@@ -1,5 +1,5 @@
 %define name    kamailio
-%define ver     3.0.1
+%define ver     3.1.0
 %define rel     0
 %define _sharedir %{_prefix}/share
 
@@ -9,6 +9,8 @@
 %define LDAP_MODULES            ldap
 %define XMLRPC_MODULES          xmlrpc
 %define PERL_MODULES            perl
+%define PYTHON_MODULES          python
+%define LUA_MODULES             lua
 %define UTILS_MODULES           utils
 %define PURPLE_MODULES          purple
 %define MEMCACHED_MODULES       memcached
@@ -19,6 +21,7 @@
 %define CARRIERROUTE_MODULES    carrierroute
 %define PRESENCE_MODULES        presence
 %define RADIUS_MODULES          radius
+%define GEOIP_MODULES           geoip
 
 Summary:      Kamailio, very fast and flexible SIP Server
 Name:         %name
@@ -33,7 +36,7 @@ Source2:      kamailio.default
 URL:          http://kamailio.org/
 Vendor:       kamailio.org
 BuildRoot:    %{_tmppath}/%{name}-%{ver}-buildroot
-Conflicts:    kamailio-mysql < %ver, kamailio-xmpp < %ver, kamailio-radius < %ver, kamailio-cpl < %ver, kamailio-unixodbc < %ver, kamailio-presence < %ver, kamailio-postgres < %ver, kamailio-snmpstats < %ver, kamailio-utils < %ver, kamailio-tls < %ver, kamailio-carrierroute  < %ver
+Conflicts:    kamailio-mysql < %ver, kamailio-postgres < %ver, kamailio-unixodbc < %ver, kamailio-ldap < %ver, kamailio-xmlrpc < %ver, kamailio-perl < %ver, kamailio-python < %ver, kamailio-lua < %ver, kamailio-utils < %ver, kamailio-purple < %ver, kamailio-memcached  < %ver, kamailio-tls  < %ver, kamailio-xmpp  < %ver, kamailio-cpl  < %ver, kamailio-snmpstats  < %ver, kamailio-carrierroute  < %ver, kamailio-presence  < %ver, kamailio-radius  < %ver, kamailio-geoip  < %ver
 BuildPrereq:  make flex bison pcre-devel
 
 %description
@@ -165,15 +168,15 @@ BuildPrereq:  libconfuse-devel
 The kamailio-carrierroute package contains a fast routing engine.
 
 
-%package  purple
-Summary:  Provides the purple module, a multi-protocol IM gateway.
-Group:    System Environment/Daemons
-Requires: kamailio = %ver
-BuildPrereq: libpurple-devel
-
-%description purple
-The kamailio-purple package provides the purple module, a multi-protocol instant
-messaging gateway module.
+#%package  purple
+#Summary:  Provides the purple module, a multi-protocol IM gateway.
+#Group:    System Environment/Daemons
+#Requires: kamailio = %ver
+#BuildPrereq: libpurple-devel
+#
+#%description purple
+#The kamailio-purple package provides the purple module, a multi-protocol instant
+#messaging gateway module.
 
 
 #%package  ldap
@@ -220,6 +223,34 @@ messaging gateway module.
 #the perlvdb database driver for Kamailio.
 
 
+#%package  lua
+#Summary:  Lua extensions for Kamailio.
+#Group:    System Environment/Daemons
+#Requires: kamailio = %ver
+#BuildPrereq: lua-devel
+#
+#%description lua
+#The kamailio-lua package provides an interface for Kamailio to write Python extensions
+
+
+%package  python
+Summary:  Python extensions for Kamailio.
+Group:    System Environment/Daemons
+Requires: kamailio = %ver
+BuildPrereq: python-devel
+
+%description python
+The kamailio-python package provides an interface for Kamailio to write Python extensions
+
+
+%package  geoip
+Summary:  GeoIP extensions for Kamailio.
+Group:    System Environment/Daemons
+Requires: kamailio = %ver
+BuildPrereq: geoip-devel
+
+%description geoip
+The kamailio-geoip package provides a GeoIP interface for Kamailio
 
 
 
@@ -228,10 +259,9 @@ messaging gateway module.
 %setup -n %{name}-%{ver}
 
 %build
-make cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT basedir=$RPM_BUILD_ROOT cfg_target=/%{_sysconfdir}/kamailio/
-make kamailio
+make FLAVOUR=kamailio cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT basedir=$RPM_BUILD_ROOT cfg_target=/%{_sysconfdir}/kamailio/ modules_dirs="modules modules_k"
+make
 make every-module skip_modules="iptrtpproxy" group_include="kstandard"
-#ENABLE_RADIUS_ACC=true make every-module skip_modules="iptrtpproxy" group_include="kstandard"
 make every-module group_include="k%MYSQL_MODULES"
 make every-module group_include="k%POSTGRES_MODULES"
 make every-module group_include="k%UNIXODBC_MODULES"
@@ -243,19 +273,20 @@ make every-module group_include="k%PRESENCE_MODULES"
 make every-module group_include="k%XMPP_MODULES"
 make every-module group_include="k%TLS_MODULES"
 make every-module group_include="k%CARRIERROUTE_MODULES"
-make every-module group_include="k%PURPLE_MODULES"
+#make every-module group_include="k%PURPLE_MODULES"
 #make every-module group_include="k%LDAP_MODULES"
 #make every-module group_include="k%MEMCACHED_MODULES"
 #make every-module group_include="k%XMLRPC_MODULES"
 #make every-module group_include="k%PERL_MODULES"
+#make every-module group_include="k%LUA_MODULES"
+make every-module group_include="k%PYTHON_MODULES"
+make every-module group_include="k%GEOIP_MODULES"
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
 
 make install
-#ENABLE_RADIUS_ACC=true make install
 make install-modules-all skip_modules="iptrtpproxy" group_include="kstandard"
-#ENABLE_RADIUS_ACC=true make install-modules-all skip_modules="iptrtpproxy" group_include="kstandard"
 make install-modules-all group_include="k%MYSQL_MODULES"
 make install-modules-all group_include="k%POSTGRES_MODULES"
 make install-modules-all group_include="k%UNIXODBC_MODULES"
@@ -267,11 +298,14 @@ make install-modules-all group_include="k%PRESENCE_MODULES"
 make install-modules-all group_include="k%XMPP_MODULES"
 make install-modules-all group_include="k%TLS_MODULES"
 make install-modules-all group_include="k%CARRIERROUTE_MODULES"
-make install-modules-all group_include="k%PURPLE_MODULES"
+#make install-modules-all group_include="k%PURPLE_MODULES"
 #make install-modules-all group_include="k%LDAP_MODULES"
 #make install-modules-all group_include="k%MEMCACHED_MODULES"
 #make install-modules-all group_include="k%XMLRPC_MODULES"
 #make install-modules-all group_include="k%PERL_MODULES"
+#make install-modules-all group_include="k%LUA_MODULES"
+make install-modules-all group_include="k%PYTHON_MODULES"
+make install-modules-all group_include="k%GEOIP_MODULES"
 
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
@@ -310,23 +344,39 @@ fi
 %doc %{_docdir}/kamailio/INSTALL
 %doc %{_docdir}/kamailio/README
 %doc %{_docdir}/kamailio/README-MODULES
+%doc %{_docdir}/kamailio/modules/README.auth
 %doc %{_docdir}/kamailio/modules/README.avpops
+%doc %{_docdir}/kamailio/modules/README.blst
 %doc %{_docdir}/kamailio/modules/README.cfg_db
 %doc %{_docdir}/kamailio/modules/README.cfg_rpc
+%doc %{_docdir}/kamailio/modules/README.counters
 %doc %{_docdir}/kamailio/modules/README.ctl
 %doc %{_docdir}/kamailio/modules/README.db_flatstore
+%doc %{_docdir}/kamailio/modules/README.debugger
 %doc %{_docdir}/kamailio/modules/README.dialplan
 %doc %{_docdir}/kamailio/modules/README.enum
+#%doc %{_docdir}/kamailio/modules/README.geoip
 %doc %{_docdir}/kamailio/modules/README.lcr
+%doc %{_docdir}/kamailio/modules/README.malloc_test
+%doc %{_docdir}/kamailio/modules/README.matrix
 %doc %{_docdir}/kamailio/modules/README.mediaproxy
 %doc %{_docdir}/kamailio/modules/README.mi_rpc
+%doc %{_docdir}/kamailio/modules/README.mqueue
+%doc %{_docdir}/kamailio/modules/README.mtree
 %doc %{_docdir}/kamailio/modules/README.pdb
+%doc %{_docdir}/kamailio/modules/README.pipelimit
+%doc %{_docdir}/kamailio/modules/README.prefix_route
+#%doc %{_docdir}/kamailio/modules/README.privacy
+%doc %{_docdir}/kamailio/modules/README.ratelimit
 %doc %{_docdir}/kamailio/modules/README.sanity
+%doc %{_docdir}/kamailio/modules/README.sl
+%doc %{_docdir}/kamailio/modules/README.sms
+%doc %{_docdir}/kamailio/modules/README.textopsx
 %doc %{_docdir}/kamailio/modules/README.tm
 %doc %{_docdir}/kamailio/modules/README.topoh
+%doc %{_docdir}/kamailio/modules/README.xhttp
 %doc %{_docdir}/kamailio/modules_k/README.acc
 %doc %{_docdir}/kamailio/modules_k/README.alias_db
-%doc %{_docdir}/kamailio/modules_k/README.auth
 %doc %{_docdir}/kamailio/modules_k/README.auth_db
 %doc %{_docdir}/kamailio/modules_k/README.auth_diameter
 %doc %{_docdir}/kamailio/modules_k/README.benchmark
@@ -357,15 +407,14 @@ fi
 %doc %{_docdir}/kamailio/modules_k/README.pua_mi
 %doc %{_docdir}/kamailio/modules_k/README.pv
 %doc %{_docdir}/kamailio/modules_k/README.qos
-%doc %{_docdir}/kamailio/modules_k/README.ratelimit
 %doc %{_docdir}/kamailio/modules_k/README.regex
 %doc %{_docdir}/kamailio/modules_k/README.registrar
 %doc %{_docdir}/kamailio/modules_k/README.rr
 %doc %{_docdir}/kamailio/modules_k/README.rtimer
+%doc %{_docdir}/kamailio/modules_k/README.rtpproxy
+%doc %{_docdir}/kamailio/modules_k/README.seas
 %doc %{_docdir}/kamailio/modules_k/README.siptrace
 %doc %{_docdir}/kamailio/modules_k/README.siputils
-%doc %{_docdir}/kamailio/modules_k/README.sl
-%doc %{_docdir}/kamailio/modules_k/README.sms
 %doc %{_docdir}/kamailio/modules_k/README.speeddial
 %doc %{_docdir}/kamailio/modules_k/README.sqlops
 %doc %{_docdir}/kamailio/modules_k/README.sst
@@ -402,24 +451,40 @@ fi
 %{_libdir}/kamailio/libtrie.so.1
 %{_libdir}/kamailio/libtrie.so.1.0
 %dir %{_libdir}/kamailio/modules
+%{_libdir}/kamailio/modules/auth.so
 %{_libdir}/kamailio/modules/avpops.so
+%{_libdir}/kamailio/modules/blst.so
 %{_libdir}/kamailio/modules/cfg_db.so
 %{_libdir}/kamailio/modules/cfg_rpc.so
+%{_libdir}/kamailio/modules/counters.so
 %{_libdir}/kamailio/modules/ctl.so
 %{_libdir}/kamailio/modules/db_flatstore.so
+%{_libdir}/kamailio/modules/debugger.so
 %{_libdir}/kamailio/modules/dialplan.so
 %{_libdir}/kamailio/modules/enum.so
+#%{_libdir}/kamailio/modules/geoip.so
 %{_libdir}/kamailio/modules/lcr.so
+%{_libdir}/kamailio/modules/malloc_test.so
+%{_libdir}/kamailio/modules/matrix.so
 %{_libdir}/kamailio/modules/mediaproxy.so
 %{_libdir}/kamailio/modules/mi_rpc.so
+%{_libdir}/kamailio/modules/mqueue.so
+%{_libdir}/kamailio/modules/mtree.so
 %{_libdir}/kamailio/modules/pdb.so
+%{_libdir}/kamailio/modules/pipelimit.so
+%{_libdir}/kamailio/modules/prefix_route.so
+%{_libdir}/kamailio/modules/privacy.so
+%{_libdir}/kamailio/modules/ratelimit.so
 %{_libdir}/kamailio/modules/sanity.so
+%{_libdir}/kamailio/modules/sl.so
+%{_libdir}/kamailio/modules/sms.so
 %{_libdir}/kamailio/modules/tm.so
+%{_libdir}/kamailio/modules/textopsx.so
 %{_libdir}/kamailio/modules/topoh.so
+%{_libdir}/kamailio/modules/xhttp.so
 %dir %{_libdir}/kamailio/modules_k
 %{_libdir}/kamailio/modules_k/acc.so
 %{_libdir}/kamailio/modules_k/alias_db.so
-%{_libdir}/kamailio/modules_k/auth.so
 %{_libdir}/kamailio/modules_k/auth_db.so
 %{_libdir}/kamailio/modules_k/auth_diameter.so
 %{_libdir}/kamailio/modules_k/benchmark.so
@@ -450,15 +515,14 @@ fi
 %{_libdir}/kamailio/modules_k/pua_mi.so
 %{_libdir}/kamailio/modules_k/pv.so
 %{_libdir}/kamailio/modules_k/qos.so
-%{_libdir}/kamailio/modules_k/ratelimit.so
 %{_libdir}/kamailio/modules_k/regex.so
 %{_libdir}/kamailio/modules_k/registrar.so
 %{_libdir}/kamailio/modules_k/rr.so
 %{_libdir}/kamailio/modules_k/rtimer.so
+%{_libdir}/kamailio/modules_k/rtpproxy.so
+%{_libdir}/kamailio/modules_k/seas.so
 %{_libdir}/kamailio/modules_k/siptrace.so
 %{_libdir}/kamailio/modules_k/siputils.so
-%{_libdir}/kamailio/modules_k/sl.so
-%{_libdir}/kamailio/modules_k/sms.so
 %{_libdir}/kamailio/modules_k/speeddial.so
 %{_libdir}/kamailio/modules_k/sqlops.so
 %{_libdir}/kamailio/modules_k/sst.so
@@ -484,6 +548,8 @@ fi
 %{_libdir}/kamailio/kamctl/kamctl.ctlbase
 %{_libdir}/kamailio/kamctl/kamctl.dbtext
 %{_libdir}/kamailio/kamctl/kamctl.fifo
+%{_libdir}/kamailio/kamctl/kamctl.ser
+%{_libdir}/kamailio/kamctl/kamctl.ser_mi
 %{_libdir}/kamailio/kamctl/kamctl.sqlbase
 %{_libdir}/kamailio/kamctl/kamctl.unixsock
 %{_libdir}/kamailio/kamctl/kamdbctl.base
@@ -532,11 +598,13 @@ fi
 
 %files radius
 %defattr(-,root,root)
-%{_docdir}/kamailio/modules/README.auth_radius
-%{_docdir}/kamailio/modules/README.misc_radius
+%{_docdir}/kamailio/modules_k/README.acc_radius
+%{_docdir}/kamailio/modules_k/README.auth_radius
+%{_docdir}/kamailio/modules_k/README.misc_radius
 %{_docdir}/kamailio/modules/README.peering
-%{_libdir}/kamailio/modules/auth_radius.so
-%{_libdir}/kamailio/modules/misc_radius.so
+%{_libdir}/kamailio/modules_k/acc_radius.so
+%{_libdir}/kamailio/modules_k/auth_radius.so
+%{_libdir}/kamailio/modules_k/misc_radius.so
 %{_libdir}/kamailio/modules/peering.so
 
 
@@ -549,6 +617,7 @@ fi
 %files presence
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules_k/README.presence
+%doc %{_docdir}/kamailio/modules_k/README.presence_conference
 %doc %{_docdir}/kamailio/modules_k/README.presence_dialoginfo
 %doc %{_docdir}/kamailio/modules_k/README.presence_mwi
 %doc %{_docdir}/kamailio/modules_k/README.presence_xml
@@ -560,7 +629,9 @@ fi
 %doc %{_docdir}/kamailio/modules_k/README.pua_xmpp
 %doc %{_docdir}/kamailio/modules_k/README.rls
 %doc %{_docdir}/kamailio/modules_k/README.xcap_client
+%doc %{_docdir}/kamailio/modules_k/README.xcap_server
 %{_libdir}/kamailio/modules_k/presence.so
+%{_libdir}/kamailio/modules_k/presence_conference.so
 %{_libdir}/kamailio/modules_k/presence_dialoginfo.so
 %{_libdir}/kamailio/modules_k/presence_mwi.so
 %{_libdir}/kamailio/modules_k/presence_xml.so
@@ -572,6 +643,7 @@ fi
 %{_libdir}/kamailio/modules_k/pua_xmpp.so
 %{_libdir}/kamailio/modules_k/rls.so
 %{_libdir}/kamailio/modules_k/xcap_client.so
+%{_libdir}/kamailio/modules_k/xcap_server.so
 
 
 %files xmpp
@@ -592,10 +664,10 @@ fi
 %{_libdir}/kamailio/modules/carrierroute.so
 
 
-%files purple
-%defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules_k/README.purple
-%{_libdir}/kamailio/modules_k/purple.so
+#%files purple
+#%defattr(-,root,root)
+#%doc %{_docdir}/kamailio/modules_k/README.purple
+#%{_libdir}/kamailio/modules_k/purple.so
 
 
 #%files ldap
@@ -626,8 +698,28 @@ fi
 #%{_libdir}/kamailio/modules_k/perlvdb.so
 
 
+#%files lua
+#%defattr(-,root,root)
+#%doc %{_docdir}/kamailio/modules_k/README.app_lua
+#%{_libdir}/kamailio/modules_k/app_lua.so
+
+
+%files python
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.app_python
+%{_libdir}/kamailio/modules/app_python.so
+
+
+%files geoip
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.geoip
+%{_libdir}/kamailio/modules/geoip.so
+
 
 
 %changelog
+* Mon Oct 4 2010 Ovidiu Sas <osas@voipembedded.com>
+ - Update for kamailio 3.1
+
 * Tue Mar 23 2010 Ovidiu Sas <osas@voipembedded.com>
  - First version of the spec file for kamailio 3.0
