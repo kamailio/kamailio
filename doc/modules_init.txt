@@ -113,6 +113,9 @@ static int mod_child(int rank)
 	return 0;
 }
 
+The forked child process shall also update its local configuration,
+please read the section "Refreshing the configuration" in doc/cfg.txt.
+
 
 Summary
 -------
