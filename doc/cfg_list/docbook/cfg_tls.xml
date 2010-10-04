@@ -97,6 +97,19 @@
     </para>
 </section>
 
+<section id="tls.crl">
+    <title>tls.crl</title>
+    <para>
+        name of the file containing the CRL  (certificare revocation
+        list in pem format).
+    </para>
+    <para>Default value: &lt;unknown:str&gt;.</para>
+    <para>Type: string.</para>
+    <para>
+        Read-only.
+    </para>
+</section>
+
 <section id="tls.certificate">
     <title>tls.certificate</title>
     <para>

@@ -46,71 +46,77 @@ Configuration Variables for tls
         Default: <unknown:str>.
         Type: string. Read-only.
 
- 8. tls.certificate
+ 8. tls.crl
+        name of the file containing the CRL  (certificare revocation
+        list in pem format).
+        Default: <unknown:str>.
+        Type: string. Read-only.
+
+ 9. tls.certificate
         name of the file containing the certificate (pem format).
         Default: <unknown:str>.
         Type: string. Read-only.
 
- 9. tls.cipher_list
+10. tls.cipher_list
         list of the accepted ciphers (strings separated by colons).
         Default: <unknown:str>.
         Type: string. Read-only.
 
-10. tls.session_cache
+11. tls.session_cache
         enables or disables the session cache.
         Default: 0.
         Range: 0 - 1.
         Type: integer. Read-only.
 
-11. tls.session_id
+12. tls.session_id
         string used for the session id.
         Default: <unknown:str>.
         Type: string. Read-only.
 
-12. tls.config
+13. tls.config
         tls config file name (used for the per domain options).
         Default: <unknown:str>.
         Type: string.
 
-13. tls.log
+14. tls.log
         tls info messages log level.
         Default: 3.
         Range: 0 - 1000.
         Type: integer.
 
-14. tls.debug
+15. tls.debug
         tls debug messages log level.
         Default: 3.
         Range: 0 - 1000.
         Type: integer.
 
-15. tls.connection_timeout
+16. tls.connection_timeout
         initial connection lifetime (in s) (obsolete).
         Default: 600.
         Range: -1 - -2147483648.
         Type: integer.
 
-16. tls.disable_compression
+17. tls.disable_compression
         if set disable the built-in OpenSSL compression.
         Default: 1.
         Range: 0 - 1.
         Type: integer. Read-only.
 
-17. tls.ssl_release_buffers
+18. tls.ssl_release_buffers
         quickly release internal OpenSSL read or write buffers. Works
         only for OpenSSL >= 1.0..
         Default: -1.
         Range: -1 - 1.
         Type: integer. Read-only.
 
-18. tls.ssl_free_list_max
+19. tls.ssl_free_list_max
         maximum number of free/cached memory chunks that OpenSSL will
         keep per connection. Works only for OpenSSL >= 1.0..
         Default: -1.
         Range: -1 - 1073741824.
         Type: integer. Read-only.
 
-19. tls.ssl_max_send_fragment
+20. tls.ssl_max_send_fragment
         sets the maximum number of bytes (clear text) send into one TLS
         record. Valid values are between 512 and 16384. Works only for
         OpenSSL >= 0.9.9.
@@ -118,7 +124,7 @@ Configuration Variables for tls
         Range: -1 - 65536.
         Type: integer. Read-only.
 
-20. tls.ssl_read_ahead
+21. tls.ssl_read_ahead
         Enables read ahead, reducing the number of BIO read calls done
         internally by the OpenSSL library. Note that in newer tls
         module versions it is better to have read ahead disabled, since
@@ -127,21 +133,21 @@ Configuration Variables for tls
         Range: -1 - 1.
         Type: integer. Read-only.
 
-21. tls.low_mem_threshold1
+22. tls.low_mem_threshold1
         sets the minimum amount of free memory for accepting new TLS
         connections (KB).
         Default: -1.
         Range: -1 - 1073741824.
         Type: integer.
 
-22. tls.low_mem_threshold2
+23. tls.low_mem_threshold2
         sets the minimum amount of free memory after which no more TLS
         operations will be attempted (even on existing connections).
         Default: -1.
         Range: -1 - 1073741824.
         Type: integer.
 
-23. tls.ct_wq_max
+24. tls.ct_wq_max
         maximum bytes queued globally for write when write has to wait
         due to TLS-level renegotiation (SSL_ERROR_WANT_READ) or initial
         TLS connection establishment (it is different from tcp.wq_max,
@@ -150,7 +156,7 @@ Configuration Variables for tls
         Range: 0 - 1073741824.
         Type: integer.
 
-24. tls.con_ct_wq_max
+25. tls.con_ct_wq_max
         maximum bytes queued for write per connection when write has to
         wait due to TLS-level renegotiation (SSL_ERROR_WANT_READ) or
         initial TLS connection establishment (it is different from
@@ -159,14 +165,14 @@ Configuration Variables for tls
         Range: 0 - 4194304.
         Type: integer.
 
-25. tls.ct_wq_blk_size
+26. tls.ct_wq_blk_size
         internal TLS pre-write (clear-text) queue minimum block size
         (advanced tunning or debugging for now).
         Default: 4096.
         Range: 1 - 65536.
         Type: integer.
 
-26. tls.send_close_notify
+27. tls.send_close_notify
         enable/disable sending a close notify TLS shutdown alert before
         closing the corresponding TCP connection.Note that having it
         enabled has a performance impact..

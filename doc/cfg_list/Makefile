@@ -27,7 +27,8 @@ files_list= \
 	$(COREPATH)/modules_s/maxfwd/maxfwd.c:maxfwd \
 	$(COREPATH)/modules/carrierroute/config.c:carrierroute \
 	$(COREPATH)/modules/malloc_test/malloc_test.c:malloc_test \
-	$(COREPATH)/modules/tls/tls_cfg.c:tls
+	$(COREPATH)/modules/tls/tls_cfg.c:tls \
+	$(COREPATH)/modules_k/dispatcher/config.c:dispatcher
 
 
 
