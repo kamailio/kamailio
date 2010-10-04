@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="prefixroute.rpc" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>RPC Commands</title>
+
+    <section id="prefixroute.reload">
+	<title><function>prefix_route.reload</function></title>
+	<para>
+		Reload prefix route tree from the database.
+		Validation is done and the prefix route tree will
+		only be reloaded if there are no errors.
+	</para>
+    </section>
+
+    <section id="prefixroute.dump">
+	<title><function>prefix_route.dump</function></title>
+	<para>
+		Dump the current prefix route tree.
+	</para>
+    </section>
+    
+</section>

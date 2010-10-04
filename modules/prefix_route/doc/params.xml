@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="prefixroute.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<title>Parameters</title>
+	
+	<section id="prefixroute.db_url">
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+			This is <acronym>URL</acronym> of the database to be used.
+		</para>
+		<para>
+			Default value is "mysql://ser@localhost/ser"
+		</para>
+		<example>
+			<title>Setting db_url parameter</title>
+			<programlisting>
+...
+modparam("prefix_route", "db_url", "mysql://ser:pass@db_host/ser")
+...
+			</programlisting>
+		</example>
+	</section>
+	
+	<section id="prefixroute.db_table">
+		<title><varname>db_table</varname> (string)</title>
+		<para>
+			The name of table where to read prefix route set.
+		</para>
+		<para>
+			Default value is "prefix_route".
+		</para>
+		<example>
+			<title>Setting db_table parameter</title>
+			<programlisting>
+...
+modparam("prefix_route", "db_table", "new_prefix_route")
+...
+			</programlisting>
+		</example>
+	</section>
+
+</section>

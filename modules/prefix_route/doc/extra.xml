@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="prefixroute.extra" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>Database Structure</title>
+
+	<para>
+	A prefix route set consists of three fields:
+	</para>
+	<itemizedlist>
+		<listitem><para>prefix - varchar(64) - Prefix rule</para></listitem>
+		<listitem><para>route - varchar(64) - Route name</para></listitem>
+		<listitem><para>comment - varchar(64) - Free-form comment</para></listitem>
+	</itemizedlist>
+    <example>
+        <title>Sample data</title>
+        <programlisting format="linespecific">
+...
+   +--------+-------+---------------+
+   | prefix | route | comment       |
+   +--------+-------+---------------+
+   | 46     | SE    | Sweden        | 
+   | 47     | NO    | Norway        | 
+   | 479    | NOMOB | Norway mobile | 
+   | 49     | DE    | Deutschland   | 
+   | 39     | IT    | Italy         | 
+   +--------+-------+---------------+
+...
+</programlisting>
+       </example>
+
+</section>

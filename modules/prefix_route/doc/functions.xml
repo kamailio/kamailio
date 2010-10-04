@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="prefixroute.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>Functions</title>
+
+	<section id="prefixroute.prefix_route">
+		<title><function>prefix_route()</function></title>
+		<para>
+		This function tries to find a route from the user part of the request URI.
+		If a route is found, it will be used for further processing. Otherwise the
+		function will return false.
+		</para>
+		<example>
+			<title>prefix_route() usage</title>
+			<programlisting>
+...
+  if (!prefix_route()) {
+      xlog("L_ERR", "prefix_route(): no matching routes\n");
+  }
+...
+			</programlisting>
+		</example>
+	</section>
+</section>
