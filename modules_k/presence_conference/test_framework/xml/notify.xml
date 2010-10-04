@@ -1,0 +1,17 @@
+<?xml encoding="UTF-8"?>
+<scenario name="subscribe_conference_event">
+	<recv request="NOTIFY"/>
+	        <send>
+		                        <![CDATA[
+SIP/2.0 200 OK
+[last_Via]
+[last_To]
+[last_From]
+Call-ID: [call_id]
+[last_Cseq]
+Allow: PRACK, INVITE, ACK, BYE, CANCEL, UPDATE, SUBSCRIBE, NOTIFY, REFER, MESSAGE, OPTIONS
+Contact: <sip:sipp@[local_ip]:[local_port];transport=[transport]>
+Content-Length: 0
+		                        ]]>
+		</send>
+</scenario>

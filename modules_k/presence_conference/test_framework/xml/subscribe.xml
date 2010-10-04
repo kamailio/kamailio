@@ -1,0 +1,35 @@
+<?xml encoding="UTF-8"?>
+<scenario name="subscribe_conference_event">
+        <send>
+	                <![CDATA[
+SUBSCRIBE sip:[presentity]@[remote_ip] SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+From: sip:[username]@[local_ip]:[local_port];tag=[rand_tag]
+To: sip:[presentity]@[remote_ip]
+Max-Forwards: 70
+Contact: <sip:[username]@[local_ip]:[local_port];transport=[transport]>
+Call-ID: [call_id]
+CSeq: 1 SUBSCRIBE
+Event: [event]
+Expires: [expiry]
+Accept: [content-type]
+Content-Length:  0
+			]]>
+	</send>
+	<recv response="202"/>
+	<recv request="NOTIFY">
+	</recv>
+	<send>
+			<![CDATA[
+SIP/2.0 200 OK
+[last_Via]
+To: <sip:[username]@[local_ip]>;tag=[rand_tag]
+From: <sip:[presentity]@[remote_ip]>[peer_tag_param]
+Call-ID: [call_id]
+CSeq: 1 NOTIFY
+Allow: PRACK, INVITE, ACK, BYE, CANCEL, UPDATE, SUBSCRIBE, NOTIFY, REFER, MESSAGE, OPTIONS
+Contact: <sip:[username]@[local_ip]:[local_port];transport=[transport]>
+Content-Length: 0
+			]]>
+	</send>
+</scenario>

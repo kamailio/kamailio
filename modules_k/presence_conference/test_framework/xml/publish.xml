@@ -1,0 +1,103 @@
+<?xml encoding="UTF-8"?>
+<scenario name="subscribe_conference_event">
+        <send>
+	                <![CDATA[
+PUBLISH sip:[presentity]@[remote_ip] SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+From: sip:[presentity]@[local_ip]:[local_port];tag=[rand_tag]
+To: sip:[presentity]@[remote_ip]
+Max-Forwards: 70
+Contact: <sip:[presentity]@[local_ip]:[local_port];transport=[transport]>
+Call-ID: [call_id]
+CSeq: 1 PUBLISH
+Event: [event]
+Expires: 3600
+Content-type: [content-type]
+Content-Length: [len]
+
+<?xml version="1.0" encoding="UTF-8"?>
+   <conference-info
+    xmlns="urn:ietf:params:xml:ns:conference-info"
+    entity="sips:conf233@example.com"
+    state="full" version="1">
+   <!--
+     CONFERENCE INFO
+   -->
+    <conference-description>
+     <subject>Agenda: This month's goals</subject>
+      <service-uris>
+       <entry>
+        <uri>http://sharepoint/salesgroup/</uri>
+        <purpose>web-page</purpose>
+       </entry>
+      </service-uris>
+     </conference-description>
+   <!--
+      CONFERENCE STATE
+   -->
+    <conference-state>
+     <user-count>33</user-count>
+    </conference-state>
+   <!--
+     USERS
+   -->
+    <users>
+     <user entity="sip:bob@example.com" state="full">
+      <display-text>Bob Hoskins</display-text>
+   <!--
+     ENDPOINTS
+   -->
+      <endpoint entity="sip:bob@pc33.example.com">
+       <display-text>Bob's Laptop</display-text>
+       <status>disconnected</status>
+       <disconnection-method>departed</disconnection-method>
+       <disconnection-info>
+        <when>2005-03-04T20:00:00Z</when>
+        <reason>bad voice quality</reason>
+        <by>sip:mike@example.com</by>
+       </disconnection-info>
+   <!--
+     MEDIA
+   -->
+       <media id="1">
+        <display-text>main audio</display-text>
+        <type>audio</type>
+        <label>34567</label>
+        <src-id>432424</src-id>
+        <status>sendrecv</status>
+       </media>
+      </endpoint>
+     </user>
+   <!--
+     USER
+   -->
+     <user entity="sip:alice@example.com" state="full">
+      <display-text>Alice</display-text>
+   <!--
+     ENDPOINTS
+   -->
+      <endpoint entity="sip:4kfk4j392jsu@example.com;grid=433kj4j3u">
+       <status>connected</status>
+       <joining-method>dialed-out</joining-method>
+       <joining-info>
+        <when>2005-03-04T20:00:00Z</when>
+        <by>sip:mike@example.com</by>
+       </joining-info>
+   <!--
+     MEDIA
+   -->
+       <media id="1">
+        <display-text>main audio</display-text>
+        <type>audio</type>
+        <label>34567</label>
+        <src-id>534232</src-id>
+        <status>sendrecv</status>
+       </media>
+      </endpoint>
+     </user>
+    </users>
+   </conference-info>
+			]]>
+	</send>
+	<recv response="200"/>
+</scenario>

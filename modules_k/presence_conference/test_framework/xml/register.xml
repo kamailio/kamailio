@@ -1,0 +1,18 @@
+<?xml encoding="UTF-8"?>
+<scenario name="register_uac">
+        <send>
+	                <![CDATA[
+REGISTER sip:[remote_ip] SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port]
+From: [username] <sip:[username]@[local_ip]:[local_port]>;tag=[call_number]
+To: [username] <sip:[username]@[local_ip]:[local_port]>
+Max-Forwards: 70
+CSeq: 1 REGISTER
+Call-ID: [call_id]
+Contact: <sip:[username]@[local_ip]:[local_port];transport=[transport]>
+Expires: [expiry]
+Content-Length: 0
+			]]>
+	</send>
+	<recv response="200"/>
+</scenario>
