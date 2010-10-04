@@ -183,11 +183,16 @@ int db_delete_ucontact(ucontact_t* _c);
 /*
  * Update ucontact with new values without replication
  */
-typedef int (*update_ucontact_t)(ucontact_t* _c, str* _u, str* aor, time_t _e, qvalue_t _q, str* _cid, int _cs, 
-								 unsigned int _set, unsigned int _res, str* _ua, str* _recv,
-								 struct socket_info* sock, str* _inst, int sid);
-int update_ucontact(ucontact_t* _c, str* _u, str* aor, time_t _e, qvalue_t _q, str* _cid, int _cs,
-					unsigned int _set, unsigned int _res, str* _ua, str* _recv,
-					struct socket_info* sock, str* _inst, int sid);
+typedef int (*update_ucontact_t)(ucontact_t* _c, str* _u, str* aor, time_t _e,
+									qvalue_t _q, str* _cid, int _cs,
+								 unsigned int _set, unsigned int _reset,
+								 str* _ua, str* _recv,
+								 struct socket_info* sock, str* _inst,
+								 int sid);
+int update_ucontact(ucontact_t* _c, str* _u, str* aor, time_t _e, qvalue_t _q,
+								str* _cid, int _cs, unsigned int _set,
+								unsigned int _reset,
+								str* _ua, str* _recv,
+								struct socket_info* sock, str* _inst, int sid);
 
 #endif /* UCONTACT_H */

@@ -220,9 +220,11 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 /*
  * Update ucontact structure in memory
  */
-int mem_update_ucontact(ucontact_t* _c, str* _u, str* aor, time_t _e, qvalue_t _q, str* _cid, int _cs,
-			unsigned int _set, unsigned int _res, str* _ua, str* _recv,
-			struct socket_info* sock, str* _inst)
+int mem_update_ucontact(ucontact_t* _c, str* _u, str* aor, time_t _e,
+						qvalue_t _q, str* _cid, int _cs,
+						unsigned int _set, unsigned int _reset,
+						str* _ua, str* _recv,
+						struct socket_info* sock, str* _inst)
 {
 	char* ptr;
 	
@@ -335,7 +337,7 @@ int mem_update_ucontact(ucontact_t* _c, str* _u, str* aor, time_t _e, qvalue_t _
 	_c->q = _q;
 	_c->cseq = _cs;
 	_c->flags |= _set;
-	_c->flags &= ~_res;
+	_c->flags &= ~_reset;
 	_c->sock = sock;
 
 	return 0;
@@ -581,8 +583,10 @@ int db_delete_ucontact(ucontact_t* _c)
 /*
  * Update ucontact with new values
  */
-int update_ucontact(ucontact_t* _c, str* _u, str* aor, time_t _e, qvalue_t _q, str* _cid, int _cs,
-					unsigned int _set, unsigned int _res, str* _ua, str* _recv,
+int update_ucontact(ucontact_t* _c, str* _u, str* aor, time_t _e,
+					qvalue_t _q, str* _cid, int _cs,
+					unsigned int _set, unsigned int _reset,
+					str* _ua, str* _recv,
 					struct socket_info* sock, str* _inst, int sid)
 {
 	/* run callbacks for UPDATE event */
@@ -592,7 +596,8 @@ int update_ucontact(ucontact_t* _c, str* _u, str* aor, time_t _e, qvalue_t _q, s
 
 	/* we have to update memory in any case, but database directly
 	 * only in db_mode 1 */
-	if (mem_update_ucontact(_c, _u, aor, _e, _q, _cid, _cs, _set, _res, _ua, _recv, sock, _inst) < 0) {
+	if (mem_update_ucontact(_c, _u, aor, _e, _q, _cid, _cs, _set, _reset,
+							_ua, _recv, sock, _inst) < 0) {
 		LOG(L_ERR, "update_ucontact(): Error while updating\n");
 		return -1;
 	}
