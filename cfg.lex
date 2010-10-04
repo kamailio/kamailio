@@ -251,6 +251,9 @@ WHILE			"while"
 
 INCLUDEFILE     "include_file"
 
+CFG_SELECT	"cfg_select"
+CFG_RESET	"cfg_reset"
+
 /*ACTION LVALUES*/
 URIHOST			"uri:host"
 URIPORT			"uri:port"
@@ -634,6 +637,9 @@ SUBST       subst
 <INITIAL>{WHILE}	{ count(); yylval.strval=yytext; return WHILE; }
 
 <INITIAL>{INCLUDEFILE}  { count(); BEGIN(INCLF); }
+
+<INITIAL>{CFG_SELECT}	{ count(); yylval.strval=yytext; return CFG_SELECT; }
+<INITIAL>{CFG_RESET}	{ count(); yylval.strval=yytext; return CFG_RESET; }
 
 <INITIAL>{URIHOST}	{ count(); yylval.strval=yytext; return URIHOST; }
 <INITIAL>{URIPORT}	{ count(); yylval.strval=yytext; return URIPORT; }

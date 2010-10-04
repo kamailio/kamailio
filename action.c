@@ -93,6 +93,7 @@
 #endif
 #include "switch.h"
 #include "events.h"
+#include "cfg/cfg_struct.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -1462,6 +1463,40 @@ match_cleanup:
 		case SET_RPL_CLOSE_T:
 			msg->rpl_send_flags.f|= SND_F_CON_CLOSE;
 			ret=1; /* continue processing */
+			break;
+		case CFG_SELECT_T:
+			if (a->val[0].type != CFG_GROUP_ST) {
+				BUG("unsupported parameter in CFG_SELECT_T: %d\n",
+						a->val[0].type);
+				ret=-1;
+				goto error;
+			}
+			switch(a->val[1].type) {
+				case NUMBER_ST:
+					v=(int)a->val[1].u.number;
+					break;
+				case RVE_ST:
+					if (rval_expr_eval_int(h, msg, &v, (struct rval_expr*)a->val[1].u.data) < 0) {
+						ret=-1;
+						goto error;
+					}
+					break;
+				default:
+					BUG("unsupported group id type in CFG_SELECT_T: %d\n",
+							a->val[1].type);
+					ret=-1;
+					goto error;
+			}
+			ret=(cfg_select((cfg_group_t*)a->val[0].u.data, v) == 0) ? 1 : -1;
+			break;
+		case CFG_RESET_T:
+			if (a->val[0].type != CFG_GROUP_ST) {
+				BUG("unsupported parameter in CFG_RESET_T: %d\n",
+						a->val[0].type);
+				ret=-1;
+				goto error;
+			}
+			ret=(cfg_reset((cfg_group_t*)a->val[0].u.data) == 0) ? 1 : -1;
 			break;
 /*
 		default:
