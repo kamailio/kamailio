@@ -32,6 +32,7 @@
 #include "../mem/shm_mem.h"
 #include "../ut.h"
 #include "../locking.h"
+#include "../bit_scan.h"
 #include "cfg_ctx.h"
 #include "cfg_script.h"
 #include "cfg_select.h"
@@ -42,7 +43,7 @@ cfg_block_t	**cfg_global = NULL;	/* pointer to the active cfg block */
 cfg_block_t	*cfg_local = NULL;	/* per-process pointer to the active cfg block.
 					Updated only when the child process
 					finishes working on the SIP message */
-static int	cfg_block_size = 0;	/* size of the cfg block including the meta-data (constant) */
+int		cfg_block_size = 0;	/* size of the cfg block including the meta-data (constant) */
 gen_lock_t	*cfg_global_lock = 0;	/* protects *cfg_global */
 gen_lock_t	*cfg_writer_lock = 0;	/* This lock makes sure that two processes do not
 					try to clone *cfg_global at the same time.
@@ -55,6 +56,7 @@ cfg_child_cb_t	**cfg_child_cb_first = NULL;	/* first item of the per-child proce
 						callback list */
 cfg_child_cb_t	**cfg_child_cb_last = NULL;	/* last item of the above list */
 cfg_child_cb_t	*cfg_child_cb = NULL;	/* pointer to the previously executed cb */	
+int		cfg_ginst_count = 0;	/* number of group instances set within the child process */
 
 
 /* forward declarations */
@@ -1056,4 +1058,97 @@ error:
 	LOG(L_ERR, "ERROR: apply_add_var_list(): Failed to apply the additional variable list\n");
 	shm_free(new_array);
 	return -1;
+}
+
+/* Move the group handle to the specified group instance pointed by dst_ginst.
+ * src_ginst shall point to the active group instance.
+ * Both parameters can be NULL meaning that the src/dst config is the default, 
+ * not an additional group instance.
+ * The function executes all the per-child process callbacks which are different
+ * in the two instaces.
+ */
+void cfg_move_handle(cfg_group_t *group, cfg_group_inst_t *src_ginst, cfg_group_inst_t *dst_ginst)
+{
+	cfg_mapping_t		*var;
+	unsigned int		bitmap;
+	int			i, pos;
+	str			gname, vname;
+
+	if (src_ginst == dst_ginst)
+		return;	/* nothing to do */
+
+	/* move the handle to the variables of the dst group instance,
+	or to the local config if no dst group instance is specified */
+	*(group->handle) = dst_ginst ?
+				dst_ginst->vars
+				: CFG_GROUP_DATA(cfg_local, group);
+
+	/* call the per child process callback of those variables
+	that have different value in the two group instances */
+	/* TODO: performance optimization: this entire loop can be
+	skipped if the group does not have any variable with
+	per-child process callback. Use some flag in the group
+	structure for this purpose. */
+	gname.s = group->name;
+	gname.len = group->name_len;
+	for (i = 0; i < CFG_MAX_VAR_NUM/(sizeof(int)*8); i++) {
+		bitmap = ((src_ginst) ? src_ginst->set[i] : 0U)
+			| ((dst_ginst) ? dst_ginst->set[i] : 0U);
+		while (bitmap) {
+			pos = bit_scan_forward32(bitmap);
+			var = &group->mapping[pos + i*sizeof(int)*8];
+			if (var->def->on_set_child_cb) {
+				vname.s = var->def->name;
+				vname.len = var->name_len;
+				var->def->on_set_child_cb(&gname, &vname);
+			}
+			bitmap -= (1U << pos);
+		}
+	}
+	/* keep track of how many group instences are set in the child process */
+	if (!src_ginst && dst_ginst)
+		cfg_ginst_count++;
+	else if (!dst_ginst)
+		cfg_ginst_count--;
+#ifdef EXTRA_DEBUG
+	if (cfg_ginst_count < 0)
+		LOG(L_ERR, "ERROR: cfg_select(): BUG, cfg_ginst_count is negative: %d. group=%.*s\n",
+			cfg_ginst_count, group->name_len, group->name);
+#endif
+	return;
+}
+
+/* Move the group handle to the specified group instance. */
+int cfg_select(cfg_group_t *group, unsigned int id)
+{
+	cfg_group_inst_t	*ginst;
+
+	if (!(ginst = cfg_find_group(CFG_GROUP_META(cfg_local, group),
+				group->size,
+				id))
+	) {
+		LOG(L_ERR, "ERROR: cfg_select(): group instance '%.*s[%u]' does not exist\n",
+				group->name_len, group->name, id);
+		return -1;
+	}
+
+	cfg_move_handle(group,
+			CFG_HANDLE_TO_GINST(*(group->handle)), /* the active group instance */
+			ginst);
+
+	LOG(L_DBG, "DEBUG: cfg_select(): group instance '%.*s[%u]' has been selected\n",
+			group->name_len, group->name, id);
+	return 0;
+}
+
+/* Reset the group handle to the default, local configuration */
+int cfg_reset(cfg_group_t *group)
+{
+	cfg_move_handle(group,
+			CFG_HANDLE_TO_GINST(*(group->handle)), /* the active group instance */
+			NULL);
+
+	LOG(L_DBG, "DEBUG: cfg_reset(): default group '%.*s' has been selected\n",
+			group->name_len, group->name);
+	return 0;
 }

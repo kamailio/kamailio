@@ -163,12 +163,14 @@ typedef struct _cfg_child_cb {
 extern cfg_group_t	*cfg_group;
 extern cfg_block_t	**cfg_global;
 extern cfg_block_t	*cfg_local;
+extern int		cfg_block_size;
 extern gen_lock_t	*cfg_global_lock;
 extern gen_lock_t	*cfg_writer_lock;
 extern int		cfg_shmized;
 extern cfg_child_cb_t	**cfg_child_cb_first;
 extern cfg_child_cb_t	**cfg_child_cb_last;
 extern cfg_child_cb_t	*cfg_child_cb;
+extern int		cfg_ginst_count;
 
 /* magic value for cfg_child_cb for processes that do not want to
    execute per-child callbacks */
@@ -195,6 +197,15 @@ extern cfg_child_cb_t	*cfg_child_cb;
  * or it uses the default value, and set the flag. */
 #define CFG_VAR_TEST_AND_SET(group_inst, var) \
 	bit_test_and_set((var)->pos % (sizeof(int)*8), (group_inst)->set + (var)->pos/(sizeof(int)*8))
+
+/* Return the group instance pointer from a handle,
+ * or NULL if the handle points to the default configuration block */
+#define CFG_HANDLE_TO_GINST(h) \
+	( (((unsigned char*)(h) < cfg_local->vars) \
+		|| ((unsigned char*)(h) > cfg_local->vars + cfg_block_size) \
+	) ? \
+		(cfg_group_inst_t*)((char*)(h) - (unsigned long)&((cfg_group_inst_t *)0)->vars) \
+		: NULL )
 
 /* initiate the cfg framework */
 int sr_cfg_init(void);
@@ -267,6 +278,16 @@ static inline void cfg_block_free(cfg_block_t *block)
 	}
 	shm_free(block);
 }
+
+/* Move the group handle to the specified group instance pointed by dst_ginst.
+ * src_ginst shall point to the active group instance.
+ * Both parameters can be NULL meaning that the src/dst config is the default, 
+ * not an additional group instance.
+ * The function executes all the per-child process callbacks which are different
+ * in the two instaces.
+ */
+void cfg_move_handle(cfg_group_t *group, cfg_group_inst_t *src_ginst, cfg_group_inst_t *dst_ginst);
+
 
 /* lock and unlock the global cfg block -- used only at the
  * very last step when the block is replaced */
@@ -352,6 +373,29 @@ static inline void cfg_update_local(int no_cbs)
 	}
 }
 
+/* Reset all the group handles to the default, local configuration */
+static inline void cfg_reset_handles(void)
+{
+	cfg_group_t	*group;
+
+	if (!cfg_local)
+		return;
+
+	for (	group = cfg_group;
+		group && cfg_ginst_count; /* cfg_ginst_count is decreased every time
+					a group handle is reset. When it reaches 0,
+					needless to continue the loop */
+		group = group->next
+	) {
+		if (((unsigned char*)*(group->handle) < cfg_local->vars)
+			|| ((unsigned char*)*(group->handle) > cfg_local->vars + cfg_block_size)
+		)
+			cfg_move_handle(group,
+					CFG_HANDLE_TO_GINST(*(group->handle)),
+					NULL);
+	}
+}
+
 /* sets the local cfg block to the active block
  * 
  * If your module forks a new process that implements
@@ -361,6 +405,8 @@ static inline void cfg_update_local(int no_cbs)
  */
 #define cfg_update() \
 	do { \
+		if (unlikely(cfg_ginst_count)) \
+			cfg_reset_handles(); \
 		if (unlikely(cfg_local != *cfg_global)) \
 			cfg_update_local(0); \
 	} while(0)
@@ -445,5 +491,11 @@ void cfg_child_cb_free(cfg_child_cb_t *child_cb_first);
  */
 int new_add_var(str *group_name, unsigned int group_id, str *var_name,
 				void *val, unsigned int type);
+
+/* Move the group handle to the specified group instance. */
+int cfg_select(cfg_group_t *group, unsigned int id);
+
+/* Reset the group handle to the default, local configuration */
+int cfg_reset(cfg_group_t *group);
 
 #endif /* _CFG_STRUCT_H */
