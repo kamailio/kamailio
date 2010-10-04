@@ -667,6 +667,7 @@ int ac_reply(as_p the_as,unsigned char processor_id,unsigned int flags,char *act
    ttag=NULL;
    my_msg=NULL;
    i=k=0;
+   the_param=NULL;
 
    net2hostL(hash_index,action,k);
    net2hostL(label,action,k);
