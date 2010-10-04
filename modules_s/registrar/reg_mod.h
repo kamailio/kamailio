@@ -42,6 +42,7 @@ extern qvalue_t default_q;
 extern int append_branches;
 extern int load_nat_flag;
 extern int save_nat_flag;
+extern int trust_received_flag;
 extern int min_expires;
 extern int max_expires;
 extern int received_avp;

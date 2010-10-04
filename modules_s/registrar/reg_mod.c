@@ -54,6 +54,7 @@ MODULE_VERSION
 static int mod_init(void);                           /* Module init function */
 static int fix_save_nat_flag( modparam_t type, void* val);
 static int fix_load_nat_flag( modparam_t type, void* val);
+static int fix_trust_received_flag( modparam_t type, void* val);
 static int domain_fixup(void** param, int param_no); /* Fixup that converts domain name */
 static int domain2_fixup(void** param, int param_no); /* Fixup that converts domain name */
 static void mod_destroy(void);
@@ -66,6 +67,9 @@ int append_branches = 1;              /* If set to 1, lookup will put all contac
 int case_sensitive  = 0;              /* If set to 1, username in aor will be case sensitive */
 int save_nat_flag   = 4;              /* The contact will be marked as behind NAT if this flag is set before calling save */
 int load_nat_flag   = 4;              /* This flag will be set by lookup if a contact is behind NAT*/
+int trust_received_flag = -1;         /* if this flag is set, a contact
+										 received param. will be trusted
+										 (otherwise it will be ignored) */
 int min_expires     = 60;             /* Minimum expires the phones are allowed to use in seconds,
 			               * use 0 to switch expires checking off */
 int max_expires     = 0;              /* Minimum expires the phones are allowed to use in seconds,
@@ -140,6 +144,9 @@ static param_export_t params[] = {
 	{"contact_attr",      PARAM_STR, &contact_attr},
 	{"aor_attr",          PARAM_STR, &aor_attr},
 	{"server_id_attr",    PARAM_STR, &server_id_attr},
+	{"trust_received_flag",  PARAM_INT, &trust_received_flag},
+	{"trust_received_flag",  PARAM_STRING|PARAM_USE_FUNC,
+										fix_trust_received_flag},
 	{0, 0, 0}
 };
 
@@ -258,6 +265,13 @@ static int fix_save_nat_flag( modparam_t type, void* val)
 static int fix_load_nat_flag( modparam_t type, void* val)
 {
 	return fix_flag(type, val, "registrar", "load_nat_flag", &load_nat_flag);
+}
+
+/* fixes trust_received_flag param (resolves possible named flags) */
+static int fix_trust_received_flag( modparam_t type, void* val)
+{
+	return fix_flag(type, val, "registrar", "trust_received_flag",
+					&trust_received_flag);
 }
 
 

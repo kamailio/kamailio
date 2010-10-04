@@ -33,13 +33,20 @@
  * 2003-03-21 save_noreply added, patch provided by 
  *            Maxim Sobolev <sobomax@sippysoft.com> (janakj)
  * 2005-02-25 incoming socket is saved in USRLOC (bogdan)
+ * 2010-09-30 trust received info only if trust_received_flag is set (andrei)
+ * 2010-10-01 if received info is available try to set the incoming socket
+ *            to the information saved in received.
  */
 
 
 #include "../../comp_defs.h"
 #include "../../str.h"
-#include "../../parser/parse_to.h"
 #include "../../dprint.h"
+#include "../../parser/parse_to.h"
+#include "../../parser/parse_param.h"
+#include "../../parser/parse_uri.h"
+#include "../../resolve.h"
+#include "../../socket_info.h"
 #include "../../trim.h"
 #include "../../ut.h"
 #include "../usrloc/usrloc.h"
@@ -256,6 +263,96 @@ static int create_rcv_uri(str** uri, struct sip_msg* m)
 }
 
 
+
+/** find send socket based on dst_ip saved in rcv_uri.
+ * Based on usrloc(s) find_socket() (modules_s/usrloc/udomain.c),
+ * but will try only IPs (no DNS lookups) and it is quiet on errors.
+ *
+ * @param received - received uri in the format:
+ *                   sip:src_host:src_port;dstip=IP;dstport=port
+ * @param ip - filled with the ip in dst_ip.
+ * @param port - filled with the port in dst_ip (if present)
+ * @param proto - filled with the uri protocol.
+ * @return <0 on error, 0 on success
+ */
+int parse_uri_dstip(str* received, struct ip_addr* ip, unsigned short* port,
+						unsigned short* proto)
+{
+	struct sip_uri puri;
+	param_hooks_t hooks;
+	struct ip_addr* p;
+	param_t* params;
+	int error;
+
+	if (unlikely(!received)) return 0;
+	if (unlikely(parse_uri(received->s, received->len, &puri) < 0))
+		goto error_uri;
+	*proto = puri.proto;
+	if (unlikely(parse_params(&puri.params, CLASS_URI, &hooks, &params) < 0))
+		goto error_uri_params;
+	if (unlikely(hooks.uri.dstip == 0 || hooks.uri.dstip->body.s == 0 ||
+				 hooks.uri.dstip->body.len == 0))
+		goto end; /* no dst_ip param */
+	/* check if it's ipv4 or ipv6 */
+	if (likely(((p = str2ip(&hooks.uri.dstip->body)) != 0) ||
+#ifdef USE_IPV6
+				((p = str2ip6(&hooks.uri.dstip->body)) != 0)
+#endif /* USE_IPV6 */
+				)) {
+		*ip = *p;
+	} else
+		goto error_no_ip; /* no ip */
+	if (likely(hooks.uri.dstport != 0 && hooks.uri.dstport->body.s  != 0 &&
+			hooks.uri.dstport->body.len !=0)) {
+		*port = str2s(hooks.uri.dstport->body.s, hooks.uri.dstport->body.len,
+					&error);
+		if (unlikely(error != 0))
+			goto error_port;
+	} else {
+		*port = 0;
+	}
+	
+end:
+	if (params) free_params(params);
+	return 0;
+error_uri:
+error_uri_params:
+error_no_ip:
+error_port:
+	if (params) free_params(params);
+	return -1;
+}
+
+
+
+/** try to find the send socket based on saved received information in uri.
+ * @param received - received uri in the format:
+ *                   sip:src_host:src_port;dstip=IP;dstport=port
+ * @return 0 on error or not found, socket_info pointer on success.
+ */
+static struct socket_info* find_send_socket(str* received)
+{
+	struct ip_addr ip;
+	unsigned short port;
+	unsigned short proto;
+	struct socket_info* si;
+
+	if (unlikely(parse_uri_dstip(received, &ip, &port, &proto) < 0))
+		return 0;
+	si = find_si(&ip, port, proto);
+#if 0
+	/* FIXME: which would be the best fallback procedure, proto:ip:*
+	   (try to keep the ip, although unlikely to be possible for replication)
+	   or proto:*: port (try to keep the same port, usefull for proxies
+	   behind transparent proxies /LBs) */
+	if (si == 0)
+		si = find_si(&ip, 0, proto);
+#endif
+	return si;
+}
+
+
+
 /*
  * Message contained some contacts, but record with same address of record was
  * not found so we have to create a new record and insert all contacts from
@@ -272,6 +369,7 @@ static inline int insert(struct sip_msg* _m, str* aor, contact_t* _c, udomain_t*
 	str callid;
 	unsigned int flags;
 	str *recv, *inst;
+	struct socket_info* send_sock;
 
 	if (isflagset(_m, save_nat_flag) == 1) flags = FL_NAT;
 	else flags = FL_NONE;
@@ -320,9 +418,12 @@ static inline int insert(struct sip_msg* _m, str* aor, contact_t* _c, udomain_t*
 			ul.delete_urecord(_d, _u);
 			return -4;
 		}
-
-		if (_c->received) {
+		
+		send_sock = 0;
+		if (_c->received && (trust_received_flag >=0) &&
+				(isflagset(_m, trust_received_flag) == 1)) {
 			recv = &_c->received->body;
+			send_sock = find_send_socket(recv);
 		} else if (flags & FL_NAT && _m->first_line.type == SIP_REQUEST) {
 			if (create_rcv_uri(&recv, _m) < 0) {
 				ERR("Error while creating rcv URI\n");
@@ -339,8 +440,11 @@ static inline int insert(struct sip_msg* _m, str* aor, contact_t* _c, udomain_t*
 			inst = 0;
 		}
 
-		if (ul.insert_ucontact(r, aor, &_c->uri, e, q, &callid, cseq, flags, &c, ua, recv, 
-							   _m->rcv.bind_address, inst, sid) < 0) {
+		if (ul.insert_ucontact(r, aor, &_c->uri, e, q, &callid, cseq,
+								flags, &c, ua, recv,
+								send_sock?send_sock:_m->rcv.bind_address,
+								inst, sid) < 0)
+		{
 			rerrno = R_UL_INS_C;
 			LOG(L_ERR, "insert(): Error while inserting contact\n");
 			ul.delete_urecord(_d, _u);
@@ -430,6 +534,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
 	qvalue_t q;
 	unsigned int nated;
 	str* recv, *inst;
+	struct socket_info* send_sock;
 	
 	if (isflagset(_m, save_nat_flag) == 1) {
 		nated = FL_NAT;
@@ -485,9 +590,13 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
 					return -3;
 				}
 				
-				if (_c->received) {
+				send_sock = 0;
+				if (_c->received && (trust_received_flag >=0) &&
+						(isflagset(_m, trust_received_flag) == 1)) {
 					recv = &_c->received->body;
-				} else if (nated & FL_NAT && _m->first_line.type == SIP_REQUEST) {
+					send_sock = find_send_socket(recv);
+				} else if (nated & FL_NAT && 
+							_m->first_line.type == SIP_REQUEST) {
 					if (create_rcv_uri(&recv, _m) < 0) {
 						ERR("Error while creating rcv URI\n");
 						rerrno = R_UL_INS_C;
@@ -497,10 +606,10 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
 					recv = 0;
 				}
 
-				if (ul.insert_ucontact(_r, aor, &_c->uri, e, q, &callid, cseq, 
+				if (ul.insert_ucontact(_r, aor, &_c->uri, e, q, &callid, cseq,
 						       nated | mem_only,
-						       &c2, _ua, recv, 
-						       _m->rcv.bind_address,
+						       &c2, _ua, recv,
+								send_sock?send_sock:_m->rcv.bind_address,
 									   inst, sid) < 0) {
 					rerrno = R_UL_INS_C;
 					LOG(L_ERR, "update(): Error while inserting contact\n");
@@ -539,8 +648,11 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
 					return -7;
 				}
 				
-				if (_c->received) {
+				send_sock = 0;
+				if (_c->received && (trust_received_flag >=0) &&
+						(isflagset(_m, trust_received_flag) == 1)) {
 					recv = &_c->received->body;
+					send_sock = find_send_socket(recv);
 				} else if (nated & FL_NAT && _m->first_line.type == SIP_REQUEST) {
 					if (create_rcv_uri(&recv, _m) < 0) {
 						ERR("Error while creating rcv URI\n");
@@ -553,7 +665,10 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
 
 				set = nated | mem_only;
 				reset = ~(nated | mem_only) & (FL_NAT | FL_MEM);
-				if (ul.update_ucontact(c, &_c->uri, aor, e, q, &callid, cseq, set, reset, _ua, recv, _m->rcv.bind_address, inst, sid) < 0) {
+				if (ul.update_ucontact(c, &_c->uri, aor, e, q, &callid, cseq,
+							set, reset, _ua, recv,
+							send_sock?send_sock:_m->rcv.bind_address,
+							inst, sid) < 0) {
 					rerrno = R_UL_UPD_C;
 					LOG(L_ERR, "update(): Error while updating contact\n");
 					return -8;
