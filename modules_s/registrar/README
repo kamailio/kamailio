@@ -21,13 +21,12 @@ Jan Janak
         1.6.3. max_expires (integer)
         1.6.4. default_q (integer)
         1.6.5. append_branches (integer)
-        1.6.6. use_domain (integer)
-        1.6.7. case_sensitive (integer)
-        1.6.8. desc_time_order (integer)
-        1.6.9. received_avp (integer)
-        1.6.10. received_param (integer)
-        1.6.11. max_contacts (integer)
-        1.6.12. retry_after (integer)
+        1.6.6. case_sensitive (integer)
+        1.6.7. desc_time_order (integer)
+        1.6.8. received_avp (integer)
+        1.6.9. received_param (integer)
+        1.6.10. max_contacts (integer)
+        1.6.11. retry_after (integer)
 
    1.7. Functions
 
@@ -193,7 +192,7 @@ b1f-448a-a8be-e29572ea3bee>"
    is the same, although the Contact URI differs. Without the sip instance
    this would have created two entries in the usrloc database.
 
-   Example 3.
+   Example 3. Different Contact with the same sip.instance
 Contact: <sip:lando@192.168.0.2:2500>;q=1.0;+sip.instance="<urn:uuid:6a66f3bd-5b
 1f-448a-a8be-e29572ea3bee>"
 
@@ -279,32 +278,27 @@ modparam("registrar", "default_q", 100)
 modparam("registrar", "append_branches", 0)
 ...
 
-1.6.6. use_domain (integer)
+1.6.6. case_sensitive (integer)
 
-   If set to 1 then the registrar will use username@domain as address of
-   record. If the variable is set to 0 then only username will be used as
-   the address of record.
+Note
 
-   Default value is 0.
-
-   Example 9. Set use_domain parameter
-...
-modparam("registrar", "use_domain", 1)
-...
-
-1.6.7. case_sensitive (integer)
+   This parameter was removed (obsolete since ser 2.0).
 
    If set to 1 then AOR comparison will be case sensitive, if set to 0
    then AOR comparison will be case insensitive--This is recommended.
 
    Default value is 0.
 
-   Example 10. Set case_sensitive parameter
+   Example 9. Set case_sensitive parameter
 ...
 modparam("registrar", "case_sensitive", 1)
 ...
 
-1.6.8. desc_time_order (integer)
+1.6.7. desc_time_order (integer)
+
+Note
+
+   This parameter was removed (obsolete since ser 2.0).
 
    If set to 1 then all contacts will be ordered in descending
    modification time order. In this case the most recently updated/created
@@ -312,12 +306,12 @@ modparam("registrar", "case_sensitive", 1)
 
    Default value is 0.
 
-   Example 11. Set desc_time_order parameter
+   Example 10. Set desc_time_order parameter
 ...
 modparam("registrar", "desc_time_order", 1)
 ...
 
-1.6.9. received_avp (integer)
+1.6.8. received_avp (integer)
 
    Registrar will store the value of the AVP configured by this parameter
    in the received column in the user location database. It will leave the
@@ -332,24 +326,24 @@ Note
 
    Default value is 42.
 
-   Example 12. Set received_avp parameter
+   Example 11. Set received_avp parameter
 ...
 modparam("registrar", "received_avp", 43)
 ...
 
-1.6.10. received_param (integer)
+1.6.9. received_param (integer)
 
    The name of the parameter that will be appended to Contacts of 200 OK
    when the received URI was set by nathelper module.
 
    Default value is "received".
 
-   Example 13. Set received_param parameter
+   Example 12. Set received_param parameter
 ...
 modparam("registrar", "received_param", "rcv")
 ...
 
-1.6.11. max_contacts (integer)
+1.6.10. max_contacts (integer)
 
    The parameter can be used to limit the number of contacts per AOR
    (Address of Record) in the user location database. Value 0 disables the
@@ -357,13 +351,13 @@ modparam("registrar", "received_param", "rcv")
 
    Default value is 0.
 
-   Example 14. Set max_contacts parameter
+   Example 13. Set max_contacts parameter
 ...
 # Allow no more than 10 contacts per AOR
 modparam("registrar", "max_contacts", 10)
 ...
 
-1.6.12. retry_after (integer)
+1.6.11. retry_after (integer)
 
    The registrar can generate 5xx reply to REGISTER in various situations.
    It can, for example, happen when the max_contacts parameter is set and
@@ -376,7 +370,7 @@ modparam("registrar", "max_contacts", 10)
 
    Default value is 0 (disabled).
 
-   Example 15. Set retry_after parameter
+   Example 14. Set retry_after parameter
 ...
 modparam("registrar", "retry_after", 30)
 ...
@@ -398,7 +392,7 @@ modparam("registrar", "retry_after", 30)
      * domain - Logical domain within registrar. If database is used then
        this must be name of the table which stores the contacts.
 
-   Example 16. save usage
+   Example 15. save usage
 ...
 save("location");
 ...
@@ -411,7 +405,7 @@ save("location");
      * domain - Logical domain within registrar. If database is used then
        this must be na e of the table which stores the contacts.
 
-   Example 17. save_noreply usage
+   Example 16. save_noreply usage
 ...
 save_noreply("location");
 ...
@@ -428,7 +422,7 @@ save_noreply("location");
    Meaning of the parameters is as follows:
      * domain - Name of table that should be used for the lookup.
 
-   Example 18. lookup usage
+   Example 17. lookup usage
 ...
 lookup("location");
 ...
@@ -443,7 +437,7 @@ lookup("location");
    Meaning of the parameters is as follows:
      * domain - Name of table that should be used for the lookup.
 
-   Example 19. registered usage
+   Example 18. registered usage
 ...
 if (registered("location")) {
     sl_send_reply("100", "Trying");

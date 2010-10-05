@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	 <!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+	 %docentities;
+	]
+>
 
 <section id="registrar" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
@@ -247,6 +254,7 @@ Contact: <sip:nils@192.168.0.122:2532>;q=1.0;+sip.instance="<urn:uuid:6a66f3bd-5
 		entries in the usrloc database.
 	</para>
 	<example>
+		<title>Different Contact with the same sip.instance</title>
 		<programlisting>
 <![CDATA[
 Contact: <sip:lando@192.168.0.2:2500>;q=1.0;+sip.instance="<urn:uuid:6a66f3bd-5b1f-448a-a8be-e29572ea3bee>"]]>
