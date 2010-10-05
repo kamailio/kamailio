@@ -16,8 +16,14 @@ ifeq ($(BUILDER),)
 		DEFS+=-I/usr/include/lua5.1
 		LIBS= -llua5.1
 	else
-		DEFS+ = $(shell pkg-config --cflags lua)
-		LIBS = $(shell pkg-config --libs lua)
+		LUALIBS = $(shell pkg-config --silence-errors --libs lua)
+		ifeq ($(LUALIBS),)
+			DEFS+=-I/usr/include/lua5.1
+			LIBS= -llua5.1
+		else
+			DEFS+ = $(shell pkg-config --cflags lua)
+			LIBS = $(shell pkg-config --libs lua)
+		endif
 	endif
 else
 	DEFS+ = $(shell lua-config --include)
