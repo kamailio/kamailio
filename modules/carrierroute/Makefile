@@ -12,10 +12,16 @@ NAME=carrierroute.so
 BUILDER = $(shell which confuse-config)
 
 ifeq ($(BUILDER),)
-	CONFUSEDEFS=-I$(LOCALBASE)/include -I/usr/local/include -I/opt/include \
-		-I/usr/sfw/include
-	CONFUSELIBS=-L$(LOCALBASE)/lib -L/usr/local/lib -L/usr/sfw/lib \
-		-L/opt/lib -lconfuse
+	BUILDER = $(shell which pkg-config)
+	ifeq ($(BUILDER),)
+		CONFUSEDEFS=-I$(LOCALBASE)/include -I/usr/local/include -I/opt/include \
+			-I/usr/sfw/include
+		CONFUSELIBS=-L$(LOCALBASE)/lib -L/usr/local/lib -L/usr/sfw/lib \
+			-L/opt/lib -lconfuse
+	else
+		CONFUSEDEFS = $(shell pkg-config --cflags libconfuse)
+		CONFUSELIBS = $(shell pkg-config --libs libconfuse)
+	endif
 else
 		CONFUSEDEFS = $(shell confuse-config --cflags)
 		CONFUSELIBS = $(shell confuse-config --libs)
