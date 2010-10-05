@@ -23,6 +23,7 @@
 #include "../../action.h"
 #include "../../mem/mem.h"
 #include "../../sr_module.h"
+#include "../../dset.h"
 #include "../../parser/msg_parser.h"
 
 #include <Python.h>
