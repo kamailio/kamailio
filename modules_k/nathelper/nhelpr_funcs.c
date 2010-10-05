@@ -198,7 +198,7 @@ int extract_body(struct sip_msg *msg, str *body )
 
 	if (body->len + body->s > msg->buf + msg->len) {
 		LM_ERR("content-length exceeds packet-length by %d\n",
-				(body->len + body->s) - (msg->buf + msg->len));
+				(int)((body->len + body->s) - (msg->buf + msg->len)));
 		goto error;
 	}
 
