@@ -8,9 +8,22 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=app_lua.so
-LIBS= -llua5.1
 
-DEFS+=-I/usr/include/lua5.1
+BUILDER = $(shell which lua-config)
+ifeq ($(BUILDER),)
+	BUILDER = $(shell which pkg-config)
+	ifeq ($(BUILDER),)
+		DEFS+=-I/usr/include/lua5.1
+		LIBS= -llua5.1
+	else
+		DEFS+ = $(shell pkg-config --cflags lua)
+		LIBS = $(shell pkg-config --libs lua)
+	endif
+else
+	DEFS+ = $(shell lua-config --include)
+	LIBS = $(shell lua-config --libs)
+endif
+
 DEFS+=-DOPENSER_MOD_INTERFACE
 
 SERLIBPATH=../../lib
