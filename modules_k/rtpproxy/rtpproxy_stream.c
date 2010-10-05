@@ -63,7 +63,7 @@ fixup_var_str_int(void **param, int param_no)
 	s.len = strlen(s.s);
 	if (str2sint(&s, &ret)==0) {
 		pkg_free(*param);
-		*param = (void *)ret;
+		*param = (void *)(long)ret;
         } else {
             LM_ERR("bad number <%s>\n", (char *)(*param));
             return E_CFG;
