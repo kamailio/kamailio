@@ -307,6 +307,10 @@ else
 	exclude_modules+= app_python
 	# depends on libxml2
 	exclude_modules+= xmlops
+	# depends on tm being compiled with -DWITH_AS_SUPPORT support
+ifeq (,$(findstring -DWITH_AS_SUPPORT, $(C_DEFS)))
+		exclude_modules+= seas
+endif
 endif
 
 # always exclude the CVS dir
