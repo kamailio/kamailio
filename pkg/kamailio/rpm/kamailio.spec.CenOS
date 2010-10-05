@@ -223,14 +223,14 @@ The kamailio-perl package provides an interface for Kamailio to write Perl exten
 the perlvdb database driver for Kamailio.
 
 
-#%package  lua
-#Summary:  Lua extensions for Kamailio.
-#Group:    System Environment/Daemons
-#Requires: kamailio = %ver
-#BuildPrereq: lua-devel
-#
-#%description lua
-#The kamailio-lua package provides an interface for Kamailio to write Python extensions
+%package  lua
+Summary:  Lua extensions for Kamailio.
+Group:    System Environment/Daemons
+Requires: kamailio = %ver
+BuildPrereq: lua-devel
+
+%description lua
+The kamailio-lua package provides an interface for Kamailio to write Python extensions
 
 
 %package  python
@@ -278,7 +278,7 @@ make every-module group_include="k%PURPLE_MODULES"
 #make every-module group_include="k%MEMCACHED_MODULES"
 #make every-module group_include="k%XMLRPC_MODULES"
 make every-module group_include="k%PERL_MODULES"
-#make every-module group_include="k%LUA_MODULES"
+make every-module group_include="k%LUA_MODULES"
 make every-module group_include="k%PYTHON_MODULES"
 make every-module group_include="k%GEOIP_MODULES"
 
@@ -303,7 +303,7 @@ make install-modules-all group_include="k%PURPLE_MODULES"
 #make install-modules-all group_include="k%MEMCACHED_MODULES"
 #make install-modules-all group_include="k%XMLRPC_MODULES"
 make install-modules-all group_include="k%PERL_MODULES"
-#make install-modules-all group_include="k%LUA_MODULES"
+make install-modules-all group_include="k%LUA_MODULES"
 make install-modules-all group_include="k%PYTHON_MODULES"
 make install-modules-all group_include="k%GEOIP_MODULES"
 
@@ -717,10 +717,10 @@ fi
 %{_libdir}/kamailio/perl/OpenSER/VDB/VTab.pm
 %{_libdir}/kamailio/perl/OpenSER/VDB/Value.pm
 
-#%files lua
-#%defattr(-,root,root)
-#%doc %{_docdir}/kamailio/modules_k/README.app_lua
-#%{_libdir}/kamailio/modules_k/app_lua.so
+%files lua
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.app_lua
+%{_libdir}/kamailio/modules/app_lua.so
 
 
 %files python
