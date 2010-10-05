@@ -7,7 +7,7 @@
 %define POSTGRES_MODULES        postgres
 %define UNIXODBC_MODULES        unixodbc
 %define LDAP_MODULES            ldap
-%define XMLRPC_MODULES          xmlrpc
+%define XMLRPC_MODULES          xml
 %define PERL_MODULES            perl
 %define PYTHON_MODULES          python
 %define LUA_MODULES             lua
@@ -179,16 +179,16 @@ The kamailio-purple package provides the purple module, a multi-protocol instant
 messaging gateway module.
 
 
-#%package  ldap
-#Summary:  LDAP modules for Kamailio.
-#Group:    System Environment/Daemons
-#Requires: kamailio = %ver
-#BuildPrereq: libldap-devel
-#
-#%description ldap
-#The kamailio-ldap package provides the ldap and h350 modules for Kamailio,
-#enabling LDAP queries from the Kamailio config and storage of SIP account
-#data in an LDAP directory.
+%package  ldap
+Summary:  LDAP modules for Kamailio.
+Group:    System Environment/Daemons
+Requires: kamailio = %ver
+BuildPrereq: openldap-devel
+
+%description ldap
+The kamailio-ldap package provides the ldap and h350 modules for Kamailio,
+enabling LDAP queries from the Kamailio config and storage of SIP account
+data in an LDAP directory.
 
 
 #%package  memcached
@@ -205,7 +205,7 @@ messaging gateway module.
 #Summary:  XMLRPC support for Kamailio's Management Interface.
 #Group:    System Environment/Daemons
 #Requires: kamailio = %ver
-#BuildPrereq: 
+#BuildPrereq:  libxml2-devel xmlrpc-c-devel
 #
 #%description xmlrpc
 #The kamailio-xmlrpc package provides the XMLRPC transport implementations for Kamailio's
@@ -274,7 +274,7 @@ make every-module group_include="k%XMPP_MODULES"
 make every-module group_include="k%TLS_MODULES"
 make every-module group_include="k%CARRIERROUTE_MODULES"
 make every-module group_include="k%PURPLE_MODULES"
-#make every-module group_include="k%LDAP_MODULES"
+make every-module group_include="k%LDAP_MODULES"
 #make every-module group_include="k%MEMCACHED_MODULES"
 #make every-module group_include="k%XMLRPC_MODULES"
 make every-module group_include="k%PERL_MODULES"
@@ -299,7 +299,7 @@ make install-modules-all group_include="k%XMPP_MODULES"
 make install-modules-all group_include="k%TLS_MODULES"
 make install-modules-all group_include="k%CARRIERROUTE_MODULES"
 make install-modules-all group_include="k%PURPLE_MODULES"
-#make install-modules-all group_include="k%LDAP_MODULES"
+make install-modules-all group_include="k%LDAP_MODULES"
 #make install-modules-all group_include="k%MEMCACHED_MODULES"
 #make install-modules-all group_include="k%XMLRPC_MODULES"
 make install-modules-all group_include="k%PERL_MODULES"
@@ -355,7 +355,6 @@ fi
 %doc %{_docdir}/kamailio/modules/README.debugger
 %doc %{_docdir}/kamailio/modules/README.dialplan
 %doc %{_docdir}/kamailio/modules/README.enum
-#%doc %{_docdir}/kamailio/modules/README.geoip
 %doc %{_docdir}/kamailio/modules/README.lcr
 %doc %{_docdir}/kamailio/modules/README.malloc_test
 %doc %{_docdir}/kamailio/modules/README.matrix
@@ -462,7 +461,6 @@ fi
 %{_libdir}/kamailio/modules/debugger.so
 %{_libdir}/kamailio/modules/dialplan.so
 %{_libdir}/kamailio/modules/enum.so
-#%{_libdir}/kamailio/modules/geoip.so
 %{_libdir}/kamailio/modules/lcr.so
 %{_libdir}/kamailio/modules/malloc_test.so
 %{_libdir}/kamailio/modules/matrix.so
@@ -670,12 +668,12 @@ fi
 %{_libdir}/kamailio/modules_k/purple.so
 
 
-#%files ldap
-#%defattr(-,root,root)
-#%doc %{_docdir}/kamailio/modules_k/README.h350
-#%doc %{_docdir}/kamailio/modules_k/README.ldap
-#%{_libdir}/kamailio_k/modules/h350.so
-#%{_libdir}/kamailio_k/modules/ldap.so
+%files ldap
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules_k/README.h350
+%doc %{_docdir}/kamailio/modules_k/README.ldap
+%{_libdir}/kamailio/modules_k/h350.so
+%{_libdir}/kamailio/modules_k/ldap.so
 
 
 #%files memcached
