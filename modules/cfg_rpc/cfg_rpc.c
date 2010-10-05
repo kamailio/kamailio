@@ -353,11 +353,21 @@ static void rpc_list(rpc_t* rpc, void* c)
 	str		gname;
 	cfg_def_t	*def;
 	int		i;
+	str		group;
+
+	if (rpc->scan(c, "*S", &group) < 1) {
+		group.s = NULL;
+		group.len = 0;
+	}
 
 	cfg_get_group_init(&h);
 	while(cfg_get_group_next(&h, &gname, &def))
-		for (i=0; def[i].name; i++)
-			rpc->printf(c, "%.*s: %s", gname.len, gname.s, def[i].name);
+		if (!group.len
+			|| ((gname.len == group.len)
+				&& (memcmp(gname.s, group.s, group.len) == 0))
+		)
+			for (i=0; def[i].name; i++)
+				rpc->printf(c, "%.*s: %s", gname.len, gname.s, def[i].name);
 }
 
 static const char* rpc_diff_doc[2] = {

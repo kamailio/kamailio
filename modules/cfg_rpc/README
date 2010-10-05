@@ -60,8 +60,8 @@ Miklos Tirpak
        can optionally contain the group instance id, for example foo[5].
      * cfg.help - Print the description of a configuration variable. The
        function accepts two parameters: group name, variable name.
-     * cfg.list - List the configuration variables. The function does not
-       have any parameters.
+     * cfg.list - List the configuration variables. The function has one
+       optional parameter: group name.
      * cfg.diff - List the pending configuration changes that have not
        been committed yet. The function does not have any parameters.
      * cfg.add_group_inst - Add a new instance to an existing

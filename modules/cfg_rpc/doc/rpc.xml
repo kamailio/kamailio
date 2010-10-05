@@ -100,7 +100,8 @@
 	<listitem>
 	    <para>
 		<emphasis>cfg.list</emphasis> - List the configuration
-		variables. The function does not have any parameters.
+		variables. The function has one optional parameter:
+		group name.
 	    </para>
 	</listitem>
 	<listitem>
