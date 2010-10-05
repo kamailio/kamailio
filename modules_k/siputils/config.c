@@ -46,6 +46,6 @@ cfg_def_t	siputils_cfg_def[] = {
 };
 
 int ring_timeout_fixup(void *handle, str* gname, str* name, void **val){
-	if((int)*val > 0) return 0;
+	if((int)(long)*val > 0) return 0;
 	return -1;
 }
