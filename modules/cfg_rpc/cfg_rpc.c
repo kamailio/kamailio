@@ -128,6 +128,34 @@ static void rpc_set_now_string(rpc_t* rpc, void* c)
 	}
 }
 
+static void rpc_set(rpc_t* rpc, void* c)
+{
+	str	group, var;
+	int	i, err;
+	char	*ch;
+	unsigned int	*group_id;
+
+	if (rpc->scan(c, "SS", &group, &var) < 2)
+		return;
+
+	if (get_group_id(&group, &group_id)) {
+		rpc->fault(c, 400, "Wrong group syntax. Use either \"group\", or \"group[id]\"");
+		return;
+	}
+
+	if (rpc->scan(c, "d", &i) == 1)
+		err = cfg_set_now_int(ctx, &group, group_id, &var, i);
+	else if (rpc->scan(c, "s", &ch) == 1)
+		err = cfg_set_now_string(ctx, &group, group_id, &var, ch);
+	else
+		return; /* error */
+
+	if (err) {
+		rpc->fault(c, 400, "Failed to set the variable");
+		return;
+	}
+}
+
 static const char* rpc_set_delayed_doc[2] = {
         "Prepare the change of a configuration variable, but does not commit the new value yet",
         0
@@ -168,6 +196,34 @@ static void rpc_set_delayed_string(rpc_t* rpc, void* c)
 	}
 
 	if (cfg_set_delayed_string(ctx, &group, group_id, &var, ch)) {
+		rpc->fault(c, 400, "Failed to set the variable");
+		return;
+	}
+}
+
+static void rpc_set_delayed(rpc_t* rpc, void* c)
+{
+	str	group, var;
+	int	i, err;
+	char	*ch;
+	unsigned int	*group_id;
+
+	if (rpc->scan(c, "SS", &group, &var) < 2)
+		return;
+
+	if (get_group_id(&group, &group_id)) {
+		rpc->fault(c, 400, "Wrong group syntax. Use either \"group\", or \"group[id]\"");
+		return;
+	}
+
+	if (rpc->scan(c, "d", &i) == 1)
+		err = cfg_set_delayed_int(ctx, &group, group_id, &var, i);
+	else if (rpc->scan(c, "s", &ch) == 1)
+		err = cfg_set_delayed_string(ctx, &group, group_id, &var, ch);
+	else
+		return; /* error */
+
+	if (err) {
 		rpc->fault(c, 400, "Failed to set the variable");
 		return;
 	}
@@ -419,8 +475,10 @@ static void rpc_del_group_inst(rpc_t* rpc, void* c)
 }
 
 static rpc_export_t rpc_calls[] = {
+	{"cfg.set",		rpc_set,		rpc_set_now_doc,	0},
 	{"cfg.set_now_int",	rpc_set_now_int,	rpc_set_now_doc,	0},
 	{"cfg.set_now_string",	rpc_set_now_string,	rpc_set_now_doc,	0},
+	{"cfg.set_delayed",	rpc_set_delayed,	rpc_set_delayed_doc,	0},
 	{"cfg.set_delayed_int",	rpc_set_delayed_int,	rpc_set_delayed_doc,	0},
 	{"cfg.set_delayed_string",	rpc_set_delayed_string,	rpc_set_delayed_doc,	0},
 	{"cfg.commit",		rpc_commit,		rpc_commit_doc,		0},

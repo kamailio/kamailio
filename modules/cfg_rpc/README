@@ -29,6 +29,12 @@ Miklos Tirpak
        commit the change immediately. The function accepts three
        parameters: group name, variable name, string value. The group name
        can optionally contain the group instance id, for example foo[5].
+     * cfg.set - Set the value of a configuration variable and commit the
+       change immediately. This is a wrapper command for cfg.set_now_int
+       and cfg.set_now_string depending on the type of the value provided.
+       The function accepts three parameters: group name, variable name,
+       int/string value. The group name can optionally contain the group
+       instance id, for example foo[5].
      * cfg.set_delayed_int - Prepare the change of a configuration
        variable, but does not commit the new value yet. The function
        accepts three parameters: group name, variable name, integer value.
@@ -39,6 +45,12 @@ Miklos Tirpak
        accepts three parameters: group name, variable name, string value.
        The group name can optionally contain the group instance id, for
        example foo[5].
+     * cfg.set_delayed - Prepare the change of a configuration variable,
+       but does not commit the new value yet. This is a wrapper command
+       for cfg.set_delayed_int and cfg.set_delayed_string depending on the
+       type of the value provided. The function accepts three parameters:
+       group name, variable name, int/string value. The group name can
+       optionally contain the group instance id, for example foo[5].
      * cfg.commit - Commit the previously prepared configuration changes.
        The function does not have any parameters.
      * cfg.rollback - Drop the prepared configuration changes. The
