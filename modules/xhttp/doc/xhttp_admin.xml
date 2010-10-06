@@ -16,16 +16,16 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides a basic HTTP/1.0 server functionaly inside SIP
-		server. SIP and HTTP are very similar protocols, practically the
-		SIP parser can handle easy HTTP requests just by adding a fake
+		This module provides basic HTTP/1.0 server functionality inside SIP
+		Router. SIP and HTTP are very similar protocols, so, practically, the
+		SIP parser can easily handle HTTP requests just by adding a fake
 		Via header.
 	</para>
 	<para>
 		The xmlrpc module uses the same concept. xHTTP module offers a
 		generic HTTP handling way, by calling event_route[xhttp:request]
 		in your config. You can check the HTTP URI via config variable
-		$hu. Note that $ru will rise errors since URO is not valid for SIP.
+		$hu. Note that $ru will raise errors since URO is not valid for SIP.
 	</para>
 	</section>
 	<section>
@@ -63,7 +63,7 @@
 	<section>
 		<title><varname>url_skip</varname> (str)</title>
 		<para>
-			Regular expression to match the HTTP URL. If there is match,
+			Regular expression to match the HTTP URL. If there is a match,
 			then event route is not executed.
 		</para>
 		<para>
@@ -83,7 +83,7 @@ modparam("xhttp", "url_skip", "^/RPC2")
 	<section>
 		<title><varname>url_match</varname> (str)</title>
 		<para>
-			Regular expression to match the HTPP URL. If there is no match,
+			Regular expression to match the HTTP URL. If there is no match,
 			then event route is not executed. This check is done after
 			url_skip, so if both url_skip and url_match would match then
 			the event route is not executed (url_skip has higher priority).
