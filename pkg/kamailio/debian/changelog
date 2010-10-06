@@ -2,7 +2,7 @@ kamailio (3.1.0) unstable; urgency=low
 
   * update to 3.1.0 from upstream
 
- -- Daniel-Constantin Mierla <miconda@gmail.com>  Thu, 27 May 2010 10:27:36 +0100
+ -- Jon Bonilla <manwe@aholab.ehu.es>  Wed, 6 Oct 2010 17:24:00 +0100
 
 kamailio (3.0.2.99) unstable; urgency=low
 
