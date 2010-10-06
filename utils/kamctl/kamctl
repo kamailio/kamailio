@@ -1116,25 +1116,35 @@ trusted() {
 lcr() {
 	case $1 in
 		show_gws)
+			merr "command disabled"
+			exit;
 			require_dbengine
 			mecho "lcr gateways"
 			QUERY="select * FROM $GW_TABLE ORDER BY $LCR_ID_COLUMN, $LCR_GW_GRPID_COLUMN; "
 			$DBROCMD "$QUERY"
 			;;
 		show_routes)
+			merr "command disabled"
+			exit;
 			require_dbengine
 			mecho "lcr routes"
 			QUERY="select * FROM $LCR_TABLE ORDER BY $LCR_ID_COLUMN, $LCR_PREFIX_COLUMN; "
 			$DBROCMD "$QUERY"
 			;;
 		reload)
-			$RPCCMD lcr.reload
+			merr "command disabled"
+			exit;
+			$CTLCMD lcr.reload
 			;;
 		dump_gws)
-			$RPCCMD lcr.dump_gws
+			merr "command disabled"
+			exit;
+			$CTLCMD lcr.dump_gws
 			;;
 		dump_routes)
-			$RPCCMD lcr.dump_lcrs
+			merr "command disabled"
+			exit;
+			$CTLCMD lcr.dump_lcrs
 			;;
 		eval_weights)
 			shift
