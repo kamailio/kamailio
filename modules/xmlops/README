@@ -25,7 +25,7 @@ Daniel-Constantin Mierla
 
 1.1. Overview
 
-   This is a module implementing funtions and pseudo-variables for XML
+   This is a module implementing functions and pseudo-variables for XML
    operations.
 
 1.2. Dependencies
@@ -39,7 +39,8 @@ Daniel-Constantin Mierla
 
    The following libraries or applications must be installed before
    running kamailio with this module loaded:
-     * libxml - for compilaiton is needed the devel vesion as well.
+     * libxml - for compilation from source, the development headers from
+       this library are needed as well.
 
 1.3. Parameters
 
@@ -69,7 +70,7 @@ modparam("xmlops", "xml_ns", "rpid=urn:ietf:params:xml:ns:pidf:rpid")
 1.4.1.  $xml(name=>spec)
 
    Pseudo-variable for XML document operations using xpath syntax. For
-   more see the Peudo-Variables Cookbook.
+   more see the Pseudo-Variables Cookbook.
 
    Example 3. xml usage
 ...
