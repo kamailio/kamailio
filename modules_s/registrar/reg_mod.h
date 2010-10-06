@@ -57,6 +57,7 @@ extern usrloc_api_t ul;  /* Structure containing pointers to usrloc functions */
 
 extern sl_api_t slb;
 
+extern str reply_code_attr, reply_reason_attr, contact_attr;
 extern avp_ident_t avpid_code, avpid_reason, avpid_contact;
 
 #endif /* REG_MOD_H */

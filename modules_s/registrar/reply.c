@@ -349,40 +349,46 @@ int setup_attrs(struct sip_msg* msg)
 	str reason, c;
 	avp_value_t val;
 
-	reason.s = NULL;
-	reason.len = 0;
 	code = codes[rerrno];
-	switch(code) {
-	case 200: reason.s = MSG_200; reason.len = sizeof(MSG_200) - 1; break;
-	case 400: reason.s = MSG_400; reason.len = sizeof(MSG_400) - 1; break;
-	case 500: reason.s = MSG_500; reason.len = sizeof(MSG_500) - 1; break;
-	case 503: reason.s = MSG_503; reason.len = sizeof(MSG_503) - 1; break;
+
+	if (reply_code_attr.len) {
+		val.n = code;
+		if (add_avp(avpid_code.flags, avpid_code.name, val) < 0) {
+			ERR("Error while creating reply code attribute\n");
+			return -1;
+		}
 	}
 
-	val.n = code;
-	if (add_avp(avpid_code.flags, avpid_code.name, val) < 0) {
-		ERR("Error while creating reply code attribute\n");
-		return -1;
+	if (reply_reason_attr.len) {
+		reason.s = NULL;
+		reason.len = 0;
+		switch(code) {
+		case 200: reason.s = MSG_200; reason.len = sizeof(MSG_200) - 1; break;
+		case 400: reason.s = MSG_400; reason.len = sizeof(MSG_400) - 1; break;
+		case 500: reason.s = MSG_500; reason.len = sizeof(MSG_500) - 1; break;
+		case 503: reason.s = MSG_503; reason.len = sizeof(MSG_503) - 1; break;
+		}
+		val.s = reason;
+		if (add_avp(avpid_reason.flags | AVP_VAL_STR, avpid_reason.name, val)
+				< 0) {
+			ERR("Error while creating reply reason attribute\n");
+			return -1;
+		}
 	}
 
-	val.s = reason;
-	if (add_avp(avpid_reason.flags | AVP_VAL_STR, avpid_reason.name, val) < 0) {
-		ERR("Error while creating reply reason attribute\n");
-		return -1;
-	}	
-
-	if (contact.data_len > 0) {
+	if (contact_attr.len && contact.data_len > 0) {
 		c.s = contact.buf;
 		c.len = contact.data_len;
 		val.s = c;
 
-		if (add_avp(avpid_contact.flags | AVP_VAL_STR, avpid_contact.name, val) < 0) {
+		if (add_avp(avpid_contact.flags | AVP_VAL_STR, avpid_contact.name, val)
+				< 0) {
 			ERR("Error while creating contact attribute\n");
 			return -1;
-		}	
+		}
 
 		contact.data_len = 0;
-	}	
+	}
 
 	return 0;
 }
