@@ -18,9 +18,9 @@
 	<title>Overview</title>
 	<para>
 		This module provides an interactive config file debugger. It can print
-		the trace of config execution for a SIP message to log and set
-		breakpoints on every config action, allowing to execute step by step the
-		config.
+		a trace of config execution for a SIP message to log and set
+		breakpoints on every config action, allowing step-by-step execution of 
+		the config.
 	</para>
 	<para>
 		Debugging can be done from local or remote host via RPC interface (e.g.,
@@ -35,9 +35,9 @@
 	</para>
 	<para>
 		When the SIP router process is stopped at a breakpoint, you can
-		investigate the values of any pseudo-varaibles. Note that some of
-		pseudo-variables may produce memory leak, that is planned to fix in the
-		future (here falls pseudo-variables with dynamic name such as htable,
+		investigate the values of any pseudo-variables. Note that some of
+		pseudo-variables may produce memory leaks; a fix is planned in the
+		future (here fall pseudo-variables with dynamic name such as htable,
 		sqlops). References to SIP message, avps, headers, script and shared
 		variables are safe.
 	</para>
@@ -120,7 +120,7 @@ modparam("debugger", "breakpoint", 1)
 	<section>
 	    <title><varname>log_level</varname> (int)</title>
 	    <para>
-			What log level to be used to print module specific messages.
+			What log level is to be used to print module-specific messages.
 	    </para>
 	    <para>
 		<emphasis>
@@ -140,7 +140,7 @@ modparam("debugger", "log_level", 1)
 	<section>
 	    <title><varname>log_facility</varname> (str)</title>
 	    <para>
-			What log facility to be used to print module specific messages.
+			What log facility is to be used to print module-specific messages.
 	    </para>
 	    <para>
 		<emphasis>
@@ -160,7 +160,7 @@ modparam("debugger", "log_facility", "LOG_DAEMON")
 	<section>
 	    <title><varname>log_prefix</varname> (str)</title>
 	    <para>
-			String to print before any module specific messages.
+			String to print before any module-specific messages.
 	    </para>
 	    <para>
 		<emphasis>
@@ -181,11 +181,11 @@ modparam("debugger", "log_prefix", "from-debugger-with-love:")
 	    <title><varname>step_usleep</varname> (int)</title>
 	    <para>
 			Microseconds to sleep before checking for new commands when
-			waiting at breakpoint
+			waiting at breakpoint.
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>100000</quote> (that is 0.1sec).
+		    Default value is <quote>100000</quote> (that is 0.1 sec).
 		</emphasis>
 	    </para>
 	    <example>
@@ -203,7 +203,7 @@ modparam("debugger", "step_usleep", 500000)
 	    <para>
 			How many sleeps of 'step_usleep' the RPC process performs when
 			waiting for a reply from worker process before responding to RPC.
-			This avoids blocking RPC process for ever in case the worker
+			This avoids blocking RPC process forever in case the worker
 			process 'forgets' to write back a reply.
 	    </para>
 	    <para>
@@ -230,12 +230,13 @@ modparam("debugger", "step_loops", 100)
 		<function moreinfo="none">dbg_breakpoint(mode)</function>
 	    </title>
 	    <para>
-			Anchor a breakpoint at that line in config. Mode specifies
-			whether the breakpoint is enabled (1) or disabled (0) at startup.
+			Anchor a breakpoint at the current line of the config (the one
+			on which this function is called). The 'mode' specifies whether 
+			the breakpoint is enabled (1) or disabled (0) at startup.
 	    </para>
 		<para>
 			Note that this version does not export this anchors to RPC for
-			interactive debugging (temporary disabled).
+			interactive debugging (temporarily disabled).
 	    </para>
 		<example>
 		<title><function>dbg_breakpoint</function> usage</title>
@@ -266,11 +267,11 @@ if($si=="10.0.0.10")
 		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
-			<listitem><para>_pid_ : pid for which to list the details. If it
-			missing, then will print for all processes.</para></listitem>	  
+			<listitem><para>_pid_ : pid for which to list the details.  If 'pid' is
+			omitted then will print for all processes.</para></listitem>	  
 		</itemizedlist>
 		<para>
-		Examples for using with sercmd:
+		Examples of use with sercmd:
 		</para>
         <programlisting  format="linespecific">
 		dbg.ls
@@ -291,10 +292,10 @@ if($si=="10.0.0.10")
 		<para>Parameters:</para>
 		<itemizedlist>
 			<listitem><para>_cmd_ : inner command can be 'on' or 'off' to
-				enable or disable the tracing for one or all processe.</para>
+				enable or disable tracing for one or all processes.</para>
 		</listitem>
-			<listitem><para>_pid_ : pid for which to list the details. If it
-					missing, then will print for all processes.</para>
+			<listitem><para>_pid_ : pid for which to list the details. If 'pid' is
+				omitted, then it will print details for all processes.</para>
 		</listitem>
 		</itemizedlist>
 		<para>
@@ -323,7 +324,8 @@ if($si=="10.0.0.10")
 			the list of available values.</para>
 		</listitem>
 		<listitem><para>_pid_ : pid for which to apply the inner command.
-				If it is missing, then will be applied for all processes.</para>
+				If 'pid' is omitted, then the inner command will be applied 
+				to all processes.</para>
 		</listitem>
 		<listitem><para>_params_ : extra params specific for each inner
 				command.</para>
@@ -393,7 +395,7 @@ if($si=="10.0.0.10")
 		</para>
 		<para>
 		Another typical usage is to do interactive debugging and run
-		step-by-step each line in routing blocks of config file for a
+		each line of the route blocks of the config file step-by-step for a
 		particular SIP message.
 		</para>
 		<para>
@@ -460,7 +462,7 @@ sercmd> dbg.bp move 6402
 ...
 </programlisting>
 		<para>
-		Running config trace looks like:
+		Running the config trace looks like:
 		</para>
 <programlisting  format="linespecific">
 ...
@@ -501,11 +503,11 @@ sercmd> dbg.bp move 6402
 ...
 </programlisting>
 		<para>
-			Above example is for registration with default config for
+			The above example is for registration with default config for
 			version 3.1.0, without authentication. Listed fields are:
 			'c' - config file; 'l' - line; 'a' - internal action id;
 			'n' - name of executed action. 'ERROR' prefix is printed
-			because these messages were sent to L_ERR log level.
+			because these messages were sent to the L_ERR log level.
 		</para>
     </section>
 
