@@ -2,6 +2,145 @@
 
 ===================== Changes Since Version 3.0.0 ===========================
 
+commit 738646b73246062196939b0105230d744ff326e7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 6 15:28:18 2010 +0200
+
+    kamctl: exit 1 in case of lcr commands
+    
+    - reported by Inaki Baz Castillo
+
+commit 863a97fa4a6dae71e2ef5e461070a0b57cd0fa72
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Oct 6 14:18:00 2010 +0200
+
+    version set to 3.1.0
+
+commit b3e6b61740995a93f6e1346916dd3736724f36b3
+Merge: 252fcd9 7fdb47f
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Oct 6 14:17:02 2010 +0200
+
+    Merge remote branch 'origin/master' into 3.1
+    
+    * origin/master:
+      xmlops: regenerate README after doc change
+      Added note on latent operations to xhttp docs in order to help educate users preemptively about a common pitfall that many implementors of web service interfaces inside Kamailio/sip-router are likely to make.
+      One more fix to xhttp documentation.
+      Some typo fixes and minor tweaks to xmlops docs.
+      Fixed some typos in xhttp module docs.
+      Some minor tweaks to documentation for textopsx.
+      Added some clarifications and additional information to the 'geoip' docs.
+      Added regenerated README for 'debugger' as well, because that seems to be the convention for doc changes.  Is it?
+      Some clarification and cleanup to 'debugger' module docs.
+      Cleaned up some grammatical errors and added some clarification to blst module documentation.
+      Fixed typo in 'xhttp' module documentation.
+      Fixed a typo in 'matrix' module documentation.
+
+commit 252fcd963637e92727e58f6c1b84bf06200eee12
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 6 12:27:28 2010 +0200
+
+    kamctl: lcr commands disabled
+    
+    - only left enabled is the one related to weights
+    - the commands were not using latest db schema
+    - Juha suggested handling lcr via kamctl is too complex to scale, so
+      commands are disabled until new code is contributed
+
+commit 7fdb47ff7f10e5dcd4855b83c58d4d9a60f5fb81
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Wed Oct 6 11:30:44 2010 +0200
+
+    xmlops: regenerate README after doc change
+
+commit 6bd9d264202716617819efc3a551f04ac21f2040
+Author: Alex Balashov <abalashov@evaristesys.com>
+Date:   Wed Oct 6 05:19:11 2010 -0400
+
+    Added note on latent operations to xhttp docs in order to help
+    educate users preemptively about a common pitfall that many
+    implementors of web service interfaces inside Kamailio/sip-router
+    are likely to make.
+
+commit fc07c55d2c7f549feeb0eb7cb4f98a1180614dda
+Author: Alex Balashov <abalashov@evaristesys.com>
+Date:   Wed Oct 6 03:15:26 2010 -0400
+
+    One more fix to xhttp documentation.
+
+commit 45b3f656c69ad43e6f9cf072ce3805dfcfdd49b4
+Author: Alex Balashov <abalashov@evaristesys.com>
+Date:   Wed Oct 6 03:10:47 2010 -0400
+
+    Some typo fixes and minor tweaks to xmlops docs.
+
+commit b520501258d59192746b1771e6827da543963189
+Author: Alex Balashov <abalashov@evaristesys.com>
+Date:   Wed Oct 6 03:08:05 2010 -0400
+
+    Fixed some typos in xhttp module docs.
+
+commit b495e34e507517cfac8ed2c921642c38b0f0262a
+Author: Alex Balashov <abalashov@evaristesys.com>
+Date:   Wed Oct 6 03:04:09 2010 -0400
+
+    Some minor tweaks to documentation for textopsx.
+
+commit 8c5375ff34b111807873cf6007886219d99d34ce
+Author: Alex Balashov <abalashov@evaristesys.com>
+Date:   Wed Oct 6 02:51:23 2010 -0400
+
+    Added some clarifications and additional information to the 'geoip' docs.
+
+commit cdd414350ab425c916ddc934fd444dc6700b08df
+Author: Alex Balashov <abalashov@evaristesys.com>
+Date:   Wed Oct 6 02:33:44 2010 -0400
+
+    Added regenerated README for 'debugger' as well, because that seems to
+    be the convention for doc changes.  Is it?
+
+commit 1e471eb0bfa60a40accddfeb01c7bb34259c1dd1
+Author: Alex Balashov <abalashov@evaristesys.com>
+Date:   Wed Oct 6 02:32:23 2010 -0400
+
+    Some clarification and cleanup to 'debugger' module docs.
+
+commit 242054fc4c3091e8d1495e246fd86a373928f1e7
+Author: Alex Balashov <abalashov@evaristesys.com>
+Date:   Wed Oct 6 02:22:08 2010 -0400
+
+    Cleaned up some grammatical errors and added some clarification to
+    blst module documentation.
+
+commit fd2c02bb06d35dca81be2e5c40e4190c91c58603
+Author: Alex Balashov <abalashov@evaristesys.com>
+Date:   Tue Oct 5 20:28:28 2010 -0400
+
+    Fixed typo in 'xhttp' module documentation.
+
+commit bf24a689d909656e8a580022bb62fd79b6849cac
+Author: Alex Balashov <abalashov@evaristesys.com>
+Date:   Tue Oct 5 20:27:10 2010 -0400
+
+    Fixed a typo in 'matrix' module documentation.
+
+commit 6e65634bb10568767700d999437ee5194765d6e8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 5 23:38:20 2010 +0200
+
+    app_lua: fix finding lua libs
+    
+    - if pkg-config fails to find lua libs, use default values
+
+commit 0c5d4312e2859299caa93ac7ab4c9034d27dcd18
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 5 21:51:15 2010 +0200
+
+    ChangeLog: refurbished for version 3.1.0
+    
+    - built from git log since Jan 11, 2010
+    - no longer includes changes for old releases since it is too big
 
 commit ad9561071ad616b3b280d6ee0330e627286e662f
 Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
