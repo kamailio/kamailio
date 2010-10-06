@@ -174,42 +174,50 @@ static int parse_attr_params(void)
 {
 	str tmp;
 
-	tmp = reply_code_attr;
-	trim(&tmp);
-	if (!tmp.len || tmp.s[0] != '$') {
-		ERR("Invalid attribute name '%.*s'\n", tmp.len, tmp.s);
-		return -1;
-	}
-	tmp.s++; tmp.len--;
-	if (parse_avp_ident(&tmp, &avpid_code) < 0) {
-		ERR("Error while parsing attribute name '%.*s'\n", tmp.len, tmp.s);
-		return -1;
-	}
-
-	tmp = reply_reason_attr;
-	trim(&tmp);
-	if (!tmp.len || tmp.s[0] != '$') {
-		ERR("Invalid attribute name '%.*s'\n", tmp.len, tmp.s);
-		return -1;
-	}
-	tmp.s++; tmp.len--;
-	if (parse_avp_ident(&tmp, &avpid_reason) < 0) {
-		ERR("Error while parsing attribute name '%.*s'\n", tmp.len, tmp.s);
-		return -1;
+	if (reply_code_attr.len) {
+		tmp = reply_code_attr;
+		trim(&tmp);
+		if (!tmp.len || tmp.s[0] != '$') {
+			ERR("Invalid attribute name '%.*s'\n", tmp.len, tmp.s);
+			return -1;
+		}
+		tmp.s++; tmp.len--;
+		if (parse_avp_ident(&tmp, &avpid_code) < 0) {
+			ERR("Error while parsing attribute name '%.*s'\n",
+					tmp.len, tmp.s);
+			return -1;
+		}
 	}
 
-	tmp = contact_attr;
-	trim(&tmp);
-	if (!tmp.len || tmp.s[0] != '$') {
-		ERR("Invalid attribute name '%.*s'\n", tmp.len, tmp.s);
-		return -1;
-	}
-	tmp.s++; tmp.len--;
-	if (parse_avp_ident(&tmp, &avpid_contact) < 0) {
-		ERR("Error while parsing attribute name '%.*s'\n", tmp.len, tmp.s);
-		return -1;
+	if (reply_reason_attr.len) {
+		tmp = reply_reason_attr;
+		trim(&tmp);
+		if (!tmp.len || tmp.s[0] != '$') {
+			ERR("Invalid attribute name '%.*s'\n", tmp.len, tmp.s);
+			return -1;
+		}
+		tmp.s++; tmp.len--;
+		if (parse_avp_ident(&tmp, &avpid_reason) < 0) {
+			ERR("Error while parsing attribute name '%.*s'\n",
+					tmp.len, tmp.s);
+			return -1;
+		}
 	}
 
+	if (contact_attr.len) {
+		tmp = contact_attr;
+		trim(&tmp);
+		if (!tmp.len || tmp.s[0] != '$') {
+			ERR("Invalid attribute name '%.*s'\n", tmp.len, tmp.s);
+			return -1;
+		}
+		tmp.s++; tmp.len--;
+		if (parse_avp_ident(&tmp, &avpid_contact) < 0) {
+			ERR("Error while parsing attribute name '%.*s'\n",
+					tmp.len, tmp.s);
+			return -1;
+		}
+	}
 	return 0;
 }
 
