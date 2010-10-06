@@ -23,7 +23,7 @@
     <section id="xmlops.overview">
 	<title>Overview</title>
 	<para>
-		This is a module implementing funtions and pseudo-variables for
+		This is a module implementing functions and pseudo-variables for
 		XML operations.
 	</para>
     </section>
@@ -51,8 +51,8 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>libxml</emphasis> - for compilaiton is needed the devel
-				vesion as well.
+				<emphasis>libxml</emphasis> - for compilation from source, the 
+				development headers from this library are needed as well.
 			</para>
 			</listitem>
 			</itemizedlist>

@@ -11,7 +11,7 @@
 		</title>
 		<para>
 		Pseudo-variable for XML document operations using xpath syntax. For
-		more see the Peudo-Variables Cookbook.
+		more see the Pseudo-Variables Cookbook.
 		</para>
 		<example>
 		<title><function>xml</function> usage</title>
