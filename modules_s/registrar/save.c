@@ -697,10 +697,12 @@ static int get_server_id(void)
 	int sid;
 	
 
-	name.s.s = server_id_attr.s + 1; /* Skip the 1st char which is $ */
-	name.s.len = server_id_attr.len - 1;
-	if (search_first_avp(AVP_TRACK_FROM | AVP_NAME_STR, name, &val, 0)) {
-		if (str2sint(&val.s, &sid) == 0) return sid;
+	if (server_id_attr.len && server_id_attr.s) {
+		name.s.s = server_id_attr.s + 1; /* Skip the 1st char which is $ */
+		name.s.len = server_id_attr.len - 1;
+		if (search_first_avp(AVP_TRACK_FROM | AVP_NAME_STR, name, &val, 0)) {
+			if (str2sint(&val.s, &sid) == 0) return sid;
+		}
 	}
 
 	/* No server_id attribute found or the attribute doesn't have
@@ -721,12 +723,16 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 	str* aor;
 	int_str name, val;
 
-	name.s.s = aor_attr.s + 1; /* Skip the 1st char which is $ */
-	name.s.len = aor_attr.len - 1;
-	if (search_first_avp(AVP_TRACK_TO | AVP_NAME_STR, name, &val, 0)) {
-	    aor = &val.s;
+	if (aor_attr.len && aor_attr.s) {
+		name.s.s = aor_attr.s + 1; /* Skip the 1st char which is $ */
+		name.s.len = aor_attr.len - 1;
+		if (search_first_avp(AVP_TRACK_TO | AVP_NAME_STR, name, &val, 0)) {
+			aor = &val.s;
+		} else {
+			aor = &get_to(_m)->uri;
+		}
 	} else {
-	    aor = &get_to(_m)->uri;
+		aor = &get_to(_m)->uri;
 	}
 
 	sid = get_server_id();
