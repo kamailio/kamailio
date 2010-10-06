@@ -17,13 +17,32 @@
     <section>
 	<title>Overview</title>
 	<para>
-		The module loads exports a new class of pseudo-variables -
-		$gip(pvc=&gt;key) - to access results upon a query against Max Mind
-		GeoIP database.
+		This module allows real-time queries against the Max Mind GeoIP 
+		database to be performed from the config script.  
+	</para>
+	<para>
+		The Max Mind GeoIP database is a map of IP network address assignments 
+		to geographical locales that can be useful -- though approximate --
+		in identifying the physical location with which an IP host address
+		is associated on a relatively granular level.
+	</para>
+	<para>
+		This database itself can be obtained on a free or commercial basis 
+		<ulink url="http://www.maxmind.com/app/ip-location">here</ulink>.  The 
+		library that interfaces with the Max Mind API, as well as scripts to
+		automate downloading of the on-disk version of the open-source 
+		database is also packaged by the Debian Linux distribution and 
+		its derivatives as <emphasis>libgeoip</emphasis>, and probably by
+		other distributions as well.
+	</para>
+	<para>
+		This module exports a new class of pseudo-variables -
+		$gip(pvc=&gt;key) - to enable access to the results of a query to the
+		database.
 	</para>
 	<para>
 		Many queries can be done and store results in different containers to
-		be able to use in parallel. Database is loaded at startup in chache.
+		be able to use in parallel. Database is loaded at startup in cache.
 	</para>
     </section>
     <section>
@@ -61,7 +80,7 @@
 	<section>
 	    <title><varname>path</varname> (string)</title>
 	    <para>
-		Path to GeoIP database file.
+		Path to the GeoIP database file.
 	    </para>
 	    <para>
 		<emphasis>
@@ -87,8 +106,8 @@ modparam("geoip", "path", "/usr/local/share/GeoLiteCity.dat")
 		<function moreinfo="none">geoip_match(ipaddr, pvc)</function>
 	    </title>
 	    <para>
-			Match ipaddr against GeoIP database and set the pvc container. The
-			function has to be called before accessing any $gip(pvc=&gt;key).
+			Match ipaddr against the GeoIP database and set the pvc container. The
+			function has to be called before accessing a key via: $gip(pvc=&gt;key).
 	    </para>
 		<example>
 		<title><function>geoip_match</function> usage</title>
@@ -107,8 +126,10 @@ if(geoip_match("$si", "src"))
 		<title>Exported pseudo-variables</title>
 		<itemizedlist>
 			<listitem><para>
-				<emphasis>$gip(pvc=&gt;key)</emphasis> - pvc is second
-				parameter of geoip_match() and key can be:
+				<emphasis>$gip(pvc=&gt;key)</emphasis> - <emphasis>pvc</emphasis> is an 
+				identifier for this query result;  it is designated by the second 
+				parameter of geoip_match(). The <emphasis>key</emphasis> can be one of
+				the following:
 				</para>
 			<itemizedlist>
 				<listitem><para>
