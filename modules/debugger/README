@@ -91,8 +91,8 @@ Chapter 1. Admin Guide
 1. Overview
 
    This module provides an interactive config file debugger. It can print
-   the trace of config execution for a SIP message to log and set
-   breakpoints on every config action, allowing to execute step by step
+   a trace of config execution for a SIP message to log and set
+   breakpoints on every config action, allowing step-by-step execution of
    the config.
 
    Debugging can be done from local or remote host via RPC interface
@@ -105,9 +105,9 @@ Chapter 1. Admin Guide
    Also the config running trace can be enabled/disabled at runtime.
 
    When the SIP router process is stopped at a breakpoint, you can
-   investigate the values of any pseudo-varaibles. Note that some of
-   pseudo-variables may produce memory leak, that is planned to fix in the
-   future (here falls pseudo-variables with dynamic name such as htable,
+   investigate the values of any pseudo-variables. Note that some of
+   pseudo-variables may produce memory leaks; a fix is planned in the
+   future (here fall pseudo-variables with dynamic name such as htable,
    sqlops). References to SIP message, avps, headers, script and shared
    variables are safe.
 
@@ -164,7 +164,7 @@ modparam("debugger", "breakpoint", 1)
 
 3.3. log_level (int)
 
-   What log level to be used to print module specific messages.
+   What log level is to be used to print module-specific messages.
 
    Default value is “-1” (L_ERR).
 
@@ -175,7 +175,7 @@ modparam("debugger", "log_level", 1)
 
 3.4. log_facility (str)
 
-   What log facility to be used to print module specific messages.
+   What log facility is to be used to print module-specific messages.
 
    Default value is “NULL” (default from core).
 
@@ -186,7 +186,7 @@ modparam("debugger", "log_facility", "LOG_DAEMON")
 
 3.5. log_prefix (str)
 
-   String to print before any module specific messages.
+   String to print before any module-specific messages.
 
    Default value is “*** cfgtrace:”.
 
@@ -198,9 +198,9 @@ modparam("debugger", "log_prefix", "from-debugger-with-love:")
 3.6. step_usleep (int)
 
    Microseconds to sleep before checking for new commands when waiting at
-   breakpoint
+   breakpoint.
 
-   Default value is “100000” (that is 0.1sec).
+   Default value is “100000” (that is 0.1 sec).
 
    Example 1.6. Set step_usleep parameter
 ...
@@ -211,7 +211,7 @@ modparam("debugger", "step_usleep", 500000)
 
    How many sleeps of 'step_usleep' the RPC process performs when waiting
    for a reply from worker process before responding to RPC. This avoids
-   blocking RPC process for ever in case the worker process 'forgets' to
+   blocking RPC process forever in case the worker process 'forgets' to
    write back a reply.
 
    Default value is “200”.
@@ -227,11 +227,12 @@ modparam("debugger", "step_loops", 100)
 
 4.1.  dbg_breakpoint(mode)
 
-   Anchor a breakpoint at that line in config. Mode specifies whether the
-   breakpoint is enabled (1) or disabled (0) at startup.
+   Anchor a breakpoint at the current line of the config (the one on which
+   this function is called). The 'mode' specifies whether the breakpoint
+   is enabled (1) or disabled (0) at startup.
 
    Note that this version does not export this anchors to RPC for
-   interactive debugging (temporary disabled).
+   interactive debugging (temporarily disabled).
 
    Example 1.8. dbg_breakpoint usage
 ...
@@ -252,10 +253,10 @@ if($si=="10.0.0.10")
    Name: dbg.list
 
    Parameters:
-     * _pid_ : pid for which to list the details. If it missing, then will
-       print for all processes.
+     * _pid_ : pid for which to list the details. If 'pid' is omitted then
+       will print for all processes.
 
-   Examples for using with sercmd:
+   Examples of use with sercmd:
                 dbg.ls
                 dbg.ls 1234
 
@@ -266,10 +267,10 @@ if($si=="10.0.0.10")
    Name: dbg.trace
 
    Parameters:
-     * _cmd_ : inner command can be 'on' or 'off' to enable or disable the
-       tracing for one or all processe.
-     * _pid_ : pid for which to list the details. If it missing, then will
-       print for all processes.
+     * _cmd_ : inner command can be 'on' or 'off' to enable or disable
+       tracing for one or all processes.
+     * _pid_ : pid for which to list the details. If 'pid' is omitted,
+       then it will print details for all processes.
 
    Examples for using with sercmd:
                 dbg.trace on
@@ -285,8 +286,8 @@ if($si=="10.0.0.10")
    Parameters:
      * _cmd_ : inner command, see next section for the list of available
        values.
-     * _pid_ : pid for which to apply the inner command. If it is missing,
-       then will be applied for all processes.
+     * _pid_ : pid for which to apply the inner command. If 'pid' is
+       omitted, then the inner command will be applied to all processes.
      * _params_ : extra params specific for each inner command.
 
    Inner commands:
@@ -321,9 +322,9 @@ if($si=="10.0.0.10")
    message. Just enable cfg running trace, send the message and watch the
    logs.
 
-   Another typical usage is to do interactive debugging and run
-   step-by-step each line in routing blocks of config file for a
-   particular SIP message.
+   Another typical usage is to do interactive debugging and run each line
+   of the route blocks of the config file step-by-step for a particular
+   SIP message.
 
    You need to connect using sercmd (or other RPC client) to SIP Router.
    Then you can enable cfg breakpoints and send the SIP message. One
@@ -383,7 +384,7 @@ sercmd> dbg.bp move 6402
 200 ok
 ...
 
-   Running config trace looks like:
+   Running the config trace looks like:
 ...
  9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=368 a=6 n=route
  9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=461 a=17 n=if
@@ -432,8 +433,8 @@ set
  9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=516 a=3 n=exit
 ...
 
-   Above example is for registration with default config for version
+   The above example is for registration with default config for version
    3.1.0, without authentication. Listed fields are: 'c' - config file;
    'l' - line; 'a' - internal action id; 'n' - name of executed action.
-   'ERROR' prefix is printed because these messages were sent to L_ERR log
-   level.
+   'ERROR' prefix is printed because these messages were sent to the L_ERR
+   log level.
