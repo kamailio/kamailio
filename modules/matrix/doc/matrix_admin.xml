@@ -175,7 +175,7 @@ modparam("matrix", "matrix_res_col", "res")
 			<title><function>matrix</function> usage</title>
 			<programlisting format="linespecific">
 ...
-if (!matrix("$avp(first)", "$(second)", "$avp(route_tree)"))
+if (!matrix("$avp(first)", "$avp(second)", "$avp(route_tree)"))
   $avp(route_tree) = $avp(frst); # default routing as defined for source number
 }
 cr_route("$avp(route_tree)", "$rd", "$rU", "$rU", "call_id");
