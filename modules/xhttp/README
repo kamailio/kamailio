@@ -10,6 +10,12 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
+Edited by
+
+Alex Balashov
+
+   <abalashov@evaristesys.com>
+
    Copyright © 2010 asipto.com
      __________________________________________________________________
 
@@ -18,19 +24,20 @@ Daniel-Constantin Mierla
    1. Admin Guide
 
         1. Overview
-        2. Dependencies
+        2. Note on Latency
+        3. Dependencies
 
-              2.1. Kamailio Modules
-              2.2. External Libraries or Applications
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
 
-        3. Exported Parameters
+        4. Exported Parameters
 
-              3.1. url_skip (str)
-              3.2. url_match (str)
+              4.1. url_skip (str)
+              4.2. url_match (str)
 
-        4. Exported Functions
+        5. Exported Functions
 
-              4.1. xhttp_reply(code, reason, ctype, body)
+              5.1. xhttp_reply(code, reason, ctype, body)
 
    List of Examples
 
@@ -43,19 +50,20 @@ Chapter 1. Admin Guide
    Table of Contents
 
    1. Overview
-   2. Dependencies
+   2. Note on Latency
+   3. Dependencies
 
-        2.1. Kamailio Modules
-        2.2. External Libraries or Applications
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
 
-   3. Exported Parameters
+   4. Exported Parameters
 
-        3.1. url_skip (str)
-        3.2. url_match (str)
+        4.1. url_skip (str)
+        4.2. url_match (str)
 
-   4. Exported Functions
+   5. Exported Functions
 
-        4.1. xhttp_reply(code, reason, ctype, body)
+        5.1. xhttp_reply(code, reason, ctype, body)
 
 1. Overview
 
@@ -70,28 +78,56 @@ Chapter 1. Admin Guide
    use of $ru will raise errors since the structure of an HTTP URL is not
    compatible with that of a SIP URI.
 
-2. Dependencies
+2. Note on Latency
 
-   2.1. Kamailio Modules
-   2.2. External Libraries or Applications
+   Because HTTP requests in xhttp are handled by the same, finite number
+   of SIP worker processes that operate on SIP messages, the same general
+   principles regarding script execution speed and throughput should be
+   observed by the writer in event_route[xhttp:request] as in any other
+   part of the route script.
 
-2.1. Kamailio Modules
+   For example, if you initiate a database query in the HTTP request route
+   that takes a long time to return rows, the SIP worker process in which
+   the request is handled will be blocked for that time and unable to
+   process other SIP messages. In most typical installations, there are
+   only a few of these worker processes running.
+
+   Therefore, it is highly inadvisable to execute particularly slow things
+   in the event_route[xhttp:request], because the request is not handled
+   in an asynchronous manner or otherwise peripherally to general SIP
+   processing. SIP worker threads will block, pending the outcome of the
+   event route just like any other config script route.
+
+   This is no more or less true for xhttp than it is for any other block
+   of script in any other scenario, and does not warrant any extraordinary
+   concern. It nevertheless bears mention here because some processes with
+   embedded HTTP servers have the request processing take place "outside"
+   of the main synchronous event sequence, whether by creating separate
+   threads or by some other asynchronous handling. That is not the case
+   with xhttp.
+
+3. Dependencies
+
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * sl - stateless reply.
 
-2.2. External Libraries or Applications
+3.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None
 
-3. Exported Parameters
+4. Exported Parameters
 
-   3.1. url_skip (str)
-   3.2. url_match (str)
+   4.1. url_skip (str)
+   4.2. url_match (str)
 
-3.1. url_skip (str)
+4.1. url_skip (str)
 
    Regular expression to match the HTTP URL. If there is a match, then
    event route is not executed.
@@ -103,7 +139,7 @@ Chapter 1. Admin Guide
 modparam("xhttp", "url_skip", "^/RPC2")
 ...
 
-3.2. url_match (str)
+4.2. url_match (str)
 
    Regular expression to match the HTTP URL. If there is no match, then
    event route is not executed. This check is done after url_skip, so if
@@ -117,11 +153,11 @@ modparam("xhttp", "url_skip", "^/RPC2")
 modparam("xhttp", "url_match", "^/sip/")
 ...
 
-4. Exported Functions
+5. Exported Functions
 
-   4.1. xhttp_reply(code, reason, ctype, body)
+   5.1. xhttp_reply(code, reason, ctype, body)
 
-4.1.  xhttp_reply(code, reason, ctype, body)
+5.1.  xhttp_reply(code, reason, ctype, body)
 
    Send back a reply with content-type and body.
 
