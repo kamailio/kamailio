@@ -63,7 +63,7 @@
 	<section>
 		<title><varname>url_skip</varname> (str)</title>
 		<para>
-			Regular expression to match the HTPP URL. If there is match,
+			Regular expression to match the HTTP URL. If there is match,
 			then event route is not executed.
 		</para>
 		<para>
