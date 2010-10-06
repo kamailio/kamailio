@@ -4,7 +4,7 @@ Andrei Pelinescu-Onciul
 
    iptelorg GmbH
 
-   Copyright © 2007 iptelorg GmbH
+   Copyright Â© 2007 iptelorg GmbH
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -50,8 +50,8 @@ else
    Adds the source of the current message to the blacklist for the time
    interval specified in the Retry-After header. If the Retry-After header
    is missing, it will fail (returns false). If the Retry-After value is
-   less then min, then min seconds will be used instead. If the
-   Retry-After value is greater then max, then max seconds will be used
+   less than min, then min seconds will be used instead. If the
+   Retry-After value is greater than max, then max seconds will be used
    instead.
 
    Example 2. blst_add_retry_after usage
@@ -89,18 +89,19 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 1.2.5.  blst_set_ignore() blst_set_ignore(flags) blst_rpl_set_ignore()
 blst_rpl_set_ignore(flags)
 
-   Set errors that will not be taken into account when deciding whether or
-   not to blacklist a destination for the current message or a local reply
-   to the current message.
+   Set errors that will not be taken into account when deciding whether to
+   blacklist a destination for the current message or a local reply to the
+   current message.
 
    blst_set_ignore(..) works for forwarding the current message and
    blst_rpl_set_ignore(...) works for local replies to the current
    message.
 
-   The variants with no parameters will ignore everything (equivalent with
-   passing 0xff).
+   The variants of these functions with no parameters will ignore
+   everything (equivalent to passing 0xff).
 
-   The following flags are defined:
+   The flags are stored internally as a bitmask, and are applied by
+   bitwise ANDing them together. The following flags are available:
      * 0x02 - generic send error (send denied/ failed).
      * 0x04 - connect failed (TCP, TLS or SCTP).
      * 0x08 - ICMP error (not currently used).

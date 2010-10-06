@@ -48,10 +48,10 @@ else
 		header.
 		If the <emphasis>Retry-After</emphasis> header is missing, it will 
 		fail (returns false).
-		If the <emphasis>Retry-After</emphasis> value is less then 
+		If the <emphasis>Retry-After</emphasis> value is less than 
 		<varname>min</varname>, then <varname>min</varname> seconds will be 
 		used instead.
-		If the <emphasis>Retry-After</emphasis> value is greater then 
+		If the <emphasis>Retry-After</emphasis> value is greater than
 		<varname>max</varname>, then <varname>max</varname> seconds will be 
 		used instead.
 	</para>
@@ -117,7 +117,7 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 	</title>
 	<para>
 		Set errors that will not be taken into account when deciding
-		whether or not to blacklist a destination for the current message
+		whether to blacklist a destination for the current message
 		or a local reply to the current message.
 	</para>
 	<para>
@@ -126,11 +126,12 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 		works for local replies to the current message.
 	</para>
 	<para>
-		The variants with no parameters will ignore everything (equivalent
-		with passing 0xff).
+		The variants of these functions with no parameters will ignore 
+		everything (equivalent to passing 0xff).
 	</para>
 	<para>
-		The following flags are defined:
+		The flags are stored internally as a bitmask, and are applied by
+		bitwise ANDing them together.  The following flags are available:
 		<itemizedlist>
 			<listitem>
 				<emphasis>0x02</emphasis> - generic send error (send denied/
