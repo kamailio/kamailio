@@ -28,11 +28,10 @@ Daniel-Constantin Mierla
 
 1.2.1.  msg_apply_changes()
 
-   Use this function to apply changes done on SIP request content. Be
-   careful when using this function -- due to special handling of changes
-   done to SIM message buffer so far, using this function might change the
-   behaviour of your config as it was so far -- do test properly your
-   config!
+   Use this function to apply changes performed on SIP request content. Be
+   careful when using this function; due to special handling of changes
+   done to SIP message buffer so far, using this function might change the
+   behaviour of your config. Do test your config properly!
 
    This function can be used from REQUEST_ROUTE.
 
@@ -51,8 +50,8 @@ if(msg_apply_changes())
 
 1.2.2.  change_reply_status(code, reason)
 
-   Change the status code and reason phrase of a SIP reply in
-   onreply_route.
+   Intercept a SIP reply (in an onreply_route) and change its status code
+   and reason phrase prior to propogating it.
 
    Meaning of the parameters is as follows:
      * code - Status code.
