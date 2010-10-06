@@ -270,4 +270,278 @@ modparam("registrar", "retry_after", 30)
 	</example>
     </section>
 
+	<section id="save_nat_flag">
+		<title><varname>save_nat_flag</varname> (flagname or integer)</title>
+		<para>
+			The contact will be marked as behind the NAT if this flag is set
+			before calling one of registrar save*() functions.
+		</para>
+		<para>
+			See also <varname>load_nat_flag</varname>.
+		</para>
+		<para>
+			The default value is 4 (flag number 4).
+		</para>
+		<example>
+			<title>Set <varname>save_nat_flag</varname> parameter</title>
+			<programlisting>
+flags FLAG_NAT;
+...
+modparam("registrar", "save_nat_flag", "FLAG_NAT")
+...
+route{
+...
+	if (nat_uac_test("19"))
+		setflag(FLAG_NAT);
+...
+}
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="load_nat_flag">
+		<title><varname>load_nat_flag</varname> (flagname or integer)</title>
+		<para>
+			This flag will be set by the registrar lookup*() functions if
+			the contact was marked as behind the NAT during its registration.
+		</para>
+		<para>
+			See also <varname>save_nat_flag</varname>.
+		</para>
+		<para>
+			The default value is 4 (flag number 4).
+		</para>
+		<example>
+			<title>Set <varname>load_nat_flag</varname> parameter</title>
+			<programlisting>
+flags FLAG_NAT;
+...
+modparam("registrar", "load_nat_flag", "FLAG_NAT")
+...
+route{
+...
+	if (lookup_contacts("location")) {
+		if (isflagset(FLAG_NAT)){
+			log(1, "natted contact");
+			# use rtpproxy a.s.o
+		}
+...
+	}
+...
+}
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="trust_received_flag">
+		<title><varname>trust_received_flag</varname> (flagname or integer)
+		</title>
+		<para>
+			If this flag is set, the received information added to the REGISTER
+			contacts on another machine (e.g. upstream proxy or replication
+			 peer) by the <function>fix_nated_register()</function> function
+			from the <emphasis>nathelper</emphasis> module (ser version,
+			under modules_s/) is trusted. If it is not set, it will be
+			ignored.
+		</para>
+		<para>
+			It is especially useful in REGISTER replication scenarios of
+			registrars behind a transparent load balancer (one IP) or a proxy /
+			load balancer that can make use of the original received
+			information (in this case combined with 
+			<varname>received_to_uri</varname>).
+		</para>
+		<para>
+			A contact with received information looks like:
+&lt;sip:foo@10.0.0.3:5060&gt;;received="sip:1.2.3.4:3412;transport=TCP;dstip=4.5.6.7;dstport=5060".
+		</para>
+		<para>
+			Besides the normal flags values (flag names or positive integers),
+			there are 2 special integer values: -1 and -2.
+			If <varname>trust_received_flag</varname> is set to 
+			<emphasis>-1</emphasis> it is equivalent with disabling it
+			globally (no contact "received" parameter will be trusted, they
+			will be all ignored). If set to <emphasis>-2</emphasis> all the
+			contact "received" parameters will be trusted.
+		</para>
+		<para>
+			See also <function>fix_nated_register()</function> in
+			ser nathelper version (modules_s/nathelper).
+		</para>
+		<para>
+			The default value is -2 (always trust received), due to config
+			compatibility reasons with older ser versions.
+		</para>
+		<example>
+			<title>Set <varname>trust_received_flag</varname> parameter</title>
+			<programlisting>
+flags FLAG_REPLICATED;
+...
+modparam("registrar", "trust_received_flag", "FLAG_REPLICATED")
+...
+route{
+...
+	if (dst_ip==224.0.1.75 &amp;&amp; method == "REGISTER") {
+		# REGISTER replicated on multicast (trusted)
+		setflag(FLAG_REPLICATED);
+		save_mem_nr("location");
+...
+	}
+...
+}
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="received_to_uri">
+		<title><varname>received_to_uri</varname> (boolean)</title>
+		<para>
+			If set the lookup*() functions will add a contact received
+			information to the uri, instead of using the contact received
+			information as a destination for the message.
+		</para>
+		<para>
+			The resulting message uri will look like:
+			&lt;sip:contact&gt;;received="sip:src_ip:src_port;transport=proto;dstip=iface_ip;dstport=iface_port".
+		</para>
+		<para>
+			Is is useful when the registrar is behind some other proxy (e.g.
+			load balancer) and using Path is not desired. In this case the
+			outer proxy would have to look at the message uri, remove
+			the "received" parameter from the uri and use it as destination
+			for the message.
+		</para>
+		<para>
+			The default value is 0 (off).
+		</para>
+		<example>
+			<title>Set <varname>received_to_uri</varname> parameter</title>
+			<programlisting>
+...
+modparam("registrar", "received_to_uri", 1)
+# example uri for a message received on 1.2.3.4:5060 from 192.168.1.1:5060:
+# &lt;sip:foo@10.0.0.3&gt;;received="sip:192.168.1.1:5060;dstip=1.2.3.4;dstport=5060"
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="reply_code_attr">
+		<title><varname>reply_code_attr</varname> (avp name)</title>
+		<para>
+			If one of the save*() functions that do not send a reply is
+			used (<function>save_contacts_no_reply()</function>,
+			<function>save_noreply()</function> or
+			<function>save_mem_nr()</function>), an AVP with the given
+			name will be set to the code of the reply that should be send
+			by other means.
+		</para>
+		<para>
+			See also <varname>reply_reason_attr</varname> and
+					 <varname>contact_attr</varname>.
+		</para>
+		<para>
+			The default value is "$code".
+		</para>
+		<example>
+			<title>Set <varname>reply_code_attr</varname>,
+			<varname>reply_reason_attr</varname> parameters and
+			<varname>contact_attr</varname></title>
+			<programlisting>
+modparam("registrar", "reply_code_attr", "$repl_code")
+modparam("registrar", "reply_reason_attr", "$repl_reason")
+modparam("registrar", "contact_attr", "$contact")
+...
+route{
+...
+	if (!save_noreply("location")) {
+		append_to_reply("$contact");
+		sl_send_reply($reply_code, $repl_reason);
+	}
+...
+}
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="reply_code_reason_attr">
+		<title><varname>reply_code_reason_attr</varname> (avp name)</title>
+		<para>
+			See <varname>reply_code_attr</varname> above.
+		</para>
+		<para>
+			The default value is "$reason".
+		</para>
+	</section>
+
+	<section id="contact_attr">
+		<title><varname>contact_attr</varname> (avp name)</title>
+		<para>
+			See <varname>reply_code_attr</varname> above.
+		</para>
+		<para>
+			The default value is "$contact".
+		</para>
+	</section>
+
+	<section id="aor_attr">
+		<title><varname>aor_attr</varname> (avp name)</title>
+		<para>
+			If set to an AVP name, the AOR will be taken from this AVP, 
+			instead of the message "To:" header (when using one of the save*()
+			functions).
+		</para>
+		<para>
+			The default value is "$aor".
+		</para>
+		<example>
+			<title>Set <varname>aor_attr</varname></title>
+			<programlisting>
+modparam("registrar", "aor_attr", "$my_aor")
+...
+route{
+...
+	if (src_ip==1.2.3.4)
+		$my_aor=@msg.header["From"];
+	save("location");
+...
+}
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="server_id_attr">
+		<title><varname>server_id_attr</varname> (avp name)</title>
+		<para>
+			If set to an AVP name, the server ID associated to the contact
+			will be set to the AVP value. If not set or the AVP is not found,
+			the server ID will be set to the <varname>server_id</varname> of
+			the current server.
+		</para>
+		<para>
+			The default value is "$server_id".
+		</para>
+		<para>
+			See also <varname>server_id</varname> (core parameter).
+		</para>
+		<example>
+			<title>Set <varname>server_id_attr</varname></title>
+			<programlisting>
+...
+modparam("registrar", "server_id_attr", "$remote_server_id")
+...
+route{
+...
+	if (dst_ip==224.0.1.75 &amp;&amp; method == "REGISTER") {
+		# REGISTER replicated on multicast, use the originator server_id
+		# (saved in the custom SER-Server-ID header)
+		$remote_server_id = @msg.header["SER-Server-ID"];
+		setflag(FLAG_REPLICATED);
+		save_mem_nr("location");
+...
+	}
+...
+}
+			</programlisting>
+		</example>
+	</section>
 </section>
