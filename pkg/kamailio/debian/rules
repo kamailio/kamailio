@@ -20,7 +20,7 @@
 export DEB_BUILD_OPTIONS:="$(DEB_BUILD_OPTIONS) nostrip"
 
 # modules not in the "main" kamailio package
-EXCLUDED_MODULES=
+EXCLUDED_MODULES= geoip
 
 # extra modules to skip, because they are not compilable now
 # - regardless if they go to the main kamailio package or to some module package,
@@ -42,8 +42,7 @@ MODULES_SP=
 # on which other depend first)
 PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   ldap xml perl utils purple memcached tls \
-			   snmpstats carrierroute xmpp cpl lua python \
-			   geoip
+			   snmpstats carrierroute xmpp cpl lua python
 
 # directories with possible duplicate libraries (that should be deleted
 # from current module* packages)
@@ -119,7 +118,7 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	$(MAKE) cfg prefix=/usr cfg_prefix=$(CURDIR)/debian/kamailio \
+	$(MAKE) FLAVOUR=kamailio cfg prefix=/usr cfg_prefix=$(CURDIR)/debian/kamailio \
 			cfg_target=/etc/kamailio/ \
 			basedir=$(CURDIR)/debian/kamailio \
 			skip_modules="$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)" \
