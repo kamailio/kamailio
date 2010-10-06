@@ -66,8 +66,9 @@ Chapter 1. Admin Guide
 
    The xmlrpc module uses the same concept. xHTTP module offers a generic
    HTTP handling way, by calling event_route[xhttp:request] in your
-   config. You can check the HTTP URI via config variable $hu. Note that
-   $ru will raise errors since URO is not valid for SIP.
+   config. You can check the HTTP URL via config variable $hu. Note that
+   use of $ru will raise errors since the structure of an HTTP URL is not
+   compatible with that of a SIP URI.
 
 2. Dependencies
 
