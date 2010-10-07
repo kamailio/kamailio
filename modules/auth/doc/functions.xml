@@ -42,7 +42,8 @@ if (www_authenticate("realm", "subscriber)) {
 		server is processing and send the reply. Upon reception of such a
 		reply the user agent should compute credentials and retry the
 		request. For more information regarding digest authentication
-		see RFC2617.
+		see RFC2617.  See module parameter force_stateless_reply
+		regarding sending of the reply.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -109,7 +110,8 @@ if (!www_authenticate("$td", "subscriber")) {
 		put the header field into a response generated from the request the
 		server is processing and send the reply. Upon reception of such a
 		reply the user agent should compute credentials and retry the request.
-		For more information regarding digest authentication see RFC2617.
+		For more information regarding digest authentication see RFC2617.    See module parameter force_stateless_reply
+		regarding sending of the reply.
 		</para>
 		<para>Meaning of the parameters the same as for function
 		www_challenge(realm, flags)</para>
