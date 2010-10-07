@@ -143,7 +143,7 @@ inline static int calc_bin_nonce_md5(union bin_nonce* b_nonce, int cfg,
 			MD5Update(&ctx, msg->callid->body.s, msg->callid->body.len);
 		}
 		if ((cfg & AUTH_CHECK_FROMTAG) &&
-			!(parse_headers(msg, HDR_FROM_F, 0) < 0 || msg->from == 0)) {
+			!(parse_from_header(msg) < 0 )) {
 			MD5Update(&ctx, get_from(msg)->tag_value.s, 
 					  get_from(msg)->tag_value.len);
 		}
