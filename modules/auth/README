@@ -194,8 +194,10 @@ modparam("auth", "qop", "auth")    # enable qop=auth
 route{
 ...
         # go stateful and catch retransmissions
-        if (!t_newtran())
-                drop; # retransmission
+        if (!t_newtran()) {
+            xlog("L_NOTICE", "Failed to create new transaction\n");
+            drop;
+        };
         if (method=="REGISTER"){
                 if (!www_authenticate("test", "credentials")){
                         # reply must be sent with t_reply because the
