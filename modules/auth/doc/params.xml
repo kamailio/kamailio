@@ -572,4 +572,23 @@ modparam("auth", "nonce_auth_max_drift", 1)   # set max drift to 1 s
 	    </programlisting>
 	</example>
     </section>
+
+	<section id="force_stateless_reply">
+	<title><varname>force_stateless_reply</varname> (boolean)</title>
+	<para>
+		If set to 1, <function>www_challenge()</function> and
+		<function>proxy_challenge()</function>
+		functions send reply statelessly no matter if transaction
+                exists or not.  If set to 0 (default), reply is sent statefully
+		if transaction exists and stelelessly otherwise.
+	</para>
+	<example>
+	    <title>force_stateless_reply example</title>
+	    <programlisting>
+...
+modparam("auth", "force_stateless_reply", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
 </section>

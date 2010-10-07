@@ -97,6 +97,7 @@ char* sec_param    = 0;     /* If the parameter was not used, the secret phrase 
 int   nonce_expire = 300;   /* Nonce lifetime */
 /*int   auth_extra_checks = 0;  -- in nonce.c */
 int   protect_contacts = 0; /* Do not include contacts in nonce by default */
+int force_stateless_reply = 0; /* Always send reply statelessly */
 
 str secret1;
 str secret2;
@@ -171,7 +172,7 @@ static param_export_t params[] = {
 	{"one_time_nonce"  ,       PARAM_INT,    &otn_enabled           },
 	{"otn_in_flight_no",       PARAM_INT,    &otn_in_flight_no      },
 	{"otn_in_flight_order",    PARAM_INT,    &otn_in_flight_k       },
-	{"nid_pool_no",            PARAM_INT,    &nid_pool_no            },
+    {"force_stateless_reply",  PARAM_INT,    &force_stateless_reply },
     {0, 0, 0}
 };
 
@@ -558,6 +559,8 @@ static int fixup_pv_auth(void **param, int param_no)
 static int auth_send_reply(struct sip_msg *msg, int code, char *reason,
 					char *hdr, int hdr_len)
 {
+        str reason_str;
+
 	/* Add new headers if there are any */
 	if ((hdr!=NULL) && (hdr_len>0)) {
 		if (add_lump_rpl(msg, hdr, hdr_len, LUMP_RPL_HDR)==0) {
@@ -566,7 +569,12 @@ static int auth_send_reply(struct sip_msg *msg, int code, char *reason,
 		}
 	}
 
-	return slb.zreply(msg, code, reason);
+	reason_str.s = reason;
+	reason_str.len = strlen(reason);
+
+	return force_stateless_reply ?
+	    slb.sreply(msg, code, &reason_str) :
+	    slb.freply(msg, code, &reason_str);
 }
 
 /**

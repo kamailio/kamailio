@@ -36,6 +36,7 @@ Daniel-Constantin Mierla
         1.3.10. secret (string)
         1.3.11. nonce_expire (integer)
         1.3.12. nonce_auth_max_drift (integer)
+        1.3.13. force_stateless_reply (boolean)
 
    1.4. Functions
 
@@ -450,6 +451,18 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 modparam("auth", "nonce_auth_max_drift", 1)   # set max drift to 1 s
 ...
 
+1.3.13. force_stateless_reply (boolean)
+
+   If set to 1, www_challenge() and proxy_challenge() functions send reply
+   statelessly no matter if transaction exists or not. If set to 0
+   (default), reply is sent statefully if transaction exists and
+   stelelessly otherwise.
+
+   Example 13. force_stateless_reply example
+...
+modparam("auth", "force_stateless_reply", 1)
+...
+
 1.4. Functions
 
 1.4.1. consume_credentials()
@@ -462,7 +475,7 @@ modparam("auth", "nonce_auth_max_drift", 1)   # set max drift to 1 s
    little bit shorter. The function must be called after www_authorize,
    proxy_authorize, www_authenticate or proxy_authenticate.
 
-   Example 13. consume_credentials example
+   Example 14. consume_credentials example
 ...
 if (www_authenticate("realm", "subscriber)) {
     consume_credentials();
@@ -476,7 +489,8 @@ if (www_authenticate("realm", "subscriber)) {
    field into a response generated from the request the server is
    processing and send the reply. Upon reception of such a reply the user
    agent should compute credentials and retry the request. For more
-   information regarding digest authentication see RFC2617.
+   information regarding digest authentication see RFC2617. See module
+   parameter force_stateless_reply regarding sending of the reply.
 
    Meaning of the parameters is as follows:
      * realm - Realm is a opaque string that the user agent should present
@@ -496,7 +510,7 @@ if (www_authenticate("realm", "subscriber)) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 14. www_challenge usage
+   Example 15. www_challenge usage
 ...
 if (!www_authenticate("$td", "subscriber")) {
         www_challenge("$td", "1");
@@ -510,14 +524,15 @@ if (!www_authenticate("$td", "subscriber")) {
    the header field into a response generated from the request the server
    is processing and send the reply. Upon reception of such a reply the
    user agent should compute credentials and retry the request. For more
-   information regarding digest authentication see RFC2617.
+   information regarding digest authentication see RFC2617. See module
+   parameter force_stateless_reply regarding sending of the reply.
 
    Meaning of the parameters the same as for function www_challenge(realm,
    flags)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 15. proxy_challenge usage
+   Example 16. proxy_challenge usage
 ...
 if (!proxy_authenticate("$fd", "subscriber)) {
         proxy_challenge("$fd", "1");
@@ -562,7 +577,7 @@ if (!proxy_authenticate("$fd", "subscriber)) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 16. pv_www_authenticate usage
+   Example 17. pv_www_authenticate usage
 ...
 if (!pv_www_authenticate("$td", "123abc", "0")) {
         www_challenge("$td", "1");
@@ -584,7 +599,7 @@ if (!pv_www_authenticate("$td", "123abc", "0")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 17. pv_proxy_authenticate usage
+   Example 18. pv_proxy_authenticate usage
 ...
 $avp(password)="xyz";
 if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
