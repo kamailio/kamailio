@@ -48,18 +48,18 @@
 	</para>
 	<para>
 		The selection of the set is done from script prior using
-		[un]force_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer()
+		unforce_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer()
 		functions - see the set_rtp_proxy_set() function.
 	</para>
 	<para>
 		For backward compatibility reasons, a set with no id take by default
 		the id 0. Also if no set is explicitly set before
-		[un]force_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer()
+		unforce_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer()
 		the 0 id set will be used.
 	</para>
 	<para>
 		IMPORTANT: if you use multiple sets, take care and use the same set for
-		both force_ and unforce_rtpproxy()!!
+		both rtpproxy_offer()/rtpproxy_answer() and unforce_rtpproxy()!!
 	</para>
 	</section>
 
@@ -290,7 +290,7 @@ modparam("nathelper", "timeout_socket_type", 42)
 		</title>
 		<para>
 		Sets the Id of the rtpproxy set to be used for the next
-		[un]force_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer()
+		unforce_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer()
 		command.
 		</para>
 		<para>
@@ -302,37 +302,21 @@ modparam("nathelper", "timeout_socket_type", 42)
 		<programlisting format="linespecific">
 ...
 set_rtp_proxy_set("2");
-force_rtp_proxy();
+rtpproxy_offer();
 ...
 </programlisting>
 		</example>
 	</section>
-	<section>
-		<title>
-		<function moreinfo="none">force_rtp_proxy([flags [, ip_address]])</function>
-		</title>
-		<para>
-		Rewrites &sdp; body to ensure that media is passed through
-		an &rtp; proxy. It can have optional parameters to force additional
-		features. If ip_address is provided, it will be used to replace the
-		one in SDP.
-		</para>
-		<para>
-		Note: Behavior of rtpproxy depends on the mode in which rtpproxy is running: If
-		rtpproxy listens only to a single interface, then rtpproxy is default symmetric (port),
-		if rtpproxy listens to two interfaces (so called bridge-mode), then rtpproxy is
-		default asymmetric (port).
-		</para>
-		<para>
-		Note: Regardless of symmetric/asymmetric rtpproxy mode, per default rtpproxy accepts
-		incoming RTP packets only from the same IP address as the SIP signaling was received.
-		Thus, if a SIP client uses different IP for media and SIP (often seen with SBCs), the
-		'r' flag must be specified.
-		</para>
-		<para>
-		The function is considered depreciated and provided for the compatibility
-		purposes.  Use rtpproxy_offer() or rtpproxy_answer() instead.
-		</para>
+        <section>
+                <title>
+                <function moreinfo="none">rtpproxy_offer([flags [, ip_address]])</function>
+                </title>
+                <para>
+                Rewrites &sdp; body to ensure that media is passed through
+                an &rtp; proxy. To be invoked
+		on INVITE for the cases the SDPs are in INVITE and 200 OK and on 200 OK
+		when SDPs are in 200 OK and ACK.
+                </para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
@@ -348,7 +332,7 @@ force_rtp_proxy();
 				<emphasis>l</emphasis> - force <quote>lookup</quote>, that is,
 				only rewrite SDP when corresponding session is already exists
 				in the RTP proxy. By default is on when the session is to be
-				completed (reply in non-swap or ACK in swap mode).
+				completed.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>i, e</emphasis> - these flags specify the direction of the SIP
@@ -387,15 +371,6 @@ force_rtp_proxy();
 				connection information.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>s</emphasis> - flags to swap creation with
-				confirmation between requests and replies. By default, a
-				request creates the RTP session and a reply confirms it. If
-				swapped, a reply will create the RTP session and a request
-				will confirm it.  The flag is considered depreciated and
-				provided for the compatibility purposes.  Use
-				rtpproxy_offer() or rtpproxy_answer() instead.
-				</para></listitem>
-				<listitem><para>
 				<emphasis>w</emphasis> - flags that for the UA from which
 				message is received, support symmetric RTP must be forced.
 				</para></listitem>
@@ -418,40 +393,6 @@ force_rtp_proxy();
 		<emphasis>ip_address</emphasis> - new SDP IP address.
 		</para></listitem>
 		</itemizedlist>
-		<para>
-			It returns value -2 when a rtp proxy has already mangled the
-			packet, making possible to determine in the script if an
-			rtpproxy is in the audio path.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-		FAILURE_ROUTE, BRANCH_ROUTE.
-		</para>
-		<example>
-		<title><function>force_rtp_proxy</function> usage</title>
-		<programlisting format="linespecific">
-...
-if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
-if (src_ip=1.2.3.4) {force_rtp_proxy("i");};
-if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("","1.2.3.4");};
-...
-</programlisting>
-		</example>
-	</section>
-        <section>
-                <title>
-                <function moreinfo="none">rtpproxy_offer([flags [, ip_address]])</function>
-                </title>
-                <para>
-                Rewrites &sdp; body to ensure that media is passed through
-                an &rtp; proxy. Equivalent of force_rtp_proxy() function to be invoked
-		on INVITE for the cases the SDPs are in INVITE and 200 OK and on 200 OK
-		when SDPs are in 200 OK and ACK.
-                </para>
-                <para>
-		See force_rtp_proxy() function description above for the meaning of the
-		parameters.
-		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
@@ -498,12 +439,12 @@ onreply_route[2]
                 </title>
 		<para>
 		Rewrites &sdp; body to ensure that media is passed through
-		an &rtp; proxy. Equivalent of force_rtp_proxy() function to be invoked
+		an &rtp; proxy. To be invoked
 		on 200 OK for the cases the SDPs are in INVITE and 200 OK and on ACK
 		when SDPs are in 200 OK and ACK.
 		</para>
 		<para>
-		See force_rtp_proxy() function description above for the meaning of the
+		See rtpproxy_answer() function description above for the meaning of the
 		parameters.
 		</para>
 		<para>
@@ -511,6 +452,7 @@ onreply_route[2]
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
+		 <title><function>rtpproxy_answer</function> usage</title>
 		<para>
 		See rtpproxy_offer() function example above for example.
 		</para>
@@ -560,9 +502,8 @@ unforce_rtp_proxy();
 	<para>
 	    In order to work correctly, functions require that the session in the
 	    RTPproxy already exists. Also those functions don't alted SDP, so that
-	    they are not substitute for calling <function>rtpproxy_offer</function>,
-	    <function>rtpproxy_answer</function> or
-	    <function>force_rtp_proxy</function>.
+	    they are not substitute for calling <function>rtpproxy_offer</function>
+	    or <function>rtpproxy_answer</function>.
 	</para>
 	<para>
 	    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.

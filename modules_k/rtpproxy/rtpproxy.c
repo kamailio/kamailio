@@ -161,8 +161,8 @@
  *             (bogdan)
  * 2008-12-12 Support for RTCP attribute in the SDP
  *              (Min Wang/BASIS AudioNet - ported from SER)
- * 2010-08-05 Core SDP parser integrated into nathelper
- *             (osas)
+ * 2010-08-05 Core SDP parser integrated into nathelper (osas)
+ * 2010-10-08 Removal of deprecated force_rtp_proxy and swap flag (osas)
  */
 
 #include <sys/types.h>
@@ -284,9 +284,6 @@ static int alter_rtcp(struct sip_msg *msg, str *body, str *oldport, str *newport
 static char *gencookie();
 static int rtpp_test(struct rtpp_node*, int, int);
 static int unforce_rtp_proxy_f(struct sip_msg *, char *, char *);
-static int force_rtp_proxy0_f(struct sip_msg *, char *, char *);
-static int force_rtp_proxy1_f(struct sip_msg *, char *, char *);
-static int force_rtp_proxy2_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy(struct sip_msg *, char *, char *, int);
 static int start_recording_f(struct sip_msg *, char *, char *);
 static int rtpproxy_answer1_f(struct sip_msg *, char *, char *);
@@ -348,15 +345,6 @@ static cmd_export_t cmds[] = {
 		fixup_set_id, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"unforce_rtp_proxy",  (cmd_function)unforce_rtp_proxy_f,    0,
-		0, 0,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
-	{"force_rtp_proxy",    (cmd_function)force_rtp_proxy0_f,     0,
-		0, 0,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
-	{"force_rtp_proxy",    (cmd_function)force_rtp_proxy1_f,     1,
-		0, 0,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
-	{"force_rtp_proxy",    (cmd_function)force_rtp_proxy2_f,     2,
 		0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"start_recording",    (cmd_function)start_recording_f,      0,
@@ -1715,21 +1703,6 @@ rtpproxy_answer2_f(struct sip_msg *msg, char *param1, char *param2)
 	return force_rtp_proxy(msg, param1, param2, 0);
 }
 
-static int
-force_rtp_proxy2_f(struct sip_msg *msg, char *param1, char *param2)
-{
-	int offer;
-
-	if (msg->first_line.type == SIP_REQUEST) {
-		offer = 1;
-	} else if (msg->first_line.type == SIP_REPLY) {
-		offer = 0;
-	} else {
-		return -1;
-	}
-
-	return force_rtp_proxy(msg, param1, param2, offer);
-}
 
 struct options {
 	str s;
@@ -1785,7 +1758,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 	str newrtcp;
 	int create, port, len, flookup, argc, proxied, real;
 	int orgip, commip;
-	int pf, pf1, force, swap;
+	int pf, pf1, force;
 	struct options opts, rep_opts, pt_opts;
 	char *cp, *cp1;
 	char  *cpend, *next;
@@ -1823,7 +1796,6 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 	int medianum, media_multi;
 	str itoabuf_str;
 	int c1p_altered;
-	static int swap_warned = 0;
 
 	int sdp_session_num, sdp_stream_num;
 	sdp_session_cell_t* sdp_session;
@@ -1837,7 +1809,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 		LM_ERR("out of pkg memory\n");
 		FORCE_RTP_PROXY_RET (-1);
 	}
-	flookup = force = real = orgip = commip = swap = 0;
+	flookup = force = real = orgip = commip = 0;
 	for (cp = str1; cp != NULL && *cp != '\0'; cp++) {
 		switch (*cp) {
 		case 'a':
@@ -1893,17 +1865,6 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 			orgip = 1;
 			break;
 
-		case 's':
-		case 'S':
-			swap = 1;
-			if (swap_warned != 0)
-				break;
-			LM_WARN("swap flag (`%c') is depreciated, use "
-			    "rtpproxy_offer() and rtpproxy_answer() "
-			    "instead\n", *cp);
-			swap_warned = 1;
-			break;
-
 		case 'w':
 		case 'W':
 			if (append_opts(&opts, 'S') == -1) {
@@ -1934,9 +1895,9 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 	}
 
 	if (offer != 0) {
-		create = swap?0:1;
+		create = 1;
 	} else {
-		create = swap?1:0;
+		create = 0;
 	}
 	/* extract_body will also parse all the headers in the message as
 	 * a side effect => don't move get_callid/get_to_tag in front of it
@@ -1958,31 +1919,12 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 		LM_ERR("can't get From tag\n");
 		FORCE_RTP_PROXY_RET (-1);
 	}
-	/*  LOGIC
-	 *  ------
-	 *  1) NO SWAP (create on request, lookup on reply):
-	 *       req -> create = 1
-	 *       rpl -> create = 0
-	 *       if (forced_lookup) -> create = 0;
-	 *
-	 *  2) SWAP (create on reply, lookup on request):
-	 *       req -> create = 0
-	 *       rpl -> create = 1
-	 *       swap_tags
-	 *       if (forced_lookup) -> create = 0;
-	 */
 	if (flookup != 0) {
 		if (to_tag.len == 0) {
 			FORCE_RTP_PROXY_RET (-1);
 		}
 		create = 0;
-		if (swap != 0 || (msg->first_line.type == SIP_REPLY && offer != 0)
-				|| (msg->first_line.type == SIP_REQUEST && offer == 0)) {
-			tmp = from_tag;
-			from_tag = to_tag;
-			to_tag = tmp;
-		}
-	} else if (swap != 0 || (msg->first_line.type == SIP_REPLY && offer != 0)
+	} else if ((msg->first_line.type == SIP_REPLY && offer != 0)
 			|| (msg->first_line.type == SIP_REQUEST && offer == 0)) {
 		if (to_tag.len == 0) {
 			FORCE_RTP_PROXY_RET (-1);
@@ -2343,26 +2285,6 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 	}
 
 	return 1;
-}
-
-static int
-force_rtp_proxy1_f(struct sip_msg* msg, char* str1, char* str2)
-{
-	char *cp;
-	char newip[IP_ADDR_MAX_STR_SIZE];
-
-	cp = ip_addr2a(&msg->rcv.dst_ip);
-	strcpy(newip, cp);
-
-	return force_rtp_proxy2_f(msg, str1, newip);
-}
-
-static int
-force_rtp_proxy0_f(struct sip_msg* msg, char* str1, char* str2)
-{
-	char arg[1] = {'\0'};
-
-	return force_rtp_proxy1_f(msg, arg, NULL);
 }
 
 
