@@ -284,7 +284,7 @@ static int alter_rtcp(struct sip_msg *msg, str *body, str *oldport, str *newport
 static char *gencookie();
 static int rtpp_test(struct rtpp_node*, int, int);
 static int unforce_rtp_proxy_f(struct sip_msg *, char *, char *);
-static int force_rtp_proxy(struct sip_msg *, char *, char *, int);
+static int force_rtp_proxy(struct sip_msg *, char *, char *, int, int);
 static int start_recording_f(struct sip_msg *, char *, char *);
 static int rtpproxy_answer1_f(struct sip_msg *, char *, char *);
 static int rtpproxy_answer2_f(struct sip_msg *, char *, char *);
@@ -1672,13 +1672,13 @@ rtpproxy_offer1_f(struct sip_msg *msg, char *str1, char *str2)
 
         cp = ip_addr2a(&msg->rcv.dst_ip);
         strcpy(newip, cp);
-	return rtpproxy_offer2_f(msg, str1, newip);
+	return force_rtp_proxy(msg, str1, newip, 1, 0);
 }
 
 static int
 rtpproxy_offer2_f(struct sip_msg *msg, char *param1, char *param2)
 {
-	return force_rtp_proxy(msg, param1, param2, 1);
+	return force_rtp_proxy(msg, param1, param2, 1, 1);
 }
 
 static int
@@ -1687,9 +1687,13 @@ rtpproxy_answer1_f(struct sip_msg *msg, char *str1, char *str2)
         char *cp;
         char newip[IP_ADDR_MAX_STR_SIZE];
 
+	if (msg->first_line.type == SIP_REQUEST)
+		if (msg->first_line.u.request.method_value != METHOD_ACK)
+			return -1;
+
         cp = ip_addr2a(&msg->rcv.dst_ip);
         strcpy(newip, cp);
-        return rtpproxy_answer2_f(msg, str1, newip);
+	return force_rtp_proxy(msg, str1, newip, 0, 0);
 }
 
 static int
@@ -1700,7 +1704,7 @@ rtpproxy_answer2_f(struct sip_msg *msg, char *param1, char *param2)
 		if (msg->first_line.u.request.method_value != METHOD_ACK)
 			return -1;
 
-	return force_rtp_proxy(msg, param1, param2, 0);
+	return force_rtp_proxy(msg, param1, param2, 0, 1);
 }
 
 
@@ -1751,7 +1755,7 @@ free_opts(struct options *op1, struct options *op2, struct options *op3)
     } while (0);
 
 static int
-force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
+force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forcedIP)
 {
 	str body, body1, oldport, oldip, newport, newip;
 	str callid, from_tag, to_tag, tmp, payload_types;
@@ -2165,8 +2169,16 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer)
 					newip.len = 7;
 				}
 			} else {
-				newip.s = (argc < 2) ? str2 : argv[1];
-				newip.len = strlen(newip.s);
+				if (forcedIP) {
+					newip.s = str2;
+					newip.len = strlen(newip.s);
+#ifdef EXTRA_DEBUG
+					LM_DBG("forcing IP='%.*s'\n", newip.len, newip.s);
+#endif
+				} else {
+					newip.s = (argc < 2) ? str2 : argv[1];
+					newip.len = strlen(newip.s);
+				}
 			}
 			/* marker to double check : newport goes: str -> int -> str ?!?! */
 			newport.s = int2str(port, &newport.len); /* beware static buffer */
