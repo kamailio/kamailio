@@ -90,20 +90,20 @@ int reload_address_table(void)
 
     /* Choose new hash table and free its old contents */
     if (*addr_hash_table == addr_hash_table_1) {
-	empty_addr_hash_table(addr_hash_table_2);
-	new_hash_table = addr_hash_table_2;
+		empty_addr_hash_table(addr_hash_table_2);
+		new_hash_table = addr_hash_table_2;
     } else {
-	empty_addr_hash_table(addr_hash_table_1);
-	new_hash_table = addr_hash_table_1;
+		empty_addr_hash_table(addr_hash_table_1);
+		new_hash_table = addr_hash_table_1;
     }
 
     /* Choose new subnet table */
     if (*subnet_table == subnet_table_1) {
-	empty_subnet_table(subnet_table_2);
-	new_subnet_table = subnet_table_2;
+		empty_subnet_table(subnet_table_2);
+		new_subnet_table = subnet_table_2;
     } else {
-	empty_subnet_table(subnet_table_1);
-	new_subnet_table = subnet_table_1;
+		empty_subnet_table(subnet_table_1);
+		new_subnet_table = subnet_table_1;
     }
 
     row = RES_ROWS(res);
@@ -111,52 +111,52 @@ int reload_address_table(void)
     LM_DBG("Number of rows in address table: %d\n", RES_ROW_N(res));
 		
     for (i = 0; i < RES_ROW_N(res); i++) {
-	val = ROW_VALUES(row + i);
-	if ((ROW_N(row + i) == 4) &&
-	    (VAL_TYPE(val) == DB1_INT) && !VAL_NULL(val) &&
-	    (VAL_INT(val) > 0) && 
-	    (VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1) &&
-	    inet_aton((char *)VAL_STRING(val + 1), &ip_addr) != 0 &&
-	    (VAL_TYPE(val + 2) == DB1_INT) && !VAL_NULL(val + 2) && 
-	    ((unsigned int)VAL_INT(val + 2) > 0) && 
-	    ((unsigned int)VAL_INT(val + 2) <= 32) &&
-	    (VAL_TYPE(val + 3) == DB1_INT) && !VAL_NULL(val + 3)) {
-	    if ((unsigned int)VAL_INT(val + 2) == 32) {
-		if (addr_hash_table_insert(new_hash_table,
+		val = ROW_VALUES(row + i);
+		if ((ROW_N(row + i) == 4) &&
+				(VAL_TYPE(val) == DB1_INT) && !VAL_NULL(val) &&
+				(VAL_INT(val) > 0) && 
+				(VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1) &&
+				inet_aton((char *)VAL_STRING(val + 1), &ip_addr) != 0 &&
+				(VAL_TYPE(val + 2) == DB1_INT) && !VAL_NULL(val + 2) && 
+				((unsigned int)VAL_INT(val + 2) > 0) && 
+				((unsigned int)VAL_INT(val + 2) <= 32) &&
+				(VAL_TYPE(val + 3) == DB1_INT) && !VAL_NULL(val + 3)) {
+			if ((unsigned int)VAL_INT(val + 2) == 32) {
+				if (addr_hash_table_insert(new_hash_table,
 					   (unsigned int)VAL_INT(val),
 					   (unsigned int)ip_addr.s_addr,
 					   (unsigned int)VAL_INT(val + 3))
-		    == -1) {
-		    LM_ERR("hash table problem\n");
-		    perm_dbf.free_result(db_handle, res);
-		    return -1;
+					   == -1) {
+					LM_ERR("hash table problem\n");
+					perm_dbf.free_result(db_handle, res);
+					return -1;
+				}
+				LM_DBG("Tuple <%u, %s, %u> inserted into address hash "
+					    "table\n", (unsigned int)VAL_INT(val),
+						(char *)VAL_STRING(val + 1),
+						(unsigned int)VAL_INT(val + 2));
+			} else {
+				if (subnet_table_insert(new_subnet_table,
+						(unsigned int)VAL_INT(val),
+						(unsigned int)ip_addr.s_addr,
+						(unsigned int)VAL_INT(val + 2),
+						(unsigned int)VAL_INT(val + 3))
+						 == -1) {
+					LM_ERR("subnet table problem\n");
+					perm_dbf.free_result(db_handle, res);
+					return -1;
+				}
+				LM_DBG("Tuple <%u, %s, %u, %u> inserted into subnet "
+						"table\n", (unsigned int)VAL_INT(val),
+						(char *)VAL_STRING(val + 1),
+						(unsigned int)VAL_INT(val + 2),
+						(unsigned int)VAL_INT(val + 3));
+			}
+		} else {
+			LM_ERR("database problem\n");
+			perm_dbf.free_result(db_handle, res);
+			return -1;
 		}
-		LM_DBG("Tuple <%u, %s, %u> inserted into address hash "
-		    "table\n", (unsigned int)VAL_INT(val),
-		    (char *)VAL_STRING(val + 1),
-		    (unsigned int)VAL_INT(val + 2));
-	    } else {
-		if (subnet_table_insert(new_subnet_table,
-					(unsigned int)VAL_INT(val),
-					(unsigned int)ip_addr.s_addr,
-					(unsigned int)VAL_INT(val + 2),
-					(unsigned int)VAL_INT(val + 3))
-		    == -1) {
-		    LM_ERR("subnet table problem\n");
-		    perm_dbf.free_result(db_handle, res);
-		    return -1;
-		}
-		LM_DBG("Tuple <%u, %s, %u, %u> inserted into subnet "
-		    "table\n", (unsigned int)VAL_INT(val),
-		    (char *)VAL_STRING(val + 1),
-		    (unsigned int)VAL_INT(val + 2),
-		    (unsigned int)VAL_INT(val + 3));
-	    }
-	} else {
-	    LM_ERR("database problem\n");
-	    perm_dbf.free_result(db_handle, res);
-	    return -1;
-	}
     }
 
     perm_dbf.free_result(db_handle, res);
@@ -176,19 +176,19 @@ int reload_address_table(void)
 int init_addresses(void)
 {
     if (!db_url.s) {
-	LM_INFO("db_url parameter of permissions module not set, "
-	    "disabling allow_address\n");
-	return 0;
+		LM_INFO("db_url parameter of permissions module not set, "
+			"disabling allow_address\n");
+		return 0;
     } else {
-	if (db_bind_mod(&db_url, &perm_dbf) < 0) {
-	    LM_ERR("load a database support module\n");
-	    return -1;
-	}
+		if (db_bind_mod(&db_url, &perm_dbf) < 0) {
+		  LM_ERR("load a database support module\n");
+		  return -1;
+		}
 
-	if (!DB_CAPABILITY(perm_dbf, DB_CAP_QUERY)) {
-	    LM_ERR("database module does not implement 'query' function\n");
-	    return -1;
-	}
+		if (!DB_CAPABILITY(perm_dbf, DB_CAP_QUERY)) {
+		    LM_ERR("database module does not implement 'query' function\n");
+		    return -1;
+		}
     }
 
     addr_hash_table_1 = addr_hash_table_2 = 0;
@@ -212,9 +212,11 @@ int init_addresses(void)
     addr_hash_table_2  = new_addr_hash_table();
     if (!addr_hash_table_2) goto error;
 		
-    addr_hash_table = (struct addr_list ***)shm_malloc
-	(sizeof(struct addr_list **));
-    if (!addr_hash_table) goto error;
+    addr_hash_table = (struct addr_list ***)shm_malloc(sizeof(struct addr_list **));
+    if (!addr_hash_table) {
+		LM_ERR("no more shared memory\n");
+		goto error;
+	}
 
     *addr_hash_table = addr_hash_table_1;
 
@@ -230,8 +232,8 @@ int init_addresses(void)
     *subnet_table = subnet_table_1;
 
     if (reload_address_table() == -1) {
-	LM_CRIT("reload of address table failed\n");
-	goto error;
+		LM_CRIT("reload of address table failed\n");
+		goto error;
     }
 
     perm_dbf.close(db_handle);
@@ -240,30 +242,29 @@ int init_addresses(void)
     return 0;
 
 error:
-	LM_ERR("no more shm memory\n");
     if (addr_hash_table_1) {
-	free_addr_hash_table(addr_hash_table_1);
-	addr_hash_table_1 = 0;
+		free_addr_hash_table(addr_hash_table_1);
+		addr_hash_table_1 = 0;
     }
     if (addr_hash_table_2) {
-	free_addr_hash_table(addr_hash_table_2);
-	addr_hash_table_2 = 0;
+		free_addr_hash_table(addr_hash_table_2);
+		addr_hash_table_2 = 0;
     }
     if (addr_hash_table) {
-	shm_free(addr_hash_table);
-	addr_hash_table = 0;
+		shm_free(addr_hash_table);
+		addr_hash_table = 0;
     }
     if (subnet_table_1) {
-	free_subnet_table(subnet_table_1);
-	subnet_table_1 = 0;
+		free_subnet_table(subnet_table_1);
+		subnet_table_1 = 0;
     }
     if (subnet_table_2) {
-	free_subnet_table(subnet_table_2);
-	subnet_table_2 = 0;
+		free_subnet_table(subnet_table_2);
+		subnet_table_2 = 0;
     }
-    if (subnet_table) {
-	shm_free(subnet_table);
-	subnet_table = 0;
+	if (subnet_table) {
+		shm_free(subnet_table);
+		subnet_table = 0;
     }
     perm_dbf.close(db_handle);
     db_handle = 0;
