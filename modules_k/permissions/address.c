@@ -92,20 +92,20 @@ int reload_address_table(void)
 
     /* Choose new hash table and free its old contents */
     if (*addr_hash_table == addr_hash_table_1) {
-	empty_addr_hash_table(addr_hash_table_2);
-	new_hash_table = addr_hash_table_2;
+		empty_addr_hash_table(addr_hash_table_2);
+		new_hash_table = addr_hash_table_2;
     } else {
-	empty_addr_hash_table(addr_hash_table_1);
-	new_hash_table = addr_hash_table_1;
+		empty_addr_hash_table(addr_hash_table_1);
+		new_hash_table = addr_hash_table_1;
     }
 
     /* Choose new subnet table */
     if (*subnet_table == subnet_table_1) {
-	empty_subnet_table(subnet_table_2);
-	new_subnet_table = subnet_table_2;
+		empty_subnet_table(subnet_table_2);
+		new_subnet_table = subnet_table_2;
     } else {
-	empty_subnet_table(subnet_table_1);
-	new_subnet_table = subnet_table_1;
+		empty_subnet_table(subnet_table_1);
+		new_subnet_table = subnet_table_1;
     }
 
     row = RES_ROWS(res);
@@ -114,54 +114,54 @@ int reload_address_table(void)
 		
     for (i = 0; i < RES_ROW_N(res); i++) {
 	val = ROW_VALUES(row + i);
-	if ((ROW_N(row + i) == 5) &&
-	    (VAL_TYPE(val) == DB1_INT) && !VAL_NULL(val) &&
-	    (VAL_INT(val) > 0) && 
-	    (VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1) &&
-	    inet_aton((char *)VAL_STRING(val + 1), &ip_addr) != 0 &&
-	    (VAL_TYPE(val + 2) == DB1_INT) && !VAL_NULL(val + 2) && 
-	    ((unsigned int)VAL_INT(val + 2) > 0) && 
-	    ((unsigned int)VAL_INT(val + 2) <= 32) &&
-	    (VAL_TYPE(val + 3) == DB1_INT) && !VAL_NULL(val + 3)) {
-		tagv = VAL_NULL(val + 4)?NULL:(char *)VAL_STRING(val + 4);
-	    if ((unsigned int)VAL_INT(val + 2) == 32) {
-		if (addr_hash_table_insert(new_hash_table,
-					   (unsigned int)VAL_INT(val),
-					   (unsigned int)ip_addr.s_addr,
-					   (unsigned int)VAL_INT(val + 3),
-					   tagv)
-		    == -1) {
-		    LM_ERR("hash table problem\n");
+		if ((ROW_N(row + i) == 5) &&
+			    (VAL_TYPE(val) == DB1_INT) && !VAL_NULL(val) &&
+			    (VAL_INT(val) > 0) && 
+			    (VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1) &&
+			    inet_aton((char *)VAL_STRING(val + 1), &ip_addr) != 0 &&
+			    (VAL_TYPE(val + 2) == DB1_INT) && !VAL_NULL(val + 2) && 
+			    ((unsigned int)VAL_INT(val + 2) > 0) && 
+				((unsigned int)VAL_INT(val + 2) <= 32) &&
+			    (VAL_TYPE(val + 3) == DB1_INT) && !VAL_NULL(val + 3)) {
+				tagv = VAL_NULL(val + 4)?NULL:(char *)VAL_STRING(val + 4);
+		    if ((unsigned int)VAL_INT(val + 2) == 32) {
+				if (addr_hash_table_insert(new_hash_table,
+							(unsigned int)VAL_INT(val),
+							(unsigned int)ip_addr.s_addr,
+							(unsigned int)VAL_INT(val + 3),
+							tagv)
+							== -1) {
+					LM_ERR("hash table problem\n");
+					perm_dbf.free_result(db_handle, res);
+					return -1;
+				}
+				LM_DBG("Tuple <%u, %s, %u> inserted into address hash "
+						"table\n", (unsigned int)VAL_INT(val),
+						(char *)VAL_STRING(val + 1),
+						(unsigned int)VAL_INT(val + 2));
+		    } else {
+				if (subnet_table_insert(new_subnet_table,
+						(unsigned int)VAL_INT(val),
+						(unsigned int)ip_addr.s_addr,
+						(unsigned int)VAL_INT(val + 2),
+						(unsigned int)VAL_INT(val + 3),
+						tagv)
+						== -1) {
+					LM_ERR("subnet table problem\n");
+					perm_dbf.free_result(db_handle, res);
+					return -1;
+				}
+				LM_DBG("Tuple <%u, %s, %u, %u> inserted into subnet "
+						"table\n", (unsigned int)VAL_INT(val),
+						(char *)VAL_STRING(val + 1),
+						(unsigned int)VAL_INT(val + 2),
+						(unsigned int)VAL_INT(val + 3));
+		    }
+		} else {
+		    LM_ERR("database problem - invalid record\n");
 		    perm_dbf.free_result(db_handle, res);
 		    return -1;
 		}
-		LM_DBG("Tuple <%u, %s, %u> inserted into address hash "
-		    "table\n", (unsigned int)VAL_INT(val),
-		    (char *)VAL_STRING(val + 1),
-		    (unsigned int)VAL_INT(val + 2));
-	    } else {
-		if (subnet_table_insert(new_subnet_table,
-					(unsigned int)VAL_INT(val),
-					(unsigned int)ip_addr.s_addr,
-					(unsigned int)VAL_INT(val + 2),
-					(unsigned int)VAL_INT(val + 3),
-					tagv)
-		    == -1) {
-		    LM_ERR("subnet table problem\n");
-		    perm_dbf.free_result(db_handle, res);
-		    return -1;
-		}
-		LM_DBG("Tuple <%u, %s, %u, %u> inserted into subnet "
-		    "table\n", (unsigned int)VAL_INT(val),
-		    (char *)VAL_STRING(val + 1),
-		    (unsigned int)VAL_INT(val + 2),
-		    (unsigned int)VAL_INT(val + 3));
-	    }
-	} else {
-	    LM_ERR("database problem\n");
-	    perm_dbf.free_result(db_handle, res);
-	    return -1;
-	}
     }
 
     perm_dbf.free_result(db_handle, res);
