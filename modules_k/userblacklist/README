@@ -29,6 +29,7 @@ Henning Westerholt
         3. Exported Parameters
 
               3.1. use_domain (integer)
+              3.2. match_mode (integer)
 
         4. Exported Functions
 
@@ -66,12 +67,13 @@ Henning Westerholt
    List of Examples
 
    1.1. Set use_domain parameter
-   1.2. check_user_blacklist usage
+   1.2. Set match_mode parameter
    1.3. check_user_blacklist usage
-   1.4. check_blacklist usage
-   1.5. reload_blacklists usage
-   1.6. Example database content - globalblacklist table
-   1.7. Example database content - userblacklist table
+   1.4. check_user_blacklist usage
+   1.5. check_blacklist usage
+   1.6. reload_blacklists usage
+   1.7. Example database content - globalblacklist table
+   1.8. Example database content - userblacklist table
    2.1. Set db_url parameter
    2.2. Set userblacklist_table parameter
    2.3. Set userblacklist_id_col parameter
@@ -98,6 +100,7 @@ Chapter 1. Admin Guide
    3. Exported Parameters
 
         3.1. use_domain (integer)
+        3.2. match_mode (integer)
 
    4. Exported Functions
 
@@ -164,6 +167,7 @@ Chapter 1. Admin Guide
 3. Exported Parameters
 
    3.1. use_domain (integer)
+   3.2. match_mode (integer)
 
 3.1. use_domain (integer)
 
@@ -175,6 +179,22 @@ Chapter 1. Admin Guide
    Example 1.1. Set use_domain parameter
 ...
 modparam("userblacklist", "use_domain", 0)
+...
+
+3.2. match_mode (integer)
+
+   The number of individual characters that are used for matching. Valid
+   values are 10 or 128. When you specifiy 10, only digits will be used
+   for matching, this operation mode is equivalent to the old behaviour.
+   When configured with 128, all standard ascii chars are available for
+   matching. Please be aware that memory requirements for storing the
+   routing tree in shared memory will also increase by a factor of 12.8.
+
+   Default value is “10”.
+
+   Example 1.2. Set match_mode parameter
+...
+modparam("userblacklist", "match_mode", 128)
 ...
 
 4. Exported Functions
@@ -198,7 +218,7 @@ table)
    are optional, the defaults are used if they are ommited. The number
    parameter can be used to check for example against the from URI user.
 
-   Example 1.2. check_user_blacklist usage
+   Example 1.3. check_user_blacklist usage
 ...
 $avp(i:80) = $rU;
 # rewrite the R-URI
@@ -219,7 +239,7 @@ table)
    are optional, the defaults are used if they are ommited. The number
    parameter can be used to check for example against the from URI user.
 
-   Example 1.3. check_user_blacklist usage
+   Example 1.4. check_user_blacklist usage
 ...
 $avp(i:80) = $rU;
 # rewrite the R-URI
@@ -236,7 +256,7 @@ if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)"))
    returned. Otherwise, true is returned. If no table is given, then
    globalblacklist_table is used.
 
-   Example 1.4. check_blacklist usage
+   Example 1.5. check_blacklist usage
 ...
 if (!check_blacklist("global_blacklist")))
         sl_send_reply("403", "Forbidden");
@@ -253,7 +273,7 @@ if (!check_blacklist("global_blacklist")))
    Reload the internal global blacklist cache. This is necessary after the
    database tables for the global blacklist have been changed.
 
-   Example 1.5. reload_blacklists usage
+   Example 1.6. reload_blacklists usage
 ...
 kamctl fifo reload_blacklist
 ...
@@ -275,7 +295,7 @@ kamctl fifo reload_blacklist
    complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.6. Example database content - globalblacklist table
+   Example 1.7. Example database content - globalblacklist table
 ...
 +----+-----------+-----------+
 | id | prefix    | whitelist |
@@ -292,7 +312,7 @@ kamctl fifo reload_blacklist
    “123455787” are also blacklisted, because the longest prefix will be
    matched.
 
-   Example 1.7. Example database content - userblacklist table
+   Example 1.8. Example database content - userblacklist table
 ...
 +----+----------------+-------------+-----------+-----------+
 | id | username       | domain      | prefix    | whitelist |

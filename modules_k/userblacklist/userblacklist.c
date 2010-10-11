@@ -73,7 +73,8 @@ struct check_blacklist_fs_t {
 };
 
 str userblacklist_db_url = str_init(DEFAULT_RODB_URL);
-static int use_domain   = 0;
+int use_domain   = 0;
+int match_mode = 10; /* numeric */
 static struct dtrie_node_t *gnode = NULL;
 
 /* ---- fixup functions: */
@@ -122,6 +123,7 @@ static param_export_t params[] = {
 	userblacklist_DB_COLS
 	globalblacklist_DB_COLS
 	{ "use_domain",      INT_PARAM, &use_domain },
+	{ "match_mode",	     INT_PARAM, &match_mode},
 	{ 0, 0, 0}
 };
 
@@ -291,7 +293,7 @@ static int check_user_list(struct sip_msg *msg, char* str1, char* str2, char* st
 		ptr = ptr + 1;
 	}
 
-	nodeflags = dtrie_longest_match(dtrie_root, ptr, strlen(ptr), NULL, 10);
+	nodeflags = dtrie_longest_match(dtrie_root, ptr, strlen(ptr), NULL, match_mode);
 	if (nodeflags) {
 		if (*nodeflags == (void *)MARK_WHITELIST) {
 			/* LM_ERR("whitelisted"); */
@@ -395,7 +397,7 @@ static int add_source(const char *table)
 	strcpy(src->table, table);
 	LM_DBG("add table %s", table);
 
-	src->dtrie_root = dtrie_init(10);
+	src->dtrie_root = dtrie_init(match_mode);
 
 	if (src->dtrie_root == NULL) {
 		LM_ERR("could not initialize data");
@@ -510,15 +512,15 @@ static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg
 
 	ptr = req_number;
 	/* Skip over non-digits.  */
-	while (strlen(ptr) > 0 && !isdigit(*ptr)) {
-		ptr = ptr + 1;
+	while (match_mode == 10 && strlen(ptr) > 0 && !isdigit(*ptr)) {
+			ptr = ptr + 1;
 	}
 
 	LM_DBG("check entry %s\n", req_number);
 
 	/* avoids dirty reads when updating d-tree */
 	lock_get(lock);
-	nodeflags = dtrie_longest_match(arg1->dtrie_root, ptr, strlen(ptr), NULL, 10);
+	nodeflags = dtrie_longest_match(arg1->dtrie_root, ptr, strlen(ptr), NULL, match_mode);
 	if (nodeflags) {
 		if (*nodeflags == (void *)MARK_WHITELIST) {
 			/* LM_DBG("whitelisted"); */
@@ -591,7 +593,7 @@ static void destroy_source_list(void)
 			sources->head = src->next;
 
 			if (src->table) shm_free(src->table);
-			dtrie_destroy(&(src->dtrie_root), NULL, 10);
+			dtrie_destroy(&(src->dtrie_root), NULL, match_mode);
 			shm_free(src);
 		}
 
@@ -673,7 +675,7 @@ static int mi_child_init(void)
 	if(userblacklist_child_initialized)
 		return 0;
 	if (userblacklist_db_open() != 0) return -1;
-	dtrie_root=dtrie_init(10);
+	dtrie_root=dtrie_init(match_mode);
 	if (dtrie_root == NULL) {
 		LM_ERR("could not initialize data");
 		return -1;
@@ -692,5 +694,5 @@ static void mod_destroy(void)
 	destroy_source_list();
 	destroy_shmlock();
 	userblacklist_db_close();
-	dtrie_destroy(&dtrie_root, NULL, 10);
+	dtrie_destroy(&dtrie_root, NULL, match_mode);
 }

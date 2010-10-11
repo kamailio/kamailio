@@ -34,6 +34,7 @@ function cleanup() {
 	$MYSQL "delete from userblacklist where username='494675231';"
 	$MYSQL "delete from userblacklist where username='494675453';"
 	$MYSQL "delete from userblacklist where username='494675454';"
+	$MYSQL "delete from userblacklist where username='user4946';"
 	$MYSQL "delete from globalblacklist where description='_test_';"
 	exit $1;
 }
@@ -58,6 +59,7 @@ $MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values 
 
 $MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456784\",\"sip:2.23456789@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
+$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"user4946\",\"sip:user4946@127.0.0.1\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
 # setup userblacklist, first some dummy data
 $MYSQL "insert into userblacklist (username, domain, prefix, whitelist) values ('494675454','','49900','0');"
@@ -133,16 +135,22 @@ $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('2'
 
 $CTL fifo reload_blacklist
 
-if [ "$ret" -ne 1 ] ; then
-	cleanup 1
-fi;
-
 sipp -sn uac -s 49721123456785 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 ret=$?
 
 if [ "$ret" -ne 0 ] ; then
 	cleanup 1
 fi;
+
+$MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('user4946','0','_test_');"
+
+sipp -sn uac -s user4946 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
+ret=$?
+
+if [ "$ret" -ne 1 ] ; then
+	cleanup 1
+fi;
+
 
 sipp -sn uac -s 49721123456784 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 ret=$?

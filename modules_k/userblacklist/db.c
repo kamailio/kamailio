@@ -36,10 +36,14 @@
 #include "../../lib/trie/dtrie.h"
 
 
+
 /**
  * Builds a d-tree using database entries.
  * \return negative on failure, postive on success, indicating the number of d-tree entries
  */
+
+extern int match_mode;
+
 int db_build_userbl_tree(const str *username, const str *domain, const str *table, struct dtrie_node_t *root, int use_domain)
 {
 	db_key_t columns[2] = { &userblacklist_prefix_col, &userblacklist_whitelist_col };
@@ -67,7 +71,7 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 		return -1;
 	}
 
-	dtrie_clear(root, NULL, 10);
+	dtrie_clear(root, NULL, match_mode);
 
 	if (RES_COL_N(res) > 1) {
 		for(i = 0; i < RES_ROW_N(res); i++) {
@@ -84,7 +88,7 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 						nodeflags=(void *)MARK_WHITELIST;
 					}
 					if (dtrie_insert(root, RES_ROWS(res)[i].values[0].val.string_val, strlen(RES_ROWS(res)[i].values[0].val.string_val),
-						nodeflags, 10) < 0) LM_ERR("could not insert values into trie.\n");
+						nodeflags, match_mode) < 0) LM_ERR("could not insert values into trie.\n");
 					n++;
 				}
 				else {
@@ -120,7 +124,7 @@ int db_reload_source(const str *table, struct dtrie_node_t *root)
 		return -1;
 	}
 
-	dtrie_clear(root, NULL, 10);
+	dtrie_clear(root, NULL, match_mode);
 
 	if (RES_COL_N(res) > 1) {
 		for(i = 0; i < RES_ROW_N(res); i++) {
@@ -134,7 +138,7 @@ int db_reload_source(const str *table, struct dtrie_node_t *root)
 					if (RES_ROWS(res)[i].values[1].val.int_val == 0) nodeflags=(void *) MARK_BLACKLIST;
 					else nodeflags=(void *)MARK_WHITELIST;
 					if (dtrie_insert(root, RES_ROWS(res)[i].values[0].val.string_val, strlen(RES_ROWS(res)[i].values[0].val.string_val),
-						nodeflags, 10) < 0) LM_ERR("could not insert values into trie.\n");
+						nodeflags, match_mode) < 0) LM_ERR("could not insert values into trie.\n");
 					n++;
 				}
 				else {
