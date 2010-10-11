@@ -20,7 +20,7 @@
 export DEB_BUILD_OPTIONS:="$(DEB_BUILD_OPTIONS) nostrip"
 
 # modules not in the "main" kamailio package
-EXCLUDED_MODULES= geoip
+EXCLUDED_MODULES= 
 
 # extra modules to skip, because they are not compilable now
 # - regardless if they go to the main kamailio package or to some module package,
@@ -42,7 +42,7 @@ MODULES_SP=
 # on which other depend first)
 PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   ldap xml perl utils purple memcached tls \
-			   snmpstats carrierroute xmpp cpl lua python
+			   snmpstats carrierroute xmpp cpl lua python geoip
 
 # directories with possible duplicate libraries (that should be deleted
 # from current module* packages)
