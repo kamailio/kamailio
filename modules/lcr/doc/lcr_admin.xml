@@ -80,11 +80,11 @@
 	<para>
         The function <emphasis>next_gw()</emphasis> can then be used to
 	select one gateway at a 
-	time for forwarding.  Upon each call, unless "dont_strip_of_tag"
+	time for forwarding.  Upon each call, unless "dont_strip_or_tag_flag"
 	flag is set, user part of the original Request-URI is first  
 	stripped by the number of characters as specified by the
 	gateway's strip count and then prefixed by 
-	the gateway's tag.  Upon each call, if a gateway's hostname is
+	the gateway's prefix.  Upon each call, if a gateway's hostname is
 	NULL, Request-URI will be  
 	rewritten based on gateway's URI scheme, IP address, port,
 	parameters, and transport protocol.  If hostname is not NULL and
@@ -103,9 +103,10 @@
 	none, 1 = udp, 2 = tcp, 3 = tls, and 4 = sctp.
 	</para>
 	<para>
-	As a side effect of gateway selection, selected gateway's flags
-	(that may contain information about capabilities of the gateway)
-	are stored into an AVP.
+	As a side effect of gateway selection, selected gateway's tag and flags
+	(that may contain information about the gateway and its capabilities)
+	are stored to tag_avp and flags_avp, respectively, if the corresponding
+	module parameter has been defined.
 	</para>
 	</section>
 
@@ -489,7 +490,7 @@ modparam("lcr", "lcr_rule_table", "rules")
 		<title><varname>prefix_column</varname> (string)</title>
 		<para>
 		Name of the column holding prefix of Request-URI user
-		part.
+		part and prefix of gateway.
 		</para>
 		<para>
 		<emphasis>
@@ -752,15 +753,37 @@ modparam("lcr", "ruri_user_avp", "$avp(i:500)")
 	</section>
 
 	<section>
-		<title><varname>flags_avp</varname> (AVP string)</title>
+		<title><varname>tag_avp</varname> (AVP string)</title>
 		<para>
-		An AVP where successful next_gw and from_gw functions
-		store gateway's flags.
+		If defined, an AVP where successful next_gw and from_gw
+		functions store gateway's tag.
 		</para>
 		<para>
 		<emphasis>
-			There is NO default value, thus this variable must
-			be defined in &siprouterconfig;.
+			There is NO default value, i.e, if not defined,
+			gateway's tag is not stored anywhere.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>tag_avp</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "tag_avp", "$avp(lcr_tag)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>flags_avp</varname> (AVP string)</title>
+		<para>
+		If defined, an AVP where successful next_gw and from_gw
+		functions store gateway's flags.
+		</para>
+		<para>
+		<emphasis>
+			There is NO default value, i.e, if not defined,
+			gateway's flags are not stored anywhere.
 		</emphasis>
 		</para>
 		<example>
@@ -894,7 +917,7 @@ modparam("lcr", "lcr_gw_count", 1024)
 	</section>
 
 	<section>
-		<title><varname>dont_strip_or_tag</varname> (integer)</title>
+		<title><varname>dont_strip_or_tag_flag</varname> (integer)</title>
 		<para>
 		Defines the flag number used to tell if stripping and
 		tagging is done for the selected gateway.
@@ -950,17 +973,20 @@ modparam("lcr", "fetch_rows", 3000)
 	<title>Exported Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">load_gws(lcr_id[, caller_uri])
+		<function moreinfo="none">load_gws(lcr_id[, uri_user[, caller_uri]])
 		</function> 
 		</title>
 		<para>
 		Loads attributes of matching gateways to gw_uri_avp
 		(see Overview section).  Argument lcr_id specifies the used
 	        LCR instance.  It can be an integer or a pseudo
-		variable containing an integer value. 
-		Caller's URI is given by caller_uri argument, which
-		must be a pseudo variable.  If caller_uri argument is
-		omitted, it defaults to empty string.
+		variable containing an integer value.
+		If uri_user is given, it is used, instead of Request-URI user
+		part, to look for matching gateways.  Caller's URI may be given
+		by caller_uri argument. If caller_uri argument is
+		omitted, it defaults to empty string. Both uri_user and
+		caller_uri argument may be a string or a pseudo variable
+		containing a sting value.  
 		</para>
 		<para>
 		Returns 1 if at least one matching gateway was found, 2
@@ -979,7 +1005,7 @@ modparam("lcr", "fetch_rows", 3000)
 		<title><function>load_gws</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (!load_gws("1", "$var(caller_uri)")) {
+if (!load_gws(1, $rU, $var(caller_uri))) {
 	sl_send_reply("500", "Server Internal Error - Cannot load gateways");
 	exit;
 };
@@ -1005,7 +1031,9 @@ if (!load_gws("1", "$var(caller_uri)")) {
 		takes user part of Request-URI from ruri_user_avp.
 		</para>
 		<para>
-		As a side effect, stores gateway's flags to flags_avp.
+		As a side effect, stores gateway's tag and flags to
+		tag_avp and flags_avp, respectively, if the corresponding
+		module parameter has been defined.
 		</para>
 		<para>
 		Returns 1 on success and -1 if there were no gateways
@@ -1085,8 +1113,10 @@ defunct_gw("60");
 		(if present) from ip_addr pseudo variable argument.
 		</para>
 		<para>
-		If request comes from a gateway, gateway's flags are
-		stored into flags_avp as side effect.
+		If request comes from a gateway, gateway's tag and flags are
+		stored as a side effect to
+		tag_avp and flags_avp, respectively, if the corresponding
+		module parameter has been defined.
 		</para>
 		<para>
 		Returns 1 on success and -1 on failure or on error.
@@ -1129,8 +1159,10 @@ if (from_gw("1", "$avp(s:real_source_addr)") {
 		the request does not come from a gateway. 
 		</para>
 		<para>
-		If request comes from a gateway, the gateway's flags are
-		stored into flags_avp as side effect.
+		If request comes from a gateway, gateway's tag and flags are
+		stored as a side effect to
+		tag_avp and flags_avp, respectively, if the corresponding
+		module parameter has been defined.
 		</para>
 		<para>
 		Execution time of from_gw() function is M * O(log N),

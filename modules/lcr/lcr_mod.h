@@ -43,12 +43,12 @@
 #include "../../locking.h"
 #include "../../parser/parse_uri.h"
 
-#define MAX_PREFIX_LEN 32
+#define MAX_PREFIX_LEN 16
 #define MAX_URI_LEN 256
 #define MAX_HOST_LEN 64
 #define MAX_NO_OF_GWS 128
 #define MAX_NAME_LEN 128
-#define MAX_TAG_LEN 16
+#define MAX_TAG_LEN 64
 #define MAX_USER_LEN 64
 #define MAX_PARAMS_LEN 64
 
@@ -56,7 +56,7 @@ typedef enum sip_protos uri_transport;
 
 struct rule_info {
     unsigned int rule_id;
-    char prefix[MAX_PREFIX_LEN + 1];
+    char prefix[MAX_PREFIX_LEN];
     unsigned short prefix_len;
     char from_uri[MAX_URI_LEN + 1];
     unsigned short from_uri_len;
@@ -92,7 +92,9 @@ struct gw_info {
     char params[MAX_PARAMS_LEN];
     unsigned short params_len;
     unsigned int strip;
-    char tag[MAX_TAG_LEN + 1];
+    char prefix[MAX_PREFIX_LEN];
+    unsigned short prefix_len;
+    char tag[MAX_TAG_LEN];
     unsigned short tag_len;
     unsigned int flags;
     unsigned int defunct_until;

@@ -118,6 +118,7 @@ MODULE_VERSION
 #define PARAMS_COL "params"
 #define HOSTNAME_COL "hostname"
 #define STRIP_COL "strip"
+#define PREFIX_COL "prefix"
 #define TAG_COL "tag"
 #define FLAGS_COL "flags"
 #define DEFUNCT_COL "defunct"
@@ -188,6 +189,7 @@ static int fetch_rows_param = DEF_FETCH_ROWS;
 /* avps */
 static char *gw_uri_avp_param = NULL;
 static char *ruri_user_avp_param = NULL;
+static char *tag_avp_param = NULL;
 static char *flags_avp_param = NULL;
 static char *defunct_gw_avp_param = NULL;
 static char *lcr_id_avp_param = NULL;
@@ -205,7 +207,7 @@ unsigned int lcr_gw_count_param = DEF_LCR_GW_COUNT;
 static unsigned int defunct_capability_param = 0;
 
 /* dont strip or tag param */
-static int dont_strip_or_tag_flag_param = -1;
+static int dont_strip_or_prefix_flag_param = -1;
 
 
 /*
@@ -216,6 +218,8 @@ static int     gw_uri_avp_type;
 static int_str gw_uri_avp;
 static int     ruri_user_avp_type;
 static int_str ruri_user_avp;
+static int     tag_avp_type;
+static int_str tag_avp;
 static int     flags_avp_type;
 static int_str flags_avp;
 static int     defunct_gw_avp_type;
@@ -237,8 +241,7 @@ static int mod_init(void);
 static int child_init(int rank);
 static void free_shared_memory(void);
 
-static int load_gws_1(struct sip_msg* _m, char* _s1, char* _s2);
-static int load_gws_2(struct sip_msg* _m, char* _s1, char* _s2);
+static int load_gws(struct sip_msg* _m, int argc, action_u_t argv[]);
 static int next_gw(struct sip_msg* _m, char* _s1, char* _s2);
 static int defunct_gw(struct sip_msg* _m, char* _s1, char* _s2);
 static int from_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
@@ -254,10 +257,8 @@ static int to_any_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-    {"load_gws", (cmd_function)load_gws_1, 1, fixup_igp_null, 0,
+    {"load_gws", (cmd_function)load_gws, VAR_PARAM_NO, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE},
-    {"load_gws", (cmd_function)load_gws_2, 2, fixup_igp_pvar,
-     fixup_free_igp_pvar, REQUEST_ROUTE | FAILURE_ROUTE},
     {"next_gw", (cmd_function)next_gw, 0, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE},
     {"defunct_gw", (cmd_function)defunct_gw, 1, fixup_igp_null, 0,
@@ -308,11 +309,13 @@ static param_export_t params[] = {
     {"params_column",            STR_PARAM, &params_col.s},
     {"hostname_column",          STR_PARAM, &hostname_col.s},
     {"strip_column",             STR_PARAM, &strip_col.s},
+    {"prefix_column",            STR_PARAM, &prefix_col.s},
     {"tag_column",               STR_PARAM, &tag_col.s},
     {"flags_column",             STR_PARAM, &flags_col.s},
     {"defunct_column",           STR_PARAM, &defunct_col.s},
     {"gw_uri_avp",               STR_PARAM, &gw_uri_avp_param},
     {"ruri_user_avp",            STR_PARAM, &ruri_user_avp_param},
+    {"tag_avp",                  STR_PARAM, &tag_avp_param},
     {"flags_avp",                STR_PARAM, &flags_avp_param},
     {"defunct_capability",       INT_PARAM, &defunct_capability_param},
     {"defunct_gw_avp",           STR_PARAM, &defunct_gw_avp_param},
@@ -320,7 +323,7 @@ static param_export_t params[] = {
     {"lcr_count",                INT_PARAM, &lcr_count_param},
     {"lcr_rule_hash_size",       INT_PARAM, &lcr_rule_hash_size_param},
     {"lcr_gw_count",             INT_PARAM, &lcr_gw_count_param},
-    {"dont_strip_or_tag_flag",   INT_PARAM, &dont_strip_or_tag_flag_param},
+    {"dont_strip_or_prefix_flag",INT_PARAM, &dont_strip_or_prefix_flag_param},
     {"fetch_rows",               INT_PARAM, &fetch_rows_param},
     {0, 0, 0}
 };
@@ -430,6 +433,7 @@ static int mod_init(void)
     params_col.len = strlen(params_col.s);
     hostname_col.len = strlen(hostname_col.s);
     strip_col.len = strlen(strip_col.s);
+    prefix_col.len = strlen(prefix_col.s);
     tag_col.len = strlen(tag_col.s);
     flags_col.len = strlen(flags_col.s);
     defunct_col.len = strlen(defunct_col.s);
@@ -456,10 +460,10 @@ static int mod_init(void)
 	       lcr_gw_count_param);
 	return -1;
     }
-    if ((dont_strip_or_tag_flag_param != -1) &&
-	!flag_in_range(dont_strip_or_tag_flag_param)) {
-	LM_ERR("invalid dont_strip_or_tag_flag value <%d>\n",
-	       dont_strip_or_tag_flag_param);
+    if ((dont_strip_or_prefix_flag_param != -1) &&
+	!flag_in_range(dont_strip_or_prefix_flag_param)) {
+	LM_ERR("invalid dont_strip_or_prefix_flag value <%d>\n",
+	       dont_strip_or_prefix_flag_param);
 	return -1;
     }
 
@@ -503,22 +507,30 @@ static int mod_init(void)
 	return -1;
     }
 
-    if (flags_avp_param && *flags_avp_param) {
+    if (tag_avp_param) {
+	s.s = tag_avp_param; s.len = strlen(s.s);
+	if ((pv_parse_spec(&s, &avp_spec)==0) || (avp_spec.type!=PVT_AVP)) {
+	    LM_ERR("malformed or non AVP definition <%s>\n", tag_avp_param);
+	    return -1;
+	}
+	if (pv_get_avp_name(0, &(avp_spec.pvp), &tag_avp, &avp_flags) != 0) {
+	    LM_ERR("invalid AVP definition <%s>\n", tag_avp_param);
+	    return -1;
+	}
+	tag_avp_type = avp_flags | AVP_VAL_STR;
+    }
+
+    if (flags_avp_param) {
 	s.s = flags_avp_param; s.len = strlen(s.s);
-	if (pv_parse_spec(&s, &avp_spec)==0
-	    || avp_spec.type!=PVT_AVP) {
+	if ((pv_parse_spec(&s, &avp_spec)==0) || (avp_spec.type != PVT_AVP)) {
 	    LM_ERR("malformed or non AVP definition <%s>\n", flags_avp_param);
 	    return -1;
 	}
-	
 	if (pv_get_avp_name(0, &(avp_spec.pvp), &flags_avp, &avp_flags) != 0) {
 	    LM_ERR("invalid AVP definition <%s>\n", flags_avp_param);
 	    return -1;
 	}
 	flags_avp_type = avp_flags;
-    } else {
-	LM_ERR("AVP flags_avp has not been defined\n");
-	return -1;
     }
 
     if (defunct_capability_param > 0) {
@@ -809,9 +821,9 @@ static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int gw_id,
 		     unsigned int port, unsigned int transport,
 		     char *params, unsigned int params_len,
 		     char *hostname, unsigned int hostname_len,
-		     char *ip_string, unsigned int strip, char *tag,
-		     unsigned int tag_len, unsigned int flags,
-		     unsigned int defunct_until)
+		     char *ip_string, unsigned int strip, char *prefix,
+		     unsigned int prefix_len, char *tag, unsigned int tag_len,
+		     unsigned int flags, unsigned int defunct_until)
 {
     if (gw_unique(gws, i - 1, ip_addr, port, hostname, hostname_len) == 0) {
 	LM_ERR("gw <%s, %u, %.*s> is not unique\n", ip_string, port,
@@ -830,6 +842,8 @@ static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int gw_id,
     if (hostname_len) memcpy(&(gws[i].hostname[0]), hostname, hostname_len);
     gws[i].hostname_len = hostname_len;
     gws[i].strip = strip;
+    gws[i].prefix_len = prefix_len;
+    if (prefix_len) memcpy(&(gws[i].prefix[0]), prefix, prefix_len);
     gws[i].tag_len = tag_len;
     if (tag_len) memcpy(&(gws[i].tag[0]), tag, tag_len);
     gws[i].flags = flags;
@@ -904,7 +918,7 @@ int reload_tables()
     db_key_t key_cols[1];
     db_op_t op[1];
     db_val_t vals[1];
-    db_key_t gw_cols[12];
+    db_key_t gw_cols[13];
     db_key_t rule_cols[5];
     db_key_t target_cols[4];
     pcre *from_uri_re;
@@ -930,10 +944,11 @@ int reload_tables()
     gw_cols[5] = &params_col;
     gw_cols[6] = &hostname_col;
     gw_cols[7] = &strip_col;
-    gw_cols[8] = &tag_col;
-    gw_cols[9] = &flags_col;
-    gw_cols[10] = &defunct_col;
-    gw_cols[11] = &id_col;
+    gw_cols[8] = &prefix_col;
+    gw_cols[9] = &tag_col;
+    gw_cols[10] = &flags_col;
+    gw_cols[11] = &defunct_col;
+    gw_cols[12] = &id_col;
 
     target_cols[0] = &rule_id_col;
     target_cols[1] = &gw_id_col;
@@ -1099,7 +1114,7 @@ int reload_tables()
 	}
 
 	VAL_INT(vals) = lcr_id;
-	if (lcr_dbf.query(dbh, key_cols, op, vals, gw_cols, 1, 12, 0, &res)
+	if (lcr_dbf.query(dbh, key_cols, op, vals, gw_cols, 1, 13, 0, &res)
 	    < 0) {
 	    LM_ERR("failed to query gw data\n");
 	    goto err;
@@ -1114,20 +1129,20 @@ int reload_tables()
 
 	for (i = 0; i < RES_ROW_N(res); i++) {
 	    row = RES_ROWS(res) + i;
-	    if ((VAL_NULL(ROW_VALUES(row) + 11) == 1) ||
-		(VAL_TYPE(ROW_VALUES(row) + 11) != DB1_INT)) {
+	    if ((VAL_NULL(ROW_VALUES(row) + 12) == 1) ||
+		(VAL_TYPE(ROW_VALUES(row) + 12) != DB1_INT)) {
 		LM_ERR("lcr_gw id at row <%u> is null or not int\n", i);
 		goto err;
 	    }
-	    gw_id = (unsigned int)VAL_INT(ROW_VALUES(row) + 11);
-	    if (VAL_NULL(ROW_VALUES(row) + 10)) {
+	    gw_id = (unsigned int)VAL_INT(ROW_VALUES(row) + 12);
+	    if (VAL_NULL(ROW_VALUES(row) + 11)) {
 		defunct_until = 0;
 	    } else {
-		if (VAL_TYPE(ROW_VALUES(row) + 10) != DB1_INT) {
+		if (VAL_TYPE(ROW_VALUES(row) + 11) != DB1_INT) {
 		    LM_ERR("lcr_gw defunct at row <%u> is not int\n", i);
 		    goto err;
 		}
-		defunct_until = (unsigned int)VAL_INT(ROW_VALUES(row) + 10);
+		defunct_until = (unsigned int)VAL_INT(ROW_VALUES(row) + 11);
 		if (defunct_until > 4294967294UL) {
 		    LM_DBG("skipping disabled gw <%u>\n", gw_id);
 		    continue;
@@ -1276,32 +1291,50 @@ int reload_tables()
 		goto err;
 	    }
 	    if (VAL_NULL(ROW_VALUES(row) + 8)) {
+		prefix_len = 0;
+		prefix = (char *)0;
+	    } else {
+		if (VAL_TYPE(ROW_VALUES(row) + 8) != DB1_STRING) {
+		    LM_ERR("lcr_gw prefix at row <%u> is not string\n", i);
+		    goto err;
+		}
+		prefix = (char *)VAL_STRING(ROW_VALUES(row) + 8);
+		prefix_len = strlen(prefix);
+	    }
+	    if (prefix_len > MAX_PREFIX_LEN) {
+		LM_ERR("lcr_gw prefix at row <%u> it too long\n", i);
+		goto err;
+	    }
+	    if (VAL_NULL(ROW_VALUES(row) + 9)) {
 		tag_len = 0;
 		tag = (char *)0;
 	    } else {
-		if (VAL_TYPE(ROW_VALUES(row) + 8) != DB1_STRING) {
+		if (VAL_TYPE(ROW_VALUES(row) + 9) != DB1_STRING) {
 		    LM_ERR("lcr_gw tag at row <%u> is not string\n", i);
 		    goto err;
 		}
-		tag = (char *)VAL_STRING(ROW_VALUES(row) + 8);
+		tag = (char *)VAL_STRING(ROW_VALUES(row) + 9);
 		tag_len = strlen(tag);
 	    }
 	    if (tag_len > MAX_TAG_LEN) {
 		LM_ERR("lcr_gw tag at row <%u> it too long\n", i);
 		goto err;
 	    }
-	    if ((VAL_NULL(ROW_VALUES(row) + 9) == 1) ||
-		(VAL_TYPE(ROW_VALUES(row) + 9) != DB1_INT)) {
-		LM_ERR("lcr_gw flags at row <%u> is null or not int\n", i);
-		goto err;
+	    if (VAL_NULL(ROW_VALUES(row) + 10)) {
+		flags = 0;
+	    } else {
+		if (VAL_TYPE(ROW_VALUES(row) + 10) != DB1_INT) {
+		    LM_ERR("lcr_gw flags at row <%u> is not int\n", i);
+		    goto err;
+		}
+		flags = (unsigned int)VAL_INT(ROW_VALUES(row) + 10);
 	    }
-	    flags = (unsigned int)VAL_INT(ROW_VALUES(row) + 9);
 	    gw_cnt++;
 	    if (!insert_gw(gws, gw_cnt, gw_id, gw_name, gw_name_len,
 			   scheme, (unsigned int)ip_addr.s_addr, port,
 			   transport, params, params_len, hostname,
-			   hostname_len, ip_string, strip, tag, tag_len, flags,
-			   defunct_until)) {
+			   hostname_len, ip_string, strip, prefix, prefix_len,
+			   tag, tag_len, flags, defunct_until)) {
 		goto err;
 	    }
 	}
@@ -1422,8 +1455,10 @@ int reload_tables()
 
 
 inline int encode_avp_value(char *value, unsigned int gw_index, uri_type scheme,
-			    unsigned int strip, char *tag, unsigned int tag_len,
-			    unsigned int ip_addr, char *hostname,
+			    unsigned int strip,
+			    char *prefix, unsigned int prefix_len,
+			    char *tag, unsigned int tag_len,
+			    unsigned int ip_addr, char *hostname, 
 			    unsigned int hostname_len, unsigned int port,
 			    char *params, unsigned int params_len,
 			    uri_transport transport, unsigned int flags)
@@ -1444,6 +1479,9 @@ inline int encode_avp_value(char *value, unsigned int gw_index, uri_type scheme,
     /* strip */
     string = int2str(strip, &len);
     append_str(at, string, len);
+    append_chr(at, '|');
+    /* prefix */
+    append_str(at, prefix, prefix_len);
     append_chr(at, '|');
     /* tag */
     append_str(at, tag, tag_len);
@@ -1477,9 +1515,9 @@ inline int encode_avp_value(char *value, unsigned int gw_index, uri_type scheme,
 }
 
 inline int decode_avp_value(char *value, unsigned int *gw_index, str *scheme,
-			    unsigned int *strip, str *tag, unsigned int *addr,
-			    str *hostname, str *port, str *params,
-			    str *transport, unsigned int *flags)
+			    unsigned int *strip, str *prefix, str *tag,
+			    unsigned int *addr, str *hostname, str *port,
+			    str *params, str *transport, unsigned int *flags)
 {
     unsigned int u;
     str s;
@@ -1519,6 +1557,14 @@ inline int decode_avp_value(char *value, unsigned int *gw_index, str *scheme,
     }
     s.len = sep - s.s;
     str2int(&s, strip);
+    /* prefix */
+    prefix->s = sep + 1;
+    sep = index(prefix->s, '|');
+    if (sep == NULL) {
+	LM_ERR("prefix was not found in AVP value\n");
+	return 0;
+    }
+    prefix->len = sep - prefix->s;
     /* tag */
     tag->s = sep + 1;
     sep = index(tag->s, '|');
@@ -1605,7 +1651,7 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 		       unsigned int gw_cnt, str *ruri_user)
 {
     unsigned int i, index, strip, hostname_len, params_len;
-    int tag_len;
+    int prefix_len, tag_len;
     str value;
     char encoded_value[MAX_URI_LEN];
     int_str val;
@@ -1622,9 +1668,11 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 	    LM_ERR("strip count of gw is too large <%u>\n", strip);
 	    goto skip;
 	}
+	prefix_len = gws[index].prefix_len;
 	tag_len = gws[index].tag_len;
-	if (5 /* gw_index */ + 5 /* scheme */ + 4 /* strip */ + tag_len +
-	    1 /* @ */ + ((hostname_len > 15)?hostname_len:15) + 6 /* port */ +
+	if (5 /* gw_index */ + 5 /* scheme */ + 4 /* strip */ + prefix_len +
+	    tag_len + 1 /* @ */ +
+	    ((hostname_len > 15)?hostname_len:15) + 6 /* port */ +
 	    params_len /* params */ + 15 /* transport */ + 10 /* flags */ +
 	    7 /* separators */ > MAX_URI_LEN) {
 	    LM_ERR("too long AVP value\n");
@@ -1632,7 +1680,8 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 	}
 	value.len = 
 	    encode_avp_value(encoded_value, index, gws[index].scheme,
-			     strip, gws[index].tag, tag_len,
+			     strip, gws[index].prefix, prefix_len,
+			     gws[index].tag, tag_len,
 			     gws[index].ip_addr,
 			     gws[index].hostname, hostname_len,
 			     gws[index].port, gws[index].params, params_len,
@@ -1652,8 +1701,7 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
 /*
  * Load info of matching GWs into gw_uri_avps
  */
-static int load_gws(struct sip_msg* _m, fparam_t *_lcr_id,
-					pv_spec_t* _from_uri)
+static int load_gws(struct sip_msg* _m, int argc, action_u_t argv[])
 {
     str ruri_user, from_uri;
     int i, j, lcr_id;
@@ -1663,44 +1711,47 @@ static int load_gws(struct sip_msg* _m, fparam_t *_lcr_id,
     struct rule_info **rules, *rule, *pl;
     struct gw_info *gws;
     struct target *t;
-    pv_value_t pv_val;
+    char* tmp;
 
     /* Get and check parameter values */
-    if (get_int_fparam(&lcr_id, _m, _lcr_id) != 0) {
-	LM_ERR("no lcr_id param value\n");
+    if (argc < 1) {
+	LM_ERR("lcr_id parameter is missing\n");
+	return -1;
+    }
+    lcr_id = strtol(argv[0].u.string, &tmp, 10);
+    if ((tmp == 0) || (*tmp) || (tmp == argv[0].u.string)) {
+	LM_ERR("invalid lcr_id parameter %s\n", argv[0].u.string);
 	return -1;
     }
     if ((lcr_id < 1) || (lcr_id > lcr_count_param)) {
 	LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
 	return -1;
     }
-    if (_from_uri) {
-		if (pv_get_spec_value(_m, _from_uri, &pv_val) == 0) {
-			if (pv_val.flags & PV_VAL_STR)
-				from_uri = pv_val.rs;
-			else {
-				LM_ERR("non string from_uri parameter value\n");
-				return -1;
-			}
-		} else {
-			LM_ERR("could not get from_uri pvar value\n");
-			return -1;
-		}
+    if (argc > 1) {
+	ruri_user = argv[1].u.str;
+    } else {
+	if ((parse_sip_msg_uri(_m) < 0) || (!_m->parsed_uri.user.s)) {
+	    LM_ERR("error while parsing R-URI\n");
+	    return -1;
+	}
+	ruri_user = _m->parsed_uri.user;
+    }
+    if (argc > 2) {
+	from_uri = argv[2].u.str;
     } else {
 	from_uri.len = 0;
 	from_uri.s = (char *)0;
     }
+    if (argc > 3) {
+	LM_ERR("too many parameters\n");
+	return -1;
+    }
+    LM_DBG("load_gws(%u, %.*s, %.*s)\n", lcr_id, ruri_user.len, ruri_user.s,
+	   from_uri.len, from_uri.s);
 
     /* Use rules and gws with index lcr_id */
     rules = rule_pt[lcr_id];
     gws = gw_pt[lcr_id];
-
-    /* Find Request-URI user */
-    if ((parse_sip_msg_uri(_m) < 0) || (!_m->parsed_uri.user.s)) {
-	LM_ERR("error while parsing R-URI\n");
-	return -1;
-    }
-    ruri_user = _m->parsed_uri.user;
 
     /*
      * Find lcr entries that match based on prefix and from_uri and collect
@@ -1793,27 +1844,16 @@ static int load_gws(struct sip_msg* _m, fparam_t *_lcr_id,
 }
 
 
-static int load_gws_1(struct sip_msg* _m, char *_lcr_id, char *_s2)
-{
-    return load_gws(_m, (fparam_t *)_lcr_id, 0);
-}
-
-
-static int load_gws_2(struct sip_msg* _m, char *_lcr_id, char *_from_uri)
-{
-    return load_gws(_m, (fparam_t *)_lcr_id, (pv_spec_t *)_from_uri);
-}
-
-
 /* Generate Request-URI and Destination URI */
 static int generate_uris(struct sip_msg* _m, char *r_uri, str *r_uri_user,
 			 unsigned int *r_uri_len, char *dst_uri,
 			 unsigned int *dst_uri_len, unsigned int *addr,
-			 unsigned int *gw_index, unsigned int *flags)
+			 unsigned int *gw_index, unsigned int *flags,
+			 str *tag)
 {
     int_str gw_uri_val;
     struct usr_avp *gu_avp;
-    str scheme, tag, hostname, port, params, transport, addr_str;
+    str scheme, prefix, hostname, port, params, transport, addr_str;
     char *at;
     unsigned int strip;
     struct ip_addr a;
@@ -1822,8 +1862,8 @@ static int generate_uris(struct sip_msg* _m, char *r_uri, str *r_uri_user,
 
     if (!gu_avp) return 0; /* No more gateways left */
 
-    decode_avp_value(gw_uri_val.s.s, gw_index, &scheme, &strip, &tag, addr,
-		     &hostname, &port, &params, &transport, flags);
+    decode_avp_value(gw_uri_val.s.s, gw_index, &scheme, &strip, &prefix,
+		     tag, addr, &hostname, &port, &params, &transport, flags);
 
     if (*addr > 0) {
 	a.af = AF_INET;
@@ -1835,23 +1875,23 @@ static int generate_uris(struct sip_msg* _m, char *r_uri, str *r_uri_user,
 	addr_str.len = 0;
     }
     
-    if (scheme.len + r_uri_user->len - strip + tag.len + 1 /* @ */ +
+    if (scheme.len + r_uri_user->len - strip + prefix.len + 1 /* @ */ +
 	((hostname.len > 15)?hostname.len:15) + 1 /* : */ +
 	port.len + params.len + transport.len + 1 /* null */ > MAX_URI_LEN) {
 	LM_ERR("too long Request URI or DST URI\n");
 	return -1;
     }
 
-    if ((dont_strip_or_tag_flag_param != -1) &&
-	isflagset(_m, dont_strip_or_tag_flag_param)) {
+    if ((dont_strip_or_prefix_flag_param != -1) &&
+	isflagset(_m, dont_strip_or_prefix_flag_param)) {
 	strip = 0;
-	tag.len = 0;
+	prefix.len = 0;
     }
 
     at = r_uri;
     
     append_str(at, scheme.s, scheme.len);
-    append_str(at, tag.s, tag.len);
+    append_str(at, prefix.s, prefix.len);
     if (strip > r_uri_user->len) {
 	LM_ERR("strip count <%u> is larger than R-URI user <%.*s>\n",
 	       strip, r_uri_user->len, r_uri_user->s);
@@ -1985,7 +2025,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     int_str ruri_user_val, val;
     struct usr_avp *ru_avp;
     int rval;
-    str uri_str;
+    str uri_str, tag;
     unsigned int flags, r_uri_len, dst_uri_len, addr, gw_index;
     char r_uri[MAX_URI_LEN], dst_uri[MAX_URI_LEN];
 
@@ -2003,7 +2043,8 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    return -1;
 	}
 	if (!generate_uris(_m, r_uri, &(_m->parsed_uri.user), &r_uri_len,
-			   dst_uri, &dst_uri_len, &addr, &gw_index, &flags)) {
+			   dst_uri, &dst_uri_len, &addr, &gw_index, &flags,
+			   &tag)) {
 	    return -1;
 	}
 
@@ -2021,7 +2062,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
          * and Destination URIs. */
 
 	if (!generate_uris(_m, r_uri, &(ruri_user_val.s), &r_uri_len, dst_uri,
-			   &dst_uri_len, &addr, &gw_index, &flags)) {
+			   &dst_uri_len, &addr, &gw_index, &flags, &tag)) {
 	    return -1;
 	}
     }
@@ -2045,9 +2086,18 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     }
 
     /* Set flags_avp */
-    val.n = flags;
-    add_avp(flags_avp_type, flags_avp, val);
-    LM_DBG("added flags_avp <%u>\n", (unsigned int)val.n);
+    if (flags_avp_param) {
+	val.n = flags;
+	add_avp(flags_avp_type, flags_avp, val);
+	LM_DBG("added flags_avp <%u>\n", (unsigned int)val.n);
+    }
+
+    /* Set tag_avp */
+    if (tag_avp_param) {
+	val.s = tag;
+	add_avp(tag_avp_type, tag_avp, val);
+	LM_DBG("added tag_avp <%.*s>\n", val.s.len, val.s.s);
+    }
 
     /* Add index of selected gw to defunct gw AVP */
     if (defunct_capability_param > 0) {
@@ -2089,9 +2139,17 @@ static int do_from_gw(struct sip_msg* _m, unsigned int lcr_id,
 	return -1;
     } else {
 	LM_DBG("request game from gw\n");
-	val.n = res->flags;
-	add_avp(flags_avp_type, flags_avp, val);
-	LM_DBG("added flags_avp <%u>\n", (unsigned int)val.n);
+	if (tag_avp_param) {
+	    val.s.s = res->tag;
+	    val.s.len = res->tag_len;
+	    add_avp(tag_avp_type, tag_avp, val);
+	    LM_DBG("added tag_avp <%.*s>\n", val.s.len, val.s.s);
+	}
+	if (flags_avp_param) {
+	    val.n = res->flags;
+	    add_avp(flags_avp_type, flags_avp, val);
+	    LM_DBG("added flags_avp <%u>\n", (unsigned int)val.n);
+	}
 	return 1;
     }
 }

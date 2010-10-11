@@ -55,18 +55,19 @@ Juha Heinanen
               3.26. lcr_count (integer)
               3.27. gw_uri_avp (AVP string)
               3.28. ruri_user_avp (AVP string)
-              3.29. flags_avp (AVP string)
-              3.30. defunct_capability (integer)
-              3.31. lcr_id_avp (AVP string)
-              3.32. defunct_gw_avp (AVP string)
-              3.33. lcr_rule_hash_size (integer)
-              3.34. lcr_gw_count (integer)
-              3.35. dont_strip_or_tag (integer)
-              3.36. fetch_rows (integer)
+              3.29. tag_avp (AVP string)
+              3.30. flags_avp (AVP string)
+              3.31. defunct_capability (integer)
+              3.32. lcr_id_avp (AVP string)
+              3.33. defunct_gw_avp (AVP string)
+              3.34. lcr_rule_hash_size (integer)
+              3.35. lcr_gw_count (integer)
+              3.36. dont_strip_or_tag_flag (integer)
+              3.37. fetch_rows (integer)
 
         4. Exported Functions
 
-              4.1. load_gws(lcr_id[, caller_uri])
+              4.1. load_gws(lcr_id[, uri_user[, caller_uri]])
               4.2. next_gw()
               4.3. defunct_gw(period)
               4.4. from_gw(lcr_id [, ip_addr])
@@ -112,25 +113,26 @@ Juha Heinanen
    1.26. Setting lcr_count module parameter
    1.27. Setting gw_uri_avp module parameter
    1.28. Setting ruri_user_avp module parameter
-   1.29. Setting flags_avp module parameter
-   1.30. Setting defunct_capability module parameter
-   1.31. Setting lcr_id_avp module parameter
-   1.32. Setting defunct_gw_avp module parameter
-   1.33. Setting lcr_rule_hash_size module parameter
-   1.34. Setting lcr_gw_count module parameter
-   1.35. Setting dont_strip_or_tag_flag module parameter
-   1.36. Set fetch_rows parameter
-   1.37. load_gws usage
-   1.38. next_gw usage from a route block
-   1.39. next_gw usage from a failure route block
-   1.40. defunct_gw usage
-   1.41. from_gw usage
+   1.29. Setting tag_avp module parameter
+   1.30. Setting flags_avp module parameter
+   1.31. Setting defunct_capability module parameter
+   1.32. Setting lcr_id_avp module parameter
+   1.33. Setting defunct_gw_avp module parameter
+   1.34. Setting lcr_rule_hash_size module parameter
+   1.35. Setting lcr_gw_count module parameter
+   1.36. Setting dont_strip_or_tag_flag module parameter
+   1.37. Set fetch_rows parameter
+   1.38. load_gws usage
+   1.39. next_gw usage from a route block
+   1.40. next_gw usage from a failure route block
+   1.41. defunct_gw usage
    1.42. from_gw usage
-   1.43. to_gw usage
+   1.43. from_gw usage
    1.44. to_gw usage
-   1.45. lcr.reload RPC example
-   1.46. lcr.dump_gws RPC example
-   1.47. lcr.dump_rules RPC example
+   1.45. to_gw usage
+   1.46. lcr.reload RPC example
+   1.47. lcr.dump_gws RPC example
+   1.48. lcr.dump_rules RPC example
 
 Chapter 1. Admin Guide
 
@@ -172,18 +174,19 @@ Chapter 1. Admin Guide
         3.26. lcr_count (integer)
         3.27. gw_uri_avp (AVP string)
         3.28. ruri_user_avp (AVP string)
-        3.29. flags_avp (AVP string)
-        3.30. defunct_capability (integer)
-        3.31. lcr_id_avp (AVP string)
-        3.32. defunct_gw_avp (AVP string)
-        3.33. lcr_rule_hash_size (integer)
-        3.34. lcr_gw_count (integer)
-        3.35. dont_strip_or_tag (integer)
-        3.36. fetch_rows (integer)
+        3.29. tag_avp (AVP string)
+        3.30. flags_avp (AVP string)
+        3.31. defunct_capability (integer)
+        3.32. lcr_id_avp (AVP string)
+        3.33. defunct_gw_avp (AVP string)
+        3.34. lcr_rule_hash_size (integer)
+        3.35. lcr_gw_count (integer)
+        3.36. dont_strip_or_tag_flag (integer)
+        3.37. fetch_rows (integer)
 
    4. Exported Functions
 
-        4.1. load_gws(lcr_id[, caller_uri])
+        4.1. load_gws(lcr_id[, uri_user[, caller_uri]])
         4.2. next_gw()
         4.3. defunct_gw(period)
         4.4. from_gw(lcr_id [, ip_addr])
@@ -241,26 +244,27 @@ Chapter 1. Admin Guide
    be done with command 'kamctl eval_weights'.
 
    The function next_gw() can then be used to select one gateway at a time
-   for forwarding. Upon each call, unless "dont_strip_of_tag" flag is set,
-   user part of the original Request-URI is first stripped by the number
-   of characters as specified by the gateway's strip count and then
-   prefixed by the gateway's tag. Upon each call, if a gateway's hostname
-   is NULL, Request-URI will be rewritten based on gateway's URI scheme,
-   IP address, port, parameters, and transport protocol. If hostname is
-   not NULL and IP address is NULL, Request-URI will be rewritten based on
-   the gateway's URI scheme, hostname, port, parameters and transport
-   protocol. If both hostname and IP address are not NULL, Request-URI
-   will be rewritten based on gateway's URI scheme, hostname, and
-   parameters, and destination URI is set based on gateway's URI scheme,
-   IP address, port, and transport protocol.
+   for forwarding. Upon each call, unless "dont_strip_or_tag_flag" flag is
+   set, user part of the original Request-URI is first stripped by the
+   number of characters as specified by the gateway's strip count and then
+   prefixed by the gateway's prefix. Upon each call, if a gateway's
+   hostname is NULL, Request-URI will be rewritten based on gateway's URI
+   scheme, IP address, port, parameters, and transport protocol. If
+   hostname is not NULL and IP address is NULL, Request-URI will be
+   rewritten based on the gateway's URI scheme, hostname, port, parameters
+   and transport protocol. If both hostname and IP address are not NULL,
+   Request-URI will be rewritten based on gateway's URI scheme, hostname,
+   and parameters, and destination URI is set based on gateway's URI
+   scheme, IP address, port, and transport protocol.
 
    Valid URI scheme values are NULL = sip, 1 = sip and 2 = sips. Currently
    valid transport protocol values are NULL = none, 1 = udp, 2 = tcp, 3 =
    tls, and 4 = sctp.
 
-   As a side effect of gateway selection, selected gateway's flags (that
-   may contain information about capabilities of the gateway) are stored
-   into an AVP.
+   As a side effect of gateway selection, selected gateway's tag and flags
+   (that may contain information about the gateway and its capabilities)
+   are stored to tag_avp and flags_avp, respectively, if the corresponding
+   module parameter has been defined.
 
 2. Dependencies
 
@@ -308,14 +312,15 @@ Chapter 1. Admin Guide
    3.26. lcr_count (integer)
    3.27. gw_uri_avp (AVP string)
    3.28. ruri_user_avp (AVP string)
-   3.29. flags_avp (AVP string)
-   3.30. defunct_capability (integer)
-   3.31. lcr_id_avp (AVP string)
-   3.32. defunct_gw_avp (AVP string)
-   3.33. lcr_rule_hash_size (integer)
-   3.34. lcr_gw_count (integer)
-   3.35. dont_strip_or_tag (integer)
-   3.36. fetch_rows (integer)
+   3.29. tag_avp (AVP string)
+   3.30. flags_avp (AVP string)
+   3.31. defunct_capability (integer)
+   3.32. lcr_id_avp (AVP string)
+   3.33. defunct_gw_avp (AVP string)
+   3.34. lcr_rule_hash_size (integer)
+   3.35. lcr_gw_count (integer)
+   3.36. dont_strip_or_tag_flag (integer)
+   3.37. fetch_rows (integer)
 
 3.1. db_url (string)
 
@@ -505,7 +510,8 @@ modparam("lcr", "lcr_rule_table", "rules")
 
 3.17. prefix_column (string)
 
-   Name of the column holding prefix of Request-URI user part.
+   Name of the column holding prefix of Request-URI user part and prefix
+   of gateway.
 
    Default value is “prefix”.
 
@@ -642,32 +648,45 @@ modparam("lcr", "gw_uri_avp", "$avp(i:709)")
 modparam("lcr", "ruri_user_avp", "$avp(i:500)")
 ...
 
-3.29. flags_avp (AVP string)
+3.29. tag_avp (AVP string)
 
-   An AVP where successful next_gw and from_gw functions store gateway's
-   flags.
+   If defined, an AVP where successful next_gw and from_gw functions store
+   gateway's tag.
 
-   There is NO default value, thus this variable must be defined in
-   sip-router.cfg.
+   There is NO default value, i.e, if not defined, gateway's tag is not
+   stored anywhere.
 
-   Example 1.29. Setting flags_avp module parameter
+   Example 1.29. Setting tag_avp module parameter
+...
+modparam("lcr", "tag_avp", "$avp(lcr_tag)")
+...
+
+3.30. flags_avp (AVP string)
+
+   If defined, an AVP where successful next_gw and from_gw functions store
+   gateway's flags.
+
+   There is NO default value, i.e, if not defined, gateway's flags are not
+   stored anywhere.
+
+   Example 1.30. Setting flags_avp module parameter
 ...
 modparam("lcr", "flags_avp", "$avp(i:712)")
 ...
 
-3.30. defunct_capability (integer)
+3.31. defunct_capability (integer)
 
    Tells if defunct capability of (non-responsive) gateways is supported.
    Non-zero value turns on defunct capability.
 
    Default value is 0.
 
-   Example 1.30.  Setting defunct_capability module parameter
+   Example 1.31.  Setting defunct_capability module parameter
 ...
 modparam("lcr", "defunct_capability", 1)
 ...
 
-3.31. lcr_id_avp (AVP string)
+3.32. lcr_id_avp (AVP string)
 
    Internal AVP that load_gws() function uses to store LCR instance
    identifier of loaded gateways. Only needed if gateway defunct
@@ -675,12 +694,12 @@ modparam("lcr", "defunct_capability", 1)
 
    There is NO default value.
 
-   Example 1.31. Setting lcr_id_avp module parameter
+   Example 1.32. Setting lcr_id_avp module parameter
 ...
 modparam("lcr", "lcr_id_avp", "$avp(s:lcr_id_avp)")
 ...
 
-3.32. defunct_gw_avp (AVP string)
+3.33. defunct_gw_avp (AVP string)
 
    Internal AVP that next_gw() function uses to store internal index of
    the selected gateway for later use by defunct_gw() function. Only
@@ -688,12 +707,12 @@ modparam("lcr", "lcr_id_avp", "$avp(s:lcr_id_avp)")
 
    There is NO default value.
 
-   Example 1.32. Setting defunct_gw_avp module parameter
+   Example 1.33. Setting defunct_gw_avp module parameter
 ...
 modparam("lcr", "defunct_gw_avp", "$avp(s:defunct_gw_avp)")
 ...
 
-3.33. lcr_rule_hash_size (integer)
+3.34. lcr_rule_hash_size (integer)
 
    Defines the size of hash table used to store LCR rules. Hashing is done
    based on rule's prefix. Larger value means less collisions with other
@@ -701,35 +720,35 @@ modparam("lcr", "defunct_gw_avp", "$avp(s:defunct_gw_avp)")
 
    Default value is 128.
 
-   Example 1.33.  Setting lcr_rule_hash_size module parameter
+   Example 1.34.  Setting lcr_rule_hash_size module parameter
 ...
 modparam("lcr", "lcr_rule_hash_size", 1024)
 ...
 
-3.34. lcr_gw_count (integer)
+3.35. lcr_gw_count (integer)
 
    Defines the maximum number of gateways in lcr_gw table.
 
    Default value is 128.
 
-   Example 1.34.  Setting lcr_gw_count module parameter
+   Example 1.35.  Setting lcr_gw_count module parameter
 ...
 modparam("lcr", "lcr_gw_count", 1024)
 ...
 
-3.35. dont_strip_or_tag (integer)
+3.36. dont_strip_or_tag_flag (integer)
 
    Defines the flag number used to tell if stripping and tagging is done
    for the selected gateway.
 
    Default value is -1 meaning that the flag is not defined.
 
-   Example 1.35.  Setting dont_strip_or_tag_flag module parameter
+   Example 1.36.  Setting dont_strip_or_tag_flag module parameter
 ...
 modparam("lcr", "dont_strip_or_tag_flag", 10)
 ...
 
-3.36. fetch_rows (integer)
+3.37. fetch_rows (integer)
 
    The number of the rows to be fetched at once from database when loading
    data from lcr_rule table. This value can be used to tune the load time
@@ -739,14 +758,14 @@ modparam("lcr", "dont_strip_or_tag_flag", 10)
 
    Default value is “1024”.
 
-   Example 1.36. Set fetch_rows parameter
+   Example 1.37. Set fetch_rows parameter
 ...
 modparam("lcr", "fetch_rows", 3000)
 ...
 
 4. Exported Functions
 
-   4.1. load_gws(lcr_id[, caller_uri])
+   4.1. load_gws(lcr_id[, uri_user[, caller_uri]])
    4.2. next_gw()
    4.3. defunct_gw(period)
    4.4. from_gw(lcr_id [, ip_addr])
@@ -754,13 +773,16 @@ modparam("lcr", "fetch_rows", 3000)
    4.6. to_gw(lcr_id [, ip_addr])
    4.7. to_any_gw([ip_addr])
 
-4.1.  load_gws(lcr_id[, caller_uri])
+4.1.  load_gws(lcr_id[, uri_user[, caller_uri]])
 
    Loads attributes of matching gateways to gw_uri_avp (see Overview
    section). Argument lcr_id specifies the used LCR instance. It can be an
-   integer or a pseudo variable containing an integer value. Caller's URI
-   is given by caller_uri argument, which must be a pseudo variable. If
-   caller_uri argument is omitted, it defaults to empty string.
+   integer or a pseudo variable containing an integer value. If uri_user
+   is given, it is used, instead of Request-URI user part, to look for
+   matching gateways. Caller's URI may be given by caller_uri argument. If
+   caller_uri argument is omitted, it defaults to empty string. Both
+   uri_user and caller_uri argument may be a string or a pseudo variable
+   containing a sting value.
 
    Returns 1 if at least one matching gateway was found, 2 if no matching
    gateways was found, and -1 on error.
@@ -771,9 +793,9 @@ modparam("lcr", "fetch_rows", 3000)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.37. load_gws usage
+   Example 1.38. load_gws usage
 ...
-if (!load_gws("1", "$var(caller_uri)")) {
+if (!load_gws(1, $rU, $var(caller_uri))) {
         sl_send_reply("500", "Server Internal Error - Cannot load gateways");
         exit;
 };
@@ -790,7 +812,9 @@ if (!load_gws("1", "$var(caller_uri)")) {
    Upon subsequent calls, does the same as in above, but takes user part
    of Request-URI from ruri_user_avp.
 
-   As a side effect, stores gateway's flags to flags_avp.
+   As a side effect, stores gateway's tag and flags to tag_avp and
+   flags_avp, respectively, if the corresponding module parameter has been
+   defined.
 
    Returns 1 on success and -1 if there were no gateways left or if an
    error occurred (see syslog).
@@ -799,7 +823,7 @@ if (!load_gws("1", "$var(caller_uri)")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.38. next_gw usage from a route block
+   Example 1.39. next_gw usage from a route block
 ...
 if (!next_gw()) {
         sl_send_reply("503", "Service not available - No gateways");
@@ -807,7 +831,7 @@ if (!next_gw()) {
 };
 ...
 
-   Example 1.39. next_gw usage from a failure route block
+   Example 1.40. next_gw usage from a failure route block
 ...
 if (!next_gw()) {
         t_reply("503", "Service not available - No more gateways");
@@ -826,7 +850,7 @@ if (!next_gw()) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.40. defunct_gw usage
+   Example 1.41. defunct_gw usage
 ...
 defunct_gw("60");
 ...
@@ -840,8 +864,9 @@ defunct_gw("60");
    taken from source IP address of the request or (if present) from
    ip_addr pseudo variable argument.
 
-   If request comes from a gateway, gateway's flags are stored into
-   flags_avp as side effect.
+   If request comes from a gateway, gateway's tag and flags are stored as
+   a side effect to tag_avp and flags_avp, respectively, if the
+   corresponding module parameter has been defined.
 
    Returns 1 on success and -1 on failure or on error.
 
@@ -851,7 +876,7 @@ defunct_gw("60");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1.41. from_gw usage
+   Example 1.42. from_gw usage
 ...
 if (from_gw("1", "$avp(s:real_source_addr)") {
         ...
@@ -869,8 +894,9 @@ if (from_gw("1", "$avp(s:real_source_addr)") {
    the gateway. Returns -1 on error or if the request does not come from a
    gateway.
 
-   If request comes from a gateway, the gateway's flags are stored into
-   flags_avp as side effect.
+   If request comes from a gateway, gateway's tag and flags are stored as
+   a side effect to tag_avp and flags_avp, respectively, if the
+   corresponding module parameter has been defined.
 
    Execution time of from_gw() function is M * O(log N), where M is number
    of LCR instances and N is average number of gateways in LCR instances.
@@ -878,7 +904,7 @@ if (from_gw("1", "$avp(s:real_source_addr)") {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1.42. from_gw usage
+   Example 1.43. from_gw usage
 ...
 $var(lcr_id) = from_any_gw();
 ...
@@ -898,7 +924,7 @@ $var(lcr_id) = from_any_gw();
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.43. to_gw usage
+   Example 1.44. to_gw usage
 ...
 if (to_gw("1")) {
         ...
@@ -922,7 +948,7 @@ if (to_gw("1")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.44. to_gw usage
+   Example 1.45. to_gw usage
 ...
 if (to_any_gw()) {
         ...
@@ -944,7 +970,7 @@ if (to_any_gw()) {
 
    Parameters: none
 
-   Example 1.45. lcr.reload RPC example
+   Example 1.46. lcr.reload RPC example
                 $ sercmd lcr.reload
 
 5.2. lcr.dump_gws
@@ -953,7 +979,7 @@ if (to_any_gw()) {
 
    Parameters: none
 
-   Example 1.46. lcr.dump_gws RPC example
+   Example 1.47. lcr.dump_gws RPC example
                 $ sercmd lcr.dump_gws
 
 5.3. lcr.dump_rules
@@ -963,7 +989,7 @@ if (to_any_gw()) {
 
    Parameters: none
 
-   Example 1.47. lcr.dump_rules RPC example
+   Example 1.48. lcr.dump_rules RPC example
                 $ sercmd lcr.dump_rules
 
 6. Known Limitations

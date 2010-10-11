@@ -65,7 +65,7 @@ static void dump_gws(rpc_t* rpc, void* c)
     unsigned int i, j;
     enum sip_protos transport;
     str gw_name, hostname, params;
-    str tag;
+    str prefix, tag;
     struct gw_info *gws;
 
     for (j = 1; j <= lcr_count_param; j++) {
@@ -114,10 +114,13 @@ static void dump_gws(rpc_t* rpc, void* c)
 	    case PROTO_NONE:
 		break;
 	    }
+	    prefix.s=gws[i].prefix;
+	    prefix.len=gws[i].prefix_len;
 	    tag.s=gws[i].tag;
 	    tag.len=gws[i].tag_len;
-	    rpc->struct_add(st, "dSdd",
+	    rpc->struct_add(st, "dSSdd",
 			    "strip",  gws[i].strip,
+			    "prefix", &prefix,
 			    "tag",    &tag,
 			    "flags",  gws[i].flags,
 			    "defunct_until",  &gws[i].defunct_until
