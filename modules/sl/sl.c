@@ -362,6 +362,7 @@ static int bind_sl(sl_api_t* api)
 	api->dreply = sl_send_reply_dlg;
 	api->freply = send_reply;
 	api->get_reply_totag = get_reply_totag;
+	api->register_cb = sl_register_callback;
 
 	return 0;
 }
