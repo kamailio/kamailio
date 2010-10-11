@@ -1,0 +1,156 @@
+kamailio (3.0.3.99) unstable; urgency=low
+
+    Update to 3.0.3.99
+
+ -- Jon Bonilla <manwe@aholab.ehu.es>  Thu, 19 Aug 2010 17:54:23 +0100
+
+kamailio (3.0.3) unstable; urgency=low
+
+    update to 3.0.3 from upstream
+    updated ChangeLog for v3.0.3
+    version set to 3.0.3
+    dns cache: fix manually inserted SRV record order
+    tcp: fix double increment for the established stats
+    tm: don't reply if the reply dest. is not yet set
+    kamctl: fix make use and make install
+    presence_dialoginfo(k): fix bsd compilation
+    xmlrpc: fix includes and libs
+    sercmd: fix LIBS - don't link -lresolv if not needed
+    core: fix unclosed comment
+    core: DragonFly kqueue support enabled
+    NEWS: notes about Dragonfly BSD support
+    makefile: Dragonfly BSD support
+    sercmd: Patch to add Dragonfly BSD support (makefile)
+    db_text(k) makefile: fix make use
+    makefile: fix $DESTDIR
+    sercmd: fix cfg. var name completion
+    core: fix selects in optimized rvalue expressions
+    tcp: force eof after read if write side hangup
+    tcp: more consistent IO_FD_CLOSING usage
+    tcp: fix dispatching closed connections to tcp readers
+    tcp: fix fd passing bug
+    io_wait: kqueue: use the entire array during too many errors fallback
+    io_wait: kqueue: use a bigger array
+    io_wait: kqueue: handle ENOENT and more robust error handling
+    io_wait: fix kqueue io_wait_add & POLLIN
+    io_wait: don't update FD watched status on error
+    io_wait: fix kqueue and too many errors in changelist
+    io_wait: fix: check for EV_ERROR for kqueue()
+    pdbt: fix two bugs in debian packaging
+    presence(k): copy evs_subs_handl to presence event list
+    presence_dialoginfo(k): don't exeed array size in error case
+    presence(k): set properly db updated flag
+    pua(k): use the outbound proxy on updates
+    pv: fixed tobody.params transformation
+    core: fix parsing quoted paramers in To header
+    registrar(k): reset local contact holder
+    sl(k): removed not needed var
+    modules_k/dialog: Remove trailing whitespace.
+    modules_k/dialog: Provide new fix to prevent "unable to find WARN messages
+    modules:carrierroute Better handling of fclose
+    modules/carrierroute: Prevent resource leak in case of error
+    modules/tm: Fixed memory leak related to several tm function exports
+    modules_k/sst: Setting AVPs from integer values requires the PV_TYPE_INT flag to be set.
+    reg(k): only store path if indicated by the configuration
+    auth_db(k): proper initialization for the default column
+    modules_k/dialog: Move comment regarding dialog-destroying
+    Revert "db_postgres(old API) FS#77: fix BLOBs with postgres"
+    modules_k/presence and modules_k/rls Fixed parse_to() usage
+    dialog(k): also update README after doc change
+    modules_k/pv : Fixed a bug in pv transformation (tobody transformation), that caused a segmentation fault.
+    modules_k/dialog doc update
+    dispatcher: doc updated to reflect PV parameter options
+    tm: use warn to print message if load_tm is not found
+    core: print line for include_file errors
+    tmx: use TM api function to get tm table
+    tm: export function to get access to tm table
+    core: typos in comments
+    tm: TMCB_RESPONSE_READY executes by its own
+    msilo(k): updated readme file
+    msilo(k): parameter to control contact header
+    pdb: avoid child re-init
+    presence_xml: avoid re-init of db handler
+    presence: avoid re-init of db handler
+    kex: check if uptime value was initialized
+    userblacklist: avoid double child initialization
+    usrloc(k): avoid re-initialization of db handler
+    domain(k): safety check for db handler initialization
+    drouting: check if db connection is initialized
+    htable: close db connection in case of mi cmd errors
+    pdt(k): safety check for db handler initialization
+    mi_rpc: initialize mi cmds for sip workers
+    permissions(k): safety check for db_handle
+    permissions(k): reverted incomplete fix for mi cmd
+    mi_rpc: call MI init child functions
+    kmi: allow multiple initializations of mi child
+    core: safety check for free contact
+    presence_xml: fixed log message
+    modules_k/dialog: Delay dialog deletion to absorb late in-dialog requests
+    Increase failed_dlgs when a non-2xx final response has been received only.
+    Fix minor typo
+    modules/dialog: Do not send BYE request for non-confirmed dialogs
+    Fixed a memory leak on shm memory, caused by the dtrie implementation.
+    Do not consider in-early-dialog BYE requests to be bogus.
+    modules_k/msilo: do not include Contact header in msilo generated messages
+    db_postgres(old API) FS#77: fix BLOBs with postgres
+    auc(k): fix error in authentification: Digest should be compared case insensitive
+    modules_k/dialog: Fix timer reset and improve timeout value logging
+    Do not consider in-early-dialog requests to be bogus.
+    Always set data payload to NULL, thus avoiding problems when root node had data associated with it
+    PKG Debian version dependant changes
+
+
+ -- Jon Bonilla <manwe@aholab.ehu.es>  Thu, 19 Aug 2010 17:54:23 +0100
+
+kamailio (3.0.2.99) unstable; urgency=low
+
+  * update to 3.0.2.99 for development version builds
+
+ -- Jon Bonilla <manwe@aholab.ehu.es>  Fri, 28 May 2010 22:26:00 +0100
+
+kamailio (3.0.2) unstable; urgency=low
+
+  * update to 3.0.2 from upstream
+
+ -- Daniel-Constantin Mierla <miconda@gmail.com>  Thu, 27 May 2010 10:27:36 +0100
+
+kamailio (3.0.1) unstable; urgency=low
+
+  * update to 3.0.1 from upstream
+
+ -- Daniel-Constantin Mierla <miconda@gmail.com>  Mon, 08 Mar 2010 20:30:48 +0100
+
+kamailio (3.0.0) unstable; urgency=low
+
+  * update to 3.0.0 from upstream
+
+ -- Daniel-Constantin Mierla <miconda@gmail.com>  Mon, 11 Jan 2010 18:30:42 +0100
+
+kamailio (3.0.0-rc3) unstable; urgency=low
+
+  * update to 3.0.0-rc3 from upstream
+  * updated debian/rules to work with the SIP Router style module packaging
+
+ -- Daniel-Constantin Mierla <miconda@gmail.com>  Fri, 10 Dec 2009 12:10:02 +0100
+
+kamailio (3.0.0-rc2) unstable; urgency=low
+
+  * update to 3.0.0-rc2 from upstream
+  * updated debian/rules to work with the new style module packaging
+
+ -- Jonas Bergler <jonas.bergler@staff.snap.net.nz>  Wed, 18 Nov 2009 12:30:02 +1300
+
+kamailio (1.5.0-svn1) unstable; urgency=low
+
+  * increment debian packaging for trunk
+
+ -- Henning Westerholt <henning.westerholt@1und1.de>  Mon, 02 Mar 2009 17:40:02 +0100
+
+kamailio (1.4.0-svn1) unstable; urgency=low
+
+  [ Klaus Darilion ]
+  * first release of Kamailio (after renaming from Openser)
+
+ -- Julien BLACHE <jblache@debian.org>  Wed, 12 Dec 2007 17:25:31 +0100
+
+
