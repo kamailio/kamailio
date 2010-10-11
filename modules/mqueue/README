@@ -10,7 +10,7 @@ Elena-Ramona Modroiu
 
    <ramona@asipto.com>
 
-   Copyright � 2010 Elena-Ramona Modroiu (asipto.com)
+   Copyright © 2010 Elena-Ramona Modroiu (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -94,7 +94,7 @@ Chapter 1. Admin Guide
 
    Definition of memory queue
 
-   Default value is "none".
+   Default value is “none”.
 
    Value must be a list of parameters: attr=value;... The attribute 'name'
    is mandatory, defining the name of the queue. Optional attribute 'size'
@@ -128,8 +128,11 @@ mq_add("myq", "$rU", "call from $fU");
 
 4.2.  mq_fetch(queue)
 
-   Take oldest item from que and fill $mqk(queue) and $mqv(queue) pseudo
-   variables. Return true on success.
+   Take oldest item from queue and fill $mqk(queue) and $mqv(queue) pseudo
+   variables.
+
+   Return: true on success (1); false on failure (-1) or no item fetched
+   (-2).
 
    Example 1.3. mq_fetch usage
 ...

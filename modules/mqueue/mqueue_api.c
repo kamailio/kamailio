@@ -254,17 +254,21 @@ int mq_head_fetch(str *name)
 		return -1;
 	lock_get(&mh->lock);
 
-	if(mh->ifirst!=NULL)
+	if(mh->ifirst==NULL)
 	{
-		mp->item = mh->ifirst;
-		mh->ifirst = mh->ifirst->next;
-		if(mh->ifirst==NULL) {
-			mh->ilast = NULL;
-		} else {
-			mh->ifirst->prev = NULL;
-		}
-		mh->csize--;
+		/* empty queue */
+		lock_release(&mh->lock);
+		return -2;
 	}
+
+	mp->item = mh->ifirst;
+	mh->ifirst = mh->ifirst->next;
+	if(mh->ifirst==NULL) {
+		mh->ilast = NULL;
+	} else {
+		mh->ifirst->prev = NULL;
+	}
+	mh->csize--;
 
 	lock_release(&mh->lock);
 	return 0;

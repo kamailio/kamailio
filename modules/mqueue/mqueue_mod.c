@@ -109,8 +109,11 @@ static void mod_destroy(void)
 
 static int w_mq_fetch(struct sip_msg* msg, char* mq, char* str2)
 {
-	if(mq_head_fetch((str*)mq)<0)
-		return -1;
+	int ret;
+
+	ret = mq_head_fetch((str*)mq);
+	if(ret<0)
+		return ret;
 	return 1;
 }
 

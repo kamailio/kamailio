@@ -118,8 +118,12 @@ mq_add("myq", "$rU", "call from $fU");
 		<function moreinfo="none">mq_fetch(queue)</function>
 	    </title>
 	    <para>
-		Take oldest item from que and fill $mqk(queue) and $mqv(queue) pseudo
-		variables. Return true on success.
+		Take oldest item from queue and fill $mqk(queue) and
+		$mqv(queue) pseudo variables.
+	    </para>
+	    <para>
+		Return: true on success (1); false on failure (-1) or
+		no item fetched (-2).
 	    </para>
 		<example>
 		<title><function>mq_fetch</function> usage</title>
