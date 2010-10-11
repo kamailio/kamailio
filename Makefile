@@ -827,8 +827,8 @@ bin:
 deb:
 	-@if [ -d debian ]; then \
 		dpkg-buildpackage -rfakeroot -tc; \
-	elif [ -d pkg/$(MAIN_NAME)/debian ]; then \
-		ln -s pkg/$(MAIN_NAME)/debian debian; \
+	elif [ -d pkg/$(MAIN_NAME)/deb/debian ]; then \
+		ln -s pkg/$(MAIN_NAME)/deb/debian debian; \
 		dpkg-buildpackage -rfakeroot -tc; \
 		rm debian; \
 	else \
