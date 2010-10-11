@@ -254,7 +254,10 @@ static int mod_init(void)
 		trace_local_ip.len = strlen(trace_local_ip.s);
 
 	if (trace_flag<0 || trace_flag>(int)MAX_FLAG)
+	{
+		LM_ERR("invalid trace flag %d\n", trace_flag);
 		return -1;
+	}
 	trace_flag = 1<<trace_flag;
 
 	/* Find a database module */
