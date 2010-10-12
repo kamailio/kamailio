@@ -92,7 +92,7 @@ MODULE_VERSION
  */
 #define LCR_RULE_TABLE_VERSION 1
 #define LCR_RULE_TARGET_TABLE_VERSION 1
-#define LCR_GW_TABLE_VERSION 1
+#define LCR_GW_TABLE_VERSION 2
 
 /* database defaults */
 
