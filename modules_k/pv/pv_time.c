@@ -100,9 +100,31 @@ error:
 	return -1;
 }
 
+int pv_parse_strftime_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	sp->pvp.pvn.u.isname.name.s.s = as_asciiz(in);
+	if(sp->pvp.pvn.u.isname.name.s.s==NULL)
+	{
+		LM_ERR("no more pkg\n");
+		return -1;
+	}
+	sp->pvp.pvn.u.isname.name.s.len = in->len;
+#if 0
+	/* to-do: free function for pv name structure */
+	sp->pvp.pvn.nfree = pkg_free;
+#endif
+	return 0;
+}
+
 static struct tm _cfgutils_ts;
 static unsigned int _cfgutils_msg_id = 0;
 
+/**
+ * return broken-down time attributes
+ */
 int pv_get_time(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
@@ -148,6 +170,39 @@ int pv_get_time(struct sip_msg *msg, pv_param_t *param,
 			return pv_get_uintval(msg, param, res, (unsigned int)_cfgutils_ts.tm_sec);
 	}
 }
+
+/**
+ * return strftime() formatted time
+ */
+int pv_get_strftime(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	time_t t;
+	str s;
+#define PV_STRFTIME_BUF_SIZE	64
+	static char _pv_strftime_buf[PV_STRFTIME_BUF_SIZE];
+
+	if(msg==NULL || param==NULL)
+		return -1;
+
+	if(_cfgutils_msg_id != msg->id)
+	{
+		pv_update_time(msg, &t);
+		_cfgutils_msg_id = msg->id;
+		if(localtime_r(&t, &_cfgutils_ts) == NULL)
+		{
+			LM_ERR("unable to break time to attributes\n");
+			return -1;
+		}
+	}
+	s.len = strftime(_pv_strftime_buf, PV_STRFTIME_BUF_SIZE,
+			param->pvn.u.isname.name.s.s,  &_cfgutils_ts);
+	if(s.len<=0)
+		return pv_get_null(msg, param, res);
+	s.s = _pv_strftime_buf;
+	return pv_get_strval(msg, param, res, &s);
+}
+
 
 int pv_get_timenows(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
