@@ -32,7 +32,7 @@ Jan Janak
         1.6.14. trust_received_flag (flagname or integer)
         1.6.15. received_to_uri (boolean)
         1.6.16. reply_code_attr (avp name)
-        1.6.17. reply_code_reason_attr (avp name)
+        1.6.17. reply_reason_attr (avp name)
         1.6.18. contact_attr (avp name)
         1.6.19. aor_attr (avp name)
         1.6.20. server_id_attr (avp name)
@@ -525,7 +525,7 @@ route{
 ...
 }
 
-1.6.17. reply_code_reason_attr (avp name)
+1.6.17. reply_reason_attr (avp name)
 
    See reply_code_attr above.
 
