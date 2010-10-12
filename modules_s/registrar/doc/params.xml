@@ -463,8 +463,8 @@ route{
 		</example>
 	</section>
 
-	<section id="reply_code_reason_attr">
-		<title><varname>reply_code_reason_attr</varname> (avp name)</title>
+	<section id="reply_reason_attr">
+		<title><varname>reply_reason_attr</varname> (avp name)</title>
 		<para>
 			See <varname>reply_code_attr</varname> above.
 		</para>
