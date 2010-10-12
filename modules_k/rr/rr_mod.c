@@ -54,6 +54,7 @@ int append_fromtag = 1;		/*!< append from tag by default */
 int enable_double_rr = 1;	/*!< enable using of 2 RR by default */
 int enable_full_lr = 0;		/*!< compatibilty mode disabled by default */
 int add_username = 0;	 	/*!< do not add username by default */
+ int enable_socket_mismatch_warning = 1; /*!< enable socket mismatch warning */
 
 static unsigned int last_rr_msg;
 
@@ -82,6 +83,8 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"record_route_preset",  (cmd_function)w_record_route_preset, 1, it_list_fixup, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"record_route_preset",  (cmd_function)w_record_route_preset, 2, it_list_fixup, 0,
+			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"add_rr_param",         (cmd_function)w_add_rr_param,	1, it_list_fixup, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"check_route_param",    (cmd_function)w_check_route_param, 1, fixup_regexp_null, fixup_free_regexp_null,
@@ -104,6 +107,7 @@ static param_export_t params[] ={
 	{"ignore_user",		STR_PARAM, &ignore_user},
 #endif
 	{"add_username",		INT_PARAM, &add_username},
+	{"enable_socket_mismatch_warning",INT_PARAM,&enable_socket_mismatch_warning},
 	{0, 0, 0 }
 };
 
@@ -217,12 +221,16 @@ static int w_record_route(struct sip_msg *msg, char *key, char *bar)
 }
 
 
-static int w_record_route_preset(struct sip_msg *msg, char *key, char *bar)
+static int w_record_route_preset(struct sip_msg *msg, char *key, char *key2)
 {
 	str s;
 
 	if (msg->id == last_rr_msg) {
 		LM_ERR("Duble attempt to record-route\n");
+		return -1;
+	}
+	if (key2 && !enable_double_rr) {
+		LM_ERR("Attempt to double record-route while 'enable_double_rr' param is disabled\n");
 		return -1;
 	}
 
@@ -233,6 +241,17 @@ static int w_record_route_preset(struct sip_msg *msg, char *key, char *bar)
 	if ( record_route_preset( msg, &s)<0 )
 		return -1;
 
+	if (!key2)
+		goto done;
+
+	if (pv_printf_s(msg, (pv_elem_t*)key2, &s)<0) {
+		LM_ERR("failed to print the format\n");
+		return -1;
+	}
+	if ( record_route_preset( msg, &s)<0 )
+		return -1;
+
+done:
 	last_rr_msg = msg->id;
 	return 1;
 }

@@ -212,6 +212,31 @@ modparam("rr", "add_username", 1)
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>enable_socket_mismatch_warning</varname> (integer)</title>
+		<para>
+		When a preset record-route header is forced in &kamailio; config and the
+		host from the record-route header is not the same as the host server,
+		a warning will be printed out in the logs.
+		The 'enable_socket_mismatch_warning' parameter enables or disables the warning.
+		When &kamailio; is behind a NATed firewall, we don't want this warning
+		to be printed for every bridged call.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (yes).
+		</emphasis>
+		</para>
+		<example>
+		<title><varname>enable_socket_mismatch_warning</varname> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("rr", "enable_socket_mismatch_warning", 0)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 
@@ -296,7 +321,7 @@ record_route();
 
 	<section>
 		<title>
-		<function moreinfo="none">record_route_preset(string)</function>
+		<function moreinfo="none">record_route_preset(string [,string2])</function>
 		</title>
 		<para>
 		This function will put the string into Record-Route, don't use 
@@ -307,10 +332,20 @@ record_route();
 		<listitem>
 			<para>
 			<emphasis>string</emphasis> - String to be inserted into the 
-				header field; it may contain pseudo-variables.
+				first header field; it may contain pseudo-variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>string2</emphasis> - String to be inserted into the 
+				second header field; it may contain pseudo-variables.
 			</para>
 		</listitem>
 		</itemizedlist>
+		<para>
+		Note: If 'string2' is present, then the 'string' param is pointing to the
+		outbound interface and the 'string2' param is pointing to the inbound interface.
+		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and 
 		FAILURE_ROUTE.

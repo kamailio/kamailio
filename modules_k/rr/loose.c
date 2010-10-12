@@ -599,7 +599,8 @@ static inline int after_strict(struct sip_msg* _m)
 		if (si) {
 			set_force_socket(_m, si);
 		} else {
-			LM_WARN("no socket found for match second RR\n");
+			if (enable_socket_mismatch_warning)
+				LM_WARN("no socket found for match second RR\n");
 		}
 
 		if (!rt->next) {
@@ -815,7 +816,8 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			if (si) {
 				set_force_socket(_m, si);
 			} else {
-				LM_WARN("no socket found for match second RR\n");
+				if (enable_socket_mismatch_warning)
+					LM_WARN("no socket found for match second RR\n");
 			}
 
 			if (!rt->next) {

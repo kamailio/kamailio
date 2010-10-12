@@ -42,6 +42,7 @@ extern int enable_double_rr;
 extern int enable_full_lr;
 /*! add username to record-route URI */
 extern int add_username;
+extern int enable_socket_mismatch_warning;
 
 
 #endif /* RR_MOD_H */
