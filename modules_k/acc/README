@@ -689,21 +689,25 @@ modparam("acc", "db_missed_flag", 3)
 
 5.19. db_table_acc (string)
 
-   Table name of accounting successfull calls -- database specific.
+   Table name of accounting successfull calls -- database specific. It can
+   include config variables.
 
    Default value is “acc”
 
    Example 1.19. db_table_acc example
 modparam("acc", "db_table_acc", "myacc_table")
+modparam("acc", "db_table_acc", "acc_$time(year)_$time(mon)")
 
 5.20. db_table_missed_calls (string)
 
-   Table name for accounting missed calls -- database specific.
+   Table name for accounting missed calls -- database specific. It can
+   include config variables.
 
    Default value is “missed_calls”
 
    Example 1.20. db_table_missed_calls example
 modparam("acc", "db_table_missed_calls", "myMC_table")
+modparam("acc", "db_table_missed_calls", "mc_$time(year)_$time(mon)")
 
 5.21. db_url (string)
 
@@ -874,13 +878,14 @@ acc_log_request("Some comment");
 
    Meaning of the parameters is as follows:
      * comment - Comment to be appended.
-     * table - Database table to be used.
+     * table - Database table to be used. It can include config variables.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1.36. acc_db_request usage
 ...
-acc_log_request("Some comment", "Some table");
+acc_log_request("Some comment", "some_table");
+acc_log_request("200 ok", "acc_cfg_$time(year)");
 ...
 
 6.3.  acc_rad_request(comment)
