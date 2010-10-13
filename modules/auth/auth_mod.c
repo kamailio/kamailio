@@ -172,6 +172,7 @@ static param_export_t params[] = {
 	{"one_time_nonce"  ,       PARAM_INT,    &otn_enabled           },
 	{"otn_in_flight_no",       PARAM_INT,    &otn_in_flight_no      },
 	{"otn_in_flight_order",    PARAM_INT,    &otn_in_flight_k       },
+	{"nid_pool_no",            PARAM_INT,    &nid_pool_no            },
     {"force_stateless_reply",  PARAM_INT,    &force_stateless_reply },
     {0, 0, 0}
 };
