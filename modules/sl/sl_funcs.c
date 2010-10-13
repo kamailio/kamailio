@@ -397,7 +397,10 @@ void sl_run_callbacks(unsigned int type, struct sip_msg *req,
 	param.req    = req;
 	param.code   = code;
 	sreason.s    = reason;
-	sreason.len  = strlen(reason);
+	if(reason)
+		sreason.len  = strlen(reason);
+	else
+		sreason.len  = 0;
 	param.reason = &sreason;
 	param.reply  = reply;
 	param.dst    = dst;
