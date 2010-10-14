@@ -289,7 +289,7 @@ static int check_user_list(struct sip_msg *msg, char* str1, char* str2, char* st
 
 	ptr = req_number;
 	/* Skip over non-digits.  */
-	while (strlen(ptr) > 0 && !isdigit(*ptr)) {
+	while (match_mode == 10 && strlen(ptr) > 0 && !isdigit(*ptr)) {
 		ptr = ptr + 1;
 	}
 
