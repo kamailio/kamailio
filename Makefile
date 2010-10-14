@@ -827,12 +827,9 @@ bin:
 deb:
 	-@if [ -d debian ]; then \
 		dpkg-buildpackage -rfakeroot -tc; \
-	elif [ -d pkg/$(MAIN_NAME)/deb/debian ]; then \
-		ln -s pkg/$(MAIN_NAME)/deb/debian debian; \
-		dpkg-buildpackage -rfakeroot -tc; \
 		rm debian; \
 	else \
-		ln -s pkg/debian debian; \
+		ln -s pkg/$(MAIN_NAME)/deb/debian debian; \
 		dpkg-buildpackage -rfakeroot -tc; \
 		rm debian; \
 	fi
@@ -843,7 +840,7 @@ sunpkg:
 	mkdir -p tmp/$(MAIN_NAME)_sun_pkg
 	$(MAKE) install basedir=$(CURDIR)/tmp/$(MAIN_NAME) \
 			prefix=/usr/local $(mk_params)
-	(cd pkg/solaris; \
+	(cd pkg/$(MAIN_NAME)/solaris; \
 	pkgmk -r ../../tmp/$(MAIN_NAME)/usr/local -o -d ../../tmp/$(MAIN_NAME)_sun_pkg/ -v "$(RELEASE)" ;\
 	cd ../..)
 	cat /dev/null > ../$(NAME)-$(RELEASE)-$(OS)-$(ARCH)-local
