@@ -245,13 +245,13 @@ static int load_gws(struct sip_msg* _m, int argc, action_u_t argv[]);
 static int next_gw(struct sip_msg* _m, char* _s1, char* _s2);
 static int defunct_gw(struct sip_msg* _m, char* _s1, char* _s2);
 static int from_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
-static int from_gw_2(struct sip_msg* _m, char* _s1, char* _s2);
+static int from_gw_3(struct sip_msg* _m, char* _s1, char* _s2, char* _s3);
 static int from_any_gw_0(struct sip_msg* _m, char* _s1, char* _s2);
-static int from_any_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
+static int from_any_gw_2(struct sip_msg* _m, char* _s1, char* _s2);
 static int to_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
-static int to_gw_2(struct sip_msg* _m, char* _s1, char* _s2);
+static int to_gw_3(struct sip_msg* _m, char* _s1, char* _s2, char* _s3);
 static int to_any_gw_0(struct sip_msg* _m, char* _s1, char* _s2);
-static int to_any_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
+static int to_any_gw_2(struct sip_msg* _m, char* _s1, char* _s2);
 
 /*
  * Exported functions
@@ -259,26 +259,25 @@ static int to_any_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
 static cmd_export_t cmds[] = {
     {"load_gws", (cmd_function)load_gws, VAR_PARAM_NO, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE},
-    {"next_gw", (cmd_function)next_gw, 0, 0, 0,
+    {"next_gw", (cmd_function)next_gw, 0, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+    {"defunct_gw", (cmd_function)defunct_gw, 1, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE},
-    {"defunct_gw", (cmd_function)defunct_gw, 1, fixup_igp_null, 0,
-     REQUEST_ROUTE | FAILURE_ROUTE},
-    {"from_gw", (cmd_function)from_gw_1, 1, fixup_igp_null, 0,
+    {"from_gw", (cmd_function)from_gw_1, 1, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-    {"from_gw", (cmd_function)from_gw_2, 2, fixup_igp_pvar,
-     fixup_free_igp_pvar, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+    {"from_gw", (cmd_function)from_gw_3, 3, 0, 0,
+     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
     {"from_any_gw", (cmd_function)from_any_gw_0, 0, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-    {"from_any_gw", (cmd_function)from_any_gw_1, 1, fixup_pvar_null,
-     fixup_free_pvar_null, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-    {"to_gw", (cmd_function)to_gw_1, 1, fixup_igp_null, 0,
+    {"from_any_gw", (cmd_function)from_any_gw_2, 2, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-    {"to_gw", (cmd_function)to_gw_2, 2, fixup_igp_pvar,
-     fixup_free_igp_pvar, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+    {"to_gw", (cmd_function)to_gw_1, 1, 0, 0,
+     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+    {"to_gw", (cmd_function)to_gw_3, 3, 0, 0,
+     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
     {"to_any_gw", (cmd_function)to_any_gw_0, 0, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-    {"to_any_gw", (cmd_function)to_any_gw_1, 1, fixup_pvar_null,
-     fixup_free_pvar_null, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+    {"to_any_gw", (cmd_function)to_any_gw_2, 2, 0, 0,
+     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
     {0, 0, 0, 0, 0, 0}
 };
 
@@ -345,7 +344,6 @@ struct module_exports exports = {
 	destroy,   /* destroy function */
 	child_init /* child initialization function */
 };
-
 
 static int lcr_db_init(const str* db_url)
 {	
@@ -633,7 +631,7 @@ static int mod_init(void)
     memset(gw_pt, 0, sizeof(struct gw_info *) * (lcr_count_param + 1));
 
     /* gw tables themselves */
-    /* ordered by <ip_addr, port> for from_gw/to_gw functions */
+    /* ordered by ip_addr for from_gw/to_gw functions */
     /* in each table i, (gw_pt[i])[0].ip_addr contains number of
        gateways in the table and (gw_pt[i])[0].port as value 1
        if some gateways in the table have null ip addr */
@@ -1621,9 +1619,12 @@ inline int decode_avp_value(char *value, unsigned int *gw_index, str *scheme,
     str2int(&s, &u);
     switch (u) {
     case PROTO_NONE:
-    case PROTO_UDP:
 	transport->s = (char *)0;
 	transport->len = 0;
+	break;
+    case PROTO_UDP:
+	transport->s = ";transport=udp";
+	transport->len = 14;
 	break;
     case PROTO_TCP:
 	transport->s = ";transport=tcp";
@@ -1961,6 +1962,7 @@ static int defunct_gw(struct sip_msg* _m, char *_defunct_period, char *_s2)
 {
     int_str lcr_id_val, index_val;
     struct gw_info *gws;
+    char *tmp;
     unsigned int gw_index, defunct_until;
     int defunct_period;
 
@@ -1972,12 +1974,15 @@ static int defunct_gw(struct sip_msg* _m, char *_defunct_period, char *_s2)
     }
 
     /* Get parameter value */
-    if (get_int_fparam(&defunct_period, _m, (fparam_t *)_defunct_period) != 0) {
-	LM_ERR("no defunct_period param value\n");
+
+    /* Get and check parameter value */
+    defunct_period = strtol(_defunct_period, &tmp, 10);
+    if ((tmp == 0) || (*tmp) || (tmp == _defunct_period)) {
+	LM_ERR("invalid defunct_period parameter %s\n", _defunct_period);
 	return -1;
     }
     if (defunct_period < 1) {
-	LM_ERR("invalid defunct_period param value\n");
+	LM_ERR("invalid defunct_period param value %d\n", defunct_period);
 	return -1;
     }
 
@@ -2115,7 +2120,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
  * Checks if request comes from ip address of a gateway
  */
 static int do_from_gw(struct sip_msg* _m, unsigned int lcr_id,
-		      unsigned int src_addr)
+		      unsigned int src_addr, uri_transport transport)
 {
     struct gw_info *res, gw, *gws;
     int_str val;
@@ -2133,11 +2138,10 @@ static int do_from_gw(struct sip_msg* _m, unsigned int lcr_id,
     res = (struct gw_info *)bsearch(&gw, &(gws[1]), gws[0].ip_addr,
 				    sizeof(struct gw_info), comp_gws);
 
-    /* Store flags and return result */
-    if (res == NULL) {
-	LM_DBG("request did not come from gw\n");
-	return -1;
-    } else {
+    /* Store tag and flags and return result */
+    if ((res != NULL) &&
+	((res->transport == transport) ||
+	 ((res->transport == PROTO_NONE) && (transport == PROTO_UDP)))) {
 	LM_DBG("request game from gw\n");
 	if (tag_avp_param) {
 	    val.s.s = res->tag;
@@ -2151,22 +2155,28 @@ static int do_from_gw(struct sip_msg* _m, unsigned int lcr_id,
 	    LM_DBG("added flags_avp <%u>\n", (unsigned int)val.n);
 	}
 	return 1;
+    } else {
+	LM_DBG("request did not come from gw\n");
+	return -1;
     }
 }
 
 
 /*
  * Checks if request comes from ip address of a gateway taking source
- * address from request.
+ * address and transport protocol from request.
  */
 static int from_gw_1(struct sip_msg* _m, char* _lcr_id, char* _s2)
 {
     int lcr_id;
+    char *tmp;
     unsigned int src_addr;
+    uri_transport transport;
 
     /* Get and check parameter value */
-    if (get_int_fparam(&lcr_id, _m, (fparam_t *)_lcr_id) != 0) {
-	LM_ERR("no lcr_id param value\n");
+    lcr_id = strtol(_lcr_id, &tmp, 10);
+    if ((tmp == 0) || (*tmp) || (tmp == _lcr_id)) {
+	LM_ERR("invalid lcr_id parameter %s\n", _lcr_id);
 	return -1;
     }
     if ((lcr_id < 1) || (lcr_id > lcr_count_param)) {
@@ -2174,57 +2184,59 @@ static int from_gw_1(struct sip_msg* _m, char* _lcr_id, char* _s2)
 	return -1;
     }
 
-    /* Get source address */
+    /* Get source address and transport preotocol */
     src_addr = _m->rcv.src_ip.u.addr32[0];
+    transport = _m->rcv.proto;
 
     /* Do test */
-    return do_from_gw(_m, lcr_id, src_addr);
+    return do_from_gw(_m, lcr_id, src_addr, transport);
 }
 
 
 /*
  * Checks if request comes from ip address of a gateway taking source
- * address from param.
+ * address and transport protocol from parameters
  */
-static int from_gw_2(struct sip_msg* _m, char* _lcr_id, char* _addr)
+static int from_gw_3(struct sip_msg* _m, char* _lcr_id, char* _addr,
+		     char* _transport)
 {
     unsigned int src_addr;
     int lcr_id;
-    pv_value_t pv_val;
+    char *tmp;
     struct ip_addr *ip;
+    str addr_str;
+    uri_transport transport;
 
     /* Get and check parameter values */
-    if (get_int_fparam(&lcr_id, _m, (fparam_t *)_lcr_id) != 0) {
-	LM_ERR("no lcr_id param value\n");
+    lcr_id = strtol(_lcr_id, &tmp, 10);
+    if ((tmp == 0) || (*tmp) || (tmp == _lcr_id)) {
+	LM_ERR("invalid lcr_id parameter %s\n", _lcr_id);
 	return -1;
     }
     if ((lcr_id < 1) || (lcr_id > lcr_count_param)) {
 	LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
 	return -1;
     }
-
-    if (_addr && (pv_get_spec_value(_m, (pv_spec_t *)_addr, &pv_val) == 0)) {
-	if (pv_val.flags & PV_VAL_INT) {
-	    src_addr = pv_val.ri;
-	} else if (pv_val.flags & PV_VAL_STR) {
-	    if ((ip = str2ip(&pv_val.rs)) == NULL) {
-		LM_DBG("request did not come from gw "
-		       "(addr param value is not an IP address)\n");
-		return -1;
-	    } else {
-		src_addr = ip->u.addr32[0];
-	    }
-	} else {
-	    LM_ERR("addr param has no value\n");
-	    return -1;
-	}
+    addr_str.s = _addr;
+    addr_str.len = strlen(_addr);
+    if ((ip = str2ip(&addr_str)) == NULL) {
+	LM_ERR("addr param value %s is not an IP address\n", _addr);
+	return -1;
     } else {
-	LM_ERR("could not get source address from param\n");
+	src_addr = ip->u.addr32[0];
+    }
+    transport = strtol(_transport, &tmp, 10);
+    if ((tmp == 0) || (*tmp) || (tmp == _transport)) {
+	LM_ERR("invalid transport parameter %s\n", _lcr_id);
+	return -1;
+    }
+    if ((transport < PROTO_NONE) || (transport > PROTO_SCTP)) {
+	LM_ERR("invalid transport parameter value %d\n", transport);
 	return -1;
     }
 
     /* Do test */
-    return do_from_gw(_m, lcr_id, src_addr);
+    return do_from_gw(_m, lcr_id, src_addr, transport);
 }
 
 
@@ -2235,11 +2247,13 @@ static int from_gw_2(struct sip_msg* _m, char* _lcr_id, char* _addr)
 static int from_any_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
 {
     unsigned int src_addr, i;
+    uri_transport transport;
 
     src_addr = _m->rcv.src_ip.u.addr32[0];
+    transport = _m->rcv.proto;
 
     for (i = 1; i <= lcr_count_param; i++) {
-	if (do_from_gw(_m, i, src_addr) == 1) {
+	if (do_from_gw(_m, i, src_addr, transport) == 1) {
 	    return i;
 	}
     }
@@ -2249,38 +2263,38 @@ static int from_any_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
 
 /*
  * Checks if request comes from ip address of a a gateway taking source
- * address from param.
+ * IP address and transport protocol from parameters.
  */
-static int from_any_gw_1(struct sip_msg* _m, char* _addr, char* _s2)
+static int from_any_gw_2(struct sip_msg* _m, char* _addr, char* _transport)
 {
     unsigned int i, src_addr;
-    pv_value_t pv_val;
+    char *tmp;
     struct ip_addr *ip;
+    str addr_str;
+    uri_transport transport;
 
-    /* Get parameter value */
-    if (_addr && (pv_get_spec_value(_m, (pv_spec_t *)_addr, &pv_val) == 0)) {
-	if (pv_val.flags & PV_VAL_INT) {
-	    src_addr = pv_val.ri;
-	} else if (pv_val.flags & PV_VAL_STR) {
-	    if ((ip = str2ip(&pv_val.rs)) == NULL) {
-		LM_DBG("request did not come from gw "
-		       "(addr param value is not an IP address)\n");
-		return -1;
-	    } else {
-		src_addr = ip->u.addr32[0];
-	    }
-	} else {
-	    LM_ERR("addr param has no value\n");
-	    return -1;
-	}
+    /* Get and check parameter values */
+    addr_str.s = _addr;
+    addr_str.len = strlen(_addr);
+    if ((ip = str2ip(&addr_str)) == NULL) {
+	LM_ERR("addr param value %s is not an IP address\n", _addr);
+	return -1;
     } else {
-	LM_ERR("could not get source address from param\n");
+	src_addr = ip->u.addr32[0];
+    }
+    transport = strtol(_transport, &tmp, 10);
+    if ((tmp == 0) || (*tmp) || (tmp == _transport)) {
+	LM_ERR("invalid transport parameter %s\n", _transport);
+	return -1;
+    }
+    if ((transport < PROTO_NONE) || (transport > PROTO_SCTP)) {
+	LM_ERR("invalid transport parameter value %d\n", transport);
 	return -1;
     }
 
     /* Do test */
     for (i = 1; i <= lcr_count_param; i++) {
-	if (do_from_gw(_m, i, src_addr) == 1) {
+	if (do_from_gw(_m, i, src_addr, transport) == 1) {
 	    return i;
 	}
     }
@@ -2292,7 +2306,7 @@ static int from_any_gw_1(struct sip_msg* _m, char* _addr, char* _s2)
  * Checks if in-dialog request goes to ip address of a gateway.
  */
 static int do_to_gw(struct sip_msg* _m, unsigned int lcr_id,
-		    unsigned int dst_addr)
+		    unsigned int dst_addr, uri_transport transport)
 {
     struct gw_info *res, gw, *gws;
 
@@ -2310,29 +2324,35 @@ static int do_to_gw(struct sip_msg* _m, unsigned int lcr_id,
 				    sizeof(struct gw_info), comp_gws);
 
     /* Return result */
-    if (res == NULL) {
-	LM_DBG("request is not going to gw\n");
-	return -1;
-    } else {
+    if ((res != NULL) &&
+	((res->transport == transport) ||
+	 ((res->transport == PROTO_NONE) && (transport == PROTO_UDP)))) {
 	LM_DBG("request goes to gw\n");
 	return 1;
+    } else {
+	LM_DBG("request is not going to gw\n");
+	return -1;
     }
 }
 
 
 /*
- * Checks if request goes to ip address of a gateway taking destination
- * address from Request URI.
+ * Checks if request goes to ip address and transport protocol of a gateway
+ * taking lcr_id from parameter and destination address and transport protocol
+ * from Request URI.
  */
 static int to_gw_1(struct sip_msg* _m, char* _lcr_id, char* _s2)
 {
     int lcr_id;
+    char *tmp;
     unsigned int dst_addr;
     struct ip_addr *ip;
+    uri_transport transport;
 
     /* Get and check parameter value */
-    if (get_int_fparam(&lcr_id, _m, (fparam_t *)_lcr_id) != 0) {
-	LM_ERR("no lcr_id param value\n");
+    lcr_id = strtol(_lcr_id, &tmp, 10);
+    if ((tmp == 0) || (*tmp) || (tmp == _lcr_id)) {
+	LM_ERR("invalid lcr_id parameter %s\n", _lcr_id);
 	return -1;
     }
     if ((lcr_id < 1) || (lcr_id > lcr_count_param)) {
@@ -2340,7 +2360,7 @@ static int to_gw_1(struct sip_msg* _m, char* _lcr_id, char* _s2)
 	return -1;
     }
 
-    /* Get destination address */
+    /* Get destination address and transport protocol from R-URI */
     if ((_m->parsed_uri_ok == 0) && (parse_sip_msg_uri(_m) < 0)) {
 	LM_ERR("while parsing Request-URI\n");
 	return -1;
@@ -2357,68 +2377,71 @@ static int to_gw_1(struct sip_msg* _m, char* _lcr_id, char* _s2)
     } else {
 	dst_addr = ip->u.addr32[0];
     }
+    transport = _m->parsed_uri.proto;
 
     /* Do test */
-    return do_to_gw(_m, lcr_id, dst_addr);
+    return do_to_gw(_m, lcr_id, dst_addr, transport);
 }
 
 
 /*
- * Checks if request goes to ip address of a gateway taking destination
- * address from param.
+ * Checks if request goes to ip address of a gateway taking lcr_id,
+ * destination address and transport protocol from parameters.
  */
-static int to_gw_2(struct sip_msg* _m, char* _lcr_id, char* _addr)
+static int to_gw_3(struct sip_msg* _m, char* _lcr_id, char* _addr,
+		   char* _transport)
 {
     int lcr_id;
+    char *tmp;
     unsigned int dst_addr;
-    pv_value_t pv_val;
     struct ip_addr *ip;
+    str addr_str;
+    uri_transport transport;
 
     /* Get and check parameter values */
-    if (get_int_fparam(&lcr_id, _m, (fparam_t *)_lcr_id) != 0) {
-	LM_ERR("no lcr_id param value\n");
+    lcr_id = strtol(_lcr_id, &tmp, 10);
+    if ((tmp == 0) || (*tmp) || (tmp == _lcr_id)) {
+	LM_ERR("invalid lcr_id parameter %s\n", _lcr_id);
 	return -1;
     }
     if ((lcr_id < 1) || (lcr_id > lcr_count_param)) {
 	LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
 	return -1;
     }
-
-    if (_addr && (pv_get_spec_value(_m, (pv_spec_t *)_addr, &pv_val) == 0)) {
-	if (pv_val.flags & PV_VAL_INT) {
-	    dst_addr = pv_val.ri;
-	} else if (pv_val.flags & PV_VAL_STR) {
-	    if ((ip = str2ip(&pv_val.rs)) == NULL) {
-		LM_DBG("request is not going to gw "
-		       "(addr param value is not an IP address)\n");
-		return -1;
-	    } else {
-		dst_addr = ip->u.addr32[0];
-	    }
-	} else {
-	    LM_ERR("addr param has no value\n");
-	    return -1;
-	}
+    addr_str.s = _addr;
+    addr_str.len = strlen(_addr);
+    if ((ip = str2ip(&addr_str)) == NULL) {
+	LM_ERR("addr param value %s is not an IP address\n", _addr);
+	return -1;
     } else {
-	LM_ERR("could not get destination address from param\n");
+	dst_addr = ip->u.addr32[0];
+    }
+    transport = strtol(_transport, &tmp, 10);
+    if ((tmp == 0) || (*tmp) || (tmp == _transport)) {
+	LM_ERR("invalid transport parameter %s\n", _transport);
+	return -1;
+    }
+    if ((transport < PROTO_NONE) || (transport > PROTO_SCTP)) {
+	LM_ERR("invalid transport parameter value %d\n", transport);
 	return -1;
     }
     
     /* Do test */
-    return do_to_gw(_m, lcr_id, dst_addr);
+    return do_to_gw(_m, lcr_id, dst_addr, transport);
 }
 
 
 /*
  * Checks if request goes to ip address of any gateway taking destination
- * address from Request-URI.
+ * address and transport protocol from Request-URI.
  */
 static int to_any_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
 {
     unsigned int dst_addr, i;
     struct ip_addr *ip;
+    uri_transport transport;
 
-    /* Get destination address */
+    /* Get destination address and transport protocol from R-URI */
     if ((_m->parsed_uri_ok == 0) && (parse_sip_msg_uri(_m) < 0)) {
 	LM_ERR("while parsing Request-URI\n");
 	return -1;
@@ -2435,10 +2458,11 @@ static int to_any_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
     } else {
 	dst_addr = ip->u.addr32[0];
     }
+    transport = _m->parsed_uri.proto;
 
     /* Do test */
     for (i = 1; i <= lcr_count_param; i++) {
-	if (do_to_gw(_m, i, dst_addr) == 1) {
+	if (do_to_gw(_m, i, dst_addr, transport) == 1) {
 	    return i;
 	}
     }
@@ -2448,38 +2472,38 @@ static int to_any_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
 
 /*
  * Checks if request goes to ip address of any gateway taking destination
- * address from param.
+ * address and transport protocol from parameters.
  */
-static int to_any_gw_1(struct sip_msg* _m, char* _addr, char* _s2)
+static int to_any_gw_2(struct sip_msg* _m, char* _addr, char* _transport)
 {
     unsigned int i, dst_addr;
-    pv_value_t pv_val;
+    char *tmp;
     struct ip_addr *ip;
+    uri_transport transport;
+    str addr_str;
 
-    /* Get parameter value */
-    if (_addr && (pv_get_spec_value(_m, (pv_spec_t *)_addr, &pv_val) == 0)) {
-	if (pv_val.flags & PV_VAL_INT) {
-	    dst_addr = pv_val.ri;
-	} else if (pv_val.flags & PV_VAL_STR) {
-	    if ((ip = str2ip(&pv_val.rs)) == NULL) {
-		LM_DBG("request did go to any gw "
-		       "(addr param value is not an IP address)\n");
-		return -1;
-	    } else {
-		dst_addr = ip->u.addr32[0];
-	    }
-	} else {
-	    LM_ERR("addr param has no value\n");
-	    return -1;
-	}
+    /* Get and check parameter values */
+    addr_str.s = _addr;
+    addr_str.len = strlen(_addr);
+    if ((ip = str2ip(&addr_str)) == NULL) {
+	LM_ERR("addr param value %s is not an IP address\n", _addr);
+	return -1;
     } else {
-	LM_ERR("could not get destination address from param\n");
+	dst_addr = ip->u.addr32[0];
+    }
+    transport = strtol(_transport, &tmp, 10);
+    if ((tmp == 0) || (*tmp) || (tmp == _transport)) {
+	LM_ERR("invalid transport parameter %s\n", _transport);
+	return -1;
+    }
+    if ((transport < PROTO_NONE) || (transport > PROTO_SCTP)) {
+	LM_ERR("invalid transport parameter value %d\n", transport);
 	return -1;
     }
 
     /* Do test */
     for (i = 1; i <= lcr_count_param; i++) {
-	if (do_to_gw(_m, i, dst_addr) == 1) {
+	if (do_to_gw(_m, i, dst_addr, transport) == 1) {
 	    return i;
 	}
     }

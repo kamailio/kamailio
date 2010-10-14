@@ -70,10 +70,10 @@ Juha Heinanen
               4.1. load_gws(lcr_id[, uri_user[, caller_uri]])
               4.2. next_gw()
               4.3. defunct_gw(period)
-              4.4. from_gw(lcr_id [, ip_addr])
-              4.5. from_any_gw([ip_addr])
-              4.6. to_gw(lcr_id [, ip_addr])
-              4.7. to_any_gw([ip_addr])
+              4.4. from_gw(lcr_id[, ip_addr, proto])
+              4.5. from_any_gw([ip_addr, proto])
+              4.6. to_gw(lcr_id[, ip_addr, proto])
+              4.7. to_any_gw([ip_addr, proto])
 
         5. Exported RPC Commands
 
@@ -189,10 +189,10 @@ Chapter 1. Admin Guide
         4.1. load_gws(lcr_id[, uri_user[, caller_uri]])
         4.2. next_gw()
         4.3. defunct_gw(period)
-        4.4. from_gw(lcr_id [, ip_addr])
-        4.5. from_any_gw([ip_addr])
-        4.6. to_gw(lcr_id [, ip_addr])
-        4.7. to_any_gw([ip_addr])
+        4.4. from_gw(lcr_id[, ip_addr, proto])
+        4.5. from_any_gw([ip_addr, proto])
+        4.6. to_gw(lcr_id[, ip_addr, proto])
+        4.7. to_any_gw([ip_addr, proto])
 
    5. Exported RPC Commands
 
@@ -768,10 +768,10 @@ modparam("lcr", "fetch_rows", 3000)
    4.1. load_gws(lcr_id[, uri_user[, caller_uri]])
    4.2. next_gw()
    4.3. defunct_gw(period)
-   4.4. from_gw(lcr_id [, ip_addr])
-   4.5. from_any_gw([ip_addr])
-   4.6. to_gw(lcr_id [, ip_addr])
-   4.7. to_any_gw([ip_addr])
+   4.4. from_gw(lcr_id[, ip_addr, proto])
+   4.5. from_any_gw([ip_addr, proto])
+   4.6. to_gw(lcr_id[, ip_addr, proto])
+   4.7. to_any_gw([ip_addr, proto])
 
 4.1.  load_gws(lcr_id[, uri_user[, caller_uri]])
 
@@ -852,17 +852,22 @@ if (!next_gw()) {
 
    Example 1.41. defunct_gw usage
 ...
-defunct_gw("60");
+defunct_gw(60);
 ...
 
-4.4.  from_gw(lcr_id [, ip_addr])
+4.4.  from_gw(lcr_id[, ip_addr, proto])
 
-   Checks if request comes from IP address of a gateway in LCR instance
-   specified by lcr_id argument, which can be an integer constant or a
-   pseudo variable with integer value. Fails if LCR instance includes one
-   or more gateways without IP address. IP address to be checked is either
-   taken from source IP address of the request or (if present) from
-   ip_addr pseudo variable argument.
+   Checks if request comes from IP address and transport protocol
+   spesified for a gateway in LCR instance lcr_id. Fails if the LCR
+   instance includes one or more gateways without IP address. IP address
+   and transport protocol to be checked are either taken from source IP
+   address of the request or (if present) from ip_addr and proto
+   arguments.
+
+   lcr_id can be an integer constant or a pseudo variable holding an
+   integer value. ip_addr can be a string or a pseudo variable holding a
+   string value. proto can be an integer constant (0 = 1 = UDP, 2 = TCP, 3
+   = TLS, 4 = SCTP) or a pseudo variable holding such an integer value.
 
    If request comes from a gateway, gateway's tag and flags are stored as
    a side effect to tag_avp and flags_avp, respectively, if the
@@ -878,21 +883,23 @@ defunct_gw("60");
 
    Example 1.42. from_gw usage
 ...
-if (from_gw("1", "$avp(s:real_source_addr)") {
+if (from_gw(1, $avp(s:real_source_addr), 2) {
         ...
 };
 ...
 
-4.5.  from_any_gw([ip_addr])
+4.5.  from_any_gw([ip_addr, proto])
 
-   Checks if request comes from IP address and port of any gateway. Only
-   LCR instances, where all gateways have IP address, are included in the
-   test. IP address to be checked is either taken from source IP address
-   of the request or (if present) from ip_addr pseudo variable argument.
+   Checks if request comes from IP address and transport protocol
+   spesified for any gateway. Only LCR instances, where all gateways have
+   IP address, are included in the test. IP address and transport protocol
+   to be checked are either taken from source IP address and transport
+   protocol of the request or (if present) from ip_addr and proto
+   arguments. See from_gw() function for more info about the arguments.
 
-   If any gateway has the IP address, function returns LCR identifier of
-   the gateway. Returns -1 on error or if the request does not come from a
-   gateway.
+   If any gateway has the IP address and transport protocol, function
+   returns LCR identifier of the gateway. Returns -1 on error or if the
+   request does not come from a gateway.
 
    If request comes from a gateway, gateway's tag and flags are stored as
    a side effect to tag_avp and flags_avp, respectively, if the
@@ -906,16 +913,17 @@ if (from_gw("1", "$avp(s:real_source_addr)") {
 
    Example 1.43. from_gw usage
 ...
-$var(lcr_id) = from_any_gw();
+$var(lcr_id) = from_any_gw("192.168.1.1", 3);
 ...
 
-4.6.  to_gw(lcr_id [, ip_addr])
+4.6.  to_gw(lcr_id[, ip_addr, proto])
 
-   Checks if in-dialog request goes to IP address and port of a gateway in
-   LCR instance specified by lcr_id argument. Fails if LCR instance
-   includes one or more gateways without IP address. IP address to be
-   checked is either taken from Request-URI hostpart or (if present) from
-   ip_addr pseudo variable argument.
+   Checks if in-dialog request goes to IP address and transport protocol
+   spesified for a gateway in LCR instance lcr_id. Fails if LCR instance
+   includes one or more gateways without IP address. IP address and
+   transport protocol to be checked are either taken from Request-URI or
+   (if present) from ip_addr and proto arguments. See from_gw() for more
+   info regarding the arguments.
 
    Returns 1 on success and -1 on failure and error.
 
@@ -932,12 +940,14 @@ if (to_gw("1")) {
 };
 ...
 
-4.7.  to_any_gw([ip_addr])
+4.7.  to_any_gw([ip_addr, proto])
 
-   Checks if in-dialog request goes to any gateway. Only LCR instances,
-   where all gateways have IP address, are included in the test. IP
-   address to be checked is either taken from Request-URI hostpart or (if
-   present) from ip_addr pseudo variable argument.
+   Checks if in-dialog request goes to IP address and transport protocol
+   of any gateway. Only LCR instances, where all gateways have IP address,
+   are included in the test. IP address and transport protocol to be
+   checked are either taken from Request-URI or (if present) from ip_addr
+   and proto arguments. See from_gw() for more info regarding the
+   arguments.
 
    Execution time of to_any_gw() function is M * O(log N), where M is
    number of LCR instances and N is average number of gateways in LCR
@@ -950,7 +960,7 @@ if (to_gw("1")) {
 
    Example 1.45. to_gw usage
 ...
-if (to_any_gw()) {
+if (to_any_gw("192.55.66.2", 1)) {
         ...
         exit;
 };
