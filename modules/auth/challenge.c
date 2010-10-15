@@ -89,6 +89,7 @@ int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 #if defined USE_NC || defined USE_OT_NONCE
 	unsigned int n_id;
 	unsigned char pool;
+	unsigned char pool_flags;
 #endif
 
 	if(!ahf)
@@ -170,23 +171,26 @@ int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 		if (nc_enabled || otn_enabled){
 			pool=nid_get_pool();
 			n_id=nid_inc(pool);
+			pool_flags=0;
 #ifdef USE_NC
 			if (nc_enabled){
 				nc_new(n_id, pool);
-				pool|=  NF_VALID_NC_ID;
+				pool_flags|=  NF_VALID_NC_ID;
 			}
 #endif
 #ifdef USE_OT_NONCE
 			if (otn_enabled){
 				otn_new(n_id, pool);
-				pool|= NF_VALID_OT_ID;
+				pool_flags|= NF_VALID_OT_ID;
 			}
 #endif
 		}else{
 			pool=0;
+			pool_flags=0;
 			n_id=0;
 		}
-		if (calc_nonce(p, &l, cfg, t, t + nonce_expire, n_id, pool,
+		if (calc_nonce(p, &l, cfg, t, t + nonce_expire, n_id,
+						pool | pool_flags,
 						&secret1, &secret2, msg) != 0)
 #else  /* USE_NC || USE_OT_NONCE*/
 		if (calc_nonce(p, &l, cfg, t, t + nonce_expire, 
