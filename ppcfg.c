@@ -83,6 +83,7 @@ int pp_subst_run(char **data)
 {
 	str* result;
 	pp_subst_rule_t *pr;
+	int i;
 
 	if(pp_subst_rules_head==NULL)
 		return 0;
@@ -93,22 +94,25 @@ int pp_subst_run(char **data)
 		return 0;
 	pr = pp_subst_rules_head;
 
+	i = 0;
 	while(pr)
 	{
 		result=subst_str(*data, 0,
 				(struct subst_expr*)pr->ppdata, 0); /* pkg malloc'ed result */
 		if(result!=NULL)
 		{
-			LM_DBG("### preprocess subst applied to [%s]"
-					" - returning new string [%s]\n", *data, result->s);
+			i++;
+			LM_DBG("preprocess subst applied [#%d] to [%s]"
+					" - returning new string [%s]\n", i, *data, result->s);
 			pkg_free(*data);
 			*data = result->s;
 			pkg_free(result);
-			return 1;
 		}
 		pr = pr->next;
 	}
 
+	if(i!=0)
+		return 1;
 	return 0;
 }
 
