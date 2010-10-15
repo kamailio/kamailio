@@ -207,11 +207,11 @@ if (!proxy_authenticate("$fd", "subscriber)) {
 		</listitem>
 		</itemizedlist>
 		<para>
-		<para>
 			When challenge header is built and stored in avp,
 			append_to_reply() and sl reply functions can be used to send
 			appropriate SIP reply to challenge for authentication.
 		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>

@@ -15,7 +15,7 @@ Daniel-Constantin Mierla
    asipto.com
    <miconda@gmail.com>
 
-   Copyright © 2002, 2003 FhG FOKUS
+   Copyright � 2002, 2003 FhG FOKUS
      __________________________________________________________________
 
    1.1. Overview
@@ -100,15 +100,29 @@ Daniel-Constantin Mierla
    is the same when an UA tries to reuse the nonce, thus protecting or
    severely limiting reply attacks.
 
-   The possible flag values for all three parameters are: 1 for checking
-   if the message uri changed (uses the whole uri), 2 for checking the
-   callid, 4 for the from tag and 8 for the source ip (see nonce.h). For
-   example setting auth_checks_register to 6 would check if the callid or
-   the from tag changed from the REGISTER message for which the original
-   nonce was generated (this would allow nonce reuse only within the same
-   UA and for the expire time). Note that enabling the extra checks will
-   limit nonce caching by UAs, requiring extra challenges and roundtrips,
-   but will provide much better protection.
+   The possible flag values for all three parameters are:
+     * 1 for checking if the message uri changed (uses the whole uri)
+     * 2 for checking the callid
+     * 4 for checking the from tag
+     * 8 for checking the source ip (see nonce.h).
+
+   For example setting auth_checks_register to 3 would check if the callid
+   or the request uri changed from the REGISTER message for which the
+   original nonce was generated (this would allow nonce reuse only within
+   the same UA and for the expire time). Note that enabling the extra
+   checks will limit nonce caching by UAs, requiring extra challenges and
+   roundtrips, but will provide much better protection.
+
+Warning
+
+   Do not enable the from tag check (4) for REGISTERs
+   (auth_checks_register) and out-of-dialog messages (auth_checks_no_dlg)
+   unless you are sure that all your user agents do not change the from
+   tag when challenged. Some user agents will also change the callid when
+   the challenged request is not in-dialog, so avoid enabling the callid
+   check (2) for messages that are not part of a dialog
+   (auth_checks_no_dlg). In some rare case this will also have to be done
+   for REGISTERs.
 
    When the secret parameter is set and the extra checks are enabled, the
    first half of the secret will be used for the expire time MD5 and the
@@ -117,7 +131,25 @@ Daniel-Constantin Mierla
 
    Example 1. Setting the auth_checks_register module parameter
 ...
-modparam("auth", "auth_checks_register", 2) # callid
+# For REGISTER requests we hash the Request-URI, Call-ID, and source IP of the
+# request into the nonce string. This ensures that the generated credentials
+# cannot be used with another registrar, user agent with another source IP
+# address or Call-ID. Note that user agents that change Call-ID with every
+# REGISTER message will not be able to register if you enable this.
+modparam("auth", "auth_checks_register", 11)
+
+# For dialog-establishing requests (such as the original INVITE, OPTIONS, etc)
+# we hash the Request-URI and source IP. Hashing Call-ID and From tags takes
+# some extra precaution, because these checks could render some UA unusable.
+modparam("auth", "auth_checks_no_dlg", 9)
+
+# For mid-dialog requests, such as re-INVITE, we can hash source IP and
+# Request-URI just like in the previous case. In addition to that we can hash
+# Call-ID and From tag because these are fixed within a dialog and are
+# guaranteed not to change. This settings effectively restrict the usage of
+# generated credentials to a single user agent within a single dialog.
+modparam("auth", "auth_checks_in_dlg", 15)
+
 ...
 
 1.3.2. qop (string)
@@ -496,7 +528,7 @@ if (www_authenticate("realm", "subscriber)) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string “”. In case of REGISTER requests To
+       It must not be empty string "". In case of REGISTER requests To
        header field domain (e.g., varibale $td) can be used (because this
        header field represents a user being registered), for all other
        messages From header field domain can be used (e.g., varibale $fd).
@@ -558,7 +590,7 @@ if (!proxy_authenticate("$fd", "subscriber)) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string “”. In case of REGISTER requests To
+       It must not be empty string "". In case of REGISTER requests To
        header field domain (e.g., varibale $td) can be used (because this
        header field represents a user being registered), for all other
        messages From header field domain can be used (e.g., varibale $fd).

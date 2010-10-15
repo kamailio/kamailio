@@ -51,17 +51,44 @@
 		protecting or severely limiting reply attacks.
 	</para>
 	<para>
-		The possible flag values for all three parameters are: 1 for checking
-		if the message uri changed (uses the whole uri), 2 for checking the
-		callid, 4 for the from tag and 8 for the source ip (see nonce.h). For
-		example setting
-		 <varname>auth_checks_register</varname> to 6 would check if the
-		 callid or the from tag changed from the REGISTER message for which
+		The possible flag values for all three parameters are:
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>1</emphasis> for checking if the message
+				uri changed (uses the whole uri)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>2</emphasis> for checking the callid
+			</para></listitem>
+			<listitem><para>
+				<emphasis>4</emphasis> for checking the from tag
+			</para></listitem>
+			<listitem><para>
+				<emphasis>8</emphasis> for checking the source ip
+				(see nonce.h).
+			</para></listitem>
+		</itemizedlist>
+	</para>
+	<para>
+		For example setting
+		 <varname>auth_checks_register</varname> to 3 would check if the
+		 callid or the request uri changed from the REGISTER message for which
 		 the original nonce was generated (this would allow nonce reuse only
 		 within the same UA and for the expire time).  Note that enabling
 		 the extra checks will limit nonce caching by UAs, requiring extra
 		 challenges and roundtrips, but will provide much better protection.
 	</para>
+	<warning><para>
+		Do not enable the from tag check (4) for REGISTERs
+		(<varname>auth_checks_register</varname>) and out-of-dialog messages
+		(<varname>auth_checks_no_dlg</varname>) unless you are sure that all
+		your user agents do not change the from tag when challenged. Some
+		user agents will also change the callid when the challenged request
+		is not in-dialog, so avoid enabling the callid check (2) for
+		messages that are not part of a dialog
+		(<varname>auth_checks_no_dlg</varname>).
+		In some rare case this will also have to be done for REGISTERs.
+	</para></warning>
 	<para>
 		When the <varname>secret</varname> parameter is set and the extra
 		checks are enabled, the first half of the <varname>secret</varname> 
@@ -74,7 +101,25 @@
 				parameter</title>
 	    <programlisting>
 ...
-modparam("auth", "auth_checks_register", 2) # callid
+# For REGISTER requests we hash the Request-URI, Call-ID, and source IP of the
+# request into the nonce string. This ensures that the generated credentials
+# cannot be used with another registrar, user agent with another source IP
+# address or Call-ID. Note that user agents that change Call-ID with every
+# REGISTER message will not be able to register if you enable this.
+modparam("auth", "auth_checks_register", 11)
+
+# For dialog-establishing requests (such as the original INVITE, OPTIONS, etc)
+# we hash the Request-URI and source IP. Hashing Call-ID and From tags takes
+# some extra precaution, because these checks could render some UA unusable.
+modparam("auth", "auth_checks_no_dlg", 9)
+
+# For mid-dialog requests, such as re-INVITE, we can hash source IP and
+# Request-URI just like in the previous case. In addition to that we can hash
+# Call-ID and From tag because these are fixed within a dialog and are
+# guaranteed not to change. This settings effectively restrict the usage of
+# generated credentials to a single user agent within a single dialog.
+modparam("auth", "auth_checks_in_dlg", 15)
+
 ...
 	    </programlisting>
 	</example>
