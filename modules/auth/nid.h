@@ -47,8 +47,8 @@ extern unsigned nid_pool_no; /* number of index pools */
  * array locations it should be a number prime with the array size and
  * bigger then the cacheline. Since this is used also for onetime nonces
  * => NID_INC/8 > CACHELINE
- * This number also limit the maximum pool/partition size, since the
- * id overlfow checks check if crt_id - nonce_id >= partition_size*NID_INC
+ * This number also limits the maximum pool/partition size, since the
+ * id overflow check checks if crt_id - nonce_id >= partition_size*NID_INC
  * => maximum partition size is (nid_t)(-1)/NID_INC*/
 #define NID_INC 257
 

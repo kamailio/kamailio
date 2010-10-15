@@ -162,7 +162,7 @@ void destroy_nonce_count()
  * nc array corresponding to p.
  * WARNING: the result is  an index in the nc_array converted to nc_t
  * (unsigned char by default), to get the index of the unsigned int in which
- * nc is packed, call 
+ * nc is packed, call get_nc_array_uint_idx(get_nc_array_raw_idx(i,p))).
  */
 #define get_nc_array_raw_idx(i,p) \
 	(((i)&nc_partition_mask)+((p)<<nc_partition_k))
@@ -204,7 +204,7 @@ nid_t nc_new(nid_t id, unsigned char p)
 	do{
 		v=atomic_get_int(&nc_array[i]);
 		/* new_value = old_int with the corresponding byte or short zeroed*/
-		new_v=v & ~(((1<<(sizeof(nc_t)*8))-1)<< (r*8));
+		new_v=v & ~(((1<<(sizeof(nc_t)*8))-1)<< (r*sizeof(nc_t)*8));
 	}while(atomic_cmpxchg_int((int*)&nc_array[i], v, new_v)!=v);
 	return id;
 }

@@ -134,7 +134,7 @@ union bin_nonce{
 
 /* maximum nonce length in binary form (not converted to base64/hex):
  * expires_t | since_t | MD5(expires_t | since_t | s1) | \
- *   MD5(info(auth_extra_checks, s2)   => 4  + 4 + 16 + 16 = 40 bytes
+ *   MD5(info(auth_extra_checks, s2))   => 4  + 4 + 16 + 16 = 40 bytes
  * or if nc_enabled:
  * expires_t | since_t | MD5...| MD5... | nonce_id | flag+pool_no(1 byte)
  * => 4 + 4 + 16 + 16 + 4 + 1 = 45 bytes

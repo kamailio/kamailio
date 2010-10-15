@@ -406,8 +406,6 @@ int check_nonce(auth_body_t* auth, str* secret1, str* secret2,
 				auth->digest.nc.len){
 			if (str2int(&auth->digest.nc, &nc)!=0){
 				/* error, bad nc */
-				ERR("FIXME:check_nonce: bad nc value %.*s\n",
-						auth->digest.nc.len, auth->digest.nc.s);
 				return 5; /* invalid nc */
 			}
 			switch(nc_check_val(n_id, pf & NF_POOL_NO_MASK, nc)){
