@@ -4,7 +4,7 @@ Juha Heinanen
 
    TutPro Inc.
 
-   Copyright � 2008 Juha Heinanen
+   Copyright © 2008-2009 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -28,6 +28,7 @@ Juha Heinanen
 
               4.1. http_query(url, result)
               4.2. xcap_auth_status(watcher_uri, presentity_uri)
+              4.3. is_int(pvar)
 
         5. MI Commands
 
@@ -46,10 +47,11 @@ Juha Heinanen
    1.4. Set xcap_table parameter
    1.5. http_query() usage
    1.6. xcap_auth_status() usage
-   1.7. forward_list usage
-   1.8. forward_switch usage
-   1.9. forward_filter usage
-   1.10. forward_proxy usage
+   1.7. is_int() usage
+   1.8. forward_list usage
+   1.9. forward_switch usage
+   1.10. forward_filter usage
+   1.11. forward_proxy usage
 
 Chapter 1. Admin Guide
 
@@ -72,6 +74,7 @@ Chapter 1. Admin Guide
 
         4.1. http_query(url, result)
         4.2. xcap_auth_status(watcher_uri, presentity_uri)
+        4.3. is_int(pvar)
 
    5. MI Commands
 
@@ -98,7 +101,7 @@ Chapter 1. Admin Guide
    deactivated.
 
    Function xcap_auth_status can be used to check from presence server
-   database, if watcher is authorized to subscribe event "presence" of
+   database, if watcher is authorized to subscribe event “presence” of
    presentity.
 
 2. Dependencies
@@ -109,7 +112,7 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * None.
+     * a database module if xcap_auth_status function is enabled.
 
 2.2. External Libraries or Applications
 
@@ -128,7 +131,7 @@ Chapter 1. Admin Guide
 
    Defines in seconds how long Kamailio waits response from HTTP server.
 
-   Default value is "4".
+   Default value is null, i.e., xcap_auth_status function is disabled.
 
    Example 1.1. Set http_query_timeout parameter
 ...
@@ -139,7 +142,7 @@ modparam("utils", "http_query_timeout", 2)
 
    Defines if the forwarding callback should be installed.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.2. Set forward_active parameter
                                         ...
@@ -162,7 +165,7 @@ modparam("utils", "pres_db_url", "mysql://foo:secret@localhost/pres")
 
    Defines name of xcap table in presence server database.
 
-   Default value is "xcap".
+   Default value is “xcap”.
 
    Example 1.4. Set xcap_table parameter
 ...
@@ -173,14 +176,15 @@ modparam("utils", "xcap_table", "pres_xcap")
 
    4.1. http_query(url, result)
    4.2. xcap_auth_status(watcher_uri, presentity_uri)
+   4.3. is_int(pvar)
 
 4.1.  http_query(url, result)
 
-   Sends HTTP GET request according to URL given in "url" parameter, which
+   Sends HTTP GET request according to URL given in “url” parameter, which
    is a string that may contain pseudo variables.
 
    If HTTP server returns a class 2xx or 3xx reply, first line of reply's
-   body (if any) is stored in "result" parameter, which must be a writable
+   body (if any) is stored in “result” parameter, which must be a writable
    pseudo variable.
 
    Function returns reply code of HTTP reply or -1 if something went
@@ -202,7 +206,7 @@ switch ($retcode) {
 4.2.  xcap_auth_status(watcher_uri, presentity_uri)
 
    Function checks from presence server database if watcher is authorized
-   to subscribe event "presence" of presentity. Sphere checking is not
+   to subscribe event “presence” of presentity. Sphere checking is not
    included.
 
    Both watcher_uri and presentity_uri are pseudo variables. Function
@@ -225,6 +229,20 @@ if (method=="MESSAGE") {
 }
 ...
 
+4.3.  is_int(pvar)
+
+   Function checks if pvar argument contains integer value and returns 1
+   if it does and -1 otherwise.
+
+   Function can be used from all kinds of routes.
+
+   Example 1.7. is_int() usage
+...
+if (is_int("$var(foo)")) {
+    xlog("L_INFO", "variable foo contains integer value\n");
+}
+...
+
 5. MI Commands
 
    5.1. forward_list
@@ -238,7 +256,7 @@ if (method=="MESSAGE") {
 
    No parameters.
 
-   Example 1.7. forward_list usage
+   Example 1.8. forward_list usage
 ...
 kamctl fifo forward_list
 id switch                         filter proxy
@@ -251,7 +269,7 @@ id switch                         filter proxy
    The syntax of this configuration string is described in 1.6.
    (switch_setting_list).
 
-   Example 1.8. forward_switch usage
+   Example 1.9. forward_switch usage
 ...
 kamctl fifo sp_forward_switch 0=on
 ...
@@ -270,7 +288,7 @@ kamctl fifo sp_forward_switch 0=on
    The syntax of this configuration string is described in 1.6.
    (filter_setting_list).
 
-   Example 1.9. forward_filter usage
+   Example 1.10. forward_filter usage
 ...
 kamctl fifo sp_forward_filter 0=REGISTER:INVITE
 ...
@@ -283,7 +301,7 @@ kamctl fifo sp_forward_filter 0=REGISTER:INVITE
    switch). The syntax of this configuration string is described in 1.6.
    (proxy_setting_list).
 
-   Example 1.10. forward_proxy usage
+   Example 1.11. forward_proxy usage
 ...
 kamctl fifo sp_forward_proxy 0=host-c.domain-c:5060
 ...

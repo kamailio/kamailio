@@ -101,6 +101,8 @@ static cmd_export_t cmds[] = {
      REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
     {"xcap_auth_status", (cmd_function)xcap_auth_status, 2, fixup_pvar_pvar,
      fixup_free_pvar_pvar, REQUEST_ROUTE},
+    {"is_int", (cmd_function)is_int, 1, fixup_pvar_null, fixup_free_pvar_null,
+     REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
     {0, 0, 0, 0, 0, 0}
 };
 
