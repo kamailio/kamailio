@@ -1096,8 +1096,11 @@ static unsigned char drop_replies;
  * Checks if the new reply (with new_code status) should be sent or not
  *  based on the current
  * transaction status.
+ *
+ * @param cancel_data - initialized cancel_info structure.
  * Returns 	- branch number (0,1,...) which should be relayed
  *         -1 if nothing to be relayed
+ * WARNING: cancel_data should be initialized prior to calling this function.
  */
 static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	int branch , int *should_store, int *should_relay,
@@ -1576,6 +1579,10 @@ skip:
    REPLY_LOCK and it returns unlocked!
    If do_put_on_wait==1 and this is the final reply, the transaction
    wait timer will be started (put_on_wait(t)).
+ *
+ * @param cancel_data - initialized cancel_info structure.
+ *
+ * WARNING: cancel_data should be initialized prior to calling this function.
 */
 enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	unsigned int msg_status, struct cancel_info *cancel_data,
@@ -1851,6 +1858,10 @@ error01:
 /* this is the "UAC" above transaction layer; if a final reply
    is received, it triggers a callback; note well -- it assumes
    it is entered locked with REPLY_LOCK and it returns unlocked!
+ *
+ * @param cancel_data - initialized cancel_info structure.
+ *
+ * WARNING: cancel_data should be initialized prior to calling this function.
 */
 enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	unsigned int msg_status, struct cancel_info *cancel_data)
