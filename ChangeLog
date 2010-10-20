@@ -1,5 +1,307 @@
 # $Id$
 
+===================== 2010-10-20 Kamailio v3.0.4 released =====================
+
+===================== Changes since release 3.0.3 =============================
+
+commit bee1ef7e0b2a8a49e70f553843feb4fb271f3aea
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 20 17:13:26 2010 +0200
+
+    Makefile: version set 3.0.4
+
+commit 145ea7cf9f28520ada30ede689e1e5ab6d0d19ab
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Mon Oct 11 19:06:58 2010 +0200
+
+    pkg debian
+      move debian folders to pkg/kamailio/deb
+      lenny and lucid are no longer symlinks
+
+commit 47a024dacab408655a8db55aa92f9e1dfec143c9
+Author: Miklos Tirpak <miklos@iptel.org>
+Date:   Thu Sep 30 10:42:57 2010 +0200
+
+    tm: t_save_lumps() verifies the route type
+    
+    Even though the t_save_lumps() function is registered only for
+    request route, in some corner case, the function might be called
+    from failure_route. (For example a failure route executes a request
+    route block which calls this function.)
+    This scenario resulted in overwriting the already cloned lump list
+    which is not allowed because of the lockless read, and also
+    resulted in a memory leak.
+    An extra check is also added to save_msg_lumps() to catch this bug.
+    (cherry picked from commit a7bbaf7cd83b5d044ff8c7fff7b19c7ff392da74)
+
+commit 253ad295e457a85ed0c629d568bff9334115dccc
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Sep 29 17:35:25 2010 +0200
+
+    core: return & break are absorbed in expressions
+    
+    return & break inside an expression do not cause the current route
+    block or while/switch statement to end.
+    E.g.: $v = { return 1; }  will not end the current route, will
+    only set $v to 1.
+    (cherry picked from commit 65b64bca77b18f7ee964119e1b3b363d66189c3e)
+
+commit 8eb41afc974a4bd0a1a6346240ace0ff72f89279
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Sep 29 16:30:40 2010 +0200
+
+    core: fix end-script commands in expr. leaks
+    
+    When having commands that end the script immediately in
+    assignments (e.g. $foo = { drop; }) or in expressions
+    (e.g. if ($v + { drop; } > 0)), the script was terminated
+    immediately via longjmp. However this might leave some un-freed
+    variables.
+    This fix introduces a safe version of run_actions()
+    (run_actions_safe()) that will not use longjmp() to immediately
+    end the whole script on drop, returning instead to its caller.
+    (cherry picked from commit 28a882873f8a69a189d790e33bcd2017c253a66a)
+
+commit 61271a1ccf92eb26eb4916d05c43742f03ebe241
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Tue Sep 28 18:09:17 2010 +0200
+
+    core: switch(string) break/return fix
+    
+    Commit 6ab93de3 (switch(string) memleak fix) broke break & return
+    from switch case statements.
+    
+    Reported-by: Juha Heinanen  jh tutpro com
+    (cherry picked from commit c9586e183f5fbde854ec8f27c38f58a7853e971a)
+
+commit 335743621f54220e58c2f3da2712dcae837b31a0
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Sun Sep 26 21:28:47 2010 +0200
+
+    core: switch(string) memleak fix
+    
+    When a switch(string) is used and one of the case blocks exits the
+    script (by drop, exit or a module function that causes the script
+    to end), the dynamic string rvals were not cleaned up.
+    This happened because run_actions() uses longjmp() to quickly end
+    the script (skipping this way over the cleanups done after the
+    run_actions() call).
+    
+    Reported-by: Daniel-Constantin Mierla <miconda@gmail.com>
+    Reported-by: César Pinto Magán  Cesar.Pinto a-e es
+    (cherry picked from commit 6ab93de37f2f1991d3406f52ac9502a7c795ef55)
+
+commit 65be1c576e31cfeb9f1a1ec0c095ddfcad303e7f
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Mon Apr 19 18:28:07 2010 +0300
+
+    modules/tm: fixed t_unref bug catcher
+    
+    - On behalf Andrei, added one more condition to t_unref bug catcher in
+      order to avoid invalid BUG message.
+    (cherry picked from commit 2812bd9c426d7a186bdc9b1d5fc4766315a64290)
+
+commit 2ccea0649cf7a5be5a70d3ae0a307dfdac114e01
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Tue Sep 21 14:01:07 2010 +0200
+
+    iptrtpproxy: makefile LIBS update
+    
+    Look for libipt_RTPPROXY first under /lib/xtables (default install
+    dir) and if not found in $(iptdir)/extensions (compile dir).
+    (cherry picked from commit 6b9f6a324851b87d37eaa1f576f3e88d5863ee2a)
+
+commit e3cf8b719eb5d518ef540330254b9d4d542a05c5
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Tue Sep 21 14:02:31 2010 +0200
+
+    iptrtpproxy: s/cfg_parse/sr_cfg_parse/
+    
+    cfg_parse name changed into sr_cfg_parse (since commit 50ca02e5).
+    (cherry picked from commit b5c339deff8c1b5b325cac96071902ebde341082)
+
+commit 363b9c7e13fc23fbdd10ac32758605f4907c5dde
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Tue Sep 21 14:13:17 2010 +0200
+
+    iptrtpproxy: minor doc updates
+    
+    - minor fixes + note about setting iptdir in Makefile
+    - README regenerated
+    (cherry picked from commit b0f583306656a2d4d5be1e9fd5e0189675dfd676)
+
+commit 32361f710b1d66723a22c10bee0bb6088867c681
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Tue Sep 7 16:57:33 2010 +0200
+
+    tls: fix wrong string variable length overwrite
+    
+    Some per-domain config string variables (cert_file, ca_file,
+    pkey_file & cipher_list) had their length truncated to that of the
+    corresponding variable in the parent domain.
+    Mostly invisible since the string length was in general ignored
+    (asciiz strings).
+    (cherry picked from commit e63610186803cfcc0ff14d8871df8ae70df83103)
+
+commit 8b4802a29d5373bcd2f9e999d1dce7267e6c790c
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Tue Aug 24 11:43:36 2010 +0200
+
+    core: fix mod_register & dlflags
+    
+    dlflags changes in mod_register() functions were discarded
+    resulting in modules failing to load.
+    (cherry picked from commit 931bd29d504f01eeab738ee5dad72fe7be858adb)
+
+commit b532368d655fb7b08c44120c85eb09ff545bab44
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Sun Oct 10 01:32:45 2010 +0200
+
+    pkg debian
+    
+      * Use libreadline-dev generic instead of libreadline5-dev as dependency
+
+commit 80928443fcd9548bd2e4599e76f1c96498aed4a7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Oct 9 10:56:38 2010 +0200
+
+    permissions(k): fixed misleading out of shm
+    
+    - out of shm memory was printed even when db load failed
+    - some identations to reveal the inner blocks
+
+commit a22dc9b151d44dede21e3f500455eab568d14f28
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Thu Sep 30 01:28:00 2010 +0200
+
+    mem: fix f_malloc big fragments search
+    
+    In some situation (depending on previous allocation and frees)
+    trying to allocate a "big" fragment (>16k) would fail even if
+    enough memory was available (the fragment search algorithm missed
+    fallback to bigger buckets when using the free bitmap).
+    (cherry picked from commit 1ccbd33558e7e09f36f39fd984ac99a7bfd3eba2)
+
+commit 61f4d7f12723c4a3d989d37a414433e5ed71abff
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Wed Sep 22 18:35:37 2010 +0300
+
+    modules_k/regex Fixed a memory leak when using pcre regex
+    
+    The compiled regular expression when using pcre_match was not freed.
+
+commit 40902d1e04afe5472ed2be14fa649694bef54142
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 18 11:24:20 2010 +0200
+
+    usrloc(k): updated index of domain column
+    
+    - index is 14
+    - harmless case since domain value is tested against null as well
+    (cherry picked from commit 390eefb442f0b3b41cf5a708270ecd98765b4a66)
+
+commit 4971831866dba88377ebe14f7032a2966acc822b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 18 11:58:21 2010 +0200
+
+    db_postgres: reset row_buf for each row
+    
+    - DB1 interface was reusing local buffer to convert returned rows,
+      resulting in misusage of values from previous rows for null values
+    - reported by Jan Klepal
+    (cherry picked from commit 63c724b42d4c4ff45eaa660508d6358f3e894d0a)
+
+commit 191502e739dcd888177fd4653b50c76ea89603c6
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Sat Sep 4 17:49:18 2010 +0200
+
+    * debian-lenny symlink added for debian builds
+
+commit fc67150b32deac0da3246763f4c9e32747f546d8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 3 10:14:26 2010 +0200
+
+    core: socket_str enclose IPv6 addresses in betwen [ ]
+    
+    - string representation of socket string takes in consideration IPv6
+      addresses
+    (cherry picked from commit 426c6b7e2103d38aca47ca9728d22355bd44b7e9)
+    
+    Conflicts:
+    
+    	pkg/kamailio/debian-lenny
+
+commit 1f11c47523449aa87c54cefc8db1489bed020bcb
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Aug 26 19:54:49 2010 +0300
+
+    modules_k/nathelper: better add_contact_alias/handle_ruri_alias fix
+    - In add_contact_alias/handle_ruri_alias functions, use ~ char both
+      as port and transport protocol separator in
+    (cherry picked from commit 9d80a7e32f1db5e1f166175e55e7868ee75879e7)
+
+commit 6b7c7b41c9b02c26748fb80da434b2616268c59d
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Aug 26 14:39:08 2010 +0300
+
+    Revert "lcr: fix load_gws() 2nd param"
+    
+    This reverts commit 5da493e4457dd97a0d9f3e453303c0aa98cdb30c.
+
+commit ca75bb5d4a327a0da4b720956dec3438513f2303
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed Aug 25 22:52:42 2010 +0300
+
+    modules_k/nathelper: replaced offending contact alias character
+    - Changed character ':' in contact alias paramater value to '~',
+      because ':' is not allowed in value field of generic contact
+      parameter.
+    - I first tried to cherry pick the commit for master, but it resulted
+      in conflicts. So i went and edited k branch manually.
+
+commit 5da493e4457dd97a0d9f3e453303c0aa98cdb30c
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed Aug 25 22:42:33 2010 +0300
+
+    lcr: fix load_gws() 2nd param
+    
+    load_gws() 2nd optional parameter was treated like a fparam
+    instead of a pv_spec_t (the fixup_igp_pvar function converts the
+    first parameter to a fparam and the second one to a pv_spec).
+    (cherry picked from commit ef56e6bc119e982dc305bfa4b7508ca9226a1287)
+    
+    Conflicts:
+    
+    	modules/lcr/lcr_mod.c
+
+commit 5e6a0aa429a9e12a7dd07eee042c518bd6ddaecb
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Wed Aug 25 14:08:35 2010 +0300
+
+    Modules_k:pv  No warning message for branch(count) if no branches
+    
+    Patch by Carsten Gross (carsten.gross at 1und1 dot de)
+    (cherry picked from commit 54f04ae93503f1d24763b6b6cb0ceec3045b26d9)
+
+commit 82fe7671c9c65cde0bd53bab615fa37b627fe3c2
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Fri Aug 20 12:22:56 2010 +0200
+
+    tls: fix state change while waiting for lock return
+    
+    tls_h_fix_read_conn() did not return the right thing if the state
+    changed while waiting for the lock (the fall-through return was
+    error instead of success).
+    
+    Reported-by: Couprie Geoffroy  geoffroy couprie atosorigin com
+    (cherry picked from commit 513c21f67f88484dd12dd6adce6d6ddc7fb60c31)
+
+commit 938b4fac168309d4b5e774b4e3a1bc6bf1f7ae53
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Fri Aug 20 14:05:12 2010 +0200
+
+    PKG: Debian changelog updates
+
 ===================== 2010-08-19 Kamailio v3.0.3 released =====================
 
 ===================== Changes since release 3.0.2 =============================
