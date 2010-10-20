@@ -225,6 +225,7 @@ int cancel_branch( struct cell *t, int branch,
 	irb=&t->uac[branch].request;
 	irb->flags|=F_RB_CANCELED;
 	ret=1;
+	init_cancel_info(&tmp_cd);
 
 #	ifdef EXTRA_DEBUG
 	if (crb->buffer!=BUSY_BUFFER) {
