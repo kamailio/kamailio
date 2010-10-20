@@ -1198,7 +1198,7 @@ modparam("tm", "failure_reply_mode", 3)
 			<title>Set <varname>local_cancel_reason</varname> parameter</title>
 			<programlisting>
 ...
-modparam("tm", "local_cancel_reason", "0")
+modparam("tm", "local_cancel_reason", 0)
 ...
 			</programlisting>
 		</example>
@@ -1230,7 +1230,7 @@ modparam("tm", "local_cancel_reason", "0")
 			<title>Set <varname>e2e_cancel_reason</varname> parameter</title>
 			<programlisting>
 ...
-modparam("tm", "e2e_cancel_reason", "0")
+modparam("tm", "e2e_cancel_reason", 0)
 ...
 			</programlisting>
 		</example>
