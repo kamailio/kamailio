@@ -333,7 +333,7 @@ void cfg_destroy(void)
 	cfg_ctx_destroy();
 
 	/* free the list of groups */
-	cfg_destory_groups(cfg_global ? (*cfg_global)->vars : NULL);
+	cfg_destory_groups((cfg_global && (*cfg_global)) ? (*cfg_global)->vars : NULL);
 
 	/* free the select list */
 	cfg_free_selects();
