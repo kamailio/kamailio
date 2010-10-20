@@ -30,3 +30,7 @@ export LANG="C"
 
 wget -O - "$url" | recode latin1..utf8 | sed 's/^*.Verzeichnis der Portierungskennungen//' | awk '/<tbody>/, /<\/tbody>/' | tr -d '\r' | tr '\n' '@' | sed 's/<\/table>.*$//' | sed 's/<\/tbody>.*$//'
 
+# probably also possible to use this:
+# http://www.bundesnetzagentur.de/cae/servlet/contentblob/156772/publicationFile/8492/KonsolidiertesVerzPortierungsk.zip
+# main page (for reference):
+# http://www.bundesnetzagentur.de/cln_1932/DE/Sachgebiete/Telekommunikation/RegulierungTelekommunikation/Nummernverwaltung/TechnischeNummern/Portierungskennung/KonsolidiertesVerzPortKenn_Basepage.html?nn=120380
