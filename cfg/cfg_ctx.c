@@ -318,7 +318,7 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 	char		*old_string = NULL;
 	void		**replaced = NULL;
 	cfg_child_cb_t	*child_cb = NULL;
-	cfg_group_inst_t	*group_inst, *new_array = NULL;
+	cfg_group_inst_t	*group_inst = NULL, *new_array = NULL;
 	unsigned char		*var_block;
 
 	/* verify the context even if we do not need it now
@@ -655,7 +655,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 	cfg_changed_var_t	*changed = NULL, **changed_p;
 	int		size;
 	str		s;
-	cfg_group_inst_t	*group_inst;
+	cfg_group_inst_t	*group_inst = NULL;
 	unsigned char		*var_block;
 
 	if (!cfg_shmized)
@@ -934,7 +934,7 @@ int cfg_commit(cfg_ctx_t *ctx)
 	void	*p;
 	str	s, s2;
 	cfg_group_t	*group;
-	cfg_group_inst_t	*group_inst;
+	cfg_group_inst_t	*group_inst = NULL;
 
 	if (!ctx) {
 		LOG(L_ERR, "ERROR: cfg_commit(): context is undefined\n");
@@ -1022,7 +1022,7 @@ int cfg_commit(cfg_ctx_t *ctx)
 		if (!changed->group_id_set) {
 			p = CFG_GROUP_DATA(block, changed->group)
 				+ changed->var->offset;
-			group_inst = NULL; /* fore the look-up of the next group_inst */
+			group_inst = NULL; /* force the look-up of the next group_inst */
 		} else {
 			if (group != changed->group) {
 				/* The group array has not been cloned yet. */
