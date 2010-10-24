@@ -81,7 +81,9 @@
 		<example>
 		<title><varname>db_url</varname> parameter usage</title>
 		<programlisting format="linespecific">
+...
 modparam("auth_db", "db_url", "&exampledb;")
+...
 </programlisting>
 		</example>
 	</section>
@@ -98,7 +100,9 @@ modparam("auth_db", "db_url", "&exampledb;")
 		<example>
 		<title><varname>user_column</varname> parameter usage</title>
 		<programlisting format="linespecific">
+...
 modparam("auth_db", "user_column", "user")
+...
 </programlisting>
 		</example>
 	</section>
@@ -116,7 +120,9 @@ modparam("auth_db", "user_column", "user")
 		<example>
 		<title><varname>domain_column</varname> parameter usage</title>
 		<programlisting format="linespecific">
+...
 modparam("auth_db", "domain_column", "domain")
+...
 </programlisting>
 		</example>
 	</section>
@@ -136,7 +142,9 @@ modparam("auth_db", "domain_column", "domain")
 		<example>
 		<title><varname>password_column</varname> parameter usage</title>
 		<programlisting format="linespecific">
+...
 modparam("auth_db", "password_column", "password")
+...
 </programlisting>
 		</example>
 	</section>
@@ -156,7 +164,9 @@ modparam("auth_db", "password_column", "password")
 		<example>
 		<title><varname>password_column_2</varname> parameter usage</title>
 		<programlisting format="linespecific">
+...
 modparam("auth_db", "password_column_2", "ha1_2")
+...
 </programlisting>
 		</example>
 	</section>
@@ -199,7 +209,9 @@ modparam("auth_db", "password_column_2", "ha1_2")
 		<example>
 		<title><varname>calculate_ha1</varname> parameter usage</title>
 		<programlisting format="linespecific">
+...
 modparam("auth_db", "calculate_ha1", 1)
+...
 </programlisting>
 		</example>
 	</section>
@@ -223,7 +235,9 @@ modparam("auth_db", "calculate_ha1", 1)
 		<example>
 		<title><varname>use_domain</varname> parameter usage</title>
 		<programlisting format="linespecific">
+...
 modparam("auth_db", "use_domain", 1)
+...
 		</programlisting>
 		</example>
 	</section>
@@ -257,9 +271,11 @@ modparam("auth_db", "use_domain", 1)
 		<example>
 		<title><varname>load_credentials</varname> parameter usage</title>
 		<programlisting format="linespecific">
-# load rpid column into $avp(i:13) and email_address column
+...
+# load rpid column into $avp(i:123) and email_address column
 # into $avp(s:email_address)
-modparam("auth_db", "load_credentials", "$avp(i:13)=rpid;email_address")
+modparam("auth_db", "load_credentials", "$avp(i:123)=rpid;email_address")
+...
 </programlisting>
 		</example>
 	</section>
@@ -269,8 +285,11 @@ modparam("auth_db", "load_credentials", "$avp(i:13)=rpid;email_address")
 	<title>Exported Functions</title>
 	<section>
 		<title>
-			<function moreinfo="none">www_authorize(realm, table)</function>
+			<function moreinfo="none">www_authenticate(realm, table)</function>
 		</title>
+		<para>
+			Name alias: www_authorize(realm, table)
+		</para>
 		<para>
 		The function verifies credentials according to 
 		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If the 
@@ -284,26 +303,15 @@ modparam("auth_db", "load_credentials", "$avp(i:13)=rpid;email_address")
 		<para>Negative codes may be interpreted as follows:</para>
 		<itemizedlist>
 			<listitem><para>
-			<emphasis>-6 (nonce reused)</emphasis> - the nonce was reused
-			in a previous request sent to the server.
-			</para></listitem>
-			<listitem><para>
-			<emphasis>-5 (generic error)</emphasis> - some generic error
+			<emphasis>-1 (generic error)</emphasis> - some generic error
 			occurred and no reply was sent out;
-			</para></listitem>
-			<listitem><para>
-			<emphasis>-4 (no credentials)</emphasis> - credentials were not
-			found in request;
-			</para></listitem>
-			<listitem><para>
-			<emphasis>-3 (stale nonce)</emphasis> - stale nonce;
 			</para></listitem>
 			<listitem><para>
 			<emphasis>-2 (invalid password)</emphasis> - valid user, but 
 			wrong password;
 			</para></listitem>
 			<listitem><para>
-			<emphasis>-1 (invalid user)</emphasis> - authentication user does
+			<emphasis>-3 (invalid user)</emphasis> - authentication user does
 			not exist.
 			</para></listitem>
 		</itemizedlist>
@@ -339,8 +347,8 @@ modparam("auth_db", "load_credentials", "$avp(i:13)=rpid;email_address")
 		<title><function moreinfo="none">www_authorize</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (www_authorize("siphub.net", "subscriber")) {
-	www_challenge("siphub.net", "1");
+if (www_authorize("kamailio.org", "subscriber")) {
+	www_challenge("kamailio.org", "1");
 };
 ...
 </programlisting>
@@ -349,8 +357,22 @@ if (www_authorize("siphub.net", "subscriber")) {
 
 	<section>
 		<title>
-			<function moreinfo="none">proxy_authorize(realm, table)</function>
+			<function moreinfo="none">www_authorize(realm, table)</function>
 		</title>
+		<para>
+			It is same function as www_authenticate(realm, table). This name
+			is kept for backward compatibility, since it was named this way
+			first time by it actually does user authentication.
+		</para>
+	</section>
+
+	<section>
+		<title>
+			<function moreinfo="none">proxy_authenticate(realm, table)</function>
+		</title>
+		<para>
+			Name alias: proxy_authorize(realm, table)
+		</para>
 		<para>
 		The function verifies credentials according to 
 		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If 
@@ -362,32 +384,8 @@ if (www_authorize("siphub.net", "subscriber")) {
 		<function moreinfo="none">proxy_challenge</function> which will
 		challenge the user again. 
 		</para>
-		<para>Negative codes may be interpreted as follows:</para>
-		<itemizedlist>
-			<listitem><para>
-				<emphasis>-6 (nonce reused)</emphasis> - the nonce was reused
-				in a previous request sent to the server.
-			</para></listitem>
-			<listitem><para>
-				<emphasis>-5 (generic error)</emphasis> - some generic error
-				occurred and no reply was sent out;
-			</para></listitem>
-			<listitem><para>
-				<emphasis>-4 (no credentials)</emphasis> - credentials were not
-				found in request;
-				</para></listitem>
-			<listitem><para>
-				<emphasis>-3 (stale nonce)</emphasis> - stale nonce;
-			</para></listitem>
-			<listitem><para>
-				<emphasis>-2 (invalid password)</emphasis> - valid user, but 
-				wrong password;
-			</para></listitem>
-			<listitem><para>
-				<emphasis>-1 (invalid user)</emphasis> - authentication user does
-				not exist.
-			</para></listitem>
-		</itemizedlist>
+		<para>Negative return codes have the same meaning as for
+			www_authenticate().</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
@@ -418,13 +416,25 @@ if (www_authorize("siphub.net", "subscriber")) {
 		<title>proxy_authorize usage</title>
 		<programlisting format="linespecific">
 ...
-if (!proxy_authorize("", "subscriber)) {
-	proxy_challenge("", "1");  # Realm will be autogenerated
+if (!proxy_authorize("$fd", "subscriber)) {
+	proxy_challenge("$fd", "1");  # Realm will be autogenerated
 };
 ...
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>
+			<function moreinfo="none">proxy_authorize(realm, table)</function>
+		</title>
+		<para>
+			It is same function as proxy_authenticate(realm, table). This name
+			is kept for backward compatibility, since it was named this way
+			first time but it actually does user authentication.
+		</para>
+	</section>
+
 	</section>
 </chapter>
 
