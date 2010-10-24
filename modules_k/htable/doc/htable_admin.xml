@@ -18,7 +18,21 @@
 	<para>
 		The module adds a hash table container to configuration language. The
 		hash table is stored in shared memory and the access to it can be
-		done via pseudo-variables: $sht(htname=&gt;name).
+		done via pseudo-variables: $sht(htname=&gt;name). The module supports
+		definition of many hash tables and can load values at startup from
+		a database table.
+	</para>
+	<para>
+		A typical use case for the SIP server is to implement a cache system
+		in configuration file - if a value is not found in hash table, load
+		it from database and store it in hash table so next time the access to
+		it is very fast. In the definition of the table you can define the
+		default expiration time of cached items. The expiration time can
+		be adjusted per itme via assignment operation at runtime.
+	</para>
+	<para>
+		You can read more about hash tables at:
+		http://en.wikipedia.org/wiki/Hash_table.
 	</para>
 	<para>
 		The <quote>name</quote> can be a static string or can include pseudo-
@@ -70,7 +84,7 @@ if(is_present_hf("Authorization"))
             $sht(a=&gt;$au::auth_count) = 0;
         }
     }
-    if(!www_authorize(""))
+    if(!www_authenticate("$td", "subscriber"))
     {
         switch ($retcode) {
             case -1:
@@ -85,12 +99,12 @@ if(is_present_hf("Authorization"))
                 $sht(a=&gt;$au::last_auth) = $Ts;
             break;
         }
-        www_challenge(""/*realm*/,"0"/*qop*/);
+        www_challenge("$td"/*realm*/,"0"/*qop*/);
         exit;
     }
     $sht(a=&gt;$au::auth_count) = 0;
 } else {
-    www_challenge("","0");
+    www_challenge("$td","0");
     exit;
 }
 ...
@@ -221,9 +235,9 @@ if(is_present_hf("Authorization"))
 		<para>
 			<emphasis>size</emphasis> - number specifying the size of hash
 			table.  Larger value means less collisions. The number of entries
-			in the table is 2^size. The possible range for this value is from
-			8 to 14, smaller or larger values will be increased or decreased
-			respectivly.
+			(aka slots or buckets) in the table is 2^size. The possible range
+			for this value is from 2 to 14, smaller or larger values will be
+			increased or decreased respectivly.
 		</para>
 		</listitem>
 		<listitem>
@@ -250,7 +264,7 @@ if(is_present_hf("Authorization"))
 		<programlisting format="linespecific">
 ...
 modparam("htable", "htable", "a=&gt;size=4;autoexpire=7200;dbtable=htable_a;")
-modparam("htable", "htable", "a=&gt;size=4;autoexpire=7200;dbtable=htable_a;")
+modparam("htable", "htable", "b=&gt;size=5;")
 ...
 </programlisting>
 		</example>
