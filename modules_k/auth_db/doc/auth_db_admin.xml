@@ -324,11 +324,11 @@ modparam("auth_db", "load_credentials", "$avp(i:123)=rpid;email_address")
 			the server is running on.
 			</para>
 			<para>
-			If an empty string <quote></quote> is used then the server will 
-			generate it from the request. In case of REGISTER requests To 
-			header field domain will be used (because this header field 
-			represents a user being registered), for all other messages From 
-			header field domain will be used.
+			It must not be empty string <quote></quote>. In case of REGISTER
+			requests To header field domain (e.g., variable $td) can be used
+			(because this header field represents the user being registered),
+			for all other messages From header field domain can be used
+			(e.g., variable $fd).
 			</para>
 			<para>
 			The string may contain pseudo variables.
@@ -393,6 +393,11 @@ if (www_authorize("kamailio.org", "subscriber")) {
 			the user agent should present to the user so he can decide what 
 			username and password to use. Usually this is domain of the host 
 			the server is running on.
+			</para>
+			<para>
+			It must not be empty string <quote></quote>. Apart of a static
+			strinh, typical value is From header field domain
+			(e.g., variable $fd).
 			</para>
 			<para>
 			If an empty string <quote></quote> is used then the server will 
