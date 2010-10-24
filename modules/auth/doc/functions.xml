@@ -55,10 +55,10 @@ if (www_authenticate("realm", "subscriber)) {
 			</para>
 			<para>
 			It must not be empty string <quote></quote>. In case of REGISTER
-			requests To header field domain (e.g., varibale $td) can be used
-			(because this header field represents a user being registered),
+			requests To header field domain (e.g., variable $td) can be used
+			(because this header field represents the user being registered),
 			for all other messages From header field domain can be used
-			(e.g., varibale $fd).
+			(e.g., variable $fd).
 			</para>
 			<para>
 			The string may contain pseudo variables.

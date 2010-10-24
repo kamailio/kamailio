@@ -15,7 +15,7 @@ Daniel-Constantin Mierla
    asipto.com
    <miconda@gmail.com>
 
-   Copyright � 2002, 2003 FhG FOKUS
+   Copyright © 2002, 2003 FhG FOKUS
      __________________________________________________________________
 
    1.1. Overview
@@ -528,10 +528,10 @@ if (www_authenticate("realm", "subscriber)) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string "". In case of REGISTER requests To
-       header field domain (e.g., varibale $td) can be used (because this
-       header field represents a user being registered), for all other
-       messages From header field domain can be used (e.g., varibale $fd).
+       It must not be empty string “”. In case of REGISTER requests To
+       header field domain (e.g., variable $td) can be used (because this
+       header field represents the user being registered), for all other
+       messages From header field domain can be used (e.g., variable $fd).
        The string may contain pseudo variables.
      * flags - Value of this parameter can be a bitmask of following:
           + 1 - build challenge header with qop=auth
@@ -590,7 +590,7 @@ if (!proxy_authenticate("$fd", "subscriber)) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string "". In case of REGISTER requests To
+       It must not be empty string “”. In case of REGISTER requests To
        header field domain (e.g., varibale $td) can be used (because this
        header field represents a user being registered), for all other
        messages From header field domain can be used (e.g., varibale $fd).
