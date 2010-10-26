@@ -26,9 +26,9 @@
 	    </title>
 	<para>
 		This function makes a row of sanity checks on the given request.
-		The function returns true if one of the checks failed. If one
+		The function returns false (-1) if one of the checks failed. If one
 		of the checks fails the module sends a precise error reply via 
-		sl_send_reply. Thus their is no need to reply with a generic 
+		sl_send_reply. Thus there is no need to reply with a generic 
 		error message.
 	</para>
 	<example>
@@ -36,8 +36,8 @@
 	    <programlisting>
 <![CDATA[
 ...
-if (sanity_check()) {
-	break;
+if (!sanity_check()) {
+	exit;
 }
 ...
 ]]>
@@ -55,9 +55,9 @@ if (sanity_check()) {
 	    <programlisting>
 <![CDATA[
 ...
-if (method=="REGISTER" && sanity_check("256")) {
+if (method=="REGISTER" && !sanity_check("256")) {
 	/* the register contains an invalid expires value and is replied with a 400 */
-	break;
+	exit;
 }
 ...
 ]]>
@@ -73,9 +73,9 @@ if (method=="REGISTER" && sanity_check("256")) {
 		<programlisting>
 <![CDATA[
 ...
-if (method=="INVITE" && sanity_check("1024", "6")) {
+if (method=="INVITE" && !sanity_check("1024", "6")) {
 	/* the INVITE contains an invalid From or To header and is replied with a 400 */
-	break;
+	exit;
 }
 ...
 ]]>

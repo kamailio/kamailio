@@ -4,7 +4,7 @@ Nils Ohlmeier
 
    iptelorg GmbH
 
-   Copyright © 2006 iptelorg GmbH
+   Copyright Â© 2006 iptelorg GmbH
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -116,17 +116,17 @@ modparam("sanity", "proxy_require", "foo, bar")
    Revision History
    Revision $Revision$ $Date$
 
-1.4.1. sanity_check()
+1.4.1.  sanity_check()
 
    This function makes a row of sanity checks on the given request. The
-   function returns true if one of the checks failed. If one of the checks
-   fails the module sends a precise error reply via sl_send_reply. Thus
-   their is no need to reply with a generic error message.
+   function returns false (-1) if one of the checks failed. If one of the
+   checks fails the module sends a precise error reply via sl_send_reply.
+   Thus there is no need to reply with a generic error message.
 
    Example 3. sanity_check usage
 ...
-if (sanity_check()) {
-        break;
+if (!sanity_check()) {
+        exit;
 }
 ...
 
@@ -138,10 +138,10 @@ if (sanity_check()) {
 
    Example 4. sanity_check usage with parameter
 ...
-if (method=="REGISTER" && sanity_check("256")) {
+if (method=="REGISTER" && !sanity_check("256")) {
         /* the register contains an invalid expires value and is replied with a
 400 */
-        break;
+        exit;
 }
 ...
 
@@ -151,9 +151,9 @@ if (method=="REGISTER" && sanity_check("256")) {
 
    Example 5. sanity_check usage with two parameters
 ...
-if (method=="INVITE" && sanity_check("1024", "6")) {
+if (method=="INVITE" && !sanity_check("1024", "6")) {
         /* the INVITE contains an invalid From or To header and is replied with
 a 400 */
-        break;
+        exit;
 }
 ...
