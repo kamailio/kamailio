@@ -50,9 +50,9 @@
 				NOTE: when you use <emphasis>dbtext</emphasis> in &kamailio;,
 				the	database URL for modules must be the path to the directory
 				where the table-files are located, prefixed by 
-				<quote>dbtext://</quote>, e.g., 
-				<quote>dbtext:///var/dbtext/ser</quote>. If there is no
-				<quote>/</quote> after <quote>dbtext://</quote> then
+				<quote>text://</quote>, e.g., 
+				<quote>text:///var/dbtext/ser</quote>. If there is no
+				<quote>/</quote> after <quote>text://</quote> then
 				<quote>CFG_DIR/</quote> is inserted at the beginning of the
 				database path. So, either you provide an absolute path to
 				database directory or a relative one to <quote>CFG_DIR</quote>
@@ -277,12 +277,12 @@ modparam("db_text", "db_mode", 1)
 		Compile the module and load it instead of mysql or other DB modules.
 		</para>
 		<para>
-		REMINDER: when you use <emphasis>dbtext</emphasis> in &kamailio;,
+		REMINDER: when you use <emphasis>text</emphasis> in &kamailio;,
 		the	database URL for modules must be the path to the directory
 		where the table-files are located, prefixed by
-		<quote>dbtext://</quote>, e.g., 
-		<quote>dbtext:///var/dbtext/ser</quote>. If there is no <quote>/</quote>
-		after <quote>dbtext://</quote> then <quote>CFG_DIR/</quote> is inserted
+		<quote>text://</quote>, e.g., 
+		<quote>text:///var/dbtext/ser</quote>. If there is no <quote>/</quote>
+		after <quote>text://</quote> then <quote>CFG_DIR/</quote> is inserted
 		at the beginning of the database path. So, either you provide an
 		absolute path to database directory or a relative one to 
 		<quote>CFG_DIR</quote> directory.
@@ -291,9 +291,9 @@ modparam("db_text", "db_mode", 1)
 		<title>Load the dbtext module</title>
 <programlisting format="linespecific">
 ...
-loadmodule "/path/to/kamailio/modules/db_text.so"
+loadmodule "/path/to/kamailio/modules_k/db_text.so"
 ...
-modparam("module_name", "database_URL", "text:///path/to/dbtext/database")
+modparam("module_name", "db_url", "text:///path/to/dbtext/database")
 ...
 </programlisting>
 		</example>
