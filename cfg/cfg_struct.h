@@ -34,10 +34,35 @@
 #include "../mem/shm_mem.h"
 #include "../locking.h"
 #include "../compiler_opt.h"
+#include "../bit_test.h"
 #include "cfg.h"
+
+/*! \brief Maximum number of variables within a configuration group. */
+#define CFG_MAX_VAR_NUM	256
 
 /*! \brief indicates that the variable has been already shmized */
 #define cfg_var_shmized	1U
+
+/*! \brief Structure for storing additional values of a variable.
+ * When the config is shmzied, these variables are combined in
+ * an array.
+ */
+typedef struct _cfg_add_var {
+	struct _cfg_add_var	*next;
+	unsigned int	type;	/*!< type == 0 is also valid, it indicates that the group
+				must be created with the default values */
+	union {
+		char	*ch;
+		str	s;
+		int	i;
+	} val;
+	unsigned int	group_id; /*!< Id of the group instance */
+	int		name_len;	/*!< Name of the variable. The variable may not be known,
+					for example the additional group value is set in the script
+					before the cfg group is declared. Hence, the pointer cannot
+					be stored here. */
+	char		name[1];
+} cfg_add_var_t;
 
 /*! \brief structure used for variable - pointer mapping */
 typedef struct _cfg_mapping {
@@ -45,9 +70,13 @@ typedef struct _cfg_mapping {
 	int		name_len;	/*!< length of def->name */
 
 	/* additional information about the cfg variable */
+	int		pos;	/*!< position of the variable within the group starting from 0 */
 	int		offset; /*!< offest within the memory block */
 	unsigned int	flag;	/*!< flag indicating the state of the variable */
 } cfg_mapping_t;
+
+/*! \brief type of the group */
+enum { CFG_GROUP_UNKNOWN = 0, CFG_GROUP_DYNAMIC, CFG_GROUP_STATIC };
 
 /*! \brief linked list of registered groups */
 typedef struct _cfg_group {
@@ -57,10 +86,15 @@ typedef struct _cfg_group {
 	char		*vars;		/*!< pointer to the memory block where the values
 					are stored -- used only before the config is
 					shmized. */
+	cfg_add_var_t	*add_var;	/*!< Additional instances of the variables.
+					This linked list is used only before the config is
+					shmized. */
 	int		size;		/*!< size of the memory block that has to be
 					allocated to store the values */
-	int		offset;		/*!< offset of the group within the
-					shmized memory block */
+	int		meta_offset;	/*!< offset of the group within the
+					shmized memory block for the meta_data */
+	int		var_offset;	/*!< offset of the group within the
+					shmized memory block for the variables */
 	void		**handle;	/*!< per-process handle that can be used
 					by the modules to access the variables.
 					It is registered when the group is created,
@@ -69,16 +103,37 @@ typedef struct _cfg_group {
 	unsigned char	dynamic;	/*!< indicates whether the variables within the group
 					are dynamically	allocated or not */
 	struct _cfg_group	*next;
-	int		name_len;	
+	int		name_len;
 	char		name[1];
 } cfg_group_t;
+
+/*! \brief One instance of the cfg group variables which stores
+ * the additional values. These values can overwrite the default values. */
+typedef struct _cfg_group_inst {
+	unsigned int	id;		/*!< identifier of the group instance */
+	unsigned int	set[CFG_MAX_VAR_NUM/(sizeof(int)*8)];
+					/*!< Bitmap indicating whether or not a value is explicitely set
+					within this instance. If the value is not set,
+					then the default value is used, and copied into this instance. */
+	unsigned char	vars[1];	/*!< block for the values */
+} cfg_group_inst_t;
+
+/*! \bried Meta-data which is stored before each variable group
+ * within the blob. This structure is used to handle the multivalue
+ * instances of the variables, i.e. manages the array for the
+ * additional values. */
+typedef struct _cfg_group_meta {
+	int			num;	/*!< Number of items in the array */
+	cfg_group_inst_t	*array;	/*!< Array of cfg groups with num number of items */
+} cfg_group_meta_t;
 
 /*! \brief single memoy block that contains all the cfg values */
 typedef struct _cfg_block {
 	atomic_t	refcnt;		/*!< reference counter,
 					the block is automatically deleted
 					when it reaches 0 */
-	char		**replaced;	/*!< set of the strings that must be freed
+	void		**replaced;	/*!< set of the strings and other memory segments
+					that must be freed
 					together with the block. The content depends
 					on the block that replaces this one */
 	unsigned char	vars[1];	/*!< blob that contains the values */
@@ -108,12 +163,14 @@ typedef struct _cfg_child_cb {
 extern cfg_group_t	*cfg_group;
 extern cfg_block_t	**cfg_global;
 extern cfg_block_t	*cfg_local;
+extern int		cfg_block_size;
 extern gen_lock_t	*cfg_global_lock;
 extern gen_lock_t	*cfg_writer_lock;
 extern int		cfg_shmized;
 extern cfg_child_cb_t	**cfg_child_cb_first;
 extern cfg_child_cb_t	**cfg_child_cb_last;
 extern cfg_child_cb_t	*cfg_child_cb;
+extern int		cfg_ginst_count;
 
 /* magic value for cfg_child_cb for processes that do not want to
    execute per-child callbacks */
@@ -122,6 +179,33 @@ extern cfg_child_cb_t	*cfg_child_cb;
 /* macros for easier variable access */
 #define CFG_VAR_TYPE(var)	CFG_VAR_MASK((var)->def->type)
 #define CFG_INPUT_TYPE(var)	CFG_INPUT_MASK((var)->def->type)
+
+/* get the meta-data of a group from the block */
+#define CFG_GROUP_META(block, group) \
+	((cfg_group_meta_t *)((block)->vars + (group)->meta_offset))
+
+/* get the data block of a group from the block */
+#define CFG_GROUP_DATA(block, group) \
+	((unsigned char *)((block)->vars + (group)->var_offset))
+
+/* Test whether a variable is explicitely set in the group instance,
+ * or it uses the default value */
+#define CFG_VAR_TEST(group_inst, var) \
+	bit_test((var)->pos % (sizeof(int)*8), (group_inst)->set + (var)->pos/(sizeof(int)*8))
+
+/* Test whether a variable is explicitely set in the group instance,
+ * or it uses the default value, and set the flag. */
+#define CFG_VAR_TEST_AND_SET(group_inst, var) \
+	bit_test_and_set((var)->pos % (sizeof(int)*8), (group_inst)->set + (var)->pos/(sizeof(int)*8))
+
+/* Return the group instance pointer from a handle,
+ * or NULL if the handle points to the default configuration block */
+#define CFG_HANDLE_TO_GINST(h) \
+	( (((unsigned char*)(h) < cfg_local->vars) \
+		|| ((unsigned char*)(h) > cfg_local->vars + cfg_block_size) \
+	) ? \
+		(cfg_group_inst_t*)((char*)(h) - (unsigned long)&((cfg_group_inst_t *)0)->vars) \
+		: NULL )
 
 /* initiate the cfg framework */
 int sr_cfg_init(void);
@@ -173,6 +257,11 @@ cfg_group_t *cfg_new_group(char *name, int name_len,
 		int num, cfg_mapping_t *mapping,
 		char *vars, int size, void **handle);
 
+/* Set the values of an existing cfg group. */
+void cfg_set_group(cfg_group_t *group,
+		int num, cfg_mapping_t *mapping,
+		char *vars, int size, void **handle);
+
 /* copy the variables to shm mem */
 int cfg_shmize(void);
 
@@ -189,6 +278,16 @@ static inline void cfg_block_free(cfg_block_t *block)
 	}
 	shm_free(block);
 }
+
+/* Move the group handle to the specified group instance pointed by dst_ginst.
+ * src_ginst shall point to the active group instance.
+ * Both parameters can be NULL meaning that the src/dst config is the default, 
+ * not an additional group instance.
+ * The function executes all the per-child process callbacks which are different
+ * in the two instaces.
+ */
+void cfg_move_handle(cfg_group_t *group, cfg_group_inst_t *src_ginst, cfg_group_inst_t *dst_ginst);
+
 
 /* lock and unlock the global cfg block -- used only at the
  * very last step when the block is replaced */
@@ -242,7 +341,7 @@ static inline void cfg_update_local(int no_cbs)
 		group;
 		group = group->next
 	)
-		*(group->handle) = cfg_local->vars + group->offset;
+		*(group->handle) = CFG_GROUP_DATA(cfg_local, group);
 
 	if (unlikely(cfg_child_cb==CFG_NO_CHILD_CBS || no_cbs))
 		return;
@@ -274,6 +373,29 @@ static inline void cfg_update_local(int no_cbs)
 	}
 }
 
+/* Reset all the group handles to the default, local configuration */
+static inline void cfg_reset_handles(void)
+{
+	cfg_group_t	*group;
+
+	if (!cfg_local)
+		return;
+
+	for (	group = cfg_group;
+		group && cfg_ginst_count; /* cfg_ginst_count is decreased every time
+					a group handle is reset. When it reaches 0,
+					needless to continue the loop */
+		group = group->next
+	) {
+		if (((unsigned char*)*(group->handle) < cfg_local->vars)
+			|| ((unsigned char*)*(group->handle) > cfg_local->vars + cfg_block_size)
+		)
+			cfg_move_handle(group,
+					CFG_HANDLE_TO_GINST(*(group->handle)),
+					NULL);
+	}
+}
+
 /* sets the local cfg block to the active block
  * 
  * If your module forks a new process that implements
@@ -283,6 +405,8 @@ static inline void cfg_update_local(int no_cbs)
  */
 #define cfg_update() \
 	do { \
+		if (unlikely(cfg_ginst_count)) \
+			cfg_reset_handles(); \
 		if (unlikely(cfg_local != *cfg_global)) \
 			cfg_update_local(0); \
 	} while(0)
@@ -297,6 +421,16 @@ static inline void cfg_update_local(int no_cbs)
 			cfg_update_local(1); \
 	} while(0)
 
+/* Reset all the group handles in the child process,
+ * i.e. move them back to the default local configuration.
+ */
+#define cfg_reset_all() \
+	do { \
+		if (unlikely(cfg_ginst_count)) \
+			cfg_reset_handles(); \
+	} while(0)
+
+
 /* searches a group by name */
 cfg_group_t *cfg_lookup_group(char *name, int len);
 	
@@ -304,11 +438,35 @@ cfg_group_t *cfg_lookup_group(char *name, int len);
 int cfg_lookup_var(str *gname, str *vname,
 			cfg_group_t **group, cfg_mapping_t **var);
 
-/* clones the global config block */
+/* searches a variable definition within a group by its name */
+cfg_mapping_t *cfg_lookup_var2(cfg_group_t *group, char *name, int len);
+
+/* clones the global config block
+ * WARNING: unsafe, cfg_writer_lock or cfg_global_lock must be held!
+ */
 cfg_block_t *cfg_clone_global(void);
+
+/* Clone an array of configuration group instances. */
+cfg_group_inst_t *cfg_clone_array(cfg_group_meta_t *meta, cfg_group_t *group);
+
+/* Extend the array of configuration group instances with one more instance.
+ * Only the ID of the new group is set, nothing else. */
+cfg_group_inst_t *cfg_extend_array(cfg_group_meta_t *meta, cfg_group_t *group,
+				unsigned int group_id,
+				cfg_group_inst_t **new_group);
+
+/* Remove an instance from a group array.
+ * inst must point to an instance within meta->array.
+ * *_new_array is set to the newly allocated array. */
+int cfg_collapse_array(cfg_group_meta_t *meta, cfg_group_t *group,
+				cfg_group_inst_t *inst,
+				cfg_group_inst_t **_new_array);
 
 /* clones a string to shared memory */
 int cfg_clone_str(str *src, str *dst);
+
+/* Find the group instance within the meta-data based on the group_id */
+cfg_group_inst_t *cfg_find_group(cfg_group_meta_t *meta, int group_size, unsigned int group_id);
 
 /* append new callbacks to the end of the child callback list
  *
@@ -324,7 +482,7 @@ void cfg_install_child_cb(cfg_child_cb_t *cb_first, cfg_child_cb_t *cb_last);
  * cb_first and cb_last define a linked list of per-child process
  * callbacks. This list is added to the global linked list.
  */
-void cfg_install_global(cfg_block_t *block, char **replaced,
+void cfg_install_global(cfg_block_t *block, void **replaced,
 			cfg_child_cb_t *cb_first, cfg_child_cb_t *cb_last);
 
 /* creates a structure for a per-child process callback */
@@ -334,5 +492,20 @@ cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name,
 
 /* free the memory allocated for a child cb list */
 void cfg_child_cb_free(cfg_child_cb_t *child_cb_first);
+
+/* Allocate memory for a new additional variable
+ * and link it to a configuration group.
+ * type==0 results in creating a new group instance with the default values.
+ * The group is created with CFG_GROUP_UNKNOWN type if it does not exist.
+ * Note: this function is usable only before the configuration is shmized.
+ */
+int new_add_var(str *group_name, unsigned int group_id, str *var_name,
+				void *val, unsigned int type);
+
+/* Move the group handle to the specified group instance. */
+int cfg_select(cfg_group_t *group, unsigned int id);
+
+/* Reset the group handle to the default, local configuration */
+int cfg_reset(cfg_group_t *group);
 
 #endif /* _CFG_STRUCT_H */

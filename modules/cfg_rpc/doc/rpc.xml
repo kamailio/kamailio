@@ -12,75 +12,117 @@
     <itemizedlist>
 	<listitem>
 	    <para>
-		<emphasis>cfg_rpc.set_now_int</emphasis> - Set the value of
+		<emphasis>cfg.set_now_int</emphasis> - Set the value of
 		a configuration variable and commit the change immediately.
 		The function accepts three parameters: group name, variable
-		name, integer value.
+		name, integer value. The group name can optionally contain the
+		group instance id, for example foo[5].
 	    </para>
 	</listitem>
 	<listitem>
 	    <para>
-		<emphasis>cfg_rpc.set_now_string</emphasis> - Set the value of
+		<emphasis>cfg.set_now_string</emphasis> - Set the value of
 		a configuration variable and commit the change immediately.
 		The function accepts three parameters: group name, variable
-		name, string value.
+		name, string value. The group name can optionally contain the
+		group instance id, for example foo[5].
 	    </para>
 	</listitem>
 	<listitem>
 	    <para>
-		<emphasis>cfg_rpc.set_delayed_int</emphasis> - Prepare the change of
+		<emphasis>cfg.set</emphasis> - Set the value of
+		a configuration variable and commit the change immediately.
+		This is a wrapper command for cfg.set_now_int and cfg.set_now_string
+		depending on the type of the value provided.
+		The function accepts three parameters: group name, variable
+		name, int/string value. The group name can optionally contain the
+		group instance id, for example foo[5].
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg.set_delayed_int</emphasis> - Prepare the change of
 		a configuration variable, but does not commit the new value yet.
 		The function accepts three parameters: group name, variable
-		name, integer value.
+		name, integer value. The group name can optionally contain the
+		group instance id, for example foo[5].
 	    </para>
 	</listitem>
 	<listitem>
 	    <para>
-		<emphasis>cfg_rpc.set_delayed_string</emphasis> - Prepare the change of
+		<emphasis>cfg.set_delayed_string</emphasis> - Prepare the change of
 		a configuration variable, but does not commit the new value yet.
 		The function accepts three parameters: group name, variable
-		name, string value.
+		name, string value. The group name can optionally contain the
+		group instance id, for example foo[5].
 	    </para>
 	</listitem>
 	<listitem>
 	    <para>
-		<emphasis>cfg_rpc.commit</emphasis> - Commit the previously
+		<emphasis>cfg.set_delayed</emphasis> - Prepare the change of
+		a configuration variable, but does not commit the new value yet.
+		This is a wrapper command for cfg.set_delayed_int and cfg.set_delayed_string
+		depending on the type of the value provided.
+		The function accepts three parameters: group name, variable
+		name, int/string value. The group name can optionally contain the
+		group instance id, for example foo[5].
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg.commit</emphasis> - Commit the previously
 		prepared configuration changes. The function does not have
 		any parameters.
 	    </para>
 	</listitem>
 	<listitem>
 	    <para>
-		<emphasis>cfg_rpc.rollback</emphasis> - Drop the prepared
+		<emphasis>cfg.rollback</emphasis> - Drop the prepared
 		configuration changes. The function does not have any
 		parameters.
 	    </para>
 	</listitem>
 	<listitem>
 	    <para>
-		<emphasis>cfg_rpc.get</emphasis> - Get the value of
+		<emphasis>cfg.get</emphasis> - Get the value of
+		a configuration variable. The function accepts two parameters:
+		group name, variable name. The group name can optionally contain the
+		group instance id, for example foo[5].
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg.help</emphasis> - Print the description of
 		a configuration variable. The function accepts two parameters:
 		group name, variable name.
 	    </para>
 	</listitem>
 	<listitem>
 	    <para>
-		<emphasis>cfg_rpc.help</emphasis> - Print the description of
-		a configuration variable. The function accepts two parameters:
-		group name, variable name.
+		<emphasis>cfg.list</emphasis> - List the configuration
+		variables. The function has one optional parameter:
+		group name.
 	    </para>
 	</listitem>
 	<listitem>
 	    <para>
-		<emphasis>cfg_rpc.list</emphasis> - List the configuration
-		variables. The function does not have any parameters.
-	    </para>
-	</listitem>
-	<listitem>
-	    <para>
-		<emphasis>cfg_rpc.diff</emphasis> - List the pending
+		<emphasis>cfg.diff</emphasis> - List the pending
 		configuration changes that have not been committed yet.
 		The function does not have any parameters.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg.add_group_inst</emphasis> - Add a new instance
+		to an existing configuration group. The function accepts one parameter:
+		group name[instance id], for example foo[5].
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg.del_group_inst</emphasis> - Delete an instance
+		of an existing configuration group. The function accepts one parameter:
+		group name[instance id], for example foo[5].
 	    </para>
 	</listitem>
     </itemizedlist>

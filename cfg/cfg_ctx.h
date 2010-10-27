@@ -49,6 +49,9 @@ typedef struct _cfg_changed_var {
 	cfg_mapping_t	*var;
 	struct _cfg_changed_var	*next;
 
+	unsigned int	group_id; /* valid only if group_id_set==1 */
+	unsigned char	group_id_set;
+
 	/* blob that contains the new value */
 	union cfg_var_value new_val; /* variable size */
 } cfg_changed_var_t;
@@ -61,7 +64,6 @@ typedef struct _cfg_ctx {
 	/* variables that are already changed
 	but have not been committed yet */
 	cfg_changed_var_t	*changed_first;
-	cfg_changed_var_t	*changed_last;
 	/* lock protecting the linked-list of
 	changed variables */
 	gen_lock_t		lock;
@@ -84,18 +86,24 @@ int cfg_register_ctx(cfg_ctx_t **handle, cfg_on_declare on_declare_cb);
 void cfg_ctx_destroy(void);
 
 /*! \brief set the value of a variable without the need of explicit commit */
-int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
+int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
 			void *val, unsigned int val_type);
-int cfg_set_now_int(cfg_ctx_t *ctx, str *group_name, str *var_name, int val);
-int cfg_set_now_string(cfg_ctx_t *ctx, str *group_name, str *var_name, char *val);
-int cfg_set_now_str(cfg_ctx_t *ctx, str *group_name, str *var_name, str *val);
+int cfg_set_now_int(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			int val);
+int cfg_set_now_string(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			char *val);
+int cfg_set_now_str(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			str *val);
 
 /* sets the value of a variable but does not commit the change */
-int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
+int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
 			void *val, unsigned int val_type);
-int cfg_set_delayed_int(cfg_ctx_t *ctx, str *group_name, str *var_name, int val);
-int cfg_set_delayed_string(cfg_ctx_t *ctx, str *group_name, str *var_name, char *val);
-int cfg_set_delayed_str(cfg_ctx_t *ctx, str *group_name, str *var_name, str *val);
+int cfg_set_delayed_int(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			int val);
+int cfg_set_delayed_string(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			char *val);
+int cfg_set_delayed_str(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
+			str *val);
 
 /*! \brief commits the previously prepared changes within the context */
 int cfg_commit(cfg_ctx_t *ctx);
@@ -104,7 +112,7 @@ int cfg_commit(cfg_ctx_t *ctx);
 int cfg_rollback(cfg_ctx_t *ctx);
 
 /*! \brief returns the value of a variable */
-int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, str *var_name,
+int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
 			void **val, unsigned int *val_type);
 
 /*! \brief returns the description of a variable */
@@ -149,26 +157,48 @@ int cfg_diff_init(cfg_ctx_t *ctx,
 
 /*! \brief return the pending changes that have not been
  * committed yet
+ * return value:
+ *	1: valid value is found
+ *	0: no more changed value found
+ *	-1: error occured
+ *
  *
  * can be used as follows:
  *
  * void *handle;
  * if (cfg_diff_init(ctx, &handle)) return -1
- * while (cfg_diff_next(&handle
- *			&group_name, &var_name,
+ * while ((err = cfg_diff_next(&handle
+ *			&group_name, &group_id, &var_name,
  *			&old_val, &new_val
- *			&val_type)
+ *			&val_type)) > 0
  * ) {
  *		...
  * }
  * cfg_diff_release(ctx);
+ * if (err) {
+ *	error occured, the changes cannot be retrieved
+ *	...
+ * }
  */
 int cfg_diff_next(void **h,
-			str *gname, str *vname,
+			str *gname, unsigned int **gid, str *vname,
 			void **old_val, void **new_val,
 			unsigned int *val_type);
 
 /*! \brief destroy the handle of cfg_diff_next() */
 void cfg_diff_release(cfg_ctx_t *ctx);
+
+/* Add a new instance to an existing group */
+int cfg_add_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id);
+
+/* Delete an instance of a group */
+int cfg_del_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id);
+
+/* Apply the changes to a group instance as long as the additional variable
+ * belongs to the specified group_id. *add_var_p is moved to the next additional
+ * variable, and all the consumed variables are freed.
+ */
+int cfg_apply_list(cfg_group_inst_t *ginst, cfg_group_t *group,
+			unsigned int group_id, cfg_add_var_t **add_var_p);
 
 #endif /* _CFG_CTX_H */

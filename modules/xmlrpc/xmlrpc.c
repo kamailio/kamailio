@@ -642,6 +642,15 @@ static int init_xmlrpc_reply(struct xmlrpc_reply* reply)
 	return 0;
 }
 
+/** Clear the XML-RPC reply code and sets it back to a success reply.
+ *
+ * @param reply XML-RPC reply structure to be cleared.
+ */
+static void clear_xmlrpc_reply(struct xmlrpc_reply* reply)
+{
+	reply->code = 200;
+	reply->reason = "OK";
+}
 
 
 /* if this a delayed reply context, and it's never been use before, fix it */
@@ -1453,6 +1462,9 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 	va_list ap;
 
 	reply = &ctx->reply;
+	/* clear the previously saved error code */
+	clear_xmlrpc_reply(reply);
+
 	fmt_len = strlen(fmt);
 	va_start(ap, fmt);
 	modifiers=0;
@@ -1776,6 +1788,8 @@ static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
 	while(*fmt) {
 		member_name = va_arg(ap, char*);
 		reply = s->reply;
+		/* clear the previously saved error code */
+		clear_xmlrpc_reply(reply);
 		ret = find_member(&value, s->doc, s->struct_in, reply, member_name);
 		if (ret != 0) goto error;
 

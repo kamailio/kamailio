@@ -115,7 +115,9 @@ enum action_type{
 		SET_FWD_NO_CONNECT_T,
 		SET_RPL_NO_CONNECT_T,
 		SET_FWD_CLOSE_T,
-		SET_RPL_CLOSE_T
+		SET_RPL_CLOSE_T,
+		CFG_SELECT_T,
+		CFG_RESET_T
 };
 /* parameter types for actions or types for expression right operands
    (WARNING right operands only, not working for left operands) */
@@ -130,7 +132,8 @@ enum _operand_subtype{
 		SELECT_UNFIXED_ST,
 		STRING_RVE_ST /* RVE converted to a string (fparam hack) */,
 		RVE_FREE_FIXUP_ST /* (str)RVE fixed up by a reversable fixup */,
-		FPARAM_DYN_ST /* temporary only (fparam hack) */
+		FPARAM_DYN_ST /* temporary only (fparam hack) */,
+		CFG_GROUP_ST
 };
 
 typedef enum _expr_l_type expr_l_type;

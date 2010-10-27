@@ -32,6 +32,7 @@
 #include "../mem/shm_mem.h"
 #include "../ut.h"
 #include "../locking.h"
+#include "../bit_scan.h"
 #include "cfg_ctx.h"
 #include "cfg_script.h"
 #include "cfg_select.h"
@@ -42,7 +43,7 @@ cfg_block_t	**cfg_global = NULL;	/* pointer to the active cfg block */
 cfg_block_t	*cfg_local = NULL;	/* per-process pointer to the active cfg block.
 					Updated only when the child process
 					finishes working on the SIP message */
-static int	cfg_block_size = 0;	/* size of the cfg block (constant) */
+int		cfg_block_size = 0;	/* size of the cfg block including the meta-data (constant) */
 gen_lock_t	*cfg_global_lock = 0;	/* protects *cfg_global */
 gen_lock_t	*cfg_writer_lock = 0;	/* This lock makes sure that two processes do not
 					try to clone *cfg_global at the same time.
@@ -55,6 +56,12 @@ cfg_child_cb_t	**cfg_child_cb_first = NULL;	/* first item of the per-child proce
 						callback list */
 cfg_child_cb_t	**cfg_child_cb_last = NULL;	/* last item of the above list */
 cfg_child_cb_t	*cfg_child_cb = NULL;	/* pointer to the previously executed cb */	
+int		cfg_ginst_count = 0;	/* number of group instances set within the child process */
+
+
+/* forward declarations */
+static void del_add_var_list(cfg_group_t *group);
+static int apply_add_var_list(cfg_block_t *block, cfg_group_t *group);
 
 /* creates a new cfg group, and adds it to the linked list */
 cfg_group_t *cfg_new_group(char *name, int name_len,
@@ -65,6 +72,14 @@ cfg_group_t *cfg_new_group(char *name, int name_len,
 
 	if (cfg_shmized) {
 		LOG(L_ERR, "ERROR: cfg_new_group(): too late config declaration\n");
+		return NULL;
+	}
+
+	if (num > CFG_MAX_VAR_NUM) {
+		LOG(L_ERR, "ERROR: cfg_new_group(): too many variables (%d) within a single group,"
+			" the limit is %d. Increase CFG_MAX_VAR_NUM, or split the group into multiple"
+			" definitions.\n",
+			num, CFG_MAX_VAR_NUM);
 		return NULL;
 	}
 
@@ -88,6 +103,18 @@ cfg_group_t *cfg_new_group(char *name, int name_len,
 	cfg_group = group;
 
 	return group;
+}
+
+/* Set the values of an existing cfg group. */
+void cfg_set_group(cfg_group_t *group,
+		int num, cfg_mapping_t *mapping,
+		char *vars, int size, void **handle)
+{
+	group->num = num;
+	group->mapping = mapping;
+	group->vars = vars;
+	group->size = size;
+	group->handle = handle;
 }
 
 /* clones a string to shared memory
@@ -162,19 +189,37 @@ int cfg_shmize(void)
 	if (!cfg_group) return 0;
 
 	/* Let us allocate one memory block that
-	will contain all the variables */
+	 * will contain all the variables + meta-data
+	 * in the following form:
+	 * |-----------|
+	 * | meta-data | <- group A: meta_offset
+	 * | variables | <- group A: var_offset
+	 * |-----------|
+	 * | meta-data | <- group B: meta_offset
+	 * | variables | <- group B: var_offset
+	 * |-----------|
+	 * |    ...    |
+	 * |-----------|
+	 *
+	 * The additional array for the multiple values
+	 * of the same variable is linked to the meta-data.
+	 */
 	for (	size=0, group = cfg_group;
 		group;
 		group=group->next
 	) {
 		size = ROUND_POINTER(size);
-		group->offset = size;
+		group->meta_offset = size;
+		size += sizeof(cfg_group_meta_t);
+
+		size = ROUND_POINTER(size);
+		group->var_offset = size;
 		size += group->size;
 	}
 
 	block = (cfg_block_t*)shm_malloc(sizeof(cfg_block_t)+size-1);
 	if (!block) {
-		LOG(L_ERR, "ERROR: cfg_clone_str(): not enough shm memory\n");
+		LOG(L_ERR, "ERROR: cfg_shmize(): not enough shm memory\n");
 		goto error;
 	}
 	memset(block, 0, sizeof(cfg_block_t)+size-1);
@@ -185,29 +230,40 @@ int cfg_shmize(void)
 		group;
 		group=group->next
 	) {
-		if (group->dynamic == 0) {
+		if (group->dynamic == CFG_GROUP_STATIC) {
 			/* clone the strings to shm mem */
 			if (cfg_shmize_strings(group)) goto error;
 
 			/* copy the values to the new block */
-			memcpy(block->vars+group->offset, group->vars, group->size);
-		} else {
+			memcpy(CFG_GROUP_DATA(block, group), group->vars, group->size);
+		} else if (group->dynamic == CFG_GROUP_DYNAMIC) {
 			/* The group was declared with NULL values,
 			 * we have to fix it up.
 			 * The fixup function takes care about the values,
 			 * it fills up the block */
-			if (cfg_script_fixup(group, block->vars+group->offset)) goto error;
+			if (cfg_script_fixup(group, CFG_GROUP_DATA(block, group))) goto error;
 
 			/* Notify the drivers about the new config definition.
 			 * Temporary set the group handle so that the drivers have a chance to
 			 * overwrite the default values. The handle must be reset after this
 			 * because the main process does not have a local configuration. */
-			*(group->handle) = block->vars+group->offset;
+			*(group->handle) = CFG_GROUP_DATA(block, group);
 			cfg_notify_drivers(group->name, group->name_len,
 					group->mapping->def);
 			*(group->handle) = NULL;
+		} else {
+			LOG(L_ERR, "ERROR: cfg_shmize(): Configuration group is declared "
+					"without any variable: %.*s\n",
+					group->name_len, group->name);
+			goto error;
 		}
+
+		/* Create the additional group instances with applying
+		the temporary list. */
+		if (apply_add_var_list(block, group))
+			goto error;
 	}
+
 	/* try to fixup the selects that failed to be fixed-up previously */
 	if (cfg_fixup_selects()) goto error;
 
@@ -243,11 +299,11 @@ static void cfg_destory_groups(unsigned char *block)
 				(CFG_VAR_TYPE(&mapping[i]) == CFG_VAR_STR)) &&
 					mapping[i].flag & cfg_var_shmized) {
 
-						old_string = *(char **)(block + group->offset + mapping[i].offset);
+						old_string = *(char **)(block + group->var_offset + mapping[i].offset);
 						if (old_string) shm_free(old_string);
 				}
 
-		if (group->dynamic) {
+		if (group->dynamic == CFG_GROUP_DYNAMIC) {
 			/* the group was dynamically allocated */
 			cfg_script_destroy(group);
 		} else {
@@ -255,6 +311,8 @@ static void cfg_destory_groups(unsigned char *block)
 			pointers are just set to static variables */
 			if (mapping) pkg_free(mapping);
 		}
+		/* Delete the additional variable list */
+		del_add_var_list(group);
 
 		group2 = group->next;
 		pkg_free(group);
@@ -538,6 +596,29 @@ int cfg_lookup_var(str *gname, str *vname,
 	return -1;
 }
 
+/* searches a variable definition within a group by its name */
+cfg_mapping_t *cfg_lookup_var2(cfg_group_t *group, char *name, int len)
+{
+	int	i;
+
+	if (!group->mapping) return NULL; /* dynamic group is not ready */
+
+	for (	i = 0;
+		i < group->num;
+		i++
+	) {
+		if ((group->mapping[i].name_len == len)
+		&& (memcmp(group->mapping[i].def->name, name, len)==0)) {
+			return &(group->mapping[i]);
+		}
+	}
+
+	LOG(L_DBG, "DEBUG: cfg_lookup_var2(): variable not found: %.*s.%.*s\n",
+			group->name_len, group->name,
+			len, name);
+	return NULL;
+}
+
 /* clones the global config block
  * WARNING: unsafe, cfg_writer_lock or cfg_global_lock must be held!
  */
@@ -556,6 +637,130 @@ cfg_block_t *cfg_clone_global(void)
 	atomic_set(&block->refcnt, 0);
 
 	return block;
+}
+
+/* Clone an array of configuration group instances. */
+cfg_group_inst_t *cfg_clone_array(cfg_group_meta_t *meta, cfg_group_t *group)
+{
+	cfg_group_inst_t	*new_array;
+	int			size;
+
+	if (!meta->array || !meta->num)
+		return NULL;
+
+	size = (sizeof(cfg_group_inst_t) + group->size - 1) * meta->num;
+	new_array = (cfg_group_inst_t *)shm_malloc(size);
+	if (!new_array) {
+		LOG(L_ERR, "ERROR: cfg_clone_array(): not enough shm memory\n");
+		return NULL;
+	}
+	memcpy(new_array, meta->array, size);
+
+	return new_array;
+}
+
+/* Extend the array of configuration group instances with one more instance.
+ * Only the ID of the new group is set, nothing else. */
+cfg_group_inst_t *cfg_extend_array(cfg_group_meta_t *meta, cfg_group_t *group,
+				unsigned int group_id,
+				cfg_group_inst_t **new_group)
+{
+	int			i;
+	cfg_group_inst_t	*new_array, *old_array;
+	int			inst_size;
+
+	inst_size = sizeof(cfg_group_inst_t) + group->size - 1;
+	new_array = (cfg_group_inst_t *)shm_malloc(inst_size * (meta->num + 1));
+	if (!new_array) {
+		LOG(L_ERR, "ERROR: cfg_extend_array(): not enough shm memory\n");
+		return NULL;
+	}
+	/* Find the position of the new group in the array. The array is ordered
+	by the group IDs. */
+	old_array = meta->array;
+	for (	i = 0;
+		(i < meta->num)
+			&& (((cfg_group_inst_t *)((char *)old_array + inst_size * i))->id < group_id);
+		i++
+	);
+	if (i > 0)
+		memcpy(	new_array,
+			old_array,
+			inst_size * i);
+
+	memset((char*)new_array + inst_size * i, 0, inst_size);
+	*new_group = (cfg_group_inst_t *)((char*)new_array + inst_size * i);
+	(*new_group)->id = group_id;
+
+	if (i < meta->num)
+		memcpy(	(char*)new_array + inst_size * (i + 1),
+			(char*)old_array + inst_size * i,
+			inst_size * (meta->num - i));
+
+	return new_array;
+}
+
+/* Remove an instance from a group array.
+ * inst must point to an instance within meta->array.
+ * *_new_array is set to the newly allocated array. */
+int cfg_collapse_array(cfg_group_meta_t *meta, cfg_group_t *group,
+				cfg_group_inst_t *inst,
+				cfg_group_inst_t **_new_array)
+{
+	cfg_group_inst_t	*new_array, *old_array;
+	int			inst_size, offset;
+
+	if (!meta->num)
+		return -1;
+
+	if (meta->num == 1) {
+		*_new_array = NULL;
+		return 0;
+	}
+
+	inst_size = sizeof(cfg_group_inst_t) + group->size - 1;
+	new_array = (cfg_group_inst_t *)shm_malloc(inst_size * (meta->num - 1));
+	if (!new_array) {
+		LOG(L_ERR, "ERROR: cfg_collapse_array(): not enough shm memory\n");
+		return -1;
+	}
+
+	old_array = meta->array;
+	offset = (char *)inst - (char *)old_array;
+	if (offset)
+		memcpy(	new_array,
+			old_array,
+			offset);
+
+	if (meta->num * inst_size > offset + inst_size)
+		memcpy( (char *)new_array + offset,
+			(char *)old_array + offset + inst_size,
+			(meta->num - 1) * inst_size - offset);
+
+	*_new_array = new_array;
+	return 0;
+}
+
+/* Find the group instance within the meta-data based on the group_id */
+cfg_group_inst_t *cfg_find_group(cfg_group_meta_t *meta, int group_size, unsigned int group_id)
+{
+	int	i;
+	cfg_group_inst_t *ginst;
+
+	if (!meta)
+		return NULL;
+
+	/* For now, search lineray.
+	TODO: improve */
+	for (i = 0; i < meta->num; i++) {
+		ginst = (cfg_group_inst_t *)((char *)meta->array
+			+ (sizeof(cfg_group_inst_t) + group_size - 1) * i);
+		if (ginst->id == group_id)
+			return ginst;
+		else if (ginst->id > group_id)
+			break; /* needless to continue, the array is ordered */
+	}
+	return NULL;
 }
 
 /* append new callbacks to the end of the child callback list
@@ -577,7 +782,7 @@ void cfg_install_child_cb(cfg_child_cb_t *cb_first, cfg_child_cb_t *cb_last)
  * cb_first and cb_last define a linked list of per-child process
  * callbacks. This list is added to the global linked list.
  */
-void cfg_install_global(cfg_block_t *block, char **replaced,
+void cfg_install_global(cfg_block_t *block, void **replaced,
 			cfg_child_cb_t *cb_first, cfg_child_cb_t *cb_last)
 {
 	cfg_block_t* old_cfg;
@@ -656,4 +861,294 @@ void cfg_child_cb_free(cfg_child_cb_t *child_cb_first)
 		cb_next = cb->next;
 		shm_free(cb);
 	}
+}
+
+/* Allocate memory for a new additional variable
+ * and link it to a configuration group.
+ * type==0 results in creating a new group instance with the default values.
+ * The group is created with CFG_GROUP_UNKNOWN type if it does not exist.
+ * Note: this function is usable only before the configuration is shmized.
+ */
+int new_add_var(str *group_name, unsigned int group_id, str *var_name,
+				void *val, unsigned int type)
+{
+	cfg_group_t	*group;
+	cfg_add_var_t	*add_var = NULL, **add_var_p;
+	int		len;
+
+	LOG(L_DBG, "DEBUG: new_add_var(): declaring a new variable instance %.*s[%u].%.*s\n",
+			group_name->len, group_name->s,
+			group_id,
+			var_name->len, var_name->s);
+
+	if (cfg_shmized) {
+		LOG(L_ERR, "ERROR: new_add_var(): too late, the configuration has already been shmized\n");
+		goto error;
+	}
+
+	group = cfg_lookup_group(group_name->s, group_name->len);
+	if (!group) {
+		/* create a new group with NULL values, it will be filled in later */
+		group = cfg_new_group(group_name->s, group_name->len,
+					0 /* num */, NULL /* mapping */,
+					NULL /* vars */, 0 /* size */, NULL /* handle */);
+
+		if (!group)
+			goto error;
+		/* It is not yet known whether the group will be static or dynamic */
+		group->dynamic = CFG_GROUP_UNKNOWN;
+	}
+
+	add_var = (cfg_add_var_t *)pkg_malloc(sizeof(cfg_add_var_t) +
+						(type ? (var_name->len - 1) : 0));
+	if (!add_var) {
+		LOG(L_ERR, "ERROR: new_add_var(): Not enough memory\n");
+		goto error;
+	}
+	memset(add_var, 0, sizeof(cfg_add_var_t) +
+				(type ? (var_name->len - 1) : 0));
+
+	add_var->group_id = group_id;
+	if (type) {
+		add_var->name_len = var_name->len;
+		memcpy(add_var->name, var_name->s, var_name->len);
+
+		switch (type) {
+		case CFG_VAR_INT:
+			add_var->val.i = (int)(long)val;
+			break;
+
+		case CFG_VAR_STR:
+			len = ((str *)val)->len;
+			add_var->val.s.s = (char *)pkg_malloc(sizeof(char) * len);
+			if (!add_var->val.s.s) {
+				LOG(L_ERR, "ERROR: new_add_var(): Not enough memory\n");
+				goto error;
+			}
+			add_var->val.s.len = len;
+			memcpy(add_var->val.s.s, ((str *)val)->s, len);
+			break;
+
+		case CFG_VAR_STRING:
+			len = strlen((char *)val);
+			add_var->val.ch = (char *)pkg_malloc(sizeof(char) * (len + 1));
+			if (!add_var->val.ch) {
+				LOG(L_ERR, "ERROR: new_add_var(): Not enough memory\n");
+				goto error;
+			}
+			memcpy(add_var->val.ch, (char *)val, len);
+			add_var->val.ch[len] = '\0';
+			break;
+
+		default:
+			LOG(L_ERR, "ERROR: new_add_var(): unsupported value type: %u\n",
+				type);
+			goto error;
+		}
+		add_var->type = type;
+	}
+
+	/* order the list by group_id, it will be easier to count the group instances */
+	for(	add_var_p = &group->add_var;
+		*add_var_p && ((*add_var_p)->group_id <= group_id);
+		add_var_p = &((*add_var_p)->next));
+
+	add_var->next = *add_var_p;
+	*add_var_p = add_var;
+
+	return 0;
+
+error:
+	if (!type)
+		LOG(L_ERR, "ERROR: new_add_var(): failed to add the additional group instance: %.*s[%u]\n",
+			group_name->len, group_name->s, group_id);
+	else
+		LOG(L_ERR, "ERROR: new_add_var(): failed to add the additional variable instance: %.*s[%u].%.*s\n",
+			group_name->len, group_name->s, group_id,
+			var_name->len, var_name->s);
+
+	if (add_var)
+		pkg_free(add_var);
+	return -1;
+}
+
+/* delete the additional variable list */
+static void del_add_var_list(cfg_group_t *group)
+{
+	cfg_add_var_t	*add_var, *add_var2;
+
+	add_var = group->add_var;
+	while (add_var) {
+		add_var2 = add_var->next;
+		if ((add_var->type == CFG_VAR_STR) && add_var->val.s.s)
+			pkg_free(add_var->val.s.s);
+		else if ((add_var->type == CFG_VAR_STRING) && add_var->val.ch)
+			pkg_free(add_var->val.ch);
+		pkg_free(add_var);
+		add_var = add_var2;
+	}
+	group->add_var = NULL;
+}
+
+/* create the array of additional group instances from the linked list */
+static int apply_add_var_list(cfg_block_t *block, cfg_group_t *group)
+{
+	int		i, num, size;
+	unsigned int	group_id;
+	cfg_add_var_t	*add_var;
+	cfg_group_inst_t	*new_array, *ginst;
+
+	/* count the number of group instances */
+	for (	add_var = group->add_var, num = 0, group_id = 0;
+		add_var;
+		add_var = add_var->next
+	) {
+		if (!num || (group_id != add_var->group_id)) {
+			num++;
+			group_id = add_var->group_id;
+		}
+	}
+
+	if (!num)	/* nothing to do */
+		return 0;
+
+	LOG(L_DBG, "DEBUG: apply_add_var_list(): creating the group instance array "
+		"for '%.*s' with %d slots\n",
+		group->name_len, group->name, num);
+	size = (sizeof(cfg_group_inst_t) + group->size - 1) * num;
+	new_array = (cfg_group_inst_t *)shm_malloc(size);
+	if (!new_array) {
+		LOG(L_ERR, "ERROR: apply_add_var_list(): not enough shm memory\n");
+		return -1;
+	}
+	memset(new_array, 0, size);
+
+	for (i = 0; i < num; i++) {
+		/* Go though each group instance, set the default values,
+		and apply the changes */
+
+		if (!group->add_var) {
+			LOG(L_ERR, "BUG: apply_add_var_list(): no more additional variable left\n");
+			goto error;
+		}
+		ginst = (cfg_group_inst_t *)((char*)new_array + (sizeof(cfg_group_inst_t) + group->size - 1) * i);
+		ginst->id = group->add_var->group_id;
+		/* fill in the new group instance with the default data */
+		memcpy(	ginst->vars,
+			CFG_GROUP_DATA(block, group),
+			group->size);
+		/* cfg_apply_list() moves the group->add_var pointer to
+		the beginning of the new group instance. */
+		if (cfg_apply_list(ginst, group, ginst->id, &group->add_var))
+			goto error;
+	}
+
+#ifdef EXTRA_DEBUG
+	if (group->add_var) {
+		LOG(L_ERR, "BUG: apply_add_var_list(): not all the additional variables have been consumed\n");
+		goto error;
+	}
+#endif
+
+	CFG_GROUP_META(block, group)->num = num;
+	CFG_GROUP_META(block, group)->array = new_array;
+	return 0;
+
+error:
+	LOG(L_ERR, "ERROR: apply_add_var_list(): Failed to apply the additional variable list\n");
+	shm_free(new_array);
+	return -1;
+}
+
+/* Move the group handle to the specified group instance pointed by dst_ginst.
+ * src_ginst shall point to the active group instance.
+ * Both parameters can be NULL meaning that the src/dst config is the default, 
+ * not an additional group instance.
+ * The function executes all the per-child process callbacks which are different
+ * in the two instaces.
+ */
+void cfg_move_handle(cfg_group_t *group, cfg_group_inst_t *src_ginst, cfg_group_inst_t *dst_ginst)
+{
+	cfg_mapping_t		*var;
+	unsigned int		bitmap;
+	int			i, pos;
+	str			gname, vname;
+
+	if (src_ginst == dst_ginst)
+		return;	/* nothing to do */
+
+	/* move the handle to the variables of the dst group instance,
+	or to the local config if no dst group instance is specified */
+	*(group->handle) = dst_ginst ?
+				dst_ginst->vars
+				: CFG_GROUP_DATA(cfg_local, group);
+
+	/* call the per child process callback of those variables
+	that have different value in the two group instances */
+	/* TODO: performance optimization: this entire loop can be
+	skipped if the group does not have any variable with
+	per-child process callback. Use some flag in the group
+	structure for this purpose. */
+	gname.s = group->name;
+	gname.len = group->name_len;
+	for (i = 0; i < CFG_MAX_VAR_NUM/(sizeof(int)*8); i++) {
+		bitmap = ((src_ginst) ? src_ginst->set[i] : 0U)
+			| ((dst_ginst) ? dst_ginst->set[i] : 0U);
+		while (bitmap) {
+			pos = bit_scan_forward32(bitmap);
+			var = &group->mapping[pos + i*sizeof(int)*8];
+			if (var->def->on_set_child_cb) {
+				vname.s = var->def->name;
+				vname.len = var->name_len;
+				var->def->on_set_child_cb(&gname, &vname);
+			}
+			bitmap -= (1U << pos);
+		}
+	}
+	/* keep track of how many group instences are set in the child process */
+	if (!src_ginst && dst_ginst)
+		cfg_ginst_count++;
+	else if (!dst_ginst)
+		cfg_ginst_count--;
+#ifdef EXTRA_DEBUG
+	if (cfg_ginst_count < 0)
+		LOG(L_ERR, "ERROR: cfg_select(): BUG, cfg_ginst_count is negative: %d. group=%.*s\n",
+			cfg_ginst_count, group->name_len, group->name);
+#endif
+	return;
+}
+
+/* Move the group handle to the specified group instance. */
+int cfg_select(cfg_group_t *group, unsigned int id)
+{
+	cfg_group_inst_t	*ginst;
+
+	if (!(ginst = cfg_find_group(CFG_GROUP_META(cfg_local, group),
+				group->size,
+				id))
+	) {
+		LOG(L_ERR, "ERROR: cfg_select(): group instance '%.*s[%u]' does not exist\n",
+				group->name_len, group->name, id);
+		return -1;
+	}
+
+	cfg_move_handle(group,
+			CFG_HANDLE_TO_GINST(*(group->handle)), /* the active group instance */
+			ginst);
+
+	LOG(L_DBG, "DEBUG: cfg_select(): group instance '%.*s[%u]' has been selected\n",
+			group->name_len, group->name, id);
+	return 0;
+}
+
+/* Reset the group handle to the default, local configuration */
+int cfg_reset(cfg_group_t *group)
+{
+	cfg_move_handle(group,
+			CFG_HANDLE_TO_GINST(*(group->handle)), /* the active group instance */
+			NULL);
+
+	LOG(L_DBG, "DEBUG: cfg_reset(): default group '%.*s' has been selected\n",
+			group->name_len, group->name);
+	return 0;
 }

@@ -26,6 +26,15 @@ without the need of commit. That means a kind of transaction support,
 the framework can keep track of the changes (per driver) until they
 are committed or rolled-back.
 
+The framework also supports multiple versions of the core or module
+configurations. Every SIP message processing or timer function starts with
+the default version which can be changed runtime in the script. Hence, even if
+the core/module implements a variable with a single value, it may have multiple
+instances with different values in memory, and the configuration instances can be
+swapped runtime. New instances of a configuration group can be added and deleted
+runtime by the drivers, and all the variables in the group instances take
+the default value unless their value has been explicitely set.
+
 2. Using the framework in a module
 ===============================================================================
 
@@ -130,6 +139,8 @@ Each row consists of the following items:
 				of the cfg framework. By default this callback is
 				called by all the child processes separately,
 				this can be changed with this flag.
+				Multiple values are not supported together with
+				the CFG_CB_ONLY_ONCE flag.
 
 - minimum value for integers (optional)
 - maximum value for integers (optional)
@@ -323,10 +334,11 @@ void		*h;
 str		gname, vname;
 void		*old_val, *new_val;
 unsigned int	val_type;
+unsigned int	*group_id;
 
 if (cfg_diff_init(ctx, &h)) return -1;
 while(cfg_diff_next(&h,
-		&gname, &vname,
+		&gname, &group_id, &vname,
 		&old_val, &new_val,
 		&val_type)
 ) {
@@ -334,6 +346,11 @@ while(cfg_diff_next(&h,
 }
 cfg_diff_release(ctx);
 
+-------------------------------------------------------------------------------
+9. Add/delete an instance of an existing group:
+
+cfg_add_group_inst()
+cfg_del_group_inst()
 
 5. Refreshing the configuration
 ===============================================================================
@@ -424,3 +441,45 @@ New configuration values can be declared in the script, the syntax is:
 The values can be accessed via select calls:
 
 @cfg_get.<group_name>.<var_name>
+
+
+Use the following syntax to set an additional instance of a configuration value:
+
+<group_name>[id].<var_name> = <value>
+
+id is an unsigned integer starting from 0, it does not have to be continuous.
+Note, that not the variables but the entire configuration group can have multiple
+instances, and it is possible to swap the configuration of the entire group at once
+with cfg_select("group_name", id), see the example below:
+
+custom.var1 = 1;
+custom.var2 = "default string";
+
+custom[1].var1 = 15;
+custom[1].var2 = "More specific string";
+
+custom[2].var1 = 3;
+# custom[2].var2 is not set, hence, it will inherit the value of custom.var2.
+# When custom.var2 changes, custom[2].var1 will be also updated.
+
+
+route {
+	# Actual values: var1:1, var2:"default string"
+
+	cfg_select("custom", 1);
+	# Actual values: var1:15, var2:"More specific string"
+
+	cfg_select("custom", 2");
+	# Actual values: var1:3, var2:"default string"
+
+	cfg_reset("custom")
+	# Actual values: var1:1, var2:"default string"
+}
+
+cfg_reset("group_name") can be used to reset the configuration back to the original values.
+The values are automatically reseted before each SIP message is started to be processed, or after
+each timer function execution.
+The above example with custom variables is supported also with module and core configuration
+groups. The only restriction is that variables with CFG_CB_ONLY_ONCE flag cannot have
+multiple values.
+

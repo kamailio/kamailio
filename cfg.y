@@ -101,7 +101,7 @@
  * 2010-02-17  added blacklist imask (DST_BLST_*_IMASK) support (andrei)
 */
 
-%expect 5
+%expect 6
 
 %{
 
@@ -347,6 +347,8 @@ extern char *finame;
 %token CASE
 %token DEFAULT
 %token WHILE
+%token CFG_SELECT
+%token CFG_RESET
 %token URIHOST
 %token URIPORT
 %token MAX_LEN
@@ -1631,6 +1633,16 @@ cfg_var:
 	}
 	| cfg_var_id DOT cfg_var_id EQUAL error { 
 		yyerror("number or string expected"); 
+	}
+	| cfg_var_id LBRACK NUMBER RBRACK DOT cfg_var_id EQUAL NUMBER {
+		if (cfg_ginst_var_int($1, $3, $6, $8)) {
+			yyerror("variable cannot be added to the group instance");
+		}
+	}
+	| cfg_var_id LBRACK NUMBER RBRACK DOT cfg_var_id EQUAL STRING {
+		if (cfg_ginst_var_string($1, $3, $6, $8)) {
+			yyerror("variable cannot be added to the group instance");
+		}
 	}
 	;
 
@@ -3261,6 +3273,19 @@ cmd:
 	| SET_RPL_CLOSE	{
 		$$=mk_action(SET_RPL_CLOSE_T, 0); set_cfg_pos($$);
 	}
+	| CFG_SELECT LPAREN STRING COMMA NUMBER RPAREN {
+		$$=mk_action(CFG_SELECT_T, 2, STRING_ST, $3, NUMBER_ST, (void*)$5); set_cfg_pos($$);
+	}
+	| CFG_SELECT LPAREN STRING COMMA rval_expr RPAREN {
+		$$=mk_action(CFG_SELECT_T, 2, STRING_ST, $3, RVE_ST, $5); set_cfg_pos($$);
+	}
+	| CFG_SELECT error { $$=0; yyerror("missing '(' or ')' ?"); }
+	| CFG_SELECT LPAREN error RPAREN { $$=0; yyerror("bad arguments, string and number expected"); }
+	| CFG_RESET LPAREN STRING RPAREN {
+		$$=mk_action(CFG_RESET_T, 1, STRING_ST, $3); set_cfg_pos($$);
+	}
+	| CFG_RESET error { $$=0; yyerror("missing '(' or ')' ?"); }
+	| CFG_RESET LPAREN error RPAREN { $$=0; yyerror("bad arguments, string expected"); }
 	| ID {mod_func_action = mk_action(MODULE0_T, 2, MODEXP_ST, NULL, NUMBER_ST,
 			0); } LPAREN func_params RPAREN	{
 		mod_func_action->val[0].u.data =

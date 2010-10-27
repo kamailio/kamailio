@@ -4,7 +4,7 @@ Miklos Tirpak
 
    <miklos@iptel.org>
 
-   Copyright © 2007 iptelorg GmbH
+   Copyright Â© 2007 iptelorg GmbH
      __________________________________________________________________
 
    1.1. Overview
@@ -20,27 +20,53 @@ Miklos Tirpak
 1.2. RPC Interface
 
    The module implements the following RPC interface commands:
-     * cfg_rpc.set_now_int - Set the value of a configuration variable and
+     * cfg.set_now_int - Set the value of a configuration variable and
        commit the change immediately. The function accepts three
-       parameters: group name, variable name, integer value.
-     * cfg_rpc.set_now_string - Set the value of a configuration variable
-       and commit the change immediately. The function accepts three
-       parameters: group name, variable name, string value.
-     * cfg_rpc.set_delayed_int - Prepare the change of a configuration
+       parameters: group name, variable name, integer value. The group
+       name can optionally contain the group instance id, for example
+       foo[5].
+     * cfg.set_now_string - Set the value of a configuration variable and
+       commit the change immediately. The function accepts three
+       parameters: group name, variable name, string value. The group name
+       can optionally contain the group instance id, for example foo[5].
+     * cfg.set - Set the value of a configuration variable and commit the
+       change immediately. This is a wrapper command for cfg.set_now_int
+       and cfg.set_now_string depending on the type of the value provided.
+       The function accepts three parameters: group name, variable name,
+       int/string value. The group name can optionally contain the group
+       instance id, for example foo[5].
+     * cfg.set_delayed_int - Prepare the change of a configuration
        variable, but does not commit the new value yet. The function
        accepts three parameters: group name, variable name, integer value.
-     * cfg_rpc.set_delayed_string - Prepare the change of a configuration
+       The group name can optionally contain the group instance id, for
+       example foo[5].
+     * cfg.set_delayed_string - Prepare the change of a configuration
        variable, but does not commit the new value yet. The function
        accepts three parameters: group name, variable name, string value.
-     * cfg_rpc.commit - Commit the previously prepared configuration
-       changes. The function does not have any parameters.
-     * cfg_rpc.rollback - Drop the prepared configuration changes. The
+       The group name can optionally contain the group instance id, for
+       example foo[5].
+     * cfg.set_delayed - Prepare the change of a configuration variable,
+       but does not commit the new value yet. This is a wrapper command
+       for cfg.set_delayed_int and cfg.set_delayed_string depending on the
+       type of the value provided. The function accepts three parameters:
+       group name, variable name, int/string value. The group name can
+       optionally contain the group instance id, for example foo[5].
+     * cfg.commit - Commit the previously prepared configuration changes.
+       The function does not have any parameters.
+     * cfg.rollback - Drop the prepared configuration changes. The
        function does not have any parameters.
-     * cfg_rpc.get - Get the value of a configuration variable. The
+     * cfg.get - Get the value of a configuration variable. The function
+       accepts two parameters: group name, variable name. The group name
+       can optionally contain the group instance id, for example foo[5].
+     * cfg.help - Print the description of a configuration variable. The
        function accepts two parameters: group name, variable name.
-     * cfg_rpc.help - Print the description of a configuration variable.
-       The function accepts two parameters: group name, variable name.
-     * cfg_rpc.list - List the configuration variables. The function does
-       not have any parameters.
-     * cfg_rpc.diff - List the pending configuration changes that have not
+     * cfg.list - List the configuration variables. The function has one
+       optional parameter: group name.
+     * cfg.diff - List the pending configuration changes that have not
        been committed yet. The function does not have any parameters.
+     * cfg.add_group_inst - Add a new instance to an existing
+       configuration group. The function accepts one parameter: group
+       name[instance id], for example foo[5].
+     * cfg.del_group_inst - Delete an instance of an existing
+       configuration group. The function accepts one parameter: group
+       name[instance id], for example foo[5].

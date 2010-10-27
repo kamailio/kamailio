@@ -94,6 +94,7 @@
 #include "ut.h"
 #include "rvalue.h"
 #include "switch.h"
+#include "cfg/cfg_struct.h"
 
 #define RT_HASH_SIZE	8 /* route names hash */
 
@@ -1148,6 +1149,60 @@ int fix_actions(struct action* a)
 					ret = E_BUG;
 					goto error;
 				}
+				break;
+			case CFG_SELECT_T:
+				if (t->val[1].type == RVE_ST) {
+					rve = t->val[1].u.data;
+					if (rve_is_constant(rve)) {
+						/* if expression is constant => evaluate it
+						   as integer and replace it with the corresp.
+						   int */
+						rv = rval_expr_eval(0, 0, rve);
+						if (rv == 0 ||
+								rval_get_int( 0, 0, &i, rv, 0) < 0 ) {
+							ERR("failed to fix constant rve");
+							if (rv) rval_destroy(rv);
+							ret = E_BUG;
+							goto error;
+						}
+						rval_destroy(rv);
+						rve_destroy(rve);
+						t->val[1].type = NUMBER_ST;
+						t->val[1].u.number = i;
+					} else {
+						/* expression is not constant => fixup &
+						   optimize it */
+						if ((ret=fix_rval_expr(rve))
+								< 0) {
+							ERR("rve fixup failed\n");
+							ret = E_BUG;
+							goto error;
+						}
+					}
+				} else if (t->val[1].type != NUMBER_ST) {
+					BUG("invalid subtype %d for cfg_select()\n",
+								t->val[1].type);
+					ret = E_BUG;
+					goto error;
+				}
+
+			case CFG_RESET_T:
+				if (t->val[0].type != STRING_ST) {
+					BUG("invalid subtype %d for cfg_select() or cfg_reset()\n",
+								t->val[0].type);
+					ret = E_BUG;
+					goto error;
+				}
+				tmp_p = (void *)cfg_lookup_group(t->val[0].u.string, strlen(t->val[0].u.string));
+				if (!tmp_p) {
+					ERR("configuration group \"%s\" not found\n",
+						t->val[0].u.string);
+					ret = E_SCRIPT;
+					goto error;
+				}
+				pkg_free(t->val[0].u.string);
+				t->val[0].u.data = tmp_p;
+				t->val[0].type = CFG_GROUP_ST;
 				break;
 			default:
 				/* no fixup required for the rest */

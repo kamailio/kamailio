@@ -49,6 +49,40 @@ static int mod_init(void)
 	return 0;
 }
 
+/* Set the group_id pointer based on the group string.
+ * The string is either "group_name", or "group_name[group_id]"
+ * *group_id is set to null in the former case.
+ * Warning: changes the group string
+ */
+static int get_group_id(str *group, unsigned int **group_id)
+{
+	static unsigned int	id;
+	str	s;
+
+	if (!group->s || (group->s[group->len-1] != ']')) {
+		*group_id = NULL;
+		return 0;
+	}
+
+	s.s = group->s + group->len - 2;
+	s.len = 0;
+	while ((s.s > group->s) && (*s.s != '[')) {
+		s.s--;
+		s.len++;
+	}
+	if (s.s == group->s) /* '[' not found */
+		return -1;
+	group->len = s.s - group->s;
+	s.s++;
+	if (!group->len || !s.len)
+		return -1;
+	if (str2int(&s, &id))
+		return -1;
+
+	*group_id = &id;
+	return 0;
+}
+
 static const char* rpc_set_now_doc[2] = {
         "Set the value of a configuration variable and commit the change immediately",
         0
@@ -58,11 +92,17 @@ static void rpc_set_now_int(rpc_t* rpc, void* c)
 {
 	str	group, var;
 	int	i;
+	unsigned int	*group_id;
 
 	if (rpc->scan(c, "SSd", &group, &var, &i) < 3)
 		return;
 
-	if (cfg_set_now_int(ctx, &group, &var, i)) {
+	if (get_group_id(&group, &group_id)) {
+		rpc->fault(c, 400, "Wrong group syntax. Use either \"group\", or \"group[id]\"");
+		return;
+	}
+
+	if (cfg_set_now_int(ctx, &group, group_id, &var, i)) {
 		rpc->fault(c, 400, "Failed to set the variable");
 		return;
 	}
@@ -72,11 +112,45 @@ static void rpc_set_now_string(rpc_t* rpc, void* c)
 {
 	str	group, var;
 	char	*ch;
+	unsigned int	*group_id;
 
 	if (rpc->scan(c, "SSs", &group, &var, &ch) < 3)
 		return;
 
-	if (cfg_set_now_string(ctx, &group, &var, ch)) {
+	if (get_group_id(&group, &group_id)) {
+		rpc->fault(c, 400, "Wrong group syntax. Use either \"group\", or \"group[id]\"");
+		return;
+	}
+
+	if (cfg_set_now_string(ctx, &group, group_id, &var, ch)) {
+		rpc->fault(c, 400, "Failed to set the variable");
+		return;
+	}
+}
+
+static void rpc_set(rpc_t* rpc, void* c)
+{
+	str	group, var;
+	int	i, err;
+	char	*ch;
+	unsigned int	*group_id;
+
+	if (rpc->scan(c, "SS", &group, &var) < 2)
+		return;
+
+	if (get_group_id(&group, &group_id)) {
+		rpc->fault(c, 400, "Wrong group syntax. Use either \"group\", or \"group[id]\"");
+		return;
+	}
+
+	if (rpc->scan(c, "d", &i) == 1)
+		err = cfg_set_now_int(ctx, &group, group_id, &var, i);
+	else if (rpc->scan(c, "s", &ch) == 1)
+		err = cfg_set_now_string(ctx, &group, group_id, &var, ch);
+	else
+		return; /* error */
+
+	if (err) {
 		rpc->fault(c, 400, "Failed to set the variable");
 		return;
 	}
@@ -91,11 +165,17 @@ static void rpc_set_delayed_int(rpc_t* rpc, void* c)
 {
 	str	group, var;
 	int	i;
+	unsigned int	*group_id;
 
 	if (rpc->scan(c, "SSd", &group, &var, &i) < 3)
 		return;
 
-	if (cfg_set_delayed_int(ctx, &group, &var, i)) {
+	if (get_group_id(&group, &group_id)) {
+		rpc->fault(c, 400, "Wrong group syntax. Use either \"group\", or \"group[id]\"");
+		return;
+	}
+
+	if (cfg_set_delayed_int(ctx, &group, group_id, &var, i)) {
 		rpc->fault(c, 400, "Failed to set the variable");
 		return;
 	}
@@ -105,11 +185,45 @@ static void rpc_set_delayed_string(rpc_t* rpc, void* c)
 {
 	str	group, var;
 	char	*ch;
+	unsigned int	*group_id;
 
 	if (rpc->scan(c, "SSs", &group, &var, &ch) < 3)
 		return;
 
-	if (cfg_set_delayed_string(ctx, &group, &var, ch)) {
+	if (get_group_id(&group, &group_id)) {
+		rpc->fault(c, 400, "Wrong group syntax. Use either \"group\", or \"group[id]\"");
+		return;
+	}
+
+	if (cfg_set_delayed_string(ctx, &group, group_id, &var, ch)) {
+		rpc->fault(c, 400, "Failed to set the variable");
+		return;
+	}
+}
+
+static void rpc_set_delayed(rpc_t* rpc, void* c)
+{
+	str	group, var;
+	int	i, err;
+	char	*ch;
+	unsigned int	*group_id;
+
+	if (rpc->scan(c, "SS", &group, &var) < 2)
+		return;
+
+	if (get_group_id(&group, &group_id)) {
+		rpc->fault(c, 400, "Wrong group syntax. Use either \"group\", or \"group[id]\"");
+		return;
+	}
+
+	if (rpc->scan(c, "d", &i) == 1)
+		err = cfg_set_delayed_int(ctx, &group, group_id, &var, i);
+	else if (rpc->scan(c, "s", &ch) == 1)
+		err = cfg_set_delayed_string(ctx, &group, group_id, &var, ch);
+	else
+		return; /* error */
+
+	if (err) {
 		rpc->fault(c, 400, "Failed to set the variable");
 		return;
 	}
@@ -152,11 +266,17 @@ static void rpc_get(rpc_t* rpc, void* c)
 	void	*val;
 	unsigned int	val_type;
 	int	ret;
+	unsigned int	*group_id;
 
 	if (rpc->scan(c, "SS", &group, &var) < 2)
 		return;
 
-	ret = cfg_get_by_name(ctx, &group, &var,
+	if (get_group_id(&group, &group_id)) {
+		rpc->fault(c, 400, "Wrong group syntax. Use either \"group\", or \"group[id]\"");
+		return;
+	}
+
+	ret = cfg_get_by_name(ctx, &group, group_id, &var,
 			&val, &val_type);
 	if (ret < 0) {
 		rpc->fault(c, 400, "Failed to get the variable");
@@ -233,11 +353,21 @@ static void rpc_list(rpc_t* rpc, void* c)
 	str		gname;
 	cfg_def_t	*def;
 	int		i;
+	str		group;
+
+	if (rpc->scan(c, "*S", &group) < 1) {
+		group.s = NULL;
+		group.len = 0;
+	}
 
 	cfg_get_group_init(&h);
 	while(cfg_get_group_next(&h, &gname, &def))
-		for (i=0; def[i].name; i++)
-			rpc->printf(c, "%.*s: %s", gname.len, gname.s, def[i].name);
+		if (!group.len
+			|| ((gname.len == group.len)
+				&& (memcmp(gname.s, group.s, group.len) == 0))
+		)
+			for (i=0; def[i].name; i++)
+				rpc->printf(c, "%.*s: %s", gname.len, gname.s, def[i].name);
 }
 
 static const char* rpc_diff_doc[2] = {
@@ -249,24 +379,32 @@ static void rpc_diff(rpc_t* rpc, void* c)
 {
 	void		*h;
 	str		gname, vname;
+	unsigned int	*gid;
 	void		*old_val, *new_val;
 	unsigned int	val_type;
 	void		*rpc_handle;
+	int		err;
 
 
 	if (cfg_diff_init(ctx, &h)) {
 		rpc->fault(c, 400, "Failed to get the changes");
 		return;
 	}
-	while(cfg_diff_next(&h,
-			&gname, &vname,
+	while((err = cfg_diff_next(&h,
+			&gname, &gid, &vname,
 			&old_val, &new_val,
-			&val_type)
+			&val_type)) > 0
 	) {
 		rpc->add(c, "{", &rpc_handle);
-		rpc->struct_add(rpc_handle, "SS",
-				"group name", &gname,
-				"variable name", &vname);
+		if (gid)
+			rpc->struct_add(rpc_handle, "SdS",
+					"group name", &gname,
+					"group id", *gid,
+					"variable name", &vname);
+		else
+			rpc->struct_add(rpc_handle, "SS",
+					"group name", &gname,
+					"variable name", &vname);
 
 		switch (val_type) {
 		case CFG_VAR_INT:
@@ -294,11 +432,63 @@ static void rpc_diff(rpc_t* rpc, void* c)
 		}
 	}
 	cfg_diff_release(ctx);
+	if (err)
+		rpc->fault(c, 400, "Failed to get the changes");
+}
+
+static const char* rpc_add_group_inst_doc[2] = {
+	"Add a new instance to an existing configuration group",
+	0
+};
+
+static void rpc_add_group_inst(rpc_t* rpc, void* c)
+{
+	str	group;
+	unsigned int	*group_id;
+
+	if (rpc->scan(c, "S", &group) < 1)
+		return;
+
+	if (get_group_id(&group, &group_id) || !group_id) {
+		rpc->fault(c, 400, "Wrong group syntax. Use \"group[id]\"");
+		return;
+	}
+
+	if (cfg_add_group_inst(ctx, &group, *group_id)) {
+		rpc->fault(c, 400, "Failed to add the group instance");
+		return;
+	}
+}
+
+static const char* rpc_del_group_inst_doc[2] = {
+	"Delte an instance of a configuration group",
+	0
+};
+
+static void rpc_del_group_inst(rpc_t* rpc, void* c)
+{
+	str	group;
+	unsigned int	*group_id;
+
+	if (rpc->scan(c, "S", &group) < 1)
+		return;
+
+	if (get_group_id(&group, &group_id) || !group_id) {
+		rpc->fault(c, 400, "Wrong group syntax. Use \"group[id]\"");
+		return;
+	}
+
+	if (cfg_del_group_inst(ctx, &group, *group_id)) {
+		rpc->fault(c, 400, "Failed to delete the group instance");
+		return;
+	}
 }
 
 static rpc_export_t rpc_calls[] = {
+	{"cfg.set",		rpc_set,		rpc_set_now_doc,	0},
 	{"cfg.set_now_int",	rpc_set_now_int,	rpc_set_now_doc,	0},
 	{"cfg.set_now_string",	rpc_set_now_string,	rpc_set_now_doc,	0},
+	{"cfg.set_delayed",	rpc_set_delayed,	rpc_set_delayed_doc,	0},
 	{"cfg.set_delayed_int",	rpc_set_delayed_int,	rpc_set_delayed_doc,	0},
 	{"cfg.set_delayed_string",	rpc_set_delayed_string,	rpc_set_delayed_doc,	0},
 	{"cfg.commit",		rpc_commit,		rpc_commit_doc,		0},
@@ -307,6 +497,8 @@ static rpc_export_t rpc_calls[] = {
 	{"cfg.help",		rpc_help,		rpc_help_doc,		0},
 	{"cfg.list",		rpc_list,		rpc_list_doc,		0},
 	{"cfg.diff",		rpc_diff,		rpc_diff_doc,		0},
+	{"cfg.add_group_inst",	rpc_add_group_inst,	rpc_add_group_inst_doc,	0},	
+	{"cfg.del_group_inst",	rpc_del_group_inst,	rpc_del_group_inst_doc,	0},	
 	{0, 0, 0, 0}
 };
 
