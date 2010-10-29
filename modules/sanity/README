@@ -16,6 +16,7 @@ Nils Ohlmeier
         1.3.1. default_checks (integer)
         1.3.2. uri_checks (integer)
         1.3.3. proxy_require (string)
+        1.3.4. autodrop (integer)
 
    1.4. Functions
 
@@ -99,6 +100,11 @@ modparam("sanity", "default_checks", "1")
    Default value is 7. This resolves to the following list of parsed URIs:
    Request RUI (1), From URI (2) and To URI (4).
 
+   Example 2. Set uri_checks parameter
+...
+modparam("sanity", "uri_checks", 3)
+...
+
 1.3.3. proxy_require (string)
 
    This parameter set the list of supported extensions for this
@@ -106,9 +112,23 @@ modparam("sanity", "default_checks", "1")
    extensions. This list is separated into single tokens. Each token from
    a proxy require header will be compare to the tokens from this list.
 
-   Example 2. Set proxy_require parameter
+   Example 3. Set proxy_require parameter
 ...
 modparam("sanity", "proxy_require", "foo, bar")
+...
+
+1.3.4. autodrop (integer)
+
+   This parameter controls whether the module drops automatically or not
+   the SIP message if the sanity checks fail. Default value is 1 (auto
+   drop). If set to 0, sanity_check() function will return -1 (false) to
+   configuration file, allowing to write log messages for example - be
+   sure you exit execution of config without sending a SIP reply because
+   it is sent by module itself.
+
+   Example 4. Set autodrop parameter
+...
+modparam("sanity", "autodrop", 1)
 ...
 
 1.4. Functions
@@ -123,7 +143,7 @@ modparam("sanity", "proxy_require", "foo, bar")
    checks fails the module sends a precise error reply via sl_send_reply.
    Thus there is no need to reply with a generic error message.
 
-   Example 3. sanity_check usage
+   Example 5. sanity_check usage
 ...
 if (!sanity_check()) {
         exit;
@@ -136,7 +156,7 @@ if (!sanity_check()) {
    checks (like for the module parameter) which should be executed at this
    function call.
 
-   Example 4. sanity_check usage with parameter
+   Example 6. sanity_check usage with parameter
 ...
 if (method=="REGISTER" && !sanity_check("256")) {
         /* the register contains an invalid expires value and is replied with a
@@ -149,7 +169,7 @@ if (method=="REGISTER" && !sanity_check("256")) {
    overwrites the global module parameter uri_checks and thus determines
    which URIs will be checked if the parse uri test will be executed.
 
-   Example 5. sanity_check usage with two parameters
+   Example 7. sanity_check usage with two parameters
 ...
 if (method=="INVITE" && !sanity_check("1024", "6")) {
         /* the INVITE contains an invalid From or To header and is replied with
