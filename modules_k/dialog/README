@@ -961,11 +961,11 @@ if (is_in_profile("caller","XX")) {
 
    Example 1.41. get_profile_size usage
 ...
-get_profile_size("inbound_call","$avp(size)");
-xlog("currently there are $avp(size) inbound calls\n");
+if(get_profile_size("inbound_call","$avp(size)"))
+    xlog("currently there are $avp(size) inbound calls\n");
 ...
-get_profile_size("caller","$fu");
-xlog("currently, the user %fu has $avp(size) active outgoing calls\n");
+if(get_profile_size("caller","$fu","$avp(size)"))
+    xlog("currently, the user $fu has $avp(size) active outgoing calls\n");
 ...
 
 6.5.  dlg_isflagset(flag)
