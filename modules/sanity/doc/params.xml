@@ -55,6 +55,14 @@ modparam("sanity", "default_checks", "1")
 		Default value is 7. This resolves to the following list of
 		parsed URIs: Request RUI (1), From URI (2) and To URI (4).
 	</para>
+	<example>
+	    <title>Set <varname>uri_checks</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "uri_checks", 3)
+...
+	    </programlisting>
+	</example>
 	</section>
 
 	<section id="proxy_require">
@@ -76,5 +84,24 @@ modparam("sanity", "proxy_require", "foo, bar")
 	</example>
 	</section>
 
+	<section id="autodrop">
+	<title><varname>autodrop</varname> (integer)</title>
+	<para>
+		This parameter controls whether the module drops automatically
+		or not the SIP message if the sanity checks fail. Default value
+		is 1 (auto drop). If set to 0, sanity_check() function will return
+		-1 (false) to configuration file, allowing to write log messages for
+		example - be sure you exit execution of config without sending a SIP
+		reply because it is sent by module itself.
+	</para>
+	<example>
+	    <title>Set <varname>autodrop</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "autodrop", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
 
 </section>
