@@ -42,6 +42,8 @@ str pr_str 	= STR_STATIC_INIT(PROXY_REQUIRE_DEF);
 
 int default_checks = SANITY_DEFAULT_CHECKS;
 int uri_checks = SANITY_DEFAULT_URI_CHECKS;
+int _sanity_drop = 1;
+
 strl* proxyrequire_list = NULL;
 
 sl_api_t slb;
@@ -67,9 +69,10 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"default_checks", 	PARAM_INT, 	&default_checks},
-	{"uri_checks",		PARAM_INT,  &uri_checks	},
-	{"proxy_require", 	PARAM_STR, 	&pr_str 	},
+	{"default_checks",	PARAM_INT,	&default_checks	},
+	{"uri_checks",		PARAM_INT,	&uri_checks		},
+	{"proxy_require",	PARAM_STR,	&pr_str			},
+	{"autodrop",		PARAM_INT,	&_sanity_drop	},
 	{0, 0, 0}
 };
 
@@ -164,55 +167,61 @@ static int sanity_check(struct sip_msg* _msg, char* _number, char* _arg) {
 		arg = (int)(long)_arg;
 	}
 
+	ret = 1;
 	if (SANITY_RURI_SIP_VERSION & check &&
-		(ret = check_ruri_sip_version(_msg)) != SANITY_CHECK_PASSED) {
-		return ret;
+			(ret = check_ruri_sip_version(_msg)) != SANITY_CHECK_PASSED) {
+		goto done;
 	}
 	if (SANITY_RURI_SCHEME & check &&
-		(ret = check_ruri_scheme(_msg)) != SANITY_CHECK_PASSED) {
-		return ret;
+			(ret = check_ruri_scheme(_msg)) != SANITY_CHECK_PASSED) {
+		goto done;
 	}
 	if (SANITY_REQUIRED_HEADERS & check &&
-		(ret = check_required_headers(_msg)) != SANITY_CHECK_PASSED) {
-		return ret;
+			(ret = check_required_headers(_msg)) != SANITY_CHECK_PASSED) {
+		goto done;
 	}
 	if (SANITY_VIA_SIP_VERSION & check &&
-		(ret = check_via_sip_version(_msg)) != SANITY_CHECK_PASSED) {
-		return ret;
+			(ret = check_via_sip_version(_msg)) != SANITY_CHECK_PASSED) {
+		goto done;
 	}
 	if (SANITY_VIA_PROTOCOL & check &&
-		(ret = check_via_protocol(_msg)) != SANITY_CHECK_PASSED) {
-		return ret;
+			(ret = check_via_protocol(_msg)) != SANITY_CHECK_PASSED) {
+		goto done;
 	}
 	if (SANITY_CSEQ_METHOD & check &&
-		(ret = check_cseq_method(_msg)) != SANITY_CHECK_PASSED) {
-		return ret;
+			(ret = check_cseq_method(_msg)) != SANITY_CHECK_PASSED) {
+		goto done;
 	}
 	if (SANITY_CSEQ_VALUE & check &&
-		(ret = check_cseq_value(_msg)) != SANITY_CHECK_PASSED) {
-		return ret;
+			(ret = check_cseq_value(_msg)) != SANITY_CHECK_PASSED) {
+		goto done;
 	}
 	if (SANITY_CL & check &&
-		(ret = check_cl(_msg)) != SANITY_CHECK_PASSED) {
-		return ret;
+			(ret = check_cl(_msg)) != SANITY_CHECK_PASSED) {
+		goto done;
 	}
 	if (SANITY_EXPIRES_VALUE & check &&
-		(ret = check_expires_value(_msg)) != SANITY_CHECK_PASSED) {
-		return ret;
+			(ret = check_expires_value(_msg)) != SANITY_CHECK_PASSED) {
+		goto done;
 	}
 	if (SANITY_PROXY_REQUIRE & check &&
-		(ret = check_proxy_require(_msg)) != SANITY_CHECK_PASSED) {
-		return ret;
+			(ret = check_proxy_require(_msg)) != SANITY_CHECK_PASSED) {
+		goto done;
 	}
 	if (SANITY_PARSE_URIS & check &&
-		(ret = check_parse_uris(_msg, arg)) != SANITY_CHECK_PASSED) {
-		return ret;
+			(ret = check_parse_uris(_msg, arg)) != SANITY_CHECK_PASSED) {
+		goto done;
 	}
 
 	if (SANITY_CHECK_DIGEST & check &&
-	        (ret = check_digest(_msg, arg)) != SANITY_CHECK_PASSED) {
-	        return ret;
+			(ret = check_digest(_msg, arg)) != SANITY_CHECK_PASSED) {
+		goto done;
 	}
+
+done:
+	if(_sanity_drop!=0)
+		return ret;
+	return (ret==SANITY_CHECK_FAILED)?-1:ret;
 
 	DBG("all sanity checks passed\n");
 	/* nobody complained so everything is fine */
