@@ -127,7 +127,8 @@ static int fixup_get_profile3(void** param, int param_no);
 static int w_set_dlg_profile(struct sip_msg*, char*, char*);
 static int w_unset_dlg_profile(struct sip_msg*, char*, char*);
 static int w_is_in_profile(struct sip_msg*, char*, char*);
-static int w_get_profile_size(struct sip_msg*, char*, char*, char*);
+static int w_get_profile_size2(struct sip_msg*, char*, char*);
+static int w_get_profile_size3(struct sip_msg*, char*, char*, char*);
 static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2);
 static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2);
 static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2);
@@ -156,9 +157,9 @@ static cmd_export_t cmds[]={
 			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"is_in_profile", (cmd_function)w_is_in_profile,      2,fixup_profile,
 			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"get_profile_size",(cmd_function)w_get_profile_size, 2,fixup_get_profile2,
+	{"get_profile_size",(cmd_function)w_get_profile_size2, 2,fixup_get_profile2,
 			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"get_profile_size",(cmd_function)w_get_profile_size, 3,fixup_get_profile3,
+	{"get_profile_size",(cmd_function)w_get_profile_size3, 3,fixup_get_profile3,
 			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"dlg_setflag", (cmd_function)w_dlg_setflag,          1,fixup_igp_null,
 			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
@@ -732,8 +733,11 @@ static int w_is_in_profile(struct sip_msg *msg, char *profile, char *value)
 }
 
 
-static int w_get_profile_size(struct sip_msg *msg, char *profile, 
-													char *value, char *result)
+/**
+ * get dynamic name profile size
+ */
+static int w_get_profile_size3(struct sip_msg *msg, char *profile,
+		char *value, char *result)
 {
 	pv_elem_t *pve;
 	str val_s;
@@ -755,7 +759,7 @@ static int w_get_profile_size(struct sip_msg *msg, char *profile,
 			LM_WARN("cannot get string for value\n");
 			return -1;
 		}
-		size = get_profile_size( (struct dlg_profile_table*)profile ,&val_s );
+		size = get_profile_size( (struct dlg_profile_table*)profile, &val_s );
 	} else {
 		size = get_profile_size( (struct dlg_profile_table*)profile, NULL );
 	}
@@ -772,6 +776,16 @@ static int w_get_profile_size(struct sip_msg *msg, char *profile,
 
 	return 1;
 }
+
+
+/**
+ * get static name profile size
+ */
+static int w_get_profile_size2(struct sip_msg *msg, char *profile, char *result)
+{
+	return w_get_profile_size3(msg, profile, result, NULL);
+}
+
 
 static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2)
 {
