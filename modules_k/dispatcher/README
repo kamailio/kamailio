@@ -693,7 +693,7 @@ Note
    use next address to achieve serial forking to all possible
    destinations.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1.29. ds_select_dst usage
 ...
@@ -714,21 +714,21 @@ ds_select_dst("1", "$var(a)");
    to use next address to achieve serial forking to all possible
    destinations.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
 4.3.  ds_next_dst()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
    and sets the dst_uri (outbound proxy address).
 
-   This function can be used from FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
 4.4.  ds_next_domain()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
    and sets the domain part of the request uri.
 
-   This function can be used from FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
 4.5.  ds_mark_dst()
 
@@ -737,7 +737,7 @@ ds_select_dst("1", "$var(a)");
    automatic detection of failed gateways. When an address is marked as
    inactive, it will be ignored by 'ds_select_dst' and 'ds_select_domain'.
 
-   This function can be used from FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
 4.6.  ds_mark_dst("s")
 
@@ -755,7 +755,7 @@ ds_select_dst("1", "$var(a)");
        Note: You will need to call this function "threshhold"-times,
        before it will be actually set to probing.
 
-   This function can be used from FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
 4.7.  ds_is_from_list()
 
