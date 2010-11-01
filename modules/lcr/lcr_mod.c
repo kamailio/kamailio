@@ -1854,7 +1854,8 @@ static int generate_uris(struct sip_msg* _m, char *r_uri, str *r_uri_user,
 {
     int_str gw_uri_val;
     struct usr_avp *gu_avp;
-    str scheme, prefix, hostname, port, params, transport, addr_str;
+    str scheme, prefix, hostname, port, params, transport, addr_str,
+	tmp_tag;
     char *at;
     unsigned int strip;
     struct ip_addr a;
@@ -1864,7 +1865,8 @@ static int generate_uris(struct sip_msg* _m, char *r_uri, str *r_uri_user,
     if (!gu_avp) return 0; /* No more gateways left */
 
     decode_avp_value(gw_uri_val.s.s, gw_index, &scheme, &strip, &prefix,
-		     tag, addr, &hostname, &port, &params, &transport, flags);
+		     &tmp_tag, addr, &hostname, &port, &params, &transport,
+		     flags);
 
     if (*addr > 0) {
 	a.af = AF_INET;
@@ -1945,6 +1947,9 @@ static int generate_uris(struct sip_msg* _m, char *r_uri, str *r_uri_user,
 	*r_uri_len = at - r_uri;
 	*dst_uri_len = 0;
     }
+
+    memcpy(tag->s, tmp_tag.s, tmp_tag.len);
+    tag->len = tmp_tag.len;
 
     destroy_avp(gu_avp);
 	
@@ -2030,9 +2035,12 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     int_str ruri_user_val, val;
     struct usr_avp *ru_avp;
     int rval;
-    str uri_str, tag;
+    str uri_str, tag_str;
+    char tag[MAX_TAG_LEN];
     unsigned int flags, r_uri_len, dst_uri_len, addr, gw_index;
     char r_uri[MAX_URI_LEN], dst_uri[MAX_URI_LEN];
+
+    tag_str.s = &(tag[0]);
 
     ru_avp = search_first_avp(ruri_user_avp_type, ruri_user_avp,
 			      &ruri_user_val, 0);
@@ -2049,7 +2057,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	}
 	if (!generate_uris(_m, r_uri, &(_m->parsed_uri.user), &r_uri_len,
 			   dst_uri, &dst_uri_len, &addr, &gw_index, &flags,
-			   &tag)) {
+			   &tag_str)) {
 	    return -1;
 	}
 
@@ -2067,7 +2075,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
          * and Destination URIs. */
 
 	if (!generate_uris(_m, r_uri, &(ruri_user_val.s), &r_uri_len, dst_uri,
-			   &dst_uri_len, &addr, &gw_index, &flags, &tag)) {
+			   &dst_uri_len, &addr, &gw_index, &flags, &tag_str)) {
 	    return -1;
 	}
     }
@@ -2099,7 +2107,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 
     /* Set tag_avp */
     if (tag_avp_param) {
-	val.s = tag;
+	val.s = tag_str;
 	add_avp(tag_avp_type, tag_avp, val);
 	LM_DBG("added tag_avp <%.*s>\n", val.s.len, val.s.s);
     }
