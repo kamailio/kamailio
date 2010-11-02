@@ -820,10 +820,13 @@ static void unreference_dialog(void *dialog)
  */
 static void unref_dlg_from_cb(struct cell* t, int type, struct tmcb_params *param)
 {
-    struct dlg_cell *dlg = (struct dlg_cell *)(*param->param);
+	struct dlg_cell *dlg = (struct dlg_cell *)(*param->param);
+
+	if (!dlg)
+		return;
 
 	/* destroy dialog */
-    unref_dlg(dlg, 1);
+	unreference_dialog(dlg);
 }
 
 
