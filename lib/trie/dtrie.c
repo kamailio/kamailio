@@ -39,8 +39,6 @@
 
 #include "dtrie.h"
 
-#include <assert.h>
-
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
@@ -142,12 +140,20 @@ int dtrie_insert(struct dtrie_node_t *root, const char *number, const unsigned i
 
 		if (node->child[digit] == NULL) {
 			node->child[digit] = shm_malloc(sizeof(struct dtrie_node_t));
-			assert(node->child[digit] != NULL);
+			if(node->child[digit] == NULL ){
+				SHM_MEM_ERROR;
+				return -1;
+			}
+
 			LM_DBG("allocate %lu bytes for node at %p\n", (long unsigned)sizeof(struct dtrie_node_t), node->child[digit]);
 			memset(node->child[digit], 0, sizeof(struct dtrie_node_t));
 
 			node->child[digit]->child = shm_malloc(sizeof(struct dtrie_node_t *) * branches);
-			assert(node->child[digit]->child != NULL);
+			if(node->child[digit]->child == NULL){
+				SHM_MEM_ERROR;
+				shm_free(node->child[digit]);
+				return -1;
+			}
 			LM_DBG("allocate %lu bytes for %d root children pointer at %p\n",
 					(long unsigned)sizeof(struct dtrie_node_t *) * branches,
 					branches, node->child[digit]->child);
