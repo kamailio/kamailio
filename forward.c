@@ -131,6 +131,10 @@ struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 	union sockaddr_union from; 
 	struct socket_info* si;
 	struct ip_addr ip;
+	union sockaddr_union uncon;
+
+	memset(&uncon, 0, sizeof(union sockaddr_union));
+	uncon.sin.sin_family = AF_UNSPEC;
 
 	if (unlikely(proto!=PROTO_UDP)) {
 		LOG(L_CRIT, "BUG: get_out_socket can only be called for UDP\n");
@@ -167,6 +171,14 @@ retry:
 		return 0;
 	}
 	}
+
+	if( !mhomed_sock_cache_disabled ){
+		/* some Linux kernel versions (all?) along with other UNIXes don't re-bound the sock if already bound */
+		/* to un-bound a socket set sin_family to AF_UNSPEC and zero out the rest*/
+		if (unlikely(connect(*temp_sock, &uncon.s, sockaddru_len(uncon))) < 0)
+				mhomed_sock_cache_disabled = 1;
+	}
+
 	if (unlikely(connect(*temp_sock, &to->s, sockaddru_len(*to))==-1)) {
 		if (unlikely(errno==EISCONN && !mhomed_sock_cache_disabled)){
 			/*  no multiple connects support on the same socket */
