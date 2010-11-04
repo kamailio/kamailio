@@ -175,7 +175,7 @@ retry:
 	if( !mhomed_sock_cache_disabled ){
 		/* some Linux kernel versions (all?) along with other UNIXes don't re-bound the sock if already bound */
 		/* to un-bound a socket set sin_family to AF_UNSPEC and zero out the rest*/
-		if (unlikely(connect(*temp_sock, &uncon.s, sockaddru_len(uncon))) < 0)
+		if (unlikely(connect(*temp_sock, &uncon.s, sockaddru_len(uncon)) < 0))
 				mhomed_sock_cache_disabled = 1;
 	}
 
