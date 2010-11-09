@@ -1134,21 +1134,41 @@ contact_1918(struct sip_msg* msg)
 static int
 sdp_1918(struct sip_msg* msg)
 {
-	str body, ip;
+	str *ip;
 	int pf;
+	int sdp_session_num, sdp_stream_num;
+	sdp_session_cell_t* sdp_session;
+	sdp_stream_cell_t* sdp_stream;
 
-	if (extract_body(msg, &body) == -1) {
-		LM_ERR("cannot extract body from msg!\n");
+	if(0 != parse_sdp(msg)) {
+		LM_ERR("Unable to parse sdp\n");
 		return 0;
 	}
-	if (extract_mediaip(&body, &ip, &pf,"c=") == -1) {
-		LM_ERR("can't extract media IP from the SDP\n");
-		return 0;
-	}
-	if (pf != AF_INET || isnulladdr(&ip, pf))
-		return 0;
 
-	return (is1918addr(&ip) == 1) ? 1 : 0;
+	sdp_session_num = 0;
+	for(;;) {
+		sdp_session = get_sdp_session(msg, sdp_session_num);
+		if(!sdp_session) break;
+		sdp_stream_num = 0;
+		for(;;) {
+			sdp_stream = get_sdp_stream(msg, sdp_session_num, sdp_stream_num);
+			if(!sdp_stream) break;
+			if (sdp_stream->ip_addr.s && sdp_stream->ip_addr.len) {
+				ip = &(sdp_stream->ip_addr);
+				pf = sdp_stream->pf;
+			} else {
+				ip = &(sdp_session->ip_addr);
+				pf = sdp_session->pf;
+			}
+			if (pf != AF_INET || isnulladdr(ip, pf))
+				break;
+			if (is1918addr(ip) == 1)
+				return 1;
+			sdp_stream_num++;
+		}
+		sdp_session_num++;
+	}
+	return 0;
 }
 
 /*
