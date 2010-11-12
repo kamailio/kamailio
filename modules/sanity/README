@@ -20,7 +20,7 @@ Nils Ohlmeier
 
    1.4. Functions
 
-        1.4.1. sanity_check()
+        1.4.1. sanity_check([msg_checks [, uri_checks]])
 
 1.1. Overview
 
@@ -136,12 +136,15 @@ modparam("sanity", "autodrop", 1)
    Revision History
    Revision $Revision$ $Date$
 
-1.4.1.  sanity_check()
+1.4.1.  sanity_check([msg_checks [, uri_checks]])
 
-   This function makes a row of sanity checks on the given request. The
-   function returns false (-1) if one of the checks failed. If one of the
-   checks fails the module sends a precise error reply via sl_send_reply.
-   Thus there is no need to reply with a generic error message.
+   This function makes a row of sanity checks over the given SIP request.
+   The behavior of the function is also controled by 'autodrop' parameter.
+   If autodrop=0, the function returns false (-1) if one of the checks
+   failed. When autodrop=1, the function stops the execution of
+   configuration file. In both cases, ff one of the checks fails the
+   module sends a precise error reply via SL send_reply(). Thus there is
+   no need to reply with a generic error message.
 
    Example 5. sanity_check usage
 ...
