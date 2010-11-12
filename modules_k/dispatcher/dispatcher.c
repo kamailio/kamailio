@@ -451,7 +451,8 @@ static int mod_init(void)
 				return -1;
 			register_timer(ds_ht_timer, NULL, ds_hash_check_interval);
 		} else {
-			LM_ERR("call load dispatching AVP set but no size of hash table\n");
+			LM_ERR("call load dispatching DSTID_AVP set but no size"
+					" for hash table\n");
 			return -1;
 		}
 	}
@@ -716,6 +717,8 @@ static struct mi_root* ds_mi_list(struct mi_root* cmd_tree, void* param)
 static struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param)
 {
 	if(dstid_avp_name.n!=0) {
+		LM_ERR("No reload support when call load dispatching is enabled."
+				" Do not set dstid_avp param if you do not use alg 10.\n");
 		return init_mi_tree(500, MI_ERR_DSLOAD, MI_ERR_DSLOAD_LEN);
 	}
 
