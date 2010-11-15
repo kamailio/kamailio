@@ -194,25 +194,19 @@ void sql_reset_result(sql_result_t *res)
 	res->ncols = 0;
 }
 
-int sql_do_query(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
-		sql_result_t *res)
+int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 {
 	db1_res_t* db_res = NULL;
 	int i, j;
-	str sq;
+	str sv;
 
-	if(msg==NULL || query==NULL)
+	if(query==NULL)
 	{
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
 	sql_reset_result(res);
-	if(pv_printf_s(msg, query, &sq)!=0)
-	{
-		LM_ERR("cannot print the sql query\n");
-		return -1;
-	}
-	if(con->dbf.raw_query(con->dbh, &sq, &db_res)!=0)
+	if(con->dbf.raw_query(con->dbh, query, &db_res)!=0)
 	{
 		LM_ERR("cannot do the query\n");
 		return -1;
@@ -276,26 +270,28 @@ int sql_do_query(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
 				res->vals[i][j].flags = PV_VAL_NULL;
 				continue;
 			}
+			sv.s = NULL;
+			sv.len = 0;
 			switch(RES_ROWS(db_res)[i].values[j].type)
 			{
 				case DB1_STRING:
 					res->vals[i][j].flags = PV_VAL_STR;
-					sq.s=
+					sv.s=
 						(char*)RES_ROWS(db_res)[i].values[j].val.string_val;
-					sq.len=strlen(sq.s);
+					sv.len=strlen(sv.s);
 				break;
 				case DB1_STR:
 					res->vals[i][j].flags = PV_VAL_STR;
-					sq.len=
+					sv.len=
 						RES_ROWS(db_res)[i].values[j].val.str_val.len;
-					sq.s=
+					sv.s=
 						(char*)RES_ROWS(db_res)[i].values[j].val.str_val.s;
 				break;
 				case DB1_BLOB:
 					res->vals[i][j].flags = PV_VAL_STR;
-					sq.len=
+					sv.len=
 						RES_ROWS(db_res)[i].values[j].val.blob_val.len;
-					sq.s=
+					sv.s=
 						(char*)RES_ROWS(db_res)[i].values[j].val.blob_val.s;
 				break;
 				case DB1_INT:
@@ -318,20 +314,20 @@ int sql_do_query(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
 			}
 			if(res->vals[i][j].flags == PV_VAL_STR)
 			{
-				if(sq.len==0)
+				if(sv.len==0)
 				{
 					res->vals[i][j].value.s = _sql_empty_str;
 					continue;
 				}
 				res->vals[i][j].value.s.s 
-					= (char*)pkg_malloc(sq.len*sizeof(char));
+					= (char*)pkg_malloc(sv.len*sizeof(char));
 				if(res->vals[i][j].value.s.s==NULL)
 				{
 					LM_ERR("no more memory\n");
 					goto error;
 				}
-				memcpy(res->vals[i][j].value.s.s, sq.s, sq.len);
-				res->vals[i][j].value.s.len = sq.len;
+				memcpy(res->vals[i][j].value.s.s, sv.s, sv.len);
+				res->vals[i][j].value.s.len = sv.len;
 			}
 		}
 	}
@@ -411,4 +407,170 @@ void sql_destroy(void)
 		pkg_free(r);
 		r = r0;
 	}
+}
+
+/**
+ *
+ */
+int sqlops_do_query(str *scon, str *squery, str *sres)
+{
+	sql_con_t *con = NULL;
+	sql_result_t *res = NULL;
+
+	con = sql_get_connection(scon);
+	if(con==NULL)
+	{
+		LM_ERR("invalid connection [%.*s]\n", scon->len, scon->s);
+		goto error;
+	}
+	res = sql_get_result(sres);
+	if(res==NULL)
+	{
+		LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
+		goto error;
+	}
+	if(sql_do_query(con, squery, res)<0)
+		goto error;
+
+	return 0;
+error:
+	return -1;
+}
+
+/**
+ *
+ */
+int sqlops_get_value(str *sres, int i, int j, sql_val_t *val)
+{
+	sql_result_t *res = NULL;
+
+	res = sql_get_result(sres);
+	if(res==NULL)
+	{
+		LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
+		goto error;
+	}
+	if(i>=res->nrows)
+	{
+		LM_ERR("row index out of bounds [%d/%d]\n", i, res->nrows);
+		goto error;
+	}
+	if(i>=res->ncols)
+	{
+		LM_ERR("column index out of bounds [%d/%d]\n", j, res->ncols);
+		goto error;
+	}
+	val = &res->vals[i][j];
+
+	return 0;
+error:
+	return -1;
+}
+
+/**
+ *
+ */
+int sqlops_is_null(str *sres, int i, int j)
+{
+	sql_result_t *res = NULL;
+
+	res = sql_get_result(sres);
+	if(res==NULL)
+	{
+		LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
+		goto error;
+	}
+	if(i>=res->nrows)
+	{
+		LM_ERR("row index out of bounds [%d/%d]\n", i, res->nrows);
+		goto error;
+	}
+	if(i>=res->ncols)
+	{
+		LM_ERR("column index out of bounds [%d/%d]\n", j, res->ncols);
+		goto error;
+	}
+	if(res->vals[i][j].flags&PV_VAL_NULL)
+		return 1;
+	return 0;
+error:
+	return -1;
+}
+
+/**
+ *
+ */
+int sqlops_get_column(str *sres, int i, str *col)
+{
+	sql_result_t *res = NULL;
+
+	res = sql_get_result(sres);
+	if(res==NULL)
+	{
+		LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
+		goto error;
+	}
+	if(i>=res->ncols)
+	{
+		LM_ERR("column index out of bounds [%d/%d]\n", i, res->ncols);
+		goto error;
+	}
+	col = &res->cols[i].name;
+	return 0;
+error:
+	return -1;
+}
+
+/**
+ *
+ */
+int sqlops_num_columns(str *sres)
+{
+	sql_result_t *res = NULL;
+
+	res = sql_get_result(sres);
+	if(res==NULL)
+	{
+		LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
+		goto error;
+	}
+	return res->ncols;
+error:
+	return -1;
+}
+
+/**
+ *
+ */
+int sqlops_num_rows(str *sres)
+{
+	sql_result_t *res = NULL;
+
+	res = sql_get_result(sres);
+	if(res==NULL)
+	{
+		LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
+		goto error;
+	}
+	return res->nrows;
+error:
+	return -1;
+}
+
+/**
+ *
+ */
+void sqlops_reset_result(str *sres)
+{
+	sql_result_t *res = NULL;
+
+	res = sql_get_result(sres);
+	if(res==NULL)
+	{
+		LM_ERR("invalid result [%.*s]\n", sres->len, sres->s);
+		return;
+	}
+	sql_reset_result(res);
+
+	return;
 }
