@@ -76,6 +76,8 @@ int pv_get_dbr(struct sip_msg *msg,  pv_param_t *param,
 				return pv_get_null(msg, param, res);
 			if(col>=spv->res->ncols)
 				return pv_get_null(msg, param, res);
+			if(spv->res->vals[row][col].flags&PV_VAL_NULL)
+				return pv_get_null(msg, param, res);
 			if(spv->res->vals[row][col].flags&PV_VAL_INT)
 				return pv_get_sintval(msg, param, res, 
 						spv->res->vals[row][col].value.n);
