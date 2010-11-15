@@ -43,8 +43,8 @@
 			of the SQL query result is accessible via pseudo-variables. Please
 			note that only integer and string variables are supported at the
 			moment because of the internal usage of <quote>AVPs</quote> to hold
-			the values. So its not possible for example to return floating point
-			or big integer values this way.
+			the values. So it is not possible for example to return floating
+			point or big integer values this way.
 		</para>
 		</listitem>
 		<listitem>
@@ -139,6 +139,29 @@
 ...
 modparam("sqlops","sqlcon","cb=&gt;mysql://openser:abc@10.10.1.1/testdb")
 modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>sqlres</varname> (str)</title>
+		<para>
+		The definition of a DB result ID. The value of the parameter can be
+		any string. Results IDs are also added at fixup time when sql_query()
+		parameters are parsed, there is no need to decalare them via module
+		parameter unless you want to use them from within other modules and be
+		available in all application processes.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sqlres</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops", "sqlres", "ra")
 ...
 </programlisting>
 		</example>
