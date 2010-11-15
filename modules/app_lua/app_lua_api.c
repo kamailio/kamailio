@@ -276,10 +276,28 @@ int lua_sr_initialized(void)
  */
 int app_lua_return_boolean(lua_State *L, int b)
 {
-	if(b==0)
-		lua_pushboolean(L, 0);
+	if(b==SRLUA_FALSE)
+		lua_pushboolean(L, SRLUA_FALSE);
 	else
-		lua_pushboolean(L, 1);
+		lua_pushboolean(L, SRLUA_TRUE);
+	return 1;
+}
+
+/**
+ *
+ */
+int app_lua_return_false(lua_State *L)
+{
+	lua_pushboolean(L, SRLUA_FALSE);
+	return 1;
+}
+
+/**
+ *
+ */
+int app_lua_return_true(lua_State *L)
+{
+	lua_pushboolean(L, SRLUA_TRUE);
 	return 1;
 }
 
