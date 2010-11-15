@@ -131,10 +131,12 @@ struct tm_binds {
 #endif
 };
 
+typedef struct tm_binds tm_api_t;
+
 extern int tm_init;
 
 typedef int(*load_tm_f)( struct tm_binds *tmb );
-int load_tm( struct tm_binds *tmb);
+int load_tm(struct tm_binds *tmb);
 
 
 static inline int load_tm_api(struct tm_binds* tmb)
@@ -154,6 +156,11 @@ static inline int load_tm_api(struct tm_binds* tmb)
 		return -1;
 	}
 	return 0;
+}
+
+static inline int tm_load_api(tm_api_t *tmb)
+{
+	return load_tm_api(tmb);
 }
 
 #endif
