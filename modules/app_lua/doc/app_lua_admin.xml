@@ -115,6 +115,12 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 				under 'sr.sl'.
 			</para>
 		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>tm</emphasis> - register functions from tm module
+				under 'sr.tm'.
+			</para>
+		    </listitem>
 	    	</itemizedlist>
 	    <para>
 			Note that 'sr', 'sr.hdr' and 'sr.pv' modules are always registered
