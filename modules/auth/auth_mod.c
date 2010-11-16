@@ -386,12 +386,9 @@ int consume_credentials(struct sip_msg* msg, char* s1, char* s2)
 /**
  * @brief do WWW-Digest authentication with password taken from cfg var
  */
-static int pv_authenticate(struct sip_msg *msg, char *p1, char *p2,
-		char *p3, int hftype)
+static int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
+		int flags, int hftype)
 {
-    int flags = 0;
-    str realm  = {0, 0};
-    str passwd = {0, 0};
 	struct hdr_field* h;
 	auth_body_t* cred;
 	int ret;
@@ -403,32 +400,7 @@ static int pv_authenticate(struct sip_msg *msg, char *p1, char *p2,
 	cred = 0;
 	ret = AUTH_ERROR;
 
-	if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
-		LM_ERR("failed to get realm value\n");
-		goto error;
-	}
-
-	if(realm.len==0) {
-		LM_ERR("invalid realm value - empty content\n");
-		goto error;
-	}
-
-	if (get_str_fparam(&passwd, msg, (fparam_t*)p2) < 0) {
-		LM_ERR("failed to get passwd value\n");
-		goto error;
-	}
-
-	if(passwd.len==0) {
-		LM_ERR("invalid password value - empty content\n");
-		goto error;
-	}
-
-	if (get_int_fparam(&flags, msg, (fparam_t*)p3) < 0) {
-		LM_ERR("invalid flags value\n");
-		goto error;
-	}
-
-	switch(pre_auth(msg, &realm, hftype, &h, NULL)) {
+	switch(pre_auth(msg, realm, hftype, &h, NULL)) {
 		case ERROR:
 		case BAD_CREDENTIALS:
 			LM_DBG("error or bad credentials\n");
@@ -458,12 +430,12 @@ static int pv_authenticate(struct sip_msg *msg, char *p1, char *p2,
 	/* compute HA1 if needed */
 	if ((flags&1)==0) {
 		/* Plaintext password is stored in PV, calculate HA1 */
-		calc_HA1(HA_MD5, &cred->digest.username.whole, &realm,
-				&passwd, 0, 0, ha1);
+		calc_HA1(HA_MD5, &cred->digest.username.whole, realm,
+				passwd, 0, 0, ha1);
 		LM_DBG("HA1 string calculated: %s\n", ha1);
 	} else {
-		memcpy(ha1, passwd.s, passwd.len);
-		ha1[passwd.len] = '\0';
+		memcpy(ha1, passwd->s, passwd->len);
+		ha1[passwd->len] = '\0';
 	}
 
 	/* Recalculate response, it must be same to authorize successfully */
@@ -496,7 +468,7 @@ end:
 			qop = &auth_qauth;
 		}
 		if (get_challenge_hf(msg, (cred ? cred->stale : 0),
-				&realm, NULL, NULL, qop, hftype, &hf) < 0) {
+				realm, NULL, NULL, qop, hftype, &hf) < 0) {
 			ERR("Error while creating challenge\n");
 			ret = AUTH_ERROR;
 		} else {
@@ -510,9 +482,7 @@ end:
 		}
 	}
 
-error:
 	return ret;
-
 }
 
 /**
@@ -521,7 +491,38 @@ error:
 static int pv_proxy_authenticate(struct sip_msg *msg, char* realm,
 		char *passwd, char *flags)
 {
-	return pv_authenticate(msg, realm, passwd, flags, HDR_PROXYAUTH_T);
+    int vflags = 0;
+    str srealm  = {0, 0};
+    str spasswd = {0, 0};
+
+	if (get_str_fparam(&srealm, msg, (fparam_t*)realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		goto error;
+	}
+
+	if(srealm.len==0) {
+		LM_ERR("invalid realm value - empty content\n");
+		goto error;
+	}
+
+	if (get_str_fparam(&spasswd, msg, (fparam_t*)passwd) < 0) {
+		LM_ERR("failed to get passwd value\n");
+		goto error;
+	}
+
+	if(spasswd.len==0) {
+		LM_ERR("invalid password value - empty content\n");
+		goto error;
+	}
+
+	if (get_int_fparam(&vflags, msg, (fparam_t*)flags) < 0) {
+		LM_ERR("invalid flags value\n");
+		goto error;
+	}
+	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_PROXYAUTH_T);
+
+error:
+	return AUTH_ERROR;
 }
 
 /**
@@ -530,7 +531,38 @@ static int pv_proxy_authenticate(struct sip_msg *msg, char* realm,
 static int pv_www_authenticate(struct sip_msg *msg, char* realm,
 		char *passwd, char *flags)
 {
-	return pv_authenticate(msg, realm, passwd, flags, HDR_AUTHORIZATION_T);
+    int vflags = 0;
+    str srealm  = {0, 0};
+    str spasswd = {0, 0};
+
+	if (get_str_fparam(&srealm, msg, (fparam_t*)realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		goto error;
+	}
+
+	if(srealm.len==0) {
+		LM_ERR("invalid realm value - empty content\n");
+		goto error;
+	}
+
+	if (get_str_fparam(&spasswd, msg, (fparam_t*)passwd) < 0) {
+		LM_ERR("failed to get passwd value\n");
+		goto error;
+	}
+
+	if(spasswd.len==0) {
+		LM_ERR("invalid password value - empty content\n");
+		goto error;
+	}
+
+	if (get_int_fparam(&vflags, msg, (fparam_t*)flags) < 0) {
+		LM_ERR("invalid flags value\n");
+		goto error;
+	}
+	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T);
+
+error:
+	return AUTH_ERROR;
 }
 
 /**
