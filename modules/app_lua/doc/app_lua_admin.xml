@@ -123,6 +123,12 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 		    </listitem>
 		    <listitem>
 			<para>
+				<emphasis>maxfwd</emphasis> - register functions from maxfwd
+				module under 'sr.maxfwd'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
 				<emphasis>rr</emphasis> - register functions from rr module
 				under 'sr.rr'.
 			</para>

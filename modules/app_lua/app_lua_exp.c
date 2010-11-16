@@ -36,6 +36,7 @@
 #include "../../modules_k/rr/api.h"
 #include "../../modules/auth/api.h"
 #include "../../modules_k/auth_db/api.h"
+#include "../../modules_k/maxfwd/api.h"
 
 #include "app_lua_api.h"
 
@@ -45,6 +46,7 @@
 #define SR_LUA_EXP_MOD_RR       (1<<3)
 #define SR_LUA_EXP_MOD_AUTH     (1<<4)
 #define SR_LUA_EXP_MOD_AUTH_DB  (1<<5)
+#define SR_LUA_EXP_MOD_MAXFWD   (1<<6)
 
 /**
  *
@@ -60,6 +62,11 @@ static auth_api_s_t _lua_authb;
  * auth_db
  */
 static auth_db_api_t _lua_auth_dbb;
+
+/**
+ * maxfwd
+ */
+static maxfwd_api_t _lua_maxfwdb;
 
 /**
  * rr
@@ -741,6 +748,52 @@ static const luaL_reg _sr_auth_db_Map [] = {
 /**
  *
  */
+static int lua_sr_maxfwd_process_maxfwd(lua_State *L)
+{
+	int ret;
+	int limit;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_MAXFWD))
+	{
+		LM_WARN("weird: maxfwd function executed but module not registered\n");
+		return app_lua_return_false(L);
+	}
+	if(env_L->msg!=NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+	if(lua_gettop(L)!=1)
+	{
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	limit = lua_tointeger(L, -1);
+	if(limit<0)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	ret = _lua_maxfwdb.process_maxfwd(env_L->msg, limit);
+
+	return app_lua_return_int(L, ret);
+}
+
+
+/**
+ *
+ */
+static const luaL_reg _sr_maxfwd_Map [] = {
+	{"process_maxfwd",      lua_sr_maxfwd_process_maxfwd},
+	{NULL, NULL}
+};
+
+/**
+ *
+ */
 int lua_sr_exp_init_mod(void)
 {
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SL)
@@ -794,13 +847,23 @@ int lua_sr_exp_init_mod(void)
 	}
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH_DB)
 	{
-		/* bind the AUTH API */
+		/* bind the AUTH_DB API */
 		if (auth_db_load_api(&_lua_auth_dbb) < 0)
 		{
 			LM_ERR("cannot bind to AUTH_DB API\n");
 			return -1;
 		}
 		LM_DBG("loaded auth_db api\n");
+	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_MAXFWD)
+	{
+		/* bind the MAXFWD API */
+		if (maxfwd_load_api(&_lua_maxfwdb) < 0)
+		{
+			LM_ERR("cannot bind to MAXFWD API\n");
+			return -1;
+		}
+		LM_DBG("loaded maxfwd api\n");
 	}
 	return 0;
 }
@@ -833,6 +896,9 @@ int lua_sr_exp_register_mod(char *mname)
 	} else 	if(len==7 && strcmp(mname, "auth_db")==0) {
 		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_AUTH_DB;
 		return 0;
+	} else 	if(len==6 && strcmp(mname, "maxfwd")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_MAXFWD;
+		return 0;
 	}
 
 	return -1;
@@ -855,5 +921,7 @@ void lua_sr_exp_openlibs(lua_State *L)
 		luaL_openlib(L, "sr.auth",    _sr_auth_Map,     0);
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH_DB)
 		luaL_openlib(L, "sr.auth_db", _sr_auth_db_Map,  0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_MAXFWD)
+		luaL_openlib(L, "sr.maxfwd",  _sr_maxfwd_Map,   0);
 }
 
