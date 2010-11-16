@@ -77,7 +77,7 @@ static int mod_init(void);
 /*
  * Remove used credentials from a SIP message header
  */
-int consume_credentials(struct sip_msg* msg, char* s1, char* s2);
+int w_consume_credentials(struct sip_msg* msg, char* s1, char* s2);
 
 static int pv_proxy_authenticate(struct sip_msg* msg, char* realm,
 		char *passwd, char *flags);
@@ -132,7 +132,7 @@ sl_api_t slb;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-    {"consume_credentials",    consume_credentials,                  0,
+    {"consume_credentials",    w_consume_credentials,                0,
 			0, REQUEST_ROUTE},
     {"www_challenge",          (cmd_function)www_challenge,          2,
 			fixup_auth_challenge, REQUEST_ROUTE},
@@ -355,7 +355,7 @@ static void destroy(void)
 /*
  * Remove used credentials from a SIP message header
  */
-int consume_credentials(struct sip_msg* msg, char* s1, char* s2)
+int consume_credentials(struct sip_msg* msg)
 {
     struct hdr_field* h;
     int len;
@@ -384,9 +384,17 @@ int consume_credentials(struct sip_msg* msg, char* s1, char* s2)
 }
 
 /**
+ *
+ */
+int w_consume_credentials(struct sip_msg* msg, char* s1, char* s2)
+{
+	return consume_credentials(msg);
+}
+
+/**
  * @brief do WWW-Digest authentication with password taken from cfg var
  */
-static int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
+int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
 		int flags, int hftype)
 {
 	struct hdr_field* h;
@@ -613,7 +621,7 @@ static int auth_send_reply(struct sip_msg *msg, int code, char *reason,
 /**
  *
  */
-static int auth_challenge(struct sip_msg *msg, str *realm, int flags, int hftype)
+int auth_challenge(struct sip_msg *msg, str *realm, int flags, int hftype)
 {
 	int ret;
     str hf = {0, 0};
