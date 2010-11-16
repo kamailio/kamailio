@@ -57,7 +57,7 @@
  *          -2 : found but method not allowed
  *          -3 : error
  */
-int lookup(struct sip_msg* _m, char* _t, char* _s)
+int lookup(struct sip_msg* _m, udomain_t* _d)
 {
 	urecord_t* r;
 	str aor, uri;
@@ -78,11 +78,11 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	
 	get_act_time();
 
-	ul.lock_udomain((udomain_t*)_t, &aor);
-	res = ul.get_urecord((udomain_t*)_t, &aor, &r);
+	ul.lock_udomain(_d, &aor);
+	res = ul.get_urecord(_d, &aor, &r);
 	if (res > 0) {
 		LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
-		ul.unlock_udomain((udomain_t*)_t, &aor);
+		ul.unlock_udomain(_d, &aor);
 		return -1;
 	}
 
@@ -171,7 +171,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 
 done:
 	ul.release_urecord(r);
-	ul.unlock_udomain((udomain_t*)_t, &aor);
+	ul.unlock_udomain(_d, &aor);
 	return ret;
 }
 

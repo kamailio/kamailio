@@ -741,8 +741,8 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 /*!\brief
  * Process REGISTER request and save it's contacts
  */
-#define is_cflag_set(_name) (((unsigned int)(unsigned long)_cflags)&(_name))
-int save(struct sip_msg* _m, char* _d, char* _cflags)
+#define is_cflag_set(_name) (((unsigned int)_cflags)&(_name))
+int save(struct sip_msg* _m, udomain_t* _d, int _cflags)
 {
 	contact_t* c;
 	int st, mode;

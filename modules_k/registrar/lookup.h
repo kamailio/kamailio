@@ -33,12 +33,13 @@
 #define LOOKUP_H
 
 #include "../../parser/msg_parser.h"
+#include "../../modules_k/usrloc/usrloc.h"
 
 
 /*! \brief
  * Lookup a contact in usrloc and rewrite R-URI if found
  */
-int lookup(struct sip_msg* _m, char* _t, char* _s);
+int lookup(struct sip_msg* _m, udomain_t* _d);
 
 
 /*! \brief

@@ -67,11 +67,12 @@
 #include "../../socket_info.h"
 #include "../../pvar.h"
 #include "../../lib/kcore/km_ut.h"
-#include "../usrloc/ul_mod.h"
+#include "../../modules_k/usrloc/usrloc.h"
 #include "../../modules/sl/sl.h"
 #include "../../mod_fix.h"
 
 #include "save.h"
+#include "api.h"
 #include "lookup.h"
 #include "regpv.h"
 #include "reply.h"
@@ -86,6 +87,9 @@ usrloc_api_t ul;/*!< Structure containing pointers to usrloc functions*/
 static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
+static int w_save(struct sip_msg* _m, char* _d, char* _cflags);
+static int w_lookup(struct sip_msg* _m, char* _d, char* _p2);
+
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
 static int save_fixup(void** param, int param_no);
@@ -150,11 +154,11 @@ static pv_export_t mod_pvs[] = {
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"save",         (cmd_function)save,         1,    save_fixup, 0,
+	{"save",         (cmd_function)w_save,       1,    save_fixup, 0,
 			REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"save",         (cmd_function)save,         2,    save_fixup, 0,
+	{"save",         (cmd_function)w_save,       2,    save_fixup, 0,
 			REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"lookup",       (cmd_function)lookup,       1,  domain_fixup, 0,
+	{"lookup",       (cmd_function)w_lookup,     1,  domain_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"registered",   (cmd_function)registered,   1,  domain_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
@@ -168,6 +172,8 @@ static cmd_export_t cmds[] = {
 	{"reg_free_contacts", (cmd_function)pv_free_contacts,   1,
 			fixup_str_null, 0,
 			REQUEST_ROUTE| FAILURE_ROUTE },
+	{"bind_registrar",  (cmd_function)bind_registrar,  0,
+		0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -383,6 +389,21 @@ static int child_init(int rank)
 	return 0;
 }
 
+/*! \brief
+ * Wrapper to save(location)
+ */
+static int w_save(struct sip_msg* _m, char* _d, char* _cflags)
+{
+	return save(_m, (udomain_t*)_d, ((int)(unsigned long)_cflags));
+}
+
+/*! \brief
+ * Wrapper to lookup(location)
+ */
+static int w_lookup(struct sip_msg* _m, char* _d, char* _p2)
+{
+	return lookup(_m, (udomain_t*)_d);
+}
 
 /*! \brief
  * Convert char* parameter to udomain_t* pointer
