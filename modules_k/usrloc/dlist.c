@@ -46,6 +46,7 @@
 #include "../../ip_addr.h"
 #include "../../socket_info.h"
 #include "udomain.h"           /* new_udomain, free_udomain */
+#include "usrloc.h"
 #include "utime.h"
 #include "ul_mod.h"
 

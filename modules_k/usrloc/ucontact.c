@@ -43,6 +43,7 @@
 #include "../../lib/srdb1/db.h"
 #include "ul_mod.h"
 #include "ul_callback.h"
+#include "usrloc.h"
 #include "urecord.h"
 #include "ucontact.h"
 

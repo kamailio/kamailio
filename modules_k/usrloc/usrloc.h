@@ -35,6 +35,12 @@
 #include "ucontact.h"
 #include "ul_callback.h"
 
+/* storage modes */
+#define NO_DB         0
+#define WRITE_THROUGH 1
+#define WRITE_BACK    2
+#define DB_ONLY       3
+
 
 /*! usrloc API export structure */
 typedef struct usrloc_api {

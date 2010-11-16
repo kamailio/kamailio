@@ -43,11 +43,6 @@
  */
 
 
-#define NO_DB         0
-#define WRITE_THROUGH 1
-#define WRITE_BACK    2
-#define DB_ONLY       3
-
 #define UL_TABLE_VERSION 1004
 
 extern str user_col;
