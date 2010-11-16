@@ -900,11 +900,9 @@ done:
 /*!
  * \brief Do loose routing as per RFC3261
  * \param _m SIP message
- * \param _s1 unused
- * \param _s2 unused
  * \return -1 on failure, 1 on success
  */
-int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
+int loose_route(struct sip_msg* _m)
 {
 	int ret;
 

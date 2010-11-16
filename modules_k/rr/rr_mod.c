@@ -65,7 +65,8 @@ static int  mod_init(void);static void mod_destroy(void);
 static int direction_fixup(void** param, int param_no);
 static int it_list_fixup(void** param, int param_no);
 /* wrapper functions */
-static int w_record_route(struct sip_msg *,char *, char *);
+static int w_loose_route(struct sip_msg *, char *, char *);
+static int w_record_route(struct sip_msg *, char *, char *);
 static int w_record_route_preset(struct sip_msg *,char *, char *);
 static int w_add_rr_param(struct sip_msg *,char *, char *);
 static int w_check_route_param(struct sip_msg *,char *, char *);
@@ -75,7 +76,7 @@ static int w_is_direction(struct sip_msg *,char *, char *);
  * \brief Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"loose_route",          (cmd_function)loose_route,			0, 0, 0,
+	{"loose_route",          (cmd_function)w_loose_route,		0, 0, 0,
 			REQUEST_ROUTE},
 	{"record_route",         (cmd_function)w_record_route,		0, 0, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
@@ -199,7 +200,17 @@ static int direction_fixup(void** param, int param_no)
 	return 0;
 }
 
+/**
+ * wrapper for loose_route(msg)
+ */
+static int w_loose_route(struct sip_msg *msg, char *p1, char *p2)
+{
+	return loose_route(msg);
+}
 
+/**
+ * wrapper for record_route(msg, params)
+ */
 static int w_record_route(struct sip_msg *msg, char *key, char *bar)
 {
 	str s;
