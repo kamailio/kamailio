@@ -440,7 +440,7 @@ error:
 /**
  *
  */
-int sqlops_get_value(str *sres, int i, int j, sql_val_t *val)
+int sqlops_get_value(str *sres, int i, int j, sql_val_t **val)
 {
 	sql_result_t *res = NULL;
 
@@ -460,7 +460,7 @@ int sqlops_get_value(str *sres, int i, int j, sql_val_t *val)
 		LM_ERR("column index out of bounds [%d/%d]\n", j, res->ncols);
 		goto error;
 	}
-	val = &res->vals[i][j];
+	*val = &res->vals[i][j];
 
 	return 0;
 error:

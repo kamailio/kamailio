@@ -81,8 +81,8 @@ void sql_reset_result(sql_result_t *res);
 typedef int (*sqlops_do_query_f)(str *scon, str *squery, str *sres);
 int sqlops_do_query(str *scon, str *squery, str *sres);
 
-typedef int (*sqlops_get_value_f)(str *sres, int i, int j, sql_val_t *val);
-int sqlops_get_value(str *sres, int i, int j, sql_val_t *val);
+typedef int (*sqlops_get_value_f)(str *sres, int i, int j, sql_val_t **val);
+int sqlops_get_value(str *sres, int i, int j, sql_val_t **val);
 
 typedef int (*sqlops_is_null_f)(str *sres, int i, int j);
 int sqlops_is_null(str *res, int i, int j);
