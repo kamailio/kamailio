@@ -60,6 +60,7 @@ int app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 int app_lua_return_boolean(lua_State *L, int b);
 int app_lua_return_false(lua_State *L);
 int app_lua_return_true(lua_State *L);
+int app_lua_return_int(lua_State *L, int v);
 
 void app_lua_dump_stack(lua_State *L);
 
