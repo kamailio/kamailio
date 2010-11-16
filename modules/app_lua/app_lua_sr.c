@@ -629,7 +629,7 @@ static int lua_sr_pv_is_null (lua_State *L)
 		return 0;
 
 	pvn.len = strlen(pvn.s);
-	LM_DBG("pv is null: %s\n", pvn.s);
+	LM_DBG("pv is null test: %s\n", pvn.s);
 	if(pv_parse_spec(&pvn, &pvs)<0)
 	{
 		LM_ERR("unable to parse pv [%s]\n", pvn.s);

@@ -61,6 +61,7 @@ int app_lua_return_boolean(lua_State *L, int b);
 int app_lua_return_false(lua_State *L);
 int app_lua_return_true(lua_State *L);
 int app_lua_return_int(lua_State *L, int v);
+int app_lua_return_error(lua_State *L);
 
 void app_lua_dump_stack(lua_State *L);
 

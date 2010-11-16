@@ -110,27 +110,21 @@ static int lua_sr_sl_send_reply (lua_State *L)
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SL))
 	{
 		LM_WARN("weird: sl function executed but module not registered\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 
 	code = lua_tointeger(L, -2);
 
 	if(code<100 || code>=800)
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	
 	txt.s = (char*)lua_tostring(L, -1);
-	if(txt.s!=NULL && env_L->msg!=NULL)
-	{
-		txt.len = strlen(txt.s);
-		ret = _lua_slb.freply(env_L->msg, code, &txt);
-		if(ret<0)
-		{
-			LM_WARN("sl send_reply returned false\n");
-			return app_lua_return_false(L);
-		}
-		return app_lua_return_true(L);
-	}
-	return app_lua_return_false(L);
+	if(txt.s==NULL || env_L->msg==NULL)
+		return app_lua_return_error(L);
+
+	txt.len = strlen(txt.s);
+	ret = _lua_slb.freply(env_L->msg, code, &txt);
+	return app_lua_return_int(L, ret);
 }
 
 /**
@@ -183,27 +177,21 @@ static int lua_sr_tm_t_reply(lua_State *L)
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM))
 	{
 		LM_WARN("weird: tm function executed but module not registered\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 
 	code = lua_tointeger(L, -2);
 
 	if(code<100 || code>=800)
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 
 	txt = (char*)lua_tostring(L, -1);
 	if(txt!=NULL && env_L->msg!=NULL)
 	{
 		ret = _lua_tmb.t_reply(env_L->msg, code, txt);
-		if(ret<0)
-		{
-			LM_WARN("tm t_reply returned false\n");
-			/* shall push FALSE to Lua ?!? */
-			return app_lua_return_false(L);
-		}
-		return app_lua_return_true(L);
+		return app_lua_return_int(L, ret);
 	}
-	return app_lua_return_false(L);
+	return app_lua_return_error(L);
 }
 
 /**
@@ -219,15 +207,10 @@ static int lua_sr_tm_t_relay(lua_State *L)
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM))
 	{
 		LM_WARN("weird: tm function executed but module not registered\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	ret = _lua_tmb.t_relay(env_L->msg, NULL, NULL);
-	if(ret<0)
-	{
-		LM_WARN("tm t_relay returned false\n");
-		return app_lua_return_false(L);
-	}
-	return app_lua_return_true(L);
+	return app_lua_return_int(L, ret);
 }
 
 
@@ -249,11 +232,12 @@ static int lua_sr_sqlops_query(lua_State *L)
 	str scon;
 	str squery;
 	str sres;
+	int ret;
 
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SQLOPS))
 	{
 		LM_WARN("weird: sqlops function executed but module not registered\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 
 	scon.s = (char*)lua_tostring(L, -3);
@@ -262,15 +246,14 @@ static int lua_sr_sqlops_query(lua_State *L)
 	if(scon.s == NULL || squery.s == NULL || sres.s == NULL)
 	{
 		LM_WARN("invalid parameters from Lua\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	scon.len = strlen(scon.s);
 	squery.len = strlen(squery.s);
 	sres.len = strlen(sres.s);
 
-	if(_lua_sqlopsb.query(&scon, &squery, &sres)<0)
-		return app_lua_return_false(L);
-	return app_lua_return_true(L);
+	ret = _lua_sqlopsb.query(&scon, &squery, &sres);
+	return app_lua_return_int(L, ret);
 }
 
 /**
@@ -476,12 +459,12 @@ static int lua_sr_rr_record_route(lua_State *L)
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_RR))
 	{
 		LM_WARN("weird: rr function executed but module not registered\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
-	if(env_L->msg!=NULL)
+	if(env_L->msg==NULL)
 	{
 		LM_WARN("invalid parameters from Lua env\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	if(lua_gettop(L)==1)
 	{
@@ -491,9 +474,7 @@ static int lua_sr_rr_record_route(lua_State *L)
 	}
 	ret = _lua_rrb.record_route(env_L->msg, (sv.len>0)?&sv:NULL);
 
-	if(ret<0)
-		return app_lua_return_false(L);
-	return app_lua_return_true(L);
+	return app_lua_return_int(L, ret);
 }
 
 /**
@@ -509,18 +490,16 @@ static int lua_sr_rr_loose_route(lua_State *L)
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_RR))
 	{
 		LM_WARN("weird: rr function executed but module not registered\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
-	if(env_L->msg!=NULL)
+	if(env_L->msg==NULL)
 	{
 		LM_WARN("invalid parameters from Lua env\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	ret = _lua_rrb.loose_route(env_L->msg);
 
-	if(ret<0)
-		return app_lua_return_false(L);
-	return app_lua_return_true(L);
+	return app_lua_return_int(L, ret);
 }
 
 /**
@@ -545,24 +524,24 @@ static int lua_sr_auth_challenge(lua_State *L, int hftype)
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH))
 	{
 		LM_WARN("weird: auth function executed but module not registered\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
-	if(env_L->msg!=NULL)
+	if(env_L->msg==NULL)
 	{
 		LM_WARN("invalid parameters from Lua env\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	if(lua_gettop(L)!=2)
 	{
 		LM_WARN("invalid number of parameters from Lua\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	realm.s = (char*)lua_tostring(L, -2);
 	flags   = lua_tointeger(L, -1);
 	if(flags<0 || realm.s==NULL)
 	{
 		LM_WARN("invalid parameters from Lua\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	realm.len = strlen(realm.s);
 	ret = _lua_authb.auth_challenge(env_L->msg, &realm, flags, hftype);
@@ -602,17 +581,17 @@ static int lua_sr_auth_pv_authenticate(lua_State *L, int hftype)
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH))
 	{
 		LM_WARN("weird: auth function executed but module not registered\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
-	if(env_L->msg!=NULL)
+	if(env_L->msg==NULL)
 	{
 		LM_WARN("invalid parameters from Lua env\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	if(lua_gettop(L)!=3)
 	{
 		LM_WARN("invalid number of parameters from Lua\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	realm.s  = (char*)lua_tostring(L, -3);
 	passwd.s = (char*)lua_tostring(L, -2);
@@ -620,7 +599,7 @@ static int lua_sr_auth_pv_authenticate(lua_State *L, int hftype)
 	if(flags<0 || realm.s==NULL || passwd.s==NULL)
 	{
 		LM_WARN("invalid parameters from Lua\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	realm.len = strlen(realm.s);
 	passwd.len = strlen(passwd.s);
@@ -659,12 +638,12 @@ static int lua_sr_auth_consume_credentials(lua_State *L)
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH))
 	{
 		LM_WARN("weird: auth function executed but module not registered\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
-	if(env_L->msg!=NULL)
+	if(env_L->msg==NULL)
 	{
 		LM_WARN("invalid parameters from Lua env\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	ret = _lua_authb.consume_credentials(env_L->msg);
 
@@ -699,24 +678,24 @@ static int lua_sr_auth_db_authenticate(lua_State *L, hdr_types_t hftype)
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH_DB))
 	{
 		LM_WARN("weird: auth function executed but module not registered\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
-	if(env_L->msg!=NULL)
+	if(env_L->msg==NULL)
 	{
 		LM_WARN("invalid parameters from Lua env\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	if(lua_gettop(L)!=2)
 	{
 		LM_WARN("invalid number of parameters from Lua\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	realm.s  = (char*)lua_tostring(L, -2);
 	table.s  = (char*)lua_tostring(L, -1);
 	if(realm.s==NULL || table.s==NULL)
 	{
 		LM_WARN("invalid parameters from Lua\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	realm.len = strlen(realm.s);
 	table.len = strlen(table.s);
@@ -766,23 +745,23 @@ static int lua_sr_maxfwd_process_maxfwd(lua_State *L)
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_MAXFWD))
 	{
 		LM_WARN("weird: maxfwd function executed but module not registered\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
-	if(env_L->msg!=NULL)
+	if(env_L->msg==NULL)
 	{
 		LM_WARN("invalid parameters from Lua env\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	if(lua_gettop(L)!=1)
 	{
 		LM_WARN("invalid number of parameters from Lua\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	limit = lua_tointeger(L, -1);
 	if(limit<0)
 	{
 		LM_WARN("invalid parameters from Lua\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	ret = _lua_maxfwdb.process_maxfwd(env_L->msg, limit);
 
@@ -815,12 +794,12 @@ static int lua_sr_registrar_save(lua_State *L)
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_MAXFWD))
 	{
 		LM_WARN("weird: maxfwd function executed but module not registered\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
-	if(env_L->msg!=NULL)
+	if(env_L->msg==NULL)
 	{
 		LM_WARN("invalid parameters from Lua env\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	if(lua_gettop(L)==1)
 	{
@@ -830,12 +809,12 @@ static int lua_sr_registrar_save(lua_State *L)
 		flags = lua_tointeger(L, -1);
 	} else {
 		LM_WARN("invalid number of parameters from Lua\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	if(table==NULL || strlen(table)==0)
 	{
 		LM_WARN("invalid parameters from Lua\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	ret = _lua_registrarb.save(env_L->msg, table, flags);
 
@@ -856,23 +835,23 @@ static int lua_sr_registrar_lookup(lua_State *L)
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_MAXFWD))
 	{
 		LM_WARN("weird: maxfwd function executed but module not registered\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
-	if(env_L->msg!=NULL)
+	if(env_L->msg==NULL)
 	{
 		LM_WARN("invalid parameters from Lua env\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	if(lua_gettop(L)!=1)
 	{
 		LM_WARN("invalid number of parameters from Lua\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	table  = (char*)lua_tostring(L, -1);
 	if(table==NULL || strlen(table)==0)
 	{
 		LM_WARN("invalid parameters from Lua\n");
-		return app_lua_return_false(L);
+		return app_lua_return_error(L);
 	}
 	ret = _lua_registrarb.lookup(env_L->msg, table);
 
