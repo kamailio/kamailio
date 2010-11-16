@@ -111,6 +111,12 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 	    	<itemizedlist>
 		    <listitem>
 			<para>
+				<emphasis>sqlops</emphasis> - register functions from sqlops
+				module under 'sr.sqlops'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
 				<emphasis>sl</emphasis> - register functions from sl module
 				under 'sr.sl'.
 			</para>

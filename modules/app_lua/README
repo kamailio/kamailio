@@ -127,6 +127,7 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 
    Use this function to register optional SIP Router submodules to Lua.
    Available submodules are:
+     * sqlops - register functions from sqlops module under 'sr.sqlops'.
      * sl - register functions from sl module under 'sr.sl'.
      * tm - register functions from tm module under 'sr.tm'.
 
