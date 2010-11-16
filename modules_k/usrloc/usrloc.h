@@ -43,6 +43,7 @@ typedef struct usrloc_api {
 	unsigned int  nat_flag;   /*! nat_flag module parameter */
 
 	register_udomain_t   register_udomain;
+	get_udomain_t        get_udomain;
 	get_all_ucontacts_t  get_all_ucontacts;
 
 	insert_urecord_t     insert_urecord;

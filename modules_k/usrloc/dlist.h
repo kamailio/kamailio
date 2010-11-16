@@ -66,6 +66,15 @@ extern dlist_t* root;
 typedef int (*register_udomain_t)(const char* _n, udomain_t** _d);
 int register_udomain(const char* _n, udomain_t** _d);
 
+/*!
+ * \brief Find and return usrloc domain
+ *
+ * \param _n domain name
+ * \param _d usrloc domain (location table)
+ * \return 0 on success, -1 on failure
+ */
+typedef int (*get_udomain_t)(const char* _n, udomain_t** _d);
+int get_udomain(const char* _n, udomain_t** _d);
 
 /*!
  * \brief Free all allocated memory for domains

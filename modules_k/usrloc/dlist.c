@@ -447,6 +447,29 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	return 0;
 }
 
+/*!
+ * \brief Registers a new domain with usrloc
+ *
+ * Find and return a usrloc domain (location table)
+ * \param _n domain name
+ * \param _d usrloc domain
+ * \return 0 on success, -1 on failure
+ */
+int get_udomain(const char* _n, udomain_t** _d)
+{
+	dlist_t* d;
+	str s;
+
+	s.s = (char*)_n;
+	s.len = strlen(_n);
+
+	if (find_dlist(&s, &d) == 0) {
+		*_d = d->d;
+		return 0;
+	}
+	*_d = NULL;
+	return -1;
+}
 
 /*!
  * \brief Registers a new domain with usrloc
