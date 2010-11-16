@@ -117,6 +117,8 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE},
 	{"proxy_authenticate", (cmd_function)proxy_authenticate, 2, auth_fixup, 0,
 		REQUEST_ROUTE},
+	{"bind_auth_db",       (cmd_function)bind_auth_db,       0, 0, 0,
+		0},
 	{0, 0, 0, 0, 0, 0}
 };
 

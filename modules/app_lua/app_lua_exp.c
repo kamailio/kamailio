@@ -35,6 +35,7 @@
 #include "../../modules_k/sqlops/sql_api.h"
 #include "../../modules_k/rr/api.h"
 #include "../../modules/auth/api.h"
+#include "../../modules_k/auth_db/api.h"
 
 #include "app_lua_api.h"
 
@@ -43,6 +44,7 @@
 #define SR_LUA_EXP_MOD_SQLOPS   (1<<2)
 #define SR_LUA_EXP_MOD_RR       (1<<3)
 #define SR_LUA_EXP_MOD_AUTH     (1<<4)
+#define SR_LUA_EXP_MOD_AUTH_DB  (1<<5)
 
 /**
  *
@@ -53,6 +55,11 @@ static unsigned int _sr_lua_exp_reg_mods = 0;
  * auth
  */
 static auth_api_s_t _lua_authb;
+
+/**
+ * auth_db
+ */
+static auth_db_api_t _lua_auth_dbb;
 
 /**
  * rr
@@ -662,6 +669,75 @@ static const luaL_reg _sr_auth_Map [] = {
 	{NULL, NULL}
 };
 
+
+/**
+ *
+ */
+static int lua_sr_auth_db_authenticate(lua_State *L, hdr_types_t hftype)
+{
+	int ret;
+	str realm = {0, 0};
+	str table = {0, 0};
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH_DB))
+	{
+		LM_WARN("weird: auth function executed but module not registered\n");
+		return app_lua_return_false(L);
+	}
+	if(env_L->msg!=NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+	if(lua_gettop(L)!=2)
+	{
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	realm.s  = (char*)lua_tostring(L, -2);
+	table.s  = (char*)lua_tostring(L, -1);
+	if(realm.s==NULL || table.s==NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	realm.len = strlen(realm.s);
+	table.len = strlen(table.s);
+	ret = _lua_auth_dbb.digest_authenticate(env_L->msg, &realm, &table,
+			hftype);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_auth_db_www_authenticate(lua_State *L)
+{
+	return lua_sr_auth_db_authenticate(L, HDR_AUTHORIZATION_T);
+}
+
+/**
+ *
+ */
+static int lua_sr_auth_db_proxy_authenticate(lua_State *L)
+{
+	return lua_sr_auth_db_authenticate(L, HDR_PROXYAUTH_T);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_auth_db_Map [] = {
+	{"www_authenticate",      lua_sr_auth_db_www_authenticate},
+	{"proxy_authenticate",    lua_sr_auth_db_proxy_authenticate},
+	{NULL, NULL}
+};
+
+
 /**
  *
  */
@@ -716,6 +792,16 @@ int lua_sr_exp_init_mod(void)
 		}
 		LM_DBG("loaded auth api\n");
 	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH_DB)
+	{
+		/* bind the AUTH API */
+		if (auth_db_load_api(&_lua_auth_dbb) < 0)
+		{
+			LM_ERR("cannot bind to AUTH_DB API\n");
+			return -1;
+		}
+		LM_DBG("loaded auth_db api\n");
+	}
 	return 0;
 }
 
@@ -744,6 +830,9 @@ int lua_sr_exp_register_mod(char *mname)
 	} else 	if(len==4 && strcmp(mname, "auth")==0) {
 		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_AUTH;
 		return 0;
+	} else 	if(len==7 && strcmp(mname, "auth_db")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_AUTH_DB;
+		return 0;
 	}
 
 	return -1;
@@ -764,5 +853,7 @@ void lua_sr_exp_openlibs(lua_State *L)
 		luaL_openlib(L, "sr.rr",      _sr_rr_Map,       0);
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH)
 		luaL_openlib(L, "sr.auth",    _sr_auth_Map,     0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH_DB)
+		luaL_openlib(L, "sr.auth_db", _sr_auth_db_Map,  0);
 }
 

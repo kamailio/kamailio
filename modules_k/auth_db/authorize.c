@@ -45,6 +45,7 @@
 #include "../../mod_fix.h"
 #include "../../mem/mem.h"
 #include "aaa_avps.h"
+#include "api.h"
 #include "authdb_mod.h"
 
 
@@ -345,4 +346,18 @@ int www_authenticate(struct sip_msg* _m, char* _realm, char* _table)
 	LM_DBG("realm value [%.*s]\n", srealm.len, srealm.s);
 
 	return digest_authenticate(_m, &srealm, &stable, HDR_AUTHORIZATION_T);
+}
+
+/**
+ * @brief bind functions to AUTH_DB API structure
+ */
+int bind_auth_db(auth_db_api_t *api)
+{
+	if (!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+	api->digest_authenticate = digest_authenticate;
+
+	return 0;
 }
