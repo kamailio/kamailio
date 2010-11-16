@@ -92,6 +92,11 @@ static void timer(unsigned int ticks, void* param); /*!< Timer handler */
 static int child_init(int rank);                    /*!< Per-child init function */
 static int mi_child_init(void);
 
+#define UL_PRELOAD_SIZE	8
+static char* ul_preload_list[UL_PRELOAD_SIZE];
+static int ul_preload_index = 0;
+static int ul_preload_param(modparam_t type, void* val);
+
 extern int bind_usrloc(usrloc_api_t* api);
 extern int ul_locks_no;
 /*
@@ -168,6 +173,7 @@ static param_export_t params[] = {
 	{"fetch_rows",        INT_PARAM, &ul_fetch_rows   },
 	{"hash_size",         INT_PARAM, &ul_hash_size    },
 	{"nat_bflag",         INT_PARAM, &nat_bflag       },
+	{"preload",           STR_PARAM|USE_FUNC_PARAM, (void*)ul_preload_param },
 	{0, 0, 0}
 };
 
@@ -216,6 +222,9 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	int i;
+	udomain_t* d;
+
 #ifdef STATISTICS
 	/* register statistics */
 	if (register_module_stats( exports.name, mod_stats)!=0 ) {
@@ -311,6 +320,12 @@ static int mod_init(void)
 		nat_bflag = 1<<nat_bflag;
 	}
 
+	for(i=0; i<ul_preload_index; i++) {
+		if(register_udomain((const char*)ul_preload_list[i], &d)<0) {
+			LM_ERR("cannot register preloaded table %s\n", ul_preload_list[i]);
+			return -1;
+		}
+	}
 	init_flag = 1;
 
 	return 0;
@@ -419,3 +434,24 @@ static void timer(unsigned int ticks, void* param)
 	}
 }
 
+/*! \brief
+ * preload module parameter handler
+ */
+static int ul_preload_param(modparam_t type, void* val)
+{
+	if(val==NULL)
+	{
+		LM_ERR("invalid parameter\n");
+		goto error;
+	}
+	if(ul_preload_index>=UL_PRELOAD_SIZE)
+	{
+		LM_ERR("too many preloaded tables\n");
+		goto error;
+	}
+	ul_preload_list[ul_preload_index] = (char*)val;
+	ul_preload_index++;
+	return 0;
+error:
+	return -1;
+}
