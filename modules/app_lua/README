@@ -120,7 +120,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set load parameter
 ...
-modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
+modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 ...
 
 3.2. register (string)
@@ -131,6 +131,8 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
      * auth_db - register functions from auth_db module under
        'sr.auth_db'.
      * maxfwd - register functions from maxfwd module under 'sr.maxfwd'.
+     * registrar - register functions from registrar module under
+       'sr.registrar'.
      * rr - register functions from rr module under 'sr.rr'.
      * sqlops - register functions from sqlops module under 'sr.sqlops'.
      * sl - register functions from sl module under 'sr.sl'.
@@ -143,7 +145,7 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 
    Example 1.2. Set register parameter
 ...
-modparam("lua", "register", "sl")
+modparam("app_lua", "register", "sl")
 ...
 
 4. Exported Functions

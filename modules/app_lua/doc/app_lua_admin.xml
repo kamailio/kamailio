@@ -96,7 +96,7 @@
 		<title>Set <varname>load</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
+modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 ...
 </programlisting>
 	    </example>
@@ -125,6 +125,12 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 			<para>
 				<emphasis>maxfwd</emphasis> - register functions from maxfwd
 				module under 'sr.maxfwd'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>registrar</emphasis> - register functions from
+				registrar module under 'sr.registrar'.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -165,7 +171,7 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 		<title>Set <varname>register</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lua", "register", "sl")
+modparam("app_lua", "register", "sl")
 ...
 </programlisting>
 	    </example>
