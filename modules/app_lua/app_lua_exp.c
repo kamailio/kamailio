@@ -32,11 +32,13 @@
 
 #include "../../modules/sl/sl.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../modules_k/sqlops/sql_api.h"
 
 #include "app_lua_api.h"
 
 #define SR_LUA_EXP_MOD_SL	(1<<0)
 #define SR_LUA_EXP_MOD_TM	(1<<1)
+#define SR_LUA_EXP_MOD_SQLOPS	(1<<2)
 
 /**
  *
@@ -44,7 +46,7 @@
 static unsigned int _sr_lua_exp_reg_mods = 0;
 
 /**
- *
+ * sl
  */
 static sl_api_t _lua_slb;
 
@@ -52,6 +54,11 @@ static sl_api_t _lua_slb;
  * tm
  */
 static tm_api_t _lua_tmb;
+
+/**
+ * sqlops
+ */
+static sqlops_api_t _lua_sqlopsb;
 
 /**
  *
@@ -202,6 +209,227 @@ static const luaL_reg _sr_tm_Map [] = {
 /**
  *
  */
+static int lua_sr_sqlops_query(lua_State *L)
+{
+	str scon;
+	str squery;
+	str sres;
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SQLOPS))
+	{
+		LM_WARN("weird: sqlops function executed but module not registered\n");
+		return app_lua_return_false(L);
+	}
+
+	scon.s = (char*)lua_tostring(L, -3);
+	squery.s = (char*)lua_tostring(L, -2);
+	sres.s = (char*)lua_tostring(L, -1);
+	if(scon.s == NULL || squery.s == NULL || sres.s == NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	scon.len = strlen(scon.s);
+	squery.len = strlen(squery.s);
+	sres.len = strlen(sres.s);
+
+	if(_lua_sqlopsb.query(&scon, &squery, &sres)<0)
+		return app_lua_return_false(L);
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_sqlops_value(lua_State *L)
+{
+	str sres;
+	int col;
+	int row;
+	sql_val_t *val;
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SQLOPS))
+	{
+		LM_WARN("weird: sqlops function executed but module not registered\n");
+		return app_lua_return_false(L);
+	}
+	sres.s = (char*)lua_tostring(L, -3);
+	row = lua_tointeger(L, -2);
+	col = lua_tointeger(L, -1);
+	if(row<0 || col<0 || sres.s==NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	sres.len = strlen(sres.s);
+	if(_lua_sqlopsb.value(&sres, row, col, &val)<0)
+		return app_lua_return_false(L);
+	if(val->flags&PV_VAL_NULL)
+	{
+		lua_pushinteger(L, 0);
+		return 1;
+	}
+
+	if(val->flags&PV_VAL_INT)
+	{
+		lua_pushinteger(L, val->value.n);
+		return 1;
+	}
+	lua_pushlstring(L, val->value.s.s, val->value.s.len);
+	return 1;
+}
+
+/**
+ *
+ */
+static int lua_sr_sqlops_is_null(lua_State *L)
+{
+	str sres;
+	int col;
+	int row;
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SQLOPS))
+	{
+		LM_WARN("weird: sqlops function executed but module not registered\n");
+		return app_lua_return_false(L);
+	}
+	sres.s = (char*)lua_tostring(L, -3);
+	row = lua_tointeger(L, -2);
+	col = lua_tointeger(L, -1);
+	if(row<0 || col<0 || sres.s==NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	sres.len = strlen(sres.s);
+	if(_lua_sqlopsb.is_null(&sres, row, col)==1)
+		return app_lua_return_true(L);
+	return app_lua_return_false(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_sqlops_column(lua_State *L)
+{
+	str sres;
+	int col;
+	str name = {0, 0};
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SQLOPS))
+	{
+		LM_WARN("weird: sqlops function executed but module not registered\n");
+		return app_lua_return_false(L);
+	}
+	sres.s = (char*)lua_tostring(L, -2);
+	col = lua_tointeger(L, -1);
+	if(col<0 || sres.s==NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	sres.len = strlen(sres.s);
+	if(_lua_sqlopsb.column(&sres, col, &name)<0)
+		return app_lua_return_false(L);
+	lua_pushlstring(L, name.s, name.len);
+	return 1;
+}
+
+/**
+ *
+ */
+static int lua_sr_sqlops_nrows(lua_State *L)
+{
+	str sres;
+	int rows;
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SQLOPS))
+	{
+		LM_WARN("weird: sqlops function executed but module not registered\n");
+		return app_lua_return_false(L);
+	}
+	sres.s = (char*)lua_tostring(L, -1);
+	if(sres.s==NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	sres.len = strlen(sres.s);
+	rows = _lua_sqlopsb.nrows(&sres);
+	if(rows<0)
+		return app_lua_return_false(L);
+	lua_pushinteger(L, rows);
+	return 1;
+}
+
+/**
+ *
+ */
+static int lua_sr_sqlops_ncols(lua_State *L)
+{
+	str sres;
+	int cols;
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SQLOPS))
+	{
+		LM_WARN("weird: sqlops function executed but module not registered\n");
+		return app_lua_return_false(L);
+	}
+	sres.s = (char*)lua_tostring(L, -1);
+	if(sres.s==NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	sres.len = strlen(sres.s);
+	cols = _lua_sqlopsb.ncols(&sres);
+	if(cols<0)
+		return app_lua_return_false(L);
+	lua_pushinteger(L, cols);
+	return 1;
+}
+
+/**
+ *
+ */
+static int lua_sr_sqlops_reset(lua_State *L)
+{
+	str sres;
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SQLOPS))
+	{
+		LM_WARN("weird: sqlops function executed but module not registered\n");
+		return app_lua_return_false(L);
+	}
+	sres.s = (char*)lua_tostring(L, -1);
+	if(sres.s==NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	sres.len = strlen(sres.s);
+	_lua_sqlopsb.reset(&sres);
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_sqlops_Map [] = {
+	{"query",   lua_sr_sqlops_query},
+	{"value",   lua_sr_sqlops_value},
+	{"is_null", lua_sr_sqlops_is_null},
+	{"column",  lua_sr_sqlops_column},
+	{"nrows",   lua_sr_sqlops_nrows},
+	{"ncols",   lua_sr_sqlops_ncols},
+	{"reset",   lua_sr_sqlops_reset},
+	{NULL, NULL}
+};
+
+
+/**
+ *
+ */
 int lua_sr_exp_init_mod(void)
 {
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SL)
@@ -223,6 +451,16 @@ int lua_sr_exp_init_mod(void)
 		}
 		LM_DBG("loaded tm api\n");
 	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SQLOPS)
+	{
+		/* bind the SQLOPS API */
+		if (sqlops_load_api(&_lua_sqlopsb) == -1)
+		{
+			LM_ERR("cannot bind to SQLOPS API\n");
+			return -1;
+		}
+		LM_DBG("loaded sqlops api\n");
+	}
 	return 0;
 }
 
@@ -242,6 +480,9 @@ int lua_sr_exp_register_mod(char *mname)
 	} else 	if(len==2 && strcmp(mname, "tm")==0) {
 		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_TM;
 		return 0;
+	} else 	if(len==6 && strcmp(mname, "sqlops")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_SQLOPS;
+		return 0;
 	}
 
 	return -1;
@@ -256,6 +497,8 @@ void lua_sr_exp_openlibs(lua_State *L)
 		luaL_openlib(L, "sr.sl",   _sr_sl_Map,   0);
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM)
 		luaL_openlib(L, "sr.tm",   _sr_tm_Map,   0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SQLOPS)
+		luaL_openlib(L, "sr.sqlops",   _sr_sqlops_Map,   0);
 }
 
 
