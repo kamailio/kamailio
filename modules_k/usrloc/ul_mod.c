@@ -173,7 +173,7 @@ static param_export_t params[] = {
 	{"fetch_rows",        INT_PARAM, &ul_fetch_rows   },
 	{"hash_size",         INT_PARAM, &ul_hash_size    },
 	{"nat_bflag",         INT_PARAM, &nat_bflag       },
-	{"preload",           STR_PARAM|USE_FUNC_PARAM, (void*)ul_preload_param },
+	{"preload",           STR_PARAM|USE_FUNC_PARAM, (void*)ul_preload_param},
 	{0, 0, 0}
 };
 
