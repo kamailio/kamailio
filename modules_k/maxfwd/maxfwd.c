@@ -45,6 +45,7 @@
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "mf_funcs.h"
+#include "api.h"
 
 MODULE_VERSION
 
@@ -57,11 +58,15 @@ static int w_process_maxfwd_header(struct sip_msg* msg,char* str,char* str2);
 static int is_maxfwd_lt(struct sip_msg *msg, char *slimit, char *foo);
 static int mod_init(void);
 
+int bind_maxfwd(maxfwd_api_t *api);
+
 static cmd_export_t cmds[]={
 	{"mf_process_maxfwd_header", (cmd_function)w_process_maxfwd_header, 1,
 		fixup_maxfwd_header, 0, REQUEST_ROUTE},
 	{"is_maxfwd_lt", (cmd_function)is_maxfwd_lt, 1,
 		fixup_maxfwd_header, 0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"bind_maxfwd",  (cmd_function)bind_maxfwd,  0,
+		0, 0, 0},
 	{0,0,0,0,0,0}
 };
 
@@ -131,8 +136,10 @@ static int fixup_maxfwd_header(void** param, int param_no)
 }
 
 
-
-static int w_process_maxfwd_header(struct sip_msg* msg, char* str1,char* str2)
+/**
+ * process max forward header
+ */
+int process_maxfwd_header(struct sip_msg *msg, int limit)
 {
 	int val;
 	str mf_value;
@@ -141,7 +148,7 @@ static int w_process_maxfwd_header(struct sip_msg* msg, char* str1,char* str2)
 	switch (val) {
 		/* header not found */
 		case -1:
-			if (add_maxfwd_header( msg, (unsigned int)(unsigned long)str1)!=0)
+			if (add_maxfwd_header(msg, (unsigned int)limit)!=0)
 				goto error;
 			return 2;
 		/* error */
@@ -166,8 +173,18 @@ error:
 	return -2;
 }
 
+/**
+ *
+ */
+static int w_process_maxfwd_header(struct sip_msg* msg, char* str1, char* str2)
+{
+	return process_maxfwd_header(msg, (int)(unsigned long)str1);
+}
 
 
+/**
+ *
+ */
 static int is_maxfwd_lt(struct sip_msg *msg, char *slimit, char *foo)
 {
 	str mf_value;
@@ -189,3 +206,16 @@ static int is_maxfwd_lt(struct sip_msg *msg, char *slimit, char *foo)
 	return 1;
 }
 
+/**
+ * @brief bind functions to MAXFWD API structure
+ */
+int bind_maxfwd(maxfwd_api_t *api)
+{
+	if (!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+	api->process_maxfwd = process_maxfwd_header;
+
+	return 0;
+}
