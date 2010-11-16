@@ -253,7 +253,7 @@ static int auth_fixup(void** param, int param_no)
 			auth_dbf.close(dbh);
 			return -1;
 		}
+		auth_dbf.close(dbh);
 	}
-	auth_dbf.close(dbh);
 	return 0;
 }
