@@ -111,6 +111,12 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 	    	<itemizedlist>
 		    <listitem>
 			<para>
+				<emphasis>auth</emphasis> - register functions from auth module
+				under 'sr.auth'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
 				<emphasis>rr</emphasis> - register functions from rr module
 				under 'sr.rr'.
 			</para>
