@@ -581,37 +581,20 @@ static int auth_send_reply(struct sip_msg *msg, int code, char *reason,
 /**
  *
  */
-static int auth_challenge(struct sip_msg *msg, char *p1, char *p2, int hftype)
+static int auth_challenge(struct sip_msg *msg, str *realm, int flags, int hftype)
 {
-    int flags = 0;
-    str realm  = {0, 0};
 	int ret;
     str hf = {0, 0};
 	struct qp *qop = NULL;
 
 	ret = -1;
 
-	if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
-		LM_ERR("failed to get realm value\n");
-		goto error;
-	}
-
-	if(realm.len==0) {
-		LM_ERR("invalid realm value - empty content\n");
-		goto error;
-	}
-
-	if (get_int_fparam(&flags, msg, (fparam_t*)p2) < 0) {
-		LM_ERR("invalid flags value\n");
-		goto error;
-	}
-	
 	if(flags&2) {
 		qop = &auth_qauthint;
 	} else if(flags&1) {
 		qop = &auth_qauth;
 	}
-	if (get_challenge_hf(msg, 0, &realm, NULL, NULL, qop, hftype, &hf) < 0) {
+	if (get_challenge_hf(msg, 0, realm, NULL, NULL, qop, hftype, &hf) < 0) {
 		ERR("Error while creating challenge\n");
 		ret = -2;
 		goto error;
@@ -647,7 +630,32 @@ error:
  */
 static int proxy_challenge(struct sip_msg *msg, char* realm, char *flags)
 {
-	return auth_challenge(msg, realm, flags, HDR_PROXYAUTH_T);
+	int vflags = 0;
+	str srealm  = {0, 0};
+
+	if (get_str_fparam(&srealm, msg, (fparam_t*)realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		goto error;
+	}
+
+	if(srealm.len==0) {
+		LM_ERR("invalid realm value - empty content\n");
+		goto error;
+	}
+
+	if (get_int_fparam(&vflags, msg, (fparam_t*)flags) < 0) {
+		LM_ERR("invalid flags value\n");
+		goto error;
+	}
+
+	return auth_challenge(msg, &srealm, vflags, HDR_PROXYAUTH_T);
+
+error:
+	if(!(vflags&4)) {
+		if(auth_send_reply(msg, 500, "Internal Server Error", 0, 0) <0 )
+			return -4;
+	}
+	return -1;
 }
 
 /**
@@ -655,7 +663,32 @@ static int proxy_challenge(struct sip_msg *msg, char* realm, char *flags)
  */
 static int www_challenge(struct sip_msg *msg, char* realm, char *flags)
 {
-	return auth_challenge(msg, realm, flags, HDR_AUTHORIZATION_T);
+	int vflags = 0;
+	str srealm  = {0, 0};
+
+	if (get_str_fparam(&srealm, msg, (fparam_t*)realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		goto error;
+	}
+
+	if(srealm.len==0) {
+		LM_ERR("invalid realm value - empty content\n");
+		goto error;
+	}
+
+	if (get_int_fparam(&vflags, msg, (fparam_t*)flags) < 0) {
+		LM_ERR("invalid flags value\n");
+		goto error;
+	}
+
+	return auth_challenge(msg, &srealm, vflags, HDR_AUTHORIZATION_T);
+
+error:
+	if(!(vflags&4)) {
+		if(auth_send_reply(msg, 500, "Internal Server Error", 0, 0) <0 )
+			return -4;
+	}
+	return -1;
 }
 
 /**
