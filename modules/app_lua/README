@@ -128,6 +128,8 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
    Use this function to register optional SIP Router submodules to Lua.
    Available submodules are:
      * auth - register functions from auth module under 'sr.auth'.
+     * auth_db - register functions from auth_db module under
+       'sr.auth_db'.
      * rr - register functions from rr module under 'sr.rr'.
      * sqlops - register functions from sqlops module under 'sr.sqlops'.
      * sl - register functions from sl module under 'sr.sl'.
@@ -140,7 +142,7 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 
    Example 1.2. Set register parameter
 ...
-modparam("lua", "register", "sr")
+modparam("lua", "register", "sl")
 ...
 
 4. Exported Functions

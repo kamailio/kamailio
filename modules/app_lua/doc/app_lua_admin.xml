@@ -117,6 +117,12 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 		    </listitem>
 		    <listitem>
 			<para>
+				<emphasis>auth_db</emphasis> - register functions from auth_db
+				module under 'sr.auth_db'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
 				<emphasis>rr</emphasis> - register functions from rr module
 				under 'sr.rr'.
 			</para>
@@ -153,7 +159,7 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 		<title>Set <varname>register</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lua", "register", "sr")
+modparam("lua", "register", "sl")
 ...
 </programlisting>
 	    </example>
