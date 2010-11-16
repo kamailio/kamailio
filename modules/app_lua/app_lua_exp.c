@@ -33,17 +33,29 @@
 #include "../../modules/sl/sl.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules_k/sqlops/sql_api.h"
+#include "../../modules_k/rr/api.h"
 
 #include "app_lua_api.h"
 
-#define SR_LUA_EXP_MOD_SL	(1<<0)
-#define SR_LUA_EXP_MOD_TM	(1<<1)
-#define SR_LUA_EXP_MOD_SQLOPS	(1<<2)
+#define SR_LUA_EXP_MOD_SL       (1<<0)
+#define SR_LUA_EXP_MOD_TM       (1<<1)
+#define SR_LUA_EXP_MOD_SQLOPS   (1<<2)
+#define SR_LUA_EXP_MOD_RR       (1<<3)
 
 /**
  *
  */
 static unsigned int _sr_lua_exp_reg_mods = 0;
+
+/**
+ * rr
+ */
+static rr_api_t _lua_rrb;
+
+/**
+ * sqlops
+ */
+static sqlops_api_t _lua_sqlopsb;
 
 /**
  * sl
@@ -54,11 +66,6 @@ static sl_api_t _lua_slb;
  * tm
  */
 static tm_api_t _lua_tmb;
-
-/**
- * sqlops
- */
-static sqlops_api_t _lua_sqlopsb;
 
 /**
  *
@@ -430,12 +437,83 @@ static const luaL_reg _sr_sqlops_Map [] = {
 /**
  *
  */
+static int lua_sr_rr_record_route(lua_State *L)
+{
+	int ret;
+	str sv = {0, 0};
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_RR))
+	{
+		LM_WARN("weird: rr function executed but module not registered\n");
+		return app_lua_return_false(L);
+	}
+	if(env_L->msg!=NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+	if(lua_gettop(L)==1)
+	{
+		sv.s = (char*)lua_tostring(L, -1);
+		if(sv.s!=NULL)
+			sv.len = strlen(sv.s);
+	}
+	ret = _lua_rrb.record_route(env_L->msg, (sv.len>0)?&sv:NULL);
+
+	if(ret<0)
+		return app_lua_return_false(L);
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_rr_loose_route(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_RR))
+	{
+		LM_WARN("weird: rr function executed but module not registered\n");
+		return app_lua_return_false(L);
+	}
+	if(env_L->msg!=NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+	ret = _lua_rrb.loose_route(env_L->msg);
+
+	if(ret<0)
+		return app_lua_return_false(L);
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_rr_Map [] = {
+	{"record_route",    lua_sr_rr_record_route},
+	{"loose_route",     lua_sr_rr_loose_route},
+	{NULL, NULL}
+};
+
+
+/**
+ *
+ */
 int lua_sr_exp_init_mod(void)
 {
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SL)
 	{
 		/* bind the SL API */
-		if (sl_load_api(&_lua_slb)!=0) {
+		if (sl_load_api(&_lua_slb) < 0) {
 			LM_ERR("cannot bind to SL API\n");
 			return -1;
 		}
@@ -444,7 +522,7 @@ int lua_sr_exp_init_mod(void)
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM)
 	{
 		/* bind the TM API */
-		if (tm_load_api(&_lua_tmb) == -1)
+		if (tm_load_api(&_lua_tmb) < 0)
 		{
 			LM_ERR("cannot bind to TM API\n");
 			return -1;
@@ -454,12 +532,22 @@ int lua_sr_exp_init_mod(void)
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SQLOPS)
 	{
 		/* bind the SQLOPS API */
-		if (sqlops_load_api(&_lua_sqlopsb) == -1)
+		if (sqlops_load_api(&_lua_sqlopsb) < 0)
 		{
 			LM_ERR("cannot bind to SQLOPS API\n");
 			return -1;
 		}
 		LM_DBG("loaded sqlops api\n");
+	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_RR)
+	{
+		/* bind the RR API */
+		if (rr_load_api(&_lua_rrb) < 0)
+		{
+			LM_ERR("cannot bind to RR API\n");
+			return -1;
+		}
+		LM_DBG("loaded rr api\n");
 	}
 	return 0;
 }
@@ -482,6 +570,9 @@ int lua_sr_exp_register_mod(char *mname)
 		return 0;
 	} else 	if(len==6 && strcmp(mname, "sqlops")==0) {
 		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_SQLOPS;
+		return 0;
+	} else 	if(len==2 && strcmp(mname, "rr")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_RR;
 		return 0;
 	}
 
