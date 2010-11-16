@@ -34,6 +34,7 @@
 #include "../../modules/tm/tm_load.h"
 #include "../../modules_k/sqlops/sql_api.h"
 #include "../../modules_k/rr/api.h"
+#include "../../modules/auth/api.h"
 
 #include "app_lua_api.h"
 
@@ -41,11 +42,17 @@
 #define SR_LUA_EXP_MOD_TM       (1<<1)
 #define SR_LUA_EXP_MOD_SQLOPS   (1<<2)
 #define SR_LUA_EXP_MOD_RR       (1<<3)
+#define SR_LUA_EXP_MOD_AUTH     (1<<4)
 
 /**
  *
  */
 static unsigned int _sr_lua_exp_reg_mods = 0;
+
+/**
+ * auth
+ */
+static auth_api_s_t _lua_authb;
 
 /**
  * rr
@@ -505,6 +512,156 @@ static const luaL_reg _sr_rr_Map [] = {
 };
 
 
+static int lua_sr_auth_challenge(lua_State *L, int hftype)
+{
+	int ret;
+	str realm = {0, 0};
+	int flags;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH))
+	{
+		LM_WARN("weird: auth function executed but module not registered\n");
+		return app_lua_return_false(L);
+	}
+	if(env_L->msg!=NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+	if(lua_gettop(L)!=2)
+	{
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	realm.s = (char*)lua_tostring(L, -2);
+	flags   = lua_tointeger(L, -1);
+	if(flags<0 || realm.s==NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	realm.len = strlen(realm.s);
+	ret = _lua_authb.auth_challenge(env_L->msg, &realm, flags, hftype);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_auth_www_challenge(lua_State *L)
+{
+	return lua_sr_auth_challenge(L, HDR_AUTHORIZATION_T);
+}
+
+/**
+ *
+ */
+static int lua_sr_auth_proxy_challenge(lua_State *L)
+{
+	return lua_sr_auth_challenge(L, HDR_PROXYAUTH_T);
+}
+
+/**
+ *
+ */
+static int lua_sr_auth_pv_authenticate(lua_State *L, int hftype)
+{
+	int ret;
+	str realm  = {0, 0};
+	str passwd = {0, 0};
+	int flags;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH))
+	{
+		LM_WARN("weird: auth function executed but module not registered\n");
+		return app_lua_return_false(L);
+	}
+	if(env_L->msg!=NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+	if(lua_gettop(L)!=3)
+	{
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	realm.s  = (char*)lua_tostring(L, -3);
+	passwd.s = (char*)lua_tostring(L, -2);
+	flags    = lua_tointeger(L, -1);
+	if(flags<0 || realm.s==NULL || passwd.s==NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+	realm.len = strlen(realm.s);
+	passwd.len = strlen(passwd.s);
+	ret = _lua_authb.pv_authenticate(env_L->msg, &realm, &passwd, flags,
+			hftype);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_auth_pv_www_authenticate(lua_State *L)
+{
+	return lua_sr_auth_pv_authenticate(L, HDR_AUTHORIZATION_T);
+}
+
+/**
+ *
+ */
+static int lua_sr_auth_pv_proxy_authenticate(lua_State *L)
+{
+	return lua_sr_auth_pv_authenticate(L, HDR_PROXYAUTH_T);
+}
+
+/**
+ *
+ */
+static int lua_sr_auth_consume_credentials(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH))
+	{
+		LM_WARN("weird: auth function executed but module not registered\n");
+		return app_lua_return_false(L);
+	}
+	if(env_L->msg!=NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+	ret = _lua_authb.consume_credentials(env_L->msg);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_auth_Map [] = {
+	{"www_challenge",            lua_sr_auth_www_challenge},
+	{"proxy_challenge",          lua_sr_auth_proxy_challenge},
+	{"pv_www_authenticate",      lua_sr_auth_pv_www_authenticate},
+	{"pv_proxy_authenticate",    lua_sr_auth_pv_proxy_authenticate},
+	{"consume_credentials",      lua_sr_auth_consume_credentials},
+	{NULL, NULL}
+};
+
 /**
  *
  */
@@ -549,6 +706,16 @@ int lua_sr_exp_init_mod(void)
 		}
 		LM_DBG("loaded rr api\n");
 	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH)
+	{
+		/* bind the AUTH API */
+		if (auth_load_api(&_lua_authb) < 0)
+		{
+			LM_ERR("cannot bind to AUTH API\n");
+			return -1;
+		}
+		LM_DBG("loaded auth api\n");
+	}
 	return 0;
 }
 
@@ -574,6 +741,9 @@ int lua_sr_exp_register_mod(char *mname)
 	} else 	if(len==2 && strcmp(mname, "rr")==0) {
 		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_RR;
 		return 0;
+	} else 	if(len==4 && strcmp(mname, "auth")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_AUTH;
+		return 0;
 	}
 
 	return -1;
@@ -585,11 +755,14 @@ int lua_sr_exp_register_mod(char *mname)
 void lua_sr_exp_openlibs(lua_State *L)
 {
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SL)
-		luaL_openlib(L, "sr.sl",   _sr_sl_Map,   0);
+		luaL_openlib(L, "sr.sl",      _sr_sl_Map,       0);
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM)
-		luaL_openlib(L, "sr.tm",   _sr_tm_Map,   0);
+		luaL_openlib(L, "sr.tm",      _sr_tm_Map,       0);
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SQLOPS)
-		luaL_openlib(L, "sr.sqlops",   _sr_sqlops_Map,   0);
+		luaL_openlib(L, "sr.sqlops",  _sr_sqlops_Map,   0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_RR)
+		luaL_openlib(L, "sr.rr",      _sr_rr_Map,       0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_AUTH)
+		luaL_openlib(L, "sr.auth",    _sr_auth_Map,     0);
 }
-
 
