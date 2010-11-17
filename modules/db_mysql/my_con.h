@@ -47,11 +47,11 @@ typedef struct my_con {
 	MYSQL* con;
 	unsigned int flags;
 	
-	/* We keep the number of connection resets in this variable,
-	 * this variable is incremented each time the module performs
-	 * a re-connect on the connection. This is used by my_cmd
-	 * related functions to check if a pre-compiled command needs
-	 * to be uploaded to the server before executing it.
+	/* We keep the number of connection resets in this variable, this
+	 * variable is incremented each time the module performs a disconnect
+	 * on the connection. This is used by my_cmd related functions to
+	 * check if a pre-compiled command needs to be uploaded to the server
+	 * before executing them.
 	 */
 	unsigned int resets;
 } my_con_t;

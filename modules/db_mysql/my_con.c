@@ -106,15 +106,6 @@ int my_con_connect(db_con_t* con)
 	DBG("mysql: Server version is %s\n", mysql_get_server_info(mcon->con));
 
 	mcon->flags |= MY_CONNECTED;
-
-	/* Increase the variable that keeps track of number of connects performed
-	 * on this connection. The mysql module uses the variable to determine
-	 * when a pre-compiled command needs to be uploaded to the server again.
-	 * If the number in the my_con structure is large than the number kept
-	 * in my_cmd then it means that we have to upload the command to the server
-	 * again because the connection was reconnected meanwhile.
-	 */
-	mcon->resets++;
 	return 0;
 }
 
@@ -133,6 +124,15 @@ void my_con_disconnect(db_con_t* con)
 
 	mysql_close(mcon->con);
 	mcon->flags &= ~MY_CONNECTED;
+
+	/* Increase the variable that keeps track of number of connection
+	 * resets on this connection. The mysql module uses the variable to
+	 * determine when a pre-compiled command needs to be uploaded to the
+	 * server again. If the number in the my_con structure is larger than
+	 * the number kept in my_cmd then it means that we have to upload the
+	 * command to the server again because the connection was reset.
+	 */
+	mcon->resets++;
 }
 
 

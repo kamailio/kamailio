@@ -671,72 +671,79 @@ static inline int update_result(db_fld_t* result, MYSQL_STMT* st)
  */
 static int exec_cmd_safe(db_cmd_t* cmd)
 {
-	int i, err;
-	db_con_t* con;
-	struct my_cmd* mcmd;
-	struct my_con* mcon;
-
-	/* First things first: retrieve connection info
-	 * from the currently active connection and also
-	 * mysql payload from the database command
+    int i, err;
+    db_con_t* con;
+    struct my_cmd* mcmd;
+    struct my_con* mcon;
+	
+    /* First things first: retrieve connection info
+     * from the currently active connection and also
+     * mysql payload from the database command
+     */
+    mcmd = DB_GET_PAYLOAD(cmd);
+    con = cmd->ctx->con[db_payload_idx];
+    mcon = DB_GET_PAYLOAD(con);
+    
+    for(i = 0; i <= my_retries; i++) {
+	if ((mcon->flags & MY_CONNECTED) == 0) {
+	    /* The connection is disconnected, try to reconnect */
+	    if (my_con_connect(con)) {
+		INFO("mysql: exec_cmd_safe failed to re-connect\n");
+		continue;
+	    }
+	}	
+	
+	/* Next check the number of resets in the database connection, if this
+	 * number is higher than the number we keep in my_cmd structure in
+	 * last_reset variable then the connection was reset and we need to
+	 * upload the command again to the server before executing it, because
+	 * the server recycles all server side information upon disconnect.
 	 */
-	mcmd = DB_GET_PAYLOAD(cmd);
-	con = cmd->ctx->con[db_payload_idx];
-	mcon = DB_GET_PAYLOAD(con);
-
-	for(i = 0; i <= my_retries; i++) {
-		/* Next check the number of resets in the database connection,
-		 * if this number is higher than the number we keep in my_cmd
-		 * structure in last_reset variable then the connection was
-		 * reset and we need to upload the command again to the server
-		 * before executing it, because the server recycles all server
-		 * side information upon disconnect.
+	if (mcon->resets > mcmd->last_reset) {
+	    INFO("mysql: Connection reset detected, uploading command to server\n");
+	    err = upload_cmd(cmd);
+	    if (err < 0) {
+		INFO("mysql: Error while uploading command\n");
+		continue;
+	    } else if (err > 0) {
+		/* DB API error, this is a serious problem such as memory
+		 * allocation failure, bail out
 		 */
-		if (mcon->resets > mcmd->last_reset) {
-			INFO("mysql: Connection reset detected, uploading command to server\n");
-			err = upload_cmd(cmd);
-			if (err < 0) {
-				INFO("mysql: Error while uploading command\n");
-				/* MySQL error, skip execution and try again if we have attempts left */
-				continue;
-			} else if (err > 0) {
-				/* DB API error, this is a serious problem such
-				 * as memory allocation failure, bail out
-				 */
-				return 1;
-			}
-		}
-
-		set_mysql_params(cmd);
-		err = mysql_stmt_execute(mcmd->st);
-		if (err == 0) {
-			/* The command was executed successfully, now fetch all data
-			 * to the client if it was requested by the user */
-			if (mcmd->flags & MY_FETCH_ALL) {
-				err = mysql_stmt_store_result(mcmd->st);
-				if (err) {
-					INFO("mysql: Error while fetching data to client.\n");
-					goto error;
-				}
-			}
-			return 0;
-		}
-		
-	error:
-		/* Command execution failed, log a message and try to reconnect */
-		INFO("mysql: libmysql: %d, %s\n", mysql_stmt_errno(mcmd->st),
-			 mysql_stmt_error(mcmd->st));
-		INFO("mysql: Error while executing command on server, trying to reconnect\n");
-		my_con_disconnect(con);
-		if (my_con_connect(con)) {
-			INFO("mysql: Failed to reconnect server\n");
-		} else {
-			INFO("mysql: Successfully reconnected server\n");
-		}
+		return 1;
+	    }
 	}
+	
+	set_mysql_params(cmd);
+	err = mysql_stmt_execute(mcmd->st);
+	if (err == 0) {
+	    /* The command was executed successfully, now fetch all data to
+	     * the client if it was requested by the user */
+	    if (mcmd->flags & MY_FETCH_ALL) {
+		err = mysql_stmt_store_result(mcmd->st);
+		if (err) {
+		    INFO("mysql: Error while fetching data to client.\n");
+		    goto error;
+		}
+	    }
+	    return 0;
+	}
+	
+    error:
+	/* Command execution failed, log a message and try to reconnect */
+	INFO("mysql: libmysql: %d, %s\n", mysql_stmt_errno(mcmd->st),
+	     mysql_stmt_error(mcmd->st));
+	INFO("mysql: Error while executing command on server, trying to reconnect\n");
 
-	INFO("mysql: Failed to execute command, giving up\n");
-	return -1;
+	my_con_disconnect(con);
+	if (my_con_connect(con)) {
+	    INFO("mysql: Failed to reconnect server\n");
+	} else {
+	    INFO("mysql: Successfully reconnected server\n");
+	}
+    }
+    
+    INFO("mysql: Failed to execute command, giving up\n");
+    return -1;
 }
 
 
@@ -1089,58 +1096,73 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
  */
 static int upload_cmd(db_cmd_t* cmd)
 {
-	struct my_cmd* res;
-	struct my_con* mcon;
-	int err = 0;
+    struct my_cmd* res;
+    struct my_con* mcon;
+    int err = 0;
+    
+    res = DB_GET_PAYLOAD(cmd);
+    
+    /* FIXME: The function should take the connection as one of parameters */
+    mcon = DB_GET_PAYLOAD(cmd->ctx->con[db_payload_idx]);
+    /* Do not upload the command if the connection is not connected */
+    if ((mcon->flags & MY_CONNECTED) == 0) {
+	err = 1;
+	goto error;
+    }
 
-	res = DB_GET_PAYLOAD(cmd);
-
-	/* FIXME: The function should take the connection as one of parameters */
-	mcon = DB_GET_PAYLOAD(cmd->ctx->con[db_payload_idx]);
-
-	/* If there is a previous pre-compiled statement, close it first */
-	if (res->st) mysql_stmt_close(res->st);
-	res->st = NULL;
-
-	/* Create a new pre-compiled statement data structure */
-	res->st = mysql_stmt_init(mcon->con);
-	if (res->st == NULL) {
-		ERR("mysql: Error while creating new MySQL_STMT data structure (no memory left)\n");
-		err = 1;
-		goto error;
-	}
-
-	/* Try to upload the command to the server */
-	err = mysql_stmt_prepare(res->st, res->sql_cmd.s, res->sql_cmd.len);
-	if (err) {
-		ERR("mysql: libmysql: %d, %s\n", mysql_stmt_errno(res->st), 
-			mysql_stmt_error(res->st));
-		ERR("mysql: An error occurred while uploading a command to MySQL server\n");
-		goto error;
-	}
-
-	err = bind_mysql_params(res->st, cmd->vals, cmd->match);
+    /* If there is a previous pre-compiled statement, close it first */
+    if (res->st) mysql_stmt_close(res->st);
+    res->st = NULL;
+    
+    /* Create a new pre-compiled statement data structure */
+    res->st = mysql_stmt_init(mcon->con);
+    if (res->st == NULL) {
+	ERR("mysql: Error while creating new MySQL_STMT data structure (no memory left)\n");
+	err = 1;
+	goto error;
+    }
+    
+    /* Try to upload the command to the server */
+    if (mysql_stmt_prepare(res->st, res->sql_cmd.s, res->sql_cmd.len)) {
+	err = mysql_stmt_errno(res->st);    
+	ERR("mysql: libmysql: %d, %s\n", err, mysql_stmt_error(res->st));
+	ERR("mysql: An error occurred while uploading command to server\n");
+    }
+    if (err == CR_SERVER_LOST ||
+	err == CR_SERVER_GONE_ERROR) {
+	/* Connection to the server was lost, mark the connection as
+	 * disconnected. In this case mysql_stmt_prepare invalidates the
+	 * connection internally and calling another mysql function on that
+	 * connection would crash. To make sure that no other mysql function
+	 * gets called unless the connection is reconnected we disconnect it
+	 * explicitly here. This is a workaround for mysql bug #33384. */
+	my_con_disconnect(cmd->ctx->con[db_payload_idx]);
+    }
+    if (err) {
+	/* Report mysql error to the caller */
+	err = -1;
+	goto error;
+    }
+    
+    err = bind_mysql_params(res->st, cmd->vals, cmd->match);
+    if (err) goto error;
+    
+    if (cmd->type == DB_GET || cmd->type == DB_SQL) {
+	err = check_result(cmd, res);
 	if (err) goto error;
-
-	if (cmd->type == DB_GET || cmd->type == DB_SQL) {
-		err = check_result(cmd, res);
-		if (err) goto error;
-		err = bind_result(res->st, cmd->result);
-		if (err) goto error;
-	}
-
-	res->last_reset = mcon->resets;
-	return 0;
-
- error:
-	if (res->st) {
-		ERR("mysql: libmysqlclient: %d, %s\n", 
-			mysql_stmt_errno(res->st), 
-			mysql_stmt_error(res->st));
-		mysql_stmt_close(res->st);
-		res->st = NULL;
-	}
-	return err;
+	err = bind_result(res->st, cmd->result);
+	if (err) goto error;
+    }
+    
+    res->last_reset = mcon->resets;
+    return 0;
+    
+error:
+    if (res->st) {
+	mysql_stmt_close(res->st);
+	res->st = NULL;
+    }
+    return err;
 }
 
 
@@ -1192,7 +1214,15 @@ int my_cmd(db_cmd_t* cmd)
 	}
 
 	DB_SET_PAYLOAD(cmd, res);
-	if (upload_cmd(cmd) != 0) goto error;
+
+	/* In order to check all the parameters and results, we need to upload
+	 * the command to the server. We need to do that here before we report
+	 * back that the command was created successfully. Hence, this
+	 * function requires the corresponding connection be established. We
+	 * would not be able to check parameters if we don't do that there and
+	 * that could result in repeated execution failures at runtime.
+	 */
+	if (upload_cmd(cmd)) goto error;
 	return 0;
 
  error:
