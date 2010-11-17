@@ -28,6 +28,7 @@
 
 #include "../../sr_module.h"
 #include "../../dprint.h"
+#include "../../route.h"
 #include "../../ut.h"
 
 #include "../../modules/sl/sl.h"
@@ -93,7 +94,8 @@ static sl_api_t _lua_slb;
 /**
  * tm
  */
-static tm_api_t _lua_tmb;
+static tm_api_t  _lua_tmb;
+static tm_xapi_t _lua_xtmb;
 
 /**
  *
@@ -110,6 +112,11 @@ static int lua_sr_sl_send_reply (lua_State *L)
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SL))
 	{
 		LM_WARN("weird: sl function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
 		return app_lua_return_error(L);
 	}
 
@@ -142,6 +149,11 @@ static int lua_sr_sl_get_reply_totag (lua_State *L)
 	{
 		LM_WARN("weird: sl function executed but module not registered\n");
 		return app_lua_return_false(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
 	}
 	ret = _lua_slb.get_reply_totag(env_L->msg, &txt);
 	if(ret<0)
@@ -179,6 +191,11 @@ static int lua_sr_tm_t_reply(lua_State *L)
 		LM_WARN("weird: tm function executed but module not registered\n");
 		return app_lua_return_error(L);
 	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
 
 	code = lua_tointeger(L, -2);
 
@@ -209,7 +226,185 @@ static int lua_sr_tm_t_relay(lua_State *L)
 		LM_WARN("weird: tm function executed but module not registered\n");
 		return app_lua_return_error(L);
 	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
 	ret = _lua_tmb.t_relay(env_L->msg, NULL, NULL);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_tm_t_on_failure(lua_State *L)
+{
+	char *name;
+	int i;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM))
+	{
+		LM_WARN("weird: tm function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	name = (char*)lua_tostring(L, -1);
+	if(name==NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+
+	i = route_get(&failure_rt, name);
+	if(failure_rt.rlist[i]==0)
+	{
+		LM_WARN("no actions in failure_route[%s]\n", name);
+		return app_lua_return_error(L);
+	}
+
+	_lua_xtmb.t_on_failure((unsigned int)i);
+	return app_lua_return_int(L, 1);
+}
+
+/**
+ *
+ */
+static int lua_sr_tm_t_on_branch(lua_State *L)
+{
+	char *name;
+	int i;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM))
+	{
+		LM_WARN("weird: tm function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	name = (char*)lua_tostring(L, -1);
+	if(name==NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+
+	i = route_get(&branch_rt, name);
+	if(branch_rt.rlist[i]==0)
+	{
+		LM_WARN("no actions in branch_route[%s]\n", name);
+		return app_lua_return_error(L);
+	}
+
+	_lua_xtmb.t_on_branch((unsigned int)i);
+	return app_lua_return_int(L, 1);
+}
+
+/**
+ *
+ */
+static int lua_sr_tm_t_on_reply(lua_State *L)
+{
+	char *name;
+	int i;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM))
+	{
+		LM_WARN("weird: tm function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	name = (char*)lua_tostring(L, -1);
+	if(name==NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+
+	i = route_get(&onreply_rt, name);
+	if(onreply_rt.rlist[i]==0)
+	{
+		LM_WARN("no actions in onreply_route[%s]\n", name);
+		return app_lua_return_error(L);
+	}
+
+	_lua_xtmb.t_on_reply((unsigned int)i);
+	return app_lua_return_int(L, 1);
+}
+
+/**
+ *
+ */
+static int lua_sr_tm_t_check_trans(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM))
+	{
+		LM_WARN("weird: tm function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_xtmb.t_check_trans(env_L->msg);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_tm_t_is_canceled(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM))
+	{
+		LM_WARN("weird: tm function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_xtmb.t_is_canceled(env_L->msg);
 	return app_lua_return_int(L, ret);
 }
 
@@ -218,8 +413,13 @@ static int lua_sr_tm_t_relay(lua_State *L)
  *
  */
 static const luaL_reg _sr_tm_Map [] = {
-	{"t_reply", lua_sr_tm_t_reply},
-	{"t_relay", lua_sr_tm_t_relay},
+	{"t_reply",        lua_sr_tm_t_reply},
+	{"t_relay",        lua_sr_tm_t_relay},
+	{"t_on_failure",   lua_sr_tm_t_on_failure},
+	{"t_on_branch",    lua_sr_tm_t_on_branch},
+	{"t_on_reply",     lua_sr_tm_t_on_reply},
+	{"t_check_trans",  lua_sr_tm_t_check_trans},
+	{"t_is_canceled",  lua_sr_tm_t_is_canceled},
 	{NULL, NULL}
 };
 
@@ -892,6 +1092,13 @@ int lua_sr_exp_init_mod(void)
 			return -1;
 		}
 		LM_DBG("loaded tm api\n");
+		/* bind the TM XAPI */
+		if (tm_load_xapi(&_lua_xtmb) < 0)
+		{
+			LM_ERR("cannot bind to TM XAPI\n");
+			return -1;
+		}
+		LM_DBG("loaded tm xapi\n");
 	}
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SQLOPS)
 	{
