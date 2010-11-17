@@ -145,3 +145,22 @@ int load_tm( struct tm_binds *tmb)
 #endif
 	return 1;
 }
+
+int load_xtm(tm_xapi_t *xapi)
+{
+	if(xapi==NULL)
+	{
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+
+	memset(xapi, 0, sizeof(tm_xapi_t));
+
+	xapi->t_on_failure    = t_on_negative;
+	xapi->t_on_branch     = t_on_branch;
+	xapi->t_on_reply      = t_on_reply;
+	xapi->t_check_trans   = t_check_trans;
+	xapi->t_is_canceled   = t_is_canceled;
+
+	return 0;
+}
