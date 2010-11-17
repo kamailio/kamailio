@@ -34,6 +34,10 @@
 #include "../../mem/mem.h"
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
+#include "../../forward.h"
+#include "../../flags.h"
+#include "../../dset.h"
+#include "../../parser/parse_uri.h"
 #include "../../lib/kcore/cmpapi.h"
 
 #include "app_lua_api.h"
@@ -274,12 +278,423 @@ error:
 /**
  *
  */
+static int lua_sr_is_myself (lua_State *L)
+{
+	str uri;
+	struct sip_uri puri;
+	int ret;
+
+	uri.s = (char*)lua_tostring(L, -1);
+	if(uri.s==NULL)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return app_lua_return_false(L);
+	}
+	uri.len = strlen(uri.s);
+	if(uri.len>4 && (strncmp(uri.s, "sip:", 4)==0
+				|| strncmp(uri.s, "sips:", 5)==0))
+	{
+		if(parse_uri(uri.s, uri.len, &puri)!=0)
+		{
+			LM_ERR("failed to parse uri [%s]\n", uri.s);
+			return app_lua_return_false(L);
+		}
+		ret = check_self(&puri.host, (puri.port.s)?puri.port_no:0,
+				(puri.transport_val.s)?puri.proto:0);
+	} else {
+		ret = check_self(&uri, 0, 0);
+	}
+	if(ret==1)
+		return app_lua_return_true(L);
+	return app_lua_return_false(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_setflag (lua_State *L)
+{
+	int flag;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	flag = lua_tointeger(L, -1);
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+
+	if (!flag_in_range(flag))
+	{
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return app_lua_return_false(L);
+	}
+
+	setflag(env_L->msg, flag);
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_resetflag (lua_State *L)
+{
+	int flag;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	flag = lua_tointeger(L, -1);
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+
+	if (!flag_in_range(flag))
+	{
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return app_lua_return_false(L);
+	}
+
+	resetflag(env_L->msg, flag);
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_isflagset (lua_State *L)
+{
+	int flag;
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	flag = lua_tointeger(L, -1);
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+
+	if (!flag_in_range(flag))
+	{
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return app_lua_return_false(L);
+	}
+
+	ret = isflagset(env_L->msg, flag);
+	if(ret>0)
+		return app_lua_return_true(L);
+	return app_lua_return_false(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_setbflag (lua_State *L)
+{
+	int flag;
+	int branch;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	if(lua_gettop(L)==1)
+	{
+		flag = lua_tointeger(L, -1);
+		branch = 0;
+	} else if(lua_gettop(L)==2) {
+		flag = lua_tointeger(L, -2);
+		branch = lua_tointeger(L, -1);
+	} else {
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+
+	if (!flag_in_range(flag))
+	{
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return app_lua_return_false(L);
+	}
+
+	setbflag(branch, flag);
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_resetbflag (lua_State *L)
+{
+	int flag;
+	int branch;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	if(lua_gettop(L)==1)
+	{
+		flag = lua_tointeger(L, -1);
+		branch = 0;
+	} else if(lua_gettop(L)==2) {
+		flag = lua_tointeger(L, -2);
+		branch = lua_tointeger(L, -1);
+	} else {
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+
+	if (!flag_in_range(flag))
+	{
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return app_lua_return_false(L);
+	}
+
+	resetbflag(branch, flag);
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_isbflagset (lua_State *L)
+{
+	int flag;
+	int branch;
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	if(lua_gettop(L)==1)
+	{
+		flag = lua_tointeger(L, -1);
+		branch = 0;
+	} else if(lua_gettop(L)==2) {
+		flag = lua_tointeger(L, -2);
+		branch = lua_tointeger(L, -1);
+	} else {
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_false(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+
+	if (!flag_in_range(flag))
+	{
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return app_lua_return_false(L);
+	}
+
+	ret = isbflagset(branch, flag);
+	if(ret>0)
+		return app_lua_return_true(L);
+	return app_lua_return_false(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_seturi (lua_State *L)
+{
+	struct action  act;
+	struct run_act_ctx h;
+	str uri;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	uri.s = (char*)lua_tostring(L, -1);
+	if(uri.s==NULL)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return app_lua_return_false(L);
+	}
+	uri.len = strlen(uri.s);
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+
+	memset(&act, 0, sizeof(act));
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = uri.s;
+	act.type = SET_URI_T;
+	init_run_actions_ctx(&h);
+	if (do_action(&h, &act, env_L->msg)<0)
+	{
+		LM_ERR("do action failed\n");
+		return app_lua_return_false(L);
+	}
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_setuser (lua_State *L)
+{
+	struct action  act;
+	struct run_act_ctx h;
+	str uri;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	uri.s = (char*)lua_tostring(L, -1);
+	if(uri.s==NULL)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return app_lua_return_false(L);
+	}
+	uri.len = strlen(uri.s);
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+
+	memset(&act, 0, sizeof(act));
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = uri.s;
+	act.type = SET_USER_T;
+	init_run_actions_ctx(&h);
+	if (do_action(&h, &act, env_L->msg)<0)
+	{
+		LM_ERR("do action failed\n");
+		return app_lua_return_false(L);
+	}
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_sethost (lua_State *L)
+{
+	struct action  act;
+	struct run_act_ctx h;
+	str uri;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	uri.s = (char*)lua_tostring(L, -1);
+	if(uri.s==NULL)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return app_lua_return_false(L);
+	}
+	uri.len = strlen(uri.s);
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+
+	memset(&act, 0, sizeof(act));
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = uri.s;
+	act.type = SET_HOST_T;
+	init_run_actions_ctx(&h);
+	if (do_action(&h, &act, env_L->msg)<0)
+	{
+		LM_ERR("do action failed\n");
+		return app_lua_return_false(L);
+	}
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_setdsturi (lua_State *L)
+{
+	str uri;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	uri.s = (char*)lua_tostring(L, -1);
+	if(uri.s==NULL)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return app_lua_return_false(L);
+	}
+	uri.len = strlen(uri.s);
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+
+	if (set_dst_uri(env_L->msg, &uri)<0)
+	{
+		LM_ERR("setting dst uri failed\n");
+		return app_lua_return_false(L);
+	}
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_resetdsturi (lua_State *L)
+{
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+
+	reset_dst_uri(env_L->msg);
+	return app_lua_return_true(L);
+}
+
+
+/**
+ *
+ */
 static const luaL_reg _sr_core_Map [] = {
-	{"probe", lua_sr_probe},
-	{"dbg",   lua_sr_dbg},
-	{"err",   lua_sr_err},
-	{"log",   lua_sr_log},
-	{"modf",  lua_sr_modf},
+	{"probe",        lua_sr_probe},
+	{"dbg",          lua_sr_dbg},
+	{"err",          lua_sr_err},
+	{"log",          lua_sr_log},
+	{"modf",         lua_sr_modf},
+	{"is_myself",    lua_sr_is_myself},
+	{"setflag",      lua_sr_setflag},
+	{"resetflag",    lua_sr_resetflag},
+	{"isflagset",    lua_sr_isflagset},
+	{"setbflag",     lua_sr_setbflag},
+	{"resetbflag",   lua_sr_resetbflag},
+	{"isbflagset",   lua_sr_isbflagset},
+	{"seturi",       lua_sr_seturi},
+	{"setuser",      lua_sr_setuser},
+	{"sethost",      lua_sr_sethost},
+	{"setdsturi",    lua_sr_setdsturi},
+	{"resetdsturi",  lua_sr_resetdsturi},
 	{NULL, NULL}
 };
 
