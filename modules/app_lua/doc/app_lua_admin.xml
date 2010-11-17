@@ -96,7 +96,7 @@
 		<title>Set <varname>load</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
+modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 ...
 </programlisting>
 	    </example>
@@ -111,8 +111,50 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 	    	<itemizedlist>
 		    <listitem>
 			<para>
+				<emphasis>auth</emphasis> - register functions from auth module
+				under 'sr.auth'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>auth_db</emphasis> - register functions from auth_db
+				module under 'sr.auth_db'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>maxfwd</emphasis> - register functions from maxfwd
+				module under 'sr.maxfwd'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>registrar</emphasis> - register functions from
+				registrar module under 'sr.registrar'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>rr</emphasis> - register functions from rr module
+				under 'sr.rr'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>sqlops</emphasis> - register functions from sqlops
+				module under 'sr.sqlops'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
 				<emphasis>sl</emphasis> - register functions from sl module
 				under 'sr.sl'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>tm</emphasis> - register functions from tm module
+				under 'sr.tm'.
 			</para>
 		    </listitem>
 	    	</itemizedlist>
@@ -129,7 +171,7 @@ modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 		<title>Set <varname>register</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lua", "register", "sr")
+modparam("app_lua", "register", "sl")
 ...
 </programlisting>
 	    </example>

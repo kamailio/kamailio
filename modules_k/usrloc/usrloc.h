@@ -35,6 +35,12 @@
 #include "ucontact.h"
 #include "ul_callback.h"
 
+/* storage modes */
+#define NO_DB         0
+#define WRITE_THROUGH 1
+#define WRITE_BACK    2
+#define DB_ONLY       3
+
 
 /*! usrloc API export structure */
 typedef struct usrloc_api {
@@ -43,6 +49,7 @@ typedef struct usrloc_api {
 	unsigned int  nat_flag;   /*! nat_flag module parameter */
 
 	register_udomain_t   register_udomain;
+	get_udomain_t        get_udomain;
 	get_all_ucontacts_t  get_all_ucontacts;
 
 	insert_urecord_t     insert_urecord;

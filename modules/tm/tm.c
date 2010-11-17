@@ -292,12 +292,12 @@ static int t_branch_timeout(struct sip_msg* msg, char*, char*);
 static int t_branch_replied(struct sip_msg* msg, char*, char*);
 static int t_any_timeout(struct sip_msg* msg, char*, char*);
 static int t_any_replied(struct sip_msg* msg, char*, char*);
-static int t_is_canceled(struct sip_msg* msg, char*, char*);
+static int w_t_is_canceled(struct sip_msg* msg, char*, char*);
 static int t_is_expired(struct sip_msg* msg, char*, char*);
 static int t_grep_status(struct sip_msg* msg, char*, char*);
 static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar);
-static int t_check_trans(struct sip_msg* msg, char* foo, char* bar);
+static int w_t_check_trans(struct sip_msg* msg, char* foo, char* bar);
 
 
 /* by default the fr timers avps are not set, so that the avps won't be
@@ -448,7 +448,7 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_any_replied",     t_any_replied,            0, 0, 
 			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
-	{"t_is_canceled",     t_is_canceled,            0, 0,
+	{"t_is_canceled",     w_t_is_canceled,          0, 0,
 			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_is_expired",      t_is_expired,             0, 0,
 			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
@@ -460,7 +460,7 @@ static cmd_export_t cmds[]={
 			FAILURE_ROUTE},
 	{"t_save_lumps",      w_t_save_lumps,           0, 0,
 			REQUEST_ROUTE},
-	{"t_check_trans",	t_check_trans,				0, 0,
+	{"t_check_trans",	  w_t_check_trans,			0, 0,
 			REQUEST_ROUTE|TM_ONREPLY_ROUTE|BRANCH_ROUTE },
 
 	{"t_load_contacts", t_load_contacts,            0, 0,
@@ -470,6 +470,7 @@ static cmd_export_t cmds[]={
 
 	/* not applicable from the script */
 	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,   0, 0},
+	{"load_xtm",           (cmd_function)load_xtm,          NO_SCRIPT,   0, 0},
 	{0,0,0,0,0}
 };
 
@@ -1755,7 +1756,7 @@ int t_branch_replied(struct sip_msg* msg, char* foo, char* bar)
 
 
 /* script function, returns: 1 if the transaction was canceled, -1 if not */
-int t_is_canceled(struct sip_msg* msg, char* foo, char* bar)
+int t_is_canceled(struct sip_msg* msg)
 {
 	struct cell *t;
 	int ret;
@@ -1771,6 +1772,11 @@ int t_is_canceled(struct sip_msg* msg, char* foo, char* bar)
 		ret=(t->flags & T_CANCELED)?1:-1;
 	}
 	return ret;
+}
+
+static int w_t_is_canceled(struct sip_msg* msg, char* foo, char* bar)
+{
+	return t_is_canceled(msg);
 }
 
 /* script function, returns: 1 if the transaction lifetime interval has already elapsed, -1 if not */
@@ -1937,7 +1943,7 @@ int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt)
  *       reliable: if the ACK  is delayed the proxied transaction might
  *       be already deleted when it reaches the proxy (wait_timeout))
  */
-static int t_check_trans(struct sip_msg* msg, char* foo, char* bar)
+int t_check_trans(struct sip_msg* msg)
 {
 	struct cell* t;
 	
@@ -1974,6 +1980,11 @@ static int t_check_trans(struct sip_msg* msg, char* foo, char* bar)
 		/* not found or error */
 	}
 	return -1;
+}
+
+static int w_t_check_trans(struct sip_msg* msg, char* foo, char* bar)
+{
+	return t_check_trans(msg);
 }
 
 static int hexatoi(str *s, unsigned int* result)

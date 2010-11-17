@@ -274,6 +274,24 @@ int lua_sr_initialized(void)
 /**
  *
  */
+int app_lua_return_int(lua_State *L, int v)
+{
+	lua_pushinteger(L, v);
+	return 1;
+}
+
+/**
+ *
+ */
+int app_lua_return_error(lua_State *L)
+{
+	lua_pushinteger(L, -1);
+	return 1;
+}
+
+/**
+ *
+ */
 int app_lua_return_boolean(lua_State *L, int b)
 {
 	if(b==SRLUA_FALSE)

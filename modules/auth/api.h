@@ -33,6 +33,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../../parser/digest/digest.h"
+#include "../../sr_module.h"
 #include "../../usr_avp.h"
 #include "../../parser/hf.h"
 #include "../../str.h"
@@ -96,6 +97,19 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr);
 typedef int (*check_response_t)(dig_cred_t* cred, str* method, char* ha1);
 int auth_check_response(dig_cred_t* cred, str* method, char* ha1);
 
+typedef int (*auth_challenge_f)(struct sip_msg *msg, str *realm, int flags,
+		int hftype);
+int auth_challenge(struct sip_msg *msg, str *realm, int flags,
+		int hftype);
+
+typedef int (*pv_authenticate_f)(struct sip_msg *msg, str *realm, str *passwd,
+		int flags, int hftype);
+int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
+		int flags, int hftype);
+
+typedef int (*consume_credentials_f)(struct sip_msg* msg);
+int consume_credentials(struct sip_msg* msg);
+
 /*
  * Auth module API
  */
@@ -104,13 +118,37 @@ typedef struct auth_api_s {
     post_auth_t post_auth;                /* The function to be called after authentication */
     build_challenge_hf_t build_challenge; /* Function to build digest challenge header */
     struct qp* qop;                       /* qop module parameter */
-	calc_HA1_t      calc_HA1;
-	calc_response_t calc_response;
-	check_response_t check_response;
+	calc_HA1_t         calc_HA1;
+	calc_response_t    calc_response;
+	check_response_t   check_response;
+	auth_challenge_f   auth_challenge;
+	pv_authenticate_f  pv_authenticate;
+	consume_credentials_f consume_credentials;
 } auth_api_s_t;
 
 typedef int (*bind_auth_s_t)(auth_api_s_t* api);
 int bind_auth_s(auth_api_s_t* api);
 
+/**
+ * load AUTH module API
+ */
+static inline int auth_load_api(auth_api_s_t* api)
+{
+	bind_auth_s_t bind_auth;
+
+	/* bind to auth module and import the API */
+	bind_auth = (bind_auth_s_t)find_export("bind_auth_s", 0, 0);
+	if (!bind_auth) {
+		LM_ERR("unable to find bind_auth function. Check if you load"
+				" the auth module.\n");
+		return -1;
+	}
+
+	if (bind_auth(api) < 0) {
+		LM_ERR("unable to bind auth module\n");
+		return -1;
+	}
+	return 0;
+}
 
 #endif /* API_H */

@@ -56,6 +56,8 @@ extern int append_fromtag;
  */
 int load_rr( struct rr_binds *rrb )
 {
+	rrb->record_route      = record_route;
+	rrb->loose_route       = loose_route;
 	rrb->add_rr_param      = add_rr_param;
 	rrb->check_route_param = check_route_param;
 	rrb->is_direction      = is_direction;

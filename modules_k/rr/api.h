@@ -50,17 +50,20 @@ typedef  int (*add_rr_param_t)(struct sip_msg*, str*);
 typedef  int (*check_route_param_t)(struct sip_msg*, regex_t*);
 typedef  int (*is_direction_t)(struct sip_msg*, int);
 typedef  int (*get_route_param_t)(struct sip_msg*, str*, str*);
-
+typedef  int (*record_route_f)(struct sip_msg*, str*);
+typedef  int (*loose_route_f)(struct sip_msg*);
 
 /*! record-route API export binding */
-struct rr_binds {
-	add_rr_param_t		add_rr_param;
-	check_route_param_t	check_route_param;
-	is_direction_t			is_direction;
-	get_route_param_t		get_route_param;
-	register_rrcb_t			register_rrcb;
-	int					append_fromtag;
-};
+typedef struct rr_binds {
+	record_route_f       record_route;
+	loose_route_f        loose_route;
+	add_rr_param_t       add_rr_param;
+	check_route_param_t  check_route_param;
+	is_direction_t       is_direction;
+	get_route_param_t    get_route_param;
+	register_rrcb_t      register_rrcb;
+	int                  append_fromtag;
+} rr_api_t;
 
 typedef  int (*load_rr_f)( struct rr_binds* );
 
@@ -92,5 +95,12 @@ inline static int load_rr_api( struct rr_binds *rrb )
 	return 0;
 }
 
+/**
+ *
+ */
+inline static int rr_load_api( rr_api_t *rrb )
+{
+	return load_rr_api(rrb);
+}
 
 #endif

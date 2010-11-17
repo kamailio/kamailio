@@ -62,6 +62,7 @@ Bogdan-Andrei Iancu
               3.22. cseq_delay (integer)
               3.23. fetch_rows (integer)
               3.24. hash_size (integer)
+              3.25. preload (string)
 
         4. Exported Functions
         5. Exported MI Functions
@@ -130,6 +131,7 @@ Bogdan-Andrei Iancu
    1.22. Set cseq_delay parameter
    1.23. Set fetch_rows parameter
    1.24. Set hash_size parameter
+   1.25. Set preload parameter
 
 Chapter 1. Admin Guide
 
@@ -170,6 +172,7 @@ Chapter 1. Admin Guide
         3.22. cseq_delay (integer)
         3.23. fetch_rows (integer)
         3.24. hash_size (integer)
+        3.25. preload (string)
 
    4. Exported Functions
    5. Exported MI Functions
@@ -270,6 +273,7 @@ Chapter 1. Admin Guide
    3.22. cseq_delay (integer)
    3.23. fetch_rows (integer)
    3.24. hash_size (integer)
+   3.25. preload (string)
 
 3.1. nat_bflag (integer)
 
@@ -598,6 +602,20 @@ modparam("usrloc", "fetch_rows", 3000)
    Example 1.24. Set hash_size parameter
 ...
 modparam("usrloc", "hash_size", 10)
+...
+
+3.25. preload (string)
+
+   Preload location table given as value. A location table is loaded based
+   on fixup of registrar functions, therefore you need to use this
+   parameter only to load tables that are not used by registrar module
+   directly in configuration file.
+
+   Default value is “NULL”.
+
+   Example 1.25. Set preload parameter
+...
+modparam("usrloc", "preload", "location")
 ...
 
 4. Exported Functions

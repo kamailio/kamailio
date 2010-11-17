@@ -28,6 +28,7 @@
 
 
 #include "../../parser/msg_parser.h"
+#include "api.h"
 
 int auth_db_init(const str* db_url);
 int auth_db_bind(const str* db_url);
@@ -44,5 +45,10 @@ int proxy_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
  */
 int www_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
 
+
+/*
+ * Bind to AUTH_DB API
+ */
+int bind_auth_db(auth_db_api_t* api);
 
 #endif /* AUTHORIZE_H */

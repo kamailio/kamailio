@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Lookup contacts in usrloc
+ * Digest Authentication - Database support
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -22,32 +22,42 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/*!
- * \file
- * \brief SIP registrar module - lookup contacts in usrloc
- * \ingroup registrar   
- */  
 
+#ifndef _AUTH_DB_API_H_
+#define _AUTH_DB_API_H_
 
-#ifndef LOOKUP_H
-#define LOOKUP_H
-
+#include "../../sr_module.h"
 #include "../../parser/msg_parser.h"
-#include "../../modules_k/usrloc/usrloc.h"
 
-
-/*! \brief
- * Lookup a contact in usrloc and rewrite R-URI if found
+typedef int (*digest_authenticate_f)(struct sip_msg* msg, str *realm,
+				str *table, hdr_types_t hftype);
+/**
+ * @brief AUTH_DB API structure
  */
-int lookup(struct sip_msg* _m, udomain_t* _d);
+typedef struct auth_db_api {
+	digest_authenticate_f digest_authenticate;
+} auth_db_api_t;
 
+typedef int (*bind_auth_db_f)(auth_db_api_t* api);
 
-/*! \brief
- * Return true if the AOR in the Request-URI is registered,
- * it is similar to lookup but registered neither rewrites
- * the Request-URI nor appends branches
+/**
+ * @brief Load the SL API
  */
-int registered(struct sip_msg* _m, char* _t, char* _s);
+static inline int auth_db_load_api(auth_db_api_t *api)
+{
+	bind_auth_db_f bindauthdb;
 
+	bindauthdb = (bind_auth_db_f)find_export("bind_auth_db", 0, 0);
+	if(bindauthdb == 0) {
+		LM_ERR("cannot find bind_auth_db\n");
+		return -1;
+	}
+	if (bindauthdb(api)==-1)
+	{
+		LM_ERR("cannot bind authdb api\n");
+		return -1;
+	}
+	return 0;
+}
 
-#endif /* LOOKUP_H */
+#endif /* _AUTH_DB_API_H_ */

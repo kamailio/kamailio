@@ -690,6 +690,29 @@ modparam("usrloc", "hash_size", 10)
 		</example>
 	</section>
 
+	<section id="preload">
+		<title><varname>preload</varname> (string)</title>
+		<para>
+		Preload location table given as value. A location table is loaded
+		based on fixup of registrar functions, therefore you need to use this
+		parameter only to load tables that are not used by registrar module
+		directly in configuration file.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>preload</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "preload", "location")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

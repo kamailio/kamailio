@@ -45,6 +45,7 @@
 #include "../../mod_fix.h"
 #include "../../mem/mem.h"
 #include "aaa_avps.h"
+#include "api.h"
 #include "authdb_mod.h"
 
 
@@ -204,41 +205,20 @@ static int generate_avps(db1_res_t* result)
 /*
  * Authorize digest credentials
  */
-static inline int digest_authenticate(struct sip_msg* msg, fparam_t* realm,
-									char* tname, hdr_types_t hftype)
+static int digest_authenticate(struct sip_msg* msg, str *realm,
+				str *table, hdr_types_t hftype)
 {
 	char ha1[256];
 	int res;
 	struct hdr_field* h;
 	auth_body_t* cred;
-	str domain, table;
 	db1_res_t* result = NULL;
 	int ret;
 
 	cred = 0;
 	ret = AUTH_ERROR;
 
-	if(!tname) {
-		LM_ERR("invalid table parameter\n");
-		return AUTH_ERROR;
-	}
-
-	table.s = tname;
-	table.len = strlen(tname);
-
-	if (get_str_fparam(&domain, msg, realm) < 0) {
-		LM_ERR("failed to get realm value\n");
-		goto end;
-	}
-
-	if (domain.len==0)
-	{
-		LM_ERR("invalid realm parameter - empty value\n");
-		goto end;
-	}
-	LM_DBG("realm value [%.*s]\n", domain.len, domain.s);
-
-	ret = auth_api.pre_auth(msg, &domain, hftype, &h, NULL);
+	ret = auth_api.pre_auth(msg, realm, hftype, &h, NULL);
 	switch(ret) {
 		case ERROR:
 		case BAD_CREDENTIALS:
@@ -266,7 +246,7 @@ static inline int digest_authenticate(struct sip_msg* msg, fparam_t* realm,
 
 	cred = (auth_body_t*)h->parsed;
 
-	res = get_ha1(&cred->digest.username, &domain, &table, ha1, &result);
+	res = get_ha1(&cred->digest.username, realm, table, ha1, &result);
 	if (res < 0) {
 		/* Error while accessing the database */
 		ret = AUTH_ERROR;
@@ -310,8 +290,30 @@ end:
  */
 int proxy_authenticate(struct sip_msg* _m, char* _realm, char* _table)
 {
-	return digest_authenticate(_m, (fparam_t*)_realm, _table,
-			HDR_PROXYAUTH_T);
+	str srealm;
+	str stable;
+
+	if(_table==NULL) {
+		LM_ERR("invalid table parameter\n");
+		return AUTH_ERROR;
+	}
+
+	stable.s   = _table;
+	stable.len = strlen(stable.s);
+
+	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		return AUTH_ERROR;
+	}
+
+	if (srealm.len==0)
+	{
+		LM_ERR("invalid realm parameter - empty value\n");
+		return AUTH_ERROR;
+	}
+	LM_DBG("realm value [%.*s]\n", srealm.len, srealm.s);
+
+	return digest_authenticate(_m, &srealm, &stable, HDR_PROXYAUTH_T);
 }
 
 
@@ -320,6 +322,42 @@ int proxy_authenticate(struct sip_msg* _m, char* _realm, char* _table)
  */
 int www_authenticate(struct sip_msg* _m, char* _realm, char* _table)
 {
-	return digest_authenticate(_m, (fparam_t*)_realm, _table,
-			HDR_AUTHORIZATION_T);
+	str srealm;
+	str stable;
+
+	if(_table==NULL) {
+		LM_ERR("invalid table parameter\n");
+		return AUTH_ERROR;
+	}
+
+	stable.s   = _table;
+	stable.len = strlen(stable.s);
+
+	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		return AUTH_ERROR;
+	}
+
+	if (srealm.len==0)
+	{
+		LM_ERR("invalid realm parameter - empty value\n");
+		return AUTH_ERROR;
+	}
+	LM_DBG("realm value [%.*s]\n", srealm.len, srealm.s);
+
+	return digest_authenticate(_m, &srealm, &stable, HDR_AUTHORIZATION_T);
+}
+
+/**
+ * @brief bind functions to AUTH_DB API structure
+ */
+int bind_auth_db(auth_db_api_t *api)
+{
+	if (!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+	api->digest_authenticate = digest_authenticate;
+
+	return 0;
 }

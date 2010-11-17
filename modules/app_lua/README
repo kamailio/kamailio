@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -116,27 +116,36 @@ Chapter 1. Admin Guide
    use lua_run(function, params) to execute a function from the script at
    runtime.
 
-   Default value is "null".
+   Default value is “null”.
 
    Example 1.1. Set load parameter
 ...
-modparam("lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
+modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 ...
 
 3.2. register (string)
 
    Use this function to register optional SIP Router submodules to Lua.
    Available submodules are:
+     * auth - register functions from auth module under 'sr.auth'.
+     * auth_db - register functions from auth_db module under
+       'sr.auth_db'.
+     * maxfwd - register functions from maxfwd module under 'sr.maxfwd'.
+     * registrar - register functions from registrar module under
+       'sr.registrar'.
+     * rr - register functions from rr module under 'sr.rr'.
+     * sqlops - register functions from sqlops module under 'sr.sqlops'.
      * sl - register functions from sl module under 'sr.sl'.
+     * tm - register functions from tm module under 'sr.tm'.
 
    Note that 'sr', 'sr.hdr' and 'sr.pv' modules are always registered to
    Lua.
 
-   Default value is "null".
+   Default value is “null”.
 
    Example 1.2. Set register parameter
 ...
-modparam("lua", "register", "sr")
+modparam("app_lua", "register", "sl")
 ...
 
 4. Exported Functions

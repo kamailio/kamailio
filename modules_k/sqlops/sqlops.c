@@ -149,7 +149,7 @@ int sql_res_param(modparam_t type, void *val)
 
 	if(val==NULL)
 	{
-		LM_ERR("invalid parameter");
+		LM_ERR("invalid parameter\n");
 		goto error;
 	}
 
