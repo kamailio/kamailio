@@ -1,9 +1,11 @@
 /*
  * $Id$
  *
- * Various URI checks and Request URI manipulation
+ * Various URI checks and URI manipulation
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ *
+ * Copyright (C) 2004-2010 Juha Heinanen
  *
  * This file is part of SIP-router, a free SIP server.
  *
@@ -49,6 +51,7 @@
 #include "../../lib/kcore/parser_helpers.h"
 #include "../../dset.h"
 #include "../../pvar.h"
+#include "../../lvalue.h"
 #include "checks.h"
 
 
@@ -453,4 +456,92 @@ int is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2)
 	LM_ERR("failed to get pseudo variable value\n");
 	return -1;
     }
+}
+
+/*
+ * Set userpart of URI
+ */
+int set_uri_user(struct sip_msg* _m, char* _uri, char* _value)
+{
+    pv_spec_t *uri_pv, *value_pv;
+    pv_value_t uri_val, value_val, res_val;
+    str uri, value;
+    char *at, *colon, *c;
+    char new_uri[MAX_URI_SIZE + 1];
+
+    uri_pv = (pv_spec_t *)_uri;
+    if (uri_pv && (pv_get_spec_value(_m, uri_pv, &uri_val) == 0)) {
+	if (uri_val.flags & PV_VAL_STR) {
+	    if (uri_val.rs.len == 0 || uri_val.rs.s == NULL) {
+		LM_ERR("missing uri value\n");
+		return -1;
+	    }
+	} else {
+	    LM_ERR("uri value is not string\n");
+	    return -1;
+	}
+    } else {
+	LM_ERR("failed to get uri value\n");
+	return -1;
+    }
+    uri = uri_val.rs;
+
+    value_pv = (pv_spec_t *)_value;
+    if (value_pv && (pv_get_spec_value(_m, value_pv, &value_val) == 0)) {
+	if (value_val.flags & PV_VAL_STR) {
+	    if (value_val.rs.s == NULL) {
+		LM_ERR("missing uriuser value\n");
+		return -1;
+	    }
+	} else {
+	    LM_ERR("uriuser value is not string\n");
+	    return -1;
+	}
+    } else {
+	LM_ERR("failed to get uriuser value\n");
+	return -1;
+    }
+    value = value_val.rs;
+
+    colon = strchr(uri.s, ':');
+    if (colon == NULL) {
+	LM_ERR("uri does not contain ':' character\n");
+	return -1;
+    }
+    at = strchr(uri.s, '@');
+    c = &(new_uri[0]);
+    if (at == NULL) {
+	if (value.len == 0) return 1;
+	if (uri.len + value.len > MAX_URI_SIZE) {
+	    LM_ERR("resulting uri would be too large\n");
+	    return -1;
+	}
+	append_str(c, uri.s, colon - uri.s + 1);
+	append_str(c, value.s, value.len);
+	append_chr(c, '@');
+	append_str(c, colon + 1, uri.len - (colon - uri.s + 1));
+	res_val.rs.len = uri.len + value.len + 1;
+    } else {
+	if (value.len == 0) {
+	    append_str(c, uri.s, colon - uri.s + 1);
+	    append_str(c, at + 1, uri.len - (at - uri.s + 1));
+	    res_val.rs.len = uri.len - (at - colon);
+	} else {
+	    if (uri.len + value.len - (at - colon - 1) > MAX_URI_SIZE) {
+		LM_ERR("resulting uri would be too large\n");
+		return -1;
+	    }
+	    append_str(c, uri.s, colon - uri.s + 1);
+	    append_str(c, value.s, value.len);
+	    append_str(c, at, uri.len - (at - uri.s));
+	    res_val.rs.len = uri.len + value.len - (at - colon - 1);
+	}
+    }
+
+    res_val.rs.s = &(new_uri[0]);
+    LM_DBG("resulting uri: %.*s\n", res_val.rs.len, res_val.rs.s);
+    res_val.flags = PV_VAL_STR;
+    uri_pv->setf(_m, &uri_pv->pvp, (int)EQ_T, &res_val);
+
+    return 1;
 }

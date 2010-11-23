@@ -90,4 +90,9 @@ int is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2);
  */
 int is_e164(struct sip_msg* _m, char* _sp, char* _s2);
 
+/*
+ * Set userpart of URI
+ */
+int set_uri_user(struct sip_msg* _m, char* _uri, char* _value);
+
 #endif /* CHECKS_H */

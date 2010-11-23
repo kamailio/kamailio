@@ -815,6 +815,53 @@ append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title>
+			<function moreinfo="none">is_rpid_user_e164()</function>
+		</title>
+		<para>
+		The function checks if the SIP URI received from the database or 
+		radius server and will potentially be used in Remote-Party-ID header 
+		field contains an E164 number (+followed by up to 15 decimal digits) 
+		in its user part.  Check fails, if no such SIP URI exists 
+		(i.e. radius server or database didn't provide this information).
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title>is_rpid_user_e164 usage</title>
+		<programlisting format="linespecific">
+...
+if (is_rpid_user_e164()) {
+    # do something here
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+			<function moreinfo="none">set_uri_user(uri, user)</function>
+		</title>
+		<para>
+		Sets userpart of SIP URI stored in writable pseudo variable
+		uri to value of	pseudo variable user.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, FAILURE_ROUTE, and ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title>set_uri_user usage</title>
+		<programlisting format="linespecific">
+...
+$var(uri) = "sip:user@host";
+$var(user) = "new_user";
+set_uri_user("$var(uri)", "$var(user)");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 </chapter>
