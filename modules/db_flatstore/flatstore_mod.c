@@ -110,6 +110,7 @@ static cmd_export_t cmds[] = {
 	{"db_con", (cmd_function)flat_con, 0, 0, 0},
 	{"db_cmd", (cmd_function)flat_cmd, 0, 0, 0},
 	{"db_put", (cmd_function)flat_put, 0, 0, 0},
+	{"db_bind_api", (cmd_function)db_flat_bind_api,      0, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
