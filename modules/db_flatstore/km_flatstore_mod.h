@@ -32,6 +32,8 @@
 
 #include <time.h>
 
+#include "../../lib/srdb1/db.h"
+
 /*
  * Process number used in filenames
  */
@@ -62,6 +64,8 @@ int km_mod_init(void);
 void km_mod_destroy(void);
 
 int km_child_init(int rank);
+
+int db_flat_bind_api(db_func_t *dbb);
 
 
 #endif /* KM_FLATSTORE_MOD_H */
