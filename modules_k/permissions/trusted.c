@@ -35,6 +35,7 @@
 #include "../../config.h"
 #include "../../lib/srdb1/db.h"
 #include "../../ip_addr.h"
+#include "../../mod_fix.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
@@ -462,51 +463,47 @@ int allow_trusted_0(struct sip_msg* _msg, char* str1, char* str2)
  */
 int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp) 
 {
-    pv_spec_t *src_ip_sp, *proto_sp;
-    pv_value_t pv_val;
-    char *src_ip, *proto;
+    str src_ip, proto;
     int proto_int;
 
-    src_ip_sp = (pv_spec_t *)_src_ip_sp;
-    proto_sp = (pv_spec_t *)_proto_sp;
-    
-    if (src_ip_sp && (pv_get_spec_value(_msg, src_ip_sp, &pv_val) == 0)) {
-	if (pv_val.flags & PV_VAL_STR) {
-	    src_ip = pv_val.rs.s;
-	} else {
-	    LM_ERR("src_ip pvar value is not string\n");
-	    return -1;
-	}
-    } else {
-	LM_ERR("src_ip pvar does not exist or has no value\n");
-	return -1;
+    if (_src_ip_sp==NULL
+			|| (fixup_get_svalue(_msg, (gparam_p)_src_ip_sp, &src_ip) != 0)) {
+		LM_ERR("src_ip param does not exist or has no value\n");
+		return -1;
     }
     
-    if (proto_sp && (pv_get_spec_value(_msg, proto_sp, &pv_val) == 0)) {
-	if (pv_val.flags & PV_VAL_STR) {
-	    strlower(&(pv_val.rs));
-	    proto = pv_val.rs.s;
-	} else {
-	    LM_ERR("proto pvar value is not string\n");
-	    return -1;
-	}
-    } else {
-	LM_ERR("proto pvar does not exist or has no value\n");
-	return -1;
+    if (_proto_sp==NULL
+			|| (fixup_get_svalue(_msg, (gparam_p)_proto_sp, &proto) != 0)) {
+		LM_ERR("proto param does not exist or has no value\n");
+		return -1;
+    }
+	if(proto.len!=3 && proto.len!=4)
+		goto error;
+
+	switch(proto.s[0]) {
+		case 'u': case 'U':
+			if (proto.len==3 && strncasecmp(proto.s, "udp", 3) == 0) {
+				proto_int = PROTO_UDP;
+			} else goto error;
+		break;
+		case 't': case 'T':
+			if (proto.len==3 && strncasecmp(proto.s, "tcp", 3) == 0) {
+				proto_int = PROTO_TCP;
+			} else if (proto.len==3 && strncasecmp(proto.s, "tls", 3) == 0) {
+				proto_int = PROTO_TLS;
+			} else goto error;
+		break;
+		case 's': case 'S':
+			if (proto.len==4 && strncasecmp(proto.s, "sctp", 4) == 0) {
+				proto_int = PROTO_SCTP;
+			} else goto error;
+		break;
+		default:
+			goto error;
     }
 
-    if (strcmp(proto, "udp") == 0) {
-	proto_int = PROTO_UDP;
-    } else if (strcmp(proto, "tcp") == 0) {
-	proto_int = PROTO_TCP;
-    } else if (strcmp(proto, "tls") == 0) {
-	proto_int = PROTO_TLS;
-    } else if (strcmp(proto, "sctp") == 0) {
-	proto_int = PROTO_SCTP;
-    } else {
-	LM_ERR("unknown protocol %s\n", proto);
+    return allow_trusted(_msg, src_ip.s, proto_int);
+error:
+	LM_ERR("unknown protocol %.*s\n", proto.len, proto.s);
 	return -1;
-    }
-
-    return allow_trusted(_msg, src_ip, proto_int);
 }
