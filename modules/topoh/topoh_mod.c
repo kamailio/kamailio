@@ -47,6 +47,8 @@
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_from.h"
 
+#include "../../modules/sanity/api.h"
+
 #include "th_mask.h"
 #include "th_msg.h"
 
@@ -69,6 +71,9 @@ str th_uri_prefix = {0, 0};
 
 int th_param_mask_callid = 0;
 
+int th_sanity_checks = 0;
+sanity_api_t scb;
+
 int th_msg_received(void *data);
 int th_msg_sent(void *data);
 
@@ -84,6 +89,7 @@ static param_export_t params[]={
 	{"vparam_name",		STR_PARAM, &th_vparam_name.s},
 	{"vparam_prefix",	STR_PARAM, &th_vparam_prefix.s},
 	{"callid_prefix",	STR_PARAM, &th_callid_prefix.s},
+	{"sanity_checks",	INT_PARAM, &th_sanity_checks},
 	{0,0,0}
 };
 
@@ -109,6 +115,14 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	if(th_sanity_checks!=0)
+	{
+		if(sanity_load_api(&scb)<0)
+		{
+			LM_ERR("cannot bind to sanity module\n");
+			goto error;
+		}
+	}
 	th_cookie_name.len = strlen(th_cookie_name.s);
 	th_ip.len = strlen(th_ip.s);
 	if(th_ip.len<=0)
@@ -175,6 +189,9 @@ error:
 	return -1;
 }
 
+/**
+ *
+ */
 int th_prepare_msg(sip_msg_t *msg)
 {
 	if (parse_msg(msg->buf, msg->len, msg)!=0)
@@ -198,6 +215,9 @@ int th_prepare_msg(sip_msg_t *msg)
 	return 0;
 }
 
+/**
+ *
+ */
 int th_msg_received(void *data)
 {
 	sip_msg_t msg;
@@ -223,6 +243,14 @@ int th_msg_received(void *data)
 	th_cookie_value.len = 2;
 	if(msg.first_line.type==SIP_REQUEST)
 	{
+		if(th_sanity_checks!=0)
+		{
+			if(scb.check_defaults(&msg)<1)
+			{
+				LM_ERR("sanity checks failed\n");
+				goto done;
+			}
+		}
 		dialog = (get_to(&msg)->tag_value.len>0)?1:0;
 		if(dialog)
 		{
@@ -280,6 +308,9 @@ done:
 	return 0;
 }
 
+/**
+ *
+ */
 int th_msg_sent(void *data)
 {
 	sip_msg_t msg;
