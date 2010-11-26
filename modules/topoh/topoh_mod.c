@@ -42,6 +42,7 @@
 #include "../../events.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../forward.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_from.h"
@@ -110,6 +111,16 @@ static int mod_init(void)
 {
 	th_cookie_name.len = strlen(th_cookie_name.s);
 	th_ip.len = strlen(th_ip.s);
+	if(th_ip.len<=0)
+	{
+		LM_ERR("mask IP parameter is invalid\n");
+		goto error;
+	}
+	if(check_self(&th_ip, 0, 0)==1)
+	{
+		LM_ERR("mask IP must be different than SIP server local IP\n");
+		goto error;
+	}
 	th_uparam_name.len = strlen(th_uparam_name.s);
 	th_uparam_prefix.len = strlen(th_uparam_prefix.s);
 	th_vparam_name.len = strlen(th_vparam_name.s);
@@ -121,18 +132,25 @@ static int mod_init(void)
 		+ th_vparam_prefix.len;
 	th_via_prefix.s = (char*)pkg_malloc(th_via_prefix.len+1);
 	if(th_via_prefix.s==NULL)
+	{
+		LM_ERR("via prefix parameter is invalid\n");
 		goto error;
+	}
 	/* 'sip:' + ip + ';' + param + '=' + prefix (+ '\0') */
 	th_uri_prefix.len = 4 + th_ip.len + 1 + th_uparam_name.len + 1
 		+ th_uparam_prefix.len;
 	th_uri_prefix.s = (char*)pkg_malloc(th_uri_prefix.len+1);
 	if(th_uri_prefix.s==NULL)
+	{
+		LM_ERR("uri prefix parameter is invalid\n");
 		goto error;
+	}
 	/* build via prefix */
 	memcpy(th_via_prefix.s, "SIP/2.0/UDP ", 12);
 	memcpy(th_via_prefix.s+12, th_ip.s, th_ip.len);
 	th_via_prefix.s[12+th_ip.len] = ';';
-	memcpy(th_via_prefix.s+12+th_ip.len+1, th_vparam_name.s, th_vparam_name.len);
+	memcpy(th_via_prefix.s+12+th_ip.len+1, th_vparam_name.s,
+			th_vparam_name.len);
 	th_via_prefix.s[12+th_ip.len+1+th_vparam_name.len] = '=';
 	memcpy(th_via_prefix.s+12+th_ip.len+1+th_vparam_name.len+1,
 			th_vparam_prefix.s, th_vparam_prefix.len);
