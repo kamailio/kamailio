@@ -66,6 +66,7 @@
 #include "ds_ht.h"
 #include "dispatch.h"
 #include "config.h"
+#include "api.h"
 
 MODULE_VERSION
 
@@ -180,6 +181,8 @@ static cmd_export_t cmds[]={
 		0, 0, ANY_ROUTE},
 	{"ds_load_update",   (cmd_function)w_ds_load_update,  0,
 		0, 0, ANY_ROUTE},
+	{"bind_dispatcher",   (cmd_function)bind_dispatcher,  0,
+		0, 0, 0},
 	{0,0,0,0,0,0}
 };
 

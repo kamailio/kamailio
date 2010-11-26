@@ -71,6 +71,7 @@
 #include "../../str.h"
 
 #include "ds_ht.h"
+#include "api.h"
 #include "dispatch.h"
 
 #define DS_TABLE_VERSION	1
@@ -2374,3 +2375,15 @@ void ds_ht_timer(unsigned int ticks, void *param)
 	return;
 }
 
+int bind_dispatcher(dispatcher_api_t* api)
+{
+	if (!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+	api->select  = ds_select_dst;
+	api->next    = ds_next_dst;
+	api->mark    = ds_mark_dst;
+	api->is_from = ds_is_from_list;
+	return 0;
+}
