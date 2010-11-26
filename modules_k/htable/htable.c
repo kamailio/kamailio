@@ -42,6 +42,7 @@
 #include "ht_api.h"
 #include "ht_db.h"
 #include "ht_var.h"
+#include "api.h"
 
 
 MODULE_VERSION
@@ -86,15 +87,14 @@ static mi_export_t mi_cmds[] = {
 
 
 static cmd_export_t cmds[]={
-	{"sht_print",  (cmd_function)ht_print,  0, 0, 0, 
-		REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE | LOCAL_ROUTE},
-	{"sht_rm_name_re",  (cmd_function)ht_rm_name_re,  1, fixup_ht_rm, 0, 
-		REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE | LOCAL_ROUTE},
-	{"sht_rm_value_re",  (cmd_function)ht_rm_value_re,  1, fixup_ht_rm, 0, 
-		REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE | LOCAL_ROUTE},
+	{"sht_print",       (cmd_function)ht_print,        0, 0, 0,
+		ANY_ROUTE},
+	{"sht_rm_name_re",  (cmd_function)ht_rm_name_re,   1, fixup_ht_rm, 0,
+		ANY_ROUTE},
+	{"sht_rm_value_re", (cmd_function)ht_rm_value_re,  1, fixup_ht_rm, 0,
+		ANY_ROUTE},
+	{"bind_htable",     (cmd_function)bind_htable,     0, 0, 0,
+		ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
