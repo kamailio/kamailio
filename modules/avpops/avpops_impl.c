@@ -687,7 +687,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 		}
 	} else {
 		/* avp name is unknown -> go through all list */
-		avp_list = get_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER);
+		avp_list = get_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI);
 		avp = avp_list;
 
 		for ( ; avp ; avp=avp->next )
@@ -784,7 +784,7 @@ int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 	} else {
 		/* avp name is not given - we have just flags */
 		/* -> go through all list */
-		avp_list = get_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER);
+		avp_list = get_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI);
 		avp = avp_list;
 
 		for ( ; avp ; avp=avp_next )
@@ -1320,7 +1320,7 @@ int ops_print_avp(void)
 	str            *name;
 
 	/* go through all list */
-	avp_list = get_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER);
+	avp_list = get_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI);
 	avp = avp_list;
 
 	for ( ; avp ; avp=avp->next)
