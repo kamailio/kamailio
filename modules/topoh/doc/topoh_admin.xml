@@ -89,8 +89,9 @@ modparam("topoh", "mask_key", "some secret here")
 		<title><varname>mask_ip</varname> (str)</title>
 		<para>
 		IP address to be used in masked headers to build valid
-		SIP URIs. Can be any IP address, does not affect routing
-		when used on the main SIP server.
+		SIP URIs. Can be any IP address, even a private-space IP address
+		(e.g., 192.168.1.1), but must not be SIP server's local IP address.
+		It is not used at all for SIP routing.
 		</para>
 		<para>
 		<emphasis>

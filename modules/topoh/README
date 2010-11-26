@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2009 FhG FOKUS
+   Copyright Â© 2009 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -132,8 +132,9 @@ modparam("topoh", "mask_key", "some secret here")
 3.2. mask_ip (str)
 
    IP address to be used in masked headers to build valid SIP URIs. Can be
-   any IP address, does not affect routing when used on the main SIP
-   server.
+   any IP address, even a private-space IP address (e.g., 192.168.1.1),
+   but must not be SIP server's local IP address. It is not used at all
+   for SIP routing.
 
    Default value is "10.1.1.10".
 
