@@ -39,6 +39,7 @@
 #include "../../modules_k/auth_db/api.h"
 #include "../../modules_k/maxfwd/api.h"
 #include "../../modules_k/registrar/api.h"
+#include "../../modules_k/dispatcher/api.h"
 
 #include "app_lua_api.h"
 
@@ -50,6 +51,7 @@
 #define SR_LUA_EXP_MOD_AUTH_DB    (1<<5)
 #define SR_LUA_EXP_MOD_MAXFWD     (1<<6)
 #define SR_LUA_EXP_MOD_REGISTRAR  (1<<7)
+#define SR_LUA_EXP_MOD_DISPATCHER (1<<8)
 
 /**
  *
@@ -65,6 +67,11 @@ static auth_api_s_t _lua_authb;
  * auth_db
  */
 static auth_db_api_t _lua_auth_dbb;
+
+/**
+ * dispatcher
+ */
+static dispatcher_api_t _lua_dispatcherb;
 
 /**
  * maxfwd
@@ -1072,6 +1079,158 @@ static const luaL_reg _sr_registrar_Map [] = {
 /**
  *
  */
+static int lua_sr_dispatcher_select(lua_State *L)
+{
+	int ret;
+	int setid;
+	int algid;
+	int mode;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_DISPATCHER))
+	{
+		LM_WARN("weird: dispatcher function executed but module"
+				" not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+	if(lua_gettop(L)==3)
+	{
+		setid = lua_tointeger(L, -3);
+		algid = lua_tointeger(L, -2);
+		mode  = lua_tointeger(L, -1);
+	} else if(lua_gettop(L)==2) {
+		setid = lua_tointeger(L, -2);
+		algid = lua_tointeger(L, -1);
+		mode  = 0;
+	} else {
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+	ret = _lua_dispatcherb.select(env_L->msg, setid, algid, mode);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_dispatcher_next(lua_State *L)
+{
+	int ret;
+	int mode;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_DISPATCHER))
+	{
+		LM_WARN("weird: dispatcher function executed but module"
+				" not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+	mode = 0;
+	if(lua_gettop(L)==1)
+	{
+		/* mode given as parameter */
+		mode  = lua_tointeger(L, -1);
+	}
+	ret = _lua_dispatcherb.next(env_L->msg, mode);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_dispatcher_mark(lua_State *L)
+{
+	int ret;
+	int mode;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_DISPATCHER))
+	{
+		LM_WARN("weird: dispatcher function executed but module"
+				" not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+	mode = 0;
+	if(lua_gettop(L)==1)
+	{
+		/* mode given as parameter */
+		mode  = lua_tointeger(L, -1);
+	}
+	ret = _lua_dispatcherb.mark(env_L->msg, mode);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_dispatcher_is_from(lua_State *L)
+{
+	int ret;
+	int mode;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_DISPATCHER))
+	{
+		LM_WARN("weird: dispatcher function executed but module"
+				" not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+	mode = -1;
+	if(lua_gettop(L)==1)
+	{
+		/* mode given as parameter */
+		mode  = lua_tointeger(L, -1);
+	}
+	ret = _lua_dispatcherb.is_from(env_L->msg, mode);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_dispatcher_Map [] = {
+	{"select",      lua_sr_dispatcher_select},
+	{"next",        lua_sr_dispatcher_next},
+	{"mark",        lua_sr_dispatcher_mark},
+	{"is_from",     lua_sr_dispatcher_is_from},
+	{NULL, NULL}
+};
+
+/**
+ *
+ */
 int lua_sr_exp_init_mod(void)
 {
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SL)
@@ -1160,6 +1319,16 @@ int lua_sr_exp_init_mod(void)
 		}
 		LM_DBG("loaded registrar api\n");
 	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_DISPATCHER)
+	{
+		/* bind the DISPATCHER API */
+		if (dispatcher_load_api(&_lua_dispatcherb) < 0)
+		{
+			LM_ERR("cannot bind to DISPATCHER API\n");
+			return -1;
+		}
+		LM_DBG("loaded dispatcher api\n");
+	}
 	return 0;
 }
 
@@ -1197,6 +1366,9 @@ int lua_sr_exp_register_mod(char *mname)
 	} else 	if(len==9 && strcmp(mname, "registrar")==0) {
 		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_REGISTRAR;
 		return 0;
+	} else 	if(len==10 && strcmp(mname, "dispatcher")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_DISPATCHER;
+		return 0;
 	}
 
 	return -1;
@@ -1223,5 +1395,7 @@ void lua_sr_exp_openlibs(lua_State *L)
 		luaL_openlib(L, "sr.maxfwd",     _sr_maxfwd_Map,      0);
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_REGISTRAR)
 		luaL_openlib(L, "sr.registrar",  _sr_registrar_Map,   0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_DISPATCHER)
+		luaL_openlib(L, "sr.dispatcher", _sr_dispatcher_Map,  0);
 }
 
