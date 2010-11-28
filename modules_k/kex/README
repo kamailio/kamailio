@@ -11,7 +11,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2009 Daniel-Constantin Mierla
+   Copyright Â© 2009 Daniel-Constantin Mierla
      __________________________________________________________________
 
    Table of Contents
@@ -37,6 +37,7 @@ Daniel-Constantin Mierla
               3.9. resetdsturi()
               3.10. isdsturiset()
               3.11. pv_printf(var, str)
+              3.12. is_myself(uri)
 
         4. Exported MI Functions
 
@@ -60,6 +61,7 @@ Daniel-Constantin Mierla
    1.9. >resetdsturi usage
    1.10. >isdsturiset usage
    1.11. >pv_printf usage
+   1.12. >is_myself usage
 
 Chapter 1. Admin Guide
 
@@ -84,6 +86,7 @@ Chapter 1. Admin Guide
         3.9. resetdsturi()
         3.10. isdsturiset()
         3.11. pv_printf(var, str)
+        3.12. is_myself(uri)
 
    4. Exported MI Functions
 
@@ -129,6 +132,7 @@ Chapter 1. Admin Guide
    3.9. resetdsturi()
    3.10. isdsturiset()
    3.11. pv_printf(var, str)
+   3.12. is_myself(uri)
 
 3.1. setsflag(flag)
 
@@ -320,6 +324,25 @@ pv_printf("$ru", "sip:$rU@$fd");
 pv_printf("$avp(x)", "From: $fU - To: $tU");
 ...
 
+3.12. is_myself(uri)
+
+   Check if the parameter matches the 'myself' condition (i.e., is a local
+   IP or domain).
+
+   Meaning of the parameters is as follows:
+     * uri - Valid SIP URI or IP address to check against the list of
+       local IP addresses or domains. The parameter value can contain
+       pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.12. >is_myself usage
+...
+if(is_myself("$fu")) {
+    ...
+}
+...
+
 4. Exported MI Functions
 
    4.1. arg
@@ -329,7 +352,7 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
    4.5. version
    4.6. which
 
-4.1. arg
+4.1.  arg
 
    Print command line arguments.
 
@@ -341,7 +364,7 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
                 :arg:_reply_fifo_file_
                 _empty_line_
 
-4.2. kill
+4.2.  kill
 
    Kill the application.
 
@@ -353,7 +376,7 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
                 :kill:_reply_fifo_file_
                 _empty_line_
 
-4.3. pwd
+4.3.  pwd
 
    Print working directory.
 
@@ -365,7 +388,7 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
                 :pwd:_reply_fifo_file_
                 _empty_line_
 
-4.4. uptime
+4.4.  uptime
 
    Print uptime.
 
@@ -377,7 +400,7 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
                 :uptime:_reply_fifo_file_
                 _empty_line_
 
-4.5. version
+4.5.  version
 
    Print version information.
 
@@ -389,7 +412,7 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
                 :version:_reply_fifo_file_
                 _empty_line_
 
-4.6. which
+4.6.  which
 
    Print list of available MI commands.
 

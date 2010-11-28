@@ -377,6 +377,36 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
 </programlisting>
 		</example>
 		</section>
+		<section>
+		<title><function moreinfo="none">is_myself(uri)</function></title>
+		<para>
+			Check if the parameter matches the 'myself' condition (i.e., is
+			a local IP or domain).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>uri</emphasis> - Valid SIP URI or IP address to
+				check against the list of local IP addresses or domains.
+				The parameter value can contain pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>>is_myself</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(is_myself("$fu")) {
+    ...
+}
+...
+</programlisting>
+		</example>
+		</section>
 	</section>
 
 	<section>
