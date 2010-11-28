@@ -26,9 +26,11 @@
 
 #include "../../sr_module.h"
 #include "../../dprint.h"
+#include "../../forward.h"
 #include "../../flags.h"
 #include "../../dset.h"
 #include "../../mod_fix.h"
+#include "../../parser/parse_uri.h"
 
 #include "flags.h"
 #include "km_core.h"
@@ -42,6 +44,8 @@ MODULE_VERSION
 /** parameters */
 
 /** module functions */
+int w_is_myself(struct sip_msg *msg, char *uri, str *s2);
+
 static int mod_init(void);
 static void destroy(void);
 
@@ -77,6 +81,8 @@ static cmd_export_t cmds[]={
 	{"pv_printf", (cmd_function)w_pv_printf,    2, pv_printf_fixup,
 			0, ANY_ROUTE },
 	{"avp_printf", (cmd_function)w_pv_printf,   2, pv_printf_fixup,
+			0, ANY_ROUTE },
+	{"is_myself", (cmd_function)w_is_myself,    1, fixup_spve_null,
 			0, ANY_ROUTE },
 
 	{0,0,0,0,0,0}
@@ -127,4 +133,36 @@ static void destroy(void)
 	return;
 }
 
+
+/**
+ *
+ */
+int w_is_myself(struct sip_msg *msg, char *uri, str *s2)
+{
+	int ret;
+	str suri;
+	struct sip_uri puri;
+
+	if(fixup_get_svalue(msg, (gparam_p)uri, &suri)!=0)
+	{
+		LM_ERR("cannot get the URI parameter\n");
+		return -1;
+	}
+	if(suri.len>4 && (strncmp(suri.s, "sip:", 4)==0
+				|| strncmp(suri.s, "sips:", 5)==0))
+	{
+		if(parse_uri(suri.s, suri.len, &puri)!=0)
+		{
+			LM_ERR("failed to parse uri [%.*s]\n", suri.len, suri.s);
+			return -1;
+		}
+		ret = check_self(&puri.host, (puri.port.s)?puri.port_no:0,
+				(puri.transport_val.s)?puri.proto:0);
+	} else {
+		ret = check_self(&suri, 0, 0);
+	}
+	if(ret!=1)
+		return -1;
+	return 1;
+}
 
