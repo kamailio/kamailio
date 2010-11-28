@@ -130,6 +130,8 @@ modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
      * auth - register functions from auth module under 'sr.auth'.
      * auth_db - register functions from auth_db module under
        'sr.auth_db'.
+     * dispatcher - register functions from dispatcher module under
+       'sr.dispatcher'.
      * maxfwd - register functions from maxfwd module under 'sr.maxfwd'.
      * registrar - register functions from registrar module under
        'sr.registrar'.

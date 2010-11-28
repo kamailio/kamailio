@@ -123,6 +123,12 @@ modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 		    </listitem>
 		    <listitem>
 			<para>
+				<emphasis>dispatcher</emphasis> - register functions from
+				dispatcher module under 'sr.dispatcher'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
 				<emphasis>maxfwd</emphasis> - register functions from maxfwd
 				module under 'sr.maxfwd'.
 			</para>
