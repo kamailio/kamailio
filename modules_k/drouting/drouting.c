@@ -411,7 +411,7 @@ error:
 static int dr_child_init(int rank)
 {
 	/* only workers needs DB connection */
-	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN || rank==PROC_INIT)
 		return 0;
 
 	/* init DB connection */
