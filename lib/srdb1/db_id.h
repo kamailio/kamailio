@@ -40,6 +40,7 @@ struct db_id {
 	char* host;          /**< Host or IP, case insensitive */
 	unsigned short port; /**< Port number */
 	char* database;      /**< Database, case sensitive */
+	int   pid;           /**< Process ID (detect cross connections) */
 };
 
 
