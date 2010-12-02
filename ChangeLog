@@ -1,3 +1,563 @@
+===================== 2010-12-02 Version 3.1.1 Released =====================
+
+===================== Changes Since Version 3.1.0 ===========================
+
+commit 44a154b4c5db9f0f49461ea3bf8ae8768dfcf440
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 2 22:16:59 2010 +0100
+
+    Makefile: version set to 3.1.1
+
+commit 1e204f4bbcc84271f509838182539476577fc77a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 30 23:16:19 2010 +0100
+
+    drouting: do not call init child for PROC_INIT
+    
+    - avoid opening a database connection before forking
+    - reported by several people in context of Postgress async lib calls
+    (cherry picked from commit 907936449b2543966a5b3b2fe821d406c2293799)
+
+commit a72e59d23d4b104af6d7f30d1dc02a5fe175f3af
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Fri Nov 26 10:59:12 2010 +0200
+
+    modules/topoh : If a message contains a bad CSEQ, skip processing it.
+    
+    This would likely cause a segmentation fault when receiving messages with bad CSEQs.
+    (cherry picked from commit 29990057d8b17cf0ded395438465c6cb2c38207f)
+
+commit e7bc980b2d42a5f2a26111978e6c3bc21198d2ef
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 26 13:07:08 2010 +0100
+
+    avpops: use proper avp list for avp_print()
+    
+    - reported by Alex Hermann - FS#104
+    (cherry picked from commit d8803270678b730a7f7352c90f475188fca50c2c)
+
+commit a81e06ed46ad688d42f2079673aef8b191cf1e1a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 26 10:00:42 2010 +0100
+
+    topoh: enhaced description of mask_ip parameter
+    (cherry picked from commit 4fe783a09d6af1a2c16659f961b9097a021805d8)
+
+commit c9576754926602aa09f5e464a5278c41b608779c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 26 09:54:04 2010 +0100
+
+    topoh: more verbose err reporting during init
+    
+    - check also if mask ip != local ip
+    - should prevent the crashes when mask ip == local ip
+    (cherry picked from commit 11ea0c4de66e40bfa1ba03a351f7ec6bc5f0fbfc)
+
+commit 6d0fa20ec53c361600c84d5322c54a402256fb75
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 25 22:25:01 2010 +0100
+
+    permissions(k): changed params from PVAR to SPVE type
+    
+    - type of fixup params for allow_trusted() updated from PVAR to SPVE
+    - PVAR can be non-zero terminated string
+    - SPVE accepts also static string or combination of PVs
+    - adapted patch submitted by Alex Hermann for crash related to static
+      protocol value, FS#102
+    (cherry picked from commit 18e67ca2d125f87b85c00eb74b057b9c010a8a26)
+
+commit f5ef15fee0c3bf09adf2506effa0895f72af9034
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Fri Nov 26 10:37:30 2010 +0200
+
+    modules_k/nathelper: add_contact_alias adds <>s around contact URI
+    
+    Make sure that Contact URI is surrounded by <> when adding ;alias
+    parameter.  Otherwise, ;alias parameter may be interpreted as header
+    parameter, because the syntax seems to be ambiguous.
+
+commit 86c16fd9bc30a6b1346c04b2e1bbd3983122dddb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 24 22:24:25 2010 +0100
+
+    db_flatstore: exported DB API v1 bind function
+    
+    - bind function for DB API v1 was no longer exported upon merging with
+      implementation of DB API V2
+    - reported by Javier Gallart
+    (cherry picked from commit 3e44fcbe47774d2b157e82228e6266df2a08d627)
+
+commit e9709a3c6b2c99e9cc3fd528704aea24e0534a55
+Author: Jan Janak <jan@ryngle.com>
+Date:   Wed Nov 17 18:26:32 2010 -0500
+
+    db_mysql: Fixes crash in libmysqlclient after connection reset.
+    
+    Sometimes SIP-Router would crash in libmysqlclient after a connection
+    to the server has been reset. This is caused by mysql_stmt_prepare
+    which will reset the connection data structure if a connection has been
+    reset. Subsequent calls to other mysql functions (mysql_stmt_execute)
+    crash unless the connection has been re-connected. This is documented
+    as mysql bug #33384.
+    
+    A workaround is to reset and reconnect the connection explicitly
+    immediately after mysql_stmt_prepare has failed with
+    CR_SERVER_GONE_ERROR. This change implements exactly that.
+    
+    First of all, this patch fixes a minor bug in updating the variable
+    that keeps track of number of connection resets for each database
+    connection and pre-pared statement. The variable needs to be
+    incremented each time a connection is closed. Previously it was
+    incremented only if a connection was successfully reconnected. If the
+    reconnect attempt failed than the variable was not incremented. The
+    function that uploads commands to the server relies on the variable
+    to detect connection resets and may not have worked properly under
+    some circumstances (if a connection fails to reconnect).
+    
+    Function upload_cmd has been modified to close the connection
+    explicitly if mysql_stmt_prepare fails with CR_SERVER_GONE_ERROR. This
+    ensures that subsequent calls to mysql_stmt_exec are forced to reconnect
+    and re-upload commands to the server. This is needed to prevent the
+    library from crashing.
+    
+    exec_cmd_safe now checks if a connection has been disconnected and if
+    so it tries to reconnect it before executing a prepared statement. This
+    is used to recover from failing mysql_stmt_prepare.
+    (cherry picked from commit 0e564bcd3616f9dc981bb768003545674c79c2a7)
+
+commit 58b0bafff9354282750035ec239f16750178f200
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 12 12:52:27 2010 +0100
+
+    dispatcher(k): more verbose logs for MI ds_reload
+    
+    - if the command is disabled, print error message to syslog with some
+      hints
+    (cherry picked from commit 72c052a94ce3a5fd2baefc74861d797c1a404a1a)
+
+commit 7340a8d0d02e22c2541b6e1d0dc82fb194a90c87
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 12 12:26:26 2010 +0100
+
+    dispatcher(k): note about disabling MI ds_reload
+    
+    - the MI command ds_reload is disabled for call load based dispatching
+      (algorithm 10)
+    (cherry picked from commit e1371192357f889c35003ea28d0eb2351e27f84d)
+
+commit 8ce822e9cb0860491266344dfeb6865e68f8ecd0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 12 12:22:20 2010 +0100
+
+    sanity: note about different behavior based on autodrop
+    (cherry picked from commit 4a0b559062b70c1c089c1ea9908eaae60679ad04)
+
+commit 0ff1a6dc15d2ccc7fc5ad99a65a496aebda8283b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 29 21:41:17 2010 +0200
+
+    dialog: added missing parameter in example
+    (cherry picked from commit 1705424e70650ae0d173227221b04d1160c3e2c4)
+
+commit 96def8782f8869cb0dce1c14daa66aee09eb468a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 29 20:51:16 2010 +0200
+
+    dialog(k): set null value parameter for get_dlg_profile() with 2 params
+    
+    - because of using same internal function for cfg get_dlg_profile(...),
+      when only 2 params were provided, the third was unpredicted and not
+      null most probably, potentially resulting in a crash
+    - reported by Eugene Oden
+    (cherry picked from commit 028e3cc1a34f1e682d604a7c0e3fb1a7da03a211)
+
+commit 2838bfd4df264bfd3030238c6b524c1d3f13c3f2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 29 18:51:14 2010 +0200
+
+    dispatcher: docs updated - routing block types for functions
+    (cherry picked from commit 54723bfd00fdc6302802533fee8c2f0ae45c7091)
+
+commit 505445c01f30b91901de7af7841e21c87e9e10ab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 29 17:09:39 2010 +0200
+
+    sanity: docs updated with autodrop parameter
+    (cherry picked from commit 8a50fa608edad91782848711c51476af01dd0392)
+
+commit 30f7a6d7d7fdd24c0c069e60c9162bfa57849a47
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 29 16:50:42 2010 +0200
+
+    sanity: parameter to control dropping of broken messages
+    
+    - new modparam autodrop to be able to return to config even when the
+      message is broken
+    - default value is 1 - drop (return 0) - for backward compatibility
+    - set it to 0 to get return -1 to config - take care in config to exit
+      execution. This mode is good for logging purposes
+    - autodrop=0 helps to get similar functionality for error_route in
+      1.5.x, where such cases could be recorded to xlog
+    - reported by Sergey Okhapkin
+    (cherry picked from commit 39a8108c62a2beafba18417613b9660a8abef86a)
+
+commit a4b121c5d654c8c4656506d20d9dc660dff50724
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 29 11:52:59 2010 +0200
+
+    dialog(k): reset the pointer value after free
+    
+    - otherwise may result in double free, reported by Alex Balashov
+    (cherry picked from commit 4e196f47767dc8da8da560f57afc92add541b672)
+
+commit f2ab4d53b7d22ff15e7f4d2d5d88bbcf005f5194
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Fri Nov 12 13:13:38 2010 +0100
+
+    pkg/debian: add libgeoip version requirements
+       reported by Klaus Darilion
+    (cherry picked from commit e1e6ddb22dc8487517a61653ea7d21d3086122cc)
+
+commit 849a667f74a1c2dd543c52e7be9b4e8a05a0bcfe
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Tue Nov 2 19:06:12 2010 +0100
+
+    modules_k/dialog: Enhance unref_dlg_from_cb() robustness.
+    
+    - Check parameter for NULL pointer.
+    - Call unreference_dlg(), thus being more wrapper-ish.
+    - Fix indention.
+    (cherry picked from commit 75fc49f74d13774f1ecc0cdd8f0adfe168915b4f)
+
+commit 759083ad159e3a9d5b52501b2f1f99a6976f9aeb
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Tue Nov 2 11:45:15 2010 +0200
+
+    trie API Fixed dtrie_insert OOM handling, where assert() was wrongfully used
+    
+    Now the function behaves as expected, freeing previous allocated resources, logging the OOM condition , and returning -1
+    (cherry picked from commit 49837c37aea72c1e4f0cc3290382c0adbf72e3f8)
+
+commit 793fde82f641f543f6d5131a3a4d3c71fe1a2d61
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Thu Oct 28 13:37:00 2010 +0300
+
+    modules/carrierroute Improved documentation of carrierroute reply_code field
+    
+    The documentation didn't make it clear that regex are _not_ supported.
+    Thanks go to IÃ±aki Baz Castillo for reporting.
+    (cherry picked from commit cfc11b8892742697c9184e942ba2113f419428dd)
+
+commit 14a2f7d1560a3462df850084f25a758ca704a473
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 26 21:15:11 2010 +0200
+
+    db_text(k): fixed db_url driver name
+    
+    - it has to be 'text' instead of 'dbtext'
+    - db_text should work as well, according to db driver names and module
+      names
+    - reported by Jeremya
+    (cherry picked from commit e82be561d2e7f98cb2cbd7e574873134f70b2f8a)
+
+commit d920515a0d65256aafcf47c5ad88deda816fccff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 26 10:25:03 2010 +0200
+
+    sanity: update docs related to return code
+    
+    - sanity_check() returns false if a test fails
+    - reported by Sergey Okhapkin
+    (cherry picked from commit 8a2334dd758a1e9d43d1fac544f6e962960b4dcc)
+
+commit 0e691792a3c27150de7686aa04ddb9fea9129756
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Oct 24 23:03:59 2010 +0200
+
+    auth_db(k): note about empty realm parameter
+    
+    - empty realm is no longer allowed, use $td of $fd if you have
+      multi-domain
+    (cherry picked from commit bacb5704a05dafb345221095ff194a9181394b98)
+
+commit 800253af1821bd2fd0e997f74d66105bb4d2aea4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Oct 24 23:03:45 2010 +0200
+
+    auth: fixe typo in docs
+
+commit ba80998055c95ae5f6dc730ecc4233981b432003
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Oct 24 20:48:56 2010 +0200
+
+    htable: updated example with www auth
+    
+    - some more details about hash tables
+    (cherry picked from commit 8431de384b9fb6122203ed7388a26990cd4b025c)
+
+commit b7e7a8fb2551422e2b853036e2a4bee2d8d82c32
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Oct 24 20:33:01 2010 +0200
+
+    auth_db(k): updated return codes meaning
+    
+    - authentication functions use now auth module that was inherited from
+      ser for better nonce protection and performances, therefore the return
+      codes have different meanings
+    (cherry picked from commit 6760745b4187c7b5af2752a82754aa0e511a38c9)
+
+commit 292bab78715749066db5693b22b490fcbcfa4e4a
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Oct 20 18:38:11 2010 +0200
+
+    tm: fix possible uninit. use of cancel_reason
+    
+    In some cases  an uninitialized cancel_reason structure was used
+    (e.g. fake_reply() and relay_reply() failing).
+    
+    Reported-by: Alex Balashov  abalashov evaristesys com
+    (cherry picked from commit 7faa58b0264cb77c991a21bd3b7e3d660596ad85)
+
+commit 7c4c6136a230aa71b8856b2df03bbdb43249e97a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 20 12:54:40 2010 +0200
+
+    tm: fixed typo in docs
+    
+    - some ingeter parameters related to control of reason header for local
+      cancel were provided as string values instead of integer
+    - reported by Mikko Lehto
+    (cherry picked from commit 97d4e101219dbb035f2a734a2a1ddea119782f55)
+
+commit a10d3c62d4eb5e18e54564ed6ae354dc0ce9dfd0
+Author: Miklos Tirpak <miklos@iptel.org>
+Date:   Wed Oct 20 15:32:18 2010 +0200
+
+    cfg framework: segfault during exit is fixed
+    
+    Verify that *cfg_global is not NULL when destroying the
+    configuration.
+    
+    t_set_fr("@cfg_get.local.invite_timeout", "@cfg_get.local.gw_timeout");
+    caused a segfault during startup when the variable was not defined.
+    
+    Reported by Juha Heinanen
+    (cherry picked from commit d85ff11cf0db4aad859f6dcfd18dfb2011e3d78a)
+
+commit 0ff81c3f6e768c84d30ec179e57432fd20e5589d
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon Oct 18 17:53:06 2010 +0200
+
+    avpops: doc fixes
+    
+    - remove obselete TM reference, rephrase text a bit
+    - reported from Andrew Pogrebennyk, andrew dot pogrebennyk at portaone dot com
+    (cherry picked from commit 741521e4dfc236934eb5f28454e49ab574f0a494)
+
+commit 840ca4db6726a1498901b75763bf5ef565fd8fb3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 15 11:19:18 2010 +0200
+
+    core: apply all subst pre-processor directives
+    
+    - previously first applied subst stopped the processes
+    - reported by Alex Balashov
+    (cherry picked from commit a423e3141332f40fec07da1efe9f5e227fff0061)
+
+commit 3cf51efaab04a9c008e50c58d9abc8eaf41ee0ed
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Fri Oct 15 10:09:03 2010 +0200
+
+    auth: fix pool no. when both nc and otn are enabled
+    
+    When both nonce_count and one_time_nonce are enabled in the same
+    time, the pool number was corrupted leading to crashes.
+    
+    Reported-by: Alex Balashov  abalashov evaristesys com
+    (cherry picked from commit 7aea949e1d1101b87d4327a86f026e119cd0ae8b)
+
+commit bf8b8d579608bfa1b702d2a6fa044b968da6dfdd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 13 13:04:14 2010 +0200
+
+    siptrace: don't attempt to get reply reason for ack
+    
+    - for sl filtered ack, execution of sl callback attempted to set the len
+      of reply reason, which does not exist in this case
+    - reported by MÃSZÃROS MihÃ¡ly
+    (cherry picked from commit f7630be368c10bb1901acd6968211ee4ec41c922)
+
+commit 93c042d6e4dbb0b32fd59461b0d59fd761c1a6f7
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Oct 13 08:13:51 2010 +0200
+
+    auth: restore deleted nid_pool_no parameter
+    
+    In commit c53bc97968e4ac2ddf5b8a23af44942e8d50e7b3 the nid_pool_no
+    parameter was removed by mistake.
+    
+    Reported-by: Alex Balashov  abalashov evaristesys com
+    (cherry picked from commit 62d7bf1af574e1bea650a96ec6a2b2a5fc67d883)
+
+commit f9915e21508accbe2d2e24af518089e746ea33a0
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Oct 13 08:06:10 2010 +0200
+
+    debian: fix radius build depends
+    (cherry picked from commit 8864b0586d34c82f015efdc5e3d0b05adc87c338)
+
+commit cb9965009f51dda3c0ecb6ae810a4b6ee94980a6
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Tue Oct 12 19:31:07 2010 +0200
+
+    registrar(s): doc - fix reply_reason_attr name
+    
+    The docs used reply_code_reason_attr instead of reply_reason_attr.
+    (cherry picked from commit 50eb81b1287292238aa4b194cfcdba2afa8b4f89)
+
+commit c34fea16c38a2338e27a49c33dc595948128d4d9
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Oct 6 19:06:42 2010 +0200
+
+    registrar(s): support for disabled code, reason and contact AVPs
+    
+    reply_code_attr, reply_reason_attr and contact_attr modparams can
+    now be set to "" to disable setting the corresponding AVPs when
+    a save*_noreply() is used (speed-up if not needed).
+    (cherry picked from commit fb021d55b09bfbb5503d5879a902f968f1bcabfd)
+
+commit 9747285971a598365ea941ee553a0a7a15259751
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Oct 6 18:53:14 2010 +0200
+
+    registrar(s): support for disabled aor_attr and server_id_attr
+    
+    If aor_attr or server_id_attr are empty ("") don't try to use
+    them.
+    (cherry picked from commit 5f94dececcbf709f92b9a4b022731d4ee17e7e42)
+
+commit 21a3752bf31a8e6cc488d26e43a48dae11b90575
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Mon Oct 11 18:56:52 2010 +0200
+
+    pkg debian generic
+       geoip modules added to the debian generic folder
+
+commit 55178d48a2fdfb3f468a4a9afa00a11ca47beba7
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Mon Oct 11 18:54:09 2010 +0200
+
+    pkg debian
+       change path of different debian folders under pkg/kamailio to a generic pkg/kamailio/deb
+       lenny and lucid are no longer symlinks
+
+commit b349f8591c305fb64afebbb89cfdd64e06d89f8d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 11 17:06:36 2010 +0200
+
+    siptrace: print error message if trace flag is invalid
+    (cherry picked from commit 69092c2f26a34c398c020a1b47eba64cfb5423b8)
+
+commit 97decac9266dcd1d839bafb2680a14a1c95ea560
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 11 17:05:19 2010 +0200
+
+    sl: init register_cb in SL API
+    
+    - used by siptrace, discovered while investigating issue reported by
+      MÃSZÃROS MihÃ¡ly
+    (cherry picked from commit dd135dbf86d899e96fa8ecad5a6f66ca3b2ca5da)
+
+commit 64793df48f817d2a05c3a4647d5645109997ab32
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Sun Oct 10 01:41:58 2010 +0200
+
+    More git hate
+
+commit 47405259234989b0c7ce53091ba4cdad280586c5
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Sun Oct 10 01:40:22 2010 +0200
+
+    I hate git
+
+commit e4c14ed4ba933dd8c675a157adf21cd7e84b565c
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Sun Oct 10 01:38:09 2010 +0200
+
+    pkg debian
+    
+      * Use libreadline-dev generic instead of libreadline5-dev as dependency
+    (cherry picked from commit b532368d655fb7b08c44120c85eb09ff545bab44)
+    
+    Conflicts:
+    
+    	pkg/kamailio/debian-squeeze/control
+    	pkg/kamailio/debian/control
+
+commit c7974ebd1d2f9a55d3b742964ab6940236204e33
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Oct 7 17:59:27 2010 +0300
+
+    modules/auth: fixed sending of [www|proxy]_challenge reply
+    - By default, [www|proxy]_challenge functions now send reply statefully
+      if transaction exists and statelessly otherwise.
+    - Added force_stateless_reply module param that can be used to change
+      the default behavior.
+    - Credits to Andrei Pelinescu-Onciul.
+
+commit 405fb620d1bba43c159012772175f533a40a3a77
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Oct 7 15:57:27 2010 +0300
+
+    modules/auth: fixed comment in nonce_count example
+
+commit 4b58008b5b40d766b16f7f912201b261400398b6
+Merge: 9781988 6b2ea25
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Thu Oct 7 10:09:51 2010 +0200
+
+    Merge remote branch 'origin/master' into 3.1
+    
+    * origin/master:
+      auth: fix unparsed from header usage
+      modules_k/rtpproxy/examples: update examples to use rtpproxy_offer/rtpproxy_answer functions
+      registrar(s): doc - updated parameters
+
+commit 6b2ea25f673382a8dc13eb32658e0bff9c3e793b
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Thu Oct 7 10:06:20 2010 +0200
+
+    auth: fix unparsed from header usage
+    
+    The from parsing check did not parse also the from body.
+
+commit ede9baa37e6a6abed0c777bf6fe1cc28bc2ec55d
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Wed Oct 6 19:24:43 2010 -0400
+
+    modules_k/rtpproxy/examples: update examples to use rtpproxy_offer/rtpproxy_answer functions
+
+commit 9781988041b0da8cd2ee25147c2a2ace8a42fb1b
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Thu Oct 7 00:26:23 2010 +0200
+
+    * kamailio packaging changes for 3.1 branch
+      * changelog version update with proper date
+      * debian-etch support dropped
+      * kamailio-xmlrpc transitional package created (to proper handling of upgrades)
+      * new module package creation and dependency tracking
+
+commit 11262f234f7a9065fee9338492aea5138e937926
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Oct 6 18:29:06 2010 +0200
+
+    registrar(s): doc - updated parameters
+    
+    Added documentation for save_nat_flag, load_nat_flag,
+    trust_received_flag, received_to_uri, reply_code_attr,
+    reply_code_reason, contact_attr, aor_attr and server_id_attr.
+    README regenerated.
+
 ===================== 2010-10-06 Version 3.1.0 Released =====================
 
 ===================== Changes Since Version 3.0.0 ===========================
