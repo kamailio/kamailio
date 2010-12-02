@@ -50,7 +50,8 @@ typedef struct sdp_stream_cell {
 	int pf;         /**< connection address family: AF_INET/AF_INET6 */
 	str ip_addr;    /**< connection address */
 	int stream_num; /**< stream index inside a session */
-	int is_rtp;	/**< flag indicating is this is an RTP stream */
+	int is_rtp;	/**< flag indicating if this is an RTP stream */
+	int is_on_hold; /**< flag indicating if this stream is on hold */
 	/* m=<media> <port> <transport> <payloads> */
 	str media;
 	str port;

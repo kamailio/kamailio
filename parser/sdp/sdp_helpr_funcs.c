@@ -321,15 +321,19 @@ int extract_rtcp(str *body, str *rtcp)
 	return extract_field(body, rtcp, field);
 }
 
-int extract_sendrecv_mode(str *body, str *sendrecv_mode)
+int extract_sendrecv_mode(str *body, str *sendrecv_mode, int *is_on_hold)
 {
 	char *cp1;
 
 	cp1 = body->s;
 	if ( !( (strncasecmp(cp1, "a=sendrecv", 10) == 0) ||
-		(strncasecmp(cp1, "a=inactive", 10) == 0) ||
-		(strncasecmp(cp1, "a=recvonly", 10) == 0) ||
-		(strncasecmp(cp1, "a=sendonly", 10) == 0) )) {
+		(strncasecmp(cp1, "a=recvonly", 10) == 0))) {
+		if ( !( (strncasecmp(cp1, "a=inactive", 10) == 0) ||
+			(strncasecmp(cp1, "a=sendonly", 10) == 0) )) {
+			return -1;
+		} else {
+			*is_on_hold = 1;
+		}
 		return -1;
 	}
 

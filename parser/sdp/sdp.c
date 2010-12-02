@@ -29,6 +29,7 @@
  */
 
 
+#include "../../ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../parser_f.h"
@@ -38,6 +39,9 @@
 
 #define USE_PKG_MEM 0
 #define USE_SHM_MEM 1
+
+#define HOLD_IP_STR "0.0.0.0"
+#define HOLD_IP_LEN 7
 
 /**
  * Creates and initialize a new sdp_info structure
@@ -524,7 +528,8 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 
 			if (parse_payload_attr && extract_ptime(&tmpstr1, &stream->ptime) == 0) {
 				a1p = stream->ptime.s + stream->ptime.len;
-			} else if (parse_payload_attr && extract_sendrecv_mode(&tmpstr1, &stream->sendrecv_mode) == 0) {
+			} else if (parse_payload_attr && extract_sendrecv_mode(&tmpstr1,
+					&stream->sendrecv_mode, &stream->is_on_hold) == 0) {
 				a1p = stream->sendrecv_mode.s + stream->sendrecv_mode.len;
 			} else if (parse_payload_attr && extract_rtpmap(&tmpstr1, &rtp_payload, &rtp_enc, &rtp_clock, &rtp_params) == 0) {
 				if (rtp_params.len != 0 && rtp_params.s != NULL) {
@@ -553,6 +558,19 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 			}
 
 			a2p = find_next_sdp_line(a1p, m2p, 'a', m2p);
+		}
+		/* Let's detect if the media is on hold by checking
+		 * the good old "0.0.0.0" connection address */
+		if (!stream->is_on_hold) {
+			if (stream->ip_addr.s && stream->ip_addr.len) {
+				if (stream->ip_addr.len == HOLD_IP_LEN &&
+					strncmp(stream->ip_addr.s, HOLD_IP_STR, HOLD_IP_LEN)==0)
+					stream->is_on_hold = 1;
+			} else if (session->ip_addr.s && session->ip_addr.len) {
+				if (session->ip_addr.len == HOLD_IP_LEN &&
+					strncmp(session->ip_addr.s, HOLD_IP_STR, HOLD_IP_LEN)==0)
+					stream->is_on_hold = 1;
+			}
 		}
 		++stream_num;
 	} /* Iterate medias/streams in session */

@@ -47,7 +47,7 @@ int get_mixed_part_delimiter(str * body, str * mp_delimiter);
 int extract_rtpmap(str *body, str *rtpmap_payload, str *rtpmap_encoding, str *rtpmap_clockrate, str *rtpmap_parmas);
 int extract_fmtp( str *body, str *fmtp_payload, str *fmtp_string );
 int extract_ptime(str *body, str *ptime);
-int extract_sendrecv_mode(str *body, str *sendrecv_mode);
+int extract_sendrecv_mode(str *body, str *sendrecv_mode, int *is_on_hold);
 int extract_mediaip(str *body, str *mediaip, int *pf, char *line);
 int extract_media_attr(str *body, str *mediamedia, str *mediaport, str *mediatransport, str *mediapayload, int *is_rtp);
 int extract_bwidth(str *body, str *bwtype, str *bwwitdth);
