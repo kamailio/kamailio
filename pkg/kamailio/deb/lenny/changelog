@@ -1,3 +1,9 @@
+kamailio (3.1.1) unstable; urgency=low
+
+  * update to 3.1.1 from upstream
+
+ -- Jon Bonilla <manwe@aholab.ehu.es>  Fri, 3 Dic 2010 16:30:00 +0100
+
 kamailio (3.1.0) unstable; urgency=low
 
   * update to 3.1.0 from upstream
