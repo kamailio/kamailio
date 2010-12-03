@@ -663,6 +663,11 @@ void uac_reg_timer(unsigned int ticks)
 			reg.attr.s = \
 				(char*)(RES_ROWS(db_res)[i].values[pos].val.string_val); \
 			reg.attr.len = strlen(reg.attr.s); \
+			if(reg.attr.len == 0) { \
+				LM_ERR("empty value not allowed for column[%d]=%.*s\n", \
+						pos, db_cols[pos]->len, db_cols[pos]->s); \
+				goto error; \
+			} \
 		} \
 	} while(0);
 
