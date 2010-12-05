@@ -328,7 +328,7 @@ error:
 	return -1;
 }
 
-int pv_get_snd(struct sip_msg *msg, pv_param_t *param,
+int pv_get_sndfrom(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	struct onsend_info* snd_inf;
@@ -360,6 +360,44 @@ int pv_get_snd(struct sip_msg *msg, pv_param_t *param,
 			/* 0 - ip */
 			return pv_get_strval(msg, param, res,
 					&snd_inf->send_sock->address_str);
+	}
+
+	return 0;
+}
+
+int pv_get_sndto(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	struct onsend_info* snd_inf;
+	str s;
+
+	snd_inf=get_onsend_info();
+	if (! likely(snd_inf && snd_inf->send_sock))
+		return pv_get_null(msg, param, res);
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1: /* af */
+			return pv_get_uintval(msg, param, res,
+					(int)snd_inf->send_sock->address.af);
+		case 2: /* port */
+			return pv_get_uintval(msg, param, res,
+					(int)su_getport(snd_inf->to));
+		case 3: /* proto */
+			return pv_get_uintval(msg, param, res,
+					(int)snd_inf->send_sock->proto);
+		case 4: /* buf */
+			s.s   = snd_inf->buf;
+			s.len = snd_inf->len;
+			return pv_get_strval(msg, param, res, &s);
+		case 5: /* len */
+			return pv_get_uintval(msg, param, res,
+					(int)snd_inf->len);
+		default:
+			/* 0 - ip */
+			s.s   = su2a(snd_inf->to, sizeof(*snd_inf->to));
+			s.len = strlen(s.s);
+			return pv_get_strval(msg, param, res, &s);
 	}
 
 	return 0;

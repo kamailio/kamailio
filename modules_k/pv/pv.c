@@ -70,8 +70,12 @@ static pv_export_t mod_pvs[] = {
 	{ {"sel", sizeof("sel")-1}, /* select */
 		PVT_OTHER, pv_get_select, 0,
 		pv_parse_select_name, 0, 0, 0 },
-	{{"snd", (sizeof("snd")-1)}, PVT_OTHER, pv_get_snd, 0,
-		pv_parse_snd_name, 0, 0, 0},
+	{ {"snd", (sizeof("snd")-1)}, PVT_OTHER, pv_get_sndto, 0,
+		pv_parse_snd_name, 0, 0, 0 },
+	{ {"sndto", (sizeof("sndto")-1)}, PVT_OTHER, pv_get_sndto, 0,
+		pv_parse_snd_name, 0, 0, 0 },
+	{ {"sndfrom", (sizeof("sndfrom")-1)}, PVT_OTHER, pv_get_sndfrom, 0,
+		pv_parse_snd_name, 0, 0, 0 },
 #ifdef WITH_XAVP
 	{ {"xavp", sizeof("xavp")-1}, /* xavp */
 		PVT_OTHER, pv_get_xavp, pv_set_xavp,
