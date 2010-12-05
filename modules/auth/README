@@ -585,6 +585,11 @@ if (!proxy_authenticate("$fd", "subscriber)) {
        sent out;
      * -2 (invalid password) - wrong password;
      * -3 (invalid user) - authentication user does not exist.
+     * -4 (nonce expired) - the nonce has expired
+     * -5 (no credentials) - request does not contain an Authorization
+       header with the correct realm.
+     * -6 (nonce reused) - the nonce has already been used to authenticate
+       a previous request
 
    Meaning of the parameters is as follows:
      * realm - Realm is a opaque string that the user agent should present
