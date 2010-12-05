@@ -83,7 +83,7 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 	} else if (ret > 0) {
 		DBG("auth:pre_auth: Credentials with realm '%.*s' not found\n",
 				realm->len, ZSW(realm->s));
-		return NOT_AUTHENTICATED;
+		return NO_CREDENTIALS;
 	}
 
 	     /* Pointer to the parsed credentials */
@@ -132,7 +132,12 @@ static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
 		if (ret==3 || ret==4){
 			/* failed auth_extra_checks or stale */
 			auth->stale=1; /* we mark the nonce as stale 
-			 				(hack that makes our life much easier) */
+							(hack that makes our life much easier) */
+			*auth_res = STALE_NONCE;
+			return 0;
+		} else if (ret==6) {
+			*auth_res = NONCE_REUSED;
+			return 0;
 		} else {
 			DBG("auth:pre_auth: Invalid nonce value received\n");
 			*auth_res = NOT_AUTHENTICATED;

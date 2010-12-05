@@ -44,6 +44,9 @@
  * return codes to config by auth functions
  */
 typedef enum auth_cfg_result {
+	AUTH_NONCE_REUSED = -6,     /*!< Returned if nonce is used more than once */
+	AUTH_NO_CREDENTIALS = -5,   /*!< Credentials missing */
+	AUTH_STALE_NONCE = -4,      /*!< Stale nonce */
 	AUTH_USER_UNKNOWN = -3,     /*!< User not found */
 	AUTH_INVALID_PASSWORD = -2, /*!< Invalid password */
 	AUTH_ERROR = -1,            /*!< Error occurred */
@@ -56,7 +59,10 @@ typedef enum auth_cfg_result {
  * return codes to auth API functions
  */
 typedef enum auth_result {
-	ERROR = -2 ,        /* Error occurred, a reply has been sent out -> return 0 to the ser core */
+	NONCE_REUSED = -5,  /* Returned if nonce is used more than once */
+	NO_CREDENTIALS,     /* Credentials missing */
+	STALE_NONCE,        /* Stale nonce */
+	ERROR,              /* Error occurred, a reply has been sent out -> return 0 to the ser core */
 	NOT_AUTHENTICATED,  /* Don't perform authentication, credentials missing */
 	DO_AUTHENTICATION,  /* Perform digest authentication */
 	AUTHENTICATED,      /* Authenticated by default, no digest authentication necessary */
@@ -67,6 +73,7 @@ typedef enum auth_result {
 	DO_RESYNCHRONIZATION   /* When AUTS is received we need do resynchronization
 	                        * of sequnce numbers with mobile station. */
 } auth_result_t;
+
 
 typedef int (*check_auth_hdr_t)(struct sip_msg* msg, auth_body_t* auth_body,
 		auth_result_t* auth_res);

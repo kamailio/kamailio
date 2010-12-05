@@ -158,6 +158,17 @@ if (!proxy_authenticate("$fd", "subscriber)) {
 			<emphasis>-3 (invalid user)</emphasis> - authentication user does
 			not exist.
 			</para></listitem>
+			<listitem><para>
+			<emphasis>-4 (nonce expired)</emphasis> - the nonce has expired
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-5 (no credentials)</emphasis> - request does not contain
+			an Authorization header with the correct realm.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-6 (nonce reused)</emphasis> - the nonce has already been
+			used to authenticate a previous request
+			</para></listitem>
 		</itemizedlist>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>

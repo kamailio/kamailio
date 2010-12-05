@@ -302,6 +302,7 @@ int calc_nonce(char* nonce, int *nonce_len, int cfg, int since, int expires,
  *          3 - nonce expires ok, but the auth_extra checks failed
  *          4 - stale
  *          5 - invalid nc value (not an unsigned int)
+ *          6 - nonce reused
  */
 int check_nonce(auth_body_t* auth, str* secret1, str* secret2,
 					struct sip_msg* msg)
@@ -430,7 +431,7 @@ int check_nonce(auth_body_t* auth, str* secret1, str* secret2,
 				case OTN_ID_OVERFLOW:
 				case OTN_INV_POOL:
 				case OTN_REPLAY:
-					return 4; /* stale */
+					return 6; /* reused */
 			}
 		}
 #endif
