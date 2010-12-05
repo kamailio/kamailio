@@ -96,7 +96,7 @@ static param_export_t params[] = {
 };
 
 struct module_exports exports = {	
-	"db_bdb",
+	"db_berkeley",
 	cmds,     /* Exported functions */
 	0,        /* RPC method */
 	params,   /* Exported parameters */
