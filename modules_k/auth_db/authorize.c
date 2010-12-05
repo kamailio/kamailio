@@ -220,6 +220,18 @@ static int digest_authenticate(struct sip_msg* msg, str *realm,
 
 	ret = auth_api.pre_auth(msg, realm, hftype, &h, NULL);
 	switch(ret) {
+		case NONCE_REUSED:
+			LM_DBG("nonce reused");
+			ret = AUTH_NONCE_REUSED;
+			goto end;
+		case STALE_NONCE:
+			LM_DBG("stale nonce\n");
+			ret = AUTH_STALE_NONCE;
+			goto end;
+		case NO_CREDENTIALS:
+			LM_DBG("no credentials\n");
+			ret = AUTH_NO_CREDENTIALS;
+			goto end;
 		case ERROR:
 		case BAD_CREDENTIALS:
 			LM_DBG("error or bad credentials\n");
