@@ -644,9 +644,11 @@
 	</para>
 	<para>
 	A comma separated list of gateway identifiers corresponding to a row in 
-	table <quote>dr_gateways</quote>. The first gateway is tried first and if 
-	failure the second one, and so one. If no gateway is left a negative 
-	response is sent back to the user.
+	table <quote>dr_gateways</quote>. You can use a predefined list from the
+	table <quote>dr_gw_lists</quote> preceded by the character
+	<quote>#</quote>. The first gateway is tried first and if routing to it
+	fails, then the second one, and so one. If no gateway is left a negative 
+	response is sent back to caller.
 	</para>
 	</listitem>
 	<listitem>
