@@ -43,6 +43,7 @@
 #define UAC_REG_DISABLED	(1<<0)
 #define UAC_REG_ONGOING		(1<<1)
 #define UAC_REG_ONLINE		(1<<2)
+#define UAC_REG_AUTHSENT	(1<<3)
 
 #define MAX_UACH_SIZE 2048
 
@@ -470,7 +471,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 					str2int(&c->expires->body, (unsigned int*)(&expires));
 				}
 				ri->timer_expires = ri->timer_expires + expires;
-				ri->flags &= ~UAC_REG_ONGOING;
+				ri->flags &= ~(UAC_REG_ONGOING|UAC_REG_AUTHSENT);
 				ri->flags |= UAC_REG_ONLINE;
 				goto done;
 			}
@@ -484,6 +485,14 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 
 	if(ps->code == 401)
 	{
+		if(ri->flags & UAC_REG_AUTHSENT)
+		{
+			LM_ERR("authentication failed for <%.*s>\n",
+					ri->l_uuid.len, ri->l_uuid.s);
+			ri->flags &= ~UAC_REG_ONGOING;
+			ri->flags |= UAC_REG_DISABLED;
+			goto done;
+		}
 		hdr = get_autenticate_hdr(ps->rpl, 401);
 		if (hdr==0)
 		{
@@ -552,6 +561,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 				&s_turi, /* From */
 				(ri->auth_proxy.len)?&ri->auth_proxy:NULL /* outbound uri */
 			);
+		ri->flags |= UAC_REG_AUTHSENT;
 
 		if(ret<0)
 			goto done;
@@ -584,6 +594,8 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 		return 2;
 	if(reg->timer_expires > tn + reg_timer_interval + 3)
 		return 3;
+	if(reg->flags&UAC_REG_DISABLED)
+		return 4;
 	reg->timer_expires = tn;
 	reg->flags |= UAC_REG_ONGOING;
 	reg->flags &= ~UAC_REG_ONLINE;
