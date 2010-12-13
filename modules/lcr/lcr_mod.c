@@ -1633,10 +1633,14 @@ inline int decode_avp_value(char *value, unsigned int *gw_index, str *scheme,
     case PROTO_TLS:
 	transport->s = ";transport=tls";
 	transport->len = 14;
-    default:
+	break;
+    case PROTO_SCTP:
 	transport->s = ";transport=sctp";
 	transport->len = 15;
 	break;
+    default:
+	LM_ERR("unknown transport '%d'\n", u);
+	return 0;
     }
     /* flags */
     s.s = sep + 1;
@@ -2192,7 +2196,7 @@ static int from_gw_1(struct sip_msg* _m, char* _lcr_id, char* _s2)
 	return -1;
     }
 
-    /* Get source address and transport preotocol */
+    /* Get source address and transport protocol */
     src_addr = _m->rcv.src_ip.u.addr32[0];
     transport = _m->rcv.proto;
 
