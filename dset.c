@@ -289,11 +289,6 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 {
 	str luri;
 
-#ifdef USE_LOCAL_ROUTE
-	if (unlikely(dset_state==0))
-		return -1;
-#endif
-
 	/* if we have already set up the maximum number
 	 * of branches, don't try new ones 
 	 */
