@@ -129,6 +129,29 @@ int pv_get_method(struct sip_msg *msg, pv_param_t *param,
 			get_cseq(msg)->method_id);
 }
 
+int pv_get_methodid(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REQUEST)
+	{
+		return pv_get_uintval(msg, param, res,
+				(unsigned int)msg->first_line.u.request.method_value);
+	}
+
+	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1)
+				|| (msg->cseq==NULL)))
+	{
+		LM_ERR("no CSEQ header\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	return pv_get_uintval(msg, param, res,
+			(unsigned int)(get_cseq(msg)->method_id));
+}
+
 int pv_get_version(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {

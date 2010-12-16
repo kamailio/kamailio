@@ -280,6 +280,9 @@ static pv_export_t mod_pvs[] = {
 	{{"rm", (sizeof("rm")-1)}, /* */
 		PVT_OTHER, pv_get_method, 0,
 		0, 0, 0, 0},
+	{{"rmid", (sizeof("rmid")-1)}, /* */
+		PVT_OTHER, pv_get_methodid, 0,
+		0, 0, 0, 0},
 	{{"rp", (sizeof("rp")-1)}, /* */
 		PVT_OTHER, pv_get_ruri_attr, pv_set_ruri_port,
 		0, 0, pv_init_iname, 3},
