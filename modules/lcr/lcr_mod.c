@@ -906,7 +906,7 @@ int reload_tables()
     unsigned int i, n, lcr_id, rule_id, gw_id, gw_name_len, port, strip,
 	tag_len, prefix_len, from_uri_len, stopper, enabled, flags, gw_cnt,
 	hostname_len, params_len, defunct_until, null_gw_ip_addr, priority,
-	weight;
+	weight, tmp;
     struct in_addr ip_addr;
     uri_type scheme;
     uri_transport transport;
@@ -1413,8 +1413,12 @@ int reload_tables()
 			   "not 1-254\n", i);
 		    goto err;
 		}
-		if (!rule_hash_table_insert_target(rules, gws, rule_id, gw_id,
-						   priority, weight)) {
+		tmp = rule_hash_table_insert_target(rules, gws, rule_id, gw_id,
+						    priority, weight);
+		if (tmp == 2) {
+		    LM_INFO("skipping disabled <gw/rule> = <%u/%u>\n",
+			    gw_id, rule_id);
+		} else if (tmp != 1) {
 		    LM_ERR("could not insert target to rule <%u>\n", rule_id);
 		    goto err;
 		}

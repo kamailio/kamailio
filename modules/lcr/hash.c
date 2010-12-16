@@ -118,9 +118,9 @@ int rule_hash_table_insert_target(struct rule_info **hash_table,
     }
 
     if (get_gw_index(gws, gw_id, &gw_index) == 0) {
-	LM_ERR("could not find gw with id <%u>\n", gw_id);
+	LM_DBG("could not find (disabled) gw with id <%u>\n", gw_id);
 	shm_free(target);
-	return 0;
+	return 2;
     }
 
     target->gw_index = gw_index;
@@ -141,7 +141,7 @@ int rule_hash_table_insert_target(struct rule_info **hash_table,
 
     LM_DBG("could not find (disabled) rule with id <%u>\n", rule_id);
     shm_free(target);
-    return 1;
+    return 2;
 }
 
 
