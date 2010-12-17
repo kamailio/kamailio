@@ -123,6 +123,8 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 	pv_value_t sv;
 	str* uri;
 	int ovector[3 * (MAX_REPLACE_WITH + 1)];
+	char *p;
+	int size;
 
 	dp_output_buf[0] = '\0';
 	result->s = dp_output_buf;
@@ -180,6 +182,7 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 
 	/* offset- offset in the replacement string */
 	result->len = repl_nb = offset = 0;
+	p=repl_comp->replacement.s;
 	
 	while( repl_nb < repl_comp->n_escapes){
 		token = repl_comp->replace[repl_nb];
@@ -191,9 +194,11 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 				goto error;
 			}
 			/*copy from the replacing string*/
-			memcpy(result->s + result->len, repl_comp->replacement.s + offset,
-				token.offset-offset);
-			result->len += (token.offset - offset);
+			size=repl_comp->replacement.s+repl_comp->replace[repl_nb].offset-p;
+			memcpy(result->s + result->len, p, size);
+			result->len += size;
+			p+=size+repl_comp->replace[repl_nb].size;
+
 			offset += token.offset-offset; /*update the offset*/
 		}
 
@@ -261,10 +266,9 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 	/* anything left? */
 	if( repl_nb && token.offset+token.size < repl_comp->replacement.len){
 		/*copy from the replacing string*/
-		memcpy(result->s + result->len,
-			repl_comp->replacement.s + token.offset+token.size, 
-			repl_comp->replacement.len -(token.offset+token.size) );
-			result->len +=repl_comp->replacement.len-(token.offset+token.size);
+		size = repl_comp->replacement.s+repl_comp->replacement.len-p;
+		memcpy(result->s + result->len, p, size);
+		result->len += size;
 	}
 
 	result->s[result->len] = '\0';
