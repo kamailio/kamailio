@@ -295,13 +295,19 @@ static inline void acc_onreply_in(struct cell *t, struct sip_msg *req,
 static inline void on_missed(struct cell *t, struct sip_msg *req,
 											struct sip_msg *reply, int code)
 {
-	str new_uri_bk;
+	str new_uri_bk = {0, 0};
 	int flags_to_reset = 0;
 
 	/* set as new_uri the last branch */
-	new_uri_bk = req->new_uri;
-	req->new_uri = t->uac[t->nr_of_outgoings-1].uri;
-	req->parsed_uri_ok = 0;
+	if (t->relayed_reply_branch>=0) {
+		new_uri_bk = req->new_uri;
+		req->new_uri = t->uac[t->relayed_reply_branch].uri;
+		req->parsed_uri_ok = 0;
+	} else {
+		new_uri_bk.len = -1;
+		new_uri_bk.s = 0;
+	}
+
 	/* set env variables */
 	env_set_to( get_rpl_to(t,reply) );
 	env_set_code_status( code, reply);
@@ -346,8 +352,11 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 	 */
 	reset_acc_flag( req, flags_to_reset );
 
-	req->new_uri = new_uri_bk;
-	req->parsed_uri_ok = 0;
+	if (new_uri_bk.len>=0) {
+		req->new_uri = new_uri_bk;
+		req->parsed_uri_ok = 0;
+	}
+
 }
 
 
