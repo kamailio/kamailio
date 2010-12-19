@@ -337,6 +337,30 @@ pkg_status();
 	
 	<section>
 		<title>
+			<function moreinfo="none">pkg_summary()</function>
+		</title>
+		<para>
+			Debugging function that dumps the summary for the private (PKG) memory
+			usage. This information is logged to the default log facility,
+			depending on the general log level and the memlog setting. You need
+			to compile the server with activated memory debugging to get detailed
+			informations.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+			<title><function>pkg_summary</function> usage</title>
+			<programlisting format="linespecific">
+...
+pkg_summary();
+...
+			</programlisting>
+		</example>
+	</section>
+	
+	<section>
+		<title>
 			<function moreinfo="none">shm_status()</function>
 		</title>
 		<para>
@@ -358,7 +382,32 @@ shm_status();
 			</programlisting>
 		</example>
 	</section>
-		<section>
+
+	<section>
+		<title>
+			<function moreinfo="none">shm_summary()</function>
+		</title>
+		<para>
+			Debugging function that dumps the summary for the shared (SHM) memory
+			usage. This information is logged to the default log facility,
+			depending on the general log level and the memlog setting. You need
+			to compile the server with activated memory debugging to get detailed
+			informations.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+			<title><function>shm_summary</function> usage</title>
+			<programlisting format="linespecific">
+...
+shm_summary();
+...
+			</programlisting>
+		</example>
+	</section>
+	
+	<section>
 		<title><function moreinfo="none">set_gflag(flag)</function></title>
 		<para>
 		Set the bit at the position <quote>flag</quote> in global flags.
