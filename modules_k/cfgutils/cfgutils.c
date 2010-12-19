@@ -88,6 +88,8 @@ static int m_usleep(struct sip_msg*, char *, char *);
 static int dbg_abort(struct sip_msg*, char*,char*);
 static int dbg_pkg_status(struct sip_msg*, char*,char*);
 static int dbg_shm_status(struct sip_msg*, char*,char*);
+static int dbg_pkg_summary(struct sip_msg*, char*,char*);
+static int dbg_shm_summary(struct sip_msg*, char*,char*);
 
 static int set_gflag(struct sip_msg*, char *, char *);
 static int reset_gflag(struct sip_msg*, char *, char *);
@@ -137,33 +139,37 @@ static cmd_export_t cmds[]={
 		1,          /* number of parameters */
 		fixup_prob, 0,         /* */
 		/* can be applied to original/failed requests and replies */
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"rand_reset_prob", (cmd_function)reset_prob, 0, 0, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"rand_get_prob",   (cmd_function)get_prob,   0, 0, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"rand_event",      (cmd_function)rand_event, 0, 0, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"sleep",  (cmd_function)m_sleep,  1, fixup_uint_null, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"usleep", (cmd_function)m_usleep, 1, fixup_uint_null, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"abort",      (cmd_function)dbg_abort,        0, 0, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"pkg_status", (cmd_function)dbg_pkg_status,   0, 0, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"shm_status", (cmd_function)dbg_shm_status,   0, 0, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
+	{"pkg_summary", (cmd_function)dbg_pkg_summary,   0, 0, 0,
+		ANY_ROUTE},
+	{"shm_summary", (cmd_function)dbg_shm_summary,   0, 0, 0,
+		ANY_ROUTE},
 	{"set_gflag",    (cmd_function)set_gflag,   1,   fixup_gflags, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"reset_gflag",  (cmd_function)reset_gflag, 1,   fixup_gflags, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"is_gflag",     (cmd_function)is_gflag,    1,   fixup_gflags, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"lock",         (cmd_function)cfg_lock,    1,   fixup_spve_null, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"unlock",       (cmd_function)cfg_unlock,  1,   fixup_spve_null, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -657,6 +663,18 @@ static int dbg_pkg_status(struct sip_msg* msg, char* foo, char* bar)
 static int dbg_shm_status(struct sip_msg* msg, char* foo, char* bar)
 {
 	shm_status();
+	return 1;
+}
+
+static int dbg_pkg_summary(struct sip_msg* msg, char* foo, char* bar)
+{
+	pkg_sums();
+	return 1;
+}
+
+static int dbg_shm_summary(struct sip_msg* msg, char* foo, char* bar)
+{
+	shm_sums();
 	return 1;
 }
 
