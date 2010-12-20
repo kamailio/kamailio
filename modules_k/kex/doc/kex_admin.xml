@@ -525,7 +525,28 @@ if(is_myself("$fu")) {
 		_empty_line_
 		</programlisting>
     </section>
-    </section>
+	</section>
 
+	<section>
+	<title>RPC Commands</title>
+	<section>
+		<title>
+		<function moreinfo="none">pkg.stats</function>
+		</title>
+		<para>
+			Print private memory (pkg) usage statistics per process. It
+			can take an optinal parameter that specifies the pid of process
+			to print statistics for. If pid parameter is not give, it prints
+			statistics for all processes.
+		</para>
+		<para>
+		Examples:
+		</para>
+        <programlisting  format="linespecific">
+		sercmd pkg.stats
+		sercmd pkg.stats 1234
+		</programlisting>
+    </section>
+    </section>
 </chapter>
 

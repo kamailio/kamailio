@@ -48,6 +48,10 @@ Daniel-Constantin Mierla
               4.5. version
               4.6. which
 
+        5. RPC Commands
+
+              5.1. pkg.stats
+
    List of Examples
 
    1.1. setsflag usage
@@ -96,6 +100,10 @@ Chapter 1. Admin Guide
         4.4. uptime
         4.5. version
         4.6. which
+
+   5. RPC Commands
+
+        5.1. pkg.stats
 
 1. Overview
 
@@ -423,3 +431,18 @@ if(is_myself("$fu")) {
    MI FIFO Command Format:
                 :which:_reply_fifo_file_
                 _empty_line_
+
+5. RPC Commands
+
+   5.1. pkg.stats
+
+5.1.  pkg.stats
+
+   Print private memory (pkg) usage statistics per process. It can take an
+   optinal parameter that specifies the pid of process to print statistics
+   for. If pid parameter is not give, it prints statistics for all
+   processes.
+
+   Examples:
+                sercmd pkg.stats
+                sercmd pkg.stats 1234
