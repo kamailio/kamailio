@@ -116,6 +116,9 @@ static int mod_init(void)
 	return dbg_init_bp_list();
 }
 
+/**
+ * child init function
+ */
 static int child_init(int rank)
 {
 	LM_DBG("rank is (%d)\n", rank);
@@ -123,6 +126,7 @@ static int child_init(int rank)
 		return dbg_init_pid_list();
 	return dbg_init_mypid();
 }
+
 /**
  * destroy module function
  */
@@ -130,6 +134,9 @@ static void mod_destroy(void)
 {
 }
 
+/**
+ * cfg wrapper to set breakpoint (not implemented yet)
+ */
 static int w_dbg_breakpoint(struct sip_msg* msg, char* point, char* str2)
 {
 	return 1;
@@ -150,6 +157,9 @@ static struct action *dbg_fixup_get_action(void **param, int param_no)
 }
 
 
+/**
+ * fixup for cfg set breakpoint function
+ */
 static int fixup_dbg_breakpoint(void** param, int param_no)
 {
 	struct action *a;
