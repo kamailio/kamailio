@@ -48,6 +48,9 @@
 #include "../globals.h"
 #include "memdbg.h"
 #include "../cfg/cfg.h" /* memlog */
+#ifdef MALLOC_STATS
+#include "../events.h"
+#endif
 
 
 /*useful macros*/
@@ -394,6 +397,10 @@ void* qm_malloc(struct qm_block* qm, unsigned long size)
 		qm->used+=f->size;
 		if (qm->max_real_used<qm->real_used)
 			qm->max_real_used=qm->real_used;
+#ifdef MALLOC_STATS
+		sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
+		sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+#endif
 #ifdef DBG_QM_MALLOC
 		f->file=file;
 		f->func=func;
@@ -452,6 +459,10 @@ void qm_free(struct qm_block* qm, void* p)
 	size=f->size;
 	qm->used-=size;
 	qm->real_used-=size;
+#ifdef MALLOC_STATS
+	sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
+	sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+#endif
 
 #ifdef QM_JOIN_FREE
 	/* mark this fragment as used (might fall into the middle of joined frags)
@@ -568,6 +579,10 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 			 */
 			qm->real_used-=(orig_size-f->size);
 			qm->used-=(orig_size-f->size);
+#ifdef MALLOC_STATS
+			sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
+			sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+#endif
 		}
 		
 	}else if (f->size < size){
@@ -598,6 +613,10 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 				}
 				qm->real_used+=(f->size-orig_size);
 				qm->used+=(f->size-orig_size);
+#ifdef MALLOC_STATS
+				sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
+				sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+#endif
 			}else{
 				/* could not join => realloc */
 	#ifdef DBG_QM_MALLOC

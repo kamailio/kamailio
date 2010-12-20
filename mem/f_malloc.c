@@ -55,6 +55,9 @@
 #include "memdbg.h"
 #include "../bit_scan.h"
 #include "../cfg/cfg.h" /* memlog */
+#ifdef MALLOC_STATS
+#include "../evnets.h"
+#endif
 
 
 /*useful macros*/
@@ -240,6 +243,9 @@ void fm_split_frag(struct fm_block* qm, struct fm_frag* frag,
 		FRAG_CLEAR_USED(n); /* never used */
 #if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
 		qm->real_used+=FRAG_OVERHEAD;
+#ifdef MALLOC_STATS
+		sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+#endif
 #endif
 #ifdef DBG_F_MALLOC
 		/* frag created by malloc, mark it*/
@@ -406,6 +412,10 @@ found:
 	qm->used+=frag->size;
 	if (qm->max_real_used<qm->real_used)
 		qm->max_real_used=qm->real_used;
+#ifdef MALLOC_STATS
+	sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
+	sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+#endif
 #endif
 	FRAG_MARK_USED(frag); /* mark it as used */
 	return (char*)frag+sizeof(struct fm_frag);
@@ -444,6 +454,10 @@ void fm_free(struct fm_block* qm, void* p)
 #if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
 	qm->used-=size;
 	qm->real_used-=size;
+#ifdef MALLOC_STATS
+	sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
+	sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+#endif
 #endif
 #ifdef DBG_F_MALLOC
 	f->file=file;
@@ -513,6 +527,10 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 		   free frag, so here we only need orig_size-f->size for real used */
 		qm->real_used-=(orig_size-f->size);
 		qm->used-=(orig_size-f->size);
+#ifdef MALLOC_STATS
+		sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
+		sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+#endif
 #endif
 	}else if (f->size<size){
 		/* grow */
@@ -546,6 +564,9 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 			f->size+=n->size+FRAG_OVERHEAD;
 		#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
 			qm->real_used-=FRAG_OVERHEAD;
+#ifdef MALLOC_STATS
+			sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+#endif
 		#endif
 			/* split it if necessary */
 			if (f->size > size){
@@ -559,6 +580,10 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 		#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
 			qm->real_used+=(f->size-orig_size);
 			qm->used+=(f->size-orig_size);
+#ifdef MALLOC_STATS
+			sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
+			sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+#endif
 		#endif
 		}else{
 			/* could not join => realloc */
