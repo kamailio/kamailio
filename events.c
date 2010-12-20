@@ -32,6 +32,9 @@
 static sr_event_cb_t _sr_events_list;
 static int _sr_events_inited = 0;
 
+/**
+ *
+ */
 void sr_event_cb_init(void)
 {
 	if(_sr_events_inited == 0)
@@ -41,6 +44,9 @@ void sr_event_cb_init(void)
 	}
 }
 
+/**
+ *
+ */
 int sr_event_register_cb(int type, sr_event_cb_f f)
 {
 	sr_event_cb_init();
@@ -65,12 +71,25 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 					_sr_events_list.run_action = f;
 				else return -1;
 			break;
+		case SREV_PKG_SET_USED:
+				if(_sr_events_list.pkg_set_used==0)
+					_sr_events_list.pkg_set_used = f;
+				else return -1;
+			break;
+		case SREV_PKG_SET_REAL_USED:
+				if(_sr_events_list.pkg_set_real_used==0)
+					_sr_events_list.pkg_set_real_used = f;
+				else return -1;
+			break;
 		default:
 			return -1;
 	}
 	return 0;
 }
 
+/**
+ *
+ */
 int sr_event_exec(int type, void *data)
 {
 	int ret;
@@ -121,11 +140,26 @@ int sr_event_exec(int type, void *data)
 					ret = _sr_events_list.run_action(data);
 					return ret;
 				} else return 1;
+		case SREV_PKG_SET_USED:
+				if(unlikely(_sr_events_list.pkg_set_used!=0))
+				{
+					ret = _sr_events_list.pkg_set_used(data);
+					return ret;
+				} else return 1;
+		case SREV_PKG_SET_REAL_USED:
+				if(unlikely(_sr_events_list.pkg_set_real_used!=0))
+				{
+					ret = _sr_events_list.pkg_set_real_used(data);
+					return ret;
+				} else return 1;
 		default:
 			return -1;
 	}
 }
 
+/**
+ *
+ */
 int sr_event_enabled(int type)
 {
 	switch(type) {
@@ -137,6 +171,10 @@ int sr_event_enabled(int type)
 				return (_sr_events_list.core_stats!=0)?1:0;
 		case SREV_CFG_RUN_ACTION:
 				return (_sr_events_list.run_action!=0)?1:0;
+		case SREV_PKG_SET_USED:
+				return (_sr_events_list.pkg_set_used!=0)?1:0;
+		case SREV_PKG_SET_REAL_USED:
+				return (_sr_events_list.pkg_set_real_used!=0)?1:0;
 	}
 	return 0;
 }

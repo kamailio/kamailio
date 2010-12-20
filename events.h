@@ -23,10 +23,12 @@
 
 #include "parser/msg_parser.h"
 
-#define SREV_NET_DATA_IN	1
-#define SREV_NET_DATA_OUT	2
-#define SREV_CORE_STATS		3
-#define SREV_CFG_RUN_ACTION 4
+#define SREV_NET_DATA_IN		1
+#define SREV_NET_DATA_OUT		2
+#define SREV_CORE_STATS			3
+#define SREV_CFG_RUN_ACTION		4
+#define SREV_PKG_SET_USED		5
+#define SREV_PKG_SET_REAL_USED	6
 
 typedef int (*sr_event_cb_f)(void *data);
 
@@ -35,6 +37,8 @@ typedef struct sr_event_cb {
 	sr_event_cb_f net_data_out;
 	sr_event_cb_f core_stats;
 	sr_event_cb_f run_action;
+	sr_event_cb_f pkg_set_used;
+	sr_event_cb_f pkg_set_real_used;
 } sr_event_cb_t;
 
 void sr_event_cb_init(void);
