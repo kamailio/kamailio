@@ -36,6 +36,7 @@
 #include "km_core.h"
 #include "mi_core.h"
 #include "core_stats.h"
+#include "pkg_stats.h"
 
 
 MODULE_VERSION
@@ -47,6 +48,7 @@ MODULE_VERSION
 int w_is_myself(struct sip_msg *msg, char *uri, str *s2);
 
 static int mod_init(void);
+static int child_init(int rank);
 static void destroy(void);
 
 static cmd_export_t cmds[]={
@@ -106,7 +108,7 @@ struct module_exports exports= {
 	mod_init,   /* module initialization function */
 	0,
 	(destroy_function) destroy,
-	0           /* per-child init function */
+	child_init  /* per-child init function */
 };
 
 /**
@@ -122,8 +124,22 @@ static int mod_init(void)
 	if(register_mi_stats()<0)
 		return -1;
 #endif
+	register_pkg_proc_stats();
+	pkg_proc_stats_init_rpc();
 	return 0;
 }
+
+/**
+ *
+ */
+static int child_init(int rank)
+{
+	LM_DBG("rank is (%d)\n", rank);
+	if (rank==PROC_INIT)
+		return pkg_proc_stats_init();
+	return pkg_proc_stats_myinit(rank);
+}
+
 
 /**
  * destroy function
