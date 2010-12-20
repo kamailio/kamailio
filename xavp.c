@@ -468,43 +468,43 @@ void xavp_print_list_content(sr_xavp_t **head, int level)
 		start = *head;
 	else
 		start=*_xavp_list_crt;
-	LM_DBG("+++++ start XAVP list: %p (level=%d)\n", start, level);
+	LM_INFO("+++++ start XAVP list: %p (level=%d)\n", start, level);
 	avp = start;
 	while(avp)
 	{
-		LM_DBG("     *** XAVP name: %s\n", avp->name.s);
-		LM_DBG("     XAVP id: %u\n", avp->id);
-		LM_DBG("     XAVP value type: %d\n", avp->val.type);
+		LM_INFO("     *** XAVP name: %s\n", avp->name.s);
+		LM_INFO("     XAVP id: %u\n", avp->id);
+		LM_INFO("     XAVP value type: %d\n", avp->val.type);
 		switch(avp->val.type) {
 			case SR_XTYPE_NULL:
-				LM_DBG("     XAVP value: <null>\n");
+				LM_INFO("     XAVP value: <null>\n");
 			break;
 			case SR_XTYPE_INT:
-				LM_DBG("     XAVP value: %d\n", avp->val.v.i);
+				LM_INFO("     XAVP value: %d\n", avp->val.v.i);
 			break;
 			case SR_XTYPE_STR:
-				LM_DBG("     XAVP value: %s\n", avp->val.v.s.s);
+				LM_INFO("     XAVP value: %s\n", avp->val.v.s.s);
 			break;
 			case SR_XTYPE_TIME:
-				LM_DBG("     XAVP value: %lu\n", avp->val.v.t);
+				LM_INFO("     XAVP value: %lu\n", avp->val.v.t);
 			break;
 			case SR_XTYPE_LONG:
-				LM_DBG("     XAVP value: %ld\n", avp->val.v.l);
+				LM_INFO("     XAVP value: %ld\n", avp->val.v.l);
 			break;
 			case SR_XTYPE_LLONG:
-				LM_DBG("     XAVP value: %lld\n", avp->val.v.ll);
+				LM_INFO("     XAVP value: %lld\n", avp->val.v.ll);
 			break;
 			case SR_XTYPE_XAVP:
-				LM_DBG("     XAVP value: <xavp:%p>\n", avp->val.v.xavp);
+				LM_INFO("     XAVP value: <xavp:%p>\n", avp->val.v.xavp);
 				xavp_print_list_content(&avp->val.v.xavp, level+1);
 			break;
 			case SR_XTYPE_DATA:
-				LM_DBG("     XAVP value: <data:%p>\n", avp->val.v.data);
+				LM_INFO("     XAVP value: <data:%p>\n", avp->val.v.data);
 			break;
 		}
 		avp = avp->next;
 	}
-	LM_DBG("----- end XAVP list: %p (level=%d)\n", start, level);
+	LM_INFO("----- end XAVP list: %p (level=%d)\n", start, level);
 }
 
 void xavp_print_list(sr_xavp_t **head)
