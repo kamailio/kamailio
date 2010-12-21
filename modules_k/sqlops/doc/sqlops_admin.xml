@@ -60,6 +60,13 @@
 			times.
 		</para>
 		</listitem>
+		<listitem>
+		<para>
+			<emphasis>alternatively, results can be stored in xavps. Columns are
+			accessed by their names, rows by xavp index. Xavp's are available 
+			during the transactions lifetime and don't need to be destroyed manually.
+		</para>
+		</listitem>
 
 	</itemizedlist>
 	</section>
@@ -213,6 +220,48 @@ sql_result_free("ra");
 </programlisting>
 		</example>
 	</section>
+		<title>
+		<function moreinfo="none">sql_xquery(connection, query, result)</function>
+		</title>
+		<para>
+			Make a SQL query using 'connection' and store data in 'result' xavp.
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>connection</emphasis> - the name of the connection
+				to be used for query (defined via the <quote>sqlcon</quote> parameter).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>query</emphasis> - SQL query string or pseudo-variables containing SQL query.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>result</emphasis> - string name to identify the
+				result xavp. Each row will be added to this xavp, each column can 
+				be accessed by its name.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+			ONREPLY_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>sql_xquery()</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
+...
+sql_xquery("ca", "select * from domain", "ra");
+  xlog("first domain: $xavp(ra=>domain) with id: $xavp(ra=>domain_id)\n");
+...
+</programlisting>
+		</example>
+	</section>
 	<section>
 		<title>
 		<function moreinfo="none">sql_result_free(result)</function>
@@ -306,7 +355,28 @@ if($dbr(ra=>rows)>0)
 }
 sql_result_free("ra");
 ...
-				 </programlisting>
+
+
+...
+if (sql_xquery("ca", "select * from domain", "ra") == 1)
+{
+# non-destructive iteration
+    $var(i) = 0;
+    while($xavp(ra[$var(i)]) != $null)
+    {
+        xlog("[id, domain] = [$xavp(ra[$var(i)]=&gt;id), $xavp(ra[$var(i)]=&gt;domain)]\n");
+        $var(i) = $var(i) + 1;
+    }
+
+# destructive iteration
+    while($xavp(ra) != $null)
+    {
+        xlog("[id, domain] = [$xavp(ra=&gt;id), $xavp(ra=&gt;domain)]\n");
+        pv_unset("$xavp(ra)");
+    }
+}
+...
+				</programlisting>
 			</example>
 	</section>
 	</section>
