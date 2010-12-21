@@ -156,9 +156,6 @@
 extern char version[];
 extern int version_len;
 
-/* global flags for build_req_from_sip_req */
-static unsigned int global_req_flags=0;
-
 
 
 /** per process fixup function for global_req_flags.
