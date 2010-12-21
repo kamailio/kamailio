@@ -373,6 +373,13 @@ typedef struct sip_msg {
 #define FAKED_REPLY     ((struct sip_msg *) -1)
 
 extern int via_cnt;
+/** global  request flags.
+ *  msg->msg_flags should be OR'ed with it before
+ * a flag value is checked, e.g.:
+ * if ((msg->msg_flags|global_req_flags) & FL_XXX) ...
+ */
+extern unsigned int global_req_flags;
+
 
 int parse_msg(char* buf, unsigned int len, struct sip_msg* msg);
 

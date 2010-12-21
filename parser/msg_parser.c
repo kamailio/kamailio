@@ -82,6 +82,8 @@
 
 /* number of via's encountered */
 int via_cnt;
+/* global request flags */
+unsigned int global_req_flags = 0;
 
 /* returns pointer to next header line, and fill hdr_f ;
  * if at end of header returns pointer to the last crlf  (always buf)*/
