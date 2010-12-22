@@ -438,11 +438,18 @@ if(is_myself("$fu")) {
 
 5.1.  pkg.stats
 
-   Print private memory (pkg) usage statistics per process. It can take an
-   optinal parameter that specifies the pid of process to print statistics
-   for. If pid parameter is not give, it prints statistics for all
+   Print private memory (pkg) usage statistics per process. It can take
+   optinally a filter to print statistics only for a specific process or
+   set of processes. If no filter is given, it prints statistics for all
    processes.
+
+   The filter can be:
+     * pid value - print statistics for specific process pid.
+     * rank value - print statistics for specific process rank.
+     * index value - print statistics for specific index in process table.
 
    Examples:
                 sercmd pkg.stats
-                sercmd pkg.stats 1234
+                sercmd pkg.stats pid 1234
+                sercmd pkg.stats rank 1
+                sercmd pkg.stats index 10
