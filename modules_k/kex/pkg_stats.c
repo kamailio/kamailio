@@ -182,8 +182,10 @@ static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
 {
 	int i;
 	int limit;
-	int lpid;
+	int cval;
+	str cname;
 	void* th;
+	int mode;
 
 	if(_pkg_proc_stats_list==NULL)
 	{
@@ -191,37 +193,64 @@ static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
 		return;
 	}
 	i = 0;
+	mode = 0;
+	cval = 0;
 	limit = _pkg_proc_stats_no;
-	if (rpc->scan(ctx, "*d", &lpid) == 1)
+	if (rpc->scan(ctx, "*S", &cname) == 1)
 	{
-		i = pkg_proc_get_pid_index((unsigned int)lpid);
-		if(i<0)
-		{
-			rpc->fault(ctx, 500, "No such pid");
+		if(cname.len==3 && strncmp(cname.s, "pid", 3)==0)
+			mode = 1;
+		else if(cname.len==4 && strncmp(cname.s, "rank", 4)==0)
+			mode = 2;
+		else if(cname.len==5 && strncmp(cname.s, "index", 5)==0)
+			mode = 3;
+		else {
+			rpc->fault(ctx, 500, "Invalid filter type");
 			return;
 		}
-		limit = i + 1;
+
+		if (rpc->scan(ctx, "d", &cval) < 1)
+		{
+			rpc->fault(ctx, 500, "One more parameter expected");
+			return;
+		}
+		if(mode==1)
+		{
+			i = pkg_proc_get_pid_index((unsigned int)cval);
+			if(i<0)
+			{
+				rpc->fault(ctx, 500, "No such pid");
+				return;
+			}
+			limit = i + 1;
+		} else if(mode==3) {
+			i=cval;
+			limit = i + 1;
+		}
 	}
 
 	for(; i<limit; i++)
 	{
 		/* add entry node */
-		if (rpc->add(ctx, "{", &th) < 0)
+		if(mode!=2 || _pkg_proc_stats_list[i].rank==cval)
 		{
-			rpc->fault(ctx, 500, "Internal error creating rpc");
-			return;
-		}
-		if(rpc->struct_add(th, "dddddd",
-						"entry",     i,
-						"pid",       _pkg_proc_stats_list[i].pid,
-						"rank",      _pkg_proc_stats_list[i].rank,
-						"used",      _pkg_proc_stats_list[i].used,
-						"free",      _pkg_proc_stats_list[i].available,
-						"real_used", _pkg_proc_stats_list[i].real_used
-					)<0)
-		{
-			rpc->fault(ctx, 500, "Internal error creating rpc");
-			return;
+			if (rpc->add(ctx, "{", &th) < 0)
+			{
+				rpc->fault(ctx, 500, "Internal error creating rpc");
+				return;
+			}
+			if(rpc->struct_add(th, "dddddd",
+							"entry",     i,
+							"pid",       _pkg_proc_stats_list[i].pid,
+							"rank",      _pkg_proc_stats_list[i].rank,
+							"used",      _pkg_proc_stats_list[i].used,
+							"free",      _pkg_proc_stats_list[i].available,
+							"real_used", _pkg_proc_stats_list[i].real_used
+						)<0)
+			{
+				rpc->fault(ctx, 500, "Internal error creating rpc");
+				return;
+			}
 		}
 	}
 }
