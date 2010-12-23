@@ -125,7 +125,7 @@ static int pkg_proc_update_used(void *data)
 		return -1;
 	if(process_no>=_pkg_proc_stats_no)
 		return -1;
-	_pkg_proc_stats_list[process_no].used = (unsigned int)data;
+	_pkg_proc_stats_list[process_no].used = (unsigned int)(long)data;
 	return 0;
 }
 
@@ -138,7 +138,7 @@ static int pkg_proc_update_real_used(void *data)
 		return -1;
 	if(process_no>=_pkg_proc_stats_no)
 		return -1;
-	_pkg_proc_stats_list[process_no].real_used = (unsigned int)data;
+	_pkg_proc_stats_list[process_no].real_used = (unsigned int)(long)data;
 	_pkg_proc_stats_list[process_no].available = pkg_available();
 	return 0;
 }
