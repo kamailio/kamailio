@@ -56,7 +56,7 @@
 #include "../bit_scan.h"
 #include "../cfg/cfg.h" /* memlog */
 #ifdef MALLOC_STATS
-#include "../evnets.h"
+#include "../events.h"
 #endif
 
 
