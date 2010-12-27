@@ -1,0 +1,2 @@
+id(int,auto) lcr_id(int) prefix(string,null) from_uri(string,null) stopper(int) enabled(int) 
+lcr_rule:1

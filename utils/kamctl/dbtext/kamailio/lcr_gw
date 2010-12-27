@@ -1,0 +1,2 @@
+id(int,auto) lcr_id(int) gw_name(string,null) ip_addr(string,null) hostname(string,null) port(int,null) params(string,null) uri_scheme(int,null) transport(int,null) strip(int,null) tag(string,null) flags(int) defunct(int,null) 
+lcr_gw:1
