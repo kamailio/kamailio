@@ -1,0 +1,2 @@
+id(int,auto) lcr_id(int) rule_id(int) gw_id(int) priority(int) weight(int) 
+lcr_rule_target:1
