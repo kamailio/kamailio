@@ -300,7 +300,7 @@ int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,
 				LM_ERR("unable to get time val attributes\n");
 				return pv_get_null(msg, param, res);
 			}
-			s.len = snprintf(_timeval_ts_buf, 32, "%u.%u",
+			s.len = snprintf(_timeval_ts_buf, 32, "%u.%06u",
 					(unsigned int)tv.tv_sec, (unsigned int)tv.tv_usec);
 			if(s.len<0)
 				return pv_get_null(msg, param, res);
