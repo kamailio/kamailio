@@ -1,1 +1,0 @@
-id(int,auto) lcr_id(int) prefix(string,null) from_uri(string,null) grp_id(int) priority(int) 
