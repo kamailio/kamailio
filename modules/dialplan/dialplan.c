@@ -532,10 +532,12 @@ static struct mi_root * mi_translate(struct mi_root *cmd, void *param)
 		return init_mi_tree(404, "Empty input parameter", 21);
 	}
 
+	LM_DBG("trying to translate %.*s with dpid %i\n",
+			input.len, input.s, idp->dp_id);
 	if (translate(NULL, input, &output, idp, &attrs)!=0){
 		LM_DBG("could not translate %.*s with dpid %i\n", 
 			input.len, input.s, idp->dp_id);
-		return 0;
+		return init_mi_tree(404, "No translation", 14);
 	}
 	LM_DBG("input %.*s with dpid %i => output %.*s\n",
 			input.len, input.s, idp->dp_id, output.len, output.s);
