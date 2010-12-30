@@ -362,7 +362,7 @@ static int xhttp_send_reply(sip_msg_t *msg, int code, str *reason,
 {
 	str tbuf;
 
-	if(ctype->len>0)
+	if(ctype!=NULL && ctype->len>0)
 	{
 		/* add content-type */
 		tbuf.len=sizeof("Content-Type: ") - 1 + ctype->len + CRLF_LEN;
@@ -386,7 +386,7 @@ static int xhttp_send_reply(sip_msg_t *msg, int code, str *reason,
 		pkg_free(tbuf.s);
 	}
 
-	if(body->len>0)
+	if(body!=NULL && body->len>0)
 	{
 		if (add_lump_rpl(msg, body->s, body->len, LUMP_RPL_BODY) < 0)
 		{
