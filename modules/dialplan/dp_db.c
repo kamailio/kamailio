@@ -316,39 +316,40 @@ int str_to_shm(str src, str * dest)
 /* Compile pcre pattern and return pointer to shm copy of result */
 static pcre *reg_ex_comp(const char *pattern, int *cap_cnt)
 {
-    pcre *re, *result;
-    const char *error;
-    int rc, size, err_offset;
+	pcre *re, *result;
+	const char *error;
+	int rc, err_offset;
+	size_t size;
 
-    re = pcre_compile(pattern, 0, &error, &err_offset, NULL);
-    if (re == NULL) {
-	LM_ERR("PCRE compilation of '%s' failed at offset %d: %s\n",
-	       pattern, err_offset, error);
-	return (pcre *)0;
-    }
-    rc = pcre_fullinfo(re, NULL, PCRE_INFO_SIZE, &size);
-    if (rc != 0) {
+	re = pcre_compile(pattern, 0, &error, &err_offset, NULL);
+	if (re == NULL) {
+		LM_ERR("PCRE compilation of '%s' failed at offset %d: %s\n",
+			pattern, err_offset, error);
+		return (pcre *)0;
+	}
+	rc = pcre_fullinfo(re, NULL, PCRE_INFO_SIZE, &size);
+	if (rc != 0) {
+		pcre_free(re);
+		LM_ERR("pcre_fullinfo on compiled pattern '%s' yielded error: %d\n",
+			pattern, rc);
+		return (pcre *)0;
+	}
+	rc = pcre_fullinfo(re, NULL, PCRE_INFO_CAPTURECOUNT, cap_cnt);
+	if (rc != 0) {
+		pcre_free(re);
+		LM_ERR("pcre_fullinfo on compiled pattern '%s' yielded error: %d\n",
+			pattern, rc);
+		return (pcre *)0;
+	}
+	result = (pcre *)shm_malloc(size);
+	if (result == NULL) {
+		pcre_free(re);
+		LM_ERR("not enough shared memory for compiled PCRE pattern\n");
+		return (pcre *)0;
+	}
+	memcpy(result, re, size);
 	pcre_free(re);
-	LM_ERR("pcre_fullinfo on compiled pattern '%s' yielded error: %d\n",
-	       pattern, rc);
-	return (pcre *)0;
-    }
-    rc = pcre_fullinfo(re, NULL, PCRE_INFO_CAPTURECOUNT, cap_cnt);
-    if (rc != 0) {
-	pcre_free(re);
-	LM_ERR("pcre_fullinfo on compiled pattern '%s' yielded error: %d\n",
-	       pattern, rc);
-	return (pcre *)0;
-    }
-    result = (pcre *)shm_malloc(size);
-    if (result == NULL) {
-	pcre_free(re);
-	LM_ERR("not enough shared memory for compiled PCRE pattern\n");
-	return (pcre *)0;
-    }
-    memcpy(result, re, size);
-    pcre_free(re);
-    return result;
+	return result;
 }
 
 
