@@ -95,8 +95,8 @@ static int  w_prefix2domain_1(struct sip_msg* msg, char* mode, char* str2);
 static int  w_prefix2domain_2(struct sip_msg* msg, char* mode, char* sd_en);
 static int  mod_init(void);
 static void mod_destroy(void);
-static int  child_init(void);
-static int  mod_child_init(int r);
+static int  child_init(int rank);
+static int  mi_child_init(void);
 static int prefix2domain(struct sip_msg*, int mode, int sd_en);
 
 static struct mi_root* pdt_mi_reload(struct mi_root*, void* param);
@@ -131,7 +131,7 @@ static param_export_t params[]={
 };
 
 static mi_export_t mi_cmds[] = {
-	{ "pdt_add",     pdt_mi_add,     0,  0,  child_init },
+	{ "pdt_add",     pdt_mi_add,     0,  0,  mi_child_init },
 	{ "pdt_reload",  pdt_mi_reload,  0,  0,  0 },
 	{ "pdt_delete",  pdt_mi_delete,  0,  0,  0 },
 	{ "pdt_list",    pdt_mi_list,    0,  0,  0 },
@@ -151,7 +151,7 @@ struct module_exports exports = {
 	mod_init,       /* module initialization function */
 	0,              /* response function */
 	mod_destroy,    /* destroy function */
-	mod_child_init  /* per child init function */
+	child_init      /* per child init function */
 };
 
 
@@ -270,7 +270,10 @@ error1:
 }
 
 
-static int child_init(void)
+/**
+ * mi and worker process init
+ */
+static int mi_child_init(void)
 {
 	/* check if db handler is initialized */
 	if(db_con!=NULL)
@@ -293,15 +296,15 @@ static int child_init(void)
 
 
 /* each child get a new connection to the database */
-static int mod_child_init(int r)
+static int child_init(int rank)
 {
-	if (r==PROC_INIT || r==PROC_MAIN || r==PROC_TCP_MAIN)
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	if ( child_init()!=0 )
+	if ( mi_child_init()!=0 )
 		return -1;
 
-	LM_DBG("#%d: database connection opened successfully\n",r);
+	LM_DBG("#%d: database connection opened successfully\n", rank);
 
 	return 0;
 }
