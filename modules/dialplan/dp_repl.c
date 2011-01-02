@@ -316,21 +316,23 @@ search_rule:
 
 			case EQUAL_OP:
 				LM_DBG("equal operator testing\n");
-			    if(rulep->match_exp.len != input.len)
+			    if(rulep->match_exp.len != input.len) {
 					rez = -1;
-			    else 
+				} else {
 					rez = strncmp(rulep->match_exp.s,input.s,input.len);
-		    break;
+					rez = (rez==0)?0:-1;
+				}
+			break;
 	    
 			default:
-			    LM_ERR("bogus match operator code %i\n", rulep->matchop);
+				LM_ERR("bogus match operator code %i\n", rulep->matchop);
 				return -1;
 		}
 		if(rez >= 0)
-		    goto repl;
+			goto repl;
 	}
-    /*test the rules with len 0*/
-    if(indexp->len){
+	/*test the rules with len 0*/
+	if(indexp->len){
 		for(indexp = indexp->next; indexp!=NULL; indexp = indexp->next)
 			if(!indexp->len)
 				break;
