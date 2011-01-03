@@ -192,6 +192,9 @@ static int child_init(int rank)
 	char* tmp;
 	unsigned int v;
 
+	if(rank==PROC_INIT)
+		return 0;
+
 	km_child_init(rank);
 
 	if (rank <= 0) {
