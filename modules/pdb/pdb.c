@@ -670,6 +670,8 @@ static int mod_init(void)
 
 static int child_init (int rank)
 {
+	if(rank==PROC_INIT || rank==PROC_TCP_MAIN)
+		return 0;
 	return mi_child_init();
 }
 
