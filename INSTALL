@@ -126,6 +126,7 @@ Requirements:
   module
 - libpcre libs and devel headers - if you want to compile the lcr and dialplan
   modules
+- libsctp devel headers - if you want to compile the SCTP transport in the core
 
 
 OS Notes:
