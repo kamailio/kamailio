@@ -1494,6 +1494,11 @@ int cfg_add_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id)
 		group_name->len, group_name->s,
 		group_id);
 
+	/* Make sure that cfg_set_*() sees the change when
+	 * the function is immediately called after the group
+	 * instance has been added. */
+	cfg_update();
+
 	return 0;
 error:
 	CFG_WRITER_UNLOCK();
@@ -1582,6 +1587,11 @@ int cfg_del_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id)
 		"group instance is deleted: %.*s[%u]\n",
 		group_name->len, group_name->s,
 		group_id);
+
+	/* Make sure that cfg_set_*() sees the change when
+	 * the function is immediately called after the group
+	 * instance has been deleted. */
+	cfg_update();
 
 	return 0;
 error:
