@@ -597,6 +597,8 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
+	if(rank==PROC_INIT || rank==PROC_TCP_MAIN)
+		return 0;
 	if (matrix_db_open() != 0) return -1;
 	return 0;
 }
