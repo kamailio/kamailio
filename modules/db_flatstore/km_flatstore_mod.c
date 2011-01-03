@@ -136,7 +136,7 @@ int km_child_init(int rank)
 	if (rank <= 0) {
 		km_flat_pid = - rank;
 	} else {
-		km_flat_pid = rank - PROC_TCP_MAIN;
+		km_flat_pid = rank - PROC_MIN;
 	}
 	return 0;
 }
