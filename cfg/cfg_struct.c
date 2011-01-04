@@ -876,10 +876,19 @@ int new_add_var(str *group_name, unsigned int group_id, str *var_name,
 	cfg_add_var_t	*add_var = NULL, **add_var_p;
 	int		len;
 
-	LOG(L_DBG, "DEBUG: new_add_var(): declaring a new variable instance %.*s[%u].%.*s\n",
+	if (type && (!var_name || !val)) {
+		LOG(L_ERR, "ERROR: new_add_var(): Missing variable/value specification\n");
+		goto error;
+	}
+	if (type)
+		LOG(L_DBG, "DEBUG: new_add_var(): declaring a new variable instance %.*s[%u].%.*s\n",
 			group_name->len, group_name->s,
 			group_id,
 			var_name->len, var_name->s);
+	else
+		LOG(L_DBG, "DEBUG: new_add_var(): declaring a new group instance %.*s[%u]\n",
+			group_name->len, group_name->s,
+			group_id);
 
 	if (cfg_shmized) {
 		LOG(L_ERR, "ERROR: new_add_var(): too late, the configuration has already been shmized\n");
