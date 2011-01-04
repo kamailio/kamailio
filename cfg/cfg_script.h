@@ -53,6 +53,15 @@ typedef struct _cfg_script_var {
 cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type,
 					char *descr);
 
+/* Rewrite the value of an already declared script variable before forking.
+ * Return value:
+ * 	 0: success
+ *	-1: error
+ *	 1: variable not found
+ */
+int cfg_set_script_var(cfg_group_t *group, str *var_name,
+			void *val, unsigned int val_type);
+
 /* fix-up the dynamically declared group */
 int cfg_script_fixup(cfg_group_t *group, unsigned char *block);
 

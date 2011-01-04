@@ -122,9 +122,13 @@ int cfg_help(cfg_ctx_t *ctx, str *group_name, str *var_name,
 /*! \brief notify the drivers about the new config definition */
 void cfg_notify_drivers(char *group_name, int group_name_len, cfg_def_t *def);
 
-/*! \brief convert the value to the requested type */
+/*! \brief convert the value to the requested type.
+ * Do not forget the call convert_val_cleaup afterwards. */
 int convert_val(unsigned int val_type, void *val,
 			unsigned int var_type, void **new_val);
+
+/*! \brief cleanup function for convert_val() */
+void convert_val_cleanup(void);
 
 /*! \brief initialize the handle for cfg_get_group_next() */
 #define cfg_get_group_init(handle) \

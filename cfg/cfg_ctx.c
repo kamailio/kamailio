@@ -30,6 +30,7 @@
 
 #include "../ut.h"
 #include "cfg_struct.h"
+#include "cfg_script.h"
 #include "cfg_ctx.h"
 
 
@@ -231,13 +232,13 @@ error:
 	return -1;
 }
 
-#define convert_val_cleanup() \
-	do { \
-		if (temp_string) { \
-			pkg_free(temp_string); \
-			temp_string = NULL; \
-		} \
-	} while(0)
+void convert_val_cleanup(void)
+{
+	if (temp_string) {
+		pkg_free(temp_string);
+		temp_string = NULL;
+	}
+}
 
 /* returns the size of the variable */
 static int cfg_var_size(cfg_mapping_t *var)
@@ -339,8 +340,17 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 	}
 
 	/* look-up the group and the variable */
-	if (cfg_lookup_var(group_name, var_name, &group, &var))
+	if (cfg_lookup_var(group_name, var_name, &group, &var)) {
+		if (!cfg_shmized) {
+			/* The group may be dynamic which is not yet ready
+			 * before forking */
+			if ((group = cfg_lookup_group(group_name->s, group_name->len))
+				&& (group->dynamic == CFG_GROUP_DYNAMIC)
+			)
+				return cfg_set_script_var(group, var_name, val, val_type);
+		}
 		return 1;
+	}
 		
 	/* check whether the variable is read-only */
 	if (var->def->type & CFG_READONLY) {

@@ -31,6 +31,7 @@
 #include "../ut.h"
 #include "cfg_struct.h"
 #include "cfg.h"
+#include "cfg_ctx.h"
 #include "cfg_script.h"
 
 /* allocates memory for a new config script variable
@@ -143,6 +144,84 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 error:
 	LOG(L_ERR, "ERROR: new_cfg_script_var(): not enough memory\n");
 	return NULL;
+}
+
+/* Rewrite the value of an already declared script variable before forking.
+ * Return value:
+ * 	 0: success
+ *	-1: error
+ *	 1: variable not found
+ */
+int cfg_set_script_var(cfg_group_t *group, str *var_name,
+			void *val, unsigned int val_type)
+{
+	cfg_script_var_t	*var;
+	void	*v;
+	str	s;
+
+	if (cfg_shmized || (group->dynamic != CFG_GROUP_DYNAMIC)) {
+		LOG(L_ERR, "BUG: cfg_set_script_var(): Not a dynamic group before forking\n");
+		return -1;
+	}
+
+	for (	var = (cfg_script_var_t *)(void *)group->vars;
+		var;
+		var = var->next
+	) {
+		if ((var->name_len == var_name->len)
+			&& (memcmp(var->name, var_name->s, var_name->len) == 0)
+		) {
+			switch (var->type) {
+			case CFG_VAR_INT:
+				if (convert_val(val_type, val, CFG_INPUT_INT, &v))
+					goto error;
+				if ((var->min || var->max)
+					&& ((var->min > (int)(long)v) || (var->max < (int)(long)v))
+				) {
+					LOG(L_ERR, "ERROR: cfg_set_script_var(): integer value is out of range\n");
+					goto error;
+				}
+				var->val.i = (int)(long)v;
+				break;
+
+			case CFG_VAR_STR:
+				if (convert_val(val_type, val, CFG_INPUT_STR, &v))
+					goto error;
+				if (((str *)v)->s) {
+					s.len = ((str *)v)->len;
+					s.s = pkg_malloc(sizeof(char) * (s.len + 1));
+					if (!s.s) {
+						LOG(L_ERR, "ERROR: cfg_set_script_var(): not enough memory\n");
+						goto error;
+					}
+					memcpy(s.s, ((str *)v)->s, s.len);
+					s.s[s.len] = '\0';
+				} else {
+					s.s = NULL;
+					s.len = 0;
+				}
+				if (var->val.s.s)
+					pkg_free(var->val.s.s);
+				var->val.s = s;
+				break;
+
+			default:
+				LOG(L_ERR, "ERROR: cfg_set_script_var(): unsupported variable type\n");
+				goto error;
+			}
+
+			convert_val_cleanup();
+			return 0;
+		}
+	}
+
+	return 1;
+
+error:
+	LOG(L_ERR, "ERROR: cfg_set_script_var(): failed to set the script variable: %.*s.%.*s\n",
+			group->name_len, group->name,
+			var_name->len, var_name->s);
+	return -1;
 }
 
 /* fix-up the dynamically declared group:
