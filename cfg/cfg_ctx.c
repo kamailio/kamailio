@@ -1648,6 +1648,56 @@ error:
 	return -1;
 }
 
+/* Check the existance of a group instance.
+ * return value:
+ *	1: exists
+ *	0: does not exist
+ */
+int cfg_group_inst_exists(cfg_ctx_t *ctx, str *group_name, unsigned int group_id)
+{
+	cfg_group_t	*group;
+	cfg_add_var_t	*add_var;
+	int	found;
+
+	/* verify the context even if we do not need it now
+	to make sure that a cfg driver has called the function
+	(very very weak security) */
+	if (!ctx) {
+		LOG(L_ERR, "ERROR: cfg_group_inst_exists(): context is undefined\n");
+		return 0;
+	}
+
+	if (!(group = cfg_lookup_group(group_name->s, group_name->len))) {
+		LOG(L_ERR, "ERROR: cfg_group_inst_exists(): group not found\n");
+		return 0;
+	}
+
+	if (!cfg_shmized) {
+		/* group instances are stored in the additional variable list
+		 * before forking */
+		found = 0;
+		for (	add_var = group->add_var;
+			add_var;
+			add_var = add_var->next
+		)
+			if (add_var->group_id == group_id) {
+				found = 1;
+				break;
+			}
+
+	} else {
+		/* make sure that nobody else replaces the global config meantime */
+		CFG_WRITER_LOCK();
+		found = (cfg_find_group(CFG_GROUP_META(*cfg_global, group),
+								group->size,
+								group_id)
+				!= NULL);
+		CFG_WRITER_UNLOCK();
+	}
+
+	return found;
+}
+
 /* Apply the changes to a group instance as long as the additional variable
  * belongs to the specified group_id. *add_var_p is moved to the next additional
  * variable, and all the consumed variables are freed.

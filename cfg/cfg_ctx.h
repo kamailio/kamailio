@@ -198,6 +198,13 @@ int cfg_add_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id);
 /* Delete an instance of a group */
 int cfg_del_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id);
 
+/* Check the existance of a group instance.
+ * return value:
+ *	1: exists
+ *	0: does not exist
+ */
+int cfg_group_inst_exists(cfg_ctx_t *ctx, str *group_name, unsigned int group_id);
+
 /* Apply the changes to a group instance as long as the additional variable
  * belongs to the specified group_id. *add_var_p is moved to the next additional
  * variable, and all the consumed variables are freed.
