@@ -1521,6 +1521,8 @@ int cfg_del_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id)
 	cfg_block_t	*block = NULL;
 	void		**replaced = NULL;
 	cfg_group_inst_t	*new_array = NULL, *group_inst;
+	cfg_mapping_t	*var;
+	int		i, num;
 
 	/* verify the context even if we do not need it now
 	to make sure that a cfg driver has called the function
@@ -1571,13 +1573,41 @@ int cfg_del_group_inst(cfg_ctx_t *ctx, str *group_name, unsigned int group_id)
 		/* prepare the array of the replaced strings,
 		and replaced group instances,
 		they will be freed when the old block is freed */
-		replaced = (void **)shm_malloc(sizeof(void *) * 2);
+
+		/* count the number of strings that has to be freed */
+		num = 0;
+		for (i = 0; i < group->num; i++) {
+			var = &group->mapping[i];
+			if (CFG_VAR_TEST(group_inst, var)
+				&& ((CFG_VAR_TYPE(var) == CFG_VAR_STRING) || (CFG_VAR_TYPE(var) == CFG_VAR_STR))
+				&& (*(char **)(group_inst->vars + var->offset) != NULL)
+			)
+				num++;
+		}
+
+		replaced = (void **)shm_malloc(sizeof(void *) * (num + 2));
 		if (!replaced) {
 			LOG(L_ERR, "ERROR: cfg_del_group_inst(): not enough shm memory\n");
 			goto error;
 		}
-		replaced[0] = CFG_GROUP_META(*cfg_global, group)->array;
-		replaced[1] = NULL;
+
+		if (num) {
+			/* There was at least one string to free, go though the list again */
+			num = 0;
+			for (i = 0; i < group->num; i++) {
+				var = &group->mapping[i];
+				if (CFG_VAR_TEST(group_inst, var)
+					&& ((CFG_VAR_TYPE(var) == CFG_VAR_STRING) || (CFG_VAR_TYPE(var) == CFG_VAR_STR))
+					&& (*(char **)(group_inst->vars + var->offset) != NULL)
+				) {
+					replaced[num] = *(char **)(group_inst->vars + var->offset);
+					num++;
+				}
+			}
+		}
+
+		replaced[num] = CFG_GROUP_META(*cfg_global, group)->array;
+		replaced[num+1] = NULL;
 	}
 	/* replace the global config with the new one */
 	cfg_install_global(block, replaced, NULL, NULL);
