@@ -30,6 +30,7 @@
 #include "../str.h"
 
 /* variable type */
+#define CFG_VAR_UNSET		0U
 #define CFG_VAR_INT		1U
 #define CFG_VAR_STRING		2U
 #define CFG_VAR_STR		3U

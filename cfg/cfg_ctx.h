@@ -51,6 +51,7 @@ typedef struct _cfg_changed_var {
 
 	unsigned int	group_id; /* valid only if group_id_set==1 */
 	unsigned char	group_id_set;
+	unsigned char	del_value;	/* delete the value instead of setting it */
 
 	/* blob that contains the new value */
 	union cfg_var_value new_val; /* variable size */
@@ -95,6 +96,10 @@ int cfg_set_now_string(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, 
 int cfg_set_now_str(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
 			str *val);
 
+/*! \brief Delete a variable from the group instance.
+ * wrapper function for cfg_set_now */
+int cfg_del_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name);
+
 /* sets the value of a variable but does not commit the change */
 int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
 			void *val, unsigned int val_type);
@@ -104,6 +109,10 @@ int cfg_set_delayed_string(cfg_ctx_t *ctx, str *group_name, unsigned int *group_
 			char *val);
 int cfg_set_delayed_str(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name,
 			str *val);
+
+/*! \brief Delete a variable from the group instance.
+ * wrapper function for cfg_set_delayed */
+int cfg_del_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name);
 
 /*! \brief commits the previously prepared changes within the context */
 int cfg_commit(cfg_ctx_t *ctx);

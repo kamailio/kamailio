@@ -198,6 +198,11 @@ extern int		cfg_ginst_count;
 #define CFG_VAR_TEST_AND_SET(group_inst, var) \
 	bit_test_and_set((var)->pos % (sizeof(int)*8), (group_inst)->set + (var)->pos/(sizeof(int)*8))
 
+/* Test whether a variable is explicitely set in the group instance,
+ * or it uses the default value, and reset the flag. */
+#define CFG_VAR_TEST_AND_RESET(group_inst, var) \
+	bit_test_and_reset((var)->pos % (sizeof(int)*8), (group_inst)->set + (var)->pos/(sizeof(int)*8))
+
 /* Return the group instance pointer from a handle,
  * or NULL if the handle points to the default configuration block */
 #define CFG_HANDLE_TO_GINST(h) \

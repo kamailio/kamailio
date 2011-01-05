@@ -330,6 +330,11 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 		return -1;
 	}
 
+	if ((val_type == CFG_VAR_UNSET) && !group_id) {
+		LOG(L_ERR, "ERROR: cfg_set_now(): Only group instance values can be deleted\n");
+		return -1;
+	}
+
 	if (group_id && !cfg_shmized) {
 		/* The config group has not been shmized yet,
 		but an additional instance of a variable needs to be added to the group.
@@ -372,10 +377,13 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 	}
 
 	/* check whether we have to convert the type */
-	if (convert_val(val_type, val, CFG_INPUT_TYPE(var), &v))
+	if ((val_type != CFG_VAR_UNSET)
+		&& convert_val(val_type, val, CFG_INPUT_TYPE(var), &v)
+	)
 		goto error0;
 	
-	if ((CFG_INPUT_TYPE(var) == CFG_INPUT_INT) 
+	if ((val_type != CFG_VAR_UNSET)
+	&& (CFG_INPUT_TYPE(var) == CFG_INPUT_INT) 
 	&& (var->def->min || var->def->max)) {
 		/* perform a simple min-max check for integers */
 		if (((int)(long)v < var->def->min)
@@ -385,7 +393,9 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 		}
 	}
 
-	if (var->def->on_change_cb) {
+	if ((val_type != CFG_VAR_UNSET)
+		&& var->def->on_change_cb
+	) {
 		/* Call the fixup function.
 		There is no need to set a temporary cfg handle,
 		becaue a single variable is changed */
@@ -450,6 +460,12 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 					group_name->len, group_name->s, *group_id);
 				goto error;
 			}
+			if ((val_type == CFG_VAR_UNSET) && !CFG_VAR_TEST(group_inst, var)) {
+				/* nothing to do, the variable is not set in the group instance */
+				CFG_WRITER_UNLOCK();
+				LOG(L_DBG, "DEBUG: cfg_set_now(): The variable is not set\n");
+				return 0;
+			}
 			var_block = group_inst->vars;
 		} else {
 			group_inst = NULL;
@@ -494,37 +510,47 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 		p = *(group->handle) + var->offset;
 	}
 
-	/* set the new value */
-	switch (CFG_VAR_TYPE(var)) {
-	case CFG_VAR_INT:
-		*(int *)p = (int)(long)v;
-		break;
+	if (val_type != CFG_VAR_UNSET) {
+		/* set the new value */
+		switch (CFG_VAR_TYPE(var)) {
+		case CFG_VAR_INT:
+			*(int *)p = (int)(long)v;
+			break;
 
-	case CFG_VAR_STRING:
-		/* clone the string to shm mem */
-		s.s = v;
-		s.len = (s.s) ? strlen(s.s) : 0;
-		if (cfg_clone_str(&s, &s)) goto error;
-		old_string = *(char **)p;
-		*(char **)p = s.s;
-		break;
+		case CFG_VAR_STRING:
+			/* clone the string to shm mem */
+			s.s = v;
+			s.len = (s.s) ? strlen(s.s) : 0;
+			if (cfg_clone_str(&s, &s)) goto error;
+			old_string = *(char **)p;
+			*(char **)p = s.s;
+			break;
 
-	case CFG_VAR_STR:
-		/* clone the string to shm mem */
-		s = *(str *)v;
-		if (cfg_clone_str(&s, &s)) goto error;
-		old_string = *(char **)p;
-		memcpy(p, &s, sizeof(str));
-		break;
+		case CFG_VAR_STR:
+			/* clone the string to shm mem */
+			s = *(str *)v;
+			if (cfg_clone_str(&s, &s)) goto error;
+			old_string = *(char **)p;
+			memcpy(p, &s, sizeof(str));
+			break;
 
-	case CFG_VAR_POINTER:
-		*(void **)p = v;
-		break;
+		case CFG_VAR_POINTER:
+			*(void **)p = v;
+			break;
 
+		}
+		if (group_inst && !CFG_VAR_TEST_AND_SET(group_inst, var))
+			old_string = NULL; /* the string is the same as the default one,
+						it cannot be freed */
+	} else {
+		/* copy the default value to the group instance */
+		if ((CFG_VAR_TYPE(var) == CFG_VAR_STRING)
+		|| (CFG_VAR_TYPE(var) == CFG_VAR_STR))
+			old_string = *(char **)p;
+		memcpy(p, CFG_GROUP_DATA(*cfg_global, group) + var->offset, cfg_var_size(var)); 
+
+		CFG_VAR_TEST_AND_RESET(group_inst, var);
 	}
-	if (group_inst && !CFG_VAR_TEST_AND_SET(group_inst, var))
-		old_string = NULL; /* the string is the same as the default one,
-					it cannot be freed */
 
 	if (cfg_shmized) {
 		if (!group_inst) {
@@ -593,12 +619,25 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 			var_name->len, var_name->s,
 			(char *)val);
 
-	else /* str type */
+	else if (val_type == CFG_VAR_STR)
 		LOG(L_INFO, "INFO: cfg_set_now(): %.*s.%.*s "
 			"has been changed to \"%.*s\"\n",
 			group_name->len, group_name->s,
 			var_name->len, var_name->s,
 			((str *)val)->len, ((str *)val)->s);
+
+	else if (val_type == CFG_VAR_UNSET)
+		LOG(L_INFO, "INFO: cfg_set_now(): %.*s.%.*s "
+			"has been deleted\n",
+			group_name->len, group_name->s,
+			var_name->len, var_name->s);
+
+	else
+		LOG(L_INFO, "INFO: cfg_set_now(): %.*s.%.*s "
+			"has been changed\n",
+			group_name->len, group_name->s,
+			var_name->len, var_name->s);
+
 	if (group_id)
 		LOG(L_INFO, "INFO: cfg_set_now(): group id = %u\n",
 			*group_id);
@@ -647,6 +686,14 @@ int cfg_set_now_str(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 				(void *)val, CFG_VAR_STR);
 }
 
+/* Delete a variable from the group instance.
+ * wrapper function for cfg_set_now */
+int cfg_del_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name)
+{
+	return cfg_set_now(ctx, group_name, group_id, var_name,
+				NULL, CFG_VAR_UNSET);
+}
+
 /* sets the value of a variable but does not commit the change
  *
  * return value:
@@ -679,6 +726,11 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 		return -1;
 	}
 
+	if ((val_type == CFG_VAR_UNSET) && !group_id) {
+		LOG(L_ERR, "ERROR: cfg_set_delayed(): Only group instance values can be deleted\n");
+		return -1;
+	}
+
 	/* look-up the group and the variable */
 	if (cfg_lookup_var(group_name, var_name, &group, &var))
 		return 1;
@@ -703,10 +755,13 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 	}
 
 	/* check whether we have to convert the type */
-	if (convert_val(val_type, val, CFG_INPUT_TYPE(var), &v))
+	if ((val_type != CFG_VAR_UNSET)
+		&& convert_val(val_type, val, CFG_INPUT_TYPE(var), &v)
+	)
 		goto error0;
 
-	if ((CFG_INPUT_TYPE(var) == CFG_INPUT_INT) 
+	if ((val_type != CFG_VAR_UNSET)
+	&& (CFG_INPUT_TYPE(var) == CFG_INPUT_INT) 
 	&& (var->def->min || var->def->max)) {
 		/* perform a simple min-max check for integers */
 		if (((int)(long)v < var->def->min)
@@ -720,7 +775,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 	the list of changed variables */
 	CFG_CTX_LOCK(ctx);
 
-	if (var->def->on_change_cb) {
+	if ((val_type != CFG_VAR_UNSET) && var->def->on_change_cb) {
 		/* The fixup function must see also the
 		not yet committed values, so a temporary handle
 		must be prepared that points to the new config.
@@ -793,8 +848,9 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 	}
 
 	/* everything went ok, we can add the new value to the list */
-	size = sizeof(cfg_changed_var_t) -
-			sizeof(((cfg_changed_var_t*)0)->new_val) + cfg_var_size(var);
+	size = sizeof(cfg_changed_var_t)
+		- sizeof(((cfg_changed_var_t*)0)->new_val)
+		+ ((val_type != CFG_VAR_UNSET) ? cfg_var_size(var) : 0);
 	changed = (cfg_changed_var_t *)shm_malloc(size);
 	if (!changed) {
 		LOG(L_ERR, "ERROR: cfg_set_delayed(): not enough shm memory\n");
@@ -808,31 +864,35 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 		changed->group_id_set = 1;
 	}
 
-	switch (CFG_VAR_TYPE(var)) {
+	if (val_type != CFG_VAR_UNSET) {
+		switch (CFG_VAR_TYPE(var)) {
 
-	case CFG_VAR_INT:
-		changed->new_val.vint = (int)(long)v;
-		break;
+		case CFG_VAR_INT:
+			changed->new_val.vint = (int)(long)v;
+			break;
 
-	case CFG_VAR_STRING:
-		/* clone the string to shm mem */
-		s.s = v;
-		s.len = (s.s) ? strlen(s.s) : 0;
-		if (cfg_clone_str(&s, &s)) goto error;
-		changed->new_val.vp = s.s;
-		break;
+		case CFG_VAR_STRING:
+			/* clone the string to shm mem */
+			s.s = v;
+			s.len = (s.s) ? strlen(s.s) : 0;
+			if (cfg_clone_str(&s, &s)) goto error;
+			changed->new_val.vp = s.s;
+			break;
 
-	case CFG_VAR_STR:
-		/* clone the string to shm mem */
-		s = *(str *)v;
-		if (cfg_clone_str(&s, &s)) goto error;
-		changed->new_val.vstr=s;
-		break;
+		case CFG_VAR_STR:
+			/* clone the string to shm mem */
+			s = *(str *)v;
+			if (cfg_clone_str(&s, &s)) goto error;
+			changed->new_val.vstr=s;
+			break;
 
-	case CFG_VAR_POINTER:
-		changed->new_val.vp=v;
-		break;
+		case CFG_VAR_POINTER:
+			changed->new_val.vp=v;
+			break;
 
+		}
+	} else {
+		changed->del_value = 1;
 	}
 
 	/* Order the changes by group + group_id + original order.
@@ -877,7 +937,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 			(char *)val,
 			ctx);
 
-	else /* str type */
+	else if (val_type == CFG_VAR_STR)
 		LOG(L_INFO, "INFO: cfg_set_delayed(): %.*s.%.*s "
 			"is going to be changed to \"%.*s\" "
 			"[context=%p]\n",
@@ -885,6 +945,23 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str
 			var_name->len, var_name->s,
 			((str *)val)->len, ((str *)val)->s,
 			ctx);
+
+	else if (val_type == CFG_VAR_UNSET)
+		LOG(L_INFO, "INFO: cfg_set_delayed(): %.*s.%.*s "
+			"is going to be deleted "
+			"[context=%p]\n",
+			group_name->len, group_name->s,
+			var_name->len, var_name->s,
+			ctx);
+
+	else
+		LOG(L_INFO, "INFO: cfg_set_delayed(): %.*s.%.*s "
+			"is going to be changed "
+			"[context=%p]\n",
+			group_name->len, group_name->s,
+			var_name->len, var_name->s,
+			ctx);
+
 	if (group_id)
 		LOG(L_INFO, "INFO: cfg_set_delayed(): group id = %u "
 			"[context=%p]\n",
@@ -928,6 +1005,14 @@ int cfg_set_delayed_str(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id,
 {
 	return cfg_set_delayed(ctx, group_name, group_id, var_name,
 				(void *)val, CFG_VAR_STR);
+}
+
+/* Delete a variable from the group instance.
+ * wrapper function for cfg_set_delayed */
+int cfg_del_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *var_name)
+{
+	return cfg_set_delayed(ctx, group_name, group_id, var_name,
+				NULL, CFG_VAR_UNSET);
 }
 
 /* commits the previously prepared changes within the context */
@@ -1063,10 +1148,11 @@ int cfg_commit(cfg_ctx_t *ctx)
 			p = group_inst->vars + changed->var->offset;
 		}
 
-		if (((changed->group_id_set && CFG_VAR_TEST_AND_SET(group_inst, changed->var))
+		if (((changed->group_id_set && !changed->del_value && CFG_VAR_TEST_AND_SET(group_inst, changed->var))
+			|| (changed->group_id_set && changed->del_value && CFG_VAR_TEST_AND_RESET(group_inst, changed->var))
 			|| !changed->group_id_set)
 		&& ((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)
-			|| (CFG_VAR_TYPE(changed->var) == CFG_VAR_STR)) 
+			|| (CFG_VAR_TYPE(changed->var) == CFG_VAR_STR))
 		) {
 			replaced[replaced_num] = *(char **)p;
 			if (replaced[replaced_num])
@@ -1076,9 +1162,15 @@ int cfg_commit(cfg_ctx_t *ctx)
 			NULL value */
 		}
 
-		memcpy(	p,
-			changed->new_val.vraw,
-			cfg_var_size(changed->var));
+		if (!changed->del_value)
+			memcpy(	p,
+				changed->new_val.vraw,
+				cfg_var_size(changed->var));
+		else
+			memcpy(	p,
+				CFG_GROUP_DATA(block, changed->group) + changed->var->offset,
+				cfg_var_size(changed->var));
+
 
 		if (!changed->group_id_set) {
 			/* the default value is changed, the copies of this value
@@ -1175,8 +1267,10 @@ int cfg_rollback(cfg_ctx_t *ctx)
 	) {
 		changed2 = changed->next;
 
-		if ((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)
-		|| (CFG_VAR_TYPE(changed->var) == CFG_VAR_STR)) {
+		if (!changed->del_value
+			&& ((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)
+				|| (CFG_VAR_TYPE(changed->var) == CFG_VAR_STR))
+		) {
 			if (changed->new_val.vp)
 				shm_free(changed->new_val.vp);
 		}
@@ -1345,7 +1439,7 @@ int cfg_diff_next(void **h,
 {
 	cfg_changed_var_t	*changed;
 	cfg_group_inst_t	*group_inst;
-	union cfg_var_value* pval;
+	union cfg_var_value	*pval_old, *pval_new;
 	static str	old_s, new_s;	/* we need the value even
 					after the function returns */
 
@@ -1362,7 +1456,7 @@ int cfg_diff_next(void **h,
 	It means that the variable is read from the local config
 	after forking */
 	if (!changed->group_id_set) {
-		pval = (union cfg_var_value*)
+		pval_old = (union cfg_var_value*)
 				(*(changed->group->handle) + changed->var->offset);
 	} else {
 		if (!cfg_local) {
@@ -1377,31 +1471,36 @@ int cfg_diff_next(void **h,
 				changed->group->name_len, changed->group->name, changed->group_id);
 			return -1;
 		}
-		pval = (union cfg_var_value*)
+		pval_old = (union cfg_var_value*)
 				(group_inst->vars + changed->var->offset);
 	}
+	if (!changed->del_value)
+		pval_new = &changed->new_val;
+	else
+		pval_new = (union cfg_var_value*)
+				(*(changed->group->handle) + changed->var->offset);
 
 	switch (CFG_VAR_TYPE(changed->var)) {
 	case CFG_VAR_INT:
-		*old_val = (void *)(long)pval->vint;
-		*new_val = (void *)(long)changed->new_val.vint;
+		*old_val = (void *)(long)pval_old->vint;
+		*new_val = (void *)(long)pval_new->vint;
 		break;
 
 	case CFG_VAR_STRING:
-		*old_val = pval->vp;
-		*new_val = changed->new_val.vp;
+		*old_val = pval_old->vp;
+		*new_val = pval_new->vp;
 		break;
 
 	case CFG_VAR_STR:
-		old_s=pval->vstr;
+		old_s=pval_old->vstr;
 		*old_val = (void *)&old_s;
-		new_s=changed->new_val.vstr;
+		new_s=pval_new->vstr;
 		*new_val = (void *)&new_s;
 		break;
 
 	case CFG_VAR_POINTER:
-		*old_val = pval->vp;
-		*new_val = changed->new_val.vp;
+		*old_val = pval_old->vp;
+		*new_val = pval_new->vp;
 		break;
 
 	}
