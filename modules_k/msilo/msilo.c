@@ -480,7 +480,7 @@ static int child_init(int rank)
 static int m_store(struct sip_msg* msg, char* owner, char* s2)
 {
 	str body, str_hdr, ctaddr;
-	struct to_body to, *pto, *pfrom;
+	struct to_body *pto, *pfrom;
 	struct sip_uri puri;
 	str duri, owner_s;
 	db_key_t db_keys[NR_KEYS-1];
@@ -528,34 +528,13 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	}
 	
 	/* get TO URI */
-	if(!msg->to || !msg->to->body.s)
+	if(parse_to_header(msg)<0)
 	{
-	    LM_ERR("cannot find 'to' header!\n");
+	    LM_ERR("failed getting 'to' header!\n");
 	    goto error;
 	}
 	
-	if(msg->to->parsed != NULL)
-	{
-		pto = (struct to_body*)msg->to->parsed;
-		LM_DBG("the 'To' header ALREADY PARSED: <%.*s>\n",
-			pto->uri.len, pto->uri.s );	
-	}
-	else
-	{
-		LM_DBG("the 'To' header NOT PARSED ->parsing ...\n");
-		memset( &to , 0, sizeof(to) );
-		parse_to(msg->to->body.s, msg->to->body.s+msg->to->body.len+1, &to);
-		if(to.uri.len > 0) /* && to.error == PARSE_OK) */
-		{
-			LM_DBG("'To' parsed OK <%.*s>.\n", to.uri.len, to.uri.s);
-			pto = &to;
-		}
-		else
-		{
-			LM_ERR("'To' cannot be parsed\n");
-			goto error;
-		}
-	}
+	pto = get_to(msg);
 	
 	/* get the owner */
 	memset(&puri, 0, sizeof(struct sip_uri));
@@ -649,23 +628,12 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	nr_keys++;
 
 	/* check FROM URI */
-	if(!msg->from || !msg->from->body.s)
+	if ( parse_from_header( msg )<0 ) 
 	{
-		LM_ERR("cannot find 'from' header!\n");
+		LM_ERR("cannot parse From header\n");
 		goto error;
 	}
-
-	if(msg->from->parsed == NULL)
-	{
-		LM_DBG("'From' header not parsed\n");
-		/* parsing from header */
-		if ( parse_from_header( msg )<0 ) 
-		{
-			LM_ERR("cannot parse From header\n");
-			goto error;
-		}
-	}
-	pfrom = (struct to_body*)msg->from->parsed;
+	pfrom = get_from(msg);
 	LM_DBG("'From' header: <%.*s>\n", pfrom->uri.len, pfrom->uri.s);	
 	
 	db_keys[nr_keys] = &sc_from;
@@ -859,7 +827,7 @@ error:
  */
 static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 {
-	struct to_body to, *pto = NULL;
+	struct to_body *pto = NULL;
 	db_key_t db_keys[3];
 	db_key_t ob_key;
 	db_op_t  db_ops[3];
@@ -900,32 +868,13 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	body_str.len=1024;
 	
 	/* check for TO header */
-	if(msg->to==NULL && (parse_headers(msg, HDR_TO_F, 0)==-1
-				|| msg->to==NULL || msg->to->body.s==NULL))
+	if(parse_to_header(msg)<0)
 	{
-		LM_ERR("cannot find TO HEADER!\n");
+		LM_ERR("failed parsing  To header\n");
 		goto error;
 	}
 
-	/* get TO header URI */
-	if(msg->to->parsed != NULL)
-	{
-		pto = (struct to_body*)msg->to->parsed;
-		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",
-			pto->uri.len, pto->uri.s );	
-	}
-	else
-	{
-		memset( &to , 0, sizeof(to) );
-		parse_to(msg->to->body.s,
-			msg->to->body.s + msg->to->body.len + 1, &to);
-		if(to.uri.len <= 0) /* || to.error != PARSE_OK) */
-		{
-			LM_ERR("'To' header NOT parsed\n");
-			goto error;
-		}
-		pto = &to;
-	}
+	pto = get_to(msg);
 
 	/**
 	 * check if has expires=0 (REGISTER)
