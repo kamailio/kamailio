@@ -57,8 +57,10 @@ struct to_body{
 
 
 /* casting macro for accessing To body */
-#define get_to( p_msg)      ((struct to_body*)(p_msg)->to->parsed)
+#define get_to(p_msg)      ((struct to_body*)(p_msg)->to->parsed)
 
+#define GET_TO_PURI(p_msg) \
+	(&((struct to_body*)(p_msg)->to->parsed)->parsed_uri)
 
 /*! \brief
  * To header field parser
