@@ -226,21 +226,6 @@ int select_##_name_##_params(str* res, select_t* s, struct sip_msg* msg) \
 	return 1; \
 } 
 
-int parse_to_header(struct sip_msg *msg)
-{
-	if ( !msg->to && ( parse_headers(msg,HDR_TO_F,0)==-1 || !msg->to)) {
-		ERR("bad msg or missing TO header\n");
-		return -1;
-	}
-
-	// HDR_TO_T is automatically parsed (get_hdr_field in parser/msg_parser.c)
-	// so check only ptr validity
-	if (msg->to->parsed)
-		return 0;
-	else
-		return -1;
-}
-
 SELECT_uri_header(to)
 SELECT_uri_header(from)
 SELECT_uri_header(refer_to)
