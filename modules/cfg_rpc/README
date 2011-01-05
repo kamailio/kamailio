@@ -35,6 +35,11 @@ Miklos Tirpak
        The function accepts three parameters: group name, variable name,
        int/string value. The group name can optionally contain the group
        instance id, for example foo[5].
+     * cfg.del - Delete the value of a configuration variable from a group
+       instance and commit the change immediately. The value is reset to
+       the default value and it follows the changes of that. The function
+       accepts two parameters: group name, variable name. The group name
+       must contain the group instance id, for example foo[5].
      * cfg.set_delayed_int - Prepare the change of a configuration
        variable, but does not commit the new value yet. The function
        accepts three parameters: group name, variable name, integer value.
@@ -51,6 +56,12 @@ Miklos Tirpak
        type of the value provided. The function accepts three parameters:
        group name, variable name, int/string value. The group name can
        optionally contain the group instance id, for example foo[5].
+     * cfg.del_delayed - Prepare the deletion of the value of a
+       configuration variable from a group instance, but does not commit
+       the change yet. The value is reset to the default value and it
+       follows the changes of that. The function accepts two parameters:
+       group name, variable name. The group name must contain the group
+       instance id, for example foo[5].
      * cfg.commit - Commit the previously prepared configuration changes.
        The function does not have any parameters.
      * cfg.rollback - Drop the prepared configuration changes. The

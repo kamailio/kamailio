@@ -156,6 +156,30 @@ static void rpc_set(rpc_t* rpc, void* c)
 	}
 }
 
+static const char* rpc_del_now_doc[2] = {
+        "Delete the value of a configuration variable from a group instance and commit the change immediately",
+        0
+};
+
+static void rpc_del(rpc_t* rpc, void* c)
+{
+	str	group, var;
+	unsigned int	*group_id;
+
+	if (rpc->scan(c, "SS", &group, &var) < 2)
+		return;
+
+	if (get_group_id(&group, &group_id) || !group_id) {
+		rpc->fault(c, 400, "Wrong group syntax. Use \"group[id]\"");
+		return;
+	}
+
+	if (cfg_del_now(ctx, &group, group_id, &var)) {
+		rpc->fault(c, 400, "Failed to delete the value");
+		return;
+	}
+}
+
 static const char* rpc_set_delayed_doc[2] = {
         "Prepare the change of a configuration variable, but does not commit the new value yet",
         0
@@ -225,6 +249,30 @@ static void rpc_set_delayed(rpc_t* rpc, void* c)
 
 	if (err) {
 		rpc->fault(c, 400, "Failed to set the variable");
+		return;
+	}
+}
+
+static const char* rpc_del_delayed_doc[2] = {
+        "Prepare the deletion of the value of a configuration variable from a group instance, but does not commit the change yet",
+        0
+};
+
+static void rpc_del_delayed(rpc_t* rpc, void* c)
+{
+	str	group, var;
+	unsigned int	*group_id;
+
+	if (rpc->scan(c, "SS", &group, &var) < 2)
+		return;
+
+	if (get_group_id(&group, &group_id) || !group_id) {
+		rpc->fault(c, 400, "Wrong group syntax. Use \"group[id]\"");
+		return;
+	}
+
+	if (cfg_del_delayed(ctx, &group, group_id, &var)) {
+		rpc->fault(c, 400, "Failed to delete the value");
 		return;
 	}
 }
@@ -488,9 +536,11 @@ static rpc_export_t rpc_calls[] = {
 	{"cfg.set",		rpc_set,		rpc_set_now_doc,	0},
 	{"cfg.set_now_int",	rpc_set_now_int,	rpc_set_now_doc,	0},
 	{"cfg.set_now_string",	rpc_set_now_string,	rpc_set_now_doc,	0},
+	{"cfg.del",		rpc_del,		rpc_del_now_doc,	0},
 	{"cfg.set_delayed",	rpc_set_delayed,	rpc_set_delayed_doc,	0},
 	{"cfg.set_delayed_int",	rpc_set_delayed_int,	rpc_set_delayed_doc,	0},
 	{"cfg.set_delayed_string",	rpc_set_delayed_string,	rpc_set_delayed_doc,	0},
+	{"cfg.del_delayed",	rpc_del_delayed,	rpc_del_delayed_doc,	0},
 	{"cfg.commit",		rpc_commit,		rpc_commit_doc,		0},
 	{"cfg.rollback",	rpc_rollback,		rpc_rollback_doc,	0},
 	{"cfg.get",		rpc_get,		rpc_get_doc,		0},

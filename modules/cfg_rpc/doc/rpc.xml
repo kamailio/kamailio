@@ -41,6 +41,17 @@
 	</listitem>
 	<listitem>
 	    <para>
+		<emphasis>cfg.del</emphasis> - Delete the value of
+		a configuration variable from a group instance and commit the change immediately.
+		The value is reset to the default value and it follows the changes
+		of that.
+		The function accepts two parameters: group name, variable
+		name. The group name must contain the
+		group instance id, for example foo[5].
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
 		<emphasis>cfg.set_delayed_int</emphasis> - Prepare the change of
 		a configuration variable, but does not commit the new value yet.
 		The function accepts three parameters: group name, variable
@@ -65,6 +76,17 @@
 		depending on the type of the value provided.
 		The function accepts three parameters: group name, variable
 		name, int/string value. The group name can optionally contain the
+		group instance id, for example foo[5].
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg.del_delayed</emphasis> - Prepare the deletion of the value of
+		a configuration variable from a group instance, but does not commit the change yet.
+		The value is reset to the default value and it follows the changes
+		of that.
+		The function accepts two parameters: group name, variable
+		name. The group name must contain the
 		group instance id, for example foo[5].
 	    </para>
 	</listitem>
