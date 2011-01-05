@@ -341,6 +341,26 @@ modparam("rls", "rls_event", "dialog;sla")
 		</example>
 	</section>
 
+	<section>
+		<title><varname>outbound_proxy</varname> (str)</title>
+		<para>
+		The SIP address where to send RLS subscriptions (outbound
+		proxy address as SIP URI).
+		</para>
+		<para>
+		<emphasis>Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>outbound_proxy</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "outbound_proxy", "sip:presence.kamailio.org")
+...
+		</programlisting>
+		</example>
+	</section>
+
 </section>
 
 <section>
