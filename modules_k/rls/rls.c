@@ -65,24 +65,26 @@ db1_con_t *rls_db = NULL;
 db_func_t rls_dbf;
 
 /** modules variables */
-str server_address= {0, 0};
-int waitn_time= 10;
-str rlsubs_table= str_init("rls_watchers");
-str rlpres_table= str_init("rls_presentity");
-str rls_xcap_table= str_init("xcap");
+str rls_server_address = {0, 0};
+int waitn_time = 10;
+str rlsubs_table = str_init("rls_watchers");
+str rlpres_table = str_init("rls_presentity");
+str rls_xcap_table = str_init("xcap");
 
-str db_url= str_init(DEFAULT_DB_URL);
-int hash_size= 512;
+str db_url = str_init(DEFAULT_DB_URL);
+int hash_size = 512;
 shtable_t rls_table;
 int pid;
 contains_event_t pres_contains_event;
 search_event_t pres_search_event;
 get_event_list_t pres_get_ev_list;
-int clean_period= 100;
+int clean_period = 100;
+
+/* address and port(default: 80):"http://192.168.2.132:8000/xcap-root"*/
 char* xcap_root;
-unsigned int xcap_port= 8000;
+unsigned int xcap_port = 8000;
 int rls_restore_db_subs(void);
-int rls_integrated_xcap_server= 0;
+int rls_integrated_xcap_server = 0;
 
 /** libxml api */
 xmlDocGetNodeByName_t XMLDocGetNodeByName;
@@ -101,12 +103,12 @@ mem_copy_subs_t  pres_copy_subs;
 update_db_subs_t pres_update_db_subs;
 extract_sdialog_info_t pres_extract_sdialog_info;
 int rls_events= EVENT_PRESENCE;
-int to_presence_code= 1;
-int rls_max_expires= 7200;
+int to_presence_code = 1;
+int rls_max_expires = 7200;
 int rls_reload_db_subs = 0;
 
 /* functions imported from xcap_client module */
-xcapGetNewDoc_t xcap_GetNewDoc= 0;
+xcapGetNewDoc_t xcap_GetNewDoc = 0;
 
 /* functions imported from pua module*/
 send_subscribe_t pua_send_subscribe;
@@ -150,7 +152,7 @@ str str_etag_col = str_init("etag");
 str str_doc_col = str_init("doc");
 
 /* outbound proxy address */
-str outbound_proxy = {0, 0};
+str rls_outbound_proxy = {0, 0};
 
 /** module functions */
 
@@ -172,23 +174,22 @@ static cmd_export_t cmds[]=
 };
 
 static param_export_t params[]={
-	{ "server_address",         STR_PARAM,   &server_address.s			     },
-	{ "db_url",					STR_PARAM,   &db_url.s					     },
-	{ "rlsubs_table",	        STR_PARAM,   &rlsubs_table.s			     },
-	{ "rlpres_table",			STR_PARAM,   &rlpres_table.s			     },
-	{ "xcap_table",		    	STR_PARAM,   &rls_xcap_table.s    		     },
-	{ "waitn_time",				INT_PARAM,   &waitn_time				     },
-	{ "clean_period",			INT_PARAM,   &clean_period				     },
-	{ "max_expires",			INT_PARAM,   &rls_max_expires			     },
-	{ "hash_size",			    INT_PARAM,   &hash_size			             },
-	{ "integrated_xcap_server",	INT_PARAM,   &rls_integrated_xcap_server     },	
+	{ "server_address",         STR_PARAM,   &rls_server_address.s           },
+	{ "db_url",                 STR_PARAM,   &db_url.s                       },
+	{ "rlsubs_table",           STR_PARAM,   &rlsubs_table.s                 },
+	{ "rlpres_table",           STR_PARAM,   &rlpres_table.s                 },
+	{ "xcap_table",             STR_PARAM,   &rls_xcap_table.s               },
+	{ "waitn_time",             INT_PARAM,   &waitn_time                     },
+	{ "clean_period",           INT_PARAM,   &clean_period                   },
+	{ "max_expires",            INT_PARAM,   &rls_max_expires                },
+	{ "hash_size",              INT_PARAM,   &hash_size                      },
+	{ "integrated_xcap_server", INT_PARAM,   &rls_integrated_xcap_server     },
 	{ "to_presence_code",       INT_PARAM,   &to_presence_code               },
 	{ "xcap_root",              STR_PARAM,   &xcap_root                      },
-	/*address and port(default: 80):"http://192.168.2.132:8000/xcap-root"*/
 	{ "rls_event",              STR_PARAM|USE_FUNC_PARAM,(void*)add_rls_event},
-	{ "outbound_proxy",         STR_PARAM,   &outbound_proxy.s               },
+	{ "outbound_proxy",         STR_PARAM,   &rls_outbound_proxy.s           },
 	{ "reload_db_subs",         INT_PARAM,   &rls_reload_db_subs             },
-	{0,							0,				0						     }
+	{0,                         0,           0                               }
 };
 
 /** module exports */
@@ -224,21 +225,21 @@ static int mod_init(void)
 
 	LM_DBG("start\n");
 
-	if(server_address.s==NULL)
+	if(rls_server_address.s==NULL)
 	{
 		LM_ERR("server_address parameter not set in configuration file\n");
 		return -1;
 	}	
 
-	server_address.len= strlen(server_address.s);
+	rls_server_address.len= strlen(rls_server_address.s);
 	
 	if(!rls_integrated_xcap_server && xcap_root== NULL)
 	{
 		LM_ERR("xcap_root parameter not set\n");
 		return -1;
 	}
-	if(outbound_proxy.s!=NULL)
-		outbound_proxy.len = strlen(outbound_proxy.s);
+	if(rls_outbound_proxy.s!=NULL)
+		rls_outbound_proxy.len = strlen(rls_outbound_proxy.s);
 	/* extract port if any */
 	if(xcap_root)
     {
