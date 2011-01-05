@@ -39,14 +39,15 @@
 #include "../../mem/mem.h"
 
 
-#define F_SUPPORTED_PATH	(1 << 0)
-#define F_SUPPORTED_100REL	(1 << 1)
-#define F_SUPPORTED_TIMER	(1 << 2)
+#define F_SUPPORTED_PATH		(1 << 0)
+#define F_SUPPORTED_100REL		(1 << 1)
+#define F_SUPPORTED_TIMER		(1 << 2)
+#define F_SUPPORTED_EVENTLIST   (1 << 3)
 
 #define SUPPORTED_PATH_STR		"path"
 #define SUPPORTED_PATH_LEN		(sizeof(SUPPORTED_PATH_STR)-1)
 
-/* RFC 3262 */
+/* RFC 3262 (PRACK) */
 #define SUPPORTED_100REL_STR	"100rel"
 #define SUPPORTED_100REL_LEN	(sizeof(SUPPORTED_100REL_STR)-1)
 
@@ -54,6 +55,9 @@
 #define SUPPORTED_TIMER_STR		"timer"
 #define SUPPORTED_TIMER_LEN		(sizeof(SUPPORTED_TIMER_STR)-1)
 
+/* RFC 4662 (RLS) */
+#define SUPPORTED_EVENTLIST_STR  "eventlist"
+#define SUPPORTED_EVENTLIST_LEN  (sizeof(SUPPORTED_EVENTLIST_STR)-1)
 
 #define get_supported(p_msg) \
 	((p_msg)->supported ? ((struct supported_body*)(p_msg)->supported->parsed)->supported_all : 0)

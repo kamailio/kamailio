@@ -92,10 +92,19 @@ static inline int parse_supported_body(str *body, unsigned int *sup)
 				}
 				break;
 
-			/* unknown */
+			/* extra supported or unknown */
 			default:
-				/* skip element */
-				for (; pos < len && !IS_DELIM(p); ++pos, ++p);
+				if(pos+SUPPORTED_EVENTLIST_LEN<=len
+						&& strncasecmp(p, SUPPORTED_EVENTLIST_STR,
+							SUPPORTED_EVENTLIST_LEN)==0
+						&& IS_DELIM(p+9) ) {
+					*sup |= F_SUPPORTED_EVENTLIST;
+					pos += SUPPORTED_EVENTLIST_LEN + 1;
+					p   += SUPPORTED_EVENTLIST_LEN + 1;
+				} else {
+					/* skip element */
+					for (; pos < len && !IS_DELIM(p); ++pos, ++p);
+				}
 				break;
 		}
 	}
