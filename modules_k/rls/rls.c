@@ -103,6 +103,7 @@ extract_sdialog_info_t pres_extract_sdialog_info;
 int rls_events= EVENT_PRESENCE;
 int to_presence_code= 1;
 int rls_max_expires= 7200;
+int rls_reload_db_subs = 0;
 
 /* functions imported from xcap_client module */
 xcapGetNewDoc_t xcap_GetNewDoc= 0;
@@ -186,6 +187,7 @@ static param_export_t params[]={
 	/*address and port(default: 80):"http://192.168.2.132:8000/xcap-root"*/
 	{ "rls_event",              STR_PARAM|USE_FUNC_PARAM,(void*)add_rls_event},
 	{ "outbound_proxy",         STR_PARAM,   &outbound_proxy.s               },
+	{ "reload_db_subs",         INT_PARAM,   &rls_reload_db_subs             },
 	{0,							0,				0						     }
 };
 
@@ -356,10 +358,13 @@ static int mod_init(void)
 		LM_ERR("while creating new hash table\n");
 		return -1;
 	}
-	if(rls_restore_db_subs()< 0)
+	if(rls_reload_db_subs!=0)
 	{
-		LM_ERR("while restoring rl watchers table\n");
-		return -1;
+		if(rls_restore_db_subs()< 0)
+		{
+			LM_ERR("while restoring rl watchers table\n");
+			return -1;
+		}
 	}
 
 	if(rls_db)
