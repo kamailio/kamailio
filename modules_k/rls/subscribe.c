@@ -598,7 +598,7 @@ found_support:
 	}
 
 /*** if correct reply with 200 OK*/
-	if(reply_200(msg, &subs.contact, subs.expires)< 0)
+	if(reply_200(msg, &subs.local_contact, subs.expires)< 0)
 		goto error;
 
 	/* call sending Notify with full state */
@@ -669,7 +669,6 @@ int update_rlsubs( subs_t* subs, unsigned int hash_code)
 	}
 
 	s->expires= subs->expires+ (int)time(NULL);
-	s->remote_cseq= subs->remote_cseq;
 	
 	if(s->db_flag & NO_UPDATEDB_FLAG)
 		s->db_flag= UPDATEDB_FLAG;
@@ -680,6 +679,8 @@ int update_rlsubs( subs_t* subs, unsigned int hash_code)
 		LM_DBG("stored cseq= %d\n", s->remote_cseq);
 		return Stale_cseq_code;
 	}
+
+	s->remote_cseq= subs->remote_cseq;
 
 	subs->pres_uri.s= (char*)pkg_malloc(s->pres_uri.len* sizeof(char));
 	if(subs->pres_uri.s== NULL)
@@ -771,7 +772,7 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr rl_node)
 	}
 	s.id= did_str;
 	s.watcher_uri= &wuri;
-	s.contact= &subs->local_contact;
+	s.contact= &server_address;
 	s.event= get_event_flag(&subs->event->name);
 	if(s.event< 0)
 	{
@@ -784,7 +785,7 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr rl_node)
 		s.outbound_proxy= &outbound_proxy;
 	extra_headers.s= buf;
 	extra_headers.len= sprintf(extra_headers.s,
-			"Max-Forwards: 70\r\nSupport: eventlist\r\n");
+			"Supported: eventlist\r\n");
 	s.extra_headers= &extra_headers;
 	
 	if(process_list_and_exec(rl_node, send_resource_subs,(void*)(&s))< 0)
