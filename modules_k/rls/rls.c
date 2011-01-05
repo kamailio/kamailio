@@ -222,12 +222,13 @@ static int mod_init(void)
 
 	LM_DBG("start\n");
 
-	if(!server_address.s)
+	if(server_address.s==NULL)
 	{
-		LM_DBG("server_address parameter not set in configuration file\n");
+		LM_ERR("server_address parameter not set in configuration file\n");
+		return -1;
 	}	
-	else
-		server_address.len= strlen(server_address.s);
+
+	server_address.len= strlen(server_address.s);
 	
 	if(!rls_integrated_xcap_server && xcap_root== NULL)
 	{
