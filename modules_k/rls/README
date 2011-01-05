@@ -39,6 +39,7 @@ Anca-Maria Vamanu
               3.11. to_presence_code (int)
               3.12. rls_event (str)
               3.13. outbound_proxy (str)
+              3.14. server_address (str)
 
         4. Exported Functions
 
@@ -64,8 +65,9 @@ Anca-Maria Vamanu
    1.11. Set to_presence_code parameter
    1.12. Set rls_event parameter
    1.13. Set outbound_proxy parameter
-   1.14. rls_handle_subscribe usage
-   1.15. rls_handle_notify usage
+   1.14. Set server_address parameter
+   1.15. rls_handle_subscribe usage
+   1.16. rls_handle_notify usage
 
 Chapter 1. Admin Guide
 
@@ -92,6 +94,7 @@ Chapter 1. Admin Guide
         3.11. to_presence_code (int)
         3.12. rls_event (str)
         3.13. outbound_proxy (str)
+        3.14. server_address (str)
 
    4. Exported Functions
 
@@ -162,6 +165,7 @@ Chapter 1. Admin Guide
    3.11. to_presence_code (int)
    3.12. rls_event (str)
    3.13. outbound_proxy (str)
+   3.14. server_address (str)
 
 3.1. db_url(str)
 
@@ -323,6 +327,17 @@ modparam("rls", "rls_event", "dialog;sla")
 modparam("rls", "outbound_proxy", "sip:presence.kamailio.org")
 ...
 
+3.14. server_address (str)
+
+   The address of the server that will be used as a contact in sent
+   Subscribe requests and 200 OK replies for Subscribe requests for RLS.
+   It is a mandatory parameter.
+
+   Example 1.14. Set server_address parameter
+...
+modparam("rls", "server_address", "sip:rls@ip.address.ofyour.proxy:5060")
+...
+
 4. Exported Functions
 
    4.1. rls_handle_subscribe()
@@ -337,7 +352,7 @@ modparam("rls", "outbound_proxy", "sip:presence.kamailio.org")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.14. rls_handle_subscribe usage
+   Example 1.15. rls_handle_subscribe usage
 ...
 For presence and rls on the same machine:
         modparam("rls", "to_presence_code", 10)
@@ -365,7 +380,7 @@ For rls only:
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.15. rls_handle_notify usage
+   Example 1.16. rls_handle_notify usage
 ...
 if(method=="NOTIFY")
     rls_handle_notify();

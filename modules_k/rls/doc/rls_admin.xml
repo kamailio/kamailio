@@ -361,6 +361,23 @@ modparam("rls", "outbound_proxy", "sip:presence.kamailio.org")
 		</example>
 	</section>
 
+	<section>
+		<title><varname>server_address</varname> (str)</title>
+		<para>
+			The address of the server that will be used as a contact in sent
+			Subscribe requests and 200 OK replies for Subscribe requests for RLS.
+			It is a mandatory parameter.
+		</para>
+		<example>
+		<title>Set <varname>server_address</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "server_address", "sip:rls@ip.address.ofyour.proxy:5060")
+...
+		</programlisting>
+		</example>
+	</section>
+
 </section>
 
 <section>
