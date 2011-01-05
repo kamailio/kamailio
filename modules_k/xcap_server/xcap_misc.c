@@ -683,7 +683,7 @@ int pv_parse_xcap_uri_name(pv_spec_p sp, str *in)
 			pxs->key.len, pxs->key.s);
 	if(pxs->key.len==4 && strncmp(pxs->key.s, "data", 4)==0) {
 		pxs->ktype = 0;
-	} else if(pxs->key.len==3 && strncmp(pxs->key.s, "uri", 4)==0) {
+	} else if(pxs->key.len==3 && strncmp(pxs->key.s, "uri", 3)==0) {
 		pxs->ktype = 1;
 	} else if(pxs->key.len==4 && strncmp(pxs->key.s, "root", 4)==0) {
 		pxs->ktype = 2;
