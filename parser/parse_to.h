@@ -69,5 +69,6 @@ void free_to_params(struct to_body* tb);
 
 void free_to(struct to_body* tb);
 
+int parse_to_header(struct sip_msg *msg);
 
 #endif

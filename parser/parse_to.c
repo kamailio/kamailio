@@ -840,3 +840,19 @@ void free_to(struct to_body* tb)
 	free_to_params(tb);
 	pkg_free(tb);
 }
+
+
+int parse_to_header(struct sip_msg *msg)
+{
+	if ( !msg->to && ( parse_headers(msg,HDR_TO_F,0)==-1 || !msg->to)) {
+		ERR("bad msg or missing TO header\n");
+		return -1;
+	}
+
+	// HDR_TO_T is automatically parsed (get_hdr_field in parser/msg_parser.c)
+	// so check only ptr validity
+	if (msg->to->parsed)
+		return 0;
+	else
+		return -1;
+}
