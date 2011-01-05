@@ -82,8 +82,8 @@ typedef struct rls_resource
 
 extern char* xcap_root;
 extern unsigned int xcap_port;
-extern str server_address; 
-extern int waitn_time; 
+extern str server_address;
+extern int waitn_time;
 extern str rlsubs_table;
 extern str rlpres_table;
 extern str rls_xcap_table;
@@ -95,6 +95,7 @@ extern int rls_max_expires;
 extern int rls_integrated_xcap_server;
 extern int rls_events;
 extern int to_presence_code;
+extern str outbound_proxy;
 
 /* database connection */
 extern db1_con_t *rls_db;

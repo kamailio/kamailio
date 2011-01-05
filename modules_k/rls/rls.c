@@ -148,6 +148,8 @@ str str_doc_type_col = str_init("doc_type");
 str str_etag_col = str_init("etag");
 str str_doc_col = str_init("doc");
 
+/* outbound proxy address */
+str outbound_proxy = {0, 0};
 
 /** module functions */
 
@@ -183,6 +185,7 @@ static param_export_t params[]={
 	{ "xcap_root",              STR_PARAM,   &xcap_root                      },
 	/*address and port(default: 80):"http://192.168.2.132:8000/xcap-root"*/
 	{ "rls_event",              STR_PARAM|USE_FUNC_PARAM,(void*)add_rls_event},
+	{ "outbound_proxy",         STR_PARAM,   &outbound_proxy.s               },
 	{0,							0,				0						     }
 };
 
@@ -231,6 +234,8 @@ static int mod_init(void)
 		LM_ERR("xcap_root parameter not set\n");
 		return -1;
 	}
+	if(outbound_proxy.s!=NULL)
+		outbound_proxy.len = strlen(outbound_proxy.s);
 	/* extract port if any */
 	if(xcap_root)
     {

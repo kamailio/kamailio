@@ -780,6 +780,8 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr rl_node)
 	}
 	s.expires= subs->expires;
 	s.source_flag= RLS_SUBSCRIBE;
+	if(outbound_proxy.s)
+		s.outbound_proxy= &outbound_proxy;
 	extra_headers.s= buf;
 	extra_headers.len= sprintf(extra_headers.s,
 			"Max-Forwards: 70\r\nSupport: eventlist\r\n");
