@@ -39,6 +39,8 @@
 
 #define free_from(_to_body_)  free_to(_to_body_)
 
+#define GET_FROM_PURI(p_msg) \
+	(&((struct to_body*)(p_msg)->from->parsed)->parsed_uri)
 
 /*
  * From header field parser
