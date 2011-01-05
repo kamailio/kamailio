@@ -602,9 +602,10 @@ str* rls_notify_extra_hdr(subs_t* subs, char* start_cid, char* boundary_string)
 	if(start_cid && boundary_string)
 	{
 		str_hdr->len+= sprintf(str_hdr->s+str_hdr->len,
-			"Content-Type: \"multipart/related;type=\"application/rlmi+xml\"");
+			"Content-Type: multipart/related;type=\"application/rlmi+xml\"");
 		str_hdr->len+= sprintf(str_hdr->s+str_hdr->len,
-				";start= <%s>;boundary=%s\r\n", start_cid, boundary_string);
+				";start=\"<%s>\";boundary=\"%s\"\r\n",
+				start_cid, boundary_string);
 	}		
 	if(str_hdr->len> RLS_HDR_LEN)
 	{
