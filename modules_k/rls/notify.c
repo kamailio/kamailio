@@ -595,7 +595,7 @@ str* rls_notify_extra_hdr(subs_t* subs, char* start_cid, char* boundary_string)
 			"Subscription-State: active;expires=%d\r\n", expires);
 	else
 		str_hdr->len+= sprintf(str_hdr->s+str_hdr->len,
-			"Subscription-State: terminated;reason=timeout");
+			"Subscription-State: terminated;reason=timeout\r\n");
 
 	str_hdr->len+= sprintf(str_hdr->s+str_hdr->len, "Require: eventlist\r\n");
 
