@@ -18,6 +18,7 @@
  * History
  * -------
  *  2010-04-26	Initial version (Miklos)
+ *  2011-01-05	bit_test_and_reset added (Miklos)
  */
 
 /* Bit test functions:
@@ -28,6 +29,11 @@
  *  - int bit_test_and_set(int offset, unsigned int *addr)
  *      Returns the bit found at offset position 
  *      in a bitstring pointed by addr, and sets
+ *      the bit at the given offset.
+ *
+ *  - int bit_test_and_reset(int offset, unsigned int *addr)
+ *      Returns the bit found at offset position 
+ *      in a bitstring pointed by addr, and resets
  *      the bit at the given offset.
  *
  * Note that 0 <= offset <= 128, Make sure that addr points to
@@ -86,6 +92,24 @@ static inline int bit_test_and_set(int offset, unsigned int *addr)
 	return (int)v;
 }
 
+/* Returns the bit found at offset position in the bitstring
+ * pointed by addr and resets it to 0.
+ * Note that the CPU can access 4 bytes starting from addr,
+ * hence 0 <= offset < 128 holds. Make sure that addr points
+ * to a memory area that is large enough.
+ */
+static inline int bit_test_and_reset(int offset, unsigned int *addr)
+{
+	unsigned char	v;
+
+	asm volatile(
+		" btr %2, %1 \n\t"
+		" setc %0 \n\t"
+		: "=qm" (v) : "m" (*addr), "r" (offset)
+	);
+	return (int)v;
+}
+
 #else /* BIT_TEST_ASM */
 
 /* Returns the bit found at offset position in the bitstring
@@ -112,6 +136,24 @@ static inline int bit_test_and_set(int offset, unsigned int *addr)
 	mask = 1U << (offset % 32);
 	res = ((*i) & mask) ? 1 : 0;
 	(*i) |= mask;
+
+	return res;
+}
+
+/* Returns the bit found at offset position in the bitstring
+ * pointed by addr and resets it to 0.
+ * Note that offset can be grater than 32, make sure that addr points
+ * to a memory area that is large enough.
+ */
+static inline int bit_test_and_reset(int offset, unsigned int *addr)
+{
+	unsigned int	*i;
+	int	mask, res;
+
+	i = addr + offset/32;
+	mask = 1U << (offset % 32);
+	res = ((*i) & mask) ? 1 : 0;
+	(*i) &= ~mask;
 
 	return res;
 }
