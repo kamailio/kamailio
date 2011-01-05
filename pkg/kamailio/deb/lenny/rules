@@ -25,7 +25,7 @@ EXCLUDED_MODULES= geoip
 # extra modules to skip, because they are not compilable now
 # - regardless if they go to the main kamailio package or to some module package,
 # they will be excluded from compile and install of all
-EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa rls iptrtpproxy
+EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy
 #EXTRA_EXCLUDED_MODULES=
 
 # possible module directories that can appear in MODULES_SP
