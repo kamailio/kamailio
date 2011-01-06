@@ -142,11 +142,17 @@ int register_udomain(const char *name, udomain_t **domain) {
 unsigned long get_number_of_users(void)
 {
 	int numberOfUsers = 0;
-	LM_INFO("not available with sp-ul_db interface");
+	LM_INFO("not available with partitioned interface");
 	return numberOfUsers;
 }
 
 
+int get_all_ucontacts(void *buf, int len, unsigned int flags,
+                         unsigned int part_idx, unsigned int part_max)
+{
+	LM_INFO("not available with partitioned interface");
+	return -1;
+}
 /*!
  * \brief Run timer handler of all domains
  * \return 0 if all timer return 0, != 0 otherwise
@@ -154,7 +160,7 @@ unsigned long get_number_of_users(void)
 int synchronize_all_udomains(void)
 {
 	int res = 0;
-	LM_INFO("not available with sp-ul_db interface");
+	LM_INFO("not available with partitioned interface");
 	return res;
 }
 

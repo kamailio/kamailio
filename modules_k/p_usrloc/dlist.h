@@ -71,6 +71,9 @@ void free_all_udomains(void);
 typedef int  (*get_all_ucontacts_t) (void* buf, int len, unsigned int flags,
               unsigned int part_idx, unsigned int part_max);
 
+int get_all_ucontacts(void *, int, unsigned int,
+                unsigned int part_idx, unsigned int part_max);
+
 /*!
  * \brief Run timer handler of all domains
  * \return 0 if all timer return 0, != 0 otherwise

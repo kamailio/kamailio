@@ -54,7 +54,7 @@ int bind_usrloc(usrloc_api_t* api)
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	LM_ERR("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\n");
+
 	if (init_flag==0) {
 		LM_ERR("configuration error - trying to bind to usrloc module"
 				" before being initialized\n");
@@ -62,6 +62,7 @@ int bind_usrloc(usrloc_api_t* api)
 	}
 
 	api->register_udomain   = register_udomain;
+	api->get_all_ucontacts  = get_all_ucontacts;
 	api->insert_urecord     = insert_urecord;
 	api->delete_urecord     = delete_urecord;
 	api->get_urecord        = get_urecord;
