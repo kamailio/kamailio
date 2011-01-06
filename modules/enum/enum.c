@@ -730,19 +730,20 @@ int enum_query_1(struct sip_msg* _msg, char* _suffix, char* _str2)
  */
 int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 {
-    str suffix, service;
+    str suffix, *service;
   
     if (get_str_fparam(&suffix, _msg, (fparam_t*)_suffix) != 0) {
 	LM_ERR("unable to get suffix\n");
 	return -1;
     }
-  
-    if (get_str_fparam(&service, _msg, (fparam_t*)_service) != 0) {
-	LM_ERR("unable to get service\n");
+
+    service = (str*)_service;
+    if ((service == NULL) || (service->len == 0)) {
+	LM_ERR("invalid service parameter");
 	return -1;
     }
 
-    return enum_query(_msg, &suffix, &service);
+    return enum_query(_msg, &suffix, service);
 }
 
 
@@ -755,6 +756,9 @@ int enum_query(struct sip_msg* _msg, str* suffix, str* service)
 	int user_len, i, j;
 	char name[MAX_DOMAIN_SIZE];
 	char string[17];
+
+	LM_DBG("enum_query on suffix <%.*s> service <%.*s>\n",
+	       suffix->len, suffix->s, service->len, service->s);
 
 	if (parse_sip_msg_uri(_msg) < 0) {
 		LM_ERR("Parsing of R-URI failed\n");
