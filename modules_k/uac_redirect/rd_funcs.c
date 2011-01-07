@@ -211,7 +211,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 			memcpy( &dup_rpl, sh_rpl, sizeof(struct sip_msg) );
 			dup = 2;
 			/* ok -> force the parsing of contact header */
-			if ( parse_headers( &dup_rpl, HDR_CONTACT_T, 0)<0 ) {
+			if ( parse_headers( &dup_rpl, HDR_CONTACT_F, 0)<0 ) {
 				LM_ERR("dup_rpl parse failed\n");
 				ret = -1;
 				goto restore;
@@ -224,7 +224,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 		} else {
 			dup = 3;
 			/* force the parsing of contact header */
-			if ( parse_headers( sh_rpl, HDR_CONTACT_T, 0)<0 ) {
+			if ( parse_headers( sh_rpl, HDR_CONTACT_F, 0)<0 ) {
 				LM_ERR("sh_rpl parse failed\n");
 				ret = -1;
 				goto restore;
@@ -272,8 +272,10 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 
 	/* add the sortet contacts as branches in dset and log this! */
 	for ( i=0 ; i<n ; i++ ) {
-		LM_DBG("adding contact <%.*s>\n", scontacts[i]->uri.len, scontacts[i]->uri.s);
-		if (km_append_branch( 0, &scontacts[i]->uri, 0, 0, sqvalues[i], bflags, 0)<0) {
+		LM_DBG("adding contact <%.*s>\n", scontacts[i]->uri.len,
+				scontacts[i]->uri.s);
+		if (km_append_branch( 0, &scontacts[i]->uri, 0, 0, sqvalues[i],
+					bflags, 0)<0) {
 			LM_ERR("failed to add contact to dset\n");
 		} else {
 			added++;
