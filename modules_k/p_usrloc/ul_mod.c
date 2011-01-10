@@ -171,7 +171,6 @@ str write_db_url         = {DEFAULT_DB_URL, DEFAULT_DB_URL_LEN};
 str read_db_url          = {DEFAULT_DB_URL, DEFAULT_DB_URL_LEN};
 int use_second_key       = 0;
 str reg_table            = {REG_TABLE, sizeof(REG_TABLE) -1};
-str subscr_table         = {SUBSCR_TABLE, sizeof(SUBSCR_TABLE) -1};
 str id_col               = {ID_COL, sizeof(ID_COL) - 1};
 str url_col              = {URL_COL, sizeof(URL_COL) - 1};
 str num_col              = {NUM_COL, sizeof(NUM_COL) - 1};

@@ -38,7 +38,7 @@ static void free_handle(ul_db_handle_list_t * element);
 static int check_status(ul_db_handle_t * a, ul_db_handle_t * b);
 
 static int compute_id(str* first, str* second);
-static int load_id(db_func_t * dbf, db1_con_t * dbh, str * first, str * second);
+
 
 static int release_handle(ul_db_handle_t * handle);
 
@@ -51,13 +51,8 @@ ul_db_handle_t * get_handle(db_func_t * dbf, db1_con_t * dbh, str * first, str *
 	int id;
 
 	switch(alg_location){
-	case 0:{ 
-		if((id = load_id(dbf, dbh, first, second)) < 0){
-			return NULL;
-		}
-		 break;
-	}
-	case 1:{
+	case 1:default:{
+		/* atm this is the only matching mode */
 		if( max_loc_nr == 0){
 			LM_WARN("max_loc_nr is 0 . Try to recompute value\n");
 			if( load_location_number(dbf, dbh, &max_loc_nr) != 0 ){
@@ -70,10 +65,11 @@ ul_db_handle_t * get_handle(db_func_t * dbf, db1_con_t * dbh, str * first, str *
 		}
 		break;
 	}
-	default:{
+/*	default:{
 		LM_ERR("No suitable selection for location\n");
 		return NULL;
 	}
+*/
 	}
 	
 	if(load_data(dbf, dbh, &tmp, id) < 0){

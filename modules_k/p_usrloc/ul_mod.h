@@ -60,7 +60,6 @@
 #define FIRST_COL      "username"
 #define SECOND_COL     "domain"
 #define REG_TABLE   "locdb"
-#define SUBSCR_TABLE   "subscriber"
 #define URL_COL        "url"
 #define ID_COL         "id"
 #define NUM_COL        "no"
@@ -123,7 +122,6 @@ extern str write_db_url;
 extern str read_db_url;
 extern int use_second_key;
 extern str reg_table;
-extern str subscr_table;
 extern str id_col;
 extern str url_col;
 extern str num_col;
