@@ -364,6 +364,9 @@ static pv_export_t mod_pvs[] = {
 	{{"true", (sizeof("true")-1)}, /* */
 		PVT_OTHER, pv_get_true, 0,
 		0, 0, 0, 0},
+	{{"Tb", (sizeof("Tb")-1)}, /* */
+		PVT_OTHER, pv_get_timeb, 0,
+		0, 0, 0, 0},
 	{{"Tf", (sizeof("Tf")-1)}, /* */
 		PVT_CONTEXT, pv_get_timef, 0,
 		0, 0, 0, 0},

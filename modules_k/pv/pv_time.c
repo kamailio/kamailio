@@ -30,6 +30,7 @@
 #include <sys/time.h>
 
 #include "../../dprint.h"
+#include "../../globals.h"
 #include "../../pvar.h"
 
 #include "pv_time.h"
@@ -252,6 +253,14 @@ int pv_get_timef(struct sip_msg *msg, pv_param_t *param,
 	s.s = ctime(&t);
 	s.len = strlen(s.s)-1;
 	return pv_get_strintval(msg, param, res, &s, (int)t);
+}
+
+int pv_get_timeb(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+	return pv_get_uintval(msg, param, res, (unsigned int)up_since);
 }
 
 static struct timeval _timeval_ts;
