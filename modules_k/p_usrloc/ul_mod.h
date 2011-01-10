@@ -57,8 +57,6 @@
 #define CONTACT_CALLID          (1)
 #define CONTACT_PATH		(2)
 
-#define FIRST_COL      "username"
-#define SECOND_COL     "domain"
 #define REG_TABLE   "locdb"
 #define URL_COL        "url"
 #define ID_COL         "id"
@@ -116,8 +114,6 @@ extern int matching_mode;
 struct mi_root* mi_ul_db_refresh(struct mi_root* cmd, void* param);
 struct mi_root* mi_loc_nr_refresh(struct mi_root* cmd, void* param);
 
-extern str first_col;
-extern str second_col;
 extern str write_db_url;
 extern str read_db_url;
 extern int use_second_key;

@@ -106,8 +106,6 @@ extern int ul_locks_no;
 /**
  * @var params
  * defines the parameters which can be set in the openser config file
- * @param first_column specifies the column in which the first key is stored
- * @param second_column specifies the column in which the second key
  * is stored. Only used when @see use_second_key is set to 1
  * @param write_db_url Url to the database where the key and database information is 
  * stored and where errors are reported to. Only used when @see write_on_db is active.
@@ -165,8 +163,6 @@ int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
 
 int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 9;
-str first_col            = {FIRST_COL, sizeof(FIRST_COL) - 1};
-str second_col           = {SECOND_COL, sizeof(SECOND_COL) - 1};
 str write_db_url         = {DEFAULT_DB_URL, DEFAULT_DB_URL_LEN};
 str read_db_url          = {DEFAULT_DB_URL, DEFAULT_DB_URL_LEN};
 int use_second_key       = 0;
@@ -246,8 +242,6 @@ static param_export_t params[] = {
 	{"default_db_url",    STR_PARAM, &default_db_url.s    },
 	{"default_db_type",   STR_PARAM, &default_db_type.s   },
 	{"domain_db",         STR_PARAM, &domain_db.s         },
-	{"first_column",         STR_PARAM, &first_col.s          },
-	{"second_column",        STR_PARAM, &second_col.s        },
 	{"write_db_url",         STR_PARAM, &write_db_url.s      },
 	{"read_db_url",          STR_PARAM, &read_db_url.s       },
 	{"use_second_key",       INT_PARAM, &use_second_key      },
@@ -353,8 +347,6 @@ static int mod_init(void)
 	last_mod_col.len = strlen(last_mod_col.s);
 	db_url.len = strlen(db_url.s);
 	
-	first_col.len = strlen (first_col.s);
-	second_col.len = strlen (second_col.s);
 	write_db_url.len = strlen (write_db_url.s);
 	read_db_url.len = strlen (read_db_url.s);
 	reg_table.len = strlen(reg_table.s);
