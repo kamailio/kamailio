@@ -25,7 +25,7 @@ static ul_domain_db_list_t * domain_db_list = NULL;
 
 int ul_db_layer_init(void) {
 	if(bind_ul_db(&p_ul_dbf) < 0) {
-		LM_ERR("could not bind sp_ul_db_api.\n");
+		LM_ERR("could not bind ul_db_api.\n");
 		return -1;
 	}
 	if(db_bind_mod(&default_db_url, &dbf) < 0) {

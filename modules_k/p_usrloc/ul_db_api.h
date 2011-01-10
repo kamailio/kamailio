@@ -59,19 +59,6 @@ typedef struct ul_db_api{
 
 typedef int (*bind_ul_db_t)(ul_db_api_t * api);
 
-/*static inline int load_ul_db_api(ul_db_api_t * api) {
-	bind_ul_db_t ul_dbf;
-	
-	if(!(ul_dbf = (bind_ul_db_t)find_export("sp_ul_db_bind", 1, 0))) {
-		LM_ERR("can't import sp_ul_db_bind.\n");
-		return -1;
-	}
-	if(ul_dbf(api) < 0){
-		return -1;
-	}
-	return 0;
-}
-*/
 
 int bind_ul_db(ul_db_api_t* api);
 
