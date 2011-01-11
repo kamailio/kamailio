@@ -55,14 +55,19 @@ Marius Zbihlei
               3.21. connection_expires (int)
               3.22. alg_location (int)
 
-        4. Installation & Running
+        4. Changes from usrloc module
 
-              4.1. Database setup
+              4.1. db_mode (integer)
+              4.2. db_url
 
-                    4.1.1. Configuration Table
+        5. Installation & Running
 
-              4.2. Maintenance
-              4.3. Additional configuration
+              5.1. Database setup
+
+                    5.1.1. Configuration Table
+
+              5.2. Maintenance
+              5.3. Additional configuration
 
    2. Developer's Guide
 
@@ -114,7 +119,8 @@ Marius Zbihlei
    1.20. Set write_on_db parameter
    1.21. Set connection_expires parameter
    1.22. Set alg_location parameter
-   1.23. Example database content - reg_table (locdb) table
+   1.23. Set db_mode parameter
+   1.24. Example database content - reg_table (locdb) table
 
 Chapter 1. User's Guide
 
@@ -155,14 +161,19 @@ Chapter 1. User's Guide
         3.21. connection_expires (int)
         3.22. alg_location (int)
 
-   4. Installation & Running
+   4. Changes from usrloc module
 
-        4.1. Database setup
+        4.1. db_mode (integer)
+        4.2. db_url
 
-              4.1.1. Configuration Table
+   5. Installation & Running
 
-        4.2. Maintenance
-        4.3. Additional configuration
+        5.1. Database setup
+
+              5.1.1. Configuration Table
+
+        5.2. Maintenance
+        5.3. Additional configuration
 
 1. Overview
 
@@ -539,18 +550,61 @@ modparam("p_usrloc", "connection_expires", "300")
 modparam("p_usrloc", "alg_location", 1)
 ...
 
-4. Installation & Running
+4.  Changes from usrloc module
 
-   4.1. Database setup
+   4.1. db_mode (integer)
+   4.2. db_url
 
-        4.1.1. Configuration Table
+4.1. db_mode (integer)
 
-   4.2. Maintenance
-   4.3. Additional configuration
+   The p_usrloc module must utilize database for persistent contact
+   storage. So mode 0 makes no sense in this setup.
+     * 1 - Write-Through scheme. All changes to usrloc are immediately
+       reflected in database too. This is very slow, but very reliable.
+       Use this scheme if speed is not your priority but need to make sure
+       that no registered contacts will be lost during crash or reboot.
+     * 2 - Write-Back scheme. This is a combination of previous two
+       schemes. All changes are made to memory and database
+       synchronization is done in the timer. The timer deletes all expired
+       contacts and flushes all modified or new contacts to database. Use
+       this scheme if you encounter high-load peaks and want them to
+       process as fast as possible. The mode will not help at all if the
+       load is high all the time. Also, latency of this mode is much lower
+       than latency of mode 1, but slightly higher than latency of mode 0.
+     * 3 - DB-Only scheme. No memory cache is kept, all operations being
+       directly performed with the database. The timer deletes all expired
+       contacts from database - cleans after clients that didn't
+       un-register or re-register. The mode is useful if you configure
+       more servers sharing the same DB without any replication at SIP
+       level. The mode may be slower due the high number of DB operation.
+       For example NAT pinging is a killer since during each ping cycle
+       all nated contact are loaded from the DB; The lack of memory
+       caching also disable the statistics exports.
 
-4.1. Database setup
+   Default value is 3.
 
-4.1.1. Configuration Table
+   Example 1.23. Set db_mode parameter
+...
+modparam("p_usrloc", "db_mode", 2)
+...
+
+4.2. db_url
+
+   This parameters is now obsolete, and replaced by specific p_usrloc
+   parameters
+
+5. Installation & Running
+
+   5.1. Database setup
+
+        5.1.1. Configuration Table
+
+   5.2. Maintenance
+   5.3. Additional configuration
+
+5.1. Database setup
+
+5.1.1. Configuration Table
 
    Before running Kamailio with p_usrloc, you have to setup the master
    database table where the module will find data about the distributed
@@ -563,7 +617,7 @@ modparam("p_usrloc", "alg_location", 1)
    complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.23. Example database content - reg_table (locdb) table
+   Example 1.24. Example database content - reg_table (locdb) table
 ...
 +----+----+------+--------+--------+---------------------+-------+----+
 | id | no | url  | status | errors | failover            | spare | rg |
@@ -583,7 +637,7 @@ modparam("p_usrloc", "alg_location", 1)
    This table contains two database groups. The first with id one, and the
    second with the id two.
 
-4.2. Maintenance
+5.2. Maintenance
 
    The module supports the decativation of redundant databases for
    maintenance reasons. This can be done by setting the status column of
@@ -606,7 +660,7 @@ modparam("p_usrloc", "alg_location", 1)
    then also used to read contacts from, the cluster is in normal
    operation with full redundancy again.
 
-4.3. Additional configuration
+5.3. Additional configuration
 
    As this module is only used internally from other modules, there is no
    additional configuration except for the module parameter setup

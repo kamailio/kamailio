@@ -561,6 +561,69 @@ modparam("p_usrloc", "alg_location", 1)
 	</section>
     </section>
     <section>
+    <title> Changes from usrloc module </title>
+    <section>
+	<title><varname>db_mode</varname> (integer)</title>
+		<para>
+		The p_usrloc module must utilize database for persistent contact storage.
+		So mode 0 makes no sense in this setup.
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			1 - Write-Through scheme. All changes to usrloc are immediately
+			reflected in database too. This is very slow, but very reliable.
+			Use this scheme if speed is not your priority but need to make
+			sure that no registered contacts will be lost during crash or
+			reboot.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			2 - Write-Back scheme. This is a combination of previous two
+			schemes. All changes are made to memory and database
+			synchronization is done in the timer. The timer deletes all
+			expired contacts and flushes all modified or new contacts to
+			database.  Use this scheme if you encounter high-load peaks
+			and want them to process as fast as possible. The mode will
+			not help at all if the load is high all the time.  Also, latency
+			of this mode is much lower than latency of mode 1, but slightly
+			higher than latency of mode 0.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			3 - DB-Only scheme. No memory cache is kept, all operations being
+			directly performed with the database. The timer deletes all
+			expired contacts from database - cleans after clients that didn't
+			un-register or re-register. The mode is useful if you configure
+			more servers sharing the same DB without any replication at SIP
+			level. The mode may be slower due the high number of DB operation.
+			For example NAT pinging is a killer since during each ping cycle
+			all nated contact are loaded from the DB; The lack of memory
+			caching also disable the statistics exports.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is 3.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "db_mode", 2)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+	<title><varname>db_url</varname></title> <para> This parameters is now obsolete, and replaced by specific p_usrloc parameters</para>
+	</section>
+    </section>
+    <section>
 	<title>Installation &amp; Running</title>
 	<section>
 	<title>Database setup</title>
