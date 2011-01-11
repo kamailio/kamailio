@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+
+<!ENTITY user SYSTEM "p_usrloc_user.xml">
+<!ENTITY devel SYSTEM "p_usrloc_devel.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+		<title>p_usrloc - Distributed databases</title>
+		<productname class="trade">&kamailioname;</productname>
+		<authorgroup>
+			<author>
+				<firstname>Jonas</firstname>
+				<surname>Appel</surname>
+				<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
+			</author>
+			<author>
+				<firstname>Henning</firstname>
+				<surname>Westerholt</surname>
+				<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
+				<address>
+					<email>henning.westerholt@1und1.de</email>
+				</address>
+			</author>
+			<author>
+				<firstname>Marius</firstname>
+				<surname>Zbihlei</surname>
+				<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
+				<address>
+					<email>marius.zbihlei@1and1.ro</email>
+				</address>
+			</author>
+			
+
+			<!--
+				<editor>
+					<firstname>EditorFirstname</firstname>
+					<surname>EditorLastname</surname>
+					<address>
+						<email>editor@email.net</email>
+					</address>
+				</editor>
+				-->
+			</authorgroup>
+			<copyright>
+				<year>2007</year>
+				<holder>1&amp;1 Internet AG</holder>
+			</copyright>
+			<revhistory>
+				<revision>
+					<revnumber>$Revision: 2 $</revnumber>
+					<date>$Date: 2005-06-13 18:47:24 +0200 (Mo, 13 Jun 2005) $</date>
+				</revision>
+					<revision>
+					<revnumber>$Revision: 3 $</revnumber>
+					<date>$Date: 2011-01-10 12:00:00 +0200 (Mo, 10 Jan 2011) $</date>
+				</revision>
+				
+
+			</revhistory>
+	</bookinfo>
+	<toc></toc>
+		
+	&user;
+	&devel;
+	
+</book>
