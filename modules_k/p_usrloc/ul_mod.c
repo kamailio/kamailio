@@ -155,7 +155,6 @@ str path_col        = str_init(PATH_COL);		/*!< Name of column containing the Pa
 str sock_col        = str_init(SOCK_COL);		/*!< Name of column containing the received socket */
 str methods_col     = str_init(METHODS_COL);		/*!< Name of column containing the supported methods */
 str last_mod_col     = str_init(LAST_MOD_COL);		/*!< Name of column containing the last modified date */
-str db_url          = str_init(DEFAULT_DB_URL);		/*!< Database URL */
 int timer_interval  = 60;				/*!< Timer interval in seconds */
 int db_mode         = 0;				/*!< Database sync scheme: 0-no db, 1-write through, 2-write back, 3-only db */
 int use_domain      = 0;				/*!< Whether usrloc should use domain part of aor */
@@ -224,7 +223,6 @@ static param_export_t params[] = {
 	{"cseq_column",       STR_PARAM, &cseq_col.s      },
 	{"flags_column",      STR_PARAM, &flags_col.s     },
 	{"cflags_column",     STR_PARAM, &cflags_col.s    },
-	{"db_url",            STR_PARAM, &db_url.s        },
 	{"timer_interval",    INT_PARAM, &timer_interval  },
 	{"db_mode",           INT_PARAM, &db_mode         },
 	{"use_domain",        INT_PARAM, &use_domain      },
@@ -345,7 +343,6 @@ static int mod_init(void)
 	sock_col.len = strlen(sock_col.s);
 	methods_col.len = strlen(methods_col.s);
 	last_mod_col.len = strlen(last_mod_col.s);
-	db_url.len = strlen(db_url.s);
 	
 	write_db_url.len = strlen (write_db_url.s);
 	read_db_url.len = strlen (read_db_url.s);
