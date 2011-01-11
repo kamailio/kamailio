@@ -78,6 +78,7 @@
 #include "km_pg_con.h"
 #include "km_val.h"
 #include "km_res.h"
+#include "pg_mod.h"
 
 static void db_postgres_free_query(const db1_con_t* _con);
 
@@ -113,6 +114,8 @@ void db_postgres_close(db1_con_t* _h)
  */
 static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 {
+	int i;
+
 	if(! _con || !_s || !_s->s)
 	{
 		LM_ERR("invalid parameter value\n");
@@ -141,19 +144,27 @@ static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 			return -1;
 	}
 
-	/* free any previous query that is laying about */
-	db_postgres_free_query(_con);
-
-	/* exec the query */
-	if (PQsendQuery(CON_CONNECTION(_con), _s->s)) {
-		LM_DBG("%p PQsendQuery(%.*s)\n", _con, _s->len, _s->s);
-	} else {
-		LM_ERR("%p PQsendQuery Error: %s Query: %.*s\n", _con,
-		PQerrorMessage(CON_CONNECTION(_con)), _s->len, _s->s);
-		return -1;
+	for(i = 0; i <= pg_retries; i++) {
+		/* free any previous query that is laying about */
+		db_postgres_free_query(_con);
+		/* exec the query */
+		if (PQsendQuery(CON_CONNECTION(_con), _s->s)) {
+			LM_DBG("sending query ok: %p - [%.*s]\n",
+					_con, _s->len, _s->s);
+			return 0;
+		}
+		LM_WARN("sending postgres command failed, connection status %d,"
+				" error [%s]\n", PQstatus(CON_CONNECTION(_con)),
+				PQerrorMessage(CON_CONNECTION(_con)));
+		if(PQstatus(CON_CONNECTION(_con))!=CONNECTION_OK)
+		{
+			LM_DBG("reseting the connection to postgress server\n");
+			PQreset(CON_CONNECTION(_con));
+		}
 	}
-
-	return 0;
+	LM_ERR("%p PQsendQuery Error: %s Query: %.*s\n", _con,
+	PQerrorMessage(CON_CONNECTION(_con)), _s->len, _s->s);
+	return -1;
 }
 
 
