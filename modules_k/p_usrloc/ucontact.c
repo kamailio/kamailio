@@ -41,7 +41,7 @@
 #include "../../socket_info.h"
 #include "../../dprint.h"
 #include "../../lib/srdb1/db.h"
-#include "ul_mod.h"
+#include "p_usrloc_mod.h"
 #include "ul_callback.h"
 #include "urecord.h"
 #include "ucontact.h"

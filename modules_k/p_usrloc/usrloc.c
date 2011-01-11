@@ -35,7 +35,7 @@
 
 #include "usrloc.h"
 #include "../../sr_module.h"
-#include "ul_mod.h"
+#include "p_usrloc_mod.h"
 
 /*! nat branch flag */
 extern unsigned int nat_bflag;

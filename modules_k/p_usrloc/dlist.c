@@ -46,7 +46,7 @@
 #include "../../socket_info.h"
 #include "udomain.h"           /* new_udomain, free_udomain */
 #include "utime.h"
-#include "ul_mod.h"
+#include "p_usrloc_mod.h"
 
 #include "ul_db_layer.h"
 

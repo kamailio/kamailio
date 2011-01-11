@@ -44,7 +44,7 @@
 #include "../../socket_info.h"
 #include "../../ut.h"
 #include "../../lib/kcore/hash_func.h"
-#include "ul_mod.h"            /* usrloc module parameters */
+#include "p_usrloc_mod.h"            /* usrloc module parameters */
 #include "utime.h"
 #include "ul_db_layer.h"
 

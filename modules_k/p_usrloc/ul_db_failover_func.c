@@ -22,7 +22,7 @@
 #include "ul_db_failover_func.h"
 
 #include "../../dprint.h"
-#include "ul_mod.h"
+#include "p_usrloc_mod.h"
 #include "ul_db.h"
 
 static str autocommit_off = str_init("SET AUTOCOMMIT=0");

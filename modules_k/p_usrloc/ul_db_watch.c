@@ -24,7 +24,7 @@
 #include "../../sr_module.h"
 #include "ul_db_watch.h"
 #include "ul_db.h"
-#include "ul_mod.h"
+#include "p_usrloc_mod.h"
 
 typedef struct ul_db_watch_list {
 	int id;

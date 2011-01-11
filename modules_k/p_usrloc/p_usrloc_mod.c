@@ -53,7 +53,7 @@
  */
 
 #include <stdio.h>
-#include "ul_mod.h"
+#include "p_usrloc_mod.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../rpc_lookup.h"
@@ -106,13 +106,11 @@ extern int ul_locks_no;
 /**
  * @var params
  * defines the parameters which can be set in the openser config file
- * is stored. Only used when @see use_second_key is set to 1
+ * is stored. Only used when @see use_domain is set to 1
  * @param write_db_url Url to the database where the key and database information is 
  * stored and where errors are reported to. Only used when @see write_on_db is active.
  * @param read_db_url Url to the database where the key and database information is 
  * stored.
- * @param use_second_key specifies if the second key is used for database lookup
- * identification. default is 1 (incactive)
  * @param reg_db_table the name of the table containing the information about the 
  * partitioned databases.
  * @param id_column name of the column containing the id mapping to a key.
@@ -136,8 +134,7 @@ extern int ul_locks_no;
  * @param db_retry_interval defines in which intervals the module shall try to 
  * reconnect to a deactivated database
  * @param write_on_db defines if the module has write access on the databases or not
- * @param alg_location defines the algorithm for the location matching 0 - based on db_location field
- * 1 - based on crc32
+ * @param alg_location defines the algorithm for the location matching - based on crc32 for  now
  */
 
 str user_col        = str_init(USER_COL); 		/*!< Name of column containing usernames */
@@ -156,7 +153,7 @@ str sock_col        = str_init(SOCK_COL);		/*!< Name of column containing the re
 str methods_col     = str_init(METHODS_COL);		/*!< Name of column containing the supported methods */
 str last_mod_col     = str_init(LAST_MOD_COL);		/*!< Name of column containing the last modified date */
 int timer_interval  = 60;				/*!< Timer interval in seconds */
-int db_mode         = 0;				/*!< Database sync scheme: 0-no db, 1-write through, 2-write back, 3-only db */
+int db_mode         = 3;				/*!< Database sync scheme:  1-write through, 2-write back, 3-only db */
 int use_domain      = 0;				/*!< Whether usrloc should use domain part of aor */
 int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
 
@@ -164,7 +161,6 @@ int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 9;
 str write_db_url         = {DEFAULT_DB_URL, DEFAULT_DB_URL_LEN};
 str read_db_url          = {DEFAULT_DB_URL, DEFAULT_DB_URL_LEN};
-int use_second_key       = 0;
 str reg_table            = {REG_TABLE, sizeof(REG_TABLE) -1};
 str id_col               = {ID_COL, sizeof(ID_COL) - 1};
 str url_col              = {URL_COL, sizeof(URL_COL) - 1};
@@ -242,7 +238,6 @@ static param_export_t params[] = {
 	{"domain_db",         STR_PARAM, &domain_db.s         },
 	{"write_db_url",         STR_PARAM, &write_db_url.s      },
 	{"read_db_url",          STR_PARAM, &read_db_url.s       },
-	{"use_second_key",       INT_PARAM, &use_second_key      },
 	{"reg_db_table",         STR_PARAM, &reg_table.s         },
 	{"id_column",            STR_PARAM, &id_col.s            },
 	{"num_column",           STR_PARAM, &num_col.s           },
@@ -368,6 +363,7 @@ static int mod_init(void)
 	switch (matching_mode) {
 		case CONTACT_ONLY:
 		case CONTACT_CALLID:
+		case CONTACT_PATH:
 			break;
 		default:
 			LM_ERR("invalid matching mode %d\n", matching_mode);
@@ -386,6 +382,11 @@ static int mod_init(void)
 	if ( init_ulcb_list() < 0) {
 		LM_ERR("usrloc/callbacks initialization failed\n");
 		return -1;
+	}
+
+	if (db_mode == NO_DB) {
+		LM_ERR("No database was configured! Partioned user location is useless!");
+		return  -1;
 	}
 
 	/* Shall we use database ? */

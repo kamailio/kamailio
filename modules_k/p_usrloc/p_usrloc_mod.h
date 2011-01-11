@@ -74,7 +74,7 @@
 #define DB_DEFAULT_TRANSACTION_LEVEL "READ UNCOMMITED"
 #define DB_DEFAULT_CONNECTION_EXPIRES 300
 #define DEFAULT_DB_TYPE "single"
-#define DEFAULT_DOMAIN_DB "location=cluster,cfa=single,cfb=single,cfnr=single,cfnl=single,cfu=single"
+#define DEFAULT_DOMAIN_DB "location=cluster,cfa=single"
 
 extern str user_col;
 extern str domain_col;
@@ -115,7 +115,6 @@ struct mi_root* mi_loc_nr_refresh(struct mi_root* cmd, void* param);
 
 extern str write_db_url;
 extern str read_db_url;
-extern int use_second_key;
 extern str reg_table;
 extern str id_col;
 extern str url_col;

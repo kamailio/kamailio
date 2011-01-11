@@ -20,7 +20,7 @@
  */
 
 #include "ul_db_handle.h"
-#include "ul_mod.h"
+#include "p_usrloc_mod.h"
 #include "ul_db.h"
 #include "ul_db_watch.h"
 #include "../../lib/kcore/km_crc.h"
@@ -531,7 +531,7 @@ static int compute_id(str* first, str* second){
 		return -1;
 	}
 	
-	if(use_second_key){
+	if(use_domain){
 		//compute crc32(user@domain)
 		LM_DBG("XDBGX: compute_id HAS second key : %.*s", first->len, first->s);
 		if(!second){
