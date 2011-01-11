@@ -113,12 +113,11 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows);
 
 int dlg_connect_db(const str *db_url)
 {
-	if (dialog_db_handle) {
-		LM_CRIT("BUG - db connection found already open\n");
+	dialog_db_handle = dialog_dbf.init(db_url);
+	if(dialog_db_handle == 0) {
+		LM_ERR("unable to connect to database\n");
 		return -1;
 	}
-	if ((dialog_db_handle = dialog_dbf.init(db_url)) == 0)
-		return -1;
 	return 0;
 }
 
