@@ -331,25 +331,6 @@ modparam("p_usrloc", "risk_group_column", "rg")
 	    </example>
 	</section>
 	<section>
-		<title><varname>use_second_key</varname> (int)</title>
-	    <para>
-		Specifies if the second key shall be used in queries or not (0 or 1).
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>0</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>use_second_key</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("p_usrloc", "use_second_key", "0")
-...
-</programlisting>
-	    </example>
-	</section>
-	<section>
 		<title><varname>expire_time</varname> (int)</title>
 	    <para>
 		Specifies the time (in seconds) when a contact expires, used
@@ -585,7 +566,7 @@ modparam("p_usrloc", "domain_db", "location=cluster,cfa=single")
 	<section>
 		<title><varname>default_db_type</varname>(str)</title>
 		<para>
-		  In case of a domain (like location,cfa) is not matched by a domain_db definition, the type is configured by using this parameter. Accepted values are single and cluster.
+		  In case  a domain (like location,cfa) is not matched by a domain_db definition, the type is configured by using this parameter. Accepted values are single and cluster.
 		</para>
 		<para>
 		<emphasis>
@@ -602,6 +583,26 @@ modparam("p_usrloc", "default_db_type", "cluster")
 	    </example>
 	</section>
     </section>
+    	<section>
+		<title><varname>default_db_url</varname>(str)</title>
+		<para>
+		  The URL of the default database for Location domains (for domains that are single). This must be configured if they are use.
+		</para>
+		<para>
+		<emphasis>
+		    Default value is <quote>DEFAULT_DB_URL</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>default_db_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "default_db_url", "mysql://ser:ser@localhost/ser")
+...
+</programlisting>
+	    </example>
+	</section>
+
     <section>
     <title> Changes from usrloc module </title>
     <section>

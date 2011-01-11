@@ -43,33 +43,33 @@ Marius Zbihlei
               3.9. spare_flag_column (string)
               3.10. error_column (string)
               3.11. risk_group_column (string)
-              3.12. use_second_key (int)
-              3.13. expire_time (int)
-              3.14. db_err_threshold (int)
-              3.15. failover_level (int)
-              3.16. db_retry_interval (int)
-              3.17. db_use_transactions (int)
-              3.18. db_transaction_level (string)
-              3.19. write_on_master_db (int)
-              3.20. write_on_db (int)
-              3.21. connection_expires (int)
-              3.22. alg_location (int)
-              3.23. domain_db(str)
-              3.24. default_db_type(str)
+              3.12. expire_time (int)
+              3.13. db_err_threshold (int)
+              3.14. failover_level (int)
+              3.15. db_retry_interval (int)
+              3.16. db_use_transactions (int)
+              3.17. db_transaction_level (string)
+              3.18. write_on_master_db (int)
+              3.19. write_on_db (int)
+              3.20. connection_expires (int)
+              3.21. alg_location (int)
+              3.22. domain_db(str)
+              3.23. default_db_type(str)
 
-        4. Changes from usrloc module
+        4. default_db_url(str)
+        5. Changes from usrloc module
 
-              4.1. db_mode (integer)
-              4.2. db_url
+              5.1. db_mode (integer)
+              5.2. db_url
 
-        5. Installation & Running
+        6. Installation & Running
 
-              5.1. Database setup
+              6.1. Database setup
 
-                    5.1.1. Configuration Table
+                    6.1.1. Configuration Table
 
-              5.2. Maintenance
-              5.3. Additional configuration
+              6.2. Maintenance
+              6.3. Additional configuration
 
    2. Developer's Guide
 
@@ -110,18 +110,18 @@ Marius Zbihlei
    1.9. Set spare_flag_column parameter
    1.10. Set error_column parameter
    1.11. Set risk_group_column parameter
-   1.12. Set use_second_key parameter
-   1.13. Set expire_time parameter
-   1.14. Set db_err_threshold parameter
-   1.15. Set failover_level parameter
-   1.16. Set db_retry_interval parameter
-   1.17. Set db_use_transactions parameter
-   1.18. Set db_transaction_level parameter
-   1.19. Set write_on_master_db parameter
-   1.20. Set write_on_db parameter
-   1.21. Set connection_expires parameter
-   1.22. Set alg_location parameter
-   1.23. Set domain_db parameter
+   1.12. Set expire_time parameter
+   1.13. Set db_err_threshold parameter
+   1.14. Set failover_level parameter
+   1.15. Set db_retry_interval parameter
+   1.16. Set db_use_transactions parameter
+   1.17. Set db_transaction_level parameter
+   1.18. Set write_on_master_db parameter
+   1.19. Set write_on_db parameter
+   1.20. Set connection_expires parameter
+   1.21. Set alg_location parameter
+   1.22. Set domain_db parameter
+   1.23. Set default_db_type parameter
    1.24. Set default_db_type parameter
    1.25. Set db_mode parameter
    1.26. Example database content - reg_table (locdb) table
@@ -153,33 +153,33 @@ Chapter 1. User's Guide
         3.9. spare_flag_column (string)
         3.10. error_column (string)
         3.11. risk_group_column (string)
-        3.12. use_second_key (int)
-        3.13. expire_time (int)
-        3.14. db_err_threshold (int)
-        3.15. failover_level (int)
-        3.16. db_retry_interval (int)
-        3.17. db_use_transactions (int)
-        3.18. db_transaction_level (string)
-        3.19. write_on_master_db (int)
-        3.20. write_on_db (int)
-        3.21. connection_expires (int)
-        3.22. alg_location (int)
-        3.23. domain_db(str)
-        3.24. default_db_type(str)
+        3.12. expire_time (int)
+        3.13. db_err_threshold (int)
+        3.14. failover_level (int)
+        3.15. db_retry_interval (int)
+        3.16. db_use_transactions (int)
+        3.17. db_transaction_level (string)
+        3.18. write_on_master_db (int)
+        3.19. write_on_db (int)
+        3.20. connection_expires (int)
+        3.21. alg_location (int)
+        3.22. domain_db(str)
+        3.23. default_db_type(str)
 
-   4. Changes from usrloc module
+   4. default_db_url(str)
+   5. Changes from usrloc module
 
-        4.1. db_mode (integer)
-        4.2. db_url
+        5.1. db_mode (integer)
+        5.2. db_url
 
-   5. Installation & Running
+   6. Installation & Running
 
-        5.1. Database setup
+        6.1. Database setup
 
-              5.1.1. Configuration Table
+              6.1.1. Configuration Table
 
-        5.2. Maintenance
-        5.3. Additional configuration
+        6.2. Maintenance
+        6.3. Additional configuration
 
 1. Overview
 
@@ -266,19 +266,18 @@ Warning
    3.9. spare_flag_column (string)
    3.10. error_column (string)
    3.11. risk_group_column (string)
-   3.12. use_second_key (int)
-   3.13. expire_time (int)
-   3.14. db_err_threshold (int)
-   3.15. failover_level (int)
-   3.16. db_retry_interval (int)
-   3.17. db_use_transactions (int)
-   3.18. db_transaction_level (string)
-   3.19. write_on_master_db (int)
-   3.20. write_on_db (int)
-   3.21. connection_expires (int)
-   3.22. alg_location (int)
-   3.23. domain_db(str)
-   3.24. default_db_type(str)
+   3.12. expire_time (int)
+   3.13. db_err_threshold (int)
+   3.14. failover_level (int)
+   3.15. db_retry_interval (int)
+   3.16. db_use_transactions (int)
+   3.17. db_transaction_level (string)
+   3.18. write_on_master_db (int)
+   3.19. write_on_db (int)
+   3.20. connection_expires (int)
+   3.21. alg_location (int)
+   3.22. domain_db(str)
+   3.23. default_db_type(str)
 
 3.1. write_db_url (string)
 
@@ -422,18 +421,7 @@ modparam("p_usrloc", "error_column", "error")
 modparam("p_usrloc", "risk_group_column", "rg")
 ...
 
-3.12. use_second_key (int)
-
-   Specifies if the second key shall be used in queries or not (0 or 1).
-
-   Default value is “0”.
-
-   Example 1.12. Set use_second_key parameter
-...
-modparam("p_usrloc", "use_second_key", "0")
-...
-
-3.13. expire_time (int)
+3.12. expire_time (int)
 
    Specifies the time (in seconds) when a contact expires, used for
    resetting the failover time of a reactivated database. It should be
@@ -442,23 +430,23 @@ modparam("p_usrloc", "use_second_key", "0")
 
    Default value is “3600”.
 
-   Example 1.13. Set expire_time parameter
+   Example 1.12. Set expire_time parameter
 ...
 modparam("p_usrloc", "expire_time", "3600")
 ...
 
-3.14. db_err_threshold (int)
+3.13. db_err_threshold (int)
 
    Specifies the error value on which a database shall be turned of.
 
    Default value is “50”.
 
-   Example 1.14. Set db_err_threshold parameter
+   Example 1.13. Set db_err_threshold parameter
 ...
 modparam("p_usrloc", "db_err_threshold", "50")
 ...
 
-3.15. failover_level (int)
+3.14. failover_level (int)
 
    Specifies the manner a failover is done. Following modes are supported:
      * 1 - Just turn off the broken database
@@ -467,12 +455,12 @@ modparam("p_usrloc", "db_err_threshold", "50")
 
    Default value is “1”.
 
-   Example 1.15. Set failover_level parameter
+   Example 1.14. Set failover_level parameter
 ...
 modparam("p_usrloc", "failover_level", "1")
 ...
 
-3.16. db_retry_interval (int)
+3.15. db_retry_interval (int)
 
    Specifies the interval (in seconds) in which a timer process shall
    check the availability of the databases and try to reconnect to broken
@@ -482,12 +470,12 @@ modparam("p_usrloc", "failover_level", "1")
 
    Default value is “10”.
 
-   Example 1.16. Set db_retry_interval parameter
+   Example 1.15. Set db_retry_interval parameter
 ...
 modparam("p_usrloc", "db_retry_interval", "10")
 ...
 
-3.17. db_use_transactions (int)
+3.16. db_use_transactions (int)
 
    Specifies if transactions should be used (set to 1) to reach a higher
    data consistency. Keep in mind that this will probably decrease
@@ -495,12 +483,12 @@ modparam("p_usrloc", "db_retry_interval", "10")
 
    Default value is “0”.
 
-   Example 1.17. Set db_use_transactions parameter
+   Example 1.16. Set db_use_transactions parameter
 ...
 modparam("p_usrloc", "db_use_transactions", "0")
 ...
 
-3.18. db_transaction_level (string)
+3.17. db_transaction_level (string)
 
    Specifies the isolation level on which transactions are performed.
    Possible values: Modes supported by the database backend. In order to
@@ -509,48 +497,48 @@ modparam("p_usrloc", "db_use_transactions", "0")
 
    Default value is “READ UNCOMMITED”.
 
-   Example 1.18. Set db_transaction_level parameter
+   Example 1.17. Set db_transaction_level parameter
 ...
 modparam("p_usrloc", "db_transaction_level", "READ UNCOMMITED")
 ...
 
-3.19. write_on_master_db (int)
+3.18. write_on_master_db (int)
 
    Sets the write access to the master database. If set to 0, no write
    operations are permitted on the master database.
 
    Default value is “0”.
 
-   Example 1.19. Set write_on_master_db parameter
+   Example 1.18. Set write_on_master_db parameter
 ...
 modparam("p_usrloc", "write_on_master_db", "0")
 ...
 
-3.20. write_on_db (int)
+3.19. write_on_db (int)
 
    Sets the write access to the distributed databases. If set to 0, no
    write operations are permitted on the databases.
 
    Default value is “0”.
 
-   Example 1.20. Set write_on_db parameter
+   Example 1.19. Set write_on_db parameter
 ...
 modparam("p_usrloc", "write_on_db", "0")
 ...
 
-3.21. connection_expires (int)
+3.20. connection_expires (int)
 
    Specifies the period (in seconds) after a database connection expires.
    Usage of a too small value will probably decrease the performance.
 
    Default value is “300”.
 
-   Example 1.21. Set connection_expires parameter
+   Example 1.20. Set connection_expires parameter
 ...
 modparam("p_usrloc", "connection_expires", "300")
 ...
 
-3.22. alg_location (int)
+3.21. alg_location (int)
 
    Specify the way the distribution of the subscriptions are computed. At
    the moment the only way is to use the CRC32 algorithm to compute the
@@ -558,12 +546,12 @@ modparam("p_usrloc", "connection_expires", "300")
 
    Default value is “0”.
 
-   Example 1.22. Set alg_location parameter
+   Example 1.21. Set alg_location parameter
 ...
 modparam("p_usrloc", "alg_location", 1)
 ...
 
-3.23. domain_db(str)
+3.22. domain_db(str)
 
    Specify the way the lookup is made. In can be either partitioned or
    single. For example, if you have a location table that is large and
@@ -581,30 +569,42 @@ lookup(cfa)
 
    Default value is “location=cluster,cfa=single”.
 
-   Example 1.23. Set domain_db parameter
+   Example 1.22. Set domain_db parameter
 ...
 modparam("p_usrloc", "domain_db", "location=cluster,cfa=single")
 ...
 
-3.24. default_db_type(str)
+3.23. default_db_type(str)
 
-   In case of a domain (like location,cfa) is not matched by a domain_db
+   In case a domain (like location,cfa) is not matched by a domain_db
    definition, the type is configured by using this parameter. Accepted
    values are single and cluster.
 
    Default value is “single”.
 
-   Example 1.24. Set default_db_type parameter
+   Example 1.23. Set default_db_type parameter
 ...
 modparam("p_usrloc", "default_db_type", "cluster")
 ...
 
-4.  Changes from usrloc module
+4. default_db_url(str)
 
-   4.1. db_mode (integer)
-   4.2. db_url
+   The URL of the default database for Location domains (for domains that
+   are single). This must be configured if they are use.
 
-4.1. db_mode (integer)
+   Default value is “DEFAULT_DB_URL”.
+
+   Example 1.24. Set default_db_type parameter
+...
+modparam("p_usrloc", "default_db_url", "mysql://ser:ser@localhost/ser")
+...
+
+5.  Changes from usrloc module
+
+   5.1. db_mode (integer)
+   5.2. db_url
+
+5.1. db_mode (integer)
 
    The p_usrloc module must utilize database for persistent contact
    storage. So mode 0 makes no sense in this setup.
@@ -637,23 +637,23 @@ modparam("p_usrloc", "default_db_type", "cluster")
 modparam("p_usrloc", "db_mode", 2)
 ...
 
-4.2. db_url
+5.2. db_url
 
    This parameters is now obsolete, and replaced by specific p_usrloc
    parameters
 
-5. Installation & Running
+6. Installation & Running
 
-   5.1. Database setup
+   6.1. Database setup
 
-        5.1.1. Configuration Table
+        6.1.1. Configuration Table
 
-   5.2. Maintenance
-   5.3. Additional configuration
+   6.2. Maintenance
+   6.3. Additional configuration
 
-5.1. Database setup
+6.1. Database setup
 
-5.1.1. Configuration Table
+6.1.1. Configuration Table
 
    Before running Kamailio with p_usrloc, you have to setup the master
    database table where the module will find data about the distributed
@@ -686,7 +686,7 @@ modparam("p_usrloc", "db_mode", 2)
    This table contains two database groups. The first with id one, and the
    second with the id two.
 
-5.2. Maintenance
+6.2. Maintenance
 
    The module supports the decativation of redundant databases for
    maintenance reasons. This can be done by setting the status column of
@@ -709,7 +709,7 @@ modparam("p_usrloc", "db_mode", 2)
    then also used to read contacts from, the cluster is in normal
    operation with full redundancy again.
 
-5.3. Additional configuration
+6.3. Additional configuration
 
    As this module is only used internally from other modules, there is no
    additional configuration except for the module parameter setup
