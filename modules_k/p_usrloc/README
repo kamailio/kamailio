@@ -54,6 +54,8 @@ Marius Zbihlei
               3.20. write_on_db (int)
               3.21. connection_expires (int)
               3.22. alg_location (int)
+              3.23. domain_db(str)
+              3.24. default_db_type(str)
 
         4. Changes from usrloc module
 
@@ -119,14 +121,16 @@ Marius Zbihlei
    1.20. Set write_on_db parameter
    1.21. Set connection_expires parameter
    1.22. Set alg_location parameter
-   1.23. Set db_mode parameter
-   1.24. Example database content - reg_table (locdb) table
+   1.23. Set domain_db parameter
+   1.24. Set default_db_type parameter
+   1.25. Set db_mode parameter
+   1.26. Example database content - reg_table (locdb) table
 
 Chapter 1. User's Guide
 
    Revision History
-   Revision $Revision: 2 $ $Date: 2005-06-13 18:47:24 +0200 (Mo, 13 Jun
-                           2005) $
+   Revision $Revision: 3 $ $Date: 2011-01-10 12:00:00 +0200 (Mo, 10 Jan
+                           2011) $
 
    Table of Contents
 
@@ -160,6 +164,8 @@ Chapter 1. User's Guide
         3.20. write_on_db (int)
         3.21. connection_expires (int)
         3.22. alg_location (int)
+        3.23. domain_db(str)
+        3.24. default_db_type(str)
 
    4. Changes from usrloc module
 
@@ -225,6 +231,11 @@ Chapter 1. User's Guide
    activated. It also supports the manual deactivation of redundant
    databases for maintenance purposes.
 
+Warning
+
+   The p_usrloc module still has some missing feature, like automatic
+   expiry of contacts and dumping of all users via the fifo cmd.
+
 2. Dependencies
 
    2.1. Kamailio Modules
@@ -266,6 +277,8 @@ Chapter 1. User's Guide
    3.20. write_on_db (int)
    3.21. connection_expires (int)
    3.22. alg_location (int)
+   3.23. domain_db(str)
+   3.24. default_db_type(str)
 
 3.1. write_db_url (string)
 
@@ -550,6 +563,42 @@ modparam("p_usrloc", "connection_expires", "300")
 modparam("p_usrloc", "alg_location", 1)
 ...
 
+3.23. domain_db(str)
+
+   Specify the way the lookup is made. In can be either partitioned or
+   single. For example, if you have a location table that is large and
+   needs to be partitioned, and a smaller table cfa that is ok to be on
+   only the master db(so there is no need to have it distributed), you can
+   set this parameter to “location=cluster,cfa=single”. This means that a
+   call to
+lookup(location)
+
+   will be done via the partition databases configured via the
+   reg_db_table parameter, but a call to
+lookup(cfa)
+
+   will be done on only the master database (as with usrloc module)
+
+   Default value is “location=cluster,cfa=single”.
+
+   Example 1.23. Set domain_db parameter
+...
+modparam("p_usrloc", "domain_db", "location=cluster,cfa=single")
+...
+
+3.24. default_db_type(str)
+
+   In case of a domain (like location,cfa) is not matched by a domain_db
+   definition, the type is configured by using this parameter. Accepted
+   values are single and cluster.
+
+   Default value is “single”.
+
+   Example 1.24. Set default_db_type parameter
+...
+modparam("p_usrloc", "default_db_type", "cluster")
+...
+
 4.  Changes from usrloc module
 
    4.1. db_mode (integer)
@@ -583,7 +632,7 @@ modparam("p_usrloc", "alg_location", 1)
 
    Default value is 3.
 
-   Example 1.23. Set db_mode parameter
+   Example 1.25. Set db_mode parameter
 ...
 modparam("p_usrloc", "db_mode", 2)
 ...
@@ -617,7 +666,7 @@ modparam("p_usrloc", "db_mode", 2)
    complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.24. Example database content - reg_table (locdb) table
+   Example 1.26. Example database content - reg_table (locdb) table
 ...
 +----+----+------+--------+--------+---------------------+-------+----+
 | id | no | url  | status | errors | failover            | spare | rg |

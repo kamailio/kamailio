@@ -4,8 +4,8 @@
     <chapterinfo>
 	<revhistory>
 	    <revision>
-		<revnumber>$Revision: 2 $</revnumber>
-		<date>$Date: 2005-06-13 18:47:24 +0200 (Mo, 13 Jun 2005) $</date>
+		<revnumber>$Revision: 3 $</revnumber>
+		<date>$Date: 2011-01-10 12:00:00 +0200 (Mo, 10 Jan 2011) $</date>
 	    </revision>
 	</revhistory>
     </chapterinfo>
@@ -63,6 +63,10 @@
 	of a database error with the usage of spare databases that are automatically activated.
 	It also supports the manual deactivation of redundant databases for maintenance purposes.
 	</para>
+
+	<para><warning>
+	      The p_usrloc module still has some missing feature, like automatic expiry of contacts and dumping of all users via the fifo cmd.
+	</warning></para>
     </section>
     <section>
 	<title>Dependencies</title>
@@ -555,6 +559,44 @@ modparam("p_usrloc", "connection_expires", "300")
 		<programlisting format="linespecific">
 ...
 modparam("p_usrloc", "alg_location", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>domain_db</varname>(str)</title>
+		<para>
+		Specify the way the lookup is made. In can be either partitioned or single. For example, if you have a location table that is large and needs to be partitioned, and a smaller table cfa that is ok to be on only the master db(so there is no need to have it distributed), you can set this parameter to <quote>location=cluster,cfa=single</quote>. This means that a call to <programlisting>lookup(location)</programlisting> will be done via the partition databases configured via the  reg_db_table parameter, but a call to <programlisting>lookup(cfa)</programlisting> will be done on only the master database (as with usrloc module)
+		</para>
+		<para>
+		<emphasis>
+		    Default value is <quote>location=cluster,cfa=single</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>domain_db</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "domain_db", "location=cluster,cfa=single")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title><varname>default_db_type</varname>(str)</title>
+		<para>
+		  In case of a domain (like location,cfa) is not matched by a domain_db definition, the type is configured by using this parameter. Accepted values are single and cluster.
+		</para>
+		<para>
+		<emphasis>
+		    Default value is <quote>single</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>default_db_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "default_db_type", "cluster")
 ...
 </programlisting>
 	    </example>
