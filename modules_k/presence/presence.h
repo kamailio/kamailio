@@ -44,6 +44,15 @@
 #include "event_list.h"
 #include "hash.h"
 
+/* DB modes */
+
+/* subscriptions are held in memory and periodically updated to db, but retrieved from db only at startup */
+#define DB_MEMORY_ONLY 0
+/* same as memory_only, but if a subscription is not found, it falls back to db */
+#define DB_FALLBACK 1
+/* subscriptions are held only in database */
+#define DB_ONLY 2
+
 /* TM bind */
 extern struct tm_binds tmb;
 
@@ -66,7 +75,7 @@ extern char *to_tag_pref;
 extern int expires_offset;
 extern str server_address;
 extern int max_expires;
-extern int fallback2db;
+extern int dbmode;
 extern int sphere_enable;
 extern int timeout_rm_subs;
 extern int shtable_size;

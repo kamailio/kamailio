@@ -69,6 +69,7 @@
 #include "../../lib/kmi/mi.h"
 #include "../../lib/kcore/hash_func.h"
 #include "../pua/hash.h"
+#include "presence.h"
 #include "publish.h"
 #include "subscribe.h"
 #include "event_list.h"
@@ -136,7 +137,8 @@ int expires_offset = 0;
 int max_expires= 3600;
 int shtable_size= 9;
 shtable_t subs_htable= NULL;
-int fallback2db= 0;
+int dbmode = 0;
+int fallback2db = 0;
 int sphere_enable= 0;
 int timeout_rm_subs = 1;
 
@@ -175,6 +177,7 @@ static param_export_t params[]={
 	{ "server_address",         STR_PARAM, &server_address.s},
 	{ "subs_htable_size",       INT_PARAM, &shtable_size},
 	{ "pres_htable_size",       INT_PARAM, &phtable_size},
+	{ "dbmode",                 INT_PARAM, &dbmode},
 	{ "fallback2db",            INT_PARAM, &fallback2db},
 	{ "enable_sphere_check",    INT_PARAM, &sphere_enable},
 	{ "timeout_rm_subs",        INT_PARAM, &timeout_rm_subs},
@@ -358,6 +361,12 @@ static int mod_init(void)
 	if(pa_db)
 		pa_dbf.close(pa_db);
 	pa_db = NULL;
+	
+	/* for legacy, we also keep the fallback2db parameter, but make sure for consistency */
+	if(fallback2db)
+	{
+		dbmode = DB_FALLBACK;
+	}
 
 	return 0;
 }

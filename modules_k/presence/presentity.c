@@ -896,8 +896,8 @@ char* get_sphere(str* pres_uri)
 	lock_release(&pres_htable[hash_code].lock);
 
 
-	/* if record not found and fallback2db query database*/
-	if(!fallback2db)
+	/* if record not found and subscriptions are held also in database, query database*/
+	if(dbmode == DB_MEMORY_ONLY)
 	{
 		return NULL;
 	}

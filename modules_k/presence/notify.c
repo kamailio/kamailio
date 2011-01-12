@@ -380,7 +380,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 		goto done;
 	}
 
-	if(fallback2db)
+	if(dbmode != DB_MEMORY_ONLY)
 	{
 		if(get_wi_subs_db(subs, watchers)< 0)
 		{
@@ -405,7 +405,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 			continue;
 		}
 
-		if(fallback2db && s->db_flag!= INSERTDB_FLAG)
+		if(dbmode != DB_MEMORY_ONLY && s->db_flag!= INSERTDB_FLAG)
 		{
 			LM_DBG("record already found in database\n");
 			continue;
@@ -641,7 +641,7 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 	if(search_phtable(&pres_uri, event->evp->type, hash_code)== NULL)
 	{
 		LM_DBG("No record exists in hash_table\n");
-		if(fallback2db)
+		if(dbmode != DB_MEMORY_ONLY)
 			goto db_query;
 
 		/* for pidf manipulation */
@@ -1226,10 +1226,12 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 	subs_t* s_array= NULL;
 	int n= 0, i= 0;
 	
-	/* if fallback2db -> should take all dialogs from db
-	 * and the only those dialogs from cache with db_flag= INSERTDB_FLAG */
+	/* if in memory mode, should take the subscriptions from the hashtable only
+	   in dbonly mode should take all dialogs from db
+	   in fallback mode, should take those dialogs with db_flag = INSERTDB_FLAG
+	*/
 
-	if(fallback2db)
+	if(dbmode != DB_MEMORY_ONLY)
 	{
 		if(get_subs_db(pres_uri, event, sender, &s_array, &n)< 0)			
 		{
@@ -1237,68 +1239,73 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 			goto error;
 		}
 	}
-	hash_code= core_hash(pres_uri, &event->name, shtable_size);
 	
-	lock_get(&subs_htable[hash_code].lock);
-
-	s= subs_htable[hash_code].entries;
-
-	while(s->next)
+	if(dbmode != DB_ONLY)
 	{
-		s= s->next;
-	
-		printf_subs(s);
+		hash_code= core_hash(pres_uri, &event->name, shtable_size);
 		
-		if(s->expires< (int)time(NULL))
-		{
-			LM_DBG("expired subs\n");
-			continue;
-		}
-		
-		if((!(s->status== ACTIVE_STATUS &&
-            s->reason.len== 0 &&
-			s->event== event && s->pres_uri.len== pres_uri->len &&
-			strncmp(s->pres_uri.s, pres_uri->s, pres_uri->len)== 0)) || 
-			(sender && sender->len== s->contact.len && 
-			strncmp(sender->s, s->contact.s, sender->len)== 0))
-			continue;
+		lock_get(&subs_htable[hash_code].lock);
 
-		if(fallback2db)
+		s= subs_htable[hash_code].entries;
+
+		while(s->next)
 		{
-			if(s->db_flag== NO_UPDATEDB_FLAG)
+			s= s->next;
+		
+			printf_subs(s);
+			
+			if(s->expires< (int)time(NULL))
 			{
-				LM_DBG("s->db_flag==NO_UPDATEDB_FLAG\n");
+				LM_DBG("expired subs\n");
 				continue;
 			}
 			
-			if(s->db_flag== UPDATEDB_FLAG)
+			if((!(s->status== ACTIVE_STATUS &&
+		    s->reason.len== 0 &&
+				s->event== event && s->pres_uri.len== pres_uri->len &&
+				strncmp(s->pres_uri.s, pres_uri->s, pres_uri->len)== 0)) || 
+				(sender && sender->len== s->contact.len && 
+				strncmp(sender->s, s->contact.s, sender->len)== 0))
+				continue;
+
+			if(dbmode == DB_FALLBACK)
 			{
-				LM_DBG("s->db_flag== UPDATEDB_FLAG\n");
-				if(n>0 && update_in_list(s, s_array, i, n)< 0)
+				if(s->db_flag== NO_UPDATEDB_FLAG)
 				{
-					LM_DBG("dialog not found in list fetched from database\n");
-					/* insert record */
+					LM_DBG("s->db_flag==NO_UPDATEDB_FLAG\n");
+					continue;
 				}
-				else
-					continue;			
+				
+				if(s->db_flag== UPDATEDB_FLAG)
+				{
+					LM_DBG("s->db_flag== UPDATEDB_FLAG\n");
+					if(n>0 && update_in_list(s, s_array, i, n)< 0)
+					{
+						LM_DBG("dialog not found in list fetched from database\n");
+						/* insert record */
+					}
+					else
+						continue;			
+				}
 			}
+			
+			LM_DBG("s->db_flag= INSERTDB_FLAG\n");
+			s_new= mem_copy_subs(s, PKG_MEM_TYPE);
+			if(s_new== NULL)
+			{
+				LM_ERR("copying subs_t structure\n");
+				lock_release(&subs_htable[hash_code].lock);
+				goto error;
+			}
+			s_new->expires-= (int)time(NULL);
+			s_new->next= s_array;
+			s_array= s_new;
+			i++;
 		}
 		
-		LM_DBG("s->db_flag= INSERTDB_FLAG\n");
-		s_new= mem_copy_subs(s, PKG_MEM_TYPE);
-		if(s_new== NULL)
-		{
-			LM_ERR("copying subs_t structure\n");
-			lock_release(&subs_htable[hash_code].lock);
-			goto error;
-		}
-		s_new->expires-= (int)time(NULL);
-		s_new->next= s_array;
-		s_array= s_new;
-		i++;
-	}
-
 	lock_release(&subs_htable[hash_code].lock);
+	}
+	
 	LM_DBG("found %d dialogs( %d in database and %d in hash_table)\n",n+i,n,i);
 
 	return s_array;
@@ -1643,30 +1650,33 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 		unsigned int hash_code;
 		hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
 
-		if(update_shtable(subs_htable, hash_code, subs, LOCAL_TYPE)< 0)
+		/* if subscriptions are held also in memory, update the subscription hashtable */
+		if(dbmode != DB_ONLY)
 		{
-			if(subs->db_flag!= INSERTDB_FLAG && fallback2db)
+			if(update_shtable(subs_htable, hash_code, subs, LOCAL_TYPE) < 0 && dbmode == DB_MEMORY_ONLY)
 			{
-				LM_DBG("record not found in subs htable\n");
-				if(update_subs_db(subs, LOCAL_TYPE)< 0)
-				{
-					LM_ERR("updating subscription in database\n");
-					return -1;
-				}
+				/* subscriptions are held only in memory, and hashtable update failed */
+				LM_ERR("updating subscription record in hash table\n");
+				return -1;
 			}
-			else
+		}
+		/* if dbonly mode, or if fallback2db mode and the subscription was inserted into the database */
+		if((dbmode == DB_ONLY) || (subs->db_flag != INSERTDB_FLAG && dbmode == DB_FALLBACK))
+		{
+			LM_DBG("updating subscription to database\n");
+			if(update_subs_db(subs, LOCAL_TYPE)< 0)
 			{
-				LM_ERR("record not found in subs htable\n");
+				LM_ERR("updating subscription in database\n");
 				return -1;
 			}
 		}
 	}
      
-    if(subs->reason.s && subs->status== ACTIVE_STATUS && 
-        subs->reason.len== 12 && strncmp(subs->reason.s, "polite-block", 12)== 0)
-    {
-        force_null_body = 1;
-    }
+	if(subs->reason.s && subs->status== ACTIVE_STATUS && 
+	subs->reason.len== 12 && strncmp(subs->reason.s, "polite-block", 12)== 0)
+	{
+		force_null_body = 1;
+	}
 
 	if(send_notify_request(subs, watcher_subs, n_body, force_null_body)< 0)
 	{

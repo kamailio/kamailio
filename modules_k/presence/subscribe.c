@@ -180,6 +180,152 @@ int delete_db_subs(str pres_uri, str ev_stored_name, str to_tag)
 	return 0;
 }
 
+int insert_subs_db(subs_t* s, int type)
+{
+	db_key_t query_cols[22];
+	db_val_t query_vals[22];
+	int n_query_cols = 0;
+	int pres_uri_col, to_user_col, to_domain_col, from_user_col, from_domain_col,
+		callid_col, totag_col, fromtag_col, event_col,status_col, event_id_col, 
+		local_cseq_col, remote_cseq_col, expires_col, record_route_col, 
+		contact_col, local_contact_col, version_col,socket_info_col,reason_col;
+		
+	if(pa_dbf.use_table(pa_db, &active_watchers_table)< 0)
+	{
+		LM_ERR("sql use table failed\n");
+		return -1;
+	}
+	
+	query_cols[pres_uri_col= n_query_cols] =&str_presentity_uri_col;
+	query_vals[pres_uri_col].type = DB1_STR;
+	query_vals[pres_uri_col].nul = 0;
+	n_query_cols++;
+	
+	query_cols[callid_col= n_query_cols] =&str_callid_col;
+	query_vals[callid_col].type = DB1_STR;
+	query_vals[callid_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[totag_col= n_query_cols] =&str_to_tag_col;
+	query_vals[totag_col].type = DB1_STR;
+	query_vals[totag_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[fromtag_col= n_query_cols] =&str_from_tag_col;
+	query_vals[fromtag_col].type = DB1_STR;
+	query_vals[fromtag_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[to_user_col= n_query_cols] =&str_to_user_col;
+	query_vals[to_user_col].type = DB1_STR;
+	query_vals[to_user_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[to_domain_col= n_query_cols] =&str_to_domain_col;
+	query_vals[to_domain_col].type = DB1_STR;
+	query_vals[to_domain_col].nul = 0;
+	n_query_cols++;
+	
+	query_cols[from_user_col= n_query_cols] =&str_watcher_username_col;
+	query_vals[from_user_col].type = DB1_STR;
+	query_vals[from_user_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[from_domain_col= n_query_cols] =&str_watcher_domain_col;
+	query_vals[from_domain_col].type = DB1_STR;
+	query_vals[from_domain_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[event_col= n_query_cols] =&str_event_col;
+	query_vals[event_col].type = DB1_STR;
+	query_vals[event_col].nul = 0;
+	n_query_cols++;	
+
+	query_cols[event_id_col= n_query_cols] =&str_event_id_col;
+	query_vals[event_id_col].type = DB1_STR;
+	query_vals[event_id_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[local_cseq_col= n_query_cols]=&str_local_cseq_col;
+	query_vals[local_cseq_col].type = DB1_INT;
+	query_vals[local_cseq_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[remote_cseq_col= n_query_cols]=&str_remote_cseq_col;
+	query_vals[remote_cseq_col].type = DB1_INT;
+	query_vals[remote_cseq_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[expires_col= n_query_cols] =&str_expires_col;
+	query_vals[expires_col].type = DB1_INT;
+	query_vals[expires_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[status_col= n_query_cols] =&str_status_col;
+	query_vals[status_col].type = DB1_INT;
+	query_vals[status_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[reason_col= n_query_cols] =&str_reason_col;
+	query_vals[reason_col].type = DB1_STR;
+	query_vals[reason_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[record_route_col= n_query_cols] =&str_record_route_col;
+	query_vals[record_route_col].type = DB1_STR;
+	query_vals[record_route_col].nul = 0;
+	n_query_cols++;
+	
+	query_cols[contact_col= n_query_cols] =&str_contact_col;
+	query_vals[contact_col].type = DB1_STR;
+	query_vals[contact_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[local_contact_col= n_query_cols] =&str_local_contact_col;
+	query_vals[local_contact_col].type = DB1_STR;
+	query_vals[local_contact_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[socket_info_col= n_query_cols] =&str_socket_info_col;
+	query_vals[socket_info_col].type = DB1_STR;
+	query_vals[socket_info_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[version_col= n_query_cols]=&str_version_col;
+	query_vals[version_col].type = DB1_INT;
+	query_vals[version_col].nul = 0;
+	n_query_cols++;
+	
+	query_vals[pres_uri_col].val.str_val= s->pres_uri;
+	query_vals[callid_col].val.str_val= s->callid;
+	query_vals[totag_col].val.str_val= s->to_tag;
+	query_vals[fromtag_col].val.str_val= s->from_tag;
+	query_vals[to_user_col].val.str_val = s->to_user;
+	query_vals[to_domain_col].val.str_val = s->to_domain;
+	query_vals[from_user_col].val.str_val = s->from_user;
+	query_vals[from_domain_col].val.str_val = s->from_domain;
+	query_vals[event_col].val.str_val = s->event->name;
+	query_vals[event_id_col].val.str_val = s->event_id;
+	query_vals[local_cseq_col].val.int_val= s->local_cseq;
+	query_vals[remote_cseq_col].val.int_val= s->remote_cseq;
+	query_vals[expires_col].val.int_val = s->expires + (int)time(NULL);
+	query_vals[record_route_col].val.str_val = s->record_route;
+	query_vals[contact_col].val.str_val = s->contact;
+	query_vals[local_contact_col].val.str_val = s->local_contact;
+	query_vals[version_col].val.int_val= s->version;
+	query_vals[status_col].val.int_val= s->status;
+	query_vals[reason_col].val.str_val= s->reason;
+	query_vals[socket_info_col].val.str_val= s->sockinfo_str;
+
+	LM_DBG("inserting subscription in active_watchers table\n");
+	if(pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0)
+	{
+		LM_ERR("unsuccessful sql insert\n");
+		return -1;
+	}
+	return 0;
+}
+
 int update_subs_db(subs_t* subs, int type)
 {
 	db_key_t query_cols[22], update_keys[7];
@@ -316,10 +462,11 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 				LM_ERR("deleting subscription record from database\n");
 				goto error;
 			}
-			/* delete record from hash table also */
-
-			subs->local_cseq= delete_shtable(subs_htable,hash_code,
-					subs->to_tag);
+			/* delete record from hash table also if not in dbonly mode */
+			if(dbmode != DB_ONLY)
+			{
+				subs->local_cseq= delete_shtable(subs_htable, hash_code, subs->to_tag);
+			}
 		
 			if(subs->event->type & PUBL_TYPE)
 			{	
@@ -359,16 +506,21 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 			}
 			return 1;
 		}
-
-		if(update_shtable(subs_htable, hash_code, subs, REMOTE_TYPE)< 0)
+		/* if subscribers are held in memory, update them */
+		if(dbmode != DB_ONLY)
 		{
-			if(fallback2db==0)
+			if(update_shtable(subs_htable, hash_code, subs, REMOTE_TYPE)< 0)
 			{
-				LM_ERR("updating subscription record in hash table\n");
-				goto error;
+				/* if subscribers are also retrieved from database, it is not a fatal error */
+				if(dbmode != DB_MEMORY_ONLY)
+				{
+					LM_ERR("updating subscription record in hash table\n");
+					goto error;
+				}
 			}
 		}
-		if(fallback2db!=0)
+		/* if subscribers are retrieved from db also, update the subscription in database immediately */
+		if(dbmode != DB_MEMORY_ONLY)
 		{
 			/* update in database table */
 			if(update_subs_db(subs, REMOTE_TYPE)< 0)
@@ -380,16 +532,30 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 	}
 	else
 	{
+		LM_DBG("subscription not in dialog\n");
 		if(subs->expires!= 0)
-		{	
-			if(insert_shtable(subs_htable,hash_code,subs)< 0)
+		{
+			if(dbmode != DB_ONLY)
 			{
-				LM_ERR("inserting new record in subs_htable\n");
-				goto error;
+				LM_DBG("inserting in shtable\n");
+				if(insert_shtable(subs_htable,hash_code,subs)< 0)
+				{
+					LM_ERR("inserting new record in subs_htable\n");
+					goto error;
+				}
 			}
+			else
+			{
+				if(insert_subs_db(subs, REMOTE_TYPE));
+			}
+			/* TODO if req_auth, the subscription was in the watcher table first, we must delete it */
 		}
 		/*otherwise there is a subscription outside a dialog with expires= 0 
 		 * no update in database, but should try to send Notify */
+		else
+		{
+			LM_DBG("subscription request with expiry=0 not in dialog\n");
+		}
 	}
 
 /* reply_and_notify  */
@@ -527,7 +693,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	reply_code= 500;
 	reply_str= pu_500_rpl;
 
-	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
+	if(parse_headers(msg,HDR_EOH_F, 0) == -1)
 	{
 		LM_ERR("parsing headers\n");
 		reply_code= 400;
@@ -602,7 +768,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			goto error;
 		}
 		reason= subs.reason;
-	}	
+	}
 
 	/* call event specific subscription handling */
 	if(event->evs_subs_handl)
@@ -653,7 +819,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 					LM_ERR("in event specific function is_watcher_allowed\n");
 					goto error;
 				}
-				if(get_status_str(subs.status)== NULL)
+				if(get_status_str(subs.status) == NULL)
 				{
 					LM_ERR("wrong status= %d\n", subs.status);
 					goto error;
@@ -678,7 +844,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		LM_ERR("wrong status\n");
 		goto error;
 	}
-    LM_DBG("subscription status= %s - %s\n", get_status_str(subs.status), 
+	LM_DBG("subscription status= %s - %s\n", get_status_str(subs.status), 
             found==0?"inserted":"found in watcher table");
 	
 	if(update_subscription(msg, &subs, to_tag_gen, &sent_reply) <0)
@@ -1045,7 +1211,7 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 		lock_release(&subs_htable[i].lock);
 	}
 
-	if(fallback2db)
+	if(dbmode == DB_FALLBACK)
 	{
 		return get_database_info(msg, subs, reply_code, reply_str);	
 	}
@@ -1326,7 +1492,7 @@ int handle_expired_subs(subs_t* s)
 void timer_db_update(unsigned int ticks,void *param)
 {	
 	int no_lock=0;
-
+	LM_DBG("db_update timer\n");
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
 	
@@ -1498,6 +1664,13 @@ void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 		LM_ERR("null database connection\n");
 		return;
 	}
+	
+	/* if in dbonly mode, no update to database is required */
+	if(dbmode == DB_ONLY)
+	{
+		goto delete_expired_subs;
+	}
+	
 	for(i=0; i<htable_size; i++) 
 	{
 		if(!no_lock)
@@ -1602,6 +1775,7 @@ void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 			lock_release(&hash_table[i].lock);	
 	}
 
+delete_expired_subs:
 	update_vals[0].val.int_val= (int)time(NULL) - expires_offset;
 	update_ops[0]= OP_LT;
 	if(dbf.delete(db, update_cols, update_ops, update_vals, 1) < 0)
@@ -1801,7 +1975,7 @@ int restore_db_subs(void)
 			s.sockinfo_str.s=(char*)row_vals[sockinfo_col].val.string_val;
 			s.sockinfo_str.len= strlen(s.sockinfo_str.s);
 
-			if(fallback2db!=0)
+			if(dbmode == DB_FALLBACK)
 				s.db_flag = NO_UPDATEDB_FLAG;
 			hash_code= core_hash(&s.pres_uri, &s.event->name, shtable_size);
 			if(insert_shtable(subs_htable, hash_code, &s)< 0)
@@ -1828,7 +2002,7 @@ int restore_db_subs(void)
 	pa_dbf.free_result(pa_db, result);
 
 	/* delete all records */
-	if(fallback2db==0 && pa_dbf.delete(pa_db, 0,0,0,0)< 0)
+	if(dbmode != DB_MEMORY_ONLY && pa_dbf.delete(pa_db, 0,0,0,0)< 0)
 	{
 		LM_ERR("deleting all records from database table\n");
 		return -1;

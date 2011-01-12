@@ -47,10 +47,11 @@ Juha Heinanen
               3.9. max_expires (int)
               3.10. server_address (str)
               3.11. fallback2db (int)
-              3.12. subs_htable_size (int)
-              3.13. pres_htable_size (int)
-              3.14. enable_sphere_check (int)
-              3.15. timeout_rm_subs (int)
+              3.12. dbmode (int)
+              3.13. subs_htable_size (int)
+              3.14. pres_htable_size (int)
+              3.15. enable_sphere_check (int)
+              3.16. timeout_rm_subs (int)
 
         4. Exported Functions
 
@@ -98,15 +99,16 @@ Juha Heinanen
    1.9. Set max_expires parameter
    1.10. Set server_address parameter
    1.11. Set fallback2db parameter
-   1.12. Set subs_htable_size parameter
-   1.13. Set pres_htable_size parameter
-   1.14. Set enable_sphere_check parameter
-   1.15. Set timeout_rm_subs parameter
-   1.16. handle_publish usage
-   1.17. handle_subscribe usage
-   1.18. pres_auth_status usage
-   1.19. pres_refresh_watchers usage
-   1.20. pres_update_watchers usage
+   1.12. Set dbmode parameter
+   1.13. Set subs_htable_size parameter
+   1.14. Set pres_htable_size parameter
+   1.15. Set enable_sphere_check parameter
+   1.16. Set timeout_rm_subs parameter
+   1.17. handle_publish usage
+   1.18. handle_subscribe usage
+   1.19. pres_auth_status usage
+   1.20. pres_refresh_watchers usage
+   1.21. pres_update_watchers usage
    2.1. presence_api_t structure
 
 Chapter 1. Admin Guide
@@ -132,10 +134,11 @@ Chapter 1. Admin Guide
         3.9. max_expires (int)
         3.10. server_address (str)
         3.11. fallback2db (int)
-        3.12. subs_htable_size (int)
-        3.13. pres_htable_size (int)
-        3.14. enable_sphere_check (int)
-        3.15. timeout_rm_subs (int)
+        3.12. dbmode (int)
+        3.13. subs_htable_size (int)
+        3.14. pres_htable_size (int)
+        3.15. enable_sphere_check (int)
+        3.16. timeout_rm_subs (int)
 
    4. Exported Functions
 
@@ -172,7 +175,13 @@ Chapter 1. Admin Guide
    mode, in case a searched record is not found in cache, the search is
    continued in database. This is useful for an architecture in which
    processing and memory load might be divided on several Kamailio
-   instances, maybe on different servers using the same database.
+   instances, maybe on different servers using the same database. This
+   parameter remains only for legacy purposes. As a new feature for the
+   presence engine, it is possible to have three database modes, which one
+   can configure through the dbmode parameter. Setting dbmode to 0, 1, 2
+   respective will cause the subscribers to be retrieved from memory only,
+   from memory and to fallback to database mode in case a record is not
+   found in memory, and from database only.
 
    The module implements several API functions, that can be used by other
    modules. In fact, it can be used only as a resource module, or
@@ -211,10 +220,11 @@ Chapter 1. Admin Guide
    3.9. max_expires (int)
    3.10. server_address (str)
    3.11. fallback2db (int)
-   3.12. subs_htable_size (int)
-   3.13. pres_htable_size (int)
-   3.14. enable_sphere_check (int)
-   3.15. timeout_rm_subs (int)
+   3.12. dbmode (int)
+   3.13. subs_htable_size (int)
+   3.14. pres_htable_size (int)
+   3.15. enable_sphere_check (int)
+   3.16. timeout_rm_subs (int)
 
 3.1. db_url(str)
 
@@ -352,7 +362,21 @@ modparam("presence", "server_address", "sip:10.10.10.10:5060")
 modparam("presence", "fallback2db", 1)
 ...
 
-3.12. subs_htable_size (int)
+3.12. dbmode (int)
+
+   This parameter sets the mode in which records are retrieved. Setting
+   this parameter to 0 or 1 is equivalent to setting fallback2db to 0 or
+   1, respectiv. The dbmode parameter can also take a third value, 2, in
+   which records are retrieved from database only. So, the three database
+   modes in which the presence engine can operate are: memory only,
+   fallback to database, and database only.
+
+   Example 1.12. Set dbmode parameter
+...
+modparam("presence", "dbmode", 2)
+...
+
+3.13. subs_htable_size (int)
 
    The size of the in-memory hash table to store subscription dialogs.
    This parameter will be used as the power of 2 when computing table
@@ -360,24 +384,24 @@ modparam("presence", "fallback2db", 1)
 
    Default value is “9 (512)”.
 
-   Example 1.12. Set subs_htable_size parameter
+   Example 1.13. Set subs_htable_size parameter
 ...
 modparam("presence", "subs_htable_size", 11)
 ...
 
-3.13. pres_htable_size (int)
+3.14. pres_htable_size (int)
 
    The size of the in-memory hash table to store publish records. This
    parameter will be used as the power of 2 when computing table size.
 
    Default value is “9 (512)”.
 
-   Example 1.13. Set pres_htable_size parameter
+   Example 1.14. Set pres_htable_size parameter
 ...
 modparam("presence", "pres_htable_size", 11)
 ...
 
-3.14. enable_sphere_check (int)
+3.15. enable_sphere_check (int)
 
    This parameter is a flag that should be set if permission rules include
    sphere checking. The sphere information is expected to be present in
@@ -387,12 +411,12 @@ modparam("presence", "pres_htable_size", 11)
 
    Default value is “0 ”.
 
-   Example 1.14. Set enable_sphere_check parameter
+   Example 1.15. Set enable_sphere_check parameter
 ...
 modparam("presence", "enable_sphere_check", 1)
 ...
 
-3.15. timeout_rm_subs (int)
+3.16. timeout_rm_subs (int)
 
    This parameter is a flag that should be set if subscriptions should be
    removed from the active_watchers when a NOTIFY times out. RFC3265
@@ -402,7 +426,7 @@ modparam("presence", "enable_sphere_check", 1)
 
    Default value is “1”.
 
-   Example 1.15. Set timeout_rm_subs parameter
+   Example 1.16. Set timeout_rm_subs parameter
 ...
 modparam("presence", "timeout_rm_subs", 0)
 ...
@@ -435,7 +459,7 @@ modparam("presence", "timeout_rm_subs", 0)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.16. handle_publish usage
+   Example 1.17. handle_publish usage
 ...
         if(is_method("PUBLISH"))
         {
@@ -461,7 +485,7 @@ modparam("presence", "timeout_rm_subs", 0)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.17. handle_subscribe usage
+   Example 1.18. handle_subscribe usage
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
@@ -478,7 +502,7 @@ if(method=="SUBSCRIBE")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.18. pres_auth_status usage
+   Example 1.19. pres_auth_status usage
 ...
 if (method=="MESSAGE") {
     pres_auth_status("$fu", $ru");
@@ -509,7 +533,7 @@ if (method=="MESSAGE") {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.19. pres_refresh_watchers usage
+   Example 1.20. pres_refresh_watchers usage
 ...
 pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 ...
@@ -527,7 +551,7 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.20. pres_update_watchers usage
+   Example 1.21. pres_update_watchers usage
 ...
 pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
