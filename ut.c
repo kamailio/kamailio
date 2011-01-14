@@ -243,6 +243,7 @@ char* get_abs_pathname(str* base, str* file)
 		 * copy and use it as it is */
 		if ((res = pkg_malloc(file->len+1)) == NULL) {
 			ERR("get_abs_pathname: No memory left (pkg_malloc failed)\n");
+			return NULL;
 		}
 		memcpy(res, file->s, file->len);
 		res[file->len]=0;
