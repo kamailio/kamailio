@@ -220,10 +220,7 @@ int fix_switch(struct action* t)
 			n++; /* count only non-default cases */
 		}else{
 			if (default_found){
-				LOG(L_ERR, "ERROR: fix_switch: more then one \"default\""
-						" label found (%d, %d)\n",
-						c->ct_rve->fpos.s_line,
-						c->ct_rve->fpos.s_col);
+				LOG(L_ERR, "ERROR: fix_switch: more then one \"default\"");
 				return E_UNSPEC;
 			}
 			default_found=1;
