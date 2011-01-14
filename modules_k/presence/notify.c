@@ -1694,7 +1694,7 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 			((c_back_param*)(*ps->param))->to_tag.s== NULL)
 	{
 		LM_DBG("message id not received\n");
-		if(*ps->param !=NULL  )
+		if(ps->param != NULL && *ps->param !=NULL)
 			free_cbparam((c_back_param*)(*ps->param));
 		return;
 	}
