@@ -104,6 +104,7 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 					s.len = s.s ? strlen(s.s) : 0;
 					val2 = &s;
 				} else if (type == PARAM_STR && PARAM_TYPE_MASK(param_type) == PARAM_STRING) {
+					s = *(str*)val;
 					val2 = s.s;	/* zero terminator expected */
 				} else {
 					val2 = val;
