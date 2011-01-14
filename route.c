@@ -1754,7 +1754,7 @@ inline static int comp_ip(int op, struct ip_addr* ip, int rtype,
 		default:
 			LOG(L_CRIT, "BUG: comp_ip: invalid type for "
 						" src_ip or dst_ip (%d)\n", rtype);
-			ret=-1;
+			return -1;
 	}
 	/* here "right" is set to the str we compare with */
 	r_expop.str=*right;

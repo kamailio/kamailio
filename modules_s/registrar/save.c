@@ -281,7 +281,7 @@ int parse_uri_dstip(str* received, struct ip_addr* ip, unsigned short* port,
 	struct sip_uri puri;
 	param_hooks_t hooks;
 	struct ip_addr* p;
-	param_t* params;
+	param_t* params = 0;
 	int error;
 
 	if (unlikely(!received)) return 0;

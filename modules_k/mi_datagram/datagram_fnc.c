@@ -335,6 +335,7 @@ static void datagram_close_async(struct mi_root *mi_rpl,struct mi_handler *hdl, 
 
 	mi_create_dtgram_replysocket(reply_sock, p->domain, err);
 
+        memset(&dtgram, 0, sizeof(dtgram));
 
 	if (mi_rpl!=0) {
 		/*allocate the response datagram*/	
