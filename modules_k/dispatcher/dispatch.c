@@ -627,18 +627,12 @@ error:
  */
 int ds_connect_db(void)
 {
-	if(!ds_db_url.s)
+	if(ds_db_url.s==NULL)
 		return -1;
 
-	if (ds_db_handle)
-	{
-		LM_CRIT("BUG - db connection found already open\n");
+	if((ds_db_handle = ds_dbf.init(&ds_db_url)) == 0) {
+		LM_ERR("cannot initialize db connection\n");
 		return -1;
-	}
-
-	if ((ds_db_handle = ds_dbf.init(&ds_db_url)) == 0){
-		
-			return -1;
 	}
 	return 0;
 }
