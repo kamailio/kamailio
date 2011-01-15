@@ -327,8 +327,6 @@ error1:
  */
 static int mi_child_init(void)
 {
-	if(db_con!=NULL)
-		return 0;
 	db_con = mt_dbf.init(&db_url);
 	if(db_con==NULL)
 	{
