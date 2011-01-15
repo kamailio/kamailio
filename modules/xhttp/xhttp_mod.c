@@ -44,6 +44,8 @@
 #include "../../mod_fix.h"
 #include "../../pvar.h"
 
+#include "api.h"
+
 MODULE_VERSION
 
 static int xhttp_handler(sip_msg_t* msg);
@@ -69,6 +71,8 @@ sl_api_t slb;
 static cmd_export_t cmds[] = {
 	{"xhttp_reply",    (cmd_function)w_xhttp_send_reply,
 		4, fixup_xhttp_reply,  0, REQUEST_ROUTE},
+	{"bind_xhttp",     (cmd_function)bind_xhttp,
+		0, 0, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -483,6 +487,19 @@ static int fixup_xhttp_reply(void** param, int param_no)
 	} else if (param_no == 4) {
 	    return fixup_spve_null(param, 1);
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+int bind_xhttp(xhttp_api_t* api)
+{
+	if (!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+	api->reply = xhttp_send_reply;
 	return 0;
 }
 
