@@ -115,6 +115,7 @@ void db_postgres_close(db1_con_t* _h)
 static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 {
 	int i;
+	ExecStatusType pqresult;
 
 	if(! _con || !_s || !_s->s)
 	{
@@ -149,11 +150,17 @@ static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 		db_postgres_free_query(_con);
 		/* exec the query */
 		if (PQsendQuery(CON_CONNECTION(_con), _s->s)) {
-			LM_DBG("sending query ok: %p - [%.*s]\n",
-					_con, _s->len, _s->s);
-			return 0;
+			pqresult = PQresultStatus(CON_RESULT(_con));
+			if(pqresult!=PGRES_FATAL_ERROR)
+			{
+				LM_DBG("sending query ok: %p (%d) - [%.*s]\n",
+						_con, pqresult, _s->len, _s->s);
+				return 0;
+			}
+			LM_WARN("postgres result check failed with code %d (%s)\n", pqresult,
+						PQresStatus(pqresult));
 		}
-		LM_WARN("sending postgres command failed, connection status %d,"
+		LM_WARN("postgres query command failed, connection status %d,"
 				" error [%s]\n", PQstatus(CON_CONNECTION(_con)),
 				PQerrorMessage(CON_CONNECTION(_con)));
 		if(PQstatus(CON_CONNECTION(_con))!=CONNECTION_OK)
@@ -221,11 +228,13 @@ int db_postgres_fetch_result(const db1_con_t* _con, db1_res_t** _res, const int 
 
 		switch(pqresult) {
 			case PGRES_COMMAND_OK:
-				/* Successful completion of a command returning no data (such as INSERT or UPDATE). */
+				/* Successful completion of a command returning no data
+				 * (such as INSERT or UPDATE). */
 				return 0;
 
 			case PGRES_TUPLES_OK:
-				/* Successful completion of a command returning data (such as a SELECT or SHOW). */
+				/* Successful completion of a command returning data
+				 * (such as a SELECT or SHOW). */
 				if (db_postgres_get_columns(_con, *_res) < 0) {
 					LM_ERR("failed to get column names\n");
 					return -2;
@@ -234,8 +243,10 @@ int db_postgres_fetch_result(const db1_con_t* _con, db1_res_t** _res, const int 
 
 			case PGRES_FATAL_ERROR:
 				LM_ERR("%p - invalid query, execution aborted\n", _con);
-				LM_ERR("%p - PQresultStatus(%s)\n", _con, PQresStatus(pqresult));
-				LM_ERR("%p: %s\n", _con, PQresultErrorMessage(CON_RESULT(_con)));
+				LM_ERR("%p - PQresultStatus(%s)\n", _con,
+						PQresStatus(pqresult));
+				LM_ERR("%p: %s\n", _con,
+						PQresultErrorMessage(CON_RESULT(_con)));
 				if (*_res)
 					db_free_result(*_res);
 				*_res = 0;
