@@ -163,6 +163,12 @@ modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 				under 'sr.tm'.
 			</para>
 		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>xhttp</emphasis> - register functions from xhttp
+				module under 'sr.xhttp'.
+			</para>
+		    </listitem>
 	    	</itemizedlist>
 	    <para>
 			Note that 'sr', 'sr.hdr' and 'sr.pv' modules are always registered

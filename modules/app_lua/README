@@ -139,6 +139,7 @@ modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
      * sqlops - register functions from sqlops module under 'sr.sqlops'.
      * sl - register functions from sl module under 'sr.sl'.
      * tm - register functions from tm module under 'sr.tm'.
+     * xhttp - register functions from xhttp module under 'sr.xhttp'.
 
    Note that 'sr', 'sr.hdr' and 'sr.pv' modules are always registered to
    Lua.
