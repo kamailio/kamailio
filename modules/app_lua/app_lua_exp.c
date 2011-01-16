@@ -40,6 +40,7 @@
 #include "../../modules_k/maxfwd/api.h"
 #include "../../modules_k/registrar/api.h"
 #include "../../modules_k/dispatcher/api.h"
+#include "../../modules/xhttp/api.h"
 
 #include "app_lua_api.h"
 
@@ -1249,7 +1250,7 @@ static int lua_sr_xhttp_reply(lua_State *L)
 		LM_WARN("invalid parameters from Lua env\n");
 		return app_lua_return_error(L);
 	}
-	rcode = (char*)lua_toint(L, -4);
+	rcode = lua_tointeger(L, -4);
 	reason.s = (char*)lua_tostring(L, -3);
 	ctype.s = (char*)lua_tostring(L, -2);
 	mbody.s = (char*)lua_tostring(L, -1);
