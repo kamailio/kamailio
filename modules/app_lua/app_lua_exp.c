@@ -52,6 +52,7 @@
 #define SR_LUA_EXP_MOD_MAXFWD     (1<<6)
 #define SR_LUA_EXP_MOD_REGISTRAR  (1<<7)
 #define SR_LUA_EXP_MOD_DISPATCHER (1<<8)
+#define SR_LUA_EXP_MOD_XHTTP      (1<<9)
 
 /**
  *
@@ -103,6 +104,11 @@ static sl_api_t _lua_slb;
  */
 static tm_api_t  _lua_tmb;
 static tm_xapi_t _lua_xtmb;
+
+/**
+ * xhttp
+ */
+static xhttp_api_t _lua_xhttpb;
 
 /**
  *
@@ -1217,6 +1223,59 @@ static int lua_sr_dispatcher_is_from(lua_State *L)
 	return app_lua_return_int(L, ret);
 }
 
+
+/**
+ *
+ */
+static int lua_sr_xhttp_reply(lua_State *L)
+{
+	int rcode;
+	str reason;
+	str ctype;
+	str mbody;
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_XHTTP))
+	{
+		LM_WARN("weird: xhttp function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+	rcode = (char*)lua_toint(L, -4);
+	reason.s = (char*)lua_tostring(L, -3);
+	ctype.s = (char*)lua_tostring(L, -2);
+	mbody.s = (char*)lua_tostring(L, -1);
+	if(reason.s == NULL || ctype.s == NULL || mbody.s == NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+	reason.len = strlen(reason.s);
+	ctype.len = strlen(ctype.s);
+	mbody.len = strlen(mbody.s);
+
+	ret = _lua_xhttpb.reply(env_L->msg, rcode, &reason, &ctype, &mbody);
+	return app_lua_return_int(L, ret);
+}
+
+
+/**
+ *
+ */
+static const luaL_reg _sr_xhttp_Map [] = {
+	{"reply",       lua_sr_xhttp_reply},
+	{NULL, NULL}
+};
+
+
 /**
  *
  */
@@ -1329,6 +1388,16 @@ int lua_sr_exp_init_mod(void)
 		}
 		LM_DBG("loaded dispatcher api\n");
 	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_XHTTP)
+	{
+		/* bind the XHTTP API */
+		if (xhttp_load_api(&_lua_xhttpb) < 0)
+		{
+			LM_ERR("cannot bind to XHTTP API\n");
+			return -1;
+		}
+		LM_DBG("loaded xhttp api\n");
+	}
 	return 0;
 }
 
@@ -1369,6 +1438,9 @@ int lua_sr_exp_register_mod(char *mname)
 	} else 	if(len==10 && strcmp(mname, "dispatcher")==0) {
 		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_DISPATCHER;
 		return 0;
+	} else 	if(len==5 && strcmp(mname, "xhttp")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_XHTTP;
+		return 0;
 	}
 
 	return -1;
@@ -1397,5 +1469,7 @@ void lua_sr_exp_openlibs(lua_State *L)
 		luaL_openlib(L, "sr.registrar",  _sr_registrar_Map,   0);
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_DISPATCHER)
 		luaL_openlib(L, "sr.dispatcher", _sr_dispatcher_Map,  0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_XHTTP)
+		luaL_openlib(L, "sr.xhttp",      _sr_xhttp_Map,       0);
 }
 
