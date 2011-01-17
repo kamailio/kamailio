@@ -117,6 +117,10 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 			}
 			turi = &puri;
 			break;
+		default: {
+			LM_ERR("incorrect check id %d\n", gcp->id);
+			return -1;
+		}
 	}
 
 	if (gcp->id != 4) {
