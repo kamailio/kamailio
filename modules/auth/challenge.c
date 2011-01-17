@@ -124,9 +124,13 @@ int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
     nonce_len = get_nonce_len(cfg, nc_enabled || otn_enabled);
 
     hf.len = hfn->len;
-    hf.len += DIGEST_REALM_LEN
-	+ realm->len
-	+ DIGEST_NONCE_LEN;
+    if (realm) {
+		hf.len += DIGEST_REALM_LEN
+		+ realm->len; 
+    }
+
+    hf.len += DIGEST_NONCE_LEN;
+
     if (nonce) {
     	hf.len += nonce->len
     	          + 1; /* '"' */
@@ -156,10 +160,14 @@ int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 		ERR("auth: No memory left (%d bytes)\n", hf.len);
 		return -1;
     }
-    
+
     memcpy(p, hfn->s, hfn->len); p += hfn->len;
-    memcpy(p, DIGEST_REALM, DIGEST_REALM_LEN); p += DIGEST_REALM_LEN;
-    memcpy(p, realm->s, realm->len); p += realm->len;
+
+    if(realm){
+	memcpy(p, DIGEST_REALM, DIGEST_REALM_LEN); p += DIGEST_REALM_LEN;
+	memcpy(p, realm->s, realm->len); p += realm->len;
+    }
+
     memcpy(p, DIGEST_NONCE, DIGEST_NONCE_LEN); p += DIGEST_NONCE_LEN;
     if (nonce) {
         memcpy(p, nonce->s, nonce->len); p += nonce->len;
