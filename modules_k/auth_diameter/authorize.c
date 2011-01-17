@@ -151,6 +151,7 @@ auth_diam_result_t diam_pre_auth(struct sip_msg* _m, str* _realm, int _hftype,
 {
 	int ret;
 	struct sip_uri uri;
+	str realm;
 
 	if ((_m->REQ_METHOD == METHOD_ACK) ||  (_m->REQ_METHOD == METHOD_CANCEL))
 		return AUTHORIZED;
@@ -167,11 +168,12 @@ auth_diam_result_t diam_pre_auth(struct sip_msg* _m, str* _realm, int _hftype,
 			}
 			return ERROR;
 		}
-		
-		*_realm = uri.host;
+		realm = uri.host;
+	} else {
+		realm = *_realm;
 	}
 
-	ret = find_credentials(_m, _realm, _hftype, _h);
+	ret = find_credentials(_m, &realm, _hftype, _h);
 	if (ret < 0) 
 	{
 		LM_ERR("credentials not found\n");
