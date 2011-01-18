@@ -46,7 +46,7 @@
 #include "usrloc.h"
 #include "urecord.h"
 #include "ucontact.h"
-
+#include "usrloc.h"
 
 /*!
  * \brief Create a new contact structure

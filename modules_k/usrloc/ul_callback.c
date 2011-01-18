@@ -38,7 +38,7 @@
 #include "../../error.h"
 #include "../../mem/shm_mem.h"
 #include "ul_callback.h"
-
+#include "ucontact.h"
 
 struct ulcb_head_list* ulcb_list = 0;
 

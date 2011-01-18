@@ -44,7 +44,7 @@
 #include "udomain.h"
 #include "utime.h"
 #include "ul_mod.h"
-
+#include "usrloc.h"
 
 /*! CSEQ nr used */
 #define MI_UL_CSEQ 1
