@@ -40,9 +40,9 @@ sleep 1
 
 # register two contacts
 echo "adding new contacts"
-sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
-sipsak -U -C sip:foobar1@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
-sipsak -U -C sip:foobar2@localhost -s sip:49721123456790@localhost -H localhost &> /dev/null
+sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost -x 30 &> /dev/null
+sipsak -U -C sip:foobar1@localhost -s sip:49721123456789@localhost -H localhost -x 30 &> /dev/null
+sipsak -U -C sip:foobar2@localhost -s sip:49721123456790@localhost -H localhost -x 30 &> /dev/null
 ret=$?
 
 if [ ! "$ret" -eq 0 ]; then
@@ -70,7 +70,6 @@ if [ "$ret" -eq 0 ]; then
 		fi
 	fi;
 fi;
-
 
 if [ "$ret" -eq 0 ]; then
 	echo "check if the contact is registered"
