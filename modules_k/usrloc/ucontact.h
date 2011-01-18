@@ -37,73 +37,11 @@
 
 
 #include <stdio.h>
-#include <time.h>
-#include "../../qvalue.h"
-#include "../../str.h"
+#include "usrloc.h"
 
-
-/*!
- * \brief States for in-memory contacts in regards to contact storage handler (db, in-memory, ldap etc)
- */
-typedef enum cstate {
-	CS_NEW,        /*!< New contact - not flushed yet */
-	CS_SYNC,       /*!< Synchronized contact with the database */
-	CS_DIRTY       /*!< Update contact - not flushed yet */
-} cstate_t;
-
-
-/*! \brief Flags that can be associated with a Contact */
-typedef enum flags {
-	FL_NONE        = 0,          /*!< No flags set */
-	FL_MEM         = 1 << 0,     /*!< Update memory only */
-	FL_ALL         = (int)0xFFFFFFFF  /*!< All flags set */
-} flags_t;
-
-
-/*! \brief Main structure for handling of registered Contact data */
-typedef struct ucontact {
-	str* domain;            /*!< Pointer to domain name (NULL terminated) */
-	str* aor;               /*!< Pointer to the AOR string in record structure*/
-	str c;                  /*!< Contact address */
-	str received;           /*!< IP+port+protocol we received the REGISTER from */
-	str path;               /*!< Path header */
-	time_t expires;         /*!< Expires parameter */
-	qvalue_t q;             /*!< q parameter */
-	str callid;             /*!< Call-ID header field of registration */
-	int cseq;               /*!< CSeq value */
-	cstate_t state;         /*!< State of the contact (\ref cstate) */
-	unsigned int flags;     /*!< Various flags (NAT, ping type, etc) */
-	unsigned int cflags;    /*!< Custom contact flags (from script) */
-	str user_agent;         /*!< User-Agent header field */
-	struct socket_info *sock; /*!< received socket */
-	time_t last_modified;   /*!< When the record was last modified */
-	unsigned int methods;   /*!< Supported methods */
-	struct ucontact* next;  /*!< Next contact in the linked list */
-	struct ucontact* prev;  /*!< Previous contact in the linked list */
-} ucontact_t;
-
-
-/*! \brief Informations related to a contact */
-typedef struct ucontact_info {
-	str received;             /*!< Received interface */
-	str* path;                /*!< Path informations */
-	time_t expires;           /*!< Contact expires */
-	qvalue_t q;               /*!< Q-value */
-	str* callid;              /*!< call-ID */
-	int cseq;                 /*!< CSEQ number */
-	unsigned int flags;       /*!< message flags */
-	unsigned int cflags;      /*!< contact flags */
-	str *user_agent;          /*!< user agent header */
-	struct socket_info *sock; /*!< socket informations */
-	unsigned int methods;     /*!< supported methods */
-	time_t last_modified;     /*!< last modified */
-} ucontact_info_t;
 
 /*! \brief ancient time used for marking the contacts forced to expired */
 #define UL_EXPIRED_TIME 10
-
-/*! \brief Valid contact is a contact that either didn't expire yet or is permanent */
-#define VALID_CONTACT(c, t)   ((c->expires>t) || (c->expires==0))
 
 
 /*!
@@ -200,20 +138,5 @@ int db_update_ucontact(ucontact_t* _c);
  */
 int db_delete_ucontact(ucontact_t* _c);
 
-
-/* ====== Module interface ====== */
-
-struct urecord;
-
-/*!
- * \brief Update ucontact with new values
- * \param _r record the contact belongs to
- * \param _c updated contact
- * \param _ci new contact informations
- * \return 0 on success, -1 on failure
- */
-typedef int (*update_ucontact_t)(struct urecord* _r, ucontact_t* _c,
-		ucontact_info_t* _ci);
-int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci);
 
 #endif
