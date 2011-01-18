@@ -42,7 +42,7 @@
 #include "../../dprint.h"
 #include "../../lib/srdb1/db.h"
 #include "p_usrloc_mod.h"
-#include "ul_callback.h"
+#include "../usrloc/ul_callback.h"
 #include "urecord.h"
 #include "ucontact.h"
 #include "ul_db_layer.h"

@@ -60,18 +60,17 @@
 #include "../../timer.h"     /* register_timer */
 #include "../../globals.h"   /* is_main */
 #include "../../ut.h"        /* str_init */
-#include "dlist.h"           /* register_udomain */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
 #include "ucontact.h"        /* update_ucontact */
 #include "ul_mi.h"
-#include "ul_callback.h"
-#include "usrloc.h"
+#include "../usrloc/ul_callback.h"
 #include "ul_db_api.h"
 #include "ul_db_watch.h"
 #include "ul_check.h"
 #include "ul_db.h"
 #include "ul_db_layer.h"
+#include "dlist.h"
 
 MODULE_VERSION
 
@@ -387,6 +386,10 @@ static int mod_init(void)
 	if (db_mode == NO_DB) {
 		LM_ERR("No database was configured! Partioned user location is useless!");
 		return  -1;
+	}
+
+	if (db_mode == WRITE_BACK) {
+		LM_WARN("The WRITE BACK mode will create discrepancies between memory and db backend");
 	}
 
 	/* Shall we use database ? */

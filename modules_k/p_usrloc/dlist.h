@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include "udomain.h"
 #include "../../str.h"
+#include "../usrloc/usrloc.h"
 
 
 /*!
@@ -49,30 +50,12 @@ struct domain_list_item {
 	struct domain_list_item*next;
 };
 
-/*!
- * \brief Registers a new domain with usrloc
- *
- * Registers a new domain with usrloc. If the domain exists,
- * a pointer to existing structure will be returned, otherwise
- * a new domain will be created
- * \param _n domain name
- * \param _d new created domain
- * \return 0 on success, -1 on failure
- */
-typedef int (*register_udomain_t)(const char* _n, udomain_t** _d);
-int register_udomain(const char* _n, udomain_t** _d);
-
 
 /*!
  * \brief Free all allocated memory for domains
  */
 void free_all_udomains(void);
 
-typedef int  (*get_all_ucontacts_t) (void* buf, int len, unsigned int flags,
-              unsigned int part_idx, unsigned int part_max);
-
-int get_all_ucontacts(void *, int, unsigned int,
-                unsigned int part_idx, unsigned int part_max);
 
 /*!
  * \brief Run timer handler of all domains

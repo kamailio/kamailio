@@ -2,7 +2,9 @@
 #define UL_DB_LAYER_H
 
 #include "../../lib/srdb1/db.h"
-#include "usrloc.h"
+#include "../usrloc/usrloc.h"
+#include "udomain.h"
+#include "ucontact.h"
 
 #define DB_TYPE_CLUSTER 0
 #define DB_TYPE_CLUSTER_STR "cluster"

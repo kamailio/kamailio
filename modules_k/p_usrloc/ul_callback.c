@@ -37,8 +37,8 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/shm_mem.h"
-#include "ul_callback.h"
-
+#include "../usrloc/ul_callback.h"
+#include "udomain.h"
 
 struct ulcb_head_list* ulcb_list = 0;
 

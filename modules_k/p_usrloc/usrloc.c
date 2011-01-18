@@ -33,7 +33,7 @@
  * - Module \ref usrloc
  */
 
-#include "usrloc.h"
+#include "../usrloc/usrloc.h"
 #include "../../sr_module.h"
 #include "p_usrloc_mod.h"
 

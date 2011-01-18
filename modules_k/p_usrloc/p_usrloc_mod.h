@@ -37,16 +37,11 @@
 #include "../../lib/srdb1/db.h"
 #include "../../str.h"
 #include "../../lib/kmi/mi.h"
+#include "../usrloc/usrloc.h"
 
 /*
  * Module parameters
  */
-
-
-#define NO_DB         0
-#define WRITE_THROUGH 1
-#define WRITE_BACK    2
-#define DB_ONLY       3
 
 #define UL_TABLE_VERSION 1004
 
