@@ -287,7 +287,7 @@ error:
  */
 int mi_init_addresses(void)
 {
-    if (!db_url.s || db_handle) return 0;
+    if (!db_url.s) return 0;
     db_handle = perm_dbf.init(&db_url);
     if (!db_handle) {
 	LM_ERR("unable to connect database\n");
