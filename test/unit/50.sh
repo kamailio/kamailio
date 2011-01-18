@@ -29,9 +29,11 @@ if ! (check_sipsak && check_kamailio && check_module "db_mysql" && check_mysql);
 	exit 0
 fi ;
 
+MYSQL_LOC_A="mysql loc_a --show-warnings --batch --user=ser --password=ser -e"
+MYSQL_LOC_B="mysql loc_b --show-warnings --batch --user=ser --password=ser  -e"
 cp $CFG $CFG.bak
 
-#$BIN -w . -f $CFG > /dev/null
+$BIN -w . -f $CFG #> /dev/null
 ret=$?
 
 sleep 1
@@ -40,83 +42,96 @@ sleep 1
 echo "adding new contacts"
 sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
 sipsak -U -C sip:foobar1@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
+sipsak -U -C sip:foobar2@localhost -s sip:49721123456790@localhost -H localhost &> /dev/null
 ret=$?
 
-sleep 100
+if [ ! "$ret" -eq 0 ]; then
+    echo "registration failed"
+fi
 
 if [ "$ret" -eq 0 ]; then
-	$CTL ul show | grep "AOR:: 49721123456789" &> /dev/null
-	ret=$?
-fi;
-
-if [ "$ret" -eq 0 ]; then
-	TMP=`$MYSQL "select COUNT(*) from location where username='49721123456789';" | tail -n 1`
+	TMP=`$MYSQL_LOC_A "select COUNT(*) from location where username='49721123456789';" | tail -n 1`
 	if [ "$TMP" -eq 0 ] ; then
-		ret=1
+		TMP=`$MYSQL_LOC_B "select COUNT(*) from location where username='49721123456789';" | tail -n 1`
+		if [ "$TMP" -eq 0 ] ; then 
+			echo "User 49721123456789 was NOT saved to either loc_a or loc_b"
+			ret=1
+		fi
 	fi;
 fi;
 
 if [ "$ret" -eq 0 ]; then
-	# check if the contact is registered
-	sipsak -U -C empty -s sip:49721123456789@127.0.0.1 -H localhost -q "Contact: <sip:foobar@localhost>" &> /dev/null
+	TMP=`$MYSQL_LOC_A "select COUNT(*) from location where username='49721123456790';" | tail -n 1`
+	if [ "$TMP" -eq 0 ] ; then
+		TMP=`$MYSQL_LOC_B "select COUNT(*) from location where username='49721123456790';" | tail -n 1`
+		if [ "$TMP" -eq 0 ] ; then 
+			echo "User 49721123456790 was NOT saved to either loc_a or loc_b"
+			ret=1
+		fi
+	fi;
+fi;
+
+
+if [ "$ret" -eq 0 ]; then
+	echo "check if the contact is registered"
+	sipsak -U -C empty -s sip:49721123456789@127.0.0.1 -H localhost -q "Contact: <sip:foobar@localhost>" #&> /dev/null
 	ret=$?
+	echo "sipsak exited with status $ret"
 fi;
 
 if [ "$ret" -eq 0 ]; then
-	# update the registration
+	echo "update the registration"
 	sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
-	# check if we get a hint when we try to unregister a non-existent conctact
+	echo "check if we get a hint when we try to unregister a non-existent conctact"
 	sipsak -U -C "sip:foobar2@localhost" -s sip:49721123456789@127.0.0.1 -H localhost -x 0 -q "Contact: <sip:foobar@localhost>" &> /dev/null
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
-	# unregister the contact
+	echo " unregister the contact"
 	sipsak -U -C "sip:foobar@localhost" -s sip:49721123456789@127.0.0.1 -H localhost -x 0 &> /dev/null
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
-	# unregister the user again should not fail
-	sipsak -U -C "sip:foobar@localhost" -s sip:49721123456789@127.0.0.1 -H localhost -x 0 &> /dev/null
+	echo "unregister the user again should not fail"
+	sipsak -U -C "sip:foobar@localhost" -s sip:49721123456789@127.0.0.1 -H localhost -x 0 #&> /dev/null
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
-	# check if the other contact is still registered
+	echo "check if the other contact is still registered"
 	sipsak -U -C empty -s sip:49721123456789@127.0.0.1 -H localhost -q "Contact: <sip:foobar1@localhost>" &> /dev/null
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
-	# register the other again
+	echo " register the other again"
 	sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
-	# unregister all contacts
+	echo " unregister all contacts"
 	sipsak -U -C "*" -s sip:49721123456789@127.0.0.1 -H localhost -x 0 &> /dev/null
 	ret=$?
 fi;
 
 if [ "$ret" -eq 0 ]; then
-	$CTL ul show | grep "AOR:: 49721123456789" > /dev/null
-	ret=$?
-	if [ "$ret" -eq 0 ]; then
-		ret=1
-	else
-		ret=0
+	executed=1
+	ret=`$MYSQL_LOC_A "select COUNT(*) from location where username='49721123456789';" | tail -n 1`
+	if [ "$TMP" -eq 0 ] ; then
+		ret=`$MYSQL_LOC_B "select COUNT(*) from location where username='49721123456789';" | tail -n 1`
 	fi;
-fi ;
-
-if [ "$ret" -eq 0 ]; then
-	ret=`$MYSQL "select COUNT(*) from location where username='49721123456789';" | tail -n 1`
 fi;
+
+if [ "x$executed" == "x1" ]; then
+    echo "After un-registration user has $ret contacts "
+fi
 
 if [ "$ret" -eq 0 ]; then
 	# test min_expires functionality
@@ -136,48 +151,10 @@ if [ "$ret" -eq 0 ]; then
 	sipsak -U -e 9 -s sip:49721123456789@localhost -H localhost &> /dev/null
 fi;
 
-if [ "$ret" -eq 0 ]; then
-	# let the timer cleanup the previous registrations
-	sleep 3
-	# and check
-	TMP=`$MYSQL "select COUNT(*) from location where username like '49721123456789%';" | tail -n 1`
-	if [ "$TMP" -eq 10 ] ; then
-		ret=0
-	else
-		ret=1
-	fi;
-fi;
 
-$MYSQL "delete from location where username like '49721123456789%';"
+$MYSQL_LOC_A "delete from location where username like '497211234567%';"
+$MYSQL_LOC_B "delete from location where username like '497211234567%';"
 
-if [ "$ret" -eq 0 ]; then
-	# register again
-	sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
-	ret=$?
-fi;
-
-$KILL
-
-# restart to test preload_udomain functionality
-$BIN -w . -f $CFG > /dev/null
-ret=$?
-
-sleep 1
-
-if [ "$ret" -eq 0 ]; then
-	# check if the contact is still registered
-	sipsak -U -C empty -s sip:49721123456789@127.0.0.1 -H localhost -q "Contact: <sip:foobar@localhost>" &> /dev/null
-	ret=$?
-fi;
-
-# check if the methods value is correct
-if [ "$ret" -eq 0 ]; then
-	$CTL ul show | grep "Methods:: 4294967295" &> /dev/null
-	ret=$?
-fi;
-
-# cleanup
-$MYSQL "delete from location where username like '49721123456789%';"
 
 $KILL
 
