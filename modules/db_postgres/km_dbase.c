@@ -151,14 +151,15 @@ static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 		/* exec the query */
 		if (PQsendQuery(CON_CONNECTION(_con), _s->s)) {
 			pqresult = PQresultStatus(CON_RESULT(_con));
-			if(pqresult!=PGRES_FATAL_ERROR)
+			if((pqresult!=PGRES_FATAL_ERROR)
+					|| (PQstatus(CON_CONNECTION(_con))==CONNECTION_OK))
 			{
 				LM_DBG("sending query ok: %p (%d) - [%.*s]\n",
 						_con, pqresult, _s->len, _s->s);
 				return 0;
 			}
-			LM_WARN("postgres result check failed with code %d (%s)\n", pqresult,
-						PQresStatus(pqresult));
+			LM_WARN("postgres result check failed with code %d (%s)\n",
+					pqresult, PQresStatus(pqresult));
 		}
 		LM_WARN("postgres query command failed, connection status %d,"
 				" error [%s]\n", PQstatus(CON_CONNECTION(_con)),
