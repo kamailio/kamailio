@@ -442,7 +442,7 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 	}
 	memcpy(rpp->aor.s, aor.s, aor.len);
 	rpp->aor.len = aor.len;
-	rpp->domain = *((udomain_t*)table)->name;
+	rpp->domain = *((udomain_head_t*)table)->name;
 	rpp->flags = 1;
 
 	/* copy contacts */
