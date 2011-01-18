@@ -399,7 +399,6 @@ int db_insert_ucontact(ucontact_t* _c)
 	if(register_udomain(_c->domain->s, &_d) < 0){
 		return -1;
 	}
-
 	keys[0] = &user_col;
 	keys[1] = &contact_col;
 	keys[2] = &expires_col;

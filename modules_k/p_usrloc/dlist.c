@@ -71,7 +71,7 @@ static inline struct domain_list_item * find_dlist (str *name) {
 
 static inline struct domain_list_item * add_to_dlist (str *name, int type) {
 	struct domain_list_item *item;
-
+        int i;
 	item = (struct domain_list_item *)
 	       pkg_malloc (sizeof (struct domain_list_item));
 	if (item == NULL) {
@@ -90,6 +90,18 @@ static inline struct domain_list_item * add_to_dlist (str *name, int type) {
 	memset (&item->domain, 0, sizeof (struct udomain));
 	item->domain.name = &item->name;
 	item->domain.dbt = type;
+
+	item->domain.table = (hslot_t*)pkg_malloc(sizeof(hslot_t) * ul_hash_size);
+	if (!item->domain.table) {
+		LM_ERR("no memory left 2\n");
+		return NULL;
+	}
+
+	for(i = 0; i < ul_hash_size; i++) {
+		init_slot(&item->domain, &(item->domain.table[i]), i);
+	}
+
+	item->domain.size = ul_hash_size;
 	/* Everything else is not useful for now.  */
 
 	item->next = domain_list;

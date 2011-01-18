@@ -213,7 +213,7 @@ int ul_db_layer_free_result(udomain_t * domain, db1_res_t * res) {
 
 int ul_add_domain_db(str * d, int t, str * url) {
 	ul_domain_db_list_t * new_d = NULL;
-	LM_DBG("%.*s, type: %s\n", d->len, d->s,
+	LM_ERR("%.*s, type: %s\n", d->len, d->s,
 			t==DB_TYPE_SINGLE ? "SINGLE" : "CLUSTER");
 	if((new_d = pkg_malloc(sizeof(ul_domain_db_list_t))) == NULL) {
 		return -1;
