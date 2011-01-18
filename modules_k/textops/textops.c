@@ -1475,12 +1475,13 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	len=s0.len;
 	if (str2) len+= str2->len + REQ_LINE(msg).uri.len;
 
-	if (likely(len>0)){
-		s = (char*)pkg_malloc(len);
-		if (!s) {
-			LM_ERR("no pkg memory left\n");
-			return -1;
-		}
+	s  = (char*)pkg_malloc(len);
+	if (!s) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+
+	if (likely(s0.len>0)){
 		memcpy(s, s0.s, s0.len);
 	}
 
