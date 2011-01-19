@@ -1211,7 +1211,7 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 		lock_release(&subs_htable[i].lock);
 	}
 
-	if(dbmode == DB_FALLBACK)
+	if(dbmode != DB_MEMORY_ONLY)
 	{
 		return get_database_info(msg, subs, reply_code, reply_str);	
 	}
