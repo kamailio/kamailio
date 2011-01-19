@@ -133,7 +133,7 @@ static int sts_update_core_stats(void *data)
 {
 	int type;
 
-	type = (int)data;
+	type = (int)(long)data;
 	switch(type) {
 		case 1:
 			/* fwd_requests */
