@@ -90,9 +90,6 @@ void free_udomain(udomain_t* _d);
 void print_udomain(FILE* _f, udomain_t* _d);
 
 
-
-
-
 /*!
  * \brief Timer function to cleanup expired contacts, DB_ONLY db_mode
  * \param _d cleaned domain
@@ -157,6 +154,35 @@ void lock_udomain(udomain_t* _d, str *_aor);
 void unlock_udomain(udomain_t* _d, str *_aor);
 
 
+
+/*!
+ * \brief Create and insert a new record
+ * \param _d domain to insert the new record
+ * \param _aor address of the record
+ * \param _r new created record
+ * \return return 0 on success, -1 on failure
+ */
+int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
+
+
+/*!
+ * \brief Obtain a urecord pointer if the urecord exists in domain
+ * \param _d domain to search the record
+ * \param _aor address of record
+ * \param _r new created record
+ * \return 0 if a record was found, 1 if nothing could be found
+ */
+int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
+
+
+/*!
+ * \brief Delete a urecord from domain
+ * \param _d domain where the record should be deleted
+ * \param _aor address of record
+ * \param _r deleted record
+ * \return 0 on success, -1 if the record could not be deleted
+ */
+int delete_urecord(udomain_t* _d, str* _aor, struct urecord* _r);
 
 
 #endif

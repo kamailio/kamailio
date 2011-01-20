@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include "usrloc.h"
 
+
 /*! \brief ancient time used for marking the contacts forced to expired */
 #define UL_EXPIRED_TIME 10
 
@@ -137,5 +138,15 @@ int db_update_ucontact(ucontact_t* _c);
  */
 int db_delete_ucontact(ucontact_t* _c);
 
+/* ====== Module interface ====== */
+
+/*!
+ * \brief Update ucontact with new values
+ * \param _r record the contact belongs to
+ * \param _c updated contact
+ * \param _ci new contact informations
+ * \return 0 on success, -1 on failure
+ */
+int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci);
 
 #endif

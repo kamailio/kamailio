@@ -138,6 +138,21 @@ int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
  */
 void mem_delete_urecord(udomain_t* _d, struct urecord* _r);
 
+
+/*! \brief
+ * Timer handler for given domain
+ */
+void lock_udomain(udomain_t* _d, str *_aor);
+
+
+/*!
+ * \brief Release lock for a domain
+ * \param _d domain
+ * \param _aor address of record, uses as hash source for the lock slot
+ */
+void unlock_udomain(udomain_t* _d, str *_aor);
+
+
 /*!
  * \brief  Get lock for a slot
  * \param _d domain
@@ -155,7 +170,34 @@ void unlock_ulslot(udomain_t* _d, int i);
 /* ===== module interface ======= */
 
 
+/*!
+ * \brief Create and insert a new record
+ * \param _d domain to insert the new record
+ * \param _aor address of the record
+ * \param _r new created record
+ * \return return 0 on success, -1 on failure
+ */
+int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
 
+
+/*!
+ * \brief Obtain a urecord pointer if the urecord exists in domain
+ * \param _d domain to search the record
+ * \param _aor address of record
+ * \param _r new created record
+ * \return 0 if a record was found, 1 if nothing could be found
+ */
+int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
+
+
+/*!
+ * \brief Delete a urecord from domain
+ * \param _d domain where the record should be deleted
+ * \param _aor address of record
+ * \param _r deleted record
+ * \return 0 on success, -1 if the record could not be deleted
+ */
+int delete_urecord(udomain_t* _d, str* _aor, struct urecord* _r);
 
 
 #endif
