@@ -32,6 +32,7 @@
 #ifndef _UL_CALLBACKS_H
 #define _UL_CALLBACKS_H
 
+#include "../../dprint.h"
 
 /* forward declaration for ucontact_t */
 struct ucontact;
@@ -84,8 +85,8 @@ static inline void run_ul_callbacks( int type , struct ucontact *c)
 
 	for (cbp=ulcb_list->first; cbp; cbp=cbp->next)  {
 		if(cbp->types&type) {
-			/*LM_DBG("contact=%p, callback type %d/%d, id %d entered\n",
-				c, type, cbp->types, cbp->id );*/
+			LM_DBG("contact=%p, callback type %d/%d, id %d entered\n",
+				c, type, cbp->types, cbp->id );
 			cbp->callback( c, type, cbp->param );
 		}
 	}

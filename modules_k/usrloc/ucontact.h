@@ -39,7 +39,6 @@
 #include <stdio.h>
 #include "usrloc.h"
 
-
 /*! \brief ancient time used for marking the contacts forced to expired */
 #define UL_EXPIRED_TIME 10
 

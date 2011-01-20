@@ -34,6 +34,10 @@
  */
 
 #include "usrloc.h"
+#include "dlist.h"
+#include "urecord.h"
+#include "ucontact.h"
+#include "udomain.h"
 #include "../../sr_module.h"
 #include "ul_mod.h"
 
