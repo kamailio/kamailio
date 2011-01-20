@@ -40,6 +40,7 @@
 #include "../../locking.h"
 #include "../../str.h"
 #include "../../lib/srdb1/db.h"
+#include "../usrloc/usrloc.h"
 #include "urecord.h"
 #include "hslot.h"
 
@@ -141,6 +142,20 @@ void lock_ulslot(udomain_t* _d, int i);
 void unlock_ulslot(udomain_t* _d, int i);
 
 /* ===== module interface ======= */
+
+/*! \brief
+ * Timer handler for given domain
+ */
+void lock_udomain(udomain_t* _d, str *_aor);
+
+
+/*!
+ * \brief Release lock for a domain
+ * \param _d domain
+ * \param _aor address of record, uses as hash source for the lock slot
+ */
+void unlock_udomain(udomain_t* _d, str *_aor);
+
 
 
 

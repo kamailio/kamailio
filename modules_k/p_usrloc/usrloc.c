@@ -36,6 +36,10 @@
 #include "../usrloc/usrloc.h"
 #include "../../sr_module.h"
 #include "p_usrloc_mod.h"
+#include "ucontact.h"
+#include "udomain.h"
+#include "dlist.h"
+#include "urecord.h"
 
 /*! nat branch flag */
 extern unsigned int nat_bflag;

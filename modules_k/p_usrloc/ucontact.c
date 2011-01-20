@@ -46,7 +46,7 @@
 #include "urecord.h"
 #include "ucontact.h"
 #include "ul_db_layer.h"
-
+#include "dlist.h"
 
 /*!
  * \brief Create a new contact structure

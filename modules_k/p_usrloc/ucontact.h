@@ -45,9 +45,6 @@
 /*! \brief ancient time used for marking the contacts forced to expired */
 #define UL_EXPIRED_TIME 10
 
-/*! \brief Valid contact is a contact that either didn't expire yet or is permanent */
-#define VALID_CONTACT(c, t)   ((c->expires>t) || (c->expires==0))
-
 
 /*!
  * \brief Create a new contact structure
@@ -147,6 +144,7 @@ int db_delete_ucontact(ucontact_t* _c);
 /* ====== Module interface ====== */
 
 struct urecord;
+
 
 
 #endif

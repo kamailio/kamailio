@@ -113,6 +113,54 @@ void timer_urecord(urecord_t* _r);
  */
 int db_delete_urecord(struct udomain* _d, urecord_t* _r);
 
+/*!
+ * \brief Create and insert new contact into urecord
+ * \param _r record into the new contact should be inserted
+ * \param _contact contact string
+ * \param _ci contact information
+ * \param _c new created contact
+ * \return 0 on success, -1 on failure
+ */
+int insert_ucontact(urecord_t* _r, str* _contact,
+           ucontact_info_t* _ci, ucontact_t** _c);
+
+
+/*!
+ * \brief Delete ucontact from urecord
+ * \param _r record where the contact belongs to
+ * \param _c deleted contact
+ * \return 0 on success, -1 on failure
+ */
+int delete_ucontact(urecord_t* _r, struct ucontact* _c);
+
+
+/*!
+ * \brief Get pointer to ucontact with given contact
+ * \param _r record where to search the contacts
+ * \param _c contact string
+ * \param _callid callid
+ * \param _path path 
+ * \param _cseq CSEQ number
+ * \param _co found contact
+ * \return 0 - found, 1 - not found, -1 - invalid found, 
+ * -2 - found, but to be skipped (same cseq)
+ */
+int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path,
+           int _cseq,
+           struct ucontact** _co);
+
+/* ===== Module interface ======== */
+
+
+/*!
+ * \brief Release urecord previously obtained through get_urecord
+ * \warning Failing to calls this function after get_urecord will
+ * result in a memory leak when the DB_ONLY mode is used. When
+ * the records is later deleted, e.g. with delete_urecord, then
+ * its not necessary, as this function already releases the record.
+ * \param _r released record
+ */
+void release_urecord(urecord_t* _r);
 
 
 #endif
