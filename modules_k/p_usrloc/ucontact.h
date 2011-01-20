@@ -145,6 +145,15 @@ int db_delete_ucontact(ucontact_t* _c);
 
 struct urecord;
 
+/*!
+ * \brief Update ucontact with new values
+ * \param _r record the contact belongs to
+ * \param _c updated contact
+ * \param _ci new contact informations
+ * \return 0 on success, -1 on failure
+ */
+int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci);
+
 
 
 #endif
