@@ -1131,6 +1131,31 @@ if(has_body("application/sdp"))
 
 	<section>
 		<title>
+		<function moreinfo="none">is_audio_on_hold()</function>
+		</title>
+		<para>
+		The function returns <emphasis>true</emphasis> if the SIP message
+		has a body attached and at least one audio stream in on hold.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE and BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>is_audio_on_hold</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(is_audio_on_hold())
+{
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
 		<function moreinfo="none">is_privacy(privacy_type)</function>
 		</title>
 		<para>
