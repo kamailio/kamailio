@@ -1,4 +1,3 @@
-
 postgres Module
 
 Greg Fausak
@@ -9,126 +8,88 @@ Edited by
 
 Greg Fausak
 
-   Copyright © 2003 Greg Fausak
-     _________________________________________________________
+   Copyright Â© 2003 Greg Fausak
+   Revision History
+   Revision $Revision$ $Date$
+     __________________________________________________________________
 
    Table of Contents
-   1. User's Guide
 
-        1.1. Overview
-        1.2. Dependencies
+   1. Admin Guide
 
-              1.2.1. SER Modules
-              1.2.2. External Libraries or Applications
+        1. Overview
+        2. Dependencies
 
-        1.3. Exported Parameters
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-              1.3.1. param_name (param_type)
+        3. Exported Parameters
 
-        1.4. Exported Functions
+              3.1. retries (integer)
 
-              1.4.1. function_name(param1, param2)
-
-        1.5. Installation & Running
-
-   2. Developer's Guide
-   3. Frequently Asked Questions
+        4. Exported Functions
 
    List of Examples
-   1-1. Set param_name parameter
-   1-2. function_name usage
-     _________________________________________________________
 
-Chapter 1. User's Guide
+   1.1. Set retries parameter
 
-1.1. Overview
+Chapter 1. Admin Guide
 
-   Module description
-     _________________________________________________________
+   Table of Contents
 
-1.2. Dependencies
+   1. Overview
+   2. Dependencies
 
-1.2.1. SER Modules
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. retries (integer)
+
+   4. Exported Functions
+
+1. Overview
+
+   The module is an implementation of the internal DB API v1 and v2
+   connector for PostgreSQL server. It has support for reconnecting when
+   the connection is broken.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
 
-     * No dependencies on other SER modules.
-     _________________________________________________________
+2.2. External Libraries or Applications
 
-1.2.2. External Libraries or Applications
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * PostgreSQL library - e.g., libpq5.
+     * PostgreSQL devel library - to compile the module (e.g., libpq-dev).
 
-   The following libraries or applications must be installed
-   before running SER with this module loaded:
+3. Exported Parameters
 
-     * None.
-     _________________________________________________________
+   3.1. retries (integer)
 
-1.3. Exported Parameters
+3.1. retries (integer)
 
-1.3.1. param_name (param_type)
+   How many retries to attept to reconnect if connection to Postgres
+   server becomes broken.
 
-   Param description.
+   Default value is 2 (that means three attepts to submit the query, first
+   will triger the connection error and two more (the value of this
+   parameter) after resetting the connection).
 
-   Default value is "value". 
-
-   Example 1-1. Set param_name parameter
+   Example 1.1. Set retries parameter
 ...
-modparam("module", "param_name", "param_value")
+modparam("db_mysql", "retries", 3)
 ...
-     _________________________________________________________
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1. function_name(param1, param2)
-
-   Description
-
-   Meaning of the parameters is as follows:
-
-     * param1 - description.
-     * param2 - description.
-
-   Example 1-2. function_name usage
-...
-function_name("sample_param1", "sample_param2");
-...
-     _________________________________________________________
-
-1.5. Installation & Running
-
-   Notes about installation and running.
-     _________________________________________________________
-
-Chapter 2. Developer's Guide
-
-   The module does not provide any sort of API to use in other
-   SER modules.
-     _________________________________________________________
-
-Chapter 3. Frequently Asked Questions
-
-   3.1. Where can I find more about SER?
-   3.2. Where can I post a question about this module?
-   3.3. How can I report a bug?
-
-   3.1. Where can I find more about SER?
-
-   Take a look at http://iptel.org/ser.
-
-   3.2. Where can I post a question about this module?
-
-   First at all check if your question was already answered on
-   one of our mailing lists:
-
-     * http://mail.iptel.org/mailman/listinfo/serusers
-     * http://mail.iptel.org/mailman/listinfo/serdev
-
-   E-mails regarding any stable version should be sent to
-   <serusers@iptel.org> and e-mail regarding development versions
-   or CVS snapshots should be send to <serdev@iptel.org>.
-
-
-   3.3. How can I report a bug?
-
-   Please follow the guidelines provided at:
-   http://iptel.org/ser/bugs
+   NONE

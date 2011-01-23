@@ -16,7 +16,9 @@
 	
 	<section>
 	<title>Overview</title>
-	<para>Module description</para>
+	<para>The module is an implementation of the internal DB API v1 and v2
+		connector for PostgreSQL server. It has support for reconnecting
+		when the connection is broken.</para>
 	</section>
 	<section>
 	<title>Dependencies</title>
@@ -57,9 +59,28 @@
 
 	<section>
 	<title>Exported Parameters</title>
+	<section>
+		<title><varname>retries</varname> (integer)</title>
 		<para>
-		NONE
+			How many retries to attept to reconnect if connection to Postgres
+			server becomes broken.
 		</para>
+		<para>
+		<emphasis>
+			Default value is 2 (that means three attepts to submit the query,
+			first will triger the connection error and two more (the value
+			of this parameter) after resetting the connection).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>retries</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_mysql", "retries", 3)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -67,10 +88,6 @@
 		<para>
 		NONE
 		</para>
-	</section>
-	<section>
-	<title>Installation and Running</title>
-	<para>Notes about installation and running.</para>
 	</section>
 </chapter>
 
