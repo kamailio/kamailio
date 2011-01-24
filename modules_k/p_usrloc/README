@@ -607,19 +607,8 @@ modparam("p_usrloc", "default_db_url", "mysql://ser:ser@localhost/ser")
 5.1. db_mode (integer)
 
    The p_usrloc module must utilize database for persistent contact
-   storage. So mode 0 makes no sense in this setup.
-     * 1 - Write-Through scheme. All changes to usrloc are immediately
-       reflected in database too. This is very slow, but very reliable.
-       Use this scheme if speed is not your priority but need to make sure
-       that no registered contacts will be lost during crash or reboot.
-     * 2 - Write-Back scheme. This is a combination of previous two
-       schemes. All changes are made to memory and database
-       synchronization is done in the timer. The timer deletes all expired
-       contacts and flushes all modified or new contacts to database. Use
-       this scheme if you encounter high-load peaks and want them to
-       process as fast as possible. The mode will not help at all if the
-       load is high all the time. Also, latency of this mode is much lower
-       than latency of mode 1, but slightly higher than latency of mode 0.
+   storage. Only mode 3 is possible at this time. Because of the way other
+   matching mode work, they make no sense on a distributed environment.
      * 3 - DB-Only scheme. No memory cache is kept, all operations being
        directly performed with the database. The timer deletes all expired
        contacts from database - cleans after clients that didn't

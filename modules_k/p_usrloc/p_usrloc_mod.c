@@ -57,7 +57,6 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../rpc_lookup.h"
-#include "../../timer.h"     /* register_timer */
 #include "../../globals.h"   /* is_main */
 #include "../../ut.h"        /* str_init */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
@@ -92,7 +91,6 @@ MODULE_VERSION
 
 static int mod_init(void);                          /*!< Module initialization function */
 static void destroy(void);                          /*!< Module destroy function */
-static void timer(unsigned int ticks, void* param); /*!< Timer handler */
 static int child_init(int rank);                    /*!< Per-child init function */
 static int mi_child_init(void);
 static int mi_child_loc_nr_init(void);
@@ -151,7 +149,6 @@ str path_col        = str_init(PATH_COL);		/*!< Name of column containing the Pa
 str sock_col        = str_init(SOCK_COL);		/*!< Name of column containing the received socket */
 str methods_col     = str_init(METHODS_COL);		/*!< Name of column containing the supported methods */
 str last_mod_col     = str_init(LAST_MOD_COL);		/*!< Name of column containing the last modified date */
-int timer_interval  = 60;				/*!< Timer interval in seconds */
 int db_mode         = 3;				/*!< Database sync scheme:  1-write through, 2-write back, 3-only db */
 int use_domain      = 0;				/*!< Whether usrloc should use domain part of aor */
 int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
@@ -218,7 +215,6 @@ static param_export_t params[] = {
 	{"cseq_column",       STR_PARAM, &cseq_col.s      },
 	{"flags_column",      STR_PARAM, &flags_col.s     },
 	{"cflags_column",     STR_PARAM, &cflags_col.s    },
-	{"timer_interval",    INT_PARAM, &timer_interval  },
 	{"db_mode",           INT_PARAM, &db_mode         },
 	{"use_domain",        INT_PARAM, &use_domain      },
 	{"desc_time_order",   INT_PARAM, &desc_time_order },
@@ -374,22 +370,15 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* Register cache timer */
-	register_timer( timer, 0, timer_interval);
-
 	/* init the callbacks list */
 	if ( init_ulcb_list() < 0) {
 		LM_ERR("usrloc/callbacks initialization failed\n");
 		return -1;
 	}
 
-	if (db_mode == NO_DB) {
-		LM_ERR("No database was configured! Partioned user location is useless!");
+	if (db_mode != DB_ONLY) {
+		LM_ERR("DB_ONLY is the only mode possible for partitioned usrloc. Please set db_mode to 3");
 		return  -1;
-	}
-
-	if (db_mode == WRITE_BACK) {
-		LM_WARN("The WRITE BACK mode will create discrepancies between memory and db backend");
 	}
 
 	/* Shall we use database ? */
@@ -481,9 +470,6 @@ static void destroy(void)
 {
 	/* we need to sync DB in order to flush the cache */
 	ul_unlock_locks();
-	if (synchronize_all_udomains() != 0) {
-		LM_ERR("flushing cache failed\n");
-	}
 
 	free_all_udomains();
 	ul_destroy_locks();
@@ -496,16 +482,6 @@ static void destroy(void)
 	
 }
 
-
-/*! \brief
- * Timer handler
- */
-static void timer(unsigned int ticks, void* param)
-{
-	if (synchronize_all_udomains() != 0) {
-		LM_ERR("synchronizing cache failed\n");
-	}
-}
 
 static int mi_child_loc_nr_init(void)
 {

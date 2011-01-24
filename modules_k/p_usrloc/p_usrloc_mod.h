@@ -87,7 +87,6 @@ extern str sock_col;
 extern str methods_col;
 extern str last_mod_col;
 
-extern int timer_interval;
 extern int db_mode;
 extern int use_domain;
 extern int desc_time_order;
