@@ -152,6 +152,8 @@ typedef int (*register_udomain_t)(const char* _n, struct udomain** _d);
 typedef int  (*get_all_ucontacts_t) (void* buf, int len, unsigned int flags,
 		unsigned int part_idx, unsigned int part_max);
 
+typedef int (*get_udomain_t)(const char* _n, udomain_t** _d);
+
 /*! usrloc API export structure */
 typedef struct usrloc_api {
 	int           use_domain; /*! use_domain module parameter */

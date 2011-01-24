@@ -123,6 +123,15 @@ int get_all_ucontacts(void *, int, unsigned int,
 
 
 /*!
+ * \brief Find and return usrloc domain
+ *
+ * \param _n domain name
+ * \param _d usrloc domain (location table)
+ * \return 0 on success, -1 on failure
+ */
+ int get_udomain(const char* _n, udomain_t** _d);
+
+/*!
  * \brief Loops through all domains summing up the number of users
  * \return the number of users, could be zero
  */
