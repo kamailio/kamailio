@@ -398,7 +398,6 @@ urecord_t* db_load_urecord(udomain_t* _d, str *_aor)
 	else
 		order = &q_col;
 
-	LM_ERR("Calluing ul_db_layer_query\n");
 	if (ul_db_layer_query(_d,  &vals[0].val.str_val,  &vals[1].val.str_val, keys, 0, vals, columns, (use_domain)?2:1, 13, order,
 				&res) < 0) {
 		LM_ERR("db_query failed\n");
@@ -642,10 +641,8 @@ int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
  */
 int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 {
-	LM_ERR("get_urecord: aor: %.*s", _aor->len, _aor->s);
 	unsigned int sl, i, aorhash;
 	urecord_t* r;
-	LM_ERR("called get urecord for %.*s, mode is %d", _aor->len, _aor->s, db_mode);
 	if (db_mode!=DB_ONLY) {
 		/* search in cache */
 		aorhash = core_hash(_aor, 0, 0);
@@ -663,7 +660,6 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 		}
 	} else {
 		/* search in DB */
-		LM_ERR("called get urecord for %.*s", _aor->len, _aor->s);
 		r = db_load_urecord(_d, _aor);
 		if (r) {
 			*_r = r;

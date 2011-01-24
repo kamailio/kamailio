@@ -151,7 +151,6 @@ int ul_db_layer_query(udomain_t * domain, str * user, str * sipdomain,
 	int ret;
 	switch(domain->dbt) {
 			case DB_TYPE_CLUSTER:{ 
-			LM_ERR("CALLING CLUSTER QUERY for %.*s \n" , user->len, user->s);
 			if((ret = p_ul_dbf.query(domain->name, user, sipdomain, &h, _k, _op, _v, _c, _n, _nc, _o, _r)) < 0 || (!_r)) {
 				return -1;
 			}
