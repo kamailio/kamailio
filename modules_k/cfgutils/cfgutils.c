@@ -552,6 +552,7 @@ static struct mi_root* mi_check_hash(struct mi_root* cmd, void* param )
 		if (MD5File(tmp, hash_file) != 0) {
 			LM_ERR("could not hash the config file");
 			rpl_tree = init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN );
+			return rpl_tree;
 		}
 		
 		if (strncmp(config_hash, tmp, MD5_LEN) == 0) {
