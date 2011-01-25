@@ -186,7 +186,7 @@ static int ul_db_failover_switch(db_func_t * dbf, db1_con_t * dbh, ul_db_handle_
 				"db %i.\n", handle->id, no);
 		return -1;
 	}
-	memset(&tmp, 0, sizeof(ul_db_handle_t));
+	memset(&tmp, 0, sizeof(ul_db_t));
 	memmove(&tmp, db, sizeof(ul_db_t));
 	memset(tmp.url.s, 0, UL_DB_URL_LEN);
 	memmove(tmp.url.s, db->url.s, UL_DB_URL_LEN);
