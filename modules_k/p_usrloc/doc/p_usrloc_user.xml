@@ -39,8 +39,9 @@
 	<para>
 	</para>
 
-	<para>Write queries are replicated to two databases, depending on some
-	distribution keys, e.g. the username and domain of some subscribers. 
+	<para>Write queries are replicated to two or more databases, depending on some
+	distribution keys, e.g. the username and domain the subscribers. The number of databases
+	used for replication is configurable at compile time by modifying the DB_NUM define.
 	Its main field of application is for storing and retrieving location data. The actual
 	database for this subscriber is choosen from a set that is specified in the master
 	database. Read queries are executed on one database of the set. If this database is
