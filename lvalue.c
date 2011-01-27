@@ -395,7 +395,8 @@ int lval_assign(struct run_act_ctx* h, struct sip_msg* msg,
 	}
 	switch(lv->type){
 		case LV_NONE:
-			BUG("uninitialized/invalid lvalue (%d)\n", lv->type);
+			BUG("uninitialized/invalid lvalue (%d) (cfg line: %d)\n",
+					lv->type, rve->fpos.s_line);
 			goto error;
 		case LV_AVP:
 			ret=lval_avp_assign(h, msg, lv, rv);
@@ -403,6 +404,11 @@ int lval_assign(struct run_act_ctx* h, struct sip_msg* msg,
 		case LV_PVAR:
 			ret=lval_pvar_assign(h, msg, lv, rv);
 			break;
+	}
+	if (unlikely(ret<0)){
+		ERR("assignmet failed at pos: (%d,%d-%d,%d)\n",
+			rve->fpos.s_line, rve->fpos.s_col,
+			rve->fpos.e_line, rve->fpos.e_col);
 	}
 	rval_destroy(rv);
 	return ret;
