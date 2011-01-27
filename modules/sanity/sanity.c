@@ -218,7 +218,8 @@ int check_ruri_scheme(struct sip_msg* _msg) {
 	if (_msg->parsed_uri_ok == 0 &&
 			parse_sip_msg_uri(_msg) != 1) {
 		/* unsupported schemes end up here already */
-		LOG(L_WARN, "sanity_check(): check_ruri_scheme(): failed to parse request uri\n");
+		LM_WARN("failed to parse request uri [%.*s]\n",
+				GET_RURI(_msg)->len, GET_RURI(_msg)->s);
 	}
 	if (_msg->parsed_uri.type == ERROR_URI_T) {
 		if (_msg->REQ_METHOD != METHOD_ACK) {
