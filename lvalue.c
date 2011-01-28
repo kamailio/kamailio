@@ -406,7 +406,7 @@ int lval_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			break;
 	}
 	if (unlikely(ret<0)){
-		ERR("assignmet failed at pos: (%d,%d-%d,%d)\n",
+		ERR("assignment failed at pos: (%d,%d-%d,%d)\n",
 			rve->fpos.s_line, rve->fpos.s_col,
 			rve->fpos.e_line, rve->fpos.e_col);
 	}
