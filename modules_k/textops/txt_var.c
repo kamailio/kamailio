@@ -64,6 +64,11 @@ int tr_txt_eval_re(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			result=subst_str(tr_txt_buf, msg, se, &nmatches);
 			if (result == NULL)
 			{
+				if (nmatches==0)
+				{
+					LM_DBG("no match for subst expression\n");
+					return 0;
+				}
 				if (nmatches<0)
 					LM_ERR("subst failed\n");
 				return -1;
