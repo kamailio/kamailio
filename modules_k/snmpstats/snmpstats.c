@@ -84,6 +84,15 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
+#include "../../lib/kcore/statistics.h"
+#include "../../sr_module.h"
+#include "../../dprint.h"
+#include "../../error.h"
+#include "../../ut.h"
+#include "../../script_cb.h"
+#include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
+
 #include "snmpSIPRegUserTable.h"
 #include "snmpSIPContactTable.h"
 
@@ -96,6 +105,69 @@
 
 /* Required in every Kamailio Module. */
 MODULE_VERSION
+
+/*! This is the first function to be called by Kamailio, to initialize the module.
+ * This call must always return a value as soon as possible.  If it were not to
+ * return, then Kamailio would not be able to initialize any of the other
+ * modules. */
+static int  mod_init(void);
+
+/*! This function is called when Kamailio has finished creating all instances of
+ * itself.  It is at this point that we want to create our AgentX sub-agent
+ * process, and register a handler for any state changes of our child. */
+static int  mod_child_init(int rank);
+
+
+/*! This function is called when Kamailio is shutting down.  When this happens, we
+ * log a useful message and kill the AgentX Sub-Agent child process */
+static void mod_destroy(void);
+
+
+static proc_export_t mod_procs[] = {
+	{"SNMP AgentX",  0,  0, agentx_child, 1 },
+	{0,0,0,0,0}
+};
+
+
+/*!
+ * This structure defines the SNMPStats parameters that can be configured
+ * through the kamailio.cfg configuration file.  
+ */
+static param_export_t mod_params[] =
+{
+	{ "sipEntityType",          STR_PARAM|USE_FUNC_PARAM,
+			(void *)handleSipEntityType       },
+	{ "MsgQueueMinorThreshold", INT_PARAM|USE_FUNC_PARAM,
+			(void *)set_queue_minor_threshold },
+	{ "MsgQueueMajorThreshold", INT_PARAM|USE_FUNC_PARAM,
+			(void *)set_queue_major_threshold },
+	{ "dlg_minor_threshold",    INT_PARAM|USE_FUNC_PARAM,
+			(void *)set_dlg_minor_threshold   },
+	{ "dlg_major_threshold",    INT_PARAM|USE_FUNC_PARAM,
+			(void *)set_dlg_major_threshold   },
+	{ "snmpgetPath",            STR_PARAM|USE_FUNC_PARAM,
+			(void *)set_snmpget_path          },
+	{ "snmpCommunity",          STR_PARAM|USE_FUNC_PARAM,
+			(void *)set_snmp_community        },
+	{ 0,0,0 }
+};
+
+
+struct module_exports exports =
+{
+	SNMPSTATS_MODULE_NAME,   /* module's name */
+	DEFAULT_DLFLAGS,         /* dlopen flags */
+	0,                       /* exported functions */
+	mod_params,              /* param exports */
+	0,                       /* exported statistics */
+	0,                       /* MI Functions */
+	0,                       /* pseudo-variables */
+	mod_procs,               /* extra processes */
+	mod_init,                /* module initialization function */
+	0,                       /* reply processing function */
+	mod_destroy,   /* Destroy function */
+	mod_child_init /* per-child init function */
+};
 
 /*!
  * The module will fork off a child process to run an snmp command via execve().
