@@ -150,7 +150,7 @@ void init_openserSIPMethodSupportedTable(void)
 		createRow(4, "METHOD_BYE");
 	}
 
-	if (module_loaded("options")) {
+	if (module_loaded("options") || module_loaded("siputils")) {
 		createRow(6, "METHOD_OPTIONS");
 	}
 
