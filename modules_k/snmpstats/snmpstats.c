@@ -266,6 +266,9 @@ static int mod_init(void)
 	/* Register the alarm checking function to run periodically */
 	register_timer(run_alarm_check, 0, ALARM_AGENT_FREQUENCY_IN_SECONDS);
 
+	/* add space for one extra process */
+	register_procs(1);
+
 	return 0;
 }
 
@@ -275,9 +278,19 @@ static int mod_init(void)
  * process, and register a handler for any state changes of our child. */
 static int mod_child_init(int rank) 
 {
+	int pid;
+
 	/* We only want to setup a single process, under the main attendant. */
 	if (rank != PROC_MAIN) {
 		return 0;
+	}
+
+	pid=fork_process(PROC_NOCHLDINIT, "SNMP AgentX", 1);
+	if (pid<0)
+		return -1; /* error */
+	if(pid==0){
+		/* child */
+		agentx_child(1);
 	}
 
 	/* Spawn a child that will check the system up time. */
