@@ -285,12 +285,14 @@ static int mod_child_init(int rank)
 		return 0;
 	}
 
+	/* Spawn SNMP AgentX process */
 	pid=fork_process(PROC_NOCHLDINIT, "SNMP AgentX", 1);
 	if (pid<0)
 		return -1; /* error */
 	if(pid==0){
 		/* child */
 		agentx_child(1);
+		return 0;
 	}
 
 	/* Spawn a child that will check the system up time. */
