@@ -125,8 +125,8 @@ int core2strar(struct sip_msg *req, str *c_vals, int *i_vals, char *t_vals)
 	struct hdr_field *from;
 	struct hdr_field *to;
 
-	/* method */
-	c_vals[0] = req->first_line.u.request.method;
+	/* method : request/reply - cseq parsed in acc_preparse_req() */
+	c_vals[0] = get_cseq(req)->method;
 	t_vals[0] = TYPE_STR;
 
 	/* from/to URI and TAG */
