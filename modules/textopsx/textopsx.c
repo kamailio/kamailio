@@ -41,12 +41,17 @@ static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2);
 static int change_reply_status_f(struct sip_msg*, char*, char *);
 static int change_reply_status_fixup(void** param, int param_no);
 
+static int w_remove_body_f(struct sip_msg*, char*, char *);
+
 /* cfg functions */
 static cmd_export_t cmds[] = {
 	{"msg_apply_changes",    (cmd_function)msg_apply_changes_f,     0,
 		0, REQUEST_ROUTE },
 	{"change_reply_status",	 change_reply_status_f,	                2,
 		change_reply_status_fixup, ONREPLY_ROUTE },
+	{"remove_body",          (cmd_function)w_remove_body_f,         0,
+		0, ANY_ROUTE },
+
 
 	{0,0,0,0,0}
 };
@@ -224,3 +229,30 @@ static int change_reply_status_f(struct sip_msg* msg, char* _code, char* _reason
 }
 
 
+/**
+ *
+ */
+static int w_remove_body_f(struct sip_msg *msg, char *p1, char *p2)
+{
+	str body = {0,0};
+
+	body.len = 0;
+	body.s = get_body(msg);
+	if (body.s==0)
+	{
+		LM_DBG("no body in the message\n");
+		return 1;
+	}
+	body.len = msg->buf + msg->len - body.s;
+	if (body.len<=0)
+	{
+		LM_DBG("empty body in the message\n");
+		return 1;
+	}
+	if(del_lump(msg, body.s - msg->buf, body.len, 0) == 0)
+	{
+		LM_ERR("cannot remove body\n");
+		return -1;
+	}
+	return 1;
+}
