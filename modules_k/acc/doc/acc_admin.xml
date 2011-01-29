@@ -968,7 +968,7 @@ modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title>acc_log_request usage</title>
@@ -1001,7 +1001,7 @@ acc_log_request("Some comment");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title>acc_db_request usage</title>
@@ -1031,7 +1031,7 @@ acc_log_request("Some comment", "Some table");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title>acc_rad_request usage</title>
@@ -1060,7 +1060,7 @@ acc_rad_request("Some comment");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title>acc_diam_request usage</title>
