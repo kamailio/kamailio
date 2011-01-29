@@ -991,8 +991,10 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					tmp=0;
 				else if (a->type==SET_PORT_T) {
 					tmp=a->val[0].u.string;
-					if (tmp) len = strlen(tmp);
-					else len = 0;
+					if (tmp) {
+						len = strlen(tmp);
+						if(len==0) tmp = 0;
+					} else len = 0;
 				} else {
 					tmp=uri.port.s;
 					len = uri.port.len;
