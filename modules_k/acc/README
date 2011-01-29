@@ -863,7 +863,7 @@ modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
    Meaning of the parameters is as follows:
      * comment - Comment to be appended.
 
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.35. acc_log_request usage
 ...
@@ -880,12 +880,12 @@ acc_log_request("Some comment");
      * comment - Comment to be appended.
      * table - Database table to be used. It can include config variables.
 
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.36. acc_db_request usage
 ...
-acc_log_request("Some comment", "some_table");
-acc_log_request("200 ok", "acc_cfg_$time(year)");
+acc_db_request("Some comment", "some_table");
+acc_db_request("200 ok", "acc_cfg_$time(year)");
 ...
 
 6.3.  acc_rad_request(comment)
@@ -896,7 +896,7 @@ acc_log_request("200 ok", "acc_cfg_$time(year)");
    Meaning of the parameters is as follows:
      * comment - Comment to be appended.
 
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.37. acc_rad_request usage
 ...
@@ -911,7 +911,7 @@ acc_rad_request("Some comment");
    Meaning of the parameters is as follows:
      * comment - Comment to be appended.
 
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.38. acc_diam_request usage
 ...
