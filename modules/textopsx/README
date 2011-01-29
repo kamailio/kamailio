@@ -17,6 +17,7 @@ Daniel-Constantin Mierla
 
         1.2.1. msg_apply_changes()
         1.2.2. change_reply_status(code, reason)
+        1.2.3. remove_body()
 
 1.1. Overview
 
@@ -67,4 +68,15 @@ onreply_route {
         exit;
     }
 }
+...
+
+1.2.3.  remove_body()
+
+   Use this function to remove body of SIP requests or replies.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 3. remove_body() usage
+...
+remove_body();
 ...

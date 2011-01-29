@@ -73,4 +73,25 @@ onreply_route {
 	</example>
     </section>
 
+	<section id="textopsx.remove_body">
+		<title>
+		<function moreinfo="none">remove_body()</function>
+		</title>
+		<para>
+		Use this function to remove body of SIP requests or replies.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>remove_body()</function> usage</title>
+		<programlisting format="linespecific">
+...
+remove_body();
+...
+</programlisting>
+		</example>
+	</section>
+
+
 </section>
