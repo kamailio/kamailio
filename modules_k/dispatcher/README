@@ -336,10 +336,11 @@ modparam("dispatcher", "priority_col", "dstpriority")
 
 3.8. force_dst (int)
 
-   If set to 1, force overwriting of destination address when that is
-   already set.
+   If set to 1, force overwriting of destination address (outbound proxy)
+   when that is already set. If set to 0, will return error when the
+   destination address is already set.
 
-   Default value is “0”.
+   Default value is “1”.
 
    Example 1.8. Set the “force_dst” parameter
 ...

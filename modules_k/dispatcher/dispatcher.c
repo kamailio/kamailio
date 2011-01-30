@@ -79,7 +79,7 @@ MODULE_VERSION
 
 /** parameters */
 char *dslistfile = CFG_DIR"dispatcher.list";
-int  ds_force_dst   = 0;
+int  ds_force_dst   = 1;
 int  ds_flags       = 0; 
 int  ds_use_default = 0; 
 static str dst_avp_param = {NULL, 0};

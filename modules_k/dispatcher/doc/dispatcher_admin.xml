@@ -223,12 +223,13 @@ modparam("dispatcher", "priority_col", "dstpriority")
 	<section>
 		<title><varname>force_dst</varname> (int)</title>
 		<para>
-		If set to 1, force overwriting of destination address when that is
-		already set.
+		If set to 1, force overwriting of destination address (outbound proxy)
+		when that is already set. If set to 0, will return error when the
+		destination address is already set.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>0</quote>.
+			Default value is <quote>1</quote>.
 		</emphasis>
 		</para>
 		<example>
