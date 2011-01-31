@@ -1025,10 +1025,13 @@ onreply_route {
 		<itemizedlist>
 			<listitem><para>_state_ : state of the destination address</para>
 			      <itemizedlist>
-	                 <listitem><para> <quote>a</quote>: active </para></listitem> 
-			         <listitem><para> <quote>i</quote>: inactive </para></listitem>	
-				<listitem><para> <quote>p</quote>: probing </para></listitem>
+	                 <listitem><para> <quote>a</quote>: active</para></listitem> 
+			         <listitem><para> <quote>i</quote>: inactive</para></listitem>	
+			         <listitem><para> <quote>d</quote>: disabled</para></listitem>	
 				  </itemizedlist>
+				  <para>The states <quote>a</quote> or <quote>i</quote> can be
+					  followed by <quote>p</quote> to set probing mode (e.g. 'ap'
+					  or 'ip')</para>
 			</listitem>	  
 
 			<listitem><para>_group_: destination group id</para></listitem>

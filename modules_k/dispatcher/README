@@ -833,7 +833,9 @@ onreply_route {
      * _state_ : state of the destination address
           + “a”: active
           + “i”: inactive
-          + “p”: probing
+          + “d”: disabled
+       The states “a” or “i” can be followed by “p” to set probing mode
+       (e.g. 'ap' or 'ip')
      * _group_: destination group id
      * _address_: address of the destination in the _group_
 
