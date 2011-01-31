@@ -2012,6 +2012,9 @@ int ds_mark_dst(struct sip_msg *msg, int mode)
 	return (ret==0)?1:-1;
 }
 
+/**
+ *
+ */
 int ds_set_state(int group, str *address, int state, int type)
 {
 	int i=0;
@@ -2075,6 +2078,44 @@ int ds_set_state(int group, str *address, int state, int type)
 	return -1;
 }
 
+/**
+ *
+ */
+int ds_reinit_state(int group, str *address, int state)
+{
+	int i=0;
+	ds_set_t *idx = NULL;
+
+	if(_ds_list==NULL || _ds_list_nr<=0)
+	{
+		LM_ERR("the list is null\n");
+		return -1;
+	}
+
+	/* get the index of the set */
+	if(ds_get_index(group, &idx)!=0)
+	{
+		LM_ERR("destination set [%d] not found\n", group);
+		return -1;
+	}
+
+	for(i=0; i<idx->nr; i++)
+	{
+		if(idx->dlist[i].uri.len==address->len
+				&& strncasecmp(idx->dlist[i].uri.s, address->s,
+					address->len)==0)
+		{
+			idx->dlist[i].flags |= state;
+			return 0;
+		}
+	}
+	LM_ERR("destination address [%d : %.*s] not found\n", group,
+			address->len, address->s);
+	return -1;
+}
+/**
+ *
+ */
 int ds_print_list(FILE *fout)
 {
 	int j;
@@ -2298,6 +2339,9 @@ void ds_check_timer(unsigned int ticks, void* param)
 	{
 		for(j=0; j<list->nr; j++)
 		{
+			/* skip addresses set in disabled state by admin */
+			if((list->dlist[j].flags&DS_DISABLED_DST) != 0)
+				continue;
 			/* If the Flag of the entry has "Probing set, send a probe:	*/
 			if (ds_probing_mode==1 ||
 					(list->dlist[j].flags&DS_PROBING_DST) != 0)

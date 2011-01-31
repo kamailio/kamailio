@@ -640,20 +640,34 @@ static struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
 
 	node = cmd_tree->node.kids;
 	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 	sp = node->value;
 	if(sp.len<=0 || !sp.s)
 	{
 		LM_ERR("bad state value\n");
-		return init_mi_tree( 500, "bad state value", 15);
+		return init_mi_tree(500, "bad state value", 15);
 	}
 
-	state = 1;
-	if(sp.s[0]=='0' || sp.s[0]=='I' || sp.s[0]=='i')
-		state = 0;
+	state = 0;
+	if(sp.s[0]=='0' || sp.s[0]=='I' || sp.s[0]=='i') {
+		/* set inactive */
+		state |= DS_INACTIVE_DST;
+		if((sp.len>1) && (sp.s[1]=='P' || sp.s[1]=='p'))
+			state |= DS_PROBING_DST;
+	} else if(sp.s[0]=='1' || sp.s[0]=='A' || sp.s[0]=='a') {
+		/* set active */
+		if((sp.len>1) && (sp.s[1]=='P' || sp.s[1]=='p'))
+			state |= DS_PROBING_DST;
+	} else if(sp.s[0]=='2' || sp.s[0]=='D' || sp.s[0]=='d') {
+		/* set disabled */
+		state |= DS_DISABLED_DST;
+	} else {
+		LM_ERR("unknow state value\n");
+		return init_mi_tree(500, "unknown state value", 19);
+	}
 	node = node->next;
 	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 	sp = node->value;
 	if(sp.s == NULL)
 	{
@@ -676,10 +690,7 @@ static struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
 		return init_mi_tree(500,"address not found", 18 );
 	}
 
-	if(state==1)
-		ret = ds_set_state(group, &sp, DS_INACTIVE_DST, 0);
-	else
-		ret = ds_set_state(group, &sp, DS_INACTIVE_DST, 1);
+	ret = ds_reinit_state(group, &sp, state);
 
 	if(ret!=0)
 	{

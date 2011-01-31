@@ -51,7 +51,8 @@
 
 #define DS_INACTIVE_DST		1  /*!< inactive destination */
 #define DS_PROBING_DST		2  /*!< checking destination */
-#define DS_RESET_FAIL_DST	4  /*!< Reset-Failure-Counter */
+#define DS_DISABLED_DST		4  /*!< admin disabled destination */
+#define DS_RESET_FAIL_DST	8  /*!< Reset-Failure-Counter */
 
 extern str ds_db_url;
 extern str ds_table_name;
@@ -98,6 +99,7 @@ int ds_destroy_list(void);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_next_dst(struct sip_msg *msg, int mode);
 int ds_set_state(int group, str *address, int state, int type);
+int ds_reinit_state(int group, str *address, int state);
 int ds_mark_dst(struct sip_msg *msg, int mode);
 int ds_print_list(FILE *fout);
 int ds_print_mi_list(struct mi_node* rpl);
