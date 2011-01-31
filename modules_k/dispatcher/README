@@ -953,26 +953,55 @@ mpath="/usr/local/lib/kamailio/modules/"
 loadmodule "maxfwd.so"
 loadmodule "sl.so"
 loadmodule "dispatcher.so"
-
-# loadmodule "modules/tm/tm.so"
+loadmodule "tm.so"
 
 # ----------------- setting module-specific parameters ---------------
+
 # -- dispatcher params --
+modparam("dispatcher", "list_file", "/usr/local/etc/kamailio/dispatcher.list")
+modparam("dispatcher", "flags", 2)
+modparam("dispatcher", "dst_avp", "$avp(AVP_DST)")
+modparam("dispatcher", "grp_avp", "$avp(AVP_GRP)")
+modparam("dispatcher", "cnt_avp", "$avp(AVP_CNT)")
 
-modparam("dispatcher", "list_file", "../etc/dispatcher.list")
-# modparam("dispatcher", "force_dst", 1)
-
-route{
+# main request routing block
+route {
         if ( !mf_process_maxfwd_header("10") )
         {
                 sl_send_reply("483","To Many Hops");
-                drop();
-        };
+                exit;
+        }
 
-        ds_select_dst("2", "0");
+        # select from first dst group by round-robin
+        if(!ds_select_dst("1", "4"))
+        {
+                sl_send_reply("500", "No destination available");
+                exit;
+        }
 
-        forward();
-        # t_relay();
+        t_on_failure("RTF_DISPATCH");
+        if(!t_relay())
+        {
+                sl_reply_error();
+                exit;
+        }
+}
+
+# dispatcher failure routing block
+failure_route[RTF_DISPATCH] {
+        if (t_is_canceled()) {
+                exit;
+        }
+        # select next destination only for local timeout
+        if (t_branch_timeout() &amp;&amp; !t_branch_replied())
+        {
+                if(ds_next_dst())
+                {
+                        t_on_failure("RTF_DISPATCH");
+                        t_relay();
+                        exit;
+                }
+        }
 }
 
 ...
