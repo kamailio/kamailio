@@ -2206,7 +2206,7 @@ int ds_print_mi_list(struct mi_node* rpl)
 {
 	int len, j;
 	char* p;
-	char c;
+	char c[3];
 	str data;
 	ds_set_t *list;
 	struct mi_node* node = NULL;
@@ -2238,16 +2238,25 @@ int ds_print_mi_list(struct mi_node* rpl)
   			if(node == NULL)
   				return -1;
 
-  			if (list->dlist[j].flags & DS_INACTIVE_DST) c = 'I';
-  			else if (list->dlist[j].flags & DS_PROBING_DST) c = 'P';
-  			else c = 'A';
+			memset(&c, 0, sizeof(c));
+			if (list->dlist[j].flags & DS_INACTIVE_DST)
+				c[0] = 'I';
+			else if (list->dlist[j].flags & DS_DISABLED_DST)
+				c[0] = 'D';
+			else
+				c[0] = 'A';
 
-  			attr = add_mi_attr (node, MI_DUP_VALUE, "flag",4, &c, 1);
-  			if(attr == 0)
+			if (list->dlist[j].flags & DS_PROBING_DST)
+				c[1] = 'P';
+			else
+				c[1] = 'X';
+
+			attr = add_mi_attr (node, MI_DUP_VALUE, "flags", 5, c, 2);
+			if(attr == 0)
   				return -1;
 
 			data.s = int2str(list->dlist[j].priority, &data.len);
-  			attr = add_mi_attr (node, MI_DUP_VALUE, "priority", 8,
+			attr = add_mi_attr (node, MI_DUP_VALUE, "priority", 8,
 					data.s, data.len);
   			if(attr == 0)
   				return -1;
