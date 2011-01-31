@@ -149,8 +149,8 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 		/* fixup call */
 
 		/* two parameters are mandatory, group name and variable name */
-		if (s->n != 3) {
-			LOG(L_ERR, "ERROR: select_cfg_var(): two parameters are expected\n");
+		if (s->n < 3) {
+			LOG(L_ERR, "ERROR: select_cfg_var(): At least two parameters are expected\n");
 			return -1;
 		}
 
@@ -239,6 +239,9 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 	}
 	return 0;
 }
+
+/* fake function to eat the first parameter of @cfg_get */
+ABSTRACT_F(select_cfg_var1)
 
 /* fix-up function for read_cfg_var()
  *

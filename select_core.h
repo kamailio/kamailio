@@ -215,6 +215,7 @@ SELECT_F(select_identity)
 SELECT_F(select_identity_info)
 
 SELECT_F(select_cfg_var)
+SELECT_F(select_cfg_var1)
 SELECT_F(cfg_selected_inst)
 
 static select_row_t select_core[] = {
@@ -410,8 +411,13 @@ static select_row_t select_core[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("identity"), select_identity, 0},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("identity_info"), select_identity_info, 0},
 
-	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("cfg_get"), select_cfg_var, CONSUME_ALL | FIXUP_CALL },
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("cfg_get"), select_cfg_var1, SEL_PARAM_EXPECTED | CONSUME_NEXT_STR},
+	{ select_cfg_var1, SEL_PARAM_STR, STR_NULL, select_cfg_var, FIXUP_CALL },
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("cfg_selected"), cfg_selected_inst, CONSUME_NEXT_STR | FIXUP_CALL },
+
+	{ select_cfg_var, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
+	{ select_cfg_var, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_any_uri, NESTED | CONSUME_NEXT_STR},
+	{ select_cfg_var, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_anyheader_params, NESTED},
 
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
