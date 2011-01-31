@@ -61,4 +61,7 @@ unsigned int read_cfg_var(struct cfg_read_handle *read_handle, void **val);
 int read_cfg_var_int(struct cfg_read_handle *read_handle, int *val);
 int read_cfg_var_str(struct cfg_read_handle *read_handle, str *val);
 
+/* return the selected group instance */
+int cfg_selected_inst(str *res, select_t *s, struct sip_msg *msg);
+
 #endif /* _CFG_SELECT_H */

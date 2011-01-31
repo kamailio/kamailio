@@ -60,14 +60,17 @@ static int cfg_new_select(str *gname, str *vname, void **group_p, void **var_p)
 	if (!sel->gname.s) goto error;
 	memcpy(sel->gname.s, gname->s, gname->len);
 	sel->gname.len = gname->len;
-
-	sel->vname.s = (char *)pkg_malloc(sizeof(char)*vname->len);
-	if (!sel->vname.s) goto error;
-	memcpy(sel->vname.s, vname->s, vname->len);
-	sel->vname.len = vname->len;
-
 	sel->group_p = group_p;
-	sel->var_p = var_p;
+
+	if (vname) {
+		sel->vname.s = (char *)pkg_malloc(sizeof(char)*vname->len);
+		if (!sel->vname.s) goto error;
+		memcpy(sel->vname.s, vname->s, vname->len);
+		sel->vname.len = vname->len;
+
+		sel->var_p = var_p;
+	}
+
 
 	sel->next = cfg_non_fixed_selects;
 	cfg_non_fixed_selects = sel;
@@ -111,14 +114,23 @@ int cfg_fixup_selects()
 
 	for (sel=cfg_non_fixed_selects; sel; sel=sel->next) {
 
-		if (cfg_lookup_var(&sel->gname, &sel->vname, &group, &var)) {
-			LOG(L_ERR, "ERROR: cfg_parse_selects(): unknown variable: %.*s.%.*s\n",
-				sel->gname.len, sel->gname.s,
-				sel->vname.len, sel->vname.s);
-			return -1;
+		if (sel->var_p) {
+			if (cfg_lookup_var(&sel->gname, &sel->vname, &group, &var)) {
+				LOG(L_ERR, "ERROR: cfg_parse_selects(): unknown variable: %.*s.%.*s\n",
+					sel->gname.len, sel->gname.s,
+					sel->vname.len, sel->vname.s);
+				return -1;
+			}
+			*(sel->group_p) = (void *)group;
+			*(sel->var_p) = (void *)var;
+		} else {
+			if (!(group = cfg_lookup_group(sel->gname.s, sel->gname.len))) {
+				LOG(L_ERR, "ERROR: cfg_parse_selects(): unknown configuration group: %.*s\n",
+					sel->gname.len, sel->gname.s);
+				return -1;
+			}
+			*(sel->group_p) = (void *)group;
 		}
-		*(sel->group_p) = (void *)group;
-		*(sel->var_p) = (void *)var;
 	}
 	/* the select list is not needed anymore */
 	cfg_free_selects();
@@ -360,3 +372,67 @@ int read_cfg_var_str(struct cfg_read_handle *read_handle, str *val)
 	*val = *(str *)(v2);
 	return 0;
 }
+
+/* return the selected group instance */
+int cfg_selected_inst(str *res, select_t *s, struct sip_msg *msg)
+{
+	cfg_group_t	*group;
+	cfg_group_inst_t	*inst;
+
+	if (msg == NULL) {
+		/* fixup call */
+
+		/* one parameter is mandatory: group name */
+		if (s->n != 2) {
+			LOG(L_ERR, "ERROR: selected_inst(): One parameter is expected\n");
+			return -1;
+		}
+
+		if (s->params[1].type != SEL_PARAM_STR) {
+			LOG(L_ERR, "ERROR: selected_inst(): string parameter is expected\n");
+			return -1;
+		}
+
+		/* look-up the group and the variable */
+		if (!(group = cfg_lookup_group(s->params[1].v.s.s, s->params[1].v.s.len))) {
+			if (cfg_shmized) {
+				LOG(L_ERR, "ERROR: selected_inst(): unknown configuration group: %.*s\n",
+					s->params[1].v.s.len, s->params[1].v.s.s);
+				return -1;
+			}
+			/* The group was not found, add it to the non-fixed select list.
+			 * So we act as if the fixup was successful, and we retry it later */
+			if (cfg_new_select(&s->params[1].v.s, NULL,
+						&s->params[1].v.p, NULL))
+				return -1;
+
+			LOG(L_DBG, "DEBUG: selected_inst(): select fixup is postponed: %.*s\n",
+				s->params[1].v.s.len, s->params[1].v.s.s);
+
+			s->params[1].type = SEL_PARAM_PTR;
+			s->params[1].v.p = NULL;
+
+			return 0;
+		}
+
+		s->params[1].type = SEL_PARAM_PTR;
+		s->params[1].v.p = (void *)group;
+
+		return 1;
+	}
+
+	group = (cfg_group_t *)s->params[1].v.p;
+	if (!group) return -1;
+
+	/* Get the current group instance from the group handle. */
+	inst = CFG_HANDLE_TO_GINST(*(group->handle));
+
+	if (inst) {
+		res->s = int2str(inst->id, &res->len);
+	} else {
+		res->s = "";
+		res->len = 0;
+	}
+	return 0;
+}
+
