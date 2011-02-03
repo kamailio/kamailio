@@ -755,7 +755,6 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
 {
 	str rec_route= {0, 0};
 	int rt  = 0;
-	str* contact= NULL;
 	contact_body_t *b;
 	struct to_body *pto, *pfrom = NULL, TO;
 	int lexpire;
@@ -962,13 +961,11 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
 	
 	if((!scontact.s) || (scontact.len== 0))
 	{
-		contact= get_local_contact(msg);
-		if(contact== NULL)
+		if(ps_fill_local_contact(msg, &subs->local_contact)<0)
 		{
-			LM_ERR("in function get_local_contact\n");
+			LM_ERR("cannot get local contact address\n");
 			goto error;
 		}
-		subs->local_contact= *contact;
 	}
 	else
 		subs->local_contact= scontact;

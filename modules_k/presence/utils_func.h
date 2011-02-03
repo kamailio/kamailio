@@ -85,27 +85,19 @@ static inline int uandd_to_uri(str user,  str domain, str *out)
 	return 0;
 }
 
-static inline str* get_local_contact(struct sip_msg* msg)
+static inline int ps_fill_local_contact(struct sip_msg* msg, str *contact)
 {
 	str ip;
 	char* proto;
 	int port;
 	int len;
-	str* contact;
 	int plen;
 
-	contact= (str*)pkg_malloc(sizeof(str));
-	if(contact== NULL)
-	{
-		LM_ERR("No more memory\n");
-		return NULL;
-	}
 	contact->s= (char*)pkg_malloc(LCONTACT_BUF_SIZE);
 	if(contact->s== NULL)
 	{
 		LM_ERR("No more memory\n");
-		pkg_free(contact);
-		return NULL;
+		goto error;
 	}
 
 	memset(contact->s, 0, LCONTACT_BUF_SIZE);
@@ -128,18 +120,14 @@ static inline str* get_local_contact(struct sip_msg* msg)
 	else
 	{
 		LM_ERR("unsupported proto\n");
-		pkg_free(contact->s);
-		pkg_free(contact);
-		return NULL;
+		goto error;
 	}	
 	
 	ip.s= ip_addr2a(&msg->rcv.dst_ip);
 	if(ip.s== NULL)
 	{
 		LM_ERR("transforming ip_addr to ascii\n");
-		pkg_free(contact->s);
-		pkg_free(contact);
-		return NULL;
+		goto error;
 	}
 	ip.len= strlen(ip.s);
 	port = msg->rcv.dst_port;
@@ -154,25 +142,26 @@ static inline str* get_local_contact(struct sip_msg* msg)
 	if(contact->len> LCONTACT_BUF_SIZE - 21)
 	{
 		LM_ERR("buffer overflow\n");
-		pkg_free(contact->s);
-		pkg_free(contact);
-		return NULL;
+		goto error;
 
 	}	
 	len= sprintf(contact->s+contact->len, ":%d;transport=" , port);
 	if(len< 0)
 	{
 		LM_ERR("unsuccessful sprintf\n");
-		pkg_free(contact->s);
-		pkg_free(contact);
-		return NULL;
+		goto error;
 	}	
 	contact->len+= len;
 	strncpy(contact->s+ contact->len, proto, plen);
 	contact->len += plen;
 	
-	return contact;
-	
+	return 0;
+error:
+	if(contact->s!=NULL)
+		pkg_free(contact->s);
+	contact->s = 0;
+	contact->len = 0;
+	return -1;
 }
 
 //str* int_to_str(long int n);
