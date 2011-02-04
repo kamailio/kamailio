@@ -247,6 +247,7 @@ int th_mask_contact(sip_msg_t *msg)
 	struct lump* l;
 	str out;
 	str in;
+	char *p;
 	contact_t *c;
 
 	if(msg->contact==NULL) 
@@ -269,6 +270,24 @@ int th_mask_contact(sip_msg_t *msg)
 	{
 		LM_ERR("cannot encode contact uri\n");
 		return -1;
+	}
+	if(*(in.s-1)!='<')
+	{
+		/* add < > around contact uri if not there */
+		p = (char*)pkg_malloc(out.len+3);
+		if(p==NULL)
+		{
+			LM_ERR("failed to get more pkg\n");
+			pkg_free(out.s);
+			return -1;
+		}
+		*p = '<';
+		strncpy(p+1, out.s, out.len);
+		p[out.len+1] = '>';
+		p[out.len+2] = '\0';
+		pkg_free(out.s);
+		out.s = p;
+		out.len += 2;
 	}
 				
 	l=del_lump(msg, in.s-msg->buf, in.len, 0);
