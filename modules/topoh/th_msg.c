@@ -1040,7 +1040,7 @@ int th_route_direction(sip_msg_t *msg)
 
 int th_skip_msg(sip_msg_t *msg)
 {
-	if (!get_cseq(msg)) {
+	if (msg->cseq==NULL || get_cseq(msg)==NULL) {
 		LM_WARN("Invalid/Unparsed CSeq in message. Skipping.");
 		return 1;
 	}

@@ -211,7 +211,10 @@ int th_msg_received(void *data)
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
 
-	th_prepare_msg(&msg);
+	if(th_prepare_msg(&msg)!=0)
+	{
+		goto done;
+	}
 
 	if(th_skip_msg(&msg))
 	{
@@ -293,7 +296,10 @@ int th_msg_sent(void *data)
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
 
-	th_prepare_msg(&msg);
+	if(th_prepare_msg(&msg)!=0)
+	{
+		goto done;
+	}
 
 	if(th_skip_msg(&msg))
 	{
