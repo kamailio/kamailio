@@ -909,6 +909,12 @@ void free_faked_req(struct sip_msg *faked_req, struct cell *t)
 			hdr->parsed = 0;
 		}
 	}
+	/* free parsed body added by failure handlers */
+	if (faked_req->body) {
+		if(faked_req->body->free)
+			faked_req->body->free(&faked_req->body);
+		faked_req->body = 0;
+	}
 }
 
 
