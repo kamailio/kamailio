@@ -264,6 +264,10 @@ if(is_present_hf("Authorization"))
        expire.
      * dbtable - name of database to be loaded at startup in hash table.
        If empty or missing, no data will be loaded.
+     * dbmode - if set to 1, the content of hash table is written to
+       database table when the SIP server is stopped (i.e., ensure
+       persistency over restarts). Default value is 0 (no write back to db
+       table).
 
    Default value is NULL.
 
