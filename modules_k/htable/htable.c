@@ -212,6 +212,18 @@ static int child_init(int rank)
  */
 static void destroy(void)
 {
+	/* sync back to db */
+	if(ht_db_url.len>0)
+	{
+		if(ht_db_init_con()==0)
+		{
+			if(ht_db_open_con()==0)
+			{
+				ht_db_sync_tables();
+				ht_db_close_con();
+			}
+		}
+	}
 	ht_destroy();
 }
 

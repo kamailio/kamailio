@@ -117,7 +117,7 @@ ht_t* ht_get_table(str *name)
 	return NULL;
 }
 
-int ht_pkg_init(str *name, int autoexp, str *dbtable, int size)
+int ht_pkg_init(str *name, int autoexp, str *dbtable, int size, int dbmode)
 {
 	unsigned int htid;
 	ht_t *ht;
@@ -155,6 +155,7 @@ int ht_pkg_init(str *name, int autoexp, str *dbtable, int size)
 	ht->name = *name;
 	if(dbtable!=NULL && dbtable->len>0)
 		ht->dbtable = *dbtable;
+	ht->dbmode = dbmode;
 
 	ht->next = _ht_pkg_root;
 	_ht_pkg_root = ht;
@@ -516,6 +517,7 @@ int ht_table_spec(char *spec)
 	unsigned int autoexpire = 0;
 	unsigned int size = 4;
 	int type = 0;
+	unsigned int dbmode = 0;
 	str in;
 	str tok;
 	char *p;
@@ -570,6 +572,8 @@ next_token:
 		type = 2;
 	else if(tok.len==4 && strncmp(tok.s, "size", 4)==0)
 		type = 3;
+	else if(tok.len==6 && strncmp(tok.s, "dbmode", 6)==0)
+		type = 4;
 	else goto error;
 
 	if(*p!='=')
@@ -613,6 +617,12 @@ next_token:
 			LM_DBG("htable [%.*s] - size [%u]\n", name.len, name.s,
 					size);
 			break;
+		case 4:
+			if(str2int(&tok, &dbmode)!=0)
+				goto error;
+			LM_DBG("htable [%.*s] - dbmode [%u]\n", name.len, name.s,
+					dbmode);
+			break;
 	}
 	while(p<in.s+in.len && (*p==';' || *p==' ' || *p=='\t'
 				|| *p=='\n' || *p=='\r'))
@@ -620,7 +630,7 @@ next_token:
 	if(p<in.s+in.len)
 		goto next_token;
 
-	return ht_pkg_init(&name, autoexpire, &dbtable, size);
+	return ht_pkg_init(&name, autoexpire, &dbtable, size, dbmode);
 
 error:
 	LM_ERR("invalid htable parameter [%.*s] at [%d]\n", in.len, in.s,
@@ -642,6 +652,28 @@ int ht_db_load_tables(void)
 					ht->name.len, ht->name.s);
 			if(ht_db_load_table(ht, &ht->dbtable, 0)!=0)
 				return -1;
+		}
+		ht = ht->next;
+	}
+	return 0;
+}
+
+int ht_db_sync_tables(void)
+{
+	ht_t *ht;
+
+	ht = _ht_root;
+	while(ht)
+	{
+		if(ht->dbtable.len>0 && ht->dbmode!=0)
+		{
+			LM_DBG("sync db table [%.*s] from ht [%.*s]\n",
+					ht->dbtable.len, ht->dbtable.s,
+					ht->name.len, ht->name.s);
+			ht_db_delete_records(&ht->dbtable);
+			if(ht_db_save_table(ht, &ht->dbtable)!=0)
+				LM_ERR("failed sync'ing hash table [%.*s] to db\n",
+					ht->name.len, ht->name.s);
 		}
 		ht = ht->next;
 	}

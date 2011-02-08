@@ -38,5 +38,7 @@ int ht_db_init_con(void);
 int ht_db_open_con(void);
 int ht_db_close_con(void);
 int ht_db_load_table(ht_t *ht, str *dbtable, int mode);
+int ht_db_save_table(ht_t *ht, str *dbtable);
+int ht_db_delete_records(str *dbtable);
 
 #endif

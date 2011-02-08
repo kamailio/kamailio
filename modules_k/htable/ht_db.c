@@ -43,6 +43,9 @@ str ht_db_vtype_column  = str_init("value_type");
 str ht_db_value_column  = str_init("key_value");
 int ht_fetch_rows = 100;
 
+/**
+ * init module parameters
+ */
 int ht_db_init_params(void)
 {
 	if(ht_db_url.s==0)
@@ -62,6 +65,9 @@ int ht_db_init_params(void)
 	return 0;
 }
 
+/**
+ * initialize database connection
+ */
 int ht_db_init_con(void)
 {
 	/* binding to DB module */
@@ -79,6 +85,10 @@ int ht_db_init_con(void)
 	}
 	return 0;
 }
+
+/**
+ * open database connection
+ */
 int ht_db_open_con(void)
 {
 	/* open a connection with the database */
@@ -93,6 +103,9 @@ int ht_db_open_con(void)
 	return 0;
 }
 
+/**
+ * close database connection
+ */
 int ht_db_close_con(void)
 {
 	if (ht_db_con!=NULL && ht_dbf.close!=NULL)
@@ -104,6 +117,9 @@ int ht_db_close_con(void)
 #define HT_NAME_BUF_SIZE	256
 static char ht_name_buf[HT_NAME_BUF_SIZE];
 
+/**
+ * load content of a db table in hash table
+ */
 int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 {
 	db_key_t db_cols[4] = {&ht_db_name_column, &ht_db_ktype_column,
@@ -290,3 +306,94 @@ error:
 
 }
 
+/**
+ * save hash table content back to database
+ */
+int ht_db_save_table(ht_t *ht, str *dbtable)
+{
+	db_key_t db_cols[4] = {&ht_db_name_column, &ht_db_ktype_column,
+		&ht_db_vtype_column, &ht_db_value_column};
+	db_val_t db_vals[4];
+	ht_cell_t *it;
+	str tmp;
+	int i;
+
+	if(ht_db_con==NULL)
+	{
+		LM_ERR("no db connection\n");
+		return -1;
+	}
+
+	if (ht_dbf.use_table(ht_db_con, dbtable) < 0)
+	{
+		LM_ERR("failed to use_table\n");
+		return -1;
+	}
+
+	LM_DBG("save the content of hash table [%.*s] to database in [%.*s]\n",
+			ht->name.len, ht->name.s, dbtable->len, dbtable->s);
+
+	for(i=0; i<ht->htsize; i++)
+	{
+		lock_get(&ht->entries[i].lock);
+		it = ht->entries[i].first;
+		while(it)
+		{
+			db_vals[0].type = DB1_STR;
+			db_vals[0].nul  = 0;
+			db_vals[0].val.str_val.s   = it->name.s;
+			db_vals[0].val.str_val.len = it->name.len;
+
+			db_vals[1].type = DB1_INT;
+			db_vals[1].nul = 0;
+			db_vals[1].val.int_val = 0;
+
+			db_vals[2].type = DB1_INT;
+			db_vals[2].nul = 0;
+			db_vals[2].val.int_val = 0;
+
+			db_vals[3].type = DB1_STR;
+			db_vals[3].nul  = 0;
+			if(it->flags&AVP_VAL_STR) {
+				db_vals[3].val.str_val.s   = it->value.s.s;
+				db_vals[3].val.str_val.len = it->value.s.len;
+			} else {
+				tmp.s = sint2str((long)it->value.n, &tmp.len);
+				db_vals[3].val.str_val.s   = tmp.s;
+				db_vals[3].val.str_val.len = tmp.len;
+			}
+			if(ht_dbf.insert(ht_db_con, db_cols, db_vals, 4) < 0)
+			{
+				LM_ERR("failed to store key [%.*s] in table [%.*s]\n",
+						it->name.len, it->name.s,
+						dbtable->len, dbtable->s);
+			}
+			it = it->next;
+		}
+	}
+	return 0;
+}
+
+
+/**
+ * delete databse table
+ */
+int ht_db_delete_records(str *dbtable)
+{
+	if(ht_db_con==NULL)
+	{
+		LM_ERR("no db connection\n");
+		return -1;
+	}
+
+	if (ht_dbf.use_table(ht_db_con, dbtable) < 0)
+	{
+		LM_ERR("failed to use_table\n");
+		return -1;
+	}
+
+	if(ht_dbf.delete(ht_db_con, NULL, NULL, NULL, 0) < 0)
+		LM_ERR("failed to detele db records in [%.*s]\n",
+				dbtable->len, dbtable->s);
+	return 0;
+}
