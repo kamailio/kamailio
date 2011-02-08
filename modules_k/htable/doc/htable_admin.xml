@@ -308,7 +308,7 @@ modparam("htable", "db_url", "mysql://openser:openserrw@localhost/openser")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>key_name</varname> parameter</title>
+		<title>Set <varname>key_name_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("htable", "key_name_column", "kname")
@@ -327,7 +327,7 @@ modparam("htable", "key_name_column", "kname")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>key_name</varname> parameter</title>
+		<title>Set <varname>key_type_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("htable", "key_type_column", "ktype")
@@ -346,10 +346,10 @@ modparam("htable", "key_type_column", "ktype")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>value_type</varname> parameter</title>
+		<title>Set <varname>value_type_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("htable", "value_type", "vtype")
+modparam("htable", "value_type_column", "vtype")
 ...
 </programlisting>
 		</example>
@@ -365,10 +365,10 @@ modparam("htable", "value_type", "vtype")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>key_value</varname> parameter</title>
+		<title>Set <varname>key_value_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("htable", "key_value", "kvalue")
+modparam("htable", "key_value_column", "kvalue")
 ...
 </programlisting>
 		</example>
