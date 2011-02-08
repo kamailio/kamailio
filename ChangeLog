@@ -1,4 +1,643 @@
-===================== 2010-12-02 Version 3.1.1 Released =====================
+===================== 2010-02-08 Version 3.1.2 Released =====================
+
+===================== Changes Since Version 3.1.1 ===========================
+
+commit 7dd78e9455394f7279ce9f598b062febb1765a4f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 8 18:34:31 2011 +0100
+
+    Makefile: version set to 3.1.2
+
+commit ce67a1bad7ca3e7964fba33eb6537e2e4ff3666a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 29 20:51:07 2011 +0100
+
+    acc: fixed typo in example
+    
+    - updated the route types where acc_*_request() can be used
+
+commit 31b9e07399fc19c7c297a46e6411859348ad0c3e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 29 20:47:18 2011 +0100
+
+    acc: take SIP method from CSeq header
+    
+    - safe usage of acc_*_request() for requests & replies
+    (cherry picked from commit 7866c516bd3bf5c6befc8d978d02bf34ab338e3a)
+
+commit 68a3740e3f9fcabd944d295f2e6e03cda172e5e9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 29 03:11:46 2011 +0100
+
+    core: check for empty port values
+    
+    - if setport has empty string parameter skip adding ':'
+    (cherry picked from commit d260b2cba84e1699fe9b2c0860de91e018e03bca)
+
+commit 5fbb96cc6e0bfc8135b8385dcd337e8bb0e60c0a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 4 19:27:10 2011 +0100
+
+    topoh: add angle brackets around contact uri
+    
+    - if there are no angle brackets around initial contact uri, add for
+      encoded uri to keep URI parameters properly
+    (cherry picked from commit 66f80a68a48835b1634da04ead4deadeb89ce7f7)
+
+commit b374c7383ed711fb12e545e1de9cecd978603fac
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Feb 5 07:08:53 2011 +0100
+
+    tm: free parsed body for faked requests
+    
+    - if sdp body was parsed in a failure route, the structure was left
+      uncleared
+    - reported by Bayan Towfiq, credits for troubleshooting access to live
+      server
+    - credits also to Ovidiu Sas for assistance with sdp parser
+    (cherry picked from commit 7a1a5ffff6a6dbf89f42ccb9f15d588d8bfe62d0)
+
+commit eb969ad69d341a851e9ee89c73c5006237329f04
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 4 18:26:37 2011 +0100
+
+    topoh: more safety checks for bad cseq
+    (cherry picked from commit 7f9b429075fa870b6bfdc4fc1a08c396f6c8eeb5)
+
+commit 09eae6628bcdc060db79af875e8b912460bf5f2e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 3 23:54:13 2011 +0100
+
+    presence(k): avoid str* alloc for local contact
+    
+    - it is not used further an leads to memleak
+    (cherry picked from commit 4462757813b146e2ca4018b1a93636115e2408f6)
+
+commit 604db10f6d8f952ab0989f159f62ddab77059e1f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 29 00:36:52 2011 +0100
+
+    textops(k): handle no match for subst transformation
+    (cherry picked from commit c0f87c06f60e2208f5e4421e9002f331cacb8a27)
+
+commit 58e87ff7de98baccf70b1ca8899b6b7bf59dab2f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 28 17:20:19 2011 +0100
+
+    snmpstats: support of OPTIONS advertised also for siputils module
+    (cherry picked from commit 9d5bae90cdd40e05e6aaff488a5c86f7241aa261)
+
+commit 16fa2cdd99515160ebe4133f26dcbac584021821
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 28 16:46:47 2011 +0100
+
+    snmpstats: moved declaration of vars in .c file
+    (cherry picked from commit 8c26d7221cabe3c7c5b2f218b842c5886d830966)
+
+commit e78f8c30935aa61ba99ac60af9c26286da054076
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 28 09:26:10 2011 +0100
+
+    snmpstats: return from agentx spawning
+    (cherry picked from commit 97a616f1e34ef3e2631f2a67e9c36cf3516a0441)
+
+commit cf783925a78100faeff4199a201ad46e7b58247c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 28 09:16:05 2011 +0100
+
+    snmpstats: start the agentx process
+    (cherry picked from commit 41e163ccd7ea6b52886e67928d453f454a239208)
+
+commit c8611d41efd19d0c8f146cb2e2121c380c644663
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Fri Jan 28 15:29:45 2011 +0100
+
+    core: small spelling fix in log message
+    (cherry picked from commit 536e5901c83b4c9b8d6aff7dd32e2fe0fefe6d0b)
+
+commit aaa605dff829c2924a7324ec9d487a58843e5db1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 28 00:02:47 2011 +0100
+
+    core: print cfg line for failed eval expressions
+    (cherry picked from commit bf7cacc549e18d483a892c208cd27c9263b86c49)
+
+commit cd7dfe3e6ad90356c4fbf22edc399cdbf9ff2ecd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 27 21:33:13 2011 +0100
+
+    sanity: print broken uri if failed to parse
+    (cherry picked from commit f3217b68093f82da411b6870eaabeaba9e229e0c)
+
+commit 67785434ca2caaea539578a584a278d861dadd31
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 19 10:30:29 2011 +0100
+
+    kex: fix compile warning on 64b
+    (cherry picked from commit 3fac57bc2ba9ed5239af12a350841b78d8c4717a)
+
+commit 021ae26451bcb80d817f6ef069a77c1830625782
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 18 20:16:31 2011 +0100
+
+    permissions(k): do not check db con in child init
+    
+    - proper connection is returned by comparison of pids
+    (cherry picked from commit be92c6713c2b7c7cb04320758a346ba6a1324982)
+
+commit 98fda6224ba218de2badbc40ea9c0de4e8f9a208
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon Jan 17 18:47:44 2011 +0100
+
+    rls: fix small typo, reported from Klaus in FS#11
+    (cherry picked from commit 47029324eb780242b5c2bda9d707bd5396dd1278)
+
+commit 26a3bb66c0f0f2c640a536df10f28df1a28a9ccb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 15 12:34:11 2011 +0100
+
+    dispatcher(k): don't safety check db con in child init
+    
+    - proper db connection is returned based on pid condition
+    (cherry picked from commit 0fa5e3acc651c7659fb0d55f03f0d23aade1dad1)
+
+commit 8aafb847ed046848b6713785ff4fb59070a0467e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 15 12:25:45 2011 +0100
+
+    pdt(k): don't safety check the db con in child init
+    
+    - proper db connection is returned based on pid condition
+    (cherry picked from commit 6da5a7a363590b4830d841125cb7e354ec376d10)
+
+commit 76a4dc1731034132b1651dc377bc34575b7ab057
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 15 12:22:45 2011 +0100
+
+    mtree: don't safety check for db con in mod child
+    
+    - proper connection will be returned based on pid condition
+    (cherry picked from commit 11b19d2f5f471bd151bfc47e82f716526118e834)
+
+commit a0d376d85aae2f6e46e381a01fb85c5830250d4d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 13 11:20:07 2011 +0100
+
+    snmpstats: fixed faulty allocation of snmp stats array
+    
+    - the size of struct was used while the pointer to that struct was in
+      the array
+    - reported by Paul Pankhurst
+    (cherry picked from commit 52ce2349234da4b82bff28eed1bb89baad645a96)
+
+commit cc6858ab7366ae07cd108d40819695f03456669e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 11 17:00:38 2011 +0100
+
+    dialog(k): fix db connection conflict after the last backports
+    
+    - reported by Phillman25 Kyriacou
+    (cherry picked from commit e392a83f7608ae0967d22d23006748fe8f09cabf)
+
+commit b3551631dfb2a72611ba8f62e0f85d09598d9acf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 10 22:44:31 2011 +0100
+
+    srdb1: extended warning with PIDs of conflicting connections
+    
+    - troubleshooting purposes
+    (cherry picked from commit db384b843cbcbbe8a42ca8ab3b36b874042fe00e)
+
+commit 2c33979528969e43f7366c7cd6470b4f03e25440
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Jan 6 11:14:14 2011 +0200
+
+    modules/enum: fixed access to service parameter in enum_query.
+    (cherry picked from commit 9f116e23d8b46b5470dc02f5bf731b61c7516fd8)
+
+commit 5fe41fc280a0cd5680c754867f495d4f193f94c0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 7 23:25:10 2011 +0100
+
+    uac_redirect: use the flag for parsing contact header
+    
+    - header type was used instead
+    (cherry picked from commit 4fc4ceb5495486ff1313c631d34a3bc04b792895)
+
+commit 7a78111d3c3a16ec32d698bea367da1566903dfb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 5 20:00:49 2011 +0100
+
+    msilo(k): simplified getting of From/To
+    (cherry picked from commit c8e8193d3d5d933445afbd636288074c1b277945)
+
+commit 01b11fa9c2a032e0e9745956f71f1bb3ce340c21
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 5 19:52:27 2011 +0100
+
+    rls(k): module polishing
+    
+    - optimiezed error checking for broken sip requests
+    - internal naming changes to avoid object conflicts
+    - query for rls services documents (reported by Klaus Darilion)
+    (cherry picked from commit 8d9f412ab0b8cdc19a00e8549722326f4b368cb4)
+
+commit b7f6d47058ab5f42617f98732ed7f1428fa6e021
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 5 18:55:54 2011 +0100
+
+    core: defines to return parsed uri in From and To
+    (cherry picked from commit 8016597dbdb1e1aa03576c537a140c81cdc8beeb)
+
+commit e4b1dd72ae5afb0cdac78f75f92964382711a35b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 5 16:23:44 2011 +0100
+
+    core: parse_to_header() moved to parser/parse_to.{c,h}
+    
+    - more convenient way of testing the validity of To header
+    (cherry picked from commit 10e4fcf8a75208dc934f9cbc821f7c081e6c4994)
+
+commit eab6b8a69a17131f0827f88b093f1a78f9c07d2b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 5 15:24:02 2011 +0100
+
+    rls(k): control loading db subs
+    
+    - parameter that can be used to control the db load from config
+    (cherry picked from commit 25d8ec8b5962b3193b37186b06be5683e4a22fda)
+
+commit 0a69c6b9aa0037e014a710043d6e258188e28c2b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 5 15:11:39 2011 +0100
+
+    rls(k): fixed double-quotes wrong position
+    
+    - reported by Klaus Darilion
+    (cherry picked from commit 7e01915b757da740d7fff31ba1a25c4aa5a96908)
+
+commit 47b7207587e2af9262a68a539549589a6ed207d9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 5 15:11:08 2011 +0100
+
+    kcore: extended supported parser with eventlist
+    (cherry picked from commit 6baa261b6494736034af8f5b90446237500eee79)
+
+commit 622c16f4c35e15f8d3889f25163d96b84eec8730
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 5 13:17:26 2011 +0100
+
+    pkg/deb(k): removed rls from excluded list
+    
+    - patch by Klaus Darilion
+    (cherry picked from commit 5d205c718032511a0cd1d29830bd0a0e9a0c8e70)
+
+commit 0cfbb69a2324985b20d2814e3e2b406bd29e14d7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 5 13:15:32 2011 +0100
+
+    xcap_server: fix len for 'uri' comparison
+    
+    - patch by Klaus Darilion
+    (cherry picked from commit 9f2919ad77a16787f59a7f99c98597fb0176806c)
+
+commit 6dbcb60a3514f5874246d6da29d2732fd8d0afbd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 5 12:59:41 2011 +0100
+
+    rls(k): documented server_address parameter
+    
+    - patch by Klaus Darilion
+    (cherry picked from commit 6d17c7421464a85ba5cf10f8c52d868fca5d3f43)
+
+commit bf92c377b7c3595c2c6337f134c6364db5554f62
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 5 12:47:37 2011 +0100
+
+    rls(k): use server_address paramter as contact in reply
+    
+    - server_address was just defined as parameter, but not used at all
+    - server_address defines the rls server address to be set in Contact
+      header of 200 replies. It has to be a valid SIP URI
+    - fix cseq stale check
+    - remove Max-Forward header because it is automatically added and use
+      Suppoted instead of Support for header name with supported events
+    - patch by Klaus Darilion
+    (cherry picked from commit 436b9532e0bdfd115705a6ae5300aa7b2c1729fe)
+
+commit 21b0e85c163638ab1b1d409923fbd75a36a3b606
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 5 12:45:58 2011 +0100
+
+    rls(k): added CRLF for Subscription-State header
+    
+    - for the case of subscrition termination on timeout, the header was
+      missing CRLF to its end
+    - patch by Klaus Darilion
+    (cherry picked from commit 7925ae1a9ae6083fcdd04249eefe974e2a5f6e8f)
+
+commit cff248aa478417749ca4f96eb317602eeac0b53e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 5 11:19:49 2011 +0100
+
+    rls(k): documented outbound_proxy parameter
+    (cherry picked from commit 8654b01c184d41da019a9e80ecfbca9da8f882ce)
+
+commit 4a5829a8ba5422598e11171885f398ccde2f7fd8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 5 11:15:28 2011 +0100
+
+    rls(k): added outbound_proxy parameter
+    
+    - set SIP uri where to send subscriptions
+    (cherry picked from commit aabeca534aebe7953b63884db9bf58e176ce5a6c)
+
+commit 009cd6c5d4a8c375a3e9935fdb5fc09aaf130692
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 4 00:43:08 2011 +0100
+
+    db_flatstore: skip child init for proc init rank
+    (cherry picked from commit ef2906d5036dd48320702285f6390e9e688a292a)
+
+commit bca50987d8e05a5e7a62ee035f113af360372eae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 4 00:39:58 2011 +0100
+
+    db_flatstore: use PROC_MIN to compute process uid
+    
+    - PROC_TCP_MAIN is no longer the lowerest and can produce overlappings
+    (cherry picked from commit 4727a534f767e6f2422dc58bb22bbf266408874c)
+
+commit e1f8647530c2a45cb3522b7d80e63656822d6a61
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 4 00:29:16 2011 +0100
+
+    pdb: skip child init for proc init and tcp main
+    (cherry picked from commit 0f376a2589b4a11a6829ca1bdf052cf6126851bd)
+
+commit d2cf07354a694611a60832d484975e9b05b6af84
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 4 00:25:20 2011 +0100
+
+    matrix: don't do db init for rank==proc_init and tcp main
+    (cherry picked from commit 24731c59cd9dcb0d1c567821ffdfb1860d4def9c)
+
+commit fbee5125e1faa2e405e8be8bdf57ae2763f6880f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 2 19:56:40 2011 +0100
+
+    dialog(k): open db connection for main process in db delayed mode
+    
+    - used at shutdown to write to db
+    (cherry picked from commit 7c530f69da7368f87e78d7a3ad1f3439005402a5)
+
+commit cd6b00481d45bbf3781e1415ff6b437c2baba28f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 2 19:44:18 2011 +0100
+
+    pdt(k): mi child init function name updated
+    
+    - child_init => mi_child_init
+    - mod_child_init => child_init
+    (cherry picked from commit 8cd8d0e18a8ead373229ce413ad7cd7f827a98e5)
+
+commit 67f2b49cfdfef2488b01bb611c14be0bd5532daa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 2 19:39:11 2011 +0100
+
+    mtree: skip db init for special ranks
+    (cherry picked from commit 517df28fc695b047d1f7f3cd4376a5f9240b7906)
+
+commit 89e65a443ed52dc9cc7e99e49b156f66044deeb4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 31 00:40:32 2010 +0100
+
+    xhttp: safety checks for null parameter values
+    (cherry picked from commit b5866451f323aa892bb48ba86424d6a45d8108b5)
+
+commit 3dafb10cffdf06d12df6e0a410bb01ca9148debd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 31 00:00:26 2010 +0100
+
+    dialplan: specific reply for translation failure
+    
+    - 404 no translation returned if dp_translate MI command fails to do
+      dialplan translate
+    - added extra debug message
+    (cherry picked from commit 4abe2eec5305de4157dc2d0d5dd9511f43c77bf2)
+
+commit 0f33a59c6811b4cf53d6917931be908a0c9a0b5b
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Tue Dec 21 14:38:45 2010 +0100
+
+    core: fix ignored force_rport
+    
+    The global force_rport config setting (not the force_rport()
+    script function), was ignored in some cases (e.g. tm & sl).
+    
+    Reported-by: Tomas Mandys  tomas.mandys iptel org
+    (cherry picked from commit 70b2fe02a634ed2fd020eab27cbc8e7f676289bf)
+
+commit 17566488fcc1d04832f690f6ef55d172f904a25e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Dec 19 11:56:49 2010 +0100
+
+    acc(k): take r-uri from winning branch for missed call acc
+    
+    - only if the branch was relayed, otherwise uac struct might be
+      unfinished due to drop call in config. Use r-uri from uas struct
+      otherwise
+    - reported by Juha Henanen
+    (cherry picked from commit ade20f7c8c26e732b7e7ad89a6d2c22b71228f60)
+
+commit 03238352349ffdd8f81c900202330d3702230e67
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Dec 18 00:34:54 2010 +0100
+
+    dialplan: don't print PV name in replacement
+    
+    - reported by Andreas Granig
+    (cherry picked from commit eb005b74c1d47d215b17ac395efafe56c14ec295)
+
+commit 2d9c704acf8eeb1c2a6473cf3e815378512eca37
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 8 00:20:44 2010 +0100
+
+    uac(k): stop trying to re-auth if first attempt fails
+    
+    - don't do cascade authentication if server keeps sending 401 for new
+      attepts
+    - reported by Bernhard Suttner, part of FS#108
+    (cherry picked from commit 9ebbbf3f53d88729add23980695ff84dace90342)
+
+commit d191397dd07a90a5865aef2388d7ae8271495344
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 6 10:23:54 2010 +0100
+
+    drouting: added note about dr_gateways
+    
+    - it can link to dr_gw_lists with '#'
+    - reported by Marc Cardinal, FS#96
+    (cherry picked from commit 07959c8330861275ffe1a611805e7eadbf7799c1)
+
+commit 59bd63727f1a7654a0a0000b1f12e46819ad4562
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 6 00:05:46 2010 +0100
+
+    pv: $snd(id) broken in $sndto(id) and $sndfrom(id)
+    
+    - $snd(id) is aliased to $sndto(id)
+    - $sndto(id) points to next hop address
+    - $sndfrom(id) points to local socket to be used for sending
+    (cherry picked from commit f6e2325aa6770840c25dbb64afd405f73077fc79)
+
+commit e6def308384872ce2cd98851a811df64b7b4fa9d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Dec 5 22:33:02 2010 +0100
+
+    db_berkeley: updated module name
+    
+    - module name was set to db_bdb upon integration of k and s version,
+      instead of module path name
+    - set now to db_berkeley
+    - reported by stas - FS#106
+    (cherry picked from commit 610126b748b3f35b7bcdfe784553f9f88f8bfdd9)
+
+commit 9ec1efcf245dfa7d802d0356f8de70706e645bc5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 3 10:59:05 2010 +0100
+
+    uac: safety checks for empty values in uacreg
+    
+    - the values in uacreg table must not be empty
+    - reported by Bernhard Suttner
+    (cherry picked from commit dd663a733845510a9ee0557b8d49f058c77ef02c)
+
+commit 0c81064473d138c87665e536d4dff7b6918cd944
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 3 10:45:00 2010 +0100
+
+    dispatcher(k): fixed use of use_default parameter
+    
+    - when there was a single destination in destination set and it was in
+      inactive state, then having parameter use_default=1 caused a divion by
+      0 while atteptimpting to look for active destaintaion
+    - reported by Eric Hiller
+    (cherry picked from commit 0f5e21c668e46492fb9f9ec69e5b5aafe41bd272)
+
+commit d173cc2dab95dba6ededdaa352bf1e2bde1faa0f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 1 23:30:34 2010 +0100
+
+    srdb1: keep PID per DB connection
+    
+    - print warning when PID mismatches - it is cross-process shared DB
+      connection
+    - initial patch by Robert Verspuy
+    (cherry picked from commit f138cce2c0968872f26538983e06a128a1b41344)
+
+commit 8d122fe2f57775079c17e68159e1a6d2001d6194
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 2 16:10:40 2011 +0100
+
+    dialplan: fix matching string comparison op
+    
+    - the return code was tested as for match of regexp, which led to
+      mismatches for str comparison
+    - credits to Jordan Levy
+    (cherry picked from commit 88f03cb2cf50ee0b09fda8b3c4c4651553ddd176)
+
+commit bf6caa0d4bbe81b452d19b75801608408c694071
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jan 2 16:00:13 2011 +0100
+
+    dialplan: use size_t to get the size of compiled pcre
+    
+    - it caused crash on 64b since size was declared as int and
+      pcre_fullinfo() expects size_t (on 32b is the same struct size)
+    - reported by Javier Gallart and Bayan Towfiq
+    - credits to Bayan for provinding testing environment and
+      troubleshooting assistance, closes FS#109
+    (cherry picked from commit 12aebbf1056a3b51e349de6e69e2aca1801905a3)
+
+commit 3b1f81896b36cb98f3a98c2c63ca64f80bc2bd65
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Tue Dec 28 13:44:53 2010 +0100
+
+    modules_k/pv: Fix microsecond respresentation of $TV(Sn)
+    
+    Make sure <100000us isn't off by multiple powers of 10.
+    eg make sure 5us isn't printed as 0.5 sec by padding with 0's
+    (cherry picked from commit a4545d8d23d9de3c6cf18329a822b677d9527047)
+
+commit e566d359f308e9c0babf63f8b7a4d27250b99743
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 28 11:38:57 2010 +0100
+
+    ldap(k): connect to server for negative ranks
+    
+    - there are some processes with negative rank that need connection to
+      ldap server, like timers
+    - reported by Pan Christensen
+    (cherry picked from commit 6faec77af3e839314ce9de59b8413e73f0266c25)
+
+commit 62756d036686a511092c9e8bdd39c927f97ce118
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 28 11:02:38 2010 +0100
+
+    kamctl: removed db_berkeley lcr obsolete tables
+    (cherry picked from commit 8a2c200bdf22b27d01389303b4677a2b14510a81)
+
+commit 8442fb34632f0850fe2ce34b63157b74b197e5e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 28 11:00:59 2010 +0100
+
+    kamctl: added db_berkeley table definitions for lcr
+    
+    - reported by Noa Resare
+    (cherry picked from commit c6307d733d4d346e29cb20bacca1080ba3805495)
+
+commit ed97fe5f6e857ab87cb494d649057d02e7f68896
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 28 10:59:09 2010 +0100
+
+    lcr: removed obsoleted db tables
+    (cherry picked from commit 3a21869fec8b0fdb202721485bd2fb10a6a3f49b)
+
+commit 553190896abed932a42b5fe1ad8e012f5bdad467
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 27 13:54:55 2010 +0100
+
+    db_text(k): add lcr tables def files
+    (cherry picked from commit 175acb78028b6f7eb3a06dc306f097e98d72be40)
+
+commit 46eb7cc5e7ed341111f5cefd667b97f98d73591e
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Dec 16 10:59:56 2010 +0200
+
+    modules/lcr: do not try to use rule target if its gw has been disabled.
+
+commit 1157f9bdf2e485409145f4911fee91dba8300dc6
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Mon Dec 13 18:21:51 2010 +0200
+
+    modules/lcr: fixed adding of ;transport parameter
+
+commit 88bda825581a919778eb6f85e0a7bf6b04ede630
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Sat Dec 4 09:22:15 2010 +0100
+
+    pkg/debian: Fix bad changelog.
+      * Prevents dpkg-parsechangelog not parsing the correct version and generating bad versiones packages.
+
+commit 22b18eefa163392ab37c6274d1631824908a4b47
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Fri Dec 3 16:38:01 2010 +0100
+
+    pkg debian
+      * Update version to 3.1.1
+      * Install general ChangeLog instead of Debian's one.
+
 
 ===================== Changes Since Version 3.1.0 ===========================
 
