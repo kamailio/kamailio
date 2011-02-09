@@ -793,26 +793,9 @@ static int comp_gws(const void *_g1, const void *_g2)
 }
 
 
-/*
- * Check if ip_addr/grp_id of gateway is unique.
+/* 
+ * Insert gw info into index i or gws table
  */
-static int gw_unique(const struct gw_info *gws, const unsigned int count,
-		     const unsigned int ip_addr, const unsigned int port,
-		     char *hostname, unsigned int hostname_len)
-{
-    unsigned int i;
-
-    for (i = 1; i <= count; i++) {
-	if ((gws[i].ip_addr == ip_addr) &&
-	    (gws[i].port == port) &&
-	    (gws[i].hostname_len == hostname_len) &&
-	    (strncasecmp(gws[i].hostname, hostname, hostname_len) == 0)) {
-	    return 0;
-	}
-    }
-    return 1;
-}
-
 static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int gw_id,
 		     char *gw_name, unsigned int gw_name_len,
 		     unsigned int scheme, unsigned int ip_addr,
@@ -823,11 +806,6 @@ static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int gw_id,
 		     unsigned int prefix_len, char *tag, unsigned int tag_len,
 		     unsigned int flags, unsigned int defunct_until)
 {
-    if (gw_unique(gws, i - 1, ip_addr, port, hostname, hostname_len) == 0) {
-	LM_ERR("gw <%s, %u, %.*s> is not unique\n", ip_string, port,
-	       hostname_len, hostname);
-	return 0;
-    }
     gws[i].gw_id = gw_id;
     if (gw_name_len) memcpy(&(gws[i].gw_name[0]), gw_name, gw_name_len);
     gws[i].gw_name_len = gw_name_len;
@@ -962,7 +940,7 @@ int reload_tables()
 
     for (lcr_id = 1; lcr_id <= lcr_count_param; lcr_id++) {
 
-	/* reload rules */
+	/* Reload rules */
 
 	rules = rule_pt[0];
 	rule_hash_table_contents_free(rules);
