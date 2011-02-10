@@ -876,8 +876,8 @@ int new_add_var(str *group_name, unsigned int group_id, str *var_name,
 	cfg_add_var_t	*add_var = NULL, **add_var_p;
 	int		len;
 
-	if (type && (!var_name || !val)) {
-		LOG(L_ERR, "ERROR: new_add_var(): Missing variable/value specification\n");
+	if (type && !var_name) {
+		LOG(L_ERR, "ERROR: new_add_var(): Missing variable specification\n");
 		goto error;
 	}
 	if (type)
@@ -929,24 +929,32 @@ int new_add_var(str *group_name, unsigned int group_id, str *var_name,
 
 		case CFG_VAR_STR:
 			len = ((str *)val)->len;
-			add_var->val.s.s = (char *)pkg_malloc(sizeof(char) * len);
-			if (!add_var->val.s.s) {
-				LOG(L_ERR, "ERROR: new_add_var(): Not enough memory\n");
-				goto error;
+			if (len) {
+				add_var->val.s.s = (char *)pkg_malloc(sizeof(char) * len);
+				if (!add_var->val.s.s) {
+					LOG(L_ERR, "ERROR: new_add_var(): Not enough memory\n");
+					goto error;
+				}
+				memcpy(add_var->val.s.s, ((str *)val)->s, len);
+			} else {
+				add_var->val.s.s = NULL;
 			}
 			add_var->val.s.len = len;
-			memcpy(add_var->val.s.s, ((str *)val)->s, len);
 			break;
 
 		case CFG_VAR_STRING:
-			len = strlen((char *)val);
-			add_var->val.ch = (char *)pkg_malloc(sizeof(char) * (len + 1));
-			if (!add_var->val.ch) {
-				LOG(L_ERR, "ERROR: new_add_var(): Not enough memory\n");
-				goto error;
+			if (val) {
+				len = strlen((char *)val);
+				add_var->val.ch = (char *)pkg_malloc(sizeof(char) * (len + 1));
+				if (!add_var->val.ch) {
+					LOG(L_ERR, "ERROR: new_add_var(): Not enough memory\n");
+					goto error;
+				}
+				memcpy(add_var->val.ch, (char *)val, len);
+				add_var->val.ch[len] = '\0';
+			} else {
+				add_var->val.ch = NULL;
 			}
-			memcpy(add_var->val.ch, (char *)val, len);
-			add_var->val.ch[len] = '\0';
 			break;
 
 		default:
