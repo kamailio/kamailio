@@ -338,7 +338,6 @@ static int *rtpp_socks = 0;
 unsigned int *natping_state=0;
 
 static str timeout_socket_str = {0, 0};
-static int timeout_socket_type = 1;
 
 static cmd_export_t cmds[] = {
 	{"set_rtp_proxy_set",  (cmd_function)set_rtp_proxy_set_f,    1,
@@ -397,7 +396,6 @@ static param_export_t params[] = {
 	{"rtpproxy_retr",         INT_PARAM, &rtpproxy_retr         },
 	{"rtpproxy_tout",         INT_PARAM, &rtpproxy_tout         },
 	{"timeout_socket",    	  STR_PARAM, &timeout_socket_str.s  },
-	{"timeout_socket_type",   INT_PARAM, &timeout_socket_type   },
 	{0, 0, 0}
 };
 
@@ -1789,8 +1787,6 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 		{";", 1},	/* separator */
 		{NULL, 0},	/* medianum */
 		{" ", 1},	/* separator */
-		{NULL, 0},	/* Type of timeout-socket: 1 Kamailio-XML-RPC */
-		{" ", 1},	/* separator */
 		{NULL, 0},	/* Timeout-Socket */
 	};
 	int iovec_param_count;
@@ -2118,12 +2114,8 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 				if (to_tag.len > 0) {
 					iovec_param_count = 18;
 					if (timeout_socket_str.len > 0) {
-						iovec_param_count = 22;
-						snprintf(itoabuf_buf, sizeof itoabuf_buf, "%d", timeout_socket_type);
-						itoabuf_str.s = itoabuf_buf;
-						itoabuf_str.len = strlen(itoabuf_buf);
-						STR2IOVEC(itoabuf_str, v[19]);
-						STR2IOVEC(timeout_socket_str, v[21]);
+						iovec_param_count = 20;
+						STR2IOVEC(timeout_socket_str, v[19]);
 					}
 				} else {
 					iovec_param_count = 14;
