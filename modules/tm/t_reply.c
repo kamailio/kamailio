@@ -1042,8 +1042,11 @@ int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 			}
 			continue;
 		}
-		/* skip 'empty branches' */
-		if (!t->uac[b].request.buffer) continue;
+		/* skip 'empty branches'
+		 * An empty branch without a final response is still considered
+		 * to be a pending, incomplete branch. */
+		if ((!t->uac[b].request.buffer) && (t->uac[b].last_received>=200))
+			continue;
 		/* there is still an unfinished UAC transaction; wait now! */
 		if ( t->uac[b].last_received<200 )
 			return -2;
