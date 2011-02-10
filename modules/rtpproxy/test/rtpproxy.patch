@@ -7589,7 +7589,7 @@ index 54c1a60..1c88b99 100644
 +AC_SUBST(LIBS_XMLRPC)
  AC_OUTPUT
 diff --git a/rtpp_command.c b/rtpp_command.c
-index c5734ae..1afae6a 100644
+index c5734ae..d6072de 100644
 --- a/rtpp_command.c
 +++ b/rtpp_command.c
 @@ -69,6 +69,9 @@ struct proto_cap proto_caps[] = {
@@ -7610,22 +7610,51 @@ index c5734ae..1afae6a 100644
  
      requested_nsamples = -1;
      ia[0] = ia[1] = NULL;
-@@ -965,17 +969,30 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
+@@ -468,7 +472,7 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
+     }
+     call_id = argv[1];
+     if (op == UPDATE || op == LOOKUP || op == PLAY) {
+-	max_argc = (op == UPDATE ? 8 : 6);
++	max_argc = (op == PLAY ? 6 : 8);
+ 	if (argc < 5 || argc > max_argc) {
+ 	    rtpp_log_write(RTPP_LOG_ERR, cf->stable.glog, "command syntax error");
+ 	    reply_error(&cf->stable, controlfd, &raddr, rlen, cookie, 4);
+@@ -478,7 +482,7 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
+ 	to_tag = argv[5];
+ 	if (op == PLAY && argv[0][1] != '\0')
+ 	    playcount = atoi(argv[0] + 1);
+-	if (op == UPDATE && argc > 6) {
++	if (op != PLAY && argc > 6) {
+ 	    socket_name_u = argv[6];
+ 	    if (strncmp("unix:", socket_name_u, 5) == 0)
+ 		socket_name_u += 5;
+@@ -965,25 +969,39 @@ handle_command(struct cfg *cf, int controlfd, double dtime)
      }
  
      pthread_mutex_lock(&cf->glock);
-+
-     if (op == UPDATE) {
+-    if (op == UPDATE) {
 -	if (cf->timeout_handler->socket_name == NULL && socket_name_u != NULL)
 -	    rtpp_log_write(RTPP_LOG_ERR, spa->log, "must permit notification socket with -n");
++
++    if ((op == UPDATE) || (op == LOOKUP)){
  	if (spa->timeout_data.notify_tag != NULL) {
  	    free(spa->timeout_data.notify_tag);
  	    spa->timeout_data.notify_tag = NULL;
  	}
- 	if (cf->timeout_handler->socket_name != NULL && socket_name_u != NULL) {
- 	    if (strcmp(cf->timeout_handler->socket_name, socket_name_u) != 0) {
+-	if (cf->timeout_handler->socket_name != NULL && socket_name_u != NULL) {
+-	    if (strcmp(cf->timeout_handler->socket_name, socket_name_u) != 0) {
 -		rtpp_log_write(RTPP_LOG_ERR, spa->log, "invalid socket name %s", socket_name_u);
 -		socket_name_u = NULL;
+-	    } else {
++        spa->timeout_data.handler = NULL;
++	if (socket_name_u != NULL) {
++	    if (cf->timeout_handler != NULL && cf->timeout_handler->socket_name != NULL 
++		&& strlen(cf->timeout_handler->socket_name) == strlen(socket_name_u)
++		&& strcmp(cf->timeout_handler->socket_name, socket_name_u) != 0) {
+ 		rtpp_log_write(RTPP_LOG_INFO, spa->log, "setting timeout handler");
+ 		spa->timeout_data.handler = cf->timeout_handler;
+ 		spa->timeout_data.notify_tag = strdup(notify_tag);
++	    } else {
 +		rtpp_log_write(RTPP_LOG_INFO, spa->log, "setting custom timeout handler (%s)", socket_name_u);
 +		my_timeout_h = malloc(sizeof(struct rtpp_timeout_handler));
 +		if (my_timeout_h == NULL) {
@@ -7636,15 +7665,20 @@ index c5734ae..1afae6a 100644
 +	    		if(my_timeout_h->socket_name != NULL) {
 +				strcpy(my_timeout_h->socket_name, socket_name_u);
 +				spa->timeout_data.handler = my_timeout_h;
-+				spa->timeout_data.notify_tag = strdup(notify_tag);
++				if (notify_tag != NULL) spa->timeout_data.notify_tag = strdup(notify_tag);
++				else spa->timeout_data.notify_tag = NULL;
 +			} else {
 +				rtpp_log_write(RTPP_LOG_ERR, spa->log, "Unable to allocate memory");
 +				free(my_timeout_h);
 +			}
 +		}
- 	    } else {
- 		rtpp_log_write(RTPP_LOG_INFO, spa->log, "setting timeout handler");
- 		spa->timeout_data.handler = cf->timeout_handler;
+ 	    }
+-	} else if (socket_name_u == NULL && spa->timeout_data.handler != NULL) {
+-	    spa->timeout_data.handler = NULL;
+-	    rtpp_log_write(RTPP_LOG_INFO, spa->log, "disabling timeout handler");
+ 	}
+     }
+ 
 diff --git a/rtpp_notify.c b/rtpp_notify.c
 index e92c9ec..35982bf 100644
 --- a/rtpp_notify.c
@@ -7798,7 +7832,7 @@ index e92c9ec..35982bf 100644
          wi->th->connected = 0;
          rtpp_log_ewrite(RTPP_LOG_ERR, wi->glog, "failed to send timeout notification");
 diff --git a/rtpp_session.c b/rtpp_session.c
-index 03e3d8a..78b2135 100644
+index 03e3d8a..44a34fa 100644
 --- a/rtpp_session.c
 +++ b/rtpp_session.c
 @@ -41,6 +41,7 @@
@@ -7815,7 +7849,7 @@ index 03e3d8a..78b2135 100644
  	free(sp->timeout_data.notify_tag);
 +#ifdef ENABLE_XMLRPC
 +    // In case we use a custom timeout handler, we have to free it.
-+    if (sp->timeout_data.handler != &cf->timeout_handler) {
++    if (sp->timeout_data.handler && (sp->timeout_data.handler != &cf->timeout_handler)) {
 + 	free(sp->timeout_data.handler->socket_name);
 +	free(sp->timeout_data.handler);
 +    }
