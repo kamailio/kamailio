@@ -58,26 +58,6 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 	</example>
     </section>
 
-    <section id="force_rtp_proxy0">
-	<title>
-	    <function>force_rtp_proxy()</function>
-	</title>
-	<para>
-	    Rewrites SDP body to ensure that media is passed through an RTP proxy.
-	</para>
-	<example>
-	    <title><function>force_rtp_proxy</function> usage</title>
-	    <programlisting>
-...
-if (search("User-Agent: Cisco ATA.*")
-{
-    force_rtp_proxy();
-};
-...
-	    </programlisting>
-	</example>
-    </section>
-
     <section id="add_rcv_param">
 	<title>
 	    <function>add_rcv_param()</function>
@@ -115,33 +95,6 @@ add_rcv_param();
 	    <programlisting>
 ...
 fix_nated_register();
-...
-	    </programlisting>
-	</example>
-    </section>
-
-    <section id="force_rtp_proxy1">
-	<title>
-	    <function>force_rtp_proxy(ip_address)</function>
-	</title>
-	<para>
-	    Rewrites SDP body with given IP address to ensure that media is passed through an
-	    RTP proxy.
-	</para>
-	<para>Meaning of the parameters is as follows:</para>
-	<itemizedlist>
-	    <listitem>
-		<para>
-		    <emphasis>ip_address</emphasis> - new SDP IP address.
-		</para>
-	    </listitem>
-	</itemizedlist>
-
-	<example>
-	    <title><function>force_rtp_proxy</function> usage</title>
-	    <programlisting>
-...
-if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("1.2.3.4");};
 ...
 	    </programlisting>
 	</example>
@@ -231,84 +184,6 @@ $c = @nathelper.rewrite_contact[1];
 $c2 = @nathelper.rewrite_contact[1].nameaddr.uri;
 	    </programlisting>
 	</example>
-    </section>
-
-    <section id="rtpproxy_stream2xxx">
-        <title>
-            <function>rtpproxy_stream2uac(prompt_name, count)</function>,
-            <function>rtpproxy_stream2uas(prompt_name, count)</function>
-        </title>
-        <para>
-            Instruct the RTPproxy to stream prompt/announcement pre-encoded with
-            the makeann command from the RTPproxy distribution. The uac/uas
-            suffix selects who will hear the announcement relatively to the current
-            transaction - UAC or UAS. For example invoking the
-            <function>rtpproxy_stream2uac</function> in the request processing
-            block on ACK transaction will play the prompt to the UA that has
-            generated original INVITE and ACK while
-            <function>rtpproxy_stop_stream2uas</function> on 183 in reply
-            processing block will play the prompt to the UA that has generated 183.
-        </para>
-        <para>
-            Apart from generating announcements, another possible application
-            of this function is implementing music on hold (MOH) functionality.
-            When count is -1, the streaming will be in loop indefinitely until
-            the appropriate <function>rtpproxy_stop_stream2xxx</function> is issued.
-        </para>
-        <para>
-            In order to work correctly, functions require that the session in the
-            RTPproxy already exists. Also those functions don't alted SDP, so that
-            they are not substitute for calling <function>rtpproxy_offer</function>,
-            <function>rtpproxy_answer</function> or
-            <function>force_rtp_proxy</function>.
-        </para>
-        <para>Meaning of the parameters is as follows:</para>
-        <itemizedlist>
-            <listitem>
-                <para>
-                    <emphasis>prompt_name</emphasis> - name of the prompt to
-                    stream.  Should be either absolute pathname or pathname
-                    relative to the directory where RTPproxy runs.
-                </para>
-            </listitem>
-            <listitem>
-                <para>
-                    <emphasis>count</emphasis> - number of times the prompt
-                    should be repeated.  The value of -1 means that it will
-                    be streaming in loop indefinitely, until appropriate
-                    <function>rtpproxy_stop_stream2xxx</function> is issued.
-                </para>
-            </listitem>
-        </itemizedlist>
-
-        <example>
-            <title><function>rtpproxy_stream2xxx</function> usage</title>
-            <programlisting>
-...
-      if (method == "INVITE") {
-          rtpproxy_offer();
-          if (detect_hold()) {
-              rtpproxy_stream2uas("/var/rtpproxy/prompts/music_on_hold", -1);
-          } else {
-              rtpproxy_stop_stream2uas();
-          };
-      };
-...
-            </programlisting>
-        </example>
-    </section>
-
-    <section id="rtpproxy_stop_stream2xxx">
-        <title>
-            <function>rtpproxy_stop_stream2uac()</function>,
-            <function>rtpproxy_stop_stream2uas()</function>
-        </title>
-        <para>
-            Stop streaming of announcement/prompt/MOH started previously by the
-            respective <function>rtpproxy_stream2xxx</function>.  The uac/uas
-            suffix selects whose announcement relatively to tha current
-            transaction should be stopped - UAC or UAS.
-        </para>
     </section>
 
 </section>
