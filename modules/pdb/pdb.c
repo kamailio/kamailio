@@ -273,6 +273,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
 					buf[NETBUFSIZE] = '\0';
 					if (strncmp(buf, number.s, number.len) == 0) {
 						carrierid=ntohs(*((short int *)&(buf[reqlen]))); /* convert to host byte order */
+						server_list->fds[i].revents = 0; /* clear event for respoding server */
 						goto found;
 					}
 				}
