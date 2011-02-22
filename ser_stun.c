@@ -64,9 +64,7 @@ int stun_add_address_attr(struct stun_msg* res,
 						int do_xor);
 int add_unknown_attr(struct stun_msg* res, struct stun_unknown_att* unknown);
 int add_error_code(struct stun_msg* res, USHORT_T error_code);
-int add_fingerprint(struct stun_buffer* msg);
 int copy_str_to_buffer(struct stun_msg* res, const char* data, UINT_T pad);
-int validate_fingerprint(struct stun_msg* req, USHORT_T* error_code);
 int reallock_buffer(struct stun_buffer* buffer, UINT_T len);
 int buf_copy(struct stun_buffer* msg, void* source, UINT_T len);
 void clean_memory(struct stun_msg* req,
@@ -231,11 +229,9 @@ int stun_parse_body(
 	struct stun_unknown_att*	tmp_unknown;
 	struct stun_unknown_att*	body;
 	char*	buf;
-	int		fp_present;
 	
 	attr_size = sizeof(struct stun_attr);
 	buf = &req->msg.buf.s[sizeof(struct stun_hdr)];
-	fp_present = 0;
 	
 	/* 
 	 * Mark the body lenght as unparsed.
@@ -286,7 +282,6 @@ int stun_parse_body(
 			case MAPPED_ADDRESS_ATTR:
 			case XOR_MAPPED_ADDRESS_ATTR:
 			case ALTERNATE_SERVER_ATTR:
-			case REFRESH_INTERVAL_ATTR:
 			case RESPONSE_ADDRESS_ATTR:
 			case SOURCE_ADDRESS_ATTR:
 			case REFLECTED_FROM_ATTR:		
@@ -300,10 +295,9 @@ int stun_parse_body(
 			
 			/* following attributes must be padded to 4 bytes */
 			case USERNAME_ATTR:
-			case PASSWORD_ATTR:
 			case ERROR_CODE_ATTR:
 			case UNKNOWN_ATTRIBUTES_ATTR:
-			case SERVER_ATTR:
+			case SOFTWARE_ATTR:
 				padded_len = PADDED_TO_FOUR(ntohs(attr.len));
 #ifdef EXTRA_DEBUG
 				LOG(L_DBG, "DEBUG: stun_parse_body: padded to four\n");
@@ -322,25 +316,8 @@ int stun_parse_body(
 #ifdef EXTRA_DEBUG
 				LOG(L_DBG, "DEBUG: stun_parse_body: fingerprint attribute found\n");
 #endif
-				fp_present = 1;
-				if (ntohs(attr.len) != SHA_DIGEST_LENGTH) {
-					LOG(L_WARN, 
-						"WARNING: STUN: Incorrect fingerprint of request.\n");
-					*error_code = BAD_REQUEST_ERR;
-					continue;
-				}
-
-				memcpy(req->fp, buf, SHA_DIGEST_LENGTH);
-				if(stun_allow_fp) {
-					if (validate_fingerprint(req, error_code) != 0) {
-						LOG(L_WARN, 
-							"WARNING: STUN: Incorrect fingerprint of request.\n");
-						*error_code = BAD_REQUEST_ERR;
-						continue;
-					}
-				} 
-
 				padded_len = SHA_DIGEST_LENGTH;
+
 				if (not_parsed > SHA_DIGEST_LENGTH) {
 #ifdef EXTRA_DEBUG
 					LOG(L_DBG, "DEBUG: stun_parse_body: fingerprint is not the last attribute\n");
@@ -396,14 +373,6 @@ int stun_parse_body(
 		*error_code = UNKNOWN_ATTRIBUTE_ERR;
 	} 
 	
-	if (fp_present == 0 && req->old == 0) {
-#ifdef EXTRA_DEBUG
-		LOG(L_DBG, "DEBUG: stun_parse_body: fingerprint is missing is this new request\n");
-#endif
-		/* missing mandatory attribute fingerprint */
-		*error_code = BAD_REQUEST_ERR;
-	}
-	
 	return 0;
 }
 
@@ -431,7 +400,6 @@ int stun_create_response(
 						struct stun_unknown_att* unknown, 
 						UINT_T error_code)
 {
-	UINT_T msg_len;
 	/*
 	 * Alloc some space for response.
 	 * Optimalization? - maybe it would be better to use biggish static array.
@@ -480,14 +448,6 @@ int stun_create_response(
 #endif
 				return FATAL_ERROR;
 			}
-			
-			if (stun_add_common_integer_attr(res, REFRESH_INTERVAL_ATTR, 
-						stun_refresh_interval) != 0) {
-#ifdef EXTRA_DEBUG
-				LOG(L_DBG, "DEBUG: stun_create_response: failed to common attributes\n");
-#endif
-				return FATAL_ERROR;
-			}
 		}
 		else {
 			if (stun_add_address_attr(res, ri->src_ip.af, ri->src_port, 
@@ -532,10 +492,10 @@ int stun_create_response(
 	
 	if (req->old == 0) {
 		/* 
-		 * add optional information about server; attribute SERVER is not a part of 
-		 * rfc3489.txt 
+		 * add optional information about server; attribute SOFTWARE is part of 
+		 * rfc5389.txt
 		 * */
-		if (stun_add_common_text_attr(res, SERVER_ATTR, SERVER_HDR, PAD4)!=0) {
+		if (stun_add_common_text_attr(res, SOFTWARE_ATTR, SERVER_HDR, PAD4)!=0) {
 #ifdef EXTRA_DEBUG
 			LOG(L_DBG, "DEBUG: stun_create_response: failed to add common text attribute\n");
 #endif
@@ -543,28 +503,9 @@ int stun_create_response(
 		}
 	}	
 	
-	if (req->old == 0 && stun_allow_fp) {
-		/* count length of body except header and fingerprint
-	 	 * and copy message length at the beginning of buffer
-	   */
-	  msg_len = res->msg.buf.len - sizeof(struct stun_hdr);
-	  msg_len += SHA_DIGEST_LENGTH + sizeof(struct stun_attr);
-		res->hdr.len = htons(msg_len);
-		memcpy(&res->msg.buf.s[sizeof(USHORT_T)], (void *) &res->hdr.len,
-	  	sizeof(USHORT_T));
-	  		
-		if (add_fingerprint(&res->msg) != 0) {
-#ifdef EXTRA_DEBUG
-			LOG(L_DBG, "DEBUG: stun_create_response: failed to add fingerprint\n");
-#endif
-			return FATAL_ERROR;
-		}
-	}
-	else {
-		res->hdr.len = htons(res->msg.buf.len - sizeof(struct stun_hdr));
-		memcpy(&res->msg.buf.s[sizeof(USHORT_T)], (void *) &res->hdr.len,
-	  	sizeof(USHORT_T));
-	}
+	res->hdr.len = htons(res->msg.buf.len - sizeof(struct stun_hdr));
+	memcpy(&res->msg.buf.s[sizeof(USHORT_T)], (void *) &res->hdr.len,
+	       sizeof(USHORT_T));
 	
 	return 0;
 }
@@ -824,14 +765,14 @@ int stun_add_address_attr(struct stun_msg* res,
 	
 	ip_struct_len = 0;
 	attr.type = htons(type);
-	res->ip_addr.port = (do_xor) ? htons(port) ^ MAGIC_COOKIE_2B : htons(port);
+	res->ip_addr.port = htons((do_xor) ? (port ^ MAGIC_COOKIE_2B) : port);
 	switch(af) {
 		case AF_INET:
 			ip_struct_len = sizeof(struct stun_ip_addr) - 3*sizeof(UINT_T);
 			res->ip_addr.family = htons(IPV4_FAMILY);
 			memcpy(res->ip_addr.ip, ip_addr, IPV4_LEN);
 			res->ip_addr.ip[0] = (do_xor) ? 
-					res->ip_addr.ip[0] ^ MAGIC_COOKIE : res->ip_addr.ip[0];		
+				res->ip_addr.ip[0] ^ htonl(MAGIC_COOKIE) : res->ip_addr.ip[0];
 			break;
 #ifdef USE_IPV6
 		case AF_INET6:
@@ -861,48 +802,6 @@ int stun_add_address_attr(struct stun_msg* res,
 		return FATAL_ERROR;
 	}
 
-	return 0;
-}
-
-/*
- * add_fingerprint()
- * 			- msg: response buffer
- * 
- * The function add_fingerprint ensures adding fingerprint attribute into
- * response buffer.
- * 
- * Return value:	0	if there is no environment error
- * 					-1	if there is some enviroment error such as insufficiency
- * 						of memory
- */
-int add_fingerprint(struct stun_buffer* msg)
-{
-	struct stun_attr attr;
-	USHORT_T attr_type_size;
-	
-	attr_type_size = sizeof(struct stun_attr);
-	attr.type = htons(FINGERPRINT_ATTR);
-	attr.len = htons(SHA_DIGEST_LENGTH);
-	
-	if (msg->empty < (SHA_DIGEST_LENGTH + attr_type_size)) {
-		if (reallock_buffer(msg, SHA_DIGEST_LENGTH + attr_type_size) != 0) {
-			return FATAL_ERROR;
-		}
-	}
-	
-	memcpy(&msg->buf.s[msg->buf.len], (void *) &attr, attr_type_size);	
-	msg->buf.len += attr_type_size;
-	msg->empty -= attr_type_size;
-	
-	if (SHA1((UCHAR_T *)msg->buf.s, msg->buf.len-attr_type_size, 
-			 (UCHAR_T *) &msg->buf.s[msg->buf.len]) == 0) {
-		LOG(L_ERR, "ERROR: STUN: SHA-1 algorithm failed.\n");
-		return FATAL_ERROR;
-	}
-	
-	msg->buf.len += SHA_DIGEST_LENGTH;
-	msg->empty -= SHA_DIGEST_LENGTH;
-	
 	return 0;
 }
 
@@ -955,38 +854,6 @@ void stun_delete_unknown_attrs(struct stun_unknown_att* unknown)
 		pkg_free(tmp_unknown);		
 	}
 	pkg_free(unknown);
-}
-
-/*
- * validate_fingerprint()
- * 			- req: structure representing request message
- * 			- error_code: indication of any protocol error
- * 
- * The function validate_fingerprint ensures validation of FINGERPRINT
- * attribute.
- * 
- * Return value:	0	if there is no environment error
- * 					-1	if there is some enviroment error such as insufficiency
- * 						of memory
- */
-int validate_fingerprint(struct stun_msg* req, USHORT_T* error_code)
-{
-	UCHAR_T	msg_digest[SHA_DIGEST_LENGTH];
-	UINT_T	buf_len; 
-	
-	buf_len = req->hdr.len + sizeof(struct stun_hdr);
-	buf_len -= SHA_DIGEST_LENGTH + sizeof(struct stun_attr);
-	
-	if (SHA1((UCHAR_T *) req->msg.buf.s, buf_len, msg_digest) == 0) {
-		LOG(L_ERR, "ERROR: STUN: SHA-1 algorithm failed.\n");
-		return FATAL_ERROR;
-	} 
-	
-	if (memcmp((void *)req->fp, (void *)&msg_digest, SHA_DIGEST_LENGTH) != 0) {
-		*error_code = BAD_REQUEST_ERR;
-	}
-	
-	return 0;	
 }
 
 /*
