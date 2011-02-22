@@ -56,19 +56,17 @@ typedef unsigned long	ULONG_T;
 /* common STUN attributes */
 #define MAPPED_ADDRESS_ATTR		0x0001
 #define USERNAME_ATTR			0x0006
-#define PASSWORD_ATTR			0x0007
 #define MESSAGE_INTEGRITY_ATTR	0x0008
 #define ERROR_CODE_ATTR			0x0009
 #define UNKNOWN_ATTRIBUTES_ATTR	0x000A
 
-/* STUN attributes defined by rfc3489bis */
+/* STUN attributes defined by rfc5389 */
 #define REALM_ATTR				0x0014
 #define NONCE_ATTR				0x0015
 #define XOR_MAPPED_ADDRESS_ATTR	0x0020 
-#define FINGERPRINT_ATTR		0x0023
-#define SERVER_ATTR				0x8022
+#define FINGERPRINT_ATTR		0x8028
+#define SOFTWARE_ATTR				0x8022
 #define ALTERNATE_SERVER_ATTR	0x8023
-#define REFRESH_INTERVAL_ATTR	0x8024
 
 /* STUN attributes defined by rfc3489 */
 #define RESPONSE_ADDRESS_ATTR	0x0002
@@ -167,7 +165,6 @@ struct stun_msg {
 	struct stun_hdr			hdr;
 	struct stun_ip_addr		ip_addr;		/* XOR values for rfc3489bis, 
 											normal values for rfc3489 */
-	char					fp[SHA_DIGEST_LENGTH];		/* fingerprint value */
 	struct stun_buffer		msg;
 	UCHAR_T					old;		/* true: the format of message is in 
 										accordance with rfc3489 */ 
