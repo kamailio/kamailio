@@ -23,7 +23,8 @@
  *
  * History:
  * --------
- *  2009-01-14  initial version (Iñaki Baz Castillo)
+ *  2011-02-22  pcre_match_group() allows now pseudo-variable as group argument.
+ *  2009-01-14  initial version (Iñaki Baz Castillo).
  */
 
 
@@ -119,7 +120,7 @@ static cmd_export_t cmds[] =
 {
 	{ "pcre_match", (cmd_function)w_pcre_match, 2, fixup_spve_spve, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-	{ "pcre_match_group", (cmd_function)w_pcre_match_group, 2, fixup_spve_uint, 0,
+	{ "pcre_match_group", (cmd_function)w_pcre_match_group, 2, fixup_spve_spve, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
 	{ "pcre_match_group", (cmd_function)w_pcre_match_group, 1, fixup_spve_null, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
@@ -383,7 +384,7 @@ static int load_pcres(int action)
 	}
 	
 	/* Log the group patterns */
-	LM_NOTICE("num groups = %d\n\n", num_pcres_tmp);
+	LM_NOTICE("num groups = %d\n", num_pcres_tmp);
 	for (i=0; i < num_pcres_tmp; i++) {
 		LM_NOTICE("<group[%d]>%s</group[%d]> (size = %i)\n", i, patterns[i], i, (int)strlen(patterns[i]));
 	}
@@ -587,8 +588,8 @@ static int w_pcre_match(struct sip_msg* _msg, char* _s1, char* _s2)
 /*! \brief Return true if the string argument matches the pattern group parameter */
 static int w_pcre_match_group(struct sip_msg* _msg, char* _s1, char* _s2)
 {
-	str string;
-	int num_pcre;
+	str string, group;
+	unsigned int num_pcre;
 	int pcre_rc;
 	
 	/* Check if group matching feature is enabled */
@@ -605,7 +606,12 @@ static int w_pcre_match_group(struct sip_msg* _msg, char* _s1, char* _s2)
 	if (_s2 == NULL) {
 		num_pcre = 0;
 	} else {
-		num_pcre = (uint)(long)_s2;
+		if (fixup_get_svalue(_msg, (gparam_p)_s2, &group))
+		{
+			LM_ERR("cannot print the format for second param\n");
+			return -5;
+		}
+		str2int(&group, &num_pcre);
 	}
 	
 	if (num_pcre >= *num_pcres) {
@@ -615,7 +621,7 @@ static int w_pcre_match_group(struct sip_msg* _msg, char* _s1, char* _s2)
 	
 	if (fixup_get_svalue(_msg, (gparam_p)_s1, &string))
 	{
-		LM_ERR("cannot print the format\n");
+		LM_ERR("cannot print the format for first param\n");
 		return -5;
 	}
 	

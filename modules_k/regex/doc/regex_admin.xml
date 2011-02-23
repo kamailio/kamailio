@@ -237,8 +237,8 @@ modparam("regex", "pcre_extended", 1)
 
 			<para>
 				Matches the given string parameter against the regular expression pcre_regex,
-				which is compiled into a PCRE object. Returns TRUE if it matches, FALSE
-				otherwise.
+				which is compiled in runtime into a PCRE object. Returns TRUE if it matches,
+				FALSE otherwise.
 			</para>
 
 			<para>Meaning of the parameters is as follows:</para>
@@ -300,10 +300,9 @@ if (pcre_match("$rU", "^user[1234]$$")) {  # Will be converted to "^user[1234]$"
 			</title>
 
 			<para>
-				It uses the groups readed from the text file
-				(see <xref linkend="file-format-id"/>) to match the given string
-				parameter against the compiled regular expression in group number group.
-				Returns TRUE if it matches, FALSE otherwise.
+				Tries to match the given string against a specific group in the text
+				file (see <xref linkend="file-format-id"/>). Returns TRUE if it matches,
+				FALSE otherwise.
 			</para>
 
 			<para>Meaning of the parameters is as follows:</para>
@@ -317,7 +316,8 @@ if (pcre_match("$rU", "^user[1234]$$")) {  # Will be converted to "^user[1234]$"
 				<listitem>
 					<para>
 						<emphasis>group</emphasis> - Number of group to use in the operation.
-						If not specified then 0 (the first group) is used.
+						If not specified then 0 (the first group) is used. A pseudo-variable
+						containing an integer can also be used.
 					</para>
 				</listitem>
 			</itemizedlist>
@@ -333,13 +333,27 @@ if (pcre_match("$rU", "^user[1234]$$")) {  # Will be converted to "^user[1234]$"
 				</title>
 <programlisting format="linespecific">
 ...
-if (pcre_match_group("$rU", 2)) {
+if (pcre_match_group("$rU", "2")) {
     xlog("L_INFO", "RURI username matches group 2\n");
 }
 ...
 </programlisting>
 			</example>
 
+			<example>
+				<title>
+					<function>pcre_match_group</function> usage (using a pseudo-variable as group)
+				</title>
+				<programlisting format="linespecific">
+					...
+					$avp(i:10) = 5;  # Maybe got from a DB query.
+					if (pcre_match_group("$ua", "$avp(i:10)")) {
+					xlog("L_INFO", "User-Agent matches group 5\n");
+					}
+					...
+				</programlisting>
+			</example>
+ 
 		</section>
 
 	</section>
@@ -455,7 +469,7 @@ group 2: ((^1\d{3}$)|(^((\+|00)34)?900\d{6}$))
 				<title>Using with pua_usrloc</title>
 <programlisting  format="linespecific">
 route[REGISTER] {
-    if (! pcre_match_group("$ua", 0)) {
+    if (! pcre_match_group("$ua", "0")) {
         xlog("L_INFO", "Auto-generated PUBLISH for $fu ($ua)\n");
         pua_set_publish();
     }
