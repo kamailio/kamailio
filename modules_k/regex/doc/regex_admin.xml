@@ -345,12 +345,12 @@ if (pcre_match_group("$rU", "2")) {
 					<function>pcre_match_group</function> usage (using a pseudo-variable as group)
 				</title>
 				<programlisting format="linespecific">
-					...
-					$avp(i:10) = 5;  # Maybe got from a DB query.
-					if (pcre_match_group("$ua", "$avp(i:10)")) {
-					xlog("L_INFO", "User-Agent matches group 5\n");
-					}
-					...
+...
+$avp(i:10) = 5;  # Maybe got from a DB query.
+if (pcre_match_group("$ua", "$avp(i:10)")) {
+    xlog("L_INFO", "User-Agent matches group 5\n");
+}
+...
 				</programlisting>
 			</example>
  
