@@ -88,7 +88,7 @@ modparam("pipelimit", "db_url", "&exampledb;")
 	<section>
 	    <title><varname>plp_table_name</varname> (string)</title>
 	    <para>
-			Name of DB table where data definitio for pipes is stores.
+			Name of DB table where data definition for pipes is stores.
 	    </para>
 	    <para>
 		<emphasis>
@@ -210,7 +210,7 @@ modparam("ratelimit", "reply_code", 505)
 </programlisting>
 		</example>
 		<para>
-		This value cant be modified at runtime using sercmd
+		This value can be modified at runtime using sercmd
 		</para>
 		<example>
 		<title> Set <varname>reply_code</varname> parameter at runtime </title>
@@ -240,7 +240,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
 </programlisting>
 		</example>
 		<para>
-		This value cant be modified at runtime using sercmd
+		This value can be modified at runtime using sercmd
 		</para>
 		<example>
 		<title> Set <varname>reply_reason</varname> parameter at runtime </title>
@@ -471,7 +471,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 		<function moreinfo="none">pl_push_load</function>
 		</title>
 		<para>
-		Force the value of the load parameter.  This methos is usefull
+		Force the value of the load parameter.  This command is useful
 		for testing the Feedback algorithm.
 		</para>
 		<para>
