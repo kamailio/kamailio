@@ -154,7 +154,7 @@ modparam("pipelimit", "db_url", "dbdriver://username:password@dbhost/dbname")
 
 3.2. plp_table_name (string)
 
-   Name of DB table where data definitio for pipes is stores.
+   Name of DB table where data definition for pipes is stores.
 
    Default value is “pl_pipes”.
 
@@ -223,7 +223,7 @@ modparam("ratelimit", "timer_interval", 5)
 modparam("ratelimit", "reply_code", 505)
 ...
 
-   This value cant be modified at runtime using sercmd
+   This value can be modified at runtime using sercmd
 
    Example 1.8.  Set reply_code parameter at runtime
 sercmd cfg.set_now_int ratelimit reply_code 505
@@ -239,7 +239,7 @@ sercmd cfg.set_now_int ratelimit reply_code 505
 modparam("ratelimit", "reply_reason", "Limiting")
 ...
 
-   This value cant be modified at runtime using sercmd
+   This value can be modified at runtime using sercmd
 
    Example 1.10.  Set reply_reason parameter at runtime
 sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
@@ -387,7 +387,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 
 5.6.  pl_push_load
 
-   Force the value of the load parameter. This methos is usefull for
+   Force the value of the load parameter. This command is useful for
    testing the Feedback algorithm.
 
    Name: pl_push_load
