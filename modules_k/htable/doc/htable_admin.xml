@@ -91,7 +91,7 @@ if(is_present_hf("Authorization"))
                 sl_send_reply("403", "Forbidden");
             exit;
             case -2:
-                if($sht(a=&gt;$au::auth_count) == null)
+                if($sht(a=&gt;$au::auth_count) == $null)
                     $sht(a=&gt;$au::auth_count) = 0;
                 $sht(a=&gt;$au::auth_count) = $sht(a=&gt;$au::auth_count) + 1;
                 if($sht(a=&gt;$au::auth_count) == 3)

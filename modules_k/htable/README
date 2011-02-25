@@ -11,7 +11,7 @@ Elena-Ramona Modroiu
 
    <ramona@rosdev.ro>
 
-   Copyright © 2008 http://www.asipto.com
+   Copyright © 2008-2011 http://www.asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -179,7 +179,7 @@ if(is_present_hf("Authorization"))
                 sl_send_reply("403", "Forbidden");
             exit;
             case -2:
-                if($sht(a=>$au::auth_count) == null)
+                if($sht(a=>$au::auth_count) == $null)
                     $sht(a=>$au::auth_count) = 0;
                 $sht(a=>$au::auth_count) = $sht(a=>$au::auth_count) + 1;
                 if($sht(a=>$au::auth_count) == 3)
