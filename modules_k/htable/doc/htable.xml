@@ -17,7 +17,7 @@
 		<firstname>Elena-Ramona</firstname>
 		<surname>Modroiu</surname>
 		<affiliation><orgname>asipto.com</orgname></affiliation>
-		<email>ramona@rosdev.ro</email>
+		<email>ramona@asipto.com</email>
 		<address>
 		<otheraddr>
 		<ulink url="http://www.asipto.com">http://www.asipto.com</ulink>
@@ -27,11 +27,11 @@
 	    <editor>
 		<firstname>Elena-Ramona</firstname>
 		<surname>Modroiu</surname>
-		<email>ramona@rosdev.ro</email>
+		<email>ramona@asipto.com</email>
 	    </editor>
 	</authorgroup>
 	<copyright>
-	    <year>2008</year>
+	    <year>2008-2011</year>
 	    <holder>http://www.asipto.com</holder>
 	</copyright>
     </bookinfo>
