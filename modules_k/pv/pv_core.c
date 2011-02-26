@@ -152,6 +152,22 @@ int pv_get_methodid(struct sip_msg *msg, pv_param_t *param,
 			(unsigned int)(get_cseq(msg)->method_id));
 }
 
+int pv_get_msgtype(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	unsigned int type = 0;
+
+	if(msg==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REQUEST)
+		type = 1;
+	else if(msg->first_line.type == SIP_REPLY)
+		type = 2;
+
+	return pv_get_uintval(msg, param, res, type);
+}
+
 int pv_get_version(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
