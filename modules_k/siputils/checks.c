@@ -54,6 +54,33 @@
 #include "../../lvalue.h"
 #include "checks.h"
 
+/**
+ * return 1 (true) if the SIP message type is request
+ */
+int w_is_request(struct sip_msg* msg, char *foo, char *bar)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REQUEST)
+		return 1;
+
+	return -1;
+}
+
+/**
+ * return 1 (true) if the SIP message type is reply
+ */
+int w_is_reply(struct sip_msg* msg, char *foo, char *bar)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REPLY)
+		return 1;
+
+	return -1;
+}
 
 /*
  * Checks if From includes a To-tag -- good to identify
