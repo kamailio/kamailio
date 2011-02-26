@@ -860,6 +860,48 @@ set_uri_user("$var(uri)", "$var(user)");
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title>
+		<function moreinfo="none">is_request()</function>
+		</title>
+		<para>
+		Return true if the SIP message is a request.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>is_request</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_request()) {
+	...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">is_reply()</function>
+		</title>
+		<para>
+		Return true if the SIP message is a reply.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>is_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_reply()) {
+	...
+}
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 </chapter>
