@@ -24,6 +24,10 @@ Gabriel Vasile
 
    FhG FOKUS
 
+Juha Heinanen
+
+   TutPro Inc.
+
 Edited by
 
 Jan Janak
@@ -424,7 +428,7 @@ if (is_user("john")) {
 
    Check if To header field uri contains tag parameter.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.13. has_totag usage
 ...
@@ -613,8 +617,7 @@ reply_route[2] {
 
    The function returns true if the two parameters matches as SIP URI.
 
-   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-   FAILURE_ROUTE and BRANCH_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.23. cmp_uri usage
 ...
@@ -629,8 +632,7 @@ if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
    The function returns true if the two parameters matches as AoR. The
    parameters have to be SIP URIs.
 
-   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-   FAILURE_ROUTE and BRANCH_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.24. cmp_aor usage
 ...

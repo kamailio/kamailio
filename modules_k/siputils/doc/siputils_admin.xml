@@ -375,7 +375,7 @@ if (is_user("john")) {
 		Check if To header field uri contains tag parameter.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>has_totag</function> usage</title>
@@ -684,8 +684,7 @@ reply_route[2] {
 		the two parameters matches as SIP URI.
 		</para>
    		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
-		FAILURE_ROUTE and BRANCH_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>cmp_uri</function> usage</title>
@@ -710,8 +709,7 @@ if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
 		URIs.
 		</para>
    		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
-		FAILURE_ROUTE and BRANCH_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>cmp_aor</function> usage</title>
