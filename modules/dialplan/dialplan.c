@@ -326,7 +326,7 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 
 	if ((idp = select_dpid(dpid)) ==0 ){
 		LM_DBG("no information available for dpid %i\n", dpid);
-		return -1;
+		return -2;
 	}
 
 	repl_par = (str2!=NULL)? ((dp_param_p)str2):default_par2;

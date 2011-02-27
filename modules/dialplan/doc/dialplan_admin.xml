@@ -365,6 +365,10 @@ modparam("dialplan", "fetch_rows", 4000)
 	missing, only matching and storing of matching rule's
 	attributes is done.
 	</para>
+	<para>
+	  Returns 1, if translation succeeded, -1 in case of some error
+	  occurred, and -2 if dialplan with ID equal to id does not exist.
+	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>
 	<listitem>
