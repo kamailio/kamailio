@@ -213,6 +213,13 @@ typedef struct hdr_field {
 } hdr_field_t;
 
 
+/* type of the function to free the structure of parsed header field */
+typedef void (*hf_parsed_free_f)(void *parsed);
+
+/* structure to hold the function to free the parsed header field */
+typedef struct hdr_parsed {
+	hf_parsed_free_f hfree;
+} hf_parsed_t;
 
 /** returns true if the header links allocated memory on parse field. */
 static inline int hdr_allocs_parse(struct hdr_field* hdr)

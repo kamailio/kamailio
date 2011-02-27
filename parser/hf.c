@@ -130,6 +130,9 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_SUPPORTED_T:
+			if(*h_parsed) {
+				((hf_parsed_t*)(*h_parsed))->hfree(*h_parsed);
+			}
 			break;
 
 		case HDR_REQUIRE_T:
