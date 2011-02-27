@@ -72,7 +72,7 @@ struct subst_expr* repl_exp_parse(str subst)
 	repl = p;
 	if((rw_no = parse_repl(rw, &p, end, &max_pmatch, WITHOUT_SEP))< 0)
 		goto error;
-	
+
 	repl_end=p;
 
     /* construct the subst_expr structure */
@@ -179,6 +179,7 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 		result->s[result->len] = '\0';
 		return 0;
 	}
+
 	/* offset- offset in the replacement string */
 	result->len = repl_nb = offset = 0;
 	p=repl_comp->replacement.s;
@@ -199,7 +200,7 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 			LM_DBG("copying <%.*s> from replacing string\n",
 			       size, p + offset);
 			result->len += size;
-			offset = token.offset; /*update the offset*/
+			offset = token.offset;
 		}
 
 		switch(token.type) {
@@ -217,15 +218,18 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 				LM_DBG("copying match <%.*s> token size %d\n",
 				       match.len, match.s, token.size);
 				result->len += match.len;
-				offset += token.size; /*update the offset*/
+				offset += token.size;
 			break;
 			case REPLACE_CHAR:
 				if(result->len + 1>= MAX_PHONE_NB_DIGITS){
 					LM_ERR("overflow\n");
 					goto error;
 				}
-				*result->s=repl_comp->replace[repl_nb].u.c;
+				*(result->s + result->len) = token.u.c;
+				LM_DBG("copying char <%c> token size %d\n",
+					token.u.c, token.size);
 				result->len++;
+				offset += token.size;
 			break;
 			case REPLACE_URI:	
 				if ( msg== NULL || msg->first_line.type!=SIP_REQUEST){
@@ -240,15 +244,17 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 					goto error;
 				}
 				memcpy(result->s + result->len, uri->s, uri->len);
+				LM_DBG("copying uri <%.*s> token size %d\n",
+					uri->len, uri->s, token.size);
 				result->len+=uri->len;
+				offset += token.size;
 			break;
 			case REPLACE_SPEC:
 				if (msg== NULL) {
 					LM_DBG("replace spec attempted on no message\n");
 					break;
 				}
-				if(pv_get_spec_value(msg, 
-						&repl_comp->replace[repl_nb].u.spec, &sv)!=0){
+				if (pv_get_spec_value(msg, &token.u.spec, &sv) != 0) {
 					LM_CRIT("item substitution returned error\n");
 					break; /* ignore, we can continue */
 				}
@@ -256,8 +262,12 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 					LM_ERR("rule_translate: overflow\n");
 					goto error;
 				}
-				memcpy(result->s + result->len, sv.rs.s, sv.rs.len);
+				memcpy(result->s + result->len, sv.rs.s,
+				       sv.rs.len);
+				LM_DBG("copying pvar value <%.*s> token size %d\n",
+					sv.rs.len, sv.rs.s, token.size);
 				result->len+=sv.rs.len;
+				offset += token.size;
 			break;
 			default:
 				LM_CRIT("unknown type %d\n", repl_comp->replace[repl_nb].type);
