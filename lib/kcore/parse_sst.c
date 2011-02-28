@@ -68,6 +68,16 @@ malloc_session_expires( void )
 	return se;
 }
 
+/**
+ * wrapper to free the content of parsed session-expires header
+ */
+void hf_free_session_expires(void *parsed)
+{
+	struct session_expires *se;
+	se = (struct session_expires*)parsed;
+	free_session_expires(se);
+}
+
 
 void
 free_session_expires( struct session_expires *se )
@@ -84,7 +94,7 @@ parse_session_expires_body( struct hdr_field *hf )
 	int pos = 0;
 	int len = hf->body.len;
 	char *q;
-	struct session_expires se = { 0, sst_refresher_unspecified };
+	struct session_expires se = { 0, 0, sst_refresher_unspecified };
 	unsigned tok;
 
 	if ( !p || len <= 0 ) {
@@ -165,6 +175,7 @@ parse_session_expires_body( struct hdr_field *hf )
 		LM_ERR(" out of pkg memory\n" );
 		return parse_sst_out_of_mem;
 	}
+	se.hfree = hf_free_session_expires;
 	*((struct session_expires *)hf->parsed) = se;
 
 	return parse_sst_success;

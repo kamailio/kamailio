@@ -53,6 +53,7 @@ enum sst_refresher {
  * a pointer to a struct session_expires.
  */
 struct session_expires {
+	hf_parsed_free_f hfree;       /* function to free the content */
 	unsigned            interval; /* in seconds */
 	enum sst_refresher  refresher;
 };
