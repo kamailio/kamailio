@@ -225,32 +225,32 @@ typedef struct hdr_parsed {
 static inline int hdr_allocs_parse(struct hdr_field* hdr)
 {
 	switch(hdr->type){
-		case HDR_VIA_T:
-		case HDR_TO_T:
-		case HDR_FROM_T:
-		case HDR_CSEQ_T:
-		case HDR_CONTACT_T:
-		case HDR_ROUTE_T:
-		case HDR_RECORDROUTE_T:
-		case HDR_AUTHORIZATION_T:
-		case HDR_EXPIRES_T:
-		case HDR_PROXYAUTH_T:
-		case HDR_ALLOW_T:
-		case HDR_EVENT_T:
 		case HDR_ACCEPT_T:
+		case HDR_ALLOW_T:
+		case HDR_AUTHORIZATION_T:
+		case HDR_CONTACT_T:
 		case HDR_CONTENTDISPOSITION_T:
-		case HDR_DIVERSION_T:
+		case HDR_CSEQ_T:
 		case HDR_DATE_T:
-		case HDR_RPID_T:
-		case HDR_REFER_TO_T:
-		case HDR_SIPIFMATCH_T:
-		case HDR_SUBSCRIPTION_STATE_T:
+		case HDR_DIVERSION_T:
+		case HDR_EVENT_T:
+		case HDR_EXPIRES_T:
+		case HDR_FROM_T:
 		case HDR_IDENTITY_INFO_T:
 		case HDR_IDENTITY_T:
-		case HDR_SUPPORTED_T:
-		case HDR_SESSIONEXPIRES_T:
-		case HDR_PPI_T:
 		case HDR_PAI_T:
+		case HDR_PPI_T:
+		case HDR_PROXYAUTH_T:
+		case HDR_RECORDROUTE_T:
+		case HDR_REFER_TO_T:
+		case HDR_ROUTE_T:
+		case HDR_RPID_T:
+		case HDR_SESSIONEXPIRES_T:
+		case HDR_SIPIFMATCH_T:
+		case HDR_SUBSCRIPTION_STATE_T:
+		case HDR_SUPPORTED_T:
+		case HDR_TO_T:
+		case HDR_VIA_T:
 			return 1;
 		default:
 			return 0;
