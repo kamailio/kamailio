@@ -152,10 +152,7 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_SESSIONEXPIRES_T:
-			if(*h_parsed) {
-				((hf_parsed_t*)(*h_parsed))->hfree(*h_parsed);
-				*h_parsed = 0;
-			}
+			hdr_free_parsed(h_parsed);
 			break;
 
 		case HDR_SIPIFMATCH_T:
@@ -167,9 +164,7 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_SUPPORTED_T:
-			if(*h_parsed) {
-				((hf_parsed_t*)(*h_parsed))->hfree(*h_parsed);
-			}
+			hdr_free_parsed(h_parsed);
 			break;
 
 		case HDR_TO_T:
@@ -233,6 +228,7 @@ void free_hdr_field_lst(struct hdr_field* hf)
 	}
 }
 
+/* print the content of hdr_field */
 void dump_hdr_field( struct hdr_field* hf )
 {
 	LOG(L_ERR, "DEBUG: dump_hdr_field: type=%d, name=%.*s, "
@@ -240,4 +236,20 @@ void dump_hdr_field( struct hdr_field* hf )
 		hf->type, hf->name.len, ZSW(hf->name.s),
 		hf->body.len, ZSW(hf->body.s),
 		hf->parsed, hf->next );
+}
+
+/**
+ * free hdr parsed structure using inner free function
+ * - hdr parsed struct must have as first file a free function,
+ *   so it can be caseted to hf_parsed_t
+ */
+void hdr_free_parsed(void **h_parsed)
+{
+	if(h_parsed==NULL || *h_parsed==NULL)
+		return;
+
+	if(((hf_parsed_t*)(*h_parsed))->hfree) {
+		((hf_parsed_t*)(*h_parsed))->hfree(*h_parsed);
+	}
+	*h_parsed = 0;
 }
