@@ -210,6 +210,12 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_SESSIONEXPIRES_T:
+			if(*h_parsed) {
+				((hf_parsed_t*)(*h_parsed))->hfree(*h_parsed);
+				*h_parsed = 0;
+			}
+			break;
+
 		case HDR_MIN_SE_T:
 		case HDR_ACCEPTCONTACT_T:
 		case HDR_ALLOWEVENTS_T:
