@@ -19,9 +19,17 @@
 		<para>
 		UAC (User Agent Client) module provides some basic UAC
 		functionalities like FROM header manipulation (anonymization)
-		or client authentication. From version 1.5.0 it has function to
-		send SIP message from configuration file. Version 3.1.0 adds user
-		registration functionality.
+		or client authentication.
+		</para>
+		<para>
+		From version 1.5.0 it has function to send SIP message from
+		configuration file. See variable $uac_req(name) and the function
+		uac_req_send().
+		</para>
+		<para>
+		Version 3.1.0 adds user registration functionality. See
+		uac_reg_lookup() function and dedicated section for remote
+		registration configuration.
 		</para>
 		<para>
 		Known limitations in this version:
@@ -440,6 +448,96 @@ if(uac_reg_lookup("$rU", "$ru"))
 		<para>
 		Exported pseudo-variables are documented at &kamwikilink;.
 		</para>
+	</section>
+	<section>
+		<title>Remote Registration</title>
+		<para>
+		The module can register contact addresses to remote REGISTRAR servers.
+		You have to add records to uacreg table. The table stores following
+		attributes:
+		</para>
+
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>l_uuid</emphasis> - local unique user id, e.g.,:
+			12345678
+			</para></listitem>
+		</itemizedlist>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>l_username</emphasis> - local user name, e.g.,: test
+			</para></listitem>
+		</itemizedlist>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>l_domain</emphasis> - local domain, e.g.,:
+			mysipserver.com
+			</para></listitem>
+		</itemizedlist>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>r_username</emphasis> - remote username, e.g.,:
+			test123
+			</para></listitem>
+		</itemizedlist>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>r_domain</emphasis> - remote domain, e.g.,:
+			sipprovider.com
+			</para></listitem>
+		</itemizedlist>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>realm</emphasis> - remote relam, e.g.,:
+			sipprovider.com
+			</para></listitem>
+		</itemizedlist>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>auth_username</emphasis> - authentication username,
+			e.g.,: test123
+			</para></listitem>
+		</itemizedlist>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>auth_password</emphasis> - authentication password,
+			e.g.,: xxxxxx
+			</para></listitem>
+		</itemizedlist>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>auth_proxy</emphasis> - SIP address of authentication
+			proxy, e.g.,: sip:sipprovider.com
+			</para></listitem>
+		</itemizedlist>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>expires</emphasis> - expiration time for registration,
+			in seconds, e.g.,: 360
+			</para></listitem>
+		</itemizedlist>
+
+		<para>
+		The module takes care of sending REGISTER and refresh registrations
+		before they expire.
+		</para>
+		<para>
+		When calls come in, you have to run uac_reg_lookup() that will detect
+		if the call is coming from a remote SIP provider and can change the
+		R-URI to local username@domain. Afterwards you can run location lookup.
+		</para>
+
+		<example>
+		<title><function>lookup remote registrations</function> usage</title>
+			<programlisting format="linespecific">
+...
+    if(uac_reg_lookup("$rU", "$ru")) {
+        xlog("request from a remote SIP provider [$ou => $ru]\n");
+    }
+    lookup("location");
+...
+			</programlisting>
+		</example>
 	</section>
 </chapter>
 
