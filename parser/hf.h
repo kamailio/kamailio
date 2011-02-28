@@ -268,6 +268,14 @@ void clean_hdr_field(struct hdr_field* hf);
  */
 void free_hdr_field_lst(struct hdr_field* hf);
 
+/* print content of hdr_field */
 void dump_hdr_field( struct hdr_field* hf );
+
+/**
+ * free hdr parsed structure using inner free function
+ * - hdr parsed struct must have as first file a free function,
+ *   so it can be caseted to hf_parsed_t
+ */
+void hdr_free_parsed(void **h_parsed);
 
 #endif /* HF_H */
