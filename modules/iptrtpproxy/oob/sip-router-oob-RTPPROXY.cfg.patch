@@ -1,0 +1,152 @@
+--- sip-router-oob.cfg.1st_phase	2011-03-03 14:07:56.000000000 +0100
++++ sip-router-oob.cfg	2011-03-03 14:07:56.000000000 +0100
+@@ -283,18 +283,6 @@
+ #
+ session_timer.min_se = "90" desc "minimum session interval (in s)"
+ 
+-# RTP Proxy options
+-#
+-# Whether to enable or disable the rtp proxy. Possible values are:
+-# "0" -- always disable
+-# "1" -- always enable regardless of whether UAC or UAS is behind NAT
+-# "detect" -- detect whether the UAC or the UAS is behind NAT,
+-#             and enable the rtp proxy when necessary
+-#
+-#DEBCONF-RTP_ENABLE-START
+-rtp_proxy.enabled = "detect" desc "indicates whether the RTP Proxy is enabled or not (0/1/detect)"
+-#DEBCONF-RTP_ENABLE-END
+-
+ # ------------------ Module Loading -----------------------------------------
+ #!ifdef LOCAL_TEST_RUN
+ loadpath "modules:modules_s"
+@@ -456,7 +444,7 @@
+ modparam("rr", "enable_full_lr", 1)
+ 
+ # Limit the length of the AVP cookie to necessary attributes only
+-modparam("rr", "cookie_filter", "(account|rproxy|stimer|dialog_id)")
++modparam("rr", "cookie_filter", "(account|stimer|dialog_id)")
+ 
+ # You probably do not want that someone can simply read and change
+ # the AVP cookie in your Routes, thus should really change this
+@@ -466,7 +454,7 @@
+ # The ftag Route parameter may be used to easily determine if a BYE
+ # is coming from caller or callee, but we prefer shorter messages
+ # Enable when FLAG_REVERSE_DIR is to be used
+-modparam("rr", "append_fromtag", 0)
++modparam("rr", "append_fromtag", 1)
+ 
+ 
+ # -- gflags --
+@@ -526,7 +514,7 @@
+ 
+ # RTP Proxy address
+ #DEBCONF-RTTPPROXY-START
+-modparam("nathelper", "rtpproxy_sock", "udp:127.0.0.1:22222")
++#modparam("nathelper", "rtpproxy_sock", "udp:127.0.0.1:22222")
+ #DEBCONF-RTTPPROXY-END
+ 
+ # TCP keepalives as simple as CRLF
+@@ -665,7 +653,8 @@
+ 	# If this is an initial INVITE (without a To-tag) we might try
+ 	# another target (call forwarding or voicemail) after receiving
+ 	# an error.
+-	if (isflagset(FLAG_INIT_DLG)) {
++	# and also for RTPPROXY processing
++	if (method=="INVITE" || method == "UPDATE") {
+ 		t_on_failure("FAILURE_ROUTE");
+ 	}
+ 
+@@ -679,7 +668,7 @@
+ 
+ 	# Activate the RTP proxy as the second last step because it modifies the
+ 	# body but also sets an dialog AVP cookie.
+-	route(RTPPROXY);
++	route(RTPPROXY_PROCESS_REQUEST);
+ 
+ 	# Insert a Record-Route header into all requests.
+ 	# This has to be done as one of the last steps to include all the
+@@ -874,47 +863,7 @@
+ 	}
+ }
+ 
+-
+-# Activates RTP proxy if necessary.
+-#
+-route[RTPPROXY]
+-{
+-	if (@cfg_get.rtp_proxy.enabled == "0") {
+-		# RTP Proxy is disabled
+-		break;
+-	} else if (@cfg_get.rtp_proxy.enabled == "detect") {
+-		if (!isflagset(FLAG_NAT)) {
+-			# If no NAT is involved we don't have to do here anything.
+-			break;
+-		}
+-	} else if (@cfg_get.rtp_proxy.enabled != "1") {
+-		# This is not a valid setting
+-		xlog("L_ERR", "Unknown option for rtp_proxy.enabled: %@cfg_get.rtp_proxy.enabled\n");
+-		break;
+-	} # else rtp proxy is permanently enabled
+-
+-	# If the message terminates a dialog for which the RTP proxy 
+-	# was turned on, turn it off again.
+-	if ((method == "BYE" && isflagset(FLAG_RTP_PROXY)) ||
+-		(method == "CANCEL")) {
+-		unforce_rtp_proxy();
+-		append_hf("P-RTP-Proxy: Off\r\n");
+-		break;
+-	}
+-
+-	# Turn the RTP proxy on for INVITEs and UPDATEs, if they 
+-	# have a body
+-	if (((method=="INVITE" || method == "UPDATE") && @msg.body != "")
+-	    && !isflagset(FLAG_RTP_PROXY))
+-	{
+-		force_rtp_proxy('r');
+-		append_hf("P-RTP-Proxy: On\r\n");
+-		setflag(FLAG_RTP_PROXY);
+-		$rproxy = 1;
+-		setavpflag($rproxy, "dialog_cookie");
+-	}
+-}
+-
++include_file "sip-router-oob-RTPPROXY.cfg.inc"
+ 
+ # Handling of Route headers
+ #
+@@ -948,11 +897,6 @@
+ 			setflag(FLAG_ACC);
+ 		}
+ 
+-		# Restore the RTP proxy flag if present
+-		if ($rproxy == "1") {
+-			setflag(FLAG_RTP_PROXY);
+-		}
+-
+ 		# Restore Session Timer flag and headers.
+ 		if ( defined $stimer && ($stimer != "0")) {
+ 			route(SESSION_TIMER);
+@@ -1586,6 +1530,7 @@
+ 			}
+ 		}
+ 	} # if (isflagset...
++	route(RTPPROXY_PROCESS_FAILURE);
+ }
+ 
+ 
+@@ -1597,14 +1542,7 @@
+ 	# allow proper routing of in-dialog messages.
+ 	route(UAS_NAT_DETECTION);
+ 
+-	# If RTP proxy was activated and this is a 18x or 2xx reply with a
+-	# body, inform RTP proxy.
+-	if (isflagset(FLAG_RTP_PROXY)
+-	    && status=~"(18[03])|(2[0-9][0-9])"
+-	    && @msg.body != "")
+-	{
+-		force_rtp_proxy('r');
+-	}
++	route(RTPPROXY_PROCESS_REPLY);
+ 
+ 	# Let's check for session timer support.
+ 	if (isflagset(FLAG_SESSIONTIMER) && status =~ "2[0-9][0-9]") {
