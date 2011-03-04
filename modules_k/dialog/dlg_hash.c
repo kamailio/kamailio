@@ -543,11 +543,10 @@ void link_dlg(struct dlg_cell *dlg, int n)
  */
 #define unref_dlg_unsafe(_dlg,_cnt,_d_entry)   \
 	do { \
-		(_dlg)->ref -= (_cnt); \
-		LM_DBG("unref dlg %p with %d -> %d\n",\
+		LM_DBG("unref dlg %p with %d, crt ref count: %d\n",\
 			(_dlg),(_cnt),(_dlg)->ref);\
-		if ((_dlg)->ref<0) {\
-			LM_CRIT("bogus ref %d with cnt %d for dlg %p [%u:%u] "\
+		if ((_dlg)->ref<=0) {\
+			LM_CRIT("bogus op: ref %d with cnt %d for dlg %p [%u:%u] "\
 				"with clid '%.*s' and tags '%.*s' '%.*s'\n",\
 				(_dlg)->ref, _cnt, _dlg,\
 				(_dlg)->h_entry, (_dlg)->h_id,\
@@ -556,11 +555,13 @@ void link_dlg(struct dlg_cell *dlg, int n)
 				(_dlg)->tag[DLG_CALLER_LEG].s,\
 				(_dlg)->tag[DLG_CALLEE_LEG].len,\
 				(_dlg)->tag[DLG_CALLEE_LEG].s); \
-		}\
-		if ((_dlg)->ref<=0) { \
-			unlink_unsafe_dlg( _d_entry, _dlg);\
-			LM_DBG("ref <=0 for dialog %p\n",_dlg);\
-			destroy_dlg(_dlg);\
+		} else { \
+			(_dlg)->ref -= (_cnt); \
+			if ((_dlg)->ref<=0) { \
+				unlink_unsafe_dlg( _d_entry, _dlg);\
+				LM_DBG("ref <=0 for dialog %p\n",_dlg);\
+				destroy_dlg(_dlg);\
+			}\
 		}\
 	}while(0)
 
