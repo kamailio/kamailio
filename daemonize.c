@@ -58,6 +58,10 @@
 #include <pwd.h>
 #include <grp.h>
 
+#ifdef __OS_linux
+#include <sys/prctl.h>
+#endif
+
 #ifdef HAVE_SCHED_SETSCHEDULER
 #include <sched.h>
 #endif
@@ -202,6 +206,40 @@ void daemon_status_no_wait()
 }
 
 
+/**
+ * enable dumpable flag for core dumping after setuid() & friends
+ * @return 0 when no critical error occured, -1 on such error
+ */
+int enable_dumpable(void)
+{
+#ifdef __OS_linux
+	struct rlimit lim;
+	/* re-enable core dumping on linux after setuid() & friends */
+	if(disable_core_dump==0) {
+		LM_DBG("trying enable core dumping...\n");
+		if(prctl(PR_GET_DUMPABLE, 0, 0, 0, 0)<=0) {
+			LM_DBG("core dumping is disabled now...\n");
+			if(prctl(PR_SET_DUMPABLE, 1, 0, 0, 0)<0) {
+				LM_WARN("cannot re-enable core dumping!\n");
+			} else {
+				LM_DBG("core dumping has just been enabled...\n");
+				if (getrlimit(RLIMIT_CORE, &lim)<0){
+					LOG(L_CRIT, "cannot get the maximum core size: %s\n",
+							strerror(errno));
+					return -1;
+				} else {
+					DBG("current core file limit: %lu (max: %lu)\n",
+						(unsigned long)lim.rlim_cur, (unsigned long)lim.rlim_max);
+				}
+			}
+		} else {
+			LM_DBG("core dumping is enabled now (%d)...\n",
+					prctl(PR_GET_DUMPABLE, 0, 0, 0, 0));
+		}
+	}
+#endif
+	return 0;
+}
 
 /** daemon init.
  *@param name - daemon name used for logging (used when opening syslog).
@@ -289,6 +327,10 @@ int daemonize(char*  name,  int status_wait)
 			exit(0);
 		}
 	}
+
+	if(enable_dumpable()<0)
+		goto error;
+
 	/* added by noh: create a pid file for the main process */
 	if (pid_file!=0){
 		
@@ -415,6 +457,10 @@ int do_suid()
 			goto error;
 		}
 	}
+
+	if(enable_dumpable()<0)
+		goto error;
+
 	return 0;
 error:
 	return -1;
@@ -477,7 +523,7 @@ error:
 
 
 /*! \brief enable core dumps */
-int set_core_dump(int enable, int size)
+int set_core_dump(int enable, long unsigned int size)
 {
 	struct rlimit lim;
 	struct rlimit newlim;
@@ -510,8 +556,11 @@ int set_core_dump(int enable, int size)
 						(unsigned long)lim.rlim_max);
 			}
 			goto error; /* it's an error we haven't got the size we wanted*/
+		}else{
+			newlim.rlim_cur=lim.rlim_cur;
+			newlim.rlim_max=lim.rlim_max;
+			goto done; /*nothing to do */
 		}
-		goto done; /*nothing to do */
 	}else{
 		/* disable */
 		newlim.rlim_cur=0;
