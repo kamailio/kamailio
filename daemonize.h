@@ -30,7 +30,7 @@
 int daemonize(char* name, int daemon_status_fd_input);
 int do_suid();
 int increase_open_fds(int target);
-int set_core_dump(int enable, int size);
+int set_core_dump(int enable, long unsigned int size);
 int mem_lock_pages();
 int set_rt_prio(int prio, int policy);
 
