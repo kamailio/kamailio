@@ -99,7 +99,7 @@ int pv_get_xavp(struct sip_msg *msg, pv_param_t *param,
 	if(idx<0)
 	{
 		count = xavp_count(&xname->name, NULL);
-		idx = count + idx + 1;
+		idx = count + idx;
 	}
 	avp = xavp_get_by_index(&xname->name, idx, NULL);
 	if(avp==NULL)
@@ -107,6 +107,8 @@ int pv_get_xavp(struct sip_msg *msg, pv_param_t *param,
 	if(xname->next==NULL)
 		return pv_xavp_get_value(msg, param, res, avp);
 
+	idx = 0;
+	idxf = 0;
 	if(xname->next->index.type==PVT_EXTRA)
 	{
 		/* get the index */
@@ -120,7 +122,7 @@ int pv_get_xavp(struct sip_msg *msg, pv_param_t *param,
 	if(idx<0)
 	{
 		count = xavp_count(&xname->next->name, &avp->val.v.xavp);
-		idx = count + idx + 1;
+		idx = count + idx;
 	}
 	avp = xavp_get_by_index(&xname->next->name, idx, &avp->val.v.xavp);
 	if(avp==NULL)
