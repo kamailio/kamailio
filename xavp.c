@@ -459,15 +459,17 @@ sr_xavp_t **xavp_get_crt_list(void)
 	return _xavp_list_crt;
 }
 
-void xavp_print_list(sr_xavp_t **head)
+void xavp_print_list_content(sr_xavp_t **head, int level)
 {
 	sr_xavp_t *avp=0;
+	sr_xavp_t *start=0;
 
 	if(head!=NULL)
-		avp = *head;
+		start = *head;
 	else
-		avp=*_xavp_list_crt;
-	LM_DBG("+++++ XAVP list: %p\n", avp);
+		start=*_xavp_list_crt;
+	LM_DBG("+++++ start XAVP list: %p (level=%d)\n", start, level);
+	avp = start;
 	while(avp)
 	{
 		LM_DBG("     *** XAVP name: %s\n", avp->name.s);
@@ -494,7 +496,7 @@ void xavp_print_list(sr_xavp_t **head)
 			break;
 			case SR_XTYPE_XAVP:
 				LM_DBG("     XAVP value: <xavp:%p>\n", avp->val.v.xavp);
-				xavp_print_list(&avp->val.v.xavp);
+				xavp_print_list_content(&avp->val.v.xavp, level+1);
 			break;
 			case SR_XTYPE_DATA:
 				LM_DBG("     XAVP value: <data:%p>\n", avp->val.v.data);
@@ -502,7 +504,11 @@ void xavp_print_list(sr_xavp_t **head)
 		}
 		avp = avp->next;
 	}
-	LM_DBG("----- XAVP list\n");
+	LM_DBG("----- end XAVP list: %p (level=%d)\n", start, level);
 }
 
+void xavp_print_list(sr_xavp_t **head)
+{
+	xavp_print_list_content(head, 0);
+}
 #endif
