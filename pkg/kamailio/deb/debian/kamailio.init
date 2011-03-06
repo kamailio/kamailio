@@ -22,13 +22,14 @@ DESC=kamailio
 HOMEDIR=/var/run/kamailio
 PIDFILE=$HOMEDIR/$NAME.pid
 DEFAULTS=/etc/default/kamailio
+CFGFILE=/etc/kamailio/kamailio.cfg
 RUN_KAMAILIO=no
 
 # Do not start kamailio if fork=no is set in the config file
 # otherwise the boot process will just stop
 check_fork ()
 {
-    if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" /etc/kamailio/kamailio.cfg; then
+    if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" $CFGFILE; then
 	echo "Not starting $DESC: fork=no specified in config file; run /etc/init.d/kamailio debug instead"
 	exit 1
     fi
@@ -80,7 +81,10 @@ create_radius_seqfile ()
     chmod 660 $RADIUS_SEQ_FILE
 }
 
-test -f $DAEMON || exit 0
+if [ ! -f $DAEMON ]; then
+	echo "No Kamailio daemon at: $DAEMON"
+	exit 0
+fi
 
 # Load startup options if available
 if [ -f $DEFAULTS ]; then
@@ -104,13 +108,34 @@ if test "$DUMP_CORE" = "yes" ; then
     ulimit -c unlimited
     
     # directory for the core dump files
-    # COREDIR=/home/corefiles
+    # COREDIR=/tmp/corefiles
     # [ -d $COREDIR ] || mkdir $COREDIR
     # chmod 777 $COREDIR
     # echo "$COREDIR/core.%e.sig%s.%p" > /proc/sys/kernel/core_pattern
 fi
 
-OPTIONS="-P $PIDFILE -m $MEMORY -u $USER -g $GROUP"
+if [ "$SSD_SUID" != "yes" ]; then
+	OPTIONS="-f $CFGFILE -P $PIDFILE -m $MEMORY -u $USER -g $GROUP"
+	SSDOPTS=""
+else
+	OPTIONS="-f $CFGFILE -P $PIDFILE -m $MEMORY"
+	SSDOPTS="--chuid $USER:$GROUP"
+fi
+
+start_kamailio_daemon ()
+{
+	start-stop-daemon --start --quiet --pidfile $PIDFILE $SSDOPTS \
+		--exec $DAEMON -- $OPTIONS || if [ ! -r "$PIDFILE" ]; then
+			echo " error, failed to start."
+			exit 1
+		elif read pid < "$PIDFILE" && ps -p "$pid" > /dev/null 2>&1; then
+			echo -n " already running"
+			echo "."
+		else
+			echo " error, failed to start ($PIDFILE exists)."
+			exit 1
+		fi
+}
 
 case "$1" in
   start|debug)
@@ -122,21 +147,12 @@ case "$1" in
 	    check_fork
 	fi
 
-	echo -n "Starting $DESC: $NAME"
-	start-stop-daemon --start --quiet --pidfile $PIDFILE \
-		--exec $DAEMON -- $OPTIONS || if [ ! -r "$PIDFILE" ]; then
-			echo " error, failed to start."
-			exit 1
-		elif read pid < "$PIDFILE" && ps -p "$pid" > /dev/null 2>&1; then
-			echo -n " already running"
-			echo "."
-		else
-			echo " error, failed to start ($PIDFILE exists)."
-			exit 1
-		fi
+	echo -n "Starting $DESC: $NAME "
+	start_kamailio_daemon
+	echo "."
 	;;
   stop)
-	echo -n "Stopping $DESC: $NAME"
+	echo -n "Stopping $DESC: $NAME "
 	start-stop-daemon --oknodo --stop --quiet --pidfile $PIDFILE \
 		--exec $DAEMON
 	echo "."
@@ -146,12 +162,11 @@ case "$1" in
 	check_homedir
 	create_radius_seqfile
 
-	echo -n "Restarting $DESC: $NAME"
+	echo -n "Restarting $DESC: $NAME "
 	start-stop-daemon --oknodo --stop --quiet --pidfile \
 		$PIDFILE --exec $DAEMON
 	sleep 1
-	start-stop-daemon --start --quiet --pidfile \
-		$PIDFILE --exec $DAEMON  -- $OPTIONS
+	start_kamailio_daemon
 	echo "."
 	;;
   status)
