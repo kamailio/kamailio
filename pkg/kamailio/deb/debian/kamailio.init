@@ -124,8 +124,16 @@ case "$1" in
 
 	echo -n "Starting $DESC: $NAME"
 	start-stop-daemon --start --quiet --pidfile $PIDFILE \
-		--exec $DAEMON -- $OPTIONS || echo -n " already running"
-	echo "."
+		--exec $DAEMON -- $OPTIONS || if [ ! -r "$PIDFILE" ]; then
+			echo " error, failed to start."
+			exit 1
+		elif read pid < "$PIDFILE" && ps -p "$pid" > /dev/null 2>&1; then
+			echo -n " already running"
+			echo "."
+		else
+			echo " error, failed to start ($PIDFILE exists)."
+			exit 1
+		fi
 	;;
   stop)
 	echo -n "Stopping $DESC: $NAME"
