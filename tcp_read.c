@@ -266,7 +266,8 @@ again:
 								break;
 						}
 				}
-				LOG(L_ERR, "error reading: %s (%d)\n", strerror(errno), errno);
+				LOG(cfg_get(core, core_cfg, corelog),
+						"error reading: %s (%d)\n", strerror(errno), errno);
 				return -1;
 			}
 		}else if (unlikely((bytes_read==0) || 
@@ -879,7 +880,8 @@ again:
 					req->start);
 #endif
 			if (unlikely(bytes==-1)){
-				LOG(L_ERR, "ERROR: tcp_read_req: error reading \n");
+				LOG(cfg_get(core, core_cfg, corelog),
+						"ERROR: tcp_read_req: error reading \n");
 				resp=CONN_ERROR;
 				goto end_req;
 			}

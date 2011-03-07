@@ -139,7 +139,8 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	msg->set_global_port=default_global_port;
 	
 	if (parse_msg(buf,len, msg)!=0){
-		LOG(L_ERR, "ERROR: receive_msg: parse_msg failed\n");
+		LOG(cfg_get(core, core_cfg, corelog),
+				"ERROR: receive_msg: parse_msg failed\n");
 		goto error02;
 	}
 	DBG("After parse_msg...\n");
