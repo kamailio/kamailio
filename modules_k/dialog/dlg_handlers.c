@@ -716,12 +716,10 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 	if (_dlg_ctx.to_bye!=0)
 		dlg->dflags |= DLG_FLAG_TOBYE;
 
-	if (t) {
-		if ( d_tmb.register_tmcb( msg, t, TMCB_MAX,
-					dlg_tmcb_dummy, (void*)dlg, 0)<0 ) {
-			LM_ERR("failed cache in T the shortcut to dlg\n");
-			goto error;
-		}
+	if ( d_tmb.register_tmcb( msg, t, TMCB_MAX,
+				dlg_tmcb_dummy, (void*)dlg, 0)<0 ) {
+		LM_ERR("failed cache in T the shortcut to dlg\n");
+		goto error;
 	}
 #if 0
 		t->dialog_ctx = (void*) dlg;
