@@ -1995,7 +1995,7 @@ int ds_mark_dst(struct sip_msg *msg, int mode)
 	
 	if(mode==1) {
 		ret = ds_set_state(group, &avp_value.s,
-				DS_INACTIVE_DST|DS_PROBING_DST, 0);
+				DS_INACTIVE_DST|DS_PROBING_DST|DS_RESET_FAIL_DST, 0);
 	} else if(mode==2) {
 		ret = ds_set_state(group, &avp_value.s, DS_PROBING_DST, 1);
 		if (ret == 0) ret = ds_set_state(group, &avp_value.s,
