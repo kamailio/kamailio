@@ -2071,6 +2071,7 @@ int ds_set_state(int group, str *address, int state, int type)
 							" to active: It is already administratively deactivated!\n");
 					return 0;
 				}
+				type = 0;
 			}
 			
 			if(type)
