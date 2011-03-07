@@ -104,3 +104,39 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val)
 	*val = (void *)(long)i;
 	return 0;
 }
+
+
+/**
+ * per process debug log level (local)
+ */
+
+/* value for unset local log level  */
+#define UNSET_LOCAL_DEBUG_LEVEL	-255
+
+/* the local debug log level */
+static int _local_debug_level = UNSET_LOCAL_DEBUG_LEVEL;
+
+/**
+ * @brief return the log level - the local one if it set,
+ *   otherwise the global value
+ */
+int get_debug_level(void) {
+	return (_local_debug_level != UNSET_LOCAL_DEBUG_LEVEL) ?
+				_local_debug_level : cfg_get(core, core_cfg, debug);
+}
+
+/**
+ * @brief set the local debug log level
+ */
+void set_local_debug_level(int level)
+{
+	_local_debug_level = level;
+}
+
+/**
+ * @brief reset the local debug log level
+ */
+void reset_local_debug_level(void)
+{
+	_local_debug_level = UNSET_LOCAL_DEBUG_LEVEL;
+}
