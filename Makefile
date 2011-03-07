@@ -772,12 +772,16 @@ utils:
 dbg: sip-router
 	gdb -command debug.gdb
 
+.PHONY: makefile_vars makefile-vars
+makefile_vars makefile-vars:
+	echo "FLAVOUR?=$(FLAVOUR)" > Makefile.vars
+
 .PHONY: tar
 .PHONY: dist
 
 dist: tar
 
-tar: $(auto_gen_keep)
+tar: makefile_vars $(auto_gen_keep)
 	$(TAR) -C .. \
 		--exclude=$(notdir $(CURDIR))/test* \
 		--exclude=$(notdir $(CURDIR))/tmp* \
@@ -1143,7 +1147,7 @@ maintainer-clean: modules=$(modules_all)
 proper realclean distclean maintainer-clean: clean_cfg
 
 # on maintainer clean, remove also the configured module list
-maintainer-clean: clean_modules_cfg
+maintainer-clean: clean_modules_cfg clean_makefile_vars
 
 .PHONY: proper-all realclean-all distclean-all
 proper-all realclean-all distclean-all: cmodules=$(all_modules_lst)
@@ -1157,6 +1161,9 @@ clean_cfg clean-cfg:
 .PHONY: clean_modules_cfg clean-modules-cfg
 clean_modules_cfg clean-modules-cfg:
 	rm -f modules.lst
+
+.PHONY: clean_makefile_vars clean-makefile-vars
+	rm -f Makefile.vars
 
 .PHONY: dbschema
 dbschema:
