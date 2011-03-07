@@ -46,6 +46,8 @@ MODULE_VERSION
 
 /** module functions */
 int w_is_myself(struct sip_msg *msg, char *uri, str *s2);
+int w_setdebug(struct sip_msg *msg, char *level, str *s2);
+int w_resetdebug(struct sip_msg *msg, char *uri, str *s2);
 
 static int mod_init(void);
 static int child_init(int rank);
@@ -85,6 +87,10 @@ static cmd_export_t cmds[]={
 	{"avp_printf", (cmd_function)w_pv_printf,   2, pv_printf_fixup,
 			0, ANY_ROUTE },
 	{"is_myself", (cmd_function)w_is_myself,    1, fixup_spve_null,
+			0, ANY_ROUTE },
+	{"setdebug", (cmd_function)w_setdebug,      1, fixup_igp_null,
+			0, ANY_ROUTE },
+	{"resetdebug", (cmd_function)w_resetdebug,  0, 0,
 			0, ANY_ROUTE },
 
 	{0,0,0,0,0,0}
@@ -182,3 +188,20 @@ int w_is_myself(struct sip_msg *msg, char *uri, str *s2)
 	return 1;
 }
 
+int w_setdebug(struct sip_msg *msg, char *level, str *s2)
+{
+	int lval=0;
+	if(fixup_get_ivalue(msg, (gparam_p)level, &lval)!=0)
+	{
+		LM_ERR("no debug level value\n");
+		return -1;
+	}
+	set_local_debug_level(lval);
+	return 1;
+}
+
+int w_resetdebug(struct sip_msg *msg, char *uri, str *s2)
+{
+	reset_local_debug_level();
+	return 1;
+}
