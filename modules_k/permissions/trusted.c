@@ -328,8 +328,8 @@ static inline int match_proto(const char *proto_string, int proto_int)
 }
 
 /*
- * Matches from uri against patterns returned from database.  Returns 1 when
- * first pattern matches and -1 if none of the patterns match.
+ * Matches from uri against patterns returned from database.  Returns number
+ * of matches or -1 if none of the patterns match.
  */
 static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 {
@@ -340,7 +340,7 @@ static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 	db_val_t* val;
 	regex_t preg;
 	int_str tag_avp, avp_val;
-	int rc = -1;
+	int count = 0;
 
 	if (parse_from_header(msg) < 0) return -1;
 	uri = get_from(msg)->uri;
@@ -383,13 +383,14 @@ static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 					LM_ERR("failed to set of tag_avp failed\n");
 					return -1;
 				}
-				rc = 1;
-			} else {
-				return 1;
 			}
+			count++;
 		}
 	}
-	return rc;
+	if (!count)
+		return -1;
+	else 
+		return count;
 }
 
 
