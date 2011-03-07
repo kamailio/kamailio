@@ -38,6 +38,8 @@ Daniel-Constantin Mierla
               3.10. isdsturiset()
               3.11. pv_printf(var, str)
               3.12. is_myself(uri)
+              3.13. setdebug(level)
+              3.14. resetdebug()
 
         4. Exported MI Functions
 
@@ -66,6 +68,8 @@ Daniel-Constantin Mierla
    1.10. >isdsturiset usage
    1.11. >pv_printf usage
    1.12. >is_myself usage
+   1.13. setdebug usage
+   1.14. >resetdebug usage
 
 Chapter 1. Admin Guide
 
@@ -91,6 +95,8 @@ Chapter 1. Admin Guide
         3.10. isdsturiset()
         3.11. pv_printf(var, str)
         3.12. is_myself(uri)
+        3.13. setdebug(level)
+        3.14. resetdebug()
 
    4. Exported MI Functions
 
@@ -141,6 +147,8 @@ Chapter 1. Admin Guide
    3.10. isdsturiset()
    3.11. pv_printf(var, str)
    3.12. is_myself(uri)
+   3.13. setdebug(level)
+   3.14. resetdebug()
 
 3.1. setsflag(flag)
 
@@ -349,6 +357,36 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
 if(is_myself("$fu")) {
     ...
 }
+...
+
+3.13. setdebug(level)
+
+   Set the debug log level per process.
+
+   Meaning of the parameters is as follows:
+     * level - the debug log level to be set. Can be integer or
+       pseudo-variable with integer value.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. setdebug usage
+...
+setdebug("1");
+...
+$var(level) = 2;
+setdebug("$var(level)");
+...
+
+3.14. resetdebug()
+
+   Reset the local debug log level back to the value of core parameter
+   'debug'.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.14. >resetdebug usage
+...
+resetdebug();
 ...
 
 4. Exported MI Functions
