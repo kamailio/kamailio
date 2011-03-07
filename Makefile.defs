@@ -117,6 +117,8 @@ ifeq ($(quiet),verbose)
 $(info normal Makefile.defs exec)
 endif # verbose
 
+-include Makefile.vars
+
 # usage: $(call set_if_empty,VAR,value)
 set_if_empty=$(if $($(1)),,$(eval override $(1)=$(2)))
 
