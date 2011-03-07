@@ -119,8 +119,9 @@ struct cfg_group_core default_core_cfg = {
 	-1,  /**< udp4_raw_ttl (auto detect by default) */
 	0,  /*!< force_rport */
 	L_DBG, /*!< memlog */
-	3 /*!< mem_summary -flags: 0 off, 1 pkg_status, 2 shm_status,
+	3, /*!< mem_summary -flags: 0 off, 1 pkg_status, 2 shm_status,
 		4 pkg_sums, 8 shm_sums */
+	L_ERR /*!< corelog */
 };
 
 void	*core_cfg = &default_core_cfg;
@@ -307,5 +308,7 @@ cfg_def_t core_cfg_def[] = {
 		" 2 - dump all the shm used blocks (status),"
 		" 4 - summary of pkg used blocks,"
 		" 8 - summary of shm used blocks" },
+	{"corelog",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"log level for non-critical core error messages"},
 	{0, 0, 0, 0, 0, 0}
 };
