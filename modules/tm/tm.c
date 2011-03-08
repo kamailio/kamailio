@@ -460,8 +460,8 @@ static cmd_export_t cmds[]={
 			FAILURE_ROUTE},
 	{"t_save_lumps",      w_t_save_lumps,           0, 0,
 			REQUEST_ROUTE},
-	{"t_check_trans",	t_check_trans,				0, 0,
-			REQUEST_ROUTE|TM_ONREPLY_ROUTE|BRANCH_ROUTE },
+	{"t_check_trans",	  t_check_trans,			0, 0,
+			REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE },
 
 	{"t_load_contacts", t_load_contacts,            0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE},
