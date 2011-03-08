@@ -384,6 +384,8 @@ static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 					return -1;
 				}
 			}
+			if (!peer_tag_mode) 
+				return 1;
 			count++;
 		}
 	}

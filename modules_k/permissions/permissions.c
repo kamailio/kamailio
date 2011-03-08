@@ -68,6 +68,7 @@ str proto_col = str_init("proto");         /* Name of protocol column */
 str from_col = str_init("from_pattern");   /* Name of from pattern column */
 str tag_col = str_init("tag");             /* Name of tag column */
 str tag_avp_param = {NULL, 0};             /* Peer tag AVP spec */
+int peer_tag_mode = 0;                     /* Add tags form all mathcing peers to avp */
 
 /* for allow_address function */
 str address_table = str_init("address");   /* Name of address table */
@@ -159,6 +160,7 @@ static param_export_t params[] = {
 	{"from_col",           STR_PARAM, &from_col.s        },
 	{"tag_col",            STR_PARAM, &tag_col.s         },
 	{"peer_tag_avp",       STR_PARAM, &tag_avp_param.s   },
+	{"peer_tag_mode",      INT_PARAM, &peer_tag_mode     },
 	{"address_table",      STR_PARAM, &address_table.s   },
 	{"grp_col",            STR_PARAM, &grp_col.s         },
 	{"ip_addr_col",        STR_PARAM, &ip_addr_col.s     },

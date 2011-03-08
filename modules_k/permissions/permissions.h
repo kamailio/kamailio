@@ -61,6 +61,8 @@ extern str grp_col;       /* Name of address group column */
 extern str ip_addr_col;   /* Name of ip address column */
 extern str mask_col;      /* Name of mask column */
 extern str port_col;      /* Name of port column */
+extern int peer_tag_mode; /* Matching mode */
+
 
 typedef struct int_or_pvar {
     unsigned int i;
