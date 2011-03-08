@@ -775,7 +775,7 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 #define SALIAS_LEN (sizeof(SALIAS) - 1)
 
 /*
- * Adds ;alias=ip:port param to cotact uri containing received ip:port
+ * Adds ;alias=ip:port param to contact uri containing received ip:port
  * if contact uri ip:port does not match received ip:port.
  */
 static int
@@ -806,14 +806,14 @@ add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
 
     /* Compare source ip and port against contact uri */
     if ((ip = str2ip(&(uri.host))) == NULL) {
-	LM_ERR("contact uri host is not an ip address\n");
-	return -1;
-    }
-    if (ip_addr_cmp(ip, &(msg->rcv.src_ip)) &&
-	((msg->rcv.src_port == uri.port_no) ||
-	 ((uri.port.len == 0) && (msg->rcv.src_port == 5060)))) {
-	LM_DBG("no need to add alias param\n");
-	return 2;
+	LM_DBG("contact uri host is not an ip address\n");
+    } else {
+	if (ip_addr_cmp(ip, &(msg->rcv.src_ip)) &&
+	    ((msg->rcv.src_port == uri.port_no) ||
+	     ((uri.port.len == 0) && (msg->rcv.src_port == 5060)))) {
+	    LM_DBG("no need to add alias param\n");
+	    return 2;
+	}
     }
 	
     /* Check if function has been called already */
