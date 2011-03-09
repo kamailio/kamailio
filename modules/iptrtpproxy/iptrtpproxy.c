@@ -3050,6 +3050,18 @@ struct module_exports exports = {
 
 #include <stdarg.h>
 
+#ifdef xtables_error
+/* iptables 1.4.8 */
+
+struct xtables_globals *xt_params = NULL;
+int xtables_check_inverse(const char option[], int *invert, int *optind, int argc, char **argv) {
+        return FALSE;
+}
+void xtables_register_target(struct xtables_target *me) {
+}
+
+#else  /* xtables_error */
+
 #ifdef _IPTABLES_COMMON_H
 /* old iptables API, it uses iptables_common.h (instead of xtables.h) included from iptables.h */
 /* #ifndef XTABLES_VERSION ... optional test */
@@ -3067,7 +3079,7 @@ void xtables_register_target(struct xtables_target *me) {
 #if IPT_RTPPROXY_IPTABLES_API
 void exit_error(enum exittype status, char *msg, ...)
 #else
-	void exit_error(enum exittype status, const char *msg, ...)
+void exit_error(enum exittype status, const char *msg, ...)
 #endif
 {
 	va_list args;
@@ -3078,28 +3090,10 @@ void exit_error(enum exittype status, char *msg, ...)
 	va_end(args);
 }
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-int check_inverse(const char option[], int *invert, int *optind, int argc)
-{
-	if (option && strcmp(option, "!") == 0) {
-		if (*invert)
-			exit_error(PARAMETER_PROBLEM, "Multiple `!' flags not allowed");
-		*invert = TRUE;
-		if (optind) {
-			*optind = *optind+1;
-			if (argc && *optind > argc)
-				exit_error(PARAMETER_PROBLEM, "no argument following `!'");
-		}
-		return TRUE;
-	}
-	return FALSE;
+int check_inverse(const char option[], int *invert, int *optind, int argc) {
+	return 0;
 }
+#endif  /* xtables_error */
 
 #endif
 
