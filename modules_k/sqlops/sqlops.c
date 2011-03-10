@@ -60,6 +60,7 @@ static int bind_sqlops(sqlops_api_t* api);
 
 /** module functions */
 static int sql_query(struct sip_msg*, char*, char*, char*);
+static int sql_query2(struct sip_msg*, char*, char*);
 #ifdef WITH_XAVP
 static int sql_xquery(struct sip_msg *msg, char *dbl, char *query, char *res);
 #endif
@@ -84,6 +85,9 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[]={
 	{"sql_query",  (cmd_function)sql_query, 3, fixup_sql_query, 0, 
+		REQUEST_ROUTE | FAILURE_ROUTE |
+		ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
+	{"sql_query",  (cmd_function)sql_query2, 2, fixup_sql_query, 0, 
 		REQUEST_ROUTE | FAILURE_ROUTE |
 		ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
 #ifdef WITH_XAVP
@@ -190,6 +194,11 @@ static int sql_query(struct sip_msg *msg, char *dbl, char *query, char *res)
 		return -1;
 	}
 	return sql_do_query((sql_con_t*)dbl, &sq, (sql_result_t*)res);
+}
+
+static int sql_query2(struct sip_msg *msg, char *dbl, char *query)
+{
+	return sql_query(msg, dbl, query, NULL);
 }
 
 #ifdef WITH_XAVP

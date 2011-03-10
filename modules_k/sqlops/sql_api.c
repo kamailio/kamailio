@@ -208,7 +208,6 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
-	sql_reset_result(res);
 	if(con->dbf.raw_query(con->dbh, query, &db_res)!=0)
 	{
 		LM_ERR("cannot do the query\n");
@@ -221,6 +220,14 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 		con->dbf.free_result(con->dbh, db_res);
 		return 2;
 	}
+	if(!res)
+	{
+		LM_DBG("no sqlresult parameter, ignoring result from query\n");
+		con->dbf.free_result(con->dbh, db_res);
+		return 3;
+	}
+
+	sql_reset_result(res);
 	res->ncols = RES_COL_N(db_res);
 	res->nrows = RES_ROW_N(db_res);
 	LM_DBG("rows [%d] cols [%d]\n", res->nrows, res->ncols);
