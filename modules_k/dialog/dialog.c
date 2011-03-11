@@ -85,12 +85,12 @@ static char* rr_param = "did";
 static int dlg_flag = -1;
 static str timeout_spec = {NULL, 0};
 static int default_timeout = 60 * 60 * 12;  /* 12 hours */
-static int seq_match_mode = SEQ_MATCH_STRICT_ID;
 static char* profiles_wv_s = NULL;
 static char* profiles_nv_s = NULL;
 str dlg_extra_hdrs = {NULL,0};
 static int db_fetch_rows = 200;
 
+int seq_match_mode = SEQ_MATCH_STRICT_ID;
 str dlg_bridge_controller = {"sip:controller@kamailio.org", 27};
 
 str ruri_pvar_param = {"$ru", 3};
@@ -551,7 +551,7 @@ static int mod_init(void)
 
 	/* init handlers */
 	init_dlg_handlers( rr_param, dlg_flag,
-		timeout_spec.s?&timeout_avp:0, default_timeout, seq_match_mode);
+		timeout_spec.s?&timeout_avp:0, default_timeout);
 
 	/* init timer */
 	if (init_dlg_timer(dlg_ontimeout)!=0) {
