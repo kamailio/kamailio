@@ -496,6 +496,43 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->rs.len = j-1;
 			break;
 
+		case TR_S_TIMEFORMAT:
+			if(tp==NULL)
+			{
+				LM_ERR("timeformat invalid parameters\n");
+				return -1;
+			}
+			if(!(val->flags&PV_VAL_INT) && (str2int(&val->rs, (unsigned int*) &val->ri)!=0))
+			{
+				LM_ERR("value is not numeric\n");
+				return -1;
+			}
+			if(tp->type==TR_PARAM_STRING)
+			{
+				st = tp->v.s;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
+				{
+					LM_ERR("timeformat cannot get p1\n");
+					return -1;
+				}
+				st = v.rs;
+			}
+			s = pkg_malloc(st.len + 1);
+			if (s==NULL)
+			{
+				LM_ERR("no more pkg memory\n");
+				return -1;
+			}
+			memcpy(s, st.s, st.len);
+			s[st.len] = '\0';
+			val->rs.len = strftime(_tr_buffer, TR_BUFFER_SIZE-1, s, localtime((time_t*) &val->ri));
+			pkg_free(s);
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			break;
+
 		default:
 			LM_ERR("unknown subtype %d\n",
 					subtype);
@@ -1212,6 +1249,7 @@ char* tr_parse_string(str* in, trans_t *t)
 {
 	char *p;
 	char *p0;
+	char *ps;
 	str name;
 	str s;
 	pv_spec_t *spec = NULL;
@@ -1421,6 +1459,26 @@ char* tr_parse_string(str* in, trans_t *t)
 		if(*p!=TR_RBRACKET)
 		{
 			LM_ERR("invalid striptail transformation: %.*s!!\n",
+				in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len==5 && strncasecmp(name.s, "ftime", 5)==0) {
+		t->subtype = TR_S_TIMEFORMAT;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid ftime transformation: %.*s!\n",
+					in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid ftime transformation: %.*s!!\n",
 				in->len, in->s);
 			goto error;
 		}
