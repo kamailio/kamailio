@@ -1180,7 +1180,7 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		_tp->v.data = (void*)_spec; \
 	} else { /* string */ \
 		_ps = _p; \
-		while(is_in_str(_p, _in) && *_p!=' ' && *_p!='\t' && *_p!='\n' \
+		while(is_in_str(_p, _in) && *_p!='\t' && *_p!='\n' \
 				&& *_p!=TR_PARAM_MARKER && *_p!=TR_RBRACKET) \
 				_p++; \
 		if(*_p=='\0') \
