@@ -53,6 +53,8 @@ static int t_reply_callid(struct sip_msg* msg, char *cid, char *cseq,
 				char *rc, char *rs);
 static int fixup_reply_callid(void** param, int param_no);
 
+static int t_flush_flags(struct sip_msg* msg, char*, char* );
+
 /* statistic variables */
 stat_var *tm_rcv_rpls;
 stat_var *tm_rld_rpls;
@@ -135,6 +137,8 @@ static cmd_export_t cmds[]={
 		fixup_cancel_callid, 0, ANY_ROUTE },
 	{"t_reply_callid", (cmd_function)t_reply_callid,  4,
 		fixup_reply_callid, 0, ANY_ROUTE },
+	{"t_flush_flags",   (cmd_function)t_flush_flags,    0, 0,
+			0, ANY_ROUTE  },
 	{0,0,0,0,0,0}
 };
 
@@ -396,6 +400,23 @@ static int t_reply_callid(struct sip_msg* msg, char *cid, char *cseq,
 		return 1;
 
 	return -1;
+}
+
+/**
+ *
+ */
+static int t_flush_flags(struct sip_msg* msg, char *foo, char *bar)
+{
+	struct cell *t;
+
+	t=_tmx_tmb.t_gett();
+	if ( t==0 || t==T_UNDEFINED) {
+		LM_ERR("failed to flush flags - no transaction found\n");
+		return -1;
+	}
+
+	t->uas.request->flags = msg->flags;
+	return 1;
 }
 
 #ifdef STATISTICS
