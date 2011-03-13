@@ -62,9 +62,10 @@
 		</listitem>
 		<listitem>
 		<para>
-			<emphasis>alternatively, results can be stored in xavps. Columns are
-			accessed by their names, rows by xavp index. Xavp's are available 
-			during the transactions lifetime and don't need to be destroyed manually.
+			<emphasis>alternatively, results can be stored in xavps</emphasis>
+			- columns are accessed by their names, rows by xavp index. Xavp's
+			are available during the transactions lifetime and don't need to
+			be destroyed manually.
 		</para>
 		</listitem>
 
@@ -204,8 +205,7 @@ modparam("sqlops", "sqlres", "ra")
 		</listitem>
 		</itemizedlist>
 		<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			ONREPLY_ROUTE, BRANCH_ROUTE.
+			This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>sql_query()</function> usage</title>
@@ -220,6 +220,7 @@ sql_result_free("ra");
 </programlisting>
 		</example>
 	</section>
+	<section>
 		<title>
 		<function moreinfo="none">sql_xquery(connection, query, result)</function>
 		</title>
@@ -247,8 +248,7 @@ sql_result_free("ra");
 		</listitem>
 		</itemizedlist>
 		<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			ONREPLY_ROUTE, BRANCH_ROUTE.
+			This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>sql_xquery()</function> usage</title>
@@ -270,8 +270,7 @@ sql_xquery("ca", "select * from domain", "ra");
 			Free data in SQL 'result'.
 		</para>
 		<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			ONREPLY_ROUTE, BRANCH_ROUTE.
+			This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>sql_result_free()</function> usage</title>
