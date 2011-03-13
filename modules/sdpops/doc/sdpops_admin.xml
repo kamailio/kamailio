@@ -67,7 +67,7 @@
 
 	<section>
 	<title>Exported Functions</title>
- 	<section>
+	<section>
 	    <title>
 		<function moreinfo="none">sdp_remove_codecs_by_id(list)</function>
 	    </title>
@@ -78,6 +78,9 @@
 			parameter can be a static string or a variable holding the
 			list of numeric codec IDs.
 	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
 		<example>
 		<title><function>sdp_remove_codecs_by_id</function> usage</title>
 		<programlisting format="linespecific">
@@ -86,6 +89,53 @@
 sdp_remove_codecs_by_id("0");
 # remove PCMU, PCMA and GSM
 sdp_remove_codecs_by_id("0,8,3");
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">sdp_with_media(type)</function>
+	    </title>
+	    <para>
+		Return true of the SDP has 'media=type ...' line. Useful to check
+		the content of the RTP sessions, such as 'audio' or 'video'. The
+		parameter can be static string or variable holding the media type.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_with_media</function> usage</title>
+		<programlisting format="linespecific">
+...
+# check for video stream
+if(sdp_with_media("video"))
+{
+    # the session has a video stream
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">sdp_print(level)</function>
+	    </title>
+	    <para>
+		Print the SDP internal structure to log 'level'. The
+		parameter can be static integer or variable holding the integer
+		value of the log level.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_print</function> usage</title>
+		<programlisting format="linespecific">
+...
+# print the SDP
+sdp_print("1");
 ...
 </programlisting>
 	    </example>
