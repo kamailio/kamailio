@@ -38,13 +38,18 @@
 MODULE_VERSION
 
 static int w_sdp_remove_codecs_by_id(sip_msg_t* msg, char* codecs, char *bar);
-static int fixup_sdp_remove_codecs_by_id(void** param, int param_no);
+static int w_sdp_with_media(sip_msg_t* msg, char* media, char *bar);
+static int w_sdp_print(sip_msg_t* msg, char* level, char *bar);
 
 static int mod_init(void);
 
 static cmd_export_t cmds[] = {
 	{"sdp_remove_codecs_by_id",    (cmd_function)w_sdp_remove_codecs_by_id,
-		1, fixup_sdp_remove_codecs_by_id,  0, ANY_ROUTE},
+		1, fixup_spve_null,  0, ANY_ROUTE},
+	{"sdp_with_media",             (cmd_function)w_sdp_with_media,
+		1, fixup_spve_null,  0, ANY_ROUTE},
+	{"sdp_print",                  (cmd_function)w_sdp_print,
+		1, fixup_igp_null,  0, ANY_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -183,8 +188,6 @@ int sdp_remove_codecs_by_id(sip_msg_t* msg, str* codecs)
 
 	sdp = (sdp_info_t*)msg->body;
 
-	print_sdp(sdp, L_DBG);
-
 	sdp_session_num = 0;
 	for(;;)
 	{
@@ -246,12 +249,96 @@ static int w_sdp_remove_codecs_by_id(sip_msg_t* msg, char* codecs, char* bar)
 
 
 /** 
- * 
+ * @brief check 'media' matches the value of any 'm=value ...' lines
+ * @return -1 - error; 0 - not found; 1 - found
  */
-static int fixup_sdp_remove_codecs_by_id(void** param, int param_no)
+static int sdp_with_media(sip_msg_t *msg, str *media)
 {
-	if (param_no == 1) {
-	    return fixup_spve_null(param, 1);
+	sdp_info_t *sdp = NULL;
+	int sdp_session_num;
+	int sdp_stream_num;
+	sdp_session_cell_t* sdp_session;
+	sdp_stream_cell_t* sdp_stream;
+
+	if(parse_sdp(msg) < 0) {
+		LM_ERR("Unable to parse sdp\n");
+		return -1;
 	}
+
+	LM_ERR("attempting to search for media type: [%.*s]\n",
+			media->len, media->s);
+
+	sdp = (sdp_info_t*)msg->body;
+
+	sdp_session_num = 0;
+	for(;;)
+	{
+		sdp_session = get_sdp_session(msg, sdp_session_num);
+		if(!sdp_session) break;
+		sdp_stream_num = 0;
+		for(;;)
+		{
+			sdp_stream = get_sdp_stream(msg, sdp_session_num, sdp_stream_num);
+			if(!sdp_stream) break;
+
+			LM_DBG("stream %d of %d - media [%.*s]\n",
+				sdp_stream_num, sdp_session_num,
+				sdp_stream->media.len, sdp_stream->media.s);
+			if(media->len==sdp_stream->media.len
+					&& strncasecmp(sdp_stream->media.s, media->s,
+							media->len)==0)
+				return 1;
+			sdp_stream_num++;
+		}
+		sdp_session_num++;
+	}
+
 	return 0;
+}
+
+/**
+ *
+ */
+static int w_sdp_with_media(sip_msg_t* msg, char* media, char *bar)
+{
+	str lmedia = {0, 0};
+
+	if(media==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)media, &lmedia)!=0)
+	{
+		LM_ERR("unable to get the media value\n");
+		return -1;
+	}
+
+	if(sdp_with_media(msg, &lmedia)<=0)
+		return -1;
+	return 1;
+}
+
+
+static int w_sdp_print(sip_msg_t* msg, char* level, char *bar)
+{
+	sdp_info_t *sdp = NULL;
+	int llevel = L_DBG;
+
+	if(parse_sdp(msg) < 0) {
+		LM_ERR("Unable to parse sdp\n");
+		return -1;
+	}
+
+	if(fixup_get_ivalue(msg, (gparam_p)level, &llevel)!=0)
+	{
+		LM_ERR("unable to get the debug level value\n");
+		return -1;
+	}
+
+	sdp = (sdp_info_t*)msg->body;
+
+	print_sdp(sdp, llevel);
+	return 1;
 }
