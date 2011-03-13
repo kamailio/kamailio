@@ -1,0 +1,97 @@
+SDPOPS Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2011 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Exported Parameters
+        4. Exported Functions
+
+              4.1. sdp_remove_codecs_by_id(list)
+
+   List of Examples
+
+   1.1. sdp_remove_codecs_by_id usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+   4. Exported Functions
+
+        4.1. sdp_remove_codecs_by_id(list)
+
+1. Overview
+
+   This module provides function for checking and managing the SDP
+   payloads of SIP messages.
+
+   Examples of what this module offers: remove codecs from SDP, check the
+   media stream types, return attributes of SDP document. For the full
+   least of the features provided by this module and the implementation
+   state, read further to the list of exported functions.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+3. Exported Parameters
+
+   The module does not export any config parameter yet.
+
+4. Exported Functions
+
+   4.1. sdp_remove_codecs_by_id(list)
+
+4.1.  sdp_remove_codecs_by_id(list)
+
+   Remove the codecs provided in the parameter 'list' from all media
+   streams found in SDP payload. The parameter 'list' must be one or a
+   comma separated list of numeric codec IDs. The parameter can be a
+   static string or a variable holding the list of numeric codec IDs.
+
+   Example 1.1. sdp_remove_codecs_by_id usage
+...
+# remove PCMU
+sdp_remove_codecs_by_id("0");
+# remove PCMU, PCMA and GSM
+sdp_remove_codecs_by_id("0,8,3");
+...
