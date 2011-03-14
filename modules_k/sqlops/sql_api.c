@@ -32,6 +32,7 @@
 #include "../../dprint.h"
 #include "../../lib/kcore/hash_func.h"
 #include "../../ut.h"
+#include "../../lib/srdb1/db_ut.h"
 #ifdef WITH_XAVP
 #include "../../xavp.h"
 #endif
@@ -319,10 +320,22 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 					res->vals[i][j].value.n
 						= (int)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
 				break;
+				case DB1_BIGINT:
+					res->vals[i][j].flags = PV_VAL_STR;
+					res->vals[i][j].value.s.len = 21*sizeof(char);
+					res->vals[i][j].value.s.s
+						= (char*)pkg_malloc(res->vals[i][j].value.s.len);
+					if(res->vals[i][j].value.s.s==NULL)
+					{
+						LM_ERR("no more memory\n");
+						goto error;
+					}
+					db_longlong2str(RES_ROWS(db_res)[i].values[j].val.ll_val, res->vals[i][j].value.s.s, &res->vals[i][j].value.s.len);
+				break;
 				default:
 					res->vals[i][j].flags = PV_VAL_NULL;
 			}
-			if(res->vals[i][j].flags == PV_VAL_STR)
+			if(res->vals[i][j].flags == PV_VAL_STR && sv.s)
 			{
 				if(sv.len==0)
 				{
