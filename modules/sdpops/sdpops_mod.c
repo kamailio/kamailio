@@ -119,7 +119,75 @@ int str_find_token(str *text, str *result, char delim)
 	return 0;
 }
 
+/**
+ *
+ */
+int sdp_locate_line(sip_msg_t* msg, char *pos, str *aline)
+{
+	char *p;
+	p = pos;
+	while(*p!='\n') p--;
+	aline->s = p + 1;
+	p = pos;
+	while(*p!='\n') p++;
+	aline->len = p - aline->s + 1;
+	return 0;
+}
 
+/**
+ *
+ */
+int sdp_remove_str_codec_id_attrs(sip_msg_t* msg,
+		sdp_stream_cell_t* sdp_stream, str *rm_codec)
+{
+	str aline = {0, 0};
+	sdp_payload_attr_t *payload;
+	struct lump *anchor;
+
+	payload = sdp_stream->payload_attr;
+	while (payload) {
+		LM_DBG("a= ... for codec %.*s/%.*s\n",
+			payload->rtp_payload.len, payload->rtp_payload.s,
+			payload->rtp_enc.len, payload->rtp_enc.s);
+		if(rm_codec->len==payload->rtp_payload.len
+				&& strncmp(payload->rtp_payload.s, rm_codec->s,
+					rm_codec->len)==0) {
+			if(payload->rtp_enc.s!=NULL) {
+				if(sdp_locate_line(msg, payload->rtp_enc.s, &aline)==0)
+				{
+					anchor = del_lump(msg, aline.s - msg->buf,
+							aline.len, 0);
+					if (anchor == NULL) {
+						LM_ERR("failed to remove [%.*s] inside [%.*s]\n",
+							rm_codec->len, rm_codec->s,
+							aline.len, aline.s);
+						return -1;
+					}
+				}
+			}
+			if(payload->fmtp_string.s!=NULL) {
+				if(sdp_locate_line(msg, payload->fmtp_string.s, &aline)==0)
+				{
+					anchor = del_lump(msg, aline.s - msg->buf,
+							aline.len, 0);
+					if (anchor == NULL) {
+						LM_ERR("failed to remove [%.*s] inside [%.*s]\n",
+							rm_codec->len, rm_codec->s,
+							aline.len, aline.s);
+						return -1;
+					}
+				}
+			}
+		}
+		payload=payload->next;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
 int sdp_remove_str_codec_id(sip_msg_t* msg, str *allcodecs, str* rmcodec)
 {
 	int i;
@@ -214,6 +282,7 @@ int sdp_remove_codecs_by_id(sip_msg_t* msg, str* codecs)
 						sdp_codecs.len, sdp_codecs.s,
 						rm_codec.len, rm_codec.s);
 				sdp_remove_str_codec_id(msg, &sdp_codecs, &rm_codec);
+				sdp_remove_str_codec_id_attrs(msg, sdp_stream, &rm_codec);
 			}
 			sdp_stream_num++;
 		}
