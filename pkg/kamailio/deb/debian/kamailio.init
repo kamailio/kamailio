@@ -93,7 +93,14 @@ fi
 
 if [ "$RUN_KAMAILIO" != "yes" ]; then
     echo "Kamailio not yet configured. Edit /etc/default/kamailio first."
-    exit 0
+    case "$1" in
+    status)
+        exit 4
+       ;;
+    *)
+       exit 1
+       ;;
+    esac
 fi
 
 set -e
