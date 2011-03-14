@@ -438,6 +438,11 @@ int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
 						val.v.i
 							= (int)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
 					break;
+					case DB1_BIGINT:
+						val.type = SR_XTYPE_LLONG;
+						val.v.ll
+							= RES_ROWS(db_res)[i].values[j].val.ll_val;
+					break;
 					default:
 						val.type = SR_XTYPE_NULL;
 				}
