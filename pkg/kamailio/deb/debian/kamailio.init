@@ -95,10 +95,12 @@ if [ "$RUN_KAMAILIO" != "yes" ]; then
     echo "Kamailio not yet configured. Edit /etc/default/kamailio first."
     case "$1" in
     status)
+        # 4 program or service status is unknown
         exit 4
        ;;
     *)
-       exit 1
+        # 6 program is not configured
+        exit 6
        ;;
     esac
 fi
