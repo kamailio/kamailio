@@ -36,6 +36,7 @@
 #define PARSE_SUPPORTED_H
 
 #include "../../parser/msg_parser.h"
+#include "../../parser/hf.h"
 #include "../../mem/mem.h"
 
 
@@ -64,6 +65,7 @@
 
 
 struct supported_body {
+	hf_parsed_free_f hfree;        /* function to free the content */
 	unsigned int supported;        /* supported mask for the current hdr */
 	unsigned int supported_all;    /* suppoted mask for the all "supported" hdr
 	                                *  - it's set only for the first hdr in 
@@ -77,12 +79,6 @@ struct supported_body {
 int parse_supported( struct sip_msg *msg);
 
 
-static inline void free_supported(struct supported_body **sb)
-{
-	if (sb && *sb) {
-		pkg_free(*sb);
-		*sb = 0;
-	}
-}
+void free_supported(struct supported_body **sb);
 
 #endif /* PARSE_SUPPORTED_H */

@@ -73,6 +73,10 @@ void sql_destroy(void);
 int sql_connect(void);
 
 int sql_do_query(sql_con_t *con, str *query, sql_result_t *res);
+#ifdef WITH_XAVP
+int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
+		pv_elem_t *res);
+#endif
 sql_con_t* sql_get_connection(str *name);
 sql_result_t* sql_get_result(str *name);
 

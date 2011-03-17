@@ -1995,7 +1995,7 @@ int ds_mark_dst(struct sip_msg *msg, int mode)
 	
 	if(mode==1) {
 		ret = ds_set_state(group, &avp_value.s,
-				DS_INACTIVE_DST|DS_PROBING_DST, 0);
+				DS_INACTIVE_DST|DS_PROBING_DST|DS_RESET_FAIL_DST, 0);
 	} else if(mode==2) {
 		ret = ds_set_state(group, &avp_value.s, DS_PROBING_DST, 1);
 		if (ret == 0) ret = ds_set_state(group, &avp_value.s,
@@ -2039,7 +2039,6 @@ int ds_set_state(int group, str *address, int state, int type)
 				&& strncasecmp(idx->dlist[i].uri.s, address->s,
 					address->len)==0)
 		{
-			
 			/* remove the Probing/Inactive-State? Set the fail-count to 0. */
 			if (state == DS_PROBING_DST) {
 				if (type) {
@@ -2063,6 +2062,16 @@ int ds_set_state(int group, str *address, int state, int type)
 			if ((state & DS_RESET_FAIL_DST) > 0) {
 				idx->dlist[i].failure_count = 0;
 				state &= ~DS_RESET_FAIL_DST;
+			}
+	
+			/*  Type 2 means reply from OPTIONS-Ping */
+			if (type == 2) {
+				if (idx->dlist[i].flags & DS_INACTIVE_DST) {
+					LM_INFO("Ignoring the request to set this destination"
+							" to active: It is already administratively deactivated!\n");
+					return 0;
+				}
+				type = 0;
 			}
 			
 			if(type)
@@ -2307,7 +2316,7 @@ static void ds_options_callback( struct cell *t, int type,
 		/* Set the according entry back to "Active":
 		 *  remove the Probing/Inactive Flag and reset the failure counter. */
 		if (ds_set_state(group, &uri,
-					DS_INACTIVE_DST|DS_PROBING_DST|DS_RESET_FAIL_DST, 0) != 0)
+					DS_INACTIVE_DST|DS_PROBING_DST|DS_RESET_FAIL_DST, 2) != 0)
 		{
 			LM_ERR("Setting the state failed (%.*s, group %d)\n", uri.len,
 					uri.s, group);

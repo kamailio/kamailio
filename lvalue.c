@@ -290,7 +290,7 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 														    break in expr*/
 			} else
 				pval.ri=0;
-			ret=pval.ri;
+			ret=!(!pval.ri);
 			break;
 		case RV_BEXPR: /* logic/boolean expr. */
 			pval.flags=PV_TYPE_INT|PV_VAL_INT;
@@ -301,7 +301,7 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 				WARN("error in expression\n");
 				pval.ri=0; /* expr. is treated as false */
 			}
-			ret=pval.ri;
+			ret=!(!pval.ri);
 			break;
 		case RV_SEL:
 			pval.flags=PV_VAL_STR;
@@ -315,7 +315,7 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 					break;
 				}
 			}
-			ret=(pval.rs.len)>0;
+			ret=(pval.rs.len>0);
 			break;
 		case RV_AVP:
 				r_avp = search_avp_by_index(rv->v.avps.type, rv->v.avps.name,

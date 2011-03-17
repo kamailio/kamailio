@@ -407,6 +407,53 @@ if(is_myself("$fu")) {
 </programlisting>
 		</example>
 		</section>
+		<section>
+		<title><function moreinfo="none">setdebug(level)</function></title>
+		<para>
+			Set the debug log level per process.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>level</emphasis> - the debug log level to
+				be set. Can be integer or pseudo-variable with integer value.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>setdebug</function> usage</title>
+		<programlisting format="linespecific">
+...
+setdebug("1");
+...
+$var(level) = 2;
+setdebug("$var(level)");
+...
+</programlisting>
+		</example>
+		</section>
+		<section>
+		<title><function moreinfo="none">resetdebug()</function></title>
+		<para>
+		Reset the local debug log level back to the value of core parameter
+		'debug'.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>>resetdebug</function> usage</title>
+		<programlisting format="linespecific">
+...
+resetdebug();
+...
+</programlisting>
+		</example>
+		</section>
 	</section>
 
 	<section>

@@ -905,7 +905,7 @@ ds_select_dst("1", "$var(a)");
 		</listitem>
 		<listitem>
 			<para><emphasis>"a", "A" or "1"</emphasis> - the last destination
-				should be set to active.</para>
+				should be set to active and the error-counter should set to "0".</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>"p", "P" or "2"</emphasis> - the last destination

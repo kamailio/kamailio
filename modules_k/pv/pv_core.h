@@ -48,6 +48,9 @@ int pv_get_method(struct sip_msg *msg, pv_param_t *param,
 int pv_get_methodid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_msgtype(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_status(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 

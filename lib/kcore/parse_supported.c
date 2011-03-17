@@ -112,6 +112,17 @@ static inline int parse_supported_body(str *body, unsigned int *sup)
 	return 0;
 }
 
+
+/**
+ * wrapper to free the content of parsed supported header
+ */
+void hf_free_supported(void *parsed)
+{
+	struct supported_body *sb;
+	sb = (struct supported_body*)parsed;
+	free_supported(&sb);
+}
+
 /*!
  * Parse all Supported headers
  */
@@ -144,6 +155,7 @@ int parse_supported( struct sip_msg *msg)
 		}
 
 		parse_supported_body(&(hdr->body), &(sb->supported));
+		sb->hfree = hf_free_supported;
 		sb->supported_all = 0;
 		hdr->parsed = (void*)sb;
 		supported |= sb->supported;
@@ -152,4 +164,13 @@ int parse_supported( struct sip_msg *msg)
 	((struct supported_body*)msg->supported->parsed)->supported_all = 
 		supported;
 	return 0;
+}
+
+/* free supported header structure */
+void free_supported(struct supported_body **sb)
+{
+	if (sb && *sb) {
+		pkg_free(*sb);
+		*sb = 0;
+	}
 }

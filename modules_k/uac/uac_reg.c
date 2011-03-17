@@ -28,8 +28,11 @@
 #include "../../mem/shm_mem.h"
 #include "../../lib/srdb1/db.h"
 #include "../../ut.h"
+#include "../../trim.h"
 #include "../../hashes.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_to.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
@@ -385,6 +388,41 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 	return NULL;
 }
 
+int uac_reg_tmdlg(dlg_t *tmdlg, sip_msg_t *rpl)
+{
+	if(tmdlg==NULL || rpl==NULL)
+		return -1;
+
+	if (parse_headers(rpl, HDR_EOH_F, 0) < 0) {
+		LM_ERR("error while parsing all headers in the reply\n");
+		return -1;
+	}
+	if(parse_to_header(rpl)<0 || parse_from_header(rpl)<0) {
+		LM_ERR("error while parsing From/To headers in the reply\n");
+		return -1;
+	}
+	memset(tmdlg, 0, sizeof(dlg_t));
+
+	str2int(&(get_cseq(rpl)->number), &tmdlg->loc_seq.value);
+	tmdlg->loc_seq.is_set = 1;
+
+	tmdlg->id.call_id = rpl->callid->body;
+	trim(&tmdlg->id.call_id);
+
+	if (get_from(rpl)->tag_value.len) {
+		tmdlg->id.loc_tag = get_from(rpl)->tag_value;
+	}
+#if 0
+	if (get_to(rpl)->tag_value.len) {
+		tmdlg->id.rem_tag = get_to(rpl)->tag_value;
+	}
+#endif
+	tmdlg->loc_uri = get_from(rpl)->uri;
+	tmdlg->rem_uri = get_to(rpl)->uri;
+	tmdlg->state= DLG_CONFIRMED;
+	return 0;
+}
+
 void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 {
 	char *uuid;
@@ -400,13 +438,16 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 	struct uac_credential cred;
 	char  b_ruri[MAX_URI_SIZE];
 	str   s_ruri;
+#ifdef UAC_OLD_AUTH
 	char  b_turi[MAX_URI_SIZE];
 	str   s_turi;
+#endif
 	char  b_hdrs[MAX_UACH_SIZE];
 	str   s_hdrs;
 	uac_req_t uac_r;
 	str method = {"REGISTER", 8};
 	int ret;
+	dlg_t tmdlg;
 
 	if(ps->param==NULL || *ps->param==0)
 	{
@@ -531,11 +572,12 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 			goto done;
 		}
 		
+#ifdef UAC_OLD_AUTH
 		snprintf(b_turi, MAX_URI_SIZE, "sip:%.*s@%.*s",
 				ri->r_username.len, ri->r_username.s,
 				ri->r_domain.len, ri->r_domain.s);
 		s_turi.s = b_turi; s_turi.len = strlen(s_turi.s);
-
+#endif
 		snprintf(b_hdrs, MAX_UACH_SIZE,
 				"Contact: <sip:%.*s@%.*s>\r\n"
 				"Expires: %d\r\n"
@@ -547,20 +589,32 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		s_hdrs.s = b_hdrs; s_hdrs.len = strlen(s_hdrs.s);
 		pkg_free(new_auth_hdr->s);
 
-		memset(&uac_r, '\0', sizeof(uac_r));
+		memset(&uac_r, 0, sizeof(uac_r));
+		if(uac_reg_tmdlg(&tmdlg, ps->rpl)<0)
+		{
+			LM_ERR("failed to build tm dialog\n");
+			goto done;
+		}
+		tmdlg.rem_target = s_ruri;
+		if(ri->auth_proxy.len)
+			tmdlg.dst_uri = ri->auth_proxy;
 		uac_r.method = &method;
 		uac_r.headers = &s_hdrs;
+		uac_r.dialog = &tmdlg;
 		uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
 		/* Callback function */
 		uac_r.cb  = uac_reg_tm_callback;
 		/* Callback parameter */
 		uac_r.cbp = (void*)uuid;
+#ifdef UAC_OLD_AUTH
 		ret = uac_tmb.t_request(&uac_r,  /* UAC Req */
 				&s_ruri, /* Request-URI */
 				&s_turi, /* To */
 				&s_turi, /* From */
 				(ri->auth_proxy.len)?&ri->auth_proxy:NULL /* outbound uri */
 			);
+#endif
+		ret = uac_tmb.t_request_within(&uac_r);
 		ri->flags |= UAC_REG_AUTHSENT;
 
 		if(ret<0)

@@ -24,6 +24,10 @@ Gabriel Vasile
 
    FhG FOKUS
 
+Juha Heinanen
+
+   TutPro Inc.
+
 Edited by
 
 Jan Janak
@@ -87,6 +91,8 @@ Gabriel Vasile
               4.18. append_rpid_hf(prefix, suffix)
               4.19. is_rpid_user_e164()
               4.20. set_uri_user(uri, user)
+              4.21. is_request()
+              4.22. is_reply()
 
    List of Examples
 
@@ -119,6 +125,8 @@ Gabriel Vasile
    1.27. append_rpid_hf(prefix, suffix) usage
    1.28. is_rpid_user_e164 usage
    1.29. set_uri_user usage
+   1.30. is_request usage
+   1.31. is_reply usage
 
 Chapter 1. Admin Guide
 
@@ -164,6 +172,8 @@ Chapter 1. Admin Guide
         4.18. append_rpid_hf(prefix, suffix)
         4.19. is_rpid_user_e164()
         4.20. set_uri_user(uri, user)
+        4.21. is_request()
+        4.22. is_reply()
 
 1. Overview
 
@@ -358,6 +368,8 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
    4.18. append_rpid_hf(prefix, suffix)
    4.19. is_rpid_user_e164()
    4.20. set_uri_user(uri, user)
+   4.21. is_request()
+   4.22. is_reply()
 
 4.1.  ring_insert_callid()
 
@@ -424,7 +436,7 @@ if (is_user("john")) {
 
    Check if To header field uri contains tag parameter.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.13. has_totag usage
 ...
@@ -613,8 +625,7 @@ reply_route[2] {
 
    The function returns true if the two parameters matches as SIP URI.
 
-   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-   FAILURE_ROUTE and BRANCH_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.23. cmp_uri usage
 ...
@@ -629,8 +640,7 @@ if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
    The function returns true if the two parameters matches as AoR. The
    parameters have to be SIP URIs.
 
-   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-   FAILURE_ROUTE and BRANCH_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.24. cmp_aor usage
 ...
@@ -728,4 +738,30 @@ if (is_rpid_user_e164()) {
 $var(uri) = "sip:user@host";
 $var(user) = "new_user";
 set_uri_user("$var(uri)", "$var(user)");
+...
+
+4.21.  is_request()
+
+   Return true if the SIP message is a request.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.30. is_request usage
+...
+if (is_request()) {
+        ...
+}
+...
+
+4.22.  is_reply()
+
+   Return true if the SIP message is a reply.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.31. is_reply usage
+...
+if (is_reply()) {
+        ...
+}
 ...

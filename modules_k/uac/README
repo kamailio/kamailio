@@ -14,9 +14,9 @@ Ramona-Elena Modroiu
 
    <ramona@rosdev.ro>
 
-   Copyright � 2009-2010 asipto.com
+   Copyright © 2009-2010 asipto.com
 
-   Copyright � 2005 Voice Sistem
+   Copyright © 2005 Voice Sistem
      __________________________________________________________________
 
    Table of Contents
@@ -51,6 +51,7 @@ Ramona-Elena Modroiu
               4.6. uac_reg_lookup(uuid, dst)
 
         5. Exported pseudo-variables
+        6. Remote Registration
 
    List of Examples
 
@@ -69,6 +70,7 @@ Ramona-Elena Modroiu
    1.13. uac_auth usage
    1.14. uac_req_send usage
    1.15. uac_reg_lookup usage
+   1.16. lookup remote registrations usage
 
 Chapter 1. Admin Guide
 
@@ -102,13 +104,20 @@ Chapter 1. Admin Guide
         4.6. uac_reg_lookup(uuid, dst)
 
    5. Exported pseudo-variables
+   6. Remote Registration
 
 1. Overview
 
    UAC (User Agent Client) module provides some basic UAC functionalities
    like FROM header manipulation (anonymization) or client authentication.
+
    From version 1.5.0 it has function to send SIP message from
-   configuration file. Version 3.1.0 adds user registration functionality.
+   configuration file. See variable $uac_req(name) and the function
+   uac_req_send().
+
+   Version 3.1.0 adds user registration functionality. See
+   uac_reg_lookup() function and dedicated section for remote registration
+   configuration.
 
    Known limitations in this version:
      * authentication does not support qop auth-int, just qop auth;
@@ -125,7 +134,7 @@ Chapter 1. Admin Guide
    The following modules must be loaded before this module:
      * TM - Transaction Module
      * RR - Record-Route Module, but only if restore mode for FROM URI is
-       set to "auto".
+       set to “auto”.
 
 2.2. External Libraries or Applications
 
@@ -150,7 +159,7 @@ Chapter 1. Admin Guide
    Name of Record-Route header parameter that will be used to store
    (encoded) the original FROM URI.
 
-   This parameter is optional, it's default value being "vsf".
+   This parameter is optional, it's default value being “vsf”.
 
    Example 1.1. Set rr_store_param parameter
 ...
@@ -160,15 +169,15 @@ modparam("uac","rr_store_param","my_param")
 3.2. from_restore_mode (string)
 
    There are 3 mode of restoring the original FROM URI:
-     * "none" - no information about original URI is stored; restoration
+     * “none” - no information about original URI is stored; restoration
        is not possible.
-     * "manual" - all following replies will be restored, but not also the
+     * “manual” - all following replies will be restored, but not also the
        sequential requests - this must be manually updated based on
        original URI.
-     * "auto" - all sequential requests and replies will be automatically
+     * “auto” - all sequential requests and replies will be automatically
        updated based on stored original URI.
 
-   This parameter is optional, it's default value being "auto".
+   This parameter is optional, it's default value being “auto”.
 
    Example 1.2. Set from_restore_mode parameter
 ...
@@ -204,9 +213,9 @@ modparam("uac","credential","username:domain:password")
    The definition of an AVP that might contain the realm to be used to
    perform authentication.
 
-   If you define it, you also need to define "auth_username_avp"
-   (Section 3.6, "auth_username_avp (string)") and "auth_username_avp"
-   (Section 3.7, "auth_password_avp (string)").
+   If you define it, you also need to define “auth_username_avp”
+   (Section 3.6, “auth_username_avp (string)”) and “auth_username_avp”
+   (Section 3.7, “auth_password_avp (string)”).
 
    Example 1.5. Set auth_realm_avp parameter
 ...
@@ -218,9 +227,9 @@ modparam("uac","auth_realm_avp","$avp(i:10)")
    The definition of an AVP that might contain the username to be used to
    perform authentication.
 
-   If you define it, you also need to define "auth_realm_avp"
-   (Section 3.5, "auth_realm_avp (string)") and "auth_username_avp"
-   (Section 3.7, "auth_password_avp (string)").
+   If you define it, you also need to define “auth_realm_avp”
+   (Section 3.5, “auth_realm_avp (string)”) and “auth_username_avp”
+   (Section 3.7, “auth_password_avp (string)”).
 
    Example 1.6. Set auth_username_avp parameter
 ...
@@ -232,9 +241,9 @@ modparam("uac","auth_username_avp","$avp(i:11)")
    The definition of an AVP that might contain the password to be used to
    perform authentication.
 
-   If you define it, you also need to define "auth_password_avp"
-   (Section 3.7, "auth_password_avp (string)") and "auth_username_avp"
-   (Section 3.7, "auth_password_avp (string)").
+   If you define it, you also need to define “auth_password_avp”
+   (Section 3.7, “auth_password_avp (string)”) and “auth_username_avp”
+   (Section 3.7, “auth_password_avp (string)”).
 
    Example 1.7. Set auth_password_avp parameter
 ...
@@ -368,3 +377,44 @@ if(uac_reg_lookup("$rU", "$ru"))
 
    Exported pseudo-variables are documented at
    http://www.kamailio.org/dokuwiki/.
+
+6. Remote Registration
+
+   The module can register contact addresses to remote REGISTRAR servers.
+   You have to add records to uacreg table. The table stores following
+   attributes:
+     * l_uuid - local unique user id, e.g.,: 12345678
+
+     * l_username - local user name, e.g.,: test
+
+     * l_domain - local domain, e.g.,: mysipserver.com
+
+     * r_username - remote username, e.g.,: test123
+
+     * r_domain - remote domain, e.g.,: sipprovider.com
+
+     * realm - remote relam, e.g.,: sipprovider.com
+
+     * auth_username - authentication username, e.g.,: test123
+
+     * auth_password - authentication password, e.g.,: xxxxxx
+
+     * auth_proxy - SIP address of authentication proxy, e.g.,:
+       sip:sipprovider.com
+
+     * expires - expiration time for registration, in seconds, e.g.,: 360
+
+   The module takes care of sending REGISTER and refresh registrations
+   before they expire.
+
+   When calls come in, you have to run uac_reg_lookup() that will detect
+   if the call is coming from a remote SIP provider and can change the
+   R-URI to local username@domain. Afterwards you can run location lookup.
+
+   Example 1.16. lookup remote registrations usage
+...
+    if(uac_reg_lookup("$rU", "$ru")) {
+        xlog("request from a remote SIP provider [$ou => $ru]\n");
+    }
+    lookup("location");
+...

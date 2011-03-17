@@ -213,27 +213,44 @@ typedef struct hdr_field {
 } hdr_field_t;
 
 
+/* type of the function to free the structure of parsed header field */
+typedef void (*hf_parsed_free_f)(void *parsed);
+
+/* structure to hold the function to free the parsed header field */
+typedef struct hdr_parsed {
+	hf_parsed_free_f hfree;
+} hf_parsed_t;
 
 /** returns true if the header links allocated memory on parse field. */
 static inline int hdr_allocs_parse(struct hdr_field* hdr)
 {
 	switch(hdr->type){
-		case HDR_VIA_T:
-		case HDR_TO_T:
-		case HDR_FROM_T:
-		case HDR_CONTACT_T:
-		case HDR_ROUTE_T:
-		case HDR_RECORDROUTE_T:
-		case HDR_AUTHORIZATION_T:
-		case HDR_EXPIRES_T:
-		case HDR_PROXYAUTH_T:
-		case HDR_EVENT_T:
 		case HDR_ACCEPT_T:
+		case HDR_ALLOW_T:
+		case HDR_AUTHORIZATION_T:
+		case HDR_CONTACT_T:
 		case HDR_CONTENTDISPOSITION_T:
+		case HDR_CSEQ_T:
+		case HDR_DATE_T:
 		case HDR_DIVERSION_T:
-		case HDR_RPID_T:
+		case HDR_EVENT_T:
+		case HDR_EXPIRES_T:
+		case HDR_FROM_T:
+		case HDR_IDENTITY_INFO_T:
+		case HDR_IDENTITY_T:
+		case HDR_PAI_T:
+		case HDR_PPI_T:
+		case HDR_PROXYAUTH_T:
+		case HDR_RECORDROUTE_T:
 		case HDR_REFER_TO_T:
+		case HDR_ROUTE_T:
+		case HDR_RPID_T:
+		case HDR_SESSIONEXPIRES_T:
+		case HDR_SIPIFMATCH_T:
 		case HDR_SUBSCRIPTION_STATE_T:
+		case HDR_SUPPORTED_T:
+		case HDR_TO_T:
+		case HDR_VIA_T:
 			return 1;
 		default:
 			return 0;
@@ -251,6 +268,14 @@ void clean_hdr_field(struct hdr_field* hf);
  */
 void free_hdr_field_lst(struct hdr_field* hf);
 
+/* print content of hdr_field */
 void dump_hdr_field( struct hdr_field* hf );
+
+/**
+ * free hdr parsed structure using inner free function
+ * - hdr parsed struct must have as first file a free function,
+ *   so it can be caseted to hf_parsed_t
+ */
+void hdr_free_parsed(void **h_parsed);
 
 #endif /* HF_H */

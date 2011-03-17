@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides function for checking and managing the SDP
+		payloads of SIP messages.
+	</para>
+	<para>
+		Examples of what this module offers: remove codecs from SDP,
+		check the media stream types, return attributes of SDP document.
+		For the full least of the features provided by this module and
+		the implementation state, read further to the list of exported
+		functions.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+		<para>
+		The module does not export any config parameter yet.
+		</para>
+	</section>
+
+	<section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">sdp_remove_codecs_by_id(list)</function>
+	    </title>
+	    <para>
+			Remove the codecs provided in the parameter 'list' from all
+			media streams found in SDP payload. The parameter 'list' must
+			be one or a comma separated list of numeric codec IDs. The
+			parameter can be a static string or a variable holding the
+			list of numeric codec IDs.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_remove_codecs_by_id</function> usage</title>
+		<programlisting format="linespecific">
+...
+# remove PCMU
+sdp_remove_codecs_by_id("0");
+# remove PCMU, PCMA and GSM
+sdp_remove_codecs_by_id("0,8,3");
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">sdp_with_media(type)</function>
+	    </title>
+	    <para>
+		Return true of the SDP has 'media=type ...' line. Useful to check
+		the content of the RTP sessions, such as 'audio' or 'video'. The
+		parameter can be static string or variable holding the media type.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_with_media</function> usage</title>
+		<programlisting format="linespecific">
+...
+# check for video stream
+if(sdp_with_media("video"))
+{
+    # the session has a video stream
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">sdp_print(level)</function>
+	    </title>
+	    <para>
+		Print the SDP internal structure to log 'level'. The
+		parameter can be static integer or variable holding the integer
+		value of the log level.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_print</function> usage</title>
+		<programlisting format="linespecific">
+...
+# print the SDP
+sdp_print("1");
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+</chapter>
+

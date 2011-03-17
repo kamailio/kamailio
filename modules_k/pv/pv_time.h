@@ -40,6 +40,8 @@ int pv_get_times(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 int pv_get_timef(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
+int pv_get_timeb(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
 int pv_parse_timeval_name(pv_spec_p sp, str *in);
 int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,

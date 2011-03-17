@@ -220,6 +220,9 @@ static pv_export_t mod_pvs[] = {
 	{{"ml", (sizeof("ml")-1)}, /* */
 		PVT_OTHER, pv_get_msg_len, 0,
 		0, 0, 0, 0},
+	{{"mt", (sizeof("mt")-1)}, /* */
+		PVT_OTHER, pv_get_msgtype, 0,
+		0, 0, 0, 0},
 	{{"od", (sizeof("od")-1)}, /* */
 		PVT_OTHER, pv_get_ouri_attr, 0,
 		0, 0, pv_init_iname, 2},
@@ -360,6 +363,9 @@ static pv_export_t mod_pvs[] = {
 		0, 0, pv_init_iname, 2},
 	{{"true", (sizeof("true")-1)}, /* */
 		PVT_OTHER, pv_get_true, 0,
+		0, 0, 0, 0},
+	{{"Tb", (sizeof("Tb")-1)}, /* */
+		PVT_OTHER, pv_get_timeb, 0,
 		0, 0, 0, 0},
 	{{"Tf", (sizeof("Tf")-1)}, /* */
 		PVT_CONTEXT, pv_get_timef, 0,

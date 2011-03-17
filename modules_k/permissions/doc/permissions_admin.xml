@@ -672,6 +672,27 @@ modparam("permissions", "peer_tag_avp", "$avp(i:707)")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>peer_tag_mode</varname> (integer)</title>
+		<para>
+		Tag mode for allow_trusted(). 0 sets only the tag of the
+		first match. 1 adds the tags of all matches to the avp. In addition
+		the return value of allow_trusted() is the number of matches.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>peer_tag_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "peer_tag_mode", "1")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

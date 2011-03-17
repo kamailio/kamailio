@@ -279,7 +279,7 @@ unsigned char cmp_db_id(const struct db_id* id1, const struct db_id* id2)
 	if (strcasecmp(id1->host, id2->host)) return 0;
 	if (strcmp(id1->database, id2->database)) return 0;
 	if(id1->pid!=id2->pid) {
-		LM_WARN("identical DB URLs, but different DB connection pid [%d/%d]\n",
+		LM_DBG("identical DB URLs, but different DB connection pid [%d/%d]\n",
 				id1->pid, id2->pid);
 		return 0;
 	}

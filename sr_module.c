@@ -1038,7 +1038,7 @@ int fix_param(int type, void** param)
 {
 	fparam_t* p;
 	str name, s;
-	unsigned int num;
+	int num;
 	int err;
 
 	p = (fparam_t*)pkg_malloc(sizeof(fparam_t));
@@ -1064,7 +1064,7 @@ int fix_param(int type, void** param)
 		case FPARAM_INT:
 			s.s = (char*)*param;
 			s.len = strlen(s.s);
-			err = str2int(&s, &num);
+			err = str2sint(&s, &num);
 			if (err == 0) {
 				p->v.i = (int)num;
 			} else {

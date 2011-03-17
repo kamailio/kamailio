@@ -32,6 +32,9 @@
 #include "../../dprint.h"
 #include "../../lib/kcore/hash_func.h"
 #include "../../ut.h"
+#ifdef WITH_XAVP
+#include "../../xavp.h"
+#endif
 
 #include "sql_api.h"
 
@@ -340,6 +343,134 @@ error:
 	sql_reset_result(res);
 	return -1;
 }
+
+#ifdef WITH_XAVP
+int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
+		pv_elem_t *res)
+{
+	db1_res_t* db_res = NULL;
+	sr_xavp_t *row = NULL;
+	sr_xval_t val;
+	int i, j;
+	str sv, xavp;
+
+	if(msg==NULL || query==NULL || res==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+	if(pv_printf_s(msg, query, &sv)!=0)
+	{
+		LM_ERR("cannot print the sql query\n");
+		return -1;
+	}
+
+	if(pv_printf_s(msg, res, &xavp)!=0)
+	{
+		LM_ERR("cannot print the result parameter\n");
+		return -1;
+	}
+
+	if(con->dbf.raw_query(con->dbh, &sv, &db_res)!=0)
+	{
+		LM_ERR("cannot do the query\n");
+		return -1;
+	}
+
+	if(db_res==NULL || RES_ROW_N(db_res)<=0 || RES_COL_N(db_res)<=0)
+	{
+		LM_DBG("no result after query\n");
+		con->dbf.free_result(con->dbh, db_res);
+		return 2;
+	}
+
+	for(i=RES_ROW_N(db_res)-1; i>=0; i--)
+	{
+		row = NULL;
+		for(j=RES_COL_N(db_res)-1; j>=0; j--)
+		{
+			if(RES_ROWS(db_res)[i].values[j].nul)
+			{
+				val.type = SR_XTYPE_NULL;
+			} else
+			{
+				switch(RES_ROWS(db_res)[i].values[j].type)
+				{
+					case DB1_STRING:
+						val.type = SR_XTYPE_STR;
+						sv.s=
+							(char*)RES_ROWS(db_res)[i].values[j].val.string_val;
+						sv.len=strlen(sv.s);
+					break;
+					case DB1_STR:
+						val.type = SR_XTYPE_STR;
+						sv.len=
+							RES_ROWS(db_res)[i].values[j].val.str_val.len;
+						sv.s=
+							(char*)RES_ROWS(db_res)[i].values[j].val.str_val.s;
+					break;
+					case DB1_BLOB:
+						val.type = SR_XTYPE_STR;
+						sv.len=
+							RES_ROWS(db_res)[i].values[j].val.blob_val.len;
+						sv.s=
+							(char*)RES_ROWS(db_res)[i].values[j].val.blob_val.s;
+					break;
+					case DB1_INT:
+						val.type = SR_XTYPE_INT;
+						val.v.i
+							= (int)RES_ROWS(db_res)[i].values[j].val.int_val;
+					break;
+					case DB1_DATETIME:
+						val.type = SR_XTYPE_INT;
+						val.v.i
+							= (int)RES_ROWS(db_res)[i].values[j].val.time_val;
+					break;
+					case DB1_BITMAP:
+						val.type = SR_XTYPE_INT;
+						val.v.i
+							= (int)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
+					break;
+					default:
+						val.type = SR_XTYPE_NULL;
+				}
+				if(val.type == SR_XTYPE_STR)
+				{
+					if(sv.len==0)
+					{
+						val.v.s = _sql_empty_str;
+					} else {
+						val.v.s.s = (char*)pkg_malloc(sv.len*sizeof(char));
+						if(val.v.s.s == NULL)
+						{
+							LM_ERR("no more memory\n");
+							goto error;
+						}
+						memcpy(val.v.s.s, sv.s, sv.len);
+						val.v.s.len = sv.len;
+					}
+				}
+			}
+			/* Add column to current row, under the column's name */
+			LM_DBG("Adding column: %.*s\n", RES_NAMES(db_res)[j]->len, RES_NAMES(db_res)[j]->s);
+			xavp_add_value(RES_NAMES(db_res)[j], &val, &row);
+		}
+		/* Add row to result xavp */
+		val.type = SR_XTYPE_XAVP;
+		val.v.xavp = row;
+		LM_DBG("Adding row\n");
+		xavp_add_value(&xavp, &val, NULL);
+	}
+
+	con->dbf.free_result(con->dbh, db_res);
+	return 1;
+
+error:
+	con->dbf.free_result(con->dbh, db_res);
+	return -1;
+
+}
+#endif
 
 int sql_parse_param(char *val)
 {

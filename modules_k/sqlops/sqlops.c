@@ -60,11 +60,17 @@ static int bind_sqlops(sqlops_api_t* api);
 
 /** module functions */
 static int sql_query(struct sip_msg*, char*, char*, char*);
+#ifdef WITH_XAVP
+static int sql_xquery(struct sip_msg *msg, char *dbl, char *query, char *res);
+#endif
 static int sql_rfree(struct sip_msg*, char*, char*);
 static int child_init(int rank);
 static void destroy(void);
 
 static int fixup_sql_query(void** param, int param_no);
+#ifdef WITH_XAVP
+static int fixup_sql_xquery(void** param, int param_no);
+#endif
 static int fixup_sql_rfree(void** param, int param_no);
 
 static int sql_con_param(modparam_t type, void* val);
@@ -80,6 +86,11 @@ static cmd_export_t cmds[]={
 	{"sql_query",  (cmd_function)sql_query, 3, fixup_sql_query, 0, 
 		REQUEST_ROUTE | FAILURE_ROUTE |
 		ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
+#ifdef WITH_XAVP
+	{"sql_xquery",  (cmd_function)sql_xquery, 3, fixup_sql_xquery, 0, 
+		REQUEST_ROUTE | FAILURE_ROUTE |
+		ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
+#endif
 	{"sql_result_free",  (cmd_function)sql_rfree,  1, fixup_sql_rfree, 0, 
 		REQUEST_ROUTE | FAILURE_ROUTE |
 		ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
@@ -181,6 +192,16 @@ static int sql_query(struct sip_msg *msg, char *dbl, char *query, char *res)
 	return sql_do_query((sql_con_t*)dbl, &sq, (sql_result_t*)res);
 }
 
+#ifdef WITH_XAVP
+/**
+ *
+ */
+static int sql_xquery(struct sip_msg *msg, char *dbl, char *query, char *res)
+{
+	return sql_do_xquery(msg, (sql_con_t*)dbl, query, (pv_elem_t*)res);
+}
+#endif
+
 /**
  *
  */
@@ -229,6 +250,46 @@ static int fixup_sql_query(void** param, int param_no)
 	}
 	return 0;
 }
+
+#ifdef WITH_XAVP
+/**
+ *
+ */
+static int fixup_sql_xquery(void** param, int param_no)
+{
+	sql_con_t *con = NULL;
+	pv_elem_t *pv = NULL;
+	str s;
+
+	s.s = (char*)(*param);
+	s.len = strlen(s.s);
+
+	if (param_no==1) {
+		con = sql_get_connection(&s);
+		if(con==NULL)
+		{
+			LM_ERR("invalid connection [%s]\n", s.s);
+			return E_UNSPEC;
+		}
+		*param = (void*)con;
+	} else if (param_no==2) {
+		if(pv_parse_format(&s, &pv)<0)
+		{
+			LM_ERR("invalid query string [%s]\n", s.s);
+			return E_UNSPEC;
+		}
+		*param = (void*)pv;
+	} else if (param_no==3) {
+		if(pv_parse_format(&s, &pv)<0)
+		{
+			LM_ERR("invalid result [%s]\n", s.s);
+			return E_UNSPEC;
+		}
+		*param = (void*)pv;
+	}
+	return 0;
+}
+#endif
 
 /**
  *

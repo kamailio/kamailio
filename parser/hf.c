@@ -68,134 +68,51 @@ void clean_hdr_field(struct hdr_field* hf)
 	void** h_parsed;
 
 	if (hf->parsed){
-		h_parsed=&hf->parsed; /*strict aliasing warnings workarround */
+		h_parsed=&hf->parsed; /* strict aliasing warnings workarround */
 		switch(hf->type){
-		case HDR_VIA_T:
-			free_via_list(hf->parsed);
-			break;
-
-		case HDR_TO_T:
-			free_to(hf->parsed);
-			break;
-
-		case HDR_FROM_T:
-			free_to(hf->parsed);
-			break;
-
-		case HDR_CSEQ_T:
-			free_cseq(hf->parsed);
-			break;
-
-		case HDR_CALLID_T:
-			break;
-
-		case HDR_SIPIFMATCH_T:
-			free_sipifmatch((str **)h_parsed);
-			break;
-
-		case HDR_CONTACT_T:
-			free_contact((contact_body_t**)h_parsed);
-			break;
-
-		case HDR_MAXFORWARDS_T:
-			break;
-
-		case HDR_ROUTE_T:
-			free_rr((rr_t**)h_parsed);
-			break;
-
-		case HDR_RECORDROUTE_T:
-			free_rr((rr_t**)h_parsed);
-			break;
-
-		case HDR_CONTENTTYPE_T:
-			break;
-
-		case HDR_CONTENTLENGTH_T:
-			break;
-
-		case HDR_RETRY_AFTER_T:
-			break;
-
-		case HDR_AUTHORIZATION_T:
-			free_credentials((auth_body_t**)h_parsed);
-			break;
-
-		case HDR_EXPIRES_T:
-			free_expires((exp_body_t**)h_parsed);
-			break;
-
-		case HDR_PROXYAUTH_T:
-			free_credentials((auth_body_t**)h_parsed);
-			break;
-
-		case HDR_SUPPORTED_T:
-			break;
-
-		case HDR_REQUIRE_T:
-			break;
-
-		case HDR_PROXYREQUIRE_T:
-			break;
-
-		case HDR_UNSUPPORTED_T:
+		/* headers with pkg alloc for parsed structure (alphabetic order) */
+		case HDR_ACCEPT_T:
+			pkg_free(hf->parsed);
 			break;
 
 		case HDR_ALLOW_T:
 			free_allow_header(hf);
 			break;
 
-		case HDR_EVENT_T:
-			free_event((event_t**)h_parsed);
+		case HDR_AUTHORIZATION_T:
+			free_credentials((auth_body_t**)h_parsed);
 			break;
 
-		case HDR_ACCEPT_T:
-			pkg_free(hf->parsed);
-			break;
-
-		case HDR_ACCEPTLANGUAGE_T:
-			break;
-
-		case HDR_ORGANIZATION_T:
-			break;
-
-		case HDR_PRIORITY_T:
-			break;
-
-		case HDR_SUBJECT_T:
-			break;
-
-		case HDR_USERAGENT_T:
-			break;
-
-		case HDR_SERVER_T:
-			break;
-
-		case HDR_ACCEPTDISPOSITION_T:
+		case HDR_CONTACT_T:
+			free_contact((contact_body_t**)h_parsed);
 			break;
 
 		case HDR_CONTENTDISPOSITION_T:
 			free_disposition( ((struct disposition**)h_parsed));
 			break;
 
-		case HDR_DIVERSION_T:
-			free_to(hf->parsed);
-			break;
-
-		case HDR_RPID_T:
-			free_to(hf->parsed);
-			break;
-
-		case HDR_REFER_TO_T:
-			free_to(hf->parsed);
-			break;
-
-		case HDR_SUBSCRIPTION_STATE_T:
-			free_subscription_state((subscription_state_t**)h_parsed);
+		case HDR_CSEQ_T:
+			free_cseq(hf->parsed);
 			break;
 
 		case HDR_DATE_T:
 			free_date(hf->parsed);
+			break;
+
+		case HDR_DIVERSION_T:
+			free_to(hf->parsed);
+			break;
+
+		case HDR_EVENT_T:
+			free_event((event_t**)h_parsed);
+			break;
+
+		case HDR_EXPIRES_T:
+			free_expires((exp_body_t**)h_parsed);
+			break;
+
+		case HDR_FROM_T:
+			free_to(hf->parsed);
 			break;
 
 		case HDR_IDENTITY_INFO_T:
@@ -206,7 +123,74 @@ void clean_hdr_field(struct hdr_field* hf)
 			free_identity(hf->parsed);
 			break;
 
+		case HDR_PAI_T:
+			free_to(hf->parsed);
+			break;
+
+		case HDR_PPI_T:
+			free_to(hf->parsed);
+			break;
+
+		case HDR_PROXYAUTH_T:
+			free_credentials((auth_body_t**)h_parsed);
+			break;
+
+		case HDR_RECORDROUTE_T:
+			free_rr((rr_t**)h_parsed);
+			break;
+
+		case HDR_REFER_TO_T:
+			free_to(hf->parsed);
+			break;
+
+		case HDR_ROUTE_T:
+			free_rr((rr_t**)h_parsed);
+			break;
+
+		case HDR_RPID_T:
+			free_to(hf->parsed);
+			break;
+
 		case HDR_SESSIONEXPIRES_T:
+			hdr_free_parsed(h_parsed);
+			break;
+
+		case HDR_SIPIFMATCH_T:
+			free_sipifmatch((str **)h_parsed);
+			break;
+
+		case HDR_SUBSCRIPTION_STATE_T:
+			free_subscription_state((subscription_state_t**)h_parsed);
+			break;
+
+		case HDR_SUPPORTED_T:
+			hdr_free_parsed(h_parsed);
+			break;
+
+		case HDR_TO_T:
+			free_to(hf->parsed);
+			break;
+
+		case HDR_VIA_T:
+			free_via_list(hf->parsed);
+			break;
+
+		/* headers with no alloc for parsed structure */
+		case HDR_CALLID_T:
+		case HDR_MAXFORWARDS_T:
+		case HDR_CONTENTTYPE_T:
+		case HDR_CONTENTLENGTH_T:
+		case HDR_RETRY_AFTER_T:
+		case HDR_REQUIRE_T:
+		case HDR_PROXYREQUIRE_T:
+		case HDR_UNSUPPORTED_T:
+		case HDR_ACCEPTLANGUAGE_T:
+		case HDR_ORGANIZATION_T:
+		case HDR_PRIORITY_T:
+		case HDR_SUBJECT_T:
+		case HDR_USERAGENT_T:
+		case HDR_SERVER_T:
+		case HDR_ACCEPTDISPOSITION_T:
 		case HDR_MIN_SE_T:
 		case HDR_ACCEPTCONTACT_T:
 		case HDR_ALLOWEVENTS_T:
@@ -219,14 +203,6 @@ void clean_hdr_field(struct hdr_field* hf)
 		case HDR_PATH_T:
 		case HDR_PRIVACY_T:
 		case HDR_REASON_T:
-			break;
-
-		case HDR_PPI_T:
-			free_to(hf->parsed);
-			break;
-
-		case HDR_PAI_T:
-			free_to(hf->parsed);
 			break;
 
 		default:
@@ -252,6 +228,7 @@ void free_hdr_field_lst(struct hdr_field* hf)
 	}
 }
 
+/* print the content of hdr_field */
 void dump_hdr_field( struct hdr_field* hf )
 {
 	LOG(L_ERR, "DEBUG: dump_hdr_field: type=%d, name=%.*s, "
@@ -259,4 +236,20 @@ void dump_hdr_field( struct hdr_field* hf )
 		hf->type, hf->name.len, ZSW(hf->name.s),
 		hf->body.len, ZSW(hf->body.s),
 		hf->parsed, hf->next );
+}
+
+/**
+ * free hdr parsed structure using inner free function
+ * - hdr parsed struct must have as first file a free function,
+ *   so it can be caseted to hf_parsed_t
+ */
+void hdr_free_parsed(void **h_parsed)
+{
+	if(h_parsed==NULL || *h_parsed==NULL)
+		return;
+
+	if(((hf_parsed_t*)(*h_parsed))->hfree) {
+		((hf_parsed_t*)(*h_parsed))->hfree(*h_parsed);
+	}
+	*h_parsed = 0;
 }

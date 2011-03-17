@@ -67,7 +67,7 @@ static char _tr_buffer[TR_BUFFER_SIZE];
 int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		pv_value_t *val)
 {
-	int i, j;
+	int i, j, max;
 	char *p, *s;
 	str st;
 	pv_value_t v;
@@ -450,6 +450,50 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			if(subtype==TR_S_STRIP)
 				val->rs.s += i;
 			val->rs.len -= i;
+			break;
+
+		case TR_S_PREFIXES:
+		case TR_S_PREFIXES_QUOT:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+
+			/* Set maximum prefix length */
+			max = val->rs.len;
+			if(tp!=NULL) {
+				if(tp->type==TR_PARAM_NUMBER) {
+					if (tp->v.n > 0 && tp->v.n < max)
+						max = tp->v.n;
+				} else {
+					if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+							|| (!(v.flags&PV_VAL_INT)))
+					{
+						LM_ERR("prefixes cannot get max\n");
+						return -1;
+					}
+					if (v.ri > 0 && v.ri < max)
+						max  = v.ri;
+				}
+			}
+
+			if(max * (max/2 + (subtype==TR_S_PREFIXES_QUOT ? 1 : 3)) > TR_BUFFER_SIZE-1) {
+				LM_ERR("prefixes buffer too short\n");
+				return -1;
+			}
+
+			j = 0;
+			for (i=1; i <= max; i++) {
+				if (subtype==TR_S_PREFIXES_QUOT)
+					_tr_buffer[j++] = '\'';
+				memcpy(&(_tr_buffer[j]), val->rs.s, i);
+				j += i;
+				if (subtype==TR_S_PREFIXES_QUOT)
+					_tr_buffer[j++] = '\'';
+				_tr_buffer[j++] = ',';
+			}
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = j-1;
 			break;
 
 		default:
@@ -1236,6 +1280,38 @@ char* tr_parse_string(str* in, trans_t *t)
 	} else if(name.len==14 && strncasecmp(name.s, "unescape.param", 14)==0) {
 		t->subtype = TR_S_UNESCAPEPARAM;
 		goto done;
+	} else if(name.len==8 && strncasecmp(name.s, "prefixes", 8)==0) {
+		t->subtype = TR_S_PREFIXES;
+		if(*p!=TR_PARAM_MARKER)
+			goto done;
+		p++;
+		_tr_parse_nparam(p, p0, tp, spec, n, sign, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid prefixes transformation: %.*s!!\n",
+				in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len==15 && strncasecmp(name.s, "prefixes.quoted", 15)==0) {
+		t->subtype = TR_S_PREFIXES_QUOT;
+		if(*p!=TR_PARAM_MARKER)
+			goto done;
+		p++;
+		_tr_parse_nparam(p, p0, tp, spec, n, sign, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid prefixes transformation: %.*s!!\n",
+				in->len, in->s);
+			goto error;
+		}
+		goto done;
 	} else if(name.len==6 && strncasecmp(name.s, "substr", 6)==0) {
 		t->subtype = TR_S_SUBSTR;
 		if(*p!=TR_PARAM_MARKER)
@@ -1706,4 +1782,3 @@ done:
 	t->name = name;
 	return p;
 }
-

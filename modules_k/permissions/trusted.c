@@ -328,18 +328,19 @@ static inline int match_proto(const char *proto_string, int proto_int)
 }
 
 /*
- * Matches from uri against patterns returned from database.  Returns 1 when
- * first pattern matches and 0 if none of the patterns match.
+ * Matches from uri against patterns returned from database.  Returns number
+ * of matches or -1 if none of the patterns match.
  */
 static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 {
-        int i, tag_avp_type;
+	int i, tag_avp_type;
 	str uri;
 	char uri_string[MAX_URI_SIZE+1];
 	db_row_t* row;
 	db_val_t* val;
 	regex_t preg;
 	int_str tag_avp, avp_val;
+	int count = 0;
 
 	if (parse_from_header(msg) < 0) return -1;
 	uri = get_from(msg)->uri;
@@ -349,46 +350,49 @@ static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 	}
 	memcpy(uri_string, uri.s, uri.len);
 	uri_string[uri.len] = (char)0;
+	get_tag_avp(&tag_avp, &tag_avp_type);
 
 	row = RES_ROWS(_r);
-		
-	for(i = 0; i < RES_ROW_N(_r); i++) {
-	    val = ROW_VALUES(row + i);
-	    if ((ROW_N(row + i) == 3) &&
-		(VAL_TYPE(val) == DB1_STRING) && !VAL_NULL(val) &&
-		match_proto(VAL_STRING(val), proto) &&
-		(VAL_NULL(val + 1) ||
-		 ((VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1))) &&
-		(VAL_NULL(val + 2) ||
-		 ((VAL_TYPE(val + 2) == DB1_STRING) && !VAL_NULL(val + 2))))
-	    {
-		if (VAL_NULL(val + 1)) goto found;
-		if (regcomp(&preg, (char *)VAL_STRING(val + 1), REG_NOSUB)) {
-		    LM_ERR("invalid regular expression\n");
-		    continue;
-		}
-		if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
-		    regfree(&preg);
-		    continue;
-		} else {
-		    regfree(&preg);
-		    goto found;
-		}
-	    }
-	}
-	return -1;
 
-found:
-	get_tag_avp(&tag_avp, &tag_avp_type);
-	if (tag_avp.n && !VAL_NULL(val + 2)) {
-	    avp_val.s.s = (char *)VAL_STRING(val + 2);
-	    avp_val.s.len = strlen(avp_val.s.s);
-	    if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, avp_val) != 0) {
-		LM_ERR("failed to set of tag_avp failed\n");
-		return -1;
-	    }
+	for(i = 0; i < RES_ROW_N(_r); i++) {
+		val = ROW_VALUES(row + i);
+		if ((ROW_N(row + i) == 3) &&
+		    (VAL_TYPE(val) == DB1_STRING) && !VAL_NULL(val) &&
+		    match_proto(VAL_STRING(val), proto) &&
+		    (VAL_NULL(val + 1) ||
+		      ((VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1))) &&
+		    (VAL_NULL(val + 2) ||
+		      ((VAL_TYPE(val + 2) == DB1_STRING) && !VAL_NULL(val + 2))))
+		{
+			if (!VAL_NULL(val + 1)) {
+				if (regcomp(&preg, (char *)VAL_STRING(val + 1), REG_NOSUB)) {
+					LM_ERR("invalid regular expression\n");
+					continue;
+				}
+				if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
+					regfree(&preg);
+					continue;
+				}
+			    regfree(&preg);
+			}
+			/* Found a match */
+			if (tag_avp.n && !VAL_NULL(val + 2)) {
+				avp_val.s.s = (char *)VAL_STRING(val + 2);
+				avp_val.s.len = strlen(avp_val.s.s);
+				if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, avp_val) != 0) {
+					LM_ERR("failed to set of tag_avp failed\n");
+					return -1;
+				}
+			}
+			if (!peer_tag_mode) 
+				return 1;
+			count++;
+		}
 	}
-	return 1;
+	if (!count)
+		return -1;
+	else 
+		return count;
 }
 
 

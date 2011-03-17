@@ -108,6 +108,7 @@ struct cfg_group_core {
 	int force_rport; /*!< if set rport will always be forced*/
 	int memlog; /*!< log level for memory status/summary info */
 	int mem_summary; /*!< display memory status/summary info on exit */
+	int corelog; /*!< log level for non-critcal core error messages */
 };
 
 extern struct cfg_group_core default_core_cfg;

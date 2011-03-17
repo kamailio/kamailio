@@ -375,7 +375,7 @@ if (is_user("john")) {
 		Check if To header field uri contains tag parameter.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>has_totag</function> usage</title>
@@ -684,8 +684,7 @@ reply_route[2] {
 		the two parameters matches as SIP URI.
 		</para>
    		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
-		FAILURE_ROUTE and BRANCH_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>cmp_uri</function> usage</title>
@@ -710,8 +709,7 @@ if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
 		URIs.
 		</para>
    		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
-		FAILURE_ROUTE and BRANCH_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>cmp_aor</function> usage</title>
@@ -858,6 +856,48 @@ if (is_rpid_user_e164()) {
 $var(uri) = "sip:user@host";
 $var(user) = "new_user";
 set_uri_user("$var(uri)", "$var(user)");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">is_request()</function>
+		</title>
+		<para>
+		Return true if the SIP message is a request.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>is_request</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_request()) {
+	...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">is_reply()</function>
+		</title>
+		<para>
+		Return true if the SIP message is a reply.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>is_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_reply()) {
+	...
+}
 ...
 </programlisting>
 		</example>

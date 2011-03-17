@@ -334,6 +334,9 @@ modparam("dialplan", "fetch_rows", 4000)
    with dialplan ID equal to id. If dest is missing, only matching and
    storing of matching rule's attributes is done.
 
+   Returns 1, if translation succeeded, -1 in case of some error occurred,
+   and -2 if dialplan with ID equal to id does not exist.
+
    Meaning of the parameters is as follows:
      * id -the dialplan id of the possible matching rules. This parameter
        can have the following types:
