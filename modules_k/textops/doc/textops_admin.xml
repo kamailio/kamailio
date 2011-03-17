@@ -1024,7 +1024,9 @@ if(is_method("OPTION|UPDATE"))
 		<function moreinfo="none">remove_hf(hname)</function>
 		</title>
 		<para>
-		Remove from message all headers with name <quote>hname</quote>
+		Remove from message all headers with name <quote>hname</quote>. 
+		Header matching is case-insensitive. Matches and removes also
+		the compact header forms.
 		</para>
 		<para>
 		Returns true if at least one header is found and removed.
@@ -1048,6 +1050,10 @@ if(remove_hf("User-Agent"))
 {
     # User Agent header removed
 }
+# compact form: remove "Contact" or "m" header
+remove_hf("Contact")
+# compact form: remove "Contact" or "m" header
+remove_hf("m")
 ...
 </programlisting>
 		</example>
