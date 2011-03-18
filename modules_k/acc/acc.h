@@ -73,6 +73,8 @@
 
 #define MAX_SYSLOG_SIZE  65536
 
+#define MAX_FAILED_FILTER_COUNT 15
+
 /* WARNING: This is a flag stored in the sip_msg structure, the flag is
  * temporarily defined here to make the module work with the sip-router core,
  * I assume it won't be needed once we merge acc implementations from both

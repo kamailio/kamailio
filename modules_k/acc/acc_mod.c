@@ -102,6 +102,9 @@ int report_cancels = 0;		/*!< would you like us to report CANCELs from upstream 
 int report_ack = 0;		/*!< report e2e ACKs too */
 int detect_direction = 0;	/*!< detect and correct direction in the sequential requests */
 int failed_transaction_flag = -1; /*!< should failed replies (>=3xx) be logged ? default==no */
+static char *failed_filter_str = 0;  /* by default, do not filter logging of
+					failed transactions */
+unsigned short failed_filter[MAX_FAILED_FILTER_COUNT + 1];
 static char* leg_info_str = 0;	/*!< multi call-leg support */
 struct acc_extra *leg_info = 0;
 
@@ -164,9 +167,7 @@ static char *db_extra_str = 0;		/*!< db extra variables */
 struct acc_extra *db_extra = 0;
 static str db_url = {NULL, 0};		/*!< Database url */
 str db_table_acc = str_init("acc");	/*!< name of database tables */
-void *db_table_acc_data = NULL;
 str db_table_mc = str_init("missed_calls");
-void *db_table_mc_data = NULL;
 /* names of columns in tables acc/missed calls*/
 str acc_method_col     = str_init("method");
 str acc_fromtag_col    = str_init("from_tag");
@@ -218,6 +219,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"early_media",             INT_PARAM, &early_media             },
 	{"failed_transaction_flag", INT_PARAM, &failed_transaction_flag },
+	{"failed_filter",           STR_PARAM, &failed_filter_str       },
 	{"report_ack",              INT_PARAM, &report_ack              },
 	{"report_cancels",          INT_PARAM, &report_cancels          },
 	{"multi_leg_info",          STR_PARAM, &leg_info_str            },
@@ -320,8 +322,6 @@ static int acc_fixup(void** param, int param_no)
 		if (db_url.s==0) {
 			pkg_free(p);
 			*param = 0;
-		} else {
-			return fixup_var_pve_str_12(param, 2);
 		}
 #endif
 	}
@@ -355,6 +355,45 @@ static int mod_lrt_init( void )
 	return 0;
 }
 
+static int parse_failed_filter(char *s, unsigned short *failed_filter)
+{
+    unsigned int n;
+    char *at;
+
+    n = 0;
+
+    while (1) {
+	if (n >= MAX_FAILED_FILTER_COUNT) {
+	    LM_ERR("too many elements in failed_filter\n");
+	    return 0;
+	}
+	at = s;
+	while ((*at >= '0') && (*at <= '9')) at++;
+	if (at - s != 3) {
+	    LM_ERR("respose code in failed_filter must have 3 digits\n");
+	    return 0;
+	}
+	failed_filter[n] = (*s - '0') * 100 + (*(s + 1) - '0') * 10 +
+	    (*(s + 2) - '0');
+	if (failed_filter[n] < 300) {
+	    LM_ERR("invalid respose code %u in failed_filter\n",
+		   failed_filter[n]);
+	    return 0;
+	}
+	LM_DBG("failed_filter %u = %u\n", n, failed_filter[n]);
+	n++;
+	failed_filter[n] = 0;
+	s = at;
+	if (*s == 0)
+	    return 1;
+	if (*s != ',') {
+	    LM_ERR("response code is not followed by comma or end of string\n");
+	    return 0;
+	}
+	s++;
+    }
+}
+
 static int mod_init( void )
 {
 	lrt_info_t li;
@@ -367,27 +406,7 @@ static int mod_init( void )
 	if (db_url.s)
 		db_url.len = strlen(db_url.s);
 	db_table_acc.len = strlen(db_table_acc.s);
-	if(db_table_acc.len!=3 || strncmp(db_table_acc.s, "acc", 3)!=0)
-	{
-		db_table_acc_data = db_table_acc.s;
-		if(fixup_var_pve_str_12(&db_table_acc_data, 1)<0)
-		{
-			LM_ERR("unable to parse acc table name [%.*s]\n",
-					db_table_acc.len, db_table_acc.s);
-			return -1;
-		}
-	}
 	db_table_mc.len = strlen(db_table_mc.s);
-	if(db_table_mc.len!=12 || strncmp(db_table_mc.s, "missed_calls", 12)!=0)
-	{
-		db_table_mc_data = db_table_mc.s;
-		if(fixup_var_pve_str_12(&db_table_mc_data, 1)<0)
-		{
-			LM_ERR("unable to parse mc table name [%.*s]\n",
-					db_table_mc.len, db_table_mc.s);
-			return -1;
-		}
-	}
 	acc_method_col.len = strlen(acc_method_col.s);
 	acc_fromtag_col.len = strlen(acc_fromtag_col.s);
 	acc_totag_col.len = strlen(acc_totag_col.s);
@@ -409,10 +428,19 @@ static int mod_init( void )
 
 	/* ----------- GENERIC INIT SECTION  ----------- */
 
+	/* failed transaction handling */
 	if ((failed_transaction_flag != -1) && 
 		!flag_in_range(failed_transaction_flag)) {
 		LM_ERR("failed_transaction_flag set to invalid value\n");
 		return -1;
+	}
+	if (failed_filter_str) {
+	    if (parse_failed_filter(failed_filter_str, failed_filter) == 0) {
+		LM_ERR("failed to parse failed_filter param\n");
+		return -1;
+	    }
+	} else {
+	    failed_filter[0] = 0;
 	}
 
 	/* load the TM API */

@@ -47,6 +47,7 @@ extern int report_cancels;
 extern int report_ack;
 extern int early_media;
 extern int failed_transaction_flag;
+extern unsigned short failed_filter[];
 extern int detect_direction;
 
 extern int log_facility;
@@ -73,9 +74,7 @@ extern int db_flag;
 extern int db_missed_flag;
 
 extern str db_table_acc;
-extern void *db_table_acc_data;
 extern str db_table_mc;
-extern void *db_table_mc_data;
 
 extern str acc_method_col;
 extern str acc_fromuri_col;

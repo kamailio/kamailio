@@ -404,6 +404,24 @@ modparam("acc", "failed_transaction_flag", 4)
 		</example>
 	</section>
 	<section>
+		<title><varname>failed_filter</varname> (string)</title>
+		<para>
+		A string of failure response codes from 300 to 999
+		separated by commas. Failed transaction will not be accounted
+		if its response code is in the list even when
+		failed_transaction_flag is set. 
+		</para>
+		<para>
+		Default value is not-set (failure filtering is off).
+		</para>
+		<example>
+		<title>failed_filter example</title>
+		<programlisting format="linespecific">
+modparam("acc", "failed_filter", "404,407")
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>report_ack</varname> (integer)</title>
 		<para>
 		Shall acc attempt to account e2e ACKs too ? Note that this is really 
@@ -695,8 +713,7 @@ modparam("acc", "db_missed_flag", 3)
 	<section>
 		<title><varname>db_table_acc</varname> (string)</title>
 		<para>
-			Table name of accounting successfull calls -- database specific. It
-			can include config variables.
+		Table name of accounting successfull calls -- database specific.
 		</para>
 		<para>
 		Default value is <quote>acc</quote>
@@ -705,15 +722,13 @@ modparam("acc", "db_missed_flag", 3)
 		<title>db_table_acc example</title>
 		<programlisting format="linespecific">
 modparam("acc", "db_table_acc", "myacc_table")
-modparam("acc", "db_table_acc", "acc_$time(year)_$time(mon)")
 </programlisting>
 		</example>
 	</section>
 	<section>
 		<title><varname>db_table_missed_calls</varname> (string)</title>
 		<para>
-			Table name for accounting missed calls -- database specific. It
-			can include config variables.
+		Table name for accounting missed calls -- database specific.
 		</para>
 		<para>
 		Default value is <quote>missed_calls</quote>
@@ -722,7 +737,6 @@ modparam("acc", "db_table_acc", "acc_$time(year)_$time(mon)")
 		<title>db_table_missed_calls example</title>
 		<programlisting format="linespecific">
 modparam("acc", "db_table_missed_calls", "myMC_table")
-modparam("acc", "db_table_missed_calls", "mc_$time(year)_$time(mon)")
 </programlisting>
 		</example>
 	</section>
@@ -1001,8 +1015,7 @@ acc_log_request("Some comment");
 			<para><emphasis>comment</emphasis> - Comment to be appended.</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>table</emphasis> - Database table to be used. It
-			can include config variables.</para>
+			<para><emphasis>table</emphasis> - Database table to be used.</para>
 		</listitem>
 		</itemizedlist>
 		<para>
@@ -1012,8 +1025,7 @@ acc_log_request("Some comment");
 		<title>acc_db_request usage</title>
 		<programlisting format="linespecific">
 ...
-acc_db_request("Some comment", "some_table");
-acc_db_request("200 ok", "acc_cfg_$time(year)");
+acc_log_request("Some comment", "Some table");
 ...
 </programlisting>
 		</example>

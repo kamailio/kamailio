@@ -39,7 +39,6 @@
 #include <string.h>
 
 #include "../../dprint.h"
-#include "../../sr_module.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
 #include "../../modules/tm/tm_load.h"
@@ -100,6 +99,8 @@ struct acc_enviroment acc_env;
 
 #define skip_cancel(_rq) \
 	(((_rq)->REQ_METHOD==METHOD_CANCEL) && report_cancels==0)
+
+
 
 
 static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps );
@@ -179,35 +180,6 @@ int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo)
 
 
 #ifdef SQL_ACC
-int acc_db_set_table_name(struct sip_msg *msg, void *param, str *table)
-{
-#define DB_TABLE_NAME_SIZE	64
-	static char db_table_name_buf[DB_TABLE_NAME_SIZE];
-	str dbtable;
-
-	if(param!=NULL) {
-		if(get_str_fparam(&dbtable, msg, (fparam_t*)param)<0) {
-			LM_ERR("cannot get acc db table name\n");
-			return -1;
-		}
-		if(dbtable.len>=DB_TABLE_NAME_SIZE) {
-			LM_ERR("acc db table name too big [%.*s] max %d\n",
-					dbtable.len, dbtable.s, DB_TABLE_NAME_SIZE);
-			return -1;
-		}
-		strncpy(db_table_name_buf, dbtable.s, dbtable.len);
-		env_set_text(db_table_name_buf, dbtable.len);
-	} else {
-		if(table==NULL) {
-			LM_ERR("no acc table name\n");
-			return -1;
-		}
-		env_set_text(table->s, table->len);
-	}
-	return 0;
-}
-
-
 int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 {
 	if (!table) {
@@ -216,12 +188,9 @@ int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 	}
 	if (acc_preparse_req(rq)<0)
 		return -1;
-	if(acc_db_set_table_name(rq, (void*)table, NULL)<0) {
-		LM_ERR("cannot set table name\n");
-		return -1;
-    }
 	env_set_to( rq->to );
 	env_set_comment((struct acc_param*)comment);
+	env_set_text(table, strlen(table));
 	return acc_db_request(rq);
 }
 #endif
@@ -289,21 +258,33 @@ void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 
 
 /* is this reply of interest for accounting ? */
-static inline int should_acc_reply(struct sip_msg *req,struct sip_msg *rpl,
-																	int code)
+static inline int should_acc_reply(struct sip_msg *req, struct sip_msg *rpl,
+				   int code)
 {
+    unsigned int i;
+
 	/* negative transactions reported otherwise only if explicitly 
 	 * demanded */
-	if ( !is_failed_acc_on(req) && code >=300 )
-		return 0;
-	if ( !is_acc_on(req) )
-		return 0;
-	if ( code<200 && !(early_media &&
-	parse_headers(rpl,HDR_CONTENTLENGTH_F, 0)==0 && rpl->content_length &&
-	get_content_length(rpl)>0 ) )
-		return 0;
 
-	return 1; /* seed is through, we will account this reply */
+    if (code >= 300) {
+	if (!is_failed_acc_on(req)) return 0;
+	i = 0;
+	while (failed_filter[i] != 0) {
+	    if (failed_filter[i] == code) return 0;
+	    i++;
+	}
+	return 1;
+    }
+
+    if ( !is_acc_on(req) )
+	return 0;
+	
+    if ( code<200 && !(early_media &&
+		       parse_headers(rpl,HDR_CONTENTLENGTH_F, 0) == 0 &&
+		       rpl->content_length && get_content_length(rpl) > 0))
+	return 0;
+
+    return 1; /* seed is through, we will account this reply */
 }
 
 
@@ -355,10 +336,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 	}
 #ifdef SQL_ACC
 	if (is_db_mc_on(req)) {
-		if(acc_db_set_table_name(req, db_table_mc_data, &db_table_mc)<0) {
-			LM_ERR("cannot set missed call db table name\n");
-			return;
-		}
+		env_set_text(db_table_mc.s, db_table_mc.len);
 		acc_db_request( req );
 		flags_to_reset |= db_missed_flag;
 	}
@@ -429,10 +407,7 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 	}
 #ifdef SQL_ACC
 	if (is_db_acc_on(req)) {
-		if(acc_db_set_table_name(req, db_table_acc_data, &db_table_acc)<0) {
-			LM_ERR("cannot set acc db table name\n");
-			return;
-		}
+		env_set_text( db_table_acc.s, db_table_acc.len);
 		acc_db_request(req);
 	}
 #endif
@@ -473,10 +448,7 @@ static inline void acc_onack( struct cell* t, struct sip_msg *req,
 	}
 #ifdef SQL_ACC
 	if (is_db_acc_on(req)) {
-		if(acc_db_set_table_name(ack, db_table_acc_data, &db_table_acc)<0) {
-			LM_ERR("cannot set acc db table name\n");
-			return;
-		}
+		env_set_text( db_table_acc.s, db_table_acc.len);
 		acc_db_request( ack );
 	}
 #endif
