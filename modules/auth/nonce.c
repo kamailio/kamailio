@@ -278,6 +278,27 @@ int calc_nonce(char* nonce, int *nonce_len, int cfg, int since, int expires,
 
 
 
+/** Utility to convert 8 hex digit string to int */
+static inline int l8hex2int(char* _s, unsigned int *_r)
+{
+    unsigned int i, res = 0;
+
+    for(i = 0; i < 8; i++) {
+	res *= 16;
+	if ((_s[i] >= '0') && (_s[i] <= '9')) {
+	    res += _s[i] - '0';
+	} else if ((_s[i] >= 'a') && (_s[i] <= 'f')) {
+	    res += _s[i] - 'a' + 10;
+	} else if ((_s[i] >= 'A') && (_s[i] <= 'F')) {
+	    res += _s[i] - 'A' + 10;
+	} else return -1;
+    }
+    
+    *_r = res;
+    return 0;
+}
+
+
 
 /** Check whether the nonce returned by UA is valid.
  * This function checks whether the nonce string returned by UA
@@ -405,9 +426,11 @@ int check_nonce(auth_body_t* auth, str* secret1, str* secret2,
 		/* if nounce-count checks enabled & auth. headers has nc */
 		if (nc_enabled && (pf & NF_VALID_NC_ID) && auth->digest.nc.s &&
 				auth->digest.nc.len){
-			if (str2int(&auth->digest.nc, &nc)!=0){
-				/* error, bad nc */
-				return 5; /* invalid nc */
+		        if ((auth->digest.nc.len != 8) ||
+			    l8hex2int(auth->digest.nc.s, &nc) != 0) {
+			    ERR("check_nonce: bad nc value %.*s\n",
+			        auth->digest.nc.len, auth->digest.nc.s);
+			    return 5; /* invalid nc */
 			}
 			switch(nc_check_val(n_id, pf & NF_POOL_NO_MASK, nc)){
 				case NC_OK:
