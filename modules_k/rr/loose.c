@@ -928,7 +928,15 @@ int loose_route(struct sip_msg* _m)
 #else
 		if (is_myself(&_m->parsed_uri.host, _m->parsed_uri.port_no)) {
 #endif
-			return after_strict(_m);
+			/* even if RURI is myself check to see if it's really after_strict by
+			 looking over the lr param, as kamailio always adds it
+			 If lr is missing, than surely this was not after strict
+			*/
+			if(!is_strict(GET_RURI(_m))){
+				return after_strict(_m);
+			} else {
+				return after_loose(_m, 0);
+			}
 		} else {
 			return after_loose(_m, 0);
 		}
