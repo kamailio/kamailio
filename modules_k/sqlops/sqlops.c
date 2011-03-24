@@ -198,7 +198,7 @@ static int sql_query(struct sip_msg *msg, char *dbl, char *query, char *res)
  */
 static int sql_xquery(struct sip_msg *msg, char *dbl, char *query, char *res)
 {
-	return sql_do_xquery(msg, (sql_con_t*)dbl, query, (pv_elem_t*)res);
+	return sql_do_xquery(msg, (sql_con_t*)dbl, (pv_elem_t*)query, (pv_elem_t*)res);
 }
 #endif
 
