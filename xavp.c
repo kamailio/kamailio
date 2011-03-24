@@ -136,7 +136,7 @@ sr_xavp_t *xavp_set_value(str *name, int idx, sr_xval_t *val, sr_xavp_t **list)
 				&& strncmp(avp->name.s, name->s, name->len)==0)
 		{
 			if(idx==n)
-				return avp;
+				break;
 			n++;
 		}
 		prv = avp;
@@ -166,16 +166,13 @@ sr_xavp_t *xavp_set_value(str *name, int idx, sr_xval_t *val, sr_xavp_t **list)
 		avp->val.v.s.s[val->v.s.len] = '\0';
 		avp->val.v.s.len = val->v.s.len;
 	}
-	if(prv)
-	{
-			avp->next = prv->next;
-			prv->next = avp;
+	avp->next = tmp->next;
+	if(prv) {
+		prv->next = avp;
 	} else {
 		if(list) {
-			avp->next = *list;
 			*list = avp;
 		} else {
-			avp->next = *_xavp_list_crt;
 			*_xavp_list_crt = avp;
 		}
 	}
