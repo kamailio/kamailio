@@ -69,8 +69,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 {
 	int i, j, max;
 	char *p, *s;
-	str st;
-	pv_value_t v;
+	str st, st2;
+	pv_value_t v, w;
 
 	if(val==NULL || val->flags&PV_VAL_NULL)
 		return -1;
@@ -494,6 +494,61 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->flags = PV_VAL_STR;
 			val->rs.s = _tr_buffer;
 			val->rs.len = j-1;
+			break;
+
+
+		case TR_S_REPLACE:
+			if(tp==NULL || tp->next==NULL)
+			{
+				LM_ERR("select invalid parameters\n");
+				return -1;
+			}
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+
+			if(tp->type==TR_PARAM_STRING)
+			{
+				st = tp->v.s;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
+				{
+					LM_ERR("replace cannot get p1\n");
+					return -1;
+				}
+				st = v.rs;
+			}
+
+			if(tp->next->type==TR_PARAM_STRING)
+			{
+				st2 = tp->next->v.s;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->next->v.data, &w)!=0
+						|| (!(w.flags&PV_VAL_STR)) || w.rs.len<=0)
+				{
+					LM_ERR("replace cannot get p2\n");
+					return -1;
+				}
+				st2 = w.rs;
+			}
+			
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+
+			i = 0;
+			j = 0;
+			max = val->rs.len - st.len;
+			while (i < val->rs.len && j < TR_BUFFER_SIZE) {
+				if (i <= max && val->rs.s[i] == st.s[0] && strncmp(val->rs.s+i, st.s, st.len) == 0) {
+					strncpy(_tr_buffer+j, st2.s, st2.len);
+					i += st.len;
+					j += st2.len;
+				} else {
+					_tr_buffer[j++] = val->rs.s[i++];
+				}
+			}
+			val->rs.s = _tr_buffer;
+			val->rs.len = j;
 			break;
 
 		case TR_S_TIMEFORMAT:
@@ -1479,6 +1534,36 @@ char* tr_parse_string(str* in, trans_t *t)
 		if(*p!=TR_RBRACKET)
 		{
 			LM_ERR("invalid ftime transformation: %.*s!!\n",
+				in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len==7 && strncasecmp(name.s, "replace", 7)==0) {
+		t->subtype = TR_S_REPLACE;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid replace transformation: %.*s!\n", in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid replace transformation: %.*s!\n",
+				in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+		t->params->next = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid replace transformation: %.*s!!\n",
 				in->len, in->s);
 			goto error;
 		}
