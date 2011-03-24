@@ -431,6 +431,8 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 					"AVP specs \"%s\"\n", fr_timer_param);
 				return -1;
 			}
+			/* ser flavour uses the To track of AVPs */
+			fr_timer_avp_type |= AVP_TRACK_TO;
 		}
 	}
 
@@ -462,6 +464,8 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 					"AVP specs \"%s\"\n", fr_inv_timer_param);
 				return -1;
 			}
+			/* ser flavour uses the To track of AVPs */
+			fr_inv_timer_avp_type |= AVP_TRACK_TO;
 		}
 	}
 
@@ -507,7 +511,7 @@ static inline int avp2timer(unsigned int* timer, int type, int_str name)
 	int_str val_istr;
 	int err;
 
-	avp = search_first_avp( type | AVP_TRACK_TO, name, &val_istr, 0);
+	avp = search_first_avp(type, name, &val_istr, 0);
 	if (!avp) {
 		/*
 		 DBG("avp2timer: AVP '%.*s' not found\n", param.s->len, ZSW(param.s->s));
