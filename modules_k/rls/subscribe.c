@@ -36,6 +36,7 @@
 #include "../../lib/kcore/cmpapi.h"
 #include "../../lib/kcore/hash_func.h"
 #include "../../lib/kcore/parse_supported.h"
+#include "../../lib/kcore/parser_helpers.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_event.h"
 #include "../../parser/parse_expires.h"
@@ -432,7 +433,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 		return 0;
 	}
 	/* check for To and From headesr */
-	if(parse_to_header(msg)<0 || parse_from_header(msg)<0)
+	if(parse_to_uri(msg)<0 || parse_from_uri(msg)<0)
 	{
 		LM_ERR("failed to find To or From headers\n");
 		if (slb.freply(msg, 400, &pu_400_rpl) < 0)
