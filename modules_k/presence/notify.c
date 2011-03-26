@@ -128,6 +128,7 @@ int build_str_hdr(subs_t* subs, int is_body, str* hdr)
 	str expires = {0, 0};
 	str status = {0, 0};
 	str tmp = {0, 0};
+	str trans = {";transport=", 11};
 
 	if(hdr == NULL)
 	{
@@ -184,7 +185,8 @@ int build_str_hdr(subs_t* subs, int is_body, str* hdr)
 	tmp.s += 10;
 	strncpy(tmp.s, subs->local_contact.s, subs->local_contact.len);
 	tmp.s +=  subs->local_contact.len;
-	if(subs->sockinfo_str.s!=NULL)
+	if(subs->sockinfo_str.s!=NULL
+			&& str_search(&subs->local_contact, &trans)==0)
 	{
 		/* fix me */
 		switch(subs->sockinfo_str.s[0]) {
