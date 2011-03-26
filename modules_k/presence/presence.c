@@ -323,10 +323,13 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(restore_db_subs()< 0)
+	if(dbmode != DB_ONLY)
 	{
-		LM_ERR("restoring subscribe info from database\n");
-		return -1;
+		if(restore_db_subs()< 0)
+		{
+			LM_ERR("restoring subscribe info from database\n");
+			return -1;
+		}
 	}
 
 	if(phtable_size< 1)
