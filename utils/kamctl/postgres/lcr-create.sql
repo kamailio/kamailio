@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('lcr_gw','1');
+INSERT INTO version (table_name, table_version) values ('lcr_gw','2');
 CREATE TABLE lcr_gw (
     id SERIAL PRIMARY KEY NOT NULL,
     lcr_id SMALLINT NOT NULL,
@@ -10,7 +10,8 @@ CREATE TABLE lcr_gw (
     uri_scheme SMALLINT,
     transport SMALLINT,
     strip SMALLINT,
-    tag VARCHAR(16) DEFAULT NULL,
+    prefix VARCHAR(16) DEFAULT NULL,
+    tag VARCHAR(64) DEFAULT NULL,
     flags INTEGER DEFAULT 0 NOT NULL,
     defunct INTEGER DEFAULT NULL,
     CONSTRAINT lcr_gw_lcr_id_ip_addr_port_hostname_idx UNIQUE (lcr_id, ip_addr, port, hostname)
