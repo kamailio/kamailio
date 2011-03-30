@@ -362,7 +362,7 @@ static int pv_get_dlg_count(struct sip_msg *msg, pv_param_t *param,
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	n = active_dlgs ? get_stat_val(active_dlgs) : 0;
+	n = active_dlgs ? (int)get_stat_val(active_dlgs) : 0;
 	l = 0;
 	ch = int2str( n, &l);
 
