@@ -103,9 +103,9 @@ int stringHandlerSanityCheck( modparam_t type, void *val, char *parameterName)
  * return the value of the statistic denoted with statName, or zero if the
  * statistic was not found. 
  */
-int get_statistic(char *statName) 
+int get_statistic(char *statName)
 {
-	int result = 0;
+	long result = 0;
 
 	str theStr;
 
@@ -120,7 +120,7 @@ int get_statistic(char *statName)
 		result = get_stat_val(theVar);
 	}
 
-	return result;
+	return (int)result;
 }
 
 /*! Returns a pointer to an SNMP DateAndTime OCTET STRING representation of the
