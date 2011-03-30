@@ -558,7 +558,7 @@ void print_all_udomains(FILE* _f)
  */
 unsigned long get_number_of_users(void)
 {
-	int numberOfUsers = 0;
+	long numberOfUsers = 0;
 
 	dlist_t* current_dlist;
 	
