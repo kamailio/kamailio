@@ -13,7 +13,7 @@ BUILDER = $(shell which lua-config)
 ifeq ($(BUILDER),)
 	BUILDER = $(shell which pkg-config)
 	ifeq ($(BUILDER),)
-		LUA51 = $(shell ls /usr/lib/liblua* | grep 5.1)
+		LUA51 = $(shell ls /usr/lib/liblua* | grep liblua5.1)
 		ifeq ($(LUA51),)
 			DEFS+=-I/usr/include/lua
 			LIBS= -llua
@@ -24,7 +24,7 @@ ifeq ($(BUILDER),)
 	else
 		LUALIBS = $(shell pkg-config --silence-errors --libs lua)
 		ifeq ($(LUALIBS),)
-			LUA51 = $(shell ls /usr/lib/liblua* | grep 5.1)
+			LUA51 = $(shell ls /usr/lib/liblua* | grep liblua5.1)
 			ifeq ($(LUA51),)
 				DEFS+=-I/usr/include/lua
 				LIBS= -llua
