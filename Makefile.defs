@@ -225,13 +225,23 @@ endif
 # extra CC command line options (e.g  -march=athlon-mp)
 CC_EXTRA_OPTS ?=
 
+LIBDIR ?=
+ifeq ($(LIBDIR),)
+ARCHBSZ= $(shell echo $(HOST_ARCH) | sed -e 's/.*64.*/64b/')
+ifeq ($(ARCHBSZ),64b)
+	LIBDIR = lib64
+else
+	LIBDIR = lib
+endif
+endif
+
 # dirs 
 cfg_dir = etc/$(MAIN_NAME)/
 bin_dir = sbin/
 share_dir = share/$(MAIN_NAME)/
 # lib/$(MAIN_NAME)/modules , lib/$(MAIN_NAME)/modules-s, lib/$(MAIN_NAME)/modules-k
-modules_dir = lib/$(MAIN_NAME)/
-lib_dir = lib/$(MAIN_NAME)/
+modules_dir = $(LIBDIR)/$(MAIN_NAME)/
+lib_dir = $(LIBDIR)/$(MAIN_NAME)/
 
 doc_dir = doc/$(MAIN_NAME)/
 man_dir = man/
@@ -2048,7 +2058,7 @@ saved_fixed_vars:=	MAIN_NAME  CFG_NAME SCR_NAME FLAVOUR INSTALL_FLAVOUR \
 # extra: prefix DESTDIR BASEDIR basedirt
 saved_chg_vars:=\
 		CC_EXTRA_OPTS CPU CFLAGS_RM CFLAGS MOD_CFLAGS LIB_CFLAGS UTILS_CFLAGS \
-		BASEDIR basedir DESTDIR \
+		BASEDIR basedir DESTDIR LIBDIR \
 		PREFIX prefix\
 		cfg_prefix cfg_dir bin_prefix bin_dir modules_prefix modules_dir \
 		doc_prefix doc_dir man_prefix man_dir ut_prefix ut_dir \
