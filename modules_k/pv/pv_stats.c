@@ -49,6 +49,7 @@ int pv_get_stat(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			param->pvn.u.isname.name.s.len, param->pvn.u.isname.name.s.s);
 		return pv_get_null(msg, param, res);
 	}
-	return pv_get_uintval(msg, param, res, get_stat_val(stat));
+	return pv_get_uintval(msg, param, res,
+			(unsigned int)get_stat_val(stat));
 }
 
