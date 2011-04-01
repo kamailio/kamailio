@@ -33,6 +33,7 @@
 #include "../../parser/parse_from.h"
 #include "../../lib/kcore/cmpapi.h"
 #include "../../lib/kcore/hash_func.h"
+#include "../../trim.h"
 #include "../pua/hash.h"
 #include "rls.h"
 #include "notify.h"
@@ -192,6 +193,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 		}
 		pto = &TO;
 	}
+	memset(&dialog, 0, sizeof(ua_pres_t));
 	dialog.watcher_uri= &pto->uri;
     if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
 	{  
@@ -425,7 +427,7 @@ int parse_rlsubs_did(char* str_did, str* callid, str* from_tag, str* to_tag)
 {
 	char* smc= NULL;
 
-	smc= strstr(str_did, DID_SEP);
+	smc= strstr(str_did, RLS_DID_SEP);
 	if(smc== NULL)
 	{
 		LM_ERR("bad format for resource list Subscribe dialog"
@@ -435,8 +437,8 @@ int parse_rlsubs_did(char* str_did, str* callid, str* from_tag, str* to_tag)
 	callid->s= str_did;
 	callid->len= smc- str_did;
 			
-	from_tag->s= smc+ DID_SEP_LEN;
-	smc= strstr(from_tag->s, DID_SEP);
+	from_tag->s= smc+ RLS_DID_SEP_LEN;
+	smc= strstr(from_tag->s, RLS_DID_SEP);
 	if(smc== NULL)
 	{
 		LM_ERR("bad format for resource list Subscribe dialog"
@@ -445,8 +447,8 @@ int parse_rlsubs_did(char* str_did, str* callid, str* from_tag, str* to_tag)
 	}
 	from_tag->len= smc- from_tag->s;
 		
-	to_tag->s= smc+ DID_SEP_LEN;
-	to_tag->len= strlen(str_did)- 2* DID_SEP_LEN- callid->len- from_tag->len;
+	to_tag->s= smc+ RLS_DID_SEP_LEN;
+	to_tag->len= strlen(str_did)- 2* RLS_DID_SEP_LEN- callid->len- from_tag->len;
 
 	return 0;
 }
@@ -462,7 +464,8 @@ void timer_send_notify(unsigned int ticks,void *param)
 	char* prev_did= NULL, * curr_did= NULL;
 	db_row_t *row;	
 	db_val_t *row_vals;
-	char* resource_uri, *pres_state;
+	char* resource_uri;
+	str pres_state = {0, 0};
 	str callid, to_tag, from_tag;
 	xmlDocPtr rlmi_doc= NULL;
 	xmlNodePtr list_node= NULL, instance_node= NULL, resource_node;
@@ -554,7 +557,9 @@ void timer_send_notify(unsigned int ticks,void *param)
 		curr_did=     (char*)row_vals[did_col].val.string_val;
 		resource_uri= (char*)row_vals[resource_uri_col].val.string_val;
 		auth_state_flag=     row_vals[auth_state_col].val.int_val;
-		pres_state=   (char*)row_vals[pres_state_col].val.string_val;
+		pres_state.s=   (char*)row_vals[pres_state_col].val.string_val;
+		pres_state.len = strlen(pres_state.s);
+		trim(&pres_state);
 		
 		if(prev_did!= NULL && strcmp(prev_did, curr_did)) 
 		{
@@ -705,17 +710,18 @@ void timer_send_notify(unsigned int ticks,void *param)
 			/* add in the multipart buffer */
 			if(cid)
 			{
-				if(buf_len+ antet_len+ strlen(pres_state)+ 4 > size)
+				if(buf_len+ antet_len+ pres_state.len+ 4 > size)
 				{
 					REALLOC_BUF
 				}
-				buf_len+= sprintf(buf+ buf_len, "--%s\r\n\r\n", bstr.s);
+				buf_len+= sprintf(buf+ buf_len, "--%s\r\n", bstr.s);
 				buf_len+= sprintf(buf+ buf_len,
 						"Content-Transfer-Encoding: binary\r\n");
 				buf_len+= sprintf(buf+ buf_len, "Content-ID: <%s>\r\n", cid);
 				buf_len+= sprintf(buf+ buf_len, "Content-Type: %s\r\n\r\n",  
 						row_vals[content_type_col].val.string_val);
-				buf_len+= sprintf(buf+buf_len,"%s\r\n\r\n", pres_state);
+				buf_len+= sprintf(buf+buf_len,"%.*s\r\n\r\n", pres_state.len,
+						pres_state.s);
 			}
 
 			i++;
@@ -738,7 +744,9 @@ void timer_send_notify(unsigned int ticks,void *param)
 			}
 			resource_uri= (char*)row_vals[resource_uri_col].val.string_val;
 			auth_state_flag=     row_vals[auth_state_col].val.int_val;
-			pres_state=   (char*)row_vals[pres_state_col].val.string_val;
+			pres_state.s=   (char*)row_vals[pres_state_col].val.string_val;
+			pres_state.len= strlen(pres_state.s);
+			trim(&pres_state);
 		}
 
 		prev_did= curr_did;
