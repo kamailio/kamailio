@@ -66,16 +66,13 @@ MODULE_VERSION
 /* database connection */
 db1_con_t *dmq_db = NULL;
 db_func_t dmq_dbf;
-int library_mode= 0;
-str server_address= {0, 0};
+int library_mode = 0;
+str server_address = {0, 0};
 int startup_time = 0;
 int pid = 0;
 
 /* module parameters */
 str db_url;
-
-/* to tag prefix */
-char* to_tag_pref = "10";
 
 /* TM bind */
 struct tm_binds tmb;
@@ -83,38 +80,37 @@ struct tm_binds tmb;
 sl_api_t slb;
 
 /** module functions */
-
 static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
 static int fixup_dmq(void** param, int param_no);
 
-static cmd_export_t cmds[]=
-{
-	{"handle_dmq_message",        (cmd_function)handle_dmq_message, 0, fixup_dmq, 0, REQUEST_ROUTE},
+static cmd_export_t cmds[] = {
+	{"handle_dmq_message",  (cmd_function)handle_dmq_message, 0, fixup_dmq, 0, 
+		REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
-static param_export_t params[]={
-	{ "db_url",                 STR_PARAM, &db_url.s},
-	{0,0,0}
+static param_export_t params[] = {
+	{"db_url", STR_PARAM, &db_url.s},
+	{0, 0, 0}
 };
 
 static mi_export_t mi_cmds[] = {
-	{ "cleanup",         0,            0,  0,  mi_child_init},
-	{  0,                0,                     0,  0,  0}
+	{"cleanup", 0, 0, 0, mi_child_init},
+	{0, 0, 0, 0, 0}
 };
 
 /** module exports */
-struct module_exports exports= {
-	"dmq",			/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
+struct module_exports exports = {
+	"dmq",				/* module name */
+	DEFAULT_DLFLAGS,		/* dlopen flags */
 	cmds,				/* exported functions */
 	params,				/* exported parameters */
-	0,					/* exported statistics */
+	0,				/* exported statistics */
 	mi_cmds,   			/* exported MI functions */
-	0,					/* exported pseudo-variables */
-	0,					/* extra processes */
+	0,				/* exported pseudo-variables */
+	0,				/* extra processes */
 	mod_init,			/* module initialization function */
 	0,   				/* response handling function */
 	(destroy_function) destroy, 	/* destroy function */
@@ -124,21 +120,19 @@ struct module_exports exports= {
 /**
  * init module function
  */
-static int mod_init(void)
-{
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
+static int mod_init(void) {
+	if(register_mi_mod(exports.name, mi_cmds)!=0) {
 		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
 
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,db_url.s);
-	if(db_url.s== NULL)
+	if(db_url.s== NULL) {
 		library_mode= 1;
+	}
 
-	if(library_mode== 1)
-	{
+	if(library_mode== 1) {
 		LM_DBG("dmq module used for API library purpose only\n");
 	}
 
@@ -149,40 +143,34 @@ static int mod_init(void)
 	}
 
 	/* load all TM stuff */
-	if(load_tm_api(&tmb)==-1)
-	{
+	if(load_tm_api(&tmb)==-1) {
 		LM_ERR("Can't load tm functions. Module TM not loaded?\n");
 		return -1;
 	}
 	
-	if(db_url.s== NULL)
-	{
+	if(db_url.s== NULL) {
 		LM_ERR("database url not set!\n");
 		return -1;
 	}
 
 	/* binding to database module  */
-	if (db_bind_mod(&db_url, &dmq_dbf))
-	{
+	if (db_bind_mod(&db_url, &dmq_dbf)) {
 		LM_ERR("database module not found\n");
 		return -1;
 	}
 	
 
-	if (!DB_CAPABILITY(dmq_dbf, DB_CAP_ALL))
-	{
+	if (!DB_CAPABILITY(dmq_dbf, DB_CAP_ALL)) {
 		LM_ERR("database module does not implement all functions needed by dmq module\n");
 		return -1;
 	}
 
 	dmq_db = dmq_dbf.init(&db_url);
-	if (!dmq_db)
-	{
+	if (!dmq_db) {
 		LM_ERR("connection to database failed\n");
 		return -1;
 	}
 	
-	/*verify table versions */
 	startup_time = (int) time(NULL);
 	return 0;
 }
@@ -190,26 +178,26 @@ static int mod_init(void)
 /**
  * Initialize children
  */
-static int child_init(int rank)
-{
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
-		return 0; /* do nothing for the main process */
+static int child_init(int rank) {
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN) {
+		/* do nothing for the main process */
+		return 0;
+	}
 
 	pid = my_pid();
 	
 	if(library_mode)
 		return 0;
 
-	if (dmq_dbf.init==0)
-	{
+	if (dmq_dbf.init==0) {
 		LM_CRIT("child_init: database not bound\n");
 		return -1;
 	}
 	if (dmq_db)
 		return 0;
+	
 	dmq_db = dmq_dbf.init(&db_url);
-	if (!dmq_db)
-	{
+	if (!dmq_db) {
 		LM_ERR("child %d: unsuccessful connecting to database\n", rank);
 		return -1;
 	}
@@ -218,21 +206,18 @@ static int child_init(int rank)
 	return 0;
 }
 
-static int mi_child_init(void)
-{
+static int mi_child_init(void) {
 	if(library_mode)
 		return 0;
 
-	if (dmq_dbf.init==0)
-	{
+	if (dmq_dbf.init==0) {
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
 	if (dmq_db)
 		return 0;
 	dmq_db = dmq_dbf.init(&db_url);
-	if (!dmq_db)
-	{
+	if (!dmq_db) {
 		LM_ERR("connecting database\n");
 		return -1;
 	}
@@ -245,6 +230,5 @@ static int mi_child_init(void)
 /*
  * destroy function
  */
-static void destroy(void)
-{
+static void destroy(void) {
 }
