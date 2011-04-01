@@ -66,6 +66,7 @@ subs_t* constr_new_subs(struct sip_msg* msg, struct to_body *pto,
 int resource_subscriptions(subs_t* subs, xmlNodePtr rl_node);
 
 int update_rlsubs( subs_t* subs,unsigned int hash_code);
+int remove_expired_rlsubs( subs_t* subs,unsigned int hash_code);
 
 /**
  * return the XML node for rls-services matching uri
@@ -406,7 +407,6 @@ int reply_489(struct sip_msg * msg)
 int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 {
 	subs_t subs;
-	str resource_list = {0, 0};
 	pres_ev_t* event = NULL;
 	int err_ret = -1;
 	str* contact = NULL;
@@ -630,6 +630,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 		LM_ERR("failed sending subscribe requests to resources in list\n");
 		goto error;
 	}
+	remove_expired_rlsubs(&subs, hash_code);
 
 done:
 	if(contact!=NULL)
@@ -677,14 +678,57 @@ error:
 
 	if(doc!=NULL)
 		xmlFreeDoc(doc);
-	if(resource_list.s!=NULL)
-		pkg_free(resource_list.s);
 	return err_ret;
+}
+
+int remove_expired_rlsubs( subs_t* subs, unsigned int hash_code)
+{
+	subs_t* s, *ps;
+	int found= 0;
+
+	if(subs->expires!=0)
+		return 0;
+
+	/* search the record in hash table */
+	lock_get(&rls_table[hash_code].lock);
+
+	s= pres_search_shtable(rls_table, subs->callid,
+			subs->to_tag, subs->from_tag, hash_code);
+	if(s== NULL)
+	{
+		LM_DBG("record not found in hash table\n");
+		lock_release(&rls_table[hash_code].lock);
+		return -1;
+	}
+	/* delete record from hash table */
+	ps= rls_table[hash_code].entries;
+	while(ps->next)
+	{
+		if(ps->next== s)
+		{
+			found= 1;
+			break;
+		}
+		ps= ps->next;
+	}
+	if(found== 0)
+	{
+		LM_ERR("record not found\n");
+		lock_release(&rls_table[hash_code].lock);
+		return -1;
+	}
+	ps->next= s->next;
+	shm_free(s);
+
+	lock_release(&rls_table[hash_code].lock);
+
+	return 0;
+
 }
 
 int update_rlsubs( subs_t* subs, unsigned int hash_code)
 {
-	subs_t* s, *ps;
+	subs_t* s;
 
 	/* search the record in hash table */
 	lock_get(&rls_table[hash_code].lock);
@@ -735,29 +779,6 @@ int update_rlsubs( subs_t* subs, unsigned int hash_code)
 	subs->local_cseq= s->local_cseq;
 	subs->version= s->version;
 
-	if(subs->expires== 0)
-	{
-		/* delete record from hash table */
-		ps= rls_table[hash_code].entries;
-		int found= 0;
-		while(ps->next)
-		{
-			if(ps->next== s)
-			{
-				found= 1;
-				break;
-			}
-			ps= ps->next;
-		}
-		if(found== 0)
-		{
-			LM_ERR("record not found\n");
-			goto error;
-		}
-		ps->next= s->next;
-		shm_free(s);
-	}
-	
 	lock_release(&rls_table[hash_code].lock);
 
 	return 0;
@@ -788,15 +809,18 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 	char* uri= NULL;
 	subs_info_t s;
 	str wuri= {0, 0};
-	static char buf[256];
 	str extra_headers;
 	str did_str= {0, 0};
 		
 	/* if is initial send an initial Subscribe 
 	 * else search in hash table for a previous subscription */
 
-	CONSTR_RLSUBS_DID(subs, &did_str);
-	
+	if(CONSTR_RLSUBS_DID(subs, &did_str)<0)
+	{
+		LM_ERR("cannot build rls subs did\n");
+		goto error;
+	}
+
 	memset(&s, 0, sizeof(subs_info_t));
 
 	if(uandd_to_uri(subs->from_user, subs->from_domain, &wuri)<0)
@@ -817,8 +841,12 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 	s.source_flag = RLS_SUBSCRIBE;
 	if(rls_outbound_proxy.s)
 		s.outbound_proxy = &rls_outbound_proxy;
-	extra_headers.s = buf;
-	extra_headers.len = sprintf(extra_headers.s, "Supported: eventlist\r\n");
+	extra_headers.s = "Supported: eventlist\r\n"
+				"Accept: application/pidf+xml, application/rlmi+xml,"
+					" application/watcherinfo+xml,"
+					" multipart/related\r\n";
+	extra_headers.len = strlen(extra_headers.s);
+
 	s.extra_headers = &extra_headers;
 	
 	if(process_list_and_exec(xmlnode, send_resource_subs, (void*)(&s))<0)

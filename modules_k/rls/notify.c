@@ -34,6 +34,7 @@
 #include "../../ut.h"
 #include "../../str.h"
 #include "../../dprint.h"
+#include "../../trim.h"
 #include "../../data_lump_rpl.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_event.h"
@@ -84,7 +85,11 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, int version, str* rl_uri,
 	LM_DBG("start\n");
 	/* query in alfabetical order */
 	
-	CONSTR_RLSUBS_DID(subs, &rlsubs_did);
+	if(CONSTR_RLSUBS_DID(subs, &rlsubs_did)<0)
+	{
+		LM_ERR("cannot build rls subs did\n");
+		goto error;
+	}
 
 	query_cols[0]= &str_rlsubs_did_col;
 	query_vals[0].type = DB1_STR;
@@ -492,6 +497,7 @@ str* constr_multipart_body(db1_res_t* result, char** cid_array,
 	
 		body.s= (char*)row_vals[pres_state_col].val.string_val;
 		body.len= strlen(body.s);
+		trim(&body);
 		ctype.s = (char*)row_vals[content_type_col].val.string_val;
 		ctype.len = strlen(ctype.s);
 
