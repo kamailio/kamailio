@@ -1,3 +1,485 @@
+===================== 2011-04-04 Version 3.1.3 Released =====================
+
+===================== Changes Since Version 3.1.2 ===========================
+
+commit 97bb1ae9722d30104672c74ab0a703b3351bc957
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 4 21:52:05 2011 +0200
+
+    pkg(k): version set to 3.1.3 for debian changelog specs
+
+commit b77ed42cd6ec12bebcc6af6d38645ccebf5cfa5f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 4 21:51:32 2011 +0200
+
+    pkg(k): vesrsion set to 3.1.3 for centos rpm spec
+
+commit 6d2c5a8f0b7f1e9d5ae0ae61e735e84490da9ae1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 31 14:08:37 2011 +0200
+
+    Makefile.radius: option to use freeradius-client library
+    
+    - using FREERADIUS=1 turns on usage of freeradius-client library instead
+      of radiusclient-ng
+    - kamailio radius modules have support for freeradius-client, library
+      which is included in opensuse instead of radiusclient-ng
+    (cherry picked from commit 942dedaf0b54b8aa2767b5bbf2bc327aa4f4cc06)
+
+commit 973ce6a51888778e278be740b6ae8d9ea52516dd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 30 21:29:00 2011 +0200
+
+    tls: update path for certificates with $cfg_target
+    (cherry picked from commit 5d7aa2cb8c9b1f3b14b071f54dd36eacf42595ff)
+
+commit b39ca6acf53e140888f07ad1642cd5970fe476ba
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 30 21:26:42 2011 +0200
+
+    usrloc(k): update for get_stat_val() type
+    (cherry picked from commit dcc540027d3df990ba146dab6d5f86393b7da99a)
+
+commit e193da6e7ebf8dacbf9cbbef785856e69023acaf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 30 21:25:51 2011 +0200
+
+    snmpstats: update for get_stat_val(type)
+    (cherry picked from commit 03087fb98241680b2e2cc8c1d63dbe0d47d8d891)
+
+commit b9ad35d54a7835f117642307dd44c1bb90108203
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 30 21:25:25 2011 +0200
+
+    dialog(k): update for get_stat_val() type
+    (cherry picked from commit ed323cf7e12fe6e36f942b8a9716d4d4412f41b4)
+
+commit a81157dd0a98d329cc6be4caadc4c46dae17b07a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 30 21:24:54 2011 +0200
+
+    pv: cast the value of statistics for PV int value
+    (cherry picked from commit d28a08034e2fb9b33d9c5c3655a0cb24e77d6d65)
+
+commit e752430554d7e0b222561709de95f9c98ef0f7e8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 30 21:23:10 2011 +0200
+
+    kcore: get_stat_val() returns long
+    
+    - the statistic value is long, the wrapper to get its value returns now
+      long as well
+    - reported by Paul Pankhurst, paul (at) crocodile-rcs.com
+    (cherry picked from commit be40563d0735486939cb70636a4c86208828f7f5)
+
+commit c7c5a3cb39adef86d1c19746a073b2b73b666348
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 30 17:34:14 2011 +0200
+
+    Makefile: use lib64 for libs path on 64b arch
+    
+    - it can be overwritten from command line with 'LIBDIR=xyz'
+    (cherry picked from commit cf837383aa29090f484dde50759604169678f1a2)
+
+commit 26916560205d294ad09d35166c754516bf122e49
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Fri Apr 1 17:14:01 2011 +0300
+
+    modules/carrierroute fixed permission checking in mod_init
+    
+    Check the permission of the cfg file based on the user settings passed to the daemon, it it applies
+    (cherry picked from commit 78f3ede8c89a0456460158157439da90290ee8ad)
+
+commit 87f995b66b1f58f9f85b604ba1214412819c9417
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Fri Apr 1 13:22:05 2011 +0300
+
+    modules_k/textops : fix pointer return in substr transformation
+    
+    Replace a local buffer with a static one, as a pointer to it was returned outside of the function
+    Credits go to Timo TerÃ¤s for spotting the bug
+
+commit 44d1984ebf7a6ef23a2ae6a2a6e7577bb75a0f37
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 1 12:13:39 2011 +0200
+
+    rls(k): update_rlsubs() broken in two funtions
+    
+    - deletion from hash table of expired subscriptions is done
+    separately now in remove_expired_rlsubs()
+    - should allow proper notification in case of un-SUBSCRIBE events,
+    first doing updated of rlsubs, then sending NOTIFY requests and then
+    deleting from hash table
+    - reported by Peter Dunkley
+    - added several safety checks about size of built attributes, used
+      variables, trimmed whitespaces from attributes added in bodies to save
+      some bytes on the network
+    (cherry picked from commit b571356226b35a4f971ef77e4a83cc503de97fd8)
+
+commit a62ce2a6b8d90f7d45e62da92f665d4e1ea141b2
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Mar 31 16:18:45 2011 +0300
+
+    modules/lcr:  improved documentation of defunct_gw() function.
+    (cherry picked from commit df7f3bc62783672eff39748450e8845187efb74a)
+
+commit 2fe4d633e4acb28750d119b659787ff68a3be7c7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 30 12:27:21 2011 +0200
+
+    app_lua: better detection of liblua name for v5.1
+    (cherry picked from commit 9945c914e9d964e8854dcd3cfcf4ce20e9ffbaba)
+
+commit 0773c617da635bac1ba8c6d53550d3e57388359d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 29 12:16:13 2011 +0200
+
+    app_lua: try to locate liblua for centos
+    
+    - centos has liblua instead of liblua5.1 and does not provide lua-config
+      or pkg-config to discover the name of lua library
+    - in this case use shell to figure out whether is liblua5.1 or liblua
+    (cherry picked from commit 20d396d9bd190929366e9e493124606aedb087c1)
+
+commit a37285b1825b7182ea920f240845ae48bb6d0b90
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 29 11:18:08 2011 +0200
+
+    db_mysql: use mysql_config to detect include and libs
+    (cherry picked from commit 54306955b4eac0dfcfc66d82e0eceb8551b52bb2)
+
+commit fc322e0ef766f65a1f734bb26afdfc1e5862c967
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 27 00:09:53 2011 +0100
+
+    presence: check for transport parameter in contact URI for NOTIFY
+    
+    - avoid adding second time the transport parameter if it is present in
+      the local contact field of subscription structure
+    - discovered by Juha Heinanen and Peter Dunkley
+    (cherry picked from commit 2b30581ac359047d3c350c432a391a7e4e4a47cc)
+
+commit c61a9bfab9bab92f9c7f59cba880a8431b5be146
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 26 23:44:01 2011 +0100
+
+    core: added function to search a str inside a str
+    
+    - str_search(text, needle) added to return the position of str needle
+      when it is found inside str text
+    (cherry picked from commit 8c2a2826f5f6954b4a38405fd04f128078e98e0f)
+
+commit e2842178f2aa3dee93170f38deff7e52c161e75b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 27 18:45:28 2011 +0200
+
+    rpm: set version to 3.1.2 for CentOS spec
+
+commit 48fad52963344561e8bb85fa882811dfefc65dfe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 26 14:24:27 2011 +0100
+
+    rls: be sure From and To URIs are parsed
+    
+    - if RLS SUBSCRIBE is handled before any other module needed From or To
+      URIs, then the structures were not filled, resulting in using empty
+      username and domain to locate the RLS document
+    - reported by Peter Dunkley
+    (cherry picked from commit 99077e7f90b1bf44ab336f16591399db57bc6978)
+
+commit c0aa177818dc7e24a8e388b1e4743f9184dde1ec
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 26 14:22:38 2011 +0100
+
+    kcore: check if To header is parsed before parsing To uri
+    
+    - parse_to_uri(msg) calls parse_to_header(msg) in order to be sure that
+      the To header has been located and parsed
+    (cherry picked from commit fa2e51a07ce6175697fd22a41a28cbbb4fa4270b)
+
+commit 1b8ad0f91e3f11add4fbfca3861ec1e7d9a88eb9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 24 23:06:17 2011 +0100
+
+    tm: enforce AVP_TRACK_TO only for ser-style timer AVPs
+    
+    - ser used the list of AVPs from track To for geting timer values
+    - kamailio is using mainly track From for AVPs
+    - for compatibility reasons, if avp name is given in ser style, enforce
+      AVPs track To, otherwise use default track (From) if none is specified
+    - reported by Min Wang
+    (cherry picked from commit 26f757d0c30db79c92011313e72c6c1d97e64cd0)
+
+commit 63e528a36299eca625e204a1834ab8502aa1cf27
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Fri Mar 18 15:06:16 2011 +0200
+
+    modules/auth: fixed checking and calculating of nonce count (nc) value
+
+commit fb04c55464adb63325ca1772f868e6b80c5c95ca
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon Jan 3 12:41:20 2011 +0100
+
+    doc: add small note about SCTP compile time deps to INSTALL file, reported from Juha
+    (cherry picked from commit d4d6d3c0270a5892fae87650adc7600a40e25c0e)
+
+commit 2b23fe5e555e6a0e9a14141b683307626a6bc24b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 12 22:50:28 2010 +0200
+
+    INSTALL: updates to reflect flavour switching
+    (cherry picked from commit 77d7e32549b46bb3a3c7d796e46cf08c0359b730)
+
+commit cd64c41785f52a48dfd568bb7cca2a8f5b6d4399
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Fri Mar 11 14:55:03 2011 +0100
+
+    modules_k/dialog: Refer to external match mode variable instead of
+    using local copy.
+    
+    - Fixes a bug that would render w_dlg_manage()'s
+      backup-override-and-restore logic of the seq_match_mode variable
+      for the call to dlg_onroute() useless as the units dialog.c and
+      dlg_handlers.c maintained individual variables each.
+    (cherry picked from commit b2426b0c2008809f984073e37a270dcab9a7d8c5)
+
+commit 971cfda1012516f446d990e335b5edf6959e065c
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Tue Mar 8 09:42:18 2011 +0200
+
+    * modules_k/nathelper: add_contact_alias() fix
+    
+    - add_contact_alias() is now able to add alias also to contact URI, where
+      hostpart contains a domain name instead of an IP address.
+    (cherry picked from commit 998ae20b26360383386d5f677ec87301e6b3ba23)
+
+commit aae2b913e2008d18d1ad58910398765948f334ca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 8 10:59:37 2011 +0100
+
+    tm: t_cehck_trans() allowed inside all onreply routes
+    
+    - starting with v3.0 there is the option to enable a function only for
+      core onreply route or tm onreply route
+    - t_check_trans() was enabled only for tm
+    - this patch enables it also for core onreply route
+    - reported by Alex Hermann
+
+commit cd88482b84f4411febdda5ad785f29876373ac34
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Mon Mar 7 09:57:33 2011 +0100
+
+    dialog(k): Register dlg_tmcb_dummy in dialog_new_dlg() even when
+    given transaction t is not available.
+    
+    - Let tm's registration function deal with creating a transaction
+      lazily.
+    - Facilitates using dialogs (e.g., profiling) created on demand
+      with dlg_manage().
+    (cherry picked from commit 00d2d6b98739327a6eaaeeafa50023cf0c47b0f3)
+
+commit da7e2d7eafbf3b22ff4ef4eaf8cdd952803ed4eb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 6 11:38:35 2011 +0100
+
+    pv: reset the index for inner fields of xavp PV
+    
+    - reported by Alex Hermann
+    (cherry picked from commit d202b9dc49565aa13c96ed75dc67bc9e389a212a)
+
+commit 703f34ce98cff100c2f1d3315ac795729ba2a0dd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 6 11:19:56 2011 +0100
+
+    core xavp: refurbised xavp_print_list()
+    
+    - print the level of xavp list
+    (cherry picked from commit 395e0dae1ec45452e5d445ea3061f798b7877bba)
+
+commit 487fef38bf962ff778f9380639cf33cf6c55ef80
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 6 00:51:41 2011 +0100
+
+    core: enable dumpable flag after setuid() on Linux
+    
+    - init rlimit struct for proper dbg message when core limits are not
+      changed
+    (cherry picked from commit f4136d7742b0b0bfc09a9157d573c8a7f6118b76)
+
+commit 2b0aabbfa20de81d3c65464c17ca0d90889721f9
+Author: Miklos Tirpak <miklos@iptel.org>
+Date:   Thu Feb 10 14:26:14 2011 +0100
+
+    tm: t_pick_branch() cannot ingnore the pending blined UACs
+    
+    Empty branches shall be considered pending branches
+    before their final response is set.
+    When all the responses were dropped in failure route and a new
+    blind UAC was added, t_pick_branch() did not realize that
+    there is still at least one pending branch, it returned an error
+    instead. Later on, the blind UAC was tried to be canceled causing
+    deadlock.
+    (cherry picked from commit 17fc9913737cf3314d317d9b62cfd3dc05f8376e)
+
+commit eb24c1e9c0c2dc12c6cc4cc1536b9873306e79f3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 4 21:27:14 2011 +0100
+
+    srdb1: warning about different pids for db connection made dbg
+    (cherry picked from commit 9fb37a55e0b97a98b7d2d104a7692f18cb3f7df6)
+
+commit ab12fc81f9861b8192b4f2d50465312782030d28
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sun Feb 27 05:59:16 2011 +0200
+
+    modules/dialplan: more repl_exp fixes
+    - Now also REPLACE_CHAR, REPLACE_URI, and REPLACE_SPEC repl_exp tokens
+      should work.
+    (cherry picked from commit d8ae33c90851cfca9c956574f3ed1f82fc4da651)
+
+commit d0902f41560a3015a19aa8728c9dda37863ec817
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Feb 26 05:12:58 2011 +0200
+
+    modules/dialplan: fixed processing of repl_exp
+    (cherry picked from commit c3a1e2ed57337c6db94b01fc794c67631fd847b9)
+
+commit cdede927ae9fff0f2cb7b2e65173d00dc2eee8c1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 28 20:32:09 2011 +0100
+
+    kamdbctl: create uacreg table
+    
+    - uacreg table was not created by kamdbctl
+    (cherry picked from commit 1c82d0a422482298b0ae5da299fccd98d67fd6f9)
+
+commit 203e6a5c7bea0d2d388beeeda4e1121fa38da5f7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 28 20:50:52 2011 +0100
+
+    uac(k): proper documentation for remote server registration
+    
+    - the feature was shortly mentioned without proper details of how to use
+    - discovered upon discution with Ovidiu Sas
+    (cherry picked from commit 28e604d16ef4dadc5368804a277c695453c9cf9f)
+
+commit a088c048179762f051efb36d45ba68eec17d05aa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 28 17:17:09 2011 +0100
+
+    core: helper function to free parsed header struct with inner free function
+    (cherry picked from commit ad8c9360348d111085a8e01a277e6b718ef803ad)
+
+commit b64268bf768e979b4d7b34b5240b006dcba573ec
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 28 16:18:24 2011 +0100
+
+    core: order the list of headers that allocate pkg
+    
+    - easier to spot the missing ones
+    (cherry picked from commit 2316acaa9adc27355e777d281bee8bfaf393cd6d)
+
+commit e617e8c67b45e55fdc22a462a5742a835a6bc81a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 28 14:27:25 2011 +0100
+
+    core: update the list of header that alloc pkg for parsed structure
+    (cherry picked from commit 33ec2a39200c0cfaf90524970fa5249c17a2b602)
+
+commit 217834b49ef8734d23bc914b1caa6c5357aeff42
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 28 11:17:10 2011 +0100
+
+    core: free SE header parsed structure
+    
+    - use the generic free framework for headers
+    (cherry picked from commit 469650e0a904331b07f8713baab6d7f19027ee48)
+
+commit 7a3cf7dcf2b1bf7a8fa2f3c5a50af96fbb7712ad
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 28 11:15:53 2011 +0100
+
+    kcore: free SE parsed body through generic hdr free framework
+    
+    - the parser for session-expires header uses now the generic header free
+      framework
+    (cherry picked from commit 1f092363559ebdcdbaf02cb5d8f093b6bea60b87)
+
+commit 7310ba9d6c808dc932fe1e925b9e36e57f6b473e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Feb 27 16:43:06 2011 +0100
+
+    kcore: supported header exports the free function in parsed structure
+    
+    - parsing the supported header creates a structure allocated in PKG, now
+      it exports the function to free it in order to be used when cleaning
+      the SIP message structure
+    - this fixes a memory leak when parsing the header
+    - reported and troubleshooted by Bayan Towfiq
+    (cherry picked from commit 9a668406925abf19cbae62c98a12b86f4c045b34)
+
+commit 0299c9e29cd51b9c0fba8cdad0e1354e95f4c17c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Feb 27 16:40:37 2011 +0100
+
+    core: framework for generic free of parsed headers
+    
+    - the structure of parsed headers can define as first field a function
+      to free the content
+    - this allow to implement the parser for headers our of the core
+    (cherry picked from commit 81d05af470d979b3d3f104bbdaa287b3fa58b57c)
+
+commit e3556ac9a50589700305e56e638b25c53d5b2ef1
+Author: Elena-Ramona Modroiu <ramona@asipto.com>
+Date:   Fri Feb 25 12:24:46 2011 +0100
+
+    htable: fix typo in readme example
+    
+    - $null missing the $
+    - reported by Ricardo Martinez
+
+commit c0f7a010fd65910b28f5b9fe4ca2218e376d68d4
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Thu Feb 24 18:59:23 2011 +0100
+
+    pipelimit: a bunch of spelling fixes
+    (cherry picked from commit 18fcaadf0741aaa98354319360b5e54420c273ec)
+
+commit 4ace86df07c55eb66f902fda3f37d198346bfb4a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 21 23:15:29 2011 +0100
+
+    core: proper return code for pvar assignment
+    
+    - in some case the value of the right expression was returned instead of
+      proper >=0 for success cases
+    - reported by Juha Heinannen
+    (cherry picked from commit 1f698797ec4def503630563c06f5aef4a7b40871)
+
+commit e914f97b4729bfe15215ba4a2ac53640644343c2
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Tue Feb 15 18:44:56 2011 +0200
+
+    module/pdb: Cleared event for poll() that was left uncleared
+
+commit 9ef0a1e347abd31b352d3cb85326605fd72e6789
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Thu Nov 4 17:14:56 2010 +0200
+
+    core:forward.c Fixed small error caused by unlikely usage.
+    (cherry picked from commit 6cfee82666b78400d5ff15c49aac1441cfbbaaf6)
+
+commit 3ec1e92fcb3ce8c673e6762c0a35a9bc8ade3a22
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Thu Nov 4 16:11:41 2010 +0200
+
+    core/forward.c Fixed mhomed behavior.
+    
+    As connect() dones't re-bound a UDP sock if the socket is already
+    bound to an interface, first unbind the socket by connecting to AF_UNSPEC
+    (cherry picked from commit ef0dd4e3f0837753ac18d58606078d8595f24dc6)
+
+
 ===================== 2011-02-08 Version 3.1.2 Released =====================
 
 ===================== Changes Since Version 3.1.1 ===========================
@@ -638,6 +1120,8 @@ Date:   Fri Dec 3 16:38:01 2010 +0100
       * Update version to 3.1.1
       * Install general ChangeLog instead of Debian's one.
 
+
+===================== 2010-12-02 Version 3.1.1 Released =====================
 
 ===================== Changes Since Version 3.1.0 ===========================
 
