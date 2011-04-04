@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2006 Voice System SRL
+ * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -75,6 +76,10 @@
 #define DLG_FLAG_CALLERBYE     (1<<4) /*!< bye from caller */
 #define DLG_FLAG_CALLEEBYE     (1<<5) /*!< bye from callee */
 #define DLG_FLAG_LOCALDLG      (1<<6) /*!< local dialog, unused */
+#define DLG_FLAG_CHANGED_VARS  (1<<7) /*!< dialog-variables changed */
+
+/* dialog-variable flags (in addition to dialog-flags) */
+#define DLG_FLAG_DEL           (1<<8) /*!< delete this var */
 
 #define DLG_CALLER_LEG         0 /*!< attribute that belongs to a caller leg */
 #define DLG_CALLEE_LEG         1 /*!< attribute that belongs to a callee leg */
@@ -112,6 +117,7 @@ struct dlg_cell
 	struct socket_info * bind_addr[2];	/*! binded address of caller and callee */
 	struct dlg_head_cbl  cbs;		/*!< dialog callbacks */
 	struct dlg_profile_link *profile_links; /*!< dialog profiles */
+	struct dlg_var       *vars;		/*!< dialog variables */
 };
 
 
@@ -157,7 +163,6 @@ extern struct dlg_cell  *current_dlg_pointer;
  */
 #define dlg_unlock(_table, _entry) \
 		lock_set_release( (_table)->locks, (_entry)->lock_idx);
-
 
 /*!
  * \brief Unlink a dialog from the list without locking

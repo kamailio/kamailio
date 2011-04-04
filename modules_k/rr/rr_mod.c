@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -38,6 +39,7 @@
 #include "../../pvar.h"
 #include "../../mem/mem.h"
 #include "../../mod_fix.h"
+#include "../../parser/parse_rr.h"
 #include "loose.h"
 #include "record.h"
 #include "rr_cb.h"
@@ -71,7 +73,8 @@ static int w_record_route_preset(struct sip_msg *,char *, char *);
 static int w_add_rr_param(struct sip_msg *,char *, char *);
 static int w_check_route_param(struct sip_msg *,char *, char *);
 static int w_is_direction(struct sip_msg *,char *, char *);
-
+/* PV functions */
+static int pv_get_route_uri_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 /*!
  * \brief Exported functions
  */
@@ -112,6 +115,16 @@ static param_export_t params[] ={
 	{0, 0, 0 }
 };
 
+/*!
+ * \brief Exported Pseudo variables
+ */
+static pv_export_t mod_pvs[] = {
+    {{"route_uri", (sizeof("route_uri")-1)}, /* URI of the first Route-Header */
+     PVT_OTHER, pv_get_route_uri_f, 0, 0, 0, 0, 0},
+    {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
+
+
 
 struct module_exports exports = {
 	"rr",
@@ -120,7 +133,7 @@ struct module_exports exports = {
 	params,			/*!< Exported parameters */
 	0,				/*!< exported statistics */
 	0,				/*!< exported MI functions */
-	0,				/*!< exported pseudo-variables */
+	mod_pvs,			/*!< exported pseudo-variables */
 	0,				/*!< extra processes */
 	mod_init,			/*!< initialize module */
 	0,				/*!< response function*/
@@ -292,3 +305,47 @@ static int w_is_direction(struct sip_msg *msg,char *dir, char *foo)
 {
 	return ((is_direction(msg,(int)(long)dir)==0)?1:-1);
 }
+
+
+/*
+ * Return the URI of the topmost Route-Header.
+ */
+static int
+pv_get_route_uri_f(struct sip_msg *msg, pv_param_t *param,
+		  pv_value_t *res)
+{
+	struct hdr_field* hdr;
+	rr_t* rt;
+	str uri;
+
+	if (!msg) {
+		LM_ERR("No message?!?\n");
+		return -1;
+	}
+
+	/* Parse the message until the First-Route-Header: */
+	if (parse_headers(msg, HDR_ROUTE_F, 0) == -1) {
+		LM_ERR("while parsing message\n");
+		return -1;
+    	}
+	
+	if (!msg->route) {
+		LM_INFO("No route header present.\n");
+		return -1;
+	}
+	hdr = msg->route;
+
+	/* Parse the contents of the header: */
+	if (parse_rr(hdr) == -1) {
+		LM_ERR("Error while parsing Route header\n");
+                return -1;
+	}
+
+
+	/* Retrieve the Route-Header */	
+	rt = (rr_t*)hdr->parsed;
+	uri = rt->nameaddr.uri;
+
+	return pv_get_strval(msg, param, res, &uri);
+}
+

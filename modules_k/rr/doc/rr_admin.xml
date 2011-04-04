@@ -471,9 +471,24 @@ if (is_direction("downstream")) {
 </programlisting>
 		</example>
 	</section>
+	</section>
+	<section>
+		<title>Exported Pseudo Variables</title>
+		<section>
+			<title><function moreinfo="none">$route_uri</function></title>
+			<para>
+			Returns the URI of the top route-header.
+			</para>
 
-
-
+		<example>
+		<title>$route_uri</title>
+		<programlisting format="linespecific">
+...
+    xdbg("Route-URI is: $route_uri\n");
+...
+		</programlisting>
+		</example>
+	        </section>
 
 	</section>
 </chapter>
