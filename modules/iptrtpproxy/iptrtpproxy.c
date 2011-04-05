@@ -464,7 +464,7 @@ struct sdp_session {
 	str oline_addr_s;
 	unsigned int media_count;
 	struct {
-		int active;  /* íf SDP has been parsed correctly, has a IP (even 0.0.0.0), port!=0 and has supported params */
+		int active;  /* if SDP has been parsed correctly, has a IP (even 0.0.0.0), port!=0 and has supported params */
 		unsigned short port;
 		unsigned int ip;
 		str ip_s;
@@ -1265,7 +1265,7 @@ static int rtpproxy_alloc(struct sip_msg* msg, char* _flags, char* _dummy) {
 	}
 	if (check_parse_sdp_content(msg, &global_sdp_sess) < 0) return -1;
 
-ERR("RTPPROXY_DEBUG: flags: %d\n", flags);
+ERR("RTPPROXY_DEBUG: sdp.media_count: %d, flags: %d\n", global_sdp_sess.media_count, flags);
 	if (global_params.protected_sess.switchboard) {  /* any protected ? */
 		/* get session source address from kernel module and compare with SDP content */
 		for (i = 0; i < global_params.protected_sess.session_count; i++) {
@@ -1292,10 +1292,6 @@ ERR("RTPPROXY_DEBUG: xt_RTPPROXY_update_sessions(sess#:%d, sdp#:%d, XT_RTPPROXY_
 			int j;
 			for (j = 0; j < i; j++) {
 				/* if two media streams have equal source address than we will allocate only one ipt session */
-				if (global_sdp_sess.media[j].active && global_sdp_sess.media[i].ip == global_sdp_sess.media[j].ip && global_sdp_sess.media[i].port == global_sdp_sess.media[j].port) {
-					ipt_sess.sdp_media[i] = ipt_sess.sdp_media[j];
-					goto cont;
-				}
 				if (global_sdp_sess.media[j].active) {
 					if (global_sdp_sess.media[i].ip == global_sdp_sess.media[j].ip && global_sdp_sess.media[i].port == global_sdp_sess.media[j].port) {
 						if (global_sdp_sess.media[i].ip != 0) {
@@ -1388,6 +1384,8 @@ ERR("DEBUG_RTPPROXY: module: do not allocate session for on-hold stream unless r
 		;
 	}
 	ipt_sess.sdp_media_count = global_sdp_sess.media_count;
+
+ERR("RTPPROXY_DEBUG: session_count: %d, reuse_existing_count: %d\n", global_sdp_sess.media_count, reuse_existing_count);
 
 	if (ipt_sess.session_count > reuse_existing_count) {
 		stamp = time(NULL);

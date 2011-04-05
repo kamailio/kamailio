@@ -35,7 +35,7 @@ loadmodule "iptrtpproxy"
 modparam("iptrtpproxy", "config", "/etc/iptrtpproxy.cfg");
 
 #DEBCONF-RTTPPROXY-START
-modparam("iptrtpproxy", "switchboard", "name=*;sip-addr=213.192.59.91");   ## TODO change back to .75
+modparam("iptrtpproxy", "switchboard", "name=*;sip-addr=213.192.59.75");   ## TODO change back to .75
 #modparam("iptrtpproxy", "switchboard", "name=gate_a;sip-addr=1.2.3.4;aggregation=AA")
 #modparam("iptrtpproxy", "switchboard", "name=gate_b;aggregation=A")
 modparam("iptrtpproxy", "codec_set", "name=any;media_type=*;rights=0;codecs=*;max_streams=9999");
@@ -86,6 +86,7 @@ route[RTPPROXY_PROCESS_REQUEST] {
 		drop;
 	}
 	xlog("L_EDEBUG", "RTPPROXY_PROCESS_REQUEST:\n%mb");
+	xlog("L_EDEBUG", "RTPPROXY_PROCESS_REQUEST: SDP\n%@msg.content.sdp\n");
 	if (isflagset(FLAG_INIT_DLG)) {
 		# if init request then test RTP proxy is to by applied
 		if (@cfg_get.rtp_proxy.enabled == "0") {
@@ -267,6 +268,7 @@ route[RTPPROXY_PROCESS_REQUEST] {
 route[RTPPROXY_PROCESS_REPLY] {
 	if (!defined $dialog_id || strempty($rtp_method_flag) || strempty(@msg.body)) break;
 	xlog("L_EDEBUG", "RTPPROXY_PROCESS_REPLY:\n%mb\n");
+	xlog("L_EDEBUG", "RTPPROXY_PROCESS_REPLY: SDP\n%@msg.content.sdp\n");
 
 	if ($rtp_method_flag == "INVITE" && (status=~"18[0-9]" || status=~"2[0-9][0-9]")) {
 		# If RTP proxy was activated and this is a 18x or 2xx reply with a
@@ -373,6 +375,7 @@ route[RTPPROXY_PROCESS_FAILURE] {
 	if (!defined $dialog_id || strempty($rtp_method_flag)) break;
 
 	xlog("L_EDEBUG", "RTPPROXY_PROCESS_FAILURE:\n%mb\n");
+	xlog("L_EDEBUG", "RTPPROXY_PROCESS_FAILURE: SDP\n%@msg.content.sdp\n");
 
 	if (isflagset(FLAG_INIT_DLG) && $rtp_method_flag == "INVITE") {
 		route("RTPPROXY_LOAD_ATTRS");
