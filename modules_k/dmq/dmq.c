@@ -34,15 +34,10 @@
 #include <fcntl.h>
 #include <time.h>
 
-#include "../../lib/srdb1/db.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../ut.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_uri.h" 
-#include "../../parser/parse_content.h"
-#include "../../parser/parse_from.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../usr_avp.h"
@@ -51,9 +46,9 @@
 #include "../../pt.h"
 #include "../../lib/kmi/mi.h"
 #include "../../lib/kcore/hash_func.h"
-#include "../pua/hash.h"
 #include "dmq.h"
 #include "bind_dmq.h"
+#include "dmq_worker.h"
 #include "../../mod_fix.h"
 
 static int mi_child_init(void);
@@ -64,20 +59,21 @@ static void destroy(void);
 MODULE_VERSION
 
 /* database connection */
-db1_con_t *dmq_db = NULL;
-db_func_t dmq_dbf;
 int library_mode = 0;
 str server_address = {0, 0};
 int startup_time = 0;
 int pid = 0;
 
 /* module parameters */
-str db_url;
+int num_workers = DEFAULT_NUM_WORKERS;
 
 /* TM bind */
 struct tm_binds tmb;
 /* SL API structure */
 sl_api_t slb;
+
+/** module variables */
+dmq_worker_t* workers;
 
 /** module functions */
 static int mod_init(void);
@@ -92,7 +88,7 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"db_url", STR_PARAM, &db_url.s},
+	{"num_workers", INT_PARAM, &num_workers},
 	{0, 0, 0}
 };
 
@@ -121,15 +117,11 @@ struct module_exports exports = {
  * init module function
  */
 static int mod_init(void) {
+	int i = 0;
+	
 	if(register_mi_mod(exports.name, mi_cmds)!=0) {
 		LM_ERR("failed to register MI commands\n");
 		return -1;
-	}
-
-	db_url.len = db_url.s ? strlen(db_url.s) : 0;
-	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,db_url.s);
-	if(db_url.s== NULL) {
-		library_mode= 1;
 	}
 
 	if(library_mode== 1) {
@@ -148,27 +140,19 @@ static int mod_init(void) {
 		return -1;
 	}
 	
-	if(db_url.s== NULL) {
-		LM_ERR("database url not set!\n");
-		return -1;
-	}
-
-	/* binding to database module  */
-	if (db_bind_mod(&db_url, &dmq_dbf)) {
-		LM_ERR("database module not found\n");
-		return -1;
-	}
-	
-
-	if (!DB_CAPABILITY(dmq_dbf, DB_CAP_ALL)) {
-		LM_ERR("database module does not implement all functions needed by dmq module\n");
-		return -1;
-	}
-
-	dmq_db = dmq_dbf.init(&db_url);
-	if (!dmq_db) {
-		LM_ERR("connection to database failed\n");
-		return -1;
+	/* fork worker processes */
+	workers = shm_malloc(num_workers * sizeof(*workers));
+	for(i = 0; i < num_workers; i++) {
+		int newpid = fork_process(PROC_NOCHLDINIT, "DMQ WORKER", 0);
+		if(newpid < 0) {
+			LM_ERR("failed to form process\n");
+			return -1;
+		} else if(newpid == 0) {
+			/* child */
+			// worker loop
+		} else {
+			workers[i].pid = newpid;
+		}
 	}
 	
 	startup_time = (int) time(NULL);
@@ -189,40 +173,10 @@ static int child_init(int rank) {
 	if(library_mode)
 		return 0;
 
-	if (dmq_dbf.init==0) {
-		LM_CRIT("child_init: database not bound\n");
-		return -1;
-	}
-	if (dmq_db)
-		return 0;
-	
-	dmq_db = dmq_dbf.init(&db_url);
-	if (!dmq_db) {
-		LM_ERR("child %d: unsuccessful connecting to database\n", rank);
-		return -1;
-	}
-	
-	LM_DBG("child %d: database connection opened successfully\n", rank);
 	return 0;
 }
 
 static int mi_child_init(void) {
-	if(library_mode)
-		return 0;
-
-	if (dmq_dbf.init==0) {
-		LM_CRIT("database not bound\n");
-		return -1;
-	}
-	if (dmq_db)
-		return 0;
-	dmq_db = dmq_dbf.init(&db_url);
-	if (!dmq_db) {
-		LM_ERR("connecting database\n");
-		return -1;
-	}
-	
-	LM_DBG("database connection opened successfully\n");
 	return 0;
 }
 
