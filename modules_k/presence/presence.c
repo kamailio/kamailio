@@ -69,6 +69,7 @@
 #include "../../lib/kmi/mi.h"
 #include "../../lib/kcore/hash_func.h"
 #include "../pua/hash.h"
+#include "../dmq/dmq.h"
 #include "presence.h"
 #include "publish.h"
 #include "subscribe.h"
@@ -105,6 +106,9 @@ char* to_tag_pref = "10";
 struct tm_binds tmb;
 /* SL API structure */
 sl_api_t slb;
+/* dmq API structure */
+dmq_api_t dmq;
+register_dmq_peer_t register_dmq;
 
 /** module functions */
 
@@ -206,6 +210,22 @@ struct module_exports exports= {
 	child_init                  	/* per-child init function */
 };
 
+int dmq_callback(struct sip_msg* msg) {
+	LM_ERR("it worked - dmq module triggered the presence callback [%ld %d]\n", time(0), my_pid());
+	sleep(4);
+	return 0;
+}
+
+static void add_dmq_peer() {
+	dmq_peer_t presence_peer;
+	presence_peer.peer_id.s = "presence";
+	presence_peer.peer_id.len = 8;
+	presence_peer.description.s = "presence";
+	presence_peer.description.len = 8;
+	presence_peer.callback = dmq_callback;
+	register_dmq(&presence_peer);
+}
+
 /**
  * init module function
  */
@@ -266,6 +286,15 @@ static int mod_init(void)
 	{
 		LM_ERR("Can't load tm functions. Module TM not loaded?\n");
 		return -1;
+	}
+	
+	if(dmq_load_api(&dmq) < 0) {
+		LM_ERR("cannot load dmq api\n");
+		return -1;
+	} else {
+		register_dmq = dmq.register_dmq_peer;
+		add_dmq_peer();
+		LM_DBG("presence-dmq loaded\n");
 	}
 	
 	if(db_url.s== NULL)

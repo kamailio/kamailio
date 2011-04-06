@@ -47,11 +47,11 @@
 #include "../../lib/kmi/mi.h"
 #include "../../lib/kcore/hash_func.h"
 #include "dmq.h"
+#include "peer.h"
 #include "bind_dmq.h"
-#include "dmq_worker.h"
+#include "worker.h"
 #include "../../mod_fix.h"
 
-static int mi_child_init(void);
 static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
@@ -74,15 +74,18 @@ sl_api_t slb;
 
 /** module variables */
 dmq_worker_t* workers;
+dmq_peer_list_t* peer_list;
 
 /** module functions */
 static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
-static int fixup_dmq(void** param, int param_no);
+static int handle_dmq_fixup(void** param, int param_no);
 
 static cmd_export_t cmds[] = {
-	{"handle_dmq_message",  (cmd_function)handle_dmq_message, 0, fixup_dmq, 0, 
+	{"handle_dmq_message",  (cmd_function)handle_dmq_message, 0, handle_dmq_fixup, 0, 
+		REQUEST_ROUTE},
+	{"bind_dmq",        (cmd_function)bind_dmq, 0, 0, 0,
 		REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -93,7 +96,6 @@ static param_export_t params[] = {
 };
 
 static mi_export_t mi_cmds[] = {
-	{"cleanup", 0, 0, 0, mi_child_init},
 	{0, 0, 0, 0, 0}
 };
 
@@ -117,7 +119,6 @@ struct module_exports exports = {
  * init module function
  */
 static int mod_init(void) {
-	int i = 0;
 	
 	if(register_mi_mod(exports.name, mi_cmds)!=0) {
 		LM_ERR("failed to register MI commands\n");
@@ -136,23 +137,21 @@ static int mod_init(void) {
 
 	/* load all TM stuff */
 	if(load_tm_api(&tmb)==-1) {
-		LM_ERR("Can't load tm functions. Module TM not loaded?\n");
+		LM_ERR("can't load tm functions. TM module probably not loaded\n");
 		return -1;
 	}
 	
-	/* fork worker processes */
+	/* load peer list - the list containing the module callbacks for dmq */
+	peer_list = init_peer_list();
+	
+	/* register worker processes */
+	register_procs(num_workers);
+	
+	/* allocate workers array */
 	workers = shm_malloc(num_workers * sizeof(*workers));
-	for(i = 0; i < num_workers; i++) {
-		int newpid = fork_process(PROC_NOCHLDINIT, "DMQ WORKER", 0);
-		if(newpid < 0) {
-			LM_ERR("failed to form process\n");
-			return -1;
-		} else if(newpid == 0) {
-			/* child */
-			// worker loop
-		} else {
-			workers[i].pid = newpid;
-		}
+	if(workers == NULL) {
+		LM_ERR("error in shm_malloc\n");
+		return -1;
 	}
 	
 	startup_time = (int) time(NULL);
@@ -163,26 +162,40 @@ static int mod_init(void) {
  * Initialize children
  */
 static int child_init(int rank) {
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN) {
+  	int i, newpid;
+	if (rank == PROC_MAIN) {
+		/* fork worker processes */
+		for(i = 0; i < num_workers; i++) {
+			init_worker(&workers[i]);
+			LM_DBG("starting worker process %d\n", i);
+			newpid = fork_process(PROC_NOCHLDINIT, "DMQ WORKER", 0);
+			if(newpid < 0) {
+				LM_ERR("failed to form process\n");
+				return -1;
+			} else if(newpid == 0) {
+				// child - this will loop forever
+				worker_loop(i);
+			} else {
+				workers[i].pid = newpid;
+			}
+		}
+		return 0;
+	}
+	if(rank == PROC_INIT || rank == PROC_TCP_MAIN) {
 		/* do nothing for the main process */
 		return 0;
 	}
 
 	pid = my_pid();
-	
-	if(library_mode)
-		return 0;
-
 	return 0;
 }
-
-static int mi_child_init(void) {
-	return 0;
-}
-
 
 /*
  * destroy function
  */
 static void destroy(void) {
+}
+
+static int handle_dmq_fixup(void** param, int param_no) {
+ 	return 0;
 }
