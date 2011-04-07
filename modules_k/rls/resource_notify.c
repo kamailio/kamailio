@@ -240,16 +240,6 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 		LM_ERR("unrecognized event package\n");
 		goto error;
 	}
-	if(pua_get_record_id(&dialog, &res_id)< 0) // verify if within a stored dialog
-	{
-		LM_ERR("occured when trying to get record id\n");
-		goto error;
-	}
-	if(res_id== 0)
-	{
-		LM_ERR("record not found\n");
-		goto error;
-	}
 
 	/* extract the subscription state */
 	hdr = msg->headers;
@@ -276,6 +266,24 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 		LM_ERR("while parsing 'Subscription-State' header\n");
 		goto error;
 	}
+	if(pua_get_record_id(&dialog, &res_id)< 0) // verify if within a stored dialog
+	{
+		LM_ERR("occured when trying to get record id\n");
+		goto error;
+	}
+	if(res_id==0)
+	{
+		LM_DBG("presence dialog record not found\n");
+		/* if it is a NOTIFY for a terminated SUBSCRIBE dialog in RLS, then
+		 * the module might not have the dialog structure anymore
+		 * - just send 200ok, it is harmless
+		 */
+		if(auth_flag==TERMINATED_STATE)
+			goto done;
+		LM_ERR("no presence dialog record for non-TERMINATED state\n");
+		goto error;
+	}
+
 	if(msg->content_type== NULL || msg->content_type->body.s== NULL)
 	{
 		LM_DBG("cannot find content type header header\n");
@@ -408,9 +416,11 @@ done:
 		goto error;
 	}	
 
-	pkg_free(res_id->s);
-	pkg_free(res_id);
-
+	if(res_id!=NULL)
+	{
+		pkg_free(res_id->s);
+		pkg_free(res_id);
+	}
 	return 1;
 
 error:
