@@ -472,11 +472,12 @@ str* constr_multipart_body(db1_res_t* result, char** cid_array,
 	int i, length= 0;
 	db_row_t *row;	
 	db_val_t *row_vals;
-	char* content_id= NULL;
+	str content_id = {0, 0};
 	str body= {0, 0};
-	str ctype= {0, 0};
-	int antet_len;
+	str content_type= {0, 0};
+	int chunk_len;
 	str* multi_body= NULL;
+	str bstr = {0, 0};
 	
 	LM_DBG("start\n");
 	buf= pkg_malloc(size* sizeof(char));
@@ -485,7 +486,8 @@ str* constr_multipart_body(db1_res_t* result, char** cid_array,
 		ERR_MEM(PKG_MEM_STR);
 	}
 
-	antet_len= COMPUTE_ANTET_LEN (boundary_string);
+	bstr.s = boundary_string;
+	bstr.len = strlen(bstr.s);
 
 	for(i= 0; i< result->n; i++)
 	{
@@ -498,29 +500,37 @@ str* constr_multipart_body(db1_res_t* result, char** cid_array,
 		body.s= (char*)row_vals[pres_state_col].val.string_val;
 		body.len= strlen(body.s);
 		trim(&body);
-		ctype.s = (char*)row_vals[content_type_col].val.string_val;
-		ctype.len = strlen(ctype.s);
-
-		if(length+ antet_len+ body.len+ 4 > size)
-		{
-			REALLOC_BUF
-		}
-
-		length+= sprintf(buf+ length, "--%s\r\n\r\n", boundary_string);
-		length+= sprintf(buf+ length, "Content-Transfer-Encoding: binary\r\n");
-		content_id= cid_array[i];
-		if(content_id== NULL)
+		content_type.s = (char*)row_vals[content_type_col].val.string_val;
+		content_type.len = strlen(content_type.s);
+		content_id.s= cid_array[i];
+		if(content_id.s== NULL)
 		{
 			LM_ERR("No cid found in array for uri= %s\n",
 					row_vals[resource_uri_col].val.string_val);
 			goto error;
 		}
+		content_id.len = strlen(content_id.s);
 
-		length+= sprintf(buf+ length, "Content-ID: <%s>\r\n",content_id);
+
+		chunk_len = 4 + bstr.len
+					+ 35
+					+ 16 + content_id.len
+					+ 18 + content_type.len
+					+ 4 + body.len + 8;
+		if(length + chunk_len >= size)
+		{
+			REALLOC_BUF
+		}
+
+		length+= sprintf(buf+ length, "--%.*s\r\n",
+				bstr.len, bstr.s);
+		length+= sprintf(buf+ length, "Content-Transfer-Encoding: binary\r\n");
+		length+= sprintf(buf+ length, "Content-ID: <%.*s>\r\n",
+				content_id.len, content_id.s);
 		length+= sprintf(buf+ length, "Content-Type: %.*s\r\n\r\n",
-				ctype.len, ctype.s);
-		
-		length+= sprintf(buf+length,"%.*s\r\n\r\n", body.len, body.s);
+				content_type.len, content_type.s);
+		length+= sprintf(buf+length,"%.*s\r\n\r\n",
+				body.len, body.s);
 	}
 
 	if(length+ strlen( boundary_string)+ 7> size )

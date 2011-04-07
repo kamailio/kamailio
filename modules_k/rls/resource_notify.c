@@ -482,8 +482,11 @@ void timer_send_notify(unsigned int ticks,void *param)
 	unsigned int hash_code= 0;
 	int len;
 	int size= BUF_REALLOC_SIZE, buf_len= 0;	
-	char* buf= NULL, *auth_state= NULL, *boundary_string= NULL, *cid= NULL;
-	int contor= 0, auth_state_flag, antet_len;
+	char* buf= NULL, *auth_state= NULL, *boundary_string= NULL;
+	str cid = {0,0};
+	str content_type = {0,0};
+	int contor= 0, auth_state_flag;
+	int chunk_len;
 	str bstr= {0, 0};
 	str rlmi_cont= {0, 0}, multi_cont;
 	subs_t* s, *dialog= NULL;
@@ -557,7 +560,6 @@ void timer_send_notify(unsigned int ticks,void *param)
 		ERR_MEM(PKG_MEM_STR);
 	}
 
-	antet_len= COMPUTE_ANTET_LEN(bstr.s);
 	LM_DBG("found %d records with updated state\n", result->n);
 	for(i= 0; i< result->n; i++)
 	{
@@ -686,7 +688,8 @@ void timer_send_notify(unsigned int ticks,void *param)
 		while(1)
 		{
 			contor++;
-			cid= NULL;
+			cid.s= NULL;
+			cid.len= 0;
 			instance_node= xmlNewChild(resource_node, NULL, 
 					BAD_CAST "instance", NULL);
 			if(instance_node== NULL)
@@ -707,8 +710,8 @@ void timer_send_notify(unsigned int ticks,void *param)
 		
 			if(auth_state_flag & ACTIVE_STATE)
 			{
-				cid= generate_cid(resource_uri, strlen(resource_uri));
-				xmlNewProp(instance_node, BAD_CAST "cid", BAD_CAST cid);
+				cid.s= generate_cid(resource_uri, strlen(resource_uri));
+				xmlNewProp(instance_node, BAD_CAST "cid", BAD_CAST cid.s);
 			}
 			else
 			if(auth_state_flag & TERMINATED_STATE)
@@ -718,18 +721,28 @@ void timer_send_notify(unsigned int ticks,void *param)
 			}
 		
 			/* add in the multipart buffer */
-			if(cid)
+			if(cid.s)
 			{
-				if(buf_len+ antet_len+ pres_state.len+ 4 > size)
+				cid.len = strlen(cid.s);
+				content_type.s = (char*)row_vals[content_type_col].val.string_val;
+				content_type.len = strlen(content_type.s);
+				chunk_len = 4 + bstr.len
+							+ 35
+							+ 16 + cid.len
+							+ 18 + content_type.len
+							+ 4 + pres_state.len + 8;
+				if(buf_len + chunk_len >= size)
 				{
 					REALLOC_BUF
 				}
-				buf_len+= sprintf(buf+ buf_len, "--%s\r\n", bstr.s);
+				buf_len+= sprintf(buf+ buf_len, "--%.*s\r\n", bstr.len,
+						bstr.s);
 				buf_len+= sprintf(buf+ buf_len,
 						"Content-Transfer-Encoding: binary\r\n");
-				buf_len+= sprintf(buf+ buf_len, "Content-ID: <%s>\r\n", cid);
-				buf_len+= sprintf(buf+ buf_len, "Content-Type: %s\r\n\r\n",  
-						row_vals[content_type_col].val.string_val);
+				buf_len+= sprintf(buf+ buf_len, "Content-ID: <%.*s>\r\n",
+						cid.len, cid.s);
+				buf_len+= sprintf(buf+ buf_len, "Content-Type: %.*s\r\n\r\n",
+						content_type.len, content_type.s);
 				buf_len+= sprintf(buf+buf_len,"%.*s\r\n\r\n", pres_state.len,
 						pres_state.s);
 			}
