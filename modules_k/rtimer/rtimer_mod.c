@@ -118,7 +118,7 @@ static int mod_init(void)
 				return -1;
 			}
 		} else {
-			register_procs(1);
+			register_dummy_timers(1);
 		}
 		it = it->next;
 	}
