@@ -35,6 +35,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../locking.h"
 #include "../../ut.h"
+#include "../../cfg/cfg_struct.h"
 #include "xr_writer.h"
 #include "xr_parser.h"
 #include "mi_xmlrpc.h"
@@ -176,6 +177,9 @@ xmlrpc_value*  default_method	(xmlrpc_env* 	env,
 	int is_shm = 0;
 
 	LM_DBG("starting up.....\n");
+
+	/* update the local config framework structures */
+	cfg_update();
 
 	f = lookup_mi_cmd((char*)methodName, strlen(methodName));
 	
