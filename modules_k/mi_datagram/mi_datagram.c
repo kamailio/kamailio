@@ -56,6 +56,7 @@
 #include "../../lib/kmi/mi.h"
 #include "../../ip_addr.h"
 #include "../../pt.h"
+#include "../../cfg/cfg_struct.h"
 #include "mi_datagram.h"
 #include "datagram_fnc.h"
 #include "mi_datagram_parser.h"
@@ -253,6 +254,8 @@ static int mi_mod_init(void)
 done:
 	/* add space for extra processes */
 	register_procs(mi_procs[0].no);
+	/* add child to update local config framework structures */
+	cfg_register_child(mi_procs[0].no);
 
 	return 0;
 }
@@ -282,6 +285,11 @@ static int mi_child_init(int rank)
 				return -1; /* error */
 			if(pid==0) {
 				/* child */
+
+				/* initialize the config framework */
+				if (cfg_child_init())
+					return -1;
+
 				datagram_process(i);
 				return 0;
 			}
