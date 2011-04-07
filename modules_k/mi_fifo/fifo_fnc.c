@@ -47,6 +47,7 @@
 #include "../../lib/kmi/mi.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
+#include "../../cfg/cfg_struct.h"
 #include "mi_fifo.h"
 #include "fifo_fnc.h"
 #include "mi_parser.h"
@@ -409,6 +410,9 @@ void mi_fifo_server(FILE *fifo_stream)
 	FILE *reply_stream;
 
 	while(1) {
+		/* update the local config framework structures */
+		cfg_update();
+
 		reply_stream = NULL;
 
 		/* commands must look this way ':<command>:[filename]' */
