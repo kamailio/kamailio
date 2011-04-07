@@ -46,7 +46,6 @@
 		if(buf== NULL) \
 		{	ERR_MEM("constr_multipart_body");}
 
-#define COMPUTE_ANTET_LEN(boundary_string) (strlen( boundary_string)+ MAX_HEADERS_LENGTH + 6)
 int send_full_notify(subs_t* subs, xmlNodePtr rl_node, 
 		int version, str* rl_uri, unsigned int hash_code);
 
