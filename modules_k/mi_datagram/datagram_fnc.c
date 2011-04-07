@@ -48,6 +48,7 @@
 #include <signal.h>
 
 #include "../../resolve.h"
+#include "../../cfg/cfg_struct.h"
 #include "mi_datagram.h"
 #include "datagram_fnc.h"
 #include "mi_datagram_parser.h"
@@ -435,6 +436,9 @@ void mi_datagram_server(int rx_sock, int tx_sock)
 	f = 0;
 
 	while(1) { /*read the datagram*/
+		/* update the local config framework structures */
+		cfg_update();
+
 		memset(mi_buf, 0, DATAGRAM_SOCK_BUF_SIZE);
 		reply_addr_len = sizeof(reply_addr);
 
