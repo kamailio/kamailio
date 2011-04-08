@@ -18,6 +18,7 @@ typedef struct dmq_peer {
 } dmq_peer_t;
 
 typedef struct dmq_peer_list {
+	gen_lock_t lock;
 	dmq_peer_t* peers;
 	int count;
 } dmq_peer_list_t;

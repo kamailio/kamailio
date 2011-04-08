@@ -49,7 +49,8 @@ int add_dmq_job(struct sip_msg* msg, dmq_peer_t* peer) {
 		}
 	}
 	if(!found_available) {
-		LM_DBG("no available worker found, passing job to the least busy one\n");
+		LM_DBG("no available worker found, passing job to the least busy one [%d %d]\n",
+		       worker->pid, job_queue_size(worker->queue));
 	}
 	job_queue_push(worker->queue, &new_job);
 	lock_release(&worker->lock);

@@ -12,6 +12,7 @@
 
 extern int num_workers;
 extern dmq_worker_t* workers;
+extern dmq_peer_t dmq_notification_peer;
 
 static inline int dmq_load_api(dmq_api_t* api) {
 	bind_dmq_f binddmq;

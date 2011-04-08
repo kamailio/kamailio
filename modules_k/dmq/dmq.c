@@ -50,6 +50,7 @@
 #include "peer.h"
 #include "bind_dmq.h"
 #include "worker.h"
+#include "notification_peer.h"
 #include "../../mod_fix.h"
 
 static int mod_init(void);
@@ -75,6 +76,8 @@ sl_api_t slb;
 /** module variables */
 dmq_worker_t* workers;
 dmq_peer_list_t* peer_list;
+// the dmq module is a peer itself for receiving notifications regarding nodes
+dmq_peer_t dmq_notification_peer;
 
 /** module functions */
 static int mod_init(void);
@@ -144,7 +147,7 @@ static int mod_init(void) {
 	/* load peer list - the list containing the module callbacks for dmq */
 	peer_list = init_peer_list();
 	
-	/* register worker processes */
+	/* register worker processes - add one because of the ping process */
 	register_procs(num_workers);
 	
 	/* allocate workers array */
@@ -154,12 +157,14 @@ static int mod_init(void) {
 		return -1;
 	}
 	
+	/* add first dmq peer - the dmq module itself to receive peer notify messages */
+	
 	startup_time = (int) time(NULL);
 	return 0;
 }
 
 /**
- * Initialize children
+ * initialize children
  */
 static int child_init(int rank) {
   	int i, newpid;
@@ -179,6 +184,11 @@ static int child_init(int rank) {
 				workers[i].pid = newpid;
 			}
 		}
+		/**
+		 * add the dmq notification peer.
+		 * the dmq is a peer itself so that it can receive node notifications
+		 */
+		add_notification_peer();
 		return 0;
 	}
 	if(rank == PROC_INIT || rank == PROC_TCP_MAIN) {
