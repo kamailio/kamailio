@@ -91,6 +91,7 @@
 #include <string.h>
 
 #include "../../sr_module.h"
+#include "../../cfg/cfg_struct.h"
 
 #include "xmpp.h"
 #include "xmpp_api.h"
@@ -497,6 +498,10 @@ int xmpp_server_child_process(int data_pipe)
 		}
 
 		rv = select(FD_SETSIZE, &fdset, NULL, NULL, NULL);
+
+		/* update the local config framework structures */
+		cfg_update();
+
 		if (rv < 0) {
 			LM_ERR("select() failed: %s\n", strerror(errno));
 		} else if (!rv) {
