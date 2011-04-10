@@ -23,6 +23,7 @@
 #include <errno.h>
 
 #include "../../dprint.h"
+#include "../../cfg/cfg_struct.h"
 
 #include "purple.h"
 #include "purplepipe.h"
@@ -231,6 +232,9 @@ void pipe_reader(gpointer data, gint fd, PurpleInputCondition condition) {
 		return;
 	}
 	
+	/* update the local config framework structures */
+	cfg_update();
+
 	switch (cmd->type) {
 	        case PURPLE_MESSAGE_CMD:
 		LM_DBG("received message cmd via pipe from <%s> to <%s>\n", cmd->message.from, cmd->message.to);

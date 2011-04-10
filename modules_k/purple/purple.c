@@ -30,6 +30,7 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../cfg/cfg_struct.h"
 #include "../pua/pua_bind.h"
 #include "../pua/pidf.h"
 
@@ -219,6 +220,8 @@ static int init(void) {
 
 	/* add space for one extra process */
 	register_procs(1);
+	/* add child to update local config framework structures */
+	cfg_register_child(1);
 
 	return 0;
 }
@@ -236,6 +239,9 @@ static int child_init(int rank)
 			return -1; /* error */
 		if(pid==0){
 			/* child */
+			/* initialize the config framework */
+			if (cfg_child_init())
+				return -1;
 			runprocs(1);
 		}
 	}
