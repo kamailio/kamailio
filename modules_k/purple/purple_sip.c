@@ -23,6 +23,7 @@
 
 #include "../../dprint.h"
 #include "../../str.h"
+#include "../../cfg/cfg_struct.h"
 #include "../../modules/tm/tm_load.h"
 #include "../pua/pua_bind.h"
 #include "../pua/pidf.h"
@@ -41,6 +42,9 @@ int purple_send_sip_msg(char *to, char *from, char *msg) {
 	char hdr_buf[512], ruri_buf[512];
 	uac_req_t uac_r;
 	
+	/* update the local config framework structures */
+	cfg_update();
+
 	ruri.s = ruri_buf;
 	ruri.len = snprintf(ruri_buf, sizeof(ruri_buf), "%s;proto=purple", to);
 	
@@ -210,10 +214,13 @@ int purple_send_sip_publish(char *from, char *tupleid, enum purple_publish_basic
 	
 	char pres_buff[512];
 	publ_info_t publ;
+	str pres_uri;
+
+	/* update the local config framework structures */
+	cfg_update();
 
 	memset(&publ, 0, sizeof(publ_info_t));
 	
-	str pres_uri;
 	pres_uri.s = pres_buff;
 	pres_uri.len = sprintf(pres_buff, "%s;proto=purple", from);
 
