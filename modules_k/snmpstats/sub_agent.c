@@ -65,6 +65,7 @@
 #include "snmpMIBNotifications.h"
 
 #include "../../dprint.h"
+#include "../../cfg/cfg_struct.h"
 
 static int keep_running;
 
@@ -110,6 +111,9 @@ static int initialize_agentx(void)
 	keep_running = 1;
 
 	while(keep_running) {
+		/* update the local config framework structures */
+		cfg_update();
+
 		agent_check_and_process(1); /* 0 == don't block */
 	}
 
