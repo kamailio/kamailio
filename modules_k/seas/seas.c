@@ -37,6 +37,7 @@
 #include "../../modules/tm/tm_load.h" /*load_tm_api*/
 #include "../../modules/tm/h_table.h" /*cell*/
 #include "../../modules/tm/t_lookup.h" /*T_UNDEFINED*/
+#include "../../cfg/cfg_struct.h"
 
 #include "encode_msg.h" /*encode_msg*/
 
@@ -681,6 +682,9 @@ static int seas_init(void)
    if(0>parse_cluster_cfg())
       goto error;
    register_procs(1);
+	/* add child to update local config framework structures */
+	cfg_register_child(1);
+
    return 0;
 error:
    for(i=0;i<2;i++)
@@ -727,6 +731,10 @@ static int seas_child_init(int rank)
    if (!pid) {
       /*dispatcher child. we leave writing end open so that new childs spawned
        * by event dispatcher can also write to pipe.. */
+
+		/* initialize the config framework */
+		if (cfg_child_init())
+			return -1;
 
       /* close(write_pipe); */
       return dispatcher_main_loop();
