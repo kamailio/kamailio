@@ -550,8 +550,8 @@ static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 		LM_ERR("could not generate etag\n");
 		goto error;
 	}
-	etag.s = etag_hdr.s + 10; /* 'SIP-ETag: ' */
-	etag.len = etag_hdr.len - 12; /* 'SIP-ETag: '  '\r\n' */
+	etag.s = etag_hdr.s + 6; /* 'ETag: ' */
+	etag.len = etag_hdr.len - 8; /* 'ETag: '  '\r\n' */
 	if(xcaps_put_db(&turi.user, &turi.host,
 				&xuri, &etag, &body)<0)
 	{
@@ -654,7 +654,7 @@ static int xcaps_get_db(str* user, str *domain, xcap_uri_t *xuri,
 		goto error;
 	}
 	etag->len = snprintf(xcaps_etag_buf, XCAPS_ETAG_SIZE,
-			"SIP-ETag: %.*s\r\n", s.len, s.s);
+			"ETag: %.*s\r\n", s.len, s.s);
 	if(etag->len < 0)
 	{
 		LM_ERR("error printing etag hdr\n ");
@@ -953,8 +953,8 @@ static int w_xcaps_del(sip_msg_t* msg, char* puri, char* ppath)
 			LM_ERR("could not generate etag\n");
 			goto error;
 		}
-		etag.s = etag_hdr.s + 10; /* 'SIP-ETag: ' */
-		etag.len = etag_hdr.len - 12; /* 'SIP-ETag: '  '\r\n' */
+		etag.s = etag_hdr.s + 6; /* 'ETag: ' */
+		etag.len = etag_hdr.len - 8; /* 'ETag: '  '\r\n' */
 		if(xcaps_put_db(&turi.user, &turi.host,
 				&xuri, &etag, &body)<0)
 		{
@@ -1047,7 +1047,7 @@ done:
 int xcaps_generate_etag_hdr(str *etag)
 {
 	etag->len = snprintf(xcaps_etag_buf, XCAPS_ETAG_SIZE,
-			"SIP-ETag: sr-%d-%d-%d\r\n", xcaps_init_time, my_pid(),
+			"ETag: sr-%d-%d-%d\r\n", xcaps_init_time, my_pid(),
 			xcaps_etag_counter++);
 	if(etag->len <0)
 	{
