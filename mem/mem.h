@@ -58,7 +58,7 @@
 		extern struct qm_block* mem_block;
 #	endif
 
-	extern char mem_pool[PKG_MEM_POOL_SIZE];
+	extern char* mem_pool;
 
 
 #	ifdef DBG_QM_MALLOC
@@ -133,6 +133,7 @@
 #endif
 
 int init_pkg_mallocs();
+void destroy_pkg_mallocs();
 int init_shm_mallocs(int force_alloc);
 
 /*! generic logging helper for allocation errors in private memory pool/ system */

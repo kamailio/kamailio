@@ -245,6 +245,7 @@ Options:\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
                   auto-probing procedure even if  OS allows\n\
     -m nr        Size of shared memory allocated in Megabytes\n\
+    -M nr        Size of private memory allocated, in Megabytes\n\
     -w dir       Change the working directory to \"dir\" (default: \"/\")\n\
     -t dir       Chroot to \"dir\"\n\
     -u uid       Change uid \n\
@@ -273,7 +274,7 @@ void print_ct_constants()
 #endif
 */
 	printf("MAX_RECV_BUFFER_SIZE %d, MAX_LISTEN %d,"
-			" MAX_URI_SIZE %d, BUF_SIZE %d, PKG_SIZE %uMB\n",
+			" MAX_URI_SIZE %d, BUF_SIZE %d, DEFAULT PKG_SIZE %uMB\n",
 		MAX_RECV_BUFFER_SIZE, MAX_LISTEN, MAX_URI_SIZE,
 		BUF_SIZE, PKG_MEM_SIZE);
 #ifdef USE_TCP
@@ -488,6 +489,8 @@ int cfg_warnings=0;
 
 /* shared memory (in MB) */
 unsigned long shm_mem_size=0;
+/* private (pkg) memory (in MB) */
+unsigned long pkg_mem_size=0;
 
 /* export command-line to anywhere else */
 int my_argc;
@@ -590,6 +593,7 @@ void cleanup(show_status)
 	destroy_lock_ops();
 	if (pid_file) unlink(pid_file);
 	if (pgid_file) unlink(pgid_file);
+	destroy_pkg_mallocs();
 }
 
 
@@ -1750,7 +1754,52 @@ int main(int argc, char** argv)
 	dont_fork_cnt=0;
 
 	daemon_status_init();
-	/*init pkg mallocs (before parsing cfg or cmd line !)*/
+	/* command line options */
+	options=  ":f:cm:M:dVhEb:l:L:n:vrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:"
+#ifdef STATS
+		"s:"
+#endif
+	;
+	/* Handle special command line arguments, that must be treated before
+	 * intializing the various subsystem or before parsing other arguments:
+	 *  - get the startup debug and log_stderr values
+	 *  - look if pkg mem size is overriden on the command line (-M) and get
+	 *    the new value here (before intializing pkg_mem).
+	 *  - look if there is a -h, e.g. -f -h construction won't be caught
+	 *    later
+	 */
+	opterr = 0;
+	while((c=getopt(argc,argv,options))!=-1) {
+		switch(c) {
+			case 'd':
+					debug_flag = 1;
+					default_core_cfg.debug++;
+					break;
+			case 'E':
+					log_stderr=1;
+					break;
+			case 'M':
+					pkg_mem_size=strtol(optarg, &tmp, 10) * 1024 * 1024;
+					if (tmp &&(*tmp)){
+						fprintf(stderr, "bad private mem size number: -M %s\n",
+											optarg);
+						goto error;
+					};
+					break;
+			default:
+					if (c == 'h' || (optarg && strcmp(optarg, "-h") == 0)) {
+						printf("version: %s\n", full_version);
+						printf("%s",help_msg);
+						exit(0);
+					}
+					break;
+		}
+	}
+	
+	/*init pkg mallocs (before parsing cfg or the rest of the cmd line !)*/
+	if (pkg_mem_size)
+		LOG(L_INFO, " private (per process) memory: %ld bytes\n",
+								pkg_mem_size );
 	if (init_pkg_mallocs()==-1)
 		goto error;
 
@@ -1759,11 +1808,6 @@ int main(int argc, char** argv)
 		"DBG_MSG_QA enabled, ser may exit abruptly\n");
 #endif
 
-	options=  ":f:cm:dVhEb:l:L:n:vrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:"
-#ifdef STATS
-		"s:"
-#endif
-	;
 	/* init counters / stats */
 	if (init_counters() == -1)
 		goto error;
@@ -1773,16 +1817,6 @@ int main(int argc, char** argv)
 #ifdef USE_SCTP
 	init_sctp_options(); /* set defaults before the config */
 #endif
-	/* look if there is a -h, e.g. -f -h construction won't catch it later */
-	opterr = 0;
-	while((c=getopt(argc,argv,options))!=-1) {
-		if (c == 'h' || (optarg && strcmp(optarg, "-h") == 0)) {
-			printf("version: %s\n", full_version);
-			printf("%s",help_msg);
-			exit(0);
-			break;
-		}
-	}
 	/* process command line (cfg. file path etc) */
 	optind = 1;  /* reset getopt */
 	/* switches required before script processing */
@@ -1808,9 +1842,12 @@ int main(int argc, char** argv)
 					LOG(L_INFO, "ser: shared memory: %ld bytes\n",
 									shm_mem_size );
 					break;
+			case 'M':
+					/* ignore it, it was parsed immediately after startup,
+					   the pkg mem. is already initialized at this point */
+					break;
 			case 'd':
-					debug_flag = 1;
-					default_core_cfg.debug++;
+					/* ignore it, was parsed immediately after startup */
 					break;
 			case 'V':
 					printf("version: %s\n", full_version);
@@ -1829,7 +1866,7 @@ int main(int argc, char** argv)
 					exit(0);
 					break;
 			case 'E':
-					log_stderr=1;
+					/* ignore it, was parsed immediately after startup */
 					break;
 			case 'O':
 					scr_opt_lev=strtol(optarg, &tmp, 10);
@@ -1974,6 +2011,7 @@ try_again:
 			case 'f':
 			case 'c':
 			case 'm':
+			case 'M':
 			case 'd':
 			case 'V':
 			case 'h':
@@ -1981,7 +2019,8 @@ try_again:
 			case 'A':
 					break;
 			case 'E':
-					log_stderr=1;	// use in both getopt switches
+					log_stderr=1;	/* use in both getopt switches,
+									   takes priority over config */
 					break;
 			case 'b':
 					maxbuffer=strtol(optarg, &tmp, 10);
@@ -2322,7 +2361,7 @@ try_again:
 	}
 
 	if (disable_core_dump) set_core_dump(0, 0);
-	else set_core_dump(1, shm_mem_size+PKG_MEM_POOL_SIZE+4*1024*1024);
+	else set_core_dump(1, shm_mem_size+pkg_mem_size+4*1024*1024);
 	if (open_files_limit>0){
 		if(increase_open_fds(open_files_limit)<0){
 			fprintf(stderr, "ERROR: error could not increase file limits\n");
