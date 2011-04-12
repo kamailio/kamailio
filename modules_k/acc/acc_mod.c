@@ -360,8 +360,13 @@ static int mod_init( void )
 		return -1;
 
 #ifdef SQL_ACC
-	if (db_url.s)
+	if (db_url.s) {
 		db_url.len = strlen(db_url.s);
+		if(db_url.len<=0) {
+			db_url.s = NULL;
+			db_url.len = 0;
+		}
+	}
 	db_table_acc.len = strlen(db_table_acc.s);
 	db_table_mc.len = strlen(db_table_mc.s);
 	acc_method_col.len = strlen(acc_method_col.s);
@@ -471,8 +476,10 @@ static int mod_init( void )
 			return -1;
 		}
 	} else {
-		db_flag = 0;
-		db_missed_flag = 0;
+		db_url.s = NULL;
+		db_url.len = 0;
+		db_flag = -1;
+		db_missed_flag = -1;
 	}
 #endif
 
@@ -503,8 +510,8 @@ static int mod_init( void )
 		}
 	} else {
 		radius_config = 0;
-		radius_flag = 0;
-		radius_missed_flag = 0;
+		radius_flag = -1;
+		radius_missed_flag = -1;
 	}
 #endif
 
