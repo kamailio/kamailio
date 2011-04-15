@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include "../../lock_ops.h"
 #include "../../str.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"

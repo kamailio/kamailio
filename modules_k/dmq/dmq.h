@@ -7,12 +7,15 @@
 #include "bind_dmq.h"
 #include "peer.h"
 #include "worker.h"
+#include "dmqnode.h"
 
 #define DEFAULT_NUM_WORKERS	2
 
 extern int num_workers;
 extern dmq_worker_t* workers;
 extern dmq_peer_t dmq_notification_peer;
+extern dmq_peer_list_t* peer_list;
+extern dmq_node_list_t* node_list;
 
 static inline int dmq_load_api(dmq_api_t* api) {
 	bind_dmq_f binddmq;

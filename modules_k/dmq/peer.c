@@ -1,4 +1,5 @@
 #include "peer.h"
+#include "dmq.h"
 
 dmq_peer_list_t* init_peer_list() {
 	dmq_peer_list_t* peer_list = shm_malloc(sizeof(dmq_peer_list_t));
