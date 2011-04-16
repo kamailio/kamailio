@@ -183,6 +183,10 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 			cnt++;
 			/* not NULL values enforced in table definition ?!?! */
 			kname.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
+			if(kname.s==NULL) {
+				LM_ERR("null key in row %d\n", i);
+				goto error;
+			}
 			kname.len = strlen(kname.s);
 			ktype = RES_ROWS(db_res)[i].values[1].val.int_val;
 			if(ktype==0 && last_ktype==1)
@@ -241,6 +245,10 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 			last_ktype = ktype;
 			vtype = RES_ROWS(db_res)[i].values[2].val.int_val;
 			kvalue.s = (char*)(RES_ROWS(db_res)[i].values[3].val.string_val);
+			if(kvalue.s==NULL) {
+				LM_ERR("null value in row %d\n", i);
+				goto error;
+			}
 			kvalue.len = strlen(kvalue.s);
 
 			/* add to hash */
