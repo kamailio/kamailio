@@ -56,6 +56,8 @@
 #include "../../mem/mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../../parser/parse_to.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 #include "../../lvalue.h"
 #include "dialplan.h"
 #include "dp_db.h"
@@ -68,6 +70,8 @@ static int mod_init(void);
 static int child_init(int rank);
 static void mod_destroy();
 static int mi_child_init();
+
+static int dialplan_init_rpc(void);
 
 static struct mi_root * mi_reload_rules(struct mi_root *cmd_tree,void *param);
 static struct mi_root * mi_translate(struct mi_root *cmd_tree, void *param);
@@ -136,6 +140,12 @@ static int mod_init(void)
 		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
+	if(dialplan_init_rpc()!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+
 
 	dp_db_url.len = dp_db_url.s ? strlen(dp_db_url.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(dp_db_url.s), dp_db_url.len,dp_db_url.s);
@@ -564,3 +574,114 @@ error:
 	return 0;
 }
 
+static const char* dialplan_rpc_reload_doc[2] = {
+	"Reload dialplan table from database",
+	0
+};
+
+
+/*
+ * RPC command to reload dialplan table
+ */
+static void dialplan_rpc_reload(rpc_t* rpc, void* ctx)
+{
+	if (dp_connect_db() < 0) {
+	    LM_ERR("failed to reload rules fron database (db connect)\n");
+		rpc->fault(ctx, 500, "DB Connection Error");
+	    return;
+	}
+
+	if(dp_load_db() != 0){
+	    LM_ERR("failed to reload rules fron database (db load)\n");
+	    dp_disconnect_db();
+		rpc->fault(ctx, 500, "Dialplan Reload Failed");
+	    return;
+	}
+
+	dp_disconnect_db();
+	return;
+}
+
+
+
+static const char* dialplan_rpc_translate_doc[2] = {
+	"Perform dialplan translation",
+	0
+};
+
+
+/*
+ * RPC command to perform dialplan translation
+ */
+static void dialplan_rpc_translate(rpc_t* rpc, void* ctx)
+{
+	dpl_id_p idp;
+	str input;
+	int dpid;
+	str attrs  = {"", 0};
+	str output = {0, 0};
+	void* th;
+
+	if (rpc->scan(ctx, "dS", &dpid, &input) < 2)
+	{
+		rpc->fault(ctx, 500, "Invalid parameters");
+		return;
+	}
+
+	if ((idp = select_dpid(dpid)) == 0 ){
+		LM_ERR("no information available for dpid %i\n", dpid);
+		rpc->fault(ctx, 500, "Dialplan ID not matched");
+		return;
+	}
+
+	if(input.s == NULL || input.len== 0)	{
+		LM_ERR("empty input parameter\n");
+		rpc->fault(ctx, 500, "Empty input parameter");
+		return;
+	}
+
+	LM_DBG("trying to translate %.*s with dpid %i\n",
+			input.len, input.s, idp->dp_id);
+	if (translate(NULL, input, &output, idp, &attrs)!=0){
+		LM_DBG("could not translate %.*s with dpid %i\n",
+			input.len, input.s, idp->dp_id);
+		rpc->fault(ctx, 500, "No translation");
+		return;
+	}
+	LM_DBG("input %.*s with dpid %i => output %.*s\n",
+			input.len, input.s, idp->dp_id, output.len, output.s);
+
+	if (rpc->add(ctx, "{", &th) < 0)
+	{
+		rpc->fault(ctx, 500, "Internal error creating rpc");
+		return;
+	}
+	if(rpc->struct_add(th, "SS",
+			"Output", &output,
+			"Attributes", &attrs)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error creating rpc");
+		return;
+	}
+
+	return;
+}
+
+
+rpc_export_t dialplan_rpc_list[] = {
+	{"dialplan.reload", dialplan_rpc_reload,
+		dialplan_rpc_reload_doc, 0},
+	{"dialplan.dump",   dialplan_rpc_translate,
+		dialplan_rpc_translate_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int dialplan_init_rpc(void)
+{
+	if (rpc_register_array(dialplan_rpc_list)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}
