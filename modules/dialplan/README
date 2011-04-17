@@ -56,7 +56,12 @@ Juha Heinanen
               7.1. dp_reload
               7.2. dp_translate
 
-        8. Installation
+        8. Exported RPC Commands
+
+              8.1. dialplan.reload
+              8.2. dialplan.translate
+
+        9. Installation
 
    2. Developer's Guide
 
@@ -113,7 +118,12 @@ Chapter 1. Admin Guide
         7.1. dp_reload
         7.2. dp_translate
 
-   8. Installation
+   8. Exported RPC Commands
+
+        8.1. dialplan.reload
+        8.2. dialplan.translate
+
+   9. Installation
 
 1. Overview
 
@@ -410,7 +420,38 @@ xlog("translated to var $var(y) \n");
             input
                 _empty_line_
 
-8. Installation
+8. Exported RPC Commands
+
+   8.1. dialplan.reload
+   8.2. dialplan.translate
+
+8.1. dialplan.reload
+
+   Forces an update of the translation rules from the database.
+
+   Name: dialplan.reload
+
+   Parameters: none
+
+   Example:
+                sercmd dialplan.reload
+
+8.2. dialplan.translate
+
+   Will apply a translation rule identified by a dialplan id and an input
+   string.
+
+   Name: dialplan.translate
+
+   Parameters: 2
+     * Dial plan ID
+     * Input String
+
+   Example:
+        # sercmd dp_translate dpid "input"
+        sercmd dp_translate 1 "abcdxyz"
+
+9. Installation
 
    The modules requires one table in Kamailio database: dialplan. The SQL
    syntax to create them can be found in dialplan-create.sql script in the
