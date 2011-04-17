@@ -107,9 +107,9 @@ static mi_export_t mi_cmds[] = {
 
 static cmd_export_t cmds[]={
 	{"dp_translate",(cmd_function)dp_translate_f,	2,	dp_trans_fixup,  0,
-				REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE|BRANCH_ROUTE},
+				ANY_ROUTE},
 	{"dp_translate",(cmd_function)dp_translate_f,	1,	dp_trans_fixup,  0,
-				REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE|BRANCH_ROUTE},
+				ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
