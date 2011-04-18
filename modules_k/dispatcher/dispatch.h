@@ -128,5 +128,39 @@ void ds_ht_timer(unsigned int ticks, void *param);
  */
 int ds_ping_check_rplcode(int);
 
+typedef struct _ds_attrs
+{
+	str body;
+	str duid;
+	int maxload;
+	int weight;
+} ds_attrs_t;
+
+typedef struct _ds_dest
+{
+	str uri;
+	int flags;
+	int priority;
+	int dload;
+	ds_attrs_t attrs;
+	struct ip_addr ip_address; 	/*!< IP-Address of the entry */
+	unsigned short int port; 	/*!< Port of the request URI */
+	int failure_count;
+	struct _ds_dest *next;
+} ds_dest_t;
+
+typedef struct _ds_set
+{
+	int id;				/*!< id of dst set */
+	int nr;				/*!< number of items in dst set */
+	int last;			/*!< last used item in dst set (round robin) */
+	int wlast;			/*!< last used item in dst set (by weight) */
+	ds_dest_t *dlist;
+	unsigned int wlist[100];
+	struct _ds_set *next;
+} ds_set_t;
+
+ds_set_t *ds_get_list(void);
+int ds_get_list_nr(void);
 #endif
 

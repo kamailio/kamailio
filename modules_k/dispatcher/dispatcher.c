@@ -62,6 +62,8 @@
 #include "../../route.h"
 #include "../../mem/mem.h"
 #include "../../mod_fix.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 
 #include "ds_ht.h"
 #include "dispatch.h"
@@ -138,6 +140,7 @@ static int mod_init(void);
 static int child_init(int);
 
 static int ds_parse_reply_codes();
+static int ds_init_rpc(void);
 
 static int w_ds_select_dst(struct sip_msg*, char*, char*);
 static int w_ds_select_domain(struct sip_msg*, char*, char*);
@@ -254,6 +257,11 @@ static int mod_init(void)
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+	if(ds_init_rpc()<0)
+	{
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -877,4 +885,214 @@ int ds_ping_check_rplcode(int code)
 
 void ds_ping_reply_codes_update(str* gname, str* name){
 	ds_parse_reply_codes();
+}
+
+/*** RPC implementation ***/
+
+static const char* dispatcher_rpc_reload_doc[2] = {
+	"Reload dispatcher destination sets",
+	0
+};
+
+
+/*
+ * RPC command to reload dispatcher destination sets
+ */
+static void dispatcher_rpc_reload(rpc_t* rpc, void* ctx)
+{
+	if(dstid_avp_name.n!=0) {
+		LM_ERR("No reload support when call load dispatching is enabled."
+				" Do not set dstid_avp param if you do not use alg 10.\n");
+		rpc->fault(ctx, 500, "Command disabled");
+		return ;
+	}
+
+	if(!ds_db_url.s) {
+		if (ds_load_list(dslistfile)!=0) {
+			rpc->fault(ctx, 500, "Reload Failed");
+			return;
+		}
+	} else {
+		if(ds_load_db()<0) {
+			rpc->fault(ctx, 500, "Reload Failed");
+			return;
+		}
+	}
+	return;
+}
+
+
+
+static const char* dispatcher_rpc_list_doc[2] = {
+	"Return the content of dispatcher sets",
+	0
+};
+
+
+/*
+ * RPC command to print dispatcher destination sets
+ */
+static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
+{
+	void* th;
+	void* ih;
+	void* vh;
+	int j;
+	char c[3];
+	str data = {"", 0};
+	ds_set_t *ds_list;
+	int ds_list_nr;
+	ds_set_t *list;
+
+	ds_list = ds_get_list();
+	ds_list_nr = ds_get_list_nr();
+
+	if(ds_list==NULL || ds_list_nr<=0)
+	{
+		LM_ERR("no destination sets\n");
+		rpc->fault(ctx, 500, "No Destination Sets");
+		return;
+	}
+
+	/* add entry node */
+	if (rpc->add(ctx, "{", &th) < 0)
+	{
+		rpc->fault(c, 500, "Internal error root reply");
+		return;
+	}
+	if(rpc->struct_add(th, "d{",
+				"SET_NO", ds_list_nr,
+				"SET",  &ih)<0)
+	{
+		rpc->fault(c, 500, "Internal error set structure");
+		return;
+	}
+
+
+	for(list = ds_list; list!= NULL; list= list->next)
+	{
+		if(rpc->struct_add(ih, "d",
+				"SET_ID", list->id)<0)
+		{
+			rpc->fault(c, 500, "Internal error creating set id");
+			return;
+		}
+
+		for(j=0; j<list->nr; j++)
+		{
+			if(rpc->struct_add(ih, "{",
+				"DEST", &vh)<0)
+			{
+				rpc->fault(c, 500, "Internal error creating dest");
+				return;
+			}
+
+			memset(&c, 0, sizeof(c));
+			if (list->dlist[j].flags & DS_INACTIVE_DST)
+				c[0] = 'I';
+			else if (list->dlist[j].flags & DS_DISABLED_DST)
+				c[0] = 'D';
+			else
+				c[0] = 'A';
+
+			if (list->dlist[j].flags & DS_PROBING_DST)
+				c[1] = 'P';
+			else
+				c[1] = 'X';
+
+			if(rpc->struct_add(vh, "SsdS",
+				"URI", &list->dlist[j].uri,
+				"FLAGS", c,
+				"PRIORITY", list->dlist[j].priority,
+				"ATTRS", (list->dlist[j].attrs.body.s)?
+							&(list->dlist[j].attrs.body):&data)<0)
+			{
+				rpc->fault(c, 500, "Internal error creating dest struct");
+				return;
+			}
+		}
+	}
+
+	return;
+}
+
+
+static const char* dispatcher_rpc_set_state_doc[2] = {
+	"Set the state of a destination address",
+	0
+};
+
+
+/*
+ * RPC command to set the state of a destination address
+ */
+static void dispatcher_rpc_set_state(rpc_t* rpc, void* ctx)
+{
+	int group;
+	str dest;
+	str state;
+	int stval;
+
+	if(rpc->scan(ctx, ".SdS", &state, &group, &dest)<3)
+	{
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if(state.len<=0 || state.s==NULL)
+	{
+		LM_ERR("bad state value\n");
+		rpc->fault(ctx, 500, "Invalid State Parameter");
+		return;
+	}
+
+	stval = 0;
+	if(state.s[0]=='0' || state.s[0]=='I' || state.s[0]=='i') {
+		/* set inactive */
+		stval |= DS_INACTIVE_DST;
+		if((state.len>1) && (state.s[1]=='P' || state.s[1]=='p'))
+			stval |= DS_PROBING_DST;
+	} else if(state.s[0]=='1' || state.s[0]=='A' || state.s[0]=='a') {
+		/* set active */
+		if((state.len>1) && (state.s[1]=='P' || state.s[1]=='p'))
+			stval |= DS_PROBING_DST;
+	} else if(state.s[0]=='2' || state.s[0]=='D' || state.s[0]=='d') {
+		/* set disabled */
+		stval |= DS_DISABLED_DST;
+	} else {
+		LM_ERR("unknow state value\n");
+		rpc->fault(ctx, 500, "Unknown State Value");
+		return;
+	}
+
+	if(ds_reinit_state(group, &dest, stval)<0)
+	{
+		rpc->fault(ctx, 500, "State Update Failed");
+		return;
+	}
+
+	return;
+}
+
+
+rpc_export_t dispatcher_rpc_cmds[] = {
+	{"dispatcher.reload", dispatcher_rpc_reload,
+		dispatcher_rpc_reload_doc, 0},
+	{"dispatcher.list",   dispatcher_rpc_list,
+		dispatcher_rpc_list_doc,   0},
+	{"dispatcher.set_state",   dispatcher_rpc_set_state,
+		dispatcher_rpc_set_state_doc,   0},
+	{0, 0, 0, 0}
+};
+
+/**
+ * register RPC commands
+ */
+static int ds_init_rpc(void)
+{
+	if (rpc_register_array(dispatcher_rpc_cmds)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
 }
