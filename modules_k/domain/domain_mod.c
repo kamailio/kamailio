@@ -284,7 +284,7 @@ static const char* domain_rpc_reload_doc[2] = {
 static void domain_rpc_reload(rpc_t* rpc, void* ctx)
 {
 	if (!db_mode) {
-		rpc->fault(ctx, 200, "Server Domain Cache Disabled");
+		rpc->fault(ctx, 500, "Server Domain Cache Disabled");
 		return;
 	}
 
