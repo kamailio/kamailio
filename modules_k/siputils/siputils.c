@@ -109,6 +109,7 @@ static void mod_destroy(void);
 /* Fixup functions to be defined later */
 static int fixup_set_uri(void** param, int param_no);
 static int fixup_free_set_uri(void** param, int param_no);
+static int fixup_tel2sip(void** param, int param_no);
 
 char *contact_flds_separator = DEFAULT_SEPARATOR;
 
@@ -127,8 +128,8 @@ static cmd_export_t cmds[]={
 		0, REQUEST_ROUTE|LOCAL_ROUTE},
 	{"add_uri_param",      (cmd_function)add_uri_param,     1, fixup_str_null,
 		0, REQUEST_ROUTE},
-	{"tel2sip",            (cmd_function)tel2sip,           0, 0,
-		0, REQUEST_ROUTE},
+	{"tel2sip", (cmd_function)tel2sip, 3, fixup_tel2sip, 0,
+	 REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"is_e164",            (cmd_function)is_e164,           1, fixup_pvar_null,
 		fixup_free_pvar_null, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
 	{"is_uri_user_e164",   (cmd_function)is_uri_user_e164,  1, fixup_pvar_null,
@@ -295,4 +296,35 @@ static int fixup_set_uri(void** param, int param_no)
 static int fixup_free_set_uri(void** param, int param_no)
 {
     return fixup_free_pvar_null(param, 1);
+}
+
+
+/*
+ * Fix tel2sip function params: uri and hostpart pvars and
+ * result writable pvar.
+ */
+static int fixup_tel2sip(void** param, int param_no)
+{
+    if ((param_no == 1) || (param_no == 2)) {
+	if (fixup_var_str_12(param, 1) < 0) {
+	    LM_ERR("failed to fixup uri or hostpart pvar\n");
+	    return -1;
+	}
+	return 0;
+    }
+
+    if (param_no == 3) {
+	if (fixup_pvar_null(param, 1) != 0) {
+	    LM_ERR("failed to fixup result pvar\n");
+	    return -1;
+	}
+	if (((pv_spec_t *)(*param))->setf == NULL) {
+	    LM_ERR("result pvar is not writeble\n");
+	    return -1;
+	}
+	return 0;
+    }
+
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
 }

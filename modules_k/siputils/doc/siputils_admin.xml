@@ -477,12 +477,14 @@ add_uri_param("nat=yes");
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">tel2sip()</function>
+		<function moreinfo="none">tel2sip(uri, hostpart, result)</function>
 		</title>
 		<para>
-		Converts RURI, if it is tel URI, to SIP URI.  Returns true only if
-		conversion succeeded or if no conversion was needed (like RURI
-		was not tel URI).
+		Converts URI in first param (pseudo variable or string) to
+		SIP URI, if it is a tel URI.  If conversion was done,
+		writes resulting SIP URI to third param (pseudo variable).
+		Returns 1 if conversion succeeded or if no conversion
+		was needed.
 		</para>
 		<para>
 		The conversion follows the rules in RFC 3261 section 19.1.6:
@@ -496,22 +498,25 @@ add_uri_param("nat=yes");
                 </itemizedlist>
 		</para>
 		<para>
-		The SIP URI host is formed using the From URI host.
+		The SIP URI hostpart is taken from second param
+		(pseudo variable or string).
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>tel2sip</function> usage</title>
 		<programlisting format="linespecific">
 ...
-# RURI:  tel:+(34)-999-888-777
-tel2sip();
-# RURI:  sip:+34999888777@foo.com;user=phone
+# $ru: tel:+(34)-999-888-777
+# $fu: sip:test@foo.com
+tel2sip("$ru", $fd", "$ru");
+# $ru:  sip:+34999888777@foo.com;user=phone
 
-# RURI:  tel:+12-(34)-56-78;Ext=200;ISUB=+123-456
-tel2sip();
-# RURI:  sip:+12345678;ext=200;isub=+123-456@foo.com;user=phone
+# $ru: tel:+12-(34)-56-78;Ext=200;ISUB=+123-456
+# $fu: sip:test@foo.com
+tel2sip("$ru", $fd", "$ru");
+# $ru:  sip:+12345678;ext=200;isub=+123-456@foo.com;user=phone
 ...
 </programlisting>
 		</example>

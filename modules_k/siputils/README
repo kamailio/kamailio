@@ -78,7 +78,7 @@ Gabriel Vasile
               4.5. uri_param(param)
               4.6. uri_param(param,value)
               4.7. add_uri_param(param)
-              4.8. tel2sip()
+              4.8. tel2sip(uri, hostpart, result)
               4.9. is_e164(pseudo-variable)
               4.10. is_uri_user_e164(pseudo-variable)
               4.11. encode_contact(encoding_prefix,hostpart)
@@ -159,7 +159,7 @@ Chapter 1. Admin Guide
         4.5. uri_param(param)
         4.6. uri_param(param,value)
         4.7. add_uri_param(param)
-        4.8. tel2sip()
+        4.8. tel2sip(uri, hostpart, result)
         4.9. is_e164(pseudo-variable)
         4.10. is_uri_user_e164(pseudo-variable)
         4.11. encode_contact(encoding_prefix,hostpart)
@@ -355,7 +355,7 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
    4.5. uri_param(param)
    4.6. uri_param(param,value)
    4.7. add_uri_param(param)
-   4.8. tel2sip()
+   4.8. tel2sip(uri, hostpart, result)
    4.9. is_e164(pseudo-variable)
    4.10. is_uri_user_e164(pseudo-variable)
    4.11. encode_contact(encoding_prefix,hostpart)
@@ -492,11 +492,12 @@ if (uri_param("param1","value1")) {
 add_uri_param("nat=yes");
 ...
 
-4.8.  tel2sip()
+4.8.  tel2sip(uri, hostpart, result)
 
-   Converts RURI, if it is tel URI, to SIP URI. Returns true only if
-   conversion succeeded or if no conversion was needed (like RURI was not
-   tel URI).
+   Converts URI in first param (pseudo variable or string) to SIP URI, if
+   it is a tel URI. If conversion was done, writes resulting SIP URI to
+   third param (pseudo variable). Returns 1 if conversion succeeded or if
+   no conversion was needed.
 
    The conversion follows the rules in RFC 3261 section 19.1.6:
      * Visual separators ( "-", ".", "(", ")" ) are removed from tel URI
@@ -504,19 +505,22 @@ add_uri_param("nat=yes");
      * tel URI parameters are downcased before appending them to SIP URI
        userinfo
 
-   The SIP URI host is formed using the From URI host.
+   The SIP URI hostpart is taken from second param (pseudo variable or
+   string).
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.
 
    Example 1.17. tel2sip usage
 ...
-# RURI:  tel:+(34)-999-888-777
-tel2sip();
-# RURI:  sip:+34999888777@foo.com;user=phone
+# $ru: tel:+(34)-999-888-777
+# $fu: sip:test@foo.com
+tel2sip("$ru", $fd", "$ru");
+# $ru:  sip:+34999888777@foo.com;user=phone
 
-# RURI:  tel:+12-(34)-56-78;Ext=200;ISUB=+123-456
-tel2sip();
-# RURI:  sip:+12345678;ext=200;isub=+123-456@foo.com;user=phone
+# $ru: tel:+12-(34)-56-78;Ext=200;ISUB=+123-456
+# $fu: sip:test@foo.com
+tel2sip("$ru", $fd", "$ru");
+# $ru:  sip:+12345678;ext=200;isub=+123-456@foo.com;user=phone
 ...
 
 4.9.  is_e164(pseudo-variable)
