@@ -508,8 +508,8 @@ add_uri_param("nat=yes");
    The SIP URI hostpart is taken from second param (pseudo variable or
    string).
 
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, or
-   ONREPLY_ROUTE.
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE, or ONREPLY_ROUTE.
 
    Example 1.17. tel2sip usage
 ...

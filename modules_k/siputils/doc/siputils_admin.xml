@@ -503,7 +503,7 @@ add_uri_param("nat=yes");
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		or ONREPLY_ROUTE.
+		BRANCH_ROUTE, or ONREPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>tel2sip</function> usage</title>
