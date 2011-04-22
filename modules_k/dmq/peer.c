@@ -36,18 +36,6 @@ void add_peer(dmq_peer_list_t* peer_list, dmq_peer_t* peer) {
 	peer_list->peers = new_peer;
 }
 
-int register_dmq_peer(dmq_peer_t* peer) {
-	lock_get(&peer_list->lock);
-	if(search_peer_list(peer_list, peer)) {
-		LM_ERR("peer already exists: %.*s %.*s\n", peer->peer_id.len, peer->peer_id.s,
-		       peer->description.len, peer->description.s);
-		return -1;
-	}
-	add_peer(peer_list, peer);
-	lock_release(&peer_list->lock);
-	return 0;
-}
-
 dmq_peer_t* find_peer(str peer_id) {
 	dmq_peer_t foo_peer;
 	foo_peer.peer_id = peer_id;

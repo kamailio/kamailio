@@ -9,7 +9,12 @@
 #include "../../mem/shm_mem.h"
 #include "../../parser/msg_parser.h"
 
-typedef int(*peer_callback_t)(struct sip_msg*);
+typedef struct peer_response {
+	int resp_code;
+	str body;
+} peer_reponse_t;
+
+typedef int(*peer_callback_t)(struct sip_msg*, peer_reponse_t* resp);
 
 typedef struct dmq_peer {
 	str peer_id;
@@ -30,7 +35,7 @@ dmq_peer_list_t* init_peer_list();
 dmq_peer_t* search_peer_list(dmq_peer_list_t* peer_list, dmq_peer_t* peer);
 typedef int (*register_dmq_peer_t)(dmq_peer_t*);
 
-int register_dmq_peer(dmq_peer_t* peer);
+void add_peer(dmq_peer_list_t* peer_list, dmq_peer_t* peer);
 dmq_peer_t* find_peer(str peer_id);
 
 

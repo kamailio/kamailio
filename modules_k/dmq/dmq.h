@@ -4,6 +4,8 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../sr_module.h"
+#include "../../modules/tm/tm_load.h"
+#include "../../modules/sl/sl.h"
 #include "bind_dmq.h"
 #include "peer.h"
 #include "worker.h"
@@ -14,8 +16,14 @@
 extern int num_workers;
 extern dmq_worker_t* workers;
 extern dmq_peer_t dmq_notification_peer;
+extern str dmq_server_address;
 extern dmq_peer_list_t* peer_list;
 extern dmq_node_list_t* node_list;
+extern str dmq_request_method;
+
+/* sl and tm */
+extern struct tm_binds tmb;
+extern sl_api_t slb;
 
 static inline int dmq_load_api(dmq_api_t* api) {
 	bind_dmq_f binddmq;

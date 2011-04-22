@@ -1,9 +1,11 @@
 #include "dmq.h"
+#include "peer.h"
 #include "worker.h"
 
 void worker_loop(int id) {
 	dmq_worker_t* worker = &workers[id];
 	dmq_job_t* current_job;
+	peer_reponse_t peer_response;
 	int ret_value;
 	for(;;) {
 		LM_DBG("dmq_worker [%d %d] getting lock\n", id, my_pid());
@@ -14,7 +16,7 @@ void worker_loop(int id) {
 			current_job = job_queue_pop(worker->queue);
 			/* job_queue_pop might return NULL if queue is empty */
 			if(current_job) {
-				ret_value = current_job->f(current_job->msg);
+				ret_value = current_job->f(current_job->msg, &peer_response);
 				if(ret_value < 0) {
 					LM_ERR("running job failed\n");
 				}

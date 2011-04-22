@@ -60,14 +60,12 @@ static void destroy(void);
 
 MODULE_VERSION
 
-/* database connection */
-int library_mode = 0;
-str server_address = {0, 0};
 int startup_time = 0;
 int pid = 0;
 
 /* module parameters */
 int num_workers = DEFAULT_NUM_WORKERS;
+str dmq_server_address = {0, 0};
 
 /* TM bind */
 struct tm_binds tmb;
@@ -75,6 +73,7 @@ struct tm_binds tmb;
 sl_api_t slb;
 
 /** module variables */
+str dmq_request_method = {"KDMQ", 4};
 dmq_worker_t* workers;
 dmq_peer_list_t* peer_list;
 /* the list of dmq servers */
@@ -87,6 +86,7 @@ static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
 static int handle_dmq_fixup(void** param, int param_no);
+static int check_dmq_server_address();
 
 static cmd_export_t cmds[] = {
 	{"handle_dmq_message",  (cmd_function)handle_dmq_message, 0, handle_dmq_fixup, 0, 
@@ -98,6 +98,7 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"num_workers", INT_PARAM, &num_workers},
+	{"server_address", STR_PARAM, &dmq_server_address.s},
 	{0, 0, 0}
 };
 
@@ -131,23 +132,19 @@ static int mod_init(void) {
 		return -1;
 	}
 
-	if(library_mode== 1) {
-		LM_DBG("dmq module used for API library purpose only\n");
-	}
-
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
-
+	
 	/* load all TM stuff */
 	if(load_tm_api(&tmb)==-1) {
 		LM_ERR("can't load tm functions. TM module probably not loaded\n");
 		return -1;
 	}
-	
 	/* load peer list - the list containing the module callbacks for dmq */
+	
 	peer_list = init_peer_list();
 	
 	/* load the dmq node list - the list containing the dmq servers */
@@ -155,6 +152,12 @@ static int mod_init(void) {
 	
 	/* register worker processes - add one because of the ping process */
 	register_procs(num_workers);
+	/* check server_address not empty and correct */
+	
+	if(check_dmq_server_address() < 0) {
+		LM_ERR("server address invalid\n");
+		return -1;
+	}
 	
 	/* allocate workers array */
 	workers = shm_malloc(num_workers * sizeof(*workers));
@@ -214,4 +217,24 @@ static void destroy(void) {
 
 static int handle_dmq_fixup(void** param, int param_no) {
  	return 0;
+}
+
+static int check_dmq_server_address() {
+	if(!dmq_server_address.s) {
+		return -1;
+	}
+	dmq_server_address.len = strlen(dmq_server_address.s);
+	if(!dmq_server_address.len) {
+		LM_ERR("empty server address\n");
+		return -1;
+	}
+	if(strncmp(dmq_server_address.s, "sip:", 4)) {
+		LM_ERR("server address must start with sip:\n");
+		return -1;
+	}
+	if(!strchr(dmq_server_address.s + 4, ':')) {
+		LM_ERR("server address must be of form sip:host:port\n");
+		return -1;
+	}
+	return 0;
 }
