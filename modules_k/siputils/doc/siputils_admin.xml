@@ -502,7 +502,8 @@ add_uri_param("nat=yes");
 		(pseudo variable or string).
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		or ONREPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>tel2sip</function> usage</title>

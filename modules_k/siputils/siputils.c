@@ -139,7 +139,7 @@ static cmd_export_t cmds[]={
 	{"decode_contact",     (cmd_function)decode_contact,    0, 0,
 		0, REQUEST_ROUTE},
 	{"decode_contact_header", (cmd_function)decode_contact_header, 0, 0,
-		0,REQUEST_ROUTE|ONREPLY_ROUTE},
+		0,REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
 	{"cmp_uri",  (cmd_function)w_cmp_uri,                   2, fixup_spve_spve,
 		0, ANY_ROUTE},
 	{"cmp_aor",  (cmd_function)w_cmp_aor,                   2, fixup_spve_spve,
