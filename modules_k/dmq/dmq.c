@@ -42,6 +42,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../usr_avp.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../parser/parse_uri.h"
 #include "../../modules/sl/sl.h"
 #include "../../pt.h"
 #include "../../lib/kmi/mi.h"
@@ -66,6 +67,10 @@ int pid = 0;
 /* module parameters */
 int num_workers = DEFAULT_NUM_WORKERS;
 str dmq_server_address = {0, 0};
+struct sip_uri dmq_server_uri;
+
+str dmq_notification_address = {0, 0};
+struct sip_uri dmq_notification_uri;
 
 /* TM bind */
 struct tm_binds tmb;
@@ -86,7 +91,7 @@ static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
 static int handle_dmq_fixup(void** param, int param_no);
-static int check_dmq_server_address();
+static int parse_server_address(str* uri, struct sip_uri* parsed_uri);
 
 static cmd_export_t cmds[] = {
 	{"handle_dmq_message",  (cmd_function)handle_dmq_message, 0, handle_dmq_fixup, 0, 
@@ -99,6 +104,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"num_workers", INT_PARAM, &num_workers},
 	{"server_address", STR_PARAM, &dmq_server_address.s},
+	{"notification_address", STR_PARAM, &dmq_notification_address.s},
 	{0, 0, 0}
 };
 
@@ -152,10 +158,15 @@ static int mod_init(void) {
 	
 	/* register worker processes - add one because of the ping process */
 	register_procs(num_workers);
-	/* check server_address not empty and correct */
 	
-	if(check_dmq_server_address() < 0) {
+	/* check server_address and notification_address are not empty and correct */
+	if(parse_server_address(&dmq_server_address, &dmq_server_uri) < 0) {
 		LM_ERR("server address invalid\n");
+		return -1;
+	}
+	
+	if(parse_server_address(&dmq_notification_address, &dmq_notification_uri) < 0) {
+		LM_ERR("notification address invalid\n");
 		return -1;
 	}
 	
@@ -213,27 +224,25 @@ static int child_init(int rank) {
  * destroy function
  */
 static void destroy(void) {
+	/* TODO unregister dmq node, free resources */
 }
 
 static int handle_dmq_fixup(void** param, int param_no) {
  	return 0;
 }
 
-static int check_dmq_server_address() {
-	if(!dmq_server_address.s) {
+static int parse_server_address(str* uri, struct sip_uri* parsed_uri) {
+	if(!uri->s) {
+		LM_ERR("server address missing\n");
 		return -1;
 	}
-	dmq_server_address.len = strlen(dmq_server_address.s);
-	if(!dmq_server_address.len) {
+	uri->len = strlen(uri->s);
+	if(!uri->len) {
 		LM_ERR("empty server address\n");
 		return -1;
 	}
-	if(strncmp(dmq_server_address.s, "sip:", 4)) {
-		LM_ERR("server address must start with sip:\n");
-		return -1;
-	}
-	if(!strchr(dmq_server_address.s + 4, ':')) {
-		LM_ERR("server address must be of form sip:host:port\n");
+	if(parse_uri(uri->s, uri->len, parsed_uri) < 0) {
+		LM_ERR("error parsing server address\n");
 		return -1;
 	}
 	return 0;

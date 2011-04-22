@@ -9,6 +9,6 @@
 #include "../../str.h"
 
 int register_dmq_peer(dmq_peer_t* peer);
-int send_dmq_message(dmq_peer_t* peer, str* body);
+int send_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* node);
 
 #endif

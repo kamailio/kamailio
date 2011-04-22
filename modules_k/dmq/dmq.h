@@ -5,6 +5,7 @@
 #include "../../error.h"
 #include "../../sr_module.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../parser/parse_uri.h"
 #include "../../modules/sl/sl.h"
 #include "bind_dmq.h"
 #include "peer.h"
@@ -20,7 +21,9 @@ extern str dmq_server_address;
 extern dmq_peer_list_t* peer_list;
 extern dmq_node_list_t* node_list;
 extern str dmq_request_method;
-
+extern struct sip_uri dmq_server_uri;
+extern str dmq_notification_address;
+extern struct sip_uri dmq_notification_uri;
 /* sl and tm */
 extern struct tm_binds tmb;
 extern sl_api_t slb;

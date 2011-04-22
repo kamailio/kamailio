@@ -2,23 +2,28 @@
 #include "dmq_funcs.h"
 
 int add_notification_peer() {
-	dmq_node_t self_node;
-	self_node.orig_uri = dmq_server_address;
-	
 	dmq_notification_peer.callback = dmq_notification_callback;
-	dmq_notification_peer.description.s = "dmqpeer";
-	dmq_notification_peer.description.len = 7;
-	dmq_notification_peer.peer_id.s = "dmqpeer";
-	dmq_notification_peer.peer_id.len = 7;
+	dmq_notification_peer.description.s = "notification_peer";
+	dmq_notification_peer.description.len = 17;
+	dmq_notification_peer.peer_id.s = "notification_peer";
+	dmq_notification_peer.peer_id.len = 17;
 	if(register_dmq_peer(&dmq_notification_peer) < 0) {
 		LM_ERR("error in register_dmq_peer\n");
 		goto error;
 	}
 	/* add itself to the node list */
-	if(add_dmq_node(node_list, &self_node) < 0) {
+	self_node = add_dmq_node(node_list, &dmq_server_address);
+	if(!self_node) {
 		LM_ERR("error adding self node\n");
 		goto error;
 	}
+	/* add the notification server to the node list */
+	notification_node = add_dmq_node(node_list, &dmq_notification_address);
+	if(!notification_node) {
+		LM_ERR("error adding notification node\n");
+		goto error;
+	}
+	/* initial notification request to receive the complete node list */
 	if(request_initial_nodelist() < 0) {
 		LM_ERR("error in request_initial_notification\n");
 		goto error;
@@ -28,6 +33,19 @@ error:
 	return -1;
 }
 
+/**
+ * extract the node list from the body of a notification request SIP message
+ * the SIP request will look something like:
+ * 	KDMQ sip:10.0.0.0:5062
+ * 	To: ...
+ * 	From: ...
+ * 	Max-Forwards: ...
+ * 	Content-Length: 22
+ * 	
+ * 	sip:host1:port1;param1=value1
+ * 	sip:host2:port2;param2=value2
+ * 	...
+ */
 int extract_node_list(dmq_node_list_t* update_list, struct sip_msg* msg) {
 	int content_length, total_nodes = 0;
 	str body;
@@ -100,7 +118,8 @@ int build_node_str(dmq_node_t* node, char* buf, int buflen) {
 	return node->orig_uri.len;
 }
 
-/* builds the body of a notification message from the list of servers 
+/**
+ * builds the body of a notification message from the list of servers 
  * the result will look something like:
  * sip:host1:port1;param1=value1\r\n
  * sip:host2:port2;param2=value2\r\n
@@ -146,7 +165,7 @@ error:
 int request_initial_nodelist() {
 	str* body = build_notification_body();
 	int ret;
-	ret = send_dmq_message(&dmq_notification_peer, body);
+	ret = send_dmq_message(&dmq_notification_peer, body, notification_node);
 	pkg_free(body->s);
 	pkg_free(body);
 	return ret;

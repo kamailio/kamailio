@@ -13,7 +13,7 @@
 
 typedef struct dmq_node {
 	str orig_uri;
-	struct sip_uri* uri;
+	struct sip_uri uri;
 	int status;
 	int last_notification;
 	struct dmq_node* next;
@@ -27,6 +27,9 @@ typedef struct dmq_node_list {
 
 dmq_node_list_t* init_dmq_node_list();
 int update_node_list(dmq_node_list_t* remote_list);
-int add_dmq_node(dmq_node_list_t* list, dmq_node_t* newnode);
+dmq_node_t* add_dmq_node(dmq_node_list_t* list, str* uri);
+
+extern dmq_node_t* self_node;
+extern dmq_node_t* notification_node;	
 
 #endif
