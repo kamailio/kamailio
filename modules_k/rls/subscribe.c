@@ -90,7 +90,7 @@ xmlNodePtr rls_get_by_service_uri(xmlDocPtr doc, str* uri)
 			val = XMLNodeGetAttrContentByName(node, "uri");
 			if(val!=NULL)
 			{
-				if((uri->len==strlen(val)) && (strcmp(val, uri->s)==0))
+				if((uri->len==strlen(val)) && (strncmp(val, uri->s, uri->len)==0))
 				{
 					xmlFree(val);
 					return node;
@@ -241,13 +241,17 @@ int rls_get_service_list(str *service_uri, str *user, str *domain,
 	*service_node = rls_get_by_service_uri(xmldoc, service_uri);
 	if(*service_node==NULL)
 	{
-		LM_ERR("service uri %.*s not found in rl document for user"
+		LM_DBG("service uri %.*s not found in rl document for user"
 			" sip:%.*s@%.*s\n", service_uri->len, service_uri->s,
 			user->len, user->s, domain->len, domain->s);
-		goto error;
+		rootdoc = NULL;
+		if(xmldoc!=NULL)
+			xmlFreeDoc(xmldoc);
 	}
-
-	*rootdoc = xmldoc;
+	else
+	{
+		*rootdoc = xmldoc;
+	}
 
 	rls_dbf.free_result(rls_db, result);
 	if(xcapdoc!=NULL)
@@ -621,7 +625,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 	if(send_full_notify(&subs, service_node, subs.version, &subs.pres_uri,
 				hash_code)<0)
 	{
-		LM_ERR("failed sending full state sotify\n");
+		LM_ERR("failed sending full state notify\n");
 		goto error;
 	}
 	/* send subscribe requests for all in the list */
