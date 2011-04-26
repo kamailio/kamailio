@@ -16,7 +16,7 @@
 
 extern int num_workers;
 extern dmq_worker_t* workers;
-extern dmq_peer_t dmq_notification_peer;
+extern dmq_peer_t* dmq_notification_peer;
 extern str dmq_server_address;
 extern dmq_peer_list_t* peer_list;
 extern dmq_node_list_t* node_list;
@@ -27,6 +27,11 @@ extern struct sip_uri dmq_notification_uri;
 /* sl and tm */
 extern struct tm_binds tmb;
 extern sl_api_t slb;
+
+extern str dmq_200_rpl;
+extern str dmq_400_rpl;
+extern str dmq_500_rpl;
+extern str dmq_404_rpl;
 
 static inline int dmq_load_api(dmq_api_t* api) {
 	bind_dmq_f binddmq;

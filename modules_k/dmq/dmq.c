@@ -48,6 +48,7 @@
 #include "../../lib/kmi/mi.h"
 #include "../../lib/kcore/hash_func.h"
 #include "dmq.h"
+#include "dmq_funcs.h"
 #include "peer.h"
 #include "bind_dmq.h"
 #include "worker.h"
@@ -71,6 +72,7 @@ struct sip_uri dmq_server_uri;
 
 str dmq_notification_address = {0, 0};
 struct sip_uri dmq_notification_uri;
+int ping_interval = 4;
 
 /* TM bind */
 struct tm_binds tmb;
@@ -84,7 +86,7 @@ dmq_peer_list_t* peer_list;
 /* the list of dmq servers */
 dmq_node_list_t* node_list;
 // the dmq module is a peer itself for receiving notifications regarding nodes
-dmq_peer_t dmq_notification_peer;
+dmq_peer_t* dmq_notification_peer;
 
 /** module functions */
 static int mod_init(void);
@@ -103,6 +105,7 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"num_workers", INT_PARAM, &num_workers},
+	{"ping_interval", INT_PARAM, &ping_interval},
 	{"server_address", STR_PARAM, &dmq_server_address.s},
 	{"notification_address", STR_PARAM, &dmq_notification_address.s},
 	{0, 0, 0}
@@ -177,9 +180,20 @@ static int mod_init(void) {
 		return -1;
 	}
 	
-	/* add first dmq peer - the dmq module itself to receive peer notify messages */
+	/**
+         * add the dmq notification peer.
+	 * the dmq is a peer itself so that it can receive node notifications
+	 */
+	add_notification_peer();
 	
 	startup_time = (int) time(NULL);
+	
+	/**
+	 * add the ping timer
+	 * it pings the servers once in a while so that we know which failed
+	 */
+	register_timer(ping_servers, 0, ping_interval);
+	
 	return 0;
 }
 
@@ -204,11 +218,20 @@ static int child_init(int rank) {
 				workers[i].pid = newpid;
 			}
 		}
-		/**
-		 * add the dmq notification peer.
-		 * the dmq is a peer itself so that it can receive node notifications
+		/* notification_node - the node from which the Kamailio instance
+		 * gets the server list on startup.
+		 * the address is given as a module parameter in dmq_notification_address
+		 * the module MUST have this parameter if the Kamailio instance is not
+		 * a master in this architecture
 		 */
-		add_notification_peer();
+		if(dmq_notification_address.s) {
+			notification_node = add_server_and_notify(&dmq_notification_address);
+			if(!notification_node) {
+				LM_ERR("cannot retrieve initial nodelist from %.*s\n",
+				       STR_FMT(&dmq_notification_address));
+				return -1;
+			}
+		}
 		return 0;
 	}
 	if(rank == PROC_INIT || rank == PROC_TCP_MAIN) {
@@ -234,16 +257,19 @@ static int handle_dmq_fixup(void** param, int param_no) {
 static int parse_server_address(str* uri, struct sip_uri* parsed_uri) {
 	if(!uri->s) {
 		LM_ERR("server address missing\n");
-		return -1;
+		goto empty;
 	}
 	uri->len = strlen(uri->s);
 	if(!uri->len) {
 		LM_ERR("empty server address\n");
-		return -1;
+		goto empty;
 	}
 	if(parse_uri(uri->s, uri->len, parsed_uri) < 0) {
 		LM_ERR("error parsing server address\n");
 		return -1;
 	}
+	return 0;
+empty:
+	uri->s = NULL;
 	return 0;
 }

@@ -1,22 +1,33 @@
 #include "dmq_funcs.h"
+#include "notification_peer.h"
 
-int register_dmq_peer(dmq_peer_t* peer) {
+dmq_peer_t* register_dmq_peer(dmq_peer_t* peer) {
+	dmq_peer_t* new_peer;
 	lock_get(&peer_list->lock);
 	if(search_peer_list(peer_list, peer)) {
 		LM_ERR("peer already exists: %.*s %.*s\n", peer->peer_id.len, peer->peer_id.s,
 		       peer->description.len, peer->description.s);
-		return -1;
+		return NULL;
 	}
-	add_peer(peer_list, peer);
+	new_peer = add_peer(peer_list, peer);
 	lock_release(&peer_list->lock);
-	return 0;
+	return new_peer;
 }
 
-void dmq_tm_callback( struct cell *t, int type, struct tmcb_params *ps) {
-	LM_ERR("callback\n");
+void dmq_tm_callback(struct cell *t, int type, struct tmcb_params *ps) {
+	dmq_cback_param_t* cb_param = (dmq_cback_param_t*)(*ps->param);
+	LM_DBG("dmq_tm_callback start\n");
+	if(cb_param->resp_cback.f) {
+		if(cb_param->resp_cback.f(ps->rpl, ps->code, cb_param->node, cb_param->resp_cback.param) < 0) {
+			LM_ERR("error in response callback\n");
+		}
+	}
+	LM_DBG("dmq_tm_callback done\n");
+	shm_free_node(cb_param->node);
+	shm_free(cb_param);
 }
 
-int build_from_str(str* username, struct sip_uri* uri, str* from) {
+int build_uri_str(str* username, struct sip_uri* uri, str* from) {
 	/* sip:user@host:port */
 	int from_len = username->len + uri->host.len + uri->port.len + 10;
 	if(!uri->host.s || !uri->host.len) {
@@ -51,19 +62,58 @@ int build_from_str(str* username, struct sip_uri* uri, str* from) {
 	return 0;
 }
 
-int send_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* node) {
+/* broadcast a dmq message
+ * peer - the peer structure on behalf of which we are sending
+ * body - the body of the message
+ * except - we do not send the message to this node
+ * resp_cback - a response callback that gets called when the transaction is complete
+ */
+int bcast_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* except, dmq_resp_cback_t* resp_cback) {
+	dmq_node_t* node;
+	
+	lock_get(&node_list->lock);
+	node = node_list->nodes;
+	while(node) {
+		if((except && cmp_dmq_node(node, except)) || node->local) {
+			node = node->next;
+			continue;
+		}
+		if(send_dmq_message(peer, body, node, resp_cback) < 0) {
+			LM_ERR("error sending dmq message\n");
+			goto error;
+		}
+		node = node->next;
+	}
+	lock_release(&node_list->lock);
+	return 0;
+error:
+	lock_release(&node_list->lock);
+	return -1;
+}
+
+/* send a dmq message
+ * peer - the peer structure on behalf of which we are sending
+ * body - the body of the message
+ * node - we send the message to this node
+ * resp_cback - a response callback that gets called when the transaction is complete
+ */
+int send_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cback_t* resp_cback) {
 	uac_req_t uac_r;
 	str str_hdr = {0, 0};
-	/* TODO - do not hardcode these - just for tesing purposes */
 	str from, to, req_uri;
-	void *cb_param = NULL;
-	int result;
+	dmq_cback_param_t* cb_param = NULL;
+	int result = 0;
 	
-	if(build_from_str(&peer->peer_id, &dmq_server_uri, &from) < 0) {
-		LM_ERR("error building from string\n");
+	cb_param = shm_malloc(sizeof(*cb_param));
+	memset(cb_param, 0, sizeof(*cb_param));
+	cb_param->resp_cback = *resp_cback;
+	cb_param->node = shm_dup_node(node);
+	
+	if(build_uri_str(&peer->peer_id, &dmq_server_uri, &from) < 0) {
+		LM_ERR("error building from string [username %.*s]\n", STR_FMT(&peer->peer_id));
 		return -1;
 	}
-	if(build_from_str(&peer->peer_id, &node->uri, &to) < 0) {
+	if(build_uri_str(&peer->peer_id, &node->uri, &to) < 0) {
 		LM_ERR("error building to string\n");
 		return -1;
 	}
@@ -74,10 +124,28 @@ int send_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* node) {
 	result = tmb.t_request(&uac_r, &req_uri,
 			       &to, &from,
 			       NULL);
-	if(result < 0)
-	{
+	if(result < 0) {
 		LM_ERR("error in tmb.t_request_within\n");
 		return -1;
 	}
 	return 0;
+}
+
+/* pings the servers in the nodelist
+ * if the server does not reply to the ping, it is removed from the list
+ * the ping messages are actualy notification requests
+ * this way the ping will have two uses:
+ *   - checks if the servers in the list are up and running
+ *   - updates the list of servers from the other nodes
+ */
+void ping_servers(unsigned int ticks,void *param) {
+	str* body = build_notification_body();
+	int ret;
+	LM_DBG("ping_servers\n");
+	ret = bcast_dmq_message(dmq_notification_peer, body, notification_node, &notification_callback);
+	pkg_free(body->s);
+	pkg_free(body);
+	if(ret < 0) {
+		LM_ERR("error broadcasting message\n");
+	}
 }

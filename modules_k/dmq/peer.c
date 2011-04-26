@@ -22,7 +22,7 @@ dmq_peer_t* search_peer_list(dmq_peer_list_t* peer_list, dmq_peer_t* peer) {
 	return 0;
 }
 
-void add_peer(dmq_peer_list_t* peer_list, dmq_peer_t* peer) {
+dmq_peer_t* add_peer(dmq_peer_list_t* peer_list, dmq_peer_t* peer) {
 	dmq_peer_t* new_peer = shm_malloc(sizeof(dmq_peer_t));
 	*new_peer = *peer;
 	
@@ -34,6 +34,7 @@ void add_peer(dmq_peer_list_t* peer_list, dmq_peer_t* peer) {
 	
 	new_peer->next = peer_list->peers;
 	peer_list->peers = new_peer;
+	return new_peer;
 }
 
 dmq_peer_t* find_peer(str peer_id) {

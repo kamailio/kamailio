@@ -11,6 +11,8 @@
 
 typedef struct peer_response {
 	int resp_code;
+	str content_type;
+	str reason;
 	str body;
 } peer_reponse_t;
 
@@ -33,9 +35,9 @@ extern dmq_peer_list_t* peer_list;
 
 dmq_peer_list_t* init_peer_list();
 dmq_peer_t* search_peer_list(dmq_peer_list_t* peer_list, dmq_peer_t* peer);
-typedef int (*register_dmq_peer_t)(dmq_peer_t*);
+typedef dmq_peer_t* (*register_dmq_peer_t)(dmq_peer_t*);
 
-void add_peer(dmq_peer_list_t* peer_list, dmq_peer_t* peer);
+dmq_peer_t* add_peer(dmq_peer_list_t* peer_list, dmq_peer_t* peer);
 dmq_peer_t* find_peer(str peer_id);
 
 
