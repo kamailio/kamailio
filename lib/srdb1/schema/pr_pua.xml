@@ -95,7 +95,7 @@
     <column>
         <name>call_id</name>
         <type>string</type>
-        <size>&domain_len;</size>
+        <size>&uri_len;</size>
         <description>Call ID</description>
     </column>
 
