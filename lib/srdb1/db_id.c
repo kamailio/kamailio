@@ -209,12 +209,14 @@ static int parse_db_url(struct db_id* id, const str* url)
 	return 0;
 
  err:
-	if (id->scheme) pkg_free(id->scheme);
-	if (id->username) pkg_free(id->username);
-	if (id->password) pkg_free(id->password);
-	if (id->host) pkg_free(id->host);
-	if (id->database) pkg_free(id->database);
-	memset(id, 0, sizeof(struct db_id));
+	if(id){
+		if (id->scheme) pkg_free(id->scheme);
+		if (id->username) pkg_free(id->username);
+		if (id->password) pkg_free(id->password);
+		if (id->host) pkg_free(id->host);
+		if (id->database) pkg_free(id->database);
+		memset(id, 0, sizeof(struct db_id));
+	}
 	if (prev_token) pkg_free(prev_token);
 	return -1;
 }
