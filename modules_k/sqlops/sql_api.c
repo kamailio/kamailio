@@ -671,7 +671,7 @@ int sqlops_get_column(str *sres, int i, str *col)
 		LM_ERR("column index out of bounds [%d/%d]\n", i, res->ncols);
 		goto error;
 	}
-	col = &res->cols[i].name;
+	*col = res->cols[i].name;
 	return 0;
 error:
 	return -1;
