@@ -96,7 +96,7 @@
     <column id="callid">
         <name>callid</name>
         <type>string</type>
-        <size>&domain_len;</size>
+        <size>&uri_len;</size>
         <description>Call ID</description>
     </column>
 
@@ -117,7 +117,7 @@
     <column>
         <name>contact</name>
         <type>string</type>
-        <size>&domain_len;</size>
+        <size>&uri_len;</size>
         <description>Contact</description>
     </column>
 
