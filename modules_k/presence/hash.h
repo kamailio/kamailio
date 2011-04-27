@@ -50,10 +50,12 @@ struct presentity;
 						goto error
 
 #define CONT_COPY(buf, dest, source)\
+	do{ \
 	dest.s= (char*)buf+ size;\
 	memcpy(dest.s, source.s, source.len);\
 	dest.len= source.len;\
-	size+= source.len;
+	size+= source.len; \
+	} while(0);
 
 #define PKG_MEM_TYPE     1<< 1
 #define SHM_MEM_TYPE     1<< 2
