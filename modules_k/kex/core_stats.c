@@ -339,9 +339,9 @@ inline static int mi_reset_and_add_stat(struct mi_node *rpl, stat_var *stat)
 
 	if (stats_support()==0) return -1;
 
-	old_val=get_stat_val_long(stat);
+	old_val=get_stat_val(stat);
 	reset_stat(stat);
-	new_val=get_stat_val_long(stat);
+	new_val=get_stat_val(stat);
 
 	if (old_val==new_val)
 	{
