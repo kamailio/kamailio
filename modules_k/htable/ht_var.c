@@ -176,7 +176,6 @@ int pv_get_ht_cell_expire(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {
 	str htname;
-	ht_cell_t *htc=NULL;
 	ht_pv_t *hpv;
 	unsigned int now;
 
@@ -196,7 +195,7 @@ int pv_get_ht_cell_expire(struct sip_msg *msg,  pv_param_t *param,
 	if(ht_get_cell_expire(hpv->ht, &htname, &now)!=0)
 		return pv_get_null(msg, param, res);
 	/* integer */
-	return pv_get_uintval(msg, param, res, htc->value.n);
+	return pv_get_uintval(msg, param, res, now);
 }
 
 int pv_set_ht_cell_expire(struct sip_msg* msg, pv_param_t *param,
