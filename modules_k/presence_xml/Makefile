@@ -1,7 +1,3 @@
-# $Id: Makefile 1856 2007-03-15 21:06:00Z jblache $
-#
-# Presence_XML 
-# 
 # 
 # WARNING: do not run this directly, it should be run by the master Makefile
 
@@ -12,7 +8,7 @@ LIBS=
 
 DEFS+=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
       -I$(LOCALBASE)/include
-LIBS+=-L$(SYSBASE)/include/lib  -L$(LOCALBASE)/lib -lxml2
+LIBS+=-L$(LOCALBASE)/lib -lxml2
 
 DEFS+=-DOPENSER_MOD_INTERFACE
 
