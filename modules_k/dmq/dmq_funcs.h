@@ -4,6 +4,7 @@
 #include "../../str.h"
 #include "../../modules/tm/dlg.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../config.h"
 #include "dmq.h"
 #include "peer.h"
 #include "worker.h"
@@ -21,7 +22,7 @@ typedef struct dmq_cback_param {
 } dmq_cback_param_t;
 
 dmq_peer_t* register_dmq_peer(dmq_peer_t* peer);
-int send_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cback_t* resp_cback);
-int bcast_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* except, dmq_resp_cback_t* resp_cback);
+int send_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cback_t* resp_cback, int max_forwards);
+int bcast_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* except, dmq_resp_cback_t* resp_cback, int max_forwards);
 
 #endif

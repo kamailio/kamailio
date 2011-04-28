@@ -1,7 +1,7 @@
 #include "notification_peer.h"
 
 static str notification_content_type = str_init("text/plain");
-dmq_resp_cback_t notification_callback = {&notification_callback_f, 0};
+dmq_resp_cback_t notification_callback = {&notification_resp_callback_f, 0};
 
 int add_notification_peer() {
 	dmq_peer_t not_peer;
@@ -36,7 +36,7 @@ dmq_node_t* add_server_and_notify(str* server_address) {
 		goto error;
 	}
 	/* request initial list from the notification server */
-	if(request_nodelist(node) < 0) {
+	if(request_nodelist(node, 1) < 0) {
 		LM_ERR("error requesting initial nodelist\n");
 		goto error;
 	}
@@ -81,9 +81,6 @@ int extract_node_list(dmq_node_list_t* update_list, struct sip_msg* msg) {
 	/* acquire big list lock */
 	lock_get(&update_list->lock);
 	while(tmp < end) {
-		cur = shm_malloc(sizeof(dmq_node_t));
-		memset(cur, 0, sizeof(*cur));
-		
 		match = q_memchr(tmp, '\n', end - tmp);
 		if(match) {
 			match++;
@@ -95,22 +92,19 @@ int extract_node_list(dmq_node_list_t* update_list, struct sip_msg* msg) {
 		tmp_uri.s = tmp;
 		tmp_uri.len = match - tmp - 1;
 		tmp = match;
-		shm_str_dup(&cur->orig_uri, &tmp_uri);
 		/* trim the \r, \n and \0's */
-		trim_r(cur->orig_uri);
-		if(parse_uri(cur->orig_uri.s, cur->orig_uri.len, &cur->uri) < 0) {
-			LM_ERR("cannot parse uri\n");
-			goto error;
-		}
-		if(!find_dmq_node(update_list, cur)) {
-			LM_DBG("found new node %.*s\n", STR_FMT(&cur->orig_uri));
+		trim_r(tmp_uri);
+		if(!find_dmq_node_uri(update_list, &tmp_uri)) {
+			LM_DBG("found new node %.*s\n", STR_FMT(&tmp_uri));
+			cur = build_dmq_node(&tmp_uri, 1);
+			if(!cur) {
+				LM_ERR("error creating new dmq node\n");
+				goto error;
+			}
 			cur->next = update_list->nodes;
 			update_list->nodes = cur;
 			update_list->count++;
 			total_nodes++;
-		} else {
-			shm_free(cur->orig_uri.s);
-			shm_free(cur);
 		}
 	}
 	/* release big list lock */
@@ -118,14 +112,13 @@ int extract_node_list(dmq_node_list_t* update_list, struct sip_msg* msg) {
 	return total_nodes;
 error:
 	lock_release(&update_list->lock);
-	shm_free(cur->orig_uri.s);
-	shm_free(cur);
 	return -1;
 }
 
 int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp) {
 	int nodes_recv;
 	str* response_body = NULL;
+	unsigned int maxforwards = 1;
 	/* received dmqnode list */
 	LM_DBG("dmq triggered from dmq_notification_callback\n");
 	/* parse the message headers */
@@ -133,6 +126,13 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp) {
 		LM_ERR("error parsing message headers\n");
 		goto error;
 	}
+	
+	/* extract the maxforwards value, if any */
+	if(msg->maxforwards) {
+		LM_DBG("max forwards: %.*s\n", STR_FMT(&msg->maxforwards->body));
+		str2int(&msg->maxforwards->body, &maxforwards);
+	}
+	
 	nodes_recv = extract_node_list(node_list, msg);
 	LM_DBG("received %d new nodes\n", nodes_recv);
 	response_body = build_notification_body();
@@ -142,8 +142,9 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp) {
 	resp->resp_code = 200;
 	
 	/* if we received any new nodes tell about them to the others */
-	if(nodes_recv > 0) {
-		bcast_dmq_message(dmq_notification_peer, response_body, 0, &notification_callback);
+	if(nodes_recv > 0 && maxforwards) {
+		/* maxforwards is set to 0 so that the message is will not be in a spiral */
+		bcast_dmq_message(dmq_notification_peer, response_body, 0, &notification_callback, 0);
 	}
 	LM_DBG("broadcasted message\n");
 	pkg_free(response_body);
@@ -205,16 +206,16 @@ error:
 	return NULL;
 }
 
-int request_nodelist(dmq_node_t* node) {
+int request_nodelist(dmq_node_t* node, int forward) {
 	str* body = build_notification_body();
 	int ret;
-	ret = send_dmq_message(dmq_notification_peer, body, node, &notification_callback);
+	ret = send_dmq_message(dmq_notification_peer, body, node, &notification_callback, forward);
 	pkg_free(body->s);
 	pkg_free(body);
 	return ret;
 }
 
-int notification_callback_f(struct sip_msg* msg, int code, dmq_node_t* node, void* param) {
+int notification_resp_callback_f(struct sip_msg* msg, int code, dmq_node_t* node, void* param) {
 	int ret;
 	LM_DBG("notification_callback_f triggered [%p %d %p]\n", msg, code, param);
 	if(code == 408) {

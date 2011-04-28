@@ -192,6 +192,9 @@ static int mod_init(void) {
 	 * add the ping timer
 	 * it pings the servers once in a while so that we know which failed
 	 */
+	if(ping_interval < MIN_PING_INTERVAL) {
+		ping_interval = MIN_PING_INTERVAL;
+	}
 	register_timer(ping_servers, 0, ping_interval);
 	
 	return 0;

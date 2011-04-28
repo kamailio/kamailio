@@ -13,6 +13,7 @@
 #include "dmqnode.h"
 
 #define DEFAULT_NUM_WORKERS	2
+#define MIN_PING_INTERVAL	4
 
 extern int num_workers;
 extern dmq_worker_t* workers;

@@ -68,17 +68,22 @@ int build_uri_str(str* username, struct sip_uri* uri, str* from) {
  * except - we do not send the message to this node
  * resp_cback - a response callback that gets called when the transaction is complete
  */
-int bcast_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* except, dmq_resp_cback_t* resp_cback) {
+int bcast_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* except, dmq_resp_cback_t* resp_cback, int max_forwards) {
 	dmq_node_t* node;
 	
 	lock_get(&node_list->lock);
 	node = node_list->nodes;
 	while(node) {
-		if((except && cmp_dmq_node(node, except)) || node->local) {
+		/* we do not send the message to the following:
+		 *   - the except node
+		 *   - itself
+		 *   - any inactive nodes
+		 */
+		if((except && cmp_dmq_node(node, except)) || node->local || node->status != DMQ_NODE_ACTIVE) {
 			node = node->next;
 			continue;
 		}
-		if(send_dmq_message(peer, body, node, resp_cback) < 0) {
+		if(send_dmq_message(peer, body, node, resp_cback, max_forwards) < 0) {
 			LM_ERR("error sending dmq message\n");
 			goto error;
 		}
@@ -97,12 +102,19 @@ error:
  * node - we send the message to this node
  * resp_cback - a response callback that gets called when the transaction is complete
  */
-int send_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cback_t* resp_cback) {
+int send_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cback_t* resp_cback, int max_forwards) {
 	uac_req_t uac_r;
 	str str_hdr = {0, 0};
 	str from, to, req_uri;
 	dmq_cback_param_t* cb_param = NULL;
 	int result = 0;
+	int len = 0;
+	
+	/* Max-Forwards */
+	str_hdr.len = 18 + CRLF_LEN;
+	str_hdr.s = pkg_malloc(str_hdr.len);
+	len += sprintf(str_hdr.s, "Max-Forwards: %d%s", max_forwards, CRLF);
+	str_hdr.len = len;
 	
 	cb_param = shm_malloc(sizeof(*cb_param));
 	memset(cb_param, 0, sizeof(*cb_param));
@@ -111,11 +123,11 @@ int send_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cba
 	
 	if(build_uri_str(&peer->peer_id, &dmq_server_uri, &from) < 0) {
 		LM_ERR("error building from string [username %.*s]\n", STR_FMT(&peer->peer_id));
-		return -1;
+		goto error;
 	}
 	if(build_uri_str(&peer->peer_id, &node->uri, &to) < 0) {
 		LM_ERR("error building to string\n");
-		return -1;
+		goto error;
 	}
 	req_uri = to;
 	
@@ -126,9 +138,13 @@ int send_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cba
 			       NULL);
 	if(result < 0) {
 		LM_ERR("error in tmb.t_request_within\n");
-		return -1;
+		goto error;
 	}
+	pkg_free(str_hdr.s);
 	return 0;
+error:
+	pkg_free(str_hdr.s);
+	return -1;
 }
 
 /* pings the servers in the nodelist
@@ -142,7 +158,7 @@ void ping_servers(unsigned int ticks,void *param) {
 	str* body = build_notification_body();
 	int ret;
 	LM_DBG("ping_servers\n");
-	ret = bcast_dmq_message(dmq_notification_peer, body, notification_node, &notification_callback);
+	ret = bcast_dmq_message(dmq_notification_peer, body, notification_node, &notification_callback, 0);
 	pkg_free(body->s);
 	pkg_free(body);
 	if(ret < 0) {
