@@ -1,0 +1,279 @@
+ipops Module
+
+Iñaki Baz Castillo
+
+   <ibc@aliax.net>
+
+Edited by
+
+Iñaki Baz Castillo
+
+   <ibc@aliax.net>
+
+   Copyright © 2011 Iñaki Baz Castillo
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. SIP Router Modules
+              2.2. External Libraries or Applications
+
+        3. Exported Parameters
+        4. Exported Functions
+
+              4.1. is_ip (ip)
+              4.2. is_pure_ip (ip)
+              4.3. is_ipv4 (ip)
+              4.4. is_ipv6 (ip)
+              4.5. is_ipv6_reference (ip)
+              4.6. ip_type (ip)
+              4.7. compare_ips (ip1, ip2)
+              4.8. compare_pure_ips (ip1, ip2)
+
+   List of Examples
+
+   1.1. is_ip usage
+   1.2. is_pure_ip usage
+   1.3. is_ipv4 usage
+   1.4. is_ipv6 usage
+   1.5. is_ipv6_reference usage
+   1.6. ip_type usage
+   1.7. compare_ips usage
+   1.8. compare_pure_ips usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. SIP Router Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+   4. Exported Functions
+
+        4.1. is_ip (ip)
+        4.2. is_pure_ip (ip)
+        4.3. is_ipv4 (ip)
+        4.4. is_ipv6 (ip)
+        4.5. is_ipv6_reference (ip)
+        4.6. ip_type (ip)
+        4.7. compare_ips (ip1, ip2)
+        4.8. compare_pure_ips (ip1, ip2)
+
+1. Overview
+
+   This module offers operations for IPv4 and IPv6.
+
+   IPv6 is defined in RFC 2460. The same IPv6 can be represented by
+   different ASCII strings, so binary comparison is required. For example,
+   the following IPv6 are equivalent:
+     * 1080:0000:0000:0000:0008:0800:200C:417A
+     * 1080:0:0:0:8:800:200C:417A
+     * 1080::8:800:200C:417A
+
+   When using IPv6 in an URI (i.e. a SIP URI) such IP must be written in
+   "IPv6 reference" format (which is the textual representation of the
+   IPv6 enclosed between [ ] symbols). An example is
+   “sip:alice@[1080:0:0:0:8:800:200C:417A]”. This module also allows
+   comparing a IPv6 with its IPv6 reference representation.
+
+2. Dependencies
+
+   2.1. SIP Router Modules
+   2.2. External Libraries or Applications
+
+2.1. SIP Router Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other SIP Router modules
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running SIP Router with this module loaded:
+     * No dependencies on external libraries
+
+3. Exported Parameters
+
+4. Exported Functions
+
+   4.1. is_ip (ip)
+   4.2. is_pure_ip (ip)
+   4.3. is_ipv4 (ip)
+   4.4. is_ipv6 (ip)
+   4.5. is_ipv6_reference (ip)
+   4.6. ip_type (ip)
+   4.7. compare_ips (ip1, ip2)
+   4.8. compare_pure_ips (ip1, ip2)
+
+4.1.  is_ip (ip)
+
+   Returns TRUE if the argument is a valid IPv4, IPv6 or IPv6 reference.
+   FALSE otherwise.
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.1.  is_ip usage
+...
+if (is_ip($rd)) {
+  xlog("L_INFO", "RURI domain is IP\n");
+}
+...
+
+4.2.  is_pure_ip (ip)
+
+   Returns TRUE if the argument is a valid IPv4 or IPv6. FALSE otherwise.
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.2.  is_pure_ip usage
+...
+$var(ip) = "::1";
+if (is_pure_ip($var(ip))) {
+  xlog("L_INFO", "it's IPv4 or IPv6\n");
+}
+...
+
+4.3.  is_ipv4 (ip)
+
+   Returns TRUE if the argument is a valid IPv4. FALSE otherwise.
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.3.  is_ipv4 usage
+...
+if (is_ipv4("1.2.3.4")) {
+  xlog("L_INFO", "it's IPv4\n");
+}
+...
+
+4.4.  is_ipv6 (ip)
+
+   Returns TRUE if the argument is a valid IPv6. FALSE otherwise.
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.4.  is_ipv6 usage
+...
+if (is_ipv6("1080:0:0:0:8:800:200C:417A")) {
+  xlog("L_INFO", "it's IPv6\n");
+}
+...
+
+4.5.  is_ipv6_reference (ip)
+
+   Returns TRUE if the argument is a valid IPv6 reference. FALSE
+   otherwise.
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.5.  is_ipv6_reference usage
+...
+if (is_ipv6_reference("[1080:0:0:0:8:800:200C:417A]")) {
+  xlog("L_INFO", "it's IPv6 reference\n");
+}
+...
+
+4.6.  ip_type (ip)
+
+   Returns the type of the given IP.
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+
+   Return value:
+     * 1 - IPv4
+     * 2 - IPv6
+     * 3 - IPv6 reference
+     * -1 - invalid IP
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.6.  ip_type usage
+...
+ip_type($var(myip));
+switch($rc) {
+  case 1:
+    xlog("L_INFO", "it's IPv4\n");
+    break;
+  case 2:
+    xlog("L_INFO", "it's IPv6\n");
+    break;
+  case 3:
+    xlog("L_INFO", "it's IPv6 reference\n");
+    break;
+  case -1:
+    xlog("L_INFO", it's type invalid\n");
+    break;
+}
+...
+
+4.7.  compare_ips (ip1, ip2)
+
+   Returns TRUE if both IP's are the same. FALSE otherwise. This function
+   also allows comparing an IPv6 against an IPv6 reference.
+
+   Parameters:
+     * ip1 - String or pseudo-variable containing the first IP to compare.
+     * ip2 - String or pseudo-variable containing the second IP to
+       compare.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.7.  compare_ips usage
+...
+if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:41
+7A]") {
+  xlog("L_INFO", "both are the same IP\n");
+}
+...
+
+4.8.  compare_pure_ips (ip1, ip2)
+
+   Returns TRUE if both IP's are the same. FALSE otherwise. This function
+   does NOT allow comparing an IPv6 against an IPv6 reference.
+
+   Parameters:
+     * ip1 - String or pseudo-variable containing the first IP to compare.
+     * ip2 - String or pseudo-variable containing the second IP to
+       compare.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.8.  compare_pure_ips usage
+...
+if ($si, "1080::8:800:200C:417A") {
+  xlog("L_INFO", "both are the same IP\n");
+}
+...
