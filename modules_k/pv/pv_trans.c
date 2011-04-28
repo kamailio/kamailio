@@ -1016,6 +1016,7 @@ int tr_eval_nameaddr(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		pv_value_t *val)
 {
 	str sv;
+	int ret;
 
 	if(val==NULL || (!(val->flags&PV_VAL_STR)) || val->rs.len<=0)
 		return -1;
@@ -1045,8 +1046,14 @@ int tr_eval_nameaddr(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		
 		/* parse params */
 		sv = _tr_nameaddr_str;
-		if (parse_nameaddr(&sv, &_tr_nameaddr)<0)
-			return -1;
+		ret = parse_nameaddr(&sv, &_tr_nameaddr);
+		if (ret < 0) {
+			if(ret != -3) return -1;
+			/* -3 means no "<" found so treat whole nameaddr as an URI */
+			_tr_nameaddr.uri = _tr_nameaddr_str;
+			_tr_nameaddr.name = _tr_empty;
+			_tr_nameaddr.len = _tr_nameaddr_str.len;
+		}
 	}
 	
 	memset(val, 0, sizeof(pv_value_t));
