@@ -97,13 +97,29 @@ enum kill_reason get_kr() {
 
 void lock_hash(int i) 
 {
-	lock(&_tm_table->entries[i].mutex);
+
+	int mypid;
+
+	mypid = my_pid();
+	if (likely(atomic_get(&_tm_table->entries[i].locker_pid) != mypid)) {
+		lock(&_tm_table->entries[i].mutex);
+		atomic_set(&_tm_table->entries[i].locker_pid, mypid);
+	} else {
+		/* locked within the same process that called us*/
+		_tm_table->entries[i].rec_lock_level++;
+	}
 }
 
 
 void unlock_hash(int i) 
 {
-	unlock(&_tm_table->entries[i].mutex);
+	if (likely(_tm_table->entries[i].rec_lock_level == 0)) {
+		atomic_set(&_tm_table->entries[i].locker_pid, 0);
+		unlock(&_tm_table->entries[i].mutex);
+	} else  {
+		/* recursive locked => decrease rec. lock count */
+		_tm_table->entries[i].rec_lock_level--;
+	}
 }
 
 
