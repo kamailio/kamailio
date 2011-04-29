@@ -126,8 +126,13 @@ typedef unsigned long	ULONG_T;
 #define XOR				1
 #define TRANSACTION_ID	12
 
-#define PADDED_TO_FOUR(len) (len == 0) ? 0 : len + (PAD4 - len%PAD4)
-#define PADDED_TO_SIXTYFOUR(len) (len == 0) ? 0 : len + (PAD64 - len%PAD64)
+/** padd len to a multiple of sz.
+ *  sz must be a power of the form 2^k (e.g. 2, 4, 8, 16 ...)
+ */
+#define PADD_TO(len, sz)	(((len) + (sz)-1) & (~((sz) - 1)))
+
+#define PADDED_TO_FOUR(len) PADD_TO(len, 4)
+#define PADDED_TO_SIXTYFOUR(len) PADD_TO(len, 64)
 
 struct transaction_id {
 	UINT_T	magic_cookie;
