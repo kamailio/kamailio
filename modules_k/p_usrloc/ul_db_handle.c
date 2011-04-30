@@ -617,7 +617,8 @@ int load_data(db_func_t * dbf, db1_con_t * dbh, ul_db_handle_t * handle, int id)
 			goto ret;
 		}
 		if(strlen((char *)VAL_STRING(ROW_VALUES(row) + 1)) >= (UL_DB_URL_LEN - 1)){
-			LM_ERR("weird: very large URL (%d Bytes)\n", strlen((char *)VAL_STRING(ROW_VALUES(row) + 1)) + 1);
+			LM_ERR("weird: very large URL (%d Bytes)\n",
+					(int)(strlen((char *)VAL_STRING(ROW_VALUES(row) + 1)) + 1));
 			ret = -1;
 			goto ret;
 		}
