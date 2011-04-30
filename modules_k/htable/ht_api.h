@@ -66,8 +66,8 @@ typedef struct _ht_pv {
 	pv_elem_t *pve;
 } ht_pv_t, *ht_pv_p;
 
-int ht_pkg_init(str *name, int autoexp, str *dbtable, int size, int dbmode);
-int ht_shm_init(void);
+int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode);
+int ht_init_tables(void);
 int ht_destroy(void);
 int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode);
 int ht_del_cell(ht_t *ht, str *name);

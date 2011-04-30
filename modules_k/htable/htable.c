@@ -144,7 +144,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(ht_shm_init()!=0)
+	if(ht_init_tables()!=0)
 		return -1;
 	ht_db_init_params();
 
