@@ -1,18 +1,16 @@
 
 #line 1 "ip_parser.rl"
 #include "ip_parser.h"
-#include <stdio.h>
-//#include <stdlib.h>
 
 
 /** Ragel machine **/
 
-#line 43 "ip_parser.rl"
+#line 41 "ip_parser.rl"
 
 
 /** Data **/
 
-#line 16 "ip_parser.c"
+#line 14 "ip_parser.c"
 static const int ip_parser_start = 1;
 static const int ip_parser_first_final = 237;
 static const int ip_parser_error = 0;
@@ -20,7 +18,7 @@ static const int ip_parser_error = 0;
 static const int ip_parser_en_main = 1;
 
 
-#line 47 "ip_parser.rl"
+#line 45 "ip_parser.rl"
 
 
 /** exec **/
@@ -34,14 +32,14 @@ enum enum_ip_type ip_parser_execute(const char *str, size_t len)
   pe = str+len;
 
   
-#line 38 "ip_parser.c"
+#line 36 "ip_parser.c"
 	{
 	cs = ip_parser_start;
 	}
 
-#line 60 "ip_parser.rl"
+#line 58 "ip_parser.rl"
   
-#line 45 "ip_parser.c"
+#line 43 "ip_parser.c"
 	{
 	if ( p == pe )
 		goto _test_eof;
@@ -135,19 +133,19 @@ case 7:
 		goto tr24;
 	goto st0;
 tr21:
-#line 10 "ip_parser.rl"
+#line 8 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv4;
   }
 	goto st237;
 tr78:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
 	goto st237;
 tr180:
-#line 18 "ip_parser.rl"
+#line 16 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6_reference;
   }
@@ -156,10 +154,10 @@ st237:
 	if ( ++p == pe )
 		goto _test_eof237;
 case 237:
-#line 160 "ip_parser.c"
+#line 158 "ip_parser.c"
 	goto st0;
 tr22:
-#line 10 "ip_parser.rl"
+#line 8 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv4;
   }
@@ -168,12 +166,12 @@ st238:
 	if ( ++p == pe )
 		goto _test_eof238;
 case 238:
-#line 172 "ip_parser.c"
+#line 170 "ip_parser.c"
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto tr24;
 	goto st0;
 tr24:
-#line 10 "ip_parser.rl"
+#line 8 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv4;
   }
@@ -182,12 +180,12 @@ st239:
 	if ( ++p == pe )
 		goto _test_eof239;
 case 239:
-#line 186 "ip_parser.c"
+#line 184 "ip_parser.c"
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto tr21;
 	goto st0;
 tr23:
-#line 10 "ip_parser.rl"
+#line 8 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv4;
   }
@@ -196,7 +194,7 @@ st240:
 	if ( ++p == pe )
 		goto _test_eof240;
 case 240:
-#line 200 "ip_parser.c"
+#line 198 "ip_parser.c"
 	if ( (*p) == 53 )
 		goto tr272;
 	if ( (*p) > 52 ) {
@@ -206,7 +204,7 @@ case 240:
 		goto tr24;
 	goto st0;
 tr272:
-#line 10 "ip_parser.rl"
+#line 8 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv4;
   }
@@ -215,7 +213,7 @@ st241:
 	if ( ++p == pe )
 		goto _test_eof241;
 case 241:
-#line 219 "ip_parser.c"
+#line 217 "ip_parser.c"
 	if ( 48 <= (*p) && (*p) <= 53 )
 		goto tr21;
 	goto st0;
@@ -760,7 +758,7 @@ case 50:
 		goto tr81;
 	goto st0;
 tr79:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -769,12 +767,12 @@ st242:
 	if ( ++p == pe )
 		goto _test_eof242;
 case 242:
-#line 773 "ip_parser.c"
+#line 771 "ip_parser.c"
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto tr81;
 	goto st0;
 tr81:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -783,12 +781,12 @@ st243:
 	if ( ++p == pe )
 		goto _test_eof243;
 case 243:
-#line 787 "ip_parser.c"
+#line 785 "ip_parser.c"
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto tr78;
 	goto st0;
 tr80:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -797,7 +795,7 @@ st244:
 	if ( ++p == pe )
 		goto _test_eof244;
 case 244:
-#line 801 "ip_parser.c"
+#line 799 "ip_parser.c"
 	if ( (*p) == 53 )
 		goto tr273;
 	if ( (*p) > 52 ) {
@@ -807,7 +805,7 @@ case 244:
 		goto tr81;
 	goto st0;
 tr273:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -816,7 +814,7 @@ st245:
 	if ( ++p == pe )
 		goto _test_eof245;
 case 245:
-#line 820 "ip_parser.c"
+#line 818 "ip_parser.c"
 	if ( 48 <= (*p) && (*p) <= 53 )
 		goto tr78;
 	goto st0;
@@ -955,7 +953,7 @@ case 62:
 		goto tr86;
 	goto st0;
 tr86:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -964,7 +962,7 @@ st246:
 	if ( ++p == pe )
 		goto _test_eof246;
 case 246:
-#line 968 "ip_parser.c"
+#line 966 "ip_parser.c"
 	if ( (*p) < 65 ) {
 		if ( 48 <= (*p) && (*p) <= 57 )
 			goto tr274;
@@ -975,7 +973,7 @@ case 246:
 		goto tr274;
 	goto st0;
 tr274:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -984,7 +982,7 @@ st247:
 	if ( ++p == pe )
 		goto _test_eof247;
 case 247:
-#line 988 "ip_parser.c"
+#line 986 "ip_parser.c"
 	if ( (*p) < 65 ) {
 		if ( 48 <= (*p) && (*p) <= 57 )
 			goto tr275;
@@ -995,7 +993,7 @@ case 247:
 		goto tr275;
 	goto st0;
 tr275:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1004,7 +1002,7 @@ st248:
 	if ( ++p == pe )
 		goto _test_eof248;
 case 248:
-#line 1008 "ip_parser.c"
+#line 1006 "ip_parser.c"
 	if ( (*p) < 65 ) {
 		if ( 48 <= (*p) && (*p) <= 57 )
 			goto tr78;
@@ -1141,7 +1139,7 @@ case 69:
 		goto st59;
 	goto st0;
 tr63:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1150,7 +1148,7 @@ st249:
 	if ( ++p == pe )
 		goto _test_eof249;
 case 249:
-#line 1154 "ip_parser.c"
+#line 1152 "ip_parser.c"
 	if ( (*p) < 65 ) {
 		if ( 48 <= (*p) && (*p) <= 57 )
 			goto tr86;
@@ -1176,7 +1174,7 @@ case 70:
 		goto st59;
 	goto st0;
 tr54:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1185,7 +1183,7 @@ st250:
 	if ( ++p == pe )
 		goto _test_eof250;
 case 250:
-#line 1189 "ip_parser.c"
+#line 1187 "ip_parser.c"
 	switch( (*p) ) {
 		case 48: goto tr91;
 		case 49: goto tr92;
@@ -1201,7 +1199,7 @@ case 250:
 		goto tr95;
 	goto st0;
 tr91:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1210,7 +1208,7 @@ st251:
 	if ( ++p == pe )
 		goto _test_eof251;
 case 251:
-#line 1214 "ip_parser.c"
+#line 1212 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st71;
@@ -1225,7 +1223,7 @@ case 251:
 		goto tr276;
 	goto st0;
 tr276:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1234,7 +1232,7 @@ st252:
 	if ( ++p == pe )
 		goto _test_eof252;
 case 252:
-#line 1238 "ip_parser.c"
+#line 1236 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st71;
 	if ( (*p) < 65 ) {
@@ -1247,7 +1245,7 @@ case 252:
 		goto tr278;
 	goto st0;
 tr278:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1256,7 +1254,7 @@ st253:
 	if ( ++p == pe )
 		goto _test_eof253;
 case 253:
-#line 1260 "ip_parser.c"
+#line 1258 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st71;
 	if ( (*p) < 65 ) {
@@ -1269,7 +1267,7 @@ case 253:
 		goto tr279;
 	goto st0;
 tr279:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1278,7 +1276,7 @@ st254:
 	if ( ++p == pe )
 		goto _test_eof254;
 case 254:
-#line 1282 "ip_parser.c"
+#line 1280 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st71;
 	goto st0;
@@ -1296,7 +1294,7 @@ case 71:
 		goto tr86;
 	goto st0;
 tr92:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1305,7 +1303,7 @@ st255:
 	if ( ++p == pe )
 		goto _test_eof255;
 case 255:
-#line 1309 "ip_parser.c"
+#line 1307 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st71;
@@ -1320,7 +1318,7 @@ case 255:
 		goto tr276;
 	goto st0;
 tr280:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1329,7 +1327,7 @@ st256:
 	if ( ++p == pe )
 		goto _test_eof256;
 case 256:
-#line 1333 "ip_parser.c"
+#line 1331 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st71;
@@ -1344,7 +1342,7 @@ case 256:
 		goto tr278;
 	goto st0;
 tr281:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1353,7 +1351,7 @@ st257:
 	if ( ++p == pe )
 		goto _test_eof257;
 case 257:
-#line 1357 "ip_parser.c"
+#line 1355 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st71;
@@ -1368,7 +1366,7 @@ case 257:
 		goto tr279;
 	goto st0;
 tr93:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1377,7 +1375,7 @@ st258:
 	if ( ++p == pe )
 		goto _test_eof258;
 case 258:
-#line 1381 "ip_parser.c"
+#line 1379 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 53: goto tr282;
@@ -1396,7 +1394,7 @@ case 258:
 		goto tr283;
 	goto st0;
 tr282:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1405,7 +1403,7 @@ st259:
 	if ( ++p == pe )
 		goto _test_eof259;
 case 259:
-#line 1409 "ip_parser.c"
+#line 1407 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st71;
@@ -1423,7 +1421,7 @@ case 259:
 		goto tr278;
 	goto st0;
 tr283:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1432,7 +1430,7 @@ st260:
 	if ( ++p == pe )
 		goto _test_eof260;
 case 260:
-#line 1436 "ip_parser.c"
+#line 1434 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st71;
@@ -1447,7 +1445,7 @@ case 260:
 		goto tr278;
 	goto st0;
 tr94:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1456,7 +1454,7 @@ st261:
 	if ( ++p == pe )
 		goto _test_eof261;
 case 261:
-#line 1460 "ip_parser.c"
+#line 1458 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st71;
@@ -1471,7 +1469,7 @@ case 261:
 		goto tr276;
 	goto st0;
 tr95:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1480,7 +1478,7 @@ st262:
 	if ( ++p == pe )
 		goto _test_eof262;
 case 262:
-#line 1484 "ip_parser.c"
+#line 1482 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st71;
 	if ( (*p) < 65 ) {
@@ -1493,7 +1491,7 @@ case 262:
 		goto tr276;
 	goto st0;
 tr48:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1502,7 +1500,7 @@ st263:
 	if ( ++p == pe )
 		goto _test_eof263;
 case 263:
-#line 1506 "ip_parser.c"
+#line 1504 "ip_parser.c"
 	switch( (*p) ) {
 		case 48: goto tr96;
 		case 49: goto tr97;
@@ -1518,7 +1516,7 @@ case 263:
 		goto tr100;
 	goto st0;
 tr96:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1527,7 +1525,7 @@ st264:
 	if ( ++p == pe )
 		goto _test_eof264;
 case 264:
-#line 1531 "ip_parser.c"
+#line 1529 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st72;
@@ -1542,7 +1540,7 @@ case 264:
 		goto tr284;
 	goto st0;
 tr284:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1551,7 +1549,7 @@ st265:
 	if ( ++p == pe )
 		goto _test_eof265;
 case 265:
-#line 1555 "ip_parser.c"
+#line 1553 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st72;
 	if ( (*p) < 65 ) {
@@ -1564,7 +1562,7 @@ case 265:
 		goto tr286;
 	goto st0;
 tr286:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1573,7 +1571,7 @@ st266:
 	if ( ++p == pe )
 		goto _test_eof266;
 case 266:
-#line 1577 "ip_parser.c"
+#line 1575 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st72;
 	if ( (*p) < 65 ) {
@@ -1586,7 +1584,7 @@ case 266:
 		goto tr287;
 	goto st0;
 tr287:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1595,7 +1593,7 @@ st267:
 	if ( ++p == pe )
 		goto _test_eof267;
 case 267:
-#line 1599 "ip_parser.c"
+#line 1597 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st72;
 	goto st0;
@@ -1618,7 +1616,7 @@ case 72:
 		goto tr95;
 	goto st0;
 tr97:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1627,7 +1625,7 @@ st268:
 	if ( ++p == pe )
 		goto _test_eof268;
 case 268:
-#line 1631 "ip_parser.c"
+#line 1629 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st72;
@@ -1642,7 +1640,7 @@ case 268:
 		goto tr284;
 	goto st0;
 tr288:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1651,7 +1649,7 @@ st269:
 	if ( ++p == pe )
 		goto _test_eof269;
 case 269:
-#line 1655 "ip_parser.c"
+#line 1653 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st72;
@@ -1666,7 +1664,7 @@ case 269:
 		goto tr286;
 	goto st0;
 tr289:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1675,7 +1673,7 @@ st270:
 	if ( ++p == pe )
 		goto _test_eof270;
 case 270:
-#line 1679 "ip_parser.c"
+#line 1677 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st72;
@@ -1690,7 +1688,7 @@ case 270:
 		goto tr287;
 	goto st0;
 tr98:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1699,7 +1697,7 @@ st271:
 	if ( ++p == pe )
 		goto _test_eof271;
 case 271:
-#line 1703 "ip_parser.c"
+#line 1701 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 53: goto tr290;
@@ -1718,7 +1716,7 @@ case 271:
 		goto tr291;
 	goto st0;
 tr290:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1727,7 +1725,7 @@ st272:
 	if ( ++p == pe )
 		goto _test_eof272;
 case 272:
-#line 1731 "ip_parser.c"
+#line 1729 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st72;
@@ -1745,7 +1743,7 @@ case 272:
 		goto tr286;
 	goto st0;
 tr291:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1754,7 +1752,7 @@ st273:
 	if ( ++p == pe )
 		goto _test_eof273;
 case 273:
-#line 1758 "ip_parser.c"
+#line 1756 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st72;
@@ -1769,7 +1767,7 @@ case 273:
 		goto tr286;
 	goto st0;
 tr99:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1778,7 +1776,7 @@ st274:
 	if ( ++p == pe )
 		goto _test_eof274;
 case 274:
-#line 1782 "ip_parser.c"
+#line 1780 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st72;
@@ -1793,7 +1791,7 @@ case 274:
 		goto tr284;
 	goto st0;
 tr100:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1802,7 +1800,7 @@ st275:
 	if ( ++p == pe )
 		goto _test_eof275;
 case 275:
-#line 1806 "ip_parser.c"
+#line 1804 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st72;
 	if ( (*p) < 65 ) {
@@ -1815,7 +1813,7 @@ case 275:
 		goto tr284;
 	goto st0;
 tr42:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1824,7 +1822,7 @@ st276:
 	if ( ++p == pe )
 		goto _test_eof276;
 case 276:
-#line 1828 "ip_parser.c"
+#line 1826 "ip_parser.c"
 	switch( (*p) ) {
 		case 48: goto tr101;
 		case 49: goto tr102;
@@ -1840,7 +1838,7 @@ case 276:
 		goto tr105;
 	goto st0;
 tr101:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1849,7 +1847,7 @@ st277:
 	if ( ++p == pe )
 		goto _test_eof277;
 case 277:
-#line 1853 "ip_parser.c"
+#line 1851 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st73;
@@ -1864,7 +1862,7 @@ case 277:
 		goto tr292;
 	goto st0;
 tr292:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1873,7 +1871,7 @@ st278:
 	if ( ++p == pe )
 		goto _test_eof278;
 case 278:
-#line 1877 "ip_parser.c"
+#line 1875 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st73;
 	if ( (*p) < 65 ) {
@@ -1886,7 +1884,7 @@ case 278:
 		goto tr294;
 	goto st0;
 tr294:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1895,7 +1893,7 @@ st279:
 	if ( ++p == pe )
 		goto _test_eof279;
 case 279:
-#line 1899 "ip_parser.c"
+#line 1897 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st73;
 	if ( (*p) < 65 ) {
@@ -1908,7 +1906,7 @@ case 279:
 		goto tr295;
 	goto st0;
 tr295:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1917,7 +1915,7 @@ st280:
 	if ( ++p == pe )
 		goto _test_eof280;
 case 280:
-#line 1921 "ip_parser.c"
+#line 1919 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st73;
 	goto st0;
@@ -1940,7 +1938,7 @@ case 73:
 		goto tr100;
 	goto st0;
 tr102:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1949,7 +1947,7 @@ st281:
 	if ( ++p == pe )
 		goto _test_eof281;
 case 281:
-#line 1953 "ip_parser.c"
+#line 1951 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st73;
@@ -1964,7 +1962,7 @@ case 281:
 		goto tr292;
 	goto st0;
 tr296:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1973,7 +1971,7 @@ st282:
 	if ( ++p == pe )
 		goto _test_eof282;
 case 282:
-#line 1977 "ip_parser.c"
+#line 1975 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st73;
@@ -1988,7 +1986,7 @@ case 282:
 		goto tr294;
 	goto st0;
 tr297:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -1997,7 +1995,7 @@ st283:
 	if ( ++p == pe )
 		goto _test_eof283;
 case 283:
-#line 2001 "ip_parser.c"
+#line 1999 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st73;
@@ -2012,7 +2010,7 @@ case 283:
 		goto tr295;
 	goto st0;
 tr103:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2021,7 +2019,7 @@ st284:
 	if ( ++p == pe )
 		goto _test_eof284;
 case 284:
-#line 2025 "ip_parser.c"
+#line 2023 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 53: goto tr298;
@@ -2040,7 +2038,7 @@ case 284:
 		goto tr299;
 	goto st0;
 tr298:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2049,7 +2047,7 @@ st285:
 	if ( ++p == pe )
 		goto _test_eof285;
 case 285:
-#line 2053 "ip_parser.c"
+#line 2051 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st73;
@@ -2067,7 +2065,7 @@ case 285:
 		goto tr294;
 	goto st0;
 tr299:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2076,7 +2074,7 @@ st286:
 	if ( ++p == pe )
 		goto _test_eof286;
 case 286:
-#line 2080 "ip_parser.c"
+#line 2078 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st73;
@@ -2091,7 +2089,7 @@ case 286:
 		goto tr294;
 	goto st0;
 tr104:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2100,7 +2098,7 @@ st287:
 	if ( ++p == pe )
 		goto _test_eof287;
 case 287:
-#line 2104 "ip_parser.c"
+#line 2102 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st73;
@@ -2115,7 +2113,7 @@ case 287:
 		goto tr292;
 	goto st0;
 tr105:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2124,7 +2122,7 @@ st288:
 	if ( ++p == pe )
 		goto _test_eof288;
 case 288:
-#line 2128 "ip_parser.c"
+#line 2126 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st73;
 	if ( (*p) < 65 ) {
@@ -2137,7 +2135,7 @@ case 288:
 		goto tr292;
 	goto st0;
 tr36:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2146,7 +2144,7 @@ st289:
 	if ( ++p == pe )
 		goto _test_eof289;
 case 289:
-#line 2150 "ip_parser.c"
+#line 2148 "ip_parser.c"
 	switch( (*p) ) {
 		case 48: goto tr106;
 		case 49: goto tr107;
@@ -2162,7 +2160,7 @@ case 289:
 		goto tr110;
 	goto st0;
 tr106:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2171,7 +2169,7 @@ st290:
 	if ( ++p == pe )
 		goto _test_eof290;
 case 290:
-#line 2175 "ip_parser.c"
+#line 2173 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st74;
@@ -2186,7 +2184,7 @@ case 290:
 		goto tr300;
 	goto st0;
 tr300:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2195,7 +2193,7 @@ st291:
 	if ( ++p == pe )
 		goto _test_eof291;
 case 291:
-#line 2199 "ip_parser.c"
+#line 2197 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st74;
 	if ( (*p) < 65 ) {
@@ -2208,7 +2206,7 @@ case 291:
 		goto tr302;
 	goto st0;
 tr302:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2217,7 +2215,7 @@ st292:
 	if ( ++p == pe )
 		goto _test_eof292;
 case 292:
-#line 2221 "ip_parser.c"
+#line 2219 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st74;
 	if ( (*p) < 65 ) {
@@ -2230,7 +2228,7 @@ case 292:
 		goto tr303;
 	goto st0;
 tr303:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2239,7 +2237,7 @@ st293:
 	if ( ++p == pe )
 		goto _test_eof293;
 case 293:
-#line 2243 "ip_parser.c"
+#line 2241 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st74;
 	goto st0;
@@ -2262,7 +2260,7 @@ case 74:
 		goto tr105;
 	goto st0;
 tr107:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2271,7 +2269,7 @@ st294:
 	if ( ++p == pe )
 		goto _test_eof294;
 case 294:
-#line 2275 "ip_parser.c"
+#line 2273 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st74;
@@ -2286,7 +2284,7 @@ case 294:
 		goto tr300;
 	goto st0;
 tr304:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2295,7 +2293,7 @@ st295:
 	if ( ++p == pe )
 		goto _test_eof295;
 case 295:
-#line 2299 "ip_parser.c"
+#line 2297 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st74;
@@ -2310,7 +2308,7 @@ case 295:
 		goto tr302;
 	goto st0;
 tr305:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2319,7 +2317,7 @@ st296:
 	if ( ++p == pe )
 		goto _test_eof296;
 case 296:
-#line 2323 "ip_parser.c"
+#line 2321 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st74;
@@ -2334,7 +2332,7 @@ case 296:
 		goto tr303;
 	goto st0;
 tr108:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2343,7 +2341,7 @@ st297:
 	if ( ++p == pe )
 		goto _test_eof297;
 case 297:
-#line 2347 "ip_parser.c"
+#line 2345 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 53: goto tr306;
@@ -2362,7 +2360,7 @@ case 297:
 		goto tr307;
 	goto st0;
 tr306:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2371,7 +2369,7 @@ st298:
 	if ( ++p == pe )
 		goto _test_eof298;
 case 298:
-#line 2375 "ip_parser.c"
+#line 2373 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st74;
@@ -2389,7 +2387,7 @@ case 298:
 		goto tr302;
 	goto st0;
 tr307:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2398,7 +2396,7 @@ st299:
 	if ( ++p == pe )
 		goto _test_eof299;
 case 299:
-#line 2402 "ip_parser.c"
+#line 2400 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st74;
@@ -2413,7 +2411,7 @@ case 299:
 		goto tr302;
 	goto st0;
 tr109:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2422,7 +2420,7 @@ st300:
 	if ( ++p == pe )
 		goto _test_eof300;
 case 300:
-#line 2426 "ip_parser.c"
+#line 2424 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st74;
@@ -2437,7 +2435,7 @@ case 300:
 		goto tr300;
 	goto st0;
 tr110:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2446,7 +2444,7 @@ st301:
 	if ( ++p == pe )
 		goto _test_eof301;
 case 301:
-#line 2450 "ip_parser.c"
+#line 2448 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st74;
 	if ( (*p) < 65 ) {
@@ -2459,7 +2457,7 @@ case 301:
 		goto tr300;
 	goto st0;
 tr30:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2468,7 +2466,7 @@ st302:
 	if ( ++p == pe )
 		goto _test_eof302;
 case 302:
-#line 2472 "ip_parser.c"
+#line 2470 "ip_parser.c"
 	switch( (*p) ) {
 		case 48: goto tr116;
 		case 49: goto tr117;
@@ -2484,7 +2482,7 @@ case 302:
 		goto tr120;
 	goto st0;
 tr116:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2493,7 +2491,7 @@ st303:
 	if ( ++p == pe )
 		goto _test_eof303;
 case 303:
-#line 2497 "ip_parser.c"
+#line 2495 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st75;
@@ -2508,7 +2506,7 @@ case 303:
 		goto tr308;
 	goto st0;
 tr308:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2517,7 +2515,7 @@ st304:
 	if ( ++p == pe )
 		goto _test_eof304;
 case 304:
-#line 2521 "ip_parser.c"
+#line 2519 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st75;
 	if ( (*p) < 65 ) {
@@ -2530,7 +2528,7 @@ case 304:
 		goto tr310;
 	goto st0;
 tr310:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2539,7 +2537,7 @@ st305:
 	if ( ++p == pe )
 		goto _test_eof305;
 case 305:
-#line 2543 "ip_parser.c"
+#line 2541 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st75;
 	if ( (*p) < 65 ) {
@@ -2552,7 +2550,7 @@ case 305:
 		goto tr311;
 	goto st0;
 tr311:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2561,7 +2559,7 @@ st306:
 	if ( ++p == pe )
 		goto _test_eof306;
 case 306:
-#line 2565 "ip_parser.c"
+#line 2563 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st75;
 	goto st0;
@@ -2584,7 +2582,7 @@ case 75:
 		goto tr110;
 	goto st0;
 tr117:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2593,7 +2591,7 @@ st307:
 	if ( ++p == pe )
 		goto _test_eof307;
 case 307:
-#line 2597 "ip_parser.c"
+#line 2595 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st75;
@@ -2608,7 +2606,7 @@ case 307:
 		goto tr308;
 	goto st0;
 tr312:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2617,7 +2615,7 @@ st308:
 	if ( ++p == pe )
 		goto _test_eof308;
 case 308:
-#line 2621 "ip_parser.c"
+#line 2619 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st75;
@@ -2632,7 +2630,7 @@ case 308:
 		goto tr310;
 	goto st0;
 tr313:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2641,7 +2639,7 @@ st309:
 	if ( ++p == pe )
 		goto _test_eof309;
 case 309:
-#line 2645 "ip_parser.c"
+#line 2643 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st75;
@@ -2656,7 +2654,7 @@ case 309:
 		goto tr311;
 	goto st0;
 tr118:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2665,7 +2663,7 @@ st310:
 	if ( ++p == pe )
 		goto _test_eof310;
 case 310:
-#line 2669 "ip_parser.c"
+#line 2667 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 53: goto tr314;
@@ -2684,7 +2682,7 @@ case 310:
 		goto tr315;
 	goto st0;
 tr314:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2693,7 +2691,7 @@ st311:
 	if ( ++p == pe )
 		goto _test_eof311;
 case 311:
-#line 2697 "ip_parser.c"
+#line 2695 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st75;
@@ -2711,7 +2709,7 @@ case 311:
 		goto tr310;
 	goto st0;
 tr315:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2720,7 +2718,7 @@ st312:
 	if ( ++p == pe )
 		goto _test_eof312;
 case 312:
-#line 2724 "ip_parser.c"
+#line 2722 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st75;
@@ -2735,7 +2733,7 @@ case 312:
 		goto tr310;
 	goto st0;
 tr119:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2744,7 +2742,7 @@ st313:
 	if ( ++p == pe )
 		goto _test_eof313;
 case 313:
-#line 2748 "ip_parser.c"
+#line 2746 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st75;
@@ -2759,7 +2757,7 @@ case 313:
 		goto tr308;
 	goto st0;
 tr120:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2768,7 +2766,7 @@ st314:
 	if ( ++p == pe )
 		goto _test_eof314;
 case 314:
-#line 2772 "ip_parser.c"
+#line 2770 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st75;
 	if ( (*p) < 65 ) {
@@ -2914,7 +2912,7 @@ case 83:
 		goto tr115;
 	goto st0;
 tr115:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2923,7 +2921,7 @@ st315:
 	if ( ++p == pe )
 		goto _test_eof315;
 case 315:
-#line 2927 "ip_parser.c"
+#line 2925 "ip_parser.c"
 	switch( (*p) ) {
 		case 48: goto tr316;
 		case 49: goto tr317;
@@ -2939,7 +2937,7 @@ case 315:
 		goto tr320;
 	goto st0;
 tr316:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2948,7 +2946,7 @@ st316:
 	if ( ++p == pe )
 		goto _test_eof316;
 case 316:
-#line 2952 "ip_parser.c"
+#line 2950 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st84;
@@ -2963,7 +2961,7 @@ case 316:
 		goto tr321;
 	goto st0;
 tr321:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2972,7 +2970,7 @@ st317:
 	if ( ++p == pe )
 		goto _test_eof317;
 case 317:
-#line 2976 "ip_parser.c"
+#line 2974 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st84;
 	if ( (*p) < 65 ) {
@@ -2985,7 +2983,7 @@ case 317:
 		goto tr323;
 	goto st0;
 tr323:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -2994,7 +2992,7 @@ st318:
 	if ( ++p == pe )
 		goto _test_eof318;
 case 318:
-#line 2998 "ip_parser.c"
+#line 2996 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st84;
 	if ( (*p) < 65 ) {
@@ -3007,7 +3005,7 @@ case 318:
 		goto tr324;
 	goto st0;
 tr324:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -3016,7 +3014,7 @@ st319:
 	if ( ++p == pe )
 		goto _test_eof319;
 case 319:
-#line 3020 "ip_parser.c"
+#line 3018 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st84;
 	goto st0;
@@ -3039,7 +3037,7 @@ case 84:
 		goto tr120;
 	goto st0;
 tr317:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -3048,7 +3046,7 @@ st320:
 	if ( ++p == pe )
 		goto _test_eof320;
 case 320:
-#line 3052 "ip_parser.c"
+#line 3050 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st84;
@@ -3063,7 +3061,7 @@ case 320:
 		goto tr321;
 	goto st0;
 tr325:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -3072,7 +3070,7 @@ st321:
 	if ( ++p == pe )
 		goto _test_eof321;
 case 321:
-#line 3076 "ip_parser.c"
+#line 3074 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st84;
@@ -3087,7 +3085,7 @@ case 321:
 		goto tr323;
 	goto st0;
 tr326:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -3096,7 +3094,7 @@ st322:
 	if ( ++p == pe )
 		goto _test_eof322;
 case 322:
-#line 3100 "ip_parser.c"
+#line 3098 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st84;
@@ -3111,7 +3109,7 @@ case 322:
 		goto tr324;
 	goto st0;
 tr318:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -3120,7 +3118,7 @@ st323:
 	if ( ++p == pe )
 		goto _test_eof323;
 case 323:
-#line 3124 "ip_parser.c"
+#line 3122 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 53: goto tr327;
@@ -3139,7 +3137,7 @@ case 323:
 		goto tr328;
 	goto st0;
 tr327:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -3148,7 +3146,7 @@ st324:
 	if ( ++p == pe )
 		goto _test_eof324;
 case 324:
-#line 3152 "ip_parser.c"
+#line 3150 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st84;
@@ -3166,7 +3164,7 @@ case 324:
 		goto tr323;
 	goto st0;
 tr328:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -3175,7 +3173,7 @@ st325:
 	if ( ++p == pe )
 		goto _test_eof325;
 case 325:
-#line 3179 "ip_parser.c"
+#line 3177 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st84;
@@ -3190,7 +3188,7 @@ case 325:
 		goto tr323;
 	goto st0;
 tr319:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -3199,7 +3197,7 @@ st326:
 	if ( ++p == pe )
 		goto _test_eof326;
 case 326:
-#line 3203 "ip_parser.c"
+#line 3201 "ip_parser.c"
 	switch( (*p) ) {
 		case 46: goto st46;
 		case 58: goto st84;
@@ -3214,7 +3212,7 @@ case 326:
 		goto tr321;
 	goto st0;
 tr320:
-#line 14 "ip_parser.rl"
+#line 12 "ip_parser.rl"
 	{
     ip_type = ip_type_ipv6;
   }
@@ -3223,7 +3221,7 @@ st327:
 	if ( ++p == pe )
 		goto _test_eof327;
 case 327:
-#line 3227 "ip_parser.c"
+#line 3225 "ip_parser.c"
 	if ( (*p) == 58 )
 		goto st84;
 	if ( (*p) < 65 ) {
@@ -5943,7 +5941,7 @@ case 236:
 	_out: {}
 	}
 
-#line 61 "ip_parser.rl"
+#line 59 "ip_parser.rl"
 
   if(len != p-str)
     return ip_type_error;

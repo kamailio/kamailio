@@ -28,19 +28,13 @@
 
     <itemizedlist>
       <listitem>
-        <para>
-          <emphasis>1080:0000:0000:0000:0008:0800:200C:417A</emphasis>
-        </para>
+        <para>1080:0000:0000:0000:0008:0800:200C:417A</para>
       </listitem>
       <listitem>
-        <para>
-          <emphasis>1080:0:0:0:8:800:200C:417A</emphasis>
-        </para>
+        <para>1080:0:0:0:8:800:200C:417A</para>
       </listitem>
       <listitem>
-        <para>
-          <emphasis>1080::8:800:200C:417A</emphasis>
-        </para>
+        <para>1080::8:800:200C:417A</para>
       </listitem>
     </itemizedlist>
 
@@ -394,7 +388,7 @@ switch($rc) {
         </title>
         <programlisting format="linespecific">
 ...
-if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:417A]") {
+if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:417A]")) {
   xlog("L_INFO", "both are the same IP\n");
 }
 ...
@@ -437,7 +431,7 @@ if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:41
         </title>
         <programlisting format="linespecific">
 ...
-if ($si, "1080::8:800:200C:417A") {
+if (compare_pure_ips($si, "1080::8:800:200C:417A")) {
   xlog("L_INFO", "both are the same IP\n");
 }
 ...

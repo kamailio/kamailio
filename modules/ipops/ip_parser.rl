@@ -1,6 +1,4 @@
 #include "ip_parser.h"
-#include <stdio.h>
-//#include <stdlib.h>
 
 
 /** Ragel machine **/

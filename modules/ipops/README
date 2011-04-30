@@ -253,7 +253,7 @@ switch($rc) {
    Example 1.7.  compare_ips usage
 ...
 if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:41
-7A]") {
+7A]")) {
   xlog("L_INFO", "both are the same IP\n");
 }
 ...
@@ -273,7 +273,7 @@ if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:41
 
    Example 1.8.  compare_pure_ips usage
 ...
-if ($si, "1080::8:800:200C:417A") {
+if (compare_pure_ips($si, "1080::8:800:200C:417A")) {
   xlog("L_INFO", "both are the same IP\n");
 }
 ...
