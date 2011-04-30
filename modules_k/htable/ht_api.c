@@ -215,7 +215,8 @@ ht_t* ht_get_table(str *name)
 	return NULL;
 }
 
-int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode)
+int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode,
+		int itype, int_str *ival)
 {
 	unsigned int htid;
 	ht_t *ht;
@@ -254,6 +255,9 @@ int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode)
 	if(dbtable!=NULL && dbtable->len>0)
 		ht->dbtable = *dbtable;
 	ht->dbmode = dbmode;
+	ht->flags = itype;
+	if(ival!=NULL)
+		ht->initval = *ival;
 
 	ht->next = _ht_root;
 	_ht_root = ht;
@@ -605,6 +609,8 @@ int ht_table_spec(char *spec)
 	str in;
 	str tok;
 	param_t *pit=NULL;
+	int_str ival;
+	int itype;
 
 	if(!shm_initialized())
 	{
@@ -620,6 +626,8 @@ int ht_table_spec(char *spec)
 		return -1;
 	}
 	name = kval.key;
+	itype = PV_VAL_NONE;
+	memset(&ival, 0, sizeof(int_str));
 
 	for (pit = kval.u.params; pit; pit=pit->next)
 	{
@@ -643,10 +651,17 @@ int ht_table_spec(char *spec)
 				goto error;
 			LM_DBG("htable [%.*s] - dbmode [%u]\n", name.len, name.s,
 					dbmode);
+		} else if(pit->name.len==7 && strncmp(pit->name.s, "initval", 7)==0) {
+			if(str2sint(&tok, &ival.n)!=0)
+				goto error;
+			itype = PV_VAL_INT;
+			LM_DBG("htable [%.*s] - initval [%d]\n", name.len, name.s,
+					ival.n);
 		} else { goto error; }
 	}
 
-	return ht_add_table(&name, autoexpire, &dbtable, size, dbmode);
+	return ht_add_table(&name, autoexpire, &dbtable, size, dbmode,
+			itype, &ival);
 
 error:
 	LM_ERR("invalid htable parameter [%.*s]\n", in.len, in.s);

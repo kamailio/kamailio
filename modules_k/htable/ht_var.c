@@ -48,7 +48,11 @@ int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
 	}
 	htc = ht_cell_pkg_copy(hpv->ht, &htname, _htc_local);
 	if(htc==NULL)
+	{
+		if(hpv->ht->flags==PV_VAL_INT)
+			return pv_get_sintval(msg, param, res, hpv->ht->initval.n);
 		return pv_get_null(msg, param, res);
+	}
 	if(_htc_local!=htc)
 	{
 		ht_cell_pkg_free(_htc_local);

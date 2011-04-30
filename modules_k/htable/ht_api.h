@@ -55,6 +55,8 @@ typedef struct _ht
 	unsigned int htexpire;
 	str dbtable;
 	int dbmode;
+	int flags;
+	int_str initval;
 	unsigned int htsize;
 	ht_entry_t *entries;
 	struct _ht *next;
@@ -66,7 +68,8 @@ typedef struct _ht_pv {
 	pv_elem_t *pve;
 } ht_pv_t, *ht_pv_p;
 
-int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode);
+int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode,
+		int itype, int_str *ival);
 int ht_init_tables(void);
 int ht_destroy(void);
 int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode);
