@@ -38,6 +38,9 @@ int pv_get_ht_cn(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
 int pv_get_ht_cv(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
-
+int pv_get_ht_inc(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res);
+int pv_get_ht_dec(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res);
 
 #endif

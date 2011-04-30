@@ -516,6 +516,113 @@ int ht_del_cell(ht_t *ht, str *name)
 	return 0;
 }
 
+ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
+		ht_cell_t *old)
+{
+	unsigned int idx;
+	unsigned int hid;
+	ht_cell_t *it, *prev, *cell;
+	time_t now;
+	int_str isval;
+
+	if(ht==NULL || ht->entries==NULL)
+		return NULL;
+
+	hid = ht_compute_hash(name);
+
+	idx = ht_get_entry(hid, ht->htsize);
+
+	now = 0;
+	if(ht->htexpire>0)
+		now = time(NULL);
+	prev = NULL;
+	if(mode) lock_get(&ht->entries[idx].lock);
+	it = ht->entries[idx].first;
+	while(it!=NULL && it->cellid < hid)
+	{
+		prev = it;
+		it = it->next;
+	}
+	while(it!=NULL && it->cellid == hid)
+	{
+		if(name->len==it->name.len
+				&& strncmp(name->s, it->name.s, name->len)==0)
+		{
+			/* update value */
+			if(it->flags&AVP_VAL_STR)
+			{
+				/* string value cannot be incremented */
+				if(mode) lock_release(&ht->entries[idx].lock);
+				return NULL;
+			} else {
+				it->value.n += val;
+				it->expire = now + ht->htexpire;
+				if(old!=NULL)
+				{
+					if(old->msize>=it->msize)
+					{
+						memcpy(old, it, it->msize);
+						lock_release(&ht->entries[idx].lock);
+						return old;
+					}
+				}
+				cell = (ht_cell_t*)pkg_malloc(it->msize);
+				if(cell!=NULL)
+					memcpy(cell, it, it->msize);
+
+				if(mode) lock_release(&ht->entries[idx].lock);
+				return cell;
+			}
+		}
+		prev = it;
+		it = it->next;
+	}
+	/* add val if htable has an integer init value */
+	if(ht->flags!=PV_VAL_INT)
+		return NULL;
+	isval.n = ht->initval.n + val;
+	it = ht_cell_new(name, 0, &isval, hid);
+	if(it == NULL)
+	{
+		LM_ERR("cannot create new cell.\n");
+		if(mode) lock_release(&ht->entries[idx].lock);
+		return NULL;
+	}
+	it->expire = now + ht->htexpire;
+	if(prev==NULL)
+	{
+		if(ht->entries[idx].first!=NULL)
+		{
+			it->next = ht->entries[idx].first;
+			ht->entries[idx].first->prev = it;
+		}
+		ht->entries[idx].first = it;
+	} else {
+		it->next = prev->next;
+		it->prev = prev;
+		if(prev->next)
+			prev->next->prev = it;
+		prev->next = it;
+	}
+	ht->entries[idx].esize++;
+	if(old!=NULL)
+	{
+		if(old->msize>=it->msize)
+		{
+			memcpy(old, it, it->msize);
+			lock_release(&ht->entries[idx].lock);
+			return old;
+		}
+	}
+	cell = (ht_cell_t*)pkg_malloc(it->msize);
+	if(cell!=NULL)
+		memcpy(cell, it, it->msize);
+
+	if(mode) lock_release(&ht->entries[idx].lock);
+	return cell;
+}
+
+
 ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 {
 	unsigned int idx;
