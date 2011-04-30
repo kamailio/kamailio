@@ -535,6 +535,18 @@ sht_rm_value_re("ha=>.*");
 			<listitem><para>
 				<emphasis>$shtex(htable=>key)</emphasis>
 			</para></listitem>
+			<listitem><para>
+				<emphasis>$shtcn(htable=>key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$shtcv(htable=>key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$shtinc(htable=>key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$shtval(htable=>key)</emphasis>
+			</para></listitem>
 		</itemizedlist>
 		<para>
 		Exported pseudo-variables are documented at &kamwikilink;.
