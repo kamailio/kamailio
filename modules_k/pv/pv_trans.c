@@ -71,6 +71,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	char *p, *s;
 	str st, st2;
 	pv_value_t v, w;
+	void *vp;
 
 	if(val==NULL || val->flags&PV_VAL_NULL)
 		return -1;
@@ -539,7 +540,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			j = 0;
 			max = val->rs.len - st.len;
 			while (i < val->rs.len && j < TR_BUFFER_SIZE) {
-				if (i <= max && val->rs.s[i] == st.s[0] && strncmp(val->rs.s+i, st.s, st.len) == 0) {
+				if (i <= max && val->rs.s[i] == st.s[0]
+						&& strncmp(val->rs.s+i, st.s, st.len) == 0) {
 					strncpy(_tr_buffer+j, st2.s, st2.len);
 					i += st.len;
 					j += st2.len;
@@ -557,7 +559,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				LM_ERR("timeformat invalid parameters\n");
 				return -1;
 			}
-			if(!(val->flags&PV_VAL_INT) && (str2int(&val->rs, (unsigned int*) &val->ri)!=0))
+			if(!(val->flags&PV_VAL_INT) && (str2int(&val->rs,
+							(unsigned int*) &val->ri)!=0))
 			{
 				LM_ERR("value is not numeric\n");
 				return -1;
@@ -582,7 +585,9 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			}
 			memcpy(s, st.s, st.len);
 			s[st.len] = '\0';
-			val->rs.len = strftime(_tr_buffer, TR_BUFFER_SIZE-1, s, localtime((time_t*) &val->ri));
+			vp = (void*)&val->ri;
+			val->rs.len = strftime(_tr_buffer, TR_BUFFER_SIZE-1, s,
+					localtime((time_t*)vp));
 			pkg_free(s);
 			val->flags = PV_VAL_STR;
 			val->rs.s = _tr_buffer;
