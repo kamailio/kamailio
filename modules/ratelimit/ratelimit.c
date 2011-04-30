@@ -63,8 +63,8 @@ MODULE_VERSION
  */
 #define RL_TIMER_INTERVAL 10
 
-#define RXLS(m, str, i) (m)[i].rm_eo - (m)[i].rm_so, (str) + (m)[i].rm_so
-#define RXL(m, str, i) (m)[i].rm_eo - (m)[i].rm_so
+#define RXLS(m, str, i) (int)((m)[i].rm_eo - (m)[i].rm_so), (str) + (m)[i].rm_so
+#define RXL(m, str, i) (int)((m)[i].rm_eo - (m)[i].rm_so)
 #define RXS(m, str, i) (str) + (m)[i].rm_so
 
 static inline int str_cmp(const str * a, const str * b);
