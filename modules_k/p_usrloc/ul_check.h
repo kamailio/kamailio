@@ -22,6 +22,8 @@
 #ifndef SP_P_USRLOC_CHECK_H
 #define SP_P_USRLOC_CHECK_H
 
+#include <time.h>
+
 #include "../../lock_ops.h"
 
 struct check_data {
