@@ -26,5 +26,8 @@
 #define _SDPOPS_DATA_H_
 #include "../../str.h"
 
-int sdpops_get_id_by_name(str *name, str *id);
+int sdpops_get_ids_by_name(str *name, str *ids);
+int str_find_token(str *text, str *result, char delim);
+int sdpops_build_ids_list(str *names, str *ids);
+
 #endif

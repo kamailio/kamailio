@@ -30,14 +30,16 @@
 #include "../../dprint.h"
 #include "../../mod_fix.h"
 #include "../../pvar.h"
-#include "../../trim.h"
 #include "../../parser/sdp/sdp.h"
+#include "../../trim.h"
 #include "../../data_lump.h"
 
+#include "sdpops_data.h"
 
 MODULE_VERSION
 
 static int w_sdp_remove_codecs_by_id(sip_msg_t* msg, char* codecs, char *bar);
+static int w_sdp_remove_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar);
 static int w_sdp_with_media(sip_msg_t* msg, char* media, char *bar);
 static int w_sdp_print(sip_msg_t* msg, char* level, char *bar);
 
@@ -45,6 +47,8 @@ static int mod_init(void);
 
 static cmd_export_t cmds[] = {
 	{"sdp_remove_codecs_by_id",    (cmd_function)w_sdp_remove_codecs_by_id,
+		1, fixup_spve_null,  0, ANY_ROUTE},
+	{"sdp_remove_codecs_by_name",  (cmd_function)w_sdp_remove_codecs_by_name,
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_with_media",             (cmd_function)w_sdp_with_media,
 		1, fixup_spve_null,  0, ANY_ROUTE},
@@ -92,32 +96,6 @@ static int mod_init(void)
 	return 0;
 }
 
-
-/**
- *
- */
-int str_find_token(str *text, str *result, char delim)
-{
-	int i;
-	if(text==NULL || result==NULL)
-		return -1;
-	if(text->s[0] == delim)
-	{
-		 text->s += 1;
-		 text->len -= 1;
-	}
-	trim_leading(text);
-	result->s = text->s;
-	result->len = 0;
-	for (i=0; i<text->len; i++)
-	{
-		if(result->s[i]==delim || result->s[i]=='\0'
-				|| result->s[i]=='\r' || result->s[i]=='\n')
-			return 0;
-		result->len++;
-	}
-	return 0;
-}
 
 /**
  *
@@ -312,6 +290,54 @@ static int w_sdp_remove_codecs_by_id(sip_msg_t* msg, char* codecs, char* bar)
 	}
 
 	if(sdp_remove_codecs_by_id(msg, &lcodecs)<0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+int sdp_remove_codecs_by_name(sip_msg_t* msg, str* codecs)
+{
+	str idslist;
+
+	if(parse_sdp(msg) < 0) {
+		LM_ERR("Unable to parse sdp\n");
+		return -1;
+	}
+
+	LM_ERR("attempting to remove codecs from sdp: [%.*s]\n",
+			codecs->len, codecs->s);
+
+	if(sdpops_build_ids_list(codecs, &idslist)<0)
+		return -1;
+
+	if(sdp_remove_codecs_by_id(msg, &idslist)<0)
+		return -1;
+
+	return 0;
+
+}
+/**
+ *
+ */
+static int w_sdp_remove_codecs_by_name(sip_msg_t* msg, char* codecs, char* bar)
+{
+	str lcodecs = {0, 0};
+
+	if(codecs==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)codecs, &lcodecs)!=0)
+	{
+		LM_ERR("unable to get the list of codecs\n");
+		return -1;
+	}
+
+	if(sdp_remove_codecs_by_name(msg, &lcodecs)<0)
 		return -1;
 	return 1;
 }

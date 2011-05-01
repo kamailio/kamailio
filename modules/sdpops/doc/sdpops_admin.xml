@@ -95,6 +95,32 @@ sdp_remove_codecs_by_id("0,8,3");
 	</section>
 	<section>
 	    <title>
+		<function moreinfo="none">sdp_remove_codecs_by_name(list)</function>
+	    </title>
+	    <para>
+			Remove the codecs provided in the parameter 'list' from all
+			media streams found in SDP payload. The parameter 'list' must
+			be one or a comma separated list of codec names. The
+			parameter can be a static string or a variable holding the
+			list of codec names.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_remove_codecs_by_name</function> usage</title>
+		<programlisting format="linespecific">
+...
+# remove PCMU
+sdp_remove_codecs_by_name("PCMU");
+# remove PCMU, PCMA and GSM
+sdp_remove_codecs_by_name("PCMU,PCMA,GSM");
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
 		<function moreinfo="none">sdp_with_media(type)</function>
 	    </title>
 	    <para>
