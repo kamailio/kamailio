@@ -4036,8 +4036,8 @@ static inline int handle_new_connect(struct socket_info* si)
 			su2a(&su, sizeof(su)), tcpconn, tcpconn->s, tcpconn->flags);
 		if(unlikely(send2child(tcpconn)<0)){
 			tcpconn->flags&=~F_CONN_READER;
-			tcpconn_put(tcpconn);
-			tcpconn_try_unhash(tcpconn);
+			if (tcpconn_try_unhash(tcpconn))
+				tcpconn_put(tcpconn);
 			tcpconn_put_destroy(tcpconn);
 		}
 #endif
@@ -4226,8 +4226,8 @@ send_to_child:
 				tcpconn->flags&=~F_CONN_WRITE_W;
 			}
 #endif /* TCP_ASYNC */
-			tcpconn_put(tcpconn);
-			tcpconn_try_unhash(tcpconn); 
+			if (tcpconn_try_unhash(tcpconn))
+				tcpconn_put(tcpconn);
 			tcpconn_put_destroy(tcpconn); /* because of the tcpconn_ref() */
 		}
 	}
