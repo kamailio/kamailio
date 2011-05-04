@@ -1396,6 +1396,7 @@ static inline void _tcpconn_detach(struct tcp_connection *c)
 	for (r=0; r<c->aliases; r++)
 		tcpconn_listrm(tcpconn_aliases_hash[c->con_aliases[r].hash], 
 						&c->con_aliases[r], next, prev);
+	c->aliases = 0;
 }
 
 
@@ -1433,6 +1434,7 @@ void tcpconn_rm(struct tcp_connection* c)
 	for (r=0; r<c->aliases; r++)
 		tcpconn_listrm(tcpconn_aliases_hash[c->con_aliases[r].hash], 
 						&c->con_aliases[r], next, prev);
+	c->aliases = 0;
 	TCPCONN_UNLOCK;
 	lock_destroy(&c->write_lock);
 #ifdef USE_TLS
@@ -2985,6 +2987,7 @@ inline static void tcpconn_destroy(struct tcp_connection* tcpconn)
 				local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
 			TCPCONN_LOCK;
 				_tcpconn_detach(tcpconn);
+				tcpconn->flags &= ~(F_CONN_HASHED|F_CONN_MAIN_TIMER);
 			TCPCONN_UNLOCK;
 		}
 		if (likely(!(tcpconn->flags & F_CONN_FD_CLOSED))){
@@ -3022,6 +3025,7 @@ inline static int tcpconn_put_destroy(struct tcp_connection* tcpconn)
 				local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
 			TCPCONN_LOCK;
 				_tcpconn_detach(tcpconn);
+				tcpconn->flags &= ~(F_CONN_HASHED|F_CONN_MAIN_TIMER);
 			TCPCONN_UNLOCK;
 		}else{
 			LOG(L_CRIT, "BUG: tcpconn_put_destroy: %p flags = %0x\n",
@@ -4417,6 +4421,7 @@ static inline void tcpconn_destroy_all()
 					tls_close(c, fd);
 #endif
 				_tcpconn_rm(c);
+				c->flags &= ~F_CONN_HASHED;
 				if (fd>0) {
 #ifdef TCP_FD_CACHE
 					if (likely(cfg_get(tcp, tcp_cfg, fd_cache)))
