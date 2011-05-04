@@ -2167,20 +2167,19 @@ conn_wait_close:
 					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
 					fd, c->flags, strerror(errno), errno);
 	}
+	/* here the connection is for sure in the hash (tcp_main will not
+	   remove it because it's marked as PENDing) and the refcnt is at least
+	   2
+	 */
 	TCPCONN_LOCK;
-		if (c->flags & F_CONN_HASHED){
-			/* if some other parallel tcp_send did send CONN_ERROR to
-			 * tcp_main, the connection might be already detached */
-			_tcpconn_detach(c);
-			c->flags&=~F_CONN_HASHED;
-			TCPCONN_UNLOCK;
-			tcpconn_put(c);
-		}else
-			TCPCONN_UNLOCK;
+		_tcpconn_detach(c);
+		c->flags&=~F_CONN_HASHED;
+		tcpconn_put(c);
+	TCPCONN_UNLOCK;
 	/* dec refcnt -> mark it for destruction */
 	tcpconn_chld_put(c);
 	return n;
-#endif /* TCP_CONNET_WAIT */
+#endif /* TCP_CONNECT_WAIT */
 release_c:
 	tcpconn_chld_put(c); /* release c (dec refcnt & free on 0) */
 end_no_deref:
@@ -3594,16 +3593,22 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 					tcpconn->flags);
 		case CONN_EOF: /* forced EOF after full send, due to send flags */
 #ifdef TCP_CONNECT_WAIT
-			/* if the connection is pending => it might be on the way of
-			 * reaching tcp_main (e.g. CONN_NEW_COMPLETE or
-			 *  CONN_NEW_PENDING_WRITE) =>  it cannot be destroyed here */
-			if ( !(tcpconn->flags & F_CONN_PENDING) &&
-					tcpconn_try_unhash(tcpconn) )
-				tcpconn_put(tcpconn);
-#else /* ! TCP_CONNECT_WAIT */
+			/* if the connection is marked as pending => it might be on
+			 *  the way of reaching tcp_main (e.g. CONN_NEW_COMPLETE or
+			 *  CONN_NEW_PENDING_WRITE) =>  it cannot be destroyed here,
+			 *  it will be destroyed on CONN_NEW_COMPLETE /
+			 *  CONN_NEW_PENDING_WRITE or in the send error case by the
+			 *  sender process */
+			if (unlikely(tcpconn->flags & F_CONN_PENDING)) {
+				if (tcpconn_put(tcpconn))
+					tcpconn_destroy(tcpconn);
+				/* no need for io_watch_del(), if PENDING it should not
+				   be watched for anything in tcp_main */
+				break;
+			}
+#endif /* TCP_CONNECT_WAIT */
 			if ( tcpconn_try_unhash(tcpconn) )
 				tcpconn_put(tcpconn);
-#endif /* TCP_CONNECT_WAIT */
 			if ( ((tcpconn->flags & (F_CONN_WRITE_W|F_CONN_READ_W)) ) &&
 					(tcpconn->s!=-1)){
 				io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
