@@ -44,10 +44,13 @@ PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   ldap xml perl utils purple memcached tls \
 			   snmpstats carrierroute xmpp cpl lua python
 
+# name of libdir in the path for libraries (e.g., lib for 32b, lib64 for 64b)
+LIBDIR ?= lib
+
 # directories with possible duplicate libraries (that should be deleted
 # from current module* packages)
-DUP_LIBS_DIRS=$(CURDIR)/debian/kamailio/usr/lib/kamailio \
-			$(CURDIR)/debian/kamailio-db-modules/usr/lib/kamailio
+DUP_LIBS_DIRS=$(CURDIR)/debian/kamailio/usr/$(LIBDIR)/kamailio \
+			$(CURDIR)/debian/kamailio-db-modules/usr/$(LIBDIR)/kamailio
 
 # modules names out of modules sp
 MODULES_SP_NAMES=$(filter-out $(MDIRS),$(subst /, ,$(MODULES_SP)))
@@ -80,10 +83,10 @@ define PACKAGE_GRP_INSTALL_template
 		doc-dir=share/doc/kamailio-$(grp)-modules
 		# eliminate duplicate libs
 		-for d in $(DUP_LIBS_DIRS); do \
-			test "$$d" != "$(CURDIR)/debian/kamailio-$(grp)-modules/usr/lib/kamailio" &&\
+			test "$$d" != "$(CURDIR)/debian/kamailio-$(grp)-modules/usr/$(LIBDIR)/kamailio" &&\
 			for r in $$d/lib*; do \
 				echo "removing $(grp) lib `basename $$r` present also in $$d";\
-				rm -f $(CURDIR)/debian/kamailio-$(grp)-modules/usr/lib/kamailio/`basename "$$r"` ; \
+				rm -f $(CURDIR)/debian/kamailio-$(grp)-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"` ; \
 			done ; \
 		done
 	)
@@ -98,10 +101,10 @@ define PACKAGE_MODULE_INSTALL_template
 				doc-dir=share/doc/kamailio-$(call mod_name,$(mod))-module
 		# eliminate duplicate libs
 		-for d in $(DUP_LIBS_DIRS); do \
-			test "$$d" != "$(CURDIR)/debian/kamailio-$(call mod_name,$(mod))-module/usr/lib/kamailio" &&\
+			test "$$d" != "$(CURDIR)/debian/kamailio-$(call mod_name,$(mod))-module/usr/$(LIBDIR)/kamailio" &&\
 			for r in $$d/lib*; do \
 				echo "removing $(call mod_name, $(mod)) lib `basename $$r` present also in $$d";\
-				rm -f $(CURDIR)/debian/kamailio-$(call mod_name,$(mod))-module/usr/lib/kamailio/`basename "$$r"` ; \
+				rm -f $(CURDIR)/debian/kamailio-$(call mod_name,$(mod))-module/usr/$(LIBDIR)/kamailio/`basename "$$r"` ; \
 			done ; \
 		done
 	)
