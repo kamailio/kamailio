@@ -153,15 +153,6 @@ error:
 	return -1;
 }
 
-int build_node_str(dmq_node_t* node, char* buf, int buflen) {
-	if(buflen < node->orig_uri.len) {
-		LM_ERR("no more space left for node string\n");
-		return -1;
-	}
-	memcpy(buf, node->orig_uri.s, node->orig_uri.len);
-	return node->orig_uri.len;
-}
-
 /**
  * builds the body of a notification message from the list of servers 
  * the result will look something like:

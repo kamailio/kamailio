@@ -80,6 +80,7 @@ int bcast_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* except, dmq_resp_
 		 *   - any inactive nodes
 		 */
 		if((except && cmp_dmq_node(node, except)) || node->local || node->status != DMQ_NODE_ACTIVE) {
+			LM_DBG("skipping node %.*s\n", STR_FMT(&node->orig_uri));
 			node = node->next;
 			continue;
 		}

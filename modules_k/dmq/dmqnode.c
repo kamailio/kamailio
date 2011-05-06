@@ -12,6 +12,23 @@ str dmq_node_active_str = str_init("active");
 str dmq_node_disabled_str = str_init("disabled");
 str dmq_node_timeout_str = str_init("timeout");
 
+str* get_status_str(int status) {
+	switch(status) {
+		case DMQ_NODE_ACTIVE: {
+			return &dmq_node_active_str;
+		}
+		case DMQ_NODE_DISABLED: {
+			return &dmq_node_disabled_str;
+		}
+		case DMQ_NODE_TIMEOUT: {
+			return &dmq_node_timeout_str;
+		}
+		default: {
+			return 0;
+		}
+	}
+}
+
 dmq_node_list_t* init_dmq_node_list() {
 	dmq_node_list_t* node_list = shm_malloc(sizeof(dmq_node_list_t));
 	memset(node_list, 0, sizeof(dmq_node_list_t));
@@ -63,6 +80,11 @@ error:
 	return -1;
 }
 
+inline int set_default_dmq_node_params(dmq_node_t* node) {
+	node->status = DMQ_NODE_ACTIVE;
+	return 0;
+}
+
 inline dmq_node_t* build_dmq_node(str* uri, int shm) {
 	dmq_node_t* ret;
 	param_hooks_t hooks;
@@ -79,6 +101,7 @@ inline dmq_node_t* build_dmq_node(str* uri, int shm) {
 		memset(ret, 0, sizeof(*ret));
 		pkg_str_dup(&ret->orig_uri, uri);
 	}
+	set_default_dmq_node_params(ret);
 	if(parse_uri(ret->orig_uri.s, ret->orig_uri.len, &ret->uri) < 0) {
 		LM_ERR("error parsing uri\n");
 		goto error;
@@ -198,4 +221,28 @@ inline dmq_node_t* add_dmq_node(dmq_node_list_t* list, str* uri) {
 	return newnode;
 error:
 	return NULL;
+}
+
+int build_node_str(dmq_node_t* node, char* buf, int buflen) {
+	/* sip:host:port;status=[status] */
+	int len = 0;
+	if(buflen < node->orig_uri.len + 32) {
+		LM_ERR("no more space left for node string\n");
+		return -1;
+	}
+	memcpy(buf + len, "sip:", 4);
+	len += 4;
+	memcpy(buf + len, node->uri.host.s, node->uri.host.len);
+	len += node->uri.host.len;
+	memcpy(buf + len, ":", 1);
+	len += 1;
+	memcpy(buf + len, node->uri.port.s, node->uri.port.len);
+	len += node->uri.port.len;
+	memcpy(buf + len, ";", 1);
+	len += 1;
+	memcpy(buf + len, "status=", 7);
+	len += 7;
+	memcpy(buf + len, get_status_str(node->status)->s, get_status_str(node->status)->len);
+	len += get_status_str(node->status)->len;
+	return len;
 }
