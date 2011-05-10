@@ -97,6 +97,11 @@ int is_e164(struct sip_msg* _m, char* _sp, char* _s2);
 int set_uri_user(struct sip_msg* _m, char* _uri, char* _value);
 
 /*
+ * Set hostpart of URI
+ */
+int set_uri_host(struct sip_msg* _m, char* _uri, char* _value);
+
+/*
  * Return true (1) if SIP message is request, otherwise false (-1)
  */
 int w_is_request(struct sip_msg* msg, char *foo, char *bar);
