@@ -437,7 +437,7 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 			}
 			break;
 		case alg_crc32_nofallback:
-			if ((prob = (hash_func(msg, hash_source, rf->max_targets) + 1)) < 0) {
+			if ((prob = (hash_func(msg, hash_source, rf->max_targets))) < 0) {
 				LM_ERR("could not hash message with CRC32");
 				return -1;
 			}
@@ -445,7 +445,7 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 			 * this function just tries only a backup rule and otherwise
 			 * returns -1. This way we get an error
 			 */
-			if ((rr = get_rule_by_hash(rf, prob)) == NULL) {
+			if ((rr = get_rule_by_hash(rf, prob + 1)) == NULL) {
 				LM_CRIT("no route found\n");
 				return -1;
 			}
