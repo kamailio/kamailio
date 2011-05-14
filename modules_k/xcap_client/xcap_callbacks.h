@@ -36,6 +36,8 @@
 #define RLS_SERVICE        1<<3
 #define PIDF_MANIPULATION  1<<4
 #define XCAP_CAPS          1<<5
+#define USER_PROFILE       1<<6
+#define PRES_CONTENT       1<<7
 
 
 /* callback function prototype */
