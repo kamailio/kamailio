@@ -410,6 +410,8 @@ static str xcaps_str_nocontent  = {"No content", 10};
 static str xcaps_str_appxcxml   = {"application/xcap-caps+xml", 25};
 #endif
 static str xcaps_str_appapxml   = {"application/auth-policy+xml", 27};
+static str xcaps_str_appupxml	= {"application/vnd.oma.user-profile+xml", 36};
+static str xcaps_str_apppcxml	= {"application/vnd.oma.pres-content+xml", 36};
 
 
 /**
@@ -787,6 +789,10 @@ static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
 			ctype = &xcaps_str_appapxml;
 		else if(xuri.type==RLS_SERVICE)
 			ctype = &xcaps_str_apprsxml;
+		else if(xuri.type==USER_PROFILE)
+			ctype = &xcaps_str_appupxml;
+		else if(xuri.type==PRES_CONTENT)
+			ctype = &xcaps_str_apppcxml;
 		xcaps_send_reply(msg, 200, &xcaps_str_ok, &etag,
 				ctype, &body);
 	} else {
@@ -1004,35 +1010,59 @@ int xcaps_path_get_auid_type(str *path)
 	c = s.s[s.len];
 	s.s[s.len] = '\0';
 
-	if(s.len>12
-			&& strstr(s.s, "/pres-rules/")!=NULL)
+	if(s.len>12 && strstr(s.s, "/pres-rules/")!=NULL)
 	{
 		LM_DBG("matched pres-rules\n");
 		ret = PRES_RULES;
 		goto done;
 	}
 
-	if(s.len>14
-			&& strstr(s.s, "/rls-services/")!=NULL)
+	if(s.len>35 && strstr(s.s, "/org.openmobilealliance.pres-rules/")!=NULL)
+	{
+		LM_DBG("matched oma pres-rules\n");
+		ret = PRES_RULES;
+		goto done;
+	}
+
+	if(s.len>14 && strstr(s.s, "/rls-services/")!=NULL)
 	{
 		LM_DBG("matched rls-services\n");
 		ret = RLS_SERVICE;
 		goto done;
 	}
 
-	if(s.len>19
-			&& strstr(s.s, "pidf-manipulation")!=NULL)
+	if(s.len>19 && strstr(s.s, "pidf-manipulation")!=NULL)
 	{
 		LM_DBG("matched pidf-manipulation\n");
 		ret = PIDF_MANIPULATION;
 		goto done;
 	}
 
-	if(s.len>16
-			&& strstr(s.s, "/resource-lists/")!=NULL)
+	if(s.len>16 && strstr(s.s, "/resource-lists/")!=NULL)
 	{
 		LM_DBG("matched resource-lists\n");
 		ret = RESOURCE_LIST;
+		goto done;
+	}
+
+	if(s.len>11 && strstr(s.s, "/xcap-caps/")!=NULL)
+	{
+		LM_DBG("matched xcap-caps\n");
+		ret = XCAP_CAPS;
+		goto done;
+	}
+
+	if(s.len> 37 && strstr(s.s, "/org.openmobilealliance.user-profile/")!=NULL)
+	{
+		LM_DBG("matched oma user-profile\n");
+		ret = USER_PROFILE;
+		goto done;
+	}
+
+	if(s.len> 37 && strstr(s.s, "/org.openmobilealliance.pres-content/")!=NULL)
+	{
+		LM_DBG("matched oma pres-content\n");
+		ret = PRES_CONTENT;
 		goto done;
 	}
 
