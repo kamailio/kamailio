@@ -1342,11 +1342,6 @@ t_relay();
    the only way a script can add a new transaction in an atomic way.
    Typically, it is used to deploy a UAS.
 
-Warning
-
-   Please note that the changes on the request that are made after this
-   function call will not be saved into transaction!
-
    Example 46. t_newtran usage
 ...
 if (t_newtran()) {
