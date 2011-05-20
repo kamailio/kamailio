@@ -1563,7 +1563,7 @@ use_media_proxy(struct sip_msg *msg, char *dialog_id, ice_candidate_data *ice_da
     str callid, cseq, from_uri, to_uri, from_tag, to_tag, user_agent;
     str signaling_ip, media_relay, sdp, str_buf, tokens[MAX_STREAMS+1];
     str priority_str, candidate;
-    char request[8192], media_str[4096], buf[64], *result, *type;
+    char request[8192], media_str[4096], buf[128], *result, *type;
     int i, j, port, len, status;
     Bool removed_session_ip, have_sdp;
     SessionInfo session;
