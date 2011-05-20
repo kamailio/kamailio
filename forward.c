@@ -543,8 +543,8 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 	   value in there; better for performance
 	*/
 	if (syn_branch ) {
-		*msg->add_to_branch_s='0';
-		msg->add_to_branch_len=1;
+	        memcpy(msg->add_to_branch_s, "z9hG4bKcydzigwkX", 16);
+		msg->add_to_branch_len=16;
 	} else {
 		if (!char_msg_val( msg, md5 )) 	{ /* parses transaction key */
 			LOG(L_ERR, "ERROR: forward_request: char_msg_val failed\n");
