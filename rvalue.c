@@ -501,12 +501,16 @@ enum rval_type rve_guess_type( struct rval_expr* rve)
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_BNOT_OP:
 		case RVE_MINUS_OP:
 		case RVE_MUL_OP:
 		case RVE_DIV_OP:
 		case RVE_MOD_OP:
 		case RVE_BOR_OP:
 		case RVE_BAND_OP:
+		case RVE_BXOR_OP:
+		case RVE_BLSHIFT_OP:
+		case RVE_BRSHIFT_OP:
 		case RVE_LAND_OP:
 		case RVE_LOR_OP:
 		case RVE_GT_OP:
@@ -565,6 +569,7 @@ int rve_is_constant(struct rval_expr* rve)
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_BNOT_OP:
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
@@ -577,6 +582,9 @@ int rve_is_constant(struct rval_expr* rve)
 		case RVE_MOD_OP:
 		case RVE_BOR_OP:
 		case RVE_BAND_OP:
+		case RVE_BXOR_OP:
+		case RVE_BLSHIFT_OP:
+		case RVE_BRSHIFT_OP:
 		case RVE_LAND_OP:
 		case RVE_LOR_OP:
 		case RVE_GT_OP:
@@ -625,6 +633,7 @@ static int rve_op_unary(enum rval_expr_op op)
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_BNOT_OP:
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
@@ -637,6 +646,9 @@ static int rve_op_unary(enum rval_expr_op op)
 		case RVE_MOD_OP:
 		case RVE_BOR_OP:
 		case RVE_BAND_OP:
+		case RVE_BXOR_OP:
+		case RVE_BLSHIFT_OP:
+		case RVE_BRSHIFT_OP:
 		case RVE_LAND_OP:
 		case RVE_LOR_OP:
 		case RVE_GT_OP:
@@ -689,6 +701,7 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_BNOT_OP:
 			*type=RV_INT;
 			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
 				if (type1==RV_STR){
@@ -707,6 +720,9 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 		case RVE_MOD_OP:
 		case RVE_BOR_OP:
 		case RVE_BAND_OP:
+		case RVE_BXOR_OP:
+		case RVE_BLSHIFT_OP:
+		case RVE_BRSHIFT_OP:
 		case RVE_LAND_OP:
 		case RVE_LOR_OP:
 		case RVE_GT_OP:
@@ -1326,6 +1342,9 @@ inline static int int_intop1(int* res, enum rval_expr_op op, int v)
 		case RVE_LNOT_OP:
 			*res=!v;
 			break;
+		case RVE_BNOT_OP:
+			*res=~v;
+			break;
 		default:
 			BUG("rv unsupported intop1 %d\n", op);
 			return -1;
@@ -1370,6 +1389,15 @@ inline static int int_intop2(int* res, enum rval_expr_op op, int v1, int v2)
 			break;
 		case RVE_BAND_OP:
 			*res=v1&v2;
+			break;
+		case RVE_BXOR_OP:
+			*res=v1^v2;
+			break;
+		case RVE_BLSHIFT_OP:
+			*res=v1<<v2;
+			break;
+		case RVE_BRSHIFT_OP:
+			*res=v1>>v2;
 			break;
 		case RVE_LAND_OP:
 			*res=v1 && v2;
@@ -1870,6 +1898,7 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_BNOT_OP:
 			if (unlikely(
 					(ret=rval_expr_eval_int(h, msg, &i1, rve->left.rve)) <0) )
 				break;
@@ -1886,6 +1915,9 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_IPLUS_OP:
 		case RVE_BOR_OP:
 		case RVE_BAND_OP:
+		case RVE_BXOR_OP:
+		case RVE_BLSHIFT_OP:
+		case RVE_BRSHIFT_OP:
 		case RVE_GT_OP:
 		case RVE_GTE_OP:
 		case RVE_LT_OP:
@@ -2154,12 +2186,16 @@ int rval_expr_eval_rvint(			   struct run_act_ctx* h,
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_BNOT_OP:
 		case RVE_MINUS_OP:
 		case RVE_MUL_OP:
 		case RVE_DIV_OP:
 		case RVE_MOD_OP:
 		case RVE_BOR_OP:
 		case RVE_BAND_OP:
+		case RVE_BXOR_OP:
+		case RVE_BLSHIFT_OP:
+		case RVE_BRSHIFT_OP:
 		case RVE_LAND_OP:
 		case RVE_LOR_OP:
 		case RVE_GT_OP:
@@ -2273,12 +2309,16 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_BNOT_OP:
 		case RVE_MINUS_OP:
 		case RVE_MUL_OP:
 		case RVE_DIV_OP:
 		case RVE_MOD_OP:
 		case RVE_BOR_OP:
 		case RVE_BAND_OP:
+		case RVE_BXOR_OP:
+		case RVE_BLSHIFT_OP:
+		case RVE_BRSHIFT_OP:
 		case RVE_LAND_OP:
 		case RVE_LOR_OP:
 		case RVE_GT_OP:
@@ -2531,6 +2571,7 @@ struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_BNOT_OP:
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
@@ -2573,6 +2614,9 @@ struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
 		case RVE_MINUS_OP:
 		case RVE_BOR_OP:
 		case RVE_BAND_OP:
+		case RVE_BXOR_OP:
+		case RVE_BLSHIFT_OP:
+		case RVE_BRSHIFT_OP:
 		case RVE_LAND_OP:
 		case RVE_LOR_OP:
 		case RVE_GT_OP:
@@ -2616,6 +2660,7 @@ static int rve_op_is_assoc(enum rval_expr_op op)
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_BNOT_OP:
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
@@ -2626,6 +2671,8 @@ static int rve_op_is_assoc(enum rval_expr_op op)
 		case RVE_DIV_OP:
 		case RVE_MOD_OP:
 		case RVE_MINUS_OP:
+		case RVE_BLSHIFT_OP:
+		case RVE_BRSHIFT_OP:
 			return 0;
 		case RVE_PLUS_OP:
 			/* the generic plus is not assoc, e.g.
@@ -2636,6 +2683,7 @@ static int rve_op_is_assoc(enum rval_expr_op op)
 		case RVE_MUL_OP:
 		case RVE_BAND_OP:
 		case RVE_BOR_OP:
+		case RVE_BXOR_OP:
 			return 1;
 		case RVE_LAND_OP:
 		case RVE_LOR_OP:
@@ -2667,6 +2715,7 @@ static int rve_op_is_commutative(enum rval_expr_op op)
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_BNOT_OP:
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
@@ -2677,6 +2726,8 @@ static int rve_op_is_commutative(enum rval_expr_op op)
 		case RVE_DIV_OP:
 		case RVE_MOD_OP:
 		case RVE_MINUS_OP:
+		case RVE_BLSHIFT_OP:
+		case RVE_BRSHIFT_OP:
 			return 0;
 		case RVE_PLUS_OP:
 			/* non commut. when diff. type 
@@ -2687,6 +2738,7 @@ static int rve_op_is_commutative(enum rval_expr_op op)
 		case RVE_MUL_OP:
 		case RVE_BAND_OP:
 		case RVE_BOR_OP:
+		case RVE_BXOR_OP:
 		case RVE_LAND_OP:
 		case RVE_LOR_OP:
 		case RVE_IEQ_OP:
@@ -3712,6 +3764,7 @@ int fix_rval_expr(void* p)
 		case RVE_UMINUS_OP: /* unary operators */
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
+		case RVE_BNOT_OP:
 		case RVE_STRLEN_OP:
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
@@ -3726,6 +3779,9 @@ int fix_rval_expr(void* p)
 		case RVE_MINUS_OP:
 		case RVE_BOR_OP:
 		case RVE_BAND_OP:
+		case RVE_BXOR_OP:
+		case RVE_BLSHIFT_OP:
+		case RVE_BRSHIFT_OP:
 		case RVE_LAND_OP:
 		case RVE_LOR_OP:
 		case RVE_GT_OP:

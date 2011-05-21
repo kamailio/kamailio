@@ -567,11 +567,14 @@ extern char *finame;
 %left LOG_AND
 %left BIN_OR
 %left BIN_AND
+%left BIN_XOR
+%left BIN_LSHIFT
+%left BIN_RSHIFT
 %left EQUAL_T DIFF MATCH INTEQ INTDIFF STREQ STRDIFF
 %left GT LT GTE LTE
 %left PLUS MINUS
 %left STAR SLASH MODULO
-%right NOT UNARY
+%right NOT UNARY BIN_NOT
 %right DEFINED
 %right INTCAST STRCAST
 %left DOT
@@ -2748,6 +2751,7 @@ rval: intno			{$$=mk_rve_rval(RV_INT, (void*)$1); }
 
 
 rve_un_op: NOT	{ $$=RVE_LNOT_OP; }
+		|  BIN_NOT 	{ $$=RVE_BNOT_OP; }
 		|  MINUS %prec UNARY	{ $$=RVE_UMINUS_OP; }
 		/* TODO: RVE_BOOL_OP, RVE_NOT_OP? */
 	;
@@ -2777,6 +2781,9 @@ rval_expr: rval						{ $$=$1;
 		| rval_expr MODULO rval_expr	{$$=mk_rve2(RVE_MOD_OP, $1, $3); }
 		| rval_expr BIN_OR rval_expr	{$$=mk_rve2(RVE_BOR_OP, $1,  $3); }
 		| rval_expr BIN_AND rval_expr	{$$=mk_rve2(RVE_BAND_OP, $1,  $3);}
+		| rval_expr BIN_XOR rval_expr	{$$=mk_rve2(RVE_BXOR_OP, $1,  $3);}
+		| rval_expr BIN_LSHIFT rval_expr {$$=mk_rve2(RVE_BLSHIFT_OP, $1,  $3);}
+		| rval_expr BIN_RSHIFT rval_expr {$$=mk_rve2(RVE_BRSHIFT_OP, $1,  $3);}
 		| rval_expr rve_cmpop rval_expr %prec GT { $$=mk_rve2( $2, $1, $3);}
 		| rval_expr rve_equalop rval_expr %prec EQUAL_T
 			{ $$=mk_rve2( $2, $1, $3);}

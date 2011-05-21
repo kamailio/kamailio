@@ -300,6 +300,10 @@ LOG_AND		"and"|"&&"
 BIN_AND         "&"
 LOG_OR		"or"|"||"
 BIN_OR          "|"
+BIN_NOT     "~"
+BIN_XOR     "^"
+BIN_LSHIFT     "<<"
+BIN_RSHIFT     ">>"
 PLUS	"+"
 MINUS	"-"
 MODULO	"mod"
@@ -935,6 +939,10 @@ SUBST       subst
 <INITIAL>{BIN_AND}	{ count(); return BIN_AND; }
 <INITIAL>{LOG_OR}	{ count(); return LOG_OR;  }
 <INITIAL>{BIN_OR}	{ count(); return BIN_OR;  }
+<INITIAL>{BIN_NOT}	{ count(); return BIN_NOT;  }
+<INITIAL>{BIN_XOR}	{ count(); return BIN_XOR;  }
+<INITIAL>{BIN_LSHIFT}	{ count(); return BIN_LSHIFT;  }
+<INITIAL>{BIN_RSHIFT}	{ count(); return BIN_RSHIFT;  }
 <INITIAL>{PLUS}		{ count(); return PLUS; }
 <INITIAL>{MINUS}	{ count(); return MINUS; }
 <INITIAL>{MODULO}	{ count(); return MODULO; }
