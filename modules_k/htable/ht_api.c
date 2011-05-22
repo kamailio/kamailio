@@ -320,20 +320,23 @@ int ht_destroy(void)
 	while(ht)
 	{
 		ht0 = ht->next;
-		for(i=0; i<ht->htsize; i++)
+		if(ht->entries!=NULL)
 		{
-			/* free entries */
-			it = ht->entries[i].first;
-			while(it)
+			for(i=0; i<ht->htsize; i++)
 			{
-				it0 = it;
-				it = it->next;
-				ht_cell_free(it0);
+				/* free entries */
+				it = ht->entries[i].first;
+				while(it)
+				{
+					it0 = it;
+					it = it->next;
+					ht_cell_free(it0);
+				}
+				/* free locks */
+				lock_destroy(&ht->entries[i].lock);
 			}
-			/* free locks */
-			lock_destroy(&ht->entries[i].lock);
+			shm_free(ht->entries);
 		}
-		shm_free(ht->entries);
 		shm_free(ht);
 		ht = ht0;
 	}
