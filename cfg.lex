@@ -200,6 +200,7 @@ SEND_TCP	send_tcp
 LOG		log
 ERROR	error
 ROUTE	route
+ROUTE_REQUEST request_route
 ROUTE_FAILURE failure_route
 ROUTE_ONREPLY onreply_route
 ROUTE_BRANCH branch_route
@@ -585,6 +586,7 @@ SUBST       subst
 <INITIAL>{AVPFLAGS_DECL}	{ count(); yylval.strval=yytext; return AVPFLAGS_DECL; }
 <INITIAL>{MSGLEN}	{ count(); yylval.strval=yytext; return MSGLEN; }
 <INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }
+<INITIAL>{ROUTE_REQUEST}	{ count(); yylval.strval=yytext; return ROUTE_REQUEST; }
 <INITIAL>{ROUTE_ONREPLY}	{ count(); yylval.strval=yytext;
 								return ROUTE_ONREPLY; }
 <INITIAL>{ROUTE_FAILURE}	{ count(); yylval.strval=yytext;

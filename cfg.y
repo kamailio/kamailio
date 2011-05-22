@@ -307,6 +307,7 @@ extern char *finame;
 %token LOG_TOK
 %token ERROR
 %token ROUTE
+%token ROUTE_REQUEST
 %token ROUTE_FAILURE
 %token ROUTE_ONREPLY
 %token ROUTE_BRANCH
@@ -1769,8 +1770,13 @@ route_name:		NUMBER	{
 			|	STRING	{ $$=$1; }
 ;
 
+
+route_main:	ROUTE { ; }
+		  | ROUTE_REQUEST { ; }
+;
+
 route_stm:
-	ROUTE LBRACE actions RBRACE {
+	route_main LBRACE actions RBRACE {
 	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
@@ -1798,6 +1804,7 @@ route_stm:
 		push($6, &main_rt.rlist[i_tmp]);
 	}
 	| ROUTE error { yyerror("invalid  route  statement"); }
+	| ROUTE_REQUEST error { yyerror("invalid  request_route  statement"); }
 	;
 failure_route_stm:
 	ROUTE_FAILURE LBRACE actions RBRACE {
