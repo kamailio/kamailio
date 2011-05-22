@@ -310,6 +310,7 @@ extern char *finame;
 %token ROUTE_REQUEST
 %token ROUTE_FAILURE
 %token ROUTE_ONREPLY
+%token ROUTE_REPLY
 %token ROUTE_BRANCH
 %token ROUTE_SEND
 %token ROUTE_EVENT
@@ -1837,8 +1838,14 @@ failure_route_stm:
 	| ROUTE_FAILURE error { yyerror("invalid failure_route statement"); }
 	;
 
+
+route_reply_main:	ROUTE_ONREPLY { ; }
+		  | ROUTE_REPLY { ; }
+;
+
+
 onreply_route_stm:
-	ROUTE_ONREPLY LBRACE {rt=CORE_ONREPLY_ROUTE;} actions RBRACE {
+	route_reply_main LBRACE {rt=CORE_ONREPLY_ROUTE;} actions RBRACE {
 	#ifdef SHM_MEM
 		if (!shm_initialized() && init_shm()<0) {
 			yyerror("Can't initialize shared memory");
@@ -1848,6 +1855,7 @@ onreply_route_stm:
 		push($4, &onreply_rt.rlist[DEFAULT_RT]);
 	}
 	| ROUTE_ONREPLY error { yyerror("invalid onreply_route statement"); }
+	| ROUTE_REPLY error { yyerror("invalid onreply_route statement"); }
 	| ROUTE_ONREPLY LBRACK route_name RBRACK 
 		{rt=(*$3=='0' && $3[1]==0)?CORE_ONREPLY_ROUTE:TM_ONREPLY_ROUTE;}
 		LBRACE actions RBRACE {

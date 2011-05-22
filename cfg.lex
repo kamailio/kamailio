@@ -202,6 +202,7 @@ ERROR	error
 ROUTE	route
 ROUTE_REQUEST request_route
 ROUTE_FAILURE failure_route
+ROUTE_REPLY reply_route
 ROUTE_ONREPLY onreply_route
 ROUTE_BRANCH branch_route
 ROUTE_SEND onsend_route
@@ -589,6 +590,7 @@ SUBST       subst
 <INITIAL>{ROUTE_REQUEST}	{ count(); yylval.strval=yytext; return ROUTE_REQUEST; }
 <INITIAL>{ROUTE_ONREPLY}	{ count(); yylval.strval=yytext;
 								return ROUTE_ONREPLY; }
+<INITIAL>{ROUTE_REPLY}	{ count(); yylval.strval=yytext; return ROUTE_REPLY; }
 <INITIAL>{ROUTE_FAILURE}	{ count(); yylval.strval=yytext;
 								return ROUTE_FAILURE; }
 <INITIAL>{ROUTE_BRANCH} { count(); yylval.strval=yytext; return ROUTE_BRANCH; }
