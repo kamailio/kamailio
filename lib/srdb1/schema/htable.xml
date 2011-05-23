@@ -12,7 +12,7 @@
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>This table us used by the htabke module to load values in the hash table at start up. More information about the avpops module can be found at: &KAMAILIO_MOD_DOC;htable.html
+        <db:para>This table us used by the htable module to load values in the hash table at start up. More information about the htable module can be found at: &KAMAILIO_MOD_DOC;htable.html
         </db:para>
     </description>
 
