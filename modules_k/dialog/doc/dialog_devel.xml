@@ -52,7 +52,8 @@
 			</listitem>
 			<listitem>
 				<para><emphasis>DLGCB_CONFIRMED</emphasis> - called when the 
-				dialog is confirmed (2xx replied) - it's a per dialog type.
+				dialog is confirmed (2xx replied) and the setup-concluding ACK
+				message from the caller has been seen - it's a per dialog type.
 				</para>
 			</listitem>
 			<listitem>
