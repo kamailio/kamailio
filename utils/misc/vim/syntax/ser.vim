@@ -34,7 +34,7 @@ syn keyword	serTodo	TODO FIXME XXX contained
 syn match	serOperator		'!\|&&\|||\|=[~=]\?\|>\|<\|+\|-\|/\|\*\||\|&\|^\|\~\|defined\|eq\|ieq\|ne\|ine\|mod' display contained
 
 syn region	serCppComment		start='/\*' end='\*/' contains=serTodo
-syn match	serHashDefine	'#!define\s\|#!ifdef\s\|#!ifndef\s\|#!endif\|#!else\|#!subst\|#!KAMAILIO\|#!OPENSER\|#!SER\|#!MAXCOMPAT\|#!ALL'
+syn match	serHashDefine	'#!define\s\|#!ifdef\s\|#!ifndef\s\|#!endif\|#!else\|#!subst\|!!define\s\|!!ifdef\s\|!!ifndef\s\|!!endif\|!!else\|!!subst\|#!KAMAILIO\|#!OPENSER\|#!SER\|#!MAXCOMPAT\|#!ALL'
 " syn match	serHashDefine	'^\s*#!.+$'
 syn match	serHashComment	'#[^!].*$\|#$' contains=serTodo
 
@@ -56,8 +56,8 @@ syn keyword	serCoreParameter debug fork log_stderror log_facility listen alias a
 
 syn region	serBlock	start='{' end='}' contained contains=serBlock,@serCodeElements
 
-syn match	serRouteBlock	'\(failure_\|onreply_\|branch_\|event_\|onsend_\)\?route\(\s*\[[^\]]\+\]\)\?' contained contains=serNumber,serString,serIdentifier
-syn region	serRrouteBlockFold	matchgroup=serRouteBlock start="\(failure_\|onreply_\|branch_\|event_\|onsend_\)\?route\(\s*\[[^\]]\+\]\)\?\s*\n\?{" matchgroup=NONE end="}" contains=serBlock,@serCodeElements
+syn match	serRouteBlock	'\(failure_\|onreply_\|branch_\|event_\|onsend_\|request_\|reply_\)\?route\(\s*\[[^\]]\+\]\)\?' contained contains=serNumber,serString,serIdentifier
+syn region	serRrouteBlockFold	matchgroup=serRouteBlock start="\(failure_\|onreply_\|branch_\|event_\|onsend_\|request_\|reply_\)\?route\(\s*\[[^\]]\+\]\)\?\s*\n\?{" matchgroup=NONE end="}" contains=serBlock,@serCodeElements
 
 syn cluster	serCodeElements contains=serHashDefine,serCppComment,serHashComment,serNumber,serString,serVariable,serOperator,serStatement,serKeyword,serCoreKeyword,serCoreValue,serCoreFunction,serIdentifier
 
