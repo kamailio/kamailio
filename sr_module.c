@@ -575,7 +575,7 @@ reload:
 			dlclose(handle);
 			WARN("%s: exports dlflags interface is deprecated and it will not"
 					" be supported in newer versions; consider using"
-					" mod_register() instead", path);
+					" mod_register() instead\n", path);
 			dlflags=new_dlflags;
 			retries--;
 			if (retries>0) goto reload;
