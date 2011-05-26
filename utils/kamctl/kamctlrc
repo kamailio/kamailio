@@ -12,7 +12,9 @@
 ## chrooted directory
 # $CHROOT_DIR="/path/to/chrooted/directory"
 
-## database type: MYSQL, PGSQL, ORACLE, DB_BERKELEY, or DBTEXT, by default none is loaded
+## database type: MYSQL, PGSQL, ORACLE, DB_BERKELEY, DBTEXT, or SQLITE
+# by default none is loaded
+#
 # If you want to setup a database with kamdbctl, you must at least specify
 # this parameter.
 # DBENGINE=MYSQL
@@ -23,7 +25,7 @@
 ## database name (for ORACLE this is TNS name)
 # DBNAME=openser
 
-# database path used by dbtext or db_berkeley
+# database path used by dbtext, db_berkeley or sqlite
 # DB_PATH="/usr/local/etc/kamailio/dbtext"
 
 ## database read/write user
