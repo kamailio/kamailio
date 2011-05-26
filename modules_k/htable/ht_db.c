@@ -201,7 +201,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 						ht_array_size_suffix.s);
 					hname.s = ht_name_buf;
 					hname.len = strlen(ht_name_buf);
-					val.n = n+1;
+					val.n = n;
 
 					if(ht_set_cell(ht, &hname, 0, &val, mode))
 					{
@@ -262,7 +262,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 			ht_array_size_suffix.s);
 		hname.s = ht_name_buf;
 		hname.len = strlen(ht_name_buf);
-		val.n = n+1;
+		val.n = n;
 		if(ht_set_cell(ht, &hname, 0, &val, mode))
 		{
 			LM_ERR("error adding array size to hash table.\n");
