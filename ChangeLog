@@ -1,3 +1,572 @@
+===================== 2011-05-26 Version 3.1.4 Released =====================
+
+===================== Changes Since Version 3.1.3 ===========================
+
+commit eac6d9e89e83edb962c14b35e7d3803adb9eb4bd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 26 18:04:32 2011 +0200
+
+    Makefile: version set to 3.1.4
+
+commit 06b74b600e6644f4bf289d256538d463f6734717
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Fri Apr 29 19:40:36 2011 +0200
+
+    tm: recursive hash locks
+    
+    The hash locks are now recursive/re-entrant.
+    This removes some of the TMCB_REQUEST_IN and TMCB_LOCAL_REQUEST_IN
+    callback restrictions (like do not create new transactions,
+    do not  call t_lookup_*()) solving problems like the one
+    described in
+    http://lists.sip-router.org/pipermail/sr-users/2011-April/068331.html
+    (cherry picked from commit 1699b6a4c479031c116fb081a805635a4d088bcb)
+
+commit 1837d493e7d08427a19038721ecc0ac52d72a75b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 26 16:16:54 2011 +0200
+
+    rpm/kamailio: version set to 3.1.4
+
+commit dd8b674cc2d19689612977b656fe7830304ac88d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 26 15:22:52 2011 +0200
+
+    debs/kamailio: version set to 3.1.4 in changelog
+
+commit ec3f4706b500771aef14e49d1a9ea3a2cdef2be1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 26 07:09:14 2011 +0200
+
+    htable: adjust item array size
+    
+    - it was 1 too much, reported by Juha Heinanen
+    (cherry picked from commit 6987c52c42e8df6a08d54e155ee868b8b9eb523b)
+
+commit f98d523cc7034c6c69e305cdbb3370693df0b1e8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 25 21:59:14 2011 +0200
+
+    htable: set the size of item arrays
+    
+    - it was not computed properly, reported by Juha Henanen
+    (cherry picked from commit 01e7be75f2643fec6a6ac6ab6614ce65421f8bf3)
+
+commit 8e38978c09ff89418a51caeb3abca9ea221423a9
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Wed May 25 12:00:41 2011 +0200
+
+    core: also include newline in error msg..
+    (cherry picked from commit 207f7c6f55fd1c986f7c1566a3acfdd3361434b5)
+
+commit bc143d2f471ccddbff6d3630c2d53921a6b2f9ec
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Wed May 25 11:28:20 2011 +0200
+
+    core: spelling fix in error msg, reported from Bret McDanel, trixter at 0xdecafbad dot com
+    (cherry picked from commit d70215e5af181fe2f9513e44b0725e6d68fa8ba5)
+
+commit 4ffe22ae5215f48873438e788fa541d82c5ba3ad
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon May 23 13:06:49 2011 +0200
+
+    htable: spelling fix in htable table definition docs
+    (cherry picked from commit 938b50beab952645438743720833070a484c07ab)
+
+commit 2e35717359d011a22a348b27f57c2fdeb7de73bd
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Mon May 23 14:06:08 2011 +0200
+
+    Sorry, this commit was never meant to see the real world. :)
+    (just a test module.)
+    
+    This reverts commit ca5fe4f895855580d0e19a8f3b178c5b00c5ea9e.
+
+commit 76a0f0241566c28809c76fed73c18cb45bdb115f
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Mon May 23 13:58:33 2011 +0200
+
+    Stress that DLGCB_CONFIRMED includes reception of the call-concluding ACK message.
+    (cherry picked from commit bea80d75f6c496a88f09591fcf4b3a412b2fde03)
+
+commit ca5fe4f895855580d0e19a8f3b178c5b00c5ea9e
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Wed Jul 28 13:45:46 2010 +0200
+
+    Add version of ui-test compatible with sip-router.
+
+commit 6c6fee9ac072de715cc0b4079a0ce5983139fbac
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Fri May 20 22:39:49 2011 +0300
+
+    modules/mediaproxy: Fixed crash in mediaproxy due to insufficient buffer size.
+    - Credits to giti.
+    (cherry picked from commit 82c86ff64c2059256b776df32628e6bd4f5c13e9)
+
+commit 0a2810181e1901708b1885d4e0c41774b28d25f9
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Tue May 17 13:04:07 2011 +0200
+
+    Revert "tm: add warning about t_newtran behaviour (pointed out from Iñaki"
+    
+    This reverts commit 6ef54ae2cb3c5390be823707aa1ebb2008b5eaef.
+
+commit abeaaff1f7a4ad3d9badb203273b249d5722a29b
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon May 16 18:21:09 2011 +0200
+
+    geoip: also include URL in docs
+    (cherry picked from commit 4d777c5100927edc1bd99ef429625eaf552f8d23)
+
+commit 5c6f5de622ccb873701119f1e3f6e1559d56aa84
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon May 16 15:48:53 2011 +0200
+
+    geoip: extend docs after discussion with Francesco Castellano
+    (cherry picked from commit b280f89b3ac4f97c3cad1487961509bae893f656)
+
+commit 203e6d078015e47ecf25a160653ace1d3745807c
+Author: Elena-Ramona Modroiu <ramona@asipto.com>
+Date:   Mon Oct 11 12:20:24 2010 +0200
+
+    mqueue: return false if queue is empty
+    
+    - return code -2
+    - reported by Alex Balashov
+    (cherry picked from commit e6fa8ae004f5d487e1c64471bf282931e4b9e901)
+
+commit 6ef54ae2cb3c5390be823707aa1ebb2008b5eaef
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon May 16 15:22:15 2011 +0200
+
+    tm: add warning about t_newtran behaviour (pointed out from Iñaki
+    (cherry picked from commit 9f27cb55a1b4def4f393def6170430cbf70e6615)
+
+commit 040d6d56de87bc4d63acc45d56bfde9d58738794
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 14 14:17:34 2011 +0200
+
+    debs(k): version set to 3.1.3 in deb changelog
+
+commit 59f7428173b40944f0ba1fbe909254c9ef1ea455
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 4 22:50:02 2011 +0100
+
+    dialog: safer unref of terminated dialogs
+    
+    - if reference counter is already <=0, don't deref anymore, dialog in
+      destroyed state
+    - should protect against bogus dereferencing
+    - reported by Anton Roman
+    (cherry picked from commit 2c28a251a87fd66fa81b4802fe960fef3989fb3d)
+
+commit ea8430ddb32e2f45f29362a97ffed2fee011f6a3
+Author: Marius Bucur <marius.bucur@1and1.ro>
+Date:   Wed May 11 13:43:08 2011 +0300
+
+    modules/carrieroute: fixed a bug in carrieroute
+    
+    the bug caused carrieroute to crash when an invalid SIP message is received (e.g. with no callid)
+
+commit 41e576663d1826fd94106d8aa1b8aff0fc7104ae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 6 06:42:51 2011 +0200
+
+    pkg: deb lib dir name is set by variable LIBDIR
+    
+    - fixes the check for duplicate libs to variants of deb distros
+    - reported in FS#130 and FS#128
+    (cherry picked from commit 807b73d8a242ae12f93564b024baaa38dce89c8e)
+
+commit 078667f55841b64fb0e33b20c5ae066f849a6195
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 6 05:42:21 2011 +0200
+
+    pkg: lib dir name is set by variable LIBDIR
+    
+    - fixes the check for duplicate libs
+    - reported in FS#130 and FS#128
+    (cherry picked from commit 29b996a5d89a74c7fe866919a6e3067071f84d75)
+
+commit 1e14827ab627db52eae556a027838cc64d3a57cd
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Thu May 5 00:43:48 2011 +0200
+
+    tcp: fix send2child() error case
+    
+    If send2child() fails don't decrement the refcnt if the connection
+    was already removed from the hash due to some other previous
+    error (very unlikely, but possible).
+    (cherry picked from commit a8859f52b9dab4b3a79babe19f3d30c3dfcb95ce)
+
+commit 463053fcd129b80b2370145b36d69638c65f7e63
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Thu May 5 00:35:31 2011 +0200
+
+    tcp: fix tcp_*_destroy() bug case
+    
+    Mark unhashed connections in the "bug" code path to avoid
+    attempting to remove them twice.
+    (cherry picked from commit 42d1a15584eb601a23c54a8af802e99473a8c4b6)
+
+commit 521b16ea814d68f9d872e2f6e1b0f081f285254b
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Thu May 5 00:13:36 2011 +0200
+
+    tcp: fix multiple hash removal attempts
+    
+    In some corner cases (pending new tcp connection created in async
+    mode, other processes try to append data to it but fail and the
+    initial send fails after that) it was possible to attempt removing
+    the connection from the hash and the local timer multiple times.
+    (cherry picked from commit 76cb63c6f120c22a134babc8948611819b9081c3)
+
+commit acad20d9479b2a48c29709304042b0f54032c16d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 4 19:25:36 2011 +0200
+
+    tm: allow t_on_reply() in branch_route
+    
+    - same for t_on_failure()
+    - reported by Sebastian Damm
+    (cherry picked from commit e950f44d733f9004710f0155d794a1c797f1580d)
+
+commit 725c8d7318c76e322a8eeef5423436347f56214d
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Sat Apr 30 00:11:02 2011 +0200
+
+    stun: fix attribute padded length outside the packet case
+    
+    - check if the attribute padded length points still inside the
+      packet (only the un-padded value was checked before)
+    -  use an integer and not an UINT for the remainder part of the
+       packet
+    - fix padded length computation in copy_str_to_buffer()
+    
+    Closes: FS#129
+    Reported-by: Francesco Castellano
+    (cherry picked from commit 677a7bfabd0a266ebdd712b23caee75198993e4a)
+
+commit 66af75fcdda45ed383f8493ea9b3d8b9b8c2cf47
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Sat Apr 30 00:08:11 2011 +0200
+
+    stun: fix padd macros
+    
+    The PADDED_TO_* macros did not work when the length was a multiple
+    of the pad value.
+    (FS#129)
+    
+    Reported-by: Francesco Castellano
+    (cherry picked from commit 263ee122bc55f81db878ddea9ad4aa2bfd8afbae)
+
+commit 2192a1d7a35364fff6241f640bdf7dd282e06447
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Sat Apr 30 00:48:12 2011 +0200
+
+    Makefile: fix gcc 4.5 support for all archs
+    
+    Commit c925278 split gcc 4.5 support from the generic 4.2+ support,
+    but it handled gcc 4.5 only for x86_64 (trying to compile on other
+    architectures with gcc 4.5 resulted in warnings and common gcc
+    optimization options).
+    (cherry picked from commit fd6704daccd4359f59183367f2059576e184635e)
+
+commit 9e451170ecb2b6aebf583e6e22960cb65813c69d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 29 17:38:29 2011 +0200
+
+    Makefile.defs: moved setting of dirs after target ARCH detection
+    
+    - should fix FS#128 - error building deb packages on chroot systems
+      reported by Ali Onur Uyar
+    (cherry picked from commit 7bb701b79d769f0c7d79d367521a1f984b35fa64)
+
+commit e506dae55f1c5011fe3b7f05e94ba9f02a13dc8b
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Wed Apr 27 15:32:18 2011 +0300
+
+    modules_k/htable $shtex(htable=>key) caused a segfault when reading (null pointer deref)
+
+commit 67420b88a997cc66d3c6ca2e8cef98c4f7cc91dd
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Mon Jan 17 14:32:22 2011 +0200
+
+    modules_k/group : In case of incorrect param, don't crash
+    (cherry picked from commit 5d668ec98ccf4c315da67a1cce6dc3a5cf1b2dc5)
+
+commit e3f8cf21c9bb601ad08e8069bc2f31ae3b6ccd20
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Wed Apr 27 13:26:13 2011 +0300
+
+    Fixed definitions for presence related tables. Size of callid and contact should be larger than 64.
+    (cherry picked from commit 5af83d0a629cf51344b2ba01b7219c3a507bd225)
+
+commit bbf59bb235f45e70f8e2925bdf584495610656c5
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Wed Apr 27 12:56:58 2011 +0300
+
+    lib/srdb1 Fixed crash caused by NULL pointer parameter
+
+commit 270a5cfcabaa1be16ccc5cf4c5a3da439fe7d644
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Wed Apr 27 12:21:11 2011 +0300
+
+    modules_k/presence : Fixed a bug caused by an incorrect Macro
+    
+    the macro expanded to incorrect results when called in statements like
+    if(cond) COND_COPY(...);
+    (cherry picked from commit 41b11916eec28133af499b7368940504c7c5834d)
+
+commit ac679cf5093f99931da6aeea4b40c1215e295a4b
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Wed Apr 27 11:48:46 2011 +0300
+
+    utils/kamctl/presence-create.sql Increased size of contact and callid in presence tables
+    
+    Some CPE (e.g. FritzBox,Samsung) issue larger contacts that 64 chars, thus resulting in a truncation in the
+    DB backend
+
+commit 4d5a004b2bb78fa8bf9bb4b603b085d04dee5519
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 25 11:45:12 2011 +0200
+
+    rls(k): few fixes
+    
+    - string comparison that fails because sometimes one of the strings
+      is '\0' terminated and the other never is.
+    - fix for when some non-RLS SUBSCRIBEs are not identified as such.
+    - fix for a small typo in an error diagnostic.
+    - patch by Peter Dunkley
+    (cherry picked from commit 2917d848a0ede8b7285a2f8414d43fcd4262f6e3)
+
+commit a0b0c849119c13c2ce0572670cfa4ec282015e6e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 18 11:40:20 2011 +0200
+
+    Makefile: disable '-mtune' parameter for gcc 4.5 x86_64
+    
+    - gcc 4.5 gives error when it has parameter -mtune=x86_64 (this should
+      be the default value anyhow) - tested on opensuse 11.4
+    (cherry picked from commit c925278b8ee3492f71a04c52784f593712522df8)
+
+commit 3b6a5953a368b1856a6b1eb7bdda62d397291920
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Apr 16 15:21:32 2011 +0200
+
+    htable: safety check for null db values
+    
+    - with some db engines the non-null condition might not be enforced,
+      resulting in working with null values
+    - reported by Eric Hiller
+    (cherry picked from commit 5cd534834b7ee529adbcef3f758a19ed93d29210)
+
+commit f3690cfddd08f43d7afb651a8d9f05b31e2174c2
+Author: Timo Teräs <timo.teras@iki.fi>
+Date:   Wed Apr 6 09:33:10 2011 +0300
+
+    modules_k/uac: fix from/to restore for small original URI
+    
+    Seems that the URI length check is superfluous and fails under
+    certain conditions. It does not make sense for the URI to have
+    zero bytes, so just use the first seen zero byte as end marker.
+    
+    I have a reproducible test case where the restore inserts URI
+    with multiple zero-bytes to wire. This happens if the original
+    URI is smaller than the one we rewrote it to using uac_replace_from.
+    (cherry picked from commit e1d1c774c9ac0b4d9103f4a1c5e9b550adbb2f38)
+
+commit d2fe333c9429cf1183a7e8ce27c578f445db929b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 12 10:22:15 2011 +0200
+
+    acc_radius(k): usage flags for acc_rad_request() set to ANY_ROUTE
+    
+    - they were forgotten as the main acc module has this type of flags for
+      acc request functions
+    (cherry picked from commit 5673f5cd5a50714b4a9c770294723caba15a995e)
+
+commit 8464b29cbffb17b810cc7f3f4f459e754bc0e4ed
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 12 10:19:38 2011 +0200
+
+    acc(k): safety check for empty db_url
+    
+    - if db_url is provided as empty string, disable db accounting
+    - if db_url is not provided, db acc flags are set to -1 instead
+      of 0 to avoid conflict with usage in config of flag 0
+    - reported by Francesco Castellano
+    (cherry picked from commit de2015d507cdd40502160070a096aa3fb6754f55)
+
+commit 9ec10a2249a8319384a143137bc67770445e2467
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 11 23:52:38 2011 +0200
+
+    srdb1: reset prev_token for safer free on error
+    
+    - if parse_db_url() fails internally, prev_token can point to same
+      memory chunk as one of the db id attributes, causing a double-free
+    (cherry picked from commit 765c17f8c2ef79fd49ec2a74781b49a56aa47c3a)
+
+commit f027ca95a2a1818cd40e4ed6d4358a76d18252ad
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Mon Apr 11 13:45:10 2011 +0300
+
+    modules/ratelimit Timer was ran at a 1.5 s interval instead of timer_interval, thus rendering TAILDROP alg unusable
+    (cherry picked from commit 3a06d7d3561f889c84249eaa5ec7a5b79a2a23bd)
+
+commit 6d4cfc5dd8a8d7b0f67ee08120f7326edacdcf69
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 11 12:02:23 2011 +0200
+
+    xcap_server: use ETag header instead of SIP-ETag
+    
+    - over http the name of header carrying entity tag is ETag
+    - patch by Peter Dunkley
+    (cherry picked from commit a20da4ced92796959d619adb6ba61334869f8588)
+
+commit 25ef2d798ade6827f67b5b5058ba6ef534b8fa15
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Apr 10 12:47:55 2011 +0200
+
+    seas(k): enable cfg framework for module's extra process
+    (cherry picked from commit 4990dea6ab31e9d0aec78ca09af96a481196cd70)
+
+commit 87a95a607533815325ac6628db9339ffb7cdbd21
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Apr 10 12:41:11 2011 +0200
+
+    snmpstats(k): enable cfg framework for module's extra process
+    (cherry picked from commit 17e94fd7535f541438e09d9536c8b2767e397f13)
+
+commit bef4e7d50b65f3c1db23ea1142d966c366398133
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Apr 10 12:34:53 2011 +0200
+
+    purple(k): enable cfg framework for module's extra process
+    (cherry picked from commit 11efca600514ba791e456cc809743dd5ec6819c2)
+
+commit 2e9113a87be66da3e2f0119d20095777ecd32223
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Apr 10 12:18:44 2011 +0200
+
+    xmpp(k): enable cfg framework for module's extra process
+    (cherry picked from commit cd3d112dcd6b0c5dd6e66fabc8082b70dcb317ae)
+
+commit 1ad6e142aad3fb4e0229d46dab52ab6ebab7e113
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Apr 10 12:11:07 2011 +0200
+
+    uac(k): enable cfg framework for module's extra process
+    (cherry picked from commit db0a6250180226ffaa700b67018ba25eb5451caf)
+
+commit 1a33654d739577747fd58d7a661b07e3a1f6fd41
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Fri Apr 8 16:48:37 2011 +0300
+
+    modules_k:siputils Fixed the fixup for ring_insert_callid
+    (cherry picked from commit 8fdc717ab8b28857e23366804f0668b83971f249)
+
+commit 341d6f035740eb1fa370760ff72e59f506a1860c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 7 22:56:46 2011 +0200
+
+    nat_traversal: use register_dummy_timers() to handle cfg framework updates
+    (cherry picked from commit 44bc565d39ef8cb078c7e46f12863a7788c7b4e4)
+
+commit 86f0ca802a1d1f7bc6da82702aa97a46e5575f5d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 7 22:55:46 2011 +0200
+
+    nathelper(k): use register_dummy_timers() to handle cfg framework updates
+    (cherry picked from commit 1decfa6aaf44cb228569cd180c57dd67375dbe43)
+
+commit c4cfa4cc3893d2c8d5825167a298d1baff812c0f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 7 22:54:15 2011 +0200
+
+    rtimer: use register_dymmy_timers() to handle cfg framework updates
+    (cherry picked from commit 7d784e2e7195b953f568caa1dd553cce1e587fe3)
+
+commit febb7de20cbcf94046f8e119664308ec596fa266
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 7 20:34:18 2011 +0200
+
+    core: wrapper to pre-register new dummy timers
+    
+    - register_dummy_timers(no) adds the number of new processes in the
+      process table and initializes as well the number of new childres
+      to the cfg framework
+    - fork_dummy_timer() handles now the updates in cfg framework
+    (cherry picked from commit 421cba5d6b25d85d542b875633368e0bc98be07d)
+
+commit f1bd0d840ec4a8521d8ad97bc8fe424913b71a7e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 7 19:29:36 2011 +0200
+
+    mi_xmlrpc: update cfg framework structures in extra MI processes
+    (cherry picked from commit b1429aef87e64833e0fa3c8f3356ce2ac69a4dee)
+
+commit eb6f5f221a6134e9d8e81e6eaeffd33e76d551a6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 7 19:17:57 2011 +0200
+
+    mi_datagram: update cfg framework structures in extra MI processes
+    (cherry picked from commit 0baefce396796b02c77c9d9e2b02a63682d02173)
+
+commit 6452fc57d09792245dfc12f84c8c294bb7789b23
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 7 19:02:15 2011 +0200
+
+    mi_fifo: update the config framework structures in fifo process
+    
+    - the extra process created by mi_fifo to listen on fifo file was not
+      registered for updating the config framework structures
+    - reported by Klaus Darilion
+    - credits to Miklos Tirpak for hints to do it
+    (cherry picked from commit b5754d49ce59d659f641e5892f763208401ce8d2)
+
+commit a1b10bff76e1a88c647612c30b12eb5e9e51c90e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 7 13:32:45 2011 +0200
+
+    rls(k): safer build of chunked body
+    
+    - the check for the size of alloc'ed buffer was using static estimation,
+      not it is cmputed based on values and makes sure the ending '\0' is
+      safe as well. When handling bodies with long values, could have caused
+      overflow
+    - reported by Peter Dunkley
+
+commit cdee458b2ec4296cb847dd6e531285c0ac64dd80
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 7 12:03:32 2011 +0200
+
+    rls(k): send 200ok for NOTIFY with subscription state termintated
+    
+    - when rls module sends an un-SUBSCRIBE (expires=0), then the dialog
+      structure is removed and the NOTIFY arriving later to confirm the
+      termination of subscription does not find any record, resulting in no
+      reply
+    - the patch detects the subscribe-state terminated in NOTIFY requests
+      and sends back 200ok
+    - reported by Peter Dunkley
+
+commit 8b3506e364546a78d18c295505066fdfc93d83b2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 7 11:59:45 2011 +0100
+
+    makefile: store the flavour in tarball
+    
+    - Makefile.vars is auto-generated to store the flavour when creating the
+      tarball
+    - Makefile.vars is stored inside the tarball
+    - do 'make maintainer-clean' or 'make clean-makefile-vars' to remove it
+    - allow to build the packaged flavour even when 'make FLAVOUR=... cfg'
+      is forgotten - suggested by Olle E. Johansson
+    (cherry picked from commit dd15ae96c06c1e39f42894238cff74efff3563fa)
+
+
 ===================== 2011-04-04 Version 3.1.3 Released =====================
 
 ===================== Changes Since Version 3.1.2 ===========================
