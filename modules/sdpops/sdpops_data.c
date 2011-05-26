@@ -30,7 +30,7 @@
 #include "../../trim.h"
 #include "sdpops_data.h"
 
-#if 0
+/*
 
 http://www.iana.org/assignments/rtp-parameters
 
@@ -91,7 +91,7 @@ Registry Name: RTP Payload Format media types
 Reference: [RFC4855]
 Registration Procedures: Standards Action Process or expert approval
 
-#endif
+*/
 
 typedef struct _codecsmap {
 	str name;
