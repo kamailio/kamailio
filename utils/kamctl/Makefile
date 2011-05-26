@@ -245,6 +245,29 @@ install-modules: $(bin_prefix)/$(bin_dir)
 				fi ;\
 			done ;\
 		fi
+		# install sqlite stuff
+		if [ "$(SQLITEON)" = "yes" ]; then \
+			mkdir -p $(modules_prefix)/$(lib_dir)/kamctl ; \
+			sed -e "s#/usr/local/sbin#$(bin_target)#g" \
+				< kamctl.pgsql > /tmp/kamctl.sqlite ; \
+			$(INSTALL_CFG) /tmp/kamctl.sqlite \
+				$(modules_prefix)/$(lib_dir)/kamctl/kamctl.sqlite ; \
+			rm -fr /tmp/kamctl.sqlite ; \
+			sed -e "s#/usr/local/share/kamailio#$(data_target)#g" \
+				< kamdbctl.sqlite > /tmp/kamdbctl.sqlite ; \
+			$(INSTALL_TOUCH) $(modules_prefix)/$(lib_dir)/kamctl/kamdbctl.sqlite ; \
+			$(INSTALL_CFG) /tmp/kamdbctl.sqlite $(modules_prefix)/$(lib_dir)/kamctl/ ; \
+			rm -fr /tmp/kamdbctl.sqlite ; \
+			mkdir -p $(data_prefix)/$(data_dir)/sqlite ; \
+			for FILE in $(wildcard sqlite/*) ; do \
+				if [ -f $$FILE ] ; then \
+				$(INSTALL_TOUCH) $$FILE \
+					$(data_prefix)/$(data_dir)/sqlite/`basename "$$FILE"` ; \
+				$(INSTALL_CFG) $$FILE \
+					$(data_prefix)/$(data_dir)/sqlite/`basename "$$FILE"` ; \
+				fi ;\
+			done ; \
+		fi
 
 
 $(cfg_prefix)/$(cfg_dir):
