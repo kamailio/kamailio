@@ -1,0 +1,71 @@
+SQlite Module
+
+Timo Teräs
+
+Edited by
+
+Timo Teräs
+
+   Copyright © 2011 Timo Teräs
+   Revision History
+   Revision $Revision$ $Date$
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Exported Parameters
+
+        4. Exported Functions
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+   4. Exported Functions
+
+1. Overview
+
+   The module is an implementation of the internal DB API v1 connector
+   for SQlite 3 file.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * SQlite 3 library - e.g., libsqlite3-0
+     * SQlite 3 devel library - to compile the module e.g. libsqlite3-dev
+     * SQlite 3 utilities - for kamdbctl e.g. sqlite3
+
+3. Exported Parameters
+
+   NONE
+
+4. Exported Functions
+
+   NONE
