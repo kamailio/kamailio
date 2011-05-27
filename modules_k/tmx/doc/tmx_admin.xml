@@ -192,6 +192,56 @@ t_flush_flags();
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title>
+		<function moreinfo="none">t_is_failure_route()</function>
+		</title>
+		<para>
+		Returns true if the top-executed route block is failure_route.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE .
+		</para>
+		<example>
+		<title><function>t_is_failure_route</function> usage</title>
+		<programlisting format="linespecific">
+...
+failure_route[xyz] {
+    route(abc);
+}
+
+route[abc] {
+    if(t_is_failure_route()) { ... }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">t_is_branch_route()</function>
+		</title>
+		<para>
+		Returns true if the top-executed route block is branch_route.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE .
+		</para>
+		<example>
+		<title><function>t_is_branch_route</function> usage</title>
+		<programlisting format="linespecific">
+...
+branch_route[xyz] {
+    route(abc);
+}
+
+route[abc] {
+    if(t_is_branch_route()) { ... }
+}
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

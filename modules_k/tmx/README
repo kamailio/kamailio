@@ -11,7 +11,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2009 Daniel-Constantin Mierla
+   Copyright � 2009 Daniel-Constantin Mierla
      __________________________________________________________________
 
    Table of Contents
@@ -30,6 +30,8 @@ Daniel-Constantin Mierla
               3.2. t_cancel_callid(callid, cseq, flag)
               3.3. t_reply_callid(callid, cseq, code, reason)
               3.4. t_flush_flags()
+              3.5. t_is_failure_route()
+              3.6. t_is_branch_route()
 
         4. Exported pseudo-variables
         5. Exported MI Functions
@@ -59,6 +61,8 @@ Daniel-Constantin Mierla
    1.2. t_cancel_callid usage
    1.3. t_reply_callid usage
    1.4. t_flush_flags usage
+   1.5. t_is_failure_route usage
+   1.6. t_is_branch_route usage
 
 Chapter 1. Admin Guide
 
@@ -76,6 +80,8 @@ Chapter 1. Admin Guide
         3.2. t_cancel_callid(callid, cseq, flag)
         3.3. t_reply_callid(callid, cseq, code, reason)
         3.4. t_flush_flags()
+        3.5. t_is_failure_route()
+        3.6. t_is_branch_route()
 
    4. Exported pseudo-variables
    5. Exported MI Functions
@@ -128,6 +134,8 @@ Chapter 1. Admin Guide
    3.2. t_cancel_callid(callid, cseq, flag)
    3.3. t_reply_callid(callid, cseq, code, reason)
    3.4. t_flush_flags()
+   3.5. t_is_failure_route()
+   3.6. t_is_branch_route()
 
 3.1.  t_cancel_branches(which)
 
@@ -199,6 +207,40 @@ if (t_reply_callid("123qaz", "5", "458", "Replied remotely")) {
 t_flush_flags();
 ...
 
+3.5.  t_is_failure_route()
+
+   Returns true if the top-executed route block is failure_route.
+
+   This function can be used from ANY_ROUTE .
+
+   Example 1.5. t_is_failure_route usage
+...
+failure_route[xyz] {
+    route(abc);
+}
+
+route[abc] {
+    if(t_is_failure_route()) { ... }
+}
+...
+
+3.6.  t_is_branch_route()
+
+   Returns true if the top-executed route block is branch_route.
+
+   This function can be used from ANY_ROUTE .
+
+   Example 1.6. t_is_branch_route usage
+...
+branch_route[xyz] {
+    route(abc);
+}
+
+route[abc] {
+    if(t_is_branch_route()) { ... }
+}
+...
+
 4. Exported pseudo-variables
 
      * $T_branch_idx
@@ -223,13 +265,13 @@ t_flush_flags();
    Parameters:
      * method - request method
      * RURI - request SIP URI
-     * NEXT HOP - next hop SIP URI (OBP); use “.” if no value.
-     * socket - local socket to be used for sending the request; use “.”
+     * NEXT HOP - next hop SIP URI (OBP); use "." if no value.
+     * socket - local socket to be used for sending the request; use "."
        if no value.
      * headers - set of additional headers to be added to the request; at
-       least “From” and “To” headers must be specify)
+       least "From" and "To" headers must be specify)
      * body - (optional, may not be present) request body (if present,
-       requires the “Content-Type” and “Content-length” headers)
+       requires the "Content-Type" and "Content-length" headers)
 
 5.2.  t_uac_cancel
 
@@ -256,9 +298,9 @@ t_flush_flags();
      * trans_id - transaction identifier (has the hash_entry:label format)
      * to_tag - To tag to be added to TO header
      * new_headers - extra headers to be appended to the reply; use a dot
-       (“.”) char only if there are no headers;
+       (".") char only if there are no headers;
      * body - (optional, may not be present) reply body (if present,
-       requires the “Content-Type” and “Content-length” headers)
+       requires the "Content-Type" and "Content-length" headers)
 
 6. Exported statistics
 
@@ -275,7 +317,7 @@ t_flush_flags();
    6.11. inuse_transactions
 
    Exported statistics are listed in the next sections. All statistics
-   except “inuse_transactions” can be reset.
+   except "inuse_transactions" can be reset.
 
 6.1. received_replies
 
