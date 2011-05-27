@@ -32,6 +32,7 @@ typedef struct dmq_node_list {
 } dmq_node_list_t;
 
 extern str dmq_node_status_str;
+extern dmq_node_list_t* node_list;
 
 dmq_node_list_t* init_dmq_node_list();
 dmq_node_t* build_dmq_node(str* uri, int shm);

@@ -10,17 +10,15 @@
 #include "bind_dmq.h"
 #include "peer.h"
 #include "worker.h"
-#include "dmqnode.h"
 
 #define DEFAULT_NUM_WORKERS	2
-#define MIN_PING_INTERVAL	4
+#define MIN_PING_INTERVAL	60
 
 extern int num_workers;
 extern dmq_worker_t* workers;
 extern dmq_peer_t* dmq_notification_peer;
 extern str dmq_server_address;
 extern dmq_peer_list_t* peer_list;
-extern dmq_node_list_t* node_list;
 extern str dmq_request_method;
 extern struct sip_uri dmq_server_uri;
 extern str dmq_notification_address;

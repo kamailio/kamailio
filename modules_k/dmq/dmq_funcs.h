@@ -8,6 +8,7 @@
 #include "dmq.h"
 #include "peer.h"
 #include "worker.h"
+#include "dmqnode.h"
 
 void ping_servers(unsigned int ticks,void *param);
 

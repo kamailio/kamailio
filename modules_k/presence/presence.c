@@ -210,9 +210,19 @@ struct module_exports exports= {
 	child_init                  	/* per-child init function */
 };
 
-int dmq_callback(struct sip_msg* msg) {
+int dmq_presence_callback(struct sip_msg* msg, peer_reponse_t* resp) {
 	LM_ERR("it worked - dmq module triggered the presence callback [%ld %d]\n", time(0), my_pid());
-	sleep(4);
+	if(update_presentity(msg, 0, (str*)msg->body, 0, 0, 0) <0)
+	{
+		LM_ERR("when updating presentity\n");
+		return -1;
+	}
+	str ct = str_init("text/xml");
+	str reason = str_init("200 OK");
+	resp->content_type = ct;
+	resp->reason = reason;
+	resp->body.s = 0;
+	resp->resp_code = 200;
 	return 0;
 }
 
@@ -222,7 +232,7 @@ static void add_dmq_peer() {
 	presence_peer.peer_id.len = 8;
 	presence_peer.description.s = "presence";
 	presence_peer.description.len = 8;
-	presence_peer.callback = dmq_callback;
+	presence_peer.callback = dmq_presence_callback;
 	register_dmq(&presence_peer);
 }
 

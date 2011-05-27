@@ -7,6 +7,7 @@ dmq_peer_t* register_dmq_peer(dmq_peer_t* peer) {
 	if(search_peer_list(peer_list, peer)) {
 		LM_ERR("peer already exists: %.*s %.*s\n", peer->peer_id.len, peer->peer_id.s,
 		       peer->description.len, peer->description.s);
+		lock_release(&peer_list->lock);
 		return NULL;
 	}
 	new_peer = add_peer(peer_list, peer);
