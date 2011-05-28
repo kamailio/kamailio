@@ -219,6 +219,7 @@
 #include "../../socket_info.h"
 #include "../../mod_fix.h"
 #include "../../dset.h"
+#include "../../route.h"
 #include "../../modules/tm/tm_load.h"
 #include "rtpproxy.h"
 #include "rtpproxy_funcs.h"
@@ -1717,7 +1718,10 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 		strcpy(newip, cp);
 	}
 
-	nosdp = parse_sdp(msg);
+	if(msg->msg_flags & FL_SDP_BODY)
+		nosdp = 0;
+	else
+		nosdp = parse_sdp(msg);
 
 	if(msg->first_line.type == SIP_REQUEST) {
 		if(method==METHOD_ACK && nosdp==0)
@@ -1727,6 +1731,8 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 			msg->msg_flags |= FL_SDP_BODY;
 			if(tmb.t_gett!=NULL && tmb.t_gett()!=NULL)
 				tmb.t_gett()->uas.request->msg_flags |= FL_SDP_BODY;
+			if(route_type==FAILURE_ROUTE)
+				return unforce_rtp_proxy_f(msg, 0, 0);
 			return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 1,
 					(ip!=NULL)?1:0);
 		}
