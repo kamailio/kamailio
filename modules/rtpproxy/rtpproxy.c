@@ -1729,7 +1729,8 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 					(ip!=NULL)?1:0);
 		if(method==METHOD_INVITE && nosdp==0) {
 			msg->msg_flags |= FL_SDP_BODY;
-			if(tmb.t_gett!=NULL && tmb.t_gett()!=NULL)
+			if(tmb.t_gett!=NULL && tmb.t_gett()!=NULL
+					&& tmb.t_gett()!=T_UNDEFINED)
 				tmb.t_gett()->uas.request->msg_flags |= FL_SDP_BODY;
 			if(route_type==FAILURE_ROUTE)
 				return unforce_rtp_proxy_f(msg, 0, 0);
