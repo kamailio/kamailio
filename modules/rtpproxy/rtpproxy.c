@@ -219,6 +219,7 @@
 #include "../../socket_info.h"
 #include "../../mod_fix.h"
 #include "../../dset.h"
+#include "../../modules/tm/tm_load.h"
 #include "rtpproxy.h"
 #include "rtpproxy_funcs.h"
 #include "rtpproxy_stream.h"
@@ -290,6 +291,9 @@ static int rtpproxy_answer1_f(struct sip_msg *, char *, char *);
 static int rtpproxy_answer2_f(struct sip_msg *, char *, char *);
 static int rtpproxy_offer1_f(struct sip_msg *, char *, char *);
 static int rtpproxy_offer2_f(struct sip_msg *, char *, char *);
+static int rtpproxy_manage0(struct sip_msg *msg, char *flags, char *ip);
+static int rtpproxy_manage1(struct sip_msg *msg, char *flags, char *ip);
+static int rtpproxy_manage2(struct sip_msg *msg, char *flags, char *ip);
 
 static int add_rtpproxy_socks(struct rtpp_set * rtpp_list, char * rtpproxy);
 static int fixup_set_id(void ** param, int param_no);
@@ -333,6 +337,9 @@ struct rtpp_set * default_rtpp_set=0;
 static unsigned int rtpp_no = 0;
 static int *rtpp_socks = 0;
 
+
+/* tm */
+static struct tm_binds tmb;
 
 /*0-> disabled, 1 ->enabled*/
 unsigned int *natping_state=0;
@@ -379,6 +386,15 @@ static cmd_export_t cmds[] = {
 	{"rtpproxy_stop_stream2uas",(cmd_function)rtpproxy_stop_stream2uas2_f,0,
 		NULL, 0,
 		ANY_ROUTE },
+	{"rtpproxy_manage",	(cmd_function)rtpproxy_manage0,     0,
+		0, 0,
+		ANY_ROUTE},
+	{"rtpproxy_manage",	(cmd_function)rtpproxy_manage1,     1,
+		0, 0,
+		ANY_ROUTE},
+	{"rtpproxy_manage",	(cmd_function)rtpproxy_manage2,     2,
+		0, 0,
+		ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -860,6 +876,12 @@ mod_init(void)
 	if (rtpp_strings)
 		pkg_free(rtpp_strings);
 
+	if (load_tm_api( &tmb ) < 0)
+	{
+		LM_DBG("could not load the TM-functions - answer-offer model"
+				" auto-detection is disabled\n");
+		memset(&tmb, 0, sizeof(struct tm_binds));
+	}
 
 	return 0;
 }
@@ -1660,6 +1682,85 @@ set_rtp_proxy_set_f(struct sip_msg * msg, char * str1, char * str2)
 	current_msg_id = msg->id;
 	selected_rtpp_set = (struct rtpp_set *)str1;
 	return 1;
+}
+
+static int
+rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
+{
+	char *cp = NULL;
+	char newip[IP_ADDR_MAX_STR_SIZE];
+	int method;
+	int nosdp;
+
+	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1)
+				|| (msg->cseq==NULL)))
+	{
+		LM_ERR("no CSEQ header\n");
+		return -1;
+	}
+
+	method = get_cseq(msg)->method_id;
+
+	if(!(method==METHOD_INVITE || method==METHOD_ACK || method==METHOD_CANCEL
+				|| method==METHOD_BYE))
+		return -1;
+
+	if(method==METHOD_CANCEL || method==METHOD_BYE)
+		return unforce_rtp_proxy_f(msg, 0, 0);
+
+	if(ip==NULL)
+	{
+		cp = ip_addr2a(&msg->rcv.dst_ip);
+		strcpy(newip, cp);
+	}
+
+	nosdp = parse_sdp(msg);
+
+	if(msg->first_line.type == SIP_REQUEST) {
+		if(method==METHOD_ACK && nosdp==0)
+			return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 0,
+					(ip!=NULL)?1:0);
+		if(method==METHOD_INVITE && nosdp==0) {
+			msg->msg_flags |= FL_SDP_BODY;
+			if(tmb.t_gett!=NULL && tmb.t_gett()!=NULL)
+				tmb.t_gett()->uas.request->msg_flags |= FL_SDP_BODY;
+			return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 1,
+					(ip!=NULL)?1:0);
+		}
+	} else if(msg->first_line.type == SIP_REPLY) {
+		if(msg->first_line.u.reply.statuscode>=300)
+			return unforce_rtp_proxy_f(msg, 0, 0);
+		if(nosdp==0) {
+			if(tmb.t_gett==NULL || tmb.t_gett()==NULL
+					|| tmb.t_gett()==T_UNDEFINED)
+				return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 0,
+					(ip!=NULL)?1:0);
+			if(tmb.t_gett()->uas.request->msg_flags & FL_SDP_BODY)
+				return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 0,
+					(ip!=NULL)?1:0);
+			return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 1,
+					(ip!=NULL)?1:0);
+		}
+	}
+	return -1;
+}
+
+static int
+rtpproxy_manage0(struct sip_msg *msg, char *flags, char *ip)
+{
+	return rtpproxy_manage(msg, 0, 0);
+}
+
+static int
+rtpproxy_manage1(struct sip_msg *msg, char *flags, char *ip)
+{
+	return rtpproxy_manage(msg, flags, 0);
+}
+
+static int
+rtpproxy_manage2(struct sip_msg *msg, char *flags, char *ip)
+{
+	return rtpproxy_manage(msg, flags, ip);
 }
 
 static int
