@@ -539,6 +539,7 @@ if (www_authenticate("realm", "subscriber)) {
           + 4 - do not send '500 Internal Server Error' reply
             automatically in failure cases (error code is returned to
             config)
+          + 16 - build challenge header with stale=true
 
    This function can be used from REQUEST_ROUTE.
 
@@ -607,6 +608,7 @@ if (!proxy_authenticate("$fd", "subscriber)) {
           + 2 - build challenge header with no qop and add it to avp
           + 4 - build challenge header with qop=auth and add it to avp
           + 8 - build challenge header with qop=auth-int and add it to avp
+          + 16 - build challenge header with stale=true
 
    When challenge header is built and stored in avp, append_to_reply() and
    sl reply functions can be used to send appropriate SIP reply to

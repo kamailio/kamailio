@@ -81,6 +81,10 @@ if (www_authenticate("realm", "subscriber)) {
 					Server Error' reply automatically in failure cases
 					(error code is returned to config)</para>
 			</listitem>
+			<listitem>
+				<para><emphasis>16</emphasis> - build challenge header with
+					stale=true</para>
+			</listitem>
 			</itemizedlist>
 		</listitem>
 		</itemizedlist>
@@ -214,6 +218,11 @@ if (!proxy_authenticate("$fd", "subscriber)) {
 				<para><emphasis>8</emphasis> - build challenge header with
 					qop=auth-int and add it to avp</para>
 			</listitem>
+			<listitem>
+				<para><emphasis>16</emphasis> - build challenge header with
+					stale=true</para>
+			</listitem>
+
 			</itemizedlist>
 		</listitem>
 		</itemizedlist>
