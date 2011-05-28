@@ -72,7 +72,8 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>None</emphasis>
+				<emphasis>tm module</emphasis> - (optional) if you want to
+				have rtpproxy_manage() fully functional
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -367,8 +368,7 @@ rtpproxy_offer();
 		</para></listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-		FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from ANY_ROUTE.
                 </para>
 		<example>
 		<title><function>rtpproxy_offer</function> usage</title>
@@ -450,6 +450,72 @@ unforce_rtp_proxy();
 </programlisting>
 		</example>
 	</section>
+
+    <section>
+        <title>
+        <function moreinfo="none">rtpproxy_manage([flags [, ip_address]])</function>
+        </title>
+		<para>
+		Manage the RTPProxy session - it combines the functionality of
+		rtpproxy_offer(), rtpproxy_answer() and unfroce_rtpproxy(), detecting
+		internally based on message type and metod which one to execute.
+		</para>
+		<para>
+		It can take same kind of parameters as rtpproxy_offer().
+		</para>
+		<para>
+		Functinality:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			if INVITE with SDP, then do rtpproxy offer
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			if INVITE with SDP, when tm is loaded, mark transaction with
+			internal flag FL_SDP_BODY to know that the 1xx and 2xx are for
+			rtpproxy answer
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			if ACK with SDP, then do rtpproxy answer
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			if BYE or CANCEL, then do unforce rtpproxy
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			if reply to INVITE with code >= 300 do unfrce rtp proxy
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			if reply with SDP to INVITE having code 1xx and 2xx, then
+			do rtpproxy answer if the request had SDP or tm is not loaded,
+			otherwise do rtpproxy offer
+			</para>
+		</listitem>
+	</itemizedlist>
+
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		 <title><function>rtpproxy_manage</function> usage</title>
+		<programlisting format="linespecific">
+...
+rtpproxy_manage();
+...
+</programlisting>
+		</example>
+        </section>
+
 	<section id="rtpproxy_stream2xxx">
 	<title>
 	    <function>rtpproxy_stream2uac(prompt_name, count)</function>,

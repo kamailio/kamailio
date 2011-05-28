@@ -55,7 +55,6 @@ Sas Ovidiu
               4.5. force_socket (string)
               4.6. nortpproxy_str (string)
               4.7. timeout_socket (string)
-              4.8. timeout_socket_type (int)
 
         5. Exported Functions
 
@@ -63,11 +62,12 @@ Sas Ovidiu
               5.2. rtpproxy_offer([flags [, ip_address]])
               5.3. rtpproxy_answer([flags [, ip_address]])
               5.4. unforce_rtp_proxy()
-              5.5. rtpproxy_stream2uac(prompt_name, count),
+              5.5. rtpproxy_manage([flags [, ip_address]])
+              5.6. rtpproxy_stream2uac(prompt_name, count),
                       rtpproxy_stream2uas(prompt_name, count)
 
-              5.6. rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
-              5.7. start_recording()
+              5.7. rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
+              5.8. start_recording()
 
         6. Exported Pseudo Variables
 
@@ -89,11 +89,11 @@ Sas Ovidiu
    1.5. Set force_socket parameter
    1.6. Set nortpproxy_str parameter
    1.7. Set timeout_socket parameter
-   1.8. Set timeout_socket_type parameter
-   1.9. fix_nated_contact usage
-   1.10. rtpproxy_offer usage
-   1.11. rtpproxy_answer usage
-   1.12. unforce_rtp_proxy usage
+   1.8. fix_nated_contact usage
+   1.9. rtpproxy_offer usage
+   1.10. rtpproxy_answer usage
+   1.11. unforce_rtp_proxy usage
+   1.12. rtpproxy_manage usage
    1.13. rtpproxy_stream2xxx usage
    1.14. start_recording usage
    1.15. $rtpstat-Usage
@@ -120,7 +120,6 @@ Chapter 1. Admin Guide
         4.5. force_socket (string)
         4.6. nortpproxy_str (string)
         4.7. timeout_socket (string)
-        4.8. timeout_socket_type (int)
 
    5. Exported Functions
 
@@ -128,11 +127,12 @@ Chapter 1. Admin Guide
         5.2. rtpproxy_offer([flags [, ip_address]])
         5.3. rtpproxy_answer([flags [, ip_address]])
         5.4. unforce_rtp_proxy()
-        5.5. rtpproxy_stream2uac(prompt_name, count),
+        5.5. rtpproxy_manage([flags [, ip_address]])
+        5.6. rtpproxy_stream2uac(prompt_name, count),
                 rtpproxy_stream2uas(prompt_name, count)
 
-        5.6. rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
-        5.7. start_recording()
+        5.7. rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
+        5.8. start_recording()
 
    6. Exported Pseudo Variables
 
@@ -186,7 +186,8 @@ Chapter 1. Admin Guide
 3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * None
+     * tm module - (optional) if you want to have rtpproxy_manage() fully
+       functional
 
 3.2. External Libraries or Applications
 
@@ -203,7 +204,6 @@ Chapter 1. Admin Guide
    4.5. force_socket (string)
    4.6. nortpproxy_str (string)
    4.7. timeout_socket (string)
-   4.8. timeout_socket_type (int)
 
 4.1. rtpproxy_sock (string)
 
@@ -300,31 +300,12 @@ modparam("rtpproxy", "nortpproxy_str", "a=sdpmangled:yes\r\n")
    If it is an empty string, no timeout socket will be transmitted to the
    RTP-Proxy.
 
-   Default value is "".
+   Default value is "" (nothing).
 
    Example 1.7. Set timeout_socket parameter
 ...
-modparam("nathelper", "timeout_socket", "http://127.0.0.1:8000/RPC2")
+modparam("nathelper", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
 ...
-
-4.8. timeout_socket_type (int)
-
-   The parameter sets type of the timeout socket, which is transmitted to
-   the RTP-Proxy.
-
-   If it is not set, type 1 (Kamailio XML-RPC-Socket) is transmitted to
-   the RTP-Proxy.
-
-   Default value is "1".
-
-   Example 1.8. Set timeout_socket_type parameter
-...
-modparam("nathelper", "timeout_socket_type", 42)
-...
-
-   The only supported Type on the RTP-Proxy is currently "1" or "0" which
-   is the default socket-type of the RTP-Proxy which is not compatible to
-   Kamailio.
 
 5. Exported Functions
 
@@ -332,11 +313,12 @@ modparam("nathelper", "timeout_socket_type", 42)
    5.2. rtpproxy_offer([flags [, ip_address]])
    5.3. rtpproxy_answer([flags [, ip_address]])
    5.4. unforce_rtp_proxy()
-   5.5. rtpproxy_stream2uac(prompt_name, count),
+   5.5. rtpproxy_manage([flags [, ip_address]])
+   5.6. rtpproxy_stream2uac(prompt_name, count),
           rtpproxy_stream2uas(prompt_name, count)
 
-   5.6. rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
-   5.7. start_recording()
+   5.7. rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
+   5.8. start_recording()
 
 5.1.  set_rtp_proxy_set()
 
@@ -346,7 +328,7 @@ modparam("nathelper", "timeout_socket_type", 42)
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.9. fix_nated_contact usage
+   Example 1.8. fix_nated_contact usage
 ...
 set_rtp_proxy_set("2");
 rtpproxy_offer();
@@ -406,10 +388,9 @@ rtpproxy_offer();
             100ms saves two thirds of the network bandwith.
      * ip_address - new SDP IP address.
 
-   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-   FAILURE_ROUTE, BRANCH_ROUTE.
+   This function can be used from ANY_ROUTE.
 
-   Example 1.10. rtpproxy_offer usage
+   Example 1.9. rtpproxy_offer usage
 route {
 ...
     if (is_method("INVITE")) {
@@ -453,7 +434,7 @@ onreply_route[2]
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.11. rtpproxy_answer usage
+   Example 1.10. rtpproxy_answer usage
 
    See rtpproxy_offer() function example above for example.
 
@@ -464,12 +445,39 @@ onreply_route[2]
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.12. unforce_rtp_proxy usage
+   Example 1.11. unforce_rtp_proxy usage
 ...
 unforce_rtp_proxy();
 ...
 
-5.5.  rtpproxy_stream2uac(prompt_name, count),
+5.5.  rtpproxy_manage([flags [, ip_address]])
+
+   Manage the RTPProxy session - it combines the functionality of
+   rtpproxy_offer(), rtpproxy_answer() and unfroce_rtpproxy(), detecting
+   internally based on message type and metod which one to execute.
+
+   It can take same kind of parameters as rtpproxy_offer().
+
+   Functinality:
+     * if INVITE with SDP, then do rtpproxy offer
+     * if INVITE with SDP, when tm is loaded, mark transaction with
+       internal flag FL_SDP_BODY to know that the 1xx and 2xx are for
+       rtpproxy answer
+     * if ACK with SDP, then do rtpproxy answer
+     * if BYE or CANCEL, then do unforce rtpproxy
+     * if reply to INVITE with code >= 300 do unfrce rtp proxy
+     * if reply with SDP to INVITE having code 1xx and 2xx, then do
+       rtpproxy answer if the request had SDP or tm is not loaded,
+       otherwise do rtpproxy offer
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.12. rtpproxy_manage usage
+...
+rtpproxy_manage();
+...
+
+5.6.  rtpproxy_stream2uac(prompt_name, count),
 rtpproxy_stream2uas(prompt_name, count)
 
    Instruct the RTPproxy to stream prompt/announcement pre-encoded with
@@ -512,7 +520,7 @@ rtpproxy_stream2uas(prompt_name, count)
     };
 ...
 
-5.6.  rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
+5.7.  rtpproxy_stop_stream2uac(), rtpproxy_stop_stream2uas()
 
    Stop streaming of announcement/prompt/MOH started previously by the
    respective rtpproxy_stream2xxx. The uac/uas suffix selects whose
@@ -521,7 +529,7 @@ rtpproxy_stream2uas(prompt_name, count)
 
    These functions can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-5.7.  start_recording()
+5.8.  start_recording()
 
    This command will send a signal to the RTP-Proxy to record the RTP
    stream on the RTP-Proxy.
@@ -593,38 +601,38 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-       What happend with "rtpproxy_disable" parameter?
+   What happend with "rtpproxy_disable" parameter?
 
-       It was removed as it became obsolete - now "rtpproxy_sock" can take
-       empty value to disable the rtpproxy functionality.
+   It was removed as it became obsolete - now "rtpproxy_sock" can take
+   empty value to disable the rtpproxy functionality.
 
    2.2.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at http://www.kamailio.org/.
+   Take a look at http://www.kamailio.org/.
 
    2.3.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           http://lists.kamailio.org/cgi-bin/mailman/listinfo/users
-         * Developer Mailing List -
-           http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       http://lists.kamailio.org/cgi-bin/mailman/listinfo/users
+     * Developer Mailing List -
+       http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <users@lists.kamailio.org> and e-mails regarding development versions
-       should be sent to <devel@lists.kamailio.org>.
+   E-mails regarding any stable Kamailio release should be sent to
+   <users@lists.kamailio.org> and e-mails regarding development versions
+   should be sent to <devel@lists.kamailio.org>.
 
-       If you want to keep the mail private, send it to
-       <team@lists.kamailio.org>.
+   If you want to keep the mail private, send it to
+   <team@lists.kamailio.org>.
 
    2.4.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       http://sourceforge.net/tracker/?group_id=139143.
+   Please follow the guidelines provided at:
+   http://sourceforge.net/tracker/?group_id=139143.
