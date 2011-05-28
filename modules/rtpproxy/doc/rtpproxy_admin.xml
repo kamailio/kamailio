@@ -433,22 +433,30 @@ onreply_route[2]
         </section>
 	<section>
 		<title>
-		<function moreinfo="none">unforce_rtp_proxy()</function>
+		<function moreinfo="none">rtpproxy_destroy()</function>
 		</title>
 		<para>
 		Tears down the RTPProxy session for the current call.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>unforce_rtp_proxy</function> usage</title>
+		<title><function>rtpproxy_destroy</function> usage</title>
 		<programlisting format="linespecific">
 ...
-unforce_rtp_proxy();
+rtpproxy_destroy();
 ...
 </programlisting>
 		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">unforce_rtp_proxy()</function>
+		</title>
+		<para>
+			Same as rtpproxy_destroy().
+		</para>
 	</section>
 
     <section>
