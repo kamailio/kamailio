@@ -22,6 +22,8 @@ sip-router \- very fast and configurable sip proxy
 ] [
 .BI \-m " shared_mem_size"
 ] [
+.BI \-M " private_mem_size"
+] [
 .BI \-w " working\-dir"
 ] [
 .BI \-t " chroot\-dir"
@@ -32,7 +34,13 @@ sip-router \- very fast and configurable sip proxy
 ] [
 .BI \-P " pid\-file"
 ] [
-.BI \-L " modules-dir"
+.BI \-G " pgid\-file"
+] [
+.BI \-L " modules\-dir"
+] [
+.BI \-a " auto\-aliases\-mode"
+] [
+.BI \-A " pre\-processor\-define"
 ]
 
 .SH DESCRIPTION
@@ -108,6 +116,9 @@ Maximum receive buffer size which will not be exceeded by the auto-probing proce
 .BI \-m " shared_mem_size"
 Size of the shared memory which will be allocated (in Megabytes).
 .TP
+.BI \-M " private_mem_size"
+Size of the private memory which will be allocated per process (in Megabytes).
+.TP
 .BI \-w " working\-dir" 
 Specifies the working directory. In the very improbable event that 
 .B sip-router 
@@ -133,10 +144,21 @@ Creates a file containing the pid of the main
 .B sip-router
 process.
 .TP
+.BI \-G " pgid\-file"
+Creates a file containing the pgid of the main
+.B sip-router
+process.
+.TP
 .BI \-L " modules\-dir"
 Specifies the directory where to look for
 .B sip-router
 modules (default: /usr/lib/sip-router/modules)
+.TP
+.BI \-a " auto\-aliases\-mode"
+Enable auto-aliases with 'yes' or 'on', disable with 'no' or 'off
+.TP
+.BI \-A " pre\-processor\-define"
+Add config pre-processor define (e.g., -A WITH_AUTH, -A N=1, -A X='"Y"')
 
 .SH FILES
 .PD 0
