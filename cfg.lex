@@ -561,6 +561,7 @@ EAT_ABLE	[\ \t\b\r]
 
 /* pre-processing blocks */
 SUBST       subst
+SUBSTDEF    substdef
 
 %%
 
@@ -1230,6 +1231,7 @@ SUBST       subst
 							addstr(&s_buf, yytext, yyleng); }
 
 <INITIAL>{PREP_START}{SUBST}	{ count();  return SUBST;}
+<INITIAL>{PREP_START}{SUBSTDEF}	{ count();  return SUBSTDEF;}
 
 <INITIAL,IFDEF_SKIP>{PREP_START}{IFDEF}{EAT_ABLE}+    { count();
 								if (pp_ifdef_type(1)) return 1;
@@ -1663,7 +1665,7 @@ int pp_define(int len, const char * text)
 	return 0;
 }
 
-int  pp_define_set(int len, char *text)
+int pp_define_set(int len, char *text)
 {
 	if(len<=0) {
 		LOG(L_DBG, "no define value - ignoring\n");
@@ -1700,7 +1702,7 @@ int  pp_define_set(int len, char *text)
 	return 0;
 }
 
-static str  *pp_define_get(int len, const char * text)
+static str *pp_define_get(int len, const char * text)
 {
 	str var = {(char *)text, len};
 	int i;
