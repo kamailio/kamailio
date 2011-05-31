@@ -133,7 +133,7 @@ static int _compare_ips(char *ip1, size_t len1, enum enum_ip_type ip1_type, char
 {
   struct in_addr in_addr1, in_addr2;
   struct in6_addr in6_addr1, in6_addr2;
-  char _ip1[40], _ip2[40];
+  char _ip1[INET6_ADDRSTRLEN], _ip2[INET6_ADDRSTRLEN];
   
   // Not same IP type, return false.
   if (ip1_type != ip2_type)
