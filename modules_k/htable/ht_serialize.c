@@ -7,6 +7,7 @@
 int serialize_ht_pair(pv_value_t* val, str* htname, str* s) {
 	str encoded_val = {0, 0};
 	str encoded_htname = {0, 0};
+	int len;
 	if (!s) {
 		LM_ERR("no destination string given\n");
 		goto error;
@@ -18,17 +19,21 @@ int serialize_ht_pair(pv_value_t* val, str* htname, str* s) {
 	if(val->rs.len) {
 		encoded_val.len = base64_enc_len(val->rs.len);
 		encoded_val.s = pkg_malloc(encoded_val.len);
-		if(base64_enc((unsigned char*)val->rs.s, val->rs.len, (unsigned char*)encoded_val.s, encoded_val.len) < 0) {
+		len = base16_enc((unsigned char*)val->rs.s, val->rs.len, (unsigned char*)encoded_val.s, encoded_val.len);
+		if(len < 0) {
 			LM_ERR("cannot encode value\n");
 			goto error;
 		}
+		encoded_val.len = len;
 	}
 	encoded_htname.len = base64_enc_len(htname->len);
 	encoded_htname.s = pkg_malloc(encoded_htname.len);
-	if(base64_enc((unsigned char*)htname->s, htname->len, (unsigned char*)encoded_htname.s, encoded_htname.len) < 0) {
+	len = base16_enc((unsigned char*)htname->s, htname->len, (unsigned char*)encoded_htname.s, encoded_htname.len);
+	if(len < 0) {
 		LM_ERR("cannot encode htname\n");
 		goto error;
 	}
+	encoded_htname.len = len;
 	s->len = snprintf(s->s, s->len, "%d %d %.*s %.*s", val->flags, val->ri, STR_FMT(&encoded_htname), STR_FMT(&encoded_val));
 	if(s->len < 0) {
 		LM_ERR("cannot serialize data - probably an small buffer\n");

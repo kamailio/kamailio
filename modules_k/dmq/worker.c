@@ -60,6 +60,7 @@ void worker_loop(int id) {
 				ret_value = current_job->f(current_job->msg, &peer_response);
 				if(ret_value < 0) {
 					LM_ERR("running job failed\n");
+					continue;
 				}
 				/* add the body to the reply */
 				if(peer_response.body.s) {
