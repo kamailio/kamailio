@@ -1,7 +1,18 @@
-#include "ht_var.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#define LM_ERR printf
+#define pkg_malloc malloc
+#define pkg_free free
 #include "../../str.h"
-#include "ht_serialize.h"
 #include "../../basex.h"
+
+typedef struct _pv_value
+{
+	str rs;    /*!< string value */
+	int ri;    /*!< integer value */
+	int flags; /*!< flags about the type of value */
+} pv_value_t, *pv_value_p;
 
 /* snprintf - pretty ugly, but cds/serialize is unusable for the moment */
 int serialize_ht_pair(pv_value_t* val, str* htname, str* s) {
@@ -80,4 +91,18 @@ error:
 	pkg_free(encoded_htname.s);
 	pkg_free(encoded_val.s);
 	return -1;
+}
+
+int main(){
+	pv_value_t pv;
+	str hname = str_init("hashtable name");
+	str src;
+	src.len = 2048;
+	src.s = pkg_malloc(src.len);
+	pv.flags = 2;
+	pv.ri = 0;
+	pv.rs.len = 12;
+	pv.rs.s = "hello world";
+	printf("%d\n", serialize_ht_pair(&pv, &hname, &src));
+	printf("%.*s\n", STR_FMT(&src));
 }
