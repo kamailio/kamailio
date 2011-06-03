@@ -1100,26 +1100,28 @@ void cfg_move_handle(cfg_group_t *group, cfg_group_inst_t *src_ginst, cfg_group_
 				dst_ginst->vars
 				: CFG_GROUP_DATA(cfg_local, group);
 
-	/* call the per child process callback of those variables
-	that have different value in the two group instances */
-	/* TODO: performance optimization: this entire loop can be
-	skipped if the group does not have any variable with
-	per-child process callback. Use some flag in the group
-	structure for this purpose. */
-	gname.s = group->name;
-	gname.len = group->name_len;
-	for (i = 0; i < CFG_MAX_VAR_NUM/(sizeof(int)*8); i++) {
-		bitmap = ((src_ginst) ? src_ginst->set[i] : 0U)
-			| ((dst_ginst) ? dst_ginst->set[i] : 0U);
-		while (bitmap) {
-			pos = bit_scan_forward32(bitmap);
-			var = &group->mapping[pos + i*sizeof(int)*8];
-			if (var->def->on_set_child_cb) {
-				vname.s = var->def->name;
-				vname.len = var->name_len;
-				var->def->on_set_child_cb(&gname, &vname);
+	if (cfg_child_cb != CFG_NO_CHILD_CBS) {
+		/* call the per child process callback of those variables
+		that have different value in the two group instances */
+		/* TODO: performance optimization: this entire loop can be
+		skipped if the group does not have any variable with
+		per-child process callback. Use some flag in the group
+		structure for this purpose. */
+		gname.s = group->name;
+		gname.len = group->name_len;
+		for (i = 0; i < CFG_MAX_VAR_NUM/(sizeof(int)*8); i++) {
+			bitmap = ((src_ginst) ? src_ginst->set[i] : 0U)
+				| ((dst_ginst) ? dst_ginst->set[i] : 0U);
+			while (bitmap) {
+				pos = bit_scan_forward32(bitmap);
+				var = &group->mapping[pos + i*sizeof(int)*8];
+				if (var->def->on_set_child_cb) {
+					vname.s = var->def->name;
+					vname.len = var->name_len;
+					var->def->on_set_child_cb(&gname, &vname);
+				}
+				bitmap -= (1U << pos);
 			}
-			bitmap -= (1U << pos);
 		}
 	}
 	/* keep track of how many group instences are set in the child process */
@@ -1139,6 +1141,11 @@ void cfg_move_handle(cfg_group_t *group, cfg_group_inst_t *src_ginst, cfg_group_
 int cfg_select(cfg_group_t *group, unsigned int id)
 {
 	cfg_group_inst_t	*ginst;
+
+	if (!cfg_local) {
+		LOG(L_ERR, "ERROR: The child process has no local configuration\n");
+		return -1;
+	}
 
 	if (!(ginst = cfg_find_group(CFG_GROUP_META(cfg_local, group),
 				group->size,
@@ -1161,6 +1168,11 @@ int cfg_select(cfg_group_t *group, unsigned int id)
 /* Reset the group handle to the default, local configuration */
 int cfg_reset(cfg_group_t *group)
 {
+	if (!cfg_local) {
+		LOG(L_ERR, "ERROR: The child process has no local configuration\n");
+		return -1;
+	}
+
 	cfg_move_handle(group,
 			CFG_HANDLE_TO_GINST(*(group->handle)), /* the active group instance */
 			NULL);
@@ -1182,6 +1194,11 @@ int cfg_select_first(cfg_group_t *group)
 {
 	cfg_group_meta_t	*meta;
 	cfg_group_inst_t	*ginst;
+
+	if (!cfg_local) {
+		LOG(L_ERR, "ERROR: The child process has no local configuration\n");
+		return -1;
+	}
 
 	meta = CFG_GROUP_META(cfg_local, group);
 	if (!meta || (meta->num == 0))
@@ -1211,6 +1228,11 @@ int cfg_select_next(cfg_group_t *group)
 	cfg_group_meta_t	*meta;
 	cfg_group_inst_t	*old_ginst, *new_ginst;
 	int	size;
+
+	if (!cfg_local) {
+		LOG(L_ERR, "ERROR: The child process has no local configuration\n");
+		return -1;
+	}
 
 	if (!(meta = CFG_GROUP_META(cfg_local, group)))
 		return -1;
