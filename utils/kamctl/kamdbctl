@@ -108,6 +108,15 @@ case $DBENGINE in
 			merr "could not load the script in $MYLIBDIR/kamdbctl.db_berkeley for database engine $DBENGINE"
 		fi
 		;;
+	SQLITE|sqlite)
+		if [ -f "$MYLIBDIR/kamdbctl.sqlite" ]; then
+			. "$MYLIBDIR/kamdbctl.sqlite"
+			USED_DBENGINE="sqlite"
+			DBNAME=$DB_PATH
+		else
+			merr "could not load the script in $MYLIBDIR/kamdbctl.sqlite for database engine $DBENGINE"
+		fi
+		;;
 esac
 
 if [ -z "$USED_DBENGINE" ] ; then
@@ -193,6 +202,10 @@ case $1 in
 		if [ $# -ne 1 ]; then
 			usage
 			exit 1
+		fi
+		if [ "$USED_DBENGINE" = "sqlite" ]; then
+			cp $DB_PATH $1
+			exit $?
 		fi
 		tmp_file=`mktemp /tmp/kamdbctl.XXXXXXXXXX` || exit 1
 		openser_dump $DBNAME $tmp_file

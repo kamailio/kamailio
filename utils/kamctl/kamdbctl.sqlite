@@ -1,0 +1,152 @@
+# $Id$
+#
+# Script for adding and dropping Kamailio sqlite tables
+#
+
+# path to the database schemas
+DATA_DIR="/usr/local/share/kamailio"
+if [ -d "$DATA_DIR/sqlite" ] ; then
+	DB_SCHEMA="$DATA_DIR/sqlite"
+else
+	DB_SCHEMA="./sqlite"
+fi
+
+#################################################################
+# config vars
+#################################################################
+
+CMD="sqlite3"
+DUMP_CMD="sql_dump"
+#################################################################
+
+sql_dump()
+{
+	$CMD ${1:-$DB_PATH} .dump
+}
+
+# execute sql command with optional db name
+sql_query()
+{
+	$CMD "$@"
+}
+
+
+openser_drop()  # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "openser_drop function takes one param"
+	exit 1
+fi
+
+if ! rm $1; then
+	merr "Dropping database $1 failed!"
+	exit 1
+fi
+
+minfo "Database $1 dropped"
+} #openser_drop
+
+
+openser_create () # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "openser_create function takes one param"
+	exit 1
+fi
+
+minfo "creating database $1 ..."
+
+if [ $? -ne 0 ] ; then
+	merr "Creating database failed!"
+	exit 1
+fi
+
+#sql_query "$1" "CREATE FUNCTION "concat" (text,text) RETURNS text AS 'SELECT \$1 || \$2;' LANGUAGE 'sql';
+#	        CREATE FUNCTION "rand" () RETURNS double precision AS 'SELECT random();' LANGUAGE 'sql';"
+# emulate mysql proprietary functions used by the lcr module in postgresql
+
+#if [ $? -ne 0 ] ; then
+#	merr "Creating mysql emulation functions failed!"
+#	exit 1
+#fi
+
+for TABLE in $STANDARD_MODULES; do
+    mdbg "Creating core table: $TABLE"
+    sql_query "$1" < $DB_SCHEMA/$TABLE-create.sql
+    if [ $? -ne 0 ] ; then
+	merr "Creating core tables failed!"
+	exit 1
+    fi
+done
+
+if [ -e $DB_SCHEMA/extensions-create.sql ]
+then
+	minfo "Creating custom extensions tables"
+	sql_query $1 < $DB_SCHEMA/extensions-create.sql
+	if [ $? -ne 0 ] ; then
+	merr "Creating custom extensions tables failed!"
+	exit 1
+	fi
+fi
+
+minfo "Core Kamailio tables succesfully created."
+
+get_answer $INSTALL_PRESENCE_TABLES "Install presence related tables? (y/n): "
+if [ "$ANSWER" = "y" ]; then
+	presence_create $1
+fi
+
+get_answer $INSTALL_EXTRA_TABLES "Install tables for $EXTRA_MODULES? (y/n): "
+if [ "$ANSWER" = "y" ]; then
+	extra_create $1
+fi
+} # openser_create
+
+
+presence_create () # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "presence_create function takes one param"
+	exit 1
+fi
+
+minfo "creating presence tables into $1 ..."
+
+sql_query "$1" < $DB_SCHEMA/presence-create.sql
+
+if [ $? -ne 0 ] ; then
+	merr "Failed to create presence tables!"
+	exit 1
+fi
+
+sql_query "$1" < $DB_SCHEMA/rls-create.sql
+
+if [ $? -ne 0 ] ; then
+	merr "Failed to create rls-presence tables!"
+	exit 1
+fi
+
+minfo "Presence tables succesfully created."
+}  # end presence_create
+
+
+extra_create () # pars: <database name>
+{
+if [ $# -ne 1 ] ; then
+	merr "extra_create function takes one param"
+	exit 1
+fi
+
+minfo "creating extra tables into $1 ..."
+
+for TABLE in $EXTRA_MODULES; do
+    mdbg "Creating extra table: $TABLE"
+    sql_query "$1" < $DB_SCHEMA/$TABLE-create.sql
+    if [ $? -ne 0 ] ; then
+	merr "Creating extra tables failed!"
+	exit 1
+    fi
+done
+
+minfo "Extra tables succesfully created."
+}  # end extra_create

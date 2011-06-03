@@ -21,6 +21,9 @@ DBTEXT_XSL = $(STYLESHEETS)/dbtext.xsl
 # Stylesheet used to generate berkeley database schema
 DB_BERKELEY_XSL = $(STYLESHEETS)/db_berkeley.xsl
 
+# Stylesheet used to generate sqlite database schema
+DB_SQLITE_XSL = $(STYLESHEETS)/db_sqlite.xsl
+
 # Stylesheet used to generate oracle database schema
 ORACLE_XSL = $(STYLESHEETS)/oracle.xsl
 
@@ -56,7 +59,7 @@ ifeq ($(VERBOSE), 1)
 	override XSLTPROC := $(XSLTPROC) --verbose
 endif
 
-all: mysql postgres dbtext db_berkeley docbook oracle #modules dbdoc
+all: mysql postgres dbtext db_berkeley db_sqlite docbook oracle #modules dbdoc
 
 .PHONY: mysql mysql_clean
 mysql:
@@ -148,6 +151,19 @@ db_berkeley_clean:
 	-@rm -f $(SCHEME)/db_berkeley/kamailio/*
 
 
+.PHONY: db_sqlite db_sqlite_clean
+db_sqlite:
+	for FILE in $(TABLES); do \
+		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+		--stringparam dir "$(SCHEME)/db_sqlite" \
+		--stringparam prefix "$$FILE-" \
+		--stringparam db "db_sqlite" \
+		$(DB_SQLITE_XSL) kamailio-"$$FILE".xml ; \
+	done
+
+db_sqlite_clean:
+	-@rm -f $(SCHEME)/db_sqlite/*
+
 .PHONY: docbook docbook_clean
 docbook:
 	for FILE in $(TABLES); do \
@@ -219,4 +235,4 @@ dbdoc_clean:
 	done
 
 .PHONY: clean
-clean: mysql_clean postgres_clean oracle_clean dbtext_clean db_berkeley_clean docbook_clean # modules_clean dbdoc_clean
+clean: mysql_clean postgres_clean oracle_clean dbtext_clean db_berkeley_clean db_sqlite_clean docbook_clean # modules_clean dbdoc_clean
