@@ -5,7 +5,6 @@
 #include "../../modules/tm/dlg.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../config.h"
-#include "dmq.h"
 #include "peer.h"
 #include "worker.h"
 #include "dmqnode.h"

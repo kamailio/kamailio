@@ -36,7 +36,7 @@ dmq_node_t* add_server_and_notify(str* server_address) {
 		goto error;
 	}
 	/* request initial list from the notification server */
-	if(request_nodelist(node, 1) < 0) {
+	if(request_nodelist(node, 2) < 0) {
 		LM_ERR("error requesting initial nodelist\n");
 		goto error;
 	}
@@ -132,6 +132,7 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp) {
 		LM_DBG("max forwards: %.*s\n", STR_FMT(&msg->maxforwards->body));
 		str2int(&msg->maxforwards->body, &maxforwards);
 	}
+	maxforwards--;
 	
 	nodes_recv = extract_node_list(node_list, msg);
 	LM_DBG("received %d new nodes\n", nodes_recv);
@@ -142,9 +143,9 @@ int dmq_notification_callback(struct sip_msg* msg, peer_reponse_t* resp) {
 	resp->resp_code = 200;
 	
 	/* if we received any new nodes tell about them to the others */
-	if(nodes_recv > 0 && maxforwards) {
+	if(nodes_recv > 0 && maxforwards > 0) {
 		/* maxforwards is set to 0 so that the message is will not be in a spiral */
-		bcast_dmq_message(dmq_notification_peer, response_body, 0, &notification_callback, 0);
+		bcast_dmq_message(dmq_notification_peer, response_body, 0, &notification_callback, maxforwards);
 	}
 	LM_DBG("broadcasted message\n");
 	pkg_free(response_body);

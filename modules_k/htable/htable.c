@@ -39,9 +39,7 @@
 #include "../../lib/kcore/faked_msg.h"
 
 #include "../../pvar.h"
-#include "../dmq/dmq.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_content.h"
+#include "htable.h"
 
 #include "ht_api.h"
 #include "ht_db.h"
@@ -53,12 +51,14 @@ MODULE_VERSION
 
 /* dmq API structure */
 dmq_api_t ht_dmq_bind;
-register_dmq_peer_t ht_register_dmq;
 dmq_peer_t* ht_dmq_peer;
+dmq_resp_cback_t ht_dmq_resp_cback;
 
 int dmq_htable_callback(struct sip_msg* msg, peer_reponse_t* resp) {
 	int content_length;
 	str body;
+	pv_value_t val;
+	str key, htname;
 	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
 		LM_ERR("error parsing message headers\n");
 		goto error;
@@ -74,7 +74,22 @@ int dmq_htable_callback(struct sip_msg* msg, peer_reponse_t* resp) {
 	}
 	body.s = get_body(msg);
 	body.len = content_length;
+	
+	htname.s = pkg_malloc(MAX_HT_SERIALIZE_BUF);
+	htname.len = MAX_HT_SERIALIZE_BUF;
+	key.s = pkg_malloc(MAX_HT_SERIALIZE_BUF);
+	key.len = MAX_HT_SERIALIZE_BUF;
+	deserialize_ht_pair(&key, &val, &htname, &body);
+	if(dmq_ht_set_cell(&key, &val, &htname) < 0) {
+		LM_ERR("error setting cell\n");
+		pkg_free(htname.s);
+		pkg_free(key.s);
+		return -1;
+	}
+	pkg_free(htname.s);
+	pkg_free(key.s);
 	LM_ERR("it worked - dmq module triggered the htable callback [%ld %d]\n", time(0), my_pid());
+	
 	str ct = str_init("text/xml");
 	str reason = str_init("200 OK");
 	resp->content_type = ct;
@@ -88,15 +103,16 @@ error:
 
 static void add_dmq_peer() {
 	dmq_peer_t htable_peer;
+	memset(&ht_dmq_resp_cback, 0, sizeof(ht_dmq_resp_cback));
 	htable_peer.peer_id.s = "htable";
 	htable_peer.peer_id.len = 6;
 	htable_peer.description.s = "ditributed htable implementation using dmq";
 	htable_peer.description.len = 42;
 	htable_peer.callback = dmq_htable_callback;
-	ht_dmq_peer = ht_register_dmq(&htable_peer);
+	ht_dmq_peer = ht_dmq_bind.register_dmq_peer(&htable_peer);
 }
 
-int  ht_timer_interval = 20;
+int ht_timer_interval = 20;
 int ht_use_dmq = 0;
 
 static int htable_init_rpc(void);
@@ -229,7 +245,6 @@ static int mod_init(void)
 			LM_ERR("cannot load dmq api\n");
 			return -1;
 		} else {
-			ht_register_dmq = ht_dmq_bind.register_dmq_peer;
 			add_dmq_peer();
 			LM_DBG("presence-dmq loaded\n");
 		}

@@ -22,6 +22,8 @@
 		       
 #include "ht_api.h"
 #include "ht_var.h"
+#include "ht_serialize.h"
+#include "htable.h"
 
 /* pkg copy */
 ht_cell_t *_htc_local=NULL;
@@ -34,7 +36,6 @@ int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
 	ht_pv_t *hpv;
 
 	hpv = (ht_pv_t*)param->pvn.u.dname;
-
 	if(hpv->ht==NULL)
 	{
 		hpv->ht = ht_get_table(&hpv->htname);
@@ -62,12 +63,39 @@ int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
 	return pv_get_sintval(msg, param, res, htc->value.n);
 }
 
+int dmq_ht_set_cell(str* key, pv_value_t* val, str* htname) {
+	ht_t* ht = ht_get_table(htname);
+	int_str isval;
+	LM_ERR("dmq_ht_set_cell %.*s %p %d\n", STR_FMT(htname), ht, htname->len);
+	if(ht==NULL) {
+		LM_ERR("error getting table\n");
+		return -1;
+	}
+	if(val->flags&PV_TYPE_INT) {
+		isval.n = val->ri;
+		if(ht_set_cell(ht, key, 0, &isval, 1)!=0)
+		{
+			LM_ERR("cannot set $ht(%.*s)\n", htname->len, htname->s);
+			return -1;
+		}
+	} else {
+		isval.s = val->rs;
+		if(ht_set_cell(ht, key, AVP_VAL_STR, &isval, 1)!=0)
+		{
+			LM_ERR("cannot set $ht(%.*s)\n", htname->len, htname->s);
+			return -1;
+		}
+	}
+	return 0;
+}
+
 int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val)
 {
 	str htname;
 	int_str isval;
 	ht_pv_t *hpv;
+	str serialized_ht;
 
 	hpv = (ht_pv_t*)param->pvn.u.dname;
 
@@ -81,7 +109,20 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 		LM_ERR("cannot get $ht name\n");
 		return -1;
 	}
-	LM_DBG("set value for $ht(%.*s=>%.*s)\n", hpv->htname.len, hpv->htname.s,
+	if(ht_use_dmq) {
+		serialized_ht.s = pkg_malloc(MAX_HT_SERIALIZE_BUF);
+		serialized_ht.len = MAX_HT_SERIALIZE_BUF;
+		if(serialize_ht_pair(&htname, val, &hpv->htname, &serialized_ht) < 0) {
+			LM_ERR("cannot serialize attributes\n");
+			return -1;
+		}
+		if(ht_dmq_bind.bcast_message(ht_dmq_peer, &serialized_ht, NULL, &ht_dmq_resp_cback, 1) < 0) {
+			LM_ERR("error broadcasting dmq message\n");
+			return -1;
+		}
+		pkg_free(serialized_ht.s);
+	}
+	LM_ERR("set value for $ht(%.*s=>%.*s)\n", hpv->htname.len, hpv->htname.s,
 			htname.len, htname.s);
 	if((val==NULL) || (val->flags&PV_VAL_NULL))
 	{
@@ -162,6 +203,7 @@ int pv_parse_ht_name(pv_spec_p sp, str *in)
 		goto error;
 	}
 	hpv->ht = ht_get_table(&hpv->htname);
+	
 	sp->pvp.pvn.u.dname = (void*)hpv;
 	sp->pvp.pvn.type = PV_NAME_OTHER;
 	return 0;
@@ -181,7 +223,6 @@ int pv_get_ht_cell_expire(struct sip_msg *msg,  pv_param_t *param,
 	unsigned int now;
 
 	hpv = (ht_pv_t*)param->pvn.u.dname;
-
 	if(hpv->ht==NULL)
 	{
 		hpv->ht = ht_get_table(&hpv->htname);

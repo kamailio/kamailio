@@ -25,6 +25,8 @@
 
 #include "../../pvar.h"
 
+int dmq_ht_set_cell(str*key, pv_value_t* val, str* htname);
+
 int pv_get_ht_cell(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,

@@ -160,7 +160,7 @@ void ping_servers(unsigned int ticks,void *param) {
 	str* body = build_notification_body();
 	int ret;
 	LM_DBG("ping_servers\n");
-	ret = bcast_dmq_message(dmq_notification_peer, body, notification_node, &notification_callback, 0);
+	ret = bcast_dmq_message(dmq_notification_peer, body, notification_node, &notification_callback, 1);
 	pkg_free(body->s);
 	pkg_free(body);
 	if(ret < 0) {
