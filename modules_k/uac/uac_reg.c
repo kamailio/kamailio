@@ -381,6 +381,8 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 				{
 					return it->r;
 				}
+			} else {
+				return it->r;
 			}
 		}
 		it = it->next;
