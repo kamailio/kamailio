@@ -27,6 +27,7 @@
 #ifndef __switch_h
 #define __switch_h
 
+#include <stddef.h>
 #include <regex.h>
 
 #include "route_struct.h"
