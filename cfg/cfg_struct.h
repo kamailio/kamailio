@@ -513,4 +513,25 @@ int cfg_select(cfg_group_t *group, unsigned int id);
 /* Reset the group handle to the default, local configuration */
 int cfg_reset(cfg_group_t *group);
 
+/* Move the group handle to the first group instance.
+ * This function together with cfg_select_next() can be used
+ * to iterate though the list of instances.
+ *
+ * Return value:
+ *	-1: no group instance found
+ *	 0: first group instance is successfully selected.
+ */
+int cfg_select_first(cfg_group_t *group);
+
+/* Move the group handle to the next group instance.
+ * This function together with cfg_select_first() can be used
+ * to iterate though the list of instances.
+ *
+ * Return value:
+ *	-1: no more group instance found. Note, that the active group
+ *		instance is not changed in this case.
+ *	 0: the next group instance is successfully selected.
+ */
+int cfg_select_next(cfg_group_t *group);
+
 #endif /* _CFG_STRUCT_H */

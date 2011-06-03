@@ -1169,3 +1169,68 @@ int cfg_reset(cfg_group_t *group)
 			group->name_len, group->name);
 	return 0;
 }
+
+/* Move the group handle to the first group instance.
+ * This function together with cfg_select_next() can be used
+ * to iterate though the list of instances.
+ *
+ * Return value:
+ *	-1: no group instance found
+ *	 0: first group instance is successfully selected.
+ */
+int cfg_select_first(cfg_group_t *group)
+{
+	cfg_group_meta_t	*meta;
+	cfg_group_inst_t	*ginst;
+
+	meta = CFG_GROUP_META(cfg_local, group);
+	if (!meta || (meta->num == 0))
+		return -1;
+
+	ginst = (cfg_group_inst_t *)meta->array;
+	cfg_move_handle(group,
+			CFG_HANDLE_TO_GINST(*(group->handle)), /* the active group instance */
+			ginst);
+
+	LOG(L_DBG, "DEBUG: cfg_select_first(): group instance '%.*s[%u]' has been selected\n",
+			group->name_len, group->name, ginst->id);
+	return 0;
+}
+
+/* Move the group handle to the next group instance.
+ * This function together with cfg_select_first() can be used
+ * to iterate though the list of instances.
+ *
+ * Return value:
+ *	-1: no more group instance found. Note, that the active group
+ *		instance is not changed in this case.
+ *	 0: the next group instance is successfully selected.
+ */
+int cfg_select_next(cfg_group_t *group)
+{
+	cfg_group_meta_t	*meta;
+	cfg_group_inst_t	*old_ginst, *new_ginst;
+	int	size;
+
+	if (!(meta = CFG_GROUP_META(cfg_local, group)))
+		return -1;
+
+	if (!(old_ginst = CFG_HANDLE_TO_GINST(*(group->handle)) /* the active group instance */)) {
+		LOG(L_ERR, "ERROR: cfg_select_next(): No group instance is set currently. Forgot to call cfg_select_first()?\n");
+		return -1;
+	}
+
+	size = sizeof(cfg_group_inst_t) + group->size - 1;
+	if (((char *)old_ginst - (char *)meta->array)/size + 1 >= meta->num)
+		return -1; /* this is the last group instance */
+
+	new_ginst = (cfg_group_inst_t *)((char *)old_ginst + size);
+	cfg_move_handle(group,
+			old_ginst, /* the active group instance */
+			new_ginst);
+
+	LOG(L_DBG, "DEBUG: cfg_select_next(): group instance '%.*s[%u]' has been selected\n",
+			group->name_len, group->name, new_ginst->id);
+	return 0;
+}
+
