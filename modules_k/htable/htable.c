@@ -101,7 +101,7 @@ error:
 	return -1;
 }
 
-static void add_dmq_peer() {
+static void ht_add_dmq_peer() {
 	dmq_peer_t htable_peer;
 	memset(&ht_dmq_resp_cback, 0, sizeof(ht_dmq_resp_cback));
 	htable_peer.peer_id.s = "htable";
@@ -113,7 +113,6 @@ static void add_dmq_peer() {
 }
 
 int ht_timer_interval = 20;
-int ht_use_dmq = 0;
 
 static int htable_init_rpc(void);
 
@@ -174,7 +173,6 @@ static param_export_t params[]={
 	{"array_size_suffix",  STR_PARAM, &ht_array_size_suffix.s},
 	{"fetch_rows",         INT_PARAM, &ht_fetch_rows},
 	{"timer_interval",     INT_PARAM, &ht_timer_interval},
-	{"use_dmq",     INT_PARAM, &ht_use_dmq},
 	{0,0,0}
 };
 
@@ -240,14 +238,12 @@ static int mod_init(void)
 		}
 	}
 	
-	if(ht_use_dmq){
-		if(dmq_load_api(&ht_dmq_bind) < 0) {
-			LM_ERR("cannot load dmq api\n");
-			return -1;
-		} else {
-			add_dmq_peer();
-			LM_DBG("presence-dmq loaded\n");
-		}
+	if(dmq_load_api(&ht_dmq_bind) < 0) {
+		LM_ERR("cannot load dmq api\n");
+		return -1;
+	} else {
+		ht_add_dmq_peer();
+		LM_DBG("presence-dmq loaded\n");
 	}
 	return 0;
 }

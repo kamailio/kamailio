@@ -55,6 +55,7 @@ typedef struct _ht
 	unsigned int htexpire;
 	str dbtable;
 	int dbmode;
+	int usedmq;
 	unsigned int htsize;
 	ht_entry_t *entries;
 	struct _ht *next;
@@ -66,7 +67,7 @@ typedef struct _ht_pv {
 	pv_elem_t *pve;
 } ht_pv_t, *ht_pv_p;
 
-int ht_pkg_init(str *name, int autoexp, str *dbtable, int size, int dbmode);
+int ht_pkg_init(str *name, int autoexp, str *dbtable, int size, int dbmode, int usedmq);
 int ht_shm_init(void);
 int ht_destroy(void);
 int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode);

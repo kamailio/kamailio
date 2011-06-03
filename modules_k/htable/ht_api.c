@@ -117,7 +117,7 @@ ht_t* ht_get_table(str *name)
 	return NULL;
 }
 
-int ht_pkg_init(str *name, int autoexp, str *dbtable, int size, int dbmode)
+int ht_pkg_init(str *name, int autoexp, str *dbtable, int size, int dbmode, int usedmq)
 {
 	unsigned int htid;
 	ht_t *ht;
@@ -156,7 +156,7 @@ int ht_pkg_init(str *name, int autoexp, str *dbtable, int size, int dbmode)
 	if(dbtable!=NULL && dbtable->len>0)
 		ht->dbtable = *dbtable;
 	ht->dbmode = dbmode;
-
+	ht->usedmq = usedmq;
 	ht->next = _ht_pkg_root;
 	_ht_pkg_root = ht;
 	return 0;
@@ -515,6 +515,7 @@ int ht_table_spec(char *spec)
 	str name;
 	str dbtable = {0, 0};
 	unsigned int autoexpire = 0;
+	unsigned int usedmq = 0;
 	unsigned int size = 4;
 	int type = 0;
 	unsigned int dbmode = 0;
@@ -574,6 +575,8 @@ next_token:
 		type = 3;
 	else if(tok.len==6 && strncmp(tok.s, "dbmode", 6)==0)
 		type = 4;
+	else if(tok.len==3 && strncmp(tok.s, "dmq", 3)==0)
+		type = 5;
 	else goto error;
 
 	if(*p!='=')
@@ -623,6 +626,12 @@ next_token:
 			LM_DBG("htable [%.*s] - dbmode [%u]\n", name.len, name.s,
 					dbmode);
 			break;
+		case 5:
+			if(str2int(&tok, &usedmq)!=0)
+				goto error;
+			LM_DBG("htable [%.*s] - usedmq [%u]\n", name.len, name.s,
+					usedmq);
+			break;
 	}
 	while(p<in.s+in.len && (*p==';' || *p==' ' || *p=='\t'
 				|| *p=='\n' || *p=='\r'))
@@ -630,7 +639,7 @@ next_token:
 	if(p<in.s+in.len)
 		goto next_token;
 
-	return ht_pkg_init(&name, autoexpire, &dbtable, size, dbmode);
+	return ht_pkg_init(&name, autoexpire, &dbtable, size, dbmode, usedmq);
 
 error:
 	LM_ERR("invalid htable parameter [%.*s] at [%d]\n", in.len, in.s,
