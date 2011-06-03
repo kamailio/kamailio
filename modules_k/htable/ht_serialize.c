@@ -1,6 +1,8 @@
 #include "ht_serialize.h"
 
-/* snprintf - pretty ugly, but cds/serialize is unusable for the moment */
+/* snprintf - pretty ugly, but cds/serialize is unusable for the moment
+ * TODO using tpl is probably a very good solution
+ */
 int serialize_ht_pair(str* key, pv_value_t* val, str* htname, str* s) {
 	str encoded_key = {0, 0};
 	str encoded_val = {0, 0};
@@ -42,7 +44,7 @@ int serialize_ht_pair(str* key, pv_value_t* val, str* htname, str* s) {
 	}
 	encoded_key.len = len;
 	
-	s->len = snprintf(s->s, s->len, "%d %d %.*s %.*s %.*s", val->flags, val->ri, STR_FMT(&encoded_htname), STR_FMT(&encoded_key), STR_FMT(&encoded_val));
+	s->len = snprintf(s->s, s->len, "%d|%d|%.*s|%.*s|%.*s", val->flags, val->ri, STR_FMT(&encoded_htname), STR_FMT(&encoded_key), STR_FMT(&encoded_val));
 	if(s->len < 0) {
 		LM_ERR("cannot serialize data - probably an small buffer\n");
 		goto error;
@@ -76,7 +78,7 @@ int deserialize_ht_pair(str* key, pv_value_t* val, str* htname, str* src) {
 	encoded_key.s = pkg_malloc(src->len);
 	memset(encoded_key.s, 0, src->len);
 	
-	sscanf(src->s, "%d %d %s %s %s", &val->flags, &val->ri, encoded_htname.s, encoded_key.s, encoded_val.s);
+	sscanf(src->s, "%d|%d|%s|%s|%s", &val->flags, &val->ri, encoded_htname.s, encoded_key.s, encoded_val.s);
 	encoded_htname.len = strlen(encoded_htname.s);
 	encoded_key.len = strlen(encoded_key.s);
 	encoded_val.len = strlen(encoded_val.s);
