@@ -326,13 +326,22 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 build_inform:
 	/* send info message */
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, IMC_BUF_SIZE, "*** <%.*s> has joined the room",
-					member->uri.len, member->uri.s);
+	if(member!=NULL)
+	{
+		body.len = snprintf(body.s, IMC_BUF_SIZE,
+				"*** <%.*s@%.*s> has joined the room",
+				src->user.len, src->user.s, src->host.len, src->host.s);
+
+	} else {
+		body.len = snprintf(body.s, IMC_BUF_SIZE,
+				"*** <%.*s@%.*s> attempted to join the room",
+				src->user.len, src->user.s, src->host.len, src->host.s);
+	}
 	if(body.len>0)
 		imc_room_broadcast(room, &all_hdrs, &body);
-
 	if(body.len>=IMC_BUF_SIZE)
-		LM_ERR("member name %.*s truncated\n", member->uri.len, member->uri.s);
+		LM_ERR("member name %.*s@%.*s truncated\n",
+				src->user.len, src->user.s, src->host.len, src->host.s);
 
 done:
 	if(room!=NULL)
