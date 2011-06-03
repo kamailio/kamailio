@@ -432,7 +432,7 @@ int uac_auth( struct sip_msg *msg)
 	/* can we authenticate this realm? */
 	crd = 0;
 	/* first look into AVP, if set */
-	if ( auth_realm_spec.type==PVT_AVP )
+	if ( auth_realm_spec.type!=PVT_NONE )
 		crd = get_avp_credential( msg, &auth.realm );
 	/* if not found, look into predefined credentials */
 	if (crd==0)
