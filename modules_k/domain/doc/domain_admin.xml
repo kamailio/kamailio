@@ -275,6 +275,43 @@ if (is_domain_local("$avp(s:some_avp)")) {
 	</section>
 	</section>
 	<section>
+	<title>Exported RPC Commands</title>
+	<section>
+		<title><function moreinfo="none">domain.reload</function></title>
+		<para>
+		Causes domain module to re-read the contents of domain table
+		into cache memory.
+		</para>
+		<para>
+		Name: <emphasis>domain.reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		sercmd domain.reload
+		</programlisting>
+	</section>
+	<section>
+		<title><function moreinfo="none">domain.dump</function></title>
+		<para>
+		Causes domain module to dump domain names in
+		its cache memory.
+		</para>
+		<para>
+		Name: <emphasis>domain.dump</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		sercmd domain.dump
+		</programlisting>
+	</section>
+	</section>
+	<section>
 	<title>Known Limitations</title>
 	<para>
 		There is an unlikely race condition on domain list update.  If a 

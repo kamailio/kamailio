@@ -36,6 +36,9 @@
 
 #include "local_timer.h"
 
+/** @brief register the number of extra dummy timer processes */
+int register_dummy_timers(int timers);
+
 /** @brief forks a separate simple sleep() periodic timer */
 int fork_dummy_timer(int child_id, char* desc, int make_sock,
 						timer_function* f, void* param, int interval);

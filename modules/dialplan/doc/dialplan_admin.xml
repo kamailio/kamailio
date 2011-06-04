@@ -511,7 +511,55 @@ xlog("translated to var $var(y) \n");
 		</programlisting>
 		</section>
 	</section>
+
+	<section>
+	<title>Exported RPC Commands</title>
+
+		<section>
+			<title><varname>dialplan.reload</varname></title>
+			<para>
+			Forces an update of the translation rules from the database.
+			</para>
+		<para>
+		Name: <emphasis>dialplan.reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		sercmd dialplan.reload
+		</programlisting>
+		</section>
     
+    <section>
+			<title><varname>dialplan.translate</varname></title>
+			<para>
+                Will apply a translation rule identified by a dialplan
+                id and an input string.
+			</para>
+		<para>
+		Name: <emphasis>dialplan.translate</emphasis>
+		</para>
+        <para>Parameters: <emphasis>2</emphasis></para>
+        <itemizedlist>
+                <listitem>
+                <para><emphasis>Dial plan ID</emphasis></para>
+                </listitem>
+                <listitem>
+                <para><emphasis>Input String</emphasis></para>
+                </listitem>
+		</itemizedlist>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+        # sercmd dp_translate dpid "input"
+        sercmd dp_translate 1 "abcdxyz"
+		</programlisting>
+		</section>
+	</section>
+
     <section>
 	    <title>Installation</title>
 	    <para>
@@ -522,7 +570,5 @@ xlog("translated to var $var(y) \n");
         project webpage, &kamailiodbdocslink;.
         </para>
     </section>
-
-
 
 </chapter>

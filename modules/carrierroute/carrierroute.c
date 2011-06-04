@@ -40,6 +40,7 @@
 #include "../../sr_module.h"
 #include "../../str.h"
 #include "../../mem/mem.h"
+#include "../../ut.h" /* for user2uid() */
 #include "carrierroute.h"
 #include "cr_fixup.h"
 #include "cr_map.h"
@@ -154,6 +155,8 @@ struct module_exports exports = {
  */
 static int mod_init(void) {
 	struct stat fs;
+	extern char* user; /*from main.c*/
+	int uid, gid;
 
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
@@ -197,9 +200,20 @@ static int mod_init(void) {
 		if(fs.st_mode & S_IWOTH){
 			LM_WARN("insecure file permissions, routing data is world writeable\n");
 		}
+
+		if (user){
+			if (user2uid(&uid, &gid, user)<0){
+				LM_ERR("bad user name/uid number: -u %s\n", user);
+				return -1;
+			}
+		} else {
+			uid = geteuid();
+			gid = getegid();
+		}
+
 		if( !( fs.st_mode & S_IWOTH) &&
-			!((fs.st_mode & S_IWGRP) && (fs.st_gid == getegid())) &&
-			!((fs.st_mode & S_IWUSR) && (fs.st_uid == geteuid())) ) {
+			!((fs.st_mode & S_IWGRP) && (fs.st_gid == uid)) &&
+			!((fs.st_mode & S_IWUSR) && (fs.st_uid == gid))) {
 				LM_ERR("config file %s not writable\n", config_file);
 				return -1;
 		}

@@ -635,7 +635,7 @@ static int auth_send_reply(struct sip_msg *msg, int code, char *reason,
  */
 int auth_challenge(struct sip_msg *msg, str *realm, int flags, int hftype)
 {
-	int ret;
+    int ret, stale;
     str hf = {0, 0};
 	struct qp *qop = NULL;
 
@@ -646,7 +646,13 @@ int auth_challenge(struct sip_msg *msg, str *realm, int flags, int hftype)
 	} else if(flags&1) {
 		qop = &auth_qauth;
 	}
-	if (get_challenge_hf(msg, 0, realm, NULL, NULL, qop, hftype, &hf) < 0) {
+	if (flags & 16) {
+	    stale = 1;
+	} else {
+	    stale = 0;
+	}
+	if (get_challenge_hf(msg, stale, realm, NULL, NULL, qop, hftype, &hf)
+	    < 0) {
 		ERR("Error while creating challenge\n");
 		ret = -2;
 		goto error;

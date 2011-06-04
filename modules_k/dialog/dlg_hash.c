@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2006 Voice System SRL
+ * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -58,6 +59,7 @@
 #include "../../lib/kcore/hash_func.h"
 #include "../../lib/kmi/mi.h"
 #include "dlg_timer.h"
+#include "dlg_var.h"
 #include "dlg_hash.h"
 #include "dlg_profile.h"
 #include "dlg_req_within.h"
@@ -132,6 +134,7 @@ error0:
 inline void destroy_dlg(struct dlg_cell *dlg)
 {
 	int ret = 0;
+	struct dlg_var *var;
 
 	LM_DBG("destroying dialog %p\n",dlg);
 
@@ -177,6 +180,16 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 
 	if (dlg->toroute_name.s)
 		shm_free(dlg->toroute_name.s);
+
+	
+	while (dlg->vars) {
+		var = dlg->vars;
+		dlg->vars = dlg->vars->next;
+		shm_free(var->key.s);
+		shm_free(var->value.s);
+		shm_free(var);
+	}
+
 
 	shm_free(dlg);
 	dlg = 0;
@@ -543,10 +556,11 @@ void link_dlg(struct dlg_cell *dlg, int n)
  */
 #define unref_dlg_unsafe(_dlg,_cnt,_d_entry)   \
 	do { \
-		LM_DBG("unref dlg %p with %d, crt ref count: %d\n",\
+		(_dlg)->ref -= (_cnt); \
+		LM_DBG("unref dlg %p with %d -> %d\n",\
 			(_dlg),(_cnt),(_dlg)->ref);\
-		if ((_dlg)->ref<=0) {\
-			LM_CRIT("bogus op: ref %d with cnt %d for dlg %p [%u:%u] "\
+		if ((_dlg)->ref<0) {\
+			LM_CRIT("bogus ref %d with cnt %d for dlg %p [%u:%u] "\
 				"with clid '%.*s' and tags '%.*s' '%.*s'\n",\
 				(_dlg)->ref, _cnt, _dlg,\
 				(_dlg)->h_entry, (_dlg)->h_id,\
@@ -555,13 +569,11 @@ void link_dlg(struct dlg_cell *dlg, int n)
 				(_dlg)->tag[DLG_CALLER_LEG].s,\
 				(_dlg)->tag[DLG_CALLEE_LEG].len,\
 				(_dlg)->tag[DLG_CALLEE_LEG].s); \
-		} else { \
-			(_dlg)->ref -= (_cnt); \
-			if ((_dlg)->ref<=0) { \
-				unlink_unsafe_dlg( _d_entry, _dlg);\
-				LM_DBG("ref <=0 for dialog %p\n",_dlg);\
-				destroy_dlg(_dlg);\
-			}\
+		}\
+		if ((_dlg)->ref<=0) { \
+			unlink_unsafe_dlg( _d_entry, _dlg);\
+			LM_DBG("ref <=0 for dialog %p\n",_dlg);\
+			destroy_dlg(_dlg);\
 		}\
 	}while(0)
 
@@ -1131,4 +1143,5 @@ error:
 	free_mi_tree(rpl_tree);
 	return NULL;
 }
+
 

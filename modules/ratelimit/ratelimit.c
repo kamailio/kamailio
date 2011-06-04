@@ -63,8 +63,8 @@ MODULE_VERSION
  */
 #define RL_TIMER_INTERVAL 10
 
-#define RXLS(m, str, i) (m)[i].rm_eo - (m)[i].rm_so, (str) + (m)[i].rm_so
-#define RXL(m, str, i) (m)[i].rm_eo - (m)[i].rm_so
+#define RXLS(m, str, i) (int)((m)[i].rm_eo - (m)[i].rm_so), (str) + (m)[i].rm_so
+#define RXL(m, str, i) (int)((m)[i].rm_eo - (m)[i].rm_so)
 #define RXS(m, str, i) (str) + (m)[i].rm_so
 
 static inline int str_cmp(const str * a, const str * b);
@@ -424,7 +424,7 @@ static int mod_init(void)
 		return -1;
 	}
 	timer_init(rl_timer, rl_timer_handle, 0, F_TIMER_FAST);
-	timer_add(rl_timer, MS_TO_TICKS(1500)); /* Start it after 1500ms */
+	timer_add(rl_timer, MS_TO_TICKS(1000*timer_interval));
 
 	network_load_value = shm_malloc(sizeof(int));
 	if (network_load_value==NULL) {

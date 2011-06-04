@@ -210,32 +210,32 @@ modparam("auth_radius", "use_ruri_flag", 22)
 	then respond with 401 that includes this header, which will
 	challenge the user again.
 		</para>
-		<para>Negative codes may be interpreted as follows:</para>
+		<para>Negative result codes may be interpreted as follows:</para>
 		<itemizedlist>
 			<listitem><para>
-			<emphasis>-5 (internal error)</emphasis> - some
-			internal error occurred;
+			<emphasis>-7 (internal error)</emphasis> - some
+			internal error occurred (see syslog);
 			</para></listitem>
 			<listitem><para>
-			<emphasis>-4 (no credentials)</emphasis> -
-			credentials were not found in request;
+			<emphasis>-6 (nonce reused)</emphasis> - nonce is used more than once;
 			</para></listitem>
 			<listitem><para>
-			<emphasis>-3 (stale nonce)</emphasis> - stale nonce;
+			<emphasis>-5 (no credentials)</emphasis> - credentials were not found in request;
 			</para></listitem>
 			<listitem><para>
-			<emphasis>-2 (bad request)</emphasis> -
-			something wrong in request, for example, credentials were not filled properly;
+			<emphasis>-4 (stale nonce)</emphasis> - stale nonce;
 			</para></listitem>
 			<listitem><para>
-			<emphasis>-1 (authorization failed)</emphasis> -
-			RADIUS responded with Access Reject
+			<emphasis>-3 (authorization failed)</emphasis> - RADIUS responded with Access Reject which may be, for example, due to user not found or wrong password;
+			</para></listitem>
+			<listitem><para>
+			<emphasis>-1 (error)</emphasis> - some error occured during authorization (see syslog);
 			</para></listitem>
 		</itemizedlist>
 		<para>
-		This function will, in fact, perform sanity checks over
+		This function will perform sanity checks over
 	the received  
-		credentials and then pass them along to the radius
+		credentials and then pass them along to RADIUS
 	server which will  
 		verify the credentials and return whether they are valid or not.
 		</para>
@@ -262,21 +262,22 @@ modparam("auth_radius", "use_ruri_flag", 22)
 		<programlisting format="linespecific">
 ...
     if (!radius_www_authorize("$td")) {
-    switch ($rc) {
-    case -5:
-	send_reply("500", "Server Internal Error");
-	exit;
-    case -2:
-        send_reply("400", "Bad Request");
+        switch ($rc) {
+        case -7:
+	    send_reply("500", "Server Internal Error");
+	    exit;
+        case -1:
+	    send_reply("400", "Bad Request");
+	    exit;
+        default:
+        };
+        if (defined($avp(digest_challenge)) &amp;&amp;
+                ($avp(digest_challenge) != "")) {
+            append_to_reply("$avp(digest_challenge)");
+        };
+        send_reply("401", "Unauthorized");
         exit;
-    default:
     };
-    if (defined($avp(digest_challenge)) &amp;&amp;
-            ($avp(digest_challenge) != "")) {
-        append_to_reply("$avp(digest_challenge)");
-    };
-    send_reply("401", "Unauthorized");
-    exit;
 ...
 </programlisting>
 		</example>
@@ -298,12 +299,11 @@ modparam("auth_radius", "use_ruri_flag", 22)
 	challenge to digest_challenge AVP.  The script should
 	then respond with 407 that includes this header, which will
 	challenge the user again.
-		For more about the negative return 
-		codes, see the above function.
+		For negative result codes, see the above function.
 		</para>
 		<para>
-		This function will, in fact, perform sanity checks over the received 
-		credentials and then pass them along to the radius server which will 
+		This function will perform sanity checks over the received 
+		credentials and then pass them along to RADIUS server which will 
 		verify the credentials and return whether they are valid or not.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -339,21 +339,22 @@ modparam("auth_radius", "use_ruri_flag", 22)
 		<programlisting format="linespecific">
 ...
     if (!radius_proxy_authorize("$pd", "$pU")) { # Realm and URI user are taken
-    switch ($rc) {                               # from P-Preferred-Identity
-    case -5:                                     # header field
-	send_reply("500", "Server Internal Error");
-	exit;
-    case -2:
-        send_reply("400", "Bad Request");
+        switch ($rc) {                           # from P-Preferred-Identity
+        case -7:                                 # header field
+	    send_reply("500", "Server Internal Error");
+	    exit;
+        case -1:
+	    send_reply("400", "Bad Request");
+	    exit;
+        default:
+        };
+        if (defined($avp(digest_challenge)) &amp;&amp;
+                ($avp(digest_challenge) != "")) {
+            append_to_reply("$avp(digest_challenge)");
+        };
+        send_reply("407", "Proxy Authentication Required");
         exit;
-    default:
     };
-    if (defined($avp(digest_challenge)) &amp;&amp;
-            ($avp(digest_challenge) != "")) {
-        append_to_reply("$avp(digest_challenge)");
-    };
-    send_reply("407", "Proxy Authentication Required");
-    exit;
 ...
 </programlisting>
 		</example>

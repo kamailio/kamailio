@@ -6,9 +6,11 @@
 #
 # (To be included from Makefiles of radius related modules)
 #
-# The purpose of this makefile is to perform radiusclient library
-# detection and setup library and include paths in DEFS and LIBS
-# variables. In addition RADIUSCLIENT_NG_4 will be defined when
+# The purpose of this makefile is to perform RADIUS client library
+# selection (radiusclient-ng or freeradius-client) and setup
+# library and include paths in DEFS and LIBS variables.
+#
+# In addition RADIUSCLIENT_NG_4 will be defined when
 # libradiusclient-ng version 4 is detected. That means the module
 # should include radiusclient.h, otherwise radiusclient-ng.h
 # should be included. Variable RADIUSCLIENT_LIB contains the
@@ -21,6 +23,15 @@
 #
 INCLUDES+=-I$(LOCALBASE)/include
 
+ifeq ($(FREERADIUS),1)
+
+# - freeradius-client library
+DEFS+= -DUSE_FREERADIUS
+RADIUSCLIENT_LIB=freeradius-client
+
+else
+
+# - radiusclient-ng v5 or v4 library
 ifneq ($(radiusclient_ng), 4)
 
 # radiusclient-ng 5+
@@ -31,6 +42,8 @@ else
 
 DEFS+=-DRADIUSCLIENT_NG_4
 RADIUSCLIENT_LIB=radiusclient
+
+endif
 
 endif
 

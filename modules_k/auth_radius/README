@@ -224,17 +224,18 @@ modparam("auth_radius", "use_ruri_flag", 22)
    respond with 401 that includes this header, which will challenge the
    user again.
 
-   Negative codes may be interpreted as follows:
-     * -5 (internal error) - some internal error occurred;
-     * -4 (no credentials) - credentials were not found in request;
-     * -3 (stale nonce) - stale nonce;
-     * -2 (bad request) - something wrong in request, for example,
-       credentials were not filled properly;
-     * -1 (authorization failed) - RADIUS responded with Access Reject
+   Negative result codes may be interpreted as follows:
+     * -7 (internal error) - some internal error occurred (see syslog);
+     * -6 (nonce reused) - nonce is used more than once;
+     * -5 (no credentials) - credentials were not found in request;
+     * -4 (stale nonce) - stale nonce;
+     * -3 (authorization failed) - RADIUS responded with Access Reject
+       which may be, for example, due to user not found or wrong password;
+     * -1 (error) - some error occured during authorization (see syslog);
 
-   This function will, in fact, perform sanity checks over the received
-   credentials and then pass them along to the radius server which will
-   verify the credentials and return whether they are valid or not.
+   This function will perform sanity checks over the received credentials
+   and then pass them along to RADIUS server which will verify the
+   credentials and return whether they are valid or not.
 
    Meaning of the parameter is as follows:
      * realm - Realm is a opaque string that the user agent should present
@@ -247,21 +248,22 @@ modparam("auth_radius", "use_ruri_flag", 22)
    Example 1.6. radius_www_authorize usage
 ...
     if (!radius_www_authorize("$td")) {
-    switch ($rc) {
-    case -5:
-        send_reply("500", "Server Internal Error");
+        switch ($rc) {
+        case -7:
+            send_reply("500", "Server Internal Error");
+            exit;
+        case -1:
+            send_reply("400", "Bad Request");
+            exit;
+        default:
+        };
+        if (defined($avp(digest_challenge)) &&
+                ($avp(digest_challenge) != "")) {
+            append_to_reply("$avp(digest_challenge)");
+        };
+        send_reply("401", "Unauthorized");
         exit;
-    case -2:
-        send_reply("400", "Bad Request");
-        exit;
-    default:
     };
-    if (defined($avp(digest_challenge)) &&
-            ($avp(digest_challenge) != "")) {
-        append_to_reply("$avp(digest_challenge)");
-    };
-    send_reply("401", "Unauthorized");
-    exit;
 ...
 
 5.2. radius_proxy_authorize(realm [, uri_user])
@@ -275,11 +277,11 @@ modparam("auth_radius", "use_ruri_flag", 22)
    it fails and assigns a Proxy-Authorize header containing a new
    challenge to digest_challenge AVP. The script should then respond with
    407 that includes this header, which will challenge the user again. For
-   more about the negative return codes, see the above function.
+   negative result codes, see the above function.
 
-   This function will, in fact, perform sanity checks over the received
-   credentials and then pass them along to the radius server which will
-   verify the credentials and return whether they are valid or not.
+   This function will perform sanity checks over the received credentials
+   and then pass them along to RADIUS server which will verify the
+   credentials and return whether they are valid or not.
 
    Meaning of the parameters is as follows:
      * realm - Realm is a opaque string that the user agent should present
@@ -298,19 +300,20 @@ modparam("auth_radius", "use_ruri_flag", 22)
    Example 1.7. proxy_authorize usage
 ...
     if (!radius_proxy_authorize("$pd", "$pU")) { # Realm and URI user are taken
-    switch ($rc) {                               # from P-Preferred-Identity
-    case -5:                                     # header field
-        send_reply("500", "Server Internal Error");
+        switch ($rc) {                           # from P-Preferred-Identity
+        case -7:                                 # header field
+            send_reply("500", "Server Internal Error");
+            exit;
+        case -1:
+            send_reply("400", "Bad Request");
+            exit;
+        default:
+        };
+        if (defined($avp(digest_challenge)) &&
+                ($avp(digest_challenge) != "")) {
+            append_to_reply("$avp(digest_challenge)");
+        };
+        send_reply("407", "Proxy Authentication Required");
         exit;
-    case -2:
-        send_reply("400", "Bad Request");
-        exit;
-    default:
     };
-    if (defined($avp(digest_challenge)) &&
-            ($avp(digest_challenge) != "")) {
-        append_to_reply("$avp(digest_challenge)");
-    };
-    send_reply("407", "Proxy Authentication Required");
-    exit;
 ...

@@ -124,6 +124,12 @@ case $DBENGINE in
 			DBENGINELOADED=1
 		fi
 		;;
+	SQLITE|sqlite)
+		if [ -f "$MYLIBDIR/kamctl.sqlite" ]; then
+			. "$MYLIBDIR/kamctl.sqlite"
+			DBENGINELOADED=1
+		fi
+		;;
 
 esac
 

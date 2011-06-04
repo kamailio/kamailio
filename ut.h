@@ -824,4 +824,8 @@ unsigned int get_sys_version(int* major, int* minor, int* minor2);
  */
 char* get_abs_pathname(str* base, str* file);
 
+/**
+ * search for needle in text
+ */
+char *str_search(str *text, str *needle);
 #endif

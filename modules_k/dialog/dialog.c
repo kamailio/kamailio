@@ -4,6 +4,7 @@
  * dialog module - basic support for dialog tracking
  *
  * Copyright (C) 2006 Voice Sistem SRL
+ * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -85,12 +86,12 @@ static char* rr_param = "did";
 static int dlg_flag = -1;
 static str timeout_spec = {NULL, 0};
 static int default_timeout = 60 * 60 * 12;  /* 12 hours */
+static int seq_match_mode = SEQ_MATCH_STRICT_ID;
 static char* profiles_wv_s = NULL;
 static char* profiles_nv_s = NULL;
 str dlg_extra_hdrs = {NULL,0};
 static int db_fetch_rows = 200;
 
-int seq_match_mode = SEQ_MATCH_STRICT_ID;
 str dlg_bridge_controller = {"sip:controller@kamailio.org", 27};
 
 str ruri_pvar_param = {"$ru", 3};
@@ -214,6 +215,13 @@ static param_export_t mod_params[]={
 	{ "from_sock_column",      STR_PARAM, &from_sock_column.s       },
 	{ "sflags_column",         STR_PARAM, &sflags_column.s          },
 	{ "toroute_name_column",   STR_PARAM, &toroute_name_column.s    },
+
+	{ "vars_table_name",       STR_PARAM, &dialog_vars_table_name   },
+	{ "vars_h_id_column",      STR_PARAM, &vars_h_id_column.s       },
+	{ "vars_h_entry_column",   STR_PARAM, &vars_h_entry_column.s    },
+	{ "vars_key_column",       STR_PARAM, &vars_key_column.s        },
+	{ "vars_value_column",     STR_PARAM, &vars_value_column.s      },
+
 	{ "db_update_period",      INT_PARAM, &db_update_period         },
 	{ "db_fetch_rows",         INT_PARAM, &db_fetch_rows            },
 	{ "profiles_with_value",   STR_PARAM, &profiles_wv_s            },
@@ -259,6 +267,8 @@ static pv_export_t mod_items[] = {
 		pv_set_dlg_ctx, pv_parse_dlg_ctx_name, 0, 0, 0 },
 	{ {"dlg",  sizeof("dlg")-1}, PVT_OTHER, pv_get_dlg,
 		0, pv_parse_dlg_name, 0, 0, 0 },
+	{ {"dlg_var", sizeof("dlg_var")-1}, PVT_OTHER, pv_get_dlg_variable,
+		pv_set_dlg_variable,    pv_parse_dialog_var_name, 0, 0, 0},
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -430,6 +440,12 @@ static int mod_init(void)
 	toroute_name_column.len = strlen(toroute_name_column.s);
 	dialog_table_name.len = strlen(dialog_table_name.s);
 
+	dialog_vars_table_name.len = strlen(dialog_vars_table_name.s);
+	vars_h_id_column.len = strlen(vars_h_id_column.s);
+	vars_h_entry_column.len = strlen(vars_h_entry_column.s);
+	vars_key_column.len = strlen(vars_key_column.s);
+	vars_value_column.len = strlen(vars_value_column.s);
+
 	/* param checkings */
 	if (dlg_flag==-1) {
 		LM_ERR("no dlg flag set!!\n");
@@ -551,7 +567,7 @@ static int mod_init(void)
 
 	/* init handlers */
 	init_dlg_handlers( rr_param, dlg_flag,
-		timeout_spec.s?&timeout_avp:0, default_timeout);
+		timeout_spec.s?&timeout_avp:0, default_timeout, seq_match_mode);
 
 	/* init timer */
 	if (init_dlg_timer(dlg_ontimeout)!=0) {
@@ -612,10 +628,9 @@ static int child_init(int rank)
 		if_update_stat(dlg_enable_stats, early_dlgs, early_dlgs_cnt);
 	}
 
-	if ( ((dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED)
-				&& (rank>0 || rank==PROC_TIMER || rank==PROC_MAIN))
-			|| (dlg_db_mode==DB_MODE_SHUTDOWN && (rank==PROC_MAIN)) )
-	{
+	if ( ((dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED) &&
+	(rank>0 || rank==PROC_TIMER)) ||
+	(dlg_db_mode==DB_MODE_SHUTDOWN && (rank==PROC_MAIN)) ) {
 		if ( dlg_connect_db(&db_url) ) {
 			LM_ERR("failed to connect to database (rank=%d)\n",rank);
 			return -1;

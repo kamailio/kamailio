@@ -58,7 +58,7 @@ int init_db_check(void){
 	int ret;
 	if(db_master_write){
 		LM_INFO("start timer, interval %i seconds\n", retry_interval);
-		ret = fork_dummy_timer(PROC_TIMER, "TIMER WATCH", 1, check_dbs, NULL, retry_interval);
+		ret = fork_dummy_timer(PROC_TIMER, "TIMER UL WATCH", 1, check_dbs, NULL, retry_interval);
 	} else {
 		ret = 0;
 	}

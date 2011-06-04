@@ -73,11 +73,12 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2);
 
 
 /*
- * Converts Request-URI, if it is tel URI, to SIP URI.  Returns 1, if
- * conversion succeeded or if no conversion was needed, i.e., Request-URI
- * was not tel URI.  Returns -1, if conversion failed.
+ * Converts URI, if it is tel URI, to SIP URI.  Returns 1, if
+ * conversion succeeded or if no conversion was needed, i.e., URI was not
+ * tel URI.  Returns -1, if conversion failed.  Takes SIP URI hostpart from
+ * second parameter and (if needed) writes the result to third paramater.
  */
-int tel2sip(struct sip_msg* _msg, char* _s1, char* _s2);
+int tel2sip(struct sip_msg* _msg, char* _uri, char* _hostpart, char* _res);
 
 
 /*
@@ -94,6 +95,11 @@ int is_e164(struct sip_msg* _m, char* _sp, char* _s2);
  * Set userpart of URI
  */
 int set_uri_user(struct sip_msg* _m, char* _uri, char* _value);
+
+/*
+ * Set hostpart of URI
+ */
+int set_uri_host(struct sip_msg* _m, char* _uri, char* _value);
 
 /*
  * Return true (1) if SIP message is request, otherwise false (-1)

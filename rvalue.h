@@ -53,12 +53,16 @@ enum rval_expr_op{
 	RVE_UMINUS_OP, /* one member expression, returns -(val) */
 	RVE_BOOL_OP,  /* one member evaluate as bool. : (val!=0)*/
 	RVE_LNOT_OP,  /* one member evaluate as bool. : (!val)*/
+	RVE_BNOT_OP,  /* one member evaluate as binary : (~ val)*/
 	RVE_MUL_OP,   /* 2 members, returns left * right */
 	RVE_DIV_OP,   /* 2 members, returns left / right */
 	RVE_MOD_OP,   /* 2 members, returns left % right */
 	RVE_MINUS_OP, /* 2 members, returns left - right */
 	RVE_BAND_OP,  /* 2 members, returns left | right */
 	RVE_BOR_OP,   /* 2 members, returns left & right */
+	RVE_BXOR_OP,   /* 2 members, returns left XOR right */
+	RVE_BLSHIFT_OP,   /* 2 members, returns left << right */
+	RVE_BRSHIFT_OP,   /* 2 members, returns left >> right */
 	RVE_LAND_OP,  /* 2 members, returns left && right */
 	RVE_LOR_OP,   /* 2 members, returns left || right */
 	RVE_GT_OP,    /*  2 members, returns left > right */

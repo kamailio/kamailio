@@ -261,6 +261,12 @@ if(is_present_hf("Authorization"))
 			write back to db table).
 		</para>
 		</listitem>
+		<listitem>
+		<para>
+			<emphasis>initval</emphasis> - the integer value to be returned
+			insted of $null when a requested key is not set.
+		</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 		<emphasis>
@@ -273,6 +279,7 @@ if(is_present_hf("Authorization"))
 ...
 modparam("htable", "htable", "a=&gt;size=4;autoexpire=7200;dbtable=htable_a;")
 modparam("htable", "htable", "b=&gt;size=5;")
+modparam("htable", "htable", "c=&gt;size=4;autoexpire=7200;initval=1;")
 ...
 </programlisting>
 		</example>
@@ -527,6 +534,18 @@ sht_rm_value_re("ha=>.*");
 			</para></listitem>
 			<listitem><para>
 				<emphasis>$shtex(htable=>key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$shtcn(htable=>key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$shtcv(htable=>key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$shtinc(htable=>key)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$shtval(htable=>key)</emphasis>
 			</para></listitem>
 		</itemizedlist>
 		<para>

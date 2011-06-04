@@ -49,7 +49,11 @@ int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
 	}
 	htc = ht_cell_pkg_copy(hpv->ht, &htname, _htc_local);
 	if(htc==NULL)
+	{
+		if(hpv->ht->flags==PV_VAL_INT)
+			return pv_get_sintval(msg, param, res, hpv->ht->initval.n);
 		return pv_get_null(msg, param, res);
+	}
 	if(_htc_local!=htc)
 	{
 		ht_cell_pkg_free(_htc_local);
@@ -218,7 +222,6 @@ int pv_get_ht_cell_expire(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {
 	str htname;
-	ht_cell_t *htc=NULL;
 	ht_pv_t *hpv;
 	unsigned int now;
 
@@ -237,7 +240,7 @@ int pv_get_ht_cell_expire(struct sip_msg *msg,  pv_param_t *param,
 	if(ht_get_cell_expire(hpv->ht, &htname, &now)!=0)
 		return pv_get_null(msg, param, res);
 	/* integer */
-	return pv_get_uintval(msg, param, res, htc->value.n);
+	return pv_get_uintval(msg, param, res, now);
 }
 
 int pv_set_ht_cell_expire(struct sip_msg* msg, pv_param_t *param,
@@ -330,3 +333,52 @@ int pv_get_ht_cv(struct sip_msg *msg,  pv_param_t *param,
 	return pv_get_sintval(msg, param, res, cnt);
 }
 
+int pv_get_ht_add(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res, int val)
+{
+	str htname;
+	ht_cell_t *htc=NULL;
+	ht_pv_t *hpv;
+
+	hpv = (ht_pv_t*)param->pvn.u.dname;
+
+	if(hpv->ht==NULL)
+	{
+		hpv->ht = ht_get_table(&hpv->htname);
+		if(hpv->ht==NULL)
+			return pv_get_null(msg, param, res);
+	}
+	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
+	{
+		LM_ERR("cannot get $ht name\n");
+		return -1;
+	}
+	htc = ht_cell_value_add(hpv->ht, &htname, val, 1, _htc_local);
+	if(htc==NULL)
+	{
+		return pv_get_null(msg, param, res);
+	}
+	if(_htc_local!=htc)
+	{
+		ht_cell_pkg_free(_htc_local);
+		_htc_local=htc;
+	}
+
+	if(htc->flags&AVP_VAL_STR)
+		return pv_get_null(msg, param, res);
+
+	/* integer */
+	return pv_get_sintval(msg, param, res, htc->value.n);
+}
+
+int pv_get_ht_inc(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res)
+{
+	return pv_get_ht_add(msg, param, res, 1);
+}
+
+int pv_get_ht_dec(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res)
+{
+	return pv_get_ht_add(msg, param, res, -1);
+}

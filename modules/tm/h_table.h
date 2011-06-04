@@ -429,6 +429,8 @@ typedef struct entry
 	struct cell*    prev_c;
 	/* sync mutex */
 	ser_lock_t      mutex;
+	atomic_t locker_pid; /* pid of the process that holds the lock */
+	int rec_lock_level; /* recursive lock count */
 	/* currently highest sequence number in a synonym list */
 	unsigned int    next_label;
 #ifdef TM_HASH_STATS

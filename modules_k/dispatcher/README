@@ -14,7 +14,7 @@ Edited by
 
 Carsten Bock
 
-   BASIS AudioNet GmbH
+   ng-voice.com
 
    Copyright © 2004 FhG FOKUS
 
@@ -82,10 +82,16 @@ Carsten Bock
               5.2. ds_list
               5.3. ds_reload
 
-        6. Installation and Running
+        6. Exported RPC Commands
 
-              6.1. Destination List File
-              6.2. Kamailio config file
+              6.1. dispatcher.set_state
+              6.2. dispatcher.list
+              6.3. dispatcher.reload
+
+        7. Installation and Running
+
+              7.1. Destination List File
+              7.2. Kamailio config file
 
    2. Frequently Asked Questions
 
@@ -183,10 +189,16 @@ Chapter 1. Admin Guide
         5.2. ds_list
         5.3. ds_reload
 
-   6. Installation and Running
+   6. Exported RPC Commands
 
-        6.1. Destination List File
-        6.2. Kamailio config file
+        6.1. dispatcher.set_state
+        6.2. dispatcher.list
+        6.3. dispatcher.reload
+
+   7. Installation and Running
+
+        7.1. Destination List File
+        7.2. Kamailio config file
 
 1. Overview
 
@@ -751,7 +763,8 @@ ds_select_dst("1", "$var(a)");
    possible parameters:
      * "i", "I" or "0" - the last destination should be set to inactive
        and will be ignored in future requests.
-     * "a", "A" or "1" - the last destination should be set to active.
+     * "a", "A" or "1" - the last destination should be set to active and
+       the error-counter should set to "0".
      * "p", "P" or "2" - the last destination will be set to probing.
        Note: You will need to call this function "threshhold"-times,
        before it will be actually set to probing.
@@ -872,12 +885,63 @@ onreply_route {
    MI DATAGRAM Command Format:
                 ":ds_reload:\n."
 
-6. Installation and Running
+6. Exported RPC Commands
 
-   6.1. Destination List File
-   6.2. Kamailio config file
+   6.1. dispatcher.set_state
+   6.2. dispatcher.list
+   6.3. dispatcher.reload
 
-6.1. Destination List File
+6.1.  dispatcher.set_state
+
+   Sets the state for a destination address (can be use to mark the
+   destination as active or inactive).
+
+   Name: dispatcher.set_state
+
+   Parameters:
+     * _state_ : state of the destination address
+          + “a”: active
+          + “i”: inactive
+          + “d”: disabled
+       The states “a” or “i” can be followed by “p” to set probing mode
+       (e.g. 'ap' or 'ip')
+     * _group_: destination group id
+     * _address_: address of the destination in the _group_
+
+   Example:
+                sercmd dispatcher.set_state _state_ _group_ _address_
+
+6.2.  dispatcher.list
+
+   It lists the groups and included destinations.
+
+   Name: dispatcher.list
+
+   Parameters: none
+
+   Example:
+                sercmd dispatcher.list
+
+6.3.  dispatcher.reload
+
+   It reloads the groups and included destinations. The command is
+   disabled for call load based dispatching (algorithm 10) since removal
+   of destinations may leave the list of active calls with broken
+   references.
+
+   Name: dispatcher.reload
+
+   Parameters: none
+
+   Example
+                sercmd dispatcher.reload
+
+7. Installation and Running
+
+   7.1. Destination List File
+   7.2. Kamailio config file
+
+7.1. Destination List File
 
    Each destination point must be on one line. First token is the set id
    (an integer value), followed by destination address (s string value in
@@ -926,7 +990,7 @@ r,opt)
 
 ...
 
-6.2. Kamailio config file
+7.2. Kamailio config file
 
    Next picture displays a sample usage of dispatcher.
 

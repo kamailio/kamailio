@@ -1091,7 +1091,86 @@ onreply_route {
     </section>
 
     </section>
-	
+
+	<section>
+	<title>Exported RPC Commands</title>
+	<section>
+		<title>
+		<function moreinfo="none">dispatcher.set_state</function>
+		</title>
+		<para>
+		Sets the state for a destination address (can be use to mark the destination
+		as active or inactive).
+		</para>
+		<para>
+		Name: <emphasis>dispatcher.set_state</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_state_ : state of the destination address</para>
+			      <itemizedlist>
+	                 <listitem><para> <quote>a</quote>: active</para></listitem>
+			         <listitem><para> <quote>i</quote>: inactive</para></listitem>
+			         <listitem><para> <quote>d</quote>: disabled</para></listitem>
+				  </itemizedlist>
+				  <para>The states <quote>a</quote> or <quote>i</quote> can be
+					  followed by <quote>p</quote> to set probing mode (e.g. 'ap'
+					  or 'ip')</para>
+			</listitem>
+
+			<listitem><para>_group_: destination group id</para></listitem>
+
+			<listitem><para>_address_: address of the destination in the _group_</para></listitem>
+		</itemizedlist>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		sercmd dispatcher.set_state _state_ _group_ _address_
+		</programlisting>
+    </section>
+	<section>
+		<title>
+		<function moreinfo="none">dispatcher.list</function>
+		</title>
+		<para>
+		It lists the groups and included destinations.
+		</para>
+		<para>
+		Name: <emphasis>dispatcher.list</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		sercmd dispatcher.list
+		</programlisting>
+    </section>
+	<section>
+		<title>
+		<function moreinfo="none">dispatcher.reload</function>
+		</title>
+		<para>
+		It reloads the groups and included destinations. The command is
+		disabled for call load based dispatching (algorithm 10) since
+		removal of destinations may leave the list of active
+		calls with broken references.
+		</para>
+		<para>
+		Name: <emphasis>dispatcher.reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		Example
+		</para>
+        <programlisting  format="linespecific">
+		sercmd dispatcher.reload
+		</programlisting>
+    </section>
+
+   </section>
+
 	<section>
 	<title>Installation and Running</title>
 	<section>

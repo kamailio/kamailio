@@ -4,16 +4,13 @@
 # Provides:          kamailio
 # Required-Start:    $syslog $network $local_fs $time
 # Required-Stop:     $syslog $network $local_fs
+# Should-Start:      mysql postgresql freeradius
+# Should-Stop:       mysql postgresql freeradius
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Start the Kamailio SIP proxy server
 # Description:       Start the Kamailio SIP proxy server
 ### END INIT INFO
-#
-# TODO:
-# The following fields should be added (and completed):
-# Should-Start:      postgresql mysql radius
-# Should-Stop:       postgresql mysql radius
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/sbin/kamailio

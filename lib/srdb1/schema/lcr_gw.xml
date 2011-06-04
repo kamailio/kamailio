@@ -129,12 +129,8 @@
     </column>
 
     <index>
-        <name>lcr_id_ip_addr_port_hostname_idx</name>
+        <name>lcr_id_idx</name>
         <colref linkend="lcr_id"/>
-        <colref linkend="ip_addr"/>
-        <colref linkend="port"/>
-        <colref linkend="hostname"/>
-        <unique/>
     </index>
 
 </table>

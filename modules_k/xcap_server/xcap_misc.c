@@ -153,6 +153,14 @@ int xcap_parse_uri(str *huri, str *xroot, xcap_uri_t *xuri)
 		LM_DBG("matched xcap-caps\n");
 		xuri->type = XCAP_CAPS;
 		xuri->auid.len = 9;
+	} else if(s.len> 36 && strncmp(s.s, "org.openmobilealliance.user-profile/", 36)==0) {
+		LM_DBG("matched oma user-profile\n");
+		xuri->type = USER_PROFILE;
+		xuri->auid.len = 35;
+	} else if(s.len> 36 && strncmp(s.s, "org.openmobilealliance.pres-content/", 36)==0) {
+		LM_DBG("matched oma pres-content\n");
+		xuri->type = PRES_CONTENT;
+		xuri->auid.len = 35;
 	} else {
 		LM_ERR("unsupported auid in [%.*s]\n", xuri->uri.len,
 				xuri->uri.s);

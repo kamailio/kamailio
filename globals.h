@@ -150,6 +150,7 @@ extern int cfg_warnings;
 extern unsigned int msg_no;
 
 extern unsigned long shm_mem_size;
+extern unsigned long pkg_mem_size;
 
 /* AVP configuration */
 extern char *avp_db_url;  /* db url used by user preferences (AVPs) */

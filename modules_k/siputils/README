@@ -78,7 +78,7 @@ Gabriel Vasile
               4.5. uri_param(param)
               4.6. uri_param(param,value)
               4.7. add_uri_param(param)
-              4.8. tel2sip()
+              4.8. tel2sip(uri, hostpart, result)
               4.9. is_e164(pseudo-variable)
               4.10. is_uri_user_e164(pseudo-variable)
               4.11. encode_contact(encoding_prefix,hostpart)
@@ -91,8 +91,9 @@ Gabriel Vasile
               4.18. append_rpid_hf(prefix, suffix)
               4.19. is_rpid_user_e164()
               4.20. set_uri_user(uri, user)
-              4.21. is_request()
-              4.22. is_reply()
+              4.21. set_uri_host(uri, host)
+              4.22. is_request()
+              4.23. is_reply()
 
    List of Examples
 
@@ -125,8 +126,9 @@ Gabriel Vasile
    1.27. append_rpid_hf(prefix, suffix) usage
    1.28. is_rpid_user_e164 usage
    1.29. set_uri_user usage
-   1.30. is_request usage
-   1.31. is_reply usage
+   1.30. set_uri_host usage
+   1.31. is_request usage
+   1.32. is_reply usage
 
 Chapter 1. Admin Guide
 
@@ -159,7 +161,7 @@ Chapter 1. Admin Guide
         4.5. uri_param(param)
         4.6. uri_param(param,value)
         4.7. add_uri_param(param)
-        4.8. tel2sip()
+        4.8. tel2sip(uri, hostpart, result)
         4.9. is_e164(pseudo-variable)
         4.10. is_uri_user_e164(pseudo-variable)
         4.11. encode_contact(encoding_prefix,hostpart)
@@ -172,8 +174,9 @@ Chapter 1. Admin Guide
         4.18. append_rpid_hf(prefix, suffix)
         4.19. is_rpid_user_e164()
         4.20. set_uri_user(uri, user)
-        4.21. is_request()
-        4.22. is_reply()
+        4.21. set_uri_host(uri, host)
+        4.22. is_request()
+        4.23. is_reply()
 
 1. Overview
 
@@ -355,7 +358,7 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
    4.5. uri_param(param)
    4.6. uri_param(param,value)
    4.7. add_uri_param(param)
-   4.8. tel2sip()
+   4.8. tel2sip(uri, hostpart, result)
    4.9. is_e164(pseudo-variable)
    4.10. is_uri_user_e164(pseudo-variable)
    4.11. encode_contact(encoding_prefix,hostpart)
@@ -368,8 +371,9 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
    4.18. append_rpid_hf(prefix, suffix)
    4.19. is_rpid_user_e164()
    4.20. set_uri_user(uri, user)
-   4.21. is_request()
-   4.22. is_reply()
+   4.21. set_uri_host(uri, host)
+   4.22. is_request()
+   4.23. is_reply()
 
 4.1.  ring_insert_callid()
 
@@ -492,11 +496,12 @@ if (uri_param("param1","value1")) {
 add_uri_param("nat=yes");
 ...
 
-4.8.  tel2sip()
+4.8.  tel2sip(uri, hostpart, result)
 
-   Converts RURI, if it is tel URI, to SIP URI. Returns true only if
-   conversion succeeded or if no conversion was needed (like RURI was not
-   tel URI).
+   Converts URI in first param (pseudo variable or string) to SIP URI, if
+   it is a tel URI. If conversion was done, writes resulting SIP URI to
+   third param (pseudo variable). Returns 1 if conversion succeeded or if
+   no conversion was needed.
 
    The conversion follows the rules in RFC 3261 section 19.1.6:
      * Visual separators ( "-", ".", "(", ")" ) are removed from tel URI
@@ -504,19 +509,23 @@ add_uri_param("nat=yes");
      * tel URI parameters are downcased before appending them to SIP URI
        userinfo
 
-   The SIP URI host is formed using the From URI host.
+   The SIP URI hostpart is taken from second param (pseudo variable or
+   string).
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE, or ONREPLY_ROUTE.
 
    Example 1.17. tel2sip usage
 ...
-# RURI:  tel:+(34)-999-888-777
-tel2sip();
-# RURI:  sip:+34999888777@foo.com;user=phone
+# $ru: tel:+(34)-999-888-777
+# $fu: sip:test@foo.com
+tel2sip("$ru", $fd", "$ru");
+# $ru:  sip:+34999888777@foo.com;user=phone
 
-# RURI:  tel:+12-(34)-56-78;Ext=200;ISUB=+123-456
-tel2sip();
-# RURI:  sip:+12345678;ext=200;isub=+123-456@foo.com;user=phone
+# $ru: tel:+12-(34)-56-78;Ext=200;ISUB=+123-456
+# $fu: sip:test@foo.com
+tel2sip("$ru", $fd", "$ru");
+# $ru:  sip:+12345678;ext=200;isub=+123-456@foo.com;user=phone
 ...
 
 4.9.  is_e164(pseudo-variable)
@@ -727,11 +736,10 @@ if (is_rpid_user_e164()) {
 
 4.20.  set_uri_user(uri, user)
 
-   Sets userpart of SIP URI stored in writable pseudo variable uri to
-   value of pseudo variable user.
+   Sets userpart of SIP URI stored in writable pseudo variable 'uri' to
+   value of pseudo variable 'user'.
 
-   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
-   FAILURE_ROUTE, and ONREPLY_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.29. set_uri_user usage
 ...
@@ -740,26 +748,40 @@ $var(user) = "new_user";
 set_uri_user("$var(uri)", "$var(user)");
 ...
 
-4.21.  is_request()
+4.21.  set_uri_host(uri, host)
+
+   Sets hostpart of SIP URI stored in writable pseudo variable 'uri' to
+   value of pseudo variable 'host'.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.30. set_uri_host usage
+...
+$var(uri) = "sip:user@host";
+$var(host) = "new_host";
+set_uri_host("$var(uri)", "$var(host)");
+...
+
+4.22.  is_request()
 
    Return true if the SIP message is a request.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.30. is_request usage
+   Example 1.31. is_request usage
 ...
 if (is_request()) {
         ...
 }
 ...
 
-4.22.  is_reply()
+4.23.  is_reply()
 
    Return true if the SIP message is a reply.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.31. is_reply usage
+   Example 1.32. is_reply usage
 ...
 if (is_reply()) {
         ...

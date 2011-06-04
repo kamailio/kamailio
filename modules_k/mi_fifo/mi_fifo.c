@@ -46,6 +46,7 @@
 #include "../../pt.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
+#include "../../cfg/cfg_struct.h"
 #include "../../lib/kmi/mi.h"
 #include "mi_fifo.h"
 #include "mi_parser.h"
@@ -174,6 +175,9 @@ static int mi_mod_init(void)
 	/* add space for one extra process */
 	register_procs(1);
 
+	/* add child to update local config framework structures */
+	cfg_register_child(1);
+
 	return 0;
 }
 
@@ -196,6 +200,11 @@ static int mi_child_init(int rank)
 			return -1; /* error */
 		if(pid==0){
 			/* child */
+
+			/* initialize the config framework */
+			if (cfg_child_init())
+				return -1;
+
 			fifo_process(1);
 		}
 	}

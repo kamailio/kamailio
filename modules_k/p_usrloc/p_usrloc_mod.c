@@ -57,6 +57,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../rpc_lookup.h"
+#include "../../timer_proc.h"
 #include "../../globals.h"   /* is_main */
 #include "../../ut.h"        /* str_init */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
@@ -435,16 +436,23 @@ static int mod_init(void)
 		LM_ERR("could not init database watch environment.\n");
 		return -1;
 	}
-	if(init_db_check() < 0){
- 			LM_ERR("could not initialise database check.\n");
- 			return -1;
- 	}
+	if(db_master_write){
+		/* register extra dummy timer to be created in init_db_check() */
+		register_dummy_timers(1);
+	}
 	return 0;
 }
 
 
 static int child_init(int _rank)
 {
+	if(_rank==PROC_INIT) {
+		if(init_db_check() < 0){
+				LM_ERR("could not initialise database check.\n");
+			return -1;
+		}
+		return 0;
+	}
 	if(ul_db_child_init() < 0){
 		LM_ERR("could not initialise databases.\n");
 		return -1;

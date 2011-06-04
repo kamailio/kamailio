@@ -412,6 +412,27 @@ static void core_ps(rpc_t* rpc, void* c)
 	}
 }
 
+static const char* core_psx_doc[] = {
+	"Returns the detailed description of running SER processes.",
+		/* Documentation string */
+	0	/* Method signature(s) */
+};
+
+
+static void core_psx(rpc_t* rpc, void* c)
+{
+	int p;
+	void *handle;
+
+	for (p=0; p<*process_count;p++) {
+		rpc->add(c, "{", &handle);
+		rpc->struct_add(handle, "dds",
+				"IDX", p,
+				"PID", pt[p].pid,
+				"DSC", pt[p].desc);
+	}
+}
+
 
 static const char* core_pwd_doc[] = {
 	"Returns the working directory of SER server.",    /* Documentation string */
@@ -889,6 +910,7 @@ static rpc_export_t core_rpc_methods[] = {
 		0        },
 	{"core.uptime",            core_uptime,            core_uptime_doc,            0        },
 	{"core.ps",                core_ps,                core_ps_doc,                RET_ARRAY},
+	{"core.psx",               core_psx,               core_psx_doc,                0},
 	{"core.pwd",               core_pwd,               core_pwd_doc,               RET_ARRAY},
 	{"core.arg",               core_arg,               core_arg_doc,               RET_ARRAY},
 	{"core.kill",              core_kill,              core_kill_doc,              0        },

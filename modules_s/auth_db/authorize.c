@@ -345,10 +345,14 @@ static inline int authenticate(struct sip_msg* msg, str* realm, authdb_table_inf
 		ret = -2;
 		goto end;
 		
+	case STALE_NONCE:
 	case NOT_AUTHENTICATED: 
+	case NO_CREDENTIALS:
 		ret = -1;
 		goto end;
 		
+	case NONCE_REUSED:
+		DBG("auth_db:authenticate: NONCE_REUSED\n");
 	case DO_AUTHENTICATION: 
 		break;
 		

@@ -179,7 +179,7 @@ modparam("sqlops", "sqlres", "ra")
 	<title>Exported Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">sql_query(connection, query, result)</function>
+		<function moreinfo="none">sql_query(connection, query[, result])</function>
 		</title>
 		<para>
 			Make a SQL query using 'connection' and store data in 'result'.
@@ -201,6 +201,8 @@ modparam("sqlops", "sqlres", "ra")
 				<emphasis>result</emphasis> - string name to identify the
 				result. Will be used by $dbr(...) pseudo-variable to access
 				result attributes.
+				If omitted, any resultset will be discarded. The result parameter should
+				normally only be omitted when no result is expected (INSERT, UPDATE, DELETE).
 			</para>
 		</listitem>
 		</itemizedlist>

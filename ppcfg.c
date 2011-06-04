@@ -62,7 +62,7 @@ int pp_subst_add(char *data)
 	se=subst_parser(&subst);
 	if (se==0)
 	{
-		LM_ERR("bad subst expression:: %s\n", data);
+		LM_ERR("bad subst expression: %s\n", data);
 		pkg_free(pr);
 		return -2;
 	}
@@ -76,7 +76,77 @@ int pp_subst_add(char *data)
 	}
 	pp_subst_rules_tail = pr;
 
+	LM_ERR("### added subst expression: %s\n", data);
+
 	return 0;
+}
+
+int pp_substdef_add(char *data)
+{
+	char c;
+	char *p;
+	str defname;
+	str defvalue;
+
+	if(pp_subst_add(data)<0) {
+		LM_ERR("subst rule cannot be added\n");
+		goto error;
+	}
+
+	p=data;
+	c=*p;
+	if (c=='\\') {
+		LM_ERR("invalid separator char [%c] in [%s]\n", c, data);
+		goto error;
+	}
+	p++;
+	/* find regexp */
+	defname.s=p;
+	for ( ; *p; p++) {
+		/* if unescaped sep. char */
+		if ((*p==c) && (*(p-1)!='\\'))
+			goto found_regexp;
+	}
+	LM_ERR("separator [%c] not found after regexp: [%s]\n", c, data);
+	goto error;
+
+found_regexp:
+	defname.len = p - defname.s;
+	if(defname.len==0) {
+		LM_ERR("define name too short\n");
+		goto error;
+	}
+
+	p++;
+	defvalue.s = p;
+	/* find replacement */
+	for ( ; *p; p++) {
+		/* if unescaped sep. char */
+		if ((*p==c) && (*(p-1)!='\\'))
+			goto found_repl;
+	}
+	LM_ERR("separator [%c] not found after replacement: [%s]\n", c, data);
+	goto error;
+
+found_repl:
+	defvalue.len = p - defvalue.s;
+
+	if(pp_define(defname.len, defname.s)<0) {
+		LM_ERR("cannot set define name\n");
+		goto error;
+	}
+	if(pp_define_set(defvalue.len, defvalue.s)<0) {
+		LM_ERR("cannot set define value\n");
+		goto error;
+	}
+
+	LM_DBG("### added substdef: [%.*s]=[%.*s]\n", defname.len, defname.s,
+			defvalue.len, defvalue.s);
+
+	return 0;
+
+error:
+	return 1;
 }
 
 int pp_subst_run(char **data)

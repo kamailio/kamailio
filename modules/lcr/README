@@ -841,10 +841,11 @@ if (!next_gw()) {
 
 4.3.  defunct_gw(period)
 
-   Defuncts gateway denoted by lcr_id_avp and defunct_gw_avp for a period
-   of seconds given as argument. Argument must be a positive integer
-   constant or a pseudo variable with positive integer value. Value of
-   defunct column in database is not updated.
+   Defuncts gateway denoted by lcr_id_avp and defunct_gw_avp (which were
+   set by previuos next_gw() call) for a period of seconds given as
+   argument. Argument must be a positive integer constant or a pseudo
+   variable with positive integer value. Value of defunct column in
+   database is not updated.
 
    Returns 1 on success and -1 in case of error (see syslog).
 

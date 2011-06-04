@@ -20,11 +20,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stddef.h>
 #include <regex.h>
 
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
+#include "../../shm_init.h"
 #include "../../dprint.h"
+#include "../../parser/parse_param.h"
 #include "../../lib/kcore/hash_func.h"
 #include "../../ut.h"
 #include "../../re.h"
@@ -38,8 +41,104 @@
 
 
 ht_t *_ht_root = NULL;
-ht_t *_ht_pkg_root = NULL;
 
+typedef struct _keyvalue {
+	str key;
+	str value;
+	int type;
+	union {
+		param_t *params;
+	} u;
+} keyvalue_t;
+
+
+#define KEYVALUE_TYPE_NONE		0
+#define KEYVALUE_TYPE_PARAMS	1
+
+/**
+ * parse a string like: 'key=>value'
+ *   - the value can be parameter list: 'name1=value1;...;nameX=valueX'
+ */
+int keyvalue_parse_str(str *data, int type, keyvalue_t *res)
+{
+	char *p;
+	str s;
+	str in;
+	param_hooks_t phooks;
+
+	if(data==NULL || data->s==NULL || data->len<=0 || res==NULL)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	memset(res, 0, sizeof(keyvalue_t));
+
+	in.s = data->s;
+	in.len = data->len;
+
+	p = in.s;
+	while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+		p++;
+	if(p>in.s+in.len || *p=='\0')
+		goto error;
+	res->key.s = p;
+	while(p < in.s + in.len)
+	{
+		if(*p=='=' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
+			break;
+		p++;
+	}
+	if(p>in.s+in.len || *p=='\0')
+		goto error;
+	res->key.len = (int)(p - res->key.s);
+	if(*p!='=')
+	{
+		while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+			p++;
+		if(p>in.s+in.len || *p=='\0' || *p!='=')
+			goto error;
+	}
+	p++;
+	if(*p!='>')
+		goto error;
+	p++;
+	while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+		p++;
+
+	s.s = p;
+	s.len = in.s + in.len - p;
+	res->value.s = s.s;
+	res->value.len = s.len;
+	res->type = type;
+	if(type==KEYVALUE_TYPE_PARAMS)
+	{
+		if(s.s[s.len-1]==';')
+			s.len--;
+		if (parse_params(&s, CLASS_ANY, &phooks, &res->u.params)<0)
+		{
+			LM_ERR("failed parsing params value\n");
+			goto error;
+		}
+	}
+	return 0;
+error:
+	LM_ERR("invalid input parameter [%.*s] at [%d]\n", in.len, in.s,
+			(int)(p-in.s));
+	return -1;
+}
+
+void keyvalue_destroy(keyvalue_t *res)
+{
+	if(res==NULL)
+		return;
+	if(res->type==KEYVALUE_TYPE_PARAMS)
+	{
+		if(res->u.params!=NULL)
+			free_params(res->u.params);
+	}
+	memset(res, 0, sizeof(keyvalue_t));
+}
 
 ht_cell_t* ht_cell_new(str *name, int type, int_str *val, unsigned int cellid)
 {
@@ -86,7 +185,6 @@ int ht_cell_free(ht_cell_t *cell)
 	return 0;
 }
 
-
 int ht_cell_pkg_free(ht_cell_t *cell)
 {
 	if(cell==NULL)
@@ -94,6 +192,7 @@ int ht_cell_pkg_free(ht_cell_t *cell)
 	pkg_free(cell);
 	return 0;
 }
+
 
 ht_t* ht_get_table(str *name)
 {
@@ -117,7 +216,8 @@ ht_t* ht_get_table(str *name)
 	return NULL;
 }
 
-int ht_pkg_init(str *name, int autoexp, str *dbtable, int size, int dbmode, int usedmq)
+int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode, int dmq,
+		int itype, int_str *ival)
 {
 	unsigned int htid;
 	ht_t *ht;
@@ -125,7 +225,7 @@ int ht_pkg_init(str *name, int autoexp, str *dbtable, int size, int dbmode, int 
 	htid = ht_compute_hash(name);
 
 	/* does it exist */
-	ht = _ht_pkg_root;
+	ht = _ht_root;
 	while(ht!=NULL)
 	{
 		if(htid == ht->htid && name->len==ht->name.len 
@@ -137,10 +237,10 @@ int ht_pkg_init(str *name, int autoexp, str *dbtable, int size, int dbmode, int 
 		ht = ht->next;
 	}
 
-	ht = (ht_t*)pkg_malloc(sizeof(ht_t));
+	ht = (ht_t*)shm_malloc(sizeof(ht_t));
 	if(ht==NULL)
 	{
-		LM_ERR("no more pkg\n");
+		LM_ERR("no more shared memory\n");
 		return -1;
 	}
 	memset(ht, 0, sizeof(ht_t));
@@ -156,36 +256,29 @@ int ht_pkg_init(str *name, int autoexp, str *dbtable, int size, int dbmode, int 
 	if(dbtable!=NULL && dbtable->len>0)
 		ht->dbtable = *dbtable;
 	ht->dbmode = dbmode;
-	ht->usedmq = usedmq;
-	ht->next = _ht_pkg_root;
-	_ht_pkg_root = ht;
+	ht->dmq = dmq;
+	ht->flags = itype;
+	if(ival!=NULL)
+		ht->initval = *ival;
+
+	ht->next = _ht_root;
+	_ht_root = ht;
 	return 0;
 }
 
-int ht_shm_init(void)
+int ht_init_tables(void)
 {
-	ht_t *htp;
-	ht_t *htp0;
 	ht_t *ht;
 	int i;
 
-	htp = _ht_pkg_root;
+	ht = _ht_root;
 
-	while(htp)
+	while(ht)
 	{
-		htp0 = htp->next;
-		ht = (ht_t*)shm_malloc(sizeof(ht_t));
-		if(ht==NULL)
-		{
-			LM_ERR("no more shm\n");
-			return -1;
-		}
-		memcpy(ht, htp, sizeof(ht_t));
-
 		ht->entries = (ht_entry_t*)shm_malloc(ht->htsize*sizeof(ht_entry_t));
 		if(ht->entries==NULL)
 		{
-			LM_ERR("no more shm.\n");
+			LM_ERR("no more shm for [%.*s]\n", ht->name.len, ht->name.s);
 			shm_free(ht);
 			return -1;
 		}
@@ -195,7 +288,8 @@ int ht_shm_init(void)
 		{
 			if(lock_init(&ht->entries[i].lock)==0)
 			{
-				LM_ERR("cannot initalize lock[%d]\n", i);
+				LM_ERR("cannot initalize lock[%d] in [%.*s]\n", i,
+						ht->name.len, ht->name.s);
 				i--;
 				while(i>=0)
 				{
@@ -208,12 +302,8 @@ int ht_shm_init(void)
 
 			}
 		}
-		ht->next = _ht_root;
-		_ht_root = ht;
-		pkg_free(htp);
-		htp = htp0;
+		ht = ht->next;
 	}
-	_ht_pkg_root = NULL;
 
 	return 0;
 }
@@ -232,20 +322,23 @@ int ht_destroy(void)
 	while(ht)
 	{
 		ht0 = ht->next;
-		for(i=0; i<ht->htsize; i++)
+		if(ht->entries!=NULL)
 		{
-			/* free entries */
-			it = ht->entries[i].first;
-			while(it)
+			for(i=0; i<ht->htsize; i++)
 			{
-				it0 = it;
-				it = it->next;
-				ht_cell_free(it0);
+				/* free entries */
+				it = ht->entries[i].first;
+				while(it)
+				{
+					it0 = it;
+					it = it->next;
+					ht_cell_free(it0);
+				}
+				/* free locks */
+				lock_destroy(&ht->entries[i].lock);
 			}
-			/* free locks */
-			lock_destroy(&ht->entries[i].lock);
+			shm_free(ht->entries);
 		}
-		shm_free(ht->entries);
 		shm_free(ht);
 		ht = ht0;
 	}
@@ -428,6 +521,113 @@ int ht_del_cell(ht_t *ht, str *name)
 	return 0;
 }
 
+ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
+		ht_cell_t *old)
+{
+	unsigned int idx;
+	unsigned int hid;
+	ht_cell_t *it, *prev, *cell;
+	time_t now;
+	int_str isval;
+
+	if(ht==NULL || ht->entries==NULL)
+		return NULL;
+
+	hid = ht_compute_hash(name);
+
+	idx = ht_get_entry(hid, ht->htsize);
+
+	now = 0;
+	if(ht->htexpire>0)
+		now = time(NULL);
+	prev = NULL;
+	if(mode) lock_get(&ht->entries[idx].lock);
+	it = ht->entries[idx].first;
+	while(it!=NULL && it->cellid < hid)
+	{
+		prev = it;
+		it = it->next;
+	}
+	while(it!=NULL && it->cellid == hid)
+	{
+		if(name->len==it->name.len
+				&& strncmp(name->s, it->name.s, name->len)==0)
+		{
+			/* update value */
+			if(it->flags&AVP_VAL_STR)
+			{
+				/* string value cannot be incremented */
+				if(mode) lock_release(&ht->entries[idx].lock);
+				return NULL;
+			} else {
+				it->value.n += val;
+				it->expire = now + ht->htexpire;
+				if(old!=NULL)
+				{
+					if(old->msize>=it->msize)
+					{
+						memcpy(old, it, it->msize);
+						lock_release(&ht->entries[idx].lock);
+						return old;
+					}
+				}
+				cell = (ht_cell_t*)pkg_malloc(it->msize);
+				if(cell!=NULL)
+					memcpy(cell, it, it->msize);
+
+				if(mode) lock_release(&ht->entries[idx].lock);
+				return cell;
+			}
+		}
+		prev = it;
+		it = it->next;
+	}
+	/* add val if htable has an integer init value */
+	if(ht->flags!=PV_VAL_INT)
+		return NULL;
+	isval.n = ht->initval.n + val;
+	it = ht_cell_new(name, 0, &isval, hid);
+	if(it == NULL)
+	{
+		LM_ERR("cannot create new cell.\n");
+		if(mode) lock_release(&ht->entries[idx].lock);
+		return NULL;
+	}
+	it->expire = now + ht->htexpire;
+	if(prev==NULL)
+	{
+		if(ht->entries[idx].first!=NULL)
+		{
+			it->next = ht->entries[idx].first;
+			ht->entries[idx].first->prev = it;
+		}
+		ht->entries[idx].first = it;
+	} else {
+		it->next = prev->next;
+		it->prev = prev;
+		if(prev->next)
+			prev->next->prev = it;
+		prev->next = it;
+	}
+	ht->entries[idx].esize++;
+	if(old!=NULL)
+	{
+		if(old->msize>=it->msize)
+		{
+			memcpy(old, it, it->msize);
+			lock_release(&ht->entries[idx].lock);
+			return old;
+		}
+	}
+	cell = (ht_cell_t*)pkg_malloc(it->msize);
+	if(cell!=NULL)
+		memcpy(cell, it, it->msize);
+
+	if(mode) lock_release(&ht->entries[idx].lock);
+	return cell;
+}
+
+
 ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 {
 	unsigned int idx;
@@ -512,138 +712,77 @@ int ht_dbg(void)
 
 int ht_table_spec(char *spec)
 {
+	keyvalue_t kval;
 	str name;
 	str dbtable = {0, 0};
 	unsigned int autoexpire = 0;
-	unsigned int usedmq = 0;
 	unsigned int size = 4;
-	int type = 0;
 	unsigned int dbmode = 0;
+	unsigne int dmq = 0;
 	str in;
 	str tok;
-	char *p;
+	param_t *pit=NULL;
+	int_str ival;
+	int itype;
 
+	if(!shm_initialized())
+	{
+		LM_ERR("shared memory was not initialized\n");
+		return -1;
+	}
 	/* parse: name=>dbtable=abc;autoexpire=123;size=123*/
 	in.s = spec;
 	in.len = strlen(in.s);
+	if(keyvalue_parse_str(&in, KEYVALUE_TYPE_PARAMS, &kval)<0)
+	{
+		LM_ERR("failed parsing: %.*s\n", in.len, in.s);
+		return -1;
+	}
+	name = kval.key;
+	itype = PV_VAL_NONE;
+	memset(&ival, 0, sizeof(int_str));
 
-	p = in.s;
-	while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
-		p++;
-	if(p>in.s+in.len || *p=='\0')
-		goto error;
-	name.s = p;
-	while(p < in.s + in.len)
+	for (pit = kval.u.params; pit; pit=pit->next)
 	{
-		if(*p=='=' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
-			break;
-		p++;
-	}
-	if(p>in.s+in.len || *p=='\0')
-		goto error;
-	name.len = p - name.s;
-	if(*p!='=')
-	{
-		while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
-			p++;
-		if(p>in.s+in.len || *p=='\0' || *p!='=')
-			goto error;
-	}
-	p++;
-	if(*p!='>')
-		goto error;
-	p++;
-	while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
-		p++;
-
-next_token:
-	tok.s = p;
-	while(p < in.s + in.len)
-	{
-		if(*p=='=' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
-			break;
-		p++;
-	}
-	if(p>in.s+in.len || *p=='\0')
-		goto error;
-	tok.len = p - tok.s;
-	if(tok.len==7 && strncmp(tok.s, "dbtable", 7)==0)
-		type = 1;
-	else if(tok.len==10 && strncmp(tok.s, "autoexpire", 10)==0)
-		type = 2;
-	else if(tok.len==4 && strncmp(tok.s, "size", 4)==0)
-		type = 3;
-	else if(tok.len==6 && strncmp(tok.s, "dbmode", 6)==0)
-		type = 4;
-	else if(tok.len==3 && strncmp(tok.s, "dmq", 3)==0)
-		type = 5;
-	else goto error;
-
-	if(*p!='=')
-	{
-		while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
-			p++;
-		if(p>in.s+in.len || *p=='\0' || *p!='=')
-			goto error;
-	}
-	p++;
-	while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
-		p++;
-	if(p>in.s+in.len || *p=='\0')
-		goto error;
-	tok.s = p;
-	while(p < in.s + in.len)
-	{
-		if(*p==';' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
-			break;
-		p++;
-	}
-	if(p>in.s+in.len || *p=='\0')
-		goto error;
-	tok.len = p - tok.s;
-	switch(type)
-	{
-		case 1:
+		tok = pit->body;
+		if(pit->name.len==7 && strncmp(pit->name.s, "dbtable", 7)==0) {
 			dbtable = tok;
 			LM_DBG("htable [%.*s] - dbtable [%.*s]\n", name.len, name.s,
 					dbtable.len, dbtable.s);
-			break;
-		case 2:
+		} else if(pit->name.len==10 && strncmp(pit->name.s, "autoexpire", 10)==0) {
 			if(str2int(&tok, &autoexpire)!=0)
 				goto error;
 			LM_DBG("htable [%.*s] - expire [%u]\n", name.len, name.s,
 					autoexpire);
-			break;
-		case 3:
+		} else if(pit->name.len==4 && strncmp(pit->name.s, "size", 4)==0) {
 			if(str2int(&tok, &size)!=0)
 				goto error;
 			LM_DBG("htable [%.*s] - size [%u]\n", name.len, name.s,
 					size);
-			break;
-		case 4:
+		} else if(pit->name.len==6 && strncmp(pit->name.s, "dbmode", 6)==0) {
 			if(str2int(&tok, &dbmode)!=0)
 				goto error;
 			LM_DBG("htable [%.*s] - dbmode [%u]\n", name.len, name.s,
 					dbmode);
-			break;
-		case 5:
-			if(str2int(&tok, &usedmq)!=0)
+		} else if(pit->name.len==7 && strncmp(pit->name.s, "initval", 7)==0) {
+			if(str2sint(&tok, &ival.n)!=0)
 				goto error;
-			LM_DBG("htable [%.*s] - usedmq [%u]\n", name.len, name.s,
-					usedmq);
-			break;
+			itype = PV_VAL_INT;
+			LM_DBG("htable [%.*s] - initval [%d]\n", name.len, name.s,
+					ival.n);
+		} else if(tok.len==3 && strncmp(tok.s, "dmq", 3)==0) {
+			if(str2sint(&tok, &dmq)!=0)
+				goto error;
+			LM_DBG("htable [%.*s] - dmq [%d]\n", name.len, name.s,
+					dmq);
+		} else { goto error; }
 	}
-	while(p<in.s+in.len && (*p==';' || *p==' ' || *p=='\t'
-				|| *p=='\n' || *p=='\r'))
-		p++;
-	if(p<in.s+in.len)
-		goto next_token;
 
-	return ht_pkg_init(&name, autoexpire, &dbtable, size, dbmode, usedmq);
+	return ht_add_table(&name, autoexpire, &dbtable, size, dbmode, dmq,
+			itype, &ival);
 
 error:
-	LM_ERR("invalid htable parameter [%.*s] at [%d]\n", in.len, in.s,
-			(int)(p-in.s));
+	LM_ERR("invalid htable parameter [%.*s]\n", in.len, in.s);
 	return -1;
 }
 

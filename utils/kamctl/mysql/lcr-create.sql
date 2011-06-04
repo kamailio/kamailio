@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('lcr_gw','1');
+INSERT INTO version (table_name, table_version) values ('lcr_gw','2');
 CREATE TABLE lcr_gw (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     lcr_id SMALLINT UNSIGNED NOT NULL,
@@ -10,7 +10,8 @@ CREATE TABLE lcr_gw (
     uri_scheme TINYINT UNSIGNED,
     transport TINYINT UNSIGNED,
     strip TINYINT UNSIGNED,
-    tag VARCHAR(16) DEFAULT NULL,
+    prefix VARCHAR(16) DEFAULT NULL,
+    tag VARCHAR(64) DEFAULT NULL,
     flags INT UNSIGNED DEFAULT 0 NOT NULL,
     defunct INT UNSIGNED DEFAULT NULL,
     CONSTRAINT lcr_id_ip_addr_port_hostname_idx UNIQUE (lcr_id, ip_addr, port, hostname)

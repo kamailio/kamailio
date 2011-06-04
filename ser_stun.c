@@ -222,7 +222,7 @@ int stun_parse_body(
 				struct stun_unknown_att** unknown,
 				USHORT_T* error_code)
 {
-	UINT_T not_parsed;
+	int not_parsed;
 	struct stun_attr attr;
 	USHORT_T attr_size;
 	UINT_T padded_len;
@@ -360,6 +360,13 @@ int stun_parse_body(
 #endif
 				padded_len = ntohs(attr.len);
 				break;
+		}
+		
+		/* check if there is enough unparsed space for the padded attribute
+		   (the padded length might be greater then the attribute length)
+		 */
+		if (not_parsed < padded_len) {
+			break;
 		}
 		buf += padded_len;
 		not_parsed -= padded_len;
@@ -713,7 +720,7 @@ int copy_str_to_buffer(struct stun_msg* res, const char* data, UINT_T pad)
 	data_len = strlen(data);
 	memset(&empty, 0, pad);
 	
-	pad_len = pad - data_len%pad;
+	pad_len = (pad - data_len%pad) % pad;
 	
 	if (buf_copy(&res->msg, (void *) data, sizeof(UCHAR_T)*data_len) != 0) {
 #ifdef EXTRA_DEBUG

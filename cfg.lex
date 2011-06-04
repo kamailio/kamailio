@@ -200,7 +200,9 @@ SEND_TCP	send_tcp
 LOG		log
 ERROR	error
 ROUTE	route
+ROUTE_REQUEST request_route
 ROUTE_FAILURE failure_route
+ROUTE_REPLY reply_route
 ROUTE_ONREPLY onreply_route
 ROUTE_BRANCH branch_route
 ROUTE_SEND onsend_route
@@ -300,6 +302,10 @@ LOG_AND		"and"|"&&"
 BIN_AND         "&"
 LOG_OR		"or"|"||"
 BIN_OR          "|"
+BIN_NOT     "~"
+BIN_XOR     "^"
+BIN_LSHIFT     "<<"
+BIN_RSHIFT     ">>"
 PLUS	"+"
 MINUS	"-"
 MODULO	"mod"
@@ -542,6 +548,9 @@ COM_LINE	#
 COM_START	"/\*"
 COM_END		"\*/"
 
+/* start of pre-processing directives */
+PREP_START	"#!"|"!!"
+
 DEFINE       "define"|"def"
 IFDEF        ifdef
 IFNDEF       ifndef
@@ -552,6 +561,7 @@ EAT_ABLE	[\ \t\b\r]
 
 /* pre-processing blocks */
 SUBST       subst
+SUBSTDEF    substdef
 
 %%
 
@@ -581,8 +591,10 @@ SUBST       subst
 <INITIAL>{AVPFLAGS_DECL}	{ count(); yylval.strval=yytext; return AVPFLAGS_DECL; }
 <INITIAL>{MSGLEN}	{ count(); yylval.strval=yytext; return MSGLEN; }
 <INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }
+<INITIAL>{ROUTE_REQUEST}	{ count(); yylval.strval=yytext; return ROUTE_REQUEST; }
 <INITIAL>{ROUTE_ONREPLY}	{ count(); yylval.strval=yytext;
 								return ROUTE_ONREPLY; }
+<INITIAL>{ROUTE_REPLY}	{ count(); yylval.strval=yytext; return ROUTE_REPLY; }
 <INITIAL>{ROUTE_FAILURE}	{ count(); yylval.strval=yytext;
 								return ROUTE_FAILURE; }
 <INITIAL>{ROUTE_BRANCH} { count(); yylval.strval=yytext; return ROUTE_BRANCH; }
@@ -935,6 +947,10 @@ SUBST       subst
 <INITIAL>{BIN_AND}	{ count(); return BIN_AND; }
 <INITIAL>{LOG_OR}	{ count(); return LOG_OR;  }
 <INITIAL>{BIN_OR}	{ count(); return BIN_OR;  }
+<INITIAL>{BIN_NOT}	{ count(); return BIN_NOT;  }
+<INITIAL>{BIN_XOR}	{ count(); return BIN_XOR;  }
+<INITIAL>{BIN_LSHIFT}	{ count(); return BIN_LSHIFT;  }
+<INITIAL>{BIN_RSHIFT}	{ count(); return BIN_RSHIFT;  }
 <INITIAL>{PLUS}		{ count(); return PLUS; }
 <INITIAL>{MINUS}	{ count(); return MINUS; }
 <INITIAL>{MODULO}	{ count(); return MODULO; }
@@ -1195,7 +1211,7 @@ SUBST       subst
 <INITIAL>{COM_LINE}!{MAXCOMPAT_CFG}{CR}	{ count(); 
 												sr_cfg_compat=SR_COMPAT_MAX;}
 
-<INITIAL>{COM_LINE}!{DEFINE}{EAT_ABLE}+	{	count();
+<INITIAL>{PREP_START}{DEFINE}{EAT_ABLE}+	{	count();
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <DEFINE_ID>{ID}                 {	count();
 									if (pp_define(yyleng, yytext)) return 1;
@@ -1214,12 +1230,13 @@ SUBST       subst
 <DEFINE_DATA>.          {	count();
 							addstr(&s_buf, yytext, yyleng); }
 
-<INITIAL>{COM_LINE}!{SUBST}	{ count();  return SUBST;}
+<INITIAL>{PREP_START}{SUBST}	{ count();  return SUBST;}
+<INITIAL>{PREP_START}{SUBSTDEF}	{ count();  return SUBSTDEF;}
 
-<INITIAL,IFDEF_SKIP>{COM_LINE}!{IFDEF}{EAT_ABLE}+    { count();
+<INITIAL,IFDEF_SKIP>{PREP_START}{IFDEF}{EAT_ABLE}+    { count();
 								if (pp_ifdef_type(1)) return 1;
 								state = IFDEF_S; BEGIN(IFDEF_ID); }
-<INITIAL,IFDEF_SKIP>{COM_LINE}!{IFNDEF}{EAT_ABLE}+    { count();
+<INITIAL,IFDEF_SKIP>{PREP_START}{IFNDEF}{EAT_ABLE}+    { count();
 								if (pp_ifdef_type(0)) return 1;
 								state = IFDEF_S; BEGIN(IFDEF_ID); }
 <IFDEF_ID>{ID}                { count();
@@ -1227,9 +1244,9 @@ SUBST       subst
                                 state = IFDEF_EOL_S; BEGIN(IFDEF_EOL); }
 <IFDEF_EOL>{EAT_ABLE}*{CR}    { count(); pp_ifdef(); }
 
-<INITIAL,IFDEF_SKIP>{COM_LINE}!{ELSE}{EAT_ABLE}*{CR}    { count(); pp_else(); }
+<INITIAL,IFDEF_SKIP>{PREP_START}{ELSE}{EAT_ABLE}*{CR}    { count(); pp_else(); }
 
-<INITIAL,IFDEF_SKIP>{COM_LINE}!{ENDIF}{EAT_ABLE}*{CR}    { count();
+<INITIAL,IFDEF_SKIP>{PREP_START}{ENDIF}{EAT_ABLE}*{CR}    { count();
 															pp_endif(); }
 
  /* we're in an ifdef that evaluated to false -- throw it away */
@@ -1648,7 +1665,7 @@ int pp_define(int len, const char * text)
 	return 0;
 }
 
-int  pp_define_set(int len, char *text)
+int pp_define_set(int len, char *text)
 {
 	if(len<=0) {
 		LOG(L_DBG, "no define value - ignoring\n");
@@ -1685,7 +1702,7 @@ int  pp_define_set(int len, char *text)
 	return 0;
 }
 
-static str  *pp_define_get(int len, const char * text)
+static str *pp_define_get(int len, const char * text)
 {
 	str var = {(char *)text, len};
 	int i;

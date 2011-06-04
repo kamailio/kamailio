@@ -42,6 +42,8 @@
 #include "../../pvar.h"
 #include "../../forward.h"
 #include "../../mod_fix.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 #include "domain.h"
 #include "mi.h"
 #include "hash.h"
@@ -69,6 +71,8 @@ MODULE_VERSION
 
 #define DOMAIN_COL "domain"
 #define DOMAIN_COL_LEN (sizeof(DOMAIN_COL) - 1)
+
+static int domain_init_rpc(void);
 
 /*
  * Module parameter variables
@@ -156,6 +160,12 @@ static int mod_init(void)
 		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
+	if(domain_init_rpc()!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+
 	if(domain_reg_myself!=0)
 	{
 		if(register_check_self_func(domain_check_self)<0)
@@ -259,4 +269,82 @@ static void destroy(void)
 		shm_free(hash_table_2);
 		hash_table_2 = 0;
 	}
+}
+
+
+static const char* domain_rpc_reload_doc[2] = {
+	"Reload domain table from database",
+	0
+};
+
+
+/*
+ * RPC command to reload domain table
+ */
+static void domain_rpc_reload(rpc_t* rpc, void* ctx)
+{
+	if (!db_mode) {
+		rpc->fault(ctx, 500, "Server Domain Cache Disabled");
+		return;
+	}
+
+	if (reload_domain_table() < 0) {
+		rpc->fault(ctx, 400, "Domain Table Reload Failed");
+	}
+}
+
+
+
+static const char* domain_rpc_dump_doc[2] = {
+	"Return the contents of domain table",
+	0
+};
+
+
+/*
+ * Fifo function to print domains from current hash table
+ */
+static void domain_rpc_dump(rpc_t* rpc, void* ctx)
+{
+	int i;
+	struct domain_list *np;
+	struct domain_list **ht;
+
+	if (!db_mode) {
+		rpc->fault(ctx, 400, "Server Domain Cache Disabled");
+		return;
+	}
+
+	if(hash_table==0 || *hash_table==0) {
+		rpc->fault(ctx, 404, "Server Domain Cache Empty");
+		return;
+	}
+	ht = *hash_table;
+	for (i = 0; i < DOM_HASH_SIZE; i++) {
+		np = ht[i];
+		while (np) {
+			if (rpc->add(ctx, "S", &np->domain) < 0)
+				return;
+
+			np = np->next;
+		}
+	}
+	return;
+}
+
+
+rpc_export_t domain_rpc_list[] = {
+	{"domain.reload", domain_rpc_reload, domain_rpc_reload_doc, 0},
+	{"domain.dump",   domain_rpc_dump,   domain_rpc_dump_doc,   0},
+	{0, 0, 0, 0}
+};
+
+static int domain_init_rpc(void)
+{
+	if (rpc_register_array(domain_rpc_list)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
 }

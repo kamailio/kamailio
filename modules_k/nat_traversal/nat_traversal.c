@@ -1809,7 +1809,7 @@ mod_init(void)
         LM_NOTICE("using 10 seconds for keepalive_interval\n");
         keepalive_interval = 10;
     }
-	register_procs(1);
+	register_dummy_timers(1);
 
     return 0;
 }

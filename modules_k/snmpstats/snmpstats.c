@@ -79,6 +79,7 @@
 #include "snmpstats.h"
 #include "snmpstats_globals.h"
 #include "../../timer.h"
+#include "../../cfg/cfg_struct.h"
 
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
@@ -340,6 +341,8 @@ static int mod_init(void)
 
 	/* add space for one extra process */
 	register_procs(1);
+	/* add child to update local config framework structures */
+	cfg_register_child(1);
 
 	return 0;
 }
@@ -363,6 +366,10 @@ static int mod_child_init(int rank)
 		return -1; /* error */
 	if(pid==0){
 		/* child */
+		/* initialize the config framework */
+		if (cfg_child_init())
+			return -1;
+
 		agentx_child(1);
 		return 0;
 	}

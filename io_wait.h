@@ -283,9 +283,9 @@ retry2:
 						io_wait_loop_kqueue EV_ERROR case */
 						if (unlikely(!(errno == EBADF || errno == ENOENT)))
 							BUG("kq_ev_change: kevent flush changes failed:"
-									" (unexpected error) %s [%d] (%d/%d)\n",
+									" (unexpected error) %s [%d] (%d/%lu)\n",
 										strerror(errno), errno,
-										r, h->kq_nchanges);
+										r, (unsigned long)h->kq_nchanges);
 						continue; /* skip over it */
 					}
 				}
@@ -1219,9 +1219,10 @@ again:
 					BUG("io_wait_loop_kqueue: unknown filter: kqueue: event "
 							"%d/%d: fd=%d, filter=%d, flags=0x%x, fflags=0x%x,"
 							" data=%lx, udata=%lx\n",
-					r, n, h->kq_array[r].ident, h->kq_array[r].filter,
+					r, n, (int)h->kq_array[r].ident, (int)h->kq_array[r].filter,
 					h->kq_array[r].flags, h->kq_array[r].fflags,
-					(long)h->kq_array[r].data, (long)h->kq_array[r].udata);
+					(unsigned long)h->kq_array[r].data,
+					(unsigned long)h->kq_array[r].udata);
 				}
 			}
 		}

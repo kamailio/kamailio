@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('lcr_gw','1');
+INSERT INTO version (table_name, table_version) values ('lcr_gw','2');
 CREATE TABLE lcr_gw (
     id NUMBER(10) PRIMARY KEY,
     lcr_id NUMBER(5),
@@ -10,7 +10,8 @@ CREATE TABLE lcr_gw (
     uri_scheme NUMBER(5),
     transport NUMBER(5),
     strip NUMBER(5),
-    tag VARCHAR2(16) DEFAULT NULL,
+    prefix VARCHAR2(16) DEFAULT NULL,
+    tag VARCHAR2(64) DEFAULT NULL,
     flags NUMBER(10) DEFAULT 0 NOT NULL,
     defunct NUMBER(10) DEFAULT NULL,
     CONSTRAINT ORA_lcr_id_ip_addr_port_hostname_idx  UNIQUE (lcr_id, ip_addr, port, hostname)

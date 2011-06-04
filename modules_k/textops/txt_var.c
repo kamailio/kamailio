@@ -41,7 +41,7 @@ int tr_txt_eval_re(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	int nmatches;
 	str* result;
 #define TR_TXT_BUF_SIZE	2048
-	char tr_txt_buf[TR_TXT_BUF_SIZE];
+	static char tr_txt_buf[TR_TXT_BUF_SIZE];
 
 	if(val==NULL || (!(val->flags&PV_VAL_STR)) || val->rs.len<=0)
 		return -1;

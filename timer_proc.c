@@ -36,11 +36,24 @@
  */
 
 #include "timer_proc.h"
+#include "cfg/cfg_struct.h"
 #include "pt.h"
 #include "mem/shm_mem.h"
 
 #include <unistd.h>
 
+
+/** update internal counters for running new dummy timers
+ *  @param timers - number of dummy timer processes
+ *  @return - 0 on success; -1 on error
+ */
+int register_dummy_timers(int timers)
+{
+	if(register_procs(timers)<0)
+		return -1;
+	cfg_register_child(timers);
+	return 0;
+}
 
 /** forks a separate simple sleep() periodic timer.
   * Forks a very basic periodic timer process, that just sleep()s for 
@@ -66,8 +79,10 @@ int fork_dummy_timer(int child_id, char* desc, int make_sock,
 	if (pid<0) return -1;
 	if (pid==0){
 		/* child */
+		if (cfg_child_init()) return -1;
 		for(;;){
 			sleep(interval);
+			cfg_update();
 			f(get_ticks(), param); /* ticks in s for compatibility with old
 									  timers */
 		}

@@ -38,6 +38,7 @@
 #include "../../mem/shm_mem.h" /*shm_malloc*/
 #include "../../dprint.h" /*LM_**/
 #include "../../locking.h"
+#include "../../cfg/cfg_struct.h"
 
 #include "seas.h"
 #include "ha.h"
@@ -129,6 +130,9 @@ int dispatcher_main_loop(void)
       spawn_pinger();
 
    while(1){
+		/* update the local config framework structures */
+		cfg_update();
+
       if(sig_flag==SIGCHLD){
 	 while ((chld=waitpid( -1, &chld_status, WNOHANG ))>0) {
 	    if (WIFEXITED(chld_status)){

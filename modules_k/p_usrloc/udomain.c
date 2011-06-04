@@ -133,8 +133,11 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 #endif
 
 	return 0;
+
+#ifdef STATISTICS
 error2:
 	shm_free((*_d)->table);
+#endif
 error1:
 	shm_free(*_d);
 error0:

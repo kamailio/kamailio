@@ -124,7 +124,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 {
 	db_key_t db_cols[4] = {&ht_db_name_column, &ht_db_ktype_column,
 		&ht_db_vtype_column, &ht_db_value_column};
-	db_key_t db_ord = &ht_db_ktype_column;
+	db_key_t db_ord = &ht_db_name_column;
 	db1_res_t* db_res = NULL;
 	str kname;
 	str pname;
@@ -199,64 +199,54 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 			cnt++;
 			/* not NULL values enforced in table definition ?!?! */
 			kname.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
+			if(kname.s==NULL) {
+				LM_ERR("null key in row %d\n", i);
+				goto error;
+			}
 			kname.len = strlen(kname.s);
 			ktype = RES_ROWS(db_res)[i].values[1].val.int_val;
-			if(ktype==0 && last_ktype==1)
+			if(last_ktype==1)
 			{
-				snprintf(ht_name_buf, HT_NAME_BUF_SIZE, "%.*s%.*s",
-					pname.len, pname.s, ht_array_size_suffix.len,
-					ht_array_size_suffix.s);
-				hname.s = ht_name_buf;
-				hname.len = strlen(ht_name_buf);
-				val.n = n+1;
-
-				if(ht_set_cell(ht, &hname, 0, &val, mode))
+				if(pname.len>0
+						&& (pname.len!=kname.len
+							|| strncmp(pname.s, kname.s, pname.len)!=0))
 				{
-					LM_ERR("error adding array size to hash table.\n");
-					goto error;
+					/* new key name, last was an array => add its size */
+					snprintf(ht_name_buf, HT_NAME_BUF_SIZE, "%.*s%.*s",
+						pname.len, pname.s, ht_array_size_suffix.len,
+						ht_array_size_suffix.s);
+					hname.s = ht_name_buf;
+					hname.len = strlen(ht_name_buf);
+					val.n = n;
+
+					if(ht_set_cell(ht, &hname, 0, &val, mode))
+					{
+						LM_ERR("error adding array size to hash table.\n");
+						goto error;
+					}
+					pname.len = 0;
+					pname.s = "";
+					n = 0;
 				}
-				pname.len = 0;
-				pname.s = "";
-				n = 0;
 			}
+			last_ktype = ktype;
+			pname = kname;
 			if(ktype==1)
 			{
-				if(pname.len!=kname.len 
-						|| strncmp(pname.s, kname.s, pname.len)) 
-				{
-					/* add count */
-					if(pname.len > 0)
-					{
-						/* perhaps some opt can be done here */
-						snprintf(ht_name_buf, HT_NAME_BUF_SIZE, "%.*s%.*s",
-							pname.len, pname.s, ht_array_size_suffix.len,
-							ht_array_size_suffix.s);
-						hname.s = ht_name_buf;
-						hname.len = strlen(ht_name_buf);
-						val.n = n+1;
-
-						if(ht_set_cell(ht, &hname, 0, &val, mode))
-						{
-							LM_ERR("error adding array size to hash table\n");
-							goto error;
-						}
-					}
-					/* reset */
-					pname = kname;
-					n=0;
-				} else {
-					n++;
-				}
 				snprintf(ht_name_buf, HT_NAME_BUF_SIZE, "%.*s[%d]",
 						kname.len, kname.s, n);
 				hname.s = ht_name_buf;
 				hname.len = strlen(ht_name_buf);
+				n++;
 			} else {
 				hname = kname;
 			}
-			last_ktype = ktype;
 			vtype = RES_ROWS(db_res)[i].values[2].val.int_val;
 			kvalue.s = (char*)(RES_ROWS(db_res)[i].values[3].val.string_val);
+			if(kvalue.s==NULL) {
+				LM_ERR("null value in row %d\n", i);
+				goto error;
+			}
 			kvalue.len = strlen(kvalue.s);
 
 			/* add to hash */
@@ -288,7 +278,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 			ht_array_size_suffix.s);
 		hname.s = ht_name_buf;
 		hname.len = strlen(ht_name_buf);
-		val.n = n+1;
+		val.n = n;
 		if(ht_set_cell(ht, &hname, 0, &val, mode))
 		{
 			LM_ERR("error adding array size to hash table.\n");

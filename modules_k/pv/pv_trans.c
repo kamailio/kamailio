@@ -69,8 +69,9 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 {
 	int i, j, max;
 	char *p, *s;
-	str st;
-	pv_value_t v;
+	str st, st2;
+	pv_value_t v, w;
+	void *vp;
 
 	if(val==NULL || val->flags&PV_VAL_NULL)
 		return -1;
@@ -494,6 +495,102 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->flags = PV_VAL_STR;
 			val->rs.s = _tr_buffer;
 			val->rs.len = j-1;
+			break;
+
+
+		case TR_S_REPLACE:
+			if(tp==NULL || tp->next==NULL)
+			{
+				LM_ERR("select invalid parameters\n");
+				return -1;
+			}
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+
+			if(tp->type==TR_PARAM_STRING)
+			{
+				st = tp->v.s;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
+				{
+					LM_ERR("replace cannot get p1\n");
+					return -1;
+				}
+				st = v.rs;
+			}
+
+			if(tp->next->type==TR_PARAM_STRING)
+			{
+				st2 = tp->next->v.s;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->next->v.data, &w)!=0
+						|| (!(w.flags&PV_VAL_STR)) || w.rs.len<=0)
+				{
+					LM_ERR("replace cannot get p2\n");
+					return -1;
+				}
+				st2 = w.rs;
+			}
+			
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+
+			i = 0;
+			j = 0;
+			max = val->rs.len - st.len;
+			while (i < val->rs.len && j < TR_BUFFER_SIZE) {
+				if (i <= max && val->rs.s[i] == st.s[0]
+						&& strncmp(val->rs.s+i, st.s, st.len) == 0) {
+					strncpy(_tr_buffer+j, st2.s, st2.len);
+					i += st.len;
+					j += st2.len;
+				} else {
+					_tr_buffer[j++] = val->rs.s[i++];
+				}
+			}
+			val->rs.s = _tr_buffer;
+			val->rs.len = j;
+			break;
+
+		case TR_S_TIMEFORMAT:
+			if(tp==NULL)
+			{
+				LM_ERR("timeformat invalid parameters\n");
+				return -1;
+			}
+			if(!(val->flags&PV_VAL_INT) && (str2int(&val->rs,
+							(unsigned int*) &val->ri)!=0))
+			{
+				LM_ERR("value is not numeric\n");
+				return -1;
+			}
+			if(tp->type==TR_PARAM_STRING)
+			{
+				st = tp->v.s;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
+				{
+					LM_ERR("timeformat cannot get p1\n");
+					return -1;
+				}
+				st = v.rs;
+			}
+			s = pkg_malloc(st.len + 1);
+			if (s==NULL)
+			{
+				LM_ERR("no more pkg memory\n");
+				return -1;
+			}
+			memcpy(s, st.s, st.len);
+			s[st.len] = '\0';
+			vp = (void*)&val->ri;
+			val->rs.len = strftime(_tr_buffer, TR_BUFFER_SIZE-1, s,
+					localtime((time_t*)vp));
+			pkg_free(s);
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
 			break;
 
 		default:
@@ -924,6 +1021,7 @@ int tr_eval_nameaddr(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		pv_value_t *val)
 {
 	str sv;
+	int ret;
 
 	if(val==NULL || (!(val->flags&PV_VAL_STR)) || val->rs.len<=0)
 		return -1;
@@ -953,8 +1051,14 @@ int tr_eval_nameaddr(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		
 		/* parse params */
 		sv = _tr_nameaddr_str;
-		if (parse_nameaddr(&sv, &_tr_nameaddr)<0)
-			return -1;
+		ret = parse_nameaddr(&sv, &_tr_nameaddr);
+		if (ret < 0) {
+			if(ret != -3) return -1;
+			/* -3 means no "<" found so treat whole nameaddr as an URI */
+			_tr_nameaddr.uri = _tr_nameaddr_str;
+			_tr_nameaddr.name = _tr_empty;
+			_tr_nameaddr.len = _tr_nameaddr_str.len;
+		}
 	}
 	
 	memset(val, 0, sizeof(pv_value_t));
@@ -1179,10 +1283,8 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		_tp->type = TR_PARAM_SPEC; \
 		_tp->v.data = (void*)_spec; \
 	} else { /* string */ \
-		while(is_in_str(_p, _in) && (*_p==' ' || *_p=='\t' || *_p=='\n')) \
-				_p++; \
 		_ps = _p; \
-		while(is_in_str(_p, _in) && *_p!=' ' && *_p!='\t' && *_p!='\n' \
+		while(is_in_str(_p, _in) && *_p!='\t' && *_p!='\n' \
 				&& *_p!=TR_PARAM_MARKER && *_p!=TR_RBRACKET) \
 				_p++; \
 		if(*_p=='\0') \
@@ -1214,6 +1316,7 @@ char* tr_parse_string(str* in, trans_t *t)
 {
 	char *p;
 	char *p0;
+	char *ps;
 	str name;
 	str s;
 	pv_spec_t *spec = NULL;
@@ -1423,6 +1526,56 @@ char* tr_parse_string(str* in, trans_t *t)
 		if(*p!=TR_RBRACKET)
 		{
 			LM_ERR("invalid striptail transformation: %.*s!!\n",
+				in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len==5 && strncasecmp(name.s, "ftime", 5)==0) {
+		t->subtype = TR_S_TIMEFORMAT;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid ftime transformation: %.*s!\n",
+					in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid ftime transformation: %.*s!!\n",
+				in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len==7 && strncasecmp(name.s, "replace", 7)==0) {
+		t->subtype = TR_S_REPLACE;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid replace transformation: %.*s!\n", in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid replace transformation: %.*s!\n",
+				in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+		t->params->next = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid replace transformation: %.*s!!\n",
 				in->len, in->s);
 			goto error;
 		}

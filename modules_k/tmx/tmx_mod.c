@@ -27,6 +27,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../mod_fix.h"
+#include "../../route.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 
@@ -54,6 +55,8 @@ static int t_reply_callid(struct sip_msg* msg, char *cid, char *cseq,
 static int fixup_reply_callid(void** param, int param_no);
 
 static int t_flush_flags(struct sip_msg* msg, char*, char* );
+static int t_is_failure_route(struct sip_msg* msg, char*, char* );
+static int t_is_branch_route(struct sip_msg* msg, char*, char* );
 
 /* statistic variables */
 stat_var *tm_rcv_rpls;
@@ -138,6 +141,10 @@ static cmd_export_t cmds[]={
 	{"t_reply_callid", (cmd_function)t_reply_callid,  4,
 		fixup_reply_callid, 0, ANY_ROUTE },
 	{"t_flush_flags",   (cmd_function)t_flush_flags,    0, 0,
+			0, ANY_ROUTE  },
+	{"t_is_failure_route",   (cmd_function)t_is_failure_route,   0, 0,
+			0, ANY_ROUTE  },
+	{"t_is_branch_route",    (cmd_function)t_is_branch_route,    0, 0,
 			0, ANY_ROUTE  },
 	{0,0,0,0,0,0}
 };
@@ -417,6 +424,26 @@ static int t_flush_flags(struct sip_msg* msg, char *foo, char *bar)
 
 	t->uas.request->flags = msg->flags;
 	return 1;
+}
+
+/**
+ *
+ */
+static int t_is_failure_route(struct sip_msg* msg, char *foo, char *bar)
+{
+	if(route_type==FAILURE_ROUTE)
+		return 1;
+	return -1;
+}
+
+/**
+ *
+ */
+static int t_is_branch_route(struct sip_msg* msg, char *foo, char *bar)
+{
+	if(route_type==BRANCH_ROUTE)
+		return 1;
+	return -1;
 }
 
 #ifdef STATISTICS

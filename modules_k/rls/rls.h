@@ -168,18 +168,25 @@ extern str str_doc_type_col;
 extern str str_etag_col;
 extern str str_doc_col;
 
-#define DID_SEP_LEN   strlen(DID_SEP)
-#define DID_SEP       ";"
-#define DID_INIT_LEN  (2* sizeof(DID_SEP))
+#define RLS_DID_SEP       ";"
+#define RLS_DID_SEP_LEN   strlen(RLS_DID_SEP)
+#define RLS_DID_INIT_LEN  (2* sizeof(RLS_DID_SEP))
+#define RLS_DID_MAX_LEN	255
 
-/* did_str= *callid*DID_SEP*from_tag*DID_SEP*to_tag* */
+/* did_str= *callid*RLS_DID_SEP*from_tag*RLS_DID_SEP*to_tag* */
 
 static inline int CONSTR_RLSUBS_DID(subs_t* subs, str *did)
 {
 	int len;
 
-	len= (DID_INIT_LEN+ subs->callid.len+ subs->to_tag.len+
+	len= (RLS_DID_INIT_LEN+ subs->callid.len+ subs->to_tag.len+
 			subs->from_tag.len+ 10)* sizeof(char);
+	if(len > RLS_DID_MAX_LEN)
+	{
+		LM_ERR("new DID size is too big [%d > %d]\n",
+				len, RLS_DID_MAX_LEN);
+		return -1;
+	}
 	did->s= (char*)pkg_malloc(len);
 	if(did->s== NULL) 
 	{
@@ -187,8 +194,8 @@ static inline int CONSTR_RLSUBS_DID(subs_t* subs, str *did)
 	}
 	
 	did->len= sprintf(did->s, "%.*s%s%.*s%s%.*s", subs->callid.len, 
-			subs->callid.s, DID_SEP,subs->from_tag.len, subs->from_tag.s, 
-			DID_SEP, subs->to_tag.len, subs->to_tag.s);
+			subs->callid.s, RLS_DID_SEP,subs->from_tag.len, subs->from_tag.s,
+			RLS_DID_SEP, subs->to_tag.len, subs->to_tag.s);
 
 	if(did->len>= len)
 	{

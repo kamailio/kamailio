@@ -88,7 +88,7 @@ acc_extra_t *rad_extra = 0;
 static cmd_export_t cmds[] = {
 	{"acc_rad_request", (cmd_function)w_acc_radius_request, 1,
 		acc_api_fixup, free_acc_api_fixup,
-		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 

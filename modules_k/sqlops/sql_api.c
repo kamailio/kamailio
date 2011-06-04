@@ -32,6 +32,7 @@
 #include "../../dprint.h"
 #include "../../lib/kcore/hash_func.h"
 #include "../../ut.h"
+#include "../../lib/srdb1/db_ut.h"
 #ifdef WITH_XAVP
 #include "../../xavp.h"
 #endif
@@ -208,7 +209,6 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
-	sql_reset_result(res);
 	if(con->dbf.raw_query(con->dbh, query, &db_res)!=0)
 	{
 		LM_ERR("cannot do the query\n");
@@ -221,6 +221,14 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 		con->dbf.free_result(con->dbh, db_res);
 		return 2;
 	}
+	if(!res)
+	{
+		LM_DBG("no sqlresult parameter, ignoring result from query\n");
+		con->dbf.free_result(con->dbh, db_res);
+		return 3;
+	}
+
+	sql_reset_result(res);
 	res->ncols = RES_COL_N(db_res);
 	res->nrows = RES_ROW_N(db_res);
 	LM_DBG("rows [%d] cols [%d]\n", res->nrows, res->ncols);
@@ -312,10 +320,22 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res)
 					res->vals[i][j].value.n
 						= (int)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
 				break;
+				case DB1_BIGINT:
+					res->vals[i][j].flags = PV_VAL_STR;
+					res->vals[i][j].value.s.len = 21*sizeof(char);
+					res->vals[i][j].value.s.s
+						= (char*)pkg_malloc(res->vals[i][j].value.s.len);
+					if(res->vals[i][j].value.s.s==NULL)
+					{
+						LM_ERR("no more memory\n");
+						goto error;
+					}
+					db_longlong2str(RES_ROWS(db_res)[i].values[j].val.ll_val, res->vals[i][j].value.s.s, &res->vals[i][j].value.s.len);
+				break;
 				default:
 					res->vals[i][j].flags = PV_VAL_NULL;
 			}
-			if(res->vals[i][j].flags == PV_VAL_STR)
+			if(res->vals[i][j].flags == PV_VAL_STR && sv.s)
 			{
 				if(sv.len==0)
 				{
@@ -430,6 +450,11 @@ int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
 						val.type = SR_XTYPE_INT;
 						val.v.i
 							= (int)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
+					break;
+					case DB1_BIGINT:
+						val.type = SR_XTYPE_LLONG;
+						val.v.ll
+							= RES_ROWS(db_res)[i].values[j].val.ll_val;
 					break;
 					default:
 						val.type = SR_XTYPE_NULL;
@@ -646,7 +671,7 @@ int sqlops_get_column(str *sres, int i, str *col)
 		LM_ERR("column index out of bounds [%d/%d]\n", i, res->ncols);
 		goto error;
 	}
-	col = &res->cols[i].name;
+	*col = res->cols[i].name;
 	return 0;
 error:
 	return -1;

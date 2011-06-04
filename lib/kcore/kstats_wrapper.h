@@ -76,11 +76,11 @@ inline static stat_var* get_stat(str *name)
 
 
 
-inline static unsigned int get_stat_val(stat_var *v)
+inline static unsigned long get_stat_val(stat_var *v)
 {
 	counter_handle_t h;
 	h.id = (unsigned short)(unsigned long)v;
-	return counter_get_val(h);
+	return (unsigned long)counter_get_val(h);
 }
 
 

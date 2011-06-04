@@ -463,14 +463,16 @@ int restore_from( struct sip_msg *msg, int *is_from )
 		LM_ERR("new URI shorter than old URI\n");
 		goto failed;
 	}
-	for( i=0 ; i<old_uri.len ; i++ )
+	for( i=0 ; i<old_uri.len ; i++ ) {
 		new_uri.s[i] ^= old_uri.s[i];
-	if (new_uri.len==old_uri.len) {
-		for( ; new_uri.len && (new_uri.s[new_uri.len-1]==0) ; new_uri.len-- );
-		if (new_uri.len==0) {
-			LM_ERR("new URI got 0 len\n");
-			goto failed;
+		if (new_uri.s[i] == 0) {
+			new_uri.len = i;
+			break;
 		}
+	}
+	if (new_uri.len==0) {
+		LM_ERR("new URI got 0 len\n");
+		goto failed;
 	}
 
 	LM_DBG("decoded uris are: new=[%.*s] old=[%.*s]\n",

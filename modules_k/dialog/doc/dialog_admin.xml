@@ -341,9 +341,9 @@ modparam("dialog", "dlg_match_mode", 1)
 		<example>
 			<title>Set <varname>detect_spirals</varname> parameter</title>
 			<programlisting format="linespecific">
-...
-modparam("dialog", "detect_spirals", 1)
-...
+				...
+				modparam("dialog", "detect_spirals", 1)
+				...
 			</programlisting>
 		</example>
 	</section>
@@ -886,6 +886,109 @@ modparam("dialog", "sflags_column", "s_flags")
 		<programlisting format="linespecific">
 ...
 modparam("dialog", "toroute_column", "timeout_route")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>vars_table_name</varname> (string)</title>
+		<para>
+		If you want to store the variables for a dialog in a
+		database a table name must be specified.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>dialog_vars</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>vars_table_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "vars_table_name", "my_dialog_vars")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>vars_h_id_column</varname> (string)</title>
+		<para>
+			The column name in the database to store the dialogs'
+			hash id information (as a reference to the dialog table).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>hash_id</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>vars_h_id_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "vars_h_id_column", "vars_h_id_name")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>vars_h_entry_column</varname> (string)</title>
+		<para>
+			The column name in the database to store the dialogs'
+			hash entry information (as a reference to the dialog table).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>hash_entry</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>vars_h_entry_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "vars_h_entry_column", "vars_h_entry_name")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>vars_key_column</varname> (string)</title>
+		<para>
+			The column name in the database to store the keys of a variable.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>dialog_key</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>vars_key_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "vars_key_column", "vars_key_name")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>vars_value_column</varname> (string)</title>
+		<para>
+			The column name in the database to store the keys of a variable.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>dialog_value</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>vars_value_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "vars_value_column", "vars_value_name")
 ...
 </programlisting>
 		</example>
@@ -1945,6 +2048,21 @@ if(!uri == myself) {
 		<section>
 			<title><varname>$dlg_ctx(...)</varname></title>
 			<para>Access to dialog context attributes.</para>
+		</section>
+
+		<section>
+			<title><varname>$dlg_var(key)</varname></title>
+			<para>
+			This is a read/write variable that can be used to store 
+			custom values assigned with a dialog (e.g. the URI of a
+			billing-server, an assigned emergency-server).
+			This pseudo-variable will be available only for subsequential
+			requests after doing loose_route().
+			</para>
+			<para>
+			Note: You will receive "NULL", if there is no dialog for this
+			request.
+			</para>
 		</section>
 
 	</section>

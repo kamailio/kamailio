@@ -374,6 +374,7 @@ int ring_filter(struct sip_msg *msg, unsigned int flags, void *bar)
  * \return 0
  */
 int ring_fixup(void ** param, int param_no) {
+	int ring_timeout = cfg_get(siputils, siputils_cfg, ring_timeout);
 	if (ring_timeout == 0) {
 		LM_ERR("ring_insert_callid functionality deactivated, you need to set a positive ring_timeout\n");
 		return -1;

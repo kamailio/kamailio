@@ -274,3 +274,26 @@ char* get_abs_pathname(str* base, str* file)
 	}
 	return res;
 }
+
+
+/**
+ * @brief search for occurence of needle in text
+ * @return pointer to start of needle in text or NULL if the needle
+ *	is not found
+ */
+char *str_search(str *text, str *needle)
+{
+    char *p;
+
+    if(text==NULL || text->s==NULL || needle==NULL || needle->s==NULL
+			|| text->len<needle->len)
+        return NULL;
+
+    for (p = text->s; p <= text->s + text->len - needle->len; p++) {
+        if (*p == *needle->s && memcmp(p, needle->s, needle->len)==0) {
+            return p;
+        }
+    }
+
+    return NULL;
+}

@@ -12,7 +12,16 @@ struct sip_uri *parse_to_uri(struct sip_msg *msg)
 {
 	struct to_body *tb = NULL;
 	
-	if(msg==NULL || msg->to==NULL || msg->to->parsed==NULL)
+	if(msg==NULL)
+		return NULL;
+
+	if(parse_to_header(msg)<0)
+	{
+		LM_ERR("cannot parse TO header\n");
+		return NULL;
+	}
+
+	if(msg->to==NULL || get_to(msg)==NULL)
 		return NULL;
 
 	tb = get_to(msg);

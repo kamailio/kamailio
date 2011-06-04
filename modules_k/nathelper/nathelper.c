@@ -649,7 +649,7 @@ mod_init(void)
 			init_sip_ping();
 		}
 
-		register_procs(natping_processes);
+		register_dummy_timers(natping_processes);
 	}
 
 	/* Prepare 1918 networks list */

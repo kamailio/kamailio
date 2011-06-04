@@ -82,8 +82,8 @@ static str       rr_param;		/*!< record-route parameter for matching */
 static int       dlg_flag;		/*!< flag for dialog tracking */
 static pv_spec_t *timeout_avp;		/*!< AVP for timeout setting */
 static int       default_timeout;	/*!< default dialog timeout */
+static int       seq_match_mode;	/*!< dlg_match mode */ 
 static int       shutdown_done = 0;	/*!< 1 when destroy_dlg_handlers was called */
-extern int       seq_match_mode;	/*!< dlg_match mode */ 
 extern int       detect_spirals;
 
 extern struct rr_binds d_rrb;		/*!< binding to record-routing module */
@@ -113,9 +113,11 @@ static unsigned int CURR_DLG_ID  = 0xffffffff;	/*!< current dialog id */
  * \param dlg_flag_p dialog flag
  * \param timeout_avp_p AVP for timeout setting
  * \param default_timeout_p default timeout
+ * \param seq_match_mode_p matching mode
  */
 void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
-		pv_spec_t *timeout_avp_p ,int default_timeout_p)
+		pv_spec_t *timeout_avp_p ,int default_timeout_p,
+		int seq_match_mode_p)
 {
 	rr_param.s = rr_param_p;
 	rr_param.len = strlen(rr_param.s);
@@ -124,6 +126,7 @@ void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
 
 	timeout_avp = timeout_avp_p;
 	default_timeout = default_timeout_p;
+	seq_match_mode = seq_match_mode_p;
 }
 
 
@@ -676,6 +679,8 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 		return -1;
 	}
 
+	
+
 	/* save caller's tag, cseq, contact and record route*/
 	if (populate_leg_info(dlg, msg, t, DLG_CALLER_LEG,
 			&(get_from(msg)->tag_value)) !=0)
@@ -687,6 +692,9 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 
 	set_current_dialog(msg, dlg);
 	_dlg_ctx.dlg = dlg;
+
+	/* Populate initial varlist: */
+	dlg->vars = get_local_varlist_pointer(msg, 1);
 
 	link_dlg(dlg, 2/* extra ref for the callback and current dlg hook */);
 
@@ -713,10 +721,12 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 	if (_dlg_ctx.to_bye!=0)
 		dlg->dflags |= DLG_FLAG_TOBYE;
 
-	if ( d_tmb.register_tmcb( msg, t, TMCB_MAX,
-				dlg_tmcb_dummy, (void*)dlg, 0)<0 ) {
-		LM_ERR("failed cache in T the shortcut to dlg\n");
-		goto error;
+	if (t) {
+		if ( d_tmb.register_tmcb( msg, t, TMCB_MAX,
+					dlg_tmcb_dummy, (void*)dlg, 0)<0 ) {
+			LM_ERR("failed cache in T the shortcut to dlg\n");
+			goto error;
+		}
 	}
 #if 0
 		t->dialog_ctx = (void*) dlg;
