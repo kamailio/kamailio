@@ -718,7 +718,7 @@ int ht_table_spec(char *spec)
 	unsigned int autoexpire = 0;
 	unsigned int size = 4;
 	unsigned int dbmode = 0;
-	unsigne int dmq = 0;
+	unsigned int dmq = 0;
 	str in;
 	str tok;
 	param_t *pit=NULL;
@@ -771,7 +771,7 @@ int ht_table_spec(char *spec)
 			LM_DBG("htable [%.*s] - initval [%d]\n", name.len, name.s,
 					ival.n);
 		} else if(tok.len==3 && strncmp(tok.s, "dmq", 3)==0) {
-			if(str2sint(&tok, &dmq)!=0)
+			if(str2int(&tok, &dmq)!=0)
 				goto error;
 			LM_DBG("htable [%.*s] - dmq [%d]\n", name.len, name.s,
 					dmq);

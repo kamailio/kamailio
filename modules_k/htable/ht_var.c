@@ -113,7 +113,7 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 		LM_ERR("cannot get $ht name\n");
 		return -1;
 	}
-	if(hpv->ht->usedmq) {
+	if(hpv->ht->dmq) {
 		serialized_ht.s = pkg_malloc(MAX_HT_SERIALIZE_BUF);
 		serialized_ht.len = MAX_HT_SERIALIZE_BUF;
 		if(serialize_ht_pair(&htname, val, &hpv->htname, &serialized_ht) < 0) {
