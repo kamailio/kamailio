@@ -207,7 +207,7 @@ module_group_kstandard=acc alias_db auth auth_db benchmark call_control \
 				avpops cfg_db cfg_rpc ctl db_flatstore dialplan enum \
 				iptrtpproxy lcr mediaproxy mi_rpc pdb sanity tm topoh \
 				blst prefix_route counters debugger matrix mqueue mtree \
-				pipelimit rtpproxy textopsx xhttp
+				pipelimit rtpproxy textopsx xhttp ipops p_usrloc sdpops
 
 # K mysql module
 module_group_kmysql=db_mysql
@@ -271,6 +271,9 @@ module_group_kpython=app_python
 # K geoip module
 module_group_kgeoip=geoip
 
+# K sqlite module
+module_group_ksqlite=db_sqlite
+
 # if not set on the cmd. line, env or in the modules.lst (cfg_group_include)
 # exclude the below modules.
 ifneq ($(group_include)$(cfg_group_include),)
@@ -286,7 +289,7 @@ else
 							osp tls oracle \
 							unixsock dbg print_lib auth_identity ldap \
 							db_berkeley db_mysql db_postgres db_oracle \
-							db_unixodbc memcached mi_xmlrpc \
+							db_sqlite db_unixodbc memcached mi_xmlrpc \
 							perl perlvdb purple \
 							snmpstats xmpp \
 							carrierroute peering \
