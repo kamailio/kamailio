@@ -66,7 +66,7 @@ int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
 int dmq_ht_set_cell(str* key, pv_value_t* val, str* htname) {
 	ht_t* ht = ht_get_table(htname);
 	int_str isval;
-	LM_ERR("dmq_ht_set_cell %.*s %p %d\n", STR_FMT(htname), ht, htname->len);
+	LM_ERR("dmq_ht_set_cell [%.*s] (%p) (%d)\n", STR_FMT(htname), ht, htname->len);
 	if(ht==NULL) {
 		LM_ERR("error getting table\n");
 		return -1;
