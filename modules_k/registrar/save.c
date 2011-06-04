@@ -369,12 +369,12 @@ error:
  * and insert all contacts from the message that have expires
  * > 0
  */
-static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
-													udomain_t* _d, str* _a)
+static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a)
 {
 	ucontact_info_t* ci;
 	urecord_t* r;
 	ucontact_t* c;
+	contact_t* _c;
 	unsigned int flags;
 	int num, expires;
 #ifdef USE_TCP
@@ -392,7 +392,7 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 		e_max = tcp_check = 0;
 	}
 #endif
-
+	_c = get_first_contact(_m);
 	for( num=0,r=0,ci=0 ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &expires);
@@ -400,7 +400,8 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 		if (expires == 0)
 			continue;
 
-		if (cfg_get(registrar, registrar_cfg, max_contacts) && (num >= cfg_get(registrar, registrar_cfg, max_contacts))) {
+		if (cfg_get(registrar, registrar_cfg, max_contacts)
+				&& (num >= cfg_get(registrar, registrar_cfg, max_contacts))) {
 			LM_INFO("too many contacts (%d) for AOR <%.*s>\n", 
 					num, _a->len, _a->s);
 			rerrno = R_TOO_MANY;
@@ -539,7 +540,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
  *    == 0, delete contact
  */
 static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
-										contact_t* _c, int _mode)
+										int _mode)
 {
 	ucontact_info_t *ci;
 	ucontact_t *c, *ptr, *ptr0;
@@ -550,6 +551,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 	struct sip_uri uri;
 #endif
 	int rc;
+	contact_t* _c;
 
 	/* mem flag */
 	flags = mem_only;
@@ -561,8 +563,11 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 		goto error;
 	}
 
-	if (cfg_get(registrar, registrar_cfg, max_contacts) && test_max_contacts(_m, _r, _c, ci) != 0 )
-		goto error;
+	if (cfg_get(registrar, registrar_cfg, max_contacts)) {
+		_c = get_first_contact(_m);
+		if(test_max_contacts(_m, _r, _c, ci) != 0)
+			goto error;
+	}
 
 #ifdef USE_TCP
 	if ( (_m->flags&tcp_persistent_flag) &&
@@ -574,6 +579,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 	}
 #endif
 
+	_c = get_first_contact(_m);
 	updated=0;
 	for( ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
@@ -701,8 +707,8 @@ error:
  * This function will process request that
  * contained some contact header fields
  */
-static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
-								udomain_t* _d, str* _a, int _mode)
+static inline int add_contacts(struct sip_msg* _m, udomain_t* _d,
+		str* _a, int _mode)
 {
 	int res;
 	int ret;
@@ -719,7 +725,7 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 	}
 
 	if (res == 0) { /* Contacts found */
-		if ((ret=update_contacts(_m, r, _c, _mode)) < 0) {
+		if ((ret=update_contacts(_m, r, _mode)) < 0) {
 			build_contact(r->contacts);
 			ul.release_urecord(r);
 			ul.unlock_udomain(_d, _a);
@@ -728,7 +734,7 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 		build_contact(r->contacts);
 		ul.release_urecord(r);
 	} else {
-		if (insert_contacts(_m, _c, _d, _a) < 0) {
+		if (insert_contacts(_m, _d, _a) < 0) {
 			ul.unlock_udomain(_d, _a);
 			return -4;
 		}
@@ -781,7 +787,7 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags)
 		}
 	} else {
 		mode = is_cflag_set(REG_SAVE_REPL_FL)?1:0;
-		if ((ret=add_contacts(_m, c, (udomain_t*)_d, &aor, mode)) < 0)
+		if ((ret=add_contacts(_m, (udomain_t*)_d, &aor, mode)) < 0)
 			goto error;
 		ret = (ret==0)?1:ret;
 	}
