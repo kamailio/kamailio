@@ -74,8 +74,7 @@ if [ -z "$SERCMD" ] ; then
 				# try locate it with which
 				SERCMD=`which sercmd`
 				if [ ! -f "$SERCMD" -o ! -x "$SERCMD" ] ; then
-					merr "sercmd tool not found"
-					exit -1;
+					mdbg "sercmd tool not found"
 				fi
 			fi
 		fi
@@ -143,6 +142,14 @@ fi
 ##### ------------------------------------------------ #####
 ### CTLENGINE
 #
+
+require_sercmd() {
+	if [ -z "$SERCMD" ] ; then
+		merr "sercmd tool is missing"
+		exit -1
+	fi
+}
+
 CTLENGINELOADED=0
 if [ -z "$CTLENGINE" ] ; then
 	CTLENGINE="FIFO"
@@ -161,6 +168,7 @@ case $CTLENGINE in
 		fi
 		;;
 	SER_MI|ser_mi|SERCMD_MI|sercmd_mi|SERCMDMI|sercmdmi)
+		require_sercmd
 		if [ -f "$MYLIBDIR/kamctl.ser_mi" ]; then
 			. "$MYLIBDIR/kamctl.ser_mi"
 			CTLENGINELOADED=1
@@ -2404,6 +2412,7 @@ case $1 in
 		;;
 
 	ser|sercmd)
+		require_sercmd
 		shift
 		$SERCTLCMD "$@"
 		;;
