@@ -5,7 +5,7 @@
 # Environment variables:
 #   PREFIX, LOCALBASE, BASEDIR
 #   INSTALL, TAR , CC, LEX, YACC,
-#   CPU, CC_EXTRA_OPTS,
+#   CPU, CC_EXTRA_OPTS, LD_EXTRA_OPTS
 #   exclude_modules, skip_modules, include_modules
 #   extra_defs
 #
@@ -225,6 +225,8 @@ endif
 # extra CC command line options (e.g  -march=athlon-mp)
 CC_EXTRA_OPTS ?=
 
+# extra LD command line options
+LD_EXTRA_OPTS ?=
 
 ifeq ($(OS), solaris)
 #use GNU versions
@@ -1590,6 +1592,11 @@ endif
 	# we need -fPIC -DPIC only for shared objects, we don't need them for
 	# the executable file, because it's always loaded at a fixed address
 	# -andrei
+
+LDFLAGS+= $(LD_EXTRA_OPTS)
+MOD_LDFLAGS+= $(LD_EXTRA_OPTS)
+LIB_LDFLAGS+= $(LD_EXTRA_OPTS)
+
 else	#mode,release
 ifeq	($(CC_NAME), gcc)
 		CFLAGS=-g -Wcast-align $(PROFILE)
