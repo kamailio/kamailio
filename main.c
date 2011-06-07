@@ -1541,9 +1541,15 @@ int main_loop()
 		/* udp processes */
 		for(si=udp_listen; si; si=si->next){
 			for(i=0;i<children_no;i++){
-				snprintf(si_desc, MAX_PT_DESC, "udp receiver child=%d "
+				if(si->address.af==AF_INET6) {
+					snprintf(si_desc, MAX_PT_DESC, "udp receiver child=%d "
+						"sock=[%s]:%s",
+						i, si->name.s, si->port_no_str.s);
+				} else {
+					snprintf(si_desc, MAX_PT_DESC, "udp receiver child=%d "
 						"sock=%s:%s",
 						i, si->name.s, si->port_no_str.s);
+				}
 				child_rank++;
 				pid = fork_process(child_rank, si_desc, 1);
 				if (pid<0){
@@ -1566,9 +1572,15 @@ int main_loop()
 		if (!sctp_disable){
 			for(si=sctp_listen; si; si=si->next){
 				for(i=0;i<sctp_children_no;i++){
-					snprintf(si_desc, MAX_PT_DESC, "sctp receiver child=%d "
+					if(si->address.af==AF_INET6) {
+						snprintf(si_desc, MAX_PT_DESC, "sctp receiver child=%d "
+								"sock=[%s]:%s",
+								i, si->name.s, si->port_no_str.s);
+					} else {
+						snprintf(si_desc, MAX_PT_DESC, "sctp receiver child=%d "
 								"sock=%s:%s",
 								i, si->name.s, si->port_no_str.s);
+					}
 					child_rank++;
 					pid = fork_process(child_rank, si_desc, 1);
 					if (pid<0){
