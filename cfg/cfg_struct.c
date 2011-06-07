@@ -95,6 +95,8 @@ cfg_group_t *cfg_new_group(char *name, int name_len,
 	group->vars = vars;
 	group->size = size;
 	group->handle = handle;
+	if (handle)
+		group->orig_handle = *handle;
 	group->name_len = name_len;
 	memcpy(&group->name, name, name_len);
 
@@ -115,6 +117,8 @@ void cfg_set_group(cfg_group_t *group,
 	group->vars = vars;
 	group->size = size;
 	group->handle = handle;
+	if (handle)
+		group->orig_handle = *handle;
 }
 
 /* clones a string to shared memory
@@ -1255,4 +1259,44 @@ int cfg_select_next(cfg_group_t *group)
 			group->name_len, group->name, new_ginst->id);
 	return 0;
 }
+
+/* Temporary set the local configuration in the main process before forking.
+ * This makes the group instances usable in the main process after
+ * the configuration is shmized, but before the children are forked.
+ */
+void cfg_main_set_local(void)
+{
+	/* Disable the execution of child-process callbacks,
+	 * they can cause trouble because the children inherit all the
+	 * values later */
+	cfg_child_cb = CFG_NO_CHILD_CBS;
+	cfg_update_no_cbs();
+}
+
+/* Reset the local configuration of the main process back to its original state
+ * to make sure that the forked processes are not affected.
+ */
+void cfg_main_reset_local(void)
+{
+	cfg_group_t	*group;
+
+	/* Unref the local config, and set it back to NULL.
+	 * Each child will set its own local configuration. */
+	if (cfg_local) {
+		CFG_UNREF(cfg_local);
+		cfg_local = NULL;
+
+		/* restore the original value of the module handles */
+		for (	group = cfg_group;
+			group;
+			group = group->next
+		)
+			*(group->handle) = group->orig_handle;
+		/* The handle might have pointed to a group instance,
+		 * reset the instance counter. */
+		cfg_ginst_count = 0;
+	}
+	cfg_child_cb = NULL;
+}
+
 

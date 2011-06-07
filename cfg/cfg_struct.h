@@ -99,6 +99,10 @@ typedef struct _cfg_group {
 					by the modules to access the variables.
 					It is registered when the group is created,
 					and updated every time the block is replaced */
+	void		*orig_handle;	/*!< Original value that the handle points to
+					when the config group is registered. This is needed
+					to temporary set the handle in the main process and
+					restore it later to its original value. */
 
 	unsigned char	dynamic;	/*!< indicates whether the variables within the group
 					are dynamically	allocated or not */
@@ -533,5 +537,16 @@ int cfg_select_first(cfg_group_t *group);
  *	 0: the next group instance is successfully selected.
  */
 int cfg_select_next(cfg_group_t *group);
+
+/* Temporary set the local configuration in the main process before forking.
+ * This makes the group instances usable in the main process after
+ * the configuration is shmized, but before the children are forked.
+ */
+void cfg_main_set_local(void);
+
+/* Reset the local configuration of the main process back to its original state
+ * to make sure that the forked processes are not affected.
+ */
+void cfg_main_reset_local(void);
 
 #endif /* _CFG_STRUCT_H */

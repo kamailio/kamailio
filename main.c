@@ -1310,6 +1310,11 @@ int main_loop()
 		   as new processes are forked (while skipping 0 reserved for main
 		*/
 
+		/* Temporary set the local configuration of the main process
+		 * to make the group instances available in PROC_INIT.
+		 */
+		cfg_main_set_local();
+
 		/* init childs with rank==PROC_INIT before forking any process,
 		 * this is a place for delayed (after mod_init) initializations
 		 * (e.g. shared vars that depend on the total number of processes
@@ -1320,8 +1325,10 @@ int main_loop()
 		if (init_child(PROC_INIT) < 0) {
 			LOG(L_ERR, "ERROR: main_dontfork: init_child(PROC_INT) --"
 						" exiting\n");
+			cfg_main_reset_local();
 			goto error;
 		}
+		cfg_main_reset_local();
 		if (counters_prefork_init(get_max_procs()) == -1) goto error;
 
 #ifdef USE_SLOW_TIMER
@@ -1523,6 +1530,12 @@ int main_loop()
 			LOG(L_CRIT, "could not initialize shared configuration\n");
 			goto error;
 		}
+
+		/* Temporary set the local configuration of the main process
+		 * to make the group instances available in PROC_INIT.
+		 */
+		cfg_main_set_local();
+
 		/* init childs with rank==PROC_INIT before forking any process,
 		 * this is a place for delayed (after mod_init) initializations
 		 * (e.g. shared vars that depend on the total number of processes
@@ -1533,8 +1546,10 @@ int main_loop()
 		if (init_child(PROC_INIT) < 0) {
 			LOG(L_ERR, "ERROR: main: error in init_child(PROC_INT) --"
 					" exiting\n");
+			cfg_main_reset_local();
 			goto error;
 		}
+		cfg_main_reset_local();
 		if (counters_prefork_init(get_max_procs()) == -1) goto error;
 
 
