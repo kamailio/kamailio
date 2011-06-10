@@ -83,6 +83,7 @@ static int w_replace_from2(struct sip_msg* msg, char* str, char* str2);
 static int w_restore_from(struct sip_msg* msg,  char* foo, char* bar);
 static int w_uac_auth(struct sip_msg* msg, char* str, char* str2);
 static int w_uac_reg_lookup(struct sip_msg* msg,  char* src, char* dst);
+static int w_uac_reg_request_to(struct sip_msg* msg,  char* src, char* mode_s);
 static int fixup_replace_from1(void** param, int param_no);
 static int fixup_replace_from2(void** param, int param_no);
 static int mod_init(void);
@@ -112,6 +113,8 @@ static cmd_export_t cmds[]={
 		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE | LOCAL_ROUTE},
 	{"uac_reg_lookup",  (cmd_function)w_uac_reg_lookup,  2, fixup_pvar_pvar,
 		fixup_free_pvar_pvar, ANY_ROUTE },
+	{"uac_reg_request_to",  (cmd_function)w_uac_reg_request_to,  2, fixup_pvar_uint, fixup_free_pvar_uint,
+		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
 
 	{0,0,0,0,0,0}
 };
@@ -460,5 +463,36 @@ static int w_uac_reg_lookup(struct sip_msg* msg,  char* src, char* dst)
 	    return -1;
 	}
 	return uac_reg_lookup(msg, &val.rs, dpv, 0);
+}
+
+
+static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* mode_s)
+{
+	pv_spec_t *spv;
+	pv_value_t val;
+	unsigned int mode;
+
+	mode = (unsigned int)(long)mode_s;
+
+	spv = (pv_spec_t*)src;
+	if(pv_get_spec_value(msg, spv, &val) != 0)
+	{
+		LM_ERR("cannot get src uri value\n");
+		return -1;
+	}
+
+	if (!(val.flags & PV_VAL_STR))
+	{
+	    LM_ERR("src pv value is not string\n");
+	    return -1;
+	}
+
+	if (mode > 1)
+	{
+		LM_ERR("invalid mode\n");
+		return -1;
+	}
+
+	return uac_reg_request_to(msg, &val.rs, mode);
 }
 

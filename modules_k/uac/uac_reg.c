@@ -130,6 +130,9 @@ CREATE TABLE uacreg (
 
 
 extern struct tm_binds uac_tmb;
+extern pv_spec_t auth_username_spec;
+extern pv_spec_t auth_realm_spec;
+extern pv_spec_t auth_password_spec;
 
 /**
  *
@@ -921,6 +924,94 @@ int  uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode)
 	val.rs = s_ruri;
 	if(pv_set_spec_value(msg, dst, 0, &val)!=0)
 		return -1;
+
+	return 1;
+}
+
+/**
+ *
+ */
+int uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode)
+{
+	char ruri[MAX_URI_SIZE];
+	struct sip_uri puri;
+	reg_uac_t *reg = NULL;
+	pv_value_t val;
+	struct action act;
+	struct run_act_ctx ra_ctx;
+
+	switch(mode)
+	{
+		case 0:
+			reg = reg_ht_get_byuuid(src);
+			break;
+		case 1:
+			if(reg_use_domain)
+			{
+				if (parse_uri(src->s, src->len, &puri)!=0)
+				{
+					LM_ERR("failed to parse uri\n");
+					return -2;
+				}
+				reg = reg_ht_get_byuser(&puri.user, &puri.host);
+			} else {
+				reg = reg_ht_get_byuser(src, NULL);
+			}
+			break;
+		default:
+			LM_ERR("unknown mode: %d\n", mode);
+			return -1;
+	}
+
+	if(reg==NULL)
+	{
+		LM_DBG("no user: %.*s\n", src->len, src->s);
+		return -1;
+	}
+
+	// Set uri ($ru)
+	snprintf(ruri, MAX_URI_SIZE, "sip:%.*s@%.*s",
+		reg->r_username.len, reg->r_username.s,
+		reg->r_domain.len, reg->r_domain.s);
+	memset(&act, 0, sizeof(act));
+	act.type = SET_URI_T;
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = ruri;
+	init_run_actions_ctx(&ra_ctx);
+	if (do_action(&ra_ctx, &act, msg) < 0) {
+		LM_ERR("error while setting request uri\n");
+		return -1;
+	}
+
+	// Set auth_proxy ($du)
+	if (set_dst_uri(msg, &reg->auth_proxy) < 0) {
+		LM_ERR("error while setting outbound proxy\n");
+		return -1;
+	}
+
+	memset(&val, 0, sizeof(pv_value_t));
+	val.flags |= PV_VAL_STR;
+
+	// Set auth_realm
+	val.rs = reg->realm;
+	if(pv_set_spec_value(msg, &auth_realm_spec, 0, &val)!=0) {
+		LM_ERR("error while setting auth_realm\n");
+		return -1;
+	}
+
+	// Set auth_username
+	val.rs = reg->auth_username;
+	if(pv_set_spec_value(msg, &auth_username_spec, 0, &val)!=0) {
+		LM_ERR("error while setting auth_username\n");
+		return -1;
+	}
+
+	// Set auth_password
+	val.rs = reg->auth_password;
+	if(pv_set_spec_value(msg, &auth_password_spec, 0, &val)!=0) {
+		LM_ERR("error while setting auth_password\n");
+		return -1;
+	}
 
 	return 1;
 }

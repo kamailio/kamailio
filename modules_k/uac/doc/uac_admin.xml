@@ -437,6 +437,47 @@ if(uac_reg_lookup("$rU", "$ru"))
 				</programlisting>
 			</example>
 		</section>
+		<section>
+			<title>
+				<function moreinfo="none">uac_reg_request_to(user, mode)</function>
+			</title>
+			<para>
+			This function can be used to send an authenticated request to a remote user in 
+			the uac registrations table. It sets the request-uri, dst-uri and auth_*_avp
+			pv's to the values that correspond to the supplied user.
+			</para>
+			<para>
+			The mode indicates whether the user should match the local uuid (mode=0), or the username (mode=1).
+			</para>
+			<para>
+			The auth_*_avp module parameters must be set to valid pv&apos;s.
+			</para>
+			<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_reg_request_to</function> usage</title>
+				<programlisting format="linespecific">
+...
+
+if(uac_reg_request_to("$fU", 0))
+{
+	xlog("L_NOTICE", "Found remote user [$rU] on [$rd] via [$du]");
+	t_on_failure("REMOTE_AUTH");
+
+	t_relay()
+}
+...
+failure_route[REMOTE_AUTH] {
+	if ($T_reply_code == 401 or $T_reply_code == 407) {
+		xlog("L_NOTICE", "Remote asked for authentication");
+		uac_auth()
+	}
+}
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 	<section>
 		<title>Exported pseudo-variables</title>
