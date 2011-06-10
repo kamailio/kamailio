@@ -240,7 +240,7 @@ int dbg_cfg_trace(void *data)
 	a = (struct action *)srevp[0];
 	msg = (struct sip_msg *)srevp[1];
 
-	if(a==NULL || msg==NULL)
+	if(a==NULL || msg==NULL || _dbg_pid_list==NULL)
 		return 0;
 
 	an = dbg_get_action_name(a);
