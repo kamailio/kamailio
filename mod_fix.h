@@ -105,6 +105,9 @@ int fixup_free_pvar_str(void** param, int param_no);
 int fixup_pvar_str_str(void** param, int param_no);
 int fixup_free_pvar_str_str(void** param, int param_no);
 
+int fixup_pvar_uint(void** param, int param_no);
+int fixup_free_pvar_uint(void** param, int param_no);
+
 int fixup_igp_igp(void** param, int param_no);
 int fixup_free_igp_igp(void** param, int param_no);
 int fixup_igp_null(void** param, int param_no);

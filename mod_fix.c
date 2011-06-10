@@ -395,6 +395,23 @@ int fixup_free_pvar_str_str(void** param, int param_no)
 }
 
 
+int fixup_pvar_uint(void** param, int param_no)
+{
+	if (param_no == 1)
+		return fixup_pvar_all(param, param_no);
+	else if (param_no == 2)
+		return fixup_uint_uint(param, param_no);
+	return E_UNSPEC;
+}
+
+
+int fixup_free_pvar_uint(void** param, int param_no)
+{
+	if (param_no == 1)
+		return fixup_free_pvar_all(param, param_no);
+	return E_UNSPEC;
+}
+
 
 FIXUP_F2FP(igp_null, 1, 1, 1, FPARAM_INT|FPARAM_PVS, 0)
 FIXUP_F2FP(igp_igp, 1, 2, 2,  FPARAM_INT|FPARAM_PVS, 0)
