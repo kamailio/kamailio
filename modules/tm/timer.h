@@ -241,14 +241,10 @@ inline static void change_retr(struct cell* t, int now,
 								ticks_t rt_t1, ticks_t rt_t2)
 {
 	int i;
-	ticks_t new_rt1_expire, new_rt2_expire, crt;
 
 	if (rt_t1) t->rt_t1_timeout=rt_t1;
 	if (rt_t2) t->rt_t2_timeout=rt_t2;
 	if (now){
-		crt=get_ticks_raw();
-		new_rt1_expire=crt+rt_t1;
-		new_rt2_expire=crt+rt_t2;
 		for (i=0; i<t->nr_of_outgoings; i++){
 			if (t->uac[i].request.t_active){ 
 					if ((t->uac[i].request.flags & F_RB_T2) && rt_t2)

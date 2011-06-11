@@ -503,7 +503,6 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 	struct cell         *p_cell;
 	unsigned int       isACK;
 	struct sip_msg  *t_msg;
-	int ret;
 	struct via_param *branch;
 	int match_status;
 	struct cell *e2e_ack_trans;
@@ -529,7 +528,6 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 
 
 	/* assume not found */
-	ret=-1;
 	e2e_ack_trans = 0;
 
 	/* first of all, look if there is RFC3261 magic cookie in branch; if
