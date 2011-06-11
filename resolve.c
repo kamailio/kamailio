@@ -1017,7 +1017,7 @@ char naptr_get_sip_proto(struct naptr_rdata* n)
 
 	proto=-1;
 	
-	if ((n->flags_len!=1) || (*n->flags!='s'))
+	if ((n->flags_len!=1) || ((*n->flags | 0x20 )!='s'))
 		return -1;
 	if (n->regexp_len!=0)
 		return -1;
