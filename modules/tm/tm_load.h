@@ -191,7 +191,7 @@ static inline int tm_load_xapi(tm_xapi_t *xtmb)
 	/* import the TM auto-loading function */
 	load_xtm = (load_xtm_f)find_export("load_xtm", NO_SCRIPT, 0);
 
-	if (load_tm == NULL) {
+	if (load_xtm == NULL) {
 		LOG(L_WARN, "Cannot import load_xtm function from tm module\n");
 		return -1;
 	}
