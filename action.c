@@ -302,6 +302,8 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	unsigned short port;
 	str* dst_host;
 	int i, flags;
+	avp_t* avp;
+	struct search_state st;
 	struct switch_cond_table* sct;
 	struct switch_jmp_table*  sjt;
 	struct rval_expr* rve;
@@ -618,15 +620,16 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			break;
 		/* jku - end : flag processing */
 
-		case AVPFLAG_OPER_T:  {
-			struct search_state st;
-			avp_t* avp;
-			int flag;
+		case AVPFLAG_OPER_T:
 			ret = 0;
-			flag = a->val[1].u.number;
-			if ((a->val[0].u.attr->type & AVP_INDEX_ALL) == AVP_INDEX_ALL || (a->val[0].u.attr->type & AVP_NAME_RE)!=0) {
-				for (avp=search_first_avp(a->val[0].u.attr->type, a->val[0].u.attr->name, NULL, &st); avp; avp = search_next_avp(&st, NULL)) {
-					switch (a->val[2].u.number) {   /* oper: 0..reset, 1..set, -1..no change */
+			if ((a->val[0].u.attr->type & AVP_INDEX_ALL) == AVP_INDEX_ALL ||
+					(a->val[0].u.attr->type & AVP_NAME_RE)!=0) {
+				for (avp=search_first_avp(a->val[0].u.attr->type,
+							a->val[0].u.attr->name, NULL, &st);
+						avp;
+						avp = search_next_avp(&st, NULL)) {
+					switch (a->val[2].u.number) {
+						/* oper: 0..reset, 1..set, -1..no change */
 						case 0:
 							avp->flags &= ~(avp_flags_t)a->val[1].u.number;
 							break;
@@ -635,13 +638,16 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 							break;
 						default:;
 					}
-					ret = ret || ((avp->flags & (avp_flags_t)a->val[1].u.number) != 0);
+					ret = ret ||
+						((avp->flags & (avp_flags_t)a->val[1].u.number) != 0);
 				}
-			}
-			else {
-				avp = search_avp_by_index(a->val[0].u.attr->type, a->val[0].u.attr->name, NULL, a->val[0].u.attr->index);
+			} else {
+				avp = search_avp_by_index(a->val[0].u.attr->type,
+											a->val[0].u.attr->name, NULL,
+											a->val[0].u.attr->index);
 				if (avp) {
-					switch (a->val[2].u.number) {   /* oper: 0..reset, 1..set, -1..no change */
+					switch (a->val[2].u.number) {
+						/* oper: 0..reset, 1..set, -1..no change */
 						case 0:
 							avp->flags &= ~(avp_flags_t)a->val[1].u.number;
 							break;
@@ -656,7 +662,6 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			if (ret==0)
 				ret = -1;
 			break;
-		}
 		case ERROR_T:
 			if ((a->val[0].type!=STRING_ST)|(a->val[1].type!=STRING_ST)){
 				LOG(L_CRIT, "BUG: do_action: bad error() types %d, %d\n",
