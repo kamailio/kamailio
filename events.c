@@ -93,13 +93,15 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 int sr_event_exec(int type, void *data)
 {
 	int ret;
+#ifdef EXTRA_DEBUG
 	str *p;
+#endif /* EXTRA_DEBUG */
 	switch(type) {
 		case SREV_NET_DATA_IN:
 				if(unlikely(_sr_events_list.net_data_in!=0))
 				{
-					p = (str*)data;
 #ifdef EXTRA_DEBUG
+					p = (str*)data;
 					LM_DBG("PRE-IN ++++++++++++++++++++++++++++++++\n"
 							"%.*s\n+++++\n", p->len, p->s);
 #endif /* EXTRA_DEBUG */
@@ -114,8 +116,8 @@ int sr_event_exec(int type, void *data)
 		case SREV_NET_DATA_OUT:
 				if(unlikely(_sr_events_list.net_data_out!=0))
 				{
-					p = (str*)data;
 #ifdef EXTRA_DEBUG
+					p = (str*)data;
 					LM_DBG("PRE-OUT ++++++++++++++++++++\n"
 							"%.*s\n+++++++++++++++++++\n", p->len, p->s);
 #endif /* EXTRA_DEBUG */

@@ -43,14 +43,13 @@ static int ss_parse(str *src, subscription_state_t *ss)
 	param_t *params;
 	str s = *src;
 	str state;
-	char *c, *end;
+	char *c;
 	
 	/* initialization */
 	ss->expires_set = 0;
 	ss->expires = 0;
 	
 	trim_leading(&s);
-	end = s.s + s.len;
 		
 	state = s;
 	

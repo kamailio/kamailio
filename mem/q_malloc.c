@@ -427,9 +427,11 @@ void qm_free(struct qm_block* qm, void* p)
 #endif
 {
 	struct qm_frag* f;
-	struct qm_frag* prev;
-	struct qm_frag* next;
 	unsigned long size;
+#ifdef QM_JOIN_FREE
+	struct qm_frag* next;
+	struct qm_frag* prev;
+#endif /* QM_JOIN_FREE*/
 
 #ifdef DBG_QM_MALLOC
 	MDBG("qm_free(%p, %p), called from %s: %s(%d)\n", qm, p, file, func, line);
@@ -443,7 +445,9 @@ void qm_free(struct qm_block* qm, void* p)
 		LOG(L_WARN, "WARNING:qm_free: free(0) called\n");
 		return;
 	}
-	prev=next=0;
+#ifdef QM_JOIN_FREE
+	next=prev=0;
+#endif /* QM_JOIN_FREE*/
 	f=(struct qm_frag*) ((char*)p-sizeof(struct qm_frag));
 #ifdef DBG_QM_MALLOC
 	qm_debug_frag(qm, f);

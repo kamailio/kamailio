@@ -2271,7 +2271,9 @@ char* via_builder( unsigned int *len,
 	str* port_str; /* port no displayed in via */
 	struct socket_info* send_sock;
 	int comp_len, comp_name_len;
+#ifdef USE_COMP
 	char* comp_name;
+#endif /* USE_COMP */
 
 	send_sock=send_info->send_sock;
 	/* use pre-set address in via or the outbound socket one */
@@ -2285,8 +2287,8 @@ char* via_builder( unsigned int *len,
 		port_str=&(send_sock->port_no_str);
 	
 	comp_len=comp_name_len=0;
-	comp_name=0;
 #ifdef USE_COMP
+	comp_name=0;
 	switch(send_info->comp){
 		case COMP_NONE:
 			break;

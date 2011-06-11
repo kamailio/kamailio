@@ -1012,7 +1012,7 @@ int pv_set_spec_value(struct sip_msg* msg, pv_spec_p sp, int op,
  */
 int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len)
 {
-	int n, h;
+	int n;
 	pv_value_t tok;
 	pv_elem_p it;
 	char *cur;
@@ -1026,7 +1026,6 @@ int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len)
 	*buf = '\0';
 	cur = buf;
 	
-	h = 0;
 	n = 0;
 	for (it=list; it; it=it->next)
 	{

@@ -3424,14 +3424,12 @@ static int rve_optimize(struct rval_expr* rve)
 	struct rvalue* rv;
 	struct rvalue* trv; /* used only for DBG() */
 	enum rval_expr_op op;
-	int flags;
 	struct rval_expr tmp_rve;
 	enum rval_type type, l_type;
 	struct rval_expr* bad_rve;
 	enum rval_type bad_type, exp_type;
 	
 	ret=0;
-	flags=0;
 	rv=0;
 	if (scr_opt_lev<1)
 		return 0;

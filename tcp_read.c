@@ -857,14 +857,12 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 	long size;
 	struct tcp_req* req;
 	struct dest_info dst;
-	int s;
 	char c;
 	int ret;
 		
 		bytes=-1;
 		total_bytes=0;
 		resp=CONN_RELEASE;
-		s=con->fd;
 		req=&con->req;
 
 again:

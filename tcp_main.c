@@ -1774,7 +1774,6 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 	int fd;
 	long response[2];
 	int n;
-	int do_close_fd;
 	ticks_t con_lifetime;
 #ifdef USE_TLS
 	const char* rest_buf;
@@ -1784,7 +1783,6 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 	snd_flags_t t_send_flags;
 #endif /* USE_TLS */
 	
-	do_close_fd=1; /* close the fd on exit */
 	port=su_getport(&dst->to);
 	con_lifetime=cfg_get(tcp, tcp_cfg, con_lifetime);
 	if (likely(port)){

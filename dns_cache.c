@@ -2202,14 +2202,12 @@ inline static struct dns_rr* dns_entry_get_rr(	struct dns_hash_entry* e,
 {
 	struct dns_rr* rr;
 	int n;
-	int flags;
 #ifdef DNS_WATCHDOG_SUPPORT
 	int servers_up;
 
 	servers_up = atomic_get(dns_servers_up);
 #endif
 
-	flags=0;
 	for(rr=e->rr_lst, n=0;rr && (n<*no);rr=rr->next, n++);/* skip *no records*/
 	for(;rr;rr=rr->next){
 		if (

@@ -158,7 +158,6 @@ int fix_switch(struct action* t)
 	struct action** tail;
 	struct switch_jmp_table* jmp;
 	struct switch_cond_table* sct;
-	int labels_no;
 	struct action** def_jmp_bm;
 	int* cond;
 	struct action*** jmp_bm;
@@ -170,7 +169,6 @@ int fix_switch(struct action* t)
 	cond=0;
 	jmp_bm=0;
 	def_jmp_bm=0;
-	labels_no=0;
 	default_found=0;
 	/* check if string switch (first case is string or RE) */
 	for (c=(struct case_stms*)t->val[1].u.data; c && c->is_default; c=c->next);
@@ -254,7 +252,6 @@ int fix_switch(struct action* t)
 			goto error;
 		}
 	}
-	labels_no=n;
 	cond=pkg_malloc(sizeof(cond[0])*n);
 	jmp_bm=pkg_malloc(sizeof(jmp_bm[0])*n);
 	if (cond==0 || jmp_bm==0){
@@ -432,7 +429,6 @@ static int fix_match(struct action* t)
 	struct action* action_lst;
 	struct action** tail;
 	struct match_cond_table* mct;
-	int labels_no;
 	struct action** def_jmp_bm;
 	struct match_str* match;
 	struct action*** jmp_bm;
@@ -446,7 +442,6 @@ static int fix_match(struct action* t)
 	match=0;
 	jmp_bm=0;
 	def_jmp_bm=0;
-	labels_no=0;
 	default_found=0;
 	rv=0;
 	s.s=0;
@@ -578,7 +573,7 @@ static int fix_match(struct action* t)
 			goto error;
 		}
 	}
-	labels_no=n;
+	/* n is the number of labels here */
 	match=pkg_malloc(sizeof(match[0])*n);
 	jmp_bm=pkg_malloc(sizeof(jmp_bm[0])*n);
 	if (match==0 || jmp_bm==0){
