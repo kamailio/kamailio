@@ -233,6 +233,32 @@ modparam("pua", "dlginfo_increase_version", 1)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>reginfo_increase_version</varname> (int)</title>
+		<para>
+		When sending PUBLISHs for Event: reg, the body contains an
+		XML document according to RFC 4235(?). This XML document contains a 
+		version attribute to easily detect changes in the registration state.
+		By setting this parameter, the pua module parses the XML document and
+		sets the version attribute to the proper value. If the receiver of
+		the PUBLISH does not care about the version parameter (e.g. like
+		&kamailio; presence_reginfo module) it makes no sense to waste 
+		CPU resources for parsing the XML body and the parameter should be 
+		set to 0.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reginfo_increase_version</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "reginfo_increase_version", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

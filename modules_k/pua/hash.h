@@ -40,6 +40,7 @@
 #define MSGSUM_EVENT        1<<3
 #define CONFERENCE_EVENT    1<<4
 #define DIALOG_EVENT        1<<5
+#define REGINFO_EVENT       1<<6
 
 #define UL_PUBLISH          1<<0
 #define BLA_PUBLISH         1<<1
@@ -53,6 +54,8 @@
 #define RLS_SUBSCRIBE       1<<9
 #define DIALOG_PUBLISH      1<<10
 #define PURPLE_PUBLISH      1<<11
+#define REGINFO_PUBLISH     1<<12
+#define REGINFO_SUBSCRIBE   1<<13
 
 #define NO_UPDATEDB_FLAG    1<<0
 #define UPDATEDB_FLAG       1<<1
@@ -135,6 +138,10 @@ static inline int get_event_flag(str* event)
 {
     switch (event->len) 
     {
+        case 3:
+            if (strncmp(event->s, "reg", 3) == 0)
+                return REGINFO_EVENT;
+            break;
         case 6:
             if (strncmp(event->s, "dialog", 6) == 0)
                 return DIALOG_EVENT;

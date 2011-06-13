@@ -1,9 +1,8 @@
 /*
- * $Id$
+ * pua_reginfo module - Presence-User-Agent Handling of reg events
  *
- * pua module - presence user agent module
- *
- * Copyright (C) 2006 Voice Sistem S.R.L.
+ * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
+ * http://www.ng-voice.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -22,27 +21,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef PUBLISH_H
-#define PUBLISH_H
+#ifndef SUBSCRIBE_H
+#define SUBSCRIBE_H
 
-#include "../../str.h"
-#include "hash.h"
+#include "../../parser/msg_parser.h"
 
-#define INSERT_TYPE      1<<1
-#define UPDATE_TYPE      1<<2
-
-#define REQ_OTHER  0
-#define REQ_ME     1
-
-extern str default_domain;
-extern struct tm_binds tmb;
-extern htable_t* HashT;
-extern int HASH_SIZE;
-extern int min_expires;
-extern int pua_ul_publish;
-extern int default_expires;
-extern str outbound_proxy;
-
-int reginfo_increase_version;
+int reginfo_subscribe(struct sip_msg*, char*, char*);
+int reginfo_subscribe2(struct sip_msg*, char*, char*);
+int fixup_subscribe(void** param, int param_no);
 
 #endif

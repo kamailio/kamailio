@@ -1,9 +1,8 @@
 /*
- * $Id$
+ * presence_reginfo module - Presence Handling of reg events
  *
- * pua module - presence user agent module
- *
- * Copyright (C) 2006 Voice Sistem S.R.L.
+ * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
+ * http://www.ng-voice.com
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -22,27 +21,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef PUBLISH_H
-#define PUBLISH_H
+#ifndef _PRES_REGINFO_H_
+#define _PRES_REGINFO_H_
 
-#include "../../str.h"
-#include "hash.h"
-
-#define INSERT_TYPE      1<<1
-#define UPDATE_TYPE      1<<2
-
-#define REQ_OTHER  0
-#define REQ_ME     1
-
-extern str default_domain;
-extern struct tm_binds tmb;
-extern htable_t* HashT;
-extern int HASH_SIZE;
-extern int min_expires;
-extern int pua_ul_publish;
-extern int default_expires;
-extern str outbound_proxy;
-
-int reginfo_increase_version;
+extern add_event_t pres_add_event;
 
 #endif

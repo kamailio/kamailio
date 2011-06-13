@@ -85,6 +85,19 @@ int pua_add_events(void)
 		return -1;
 	}
 	
+	/* add application/reginfo+xml */
+	if (dlginfo_increase_version) {
+		if(add_pua_event(REGINFO_EVENT, "reg", "application/reginfo+xml", reginfo_process_body)< 0) {
+			LM_ERR("while adding event application/reginfo+xml with version increase\n");
+			return -1;
+		}
+	} else {
+		if(add_pua_event(REGINFO_EVENT, "reg", "application/reginfo+xml", dlg_process_body)< 0) {
+			LM_ERR("while adding event application/reginfo+xml\n");
+			return -1;
+		}
+	}
+	
 	return 0;
 
 }	
@@ -280,6 +293,65 @@ int bla_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple)
 	body= (str*)pkg_malloc(sizeof(str));
 	if(body== NULL)
 	{
+		LM_ERR("NO more memory left\n");
+		goto error;
+	}
+	memset(body, 0, sizeof(str));
+	xmlDocDumpFormatMemory(doc, (xmlChar**)(void*)&body->s, &body->len, 1);	
+
+	xmlFreeDoc(doc);
+	doc= NULL;
+	*fin_body= body;	
+	if(*fin_body== NULL)
+		LM_DBG("NULL fin_body\n");
+
+	xmlMemoryDump();
+	xmlCleanupParser();
+	LM_DBG("successful\n");
+	return 1;
+
+error:
+	if(doc)
+		xmlFreeDoc(doc);
+	if(body)
+		pkg_free(body);
+	
+	xmlMemoryDump();
+	xmlCleanupParser();
+	return -1;
+}
+
+int reginfo_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple)
+{
+	xmlNodePtr node= NULL;
+	xmlDocPtr doc= NULL;
+	char* version;
+	str* body= NULL;
+	int len;
+	str* init_body;
+
+	init_body= publ->body;
+
+	doc= xmlParseMemory(init_body->s, init_body->len );
+	if(doc== NULL) {
+		LM_ERR("while parsing xml memory\n");
+		goto error;
+	}
+	/* change version and state*/
+	node= xmlDocGetNodeByName(doc, "reginfo", NULL);
+	if(node == NULL) {
+		LM_ERR("while extracting dialog-info node\n");
+		goto error;
+	}
+	version= int2str(ver,&len);
+	version[len]= '\0';
+
+	if( xmlSetProp(node, (const xmlChar *)"version",(const xmlChar*)version)== NULL) {
+		LM_ERR("while setting version attribute\n");
+		goto error;	
+	}
+	body= (str*)pkg_malloc(sizeof(str));
+	if(body== NULL) {
 		LM_ERR("NO more memory left\n");
 		goto error;
 	}
