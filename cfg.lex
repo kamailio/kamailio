@@ -1298,21 +1298,29 @@ IMPORTFILE      "import_file"
 
 <INCLF>[ \t]*      /* eat the whitespace */
 <INCLF>[^ \t\n]+   { /* get the include file name */
-				if(sr_push_yy_state(yytext, 0)<0)
+				memset(&s_buf, 0, sizeof(s_buf));
+				addstr(&s_buf, yytext, yyleng);
+				r = pp_subst_run(&s_buf.s);
+				if(sr_push_yy_state(s_buf.s, 0)<0)
 				{
 					LOG(L_CRIT, "error at %s line %d\n", (finame)?finame:"cfg", line);
 					exit(-1);
 				}
+				memset(&s_buf, 0, sizeof(s_buf));
 				BEGIN(INITIAL);
 }
 
 <IMPTF>[ \t]*      /* eat the whitespace */
 <IMPTF>[^ \t\n]+   { /* get the import file name */
-				if(sr_push_yy_state(yytext, 1)<0)
+				memset(&s_buf, 0, sizeof(s_buf));
+				addstr(&s_buf, yytext, yyleng);
+				r = pp_subst_run(&s_buf.s);
+				if(sr_push_yy_state(s_buf.s, 1)<0)
 				{
 					LOG(L_CRIT, "error at %s line %d\n", (finame)?finame:"cfg", line);
 					exit(-1);
 				}
+				memset(&s_buf, 0, sizeof(s_buf));
 				BEGIN(INITIAL);
 }
 
@@ -1496,12 +1504,12 @@ static int sr_push_yy_state(char *fin, int mode)
 	l = strlen(fin);
 	if(l>=MAX_INCLUDE_FNAME)
 	{
-		LOG(L_CRIT, "included file name too long\n");
+		LOG(L_CRIT, "included file name too long: %s\n", fin);
 		return -1;
 	}
 	if(fin[0]!='"' || fin[l-1]!='"')
 	{
-		LOG(L_CRIT, "included file name must be between quotes\n");
+		LOG(L_CRIT, "included file name must be between quotes: %s\n", fin);
 		return -1;
 	}
 	j = 0;
@@ -1511,7 +1519,7 @@ static int sr_push_yy_state(char *fin, int mode)
 			case '\\':
 				if(i+1==l-1)
 				{
-					LOG(L_CRIT, "invalid escape in included file name\n");
+					LOG(L_CRIT, "invalid escape at %d in included file name: %s\n", i, fin);
 					return -1;
 				}
 				i++;
@@ -1535,7 +1543,7 @@ static int sr_push_yy_state(char *fin, int mode)
 	}
 	if(j==0)
 	{
-		LOG(L_CRIT, "invalid included file name\n");
+		LOG(L_CRIT, "invalid included file name: %s\n", fin);
 		return -1;
 	}
 	fbuf[j] = '\0';
