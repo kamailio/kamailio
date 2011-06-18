@@ -1,0 +1,76 @@
+presence_reginfo Module
+
+Carsten Bock
+
+   <carsten@ng-voice.com>
+
+Edited by
+
+Carsten Bock
+
+   <carsten@ng-voice.com>
+
+   Copyright © 2011 Carsten Bock, carsten@ng-voice.com,
+   http://www.ng-voice.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Exported Functions
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Functions
+
+1. Overview
+
+   The module enables the handling of "Event: reg" (as defined in RFC
+   3680) inside of the presence module. This can be used distribute the
+   registration-info status to the subscribed watchers.
+
+   The module does not currently implement any authorization rules. It
+   assumes that publish requests are only issued by an authorized
+   application and subscribe requests only by authorized users.
+   Authorization can thus be easily done in Kamailio configuration file
+   before calling handle_publish() and handle_subscribe() functions.
+
+   Note: This module only activates the processing of the "reg" in the
+   presence module. To send dialog-info to watchers you also need a source
+   which PUBLISH the reg info to the presence module. For example you can
+   use the pua_reginfo module or any external component. This approach
+   allows to have the presence server and the reg-info aware publisher
+   (e.g. the main proxy) on different Kamailio instances.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * presence.
+
+2.2. External Libraries or Applications
+
+   None.
+
+3. Exported Functions
+
+   None to be used in configuration file.
