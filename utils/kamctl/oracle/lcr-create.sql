@@ -13,8 +13,7 @@ CREATE TABLE lcr_gw (
     prefix VARCHAR2(16) DEFAULT NULL,
     tag VARCHAR2(64) DEFAULT NULL,
     flags NUMBER(10) DEFAULT 0 NOT NULL,
-    defunct NUMBER(10) DEFAULT NULL,
-    CONSTRAINT ORA_lcr_id_ip_addr_port_hostname_idx  UNIQUE (lcr_id, ip_addr, port, hostname)
+    defunct NUMBER(10) DEFAULT NULL
 );
 
 CREATE OR REPLACE TRIGGER lcr_gw_tr
@@ -25,6 +24,8 @@ END lcr_gw_tr;
 /
 BEGIN map2users('lcr_gw'); END;
 /
+CREATE INDEX lcr_gw_lcr_id_idx  ON lcr_gw (lcr_id);
+
 INSERT INTO version (table_name, table_version) values ('lcr_rule_target','1');
 CREATE TABLE lcr_rule_target (
     id NUMBER(10) PRIMARY KEY,

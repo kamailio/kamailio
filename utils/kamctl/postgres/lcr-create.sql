@@ -13,9 +13,10 @@ CREATE TABLE lcr_gw (
     prefix VARCHAR(16) DEFAULT NULL,
     tag VARCHAR(64) DEFAULT NULL,
     flags INTEGER DEFAULT 0 NOT NULL,
-    defunct INTEGER DEFAULT NULL,
-    CONSTRAINT lcr_gw_lcr_id_ip_addr_port_hostname_idx UNIQUE (lcr_id, ip_addr, port, hostname)
+    defunct INTEGER DEFAULT NULL
 );
+
+CREATE INDEX lcr_gw_lcr_id_idx ON lcr_gw (lcr_id);
 
 INSERT INTO version (table_name, table_version) values ('lcr_rule_target','1');
 CREATE TABLE lcr_rule_target (

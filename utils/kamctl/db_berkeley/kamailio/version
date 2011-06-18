@@ -16,10 +16,10 @@ address|
 address|4
 aliases|
 aliases|1004
-carrierfailureroute|
-carrierfailureroute|2
 carrier_name|
 carrier_name|1
+carrierfailureroute|
+carrierfailureroute|2
 carrierroute|
 carrierroute|3
 cpl|
