@@ -43,6 +43,7 @@
 #define MI_TM_CANCEL   "t_uac_cancel"
 #define MI_TM_HASH     "t_hash"
 #define MI_TM_REPLY    "t_reply"
+#define MI_TM_REPLY_CALLID "t_reply_callid"
 
 struct mi_root* mi_tm_uac_dlg(struct mi_root* cmd_tree, void* param);
 
@@ -51,5 +52,7 @@ struct mi_root* mi_tm_cancel(struct mi_root* cmd_tree, void* param);
 struct mi_root* mi_tm_hash(struct mi_root* cmd_tree, void* param);
 
 struct mi_root* mi_tm_reply(struct mi_root* cmd_tree, void* param);
+
+struct mi_root* mi_tm_reply_callid(struct mi_root* cmd_tree, void* param);
 
 #endif

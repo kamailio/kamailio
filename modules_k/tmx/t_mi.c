@@ -824,3 +824,77 @@ struct mi_root* mi_tm_reply(struct mi_root* cmd_tree, void* param)
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
 
+/*
+  Syntax of "t_reply_callid" :
+  code
+  reason
+  callid
+  cseq
+  to_tag
+  new headers
+  [Body]
+*/
+struct mi_root* mi_tm_reply_callid(struct mi_root* cmd_tree, void* param)
+{
+	struct mi_node* node;
+	unsigned int rpl_code;
+	struct cell *trans;
+	str reason = {0, 0};
+	str totag = {0, 0};
+	str new_hdrs = {0, 0};
+	str body = {0, 0};
+	str callid = {0, 0};
+	str cseq = {0, 0};
+	int n;
+
+	for( n=0,node = cmd_tree->node.kids; n<7 && node ; n++,node=node->next );
+	if ( !(n==6 || n==7) || node!=0)
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+
+	/* get all info from the command */
+
+	/* reply code (param 1) */
+	node = cmd_tree->node.kids;
+	if (str2int( &node->value, &rpl_code)!=0 || rpl_code>=700)
+		return init_mi_tree( 400, "Invalid reply code", 18);
+
+	/* reason text (param 2) */
+	node = node->next;
+	reason = node->value;
+
+	/* callid (param 3) */
+	node = node->next;
+	callid = node->value;
+
+	/* cseq (param 4) */
+	node = node->next;
+	cseq = node->value;
+
+	if(_tmx_tmb.t_lookup_callid( &trans, callid, cseq) < 0 )
+		return init_mi_tree( 400, "Lookup failed - no transaction", 30);
+
+	/* to_tag (param 5) */
+	node = node->next;
+	totag = node->value;
+
+	/* new headers (param 6) */
+	node = node->next;
+	if (!(node->value.len==1 && node->value.s[0]=='.'))
+		new_hdrs = node->value;
+
+	/* body (param 7 - optional) */
+	node = node->next;
+	if (node)
+		body = node->value;
+
+	/* it's refcounted now, t_reply_with body unrefs for me -- I can
+	 * continue but may not use T anymore  */
+	n = _tmx_tmb.t_reply_with_body(trans, rpl_code, &reason, &body,
+			&new_hdrs, &totag);
+
+	if (n<0)
+		return init_mi_tree( 500, "Reply failed", 12);
+
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+}
+
