@@ -176,7 +176,8 @@ module_group_radius=acc_radius auth_radius misc_radius avp_radius uri_radius \
 # kamailio modules
 module_group_presence=presence presence_dialoginfo presence_mwi presence_xml \
 						pua pua_bla pua_dialoginfo pua_mi pua_usrloc pua_xmpp \
-						rls xcap_client xcap_server presence_conference
+						rls xcap_client xcap_server presence_conference \
+						presence_reginfo pua_reginfo
 #ser modules
 module_group_presence+=dialog presence_b2b xcap
 # obsolete/unmaintained ser modules
@@ -260,7 +261,8 @@ module_group_ktls=tls
 # K presence modules
 module_group_kpresence=presence presence_dialoginfo presence_mwi presence_xml \
 						pua pua_bla pua_dialoginfo pua_mi pua_usrloc pua_xmpp \
-						rls xcap_client xcap_server presence_conference
+						rls xcap_client xcap_server presence_conference \
+						presence_reginfo pua_reginfo
 
 # K lua module
 module_group_klua=app_lua
@@ -296,7 +298,8 @@ else
 							dialplan lcr utils presence presence_mwi \
 							presence_dialoginfo presence_xml pua pua_bla \
 							pua_dialoginfo pua_usrloc pua_xmpp \
-							regex xcap_client xcap_server presence_conference
+							regex xcap_client xcap_server presence_conference \
+							presence_reginfo pua_reginfo
 	#excluded because they depend on external *.h files
 	exclude_modules+= h350
 	# excluded because they do not compile (remove them only after they are
