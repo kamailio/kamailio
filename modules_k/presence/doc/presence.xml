@@ -17,12 +17,9 @@
 	    <author>
 		<firstname>Anca-Maria</firstname>
 		<surname>Vamanu</surname>
-		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<affiliation><orgname>Voice Sistem SRL</orgname></affiliation>
 		<address>
 		<email>anca@voice-system.ro</email>
-		<otheraddr>
-		<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
-		</otheraddr>
 		</address>
 	    </author>
 	    <author>
@@ -50,18 +47,12 @@
 	</authorgroup>
 	<copyright>
 	    <year>2006</year>
-	    <holder>&voicesystem;</holder>
+	    <holder>Voice Sistem SRL</holder>
 	</copyright>
 	<copyright>
 	    <year>2009</year>
 	    <holder>Juha Heinanen</holder>
 	</copyright>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision: 4594 $</revnumber>
-		<date>$Date: 2008-08-06 13:08:33 +0300 (Wed, 06 Aug 2008) $</date>
-	    </revision>
-	</revhistory>
   </bookinfo>
     <toc></toc>
     

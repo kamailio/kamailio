@@ -11,7 +11,7 @@ Elena-Ramona Modroiu
 
    <ramona@rosdev.ro>
 
-   Copyright � 2008-2011 http://www.asipto.com
+   Copyright © 2008-2011 http://www.asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -130,7 +130,7 @@ Chapter 1. Admin Guide
    You can read more about hash tables at:
    http://en.wikipedia.org/wiki/Hash_table.
 
-   The "name" can be a static string or can include pseudo- variables that
+   The “name” can be a static string or can include pseudo- variables that
    will be replaced at runtime.
 
    Example 1.1. Accessing $sht(htname=>key)
@@ -153,7 +153,7 @@ $sht(a=>$ci::srcip) = $si;
    the failed authentications per user and one for storing the time of
    last authentication attempt. To ensure unique name per user, the hash
    table uses a combination of authentication username and text
-   "::auth_count" and "::last_auth".
+   “::auth_count” and “::last_auth”.
 
    Example 1.2. Dictionary attack limitation
 ...

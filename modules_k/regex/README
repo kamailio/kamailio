@@ -11,8 +11,6 @@ Iñaki Baz Castillo
    <ibc@aliax.net>
 
    Copyright © 2009 Iñaki Baz Castillo
-   Revision History
-   Revision $Revision$ $Date$
      __________________________________________________________________
 
    Table of Contents
@@ -301,15 +299,12 @@ if (pcre_match_group("$rU", "2")) {
 
    Example 1.11.  pcre_match_group usage (using a pseudo-variable as
    group)
-                                        ...
-                                        $avp(i:10) = 5;  # Maybe got from a DB q
-uery.
-                                        if (pcre_match_group("$ua", "$avp(i:10)"
-)) {
-                                        xlog("L_INFO", "User-Agent matches group
- 5\n");
-                                        }
-                                        ...
+...
+$avp(i:10) = 5;  # Maybe got from a DB query.
+if (pcre_match_group("$ua", "$avp(i:10)")) {
+    xlog("L_INFO", "User-Agent matches group 5\n");
+}
+...
 
 5. Exported MI Functions
 

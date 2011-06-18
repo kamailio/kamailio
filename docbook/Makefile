@@ -113,7 +113,8 @@ ifeq ($(validate), 0)
 	override xsltproc_flags := $(xsltproc_flags) --novalid
 endif
 
-all_deps = Makefile $(docbook_dir)/Makefile $(dep_xsl) $(catalog) $(extra_deps)
+all_deps = Makefile $(docbook_dir)/Makefile $(docbook_dir)/entities.xml \
+		   $(dep_xsl) $(catalog) $(extra_deps)
 
 all: txt
 

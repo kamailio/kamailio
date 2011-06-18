@@ -12,39 +12,36 @@ Edited by
 
 Bogdan-Andrei Iancu
 
-   Copyright � 2003 FhG FOKUS
+   Copyright © 2003 FhG FOKUS
 
-   Copyright � 2005 voice-system.ro
-   Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
-     __________________________________________________________
+   Copyright © 2005 Voice Sistem SRL
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. db_url (string)
-              1.3.2. db_table (string)
-              1.3.3. user_column (string)
-              1.3.4. domain_column (string)
-              1.3.5. uriuser_column (string)
-              1.3.6. use_uri_table (integer)
-              1.3.7. use_domain (integer)
+              3.1. db_url (string)
+              3.2. db_table (string)
+              3.3. user_column (string)
+              3.4. domain_column (string)
+              3.5. uriuser_column (string)
+              3.6. use_uri_table (integer)
+              3.7. use_domain (integer)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. check_to()
-              1.4.2. check_from()
-              1.4.3. does_uri_exist()
+              4.1. check_to()
+              4.2. check_from()
+              4.3. does_uri_exist()
 
    List of Examples
 
@@ -61,123 +58,158 @@ Bogdan-Andrei Iancu
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. db_url (string)
+        3.2. db_table (string)
+        3.3. user_column (string)
+        3.4. domain_column (string)
+        3.5. uriuser_column (string)
+        3.6. use_uri_table (integer)
+        3.7. use_domain (integer)
+
+   4. Exported Functions
+
+        4.1. check_to()
+        4.2. check_from()
+        4.3. does_uri_exist()
+
+1. Overview
 
    Various checks related to SIP URI.
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * a Kamailio database module .
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * None.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. db_url (string)
+   3.1. db_url (string)
+   3.2. db_table (string)
+   3.3. user_column (string)
+   3.4. domain_column (string)
+   3.5. uriuser_column (string)
+   3.6. use_uri_table (integer)
+   3.7. use_domain (integer)
+
+3.1. db_url (string)
 
    URL of the database to be used.
 
-   If the db_url string is empty, the default database URL will be
-   used.
+   If the db_url string is empty, the default database URL will be used.
 
-   Default value is
-   "mysql://openserro:openserro@localhost/openser".
+   Default value is “mysql://openserro:openserro@localhost/openser”.
 
    Example 1.1. Set db_url parameter
 ...
-modparam("uri_db", "db_url", "mysql://username:password@localhost/opense
-r")
+modparam("uri_db", "db_url", "mysql://username:password@localhost/openser")
 ...
 
-1.3.2. db_table (string)
+3.2. db_table (string)
 
-   The DB table that should be used. Its possible to use the
-   "subscriber" and "uri" table. If the "uri" table should be
-   used, an additional parameter (Section 1.3.6, "use_uri_table
-   (integer)") must be set.
+   The DB table that should be used. Its possible to use the “subscriber”
+   and “uri” table. If the “uri” table should be used, an additional
+   parameter (Section 3.6, “use_uri_table (integer)”) must be set.
 
-   Default value is "subscriber".
+   Default value is “subscriber”.
 
    Example 1.2. Set uri_table parameter
 ...
 modparam("uri_db", "db_table", "uri")
 ...
 
-1.3.3. user_column (string)
+3.3. user_column (string)
 
    Column holding usernames in the table.
 
-   Default value is "username".
+   Default value is “username”.
 
    Example 1.3. Set user_column parameter
 ...
 modparam("uri_db", "user_column", "username")
 ...
 
-1.3.4. domain_column (string)
+3.4. domain_column (string)
 
    Column holding domain in the table.
 
-   Default value is "domain".
+   Default value is “domain”.
 
    Example 1.4. Set domain_column parameter
 ...
 modparam("uri_db", "domain_column", "domain")
 ...
 
-1.3.5. uriuser_column (string)
+3.5. uriuser_column (string)
 
    Column holding URI username in the table.
 
-   Default value is "uri_user".
+   Default value is “uri_user”.
 
    Example 1.5. Set uriuser_column parameter
 ...
 modparam("uri_db", "uriuser_column", "uri_user")
 ...
 
-1.3.6. use_uri_table (integer)
+3.6. use_uri_table (integer)
 
-   Specify if the "uri" table should be used for checkings instead
-   of "subscriber" table. A non-zero value means true.
+   Specify if the “uri” table should be used for checkings instead of
+   “subscriber” table. A non-zero value means true.
 
-   Default value is "0 (false)".
+   Default value is “0 (false)”.
 
    Example 1.6. Set use_uri_table parameter
 ...
 modparam("uri_db", "use_uri_table", 1)
 ...
 
-1.3.7. use_domain (integer)
+3.7. use_domain (integer)
 
-   Specify if the domain part of the URI should be used to
-   identify the users (along with username). This is useful in
-   multi domain setups, a non-zero value means true.
+   Specify if the domain part of the URI should be used to identify the
+   users (along with username). This is useful in multi domain setups, a
+   non-zero value means true.
 
-   This parameter is only evaluated for calls to "does_uri_exist",
-   all other functions checks the digest username and realm
-   against the given username, if the "uri" table is used.
+   This parameter is only evaluated for calls to “does_uri_exist”, all
+   other functions checks the digest username and realm against the given
+   username, if the “uri” table is used.
 
-   Default value is "0 (false)".
+   Default value is “0 (false)”.
 
    Example 1.7. Set use_domain parameter
 ...
 modparam("uri_db", "use_domain", 1)
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1.  check_to()
+   4.1. check_to()
+   4.2. check_from()
+   4.3. does_uri_exist()
 
-   Check To username against URI table (if use_uri_table is set)
-   or digest credentials (no DB backend required).
+4.1.  check_to()
+
+   Check To username against URI table (if use_uri_table is set) or digest
+   credentials (no DB backend required).
 
    This function can be used from REQUEST_ROUTE.
 
@@ -188,10 +220,10 @@ if (check_to()) {
 };
 ...
 
-1.4.2.  check_from()
+4.2.  check_from()
 
-   Check From username against URI table (if use_uri_table is set)
-   or digest credentials (no DB backend required).
+   Check From username against URI table (if use_uri_table is set) or
+   digest credentials (no DB backend required).
 
    This function can be used from REQUEST_ROUTE.
 
@@ -202,13 +234,12 @@ if (check_from()) {
 };
 ...
 
-1.4.3.  does_uri_exist()
+4.3.  does_uri_exist()
 
-   Check if username in the request URI belongs to an existing
-   user.
+   Check if username in the request URI belongs to an existing user.
 
-   As the checking is done against URI table (if use_uri_table is
-   set) or subscriber table.
+   As the checking is done against URI table (if use_uri_table is set) or
+   subscriber table.
 
    This function can be used from REQUEST_ROUTE.
 

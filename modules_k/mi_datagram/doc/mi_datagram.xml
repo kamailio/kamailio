@@ -16,12 +16,9 @@
 		<author>
 		<firstname>Andreea-Ancuta</firstname>
 		<surname>Onofrei</surname>
-		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<affiliation><orgname>Voice Sistem SRL</orgname></affiliation>
 		<address>
 		<email>ancuta@voice-system.ro</email>
-		<otheraddr>
-		<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
-		</otheraddr>
 		</address>
 		</author>
 		<editor>
@@ -34,14 +31,8 @@
 	</authorgroup>
 	<copyright>
 		<year>2007</year>
-		<holder>&voicesystem;</holder>
+		<holder>Voice Sistem SRL</holder>
 	</copyright>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision: 1133 $</revnumber>
-		<date>$Date: 2007-05-04 14:31:13 +0300 (Thu, 05 Apr 2006) $</date>
-		</revision>
-	</revhistory>
 	</bookinfo>
 	<toc></toc>
 	

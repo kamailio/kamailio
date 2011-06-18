@@ -4,9 +4,7 @@ Andrei Pelinescu-Onciul
 
    iptelorg GmbH
 
-   Copyright © 2007 iptelorg GmbH
-   Revision History
-   Revision $Revision$ $Date$
+   Copyright Â© 2007 iptelorg GmbH
      __________________________________________________________________
 
    1.1. Overview
@@ -207,9 +205,6 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 
 1.8. Quick Certificate Howto
 
-   Revision History
-   Revision $Revision$ $Date$
-
    There are various ways to create, sign certificates and manage small
    CAs (Certificate Authorities). If you want a GUI, try tinyca
    (http://tinyca.sm-zone.net/), a very nice and small CA management
@@ -341,9 +336,6 @@ Revoking a certificate and using a CRL
                 modparam("tls", "crl", "path/my_crl.pem")
 
 1.9. Parameters
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.9.1. tls_method (string)
 
@@ -971,9 +963,6 @@ modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
 
 1.10. Functions
 
-   Revision History
-   Revision $Revision$ $Date$
-
 1.10.1. is_peer_verified()
 
    Returns true if the connection on which the message was received is TLS
@@ -987,9 +976,6 @@ modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
         }
 
 1.11. History
-
-   Revision History
-   Revision $Revision$ $Date$
 
    This module was put together by Jan Janak <jan@iptel.org> from code
    from the experimental tls core addon

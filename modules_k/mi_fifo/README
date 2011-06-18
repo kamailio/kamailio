@@ -2,40 +2,37 @@ mi_fifo Module
 
 Bogdan-Andrei Iancu
 
-   voice-system.ro
+   Voice Sistem SRL
 
 Edited by
 
 Bogdan-Andrei Iancu
 
-   Copyright � 2006 voice-system.ro
-   Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
-     __________________________________________________________
+   Copyright © 2006 Voice Sistem SRL
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. FIFO command syntax
-        1.3. Dependencies
+        1. Overview
+        2. FIFO command syntax
+        3. Dependencies
 
-              1.3.1. Kamailio Modules
-              1.3.2. External Libraries or Applications
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
 
-        1.4. Exported Parameters
+        4. Exported Parameters
 
-              1.4.1. fifo_name (string)
-              1.4.2. fifo_mode (integer)
-              1.4.3. fifo_group (integer) fifo_group (string)
-              1.4.4. fifo_user (integer) fifo_group (string)
-              1.4.5. reply_dir (string)
-              1.4.6. reply_indent (string)
+              4.1. fifo_name (string)
+              4.2. fifo_mode (integer)
+              4.3. fifo_group (integer) fifo_group (string)
+              4.4. fifo_user (integer) fifo_group (string)
+              4.5. reply_dir (string)
+              4.6. reply_indent (string)
 
-        1.5. Exported Functions
-        1.6. Example
+        5. Exported Functions
+        6. Example
 
    List of Examples
 
@@ -49,12 +46,33 @@ Bogdan-Andrei Iancu
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   This is a module which provides a FIFO transport layer
-   implementation for Management Interface.
+   1. Overview
+   2. FIFO command syntax
+   3. Dependencies
 
-1.2. FIFO command syntax
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
+
+   4. Exported Parameters
+
+        4.1. fifo_name (string)
+        4.2. fifo_mode (integer)
+        4.3. fifo_group (integer) fifo_group (string)
+        4.4. fifo_user (integer) fifo_group (string)
+        4.5. reply_dir (string)
+        4.6. reply_indent (string)
+
+   5. Exported Functions
+   6. Example
+
+1. Overview
+
+   This is a module which provides a FIFO transport layer implementation
+   for Management Interface.
+
+2. FIFO command syntax
 
    The external commands issued via FIFO interface must follow the
    following syntax:
@@ -65,25 +83,35 @@ Chapter 1. Admin Guide
      * arg_value = not-quoted_string | '"' string '"'
      * not-quoted_string = string - {',",\n,\r}
 
-1.3. Dependencies
+3. Dependencies
 
-1.3.1. Kamailio Modules
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * No dependencies on other Kamailio modules.
 
-1.3.2. External Libraries or Applications
+3.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * none
 
-1.4. Exported Parameters
+4. Exported Parameters
 
-1.4.1. fifo_name (string)
+   4.1. fifo_name (string)
+   4.2. fifo_mode (integer)
+   4.3. fifo_group (integer) fifo_group (string)
+   4.4. fifo_user (integer) fifo_group (string)
+   4.5. reply_dir (string)
+   4.6. reply_indent (string)
 
-   The name of the FIFO file to be created for listening and
-   reading external commands.
+4.1. fifo_name (string)
+
+   The name of the FIFO file to be created for listening and reading
+   external commands.
 
    Default value is NONE.
 
@@ -92,10 +120,10 @@ Chapter 1. Admin Guide
 modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
 ...
 
-1.4.2. fifo_mode (integer)
+4.2. fifo_mode (integer)
 
-   Permission to be used for creating the listening FIFO file. It
-   follows the UNIX conventions.
+   Permission to be used for creating the listening FIFO file. It follows
+   the UNIX conventions.
 
    Default value is 0660 (rw-rw----).
 
@@ -104,7 +132,7 @@ modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
 modparam("mi_fifo", "fifo_mode", 0600)
 ...
 
-1.4.3. fifo_group (integer) fifo_group (string)
+4.3. fifo_group (integer) fifo_group (string)
 
    Group to be used for creating the listening FIFO file.
 
@@ -116,7 +144,7 @@ modparam("mi_fifo", "fifo_group", 0)
 modparam("mi_fifo", "fifo_group", "root")
 ...
 
-1.4.4. fifo_user (integer) fifo_group (string)
+4.4. fifo_user (integer) fifo_group (string)
 
    User to be used for creating the listening FIFO file.
 
@@ -128,41 +156,39 @@ modparam("mi_fifo", "fifo_user", 0)
 modparam("mi_fifo", "fifo_user", "root")
 ...
 
-1.4.5. reply_dir (string)
+4.5. reply_dir (string)
 
    Directory to be used for creating the reply FIFO files.
 
-   Default value is "/tmp/"
+   Default value is “/tmp/”
 
    Example 1.5. Set reply_dir parameter
 ...
 modparam("mi_fifo", "reply_dir", "/home/kamailio/tmp/")
 ...
 
-1.4.6. reply_indent (string)
+4.6. reply_indent (string)
 
-   Strings to be used for line indentation. As the MI data
-   structure is tree oriendeted, the depth level will printed as
-   indentation.
+   Strings to be used for line indentation. As the MI data structure is
+   tree oriendeted, the depth level will printed as indentation.
 
-   Default value is ""\t" (TAB)".
+   Default value is “"\t" (TAB)”.
 
    Example 1.6. Set reply_indent parameter
 ...
 modparam("mi_fifo", "reply_indent", "    ")
 ...
 
-1.5. Exported Functions
+5. Exported Functions
 
    No function exported to be used from configuration file.
 
-1.6. Example
+6. Example
 
-   This is an example showing the FIFO format for the
-   "get_statistics dialog: tm:" MI commad: response.
+   This is an example showing the FIFO format for the “get_statistics
+   dialog: tm:” MI commad: response.
 
    Example 1.7. FIFO request
-
 :get_statistics:reply_fifo\n
 dialog:\n
 tm:\n

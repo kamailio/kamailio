@@ -2,36 +2,33 @@ Statistics Module
 
 Bogdan Iancu
 
-   voice-system.ro
+   Voice Sistem SRL
 
 Edited by
 
 Bogdan Iancu
 
-   Copyright © 2006 voice-system.ro
-   Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
-     __________________________________________________________
+   Copyright Â© 2006 Voice Sistem SRL
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. variable (string)
+              3.1. variable (string)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. update_stat(variable,value)
-              1.4.2. reset_stat(variable)
+              4.1. update_stat(variable,value)
+              4.2. reset_stat(variable)
 
    List of Examples
 
@@ -41,32 +38,54 @@ Bogdan Iancu
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. variable (string)
+
+   4. Exported Functions
+
+        4.1. update_stat(variable,value)
+        4.2. reset_stat(variable)
+
+1. Overview
 
    The Statistics module is a wrapper over the internal statistics
-   manager, allowing the script writer to dynamically define and
-   use of statistic variables.
+   manager, allowing the script writer to dynamically define and use of
+   statistic variables.
 
-   By bringing the statistics support into the script, it takes
-   advantage of the script flexibility in defining logics, making
-   possible implementation of any kind of statistic scenario.
+   By bringing the statistics support into the script, it takes advantage
+   of the script flexibility in defining logics, making possible
+   implementation of any kind of statistic scenario.
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * No dependencies on other Kamailio modules.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * None.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. variable (string)
+   3.1. variable (string)
+
+3.1. variable (string)
 
    Name of a new statistic variable. The name may be followed by
    additional flag which describe the variable behavior:
@@ -76,9 +95,12 @@ Chapter 1. Admin Guide
 modparam("statistics", "variable", "register_counter")
 modparam("statistics", "variable", "active_calls/no_reset")
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1.  update_stat(variable,value)
+   4.1. update_stat(variable,value)
+   4.2. reset_stat(variable)
+
+4.1.  update_stat(variable,value)
 
    Updates the value of the statistic variable with the new value.
 
@@ -98,7 +120,7 @@ $var(a_calls) = "active_calls";
 update_stat("$var(a_calls)", "-1");
 ...
 
-1.4.2.  reset_stat(variable)
+4.2.  reset_stat(variable)
 
    Resets to zero the value of the statistic variable.
 

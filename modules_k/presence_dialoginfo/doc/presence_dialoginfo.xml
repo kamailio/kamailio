@@ -42,12 +42,6 @@
 	    <year>2008</year>
 	    <holder>Klaus Darilion, IPCom (Module implementation was partly sponsored by Silver Server (www.sil.at))</holder>
 	</copyright>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision: 1 $</revnumber>
-		<date>$Date: 2007-04-30 14:05:57 +0200 (Mon, 30 Jan 2007) $</date>
-	    </revision>
-	</revhistory>
   </bookinfo>
     <toc></toc>
     

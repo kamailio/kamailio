@@ -16,12 +16,9 @@
 	    <author>
 		<firstname>Anca-Maria</firstname>
 		<surname>Vamanu</surname>
-		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<affiliation><orgname>Voice Sistem SRL</orgname></affiliation>
 		<address>
 		<email>anca@voice-system.ro</email>
-		<otheraddr>
-		<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
-		</otheraddr>
 		</address>
 	    </author>
 	    <editor>
@@ -34,14 +31,8 @@
 	</authorgroup>
 	<copyright>
 	    <year>2007</year>
-	    <holder>&voicesystem;</holder>
+	    <holder>Voice Sistem SRL</holder>
 	</copyright>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision: 2492 $</revnumber>
-		<date>$Date: 2007-07-20 14:04:13 +0300 (Fri, 20 Jul 2007) $</date>
-	    </revision>
-	</revhistory>
   </bookinfo>
     <toc></toc>
     

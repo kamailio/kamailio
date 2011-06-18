@@ -20,12 +20,9 @@
 		<author>
 		<firstname></firstname>
 		<surname></surname>
-		<affiliation><orgname>&vsname;</orgname></affiliation>
+		<affiliation><orgname>Voice Sistem SRL</orgname></affiliation>
 		<address>
 			<email>team@voice-system.ro</email>
-		<otheraddr>
-			<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
-		</otheraddr>
 		</address>
 		</author>
 		<editor>
@@ -38,14 +35,8 @@
 	</authorgroup>
 	<copyright>
 		<year>2005-2008</year>
-		<holder>&voicesystem;</holder>
+		<holder>Voice Sistem SRL</holder>
 	</copyright>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision: 4473 $</revnumber>
-		<date>$Date: 2008-07-12 00:16:22 +0300 (Sat, 12 Jul 2008) $</date>
-		</revision>
-	</revhistory>
 	</bookinfo>
 	<toc></toc>
 

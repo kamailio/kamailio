@@ -13,11 +13,6 @@ Marius Zbihlei
    1&1 Internet AG
 
    Copyright © 2007 1&1 Internet AG
-   Revision History
-   Revision $Revision: 2 $ $Date: 2005-06-13 18:47:24 +0200 (Mo, 13 Jun
-                           2005) $
-   Revision $Revision: 3 $ $Date: 2011-01-10 12:00:00 +0200 (Mo, 10 Jan
-                           2011) $
      __________________________________________________________________
 
    Table of Contents
@@ -127,10 +122,6 @@ Marius Zbihlei
    1.26. Example database content - reg_table (locdb) table
 
 Chapter 1. User's Guide
-
-   Revision History
-   Revision $Revision: 3 $ $Date: 2011-01-10 12:00:00 +0200 (Mo, 10 Jan
-                           2011) $
 
    Table of Contents
 
@@ -706,10 +697,6 @@ modparam("p_usrloc", "db_mode", 2)
    necessary.
 
 Chapter 2. Developer's Guide
-
-   Revision History
-   Revision $Revision: 2 $ $Date: 2005-06-13 18:47:24 +0200 (Mo, 13 Jun
-                           2005) $
 
    Table of Contents
 

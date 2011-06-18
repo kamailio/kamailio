@@ -16,7 +16,7 @@
 		<author>
 		<firstname>Andreea-Ancuta</firstname>
 		<surname>Onofrei</surname>
-		<affiliation><orgname>&vsname;</orgname></affiliation>
+		<affiliation><orgname>Voice Sistem SRL</orgname></affiliation>
 		<address>
 			<email>team@voice-system.ro</email>
 		</address>
@@ -35,22 +35,12 @@
 	</authorgroup>
 	<copyright>
 		<year>2007-2008</year>
-		<holder>&voicesystem;</holder>
+		<holder>Voice Sistem SRL</holder>
 	</copyright>
 	<copyright>
 		<year>2008-2010</year>
 		<holder>Juha Heinanen</holder>
 	</copyright>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision: 1.1 $</revnumber>
-		<date>$Date: 2007/08/30 13:16:22 $</date>
-		</revision>
-		<revision>
-		<revnumber>$Revision: 1.2 $</revnumber>
-		<date>$Date: 2008/10/9 15:57 $</date>
-		</revision>
-	</revhistory>
 	</bookinfo>
 	<toc></toc>
 	

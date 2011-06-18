@@ -4,9 +4,7 @@ Andrei Pelinescu-Onciul
 
    iptelorg GmbH
 
-   Copyright © 2010 iptelorg GmbH
-   Revision History
-   Revision $Revision$ $Date$
+   Copyright Â© 2010 iptelorg GmbH
      __________________________________________________________________
 
    1.1. Overview
@@ -45,9 +43,6 @@ Warning
 
 1.2. Parameters
 
-   Revision History
-   Revision $Revision$ $Date$
-
 1.2.1. check_content
 
    When doing the tests, check also for the possibility of the memory
@@ -65,9 +60,6 @@ modparam("malloc_test", "check_content", 1)
 $ sercmd cfg.set_now_int malloc_test check_content 1
 
 1.3. Functions
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.3.1. mt_mem_alloc(size)
 
@@ -98,9 +90,6 @@ mem_free();
 ...
 
 1.4. malloc_test RPC Functions
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.4.1.  mt.mem_alloc size [unit]
 

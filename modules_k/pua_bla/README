@@ -2,39 +2,36 @@ PUA Bridged Line Appearances
 
 Anca-Maria Vamanu
 
-   voice-system.ro
+   Voice Sistem SRL
 
 Edited by
 
 Anca-Maria Vamanu
 
-   Copyright � 2007 voice-system.ro
-   Revision History
-   Revision $Revision: 1294 $ $Date: 2007-03-13 14:05:07 +0200
-                              (Thu, 13 March 2007) $
-     __________________________________________________________
+   Copyright © 2007 Voice Sistem SRL
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. default_domain(str)
-              1.3.2. header_name(str)
-              1.3.3. outbound_proxy(str)
-              1.3.4. server_address(str)
+              3.1. default_domain(str)
+              3.2. header_name(str)
+              3.3. outbound_proxy(str)
+              3.4. server_address(str)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. bla_set_flag
-              1.4.2. bla_handle_notify
+              4.1. bla_set_flag
+              4.2. bla_handle_notify
 
    List of Examples
 
@@ -47,68 +44,94 @@ Anca-Maria Vamanu
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   The pua_bla module enables Bridged Line Appearances support
-   according to the specifications in
-   draft-anil-sipping-bla-03.txt.
+   1. Overview
+   2. Dependencies
 
-1.2. Dependencies
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
 
-1.2.1. Kamailio Modules
+   3. Exported Parameters
+
+        3.1. default_domain(str)
+        3.2. header_name(str)
+        3.3. outbound_proxy(str)
+        3.4. server_address(str)
+
+   4. Exported Functions
+
+        4.1. bla_set_flag
+        4.2. bla_handle_notify
+
+1. Overview
+
+   The pua_bla module enables Bridged Line Appearances support according
+   to the specifications in draft-anil-sipping-bla-03.txt.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * usrloc.
      * pua.
      * presence.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * libxml.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. default_domain(str)
+   3.1. default_domain(str)
+   3.2. header_name(str)
+   3.3. outbound_proxy(str)
+   3.4. server_address(str)
+
+3.1. default_domain(str)
 
    The default domain for the registered users to be used when
    constructing the uri for the registrar callback.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.1. Set default_domain parameter
 ...
 modparam("pua_bla", "default_domain", "kamailio.org")
 ...
 
-1.3.2. header_name(str)
+3.2. header_name(str)
 
-   The name of the header to be added to Publish requests. It will
-   contain the uri of the user agent that sent the Notify that is
-   transformed into Publish. It stops sending a Notification with
-   the same information to the sender.
+   The name of the header to be added to Publish requests. It will contain
+   the uri of the user agent that sent the Notify that is transformed into
+   Publish. It stops sending a Notification with the same information to
+   the sender.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.2. Set header_name parameter
 ...
 modparam("pua_bla", "header_name", "Sender")
 ...
 
-1.3.3. outbound_proxy(str)
+3.3. outbound_proxy(str)
 
-   The outbound_proxy uri to be used when sending Subscribe
-   requests.
+   The outbound_proxy uri to be used when sending Subscribe requests.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.3. Set outbound_proxy parameter
 ...
 modparam("pua_bla", "outbound_proxy", "sip:proxy@kamailio.org")
 ...
 
-1.3.4. server_address(str)
+3.4. server_address(str)
 
    The IP address of the server.
 
@@ -117,13 +140,15 @@ modparam("pua_bla", "outbound_proxy", "sip:proxy@kamailio.org")
 modparam("pua_bla", "server_address", "sip:bla@160.34.23.12")
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1.  bla_set_flag
+   4.1. bla_set_flag
+   4.2. bla_handle_notify
 
-   The function is used to mark REGISTER requests made to a BLA
-   AOR. The modules subscribes to the registered contacts for
-   dialog;sla event.
+4.1.  bla_set_flag
+
+   The function is used to mark REGISTER requests made to a BLA AOR. The
+   modules subscribes to the registered contacts for dialog;sla event.
 
    Example 1.5. bla_set_flag usage
 ...
@@ -131,12 +156,12 @@ if(is_method("REGISTER") && to_uri=~"bla_aor@kamailio.org")
         bla_set_flag();
 ...
 
-1.4.2.  bla_handle_notify
+4.2.  bla_handle_notify
 
-   The function handles Notify requests sent from phones on the
-   same BLA to the server. The message is transformed in Publish
-   request and passed to presence module for further handling. in
-   case of a successful processing a 2xx reply should be sent.
+   The function handles Notify requests sent from phones on the same BLA
+   to the server. The message is transformed in Publish request and passed
+   to presence module for further handling. in case of a successful
+   processing a 2xx reply should be sent.
 
    Example 1.6. bla_handle_notify usage
 ...

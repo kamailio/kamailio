@@ -64,7 +64,7 @@
 	</copyright>
 	<copyright>
 		<year>2005</year>
-		<holder>&voicesystem;</holder>
+		<holder>Voice Sistem SRL</holder>
 	</copyright>
 	<copyright>
 		<year>2009</year>
@@ -74,12 +74,6 @@
 		<year>2010</year>
 		<holder><ulink url='http://www.voipembedded.com'>VoIPEmbedded Inc.</ulink></holder>
 	</copyright>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-		</revision>
-	</revhistory>
 	</bookinfo>
 	<toc></toc>
 	

@@ -23,12 +23,6 @@
 	    <year>2005</year>
 	    <holder>FhG FOKUS</holder>
 	</copyright>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </sectioninfo>
 
     <title>Db_flatstore Module</title>

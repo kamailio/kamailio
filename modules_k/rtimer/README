@@ -11,23 +11,23 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2009 http://www.asipto.com
-     __________________________________________________________
+   Copyright Â© 2009 http://www.asipto.com
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. timer (str)
-              1.3.2. exec (str)
+              3.1. timer (str)
+              3.2. exec (str)
 
    List of Examples
 
@@ -36,39 +36,56 @@ Daniel-Constantin Mierla
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   The module executes route blocks on a timer base. It can create
-   new timer processes and execute many route blocks on same
-   timer.
+   1. Overview
+   2. Dependencies
 
-   A static faked SIP message is given as parameter to called
-   functions, so all functions available for REQUEST_ROUTE can be
-   used.
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
 
-1.2. Dependencies
+   3. Exported Parameters
 
-1.2.1. Kamailio Modules
+        3.1. timer (str)
+        3.2. exec (str)
+
+1. Overview
+
+   The module executes route blocks on a timer base. It can create new
+   timer processes and execute many route blocks on same timer.
+
+   A static faked SIP message is given as parameter to called functions,
+   so all functions available for REQUEST_ROUTE can be used.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * No dependencies on other Kamailio modules.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * None.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. timer (str)
+   3.1. timer (str)
+   3.2. exec (str)
 
-   The definition of a timer. The value of the parameter must have
-   the following format:
+3.1. timer (str)
+
+   The definition of a timer. The value of the parameter must have the
+   following format:
      * "name=_string_;mode=_number_;interval=_number_"
 
-   The parameter can be set multiple times to get more timers in
-   same configuration file.
+   The parameter can be set multiple times to get more timers in same
+   configuration file.
      * name - name of the timer.
      * mode - if set to 1, will create a new timer process.
      * interval - timer interval in seconds.
@@ -80,14 +97,14 @@ Chapter 1. Admin Guide
 modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
 ...
 
-1.3.2. exec (str)
+3.2. exec (str)
 
-   Specify route to be executed on timer. The value of the
-   parameter must have the following format:
+   Specify route to be executed on timer. The value of the parameter must
+   have the following format:
      * "timer=_string_;route=_number_"
 
-   The parameter can be set multiple times to get more routes
-   executed on same timer.
+   The parameter can be set multiple times to get more routes executed on
+   same timer.
      * timer - name of the timer.
      * route - the index of the route to be executed.
 

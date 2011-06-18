@@ -5,8 +5,6 @@ Juha Heinanen
    <jh@tutpro.com>
 
    Copyright © 2002-2010 Juha Heinanen
-   Revision History
-   Revision $Revision$ $Date$
      __________________________________________________________________
 
    1.1. Overview
@@ -221,9 +219,6 @@ iptel
 
 1.4. Parameters
 
-   Revision History
-   Revision $Revision$ $Date$
-
 1.4.1. db_url (string)
 
    This is URL of the database to be used.
@@ -384,9 +379,6 @@ modparam("domain", "load_domain_attrs", 1)
 
 1.5. Functions
 
-   Revision History
-   Revision $Revision$ $Date$
-
 1.5.1. is_local(domain)
 
    This function can be used to test whether a given domain name in
@@ -484,9 +476,6 @@ if ($fd.did && $td.did) {
 }
 
 1.6. FIFO Interface
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.6.1. domain.reload
 

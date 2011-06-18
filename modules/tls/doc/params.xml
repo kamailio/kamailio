@@ -9,12 +9,6 @@
 
 <section id="tls.parameters">
     <sectioninfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </sectioninfo>
 
     <title>Parameters</title>

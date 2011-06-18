@@ -14,35 +14,35 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2005 voice-system.ro
+   Copyright © 2005 Voice Sistem SRL
 
-   Copyright � 2008 asipto.com
-     __________________________________________________________
+   Copyright © 2008 asipto.com
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. db_url (str)
-              1.3.2. user_column (str)
-              1.3.3. domain_column (str)
-              1.3.4. alias_user_column (str)
-              1.3.5. alias_domain_column (str)
-              1.3.6. use_domain (int)
-              1.3.7. domain_prefix (str)
-              1.3.8. append_branches (int)
+              3.1. db_url (str)
+              3.2. user_column (str)
+              3.3. domain_column (str)
+              3.4. alias_user_column (str)
+              3.5. alias_domain_column (str)
+              3.6. use_domain (int)
+              3.7. domain_prefix (str)
+              3.8. append_branches (int)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. alias_db_lookup(table_name)
+              4.1. alias_db_lookup(table_name)
 
    List of Examples
 
@@ -58,142 +58,176 @@ Daniel-Constantin Mierla
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   ALIAS_DB module can be used as an alternative for user aliases
-   via usrloc. The main feature is that it does not store all
-   addiacent data as for user location and always uses database
-   for search (no memory caching).
+   1. Overview
+   2. Dependencies
 
-   Having no memory caching the speed of search can decrease but
-   the provisioning is easier. With very fast databases like MySQL
-   the speed penalty can be lowered. Also, the search can be
-   performed on different tables in the same script.
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
 
-1.2. Dependencies
+   3. Exported Parameters
 
-1.2.1. Kamailio Modules
+        3.1. db_url (str)
+        3.2. user_column (str)
+        3.3. domain_column (str)
+        3.4. alias_user_column (str)
+        3.5. alias_domain_column (str)
+        3.6. use_domain (int)
+        3.7. domain_prefix (str)
+        3.8. append_branches (int)
+
+   4. Exported Functions
+
+        4.1. alias_db_lookup(table_name)
+
+1. Overview
+
+   ALIAS_DB module can be used as an alternative for user aliases via
+   usrloc. The main feature is that it does not store all addiacent data
+   as for user location and always uses database for search (no memory
+   caching).
+
+   Having no memory caching the speed of search can decrease but the
+   provisioning is easier. With very fast databases like MySQL the speed
+   penalty can be lowered. Also, the search can be performed on different
+   tables in the same script.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * database module (mysql, dbtext, ...).
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * None.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. db_url (str)
+   3.1. db_url (str)
+   3.2. user_column (str)
+   3.3. domain_column (str)
+   3.4. alias_user_column (str)
+   3.5. alias_domain_column (str)
+   3.6. use_domain (int)
+   3.7. domain_prefix (str)
+   3.8. append_branches (int)
+
+3.1. db_url (str)
 
    Database URL.
 
-   Default value is
-   "mysql://openserro:openserro@localhost/openser".
+   Default value is “mysql://openserro:openserro@localhost/openser”.
 
    Example 1.1. Set db_url parameter
 ...
-modparam("alias_db", "db_url", "dbdriver://username:password@dbhost/dbna
-me")
+modparam("alias_db", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
-1.3.2. user_column (str)
+3.2. user_column (str)
 
    Name of the column storing username.
 
-   Default value is "username".
+   Default value is “username”.
 
    Example 1.2. Set user_column parameter
 ...
 modparam("alias_db", "user_column", "susername")
 ...
 
-1.3.3. domain_column (str)
+3.3. domain_column (str)
 
    Name of the column storing user's domain.
 
-   Default value is "domain".
+   Default value is “domain”.
 
    Example 1.3. Set domain_column parameter
 ...
 modparam("alias_db", "domain_column", "sdomain")
 ...
 
-1.3.4. alias_user_column (str)
+3.4. alias_user_column (str)
 
    Name of the column storing alias username.
 
-   Default value is "alias_username".
+   Default value is “alias_username”.
 
    Example 1.4. Set alias_user_column parameter
 ...
 modparam("alias_db", "alias_user_column", "auser")
 ...
 
-1.3.5. alias_domain_column (str)
+3.5. alias_domain_column (str)
 
    Name of the column storing alias domain.
 
-   Default value is "alias_domain".
+   Default value is “alias_domain”.
 
    Example 1.5. Set alias_domain_column parameter
 ...
 modparam("alias_db", "alias_domain_column", "adomain")
 ...
 
-1.3.6. use_domain (int)
+3.6. use_domain (int)
 
-   Specifies whether to use or not the domain from R-URI when
-   searching for alias. If set to 0, the domain from R-URI is not
-   used, if set to 1 the domain from R-URI is used.
+   Specifies whether to use or not the domain from R-URI when searching
+   for alias. If set to 0, the domain from R-URI is not used, if set to 1
+   the domain from R-URI is used.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.6. Set use_domain parameter
 ...
 modparam("alias_db", "use_domain", 1)
 ...
 
-1.3.7. domain_prefix (str)
+3.7. domain_prefix (str)
 
-   Specifies the prefix to be stripped from the domain in R-URI
-   before doing the search.
+   Specifies the prefix to be stripped from the domain in R-URI before
+   doing the search.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.7. Set domain_prefix parameter
 ...
 modparam("alias_db", "domain_prefix", "sip.")
 ...
 
-1.3.8. append_branches (int)
+3.8. append_branches (int)
 
-   If the alias resolves to many SIP IDs, the first is replacing
-   the R-URI, the rest are added as branches.
+   If the alias resolves to many SIP IDs, the first is replacing the
+   R-URI, the rest are added as branches.
 
-   Default value is "0" (0 - don't add branches; 1 - add
-   branches).
+   Default value is “0” (0 - don't add branches; 1 - add branches).
 
    Example 1.8. Set append_branches parameter
 ...
 modparam("alias_db", "append_branches", 1)
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1.  alias_db_lookup(table_name)
+   4.1. alias_db_lookup(table_name)
 
-   The function takes the R-URI and search to see whether it is an
-   alias or not. If it is an alias for a local user, the R-URI is
-   replaced with user's SIP uri.
+4.1.  alias_db_lookup(table_name)
 
-   The function returns TRUE if R-URI is alias and it was replaced
-   by user's SIP uri.
+   The function takes the R-URI and search to see whether it is an alias
+   or not. If it is an alias for a local user, the R-URI is replaced with
+   user's SIP uri.
+
+   The function returns TRUE if R-URI is alias and it was replaced by
+   user's SIP uri.
 
    Meaning of the parameters is as follows:
-     * table_name - the name of the table where to search for
-       alias. It can include pseudo-variables.
+     * table_name - the name of the table where to search for alias. It
+       can include pseudo-variables.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 

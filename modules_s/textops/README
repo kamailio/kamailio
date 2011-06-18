@@ -5,8 +5,6 @@ Andrei Pelinescu-Onciul
    FhG FOKUS
 
    Copyright © 2003 FhG FOKUS
-   Revision History
-   Revision $Revision$ $Date$
      __________________________________________________________________
 
    1.1. Overview
@@ -53,9 +51,6 @@ From: medabeda
  <sip:medameda@foo.bar>;tag=1234
 
 1.2. Functions
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.2.1.  search(re)
 

@@ -9,12 +9,6 @@
 
 <section id="malloc_test.rpcs" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<sectioninfo>
-		<revhistory>
-			<revision>
-				<revnumber>$Revision$</revnumber>
-				<date>$Date$</date>
-			</revision>
-		</revhistory>
 	</sectioninfo>
 	<title>malloc_test RPC Functions</title>
 

@@ -27,12 +27,6 @@
 	    <year>2003</year>
 	    <holder>FhG FOKUS</holder>
 	</copyright>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </sectioninfo>
 
     <title>Auth_radius Module</title>

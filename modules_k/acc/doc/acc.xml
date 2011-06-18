@@ -22,7 +22,7 @@
 		<author>
 		<firstname>Bogdan-Andrei</firstname>
 		<surname>Iancu</surname>
-		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<affiliation><orgname>Voice Sistem SRL</orgname></affiliation>
 		<email>bogdan@voice-system.ro</email>
 		</author>
 		<author>
@@ -34,7 +34,7 @@
 		<editor>
 		<firstname>Bogdan-Andrei</firstname>
 		<surname>Iancu</surname>
-		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<affiliation><orgname>Voice Sistem SRL</orgname></affiliation>
 		<email>bogdan@voice-system.ro</email>
 		</editor>
 	</authorgroup>
@@ -46,14 +46,8 @@
 	<copyright>
 		<year>2004</year>
 		<year>2006</year>
-		<holder>&voicesystem;</holder>
+		<holder>Voice Sistem SRL</holder>
 	</copyright>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-		</revision>
-	</revhistory>
 	</bookinfo>
 	<toc></toc>
 

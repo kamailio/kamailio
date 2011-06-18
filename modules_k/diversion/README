@@ -8,31 +8,28 @@ Edited by
 
 Jan Janak
 
-   Copyright � 2004 FhG FOKUS
-   Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
-     __________________________________________________________
+   Copyright © 2004 FhG FOKUS
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. suffix (string)
+              3.1. suffix (string)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. add_diversion(reason)
+              4.1. add_diversion(reason)
 
-        1.5. Diversion Example
+        5. Diversion Example
 
    2. Developer Guide
 
@@ -43,58 +40,80 @@ Jan Janak
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. suffix (string)
+
+   4. Exported Functions
+
+        4.1. add_diversion(reason)
+
+   5. Diversion Example
+
+1. Overview
 
    The module implements the Diversion extensions as per
-   draft-levy-sip-diversion-08. The diversion extensions are
-   useful in various scenarios involving call forwarding.
-   Typically one needs to communicate the original recipient of
-   the call to the PSTN gateway and this is what the diversion
-   extensions can be used for.
+   draft-levy-sip-diversion-08. The diversion extensions are useful in
+   various scenarios involving call forwarding. Typically one needs to
+   communicate the original recipient of the call to the PSTN gateway and
+   this is what the diversion extensions can be used for.
 
 Warning
 
-   The draft-levy-sip-diversion-08 is expired!! See IETF I-D
-   tracker.
+   The draft-levy-sip-diversion-08 is expired!! See IETF I-D tracker.
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    None.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * None.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. suffix (string)
+   3.1. suffix (string)
 
-   The suffix to be appended to the end of the header field. You
-   can use the parameter to specify additional parameters to be
-   added to the header field, see the example.
+3.1. suffix (string)
 
-   Default value is "" (empty string).
+   The suffix to be appended to the end of the header field. You can use
+   the parameter to specify additional parameters to be added to the
+   header field, see the example.
+
+   Default value is “” (empty string).
 
    Example 1.1. suffix usage
 modparam("diversion", "suffix", ";privacy=full")
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1. add_diversion(reason)
+   4.1. add_diversion(reason)
+
+4.1. add_diversion(reason)
 
    The function adds a new diversion header field before any other
    existing Diversion header field in the message (the newly added
-   Diversion header field will become the topmost Diversion header
-   field). The inbound (without any modifications done by the
-   proxy server) Request-URI will be used as the Diversion URI.
+   Diversion header field will become the topmost Diversion header field).
+   The inbound (without any modifications done by the proxy server)
+   Request-URI will be used as the Diversion URI.
 
    Meaning of the parameters is as follows:
-     * reason - The reason string to be added as the reason
-       parameter
+     * reason - The reason string to be added as the reason parameter
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
@@ -103,11 +122,11 @@ modparam("diversion", "suffix", ";privacy=full")
 add_diversion("user-busy");
 ...
 
-1.5. Diversion Example
+5. Diversion Example
 
-   The following example shows a Diversion header field added to
-   INVITE message. The original INVITE received by the user agent
-   of sip:bob@sip.org is:
+   The following example shows a Diversion header field added to INVITE
+   message. The original INVITE received by the user agent of
+   sip:bob@sip.org is:
 INVITE sip:bob@sip.org SIP/2.0
 Via: SIP/2.0/UDP 1.2.3.4:5060
 From: "mark" <sip:mark@sip.org>;tag=ldgheoihege
@@ -117,9 +136,9 @@ CSeq: 3 INVITE
 Contact: <sip:mark@1.2.3.4>
 Content-Length: 0
 
-   The INVITE message is diverted by the user agent of
-   sip:bob@sip.org because the user was talking to someone else
-   and the new destination is sip:alice@sip.org :
+   The INVITE message is diverted by the user agent of sip:bob@sip.org
+   because the user was talking to someone else and the new destination is
+   sip:alice@sip.org :
 INVITE sip:alice@sip.org SIP/2.0
 Via: SIP/2.0/UDP 5.6.7.8:5060
 Via: SIP/2.0/UDP 1.2.3.4:5060
@@ -133,32 +152,29 @@ Content-Length: 0
 
 Chapter 2. Developer Guide
 
-   According to the specification new Diversion header field
-   should be inserted as the topmost Diversion header field in the
-   message, that means before any other existing Diversion header
-   field in the message. In addition to that, add_diversion
-   function can be called several times and each time it should
-   insert the new Diversion header field as the topmost one.
+   According to the specification new Diversion header field should be
+   inserted as the topmost Diversion header field in the message, that
+   means before any other existing Diversion header field in the message.
+   In addition to that, add_diversion function can be called several times
+   and each time it should insert the new Diversion header field as the
+   topmost one.
 
-   In order to implement this, add_diversion function creates the
-   anchor in data_lump lists as a static variable to ensure that
-   the next call of the function will use the same anchor and
-   would insert new Diversion headers before the one created in
-   the previous execution. To my knowledge this is the only way of
-   inserting the diversion header field before any other created
-   in previous runs of the function.
+   In order to implement this, add_diversion function creates the anchor
+   in data_lump lists as a static variable to ensure that the next call of
+   the function will use the same anchor and would insert new Diversion
+   headers before the one created in the previous execution. To my
+   knowledge this is the only way of inserting the diversion header field
+   before any other created in previous runs of the function.
 
-   The anchor kept this way is only valid for a single message and
-   we have to invalidate it when another message is being
-   processed. For this reason, the function also stores the id of
-   the message in another static variable and compares the value
-   of that variable with the id of the SIP message being
-   processed. If they differ then the anchor will be invalidated
-   and the function creates a new one.
+   The anchor kept this way is only valid for a single message and we have
+   to invalidate it when another message is being processed. For this
+   reason, the function also stores the id of the message in another
+   static variable and compares the value of that variable with the id of
+   the SIP message being processed. If they differ then the anchor will be
+   invalidated and the function creates a new one.
 
-   The following code snippet shows the code that invalidates the
-   anchor, new anchor will be created when the anchor variable is
-   set to 0.
+   The following code snippet shows the code that invalidates the anchor,
+   new anchor will be created when the anchor variable is set to 0.
 static inline int add_diversion_helper(struct sip_msg* msg, str* s)
 {
     static struct lump* anchor = 0;

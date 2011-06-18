@@ -4,12 +4,6 @@
 
 <section id="pike.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </sectioninfo>
 
     <title>Parameters</title>

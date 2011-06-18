@@ -2,12 +2,6 @@
 
 <chapter>
   <chapterinfo>
-    <revhistory>
-      <revision>
-        <revnumber>$Revision$</revnumber>
-        <date>$Date$</date>
-      </revision>
-    </revhistory>
   </chapterinfo>
   <title>Developer's Guide</title>
   <para>The functions of the OSP modules are not used by other SER modules.</para>

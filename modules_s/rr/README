@@ -4,9 +4,7 @@ Jan Janak
 
    FhG FOKUS
 
-   Copyright © 2003 FhG FOKUS
-   Revision History
-   Revision $Revision$ $Date$
+   Copyright Â© 2003 FhG FOKUS
      __________________________________________________________________
 
    1.1. Overview
@@ -32,9 +30,6 @@ Jan Janak
    The module contains record routing logic
 
 1.2. Parameters
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.2.1. enable_full_lr (integer)
 
@@ -149,9 +144,6 @@ modparam("rr", "force_send_socket", 1)
 ...
 
 1.3. Functions
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.3.1.  loose_route()
 

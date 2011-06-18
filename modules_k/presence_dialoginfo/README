@@ -19,30 +19,27 @@ Klaus Darilion
 
    <klaus.darilion@mailinglists@pernau.at>
 
-   Copyright � 2007 Juha Heinanen
+   Copyright © 2007 Juha Heinanen
 
-   Copyright � 2008 Klaus Darilion, IPCom (Module implementation
-   was partly sponsored by Silver Server (www.sil.at))
-   Revision History
-   Revision $Revision: 1 $ $Date: 2007-04-30 14:05:57 +0200 (Mon,
-                           30 Jan 2007) $
-     __________________________________________________________
+   Copyright © 2008 Klaus Darilion, IPCom (Module implementation was
+   partly sponsored by Silver Server (www.sil.at))
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. force_single_dialog (int)
+              3.1. force_single_dialog (int)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
    List of Examples
 
@@ -50,43 +47,51 @@ Klaus Darilion
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   The module enables the handling of "Event: dialog" (as defined
-   in RFC 4235) inside of the presence module. This can be used
-   distribute the dialog-info status to the subscribed watchers.
+   1. Overview
+   2. Dependencies
 
-   The module does not currently implement any authorization
-   rules. It assumes that publish requests are only issued by an
-   authorized application and subscribe requests only by
-   authorized users. Authorization can thus be easily done in
-   Kamailio configuration file before calling handle_publish() and
-   handle_subscribe() functions.
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
 
-   Note: This module only activates the processing of the "dialog"
-   in the presence module. To send dialog-info to watchers you
-   also need a source which PUBLISH the dialog info to the
-   presence module. For example you can use the pua_dialoginfo
-   module or any external component. This approach allows to have
-   the presence server and the dialog-info aware publisher (e.g.
-   the main proxy) on different Kamailio instances.
+   3. Exported Parameters
 
-   This module by default does body aggregation. That means, if
-   the presence module received PUBLISH from multiple presentities
-   (e.g. if the entity has multiple dialogs the pua_dialoginfo
-   will send multiple PUBLISH), the module will parse all the
-   received (and still valid, depending on the Expires header in
-   the PUBLISH request) XML documents and generate a single XML
-   document with multiple "dialog" elements. This is perfectly
-   valid, but unfortunately not supported by all SIP phones, e.g.
-   Linksys SPA962 crashes when it receives dialog-info with
-   multiple dialog elements. In this case use the ..... module
-   parameter.
+        3.1. force_single_dialog (int)
 
-   To get better understanding how all the module works together
-   please take a look at the follwing figure:
+   4. Exported Functions
 
+1. Overview
 
+   The module enables the handling of "Event: dialog" (as defined in RFC
+   4235) inside of the presence module. This can be used distribute the
+   dialog-info status to the subscribed watchers.
+
+   The module does not currently implement any authorization rules. It
+   assumes that publish requests are only issued by an authorized
+   application and subscribe requests only by authorized users.
+   Authorization can thus be easily done in Kamailio configuration file
+   before calling handle_publish() and handle_subscribe() functions.
+
+   Note: This module only activates the processing of the "dialog" in the
+   presence module. To send dialog-info to watchers you also need a source
+   which PUBLISH the dialog info to the presence module. For example you
+   can use the pua_dialoginfo module or any external component. This
+   approach allows to have the presence server and the dialog-info aware
+   publisher (e.g. the main proxy) on different Kamailio instances.
+
+   This module by default does body aggregation. That means, if the
+   presence module received PUBLISH from multiple presentities (e.g. if
+   the entity has multiple dialogs the pua_dialoginfo will send multiple
+   PUBLISH), the module will parse all the received (and still valid,
+   depending on the Expires header in the PUBLISH request) XML documents
+   and generate a single XML document with multiple "dialog" elements.
+   This is perfectly valid, but unfortunately not supported by all SIP
+   phones, e.g. Linksys SPA962 crashes when it receives dialog-info with
+   multiple dialog elements. In this case use the ..... module parameter.
+
+   To get better understanding how all the module works together please
+   take a look at the follwing figure:
     Main Proxy and Presence Server on the same Instance
 
    caller        proxy &      callee         watcher
@@ -119,29 +124,25 @@ alice@example   presence   bob@example   watcher@example
      |             |<-------200 OK--------------|
      |             |            |               |
 
-
      * The watcher subscribes the "Event: dialog" of Bob.
      * Alice calls Bob.
-     * Bob replies with ringing, the dialog in the dialog module
-       transits to "early". The callback in pua_dialoginfo is
-       executed. The pua_dialoginfo module creates the XML
-       document and uses the pua module to send the PUBLISH. (pua
-       module itself uses tm module to send the PUBLISH stateful)
-     * PUBLISH is received and handled by presence module.
-       Presence module updates the "presentity". Presence module
-       checks for active watchers of the presentity. It gives all
-       the XML dcouments to presence_dialoginfo module to
-       aggregate them into a single XML document. Then it sends
-       the NOTIFY with the aggregated XML document to all active
-       watchers.
+     * Bob replies with ringing, the dialog in the dialog module transits
+       to "early". The callback in pua_dialoginfo is executed. The
+       pua_dialoginfo module creates the XML document and uses the pua
+       module to send the PUBLISH. (pua module itself uses tm module to
+       send the PUBLISH stateful)
+     * PUBLISH is received and handled by presence module. Presence module
+       updates the "presentity". Presence module checks for active
+       watchers of the presentity. It gives all the XML dcouments to
+       presence_dialoginfo module to aggregate them into a single XML
+       document. Then it sends the NOTIFY with the aggregated XML document
+       to all active watchers.
 
-   The presence server can also be separated from the main proxy
-   by using a separate Kamailio instance as shown in the following
-   figure. (Either set the outbound_proxy parameter of pua module
-   or make sure to route the "looped" PUBLISH requests from the
-   main proxy to the presence server).
-
-
+   The presence server can also be separated from the main proxy by using
+   a separate Kamailio instance as shown in the following figure. (Either
+   set the outbound_proxy parameter of pua module or make sure to route
+   the "looped" PUBLISH requests from the main proxy to the presence
+   server).
     Main Proxy and Presence Server use a separate Instance
 
    caller        proxy &   presence      callee         watcher
@@ -166,51 +167,51 @@ alice@example    server     server     bob@example   watcher@example
      |             |            |<-------200 OK--------------|
      |             |            |               |            |
 
-
-
-
    Known issues:
-     * The "version" attribute is increased for every NOTIFY, even
-       if the XML document has not changed. This is of course
-       valid, but not very smart.
+     * The "version" attribute is increased for every NOTIFY, even if the
+       XML document has not changed. This is of course valid, but not very
+       smart.
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * presence.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
    None.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. force_single_dialog (int)
+   3.1. force_single_dialog (int)
 
-   By default the module aggregates all available dialog info into
-   a single dialog-info document containing multiple "dialog"
-   elements. If the phone does not support this, you can activate
-   this parameter.
+3.1. force_single_dialog (int)
 
-   If this parameter is set, only the dialog element with the
-   currently most interesting dialog state will be put into the
-   dialog-info document. Thus, the dialog-info element will
-   contain only a single "dialog" element. The algorithm chooses
-   the state based onf the following order of priority (least
-   important first): terminated, trying, proceeding, confirmed,
-   early. Note: I consider the "early" state more intersting than
-   confirmed as often you might want to pickup a call if the
-   originall callee is already busy in a call.
+   By default the module aggregates all available dialog info into a
+   single dialog-info document containing multiple "dialog" elements. If
+   the phone does not support this, you can activate this parameter.
 
-   Default value is "0".
+   If this parameter is set, only the dialog element with the currently
+   most interesting dialog state will be put into the dialog-info
+   document. Thus, the dialog-info element will contain only a single
+   "dialog" element. The algorithm chooses the state based onf the
+   following order of priority (least important first): terminated,
+   trying, proceeding, confirmed, early. Note: I consider the "early"
+   state more intersting than confirmed as often you might want to pickup
+   a call if the originall callee is already busy in a call.
+
+   Default value is “0”.
 
    Example 1.1. Set parameter
 ...
 modparam("presence_dialoginfo", "force_single_dialog", 1)
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
    None to be used in configuration file.

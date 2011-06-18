@@ -10,10 +10,7 @@ Dan Pascu
 
    <dan@ag-projects.com>
 
-   Copyright � 2005-2008 Dan Pascu
-   Revision History
-   Revision $Revision: 1 $ $Date: 2008-12-17 13:05:29 +0200 (Wed, 17 Dec
-                           2008) $
+   Copyright © 2005-2008 Dan Pascu
      __________________________________________________________________
 
    Table of Contents
@@ -180,7 +177,7 @@ Chapter 1. Admin Guide
    return a code indicating that there is no limit associated with the
    call, allowing the use of the same configuration without changes.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.1. Setting the disable parameter
 ...
@@ -192,7 +189,7 @@ modparam("call_control", "disable", 1)
    It is the path to the filesystem socket where the callcontrol
    application listens for commands from the module.
 
-   Default value is "/var/run/callcontrol/socket".
+   Default value is “/var/run/callcontrol/socket”.
 
    Example 1.2. Setting the socket_name parameter
 ...
@@ -204,7 +201,7 @@ modparam("call_control", "socket_name", "/var/run/callcontrol/socket")
    How much time (in milliseconds) to wait for an answer from the
    callcontrol application.
 
-   Default value is "500" (ms).
+   Default value is “500” (ms).
 
    Example 1.3. Setting the socket_timeout parameter
 ...
@@ -230,7 +227,7 @@ modparam("call_control", "socket_timeout", 500)
    call based on caller's SIP URI, caller's SIP domain or caller's IP
    address (whichever yields a rate forst, in this order).
 
-   Default value is "$avp(s:signaling_ip)".
+   Default value is “$avp(s:signaling_ip)”.
 
    Example 1.4. Setting the signaling_ip_avp parameter
 ...
@@ -246,7 +243,7 @@ modparam("call_control", "signaling_ip_avp", "$avp(s:signaling_ip)")
    have a different, canonical form in the rating engine computation than
    it has in the ruri.
 
-   Default value is "$avp(s:can_uri)".
+   Default value is “$avp(s:can_uri)”.
 
    Example 1.5. Setting the canonical_uri_avp parameter
 ...
@@ -260,7 +257,7 @@ modparam("call_control", "canonical_uri_avp", "$avp(s:can_uri)")
    by the rating engine as the billing party when finding the rates to
    apply to a given call, otherwise, the caller's URI taken from the From
    field will be used. When set, this AVP should contain a value in the
-   form "user@domain" (no sip: prefix should be used).
+   form “user@domain” (no sip: prefix should be used).
 
    This is useful when a destination diverts a call, thus becoming the new
    caller. In this case the billing party is the diverter and this AVP
@@ -270,7 +267,7 @@ modparam("call_control", "canonical_uri_avp", "$avp(s:can_uri)")
    because B is the billing party in the call not A after the call was
    diverted.
 
-   Default value is "805".
+   Default value is “805”.
 
    Example 1.6. Setting the diverter_avp_id parameter
 ...

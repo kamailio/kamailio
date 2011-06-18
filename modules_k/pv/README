@@ -11,7 +11,7 @@ Daniel-Constantin Mierla
 
    <daniel@asipto.com>
 
-   Copyright � 2008 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2008 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -113,11 +113,11 @@ Chapter 1. Admin Guide
    _value_
      * _name_: shared variable name
      * _type_: type of the value
-          + "i": integer value
-          + "s": string value
+          + “i”: integer value
+          + “s”: string value
      * _value_: value to be set
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.1. shvset parameter usage
 ...
@@ -134,11 +134,11 @@ modparam("pv", "shvset", "pstngw=s:sip:10.10.10.10")
    _value_
      * _name_: shared variable name
      * _type_: type of the value
-          + "i": integer value
-          + "s": string value
+          + “i”: integer value
+          + “s”: string value
      * _value_: value to be set
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.2. varset parameter usage
 ...
@@ -205,8 +205,8 @@ pv_unset("$avp("s:x")");
    Parameters:
      * _name_: shared variable name
      * _type_: type of the value
-          + "int": integer value
-          + "str": string value
+          + “int”: integer value
+          + “str”: string value
      * _value_: value to be set
 
    MI FIFO Command Format:

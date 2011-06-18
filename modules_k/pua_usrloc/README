@@ -2,15 +2,13 @@ PUA Usrloc
 
 Anca-Maria Vamanu
 
-   voice-system.ro
+   Voice Sistem SRL
 
 Edited by
 
 Anca-Maria Vamanu
 
-   Copyright � 2006 voice-system.ro
-   Revision History
-   Revision $Revision$ $Date$
+   Copyright © 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -95,7 +93,7 @@ Chapter 1. Admin Guide
    The default domain to use when constructing the presentity URI if it is
    missing from recorded AOR.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.1. Set default_domain parameter
 ...
@@ -107,7 +105,7 @@ modparam("pua_usrloc", "default_domain", "kamailio.org")
    The prefix when construstructing entity attribute to be added to
    presence node in XML PIDF. (ex: pres:user@domain ).
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.2. Set presentity_prefix parameter
 ...
@@ -118,7 +116,7 @@ modparam("pua_usrloc", "entity_prefix", "pres")
 
    4.1. pua_set_publish()
 
-4.1. pua_set_publish()
+4.1.  pua_set_publish()
 
    The function is used to mark REGISTER requests that have to issue a
    PUBLISH. The PUBLISH is issued when REGISTER is saved in location

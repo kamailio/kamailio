@@ -11,7 +11,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2009 Daniel-Constantin Mierla
+   Copyright © 2009 Daniel-Constantin Mierla
      __________________________________________________________________
 
    Table of Contents
@@ -139,7 +139,7 @@ Chapter 1. Admin Guide
    3.5. t_is_failure_route()
    3.6. t_is_branch_route()
 
-3.1. t_cancel_branches(which)
+3.1.  t_cancel_branches(which)
 
    Cancel branches of an active SIP transaction. The function can be
    called for a SIP reply that will identify the current branch.
@@ -158,7 +158,7 @@ if (t_cancel_branches("all")) {
 }
 ...
 
-3.2. t_cancel_callid(callid, cseq, flag)
+3.2.  t_cancel_callid(callid, cseq, flag)
 
    Cancel first INVITE transaction identified by callid and cseq. It sets
    the flag if the value is greater than zero
@@ -177,7 +177,7 @@ if (t_cancel_callid("123qaz", "5", "22")) {
 }
 ...
 
-3.3. t_reply_callid(callid, cseq, code, reason)
+3.3.  t_reply_callid(callid, cseq, code, reason)
 
    Send reply to first INVITE transaction identified by callid and cseq.
 
@@ -196,7 +196,7 @@ if (t_reply_callid("123qaz", "5", "458", "Replied remotely")) {
 }
 ...
 
-3.4. t_flush_flags()
+3.4.  t_flush_flags()
 
    Flush the flags from current SIP message into the already created
    transaction. It make sense only in routing block if the transaction was
@@ -209,7 +209,7 @@ if (t_reply_callid("123qaz", "5", "458", "Replied remotely")) {
 t_flush_flags();
 ...
 
-3.5. t_is_failure_route()
+3.5.  t_is_failure_route()
 
    Returns true if the top-executed route block is failure_route.
 
@@ -226,7 +226,7 @@ route[abc] {
 }
 ...
 
-3.6. t_is_branch_route()
+3.6.  t_is_branch_route()
 
    Returns true if the top-executed route block is branch_route.
 
@@ -261,22 +261,22 @@ route[abc] {
    5.4. t_reply
    5.5. t_reply_callid
 
-5.1. t_uac_dlg
+5.1.  t_uac_dlg
 
    Generates and sends a local SIP request.
 
    Parameters:
      * method - request method
      * RURI - request SIP URI
-     * NEXT HOP - next hop SIP URI (OBP); use "." if no value.
-     * socket - local socket to be used for sending the request; use "."
+     * NEXT HOP - next hop SIP URI (OBP); use “.” if no value.
+     * socket - local socket to be used for sending the request; use “.”
        if no value.
      * headers - set of additional headers to be added to the request; at
-       least "From" and "To" headers must be specify)
+       least “From” and “To” headers must be specify)
      * body - (optional, may not be present) request body (if present,
-       requires the "Content-Type" and "Content-length" headers)
+       requires the “Content-Type” and “Content-length” headers)
 
-5.2. t_uac_cancel
+5.2.  t_uac_cancel
 
    Generates and sends a CANCEL for an existing local SIP request.
 
@@ -284,14 +284,14 @@ route[abc] {
      * callid - callid of the INVITE request to be cancelled.
      * cseq - cseq of the INVITE request to be cancelled.
 
-5.3. t_hash
+5.3.  t_hash
 
    Gets information about the load of TM internal hash table.
 
    Parameters:
      * none
 
-5.4. t_reply
+5.4.  t_reply
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
@@ -301,11 +301,11 @@ route[abc] {
      * trans_id - transaction identifier (has the hash_entry:label format)
      * to_tag - To tag to be added to TO header
      * new_headers - extra headers to be appended to the reply; use a dot
-       (".") char only if there are no headers;
+       (“.”) char only if there are no headers;
      * body - (optional, may not be present) reply body (if present,
-       requires the "Content-Type" and "Content-length" headers)
+       requires the “Content-Type” and “Content-length” headers)
 
-5.5. t_reply_callid
+5.5.  t_reply_callid
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
@@ -316,9 +316,9 @@ route[abc] {
      * cseq - SIP CSeq header
      * to_tag - To tag to be added to TO header
      * new_headers - extra headers to be appended to the reply; use a dot
-       (".") char only if there are no headers;
+       (“.”) char only if there are no headers;
      * body - (optional, may not be present) reply body (if present,
-       requires the "Content-Type" and "Content-length" headers)
+       requires the “Content-Type” and “Content-length” headers)
 
 6. Exported statistics
 
@@ -335,7 +335,7 @@ route[abc] {
    6.11. inuse_transactions
 
    Exported statistics are listed in the next sections. All statistics
-   except "inuse_transactions" can be reset.
+   except “inuse_transactions” can be reset.
 
 6.1. received_replies
 

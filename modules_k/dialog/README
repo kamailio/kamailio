@@ -4,13 +4,21 @@ Bogdan-Andrei Iancu
 
    Voice Sistem SRL
 
+Carsten Bock
+
+   ng-voice.com
+
 Edited by
 
 Bogdan-Andrei Iancu
 
-   Copyright © 2006 voice-system.ro
-   Revision History
-   Revision $Revision$ $Date$
+Edited by
+
+Carsten Bock
+
+   Copyright © 2006 Voice Sistem SRL
+
+   Copyright © 2011 Carsten Bock, http://www.ng-voice.com
      __________________________________________________________________
 
    Table of Contents
@@ -61,9 +69,14 @@ Bogdan-Andrei Iancu
               5.32. timeout_column (string)
               5.33. sflags_column (string)
               5.34. toroute_column (string)
-              5.35. profiles_with_value (string)
-              5.36. profiles_no_value (string)
-              5.37. bridge_controller (string)
+              5.35. vars_table_name (string)
+              5.36. vars_h_id_column (string)
+              5.37. vars_h_entry_column (string)
+              5.38. vars_key_column (string)
+              5.39. vars_value_column (string)
+              5.40. profiles_with_value (string)
+              5.41. profiles_no_value (string)
+              5.42. bridge_controller (string)
 
         6. Exported Functions
 
@@ -117,6 +130,7 @@ Bogdan-Andrei Iancu
               10.3. $DLG_lifetime
               10.4. $dlg(...)
               10.5. $dlg_ctx(...)
+              10.6. $dlg_var(key)
 
    2. Developer Guide
 
@@ -162,22 +176,27 @@ Bogdan-Andrei Iancu
    1.32. Set timeout_column parameter
    1.33. Set sflags_column parameter
    1.34. Set toroute_column parameter
-   1.35. Set profiles_with_value parameter
-   1.36. Set profiles_no_value parameter
-   1.37. Set bridge_controller parameter
-   1.38. set_dlg_profile usage
-   1.39. unset_dlg_profile usage
-   1.40. is_in_profile usage
-   1.41. get_profile_size usage
-   1.42. dlg_isflagset usage
-   1.43. dlg_setflag usage
-   1.44. dlg_resetflag usage
-   1.45. dlg_bye usage
-   1.46. dlg_refer usage
-   1.47. dlg_manage usage
-   1.48. dlg_bridge usage
-   1.49. dlg_get usage
-   1.50. is_known_dlg() usage
+   1.35. Set vars_table_name parameter
+   1.36. Set vars_h_id_column parameter
+   1.37. Set vars_h_entry_column parameter
+   1.38. Set vars_key_column parameter
+   1.39. Set vars_value_column parameter
+   1.40. Set profiles_with_value parameter
+   1.41. Set profiles_no_value parameter
+   1.42. Set bridge_controller parameter
+   1.43. set_dlg_profile usage
+   1.44. unset_dlg_profile usage
+   1.45. is_in_profile usage
+   1.46. get_profile_size usage
+   1.47. dlg_isflagset usage
+   1.48. dlg_setflag usage
+   1.49. dlg_resetflag usage
+   1.50. dlg_bye usage
+   1.51. dlg_refer usage
+   1.52. dlg_manage usage
+   1.53. dlg_bridge usage
+   1.54. dlg_get usage
+   1.55. is_known_dlg() usage
 
 Chapter 1. Admin Guide
 
@@ -227,9 +246,14 @@ Chapter 1. Admin Guide
         5.32. timeout_column (string)
         5.33. sflags_column (string)
         5.34. toroute_column (string)
-        5.35. profiles_with_value (string)
-        5.36. profiles_no_value (string)
-        5.37. bridge_controller (string)
+        5.35. vars_table_name (string)
+        5.36. vars_h_id_column (string)
+        5.37. vars_h_entry_column (string)
+        5.38. vars_key_column (string)
+        5.39. vars_value_column (string)
+        5.40. profiles_with_value (string)
+        5.41. profiles_no_value (string)
+        5.42. bridge_controller (string)
 
    6. Exported Functions
 
@@ -283,6 +307,7 @@ Chapter 1. Admin Guide
         10.3. $DLG_lifetime
         10.4. $dlg(...)
         10.5. $dlg_ctx(...)
+        10.6. $dlg_var(key)
 
 1. Overview
 
@@ -386,9 +411,14 @@ Chapter 1. Admin Guide
    5.32. timeout_column (string)
    5.33. sflags_column (string)
    5.34. toroute_column (string)
-   5.35. profiles_with_value (string)
-   5.36. profiles_no_value (string)
-   5.37. bridge_controller (string)
+   5.35. vars_table_name (string)
+   5.36. vars_h_id_column (string)
+   5.37. vars_h_entry_column (string)
+   5.38. vars_key_column (string)
+   5.39. vars_value_column (string)
+   5.40. profiles_with_value (string)
+   5.41. profiles_no_value (string)
+   5.42. bridge_controller (string)
 
 5.1. enable_stats (integer)
 
@@ -823,35 +853,93 @@ modparam("dialog", "sflags_column", "s_flags")
 modparam("dialog", "toroute_column", "timeout_route")
 ...
 
-5.35. profiles_with_value (string)
+5.35. vars_table_name (string)
+
+   If you want to store the variables for a dialog in a database a table
+   name must be specified.
+
+   Default value is “dialog_vars”.
+
+   Example 1.35. Set vars_table_name parameter
+...
+modparam("dialog", "vars_table_name", "my_dialog_vars")
+...
+
+5.36. vars_h_id_column (string)
+
+   The column name in the database to store the dialogs' hash id
+   information (as a reference to the dialog table).
+
+   Default value is “hash_id”.
+
+   Example 1.36. Set vars_h_id_column parameter
+...
+modparam("dialog", "vars_h_id_column", "vars_h_id_name")
+...
+
+5.37. vars_h_entry_column (string)
+
+   The column name in the database to store the dialogs' hash entry
+   information (as a reference to the dialog table).
+
+   Default value is “hash_entry”.
+
+   Example 1.37. Set vars_h_entry_column parameter
+...
+modparam("dialog", "vars_h_entry_column", "vars_h_entry_name")
+...
+
+5.38. vars_key_column (string)
+
+   The column name in the database to store the keys of a variable.
+
+   Default value is “dialog_key”.
+
+   Example 1.38. Set vars_key_column parameter
+...
+modparam("dialog", "vars_key_column", "vars_key_name")
+...
+
+5.39. vars_value_column (string)
+
+   The column name in the database to store the keys of a variable.
+
+   Default value is “dialog_value”.
+
+   Example 1.39. Set vars_value_column parameter
+...
+modparam("dialog", "vars_value_column", "vars_value_name")
+...
+
+5.40. profiles_with_value (string)
 
    List of names for profiles with values.
 
    Default value is “empty”.
 
-   Example 1.35. Set profiles_with_value parameter
+   Example 1.40. Set profiles_with_value parameter
 ...
 modparam("dialog", "profiles_with_value", "caller ; my_profile")
 ...
 
-5.36. profiles_no_value (string)
+5.41. profiles_no_value (string)
 
    List of names for profiles without values.
 
    Default value is “empty”.
 
-   Example 1.36. Set profiles_no_value parameter
+   Example 1.41. Set profiles_no_value parameter
 ...
 modparam("dialog", "profiles_no_value", "inbound ; outbound")
 ...
 
-5.37. bridge_controller (string)
+5.42. bridge_controller (string)
 
    SIP address to be used in From header when initiating a call bridge.
 
    Default value is “sip:controller@kamailio.org”.
 
-   Example 1.37. Set bridge_controller parameter
+   Example 1.42. Set bridge_controller parameter
 ...
 modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
 ...
@@ -888,7 +976,7 @@ modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.38. set_dlg_profile usage
+   Example 1.43. set_dlg_profile usage
 ...
 set_dlg_profile("inbound_call");
 set_dlg_profile("caller","$fu");
@@ -907,7 +995,7 @@ set_dlg_profile("caller","$fu");
    This function can be used from BRANCH_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.39. unset_dlg_profile usage
+   Example 1.44. unset_dlg_profile usage
 ...
 unset_dlg_profile("inbound_call");
 unset_dlg_profile("caller","$fu");
@@ -930,7 +1018,7 @@ unset_dlg_profile("caller","$fu");
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.40. is_in_profile usage
+   Example 1.45. is_in_profile usage
 ...
 if (is_in_profile("inbound_call")) {
         log("this request belongs to a inbound call\n");
@@ -959,7 +1047,7 @@ if (is_in_profile("caller","XX")) {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.41. get_profile_size usage
+   Example 1.46. get_profile_size usage
 ...
 if(get_profile_size("inbound_call","$avp(size)"))
     xlog("currently there are $avp(size) inbound calls\n");
@@ -978,7 +1066,7 @@ if(get_profile_size("caller","$fu","$avp(size)"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.42. dlg_isflagset usage
+   Example 1.47. dlg_isflagset usage
 ...
 if(dlg_isflagset("1"))
 {
@@ -996,7 +1084,7 @@ if(dlg_isflagset("1"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.43. dlg_setflag usage
+   Example 1.48. dlg_setflag usage
 ...
 dlg_setflag("1");
 ...
@@ -1011,7 +1099,7 @@ dlg_setflag("1");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.44. dlg_resetflag usage
+   Example 1.49. dlg_resetflag usage
 ...
 redlg_setflag("1");
 ...
@@ -1027,7 +1115,7 @@ redlg_setflag("1");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.45. dlg_bye usage
+   Example 1.50. dlg_bye usage
 ...
 dlg_bye("all");
 ...
@@ -1043,7 +1131,7 @@ dlg_bye("all");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.46. dlg_refer usage
+   Example 1.51. dlg_refer usage
 ...
 dlg_refer("caller", "sip:annoucement@kamailio.org");
 ...
@@ -1056,7 +1144,7 @@ dlg_refer("caller", "sip:annoucement@kamailio.org");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.47. dlg_manage usage
+   Example 1.52. dlg_manage usage
 ...
 modparam("dialog", "default_timeout", 100)
 ...
@@ -1084,7 +1172,7 @@ route {
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.48. dlg_bridge usage
+   Example 1.53. dlg_bridge usage
 ...
 dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    "sip:kamailio.org:5080");
@@ -1103,7 +1191,7 @@ dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.49. dlg_get usage
+   Example 1.54. dlg_get usage
 ...
 if(dlg_get("abcdef", "123", "456"))
 {
@@ -1127,7 +1215,7 @@ if(dlg_get("abcdef", "123", "456"))
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.50. is_known_dlg() usage
+   Example 1.55. is_known_dlg() usage
 ...
 if(!uri == myself) {
         if(is_known_dlg()) {
@@ -1450,6 +1538,7 @@ if(!uri == myself) {
    10.3. $DLG_lifetime
    10.4. $dlg(...)
    10.5. $dlg_ctx(...)
+   10.6. $dlg_var(key)
 
 10.1. $DLG_count
 
@@ -1484,6 +1573,15 @@ if(!uri == myself) {
 
    Access to dialog context attributes.
 
+10.6. $dlg_var(key)
+
+   This is a read/write variable that can be used to store custom values
+   assigned with a dialog (e.g. the URI of a billing-server, an assigned
+   emergency-server). This pseudo-variable will be available only for
+   subsequential requests after doing loose_route().
+
+   Note: You will receive "NULL", if there is no dialog for this request.
+
 Chapter 2. Developer Guide
 
    Table of Contents
@@ -1513,7 +1611,8 @@ Chapter 2. Developer Guide
           + DLGCB_FAILED - called when the dialog was negatively replied
             (non-2xx) - it's a per dialog type.
           + DLGCB_CONFIRMED - called when the dialog is confirmed (2xx
-            replied) - it's a per dialog type.
+            replied) and the setup-concluding ACK message from the caller
+            has been seen - it's a per dialog type.
           + DLGCB_REQ_WITHIN - called when the dialog matches a sequential
             request - it's a per dialog type.
           + DLGCB_TERMINATED - called when the dialog is terminated via
@@ -1566,20 +1665,20 @@ Chapter 3. Frequently Asked Questions
        First at all check if your question was already answered on one of our
        mailing lists:
          * User Mailing List -
-           http://lists.kamailio.org/cgi-bin/mailman/listinfo/users
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
          * Developer Mailing List -
-           http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
        E-mails regarding any stable Kamailio release should be sent to
-       <users@lists.kamailio.org> and e-mails regarding development versions
-       should be sent to <devel@lists.kamailio.org>.
+       <sr-users@lists.sip-router.org> and e-mails regarding development
+       versions should be sent to <sr-dev@lists.sip-router.org>.
 
        If you want to keep the mail private, send it to
-       <team@lists.kamailio.org>.
+       <sr-users@lists.sip-router.org>.
 
    3.4.
 
        How can I report a bug?
 
        Please follow the guidelines provided at:
-       http://sourceforge.net/tracker/?group_id=139143.
+       http://sip-router.org/tracker.

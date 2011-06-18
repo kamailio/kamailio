@@ -5,8 +5,6 @@ Andrei Pelinescu-Onciul
    iptelorg GmbH
 
    Copyright © 2007 iptelorg GmbH
-   Revision History
-   Revision $Revision$ $Date$
      __________________________________________________________________
 
    1.1. Overview
@@ -27,9 +25,6 @@ Andrei Pelinescu-Onciul
    This module exports blacklist related functions to the script.
 
 1.2. Functions
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.2.1.  blst_add([timeout])
 

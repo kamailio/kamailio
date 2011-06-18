@@ -12,43 +12,40 @@ Edited by
 
 Jan Janak
 
-   Copyright � 2003 FhG FOKUS
-   Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
-     __________________________________________________________
+   Copyright © 2003 FhG FOKUS
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
+        1. Overview
 
-              1.1.1. Strict membership checking
-              1.1.2. Regular Expression based checking
+              1.1. Strict membership checking
+              1.2. Regular Expression based checking
 
-        1.2. Dependencies
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. db_url (string)
-              1.3.2. table (string)
-              1.3.3. user_column (string)
-              1.3.4. domain_column (string)
-              1.3.5. group_column (string)
-              1.3.6. use_domain (integer)
-              1.3.7. re_table (string)
-              1.3.8. re_exp_column (string)
-              1.3.9. re_gid_column (string)
-              1.3.10. multiple_gid (integer)
+              3.1. db_url (string)
+              3.2. table (string)
+              3.3. user_column (string)
+              3.4. domain_column (string)
+              3.5. group_column (string)
+              3.6. use_domain (integer)
+              3.7. re_table (string)
+              3.8. re_exp_column (string)
+              3.9. re_gid_column (string)
+              3.10. multiple_gid (integer)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. is_user_in(URI, group)
-              1.4.2. get_user_group(URI, AVP)
+              4.1. is_user_in(URI, group)
+              4.2. get_user_group(URI, AVP)
 
    List of Examples
 
@@ -67,108 +64,153 @@ Jan Janak
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   This module provides functionalities for different methods of
-   group membership checking.
+   1. Overview
 
-1.1.1. Strict membership checking
+        1.1. Strict membership checking
+        1.2. Regular Expression based checking
 
-   There is a database table that contains list of users and
-   groups they belong to. The module provides the possibility to
-   check if a specific user belongs to a specific group.
+   2. Dependencies
 
-   There is no DB caching support, each check involving a DB
-   query.
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
 
-1.1.2. Regular Expression based checking
+   3. Exported Parameters
 
-   Another database table contains list of regular expressions and
-   group IDs. A matching occurs if the user URI match the regular
-   expression. This type of matching may be used to fetch the
-   group ID(s) the user belongs to (via RE matching) .
+        3.1. db_url (string)
+        3.2. table (string)
+        3.3. user_column (string)
+        3.4. domain_column (string)
+        3.5. group_column (string)
+        3.6. use_domain (integer)
+        3.7. re_table (string)
+        3.8. re_exp_column (string)
+        3.9. re_gid_column (string)
+        3.10. multiple_gid (integer)
 
-   Due performance reasons (regular expression evaluation), DB
-   cache support is available: the table content is loaded into
-   memory at startup and all regular expressions are compiled.
+   4. Exported Functions
 
-1.2. Dependencies
+        4.1. is_user_in(URI, group)
+        4.2. get_user_group(URI, AVP)
 
-1.2.1. Kamailio Modules
+1. Overview
+
+   1.1. Strict membership checking
+   1.2. Regular Expression based checking
+
+   This module provides functionalities for different methods of group
+   membership checking.
+
+1.1. Strict membership checking
+
+   There is a database table that contains list of users and groups they
+   belong to. The module provides the possibility to check if a specific
+   user belongs to a specific group.
+
+   There is no DB caching support, each check involving a DB query.
+
+1.2. Regular Expression based checking
+
+   Another database table contains list of regular expressions and group
+   IDs. A matching occurs if the user URI match the regular expression.
+   This type of matching may be used to fetch the group ID(s) the user
+   belongs to (via RE matching) .
+
+   Due performance reasons (regular expression evaluation), DB cache
+   support is available: the table content is loaded into memory at
+   startup and all regular expressions are compiled.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * A database module, like mysql, postgres or dbtext
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * None.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. db_url (string)
+   3.1. db_url (string)
+   3.2. table (string)
+   3.3. user_column (string)
+   3.4. domain_column (string)
+   3.5. group_column (string)
+   3.6. use_domain (integer)
+   3.7. re_table (string)
+   3.8. re_exp_column (string)
+   3.9. re_gid_column (string)
+   3.10. multiple_gid (integer)
+
+3.1. db_url (string)
 
    URL of the database table to be used.
 
-   Default value is
-   "mysql://openserro:openserro@localhost/openser".
+   Default value is “mysql://openserro:openserro@localhost/openser”.
 
    Example 1.1. Set db_url parameter
 ...
 modparam("group", "db_url", "mysql://username:password@dbhost/openser")
 ...
 
-1.3.2. table (string)
+3.2. table (string)
 
-   Name of the table holding strict definitions of groups and
-   their members.
+   Name of the table holding strict definitions of groups and their
+   members.
 
-   Default value is "grp".
+   Default value is “grp”.
 
    Example 1.2. Set table parameter
 ...
 modparam("group", "table", "grp_table")
 ...
 
-1.3.3. user_column (string)
+3.3. user_column (string)
 
-   Name of the "table" column holding usernames.
+   Name of the “table” column holding usernames.
 
-   Default value is "username".
+   Default value is “username”.
 
    Example 1.3. Set user_column parameter
 ...
 modparam("group", "user_column", "user")
 ...
 
-1.3.4. domain_column (string)
+3.4. domain_column (string)
 
-   Name of the "table" column holding domains.
+   Name of the “table” column holding domains.
 
-   Default value is "domain".
+   Default value is “domain”.
 
    Example 1.4. Set domain_column parameter
 ...
 modparam("group", "domain_column", "realm")
 ...
 
-1.3.5. group_column (string)
+3.5. group_column (string)
 
-   Name of the "table" column holding groups.
+   Name of the “table” column holding groups.
 
-   Default value is "grp".
+   Default value is “grp”.
 
    Example 1.5. Set group_column parameter
 ...
 modparam("group", "group_column", "grp")
 ...
 
-1.3.6. use_domain (integer)
+3.6. use_domain (integer)
 
-   If enabled (set to non zero value) then domain will be used
-   also used for strict group matching; otherwise only the
-   username part will be used.
+   If enabled (set to non zero value) then domain will be used also used
+   for strict group matching; otherwise only the username part will be
+   used.
 
    Default value is 0 (no).
 
@@ -177,73 +219,76 @@ modparam("group", "group_column", "grp")
 modparam("group", "use_domain", 1)
 ...
 
-1.3.7. re_table (string)
+3.7. re_table (string)
 
-   Name of the table holding definitions for regular-expression
-   based groups. If no table is defined, the regular-expression
-   support is disabled.
+   Name of the table holding definitions for regular-expression based
+   groups. If no table is defined, the regular-expression support is
+   disabled.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.7. Set re_table parameter
 ...
 modparam("group", "re_table", "re_grp")
 ...
 
-1.3.8. re_exp_column (string)
+3.8. re_exp_column (string)
 
-   Name of the "re_table" column holding the regular expression
-   used for user matching.
+   Name of the “re_table” column holding the regular expression used for
+   user matching.
 
-   Default value is "reg_exp".
+   Default value is “reg_exp”.
 
    Example 1.8. Set reg_exp_column parameter
 ...
 modparam("group", "reg_exp_column", "re")
 ...
 
-1.3.9. re_gid_column (string)
+3.9. re_gid_column (string)
 
-   Name of the "re_table" column holding the group IDs.
+   Name of the “re_table” column holding the group IDs.
 
-   Default value is "group_id".
+   Default value is “group_id”.
 
    Example 1.9. Set re_gid_column parameter
 ...
 modparam("group", "re_gid_column", "grp_id")
 ...
 
-1.3.10. multiple_gid (integer)
+3.10. multiple_gid (integer)
 
-   If enabled (non zero value) the regular-expression matching
-   will return all group IDs that match the user; otherwise only
-   the first will be returned.
+   If enabled (non zero value) the regular-expression matching will return
+   all group IDs that match the user; otherwise only the first will be
+   returned.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.10. Set multiple_gid parameter
 ...
 modparam("group", "multiple_gid", 0)
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1.  is_user_in(URI, group)
+   4.1. is_user_in(URI, group)
+   4.2. get_user_group(URI, AVP)
 
-   This function is to be used for script group membership. The
-   function returns true if username in the given URI is member of
-   the given group and false if not.
+4.1.  is_user_in(URI, group)
+
+   This function is to be used for script group membership. The function
+   returns true if username in the given URI is member of the given group
+   and false if not.
 
    Meaning of the parameters is as follows:
-     * URI - URI whose username and optionally domain to be used,
-       this can be one of:
-          + Request-URI - Use Request-URI username and
-            (optionally) domain.
+     * URI - URI whose username and optionally domain to be used, this can
+       be one of:
+          + Request-URI - Use Request-URI username and (optionally)
+            domain.
           + To - Use To username and (optionally) domain.
           + From - Use From username and (optionally) domain.
           + Credentials - Use digest credentials username.
-          + $avp(name) - Use the URI from the AVP specified by
-            this pseudo-variable.
+          + $avp(name) - Use the URI from the AVP specified by this
+            pseudo-variable.
      * group - Name of the group to check.
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
@@ -255,24 +300,21 @@ if (is_user_in("Request-URI", "ld")) {
 };
 ...
 
-1.4.2.  get_user_group(URI, AVP)
+4.2.  get_user_group(URI, AVP)
 
    This function is to be used for regular expression based group
-   membership. The function returns true if username in the given
-   URI belongs to at least one group; the group ID(s) are returned
-   as AVPs.
+   membership. The function returns true if username in the given URI
+   belongs to at least one group; the group ID(s) are returned as AVPs.
 
    Meaning of the parameters is as follows:
      * URI - URI to be matched against the regular expressions:
           + Request-URI - Use Request-URI
           + To - Use To URI.
           + From - Use From URI
-          + Credentials - Use digest credentials username and
-            realm.
-          + $avp(name) - Use the URI from the AVP specified by
-            this pseudo-variable.
-     * AVP - $avp(name) - the matched group IDs are returned in
-       this AVP.
+          + Credentials - Use digest credentials username and realm.
+          + $avp(name) - Use the URI from the AVP specified by this
+            pseudo-variable.
+     * AVP - $avp(name) - the matched group IDs are returned in this AVP.
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 

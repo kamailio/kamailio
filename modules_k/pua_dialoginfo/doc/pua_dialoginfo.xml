@@ -16,12 +16,9 @@
 	    <author>
 		<firstname>Anca-Maria</firstname>
 		<surname>Vamanu</surname>
-		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<affiliation><orgname>Voice Sistem SRL</orgname></affiliation>
 		<address>
 		<email>anca@voice-system.ro</email>
-		<otheraddr>
-		<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
-		</otheraddr>
 		</address>
 	    </author>
 	    <editor>
@@ -44,18 +41,12 @@
 	</authorgroup>
 	<copyright>
 	    <year>2006</year>
-	    <holder>&voicesystem;</holder>
+	    <holder>Voice Sistem SRL</holder>
 	</copyright>
 	<copyright>
 	    <year>2008</year>
 	    <holder>Klaus Darilion IPCom</holder>
 	</copyright>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision: 4594 $</revnumber>
-		<date>$Date: 2008-08-06 12:08:33 +0200 (Wed, 06 Aug 2008) $</date>
-	    </revision>
-	</revhistory>
   </bookinfo>
     <toc></toc>
     

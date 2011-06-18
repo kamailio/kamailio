@@ -11,50 +11,49 @@ Elena-Ramona Modroiu
 
    <ramona@asipto.com>
 
-   Copyright � 2003 FhG FOKUS
+   Copyright © 2003 FhG FOKUS
 
-   Copyright � 2004 voice-system.ro
+   Copyright © 2004 Voice Sistem SRL
 
-   Copyright � 2008 Elena-Ramona Modroiu
-     __________________________________________________________
+   Copyright © 2008 Elena-Ramona Modroiu
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. db_url (string)
-              1.3.2. db_table (string)
-              1.3.3. sdomain_column (string)
-              1.3.4. prefix_column (string)
-              1.3.5. domain_column (string)
-              1.3.6. prefix (string)
-              1.3.7. fetch_rows (integer)
-              1.3.8. char_list (string)
-              1.3.9. check_domain (integer)
+              3.1. db_url (string)
+              3.2. db_table (string)
+              3.3. sdomain_column (string)
+              3.4. prefix_column (string)
+              3.5. domain_column (string)
+              3.6. prefix (string)
+              3.7. fetch_rows (integer)
+              3.8. char_list (string)
+              3.9. check_domain (integer)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. prefix2domain(rewrite_mode, multidomain_mode)
+              4.1. prefix2domain(rewrite_mode, multidomain_mode)
+              4.2. prefix2domain(rewrite_mode)
+              4.3. prefix2domain()
 
-              1.4.2. prefix2domain(rewrite_mode)
-              1.4.3. prefix2domain()
+        5. Exported MI Functions
 
-        1.5. Exported MI Functions
+              5.1. pdt_add
+              5.2. pdt_delete
+              5.3. pdt_list
+              5.4. pdt_reload
 
-              1.5.1. pdt_add
-              1.5.2. pdt_delete
-              1.5.3. pdt_list
-              1.5.4. pdt_reload
-
-        1.6. Installation and Running
+        6. Installation and Running
 
    List of Examples
 
@@ -72,17 +71,52 @@ Elena-Ramona Modroiu
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   This module translates a numerical prefix into a domain and
-   updates accordingly the request URI.
+   1. Overview
+   2. Dependencies
 
-   The module looks up at the R-URI part of a message and if the
-   user part begins with an established prefix it will update the
-   URI. Updating the uri consists of: remove the prefix from the
-   user part of the uri and keep the rest as the user part of the
-   new uri. The host and port are changed with the domain matched
-   for the leading prefix and the domain in From URI.
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. db_url (string)
+        3.2. db_table (string)
+        3.3. sdomain_column (string)
+        3.4. prefix_column (string)
+        3.5. domain_column (string)
+        3.6. prefix (string)
+        3.7. fetch_rows (integer)
+        3.8. char_list (string)
+        3.9. check_domain (integer)
+
+   4. Exported Functions
+
+        4.1. prefix2domain(rewrite_mode, multidomain_mode)
+        4.2. prefix2domain(rewrite_mode)
+        4.3. prefix2domain()
+
+   5. Exported MI Functions
+
+        5.1. pdt_add
+        5.2. pdt_delete
+        5.3. pdt_list
+        5.4. pdt_reload
+
+   6. Installation and Running
+
+1. Overview
+
+   This module translates a numerical prefix into a domain and updates
+   accordingly the request URI.
+
+   The module looks up at the R-URI part of a message and if the user part
+   begins with an established prefix it will update the URI. Updating the
+   uri consists of: remove the prefix from the user part of the uri and
+   keep the rest as the user part of the new uri. The host and port are
+   changed with the domain matched for the leading prefix and the domain
+   in From URI.
 
    <prefix><userid><:password>@<mydomain.com> ...
 
@@ -102,98 +136,111 @@ entry in database:
 The RURI will be updated in the following way"
 sip:12391001@mydomain.com  => sip:91001@alpha.org
 
-   The prefix could be prefixed by other digits. These digits will
-   not be used to look up the domain (the classic example, 00 used
-   for international calls, then follows the country prefix). For
-   more information on this, see 'prefix' parameter.
+   The prefix could be prefixed by other digits. These digits will not be
+   used to look up the domain (the classic example, 00 used for
+   international calls, then follows the country prefix). For more
+   information on this, see 'prefix' parameter.
      * A sample config file is located in './doc/'.
-     * MySQL script to create the database needed by PDT is
-       located in '../../scripts/mysql/pdt-create.sql'
-       The database is loaded by Kamailio only at start up time
-       and only cache is used to lookup domains. Check the MI
-       Functions for adding/deleting prefix-domain pairs or
-       reloading from database at runtime.
-     * Sample shell scripts to manage prefix-domain pairs are also
-       located in './doc/' (pdt_fifo_add.sh, pdt_fifo_delete.sh,
+     * MySQL script to create the database needed by PDT is located in
+       '../../scripts/mysql/pdt-create.sql'
+       The database is loaded by Kamailio only at start up time and only
+       cache is used to lookup domains. Check the MI Functions for
+       adding/deleting prefix-domain pairs or reloading from database at
+       runtime.
+     * Sample shell scripts to manage prefix-domain pairs are also located
+       in './doc/' (pdt_fifo_add.sh, pdt_fifo_delete.sh,
        pdt_fifo_list.sh).
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * A Kamailio database module (e.g., mysql, dbtext).
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * None.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. db_url (string)
+   3.1. db_url (string)
+   3.2. db_table (string)
+   3.3. sdomain_column (string)
+   3.4. prefix_column (string)
+   3.5. domain_column (string)
+   3.6. prefix (string)
+   3.7. fetch_rows (integer)
+   3.8. char_list (string)
+   3.9. check_domain (integer)
+
+3.1. db_url (string)
 
    URL of the database table to be used.
 
-   Default value is "mysql://openser:openserrw@localhost/openser".
+   Default value is “mysql://openser:openserrw@localhost/openser”.
 
    Example 1.2. Set db_url parameter
 ...
 modparam("pdt", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
-1.3.2. db_table (string)
+3.2. db_table (string)
 
    Table name.
 
-   Default value is "pdt".
+   Default value is “pdt”.
 
    Example 1.3. Set db_table parameter
 ...
 modparam("pdt", "db_table", "pdt")
 ...
 
-1.3.3. sdomain_column (string)
+3.3. sdomain_column (string)
 
    Name of 'sdomain' column.
 
-   Default value is "sdomain".
+   Default value is “sdomain”.
 
    Example 1.4. Set sdomain_column parameter
 ...
 modparam("pdt", "domain_column", "source_domain")
 ...
 
-1.3.4. prefix_column (string)
+3.4. prefix_column (string)
 
    Name of 'prefix' column.
 
-   Default value is "prefix".
+   Default value is “prefix”.
 
    Example 1.5. Set prefix_column parameter
 ...
 modparam("pdt", "prefix_column", "prefix")
 ...
 
-1.3.5. domain_column (string)
+3.5. domain_column (string)
 
    Name of 'domain' column.
 
-   Default value is "domain".
+   Default value is “domain”.
 
    Example 1.6. Set domain_column parameter
 ...
 modparam("pdt", "domain_column", "hostname")
 ...
 
-1.3.6. prefix (string)
+3.6. prefix (string)
 
-   Default leading prefix who denotes what URI needs to be
-   translated - if it is NULL the module will not check the R-URI
-   against it and the PDT prefix is considered starting from the
-   first digit. Otherwise, the module will check first if the
-   R-URI starts with it and will skip it to look up the domain.
+   Default leading prefix who denotes what URI needs to be translated - if
+   it is NULL the module will not check the R-URI against it and the PDT
+   prefix is considered starting from the first digit. Otherwise, the
+   module will check first if the R-URI starts with it and will skip it to
+   look up the domain.
 
    Default value is NULL.
 
@@ -202,7 +249,7 @@ modparam("pdt", "domain_column", "hostname")
 modparam("pdt", "prefix", "00")
 ...
 
-1.3.7. fetch_rows (integer)
+3.7. fetch_rows (integer)
 
    Number of rows to be loaded in one step from database.
 
@@ -213,21 +260,21 @@ modparam("pdt", "prefix", "00")
 modparam("pdt", "fetch_rows", 4000)
 ...
 
-1.3.8. char_list (string)
+3.8. char_list (string)
 
    The list with characters allowed in prefix.
 
-   Default value is "0123456789".
+   Default value is “0123456789”.
 
    Example 1.9. Set char_list parameter
 ...
 modparam("pdt", "char_list", "0123456789*+")
 ...
 
-1.3.9. check_domain (integer)
+3.9. check_domain (integer)
 
-   Module will check if destination domain is duplicated for same
-   source domain (1 - check; 0 - don't check).
+   Module will check if destination domain is duplicated for same source
+   domain (1 - check; 0 - don't check).
 
    Default value is 1.
 
@@ -236,41 +283,44 @@ modparam("pdt", "char_list", "0123456789*+")
 modparam("pdt", "check_domain", 0)
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1.  prefix2domain(rewrite_mode, multidomain_mode)
+   4.1. prefix2domain(rewrite_mode, multidomain_mode)
+   4.2. prefix2domain(rewrite_mode)
+   4.3. prefix2domain()
 
-   Build a new URI if it is necessary. Returns 1 when the
-   translation was made or there was nothing to translate (user
-   part of the URI is empty, it does not match the prefix
-   parameter or there is no domain associated with a possible
-   prefix from user part). Returns -1 in error cases.
+4.1.  prefix2domain(rewrite_mode, multidomain_mode)
 
-   The translation is done based on lookup up for a entry in the
-   database where the sdomain equals the domain in FROM uri, and
-   the prefix matches the beginning of the user part of the RURI.
-   If such an entry is found, then the domain in RURI is updated
-   with the domain of this entry (sdomain, prefix, domain).
+   Build a new URI if it is necessary. Returns 1 when the translation was
+   made or there was nothing to translate (user part of the URI is empty,
+   it does not match the prefix parameter or there is no domain associated
+   with a possible prefix from user part). Returns -1 in error cases.
 
-   There is also the possibility to have the translation of URI
-   regardless of source domain. This can be achieved inserting in
-   the database entries where sdomain has the value "*".
+   The translation is done based on lookup up for a entry in the database
+   where the sdomain equals the domain in FROM uri, and the prefix matches
+   the beginning of the user part of the RURI. If such an entry is found,
+   then the domain in RURI is updated with the domain of this entry
+   (sdomain, prefix, domain).
 
-   The "rewrite_mode" parameter specifies whether to strip or not
-   the prefix from user part. The possible values are:
+   There is also the possibility to have the translation of URI regardless
+   of source domain. This can be achieved inserting in the database
+   entries where sdomain has the value "*".
+
+   The “rewrite_mode” parameter specifies whether to strip or not the
+   prefix from user part. The possible values are:
      * 0: the prefix is removed along with the leading prefix.
      * 1: only the leading prefix is removed.
      * 2: the user part of the URI is not changed.
      * $PV : any PV holding one of the above values.
 
-   The "multidomain_mode" parameter specifies the kind of
-   multidomain support to use. The possible values are:
+   The “multidomain_mode” parameter specifies the kind of multidomain
+   support to use. The possible values are:
      * 0 : Translation of URI regardless of source domain.
      * 1 : Translation of URI using as source domain the domain in
        From-URI.
      * 2 : Translation of URI using as source domain the domain in
-       From-URI. In case there is no entry for the required
-       sdomain, it tries the translation using "*" as sdomain.
+       From-URI. In case there is no entry for the required sdomain, it
+       tries the translation using "*" as sdomain.
      * $PV : any PV holding one of the above values.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -283,31 +333,36 @@ $var(a) = 1;
 prefix2domain("$var(a)", "2");
 ...
 
-1.4.2.  prefix2domain(rewrite_mode)
+4.2.  prefix2domain(rewrite_mode)
 
    The same as prefix2domain(rewrite_mode, "0"), that is without
-   multidomain support, translation of URI being done regardless
-   of the source domain.
+   multidomain support, translation of URI being done regardless of the
+   source domain.
 ...
 prefix2domain("2");
 ...
 
-1.4.3.  prefix2domain()
+4.3.  prefix2domain()
 
    The same as prefix2domain("0", "0").
 ...
 prefix2domain();
 ...
 
-1.5. Exported MI Functions
+5. Exported MI Functions
 
-   The database is loaded by Kamailio at start up time. The module
-   uses only the cache to look up domains. If you want to add or
-   delete a new prefix-domain pair at runtime you have to use MI
-   FIFO commands. All changes made via these commands are applied
-   to database and the cache is updated correspondingly.
+   5.1. pdt_add
+   5.2. pdt_delete
+   5.3. pdt_list
+   5.4. pdt_reload
 
-1.5.1.  pdt_add
+   The database is loaded by Kamailio at start up time. The module uses
+   only the cache to look up domains. If you want to add or delete a new
+   prefix-domain pair at runtime you have to use MI FIFO commands. All
+   changes made via these commands are applied to database and the cache
+   is updated correspondingly.
+
+5.1.  pdt_add
 
    Adds a new sdomain-prefix-domain entry.
 
@@ -316,8 +371,8 @@ prefix2domain();
    Parameters:
      * _sdomain_ : source domain
      * _prefix_: prefix
-     * _domain_: domain corresponding to a pair of source domain
-       and prefix
+     * _domain_: domain corresponding to a pair of source domain and
+       prefix
 
    MI FIFO Command Format:
                 :pdt_add:_reply_fifo_file_
@@ -326,7 +381,7 @@ prefix2domain();
                 _domain_
                 _empty_line_
 
-1.5.2.  pdt_delete
+5.2.  pdt_delete
 
    Removes a sdomain-prefix-domain entry.
 
@@ -334,8 +389,7 @@ prefix2domain();
 
    Parameters:
      * _sdomain_ : a source domain
-     * _domain_: a domain associated via a prefix with the source
-       domain
+     * _domain_: a domain associated via a prefix with the source domain
 
    MI FIFO Command Format:
                 :pdt_delete:_reply_fifo_file_
@@ -343,7 +397,7 @@ prefix2domain();
                 _domain_
                 _empty_line_
 
-1.5.3.  pdt_list
+5.3.  pdt_list
 
    Produces a listing of the entries prefixes/domains/sdomains.
 
@@ -356,8 +410,8 @@ prefix2domain();
 
    "." (dot) means NULL value
 
-   The comparison operation is 'START WITH' -- if domain is 'a'
-   then all domains starting with 'a' are listed.
+   The comparison operation is 'START WITH' -- if domain is 'a' then all
+   domains starting with 'a' are listed.
 
    MI FIFO Command Format:
                 :pdt_list:_reply_fifo_file_
@@ -367,17 +421,14 @@ prefix2domain();
                 _empty_line_
 
    Examples:
-     * "pdt_list siph 2 ." : Lists the entries where sdomain is
-       starting with 'siph', prefix is starting with '2' and
-       domain is anything
-     * "pdt_list siph 2" : Lists the entries where sdomain is
-       starting with 'siph', prefix is starting with '2' and
-       domain is anything
-     * "pdt_list . 2 open" : Lists the entries where sdomain is
-       anything, prefix starts with '2' and domain starts with
-       'open'.
+     * “pdt_list siph 2 .” : Lists the entries where sdomain is starting
+       with 'siph', prefix is starting with '2' and domain is anything
+     * “pdt_list siph 2” : Lists the entries where sdomain is starting
+       with 'siph', prefix is starting with '2' and domain is anything
+     * “pdt_list . 2 open” : Lists the entries where sdomain is anything,
+       prefix starts with '2' and domain starts with 'open'.
 
-1.5.4.  pdt_reload
+5.4.  pdt_reload
 
    Reload all sdomain-prefix-domain records from database.
 
@@ -390,8 +441,7 @@ prefix2domain();
                 :pdt_reload:_reply_fifo_file_
                 _empty_line_
 
-1.6. Installation and Running
+6. Installation and Running
 
-   Example shell scripts for MI FIFO commands are placed in
-   './doc/' (pdt_fifo_add.sh, pdt_fifo_delete.sh,
-   pdt_fifo_list.sh).
+   Example shell scripts for MI FIFO commands are placed in './doc/'
+   (pdt_fifo_add.sh, pdt_fifo_delete.sh, pdt_fifo_list.sh).

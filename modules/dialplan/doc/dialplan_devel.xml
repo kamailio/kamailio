@@ -12,12 +12,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision: 1.1 $</revnumber>
-		<date>$Date: 2007/08/30 13:16:22 $</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>Developer's Guide</title>
 	<para>

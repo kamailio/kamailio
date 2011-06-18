@@ -8,11 +8,11 @@
 	    <author>
 		<firstname>Elena-Ramona</firstname>
 		<surname>Modroiu</surname>
-		<affiliation><orgname>Voice Sistem</orgname></affiliation>
+		<affiliation><orgname>Asipto</orgname></affiliation>
 		<address>
-		    <email>ramona@voice-system.ro</email>
+		    <email>ramona@asipto.com</email>
 		    <otheraddr>
-			<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
+			<ulink url="http://www.asipto.com">http://www.asipto.com</ulink>
 		    </otheraddr>
 		</address>
 	    </author>
@@ -21,12 +21,6 @@
 	    <year>2004</year>
 	    <holder>Voice Sistem</holder>
 	</copyright>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </sectioninfo>
     
     <title>Speedial Module</title>

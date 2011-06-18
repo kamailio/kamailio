@@ -24,7 +24,7 @@
 		<author>
 		<firstname>Bogdan-Andrei</firstname>
 		<surname>Iancu</surname>
-		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<affiliation><orgname>Voice Sistem SRL</orgname></affiliation>
 		<address>
 			<email>bogdan@voice-system.ro</email>
 		</address>
@@ -58,18 +58,12 @@
 	</copyright>
 	<copyright>
 		<year>2005</year>
-		<holder>&voicesystem;</holder>
+		<holder>Voice Sistem SRL</holder>
 	</copyright>
 	<copyright>
 		<year>2011</year>
 		<holder>Carsten Bock, carsten@ng-voice.com</holder>
 	</copyright>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-		</revision>
-	</revhistory>
 	</bookinfo>
 	<toc></toc>
 	

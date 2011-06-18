@@ -24,8 +24,6 @@ Juha Heinanen
    <jh@tutpro.com>
 
    Copyright © 2003 FhG FOKUS
-   Revision History
-   Revision $Revision$ $Date$
      __________________________________________________________________
 
    Table of Contents
@@ -760,7 +758,8 @@ if(is_method("OPTION|UPDATE"))
 
 3.27.  remove_hf(hname)
 
-   Remove from message all headers with name “hname”
+   Remove from message all headers with name “hname”. Header matching is
+   case-insensitive. Matches and removes also the compact header forms.
 
    Returns true if at least one header is found and removed.
 
@@ -776,6 +775,10 @@ if(remove_hf("User-Agent"))
 {
     # User Agent header removed
 }
+# compact form: remove "Contact" or "m" header
+remove_hf("Contact")
+# compact form: remove "Contact" or "m" header
+remove_hf("m")
 ...
 
 3.28.  remove_hf_re(re)

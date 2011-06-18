@@ -4,9 +4,7 @@ Jan Janak
 
    FhG FOKUS
 
-   Copyright © 2003 FhG FOKUS
-   Revision History
-   Revision $Revision$ $Date$
+   Copyright Â© 2003 FhG FOKUS
      __________________________________________________________________
 
    1.1. Overview
@@ -212,9 +210,6 @@ Contact: <sip:lando@192.168.0.2:2500>;q=1.0;+sip.instance="<urn:uuid:6a66f3bd-5b
      * sl - Stateless Replies.
 
 1.6. Parameters
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.6.1. default_expires (integer)
 
@@ -583,9 +578,6 @@ route{
 }
 
 1.7. Functions
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.7.1.  save(domain)
 

@@ -6,28 +6,28 @@ Edited by
 
 Maxim Sobolev
 
-   Copyright � 2010 Maxim Sobolev
+   Copyright © 2010 Maxim Sobolev
      __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. script_name (string)
-              1.3.2. mod_init_function (string)
-              1.3.3. child_init_method (string)
+              3.1. script_name (string)
+              3.2. mod_init_function (string)
+              3.3. child_init_method (string)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. python_exec(method [, mystr])
+              4.1. python_exec(method [, mystr])
 
    List of Examples
 
@@ -38,62 +38,89 @@ Maxim Sobolev
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. script_name (string)
+        3.2. mod_init_function (string)
+        3.3. child_init_method (string)
+
+   4. Exported Functions
+
+        4.1. python_exec(method [, mystr])
+
+1. Overview
 
    This module allows executing Python scripts from config file, exporting
    functions to access the SIP message from Python.
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * none.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * python-dev - Python devel library.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. script_name (string)
+   3.1. script_name (string)
+   3.2. mod_init_function (string)
+   3.3. child_init_method (string)
+
+3.1. script_name (string)
 
    TBD.
 
-   Default value is "/usr/local/etc/sip-router/handler.py".
+   Default value is “/usr/local/etc/sip-router/handler.py”.
 
    Example 1.1. Set script_name parameter
 ...
 modparam("app_python", "script_name", "/usr/local/etc/sip-router/myscript.py")
 ...
 
-1.3.2. mod_init_function (string)
+3.2. mod_init_function (string)
 
    TBD.
 
-   Default value is "mod_init".
+   Default value is “mod_init”.
 
    Example 1.2. Set mod_init_function parameter
 ...
 modparam("app_python", "mod_init_function", "my_mod_init")
 ...
 
-1.3.3. child_init_method (string)
+3.3. child_init_method (string)
 
    TBD.
 
-   Default value is "child_init".
+   Default value is “child_init”.
 
    Example 1.3. Set child_init_method parameter
 ...
 modparam("app_python", "child_init_method", "my_child_init")
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1. python_exec(method [, mystr])
+   4.1. python_exec(method [, mystr])
+
+4.1.  python_exec(method [, mystr])
 
    TBD.
 

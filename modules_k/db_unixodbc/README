@@ -8,125 +8,152 @@ Edited by
 
 Marco Lorrai
 
-   Copyright � 2005, 2006 Marco Lorrai
-   Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
-     __________________________________________________________
+   Copyright © 2005, 2006 Marco Lorrai
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. ping_interval (int)
-              1.3.2. auto_reconnect (int)
-              1.3.3. use_escape_common (int)
+              3.1. ping_interval (int)
+              3.2. auto_reconnect (int)
+              3.3. use_escape_common (int)
 
-        1.4. Exported Functions
-        1.5. Installation and Running
+        4. Exported Functions
+        5. Installation and Running
 
-              1.5.1. Installing
-              1.5.2. Configuring and Running
+              5.1. Installing
+              5.2. Configuring and Running
 
    2. Developer Guide
 
    List of Examples
 
-   1.1. Set the "ping_interval" parameter
-   1.2. Set the "auto_reconnect" parameter
-   1.3. Set the "use_escape_common" parameter
+   1.1. Set the “ping_interval” parameter
+   1.2. Set the “auto_reconnect” parameter
+   1.3. Set the “use_escape_common” parameter
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   This module allows to use the unixodbc package with Kamailio.
-   It have been tested with mysql and the odbc connector, but it
-   should work also with other database. The auth_db module works.
+   1. Overview
+   2. Dependencies
 
-   For more information, see the http://www.unixodbc.org/ project
-   web page.
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. ping_interval (int)
+        3.2. auto_reconnect (int)
+        3.3. use_escape_common (int)
+
+   4. Exported Functions
+   5. Installation and Running
+
+        5.1. Installing
+        5.2. Configuring and Running
+
+1. Overview
+
+   This module allows to use the unixodbc package with Kamailio. It have
+   been tested with mysql and the odbc connector, but it should work also
+   with other database. The auth_db module works.
+
+   For more information, see the http://www.unixodbc.org/ project web
+   page.
 
    To see what DB engines can be used via unixodbc, look at
    http://www.unixodbc.org/drivers.html.
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * No dependencies on other Kamailio modules.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * None.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. ping_interval (int)
+   3.1. ping_interval (int)
+   3.2. auto_reconnect (int)
+   3.3. use_escape_common (int)
+
+3.1. ping_interval (int)
 
    Sets the ping time interval.
 
-   Default value is "300" seconds.
+   Default value is “300” seconds.
 
-   Example 1.1. Set the "ping_interval" parameter
+   Example 1.1. Set the “ping_interval” parameter
 ...
 modparam("db_unixodbc", "ping_interval", 600)
 ...
 
-1.3.2. auto_reconnect (int)
+3.2. auto_reconnect (int)
 
    Turns on or off the auto_reconnect mode.
 
-   Default value is "1", this means it is enabled.
+   Default value is “1”, this means it is enabled.
 
-   Example 1.2. Set the "auto_reconnect" parameter
+   Example 1.2. Set the “auto_reconnect” parameter
 ...
 modparam("db_unixodbc", "auto_reconnect", 0)
 ...
 
-1.3.3. use_escape_common (int)
+3.3. use_escape_common (int)
 
-   Escape values in query using internal escape_common() function.
-   It escapes single quote ''', double quote '"', backslash '\',
-   and NULL characters.
+   Escape values in query using internal escape_common() function. It
+   escapes single quote ''', double quote '"', backslash '\', and NULL
+   characters.
 
-   You should enable this parameter if you know that the ODBC
-   driver considers the above characters as special (for marking
-   begin and end of a value, escape other characters ...). It
-   prevents against SQL injection.
+   You should enable this parameter if you know that the ODBC driver
+   considers the above characters as special (for marking begin and end of
+   a value, escape other characters ...). It prevents against SQL
+   injection.
 
-   Default value is "0" (0 = disabled; 1 = enabled).
+   Default value is “0” (0 = disabled; 1 = enabled).
 
-   Example 1.3. Set the "use_escape_common" parameter
+   Example 1.3. Set the “use_escape_common” parameter
 ...
 modparam("db_unixodbc", "use_escape_common", 1)
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
    NONE
 
-1.5. Installation and Running
+5. Installation and Running
 
-1.5.1. Installing
+   5.1. Installing
+   5.2. Configuring and Running
 
-   Prerequirement: you should first install unixodbc (or another
-   program that implements the odbc standard, such iodbc), your
-   database, and the right connector. Set the DSN in the odbc.ini
-   file and the connector drivers in the odbcinst.ini file.
+5.1. Installing
 
-1.5.2. Configuring and Running
+   Prerequirement: you should first install unixodbc (or another program
+   that implements the odbc standard, such iodbc), your database, and the
+   right connector. Set the DSN in the odbc.ini file and the connector
+   drivers in the odbcinst.ini file.
+
+5.2. Configuring and Running
 
    In the openser.conf file, add the line:
 ....
@@ -142,8 +169,8 @@ modparam("auth_db", "calculate_ha1", yes)
 modparam("auth_db", "password_column", "password")
 ....
 
-   and setting the DSN specified in the odbc.ini, inserting this
-   with the url adding this line:
+   and setting the DSN specified in the odbc.ini, inserting this with the
+   url adding this line:
 ....
 modparam("usrloc|auth_db", "db_url",
     "unixodbc://openser:openserrw@localhost/my_dsn")
@@ -151,14 +178,14 @@ modparam("usrloc|auth_db", "db_url",
 
    replacing my_dsn with the correct value.
 
-   HINT: if unixodbc don't want to connect to mysql server, try
-   restarting mysql server with:
+   HINT: if unixodbc don't want to connect to mysql server, try restarting
+   mysql server with:
 shell>safe_mysqld --user=mysql --socket=/var/lib/mysql/mysql.sock
 
-   The connector search the socket in /var/lib/mysql/mysql.sock
-   and not in /tmp/mysql.sock
+   The connector search the socket in /var/lib/mysql/mysql.sock and not in
+   /tmp/mysql.sock
 
 Chapter 2. Developer Guide
 
-   The module implements the Kamailio DB API, in order to be used
-   by other modules.
+   The module implements the Kamailio DB API, in order to be used by other
+   modules.

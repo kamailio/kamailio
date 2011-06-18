@@ -4,9 +4,7 @@ Jiri Kuthan
 
    <jiri@iptel.org>
 
-   Copyright © 2004 FhG FOKUS
-   Revision History
-   Revision $Revision$ $Date$
+   Copyright Â© 2004 FhG FOKUS
      __________________________________________________________________
 
    1.1. Overview
@@ -47,9 +45,6 @@ if (is_gflag("1")) {
 
 1.2. Parameters
 
-   Revision History
-   Revision $Revision$ $Date$
-
 1.2.1. initial (integer)
 
    The initial value of global flags. Each bit in the integer represents
@@ -58,9 +53,6 @@ if (is_gflag("1")) {
    Default value is 0.
 
 1.3. Functions
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.3.1. set_gflag(flag_num)
 
@@ -89,9 +81,6 @@ reset_gflag("2");
 
 1.4. FIFO Interface
 
-   Revision History
-   Revision $Revision$ $Date$
-
    The state of the global flags can be read and modified over the FIFO
    interface of SER. This module implements the following FIFO interface
    functions:
@@ -104,9 +93,6 @@ reset_gflag("2");
        parameter of this function is the number of the flag.
 
 1.5. XMLRPC Interface
-
-   Revision History
-   Revision $Revision$ $Date$
 
    The state of the global flags can be read and modified over the XMLRPC
    interface. This module implements the following XMLRPC interface

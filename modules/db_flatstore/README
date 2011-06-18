@@ -5,10 +5,16 @@ Jan Janak
    FhG FOKUS
    <jan@iptel.org>
 
-   Copyright © 2004, 2005 FhG FOKUS
-   Revision History
-   Revision $Revision$ $Date$
+   Copyright Â© 2004, 2005 FhG FOKUS
      __________________________________________________________________
+
+   1.1. Overview
+
+        1.1.1. Rotating Log Files
+
+   1.2. Parameters
+
+        1.2.1. flush (integer)
 
 1.1. Overview
 
@@ -81,9 +87,6 @@ sercmd flatstore.rotate
      * Move the renamed files somewhere else and process them.
 
 1.2. Parameters
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.2.1. flush (integer)
 

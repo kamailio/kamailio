@@ -10,38 +10,35 @@ Edited by
 
 Andreea Spirea
 
-   Copyright � 2006 voice-system.ro
-   Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
-     __________________________________________________________
+   Copyright © 2006 Voice Sistem SRL
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. backend(string)
-              1.3.2. domain_separator (string)
-              1.3.3. gateway_domain (string)
-              1.3.4. xmpp_domain (string)
-              1.3.5. xmpp_host (string)
-              1.3.6. xmpp_port (integer)
-              1.3.7. xmpp_password (string)
-              1.3.8. outbound_proxy (string)
+              3.1. backend(string)
+              3.2. domain_separator (string)
+              3.3. gateway_domain (string)
+              3.4. xmpp_domain (string)
+              3.5. xmpp_host (string)
+              3.6. xmpp_port (integer)
+              3.7. xmpp_password (string)
+              3.8. outbound_proxy (string)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. xmpp_send_message()
+              4.1. xmpp_send_message()
 
-        1.5. Configuration
+        5. Configuration
 
    List of Examples
 
@@ -57,42 +54,65 @@ Andreea Spirea
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   This module is a gateway between Kamailio and a XMPP/Jabber
-   server. It enables the exchange of instant messages between SIP
-   clients and XMPP(jabber) clients.
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. backend(string)
+        3.2. domain_separator (string)
+        3.3. gateway_domain (string)
+        3.4. xmpp_domain (string)
+        3.5. xmpp_host (string)
+        3.6. xmpp_port (integer)
+        3.7. xmpp_password (string)
+        3.8. outbound_proxy (string)
+
+   4. Exported Functions
+
+        4.1. xmpp_send_message()
+
+   5. Configuration
+
+1. Overview
+
+   This module is a gateway between Kamailio and a XMPP/Jabber server. It
+   enables the exchange of instant messages between SIP clients and
+   XMPP(jabber) clients.
 
    The module can be used in two different modes:
-     * XMPP Component Mode. In this mode, Kamailio connects to an
-       XMPP server using the standardized XMPP component
-       interface, extending your XMPP services. The connection is
-       done over TCP/IP with authorization.
+     * XMPP Component Mode. In this mode, Kamailio connects to an XMPP
+       server using the standardized XMPP component interface, extending
+       your XMPP services. The connection is done over TCP/IP with
+       authorization.
      * XMPP Server. In this mode, the Kamailio XMPP module is a
-       stand-alone XMPP server, with no requirement for another
-       XMPP server in the system. This server uses XMPP S2S
-       (Server to Server) connections to connect to other XMPP
-       servers or receive connections from other servers. NOTE:
-       this is limited implementation of a XMPP server, it does
-       not support SRV or TLS so far. This mode is in beta stage
-       for the moment.
+       stand-alone XMPP server, with no requirement for another XMPP
+       server in the system. This server uses XMPP S2S (Server to Server)
+       connections to connect to other XMPP servers or receive connections
+       from other servers. NOTE: this is limited implementation of a XMPP
+       server, it does not support SRV or TLS so far. This mode is in beta
+       stage for the moment.
 
-   In the component mode, you need a local XMPP server
-   (recommended Jabberd2). The XMPP module will connect by using
-   TCP/IP connection to the local jabber server. The documentation
-   and the source for Jabberd server are located at the following
-   link: http://jabberd.jabberstudio.org/2/#download
+   In the component mode, you need a local XMPP server (recommended
+   Jabberd2). The XMPP module will connect by using TCP/IP connection to
+   the local jabber server. The documentation and the source for Jabberd
+   server are located at the following link:
+   http://jabberd.jabberstudio.org/2/#download
 
-   After you have a running XMPP server, what you need to do is
-   set the following parameters in the Kamailio configuration
-   file:
+   After you have a running XMPP server, what you need to do is set the
+   following parameters in the Kamailio configuration file:
      * gateway_domain, xmpp_domain (which can be the same as
-       gateway_domain) and xmpp_host, which are explained in the
-       Exported Parameters section;
+       gateway_domain) and xmpp_host, which are explained in the Exported
+       Parameters section;
      * listen = your ip;
      * alias=Kamailio SIP domain and alias=gateway domain;
-     * in the following section of the configuration file, change
-       to your gateway domain:
+     * in the following section of the configuration file, change to your
+       gateway domain:
 
          ### ---8<--- cut here ---8<--- ###
         if (avp_check("$rd", "eq/s:sip-xmpp.kamailio.org")) {
@@ -100,64 +120,70 @@ Chapter 1. Admin Guide
                         sl_reply_error();
         ...........
 
-     * you can also define a password for the XMPP Component
-       connection to the Jabber server, which must be the same as
-       the xmpp_password parameter.
+     * you can also define a password for the XMPP Component connection to
+       the Jabber server, which must be the same as the xmpp_password
+       parameter.
 
    A use case, for the component-mode, would look like this:
      * Kamailio is hosting the sip-server.kamailio.org SIP domain
      * The gateway SIP domain is sip-xmpp.kamailio.org
-     * The XMPP server is hosting the XMPP domain
-       xmpp.kamailio.org
-     * The Component is hosting the XMPP domain
-       xmpp-sip.kamailio.org
+     * The XMPP server is hosting the XMPP domain xmpp.kamailio.org
+     * The Component is hosting the XMPP domain xmpp-sip.kamailio.org
 
-   In the XMPP stand-alone server mode, the XMPP module is a
-   minimal XMPP/Jabber server. In this mode, another Jabber server
-   is not needed. The gateway will connect to other XMPP servers
-   basaed on the JID domain and by using the standardized XMPP S2S
-   protocol.
+   In the XMPP stand-alone server mode, the XMPP module is a minimal
+   XMPP/Jabber server. In this mode, another Jabber server is not needed.
+   The gateway will connect to other XMPP servers basaed on the JID domain
+   and by using the standardized XMPP S2S protocol.
 
-   If you want to change to server-mode, you have to change the
-   "backend" parameter, as shown in the Exported Parameters
-   section, from "component" to "server".
+   If you want to change to server-mode, you have to change the "backend"
+   parameter, as shown in the Exported Parameters section, from
+   "component" to "server".
 
    A use case, for the server-mode, would look like this:
      * Kamailio is hosting the SIP domain sip-server.kamailio.org
-     * The gateway is hosting the SIP domain
-       sip-xmpp.kamailio.org;
+     * The gateway is hosting the SIP domain sip-xmpp.kamailio.org;
      * The "XMPP server" is running on xmpp-sip.kamailio.org.
 
-   In both cases, the destination address must have the same
-   pattern:
+   In both cases, the destination address must have the same pattern:
 
-   "sip:username<delim>jabber_server@gateway_domain"
+   “sip:username<delim>jabber_server@gateway_domain”
 
-   From a jabber client's point of view, the destination will look
-   like:
+   From a jabber client's point of view, the destination will look like:
 
-   "sip_username<delim>openser_domain@xmpp_domain"
+   “sip_username<delim>openser_domain@xmpp_domain”
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * requires 'tm' module.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * expat - used for parsing/building XML. Linux package:
        libexpat1-devel
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. backend(string)
+   3.1. backend(string)
+   3.2. domain_separator (string)
+   3.3. gateway_domain (string)
+   3.4. xmpp_domain (string)
+   3.5. xmpp_host (string)
+   3.6. xmpp_port (integer)
+   3.7. xmpp_password (string)
+   3.8. outbound_proxy (string)
 
-   The mode you are using the module; it can be either "component"
-   or "server".
+3.1. backend(string)
+
+   The mode you are using the module; it can be either "component" or
+   "server".
 
    Default value is "component".
 
@@ -166,15 +192,15 @@ Chapter 1. Admin Guide
  modparam("xmpp", "backend", "server")
 ...
 
-1.3.2. domain_separator (string)
+3.2. domain_separator (string)
 
-   In the destination address we need an extra character as a
-   domain separator, apart from @. The address of the XMPP(jabber)
-   client looks like this:
-   "sip:username<domain_separator>jabber_server@gateway_domain".
-   The address of a SIP client has the following pattern :
-   "sip_username<domain_separator>openser_domain@xmpp_domain"; A
-   common used character in XMPP transports is "%".
+   In the destination address we need an extra character as a domain
+   separator, apart from @. The address of the XMPP(jabber) client looks
+   like this:
+   "sip:username<domain_separator>jabber_server@gateway_domain". The
+   address of a SIP client has the following pattern :
+   "sip_username<domain_separator>openser_domain@xmpp_domain"; A common
+   used character in XMPP transports is "%".
 
    Default value is "*".
 
@@ -183,11 +209,11 @@ Chapter 1. Admin Guide
  modparam("xmpp", "domain_separator", "%")
 ...
 
-1.3.3. gateway_domain (string)
+3.3. gateway_domain (string)
 
-   The domain of the gateway, which must resolve in DNS. It must
-   be the same with the gateway_domain from the destination
-   address of the XMPP(jabber) client, as seen by the SIP client:
+   The domain of the gateway, which must resolve in DNS. It must be the
+   same with the gateway_domain from the destination address of the
+   XMPP(jabber) client, as seen by the SIP client:
    "sip:username<delim>jjabber_server@gateway_domain".
 
    Default value is "sip-xmpp.example.org".
@@ -197,13 +223,12 @@ Chapter 1. Admin Guide
  modparam("xmpp", "gateway_domain", "sip-xmpp.kamailio.org")
 ...
 
-1.3.4. xmpp_domain (string)
+3.4. xmpp_domain (string)
 
-   The XMPP domain of the component or the server, depending on
-   the mode we are in. It can be the same as the gateway_domain.
-   For a server DNS name, you need to add _xmpp-server._tcp SRV
-   records in your DNS zone to enable connections from other XMPP
-   servers.
+   The XMPP domain of the component or the server, depending on the mode
+   we are in. It can be the same as the gateway_domain. For a server DNS
+   name, you need to add _xmpp-server._tcp SRV records in your DNS zone to
+   enable connections from other XMPP servers.
 
    Default value is "sip-xmpp.example.org".
 
@@ -212,11 +237,11 @@ Chapter 1. Admin Guide
  modparam("xmpp", "xmpp_domain", "xmpp-sip.kamailio.org")
 ...
 
-1.3.5. xmpp_host (string)
+3.5. xmpp_host (string)
 
-   The IP address or the name of the local XMPP/Jabber server, if
-   the backend is set to "component". For server mode, this is the
-   IP address the XMPP component binds to.
+   The IP address or the name of the local XMPP/Jabber server, if the
+   backend is set to "component". For server mode, this is the IP address
+   the XMPP component binds to.
 
    Default value is "xmpp.example.org".
 
@@ -225,29 +250,28 @@ Chapter 1. Admin Guide
  modparam("xmpp", "xmpp_host", "xmpp.kamailio.org")
 ...
 
-1.3.6. xmpp_port (integer)
+3.6. xmpp_port (integer)
 
-   In component mode, this is the port the XMPP server component
-   interface listens to. In server mode, this is the port the
-   server listens to.
+   In component mode, this is the port the XMPP server component interface
+   listens to. In server mode, this is the port the server listens to.
 
-   Default value is "5347", if backend is set to "component" and
-   "5269", if backend is set to "server".
+   Default value is "5347", if backend is set to "component" and "5269",
+   if backend is set to "server".
 
    Example 1.6. Set xmpp_port parameter
 ...
  modparam("xmpp", "xmpp_port", 5269)
 ...
 
-1.3.7. xmpp_password (string)
+3.7. xmpp_password (string)
 
    The password of the local XMPP server.
 
-   This is the password for the component interface on the XMPP
-   server, when connecting as a component. Default password is
-   "secret". When connecting to jabberd2, you need to make sure
-   this is the password configured in the file "c2s.xml". This is
-   how the default configuration for the jabberd2 looks like:
+   This is the password for the component interface on the XMPP server,
+   when connecting as a component. Default password is "secret". When
+   connecting to jabberd2, you need to make sure this is the password
+   configured in the file "c2s.xml". This is how the default configuration
+   for the jabberd2 looks like:
                         <router>
         ...............
         <!-- Username/password to authenticate as --&gt;
@@ -259,13 +283,12 @@ Chapter 1. Admin Guide
  modparam("xmpp", "xmpp_password", "secret")
 ...
 
-1.3.8. outbound_proxy (string)
+3.8. outbound_proxy (string)
 
-   The SIP address used as next hop when sending the message. Very
-   useful when using Kamailio with a domain name not in DNS, or
-   when using a separate Kamailio instance for XMPP processing. If
-   not set, the message will be sent to the address in destination
-   URI.
+   The SIP address used as next hop when sending the message. Very useful
+   when using Kamailio with a domain name not in DNS, or when using a
+   separate Kamailio instance for XMPP processing. If not set, the message
+   will be sent to the address in destination URI.
 
    Default value is NULL.
 
@@ -274,25 +297,27 @@ Chapter 1. Admin Guide
  modparam("xmpp", "outbound_proxy", "sip:kamailio.org;transport=tcp")
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1.  xmpp_send_message()
+   4.1. xmpp_send_message()
 
-   Converts SIP messages to XMPP(jabber) messages, in order to be
-   relayed to a XMPP(jabber) client.
+4.1.  xmpp_send_message()
+
+   Converts SIP messages to XMPP(jabber) messages, in order to be relayed
+   to a XMPP(jabber) client.
 
    Example 1.9. xmpp_send_message() usage
 ...
 xmpp_send_message();
 ...
 
-1.5. Configuration
+5. Configuration
 
-   Next is presented a sample configuration file one can use to
-   implement a standalone SIP-to-XMPP gateway. You can run an
-   instance of Kamailio on a separate machine or on different port
-   with the following config, and have the main SIP server
-   configured to forward all SIP requests for XMPP world to it.
+   Next is presented a sample configuration file one can use to implement
+   a standalone SIP-to-XMPP gateway. You can run an instance of Kamailio
+   on a separate machine or on different port with the following config,
+   and have the main SIP server configured to forward all SIP requests for
+   XMPP world to it.
 ....
 #
 # $Id$

@@ -38,7 +38,7 @@
 
 /*
  * Prefix-Domains Translation - ser module
- * Ramona Modroiu <ramona@voice-system.ro>
+ * Ramona Modroiu
  */
 
 #include <stdio.h>

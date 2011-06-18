@@ -4,7 +4,7 @@ Gergely Kovacs
 
    Iptel.org
 
-   Copyright © 2007 Iptel.org
+   Copyright Â© 2007 Iptel.org
      __________________________________________________________________
 
    1.1. Overview
@@ -150,7 +150,7 @@ modparam("auth_identity","msg_timeout",600)
 
 1.6. Authorizer service functions
 
-1.6.1. auth_date_proc()
+1.6.1.  auth_date_proc()
 
    If a message, the auth service should authorize, contains Date header
    then this function checks whether it falls in message timeout (set by
@@ -163,7 +163,7 @@ modparam("auth_identity","msg_timeout",600)
 
    No dependencies
 
-1.6.2. auth_add_identity()
+1.6.2.  auth_add_identity()
 
    Assembles digest-string from the message, calculates its SHA1 hash,
    encrypts it with the private key (set by privatekey_path parameter) of
@@ -293,7 +293,7 @@ modparam("auth_identity","accept_pem_certs",1)
 
 1.9. Verifier service functions
 
-1.9.1. vrfy_check_date()
+1.9.1.  vrfy_check_date()
 
    Checks Date header of the incoming message whether falls in validity
    time (set by auth_validity_time parameter)
@@ -302,7 +302,7 @@ modparam("auth_identity","accept_pem_certs",1)
 
    No dependencies
 
-1.9.2. vrfy_get_certificate()
+1.9.2.  vrfy_get_certificate()
 
    Tries to get certificate defined by the value of Identity-info header
    from certificate table (which size is set by certificate_cache_limit
@@ -313,7 +313,7 @@ modparam("auth_identity","accept_pem_certs",1)
 
    No dependencies
 
-1.9.3. vrfy_check_certificate()
+1.9.3.  vrfy_check_certificate()
 
    Checks whether the downloaded certificate is valid (is not expired, its
    subject and the domain part of the URL are the same) and adds it to
@@ -323,7 +323,7 @@ modparam("auth_identity","accept_pem_certs",1)
 
    vrfy_get_certificate() must be called before
 
-1.9.4. vrfy_check_msgvalidity()
+1.9.4.  vrfy_check_msgvalidity()
 
    Assembles digest-string from the message, create SHA1 hash and compares
    it with the decrypted value of Identity header.
@@ -333,7 +333,7 @@ modparam("auth_identity","accept_pem_certs",1)
    vrfy_get_certificate() must be called before and
    vrfy_check_certificate() should be called before
 
-1.9.5. vrfy_check_callid()
+1.9.5.  vrfy_check_callid()
 
    Checks whether the current call's been already processed in validity
    time (set by auth_validity_time) to recognize call replay attacks. If

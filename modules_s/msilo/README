@@ -1,111 +1,78 @@
-
-Msilo Module
+1. Msilo Module
 
 Daniel-Constantin Mierla
 
    FhG FOKUS
 
-   Copyright © 2003 FhG FOKUS
-   Revision History
-   Revision $Revision$ $Date$
-     _________________________________________________________________
+   Copyright Â© 2003 FhG FOKUS
+     __________________________________________________________________
 
-Overview
+   1.1. Overview
+   1.2. Dependencies
+
+        1.2.1. SER modules
+
+   1.3. Installation And Running
+
+        1.3.1. SER Configuration File
+
+   1.4. Parameters
+
+        1.4.1. db_url (string)
+        1.4.2. db_table (string)
+        1.4.3. registrar (string)
+        1.4.4. expire_time (int)
+        1.4.5. check_time (int)
+        1.4.6. clean_period (int)
+        1.4.7. use_contact (int)
+
+   1.5. Functions
+
+        1.5.1. m_store(mode, next_hop)
+        1.5.2. m_dump(next_hop)
+
+1.1. Overview
 
    This modules provides offline message storage for SER. It stores
    received messages for an offline user and sends them when the user
    becomes online.
 
-   For each message, the modules stores "Request-URI" ("R-URI") only if
-   it is a complete address of record ("username@hostname"), URI from
-   "To" header, URI from "From" header, incoming time, expiration time,
-   content type and body of the message. If "R-URI" is not an address of
-   record (it might be the contact address for current SIP session) the
-   URI from "To" header will be used as R-URI.
+   For each message, the modules stores "Request-URI" ("R-URI") only if it
+   is a complete address of record ("username@hostname"), URI from "To"
+   header, URI from "From" header, incoming time, expiration time, content
+   type and body of the message. If "R-URI" is not an address of record
+   (it might be the contact address for current SIP session) the URI from
+   "To" header will be used as R-URI.
 
    When the expiration time passed, the message is discarded from
-   database. Expiration time is computed based on incoming time and one
-   of the module's parameters.
+   database. Expiration time is computed based on incoming time and one of
+   the module's parameters.
 
    Every time when a user registers with SER, the module is looking in
    database for offline messages intended for that user. All of them will
    be sent to contact address provided in REGISTER request.
 
    It may happen the SIP user to be registered but his SIP User Agent to
-   have no support for MESSAGE request. In this case it should be used
-   the "failure_route" to store the undelivered requests.
+   have no support for MESSAGE request. In this case it should be used the
+   "failure_route" to store the undelivered requests.
 
-Dependencies
+1.2. Dependencies
 
-SER modules
+1.2.1. SER modules
 
    The following modules must be loaded before this module:
-     * database module - mysql, dbtext or other module that implements
-       the "db" interface and provides support for storing/receiving data
+     * database module - mysql, dbtext or other module that implements the
+       "db" interface and provides support for storing/receiving data
        to/from a database system.
      * tm - Transaction module is used to send SIP requests.
 
-Installation And Running
+1.3. Installation And Running
 
-Database setup
-
-   Before running SER with msilo, you have to setup the database table
-   where the module will store the message. For that, if the table was
-   not created by the installation script or you choose to install
-   everything by yourself you can use the following SQL script (good for
-   MySQL) as template. Database and table name can be set with module
-   parameters so they can be changed, but the name of the columns must be
-   as they are in the next SQL script.
-
-   Example 1. Msilo SQL Script
--- SQL script for MSILO module
-
-DROP DATABASE IF EXISTS msilo;
-
--- create a database for storage
-CREATE DATABASE msilo;
-
-USE msilo;
-
--- create version table
-CREATE TABLE version (
-      -- the name of the table
-   table_name varchar(64) NOT NULL,
-      -- version of the table
-   table_version smallint(5) DEFAULT '0' NOT NULL
-);
-
-INSERT INTO version (table_name, table_version) VALUES ('silo', 3);
-
--- create the table
-CREATE TABLE silo(
-      -- unique ID per message
-    mid INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
-      -- src address - From URI
-    src_addr VARCHAR(255) NOT NULL DEFAULT "",
-      -- dst address - To URI
-    dst_addr VARCHAR(255) NOT NULL DEFAULT "",
-      -- r-uri == username@domain (for compatibility with old version)
-    r_uri VARCHAR(255) NOT NULL DEFAULT "",
-      -- username
-    username VARCHAR(64) NOT NULL DEFAULT "",
-      -- domain
-    domain VARCHAR(128) NOT NULL DEFAULT "",
-      -- incoming time
-    inc_time INTEGER NOT NULL DEFAULT 0,
-      -- expiration time
-    exp_time INTEGER NOT NULL DEFAULT 0,
-      -- content type
-    ctype VARCHAR(32) NOT NULL DEFAULT "text/plain",
-      -- body of the message
-    body BLOB NOT NULL DEFAULT ""
-);
-
-SER Configuration File
+1.3.1. SER Configuration File
 
    Configuration example for msilo module.
 
-   Example 2. SER Configuration Example
+   Example 1. SER Configuration Example
 #
 # MSILO usage example
 #
@@ -123,7 +90,7 @@ dns=off           # (cmd. line: -r)
 rev_dns=off       # (cmd. line: -R)
 port=5060
 
-listen=10.0.0.2   # listen address
+listen=127.0.0.1   # listen address
 
 # ------------------ module loading ----------------------------------
 
@@ -168,7 +135,7 @@ route{
     };
 
 
-    if (uri==myself) {
+    if (uri==myself)
     {
         # for testing purposes, simply okay all REGISTERs
         if (method=="REGISTER")
@@ -177,7 +144,7 @@ route{
             log("REGISTER received -> dumping messages with MSILO\n");
 
             # MSILO - dumping user's offline messages
-            if (m_dump(""))
+            if (m_dump())
             {
                 log("MSILO: offline messages dumped - if they were\n");
             }else{
@@ -206,7 +173,7 @@ route{
             };
             log("MESSAGE received -> storing using MSILO\n");
             # MSILO - storing as offline message
-            if (m_store("0", ""))
+            if (m_store("0"))
             {
                 log("MSILO: offline message stored\n");
                 if (!t_reply("202", "Accepted"))
@@ -242,7 +209,7 @@ failure_route[1] {
 
     log(1,"MSILO:the downstream UA doesn't support MESSAGEs\n");
     # we have changed the R-URI with the contact address, ignore it now
-    if (m_store("1", ""))
+    if (m_store("1"))
     {
         log("MSILO: offline message stored\n");
         t_reply("202", "Accepted");
@@ -253,61 +220,59 @@ failure_route[1] {
 }
 
 
-Parameters
 
-   Revision History
-   Revision $Revision$ $Date$
+1.4. Parameters
 
-db_url (string)
+1.4.1. db_url (string)
 
    Database URL.
 
    Default value is "mysql://root@localhost/msilo".
 
-   Example 3. Set the "db_url" parameter
+   Example 2. Set the "db_url" parameter
 ...
 modparam("msilo", "db_url", "mysql://user:passwd@host.com/dbname")
 ...
 
-db_table (string)
+1.4.2. db_table (string)
 
    The name of table where to store the messages.
 
    Default value is "silo".
 
-   Example 4. Set the "db_table" parameter
+   Example 3. Set the "db_table" parameter
 ...
 modparam("msilo", "db_table", "silo")
 ...
 
-registrar (string)
+1.4.3. registrar (string)
 
    The SIP address used to inform users that destination of their message
    is not online and the message will be delivered next time when that
-   user goes online. If the parameter is not set, the module will not
-   send any notification. All requests intended for this SIP address will
-   not be stored for lately delivery.
+   user goes online. If the parameter is not set, the module will not send
+   any notification. All requests intended for this SIP address will not
+   be stored for lately delivery.
 
    Default value is "NULL".
 
-   Example 5. Set the registrar parameter
+   Example 4. Set the registrar parameter
 ...
 modparam("msilo", "registrar", "sip:registrar@iptel.org")
 ...
 
-expire_time (int)
+1.4.4. expire_time (int)
 
    Expire time of stored messages - seconds. When this time passed, the
    message is silently discarded from database.
 
    Default value is 259200 (72 hours = 3 days).
 
-   Example 6. Set the expire_time parameter
+   Example 5. Set the expire_time parameter
 ...
 modparam("msilo", "expire_time", 36000)
 ...
 
-check_time (int)
+1.4.5. check_time (int)
 
    Timer interval to check if dumped messages are sent OK - seconds. The
    module keeps each request send by itself for a new online user and if
@@ -315,48 +280,45 @@ check_time (int)
 
    Default value is 30.
 
-   Example 7. Set the check_time parameter
+   Example 6. Set the check_time parameter
 ...
 modparam("msilo", "check_time", 10)
 ...
 
-clean_period (int)
+1.4.6. clean_period (int)
 
-   Number of check_time cycles when to check if there are expired
-   messages in database.
+   Number of check_time cycles when to check if there are expired messages
+   in database.
 
    Default value is 5.
 
-   Example 8. Set the clean_period parameter
+   Example 7. Set the clean_period parameter
 ...
 modparam("msilo", "clean_period", "3")
 ...
 
-use_contact (int)
+1.4.7. use_contact (int)
 
-   Turns on/off the usage of the Contact address to send notification
-   back to sender whose message is stored by MSILO.
+   Turns on/off the usage of the Contact address to send notification back
+   to sender whose message is stored by MSILO.
 
    Default value is 1 (0 = off, 1 = on).
 
-   Example 9. Set the param_name parameter
+   Example 8. Set the param_name parameter
 ...
 modparam("msilo", "use_contact", 0)
 ...
 
-Functions
+1.5. Functions
 
-   Revision History
-   Revision $Revision$ $Date$
-
-m_store(mode, next_step)
+1.5.1. m_store(mode, next_hop)
 
    The method stores certain parts of the current SIP request (it should
    be called when the request type is MESSAGE and the destination user is
    offline or his UA does not support MESSAGE requests). If the user is
-   registered with a UA which does not support MESSAGE requests you
-   should not use mode="0" if you have changed the request uri with the
-   contact address of user's UA.
+   registered with a UA which does not support MESSAGE requests you should
+   not use mode="0" if you have changed the request uri with the contact
+   address of user's UA.
 
    Meaning of the parameters is as follows:
      * mode - specifies what to save as R-URI.
@@ -365,19 +327,19 @@ m_store(mode, next_step)
             and, if necessary, at URI from "To" header.
           + "1" - look first at R-URI and then at URI from "To" header.
           + "2" - look only at URI form "To" header.
-     * next_hop - specifies next hop for sending outgoing messages (use
-       as "outbound proxy"). Its value can be empty or set to a sip URI
-       like "sip:127.0.0.1:5060".
+     * next_hop (optional) - specifies next hop for sending outgoing
+       messages (use as "outbound proxy"). Its value can be unset, empty
+       or set to a sip URI like "sip:127.0.0.1:5060".
 
-m_dump(next_hop)
+1.5.2. m_dump(next_hop)
 
    The method sends stored messages for the SIP user that is going to
    register to his actual contact address. The method should be called
-   when a REGISTER request is received and the "Expire" header has a
-   value greater than zero. The parameter can contain machine used as
-   "outbound proxy" or can be empty.
+   when a REGISTER request is received and the "Expire" header has a value
+   greater than zero. The parameter can contain machine used as "outbound
+   proxy" or can be empty.
 
    Meaning of the parameters is as follows:
-     * next_hop - specifies next hop for sending outgoing messages (use
-       as "outbound proxy"). Its value can be empty or set to a sip URI
-       like "sip:127.0.0.1:5060".
+     * next_hop (optional) - specifies next hop for sending outgoing
+       messages (use as "outbound proxy"). Its value can be unset, empty
+       or set to a sip URI like "sip:127.0.0.1:5060".

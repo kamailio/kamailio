@@ -2,11 +2,9 @@
 
 Elena-Ramona Modroiu
 
-   Voice Sistem
+   Asipto
 
-   Copyright � 2003 FhG FOKUS
-   Revision History
-   Revision $Revision$ $Date$
+   Copyright © 2003 FhG FOKUS
      __________________________________________________________________
 
    1.1. Overview
@@ -44,7 +42,7 @@ Elena-Ramona Modroiu
    This module provides the possibility to print user formatted log or
    debug messages from SER scripts, similar to printf function but now a
    specifier is replaced with a part of the SIP request. Section 1.2,
-   "Implemented Specifiers" shows what can be printed out.
+   “Implemented Specifiers” shows what can be printed out.
 
 1.2. Implemented Specifiers
 
@@ -123,9 +121,6 @@ Elena-Ramona Modroiu
 
 1.3. Parameters
 
-   Revision History
-   Revision $Revision$ $Date$
-
 1.3.1. buf_size (integer)
 
    Maximum size of the log message.
@@ -138,9 +133,6 @@ modparam("xlog", "buf_size", 8192)
 ...
 
 1.4. Functions
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.4.1.  xlog(level, format)
 
@@ -176,9 +168,6 @@ xdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
 ...
 
 1.5. Module API
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.5.1. Functions
 

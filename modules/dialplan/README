@@ -12,12 +12,9 @@ Edited by
 
 Juha Heinanen
 
-   Copyright © 2007-2008 voice-system.ro
+   Copyright © 2007-2008 Voice Sistem SRL
 
    Copyright © 2008-2010 Juha Heinanen
-   Revision History
-   Revision $Revision: 1.1 $ $Date: 2007/08/30 13:16:22 $
-   Revision $Revision: 1.2 $ $Date: 2008/10/9 15:57 $
      __________________________________________________________________
 
    Table of Contents
@@ -460,8 +457,5 @@ xlog("translated to var $var(y) \n");
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
 Chapter 2. Developer's Guide
-
-   Revision History
-   Revision $Revision: 1.1 $ $Date: 2007/08/30 13:16:22 $
 
    The module does not provide any API to use in other Kamailio modules.

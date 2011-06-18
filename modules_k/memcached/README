@@ -2,7 +2,7 @@ Memcached Module
 
 Henning Westerholt
 
-   Copyright � 2009 Henning Westerholt
+   Copyright © 2009 Henning Westerholt
      __________________________________________________________________
 
    Table of Contents
@@ -76,7 +76,7 @@ Chapter 1. Admin Guide
    pseudo-variable: $mct(key). Entries are stored and retrieved from an
    external server application.
 
-   The "key" can be a static string and also any existing pseudo-variable.
+   The “key” can be a static string and also any existing pseudo-variable.
    Further interfaces to the functionality provided from memcached are
    also provided, like access to the atomic increment and decrement
    operations.
@@ -127,7 +127,7 @@ xlog("stored value is $mct(test)"); # will return <null>
 
    The used memcache library has a rather conservative approach to error
    handling. In the default configuration each error with severity above
-   "WARN" will lead to a immediately exit (or even an abort) of the
+   “WARN” will lead to a immediately exit (or even an abort) of the
    execution, causing also a shutdown of Kamailio. This is of course not
    optimal from a availability point of view. Therefore in the internal
    error handler this is overriden. This means that we err a bit on the
@@ -185,7 +185,7 @@ xlog("stored value is $mct(test)"); # will return <null>
 
    The servers to connect to. At the moment only one server is supported.
 
-   Default value is "localhost:11211".
+   Default value is “localhost:11211”.
 
    Example 1.4. Set servers parameter
 ...
@@ -209,7 +209,7 @@ modparam("memcached", "servers", "localhost:11211")
    Its possible to override this default value later on by setting a
    different timeout for this key with the mctex pseudo-variable.
 
-   Default value is "10800"s (3h).
+   Default value is “10800”s (3h).
 
    Example 1.5. Set expire parameter
 ...
@@ -219,12 +219,12 @@ modparam("memcached", "expire", 10800)
 4.3. mode (integer)
 
    The used storage mode for the memcached module for write access to the
-   hash table. A value of "0" means to set (overwrite) the old value, with
-   a value of "1" the module will not overwrite it. Here every entry to
+   hash table. A value of “0” means to set (overwrite) the old value, with
+   a value of “1” the module will not overwrite it. Here every entry to
    the hash table could be written only once, subsequent inserts will
    fail.
 
-   Default value is "0" (overwrite).
+   Default value is “0” (overwrite).
 
    Example 1.6. Set mode parameter
 ...
@@ -235,7 +235,7 @@ modparam("memcached", "mode", 0)
 
    The timeout for the memcache servers access in milliseconds.
 
-   Default value is "5000" (5s).
+   Default value is “5000” (5s).
 
    Example 1.7. Set timeout parameter
 ...

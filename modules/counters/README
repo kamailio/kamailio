@@ -4,9 +4,7 @@ Andrei Pelinescu-Onciul
 
    iptelorg GmbH
 
-   Copyright © 2010 iptelorg GmbH
-   Revision History
-   Revision $Revision$ $Date$
+   Copyright Â© 2010 iptelorg GmbH
      __________________________________________________________________
 
    1.1. Overview
@@ -37,9 +35,6 @@ Andrei Pelinescu-Onciul
 
 1.2. Parameters
 
-   Revision History
-   Revision $Revision$ $Date$
-
 1.2.1. script_counter
 
    Define a new counter that can be used from the script. The declaration
@@ -68,9 +63,6 @@ modparam("counters", "script_counter", "test.x:another example") # test.x
 modparam("counters", "script_cnt_grp_name", "my_counters")
 
 1.3. Functions
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.3.1.  cnt_inc([group.]name)
 
@@ -122,9 +114,6 @@ route {
 }
 
 1.4. counters RPC Functions
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.4.1.  cnt.get group counter_name
 

@@ -23,12 +23,6 @@
 	    <year>2006</year>
 	    <holder>Sippy Software, Inc.</holder>
 	</copyright>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </sectioninfo>
 
     <title>BDB Module</title>

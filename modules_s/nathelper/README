@@ -4,10 +4,25 @@ Maxim Sobolev
 
    Sippy Software, Inc.
 
-   Copyright © 2003-2008 Sippy Software, Inc.
-   Revision History
-   Revision $Revision$ $Date$
+   Copyright Â© 2003-2008 Sippy Software, Inc.
      __________________________________________________________________
+
+   1.1. Overview
+   1.2. Parameters
+
+        1.2.1. natping_interval (integer)
+        1.2.2. ping_nated_only (integer)
+        1.2.3. received_avp (integer)
+
+   1.3. Functions
+
+        1.3.1. fix_nated_contact()
+        1.3.2. fix_nated_sdp(mode)
+        1.3.3. add_rcv_param()
+        1.3.4. fix_nated_register()
+        1.3.5. nat_uac_test(mode)
+        1.3.6. ping_contact(contact)
+        1.3.7. @nathelper.rewrite_contact[n]
 
 1.1. Overview
 
@@ -24,9 +39,6 @@ Maxim Sobolev
    _guide09186a0080110bf9.html">
 
 1.2. Parameters
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.2.1. natping_interval (integer)
 
@@ -70,9 +82,6 @@ modparam("nathelper", "received_avp", 43)
 ...
 
 1.3. Functions
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.3.1.  fix_nated_contact()
 

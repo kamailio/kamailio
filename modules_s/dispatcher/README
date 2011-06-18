@@ -1,15 +1,31 @@
-Dispatcher Module
+1. Dispatcher Module
 
 Daniel-Constantin Mierla
 
    FhG FOKUS
 
-   Copyright © 2004 FhG FOKUS
-   Revision History
-   Revision $Revision$ $Date$
+   Copyright Â© 2004 FhG FOKUS
      __________________________________________________________________
 
-Overview
+   1.1. Overview
+   1.2. Parameters
+
+        1.2.1. list_file (string)
+        1.2.2. force_dst (int)
+        1.2.3. flags (int)
+
+   1.3. Functions
+
+        1.3.1. ds_select_dst(set, alg)
+
+   1.4. FIFO Interface
+
+        1.4.1. Dumping the current configuration
+        1.4.2. Reloading the dispatcher list
+
+   1.5. Installation And Running
+
+1.1. Overview
 
    This modules implements a dispatcher for destination addresses. It
    computes hashes over parts of the request and selects an address from a
@@ -20,9 +36,9 @@ Overview
 
    The dispatcher module offers reloads on the fly using sercmd.
 
-Parameters
+1.2. Parameters
 
-list_file (string)
+1.2.1. list_file (string)
 
    Path to the file with destination sets.
 
@@ -34,7 +50,7 @@ list_file (string)
 modparam("dispatcher", "list_file", "/var/run/ser/dispatcher.list")
 ...
 
-force_dst (int)
+1.2.2. force_dst (int)
 
    If set to 1, force overwriting of destination address when that is
    already set.
@@ -46,7 +62,7 @@ force_dst (int)
 modparam("dispatcher", "force_dst", 1)
 ...
 
-flags (int)
+1.2.3. flags (int)
 
    Various flags that affect the hashing behaviour. For now only the flag
    1 and 2 are defined. If flag 1 is set only the username part of the uri
@@ -63,9 +79,9 @@ flags (int)
 modparam("dispatcher", "flags", 1)
 ...
 
-Functions
+1.3. Functions
 
-ds_select_dst(set, alg)
+1.3.1.  ds_select_dst(set, alg)
 
    The method selects a destination from addresses set.
 
@@ -85,7 +101,7 @@ ds_select_dst(set, alg)
 ds_select_dst("1", "0");
 ...
 
-FIFO Interface
+1.4. FIFO Interface
 
    The module allows dumping the current configuration as well as
    dispatcher list reloading via the FIFO interface.
@@ -94,7 +110,7 @@ FIFO Interface
      * dispatcher.dump - dump the current dispatcher sets
      * dispatcher.reload - reload the dispatcher list text file
 
-Dumping the current configuration
+1.4.1. Dumping the current configuration
 
    The command dispatcher.dump can be used to dump the currently deployed
    dispatcher list in the SER internal notation.
@@ -127,7 +143,7 @@ Set '15' is empty
 End of dispatcher list
 #
 
-Reloading the dispatcher list
+1.4.2. Reloading the dispatcher list
 
    The command dispatcher.reload can be used to update the dispatcher list
    while running SER.
@@ -137,7 +153,7 @@ Reloading the dispatcher list
 dispatcher list 1 activated
 #
 
-Installation And Running
+1.5. Installation And Running
 
    Example 7. Destination List File
 

@@ -4,12 +4,6 @@
 
 <section id="tls.history">
     <sectioninfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </sectioninfo>
 
 	<title>History</title>

@@ -3,8 +3,6 @@ Jan Janak
    iptelorg GmbH
 
    Copyright © 2005 iptelorg GmbH
-   Revision History
-   Revision $Revision$ $Date$
      __________________________________________________________________
 
    1.1. Design Goals
@@ -499,9 +497,6 @@ route[XMLRPC]{
 
 1.5. Parameters
 
-   Revision History
-   Revision $Revision$ $Date$
-
 1.5.1. route (string)
 
    Name of the route called for XMLRPC messages.
@@ -607,9 +602,6 @@ modparam("xmlrpc", "url_match", "^/RPC2")
 ...
 
 1.6. Functions
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.6.1.  dispatch_rpc()
 

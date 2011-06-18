@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision: 2 $</revnumber>
-		<date>$Date: 2005-06-13 18:47:24 +0200 (Mo, 13 Jun 2005) $</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>Developer's Guide</title>
 	<para>

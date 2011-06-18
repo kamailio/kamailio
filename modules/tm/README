@@ -11,8 +11,6 @@ Juha Heinanen
    Copyright © 2003 FhG FOKUS
 
    Copyright © 2008 Juha Heinanen
-   Revision History
-   Revision $Revision$ $Date$
      __________________________________________________________________
 
    1.1. Overview
@@ -368,9 +366,6 @@ failure_route["serial"]
        matter any longer so much as there is a new replication module).
 
 1.4. Parameters
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.4.1. fr_timer (integer)
 
@@ -1171,9 +1166,6 @@ modparam("tm", "e2e_cancel_reason", 0)
 ...
 
 1.5. Functions
-
-   Revision History
-   Revision $Revision$ $Date$
 
 1.5.1.  t_relay_to_udp(ip, port), t_relay_to_udp(), t_relay_to_tcp(ip, port)
 t_relay_to_tcp() t_relay_to_tls(ip, port) t_relay_to_tls()
@@ -2107,9 +2099,6 @@ opying
 }
 
 1.6. TM Module API
-
-   Revision History
-   Revision $Revision$ $Date$
 
    There are applications which would like to generate SIP transactions
    without too big involvement in SIP stack, transaction management, etc.

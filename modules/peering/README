@@ -10,10 +10,7 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
-   Copyright � 2008 Juha Heinanen
-   Revision History
-   Revision $Revision: 4261 $ $Date: 2008-05-30 01:03:56 +0200 (Fri, 30
-   Apr 2008) $
+   Copyright © 2008 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -119,7 +116,7 @@ Chapter 1. Admin Guide
    This is the location of the configuration file of Radius client
    libraries.
 
-   Default value is "/usr/local/etc/radiusclient-ng/radiusclient.conf".
+   Default value is “/usr/local/etc/radiusclient-ng/radiusclient.conf”.
 
    Example 1.1. radius_config parameter usage
 modparam("peering", "radius_config", "/etc/broker/radiusclient.conf")
@@ -130,7 +127,7 @@ modparam("peering", "radius_config", "/etc/broker/radiusclient.conf")
    sender of SIP Request verifies the request's destination using
    verify_destination() function.
 
-   Default value is the dictionary value of "Sip-Verify-Destination"
+   Default value is the dictionary value of “Sip-Verify-Destination”
    Service-Type.
 
    Example 1.2. verify_destination_service_type parameter usage
@@ -142,7 +139,7 @@ modparam("peering", "verify_destination_service_type", 21)
    receiver of SIP Request verifies the request's source using
    verify_source() function.
 
-   Default value is the dictionary value of "Sip-Verify-Source"
+   Default value is the dictionary value of “Sip-Verify-Source”
    Service-Type.
 
    Example 1.3. verify_source_service_type parameter usage

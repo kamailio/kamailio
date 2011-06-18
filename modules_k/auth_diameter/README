@@ -8,35 +8,32 @@ Edited by
 
 Elena-Ramona Modroiu
 
-   Copyright � 2003, 2004 FhG FOKUS
-   Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
-     __________________________________________________________
+   Copyright © 2003, 2004 FhG FOKUS
+     __________________________________________________________________
 
    Table of Contents
 
    1. Admin Guide
 
-        1.1. Overview
-        1.2. Dependencies
+        1. Overview
+        2. Dependencies
 
-              1.2.1. Kamailio Modules
-              1.2.2. External Libraries or Applications
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
 
-        1.3. Exported Parameters
+        3. Exported Parameters
 
-              1.3.1. diameter_client_host (string)
-              1.3.2. diameter_client_port (int)
-              1.3.3. use_domain (int)
+              3.1. diameter_client_host (string)
+              3.2. diameter_client_port (int)
+              3.3. use_domain (int)
 
-        1.4. Exported Functions
+        4. Exported Functions
 
-              1.4.1. diameter_www_authorize(realm)
-              1.4.2. diameter_proxy_authorize(realm)
-              1.4.3. diameter_is_user_in(who, group)
+              4.1. diameter_www_authorize(realm)
+              4.2. diameter_proxy_authorize(realm)
+              4.3. diameter_is_user_in(who, group)
 
-        1.5. Installation and Running
+        5. Installation and Running
 
    List of Examples
 
@@ -50,20 +47,40 @@ Elena-Ramona Modroiu
 
 Chapter 1. Admin Guide
 
-1.1. Overview
+   Table of Contents
 
-   This module implements SIP authentication and authorization
-   with DIAMETER server, namely DIameter Server Client (DISC).
+   1. Overview
+   2. Dependencies
 
-   NOTE: diameter support was developed for DISC (DIameter Server
-   Client project at http://developer.berlios.de/projects/disc/).
-   This project seems to be no longer maintained and DIAMETER
-   specifications were updated in the meantime. Thus, the module
-   is obsolete and needs rework to be usable with opendiameter or
-   other DIAMETER servers.
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
 
-   The digest authentication mechanism is presented in next
-   figure.
+   3. Exported Parameters
+
+        3.1. diameter_client_host (string)
+        3.2. diameter_client_port (int)
+        3.3. use_domain (int)
+
+   4. Exported Functions
+
+        4.1. diameter_www_authorize(realm)
+        4.2. diameter_proxy_authorize(realm)
+        4.3. diameter_is_user_in(who, group)
+
+   5. Installation and Running
+
+1. Overview
+
+   This module implements SIP authentication and authorization with
+   DIAMETER server, namely DIameter Server Client (DISC).
+
+   NOTE: diameter support was developed for DISC (DIameter Server Client
+   project at http://developer.berlios.de/projects/disc/). This project
+   seems to be no longer maintained and DIAMETER specifications were
+   updated in the meantime. Thus, the module is obsolete and needs rework
+   to be usable with opendiameter or other DIAMETER servers.
+
+   The digest authentication mechanism is presented in next figure.
 
    Example 1.1. Digest Authentication
 ...
@@ -94,73 +111,83 @@ Chapter 1. Admin Guide
 
 ...
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * sl - used to send stateless replies.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
-   The following libraries or applications must be installed
-   before running Kamailio with this module loaded:
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
      * None.
 
-1.3. Exported Parameters
+3. Exported Parameters
 
-1.3.1. diameter_client_host (string)
+   3.1. diameter_client_host (string)
+   3.2. diameter_client_port (int)
+   3.3. use_domain (int)
+
+3.1. diameter_client_host (string)
 
    Hostname of the machine where the DIAMETER Client is running.
 
-   Default value is "localhost".
+   Default value is “localhost”.
 
    Example 1.2. Set diameter_client_host parameter
 ...
 modparam("auth_diameter", "diameter_client_host", "10.10.10.10")
 ...
 
-1.3.2. diameter_client_port (int)
+3.2. diameter_client_port (int)
 
    Port number where the DIAMETER Client is listening.
 
-   Default value is "3000".
+   Default value is “3000”.
 
    Example 1.3. Set diameter_client_port parameter
 ...
 modparam("auth_diameter", "diameter_client_port", 3000)
 ...
 
-1.3.3. use_domain (int)
+3.3. use_domain (int)
 
-   Specifies whether the domain name part of URI is used when
-   checking the user's privileges.
+   Specifies whether the domain name part of URI is used when checking the
+   user's privileges.
 
-   Default value is "0 (0==false and 1==true )".
+   Default value is “0 (0==false and 1==true )”.
 
    Example 1.4. Set use_domain parameter
 ...
 modparam("auth_diameter", "use_domain", 1)
 ...
 
-1.4. Exported Functions
+4. Exported Functions
 
-1.4.1.  diameter_www_authorize(realm)
+   4.1. diameter_www_authorize(realm)
+   4.2. diameter_proxy_authorize(realm)
+   4.3. diameter_is_user_in(who, group)
+
+4.1.  diameter_www_authorize(realm)
 
    SIP Server checks for authorization having a DIAMETER server in
-   backend. If no credentials are provided inside the SIP request
-   then a challenge is sent back to UAC. If the credentials don't
-   match the ones computed by DISC then "403 Forbidden" is sent
-   back.
+   backend. If no credentials are provided inside the SIP request then a
+   challenge is sent back to UAC. If the credentials don't match the ones
+   computed by DISC then “403 Forbidden” is sent back.
 
    Negative codes may be interpreted as follows:
-     * -5 (generic error) - some generic error occurred and no
-       reply was sent out;
+     * -5 (generic error) - some generic error occurred and no reply was
+       sent out;
      * -3 (stale nonce) - stale nonce;
 
    Meaning of the parameters is as follows:
-     * realm - the realm to be use for authentication and
-       authorization. The string may contain pseudo variables.
+     * realm - the realm to be use for authentication and authorization.
+       The string may contain pseudo variables.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -172,18 +199,17 @@ if(!diameter_www_authorize("siphub.net"))
 };
 ...
 
-1.4.2.  diameter_proxy_authorize(realm)
+4.2.  diameter_proxy_authorize(realm)
 
-   SIP Proxy checks for authorization having a DIAMETER server in
-   backend. If no credentials are provided inside the SIP request
-   then a challenge is sent back to UAC. If the credentials don't
-   match the ones computed by DISC then "403 Forbidden" is sent
-   back. For more about the negative return codes, see the above
-   function.
+   SIP Proxy checks for authorization having a DIAMETER server in backend.
+   If no credentials are provided inside the SIP request then a challenge
+   is sent back to UAC. If the credentials don't match the ones computed
+   by DISC then “403 Forbidden” is sent back. For more about the negative
+   return codes, see the above function.
 
    Meaning of the parameters is as follows:
-     * realm - the realm to be use for authentication and
-       authorization. The string may contain pseudo variables.
+     * realm - the realm to be use for authentication and authorization.
+       The string may contain pseudo variables.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -195,16 +221,15 @@ if(!diameter_proxy_authorize("siphub.net"))
 };
 ...
 
-1.4.3.  diameter_is_user_in(who, group)
+4.3.  diameter_is_user_in(who, group)
 
    The method performs group membership checking with DISC.
 
    Meaning of the parameters is as follows:
-     * who - what header to be used to get the SIP URI that is
-       wanted to be checked being member in a certain group. It
-       can be: "Request-URI", "From", "To" or "Credentials".
-     * group - the group name where to check if the user is part
-       of.
+     * who - what header to be used to get the SIP URI that is wanted to
+       be checked being member in a certain group. It can be:
+       “Request-URI”, “From”, “To” or “Credentials”.
+     * group - the group name where to check if the user is part of.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -216,6 +241,6 @@ if(!diameter_is_user_in("From", "voicemail"))
 };
 ...
 
-1.5. Installation and Running
+5. Installation and Running
 
    Notes about installation and running.

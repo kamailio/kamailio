@@ -29,14 +29,8 @@
 	</authorgroup>
 	<copyright>
 	    <year>2006</year>
-	    <holder>&voicesystem;</holder>
+	    <holder>Voice Sistem SRL</holder>
 	</copyright>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </bookinfo>
     <toc></toc>
     

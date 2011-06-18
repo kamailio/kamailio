@@ -11,11 +11,9 @@ Elena-Ramona Modroiu
 
    <ramona@rosdev.ro>
 
-   Copyright � 2003 FhG FOKUS
+   Copyright © 2003 FhG FOKUS
 
-   Copyright � 2008-2010 Elena-Ramona Modroiu
-   Revision History
-   Revision $Revision$ $Date$
+   Copyright © 2008-2010 Elena-Ramona Modroiu
      __________________________________________________________________
 
    Table of Contents
@@ -82,7 +80,7 @@ Chapter 1. Admin Guide
    This module provides the possibility to print user formatted log or
    debug messages from Kamailio scripts, similar to the printf function. A
    C-style printf specifier is replaced with a part of the SIP request or
-   other variables from system. Section 2, "Implemented Specifiers" shows
+   other variables from system. Section 2, “Implemented Specifiers” shows
    what can be printed out.
 
 2. Implemented Specifiers
@@ -195,7 +193,7 @@ modparam("xlog", "prefix", "-xlog: ")
             See above options for valid log levels.
        If it is not a pseudo-variable, then what really matters is the
        third letter of the value. If the log level is higher than the
-       "debug" global parameter, the message is not printed to syslog.
+       “debug” global parameter, the message is not printed to syslog.
        If this parameter is missing, the implicit log level is 'L_ERR'.
      * format - The formatted string to be printed.
 
