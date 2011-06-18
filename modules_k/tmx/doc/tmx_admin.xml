@@ -377,6 +377,43 @@ route[abc] {
 			</para></listitem>
 		</itemizedlist>
 	</section>
+	<section>
+		<title>
+		<function moreinfo="none">t_reply_callid</function>
+		</title>
+		<para>
+		Generates and sends a reply for an existing inbound SIP transaction.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>code</emphasis> - reply code
+			</para></listitem>
+			<listitem><para>
+				<emphasis>reason</emphasis> - reason phrase.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>callid</emphasis> - SIP Call-ID header
+			</para></listitem>
+			<listitem><para>
+				<emphasis>cseq</emphasis> - SIP CSeq header
+			</para></listitem>
+			<listitem><para>
+				<emphasis>to_tag</emphasis> - To tag to be added to TO header
+			</para></listitem>
+			<listitem><para>
+				<emphasis>new_headers</emphasis> - extra headers to be
+				appended to the reply; use a dot (<quote>.</quote>) char 
+				only if there are no headers;
+			</para></listitem>
+			<listitem><para>
+				<emphasis>body</emphasis> - (optional, may not be present)
+				reply body (if present, requires the 
+				<quote>Content-Type</quote> and <quote>Content-length</quote>
+				headers)
+			</para></listitem>
+		</itemizedlist>
+	</section>
 
 	</section>
 
