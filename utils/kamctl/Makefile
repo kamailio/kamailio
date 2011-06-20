@@ -258,13 +258,13 @@ install-modules: $(bin_prefix)/$(bin_dir)
 			$(INSTALL_TOUCH) $(modules_prefix)/$(lib_dir)/kamctl/kamdbctl.sqlite ; \
 			$(INSTALL_CFG) /tmp/kamdbctl.sqlite $(modules_prefix)/$(lib_dir)/kamctl/ ; \
 			rm -fr /tmp/kamdbctl.sqlite ; \
-			mkdir -p $(data_prefix)/$(data_dir)/sqlite ; \
-			for FILE in $(wildcard sqlite/*) ; do \
+			mkdir -p $(data_prefix)/$(data_dir)/db_sqlite ; \
+			for FILE in $(wildcard db_sqlite/*) ; do \
 				if [ -f $$FILE ] ; then \
 				$(INSTALL_TOUCH) $$FILE \
-					$(data_prefix)/$(data_dir)/sqlite/`basename "$$FILE"` ; \
+					$(data_prefix)/$(data_dir)/db_sqlite/`basename "$$FILE"` ; \
 				$(INSTALL_CFG) $$FILE \
-					$(data_prefix)/$(data_dir)/sqlite/`basename "$$FILE"` ; \
+					$(data_prefix)/$(data_dir)/db_sqlite/`basename "$$FILE"` ; \
 				fi ;\
 			done ; \
 		fi

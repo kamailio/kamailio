@@ -5,10 +5,10 @@
 
 # path to the database schemas
 DATA_DIR="/usr/local/share/kamailio"
-if [ -d "$DATA_DIR/sqlite" ] ; then
-	DB_SCHEMA="$DATA_DIR/sqlite"
+if [ -d "$DATA_DIR/db_sqlite" ] ; then
+	DB_SCHEMA="$DATA_DIR/db_sqlite"
 else
-	DB_SCHEMA="./sqlite"
+	DB_SCHEMA="./db_sqlite"
 fi
 
 #################################################################
