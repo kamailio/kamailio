@@ -2976,7 +2976,7 @@ inline static int dns_a_resolve( struct dns_hash_entry** e,
 		ret=-E_DNS_EOR;
 	}
 error:
-	DBG("dns_a_resovle(%.*s, %d) returning %d\n",
+	DBG("dns_a_resolve(%.*s, %d) returning %d\n",
 			name->len, name->s, *rr_no, ret);
 	return ret;
 }
