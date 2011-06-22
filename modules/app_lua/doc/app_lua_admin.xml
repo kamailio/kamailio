@@ -215,7 +215,7 @@ lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
 	    <title>
 		<function moreinfo="none">lua_dostring(script)</function>
 	    </title>
-	    <para>i
+	    <para>
 		Execute the Lua script stored in parameter. The parameter can be
 		a string with pseudo-variables.
 	    </para>
@@ -261,7 +261,7 @@ lua_run("lua_funcx", "$rU", "2");
 	    <title>
 		<function moreinfo="none">lua_runstring(script)</function>
 	    </title>
-	    <para>i
+	    <para>
 		Execute the Lua script stored in parameter. The parameter can be
 		a string with pseudo-variables. The script is executed in Lua context
 		specific to loaded Lua files at startup.
