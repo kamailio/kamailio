@@ -494,7 +494,7 @@ rtpproxy_destroy();
 		</listitem>
 		<listitem>
 			<para>
-			if BYE or CANCEL, then do unforce rtpproxy
+			if BYE or CANCEL, or called within a failure_route[], then do unforce rtpproxy
 			</para>
 		</listitem>
 		<listitem>
