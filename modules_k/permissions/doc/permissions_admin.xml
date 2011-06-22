@@ -547,7 +547,7 @@ modparam("permissions", "db_mode", 1)
 		<title><varname>trusted_table</varname> (string)</title>
 		<para>
 		Name of database table containing matching rules used by
-		<function moreinfo="none">allow_register</function> function.
+		<function moreinfo="none">allow_trusted</function> function.
 		</para>
 		<para>
 		<emphasis>
