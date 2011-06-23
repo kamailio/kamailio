@@ -35,7 +35,7 @@
 
 
 /**
- * \brief Constants for MD5Transform routine.
+ * \name Constants for MD5Transform routine
  */
 
 /*@{ */
@@ -70,7 +70,7 @@ static unsigned char PADDING[64] = {
 };
 
 /**
- * \brief F, G, H and I are basic MD5 functions.
+ * \name F, G, H and I are basic MD5 functions
  */
 
 /*@{ */
@@ -81,13 +81,12 @@ static unsigned char PADDING[64] = {
 /*@} */
 
 /**
- * \brief ROTATE_LEFT rotates x left n bits.
+ * \brief ROTATE_LEFT rotates x left n bits
  */
 #define ROTATE_LEFT(x, n) (((x) << (n)) | ((x) >> (32-(n))))
 
 /**
- * \brief FF, GG, HH, and II transformations for rounds 1, 2, 3, and 4.
- * 
+ * \name FF, GG, HH, and II transformations for rounds 1, 2, 3, and 4
  * FF, GG, HH, and II transformations for rounds 1, 2, 3, and 4.
  * Rotation is separate from addition to prevent recomputation.
  */

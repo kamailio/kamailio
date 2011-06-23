@@ -21,6 +21,13 @@
  * documentation and/or software.
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: md5 hash support
+ * \ingroup core
+ * Module: \ref core
+ */
+
 #ifndef MD5_H
 #define MD5_H
 

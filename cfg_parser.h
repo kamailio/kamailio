@@ -163,7 +163,7 @@ void cfg_parser_close(struct cfg_parser* st);
 
 struct cfg_option* cfg_lookup_token(struct cfg_option* options, str* token);
 
-/*! ! \briefInterface to the lexical scanner */
+/*! ! \brief Interface to the lexical scanner */
 int cfg_get_token(struct cfg_token* token, struct cfg_parser* st, unsigned int flags);
 
 /* Commonly needed parser functions */

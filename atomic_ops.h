@@ -21,7 +21,7 @@
  * \brief SIP-router core :: Atomic operations and memory barriers
  * \ingroup core
  * Module: \ref core
- * See \ref atomicops
+ * See \ref atomic
  */
 
 /*
