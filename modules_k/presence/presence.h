@@ -75,6 +75,7 @@ extern int max_expires;
 extern int dbmode;
 extern int sphere_enable;
 extern int timeout_rm_subs;
+extern int send_fast_notify;
 extern int shtable_size;
 extern shtable_t subs_htable;
 

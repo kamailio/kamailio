@@ -359,6 +359,27 @@ modparam("presence", "pres_htable_size", 11)
 		</example>
 	</section>
 	<section>
+		<title><varname>send_fast_notify</varname> (int)</title>
+		<para>
+		This parameter enables or disables the sending of an initial empty NOTIFY after a SUBSCRIBE/reSUBSCRIBE. 
+		This caused problems for MWI application, because some CPEs (like Samsung) fail to understand an empty
+		NOTIFY to an message-summary event. This parameter is enabled by default, thus addering to the standard.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1 </quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>send_fast_notify</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "send_fast_notify", 0)
+...
+	</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>enable_sphere_check</varname> (int)</title>
 		<para>
 		This parameter is a flag that should be set if permission rules include

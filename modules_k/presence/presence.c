@@ -137,6 +137,7 @@ int dbmode = 0;
 int fallback2db = 0;
 int sphere_enable= 0;
 int timeout_rm_subs = 1;
+int send_fast_notify = 1;
 
 int phtable_size= 9;
 phtable_t* pres_htable;
@@ -177,6 +178,7 @@ static param_export_t params[]={
 	{ "fallback2db",            INT_PARAM, &fallback2db},
 	{ "enable_sphere_check",    INT_PARAM, &sphere_enable},
 	{ "timeout_rm_subs",        INT_PARAM, &timeout_rm_subs},
+	{ "send_fast_notify",	    INT_PARAM, &send_fast_notify},
     {0,0,0}
 };
 
