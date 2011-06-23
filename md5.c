@@ -1,29 +1,24 @@
 /* 
-
-$Id$
-
-MD5C.C - RSA Data Security, Inc., MD5 message-digest algorithm
-
-Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
-rights reserved.
-
-License to copy and use this software is granted provided that it
-is identified as the "RSA Data Security, Inc. MD5 Message-Digest
-Algorithm" in all material mentioning or referencing this software
-or this function.
-
-License is also granted to make and use derivative works provided
-that such works are identified as "derived from the RSA Data
-Security, Inc. MD5 Message-Digest Algorithm" in all material
-mentioning or referencing the derived work.
-
-RSA Data Security, Inc. makes no representations concerning either
-the merchantability of this software or the suitability of this
-software for any particular purpose. It is provided "as is"
-without express or implied warranty of any kind.
-
-These notices must be retained in any copies of any part of this
-documentation and/or software.
+ * MD5C.C - RSA Data Security, Inc., MD5 message-digest algorithm
+ * Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
+ * rights reserved.
+ * License to copy and use this software is granted provided that it
+ * is identified as the "RSA Data Security, Inc. MD5 Message-Digest
+ * Algorithm" in all material mentioning or referencing this software
+ * or this function.
+ * 
+ * License is also granted to make and use derivative works provided
+ * that such works are identified as "derived from the RSA Data
+ * Security, Inc. MD5 Message-Digest Algorithm" in all material
+ * mentioning or referencing the derived work.
+ * 
+ * RSA Data Security, Inc. makes no representations concerning either
+ * the merchantability of this software or the suitability of this
+ * software for any particular purpose. It is provided "as is"
+ * without express or implied warranty of any kind.
+ * 
+ * These notices must be retained in any copies of any part of this
+ * documentation and/or software.
  */
 
 /*!
@@ -39,13 +34,8 @@ documentation and/or software.
 #include "md5.h"
 
 
-#define USE_MEM
-
 /* Constants for MD5Transform routine.
  */
-
-
-
 
 #define S11 7
 #define S12 12
@@ -69,8 +59,6 @@ static void Encode PROTO_LIST
   ((unsigned char *, UINT4 *, unsigned int));
 static void Decode PROTO_LIST
   ((UINT4 *, unsigned char *, unsigned int));
-static void MD5_memcpy PROTO_LIST ((POINTER, POINTER, unsigned int));
-static void MD5_memset PROTO_LIST ((POINTER, int, unsigned int));
 
 static unsigned char PADDING[64] = {
   0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -153,7 +141,7 @@ unsigned int inputLen;                     /* length of input block */
   /* Transform as many times as possible.
 */
   if (inputLen >= partLen) {
- MD5_memcpy
+ memcpy
    ((POINTER)&context->buffer[index], (POINTER)input, partLen);
  MD5Transform (context->state, context->buffer);
 
@@ -166,7 +154,7 @@ unsigned int inputLen;                     /* length of input block */
  i = 0;
 
   /* Buffer remaining input */
-  MD5_memcpy
+  memcpy
  ((POINTER)&context->buffer[index], (POINTER)&input[i],
   inputLen-i);
 }
@@ -198,7 +186,7 @@ MD5_CTX *context;                                       /* context */
 
   /* Zeroize sensitive information.
 */
-  MD5_memset ((POINTER)context, 0, sizeof (*context));
+  memset ((POINTER)context, 0, sizeof (*context));
 }
 
 /* MD5 basic transformation. Transforms state based on block.
@@ -290,7 +278,7 @@ unsigned char block[64];
 
   /* Zeroize sensitive information.
 */
-  MD5_memset ((POINTER)x, 0, sizeof (x));
+  memset ((POINTER)x, 0, sizeof (x));
 }
 
 /* Encodes input (UINT4) into output (unsigned char). Assumes len is
@@ -325,40 +313,3 @@ unsigned int len;
  output[i] = ((UINT4)input[j]) | (((UINT4)input[j+1]) << 8) |
    (((UINT4)input[j+2]) << 16) | (((UINT4)input[j+3]) << 24);
 }
-
-/* Note: Replace "for loop" with standard memcpy if possible.
- */
-
-static void MD5_memcpy (output, input, len)
-POINTER output;
-POINTER input;
-unsigned int len;
-{
-
-#ifndef USE_MEM
-  unsigned int i;
-
-  for (i = 0; i < len; i++)
- output[i] = input[i];
-#else
-  memcpy( output, input, len );
-#endif
-}
-
-/* Note: Replace "for loop" with standard memset if possible.
- */
-static void MD5_memset (output, value, len)
-POINTER output;
-int value;
-unsigned int len;
-{
-
-#ifndef USE_MEM
-  unsigned int i;
-  for (i = 0; i < len; i++)
- ((char *)output)[i] = (char)value;
-#else
-  memset( output, value, len );
-#endif
-}
-
