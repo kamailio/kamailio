@@ -38,6 +38,19 @@
  *  2010-06-16 added sip-router rpc interface (osas)
  */
 
+/**
+ * @defgroup dialog dialog :: Kamailio dialog module
+ * @brief Kamailio dialog module
+ *
+ * The dialog module provides dialog awareness to the Kamailio proxy. Its
+ * functionality is to keep track of the current dialogs, to offer
+ * information about them (like how many dialogs are active) or to manage
+ * them. The module exports several functions that could be used directly
+ * from scripts.
+ * The module, via an internal API, also provide the foundation to build
+ * on top of it more complex dialog-based functionalities via other
+ * Kamailio modules.                       
+ */
 
 #include <stdio.h>
 #include <string.h>
