@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -16,9 +14,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/** @file       @brief
- * common part for all the atomic operations (atomic_t and common operations)
- *  See @ref atomic_ops.h for more info.
+/**
+ * @defgroup atomic SIP-router atomic operations
+ * @brief  SIP-router atomic operations and memory barriers support
+ * 
+ * SIP-router atomic operations and memory barriers support for different CPU
+ * architectures implemented in assembler. It also provides some generic
+ * fallback code for architectures not currently supported.
+ */
+
+/**
+ * @file
+ * @brief Common part for all the atomic operations
+ * 
+ * Common part for all the atomic operations (atomic_t and common operations)
+ * see atomic_ops.h for more info.
+ * @ingroup atomic
  */
 
 /* 
@@ -27,18 +38,27 @@
  *  2006-03-08  created by andrei
  *  2007-05-13  split from atomic_ops.h (andrei)
  */
+
+
 #ifndef __atomic_common
 #define __atomic_common
 
-/** @brief atomic_t defined as a struct to easily catch non atomic ops. on it,
- * e.g.  atomic_t  foo; foo++  will generate a compile error */
+/**
+ * @brief atomic_t defined as a struct to easily catch non atomic operations on it.
+ * 
+ * atomic_t defined as a struct to easily catch non atomic operations on it,
+ * e.g. atomic_t foo; foo++  will generate a compile error.
+ */
 typedef struct{ volatile int val; } atomic_t; 
 
 
-/** @name AtomicOps store and load operations are atomic on all cpus, note however that they
+/** 
+ * @name Atomic load and store operations
+ * Atomic store and load operations are atomic on all cpus, note however that they
  * don't include memory barriers so if you want to use atomic_{get,set} 
  * to implement mutexes you must use the mb_* versions or explicitely use
- * the barriers */
+ * the barriers 
+ */
 
 /*@{ */
 

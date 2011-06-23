@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -16,15 +14,19 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/** @file @brief
- *  atomic operations and memory barriers (sparc64 version, 32 and 64 bit modes)
- *  WARNING: atomic ops do not include memory barriers
- *  see atomic_ops.h for more details 
+/**
+ * @file
+ * @brief Atomic operations and memory barriers (SPARC64 version, 32 and 64 bit modes)
+ * 
+ * Atomic operations and memory barriers (SPARC64 version, 32 and 64 bit modes)
+ * \warning atomic ops do not include memory barriers see atomic_ops.h for
+ * more details.
  *
- *  Config defs: - SPARC64_MODE (if defined long is assumed to be 64 bits
- *                               else long & void* are assumed to be 32 for
- *                               sparc32plus code)
- *               - NOSMP
+ * Config defines:
+ * - SPARC64_MODE (if defined long is assumed to be 64 bits else long & void*
+ *   are assumed to be 32 for SPARC32plus code)
+ * - NOSMP
+ * @ingroup atomic
  */
 
 /* 

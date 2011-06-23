@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -16,15 +14,20 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/** @file	@brief
- *  atomic ops and memory barriers for arm (>= v3)
- *  see atomic_ops.h for more details 
- *
- * Config defines: - NOSMP
- *                 - __CPU_arm
- *                 - __CPU_arm6    - armv6 support (supports atomic ops
- *                                    via ldrex/strex)
- */ 
+/**
+ * @file
+ * @brief Atomic ops and memory barriers for ARM (>= v3)
+ * 
+ * Atomic ops and memory barriers for ARM architecture (starting from version 3)
+ * see atomic_ops.h for more info.
+ * 
+ * Config defines:
+ * - NOSMP
+ * - __CPU_arm
+ * - __CPU_arm6    - armv6 support (supports atomic ops via ldrex/strex)
+ * @ingroup atomic
+ */
+
 /* 
  * History:
  * --------

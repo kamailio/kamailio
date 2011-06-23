@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -16,19 +14,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/** @file @brief
- *  atomic operations and memory barriers (x86 and x86_64/amd64 specific)
- *  WARNING: atomic ops do not include memory barriers
- *  see atomic_ops.h for more details 
+/**
+ * @file
+ * @brief Atomic operations and memory barriers (x86 and x86_64/amd64 specific)
+ * 
+ * Atomic operations and memory barriers (x86 and x86_64/amd64 specific)
+ * \warning atomic ops do not include memory barriers, see atomic_ops.h for more
+ * details.
  *
- *  Config defines:   - NOSMP
- *                    - X86_OOSTORE (out of order store, defined by default)
- *                    - X86_64_OOSTORE, like X86_OOSTORE, but for x86_64 cpus,
- *                      default off
- *                    - __CPU_x86_64 (64 bit mode, long and void* is 64 bit and
- *                                    the cpu has all of the mfence, lfence
- *                                    and sfence instructions)
- *                    - __CPU_i386  (486+, 32 bit)
+ * Config defines:
+ * - NOSMP
+ * - X86_OOSTORE (out of order store, defined by default)
+ * - X86_64_OOSTORE, like X86_OOSTORE, but for x86_64 CPUs, default off
+ * - __CPU_x86_64 (64 bit mode, long and void* is 64 bit and the CPU has all
+ *   of the mfence, lfence and sfence instructions)
+ * - __CPU_i386  (486+, 32 bit)
+ * @ingroup atomic
  */
 /* 
  * History:

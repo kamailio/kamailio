@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -16,20 +14,23 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/** @file @brief
- *  atomic operations and memory barriers (mips isa 2 and mips64 specific)
- *  WARNING: atomic ops do not include memory barriers
- *  see atomic_ops.h for more details 
- *  WARNING: not tested on mips64 (not even a compile test)
+/** 
+ * @file 
+ * @brief Atomic operations and memory barriers (MIPS isa 2 and MIPS64 specific)
+ * 
+ * Atomic operations and memory barriers (MIPS isa 2 and MIPS64 specific)
+ * \warning atomic ops do not include memory barriers, see atomic_ops.h for
+ * more details.
+ * \warning not tested on MIPS64 (not even a compile test)
  *
- *  Config defines:  - NOSMP (in NOSMP mode it will also work on mips isa 1
- *                            cpus that support LL and SC, see MIPS_HAS_LLSC
- *                            in atomic_ops.h)
- *                   - __CPU_MIPS64 (mips64 arch., in 64 bit mode: long and
- *                                    void* are 64 bits)
- *                   - __CPU_MIPS2 or __CPU_MIPS && MIPS_HAS_LLSC && NOSMP
- *                                 (if __CPU_MIPS64 is not defined)
+ * Config defines:
+ * - NOSMP (in NOSMP mode it will also work on mips isa 1 CPUs that support
+ *   LL and SC, see MIPS_HAS_LLSC in atomic_ops.h)
+ * - __CPU_MIPS64 (mips64 arch., in 64 bit mode: long and void* are 64 bits)
+ * - __CPU_MIPS2 or __CPU_MIPS && MIPS_HAS_LLSC && NOSMP (if __CPU_MIPS64 is not defined)
+ * @ingroup atomic
  */
+
 /* 
  * History:
  * --------

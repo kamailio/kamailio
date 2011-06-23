@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -16,32 +14,35 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/** @file @brief
- *  include file for native (asm) atomic operations and memory barriers
- *  WARNING: atomic ops do not include memory barriers
- *  See atomic_ops.h for more info.
- *  Expects atomic_t to be defined (#include "atomic_common.h")
+/**
+ * @file
+ * @brief Native (asm) atomic operations and memory barriers
+ * 
+ * Native (assembler) atomic operations and memory barriers.
+ * \warning atomic ops do not include memory barriers, see atomic_ops.h for
+ * more info. Expects atomic_t to be defined (#include "atomic_common.h")
  *
- * Config defines:   CC_GCC_LIKE_ASM  - the compiler support gcc style
- *                     inline asm
- *                   NOSMP - the code will be a little faster, but not SMP
- *                            safe
- *                   __CPU_i386, __CPU_x86_64, X86_OOSTORE - see 
- *                       atomic_x86.h
- *                   __CPU_mips, __CPU_mips2, __CPU_mips64, MIPS_HAS_LLSC - see
- *                       atomic_mip2.h
- *                   __CPU_ppc, __CPU_ppc64 - see atomic_ppc.h
- *                   __CPU_sparc - see atomic_sparc.h
- *                   __CPU_sparc64, SPARC64_MODE - see atomic_sparc64.h
- *                   __CPU_arm, __CPU_arm6 - see atomic_arm.h
- *                   __CPU_alpha - see atomic_alpha.h
+ * Config defines:   
+ * - CC_GCC_LIKE_ASM  - the compiler support gcc style inline asm
+ * - NOSMP - the code will be a little faster, but not SMP safe
+ * - __CPU_i386, __CPU_x86_64, X86_OOSTORE - see atomic_x86.h
+ * - __CPU_mips, __CPU_mips2, __CPU_mips64, MIPS_HAS_LLSC - see atomic_mip2.h
+ * - __CPU_ppc, __CPU_ppc64 - see atomic_ppc.h
+ * - __CPU_sparc - see atomic_sparc.h
+ * - __CPU_sparc64, SPARC64_MODE - see atomic_sparc64.h
+ * - __CPU_arm, __CPU_arm6 - see atomic_arm.h
+ * - __CPU_alpha - see atomic_alpha.h
+ * @ingroup atomic
  */
+
 /* 
  * History:
  * --------
  *  2006-03-08  created by andrei
  *  2007-05-13  split from atomic_ops.h (andrei)
  */
+
+
 #ifndef __atomic_native
 #define __atomic_native
 

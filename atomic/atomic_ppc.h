@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -16,16 +14,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/** @file @brief
- *  atomic operations and memory barriers (powerpc and powerpc64 versions)
- *  WARNING: atomic ops do not include memory barriers
- *  see atomic_ops.h for more details 
- *  WARNING: not tested on ppc64
+/**
+ * @file
+ * @brief Atomic operations and memory barriers (PowerPC and PowerPC64 versions)
+ * 
+ * Atomic operations and memory barriers (PowerPC and PowerPC64 versions)
+ * \warning atomic ops do not include memory barriers see atomic_ops.h for
+ * more details. 
+ * \warning not tested on ppc64
  *
- *  Config defines:  - NOSMP
- *                   - __CPU_ppc64  (powerpc64 w/ 64 bits long and void*)
- *                   - __CPU_ppc    (powerpc or powerpc64 32bit mode)
+ * Config defines:
+ * - NOSMP
+ * - __CPU_ppc64  (powerpc64 w/ 64 bits long and void*)
+ * - __CPU_ppc    (powerpc or powerpc64 32bit mode)
+ * @ingroup atomic
  */
+
 /* 
  * History:
  * --------
@@ -38,6 +42,7 @@
  *  2007-05-29  added membar_depends(), membar_*_atomic_op and
  *                membar_*_atomic_setget (andrei)
  */
+
 
 #ifndef _atomic_ppc_h
 #define _atomic_ppc_h

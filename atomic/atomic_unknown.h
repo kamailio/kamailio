@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -16,20 +14,24 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/** @file @brief
- *  atomic operations and memory barriers implemented using locks
- *  (for architectures not yet supported via inline asm)
+/**
+ * @file
+ * @brief Atomic operations and memory barriers implemented using locks
  *
- *  WARNING: atomic ops do not include memory barriers
- *  see atomic_ops.h for more details 
+ * Atomic operations and memory barriers implemented using locks
+ * (for architectures not yet supported via inline assembler).
  *
- *  Config defs: - NOSMP (membars are null in this case)
- *               - HAVE_ASM_INLINE_MEMBAR (membars arleady defined =>
- *                                          use them)
- *               - HAVE_ASM_INLINE_ATOMIC_OPS (atomic ops already defined
- *                                               => don't redefine them)
+ * \warning atomic ops do not include memory barriers, see atomic_ops.h
+ * for more details 
  *
+ * Config defines:
+ * - NOSMP (membars are null in this case)
+ * - HAVE_ASM_INLINE_MEMBAR (membars already defined => use them)
+ * - HAVE_ASM_INLINE_ATOMIC_OPS (atomic ops already defined => don't
+ *   redefine them)
+ * @ingroup atomic
  */
+
 /* 
  * History:
  * --------
@@ -39,6 +41,7 @@
  *  2007-05-29  added membar_depends(), membar_*_atomic_op and
  *                membar_*_atomic_setget (andrei)
  */
+
 
 #ifndef _atomic_unknown_h
 #define _atomic_unknown_h
