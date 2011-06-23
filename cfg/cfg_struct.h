@@ -118,7 +118,7 @@ typedef struct _cfg_group_inst {
 	unsigned char	vars[1];	/*!< block for the values */
 } cfg_group_inst_t;
 
-/*! \bried Meta-data which is stored before each variable group
+/*! \brief Meta-data which is stored before each variable group
  * within the blob. This structure is used to handle the multivalue
  * instances of the variables, i.e. manages the array for the
  * additional values. */

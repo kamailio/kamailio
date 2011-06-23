@@ -60,7 +60,7 @@ typedef struct sl_cbp {
 typedef void (*sl_cbf_f)(sl_cbp_t *slcbp);
 
 /**
- * @bried SL callback structure definition
+ * @brief SL callback structure definition
  */
 typedef struct sl_cbelem {
 	unsigned int type;         /* type of callback - can be a mask of types */
