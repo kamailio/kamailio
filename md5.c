@@ -23,7 +23,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief SIP-router core :: md5 hash support
  * \ingroup core
  * Module: \ref core
  */
@@ -34,9 +34,11 @@
 #include "md5.h"
 
 
-/* Constants for MD5Transform routine.
+/**
+ * \brief Constants for MD5Transform routine.
  */
 
+/*@{ */
 #define S11 7
 #define S12 12
 #define S13 17
@@ -53,6 +55,7 @@
 #define S42 10
 #define S43 15
 #define S44 21
+/*@} */
 
 static void MD5Transform PROTO_LIST ((UINT4 [4], unsigned char [64]));
 static void Encode PROTO_LIST
@@ -66,20 +69,30 @@ static unsigned char PADDING[64] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-/* F, G, H and I are basic MD5 functions.
+/**
+ * \brief F, G, H and I are basic MD5 functions.
  */
+
+/*@{ */
 #define F(x, y, z) (((x) & (y)) | ((~x) & (z)))
 #define G(x, y, z) (((x) & (z)) | ((y) & (~z)))
 #define H(x, y, z) ((x) ^ (y) ^ (z))
 #define I(x, y, z) ((y) ^ ((x) | (~z)))
+/*@} */
 
-/* ROTATE_LEFT rotates x left n bits.
+/**
+ * \brief ROTATE_LEFT rotates x left n bits.
  */
 #define ROTATE_LEFT(x, n) (((x) << (n)) | ((x) >> (32-(n))))
 
-/* FF, GG, HH, and II transformations for rounds 1, 2, 3, and 4.
-Rotation is separate from addition to prevent recomputation.
+/**
+ * \brief FF, GG, HH, and II transformations for rounds 1, 2, 3, and 4.
+ * 
+ * FF, GG, HH, and II transformations for rounds 1, 2, 3, and 4.
+ * Rotation is separate from addition to prevent recomputation.
  */
+
+/*@{ */
 #define FF(a, b, c, d, x, s, ac) { \
  (a) += F ((b), (c), (d)) + (x) + (UINT4)(ac); \
  (a) = ROTATE_LEFT ((a), (s)); \
@@ -100,11 +113,16 @@ Rotation is separate from addition to prevent recomputation.
  (a) = ROTATE_LEFT ((a), (s)); \
  (a) += (b); \
   }
+/*@} */
 
-/* MD5 initialization. Begins an MD5 operation, writing a new context.
+/**
+ * \brief MD5 context initialization
+ * 
+ * MD5 context initialization. Begins an MD5 operation, writing a new context.
+ * \param context initialized context
  */
 void MD5Init (context)
-MD5_CTX *context;                                        /* context */
+MD5_CTX *context;
 {
   context->count[0] = context->count[1] = 0;
   /* Load magic initialization constants.
@@ -115,14 +133,20 @@ MD5_CTX *context;                                        /* context */
   context->state[3] = 0x10325476;
 }
 
-/* MD5 block update operation. Continues an MD5 message-digest
-  operation, processing another message block, and updating the
-  context.
+/**
+ * \brief MD5 block update operation
+ * 
+ * MD5 block update operation. Continues an MD5 message-digest
+ * operation, processing another message block, and updating the
+ * context.
+ * \param context context
+ * \param input input block
+ * \param inputLen length of input block
  */
 void MD5Update (context, input, inputLen)
-MD5_CTX *context;                                        /* context */
-unsigned char *input;                                /* input block */
-unsigned int inputLen;                     /* length of input block */
+MD5_CTX *context;
+unsigned char *input;
+unsigned int inputLen;
 {
   unsigned int i, index, partLen;
 
@@ -159,12 +183,17 @@ unsigned int inputLen;                     /* length of input block */
   inputLen-i);
 }
 
-/* MD5 finalization. Ends an MD5 message-digest operation, writing the
-  the message digest and zeroizing the context.
+/**
+ * \brief MD5 finalization
+ * 
+ * MD5 finalization. Ends an MD5 message-digest operation, writing the
+ * the message digest and zeroizing the context.
+ * \param digest message digest
+ * \param context context
  */
 void MD5Final (digest, context)
-unsigned char digest[16];                         /* message digest */
-MD5_CTX *context;                                       /* context */
+unsigned char digest[16];
+MD5_CTX *context;
 {
   unsigned char bits[8];
   unsigned int index, padLen;
@@ -189,7 +218,12 @@ MD5_CTX *context;                                       /* context */
   memset ((POINTER)context, 0, sizeof (*context));
 }
 
-/* MD5 basic transformation. Transforms state based on block.
+/**
+ * \brief MD5 basic transformation
+ * 
+ * MD5 basic transformation. Transforms state based on block.
+ * \param state transformed state
+ * \param block block input for transformation
  */
 static void MD5Transform (state, block)
 UINT4 state[4];
@@ -281,8 +315,14 @@ unsigned char block[64];
   memset ((POINTER)x, 0, sizeof (x));
 }
 
-/* Encodes input (UINT4) into output (unsigned char). Assumes len is
-  a multiple of 4.
+/**
+ * \brief Encodes input (UINT4) into output (unsigned char)
+ * 
+ * Encodes input (UINT4) into output (unsigned char). Assumes len is
+ * a multiple of 4.
+ * \param output output character
+ * \param input integer input
+ * \param len length of output
  */
 static void Encode (output, input, len)
 unsigned char *output;
@@ -299,8 +339,14 @@ unsigned int len;
   }
 }
 
-/* Decodes input (unsigned char) into output (UINT4). Assumes len is
-  a multiple of 4.
+/**
+ * \brief Decodes input (unsigned char) into output (UINT4)
+ * 
+ * Decodes input (unsigned char) into output (UINT4). Assumes len is
+ * a multiple of 4.
+ * \param output output integer
+ * \param input input character
+ * \param len length of input
  */
 static void Decode (output, input, len)
 UINT4 *output;
