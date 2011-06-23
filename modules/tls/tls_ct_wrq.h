@@ -15,11 +15,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 /** .
- * @file /home/andrei/sr.git/modules/tls/tls_ct_wrq.h
+ * @file
  * @ingroup: 
  * Module: 
  */
+
 /*
  * History:
  * --------

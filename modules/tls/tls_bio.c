@@ -15,11 +15,14 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** openssl BIOs for reading/writing via a fixed memory buffer.
- * @file /home/andrei/sr.git/modules/tls/tls_bio.c
+
+/**
+ * openssl BIOs for reading/writing via a fixed memory buffer.
+ * @file
  * @ingroup tls
  * @Module: @ref tls
  */
+
 /*
  * History:
  * --------

@@ -15,11 +15,14 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** tls runtime configuration.
- * @filetls_cfg.h
+
+/**
+ * TLS runtime configuration.
+ * @file tls_cfg.h
  * @ingroup: tls
  * Module: @ref tls
  */
+
 /*
  * History:
  * --------
