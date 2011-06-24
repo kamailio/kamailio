@@ -279,6 +279,26 @@ modparam("auth_db", "load_credentials", "$avp(i:123)=rpid;email_address")
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>version_table</varname> (integer)</title>
+		<para>
+		If set to 0, the module will skip checking the version
+		for subscriber table.
+		</para>
+		<para>
+		Default value is <quote>1 (check for table version)</quote>.
+		</para>
+		<example>
+		<title><varname>version_table</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("auth_db", "version_table", 0)
+...
+		</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
