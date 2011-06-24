@@ -93,6 +93,7 @@ str domain_column           = {DOMAIN_COL, DOMAIN_COL_LEN};
 str pass_column             = {PASS_COL, PASS_COL_LEN};
 str pass_column_2           = {PASS_COL_2, PASS_COL_2_LEN};
 
+static int version_table_check = 1;
 
 int calc_ha1                = 0;
 int use_domain              = 0; /* Use also domain when looking up in table */
@@ -127,14 +128,15 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",            STR_PARAM, &db_url.s           },
-	{"user_column",       STR_PARAM, &user_column.s      },
-	{"domain_column",     STR_PARAM, &domain_column.s    },
-	{"password_column",   STR_PARAM, &pass_column.s      },
-	{"password_column_2", STR_PARAM, &pass_column_2.s    },
-	{"calculate_ha1",     INT_PARAM, &calc_ha1           },
-	{"use_domain",        INT_PARAM, &use_domain         },
-	{"load_credentials",  STR_PARAM, &credentials_list   },
+	{"db_url",            STR_PARAM, &db_url.s            },
+	{"user_column",       STR_PARAM, &user_column.s       },
+	{"domain_column",     STR_PARAM, &domain_column.s     },
+	{"password_column",   STR_PARAM, &pass_column.s       },
+	{"password_column_2", STR_PARAM, &pass_column_2.s     },
+	{"calculate_ha1",     INT_PARAM, &calc_ha1            },
+	{"use_domain",        INT_PARAM, &use_domain          },
+	{"load_credentials",  STR_PARAM, &credentials_list    },
+	{"version_table",     INT_PARAM, &version_table_check },
 	{0, 0, 0}
 };
 
@@ -250,7 +252,9 @@ static int auth_fixup(void** param, int param_no)
 			LM_ERR("unable to open database connection\n");
 			return -1;
 		}
-		if(db_check_table_version(&auth_dbf, dbh, &name, TABLE_VERSION) < 0) {
+		if(version_table_check!=0
+				&& db_check_table_version(&auth_dbf, dbh, &name,
+					TABLE_VERSION) < 0) {
 			LM_ERR("error during table version check.\n");
 			auth_dbf.close(dbh);
 			return -1;
