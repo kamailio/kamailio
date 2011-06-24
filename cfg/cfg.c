@@ -141,6 +141,14 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 		goto error;
 	}
 
+	/* The cfg variables are ready to use, let us set the handle
+	before passing the new definitions to the drivers.
+	We make the interface usable for the fixup functions
+	at this step
+	cfg_set_group() and cfg_new_group() need the handle to be set because
+	they save its original value. */
+	*handle = values;
+
 	group_name_len = strlen(group_name);
 	/* check for duplicates */
 	if ((group = cfg_lookup_group(group_name, group_name_len))) {
@@ -161,12 +169,6 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 			goto error;
 	}
 	group->dynamic = CFG_GROUP_STATIC;
-
-	/* The cfg variables are ready to use, let us set the handle
-	before passing the new definitions to the drivers.
-	We make the interface usable for the fixup functions
-	at this step */
-	*handle = values;
 
 	/* notify the drivers about the new config definition */
 	cfg_notify_drivers(group_name, group_name_len, def);
