@@ -596,3 +596,17 @@ void print_actions(struct action* a)
 		a = a->next;
 	}
 }
+
+/**
+ * get the pointer to action structure from parameter
+ */
+struct action *get_action_from_param(void **param, int param_no)
+{
+	struct action *ac, ac2;
+	action_u_t *au, au2;
+	/* param points to au->u.string, get pointer to au */
+	au = (void*) ((char *)param - ((char *)&au2.u.string-(char *)&au2));
+	au = au - 1 - param_no;
+	ac = (void*) ((char *)au - ((char *)&ac2.val-(char *)&ac2));
+	return ac;
+}
