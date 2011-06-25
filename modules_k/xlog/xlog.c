@@ -279,22 +279,6 @@ static void destroy(void)
 		pkg_free(_xlog_buf);
 }
 
-/**
- * get the pointer to action structure
- * - take cfg line
- * - cfg file name available, but could be long
- */
-static struct action *xlog_fixup_get_action(void **param, int param_no)
-{
-	struct action *ac, ac2;
-	action_u_t *au, au2;
-	/* param points to au->u.string, get pointer to au */
-	au = (void*) ((char *)param - ((char *)&au2.u.string-(char *)&au2));
-	au = au - 1 - param_no;
-	ac = (void*) ((char *)au - ((char *)&ac2.val-(char *)&ac2));
-	return ac;
-}
-
 static int xdbg_fixup_helper(void** param, int param_no, int mode)
 {
 	xl_msg_t *xm;
@@ -308,7 +292,7 @@ static int xdbg_fixup_helper(void** param, int param_no, int mode)
 	}
 	memset(xm, 0, sizeof(xl_msg_t));
 	if(mode==1)
-		xm->a = xlog_fixup_get_action(param, param_no);
+		xm->a = get_action_from_param(param, param_no);
 	s.s = (char*)(*param); s.len = strlen(s.s);
 
 	if(pv_parse_format(&s, &xm->m)<0)
