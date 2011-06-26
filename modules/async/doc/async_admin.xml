@@ -87,7 +87,47 @@ modparam("async", "workers", 2)
 
 	<section>
 	<title>Exported Functions</title>
- 	<section>
+	<section>
+	    <title>
+		<function moreinfo="none">async_route(routename, seconds)</function>
+	    </title>
+	    <para>
+		Simulate a sleep of 'seconds' and then continue the processing of SIP
+		request with the route[routename]. In case of internal errors, the
+		function returns false, otherwise the function exits the execution of
+		config at that moment (return 0 behaviour).
+		</para>
+		<para>
+		The routename parameter can be a static string or a dynamic string
+		value with config variables.
+		</para>
+		<para>
+		The sleep parameter represent the number of seconds to suppend the
+		processing of SIP request. Maximum value is 100. The parameter can be
+		a static integer or a varaible holding an integer.
+		</para>
+		<para>
+		Since the SIP request handling is resumed in another process,
+		practically the config file execution state is lost. Therefore beware
+		that the execution of config after resume will end once the
+		route[routename] is finished.
+		</para>
+		<example>
+		<title><function>async_sleep</function> usage</title>
+		<programlisting format="linespecific">
+...
+async_route("RESUME", "4");
+...
+route[RESUME] {
+   send_reply("404", "Not found");
+   exit;
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
 	    <title>
 		<function moreinfo="none">async_sleep(seconds)</function>
 	    </title>
