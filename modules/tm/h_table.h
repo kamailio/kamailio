@@ -425,7 +425,7 @@ typedef struct cell
 	/* place holder for MD5checksum  (meaningful only if syn_branch=0) */
 	char md5[0]; /* if syn_branch==0 then MD5_LEN bytes are extra alloc'ed*/
 
-}cell_type;
+} tm_cell_t;
 
 
 #if 0
