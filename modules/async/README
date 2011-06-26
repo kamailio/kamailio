@@ -1,0 +1,127 @@
+ASYNC Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2011 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Exported Parameters
+
+              3.1. workers (int)
+
+        4. Exported Functions
+
+              4.1. async_sleep(seconds)
+
+   List of Examples
+
+   1.1. Set workers parameter
+   1.2. async_sleep usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. workers (int)
+
+   4. Exported Functions
+
+        4.1. async_sleep(seconds)
+
+1. Overview
+
+   This module provides asynchornous operations for handling SIP requests
+   in configuration file.
+
+   It uses t_suspend() and t_continue() from TM module.
+
+   Note that after invoking the an asyncronous operation, the processing
+   will continue later, in another application process. Therefore, do not
+   rely on variables stored in private memory, used shared memory if you
+   want to get values after the processing is resumend (e.g., $shv(...) of
+   htable $sht(...)).
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * tm - transaction management.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+3. Exported Parameters
+
+   3.1. workers (int)
+
+3.1. workers (int)
+
+   Number of worker processes to be started to handle the asynchornous
+   tasks.
+
+   Default value is 1.
+
+   Example 1.1. Set workers parameter
+...
+modparam("async", "workers", 2)
+...
+
+4. Exported Functions
+
+   4.1. async_sleep(seconds)
+
+4.1. async_sleep(seconds)
+
+   Simulate a sleep of 'seconds' and then continue the processing of SIP
+   request with the next action. In case of internal errors, the function
+   returns false, otherwise the function exits the execution of config at
+   that moment (return 0 behaviour).
+
+   The sleep parameter represent the number of seconds to suppend the
+   processing of SIP request. Maximum value is 100. The parameter can be a
+   static integer or a varaible holding an integer.
+
+   Since the SIP request handling is resumed in another process,
+   practically the config file execution state is lost. Therefore beware
+   that the execution of config after resume will end once the route block
+   where async_sleep() is called is finished.
+
+   Example 1.2. async_sleep usage
+...
+async_sleep("4");
+send_reply("404", "Not found");
+exit;
+...
