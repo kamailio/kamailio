@@ -33,7 +33,7 @@ typedef struct async_param {
 	int type;
 	gparam_t *pinterval;
 	union {
-		struct action *paction;
+		cfg_action_t *paction;
 		gparam_t *proute;
 	} u;
 } async_param_t;
@@ -42,7 +42,7 @@ int async_init_timer_list(void);
 
 int async_destroy_timer_list(void);
 
-int async_sleep(struct sip_msg* msg, int seconds, struct action *act);
+int async_sleep(struct sip_msg* msg, int seconds, cfg_action_t *act);
 
 void async_timer_exec(unsigned int ticks, void *param);
 

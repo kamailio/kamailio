@@ -42,7 +42,7 @@ typedef struct async_item {
 	unsigned int tindex;
 	unsigned int tlabel;
 	unsigned int ticks;
-	struct action *act;
+	cfg_action_t *act;
 	struct async_item *next;
 } async_item_t;
 
@@ -105,12 +105,12 @@ int async_destroy_timer_list(void)
 	return 0;
 }
 
-int async_sleep(struct sip_msg* msg, int seconds, struct action *act)
+int async_sleep(struct sip_msg* msg, int seconds, cfg_action_t *act)
 {
 	int slot;
 	unsigned int ticks;
 	async_item_t *ai;
-	struct cell *t = 0;
+	tm_cell_t *t = 0;
 
 	if(seconds<=0) {
 		LM_ERR("negative or zero sleep time (%d)\n", seconds);
