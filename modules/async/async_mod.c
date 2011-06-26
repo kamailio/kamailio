@@ -47,12 +47,16 @@ static void mod_destroy(void);
 
 static int w_async_sleep(struct sip_msg* msg, char* sec, char* str2);
 static int fixup_async_sleep(void** param, int param_no);
+static int w_async_route(struct sip_msg* msg, char* rt, char* sec);
+static int fixup_async_route(void** param, int param_no);
 
 /* tm */
 struct tm_binds tmb;
 
 
 static cmd_export_t cmds[]={
+	{"async_route", (cmd_function)w_async_route, 2, fixup_async_route,
+		0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"async_sleep", (cmd_function)w_async_sleep, 1, fixup_async_sleep,
 		0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{0, 0, 0, 0, 0, 0}
@@ -167,5 +171,60 @@ static int fixup_async_sleep(void** param, int param_no)
 		return -1;
 	ap->pinterval = (gparam_t*)(*param);
 	*param = (void*)ap;
+	return 0;
+}
+
+static int w_async_route(struct sip_msg* msg, char* rt, char* sec)
+{
+	cfg_action_t *act;
+	int s;
+	str rn;
+	int ri;
+
+	if(msg==NULL)
+		return -1;
+
+	if(fixup_get_svalue(msg, (gparam_t*)rt, &rn)!=0)
+	{
+		LM_ERR("no async route block name\n");
+		return -1;
+	}
+
+	if(fixup_get_ivalue(msg, (gparam_t*)sec, &s)!=0)
+	{
+		LM_ERR("no async interval value\n");
+		return -1;
+	}
+
+	ri = route_get(&main_rt, rn.s);
+	if(ri<0)
+	{
+		LM_ERR("unable to find route block [%.*s]\n", rn.len, rn.s);
+		return -1;
+	}
+	act = main_rt.rlist[ri];
+	if(act==NULL)
+	{
+		LM_ERR("empty action lists in route block [%.*s]\n", rn.len, rn.s);
+		return -1;
+	}
+
+	if(async_sleep(msg, s, act)<0)
+		return -1;
+	/* force exit in config */
+	return 0;
+}
+
+static int fixup_async_route(void** param, int param_no)
+{
+	if(param_no==1)
+	{
+		if(fixup_spve_null(param, 1)<0)
+			return -1;
+		return 0;
+	} else if(param_no==2) {
+		if(fixup_igp_null(param, 1)<0)
+			return -1;
+	}
 	return 0;
 }
