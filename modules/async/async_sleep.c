@@ -181,7 +181,7 @@ void async_timer_exec(unsigned int ticks, void *param)
 
 		if(ai==NULL)
 			break;
-		if(ai->act!=NULL && ai->act->next!=NULL)
-			tmb.t_continue(ai->tindex, ai->tlabel, ai->act->next);
+		if(ai->act!=NULL)
+			tmb.t_continue(ai->tindex, ai->tlabel, ai->act);
 	}
 }

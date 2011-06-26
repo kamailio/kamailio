@@ -132,20 +132,25 @@ static void mod_destroy(void)
 static int w_async_sleep(struct sip_msg* msg, char* sec, char* str2)
 {
 	int s;
-	async_param_t *ai;
+	async_param_t *ap;
 	
 	if(msg==NULL)
 		return -1;
 
-	ai = (async_param_t*)sec;
-	if(fixup_get_ivalue(msg, ai->pinterval, &s)!=0)
+	ap = (async_param_t*)sec;
+	if(fixup_get_ivalue(msg, ap->pinterval, &s)!=0)
 	{
 		LM_ERR("no async sleep time value\n");
 		return -1;
 	}
-	if(ai->type==0)
+	if(ap->type==0)
 	{
-		if(async_sleep(msg, s, ai->u.paction)<0)
+		if(ap->u.paction==NULL || ap->u.paction->next!=NULL)
+		{
+			LM_ERR("cannot be executed as last action in a route block\n");
+			return -1;
+		}
+		if(async_sleep(msg, s, ap->u.paction->next)<0)
 			return -1;
 		/* force exit in config */
 		return 0;
