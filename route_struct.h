@@ -206,6 +206,8 @@ struct action{
 	action_u_t val[MAX_ACTIONS];
 };
 
+typedef struct action cfg_action_t;
+
 struct expr* mk_exp(int op, struct expr* left, struct expr* right);
 struct expr* mk_elem(int op, expr_l_type ltype, void* lparam,
 							 expr_r_type rtype, void* rparam);
