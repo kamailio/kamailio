@@ -67,8 +67,8 @@ Chapter 1. Admin Guide
    Note that after invoking the an asyncronous operation, the processing
    will continue later, in another application process. Therefore, do not
    rely on variables stored in private memory, used shared memory if you
-   want to get values after the processing is resumend (e.g., $shv(...) of
-   htable $sht(...)).
+   want to get values after the processing is resumend (e.g., $avp(...),
+   $xavp(...), $shv(...), htable $sht(...)).
 
 2. Dependencies
 
