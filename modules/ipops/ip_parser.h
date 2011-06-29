@@ -1,3 +1,8 @@
+/*
+ * Warning: This file is auto generated from a ragel syntax (ip_parser.rl),
+ * do not change it!
+ */   
+
 #ifndef ip_parser_h
 #define ip_parser_h
 
