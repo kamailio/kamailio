@@ -1,7 +1,4 @@
 /* 
- * $Id$
- *
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -26,6 +23,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SIP-router core :: md5 hash support
+ * \ingroup core
+ * Module: \ref core
+ */
 
 #ifndef _MD5UTILS_H
 #define _MD5UTILS_H
@@ -34,6 +37,16 @@
 
 #define MD5_LEN	32
 
+/*!
+  * \brief Calculate a MD5 digests over a string array
+  * 
+  * Calculate a MD5 digests over a string array and stores the result in the
+  * destination char array. This function assumes 32 bytes in the destination
+  * buffer.
+  * \param dst destination
+  * \param src string input array
+  * \param size elements in the input array
+  */
 void MD5StringArray (char *dst, str src[], int size);
 
 #endif /* _MD5UTILS_H */

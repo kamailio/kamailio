@@ -54,7 +54,7 @@ void th_shuffle(char *in, int size)
 	MD5Init(&ctx);
 	MD5Update(&ctx, _th_key.s, _th_key.len);
 	MD5Update(&ctx, _th_key.s, _th_key.len);
-	MD5Final(md5, &ctx);
+	U_MD5Final(md5, &ctx);
 
 	md5i = (unsigned int*)md5;
 

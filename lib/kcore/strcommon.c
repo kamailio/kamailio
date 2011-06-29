@@ -117,7 +117,7 @@ void compute_md5(char *dst, char *src, int src_len)
 	unsigned char digest[16];
 	MD5Init (&context);
   	MD5Update (&context, src, src_len);
-	MD5Final (digest, &context);
+	U_MD5Final (digest, &context);
 	string2hex(digest, 16, dst);
 }
 

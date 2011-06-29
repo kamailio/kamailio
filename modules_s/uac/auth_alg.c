@@ -30,7 +30,6 @@
  */
 
 
-#include "../../md5global.h"
 #include "../../md5.h"
 
 #include "auth_alg.h"

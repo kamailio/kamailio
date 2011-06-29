@@ -31,14 +31,12 @@
 #ifndef MD5_H
 #define MD5_H
 
-#include "md5global.h"
-
 /**
  * \brief MD5 context
  */
 typedef struct {
-  UINT4 state[4];                                   /* state (ABCD) */
-  UINT4 count[2];        /* number of bits, modulo 2^64 (lsb first) */
+  unsigned int state[4];                                   /* state (ABCD) */
+  unsigned int count[2];        /* number of bits, modulo 2^64 (lsb first) */
   unsigned char buffer[64];                         /* input buffer */
 } MD5_CTX;
 
@@ -48,7 +46,7 @@ typedef struct {
  * MD5 context initialization. Begins an MD5 operation, writing a new context.
  * \param context initialized context
  */
-void MD5Init PROTO_LIST ((MD5_CTX *));
+void MD5Init (MD5_CTX *context);
 
 /**
  * \brief MD5 block update operation
@@ -60,8 +58,7 @@ void MD5Init PROTO_LIST ((MD5_CTX *));
  * \param input input block
  * \param inputLen length of input block
  */
-void MD5Update PROTO_LIST
-  ((MD5_CTX *, unsigned char *, unsigned int));
+void U_MD5Update (MD5_CTX *context, unsigned char *input, unsigned int inputLen);
 
   /**
  * \brief MD5 finalization
@@ -71,6 +68,35 @@ void MD5Update PROTO_LIST
  * \param digest message digest
  * \param context context
  */
-void MD5Final PROTO_LIST ((unsigned char [16], MD5_CTX *));
+void U_MD5Final (unsigned char digest[16], MD5_CTX *context);
+
+/*!
+ * \brief Small wrapper around MD5Update
+ *
+ * Small wrapper around MD5Update, because everybody uses this on 'str' types
+ * \param context MD5 context
+ * \param input input block
+ * \param inputLen length of input block
+ * \note please not use this in new code
+ * \todo review and fix all wrong usage
+ */
+static inline void MD5Update (MD5_CTX *context, char *input, unsigned int inputLen)
+{
+	return U_MD5Update(context, (unsigned char *)input, inputLen);
+}
+
+/*!
+ * \brief Small wrapper around MD5Final
+ *
+ * Small wrapper around MD5Final, because everybody uses this on 'str' types
+ * \param digest message digest
+ * \param context MD5 context
+ * \note please not use this in new code
+ * \todo review and fix all wrong usage
+ */
+static inline void MD5Final (char digest[16], MD5_CTX *context)
+{
+	U_MD5Final((unsigned char *)digest, context);
+}
 
 #endif /* MD5_H */

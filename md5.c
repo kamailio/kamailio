@@ -30,7 +30,6 @@
 
 
 #include <string.h>
-#include "md5global.h"
 #include "md5.h"
 
 
@@ -57,11 +56,9 @@
 #define S44 21
 /*@} */
 
-static void MD5Transform PROTO_LIST ((UINT4 [4], unsigned char [64]));
-static void Encode PROTO_LIST
-  ((unsigned char *, UINT4 *, unsigned int));
-static void Decode PROTO_LIST
-  ((UINT4 *, unsigned char *, unsigned int));
+static void MD5Transform(unsigned int [4], unsigned char [64]);
+static void Encode(unsigned char *, unsigned int *, unsigned int);
+static void Decode(unsigned int *, unsigned char *, unsigned int);
 
 static unsigned char PADDING[64] = {
   0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -93,22 +90,22 @@ static unsigned char PADDING[64] = {
 
 /*@{ */
 #define FF(a, b, c, d, x, s, ac) { \
- (a) += F ((b), (c), (d)) + (x) + (UINT4)(ac); \
+ (a) += F ((b), (c), (d)) + (x) + (unsigned int)(ac); \
  (a) = ROTATE_LEFT ((a), (s)); \
  (a) += (b); \
   }
 #define GG(a, b, c, d, x, s, ac) { \
- (a) += G ((b), (c), (d)) + (x) + (UINT4)(ac); \
+ (a) += G ((b), (c), (d)) + (x) + (unsigned int)(ac); \
  (a) = ROTATE_LEFT ((a), (s)); \
  (a) += (b); \
   }
 #define HH(a, b, c, d, x, s, ac) { \
- (a) += H ((b), (c), (d)) + (x) + (UINT4)(ac); \
+ (a) += H ((b), (c), (d)) + (x) + (unsigned int)(ac); \
  (a) = ROTATE_LEFT ((a), (s)); \
  (a) += (b); \
   }
 #define II(a, b, c, d, x, s, ac) { \
- (a) += I ((b), (c), (d)) + (x) + (UINT4)(ac); \
+ (a) += I ((b), (c), (d)) + (x) + (unsigned int)(ac); \
  (a) = ROTATE_LEFT ((a), (s)); \
  (a) += (b); \
   }
@@ -120,8 +117,7 @@ static unsigned char PADDING[64] = {
  * MD5 context initialization. Begins an MD5 operation, writing a new context.
  * \param context initialized context
  */
-void MD5Init (context)
-MD5_CTX *context;
+void MD5Init (MD5_CTX *context)
 {
   context->count[0] = context->count[1] = 0;
   /* Load magic initialization constants.
@@ -142,10 +138,7 @@ MD5_CTX *context;
  * \param input input block
  * \param inputLen length of input block
  */
-void MD5Update (context, input, inputLen)
-MD5_CTX *context;
-unsigned char *input;
-unsigned int inputLen;
+void U_MD5Update (MD5_CTX *context, unsigned char *input, unsigned int inputLen)
 {
   unsigned int i, index, partLen;
 
@@ -153,11 +146,11 @@ unsigned int inputLen;
   index = (unsigned int)((context->count[0] >> 3) & 0x3F);
 
   /* Update number of bits */
-  if ((context->count[0] += ((UINT4)inputLen << 3))
+  if ((context->count[0] += ((unsigned int)inputLen << 3))
 
-   < ((UINT4)inputLen << 3))
+   < ((unsigned int)inputLen << 3))
  context->count[1]++;
-  context->count[1] += ((UINT4)inputLen >> 29);
+  context->count[1] += ((unsigned int)inputLen >> 29);
 
   partLen = 64 - index;
 
@@ -165,7 +158,7 @@ unsigned int inputLen;
 */
   if (inputLen >= partLen) {
  memcpy
-   ((POINTER)&context->buffer[index], (POINTER)input, partLen);
+   ((unsigned char *)&context->buffer[index], (unsigned char *)input, partLen);
  MD5Transform (context->state, context->buffer);
 
  for (i = partLen; i + 63 < inputLen; i += 64)
@@ -178,7 +171,7 @@ unsigned int inputLen;
 
   /* Buffer remaining input */
   memcpy
- ((POINTER)&context->buffer[index], (POINTER)&input[i],
+ ((unsigned char *)&context->buffer[index], (unsigned char *)&input[i],
   inputLen-i);
 }
 
@@ -190,9 +183,7 @@ unsigned int inputLen;
  * \param digest message digest
  * \param context context
  */
-void MD5Final (digest, context)
-unsigned char digest[16];
-MD5_CTX *context;
+void U_MD5Final (unsigned char digest[16], MD5_CTX *context)
 {
   unsigned char bits[8];
   unsigned int index, padLen;
@@ -204,17 +195,17 @@ MD5_CTX *context;
 */
   index = (unsigned int)((context->count[0] >> 3) & 0x3f);
   padLen = (index < 56) ? (56 - index) : (120 - index);
-  MD5Update (context, PADDING, padLen);
+  U_MD5Update (context, PADDING, padLen);
 
   /* Append length (before padding) */
-  MD5Update (context, bits, 8);
+  U_MD5Update (context, bits, 8);
 
   /* Store state in digest */
   Encode (digest, context->state, 16);
 
   /* Zeroize sensitive information.
 */
-  memset ((POINTER)context, 0, sizeof (*context));
+  memset ((unsigned char *)context, 0, sizeof (*context));
 }
 
 /**
@@ -224,11 +215,9 @@ MD5_CTX *context;
  * \param state transformed state
  * \param block block input for transformation
  */
-static void MD5Transform (state, block)
-UINT4 state[4];
-unsigned char block[64];
+static void MD5Transform (unsigned int state[4], unsigned char block[64])
 {
-  UINT4 a = state[0], b = state[1], c = state[2], d = state[3], x[16];
+  unsigned int a = state[0], b = state[1], c = state[2], d = state[3], x[16];
 
   Decode (x, block, 64);
 
@@ -311,50 +300,44 @@ unsigned char block[64];
 
   /* Zeroize sensitive information.
 */
-  memset ((POINTER)x, 0, sizeof (x));
+  memset ((unsigned char *)x, 0, sizeof (x));
 }
 
 /**
- * \brief Encodes input (UINT4) into output (unsigned char)
+ * \brief Encodes input (unsigned int) into output (unsigned char)
  * 
- * Encodes input (UINT4) into output (unsigned char). Assumes len is
+ * Encodes input (unsigned int) into output (unsigned char). Assumes len is
  * a multiple of 4.
  * \param output output character
  * \param input integer input
  * \param len length of output
  */
-static void Encode (output, input, len)
-unsigned char *output;
-UINT4 *input;
-unsigned int len;
+static void Encode (unsigned char *output, unsigned int *input, unsigned int len)
 {
   unsigned int i, j;
 
   for (i = 0, j = 0; j < len; i++, j += 4) {
- output[j] = (unsigned char)(input[i] & 0xff);
- output[j+1] = (unsigned char)((input[i] >> 8) & 0xff);
- output[j+2] = (unsigned char)((input[i] >> 16) & 0xff);
- output[j+3] = (unsigned char)((input[i] >> 24) & 0xff);
+    output[j] = (unsigned char)(input[i] & 0xff);
+    output[j+1] = (unsigned char)((input[i] >> 8) & 0xff);
+    output[j+2] = (unsigned char)((input[i] >> 16) & 0xff);
+    output[j+3] = (unsigned char)((input[i] >> 24) & 0xff);
   }
 }
 
 /**
- * \brief Decodes input (unsigned char) into output (UINT4)
+ * \brief Decodes input (unsigned char) into output (unsigned int)
  * 
- * Decodes input (unsigned char) into output (UINT4). Assumes len is
+ * Decodes input (unsigned char) into output (unsigned int). Assumes len is
  * a multiple of 4.
  * \param output output integer
  * \param input input character
  * \param len length of input
  */
-static void Decode (output, input, len)
-UINT4 *output;
-unsigned char *input;
-unsigned int len;
+static void Decode (unsigned int *output, unsigned char *input, unsigned int len)
 {
   unsigned int i, j;
 
   for (i = 0, j = 0; j < len; i++, j += 4)
- output[i] = ((UINT4)input[j]) | (((UINT4)input[j+1]) << 8) |
-   (((UINT4)input[j+2]) << 16) | (((UINT4)input[j+3]) << 24);
+    output[i] = ((unsigned int)input[j]) | (((unsigned int)input[j+1]) << 8) |
+      (((unsigned int)input[j+2]) << 16) | (((unsigned int)input[j+3]) << 24);
 }

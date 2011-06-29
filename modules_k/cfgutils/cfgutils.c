@@ -525,11 +525,11 @@ static int MD5File(char *dest, const char *file_name)
 			fclose(input);
 			return -1;
 		}
-		MD5Update(&context, buffer, counter);
+		U_MD5Update(&context, buffer, counter);
 		size -= counter;
 	}
 	fclose(input);
-	MD5Final(hash, &context);
+	U_MD5Final(hash, &context);
 
 	string2hex(hash, 16, dest);
 	LM_DBG("MD5 calculated: %.*s for file %s\n", MD5_LEN, dest, file_name);
