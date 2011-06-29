@@ -815,7 +815,7 @@ return ret;
  *            context), all other calls will have no effect and will log a
  *            bug message
  */
-void timer_allow_del()
+void timer_allow_del(void)
 {
 	if (IS_IN_TIMER() ){
 			UNSET_RUNNING();

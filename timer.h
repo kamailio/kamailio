@@ -186,7 +186,7 @@ int timer_del_safe(struct timer_ln *tl);
 #define timer_del timer_del_safe
 #endif
 
-void timer_allow_del();
+void timer_allow_del(void);
 
 /* old timer compatibility functions & structure */
 

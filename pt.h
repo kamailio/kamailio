@@ -62,7 +62,7 @@ extern int process_no;
 
 extern struct tcp_child* tcp_children;
 
-int init_pt();
+int init_pt(int proc_no);
 int get_max_procs();
 int register_procs(int no);
 int get_max_open_fds();

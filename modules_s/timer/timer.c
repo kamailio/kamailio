@@ -204,7 +204,7 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
         /* begin critical section */
 	if (a->disable_itself) {
 
-		timer_allow_del(a->link);
+		timer_allow_del();
 		timer_del(a->link);
 		timer_reinit(a->link);
 		a->disable_itself = 0;
