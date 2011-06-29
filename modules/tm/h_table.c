@@ -80,7 +80,7 @@ struct s_table* tm_get_table(void) {
 	return _tm_table;
 }
 
-void reset_kr() {
+void reset_kr(void) {
 	kr=0;
 }
 

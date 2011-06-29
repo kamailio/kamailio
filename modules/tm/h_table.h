@@ -483,7 +483,7 @@ extern struct s_table*  _tm_table; /* private internal stuff, don't touch
 #define no_new_branches(_t_)     ((_t_)->flags&T_6xx)
 
 
-void reset_kr();
+void reset_kr(void);
 void set_kr( enum kill_reason kr );
 enum kill_reason get_kr();
 

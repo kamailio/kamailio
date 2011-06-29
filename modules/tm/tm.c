@@ -722,7 +722,7 @@ static int script_init( struct sip_msg *foo, unsigned int flags, void *bar)
 	t_on_reply(0);
 	t_on_branch(0);
 	/* reset the kr status */
-	reset_kr(0);
+	reset_kr();
 	/* set request mode so that multiple-mode actions know
 	 * how to behave */
 	set_route_type(REQUEST_ROUTE);
