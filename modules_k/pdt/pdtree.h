@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2005 Voice Sistem SRL (Voice-System.RO)
+ * Copyright (C) 2011 Elena-Ramona Modroiu
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -19,9 +19,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * History:
- * -------
- * 2005-01-25  first tree version (ramona)
  */
 
 		       
@@ -66,6 +63,13 @@ int pdt_check_pd(pdt_tree_t *pt, str* sdomain, str *sp, str *sd);
 
 /* used to get the index for the PDT Tree hash*/
 #define strpos(s,c) (strchr(s,c)-s)
+
+int pdt_init_db(void);
+int pdt_load_db(void);
+int pdt_init_mi(char *mod);
+str *pdt_get_char_list(void);
+
+pdt_tree_t **pdt_get_ptree(void);
 
 #endif
 

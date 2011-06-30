@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2005 Voice Sistem SRL (Voice-System.RO)
+ * Copyright (C) 2011 Elena-Ramona Modroiu (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -20,10 +20,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * History:
- * -------
- * 2005-01-25  first tree version (ramona)
- * 2006-01-30 multi domain support added (ramona)
  */
 
 #include <stdio.h>
@@ -40,6 +36,9 @@
 //extern str pdt_char_list = {"1234567890*",11};
 extern str pdt_char_list;
 
+/**
+ *
+ */
 pdt_tree_t* pdt_init_tree(str* sdomain)
 {
 	pdt_tree_t *pt = NULL;
@@ -62,7 +61,6 @@ pdt_tree_t* pdt_init_tree(str* sdomain)
 	memset(pt->sdomain.s, 0,1+sdomain->len );
 	memcpy(pt->sdomain.s, sdomain->s, sdomain->len);
 	pt->sdomain.len = sdomain->len;
-//	printf("sdomain:%.*s\n", pt->sdomain.len, pt->sdomain.s);
 	
 	pt->head = (pdt_node_t*)shm_malloc(PDT_NODE_SIZE*sizeof(pdt_node_t));
 	if(pt->head == NULL)
@@ -77,6 +75,9 @@ pdt_tree_t* pdt_init_tree(str* sdomain)
 	return pt;
 }
 
+/**
+ *
+ */
 int add_to_tree(pdt_tree_t *pt, str *sp, str *sd)
 {
 	int l;
@@ -147,6 +148,9 @@ int add_to_tree(pdt_tree_t *pt, str *sp, str *sd)
 	return 0;
 }
 
+/**
+ *
+ */
 pdt_tree_t* pdt_get_tree(pdt_tree_t *pl, str *sdomain)
 {
 	pdt_tree_t *it;
@@ -171,6 +175,9 @@ pdt_tree_t* pdt_get_tree(pdt_tree_t *pl, str *sdomain)
 	return it;
 }
 
+/**
+ *
+ */
 int pdt_add_to_tree(pdt_tree_t **dpt, str *sdomain, str *code, str *domain)
 {
 	pdt_tree_t *ndl, *it, *prev;
@@ -230,6 +237,9 @@ int pdt_add_to_tree(pdt_tree_t **dpt, str *sdomain, str *code, str *domain)
 	return 0;
 }
 
+/**
+ *
+ */
 str* get_domain(pdt_tree_t *pt, str *sp, int *plen)
 {
 	int l, len;
@@ -271,6 +281,10 @@ str* get_domain(pdt_tree_t *pt, str *sp, int *plen)
 	return domain;
 	
 }
+
+/**
+ *
+ */
 str* pdt_get_domain(pdt_tree_t *pl, str* sdomain, str *code, int *plen)
 {
 	pdt_tree_t *it;
@@ -297,6 +311,9 @@ str* pdt_get_domain(pdt_tree_t *pl, str* sdomain, str *code, int *plen)
 	return domain;
 }
 
+/**
+ *
+ */
 void pdt_free_node(pdt_node_t *pn)
 {
 	int i;
@@ -323,6 +340,9 @@ void pdt_free_node(pdt_node_t *pn)
 	return;
 }
 
+/**
+ *
+ */
 void pdt_free_tree(pdt_tree_t *pt)
 {
 	if(pt == NULL)
@@ -340,6 +360,9 @@ void pdt_free_tree(pdt_tree_t *pt)
 	return;
 }
 
+/**
+ *
+ */
 int pdt_print_node(pdt_node_t *pn, char *code, int len)
 {
 	int i;
@@ -360,6 +383,9 @@ int pdt_print_node(pdt_node_t *pn, char *code, int len)
 }
 
 static char pdt_code_buf[PDT_MAX_DEPTH+1];
+/**
+ *
+ */
 int pdt_print_tree(pdt_tree_t *pt)
 {
 	int len;
@@ -376,6 +402,9 @@ int pdt_print_tree(pdt_tree_t *pt)
 	return pdt_print_tree(pt->next);
 }
 
+/**
+ *
+ */
 int pdt_check_pd_node(pdt_node_t *pn, str *sp, str *sd,
 		char *code, int len)
 {

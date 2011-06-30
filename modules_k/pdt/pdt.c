@@ -41,7 +41,6 @@
 #include <stdlib.h>
 
 #include "../../lib/srdb1/db_op.h"
-#include "../../lib/kmi/mi.h"
 #include "../../sr_module.h"
 #include "../../lib/srdb1/db.h"
 #include "../../mem/shm_mem.h"
@@ -96,16 +95,9 @@ static int  w_prefix2domain_2(struct sip_msg* msg, char* mode, char* sd_en);
 static int  mod_init(void);
 static void mod_destroy(void);
 static int  child_init(int rank);
-static int  mi_child_init(void);
 static int prefix2domain(struct sip_msg*, int mode, int sd_en);
 
-static struct mi_root* pdt_mi_reload(struct mi_root*, void* param);
-static struct mi_root* pdt_mi_add(struct mi_root*, void* param);
-static struct mi_root* pdt_mi_delete(struct mi_root*, void* param);
-static struct mi_root* pdt_mi_list(struct mi_root*, void* param);
-
 static int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode);
-static int pdt_load_db();
 
 static cmd_export_t cmds[]={
 	{"prefix2domain", (cmd_function)w_prefix2domain,   0, 0,
@@ -130,14 +122,6 @@ static param_export_t params[]={
 	{0, 0, 0}
 };
 
-static mi_export_t mi_cmds[] = {
-	{ "pdt_add",     pdt_mi_add,     0,  0,  mi_child_init },
-	{ "pdt_reload",  pdt_mi_reload,  0,  0,  0 },
-	{ "pdt_delete",  pdt_mi_delete,  0,  0,  0 },
-	{ "pdt_list",    pdt_mi_list,    0,  0,  0 },
-	{ 0, 0, 0, 0, 0}
-};
-
 
 struct module_exports exports = {
 	"pdt",
@@ -145,7 +129,7 @@ struct module_exports exports = {
 	cmds,
 	params,
 	0,
-	mi_cmds,        /* exported MI functions */
+	0,              /* exported MI functions */
 	0,              /* exported pseudo-variables */
 	0,              /* extra processes */
 	mod_init,       /* module initialization function */
@@ -161,12 +145,11 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	if(pdt_init_mi(exports.name)<0)
 	{
-		LM_ERR("failed to register MI commands\n");
+		LM_ERR("cannot register MI commands\n");
 		return -1;
 	}
-
 	db_url.len = strlen(db_url.s);
 	db_table.len = strlen(db_table.s);
 	sdomain_column.len = strlen(sdomain_column.s);
@@ -269,40 +252,18 @@ error1:
 	return -1;
 }
 
-
-/**
- * mi and worker process init
- */
-static int mi_child_init(void)
-{
-	/* db handler initialization */
-	db_con = pdt_dbf.init(&db_url);
-	if(db_con==NULL)
-	{
-		LM_ERR("failed to connect to database\n");
-		return -1;
-	}
-
-	if (pdt_dbf.use_table(db_con, &db_table) < 0)
-	{
-		LM_ERR("use_table failed\n");
-		return -1;
-	}
-	return 0;
-}
-
-
 /* each child get a new connection to the database */
 static int child_init(int rank)
 {
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	if ( mi_child_init()!=0 )
+	if(pdt_init_db()<0)
+	{
+		LM_ERR("cannot initialize database connection\n");
 		return -1;
-
+	}
 	LM_DBG("#%d: database connection opened successfully\n", rank);
-
 	return 0;
 }
 
@@ -564,7 +525,25 @@ static int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 	return 0;
 }
 
-static int pdt_load_db(void)
+int pdt_init_db(void)
+{
+	/* db handler initialization */
+	db_con = pdt_dbf.init(&db_url);
+	if(db_con==NULL)
+	{
+		LM_ERR("failed to connect to database\n");
+		return -1;
+	}
+
+	if (pdt_dbf.use_table(db_con, &db_table) < 0)
+	{
+		LM_ERR("use_table failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+int pdt_load_db(void)
 {
 	db_key_t db_cols[3] = {&sdomain_column, &prefix_column, &domain_column};
 	str p, d, sdomain;
@@ -694,384 +673,15 @@ error:
 	return -1;
 }
 
-/**************************** MI ***************************/
 
-/**
- * "pdt_reload" syntax :
- * \n
- */
-static struct mi_root* pdt_mi_reload(struct mi_root *cmd_tree, void *param)
+/* return the pointer to char list */
+str* pdt_get_char_list(void)
 {
-	/* re-loading all information from database */
-	if(pdt_load_db()!=0)
-	{
-		LM_ERR("cannot re-load info from database\n");	
-		goto error;
-	}
-	
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-
-error:
-	return init_mi_tree( 500, "Failed to reload",16);
+	return &pdt_char_list;
 }
 
-
-
-/**
- * "pdt_add" syntax :
- *   sdomain
- *   prefix
- *   domain
- */
-struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
+/* return head of pdt trees */
+pdt_tree_t **pdt_get_ptree(void)
 {
-	db_key_t db_keys[NR_KEYS] = {&sdomain_column, &prefix_column, &domain_column};
-	db_val_t db_vals[NR_KEYS];
-	db_op_t  db_ops[NR_KEYS] = {OP_EQ, OP_EQ};
-	int i= 0;
-	str sd, sp, sdomain;
-	struct mi_node* node= NULL;
-
-	if(_ptree==NULL)
-	{
-		LM_ERR("strange situation\n");
-		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
-	}
-
-	/* read sdomain */
-	node = cmd_tree->node.kids;
-	if(node == NULL)
-		goto error1;
-
-	sdomain = node->value;
-	if(sdomain.s == NULL || sdomain.len== 0)
-		return init_mi_tree( 404, "domain not found", 16);
-
-	if(*sdomain.s=='.' )
-		 return init_mi_tree( 400, "empty param",11);
-
-	/* read prefix */
-	node = node->next;
-	if(node == NULL)
-		goto error1;
-
-	sp= node->value;
-	if(sp.s== NULL || sp.len==0)
-	{
-		LM_ERR("could not read prefix\n");
-		return init_mi_tree( 404, "prefix not found", 16);
-	}
-
-	if(*sp.s=='.')
-		 return init_mi_tree(400, "empty param", 11);
-
-	while(i< sp.len)
-	{
-		if(strpos(pdt_char_list.s,sp.s[i]) < 0) 
-			return init_mi_tree(400, "bad prefix", 10);
-		i++;
-	}
-
-	/* read domain */
-	node= node->next;
-	if(node == NULL || node->next!=NULL)
-		goto error1;
-
-	sd= node->value;
-	if(sd.s== NULL || sd.len==0)
-	{
-		LM_ERR("could not read domain\n");
-		return init_mi_tree( 400, "domain not found", 16);
-	}
-
-	if(*sd.s=='.')
-		 return init_mi_tree(400, "empty param", 11);
-
-	
-	if(pdt_check_domain!=0 && *_ptree!=NULL
-			&& pdt_check_pd(*_ptree, &sdomain, &sp, &sd)==1)
-	{
-		LM_ERR("(sdomain,prefix,domain) exists\n");
-		return init_mi_tree(400,
-				"(sdomain,prefix,domain) exists already", 38);
-	}
-	db_vals[0].type = DB1_STR;
-	db_vals[0].nul = 0;
-	db_vals[0].val.str_val.s = sdomain.s;
-	db_vals[0].val.str_val.len = sdomain.len;
-
-	db_vals[1].type = DB1_STR;
-	db_vals[1].nul = 0;
-	db_vals[1].val.str_val.s = sp.s;
-	db_vals[1].val.str_val.len = sp.len;
-
-	db_vals[2].type = DB1_STR;
-	db_vals[2].nul = 0;
-	db_vals[2].val.str_val.s = sd.s;
-	db_vals[2].val.str_val.len = sd.len;
-	
-	/* insert a new domain into database */
-	if(pdt_dbf.insert(db_con, db_keys, db_vals, NR_KEYS)<0)
-	{
-		LM_ERR("failed to store new prefix/domain\n");
-		return init_mi_tree( 500,"Cannot store prefix/domain", 26);
-	}
-
-	/* re-loading all information from database */
-	if(pdt_load_db()!=0)
-	{
-		LM_ERR("cannot re-load info from database\n");	
-		goto error;
-	}
-	
-	LM_DBG("new prefix added %.*s-%.*s => %.*s\n",
-			sdomain.len, sdomain.s, sp.len, sp.s, sd.len, sd.s);
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-
-	
-error:
-	if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, NR_KEYS)<0)
-		LM_ERR("database/cache are inconsistent\n");
-	return init_mi_tree( 500, "could not add to cache", 23 );
-
-error1:
-	return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
+	return _ptree;
 }
-
-/**
- * "pdt_delete" syntax:
- *    sdomain
- *    domain
- */
-struct mi_root* pdt_mi_delete(struct mi_root* cmd_tree, void* param)
-{
-	str sd, sdomain;
-	struct mi_node* node= NULL;
-	db_key_t db_keys[2] = {&sdomain_column, &domain_column};
-	db_val_t db_vals[2];
-	db_op_t  db_ops[2] = {OP_EQ, OP_EQ};
-
-	/* read sdomain */
-	node = cmd_tree->node.kids;
-	if(node == NULL)
-		goto error;
-
-	sdomain = node->value;
-	if(sdomain.s == NULL || sdomain.len== 0)
-		return init_mi_tree( 404, "domain not found", 16);
-
-	if( *sdomain.s=='.' )
-		 return init_mi_tree( 400, "400 empty param",11);
-
-	/* read domain */
-	node= node->next;
-	if(node == NULL || node->next!=NULL)
-		goto error;
-
-	sd= node->value;
-	if(sd.s== NULL || sd.len==0)
-	{
-		LM_ERR("could not read domain\n");
-		return init_mi_tree(404, "domain not found", 16);
-	}
-
-	if(*sd.s=='.')
-		 return init_mi_tree( 400, "empty param", 11);
-
-
-	db_vals[0].type = DB1_STR;
-	db_vals[0].nul = 0;
-	db_vals[0].val.str_val.s = sdomain.s;
-	db_vals[0].val.str_val.len = sdomain.len;
-	
-	db_vals[1].type = DB1_STR;
-	db_vals[1].nul = 0;
-	db_vals[1].val.str_val.s = sd.s;
-	db_vals[1].val.str_val.len = sd.len;
-
-	if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, 2)<0)
-	{
-		LM_ERR("database/cache are inconsistent\n");
-		return init_mi_tree( 500, "database/cache are inconsistent", 31 );
-	} 
-	/* re-loading all information from database */
-	if(pdt_load_db()!=0)
-	{
-		LM_ERR("cannot re-load info from database\n");	
-		return init_mi_tree( 500, "cannot reload", 13 );
-	}
-
-	LM_DBG("prefix for sdomain [%.*s] domain [%.*s] "
-			"removed\n", sdomain.len, sdomain.s, sd.len, sd.s);
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-error:
-	return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-}
-
-
-int pdt_print_mi_node(pdt_node_t *pt, struct mi_node* rpl, char *code,
-		int len, str *sdomain, str *sd, str *sp)
-{
-	int i;
-	struct mi_node* node = NULL;
-	struct mi_attr* attr= NULL;
-
-	if(pt==NULL || len>=PDT_MAX_DEPTH)
-		return 0;
-	
-	for(i=0; i<PDT_NODE_SIZE; i++)
-	{
-		code[len]=pdt_char_list.s[i];
-		if(pt[i].domain.s!=NULL)
-		{
-			if((sp->s==NULL && sd->s==NULL)
-				|| (sp->s==NULL && (sd->s!=NULL && pt[i].domain.len==sd->len
-						&& strncasecmp(pt[i].domain.s, sd->s, sd->len)==0)) 
-				|| (sd->s==NULL && (len+1>=sp->len
-						&& strncmp(code, sp->s, sp->len)==0))
-				|| ((sp->s!=NULL && len+1>=sp->len
-						&& strncmp(code, sp->s, sp->len)==0)
-						&& (sd->s!=NULL && pt[i].domain.len>=sd->len
-						&& strncasecmp(pt[i].domain.s, sd->s, sd->len)==0)))
-			{
-				node = add_mi_node_child(rpl, 0, "PDT", 3, 0, 0);
-				if(node == NULL)
-					goto error;
-
-				attr = add_mi_attr(node, MI_DUP_VALUE, "SDOMAIN", 7,
-						sdomain->s, sdomain->len);
-				if(attr == NULL)
-					goto error;
-				attr = add_mi_attr(node, MI_DUP_VALUE, "PREFIX", 6,
-							code, len+1);
-				if(attr == NULL)
-					goto error;
-						
-				attr = add_mi_attr(node, MI_DUP_VALUE,"DOMAIN", 6,
-							pt[i].domain.s, pt[i].domain.len);
-				if(attr == NULL)
-					goto error;
-			}
-		}
-		if(pdt_print_mi_node(pt[i].child, rpl, code, len+1, sdomain, sd, sp)<0)
-			goto error;
-	}
-	return 0;
-error:
-	return -1;
-}
-
-/**
- * "pdt_list" syntax :
- *    sdomain
- *    prefix
- *    domain
- *
- * 	- '.' (dot) means NULL value and will match anything
- * 	- the comparison operation is 'START WITH' -- if domain is 'a' then
- * 	  all domains starting with 'a' are listed
- *
- * 	  Examples
- * 	  pdt_list o 2 .    - lists the entries where sdomain is starting with 'o', 
- * 	                      prefix is starting with '2' and domain is anything
- * 	  
- * 	  pdt_list . 2 open - lists the entries where sdomain is anything, prefix 
- * 	                      starts with '2' and domain starts with 'open'
- */
-
-struct mi_root* pdt_mi_list(struct mi_root* cmd_tree, void* param)
-{
-	str sd, sp, sdomain;
-	pdt_tree_t *pt;
-	struct mi_node* node = NULL;
-	unsigned int i= 0;
-	struct mi_root* rpl_tree = NULL;
-	struct mi_node* rpl = NULL;
-	static char code_buf[PDT_MAX_DEPTH+1];
-	int len;
-
-	if(_ptree==NULL)
-	{
-		LM_ERR("empty domain list\n");
-		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
-	}
-
-	/* read sdomain */
-	sdomain.s = 0;
-	sdomain.len = 0;
-	sp.s = 0;
-	sp.len = 0;
-	sd.s = 0;
-	sd.len = 0;
-	node = cmd_tree->node.kids;
-	if(node != NULL)
-	{
-		sdomain = node->value;
-		if(sdomain.s == NULL || sdomain.len== 0)
-			return init_mi_tree( 404, "domain not found", 16);
-
-		if(*sdomain.s=='.')
-			sdomain.s = 0;
-
-		/* read prefix */
-		node = node->next;
-		if(node != NULL)
-		{
-			sp= node->value;
-			if(sp.s== NULL || sp.len==0 || *sp.s=='.')
-				sp.s = NULL;
-			else {
-				while(sp.s!=NULL && i!=sp.len)
-				{
-					if(strpos(pdt_char_list.s,sp.s[i]) < 0)
-					{
-						LM_ERR("bad prefix [%.*s]\n", sp.len, sp.s);
-						return init_mi_tree( 400, "bad prefix", 10);
-					}
-					i++;
-				}
-			}
-
-			/* read domain */
-			node= node->next;
-			if(node != NULL)
-			{
-				sd= node->value;
-				if(sd.s== NULL || sd.len==0 || *sd.s=='.')
-					sd.s = NULL;
-			}
-		}
-	}
-
-	rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-	if(rpl_tree == NULL)
-		return 0;
-	rpl = &rpl_tree->node;
-
-	if(*_ptree==0)
-		return rpl_tree;
-
-	pt = *_ptree;
-	
-	while(pt!=NULL)
-	{
-		if(sdomain.s==NULL || 
-			(sdomain.s!=NULL && pt->sdomain.len>=sdomain.len && 
-			 strncmp(pt->sdomain.s, sdomain.s, sdomain.len)==0))
-		{
-			len = 0;
-			if(pdt_print_mi_node(pt->head, rpl, code_buf, len, &pt->sdomain,
-						&sd, &sp)<0)
-				goto error;
-		}
-		pt = pt->next;
-	}
-	
-	return rpl_tree;
-
-error:
-	free_mi_tree(rpl_tree);
-	return 0;
-}
-
