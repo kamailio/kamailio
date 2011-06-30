@@ -444,3 +444,71 @@ int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 	return 0;
 }
 
+int pv_parse_t_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 8:
+			if(strncmp(in->s, "id_label", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "id_index", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		case 10:
+			if(strncmp(in->s, "reply_code", 10)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else goto error;
+		break;
+		case 12:
+			if(strncmp(in->s, "branch_index", 12)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV time name %.*s\n", in->len, in->s);
+	return -1;
+
+}
+
+int pv_get_t(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res)
+{
+	tm_cell_t *t;
+
+	if(msg==NULL || param==NULL)
+		return -1;
+
+	/* aliases to old TM pvs */
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 2:
+			return pv_get_tm_reply_code(msg, param, res);
+		case 3:
+			return pv_get_tm_branch_idx(msg, param, res);
+	}
+
+	t = _tmx_tmb.t_gett();
+	if(t==NULL || t==T_UNDEFINED) {
+		/* no T */
+		return pv_get_null(msg, param, res);
+	}
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1:
+			return pv_get_uintval(msg, param, res, t->label);
+		default:
+			return pv_get_uintval(msg, param, res, t->hash_index);
+	}
+}

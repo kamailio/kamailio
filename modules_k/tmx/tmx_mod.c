@@ -121,6 +121,8 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_t_var_name, 0, 0, 0 },
 	{ {"T_rpl", sizeof("T_rpl")-1}, PVT_OTHER, pv_get_t_var_rpl, 0,
 		pv_parse_t_var_name, 0, 0, 0 },
+	{ {"T", sizeof("T")-1}, PVT_OTHER, pv_get_t, 0,
+		pv_parse_t_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 

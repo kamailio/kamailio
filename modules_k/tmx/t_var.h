@@ -41,4 +41,7 @@ int pv_get_tm_branch_idx(struct sip_msg *msg, pv_param_t *param,
 int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_t(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res);
+int pv_parse_t_name(pv_spec_p sp, str *in);
 #endif
