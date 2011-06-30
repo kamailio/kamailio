@@ -170,6 +170,25 @@ modparam("xlog", "prefix", "-xlog: ")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>log_facility</varname> (string)</title>
+		<para>
+		Syslog facility to be used when printing xlog messages.
+		In this way you can get the xlog messages in a separate syslog file
+		than the debug messages issued from source code.
+		</para>
+		<para>
+		Default value is NULL (unset - use same facility as source code debug
+		messages).
+		</para>
+		<example>
+		<title>log_facility example</title>
+		<programlisting format="linespecific">
+modparam("xlog", "log_facility", "LOG_DAEMON")
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 	<section>
 	<title>Exported Functions</title>
