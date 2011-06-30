@@ -14,6 +14,9 @@ DEFS +=-DSER_MOD_INTERFACE
 
 ifeq ($(CROSS_COMPILE),)
 MYSQLCFG=$(shell which mysql_config)
+ifeq ($(MYSQLCFG),)
+MYSQLCFG=$(shell which mysql_config5)
+endif
 endif
 
 ifneq ($(MYSQLCFG),)
