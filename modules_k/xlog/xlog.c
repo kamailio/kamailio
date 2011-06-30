@@ -49,6 +49,8 @@ char *_xlog_prefix = "<script>: ";
 static int buf_size=4096;
 static int force_color=0;
 static int long_format=0;
+static int xlog_facility = DEFAULT_FACILITY;
+static char *xlog_facility_name = NULL;
 
 /** module functions */
 static int mod_init(void);
@@ -110,6 +112,7 @@ static param_export_t params[]={
 	{"force_color",  INT_PARAM, &force_color},
 	{"long_format",  INT_PARAM, &long_format},
 	{"prefix",       STR_PARAM, &_xlog_prefix},
+	{"log_facility", STR_PARAM, &xlog_facility_name},
 	{0,0,0}
 };
 
@@ -135,6 +138,17 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	int lf;
+	if (xlog_facility_name!=NULL) {
+		lf = str2facility(xlog_facility_name);
+		if (lf != -1) {
+			xlog_facility = lf;
+		} else {
+			LM_ERR("invalid syslog facility %s\n", xlog_facility_name);
+			return -1;
+		}
+	}
+
 	_xlog_buf = (char*)pkg_malloc((buf_size+1)*sizeof(char));
 	if(_xlog_buf==NULL)
 	{
@@ -156,15 +170,15 @@ static inline int xlog_helper(struct sip_msg* msg, xl_msg_t *xm,
 	txt.s = _xlog_buf;
 	if(line>0)
 		if(long_format==1)
-			LOG_(DEFAULT_FACILITY, level, _xlog_prefix,
+			LOG_(xlog_facility, level, _xlog_prefix,
 				"%s:%d:%.*s",
 				(xm->a)?(((xm->a->cfile)?xm->a->cfile:"")):"",
 				(xm->a)?xm->a->cline:0, txt.len, txt.s);
 		else
-			LOG_(DEFAULT_FACILITY, level, _xlog_prefix,
+			LOG_(xlog_facility, level, _xlog_prefix,
 				"%d:%.*s", (xm->a)?xm->a->cline:0, txt.len, txt.s);
 	else
-		LOG_(DEFAULT_FACILITY, level, _xlog_prefix,
+		LOG_(xlog_facility, level, _xlog_prefix,
 			"%.*s", txt.len, txt.s);
 	return 1;
 }
