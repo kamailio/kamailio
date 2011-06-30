@@ -48,10 +48,8 @@ Elena-Ramona Modroiu
 
         5. Exported MI Functions
 
-              5.1. pdt_add
-              5.2. pdt_delete
-              5.3. pdt_list
-              5.4. pdt_reload
+              5.1. pdt_list
+              5.2. pdt_reload
 
         6. Installation and Running
 
@@ -99,10 +97,8 @@ Chapter 1. Admin Guide
 
    5. Exported MI Functions
 
-        5.1. pdt_add
-        5.2. pdt_delete
-        5.3. pdt_list
-        5.4. pdt_reload
+        5.1. pdt_list
+        5.2. pdt_reload
 
    6. Installation and Running
 
@@ -148,8 +144,7 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
        adding/deleting prefix-domain pairs or reloading from database at
        runtime.
      * Sample shell scripts to manage prefix-domain pairs are also located
-       in './doc/' (pdt_fifo_add.sh, pdt_fifo_delete.sh,
-       pdt_fifo_list.sh).
+       in './doc/' (pdt_fifo_list.sh).
 
 2. Dependencies
 
@@ -351,10 +346,8 @@ prefix2domain();
 
 5. Exported MI Functions
 
-   5.1. pdt_add
-   5.2. pdt_delete
-   5.3. pdt_list
-   5.4. pdt_reload
+   5.1. pdt_list
+   5.2. pdt_reload
 
    The database is loaded by Kamailio at start up time. The module uses
    only the cache to look up domains. If you want to add or delete a new
@@ -362,42 +355,7 @@ prefix2domain();
    changes made via these commands are applied to database and the cache
    is updated correspondingly.
 
-5.1.  pdt_add
-
-   Adds a new sdomain-prefix-domain entry.
-
-   Name: pdt_add
-
-   Parameters:
-     * _sdomain_ : source domain
-     * _prefix_: prefix
-     * _domain_: domain corresponding to a pair of source domain and
-       prefix
-
-   MI FIFO Command Format:
-                :pdt_add:_reply_fifo_file_
-                _sdomain_
-                _prefix_
-                _domain_
-                _empty_line_
-
-5.2.  pdt_delete
-
-   Removes a sdomain-prefix-domain entry.
-
-   Name: pdt_delete
-
-   Parameters:
-     * _sdomain_ : a source domain
-     * _domain_: a domain associated via a prefix with the source domain
-
-   MI FIFO Command Format:
-                :pdt_delete:_reply_fifo_file_
-                _sdomain_
-                _domain_
-                _empty_line_
-
-5.3.  pdt_list
+5.1.  pdt_list
 
    Produces a listing of the entries prefixes/domains/sdomains.
 
@@ -428,7 +386,7 @@ prefix2domain();
      * “pdt_list . 2 open” : Lists the entries where sdomain is anything,
        prefix starts with '2' and domain starts with 'open'.
 
-5.4.  pdt_reload
+5.2.  pdt_reload
 
    Reload all sdomain-prefix-domain records from database.
 

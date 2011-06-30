@@ -80,7 +80,7 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
 	    <listitem>
 		<para>
 		    Sample shell scripts to manage prefix-domain pairs are also located
-			in './doc/' (pdt_fifo_add.sh, pdt_fifo_delete.sh, pdt_fifo_list.sh).
+			in './doc/' (pdt_fifo_list.sh).
 		</para>
 	    </listitem>
 	</itemizedlist>
@@ -422,60 +422,6 @@ prefix2domain();
 		MI FIFO commands. All changes made via these commands are applied to
 		database and the cache is updated correspondingly. 
 		</para>
-
-	<section>
-		<title>
-		<function moreinfo="none">pdt_add</function>
-		</title>
-		<para>
-		Adds a new sdomain-prefix-domain entry.
-		</para>
-		<para>
-		Name: <emphasis>pdt_add</emphasis>
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>_sdomain_ : source domain</para></listitem>	  
-			<listitem><para>_prefix_: prefix</para></listitem>			
-			<listitem><para>_domain_: domain corresponding to a pair of source domain and prefix</para></listitem>
-		</itemizedlist>
-		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:pdt_add:_reply_fifo_file_
-		_sdomain_
-		_prefix_
-		_domain_
-		_empty_line_
-		</programlisting>
-    </section>
-
-	<section>
-		<title>
-		<function moreinfo="none">pdt_delete</function>
-		</title>
-		<para>
-		Removes a sdomain-prefix-domain entry.
-		</para>
-		<para>
-		Name: <emphasis>pdt_delete</emphasis>
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>_sdomain_ : a source domain</para></listitem>	  
-			<listitem><para>_domain_: a domain associated via a prefix with the source domain</para></listitem>
-		</itemizedlist>
-		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:pdt_delete:_reply_fifo_file_
-		_sdomain_
-		_domain_
-		_empty_line_
-		</programlisting>
-    </section>
 
 	<section>
 		<title>
