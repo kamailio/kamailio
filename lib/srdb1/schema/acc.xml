@@ -54,7 +54,7 @@
         <name>callid</name>
         <type>string</type>
         <natural/>
-        <size>&domain_len;</size>
+        <size>&description_len;</size>
         <default/>
         <description>Call-ID header field uniquely identifies a particular invitation or all registrations of a particular client. </description>
     </column>
