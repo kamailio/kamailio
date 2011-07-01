@@ -177,7 +177,7 @@ static param_export_t params[]={
 	{ "server_address",         STR_PARAM, &server_address.s},
 	{ "subs_htable_size",       INT_PARAM, &shtable_size},
 	{ "pres_htable_size",       INT_PARAM, &phtable_size},
-	{ "dbmode",                 INT_PARAM, &dbmode},
+	{ "db_mode",                INT_PARAM, &dbmode},
 	{ "fallback2db",            INT_PARAM, &fallback2db},
 	{ "enable_sphere_check",    INT_PARAM, &sphere_enable},
 	{ "timeout_rm_subs",        INT_PARAM, &timeout_rm_subs},

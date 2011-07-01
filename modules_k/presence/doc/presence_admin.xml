@@ -33,8 +33,8 @@
 	an architecture in which processing and memory load might be divided on 
 	several &kamailio; instances, maybe on different servers using the same database.
         This parameter remains only for legacy purposes. As a new feature for the presence engine, it is possible
-        to have three database modes, which one can configure through the dbmode parameter.
-        Setting dbmode to 0, 1, 2 respective will cause the subscribers to be retrieved from memory only,
+        to have three database modes, which one can configure through the db_mode parameter.
+        Setting db_mode to 0, 1, 2 respective will cause the subscribers to be retrieved from memory only,
         from memory and to fallback to database mode in case a record is not found in memory, and from database only.
 	</para>
 	<para>The module implements several API functions, that can be used by other
@@ -299,18 +299,18 @@ modparam("presence", "fallback2db", 1)
 		</example>
 	</section>
 <section>
-		<title><varname>dbmode</varname> (int)</title>
+		<title><varname>db_mode</varname> (int)</title>
 		<para>
 		This parameter sets the mode in which records are retrieved.
                 Setting this parameter to 0 or 1 is equivalent to setting fallback2db to 0 or 1, respectiv.
-                The dbmode parameter can also take a third value, 2, in which records are retrieved from database only.
+                The db_mode parameter can also take a third value, 2, in which records are retrieved from database only.
                 So, the three database modes in which the presence engine can operate are: memory only, fallback to database, and database only.
 		</para>
 		<example>
-		<title>Set <varname>dbmode</varname> parameter</title>
+		<title>Set <varname>db_mode</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("presence", "dbmode", 2)
+modparam("presence", "db_mode", 2)
 ...
 </programlisting>
 		</example>
