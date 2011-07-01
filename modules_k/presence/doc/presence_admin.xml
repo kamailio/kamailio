@@ -287,7 +287,11 @@ modparam("presence", "server_address", "sip:10.10.10.10:5060")
 		In this mode, in case a searched record is not found in cache, 
 		the search is continued	in database. Useful for an architecture in
 		which processing and memory load might be divided on more servers
-		using the same database.
+		using the same database. This parameter overwrite the configuration
+		specified from the <quote>db_mode</quote> parameter.
+		</para>
+		<para>
+		This parameter is obsolet and will be removed in future releases.
 		</para>
 		<example>
 		<title>Set <varname>fallback2db</varname> parameter</title>
