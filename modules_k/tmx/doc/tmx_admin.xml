@@ -242,6 +242,71 @@ route[abc] {
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title>
+		<function moreinfo="none">t_suspend()</function>
+		</title>
+		<para>
+		Suspend the execution of SIP request in a transaction. If transaction
+		was not created yet, it is created by this function. Returns true in
+		case of success and internal transaction index and label are available
+		via $T(id_index) and $T(id_label).
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE .
+		</para>
+		<example>
+		<title><function>t_suspend</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(t_suspend())
+{
+    xlog("proceesing suspended in trasaction [$T(id_index):$T(id_label)]\n");
+    exit;
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+			<function moreinfo="none">t_continue(tindex, tlabel, rtname)
+			</function>
+		</title>
+		<para>
+		Continue the execution of the transaction identified by tindex and
+		tlabel with the actions defined in route[rtname].
+		</para>
+		<para>
+		Parameters:.
+		</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>tindex</emphasis> - internal index of transaction.
+				Can be an integer or a pseudo-variable.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>tlabel</emphasis> - internal label of transaction.
+				Can be an integer or a pseudo-variable.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>rtname</emphasis> - the name of the route block to
+				execute. Can be a static string value or a dynamic string with
+				pseudo-variables.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>t_continue</function> usage</title>
+		<programlisting format="linespecific">
+...
+tcontinue('123', '456', 'MYROUTE');
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
