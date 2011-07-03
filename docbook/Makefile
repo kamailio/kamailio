@@ -97,7 +97,7 @@ html_css ?= /css/sr-doc.css
 # the site-wide catalog file present in Debian and possibly other systems
 # too. This file is updated by the package manager whenever docbook schema
 # file or docbook xsl stylesheets are being installed.
-catalog=$(docbook_dir)/catalog.xml
+catalog  ?= $(docbook_dir)/catalog.xml
 
 lynx     ?= lynx
 dia      ?= dia
