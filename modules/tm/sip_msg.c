@@ -64,29 +64,21 @@
 #include "../../data_lump_rpl.h"
 #include "../../ut.h"
 #include "../../sip_msg_clone.h"
-
-#ifdef POSTPONE_MSG_CLONING
 #include "../../fix_lumps.h"
-#endif
 
 /* Warning: Cloner does not clone all hdr_field headers (From, To, etc.). Pointers will reference pkg memory. Dereferencing will crash ser!!! */
 
 struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 {
-#ifdef POSTPONE_MSG_CLONING
 	/* take care of the lumps only for replies if the msg cloning is 
 	   postponed */
 	if (org_msg->first_line.type==SIP_REPLY)
-#endif /* POSTPONE_MSG_CLONING */
 		/*cloning all the lumps*/
 		return sip_msg_shm_clone(org_msg, sip_msg_len, 1);
-#ifdef POSTPONE_MSG_CLONING
 	/* don't clone the lumps */
 	return sip_msg_shm_clone(org_msg, sip_msg_len, 0);
-#endif /* POSTPONE_MSG_CLONING */
 }
 
-#ifdef POSTPONE_MSG_CLONING
 /* indicates wheter we have already cloned the msg lumps or not */
 unsigned char lumps_are_cloned = 0;
 
@@ -144,4 +136,3 @@ int save_msg_lumps( struct sip_msg *shm_msg, struct sip_msg *pkg_msg)
 	}
 	return ret<0?-1:0;
 }
-#endif /* POSTPONE_MSG_CLONING */

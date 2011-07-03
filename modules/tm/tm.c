@@ -726,10 +726,7 @@ static int script_init( struct sip_msg *foo, unsigned int flags, void *bar)
 	/* set request mode so that multiple-mode actions know
 	 * how to behave */
 	set_route_type(REQUEST_ROUTE);
-
-#ifdef POSTPONE_MSG_CLONING
 	lumps_are_cloned = 0;
-#endif
 	return 1;
 }
 
@@ -1888,7 +1885,6 @@ static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar)
 /* save the message lumps after t_newtran() but before t_relay() */
 static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar)
 {
-#ifdef POSTPONE_MSG_CLONING
 	struct cell *t;
 
 	if (is_route_type(REQUEST_ROUTE)) {
@@ -1905,11 +1901,6 @@ static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar)
 		}
 	} /* else nothing to do, the lumps have already been saved */
 	return 1;
-#else
-	LOG(L_ERR, "ERROR: w_t_save_lumps: POSTPONE_MSG_CLONING is not defined,"
-			" thus, the functionality is not supported\n");
-	return -1;
-#endif
 }
 
 

@@ -42,19 +42,15 @@
  * the first time.
  * Replies use only one memory block.
  */
-#define POSTPONE_MSG_CLONING
 
-#ifdef POSTPONE_MSG_CLONING
 #include "../../atomic_ops.h" /* membar_depends() */
-#endif
 
-#ifdef POSTPONE_MSG_CLONING
-	/* msg is a reply: one memory block was allocated
-	 * msg is a request: two memory blocks were allocated:
-	 *	- one for the sip_msg struct
-	 *	- another one for the lumps which is linked to
-	 *		add_rm, body_lumps, or reply_lump. 
-	 */
+/* msg is a reply: one memory block was allocated
+ * msg is a request: two memory blocks were allocated:
+ *	- one for the sip_msg struct
+ *	- another one for the lumps which is linked to
+ *		add_rm, body_lumps, or reply_lump. 
+ */
 #define  _sip_msg_free(_free_func, _p_msg) \
 		do{ \
 			if (_p_msg->first_line.type==SIP_REPLY) { \
@@ -72,13 +68,6 @@
 			} \
 		}while(0)
 
-#else /* POSTPONE_MSG_CLONING */
-
-	/* only one memory block was allocated */
-#define  _sip_msg_free(_free_func, _p_msg) \
-		_free_func( (_p_msg) )
-
-#endif /* POSTPONE_MSG_CLONING */
 
 #define  sip_msg_free(_p_msg) _sip_msg_free(shm_free, _p_msg)
 #define  sip_msg_free_unsafe(_p_msg) _sip_msg_free(shm_free_unsafe, _p_msg)
@@ -86,11 +75,9 @@
 
 struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len );
 
-#ifdef POSTPONE_MSG_CLONING
 extern unsigned char lumps_are_cloned;
 
 int save_msg_lumps( struct sip_msg *shm_msg, struct sip_msg *pkg_msg);
-#endif
 
 
 #endif

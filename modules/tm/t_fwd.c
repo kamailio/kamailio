@@ -123,9 +123,8 @@
 #ifdef USE_DST_BLACKLIST
 #include "../../dst_blacklist.h"
 #endif
-#ifdef POSTPONE_MSG_CLONING
 #include "../../atomic_ops.h" /* membar_depends() */
-#endif
+
 
 static int goto_on_branch = 0, branch_route = 0;
 
@@ -231,11 +230,9 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 
 	/* dup lumps
 	 * TODO: clone lumps only if needed */
-#ifdef POSTPONE_MSG_CLONING
 	/* lumps can be set outside of the lock, make sure that we read
 	 * the up-to-date values */
 	membar_depends();
-#endif
 	add_rm_backup = i_req->add_rm;
 	body_lumps_backup = i_req->body_lumps;
 	if (unlikely(i_req->add_rm)){
@@ -919,11 +916,9 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	/* print */
 	if (cfg_get(tm, tm_cfg, reparse_invite)) {
 		/* buffer is built localy from the INVITE which was sent out */
-#ifdef POSTPONE_MSG_CLONING
 		/* lumps can be set outside of the lock, make sure that we read
 		 * the up-to-date values */
 		membar_depends();
-#endif
 		if (cancel_msg->add_rm || cancel_msg->body_lumps) {
 			LOG(L_WARN, "WARNING: e2e_cancel_branch: CANCEL is built locally, "
 			"thus lumps are not applied to the message!\n");
@@ -1461,7 +1456,6 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		branch_route = 0;
 	}
 	
-#ifdef POSTPONE_MSG_CLONING
 	/* on first-time forwarding, update the lumps */
 	if (first_branch==0) {
 		/* update the shmem-ized msg with the lumps */
@@ -1472,7 +1466,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 				return -1;
 			}
 	}
-#endif
+
 	/* if ruri is not already consumed (by another invocation), use current
 	   uri too. Else add only additional branches (which may be continuously
 	   refilled).
