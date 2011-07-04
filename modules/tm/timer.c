@@ -1,7 +1,4 @@
 /*
- * $Id$
- *
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -26,72 +23,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-/* 
-  timer.c is where we implement TM timers. It has been designed
-  for high performance using some techniques of which timer users
-  need to be aware.
-
-	One technique is "fixed-timer-length". We maintain separate 
-	timer lists, all of them include elements of the same time
-	to fire. That allows *appending* new events to the list as
-	opposed to inserting them by time, which is costly due to
-	searching time spent in a mutex. The performance benefit is
-	noticeable. The limitation is you need a new timer list for
-	each new timer length.
-
-	Another technique is the timer process slices off expired elements
-	from the list in a mutex, but executes the timer after the mutex
-	is left. That saves time greatly as whichever process wants to
-	add/remove a timer, it does not have to wait until the current
-	list is processed. However, be aware the timers may hit in a delayed
-	manner; you have no guarantee in your process that after resetting a timer, 
-	it will no more hit. It might have been removed by timer process,
-    and is waiting to be executed.  The following example shows it:
-
-			PROCESS1				TIMER PROCESS
-
-	0.								timer hits, it is removed from queue and
-									about to be executed
-	1.	process1 decides to
-		reset the timer 
-	2.								timer is executed now
-	3.	if the process1 naively
-		thinks the timer could not 
-		have been executed after 
-		resetting the timer, it is
-		WRONG -- it was (step 2.)
-
-	So be careful when writing the timer handlers. Currently defined timers 
-	don't hurt if they hit delayed, I hope at least. Retransmission timer 
-	may results in a useless retransmission -- not too bad. FR timer not too
-	bad either as timer processing uses a REPLY mutex making it safe to other
-	processing affecting transaction state. Wait timer not bad either -- processes
-	putting a transaction on wait don't do anything with it anymore.
-
-		Example when it does not hurt:
-
-			P1						TIMER
-	0.								RETR timer removed from list and
-									scheduled for execution
-	1. 200/BYE received->
-	   reset RETR, put_on_wait
-	2.								RETR timer executed -- too late but it does
-									not hurt
-	3.								WAIT handler executed
-
-	The rule of thumb is don't touch data you put under a timer. Create data,
-    put them under a timer, and let them live until they are safely destroyed from
-    wait/delete timer.  The only safe place to manipulate the data is 
-    from timer process in which delayed timers cannot hit (all timers are
-    processed sequentially).
-
-	A "bad example" -- rewriting content of retransmission buffer
-	in an unprotected way is bad because a delayed retransmission timer might 
-	hit. Thats why our reply retransmission procedure is enclosed in 
-	a REPLY_LOCK.
-
-*/
 /*
  * History:
  * --------
@@ -114,8 +45,77 @@
  *             added maximum inv. and non-inv. transaction life time (andrei)
  */
 
-#include "defs.h"
+/**
+ * \file
+ * \brief TM :: timer support
+ * 
+ * TM timer support. It has been designed for high performance using
+ * some techniques of which timer users need to be aware.
+ * - One technique is "fixed-timer-length". We maintain separate 
+ * timer lists, all of them include elements of the same time
+ * to fire. That allows *appending* new events to the list as
+ * opposed to inserting them by time, which is costly due to
+ * searching time spent in a mutex. The performance benefit is
+ * noticeable. The limitation is you need a new timer list for
+ * each new timer length.
+ * - Another technique is the timer process slices off expired elements
+ * from the list in a mutex, but executes the timer after the mutex
+ * is left. That saves time greatly as whichever process wants to
+ * add/remove a timer, it does not have to wait until the current
+ * list is processed. However, be aware the timers may hit in a delayed
+ * manner; you have no guarantee in your process that after resetting a timer, 
+ * it will no more hit. It might have been removed by timer process,
+ * and is waiting to be executed.
+ * 
+ * The following example shows it:
+ * 
+ *		PROCESS1				TIMER PROCESS
+ * 
+ * -	0.						timer hits, it is removed from queue and
+ * 							about to be executed
+ * -	1.	process1 decides to
+ * 		reset the timer 
+ * -	2.						timer is executed now
+ * -	3.	if the process1 naively
+ * 		thinks the timer could not 
+ * 		have been executed after 
+ * 		resetting the timer, it is
+ * 		WRONG -- it was (step 2.)
+ * 
+ * So be careful when writing the timer handlers. Currently defined timers 
+ * don't hurt if they hit delayed, I hope at least. Retransmission timer 
+ * may results in a useless retransmission -- not too bad. FR timer not too
+ * bad either as timer processing uses a REPLY mutex making it safe to other
+ * processing affecting transaction state. Wait timer not bad either -- processes
+ * putting a transaction on wait don't do anything with it anymore.
+ * 
+ * 	Example when it does not hurt:
+ * 
+ * 		PROCESS1				TIMER PROCESS
+ * 
+ * -	0.						RETR timer removed from list and
+ * 							scheduled for execution
+ * -	1. 200/BYE received->
+ * 	   reset RETR, put_on_wait
+ * -	2.						RETR timer executed -- too late but it does
+ * 							not hurt
+ * -	3.						WAIT handler executed
+ *
+ * The rule of thumb is don't touch data you put under a timer. Create data,
+ * put them under a timer, and let them live until they are safely destroyed from
+ * wait/delete timer.  The only safe place to manipulate the data is 
+ * from timer process in which delayed timers cannot hit (all timers are
+ * processed sequentially).
+ * 
+ * A "bad example" -- rewriting content of retransmission buffer
+ * in an unprotected way is bad because a delayed retransmission timer might 
+ * hit. Thats why our reply retransmission procedure is enclosed in 
+ * a REPLY_LOCK.
+ * \ingroup tm
+ */
 
+
+#include "defs.h"
 
 
 #include "config.h"
@@ -157,10 +157,15 @@ struct msgid_var user_inv_max_lifetime;
 struct msgid_var user_noninv_max_lifetime;
 
 
-/* internal use, val should be unsigned or positive
- *  <= instead of < to get read of gcc warning when 
- *  sizeof(cell_member)==sizeof(val) (Note that this limits
- *  maximum value to max. type -1) */
+/**
+ * \brief Check helper for configuration framework values
+ * 
+ * Check helper for configuration framework values for internal use
+ * The val should be unsigned or positive, use
+ * <= instead of < to get read of gcc warning when 
+ * sizeof(cell_member)==sizeof(val) (Note that this limits
+ * maximum value to max. type -1)
+ */
 #define SIZE_FIT_CHECK(cell_member, val, cfg_name) \
 	if (MAX_UVAR_VALUE(((struct cell*)0)->cell_member) <= (val)){ \
 		ERR("tm_init_timers: " cfg_name " too big: %lu (%lu ticks) " \
@@ -171,7 +176,9 @@ struct msgid_var user_noninv_max_lifetime;
 		goto error; \
 	} 
 
-/* fix timer values to ticks */
+/**
+ * \brief fix timer values to ticks
+ */
 int tm_init_timers()
 {
 	default_tm_cfg.fr_timeout=MS_TO_TICKS(default_tm_cfg.fr_timeout); 
@@ -222,8 +229,11 @@ error:
 	return -1;
 }
 
-/* internal macro for timer_fixup()
- * performs size fit check if the timer name matches
+/**
+ * \brief Internal macro for timer_fixup()
+ * 
+ * Internal macro for timer_fixup(), performs size fit
+ * check if the timer name matches
  */
 #define IF_IS_TIMER_NAME(cell_member, cfg_name) \
 	if ((name->len == sizeof(cfg_name)-1) && \
@@ -231,8 +241,16 @@ error:
 			SIZE_FIT_CHECK(cell_member, t, cfg_name); \
 	}
 
-/* fixup function for the timer values
- * (called by the configuration framework)
+/**
+ * \brief Fixup function for the timer values
+ * 
+ * Fixup function for the timer values, (called by the
+ * configuration framework)
+ * \param handle not used
+ * \param gname not used
+ * \param name not used
+ * \param val fixed timer value
+ * \return 0 on success, -1 on error
  */
 int timer_fixup(void *handle, str *gname, str *name, void **val)
 {
