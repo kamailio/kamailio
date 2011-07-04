@@ -395,6 +395,10 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 					avp_val.n
 						= (int)RES_ROWS(db_res)[i].values[j].val.int_val;
 				break;
+				case DB1_BIGINT:
+					avp_val.n
+						= (int)RES_ROWS(db_res)[i].values[j].val.ll_val;
+				break;
 				case DB1_DATETIME:
 					avp_val.n
 						= (int)RES_ROWS(db_res)[i].values[j].val.time_val;
