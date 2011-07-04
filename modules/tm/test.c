@@ -26,6 +26,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#if 0
+
 #include "defs.h"
 
 
@@ -67,3 +69,4 @@ int _test_insert_to_reply( struct sip_msg *msg, char *str )
     return 1;
 }
 
+#endif
