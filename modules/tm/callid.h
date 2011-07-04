@@ -1,8 +1,4 @@
 /*
- * $Id$
- *
- * Fast Call-ID Generator
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of SIP-router, a free SIP server.
@@ -39,22 +35,30 @@
 #include "../../str.h"
 
 
-/*
- * Initialize the Call-ID generator -- generates random prefix
+/**
+ * \brief Initialize the Call-ID generator, generates random prefix
+ * \param 0 on success, -1 on error
  */
 int init_callid(void);
 
 
-/*
- * Child initialization -- generates suffix
+/**
+ * \brief Child initialization, generates suffix
+ * \param rank not used
+ * \param 0 on success, -1 on error
  */
 int child_init_callid(int rank);
 
 
+/**
+ * \brief TM API export
+ */
 typedef void (*generate_callid_f)(str*);
 
-/*
- * Get a unique Call-ID
+
+/**
+ * \brief Get a unique Call-ID
+ * \param callid returned Call-ID
  */
 void generate_callid(str* callid);
 

@@ -1,8 +1,4 @@
 /*
- * $Id$
- *
- * Fast Call-ID Generator
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of SIP-router, a free SIP server.
@@ -30,6 +26,11 @@
 /*!
  * \file 
  * \brief TM :: Fast Call-ID generator
+ * 
+ * Fast Call-ID generator. The Call-ID has the following form: <callid_nr>-<pid>@<ip>
+ * - callid_nr is initialized as a random number and continually increases
+ * - <pid>@<ip> is kept in callid_suffix
+ * - both are separated by a '-'
  * \ingroup tm
  */
 
@@ -40,21 +41,22 @@
 #include "../../socket_info.h"
 #include "callid.h"
 
+/**
+ * \brief Length of a Call-ID in TM
+ */
 #define CALLID_NR_LEN 20
 
-/* Call-ID has the following form: <callid_nr>-<pid>@<ip>
- * callid_nr is initialized as a random number and continually
- * increases; -<pid>@<ip> is kept in callid_suffix
+/**
+ * \brief Length of the Call-ID suffix
  */
 #define CALLID_SUFFIX_LEN ( 1 /* - */                                            + \
 			    5 /* pid */                                          + \
                            42 /* embedded v4inv6 address can be looong '128.' */ + \
-	                    2 /* parenthesis [] */                              + \
+	                    2 /* parenthesis [] */                               + \
                             1 /* ZT 0 */                                         + \
 	                   16 /* one never knows ;-) */                            \
                           )
 
-#define CID_SEP '-' /* the character which separates random from constant part */
 
 static unsigned long callid_nr;
 static char callid_buf[CALLID_NR_LEN + CALLID_SUFFIX_LEN];
@@ -63,8 +65,9 @@ str callid_prefix;
 str callid_suffix;
 
 
-/*
- * Initialize the Call-ID generator -- generates random prefix
+/**
+ * \brief Initialize the Call-ID generator, generates random prefix
+ * \param 0 on success, -1 on error
  */
 int init_callid(void)
 {
@@ -104,8 +107,10 @@ int init_callid(void)
 }
 
 
-/*
- * Child initialization -- generates suffix
+/**
+ * \brief Child initialization, generates suffix
+ * \param rank not used
+ * \param 0 on success, -1 on error
  */
 int child_init_callid(int rank) 
 {
@@ -121,7 +126,7 @@ int child_init_callid(int rank)
 	callid_suffix.s = callid_buf + callid_prefix.len;
 
 	callid_suffix.len = snprintf(callid_suffix.s, CALLID_SUFFIX_LEN,
-				     "%c%d@%.*s", CID_SEP, my_pid(), 
+				     "%c%d@%.*s", '-', my_pid(), 
 				     si->address_str.len,
 				     si->address_str.s);
 	if ((callid_suffix.len == -1) || (callid_suffix.len > CALLID_SUFFIX_LEN)) {
@@ -134,9 +139,10 @@ int child_init_callid(int rank)
 }
 
 
-/*
- * Increment a character in hex, return
- * carry flag
+/**
+ * \brief Increment a character in hex, return the carry flag
+ * \param _c input character
+ * \return carry flag
  */
 static inline int inc_hexchar(char* _c)
 {
@@ -155,8 +161,9 @@ static inline int inc_hexchar(char* _c)
 }
 
 
-/*
- * Get a unique Call-ID
+/**
+ * \brief Get a unique Call-ID
+ * \param callid returned Call-ID
  */
 void generate_callid(str* callid)
 {
