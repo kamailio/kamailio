@@ -179,7 +179,7 @@ struct msgid_var user_noninv_max_lifetime;
 /**
  * \brief fix timer values to ticks
  */
-int tm_init_timers()
+int tm_init_timers(void)
 {
 	default_tm_cfg.fr_timeout=MS_TO_TICKS(default_tm_cfg.fr_timeout); 
 	default_tm_cfg.fr_inv_timeout=MS_TO_TICKS(default_tm_cfg.fr_inv_timeout);
@@ -254,7 +254,7 @@ error:
  */
 int timer_fixup(void *handle, str *gname, str *name, void **val)
 {
-	ticks_t	t;
+	ticks_t t;
 
 	t = MS_TO_TICKS((unsigned int)(long)(*val));
 	/* fix 0 values to 1 tick (minimum possible wait time ) */

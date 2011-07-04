@@ -152,7 +152,7 @@ extern struct msgid_var user_noninv_max_lifetime;
 /**
  * \brief fix timer values to ticks
  */
-extern int tm_init_timers();
+extern int tm_init_timers(void);
 
 /**
  * \brief Fixup function for the timer values
