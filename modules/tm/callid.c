@@ -61,8 +61,8 @@
 static unsigned long callid_nr;
 static char callid_buf[CALLID_NR_LEN + CALLID_SUFFIX_LEN];
 
-str callid_prefix;
-str callid_suffix;
+static str callid_prefix;
+static str callid_suffix;
 
 
 /**
