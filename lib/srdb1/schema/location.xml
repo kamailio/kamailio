@@ -90,7 +90,7 @@
     <column>
         <name>callid</name>
         <type>string</type>
-        <size>&hf_len;</size>
+        <size>&callid_len;</size>
         <default>&DEFAULT_CALLID;</default>
         <description>Call-ID header field uniquely identifies a particular invitation or all registrations of a particular client.</description>
     </column>

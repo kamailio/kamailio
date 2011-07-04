@@ -96,7 +96,7 @@
     <column id="callid">
         <name>callid</name>
         <type>string</type>
-        <size>&uri_len;</size>
+        <size>&callid_len;</size>
         <description>Call ID</description>
     </column>
 

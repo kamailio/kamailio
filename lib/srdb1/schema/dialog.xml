@@ -47,7 +47,7 @@
 	<column>
 		<name>callid</name>
 		<type>string</type>
-		<size>&hf_len;</size>
+		<size>&callid_len;</size>
 		<description>Call-ID of the dialog</description>
 		
 	</column>
