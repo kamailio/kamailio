@@ -26,7 +26,7 @@ CREATE TABLE missed_calls (
     method VARCHAR2(16) DEFAULT '',
     from_tag VARCHAR2(64) DEFAULT '',
     to_tag VARCHAR2(64) DEFAULT '',
-    callid VARCHAR2(64) DEFAULT '',
+    callid VARCHAR2(255) DEFAULT '',
     sip_code VARCHAR2(3) DEFAULT '',
     sip_reason VARCHAR2(32) DEFAULT '',
     time DATE

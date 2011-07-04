@@ -24,7 +24,7 @@ CREATE TABLE active_watchers (
     event_id VARCHAR(64),
     to_tag VARCHAR(64) NOT NULL,
     from_tag VARCHAR(64) NOT NULL,
-    callid VARCHAR(128) NOT NULL,
+    callid VARCHAR(255) NOT NULL,
     local_cseq INT(11) NOT NULL,
     remote_cseq INT(11) NOT NULL,
     contact VARCHAR(128) NOT NULL,

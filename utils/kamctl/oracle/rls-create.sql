@@ -34,7 +34,7 @@ CREATE TABLE rls_watchers (
     event_id VARCHAR2(64),
     to_tag VARCHAR2(64),
     from_tag VARCHAR2(64),
-    callid VARCHAR2(128),
+    callid VARCHAR2(255),
     local_cseq NUMBER(10),
     remote_cseq NUMBER(10),
     contact VARCHAR2(128),
