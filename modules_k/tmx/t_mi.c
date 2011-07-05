@@ -42,13 +42,6 @@
 #include "tmx_mod.h"
 
 
-/*! Which header fields should be skipped */
-#define skip_hf(_hf) \
-	(((_hf)->type == HDR_FROM_T)  || \
-	((_hf)->type == HDR_TO_T)     || \
-	((_hf)->type == HDR_CALLID_T) || \
-	((_hf)->type == HDR_CSEQ_T))
-
 
 /*!
  * \brief Convert a URI into socket address.
@@ -183,7 +176,7 @@ static inline char *get_hfblock( str *uri, struct hdr_field *hf, int *l, struct 
 	portname=sock_name=0;
 
 	for (; hf; hf=hf->next) {
-		if (skip_hf(hf)) continue;
+		if (tm_skip_hf(hf)) continue;
 
 		begin=needle=hf->name.s; 
 		hf_avail=hf->len;

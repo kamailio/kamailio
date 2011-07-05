@@ -61,6 +61,15 @@
 #include "../../cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
 #endif
 
+
+/*! Which header fields should be skipped */
+#define tm_skip_hf(_hf) \
+	(((_hf)->type == HDR_FROM_T)  || \
+	((_hf)->type == HDR_TO_T)     || \
+	((_hf)->type == HDR_CALLID_T) || \
+	((_hf)->type == HDR_CSEQ_T))
+
+
 /* a forced_proto takes precedence if != PROTO_NONE */
 inline static enum sip_protos get_proto(enum sip_protos force_proto,
 										enum sip_protos proto)

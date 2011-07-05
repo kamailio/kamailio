@@ -42,15 +42,6 @@
 
 
 
-#define skip_hf(_hf) (             \
-    ((_hf)->type == HDR_FROM_T)   || \
-    ((_hf)->type == HDR_TO_T)     || \
-    ((_hf)->type == HDR_CALLID_T) || \
-    ((_hf)->type == HDR_CSEQ_T)      \
-)
-
-
-
 /** make sure the rpc user created the msg properly.
  * Make sure that the FIFO user created the message
  * correctly and fill some extra parameters in function
@@ -174,7 +165,7 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int proto,
 	}
 
 	for (; hf; hf = hf->next) {
-		if (skip_hf(hf)) continue;
+		if (tm_skip_hf(hf)) continue;
 
 		begin = needle = hf->name.s; 
 		p = hf->len;
