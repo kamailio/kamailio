@@ -652,7 +652,10 @@ IMPORTFILE      "import_file"
 <INITIAL>{WHILE}	{ count(); yylval.strval=yytext; return WHILE; }
 
 <INITIAL>{INCLUDEFILE}  { count(); BEGIN(INCLF); }
+<INITIAL>{PREP_START}{INCLUDEFILE}  { count(); BEGIN(INCLF); }
+
 <INITIAL>{IMPORTFILE}  { count(); BEGIN(IMPTF); }
+<INITIAL>{PREP_START}{IMPORTFILE}  { count(); BEGIN(IMPTF); }
 
 <INITIAL>{CFG_SELECT}	{ count(); yylval.strval=yytext; return CFG_SELECT; }
 <INITIAL>{CFG_RESET}	{ count(); yylval.strval=yytext; return CFG_RESET; }
