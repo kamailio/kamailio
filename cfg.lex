@@ -158,7 +158,7 @@
 	} include_stack[MAX_INCLUDE_DEPTH];
 	static int include_stack_ptr = 0;
 
-	static int sr_push_yy_state(char *fin);
+	static int sr_push_yy_state(char *fin, int mode);
 	static int sr_pop_yy_state();
 
 	static struct sr_yy_fname {
@@ -177,7 +177,7 @@
 
 /* start conditions */
 %x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P 
-%x PVARID INCLF
+%x PVARID INCLF IMPTF
 %x LINECOMMENT DEFINE_ID DEFINE_EOL DEFINE_DATA IFDEF_ID IFDEF_EOL IFDEF_SKIP
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
@@ -250,8 +250,6 @@ SWITCH			"switch"
 CASE			"case"
 DEFAULT			"default"
 WHILE			"while"
-
-INCLUDEFILE     "include_file"
 
 CFG_SELECT	"cfg_select"
 CFG_RESET	"cfg_reset"
@@ -563,6 +561,10 @@ EAT_ABLE	[\ \t\b\r]
 SUBST       subst
 SUBSTDEF    substdef
 
+/* include files */
+INCLUDEFILE     "include_file"
+IMPORTFILE      "import_file"
+
 %%
 
 
@@ -650,6 +652,7 @@ SUBSTDEF    substdef
 <INITIAL>{WHILE}	{ count(); yylval.strval=yytext; return WHILE; }
 
 <INITIAL>{INCLUDEFILE}  { count(); BEGIN(INCLF); }
+<INITIAL>{IMPORTFILE}  { count(); BEGIN(IMPTF); }
 
 <INITIAL>{CFG_SELECT}	{ count(); yylval.strval=yytext; return CFG_SELECT; }
 <INITIAL>{CFG_RESET}	{ count(); yylval.strval=yytext; return CFG_RESET; }
@@ -1277,7 +1280,17 @@ SUBSTDEF    substdef
 
 <INCLF>[ \t]*      /* eat the whitespace */
 <INCLF>[^ \t\n]+   { /* get the include file name */
-				if(sr_push_yy_state(yytext)<0)
+				if(sr_push_yy_state(yytext, 0)<0)
+				{
+					LOG(L_CRIT, "error at %s line %d\n", (finame)?finame:"cfg", line);
+					exit(-1);
+				}
+				BEGIN(INITIAL);
+}
+
+<IMPTF>[ \t]*      /* eat the whitespace */
+<IMPTF>[^ \t\n]+   { /* get the import file name */
+				if(sr_push_yy_state(yytext, 1)<0)
 				{
 					LOG(L_CRIT, "error at %s line %d\n", (finame)?finame:"cfg", line);
 					exit(-1);
@@ -1444,14 +1457,16 @@ int yywrap()
 	return 1;
 }
 
-static int sr_push_yy_state(char *fin)
+static int sr_push_yy_state(char *fin, int mode)
 {
 	struct sr_yy_fname *fn = NULL;
+	FILE *fp = NULL;
 	char *x = NULL;
 	char *newf = NULL;
 #define MAX_INCLUDE_FNAME	128
 	char fbuf[MAX_INCLUDE_FNAME];
 	int i, j, l;
+	char *tmpfiname = 0;
 
 	if ( include_stack_ptr >= MAX_INCLUDE_DEPTH )
 	{
@@ -1505,6 +1520,65 @@ static int sr_push_yy_state(char *fin)
 	}
 	fbuf[j] = '\0';
 
+	fp = fopen(fbuf, "r" );
+
+	if ( ! fp )
+	{
+		tmpfiname = (finame==0)?cfg_file:finame;
+		if(tmpfiname==0 || fbuf[0]=='/')
+		{
+			if(mode==0)
+			{
+				LOG(L_CRIT, "cannot open included file: %s\n", fin);
+				return -1;
+			} else {
+				LOG(L_DBG, "importing file ignored: %s\n", fin);
+				return 0;
+			}
+		}
+		x = strrchr(tmpfiname, '/');
+		if(x==NULL)
+		{
+			/* nothing else to try */
+			if(mode==0)
+			{
+				LOG(L_CRIT, "cannot open included file: %s\n", fin);
+				return -1;
+			} else {
+				LOG(L_DBG, "importing file ignored: %s\n", fin);
+				return 0;
+			}
+		}
+
+		newf = (char*)pkg_malloc(x-tmpfiname+strlen(fbuf)+2);
+		if(newf==0)
+		{
+			LOG(L_CRIT, "no more pkg\n");
+			return -1;
+		}
+		newf[0] = '\0';
+		strncat(newf, tmpfiname, x-tmpfiname);
+		strcat(newf, "/");
+		strcat(newf, fbuf);
+
+		fp = fopen(newf, "r" );
+		if ( fp==NULL )
+		{
+			pkg_free(newf);
+			if(mode==0)
+			{
+				LOG(L_CRIT, "cannot open included file: %s (%s)\n", fbuf, newf);
+				return -1;
+			} else {
+				LOG(L_DBG, "importing file ignored: %s (%s)\n", fbuf, newf);
+				return 0;
+			}
+		}
+		LOG(L_DBG, "including file: %s (%s)\n", fbuf, newf);
+	} else {
+		newf = fbuf;
+	}
+
 	include_stack[include_stack_ptr].state = YY_CURRENT_BUFFER;
 	include_stack[include_stack_ptr].line = line;
 	include_stack[include_stack_ptr].column = column;
@@ -1518,40 +1592,7 @@ static int sr_push_yy_state(char *fin)
 	startline=1;
 	startcolumn=1;
 
-	yyin = fopen(fbuf, "r" );
-
-	if ( ! yyin )
-	{
-		finame = (finame==0)?cfg_file:finame;
-		if(finame==0 || fbuf[0]=='/')
-		{
-			LOG(L_CRIT, "cannot open included file: %s\n", fin);
-			return -1;
-		}
-		x = strrchr(finame, '/');
-		if(x)
-		{
-			newf = (char*)pkg_malloc(x-finame+strlen(fbuf)+2);
-			if(newf==0)
-			{
-				LOG(L_CRIT, "no more pkg\n");
-				return -1;
-			}
-			newf[0] = '\0';
-			strncat(newf, finame, x-finame);
-			strcat(newf, "/");
-			strcat(newf, fbuf);
-		}
-		yyin = fopen(newf, "r" );
-		if ( ! yyin )
-		{
-			LOG(L_CRIT, "cannot open included file: %s (%s)\n", fbuf, newf);
-			return -1;
-		}
-		LOG(L_DBG, "including file: %s (%s)\n", fbuf, newf);
-	} else {
-		newf = fbuf;
-	}
+	yyin = fp;
 
 	/* make a copy in PKG if does not exist */
 	fn = sr_yy_fname_list;
