@@ -1912,6 +1912,7 @@ int main(int argc, char** argv)
 					if(p) {
 						*p = '\0';
 					}
+					pp_define_set_type(0);
 					if(pp_define(strlen(optarg), optarg)<0) {
 						fprintf(stderr, "error at define param: -A %s\n",
 								optarg);

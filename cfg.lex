@@ -553,6 +553,9 @@ DEFINE       "define"|"def"
 IFDEF        ifdef
 IFNDEF       ifndef
 ENDIF        endif
+TRYDEF       "trydefine"|"trydef"
+REDEF        "redefine"|"redef"
+
 /* else is already defined */
 
 EAT_ABLE	[\ \t\b\r]
@@ -1217,7 +1220,11 @@ IMPORTFILE      "import_file"
 <INITIAL>{COM_LINE}!{MAXCOMPAT_CFG}{CR}	{ count(); 
 												sr_cfg_compat=SR_COMPAT_MAX;}
 
-<INITIAL>{PREP_START}{DEFINE}{EAT_ABLE}+	{	count();
+<INITIAL>{PREP_START}{DEFINE}{EAT_ABLE}+	{	count(); pp_define_set_type(0);
+											state = DEFINE_S; BEGIN(DEFINE_ID); }
+<INITIAL>{PREP_START}{TRYDEF}{EAT_ABLE}+	{	count(); pp_define_set_type(1);
+											state = DEFINE_S; BEGIN(DEFINE_ID); }
+<INITIAL>{PREP_START}{REDEF}{EAT_ABLE}+	{	count(); pp_define_set_type(2);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <DEFINE_ID>{ID}                 {	count();
 									if (pp_define(yyleng, yytext)) return 1;
@@ -1666,6 +1673,8 @@ static int sr_pop_yy_state()
 #define MAX_DEFINES    256
 static str pp_defines[MAX_DEFINES][2];
 static int pp_num_defines = 0;
+static int pp_define_type = 0;
+static int pp_define_index = -1;
 
 /* pp_ifdef_stack[i] is 1 if the ifdef test at depth i is either
  * ifdef(defined), ifndef(undefined), or the opposite of these
@@ -1687,23 +1696,55 @@ static int pp_lookup(int len, const char * text)
 	return -1;
 }
 
+int pp_define_set_type(int type)
+{
+	pp_define_type = type;
+	return 0;
+}
+
 int pp_define(int len, const char * text)
 {
+	int ppos;
+
+	LOG(L_DBG, "++++++ attempting to define: %.*s\n", len, text);
+
 	if (pp_num_defines == MAX_DEFINES) {
 		LOG(L_CRIT, "ERROR: too many defines -- adjust MAX_DEFINES\n");
 		return -1;
 	}
 
-	if (pp_lookup(len, text) >= 0) {
-		LOG(L_CRIT, "ERROR: already defined: %.*s\n", len, text);
-		return -1;
+	pp_define_index = -1;
+	ppos = pp_lookup(len, text);
+	if(ppos >= 0) {
+		if(pp_define_type==1) {
+			LOG(L_DBG, "ignoring - already defined: %.*s\n", len, text);
+			pp_define_index = -2;
+			return 0;
+		} else if(pp_define_type==2) {
+			LOG(L_DBG, "redefining: %.*s\n", len, text);
+			pp_define_index = ppos;
+			if(pp_defines[ppos][1].s != NULL) {
+				pkg_free(pp_defines[ppos][1].s);
+				pp_defines[ppos][1].len = 0;
+				pp_defines[ppos][1].s = NULL;
+			}
+			return 0;
+		} else {
+			LOG(L_CRIT, "ERROR: already defined: %.*s\n", len, text);
+			return -1;
+		}
 	}
 
 	pp_defines[pp_num_defines][0].len = len;
 	pp_defines[pp_num_defines][0].s = (char*)pkg_malloc(len+1);
+	if(pp_defines[pp_num_defines][0].s==NULL) {
+		LOG(L_CRIT, "no more memory to define: %.*s\n", len, text);
+		return -1;
+	}
 	memcpy(pp_defines[pp_num_defines][0].s, text, len);
 	pp_defines[pp_num_defines][1].len = 0;
 	pp_defines[pp_num_defines][1].s = NULL;
+	pp_define_index = pp_num_defines;
 	pp_num_defines++;
 
 	return 0;
@@ -1711,38 +1752,51 @@ int pp_define(int len, const char * text)
 
 int pp_define_set(int len, char *text)
 {
+	int ppos;
+
+	if(pp_define_index == -2) {
+		/* #!trydef that should be ignored */
+		return 0;
+	}
+
+	if(pp_define_index < 0) {
+		/* invalid position in define table */
+		LOG(L_BUG, "BUG: the index in define table not set yet\n");
+		return -1;
+	}
 	if(len<=0) {
 		LOG(L_DBG, "no define value - ignoring\n");
 		return 0;
 	}
 	if (pp_num_defines == MAX_DEFINES) {
-		LOG(L_BUG, "BUG: setting define value, but no define id yet\n");
-		return -1;
-	}
-	if (pp_num_defines == 0) {
 		LOG(L_CRIT, "ERROR: too many defines -- adjust MAX_DEFINES\n");
 		return -1;
 	}
+	if (pp_num_defines == 0) {
+		LOG(L_BUG, "BUG: setting define value, but no define id yet\n");
+		return -1;
+	}
 
-	if (pp_defines[pp_num_defines-1][0].s == NULL) {
+	ppos = pp_define_index;
+	if (pp_defines[ppos][0].s == NULL) {
 		LOG(L_BUG, "BUG: last define ID is null\n");
 		return -1;
 	}
 
-	if (pp_defines[pp_num_defines-1][1].s != NULL) {
-		LOG(L_BUG, "BUG: ID %.*s redefined\n",
-			pp_defines[pp_num_defines-1][0].len,
-			pp_defines[pp_num_defines-1][0].s);
+	if (pp_defines[ppos][1].s != NULL) {
+		LOG(L_BUG, "BUG: ID %.*s [%d] overwritten\n",
+			pp_defines[ppos][0].len,
+			pp_defines[ppos][0].s, ppos);
 		return -1;
 	}
 
-	pp_defines[pp_num_defines-1][1].len = len;
-	pp_defines[pp_num_defines-1][1].s = text;
+	pp_defines[ppos][1].len = len;
+	pp_defines[ppos][1].s = text;
 	LM_DBG("### setting define ID [%.*s] value [%.*s]\n",
-			pp_defines[pp_num_defines-1][0].len,
-			pp_defines[pp_num_defines-1][0].s,
-			pp_defines[pp_num_defines-1][1].len,
-			pp_defines[pp_num_defines-1][1].s);
+			pp_defines[ppos][0].len,
+			pp_defines[ppos][0].s,
+			pp_defines[ppos][1].len,
+			pp_defines[ppos][1].s);
 	return 0;
 }
 
