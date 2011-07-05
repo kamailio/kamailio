@@ -29,6 +29,7 @@
 #include "../../socket_info.h"
 #include "../../ut.h"
 #include "../../parser/parse_from.h"
+#include "../../str_list.h"
 #include "ut.h"
 #include "dlg.h"
 #include "uac.h"
@@ -47,13 +48,6 @@
     ((_hf)->type == HDR_CALLID_T) || \
     ((_hf)->type == HDR_CSEQ_T)      \
 )
-
-
-
-struct str_list {
-	str s;
-	struct str_list *next;
-};
 
 
 
@@ -151,25 +145,6 @@ err:
 
 
 
-static inline struct str_list *new_str(char *s, int len,
-										struct str_list **last, int *total)
-{
-	struct str_list *new;
-	new = pkg_malloc(sizeof(struct str_list));
-	if (!new) {
-		LOG(L_ERR, "new_str: Not enough mem\n");
-		return 0;
-	}
-	new->s.s = s;
-	new->s.len = len;
-	new->next = 0;
-
-	(*last)->next = new;
-	*last = new;
-	*total += len;
-	return new;
-}
-
 
 
 /** construct a "header block" from a header list.
@@ -208,7 +183,7 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int proto,
 		while(p) {
 			d = q_memchr(needle, SUBST_CHAR, p);
 			if (!d || d + 1 >= needle + p) { /* nothing to substitute */
-				if (!new_str(begin, p, &last, &total_len)) goto error;
+				if (!append_str_list(begin, p, &last, &total_len)) goto error;
 				break;
 			} else {
 				frag_len = d - begin;
@@ -216,7 +191,7 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int proto,
 				switch(*d) {
 				case SUBST_CHAR: /* double SUBST_CHAR: IP */
 					     /* string before substitute */
-					if (!new_str(begin, frag_len, &last, &total_len))
+					if (!append_str_list(begin, frag_len, &last, &total_len))
 						goto error;
 					     /* substitute */
 					if (!sock_name) {
@@ -234,12 +209,12 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int proto,
 						sock_name = &di.send_sock->address_str;
 						portname = &di.send_sock->port_no_str;
 					}
-					if (!new_str(sock_name->s, sock_name->len, &last,
+					if (!append_str_list(sock_name->s, sock_name->len, &last,
 									&total_len))
 						goto error;
 					/* inefficient - FIXME --andrei*/
-					if (!new_str(":", 1, &last, &total_len)) goto error;
-					if (!new_str(portname->s, portname->len, &last,
+					if (!append_str_list(":", 1, &last, &total_len)) goto error;
+					if (!append_str_list(portname->s, portname->len, &last,
 								&total_len)) goto error;
 					/* keep going ... */
 					begin = needle = d + 1;
