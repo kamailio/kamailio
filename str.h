@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -70,7 +68,7 @@ struct _str{
 };
 
 
-/** Data structure used across SER soruces to store counted-length strings.
+/** Data structure used across SER sources to store counted-length strings.
  * @see _str
  */
 typedef struct _str str;
