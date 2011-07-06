@@ -1604,9 +1604,9 @@ openser_start() {
 		exit 1
 	fi
 	if [ $SYSLOG = 1 ] ; then
-		$OSERBIN -P $PID_FILE $STARTOPTIONS 1>/dev/null 2>/dev/null
+		$OSERBIN -P $PID_FILE  -f $ETCDIR/kamailio.cfg $STARTOPTIONS 1>/dev/null 2>/dev/null
 	else
-	 	$OSERBIN -P $PID_FILE -E $STARTOPTIONS
+		$OSERBIN -P $PID_FILE -E  -f $ETCDIR/kamailio.cfg $STARTOPTIONS
 	fi
 	sleep 3
 	if [ ! -s $PID_FILE ] ; then
