@@ -52,6 +52,14 @@
 static str str_udp    = { "UDP", 3 };
 static str str_5060   = { "5060", 4 };
 static str pv_str_1   = { "1", 1 };
+static str pv_uri_scheme[] = {
+		{ "none", 4 },
+		{ "sip",  3 },
+		{ "sips", 4 },
+		{ "tel",  3 },
+		{ "tels", 4 },
+		{ 0, 0 }
+	};
 
 int _pv_pid = 0;
 
@@ -271,6 +279,9 @@ int pv_get_xuri_attr(struct sip_msg *msg, struct sip_uri *parsed_uri,
 			return pv_get_udp(msg, param, res);
 		return pv_get_strintval(msg, param, res, &parsed_uri->transport_val,
 				(int)parsed_uri->proto);
+	} else if(param->pvn.u.isname.name.n==5) /* uri scheme */ {
+		return pv_get_strintval(msg, param, res, &pv_uri_scheme[parsed_uri->type],
+				(int)parsed_uri->type);
 	}
 	LM_ERR("unknown specifier\n");
 	return pv_get_null(msg, param, res);
