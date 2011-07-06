@@ -563,6 +563,7 @@ EAT_ABLE	[\ \t\b\r]
 /* pre-processing blocks */
 SUBST       subst
 SUBSTDEF    substdef
+SUBSTDEFS   substdefs
 
 /* include files */
 INCLUDEFILE     "include_file"
@@ -1245,6 +1246,7 @@ IMPORTFILE      "import_file"
 
 <INITIAL>{PREP_START}{SUBST}	{ count();  return SUBST;}
 <INITIAL>{PREP_START}{SUBSTDEF}	{ count();  return SUBSTDEF;}
+<INITIAL>{PREP_START}{SUBSTDEFS}	{ count();  return SUBSTDEFS;}
 
 <INITIAL,IFDEF_SKIP>{PREP_START}{IFDEF}{EAT_ABLE}+    { count();
 								if (pp_ifdef_type(1)) return 1;

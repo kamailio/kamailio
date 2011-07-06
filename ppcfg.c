@@ -81,7 +81,7 @@ int pp_subst_add(char *data)
 	return 0;
 }
 
-int pp_substdef_add(char *data)
+int pp_substdef_add(char *data, int mode)
 {
 	char c;
 	char *p;
@@ -131,17 +131,31 @@ found_regexp:
 found_repl:
 	defvalue.len = p - defvalue.s;
 
+	pp_define_set_type(0);
 	if(pp_define(defname.len, defname.s)<0) {
 		LM_ERR("cannot set define name\n");
 		goto error;
+	}
+	if(mode==1) {
+		/* define the value enclosed in double quotes */
+		*(defvalue.s-1) = '"';
+		defvalue.s[defvalue.len] = '"';
+		defvalue.s--;
+		defvalue.len += 2;
 	}
 	if(pp_define_set(defvalue.len, defvalue.s)<0) {
 		LM_ERR("cannot set define value\n");
 		goto error;
 	}
+	if(mode==1) {
+		defvalue.s++;
+		defvalue.len -= 2;
+		*(defvalue.s-1) = c;
+		defvalue.s[defvalue.len] = c;
+	}
 
-	LM_DBG("### added substdef: [%.*s]=[%.*s]\n", defname.len, defname.s,
-			defvalue.len, defvalue.s);
+	LM_DBG("### added substdef: [%.*s]=[%.*s] (%d)\n", defname.len, defname.s,
+			defvalue.len, defvalue.s, mode);
 
 	return 0;
 

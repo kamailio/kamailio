@@ -563,6 +563,7 @@ extern char *finame;
 /*pre-processor*/
 %token SUBST
 %token SUBSTDEF
+%token SUBSTDEFS
 
 /* operators, C like precedence */
 %right EQUAL
@@ -1969,8 +1970,10 @@ event_route_stm: ROUTE_EVENT LBRACK EVENT_RT_NAME RBRACK LBRACE actions RBRACE {
 preprocess_stm:
 	SUBST STRING { if(pp_subst_add($2)<0) YYERROR; }
 	| SUBST error { yyerror("invalid subst preprocess statement"); }
-	| SUBSTDEF STRING { if(pp_substdef_add($2)<0) YYERROR; }
+	| SUBSTDEF STRING { if(pp_substdef_add($2, 0)<0) YYERROR; }
 	| SUBSTDEF error { yyerror("invalid substdef preprocess statement"); }
+	| SUBSTDEFS STRING { if(pp_substdef_add($2, 1)<0) YYERROR; }
+	| SUBSTDEFS error { yyerror("invalid substdefs preprocess statement"); }
 	;
 
 /*exp:	rval_expr
