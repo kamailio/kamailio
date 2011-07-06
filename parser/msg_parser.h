@@ -232,6 +232,8 @@ struct sip_uri {
 #endif
 };
 
+typedef struct sip_uri sip_uri_t;
+
 struct msg_body;
 
 typedef void (*free_msg_body_f)(struct msg_body** ptr);
