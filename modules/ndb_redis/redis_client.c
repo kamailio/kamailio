@@ -207,6 +207,12 @@ int redisc_exec(str *srv, str *cmd, str *argv1, str *argv2, str *argv3,
 		LM_ERR("no redis reply id found: %.*s\n", res->len, res->s);
 		return -1;
 	}
+	if(rpl->rplRedis!=NULL)
+	{
+		/* clean up previous redis reply */
+		freeReplyObject(rpl->rplRedis);
+		rpl->rplRedis = NULL;
+	}
 	c = cmd->s[cmd->len];
 	cmd->s[cmd->len] = '\0';
 	rpl->rplRedis = redisCommand(rsrv->ctxRedis, cmd->s);
