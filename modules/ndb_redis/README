@@ -1,0 +1,130 @@
+NDB_REDIS Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2011 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Exported Parameters
+
+              3.1. server (int)
+
+        4. Exported Functions
+
+              4.1. redis_cmd(srvname, command, replyid)
+
+   List of Examples
+
+   1.1. Set server parameter
+   1.2. redis_cmd usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. server (int)
+
+   4. Exported Functions
+
+        4.1. redis_cmd(srvname, command, replyid)
+
+1. Overview
+
+   This module provides a connector to interact with REDIS NoSQL Database
+   from configuration file. You can read more about REDIS at
+   http://redis.io.
+
+   It can connect to many REDIS servers and store the results in different
+   containers.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * hiredis - available at https://github.com/antirez/hiredis .
+
+3. Exported Parameters
+
+   3.1. server (int)
+
+3.1. server (int)
+
+   Specify the details to connect to REDIS server. It takes a list of
+   attribute=value separated by semicolon, the attributes can be name,
+   addr and port. Name is a genric identifier to be used with module
+   functions. addr and port are the IP address and the port to connect to
+   REDIS server.
+
+   Default value is NULL.
+
+   Example 1.1. Set server parameter
+...
+modparam("ndb_redis", "server", "name=srvN;addr=127.0.0.1;port=6379")
+...
+
+4. Exported Functions
+
+   4.1. redis_cmd(srvname, command, replyid)
+
+4.1.  redis_cmd(srvname, command, replyid)
+
+   Send a command to REDIS server identified by srvname. The reply will be
+   stored in a local continer identified by replyid. All the parameters
+   can be strings with pseudo-variables that are evaluated at runtime.
+
+   The reply can be accessed via pseudo-variable $redis(key). The key can
+   be: type - type of the reply (as in hiredis.h); value - the value
+   returned by REDIS server; info - in case of error from REDIS, it will
+   contain an info message.
+
+   Example 1.2. redis_cmd usage
+...
+if(redis_cmd("srvN", "INCR cnt", "r")) {
+    # success - the incremented value is in $redis(r=>value)
+    xlog("===== $redis(r=>type) * $redis(r=>value)\n");
+}
+
+# set a value
+redis_cmd("srvN", "SET foo bar", "r");
+
+redis_cmd("srvN", "SET ruri $ru", "r");
+
+# get a value
+redis_cmd("srvN", "GET foo", "r");
+...

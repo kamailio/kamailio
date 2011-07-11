@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides a connector to interact with REDIS NoSQL Database
+		from configuration file. You can read more about REDIS at
+		http://redis.io.
+	</para>
+	<para>
+		It can connect to many REDIS servers and store the results in different
+		containers.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>hiredis</emphasis> - available at
+				https://github.com/antirez/hiredis .
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>server</varname> (int)</title>
+		<para>
+			Specify the details to connect to REDIS server. It takes a list of
+			attribute=value separated by semicolon, the attributes can be
+			name, addr and port. Name is a genric identifier to be used with
+			module functions. addr and port are the IP address and the port to
+			connect to REDIS server.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>server</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ndb_redis", "server", "name=srvN;addr=127.0.0.1;port=6379")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">redis_cmd(srvname, command, replyid)</function>
+	    </title>
+	    <para>
+			Send a command to REDIS server identified by srvname. The reply will
+			be stored in a local continer identified by replyid. All the
+			parameters can be strings with pseudo-variables that are evaluated
+			at runtime.
+		</para>
+		<para>
+			The reply can be accessed via pseudo-variable $redis(key). The key
+			can be: type - type of the reply (as in hiredis.h); value - the value
+			returned by REDIS server; info - in case of error from REDIS, it will
+			contain an info message.
+		</para>
+		<example>
+		<title><function>redis_cmd</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(redis_cmd("srvN", "INCR cnt", "r")) {
+    # success - the incremented value is in $redis(r=>value)
+    xlog("===== $redis(r=>type) * $redis(r=>value)\n");
+}
+
+# set a value
+redis_cmd("srvN", "SET foo bar", "r");
+
+redis_cmd("srvN", "SET ruri $ru", "r");
+
+# get a value
+redis_cmd("srvN", "GET foo", "r");
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+</chapter>
+
