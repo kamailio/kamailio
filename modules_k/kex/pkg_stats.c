@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
@@ -23,7 +21,8 @@
 
 /*!
  * \file
- * \brief  Kamailio pkg statistics
+ * \brief KEX :: Kamailio private memory pool statistics
+ * \ingroup kex
  */
 
 #include <stdio.h>

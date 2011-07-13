@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 Voice Sistem SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -28,7 +26,8 @@
 
 /*!
  * \file
- * \brief Kamailio Core statistics
+ * \brief KEX :: Kamailio Core statistics
+ * \ingroup kex
  */
 
 
@@ -56,8 +55,8 @@ stat_var* drp_rpls;				/*!< dropped replies          */
 stat_var* err_reqs;				/*!< error requests           */
 stat_var* err_rpls;				/*!< error replies            */
 stat_var* bad_URIs;				/*!< number of bad URIs       */
-stat_var* unsupported_methods;	/*!< unsupported methods      */
-stat_var* bad_msg_hdr;			/*!< messages with bad header */
+stat_var* unsupported_methods;			/*!< unsupported methods      */
+stat_var* bad_msg_hdr;				/*!< messages with bad header */
 
 
 /*! exported core statistics */
