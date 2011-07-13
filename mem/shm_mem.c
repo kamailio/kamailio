@@ -118,7 +118,7 @@ void* _shm_resize( void* p , unsigned int s)
 
 
 
-int shm_getmem()
+int shm_getmem(void)
 {
 
 #ifdef SHM_MMAP
@@ -233,7 +233,7 @@ int shm_mem_init(int force_alloc)
 }
 
 
-void shm_mem_destroy()
+void shm_mem_destroy(void)
 {
 #ifndef SHM_MMAP
 	struct shmid_ds shm_info;

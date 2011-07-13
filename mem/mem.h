@@ -150,12 +150,12 @@
  * \brief Initialize private memory pool
  * \return 0 if the memory allocation was successful, -1 otherwise
  */
-int init_pkg_mallocs();
+int init_pkg_mallocs(void);
 
 /**
  * \brief Destroy private memory pool
  */
-void destroy_pkg_mallocs();
+void destroy_pkg_mallocs(void);
 
 /**
  * \brief Initialize shared memory pool

@@ -174,11 +174,11 @@
 
 
 int shm_mem_init(int); /* calls shm_getmem & shm_mem_init_mallocs */
-int shm_getmem();   /* allocates the memory (mmap or sysv shmap) */
+int shm_getmem(void);   /* allocates the memory (mmap or sysv shmap) */
 int shm_mem_init_mallocs(void* mempool, unsigned long size); /* initialize
 																the mallocs
 																& the lock */
-void shm_mem_destroy();
+void shm_mem_destroy(void);
 
 
 
