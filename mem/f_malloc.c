@@ -1,6 +1,4 @@
-/* $Id$
- *
- *
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of sip-router, a free SIP server.
@@ -17,6 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
  * History:
  * --------
@@ -40,6 +39,12 @@
  *               allocation accounted twice fro the frag. overhead (andrei)
  *  2010-09-30  fixed search for big fragments using the hash bitmap
  *               (only the first bucket was tried) (andrei)
+ */
+
+/**
+ * \file
+ * \brief Simple, very fast, malloc library
+ * \ingroup mem
  */
 
 

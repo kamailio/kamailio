@@ -1,8 +1,4 @@
-/* $Id$
- *
- * memory related stuff (malloc & friends)
- * 
- *
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of sip-router, a free SIP server.
@@ -19,6 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
  * History:
  * --------
@@ -29,6 +26,23 @@
  *  2007-02-23   added pkg_info() and pkg_available() (andrei)
  */
 
+/**
+ * \defgroup mem SIP-router memory manager
+ * \brief  SIP-router internal memory manager
+ * 
+ * SIP-router internal memory manager for private (per process) and shared
+ * memory pools. It provides several different strategies for the memory
+ * management, like really fast, with extended debugging and also plain system
+ * memory management.
+ */
+
+/**
+ * \file
+ * \brief Main definitions for memory manager
+ * 
+ * \brief Main definitions for memory manager, like malloc, free and realloc
+ * \ingroup mem
+ */
 
 
 #ifndef mem_h
@@ -132,17 +146,31 @@
 #	define pkg_sums()
 #endif
 
+/**
+ * \brief Initialize private memory pool
+ * \return 0 if the memory allocation was successful, -1 otherwise
+ */
 int init_pkg_mallocs();
+
+/**
+ * \brief Destroy private memory pool
+ */
 void destroy_pkg_mallocs();
+
+/**
+ * \brief Initialize shared memory pool
+ * \param force_alloc Force allocation of memory, e.g. initialize complete block with zero
+ * \return 0 if the memory allocation was successful, -1 otherwise
+ */
 int init_shm_mallocs(int force_alloc);
 
-/*! generic logging helper for allocation errors in private memory pool/ system */
+/** generic logging helper for allocation errors in private memory pool/ system */
 #ifdef SYSTEM_MALLOC
 #define PKG_MEM_ERROR LM_ERR("could not allocate private memory from system")
 #else
 #define PKG_MEM_ERROR LM_ERR("could not allocate private memory from available pool")
 #endif
-/*! generic logging helper for allocation errors in shared memory pool */
+/** generic logging helper for allocation errors in shared memory pool */
 #define SHM_MEM_ERROR LM_ERR("could not allocate shared memory from available pool")
 
 #endif

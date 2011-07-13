@@ -1,7 +1,4 @@
-/* $Id$
- *
- * simple, very fast, malloc library
- *
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of sip-router, a free SIP server.
@@ -18,6 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
  * History:
  * --------
@@ -27,6 +25,12 @@
  *               for the future de-fragmentation support (andrei)
  *  2004-11-10  support for > 4Gb mem., switched to long (andrei)
  *  2007-06-23  added hash bitmap (andrei)
+ */
+
+/**
+ * \file
+ * \brief Simple, very fast, malloc library
+ * \ingroup mem
  */
 
 
@@ -104,6 +108,10 @@ struct fm_frag_lnk{
 	unsigned long no;
 };
 
+/**
+ * \brief Block of memory for F_MALLOC memory manager
+ * \see mem_info
+ */
 struct fm_block{
 	unsigned long size; /* total size */
 #if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)

@@ -1,6 +1,4 @@
-/* $Id$
- *
- *
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of sip-router, a free SIP server.
@@ -17,6 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
  * History:
  * --------
@@ -34,6 +33,12 @@
  *  2006-04-07  s/DBG/MDBG (andrei)
  *  2007-02-23  added fm_available() (andrei)
  *  2009-09-28  added fm_sums() (patch from Dragos Vingarzan)
+ */
+
+/**
+ * \file
+ * \brief Simple & fast malloc library
+ * \ingroup mem
  */
 
 

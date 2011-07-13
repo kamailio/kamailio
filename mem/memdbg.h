@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,10 +13,17 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* malloc debug messages
+
+/*
  * History:
  * --------
  *  2006-04-07             created by andrei
+ */
+
+/**
+ * \file
+ * \brief Malloc debug messages
+ * \ingroup mem
  */
 
 

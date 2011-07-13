@@ -1,7 +1,4 @@
-/* $Id$*
- *
- * mem (malloc) info 
- *
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of sip-router, a free SIP server.
@@ -18,6 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
  * History:
  * --------
@@ -25,17 +23,28 @@
  *  2005-07-25  renamed meminfo to mem_info due to name conflict on solaris
  */
 
+/**
+ * \file
+ * \brief Memory manager (malloc) informations and statistics
+ * 
+ * Memory manager (malloc) informations and statistics, like the used memory,
+ * fragmentations etc..
+ * \ingroup mem
+ */
+
 #ifndef meminfo_h
 #define meminfo_h
 
+
+/** Memory information structure */
 struct mem_info{
-	unsigned long total_size;
-	unsigned long free;
-	unsigned long used;
-	unsigned long real_used; /*used + overhead*/
-	unsigned long max_used;
-	unsigned long min_frag;
-	unsigned long total_frags; /* total fragment no */
+	unsigned long total_size; /** total size of memory pool */
+	unsigned long free; /** free memory */
+	unsigned long used; /** allocated size */
+	unsigned long real_used; /** used size plus overhead from malloc */
+	unsigned long max_used; /** maximum used size since server start? */
+	unsigned long min_frag; /** minimum number of fragmentations? */
+	unsigned long total_frags; /** number of total memory fragments */
 };
 
 #endif

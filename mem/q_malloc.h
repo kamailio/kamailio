@@ -1,7 +1,4 @@
-/* $Id$
- *
- * simple & fast malloc library
- *
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of sip-router, a free SIP server.
@@ -18,6 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
  * History:
  * --------
@@ -28,6 +26,11 @@
  *  2004-11-10  support for > 4Gb mem. (switched to long) (andrei)
  */
 
+/**
+ * \file
+ * \brief Simple & fast malloc library
+ * \ingroup mem
+ */
 
 #if !defined(q_malloc_h) && !defined(F_MALLOC)
 #define q_malloc_h
@@ -102,6 +105,11 @@ struct qm_frag_lnk{
 	unsigned long no;
 };
 
+
+/**
+ * \brief Block of memory for Q_MALLOC memory manager
+ * \see mem_info
+ */
 
 struct qm_block{
 	unsigned long size; /* total size */

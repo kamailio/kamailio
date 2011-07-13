@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of sip-router, a free SIP server.
@@ -22,6 +20,14 @@
  * --------
  *  2003-04-08  init_mallocs split into init_{pkg,shm}_malloc (andrei)
  * 
+ */
+
+/**
+ * \file
+ * \brief Main definitions for memory manager
+ * 
+ * Main definitions for memory manager, like malloc, free and realloc
+ * \ingroup mem
  */
 
 
@@ -55,6 +61,10 @@
 #endif
 
 
+/**
+ * \brief Initialize private memory pool
+ * \return 0 if the memory allocation was successful, -1 otherwise
+ */
 int init_pkg_mallocs()
 {
 #ifdef PKG_MALLOC
@@ -87,6 +97,9 @@ int init_pkg_mallocs()
 
 
 
+/**
+ * \brief Destroy private memory pool
+ */
 void destroy_pkg_mallocs()
 {
 #ifdef PKG_MALLOC
@@ -100,7 +113,11 @@ void destroy_pkg_mallocs()
 }
 
 
-
+/**
+ * \brief Initialize shared memory pool
+ * \param force_alloc Force allocation of memory, e.g. initialize complete block with zero
+ * \return 0 if the memory allocation was successful, -1 otherwise
+ */
 int init_shm_mallocs(int force_alloc)
 {
 #ifdef SHM_MEM
@@ -113,5 +130,3 @@ int init_shm_mallocs(int force_alloc)
 #endif
 	return 0;
 }
-
-

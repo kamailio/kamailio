@@ -1,5 +1,4 @@
-/* $Id$*
- *
+/*
  * shared mem stuff
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -18,6 +17,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 /*
  * History:
  * --------
@@ -27,6 +27,12 @@
  *  2005-03-02   added shm_info() & re-eneabled locking on shm_status (andrei)
  *  2007-02-23   added shm_available() (andrei)
  *  2007-06-10   support for sf_malloc (andrei)
+ */
+
+/**
+ * \file
+ * \brief  Shared memory functions
+ * \ingroup mem
  */
 
 

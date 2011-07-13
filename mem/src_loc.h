@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,26 +13,32 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * mem/src_loc.h - defines for src location ( function name, module a.s.o.),
- *  used for recording a *malloc()/ *free() caller.
- *
- * Expects MOD_NAME defined for modules (if it's not defined "core" will be
- * assumed).
- * Defines:
- *  _SRC_FUNCTION_  - current function name
- *  _SRC_FILENAME_  - current .c filename
- *  _SRC_LINE_      - current line
- *  _SRC_MODULE_    - module name, lib name or "<core>" (depends on MOD_NAME
- *                    being properly set)
- *  _SRC_LOC_       - module name + file name
- *
- */
+
 /*
  * History:
  * --------
  *  2009-10-08  initial version (andrei)
 */
+
+/**
+ * \file
+ * \brief Helper definitions for internal memory manager
+ * 
+ * Helper definitions for internal memory manager, defines for src location
+ * (function name, module a.s.o.), used for recording a *malloc()/ *free()
+ * caller. Expects MOD_NAME defined for modules (if it's not defined "core"
+ * will be assumed).
+ * 
+ * Defines:
+ * - _SRC_FUNCTION_  - current function name
+ * - _SRC_FILENAME_  - current .c filename
+ * - _SRC_LINE_      - current line
+ * - _SRC_MODULE_    - module name, lib name or "<core>" (depends on MOD_NAME
+ * being properly set)
+ * - _SRC_LOC_       - module name + file name
+ * \ingroup mem
+ */
+
 
 #ifndef __src_loc_h
 #define __src_loc_h
