@@ -1714,7 +1714,7 @@ int pp_define(int len, const char * text)
 {
 	int ppos;
 
-	LOG(L_DBG, "++++++ attempting to define: %.*s\n", len, text);
+	LM_DBG("defining id: %.*s\n", len, text);
 
 	if (pp_num_defines == MAX_DEFINES) {
 		LOG(L_CRIT, "ERROR: too many defines -- adjust MAX_DEFINES\n");
