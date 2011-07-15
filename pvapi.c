@@ -1608,6 +1608,7 @@ static int _pv_print_buffer_size  = PV_DEFAULT_PRINT_BUFFER_SIZE;
 /* 6 mod params + 4 direct usage from mods */
 #define PV_DEFAULT_PRINT_BUFFER_SLOTS 10
 static int _pv_print_buffer_slots = PV_DEFAULT_PRINT_BUFFER_SLOTS;
+static int _pv_print_buffer_index = 0;
 
 /**
  *
@@ -1677,10 +1678,9 @@ int pv_reinit_buffer(void)
 char* pv_get_buffer(void)
 {
 	char *p;
-	static int _pv_print_buffer_itr = 0;
 
-	p = _pv_print_buffer[_pv_print_buffer_itr];
-	_pv_print_buffer_itr = (_pv_print_buffer_itr+1)%_pv_print_buffer_slots;
+	p = _pv_print_buffer[_pv_print_buffer_index];
+	_pv_print_buffer_index = (_pv_print_buffer_index+1)%_pv_print_buffer_slots;
 
 	return p;
 }
