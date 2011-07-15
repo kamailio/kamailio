@@ -292,7 +292,7 @@ else
 							unixsock dbg print_lib auth_identity ldap \
 							db_berkeley db_mysql db_postgres db_oracle \
 							db_sqlite db_unixodbc memcached mi_xmlrpc \
-							perl perlvdb purple \
+							ndb_redis perl perlvdb purple \
 							snmpstats xmpp \
 							carrierroute peering \
 							dialplan lcr utils presence presence_mwi \
