@@ -2184,6 +2184,10 @@ try_again:
 		}
 	}
 
+	/* reinit if pv buffer size has been set in config */
+	if (pv_reinit_buffer()<0)
+		goto error;
+
 	if (dont_fork_cnt)
 		dont_fork = dont_fork_cnt;	/* override by command line */
 

@@ -26,7 +26,7 @@ int  pv_init_api(void);
 void pv_destroy_api(void);
 
 int   pv_init_buffer(void);
-int   pv_resize_buffer(void);
+int   pv_reinit_buffer(void);
 void  pv_destroy_buffer(void);
 char* pv_get_buffer(void);
 int   pv_get_buffer_size(void);
