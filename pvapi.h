@@ -22,9 +22,18 @@
 #ifndef __pvapi_h__
 #define __pvapi_h__
 
-int init_pv_api(void);
-void destroy_pv_api(void);
+int  pv_init_api(void);
+void pv_destroy_api(void);
 
-#endif /*__pvapi_h_*/
+int   pv_init_buffer(void);
+int   pv_resize_buffer(void);
+void  pv_destroy_buffer(void);
+char* pv_get_buffer(void);
+int   pv_get_buffer_size(void);
+int   pv_get_buffer_slots(void);
+void  pv_set_buffer_size(int n);
+void  pv_set_buffer_slots(int n);
+
+#endif /*__pvapi_h__*/
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

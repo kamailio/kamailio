@@ -1195,16 +1195,10 @@ void pv_value_destroy(pv_value_t *val)
 	memset(val, 0, sizeof(pv_value_t));
 }
 
-#define PV_PRINT_BUF_SIZE  1024
-#define PV_PRINT_BUF_NO    3
 int pv_printf_s(struct sip_msg* msg, pv_elem_p list, str *s)
 {
-	static int buf_itr = 0;
-	static char buf[PV_PRINT_BUF_NO][PV_PRINT_BUF_SIZE];
-
-	s->s = buf[buf_itr];
-	s->len = PV_PRINT_BUF_SIZE;
-	buf_itr = (buf_itr+1)%PV_PRINT_BUF_NO;
+	s->s = pv_get_buffer();
+	s->len = pv_get_buffer_size();
 	return pv_printf( msg, list, s->s, &s->len);
 }
 
@@ -1583,10 +1577,12 @@ static pv_export_t _core_pvs[] = {
 /** init pv api (optional).
  * @return 0 on success, -1 on error
  */
-int init_pv_api(void)
+int pv_init_api(void)
 {
 	pv_init_table();
 	tr_init_table();
+	if(pv_init_buffer()<0)
+		return -1;
 	if(register_pvars_mod("core", _core_pvs)<0)
 		return -1;
 	return 0;
@@ -1594,10 +1590,133 @@ int init_pv_api(void)
 
 
 /** destroy pv api. */
-void destroy_pv_api(void)
+void pv_destroy_api(void)
 {
 	/* free PV and TR hash tables */
 	pv_table_free();
 	tr_table_free();
+	pv_destroy_buffer();
 	return;
+}
+
+/**
+ * - buffer to print PVs
+ */
+static char **_pv_print_buffer = NULL;
+#define PV_DEFAULT_PRINT_BUFFER_SIZE 1024
+static int _pv_print_buffer_size  = PV_DEFAULT_PRINT_BUFFER_SIZE;
+/* 6 mod params + 4 direct usage from mods */
+#define PV_DEFAULT_PRINT_BUFFER_SLOTS 10
+static int _pv_print_buffer_slots = PV_DEFAULT_PRINT_BUFFER_SLOTS;
+
+/**
+ *
+ */
+int pv_init_buffer(void)
+{
+	int i;
+
+	/* already initialized ?!? */
+	if(_pv_print_buffer!=NULL)
+		return 0;
+
+	_pv_print_buffer =
+		(char**)pkg_malloc(_pv_print_buffer_slots*sizeof(char*));
+	if(_pv_print_buffer==NULL)
+	{
+		LM_ERR("cannot init PV print buffer slots\n");
+		return -1;
+	}
+	memset(_pv_print_buffer, 0, _pv_print_buffer_slots);
+	for(i=0; i<_pv_print_buffer_slots; i++)
+	{
+		_pv_print_buffer[i] =
+			(char*)pkg_malloc(_pv_print_buffer_size*sizeof(char));
+		if(_pv_print_buffer[i]==NULL)
+		{
+			LM_ERR("cannot init PV print buffer slot[%d]\n", i);
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+void pv_destroy_buffer(void)
+{
+	int i;
+
+	if(_pv_print_buffer==NULL)
+		return;
+	for(i=0; i<_pv_print_buffer_slots; i++)
+	{
+		if(_pv_print_buffer[i]!=NULL)
+			pkg_free(_pv_print_buffer[i]);
+	}
+	pkg_free(_pv_print_buffer);
+	_pv_print_buffer = NULL;
+}
+
+/**
+ *
+ */
+int pv_reinit_buffer(void)
+{
+	if(_pv_print_buffer_size==PV_DEFAULT_PRINT_BUFFER_SIZE
+			&& _pv_print_buffer_slots==PV_DEFAULT_PRINT_BUFFER_SLOTS)
+		return 0;
+	pv_destroy_buffer();
+	return pv_init_buffer();
+}
+
+/**
+ *
+ */
+char* pv_get_buffer(void)
+{
+	char *p;
+	static int _pv_print_buffer_itr = 0;
+
+	p = _pv_print_buffer[_pv_print_buffer_itr];
+	_pv_print_buffer_itr = (_pv_print_buffer_itr+1)%_pv_print_buffer_slots;
+
+	return p;
+}
+
+/**
+ *
+ */
+int pv_get_buffer_size(void)
+{
+	return _pv_print_buffer_size;
+}
+
+/**
+ *
+ */
+int pv_get_buffer_slots(void)
+{
+	return _pv_print_buffer_slots;
+}
+
+/**
+ *
+ */
+void pv_set_buffer_size(int n)
+{
+	_pv_print_buffer_size = n;
+	if(_pv_print_buffer_size<=0)
+		_pv_print_buffer_size = PV_DEFAULT_PRINT_BUFFER_SIZE;
+}
+
+/**
+ *
+ */
+void pv_set_buffer_slots(int n)
+{
+	_pv_print_buffer_slots = n;
+	if(_pv_print_buffer_slots<=0)
+		_pv_print_buffer_slots = PV_DEFAULT_PRINT_BUFFER_SLOTS;
 }
