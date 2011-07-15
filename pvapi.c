@@ -39,7 +39,7 @@
 #include "dprint.h"
 #include "hashes.h"
 #include "route.h"
-#include "pvapi_init.h"
+#include "pvapi.h"
 #include "pvar.h"
 
 #define is_in_str(p, in) (p<in->s+in->len && *p)

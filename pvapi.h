@@ -16,16 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
- * pvapi_init.h - pvapi init and destroy functions.
+ * pvapi.h - pvapi init and destroy functions.
  */
 
-#ifndef __pvapi_init_h
-#define __pvapi_init_h
+#ifndef __pvapi_h__
+#define __pvapi_h__
 
 int init_pv_api(void);
 void destroy_pv_api(void);
 
-
-#endif /*__pvapi_init_h*/
+#endif /*__pvapi_h_*/
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

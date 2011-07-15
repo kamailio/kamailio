@@ -186,7 +186,7 @@
 #include "cfg_core.h"
 #include "endianness.h" /* init */
 #include "basex.h" /* init */
-#include "pvapi_init.h" /* init */
+#include "pvapi.h" /* init PV api */
 #include "pv_core.h" /* register core pvars */
 #include "ppcfg.h"
 #include "sock_ut.h"
