@@ -142,6 +142,7 @@
 #include "msg_translator.h"
 
 #include "ppcfg.h"
+#include "pvapi.h"
 #include "config.h"
 #include "cfg_core.h"
 #include "cfg/cfg.h"
@@ -536,6 +537,8 @@ extern char *finame;
 %token PMTU_DISCOVERY
 %token KILL_TIMEOUT
 %token MAX_WLOOPS
+%token PVBUFSIZE
+%token PVBUFSLOTS
 %token CFG_DESCRIPTION
 %token SERVER_ID
 
@@ -1586,6 +1589,10 @@ assign_stm:
 	| KILL_TIMEOUT EQUAL error { yyerror("number expected"); }
 	| MAX_WLOOPS EQUAL NUMBER { default_core_cfg.max_while_loops=$3; }
 	| MAX_WLOOPS EQUAL error { yyerror("number expected"); }
+	| PVBUFSIZE EQUAL NUMBER { pv_set_buffer_size($3); }
+	| PVBUFSIZE EQUAL error { yyerror("number expected"); }
+	| PVBUFSLOTS EQUAL NUMBER { pv_set_buffer_slots($3); }
+	| PVBUFSLOTS EQUAL error { yyerror("number expected"); }
 	| STUN_REFRESH_INTERVAL EQUAL NUMBER { IF_STUN(stun_refresh_interval=$3); }
 	| STUN_REFRESH_INTERVAL EQUAL error{ yyerror("number expected"); }
 	| STUN_ALLOW_STUN EQUAL NUMBER { IF_STUN(stun_allow_stun=$3); }

@@ -483,6 +483,8 @@ TOS			"tos"
 PMTU_DISCOVERY	"pmtu_discovery"
 KILL_TIMEOUT	"exit_timeout"|"ser_kill_timeout"
 MAX_WLOOPS		"max_while_loops"
+PVBUFSIZE		"pv_buffer_size"
+PVBUFSLOTS		"pv_buffer_slots"
 
 /* stun config variables */
 STUN_REFRESH_INTERVAL "stun_refresh_interval"
@@ -933,6 +935,10 @@ IMPORTFILE      "import_file"
 									return KILL_TIMEOUT; }
 <INITIAL>{MAX_WLOOPS}			{	count(); yylval.strval=yytext;
 									return MAX_WLOOPS; }
+<INITIAL>{PVBUFSIZE}			{	count(); yylval.strval=yytext;
+									return PVBUFSIZE; }
+<INITIAL>{PVBUFSLOTS}			{	count(); yylval.strval=yytext;
+									return PVBUFSLOTS; }
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
 <INITIAL>{CFG_DESCRIPTION}	{ count(); yylval.strval=yytext; return CFG_DESCRIPTION; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }

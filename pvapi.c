@@ -1628,7 +1628,7 @@ int pv_init_buffer(void)
 		LM_ERR("cannot init PV print buffer slots\n");
 		return -1;
 	}
-	memset(_pv_print_buffer, 0, _pv_print_buffer_slots);
+	memset(_pv_print_buffer, 0, _pv_print_buffer_slots*sizeof(char*));
 	for(i=0; i<_pv_print_buffer_slots; i++)
 	{
 		_pv_print_buffer[i] =
@@ -1639,6 +1639,8 @@ int pv_init_buffer(void)
 			return -1;
 		}
 	}
+	LM_DBG("PV print buffer initialized to [%d][%d]\n",
+			_pv_print_buffer_slots, _pv_print_buffer_size);
 	return 0;
 }
 
