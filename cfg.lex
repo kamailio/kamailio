@@ -1404,7 +1404,9 @@ static char* addstr(struct str_buf* dst_b, char* src, int len)
 	return dst_b->s;
 error:
 	LOG(L_CRIT, "ERROR:lex:addstr: memory allocation error\n");
-	return 0;
+	LOG(L_CRIT, "ERROR:lex:addstr: try to increase pkg size with"
+					" -M parameter\n");
+	exit(-1);
 }
 
 
