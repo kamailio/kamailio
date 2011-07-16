@@ -30,7 +30,10 @@
  *  @{
  */
 
-#define _XOPEN_SOURCE 4     /* bsd */
+/* the following macro will break the compile on solaris */
+#if !defined (__SVR4) && !defined (__sun)
+   #define _XOPEN_SOURCE 4     /* bsd */
+#endif
 #define _XOPEN_SOURCE_EXTENDED 1    /* solaris */
 #define _SVID_SOURCE 1 /* timegm */
 
