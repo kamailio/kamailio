@@ -85,7 +85,7 @@ struct module_exports exports = {
 static int
 mod_init(void)
 {
-    char *dname, *bname;
+    char *dname, *bname, *tname;
     int i;
     PyObject *sys_path, *pDir, *pModule, *pFunc, *pArgs;
     PyThreadState *mainThreadState;
@@ -100,11 +100,19 @@ mod_init(void)
         child_init_mname.len = strlen(child_init_mname.s);
     }
 
-    dname = dirname(script_name.s);
+    tname = as_asciiz(&script_name);
+	if(tname==NULL)
+	{
+		LM_ERR("no more pkg memory\n");
+		return -1;
+	}
+    dname = dirname(tname);
     if (strlen(dname) == 0)
         dname = ".";
-    bname = basename(script_name.s);
+	memcpy(tname, script_name.s, script_name.len);
+    bname = basename(tname);
     i = strlen(bname);
+	pkg_free(tname);
     if (bname[i - 1] == 'c' || bname[i - 1] == 'o')
         i -= 1;
     if (bname[i - 3] == '.' && bname[i - 2] == 'p' && bname[i - 1] == 'y') {
