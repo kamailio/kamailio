@@ -526,8 +526,7 @@ static PyTypeObject MSGtype = {
 int
 python_msgobj_init(void)
 {
-
-    Py_TYPE(&MSGtype) = &PyType_Type;
+    Py_TYPE((void*)(&MSGtype)) = &PyType_Type;
     if (PyType_Ready(&MSGtype) < 0)
         return -1;
     return 0;
