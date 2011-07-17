@@ -44,6 +44,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../pt.h"
+#include "../../globals.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../cfg/cfg_struct.h"
@@ -123,11 +124,13 @@ static int mi_mod_init(void)
 	LM_DBG("testing mi_fifo existance ...\n");
 	n=stat(mi_fifo, &filestat);
 	if (n==0) {
-		/* FIFO exist, delete it (safer) */
-		if (unlink(mi_fifo)<0){
-			LM_ERR("Cannot delete old MI fifo (%s): %s\n",
-				mi_fifo, strerror(errno));
-			return -1;
+		/* FIFO exist, delete it (safer) if no config check */
+		if(config_check==0) {
+			if (unlink(mi_fifo)<0){
+				LM_ERR("Cannot delete old MI fifo (%s): %s\n",
+					mi_fifo, strerror(errno));
+				return -1;
+			}
 		}
 	} else if (n<0 && errno!=ENOENT){
 		LM_ERR("MI FIFO stat failed: %s\n", strerror(errno));
@@ -256,11 +259,13 @@ static int mi_destroy(void)
 	/* destroying the fifo file */
 	n=stat(mi_fifo, &filestat);
 	if (n==0){
-		/* FIFO exist, delete it (safer) */
-		if (unlink(mi_fifo)<0){
-			LM_ERR("cannot delete the fifo (%s): %s\n",
-				mi_fifo, strerror(errno));
-			goto error;
+		/* FIFO exist, delete it (safer) if not config check */
+		if(config_check==0) {
+			if (unlink(mi_fifo)<0){
+				LM_ERR("cannot delete the fifo (%s): %s\n",
+					mi_fifo, strerror(errno));
+				goto error;
+			}
 		}
 	} else if (n<0 && errno!=ENOENT) {
 		LM_ERR("FIFO stat failed: %s\n", strerror(errno));
