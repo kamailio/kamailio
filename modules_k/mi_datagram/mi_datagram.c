@@ -56,6 +56,7 @@
 #include "../../lib/kmi/mi.h"
 #include "../../ip_addr.h"
 #include "../../pt.h"
+#include "../../globals.h"
 #include "../../cfg/cfg_struct.h"
 #include "mi_datagram.h"
 #include "datagram_fnc.h"
@@ -218,9 +219,11 @@ static int mi_mod_init(void)
 	n=stat(mi_socket, &filestat);
 	if( n==0) {
 		LM_INFO("the socket %s already exists, trying to delete it...\n", mi_socket);
-		if (unlink(mi_socket)<0) {
-			LM_ERR("cannot delete old socket: %s\n", strerror(errno));
-			return -1;
+		if(config_check==0) {
+			if (unlink(mi_socket)<0) {
+				LM_ERR("cannot delete old socket: %s\n", strerror(errno));
+				return -1;
+			}
 		}
 	} else if (n<0 && errno!=ENOENT) {
 		LM_ERR("socket stat failed:%s\n", strerror(errno));
@@ -364,10 +367,12 @@ static int mi_destroy(void)
 	if(mi_socket_domain == AF_UNIX) {
 		n=stat(mi_socket, &filestat);
 		if (n==0) {
-			if (unlink(mi_socket)<0){
-				LM_ERR("cannot delete the socket (%s): %s\n", 
+			if(config_check==0) {
+				if (unlink(mi_socket)<0){
+					LM_ERR("cannot delete the socket (%s): %s\n", 
 						mi_socket, strerror(errno));
-				goto error;
+					goto error;
+				}
 			}
 		} else if (n<0 && errno!=ENOENT) {
 			LM_ERR("socket stat failed: %s\n", strerror(errno));
