@@ -722,7 +722,7 @@ static inline char* su2a(union sockaddr_union* su, int su_len)
 {
 	static char buf[SU2A_MAX_STR_SIZE];
 	int offs;
-	
+
 #ifdef USE_IPV6
 	if (unlikely(su->s.sa_family==AF_INET6)){
 		if (unlikely(su_len<sizeof(su->sin6)))
@@ -740,6 +740,34 @@ static inline char* su2a(union sockaddr_union* su, int su_len)
 		offs=ip4tosbuf((unsigned char*)&su->sin.sin_addr, buf, sizeof(buf)-2);
 	buf[offs]=':';
 	offs+=1+ushort2sbuf(su_getport(su), &buf[offs+1], sizeof(buf)-(offs+1)-1);
+	buf[offs]=0;
+	return buf;
+}
+
+#define SUIP2A_MAX_STR_SIZE  (IP6_MAX_STR_SIZE + 2 /* [] */ + 1 /* \0 */)
+/* returns an asciiz string containing the ip
+ *  (<ipv4_addr> or [<ipv6_addr>])
+ */
+static inline char* suip2a(union sockaddr_union* su, int su_len)
+{
+	static char buf[SUIP2A_MAX_STR_SIZE];
+	int offs;
+
+#ifdef USE_IPV6
+	if (unlikely(su->s.sa_family==AF_INET6)){
+		if (unlikely(su_len<sizeof(su->sin6)))
+			return "<addr. error>";
+		buf[0]='[';
+		offs=1+ip6tosbuf((unsigned char*)su->sin6.sin6_addr.s6_addr, &buf[1],
+							sizeof(buf)-4);
+		buf[offs]=']';
+		offs++;
+	}else
+#endif /* USE_IPV6*/
+	if (unlikely(su_len<sizeof(su->sin)))
+		return "<addr. error>";
+	else
+		offs=ip4tosbuf((unsigned char*)&su->sin.sin_addr, buf, sizeof(buf)-2);
 	buf[offs]=0;
 	return buf;
 }
