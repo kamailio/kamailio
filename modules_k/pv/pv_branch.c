@@ -395,7 +395,7 @@ int pv_get_sndto(struct sip_msg *msg, pv_param_t *param,
 					(int)snd_inf->len);
 		default:
 			/* 0 - ip */
-			s.s   = su2a(snd_inf->to, sizeof(*snd_inf->to));
+			s.s   = suip2a(snd_inf->to, sizeof(*snd_inf->to));
 			s.len = strlen(s.s);
 			return pv_get_strval(msg, param, res, &s);
 	}
