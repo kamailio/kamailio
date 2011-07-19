@@ -343,6 +343,8 @@ int mq_item_add(str *qname, str *key, str *val)
 			mh->ilast = NULL;
 		else
 			mh->ifirst->prev = NULL;
+		mh->csize--;
+		shm_free(mi);
 	}
 	lock_release(&mh->lock);
 	return 0;
