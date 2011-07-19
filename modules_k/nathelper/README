@@ -64,8 +64,9 @@ Ovidiu Sas
               5.4. add_rcv_param([flag]),
               5.5. fix_nated_register()
               5.6. nat_uac_test(flags)
-              5.7. add_contact_alias()
-              5.8. handle_ruri_alias()
+              5.7. is_rfc1918(ip_address)
+              5.8. add_contact_alias()
+              5.9. handle_ruri_alias()
 
         6. Exported Pseudo Variables
 
@@ -131,8 +132,9 @@ Chapter 1. Admin Guide
         5.4. add_rcv_param([flag]),
         5.5. fix_nated_register()
         5.6. nat_uac_test(flags)
-        5.7. add_contact_alias()
-        5.8. handle_ruri_alias()
+        5.7. is_rfc1918(ip_address)
+        5.8. add_contact_alias()
+        5.9. handle_ruri_alias()
 
    6. Exported Pseudo Variables
 
@@ -235,7 +237,7 @@ modparam("nathelper", "natping_interval", 10)
 
 4.2. ping_nated_only (integer)
 
-   If this variable is set then only contacts that have “behind_NAT” flag
+   If this variable is set then only contacts that have "behind_NAT" flag
    in user location database set will get ping.
 
    Default value is 0.
@@ -310,7 +312,7 @@ modparam("nathelper", "sipping_bflag", 7)
    feature, you have to set this parameter. The SIP request pinging will
    be used only for requests marked so.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.7. Set sipping_from parameter
 ...
@@ -322,7 +324,7 @@ modparam("nathelper", "sipping_from", "sip:pinger@siphub.net")
    The parameter sets the SIP method to be used in generating the SIP
    requests for NAT ping purposes.
 
-   Default value is “OPTIONS”.
+   Default value is "OPTIONS".
 
    Example 1.8. Set sipping_method parameter
 ...
@@ -340,7 +342,7 @@ Note
 
    The string must be a complete SDP line, including the EOH (\r\n).
 
-   Default value is “a=nortpproxy:yes\r\n”.
+   Default value is "a=nortpproxy:yes\r\n".
 
    Example 1.9. Set nortpproxy_str parameter
 ...
@@ -355,8 +357,9 @@ modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
    5.4. add_rcv_param([flag]),
    5.5. fix_nated_register()
    5.6. nat_uac_test(flags)
-   5.7. add_contact_alias()
-   5.8. handle_ruri_alias()
+   5.7. is_rfc1918(ip_address)
+   5.8. add_contact_alias()
+   5.9. handle_ruri_alias()
 
 5.1.  fix_nated_contact()
 
@@ -373,15 +376,15 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 5.2.  fix_nated_sdp(flags [, ip_address])
 
    Alters the SDP information in orer to facilitate NAT traversal. What
-   changes to be performed may be controled via the “flags” parameter.
+   changes to be performed may be controled via the "flags" parameter.
 
    Meaning of the parameters is as follows:
      * flags - the value may be a bitwise OR of the following flags:
-          + 0x01 - adds “a=direction:active” SDP line;
+          + 0x01 - adds "a=direction:active" SDP line;
           + 0x02 - rewrite media IP address (c=) with source address of
             the message or the provided IP address (the provide IP address
             take precedence over the source address).
-          + 0x04 - adds “a=nortpproxy:yes” SDP line;
+          + 0x04 - adds "a=nortpproxy:yes" SDP line;
           + 0x08 - rewrite IP from origin description (o=) with source
             address of the message or the provided IP address (the provide
             IP address take precedence over the source address).
@@ -476,7 +479,14 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-5.7.  add_contact_alias()
+5.7.  is_rfc1918(ip_address)
+
+   Determines if the address in the parameter is an rfc1918 address. The
+   parameter allows pseudo-variables usage.
+
+   This function can be used from ANY_ROUTE.
+
+5.8.  add_contact_alias()
 
    Adds ;alias=ip:port parameter to contact URI containing received
    ip:port if contact uri ip:port does not match received ip:port.
@@ -495,7 +505,7 @@ fix_nated_register();
     };
 ...
 
-5.8.  handle_ruri_alias()
+5.9.  handle_ruri_alias()
 
    Checks if Request URI has alias param and if so, removes it and sets
    $du based on its value. Note that this means that routing of request is
@@ -576,16 +586,16 @@ $ kamctl fifo nh_enable_ping 1
 
 Chapter 2. Frequently Asked Questions
 
-   2.1. What happend with “rtpproxy_disable” parameter?
+   2.1. What happend with "rtpproxy_disable" parameter?
    2.2. Where can I find more about Kamailio?
    2.3. Where can I post a question about this module?
    2.4. How can I report a bug?
 
    2.1.
 
-       What happend with “rtpproxy_disable” parameter?
+       What happend with "rtpproxy_disable" parameter?
 
-       It was removed as it became obsolete - now “rtpproxy_sock” can take
+       It was removed as it became obsolete - now "rtpproxy_sock" can take
        empty value to disable the rtpproxy functionality.
 
    2.2.

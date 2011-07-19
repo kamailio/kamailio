@@ -289,6 +289,7 @@ static int handle_ruri_alias_f(struct sip_msg *, char *, char *);
 static int pv_get_rr_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int pv_get_rr_top_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
+static int is_rfc1918_f(struct sip_msg *, char *, char *);
 static int extract_mediaip(str *, str *, int *, char *);
 static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int fix_nated_register_f(struct sip_msg *, char *, char *);
@@ -378,6 +379,9 @@ static cmd_export_t cmds[] = {
 	{"add_rcv_param",      (cmd_function)add_rcv_param_f,        1,
 		fixup_uint_null, 0,
 		REQUEST_ROUTE },
+	{"is_rfc1918",         (cmd_function)is_rfc1918_f,           1,
+		fixup_spve_null, 0,
+		ANY_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -1270,6 +1274,20 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 	/* no test succeeded */
 	return -1;
 
+}
+
+static int
+is_rfc1918_f(struct sip_msg* msg, char* str1, char* str2)
+{
+	str address;
+
+	if(fixup_get_svalue(msg, (gparam_p)str1, &address)!=0 || address.len==0)
+	{
+		LM_ERR("invalid address parameter\n");
+		return -2;
+	}
+
+	return (is1918addr(&address) == 1) ? 1 : -1;
 }
 
 #define	ADD_ADIRECTION	0x01

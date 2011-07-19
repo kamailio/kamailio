@@ -552,6 +552,19 @@ fix_nated_register();
 
 	<section>
 		<title>
+		<function>is_rfc1918(ip_address)</function>
+		</title>
+		<para>
+			Determines if the address in the parameter is an rfc1918 address.
+			The parameter allows pseudo-variables usage.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+	</section>
+
+	<section>
+		<title>
 		<function moreinfo="none">add_contact_alias()</function>
 		</title>
 		<para>
