@@ -1940,12 +1940,17 @@ int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt)
 static int t_check_trans(struct sip_msg* msg, char* foo, char* bar)
 {
 	struct cell* t;
+	int branch;
+	int ret;
 	
-	if (msg->first_line.type==SIP_REPLY)
-		return w_t_check(msg, 0 ,0);
-	else if (msg->REQ_METHOD==METHOD_CANCEL)
+	if (msg->first_line.type==SIP_REPLY) {
+		branch = 0;
+		ret = (t_check_msg( msg , &branch)==1) ? 1 : -1;
+		tm_ctx_set_branch_index(branch);
+		return ret;
+	} else if (msg->REQ_METHOD==METHOD_CANCEL) {
 		return w_t_lookup_cancel(msg, 0, 0);
-	else{
+	} else {
 		switch(t_check_msg(msg, 0)){
 			case -2: /* possible e2e ack */
 				return 1;
