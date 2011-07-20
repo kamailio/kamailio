@@ -34,6 +34,8 @@
 
 #include "redis_client.h"
 
+#define redisCommandNR(a...) (int)({ void *__tmp; __tmp = redisCommand(a); if (__tmp) freeReplyObject(__tmp); __tmp ? 0 : -1;})
+
 static redisc_server_t *_redisc_srv_list=NULL;
 
 static redisc_reply_t *_redisc_rpl_list=NULL;
@@ -44,9 +46,13 @@ static redisc_reply_t *_redisc_rpl_list=NULL;
 int redisc_init(void)
 {
 	char *addr;
-	unsigned int port;
+	unsigned int port, db;
 	redisc_server_t *rsrv=NULL;
 	param_t *pit = NULL;
+	struct timeval tv;
+
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
 
 	if(_redisc_srv_list==NULL)
 	{
@@ -58,6 +64,7 @@ int redisc_init(void)
 	{
 		addr = "127.0.0.1";
 		port = 6379;
+		db = 0;
 		for (pit = rsrv->attrs; pit; pit=pit->next)
 		{
 			if(pit->name.len==4 && strncmp(pit->name.s, "addr", 4)==0) {
@@ -66,19 +73,33 @@ int redisc_init(void)
 			} else if(pit->name.len==4 && strncmp(pit->name.s, "port", 4)==0) {
 				if(!str2int(&pit->body, &port))
 					port = 6379;
+			} else if(pit->name.len==2 && strncmp(pit->name.s, "db", 2)==0) {
+				if(!str2int(&pit->body, &db))
+					db = 0;
 			}
 		}
-		rsrv->ctxRedis = redisConnect(addr, port);
-		if (rsrv->ctxRedis->err) {
-			LM_ERR("failed to connect to redis server [%.*s]: %s\n",
-					rsrv->sname->len, rsrv->sname->s, rsrv->ctxRedis->errstr);
-			return -1;
-		} else {
-			LM_DBG("connected to redis server [%.*s] (%s:%d)\n",
-					rsrv->sname->len, rsrv->sname->s, addr, port);
-		}
+		rsrv->ctxRedis = redisConnectWithTimeout(addr, port, tv);
+		if(!rsrv->ctxRedis)
+			goto err;
+		if (rsrv->ctxRedis->err)
+			goto err2;
+		if (redisCommandNR(rsrv->ctxRedis, "PING"))
+			goto err2;
+		if (redisCommandNR(rsrv->ctxRedis, "SELECT %i", db))
+			goto err2;
+
 	}
+
 	return 0;
+
+err2:
+	LM_ERR("error communicating with redis server [%.*s] (%s:%d/%d): %s\n",
+		rsrv->sname->len, rsrv->sname->s, addr, port, db, rsrv->ctxRedis->errstr);
+	return -1;
+err:
+	LM_ERR("failed to connect to redis server [%.*s] (%s:%d/%d)\n",
+		rsrv->sname->len, rsrv->sname->s, addr, port, db);
+	return -1;
 }
 
 /**

@@ -64,9 +64,9 @@
 		<para>
 			Specify the details to connect to REDIS server. It takes a list of
 			attribute=value separated by semicolon, the attributes can be
-			name, addr and port. Name is a genric identifier to be used with
+			name, addr, port and db. Name is a generic identifier to be used with
 			module functions. addr and port are the IP address and the port to
-			connect to REDIS server.
+			connect to REDIS server. db is the DB number to use (defaults to 0 if not specified).
 		</para>
 		<para>
 		<emphasis>
@@ -77,7 +77,7 @@
 			<title>Set <varname>server</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("ndb_redis", "server", "name=srvN;addr=127.0.0.1;port=6379")
+modparam("ndb_redis", "server", "name=srvN;addr=127.0.0.1;port=6379;db=1")
 ...
 </programlisting>
 		</example>
