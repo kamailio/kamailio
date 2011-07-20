@@ -45,10 +45,11 @@
 
 #include "meminfo.h"
 
-/* defs*/
 
-/* use a bitmap to quickly find free fragments, should speed up
- * especially startup (non-warmed-up malloc) */
+/**
+ * Use a bitmap to quickly find free fragments, should speed up
+ * especially startup (non-warmed-up malloc) 
+ */
 #define F_MALLOC_HASH_BITMAP
 
 #ifdef DBG_F_MALLOC
@@ -68,11 +69,10 @@
 
 
 
-#define F_MALLOC_OPTIMIZE_FACTOR 14UL /*used below */
+#define F_MALLOC_OPTIMIZE_FACTOR 14UL /* used below */
+/** Size to optimize for, (most allocs <= this size), must be 2^k */
 #define F_MALLOC_OPTIMIZE  (1UL<<F_MALLOC_OPTIMIZE_FACTOR)
-								/* size to optimize for,
-									(most allocs <= this size),
-									must be 2^k */
+
 
 #define F_HASH_SIZE (F_MALLOC_OPTIMIZE/ROUNDTO + \
 		(sizeof(long)*8-F_MALLOC_OPTIMIZE_FACTOR)+1)
@@ -84,11 +84,12 @@ typedef unsigned long fm_hash_bitmap_t;
 	((F_HASH_SIZE+FM_HASH_BMP_BITS-1)/FM_HASH_BMP_BITS)
 #endif
 
-/* hash structure:
- * 0 .... F_MALLOC_OPTIMIZE/ROUNDTO  - small buckets, size increases with
- *                            ROUNDTO from bucket to bucket
- * +1 .... end -  size = 2^k, big buckets */
-
+/**
+ * \name Hash structure
+ * - 0 .... F_MALLOC_OPTIMIZE/ROUNDTO  - small buckets, size increases with
+ * ROUNDTO from bucket to bucket
+ * - +1 .... end -  size = 2^k, big buckets
+ */
 struct fm_frag{
 	unsigned long size;
 	union{
@@ -129,9 +130,21 @@ struct fm_block{
 };
 
 
-
+/**
+ * \brief Initialize memory manager malloc
+ * \param address start address for memory block
+ * \param size Size of allocation
+ * \return return the fm_block
+ */
 struct fm_block* fm_malloc_init(char* address, unsigned long size);
 
+
+/**
+ * \brief Main memory manager allocation function
+ * \param qm memory block
+ * \param size memory allocation size
+ * \return address of allocated memory
+ */
 #ifdef DBG_F_MALLOC
 void* fm_malloc(struct fm_block*, unsigned long size,
 					const char* file, const char* func, unsigned int line);
@@ -139,6 +152,14 @@ void* fm_malloc(struct fm_block*, unsigned long size,
 void* fm_malloc(struct fm_block*, unsigned long size);
 #endif
 
+
+/**
+ * \brief Main memory manager free function
+ * 
+ * Main memory manager free function, provide functionality necessary for pkg_free
+ * \param qm memory block
+ * \param p freed memory
+ */
 #ifdef DBG_F_MALLOC
 void  fm_free(struct fm_block*, void* p, const char* file, const char* func, 
 				unsigned int line);
@@ -146,6 +167,16 @@ void  fm_free(struct fm_block*, void* p, const char* file, const char* func,
 void  fm_free(struct fm_block*, void* p);
 #endif
 
+
+/**
+ * \brief Main memory manager realloc function
+ * 
+ * Main memory manager realloc function, provide functionality for pkg_realloc
+ * \param qm memory block
+ * \param p reallocated memory block
+ * \param size
+ * \return reallocated memory block
+ */
 #ifdef DBG_F_MALLOC
 void*  fm_realloc(struct fm_block*, void* p, unsigned long size, 
 					const char* file, const char* func, unsigned int line);
@@ -153,11 +184,38 @@ void*  fm_realloc(struct fm_block*, void* p, unsigned long size,
 void*  fm_realloc(struct fm_block*, void* p, unsigned long size);
 #endif
 
+
+/**
+ * \brief Report internal memory manager status
+ * \param qm memory block
+ */
 void  fm_status(struct fm_block*);
+
+
+/**
+ * \brief Fills a malloc info structure with info about the block
+ *
+ * Fills a malloc info structure with info about the block, if a
+ * parameter is not supported, it will be filled with 0
+ * \param qm memory block
+ * \param memory information
+ */
 void  fm_info(struct fm_block*, struct mem_info*);
 
+
+/**
+ * \brief Helper function for available memory report
+ * \param qm memory block
+ * \return Returns how much free memory is available, on error (not compiled
+ * with bookkeeping code) returns (unsigned long)(-1)
+ */
 unsigned long fm_available(struct fm_block*);
 
+
+/**
+ * \brief Debugging helper, summary and logs all allocated memory blocks
+ * \param qm memory block
+ */
 #ifdef DBG_F_MALLOC
 void fm_sums(struct fm_block*);
 #else
