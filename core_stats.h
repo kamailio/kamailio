@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,11 +13,16 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/**  macros used for various core statistics.
- *  (if USE_CORE_STATS is not defined they won't do anything)
- * @file core_stats.h
+
+/** 
+ * @brief Macros used for various core statistics
+ * 
+ * Macros used for various core statistics, (if USE_CORE_STATS is not defined
+ * they won't do anything).
+ * @file
  * @ingroup core
  */
+ 
 /*
  * History:
  * --------

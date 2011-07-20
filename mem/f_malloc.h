@@ -198,7 +198,7 @@ void fm_status(struct fm_block* qm);
  * Fills a malloc info structure with info about the block, if a
  * parameter is not supported, it will be filled with 0
  * \param qm memory block
- * \param memory information
+ * \param info memory information
  */
 void fm_info(struct fm_block* qm, struct mem_info* info);
 

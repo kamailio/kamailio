@@ -14,11 +14,14 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** counters/statistics rpcs and script functions.
- * @file counters.c
+
+/**
+ * @brief counters/statistics rpcs and script functions
+ * @file
  * @ingroup counters
  * Module: counters.
  */
+ 
 /*
  * History:
  * -------
