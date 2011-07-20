@@ -512,10 +512,10 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 
 unsupported_event:
 	
-	LM_ERR("Missing or unsupported event header field value\n");
+	LM_WARN("Missing or unsupported event header field value\n");
 		
 	if(msg->event && msg->event->body.s && msg->event->body.len>0)
-		LM_ERR("\tevent=[%.*s]\n", msg->event->body.len, msg->event->body.s);
+		LM_ERR("    event=[%.*s]\n", msg->event->body.len, msg->event->body.s);
 
 	reply_code= BAD_EVENT_CODE;
 	reply_str=	pu_489_rpl; 
