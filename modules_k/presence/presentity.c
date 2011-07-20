@@ -354,15 +354,19 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 				(int)time(NULL);
 		n_query_cols++;
 	
-		if( presentity->sender)
+		query_cols[n_query_cols] = &str_sender_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		if(presentity->sender)
 		{
-			query_cols[n_query_cols] = &str_sender_col;
-			query_vals[n_query_cols].type = DB1_STR;
-			query_vals[n_query_cols].nul = 0;
 			query_vals[n_query_cols].val.str_val.s = presentity->sender->s;
 			query_vals[n_query_cols].val.str_val.len = presentity->sender->len;
-			n_query_cols++;
+		} else {
+			query_vals[n_query_cols].val.str_val.s = "";
+			query_vals[n_query_cols].val.str_val.len = 0;
 		}
+		}
+		n_query_cols++;
 
 		query_cols[n_query_cols] = &str_body_col;
 		query_vals[n_query_cols].type = DB1_BLOB;
