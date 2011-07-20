@@ -114,10 +114,10 @@ struct fm_frag_lnk{
  * \see mem_info
  */
 struct fm_block{
-	unsigned long size; /* total size */
+	unsigned long size; /** total size */
 #if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
-	unsigned long used; /* alloc'ed size*/
-	unsigned long real_used; /* used+malloc overhead*/
+	unsigned long used; /** allocated size*/
+	unsigned long real_used; /** used + malloc overhead */
 	unsigned long max_real_used;
 #endif
 	
@@ -146,10 +146,10 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size);
  * \return address of allocated memory
  */
 #ifdef DBG_F_MALLOC
-void* fm_malloc(struct fm_block*, unsigned long size,
+void* fm_malloc(struct fm_block* qm, unsigned long size,
 					const char* file, const char* func, unsigned int line);
 #else
-void* fm_malloc(struct fm_block*, unsigned long size);
+void* fm_malloc(struct fm_block* qm, unsigned long size);
 #endif
 
 
@@ -161,10 +161,10 @@ void* fm_malloc(struct fm_block*, unsigned long size);
  * \param p freed memory
  */
 #ifdef DBG_F_MALLOC
-void  fm_free(struct fm_block*, void* p, const char* file, const char* func, 
+void  fm_free(struct fm_block* qm, void* p, const char* file, const char* func, 
 				unsigned int line);
 #else
-void  fm_free(struct fm_block*, void* p);
+void  fm_free(struct fm_block* qm, void* p);
 #endif
 
 
@@ -178,10 +178,10 @@ void  fm_free(struct fm_block*, void* p);
  * \return reallocated memory block
  */
 #ifdef DBG_F_MALLOC
-void*  fm_realloc(struct fm_block*, void* p, unsigned long size, 
+void*  fm_realloc(struct fm_block* qm, void* p, unsigned long size, 
 					const char* file, const char* func, unsigned int line);
 #else
-void*  fm_realloc(struct fm_block*, void* p, unsigned long size);
+void*  fm_realloc(struct fm_block* qm, void* p, unsigned long size);
 #endif
 
 
@@ -189,7 +189,7 @@ void*  fm_realloc(struct fm_block*, void* p, unsigned long size);
  * \brief Report internal memory manager status
  * \param qm memory block
  */
-void  fm_status(struct fm_block*);
+void fm_status(struct fm_block* qm);
 
 
 /**
@@ -200,7 +200,7 @@ void  fm_status(struct fm_block*);
  * \param qm memory block
  * \param memory information
  */
-void  fm_info(struct fm_block*, struct mem_info*);
+void fm_info(struct fm_block* qm, struct mem_info* info);
 
 
 /**
@@ -209,7 +209,7 @@ void  fm_info(struct fm_block*, struct mem_info*);
  * \return Returns how much free memory is available, on error (not compiled
  * with bookkeeping code) returns (unsigned long)(-1)
  */
-unsigned long fm_available(struct fm_block*);
+unsigned long fm_available(struct fm_block* qm);
 
 
 /**
@@ -217,9 +217,9 @@ unsigned long fm_available(struct fm_block*);
  * \param qm memory block
  */
 #ifdef DBG_F_MALLOC
-void fm_sums(struct fm_block*);
+void fm_sums(struct fm_block* qm);
 #else
-#define fm_sums(v) do{}while(0)
+#define fm_sums(qm) do{}while(0)
 #endif /* DBG_F_MALLOC */
 
 #endif
