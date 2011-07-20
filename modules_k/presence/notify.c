@@ -637,7 +637,12 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 		LM_ERR("while parsing uri\n");
 		return NULL;
 	}
-
+	
+	/* if in db_only mode, get the presentity information from database - skip htable search */
+	if(dbmode == DB_ONLY)
+	{
+		goto db_query;
+	}
 	/* search in hash table if any record exists */
 	hash_code= core_hash(&pres_uri, NULL, phtable_size);
 	if(search_phtable(&pres_uri, event->evp->type, hash_code)== NULL)
