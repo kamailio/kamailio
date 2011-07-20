@@ -38,7 +38,7 @@ STANDARD_TABLES=${STANDARD_TABLES:-version acc dbaliases domain grp
 		aliases silo dialog dispatcher dialplan}
 EXTRA_TABLES=${EXTRA_TABLES:-imc_members imc_rooms cpl sip_trace domainpolicy
 		carrierroute carrier_name domain_name carrierfailureroute userblacklist
-		globalblacklist htable purplemap uacreg}
+		globalblacklist htable purplemap uacreg pl_pipes}
 PRESENCE_TABLES=${PRESENCE_TABLES:-presentity active_watchers watchers xcap 
 		pua rls_presentity rls_watchers}
 
@@ -67,7 +67,7 @@ STANDARD_MODULES=${STANDARD_MODULES:-standard acc lcr domain group permissions
 				     speeddial avpops auth_db pdt dialog dispatcher
 				     dialplan}
 EXTRA_MODULES=${EXTRA_MODULES:-imc cpl siptrace domainpolicy carrierroute
-    userblacklist htable purple uac}
+    userblacklist htable purple uac pipelimit}
 
 ############################################################
 
