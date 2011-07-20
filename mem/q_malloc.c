@@ -83,11 +83,6 @@
 #define ROUNDUP(s)		(((s)+(ROUNDTO-1))&ROUNDTO_MASK)
 #define ROUNDDOWN(s)	((s)&ROUNDTO_MASK)
 
-/*
-#define ROUNDUP(s)		(((s)%ROUNDTO)?((s)+ROUNDTO)/ROUNDTO*ROUNDTO:(s))
-#define ROUNDDOWN(s)	(((s)%ROUNDTO)?((s)-ROUNDTO)/ROUNDTO*ROUNDTO:(s))
-*/
-
 
 
 	/* finds the hash value for s, s=ROUNDTO multiple*/

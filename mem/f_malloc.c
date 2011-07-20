@@ -81,11 +81,6 @@
 #define ROUNDUP(s)		(((s)+(ROUNDTO-1))&ROUNDTO_MASK)
 #define ROUNDDOWN(s)	((s)&ROUNDTO_MASK)
 
-/*
- #define ROUNDUP(s)		(((s)%ROUNDTO)?((s)+ROUNDTO)/ROUNDTO*ROUNDTO:(s))
- #define ROUNDDOWN(s)	(((s)%ROUNDTO)?((s)-ROUNDTO)/ROUNDTO*ROUNDTO:(s))
-*/
-
 
 
 	/* finds the hash value for s, s=ROUNDTO multiple*/
@@ -169,21 +164,7 @@ inline static int fm_bmp_first_set(struct fm_block* qm, int start)
 
 
 /* computes hash number for big buckets*/
-#if 0
-inline static unsigned long big_hash_idx(unsigned long s)
-{
-	unsigned long idx;
-	/* s is rounded => s = k*2^n (ROUNDTO=2^n) 
-	 * index= i such that 2^(i+1) > s >= 2^i
-	 *
-	 * => index = number of the first non null bit in s*/
-	idx=sizeof(long)*8-1;
-	for (; !(s&(1UL<<(sizeof(long)*8-1))) ; s<<=1, idx--);
-	return idx;
-}
-#else
 #define big_hash_idx(s) ((unsigned long)bit_scan_reverse((unsigned long)(s)))
-#endif
 
 
 #ifdef DBG_F_MALLOC
