@@ -365,7 +365,6 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			query_vals[n_query_cols].val.str_val.s = "";
 			query_vals[n_query_cols].val.str_val.len = 0;
 		}
-		}
 		n_query_cols++;
 
 		query_cols[n_query_cols] = &str_body_col;
