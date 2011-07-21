@@ -263,7 +263,8 @@ event_route[xhttp:request] {
 5. Exported pseudo-variables
 
      * $xcapuri(name=>key) - name can be any to idenitfy the XCAP uri; key
-       can be: data, uri, root, auid, type, tree, xuid, file, node.
+       can be: data, uri, root, auid, type, tree, xuid, file, node,
+       target, domain.
 
    Exported pseudo-variables are documented at
    http://www.kamailio.org/dokuwiki/.

@@ -161,6 +161,42 @@ int xcap_parse_uri(str *huri, str *xroot, xcap_uri_t *xuri)
 		LM_DBG("matched oma pres-content\n");
 		xuri->type = PRES_CONTENT;
 		xuri->auid.len = 35;
+	} else if(s.len> 30 && strncmp(s.s, "org.openmobilealliance.search?", 30)==0) {
+		LM_DBG("matched oma search\n");
+		xuri->type = SEARCH;
+		xuri->auid.len = 29;
+
+		s.s   += xuri->auid.len + 1;
+		s.len -= xuri->auid.len + 1;
+
+		/* target */
+		if (s.len>7 && strncmp(s.s, "target=", 7)==0) {
+			LM_DBG("matched target=\n");
+			s.s   += 7;
+			s.len -= 7;
+			xuri->target.s = s.s;
+			p = strchr(s.s, '&');
+			if (p==NULL) {
+				xuri->target.len = s.len;
+			} else {
+				xuri->target.len = p - xuri->target.s;
+			}
+			s.s   += xuri->target.len + 1;
+			s.len -= xuri->target.len+1;
+			LM_DBG("target=%.*s\n", xuri->target.len, xuri->target.s);
+		}
+
+		/* domain */
+		if (s.len>7 && strncmp(s.s, "domain=", 7)==0) {
+			LM_DBG("matched domain=\n");
+			s.s   += 7;
+			s.len -= 7;
+			xuri->domain.s = s.s;
+			xuri->domain.len = s.len;
+			LM_DBG("domain=%.*s\n", xuri->domain.len, xuri->domain.s);
+		}
+
+		return 0;
 	} else {
 		LM_ERR("unsupported auid in [%.*s]\n", xuri->uri.len,
 				xuri->uri.s);
@@ -707,6 +743,10 @@ int pv_parse_xcap_uri_name(pv_spec_p sp, str *in)
 		pxs->ktype = 7;
 	} else if(pxs->key.len==4 && strncmp(pxs->key.s, "node", 4)==0) {
 		pxs->ktype = 8;
+	} else if(pxs->key.len==6 && strncmp(pxs->key.s, "target", 6)==0) {
+		pxs->ktype = 9;
+	} else if(pxs->key.len==6 && strncmp(pxs->key.s, "domain", 6)==0) {
+		pxs->ktype = 10;
 	} else {
 		LM_ERR("unknown key type [%.*s]\n", in->len, in->s);
 		goto error;
@@ -800,6 +840,16 @@ int pv_get_xcap_uri(struct sip_msg *msg,  pv_param_t *param,
 			/* get node */
 			if(pxs->xus->xuri.node.len>0)
 				return pv_get_strval(msg, param, res, &pxs->xus->xuri.node);
+		break;
+		case 9:
+			/* get target */
+			if(pxs->xus->xuri.target.len>0)
+				return pv_get_strval(msg, param, res, &pxs->xus->xuri.target);
+		break;
+		case 10:
+			/* get domain */
+			if(pxs->xus->xuri.domain.len>0)
+				return pv_get_strval(msg, param, res, &pxs->xus->xuri.domain);
 		break;
 		default:
 			return pv_get_null(msg, param, res);

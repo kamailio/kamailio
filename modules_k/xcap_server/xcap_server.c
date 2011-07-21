@@ -410,8 +410,9 @@ static str xcaps_str_nocontent  = {"No content", 10};
 static str xcaps_str_appxcxml   = {"application/xcap-caps+xml", 25};
 #endif
 static str xcaps_str_appapxml   = {"application/auth-policy+xml", 27};
-static str xcaps_str_appupxml	= {"application/vnd.oma.user-profile+xml", 36};
+static str xcaps_str_appupxml	= {"application/vnd.oma.user-profile+xml", 36}; 
 static str xcaps_str_apppcxml	= {"application/vnd.oma.pres-content+xml", 36};
+static str xcaps_str_appsexml	= {"application/vnd.oma.search+xml", 30};
 
 
 /**
@@ -1045,24 +1046,31 @@ int xcaps_path_get_auid_type(str *path)
 		goto done;
 	}
 
-	if(s.len>11 && strstr(s.s, "/xcap-caps/")!=NULL)
+        if(s.len>11 && strstr(s.s, "/xcap-caps/")!=NULL)
 	{
-		LM_DBG("matched xcap-caps\n");
-		ret = XCAP_CAPS;
+                LM_DBG("matched xcap-caps\n");
+                ret = XCAP_CAPS;
 		goto done;
 	}
 
-	if(s.len> 37 && strstr(s.s, "/org.openmobilealliance.user-profile/")!=NULL)
+        if(s.len> 37 && strstr(s.s, "/org.openmobilealliance.user-profile/")!=NULL)
 	{
-		LM_DBG("matched oma user-profile\n");
-		ret = USER_PROFILE;
+                LM_DBG("matched oma user-profile\n");
+                ret = USER_PROFILE;
 		goto done;
 	}
 
-	if(s.len> 37 && strstr(s.s, "/org.openmobilealliance.pres-content/")!=NULL)
+        if(s.len> 37 && strstr(s.s, "/org.openmobilealliance.pres-content/")!=NULL)
 	{
-		LM_DBG("matched oma pres-content\n");
-		ret = PRES_CONTENT;
+                LM_DBG("matched oma pres-content\n");
+                ret = PRES_CONTENT;
+		goto done;
+	}
+
+	if(s.len>31 && strstr(s.s, "/org.openmobilealliance.search?")!=NULL)
+	{
+                LM_DBG("matched oma search\n");
+                ret = SEARCH;
 		goto done;
 	}
 
