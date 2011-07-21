@@ -2317,7 +2317,7 @@ void ds_check_timer(unsigned int ticks, void* param)
 	/* Check for the list. */
 	if(_ds_list==NULL || _ds_list_nr<=0)
 	{
-		LM_ERR("no destination sets\n");
+		LM_DBG("no destination sets\n");
 		return;
 	}
 
