@@ -71,7 +71,7 @@ INSERT INTO version (table_name, table_version) values ('pua','6');
 CREATE TABLE pua (
     id SERIAL PRIMARY KEY NOT NULL,
     pres_uri VARCHAR(128) NOT NULL,
-    pres_id VARCHAR(64) NOT NULL,
+    pres_id VARCHAR(255) NOT NULL,
     event INTEGER NOT NULL,
     expires INTEGER NOT NULL,
     desired_expires INTEGER NOT NULL,

@@ -103,7 +103,7 @@ INSERT INTO version (table_name, table_version) values ('pua','6');
 CREATE TABLE pua (
     id NUMBER(10) PRIMARY KEY,
     pres_uri VARCHAR2(128),
-    pres_id VARCHAR2(64),
+    pres_id VARCHAR2(255),
     event NUMBER(10),
     expires NUMBER(10),
     desired_expires NUMBER(10),

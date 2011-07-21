@@ -37,7 +37,7 @@
     <column>
         <name>pres_id</name>
         <type>string</type>
-        <size>&domain_len;</size>
+        <size>255</size>
         <description>ID</description>
     </column>
 
