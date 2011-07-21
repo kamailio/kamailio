@@ -294,7 +294,7 @@ str* pdt_get_domain(pdt_tree_t *pl, str* sdomain, str *code, int *plen)
 	if(pl==NULL || sdomain==NULL || sdomain->s==NULL || code == NULL
 			|| code->s == NULL)
 	{
-		LM_ERR("bad parameters\n");
+		LM_INFO("bad parameters\n");
 		return NULL;
 	}
 
