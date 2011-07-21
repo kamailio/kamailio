@@ -259,6 +259,30 @@ modparam("pua", "reginfo_increase_version", 1)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>check_remote_contact</varname> (int)</title>
+		<para>
+		When sending a SUBSCRIBE check that the remote contact matches the
+		one in the stored dialog or not. If the remote contact is checked
+		and does not match the one in the stored dialog then the dialog is
+		not matched. Checking the remote contact can cause problems when
+		using modules like RLS and should not be required in order to
+		properly match the dialog anyway. Set this parameter to 0 to
+		disable checking of remote contact for SUBSCRIBE dialog matching.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>check_remote_contact</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "check_remote_contact", 0)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

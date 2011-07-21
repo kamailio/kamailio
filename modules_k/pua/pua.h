@@ -42,6 +42,7 @@ extern int min_expires;
 extern int pua_ul_publish;
 extern int default_expires;
 extern str outbound_proxy;
+extern int check_remote_contact;
 
 int reginfo_increase_version;
 

@@ -65,6 +65,7 @@ static str db_url = str_init(DEFAULT_DB_URL);
 static str db_table= str_init("pua");
 int update_period= 100;
 str outbound_proxy = {0, 0};
+int check_remote_contact = 1;
 int startup_time = 0;
 int dlginfo_increase_version = 0;
 int reginfo_increase_version = 0;
@@ -125,6 +126,7 @@ static param_export_t params[]={
 	{"outbound_proxy",	 STR_PARAM, &outbound_proxy.s    },
 	{"dlginfo_increase_version",	 INT_PARAM, &dlginfo_increase_version},
 	{"reginfo_increase_version",	 INT_PARAM, &reginfo_increase_version},
+	{"check_remote_contact", INT_PARAM, &check_remote_contact	},
 	{0,							 0,			0            }
 };
 
@@ -228,6 +230,12 @@ static int mod_init(void)
 	if(pua_add_events()< 0)
 	{
 		LM_ERR("while adding events\n");
+		return -1;
+	}
+
+	if(check_remote_contact<0 || check_remote_contact>1)
+	{
+		LM_ERR("bad value for check_remote_contact\n");
 		return -1;
 	}
 
