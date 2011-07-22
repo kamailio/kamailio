@@ -111,7 +111,7 @@ extern unsigned char lumps_are_cloned;
 /**
  * @brief Wrapper function for msg_lump_cloner() with some additional sanity checks
  * @param shm_msg SIP message in shared memory
- * @param pgk_msg SIP message in private memory
+ * @param pkg_msg SIP message in private memory
  * @return 0 on success, -1 on error
  */
 int save_msg_lumps( struct sip_msg *shm_msg, struct sip_msg *pkg_msg);

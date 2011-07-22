@@ -1,6 +1,4 @@
 /*
- * $Id: carrierroute.c 4712 2008-08-22 17:05:16Z henningw $
- *
  * Copyright (C) 2009 1&1 Internet AG
  *
  * This file is part of sip-router, a free SIP server.
@@ -46,7 +44,7 @@ MODULE_VERSION
 #define NETBUFSIZE 200
 
 
-static char* modp_server = NULL;  /*!< format: <host>:<port>,... */
+static char* modp_server = NULL;  /*!< format: \<host\>:\<port\>,... */
 static int timeout = 50;  /*!< timeout for queries in milliseconds */
 static int timeoutlogs = -10;  /*!< for aggregating timeout logs */
 static int *active = NULL;

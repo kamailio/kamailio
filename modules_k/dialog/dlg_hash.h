@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 Voice System SRL
  * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
@@ -257,8 +255,8 @@ int dlg_set_toroute(struct dlg_cell *dlg, str *route);
  * \brief Lookup a dialog in the global list
  * \param h_entry number of the hash table entry
  * \param h_id id of the hash table entry
- * \param del unless null, flag that is set if dialog is in "deleted" state
- * \return dialog on success, NULL on failure
+ * \param del will set to 1 if dialog is deleted
+ * \return dialog structure on success, NULL on failure or if not found
  */
 struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id, unsigned int *del);
 
@@ -352,6 +350,7 @@ struct mi_root * mi_terminate_dlgs(struct mi_root *cmd_tree, void *param );
 /*!
  * \brief Check if a dialog structure matches to a SIP message dialog
  * \param dlg dialog structure
+ * \param callid SIP message Call-ID
  * \param ftag SIP message from tag
  * \param ttag SIP message to tag
  * \param dir direction of the message, if DLG_DIR_NONE it will set

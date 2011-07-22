@@ -27,9 +27,9 @@
  * \file 
  * \brief TM :: Fast Call-ID generator
  * 
- * Fast Call-ID generator. The Call-ID has the following form: <callid_nr>-<pid>@<ip>
+ * Fast Call-ID generator. The Call-ID has the following form: \<callid_nr>-\<pid\>\@\<ip\>
  * - callid_nr is initialized as a random number and continually increases
- * - <pid>@<ip> is kept in callid_suffix
+ * - \<pid\>\@\<ip\> is kept in callid_suffix
  * - both are separated by a '-'
  * \ingroup tm
  */
@@ -67,7 +67,7 @@ static str callid_suffix;
 
 /**
  * \brief Initialize the Call-ID generator, generates random prefix
- * \param 0 on success, -1 on error
+ * \return 0 on success, -1 on error
  */
 int init_callid(void)
 {
@@ -110,7 +110,7 @@ int init_callid(void)
 /**
  * \brief Child initialization, generates suffix
  * \param rank not used
- * \param 0 on success, -1 on error
+ * \return 0 on success, -1 on error
  */
 int child_init_callid(int rank) 
 {

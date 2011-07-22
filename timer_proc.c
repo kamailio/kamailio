@@ -43,9 +43,10 @@
 #include <unistd.h>
 
 
-/** update internal counters for running new dummy timers
- *  @param timers - number of dummy timer processes
- *  @return - 0 on success; -1 on error
+/**
+ * \brief update internal counters for running new dummy timers
+ * @param timers number of dummy timer processes
+ * @return 0 on success; -1 on error
  */
 int register_dummy_timers(int timers)
 {
@@ -55,21 +56,23 @@ int register_dummy_timers(int timers)
 	return 0;
 }
 
-/** forks a separate simple sleep() periodic timer.
-  * Forks a very basic periodic timer process, that just sleep()s for 
-  * the specified interval and then calls the timer function.
-  * The new "dummy timer" process execution start immediately, the sleep()
-  * is called first (so the first call to the timer function will happen
-  * <interval> seconds after the call to fork_dummy_timer)
-  * @param child_id - @see fork_process()
-  * @param desc     - @see fork_process()
-  * @param make_sock - @see fork_process()
-  * @param f         - timer function/callback
-  * @param param     - parameter passed to the timer function
-  * @param interval  - interval in seconds.
-  * @return - pid of the new process on success, -1 on error
-  *           (doesn't return anything in the child process)
-  */
+/**
+ * \brief Forks a separate simple sleep() periodic timer
+ * 
+ * Forks a very basic periodic timer process, that just sleep()s for 
+ * the specified interval and then calls the timer function.
+ * The new "dummy timer" process execution start immediately, the sleep()
+ * is called first (so the first call to the timer function will happen
+ * \<interval\> seconds after the call to fork_dummy_timer)
+ * @param child_id  @see fork_process()
+ * @param desc      @see fork_process()
+ * @param make_sock @see fork_process()
+ * @param f         timer function/callback
+ * @param param     parameter passed to the timer function
+ * @param interval  interval in seconds.
+ * @return pid of the new process on success, -1 on error
+ * (doesn't return anything in the child process)
+ */
 int fork_dummy_timer(int child_id, char* desc, int make_sock,
 						timer_function* f, void* param, int interval)
 {
@@ -93,31 +96,33 @@ int fork_dummy_timer(int child_id, char* desc, int make_sock,
 
 
 
-/** forks a timer process based on the local timer.
- *  Forks a separate timer process running a local_timer.h type of timer
- *  A pointer to the local_timer handle (allocated in shared memory) is
- *  returned in lt_h. It can be used to add/delete more timers at runtime
- *  (via local_timer_add()/local_timer_del() a.s.o).
- *  If timers are added from separate processes, some form of locking must be
- *  used (all the calls to local_timer* must be enclosed by locks if it
- *  cannot be guaranteed that they cannot execute in the same time)
- *  The timer "engine" must be run manually from the child process. For
- *  example a very simple local timer process that just runs a single 
- *  periodic timer can be started in the following way:
- *      struct local_timer* lt_h;
- *
- *      pid=fork_local_timer_process(...., &lt_h);
- *      if (pid==0){
+/**
+ * \brief Forks a timer process based on the local timer
+ * 
+ * Forks a separate timer process running a local_timer.h type of timer
+ * A pointer to the local_timer handle (allocated in shared memory) is
+ * returned in lt_h. It can be used to add/delete more timers at runtime
+ * (via local_timer_add()/local_timer_del() a.s.o).
+ * If timers are added from separate processes, some form of locking must be
+ * used (all the calls to local_timer* must be enclosed by locks if it
+ * cannot be guaranteed that they cannot execute in the same time)
+ * The timer "engine" must be run manually from the child process. For
+ * example a very simple local timer process that just runs a single 
+ * periodic timer can be started in the following way:
+ * struct local_timer* lt_h;
+ * 
+ * pid=fork_local_timer_process(...., &lt_h);
+ * if (pid==0){
  *          timer_init(&my_timer, my_timer_f, 0, 0);
  *          local_timer_add(&lt_h, &my_timer, S_TO_TICKS(10), get_ticks_raw());
  *          while(1) { sleep(1); local_timer_run(lt, get_ticks_raw()); }
- *      }
+ * }
  *
- * @param child_id - @see fork_process()
- * @param desc     - @see fork_process()
- * @param make_sock - @see fork_process()
- * @param lt_h      - local_timer handler
- * @return - pid to the parent, 0 to the child, -1 if error.
+ * @param child_id  @see fork_process()
+ * @param desc      @see fork_process()
+ * @param make_sock @see fork_process()
+ * @param lt_h      local_timer handler
+ * @return pid to the parent, 0 to the child, -1 if error.
  */
 int fork_local_timer_process(int child_id, char* desc, int make_sock,
 						struct local_timer** lt_h)

@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -377,16 +376,18 @@ static inline int version_control(void *handle, char *path)
 	return 0;
 }
 
-/** load a sr module.
+/**
+ * \brief load a sr module
+ * 
  * tries to load the module specified by mod_path.
  * If mod_path is 'modname' or 'modname.so' then
- *  <MODS_DIR>/<modname>.so will be tried and if this fails
- *  <MODS_DIR>/<modname>/<modname>.so
+ *  \<MODS_DIR\>/\<modname\>.so will be tried and if this fails
+ *  \<MODS_DIR\>/\<modname\>/\<modname\>.so
  * If mod_path contain a '/' it is assumed to be the 
  * path to the module and tried first. If fails and mod_path is not
  * absolute path (not starting with '/') then will try:
- *   <MODS_DIR>/mod_path
- * @param modname - path or module name
+ * \<MODS_DIR\>/mod_path
+ * @param mod_path path or module name
  * @return 0 on success , <0 on error
  */
 int load_module(char* mod_path)

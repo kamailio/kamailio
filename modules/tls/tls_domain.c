@@ -1,8 +1,4 @@
 /*
- * $Id$
- *
- * TLS module - virtual configuration domain support
- *
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2005,2006 iptelorg GmbH
  *
@@ -18,7 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** SIP-router TLS support :: Virtual domain configuration support.
+
+/**
+ * SIP-router TLS support :: Virtual domain configuration support
  * @file
  * @ingroup tls
  * Module: @ref tls
@@ -349,7 +347,7 @@ static int tls_foreach_CTX_in_cfg(tls_domains_cfg_t* cfg,
  * @param path - path to be fixed. If it starts with '.' or '/' is left alone
  *               (forced "relative" or "absolute" path). Otherwise the path
  *               is considered to be relative to the main config file directory
- *               (e.g. for /etc/ser/ser.cfg => /etc/ser/<path>).
+ *               (e.g. for /etc/ser/ser.cfg => /etc/ser/\<path\>).
  * @return  0 on success, -1 on error.
  */
 int fix_shm_pathname(str* path)

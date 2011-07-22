@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 Voice System SRL
  * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
@@ -385,7 +383,8 @@ error:
  * \brief Lookup a dialog in the global list
  * \param h_entry number of the hash table entry
  * \param h_id id of the hash table entry
- * \return dialog on success, NULL on failure
+ * \param del will set to 1 if dialog is deleted
+ * \return dialog structure on success, NULL on failure or if not found
  */
 struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id, unsigned int *del)
 {
@@ -432,7 +431,8 @@ not_found:
  * \param ftag from tag
  * \param ttag to tag
  * \param dir direction
- * \return dialog structure on success, NULL on failure
+ * \param del will set to 1 if dialog is deleted
+ * \return dialog structure on success, NULL on failure or if not found
  */
 static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 						str *callid, str *ftag, str *ttag, unsigned int *dir,
@@ -487,6 +487,7 @@ not_found:
  * \param ftag from tag
  * \param ttag to tag
  * \param dir direction
+ * \param del deleted dialog information
  * \return dialog structure on success, NULL on failure
  */
 struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir,
@@ -553,6 +554,7 @@ void link_dlg(struct dlg_cell *dlg, int n)
  * \brief Unreference a dialog without locking
  * \param _dlg dialog
  * \param _cnt decrement for the reference counter
+ * \param _d_entry dialog entry
  */
 #define unref_dlg_unsafe(_dlg,_cnt,_d_entry)   \
 	do { \

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -860,15 +858,15 @@ int parse_avp_name( str *name, int *type, int_str *avp_name, int *index)
  *       - "<track><class>.<name>[<index>]"      (e.g:  fd.bar[2])
  *       - "<string>"                            (e.g.: foo)
  * Where:
- *          <string> = ascii string
- *          <id>   = ascii string w/o '[', ']', '.' and '/'
- *          <name> = <id> | '/' regex '/'
+ *          \<string\> = ascii string
+ *          \<id\>   = ascii string w/o '[', ']', '.' and '/'
+ *          \<name\> = \<id\> | '/' regex '/'
  *                   (Note: regex use is deprecated)
- *          <track> = 'f' | 't'
+ *          \<track\> = 'f' | 't'
  *                   (from or to)
- *          <class> = 'r' | 'u' | 'd' | 'g'
+ *          \<class\> = 'r' | 'u' | 'd' | 'g'
  *                    (uri, user, domain or global)
- *          <index> = <number> | '-' <number> | ''
+ *          \<index\> = \<number\> | '-' \<number\> | ''
  *                    (the avp index, if missing it means AVP_INDEX_ALL, but
  *                     it's use is deprecated)
  * More examples:

@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,11 +13,14 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** tls runtime configuration.
+
+/**
+ * SIP-router TLS support :: tls runtime configuration
  * @file tls_cfg.c
  * @ingroup: @tls
  * Module: @ref tls
  */
+
 /*
  * History:
  * --------
@@ -222,7 +223,7 @@ cfg_def_t	tls_cfg_def[] = {
  * @param path - path to be fixed. If it starts with '.' or '/' is left alone
  *               (forced "relative" or "absolute" path). Otherwise the path
  *               is considered to be relative to the main config file directory
- *               (e.g. for /etc/ser/ser.cfg => /etc/ser/<path>).
+ *               (e.g. for /etc/ser/ser.cfg => /etc/ser/\<path\>).
  * @param def - default value used if path->s is empty (path->s == 0).
  * @return  0 on success, -1 on error.
  */

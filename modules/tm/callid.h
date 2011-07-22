@@ -37,7 +37,7 @@
 
 /**
  * \brief Initialize the Call-ID generator, generates random prefix
- * \param 0 on success, -1 on error
+ * \return 0 on success, -1 on error
  */
 int init_callid(void);
 
@@ -45,7 +45,7 @@ int init_callid(void);
 /**
  * \brief Child initialization, generates suffix
  * \param rank not used
- * \param 0 on success, -1 on error
+ * \return 0 on success, -1 on error
  */
 int child_init_callid(int rank);
 

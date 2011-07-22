@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 Voice System SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -188,7 +186,9 @@ static inline int add_dlg_rr_param(struct sip_msg *req, unsigned int entry,
  * Parse SIP message and populate leg informations. 
  * \param dlg the dialog to add cseq, contact & record_route
  * \param msg sip message
- * \param flag  0-for a request(INVITE), 1- for a reply(200 ok)
+ * \param t transaction
+ * \param leg type of the call leg
+ * \param tag SIP To tag
  * \return 0 on success, -1 on failure
  * \note for a request: get record route in normal order, for a reply get
  * in reverse order, skipping the ones from the request and the proxies' own
