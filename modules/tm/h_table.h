@@ -168,7 +168,7 @@ typedef struct retr_buf
 	volatile unsigned short flags; /* DISABLED, T2 */
 	volatile unsigned char t_active; /* timer active */
 	unsigned short branch; /* no more then 65k branches :-) */
-	short buffer_len;
+	int buffer_len;
 	char *buffer;
 	/*the cell that contains this retrans_buff*/
 	struct cell* my_T;
