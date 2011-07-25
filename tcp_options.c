@@ -114,7 +114,7 @@ static cfg_def_t tcp_cfg_def[] = {
 		"accept TCP messges without Content-Lenght "},
 	/* internal and/or "fixed" versions of some vars
 	   (not supposed to be writeable, read will provide only debugging value*/
-	{ "rd_buf_size", CFG_VAR_INT | CFG_ATOMIC,    512,    65536,  0,         0,
+	{ "rd_buf_size", CFG_VAR_INT | CFG_ATOMIC,    512,    16777216,  0,         0,
 		"internal read buffer size (should be > max. expected datagram)"},
 	{ "wq_blk_size", CFG_VAR_INT | CFG_ATOMIC,    1,    65535,  0,         0,
 		"internal async write block size (debugging use only for now)"},
