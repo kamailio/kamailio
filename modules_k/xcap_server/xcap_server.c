@@ -49,7 +49,7 @@
 
 MODULE_VERSION
 
-#define XCAP_TABLE_VERSION   3
+#define XCAP_TABLE_VERSION   4
 
 
 static int xcaps_put_db(str* user, str *domain, xcap_uri_t *xuri, str *etag,

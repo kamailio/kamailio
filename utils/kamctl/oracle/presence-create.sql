@@ -75,7 +75,7 @@ END watchers_tr;
 /
 BEGIN map2users('watchers'); END;
 /
-INSERT INTO version (table_name, table_version) values ('xcap','3');
+INSERT INTO version (table_name, table_version) values ('xcap','4');
 CREATE TABLE xcap (
     id NUMBER(10) PRIMARY KEY,
     username VARCHAR2(64),

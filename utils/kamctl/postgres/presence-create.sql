@@ -51,7 +51,7 @@ CREATE TABLE watchers (
     CONSTRAINT watchers_watcher_idx UNIQUE (presentity_uri, watcher_username, watcher_domain, event)
 );
 
-INSERT INTO version (table_name, table_version) values ('xcap','3');
+INSERT INTO version (table_name, table_version) values ('xcap','4');
 CREATE TABLE xcap (
     id SERIAL PRIMARY KEY NOT NULL,
     username VARCHAR(64) NOT NULL,
