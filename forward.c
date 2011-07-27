@@ -124,6 +124,8 @@ static int sock_inet = -1;
 static int sock_inet6 = -1;
 #endif /* USE_IPV6 */
 
+static void apply_force_send_socket(struct dest_info* dst, struct sip_msg* msg);
+
 struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 {
 	int* temp_sock;
@@ -829,6 +831,9 @@ int forward_reply(struct sip_msg* msg)
 				
 	} 
 #endif
+
+	apply_force_send_socket(&dst, msg);
+
 	if (msg_send(&dst, new_buf, new_len)<0)
 	{
 		STATS_RPL_FWD_DROP();
@@ -849,4 +854,11 @@ skip:
 error:
 	if (new_buf) pkg_free(new_buf);
 	return -1;
+}
+
+static void apply_force_send_socket(struct dest_info* dst, struct sip_msg* msg)
+{
+	if (msg->force_send_socket != 0) {
+		dst->send_sock = get_send_socket(msg, &dst->to, dst->proto);
+	}
 }
