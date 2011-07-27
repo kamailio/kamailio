@@ -53,7 +53,7 @@
 
     <column>
         <name>msg</name>
-        <type>text</type>
+        <type>largetext</type>
         <description>Full SIP message</description>
     </column>
 
