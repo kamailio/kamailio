@@ -83,15 +83,17 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   ALIAS_DB module can be used as an alternative for user aliases via
+   The ALIAS_DB module can be used as an alternative for user aliases via
    usrloc. The main feature is that it does not store all addiacent data
-   as for user location and always uses database for search (no memory
-   caching).
+   as for user location and always uses the database for search (no memory
+   caching). A common use case is to provide additional user aliases, i.e.
+   to supplement the registration in the location database. Users are this
+   way on a proxy reachable with several request URIs.
 
-   Having no memory caching the speed of search can decrease but the
-   provisioning is easier. With very fast databases like MySQL the speed
-   penalty can be lowered. Also, the search can be performed on different
-   tables in the same script.
+   As the module use no memory caching the lookup is a bit slower but the
+   data provisioning is easier. With very fast databases like MySQL the
+   speed penalty can be lowered. Also, the search can be performed on
+   different tables in the same script.
 
 2. Dependencies
 
