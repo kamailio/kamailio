@@ -90,7 +90,7 @@ struct kam_module_exports kam_exports = {
 int kam_mysql_mod_init(void)
 {
 	LM_DBG("MySQL client version is %s\n", mysql_get_client_info());
-	return 0;
+	return db_mysql_alloc_buffer();
 }
 
 int db_mysql_bind_api(db_func_t *dbb)

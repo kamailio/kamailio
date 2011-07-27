@@ -36,9 +36,10 @@
 #include "../../dprint.h"
 #include "db_ut.h"
 #include "db_query.h"
+#include "../../globals.h"
 
 static str  sql_str;
-static char sql_buf[SQL_BUF_LEN];
+static char *sql_buf = NULL;
 
 int db_do_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
@@ -54,35 +55,35 @@ int db_do_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	}
 
 	if (!_c) {
-		ret = snprintf(sql_buf, SQL_BUF_LEN, "select * from %.*s ", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
-		if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
+		ret = snprintf(sql_buf, sql_buffer_size, "select * from %.*s ", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+		if (ret < 0 || ret >= sql_buffer_size) goto error;
 		off = ret;
 	} else {
-		ret = snprintf(sql_buf, SQL_BUF_LEN, "select ");
-		if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
+		ret = snprintf(sql_buf, sql_buffer_size, "select ");
+		if (ret < 0 || ret >= sql_buffer_size) goto error;
 		off = ret;
 
-		ret = db_print_columns(sql_buf + off, SQL_BUF_LEN - off, _c, _nc);
+		ret = db_print_columns(sql_buf + off, sql_buffer_size - off, _c, _nc);
 		if (ret < 0) return -1;
 		off += ret;
 
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, "from %.*s ", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+		ret = snprintf(sql_buf + off, sql_buffer_size - off, "from %.*s ", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+		if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
 		off += ret;
 	}
 	if (_n) {
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, "where ");
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+		ret = snprintf(sql_buf + off, sql_buffer_size - off, "where ");
+		if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
 		off += ret;
 
 		ret = db_print_where(_h, sql_buf + off,
-				SQL_BUF_LEN - off, _k, _op, _v, _n, val2str);
+				sql_buffer_size - off, _k, _op, _v, _n, val2str);
 		if (ret < 0) return -1;;
 		off += ret;
 	}
 	if (_o) {
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " order by %.*s", _o->len, _o->s);
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+		ret = snprintf(sql_buf + off, sql_buffer_size - off, " order by %.*s", _o->len, _o->s);
+		if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
 		off += ret;
 	}
 	/*
@@ -90,9 +91,9 @@ int db_do_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	 * don't support a length parameter, so they need this for the correct
 	 * function of strlen. This zero is not included in the 'str' length.
 	 * We need to check the length here, otherwise we could overwrite the buffer
-	 * boundaries if off is equal to SQL_BUF_LEN.
+	 * boundaries if off is equal to sql_buffer_size.
 	 */
-	if (off + 1 >= SQL_BUF_LEN) goto error;
+	if (off + 1 >= sql_buffer_size) goto error;
 	sql_buf[off + 1] = '\0';
 	sql_str.s = sql_buf;
 	sql_str.len = off;
@@ -153,23 +154,23 @@ int db_do_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 		return -1;
 	}
 
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "insert into %.*s (", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
-	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
+	ret = snprintf(sql_buf, sql_buffer_size, "insert into %.*s (", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+	if (ret < 0 || ret >= sql_buffer_size) goto error;
 	off = ret;
 
-	ret = db_print_columns(sql_buf + off, SQL_BUF_LEN - off, _k, _n);
+	ret = db_print_columns(sql_buf + off, sql_buffer_size - off, _k, _n);
 	if (ret < 0) return -1;
 	off += ret;
 
-	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
-	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+	ret = snprintf(sql_buf + off, sql_buffer_size - off, ") values (");
+	if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
 	off += ret;
 
-	ret = db_print_values(_h, sql_buf + off, SQL_BUF_LEN - off, _v, _n, val2str);
+	ret = db_print_values(_h, sql_buf + off, sql_buffer_size - off, _v, _n, val2str);
 	if (ret < 0) return -1;
 	off += ret;
 
-	if (off + 2 > SQL_BUF_LEN) goto error;
+	if (off + 2 > sql_buffer_size) goto error;
 	sql_buf[off++] = ')';
 	sql_buf[off] = '\0';
 	sql_str.s = sql_buf;
@@ -199,21 +200,21 @@ int db_do_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		return -1;
 	}
 
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "delete from %.*s", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
-	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
+	ret = snprintf(sql_buf, sql_buffer_size, "delete from %.*s", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+	if (ret < 0 || ret >= sql_buffer_size) goto error;
 	off = ret;
 
 	if (_n) {
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+		ret = snprintf(sql_buf + off, sql_buffer_size - off, " where ");
+		if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
 		off += ret;
 
 		ret = db_print_where(_h, sql_buf + off,
-				SQL_BUF_LEN - off, _k, _o, _v, _n, val2str);
+				sql_buffer_size - off, _k, _o, _v, _n, val2str);
 		if (ret < 0) return -1;
 		off += ret;
 	}
-	if (off + 1 > SQL_BUF_LEN) goto error;
+	if (off + 1 > sql_buffer_size) goto error;
 	sql_buf[off] = '\0';
 	sql_str.s = sql_buf;
 	sql_str.len = off;
@@ -242,24 +243,24 @@ int db_do_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		return -1;
 	}
 
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "update %.*s set ", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
-	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
+	ret = snprintf(sql_buf, sql_buffer_size, "update %.*s set ", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+	if (ret < 0 || ret >= sql_buffer_size) goto error;
 	off = ret;
 
-	ret = db_print_set(_h, sql_buf + off, SQL_BUF_LEN - off, _uk, _uv, _un, val2str);
+	ret = db_print_set(_h, sql_buf + off, sql_buffer_size - off, _uk, _uv, _un, val2str);
 	if (ret < 0) return -1;
 	off += ret;
 
 	if (_n) {
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+		ret = snprintf(sql_buf + off, sql_buffer_size - off, " where ");
+		if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
 		off += ret;
 
-		ret = db_print_where(_h, sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n, val2str);
+		ret = db_print_where(_h, sql_buf + off, sql_buffer_size - off, _k, _o, _v, _n, val2str);
 		if (ret < 0) return -1;
 		off += ret;
 	}
-	if (off + 1 > SQL_BUF_LEN) goto error;
+	if (off + 1 > sql_buffer_size) goto error;
 	sql_buf[off] = '\0';
 	sql_str.s = sql_buf;
 	sql_str.len = off;
@@ -287,24 +288,24 @@ int db_do_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 		return -1;
 	}
 
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "replace %.*s (", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
-	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
+	ret = snprintf(sql_buf, sql_buffer_size, "replace %.*s (", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+	if (ret < 0 || ret >= sql_buffer_size) goto error;
 	off = ret;
 
-	ret = db_print_columns(sql_buf + off, SQL_BUF_LEN - off, _k, _n);
+	ret = db_print_columns(sql_buf + off, sql_buffer_size - off, _k, _n);
 	if (ret < 0) return -1;
 	off += ret;
 
-	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
-	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+	ret = snprintf(sql_buf + off, sql_buffer_size - off, ") values (");
+	if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
 	off += ret;
 
-	ret = db_print_values(_h, sql_buf + off, SQL_BUF_LEN - off, _v, _n,
+	ret = db_print_values(_h, sql_buf + off, sql_buffer_size - off, _v, _n,
 	val2str);
 	if (ret < 0) return -1;
 	off += ret;
 
-	if (off + 2 > SQL_BUF_LEN) goto error;
+	if (off + 2 > sql_buffer_size) goto error;
 	sql_buf[off++] = ')';
 	sql_buf[off] = '\0';
 	sql_str.s = sql_buf;
@@ -319,4 +320,21 @@ int db_do_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
  error:
 	LM_ERR("error while preparing replace operation\n");
 	return -1;
+}
+
+int db_query_init(void)
+{
+    if (sql_buf != NULL)
+    {
+        LM_DBG("sql_buf not NULL on init\n");
+        return 0;
+    }
+    LM_DBG("About to allocate sql_buf size = %d\n", sql_buffer_size);
+    sql_buf = (char*)malloc(sql_buffer_size);
+    if (sql_buf == NULL)
+    {
+        LM_ERR("failed to allocate sql_buf\n");
+        return -1;
+    }
+    return 0;
 }

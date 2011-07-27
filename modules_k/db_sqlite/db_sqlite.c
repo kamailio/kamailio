@@ -63,7 +63,7 @@ static int sqlite_mod_init(void)
 	LM_INFO("SQlite library version %s (compiled using %s)\n",
 		sqlite3_libversion(),
 		SQLITE_VERSION);
-	return 0;
+	return db_query_init();
 }
 
 

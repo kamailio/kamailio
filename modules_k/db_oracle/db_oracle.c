@@ -30,6 +30,7 @@
 #include <oci.h>
 #include "../../sr_module.h"
 #include "../../lib/srdb1/db.h"
+#include "../../lib/srdb1/db_query.h"
 #include "dbase.h"
 #include "asynch.h"
 
@@ -82,7 +83,7 @@ static int oracle_mod_init(void)
 	OCIClientVersion(&major, &minor, &update, &patch, &port);
 	LM_DBG("Oracle client version is %d.%d.%d.%d.%d\n",
 		major, minor, update, patch, port);
-	return 0;
+	return db_query_init();
 }
 
 

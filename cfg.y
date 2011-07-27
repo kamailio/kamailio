@@ -447,6 +447,7 @@ extern char *finame;
 %token LOADPATH
 %token MODPARAM
 %token MAXBUFFER
+%token SQL_BUFFER_SIZE
 %token USER
 %token GROUP
 %token CHROOT
@@ -914,6 +915,8 @@ assign_stm:
 	}
 	| MAXBUFFER EQUAL NUMBER { maxbuffer=$3; }
 	| MAXBUFFER EQUAL error { yyerror("number expected"); }
+    | SQL_BUFFER_SIZE EQUAL NUMBER { sql_buffer_size=$3; }
+	| SQL_BUFFER_SIZE EQUAL error { yyerror("number expected"); }
 	| PORT EQUAL error    { yyerror("number expected"); }
 	| CHILDREN EQUAL NUMBER { children_no=$3; }
 	| CHILDREN EQUAL error { yyerror("number expected"); }

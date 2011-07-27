@@ -184,4 +184,13 @@ int db_do_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	int*), int (*submit_query)(const db1_con_t* _h, const str* _c));
 
 
+/**
+ * \brief Initialisation function - should be called from db.c at start-up
+ *
+ * This initialises the db_query module, and should be called before any functions in db_query are called.
+ *
+ * \return zero on success, negative on errors
+ */
+int db_query_init(void);
+    
 #endif

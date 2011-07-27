@@ -383,6 +383,7 @@ DST_BLST_SCTP_IMASK	dst_blacklist_sctp_imask
 PORT	port
 STAT	statistics
 MAXBUFFER maxbuffer
+SQL_BUFFER_SIZE sql_buffer_size
 CHILDREN children
 CHECK_VIA	check_via
 PHONE2TEL	phone2tel
@@ -765,6 +766,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{PORT}	{ count(); yylval.strval=yytext; return PORT; }
 <INITIAL>{STAT}	{ count(); yylval.strval=yytext; return STAT; }
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
+<INITIAL>{SQL_BUFFER_SIZE}	{ count(); yylval.strval=yytext; return SQL_BUFFER_SIZE; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
 <INITIAL>{PHONE2TEL}	{ count(); yylval.strval=yytext; return PHONE2TEL; }

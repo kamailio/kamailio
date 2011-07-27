@@ -50,6 +50,8 @@
 #include "km_db_mysql.h"
 #include "km_dbase.h"
 
+static char *sql_buf;
+
 
 /**
  * \brief Send a SQL query to the server.
@@ -490,35 +492,34 @@ int db_last_inserted_id(const db1_con_t* _h)
  {
 	int off, ret;
 	static str  sql_str;
-	static char sql_buf[SQL_BUF_LEN];
  
 	if ((!_h) || (!_k) || (!_v) || (!_n)) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
  
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "insert into %.*s (", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
-	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
+	ret = snprintf(sql_buf, sql_buffer_size, "insert into %.*s (", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+	if (ret < 0 || ret >= sql_buffer_size) goto error;
 	off = ret;
 
-	ret = db_print_columns(sql_buf + off, SQL_BUF_LEN - off, _k, _n);
+	ret = db_print_columns(sql_buf + off, sql_buffer_size - off, _k, _n);
 	if (ret < 0) return -1;
 	off += ret;
 
-	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
-	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+	ret = snprintf(sql_buf + off, sql_buffer_size - off, ") values (");
+	if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
 	off += ret;
-	ret = db_print_values(_h, sql_buf + off, SQL_BUF_LEN - off, _v, _n, db_mysql_val2str);
+	ret = db_print_values(_h, sql_buf + off, sql_buffer_size - off, _v, _n, db_mysql_val2str);
 	if (ret < 0) return -1;
 	off += ret;
 
 	*(sql_buf + off++) = ')';
 	
-	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " on duplicate key update ");
-	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+	ret = snprintf(sql_buf + off, sql_buffer_size - off, " on duplicate key update ");
+	if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
 	off += ret;
 	
-	ret = db_print_set(_h, sql_buf + off, SQL_BUF_LEN - off, _k, _v, _n, db_mysql_val2str);
+	ret = db_print_set(_h, sql_buf + off, sql_buffer_size - off, _k, _v, _n, db_mysql_val2str);
 	if (ret < 0) return -1;
 	off += ret;
 	
@@ -546,4 +547,25 @@ error:
 int db_mysql_use_table(db1_con_t* _h, const str* _t)
 {
 	return db_use_table(_h, _t);
+}
+
+
+/**
+ * Allocate a buffer for database module
+ * No function should be called before this
+ * \return zero on success, negative value on failure
+ */
+int db_mysql_alloc_buffer(void)
+{
+    if (db_query_init())
+    {
+        LM_ERR("Failed to initialise db_query\n");
+		return -1;
+    }
+
+    sql_buf = (char*)malloc(sql_buffer_size);
+    if (sql_buf == NULL)
+        return -1;
+    else
+        return 0;
 }

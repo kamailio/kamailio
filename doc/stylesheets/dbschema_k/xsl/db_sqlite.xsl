@@ -85,12 +85,14 @@
 		<xsl:call-template name="column.size"/>
 		<xsl:call-template name="column.trailing"/>
 	    </xsl:when>
-	    <xsl:when test="$type='binary'">
+	    <xsl:when test="$type='binary' or
+						$type='largebinary'">
 		<xsl:text>BYTEA</xsl:text>
 		<xsl:call-template name="column.size"/>
 		<xsl:call-template name="column.trailing"/>
 	    </xsl:when>
-	    <xsl:when test="$type='text'">
+	    <xsl:when test="$type='text'or
+						$type='largetext'">
 		<xsl:text>TEXT</xsl:text>
 		<xsl:call-template name="column.size"/>
 		<xsl:call-template name="column.trailing"/>

@@ -30,6 +30,7 @@
 
 #include "../../sr_module.h"
 #include "../../lib/srdb1/db.h"
+#include "../../lib/srdb1/db_query.h"
 #include "dbase.h"
 #include "db_unixodbc.h"
 
@@ -40,6 +41,7 @@ int use_escape_common = 0;  /* Enable common escaping */
 MODULE_VERSION
 
 int db_unixodbc_bind_api(db_func_t *dbb);
+int unixodbc_mod_init(void);
 
 /*
  * MySQL database module interface
@@ -65,15 +67,15 @@ struct module_exports exports = {
 	"db_unixodbc",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
-	params,     /*  module parameters */
-	0,          /* exported statistics */
-	0,          /* exported MI functions */
-	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	0,          /* module initialization function */
-	0,          /* response function*/
-	0,          /* destroy function */
-	0           /* per-child init function */
+	params,             /*  module parameters */
+	0,                  /* exported statistics */
+	0,                  /* exported MI functions */
+	0,                  /* exported pseudo-variables */
+	0,                  /* extra processes */
+	unixodbc_mod_init,  /* module initialization function */
+	0,                  /* response function*/
+	0,                  /* destroy function */
+	0                   /* per-child init function */
 };
 
 int db_unixodbc_bind_api(db_func_t *dbb)
@@ -96,5 +98,10 @@ int db_unixodbc_bind_api(db_func_t *dbb)
 	dbb->replace          = db_unixodbc_replace;
 
 	return 0;
+}
+
+int unixodbc_mod_init(void)
+{
+	return db_query_init();
 }
 

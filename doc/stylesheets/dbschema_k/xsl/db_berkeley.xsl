@@ -166,7 +166,9 @@
 	    </xsl:when>
 	    <xsl:when test="$type='string' or
 						$type='text' or
-						$type='binary'">
+						$type='binary' or 
+                        $type='largetext' or
+						$type='largebinary'">
 		<xsl:text>str</xsl:text>
 	    </xsl:when>
 	    <xsl:otherwise>

@@ -37,6 +37,7 @@
 #include "../../sr_module.h"
 #include "../../lib/srdb1/db_con.h"
 #include "../../lib/srdb1/db.h"
+#include "../../lib/srdb1/db_query.h"
 #include "km_dbase.h"
 #include "km_db_postgres.h"
 
@@ -72,7 +73,7 @@ struct kam_module_exports kam_exports = {
 
 int km_postgres_mod_init(void)
 {
-	return 0;
+	return db_query_init();
 }
 
 int db_postgres_bind_api(db_func_t *dbb)

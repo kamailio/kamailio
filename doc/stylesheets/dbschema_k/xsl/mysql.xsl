@@ -103,8 +103,20 @@
 		<xsl:call-template name="column.size"/>
 		<xsl:call-template name="column.trailing"/>
 	    </xsl:when>
+        <xsl:when test="$type='largebinary'">
+        <!-- In MySQL  MEDIUMBLOB <= 16MB -->
+		<xsl:text>MEDIUMBLOB</xsl:text>
+		<xsl:call-template name="column.size"/>
+		<xsl:call-template name="column.trailing"/>
+	    </xsl:when>
 	    <xsl:when test="$type='text'">
 		<xsl:text>TEXT</xsl:text>
+		<xsl:call-template name="column.size"/>
+		<xsl:call-template name="column.trailing"/>
+	    </xsl:when>
+	    <xsl:when test="$type='largetext'">
+        <!-- In MySQL  MEDIUMTEXT <= 16MB -->
+		<xsl:text>MEDIUMTEXT</xsl:text>
 		<xsl:call-template name="column.size"/>
 		<xsl:call-template name="column.trailing"/>
 	    </xsl:when>

@@ -34,11 +34,6 @@
 #define DB1_UT_H
 
 /**
- * maximal SQL buffer length for database drivers
- */
-#define SQL_BUF_LEN 65536
-
-/**
  * make strptime available
  * use 600 for 'Single UNIX Specification, Version 3'
  * _XOPEN_SOURCE creates conflict in swab definition in Solaris

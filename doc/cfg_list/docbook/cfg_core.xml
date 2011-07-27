@@ -520,4 +520,16 @@
     </para>
 </section>
 
+<section id="coresql_buffer_size">
+    <title>core.sql_buffer_size</title>
+    <para>
+        Size for the SQL buffer.
+        This will limit the size of objects that can be stored in an SQL database.
+    </para>
+    <para>Default value: 65535.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
 </chapter>

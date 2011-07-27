@@ -311,6 +311,8 @@ unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
 												  not want to exceed during the
 												  auto-probing procedure; may
 												  be re-configured */
+unsigned int sql_buffer_size = 65535; /* Size for the SQL buffer. Defaults to 64k. 
+                                         This may be re-configured */
 int children_no = 0;			/* number of children processing requests */
 #ifdef USE_TCP
 int tcp_children_no = 0;
