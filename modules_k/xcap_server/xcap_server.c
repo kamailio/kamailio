@@ -351,7 +351,7 @@ static int xcaps_put_db(str* user, str *domain, xcap_uri_t *xuri, str *etag,
 	ncols++;
 
 	qcols[ncols] = &str_doc_col;
-	qvals[ncols].type = DB1_STR;
+	qvals[ncols].type = DB1_BLOB;
 	qvals[ncols].nul = 0;
 	qvals[ncols].val.str_val= *doc;
 	ncols++;

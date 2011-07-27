@@ -44,7 +44,7 @@
 
     <column>
         <name>doc</name>
-        <type>binary</type>
+        <type>largebinary</type>
         <description>doc</description>
     </column>
 
