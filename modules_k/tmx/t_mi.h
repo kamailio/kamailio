@@ -1,6 +1,4 @@
 /*
- * $Id: mi.h 4518 2008-07-28 15:39:28Z henningw $
- *
  * Header file for TM MI functions
  *
  * Copyright (C) 2006 Voice Sistem SRL
@@ -31,7 +29,6 @@
  *
  * \ingroup tm
  * - Module: \ref tm
- * - \ref mi.c
  */
 
 #ifndef _TM_MI_H_

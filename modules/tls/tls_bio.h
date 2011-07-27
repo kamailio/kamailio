@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,11 +13,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+ 
 /** openssl BIOs for reading/writing via a fixed memory buffer.
  * @file modules/tls/tls_bio.h
  * @ingroup tls
- * @Module: @ref tls
  */
+ 
 /*
  * History:
  * --------

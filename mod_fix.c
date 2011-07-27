@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,10 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/**
- * @file mod_fix.c
- * @brief kamailio compatible fixups
- */
+
 /* 
  * History:
  * --------
@@ -27,7 +22,7 @@
 
 /*!
  * \file
- * \brief SIP-router core :: 
+ * \brief SIP-router core :: kamailio compatible fixups
  * \ingroup core
  * Module: \ref core
  */
@@ -67,7 +62,7 @@ int fixup_regexpNL_none(void** param, int param_no); /* textops */
   * @param maxp - maximum parameter number
   * @param no1 -  number of parameters of type1
   * @param type1 - fix_param type for the 1st param
-  * @paran type2 - fix_param type for all the other params
+  * @param type2 - fix_param type for all the other params
   */
 #define FIXUP_F2FP(suffix, minp, maxp, no1, type1, type2) \
 	int fixup_##suffix (void** param, int param_no) \

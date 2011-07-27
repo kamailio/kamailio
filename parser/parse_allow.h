@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (c) 2004 Juha Heinanen
  *
  * This file is part of ser, a free SIP server.
@@ -56,7 +54,10 @@ int parse_allow(struct sip_msg *msg);
 
 
 /*! \brief
- * Parse Allow HF body
+ * This method is used to parse Allow header.
+ *
+ * \param hf message header field
+ * \return 0 on success, -1 on failure.
  */
 int parse_allow_header(struct hdr_field* _h);
 

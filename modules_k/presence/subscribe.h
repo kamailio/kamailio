@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * presence module - presence server implementation
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
@@ -28,7 +26,6 @@
 
 /*! \file
  * \brief Kamailio presence module :: SUBSCRIBE support
- * \ref subscribe.c
  * \ingroup presence 
  */
 
