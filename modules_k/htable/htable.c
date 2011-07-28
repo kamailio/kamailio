@@ -109,6 +109,7 @@ static param_export_t params[]={
 	{"key_type_column",    STR_PARAM, &ht_db_ktype_column.s},
 	{"value_type_column",  STR_PARAM, &ht_db_vtype_column.s},
 	{"key_value_column",   STR_PARAM, &ht_db_value_column.s},
+	{"expires_column",     STR_PARAM, &ht_db_expires_column.s},
 	{"array_size_suffix",  STR_PARAM, &ht_array_size_suffix.s},
 	{"fetch_rows",         INT_PARAM, &ht_fetch_rows},
 	{"timer_interval",     INT_PARAM, &ht_timer_interval},

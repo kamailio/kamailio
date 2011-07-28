@@ -264,7 +264,7 @@ if(is_present_hf("Authorization"))
 		<listitem>
 		<para>
 			<emphasis>initval</emphasis> - the integer value to be returned
-			insted of $null when a requested key is not set.
+			instead of $null when a requested key is not set.
 		</para>
 		</listitem>
 		</itemizedlist>
@@ -376,6 +376,25 @@ modparam("htable", "value_type_column", "vtype")
 		<programlisting format="linespecific">
 ...
 modparam("htable", "key_value_column", "kvalue")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>expires_column</varname> (str)</title>
+		<para>
+			The name of the column containing expires type.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'expires'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>expires_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "expires", "expiry")
 ...
 </programlisting>
 		</example>

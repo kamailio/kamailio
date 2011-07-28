@@ -30,6 +30,7 @@ extern str ht_db_name_column;
 extern str ht_db_ktype_column;
 extern str ht_db_vtype_column;
 extern str ht_db_value_column;
+extern str ht_db_expires_column;
 extern str ht_array_size_suffix;
 extern int ht_fetch_rows;
 
