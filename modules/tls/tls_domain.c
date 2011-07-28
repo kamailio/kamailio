@@ -68,10 +68,6 @@ tls_domain_t* tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
 	d->verify_depth = -1;
 	d->require_cert = -1;
 	return d;
-/*
- error:
-	shm_free(d);
-	return 0; */
 }
 
 
@@ -831,7 +827,6 @@ static int passwd_cb(char *buf, int size, int rwflag, void *filename)
 }
 
 
-#define NUM_RETRIES 3
 /**
  * @brief Load a private key from a file 
  * @param d TLS domain
@@ -854,7 +849,7 @@ static int load_private_key(tls_domain_t* d)
 		SSL_CTX_set_default_passwd_cb(d->ctx[i], passwd_cb);
 		SSL_CTX_set_default_passwd_cb_userdata(d->ctx[i], d->pkey_file.s);
 		
-		for(idx = 0, ret_pwd = 0; idx < NUM_RETRIES; idx++) {
+		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
 			ret_pwd = SSL_CTX_use_PrivateKey_file(d->ctx[i], d->pkey_file.s,
 					SSL_FILETYPE_PEM);
 			if (ret_pwd) {
