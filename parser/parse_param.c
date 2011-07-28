@@ -1,6 +1,4 @@
 /* 
- * $Id$
- *
  * Generic Parameter Parser
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -503,14 +501,11 @@ error:
 
 /*! \brief
  * Parse parameters
- *  \param _s is string containing parameters, it will be updated to point behind the parameters
- *  \param _c is class of parameters
- *  \param _h is pointer to structure that will be filled with pointer to well known parameters
- *  \param the variable _p is pointing to
- * linked list of parsed parameters will be stored
- *
- * The function returns 0 on success and negative number
- * on an error
+ * \param _s is string containing parameters, it will be updated to point behind the parameters
+ * \param _c is class of parameters
+ * \param _h is pointer to structure that will be filled with pointer to well known parameters
+ * \param _p pointing to linked list where parsed parameters will be stored
+ * \return 0 on success and negative number on an error
  */
 int parse_params(str* _s, pclass_t _c, param_hooks_t* _h, param_t** _p)
 {

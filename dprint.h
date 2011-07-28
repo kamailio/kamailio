@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -103,7 +101,7 @@
 	(log_level_info[(level) - (L_ALERT)].syslog_level)
 
 
-/** @brief my_pid(), process_no are from pt.h but we cannot #include it here
+/** @brief my_pid(), process_no are from pt.h but we cannot \#include it here
    because of circular dependencies */
 extern int process_no;
 extern int my_pid();

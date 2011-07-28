@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -94,7 +92,7 @@ void destroy_dst_blacklist();
 
 
 /** force add to the blacklist.
- * like @function dst_blacklist_add_to, but no ignore mask or
+ * like function dst_blacklist_add_to, but no ignore mask or
  * blacklist enabled checks are made.
  * @see dst_blacklist_add_to for the parameters and return value.
  */
@@ -102,7 +100,7 @@ int dst_blacklist_force_add_to(unsigned char err_flags, struct dest_info* si,
 								struct sip_msg* msg, ticks_t timeout);
 
 /** force add to the blacklist, long version.
- * like @function dst_blacklist_su_to, but no ignore mask or
+ * like function dst_blacklist_su_to, but no ignore mask or
  * blacklist enabled checks are made.
  * @see dst_blacklist_su_to for the parameters and return value.
  */
@@ -127,13 +125,12 @@ int dst_blacklist_force_su_to(	unsigned char err_flags,
 
 
 /** checks if blacklist should be used, long version.
-  * @param  err_flags - blacklist reason
+  * @param err_flags - blacklist reason
   * @param snd_flags - snd_flags pointer, can be 0.
   * @param proto - protocol, can be 0 (PROTO_NONE).
-  * @param si  - sockaddr_union pointer, can be 0.
+  * @param su  - sockaddr_union pointer, can be 0.
   * @return 1 if blacklist is enabled (core_cfg) and the event/error
-  *           is not in the ignore list.
-  *         0 otherwise
+  *           is not in the ignore list. 0 otherwise
   */
 #define should_blacklist_su(err_flags, snd_flags, proto, su) \
 	(cfg_get(core, core_cfg, use_dst_blacklist) && \

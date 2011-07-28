@@ -1,6 +1,4 @@
 /* 
- * $Id$
- *
  * Generic Parameter Parser
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -143,7 +141,7 @@ typedef union param_hooks {
 
 /*! \brief
  * Only parse one parameter
- * @Return:
+ * @return:
  * 	t: out parameter
  * 	-1: on error
  * 	0: success, but expect a next paramter
@@ -157,8 +155,7 @@ inline int parse_param(str *_s, pclass_t _c, param_hooks_t *_h, param_t *t);
  *  \param _s is string containing parameters
  *  \param _c is class of parameters
  *  \param _h is pointer to structure that will be filled with pointer to well known parameters
- * linked list of parsed parameters will be stored in
- * the variable _p is pointing to
+ * linked list of parsed parameters will be stored in the variable _p is pointing to
  * \return The function returns 0 on success and negative number
  * on an error
  */

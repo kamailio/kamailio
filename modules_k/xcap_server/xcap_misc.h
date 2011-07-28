@@ -29,7 +29,7 @@
 #include "../../sr_module.h"
 #include "../../pvar.h"
 
-#define XCAP_MAX_URI_SIZE	127
+#define XCAP_MAX_URI_SIZE	255
 /* Node Selector Separator */
 #define XCAP_NSS	"~~"
 
