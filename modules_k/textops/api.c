@@ -103,7 +103,7 @@ int search_api(struct sip_msg *msg, str *regex){
 /*
  * Function to load the textops api.
  */
-int load_textops(struct textops_binds *tob){
+int bind_textops(textops_api_t *tob){
 	if(tob==NULL){
 		LM_WARN("textops_binds: Cannot load textops API into a NULL pointer\n");
 		return -1;

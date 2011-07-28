@@ -37,31 +37,31 @@ typedef int (*search_t)(struct sip_msg*, str*);
 /*
  * Struct with the textops api.
  */
-struct textops_binds{
+typedef struct textops_binds {
 	append_hf_t	append_hf; // Append a header to the message.
 	remove_hf_t	remove_hf; // Remove a header with the specified name from the message.
 	search_append_t search_append; // Append a str after a match of the specified regex.
 	search_t search; // Check if the regex matches a part of the message.
-};
+} textops_api_t;
 
-typedef int (*load_textops_f)(struct textops_binds*);
+typedef int (*bind_textops_f)(textops_api_t*);
 
 /*
  * function exported by module - it will load the other functions
  */
-int load_textops(struct textops_binds*);
+int bind_textops(textops_api_t*);
 
 /*
  * Function to be called direclty from other modules to load
  * the textops API.
  */
-inline static int load_textops_api(struct textops_binds *tob){
-	load_textops_f load_textops_exports;
-	if(!(load_textops_exports=(load_textops_f)find_export("load_textops",0,0))){
-		LM_ERR("Failed to import load_textops\n");
+inline static int load_textops_api(textops_api_t *tob){
+	bind_textops_f bind_textops_exports;
+	if(!(bind_textops_exports=(bind_textops_f)find_export("bind_textops",0,0))){
+		LM_ERR("Failed to import bind_textops\n");
 		return -1;
 	}
-	return load_textops_exports(tob);
+	return bind_textops_exports(tob);
 }
 
 #endif /*TEXT_OPS_API_H_*/
