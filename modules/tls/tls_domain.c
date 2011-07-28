@@ -677,7 +677,7 @@ static int set_session_cache(tls_domain_t* d)
  * @param clear if set to !=0 will do a clear, else (==0) a set
  * @return 0 (always succeeds)
  */
-int tls_ssl_ctx_mode(SSL_CTX* ctx, long mode, void* clear)
+static int tls_ssl_ctx_mode(SSL_CTX* ctx, long mode, void* clear)
 {
 	if (clear)
 #if OPENSSL_VERSION_NUMBER >= 0x01000000L || \
@@ -700,7 +700,7 @@ int tls_ssl_ctx_mode(SSL_CTX* ctx, long mode, void* clear)
  * @param unused unused
  * @return 0 (always succeeds)
  */
-int tls_ssl_ctx_set_freelist(SSL_CTX* ctx, long val, void* unused)
+static int tls_ssl_ctx_set_freelist(SSL_CTX* ctx, long val, void* unused)
 {
 	if (val >= 0)
 #if OPENSSL_VERSION_NUMBER >= 0x01000000L
@@ -721,7 +721,7 @@ int tls_ssl_ctx_set_freelist(SSL_CTX* ctx, long val, void* unused)
  * @param unused unused
  * @return 0 on success, < 0 on failure (invalid value)
  */
-int tls_ssl_ctx_set_max_send_fragment(SSL_CTX* ctx, long val, void* unused)
+static int tls_ssl_ctx_set_max_send_fragment(SSL_CTX* ctx, long val, void* unused)
 {
 	if (val >= 0)
 #if OPENSSL_VERSION_NUMBER >= 0x00909000L
@@ -741,7 +741,7 @@ int tls_ssl_ctx_set_max_send_fragment(SSL_CTX* ctx, long val, void* unused)
  * @param unused unused
  * @return 0 (always success).
  */
-int tls_ssl_ctx_set_read_ahead(SSL_CTX* ctx, long val, void* unused)
+static int tls_ssl_ctx_set_read_ahead(SSL_CTX* ctx, long val, void* unused)
 {
 	if (val >= 0)
 		SSL_CTX_set_read_ahead(ctx, val);
