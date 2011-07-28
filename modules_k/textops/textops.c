@@ -247,6 +247,9 @@ static cmd_export_t cmds[]={
 		fixup_spve_spve, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 
+	{"bind_textops",      (cmd_function)bind_textops,       0, 0, 0,
+		0},
+
 	{0,0,0,0,0,0}
 };
 
