@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,13 +13,16 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** tls clear text queue (wrappers over sbufq).
+
+/**
+ * TLS clear text queue (wrappers over sbufq)
  * (e.g. queue clear text when SSL_write() cannot write it immediately due to
- *  re-keying).
- * @file modules/tls/tls_ct_q.c
- * @ingroup: tls
+ * re-keying).
+ * @file
+ * @ingroup tls
  * Module: @ref tls
  */
+
 /*
  * History:
  * --------
@@ -41,8 +42,9 @@ typedef struct sbuffer_queue tls_ct_q;
 #define tls_ct_q_non_empty(bq) ((bq) && (bq)->first!=0)
 
 
-/** adds/appends data to a tls clear text buffer queue.
- * WARNING: it does no attempt to synchronize access/lock. If needed it should
+/**
+ * @brief Adds/appends data to a tls clear text buffer queue
+ * @warning it does no attempt to synchronize access/lock. If needed it should
  * be called under lock.
  * @param **ct_q - double pointer to the buffer queue
  * @param data
@@ -70,9 +72,11 @@ error:
 
 
 
-/** destroy a buffer queue.
- * Everything is destroyed (shm_free()'d), included the queue head.
- * WARNING: it does no attempt to synchronize access/lock. If needed it should
+/**
+ * @brief Destroy a buffer queue
+ * 
+ * Everything is destroyed from a buffer queue (shm_free()'d), included the queue head.
+ * @warning it does no attempt to synchronize access/lock. If needed it should
  * be called under lock.
  * @param **ct_q - double pointer to the queue
  * @return - number of bytes that used to be queued (>=0).
@@ -92,12 +96,14 @@ inline static unsigned int tls_ct_q_destroy(tls_ct_q** ct_q)
 
 
 
-/** tries to flush the tls clear text queue.
+/**
+ * @brief Tries to flush the tls clear text queue
+ * 
  * Tries to flush as much as possible from the given queue, using the 
  * given callback.
- * WARNING: it does no attempt to synchronize access/lock. If needed it should
+ * @warning it does no attempt to synchronize access/lock. If needed it should
  * be called under lock.
- * @param q - buffer queue
+ * @param tc_q - buffer queue
  * @param *flags - set to:
  *                   F_BUFQ_EMPTY if the queued is completely flushed
  *                   F_BUFQ_FLUSH_ERR if the flush_f callback returned error.

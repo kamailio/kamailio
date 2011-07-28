@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,13 +13,16 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** tls clear text write queue.
+
+/**
+ * tls clear text write queue.
  * (queue clear text when SSL_write() cannot write it immediately due to
- *  re-keying).
- * @file modules/tls/tls_ct_wrq.c
- * @ingroup: tls
+ * re-keying).
+ * @file
+ * @ingroup tls
  * Module: @ref tls
  */
+
 /*
  * History:
  * --------
@@ -43,7 +44,8 @@ atomic_t* tls_total_ct_wq; /* total clear text bytes queued for a future
 
 
 
-/** init clear text write queues support.
+/**
+ * @brief Init clear text write queues support
  * @return 0 on success, < 0 on error.
  */
 int tls_ct_wq_init()
@@ -57,7 +59,9 @@ int tls_ct_wq_init()
 
 
 
-/** destroy clear text write queues support. */
+/**
+ * @brief Destroy clear text write queues support
+ */
 void tls_ct_wq_destroy()
 {
 	if (tls_total_ct_wq) {
@@ -68,7 +72,10 @@ void tls_ct_wq_destroy()
 
 
 
-/** total number of wr. queued bytes in all the SSL connections. */
+/**
+ * @brief Total number of written queued bytes in all the SSL connections
+ * @return total number of written queued bytes in all SSL connections
+ */
 unsigned int tls_ct_wq_total_bytes()
 {
 	return (unsigned)atomic_get(tls_total_ct_wq);
@@ -76,13 +83,16 @@ unsigned int tls_ct_wq_total_bytes()
 
 
 
-/** callback for tls_ct_q_flush().
+/**
+ * @brief Callback for tls_ct_q_flush()
  *
- * @param *ssl - ssl context.
- * @param *err - error reason (set on exit).
+ * @param tcp_c TCP connection containing the SSL context
+ * @param error error reason (set on exit)
+ * @param buf buffer
+ * @param size buffer size
  * @return >0 on success (bytes written), <=0 on ssl error (should be
- *  handled outside).
- * WARNING: the ssl context must have the wbio and rbio previously set!
+ * handled outside)
+ * @warning the SSL context must have the wbio and rbio previously set!
  */
 static int ssl_flush(void* tcp_c, void* error, const void* buf, unsigned size)
 {
@@ -120,14 +130,15 @@ static int ssl_flush(void* tcp_c, void* error, const void* buf, unsigned size)
 
 
 
-
-/** wrapper over tls_ct_q_flush().
- * Besides doing a tls_ct_q_add it also keeps track of queue size and
- * total queued bytes.
- * @param ssl - ssl context
- * @param **ct_q - double pointer to clear text queue.
- * @param *flags - filled, @see tls_ct_q_add() for more details.
- * @param ssl_err - set to the ssl err (SSL_ERROR_NONE on full success).
+/**
+ * @brief Wrapper over tls_ct_q_flush()
+ * 
+ * Wrapper over tls_ct_q_flush(), besides doing a tls_ct_q_add it
+ * also keeps track of queue size and total queued bytes.
+ * @param c TCP connection
+ * @param ct_q clear text queue
+ * @param flags filled, @see tls_ct_q_add() for more details.
+ * @param ssl_err set to the SSL err (SSL_ERROR_NONE on full success).
  * @return -1 on internal error, or the number of bytes flushed on success
  *         (>=0).
  */
@@ -147,9 +158,15 @@ int tls_ct_wq_flush(struct tcp_connection* c, tls_ct_q** ct_q,
 
 
 
-/** wrapper over tls_ct_q_add().
- * Besides doing a tls_ct_q_add it also keeps track of queue size and
- * total queued bytes. If the maximum queue size is exceeded => error.
+/**
+ * @brief Wrapper over tls_ct_q_add()
+ * 
+ * Wrapper over tls_ct_q_add(), besides doing a tls_ct_q_add it
+ * also keeps track of queue size and total queued bytes.
+ * If the maximum queue size is exceeded => error.
+ * @param ct_q clear text queue
+ * @param data data
+ * @param size data size
  * @return 0 on success, < 0 on error (-1 memory allocation, -2 queue size
  *         too big).
  */
@@ -172,10 +189,12 @@ int tls_ct_wq_add(tls_ct_q** ct_q, const void* data, unsigned int size)
 
 
 
-/** wrapper over tls_ct_q_destroy().
- * Besides doing a tls_ct_q_destroy it also keeps track of the total queued
- * bytes.
- * @return - number of bytes that used to be queued (>=0),
+/**
+ * @brief Wrapper over tls_ct_q_destroy()
+ * Wrapper over tls_ct_q_destroy(), besides doing a tls_ct_q_destroy it
+ * also keeps track of the total queued bytes.
+ * @param ct_q clear text queue
+ * @return number of bytes that used to be queued (>=0),
  */
 unsigned int tls_ct_wq_free(tls_ct_q** ct_q)
 {

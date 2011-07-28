@@ -17,7 +17,7 @@
 /**
  * SIP-router TLS support :: tls runtime configuration
  * @file tls_cfg.c
- * @ingroup: @tls
+ * @ingroup tls
  * Module: @ref tls
  */
 

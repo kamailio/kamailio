@@ -1,8 +1,4 @@
 /*
- * $Id$
- *
- * TLS module - virtual configuration domain support
- * 
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2005,2006 iptelorg GmbH
  *
@@ -18,8 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/** SIP-router TLS support :: virtual configuration domain support.
- * @file tls_domain.h
+
+/**
+ * SIP-router TLS support :: virtual domain configuration support
+ * @file
  * @ingroup tls
  * Module: @ref tls
  */
@@ -33,7 +31,7 @@
 #include <openssl/ssl.h>
 
 
-/*
+/**
  * Available TLS methods
  */
 enum tls_method {
@@ -54,17 +52,17 @@ enum tls_method {
 };
 
 
-/*
+/**
  * TLS configuration domain type
  */
 enum tls_domain_type {
-	TLS_DOMAIN_DEF = (1 << 0), /* Default domain */
-	TLS_DOMAIN_SRV = (1 << 1), /* Server domain */
-	TLS_DOMAIN_CLI = (1 << 2)  /* Client domain */
+	TLS_DOMAIN_DEF = (1 << 0), /**< Default domain */
+	TLS_DOMAIN_SRV = (1 << 1), /**< Server domain */
+	TLS_DOMAIN_CLI = (1 << 2)  /**< Client domain */
 };
 
 
-/*
+/**
  * separate configuration per ip:port
  */
 typedef struct tls_domain {
@@ -85,72 +83,101 @@ typedef struct tls_domain {
 } tls_domain_t;
 
 
-/*
+/**
  * TLS configuration structures
  */
 typedef struct tls_domains_cfg {
-	tls_domain_t* srv_default; /* Default server domain */
-	tls_domain_t* cli_default; /* Default client domain */
-	tls_domain_t* srv_list;    /* Server domain list */
-	tls_domain_t* cli_list;    /* Client domain list */
-	struct tls_domains_cfg* next; /* Next element in the garbage list */
-	int ref_count;             /* How many connections use this configuration */
+	tls_domain_t* srv_default; /**< Default server domain */
+	tls_domain_t* cli_default; /**< Default client domain */
+	tls_domain_t* srv_list;    /**< Server domain list */
+	tls_domain_t* cli_list;    /**< Client domain list */
+	struct tls_domains_cfg* next; /**< Next element in the garbage list */
+	int ref_count;             /**< How many connections use this configuration */
 } tls_domains_cfg_t;
 
 
-/*
- * create a new domain 
+/**
+ * @brief Create a new TLS domain structure
+ * 
+ * Create a new domain structure in new allocated shared memory.
+ * @param type domain Type
+ * @param ip domain IP
+ * @param port domain port
+ * @return new domain
  */
 tls_domain_t *tls_new_domain(int type, struct ip_addr *ip, 
 			     unsigned short port);
 
 
-/*
- * Free all memory used for configuration domain
+/**
+ * @brief Free all memory used by TLS configuration domain
+ * @param d freed domain
  */
 void tls_free_domain(tls_domain_t* d);
 
 
-/*
- * Generate tls domain string identifier
+/**
+ * @brief Generate TLS domain identifier
+ * @param d printed domain
+ * @return printed domain, with zero termination
  */
 char* tls_domain_str(tls_domain_t* d);
 
 
 
-/*
- * Create new instance of TLS configuration data
+/**
+ * @brief Create new TLS configuration structure
+ * 
+ * Create new configuration structure in new allocated shared memory.
+ * @return configuration structure or zero on error
  */
 tls_domains_cfg_t* tls_new_cfg(void);
 
 
-/*
- * Add a new configuration domain
+/**
+ * @brief Add a domain to the configuration set
+ * @param cfg configuration set
+ * @param d TLS domain
+ * @return 1 if domain already exists, 0 after addition, -1 on error
  */
 int tls_add_domain(tls_domains_cfg_t* cfg, tls_domain_t* d);
 
 
-/*
- * Fill in missing parameters
+/**
+ * @brief Initialize attributes of all domains from default domains if necessary
+ * 
+ * Initialize attributes of all domains from default domains if necessary,
+ * fill in missing parameters.
+ * @param cfg initialized domain
+ * @param srv_defaults server defaults
+ * @param cli_defaults command line interface defaults
+ * @return 0 on success, -1 on error
  */
 int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
 				tls_domain_t* cli_defaults);
 
 
-/*
- * Lookup TLS configuration
+/**
+ * @brief Lookup TLS configuration based on type, ip, and port
+ * @param cfg configuration set
+ * @param type type of configuration
+ * @param ip IP for configuration
+ * @param port port for configuration
+ * @return found configuration or default, if not found
  */
 tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 								struct ip_addr* ip, unsigned short port);
 
 
-/*
- * Free TLS configuration data
+/**
+ * @brief Free TLS configuration structure
+ * @param cfg freed configuration
  */
 void tls_free_cfg(tls_domains_cfg_t* cfg);
 
-/*
- * Destroy all the config data
+
+/**
+ * @brief Destroy all TLS configuration data
  */
 void tls_destroy_cfg(void);
 
