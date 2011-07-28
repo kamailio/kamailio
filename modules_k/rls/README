@@ -402,7 +402,18 @@ if(method=="NOTIFY")
 
    Example 1.17. rls_update_subs usage
 ...
-rls_update_subs("sip:test@kamailio.org", "presence");
+Within event_route[xhttp:request]:
+        case "PUT":
+                xcaps_put("$var(uri)", "$var(doc_uri)", "$rb");
+                if($xcapuri(u=>auid)=~"pres-rules") {
+                        pres_update_watchers("$var(uri)", "presence");
+                        pres_refresh_watchers("$var(uri)", "presence", 1);
+                } else if ($xcapuri(u=>auid)=~"resource-lists"
+                           || $xcapuri(u=>auid)=~"rls-services") {
+                        rls_update_subs("$var(uri)", "presence");
+                }
+                exit;
+                break;
 ...
 
 5. Installation
