@@ -340,14 +340,15 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 
 			db_vals[2].type = DB1_INT;
 			db_vals[2].nul = 0;
-			db_vals[2].val.int_val = 0;
 
 			db_vals[3].type = DB1_STR;
 			db_vals[3].nul  = 0;
 			if(it->flags&AVP_VAL_STR) {
+				db_vals[2].val.int_val = 0;
 				db_vals[3].val.str_val.s   = it->value.s.s;
 				db_vals[3].val.str_val.len = it->value.s.len;
 			} else {
+				db_vals[2].val.int_val = 1;
 				tmp.s = sint2str((long)it->value.n, &tmp.len);
 				db_vals[3].val.str_val.s   = tmp.s;
 				db_vals[3].val.str_val.len = tmp.len;
