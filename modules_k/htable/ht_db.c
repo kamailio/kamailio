@@ -140,6 +140,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 	int i;
 	int ret;
 	int cnt;
+	int now;
 
 	if(ht_db_con==NULL)
 	{
@@ -195,10 +196,10 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 	pname.s = "";
 	n = 0;
 	last_ktype = 0;
+	now = (int)time(NULL);
 	do {
 		for(i=0; i<RES_ROW_N(db_res); i++)
 		{
-			cnt++;
 			/* not NULL values enforced in table definition ?!?! */
 			kname.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
 			if(kname.s==NULL) {
@@ -206,6 +207,14 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 				goto error;
 			}
 			kname.len = strlen(kname.s);
+
+			expires.n = RES_ROWS(db_res)[i].values[4].val.int_val;
+			if (expires.n > 0 && expires.n < now) {
+				LM_DBG("skipping expired entry [%.*s] (%d)\n", kname.len, kname.s, expires.n-now);
+				continue;
+			}
+
+			cnt++;
 			ktype = RES_ROWS(db_res)[i].values[1].val.int_val;
 			if(last_ktype==1)
 			{
@@ -264,14 +273,11 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 			}
 
 			/* set expiry */
-			if (ht->htexpire > 0) {
-				expires.n = RES_ROWS(db_res)[i].values[4].val.int_val;
-				if (expires.n > 0) {
-					expires.n -= now;
-					if(ht_set_cell_expire(ht, &hname, 0, &expires)) {
-						LM_ERR("error setting expires to hash entry [%*.s]\n", hname.len, hname.s);
-						goto error;
-					}
+			if (ht->htexpire > 0 && expires.n > 0) {
+				expires.n -= now;
+				if(ht_set_cell_expire(ht, &hname, 0, &expires)) {
+					LM_ERR("error setting expires to hash entry [%*.s]\n", hname.len, hname.s);
+					goto error;
 				}
 			}
 	 	}
@@ -321,6 +327,7 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 	ht_cell_t *it;
 	str tmp;
 	int i;
+	time_t now;
 
 	if(ht_db_con==NULL)
 	{
@@ -337,6 +344,8 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 	LM_DBG("save the content of hash table [%.*s] to database in [%.*s]\n",
 			ht->name.len, ht->name.s, dbtable->len, dbtable->s);
 
+	now = time(NULL);
+
 	for(i=0; i<ht->htsize; i++)
 	{
 		lock_get(&ht->entries[i].lock);
@@ -349,6 +358,12 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 			} else {
 				LM_DBG("entry key: [%.*s] value: [%d] (int)\n",
 					it->name.len, it->name.s, it->value.n);
+			}
+
+			if (it->expire <= now) {
+				LM_DBG("skipping expired entry");
+				it = it->next;
+				continue;
 			}
 
 			db_vals[0].type = DB1_STR;
