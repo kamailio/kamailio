@@ -60,7 +60,8 @@ int resource_uri_col=0, content_type_col, pres_state_col= 0,
 	auth_state_col= 0, reason_col= 0;
 
 str* constr_rlmi_doc(db1_res_t* result, str* rl_uri, int version,
-		xmlNodePtr rl_node, char*** cid_array);
+		xmlNodePtr rl_node, char*** cid_array,
+		str username, str domain);
 str* constr_multipart_body(db1_res_t* result,char** cid_array,
 		char* boundary_string);
 
@@ -68,6 +69,9 @@ dlg_t* rls_notify_dlg(subs_t* subs);
 
 void rls_notify_callback( struct cell *t, int type, struct tmcb_params *ps);
 
+int parse_xcap_uri(char *uri, str *host, unsigned short *port, str *path);
+int rls_get_resource_list(str *rl_uri, str *username, str *domain,
+		xmlNodePtr *rl_node, xmlDocPtr *xmldoc);
 
 int send_full_notify(subs_t* subs, xmlNodePtr rl_node, int version, str* rl_uri,
 		unsigned int hash_code)
@@ -117,7 +121,7 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, int version, str* rl_uri,
 	if(result== NULL)
 		goto error;
 
-	rlmi_body= constr_rlmi_doc(result, rl_uri, version, rl_node, &cid_array);
+	rlmi_body= constr_rlmi_doc(result, rl_uri, version, rl_node, &cid_array, subs->from_user, subs->from_domain);
 	if(rlmi_body== NULL)
 	{
 		LM_ERR("while constructing rlmi doc\n");
@@ -384,7 +388,8 @@ error:
 }
 
 str* constr_rlmi_doc(db1_res_t *result, str* rl_uri, int version,
-		xmlNodePtr rl_node, char*** rlmi_cid_array)
+		xmlNodePtr rl_node, char*** rlmi_cid_array,
+		str username, str domain)
 {
 	xmlDocPtr doc= NULL;
 	xmlNodePtr list_node= NULL;
@@ -438,7 +443,7 @@ str* constr_rlmi_doc(db1_res_t *result, str* rl_uri, int version,
 	param.db_result= result;
 	param.cid_array= cid_array;
 
-	if(	process_list_and_exec(rl_node, add_resource,(void*)(&param))< 0)
+	if(process_list_and_exec(rl_node, username, domain, add_resource,(void*)(&param))< 0)
 	{
 		LM_ERR("in process_list_and_exec function\n");
 		goto error;
@@ -880,16 +885,68 @@ done:
 
 }
 
-int process_list_and_exec(xmlNodePtr list_node, list_func_t function,
-		void* param)
+int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
+		list_func_t function, void* param)
 {
 	xmlNodePtr node;
-	char* uri;
+	char* uri = NULL;
+	int res = 0;
 
 	LM_DBG("start\n");
 	for(node= list_node->children; node; node= node->next)
 	{
-		if(xmlStrcasecmp(node->name,(unsigned char*)"entry")== 0)
+		if(xmlStrcasecmp(node->name,(unsigned char*)"resource-list")==0)
+		{
+			str hostname, rl_uri;
+			unsigned short port = 0;
+			xmlNodePtr rl_node = NULL;
+			xmlDocPtr rl_doc = NULL;
+
+			uri= XMLNodeGetNodeContentByName(node, "resource-list", NULL);
+
+			if (uri == NULL)
+			{
+				LM_ERR("when extracting URI from node\n");
+				return -1;
+			}
+
+			if(parse_xcap_uri(uri, &hostname, &port, &rl_uri)>0)
+			{
+				if (rls_integrated_xcap_server == 1
+					&& (hostname.len == 0
+						|| check_self(&hostname, port, PROTO_NONE) == 1))
+				{
+					LM_DBG("fetching local <resource-list/>\n");
+					if (rls_get_resource_list(&rl_uri, &username, &domain, &rl_node, &rl_doc)>0)
+					{
+						LM_DBG("calling myself for rl_node\n");
+						res = process_list_and_exec(rl_node, username, domain, function, param);
+						xmlFree(uri);
+						xmlFree(rl_doc);
+					}
+					else
+					{
+						LM_ERR("<resource-list/> not found\n");
+						xmlFree(uri);
+						return -1;
+					}
+					
+				}
+				else
+				{
+					LM_ERR("<resource-list/> is not local - unsupported at this time\n");
+					xmlFree(uri);
+					return -1;
+				}
+			}
+			else
+			{
+				LM_ERR("unable to parse URI for <resource-list/>\n");
+				return -1;
+			}
+		}
+		else
+                if(xmlStrcasecmp(node->name,(unsigned char*)"entry")== 0)
 		{
 			uri= XMLNodeGetAttrContentByName(node, "uri");
 			if(uri== NULL)
@@ -900,7 +957,7 @@ int process_list_and_exec(xmlNodePtr list_node, list_func_t function,
 			LM_DBG("uri= %s\n", uri);
 			if(function(uri, param)< 0)
 			{
-				LM_ERR(" infunction given as a parameter\n");
+				LM_ERR("in function given as a parameter\n");
 				xmlFree(uri);
 				return -1;
 			}
@@ -908,10 +965,9 @@ int process_list_and_exec(xmlNodePtr list_node, list_func_t function,
 		}
 		else
 		if(xmlStrcasecmp(node->name,(unsigned char*)"list")== 0)
-			process_list_and_exec(node, function, param);
+			res = process_list_and_exec(node, username, domain, function, param);
 	}
-	return 0;
-
+	return res;
 }
 
 char* generate_string(int seed, int length)
@@ -961,3 +1017,185 @@ char* get_auth_string(int flag)
 	return NULL;
 }
 
+#define HTTP_PREFIX		"http://"
+#define HTTP_PREFIX_LEN		7
+#define HTTP_PORT_DEFAULT	80
+#define HTTPS_PREFIX		"https://"
+#define HTTPS_PREFIX_LEN	8
+#define HTTPS_PORT_DEFAULT	443
+#define LOCAL_PREFIX		"/"
+#define LOCAL_PREFIX_LEN	1
+#define CHAR_PORT_LEN		5
+
+int parse_xcap_uri(char *uri, str *host, unsigned short *port, str *path)
+{
+	host->s = NULL;
+	host->len = 0;
+	*port = 0;
+	path->s = NULL;
+	path->len = 0;		
+	
+	if(strncmp(uri, HTTP_PREFIX, HTTP_PREFIX_LEN) == 0)
+	{
+		host->s = &uri[HTTP_PREFIX_LEN];
+		*port = HTTP_PORT_DEFAULT;
+		LM_DBG("resource list is on http server\n");
+	}
+	else
+	if(strncmp(uri, HTTPS_PREFIX, HTTPS_PREFIX_LEN) == 0)
+	{
+		host->s = &uri[HTTPS_PREFIX_LEN];
+		*port = HTTPS_PORT_DEFAULT;
+		LM_DBG("resource list is on https server\n");
+	}
+	else
+	if(strncmp(uri, LOCAL_PREFIX, LOCAL_PREFIX_LEN) == 0)
+	{
+		path->s = &uri[0];
+		LM_DBG("resource list is local\n");
+	}
+	else
+	{
+		LM_ERR("resource list is unidentifiable\n");
+		return -1;
+	}
+
+	if (host->s != NULL)
+	{
+		while(host->s[host->len] != '\0' && host->s[host->len] != ':' && host->s[host->len] != '/') host->len++;
+
+		if (host->s[host->len] == ':')
+		{
+			char char_port[CHAR_PORT_LEN + 1];
+			unsigned cur_pos = host->len + 1;
+			memset(char_port, '\0', CHAR_PORT_LEN + 1);
+
+			while(host->s[cur_pos] != '\0' && host->s[cur_pos] != '/') cur_pos++;
+			strncpy(char_port, &host->s[host->len + 1], MIN(cur_pos - host->len - 1, CHAR_PORT_LEN));
+			*port = atoi(char_port);
+
+			path->s = &host->s[cur_pos];
+		}
+		else
+		{
+			path->s = &host->s[host->len];
+		}
+	}
+
+	while(path->s[path->len] != '\0') path->len++;
+
+	return 1;
+}
+
+int rls_get_resource_list(str *rl_uri, str *username, str *domain,
+		xmlNodePtr *rl_node, xmlDocPtr *xmldoc)
+{
+	db_key_t query_cols[5];
+	db_val_t query_vals[5];
+	int n_query_cols = 0;
+	db_key_t result_cols[3];
+	int n_result_cols = 0;
+	db1_res_t *result = 0;
+	db_row_t *row;
+	db_val_t *row_vals;
+	int xcap_col;
+	str body;
+
+	if (rl_uri==NULL || username==NULL || domain==NULL)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	query_cols[n_query_cols] = &str_username_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = *username;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_domain_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = *domain;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_doc_type_col;
+	query_vals[n_query_cols].type = DB1_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val = RESOURCE_LIST;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_doc_uri_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = *rl_uri;
+	n_query_cols++;
+
+	if(rls_dbf.use_table(rls_db, &rls_xcap_table) < 0)
+	{
+		LM_ERR("in use_table-[table]=%.*s\n",
+			rls_xcap_table.len, rls_xcap_table.s);
+		return -1;
+	}
+
+	result_cols[xcap_col= n_result_cols++] = &str_doc_col;
+
+	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
+				n_query_cols, n_result_cols, 0, &result)<0)
+	{
+		LM_ERR("failed querying table xcap for document [rl_uri]=%.*s\n",
+				rl_uri->len, rl_uri->s);
+		if(result)
+			rls_dbf.free_result(rls_db, result);
+		return -1;
+	}
+
+	if(result->n<=0)
+	{
+		LM_DBG("No rl document found\n");
+		rls_dbf.free_result(rls_db, result);
+		return -1;
+	}
+
+	row = &result->rows[0];
+	row_vals = ROW_VALUES(row);
+
+	body.s = (char*)row_vals[xcap_col].val.string_val;
+	if(body.s==NULL)
+	{
+		LM_ERR("xcap doc is null\n");
+		goto error;
+	}
+	body.len = strlen(body.s);
+	if(body.len==0)
+	{
+		LM_ERR("xcap doc is empty\n");
+		goto error;
+	}
+
+	LM_DBG("rl document:\n%.*s", body.len, body.s);
+	*xmldoc = xmlParseMemory(body.s, body.len);
+	if(*xmldoc==NULL)
+	{
+		LM_ERR("while parsing XML memory\n");
+		goto error;
+	}
+
+	*rl_node = XMLDocGetNodeByName(*xmldoc,"resource-lists", NULL);
+	if(rl_node==NULL)
+	{
+		LM_ERR("no resource-lists node in XML document\n");
+		goto error;
+	}
+
+	rls_dbf.free_result(rls_db, result);
+	return 1;
+
+error:
+	if(result!=NULL)
+		rls_dbf.free_result(rls_db, result);
+	if(xmldoc!=NULL)
+		xmlFreeDoc(*xmldoc);
+
+	return -1;
+}

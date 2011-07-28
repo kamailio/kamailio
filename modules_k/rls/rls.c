@@ -150,6 +150,7 @@ str str_domain_col = str_init("domain");
 str str_doc_type_col = str_init("doc_type");
 str str_etag_col = str_init("etag");
 str str_doc_col = str_init("doc");
+str str_doc_uri_col = str_init("doc_uri");
 
 /* outbound proxy address */
 str rls_outbound_proxy = {0, 0};

@@ -167,6 +167,7 @@ extern str str_domain_col;
 extern str str_doc_type_col;
 extern str str_etag_col;
 extern str str_doc_col;
+extern str str_doc_uri_col;
 
 #define RLS_DID_SEP       ";"
 #define RLS_DID_SEP_LEN   strlen(RLS_DID_SEP)

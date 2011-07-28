@@ -853,7 +853,8 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 
 	s.extra_headers = &extra_headers;
 	
-	if(process_list_and_exec(xmlnode, send_resource_subs, (void*)(&s))<0)
+	if(process_list_and_exec(xmlnode, subs->from_user, subs->from_domain,
+			send_resource_subs, (void*)(&s))<0)
 	{
 		LM_ERR("while processing list\n");
 		goto error;
