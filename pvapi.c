@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of SIP-Router, a free SIP server.
@@ -22,7 +20,7 @@
 
 /*!
  * \file
- * \brief SIP-router core ::  PV API specification
+ * \brief SIP-router core :: PV API specification
  * \ingroup core
  * Module: \ref core
  */
@@ -44,8 +42,8 @@
 
 #define is_in_str(p, in) (p<in->s+in->len && *p)
 
-#define PV_TABLE_SIZE	16
-#define TR_TABLE_SIZE	4
+#define PV_TABLE_SIZE	16 /*!< pseudo-variable table size */
+#define TR_TABLE_SIZE	4  /*!< PV transformation size */
 
 
 void tr_destroy(trans_t *t);
@@ -72,7 +70,9 @@ void pv_init_table(void)
 }
 
 /**
- *
+ * @brief Check if a char is valid according to the PV syntax
+ * @param c checked char
+ * @return 1 if char is valid, 0 if not valid
  */
 static int is_pv_valid_char(char c)
 {
@@ -1335,11 +1335,10 @@ void tr_destroy(trans_t *t)
 /*!
  * \brief Exec transformation on a pseudo-variable value
  * \param msg SIP message
- * \param tr one or more transformations
- * \param val pseudo-variable value
+ * \param t one or more transformations
+ * \param v pseudo-variable value
  * \return 0 on success, -1 on error
  */
-
 int tr_exec(struct sip_msg *msg, trans_t *t, pv_value_t *v)
 {
 	int r;
