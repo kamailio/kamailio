@@ -444,6 +444,40 @@ if(method=="NOTIFY")
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">rls_update_subs(uri, event)</function>
+		</title>
+		<para>
+		This function can be used in configuration to trigger updates to
+		resource list subscriptions (for example, after the contents of a
+		resource list has changes).
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>uri - the uri of the user who made the change
+				and whose resource list subscriptions should be
+				updated</para>
+			</listitem>
+			<listitem>
+				<para>event - the event package (e.g. presence).
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>rls_update_subs</function> usage</title>
+		<programlisting format="linespecific">
+...
+rls_update_subs("sip:test@kamailio.org", "presence");
+...
+</programlisting>
+		</example>
+	</section>
 </section>
 
 <section>

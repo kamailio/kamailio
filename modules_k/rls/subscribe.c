@@ -50,6 +50,7 @@
 #include "subscribe.h"
 #include "notify.h"
 #include "rls.h"
+#include "../../mod_fix.h"
 
 int counter= 0;
 
@@ -876,3 +877,138 @@ error:
 
 }
 
+int fixup_update_subs(void** param, int param_no)
+{
+	if (param_no == 1) {
+		return fixup_spve_null(param, 1);
+	} else if (param_no == 2) {
+		return fixup_spve_null(param, 1);
+	}
+	return 0;
+}
+
+int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
+{
+	str uri;
+	str event;
+	struct sip_uri parsed_uri;
+	event_t e;
+	int i;
+	
+	if (fixup_get_svalue(msg, (gparam_p)puri, &uri) != 0)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+
+	if (fixup_get_svalue(msg, (gparam_p)pevent, &event) != 0)
+	{
+		LM_ERR("invalid event parameter\n");
+		return -1;
+	}
+
+	if (event_parser(event.s, event.len, &e) < 0)
+	{
+		LM_ERR("while parsing event: %.*s\n", event.len, event.s);
+		return -1;
+	}
+
+	if (e.type & EVENT_OTHER)
+	{
+		LM_ERR("unrecognised event: %.*s\n", event.len, event.s);
+		return -1;
+	}
+
+	if (!(e.type & rls_events))
+	{
+		LM_ERR("event not supported by RLS: %.*s\n", event.len,
+			event.s);
+		return -1;
+	}
+
+	if (parse_uri(uri.s, uri.len, &parsed_uri) < 0)
+	{
+		LM_ERR("bad uri: %.*s\n", uri.len, uri.s);
+		return -1;
+	}
+
+	LM_DBG("watcher username: %.*s, watcher domain: %.*s\n",
+		parsed_uri.user.len, parsed_uri.user.s,
+		parsed_uri.host.len, parsed_uri.host.s);
+
+	if (rls_table == NULL)
+	{
+		LM_ERR("rls_table is NULL\n");
+		return -1;
+	}
+
+	/* Search through the entire subscription table for matches... */
+	for (i = 0; i < hash_size; i++)
+	{
+		subs_t *subs;
+
+		lock_get(&rls_table[i].lock);
+
+		subs = rls_table[i].entries->next;
+
+		while (subs != NULL)
+		{
+			if (subs->from_user.len == parsed_uri.user.len &&
+				strncmp(subs->from_user.s, parsed_uri.user.s, parsed_uri.user.len) == 0 &&
+			    subs->from_domain.len == parsed_uri.host.len &&
+				strncmp(subs->from_domain.s, parsed_uri.host.s, parsed_uri.host.len) == 0 &&
+				subs->event->evp->type == e.type)
+			{
+				subs_t *subs_copy = NULL;
+				xmlDocPtr doc = NULL;
+				xmlNodePtr service_node = NULL;
+	
+				LM_DBG("found matching RLS subscription for: %.*s\n",
+					subs->pres_uri.len, subs->pres_uri.s);
+
+				if ((subs_copy = pres_copy_subs(subs, PKG_MEM_TYPE)) == NULL)
+				{
+					LM_ERR("subs_t copy failed\n");
+					lock_release(&rls_table[i].lock);
+					return -1;
+				}
+
+				if ((subs_copy->expires -= (int)time(NULL)) <= 0)
+				{
+					LM_WARN("found expired subscription for: %.*s\n",
+						subs_copy->pres_uri.len, subs_copy->pres_uri.s);
+					goto loop_done;
+				}
+
+				if(rls_get_service_list(&subs_copy->pres_uri, &subs_copy->from_user,
+							&subs_copy->from_domain, &service_node, &doc)<0)
+				{
+					LM_ERR("failed getting resource list for: %.*s\n",
+						subs_copy->pres_uri.len, subs_copy->pres_uri.s);
+					goto loop_done;
+				}
+				if(doc==NULL)
+				{
+					LM_WARN("no document returned for: %.*s\n",
+						subs_copy->pres_uri.len, subs_copy->pres_uri.s);
+					goto loop_done;
+				}
+
+				if(resource_subscriptions(subs_copy, service_node)< 0)
+				{
+					LM_ERR("failed sending subscribe requests to resources in list\n");
+					goto loop_done;
+				}
+
+loop_done:
+				if (doc != NULL)
+					xmlFreeDoc(doc);
+				pkg_free(subs_copy);
+			}
+			subs = subs->next;
+		}		
+		lock_release(&rls_table[i].lock);
+	}
+
+	return 1;
+}

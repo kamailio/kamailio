@@ -164,6 +164,8 @@ static void destroy(void);
 int rlsubs_table_restore();
 void rlsubs_table_update(unsigned int ticks,void *param);
 int add_rls_event(modparam_t type, void* val);
+int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent);
+int fixup_update_subs(void** param, int param_no);
 
 static cmd_export_t cmds[]=
 {
@@ -171,6 +173,8 @@ static cmd_export_t cmds[]=
 			0, 0, REQUEST_ROUTE},
 	{"rls_handle_notify",     (cmd_function)rls_handle_notify,      0,
 			0, 0, REQUEST_ROUTE},
+	{"rls_update_subs",       (cmd_function)rls_update_subs,	2,
+			fixup_update_subs, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0 }
 };
 

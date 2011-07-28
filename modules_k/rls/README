@@ -42,6 +42,7 @@ Anca-Maria Vamanu
 
               4.1. rls_handle_subscribe()
               4.2. rls_handle_notify()
+              4.3. rls_update_subs(uri, event)
 
         5. Installation
 
@@ -65,6 +66,7 @@ Anca-Maria Vamanu
    1.14. Set server_address parameter
    1.15. rls_handle_subscribe usage
    1.16. rls_handle_notify usage
+   1.17. rls_update_subs usage
 
 Chapter 1. Admin Guide
 
@@ -97,6 +99,7 @@ Chapter 1. Admin Guide
 
         4.1. rls_handle_subscribe()
         4.2. rls_handle_notify()
+        4.3. rls_update_subs(uri, event)
 
    5. Installation
 
@@ -339,6 +342,7 @@ modparam("rls", "server_address", "sip:rls@ip.address.ofyour.proxy:5060")
 
    4.1. rls_handle_subscribe()
    4.2. rls_handle_notify()
+   4.3. rls_update_subs(uri, event)
 
 4.1.  rls_handle_subscribe()
 
@@ -381,6 +385,24 @@ For rls only:
 ...
 if(method=="NOTIFY")
     rls_handle_notify();
+...
+
+4.3.  rls_update_subs(uri, event)
+
+   This function can be used in configuration to trigger updates to
+   resource list subscriptions (for example, after the contents of a
+   resource list has changes).
+
+   Parameters:
+     * uri - the uri of the user who made the change and whose resource
+       list subscriptions should be updated
+     * event - the event package (e.g. presence).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.17. rls_update_subs usage
+...
+rls_update_subs("sip:test@kamailio.org", "presence");
 ...
 
 5. Installation
