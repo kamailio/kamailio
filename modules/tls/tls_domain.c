@@ -41,8 +41,14 @@
 #include "tls_cfg.h"
 
 
-/*
- * create a new domain 
+/**
+ * @brief Create a new TLS domain structure
+ * 
+ * Create a new domain structure in new allocated shared memory.
+ * @param type domain Type
+ * @param ip domain IP
+ * @param port domain port
+ * @return new domain
  */
 tls_domain_t* tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
 {
@@ -62,15 +68,12 @@ tls_domain_t* tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
 	d->verify_depth = -1;
 	d->require_cert = -1;
 	return d;
-/*
- error:
-	shm_free(d);
-	return 0; */
 }
 
 
-/*
- * Free all memory used by configuration domain
+/**
+ * @brief Free all memory used by TLS configuration domain
+ * @param d freed domain
  */
 void tls_free_domain(tls_domain_t* d)
 {
@@ -95,8 +98,9 @@ void tls_free_domain(tls_domain_t* d)
 }
 
 
-/*
- * clean up 
+/**
+ * @brief Free TLS configuration structure
+ * @param cfg freed configuration
  */
 void tls_free_cfg(tls_domains_cfg_t* cfg)
 {
@@ -116,7 +120,9 @@ void tls_free_cfg(tls_domains_cfg_t* cfg)
 }
 
 
-
+/**
+ * @brief Destroy all TLS configuration data
+ */
 void tls_destroy_cfg(void)
 {
 	tls_domains_cfg_t* ptr;
@@ -141,8 +147,10 @@ void tls_destroy_cfg(void)
 
 
 
-/*
- * Print TLS domain identifier
+/**
+ * @brief Generate TLS domain identifier
+ * @param d printed domain
+ * @return printed domain, with zero termination
  */
 char* tls_domain_str(tls_domain_t* d)
 {
@@ -164,9 +172,14 @@ char* tls_domain_str(tls_domain_t* d)
 }
 
 
-/*
- * Initialize parameters that have not been configured from
- * parent domain (usually one of default domains
+/**
+ * @brief Initialize TLS domain parameters that have not been configured yet
+ * 
+ * Initialize TLS domain parameters that have not been configured from
+ * parent domain (usually one of default domains)
+ * @param d initialized domain
+ * @param parent parent domain
+ * @return 0 on success, -1 on error
  */
 static int fill_missing(tls_domain_t* d, tls_domain_t* parent)
 {
@@ -228,18 +241,23 @@ static int fill_missing(tls_domain_t* d, tls_domain_t* parent)
 }
 
 
-/* called for ctx, with 2 args.
- * should return 0 on succes, <0 on critical error.
+/** 
+ * @brief Called for ctx, with 2 args
+ * @param ctx SSL context
+ * @param larg ?
+ * @param parg ?
+ * @return return 0 on succes, <0 on critical error
  */
 typedef int (*per_ctx_cbk_f)(SSL_CTX* ctx, long larg, void* parg);
 
 
-/** execute callback on all the CTX'es on a domain.
- * @param d - domain
- * @param f - callback function
- * @param l - parameter passed to the callback
- * @param p - parameter passed to the callback
- * @return 0 on success, <0 on error.
+/**
+ * @brief Execute callback on all the CTX'es on a domain
+ * @param d domain
+ * @param ctx_cbk callback function
+ * @param l1 parameter passed to the callback
+ * @param p2 parameter passed to the callback
+ * @return 0 on success, <0 on error
  */
 static int tls_domain_foreach_CTX(tls_domain_t* d, per_ctx_cbk_f ctx_cbk,
 									long l1, void* p2)
@@ -256,12 +274,13 @@ static int tls_domain_foreach_CTX(tls_domain_t* d, per_ctx_cbk_f ctx_cbk,
 }
 
 
-/** execute callback on all the CTX'es on in a domain list.
- * @param d - domain
- * @param f - callback function
- * @param l - parameter passed to the callback
- * @param p - parameter passed to the callback
- * @return 0 on success, <0 on error.
+/**
+ * @brief Execute callback on all the CTX'es on in a domain list
+ * @param d domain
+ * @param ctx_cbk callback function
+ * @param l1 parameter passed to the callback
+ * @param p2 parameter passed to the callback
+ * @return 0 on success, <0 on error
  */
 static int tls_foreach_CTX_in_domain_lst(tls_domain_t* d,
 										per_ctx_cbk_f ctx_cbk,
@@ -275,12 +294,13 @@ static int tls_foreach_CTX_in_domain_lst(tls_domain_t* d,
 }
 
 
-/** execute callback on all the CTX'es in all the srv domains in a tls cfg.
- * @param cfg - tls cfg.
- * @param f - callback function
- * @param l - parameter passed to the callback
- * @param p - parameter passed to the callback
- * @return 0 on success, <0 on error.
+/**
+ * @brief Execute callback on all the CTX'es in all the srv domains in a tls cfg
+ * @param cfg tls cfg.
+ * @param ctx_cbk callback function
+ * @param l1 parameter passed to the callback
+ * @param p2 parameter passed to the callback
+ * @return 0 on success, <0 on error
  */
 static int tls_foreach_CTX_in_srv_domains(tls_domains_cfg_t* cfg,
 											per_ctx_cbk_f ctx_cbk,
@@ -296,11 +316,12 @@ static int tls_foreach_CTX_in_srv_domains(tls_domains_cfg_t* cfg,
 }
 
 
-/** execute callback on all the CTX'es in all the client domains in a tls cfg.
- * @param cfg - tls cfg.
- * @param f - callback function
- * @param l - parameter passed to the callback
- * @param p - parameter passed to the callback
+/**
+ * @brief Execute callback on all the CTX'es in all the client domains in a tls cfg
+ * @param cfg tls cfg.
+ * @param ctx_cbk callback function
+ * @param l1 parameter passed to the callback
+ * @param p2 parameter passed to the callback
  * @return 0 on success, <0 on error.
  */
 static int tls_foreach_CTX_in_cli_domains(tls_domains_cfg_t* cfg,
@@ -317,12 +338,13 @@ static int tls_foreach_CTX_in_cli_domains(tls_domains_cfg_t* cfg,
 }
 
 
-/** execute callback on all the CTX'es in all the domains in a tls cfg.
- * @param cfg - tls cfg
- * @param f - callback function
- * @param l - parameter passed to the callback
- * @param p - parameter passed to the callback
- * @return 0 on success, <0 on error.
+/**
+ * @brief Execute callback on all the CTX'es in all the domains in a tls cfg
+ * @param cfg tls cfg
+ * @param ctx_cbk callback function
+ * @param l1 parameter passed to the callback
+ * @param p2 parameter passed to the callback
+ * @return 0 on success, <0 on error
  */
 static int tls_foreach_CTX_in_cfg(tls_domains_cfg_t* cfg,
 										per_ctx_cbk_f ctx_cbk,
@@ -340,15 +362,17 @@ static int tls_foreach_CTX_in_cfg(tls_domains_cfg_t* cfg,
 
 
 
-/** fix pathnames.
- * To be used when loading the domain key, cert, ca list a.s.o.
+/**
+ * @brief Fix pathnames when loading domain keys or other list
+ * 
+ * Fix pathnames, to be used when loading the domain key, cert, ca list a.s.o.
  * It will replace path with a fixed shm allocated version. Assumes path->s
  * was shm allocated.
- * @param path - path to be fixed. If it starts with '.' or '/' is left alone
- *               (forced "relative" or "absolute" path). Otherwise the path
- *               is considered to be relative to the main config file directory
- *               (e.g. for /etc/ser/ser.cfg => /etc/ser/\<path\>).
- * @return  0 on success, -1 on error.
+ * @param path path to be fixed. If it starts with '.' or '/' is left alone
+ * (forced "relative" or "absolute" path). Otherwise the path is considered 
+ * to be relative to the main config file directory
+ * (e.g. for /etc/ser/ser.cfg => /etc/ser/\<path\>).
+ * @return  0 on success, -1 on error
  */
 int fix_shm_pathname(str* path)
 {
@@ -370,8 +394,10 @@ int fix_shm_pathname(str* path)
 
 
 
-/* 
- * Load certificate from file 
+/**
+ * @brief Load certificate from file
+ * @param d domain
+ * @return 0 if not configured or on success, -1 on error
  */
 static int load_cert(tls_domain_t* d)
 {
@@ -398,8 +424,10 @@ static int load_cert(tls_domain_t* d)
 }
 
 
-/* 
- * Load CA list from file 
+/**
+ * @brief Load CA list from file
+ * @param d domain
+ * @return 0 if not configured or on success, -1 on error
  */
 static int load_ca_list(tls_domain_t* d)
 {
@@ -432,8 +460,10 @@ static int load_ca_list(tls_domain_t* d)
 }
 
 
-/*
- * Load CRL from file
+/**
+ * @brief Load CRL from file
+ * @param d domain
+ * @return 0 if not configured or on success, -1 on error
  */
 static int load_crl(tls_domain_t* d)
 {
@@ -470,8 +500,10 @@ static int load_crl(tls_domain_t* d)
 #define C_NO_KRB5_SUFFIX ":!KRB5"
 #define C_NO_KRB5_SUFFIX_LEN (sizeof(C_NO_KRB5_SUFFIX)-1)
 
-/* 
- * Configure cipher list 
+/**
+ * @brief Configure cipher list
+ * @param d domain
+ * @return 0 on success, -1 on error
  */
 static int set_cipher_list(tls_domain_t* d)
 {
@@ -513,8 +545,10 @@ static int set_cipher_list(tls_domain_t* d)
 }
 
 
-/* 
- * Enable/disable certificate verification 
+/**
+ * @brief Enable/disable TLS certificate verification
+ * @param d domain
+ * @return 0
  */
 static int set_verification(tls_domain_t* d)
 {
@@ -557,8 +591,10 @@ static int set_verification(tls_domain_t* d)
 }
 
 
-/* 
- * Configure generic SSL parameters 
+/**
+ * @brief Configure generic SSL parameters 
+ * @param d domain
+ * @return 0
  */
 static int set_ssl_options(tls_domain_t* d)
 {
@@ -604,8 +640,10 @@ static int set_ssl_options(tls_domain_t* d)
 }
 
 
-/* 
- * Configure session cache parameters 
+/**
+ * @brief Configure TLS session cache parameters 
+ * @param d domain
+ * @return 0
  */
 static int set_session_cache(tls_domain_t* d)
 {
@@ -632,12 +670,14 @@ static int set_session_cache(tls_domain_t* d)
 
 
 
-/** tls SSL_CTX_set_mode and SSL_CTX_clear_mode wrapper.
- *  @param mode - SSL_MODE_*.
- *  @param clear - if set to !=0 will do a clear, else (==0) a set.
- *  @return - 0 (always succeeds).
+/**
+ * @brief TLS SSL_CTX_set_mode and SSL_CTX_clear_mode wrapper
+ * @param ctx SSL context
+ * @param mode SSL_MODE_*
+ * @param clear if set to !=0 will do a clear, else (==0) a set
+ * @return 0 (always succeeds)
  */
-int tls_ssl_ctx_mode(SSL_CTX* ctx, long mode, void* clear)
+static int tls_ssl_ctx_mode(SSL_CTX* ctx, long mode, void* clear)
 {
 	if (clear)
 #if OPENSSL_VERSION_NUMBER >= 0x01000000L || \
@@ -653,11 +693,14 @@ int tls_ssl_ctx_mode(SSL_CTX* ctx, long mode, void* clear)
 
 
 
-/** tls set ctx->free_list_max_len.
- *  @param val - value (<0 ignored).
- *  @return - 0 (always succeeds).
+/**
+ * @brief TLS set ctx->free_list_max_len
+ * @param ctx TLS context
+ * @param val value (<0 ignored)
+ * @param unused unused
+ * @return 0 (always succeeds)
  */
-int tls_ssl_ctx_set_freelist(SSL_CTX* ctx, long val, void* unused)
+static int tls_ssl_ctx_set_freelist(SSL_CTX* ctx, long val, void* unused)
 {
 	if (val >= 0)
 #if OPENSSL_VERSION_NUMBER >= 0x01000000L
@@ -671,11 +714,14 @@ int tls_ssl_ctx_set_freelist(SSL_CTX* ctx, long val, void* unused)
 	return 0;
 }
 
-/** tls SSL_CTX_set_max_send_fragment wrapper.
- *  @param val - value (<0 ignored). Should be between 512 and 16k.
- *  @return  0 on success, < 0 on failure (invalid value)
+/**
+ * @brief TLS SSL_CTX_set_max_send_fragment wrapper
+ * @param ctx TLS context
+ * @param val value (<0 ignored). Should be between 512 and 16k
+ * @param unused unused
+ * @return 0 on success, < 0 on failure (invalid value)
  */
-int tls_ssl_ctx_set_max_send_fragment(SSL_CTX* ctx, long val, void* unused)
+static int tls_ssl_ctx_set_max_send_fragment(SSL_CTX* ctx, long val, void* unused)
 {
 	if (val >= 0)
 #if OPENSSL_VERSION_NUMBER >= 0x00909000L
@@ -688,20 +734,24 @@ int tls_ssl_ctx_set_max_send_fragment(SSL_CTX* ctx, long val, void* unused)
 
 
 
-/** tls SSL_CTX_set_read_ahead wrapper.
- *  @param val - value (<0 ignored, 0 or >0).
- *  @return  0 (always success).
+/**
+ * @brief TLS SSL_CTX_set_read_ahead wrapper
+ * @param ctx TLS context
+ * @param val value (<0 ignored, 0 or >0)
+ * @param unused unused
+ * @return 0 (always success).
  */
-int tls_ssl_ctx_set_read_ahead(SSL_CTX* ctx, long val, void* unused)
+static int tls_ssl_ctx_set_read_ahead(SSL_CTX* ctx, long val, void* unused)
 {
 	if (val >= 0)
 		SSL_CTX_set_read_ahead(ctx, val);
 	return 0;
 }
 
-/*
- * Initialize all domain attributes from default domains
- * if necessary
+/**
+ * @brief Initialize all domain attributes from default domains if necessary
+ * @param d initialized TLS domain
+ * @param def default TLS domains
  */
 static int fix_domain(tls_domain_t* d, tls_domain_t* def)
 {
@@ -736,6 +786,14 @@ static int fix_domain(tls_domain_t* d, tls_domain_t* def)
 }
 
 
+/**
+ * @brief Password callback, ask for private key password on CLI
+ * @param buf buffer
+ * @param size buffer size
+ * @param rwflag not used
+ * @param filename filename
+ * @return length of password on success, 0 on error
+ */
 static int passwd_cb(char *buf, int size, int rwflag, void *filename)
 {
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L	
@@ -769,9 +827,10 @@ static int passwd_cb(char *buf, int size, int rwflag, void *filename)
 }
 
 
-#define NUM_RETRIES 3
-/*
- * load a private key from a file 
+/**
+ * @brief Load a private key from a file 
+ * @param d TLS domain
+ * @return 0 on success, -1 on error
  */
 static int load_private_key(tls_domain_t* d)
 {
@@ -790,7 +849,7 @@ static int load_private_key(tls_domain_t* d)
 		SSL_CTX_set_default_passwd_cb(d->ctx[i], passwd_cb);
 		SSL_CTX_set_default_passwd_cb_userdata(d->ctx[i], d->pkey_file.s);
 		
-		for(idx = 0, ret_pwd = 0; idx < NUM_RETRIES; idx++) {
+		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
 			ret_pwd = SSL_CTX_use_PrivateKey_file(d->ctx[i], d->pkey_file.s,
 					SSL_FILETYPE_PEM);
 			if (ret_pwd) {
@@ -824,9 +883,15 @@ static int load_private_key(tls_domain_t* d)
 }
 
 
-/*
- * Initialize attributes of all domains from default domains
- * if necessary
+/**
+ * @brief Initialize attributes of all domains from default domains if necessary
+ *
+ * Initialize attributes of all domains from default domains if necessary,
+ * fill in missing parameters.
+ * @param cfg initialized domain
+ * @param srv_defaults server defaults
+ * @param cli_defaults command line interface defaults
+ * @return 0 on success, -1 on error
  */
 int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
 				tls_domain_t* cli_defaults)
@@ -958,8 +1023,11 @@ int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
 }
 
 
-/*
- * Create new configuration structure
+/**
+ * @brief Create new configuration structure
+ * 
+ * Create new configuration structure in new allocated shared memory
+ * @return configuration structure or zero on error
  */
 tls_domains_cfg_t* tls_new_cfg(void)
 {
@@ -975,8 +1043,13 @@ tls_domains_cfg_t* tls_new_cfg(void)
 }
 
 
-/*
- * Lookup TLS configuration based on type, ip, and port
+/**
+ * @brief Lookup TLS configuration based on type, ip, and port
+ * @param cfg configuration set
+ * @param type type of configuration
+ * @param ip IP for configuration
+ * @param port port for configuration
+ * @return found configuration or default, if not found
  */
 tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 								struct ip_addr* ip, unsigned short port)
@@ -1003,8 +1076,11 @@ tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 }
 
 
-/*
- * Check whether configuration domain exists
+/**
+ * @brief Check whether configuration domain exists
+ * @param cfg configuration set
+ * @param d checked domain
+ * @return 1 if domain exists, 0 if its not exists
  */
 static int domain_exists(tls_domains_cfg_t* cfg, tls_domain_t* d)
 {
@@ -1028,8 +1104,11 @@ static int domain_exists(tls_domains_cfg_t* cfg, tls_domain_t* d)
 }
 
 
-/*
- * Add a domain to the configuration set
+/**
+ * @brief Add a domain to the configuration set
+ * @param cfg configuration set
+ * @param d TLS domain
+ * @return 1 if domain already exists, 0 after addition, -1 on error
  */
 int tls_add_domain(tls_domains_cfg_t* cfg, tls_domain_t* d)
 {

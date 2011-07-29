@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,10 +13,14 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 /**
  * @file 
- * @brief lvalues (assignment)
+ * @brief SIP-router core :: lvalues (assignment)
+ * \ingroup core
+ * Module: \ref core
  */
+
 /* 
  * History:
  * --------
@@ -29,12 +31,6 @@
  *              delete the lvalue (similar to perl)  (andrei)
  */
 
-/*!
- * \file
- * \brief SIP-router core :: 
- * \ingroup core
- * Module: \ref core
- */
 
 #include "lvalue.h"
 #include "dprint.h"
@@ -42,15 +38,15 @@
 
 
 
-/** eval rve and assign the result to an avp
- * lv->lv.avp=eval(rve)
- *
- * based on do_action() ASSIGN_T
- *
+/**
+ * @brief eval rve and assign the result to an avp
+ * 
+ * eval rve and assign the result to an avp, lv->lv.avp=eval(rve)
+ * based on do_action() ASSIGN_T.
  * @param h  - script context
  * @param msg - sip msg
  * @param lv - lvalue
- * @param rve - rvalue expression
+ * @param rv - rvalue expression
  * @return >= 0 on success (expr. bool value), -1 on error
  */
 inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
@@ -232,15 +228,15 @@ drop:
 
 
 
-/** eval rve and assign the result to a pvar
- * lv->lv.pvar=eval(rve)
+/**
+ * @brief eval rve and assign the result to a pvar
  *
- * based on do_action() ASSIGN_T
- *
+ * eval rve and assign the result to a pvar, lv->lv.pvar=eval(rve)
+ * based on do_action() ASSIGN_T.
  * @param h  - script context
  * @param msg - sip msg
  * @param lv - lvalue
- * @param rve - rvalue expression
+ * @param rv - rvalue expression
  * @return >= 0 on success (expr. bool value), -1 on error
  */
 inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,

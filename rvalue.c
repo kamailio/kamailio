@@ -1,6 +1,4 @@
 /* 
- * $Id$
- * 
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,10 +13,14 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 /**
  * @file 
- * @brief rvalue expressions
+ * @brief SIP-router core :: rvalue expressions
+ * @ingroup core
+ * Module: \ref core
  */
+
 /* 
  * History:
  * --------
@@ -58,12 +60,6 @@
  *                           Depends on RV_STR2INT_ERR.
  */
 
-/*!
- * \file
- * \brief SIP-router core :: 
- * \ingroup core
- * Module: \ref core
- */
 
 #include "rvalue.h"
 
@@ -344,14 +340,14 @@ char* rval_type_name(enum rval_type type)
 
 
 
-/** create a new pk_malloc'ed rvalue from a rval_val union.
-  *
-  * @param s - pointer to str, must be non-null
-  * @param extra_size - extra space to allocate
-  *                    (so that future string operation can reuse
-  *                     the space)
-  * @return new rv or 0 on error
-  */
+/**
+ * @brief create a new pk_malloc'ed rvalue from a rval_val union
+ * @param t rvalue type
+ * @param v rvalue value
+ * @param extra_size extra space to allocate
+ * (so that future string operation can reuse the space)
+ * @return new rv or 0 on error
+ */
 struct rvalue* rval_new(enum rval_type t, union rval_val* v, int extra_size)
 {
 	struct rvalue* rv;
@@ -375,18 +371,21 @@ struct rvalue* rval_new(enum rval_type t, union rval_val* v, int extra_size)
 
 
 
-/** get rvalue basic type (RV_INT or RV_STR).
-  *
-  * Given a rvalue it tries to determinte its basic type.
-  * Fills val_cache if non-null and empty (can be used in other rval*
-  * function calls, to avoid re-resolving avps or pvars). It must be
-  * rval_cache_clean()'en when no longer needed.
-  *
-  * @param rv - target rvalue
-  * @param val_cache - write-only: value cache, might be filled if non-null,
-  *                    it _must_ be rval_cache_clean()'en when done.
-  * @return - basic type or RV_NONE on error
-  */
+/**
+ * @brief get rvalue basic type (RV_INT or RV_STR)
+ *
+ * Given a rvalue it tries to determinte its basic type.
+ * Fills val_cache if non-null and empty (can be used in other rval*
+ * function calls, to avoid re-resolving avps or pvars). It must be
+ * rval_cache_clean()'en when no longer needed.
+ *
+ * @param h run action context
+ * @param msg SIP message
+ * @param rv target rvalue
+ * @param val_cache write-only value cache, might be filled if non-null,
+ * it _must_ be rval_cache_clean()'en when done.
+ * @return basic type or RV_NONE on error
+ */
 inline static enum rval_type rval_get_btype(struct run_act_ctx* h,
 											struct sip_msg* msg,
 											struct rvalue* rv,
@@ -675,18 +674,19 @@ static int rve_op_unary(enum rval_expr_op op)
 
 
 
-/** returns 1 if expression is valid (type-wise).
-  * @param type - filled with the type of the expression (RV_INT, RV_STR or
-  *                RV_NONE if it's dynamic)
-  * @param rve  - checked expression
-  * @param bad_rve - set on failure to the subexpression for which the 
-  *                    type check failed
-  * @param bad_type - set on failure to the type of the bad subexpression
-  * @param exp_type - set on failure to the expected type for the bad
-  *                   subexpression
-  * @return 0 or 1  and sets *type to the resulting type
-  * (RV_INT, RV_STR or RV_NONE if it can be found only at runtime)
-  */
+/**
+ * @brief Returns 1 if expression is valid (type-wise)
+ * @param type filled with the type of the expression (RV_INT, RV_STR or
+ *                RV_NONE if it's dynamic)
+ * @param rve  checked expression
+ * @param bad_rve set on failure to the subexpression for which the 
+ * type check failed
+ * @param bad_t set on failure to the type of the bad subexpression
+ * @param exp_t set on failure to the expected type for the bad
+ * subexpression
+ * @return 0 or 1 and sets *type to the resulting type
+ * (RV_INT, RV_STR or RV_NONE if it can be found only at runtime)
+ */
 int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 					struct rval_expr** bad_rve, 
 					enum rval_type* bad_t,
@@ -1274,18 +1274,22 @@ error:
 
 
 
-/** convert a rvalue to another rvalue, of a specific type.
+/**
+ * @brief Convert a rvalue to another rvalue, of a specific type
  *
+ * Convert a rvalue to another rvalue, of a specific type.
  * The result is read-only in most cases (can be a reference
  * to another rvalue, can be checked by using rv_chg_in_place()) and
  * _must_ be rval_destroy()'ed.
  *
+ * @param h run action context
+ * @param msg SIP mesasge
  * @param type - type to convert to
  * @param v - rvalue to convert
  * @param c - rval_cache (cached v value if known/filled by another
  *            function), can be 0 (unknown/not needed)
  * @return pointer to a rvalue (reference to an existing one or a new
- *   one, @see rv_chg_in_place() and the above comment) or 0 on error.
+ * one, @see rv_chg_in_place() and the above comment), or 0 on error.
  */
 struct rvalue* rval_convert(struct run_act_ctx* h, struct sip_msg* msg,
 							enum rval_type type, struct rvalue* v,
@@ -1761,9 +1765,17 @@ error:
 
 
 
-/** integer operation on rval evaluated as string.
- * Can use cached rvalues (c1 & c2).
- * @param res - will be set to the result
+/**
+ * @brief Integer operation on rval evaluated as string
+ * 
+ * Integer operation on rval evaluated as string, can use cached
+ * rvalues (c1 & c2).
+ * @param h run action context
+ * @param msg SIP message
+ * @param res will be set to the result
+ * @param op rvalue expression operation
+ * @param l rvalue
+ * @param c1 rvalue cache
  * @return 0 success, -1 on error
  */
 inline static int rval_int_strop1(struct run_act_ctx* h,
@@ -1791,14 +1803,18 @@ error:
 
 
 
-/** checks if rv is defined.
- * @param res - set to the result 1 - defined, 0 not defined
+/**
+ * @brief Checks if rv is defined
+ * @param h run action context
+ * @param msg SIP message
+ * @param res set to the result 1 is defined, 0 not defined
+ * @param rv rvalue
+ * @param cache rvalue cache
  * @return 0 on success, -1 on error
- * Can use cached rvalues (cache).
- * Note: a rv can be undefined if it's an undefined avp or pvar or select or
- * if it's NONE
- * Note2: an error in the avp, pvar or select search is equivalent to 
- *  undefined (and it's not reported)
+ * @note Can use cached rvalues (cache). A rv can be undefined if it's
+ * an undefined avp or pvar or select or if it's NONE
+ * @note An error in the avp, pvar or select search is equivalent to
+ * undefined (and it's not reported)
  */
 inline static int rv_defined(struct run_act_ctx* h,
 						 struct sip_msg* msg, int* res,
@@ -1857,9 +1873,13 @@ inline static int rv_defined(struct run_act_ctx* h,
 }
 
 
-/** defined (integer) operation on rve.
+/**
+ * @brief Defined (integer) operation on rve
+ * @param h run action context
+ * @param msg SIP message
  * @param res - set to  1 defined, 0 not defined
- * @return - 0 on success, -1 on error
+ * @param rve rvalue expression
+ * @return 0 on success, -1 on error
  */
 inline static int int_rve_defined(struct run_act_ctx* h,
 						 struct sip_msg* msg, int* res,
@@ -2129,22 +2149,22 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 
 
 
-/** evals a rval expr. into an int or another rv(str).
- * WARNING: rv result (rv_res) must be rval_destroy()'ed if non-null
+/**
+ * @brief Evals a rval expression into an int or another rv(str)
+ * @warning rv result (rv_res) must be rval_destroy()'ed if non-null
  * (it might be a reference to another rval). The result can be
  * modified only if rv_chg_in_place() returns true.
- * @param res_rv - pointer to rvalue result, if non-null it means the 
- *                 expression evaluated to a non-int (str), which will be
- *                 stored here.
- * @param res_i  - pointer to int result, if res_rv==0 and the function
- *                 returns success => the result is an int which will be 
- *                 stored here.
- * @param rve    - expression that will be evaluated.
- * @param cache  - write-only value cache, it might be filled if non-null and
- *                 empty (rval_cache_init()). If non-null, it _must_ be 
- *                 rval_cache_clean()'ed when done. 
- *
- * @result  0 on success, -1 on error,  sets *res_rv or *res_i.
+ * @param h run action context
+ * @param msg SIP message
+ * @param res_rv pointer to rvalue result, if non-null it means the 
+ * expression evaluated to a non-int (str), which will be stored here.
+ * @param res_i pointer to int result, if res_rv==0 and the function
+ * returns success => the result is an int which will be stored here.
+ * @param rve expression that will be evaluated.
+ * @param cache write-only value cache, it might be filled if non-null and
+ * empty (rval_cache_init()). If non-null, it _must_ be rval_cache_clean()'ed
+ * when done. 
+ * @return 0 on success, -1 on error, sets *res_rv or *res_i.
  */
 int rval_expr_eval_rvint(			   struct run_act_ctx* h,
 									   struct sip_msg* msg,
@@ -2281,10 +2301,14 @@ error:
 
 
 
-/** evals a rval expr..
- * WARNING: result must be rval_destroy()'ed if non-null (it might be
+/**
+ * @brief Evals a rval expression
+ * @warning result must be rval_destroy()'ed if non-null (it might be
  * a reference to another rval). The result can be modified only
  * if rv_chg_in_place() returns true.
+ * @param h run action context
+ * @param msg SIP message
+ * @param rve rvalue expression
  * @return rvalue on success, 0 on error
  */
 struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
@@ -2556,10 +2580,12 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
 
 
 
-/** create a unary op. rval_expr..
+/**
+ * @brief Create a unary op. rval_expr
  * ret= op rve1
  * @param op   - rval expr. unary operator
  * @param rve1 - rval expr. on which the operator will act.
+ * @param pos configuration position
  * @return new pkg_malloc'ed rval_expr or 0 on error.
  */
 struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
@@ -2594,11 +2620,13 @@ struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
 
 
 
-/** create a rval_expr. from 2 other rval exprs, using op.
+/**
+ * @brief Create a rval_expr. from 2 other rval exprs, using op
  * ret = rve1 op rve2
  * @param op   - rval expr. operator
  * @param rve1 - rval expr. on which the operator will act.
  * @param rve2 - rval expr. on which the operator will act.
+ * @param pos configuration position
  * @return new pkg_malloc'ed rval_expr or 0 on error.
  */
 struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
@@ -2862,15 +2890,17 @@ static int fix_rval(struct rvalue* rv)
 
 
 
-/** helper function: replace a rve (in-place) with a constant rval_val.
- * WARNING: since it replaces in-place, one should make sure that if
+/**
+ * @brief Helper function: replace a rve (in-place) with a constant rval_val
+ * @warning since it replaces in-place, one should make sure that if
  * rve is in fact a rval (rve->op==RVE_RVAL_OP), no reference is kept
  * to the rval!
- * @param rve - expression to be replaced (in-place)
- * @param v   - pointer to a rval_val union containing the replacement
- *              value.
- * @param flags - value flags (how it was alloc'ed, e.g.: RV_CNT_ALLOCED_F)
- * @return 0 on success, -1 on error */
+ * @param rve expression to be replaced (in-place)
+ * @param type rvalue type
+ * @param v pointer to a rval_val union containing the replacement value.
+ * @param flags value flags (how it was alloc'ed, e.g.: RV_CNT_ALLOCED_F)
+ * @return 0 on success, -1 on error
+ */
 static int rve_replace_with_val(struct rval_expr* rve, enum rval_type type,
 								union rval_val* v, int flags)
 {
