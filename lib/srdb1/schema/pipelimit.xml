@@ -52,10 +52,4 @@
         <description>Pipe limit (hits per second)</description>
     </column>
 
-    <index>
-        <name>account_idx</name>
-        <colref linkend="username"/>
-        <colref linkend="domain"/>
-    </index>
-
 </table>
