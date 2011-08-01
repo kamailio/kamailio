@@ -242,15 +242,21 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
     }
 
     ruri = (str *)0;
-
-    /* Take first q from Request-URI */
-    ruri = GET_RURI(msg);
-    if (!ruri) {
-	LM_ERR("no Request-URI found\n");
-	return -1;
+	if (ruri_is_new) {
+		/* Take first q from Request-URI */
+		ruri = GET_RURI(msg);
+		if (!ruri) {
+			LM_ERR("no Request-URI found\n");
+			return -1;
+		}
+		first_q = get_ruri_q();
+		first_idx = 0;
+	} else {
+		/* Take first q from first branch */
+		uri.s = get_branch(0, &uri.len, &first_q, &dst_uri, &path, &flags,
+			               &sock);
+		first_idx = 1;
     }
-    first_q = get_ruri_q();
-    first_idx = 0;
 
     /* Check if all q values are equal */
     for(idx = first_idx; (tmp.s = get_branch(idx, &tmp.len, &q, 0, 0, 0, 0))
@@ -272,15 +278,24 @@ rest:
 		return -1;
     }
 
-    /* Insert Request-URI branch to first contact */
-    contacts->uri.s = ruri->s;
-    contacts->uri.len = ruri->len;
-    contacts->dst_uri = msg->dst_uri;
-    contacts->sock = msg->force_send_socket;
-    getbflagsval(0, &contacts->flags);
-    contacts->path = msg->path_vec;
-    contacts->q = first_q;
-    contacts->next = (struct contact *)0;
+	if (ruri_is_new) {
+		/* Insert Request-URI branch to first contact */
+		contacts->uri.s = ruri->s;
+		contacts->uri.len = ruri->len;
+		contacts->dst_uri = msg->dst_uri;
+		contacts->sock = msg->force_send_socket;
+		getbflagsval(0, &contacts->flags);
+		contacts->path = msg->path_vec;
+	} else {
+		/* Insert first branch to first contact */
+		contacts->uri = uri;
+		contacts->dst_uri = dst_uri;
+		contacts->sock = sock;
+		contacts->flags = flags;
+		contacts->path = path;
+    }
+	contacts->q = first_q;
+	contacts->next = (struct contact *)0;
 
     /* Insert (remaining) branches to contact list in increasing q order */
 
