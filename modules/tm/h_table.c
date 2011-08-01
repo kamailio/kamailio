@@ -487,4 +487,41 @@ error0:
 }
 
 
+/**
+ * backup xdata from/to msg context to local var and use T lists
+ * - mode = 0 - from msg context to _txdata and use T lists
+ * - mode = 1 - restore to msg context from _txdata
+ */
+void tm_xdata_swap(tm_cell_t *t, int mode)
+{
+	static tm_xdata_t _txdata;
+	tm_xdata_t *x;
 
+	x = &_txdata;
+
+	if(mode==0) {
+		if(t==NULL)
+			return;
+		x->uri_avps_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from );
+		x->uri_avps_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to );
+		x->user_avps_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from );
+		x->user_avps_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
+		x->domain_avps_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
+		x->domain_avps_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
+#ifdef WITH_XAVP
+		x->xavps_list = xavp_set_list(&t->xavps_list);
+#endif
+	} else if(mode==1) {
+		/* restore original avp list */
+		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_URI, x->uri_avps_from );
+		set_avp_list( AVP_TRACK_TO | AVP_CLASS_URI, x->uri_avps_to );
+		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_USER, x->user_avps_from );
+		set_avp_list( AVP_TRACK_TO | AVP_CLASS_USER, x->user_avps_to );
+		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_DOMAIN, x->domain_avps_from );
+		set_avp_list( AVP_TRACK_TO | AVP_CLASS_DOMAIN, x->domain_avps_to );
+#ifdef WITH_XAVP
+		xavp_set_list(x->xavps_list);
+#endif
+	}
+
+}
