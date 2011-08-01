@@ -623,8 +623,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 	}
 
 	/* sending notify with full state */
-	if(send_full_notify(&subs, service_node, subs.version, &subs.pres_uri,
-				hash_code)<0)
+	if(send_full_notify(&subs, service_node, &subs.pres_uri, hash_code)<0)
 	{
 		LM_ERR("failed sending full state notify\n");
 		goto error;

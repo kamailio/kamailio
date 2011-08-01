@@ -37,6 +37,7 @@ Anca-Maria Vamanu
               3.12. rls_event (str)
               3.13. outbound_proxy (str)
               3.14. server_address (str)
+              3.15. max_notify_body_length (int)
 
         4. Exported Functions
 
@@ -64,9 +65,10 @@ Anca-Maria Vamanu
    1.12. Set rls_event parameter
    1.13. Set outbound_proxy parameter
    1.14. Set server_address parameter
-   1.15. rls_handle_subscribe usage
-   1.16. rls_handle_notify usage
-   1.17. rls_update_subs usage
+   1.15. Set max_notify_body_length parameter
+   1.16. rls_handle_subscribe usage
+   1.17. rls_handle_notify usage
+   1.18. rls_update_subs usage
 
 Chapter 1. Admin Guide
 
@@ -94,6 +96,7 @@ Chapter 1. Admin Guide
         3.12. rls_event (str)
         3.13. outbound_proxy (str)
         3.14. server_address (str)
+        3.15. max_notify_body_length (int)
 
    4. Exported Functions
 
@@ -166,6 +169,7 @@ Chapter 1. Admin Guide
    3.12. rls_event (str)
    3.13. outbound_proxy (str)
    3.14. server_address (str)
+   3.15. max_notify_body_length (int)
 
 3.1. db_url(str)
 
@@ -338,6 +342,17 @@ modparam("rls", "outbound_proxy", "sip:presence.kamailio.org")
 modparam("rls", "server_address", "sip:rls@ip.address.ofyour.proxy:5060")
 ...
 
+3.15. max_notify_body_length (int)
+
+   The maximum size that the body of a NOTIFY message may be. If set to 0
+   (the default), no size limit is applied. Note that this refers only to
+   the body, not the complete NOTIFY message.
+
+   Example 1.15. Set max_notify_body_length parameter
+...
+modparam("rls", "max_notify_body_length", 32000)
+...
+
 4. Exported Functions
 
    4.1. rls_handle_subscribe()
@@ -353,7 +368,7 @@ modparam("rls", "server_address", "sip:rls@ip.address.ofyour.proxy:5060")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.15. rls_handle_subscribe usage
+   Example 1.16. rls_handle_subscribe usage
 ...
 For presence and rls on the same machine:
         modparam("rls", "to_presence_code", 10)
@@ -381,7 +396,7 @@ For rls only:
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.16. rls_handle_notify usage
+   Example 1.17. rls_handle_notify usage
 ...
 if(method=="NOTIFY")
     rls_handle_notify();
@@ -400,7 +415,7 @@ if(method=="NOTIFY")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.17. rls_update_subs usage
+   Example 1.18. rls_update_subs usage
 ...
 Within event_route[xhttp:request]:
         case "PUT":

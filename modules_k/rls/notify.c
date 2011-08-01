@@ -51,19 +51,22 @@
 
 typedef struct res_param
 {
-	xmlNodePtr list_node;
-	db1_res_t* db_result;
-	char** cid_array;
+    struct uri_link **next;
 }res_param_t;
+
+typedef struct uri_link
+{
+    char *uri;
+    struct uri_link *next;
+} uri_link_t;
 
 int resource_uri_col=0, content_type_col, pres_state_col= 0,
 	auth_state_col= 0, reason_col= 0;
 
-str* constr_rlmi_doc(db1_res_t* result, str* rl_uri, int version,
+xmlDocPtr constr_rlmi_doc(db1_res_t* result, str* rl_uri, int version,
 		xmlNodePtr rl_node, char*** cid_array,
 		str username, str domain);
-str* constr_multipart_body(db1_res_t* result,char** cid_array,
-		char* boundary_string);
+void constr_multipart_body(str *multipart_body, const str *const content_type, const str *const body, str *cid, int boundary_len, char *boundary_string);
 
 dlg_t* rls_notify_dlg(subs_t* subs);
 
@@ -72,19 +75,28 @@ void rls_notify_callback( struct cell *t, int type, struct tmcb_params *ps);
 int parse_xcap_uri(char *uri, str *host, unsigned short *port, str *path);
 int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 		xmlNodePtr *rl_node, xmlDocPtr *xmldoc);
+int add_resource_to_list(char* uri, void* param);
+int add_resource(char* uri, xmlNodePtr list_node, str *multipart_body, char * boundary_string, db1_res_t *result, int *len_est);
 
-int send_full_notify(subs_t* subs, xmlNodePtr rl_node, int version, str* rl_uri,
+int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 		unsigned int hash_code)
 {
-	str* rlmi_body= NULL;
+	xmlDocPtr rlmi_body= NULL;
+    xmlNodePtr list_node= NULL;
 	str* multipart_body= NULL;
 	db_key_t query_cols[2], update_cols[2], result_cols[7];
 	db_val_t query_vals[2], update_vals[2];
 	db1_res_t *result= NULL;
-	int n_result_cols= 0, i;
+	int n_result_cols= 0;
 	char* boundary_string;
-	char** cid_array= NULL;
 	str rlsubs_did= {0, 0};
+    str* rlmi_cont= NULL;
+    uri_link_t *uri_list_head = NULL;
+    int len_est;
+    res_param_t param;
+    char* body_buffer;
+    int size= BUF_REALLOC_SIZE;
+    int resource_added = 0; /* Flag to indicate that we have added at least one resource */
 
 	LM_DBG("start\n");
 	/* query in alfabetical order */
@@ -121,36 +133,99 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, int version, str* rl_uri,
 	if(result== NULL)
 		goto error;
 
-	rlmi_body= constr_rlmi_doc(result, rl_uri, version, rl_node, &cid_array, subs->from_user, subs->from_domain);
-	if(rlmi_body== NULL)
+    /* Allocate an initial buffer for the multipart body.
+	 * This buffer will be reallocated if neccessary */
+    body_buffer= (char *)pkg_malloc(size);
+	if(body_buffer== NULL)
 	{
-		LM_ERR("while constructing rlmi doc\n");
+		ERR_MEM(PKG_MEM_STR);
+	}
+    
+    multipart_body= (str*)pkg_malloc(sizeof(str));
+	if(multipart_body== NULL)
+	{
+		ERR_MEM(PKG_MEM_STR);
+	}
+
+	multipart_body->s= body_buffer;
+	multipart_body->len= 0;
+
+    /* Create an empty rlmi document */
+	len_est = create_empty_rlmi_doc(&rlmi_body, &list_node, rl_uri, subs->version, 1);
+	xmlDocSetRootElement(rlmi_body, list_node);
+
+    /* Find all the uri's to which we are subscribed */
+	param.next = &uri_list_head;
+	if(	process_list_and_exec(rl_node, subs->from_user, subs->from_domain, add_resource_to_list,(void*)(&param))< 0)
+	{
+		LM_ERR("in process_list_and_exec function\n");
 		goto error;
 	}
 
 	boundary_string= generate_string((int)time(NULL), BOUNDARY_STRING_LEN);
 	
-	if(result->n> 0)
+    while (uri_list_head)
 	{
-		multipart_body= constr_multipart_body(result, cid_array, 
-				boundary_string);
-		if(multipart_body== NULL)
+        uri_link_t *last = uri_list_head;
+        if (add_resource(uri_list_head->uri, list_node, multipart_body, boundary_string, result, &len_est) >0)
+        {
+            if (resource_added == 0)
+            {
+                /* We have exceeded our length estimate without adding any resource.
+                   We cannot send this resource, move on. */
+                LM_ERR("Failed to add a single resource %d vs %d\n", len_est, rls_max_notify_body_len);
+                uri_list_head = uri_list_head->next;
+                pkg_free(last);
+            }
+            else
+            {
+                LM_DBG("send_full_notify estimate exceeded %d vs %d\n", len_est, rls_max_notify_body_len);
+                /* If add_resource returns > 0 the resource did not fit in our size limit */
+                rlmi_cont= (str*)pkg_malloc(sizeof(str));
+                if(rlmi_cont== NULL)
+                {
+                    ERR_MEM(PKG_MEM_STR);
+                }
+                /* Where we are worried about length we won't use padding */
+                xmlDocDumpFormatMemory(rlmi_body,(xmlChar**)(void*)&rlmi_cont->s,
+                        &rlmi_cont->len, 0);
+                xmlFreeDoc(rlmi_body);
+
+                if(agg_body_sendn_update(rl_uri, boundary_string, rlmi_cont,
+                    multipart_body, subs, hash_code)< 0)
+                {
+                    LM_ERR("in function agg_body_sendn_update\n");
+                    goto error;
+                }
+                
+                /* Create a new rlmi body, but not a full_state one this time */
+                len_est = create_empty_rlmi_doc(&rlmi_body, &list_node, rl_uri, subs->version, 0);
+                xmlDocSetRootElement(rlmi_body, list_node);
+                multipart_body->len = 0;
+                resource_added = 0;
+            }
+        }
+        else
 		{
-			LM_ERR("while constructing multipart body\n");
-			goto error;
-		}
-		for(i = 0; i<result->n; i++)
-		{
-			if(cid_array[i])
-				pkg_free(cid_array[i]);
+            resource_added = 1;
+            uri_list_head = uri_list_head->next;
+            pkg_free(last);
 		}
 	}
-	pkg_free(cid_array);
-	cid_array= NULL;
+    
+	rlmi_cont= (str*)pkg_malloc(sizeof(str));
+	if(rlmi_cont== NULL)
+	{
+		ERR_MEM(PKG_MEM_STR);
+	}
+	xmlDocDumpFormatMemory(rlmi_body,(xmlChar**)(void*)&rlmi_cont->s,
+			&rlmi_cont->len, (rls_max_notify_body_len == 0));
+	xmlFreeDoc(rlmi_body);
+
 	rls_dbf.free_result(rls_db, result);
 	result= NULL;
 
-	if(agg_body_sendn_update(rl_uri, boundary_string, rlmi_body,
+	if(agg_body_sendn_update(rl_uri, boundary_string, rlmi_cont,
 		multipart_body, subs, hash_code)< 0)
 	{
 		LM_ERR("in function agg_body_sendn_update\n");
@@ -175,8 +250,8 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, int version, str* rl_uri,
 		goto error;
 	}
 
-	xmlFree(rlmi_body->s);
-	pkg_free(rlmi_body);
+	xmlFree(rlmi_cont->s);
+	pkg_free(rlmi_cont);
 
 	if(multipart_body)			
 	{
@@ -188,11 +263,11 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, int version, str* rl_uri,
 	return 0;
 error:
 
-	if(rlmi_body)
+	if(rlmi_cont)
 	{
-		if(rlmi_body->s)
-			xmlFree(rlmi_body->s);
-		pkg_free(rlmi_body);
+		if(rlmi_cont->s)
+			xmlFree(rlmi_cont->s);
+		pkg_free(rlmi_cont);
 	}
 	if(multipart_body)
 	{
@@ -201,13 +276,6 @@ error:
 		pkg_free(multipart_body);
 	}
 	
-	if(cid_array)
-	{
-		for(i= 0; i< result->n ; i++)
-			if(cid_array[i])
-				pkg_free(cid_array[i]);
-		pkg_free(cid_array);
-	}
 	if(result)
 		rls_dbf.free_result(rls_db, result);
 	if(rlsubs_did.s)
@@ -287,7 +355,8 @@ error:
 
 
 int add_resource_instance(char* uri, xmlNodePtr resource_node,
-		db1_res_t* result, char** cid_array)
+		db1_res_t* result, str *multipart_body, char * boundary_string,
+        int *len_est)
 {
 	xmlNodePtr instance_node= NULL;
 	db_row_t *row;	
@@ -295,8 +364,11 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 	int i, cmp_code;
 	char* auth_state= NULL;
 	int contor= 0;
-	str cid;
 	int auth_state_flag;
+    int boundary_len = strlen(boundary_string);
+    str cid;
+  	str content_type= {0, 0};
+    str body= {0, 0};
 
 	for(i= 0; i< result->n; i++)
 	{
@@ -311,16 +383,7 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 		if(cmp_code== 0)
 		{
 			contor++;
-			instance_node= xmlNewChild(resource_node, NULL, 
-					BAD_CAST "instance", NULL);
-			if(instance_node== NULL)
-			{
-				LM_ERR("while adding instance child\n");
-				goto error;
-			}
 		
-			xmlNewProp(instance_node, BAD_CAST "id",
-					BAD_CAST generate_string(contor, 8));
 			auth_state_flag= row_vals[auth_state_col].val.int_val;
 			auth_state= get_auth_string(auth_state_flag );
 			if(auth_state== NULL)
@@ -328,20 +391,52 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 				LM_ERR("bad authorization status flag\n");
 				goto error;
 			}
-			xmlNewProp(instance_node, BAD_CAST "state", BAD_CAST auth_state);
+            *len_est += strlen(auth_state) + 38; /* <instance id="12345678" state="[auth_state]" />r/n */
 
 			if(auth_state_flag & ACTIVE_STATE)
 			{
 				cid.s= generate_cid(uri, strlen(uri));
 				cid.len= strlen(cid.s);
+                body.s= (char*)row_vals[pres_state_col].val.string_val;
+                body.len= strlen(body.s);
+                trim(&body);
 
-				cid_array[i]= (char*)pkg_malloc((1+ cid.len)*sizeof(char));
-				if(cid_array[i]== NULL)
+                *len_est += cid.len + 8; /* cid="[cid]" */
+				content_type.s = (char*)row_vals[content_type_col].val.string_val;
+				content_type.len = strlen(content_type.s);
+				*len_est += 4 + boundary_len
+ 						 + 35
+						 + 16 + cid.len
+						 + 18 + content_type.len
+						 + 4 + body.len + 8;
+			}
+			else
+			if(auth_state_flag & TERMINATED_STATE)
 				{
-					ERR_MEM(PKG_MEM_STR);
-				}	
-				memcpy(cid_array[i], cid.s, cid.len);
-				cid_array[i][cid.len]= '\0';
+			    *len_est += strlen(row_vals[resource_uri_col].val.string_val) + 10; /* reason="[resaon]" */
+			}
+            if (rls_max_notify_body_len > 0 && *len_est > rls_max_notify_body_len)
+            {
+                /* We have a limit on body length set, and we were about to exceed it */
+                return *len_est;
+			}
+            
+            instance_node= xmlNewChild(resource_node, NULL, 
+					BAD_CAST "instance", NULL);
+			if(instance_node== NULL)
+			{
+				LM_ERR("while adding instance child\n");
+				goto error;
+			}
+		
+            /* OK, we are happy this will fit */
+			xmlNewProp(instance_node, BAD_CAST "id",
+					BAD_CAST generate_string(contor, 8));
+			xmlNewProp(instance_node, BAD_CAST "state", BAD_CAST auth_state);
+
+			if(auth_state_flag & ACTIVE_STATE)
+			{
+                constr_multipart_body (multipart_body, &content_type, &body, &cid, boundary_len, boundary_string);
 
 				xmlNewProp(instance_node, BAD_CAST "cid", BAD_CAST cid.s);
 			}
@@ -360,206 +455,156 @@ error:
 	return -1;
 }
 
-int add_resource(char* uri, void* param)
+int add_resource(char* uri, xmlNodePtr list_node, str *multipart_body, char * boundary_string, db1_res_t *result, int *len_est)
 {
-	char** cid_array= ((res_param_t*)param)->cid_array;
-	xmlNodePtr list_node= ((res_param_t*)param)->list_node;
 	xmlNodePtr resource_node= NULL;
-	db1_res_t *result= ((res_param_t*)param)->db_result;
+    int res;
 
-	LM_DBG("uri= %s\n", uri);
+    if (rls_max_notify_body_len > 0)
+    {
+        *len_est += strlen (uri) + 35; /* <resource uri="[uri]"></resource>/r/n */
+        if (*len_est > rls_max_notify_body_len)
+        {
+            return *len_est;
+        }
+    }
 	resource_node= xmlNewChild(list_node, NULL, BAD_CAST "resource", NULL);
 	if(resource_node== NULL)
 	{
-		LM_ERR("while adding new rsource_node\n");
 		goto error;
 	}
 	xmlNewProp(resource_node, BAD_CAST "uri", BAD_CAST uri);
 
-	if(add_resource_instance(uri, resource_node, result, cid_array)< 0)
+    res = add_resource_instance(uri, resource_node, result, multipart_body, boundary_string, len_est);
+	if(res < 0)
 	{
 		LM_ERR("while adding resource instance node\n");
 		goto error;
 	}
+
+	return res;
+error:
+	return -1;
+}
+
+int add_resource_to_list(char* uri, void* param)
+{
+    struct uri_link **next = ((res_param_t*)param)->next;
+    *next = pkg_malloc(sizeof(uri_link_t));
+    if (*next == NULL)
+	{
+    	LM_ERR("while creating linked list element\n");
+		goto error;
+	}
+
+    (*next)->next = NULL;
+    (*next)->uri = pkg_malloc(strlen(uri) + 1);
+    if ((*next)->uri == NULL)
+	{
+    	LM_ERR("while creating uri store\n");
+        pkg_free(*next);
+        *next = NULL;
+		goto error;
+	}
+    strcpy((*next)->uri, uri);
+    ((res_param_t*)param)->next = &(*next)->next;
 
 	return 0;
 error:
 	return -1;
 }
 
-str* constr_rlmi_doc(db1_res_t *result, str* rl_uri, int version,
-		xmlNodePtr rl_node, char*** rlmi_cid_array,
-		str username, str domain)
+int create_empty_rlmi_doc(xmlDocPtr *rlmi_doc, xmlNodePtr *list_node, str *uri, int version, int full_state)
 {
-	xmlDocPtr doc= NULL;
-	xmlNodePtr list_node= NULL;
-	str* rlmi_cont= NULL;
-	int len; 
-	char* uri;
-	res_param_t param;
-	char** cid_array= NULL;
-	int n= result->n;
-
-	LM_DBG("start\n");
-	cid_array= (char**)pkg_malloc(n* sizeof(char*));
-	if(cid_array== NULL)
-	{
-		ERR_MEM(PKG_MEM_STR);
-	}
-	memset(cid_array, 0, n* sizeof(char*));
-
-	doc= xmlNewDoc(BAD_CAST "1.0");
-	if(doc== NULL)
-	{
-		LM_ERR("while constructing new xml doc\n");
-		goto error;
-	}
-	list_node= xmlNewNode(NULL, BAD_CAST "list");
-	if(list_node== NULL)
+    /* length is an pessimitic estimate of the size of an empty document
+       We calculate it once for performance reasons.
+       We add in the uri length each time as this varies, and it is cheap to add */
+    static int length = 0;
+    char* rl_uri= NULL;
+    int len;
+    
+    /* make new rlmi and multipart documents */
+    *rlmi_doc= xmlNewDoc(BAD_CAST "1.0");
+    if(*rlmi_doc== NULL)
+    {
+        LM_ERR("when creating new xml doc\n");
+        return 0;
+    }
+    *list_node= xmlNewNode(NULL, BAD_CAST "list");
+    if(*list_node== NULL)
 	{
 		LM_ERR("while creating new xml node\n");
-		goto error;
+        return 0;
 	}
-	uri= (char*)pkg_malloc(rl_uri->len+ 1);
-	if(uri== NULL)
+    rl_uri= (char*)pkg_malloc((uri->len+ 1)* sizeof(char));
+    if(rl_uri==  NULL)
 	{
 		ERR_MEM(PKG_MEM_STR);
 	}
-	memcpy(uri, rl_uri->s, rl_uri->len);
-	uri[rl_uri->len]= '\0';
-	xmlNewProp(list_node, BAD_CAST "uri", BAD_CAST uri);
-	pkg_free(uri);
+    memcpy(rl_uri, uri->s, uri->len);
+    rl_uri[uri->len]= '\0';
 
-	xmlNewProp(list_node, BAD_CAST "xmlns",
+    xmlNewProp(*list_node, BAD_CAST "uri", BAD_CAST rl_uri);
+    xmlNewProp(*list_node, BAD_CAST "xmlns",
 			BAD_CAST "urn:ietf:params:xml:ns:rlmi");
-	xmlNewProp(list_node, BAD_CAST "version", BAD_CAST int2str(version, &len));
-	xmlNewProp(list_node, BAD_CAST "fullState", BAD_CAST "true");
-
-	xmlDocSetRootElement(doc, list_node);
+    xmlNewProp(*list_node, BAD_CAST "version",
+            BAD_CAST int2str(version, &len));
+    if (full_state)               
+        xmlNewProp(*list_node, BAD_CAST "fullState", BAD_CAST "true");
+    else
+        xmlNewProp(*list_node, BAD_CAST "fullState", BAD_CAST "false");
 	
-	/* go through the list -- and add the appropriate 'resource' nodes*/
-	
-	param.list_node= list_node;
-	param.db_result= result;
-	param.cid_array= cid_array;
+    xmlDocSetRootElement(*rlmi_doc, *list_node);
+    pkg_free(rl_uri);  /* xmlNewProp takes a copy, so we can free this now */
 
-	if(process_list_and_exec(rl_node, username, domain, add_resource,(void*)(&param))< 0)
+    if (length == 0)
 	{
-		LM_ERR("in process_list_and_exec function\n");
-		goto error;
+        /* We haven't found out how big an empty doc is
+           Let's find out now ! */
+        xmlChar* dumped_document;
+        /* Where we are worried about length we won't use padding */
+        xmlDocDumpFormatMemory( *rlmi_doc,&dumped_document, &length, 0);
+        xmlFree(dumped_document);
+        length -= uri->len; /* The uri varies, so we will add it each time */
 	}
-	rlmi_cont= (str*)pkg_malloc(sizeof(str));
-	if(rlmi_cont== NULL)
-	{
-		ERR_MEM(PKG_MEM_STR);
-	}
-	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&rlmi_cont->s,
-			&rlmi_cont->len, 1);
-
-	*rlmi_cid_array= cid_array;
-	
-	xmlFreeDoc(doc);
-
-	return rlmi_cont;
-
+    return length + uri->len;
 error:
-	if(doc)
-		xmlFreeDoc(doc);
-	return NULL;	
+    return 0;
 }
 
 
-str* constr_multipart_body(db1_res_t* result, char** cid_array, 
-		char* boundary_string)
+void constr_multipart_body(str *multipart_body, const str *const content_type, const str *const body, str *cid, int boundary_len, char *boundary_string)
 {
-	char* buf= NULL;
+	char* buf= multipart_body->s;
 	int size= BUF_REALLOC_SIZE;
-	int i, length= 0;
-	db_row_t *row;	
-	db_val_t *row_vals;
-	str content_id = {0, 0};
-	str body= {0, 0};
-	str content_type= {0, 0};
+	int length= multipart_body->len;
 	int chunk_len;
-	str* multi_body= NULL;
-	str bstr = {0, 0};
 	
 	LM_DBG("start\n");
-	buf= pkg_malloc(size* sizeof(char));
-	if(buf== NULL)
-	{
-		ERR_MEM(PKG_MEM_STR);
-	}
 
-	bstr.s = boundary_string;
-	bstr.len = strlen(bstr.s);
-
-	for(i= 0; i< result->n; i++)
-	{
-		row = &result->rows[i];
-		row_vals = ROW_VALUES(row);
-	
-		if(row_vals[auth_state_col].val.int_val!= ACTIVE_STATE)
-			continue;
-	
-		body.s= (char*)row_vals[pres_state_col].val.string_val;
-		body.len= strlen(body.s);
-		trim(&body);
-		content_type.s = (char*)row_vals[content_type_col].val.string_val;
-		content_type.len = strlen(content_type.s);
-		content_id.s= cid_array[i];
-		if(content_id.s== NULL)
-		{
-			LM_ERR("No cid found in array for uri= %s\n",
-					row_vals[resource_uri_col].val.string_val);
-			goto error;
-		}
-		content_id.len = strlen(content_id.s);
-
-
-		chunk_len = 4 + bstr.len
-					+ 35
-					+ 16 + content_id.len
-					+ 18 + content_type.len
-					+ 4 + body.len + 8;
+    chunk_len = 4 + boundary_len
+                + 35
+                + 16 + cid->len
+                + 18 + content_type->len
+                + 4 + body->len + 8;
 		if(length + chunk_len >= size)
 		{
 			REALLOC_BUF
 		}
 
 		length+= sprintf(buf+ length, "--%.*s\r\n",
-				bstr.len, bstr.s);
+            boundary_len, boundary_string);
 		length+= sprintf(buf+ length, "Content-Transfer-Encoding: binary\r\n");
 		length+= sprintf(buf+ length, "Content-ID: <%.*s>\r\n",
-				content_id.len, content_id.s);
+            cid->len, cid->s);
 		length+= sprintf(buf+ length, "Content-Type: %.*s\r\n\r\n",
-				content_type.len, content_type.s);
+            content_type->len, content_type->s);
 		length+= sprintf(buf+length,"%.*s\r\n\r\n",
-				body.len, body.s);
-	}
-
-	if(length+ strlen( boundary_string)+ 7> size )
-	{
-		REALLOC_BUF
-	}
-	buf[length]= '\0';
-	
-	multi_body= (str*)pkg_malloc(sizeof(str));
-	if(multi_body== NULL)
-	{
-		ERR_MEM(PKG_MEM_STR);
-	}
-
-	multi_body->s= buf;
-	multi_body->len= length;
-
-	return multi_body;
+            body->len, body->s);
 
 error:
 
-	if(buf)
-		pkg_free(buf);
-	return NULL;
+	return;
 }
 
 str* rls_notify_extra_hdr(subs_t* subs, char* start_cid, char* boundary_string)
@@ -892,7 +937,6 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 	char* uri = NULL;
 	int res = 0;
 
-	LM_DBG("start\n");
 	for(node= list_node->children; node; node= node->next)
 	{
 		if(xmlStrcasecmp(node->name,(unsigned char*)"resource-list")==0)
@@ -1177,7 +1221,7 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 	*xmldoc = xmlParseMemory(body.s, body.len);
 	if(*xmldoc==NULL)
 	{
-		LM_ERR("while parsing XML memory\n");
+		LM_ERR("while parsing XML memory. len = %d\n", body.len);
 		goto error;
 	}
 

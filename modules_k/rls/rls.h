@@ -96,6 +96,7 @@ extern int rls_integrated_xcap_server;
 extern int rls_events;
 extern int to_presence_code;
 extern str rls_outbound_proxy;
+extern int rls_max_notify_body_len;
 
 /* database connection */
 extern db1_con_t *rls_db;

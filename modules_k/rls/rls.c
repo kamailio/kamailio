@@ -106,6 +106,7 @@ int rls_events= EVENT_PRESENCE;
 int to_presence_code = 1;
 int rls_max_expires = 7200;
 int rls_reload_db_subs = 0;
+int rls_max_notify_body_len = 0;
 
 /* functions imported from xcap_client module */
 xcapGetNewDoc_t xcap_GetNewDoc = 0;
@@ -194,6 +195,7 @@ static param_export_t params[]={
 	{ "rls_event",              STR_PARAM|USE_FUNC_PARAM,(void*)add_rls_event},
 	{ "outbound_proxy",         STR_PARAM,   &rls_outbound_proxy.s           },
 	{ "reload_db_subs",         INT_PARAM,   &rls_reload_db_subs             },
+	{ "max_notify_body_length", INT_PARAM,	 &rls_max_notify_body_len	     },
 	{0,                         0,           0                               }
 };
 

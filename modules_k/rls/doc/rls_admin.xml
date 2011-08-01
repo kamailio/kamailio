@@ -378,6 +378,23 @@ modparam("rls", "server_address", "sip:rls@ip.address.ofyour.proxy:5060")
 		</example>
 	</section>
 
+	<section>
+		<title><varname>max_notify_body_length</varname> (int)</title>
+		<para>
+			The maximum size that the body of a NOTIFY message may be. 
+            If set to 0 (the default), no size limit is applied.
+            Note that this refers only to the body, not the complete NOTIFY message.
+		</para>
+		<example>
+		<title>Set <varname>max_notify_body_length</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "max_notify_body_length", 32000)
+...
+		</programlisting>
+		</example>
+	</section>
+
 </section>
 
 <section>

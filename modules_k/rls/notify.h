@@ -47,7 +47,7 @@
 		{	ERR_MEM("constr_multipart_body");}
 
 int send_full_notify(subs_t* subs, xmlNodePtr rl_node, 
-		int version, str* rl_uri, unsigned int hash_code);
+                     str* rl_uri, unsigned int hash_code);
 
 typedef int (*list_func_t)(char* uri, void* param); 
 
@@ -59,5 +59,5 @@ char* get_auth_string(int flag);
 int agg_body_sendn_update(str* rl_uri, char* boundary_string, str* rlmi_body,
 		str* multipart_body, subs_t* subs, unsigned int hash_code);
 int rls_send_notify(subs_t* subs,str* body,char* start_cid,char* boundary_string);
-
+int create_empty_rlmi_doc(xmlDocPtr *rlmi_doc, xmlNodePtr *list_node, str *uri, int version, int full_state);
 #endif
