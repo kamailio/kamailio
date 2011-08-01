@@ -10,8 +10,8 @@ modules.lst
 # ignore dependency files
 *.d
 # ignore binary files and objects
-ser
-kamailio
+/ser
+/kamailio
 *.so
 *.so.*
 *.o
