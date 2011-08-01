@@ -34,6 +34,7 @@ Iñaki Baz Castillo
               4.6. ip_type (ip)
               4.7. compare_ips (ip1, ip2)
               4.8. compare_pure_ips (ip1, ip2)
+              4.9. is_ip_rfc1918 (ip)
 
    List of Examples
 
@@ -45,6 +46,7 @@ Iñaki Baz Castillo
    1.6. ip_type usage
    1.7. compare_ips usage
    1.8. compare_pure_ips usage
+   1.9. is_ip_rfc1918 usage
 
 Chapter 1. Admin Guide
 
@@ -67,6 +69,7 @@ Chapter 1. Admin Guide
         4.6. ip_type (ip)
         4.7. compare_ips (ip1, ip2)
         4.8. compare_pure_ips (ip1, ip2)
+        4.9. is_ip_rfc1918 (ip)
 
 1. Overview
 
@@ -113,6 +116,7 @@ Chapter 1. Admin Guide
    4.6. ip_type (ip)
    4.7. compare_ips (ip1, ip2)
    4.8. compare_pure_ips (ip1, ip2)
+   4.9. is_ip_rfc1918 (ip)
 
 4.1.  is_ip (ip)
 
@@ -275,5 +279,23 @@ if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:41
 ...
 if (compare_pure_ips($si, "1080::8:800:200C:417A")) {
   xlog("L_INFO", "both are the same IP\n");
+}
+...
+
+4.9.  is_ip_rfc1918 (ip)
+
+   Returns TRUE if the argument is a private IPv4 according to RFC 1918.
+   FALSE otherwise.
+
+   Parameters:
+     * ip - String or pseudo-variable containing the IP to evaluate.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.9.  is_ip_rfc1918 usage
+...
+if (is_ip_rfc1918("10.0.123.123")) {
+  xlog("L_INFO", "it's a private IPv4\n");
 }
 ...

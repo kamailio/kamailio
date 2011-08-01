@@ -21,6 +21,7 @@
  *
  * History:
  * -------
+ *  2011-07-29: Added a function to detect RFC1918 private IPv4 addresses (ibc)
  *  2011-04-27: Initial version (ibc)
  */
 /*!
@@ -46,7 +47,7 @@
 #include "../../mod_fix.h"
 #include "../../pvar.h"
 #include "ip_parser.h"
-
+#include "rfc1918_parser.h"
 
 MODULE_VERSION
 
@@ -78,6 +79,7 @@ static int w_is_ipv6_reference(struct sip_msg*, char*);
 static int w_ip_type(struct sip_msg*, char*);
 static int w_compare_ips(struct sip_msg*, char*, char*);
 static int w_compare_pure_ips(struct sip_msg*, char*, char*);
+static int w_is_ip_rfc1918(struct sip_msg*, char*);
 
 
 /*
@@ -100,6 +102,8 @@ static cmd_export_t cmds[] =
   { "compare_ips", (cmd_function)w_compare_ips, 2, fixup_spve_spve, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
   { "compare_pure_ips", (cmd_function)w_compare_pure_ips, 2, fixup_spve_spve, 0,
+  REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
+  { "is_ip_rfc1918", (cmd_function)w_is_ip_rfc1918, 1, fixup_spve_null, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
   { 0, 0, 0, 0, 0, 0 }
 };
@@ -435,3 +439,25 @@ static int w_compare_pure_ips(struct sip_msg* _msg, char* _s1, char* _s2)
     return -1;
 }
 
+
+/*! \brief Return true if the given argument (string or pv) is a valid RFC 1918 IPv4 (private address). */
+static int w_is_ip_rfc1918(struct sip_msg* _msg, char* _s)
+{
+  str string;
+  
+  if (_s == NULL) {
+    LM_ERR("bad parameter\n");
+    return -2;
+  }
+  
+  if (fixup_get_svalue(_msg, (gparam_p)_s, &string))
+  {
+    LM_ERR("cannot print the format for string\n");
+    return -3;
+  }
+  
+  if (rfc1918_parser_execute(string.s, string.len) == 1)
+    return 1;
+  else
+    return -1;
+}

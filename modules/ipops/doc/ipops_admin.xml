@@ -440,6 +440,45 @@ if (compare_pure_ips($si, "1080::8:800:200C:417A")) {
 
     </section>
 
+    <section>
+      <title>
+        <function moreinfo="none">is_ip_rfc1918 (ip)</function>
+      </title>
+
+      <para>
+        Returns TRUE if the argument is a private IPv4 according to RFC 1918. FALSE otherwise.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>is_ip_rfc1918</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (is_ip_rfc1918("10.0.123.123")) {
+  xlog("L_INFO", "it's a private IPv4\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
+ 
+
   </section>
  
 </chapter>
