@@ -326,14 +326,6 @@ typedef struct kam_cmd_export_ kam_cmd_export_t;
 typedef struct cmd_export_common_ cmd_export_common_t;
 typedef struct sr31_cmd_export_ sr31_cmd_export_t;
 
-#if 0
-union cmd_export_u{
-	cmd_export_common_t c; /* common members for everybody */
-	ser_cmd_export_t v0;
-	kam_cmd_export_t v1;
-};
-#endif
-
 
 /** ser module exports version */
 struct ser_module_exports {
