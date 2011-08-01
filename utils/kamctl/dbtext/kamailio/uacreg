@@ -1,0 +1,1 @@
+id(int,auto) l_uuid(string) l_username(string) l_domain(string) r_username(string) r_domain(string) realm(string) auth_username(string) auth_password(string) auth_proxy(string) expires(int) 
