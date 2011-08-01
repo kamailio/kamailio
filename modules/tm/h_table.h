@@ -300,6 +300,25 @@ struct totag_elem {
  * saves us 2*2 bytes */
 typedef unsigned short retr_timeout_t;
 
+
+/**
+ * extra data from SIP message context to transaction storage
+ */
+typedef struct tm_xdata
+{
+	/* lists with avps */
+	struct usr_avp **uri_avps_from;
+	struct usr_avp **uri_avps_to;
+	struct usr_avp **user_avps_from;
+	struct usr_avp **user_avps_to;
+	struct usr_avp **domain_avps_from;
+	struct usr_avp **domain_avps_to;
+#ifdef WITH_XAVP
+	sr_xavp_t **xavps_list;
+#endif
+} tm_xdata_t;
+
+
 /* transaction context */
 
 typedef struct cell
@@ -370,7 +389,7 @@ typedef struct cell
 	 * many due to downstream forking; */
 	struct totag_elem *fwded_totags;
 
-	     /* list with avp */
+	     /* lists with avps */
 	struct usr_avp *uri_avps_from;
 	struct usr_avp *uri_avps_to;
 	struct usr_avp *user_avps_from;
@@ -542,6 +561,11 @@ inline static void remove_from_hash_table_unsafe( struct cell * p_cell)
 #endif
 	t_stats_deleted( is_local(p_cell) );
 }
+
+/**
+ * backup xdata from/to msg context to local var and use T lists
+ */
+void tm_xdata_swap(tm_cell_t *t, int mode);
 
 #endif
 

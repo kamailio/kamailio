@@ -352,9 +352,8 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 			#ifdef USE_COMP
 				lreq.rcv.comp=dst.comp;
 			#endif /* USE_COMP */
-				/* AVPs are reset anyway afterwards, so no need to 
-				   backup/restore them*/
 				sflag_bk = getsflags();
+				tm_xdata_swap(new_cell, 0);
 
 				/* run the route */
 				backup_route_type = get_route_type();
@@ -373,6 +372,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				set_route_type( backup_route_type );
 
 				/* restore original environment */
+				tm_xdata_swap(new_cell, 1);
 				setsflagsval(sflag_bk);
 
 				if (unlikely(lreq.new_uri.s))
@@ -406,13 +406,6 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 			}
 		}
 	}
-#endif
-
-	/* better reset avp list now - anyhow, it's useless from
-	 * this point (bogdan) */
-	reset_avps();
-#ifdef WITH_XAVP
-	xavp_reset_list();
 #endif
 
 	new_cell->method.s = buf;
