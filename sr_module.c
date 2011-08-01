@@ -22,6 +22,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
 /*
  * History:
  * --------
@@ -40,10 +41,13 @@
  *  2008-11-26  added fparam_free_contents() and fix_param_types (andrei)
  */
 
-/** module loading, standard fixups.
- * @file sr_module.c
+/**
+ * @file
+ * @brief SIP-Router core :: modules loading, structures declarations and utilities
  * @ingroup core
+ * Module: \ref core
  */
+
 
 #include "sr_module.h"
 #include "mod_fix.h"
@@ -701,6 +705,14 @@ struct sr_module* find_module_by_name(char* mod) {
 }
 
 
+/*!
+ * \brief Find a parameter with given type
+ * \param mod module
+ * \param name parameter name
+ * \param type_mask parameter mask
+ * \param param_type parameter type
+ * \return parameter address in memory, if there is no such parameter, NULL is returned
+ */
 void* find_param_export(struct sr_module* mod, char* name,
 						modparam_t type_mask, modparam_t *param_type)
 {
@@ -1233,10 +1245,13 @@ void fparam_free_contents(fparam_t* fp)
 }
 
 
-
-/** generic free fixup type function for a fixed fparam.
- * It will free whatever was allocated during the initial fparam fixup
- * and restore the original param value.
+/**
+ * @brief Generic free fixup type function for a fixed fparam
+ * 
+ * Generic free fixup type function for a fixed fparam. It will free whatever
+ * was allocated during the initial fparam fixup and restore the original param
+ * value.
+ * @param param freed parameters
  */
 void fparam_free_restore(void** param)
 {
@@ -1725,12 +1740,14 @@ int is_fparam_rve_fixup(fixup_function f)
 }
 
 
-
-/** returns the corresponding fixup_free* for various known fixup types.
+/**
+ * @brief returns the corresponding fixup_free* for various known fixup types
+ * 
+ * Returns the corresponding fixup_free* for various known fixup types.
  * Used to automatically fill in free_fixup* functions.
- * @param f - fixup function pointer
- * @return - free fixup function pointer on success, 0 on failure (unknown
- *           fixup or no free fixup function).
+ * @param f fixup function pointer
+ * @return free fixup function pointer on success, 0 on failure (unknown
+ * fixup or no free fixup function).
  */
 free_fixup_function get_fixup_free(fixup_function f)
 {
