@@ -249,6 +249,7 @@ void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int aut
             len_est = create_empty_rlmi_doc(&rlmi_doc, &list_node, &dialog->pres_uri, dialog->version, 0);
             len_est += 2*strlen(boundary_string)+4+102+2+50+strlen(resource_uri)+20;
 			buf_len= 0;
+            resource_added = 0;
 
 			/* !!!! for now I will include the auth state without checking if 
 			 * it has changed - > in future chech if it works */		
@@ -265,6 +266,7 @@ void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int aut
         }
 		xmlNewProp(resource_node, BAD_CAST "uri", BAD_CAST resource_uri);
         len_est += strlen (resource_uri) + 35; /* <resource uri="[uri]"></resource>/r/n */
+        resource_added = 1;
 
 		/* there might be more records with the same uri- more instances-
 		 * search and add them all */
@@ -406,7 +408,7 @@ void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int aut
 
 	if(rlmi_doc)
 	{
-        LM_ERR("timer_send_notify at end len_est = %d resource_added = %d\n", len_est, resource_added);
+        LM_DBG("timer_send_notify at end len_est = %d resource_added = %d\n", len_est, resource_added);
         if (resource_added == 1)
         {
             send_notify(&rlmi_doc, buf, buf_len, bstr, dialog, hash_code);
