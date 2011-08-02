@@ -128,7 +128,7 @@ void dlg_ontimeout( struct dlg_tl *tl);
  * \param t transaction
  * \return 0 on success, -1 on failure
  */ 
-int dlg_new_dialog(struct sip_msg *msg, struct cell *t);
+int dlg_new_dialog(struct sip_msg *msg, struct cell *t, const int run_initial_cbs);
 
 
 /*!

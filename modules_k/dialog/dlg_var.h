@@ -83,4 +83,6 @@ struct dlg_cell* dlg_get_ctx_dialog(void);
 
 dlg_ctx_t* dlg_get_dlg_ctx(void);
 
+int spiral_detect_reset(struct sip_msg *foo, unsigned int flags, void *bar);
+
 #endif

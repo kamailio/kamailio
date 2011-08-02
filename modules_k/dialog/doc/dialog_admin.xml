@@ -1054,6 +1054,46 @@ modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
 		</example>
 	</section>
 
+	<section>
+		<title><varname>initial_cbs_inscript</varname> (string)</title>
+		<para>
+            If the initial dialog callbacks (i.e., DLGCB_CREATED and
+            DLGCB_SPIRALED) should be executed in-script or post-script.
+            If dlg_manage() is not used, the setting of this parameter does
+            not matter; otherwise, initial callbacks will be executed
+            directly after dlg_manage() is called if this parameter is
+            enabled. If it is disabled, initial callback execution will be
+            postponed until configuration script execution completes.
+		</para>
+		<para>
+		The supported values are:
+		</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>0 - POST-SCRIPT</emphasis> - execute initial
+				callbacks after the script completes;
+			</para></listitem>
+			<listitem><para>
+				<emphasis>1 - IN-SCRIPT</emphasis> - execute initial
+                callbacks during script execution, i.e., right after
+                dlg_manage() is called;
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>initial_cbs_inscript</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "initial_cbs_inscript", "0")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 

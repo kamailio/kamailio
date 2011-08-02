@@ -83,6 +83,8 @@ static int       default_timeout;	/*!< default dialog timeout */
 static int       seq_match_mode;	/*!< dlg_match mode */ 
 static int       shutdown_done = 0;	/*!< 1 when destroy_dlg_handlers was called */
 extern int       detect_spirals;
+extern int       initial_cbs_inscript;
+int              spiral_detected = -1;
 
 extern struct rr_binds d_rrb;		/*!< binding to record-routing module */
 
@@ -609,11 +611,17 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 {
 	struct sip_msg *req = param->req;
 
+	if (!initial_cbs_inscript) {
+		if (spiral_detected == 1)
+			run_dlg_callbacks( DLGCB_SPIRALED, current_dlg_pointer, req, NULL, DLG_DIR_DOWNSTREAM, 0);
+		else if (spiral_detected == 0)
+			run_create_callbacks( current_dlg_pointer, req);
+	}
 	if((req->flags&dlg_flag)!=dlg_flag)
 		return;
 	if (current_dlg_pointer!=NULL)
 		return;
-	dlg_new_dialog(req, t);
+	dlg_new_dialog(req, t, 1);
 }
 
 
@@ -754,7 +762,7 @@ static void store_dlg_in_tm_cb (struct cell* t,
  * \param t transaction
  * \return 0 on success, -1 on failure
  */ 
-int dlg_new_dialog(struct sip_msg *req, struct cell *t)
+int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cbs)
 {
 	struct dlg_cell *dlg;
 	str s;
@@ -787,6 +795,9 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t)
 
     if (detect_spirals)
     {
+        if (spiral_detected == 1)
+            return 0;
+
         dir = DLG_DIR_NONE;
 
         dlg = get_dlg(&callid, &ftag, &ttag, &dir, &del);
@@ -801,14 +812,16 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t)
         {
             LM_DBG("Callid '%.*s' found, must be a spiraled request\n",
                 callid.len, callid.s);
+            spiral_detected = 1;
 
-            run_dlg_callbacks( DLGCB_SPIRALED, dlg, req, NULL, DLG_DIR_DOWNSTREAM, 0);
-
+            if (run_initial_cbs)
+                run_dlg_callbacks( DLGCB_SPIRALED, dlg, req, NULL, DLG_DIR_DOWNSTREAM, 0);
             // get_dlg with del==0 has incremented the ref count by 1
             unref_dlg(dlg, 1);
             goto finish;
         }
     }
+    spiral_detected = 0;
 
     dlg = build_new_dlg (&callid /*callid*/,
                          &(get_from(req)->uri) /*from uri*/,
@@ -837,7 +850,7 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t)
 
 	link_dlg(dlg,0);
 
-    run_create_callbacks(dlg, req);
+    if (run_initial_cbs)  run_create_callbacks( dlg, req);
 
 	/* first INVITE seen (dialog created, unconfirmed) */
 	if ( seq_match_mode!=SEQ_MATCH_NO_ID &&

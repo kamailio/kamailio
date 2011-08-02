@@ -29,6 +29,7 @@
 #include "dlg_db_handler.h"
 
 dlg_ctx_t _dlg_ctx;
+extern int spiral_detected;
 
 /*! global variable table, in case the dialog does not exist yet */
 struct dlg_var * var_table = 0;
@@ -720,4 +721,11 @@ struct dlg_cell* dlg_get_ctx_dialog(void)
 dlg_ctx_t* dlg_get_dlg_ctx(void)
 {
 	return &_dlg_ctx;
+}
+
+int spiral_detect_reset(struct sip_msg *foo, unsigned int flags, void *bar)
+{
+	spiral_detected = -1;
+
+	return 0;
 }

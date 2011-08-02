@@ -104,6 +104,7 @@ static char* profiles_wv_s = NULL;
 static char* profiles_nv_s = NULL;
 str dlg_extra_hdrs = {NULL,0};
 static int db_fetch_rows = 200;
+int initial_cbs_inscript = 1;
 
 str dlg_bridge_controller = {"sip:controller@kamailio.org", 27};
 
@@ -241,6 +242,7 @@ static param_export_t mod_params[]={
 	{ "profiles_no_value",     STR_PARAM, &profiles_nv_s            },
 	{ "bridge_controller",     STR_PARAM, &dlg_bridge_controller.s  },
 	{ "ruri_pvar",             STR_PARAM, &ruri_pvar_param.s        },
+	{ "initial_cbs_inscript",  INT_PARAM, &initial_cbs_inscript     },
 	{ 0,0,0 }
 };
 
@@ -503,6 +505,11 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if (initial_cbs_inscript != 0 && initial_cbs_inscript != 1) {
+		LM_ERR("invalid parameter for running initial callbacks in-script (must be either 0 or 1)\n");
+		return -1;
+	}
+
 	/* update the len of the extra headers */
 	if (dlg_extra_hdrs.s)
 		dlg_extra_hdrs.len = strlen(dlg_extra_hdrs.s);
@@ -572,6 +579,11 @@ static int mod_init(void)
 				POST_SCRIPT_CB|REQUEST_CB,0)<0)
 	{
 		LM_ERR("cannot regsiter post-script ctx callback\n");
+		return -1;
+	}
+
+	if (register_script_cb( spiral_detect_reset, POST_SCRIPT_CB|REQUEST_CB,0)<0) {
+		LM_ERR("cannot register req pre-script spiral detection reset callback\n");
 		return -1;
 	}
 
@@ -902,7 +914,7 @@ static int w_dlg_manage(struct sip_msg *msg, char *s1, char *s2)
 		dlg_onroute(msg, NULL, NULL);
 		seq_match_mode = backup_mode;
 	} else {
-		if(dlg_new_dialog(msg, 0)!=0)
+		if(dlg_new_dialog(msg, 0, initial_cbs_inscript)!=0)
 			return -1;
 	}
 	return 1;
