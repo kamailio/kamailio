@@ -213,7 +213,7 @@ case "$1" in
     echo "Restarting $DESC:"
     set +e
     start-stop-daemon --oknodo --stop --quiet --pidfile $PIDFILE --retry=5 \
-      $PIDFILE --exec $DAEMON
+      --exec $DAEMON
     if [ $? -ne 0 ] ; then
       echo "$NAME failed to stop."
       exit 1
