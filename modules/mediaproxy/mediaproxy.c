@@ -1903,14 +1903,14 @@ __free_dialog_data(void *data)
 static void
 __dialog_requests(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
-    use_media_proxy(_params->msg, get_dialog_id(dlg), (ice_candidate_data*)*_params->param);
+    use_media_proxy(_params->req, get_dialog_id(dlg), (ice_candidate_data*)*_params->param);
 }
 
 
 static void
 __dialog_replies(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
-    struct sip_msg *reply = _params->msg;
+    struct sip_msg *reply = _params->rpl;
 
     if (reply == FAKED_REPLY)
         return;
@@ -1934,7 +1934,7 @@ __dialog_ended(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 static void
 __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
-    struct sip_msg *request = _params->msg;
+    struct sip_msg *request = _params->req;
     ice_candidate_data *ice_data;
 
     if (request->REQ_METHOD != METHOD_INVITE)

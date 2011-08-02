@@ -1035,7 +1035,7 @@ __dialog_early(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
         return;
     }
 
-    uri = get_source_uri(_params->msg);
+    uri = get_source_uri(_params->rpl);
     if (!Dialog_Param_has_candidate(param, uri)) {
         if (!Dialog_Param_add_candidate(param, uri)) {
             LM_ERR("cannot add callee candidate uri to the list\n");
@@ -1079,7 +1079,7 @@ __dialog_confirmed(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params
 
     param->confirmed = True;
 
-    callee_uri = get_source_uri(_params->msg);
+    callee_uri = get_source_uri(_params->rpl);
 
     // remove all keepalives on unanswered branches
     for (i=0; i<param->callee_candidates.count; i++) {
@@ -1224,7 +1224,7 @@ __dialog_destroy(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 static void
 __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
-    struct sip_msg *request = _params->msg;
+    struct sip_msg *request = _params->req;
     NAT_Contact *contact;
     SIP_Dialog *dialog;
     Dialog_Param *param;

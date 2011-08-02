@@ -946,7 +946,7 @@ typedef enum {
 static void
 __dialog_replies(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
-    struct sip_msg *reply = _params->msg;
+    struct sip_msg *reply = _params->rpl;
 
     if (reply!=FAKED_REPLY && reply->REPLY_STATUS==200) {
         call_control_start(reply, dlg);
@@ -958,7 +958,10 @@ static void
 __dialog_ended(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
     if ((int)(long)*_params->param == CCActive) {
-        call_control_stop(_params->msg, dlg->callid);
+        struct sip_msg* msg = _params->rpl;
+        if( !msg || msg == FAKED_REPLY)
+            msg = _params->req;
+        call_control_stop(msg, dlg->callid);
         *_params->param = CCInactive;
     }
 }
@@ -967,7 +970,7 @@ __dialog_ended(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 static void
 __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
-    struct sip_msg *request = _params->msg;
+    struct sip_msg *request = _params->req;
 
     if (request->REQ_METHOD != METHOD_INVITE)
         return;

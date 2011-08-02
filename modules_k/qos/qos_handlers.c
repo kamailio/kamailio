@@ -116,7 +116,7 @@ static void setup_dialog_callbacks(struct dlg_cell *did, qos_ctx_t *ctx)
 void qos_dialog_created_CB(struct dlg_cell *did, int type, struct dlg_cb_params * params)
 {
 	qos_ctx_t *qos_ctx = NULL;
-	struct sip_msg* msg = params->msg;
+	struct sip_msg* msg = params->req;
 	unsigned int dir = params->direction, role, other_role;
 
 	if (dir == DLG_DIR_UPSTREAM) {
@@ -173,7 +173,7 @@ void qos_dialog_created_CB(struct dlg_cell *did, int type, struct dlg_cb_params 
  */
 static void qos_dialog_destroy_CB(struct dlg_cell* did, int type, struct dlg_cb_params * params)
 {
-	struct sip_msg* msg = params->msg;
+	struct sip_msg* msg = params->req;
 	qos_ctx_t* qos_ctx = (qos_ctx_t*)*(params->param);
 
 	/* run the QOSCB_TERMINATED callback */
@@ -196,7 +196,7 @@ static void qos_dialog_destroy_CB(struct dlg_cell* did, int type, struct dlg_cb_
  */
 static void qos_dialog_request_CB(struct dlg_cell* did, int type, struct dlg_cb_params * params)
 {
-	struct sip_msg* msg = params->msg;
+	struct sip_msg* msg = params->req;
 	unsigned int dir = params->direction, role, other_role;
 	qos_ctx_t* qos_ctx = (qos_ctx_t*)*(params->param);
 
@@ -245,7 +245,7 @@ static void qos_dialog_request_CB(struct dlg_cell* did, int type, struct dlg_cb_
  */
 static void qos_dialog_response_CB(struct dlg_cell* did, int type, struct dlg_cb_params * params)
 {
-	struct sip_msg* msg = params->msg;
+	struct sip_msg* msg = params->rpl;
 	unsigned int dir = params->direction, role, other_role;
 	qos_ctx_t* qos_ctx = (qos_ctx_t*)*(params->param);
 
