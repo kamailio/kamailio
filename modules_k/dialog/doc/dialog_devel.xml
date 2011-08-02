@@ -67,6 +67,12 @@
 				</para>
 			</listitem>
 			<listitem>
+				<para><emphasis>DLGCB_TERMINATED_CONFIRMED</emphasis> -
+				called when response to a BYE request is received - it's a
+				per dialog type.
+				</para>
+			</listitem>
+			<listitem>
 				<para><emphasis>DLGCB_EXPIRED</emphasis> - called when the 
 				dialog expires without receiving a BYE - it's a per dialog 
 				type.
