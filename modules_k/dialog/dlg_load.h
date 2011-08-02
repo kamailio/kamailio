@@ -34,6 +34,8 @@
 
 struct dlg_binds {
 	register_dlgcb_f  register_dlgcb;
+    set_dlg_variable_f set_dlg_var;
+	get_dlg_variable_f get_dlg_var;
 };
 
 

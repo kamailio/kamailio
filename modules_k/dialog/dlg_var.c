@@ -214,6 +214,61 @@ void print_lists(struct dlg_cell *dlg) {
 	}
 }
 
+str * get_dlg_variable(struct dlg_cell *dlg, str *key)
+{
+    str* var = NULL;
+
+    if( !dlg || !key || key->len > strlen(key->s))
+    {
+        LM_ERR("BUG - bad parameters\n");
+
+        return NULL;
+    }
+
+    dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+    var = get_dlg_variable_unsafe( dlg, key);
+    dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+
+    return var;
+}
+
+int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
+{
+    if( !dlg || !key || key->len > strlen(key->s) || (val && val->len > strlen(val->s)))
+    {
+        LM_ERR("BUG - bad parameters\n");
+        return -1;
+    }
+
+    dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+
+    if( !val)
+    {
+        if (set_dlg_variable_unsafe(dlg, key, NULL, 1)!=0) {
+            LM_ERR("failed to delete dialog variable <%.*s>\n", key->len,key->s);
+            goto error;
+        }
+    } else {
+        if (set_dlg_variable_unsafe(dlg, key, val, 1)!=0) {
+            LM_ERR("failed to store dialog values <%.*s>\n",key->len,key->s);
+            goto error;
+        }
+    }
+
+    dlg->dflags &= DLG_FLAG_CHANGED_VARS;
+    dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+    if ( dlg_db_mode==DB_MODE_REALTIME )
+        update_dialog_dbinfo(dlg);
+
+    print_lists(dlg);
+
+    return 0;
+
+error:
+    dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+    return -1;
+}
+
 int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	struct dlg_cell *dlg;
@@ -225,7 +280,7 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	}
 
 	/* Retrieve the current dialog */
-	dlg=get_current_dlg_pointer();
+	dlg=get_current_dialog( msg);
 
 	if (dlg) {
 		/* Lock the dialog */
@@ -254,7 +309,7 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 	struct dlg_cell *dlg;
 
 	/* Retrieve the current dialog */
-	dlg=get_current_dlg_pointer();
+	dlg=get_current_dialog( msg);
 	
 	if (dlg) {
 		/* Lock the dialog */

@@ -37,7 +37,8 @@
 struct dlg_cell;
 
 struct dlg_cb_params {
-	struct sip_msg* msg;       /* sip msg related to the callback event */
+	struct sip_msg* req;       /* sip request msg related to the callback event */
+    struct sip_msg* rpl;       /* sip reply msg related to the callback event */
 	unsigned int direction;    /* direction of the sip msg */
 	void *dlg_data;            /* generic paramter, specific to callback */
 	void **param;              /* parameter passed at callback registration*/
@@ -52,6 +53,13 @@ typedef void (param_free_cb) (void *param);
 typedef int (*register_dlgcb_f)(struct dlg_cell* dlg, int cb_types,
 		dialog_cb f, void *param, param_free_cb ff);
 
+/* method to set a variable within a dialog */
+typedef int (*set_dlg_variable_f)( struct dlg_cell* dlg,
+                                   str* key,
+                                   str* val);
+/* method to get a variable from a dialog */
+typedef str* (*get_dlg_variable_f)( struct dlg_cell* dlg,
+                                    str* key);
 
 #define DLGCB_LOADED          (1<<0)
 #define DLGCB_CREATED         (1<<1)
@@ -67,6 +75,7 @@ typedef int (*register_dlgcb_f)(struct dlg_cell* dlg, int cb_types,
 #define DLGCB_RPC_CONTEXT     (1<<11)
 #define DLGCB_DESTROY         (1<<12)
 #define DLGCB_SPIRALED        (1<<13)
+#define DLGCB_TERMINATED_CONFIRMED (1<<14)
 
 struct dlg_callback {
 	int types;
@@ -91,8 +100,12 @@ int register_dlgcb( struct dlg_cell* dlg, int types, dialog_cb f, void *param, p
 
 void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg);
 
-void run_dlg_callbacks( int type , struct dlg_cell *dlg, struct sip_msg *msg,
-		unsigned int dir, void *dlg_data);
+void run_dlg_callbacks( int type ,
+                        struct dlg_cell *dlg,
+                        struct sip_msg *req,
+                        struct sip_msg *rpl,
+                        unsigned int dir,
+                        void *dlg_data);
 
 void run_load_callbacks( void );
 

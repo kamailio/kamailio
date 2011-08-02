@@ -49,6 +49,8 @@ struct dlg_var {
 	struct dlg_var *next;
 };
 
+str * get_dlg_variable(struct dlg_cell *dlg, str *key);
+int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val);
 
 int pv_parse_dialog_var_name(pv_spec_p sp, str *in);
 

@@ -61,6 +61,7 @@
 #include "dlg_hash.h"
 #include "dlg_profile.h"
 #include "dlg_req_within.h"
+#include "dlg_db_handler.h"
 
 #define MAX_LDG_LOCKS  2048
 #define MIN_LDG_LOCKS  2
@@ -153,7 +154,12 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 			dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
 	}
 
-	run_dlg_callbacks( DLGCB_DESTROY , dlg, 0, DLG_DIR_NONE, 0);
+	run_dlg_callbacks( DLGCB_DESTROY , dlg, NULL, NULL, DLG_DIR_NONE, 0);
+
+
+	/* delete the dialog from DB*/
+	if (dlg_db_mode)
+		remove_dialog_from_db(dlg);
 
 	if(dlg==get_current_dlg_pointer())
 		reset_current_dlg_pointer();
@@ -841,6 +847,11 @@ static inline int internal_mi_print_dlg(struct mi_node *rpl,
 	if (node1==0)
 		goto error;
 
+	p= int2str((unsigned long)dlg->ref, &len);
+	node1 = add_mi_node_child( node, MI_DUP_VALUE, "ref_count", 9, p, len);
+	if (node1==0)
+		goto error;
+
 	p= int2str((unsigned long)dlg->start_ts, &len);
 	node1 = add_mi_node_child(node,MI_DUP_VALUE,"timestart",9, p, len);
 	if (node1==0)
@@ -934,8 +945,12 @@ static inline int internal_mi_print_dlg(struct mi_node *rpl,
 		node1 = add_mi_node_child(node, 0, "context", 7, 0, 0);
 		if(node1 == 0)
 			goto error;
-		run_dlg_callbacks( DLGCB_MI_CONTEXT, dlg, NULL, 
-			DLG_DIR_NONE, (void *)node1);
+		run_dlg_callbacks( DLGCB_MI_CONTEXT,
+		                   dlg,
+		                   NULL,
+		                   NULL,
+		                   DLG_DIR_NONE,
+		                   (void *)node1);
 	}
 	return 0;
 

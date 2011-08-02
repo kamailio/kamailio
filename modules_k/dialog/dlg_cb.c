@@ -40,7 +40,7 @@ static struct dlg_head_cbl* create_cbs = 0;
 
 static struct dlg_head_cbl* load_cbs = 0;
 
-static struct dlg_cb_params params = {NULL, DLG_DIR_NONE, NULL, NULL};
+static struct dlg_cb_params params = {NULL, NULL, DLG_DIR_NONE, NULL, NULL};
 
 
 #define POINTER_CLOSED_MARKER  ((void *)(-1))
@@ -184,7 +184,8 @@ static void run_load_callback(struct dlg_callback *cb)
 	struct dlg_cell *dlg;
 	unsigned int i;
 
-	params.msg = NULL;
+	params.req = NULL;
+	params.rpl = NULL;
 	params.direction = DLG_DIR_NONE;
 	params.param = &cb->param;
 
@@ -217,7 +218,8 @@ void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg)
 	if (create_cbs==NULL || create_cbs->first==NULL)
 		return;
 
-	params.msg = msg;
+	params.req = msg;
+	params.rpl = NULL;
 	/* initial request goes DOWNSTREAM all the time */
 	params.direction = DLG_DIR_DOWNSTREAM;
 	/* avoid garbage due static structure */
@@ -233,12 +235,16 @@ void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg)
 }
 
 
-void run_dlg_callbacks(int type , struct dlg_cell *dlg, struct sip_msg *msg,
-											unsigned int dir, void *dlg_data)
+void run_dlg_callbacks( int type ,
+						struct dlg_cell *dlg,
+						struct sip_msg *req,
+						struct sip_msg *rpl,
+						unsigned int dir, void *dlg_data)
 {
 	struct dlg_callback *cb;
 
-	params.msg = msg;
+	params.req = req;
+	params.rpl = rpl;
 	params.direction = dir;
 	params.dlg_data = dlg_data;
 
