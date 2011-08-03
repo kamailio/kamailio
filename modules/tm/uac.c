@@ -216,6 +216,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	int backup_route_type;
 #endif
 	snd_flags_t snd_flags;
+	tm_xdata_t backup_xd;
 
 	ret=-1;
 	hi=0; /* make gcc happy */
@@ -353,7 +354,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				lreq.rcv.comp=dst.comp;
 			#endif /* USE_COMP */
 				sflag_bk = getsflags();
-				tm_xdata_swap(new_cell, 0);
+				tm_xdata_swap(new_cell, &backup_xd, 0);
 
 				/* run the route */
 				backup_route_type = get_route_type();
@@ -372,7 +373,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				set_route_type( backup_route_type );
 
 				/* restore original environment */
-				tm_xdata_swap(new_cell, 1);
+				tm_xdata_swap(new_cell, &backup_xd, 1);
 				setsflagsval(sflag_bk);
 
 				if (unlikely(lreq.new_uri.s))
