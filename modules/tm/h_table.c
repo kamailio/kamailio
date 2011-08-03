@@ -499,12 +499,15 @@ error0:
  * - mode = 0 - from msg context to _txdata and use T lists
  * - mode = 1 - restore to msg context from _txdata
  */
-void tm_xdata_swap(tm_cell_t *t, int mode)
+void tm_xdata_swap(tm_cell_t *t, tm_xdata_t *xd, int mode)
 {
 	static tm_xdata_t _txdata;
 	tm_xdata_t *x;
 
-	x = &_txdata;
+	if(xd==NULL)
+		x = &_txdata;
+	else
+		x = xd;
 
 	if(mode==0) {
 		if(t==NULL)

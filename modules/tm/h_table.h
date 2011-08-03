@@ -565,7 +565,7 @@ inline static void remove_from_hash_table_unsafe( struct cell * p_cell)
 /**
  * backup xdata from/to msg context to local var and use T lists
  */
-void tm_xdata_swap(tm_cell_t *t, int mode);
+void tm_xdata_swap(tm_cell_t *t, tm_xdata_t *xd, int mode);
 
 #endif
 
