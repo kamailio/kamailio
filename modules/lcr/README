@@ -865,7 +865,7 @@ defunct_gw(60);
 
    lcr_id can be an integer constant or a pseudo variable holding an
    integer value. ip_addr can be a string or a pseudo variable holding a
-   string value. proto can be an integer constant (0 = 1 = UDP, 2 = TCP, 3
+   string value. proto can be an integer constant (0 = ANY, 1 = UDP, 2 = TCP, 3
    = TLS, 4 = SCTP) or a pseudo variable holding such an integer value.
 
    If request comes from a gateway, gateway's tag and flags are stored as
