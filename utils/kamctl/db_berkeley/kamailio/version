@@ -16,10 +16,10 @@ address|
 address|4
 aliases|
 aliases|1004
-carrierfailureroute|
-carrierfailureroute|2
 carrier_name|
 carrier_name|1
+carrierfailureroute|
+carrierfailureroute|2
 carrierroute|
 carrierroute|3
 cpl|
@@ -50,16 +50,12 @@ globalblacklist|
 globalblacklist|1
 grp|
 grp|2
-METADATA_DEFAULTS
-NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL|NULL|NIL|0|NULL
 htable|
 htable|1
 imc_members|
 imc_members|1
 imc_rooms|
 imc_rooms|1
-METADATA_DEFAULTS
-NIL|NIL|NULL|NULL|NIL|NIL
 lcr_gw|
 lcr_gw|1
 lcr_rule|
@@ -72,8 +68,6 @@ matrix|
 matrix|1
 missed_calls|
 missed_calls|3
-mtree|
-mtree|1
 pdt|
 pdt|1
 presentity|
@@ -98,8 +92,6 @@ subscriber|
 subscriber|6
 trusted|
 trusted|5
-uacreg|
-uacreg|1
 uri|
 uri|1
 userblacklist|
