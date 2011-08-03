@@ -93,8 +93,8 @@ int load_carrier_names(char *filename) {
 			exit(-1);
 		}
 		
-		strncpy(cnames[id], p, len);
-		cnames[id][len]=0;
+		strncpy(cnames[id], p, len - 1);
+		cnames[id][len - 1]=0;
 
 	nextline:
 		n++;
