@@ -151,6 +151,8 @@ unsigned int get_on_branch(void)
 
 /* prepare_new_uac flags */
 #define UAC_DNS_FAILOVER_F 1 /**< new branch due to dns failover */
+#define UAC_SKIP_BR_DST_F  2 /**< don't set next hop as dst_uri for
+							   branch_route */
 
 
 /** prepares a new branch "buffer".
@@ -176,7 +178,7 @@ unsigned int get_on_branch(void)
  * @param fsocket - forced send socket for forwarding.
  * @param send_flags - special flags for sending (see SND_F_* / snd_flags_t).
  * @param fproto - forced proto for forwarding. Used only if next_hop!=0.
- * @param flags - 0 or UAC_DNS_FAILOVER_F for now.
+ * @param flags - 0, UAC_DNS_FAILOVER_F or UAC_SKIP_BR_DST_F for now.
  *
  * @return  0 on success, < 0 (ser_errror E***) on failure.
  */
@@ -302,10 +304,12 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 		i_req->dst_uri.s=0;
 		i_req->dst_uri.len=0;
 		if (likely(next_hop)){
-			/* set dst uri to next_hop for the on_branch route */
-			if (unlikely(set_dst_uri(i_req, next_hop)<0)){
-				ret=E_OUT_OF_MEM;
-				goto error03;
+			if(unlikely((flags & UAC_SKIP_BR_DST_F)==0)){
+				/* set dst uri to next_hop for the on_branch route */
+				if (unlikely(set_dst_uri(i_req, next_hop)<0)){
+					ret=E_OUT_OF_MEM;
+					goto error03;
+				}
 			}
 		}
 
@@ -1475,7 +1479,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		try_new=1;
 		branch_ret=add_uac( t, p_msg, GET_RURI(p_msg), GET_NEXT_HOP(p_msg),
 							&p_msg->path_vec, proxy, p_msg->force_send_socket,
-							p_msg->fwd_send_flags, proto, 0);
+							p_msg->fwd_send_flags, proto,
+							(p_msg->dst_uri.len)?0:UAC_SKIP_BR_DST_F);
 		if (branch_ret>=0) 
 			added_branches |= 1<<branch_ret;
 		else
@@ -1491,7 +1496,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		branch_ret=add_uac( t, p_msg, &current_uri,
 							(dst_uri.len) ? (&dst_uri) : &current_uri,
 							&path, proxy, si, p_msg->fwd_send_flags,
-							proto, 0);
+							proto, (dst_uri.len)?0:UAC_SKIP_BR_DST_F);
 		/* pick some of the errors in case things go wrong;
 		   note that picking lowest error is just as good as
 		   any other algorithm which picks any other negative
