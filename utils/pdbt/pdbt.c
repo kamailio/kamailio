@@ -546,10 +546,12 @@ void query_mmap(char *number, char *comment, void *data) {
 	nmatch=dtm_longest_match(mroot, number, strlen(number), &carrierid);
 
 	if (nmatch<=0) {
-		LINFO("%s: not_found: nmatch=%ld, comment='%s'\n", number, (long int)nmatch, comment);
+		LINFO("%s:%s:%ld:%s\n", number, comment, (long int)carrierid, "not allocated, probably old");
 	}
 	else {
-		LINFO("%s: found: carrier_id=%ld, carrier_name='%s', nmatch=%ld, comment='%s'\n", number, (long int)carrierid, carrierid2name(carrierid), (long int)nmatch, comment);
+		LINFO("%s:%s:%ld:%s\n", number, comment, (long int)carrierid, carrierid2name(carrierid));
+		/* LINFO("%s: found: carrier_id=%ld, carrier_name='%s', nmatch=%ld, comment='%s'\n", number, (long int)carrierid, carrierid2name(carrierid), (long int)nmatch, comment);
+		*/
 	}
 }
 
@@ -566,7 +568,9 @@ void query_server(char *number, char *comment, void *data) {
 		LINFO("%s: not_found: comment='%s'\n", number, comment);
 	}
 	else {
-		LINFO("%s: found: carrier_id=%ld, carrier_name='%s', comment='%s'\n", number, (long int)carrierid, carrierid2name(carrierid), comment);
+		LINFO("%s:%ld:%s\n", number, (long int)carrierid, carrierid2name(carrierid));
+		/* LINFO("%s: found: carrier_id=%ld, carrier_name='%s', comment='%s'\n", number, (long int)carrierid, carrierid2name(carrierid), comment);
+		*/
 	}
 }
 
