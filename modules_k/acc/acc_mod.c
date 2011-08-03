@@ -73,6 +73,7 @@
 #include "acc_mod.h"
 #include "acc_extra.h"
 #include "acc_logic.h"
+#include "acc_cdr.h"
 
 #ifdef RAD_ACC
 #include "../../lib/kcore/radius.h"
@@ -110,7 +111,7 @@ struct acc_extra *leg_info = 0;
 
 
 /* ----- SYSLOG acc variables ----------- */
-/*! \name AccSyslogVariables  Syslog Variables */     
+/*! \name AccSyslogVariables  Syslog Variables */
 /*@{*/
 
 int log_flag = -1;
@@ -122,6 +123,16 @@ static char *log_extra_str = 0; /*!< Syslog: log extra variables */
 struct acc_extra *log_extra = 0; /*!< Log extra attributes */
 
 /*@}*/
+
+/* ----- CDR generation variables ------- */
+/*! \name AccCdrVariables  CDR Variables */
+/*@{*/
+
+int cdr_enable  = 0;
+int cdr_start_on_confirmed = 0;
+static char* cdr_facility_str = 0;
+static char* cdr_log_extra_str = 0;
+/*@{*/
 
 /* ----- RADIUS acc variables ----------- */
 /*! \name AccRadiusVariables  Radius Variables */     
@@ -230,6 +241,11 @@ static param_export_t params[] = {
 	{"log_level",            INT_PARAM, &log_level            },
 	{"log_facility",         STR_PARAM, &log_facility_str     },
 	{"log_extra",            STR_PARAM, &log_extra_str        },
+    /* cdr specific */
+    {"cdr_enable",           INT_PARAM, &cdr_enable                     },
+    {"cdr_start_on_confirmed", INT_PARAM, &cdr_start_on_confirmed   },
+    {"cdr_facility",         STR_PARAM, &cdr_facility_str                },
+    {"cdr_extra",            STR_PARAM, &cdr_log_extra_str              },
 #ifdef RAD_ACC
 	{"radius_config",        STR_PARAM, &radius_config        },
 	{"radius_flag",          INT_PARAM, &radius_flag          },
@@ -502,6 +518,35 @@ static int mod_init( void )
 	}
 
 	acc_log_init();
+
+    /* ----------- INIT CDR GENERATION ----------- */
+
+    if( cdr_enable < 0 || cdr_enable > 1)
+    {
+        LM_ERR("cdr_enable is out of rage\n");
+        return -1;
+    }
+
+    if( cdr_enable)
+    {
+        if( cdr_log_extra_str && set_cdr_extra( cdr_log_extra_str) != 0)
+        {
+            LM_ERR( "failed to set cdr extra '%s'\n", cdr_log_extra_str);
+            return -1;
+        }
+
+        if( cdr_facility_str && set_cdr_facility( cdr_facility_str) != 0)
+        {
+            LM_ERR( "failed to set cdr facility '%s'\n", cdr_facility_str);
+            return -1;
+        }
+
+        if( init_cdr_generation() != 0)
+        {
+            LM_ERR("failed to init cdr generation\n");
+            return -1;
+        }
+    }
 
 	/* ------------ SQL INIT SECTION ----------- */
 

@@ -55,6 +55,9 @@ extern int log_level;
 extern int log_flag;
 extern int log_missed_flag;
 
+extern int cdr_enable;
+extern int cdr_start_on_confirmed;
+extern int cdr_log_facility;
 
 #ifdef RAD_ACC
 extern int radius_flag;

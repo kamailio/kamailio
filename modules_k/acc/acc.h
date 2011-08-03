@@ -69,6 +69,7 @@
 #define A_STATUS_LEN (sizeof(A_STATUS)-1)
 
 #define A_SEPARATOR_CHR ';'
+#define A_SEPARATOR_CHR_2 ' '
 #define A_EQ_CHR '='
 
 #define MAX_SYSLOG_SIZE  65536

@@ -37,6 +37,12 @@
 		<affiliation><orgname>Voice Sistem SRL</orgname></affiliation>
 		<email>bogdan@voice-system.ro</email>
 		</editor>
+		<editor>
+		<firstname>Sven</firstname>
+		<surname>Knoblich</surname>
+		<affiliation><orgname>1&amp;1 Internet AG</orgname></affiliation>
+		<email>sven.knoblich@1und1.de</email>
+		</editor>
 	</authorgroup>
 	<copyright>
 		<year>2002</year>
@@ -48,6 +54,16 @@
 		<year>2006</year>
 		<holder>Voice Sistem SRL</holder>
 	</copyright>
+	<copyright>
+		<year>2011</year>
+		<holder>1&amp;1 Internet AG</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
 	</bookinfo>
 	<toc></toc>
 
