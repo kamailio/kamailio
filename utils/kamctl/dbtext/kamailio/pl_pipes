@@ -1,0 +1,2 @@
+id(int,auto) pipeid(string) algorithm(string) plimit(int) 
+pl_pipes:1
