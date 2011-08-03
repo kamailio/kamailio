@@ -86,6 +86,7 @@ static int child_init(int rank);
 static void destroy(void);
 static int sip_trace(struct sip_msg*, char*, char*);
 
+static int sip_trace_store_db(struct _siptrace_data* sto);
 static int trace_send_duplicate(char *buf, int len);
 
 static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps);
@@ -463,14 +464,20 @@ error:
 
 static int sip_trace_store(struct _siptrace_data *sto)
 {
-	db_key_t db_keys[NR_KEYS];
-	db_val_t db_vals[NR_KEYS];
-
 	if(sto==NULL)
 	{
 		LM_DBG("invalid parameter\n");
 		return -1;
 	}
+	
+	trace_send_duplicate(sto->body.s, sto->body.len);
+	return sip_trace_store_db(sto);
+}
+
+static int sip_trace_store_db(struct _siptrace_data *sto)
+{
+	db_key_t db_keys[NR_KEYS];
+	db_val_t db_vals[NR_KEYS];
 
 	db_keys[0] = &msg_column;
 	db_vals[0].type = DB1_BLOB;
@@ -539,9 +546,6 @@ static int sip_trace_store(struct _siptrace_data *sto)
 	
 	if(sto->avp==NULL)
 		goto done;
-	
-	trace_send_duplicate(db_vals[0].val.blob_val.s,
-			db_vals[0].val.blob_val.len);
 	
 	db_vals[9].val.str_val = sto->avp_value.s;
 
