@@ -107,16 +107,7 @@ fi
 
 if [ "$RUN_KAMAILIO" != "yes" ]; then
   echo "$DESC not yet configured. Edit $DEFAULTS first."
-  case "$1" in
-  status)
-    # LSB - 4: program or service status is unknown.
-    exit 4
-    ;;
-  *)
-    # LSB - 6: program is not configured.
-    exit 6
-    ;;
-  esac
+  exit 0
 fi
 
 
