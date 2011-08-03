@@ -117,10 +117,13 @@ int trace_flag = -1;
 int trace_on   = 0;
 int trace_sl_acks = 1;
 
+int trace_to_database = 1;
+
 str    dup_uri_str      = {0, 0};
 struct sip_uri *dup_uri = 0;
 
 int *trace_on_flag = NULL;
+int *trace_to_database_flag = NULL;
 
 static unsigned short traced_user_avp_type = 0;
 static int_str traced_user_avp;
@@ -166,6 +169,7 @@ static param_export_t params[] = {
 	{"traced_user_avp",    STR_PARAM, &traced_user_avp_str.s},
 	{"trace_table_avp",    STR_PARAM, &trace_table_avp_str.s},
 	{"duplicate_uri",      STR_PARAM, &dup_uri_str.s        },
+	{"trace_to_database",  INT_PARAM, &trace_to_database    },
 	{"trace_local_ip",     STR_PARAM, &trace_local_ip.s     },
 	{"trace_sl_acks",      INT_PARAM, &trace_sl_acks        },
 	{0, 0, 0}
@@ -281,6 +285,14 @@ static int mod_init(void)
 	}
 	
 	*trace_on_flag = trace_on;
+	
+	trace_to_database_flag = (int*)shm_malloc(sizeof(int));
+	if(trace_to_database_flag==NULL) {
+		LM_ERR("no more shm memory left\n");
+		return -1;
+	}
+	
+	*trace_to_database_flag = trace_to_database;
 	
 	/* register callbacks to TM */
 	if (load_tm_api(&tmb)!=0)
@@ -476,6 +488,9 @@ static int sip_trace_store(struct _siptrace_data *sto)
 
 static int sip_trace_store_db(struct _siptrace_data *sto)
 {
+	if(trace_to_database_flag==NULL || *trace_to_database_flag==0)
+		goto done;
+	
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
 

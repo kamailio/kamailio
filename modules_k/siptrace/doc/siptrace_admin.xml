@@ -233,6 +233,31 @@ modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 		</example>
 	</section>
 	<section>
+		<title><varname>trace_to_database</varname> (integer)</title>
+		<para>
+		Parameter to enable/disable inserts to the Database from this
+		Kamailio. 
+		</para>
+		<para>
+		In case we only want to send the SIP-Messages to the 
+		duplicate_uri and not store the information to the local 
+		database we can set this to "0".  
+		</para>
+		<para>
+		<emphasis>
+			Default value is "1".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>trace_to_database</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("siptrace", "trace_to_database", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>trace_local_ip</varname> (str)</title>
 		<para>
 		The address to be used in fromip field for local generated
