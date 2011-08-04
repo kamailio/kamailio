@@ -39,7 +39,7 @@ check_kamailio_config ()
 {
   # Check if kamailio configuration is valid before starting the server.
   set +e
-  out=$($DAEMON -c 2>&1 > /dev/null)
+  out=$($DAEMON -M $PKG_MEMORY -c 2>&1 > /dev/null)
   retcode=$?
   set -e
   if [ "$retcode" != '0' ]; then
@@ -114,10 +114,12 @@ fi
 set -e
 
 
-MEMORY=$((`echo $MEMORY | sed -e 's/[^0-9]//g'`))
+SHM_MEMORY=$((`echo $SHM_MEMORY | sed -e 's/[^0-9]//g'`))
+PKG_MEMORY=$((`echo $PKG_MEMORY | sed -e 's/[^0-9]//g'`))
+[ $SHM_MEMORY -le 0 ] && SHM_MEMORY=64
+[ $PKG_MEMORY -le 0 ] && PKG_MEMORY=4
 [ -z "$USER" ]  && USER=kamailio
 [ -z "$GROUP" ] && GROUP=kamailio
-[ $MEMORY -le 0 ] && MEMORY=32
 
 
 if test "$DUMP_CORE" = "yes" ; then
@@ -133,10 +135,10 @@ fi
 
 
 if [ "$SSD_SUID" != "yes" ]; then
-  OPTIONS="-f $CFGFILE -P $PIDFILE -m $MEMORY -u $USER -g $GROUP"
+  OPTIONS="-f $CFGFILE -P $PIDFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP"
   SSDOPTS=""
 else
-  OPTIONS="-f $CFGFILE -P $PIDFILE -m $MEMORY"
+  OPTIONS="-f $CFGFILE -P $PIDFILE -m $MEMORY -M $PKG_MEMORY"
   SSDOPTS="--chuid $USER:$GROUP"
 fi
 
