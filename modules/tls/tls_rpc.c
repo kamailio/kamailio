@@ -133,11 +133,15 @@ static void tls_list(rpc_t* rpc, void* c)
 					"dst_ip", dst_ip,
 					"dst_port", con->rcv.dst_port);
 			if (tls_d) {
-				tls_info = SSL_CIPHER_description(
+				if(SSL_get_current_cipher(tls_d->ssl)) {
+					tls_info = SSL_CIPHER_description(
 									SSL_get_current_cipher(tls_d->ssl),
 									buf, sizeof(buf));
-				len = strlen(buf);
-				if (len && buf[len - 1] == '\n') buf[len - 1] = '\0';
+					len = strlen(buf);
+					if (len && buf[len - 1] == '\n') buf[len - 1] = '\0';
+				} else {
+					tls_info = "unknown";
+				}
 				/* tls data */
 				state = "unknown/error";
 				lock_get(&con->write_lock);
