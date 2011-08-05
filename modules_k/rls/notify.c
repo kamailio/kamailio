@@ -48,6 +48,8 @@
 #include "../../lib/kcore/hash_func.h"
 #include "rls.h"
 #include "notify.h"
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
 
 typedef struct res_param
 {
@@ -1131,6 +1133,7 @@ int parse_xcap_uri(char *uri, str *host, unsigned short *port, str *path)
 	return 1;
 }
 
+#define MAX_PATH_LEN	127
 int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 		xmlNodePtr *rl_node, xmlDocPtr *xmldoc)
 {
@@ -1144,12 +1147,68 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 	db_val_t *row_vals;
 	int xcap_col;
 	str body;
+	int checked = 0;
+	str root, path = {0, 0};
+	char path_str[MAX_PATH_LEN + 1];
+	xmlXPathContextPtr xpathCtx = NULL;
+	xmlXPathObjectPtr xpathObj = NULL;
+
 
 	if (rl_uri==NULL || username==NULL || domain==NULL)
 	{
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
+
+	LM_DBG("rl_uri: %.*s", rl_uri->len, rl_uri->s);
+
+	root.s = rl_uri->s;
+	root.len = rl_uri->len;
+	while (checked < rl_uri->len)
+	{
+		if (checked < rl_uri->len - 3 && strncmp(rl_uri->s + checked, "/~~", 3) == 0)
+		{
+			root.len = checked;
+			checked += 3;
+			break;
+		}
+		checked++;
+	}
+	LM_DBG("doc: %.*s", root.len, root.s);
+
+	memset (path_str, '\0', MAX_PATH_LEN + 1);
+	path.s = path_str;
+	path.len = 0;
+	while (checked < rl_uri->len && path.len <= MAX_PATH_LEN)
+	{
+		if (rl_uri->s[checked] == '/')
+		{
+			strcat(path.s, "/xmlns:");
+			path.len += 7;
+			checked++;
+		}
+		else if (checked <= rl_uri->len - 3 && strncmp(rl_uri->s + checked, "\%5b", 3) == 0)
+		{
+			path.s[path.len++] = '[';
+			checked += 3;
+		}
+		else if (checked <= rl_uri->len - 3 && strncmp(rl_uri->s + checked, "\%5d", 3) == 0)
+		{
+			path.s[path.len++] = ']';
+			checked += 3;
+		}
+		else if (checked <= rl_uri->len - 3 && strncmp(rl_uri->s + checked, "\%22", 3) == 0)
+		{
+			path.s[path.len++] = '\"';
+			checked += 3;
+		}
+		else
+		{
+			path.s[path.len++] = rl_uri->s[checked];
+			checked++;
+		}
+	}
+	LM_DBG("path: %.*s", path.len, path.s);
 
 	query_cols[n_query_cols] = &str_username_col;
 	query_vals[n_query_cols].type = DB1_STR;
@@ -1172,7 +1231,7 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 	query_cols[n_query_cols] = &str_doc_uri_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = *rl_uri;
+	query_vals[n_query_cols].val.str_val = root;
 	n_query_cols++;
 
 	if(rls_dbf.use_table(rls_db, &rls_xcap_table) < 0)
@@ -1187,8 +1246,8 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
 				n_query_cols, n_result_cols, 0, &result)<0)
 	{
-		LM_ERR("failed querying table xcap for document [rl_uri]=%.*s\n",
-				rl_uri->len, rl_uri->s);
+		LM_ERR("failed querying table xcap for document: %.*s\n",
+				root.len, root.s);
 		if(result)
 			rls_dbf.free_result(rls_db, result);
 		return -1;
@@ -1225,19 +1284,67 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 		goto error;
 	}
 
-	*rl_node = XMLDocGetNodeByName(*xmldoc,"resource-lists", NULL);
-	if(rl_node==NULL)
+	if (path.len == 0)
 	{
-		LM_ERR("no resource-lists node in XML document\n");
-		goto error;
+		/* No path specified - use all resource-lists. */
+		*rl_node = XMLDocGetNodeByName(*xmldoc,"resource-lists", NULL);
+		if(rl_node==NULL)
+		{
+			LM_ERR("no resource-lists node in XML document\n");
+			goto error;
+		}
 	}
+	else if (path.s != NULL)
+	{
+		xpathCtx = xmlXPathNewContext(*xmldoc);
+		if (xpathCtx == NULL)
+		{
+			LM_ERR("unable to create new XPath context");
+			goto error;
+		}
 
+		if (xmlXPathRegisterNs(xpathCtx, BAD_CAST "xmlns", BAD_CAST "urn:ietf:params:xml:ns:resource-lists") != 0)
+		{
+			LM_ERR("unable to register xmlns\n");
+			goto error;
+		}
+
+		xpathObj = xmlXPathEvalExpression(BAD_CAST path.s, xpathCtx);
+		if (xpathObj == NULL)
+		{
+			LM_ERR("unable to evaluate path\n");
+			goto error;
+		}
+
+		if (xpathObj->nodesetval == NULL || xpathObj->nodesetval->nodeNr <= 0)
+		{
+			LM_ERR("no nodes found\n");
+			goto error;
+		}
+		if (xpathObj->nodesetval->nodeTab[0] != NULL && xpathObj->nodesetval->nodeTab[0]->type != XML_ELEMENT_NODE)
+		{
+			LM_ERR("no nodes of the correct type found\n");
+			goto error;
+
+		}
+
+		*rl_node = xpathObj->nodesetval->nodeTab[0];
+
+		xmlXPathFreeObject(xpathObj);
+		xmlXPathFreeContext(xpathCtx);
+	}
+	
 	rls_dbf.free_result(rls_db, result);
 	return 1;
 
 error:
 	if(result!=NULL)
 		rls_dbf.free_result(rls_db, result);
+	if(xpathObj!=NULL)
+		xmlXPathFreeObject(xpathObj);
+	
+	if(xpathCtx!=NULL)
+		xmlXPathFreeContext(xpathCtx);
 	if(xmldoc!=NULL)
 		xmlFreeDoc(*xmldoc);
 
