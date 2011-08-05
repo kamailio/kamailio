@@ -3200,7 +3200,7 @@ cmd:
 							NUMBER_ST, (void *)Q_UNSPECIFIED);
 		set_cfg_pos($$);
 	}
-	| REMOVE_BRANCH LPAREN NUMBER RPAREN {
+	| REMOVE_BRANCH LPAREN intno RPAREN {
 			$$=mk_action(REMOVE_BRANCH_T, 1, NUMBER_ST, (void*)$3);
 			set_cfg_pos($$);
 	}
