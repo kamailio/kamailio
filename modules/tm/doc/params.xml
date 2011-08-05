@@ -1168,6 +1168,46 @@ modparam("tm", "failure_reply_mode", 3)
 	</example>
 	</section>
 
+	<section id="faked_reply_prio">
+	<title><varname>faked_reply_prio</varname> (integer)</title>
+	<para>
+		It controls how branch selection is done. It allows to give a penalty
+		to faked replies such as the infamous 408 on branch timeout.
+	</para>
+	<para>
+		Internally, every reply is assigned a priority between 0 (high prio) 
+		and 32000 (low prio). With this parameter the priority of fake replies
+		can be adjusted.
+	</para>
+	<itemizedlist>
+		<listitem><para>
+		<emphasis>0</emphasis> - disabled (default)
+		</para></listitem>
+		<listitem><para>
+		<emphasis>&lt; 0</emphasis> - priority is increased by given amount.
+		</para></listitem>
+		<listitem><para>
+		<emphasis>&gt; 0</emphasis> - priority is decreased by given amount.
+		Do not make it higer than 10000 or faked replies will even loose
+		from 1xx clsss replies.
+		</para></listitem>
+	</itemizedlist>
+	<para>
+		The default value is 0.
+	</para>
+	<para>
+		To let received replies win from a locally generated 408, set this
+		value to 2000.
+	</para>
+	<example>
+		<title>Set <varname>faked_reply_prio</varname> parameter</title>
+		<programlisting>
+...
+modparam("tm", "faked_reply_prio", 2000)
+...
+	    </programlisting>
+	</example>
+	</section>
 
 	<section id="local_cancel_reason">
 		<title><varname>local_cancel_reason</varname> (boolean)</title>

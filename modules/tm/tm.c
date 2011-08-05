@@ -517,6 +517,7 @@ static param_export_t params[]={
 	{"disable_6xx_block",   PARAM_INT, &default_tm_cfg.disable_6xx           },
 	{"local_ack_mode",      PARAM_INT, &default_tm_cfg.local_ack_mode        },
 	{"failure_reply_mode",  PARAM_INT, &failure_reply_mode                   },
+	{"faked_reply_prio",    PARAM_INT, &faked_reply_prio                     },
 #ifdef CANCEL_REASON_SUPPORT
 	{"local_cancel_reason", PARAM_INT, &default_tm_cfg.local_cancel_reason   },
 	{"e2e_cancel_reason",   PARAM_INT, &default_tm_cfg.e2e_cancel_reason     },

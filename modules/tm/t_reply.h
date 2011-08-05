@@ -65,6 +65,10 @@ extern int goto_on_sl_reply;
 
 extern int failure_reply_mode;
 
+extern int faked_reply_prio;
+
+extern int tm_rich_redirect;
+ 
 /* has this to-tag been never seen in previous 200/INVs? */
 int unmatched_totag(struct cell *t, struct sip_msg *ack);
 

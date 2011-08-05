@@ -201,6 +201,14 @@ static unsigned short resp_class_prio[]={
 			1000   /* 6xx, highest priority */
 };
 
+/* How to prioritize faked replies 
+ * The value will be added to the default prio
+ * - 0 disabled
+ * - < 0 increase prio
+ * - > 0 decrease prio
+ */
+int faked_reply_prio = 0;
+
 
 int t_get_reply_totag(struct sip_msg *msg, str *totag)
 {
@@ -1007,18 +1015,26 @@ inline static short int get_4xx_prio(unsigned char xx)
  *  6xx                          1000+xx              (high)
  *  2xx                          0000+xx              (highest) 
  */
-inline static short int get_prio(unsigned int resp)
+inline static short int get_prio(unsigned int resp, struct sip_msg *rpl)
 {
 	int class;
 	int xx;
+	int prio;
 	
 	class=resp/100;
 
 	if (class<7){
 		xx=resp%100;
-		return resp_class_prio[class]+((class==4)?get_4xx_prio(xx):xx);
+		prio = resp_class_prio[class]+((class==4)?get_4xx_prio(xx):xx);
+	} else {
+		prio = 10000+resp; /* unknown response class => return very low prio */
 	}
-	return 10000+resp; /* unknown response class => return very low prio */
+	if (rpl == FAKED_REPLY) {
+		/* Add faked_reply penalty */
+		return prio + faked_reply_prio;
+	} else {
+		return prio;
+	}
 }
 
 
@@ -1031,12 +1047,15 @@ inline static short int get_prio(unsigned int resp)
 int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 {
 	int best_b, best_s, b;
+	sip_msg_t *rpl;
 
 	best_b=-1; best_s=0;
 	for ( b=0; b<t->nr_of_outgoings ; b++ ) {
+		rpl = t->uac[b].reply;
+
 		/* "fake" for the currently processed branch */
 		if (b==inc_branch) {
-			if (get_prio(inc_code)<get_prio(best_s)) {
+			if (get_prio(inc_code, rpl)<get_prio(best_s, rpl)) {
 				best_b=b;
 				best_s=inc_code;
 			}
@@ -1051,8 +1070,8 @@ int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 		if ( t->uac[b].last_received<200 )
 			return -2;
 		/* if reply is null => t_send_branch "faked" reply, skip over it */
-		if ( t->uac[b].reply && 
-				get_prio(t->uac[b].last_received)<get_prio(best_s) ) {
+		if ( rpl && 
+				get_prio(t->uac[b].last_received, rpl)<get_prio(best_s, rpl) ) {
 			best_b =b;
 			best_s = t->uac[b].last_received;
 		}
@@ -1075,6 +1094,7 @@ int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 int t_pick_branch_blind(struct cell *t, int *res_code)
 {
 	int best_b, best_s, b;
+	sip_msg_t *rpl;
 
 	best_b=-1; best_s=0;
 	for ( b=0; b<t->nr_of_outgoings ; b++ ) {
@@ -1082,8 +1102,9 @@ int t_pick_branch_blind(struct cell *t, int *res_code)
 		if ( t->uac[b].last_received<200 )
 			return -2;
 		/* if reply is null => t_send_branch "faked" reply, skip over it */
-		if ( t->uac[b].reply && 
-				get_prio(t->uac[b].last_received)<get_prio(best_s) ) {
+		rpl = t->uac[b].reply;
+		if ( rpl && 
+				get_prio(t->uac[b].last_received, rpl)<get_prio(best_s, rpl) ) {
 			best_b = b;
 			best_s = t->uac[b].last_received;
 		}
