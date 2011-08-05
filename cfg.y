@@ -324,6 +324,8 @@ extern char *finame;
 %token STRIP_TAIL
 %token SET_USERPHONE
 %token APPEND_BRANCH
+%token REMOVE_BRANCH
+%token CLEAR_BRANCHES
 %token SET_USER
 %token SET_USERPASS
 %token SET_PORT
@@ -3198,6 +3200,17 @@ cmd:
 							NUMBER_ST, (void *)Q_UNSPECIFIED);
 		set_cfg_pos($$);
 	}
+	| REMOVE_BRANCH LPAREN NUMBER RPAREN {
+			$$=mk_action(REMOVE_BRANCH_T, 1, NUMBER_ST, (void*)$3);
+			set_cfg_pos($$);
+	}
+	| REMOVE_BRANCH LPAREN RPAREN {
+			$$=mk_action(REMOVE_BRANCH_T, 0);
+			set_cfg_pos($$);
+	}
+	| REMOVE_BRANCH error { $$=0; yyerror("missing '(' or ')' ?"); }
+	| REMOVE_BRANCH LPAREN error RPAREN { $$=0; yyerror("bad argument, number expected"); }
+	| CLEAR_BRANCHES LPAREN RPAREN { $$=mk_action(CLEAR_BRANCHES_T, 0); set_cfg_pos($$); }
 	| SET_HOSTPORT LPAREN STRING RPAREN { $$=mk_action(SET_HOSTPORT_T, 1, STRING_ST, $3); set_cfg_pos($$); }
 	| SET_HOSTPORT error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SET_HOSTPORT LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }

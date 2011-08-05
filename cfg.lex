@@ -237,6 +237,8 @@ STRIP			"strip"
 STRIP_TAIL		"strip_tail"
 SET_USERPHONE		"userphone"
 APPEND_BRANCH	"append_branch"
+REMOVE_BRANCH	"remove_branch"
+CLEAR_BRANCHES	"clear_branches"
 IF				"if"
 ELSE			"else"
 SET_ADV_ADDRESS	"set_advertised_address"
@@ -623,6 +625,10 @@ IMPORTFILE      "import_file"
 <INITIAL>{STRIP_TAIL}	{ count(); yylval.strval=yytext; return STRIP_TAIL; }
 <INITIAL>{APPEND_BRANCH}	{ count(); yylval.strval=yytext;
 								return APPEND_BRANCH; }
+<INITIAL>{REMOVE_BRANCH}	{ count(); yylval.strval=yytext;
+								return REMOVE_BRANCH; }
+<INITIAL>{CLEAR_BRANCHES}	{ count(); yylval.strval=yytext;
+								return CLEAR_BRANCHES; }
 <INITIAL>{SET_USERPHONE}	{ count(); yylval.strval=yytext;
 								return SET_USERPHONE; }
 <INITIAL>{FORCE_RPORT}	{ count(); yylval.strval=yytext; return FORCE_RPORT; }
