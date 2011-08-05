@@ -70,6 +70,7 @@ struct _siptrace_data {
 	str toip;
 	char toip_buff[IP_ADDR_MAX_STR_SIZE+12];
 	char fromip_buff[IP_ADDR_MAX_STR_SIZE+12];
+	struct timeval tv;
 #ifdef STATISTICS
 	stat_var *stat;
 #endif
@@ -110,8 +111,9 @@ static str fromip_column      = str_init("fromip");      /* 06 */
 static str toip_column        = str_init("toip");        /* 07 */
 static str fromtag_column     = str_init("fromtag");     /* 08 */
 static str direction_column   = str_init("direction");   /* 09 */
+static str time_us_column     = str_init("time_us");     /* 10 */
 
-#define NR_KEYS 10
+#define NR_KEYS 11
 
 #define XHEADERS_BUFSIZE 512
 
@@ -648,6 +650,8 @@ static int sip_trace_store(struct _siptrace_data *sto)
 		return -1;
 	}
 	
+	gettimeofday(&sto->tv, NULL);
+	
 	if (sip_trace_xheaders_read(sto) != 0) return -1;
 	int ret = sip_trace_store_db(sto);
 
@@ -700,7 +704,7 @@ static int sip_trace_store_db(struct _siptrace_data *sto)
 	db_keys[6] = &date_column;
 	db_vals[6].type = DB1_DATETIME;
 	db_vals[6].nul = 0;
-	db_vals[6].val.time_val = time(NULL);
+	db_vals[6].val.time_val = sto->tv.tv_sec;
 	
 	db_keys[7] = &direction_column;
 	db_vals[7].type = DB1_STRING;
@@ -712,11 +716,16 @@ static int sip_trace_store_db(struct _siptrace_data *sto)
 	db_vals[8].nul = 0;
 	db_vals[8].val.str_val = sto->fromtag;
 	
-	db_funcs.use_table(db_con, siptrace_get_table());
-	
 	db_keys[9] = &traced_user_column;
 	db_vals[9].type = DB1_STR;
 	db_vals[9].nul = 0;
+	
+	db_keys[10] = &time_us_column;
+	db_vals[10].type = DB1_INT;
+	db_vals[10].nul = 0;
+	db_vals[10].val.int_val = sto->tv.tv_usec;
+	
+	db_funcs.use_table(db_con, siptrace_get_table());
 
 	if(trace_on_flag!=NULL && *trace_on_flag!=0) {
 		db_vals[9].val.str_val.s   = "";
