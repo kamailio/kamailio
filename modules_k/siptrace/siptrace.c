@@ -526,10 +526,12 @@ static int sip_trace_xheaders_write(struct _siptrace_data *sto)
 	int bytes_written = snprintf(eoh, XHEADERS_BUFSIZE,
 		"X-Siptrace-Fromip: %.*s\r\n"
 		"X-Siptrace-Toip: %.*s\r\n"
+		"X-Siptrace-Time: %llu %llu\r\n"
 		"X-Siptrace-Method: %.*s\r\n"
 		"X-Siptrace-Dir: %s\r\n",
 		sto->fromip.len, sto->fromip.s,
 		sto->toip.len, sto->toip.s,
+		(unsigned long long)sto->tv.tv_sec, (unsigned long long)sto->tv.tv_usec,
 		sto->method.len, sto->method.s,
 		sto->dir);
 	if (bytes_written >= XHEADERS_BUFSIZE) {
@@ -594,12 +596,15 @@ static int sip_trace_xheaders_read(struct _siptrace_data *sto)
 	}
 
 	// Parse the x-headers: scanf()
+	long long unsigned int tv_sec, tv_usec;
 	if (sscanf(xheaders, "\r\n"
 			"X-Siptrace-Fromip: %50s\r\n"
 			"X-Siptrace-Toip: %50s\r\n"
+			"X-Siptrace-Time: %llu %llu\r\n"
 			"X-Siptrace-Method: %50s\r\n"
 			"X-Siptrace-Dir: %3s",
 			sto->fromip.s, sto->toip.s,
+			&tv_sec, &tv_usec,
 			sto->method.s,
 			sto->dir) == EOF) {
 		LM_ERR("sip_trace_xheaders_read: malformed x-headers\n");
@@ -607,6 +612,8 @@ static int sip_trace_xheaders_read(struct _siptrace_data *sto)
 	}
 	sto->fromip.len = strlen(sto->fromip.s);
 	sto->toip.len = strlen(sto->toip.s);
+	sto->tv.tv_sec = (time_t)tv_sec;
+	sto->tv.tv_usec = (suseconds_t)tv_usec;
 	sto->method.len = strlen(sto->method.s);
 
 	// Remove the x-headers: the message body is shifted towards the beginning
