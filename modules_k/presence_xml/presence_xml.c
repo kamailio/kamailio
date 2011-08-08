@@ -1,8 +1,4 @@
 /*
- * $Id: presence_xml.c 2006-12-07 18:05:05Z anca_vamanu$
- *
- * presence_xml module - Presence Handling XML bodies module
- *
  * Copyright (C) 2006 Voice Sistem S.R.L.
  *
  * This file is part of Kamailio, a free SIP server.
@@ -26,12 +22,14 @@
  *  2007-04-12  initial version (anca)
  */
 
-/*! \file
+/*!
+ * \file
  * \brief Kamailio Presence_XML :: Core
  * \ingroup presence_xml
  */
 
-/*! \defgroup presence_xml Presence_xml :: This module implements a range of XML-based SIP event packages for presence
+/*!
+ * \defgroup presence_xml Presence_xml :: This module implements a range of XML-based SIP event packages for presence
  */
 
 

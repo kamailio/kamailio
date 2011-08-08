@@ -1,8 +1,4 @@
 /*
- * $Id: presence_xml.h 2006-12-07 18:05:05Z anca_vamanu$
- *
- * presence_xml module - Presence Handling XML bodies module
- *
  * Copyright (C) 2006 Voice Sistem S.R.L.
  *
  * This file is part of Kamailio, a free SIP server.

@@ -1,8 +1,4 @@
 /*
- * $Id$
- *
- * presence module - presence server implementation
- *
  * Copyright (C) 2006 Voice Sistem S.R.L.
  *
  * This file is part of Kamailio, a free SIP server.
@@ -26,18 +22,18 @@
  *  2006-08-15  initial version (anca)
  */
 
-/*! \defgroup presence Presence :: A generic implementation of the SIP event package (PUBLISH, SUBSCRIBE, NOTIFY)
- *
- *	   The Kamailio presence module is a generic module for SIP event packages, which is much more than presence.
- *	   It is extensible by developing other modules that use the internal developer API.
- *	   Examples:
- *	   - \ref presence_mwi
- *	   - \ref presence_xml
+/*!
+ * \defgroup presence Presence :: A generic implementation of the SIP event package (PUBLISH, SUBSCRIBE, NOTIFY)
+ * The Kamailio presence module is a generic module for SIP event packages, which is much more than presence.
+ * It is extensible by developing other modules that use the internal developer API.
+ * Examples:
+ *- \ref presence_mwi
+ *- \ref presence_xml
  */
 
-/*! \file
- * \brief Kamailio presence module
- * 
+/*!
+ * \file
+ * \brief Kamailio presence module :: Core
  * \ingroup presence 
  */
 

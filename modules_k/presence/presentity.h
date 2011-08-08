@@ -1,8 +1,4 @@
 /*
- * $Id$
- *
- * presence module - presence server implementation
- *
  * Copyright (C) 2006 Voice Sistem S.R.L.
  *
  * This file is part of Kamailio, a free SIP server.
@@ -26,9 +22,9 @@
  *  2006-08-15  initial version (anca)
  */
 
-/*! \file
+/*!
+ * \file
  * \brief Kamailio presence module :: Presentity handling
- * \ref presentity.c
  * \ingroup presence 
  */
 

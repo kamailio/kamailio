@@ -1,8 +1,4 @@
 /*
- * $Id: add_events.c 2006-12-07 18:05:05Z anca_vamanu $
- *
- * presence_xml module - 
- *
  * Copyright (C) 2006 Voice Sistem S.R.L.
  *
  * This file is part of Kamailio, a free SIP server.
@@ -26,14 +22,13 @@
  *  2007-04-17  initial version (anca)
  */
 
-/*! \file
- * \brief Kamailio Presence_XML :: 
+/*!
+ * \file
+ * \brief Kamailio Presence_XML :: Several event packages, presence, presence.winfo, dialog;sla 
  * \ingroup presence_xml
  */
 
-/*
- *	add 3 events: presence, presence.winfo, dialog;sla
- * */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
