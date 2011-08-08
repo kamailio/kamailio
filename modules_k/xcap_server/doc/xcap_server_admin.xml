@@ -307,7 +307,7 @@ event_route[xhttp:request] {
 			<listitem><para>
 				<emphasis>$xcapuri(name=>key)</emphasis> - name can be any
 				to idenitfy the XCAP uri; key can be: data, uri, root, auid,
-				type, tree, xuid, file, node, target, domain.
+				type, tree, xuid, file, node, target, domain, xuiddomain.
 			</para></listitem>
 		</itemizedlist>
 		<para>
