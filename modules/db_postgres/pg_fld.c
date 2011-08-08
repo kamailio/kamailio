@@ -246,22 +246,6 @@ static inline void db_int2pg_bit(struct pg_params* dst, int i, db_fld_t* src)
    	dst->len[i] = 8;
 }
 
-/*
-static inline void db_int2pg_varbit(struct pg_params* dst, int i,
-						  db_fld_t* src)
-{
-	unsigned int len = 32;
-	struct pg_fld* pfld = DB_GET_PAYLOAD(src);
-
-	pfld->v.int4[0] = htonl(len);
-	pfld->v.int4[1] = htonl(src->v.int4);
-
-	dst->fmt[i] = 1;
-	dst->val[i] = pfld->v.byte;
-   	dst->len[i] = 4 + len / 8 + (len % 8 ? 1 : 0);
-}
-*/
-
 
 static inline void db_str2pg_string(struct pg_params* dst, int i,
 									db_fld_t* src)
@@ -270,6 +254,7 @@ static inline void db_str2pg_string(struct pg_params* dst, int i,
 	dst->val[i] = src->v.lstr.s;
 	dst->len[i] = src->v.lstr.len;
 }
+
 
 static inline void db_cstr2pg_string(struct pg_params* dst, int i,
 									 db_fld_t* src)
