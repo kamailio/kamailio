@@ -1,8 +1,4 @@
 /* 
- * $Id$ 
- *
- * PostgreSQL Database Driver for SER
- *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2003 August.Net Services, LLC
  * Portions Copyright (C) 2005-2008 iptelorg GmbH
@@ -28,12 +24,12 @@
  * Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-/** \addtogroup postgres
- * @{ 
- */
 
-/** \file 
- * Data field conversion and type checking functions.
+/*!
+ * \file
+ * \brief DB_POSTGRES :: Data field conversion and type checking functions.
+ * \ingroup db_postgres
+ * Module: \ref db_postgres
  */
 
 #include "pg_fld.h"
@@ -934,6 +930,3 @@ int pg_pg2fld(db_fld_t* dst, PGresult* src, int row,
 		type, dst[i].type);
 	return -1;
 }
-
-
-/** @} */

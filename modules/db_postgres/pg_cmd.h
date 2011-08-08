@@ -1,8 +1,4 @@
 /* 
- * $Id$ 
- *
- * PostgreSQL Database Driver for SER
- *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2003 August.Net Services, LLC
  * Portions Copyright (C) 2005-2008 iptelorg GmbH
@@ -31,13 +27,15 @@
 #ifndef _PG_CMD_H
 #define _PG_CMD_H
 
-/** \addtogroup postgres
- * @{ 
- */
 
-/** \file 
- * Declaration of pg_cmd data structure that contains PostgreSQL specific data
+/*!
+ * \file
+ * \brief DB_POSTGRES :: * Declaration of pg_cmd data structure
+ * 
+ * Declaration of pg_cmd data structure  that contains PostgreSQL specific data
  * stored in db_cmd structures and related functions.
+ * \ingroup db_postgres
+ * Module: \ref db_postgres
  */
 
 #include "pg_oid.h"
@@ -90,6 +88,7 @@ int pg_cmd(db_cmd_t* cmd);
  * necessary.
  * @param res A pointer to (optional) result structure if the command returns
  *            a result.
+ * @param cmd executed command
  * @retval 0 if executed successfully
  * @retval A negative number if the database server failed to execute command
  * @retval A positive number if there was an error on client side (SER)
@@ -106,7 +105,7 @@ int pg_cmd_exec(db_res_t* res, db_cmd_t* cmd);
  * @param res A result set retrieved from PostgreSQL server.
  * @retval 0 If executed successfully.
  * @retval 1 If the result is empty.
- * @retival A negative number on error.
+ * @retval A negative number on error.
  */
 int pg_cmd_first(db_res_t* res);
 
@@ -120,7 +119,7 @@ int pg_cmd_first(db_res_t* res);
  * @param res A result set retrieved from PostgreSQL server.
  * @retval 0 If executed successfully.
  * @retval 1 If there are no more records in the result.
- * @retival A negative number on error.
+ * @retval A negative number on error.
  */
 int pg_cmd_next(db_res_t* res);
 
@@ -149,7 +148,5 @@ int pg_getopt(db_cmd_t* cmd, char* optname, va_list ap);
  * @retval A negative number on error.
  */
 int pg_setopt(db_cmd_t* cmd, char* optname, va_list ap);
-
-/** @} */
 
 #endif /* _PG_CMD_H */
