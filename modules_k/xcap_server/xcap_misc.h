@@ -48,7 +48,6 @@ typedef struct xcap_uri {
 	str node;
 	str target;
 	str domain;
-	str xuiddomain;
 } xcap_uri_t;
 
 int xcap_parse_uri(str *huri, str *xroot, xcap_uri_t *xuri);
