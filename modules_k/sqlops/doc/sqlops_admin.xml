@@ -379,7 +379,30 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1)
 ...
 				</programlisting>
 			</example>
-	</section>
+		</section>
+		<section>
+			<title><varname>$sqlrows(con)</varname></title>
+			<para>
+				Number of affected rows of the previous query on the
+				specified connection. Its primary use is to get the number
+				of rows affected by UPDATE, INSERT and DELETE queries.
+			</para>
+			<para>
+				<quote>con</quote> must be the name identifying an SQL
+				connection.
+			</para>
+			<example>
+				<title><function moreinfo="none">$sqlrows(con)</function> usage</title>
+				<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
+...
+sql_query("ca", "update domain set domain='mydomain' where id=5");
+xlog("Affected rows: $sqlrows(ca)\n");
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 </chapter>
 

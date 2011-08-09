@@ -80,6 +80,8 @@ static int sql_res_param(modparam_t type, void* val);
 static pv_export_t mod_pvs[] = {
 	{ {"dbr", sizeof("dbr")-1}, PVT_OTHER, pv_get_dbr, 0,
 		pv_parse_dbr_name, 0, 0, 0 },
+	{ {"sqlrows", sizeof("sqlrows")-1}, PVT_OTHER, pv_get_sqlrows, 0,
+		pv_parse_con_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 

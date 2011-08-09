@@ -38,6 +38,7 @@ Daniel-Constantin Mierla
         5. Exported pseudo-variables
 
               5.1. $dbr(result=>key)
+              5.2. $sqlrows(con)
 
    List of Examples
 
@@ -47,6 +48,7 @@ Daniel-Constantin Mierla
    1.4. sql_xquery() usage
    1.5. sql_result_free() usage
    1.6. $dbr(result=>key) usage
+   1.7. $sqlrows(con) usage
 
 Chapter 1. Admin Guide
 
@@ -72,6 +74,7 @@ Chapter 1. Admin Guide
    5. Exported pseudo-variables
 
         5.1. $dbr(result=>key)
+        5.2. $sqlrows(con)
 
 1. Overview
 
@@ -224,6 +227,7 @@ sql_result_free("ra");
 5. Exported pseudo-variables
 
    5.1. $dbr(result=>key)
+   5.2. $sqlrows(con)
 
 5.1. $dbr(result=>key)
 
@@ -289,4 +293,20 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1)
         pv_unset("$xavp(ra)");
     }
 }
+...
+
+5.2. $sqlrows(con)
+
+   Number of affected rows of the previous query on the specified
+   connection. Its primary use is to get the number of rows affected by
+   UPDATE, INSERT and DELETE queries.
+
+   “con” must be the name identifying an SQL connection.
+
+   Example 1.7. $sqlrows(con) usage
+...
+modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
+...
+sql_query("ca", "update domain set domain='mydomain' where id=5");
+xlog("Affected rows: $sqlrows(ca)\n");
 ...

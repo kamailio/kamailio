@@ -96,6 +96,49 @@ int sql_init_con(str *name, str *url)
 	return 0;
 }
 
+int pv_parse_con_name(pv_spec_p sp, str *in)
+{
+	sql_con_t *con;
+
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	con = sql_get_connection(in);
+	if (con==NULL) {
+		LM_ERR("invalid connection [%.*s]\n", in->len, in->s);
+		return -1;
+	}
+
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = AVP_VAL_STR;
+	sp->pvp.pvn.u.isname.name.s = *in;
+	return 0;
+}
+
+int pv_get_sqlrows(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res)
+{
+	sql_con_t *con;
+	str* sc;
+
+	sc = &param->pvn.u.isname.name.s;
+	con = sql_get_connection(sc);
+	if(con==NULL)
+	{
+		LM_ERR("invalid connection [%.*s]\n", sc->len, sc->s);
+		return -1;
+	}
+
+	if (!DB_CAPABILITY(con->dbf, DB_CAP_AFFECTED_ROWS))
+	{
+		LM_ERR("con: %p database module does not have DB_CAP_AFFECTED_ROWS [%.*s]\n",
+		       con, sc->len, sc->s);
+		return -1;
+	}
+
+	return pv_get_sintval(msg, param, res, con->dbf.affected_rows(con->dbh));
+}
+
 int sql_connect(void)
 {
 	sql_con_t *sc;
