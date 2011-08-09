@@ -968,6 +968,62 @@ append_time();
 
 	<section>
 		<title>
+		<function moreinfo="none">append_time_to_request()</function>
+		</title>
+		<para>
+		Adds a time header to the request. Header format is: 
+		<quote>Date: %a, %d %b %Y %H:%M:%S GMT</quote>, with the legend:
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>%a</emphasis> abbreviated week of day name (locale)
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>%d</emphasis> day of month as decimal number
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>%b</emphasis> abbreviated month name (locale)
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>%Y</emphasis> year with century
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>%H</emphasis> hour
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>%M</emphasis> minutes
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>%S</emphasis> seconds
+			</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		Return true if a header was succesfully appended.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>append_time_to_request</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(!is_present_hf("Date"))
+    append_time_to_request();
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
 		<function moreinfo="none">is_method(name)</function>
 		</title>
 		<para>
