@@ -139,6 +139,11 @@ int db_check_api(db_func_t* dbf, char *mname)
 	if (dbf->insert_delayed) {
 		dbf->cap |= DB_CAP_INSERT_UPDATE;
 	}
+
+	if (dbf->affected_rows) {
+		dbf->cap |= DB_CAP_AFFECTED_ROWS;
+	}
+
 	return 0;
 error:
 	return -1;
@@ -229,6 +234,8 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 		dbf.replace = (db_replace_f)find_mod_export(tmp, "db_replace", 2, 0);
 		dbf.last_inserted_id= (db_last_inserted_id_f)find_mod_export(tmp,
 			"db_last_inserted_id", 1, 0);
+		dbf.affected_rows = (db_affected_rows_f)find_mod_export(tmp,
+			"db_affected_rows", 1, 0);
 		dbf.insert_update = (db_insert_update_f)find_mod_export(tmp,
 			"db_insert_update", 2, 0);
 		dbf.insert_delayed = (db_insert_delayed_f)find_mod_export(tmp,

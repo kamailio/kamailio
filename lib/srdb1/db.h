@@ -296,6 +296,16 @@ typedef int (*db_insert_delayed_f) (const db1_con_t* _h, const db_key_t* _k,
 				const db_val_t* _v, const int _n);
 
 
+/**
+ * \brief Retrieve the number of affected rows for the last query.
+ *
+ * The function returns the rows affected by the last query.
+ * If any other type of query was the last, it returns null.
+ * \param _h structure representing database connection
+ * \return returns the number of rows as integer or returns -1 on error
+ */
+typedef int (*db_affected_rows_f) (const db1_con_t* _h);
+
 
 /**
  * \brief Database module callbacks
@@ -321,6 +331,7 @@ typedef struct db_func {
 	                                            in a table */
 	db_insert_update_f insert_update; /* Insert into table, update on duplicate key */ 
 	db_insert_delayed_f insert_delayed;           /* Insert delayed into table */
+	db_affected_rows_f affected_rows; /* Numer of affected rows for last query */
 } db_func_t;
 
 
