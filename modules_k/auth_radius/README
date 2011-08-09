@@ -49,7 +49,7 @@ Jan Janak
 
         5. Exported Functions
 
-              5.1. radius_www_authorize(realm)
+              5.1. radius_www_authorize(realm [, uri_user])
               5.2. radius_proxy_authorize(realm [, uri_user])
 
    List of Examples
@@ -82,7 +82,7 @@ Chapter 1. Admin Guide
 
    5. Exported Functions
 
-        5.1. radius_www_authorize(realm)
+        5.1. radius_www_authorize(realm [, uri_user])
         5.2. radius_proxy_authorize(realm [, uri_user])
 
 1. Overview
@@ -206,10 +206,10 @@ modparam("auth_radius", "use_ruri_flag", 22)
 
 5. Exported Functions
 
-   5.1. radius_www_authorize(realm)
+   5.1. radius_www_authorize(realm [, uri_user])
    5.2. radius_proxy_authorize(realm [, uri_user])
 
-5.1. radius_www_authorize(realm)
+5.1. radius_www_authorize(realm [, uri_user])
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will succeed
@@ -240,6 +240,11 @@ modparam("auth_radius", "use_ruri_flag", 22)
        to the user so he can decide what username and password to use. In
        case of REGISTER requests it is usually hostpart of To URI.
        The string may contain pseudo variables.
+     * uri_user - Uri_user is an optional pseudo variable parameter whose
+       value, if present, will be given to Radius server as value of
+       SIP-URI-User check item. If uri_user pseudo variable parameter is
+       not present, the server will generate SIP-URI-User check item value
+       from user part of To/From URI.
 
    This function can be used from REQUEST_ROUTE.
 
