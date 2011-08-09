@@ -111,6 +111,13 @@ int db_mysql_replace(const db1_con_t* handle, const db_key_t* keys, const db_val
  */
 int db_mysql_last_inserted_id(const db1_con_t* _h);
 
+
+/*! \brief
+ * Returns number of affected rows for last query
+ */
+int db_mysql_affected_rows(const db1_con_t* _h);
+
+
 /*! \brief
  * Insert a row into table, update on duplicate key
  */

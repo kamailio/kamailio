@@ -480,7 +480,22 @@ int db_mysql_last_inserted_id(const db1_con_t* _h)
 }
 
 
- /**
+/**
+ * Returns the affected rows of the last query.
+ * \param _h database handle
+ * \return returns the affected rows as integer or -1 on error.
+ */
+int db_mysql_affected_rows(const db1_con_t* _h)
+{
+	if (!_h) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+	return (int)mysql_affected_rows(CON_CONNECTION(_h));
+}
+
+
+/**
   * Insert a row into a specified table, update on duplicate key.
   * \param _h structure representing database connection
   * \param _k key names
