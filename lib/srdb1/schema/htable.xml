@@ -59,7 +59,7 @@
     <column id="expires">
         <name>expires</name>
         <type>string</type>
-		<default>0<default/>
+		<default>0</default>
         <description>The epoch at which the key expires</description>
     </column>
 </table>
