@@ -109,8 +109,8 @@ struct cfg_group_tm {
 	unsigned int    fr_inv_timeout_next;
 	unsigned int	wait_timeout;
 	unsigned int	delete_timeout;
-	unsigned int	rt_t1_timeout;
-	unsigned int	rt_t2_timeout;
+	unsigned int	rt_t1_timeout_ms;
+	unsigned int	rt_t2_timeout_ms;
 	unsigned int	tm_max_inv_lifetime;
 	unsigned int	tm_max_noninv_lifetime;
 	int	noisy_ctimer;

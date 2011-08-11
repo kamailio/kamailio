@@ -1294,14 +1294,16 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 		}
 	}
 #ifdef TM_DIFF_RT_TIMEOUT
-	new_cell->rt_t1_timeout=(ticks_t)get_msgid_val(user_rt_t1_timeout,
-												p_msg->id, int);
-	if (likely(new_cell->rt_t1_timeout==0))
-		new_cell->rt_t1_timeout=cfg_get(tm, tm_cfg, rt_t1_timeout);
-	new_cell->rt_t2_timeout=(ticks_t)get_msgid_val(user_rt_t2_timeout,
-												p_msg->id, int);
-	if (likely(new_cell->rt_t2_timeout==0))
-		new_cell->rt_t2_timeout=cfg_get(tm, tm_cfg, rt_t2_timeout);
+	new_cell->rt_t1_timeout_ms = (retr_timeout_t) get_msgid_val(
+														user_rt_t1_timeout_ms,
+														p_msg->id, int);
+	if (likely(new_cell->rt_t1_timeout_ms == 0))
+		new_cell->rt_t1_timeout_ms = cfg_get(tm, tm_cfg, rt_t1_timeout_ms);
+	new_cell->rt_t2_timeout_ms = (retr_timeout_t) get_msgid_val(
+														user_rt_t2_timeout_ms,
+														p_msg->id, int);
+	if (likely(new_cell->rt_t2_timeout_ms == 0))
+		new_cell->rt_t2_timeout_ms = cfg_get(tm, tm_cfg, rt_t2_timeout_ms);
 #endif
 	new_cell->on_branch=get_on_branch();
 }
@@ -1813,30 +1815,30 @@ int t_reset_fr()
 
 /* params: retr. t1 & retr. t2 value in ms, 0 means "do not touch"
  * ret: 1 on success, -1 on error (script safe)*/
-int t_set_retr(struct sip_msg* msg, unsigned int t1_to, unsigned int t2_to)
+int t_set_retr(struct sip_msg* msg, unsigned int t1_ms, unsigned int t2_ms)
 {
 	struct cell *t;
 	ticks_t retr_t1, retr_t2;
 	
 	
-	retr_t1=MS_TO_TICKS((ticks_t)t1_to);
-	if (unlikely((retr_t1==0) && (t1_to!=0))){
-		ERR("t_set_retr: retr. t1 interval too small (%u)\n", t1_to);
+	retr_t1=MS_TO_TICKS((ticks_t)t1_ms);
+	if (unlikely((retr_t1==0) && (t1_ms!=0))){
+		ERR("t_set_retr: retr. t1 interval too small (%u)\n", t1_ms);
 		return -1;
 	}
-	if (unlikely(MAX_UVAR_VALUE(t->rt_t1_timeout) < retr_t1)){
+	if (unlikely(MAX_UVAR_VALUE(t->rt_t1_timeout_ms) < t1_ms)){
 		ERR("t_set_retr: retr. t1 interval too big: %d (max %lu)\n",
-				t1_to, TICKS_TO_MS(MAX_UVAR_VALUE(t->rt_t1_timeout))); 
+				t1_ms, MAX_UVAR_VALUE(t->rt_t1_timeout_ms)); 
 		return -1;
 	} 
-	retr_t2=MS_TO_TICKS((ticks_t)t2_to);
-	if (unlikely((retr_t2==0) && (t2_to!=0))){
-		ERR("t_set_retr: retr. t2 interval too small (%d)\n", t2_to);
+	retr_t2=MS_TO_TICKS((ticks_t)t2_ms);
+	if (unlikely((retr_t2==0) && (t2_ms!=0))){
+		ERR("t_set_retr: retr. t2 interval too small (%d)\n", t2_ms);
 		return -1;
 	}
-	if (unlikely(MAX_UVAR_VALUE(t->rt_t2_timeout) < retr_t2)){
+	if (unlikely(MAX_UVAR_VALUE(t->rt_t2_timeout_ms) < t2_ms)){
 		ERR("t_set_retr: retr. t2 interval too big: %u (max %lu)\n",
-				t2_to, TICKS_TO_MS(MAX_UVAR_VALUE(t->rt_t2_timeout))); 
+				t2_ms, MAX_UVAR_VALUE(t->rt_t2_timeout_ms)); 
 		return -1;
 	} 
 	
@@ -1845,10 +1847,10 @@ int t_set_retr(struct sip_msg* msg, unsigned int t1_to, unsigned int t2_to)
 	 * in REQUEST_ROUTE T will be set only if the transaction was already
 	 * created; if not -> use the static variables */
 	if (!t || t==T_UNDEFINED ){
-		set_msgid_val(user_rt_t1_timeout, msg->id, int, (int)retr_t1);
-		set_msgid_val(user_rt_t2_timeout, msg->id, int, (int)retr_t2);
+		set_msgid_val(user_rt_t1_timeout_ms, msg->id, int, (int)t1_ms);
+		set_msgid_val(user_rt_t2_timeout_ms, msg->id, int, (int)t2_ms);
 	}else{
-		change_retr(t, 1, retr_t1, retr_t2); /* change running uac timers */
+		change_retr(t, 1, t1_ms, t2_ms); /* change running uac timers */
 	}
 	return 1;
 }
@@ -1863,13 +1865,14 @@ int t_reset_retr()
 	 * in REQUEST_ROUTE T will be set only if the transaction was already
 	 * created; if not -> use the static variables */
 	if (!t || t==T_UNDEFINED ){
-		memset(&user_rt_t1_timeout, 0, sizeof(user_rt_t1_timeout));
-		memset(&user_rt_t2_timeout, 0, sizeof(user_rt_t2_timeout));
+		memset(&user_rt_t1_timeout_ms, 0, sizeof(user_rt_t1_timeout_ms));
+		memset(&user_rt_t2_timeout_ms, 0, sizeof(user_rt_t2_timeout_ms));
 	}else{
+		 /* change running uac timers */
 		change_retr(t,
 			1,
-			cfg_get(tm, tm_cfg, rt_t1_timeout),
-			cfg_get(tm, tm_cfg, rt_t2_timeout)); /* change running uac timers */
+			cfg_get(tm, tm_cfg, rt_t1_timeout_ms),
+			cfg_get(tm, tm_cfg, rt_t2_timeout_ms));
 	}
 	return 1;
 }
