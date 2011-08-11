@@ -244,28 +244,31 @@ void insert_htable(ua_pres_t* presentity)
 
 }
 
+/* This function used to perform a search to find the hash table
+   entry that matches the presentity it is passed.  However,
+   everywhere it is used it is passed a pointer to the correct
+   hash table entry already...  so let's just delete that */
 void delete_htable(ua_pres_t* presentity, unsigned int hash_code)
 { 
-	ua_pres_t* p= NULL, *q= NULL;
+	ua_pres_t *q = NULL;
 
-	p= search_htable(presentity, hash_code);
-	if(p== NULL)
+	if (presentity == NULL)
 		return;
 
-	q=HashT->p_records[hash_code].entity;
+	q = HashT->p_records[hash_code].entity;
 
-	while(q->next!=p)
-		q= q->next;
-	q->next=p->next;
+	while (q->next != presentity)
+		q = q->next;
+	q->next = presentity->next;
 	
-	if(p->etag.s)
-		shm_free(p->etag.s);
+	if(presentity->etag.s)
+		shm_free(presentity->etag.s);
 	else
-		if(p->remote_contact.s)
-			shm_free(p->remote_contact.s);
+		if(presentity->remote_contact.s)
+			shm_free(presentity->remote_contact.s);
 
-	shm_free(p);
-	p= NULL;
+	shm_free(presentity);
+	presentity = NULL;
 
 }
 	
@@ -323,7 +326,7 @@ ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code)
 			if((p->pres_uri->len== dialog->pres_uri->len) &&
 				(strncmp(p->pres_uri->s, dialog->pres_uri->s,p->pres_uri->len)==0)&&
 				(p->watcher_uri->len== dialog->watcher_uri->len) &&
- 	    		(strncmp(p->watcher_uri->s,dialog->watcher_uri->s,p->watcher_uri->len )==0)&&
+				(strncmp(p->watcher_uri->s,dialog->watcher_uri->s,p->watcher_uri->len )==0)&&
 				(strncmp(p->call_id.s, dialog->call_id.s, p->call_id.len)== 0) &&
 				(strncmp(p->to_tag.s, dialog->to_tag.s, p->to_tag.len)== 0) &&
 				(strncmp(p->from_tag.s, dialog->from_tag.s, p->from_tag.len)== 0) )
@@ -335,6 +338,39 @@ ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code)
 	
 	}
 		
+	return p;
+}
+
+/* must lock the record line before calling this function*/
+ua_pres_t* get_temporary_dialog(ua_pres_t* dialog, unsigned int hash_code)
+{
+	ua_pres_t* p= NULL, *L;
+	LM_DBG("core_hash= %u\n", hash_code);
+
+	L= HashT->p_records[hash_code].entity;
+	for(p= L->next; p; p=p->next)
+	{
+		LM_DBG("pres_uri= %.*s\twatcher_uri=%.*s\n\t"
+				"callid= %.*s\tfrom_tag= %.*s\n",
+			p->pres_uri->len, p->pres_uri->s, p->watcher_uri->len,
+			p->watcher_uri->s,p->call_id.len, p->call_id.s,
+			p->from_tag.len, p->from_tag.s);
+
+		if((p->pres_uri->len== dialog->pres_uri->len) &&
+			(strncmp(p->pres_uri->s, dialog->pres_uri->s,p->pres_uri->len)==0)&&
+			(p->watcher_uri->len== dialog->watcher_uri->len) &&
+			(strncmp(p->watcher_uri->s,dialog->watcher_uri->s,p->watcher_uri->len )==0)&&
+			(p->call_id.len == dialog->call_id.len) &&
+			(strncmp(p->call_id.s, dialog->call_id.s, p->call_id.len)== 0) &&
+			(p->from_tag.len == dialog->from_tag.len) &&
+			(strncmp(p->from_tag.s, dialog->from_tag.s, p->from_tag.len)== 0) &&
+			p->to_tag.len == 0)
+			{
+				LM_DBG("FOUND temporary dialog\n");
+				break;
+			}
+	}
+
 	return p;
 }
 
@@ -352,9 +388,14 @@ int get_record_id(ua_pres_t* dialog, str** rec_id)
 	rec= get_dialog(dialog, hash_code);
 	if(rec== NULL)
 	{
-		LM_DBG("Record not found\n");
-		lock_release(&HashT->p_records[hash_code].lock);
-		return 0;
+		LM_DBG("Record not found - looking for temporary\n");
+		rec = get_temporary_dialog(dialog, hash_code);
+		if (rec == NULL)
+		{
+			LM_DBG("Temporary record not found\n");
+			lock_release(&HashT->p_records[hash_code].lock);
+			return 0;
+		}
 	}
 	id= (str*)pkg_malloc(sizeof(str));
 	if(id== NULL)

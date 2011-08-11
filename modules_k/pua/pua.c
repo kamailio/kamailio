@@ -749,14 +749,14 @@ static void db_update(unsigned int ticks,void *param)
 	db_key_t db_cols[5];
 	db_val_t q_vals[20], db_vals[5];
 	db_op_t  db_ops[1] ;
-	int n_query_cols= 0, n_query_update= 0;
+	int n_query_cols= 0, n_query_update= 0, n_actual_query_cols= 0;
 	int n_update_cols= 0;
 	int i;
 	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col,event_col;
 	int watcher_col,callid_col,totag_col,fromtag_col,record_route_col,cseq_col;
 	int no_lock= 0, contact_col, desired_expires_col, extra_headers_col;
 	int remote_contact_col, version_col;
-	
+
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
 
@@ -765,7 +765,7 @@ static void db_update(unsigned int ticks,void *param)
 	q_vals[puri_col].type = DB1_STR;
 	q_vals[puri_col].nul = 0;
 	n_query_cols++;
-	
+
 	q_cols[pid_col= n_query_cols] = &str_pres_id_col;	
 	q_vals[pid_col].type = DB1_STR;
 	q_vals[pid_col].nul = 0;
@@ -1003,21 +1003,43 @@ static void db_update(unsigned int ticks,void *param)
 					q_vals[puri_col].val.str_val = *(p->pres_uri);
 					q_vals[pid_col].val.str_val = p->id;
 					q_vals[flag_col].val.int_val = p->flag;
-					if((p->watcher_uri))
-						q_vals[watcher_col].val.str_val = *(p->watcher_uri);
-					else
-						memset(& q_vals[watcher_col].val.str_val ,0, sizeof(str));
-					q_vals[tuple_col].val.str_val = p->tuple_id;
-					q_vals[etag_col].val.str_val = p->etag;
 					q_vals[callid_col].val.str_val = p->call_id;
-					q_vals[totag_col].val.str_val = p->to_tag;
 					q_vals[fromtag_col].val.str_val = p->from_tag;
 					q_vals[cseq_col].val.int_val= p->cseq;
 					q_vals[expires_col].val.int_val = p->expires;
 					q_vals[desired_expires_col].val.int_val = p->desired_expires;
 					q_vals[event_col].val.int_val = p->event;
 					q_vals[version_col].val.int_val = p->version;
-					
+
+					if((p->watcher_uri))
+						q_vals[watcher_col].val.str_val = *(p->watcher_uri);
+					else
+						memset(& q_vals[watcher_col].val.str_val ,0, sizeof(str));
+
+					if(p->tuple_id.s == NULL)
+					{
+						q_vals[tuple_col].val.str_val.s="";
+						q_vals[tuple_col].val.str_val.len=0;
+					}
+					else
+						q_vals[tuple_col].val.str_val = p->tuple_id;
+
+					if(p->etag.s == NULL)
+					{
+						q_vals[etag_col].val.str_val.s="";
+						q_vals[etag_col].val.str_val.len=0;
+					}
+					else
+						q_vals[etag_col].val.str_val = p->etag;
+
+					if (p->to_tag.s == NULL)
+					{
+						q_vals[totag_col].val.str_val.s="";
+						q_vals[totag_col].val.str_val.len=0;
+					}
+					else
+						q_vals[totag_col].val.str_val = p->to_tag;
+
 					if(p->record_route.s== NULL)
 					{
 						q_vals[record_route_col].val.str_val.s= "";
@@ -1025,8 +1047,15 @@ static void db_update(unsigned int ticks,void *param)
 					}
 					else
 						q_vals[record_route_col].val.str_val = p->record_route;
-					
-					q_vals[contact_col].val.str_val = p->contact;
+
+					if(p->contact.s == NULL)
+					{
+						q_vals[contact_col].val.str_val.s = "";
+						q_vals[contact_col].val.str_val.len = 0;
+					}
+					else
+						q_vals[contact_col].val.str_val = p->contact;
+
 					if(p->remote_contact.s)
 					{
 						q_vals[remote_contact_col].val.str_val = p->remote_contact;
@@ -1039,11 +1068,14 @@ static void db_update(unsigned int ticks,void *param)
 					}
 
 					if(p->extra_headers)
+					{
+						n_actual_query_cols = n_query_cols;
 						q_vals[extra_headers_col].val.str_val = *(p->extra_headers);
+					}
 					else
-						n_query_cols--;
+						n_actual_query_cols = n_query_cols - 1;
 						
-					if(pua_dbf.insert(pua_db, q_cols, q_vals,n_query_cols )<0)
+					if(pua_dbf.insert(pua_db, q_cols, q_vals,n_actual_query_cols )<0)
 					{
 						LM_ERR("while inserting in db table pua\n");
 						if(!no_lock)
