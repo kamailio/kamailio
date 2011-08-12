@@ -32,17 +32,17 @@
 #include "dlg_cb.h"
 #include "../../sr_module.h"
 
+/* terminate_dlg function prototype */
+typedef int (*terminate_dlg_f)(struct dlg_cell* dlg, str *hdrs);
+
 struct dlg_binds {
 	register_dlgcb_f  register_dlgcb;
 	terminate_dlg_f terminate_dlg;
 };
 
-/* terminate_dlg function prototype */
-typedef int (*terminate_dlg_f)(struct dlg_cell* dlg, str *hdrs);
 
 typedef int(*load_dlg_f)( struct dlg_binds *dlgb );
 int load_dlg( struct dlg_binds *dlgb);
-
 
 static inline int load_dlg_api( struct dlg_binds *dlgb )
 {
