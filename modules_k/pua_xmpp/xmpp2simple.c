@@ -76,13 +76,13 @@ void pres_Xmpp2Sip(char *msg, int type, void *param)
 	{
 		LM_DBG("type attribut not present\n");
 		build_publish(pres_node, -1);
-		if(presence_subscribe(pres_node, 3600, XMPP_SUBSCRIBE)< 0)
+	/*	if(presence_subscribe(pres_node, 3600, XMPP_SUBSCRIBE)< 0)
 		{
 				LM_ERR("when sending subscribe for presence");
 				xmlFree(pres_type);
 				goto error;
 		}
-
+	*/
 
 		/* send subscribe after publish because in xmpp subscribe message
 		 * comes only when a new contact is inserted in buddy list */
@@ -91,13 +91,13 @@ void pres_Xmpp2Sip(char *msg, int type, void *param)
 	if(strcmp(pres_type, "unavailable")== 0)
 	{
 		build_publish(pres_node, 0);
-		if(presence_subscribe(pres_node, 3600, XMPP_SUBSCRIBE)< 0)
-				/* else subscribe for one hour*/
+	/*	if(presence_subscribe(pres_node, 0, XMPP_SUBSCRIBE)< 0)
 		{
 				LM_ERR("when unsubscribing for presence");
 				xmlFree(pres_type);
 				goto error;
 		}
+	*/
 
 	}		
 	else
@@ -243,13 +243,13 @@ str* build_pidf(xmlNodePtr pres_node, char* uri, char* resource)
 	if(show_cont)
 	{
 		if(strcmp(show_cont, "xa")== 0)
-			status= "not available";
+			status= "Away";
 		else
 			if(strcmp(show_cont, "chat")== 0)
-				status= "free for chat";
+			status= "Online";
 		else
 			if(strcmp(show_cont, "dnd")== 0)
-				status= "do not disturb";
+			status= "Busy (DND)";
 		else
 			status= show_cont;
 	}
@@ -264,24 +264,25 @@ str* build_pidf(xmlNodePtr pres_node, char* uri, char* resource)
 			goto error;
 		}
 		*/
-		node = xmlNewChild(root_node, NULL, BAD_CAST "note",
-				BAD_CAST status_cont);
+		node = xmlNewChild(tuple_node, NULL, BAD_CAST "note",
+				BAD_CAST status);
 		if(node== NULL)
 		{
 			LM_ERR("while adding node\n");
 			goto error;
 		}
-	}else
+	} else {
 		if(show_cont)
 		{
-			node = xmlNewChild(root_node, NULL, BAD_CAST "note", 
+			node = xmlNewChild(tuple_node, NULL, BAD_CAST "note", 
 					BAD_CAST status);
 			if(node== NULL)
 			{
 				LM_ERR("while adding node\n");
 				goto error;
 			}	
-		}	
+		}
+	}
 
 	if(show_cont)
 	{
@@ -295,23 +296,6 @@ str* build_pidf(xmlNodePtr pres_node, char* uri, char* resource)
 				goto error;
 			}
 		}
-		node=  xmlNewChild(person_node, NULL, BAD_CAST "activities", 
-				BAD_CAST 0);
-		if(node== NULL)
-		{
-			LM_ERR("while adding node\n");
-			goto error;
-		}
-
-						
-		if( xmlNewChild(person_node, NULL, BAD_CAST "note", 
-					BAD_CAST status )== NULL)
-		{
-			LM_ERR("while adding node\n");
-			goto error;
-		}
-
-
 	}
 		
 	
