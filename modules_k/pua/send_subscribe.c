@@ -344,7 +344,6 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		hentity->call_id=  msg->callid->body;
 		hentity->to_tag= pto->tag_value;
 		hentity->from_tag= pfrom->tag_value;
-	
 	}
 
 	/* extract the other necesary information for inserting a new record */		
@@ -608,6 +607,12 @@ done:
 		run_pua_callbacks( hentity, msg);
 	}
 error:	
+	lock_get(&HashT->p_records[hash_code].lock);
+	presentity = get_temporary_dialog(hentity, hash_code);
+	if (presentity!=NULL)
+		delete_htable(presentity, hash_code);
+	lock_release(&HashT->p_records[hash_code].lock);
+
 	if(hentity)
 	{	
 		shm_free(hentity);
@@ -858,6 +863,7 @@ int send_subscribe(subs_info_t* subs)
 	
 	if(presentity== NULL )
 	{
+		int size;
 insert:
 		lock_release(&HashT->p_records[hash_code].lock); 
 		if(subs->flag & UPDATE_TYPE)
@@ -887,7 +893,7 @@ insert:
 
 		set_uac_req(&uac_r, &met, str_hdr, 0, 0, TMCB_LOCAL_COMPLETED,
 				subs_cback_func, (void*)hentity);
-		result= tmb.t_request
+		result= tmb.t_request_outside
 			(&uac_r,						  /* Type of the message */
 		subs->remote_target?subs->remote_target:subs->pres_uri,/* Request-URI*/
 			subs->pres_uri,				  /* To */
@@ -897,9 +903,74 @@ insert:
 		if(result< 0)
 		{
 			LM_ERR("while sending request with t_request\n");
+			if (uac_r.dialog != NULL)
+			{
+				uac_r.dialog->rem_target.s = 0;
+				uac_r.dialog->dst_uri.s = 0;
+				tmb.free_dlg(uac_r.dialog);
+				uac_r.dialog = 0;
+			}
 			shm_free(hentity);
 			goto  done;
 		}
+
+		/* Now create a temporary hash table entry.
+		   This is needed to deal with the race-hazard when NOTIFYs
+		   arrive before the 2xx response to the SUBSCRIBE. */
+		size = sizeof(ua_pres_t)+ 2 * sizeof(str) + (
+			subs->pres_uri->len +
+			subs->watcher_uri->len +
+			uac_r.dialog->id.loc_tag.len +
+			uac_r.dialog->id.call_id.len +
+			subs->id.len) * sizeof(char);
+
+		presentity= (ua_pres_t*)shm_malloc(size);
+		if(presentity== NULL)
+		{
+			LM_ERR("no more share memory\n");
+			goto done;
+		}
+		memset(presentity, 0, size);
+		size= sizeof(ua_pres_t);
+
+		presentity->pres_uri = (str *) ((char *) presentity + size);
+		size += sizeof(str);
+		presentity->pres_uri->s= (char *) presentity + size;
+		memcpy(presentity->pres_uri->s, subs->pres_uri->s, subs->pres_uri->len);
+		presentity->pres_uri->len= subs->pres_uri->len;
+		size+= subs->pres_uri->len;
+
+		presentity->watcher_uri= (str *) ((char *) presentity + size);
+		size += sizeof(str);
+		presentity->watcher_uri->s= (char *) presentity + size;
+		memcpy(presentity->watcher_uri->s, subs->watcher_uri->s, subs->watcher_uri->len);
+		presentity->watcher_uri->len = subs->watcher_uri->len;
+		size += subs->watcher_uri->len;
+
+		presentity->call_id.s = (char *) presentity + size;
+		memcpy(presentity->call_id.s, uac_r.dialog->id.call_id.s, uac_r.dialog->id.call_id.len);
+		presentity->call_id.len = uac_r.dialog->id.call_id.len;
+		size += uac_r.dialog->id.call_id.len;
+
+		presentity->from_tag.s = (char *) presentity + size;
+		memcpy(presentity->from_tag.s, uac_r.dialog->id.loc_tag.s, uac_r.dialog->id.loc_tag.len);
+		presentity->from_tag.len= uac_r.dialog->id.loc_tag.len;
+		size += uac_r.dialog->id.loc_tag.len;
+
+		presentity->id.s = (char *) presentity+ size;
+		memcpy(presentity->id.s, subs->id.s, subs->id.len);
+		presentity->id.len = subs->id.len;
+		size += subs->id.len;
+
+		/* Set the temporary record expiry for 2 * 64T1 seconds from now */
+		presentity->expires= (int)time(NULL) + 64;
+
+		insert_htable(presentity);
+
+		uac_r.dialog->rem_target.s = 0;
+		uac_r.dialog->dst_uri.s = 0;
+		tmb.free_dlg(uac_r.dialog);
+		uac_r.dialog = 0;
 	}
 	else
 	{

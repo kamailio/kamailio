@@ -707,7 +707,7 @@ int req_within(uac_req_t *uac_r)
  * Send an initial request that will start a dialog
  * WARNING: writes uac_r->dialog
  */
-int req_outside(uac_req_t *uac_r, str* to, str* from)
+int req_outside(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 {
 	str callid, fromtag;
 
@@ -720,6 +720,15 @@ int req_outside(uac_req_t *uac_r, str* to, str* from)
 		LOG(L_ERR, "req_outside(): Error while creating new dialog\n");
 		goto err;
 	}
+
+	if (ruri) {
+		uac_r->dialog->rem_target.s = ruri->s;
+		uac_r->dialog->rem_target.len = ruri->len;
+		/* hooks will be set from w_calculate_hooks */
+	}
+
+	if (next_hop) uac_r->dialog->dst_uri = *next_hop;
+	w_calculate_hooks(uac_r->dialog);
 
 	return t_uac(uac_r);
 
