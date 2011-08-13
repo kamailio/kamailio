@@ -1,9 +1,9 @@
-INSERT INTO version (table_name, table_version) values ('rls_presentity','0');
+INSERT INTO version (table_name, table_version) values ('rls_presentity','1');
 CREATE TABLE rls_presentity (
     id SERIAL PRIMARY KEY NOT NULL,
     rlsubs_did VARCHAR(255) NOT NULL,
     resource_uri VARCHAR(128) NOT NULL,
-    content_type VARCHAR(64) NOT NULL,
+    content_type VARCHAR(255) NOT NULL,
     presence_state BYTEA NOT NULL,
     expires INTEGER NOT NULL,
     updated INTEGER NOT NULL,

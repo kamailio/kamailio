@@ -1,1 +1,1 @@
-id(int,auto) key_name(string) key_type(int) value_type(int) key_value(string) 
+id(int,auto) key_name(string) key_type(int) value_type(int) key_value(string) expires(string) 

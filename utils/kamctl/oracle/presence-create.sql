@@ -99,7 +99,7 @@ BEGIN map2users('xcap'); END;
 /
 CREATE INDEX xcap_source_idx  ON xcap (source);
 
-INSERT INTO version (table_name, table_version) values ('pua','6');
+INSERT INTO version (table_name, table_version) values ('pua','7');
 CREATE TABLE pua (
     id NUMBER(10) PRIMARY KEY,
     pres_uri VARCHAR2(128),
@@ -111,7 +111,7 @@ CREATE TABLE pua (
     etag VARCHAR2(64),
     tuple_id VARCHAR2(64),
     watcher_uri VARCHAR2(128),
-    call_id VARCHAR2(128),
+    call_id VARCHAR2(255),
     to_tag VARCHAR2(64),
     from_tag VARCHAR2(64),
     cseq NUMBER(10),

@@ -6,4 +6,3 @@ CREATE TABLE pl_pipes (
     plimit INT DEFAULT 0 NOT NULL
 ) ENGINE=MyISAM;
 
-CREATE INDEX account_idx ON pl_pipes (
