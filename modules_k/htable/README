@@ -11,7 +11,7 @@ Elena-Ramona Modroiu
 
    <ramona@rosdev.ro>
 
-   Copyright © 2008-2011 http://www.asipto.com
+   Copyright � 2008-2011 http://www.asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -38,6 +38,7 @@ Elena-Ramona Modroiu
               3.9. fetch_rows (integer)
               3.10. timer_interval (integer)
               3.11. timer_mode (integer)
+              3.12. db_expires (integer)
 
         4. Exported Functions
 
@@ -70,9 +71,10 @@ Elena-Ramona Modroiu
    1.11. Set fetch_rows parameter
    1.12. Set timer_interval parameter
    1.13. Set timer_mode parameter
-   1.14. sht_print usage
-   1.15. sht_rm_name_re usage
-   1.16. sht_rm_value_re usage
+   1.14. Set db_expires parameter
+   1.15. sht_print usage
+   1.16. sht_rm_name_re usage
+   1.17. sht_rm_value_re usage
 
 Chapter 1. Admin Guide
 
@@ -98,6 +100,7 @@ Chapter 1. Admin Guide
         3.9. fetch_rows (integer)
         3.10. timer_interval (integer)
         3.11. timer_mode (integer)
+        3.12. db_expires (integer)
 
    4. Exported Functions
 
@@ -133,7 +136,7 @@ Chapter 1. Admin Guide
    You can read more about hash tables at:
    http://en.wikipedia.org/wiki/Hash_table.
 
-   The “name” can be a static string or can include pseudo- variables that
+   The "name" can be a static string or can include pseudo- variables that
    will be replaced at runtime.
 
    Example 1.1. Accessing $sht(htname=>key)
@@ -156,7 +159,7 @@ $sht(a=>$ci::srcip) = $si;
    the failed authentications per user and one for storing the time of
    last authentication attempt. To ensure unique name per user, the hash
    table uses a combination of authentication username and text
-   “::auth_count” and “::last_auth”.
+   "::auth_count" and "::last_auth".
 
    Example 1.2. Dictionary attack limitation
 ...
@@ -247,6 +250,7 @@ if(is_present_hf("Authorization"))
    3.9. fetch_rows (integer)
    3.10. timer_interval (integer)
    3.11. timer_mode (integer)
+   3.12. db_expires (integer)
 
 3.1. htable (str)
 
@@ -396,13 +400,26 @@ modparam("htable", "timer_interval", 10)
 modparam("htable", "timer_mode", 1)
 ...
 
+3.12. db_expires (integer)
+
+   If set to 1, will load/save the expires values of the items in hash
+   table fromm/to database. It applies only to hash tables that have
+   auto-expires attribute defined.
+
+   Default value is 0.
+
+   Example 1.14. Set db_expires parameter
+...
+modparam("htable", "db_expires", 1)
+...
+
 4. Exported Functions
 
    4.1. sht_print()
    4.2. sht_rm_name_re(htable=>regexp)
    4.3. sht_rm_value_re(htable=>regexp)
 
-4.1.  sht_print()
+4.1. sht_print()
 
    Dump content of hash table to L_ERR log level. Intended for debug
    purposes.
@@ -410,12 +427,12 @@ modparam("htable", "timer_mode", 1)
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.14. sht_print usage
+   Example 1.15. sht_print usage
 ...
 sht_print();
 ...
 
-4.2.  sht_rm_name_re(htable=>regexp)
+4.2. sht_rm_name_re(htable=>regexp)
 
    Delete all entries in the htable that match the name against regular
    expression.
@@ -423,12 +440,12 @@ sht_print();
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.15. sht_rm_name_re usage
+   Example 1.16. sht_rm_name_re usage
 ...
 sht_rm_name_re("ha=>.*");
 ...
 
-4.3.  sht_rm_value_re(htable=>regexp)
+4.3. sht_rm_value_re(htable=>regexp)
 
    Delete all entries in the htable that match the value against regular
    expression.
@@ -436,7 +453,7 @@ sht_rm_name_re("ha=>.*");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.16. sht_rm_value_re usage
+   Example 1.17. sht_rm_value_re usage
 ...
 sht_rm_value_re("ha=>.*");
 ...
@@ -458,7 +475,7 @@ sht_rm_value_re("ha=>.*");
    6.1. sht_reload
    6.2. sht_dump
 
-6.1.  sht_reload
+6.1. sht_reload
 
    Reload a hash table from database.
 
@@ -471,7 +488,7 @@ sht_rm_value_re("ha=>.*");
                 _hash_table_name_
                 _empty_line_
 
-6.2.  sht_dump
+6.2. sht_dump
 
    Dump content of a hash table via MI.
 
@@ -488,7 +505,7 @@ sht_rm_value_re("ha=>.*");
 
    7.1. htable:mod-init
 
-7.1.  htable:mod-init
+7.1. htable:mod-init
 
    When defined, the module calls event_route[htable:mod-init] after all
    modules have been initialised. A typical use case is to initialise

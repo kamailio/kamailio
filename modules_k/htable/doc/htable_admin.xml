@@ -478,6 +478,27 @@ modparam("htable", "timer_mode", 1)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>db_expires</varname> (integer)</title>
+		<para>
+			If set to 1, will load/save the expires values of the items in
+			hash table fromm/to database. It applies only to hash tables that
+			have auto-expires attribute defined.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "db_expires", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Exported Functions</title>
