@@ -141,6 +141,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 	int ret;
 	int cnt;
 	int now;
+	int ncols;
 
 	if(ht_db_con==NULL)
 	{
@@ -157,9 +158,12 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 	LM_DBG("=============== loading hash table [%.*s] from database [%.*s]\n",
 			ht->name.len, ht->name.s, dbtable->len, dbtable->s);
 	cnt = 0;
+	ncols = 4;
+	if(ht->htexpire > 0 && ht_db_expires_flag!=0)
+		ncols = 5;
 
 	if (DB_CAPABILITY(ht_dbf, DB_CAP_FETCH)) {
-		if(ht_dbf.query(ht_db_con,0,0,0,db_cols,0,5,db_ord,0) < 0)
+		if(ht_dbf.query(ht_db_con,0,0,0,db_cols,0,ncols,db_ord,0) < 0)
 		{
 			LM_ERR("Error while querying db\n");
 			return -1;
@@ -179,7 +183,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 		}
 	} else {
 		if((ret=ht_dbf.query(ht_db_con, NULL, NULL, NULL, db_cols,
-				0, 5, db_ord, &db_res))!=0
+				0, ncols, db_ord, &db_res))!=0
 			|| RES_ROW_N(db_res)<=0 )
 		{
 			if( ret==0)
@@ -208,10 +212,14 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 			}
 			kname.len = strlen(kname.s);
 
-			expires.n = RES_ROWS(db_res)[i].values[4].val.int_val;
-			if (expires.n > 0 && expires.n < now) {
-				LM_DBG("skipping expired entry [%.*s] (%d)\n", kname.len, kname.s, expires.n-now);
-				continue;
+			expires.n = 0;
+			if(ht->htexpire > 0 && ht_db_expires_flag!=0) {
+				expires.n = RES_ROWS(db_res)[i].values[4].val.int_val;
+				if (expires.n > 0 && expires.n < now) {
+					LM_DBG("skipping expired entry [%.*s] (%d)\n", kname.len,
+							kname.s, expires.n-now);
+					continue;
+				}
 			}
 
 			cnt++;
@@ -328,6 +336,7 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 	str tmp;
 	int i;
 	time_t now;
+	int ncols;
 
 	if(ht_db_con==NULL)
 	{
@@ -390,12 +399,15 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 				db_vals[3].val.str_val.s   = tmp.s;
 				db_vals[3].val.str_val.len = tmp.len;
 			}
+			ncols = 4;
 
-			db_vals[4].type = DB1_INT;
-			db_vals[4].nul = 0;
-			db_vals[4].val.int_val = (int)it->expire;
-
-			if(ht_dbf.insert(ht_db_con, db_cols, db_vals, 5) < 0)
+			if(ht_db_expires_flag!=0 && ht->htexpire > 0) {
+				db_vals[4].type = DB1_INT;
+				db_vals[4].nul = 0;
+				db_vals[4].val.int_val = (int)it->expire;
+				ncols = 5;
+			}
+			if(ht_dbf.insert(ht_db_con, db_cols, db_vals, ncols) < 0)
 			{
 				LM_ERR("failed to store key [%.*s] in table [%.*s]\n",
 						it->name.len, it->name.s,

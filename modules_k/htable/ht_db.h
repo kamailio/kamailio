@@ -33,6 +33,7 @@ extern str ht_db_value_column;
 extern str ht_db_expires_column;
 extern str ht_array_size_suffix;
 extern int ht_fetch_rows;
+extern int ht_db_expires_flag;
 
 int ht_db_init_params(void);
 int ht_db_init_con(void);

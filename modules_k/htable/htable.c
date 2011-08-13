@@ -48,6 +48,7 @@
 MODULE_VERSION
 
 int  ht_timer_interval = 20;
+int  ht_db_expires_flag = 0;
 
 static int htable_init_rpc(void);
 
@@ -113,6 +114,7 @@ static param_export_t params[]={
 	{"array_size_suffix",  STR_PARAM, &ht_array_size_suffix.s},
 	{"fetch_rows",         INT_PARAM, &ht_fetch_rows},
 	{"timer_interval",     INT_PARAM, &ht_timer_interval},
+	{"db_expires",         INT_PARAM, &ht_db_expires_flag},
 	{0,0,0}
 };
 
