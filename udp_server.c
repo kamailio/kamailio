@@ -75,6 +75,7 @@
 #include "mem/mem.h"
 #include "ip_addr.h"
 #include "cfg/cfg_struct.h"
+#include "events.h"
 #ifdef USE_RAW_SOCKS
 #include "raw_sock.h"
 #endif /* USE_RAW_SOCKS */
@@ -475,6 +476,17 @@ int udp_rcv_loop()
 		su2ip_addr(&ri.src_ip, from);
 		ri.src_port=su_getport(from);
 
+		if(unlikely(sr_event_enabled(SREV_NET_DGRAM_IN)))
+		{
+			void *sredp[3];
+			sredp[0] = (void*)buf;
+			sredp[1] = (void*)(&len);
+			sredp[2] = (void*)(&ri);
+			if(sr_event_exec(SREV_NET_DGRAM_IN, (void*)sredp)<0) {
+				/* data handled by callback - continue to next packet */
+				continue;
+			}
+		}
 #ifndef NO_ZERO_CHECKS
 #ifdef USE_STUN
 		/* STUN support can be switched off even if it's compiled */
