@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para> The DMQ module implements a distributed message passing system on top of Kamailio.
+	The DMQ nodes within the system are grouped in a logical entity called DMQ bus and are able to
+	communicate with each others by sending/receiving messages (either by broadcast or sending a DMQ
+	message to a specific node).
+	The system transparently deals with node discovery, node consistency within the DMQ bus, retransmissions,
+	etc.
+	</para>
+	
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>sl</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	<section>
+		<title>External Libraries or Applications</title>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>
+				Each peer needs to use its own serialization mechanism.
+				Some examples are libtpl, protobuf.
+				</emphasis>.
+			</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+	
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>dmq_server_address</varname>(str)</title>
+		<para>
+		The local server address.
+		</para>
+		<para>
+		The modules needs it to know on which interface the DMQ engine should send and receive messages.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>NULL</quote>.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dmq_server_address</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "dmq_server_address", "&defaultdb;")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>dmq_notification_address</varname>(str)</title>
+		<para>
+		The address of the DMQ node from which the local node should retrieve initial information.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dmq_notification_address</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "dmq_notification_address", "&defaultdb;")
+...
+</programlisting>
+		</example>
+	</section>
+</chapter>
+
