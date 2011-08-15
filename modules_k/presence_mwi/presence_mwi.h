@@ -1,6 +1,4 @@
 /*
- * presence_mwi module - presence_mwi header file
- *
  * Copyright (C) 2007 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.

@@ -233,6 +233,31 @@ modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 		</example>
 	</section>
 	<section>
+		<title><varname>trace_to_database</varname> (integer)</title>
+		<para>
+		Parameter to enable/disable inserts to the Database from this
+		Kamailio. 
+		</para>
+		<para>
+		In case we only want to send the SIP-Messages to the 
+		duplicate_uri and not store the information to the local 
+		database we can set this to "0".  
+		</para>
+		<para>
+		<emphasis>
+			Default value is "1".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>trace_to_database</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("siptrace", "trace_to_database", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>trace_local_ip</varname> (str)</title>
 		<para>
 		The address to be used in fromip field for local generated
@@ -276,6 +301,66 @@ modparam("siptrace", "trace_local_ip", "10.1.1.1:5064")
 		<programlisting format="linespecific">
 ...
 modparam("siptrace", "trace_sl_acks", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>xheaders_write</varname> (integer)</title>
+		<para>
+		Parameter to enable/disable writing of x-headers.
+		</para>
+		<para>
+		Stores fromip, toip, method and direction in X-Siptrace-* headers.
+		This allows to transmit them to a second kamailio server
+		using the duplicate_uri feature.
+		Because the headers are added after the data is written to the database,
+		the headers only show up in the packets sent by duplicate_uri.
+		</para>
+		<para>
+		See <varname>xheaders_read</varname>, it should be used on the receiving
+		side.
+		</para>
+		<para>
+		Note: The headers are first read, then written. This allows to relay
+		the information over more then two kamailio servers by setting both
+		<varname>xheaders_write</varname> and <varname>xheaders_read</varname>
+		to "1" on the servers in the middle.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "0".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xheaders_write</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("siptrace", "xheaders_write", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>xheaders_read</varname> (integer)</title>
+		<para>
+		Parameter to enable/disable reading of x-headers.
+		</para>
+		<para>
+		Reads and removes the X-Siptrace-* headers. Packets not containing the
+		headers are neither stored to the database nor relayed (duplicate_uri).
+		See <varname>xheaders_write</varname> for further information.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "0".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xheaders_read</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("siptrace", "xheaders_read", 0)
 ...
 </programlisting>
 		</example>

@@ -216,6 +216,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	int backup_route_type;
 #endif
 	snd_flags_t snd_flags;
+	tm_xdata_t backup_xd;
 
 	ret=-1;
 	hi=0; /* make gcc happy */
@@ -303,8 +304,8 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	new_cell->end_of_life=get_ticks_raw()+lifetime;
 #ifdef TM_DIFF_RT_TIMEOUT
 	/* same as above for retransmission intervals */
-	new_cell->rt_t1_timeout=cfg_get(tm, tm_cfg, rt_t1_timeout);
-	new_cell->rt_t2_timeout=cfg_get(tm, tm_cfg, rt_t2_timeout);
+	new_cell->rt_t1_timeout_ms = cfg_get(tm, tm_cfg, rt_t1_timeout_ms);
+	new_cell->rt_t2_timeout_ms = cfg_get(tm, tm_cfg, rt_t2_timeout_ms);
 #endif
 
 	set_kr(REQ_FWDED);
@@ -353,7 +354,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				lreq.rcv.comp=dst.comp;
 			#endif /* USE_COMP */
 				sflag_bk = getsflags();
-				tm_xdata_swap(new_cell, 0);
+				tm_xdata_swap(new_cell, &backup_xd, 0);
 
 				/* run the route */
 				backup_route_type = get_route_type();
@@ -372,7 +373,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				set_route_type( backup_route_type );
 
 				/* restore original environment */
-				tm_xdata_swap(new_cell, 1);
+				tm_xdata_swap(new_cell, &backup_xd, 1);
 				setsflagsval(sflag_bk);
 
 				if (unlikely(lreq.new_uri.s))
@@ -706,7 +707,7 @@ int req_within(uac_req_t *uac_r)
  * Send an initial request that will start a dialog
  * WARNING: writes uac_r->dialog
  */
-int req_outside(uac_req_t *uac_r, str* to, str* from)
+int req_outside(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 {
 	str callid, fromtag;
 
@@ -719,6 +720,15 @@ int req_outside(uac_req_t *uac_r, str* to, str* from)
 		LOG(L_ERR, "req_outside(): Error while creating new dialog\n");
 		goto err;
 	}
+
+	if (ruri) {
+		uac_r->dialog->rem_target.s = ruri->s;
+		uac_r->dialog->rem_target.len = ruri->len;
+		/* hooks will be set from w_calculate_hooks */
+	}
+
+	if (next_hop) uac_r->dialog->dst_uri = *next_hop;
+	w_calculate_hooks(uac_r->dialog);
 
 	return t_uac(uac_r);
 

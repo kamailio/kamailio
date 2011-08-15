@@ -895,11 +895,25 @@ static inline int internal_mi_print_dlg(struct mi_node *rpl,
 	if(node1 == 0)
 		goto error;
 
-	node1 = add_mi_node_child(node, 0,"caller_bind_addr",16,
-			dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s, 
+	if (dlg->bind_addr[DLG_CALLER_LEG]) {
+		node1 = add_mi_node_child(node, 0,
+			"caller_bind_addr",16,
+			dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s,
 			dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len);
-	if(node1 == 0)
-		goto error;
+	} else {
+		node1 = add_mi_node_child(node, 0,
+			"caller_bind_addr",16,0,0);
+	}
+
+	if (dlg->bind_addr[DLG_CALLEE_LEG]) {
+		node1 = add_mi_node_child(node, 0,
+			"callee_bind_addr",16,
+			dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.s,
+			dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.len);
+	} else {
+		node1 = add_mi_node_child(node, 0,
+			"callee_bind_addr",16,0,0);
+	}
 
 	node1 = add_mi_node_child(node, MI_DUP_VALUE, "to_uri", 6,
 			dlg->to_uri.s, dlg->to_uri.len);
@@ -929,15 +943,6 @@ static inline int internal_mi_print_dlg(struct mi_node *rpl,
 	if(node1 == 0)
 		goto error;
 
-	if (dlg->bind_addr[DLG_CALLEE_LEG]) {
-		node1 = add_mi_node_child(node, 0,
-			"callee_bind_addr",16,
-			dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.s, 
-			dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.len);
-	} else {
-		node1 = add_mi_node_child(node, 0,
-			"callee_bind_addr",16,0,0);
-	}
 	if(node1 == 0)
 		goto error;
 

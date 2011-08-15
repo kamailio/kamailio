@@ -133,9 +133,9 @@ int insert_dlg_timer(struct dlg_tl *tl, int interval)
 	lock_get( d_timer->lock);
 
 	if (tl->next!=0 || tl->prev!=0) {
-		lock_release( d_timer->lock);
 		LM_CRIT("Trying to insert a bogus dlg tl=%p tl->next=%p tl->prev=%p\n",
 			tl, tl->next, tl->prev);
+		lock_release( d_timer->lock);
 		return -1;
 	}
 	tl->timeout = get_ticks()+interval;
@@ -202,14 +202,13 @@ int update_dlg_timer(struct dlg_tl *tl, int timeout)
 {
 	lock_get( d_timer->lock);
 
-	if ( tl->next ) {
-		if (tl->prev==0) {
-			lock_release( d_timer->lock);
-			return -1;
-		}
-		remove_dialog_timer_unsafe(tl);
+	if (tl->next==0 || tl->prev==0) {
+		LM_CRIT("Trying to update a bogus dlg tl=%p tl->next=%p tl->prev=%p\n",
+			tl, tl->next, tl->prev);
+		lock_release( d_timer->lock);
+		return -1;
 	}
-
+	remove_dialog_timer_unsafe( tl );
 	tl->timeout = get_ticks()+timeout;
 	insert_dialog_timer_unsafe( tl );
 

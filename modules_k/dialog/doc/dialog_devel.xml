@@ -135,6 +135,29 @@
 		</itemizedlist>
 	</section>
 
+
+	<section>
+		<title>
+		<function moreinfo="none">terminate_dlg (dlg, hdrs)</function>
+		</title>
+		<para>
+		Terminate a Dialog
+		</para>
+		<para>Meaning of parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>struct dlg_cell* dlg</emphasis> - dialog to 
+			terminate.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>str* hdrs</emphasis> - string containg extra headers (full format) 
+			to be added to the BYE requests of the dialog.
+			</para>
+		</listitem>
+		</itemizedlist>
+	</section>
+
 	</section>
 
 </chapter>

@@ -33,21 +33,26 @@
 
 
 /*
- * Authorize using Proxy-Authorize header field (no from parameter given)
+ * Authorize using Proxy-Authorize header field (no URI user parameter given)
  */
 int radius_proxy_authorize_1(struct sip_msg* _msg, char* _realm, char* _s2);
 
 
 /*
- * Authorize using Proxy-Authorize header field (from parameter given)
+ * Authorize using Proxy-Authorize header field (URI user parameter given)
  */
-int radius_proxy_authorize_2(struct sip_msg* _msg, char* _realm, char* _from);
+int radius_proxy_authorize_2(struct sip_msg* _msg, char* _realm, char* _uri_user);
 
 
 /*
- * Authorize using WWW-Authorization header field
+ * Authorize using WWW-Authorization header field (no URI user parameter given)
  */
-int radius_www_authorize(struct sip_msg* _msg, char* _realm, char* _s2);
+int radius_www_authorize_1(struct sip_msg* _msg, char* _realm, char* _s2);
+
+/*
+ * Authorize using WWW-Authorization header field (URI user parameter given)
+ */
+int radius_www_authorize_2(struct sip_msg* _msg, char* _realm, char* _uri_user);
 
 
 #endif /* AUTHORIZE_H */

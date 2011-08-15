@@ -41,6 +41,7 @@ str ht_db_name_column   = str_init("key_name");
 str ht_db_ktype_column  = str_init("key_type");
 str ht_db_vtype_column  = str_init("value_type");
 str ht_db_value_column  = str_init("key_value");
+str ht_db_expires_column= str_init("expires");
 int ht_fetch_rows = 100;
 
 /**
@@ -122,8 +123,8 @@ static char ht_name_buf[HT_NAME_BUF_SIZE];
  */
 int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 {
-	db_key_t db_cols[4] = {&ht_db_name_column, &ht_db_ktype_column,
-		&ht_db_vtype_column, &ht_db_value_column};
+	db_key_t db_cols[5] = {&ht_db_name_column, &ht_db_ktype_column,
+		&ht_db_vtype_column, &ht_db_value_column, &ht_db_expires_column};
 	db_key_t db_ord = &ht_db_name_column;
 	db1_res_t* db_res = NULL;
 	str kname;
@@ -135,9 +136,12 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 	int last_ktype;
 	int n;
 	int_str val;
+	int_str expires;
 	int i;
 	int ret;
 	int cnt;
+	int now;
+	int ncols;
 
 	if(ht_db_con==NULL)
 	{
@@ -154,9 +158,12 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 	LM_DBG("=============== loading hash table [%.*s] from database [%.*s]\n",
 			ht->name.len, ht->name.s, dbtable->len, dbtable->s);
 	cnt = 0;
+	ncols = 4;
+	if(ht->htexpire > 0 && ht_db_expires_flag!=0)
+		ncols = 5;
 
 	if (DB_CAPABILITY(ht_dbf, DB_CAP_FETCH)) {
-		if(ht_dbf.query(ht_db_con,0,0,0,db_cols,0,4,db_ord,0) < 0)
+		if(ht_dbf.query(ht_db_con,0,0,0,db_cols,0,ncols,db_ord,0) < 0)
 		{
 			LM_ERR("Error while querying db\n");
 			return -1;
@@ -176,7 +183,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 		}
 	} else {
 		if((ret=ht_dbf.query(ht_db_con, NULL, NULL, NULL, db_cols,
-				0, 3, db_ord, &db_res))!=0
+				0, ncols, db_ord, &db_res))!=0
 			|| RES_ROW_N(db_res)<=0 )
 		{
 			if( ret==0)
@@ -193,10 +200,10 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 	pname.s = "";
 	n = 0;
 	last_ktype = 0;
+	now = (int)time(NULL);
 	do {
 		for(i=0; i<RES_ROW_N(db_res); i++)
 		{
-			cnt++;
 			/* not NULL values enforced in table definition ?!?! */
 			kname.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
 			if(kname.s==NULL) {
@@ -204,6 +211,18 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 				goto error;
 			}
 			kname.len = strlen(kname.s);
+
+			expires.n = 0;
+			if(ht->htexpire > 0 && ht_db_expires_flag!=0) {
+				expires.n = RES_ROWS(db_res)[i].values[4].val.int_val;
+				if (expires.n > 0 && expires.n < now) {
+					LM_DBG("skipping expired entry [%.*s] (%d)\n", kname.len,
+							kname.s, expires.n-now);
+					continue;
+				}
+			}
+
+			cnt++;
 			ktype = RES_ROWS(db_res)[i].values[1].val.int_val;
 			if(last_ktype==1)
 			{
@@ -260,6 +279,15 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 				LM_ERR("error adding to hash table\n");
 				goto error;
 			}
+
+			/* set expiry */
+			if (ht->htexpire > 0 && expires.n > 0) {
+				expires.n -= now;
+				if(ht_set_cell_expire(ht, &hname, 0, &expires)) {
+					LM_ERR("error setting expires to hash entry [%*.s]\n", hname.len, hname.s);
+					goto error;
+				}
+			}
 	 	}
 		if (DB_CAPABILITY(ht_dbf, DB_CAP_FETCH)) {
 			if(ht_dbf.fetch_result(ht_db_con, &db_res, ht_fetch_rows)<0) {
@@ -301,12 +329,14 @@ error:
  */
 int ht_db_save_table(ht_t *ht, str *dbtable)
 {
-	db_key_t db_cols[4] = {&ht_db_name_column, &ht_db_ktype_column,
-		&ht_db_vtype_column, &ht_db_value_column};
-	db_val_t db_vals[4];
+	db_key_t db_cols[5] = {&ht_db_name_column, &ht_db_ktype_column,
+		&ht_db_vtype_column, &ht_db_value_column, &ht_db_expires_column};
+	db_val_t db_vals[5];
 	ht_cell_t *it;
 	str tmp;
 	int i;
+	time_t now;
+	int ncols;
 
 	if(ht_db_con==NULL)
 	{
@@ -323,12 +353,28 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 	LM_DBG("save the content of hash table [%.*s] to database in [%.*s]\n",
 			ht->name.len, ht->name.s, dbtable->len, dbtable->s);
 
+	now = time(NULL);
+
 	for(i=0; i<ht->htsize; i++)
 	{
 		lock_get(&ht->entries[i].lock);
 		it = ht->entries[i].first;
 		while(it)
 		{
+			if(it->flags&AVP_VAL_STR) {
+				LM_DBG("entry key: [%.*s] value: [%.*s] (str)\n",
+					it->name.len, it->name.s, it->value.s.len, it->value.s.s);
+			} else {
+				LM_DBG("entry key: [%.*s] value: [%d] (int)\n",
+					it->name.len, it->name.s, it->value.n);
+			}
+
+			if (it->expire <= now) {
+				LM_DBG("skipping expired entry");
+				it = it->next;
+				continue;
+			}
+
 			db_vals[0].type = DB1_STR;
 			db_vals[0].nul  = 0;
 			db_vals[0].val.str_val.s   = it->name.s;
@@ -340,19 +386,28 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 
 			db_vals[2].type = DB1_INT;
 			db_vals[2].nul = 0;
-			db_vals[2].val.int_val = 0;
 
 			db_vals[3].type = DB1_STR;
 			db_vals[3].nul  = 0;
 			if(it->flags&AVP_VAL_STR) {
+				db_vals[2].val.int_val = 0;
 				db_vals[3].val.str_val.s   = it->value.s.s;
 				db_vals[3].val.str_val.len = it->value.s.len;
 			} else {
+				db_vals[2].val.int_val = 1;
 				tmp.s = sint2str((long)it->value.n, &tmp.len);
 				db_vals[3].val.str_val.s   = tmp.s;
 				db_vals[3].val.str_val.len = tmp.len;
 			}
-			if(ht_dbf.insert(ht_db_con, db_cols, db_vals, 4) < 0)
+			ncols = 4;
+
+			if(ht_db_expires_flag!=0 && ht->htexpire > 0) {
+				db_vals[4].type = DB1_INT;
+				db_vals[4].nul = 0;
+				db_vals[4].val.int_val = (int)it->expire;
+				ncols = 5;
+			}
+			if(ht_dbf.insert(ht_db_con, db_cols, db_vals, ncols) < 0)
 			{
 				LM_ERR("failed to store key [%.*s] in table [%.*s]\n",
 						it->name.len, it->name.s,
@@ -383,7 +438,7 @@ int ht_db_delete_records(str *dbtable)
 	}
 
 	if(ht_dbf.delete(ht_db_con, NULL, NULL, NULL, 0) < 0)
-		LM_ERR("failed to detele db records in [%.*s]\n",
+		LM_ERR("failed to delete db records in [%.*s]\n",
 				dbtable->len, dbtable->s);
 	return 0;
 }

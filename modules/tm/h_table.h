@@ -295,9 +295,8 @@ struct totag_elem {
 #	define pass_provisional(_t_)	((_t_)->flags&T_PASS_PROVISIONAL_FLAG)
 #endif
 
-/* unsigned short should be enough for a retr. timer: max. 65535 ticks =>
- * max  retr. = 1023 s for tick = 15 ms, which should be more then enough and
- * saves us 2*2 bytes */
+/* unsigned short should be enough for a retr. timer: max. 65535 ms =>
+ * max retr. = 65 s which should be enough and saves us 2*2 bytes */
 typedef unsigned short retr_timeout_t;
 
 
@@ -406,8 +405,8 @@ typedef struct cell
 	ticks_t fr_timeout;     /* final response interval for retr_bufs */
 	ticks_t fr_inv_timeout; /* final inv. response interval for retr_bufs */
 #ifdef TM_DIFF_RT_TIMEOUT
-	retr_timeout_t rt_t1_timeout; /* start retr. interval for retr_bufs */
-	retr_timeout_t rt_t2_timeout; /* maximum retr. interval for retr_bufs */
+	retr_timeout_t rt_t1_timeout_ms; /* start retr. interval for retr_bufs */
+	retr_timeout_t rt_t2_timeout_ms; /* maximum retr. interval for retr_bufs */
 #endif
 	ticks_t end_of_life; /* maximum lifetime */
 
@@ -565,7 +564,7 @@ inline static void remove_from_hash_table_unsafe( struct cell * p_cell)
 /**
  * backup xdata from/to msg context to local var and use T lists
  */
-void tm_xdata_swap(tm_cell_t *t, int mode);
+void tm_xdata_swap(tm_cell_t *t, tm_xdata_t *xd, int mode);
 
 #endif
 

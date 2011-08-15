@@ -70,6 +70,7 @@ struct _siptrace_data {
 	str toip;
 	char toip_buff[IP_ADDR_MAX_STR_SIZE+12];
 	char fromip_buff[IP_ADDR_MAX_STR_SIZE+12];
+	struct timeval tv;
 #ifdef STATISTICS
 	stat_var *stat;
 #endif
@@ -86,6 +87,7 @@ static int child_init(int rank);
 static void destroy(void);
 static int sip_trace(struct sip_msg*, char*, char*);
 
+static int sip_trace_store_db(struct _siptrace_data* sto);
 static int trace_send_duplicate(char *buf, int len);
 
 static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps);
@@ -109,17 +111,29 @@ static str fromip_column      = str_init("fromip");      /* 06 */
 static str toip_column        = str_init("toip");        /* 07 */
 static str fromtag_column     = str_init("fromtag");     /* 08 */
 static str direction_column   = str_init("direction");   /* 09 */
+static str time_us_column     = str_init("time_us");     /* 10 */
 
-#define NR_KEYS 10
+#define NR_KEYS 11
+
+#define XHEADERS_BUFSIZE 512
 
 int trace_flag = -1;
 int trace_on   = 0;
 int trace_sl_acks = 1;
 
+int trace_to_database = 1;
+
+int xheaders_write = 0;
+int xheaders_read = 0;
+
 str    dup_uri_str      = {0, 0};
 struct sip_uri *dup_uri = 0;
 
 int *trace_on_flag = NULL;
+int *trace_to_database_flag = NULL;
+
+int *xheaders_write_flag = NULL;
+int *xheaders_read_flag = NULL;
 
 static unsigned short traced_user_avp_type = 0;
 static int_str traced_user_avp;
@@ -165,8 +179,11 @@ static param_export_t params[] = {
 	{"traced_user_avp",    STR_PARAM, &traced_user_avp_str.s},
 	{"trace_table_avp",    STR_PARAM, &trace_table_avp_str.s},
 	{"duplicate_uri",      STR_PARAM, &dup_uri_str.s        },
+	{"trace_to_database",  INT_PARAM, &trace_to_database    },
 	{"trace_local_ip",     STR_PARAM, &trace_local_ip.s     },
 	{"trace_sl_acks",      INT_PARAM, &trace_sl_acks        },
+	{"xheaders_write",     INT_PARAM, &xheaders_write       },
+	{"xheaders_read",      INT_PARAM, &xheaders_read        },
 	{0, 0, 0}
 };
 
@@ -281,6 +298,23 @@ static int mod_init(void)
 	
 	*trace_on_flag = trace_on;
 	
+	trace_to_database_flag = (int*)shm_malloc(sizeof(int));
+	if(trace_to_database_flag==NULL) {
+		LM_ERR("no more shm memory left\n");
+		return -1;
+	}
+	
+	*trace_to_database_flag = trace_to_database;
+	
+	xheaders_write_flag = (int*)shm_malloc(sizeof(int));
+	xheaders_read_flag = (int*)shm_malloc(sizeof(int));
+	if (!(xheaders_write_flag && xheaders_read_flag)) {
+		LM_ERR("no more shm memory left\n");
+		return -1;
+	}
+	*xheaders_write_flag = xheaders_write;
+	*xheaders_read_flag = xheaders_read;
+
 	/* register callbacks to TM */
 	if (load_tm_api(&tmb)!=0)
 	{
@@ -461,16 +495,188 @@ error:
 	return -1;
 }
 
+// Appends x-headers to the message in sto->body containing data from sto
+static int sip_trace_xheaders_write(struct _siptrace_data *sto)
+{
+	if(xheaders_write_flag==NULL || *xheaders_write_flag==0)
+		return 0;
+
+	// Memory for the message with some additional headers.
+	// It gets free()ed in sip_trace_xheaders_free().
+	char* buf = malloc(sto->body.len + XHEADERS_BUFSIZE);
+	if (buf == NULL) {
+		LM_ERR("sip_trace_xheaders_write: out of memory\n");
+		return -1;
+	}
+
+	// Copy the whole message to buf first; it must be \0-terminated for
+	// strstr() to work. Then search for the end-of-header sequence.
+	memcpy(buf, sto->body.s, sto->body.len);
+	buf[sto->body.len] = '\0';
+	char* eoh = strstr(buf, "\r\n\r\n");
+	if (eoh == NULL) {
+		LM_ERR("sip_trace_xheaders_write: malformed message\n");
+		return -1;
+	}
+	eoh += 2; // the first \r\n belongs to the last header => skip it
+
+	// Write the new headers a the end-of-header position. This overwrites
+	// the \r\n terminating the old headers and the beginning of the message
+	// body. Both will be recovered later.
+	int bytes_written = snprintf(eoh, XHEADERS_BUFSIZE,
+		"X-Siptrace-Fromip: %.*s\r\n"
+		"X-Siptrace-Toip: %.*s\r\n"
+		"X-Siptrace-Time: %llu %llu\r\n"
+		"X-Siptrace-Method: %.*s\r\n"
+		"X-Siptrace-Dir: %s\r\n",
+		sto->fromip.len, sto->fromip.s,
+		sto->toip.len, sto->toip.s,
+		(unsigned long long)sto->tv.tv_sec, (unsigned long long)sto->tv.tv_usec,
+		sto->method.len, sto->method.s,
+		sto->dir);
+	if (bytes_written >= XHEADERS_BUFSIZE) {
+		LM_ERR("sip_trace_xheaders_write: string too long\n");
+		return -1;
+	}
+
+	// Copy the \r\n terminating the old headers and the message body from the
+	// old buffer in sto->body.s to the new end-of-header in buf.
+	int eoh_offset = eoh - buf;
+	char* new_eoh = eoh + bytes_written;
+	memcpy(new_eoh, sto->body.s + eoh_offset, sto->body.len - eoh_offset);
+
+	// Change sto to point to the new buffer.
+	sto->body.s = buf;
+	sto->body.len += bytes_written;
+	return 0;
+}
+
+// Parses x-headers, saves the data back to sto, and removes the x-headers
+// from the message in sto->buf
+static int sip_trace_xheaders_read(struct _siptrace_data *sto)
+{
+	if(xheaders_read_flag==NULL || *xheaders_read_flag==0)
+		return 0;
+
+	// Find the end-of-header marker \r\n\r\n
+	char* searchend = sto->body.s + sto->body.len - 3;
+	char* eoh = memchr(sto->body.s, '\r', searchend - eoh);
+	while (eoh != NULL && eoh < searchend) {
+		if (memcmp(eoh, "\r\n\r\n", 4) == 0)
+			break;
+		eoh = memchr(eoh + 1, '\r', searchend - eoh);
+	}
+	if (eoh == NULL) {
+		LM_ERR("sip_trace_xheaders_read: malformed message\n");
+		return -1;
+	}
+
+	// Find x-headers: eoh will be overwritten by \0 to allow the use of
+	// strstr(). The byte at eoh will later be recovered, when the
+	// message body is shifted towards the beginning of the message
+	// to remove the x-headers.
+	*eoh = '\0';
+	char* xheaders = strstr(sto->body.s, "\r\nX-Siptrace-Fromip: ");
+	if (xheaders == NULL) {
+		LM_ERR("sip_trace_xheaders_read: message without x-headers "
+			"from %.*s, callid %.*s\n",
+			sto->fromip.len, sto->fromip.s, sto->callid.len, sto->callid.s);
+		return -1;
+	}
+
+	// Allocate memory for new strings in sto
+	// (gets free()ed in sip_trace_xheaders_free() )
+	sto->fromip.s = malloc(51);
+	sto->toip.s = malloc(51);
+	sto->method.s = malloc(51);
+	sto->dir = malloc(4);
+	if (!(sto->fromip.s && sto->toip.s && sto->method.s && sto->dir)) {
+		LM_ERR("sip_trace_xheaders_read: out of memory\n");
+		goto erroraftermalloc;
+	}
+
+	// Parse the x-headers: scanf()
+	long long unsigned int tv_sec, tv_usec;
+	if (sscanf(xheaders, "\r\n"
+			"X-Siptrace-Fromip: %50s\r\n"
+			"X-Siptrace-Toip: %50s\r\n"
+			"X-Siptrace-Time: %llu %llu\r\n"
+			"X-Siptrace-Method: %50s\r\n"
+			"X-Siptrace-Dir: %3s",
+			sto->fromip.s, sto->toip.s,
+			&tv_sec, &tv_usec,
+			sto->method.s,
+			sto->dir) == EOF) {
+		LM_ERR("sip_trace_xheaders_read: malformed x-headers\n");
+		goto erroraftermalloc;
+	}
+	sto->fromip.len = strlen(sto->fromip.s);
+	sto->toip.len = strlen(sto->toip.s);
+	sto->tv.tv_sec = (time_t)tv_sec;
+	sto->tv.tv_usec = (suseconds_t)tv_usec;
+	sto->method.len = strlen(sto->method.s);
+
+	// Remove the x-headers: the message body is shifted towards the beginning
+	// of the message, overwriting the x-headers. Before that, the byte at eoh
+	// is recovered.
+	*eoh = '\r';
+	memmove(xheaders, eoh, sto->body.len - (eoh - sto->body.s));
+	sto->body.len -= eoh - xheaders;
+
+	return 0;
+
+erroraftermalloc:
+	if (sto->fromip.s) free(sto->fromip.s);
+	if (sto->toip.s) free(sto->toip.s);
+	if (sto->method.s) free(sto->method.s);
+	if (sto->dir) free(sto->dir);
+	return -1;
+}
+
+// Frees the memory allocated by sip_trace_xheaders_{write,read}
+static int sip_trace_xheaders_free(struct _siptrace_data *sto)
+{
+	if (xheaders_write_flag != NULL && *xheaders_write_flag != 0) {
+		free(sto->body.s);
+	}
+
+	if (xheaders_read_flag != NULL && *xheaders_read_flag != 0) {
+		free(sto->fromip.s);
+		free(sto->toip.s);
+		free(sto->dir);
+	}
+
+	return 0;
+}
+
 static int sip_trace_store(struct _siptrace_data *sto)
 {
-	db_key_t db_keys[NR_KEYS];
-	db_val_t db_vals[NR_KEYS];
-
 	if(sto==NULL)
 	{
 		LM_DBG("invalid parameter\n");
 		return -1;
 	}
+	
+	gettimeofday(&sto->tv, NULL);
+	
+	if (sip_trace_xheaders_read(sto) != 0) return -1;
+	int ret = sip_trace_store_db(sto);
+
+	if (sip_trace_xheaders_write(sto) != 0) return -1;
+	trace_send_duplicate(sto->body.s, sto->body.len);
+
+	if (sip_trace_xheaders_free(sto) != 0) return -1;
+
+	return ret;
+}
+
+static int sip_trace_store_db(struct _siptrace_data *sto)
+{
+	if(trace_to_database_flag==NULL || *trace_to_database_flag==0)
+		goto done;
+	
+	db_key_t db_keys[NR_KEYS];
+	db_val_t db_vals[NR_KEYS];
 
 	db_keys[0] = &msg_column;
 	db_vals[0].type = DB1_BLOB;
@@ -505,7 +711,7 @@ static int sip_trace_store(struct _siptrace_data *sto)
 	db_keys[6] = &date_column;
 	db_vals[6].type = DB1_DATETIME;
 	db_vals[6].nul = 0;
-	db_vals[6].val.time_val = time(NULL);
+	db_vals[6].val.time_val = sto->tv.tv_sec;
 	
 	db_keys[7] = &direction_column;
 	db_vals[7].type = DB1_STRING;
@@ -517,11 +723,16 @@ static int sip_trace_store(struct _siptrace_data *sto)
 	db_vals[8].nul = 0;
 	db_vals[8].val.str_val = sto->fromtag;
 	
-	db_funcs.use_table(db_con, siptrace_get_table());
-	
 	db_keys[9] = &traced_user_column;
 	db_vals[9].type = DB1_STR;
 	db_vals[9].nul = 0;
+	
+	db_keys[10] = &time_us_column;
+	db_vals[10].type = DB1_INT;
+	db_vals[10].nul = 0;
+	db_vals[10].val.int_val = sto->tv.tv_usec;
+	
+	db_funcs.use_table(db_con, siptrace_get_table());
 
 	if(trace_on_flag!=NULL && *trace_on_flag!=0) {
 		db_vals[9].val.str_val.s   = "";
@@ -539,9 +750,6 @@ static int sip_trace_store(struct _siptrace_data *sto)
 	
 	if(sto->avp==NULL)
 		goto done;
-	
-	trace_send_duplicate(db_vals[0].val.blob_val.s,
-			db_vals[0].val.blob_val.len);
 	
 	db_vals[9].val.str_val = sto->avp_value.s;
 

@@ -264,7 +264,7 @@ if(is_present_hf("Authorization"))
 		<listitem>
 		<para>
 			<emphasis>initval</emphasis> - the integer value to be returned
-			insted of $null when a requested key is not set.
+			instead of $null when a requested key is not set.
 		</para>
 		</listitem>
 		</itemizedlist>
@@ -381,6 +381,25 @@ modparam("htable", "key_value_column", "kvalue")
 		</example>
 	</section>
 	<section>
+		<title><varname>expires_column</varname> (str)</title>
+		<para>
+			The name of the column containing expires type.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'expires'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>expires_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "expires", "expiry")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>array_size_suffix</varname> (str)</title>
 		<para>
 			The suffix to be added to store the number of items in an
@@ -455,6 +474,27 @@ modparam("htable", "timer_interval", 10)
 		<programlisting format="linespecific">
 ...
 modparam("htable", "timer_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_expires</varname> (integer)</title>
+		<para>
+			If set to 1, will load/save the expires values of the items in
+			hash table fromm/to database. It applies only to hash tables that
+			have auto-expires attribute defined.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "db_expires", 1)
 ...
 </programlisting>
 		</example>

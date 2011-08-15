@@ -150,8 +150,8 @@
 struct msgid_var user_fr_timeout;
 struct msgid_var user_fr_inv_timeout;
 #ifdef TM_DIFF_RT_TIMEOUT
-struct msgid_var user_rt_t1_timeout;
-struct msgid_var user_rt_t2_timeout;
+struct msgid_var user_rt_t1_timeout_ms;
+struct msgid_var user_rt_t2_timeout_ms;
 #endif
 struct msgid_var user_inv_max_lifetime;
 struct msgid_var user_noninv_max_lifetime;
@@ -185,8 +185,6 @@ int tm_init_timers(void)
 	default_tm_cfg.fr_inv_timeout=MS_TO_TICKS(default_tm_cfg.fr_inv_timeout);
 	default_tm_cfg.wait_timeout=MS_TO_TICKS(default_tm_cfg.wait_timeout);
 	default_tm_cfg.delete_timeout=MS_TO_TICKS(default_tm_cfg.delete_timeout);
-	default_tm_cfg.rt_t1_timeout=MS_TO_TICKS(default_tm_cfg.rt_t1_timeout);
-	default_tm_cfg.rt_t2_timeout=MS_TO_TICKS(default_tm_cfg.rt_t2_timeout);
 	default_tm_cfg.tm_max_inv_lifetime=MS_TO_TICKS(default_tm_cfg.tm_max_inv_lifetime);
 	default_tm_cfg.tm_max_noninv_lifetime=MS_TO_TICKS(default_tm_cfg.tm_max_noninv_lifetime);
 	/* fix 0 values to 1 tick (minimum possible wait time ) */
@@ -194,8 +192,8 @@ int tm_init_timers(void)
 	if (default_tm_cfg.fr_inv_timeout==0) default_tm_cfg.fr_inv_timeout=1;
 	if (default_tm_cfg.wait_timeout==0) default_tm_cfg.wait_timeout=1;
 	if (default_tm_cfg.delete_timeout==0) default_tm_cfg.delete_timeout=1;
-	if (default_tm_cfg.rt_t2_timeout==0) default_tm_cfg.rt_t2_timeout=1;
-	if (default_tm_cfg.rt_t1_timeout==0) default_tm_cfg.rt_t1_timeout=1;
+	if (default_tm_cfg.rt_t2_timeout_ms==0) default_tm_cfg.rt_t2_timeout_ms=1;
+	if (default_tm_cfg.rt_t1_timeout_ms==0) default_tm_cfg.rt_t1_timeout_ms=1;
 	if (default_tm_cfg.tm_max_inv_lifetime==0) default_tm_cfg.tm_max_inv_lifetime=1;
 	if (default_tm_cfg.tm_max_noninv_lifetime==0) default_tm_cfg.tm_max_noninv_lifetime=1;
 	
@@ -203,8 +201,10 @@ int tm_init_timers(void)
 	SIZE_FIT_CHECK(fr_timeout, default_tm_cfg.fr_timeout, "fr_timer");
 	SIZE_FIT_CHECK(fr_inv_timeout, default_tm_cfg.fr_inv_timeout, "fr_inv_timer");
 #ifdef TM_DIFF_RT_TIMEOUT
-	SIZE_FIT_CHECK(rt_t1_timeout, default_tm_cfg.rt_t1_timeout, "retr_timer1");
-	SIZE_FIT_CHECK(rt_t2_timeout, default_tm_cfg.rt_t2_timeout, "retr_timer2");
+	SIZE_FIT_CHECK(rt_t1_timeout_ms, default_tm_cfg.rt_t1_timeout_ms,
+					"retr_timer1");
+	SIZE_FIT_CHECK(rt_t2_timeout_ms, default_tm_cfg.rt_t2_timeout_ms,
+					"retr_timer2");
 #endif
 	SIZE_FIT_CHECK(end_of_life, default_tm_cfg.tm_max_inv_lifetime, "max_inv_lifetime");
 	SIZE_FIT_CHECK(end_of_life, default_tm_cfg.tm_max_noninv_lifetime, "max_noninv_lifetime");
@@ -212,8 +212,8 @@ int tm_init_timers(void)
 	memset(&user_fr_timeout, 0, sizeof(user_fr_timeout));
 	memset(&user_fr_inv_timeout, 0, sizeof(user_fr_inv_timeout));
 #ifdef TM_DIFF_RT_TIMEOUT
-	memset(&user_rt_t1_timeout, 0, sizeof(user_rt_t1_timeout));
-	memset(&user_rt_t2_timeout, 0, sizeof(user_rt_t2_timeout));
+	memset(&user_rt_t1_timeout_ms, 0, sizeof(user_rt_t1_timeout_ms));
+	memset(&user_rt_t2_timeout_ms, 0, sizeof(user_rt_t2_timeout_ms));
 #endif
 	memset(&user_inv_max_lifetime, 0, sizeof(user_inv_max_lifetime));
 	memset(&user_noninv_max_lifetime, 0, sizeof(user_noninv_max_lifetime));
@@ -222,7 +222,7 @@ int tm_init_timers(void)
 			" max_inv_lifetime=%d max_noninv_lifetime=%d\n",
 			default_tm_cfg.fr_timeout, default_tm_cfg.fr_inv_timeout,
 			default_tm_cfg.wait_timeout, default_tm_cfg.delete_timeout,
-			default_tm_cfg.rt_t1_timeout, default_tm_cfg.rt_t2_timeout,
+			default_tm_cfg.rt_t1_timeout_ms, default_tm_cfg.rt_t2_timeout_ms,
 			default_tm_cfg.tm_max_inv_lifetime, default_tm_cfg.tm_max_noninv_lifetime);
 	return 0;
 error:
@@ -263,14 +263,34 @@ int timer_fixup(void *handle, str *gname, str *name, void **val)
 	/* size fix checks */
 	IF_IS_TIMER_NAME(fr_timeout, "fr_timer")
 	else IF_IS_TIMER_NAME(fr_inv_timeout, "fr_inv_timer")
-#ifdef TM_DIFF_RT_TIMEOUT
-	else IF_IS_TIMER_NAME(rt_t1_timeout, "retr_timer1")
-	else IF_IS_TIMER_NAME(rt_t2_timeout, "retr_timer2")
-#endif
 	else IF_IS_TIMER_NAME(end_of_life, "max_inv_lifetime")
 	else IF_IS_TIMER_NAME(end_of_life, "max_noninv_lifetime")
 
 	*val = (void *)(long)t;
+	return 0;
+
+error:
+	return -1;
+}
+
+
+
+/** fixup function for timer values that are kept in ms.
+ * (called by the configuration framework)
+ * It checks if the value fits in the tm structures 
+ */
+int timer_fixup_ms(void *handle, str *gname, str *name, void **val)
+{
+	long	t;
+
+	t = (long)(*val);
+
+	/* size fix checks */
+#ifdef TM_DIFF_RT_TIMEOUT
+	IF_IS_TIMER_NAME(rt_t1_timeout_ms, "retr_timer1")
+	else IF_IS_TIMER_NAME(rt_t2_timeout_ms, "retr_timer2")
+#endif
+
 	return 0;
 
 error:
@@ -528,7 +548,8 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 	ticks_t fr_remainder;
 	ticks_t retr_remainder;
 	ticks_t retr_interval;
-	ticks_t new_retr_interval;
+	unsigned long new_retr_interval_ms;
+	unsigned long crt_retr_interval_ms;
 	struct cell *t;
 
 	rbuf=(struct  retr_buf*)
@@ -569,28 +590,20 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 			if ((s_ticks_t)(rbuf->retr_expire-ticks)<=0){
 				if (rbuf->flags & F_RB_RETR_DISABLED)
 					goto disabled;
-				/* retr_interval= min (2*ri, rt_t2) , *p==2*ri*/
-				/* no branch version: 
-					#idef CC_SIGNED_RIGHT_SHIFT
-						ri=  rt_t2+((2*ri-rt_t2) & 
-						((signed)(2*ri-rt_t2)>>(sizeof(ticks_t)*8-1));
-					#else
-						ri=rt_t2+((2*ri-rt_t2)& -(2*ri<rt_t2));
-					#endif
-				*/
-				
+				crt_retr_interval_ms = (unsigned long)p;
 				/* get the  current interval from timer param. */
-				if ((rbuf->flags & F_RB_T2) || 
-						(((ticks_t)(unsigned long)p)>RT_T2_TIMEOUT(rbuf))){
-					retr_interval=RT_T2_TIMEOUT(rbuf);
-					new_retr_interval=RT_T2_TIMEOUT(rbuf);
+				if (unlikely((rbuf->flags & F_RB_T2) ||
+						(crt_retr_interval_ms > RT_T2_TIMEOUT_MS(rbuf)))){
+					retr_interval = MS_TO_TICKS(RT_T2_TIMEOUT_MS(rbuf));
+					new_retr_interval_ms = RT_T2_TIMEOUT_MS(rbuf);
 				}else{
-					retr_interval=(ticks_t)(unsigned long)p;
-					new_retr_interval=retr_interval<<1;
+					retr_interval = MS_TO_TICKS(crt_retr_interval_ms);
+					new_retr_interval_ms=crt_retr_interval_ms<<1;
 				}
 #ifdef TIMER_DEBUG
-				DBG("tm: timer: retr: new interval %d (max %d)\n", 
-						retr_interval, RT_T2_TIMEOUT(rbuf));
+				DBG("tm: timer: retr: new interval %ld ms / %d ticks"
+						" (max %d ms)\n", new_retr_interval_ms, retr_interval,
+						RT_T2_TIMEOUT_MS(rbuf));
 #endif
 				/* we could race with the reply_received code, but the 
 				 * worst thing that can happen is to delay a reset_to_t2
@@ -598,9 +611,9 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 				rbuf->retr_expire=ticks+retr_interval;
 				/* set new interval to -1 on error, or retr_int. on success */
 				retr_remainder=retransmission_handler(rbuf) | retr_interval;
-				/* store the next retr. interval inside the timer struct,
+				/* store the next retr. interval in ms inside the timer struct,
 				 * in the data member */
-				tl->data=(void*)(unsigned long)(new_retr_interval);
+				tl->data=(void*)(new_retr_interval_ms);
 			}else{
 				retr_remainder= rbuf->retr_expire-ticks;
 				DBG("tm: timer: retr: nothing to do, expire in %d\n", 

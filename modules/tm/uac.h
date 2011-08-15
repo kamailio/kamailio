@@ -83,7 +83,7 @@ extern int goto_on_local_req;
  * Function prototypes
  */
 typedef int (*reqwith_t)(uac_req_t *uac_r);
-typedef int (*reqout_t)(uac_req_t *uac_r, str* to, str* from);
+typedef int (*reqout_t)(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop);
 typedef int (*req_t)(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop);
 typedef int (*t_uac_t)(uac_req_t *uac_r);
 typedef int (*t_uac_with_ids_t)(uac_req_t *uac_r,
@@ -128,7 +128,7 @@ int req_within(uac_req_t *uac_r);
 /*
  * Send an initial request that will start a dialog
  */
-int req_outside(uac_req_t *uac_r, str* to, str* from);
+int req_outside(uac_req_t *uac_r, str* ruri, str* to, str* from, str* next_hop);
 
 
 #ifdef WITH_AS_SUPPORT

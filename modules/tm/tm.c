@@ -482,8 +482,8 @@ static param_export_t params[]={
 	{"fr_inv_timer",        PARAM_INT, &default_tm_cfg.fr_inv_timeout        },
 	{"wt_timer",            PARAM_INT, &default_tm_cfg.wait_timeout          },
 	{"delete_timer",        PARAM_INT, &default_tm_cfg.delete_timeout        },
-	{"retr_timer1",         PARAM_INT, &default_tm_cfg.rt_t1_timeout         },
-	{"retr_timer2"  ,       PARAM_INT, &default_tm_cfg.rt_t2_timeout         },
+	{"retr_timer1",         PARAM_INT, &default_tm_cfg.rt_t1_timeout_ms      },
+	{"retr_timer2"  ,       PARAM_INT, &default_tm_cfg.rt_t2_timeout_ms      },
 	{"max_inv_lifetime",    PARAM_INT, &default_tm_cfg.tm_max_inv_lifetime   },
 	{"max_noninv_lifetime", PARAM_INT, &default_tm_cfg.tm_max_noninv_lifetime},
 	{"noisy_ctimer",        PARAM_INT, &default_tm_cfg.noisy_ctimer          },
@@ -517,6 +517,7 @@ static param_export_t params[]={
 	{"disable_6xx_block",   PARAM_INT, &default_tm_cfg.disable_6xx           },
 	{"local_ack_mode",      PARAM_INT, &default_tm_cfg.local_ack_mode        },
 	{"failure_reply_mode",  PARAM_INT, &failure_reply_mode                   },
+	{"faked_reply_prio",    PARAM_INT, &faked_reply_prio                     },
 #ifdef CANCEL_REASON_SUPPORT
 	{"local_cancel_reason", PARAM_INT, &default_tm_cfg.local_cancel_reason   },
 	{"e2e_cancel_reason",   PARAM_INT, &default_tm_cfg.e2e_cancel_reason     },

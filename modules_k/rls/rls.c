@@ -57,7 +57,7 @@
 
 MODULE_VERSION
 
-#define P_TABLE_VERSION 0
+#define P_TABLE_VERSION 1
 #define W_TABLE_VERSION 1
 
 /** database connection */

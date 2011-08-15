@@ -373,6 +373,7 @@ static int fixup_get_profile3(void** param, int param_no)
 int load_dlg( struct dlg_binds *dlgb )
 {
 	dlgb->register_dlgcb = register_dlgcb;
+	dlgb->terminate_dlg = dlg_bye_all;
 	dlgb->set_dlg_var = set_dlg_variable;
 	dlgb->get_dlg_var = get_dlg_variable;
 	return 1;

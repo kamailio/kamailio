@@ -87,7 +87,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	if(msg->to->parsed != NULL)
 	{
 		pto = (struct to_body*)msg->to->parsed;
-		LM_ERR("'To' header ALREADY PARSED:<%.*s>\n",pto->uri.len,pto->uri.s);
+		LM_DBG("'To' header ALREADY PARSED:<%.*s>\n",pto->uri.len,pto->uri.s);
 	}
 	else
 	{
@@ -415,7 +415,8 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 		goto error;
 	}
 
-	if(xmlStrcasecmp((unsigned char*)note, (unsigned char*)"away")== 0)
+	if((xmlStrcasecmp((unsigned char*)note, (unsigned char*)"away")== 0)||
+			(xmlStrcasecmp((unsigned char*)note, (unsigned char*)"On the phone")== 0))
 	{
 		new_node = xmlNewChild(xmpp_root, NULL, BAD_CAST "show",
 				BAD_CAST "away");
@@ -456,12 +457,14 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 					LM_ERR("while adding node: idle\n");
 					goto error;
 				}	
-			}
-			else */	
+			}*/
+			else
 				if((xmlStrcasecmp((unsigned char*)note,
 					(unsigned char*)"dnd")== 0)||
 					(xmlStrcasecmp((unsigned char*)note,
-						(unsigned char*)"do not disturb")== 0))
+						(unsigned char*)"do not disturb")== 0)||
+					(xmlStrcasecmp((unsigned char*)note,
+					(unsigned char*)"Busy (DND)")== 0))
 				{
 					new_node = xmlNewChild(xmpp_root, NULL, BAD_CAST "show",
 							BAD_CAST "dnd");
@@ -471,6 +474,8 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 						goto error;
 					}		
 				}
+				else
+					LM_DBG("Not Found Status\n");
 
 	
 	/* adding status node */

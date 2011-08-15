@@ -66,15 +66,16 @@ Juha Heinanen
               3.23. is_present_hf(hf_name)
               3.24. is_present_hf_re(hf_name_re)
               3.25. append_time()
-              3.26. is_method(name)
-              3.27. remove_hf(hname)
-              3.28. remove_hf_re(re)
-              3.29. has_body(), has_body(mime)
-              3.30. is_audio_on_hold()
-              3.31. is_privacy(privacy_type)
-              3.32. cmp_str(str1, str2)
-              3.33. cmp_istr(str1, str2)
-              3.34. starts_with(str1, str2)
+              3.26. append_time_to_request()
+              3.27. is_method(name)
+              3.28. remove_hf(hname)
+              3.29. remove_hf_re(re)
+              3.30. has_body(), has_body(mime)
+              3.31. is_audio_on_hold()
+              3.32. is_privacy(privacy_type)
+              3.33. cmp_str(str1, str2)
+              3.34. cmp_istr(str1, str2)
+              3.35. starts_with(str1, str2)
 
         4. Known Limitations
 
@@ -111,15 +112,16 @@ Juha Heinanen
    1.23. is_present_hf usage
    1.24. is_present_hf_re usage
    1.25. append_time usage
-   1.26. is_method usage
-   1.27. remove_hf usage
-   1.28. remove_hf_re usage
-   1.29. has_body usage
-   1.30. is_audio_on_hold usage
-   1.31. is_privacy usage
-   1.32. cmp_str usage
+   1.26. append_time_to_request usage
+   1.27. is_method usage
+   1.28. remove_hf usage
+   1.29. remove_hf_re usage
+   1.30. has_body usage
+   1.31. is_audio_on_hold usage
+   1.32. is_privacy usage
    1.33. cmp_str usage
-   1.34. starts_with usage
+   1.34. cmp_str usage
+   1.35. starts_with usage
 
 Chapter 1. Admin Guide
 
@@ -161,15 +163,16 @@ Chapter 1. Admin Guide
         3.23. is_present_hf(hf_name)
         3.24. is_present_hf_re(hf_name_re)
         3.25. append_time()
-        3.26. is_method(name)
-        3.27. remove_hf(hname)
-        3.28. remove_hf_re(re)
-        3.29. has_body(), has_body(mime)
-        3.30. is_audio_on_hold()
-        3.31. is_privacy(privacy_type)
-        3.32. cmp_str(str1, str2)
-        3.33. cmp_istr(str1, str2)
-        3.34. starts_with(str1, str2)
+        3.26. append_time_to_request()
+        3.27. is_method(name)
+        3.28. remove_hf(hname)
+        3.29. remove_hf_re(re)
+        3.30. has_body(), has_body(mime)
+        3.31. is_audio_on_hold()
+        3.32. is_privacy(privacy_type)
+        3.33. cmp_str(str1, str2)
+        3.34. cmp_istr(str1, str2)
+        3.35. starts_with(str1, str2)
 
    4. Known Limitations
 
@@ -234,15 +237,16 @@ From: medabeda
    3.23. is_present_hf(hf_name)
    3.24. is_present_hf_re(hf_name_re)
    3.25. append_time()
-   3.26. is_method(name)
-   3.27. remove_hf(hname)
-   3.28. remove_hf_re(re)
-   3.29. has_body(), has_body(mime)
-   3.30. is_audio_on_hold()
-   3.31. is_privacy(privacy_type)
-   3.32. cmp_str(str1, str2)
-   3.33. cmp_istr(str1, str2)
-   3.34. starts_with(str1, str2)
+   3.26. append_time_to_request()
+   3.27. is_method(name)
+   3.28. remove_hf(hname)
+   3.29. remove_hf_re(re)
+   3.30. has_body(), has_body(mime)
+   3.31. is_audio_on_hold()
+   3.32. is_privacy(privacy_type)
+   3.33. cmp_str(str1, str2)
+   3.34. cmp_istr(str1, str2)
+   3.35. starts_with(str1, str2)
 
 3.1.  search(re)
 
@@ -719,7 +723,30 @@ if (is_present_hf_re("^P-")) log(1, "There are headers starting with P-\n");
 append_time();
 ...
 
-3.26.  is_method(name)
+3.26.  append_time_to_request()
+
+   Adds a time header to the request. Header format is: “Date: %a, %d %b
+   %Y %H:%M:%S GMT”, with the legend:
+     * %a abbreviated week of day name (locale)
+     * %d day of month as decimal number
+     * %b abbreviated month name (locale)
+     * %Y year with century
+     * %H hour
+     * %M minutes
+     * %S seconds
+
+   Return true if a header was succesfully appended.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
+   Example 1.26. append_time_to_request usage
+...
+if(!is_present_hf("Date"))
+    append_time_to_request();
+...
+
+3.27.  is_method(name)
 
    Check if the method of the message matches the name. If name is a known
    method (invite, cancel, ack, bye, options, info, update, register,
@@ -744,7 +771,7 @@ append_time();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.26. is_method usage
+   Example 1.27. is_method usage
 ...
 if(is_method("INVITE"))
 {
@@ -756,7 +783,7 @@ if(is_method("OPTION|UPDATE"))
 }
 ...
 
-3.27.  remove_hf(hname)
+3.28.  remove_hf(hname)
 
    Remove from message all headers with name “hname”. Header matching is
    case-insensitive. Matches and removes also the compact header forms.
@@ -769,7 +796,7 @@ if(is_method("OPTION|UPDATE"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.27. remove_hf usage
+   Example 1.28. remove_hf usage
 ...
 if(remove_hf("User-Agent"))
 {
@@ -781,7 +808,7 @@ remove_hf("Contact")
 remove_hf("m")
 ...
 
-3.28.  remove_hf_re(re)
+3.29.  remove_hf_re(re)
 
    Remove from message all headers with name matching regular expression
    “re”
@@ -794,7 +821,7 @@ remove_hf("m")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.28. remove_hf_re usage
+   Example 1.29. remove_hf_re usage
 ...
 if(remove_hf_re("^P-"))
 {
@@ -802,7 +829,7 @@ if(remove_hf_re("^P-"))
 }
 ...
 
-3.29.  has_body(), has_body(mime)
+3.30.  has_body(), has_body(mime)
 
    The function returns true if the SIP message has a body attached. The
    checked includes also the “Content-Lenght” header presence and value.
@@ -817,7 +844,7 @@ if(remove_hf_re("^P-"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.29. has_body usage
+   Example 1.30. has_body usage
 ...
 if(has_body("application/sdp"))
 {
@@ -825,7 +852,7 @@ if(has_body("application/sdp"))
 }
 ...
 
-3.30.  is_audio_on_hold()
+3.31.  is_audio_on_hold()
 
    The function returns true if the SIP message has a body attached and at
    least one audio stream in on hold.
@@ -833,7 +860,7 @@ if(has_body("application/sdp"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.30. is_audio_on_hold usage
+   Example 1.31. is_audio_on_hold usage
 ...
 if(is_audio_on_hold())
 {
@@ -841,7 +868,7 @@ if(is_audio_on_hold())
 }
 ...
 
-3.31.  is_privacy(privacy_type)
+3.32.  is_privacy(privacy_type)
 
    The function returns true if the SIP message has a Privacy header field
    that includes the given privacy_type among its privacy values. See
@@ -851,7 +878,7 @@ if(is_audio_on_hold())
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.31. is_privacy usage
+   Example 1.32. is_privacy usage
 ...
 if(is_privacy("id"))
 {
@@ -859,7 +886,7 @@ if(is_privacy("id"))
 }
 ...
 
-3.32.  cmp_str(str1, str2)
+3.33.  cmp_str(str1, str2)
 
    The function returns true if the two parameters matches as string case
    sensitive comparison.
@@ -867,7 +894,7 @@ if(is_privacy("id"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.32. cmp_str usage
+   Example 1.33. cmp_str usage
 ...
 if(cmp_str("$rU", "kamailio"))
 {
@@ -875,7 +902,7 @@ if(cmp_str("$rU", "kamailio"))
 }
 ...
 
-3.33.  cmp_istr(str1, str2)
+3.34.  cmp_istr(str1, str2)
 
    The function returns true if the two parameters matches as string case
    insensitive comparison.
@@ -883,7 +910,7 @@ if(cmp_str("$rU", "kamailio"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.33. cmp_str usage
+   Example 1.34. cmp_str usage
 ...
 if(cmp_istr("$rU@you", "kamailio@YOU"))
 {
@@ -891,7 +918,7 @@ if(cmp_istr("$rU@you", "kamailio@YOU"))
 }
 ...
 
-3.34.  starts_with(str1, str2)
+3.35.  starts_with(str1, str2)
 
    The function returns true if the first string starts with the second
    string.
@@ -899,7 +926,7 @@ if(cmp_istr("$rU@you", "kamailio@YOU"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1.34. starts_with usage
+   Example 1.35. starts_with usage
 ...
 if (starts_with("$rU", "+358"))
 {

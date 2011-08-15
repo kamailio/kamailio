@@ -9,7 +9,7 @@
 
 <table id="htable" xmlns:db="http://docbook.org/ns/docbook">
     <name>htable</name>
-    <version>1</version>
+    <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table us used by the htable module to load values in the hash table at start up. More information about the htable module can be found at: &KAMAILIO_MOD_DOC;htable.html
@@ -45,7 +45,7 @@
         <name>value_type</name>
         <type>int</type>
         <default>0</default>
-        <description>Type of the value (0 - string valuel 1 - integer value)</description>
+        <description>Type of the value (0 - string value; 1 - integer value)</description>
     </column>
 
     <column id="attribute">
@@ -56,4 +56,10 @@
         <description>The value of the key</description>
     </column>
 
+    <column id="expires">
+        <name>expires</name>
+        <type>string</type>
+		<default>0</default>
+        <description>The epoch at which the key expires</description>
+    </column>
 </table>

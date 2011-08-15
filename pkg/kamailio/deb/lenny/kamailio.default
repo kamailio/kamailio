@@ -11,8 +11,17 @@ USER=kamailio
 # Group to run as
 GROUP=kamailio
 
-# Amount of memory to allocate for the running Kamailio server (in Mb)
-MEMORY=64
+# Amount of shared memory to allocate for the running Kamailio server (in Mb)
+SHM_MEMORY=64
+
+# Amount of private memory for each Kamailio process (in Mb)
+PKG_MEMORY=4
+
+# Switch to USER and GROUP by start-stop-daemon or by kamailio itself
+# - with recent kernels, changing user ID inside applicaton prevents
+#   dumping core files. If the value is 'yes', the suid is done by
+#   start-stop-daemon, otherwise it is done by kamailio itself
+SSD_SUID=no
 
 # Enable the server to leave a core file when it crashes.
 # Set this to 'yes' to enable Kamailio to leave a core file when it crashes

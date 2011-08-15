@@ -825,9 +825,9 @@ void reset_path_vector(struct sip_msg* msg)
 }
 
 
-struct hdr_field* get_hdr(struct sip_msg *msg, enum _hdr_types_t ht)
+hdr_field_t* get_hdr(sip_msg_t *msg, enum _hdr_types_t ht)
 {
-	struct hdr_field *hdr;
+	hdr_field_t *hdr;
 
 	if (msg->parsed_flag & HDR_T2F(ht))
 		for(hdr = msg->headers; hdr; hdr = hdr->next) {
@@ -837,12 +837,37 @@ struct hdr_field* get_hdr(struct sip_msg *msg, enum _hdr_types_t ht)
 }
 
 
-struct hdr_field* next_sibling_hdr(struct hdr_field *hf)
-{	
-	struct hdr_field *hdr;
-	
+hdr_field_t* next_sibling_hdr(hdr_field_t *hf)
+{
+	hdr_field_t *hdr;
+
 	for(hdr = hf->next; hdr; hdr = hdr->next) {
 		if(hdr->type == hf->type) return hdr;
+	}
+	return NULL;
+}
+
+hdr_field_t* get_hdr_by_name(sip_msg_t *msg, char *name, int name_len)
+{
+	hdr_field_t *hdr;
+
+	for(hdr = msg->headers; hdr; hdr = hdr->next) {
+		if(hdr->name.len == name_len && *hdr->name.s==*name
+				&& strncmp(hdr->name.s, name, name_len)==0)
+			return hdr;
+	}
+	return NULL;
+}
+
+
+hdr_field_t* next_sibling_hdr_by_name(hdr_field_t *hf)
+{
+	hdr_field_t *hdr;
+
+	for(hdr = hf->next; hdr; hdr = hdr->next) {
+		if(hdr->name.len == hf->name.len && *hdr->name.s==*hf->name.s
+				&& strncmp(hdr->name.s, hf->name.s, hf->name.len)==0)
+			return hdr;
 	}
 	return NULL;
 }

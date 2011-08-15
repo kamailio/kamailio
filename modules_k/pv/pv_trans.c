@@ -72,7 +72,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	char *p, *s;
 	str st, st2;
 	pv_value_t v, w;
-	void *vp;
+	time_t t;
 
 	if(val==NULL || (val->flags&PV_VAL_NULL && subtype != TR_S_SQL))
 		return -1;
@@ -586,9 +586,9 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			}
 			memcpy(s, st.s, st.len);
 			s[st.len] = '\0';
-			vp = (void*)&val->ri;
+			t = val->ri;
 			val->rs.len = strftime(_tr_buffer, TR_BUFFER_SIZE-1, s,
-					localtime((time_t*)vp));
+			                localtime(&t));
 			pkg_free(s);
 			val->flags = PV_VAL_STR;
 			val->rs.s = _tr_buffer;

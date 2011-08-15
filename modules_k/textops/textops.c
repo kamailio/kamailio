@@ -118,6 +118,7 @@ static int insert_hf_1(struct sip_msg* msg, char* str1, char* str2);
 static int insert_hf_2(struct sip_msg* msg, char* str1, char* str2);
 static int append_urihf(struct sip_msg* msg, char* str1, char* str2);
 static int append_time_f(struct sip_msg* msg, char* , char *);
+static int append_time_request_f(struct sip_msg* msg, char* , char *);
 static int set_body_f(struct sip_msg* msg, char*, char *);
 static int set_rpl_body_f(struct sip_msg* msg, char*, char *);
 static int is_method_f(struct sip_msg* msg, char* , char *);
@@ -251,6 +252,9 @@ static cmd_export_t cmds[]={
 		fixup_spve_spve, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"is_audio_on_hold",  (cmd_function)is_audio_on_hold_f, 0,
+		0, 0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"append_time_to_request", (cmd_function)append_time_request_f, 0,
 		0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 
@@ -1158,6 +1162,51 @@ static int append_time_f(struct sip_msg* msg, char* p1, char *p2)
 	return 1;
 }
 
+static int append_time_request_f(struct sip_msg* msg, char* p1, char *p2)
+{
+	str time_str = {0, 0};
+	time_t now;
+	struct tm *bd_time;
+	struct hdr_field *hf = msg->headers;
+	struct lump *anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
+
+	now=time(0);
+
+	bd_time=gmtime(&now);
+	if (bd_time==NULL) {
+		LM_ERR("gmtime failed\n");
+		goto error;
+	}
+
+	time_str.s = pkg_malloc(MAX_TIME);
+	time_str.len=strftime(time_str.s, MAX_TIME, TIME_FORMAT, bd_time);
+	if (time_str.len>MAX_TIME-2 || time_str.len==0) {
+		LM_ERR("unexpected time length\n");
+		goto error;
+	}
+
+	time_str.s[time_str.len++]='\r';
+	time_str.s[time_str.len++]='\n';
+
+	if (anchor == NULL)
+	{
+		LM_ERR("Problem with getting anchor");
+		goto error;
+	}
+
+	if (insert_new_lump_after(anchor, time_str.s, time_str.len, 0) == 0)
+	{
+		LM_ERR("unable to add lump\n");
+		goto error;
+	}
+
+	return 1;
+error:
+	if (time_str.s != NULL)
+		pkg_free(time_str.s);
+
+	return -1;
+}
 
 static int set_body_f(struct sip_msg* msg, char* p1, char* p2)
 {

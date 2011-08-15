@@ -559,6 +559,21 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				ruri_mark_consumed();
 			break;
 
+		/* remove last branch */
+		case REMOVE_BRANCH_T:
+			if (a->val[0].type!=NUMBER_ST) {
+				ret=drop_sip_branch(0) ? -1 : 1;
+			} else {
+				ret=drop_sip_branch(a->val[0].u.number) ? -1 : 1;
+			}
+			break;
+
+		/* remove all branches */
+		case CLEAR_BRANCHES_T:
+			clear_branches();
+			ret=1;
+			break;
+
 		/* jku begin: is_length_greater_than */
 		case LEN_GT_T:
 			if (a->val[0].type!=NUMBER_ST) {

@@ -441,8 +441,10 @@ int set_dst_uri(struct sip_msg* msg, str* uri);
 /*! \brief If the dst_uri is set to an URI then reset it */
 void reset_dst_uri(struct sip_msg* msg);
 
-struct hdr_field* get_hdr(struct sip_msg *msg, enum _hdr_types_t ht);
-struct hdr_field* next_sibling_hdr(struct hdr_field *hf);
+hdr_field_t* get_hdr(sip_msg_t *msg, enum _hdr_types_t ht);
+hdr_field_t* next_sibling_hdr(hdr_field_t *hf);
+hdr_field_t* get_hdr_by_name(sip_msg_t *msg, char *name, int name_len);
+hdr_field_t* next_sibling_hdr_by_name(hdr_field_t *hf);
 
 int set_path_vector(struct sip_msg* msg, str* path);
 

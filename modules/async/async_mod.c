@@ -145,7 +145,7 @@ static int w_async_sleep(struct sip_msg* msg, char* sec, char* str2)
 	}
 	if(ap->type==0)
 	{
-		if(ap->u.paction==NULL || ap->u.paction->next!=NULL)
+		if(ap->u.paction==NULL || ap->u.paction->next==NULL)
 		{
 			LM_ERR("cannot be executed as last action in a route block\n");
 			return -1;

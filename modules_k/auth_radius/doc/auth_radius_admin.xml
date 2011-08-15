@@ -193,7 +193,7 @@ modparam("auth_radius", "use_ruri_flag", 22)
 	<section>
 	<title>Exported Functions</title>
 	<section>
-		<title><function moreinfo="none">radius_www_authorize(realm)</function></title>
+		<title><function moreinfo="none">radius_www_authorize(realm [, uri_user])</function></title>
 		<para>
 		The function verifies credentials according to 
 		<ulink url="http://www.ietf.org/rfc/rfc2617.txt">RFC2617</ulink>. If 
@@ -251,6 +251,17 @@ modparam("auth_radius", "use_ruri_flag", 22)
 			</para>
 			<para>
 			The string may contain pseudo variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>uri_user</emphasis> - Uri_user is an
+			optional pseudo variable parameter whose value, if
+			present, will be given to Radius server as value of
+			SIP-URI-User check item.
+			If uri_user pseudo variable parameter is not
+			present, the server will generate 
+                        SIP-URI-User check item value from user part of
+			To/From URI.
 			</para>
 		</listitem>
 		</itemizedlist>

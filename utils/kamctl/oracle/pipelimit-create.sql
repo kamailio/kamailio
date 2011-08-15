@@ -14,4 +14,3 @@ END pl_pipes_tr;
 /
 BEGIN map2users('pl_pipes'); END;
 /
-CREATE INDEX pl_pipes_account_idx  ON pl_pipes (

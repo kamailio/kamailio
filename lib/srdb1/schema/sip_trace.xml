@@ -9,7 +9,7 @@
 
 <table id="sip_trace" xmlns:db="http://docbook.org/ns/docbook">
     <name>sip_trace</name>
-    <version>2</version>
+    <version>3</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used to store incoming/outgoing SIP messages in database. More informations can be found in the siptrace module documentation at: &KAMAILIO_MOD_DOC;siptrace.html.
@@ -31,7 +31,14 @@
         <type>datetime</type>
         <default>&DEFAULT_DATETIME;</default>
         <default db="oracle">to_date('&DEFAULT_DATETIME;','yyyy-mm-dd hh24:mi:ss')</default>
-        <description>Recording date</description>
+        <description>Time stamp of processing the SIP message</description>
+    </column>
+
+    <column id="time_us">
+        <name>time_us</name>
+        <type>unsigned int</type>
+        <default>0</default>
+        <description>Store the milliseconds part of the time</description>
     </column>
 
     <column id="callid">

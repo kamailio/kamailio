@@ -20,7 +20,7 @@ dr_gw_lists:1
 dr_rules:3
 globalblacklist:1
 grp:2
-htable:1
+htable:2
 imc_members:1
 imc_rooms:1
 lcr_gw:2
@@ -33,13 +33,13 @@ mtree:1
 pdt:1
 pl_pipes:1
 presentity:3
-pua:6
+pua:7
 purplemap:1
 re_grp:1
-rls_presentity:0
+rls_presentity:1
 rls_watchers:1
 silo:5
-sip_trace:2
+sip_trace:3
 speed_dial:2
 subscriber:6
 trusted:5

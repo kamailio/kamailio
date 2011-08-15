@@ -1,8 +1,4 @@
 /* 
- * $Id$ 
- *
- * PostgreSQL Database Driver for SER
- *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2003 August.Net Services, LLC
  * Portions Copyright (C) 2005-2008 iptelorg GmbH
@@ -28,12 +24,12 @@
  * Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-/** \addtogroup postgres
- * @{ 
- */
 
-/** \file 
- * Data field conversion and type checking functions.
+/*!
+ * \file
+ * \brief DB_POSTGRES :: Data field conversion and type checking functions.
+ * \ingroup db_postgres
+ * Module: \ref db_postgres
  */
 
 #include "pg_fld.h"
@@ -250,22 +246,6 @@ static inline void db_int2pg_bit(struct pg_params* dst, int i, db_fld_t* src)
    	dst->len[i] = 8;
 }
 
-/*
-static inline void db_int2pg_varbit(struct pg_params* dst, int i,
-						  db_fld_t* src)
-{
-	unsigned int len = 32;
-	struct pg_fld* pfld = DB_GET_PAYLOAD(src);
-
-	pfld->v.int4[0] = htonl(len);
-	pfld->v.int4[1] = htonl(src->v.int4);
-
-	dst->fmt[i] = 1;
-	dst->val[i] = pfld->v.byte;
-   	dst->len[i] = 4 + len / 8 + (len % 8 ? 1 : 0);
-}
-*/
-
 
 static inline void db_str2pg_string(struct pg_params* dst, int i,
 									db_fld_t* src)
@@ -274,6 +254,7 @@ static inline void db_str2pg_string(struct pg_params* dst, int i,
 	dst->val[i] = src->v.lstr.s;
 	dst->len[i] = src->v.lstr.len;
 }
+
 
 static inline void db_cstr2pg_string(struct pg_params* dst, int i,
 									 db_fld_t* src)
@@ -934,6 +915,3 @@ int pg_pg2fld(db_fld_t* dst, PGresult* src, int row,
 		type, dst[i].type);
 	return -1;
 }
-
-
-/** @} */

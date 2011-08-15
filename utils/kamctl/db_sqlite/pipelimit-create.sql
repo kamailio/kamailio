@@ -6,4 +6,3 @@ CREATE TABLE pl_pipes (
     plimit INTEGER DEFAULT 0 NOT NULL
 );
 
-CREATE INDEX pl_pipes_account_idx ON pl_pipes (

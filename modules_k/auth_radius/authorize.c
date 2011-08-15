@@ -236,10 +236,20 @@ int radius_proxy_authorize_2(struct sip_msg* _msg, char* _realm,
 
 
 /*
- * Authorize using WWW-Authorize header field
+ * Authorize using WWW-Authorize header field (no URI user parameter given)
  */
-int radius_www_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
+int radius_www_authorize_1(struct sip_msg* _msg, char* _realm, char* _s2)
 {
 	return authorize(_msg, (pv_elem_t*)_realm, (pv_spec_t *)0,
+			 HDR_AUTHORIZATION_T);
+}
+
+
+/*
+ * Authorize using WWW-Authorize header field (URI user parameter given)
+ */
+int radius_www_authorize_2(struct sip_msg* _msg, char* _realm, char* _uri_user)
+{
+	return authorize(_msg, (pv_elem_t*)_realm, (pv_spec_t *)_uri_user,
 			 HDR_AUTHORIZATION_T);
 }
