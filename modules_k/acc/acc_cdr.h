@@ -23,7 +23,7 @@
 
 /*! \file
  * \ingroup acc
- * \brief Acc:: File to handle CRD generation by the help of the dialog-module
+ * \brief Acc:: File to handle CDR generation with the help of the dialog module
  *
  * - Module: \ref acc
  */
