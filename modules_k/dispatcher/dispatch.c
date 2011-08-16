@@ -69,6 +69,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_res.h"
 #include "../../str.h"
+#include "../../script_cb.h"
 
 #include "ds_ht.h"
 #include "api.h"
@@ -98,8 +99,12 @@ int *ds_list_nr = NULL;
 int *crt_idx    = NULL;
 int *next_idx   = NULL;
 
+int ds_tmp_msg_no = 1;
+
 #define _ds_list 	(ds_lists[*crt_idx])
 #define _ds_list_nr (*ds_list_nr)
+
+static void ds_run_route(struct sip_msg *msg, int route);
 
 void destroy_list(int);
 
@@ -1964,15 +1969,15 @@ int ds_mark_dst(struct sip_msg *msg, int mode)
 	
 	if(mode==1) {
 		ret = ds_set_state(group, &avp_value.s,
-				DS_INACTIVE_DST|DS_PROBING_DST|DS_RESET_FAIL_DST, 0);
+				DS_INACTIVE_DST|DS_PROBING_DST|DS_RESET_FAIL_DST, 0, msg);
 	} else if(mode==2) {
-		ret = ds_set_state(group, &avp_value.s, DS_PROBING_DST, 1);
+		ret = ds_set_state(group, &avp_value.s, DS_PROBING_DST, 1, msg);
 		if (ret == 0) ret = ds_set_state(group, &avp_value.s,
-				DS_INACTIVE_DST, 0);
+				DS_INACTIVE_DST, 0, msg);
 	} else {
-		ret = ds_set_state(group, &avp_value.s, DS_INACTIVE_DST, 1);
+		ret = ds_set_state(group, &avp_value.s, DS_INACTIVE_DST, 1, msg);
 		if (ret == 0) ret = ds_set_state(group, &avp_value.s,
-				DS_PROBING_DST, 0);
+				DS_PROBING_DST, 0, msg);
 	}
 	
 	LM_DBG("mode [%d] grp [%d] dst [%.*s]\n", mode, group, avp_value.s.len,
@@ -1984,7 +1989,7 @@ int ds_mark_dst(struct sip_msg *msg, int mode)
 /**
  *
  */
-int ds_set_state(int group, str *address, int state, int type)
+int ds_set_state(int group, str *address, int state, int type, struct sip_msg *msg)
 {
 	int i=0;
 	ds_set_t *idx = NULL;
@@ -2044,9 +2049,20 @@ int ds_set_state(int group, str *address, int state, int type)
 			}
 			
 			if(type)
+			{
+				if (state & DS_PROBING_DST && !(idx->dlist[i].flags & state))
+					ds_run_route(msg, ds_dst_unav_route);
+
 				idx->dlist[i].flags |= state;
+			}
 			else
+			{
+				if (state & DS_PROBING_DST && idx->dlist[i].flags & state)
+					ds_run_route(msg, ds_dst_av_route);
+
 				idx->dlist[i].flags &= ~state;
+
+			}
 				
 			return 0;
 		}
@@ -2054,6 +2070,32 @@ int ds_set_state(int group, str *address, int state, int type)
 	}
 
 	return -1;
+}
+
+static void ds_run_route(struct sip_msg *msg, int route)
+{
+	int backup_route_type = get_route_type();
+
+	LM_DBG("ds_run_route\n");
+
+	if (route == -1)
+		return;
+
+	if (exec_pre_script_cb(msg, LOCAL_CB_TYPE) == 0)
+	{
+		LM_ERR("exec_pre_script_cb failed\n");
+		goto error;
+	}
+	set_route_type(LOCAL_ROUTE);
+	if (run_top_route(main_rt.rlist[route], msg, 0) < 0)
+	{
+		LM_ERR("run_top_route failed\n");
+		goto error;
+	}
+	exec_post_script_cb(msg, LOCAL_CB_TYPE);
+
+error:
+	set_route_type(backup_route_type);
 }
 
 /**
@@ -2282,10 +2324,13 @@ static void ds_options_callback( struct cell *t, int type,
 	 * We accept both a "200 OK" or the configured reply as a valid response */
 	if ((ps->code == 200) || ds_ping_check_rplcode(ps->code))
 	{
+		ds_tmp_msg.new_uri = uri;
+		ds_tmp_msg.id = ds_tmp_msg_no++;
+	
 		/* Set the according entry back to "Active":
 		 *  remove the Probing/Inactive Flag and reset the failure counter. */
 		if (ds_set_state(group, &uri,
-					DS_INACTIVE_DST|DS_PROBING_DST|DS_RESET_FAIL_DST, 2) != 0)
+					DS_INACTIVE_DST|DS_PROBING_DST|DS_RESET_FAIL_DST, 2, &ds_tmp_msg) != 0)
 		{
 			LM_ERR("Setting the state failed (%.*s, group %d)\n", uri.len,
 					uri.s, group);
@@ -2293,7 +2338,10 @@ static void ds_options_callback( struct cell *t, int type,
 	}
 	if(ds_probing_mode==1 && ps->code == 408)
 	{
-		if (ds_set_state(group, &uri, DS_PROBING_DST, 1) != 0)
+
+		ds_tmp_msg.new_uri = uri;
+		ds_tmp_msg.id = ds_tmp_msg_no++;
+		if (ds_set_state(group, &uri, DS_PROBING_DST, 1, &ds_tmp_msg) != 0)
 		{
 			LM_ERR("Setting the probing state failed (%.*s, group %d)\n",
 					uri.len, uri.s, group);

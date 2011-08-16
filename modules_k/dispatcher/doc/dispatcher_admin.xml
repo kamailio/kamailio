@@ -688,7 +688,69 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
 	</section>
-
+ 	<section>
+ 		<title><varname>ds_dst_unavailable_route</varname> (string)</title>
+ 		<para>
+		Optional parameter that specifies a route to run when a destination
+		is marked as PROBING.  Destinations are marked PROBING after threshhold
+                number of OPTIONS ping failures or calls to
+		<emphasis>ds_mark_dst("p")</emphasis>.
+ 		</para>
+		<para>
+		This setting can be used to log desination failures.  It may be used
+		(in conjunction with other modules like <emphasis>exec</emphasis>) to
+		run external commands to update NMC equipment, generate SNMP traps,
+		and so on.
+		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>null</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>ds_dst_unavailable_route</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "ds_dst_unavailable_route", "DST_FAILED")
+ ...
+ route[DST_FAILED] {
+     xlog("L_ERR", "Destination failed: $rm $ru ($du)\n");
+ }
+ ...
+ </programlisting>
+ 		</example>
+	</section>
+ 	<section>
+ 		<title><varname>ds_dst_available_route</varname> (string)</title>
+ 		<para>
+		Optional parameter that specifies a route to run when a destination
+		leaves the PROBING state.  Destinations leave the PROBING state after
+                an OPTIONS ping succeeds.
+ 		</para>
+		<para>
+		This setting can be used to log desination recoveries.  It may be used
+		(in conjunction with other modules like <emphasis>exec</emphasis>) to
+		run external commands to update NMC equipment, generate SNMP traps,
+		and so on.
+		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>null</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>ds_dst_available_route</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "ds_dst_available_route", "DST_RESTORED")
+ ...
+ route[DST_RESTORED] {
+     xlog("L_ERR", "Destination restored: $rm $ru ($du)\n");
+ }
+ ...
+ </programlisting>
+ 		</example>
+	</section>
 	</section>
 
 	<section>

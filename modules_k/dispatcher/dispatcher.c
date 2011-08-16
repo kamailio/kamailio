@@ -119,6 +119,15 @@ int ds_hash_size = 0;
 int ds_hash_expire = 7200;
 int ds_hash_initexpire = 7200;
 int ds_hash_check_interval = 30;
+char *ds_dst_unavailable_route = NULL;
+int ds_dst_unav_route = -1;
+char *ds_dst_available_route = NULL;
+int ds_dst_av_route = -1;
+
+#define DS_TMP_MSG "OPTIONS sip:you@kamailio.org SIP/2.0\r\nVia: SIP/2.0/UDP 127.0.0.1\r\nFrom: <you@kamailio.org>;tag=123\r\nTo: <you@kamailio.org>\r\nCall-ID: 123\r\nCSeq: 1 OPTIONS\r\nContent-Length: 0\r\n\r\n"
+#define DS_TMP_MSG_LEN (sizeof(DS_TMP_MSG)-1)
+struct sip_msg ds_tmp_msg;
+char ds_tmp_msg_buf[DS_TMP_MSG_LEN + 1];
 
 /* tm */
 struct tm_binds tmb;
@@ -219,6 +228,8 @@ static param_export_t params[]={
 	{"ds_hash_expire",     INT_PARAM, &ds_hash_expire},
 	{"ds_hash_initexpire", INT_PARAM, &ds_hash_initexpire},
 	{"ds_hash_check_interval", INT_PARAM, &ds_hash_check_interval},
+	{"ds_dst_unavailable_route", STR_PARAM, &ds_dst_unavailable_route},
+	{"ds_dst_available_route", STR_PARAM, &ds_dst_available_route},
 	{0,0,0}
 };
 
@@ -470,6 +481,8 @@ static int mod_init(void)
 	/* Only, if the Probing-Timer is enabled the TM-API needs to be loaded: */
 	if (ds_ping_interval > 0)
 	{
+		int c;
+
 		/*****************************************************
 		 * TM-Bindings
 	  	 *****************************************************/
@@ -482,6 +495,87 @@ static int mod_init(void)
 		 * Register the PING-Timer
 		 *****************************************************/
 		register_timer(ds_check_timer, NULL, ds_ping_interval);
+
+		/* Build a temporary message for later use */
+		memcpy(ds_tmp_msg_buf, DS_TMP_MSG, DS_TMP_MSG_LEN);
+		ds_tmp_msg_buf[DS_TMP_MSG_LEN] = '\0';
+		memset(&ds_tmp_msg, 0, sizeof(struct sip_msg));
+		ds_tmp_msg.buf = ds_tmp_msg_buf;
+		ds_tmp_msg.len = DS_TMP_MSG_LEN;
+		ds_tmp_msg.set_global_address = default_global_address;
+		ds_tmp_msg.set_global_port = default_global_port;
+		if (parse_msg(ds_tmp_msg.buf, ds_tmp_msg.len, &ds_tmp_msg) != 0)
+		{
+			LM_ERR("parse_msg failed\n");
+			return -1;
+		}
+		ds_tmp_msg.parsed_orig_ruri = ds_tmp_msg.parsed_uri;
+		ds_tmp_msg.parsed_orig_ruri_ok = 0;
+
+		if (ds_dst_unavailable_route != NULL)
+		{
+			int length = strlen(ds_dst_unavailable_route);
+			c = ds_dst_unavailable_route[length];
+			ds_dst_unavailable_route[length] = '\0';
+			ds_dst_unav_route = route_get(&main_rt, ds_dst_unavailable_route);
+			ds_dst_unavailable_route[length] = c;
+
+			if (ds_dst_unav_route == -1)
+			{
+				LM_ERR("failed to determine destination unavailable route\n");
+				return -1;
+			}
+
+			if (main_rt.rlist[ds_dst_unav_route] == 0)
+			{
+				LM_WARN("route[%s] is empty\n", ds_dst_unavailable_route);
+				ds_dst_unav_route = -1;
+			}
+			else
+			{
+				LM_INFO("destination unavailable route: route[%s] (%d)\n",
+					ds_dst_unavailable_route, ds_dst_unav_route);
+			}
+
+		}
+		else
+		{
+			LM_INFO("No destination unavailable route configured\n");
+			ds_dst_unav_route = -1;
+		}
+
+		if (ds_dst_available_route != NULL)
+		{
+			int length = strlen(ds_dst_available_route);
+			c = ds_dst_available_route[length];
+			ds_dst_available_route[length] = '\0';
+			ds_dst_av_route = route_get(&main_rt, ds_dst_available_route);
+			ds_dst_available_route[length] = c;
+
+			if (ds_dst_av_route == -1)
+			{
+				LM_ERR("failed to determine destination available route\n");
+				return -1;
+			}
+
+			if (main_rt.rlist[ds_dst_av_route] == 0)
+			{
+				LM_WARN("route[%s] is empty\n", ds_dst_available_route);
+				ds_dst_av_route = -1;
+			}
+			else
+			{
+				LM_INFO("destination available route: route[%s] (%d)\n",
+					ds_dst_available_route, ds_dst_av_route);
+			}
+
+		}
+		else
+		{
+			LM_INFO("No destination available route configured\n");
+			ds_dst_av_route = -1;
+		}
+
 	}
 
 	return 0;

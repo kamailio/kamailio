@@ -88,6 +88,9 @@ extern str ds_ping_from;
 extern int probing_threshhold; /*!< number of failed requests,
 						before a destination is taken into probing */ 
 extern int ds_probing_mode;
+extern struct sip_msg ds_tmp_msg;
+extern int ds_dst_unav_route;
+extern int ds_dst_av_route;
 
 int init_data(void);
 int init_ds_db(void);
@@ -98,7 +101,7 @@ int ds_load_db(void);
 int ds_destroy_list(void);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_next_dst(struct sip_msg *msg, int mode);
-int ds_set_state(int group, str *address, int state, int type);
+int ds_set_state(int group, str *address, int state, int type, struct sip_msg *msg);
 int ds_reinit_state(int group, str *address, int state);
 int ds_mark_dst(struct sip_msg *msg, int mode);
 int ds_print_list(FILE *fout);
