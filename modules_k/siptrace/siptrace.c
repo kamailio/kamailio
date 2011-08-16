@@ -780,6 +780,7 @@ error:
 static int sip_trace(struct sip_msg *msg, char *dir, char *s2)
 {
 	struct _siptrace_data sto;
+	struct onsend_info *snd_inf = NULL;
 
 	if(msg==NULL) {
 		LM_DBG("nothing to trace\n");
@@ -798,8 +799,6 @@ static int sip_trace(struct sip_msg *msg, char *dir, char *s2)
 	if(sip_trace_prepare(msg)<0)
 		return -1;
 
-	sto.body.s = msg->buf;
-	sto.body.len = msg->len;
 	sto.callid = msg->callid->body;
 
 	if(msg->first_line.type==SIP_REQUEST) {
@@ -816,21 +815,44 @@ static int sip_trace(struct sip_msg *msg, char *dir, char *s2)
 		sto.status.len = 0;
 	}
 
-	siptrace_copy_proto(msg->rcv.proto, sto.fromip_buff);
-	strcat(sto.fromip_buff, ip_addr2a(&msg->rcv.src_ip));
-	strcat(sto.fromip_buff,":");
-	strcat(sto.fromip_buff, int2str(msg->rcv.src_port, NULL));
-	sto.fromip.s = sto.fromip_buff;
-	sto.fromip.len = strlen(sto.fromip_buff);
+	snd_inf=get_onsend_info();
+	if(snd_inf==NULL) {
+		sto.body.s = msg->buf;
+		sto.body.len = msg->len;
 
-	siptrace_copy_proto(msg->rcv.proto, sto.toip_buff);
-	strcat(sto.toip_buff, ip_addr2a(&msg->rcv.dst_ip));
-	strcat(sto.toip_buff,":");
-	strcat(sto.toip_buff, int2str(msg->rcv.dst_port, NULL));
-	sto.toip.s = sto.toip_buff;
-	sto.toip.len = strlen(sto.toip_buff);
+		siptrace_copy_proto(msg->rcv.proto, sto.fromip_buff);
+		strcat(sto.fromip_buff, ip_addr2a(&msg->rcv.src_ip));
+		strcat(sto.fromip_buff,":");
+		strcat(sto.fromip_buff, int2str(msg->rcv.src_port, NULL));
+		sto.fromip.s = sto.fromip_buff;
+		sto.fromip.len = strlen(sto.fromip_buff);
 
-	sto.dir = (dir)?dir:"in";
+		siptrace_copy_proto(msg->rcv.proto, sto.toip_buff);
+		strcat(sto.toip_buff, ip_addr2a(&msg->rcv.dst_ip));
+		strcat(sto.toip_buff,":");
+		strcat(sto.toip_buff, int2str(msg->rcv.dst_port, NULL));
+		sto.toip.s = sto.toip_buff;
+		sto.toip.len = strlen(sto.toip_buff);
+
+		sto.dir = (dir)?dir:"in";
+	} else {
+		sto.body.s   = snd_inf->buf;
+		sto.body.len = snd_inf->len;
+
+		strncpy(sto.fromip_buff, snd_inf->send_sock->sock_str.s,
+				snd_inf->send_sock->sock_str.len);
+		sto.fromip.s = sto.fromip_buff;
+		sto.fromip.len = strlen(sto.fromip_buff);
+
+		siptrace_copy_proto(snd_inf->send_sock->proto, sto.toip_buff);
+		strcat(sto.toip_buff, suip2a(snd_inf->to, sizeof(*snd_inf->to)));
+		strcat(sto.toip_buff,":");
+		strcat(sto.toip_buff, int2str((int)su_getport(snd_inf->to), NULL));
+		sto.toip.s = sto.toip_buff;
+		sto.toip.len = strlen(sto.toip_buff);
+
+		sto.dir = "out";
+	}
 
 	sto.fromtag = get_from(msg)->tag_value;
 
