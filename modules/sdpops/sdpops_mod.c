@@ -34,6 +34,7 @@
 #include "../../trim.h"
 #include "../../data_lump.h"
 
+#include "api.h"
 #include "sdpops_data.h"
 
 MODULE_VERSION
@@ -54,7 +55,9 @@ static cmd_export_t cmds[] = {
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_print",                  (cmd_function)w_sdp_print,
 		1, fixup_igp_null,  0, ANY_ROUTE},
-	{0, 0, 0, 0, 0}
+	{"bind_sdpops",                (cmd_function)bind_sdpops,
+		0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
 };
 
 static pv_export_t mod_pvs[] = {
@@ -360,7 +363,7 @@ static int sdp_with_media(sip_msg_t *msg, str *media)
 		return -1;
 	}
 
-	LM_ERR("attempting to search for media type: [%.*s]\n",
+	LM_DBG("attempting to search for media type: [%.*s]\n",
 			media->len, media->s);
 
 	sdp = (sdp_info_t*)msg->body;
@@ -436,4 +439,13 @@ static int w_sdp_print(sip_msg_t* msg, char* level, char *bar)
 
 	print_sdp(sdp, llevel);
 	return 1;
+}
+
+int bind_sdpops(struct sdpops_binds *sob){
+	if (sob == NULL) {
+		LM_WARN("bind_sdpops: Cannot load sdpops API into a NULL pointer\n");
+		return -1;
+	}
+	sob->sdp_with_media = sdp_with_media;
+	return 0;
 }

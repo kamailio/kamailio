@@ -41,6 +41,7 @@
 #include "../../modules_k/registrar/api.h"
 #include "../../modules_k/dispatcher/api.h"
 #include "../../modules/xhttp/api.h"
+#include "../../modules/sdpops/api.h"
 
 #include "app_lua_api.h"
 
@@ -54,6 +55,7 @@
 #define SR_LUA_EXP_MOD_REGISTRAR  (1<<7)
 #define SR_LUA_EXP_MOD_DISPATCHER (1<<8)
 #define SR_LUA_EXP_MOD_XHTTP      (1<<9)
+#define SR_LUA_EXP_MOD_SDPOPS     (1<<10)
 
 /**
  *
@@ -110,6 +112,11 @@ static tm_xapi_t _lua_xtmb;
  * xhttp
  */
 static xhttp_api_t _lua_xhttpb;
+
+/**
+ * sdpops
+ */
+static sdpops_api_t _lua_sdpopsb;
 
 /**
  *
@@ -1224,6 +1231,17 @@ static int lua_sr_dispatcher_is_from(lua_State *L)
 	return app_lua_return_int(L, ret);
 }
 
+/**
+ *
+ */
+static const luaL_reg _sr_dispatcher_Map [] = {
+	{"select",      lua_sr_dispatcher_select},
+	{"next",        lua_sr_dispatcher_next},
+	{"mark",        lua_sr_dispatcher_mark},
+	{"is_from",     lua_sr_dispatcher_is_from},
+	{NULL, NULL}
+};
+
 
 /**
  *
@@ -1276,17 +1294,33 @@ static const luaL_reg _sr_xhttp_Map [] = {
 	{NULL, NULL}
 };
 
+/**
+ *
+ */
+static int lua_sr_sdpops_with_media(lua_State *L)
+{
+	int ret;
+	str media;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	media.s = (char*)lua_tostring(L, -1);
+	media.len = strlen(media.s);
+
+	ret = _lua_sdpopsb.sdp_with_media(env_L->msg, &media);
+
+	return app_lua_return_int(L, ret);
+}
 
 /**
  *
  */
-static const luaL_reg _sr_dispatcher_Map [] = {
-	{"select",      lua_sr_dispatcher_select},
-	{"next",        lua_sr_dispatcher_next},
-	{"mark",        lua_sr_dispatcher_mark},
-	{"is_from",     lua_sr_dispatcher_is_from},
+static const luaL_reg _sr_sdpops_Map [] = {
+	{"sdp_with_media",       lua_sr_sdpops_with_media},
 	{NULL, NULL}
 };
+
 
 /**
  *
@@ -1399,6 +1433,16 @@ int lua_sr_exp_init_mod(void)
 		}
 		LM_DBG("loaded xhttp api\n");
 	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS)
+	{
+		/* bind the SDPOPS API */
+		if (sdpops_load_api(&_lua_sdpopsb) < 0)
+		{
+			LM_ERR("cannot bind to SDPOPS API\n");
+			return -1;
+		}
+		LM_DBG("loaded sdpops api\n");
+	}
 	return 0;
 }
 
@@ -1442,6 +1486,9 @@ int lua_sr_exp_register_mod(char *mname)
 	} else 	if(len==5 && strcmp(mname, "xhttp")==0) {
 		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_XHTTP;
 		return 0;
+	} else 	if(len==6 && strcmp(mname, "sdpops")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_SDPOPS;
+		return 0;
 	}
 
 	return -1;
@@ -1472,5 +1519,7 @@ void lua_sr_exp_openlibs(lua_State *L)
 		luaL_openlib(L, "sr.dispatcher", _sr_dispatcher_Map,  0);
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_XHTTP)
 		luaL_openlib(L, "sr.xhttp",      _sr_xhttp_Map,       0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS)
+		luaL_openlib(L, "sr.sdpops",     _sr_sdpops_Map,      0);
 }
 
