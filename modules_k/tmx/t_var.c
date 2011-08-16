@@ -507,8 +507,8 @@ int pv_get_t(struct sip_msg *msg,  pv_param_t *param,
 	switch(param->pvn.u.isname.name.n)
 	{
 		case 1:
-			return pv_get_uintval(msg, param, res, t->label);
-		default:
 			return pv_get_uintval(msg, param, res, t->hash_index);
+		default:
+			return pv_get_uintval(msg, param, res, t->label);
 	}
 }

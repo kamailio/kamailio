@@ -62,6 +62,8 @@ Carsten Bock
               3.25. ds_hash_expire (int)
               3.26. ds_hash_initexpire (int)
               3.27. ds_hash_check_interval (int)
+              3.28. ds_dst_unavailable_route (string)
+              3.29. ds_dst_available_route (string)
 
         4. Exported Functions
 
@@ -125,10 +127,12 @@ Carsten Bock
    1.26. Set the “ds_hash_expire” parameter
    1.27. Set the “ds_hash_initexpire” parameter
    1.28. Set the “ds_hash_check_interval” parameter
-   1.29. ds_select_dst usage
-   1.30. ds_load_unset usage
-   1.31. dispatcher list file
-   1.32. Kamailio config script - sample dispatcher usage
+   1.29. Set the “ds_dst_unavailable_route” parameter
+   1.30. Set the “ds_dst_available_route” parameter
+   1.31. ds_select_dst usage
+   1.32. ds_load_unset usage
+   1.33. dispatcher list file
+   1.34. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -169,6 +173,8 @@ Chapter 1. Admin Guide
         3.25. ds_hash_expire (int)
         3.26. ds_hash_initexpire (int)
         3.27. ds_hash_check_interval (int)
+        3.28. ds_dst_unavailable_route (string)
+        3.29. ds_dst_available_route (string)
 
    4. Exported Functions
 
@@ -263,6 +269,8 @@ Chapter 1. Admin Guide
    3.25. ds_hash_expire (int)
    3.26. ds_hash_initexpire (int)
    3.27. ds_hash_check_interval (int)
+   3.28. ds_dst_unavailable_route (string)
+   3.29. ds_dst_available_route (string)
 
 3.1. list_file (string)
 
@@ -646,6 +654,48 @@ Note
  modparam("dispatcher", "ds_hash_check_interval", 60)
  ...
 
+3.28. ds_dst_unavailable_route (string)
+
+   Optional parameter that specifies a route to run when a destination is
+   marked as PROBING. Destinations are marked PROBING after threshhold
+   number of OPTIONS ping failures or calls to ds_mark_dst("p").
+
+   This setting can be used to log desination failures. It may be used (in
+   conjunction with other modules like exec) to run external commands to
+   update NMC equipment, generate SNMP traps, and so on.
+
+   Default value is “null”.
+
+   Example 1.29. Set the “ds_dst_unavailable_route” parameter
+ ...
+ modparam("dispatcher", "ds_dst_unavailable_route", "DST_FAILED")
+ ...
+ route[DST_FAILED] {
+     xlog("L_ERR", "Destination failed: $rm $ru ($du)\n");
+ }
+ ...
+
+3.29. ds_dst_available_route (string)
+
+   Optional parameter that specifies a route to run when a destination
+   leaves the PROBING state. Destinations leave the PROBING state after an
+   OPTIONS ping succeeds.
+
+   This setting can be used to log desination recoveries. It may be used
+   (in conjunction with other modules like exec) to run external commands
+   to update NMC equipment, generate SNMP traps, and so on.
+
+   Default value is “null”.
+
+   Example 1.30. Set the “ds_dst_available_route” parameter
+ ...
+ modparam("dispatcher", "ds_dst_available_route", "DST_RESTORED")
+ ...
+ route[DST_RESTORED] {
+     xlog("L_ERR", "Destination restored: $rm $ru ($du)\n");
+ }
+ ...
+
 4. Exported Functions
 
    4.1. ds_select_dst(set, alg)
@@ -708,7 +758,7 @@ Note
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.29. ds_select_dst usage
+   Example 1.31. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -805,7 +855,7 @@ ds_select_dst("1", "$var(a)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.30. ds_load_unset usage
+   Example 1.32. ds_load_unset usage
 ...
 route {
     ...
@@ -969,7 +1019,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.31. dispatcher list file
+   Example 1.33. dispatcher list file
 ...
 # $Id$
 # dispatcher destination sets
@@ -994,7 +1044,7 @@ r,opt)
 
    Next picture displays a sample usage of dispatcher.
 
-   Example 1.32. Kamailio config script - sample dispatcher usage
+   Example 1.34. Kamailio config script - sample dispatcher usage
 ...
 # $Id$
 # sample config file for dispatcher module
@@ -1080,46 +1130,46 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-       Does dispatcher provide a fair distribution?
+   Does dispatcher provide a fair distribution?
 
-       There is no guarantee of that. You should do some measurements to
-       decide what distribution algorithm fits better in your environment.
+   There is no guarantee of that. You should do some measurements to
+   decide what distribution algorithm fits better in your environment.
 
    2.2.
 
-       Is dispatcher dialog stateful?
+   Is dispatcher dialog stateful?
 
-       No. Dispatcher is stateless, although some distribution algorithms are
-       designed to select same destination for subsequent requests of the same
-       dialog (e.g., hashing the call-id).
+   No. Dispatcher is stateless, although some distribution algorithms are
+   designed to select same destination for subsequent requests of the same
+   dialog (e.g., hashing the call-id).
 
    2.3.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at http://www.kamailio.org/.
+   Take a look at http://www.kamailio.org/.
 
    2.4.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable version should be sent to
-       <sr-users@lists.sip-router.org> and e-mail regarding development
-       versions or CVS snapshots should be send to
-       <sr-dev@lists.sip-router.org>.
+   E-mails regarding any stable version should be sent to
+   <sr-users@lists.sip-router.org> and e-mail regarding development
+   versions or CVS snapshots should be send to
+   <sr-dev@lists.sip-router.org>.
 
-       If you want to keep the mail private, send it to
-       <sr-users@lists.sip-router.org>.
+   If you want to keep the mail private, send it to
+   <sr-users@lists.sip-router.org>.
 
    2.5.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at: http://sip-router.org/tracker
+   Please follow the guidelines provided at: http://sip-router.org/tracker

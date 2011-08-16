@@ -91,7 +91,11 @@ static int lua_sr_log (lua_State *L)
 		{
 			LM_ERR("%s", txt);
 		} else {
-			if(strcasecmp(level, "warn")==0) {
+			if(strcasecmp(level, "dbg")==0) {
+				LM_DBG("%s", txt);
+			} else if(strcasecmp(level, "info")==0) {
+				LM_INFO("%s", txt);
+			} else if(strcasecmp(level, "warn")==0) {
 				LM_WARN("%s", txt);
 			} else if(strcasecmp(level, "crit")==0) {
 				LM_CRIT("%s", txt);
