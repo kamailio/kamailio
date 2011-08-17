@@ -896,6 +896,23 @@ error:
 	return NULL;
 }
 
+void free_notify_body(str *body, pres_ev_t *ev)
+{
+	if (body != NULL)
+	{
+		if (body->s != NULL)
+		{
+			if (ev->type & WINFO_TYPE)
+				xmlFree(body->s);
+			else if (ev->agg_nbody== NULL && ev->apply_auth_nbody== NULL)
+				pkg_free(body->s);
+			else
+				ev->free_body(body->s);
+		}
+		pkg_free(body);
+	}
+}
+
 int free_tm_dlg(dlg_t *td)
 {
 	if(td)
@@ -1374,18 +1391,7 @@ int publ_notify(presentity_t* p, str pres_uri, str* body, str* offline_etag, str
 
 done:
 	free_subs_list(subs_array, PKG_MEM_TYPE, 0);
-	
-	if(notify_body!=NULL)
-	{
-		if(notify_body->s)
-		{
-			if(	p->event->agg_nbody== NULL && p->event->apply_auth_nbody== NULL)
-				pkg_free(notify_body->s);
-			else
-				p->event->free_body(notify_body->s);
-		}
-		pkg_free(notify_body);
-	}
+	free_notify_body(notify_body, p->event);	
 	return ret_code;
 }	
 
@@ -1442,20 +1448,7 @@ int query_db_notify(str* pres_uri, pres_ev_t* event, subs_t* watcher_subs )
 
 done:
 	free_subs_list(subs_array, PKG_MEM_TYPE, 0);
-	if(notify_body!=NULL)
-	{
-		if(notify_body->s)
-		{
-			if(event->type & WINFO_TYPE)
-				pkg_free(notify_body->s);
-			else
-			if(event->agg_nbody== NULL && event->apply_auth_nbody== NULL)
-				pkg_free(notify_body->s);
-			else
-				event->free_body(notify_body->s);
-		}
-		pkg_free(notify_body);
-	}
+	free_notify_body(notify_body, event);
 
 	return ret_code;
 }
@@ -1604,23 +1597,8 @@ jump_over_body:
 	if(str_hdr.s) pkg_free(str_hdr.s);
 	
 	if((int)(long)n_body!= (int)(long)notify_body)
-	{
-		if(notify_body!=NULL)
-		{
-			if(notify_body->s!=NULL)
-			{
-				if(subs->event->type& WINFO_TYPE )
-					xmlFree(notify_body->s);
-				else
-				if(subs->event->apply_auth_nbody== NULL
-						&& subs->event->agg_nbody== NULL)
-					pkg_free(notify_body->s);
-				else
-				subs->event->free_body(notify_body->s);
-			}
-			pkg_free(notify_body);
-		}
-	}	
+		free_notify_body(notify_body, subs->event);
+
 	return 0;
 
 error:

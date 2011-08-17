@@ -83,6 +83,8 @@ Juha Heinanen
         13. get_event_list
         14. update_watchers_status
         15. get_sphere
+        16. get_presentity
+        17. free_presentity
 
    List of Examples
 
@@ -647,6 +649,8 @@ Chapter 2. Developer Guide
    13. get_event_list
    14. update_watchers_status
    15. get_sphere
+   16. get_presentity
+   17. free_presentity
 
    The module provides the following functions that can be used in other
    Kamailio modules.
@@ -911,3 +915,30 @@ typedef char* (*pres_get_sphere_t)(str* pres_uri);
    This function searches for a sphere definition in the published
    information if this has type RPID. If not found returns NULL. (the
    return value is allocated in private memory and should be freed)
+
+16.  get_presentity
+
+   Field type:
+...
+typedef str* (*pres_get_presentity_t)(str pres_uri, pres_ev_t *ev, str *etag, st
+r *contact);
+...
+
+   This function returns a pointer to a str containing an XML document
+   with all of the matching presentities. If no matching presentities are
+   found the function returns NULL.
+
+   The etag and contact parameters are optional and may be set to NULL.
+   Once you are finished with the presentity document you must call
+   free_presentity to free the allocated memory.
+
+17.  free_presentity
+
+   Field type:
+...
+typedef void (*pres_free_presentity_t)(str *presentity, pres_ev_t *ev);
+...
+
+   This function frees memory allocated by a call to get_presentity. The
+   ev parameter MUST point to the same pres_ev_t data-structure that was
+   used in the call to get_presentity.

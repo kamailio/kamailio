@@ -113,4 +113,6 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 
 char* get_status_str(int flag);
 
+str *get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag, str *contact);
+void free_notify_body(str *body, pres_ev_t *ev);
 #endif

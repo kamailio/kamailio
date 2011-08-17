@@ -40,6 +40,7 @@
 #include "../../sr_module.h"
 #include "presence.h"
 #include "bind_presence.h"
+#include "notify.h"
 
 int bind_presence(presence_api_t* api)
 {
@@ -63,6 +64,8 @@ int bind_presence(presence_api_t* api)
 	api->update_db_subs= update_db_subs;
 	api->extract_sdialog_info= extract_sdialog_info;
 	api->get_sphere= get_sphere;
+	api->get_presentity= get_p_notify_body;
+	api->free_presentity= free_notify_body;
 	return 0;
 }
 

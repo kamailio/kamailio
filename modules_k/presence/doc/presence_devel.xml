@@ -399,5 +399,50 @@ typedef char* (*pres_get_sphere_t)(str* pres_uri);
 	</para>
 </section>
 
+<section>
+	<title>
+	<function moreinfo="none">get_presentity</function>
+	</title>
+	<para>
+		Field type:
+	</para>
+		<programlisting format="linespecific">
+...
+typedef str* (*pres_get_presentity_t)(str pres_uri, pres_ev_t *ev, str *etag, str *contact);
+...
+</programlisting>
+	<para>
+	This function returns a pointer to a <emphasis>str</emphasis> containing an
+	XML document with all of the matching presentities.  If no matching
+	presentities are found the function returns NULL.
+	</para>
+	<para>
+	The <emphasis>etag</emphasis> and <emphasis>contact</emphasis> parameters are
+	optional and may be set to NULL.  Once you are finished with the presentity
+	document you must call <emphasis>free_presentity</emphasis> to free the
+	allocated memory.
+	</para>
+</section>
+
+<section>
+	<title>
+	<function moreinfo="none">free_presentity</function>
+	</title>
+	<para>
+		Field type:
+	</para>
+		<programlisting format="linespecific">
+...
+typedef void (*pres_free_presentity_t)(str *presentity, pres_ev_t *ev);
+...
+</programlisting>
+	<para>
+	This function frees memory allocated by a call to 
+	<emphasis>get_presentity</emphasis>.  The <emphasis>ev</emphasis> parameter
+	MUST point to the same <emphasis>pres_ev_t</emphasis> data-structure
+	that was used in the call to <emphasis>get_presentity</emphasis>.
+	</para>
+</section>
+
 </chapter>
 

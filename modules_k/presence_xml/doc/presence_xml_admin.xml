@@ -315,9 +315,91 @@ modparam("presence_xml", "passive_mode", 1)
 
 <section>
 	<title>Exported Functions</title>
-	<para>
-	None to be used in configuration file.
-	</para>
+	<section>
+		<title>
+		<function moreinfo="none">pres_check_basic(char *presentity_uri, char *status)</function>
+		</title>
+		<para>
+		Checks the /presence/tuple/status/basic nodes in the presentity for
+		<emphasis>presentity_uri</emphasis> against the value in status.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<para>
+		<emphasis>Return code:</emphasis>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis> 1 - if a match is found</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis> -1 - if a match is not found</emphasis>.
+			</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+		<example>
+		<title><function>pres_check_basic</function> usage</title>
+		<programlisting format="linespecific">
+...
+    if (pres_check_basic("$ru", "open")) {
+        ...
+    } else {
+        if (is_method("MESSAGE"))
+            m_store();
+    else
+        send_reply("404", "Not Found");
+    }
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">pres_check_activities(char *presentity_uri, char *activity)</function>
+		</title>
+		<para>
+		Checks whether a /presence/person/activities/<emphasis>activity</emphasis>
+		node exists in the presentity for <emphasis>presentity_uri</emphasis>.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<para>
+		<emphasis>Return code:</emphasis>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis> 1 - if a match is found</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis> -1 - if a match is not found</emphasis>.
+			</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+		<example>
+		<title><function>pres_check_activities</function> usage</title>
+		<programlisting format="linespecific">
+...
+    if (pres_check_basic("$ru", "open")) {
+        if (pres_check_activities("$ru", "unknown") || !is_method("INVITE"))
+            t_relay();
+	else
+            send_reply("486", "Busy Here");
+    } else {
+        ...
+    }
+...
+</programlisting>
+		</example>
+	</section>
+
 </section>
 
 <section>

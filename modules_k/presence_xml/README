@@ -35,6 +35,11 @@ Anca-Maria Vamanu
               3.10. passive_mode(int)
 
         4. Exported Functions
+
+              4.1. pres_check_basic(char *presentity_uri, char *status)
+              4.2. pres_check_activities(char *presentity_uri, char
+                      *activity)
+
         5. Installation
         6. Exported pseudo-variables
 
@@ -52,6 +57,8 @@ Anca-Maria Vamanu
    1.8. Set integrated_xcap_server parameter
    1.9. Set xcap_server parameter
    1.10. Set passive_mode parameter
+   1.11. pres_check_basic usage
+   1.12. pres_check_activities usage
 
 Chapter 1. Admin Guide
 
@@ -77,6 +84,10 @@ Chapter 1. Admin Guide
         3.10. passive_mode(int)
 
    4. Exported Functions
+
+        4.1. pres_check_basic(char *presentity_uri, char *status)
+        4.2. pres_check_activities(char *presentity_uri, char *activity)
+
    5. Installation
    6. Exported pseudo-variables
 
@@ -273,7 +284,54 @@ modparam("presence_xml", "passive_mode", 1)
 
 4. Exported Functions
 
-   None to be used in configuration file.
+   4.1. pres_check_basic(char *presentity_uri, char *status)
+   4.2. pres_check_activities(char *presentity_uri, char *activity)
+
+4.1.  pres_check_basic(char *presentity_uri, char *status)
+
+   Checks the /presence/tuple/status/basic nodes in the presentity for
+   presentity_uri against the value in status.
+
+   This function can be used from ANY_ROUTE.
+
+   Return code:
+     * 1 - if a match is found.
+     * -1 - if a match is not found.
+
+   Example 1.11. pres_check_basic usage
+...
+    if (pres_check_basic("$ru", "open")) {
+        ...
+    } else {
+        if (is_method("MESSAGE"))
+            m_store();
+    else
+        send_reply("404", "Not Found");
+    }
+...
+
+4.2.  pres_check_activities(char *presentity_uri, char *activity)
+
+   Checks whether a /presence/person/activities/activity node exists in
+   the presentity for presentity_uri.
+
+   This function can be used from ANY_ROUTE.
+
+   Return code:
+     * 1 - if a match is found.
+     * -1 - if a match is not found.
+
+   Example 1.12. pres_check_activities usage
+...
+    if (pres_check_basic("$ru", "open")) {
+        if (pres_check_activities("$ru", "unknown") || !is_method("INVITE"))
+            t_relay();
+        else
+            send_reply("486", "Busy Here");
+    } else {
+        ...
+    }
+...
 
 5. Installation
 

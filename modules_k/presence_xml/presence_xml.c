@@ -55,6 +55,7 @@
 #include "pidf.h"
 #include "add_events.h"
 #include "presence_xml.h"
+#include "pres_check.h"
 
 MODULE_VERSION
 #define S_TABLE_VERSION 4
@@ -100,6 +101,14 @@ db_func_t pxml_dbf;
 
 xcapGetNewDoc_t xcap_GetNewDoc;
 
+static cmd_export_t cmds[]={
+	{ "pres_check_basic",		(cmd_function)presxml_check_basic, 2,
+		fixup_presxml_check, 0, ANY_ROUTE},
+	{ "pres_check_activities",	(cmd_function)presxml_check_activities, 2,
+		fixup_presxml_check, 0, ANY_ROUTE},
+	{ 0, 0, 0, 0, 0, 0}
+};
+
 static param_export_t params[]={
 	{ "db_url",		STR_PARAM, &db_url.s},
 	{ "xcap_table",		STR_PARAM, &xcap_table.s},
@@ -124,7 +133,7 @@ static mi_export_t mi_cmds[] = {
 struct module_exports exports= {
 	"presence_xml",		/* module name */
 	 DEFAULT_DLFLAGS,	/* dlopen flags */
-	 0,  			/* exported functions */
+	 cmds,  		/* exported functions */
 	 params,		/* exported parameters */
 	 0,				/* exported statistics */
 	 mi_cmds,		/* exported MI functions */
@@ -202,6 +211,9 @@ static int mod_init(void)
 	pres_get_sphere= pres.get_sphere;
 	pres_add_event= pres.add_event;
 	pres_update_watchers= pres.update_watchers_status;
+	pres_contains_event= pres.contains_event;
+	pres_get_presentity= pres.get_presentity;
+	pres_free_presentity= pres.free_presentity;
 	if (pres_add_event == NULL || pres_update_watchers== NULL)
 	{
 		LM_ERR("Can't import add_event\n");
