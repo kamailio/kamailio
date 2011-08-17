@@ -119,6 +119,13 @@ int db_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v
 
 
 /*! \brief
+ * Insert a row into table
+ */
+int db_mysql_insert_delayed(const db1_con_t* _h, const db_key_t* _k,
+		const db_val_t* _v, const int _n);
+
+
+/*! \brief
  * Store name of table that will be used by
  * subsequent database functions
  */

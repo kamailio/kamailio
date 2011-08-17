@@ -539,6 +539,21 @@ error:
 
 
 /**
+ * Insert delayed a row into a specified table.
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _v values of the keys
+ * \param _n number of key=value pairs
+ * \return zero on success, negative value on failure
+ */
+int db_mysql_insert_delayed(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
+{
+	return db_do_insert_delayed(_h, _k, _v, _n, db_mysql_val2str,
+	db_mysql_submit_query);
+}
+
+
+/**
  * Store the name of table that will be used by subsequent database functions
  * \param _h database handle
  * \param _t table name
