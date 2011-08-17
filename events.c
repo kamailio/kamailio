@@ -188,6 +188,8 @@ int sr_event_enabled(int type)
 				return (_sr_events_list.pkg_set_used!=0)?1:0;
 		case SREV_PKG_SET_REAL_USED:
 				return (_sr_events_list.pkg_set_real_used!=0)?1:0;
+		case SREV_NET_DGRAM_IN:
+				return (_sr_events_list.net_dgram_in!=0)?1:0;
 	}
 	return 0;
 }
