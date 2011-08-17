@@ -48,19 +48,6 @@
  * */
 static str su_200_rpl     = str_init("OK");
 
-#define CONT_COPY(buf, dest, source)\
-	dest.s= (char*)buf+ size;\
-	memcpy(dest.s, source.s, source.len);\
-	dest.len= source.len;\
-	size+= source.len;
-
-
-#define CONT_COPY_1 (buf, dest_s, dest_len, source_s, source_len)\
-	dest_s= (char*)buf+ size;\
-	memcpy(dest_s, source_s, source_len);\
-	dest_len= source_len;\
-	size+= source_len;
-
 int parse_rlsubs_did(char* str_did, str* callid, str* from_tag, str* to_tag)
 {
 	char* smc= NULL;
