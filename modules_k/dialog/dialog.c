@@ -603,11 +603,18 @@ static int mod_init(void)
 		return -1;
 	}
 
+	/* sanitize dlg_hash_zie */
+	if (dlg_hash_size < 1){
+		LM_WARN("hash_size is smaller "
+				"then 1  -> rounding from %d to 1\n",
+				dlg_hash_size);
+		dlg_hash_size = 1;
+	}
 	/* initialized the hash table */
 	for( n=0 ; n<(8*sizeof(n)) ; n++) {
 		if (dlg_hash_size==(1<<n))
 			break;
-		if (dlg_hash_size<(1<<n)) {
+		if (n && dlg_hash_size<(1<<n)) {
 			LM_WARN("hash_size is not a power "
 				"of 2 as it should be -> rounding from %d to %d\n",
 				dlg_hash_size, 1<<(n-1));
