@@ -943,9 +943,6 @@ static inline int internal_mi_print_dlg(struct mi_node *rpl,
 	if(node1 == 0)
 		goto error;
 
-	if(node1 == 0)
-		goto error;
-
 	if (with_context) {
 		node1 = add_mi_node_child(node, 0, "context", 7, 0, 0);
 		if(node1 == 0)
