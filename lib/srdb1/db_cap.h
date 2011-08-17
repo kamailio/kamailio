@@ -47,7 +47,8 @@ typedef enum db_cap {
 	DB_CAP_REPLACE =   1 << 5,  /*!< driver can replace (also known as INSERT OR UPDATE) data       */
 	DB_CAP_FETCH   =   1 << 6,  /*!< driver supports fetch result queries                           */
 	DB_CAP_LAST_INSERTED_ID = 1 << 7,  /*!< driver can return the ID of the last insert operation   */
- 	DB_CAP_INSERT_UPDATE = 1 << 8 /*!< driver can insert data into database and update on duplicate */
+	DB_CAP_INSERT_UPDATE = 1 << 8, /*!< driver can insert data into database & update on duplicate  */
+	DB_CAP_INSERT_DELAYED = 1 << 9 /*!< driver can do insert delayed                                */
 
 } db_cap_t;
 

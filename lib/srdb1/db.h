@@ -282,6 +282,22 @@ typedef int (*db_insert_update_f) (const db1_con_t* _h, const db_key_t* _k,
 
 
 /**
+ * \brief Insert delayed a row into the specified table.
+ *
+ * This function implements INSERT DELAYED SQL directive. It is possible to
+ * insert one or more rows in a table with delay using this function.
+ * \param _h database connection handle
+ * \param _k array of keys (column names)
+ * \param _v array of values for keys specified in _k parameter
+ * \param _n number of keys-value pairs int _k and _v parameters
+ * \return returns 0 if everything is OK, otherwise returns value < 0
+ */
+typedef int (*db_insert_delayed_f) (const db1_con_t* _h, const db_key_t* _k,
+				const db_val_t* _v, const int _n);
+
+
+
+/**
  * \brief Database module callbacks
  * 
  * This structure holds function pointer to all database functions. Before this
@@ -304,6 +320,7 @@ typedef struct db_func {
 	db_last_inserted_id_f  last_inserted_id;  /* Retrieve the last inserted ID
 	                                            in a table */
 	db_insert_update_f insert_update; /* Insert into table, update on duplicate key */ 
+	db_insert_delayed_f insert_delayed;           /* Insert delayed into table */
 } db_func_t;
 
 

@@ -185,6 +185,27 @@ int db_do_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 
 
 /**
+ * \brief Helper function for db insert delayed operations
+ *
+ * This method evaluates the actual arguments for the database operation
+ * and setups the string that is used for the insert delayed operation in the db
+ * module. Then its submit the query for the operation. It uses for its work
+ * the implementation in the concrete database module.
+ *
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _v values of the keys
+ * \param _n number of key/value pairs
+ * \param (*val2str) function pointer to the db specific val conversion function
+ * \param (*submit_query) function pointer to the db specific query submit function
+ * \return zero on success, negative on errors
+ */
+int db_do_insert_delayed(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+	const int _n, int (*val2str) (const db1_con_t*, const db_val_t*, char*, int*),
+	int (*submit_query)(const db1_con_t* _h, const str* _c));
+
+
+/**
  * \brief Initialisation function - should be called from db.c at start-up
  *
  * This initialises the db_query module, and should be called before any functions in db_query are called.

@@ -33,6 +33,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "../../dprint.h"
 #include "db_ut.h"
 #include "db_query.h"
@@ -143,9 +144,9 @@ int db_do_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r,
 }
 
 
-int db_do_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+int db_do_insert_cmd(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	const int _n, int (*val2str) (const db1_con_t*, const db_val_t*, char*, int*),
-	int (*submit_query)(const db1_con_t* _h, const str* _c))
+	int (*submit_query)(const db1_con_t* _h, const str* _c), int mode)
 {
 	int off, ret;
 
@@ -154,7 +155,12 @@ int db_do_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 		return -1;
 	}
 
-	ret = snprintf(sql_buf, sql_buffer_size, "insert into %.*s (", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+	if(mode==1)
+		ret = snprintf(sql_buf, sql_buffer_size, "insert delayed into %.*s (",
+				CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+	else
+		ret = snprintf(sql_buf, sql_buffer_size, "insert into %.*s (",
+				CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 	if (ret < 0 || ret >= sql_buffer_size) goto error;
 	off = ret;
 
@@ -187,6 +193,19 @@ error:
 	return -1;
 }
 
+int db_do_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+	const int _n, int (*val2str) (const db1_con_t*, const db_val_t*, char*, int*),
+	int (*submit_query)(const db1_con_t* _h, const str* _c))
+{
+	return db_do_insert_cmd(_h, _k, _v, _n, val2str, submit_query, 0);
+}
+
+int db_do_insert_delayed(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+	const int _n, int (*val2str) (const db1_con_t*, const db_val_t*, char*, int*),
+	int (*submit_query)(const db1_con_t* _h, const str* _c))
+{
+	return db_do_insert_cmd(_h, _k, _v, _n, val2str, submit_query, 1);
+}
 
 int db_do_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 	const db_val_t* _v, const int _n, int (*val2str) (const db1_con_t*,
