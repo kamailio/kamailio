@@ -628,7 +628,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 	}
 
 done:
-	ri->flags &= ~UAC_REG_ONGOING;
+	if(ri) ri->flags &= ~UAC_REG_ONGOING;
 	shm_free(uuid);
 }
 
