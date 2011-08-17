@@ -398,7 +398,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 
 	if (new_state==DLG_STATE_CONFIRMED_NA &&
 	old_state!=DLG_STATE_CONFIRMED_NA && old_state!=DLG_STATE_CONFIRMED ) {
-		LM_DBG("dialog %p confirmed\n",dlg);
+		LM_DBG("dialog %p confirmed (ACK pending)\n",dlg);
 
 		 if (rpl != FAKED_REPLY) {
 			/* get to tag*/
@@ -445,8 +445,8 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 			ref_dlg(dlg,1);
 		}
 
-		/* dialog confirmed */
-		run_dlg_callbacks( DLGCB_CONFIRMED, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
+		/* dialog confirmed (ACK pending) */
+		run_dlg_callbacks( DLGCB_CONFIRMED_NA, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
 
 		if (old_state==DLG_STATE_EARLY)
 			if_update_stat(dlg_enable_stats, early_dlgs, -1);
@@ -1168,7 +1168,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 
 	if ( (event==DLG_EVENT_REQ || event==DLG_EVENT_REQACK)
 	&& new_state==DLG_STATE_CONFIRMED) {
-		LM_DBG("sequential request successfully processed\n");
+
 		timeout = get_dlg_timeout(req);
 		if (timeout!=default_timeout) {
 			dlg->lifetime = timeout;
@@ -1184,20 +1184,29 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 				update_dialog_dbinfo(dlg);
 		}
 
-		/* within dialog request */
-		run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req, NULL, dir, 0);
+		if (old_state==DLG_STATE_CONFIRMED_NA) {
+			LM_DBG("confirming ACK successfully processed\n");
 
-		if ( (event!=DLG_EVENT_REQACK) &&
-		(dlg->cbs.types)&DLGCB_RESPONSE_WITHIN ) {
-			/* ref the dialog as registered into the transaction callback.
-			 * unref will be done when the callback will be destroyed */
-			ref_dlg( dlg , 1);
-			/* register callback for the replies of this request */
-			if ( d_tmb.register_tmcb( req, 0, TMCB_RESPONSE_FWDED,
-			(dir==DLG_DIR_UPSTREAM)?dlg_seq_down_onreply:dlg_seq_up_onreply,
-			(void*)dlg, unreference_dialog)<0 ) {
-				LM_ERR("failed to register TMCB (2)\n");
+			/* confirming ACK request */
+			run_dlg_callbacks( DLGCB_CONFIRMED, dlg, req, NULL, dir, 0);
+		} else {
+			LM_DBG("sequential request successfully processed\n");
+
+			/* within dialog request */
+			run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req, NULL, dir, 0);
+
+			if ( (event!=DLG_EVENT_REQACK) &&
+					(dlg->cbs.types)&DLGCB_RESPONSE_WITHIN ) {
+				/* ref the dialog as registered into the transaction callback.
+				 * unref will be done when the callback will be destroyed */
+				ref_dlg( dlg , 1);
+				/* register callback for the replies of this request */
+				if ( d_tmb.register_tmcb( req, 0, TMCB_RESPONSE_FWDED,
+							(dir==DLG_DIR_UPSTREAM)?dlg_seq_down_onreply:dlg_seq_up_onreply,
+							(void*)dlg, unreference_dialog)<0 ) {
+					LM_ERR("failed to register TMCB (2)\n");
 					unref_dlg( dlg , 1);
+				}
 			}
 		}
 	}

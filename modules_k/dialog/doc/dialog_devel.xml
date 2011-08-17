@@ -51,14 +51,22 @@
 				</para>
 			</listitem>
 			<listitem>
-				<para><emphasis>DLGCB_CONFIRMED</emphasis> - called when the 
+				<para><emphasis>DLGCB_CONFIRMED_NA</emphasis> - called when the
+				dialog is confirmed (2xx replied) but the setup-concluding ACK
+				message from the caller is yet pending - it's a per dialog type.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>DLGCB_CONFIRMED</emphasis> - called when the
 				dialog is confirmed (2xx replied) and the setup-concluding ACK
 				message from the caller has been seen - it's a per dialog type.
 				</para>
 			</listitem>
 			<listitem>
 				<para><emphasis>DLGCB_REQ_WITHIN</emphasis> - called when the 
-				dialog matches a sequential request - it's a per dialog type.
+				dialog matches a sequential request (excluding setup-concluding
+				ACK messages which are handled in DLGCB_CONFIRMED) - it's a per
+				dialog type.
 				</para>
 			</listitem>
 			<listitem>
