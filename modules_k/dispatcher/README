@@ -62,8 +62,6 @@ Carsten Bock
               3.25. ds_hash_expire (int)
               3.26. ds_hash_initexpire (int)
               3.27. ds_hash_check_interval (int)
-              3.28. ds_dst_unavailable_route (string)
-              3.29. ds_dst_available_route (string)
 
         4. Exported Functions
 
@@ -94,6 +92,11 @@ Carsten Bock
 
               7.1. Destination List File
               7.2. Kamailio config file
+
+        8. Event routes
+
+              8.1. dispatcher:dst-down
+              8.2. dispatcher:dst-up
 
    2. Frequently Asked Questions
 
@@ -127,12 +130,10 @@ Carsten Bock
    1.26. Set the “ds_hash_expire” parameter
    1.27. Set the “ds_hash_initexpire” parameter
    1.28. Set the “ds_hash_check_interval” parameter
-   1.29. Set the “ds_dst_unavailable_route” parameter
-   1.30. Set the “ds_dst_available_route” parameter
-   1.31. ds_select_dst usage
-   1.32. ds_load_unset usage
-   1.33. dispatcher list file
-   1.34. Kamailio config script - sample dispatcher usage
+   1.29. ds_select_dst usage
+   1.30. ds_load_unset usage
+   1.31. dispatcher list file
+   1.32. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -173,8 +174,6 @@ Chapter 1. Admin Guide
         3.25. ds_hash_expire (int)
         3.26. ds_hash_initexpire (int)
         3.27. ds_hash_check_interval (int)
-        3.28. ds_dst_unavailable_route (string)
-        3.29. ds_dst_available_route (string)
 
    4. Exported Functions
 
@@ -205,6 +204,11 @@ Chapter 1. Admin Guide
 
         7.1. Destination List File
         7.2. Kamailio config file
+
+   8. Event routes
+
+        8.1. dispatcher:dst-down
+        8.2. dispatcher:dst-up
 
 1. Overview
 
@@ -269,8 +273,6 @@ Chapter 1. Admin Guide
    3.25. ds_hash_expire (int)
    3.26. ds_hash_initexpire (int)
    3.27. ds_hash_check_interval (int)
-   3.28. ds_dst_unavailable_route (string)
-   3.29. ds_dst_available_route (string)
 
 3.1. list_file (string)
 
@@ -654,48 +656,6 @@ Note
  modparam("dispatcher", "ds_hash_check_interval", 60)
  ...
 
-3.28. ds_dst_unavailable_route (string)
-
-   Optional parameter that specifies a route to run when a destination is
-   marked as PROBING. Destinations are marked PROBING after threshhold
-   number of OPTIONS ping failures or calls to ds_mark_dst("p").
-
-   This setting can be used to log desination failures. It may be used (in
-   conjunction with other modules like exec) to run external commands to
-   update NMC equipment, generate SNMP traps, and so on.
-
-   Default value is “null”.
-
-   Example 1.29. Set the “ds_dst_unavailable_route” parameter
- ...
- modparam("dispatcher", "ds_dst_unavailable_route", "DST_FAILED")
- ...
- route[DST_FAILED] {
-     xlog("L_ERR", "Destination failed: $rm $ru ($du)\n");
- }
- ...
-
-3.29. ds_dst_available_route (string)
-
-   Optional parameter that specifies a route to run when a destination
-   leaves the PROBING state. Destinations leave the PROBING state after an
-   OPTIONS ping succeeds.
-
-   This setting can be used to log desination recoveries. It may be used
-   (in conjunction with other modules like exec) to run external commands
-   to update NMC equipment, generate SNMP traps, and so on.
-
-   Default value is “null”.
-
-   Example 1.30. Set the “ds_dst_available_route” parameter
- ...
- modparam("dispatcher", "ds_dst_available_route", "DST_RESTORED")
- ...
- route[DST_RESTORED] {
-     xlog("L_ERR", "Destination restored: $rm $ru ($du)\n");
- }
- ...
-
 4. Exported Functions
 
    4.1. ds_select_dst(set, alg)
@@ -758,7 +718,7 @@ Note
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.31. ds_select_dst usage
+   Example 1.29. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -855,7 +815,7 @@ ds_select_dst("1", "$var(a)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.32. ds_load_unset usage
+   Example 1.30. ds_load_unset usage
 ...
 route {
     ...
@@ -1019,7 +979,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.33. dispatcher list file
+   Example 1.31. dispatcher list file
 ...
 # $Id$
 # dispatcher destination sets
@@ -1044,7 +1004,7 @@ r,opt)
 
    Next picture displays a sample usage of dispatcher.
 
-   Example 1.34. Kamailio config script - sample dispatcher usage
+   Example 1.32. Kamailio config script - sample dispatcher usage
 ...
 # $Id$
 # sample config file for dispatcher module
@@ -1118,6 +1078,33 @@ failure_route[RTF_DISPATCH] {
         }
 }
 
+...
+
+8. Event routes
+
+   8.1. dispatcher:dst-down
+   8.2. dispatcher:dst-up
+
+8.1.  dispatcher:dst-down
+
+   When defined, the module calls event_route[dispatcher:ds-down] when a
+   destination goes down (becomes probing). A typical use case is to
+   update NMC equipment as to the status of a destination.
+...
+event_route[dispatcher:dst-down] {
+    xlog("L_ERR", "Destination down: $rm $ru ($du)\n");
+}
+...
+
+8.2.  dispatcher:dst-up
+
+   When defined, the module calls event_route[dispatcher:ds-up] when a
+   destination that was previously down (probing) comes up. A typical use
+   case is to update NMC equipment as to the status of a destination.
+...
+event_route[dispatcher:dst-up] {
+    xlog("L_ERR", "Destination up: $rm $ru\n");
+}
 ...
 
 Chapter 2. Frequently Asked Questions

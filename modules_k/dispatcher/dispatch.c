@@ -70,6 +70,7 @@
 #include "../../lib/srdb1/db_res.h"
 #include "../../str.h"
 #include "../../script_cb.h"
+#include "../../lib/kcore/faked_msg.h"
 
 #include "ds_ht.h"
 #include "api.h"
@@ -99,12 +100,10 @@ int *ds_list_nr = NULL;
 int *crt_idx    = NULL;
 int *next_idx   = NULL;
 
-int ds_tmp_msg_no = 1;
-
 #define _ds_list 	(ds_lists[*crt_idx])
 #define _ds_list_nr (*ds_list_nr)
 
-static void ds_run_route(struct sip_msg *msg, int route);
+static void ds_run_route(struct sip_msg *msg, char *route);
 
 void destroy_list(int);
 
@@ -2051,14 +2050,14 @@ int ds_set_state(int group, str *address, int state, int type, struct sip_msg *m
 			if(type)
 			{
 				if (state & DS_PROBING_DST && !(idx->dlist[i].flags & state))
-					ds_run_route(msg, ds_dst_unav_route);
+					ds_run_route(msg, "dispatcher:dst-down");
 
 				idx->dlist[i].flags |= state;
 			}
 			else
 			{
 				if (state & DS_PROBING_DST && idx->dlist[i].flags & state)
-					ds_run_route(msg, ds_dst_av_route);
+					ds_run_route(msg, "dispatcher:dst-up");
 
 				idx->dlist[i].flags &= ~state;
 
@@ -2072,30 +2071,30 @@ int ds_set_state(int group, str *address, int state, int type, struct sip_msg *m
 	return -1;
 }
 
-static void ds_run_route(struct sip_msg *msg, int route)
+static void ds_run_route(struct sip_msg *msg, char *route)
 {
-	int backup_route_type = get_route_type();
+	int rt, backup_rt = get_route_type();
+	struct run_act_ctx ctx;
 
 	LM_DBG("ds_run_route\n");
 
-	if (route == -1)
+	if (route == NULL)
+	{
+		LM_ERR("bad route\n");
 		return;
-
-	if (exec_pre_script_cb(msg, LOCAL_CB_TYPE) == 0)
-	{
-		LM_ERR("exec_pre_script_cb failed\n");
-		goto error;
 	}
-	set_route_type(LOCAL_ROUTE);
-	if (run_top_route(main_rt.rlist[route], msg, 0) < 0)
-	{
-		LM_ERR("run_top_route failed\n");
-		goto error;
-	}
-	exec_post_script_cb(msg, LOCAL_CB_TYPE);
 
-error:
-	set_route_type(backup_route_type);
+	rt = route_get(&event_rt, route);
+	if (rt < 0 || event_rt.rlist[rt] == NULL)
+	{
+		LM_DBG("route does not exist");
+		return;
+	}
+
+	set_route_type(REQUEST_ROUTE);
+	init_run_actions_ctx(&ctx);
+	run_top_route(event_rt.rlist[rt], msg, 0);
+	set_route_type(backup_rt);
 }
 
 /**
@@ -2301,6 +2300,8 @@ static void ds_options_callback( struct cell *t, int type,
 {
 	int group = 0;
 	str uri = {0, 0};
+	struct sip_msg *fmsg;
+
 	/* The Param does contain the group, in which the failed host
 	 * can be found.*/
 	if (!*ps->param)
@@ -2324,13 +2325,19 @@ static void ds_options_callback( struct cell *t, int type,
 	 * We accept both a "200 OK" or the configured reply as a valid response */
 	if ((ps->code == 200) || ds_ping_check_rplcode(ps->code))
 	{
-		ds_tmp_msg.new_uri = uri;
-		ds_tmp_msg.id = ds_tmp_msg_no++;
-	
+		if (faked_msg_init() < 0)
+		{
+			LM_ERR("faked_msg_init() failed\n");
+			return;
+		}
+		fmsg = faked_msg_next();
+		fmsg->parsed_orig_ruri_ok = 0;
+		fmsg->new_uri = uri;
+
 		/* Set the according entry back to "Active":
 		 *  remove the Probing/Inactive Flag and reset the failure counter. */
 		if (ds_set_state(group, &uri,
-					DS_INACTIVE_DST|DS_PROBING_DST|DS_RESET_FAIL_DST, 2, &ds_tmp_msg) != 0)
+					DS_INACTIVE_DST|DS_PROBING_DST|DS_RESET_FAIL_DST, 2, fmsg) != 0)
 		{
 			LM_ERR("Setting the state failed (%.*s, group %d)\n", uri.len,
 					uri.s, group);
@@ -2339,9 +2346,16 @@ static void ds_options_callback( struct cell *t, int type,
 	if(ds_probing_mode==1 && ps->code == 408)
 	{
 
-		ds_tmp_msg.new_uri = uri;
-		ds_tmp_msg.id = ds_tmp_msg_no++;
-		if (ds_set_state(group, &uri, DS_PROBING_DST, 1, &ds_tmp_msg) != 0)
+		if (faked_msg_init() < 0)
+		{
+			LM_ERR("faked_msg_init() failed\n");
+			return;
+		}
+		fmsg = faked_msg_next();
+		fmsg->parsed_orig_ruri_ok = 0;
+		fmsg->new_uri = uri;
+
+		if (ds_set_state(group, &uri, DS_PROBING_DST, 1, fmsg) != 0)
 		{
 			LM_ERR("Setting the probing state failed (%.*s, group %d)\n",
 					uri.len, uri.s, group);

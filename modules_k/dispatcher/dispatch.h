@@ -88,9 +88,6 @@ extern str ds_ping_from;
 extern int probing_threshhold; /*!< number of failed requests,
 						before a destination is taken into probing */ 
 extern int ds_probing_mode;
-extern struct sip_msg ds_tmp_msg;
-extern int ds_dst_unav_route;
-extern int ds_dst_av_route;
 
 int init_data(void);
 int init_ds_db(void);

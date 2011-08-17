@@ -688,69 +688,7 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
 	</section>
- 	<section>
- 		<title><varname>ds_dst_unavailable_route</varname> (string)</title>
- 		<para>
-		Optional parameter that specifies a route to run when a destination
-		is marked as PROBING.  Destinations are marked PROBING after threshhold
-                number of OPTIONS ping failures or calls to
-		<emphasis>ds_mark_dst("p")</emphasis>.
- 		</para>
-		<para>
-		This setting can be used to log desination failures.  It may be used
-		(in conjunction with other modules like <emphasis>exec</emphasis>) to
-		run external commands to update NMC equipment, generate SNMP traps,
-		and so on.
-		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>null</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_dst_unavailable_route</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_dst_unavailable_route", "DST_FAILED")
- ...
- route[DST_FAILED] {
-     xlog("L_ERR", "Destination failed: $rm $ru ($du)\n");
- }
- ...
- </programlisting>
- 		</example>
-	</section>
- 	<section>
- 		<title><varname>ds_dst_available_route</varname> (string)</title>
- 		<para>
-		Optional parameter that specifies a route to run when a destination
-		leaves the PROBING state.  Destinations leave the PROBING state after
-                an OPTIONS ping succeeds.
- 		</para>
-		<para>
-		This setting can be used to log desination recoveries.  It may be used
-		(in conjunction with other modules like <emphasis>exec</emphasis>) to
-		run external commands to update NMC equipment, generate SNMP traps,
-		and so on.
-		</para>
- 		<para>
- 		<emphasis>
- 			Default value is <quote>null</quote>.
- 		</emphasis>
- 		</para>
- 		<example>
- 		<title>Set the <quote>ds_dst_available_route</quote> parameter</title>
- <programlisting format="linespecific">
- ...
- modparam("dispatcher", "ds_dst_available_route", "DST_RESTORED")
- ...
- route[DST_RESTORED] {
-     xlog("L_ERR", "Destination restored: $rm $ru ($du)\n");
- }
- ...
- </programlisting>
- 		</example>
-	</section>
+
 	</section>
 
 	<section>
@@ -1307,5 +1245,45 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 		</example>
 	</section>
 	</section>
+
+        <section>
+        <title>Event routes</title>
+        <section>
+                <title>
+                <function moreinfo="none">dispatcher:dst-down</function>
+                </title>
+                <para>
+			When defined, the module calls event_route[dispatcher:ds-down]
+			when a destination goes down (becomes probing). A typical use
+			case is to update NMC equipment as to the status of a destination.
+                </para>
+        <programlisting  format="linespecific">
+...
+event_route[dispatcher:dst-down] {
+    xlog("L_ERR", "Destination down: $rm $ru ($du)\n");
+}
+...
+                </programlisting>
+	</section>
+        <section>
+                <title>
+                <function moreinfo="none">dispatcher:dst-up</function>
+                </title>
+                <para>
+			When defined, the module calls event_route[dispatcher:ds-up]
+			when a destination that was previously down (probing) comes up.
+			A typical use case is to update NMC equipment as to the status
+			of a destination.
+                </para>
+        <programlisting  format="linespecific">
+...
+event_route[dispatcher:dst-up] {
+    xlog("L_ERR", "Destination up: $rm $ru\n");
+}
+...
+                </programlisting>
+    </section>
+    </section>
+
 </chapter>
 
