@@ -109,12 +109,12 @@ int db_mysql_replace(const db1_con_t* handle, const db_key_t* keys, const db_val
 /*! \brief
  * Returns the last inserted ID
  */
-int db_last_inserted_id(const db1_con_t* _h);
+int db_mysql_last_inserted_id(const db1_con_t* _h);
 
 /*! \brief
  * Insert a row into table, update on duplicate key
  */
-int db_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+int db_mysql_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	const int _n);
 
 

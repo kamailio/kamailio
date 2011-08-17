@@ -470,7 +470,7 @@ int db_mysql_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v
  * \return returns the ID as integer or returns 0 if the previous statement
  * does not use an AUTO_INCREMENT value.
  */
-int db_last_inserted_id(const db1_con_t* _h)
+int db_mysql_last_inserted_id(const db1_con_t* _h)
 {
 	if (!_h) {
 		LM_ERR("invalid parameter value\n");
@@ -487,7 +487,7 @@ int db_last_inserted_id(const db1_con_t* _h)
   * \param _v values of the keys
   * \param _n number of key=value pairs
  */
- int db_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+ int db_mysql_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	const int _n)
  {
 	int off, ret;
