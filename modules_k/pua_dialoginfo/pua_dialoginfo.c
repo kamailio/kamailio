@@ -130,7 +130,7 @@ __dialog_cbtest(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 	}
 
 if (type != DLGCB_DESTROY) {
-	msg = get_valid_msg(_params);
+	msg = dlg_get_valid_msg(_params);
 	if (!msg) {
 		LM_ERR("no SIP message available in callback parameters\n");
 		return;

@@ -116,6 +116,24 @@ void run_load_callbacks( void );
  * \param cb_params dialog callback parameter struct
  * \return pointer to valid SIP message if existent, NULL otherwise
  */
-struct sip_msg *get_valid_msg(struct dlg_cb_params *cb_params);
+static inline struct sip_msg *dlg_get_valid_msg(struct dlg_cb_params *cb_params)
+{
+	struct sip_msg *msg;
+
+	if (cb_params == NULL) {
+		LM_ERR("no dialog parameters given\n");
+		return NULL;
+	}
+
+	msg = cb_params->req;
+	if (msg == NULL) {
+		msg = cb_params->rpl;
+		if (msg == NULL || msg == FAKED_REPLY) {
+			return NULL;
+		}
+	}
+
+	return msg;
+};
 
 #endif

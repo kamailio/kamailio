@@ -260,24 +260,3 @@ void run_dlg_callbacks( int type ,
 	}
 	return;
 }
-
-
-struct sip_msg *get_valid_msg(struct dlg_cb_params *cb_params)
-{
-	struct sip_msg *msg;
-
-	if (cb_params == NULL) {
-		LM_ERR("no dialog parameters given\n");
-		return NULL;
-	}
-
-	msg = cb_params->req;
-	if (msg == NULL) {
-		msg = cb_params->rpl;
-		if (msg == NULL || msg == FAKED_REPLY) {
-			return NULL;
-		}
-	}
-
-	return msg;
-}
