@@ -415,11 +415,11 @@ static str xcaps_str_apprsxml   = {"application/rls-services+xml", 28};
 #if 0
 static str xcaps_str_nocontent  = {"No content", 10};
 static str xcaps_str_appxcxml   = {"application/xcap-caps+xml", 25};
+static str xcaps_str_appsexml	= {"application/vnd.oma.search+xml", 30};
 #endif
 static str xcaps_str_appapxml   = {"application/auth-policy+xml", 27};
 static str xcaps_str_appupxml	= {"application/vnd.oma.user-profile+xml", 36}; 
 static str xcaps_str_apppcxml	= {"application/vnd.oma.pres-content+xml", 36};
-static str xcaps_str_appsexml	= {"application/vnd.oma.search+xml", 30};
 
 
 /**
