@@ -111,4 +111,11 @@ void run_dlg_callbacks( int type ,
 void run_load_callbacks( void );
 
 
+/*!
+ * \brief Function that returns valid SIP message from given dialog callback parameter struct
+ * \param cb_params dialog callback parameter struct
+ * \return pointer to valid SIP message if existent, NULL otherwise
+ */
+struct sip_msg *get_valid_msg(struct dlg_cb_params *cb_params);
+
 #endif
