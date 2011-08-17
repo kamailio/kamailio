@@ -436,6 +436,13 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 
 	}while (nr_rows>0);
 
+	if (dlg_db_mode==DB_MODE_SHUTDOWN) {
+		if (dialog_dbf.delete(dialog_db_handle, 0, 0, 0, 0) < 0) {
+			LM_ERR("failed to clear dialog table\n");
+			goto error;
+		}
+	}
+
 end:
 	dialog_dbf.free_result(dialog_db_handle, res);
 	return 0;
@@ -545,6 +552,13 @@ static int load_dialog_vars_from_db(int fetch_num_rows)
 		}
 
 	}while (nr_rows>0);
+
+	if (dlg_db_mode==DB_MODE_SHUTDOWN) {
+		if (dialog_dbf.delete(dialog_db_handle, 0, 0, 0, 0) < 0) {
+			LM_ERR("failed to clear dialog variable table\n");
+			goto error;
+		}
+	}
 
 end:
 	dialog_dbf.free_result(dialog_db_handle, res);
