@@ -365,7 +365,7 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 static void sst_dialog_confirmed_CB(struct dlg_cell *did, int type,
 		struct dlg_cb_params * params)
 {
-	struct sip_msg* msg = params->msg;
+	struct sip_msg* msg = params->rpl;
 
 	LM_DBG("confirmed dialog CB %p\n", did);
 	DLOGMSG(msg);
@@ -944,7 +944,7 @@ static void setup_dialog_callbacks(struct dlg_cell *did, sst_info_t *info)
 #ifdef USE_CONFIRM_CALLBACK
 	LM_DBG("Adding callback DLGCB_CONFIRMED\n");
 	dlg_binds->register_dlgcb(did,
-			DLGCB_CONFIRMED, sst_dialog_confirmed_CB, info, NULL);
+			DLGCB_CONFIRMED_NA, sst_dialog_confirmed_CB, info, NULL);
 #endif /* USE_CONFIRM_CALLBACK */
 
 	LM_DBG("Adding callback "

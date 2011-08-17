@@ -120,6 +120,7 @@ static void
 __dialog_cbtest(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
 	str tag;
+	struct sip_msg *msg;
 	LM_ERR("dialog callback received, from=%.*s, to=%.*s\n", dlg->from_uri.len, dlg->from_uri.s, dlg->to_uri.len, dlg->to_uri.s);
 	if (dlg->tag[0].len && dlg->tag[0].s ) {
 		LM_ERR("dialog callback: tag[0] = %.*s", dlg->tag[0].len, dlg->tag[0].s);
@@ -129,24 +130,30 @@ __dialog_cbtest(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 	}
 
 if (type != DLGCB_DESTROY) {
+	msg = get_valid_msg(_params);
+	if (!msg) {
+		LM_ERR("no SIP message available in callback parameters\n");
+		return;
+	}
+
 	/* get to tag*/
-	if ( !_params->msg->to) {
+	if ( !msg->to) {
 		// to header not defined, parse to header
 		LM_ERR("to header not defined, parse to header\n");
-		if (parse_headers(_params->msg, HDR_TO_F,0)<0) {
+		if (parse_headers(msg, HDR_TO_F,0)<0) {
 			//parser error
 			LM_ERR("parsing of to-header failed\n");
 			tag.s = 0;
 			tag.len = 0;
-		} else if (!_params->msg->to) {
+		} else if (!msg->to) {
 			// to header still not defined
 			LM_ERR("no to although to-header is parsed: bad reply or missing TO hdr :-/\n");
 			tag.s = 0;
 			tag.len = 0;
 		} else 
-			tag = get_to(_params->msg)->tag_value;
+			tag = get_to(msg)->tag_value;
 	} else {
-		tag = get_to(_params->msg)->tag_value;
+		tag = get_to(msg)->tag_value;
 		if (tag.s==0 || tag.len==0) {
 			LM_ERR("missing TAG param in TO hdr :-/\n");
 			tag.s = 0;
@@ -154,13 +161,16 @@ if (type != DLGCB_DESTROY) {
 		}
 	}
 	if (tag.s) {
-		LM_ERR("dialog callback: _params->msg->to->parsed->tag_value = %.*s", tag.len, tag.s);
+		LM_ERR("dialog callback: msg->to->parsed->tag_value = %.*s", tag.len, tag.s);
 	}
 }
 
 	switch (type) {
 	case DLGCB_FAILED:
 		LM_ERR("dialog callback type 'DLGCB_FAILED' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
+		break;
+	case DLGCB_CONFIRMED_NA:
+		LM_ERR("dialog callback type 'DLGCB_CONFIRMED_NA' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
 		break;
 	case DLGCB_CONFIRMED:
 		LM_ERR("dialog callback type 'DLGCB_CONFIRMED' received, from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
@@ -228,24 +238,24 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 		LM_DBG("dialog is early, from=%.*s\n", dlginfo->from_uri.len, dlginfo->from_uri.s);
 		if (include_tags) {
 			/* get remotetarget */
-			if ( !_params->msg->contact && ((parse_headers(_params->msg, HDR_CONTACT_F,0)<0) || !_params->msg->contact) ) {
+			if ( !_params->rpl->contact && ((parse_headers(_params->rpl, HDR_CONTACT_F,0)<0) || !_params->rpl->contact) ) {
 				LM_ERR("bad reply or missing CONTACT hdr\n");
 			} else {
-				if ( parse_contact(_params->msg->contact)<0 ||
-						((contact_body_t *)_params->msg->contact->parsed)->contacts==NULL ||
-						((contact_body_t *)_params->msg->contact->parsed)->contacts->next!=NULL ) {
+				if ( parse_contact(_params->rpl->contact)<0 ||
+						((contact_body_t *)_params->rpl->contact->parsed)->contacts==NULL ||
+						((contact_body_t *)_params->rpl->contact->parsed)->contacts->next!=NULL ) {
 					LM_ERR("Malformed CONTACT hdr\n");
 				} else {
-					target = ((contact_body_t *)_params->msg->contact->parsed)->contacts->uri;
+					target = ((contact_body_t *)_params->rpl->contact->parsed)->contacts->uri;
 				}
 			}
 			/* get to tag*/
-			if ( !_params->msg->to && ((parse_headers(_params->msg, HDR_TO_F,0)<0) || !_params->msg->to) ) {
+			if ( !_params->rpl->to && ((parse_headers(_params->rpl, HDR_TO_F,0)<0) || !_params->rpl->to) ) {
 				LM_ERR("bad reply or missing TO hdr :-/\n");
 				tag.s = 0;
 				tag.len = 0;
 			} else {
-				tag = get_to(_params->msg)->tag_value;
+				tag = get_to(_params->rpl)->tag_value;
 				if (tag.s==0 || tag.len==0) {
 					LM_ERR("missing TAG param in TO hdr :-/\n");
 					tag.s = 0;
@@ -281,7 +291,7 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 static void
 __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
-	struct sip_msg *request = _params->msg;
+	struct sip_msg *request = _params->req;
 	struct dlginfo_cell *dlginfo;
 	int len;
 
@@ -329,7 +339,7 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 	
 	/* register dialog callbacks which triggers sending PUBLISH */
 	if (dlg_api.register_dlgcb(dlg, 
-		DLGCB_FAILED| DLGCB_CONFIRMED | DLGCB_TERMINATED | DLGCB_EXPIRED | 
+		DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_TERMINATED | DLGCB_EXPIRED |
 		DLGCB_REQ_WITHIN | DLGCB_EARLY,
 		__dialog_sendpublish, dlginfo, free_dlginfo_cell) != 0) {
 		LM_ERR("cannot register callback for interesting dialog types\n");
@@ -339,8 +349,8 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 #ifdef PUA_DIALOGINFO_DEBUG
 	/* dialog callback testing (registered last to be executed frist) */
 	if (dlg_api.register_dlgcb(dlg, 
-		DLGCB_FAILED| DLGCB_CONFIRMED | DLGCB_REQ_WITHIN | DLGCB_TERMINATED | DLGCB_EXPIRED | 
-		DLGCB_EARLY | DLGCB_RESPONSE_FWDED | DLGCB_RESPONSE_WITHIN  | 
+		DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_CONFIRMED | DLGCB_REQ_WITHIN | DLGCB_TERMINATED |
+		DLGCB_EXPIRED | DLGCB_EARLY | DLGCB_RESPONSE_FWDED | DLGCB_RESPONSE_WITHIN  |
 		DLGCB_MI_CONTEXT | DLGCB_DESTROY,
 		__dialog_cbtest, NULL, NULL) != 0) {
 		LM_ERR("cannot register callback for all dialog types\n");
