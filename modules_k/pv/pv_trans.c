@@ -54,7 +54,6 @@
 
 /*! transformation buffer */
 static char _tr_buffer[TR_BUFFER_SIZE];
-static str _tr_null = { "NULL", 4 };
 
 
 /*!
@@ -74,7 +73,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	pv_value_t v, w;
 	time_t t;
 
-	if(val==NULL || (val->flags&PV_VAL_NULL && subtype != TR_S_SQL))
+	if(val==NULL || val->flags&PV_VAL_NULL)
 		return -1;
 
 	switch(subtype)
@@ -592,31 +591,6 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			pkg_free(s);
 			val->flags = PV_VAL_STR;
 			val->rs.s = _tr_buffer;
-			break;
-
-		case TR_S_SQL:
-			if (val->flags&PV_VAL_NULL) {
-				val->flags = PV_VAL_STR;
-				val->rs = _tr_null;
-				break;
-			}
-			if(val->flags&PV_TYPE_INT || !(val->flags&PV_VAL_STR)) {
-				val->rs.s = int2str(val->ri, &val->rs.len);
-				val->flags = PV_VAL_STR;
-				break;
-			}
-			if(val->rs.len>TR_BUFFER_SIZE/2-1) {
-				LM_ERR("escape buffer to short");
-				return -1;
-			}
-			_tr_buffer[0] = '\'';
-			i = escape_common(_tr_buffer+1, val->rs.s, val->rs.len);
-			_tr_buffer[++i] = '\'';
-			_tr_buffer[++i] = '\0';
-			memset(val, 0, sizeof(pv_value_t));
-			val->flags = PV_VAL_STR;
-			val->rs.s = _tr_buffer;
-			val->rs.len = i;
 			break;
 
 		default:
@@ -1378,9 +1352,6 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==3 && strncasecmp(name.s, "md5", 3)==0) {
 		t->subtype = TR_S_MD5;
-		goto done;
-	} else if(name.len==3 && strncasecmp(name.s, "sql", 3)==0) {
-		t->subtype = TR_S_SQL;
 		goto done;
 	} else if(name.len==7 && strncasecmp(name.s, "tolower", 7)==0) {
 		t->subtype = TR_S_TOLOWER;

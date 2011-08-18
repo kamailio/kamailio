@@ -52,6 +52,7 @@
 #include "../../pvar.h"
 #include "sql_api.h"
 #include "sql_var.h"
+#include "sql_trans.h"
 
 
 MODULE_VERSION
@@ -110,6 +111,11 @@ static param_export_t params[]={
 	{0,0,0}
 };
 
+static tr_export_t mod_trans[] = {
+	{ {"sql", sizeof("sql")-1}, tr_parse_sql },
+	{ { 0, 0 }, 0 }
+};
+
 
 /** module exports */
 struct module_exports exports= {
@@ -126,6 +132,11 @@ struct module_exports exports= {
 	(destroy_function) destroy,
 	child_init  /* per-child init function */
 };
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	return register_trans_mod(path, mod_trans);
+}
 
 static int child_init(int rank)
 {
