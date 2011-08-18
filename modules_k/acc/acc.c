@@ -91,6 +91,7 @@ extern struct acc_extra *dia_extra;
 static db_func_t acc_dbf;
 static db1_con_t* db_handle=0;
 extern struct acc_extra *db_extra;
+extern int acc_db_insert_mode;
 #endif
 
 /* arrays used to collect the values before being
@@ -394,18 +395,32 @@ int acc_db_request( struct sip_msg *rq)
 
 	/* multi-leg columns */
 	if ( !leg_info ) {
-		if (acc_dbf.insert(db_handle, db_keys, db_vals, m) < 0) {
-			LM_ERR("failed to insert into database\n");
-			return -1;
+		if(acc_db_insert_mode==1 && acc_dbf.insert_delayed!=NULL) {
+			if (acc_dbf.insert_delayed(db_handle, db_keys, db_vals, m) < 0) {
+				LM_ERR("failed to insert delayed into database\n");
+				return -1;
+			}
+		} else {
+			if (acc_dbf.insert(db_handle, db_keys, db_vals, m) < 0) {
+				LM_ERR("failed to insert into database\n");
+				return -1;
+			}
 		}
 	} else {
   	        n = legs2strar(leg_info,rq,val_arr+m,int_arr+m,type_arr+m,1);
 		do {
 			for (i=m; i<m+n; i++)
 				VAL_STR(db_vals+i)=val_arr[i];
-			if (acc_dbf.insert(db_handle, db_keys, db_vals, m+n) < 0) {
-				LM_ERR("failed to insert into database\n");
-				return -1;
+			if(acc_db_insert_mode==1 && acc_dbf.insert_delayed!=NULL) {
+				if(acc_dbf.insert_delayed(db_handle,db_keys,db_vals,m+n)<0) {
+					LM_ERR("failed to insert delayed into database\n");
+					return -1;
+				}
+			} else {
+				if (acc_dbf.insert(db_handle, db_keys, db_vals, m+n) < 0) {
+					LM_ERR("failed to insert into database\n");
+					return -1;
+				}
 			}
 		}while ( (n=legs2strar(leg_info,rq,val_arr+m,int_arr+m,
 				       type_arr+m,0))!=0 );
