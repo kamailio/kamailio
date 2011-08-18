@@ -1305,6 +1305,24 @@ static int lua_sr_sdpops_with_media(lua_State *L)
 
 	env_L = sr_lua_env_get();
 
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS))
+	{
+		LM_WARN("weird: sdpops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=1)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
 	media.s = (char*)lua_tostring(L, -1);
 	media.len = strlen(media.s);
 

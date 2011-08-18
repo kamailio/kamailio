@@ -56,7 +56,7 @@ static cmd_export_t cmds[] = {
 	{"sdp_print",                  (cmd_function)w_sdp_print,
 		1, fixup_igp_null,  0, ANY_ROUTE},
 	{"bind_sdpops",                (cmd_function)bind_sdpops,
-		0, 0, 0, 0},
+		1, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 

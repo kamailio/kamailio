@@ -15,7 +15,7 @@ int bind_sdpops(struct sdpops_binds*);
 inline static int sdpops_load_api(sdpops_api_t *sob)
 {
 	bind_sdpops_f bind_sdpops_exports;
-	if (!(bind_sdpops_exports = (bind_sdpops_f)find_export("bind_sdpops", 0, 0)))
+	if (!(bind_sdpops_exports = (bind_sdpops_f)find_export("bind_sdpops", 1, 0)))
 	{
 		LM_ERR("Failed to import bind_sdpops\n");
 		return -1;
