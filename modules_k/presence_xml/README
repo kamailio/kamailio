@@ -320,11 +320,13 @@ modparam("presence_xml", "passive_mode", 1)
    Return code:
      * 1 - if a match is found.
      * -1 - if a match is not found.
+     * -2 - if /presence/person or /presence/person/activity do not exist.
 
    Example 1.12. pres_check_activities usage
 ...
     if (pres_check_basic("$ru", "open")) {
-        if (pres_check_activities("$ru", "unknown") || !is_method("INVITE"))
+        pres_check_activities("$ru", "unknown");
+        if ($retcode || $retcode == -2 || !is_method("INVITE"))
             t_relay();
         else
             send_reply("486", "Busy Here");

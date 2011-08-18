@@ -98,7 +98,7 @@ int presxml_check_basic(struct sip_msg *msg, char *presentity_uri, char *status)
 		goto error;
 	}
 
-	while (tuple->next != NULL)
+	while (tuple != NULL)
 	{
 		if (xmlStrcasecmp(tuple->name, (unsigned char *) "tuple") == 0)
 		{
@@ -189,17 +189,19 @@ int presxml_check_activities(struct sip_msg *msg, char *presentity_uri, char *ac
 
 	if ((person = xmlDocGetNodeByName(xmlDoc, "person", NULL)) == NULL)
 	{
-		LM_ERR("unable to extract 'person'\n");
+		LM_DBG("unable to extract 'person'\n");
+		retval = -2;
 		goto error;
 	}
 
-	while (person->next != NULL)
+	while (person != NULL)
 	{
 		if (xmlStrcasecmp(person->name, (unsigned char *) "person") == 0)
 		{
 			if ((activitiesNode = xmlNodeGetNodeByName(person, "activities", NULL)) == NULL)
 			{
-				LM_ERR("while extracting 'actvities' node\n");
+				LM_DBG("unable to extract 'actvities' node\n");
+				retval = -2;
 				goto error;
 			}
 

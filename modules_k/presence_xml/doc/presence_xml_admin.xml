@@ -381,6 +381,12 @@ modparam("presence_xml", "passive_mode", 1)
 				<emphasis> -1 - if a match is not found</emphasis>.
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis> -2 - if /presence/person or /presence/person/activity do not exist</emphasis>.
+			</para>
+			</listitem>
+	
 		</itemizedlist>
 		</para>
 		<example>
@@ -388,7 +394,8 @@ modparam("presence_xml", "passive_mode", 1)
 		<programlisting format="linespecific">
 ...
     if (pres_check_basic("$ru", "open")) {
-        if (pres_check_activities("$ru", "unknown") || !is_method("INVITE"))
+	pres_check_activities("$ru", "unknown");
+	if ($retcode || $retcode == -2 || !is_method("INVITE"))
             t_relay();
 	else
             send_reply("486", "Busy Here");
