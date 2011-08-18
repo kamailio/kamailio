@@ -123,64 +123,14 @@ error:
 	return -1;
 }
 
-#define _tr_parse_sparam(_p, _p0, _tp, _spec, _ps, _in, _s) \
-	while(is_in_str(_p, _in) && (*_p==' ' || *_p=='\t' || *_p=='\n')) _p++; \
-	if(*_p==PV_MARKER) \
-	{ /* pseudo-variable */ \
-		_spec = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t)); \
-		if(_spec==NULL) \
-		{ \
-			LM_ERR("no more private memory!\n"); \
-			goto error; \
-		} \
-		_s.s = _p; _s.len = _in->s + _in->len - _p; \
-		_p0 = pv_parse_spec(&_s, _spec); \
-		if(_p0==NULL) \
-		{ \
-			LM_ERR("invalid spec in substr transformation: %.*s!\n", \
-				_in->len, _in->s); \
-			goto error; \
-		} \
-		_p = _p0; \
-		_tp = (tr_param_t*)pkg_malloc(sizeof(tr_param_t)); \
-		if(_tp==NULL) \
-		{ \
-			LM_ERR("no more private memory!\n"); \
-			goto error; \
-		} \
-		memset(_tp, 0, sizeof(tr_param_t)); \
-		_tp->type = TR_PARAM_SPEC; \
-		_tp->v.data = (void*)_spec; \
-	} else { /* string */ \
-		_ps = _p; \
-		while(is_in_str(_p, _in) && *_p!='\t' && *_p!='\n' \
-				&& *_p!=TR_PARAM_MARKER && *_p!=TR_RBRACKET) \
-				_p++; \
-		if(*_p=='\0') \
-		{ \
-			LM_ERR("invalid param in transformation: %.*s!!\n", \
-				_in->len, _in->s); \
-			goto error; \
-		} \
-		_tp = (tr_param_t*)pkg_malloc(sizeof(tr_param_t)); \
-		if(_tp==NULL) \
-		{ \
-			LM_ERR("no more private memory!\n"); \
-			goto error; \
-		} \
-		memset(_tp, 0, sizeof(tr_param_t)); \
-		_tp->type = TR_PARAM_STRING; \
-		_tp->v.s.s = _ps; \
-		_tp->v.s.len = _p - _ps; \
-	}
-
 char* tr_txt_parse_re(str *in, trans_t *t)
 {
-	char *p, *p0, *ps;
+	char *p;
 	str name;
-	str s;
+	str tok;
 	struct subst_expr *se = NULL;
 	tr_param_t *tp = NULL;
+	int n;
 	pv_spec_t *spec = NULL;
 
 
@@ -205,11 +155,62 @@ char* tr_txt_parse_re(str *in, trans_t *t)
 		if(*p!=TR_PARAM_MARKER)
 			goto error;
 		p++;
-		/* get parameter */
-		_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
-		if (tp->type == TR_PARAM_STRING) {
-			/* precompile static regexp */
-			se=subst_parser(&tp->v.s);
+		if(*p==PV_MARKER) {
+			spec = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
+			if(spec==NULL)
+			{
+				LM_ERR("no more private memory!\n");
+				return 0;
+			}
+			tok.s = p; tok.len = in->s + in->len - p;
+			p = pv_parse_spec(&tok, spec);
+			if(p==NULL)
+			{
+				LM_ERR("invalid pv spec in transformation: %.*s!\n",
+					in->len, in->s);
+				pkg_free(spec);
+				return 0;
+			}
+
+			tp = (tr_param_t*)pkg_malloc(sizeof(tr_param_t));
+			if(tp==NULL)
+			{
+				LM_ERR("no more private memory!\n");
+				pkg_free(spec);
+				goto error;
+			}
+			tp->type = TR_PARAM_SPEC;
+			tp->v.data = (void*)spec;
+		} else {
+			/* get trans here */
+			n = 0;
+			tok.s = p;
+			while(is_in_str(p, in))
+			{
+				if(*p==TR_RBRACKET)
+				{
+					if(n==0)
+							break;
+					n--;
+				}
+				if(*p == TR_LBRACKET)
+					n++;
+				p++;
+			}
+			if(!is_in_str(p, in))
+				goto error;
+			if(p==tok.s)
+				goto error;
+			tok.len = p - tok.s;
+			tp = (tr_param_t*)pkg_malloc(sizeof(tr_param_t));
+			if(tp==NULL)
+			{
+				LM_ERR("no more private memory!\n");
+				goto error;
+			}
+
+			se=subst_parser(&tok);
+
 			if (se==0)
 				goto error;
 			tp->type = TR_PARAM_SUBST;
