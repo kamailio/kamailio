@@ -66,6 +66,7 @@ int bind_presence(presence_api_t* api)
 	api->get_sphere= get_sphere;
 	api->get_presentity= get_p_notify_body;
 	api->free_presentity= free_notify_body;
+	api->pres_auth_status= pres_auth_status;
 	return 0;
 }
 

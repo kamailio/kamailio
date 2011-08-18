@@ -116,7 +116,7 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code,
 		subs_t** subs_array);
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc);
 static int mi_child_init(void);
-static int pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2);
+static int w_pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2);
 static int w_pres_refresh_watchers(struct sip_msg *msg, char *puri,
 		char *pevent, char *ptype);
 static int w_pres_update_watchers(struct sip_msg *msg, char *puri,
@@ -150,7 +150,7 @@ static cmd_export_t cmds[]=
 		fixup_presence, 0, REQUEST_ROUTE},
 	{"handle_subscribe",      (cmd_function)handle_subscribe,        0,
 		fixup_subscribe,0, REQUEST_ROUTE},
-	{"pres_auth_status",      (cmd_function)pres_auth_status,        2,
+	{"pres_auth_status",      (cmd_function)w_pres_auth_status,      2,
 		fixup_pvar_pvar, fixup_free_pvar_pvar, REQUEST_ROUTE},
 	{"pres_refresh_watchers", (cmd_function)w_pres_refresh_watchers, 3,
 		fixup_refresh_watchers, 0, ANY_ROUTE},
@@ -1131,16 +1131,11 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
     return 0;
 }
 
-static int pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
+static int w_pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
 {
     pv_spec_t *sp;
     pv_value_t pv_val;
-    str watcher_uri, presentity_uri, event;
-    struct sip_uri uri;
-    pres_ev_t* ev;
-    str* rules_doc = NULL;
-    subs_t subs;
-    int res;
+    str watcher_uri, presentity_uri;
 
     sp = (pv_spec_t *)_sp1;
 
@@ -1177,6 +1172,19 @@ static int pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
 	LM_ERR("cannot get presentity pseudo variable value\n");
 	return -1;
     }
+
+    return pres_auth_status(_msg, watcher_uri, presentity_uri);
+}
+
+
+int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri)
+{
+    str event;
+    struct sip_uri uri;
+    pres_ev_t* ev;
+    str* rules_doc = NULL;
+    subs_t subs;
+    int res;
 
     event.s = "presence";
     event.len = 8;
