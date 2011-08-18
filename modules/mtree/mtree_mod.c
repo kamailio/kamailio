@@ -82,10 +82,12 @@ static str tvalue_column  = str_init("tvalue");
 str mt_char_list = {"0123456789", 10};
 
 static str value_param = {"$avp(s:tvalue)", 0};
+static str values_param = {"$avp(s:tvalues)", 0};
 static str dstid_param = {"$avp(s:tdstid)", 0};
 static str weight_param = {"$avp(s:tweight)", 0};
 static str count_param = {"$avp(s:tcount)", 0};
 pv_spec_t pv_value;
+pv_spec_t pv_values;
 pv_spec_t pv_dstid;
 pv_spec_t pv_weight;
 pv_spec_t pv_count;
@@ -133,6 +135,7 @@ static param_export_t params[]={
 	{"char_list",      STR_PARAM, &mt_char_list.s},
 	{"fetch_rows",     INT_PARAM, &mt_fetch_rows},
 	{"pv_value",       STR_PARAM, &value_param.s},
+	{"pv_values",      STR_PARAM, &values_param.s},
 	{"pv_dstid",       STR_PARAM, &dstid_param.s},
 	{"pv_weight",      STR_PARAM, &weight_param.s},
 	{"pv_count",       STR_PARAM, &count_param.s},
@@ -186,6 +189,7 @@ static int mod_init(void)
 	tvalue_column.len = strlen(tvalue_column.s);
 
 	value_param.len = strlen(value_param.s);
+	values_param.len = strlen(values_param.s);
 	dstid_param.len = strlen(dstid_param.s);
 	weight_param.len = strlen(weight_param.s);
 	count_param.len = strlen(count_param.s);
@@ -195,6 +199,12 @@ static int mod_init(void)
 	{
 		LM_ERR("cannot parse value pv or is read only\n");
 		return -1;
+	}
+
+	if (pv_parse_spec(&values_param, &pv_values) <0
+	    || pv_values.type != PVT_AVP) {
+	    LM_ERR("cannot parse values avp\n");
+	    return -1;
 	}
 
 	if(pv_parse_spec(&dstid_param, &pv_dstid)<0
@@ -483,7 +493,7 @@ static int mt_load_db(str *tname)
 		LM_ERR("no db connection\n");
 		return -1;
 	}
-	LM_ERR("attempting to load [%.*s]\n", tname->len, tname->s);
+
 	old_tree = mt_get_tree(tname);
 	if(old_tree==NULL)
 	{
@@ -921,6 +931,11 @@ struct mi_root* mt_mi_summary(struct mi_root* cmd_tree, void* param)
 			goto error;
 		attr = add_mi_attr(node, MI_DUP_VALUE, "TNAME", 5,
 				pt->tname.s, pt->tname.len);
+		if(attr == NULL)
+			goto error;
+		val.s = int2str(pt->type, &val.len);
+		attr = add_mi_attr(node, MI_DUP_VALUE, "TTYPE", 5,
+				   val.s, val.len);
 		if(attr == NULL)
 			goto error;
 		val.s = int2str(pt->memsize, &val.len);

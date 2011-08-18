@@ -23,10 +23,24 @@
 		<surname>Mierla</surname>
 		    <email>miconda@gmail.com</email>
 	    </editor>
+	    <author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<affiliation><orgname>tutpro.com</orgname></affiliation>
+	    </author>
+	    <editor>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		    <email>jh@tutpro.com</email>
+	    </editor>
 	</authorgroup>
 	<copyright>
 	    <year>2010</year>
 	    <holder>Daniel-Constantin Mierla (asipto.com)</holder>
+	</copyright>
+	<copyright>
+	    <year>2011</year>
+	    <holder>Juha Heinanen</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>

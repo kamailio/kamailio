@@ -40,6 +40,7 @@
 //extern str mt_char_list = {"1234567890*",11};
 extern str mt_char_list;
 extern pv_spec_t pv_value;
+extern pv_spec_t pv_values;
 extern pv_spec_t pv_dstid;
 extern pv_spec_t pv_weight;
 extern int _mt_tree_type;
@@ -311,6 +312,51 @@ str* mt_get_tvalue(m_tree_t *pt, str *tomatch, int *plen)
 	return tvalue;
 }
 
+int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
+{
+    int l, len;
+    mt_node_t *itn;
+    int_str val, values_avp_name;
+    unsigned short values_name_type;
+
+    if (pt == NULL || tomatch == NULL || tomatch->s == NULL) {
+	LM_ERR("bad parameters\n");
+	return -1;
+    }
+    
+    if (pv_get_avp_name(msg, &pv_values.pvp, &values_avp_name,
+			&values_name_type) < 0) {
+	LM_ERR("cannot get values avp name\n");
+	return -1;
+    }
+	
+    l = len = 0;
+    itn = pt->head;
+
+    while (itn != NULL && l < tomatch->len && l < MT_MAX_DEPTH) {
+	/* check validity */
+	if(_mt_char_table[(unsigned int)tomatch->s[l]]==255) {
+	    LM_ERR("invalid char at %d in [%.*s]\n",
+		   l, tomatch->len, tomatch->s);
+	    return -1;
+	}
+
+	if (itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalue.s != NULL) {
+	    val.s = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalue;
+	    LM_DBG("adding avp <%.*s> with value <%.*s>\n",
+		   values_avp_name.s.len, values_avp_name.s.s,
+		   val.s.len, val.s.s);
+	    add_avp(values_name_type|AVP_VAL_STR, values_avp_name, val);
+	    len = l+1;
+	}
+		
+	itn = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].child;
+	l++;	
+    }
+
+    return 0;
+}
+
 int mt_match_prefix(struct sip_msg *msg, m_tree_t *it,
 		str *tomatch, int mode)
 {
@@ -343,6 +389,9 @@ int mt_match_prefix(struct sip_msg *msg, m_tree_t *it,
 	n = 0;
 	if(it->type==MT_TREE_SVAL)
 	{
+	        if (mode == 2) 
+		    return mt_add_tvalues(msg, it, tomatch);
+
 		tvalue = mt_get_tvalue(it, tomatch, &len);
 		if(tvalue==NULL)
 		{
@@ -684,8 +733,8 @@ int mt_table_spec(char* val)
 	/* add new tname*/
 	if(it==NULL || str_strcmp(&it->tname, &tmp.tname)>0)
 	{
-		LM_DBG("adding new tname [%s]\n", tmp.tname.s);
-		
+                LM_DBG("adding new tname [%s]\n", tmp.tname.s);
+
 		ndl = mt_init_tree(&tmp.tname, &tmp.dbtable, tmp.type);
 		if(ndl==NULL)
 		{
