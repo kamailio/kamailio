@@ -137,7 +137,7 @@ int db_check_api(db_func_t* dbf, char *mname)
 	}
 
 	if (dbf->insert_delayed) {
-		dbf->cap |= DB_CAP_INSERT_UPDATE;
+		dbf->cap |= DB_CAP_INSERT_DELAYED;
 	}
 
 	if (dbf->affected_rows) {
