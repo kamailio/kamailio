@@ -525,7 +525,7 @@ static int mod_init( void )
 
     if( cdr_enable < 0 || cdr_enable > 1)
     {
-        LM_ERR("cdr_enable is out of rage\n");
+        LM_ERR("cdr_enable is out of range\n");
         return -1;
     }
 
