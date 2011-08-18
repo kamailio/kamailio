@@ -1,0 +1,135 @@
+Distributed Message Queue Module
+
+Marius Ovidiu Bucur
+
+Edited by
+
+Marius Ovidiu Bucur
+
+   Copyright © 2011 Marius Bucur
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Exported Parameters
+
+              3.1. dmq_server_address(str)
+              3.2. dmq_notification_address(str)
+
+   2. Developer Guide
+
+        1. dmq_load_api(dmq_api_t* api)
+
+   List of Examples
+
+   1.1. Set dmq_server_address parameter
+   1.2. Set dmq_notification_address parameter
+   2.1. dmq_api_t structure
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. dmq_server_address(str)
+        3.2. dmq_notification_address(str)
+
+1. Overview
+
+   The DMQ module implements a distributed message passing system on top
+   of Kamailio. The DMQ nodes within the system are grouped in a logical
+   entity called DMQ bus and are able to communicate with each others by
+   sending/receiving messages (either by broadcast or sending a DMQ
+   message to a specific node). The system transparently deals with node
+   discovery, node consistency within the DMQ bus, retransmissions, etc.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * sl.
+     * tm.
+
+2.2. External Libraries or Applications
+
+     * Each peer needs to use its own serialization mechanism. Some
+       examples are libtpl, protobuf. .
+
+3. Exported Parameters
+
+   3.1. dmq_server_address(str)
+   3.2. dmq_notification_address(str)
+
+3.1. dmq_server_address(str)
+
+   The local server address.
+
+   The modules needs it to know on which interface the DMQ engine should
+   send and receive messages.
+
+   Default value is "NULL".
+
+   Example 1.1. Set dmq_server_address parameter
+...
+modparam("dmq", "dmq_server_address", "mysql://openser:openserrw@localhost/opens
+er")
+...
+
+3.2. dmq_notification_address(str)
+
+   The address of the DMQ node from which the local node should retrieve
+   initial information.
+
+   Default value is "NULL".
+
+   Example 1.2. Set dmq_notification_address parameter
+...
+modparam("dmq", "dmq_notification_address", "mysql://openser:openserrw@localhost
+/openser")
+...
+
+Chapter 2. Developer Guide
+
+   Table of Contents
+
+   1. dmq_load_api(dmq_api_t* api)
+
+   The module provides the following functions that can be used in other
+   Kamailio modules.
+
+1. dmq_load_api(dmq_api_t* api)
+
+   This function binds the dmq modules and fills the structure with the
+   exported functions -> register_dmq_peer - registers an entity as a DMQ
+   peer which permits receiving/sending messages between nodes which
+   support the same peer, -> bcast_message - broadcast a DMQ message to
+   all peers available in the DMQ bus, -> send_message - sends a DMQ
+   message to a specific peer in the local DMQ bus.
+
+   Example 2.1. dmq_api_t structure
+...
+typedef struct dmq_api {
+        register_dmq_peer_t register_dmq_peer;
+        bcast_message_t bcast_message;
+        send_message_t send_message;
+} dmq_api_t;
+...

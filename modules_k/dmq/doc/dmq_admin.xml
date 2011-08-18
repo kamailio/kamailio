@@ -58,7 +58,9 @@
 			</listitem>
 		</itemizedlist>
 	</section>
+	</section>
 	
+	<section>
 	<title>Exported Parameters</title>
 	<section>
 		<title><varname>dmq_server_address</varname>(str)</title>
@@ -98,6 +100,7 @@ modparam("dmq", "dmq_notification_address", "&defaultdb;")
 ...
 </programlisting>
 		</example>
+	</section>
 	</section>
 </chapter>
 
