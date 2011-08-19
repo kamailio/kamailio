@@ -586,7 +586,7 @@ int sql_parse_param(char *val)
 
 	return sql_init_con(&name, &tok);
 error:
-	LM_ERR("invalid htable parameter [%.*s] at [%d]\n", in.len, in.s,
+	LM_ERR("invalid sqlops parameter [%.*s] at [%d]\n", in.len, in.s,
 			(int)(p-in.s));
 	return -1;
 }
