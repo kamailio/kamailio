@@ -1102,15 +1102,20 @@ pvname_list_t* parse_pvname_list(str *in, unsigned int type)
 		if(!is_in_str(p, in))
 		{
 			if(head==NULL)
-				LM_ERR("wrong item name list [%.*s]\n", in->len, in->s);
+				LM_ERR("parse error in name list [%.*s]\n", in->len, in->s);
 			return head;
 		}
-		s.s=p;
-		s.len = in->s+in->len-p;
+		s.s = p;
+		s.len = in->s + in->len - p;
 		p = pv_parse_spec(&s, &spec);
-		if(p==NULL || (type && spec.type!=type))
+		if(p==NULL)
 		{
-			LM_ERR("wrong item name list [%.*s]!\n", in->len, in->s);
+			LM_ERR("parse error in item [%.*s]\n", s.len, s.s);
+			goto error;
+		}
+		if(type && spec.type!=type)
+		{
+			LM_ERR("wrong type for item [%.*s]\n", (int)(p-s.s), s.s);
 			goto error;
 		}
 		al = (pvname_list_t*)pkg_malloc(sizeof(pvname_list_t));
