@@ -1097,7 +1097,7 @@ pvname_list_t* parse_pvname_list(str *in, unsigned int type)
 	p = in->s;
 	while(is_in_str(p, in))
 	{
-		while(is_in_str(p, in) && (*p==' '||*p=='\t'||*p==','||*p==';'))
+		while(is_in_str(p, in) && (*p==' '||*p=='\t'||*p==','||*p==';'||*p=='\n'))
 			p++;
 		if(!is_in_str(p, in))
 		{
