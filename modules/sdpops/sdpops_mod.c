@@ -175,7 +175,7 @@ int sdp_remove_str_codec_id_attrs(sip_msg_t* msg,
 /**
  *
  */
-int sdp_codec_in_str(str *allcodecs, str* codec)
+int sdp_codec_in_str(str *allcodecs, str* codec, char delim)
 {
 	int i;
 	int cmp;
@@ -191,7 +191,7 @@ int sdp_codec_in_str(str *allcodecs, str* codec)
 				if(strncmp(&allcodecs->s[i], codec->s, codec->len)==0) {
 					if(&allcodecs->s[i+codec->len]
 									== &allcodecs->s[allcodecs->len]
-							|| allcodecs->s[i+codec->len] == ' ') {
+							|| allcodecs->s[i+codec->len] == delim) {
 						/* match */
 						return 1;
 					}
@@ -434,7 +434,7 @@ int sdp_keep_codecs_by_id(sip_msg_t* msg, str* codecs)
 				tmp_codecs.len -=(int)(&rm_codec.s[rm_codec.len]-tmp_codecs.s);
 				tmp_codecs.s = rm_codec.s + rm_codec.len;
 
-				if(sdp_codec_in_str(codecs, &rm_codec)==0) {
+				if(sdp_codec_in_str(codecs, &rm_codec, ',')==0) {
 					LM_DBG("codecs [%.*s] - remove [%.*s]\n",
 						sdp_codecs.len, sdp_codecs.s,
 						rm_codec.len, rm_codec.s);
