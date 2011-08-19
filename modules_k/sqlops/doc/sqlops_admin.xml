@@ -182,7 +182,7 @@ modparam("sqlops", "sqlres", "ra")
 		<function moreinfo="none">sql_query(connection, query[, result])</function>
 		</title>
 		<para>
-			Make a SQL query using 'connection' and store data in 'result'.
+			Make an SQL query using 'connection' and store data in 'result'.
 		</para>
 		<itemizedlist>
 		<listitem>
@@ -227,7 +227,7 @@ sql_result_free("ra");
 		<function moreinfo="none">sql_xquery(connection, query, result)</function>
 		</title>
 		<para>
-			Make a SQL query using 'connection' and store data in 'result' xavp.
+			Make an SQL query using 'connection' and store data in 'result' xavp.
 		</para>
 		<itemizedlist>
 		<listitem>
@@ -260,6 +260,68 @@ modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
 ...
 sql_xquery("ca", "select * from domain", "ra");
   xlog("first domain: $xavp(ra=>domain) with id: $xavp(ra=>domain_id)\n");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">sql_pvquery(connection, query, result)</function>
+		</title>
+		<para>
+			Make an SQL query using 'connection' and store data in arbitrary
+			PV's specified by 'result' parameter.
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>connection</emphasis> - the name of the connection
+				to be used for query (defined via the <quote>sqlcon</quote> parameter).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>query</emphasis> - SQL query string or pseudo-variables containing SQL query.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>result</emphasis> - a list with PV names where
+				to store the result. The format is
+				<quote>$pv;$pv;...</quote>. Every PV that is writable may 
+				be used (for example $var, $avp, $xavp, $ru, $du, $sht, etc).
+			</para>
+			<para>
+				The PV are assigned values in the following order: last row
+				to first row, first field to last field. Assignment has the
+				same behavior as assigning in the script itself with one
+				exception for avp's, a NULL value will not delete an avp, but
+				will be skipped over.
+			</para>
+			<para>
+				Beware that if multiple rows are returned, non-(x)avp variables
+				will only hold the last added value, which corresponds to the 
+				first returned row.
+			</para>
+			<para>
+				The value type of the PV (string or integer) will
+				be derived from the type of the columns. Please note that only
+				these two datatypes are supported, other datatypes will/may be
+				converted to string.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sql_pvquery()</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
+...
+sql_xquery("ca", "select 'col1', 2, NULL, 'sip:test@example.com'",
+	"$var(a), $avp(col2), $xavp(item[0]=>s), $ru");
 ...
 </programlisting>
 		</example>

@@ -65,6 +65,7 @@ static int sql_query2(struct sip_msg*, char*, char*);
 #ifdef WITH_XAVP
 static int sql_xquery(struct sip_msg *msg, char *dbl, char *query, char *res);
 #endif
+static int sql_pvquery(struct sip_msg *msg, char *dbl, char *query, char *res);
 static int sql_rfree(struct sip_msg*, char*, char*);
 static int child_init(int rank);
 static void destroy(void);
@@ -73,6 +74,7 @@ static int fixup_sql_query(void** param, int param_no);
 #ifdef WITH_XAVP
 static int fixup_sql_xquery(void** param, int param_no);
 #endif
+static int fixup_sql_pvquery(void** param, int param_no);
 static int fixup_sql_rfree(void** param, int param_no);
 
 static int sql_con_param(modparam_t type, void* val);
@@ -98,6 +100,9 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE | FAILURE_ROUTE |
 		ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
 #endif
+	{"sql_pvquery",  (cmd_function)sql_pvquery, 3, fixup_sql_pvquery, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE |
+		ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
 	{"sql_result_free",  (cmd_function)sql_rfree,  1, fixup_sql_rfree, 0, 
 		REQUEST_ROUTE | FAILURE_ROUTE |
 		ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
@@ -227,6 +232,14 @@ static int sql_xquery(struct sip_msg *msg, char *dbl, char *query, char *res)
 /**
  *
  */
+static int sql_pvquery(struct sip_msg *msg, char *dbl, char *query, char *res)
+{
+	return sql_do_pvquery(msg, (sql_con_t*)dbl, (pv_elem_t*)query, (pvname_list_t*)res);
+}
+
+/**
+ *
+ */
 static int sql_rfree(struct sip_msg *msg, char *res, char *s2)
 {
 	sql_reset_result((sql_result_t*)res);
@@ -312,6 +325,67 @@ static int fixup_sql_xquery(void** param, int param_no)
 	return 0;
 }
 #endif
+
+/**
+ *
+ */
+static int fixup_sql_pvquery(void** param, int param_no)
+{
+	sql_con_t *con = NULL;
+	pv_elem_t *pv = NULL;
+	pvname_list_t *res = NULL;
+	pvname_list_t *pvl = NULL;
+	str s;
+	int i;
+
+	if(*param == NULL)
+	{
+		LM_ERR("missing parameter %d\n", param_no);
+		return E_UNSPEC;
+	}
+	s.s = (char*)(*param);
+	s.len = strlen(s.s);
+
+	if (param_no==1) {
+		con = sql_get_connection(&s);
+		if(con==NULL)
+		{
+			LM_ERR("invalid connection [%s]\n", s.s);
+			return E_UNSPEC;
+		}
+		*param = (void*)con;
+	} else if (param_no==2) {
+		if(pv_parse_format(&s, &pv)<0)
+		{
+			LM_ERR("invalid query string [%s]\n", s.s);
+			return E_UNSPEC;
+		}
+		*param = (void*)pv;
+	} else if (param_no==3) {
+		/* parse result variables into list of pv_spec_t's */
+		res = parse_pvname_list(&s, 0);
+		if(res==NULL)
+		{
+			LM_ERR("invalid result parameter [%s]\n", s.s);
+			return E_UNSPEC;
+		}
+		/* check if all result variables are writable */
+		pvl = res;
+		i = 1;
+		while (pvl) {
+			if (pvl->sname.setf == NULL)
+			{
+				LM_ERR("result variable [%d] is read-only\n", i);
+				return E_UNSPEC;
+			}
+			i++;
+			pvl = pvl->next;
+		}
+		*param = (void*)res;
+		return 0;
+	}
+	return 0;
+}
 
 /**
  *

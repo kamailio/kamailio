@@ -77,6 +77,8 @@ int sql_do_query(sql_con_t *con, str *query, sql_result_t *res);
 int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
 		pv_elem_t *res);
 #endif
+int sql_do_pvquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
+		pvname_list_t *res);
 int pv_get_sqlrows(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
 int pv_parse_con_name(pv_spec_p sp, str *in);

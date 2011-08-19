@@ -540,6 +540,62 @@ error:
 }
 #endif
 
+
+int sql_do_pvquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
+		pvname_list_t *res)
+{
+	db1_res_t* db_res = NULL;
+	pvname_list_t* pv;
+	str sv;
+	int i, j;
+
+	if(msg==NULL || query==NULL || res==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+	if(pv_printf_s(msg, query, &sv)!=0)
+	{
+		LM_ERR("cannot print the sql query\n");
+		return -1;
+	}
+
+	if(con->dbf.raw_query(con->dbh, &sv, &db_res)!=0)
+	{
+		LM_ERR("cannot do the query\n");
+		return -1;
+	}
+
+	if(db_res==NULL || RES_ROW_N(db_res)<=0 || RES_COL_N(db_res)<=0)
+	{
+		LM_DBG("no result after query\n");
+		con->dbf.free_result(con->dbh, db_res);
+		return 2;
+	}
+
+	for(i=RES_ROW_N(db_res)-1; i>=0; i--)
+	{
+		pv = res;
+		for(j=0; j<RES_COL_N(db_res); j++)
+		{
+			if (db_val2pv_spec(msg, &RES_ROWS(db_res)[0].values[j], &pv->sname) != 0) {
+				LM_ERR("Failed to convert value for column %.*s\n",
+				       RES_NAMES(db_res)[j]->len, RES_NAMES(db_res)[j]->s);
+				goto error;
+			}
+			pv = pv->next;
+		}
+	}
+
+	con->dbf.free_result(con->dbh, db_res);
+	return 1;
+
+error:
+	con->dbf.free_result(con->dbh, db_res);
+	return -1;
+}
+
+
 int sql_parse_param(char *val)
 {
 	str name;

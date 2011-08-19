@@ -33,7 +33,8 @@ Daniel-Constantin Mierla
 
               4.1. sql_query(connection, query[, result])
               4.2. sql_xquery(connection, query, result)
-              4.3. sql_result_free(result)
+              4.3. sql_pvquery(connection, query, result)
+              4.4. sql_result_free(result)
 
         5. Exported pseudo-variables
 
@@ -46,9 +47,10 @@ Daniel-Constantin Mierla
    1.2. Set sqlres parameter
    1.3. sql_query() usage
    1.4. sql_xquery() usage
-   1.5. sql_result_free() usage
-   1.6. $dbr(result=>key) usage
-   1.7. $sqlrows(con) usage
+   1.5. sql_pvquery() usage
+   1.6. sql_result_free() usage
+   1.7. $dbr(result=>key) usage
+   1.8. $sqlrows(con) usage
 
 Chapter 1. Admin Guide
 
@@ -69,7 +71,8 @@ Chapter 1. Admin Guide
 
         4.1. sql_query(connection, query[, result])
         4.2. sql_xquery(connection, query, result)
-        4.3. sql_result_free(result)
+        4.3. sql_pvquery(connection, query, result)
+        4.4. sql_result_free(result)
 
    5. Exported pseudo-variables
 
@@ -164,11 +167,12 @@ modparam("sqlops", "sqlres", "ra")
 
    4.1. sql_query(connection, query[, result])
    4.2. sql_xquery(connection, query, result)
-   4.3. sql_result_free(result)
+   4.3. sql_pvquery(connection, query, result)
+   4.4. sql_result_free(result)
 
 4.1.  sql_query(connection, query[, result])
 
-   Make a SQL query using 'connection' and store data in 'result'.
+   Make an SQL query using 'connection' and store data in 'result'.
      * connection - the name of the connection to be used for query
        (defined via the “sqlcon” parameter).
      * query - SQL query string or pseudo-variables containing SQL query.
@@ -191,7 +195,7 @@ sql_result_free("ra");
 
 4.2.  sql_xquery(connection, query, result)
 
-   Make a SQL query using 'connection' and store data in 'result' xavp.
+   Make an SQL query using 'connection' and store data in 'result' xavp.
      * connection - the name of the connection to be used for query
        (defined via the “sqlcon” parameter).
      * query - SQL query string or pseudo-variables containing SQL query.
@@ -208,13 +212,45 @@ sql_xquery("ca", "select * from domain", "ra");
   xlog("first domain: $xavp(ra=>domain) with id: $xavp(ra=>domain_id)\n");
 ...
 
-4.3.  sql_result_free(result)
+4.3.  sql_pvquery(connection, query, result)
+
+   Make an SQL query using 'connection' and store data in arbitrary PV's
+   specified by 'result' parameter.
+     * connection - the name of the connection to be used for query
+       (defined via the “sqlcon” parameter).
+     * query - SQL query string or pseudo-variables containing SQL query.
+     * result - a list with PV names where to store the result. The format
+       is “$pv;$pv;...”. Every PV that is writable may be used (for
+       example $var, $avp, $xavp, $ru, $du, $sht, etc).
+       The PV are assigned values in the following order: last row to
+       first row, first field to last field. Assignment has the same
+       behavior as assigning in the script itself with one exception for
+       avp's, a NULL value will not delete an avp, but will be skipped
+       over.
+       Beware that if multiple rows are returned, non-(x)avp variables
+       will only hold the last added value, which corresponds to the first
+       returned row.
+       The value type of the PV (string or integer) will be derived from
+       the type of the columns. Please note that only these two datatypes
+       are supported, other datatypes will/may be converted to string.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.5. sql_pvquery() usage
+...
+modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
+...
+sql_xquery("ca", "select 'col1', 2, NULL, 'sip:test@example.com'",
+        "$var(a), $avp(col2), $xavp(item[0]=>s), $ru");
+...
+
+4.4.  sql_result_free(result)
 
    Free data in SQL 'result'.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.5. sql_result_free() usage
+   Example 1.6. sql_result_free() usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -244,7 +280,7 @@ sql_result_free("ra");
        integer.
      * colname[N] - return the name of the N-th column in the result set.
 
-   Example 1.6. $dbr(result=>key) usage
+   Example 1.7. $dbr(result=>key) usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
@@ -303,7 +339,7 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1)
 
    “con” must be the name identifying an SQL connection.
 
-   Example 1.7. $sqlrows(con) usage
+   Example 1.8. $sqlrows(con) usage
 ...
 modparam("sqlops","sqlcon","ca=>dbdriver://username:password@dbhost/dbname")
 ...
