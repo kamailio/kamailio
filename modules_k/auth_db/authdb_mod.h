@@ -51,7 +51,7 @@ extern db_func_t auth_dbf;
 
 extern auth_api_s_t auth_api;
 
-extern struct aaa_avp* credentials;
+extern pv_elem_t *credentials;
 extern int credentials_n;
 
 #endif /* AUTHDB_MOD_H */

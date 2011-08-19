@@ -37,6 +37,7 @@
 #include "../../ut.h"
 #include "../../str.h"
 #include "../../lib/srdb1/db.h"
+#include "../../lib/srdb1/db_ut.h"
 #include "../../dprint.h"
 #include "../../parser/digest/digest.h"
 #include "../../parser/hf.h"
@@ -44,7 +45,6 @@
 #include "../../usr_avp.h"
 #include "../../mod_fix.h"
 #include "../../mem/mem.h"
-#include "aaa_avps.h"
 #include "api.h"
 #include "authdb_mod.h"
 
@@ -52,7 +52,7 @@
 static inline int get_ha1(struct username* _username, str* _domain,
 			  const str* _table, char* _ha1, db1_res_t** res)
 {
-	struct aaa_avp *cred;
+	pv_elem_t *cred;
 	db_key_t keys[2];
 	db_val_t vals[2];
 	db_key_t *col;
@@ -73,7 +73,7 @@ static inline int get_ha1(struct username* _username, str* _domain,
 		(&pass_column_2) : (&pass_column);
 
 	for (n = 0, cred=credentials; cred ; n++, cred=cred->next) {
-		col[1 + n] = &cred->attr_name;
+		col[1 + n] = &cred->text;
 	}
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB1_STR;
@@ -131,73 +131,18 @@ static inline int get_ha1(struct username* _username, str* _domain,
 /*
  * Generate AVPs from the database result
  */
-static int generate_avps(db1_res_t* result)
+static int generate_avps(struct sip_msg* msg, db1_res_t* db_res)
 {
-	struct aaa_avp *cred;
-	int_str ivalue;
+	pv_elem_t *cred;
 	int i;
 
 	for (cred=credentials, i=1; cred; cred=cred->next, i++) {
-		switch (result->col.types[i]) {
-		case DB1_STR:
-			ivalue.s = VAL_STR(&(result->rows[0].values[i]));
-
-			if (VAL_NULL(&(result->rows[0].values[i])) ||
-			ivalue.s.s == NULL || ivalue.s.len==0)
-				continue;
-
-			if (add_avp(cred->avp_type|AVP_VAL_STR,cred->avp_name,ivalue)!=0){
-				LM_ERR("failed to add AVP\n");
-				return -1;
-			}
-
-			LM_DBG("set string AVP \"%s\"/%d = \"%.*s\"\n",
-				(cred->avp_type&AVP_NAME_STR)?cred->avp_name.s.s:"",
-				(cred->avp_type&AVP_NAME_STR)?0:cred->avp_name.n,
-				ivalue.s.len, ZSW(ivalue.s.s));
-			break;
-		case DB1_STRING:
-			ivalue.s.s = (char*)VAL_STRING(&(result->rows[0].values[i]));
-
-			if (VAL_NULL(&(result->rows[0].values[i])) ||
-			ivalue.s.s == NULL || (ivalue.s.len=strlen(ivalue.s.s))==0 )
-				continue;
-
-			if (add_avp(cred->avp_type|AVP_VAL_STR,cred->avp_name,ivalue)!=0){
-				LM_ERR("failed to add AVP\n");
-				return -1;
-			}
-
-			LM_DBG("set string AVP \"%s\"/%d = \"%.*s\"\n",
-				(cred->avp_type&AVP_NAME_STR)?cred->avp_name.s.s:"",
-				(cred->avp_type&AVP_NAME_STR)?0:cred->avp_name.n,
-				ivalue.s.len, ZSW(ivalue.s.s));
-			break;
-		case DB1_INT:
-			if (VAL_NULL(&(result->rows[0].values[i])))
-				continue;
-
-			ivalue.n = (int)VAL_INT(&(result->rows[0].values[i]));
-
-			if (add_avp(cred->avp_type, cred->avp_name, ivalue)!=0) {
-				LM_ERR("failed to add AVP\n");
-				return -1;
-			}
-
-			LM_DBG("set int AVP \"%s\"/%d = %d\n",
-				(cred->avp_type&AVP_NAME_STR)?cred->avp_name.s.s:"",
-				(cred->avp_type&AVP_NAME_STR)?0:cred->avp_name.n,
-				ivalue.n);
-			break;
-		default:
-			LM_ERR("subscriber table column `%.*s' has unsuported type. "
-				"Only string/str or int columns are supported by"
-				"load_credentials.\n", result->col.names[i]->len,
-				result->col.names[i]->s);
-			break;
+		if (db_val2pv_spec(msg, &RES_ROWS(db_res)[0].values[i], &cred->spec) != 0) {
+			LM_ERR("Failed to convert value for column %.*s\n",
+					RES_NAMES(db_res)[i]->len, RES_NAMES(db_res)[i]->s);
+			return -1;
 		}
 	}
-
 	return 0;
 }
 
@@ -277,7 +222,7 @@ static int digest_authenticate(struct sip_msg* msg, str *realm,
 		ret = AUTH_OK;
 		switch(auth_api.post_auth(msg, h)) {
 			case AUTHENTICATED:
-				generate_avps(result);
+				generate_avps(msg, result);
 				break;
 			default:
 				ret = AUTH_ERROR;
