@@ -9,6 +9,7 @@ carrierroute:3
 cpl:1
 dbaliases:1
 dialog:5
+id(int,auto) hash_entry(int) hash_id(int) dialog_key(string) dialog_value(string)
 dialplan:1
 dispatcher:4
 domain:1

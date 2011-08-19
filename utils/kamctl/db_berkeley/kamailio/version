@@ -28,6 +28,8 @@ dbaliases|
 dbaliases|1
 dialog|
 dialog|5
+METADATA_DEFAULTS
+NIL|NIL|NIL|NIL|NIL
 dialplan|
 dialplan|1
 dispatcher|

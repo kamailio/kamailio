@@ -1,5 +1,5 @@
 METADATA_COLUMNS
-id(int) key_name(str) key_type(int) value_type(int) key_value(str) expires(str)
+id(int) key_name(str) key_type(int) value_type(int) key_value(str) expires(int)
 METADATA_KEY
 
 METADATA_READONLY

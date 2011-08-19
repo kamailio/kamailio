@@ -5,7 +5,7 @@ CREATE TABLE htable (
     key_type NUMBER(10) DEFAULT 0 NOT NULL,
     value_type NUMBER(10) DEFAULT 0 NOT NULL,
     key_value VARCHAR2(128) DEFAULT '',
-    expires VARCHAR2 DEFAULT 0 NOT NULL
+    expires NUMBER(10) DEFAULT 0 NOT NULL
 );
 
 CREATE OR REPLACE TRIGGER htable_tr
