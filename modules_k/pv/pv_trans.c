@@ -47,7 +47,6 @@
 #include "../../lib/kcore/strcommon.h"
 #include "pv_trans.h"
 
-#define is_in_str(p, in) (p<in->s+in->len && *p)
 
 /*! transformation buffer size */
 #define TR_BUFFER_SIZE 65536

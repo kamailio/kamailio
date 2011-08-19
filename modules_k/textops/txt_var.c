@@ -29,10 +29,9 @@
 #include "../../dprint.h"
 #include "../../trim.h"
 #include "../../re.h"
+#include "../../ut.h"
 
 #include "txt_var.h"
-
-#define is_in_str(p, in) (p<in->s+in->len && *p)
 
 int tr_txt_eval_re(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		pv_value_t *val)

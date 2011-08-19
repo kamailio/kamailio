@@ -28,11 +28,10 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../trim.h"
+#include "../../ut.h"
 #include "../../lib/kcore/strcommon.h"
 
 #include "sql_trans.h"
-
-#define is_in_str(p, in) (p<in->s+in->len && *p)
 
 #define TR_BUFFER_SIZE 2048
 

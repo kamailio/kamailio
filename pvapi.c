@@ -40,8 +40,6 @@
 #include "pvapi.h"
 #include "pvar.h"
 
-#define is_in_str(p, in) (p<in->s+in->len && *p)
-
 #define PV_TABLE_SIZE	16 /*!< pseudo-variable table size */
 #define TR_TABLE_SIZE	4  /*!< PV transformation size */
 

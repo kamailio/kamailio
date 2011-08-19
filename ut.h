@@ -158,6 +158,9 @@
 	*((_dest)++) = _c;
 
 
+#define is_in_str(p, in) (p < in->s + in->len && *p)
+
+
 /* links a value to a msgid */
 struct msgid_var{
 	union{
