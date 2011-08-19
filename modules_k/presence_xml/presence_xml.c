@@ -52,10 +52,12 @@
 #include "../xcap_client/xcap_functions.h"
 #include "../../modules/sl/sl.h"
 #include "../../lib/kmi/mi.h"
+#include "../../mod_fix.h"
 #include "pidf.h"
 #include "add_events.h"
 #include "presence_xml.h"
 #include "pres_check.h"
+#include "api.h"
 
 MODULE_VERSION
 #define S_TABLE_VERSION 4
@@ -71,6 +73,10 @@ static void free_xs_list(xcap_serv_t* xs_list, int mem_type);
 static int xcap_doc_updated(int doc_type, str xid, char* doc);
 static int mi_child_init(void);
 static struct mi_root* dum(struct mi_root* cmd, void* param);
+
+static int fixup_presxml_check(void **param, int param_no);
+static int w_presxml_check_basic(struct sip_msg *msg, char *presentity_uri, char *status);
+static int w_presxml_check_activities(struct sip_msg *msg, char *presentity_uri, char *activities);
 
 /** module variables ***/
 add_event_t pres_add_event;
@@ -102,10 +108,12 @@ db_func_t pxml_dbf;
 xcapGetNewDoc_t xcap_GetNewDoc;
 
 static cmd_export_t cmds[]={
-	{ "pres_check_basic",		(cmd_function)presxml_check_basic, 2,
+	{ "pres_check_basic",		(cmd_function)w_presxml_check_basic, 2,
 		fixup_presxml_check, 0, ANY_ROUTE},
-	{ "pres_check_activities",	(cmd_function)presxml_check_activities, 2,
+	{ "pres_check_activities",	(cmd_function)w_presxml_check_activities, 2,
 		fixup_presxml_check, 0, ANY_ROUTE},
+	{ "bind_presence_xml",		(cmd_function)bind_presence_xml, 1,
+		0, 0, 0},
 	{ 0, 0, 0, 0, 0, 0}
 };
 
@@ -497,4 +505,66 @@ static int xcap_doc_updated(int doc_type, str xid, char* doc)
 static struct mi_root* dum(struct mi_root* cmd, void* param)
 {
 	return 0;
+}
+
+int bind_presence_xml(struct presence_xml_binds *pxb)
+{
+	if (pxb == NULL)
+	{
+		LM_WARN("bind_presence_xml: Cannot load presence_xml API into a NULL pointer\n");
+		return -1;
+	}
+
+	pxb->pres_check_basic = presxml_check_basic;
+	pxb->pres_check_activities = presxml_check_activities;
+	return 0;
+}
+
+static int fixup_presxml_check(void **param, int param_no)
+{
+        if(param_no==1)
+        {
+                return fixup_spve_null(param, 1);
+        } else if(param_no==2) {
+                return fixup_spve_null(param, 1);
+        }
+        return 0;
+}
+
+static int w_presxml_check_basic(struct sip_msg *msg, char *presentity_uri, char *status)
+{
+        str uri, basic;
+
+        if (fixup_get_svalue(msg, (gparam_p)presentity_uri, &uri) != 0)
+        {
+                LM_ERR("invalid presentity uri parameter\n");
+                return -1;
+        }
+
+        if (fixup_get_svalue(msg, (gparam_p)status, &basic) != 0)
+        {
+                LM_ERR("invalid status parameter\n");
+                return -1;
+        }
+
+	return presxml_check_basic(msg, uri, basic);
+}
+
+static int w_presxml_check_activities(struct sip_msg *msg, char *presentity_uri, char *activity)
+{
+        str uri, act;
+
+        if (fixup_get_svalue(msg, (gparam_p)presentity_uri, &uri) != 0)
+        {
+                LM_ERR("invalid presentity uri parameter\n");
+                return -1;
+        }
+
+        if (fixup_get_svalue(msg, (gparam_p)activity, &act) != 0)
+        {
+                LM_ERR("invalid activity parameter\n");
+                return -1;
+        }
+
+	return presxml_check_activities(msg, uri, act);
 }

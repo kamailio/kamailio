@@ -43,6 +43,7 @@
 #include "../../modules/xhttp/api.h"
 #include "../../modules/sdpops/api.h"
 #include "../../modules_k/presence/bind_presence.h"
+#include "../../modules_k/presence_xml/api.h"
 
 #include "app_lua_api.h"
 
@@ -58,6 +59,7 @@
 #define SR_LUA_EXP_MOD_XHTTP      (1<<9)
 #define SR_LUA_EXP_MOD_SDPOPS     (1<<10)
 #define SR_LUA_EXP_MOD_PRESENCE   (1<<11)
+#define SR_LUA_EXP_MOD_PRESENCE_XML (1<<12)
 
 /**
  *
@@ -124,6 +126,11 @@ static sdpops_api_t _lua_sdpopsb;
  * presence
  */
 static presence_api_t _lua_presenceb;
+
+/**
+ * presence_xml
+ */
+static presence_xml_api_t _lua_presence_xmlb;
 
 /**
  *
@@ -1395,6 +1402,91 @@ static const luaL_reg _sr_presence_Map [] = {
 /**
  *
  */
+static int lua_sr_pres_check_basic(lua_State *L)
+{
+	str param[2];
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PRESENCE_XML))
+	{
+		LM_WARN("weird: presence_xml function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=2)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	param[0].s = (char *) lua_tostring(L, -2);
+	param[0].len = strlen(param[0].s);
+	param[1].s = (char *) lua_tostring(L, -1);
+	param[1].len = strlen(param[1].s);
+	
+	ret = _lua_presence_xmlb.pres_check_basic(env_L->msg, param[0], param[1]);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_pres_check_activities(lua_State *L)
+{
+	str param[2];
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PRESENCE_XML))
+	{
+		LM_WARN("weird: presence_xml function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=2)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	param[0].s = (char *) lua_tostring(L, -2);
+	param[0].len = strlen(param[0].s);
+	param[1].s = (char *) lua_tostring(L, -1);
+	param[1].len = strlen(param[1].s);
+	
+	ret = _lua_presence_xmlb.pres_check_activities(env_L->msg, param[0], param[1]);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_presence_xml_Map [] = {
+	{"pres_check_basic",       lua_sr_pres_check_basic},
+	{"pres_check_activities",  lua_sr_pres_check_activities},
+	{NULL, NULL}
+};
+
+/**
+ *
+ */
 int lua_sr_exp_init_mod(void)
 {
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SL)
@@ -1523,6 +1615,16 @@ int lua_sr_exp_init_mod(void)
 		}
 		LM_DBG("loaded presence api\n");
 	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PRESENCE)
+	{
+		/* bind the PRESENCE_XML API */
+		if (presence_xml_load_api(&_lua_presence_xmlb) < 0)
+		{
+			LM_ERR("cannot bind to PRESENCE_XML API\n");
+			return -1;
+		}
+		LM_DBG("loaded presence_xml api\n");
+	}
 	return 0;
 }
 
@@ -1572,6 +1674,9 @@ int lua_sr_exp_register_mod(char *mname)
 	} else 	if(len==8 && strcmp(mname, "presence")==0) {
 		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_PRESENCE;
 		return 0;
+	} else 	if(len==12 && strcmp(mname, "presence_xml")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_PRESENCE_XML;
+		return 0;
 	}
 
 	return -1;
@@ -1606,5 +1711,7 @@ void lua_sr_exp_openlibs(lua_State *L)
 		luaL_openlib(L, "sr.sdpops",     _sr_sdpops_Map,      0);
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PRESENCE)
 		luaL_openlib(L, "sr.presence",     _sr_presence_Map,  0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PRESENCE_XML)
+		luaL_openlib(L, "sr.presence_xml", _sr_presence_xml_Map, 0);
 }
 

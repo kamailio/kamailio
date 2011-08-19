@@ -24,26 +24,13 @@
 
 #include "pres_check.h"
 #include "pidf.h"
-#include "../../mod_fix.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_uri.h"
 #include "../../str.h"
 #include "../presence/event_list.h"
 
-int fixup_presxml_check(void **param, int param_no)
+int presxml_check_basic(struct sip_msg *msg, str presentity_uri, str status)
 {
-        if(param_no==1)
-        {
-                return fixup_spve_null(param, 1);
-        } else if(param_no==2) {
-                return fixup_spve_null(param, 1);
-        }
-        return 0;
-}
-
-int presxml_check_basic(struct sip_msg *msg, char *presentity_uri, char *status)
-{
-	str uri, basic;
 	str *presentity = NULL;
 	struct sip_uri parsed_uri;
 	pres_ev_t *ev;
@@ -53,21 +40,9 @@ int presxml_check_basic(struct sip_msg *msg, char *presentity_uri, char *status)
 	xmlNodePtr tuple = NULL, basicNode = NULL;
 	char *basicVal = NULL;
 
-	if (fixup_get_svalue(msg, (gparam_p)presentity_uri, &uri) != 0)
+	if (parse_uri(presentity_uri.s, presentity_uri.len, &parsed_uri) < 0)
 	{
-		LM_ERR("invalid presentity uri parameter\n");
-		return -1;
-	}
-
-	if (fixup_get_svalue(msg, (gparam_p)status, &basic) != 0)
-	{
-		LM_ERR("invalud status parameter\n");
-		return -1;
-	}
-
-	if (parse_uri(uri.s, uri.len, &parsed_uri) < 0)
-	{
-		LM_ERR("bad uri: %.*s\n", uri.len, uri.s);
+		LM_ERR("bad uri: %.*s\n", presentity_uri.len, presentity_uri.s);
 		return -1;
 	}
 
@@ -78,11 +53,11 @@ int presxml_check_basic(struct sip_msg *msg, char *presentity_uri, char *status)
 		return -1;
 	}
 
-	presentity = pres_get_presentity(uri, ev, NULL, NULL);
+	presentity = pres_get_presentity(presentity_uri, ev, NULL, NULL);
 
 	if (presentity == NULL || presentity->len <= 0 || presentity->s == NULL)
 	{
-		LM_DBG("cannot get presentity for %.*s\n", uri.len, uri.s);
+		LM_DBG("cannot get presentity for %.*s\n", presentity_uri.len, presentity_uri.s);
 		return -1;
 	}
 
@@ -114,7 +89,7 @@ int presxml_check_basic(struct sip_msg *msg, char *presentity_uri, char *status)
 				goto error;
 			}
 
-			if (strncasecmp(basicVal, basic.s, basic.len) == 0)
+			if (strncasecmp(basicVal, status.s, status.len) == 0)
 				retval = 1;
 
 			xmlFree(basicVal);
@@ -128,9 +103,8 @@ error:
 	return retval;
 }
 
-int presxml_check_activities(struct sip_msg *msg, char *presentity_uri, char *activity)
+int presxml_check_activities(struct sip_msg *msg, str presentity_uri, str activity)
 {
-	str uri, act;
 	str *presentity = NULL;
 	struct sip_uri parsed_uri;
 	pres_ev_t *ev;
@@ -140,21 +114,9 @@ int presxml_check_activities(struct sip_msg *msg, char *presentity_uri, char *ac
 	xmlDocPtr xmlDoc = NULL;
 	xmlNodePtr person = NULL, activitiesNode = NULL, activityNode = NULL;
 
-	if (fixup_get_svalue(msg, (gparam_p)presentity_uri, &uri) != 0)
+	if (parse_uri(presentity_uri.s, presentity_uri.len, &parsed_uri) < 0)
 	{
-		LM_ERR("invalid presentity uri parameter\n");
-		return -1;
-	}
-
-	if (fixup_get_svalue(msg, (gparam_p)activity, &act) != 0)
-	{
-		LM_ERR("invalid activity parameter\n");
-		return -1;
-	}
-
-	if (parse_uri(uri.s, uri.len, &parsed_uri) < 0)
-	{
-		LM_ERR("bad uri: %.*s\n", uri.len, uri.s);
+		LM_ERR("bad uri: %.*s\n", presentity_uri.len, presentity_uri.s);
 		return -1;
 	}
 
@@ -165,19 +127,19 @@ int presxml_check_activities(struct sip_msg *msg, char *presentity_uri, char *ac
 		return -1;
 	}
 
-	if ((nodeName = pkg_malloc(act.len + 1)) == NULL)
+	if ((nodeName = pkg_malloc(activity.len + 1)) == NULL)
 	{
 		LM_ERR("cannot pkg_malloc for nodeName\n");
 		return -1;		
 	}
-	memcpy(nodeName, act.s, act.len);
-	nodeName[act.len] = '\0';
+	memcpy(nodeName, activity.s, activity.len);
+	nodeName[activity.len] = '\0';
 
-	presentity = pres_get_presentity(uri, ev, NULL, NULL);
+	presentity = pres_get_presentity(presentity_uri, ev, NULL, NULL);
 
 	if (presentity == NULL || presentity->len <= 0 || presentity->s == NULL)
 	{
-		LM_DBG("cannot get presentity for %.*s\n", uri.len, uri.s);
+		LM_DBG("cannot get presentity for %.*s\n", presentity_uri.len, presentity_uri.s);
 		return -1;
 	}
 

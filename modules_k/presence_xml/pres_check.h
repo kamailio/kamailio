@@ -24,9 +24,8 @@
 #include "../presence/bind_presence.h"
 #include "../presence/event_list.h"
 
-int presxml_check_basic(struct sip_msg* msg, char *presentity_uri, char *status);
-int presxml_check_activities(struct sip_msg* msg, char *presentity_uri, char *activity);
-int fixup_presxml_check(void **param, int param_no);
+int presxml_check_basic(struct sip_msg* msg, str presentity_uri, str status);
+int presxml_check_activities(struct sip_msg* msg, str presentity_uri, str activity);
 contains_event_t pres_contains_event;
 pres_get_presentity_t pres_get_presentity;
 pres_free_presentity_t pres_free_presentity;
