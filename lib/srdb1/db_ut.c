@@ -34,6 +34,7 @@
 
 #include "../../mem/mem.h"
 #include "../../dprint.h"
+#include "../../pvar.h"
 #include <limits.h>
 #include <errno.h>
 #include <stdio.h>
@@ -370,4 +371,102 @@ int db_print_set(const db1_con_t* _c, char* _b, const int _l, const db_key_t* _k
  error:
 	LM_ERR("Error in snprintf\n");
 	return -1;
+}
+
+/*
+ * Convert db_val to pv_spec
+ */
+int db_val2pv_spec(struct sip_msg* msg, db_val_t *dbval, pv_spec_t *pvs)
+{
+	pv_value_t pv;
+	str sv = {NULL, 0};
+	static str _str_empty = { "", 0 };
+
+	if(dbval->nul)
+	{
+		pv.flags = PV_VAL_NULL;
+	} else
+	{
+		switch(dbval->type)
+		{
+			case DB1_STRING:
+				pv.flags = PV_VAL_STR;
+				sv.s = (char*)dbval->val.string_val;
+				sv.len = strlen(sv.s);
+			break;
+			case DB1_STR:
+				pv.flags = PV_VAL_STR;
+				sv.s = (char*)dbval->val.str_val.s;
+				sv.len = dbval->val.str_val.len;
+			break;
+			case DB1_BLOB:
+				pv.flags = PV_VAL_STR;
+				sv.s = (char*)dbval->val.blob_val.s;
+				sv.len = dbval->val.blob_val.len;
+			break;
+			case DB1_INT:
+				pv.flags = PV_VAL_INT | PV_TYPE_INT;
+				pv.ri = (int)dbval->val.int_val;
+			break;
+			case DB1_DATETIME:
+				pv.flags = PV_VAL_INT | PV_TYPE_INT;
+				pv.ri = (int)dbval->val.time_val;
+			break;
+			case DB1_BITMAP:
+				pv.flags = PV_VAL_INT | PV_TYPE_INT;
+				pv.ri = (int)dbval->val.bitmap_val;
+			break;
+			case DB1_BIGINT:
+				/* BIGINT is stored as string */
+				pv.flags = PV_VAL_STR;
+				pv.rs.len = 21*sizeof(char);
+				pv.rs.s = (char*)pkg_malloc(pv.rs.len);
+				if (pv.rs.s==NULL)
+				{
+					LM_ERR("no more memory\n");
+					return -1;
+				}
+				db_longlong2str(dbval->val.ll_val, pv.rs.s, &pv.rs.len);
+			break;
+			default:
+				LM_NOTICE("unknown field type: %d, setting value to null\n",
+				          dbval->type);
+				pv.flags = PV_VAL_NULL;
+		}
+	}
+
+	/* null values are ignored for avp type PV */
+	if (pv.flags == PV_VAL_NULL && pvs->type == PVT_AVP)
+		return 0;
+
+	/* handle string values */
+	if(pv.flags == PV_VAL_STR && sv.s)
+	{
+		if(sv.len==0)
+		{
+			pv.rs = _str_empty;
+		} else
+		{
+			/* create copy of string value in pkg mem */
+			pv.rs.s = (char*)pkg_malloc(sv.len*sizeof(char));
+			if(pv.rs.s==NULL)
+			{
+				LM_ERR("no more memory\n");
+				return -1;
+			}
+			memcpy(pv.rs.s, sv.s, sv.len);
+			pv.rs.len = sv.len;
+		}
+	}
+
+	/* add value to result pv */
+	if (pv_set_spec_value(msg, pvs, 0, &pv) != 0)
+	{
+		LM_ERR("Failed to add value to spec\n");
+		if (pv.flags == PV_VAL_STR)
+			pkg_free(pv.rs.s);
+		return -1;
+	}
+
+	return 0;
 }
