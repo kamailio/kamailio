@@ -142,6 +142,7 @@ int sdp_remove_str_codec_id_attrs(sip_msg_t* msg,
 			if(payload->rtp_enc.s!=NULL) {
 				if(sdp_locate_line(msg, payload->rtp_enc.s, &aline)==0)
 				{
+					LM_DBG("removing line: %.*s", aline.len, aline.s);
 					anchor = del_lump(msg, aline.s - msg->buf,
 							aline.len, 0);
 					if (anchor == NULL) {
@@ -155,6 +156,7 @@ int sdp_remove_str_codec_id_attrs(sip_msg_t* msg,
 			if(payload->fmtp_string.s!=NULL) {
 				if(sdp_locate_line(msg, payload->fmtp_string.s, &aline)==0)
 				{
+					LM_DBG("removing line: %.*s\n", aline.len, aline.s);
 					anchor = del_lump(msg, aline.s - msg->buf,
 							aline.len, 0);
 					if (anchor == NULL) {
@@ -407,7 +409,7 @@ int sdp_keep_codecs_by_id(sip_msg_t* msg, str* codecs)
 		return -1;
 	}
 
-	LM_ERR("attempting to remove codecs from sdp: [%.*s]\n",
+	LM_ERR("attempting to keep codecs in sdp: [%.*s]\n",
 			codecs->len, codecs->s);
 
 	sdp = (sdp_info_t*)msg->body;
