@@ -33,6 +33,8 @@
 #ifndef DB1_UT_H
 #define DB1_UT_H
 
+#include "../../pvar.h"
+
 /**
  * make strptime available
  * use 600 for 'Single UNIX Specification, Version 3'
@@ -54,7 +56,6 @@
 
 #include "db_key.h"
 #include "db.h"
-#include "../../pvar.h"
 
 
 /**
