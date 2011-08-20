@@ -211,8 +211,8 @@ int db_print_set(const db1_con_t* _c, char* _b, const int _l,
  * 
  * \param msg sip msg structure
  * \param dbval database value
- * \param pvs pv_spec wher to put the database value
- * \return 1 on success, 0 on failure
+ * \param pvs pv_spec where to put the database value
+ * \return 0 on success, -1 on failure
  */
 int db_val2pv_spec(struct sip_msg* msg, db_val_t *dbval, pv_spec_t *pvs);
 
