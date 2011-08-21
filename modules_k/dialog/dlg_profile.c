@@ -327,17 +327,33 @@ int profile_cleanup( struct sip_msg *msg, unsigned int flags, void *param )
 }
 
 
+
+struct dlg_cell* get_dialog_from_tm(struct cell *t)
+{
+    if (t==NULL || t==T_UNDEFINED)
+        return NULL;
+
+    struct tm_callback* x = (struct tm_callback*)(t->tmcb_hl.first);
+
+    while(x){
+        membar_depends();
+        if (x->types==TMCB_MAX && x->callback==dlg_tmcb_dummy){
+            return (struct dlg_cell*)(x->param);
+        }
+        x=x->next;
+    }
+
+    return NULL;
+}
+
 /*!
  * \brief Get the current dialog for a message, if exists
  * \param msg SIP message
  * \return NULL if called in REQUEST_ROUTE, pointer to dialog ctx otherwise
  */ 
-static struct dlg_cell *get_current_dialog(struct sip_msg *msg)
+struct dlg_cell *get_current_dialog(struct sip_msg *msg)
 {
-	struct cell *trans;
-	struct tm_callback* x;
-
-	if (is_route_type(REQUEST_ROUTE)) {
+	if (is_route_type(REQUEST_ROUTE|BRANCH_ROUTE)) {
 		/* use the per-process static holder */
 		if (msg->id==current_dlg_msg_id)
 			return current_dlg_pointer;
@@ -348,18 +364,7 @@ static struct dlg_cell *get_current_dialog(struct sip_msg *msg)
 		return NULL;
 	} else {
 		/* use current transaction to get dialog */
-		trans = d_tmb.t_gett();
-		if (trans==NULL || trans==T_UNDEFINED)
-			return NULL;
-		x=(struct tm_callback*)(trans->tmcb_hl.first);
-		while(x){
-			membar_depends();
-			if (x->types==TMCB_MAX && x->callback==dlg_tmcb_dummy){
-				return (struct dlg_cell*)(x->param);
-			}
-			x=x->next;
-		}
-		return NULL;
+	    return get_dialog_from_tm(d_tmb.t_gett());
 	}
 }
 

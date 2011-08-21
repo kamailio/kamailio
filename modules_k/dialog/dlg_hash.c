@@ -61,6 +61,7 @@
 #include "dlg_hash.h"
 #include "dlg_profile.h"
 #include "dlg_req_within.h"
+#include "dlg_db_handler.h"
 
 #define MAX_LDG_LOCKS  2048
 #define MIN_LDG_LOCKS  2
@@ -153,6 +154,10 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 	}
 
 	run_dlg_callbacks( DLGCB_DESTROY , dlg, 0, DLG_DIR_NONE, 0);
+
+	/* delete the dialog from DB*/
+	if (dlg_db_mode)
+		remove_dialog_from_db(dlg);
 
 	if(dlg==get_current_dlg_pointer())
 		reset_current_dlg_pointer();
@@ -824,6 +829,11 @@ static inline int internal_mi_print_dlg(struct mi_node *rpl,
 
 	p= int2str((unsigned long)dlg->state, &len);
 	node1 = add_mi_node_child( node, MI_DUP_VALUE, "state", 5, p, len);
+	if (node1==0)
+		goto error;
+
+	p= int2str((unsigned long)dlg->ref, &len);
+	node1 = add_mi_node_child( node, MI_DUP_VALUE, "ref_count", 9, p, len);
 	if (node1==0)
 		goto error;
 

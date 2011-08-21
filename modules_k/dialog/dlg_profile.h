@@ -33,6 +33,8 @@
 #include "../../parser/msg_parser.h"
 #include "../../locking.h"
 #include "../../str.h"
+#include "../../modules/tm/h_table.h"
+
 
 
 /*!
@@ -82,6 +84,10 @@ struct dlg_profile_table {
 struct dlg_cell *get_current_dlg_pointer(void);
 
 void reset_current_dlg_pointer(void);
+
+struct dlg_cell* get_dialog_from_tm(struct cell *t);
+
+struct dlg_cell *get_current_dialog(struct sip_msg *msg);
 
 /*!
  * \brief Add profile definitions to the global list
