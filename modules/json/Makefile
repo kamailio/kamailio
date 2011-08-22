@@ -9,10 +9,15 @@ auto_gen=
 NAME=json.so
 LIBS=
 
-DEFS+=-I/usr/include/json -I$(LOCALBASE)/include/json \
+BUILDER = $(shell which pkg-config)
+ifeq ($(BUILDER),)
+	DEFS+=-I/usr/include/json -I$(LOCALBASE)/include/json \
        -I$(LOCALBASE)/include
-LIBS+=-L$(SYSBASE)/include/lib -L$(LOCALBASE)/lib -ljson
- 
+	LIBS+=-L$(SYSBASE)/include/lib -L$(LOCALBASE)/lib -ljson
+else
+	DEFS+= $(shell pkg-config --cflags json)
+	LIBS+= $(shell pkg-config --libs json)
+endif
 DEFS+=-DOPENSER_MOD_INTERFACE
 
 SERLIBPATH=../../lib

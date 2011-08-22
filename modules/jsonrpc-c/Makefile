@@ -7,11 +7,19 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=jsonrpc-c.so
-LIBS=-lm -levent
+LIBS=-lm
 
-DEFS+=-I/usr/include/json -I$(LOCALBASE)/include/json \
+BUILDER = $(shell which pkg-config)
+ifeq ($(BUILDER),)
+	DEFS+=-I/usr/include/json -I$(LOCALBASE)/include/json \
        -I$(LOCALBASE)/include
-LIBS+=-L$(SYSBASE)/include/lib -L$(LOCALBASE)/lib -ljson
+	LIBS+=-L$(SYSBASE)/include/lib -L$(LOCALBASE)/lib -levent -ljson
+else
+	DEFS+= $(shell pkg-config --cflags json)
+	LIBS+= $(shell pkg-config --libs json)
+	DEFS+= $(shell pkg-config --cflags libevent)
+	LIBS+= $(shell pkg-config --libs libevent)
+endif
  
 DEFS+=-DOPENSER_MOD_INTERFACE
 
