@@ -1,0 +1,1284 @@
+/* 
+ * $Id$ 
+ *
+ * sipcapture module - helper module to capture sip messages
+ *
+ * Copyright (C) 2011 Alexandr Dubovikov (QSC AG) (alexandr.dubovikov@gmail.com)
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
+/*! \file
+ * sipcapture module - helper module to capture sip messages
+ *
+ */
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include "../../sr_module.h"
+#include "../../dprint.h"
+#include "../../events.h"
+#include "../../ut.h"
+#include "../../ip_addr.h"
+#include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
+#include "../../lib/kmi/mi.h"
+#include "../../lib/srdb1/db.h"
+#include "../../parser/contact/parse_contact.h"
+#include "../../parser/parse_content.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_uri.h"
+#include "../../parser/digest/digest.h"
+#include "../../lib/kcore/parse_pai.h"
+#include "../../lib/kcore/parse_ppi.h"
+#include "../../pvar.h"
+#include "../../str.h"
+#include "../../onsend.h"
+#include "../../raw_sock.h"
+#include "../../raw_listener.h"
+#include "../../resolve.h"
+#include "sipcapture.h"
+
+#ifdef __OS_linux
+	#include <sys/ioctl.h>       
+	#include <net/if.h>
+#endif
+
+#ifdef STATISTICS
+#include "../../lib/kcore/statistics.h"
+#endif
+
+MODULE_VERSION
+
+struct _sipcapture_object {
+	str method;
+	str reply_reason;
+	str ruri;
+	str ruri_user;
+	str from_user;
+	str from_tag;
+	str to_user;
+	str to_tag;
+	str pid_user;
+	str contact_user;
+	str auth_user;
+	str callid;
+	str callid_aleg;
+	str via_1;
+	str via_1_branch;
+	str cseq;
+	str diversion;
+	str reason;
+	str content_type;
+	str authorization;
+	str user_agent;
+	str source_ip;
+	int source_port;
+	str destination_ip;
+	int destination_port;
+	str contact_ip;
+	int contact_port;
+	str originator_ip;
+	int originator_port;
+	int proto;
+	int family;
+	str rtp_stat;
+	int type;
+	str node;	
+	str msg;	
+#ifdef STATISTICS
+	stat_var *stat;
+#endif
+};
+
+#define EMPTY_STR(val) val.s=""; val.len=0;
+
+#define TABLE_LEN 256
+
+#define NR_KEYS 37
+
+/* module function prototypes */
+static int mod_init(void);
+static int child_init(int rank);
+static void destroy(void);
+static int sip_capture(struct sip_msg *msg, char *s1, char *s2);
+int hep_msg_received(void *data);
+int init_rawsock_children(void);
+int extract_host_port(void);
+
+
+static struct mi_root* sip_capture_mi(struct mi_root* cmd, void* param );
+
+static str db_url		= str_init(DEFAULT_RODB_URL);
+static str table_name		= str_init("sip_capture");
+static str id_column		= str_init("id");
+static str date_column		= str_init("date");
+static str micro_ts_column 	= str_init("micro_ts");
+static str method_column 	= str_init("method"); 	
+static str reply_reason_column 	= str_init("reply_reason");        
+static str ruri_column 		= str_init("ruri");     	
+static str ruri_user_column 	= str_init("ruri_user");  
+static str from_user_column 	= str_init("from_user");  
+static str from_tag_column 	= str_init("from_tag");   
+static str to_user_column 	= str_init("to_user");
+static str to_tag_column 	= str_init("to_tag");   
+static str pid_user_column 	= str_init("pid_user");
+static str contact_user_column 	= str_init("contact_user");
+static str auth_user_column 	= str_init("auth_user");  
+static str callid_column 	= str_init("callid");
+static str callid_aleg_column 	= str_init("callid_aleg");
+static str via_1_column 	= str_init("via_1");      
+static str via_1_branch_column 	= str_init("via_1_branch"); 
+static str cseq_column		= str_init("cseq");     
+static str diversion_column 	= str_init("diversion_user"); 
+static str reason_column 	= str_init("reason");        
+static str content_type_column 	= str_init("content_type");  
+static str authorization_column = str_init("authorization"); 
+static str user_agent_column 	= str_init("user_agent");
+static str source_ip_column 	= str_init("source_ip");  
+static str source_port_column 	= str_init("source_port");	
+static str dest_ip_column	= str_init("destination_ip");
+static str dest_port_column 	= str_init("destination_port");		
+static str contact_ip_column 	= str_init("contact_ip"); 
+static str contact_port_column 	= str_init("contact_port");
+static str orig_ip_column 	= str_init("originator_ip");      
+static str orig_port_column 	= str_init("originator_port");    
+static str rtp_stat_column 	= str_init("rtp_stat");    
+static str proto_column 	= str_init("proto"); 
+static str family_column 	= str_init("family"); 
+static str type_column 		= str_init("type");  
+static str node_column 		= str_init("node");  
+static str msg_column 		= str_init("msg");   
+static str capture_node 	= str_init("homer01");     	
+
+
+int raw_sock_desc = -1; /* raw socket used for ip packets */
+unsigned int raw_sock_children = 1;
+int capture_on   = 0;
+int hep_capture_on   = 0;
+int ipip_capture_on   = 0;
+int moni_capture_on   = 0;
+int moni_port_start = 5060;
+int moni_port_end   = 0;
+int *capture_on_flag = NULL;
+int db_insert_mode = 0;
+int partitioning_mode = 1;
+int promisc_on = 0;
+
+str raw_socket_listen = { 0, 0 };
+str raw_interface = { 0, 0 };
+
+struct ifreq ifr; 	/* interface structure */
+
+
+db1_con_t *db_con = NULL; 		/*!< database connection */
+db_func_t db_funcs;      		/*!< Database functions */
+
+/*! \brief
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"sip_capture", (cmd_function)sip_capture, 0, 0, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
+
+
+/*! \brief
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"db_url",			STR_PARAM, &db_url.s            },
+	{"table_name",       		STR_PARAM, &table_name.s	},
+	{"id_column",        		STR_PARAM, &id_column.s         },
+	{"date_column",        		STR_PARAM, &date_column.s       },	
+	{"micro_ts_column",     	STR_PARAM, &micro_ts_column.s	},
+	{"method_column",      		STR_PARAM, &method_column.s 	},
+	{"reply_reason_column",		STR_PARAM, &reply_reason_column.s	},
+	{"ruri_column",      		STR_PARAM, &ruri_column.s     	},
+	{"ruri_user_column",      	STR_PARAM, &ruri_user_column.s  },
+	{"from_user_column",      	STR_PARAM, &from_user_column.s  },
+	{"from_tag_column",        	STR_PARAM, &from_tag_column.s   },
+	{"to_user_column",     		STR_PARAM, &to_user_column.s	},
+	{"to_tag_column",        	STR_PARAM, &to_tag_column.s	},	
+	{"pid_user_column",   		STR_PARAM, &pid_user_column.s	},
+	{"contact_user_column",        	STR_PARAM, &contact_user_column.s	},
+	{"auth_user_column",     	STR_PARAM, &auth_user_column.s  },
+	{"callid_column",      		STR_PARAM, &callid_column.s},
+	{"callid_aleg_column",      	STR_PARAM, &callid_aleg_column.s},
+	{"via_1_column",		STR_PARAM, &via_1_column.s      },
+	{"via_1_branch_column",        	STR_PARAM, &via_1_branch_column.s },
+	{"cseq_column",     		STR_PARAM, &cseq_column.s     },
+	{"diversion_column",      	STR_PARAM, &diversion_column.s },
+	{"reason_column",		STR_PARAM, &reason_column.s        },
+	{"content_type_column",        	STR_PARAM, &content_type_column.s  },
+	{"authorization_column",     	STR_PARAM, &authorization_column.s },
+	{"user_agent_column",      	STR_PARAM, &user_agent_column.s	},
+	{"source_ip_column",		STR_PARAM, &source_ip_column.s  },
+	{"source_port_column",		STR_PARAM, &source_port_column.s},	
+	{"destination_ip_column",	STR_PARAM, &dest_ip_column.s	},
+	{"destination_port_column",	STR_PARAM, &dest_port_column.s	},		
+	{"contact_ip_column",		STR_PARAM, &contact_ip_column.s },
+	{"contact_port_column",		STR_PARAM, &contact_port_column.s	},
+	{"originator_ip_column",	STR_PARAM, &orig_ip_column.s    },
+	{"originator_port_column",	STR_PARAM, &orig_port_column.s  },
+	{"proto_column",		STR_PARAM, &proto_column.s },
+	{"family_column",		STR_PARAM, &family_column.s },
+	{"rtp_stat_column",		STR_PARAM, &rtp_stat_column.s },
+	{"type_column",			STR_PARAM, &type_column.s  },
+	{"node_column",			STR_PARAM, &node_column.s  },
+	{"msg_column",			STR_PARAM, &msg_column.s   },
+	{"capture_on",           	INT_PARAM, &capture_on          },
+	{"capture_node",     		STR_PARAM, &capture_node.s     	},
+        {"raw_sock_children",  		INT_PARAM, &raw_sock_children   },	
+        {"hep_capture_on",  		INT_PARAM, &hep_capture_on   },	
+	{"raw_socket_listen",     	STR_PARAM, &raw_socket_listen.s   },        
+        {"raw_ipip_capture_on",  	INT_PARAM, &ipip_capture_on  },	
+        {"raw_moni_capture_on",  	INT_PARAM, &moni_capture_on  },	
+        {"db_insert_mode",  		INT_PARAM, &db_insert_mode  },	
+        {"partitioning_mode",  		INT_PARAM, &partitioning_mode  },
+	{"raw_interface",     		STR_PARAM, &raw_interface.s   },
+        {"promiscious_on",  		INT_PARAM, &promisc_on   },		
+	{0, 0, 0}
+};
+
+/*! \brief
+ * MI commands
+ */
+static mi_export_t mi_cmds[] = {
+	{ "sip_capture", sip_capture_mi,   0,  0,  0 },
+	{ 0, 0, 0, 0, 0}
+};
+
+
+#ifdef STATISTICS
+stat_var* sipcapture_req;
+stat_var* sipcapture_rpl;
+
+stat_export_t sipcapture_stats[] = {
+	{"captured_requests" ,  0,  &sipcapture_req  },
+	{"captured_replies"  ,  0,  &sipcapture_rpl  },
+	{0,0,0}
+};
+#endif
+
+/*! \brief module exports */
+struct module_exports exports = {
+	"sipcapture", 
+	DEFAULT_DLFLAGS, /*!< dlopen flags */
+	cmds,       /*!< Exported functions */
+	params,     /*!< Exported parameters */
+#ifdef STATISTICS
+	sipcapture_stats,  /*!< exported statistics */
+#else
+	0,          /*!< exported statistics */
+#endif
+	mi_cmds,    /*!< exported MI functions */
+	0,          /*!< exported pseudo-variables */
+	0,          /*!< extra processes */
+	mod_init,   /*!< module initialization function */
+	0,          /*!< response function */
+	destroy,    /*!< destroy function */
+	child_init  /*!< child initialization function */
+};
+
+
+/*! \brief Initialize sipcapture module */
+static int mod_init(void) {
+
+	struct ip_addr *ip = NULL;
+
+#ifdef STATISTICS
+	/* register statistics */
+	if (register_module_stats(exports.name, sipcapture_stats)!=0)
+	{
+		LM_ERR("failed to register core statistics\n");
+		return -1;
+	}
+#endif
+
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
+	db_url.len = strlen(db_url.s);
+	table_name.len = strlen(table_name.s);
+	date_column.len = strlen(date_column.s);
+	id_column.len = strlen(id_column.s);
+	micro_ts_column.len = strlen(micro_ts_column.s);
+	method_column.len = strlen(method_column.s); 	
+	reply_reason_column.len = strlen(reply_reason_column.s);        
+	ruri_column.len = strlen(ruri_column.s);     	
+	ruri_user_column.len = strlen(ruri_user_column.s);  
+	from_user_column.len = strlen(from_user_column.s);  
+	from_tag_column.len = strlen(from_tag_column.s);   
+	to_user_column.len = strlen(to_user_column.s);
+	pid_user_column.len = strlen(pid_user_column.s);
+	contact_user_column.len = strlen(contact_user_column.s);
+	auth_user_column.len = strlen(auth_user_column.s);  
+	callid_column.len = strlen(callid_column.s);
+	via_1_column.len = strlen(via_1_column.s);      
+	via_1_branch_column.len = strlen(via_1_branch_column.s); 
+	cseq_column.len = strlen(cseq_column.s);     
+	diversion_column.len = strlen(diversion_column.s); 
+	reason_column.len = strlen(reason_column.s);        
+	content_type_column.len = strlen(content_type_column.s);  
+	authorization_column.len = strlen(authorization_column.s); 
+	user_agent_column.len = strlen(user_agent_column.s);
+	source_ip_column.len = strlen(source_ip_column.s);  
+	source_port_column.len = strlen(source_port_column.s);	
+	dest_ip_column.len = strlen(dest_ip_column.s);
+	dest_port_column.len = strlen(dest_port_column.s);		
+	contact_ip_column.len = strlen(contact_ip_column.s); 
+	contact_port_column.len = strlen(contact_port_column.s);
+	orig_ip_column.len = strlen(orig_ip_column.s);      
+	orig_port_column.len = strlen(orig_port_column.s);    
+	proto_column.len = strlen(proto_column.s); 
+	family_column.len = strlen(family_column.s); 
+	type_column.len = strlen(type_column.s);  
+	rtp_stat_column.len = strlen(rtp_stat_column.s);  
+	node_column.len = strlen(node_column.s);  
+	msg_column.len = strlen(msg_column.s);   
+	capture_node.len = strlen(capture_node.s);     	
+	
+	if(raw_socket_listen.s) 
+		raw_socket_listen.len = strlen(raw_socket_listen.s);     	
+	if(raw_interface.s)
+		raw_interface.len = strlen(raw_interface.s);     	
+
+	/* Find a database module */
+	if (db_bind_mod(&db_url, &db_funcs))
+	{
+		LM_ERR("unable to bind database module\n");
+		return -1;
+	}
+	if (!DB_CAPABILITY(db_funcs, DB_CAP_INSERT))
+	{
+		LM_ERR("database modules does not provide all functions needed"
+				" by module\n");
+		return -1;
+	}
+
+	/*Check the table name*/
+	if(!table_name.len) {	
+		LM_ERR("ERROR: sipcapture: mod_init: table_name is not defined or empty\n");
+		return -1;
+	}
+
+
+	if(partitioning_mode && db_insert_mode) {
+                LM_INFO("INFO: sipcapture: mod_init: you have enabled INSERT DELAYED for partitioning table \
+                                Make sure your DB can support it\n");
+        }
+
+	capture_on_flag = (int*)shm_malloc(sizeof(int));
+	if(capture_on_flag==NULL) {
+		LM_ERR("no more shm memory left\n");
+		return -1;
+	}
+	
+	*capture_on_flag = capture_on;
+	
+	/* register DGRAM event */
+	if(sr_event_register_cb(SREV_NET_DGRAM_IN, hep_msg_received) < 0) {
+		LM_ERR("ERROR:sipcapture:mod_init: failed to register SREV_NET_DGRAM_IN event\n");
+		return -1;		                	
+	}
+
+	if(ipip_capture_on && moni_capture_on) {
+		LM_ERR("ERROR:sipcapture:mod_init: only one RAW mode is supported. Please disable ipip_capture_on or moni_capture_on\n");
+		return -1;		                		
+	}		
+
+	/* raw processes for IPIP encapsulation */
+	if (ipip_capture_on || moni_capture_on) {
+		register_procs(raw_sock_children);
+		                		
+		if(extract_host_port() && (((ip=str2ip(&raw_socket_listen)) == NULL)
+#ifdef  USE_IPV6
+		               && ((ip=str2ip6(&raw_socket_listen)) == NULL)
+#endif
+		         )) 
+		{		
+			LM_ERR("sipcapture mod_init: bad RAW IP: %.*s\n", raw_socket_listen.len, raw_socket_listen.s); 
+			return -1;
+		}			
+
+		
+		raw_sock_desc = raw_socket(ipip_capture_on ? IPPROTO_IPIP : IPPROTO_UDP , 
+				raw_socket_listen.len ? ip : 0, raw_interface.len ? &raw_interface : 0, 0);
+		
+		if(raw_sock_desc < 0) {
+			LM_ERR("could not initialize raw udp socket:"
+                                         " %s (%d)\n", strerror(errno), errno);
+	                if (errno == EPERM)
+        	        	LM_ERR("could not initialize raw socket on startup"
+                	        	" due to inadequate permissions, please"
+                        	        " restart as root or with CAP_NET_RAW\n");
+                                
+			return -1;		
+		}
+
+		if(ipip_capture_on) raw_ipip = 1; /* IPIP mode for raw socket */
+
+		if(promisc_on && raw_interface.len) {
+
+			 memset(&ifr, 0, sizeof(ifr));
+			 memcpy(ifr.ifr_name, raw_interface.s, raw_interface.len);
+#ifdef __OS_linux			 			 
+			 if(ioctl(raw_sock_desc, SIOCGIFFLAGS, &ifr) < 0) {
+				LM_ERR("could not get flags from interface [%.*s]:"
+                                         " %s (%d)\n", raw_interface.len, raw_interface.s, strerror(errno), errno);			 			 				 
+				goto error;
+			 }
+			 
+	                 ifr.ifr_flags |= IFF_PROMISC; 
+	                 
+	                 if (ioctl(raw_sock_desc, SIOCSIFFLAGS, &ifr) < 0) {
+	                 	LM_ERR("could not set PROMISC flag to interface [%.*s]:"
+                                         " %s (%d)\n", raw_interface.len, raw_interface.s, strerror(errno), errno);			 			 				 
+				goto error;	                 
+	                 }
+#endif
+	                 
+		}		
+	}
+
+	return 0;
+error:
+	if(raw_sock_desc) close(raw_sock_desc);
+	return -1;	
+}
+
+int extract_host_port(void)
+{
+	if(raw_socket_listen.len) {
+		char *p1,*p2;
+		p1 = raw_socket_listen.s;
+			
+		if( (p1 = strrchr(p1, ':')) != 0 ) {
+			 *p1 = '\0';
+			 p1++;			 
+			 p2=p1;
+			 if((p2 = strrchr(p2, '-')) != 0 ) {
+			 	p2++;
+			 	moni_port_end = atoi(p2);
+			 	p1[strlen(p1)-strlen(p2)-1]='\0';
+			 }
+			 moni_port_start = atoi(p1);
+			 raw_socket_listen.len = strlen(raw_socket_listen.s);
+		}									                                        									
+		return 1;
+	}
+	return 0;
+}
+
+
+static int child_init(int rank)
+{
+	if (rank == PROC_MAIN && (ipip_capture_on || moni_capture_on)) {
+                if (init_rawsock_children() < 0) return -1;
+        }
+
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+		return 0; /* do nothing for the main process */
+
+	db_con = db_funcs.init(&db_url);
+	if (!db_con)
+	{
+		LM_ERR("unable to connect to database. Please check configuration.\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/*
+ * RAW IPIP || Monitoring listeners
+ */
+int init_rawsock_children(void)
+{
+        int i;
+        pid_t pid;
+
+        for(i = 0; i < raw_sock_children; i++) {
+                pid = fork_process(PROC_UNIXSOCK,"homer raw socket", 1);
+                if (pid < 0) {
+                        ERR("Unable to fork: %s\n", strerror(errno));
+                        return -1;
+                } else if (pid == 0) { /* child */
+			raw_udp4_rcv_loop(raw_sock_desc, moni_capture_on ? moni_port_start : 0, 
+					moni_capture_on ? moni_port_end : 0);
+                }
+                /* Parent */
+        }
+
+        DBG("Raw IPIP socket server successfully initialized\n");
+        return 1;
+}
+
+
+static void destroy(void)
+{
+	if (db_con!=NULL)
+		db_funcs.close(db_con);
+	if (capture_on_flag)
+		shm_free(capture_on_flag);
+		
+	if(raw_sock_desc > 0) {
+		 if(promisc_on && raw_interface.len) {
+#ifdef __OS_linux
+                         ifr.ifr_flags &= ~(IFF_PROMISC);
+
+                         if (ioctl(raw_sock_desc, SIOCSIFFLAGS, &ifr) < 0) {
+                                LM_ERR("destroy: could not remove PROMISC flag from interface [%.*s]:"
+                                         " %s (%d)\n", raw_interface.len, raw_interface.s, strerror(errno), errno);
+                         }
+#endif                        
+                }                		
+		close(raw_sock_desc);
+	}
+}
+
+
+/**
+ * HEP message
+ */
+int hep_msg_received(void *data)
+{
+
+	void **srevp;
+	char *buf;
+	unsigned len;
+	struct receive_info *ri;
+	
+	int offset = 0, hl;
+        struct hep_hdr *heph;
+        struct ip_addr dst_ip, src_ip;
+        char *hep_payload, *end, *p, *hep_ip;
+        struct hep_iphdr *hepiph = NULL;
+
+#ifdef USE_IPV6
+        struct hep_ip6hdr *hepip6h = NULL;
+#endif /* USE_IPV6 */
+
+	if(!hep_capture_on) {
+		LOG(L_ERR, "ERROR: sipcapture:hep_msg_received HEP is not enabled\n");
+                return -1;	
+	}	
+
+	srevp = (void**)data;
+	        
+	buf = (char *)srevp[0];
+	len = *((unsigned *)srevp[1]);
+	ri = (struct receive_info *)srevp[2];
+
+
+	hl = offset = sizeof(struct hep_hdr);
+        end = buf + len;
+        if (unlikely(len<offset)) {
+        	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received len less than offset [%i] vs [%i]\n", len, offset);
+                return -1;
+        }
+
+	/* hep_hdr */
+        heph = (struct hep_hdr*) buf;
+
+        switch(heph->hp_f){
+        	case AF_INET:
+                	hl += sizeof(struct hep_iphdr);
+                        break;
+#ifdef USE_IPV6
+		case AF_INET6:
+                	hl += sizeof(struct hep_ip6hdr);
+                        break;
+#endif /* USE_IPV6 */
+		default:
+                        LOG(L_ERR, "ERROR: sipcapture:hep_msg_received:  unsupported family [%d]\n", heph->hp_f);
+                        return -1;
+                }
+
+	/* Check version */
+        if(heph->hp_v != 1 || hl != heph->hp_l) {
+        	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: not supported version or bad length: v:[%d] l:[%d] vs [%d]\n",
+                                                heph->hp_v, heph->hp_l, hl);
+                return -1;
+	}
+
+        /* PROTO */
+        if(heph->hp_p == IPPROTO_UDP) ri->proto=PROTO_UDP;
+        else if(heph->hp_p == IPPROTO_TCP) ri->proto=PROTO_TCP;
+        else if(heph->hp_p == IPPROTO_IDP) ri->proto=PROTO_TLS; /* fake protocol */
+        else if(heph->hp_p == IPPROTO_SCTP) ri->proto=PROTO_SCTP;
+        else {
+        	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: unknow protocol [%d]\n",heph->hp_p);
+                ri->proto = PROTO_NONE;
+	}
+
+        hep_ip = buf + sizeof(struct hep_hdr);
+
+        if (unlikely(hep_ip>end)){
+                LOG(L_ERR,"hep_ip is over buf+len\n");
+                return -1;
+        }
+
+	switch(heph->hp_f){
+		case AF_INET:
+                	offset+=sizeof(struct hep_iphdr);
+                        hepiph = (struct hep_iphdr*) hep_ip;
+                        break;
+#ifdef USE_IPV6
+
+		case AF_INET6:
+                	offset+=sizeof(struct hep_ip6hdr);
+                        hepip6h = (struct hep_ip6hdr*) hep_ip;
+                        break;
+#endif /* USE_IPV6 */
+
+	  }
+
+	/* VOIP payload */
+        hep_payload = buf + offset;
+
+        if (unlikely(hep_payload>end)){
+        	LOG(L_ERR,"hep_payload is over buf+len\n");
+                return -1;
+	}
+
+	/* fill ip from the packet to dst_ip && to */
+        switch(heph->hp_f){
+
+		case AF_INET:
+                	dst_ip.af = src_ip.af = AF_INET;
+                        dst_ip.len = src_ip.len = 4 ;
+                        memcpy(&dst_ip.u.addr, &hepiph->hp_dst, 4);
+                        memcpy(&src_ip.u.addr, &hepiph->hp_src, 4);
+                        break;
+#ifdef USE_IPV6
+
+		case AF_INET6:
+                	dst_ip.af = src_ip.af = AF_INET6;
+                        dst_ip.len = src_ip.len = 16 ;
+                        memcpy(&dst_ip.u.addr, &hepip6h->hp6_dst, 16);
+                        memcpy(&src_ip.u.addr, &hepip6h->hp6_src, 16);
+                        break;
+
+#endif /* USE_IPV6 */
+	}
+
+        ri->src_ip = src_ip;
+        ri->src_port = ntohs(heph->hp_sport);
+
+        ri->dst_ip = dst_ip;
+        ri->dst_port = ntohs(heph->hp_dport);
+
+	/* cut off the offset */
+        len -= offset;
+        p = buf + offset;
+        memmove(buf, p, BUF_SIZE+1);
+	
+	return 0;
+}
+
+
+static int sip_capture_prepare(sip_msg_t *msg)
+{
+	/* We need parse all headers */
+	if (parse_headers(msg, HDR_CALLID_F|HDR_EOH_F, 0) != 0) {
+		LM_ERR("cannot parse headers\n");
+		return -1;
+	}
+	
+	return 0;
+}
+
+static int sip_capture_store(struct _sipcapture_object *sco)
+{
+	db_key_t db_keys[NR_KEYS];
+	db_val_t db_vals[NR_KEYS];
+	struct timeval tvb;
+	struct timezone tz;
+	char tmptable[TABLE_LEN];
+        int ret = 0;
+        struct tm *t;
+	               	
+	if(sco==NULL)
+	{
+		LM_DBG("invalid parameter\n");
+		return -1;
+	}
+	
+	gettimeofday( &tvb, &tz );
+	
+	t = localtime(&tvb.tv_sec);
+
+	db_keys[0] = &id_column;			
+        db_vals[0].type = DB1_INT;
+        db_vals[0].nul = 0;
+        db_vals[0].val.int_val = 0;
+        
+	db_keys[1] = &date_column;
+	db_vals[1].type = DB1_DATETIME;
+	db_vals[1].nul = 0;
+	db_vals[1].val.time_val = time(NULL);	
+	
+	db_keys[2] = &micro_ts_column;			
+        db_vals[2].type = DB1_BIGINT;
+        db_vals[2].nul = 0;
+        db_vals[2].val.ll_val = (unsigned long long)(tvb.tv_sec*1000000+tvb.tv_usec); /* micro ts */
+	
+	db_keys[3] = &method_column;
+	db_vals[3].type = DB1_STR;
+	db_vals[3].nul = 0;
+	db_vals[3].val.str_val = sco->method;	
+	
+	db_keys[4] = &reply_reason_column;
+	db_vals[4].type = DB1_STR;
+	db_vals[4].nul = 0;
+	db_vals[4].val.str_val = sco->reply_reason;		
+	
+	db_keys[5] = &ruri_column;
+	db_vals[5].type = DB1_STR;
+	db_vals[5].nul = 0;
+	db_vals[5].val.str_val = sco->ruri;		
+	
+	db_keys[6] = &ruri_user_column;
+	db_vals[6].type = DB1_STR;
+	db_vals[6].nul = 0;
+	db_vals[6].val.str_val = sco->ruri_user;		
+	
+	db_keys[7] = &from_user_column;
+	db_vals[7].type = DB1_STR;
+	db_vals[7].nul = 0;
+	db_vals[7].val.str_val = sco->from_user;		
+	
+	db_keys[8] = &from_tag_column;
+	db_vals[8].type = DB1_STR;
+	db_vals[8].nul = 0;
+	db_vals[8].val.str_val = sco->from_tag;		
+
+	db_keys[9] = &to_user_column;
+	db_vals[9].type = DB1_STR;
+	db_vals[9].nul = 0;
+	db_vals[9].val.str_val = sco->to_user;
+
+	db_keys[10] = &to_tag_column;
+	db_vals[10].type = DB1_STR;
+	db_vals[10].nul = 0;
+	db_vals[10].val.str_val = sco->to_tag;
+	
+	db_keys[11] = &pid_user_column;
+	db_vals[11].type = DB1_STR;
+	db_vals[11].nul = 0;
+	db_vals[11].val.str_val = sco->pid_user;
+
+	db_keys[12] = &contact_user_column;
+	db_vals[12].type = DB1_STR;
+	db_vals[12].nul = 0;
+	db_vals[12].val.str_val = sco->contact_user;	
+
+	db_keys[13] = &auth_user_column;
+	db_vals[13].type = DB1_STR;
+	db_vals[13].nul = 0;
+	db_vals[13].val.str_val = sco->auth_user;
+	
+	db_keys[14] = &callid_column;
+	db_vals[14].type = DB1_STR;
+	db_vals[14].nul = 0;
+	db_vals[14].val.str_val = sco->callid;
+
+	db_keys[15] = &callid_aleg_column;
+	db_vals[15].type = DB1_STR;
+	db_vals[15].nul = 0;
+	db_vals[15].val.str_val = sco->callid_aleg;
+	
+	db_keys[16] = &via_1_column;
+	db_vals[16].type = DB1_STR;
+	db_vals[16].nul = 0;
+	db_vals[16].val.str_val = sco->via_1;
+	
+	db_keys[17] = &via_1_branch_column;
+	db_vals[17].type = DB1_STR;
+	db_vals[17].nul = 0;
+	db_vals[17].val.str_val = sco->via_1_branch;
+
+	db_keys[18] = &cseq_column;
+	db_vals[18].type = DB1_STR;
+	db_vals[18].nul = 0;
+	db_vals[18].val.str_val = sco->cseq;	
+	
+	db_keys[19] = &reason_column;
+	db_vals[19].type = DB1_STR;
+	db_vals[19].nul = 0;
+	db_vals[19].val.str_val = sco->reason;
+	
+	db_keys[20] = &content_type_column;
+	db_vals[20].type = DB1_STR;
+	db_vals[20].nul = 0;
+	db_vals[20].val.str_val = sco->content_type;
+
+	db_keys[21] = &authorization_column;
+	db_vals[21].type = DB1_STR;
+	db_vals[21].nul = 0;
+	db_vals[21].val.str_val = sco->authorization;
+
+	db_keys[22] = &user_agent_column;
+	db_vals[22].type = DB1_STR;
+	db_vals[22].nul = 0;
+	db_vals[22].val.str_val = sco->user_agent;
+	
+	db_keys[23] = &source_ip_column;
+	db_vals[23].type = DB1_STR;
+	db_vals[23].nul = 0;
+	db_vals[23].val.str_val = sco->source_ip;
+	
+	db_keys[24] = &source_port_column;			
+        db_vals[24].type = DB1_INT;
+        db_vals[24].nul = 0;
+        db_vals[24].val.int_val = sco->source_port;
+        
+	db_keys[25] = &dest_ip_column;
+	db_vals[25].type = DB1_STR;
+	db_vals[25].nul = 0;
+	db_vals[25].val.str_val = sco->destination_ip;
+	
+	db_keys[26] = &dest_port_column;			
+        db_vals[26].type = DB1_INT;
+        db_vals[26].nul = 0;
+        db_vals[26].val.int_val = sco->destination_port;        
+        
+	db_keys[27] = &contact_ip_column;
+	db_vals[27].type = DB1_STR;
+	db_vals[27].nul = 0;
+	db_vals[27].val.str_val = sco->contact_ip;
+	
+	db_keys[28] = &contact_port_column;			
+        db_vals[28].type = DB1_INT;
+        db_vals[28].nul = 0;
+        db_vals[28].val.int_val = sco->contact_port;
+        
+	db_keys[29] = &orig_ip_column;
+	db_vals[29].type = DB1_STR;
+	db_vals[29].nul = 0;
+	db_vals[29].val.str_val = sco->originator_ip;
+	
+	db_keys[30] = &orig_port_column;			
+        db_vals[30].type = DB1_INT;
+        db_vals[30].nul = 0;
+        db_vals[30].val.int_val = sco->originator_port;        
+        
+        db_keys[31] = &proto_column;			
+        db_vals[31].type = DB1_INT;
+        db_vals[31].nul = 0;
+        db_vals[31].val.int_val = sco->proto;        
+
+        db_keys[32] = &family_column;			
+        db_vals[32].type = DB1_INT;
+        db_vals[32].nul = 0;
+        db_vals[32].val.int_val = sco->family;        
+        
+        db_keys[33] = &rtp_stat_column;			
+        db_vals[33].type = DB1_STR;
+        db_vals[33].nul = 0;
+        db_vals[33].val.str_val = sco->rtp_stat;                
+        
+        db_keys[34] = &type_column;			
+        db_vals[34].type = DB1_INT;
+        db_vals[34].nul = 0;
+        db_vals[34].val.int_val = sco->type;                
+
+	db_keys[35] = &node_column;
+	db_vals[35].type = DB1_STR;
+	db_vals[35].nul = 0;
+	db_vals[35].val.str_val = sco->node;
+	
+	db_keys[36] = &msg_column;
+	db_vals[36].type = DB1_BLOB;
+	db_vals[36].nul = 0;
+	db_vals[36].val.blob_val = sco->msg;	
+		
+	if(!partitioning_mode) {
+                ret = snprintf(tmptable, TABLE_LEN, "%.*s_%02d_%02d",
+                        table_name.len, table_name.s, (t->tm_wday == 0) ? 7 : t->tm_wday , t->tm_hour);
+                if(ret < 0 || ret >=TABLE_LEN) {
+                        LM_ERR("error create table name\n");
+                        goto error;
+                }
+
+                table_name.s = tmptable;
+                table_name.len = strlen(tmptable);
+        }
+
+	db_funcs.use_table(db_con, &table_name);
+
+	LM_DBG("storing info...\n");
+
+	if(db_insert_mode==1 && db_funcs.insert_delayed!=NULL) {
+                if (db_funcs.insert_delayed(db_con, db_keys, db_vals, NR_KEYS) < 0) {
+                	LM_ERR("failed to insert delayed into database\n");
+                        goto error;
+                }
+        } else if (db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0) {
+		LM_ERR("failed to insert into database\n");
+                goto error;               
+	}
+	
+	
+#ifdef STATISTICS
+	update_stat(sco->stat, 1);
+#endif	
+
+	return 1;
+error:
+	return -1;
+}
+
+static int sip_capture(struct sip_msg *msg, char *s1, char *s2)
+{
+	struct _sipcapture_object sco;
+	struct sip_uri from, to, pai, contact;
+	struct hdr_field *hook1 = NULL;	 
+	hdr_field_t *tmphdr[4];       
+	contact_body_t*  cb=0;	        	        
+	char buf_ip[IP_ADDR_MAX_STR_SIZE+12];
+	char *port_str = NULL, *tmp = NULL;
+	                                          
+	LM_DBG("CAPTURE DEBUG...\n");
+
+	if(msg==NULL) {
+		LM_DBG("nothing to capture\n");
+		return -1;
+	}
+	memset(&sco, 0, sizeof(struct _sipcapture_object));
+
+
+	if(capture_on_flag==NULL || *capture_on_flag==0) {
+		LM_DBG("capture off...\n");
+		return -1;
+	}
+	
+	if(sip_capture_prepare(msg)<0) return -1;
+
+	if(msg->first_line.type == SIP_REQUEST) {
+
+		if (parse_sip_msg_uri(msg)<0) return -1;
+	
+		sco.method = msg->first_line.u.request.method;
+		EMPTY_STR(sco.reply_reason);
+		
+		sco.ruri = msg->first_line.u.request.uri;
+		sco.ruri_user = msg->parsed_uri.user;		
+	}
+	else if(msg->first_line.type == SIP_REPLY) {
+		sco.method = msg->first_line.u.reply.status;
+		sco.reply_reason = msg->first_line.u.reply.reason;
+
+		EMPTY_STR(sco.ruri);
+		EMPTY_STR(sco.ruri_user);		
+	}
+	else {		
+		LM_ERR("unknow type [%i]\n", msg->first_line.type);	
+		EMPTY_STR(sco.method);
+		EMPTY_STR(sco.reply_reason);
+		EMPTY_STR(sco.ruri);
+		EMPTY_STR(sco.ruri_user);
+	}
+	
+	/* Parse FROM */
+        if(msg->from) {
+
+              if (parse_from_header(msg)!=0){
+                   LOG(L_ERR, "ERROR: eval_elem: bad or missing" " From: header\n");
+                   return -1;
+              }
+
+              if (parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len, &from)<0){
+                   LOG(L_ERR, "ERROR: do_action: bad from dropping"" packet\n");
+                   return -1;
+              }
+              
+              sco.from_user = from.user;
+              sco.from_tag = get_from(msg)->tag_value;              
+        }
+        else {
+		EMPTY_STR(sco.from_user);
+		EMPTY_STR(sco.from_tag);
+        }
+
+        /* Parse TO */
+        if(msg->to) {
+
+              if (parse_uri(get_to(msg)->uri.s, get_to(msg)->uri.len, &to)<0){
+                    LOG(L_ERR, "ERROR: do_action: bad to dropping"" packet\n");
+                    return -1;
+              }
+        
+              sco.to_user = to.user;
+              if(get_to(msg)->tag_value.len) 
+              		sco.to_tag = get_to(msg)->tag_value;              
+              else { EMPTY_STR(sco.to_tag); }
+        }
+        else {        
+        	EMPTY_STR(sco.to_user);
+        	EMPTY_STR(sco.to_tag);
+        }
+	
+	/* P-Asserted-Id */
+	if(msg->pai) {
+
+	     if(parse_pai_header(msg)==-1)
+             {
+		LM_DBG("no P-Asserted-Identity header\n");
+		return -1;
+	     }
+
+	     if (parse_uri(get_pai(msg)->uri.s, get_pai(msg)->uri.len, &pai)<0){
+             	LOG(L_ERR, "ERROR: do_action: bad pai dropping"" packet\n");
+                return -1;
+             }
+             
+             LM_DBG("PARSE PAI: (%.*s)\n",get_pai(msg)->uri.len, get_pai(msg)->uri.s);
+
+             sco.pid_user = pai.user;                          
+	}	
+	else if(msg->ppi) {
+
+	     if(parse_ppi_header(msg)==-1)
+             {
+		LM_DBG("no P-Preferred-Identity header\n");
+		return -1;
+	     }
+		
+	     if (parse_uri(get_ppi(msg)->uri.s, get_ppi(msg)->uri.len, &pai)<0){
+             	LOG(L_ERR, "ERROR: do_action: bad ppi dropping"" packet\n");
+                return -1;
+             }
+             
+             sco.pid_user = pai.user;
+        }
+        else { EMPTY_STR(sco.pid_user); }
+	
+	/* Auth headers */
+        if(msg->proxy_auth != NULL) hook1 = msg->proxy_auth;
+        else if(msg->authorization != NULL) hook1 = msg->authorization;
+
+        if(hook1) {
+               if(parse_credentials(hook1) == 0)  sco.auth_user = ((auth_body_t*)(hook1->parsed))->digest.username.user;               
+               else { EMPTY_STR(sco.auth_user); }
+        }
+        else { EMPTY_STR(sco.auth_user);}
+
+	if(msg->contact) {
+
+              if (msg->contact->parsed == 0 && parse_contact(msg->contact) == -1) {
+                     LOG(L_ERR,"assemble_msg: error while parsing <Contact:> header\n");
+                     return -1;
+              }
+
+              cb = (contact_body_t*)msg->contact->parsed;
+
+              if(cb && cb->contacts) {
+                  if(parse_uri( cb->contacts->uri.s, cb->contacts->uri.len, &contact)<0){
+                        LOG(L_ERR, "ERROR: do_action: bad contact dropping"" packet\n");
+                        return -1;
+                  }
+              }
+        }
+
+	/* Call-id */
+	if(msg->callid) sco.callid = msg->callid->body;
+	else { EMPTY_STR(sco.callid); }
+	
+
+	/* get header x-cid: */
+	/* callid_aleg X-CID */
+	if((tmphdr[0] = get_hdr_by_name(msg,"X-CID", 5)) != NULL) {
+		sco.callid_aleg = tmphdr[0]->body;
+        }
+	else { EMPTY_STR(sco.callid_aleg);}
+		
+	/* VIA 1 */
+	sco.via_1 = msg->h_via1->body;
+
+	/* Via branch */
+	if(msg->via1->branch) sco.via_1_branch = msg->via1->branch->value;
+	else { EMPTY_STR(sco.via_1_branch); }
+	
+	/* CSEQ */	
+	if(msg->cseq) sco.cseq = msg->cseq->body;
+	else { EMPTY_STR(sco.cseq); }
+	
+	/* Reason */	
+	if((tmphdr[1] = get_hdr_by_name(msg,"Reason", 6)) != NULL) {
+		sco.reason =  tmphdr[1]->body;
+	}	                         	
+	else { EMPTY_STR(sco.reason); }
+
+	/* Diversion */	
+	if(msg->diversion) sco.diversion = msg->diversion->body;
+	else { EMPTY_STR(sco.diversion);}
+	
+	/* Content-type */	
+	if(msg->content_type) sco.content_type = msg->content_type->body;
+	else { EMPTY_STR(sco.content_type);}
+	
+	/* User-Agent */	
+	if(msg->user_agent) sco.user_agent = msg->user_agent->body;
+	else { EMPTY_STR(sco.user_agent);}
+
+	/* Contact */	
+	if(msg->contact && cb) {
+		sco.contact_ip = contact.host;
+		str2int(&contact.port, (unsigned int*)&sco.contact_port);
+	}
+	else {
+		EMPTY_STR(sco.contact_ip);	
+		sco.contact_port = 0;
+	}
+	
+	/* X-OIP */	
+	//if(msg->xoip) {
+	if((tmphdr[2] = get_hdr_by_name(msg,"X-OIP", 5)) != NULL) {
+		sco.originator_ip = tmphdr[2]->body;
+		/* Originator port. Should be parsed from XOIP header as ":" param */
+		tmp = strchr(tmphdr[2]->body.s, ':');
+	        if (tmp) {
+			*tmp = '\0';
+	                port_str = tmp + 1;
+			sco.originator_port = strtol(port_str, NULL, 10);
+		}
+		else sco.originator_port = 0;		
+	}
+	else {
+		EMPTY_STR(sco.originator_ip);
+		sco.originator_port = 0;
+	}	
+	
+	/* X-RTP-Stat */	
+	if((tmphdr[3] = get_hdr_by_name(msg,"X-RTP-Stat", 10)) != NULL) {
+		sco.rtp_stat =  tmphdr[3]->body;
+	}	                         
+	/* P-RTP-Stat */	
+	else if((tmphdr[3] = get_hdr_by_name(msg,"P-RTP-Stat", 10)) != NULL) {
+		sco.rtp_stat =  tmphdr[3]->body;
+	}	                         	
+	else { EMPTY_STR(sco.rtp_stat); }	
+	
+		
+	/* PROTO TYPE */
+	sco.proto = msg->rcv.proto;
+	
+	/* FAMILY TYPE */
+	sco.family = msg->rcv.src_ip.af;
+	
+	/* MESSAGE TYPE */
+	sco.type = msg->first_line.type;
+	
+	/* Our node name */
+	sco.node = capture_node;
+	
+	/* MSG */	
+	sco.msg.s = msg->buf;
+	sco.msg.len = msg->len;	        
+	//EMPTY_STR(sco.msg);
+                 
+	/* IP source and destination */
+	
+	strcpy(buf_ip, ip_addr2a(&msg->rcv.src_ip));
+	sco.source_ip.s = buf_ip;
+	sco.source_ip.len = strlen(buf_ip);
+        sco.source_port = msg->rcv.src_port;	
+
+        /*source ip*/
+	sco.destination_ip.s = ip_addr2a(&msg->rcv.dst_ip);
+	sco.destination_ip.len = strlen(sco.destination_ip.s);
+	sco.destination_port = msg->rcv.dst_port;
+	
+        
+        LM_DBG("src_ip: [%.*s]\n", sco.source_ip.len, sco.source_ip.s);
+        LM_DBG("dst_ip: [%.*s]\n", sco.destination_ip.len, sco.destination_ip.s);
+                 
+        LM_DBG("dst_port: [%d]\n", sco.destination_port);
+        LM_DBG("src_port: [%d]\n", sco.source_port);
+        
+#ifdef STATISTICS
+	if(msg->first_line.type==SIP_REPLY) {
+		sco.stat = sipcapture_rpl;
+	} else {
+		sco.stat = sipcapture_req;
+	}
+#endif
+	//LM_DBG("DONE");
+	return sip_capture_store(&sco);
+}
+
+#define capture_is_off(_msg) \
+	(capture_on_flag==NULL || *capture_on_flag==0)
+
+
+/*! \brief
+ * MI Sip_capture command
+ *
+ * MI command format:
+ * name: sip_capture
+ * attribute: name=none, value=[on|off]
+ */
+static struct mi_root* sip_capture_mi(struct mi_root* cmd_tree, void* param )
+{
+	struct mi_node* node;
+	
+	struct mi_node *rpl; 
+	struct mi_root *rpl_tree ; 
+
+	node = cmd_tree->node.kids;
+	if(node == NULL) {
+		rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
+		if (rpl_tree == 0)
+			return 0;
+		rpl = &rpl_tree->node;
+
+		if (*capture_on_flag == 0 ) {
+			node = add_mi_node_child(rpl,0,0,0,MI_SSTR("off"));
+		} else if (*capture_on_flag == 1) {
+			node = add_mi_node_child(rpl,0,0,0,MI_SSTR("on"));
+		}
+		return rpl_tree ;
+	}
+	if(capture_on_flag==NULL)
+		return init_mi_tree( 500, MI_SSTR(MI_INTERNAL_ERR));
+
+	if ( node->value.len==2 && (node->value.s[0]=='o'
+				|| node->value.s[0]=='O') &&
+			(node->value.s[1]=='n'|| node->value.s[1]=='N')) {
+		*capture_on_flag = 1;
+		return init_mi_tree( 200, MI_SSTR(MI_OK));
+	} else if ( node->value.len==3 && (node->value.s[0]=='o'
+				|| node->value.s[0]=='O')
+			&& (node->value.s[1]=='f'|| node->value.s[1]=='F')
+			&& (node->value.s[2]=='f'|| node->value.s[2]=='F')) {
+		*capture_on_flag = 0;
+		return init_mi_tree( 200, MI_SSTR(MI_OK));
+	} else {
+		return init_mi_tree( 400, MI_SSTR(MI_BAD_PARM));
+	}
+}
+

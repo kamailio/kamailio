@@ -1,0 +1,340 @@
+SipCapture Module
+
+Alexandr Dubovikov
+
+   <alexandr.dubovikov@gmail.com>
+
+Edited by
+
+Alexandr Dubovikov
+
+   <alexandr.dubovikov@gmail.com>
+
+   Copyright © 2011 QSC AG
+
+   Copyright © 2011 http://www.qsc.de
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Exported Parameters
+
+              3.1. db_url (str)
+              3.2. table_name (str)
+              3.3. partitioning_mode (integer)
+              3.4. db_insert_mode (integer)
+              3.5. capture_on (integer)
+              3.6. hep_capture_on (integer)
+              3.7. raw_ipip_capture_on (integer)
+              3.8. raw_moni_capture_on (integer)
+              3.9. raw_socket_listen (string)
+              3.10. raw_interface (string)
+              3.11. raw_sock_children (integer)
+              3.12. promiscuous_on (integer)
+              3.13. capture_node (str)
+
+        4. Exported MI Functions
+
+              4.1. sip_capture
+
+        5. Database setup
+        6. Limitation
+
+   List of Examples
+
+   1.1. Set db_url parameter
+   1.2. Set sip_capture parameter
+   1.3. partitioning_mode
+   1.4. db_insert_mode example
+   1.5. Set capture_on parameter
+   1.6. Set hep_capture_on parameter
+   1.7. Set raw_ipip_capture_on parameter
+   1.8. Set raw_moni_capture_on parameter
+   1.9. Set raw_socket_listen parameter
+   1.10. Set raw_socket_listen parameter
+   1.11. Set raw_socket_listen parameter
+   1.12. Set hep_capture_on parameter
+   1.13. Set capture_node parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+
+        3.1. db_url (str)
+        3.2. table_name (str)
+        3.3. partitioning_mode (integer)
+        3.4. db_insert_mode (integer)
+        3.5. capture_on (integer)
+        3.6. hep_capture_on (integer)
+        3.7. raw_ipip_capture_on (integer)
+        3.8. raw_moni_capture_on (integer)
+        3.9. raw_socket_listen (string)
+        3.10. raw_interface (string)
+        3.11. raw_sock_children (integer)
+        3.12. promiscuous_on (integer)
+        3.13. capture_node (str)
+
+   4. Exported MI Functions
+
+        4.1. sip_capture
+
+   5. Database setup
+   6. Limitation
+
+1. Overview
+
+   Offer a possibility to store incoming/outgoing SIP messages in
+   database.
+
+   Kamailio can capture SIP messages in three mode
+     * IPIP encapsulation. (ETHHDR+IPHDR+IPHDR+UDPHDR).
+     * Monitoring/mirroring port.
+     * Homer encapsulation protocl mode (HEP v1).
+
+   The capturing can be turned on/off using fifo commad.
+
+   kamctl fifo sip_capture on
+
+   kamctl fifo sip_capture off
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * database module - mysql, postrgress, dbtext, unixodbc...
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Exported Parameters
+
+   3.1. db_url (str)
+   3.2. table_name (str)
+   3.3. partitioning_mode (integer)
+   3.4. db_insert_mode (integer)
+   3.5. capture_on (integer)
+   3.6. hep_capture_on (integer)
+   3.7. raw_ipip_capture_on (integer)
+   3.8. raw_moni_capture_on (integer)
+   3.9. raw_socket_listen (string)
+   3.10. raw_interface (string)
+   3.11. raw_sock_children (integer)
+   3.12. promiscuous_on (integer)
+   3.13. capture_node (str)
+
+3.1. db_url (str)
+
+   Database URL.
+
+   Default value is "".
+
+   Example 1.1. Set db_url parameter
+...
+modparam("sipcapture", "db_url", "mysql://user:passwd@host/dbname")
+...
+
+3.2. table_name (str)
+
+   Name of the table's name where to store the SIP messages. If
+   partitioning_mode set to 1, the table_name is a prefix to separate
+   table. i.e. sip_capture_01_02.
+
+   Default value is "sip_capture".
+
+   Example 1.2. Set sip_capture parameter
+...
+modparam("sipcapture", "table_name", "homer_capture")
+...
+
+3.3. partitioning_mode (integer)
+
+   If set to 0, records will store to separate table, depends on the day
+   of the week and the hour of the day. Otherwise records will store into
+   partitioning table.
+
+   Default value is 1.
+
+   Example 1.3. partitioning_mode
+modparam("sipcapture", "partitioning_mode", 0)
+
+3.4. db_insert_mode (integer)
+
+   If set to 1, use INSERT DELAYED to store sip message into capture table
+   when the DB driver has support for it. If no INSERT DELAYED support is
+   offered by DB driver, then standard INSERT is used.
+
+   Default value is 0 (no INSERT DELAYED).
+
+   Example 1.4. db_insert_mode example
+modparam("sipcapture", "db_insert_mode", 1)
+
+3.5. capture_on (integer)
+
+   Parameter to enable/disable capture globaly (on(1)/off(0))
+
+   Default value is "0".
+
+   Example 1.5. Set capture_on parameter
+...
+modparam("sipcapture", "capture_on", 1)
+...
+
+3.6. hep_capture_on (integer)
+
+   Parameter to enable/disable capture of HEP (on(1)/off(0))
+
+   Default value is "0".
+
+   Example 1.6. Set hep_capture_on parameter
+...
+modparam("sipcapture", "hep_capture_on", 1)
+...
+
+3.7. raw_ipip_capture_on (integer)
+
+   Parameter to enable/disable IPIP capturing (on(1)/off(0))
+
+   Default value is "0".
+
+   Example 1.7. Set raw_ipip_capture_on parameter
+...
+modparam("sipcapture", "raw_ipip_capture_on", 1)
+...
+
+3.8. raw_moni_capture_on (integer)
+
+   Parameter to enable/disable monitoring/mirroring port capturing
+   (on(1)/off(0)) Only one mode on raw socket can be enabled!
+
+   Default value is "0".
+
+   Example 1.8. Set raw_moni_capture_on parameter
+...
+modparam("sipcapture", "raw_moni_capture_on", 1)
+...
+
+3.9. raw_socket_listen (string)
+
+   Parameter indicate an listen IP address of RAW socket. You can also
+   define a port or portrange, which make sense only in
+   monitoring/mirroring capture mode.
+
+   Default value is "".
+
+   Example 1.9. Set raw_socket_listen parameter
+...
+modparam("sipcapture", "raw_socket_listen", "10.0.0.1:5060-5090")
+...
+modparam("sipcapture", "raw_socket_listen", "10.0.0.1:5060")
+...
+
+3.10. raw_interface (string)
+
+   Name of the interface to bind on the raw socket.
+
+   Default value is "".
+
+   Example 1.10. Set raw_socket_listen parameter
+...
+modparam("sipcapture", "raw_interface", "eth0")
+...
+
+3.11. raw_sock_children (integer)
+
+   Parameter define how much children must be created to listen the raw
+   socket.
+
+   Default value is "1".
+
+   Example 1.11. Set raw_socket_listen parameter
+...
+modparam("sipcapture", "raw_sock_children", 6)
+...
+
+3.12. promiscuous_on (integer)
+
+   Parameter to enable/disable promiscuous mode on the raw socket. Linux
+   only.
+
+   Default value is "0".
+
+   Example 1.12. Set hep_capture_on parameter
+...
+modparam("sipcapture", "promiscuous_on", 1)
+...
+
+3.13. capture_node (str)
+
+   Name of the capture node.
+
+   Default value is "homer01".
+
+   Example 1.13. Set capture_node parameter
+...
+modparam("sipcapture", "capture_node", "homer03")
+...
+
+4. Exported MI Functions
+
+   4.1. sip_capture
+
+4.1.  sip_capture
+
+   Name: sip_capture
+
+   Parameters:
+     * capture_mode : turns on/off SIP message capturing. Possible values
+       are:
+          + on
+          + off
+       The parameter is optional - if missing, the command will return the
+       status of the SIP message capturing (as string “on” or “off” )
+       without changing anything.
+
+   MI FIFO Command Format:
+                :sip_capture:_reply_fifo_file_
+                capture_mode
+                _empty_line_
+
+5. Database setup
+
+   Before running Kamailio with sipcapture, you have to setup the database
+   tables where the module will store the data. For that, if the table
+   were not created by the installation script or you choose to install
+   everything by yourself you can use the sipcapture-create.sql or the
+   sipcapture-st-create.sql SQL script in the database directories in the
+   kamailio/scripts folder as template. You can also find the complete
+   database documentation on the project webpage,
+   http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+
+6. Limitation
+
+   1. Only one capturing mode on RAW socket is supported: IPIP or
+   monitoring/mirroring port. Don't activate both at the same time. 2. By
+   default MySQL doesn't support INSERT DELAYED for partitioning table.
+   You can patch MySQL (http://bugs.mysql.com/bug.php?id=50393) or use
+   separate tables (pseudo partitioning) 3. Promiscuous mode works only on
+   Linux.

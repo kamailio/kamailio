@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		Offer a possibility to store incoming/outgoing SIP messages in database.
+	</para>
+	<para>
+		Kamailio can capture SIP messages in three mode
+		<itemizedlist>
+		<listitem>
+		<para>
+		IPIP encapsulation. (ETHHDR+IPHDR+IPHDR+UDPHDR).
+		</para>
+		</listitem>
+	        <listitem>
+                <para>
+                Monitoring/mirroring port.
+                </para>
+                </listitem>
+		<listitem>
+		<para>
+		Homer encapsulation protocl mode (HEP v1). 
+		</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+
+	<para>
+	The capturing can be turned on/off using fifo commad.
+	</para>
+	<para>
+	&ctltool; fifo sip_capture on
+	</para>
+	<para>
+	&ctltool; fifo sip_capture off
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>database module</emphasis> - mysql, postrgress,
+				dbtext, unixodbc...
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>db_url</varname> (str)</title>
+		<para>
+		Database URL.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipcapture", "db_url", "mysql://user:passwd@host/dbname")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>table_name</varname> (str)</title>
+		<para>
+		Name of the table's name where to store the SIP messages. 
+		If partitioning_mode set to 1, the table_name is a prefix 
+		to separate table. i.e. sip_capture_01_02.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "sip_capture".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sip_capture</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipcapture", "table_name", "homer_capture")
+...
+
+</programlisting>
+		</example>
+	</section>
+        <section>
+                <title><varname>partitioning_mode</varname> (integer)</title>
+                <para>
+                If set to 0, records will store to separate table, depends on 
+		the day of the week and the hour of the day. Otherwise records 
+		will store into partitioning table. 
+                </para>
+                <para>
+                Default value is 1.
+                </para>
+                <example>
+                <title>partitioning_mode</title>
+                <programlisting format="linespecific">
+modparam("sipcapture", "partitioning_mode", 0)
+</programlisting>
+                </example>
+        </section>
+        <section>
+                <title><varname>db_insert_mode</varname> (integer)</title>
+                <para>
+                If set to 1, use INSERT DELAYED to store sip message into capture table
+                when the DB driver has support for it. If no INSERT DELAYED support
+                is offered by DB driver, then standard INSERT is used.
+                </para>
+                <para>
+                Default value is 0 (no INSERT DELAYED).
+                </para>
+                <example>
+                <title>db_insert_mode example</title>
+                <programlisting format="linespecific">
+modparam("sipcapture", "db_insert_mode", 1)
+</programlisting>
+                </example>
+        </section>
+	<section>
+		<title><varname>capture_on</varname> (integer)</title>
+		<para>
+		Parameter to enable/disable capture globaly (on(1)/off(0))
+		</para>
+		<para>
+		<emphasis>
+			Default value is "0".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>capture_on</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipcapture", "capture_on", 1)
+...
+</programlisting>
+		</example>
+	</section>
+        <section>
+                <title><varname>hep_capture_on</varname> (integer)</title>
+                <para>
+                Parameter to enable/disable capture of HEP (on(1)/off(0))
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "0".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>hep_capture_on</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "hep_capture_on", 1)
+...
+</programlisting>
+                </example>
+        </section>
+        <section>
+                <title><varname>raw_ipip_capture_on</varname> (integer)</title>
+                <para>
+                Parameter to enable/disable IPIP capturing (on(1)/off(0))
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "0".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>raw_ipip_capture_on</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "raw_ipip_capture_on", 1)
+...
+</programlisting>
+                </example>
+        </section>
+        <section>
+                <title><varname>raw_moni_capture_on</varname> (integer)</title>
+                <para>
+                Parameter to enable/disable monitoring/mirroring port capturing (on(1)/off(0))
+		Only one mode on raw socket can be enabled!
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "0".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>raw_moni_capture_on</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "raw_moni_capture_on", 1)
+...
+		</programlisting>
+                </example>
+        </section>
+	<section>
+                <title><varname>raw_socket_listen</varname> (string)</title>
+                <para>
+                Parameter indicate an listen IP address of RAW socket. You can also define
+		a port or portrange, which make sense only in monitoring/mirroring 
+		capture mode. 
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>raw_socket_listen</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "raw_socket_listen", "10.0.0.1:5060-5090")
+...
+modparam("sipcapture", "raw_socket_listen", "10.0.0.1:5060")
+...
+</programlisting>
+                </example>
+        </section>
+       <section>
+                <title><varname>raw_interface</varname> (string)</title>
+		<para>
+		Name of the interface to bind on the raw socket.
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>raw_socket_listen</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "raw_interface", "eth0")
+...
+</programlisting>
+                </example>
+        </section>
+        <section>
+                <title><varname>raw_sock_children</varname> (integer)</title>
+                <para>
+		Parameter define how much children must be created to listen the raw socket.
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "1".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>raw_socket_listen</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "raw_sock_children", 6)
+...
+</programlisting>
+                </example>
+        </section>
+        <section>
+                <title><varname>promiscuous_on</varname> (integer)</title>
+                <para>
+                Parameter to enable/disable promiscuous mode on the raw socket.
+		Linux only.
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "0".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>hep_capture_on</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "promiscuous_on", 1)
+...
+</programlisting>
+                </example>
+        </section>
+	<section>
+		<title><varname>capture_node</varname> (str)</title>
+		<para>
+		Name of the capture node.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "homer01".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>capture_node</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipcapture", "capture_node", "homer03")
+...
+</programlisting>
+		</example>
+	</section>
+</section>	
+    <section>
+	<title>Exported MI Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">sip_capture</function>
+		</title>
+		<para>
+
+		</para>
+		<para>
+		Name: <emphasis>sip_capture</emphasis>
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>capture_mode : turns on/off SIP message capturing.
+			Possible values are:</para>
+			<itemizedlist>
+				<listitem><para> on </para></listitem> 
+				<listitem><para> off </para></listitem>
+			</itemizedlist>
+			<para>The parameter is optional - if missing, the command will
+			return the status of the SIP message capturing (as string 
+			<quote>on</quote> or <quote>off</quote> ) without changing
+			anything.</para>
+			</listitem>
+		</itemizedlist>
+
+		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:sip_capture:_reply_fifo_file_
+		capture_mode
+		_empty_line_
+		</programlisting>
+	</section>
+	</section>
+	
+	<section>
+		<title>Database setup</title>
+		<para>
+		Before running &kamailio; with sipcapture, you have to setup the database 
+		tables where the module will store the data. For that, if the
+		table were not created by the installation script or you choose
+		to install everything by yourself you can use the sipcapture-create.sql or 
+		the sipcapture-st-create.sql <acronym>SQL</acronym> script in the database 
+		directories in the kamailio/scripts folder as template.
+		You can also find the complete database documentation on the
+		project webpage, &kamailiodbdocslink;.
+		</para>
+	</section>
+	<section>
+        <title>Limitation</title>
+        <para>
+	
+		1. Only one capturing mode on RAW socket is supported: IPIP or monitoring/mirroring port. 
+		   Don't activate both at the same time.
+		2. By default MySQL doesn't support INSERT DELAYED for partitioning table. You can patch MySQL 
+		  (http://bugs.mysql.com/bug.php?id=50393) or use separate tables (pseudo partitioning)
+		3. Promiscuous mode works only on Linux.
+	
+        </para>
+        </section>
+</chapter>
+
