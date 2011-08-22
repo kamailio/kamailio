@@ -1,0 +1,1 @@
+* "Reliable" Notifications (implement using requests, and failover on error; ignore non-error responses) ?
