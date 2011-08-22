@@ -84,6 +84,8 @@
 
 #endif /* __OS_* */
 
+int raw_ipip = 0; /* set if raw socket is in capture mode for IPIP */
+
 
 /** create and return a raw socket.
  * @param proto - protocol used (e.g. IPPROTO_UDP, IPPROTO_RAW)
@@ -319,10 +321,14 @@ int raw_udp4_recv(int rsock, char** buf, int len, union sockaddr_union* from,
 	if (unlikely(n<0)) goto error;
 	
 	end=*buf+n;
-	if (unlikely(n<(sizeof(struct ip)+sizeof(struct udphdr)))) {
+	if (unlikely(n<((sizeof(struct ip) * raw_ipip ? 2 : 1)+sizeof(struct udphdr)))) {
 		n=-3;
 		goto error;
 	}
+	
+	if(raw_ipip) 
+        	*buf = *buf + sizeof(struct ip);
+	
 	/* FIXME: if initial buffer is aligned, one could skip the memcpy
 	   and directly cast ip and udphdr pointer to the memory */
 	memcpy(&iph, *buf, sizeof(struct ip));

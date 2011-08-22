@@ -39,6 +39,7 @@ struct raw_filter{
 	char proto;
 };
 
+extern int raw_ipip;
 
 int raw_socket(int proto, struct ip_addr* ip, str* iface, int iphdr_incl);
 int raw_udp4_socket(struct ip_addr* ip, str* iface, int iphdr_incl);
