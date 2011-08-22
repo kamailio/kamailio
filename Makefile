@@ -276,6 +276,9 @@ module_group_kgeoip=geoip
 # K sqlite module
 module_group_ksqlite=db_sqlite
 
+# K json modules
+module_group_kjson=json jsonrpc-c
+
 # if not set on the cmd. line, env or in the modules.lst (cfg_group_include)
 # exclude the below modules.
 ifneq ($(group_include)$(cfg_group_include),)
@@ -313,6 +316,8 @@ else
 	exclude_modules+= app_python
 	# depends on libxml2
 	exclude_modules+= xmlops
+	# depends on jsoc-c
+	exclude_modules+= json jsonrpc-c
 	# depends on tm being compiled with -DWITH_AS_SUPPORT support
 ifeq (,$(findstring -DWITH_AS_SUPPORT, $(C_DEFS)))
 		exclude_modules+= seas
