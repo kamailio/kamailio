@@ -33,12 +33,12 @@ ifeq ($(BUILDER),)
 				LIBS= -llua5.1
 			endif
 		else
-			DEFS+ = $(shell pkg-config --cflags lua)
+			DEFS+= $(shell pkg-config --cflags lua)
 			LIBS = $(shell pkg-config --libs lua)
 		endif
 	endif
 else
-	DEFS+ = $(shell lua-config --include)
+	DEFS+= $(shell lua-config --include)
 	LIBS = $(shell lua-config --libs)
 endif
 
