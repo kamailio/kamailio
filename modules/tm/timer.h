@@ -201,8 +201,8 @@ inline static int _set_fr_retr(struct retr_buf* rb, unsigned retr_ms)
 	ticks=get_ticks_raw();
 	timeout=rb->my_T->fr_timeout;
 	eol=rb->my_T->end_of_life;
+	retr_ticks = (retr_ms != (unsigned)(-1))?MS_TO_TICKS(retr_ms):retr_ms;
 	/* hack , next retr. int. */
-	retr_ticks = MS_TO_TICKS(retr_ms);
 	rb->timer.data=(void*)(unsigned long)(2*retr_ms);
 	rb->retr_expire=ticks + retr_ticks;
 	if (unlikely(rb->t_active)){
