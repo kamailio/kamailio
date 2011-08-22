@@ -33,6 +33,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <net/if.h> 
+#include <netdb.h>
+
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../events.h"
@@ -464,9 +471,11 @@ static int mod_init(void) {
 	}
 
 	return 0;
+#ifdef __OS_linux			 			 
 error:
 	if(raw_sock_desc) close(raw_sock_desc);
 	return -1;	
+#endif
 }
 
 int extract_host_port(void)
@@ -628,7 +637,9 @@ int hep_msg_received(void *data)
         if(heph->hp_p == IPPROTO_UDP) ri->proto=PROTO_UDP;
         else if(heph->hp_p == IPPROTO_TCP) ri->proto=PROTO_TCP;
         else if(heph->hp_p == IPPROTO_IDP) ri->proto=PROTO_TLS; /* fake protocol */
+#ifdef USE_SCTP
         else if(heph->hp_p == IPPROTO_SCTP) ri->proto=PROTO_SCTP;
+#endif
         else {
         	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: unknow protocol [%d]\n",heph->hp_p);
                 ri->proto = PROTO_NONE;
