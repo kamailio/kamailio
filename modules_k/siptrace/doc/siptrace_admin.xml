@@ -16,7 +16,9 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		Offer a possibility to store incoming/outgoing SIP messages in database.
+		Offer a possibility to store incoming/outgoing SIP messages in database
+		and/or duplicate to the capturing server (homer encapsulation protocol 
+		or plain sip mode)
 	</para>
 	<para>
 	There are two ways of storing information.
@@ -365,6 +367,25 @@ modparam("siptrace", "xheaders_read", 0)
 </programlisting>
 		</example>
 	</section>
+	<section>
+                <title><varname>hep_mode_on</varname> (integer)</title>
+                <para>
+                Parameter to enable/disable homer encapsulate mode (on(1)/off(0))
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "0".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>hep_mode_on</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("siptrace", "hep_mode_on", 1)
+...
+</programlisting>
+                </example>
+        </section>
 	</section>
 	
 	<section>

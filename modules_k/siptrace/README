@@ -6,6 +6,12 @@ Daniel-Constantin Mierla
 
 Edited by
 
+Alexandr Dubovikov
+
+   <alexandr.dubovikov@gmail.com>
+
+Edited by
+
 Daniel-Constantin Mierla
 
    <miconda@gmail.com>
@@ -34,8 +40,12 @@ Daniel-Constantin Mierla
               3.5. traced_user_avp (str)
               3.6. trace_table_avp (str)
               3.7. duplicate_uri (str)
-              3.8. trace_local_ip (str)
-              3.9. trace_sl_acks (integer)
+              3.8. trace_to_database (integer)
+              3.9. trace_local_ip (str)
+              3.10. trace_sl_acks (integer)
+              3.11. xheaders_write (integer)
+              3.12. xheaders_read (integer)
+              3.13. hep_mode_on (integer)
 
         4. Exported Functions
 
@@ -57,9 +67,13 @@ Daniel-Constantin Mierla
    1.5. Set traced_user_avp parameter
    1.6. Set trace_table_avp parameter
    1.7. Set duplicate_uri parameter
-   1.8. Set trace_local_ip parameter
-   1.9. Set trace_sl_acks parameter
-   1.10. sip_trace() usage
+   1.8. Set trace_to_database parameter
+   1.9. Set trace_local_ip parameter
+   1.10. Set trace_sl_acks parameter
+   1.11. Set xheaders_write parameter
+   1.12. Set xheaders_read parameter
+   1.13. Set hep_mode_on parameter
+   1.14. sip_trace() usage
 
 Chapter 1. Admin Guide
 
@@ -80,8 +94,12 @@ Chapter 1. Admin Guide
         3.5. traced_user_avp (str)
         3.6. trace_table_avp (str)
         3.7. duplicate_uri (str)
-        3.8. trace_local_ip (str)
-        3.9. trace_sl_acks (integer)
+        3.8. trace_to_database (integer)
+        3.9. trace_local_ip (str)
+        3.10. trace_sl_acks (integer)
+        3.11. xheaders_write (integer)
+        3.12. xheaders_read (integer)
+        3.13. hep_mode_on (integer)
 
    4. Exported Functions
 
@@ -96,8 +114,9 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   Offer a possibility to store incoming/outgoing SIP messages in
-   database.
+   Offer a possibility to store incoming/outgoing SIP messages in database
+   and/or duplicate to the capturing server (homer encapsulation protocol
+   or plain sip mode)
 
    There are two ways of storing information.
      * by calling explicitely the sip_trace() method in Kamailio
@@ -141,8 +160,12 @@ Chapter 1. Admin Guide
    3.5. traced_user_avp (str)
    3.6. trace_table_avp (str)
    3.7. duplicate_uri (str)
-   3.8. trace_local_ip (str)
-   3.9. trace_sl_acks (integer)
+   3.8. trace_to_database (integer)
+   3.9. trace_local_ip (str)
+   3.10. trace_sl_acks (integer)
+   3.11. xheaders_write (integer)
+   3.12. xheaders_read (integer)
+   3.13. hep_mode_on (integer)
 
 3.1. db_url (str)
 
@@ -231,7 +254,21 @@ modparam("siptrace", "trace_table_avp", "$avp(s:siptrace_table)")
 modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 ...
 
-3.8. trace_local_ip (str)
+3.8. trace_to_database (integer)
+
+   Parameter to enable/disable inserts to the Database from this Kamailio.
+
+   In case we only want to send the SIP-Messages to the duplicate_uri and
+   not store the information to the local database we can set this to "0".
+
+   Default value is "1".
+
+   Example 1.8. Set trace_to_database parameter
+...
+modparam("siptrace", "trace_to_database", 0)
+...
+
+3.9. trace_local_ip (str)
 
    The address to be used in fromip field for local generated messages. If
    not set, the module sets it to the address of the socket that will be
@@ -239,12 +276,12 @@ modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 
    Default value is "NULL".
 
-   Example 1.8. Set trace_local_ip parameter
+   Example 1.9. Set trace_local_ip parameter
 ...
 modparam("siptrace", "trace_local_ip", "10.1.1.1:5064")
 ...
 
-3.9. trace_sl_acks (integer)
+3.10. trace_sl_acks (integer)
 
    Parameter to enable/disable tracing of SL-filtered ACKs (on=1 / off=0).
 
@@ -256,9 +293,58 @@ modparam("siptrace", "trace_local_ip", "10.1.1.1:5064")
 
    Default value is "1".
 
-   Example 1.9. Set trace_sl_acks parameter
+   Example 1.10. Set trace_sl_acks parameter
 ...
 modparam("siptrace", "trace_sl_acks", 0)
+...
+
+3.11. xheaders_write (integer)
+
+   Parameter to enable/disable writing of x-headers.
+
+   Stores fromip, toip, method and direction in X-Siptrace-* headers. This
+   allows to transmit them to a second kamailio server using the
+   duplicate_uri feature. Because the headers are added after the data is
+   written to the database, the headers only show up in the packets sent
+   by duplicate_uri.
+
+   See xheaders_read, it should be used on the receiving side.
+
+   Note: The headers are first read, then written. This allows to relay
+   the information over more then two kamailio servers by setting both
+   xheaders_write and xheaders_read to "1" on the servers in the middle.
+
+   Default value is "0".
+
+   Example 1.11. Set xheaders_write parameter
+...
+modparam("siptrace", "xheaders_write", 0)
+...
+
+3.12. xheaders_read (integer)
+
+   Parameter to enable/disable reading of x-headers.
+
+   Reads and removes the X-Siptrace-* headers. Packets not containing the
+   headers are neither stored to the database nor relayed (duplicate_uri).
+   See xheaders_write for further information.
+
+   Default value is "0".
+
+   Example 1.12. Set xheaders_read parameter
+...
+modparam("siptrace", "xheaders_read", 0)
+...
+
+3.13. hep_mode_on (integer)
+
+   Parameter to enable/disable homer encapsulate mode (on(1)/off(0))
+
+   Default value is "0".
+
+   Example 1.13. Set hep_mode_on parameter
+...
+modparam("siptrace", "hep_mode_on", 1)
 ...
 
 4. Exported Functions
@@ -273,7 +359,7 @@ modparam("siptrace", "trace_sl_acks", 0)
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.10. sip_trace() usage
+   Example 1.14. sip_trace() usage
 ...
 sip_trace();
 ...
