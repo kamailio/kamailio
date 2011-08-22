@@ -1,0 +1,373 @@
+--- /root/sip-router/etc/sip-router-oob.cfg	2011-04-05 21:11:22.000000000 +0200
++++ sip-router-oob-RTPPROXY.cfg-pre_flexroute	2011-04-05 21:03:19.000000000 +0200
+@@ -283,23 +287,11 @@
+ #
+ session_timer.min_se = "90" desc "minimum session interval (in s)"
+ 
+-# RTP Proxy options
+-#
+-# Whether to enable or disable the rtp proxy. Possible values are:
+-# "0" -- always disable
+-# "1" -- always enable regardless of whether UAC or UAS is behind NAT
+-# "detect" -- detect whether the UAC or the UAS is behind NAT,
+-#             and enable the rtp proxy when necessary
+-#
+-#DEBCONF-RTP_ENABLE-START
+-rtp_proxy.enabled = "detect" desc "indicates whether the RTP Proxy is enabled or not (0/1/detect)"
+-#DEBCONF-RTP_ENABLE-END
+-
+ # ------------------ Module Loading -----------------------------------------
+ #!ifdef LOCAL_TEST_RUN
+ loadpath "modules:modules_s"
+ #!else
+-loadpath "/usr/lib/sip-router/modules:/usr/lib/sip-router/modules_s"
++loadpath "/usr/local/lib/ser/modules:/usr/local/lib/ser/modules_s"
+ #!endif
+ 
+ # load a SQL database for authentication, domains, user AVPs etc.
+@@ -457,7 +449,7 @@
+ modparam("rr", "enable_full_lr", 1)
+ 
+ # Limit the length of the AVP cookie to necessary attributes only
+-modparam("rr", "cookie_filter", "(account|rproxy|stimer|dialog_id)")
++modparam("rr", "cookie_filter", "(account|stimer|dialog_id)")
+ 
+ # You probably do not want that someone can simply read and change
+ # the AVP cookie in your Routes, thus should really change this
+@@ -467,7 +459,7 @@
+ # The ftag Route parameter may be used to easily determine if a BYE
+ # is coming from caller or callee, but we prefer shorter messages
+ # Enable when FLAG_REVERSE_DIR is to be used
+-modparam("rr", "append_fromtag", 0)
++modparam("rr", "append_fromtag", 1)
+ 
+ 
+ # -- gflags --
+@@ -529,7 +521,7 @@
+ 
+ # RTP Proxy address
+ #DEBCONF-RTTPPROXY-START
+-modparam("nathelper", "rtpproxy_sock", "udp:127.0.0.1:22222")
++#modparam("nathelper", "rtpproxy_sock", "udp:127.0.0.1:22222")
+ #DEBCONF-RTTPPROXY-END
+ 
+ # TCP keepalives as simple as CRLF
+@@ -649,7 +641,7 @@
+ 	route(PSTN);
+ 
+ 	# nothing matched
+-	sl_reply("404", "No route matched");
++	t_reply("404", "No route matched");
+ }
+ 
+ # Forward a request to the destination set.
+@@ -668,7 +660,8 @@
+ 	# If this is an initial INVITE (without a To-tag) we might try
+ 	# another target (call forwarding or voicemail) after receiving
+ 	# an error.
+-	if (isflagset(FLAG_INIT_DLG)) {
++	# and also for RTPPROXY processing
++	if (method=="INVITE" || method == "UPDATE") {
+ 		t_on_failure("FAILURE_ROUTE");
+ 	}
+ 
+@@ -682,7 +675,7 @@
+ 
+ 	# Activate the RTP proxy as the second last step because it modifies the
+ 	# body but also sets an dialog AVP cookie.
+-	route(RTPPROXY);
++	route(RTPPROXY_PROCESS_REQUEST);
+ 
+ 	# Insert a Record-Route header into all requests.
+ 	# This has to be done as one of the last steps to include all the
+@@ -742,10 +735,10 @@
+ 	# if needed then we MUST put after force_rport() which is located in NAT_DETECTION!!!
+ 	# also must be called after FLAG_ACC is set !!!
+ 	# Check t_reply() vs. sl_reply() usage in script
+-	#if (!t_newtran()) {
+-	#	sl_reply("500", "Internal tm error");
+-	#	drop;
+-	#}
++	if (!t_newtran()) {
++		sl_reply("500", "Internal tm error");
++		drop;
++	}
+ 														
+ 	# Set flag and use it instead of the attribute.
+ 	if ($replicate==1) {
+@@ -765,6 +758,7 @@
+ 		(uri == myself || $t.did != ""))
+ 	{
+ 		options_reply();
++		t_release();
+ 		drop;
+ 	}
+ }
+@@ -879,47 +873,7 @@
+ 	}
+ }
+ 
+-
+-# Activates RTP proxy if necessary.
+-#
+-route[RTPPROXY]
+-{
+-	if (@cfg_get.rtp_proxy.enabled == "0") {
+-		# RTP Proxy is disabled
+-		break;
+-	} else if (@cfg_get.rtp_proxy.enabled == "detect") {
+-		if (!isflagset(FLAG_NAT)) {
+-			# If no NAT is involved we don't have to do here anything.
+-			break;
+-		}
+-	} else if (@cfg_get.rtp_proxy.enabled != "1") {
+-		# This is not a valid setting
+-		xlog("L_ERR", "Unknown option for rtp_proxy.enabled: %@cfg_get.rtp_proxy.enabled\n");
+-		break;
+-	} # else rtp proxy is permanently enabled
+-
+-	# If the message terminates a dialog for which the RTP proxy 
+-	# was turned on, turn it off again.
+-	if ((method == "BYE" && isflagset(FLAG_RTP_PROXY)) ||
+-		(method == "CANCEL")) {
+-		unforce_rtp_proxy();
+-		append_hf("P-RTP-Proxy: Off\r\n");
+-		break;
+-	}
+-
+-	# Turn the RTP proxy on for INVITEs and UPDATEs, if they 
+-	# have a body
+-	if (((method=="INVITE" || method == "UPDATE") && @msg.body != "")
+-	    && !isflagset(FLAG_RTP_PROXY))
+-	{
+-		force_rtp_proxy('r');
+-		append_hf("P-RTP-Proxy: On\r\n");
+-		setflag(FLAG_RTP_PROXY);
+-		$rproxy = 1;
+-		setavpflag($rproxy, "dialog_cookie");
+-	}
+-}
+-
++include_file "sip-router-oob-RTPPROXY.cfg.inc"
+ 
+ # Handling of Route headers
+ #
+@@ -934,7 +888,7 @@
+ 		xlog("L_DEBUG", "\n%mb\n\ndialogid -/from/to=%$dialog_id/%$f.dialog_id/%$t.dialog_id");
+ 		if (method == "INVITE" || method == "UPDATE" || method == "ACK" || method == "BYE") {
+ 			if (!defined $dialog_id) {
+-				sl_reply("400", "Missing cookie");
++				t_reply("400", "Missing cookie");
+ 				drop;
+ 			}
+ 		}
+@@ -954,11 +908,6 @@
+ 			setflag(FLAG_ACC_MISSED);
+ 		}
+ 
+-		# Restore the RTP proxy flag if present
+-		if ($rproxy == "1") {
+-			setflag(FLAG_RTP_PROXY);
+-		}
+-
+ 		# Restore Session Timer flag and headers.
+ 		if ( defined $stimer && ($stimer != "0")) {
+ 			route(SESSION_TIMER);
+@@ -1039,7 +988,7 @@
+ 	# then From b@B and To a@A. There is no mentioning of c@C despite
+ 	# legitimate behaviour of c@C).
+ 	if (!isflagset(FLAG_TOTAG) && strempty($t.did) && strempty($f.did)) {
+-		sl_reply("403", "Relaying Forbidden");
++		t_reply("403", "Relaying Forbidden");
+ 		drop;
+ 	}
+ }
+@@ -1057,6 +1006,7 @@
+ 	# If this is a replica (sent to the multicast address), trust it to
+ 	# be secure and store it in usrloc
+ 	if (dst_ip==224.0.1.75) {
++		t_release();
+ 		if (!isflagset(FLAG_REPL_ENABLED)) {
+ 			# Multicast replication administratively disabled.
+ 			# Ignore.
+@@ -1097,13 +1047,13 @@
+ 
+ 	# Check if the REGISTER if for one of our local domains.
+ 	if (strempty($t.did)) {
+-		sl_reply("403", "Register Forwarding Forbidden");
++		t_reply("403", "Register Forwarding Forbidden");
+ 		drop;
+ 	}
+ 
+ 	# The REGISTER target is in the To header, so reload the domain.
+ 	if (!lookup_domain("$td", "@to.uri.host")) {
+-		sl_reply("404", "Unknown Domain");
++		t_reply("404", "Unknown Domain");
+ 		drop;
+ 	}
+ 
+@@ -1115,29 +1065,29 @@
+ 	# We want only authenticated users to be registered.
+ 	if (!www_authenticate("$fd.digest_realm", "credentials")) {
+ 		if ($? == -2) {
+-			sl_reply("500", "Internal Server Error");
++			t_reply("500", "Internal Server Error");
+ 		}
+ 		else if ($? == -3) {
+-			sl_reply("400", "Bad Request");
++			t_reply("400", "Bad Request");
+ 		}
+ 		else {
+ 			if ($digest_challenge != "") {
+ 				append_to_reply("%$digest_challenge");
+ 			}
+-			sl_reply("401", "Unauthorized");
++			t_reply("401", "Unauthorized");
+ 		}
+ 		drop;
+ 	}
+ 
+ 	# Check if the authenticated user is the same as the target user.
+ 	if (!lookup_user("$tu.uid", "@to.uri")) {
+-		sl_reply("404", "Unknown user in To");
++		t_reply("404", "Unknown user in To");
+ 		drop;
+ 	}
+ 
+ 	# the authentication ID does not match the ID in the To header
+ 	if ($f.uid != $t.uid) {
+-		sl_reply("403", "Authentication and To-Header mismatch");
++		t_reply("403", "Authentication and To-Header mismatch");
+ 		drop;
+ 	}
+ 
+@@ -1145,11 +1095,11 @@
+ 	# originator. You may uncomment it if you care, which URI is in
+ 	# the From header.
+ 	#if (!lookup_user("$fr.uid", "@from.uri")) {
+-	#	sl_reply("404", "Unknown user in From");
++	#	t_reply("404", "Unknown user in From");
+ 	#	drop;
+ 	#}
+ 	#if ($fu.uid != $fr.uid) {
+-	#	sl_reply("403", "Authentication and From-Header mismatch");
++	#	t_reply("403", "Authentication and From-Header mismatch");
+ 	#	drop;
+ 	#}
+ 
+@@ -1158,7 +1108,7 @@
+ 	}
+ 	# Everything is fine. Store the binding.
+ 	if (!save_contacts("location")) {
+-		sl_reply("400", "Invalid REGISTER Request");
++		t_reply("400", "Invalid REGISTER Request");
+ 		drop;
+ 	}
+ # do not delete the following 3 lines, they are used by debconf
+@@ -1190,7 +1140,7 @@
+ #DEBCONF-REPLICATION2-START
+ #
+ #DEBCONF-REPLICATION2-END
+-
++	t_release();
+ 	drop;
+ }
+ 
+@@ -1221,16 +1171,16 @@
+ 
+ 	if (!proxy_authenticate("$fd.digest_realm", "credentials")) {
+ 		if ($? == -2) {
+-			sl_reply("500", "Internal Server Error");
++			t_reply("500", "Internal Server Error");
+ 		}
+ 		else if ($? == -3) {
+-			sl_reply("400", "Bad Request");
++			t_reply("400", "Bad Request");
+ 		}
+ 		else {
+ 			if (defined $digest_challenge && $digest_challenge != "") {
+ 				append_to_reply("%$digest_challenge");
+ 			}
+-			sl_reply("407", "Proxy Authentication Required");
++			t_reply("407", "Proxy Authentication Required");
+ 		}
+ 		drop;
+ 	}
+@@ -1238,11 +1188,11 @@
+ 	# Check if the UID derived from authentication matches that from
+ 	# the From header.
+ 	if (!lookup_user("$fr.uid", "@from.uri")) {
+-		sl_reply("403", "Fake Identity");
++		t_reply("403", "Fake Identity");
+ 		drop;
+ 	}
+ 	if ($fu.uid != $fr.uid) {
+-		sl_reply("403", "Fake Identity");
++		t_reply("403", "Fake Identity");
+ 		drop;
+ 	}
+ 	setflag(FLAG_AUTH_OK);
+@@ -1274,10 +1224,10 @@
+ 	# UA to the real target.
+ 	if ($fd.did != "" && uri =~ "sip:[0-9][0-9]@") {
+ 		if (sd_lookup("speed_dial")) {
+-			sl_reply("302", "Speed Dial Redirect");
++			t_reply("302", "Speed Dial Redirect");
+ 		}
+ 		else {
+-			sl_reply("404", "Speed Dial Not Found");
++			t_reply("404", "Speed Dial Not Found");
+ 		}
+ 		drop;
+ 	}
+@@ -1392,7 +1342,7 @@
+ 	# Check permissions of the caller for initial INVITEs.
+ 	if (isflagset(FLAG_INIT_DLG)) {
+ 		if ($f.gw_acl != "1") {
+-			sl_reply("403", "PSTN Not Permitted");
++			t_reply("403", "PSTN Not Permitted");
+ 			drop;
+ 		}
+ 	}
+@@ -1431,7 +1381,7 @@
+ 		xlog("L_DEBUG", "catching cancel dialogid=%$dialog_id\n");
+ 		if (!t_relay_cancel()) {
+ 			# An INVITE was found but some error occurred.
+-			sl_reply("500", "Internal Server Error");
++			t_reply("500", "Internal Server Error");
+ 			drop;
+ 		}
+ 		# Bad luck, no corresponding INVITE was found, we have to
+@@ -1486,7 +1436,7 @@
+ 				# Session interval is lower than the
+ 				# configured Min-SE
+ 				append_to_reply("Min-SE: %@cfg_get.session_timer.min_se\r\n");
+-				sl_reply("422", "Session Interval Too Small");
++				t_reply("422", "Session Interval Too Small");
+ 				drop;
+ 			}
+ 
+@@ -1592,6 +1542,7 @@
+ 			}
+ 		}
+ 	} # if (isflagset...
++	route(RTPPROXY_PROCESS_FAILURE);
+ }
+ 
+ 
+@@ -1603,14 +1554,7 @@
+ 	# allow proper routing of in-dialog messages.
+ 	route(UAS_NAT_DETECTION);
+ 
+-	# If RTP proxy was activated and this is a 18x or 2xx reply with a
+-	# body, inform RTP proxy.
+-	if (isflagset(FLAG_RTP_PROXY)
+-	    && status=~"(18[03])|(2[0-9][0-9])"
+-	    && @msg.body != "")
+-	{
+-		force_rtp_proxy('r');
+-	}
++	route(RTPPROXY_PROCESS_REPLY);
+ 
+ 	# Let's check for session timer support.
+ 	if (isflagset(FLAG_SESSIONTIMER) && status =~ "2[0-9][0-9]") {
