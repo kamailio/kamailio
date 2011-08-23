@@ -1154,8 +1154,8 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, struct dlg_cell *
 {
 	rpc_cb_ctx_t rpc_cb;
 
-	rpc->printf(c, "hash:%u:%u state:%u timestart:%u timeout:%u",
-		dlg->h_entry, dlg->h_id, dlg->state, dlg->start_ts, dlg->tl.timeout);
+	rpc->printf(c, "hash:%u:%u state:%u ref_count:%u timestart:%u timeout:%u",
+		dlg->h_entry, dlg->h_id, dlg->state, dlg->ref, dlg->start_ts, dlg->tl.timeout);
 	rpc->printf(c, "\tcallid:%.*s from_tag:%.*s to_tag:%.*s",
 		dlg->callid.len, dlg->callid.s,
 		dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
