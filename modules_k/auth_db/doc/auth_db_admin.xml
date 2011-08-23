@@ -367,7 +367,7 @@ modparam("auth_db", "version_table", 0)
 		<title><function moreinfo="none">www_authorize</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (www_authorize("kamailio.org", "subscriber")) {
+if (!www_authorize("kamailio.org", "subscriber")) {
 	www_challenge("kamailio.org", "1");
 };
 ...
