@@ -239,24 +239,27 @@ error:
  */
 int init_child_trusted(int rank)
 {
-    if ((rank <= 0) && (rank != PROC_RPC) && (rank != PROC_UNIXSOCK))
+	if (db_mode == ENABLE_CACHE)
+		return 0;
+
+	if ((rank <= 0) && (rank != PROC_RPC) && (rank != PROC_UNIXSOCK))
 		return 0;
 
 	if (!db_url.s) {
 		return 0;
 	}
-	
+
 	db_handle = perm_dbf.init(&db_url);
 	if (!db_handle) {
-	    LM_ERR("unable to connect database\n");
-	    return -1;
+		LM_ERR("unable to connect database\n");
+		return -1;
 	}
 
 	if (db_check_table_version(&perm_dbf, db_handle, &trusted_table,
 				   TABLE_VERSION) < 0) {
-	    LM_ERR("error during table version check.\n");
-	    perm_dbf.close(db_handle);
-	    return -1;
+		LM_ERR("error during table version check.\n");
+		perm_dbf.close(db_handle);
+		return -1;
 	}
 
 	return 0;
