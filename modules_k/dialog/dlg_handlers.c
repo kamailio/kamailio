@@ -796,10 +796,14 @@ finish:
 	ref_dlg(dlg, 1);
 
 	if (t) {
+		// transaction exists ==> keep ref counter large enough to
+		// avoid premature cleanup and ensure proper dialog referencing
 		store_dlg_in_tm( msg, t, dlg);
 	}
 	else
 	{
+		// no transaction exists ==> postpone work until we see the
+		// request being forwarded statefully
 		if ( d_tmb.register_tmcb( msg, NULL, TMCB_REQUEST_FWDED,
 					store_dlg_in_tm_cb, (void*)dlg, NULL)<0 ) {
 			LM_ERR("failed to store dialog in transaction during dialog creation for later reference\n");
