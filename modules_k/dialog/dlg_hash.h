@@ -253,12 +253,14 @@ int dlg_set_toroute(struct dlg_cell *dlg, str *route);
 
 /*!
  * \brief Lookup a dialog in the global list
+ *
+ * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again iff a dialog has been found.
  * \param h_entry number of the hash table entry
  * \param h_id id of the hash table entry
- * \param del will set to 1 if dialog is deleted
- * \return dialog structure on success, NULL on failure or if not found
+ * \return dialog structure on success, NULL on failure
  */
-struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id, unsigned int *del);
+struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id);
 
 
 /*!
@@ -269,14 +271,15 @@ struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id, unsigned i
  * "The combination of the To tag, From tag, and Call-ID completely  
  * defines a peer-to-peer SIP relationship between [two UAs] and is 
  * referred to as a dialog."
+ * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again iff a dialog has been found.
  * \param callid callid
  * \param ftag from tag
  * \param ttag to tag
  * \param dir direction
- * \param del unless null, flag that is set if dialog is in "deleted" state
  * \return dialog structure on success, NULL on failure
  */
-struct dlg_cell* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir, unsigned int *del);
+struct dlg_cell* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
 
 
 /*!

@@ -465,6 +465,9 @@ void set_current_dialog(struct sip_msg *msg, struct dlg_cell *dlg)
 	}
 	current_pending_linkers = NULL;
 	current_dlg_pointer = dlg;
+
+	/* do not increase reference counter here, let caller handle it
+	 * (yes, this is somewhat ugly) */
 }
 
 

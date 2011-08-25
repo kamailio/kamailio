@@ -647,7 +647,7 @@ static void unref_new_dialog(void *dialog)
 static void unreference_dialog(void *dialog)
 {
     // if the dialog table is gone, it means the system is shutting down.
-    if (!d_table)
+    if (!dialog || !d_table)
         return;
     unref_dlg((struct dlg_cell*)dialog, 1);
 }
@@ -664,68 +664,42 @@ void dlg_tmcb_dummy(struct cell* t, int type, struct tmcb_params *param)
 }
 
 /*!
- * \brief Release a transaction from a dialog
- * \param t transaction
- * \param type type of the entered callback
- * \param param saved dialog structure in the callback
- */
-static void release_dlg_from_tm(struct cell* t,
-                                int type,
-                                struct tmcb_params *param)
-{
-    struct dlg_cell *dlg = get_dialog_from_tm(t);
-
-    if (!dlg)
-    {
-        LM_ERR("Failed to get and unref dialog from transaction!");
-        return;
-    }
-
-    unreference_dialog(dlg);
-}
-
-/*!
  * \brief Register a transaction on a dialog
  * \param t transaction
  * \param type type of the entered callback
  * \param param saved dialog structure in the callback
  */
-static void store_dlg_in_tm(struct sip_msg* msg,
+static int store_dlg_in_tm(struct sip_msg* msg,
                             struct cell* t,
                             struct dlg_cell *dlg)
 {
     if( !msg || msg == FAKED_REPLY || !t || !dlg)
     {
         LM_ERR("invalid parameter msg(%p), t(%p), dlg(%p)\n", msg, t, dlg);
-        return;
+        return -1;
     }
 
     if(get_dialog_from_tm(t))
     {
         LM_NOTICE("dialog %p is already set for this transaction!\n",dlg);
-        return;
+        return 1;
     }
 
+	// facilitate referencing of dialog through TMCB_MAX
     if( d_tmb.register_tmcb (msg,
                              t,
                              TMCB_MAX,
                              dlg_tmcb_dummy,
-                             (void*)dlg, 0)<0 )
+                             (void*)dlg, unreference_dialog)<0 )
     {
         LM_ERR("failed cache in T the shortcut to dlg %p\n",dlg);
-        return;
+        return -3;
     }
 
+	// registering succeeded, we must increase the reference counter
     ref_dlg(dlg, 1);
 
-    if (d_tmb.register_tmcb (msg,
-                             t,
-                             TMCB_DESTROY,
-                             release_dlg_from_tm,
-                             (void*)dlg, NULL)<0 )
-    {
-        LM_ERR("failed to register unref tm for handling dialog-termination\n");
-    }
+	return 0;
 }
 
 /*!
@@ -771,7 +745,6 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
     str ttag;
     str req_uri;
     unsigned int dir;
-    unsigned int del;
 
     if(current_dlg_pointer != NULL)
         return -1;
@@ -800,14 +773,7 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
 
         dir = DLG_DIR_NONE;
 
-        dlg = get_dlg(&callid, &ftag, &ttag, &dir, &del);
-        if (del == 1)
-        {
-            LM_WARN("Failed to get dialog (callid: '%.*s') because it is marked for deletion!\n",
-                callid.len, callid.s);
-            unref_dlg(dlg, 1);
-            return 0;
-        }
+        dlg = get_dlg(&callid, &ftag, &ttag, &dir);
         if (dlg)
         {
             LM_DBG("Callid '%.*s' found, must be a spiraled request\n",
@@ -816,7 +782,7 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
 
             if (run_initial_cbs)
                 run_dlg_callbacks( DLGCB_SPIRALED, dlg, req, NULL, DLG_DIR_DOWNSTREAM, 0);
-            // get_dlg with del==0 has incremented the ref count by 1
+            // get_dlg has incremented the ref count by 1
             unref_dlg(dlg, 1);
             goto finish;
         }
@@ -888,7 +854,10 @@ finish:
 	if (t) {
 		// transaction exists ==> keep ref counter large enough to
 		// avoid premature cleanup and ensure proper dialog referencing
-	    store_dlg_in_tm( req, t, dlg);
+	    if (store_dlg_in_tm( req, t, dlg) < 0) {
+			LM_ERR("failed to store dialog in transaction\n");
+			goto error;
+		}
 	}
 	else
 	{
@@ -896,14 +865,15 @@ finish:
 		// request being forwarded statefully
         if ( d_tmb.register_tmcb( req, NULL, TMCB_REQUEST_FWDED,
                 store_dlg_in_tm_cb, (void*)dlg, NULL)<0 ) {
-            LM_ERR("failed to store dialog in transaction during dialog creation for later reference\n");
+            LM_ERR("failed to register callback for storing dialog in transaction\n");
+			goto error;
         }
 	}
 
 	return 0;
 error:
-	unref_dlg(dlg,1);
-	profile_cleanup(req, 0, NULL);
+	unref_dlg(dlg,1);                   // undo ref regarding linking
+	profile_cleanup(req, 0, NULL);      // undo ref regarding setting current dialog
 	return -1;
 }
 
@@ -1001,7 +971,6 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	str val, callid, ftag, ttag;
 	int h_entry, h_id, new_state, old_state, unref, event, timeout;
 	unsigned int dir;
-	unsigned int del;
 	int ret = 0;
 
 	if (current_dlg_pointer!=NULL)
@@ -1030,11 +999,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			if ( parse_dlg_rr_param( val.s, val.s+val.len, &h_entry, &h_id)<0 )
 				return;
 
-			dlg = lookup_dlg( h_entry, h_id, &del);
-			if (del == 1) {
-				LM_DBG("dialog marked for deletion, ignoring\n");
-				return;
-			}
+			dlg = lookup_dlg( h_entry, h_id);
 			if (dlg==0) {
 				LM_WARN("unable to find dialog for %.*s "
 					"with route param '%.*s' [%u:%u]\n",
@@ -1044,8 +1009,8 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 				if (seq_match_mode==SEQ_MATCH_STRICT_ID )
 					return;
 			} else {
-				// lookup_dlg has incremented the ref count by 1
 				if (pre_match_parse( req, &callid, &ftag, &ttag, 1)<0) {
+					// lookup_dlg has incremented the ref count by 1
 					unref_dlg(dlg, 1);
 					return;
 				}
@@ -1064,6 +1029,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 							dlg->tag[DLG_CALLER_LEG].len,
 							dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s,
 							dlg->tag[DLG_CALLEE_LEG].len);
+					// lookup_dlg has incremented the ref count by 1
 					unref_dlg(dlg, 1);
 
 					// Reset variables in order to do a lookup based on SIP-Elements.
@@ -1082,11 +1048,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			return;
 		/* TODO - try to use the RR dir detection to speed up here the
 		 * search -bogdan */
-		dlg = get_dlg(&callid, &ftag, &ttag, &dir, &del);
-		if (del == 1) {
-			LM_DBG("dialog marked for deletion, ignoring\n");
-			return;
-		}
+		dlg = get_dlg(&callid, &ftag, &ttag, &dir);
 		if (!dlg){
 			LM_DBG("Callid '%.*s' not found\n",
 				req->callid->body.len, req->callid->body.s);
@@ -1094,19 +1056,13 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		}
 	}
 
-    /* set current dialog - it will keep a ref! */
+    /* set current dialog - re-use ref increment from dlg_get() above */
     set_current_dialog( req, dlg);
     _dlg_ctx.dlg = dlg;
 
     if ( d_tmb.register_tmcb( req, NULL, TMCB_REQUEST_FWDED,
             store_dlg_in_tm_cb, (void*)dlg, NULL)<0 ) {
         LM_ERR("failed to store dialog in transaction during dialog creation for later reference\n");
-    }
-
-    if (del == 1) {
-        LM_DBG( "Use the dialog (callid: '%.*s') without further handling because it is marked for deletion\n",
-            callid.len, callid.s);
-        return;
     }
 
 	/* run state machine */

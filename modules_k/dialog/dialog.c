@@ -1139,9 +1139,10 @@ static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 		return -1;
 	}
 
-	dlg = get_dlg(&sc, &sf, &st, &dir, NULL);
+	dlg = get_dlg(&sc, &sf, &st, &dir);
 	if(dlg==NULL)
 		return -1;
+    /* set current dialog pointer - re-use ref increment from dlg_get() above */
 	current_dlg_pointer = dlg;
 	_dlg_ctx.dlg = dlg;
 	_dlg_ctx.dir = dir;
@@ -1433,7 +1434,7 @@ static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
 
 	if (rpc->scan(c, "ddS", &h_entry, &h_id, &rpc_extra_hdrs) < 2) return;
 
-	dlg = lookup_dlg(h_entry, h_id, NULL);
+	dlg = lookup_dlg(h_entry, h_id);
 	if(dlg){
 		dlg_bye_all(dlg, (rpc_extra_hdrs.len>0)?&rpc_extra_hdrs:NULL);
 		unref_dlg(dlg, 1);
