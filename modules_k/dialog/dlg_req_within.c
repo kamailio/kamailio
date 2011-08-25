@@ -318,7 +318,7 @@ struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param ){
 
 	LM_DBG("h_entry %u h_id %u\n", h_entry, h_id);
 
-	dlg = lookup_dlg(h_entry, h_id, NULL);
+	dlg = lookup_dlg(h_entry, h_id);
 
 	// lookup_dlg has incremented the reference count
 
