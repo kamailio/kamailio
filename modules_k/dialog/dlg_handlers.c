@@ -757,10 +757,6 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 	if_update_stat( dlg_enable_stats, processed_dlgs, 1);
 
 finish:
-	set_current_dialog(msg, dlg);
-	_dlg_ctx.dlg = dlg;
-	ref_dlg(dlg, 1);
-
 	if (t) {
 		// transaction exists ==> keep ref counter large enough to
 		// avoid premature cleanup and ensure proper dialog referencing
@@ -779,10 +775,15 @@ finish:
 		}
 	}
 
+    set_current_dialog(req, dlg);
+    _dlg_ctx.dlg = dlg;
+    ref_dlg(dlg, 1);
+
 	return 0;
+
 error:
-	unref_dlg(dlg,1);                   // undo ref regarding linking
-	profile_cleanup(msg, 0, NULL);      // undo ref regarding setting current dialog
+	if (!spiral_detected)
+		unref_dlg(dlg,1);               // undo ref regarding linking
 	return -1;
 }
 
