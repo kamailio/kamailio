@@ -1568,6 +1568,7 @@ is_rfc1918_f(struct sip_msg* msg, char* str1, char* str2)
 #define	AOLDMEDPRT_LEN	(sizeof(AOLDMEDPRT) - 1)
 
 
+/* replace ip addresses in SDP and return umber of replacements */
 static inline int 
 replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line, str *ip)
 {
@@ -1577,6 +1578,8 @@ replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line, str *ip)
 	int pf, pf1 = 0;
 	str body2;
 	char *bodylimit = body.s + body.len;
+	int ret;
+	int count = 0;
 
 	/* Iterate all lines and replace ips in them. */
 	if (!ip) {
@@ -1601,10 +1604,12 @@ replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line, str *ip)
 		}
 		body2.s = oldip.s + oldip.len;
 		body2.len = bodylimit - body2.s;
-		if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf,1) == -1) {
+		ret = alter_mediaip(msg, &body1, &oldip, pf, &newip, pf,1);
+		if (ret == -1) {
 			LM_ERR("can't alter '%s' IP\n",line);
 			return -1;
 		}
+		count += ret;
 		hasreplaced = 1;
 		body1 = body2;
 	}
@@ -1613,7 +1618,7 @@ replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line, str *ip)
 		return -1;
 	}
 
-	return 0;
+	return count;
 }
 
 static int
@@ -1624,6 +1629,8 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	int level, rest_len;
 	char *buf, *m_start, *m_end;
 	struct lump* anchor;
+	int ret;
+	int count = 0;
 
 	level = (int)(long)str1;
 	if (str2 && pv_printf_s( msg, (pv_elem_p)str2, &ip)!=0)
@@ -1690,17 +1697,21 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 
 	if (level & FIX_MEDIP) {
 		/* Iterate all c= and replace ips in them. */
-		if (replace_sdp_ip(msg, &body, "c=", str2?&ip:0)==-1)
+		ret = replace_sdp_ip(msg, &body, "c=", str2?&ip:0);
+		if (ret==-1)
 			return -1;
+		count += ret;
 	}
 
 	if (level & FIX_ORGIP) {
 		/* Iterate all o= and replace ips in them. */
-		if (replace_sdp_ip(msg, &body, "o=", str2?&ip:0)==-1)
+		ret = replace_sdp_ip(msg, &body, "o=", str2?&ip:0);
+		if (ret==-1)
 			return -1;
+		count += ret;
 	}
 
-	return 1;
+	return count > 0 ? 1 : 2;
 }
 
 static int
@@ -1842,7 +1853,7 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 		pkg_free(nip.s);
 		return -1;
 	}
-	return 0;
+	return 1;
 }
 
 

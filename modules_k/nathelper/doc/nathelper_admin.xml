@@ -414,7 +414,8 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 		<para>
 		Alters the SDP information in orer to facilitate NAT traversal. What
 		changes to be performed may be controled via the 
-		<quote>flags</quote> parameter.
+		<quote>flags</quote> parameter. Return value is -1 if error occurred,
+		1 if ip's were replaced, 2 if no ip's were replaced.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
