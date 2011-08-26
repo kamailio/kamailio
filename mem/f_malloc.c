@@ -667,8 +667,10 @@ void fm_status(struct fm_block* qm)
 	int unused;
 	unsigned long size;
 	int memlog;
+	int mem_summary;
 
 	memlog=cfg_get(core, core_cfg, memlog);
+	mem_summary=cfg_get(core, core_cfg, mem_summary);
 	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ", "fm_status (%p):\n", qm);
 	if (!qm) return;
 
@@ -681,6 +683,9 @@ void fm_status(struct fm_block* qm)
 	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
 			" max used (+overhead)= %lu\n", qm->max_real_used);
 #endif
+
+	if (mem_summary & 16) return;
+
 	/*
 	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ", "dumping all fragments:\n");
 	for (f=qm->first_frag, i=0;((char*)f<(char*)qm->last_frag) && (i<10);

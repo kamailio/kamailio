@@ -511,10 +511,12 @@
         memory debugging information displayed on exit (flags):  0 -
         off, 1 - dump all the pkg used blocks (status), 2 - dump all
         the shm used blocks (status), 4 - summary of pkg used blocks, 8
-        - summary of shm used blocks.
+        - summary of shm used blocks, 16 - show only summary of used
+	blocks instead of full dump (to use in conjuntion with flags 1
+	and 2).
     </para>
     <para>Default value: 3.</para>
-    <para>Range: 0 - 15.</para>
+    <para>Range: 0 - 31.</para>
     <para>Type: integer.</para>
     <para>
     </para>

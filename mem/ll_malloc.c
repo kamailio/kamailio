@@ -971,14 +971,19 @@ void sfm_status(struct sfm_block* qm)
 	unsigned long size;
 	int k;
 	int memlog;
+	int mem_summary;
 
 #warning "ll_status doesn't work (might crash if used)"
 
 	memlog=cfg_get(core, core_cfg, memlog);
+	mem_summary=cfg_get(core, core_cfg, mem_summary);
 	LOG(memlog, "sfm_status (%p):\n", qm);
 	if (!qm) return;
 
 	LOG(memlog, " heap size= %ld\n", qm->size);
+
+	if (mem_summary & 16) return;
+
 	LOG(memlog, "dumping free list:\n");
 	for(h=0,i=0,size=0;h<=sfm_max_hash;h++){
 		SFM_MAIN_HASH_LOCK(qm, h);
