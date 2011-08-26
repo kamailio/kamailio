@@ -102,16 +102,25 @@ int pv_get_flags(struct sip_msg *msg, pv_param_t *param,
 int pv_get_hexflags(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_flag(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_bflags(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
 int pv_get_hexbflags(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_bflag(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_sflags(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
 int pv_get_hexsflags(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_get_sflag(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
 int pv_get_callid(struct sip_msg *msg, pv_param_t *param,
@@ -238,10 +247,19 @@ int pv_set_force_sock(struct sip_msg* msg, pv_param_t *param,
 int pv_set_mflags(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val);
 
+int pv_set_mflag(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
 int pv_set_sflags(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val);
 
+int pv_set_sflag(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
 int pv_set_bflags(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_set_bflag(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val);
 
 int pv_set_to_uri(struct sip_msg* msg, pv_param_t *param,
@@ -285,6 +303,8 @@ int pv_parse_K_name(pv_spec_p sp, str *in);
 
 int pv_get_K(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
+
+int pv_parse_flag_param(pv_spec_p sp, str *in);
 
 #endif
 

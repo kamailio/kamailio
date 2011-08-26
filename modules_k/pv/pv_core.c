@@ -27,6 +27,7 @@
 #include "../../ut.h" 
 #include "../../route_struct.h"
 #include "../../dset.h"
+#include "../../flags.h"
 #include "../../action.h"
 #include "../../socket_info.h"
 #include "../../data_lump.h"
@@ -504,6 +505,18 @@ int pv_get_flags(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_uintval(msg, param, res, msg->flags);
 }
 
+int pv_get_flag(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if (param->pvn.type != PV_NAME_INTSTR)
+		return -1;
+	
+	return pv_get_uintval(msg, param, res, (msg->flags & (1<<param->pvn.u.isname.name.n)) ? 1 : 0);
+}
+
 static inline char* int_to_8hex(int val)
 {
 	unsigned short digit;
@@ -543,10 +556,24 @@ int pv_get_bflags(struct sip_msg *msg, pv_param_t *param,
 {
 	flag_t flags;
 	if (getbflagsval(0, &flags) < 0) {
-		ERR("pv_get_bflags: Error while obtainig values of branch flags\n");
+		ERR("pv_get_bflags: Error while obtaining values of branch flags\n");
 		return -1;
 	}
 	return pv_get_uintval(msg, param, res, flags);
+}
+
+int pv_get_bflag(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	flag_t flags;
+	if (getbflagsval(0, &flags) < 0) {
+		ERR("pv_get_bflags: Error while obtaining values of branch flags\n");
+		return -1;
+	}
+	if (param->pvn.type != PV_NAME_INTSTR)
+		return -1;
+
+	return pv_get_uintval(msg, param, res, (flags & (1<<param->pvn.u.isname.name.n)) ? 1 : 0);
 }
 
 int pv_get_hexbflags(struct sip_msg *msg, pv_param_t *param,
@@ -570,6 +597,16 @@ int pv_get_sflags(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	return pv_get_uintval(msg, param, res, getsflags());
+}
+
+int pv_get_sflag(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+
+{
+	if (param->pvn.type != PV_NAME_INTSTR)
+		return -1;
+
+	return pv_get_uintval(msg, param, res, (getsflags() & (1<<param->pvn.u.isname.name.n)) ? 1 : 0);
 }
 
 int pv_get_hexsflags(struct sip_msg *msg, pv_param_t *param,
@@ -2104,6 +2141,41 @@ int pv_set_mflags(struct sip_msg* msg, pv_param_t *param,
 	return 0;
 }
 
+int pv_set_mflag(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	if(msg==NULL || param==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	if(val == NULL || (val->flags&PV_VAL_NULL))
+	{
+		msg->flags = 0;
+		return 0;
+	}
+
+	if(!(val->flags&PV_VAL_INT))
+	{
+		LM_ERR("assigning non-int value to msg flag\n");
+		return -1;
+	}
+
+	if (param->pvn.type != PV_NAME_INTSTR)
+	{
+		LM_ERR("missing flag number\n");
+		return -1;
+	}
+
+	if (val->ri) 
+		setflag(msg, param->pvn.u.isname.name.n);
+	else
+		resetflag(msg, param->pvn.u.isname.name.n);
+
+	return 0;
+}
+
 int pv_set_sflags(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val)
 {
@@ -2126,6 +2198,41 @@ int pv_set_sflags(struct sip_msg* msg, pv_param_t *param,
 	}
 	
 	setsflagsval((unsigned int)val->ri);
+
+	return 0;
+}
+
+int pv_set_sflag(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	if(msg==NULL || param==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+					
+	if(val == NULL || (val->flags&PV_VAL_NULL))
+	{
+		setsflagsval(0);
+		return 0;
+	}
+
+	if(!(val->flags&PV_VAL_INT))
+	{
+		LM_ERR("assigning non-int value to script flags\n");
+		return -1;
+	}
+	
+	if (param->pvn.type != PV_NAME_INTSTR)
+	{
+		LM_ERR("missing flag number\n");
+		return -1;
+	}
+
+	if (val->ri) 
+		setsflag(param->pvn.u.isname.name.n);
+	else
+		resetsflag(param->pvn.u.isname.name.n);
 
 	return 0;
 }
@@ -2153,6 +2260,41 @@ int pv_set_bflags(struct sip_msg* msg, pv_param_t *param,
 	}
 	
 	setbflagsval(0, (flag_t)val->ri);
+
+	return 0;
+}
+
+int pv_set_bflag(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	if(msg==NULL || param==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+					
+	if(val == NULL || (val->flags&PV_VAL_NULL))
+	{
+		setbflagsval(0, 0);
+		return 0;
+	}
+
+	if(!(val->flags&PV_VAL_INT))
+	{
+		LM_ERR("assigning non-int value to branch 0 flags\n");
+		return -1;
+	}
+	
+	if (param->pvn.type != PV_NAME_INTSTR)
+	{
+		LM_ERR("missing flag number\n");
+		return -1;
+	}
+
+	if (val->ri) 
+		setbflag(0, param->pvn.u.isname.name.n);
+	else
+		resetbflag(0, param->pvn.u.isname.name.n);
 
 	return 0;
 }
@@ -2565,6 +2707,34 @@ int pv_parse_K_name(pv_spec_p sp, str *in)
 error:
 	LM_ERR("unknown PV af key: %.*s\n", in->len, in->s);
 	return -1;
+}
+
+int pv_parse_flag_param(pv_spec_p sp, str *in)
+{
+	unsigned int n;
+
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	if (str2int(in, &n) != 0)
+	{
+		if ((n = get_flag_no(in->s, in->len)) < 0)
+		{
+			LM_ERR("flag not declared: [%.*s]\n", in->len, in->s);
+			return -1;
+		}
+	}
+	if (check_flag(n) < 0)
+	{
+		LM_ERR("bad flag value: [%.*s]\n", in->len, in->s);
+		return -1;
+	}
+
+	sp->pvp.pvn.u.isname.name.n = n;
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
 }
 
 /**

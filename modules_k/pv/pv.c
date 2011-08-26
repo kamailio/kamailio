@@ -119,6 +119,9 @@ static pv_export_t mod_pvs[] = {
 	{{"bF", (sizeof("bF")-1)}, /* */
 		PVT_CONTEXT, pv_get_hexbflags, pv_set_bflags,
 		0, 0, 0, 0},
+	{{"Bf", (sizeof("Bf")-1)}, /* */
+		PVT_CONTEXT, pv_get_bflag, pv_set_bflag,
+		pv_parse_flag_param, 0, 0, 0},
 	{{"br", (sizeof("br")-1)}, /* */
 		PVT_BRANCH, pv_get_branch, pv_set_branch,
 		0, 0, 0, 0},
@@ -227,6 +230,9 @@ static pv_export_t mod_pvs[] = {
 	{{"mF", (sizeof("mF")-1)}, /* */
 		PVT_OTHER, pv_get_hexflags, pv_set_mflags,
 		0, 0, 0, 0},
+	{{"Mf", (sizeof("mf")-1)}, /* */
+		PVT_OTHER, pv_get_flag, pv_set_mflag,
+		pv_parse_flag_param, 0, 0, 0},
 	{{"ml", (sizeof("ml")-1)}, /* */
 		PVT_OTHER, pv_get_msg_len, 0,
 		0, 0, 0, 0},
@@ -341,6 +347,9 @@ static pv_export_t mod_pvs[] = {
 	{{"sF", (sizeof("sF")-1)}, /* */
 		PVT_OTHER, pv_get_hexsflags, pv_set_sflags,
 		0, 0, 0, 0},
+	{{"Sf", (sizeof("sf")-1)}, /* */
+		PVT_OTHER, pv_get_sflag, pv_set_sflag,
+		pv_parse_flag_param, 0, 0, 0},
 	{{"src_ip", (sizeof("src_ip")-1)}, /* */
 		PVT_OTHER, pv_get_srcip, 0,
 		0, 0, 0, 0},
