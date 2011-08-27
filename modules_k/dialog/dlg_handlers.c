@@ -664,6 +664,7 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
     str ttag;
     str req_uri;
     unsigned int dir;
+    int spiral_detected;
 
 	if(current_dlg_pointer != NULL)
 		return -1;
@@ -694,6 +695,7 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 		{
 			LM_DBG("Callid '%.*s' found, must be a spiraled request\n",
 					callid.len, callid.s);
+			spiral_detected = 1;
 
 			run_dlg_callbacks( DLGCB_SPIRALED, dlg, msg, DLG_DIR_DOWNSTREAM, 0);
 
@@ -702,6 +704,7 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 			goto finish;
 		}
 	}
+	spiral_detected = 0;
 
 	dlg = build_new_dlg (&callid /*callid*/,
 			&(get_from(msg)->uri) /*from uri*/,
@@ -775,7 +778,7 @@ finish:
 		}
 	}
 
-    set_current_dialog(req, dlg);
+    set_current_dialog(msg, dlg);
     _dlg_ctx.dlg = dlg;
     ref_dlg(dlg, 1);
 
