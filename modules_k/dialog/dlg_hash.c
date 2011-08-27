@@ -472,7 +472,6 @@ not_found:
  * \param ftag from tag
  * \param ttag to tag
  * \param dir direction
- * \param del will set to 1 if dialog is deleted
  * \return dialog structure on success, NULL on failure
  */
 static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
