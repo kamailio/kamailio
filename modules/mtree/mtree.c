@@ -314,7 +314,7 @@ str* mt_get_tvalue(m_tree_t *pt, str *tomatch, int *plen)
 
 int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
 {
-    int l, len;
+    int l;
     mt_node_t *itn;
     int_str val, values_avp_name;
     unsigned short values_name_type;
@@ -330,7 +330,7 @@ int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
 	return -1;
     }
 	
-    l = len = 0;
+    l = 0;
     itn = pt->head;
 
     while (itn != NULL && l < tomatch->len && l < MT_MAX_DEPTH) {
@@ -347,7 +347,6 @@ int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
 		   values_avp_name.s.len, values_avp_name.s.s,
 		   val.s.len, val.s.s);
 	    add_avp(values_name_type|AVP_VAL_STR, values_avp_name, val);
-	    len = l+1;
 	}
 		
 	itn = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].child;
