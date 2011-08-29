@@ -149,9 +149,14 @@ int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val, int new)
 		}
 	}
 
-	/* not found -> simply add a new one */
+	/* not found: */
 
-	/* insert at the beginning of the list */
+	if (!var) {
+		LM_ERR("dialog variable <%.*s> does not exist in variable list\n", key->len, key->s);
+		return -1;
+	}
+
+	/* insert a new one at the beginning of the list */
 	var->next = *var_list;
 	*var_list = var;
 
