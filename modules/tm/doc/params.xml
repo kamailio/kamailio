@@ -985,6 +985,38 @@ modparam("tm", "via1_matching", 1)
 	</example>
 	</section>
 
+	<section id="callid_matching">
+	<title><varname>callid_matching</varname> (integer)</title>
+	<para>
+		If set it will also try to match the callid when doing
+		transaction matching.
+	</para>
+	<para>
+		Turn on if you don't want replies/requests from broken clients who
+		send a mangled Call-ID to match the transaction. For example when
+		the other side won't recognise the response anyway because of changed
+		Call-ID, this setting will prevent accounting records to be created
+		or failure_route to be skipped.
+	</para>
+	<para>
+		Default value is 0 (off).
+	</para>
+	<para>
+		Can be set at runtime, e.g.:
+		<programlisting>
+	$ sercmd cfg.set_now_int tm callid_matching 0
+		</programlisting>
+	</para>
+	<example>
+		<title>Set <varname>callid_matching</varname> parameter</title>
+		<programlisting>
+...
+modparam("tm", "callid_matching", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
 	<section id="pass_provisional_replies">
 	<title><varname>pass_provisional_replies</varname> (integer)</title>
 	<para>

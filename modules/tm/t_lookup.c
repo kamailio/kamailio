@@ -453,9 +453,16 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 			continue;
 		}
 		/* now real tid matching occurs  for negative ACKs and any 
-	 	 * other requests */
+		 * other requests */
 		if (!via_matching(t_msg->via1 /* inv via */, via1 /* ack */ ))
 			continue;
+		/* check if call-id is still the same */
+		if (cfg_get(tm, tm_cfg, callid_matching) && !EQ_LEN(callid) && !EQ_STR(callid)) {
+			LOG(L_ERR, "matching transaction found but callids don't match (received: %.*s stored: %.*s)\n",
+			        p_msg->callid->body.len, p_msg->callid->body.s,
+			        t_msg->callid->body.len, t_msg->callid->body.s);
+			continue;
+		}
 		if (t_msg->REQ_METHOD==METHOD_CANCEL){
 			if ((p_msg->REQ_METHOD!=METHOD_CANCEL) && !is_ack){
 			/* found an existing cancel for the searched transaction */
@@ -1005,6 +1012,15 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 				&& p_cell->uac[branch_id].local_cancel.buffer_len ))) 
 			continue;
 
+		if (cfg_get(tm, tm_cfg, callid_matching) && 
+		        (p_msg->callid->body.len != p_cell->uas.request->callid->body.len ||
+		         memcmp(p_msg->callid->body.s, p_cell->uas.request->callid->body.s, p_msg->callid->body.len) != 0)
+		) {
+			LOG(L_ERR, "matching transaction found but callids don't match (received: %.*s stored: %.*s)\n",
+		        p_msg->callid->body.len, p_msg->callid->body.s,
+		        p_cell->uas.request->callid->body.len, p_cell->uas.request->callid->body.s);
+			continue;
+		}
 
 		/* we passed all disqualifying factors .... the transaction has been
 		   matched !
@@ -1114,12 +1130,12 @@ int t_check_msg( struct sip_msg* p_msg , int *param_branch )
 								"completely parsed\n");
 					/* try to continue, via1 & cseq are checked below */
 				}
-			}else if ( parse_headers(p_msg, HDR_VIA1_F|HDR_CSEQ_F, 0 )==-1) {
+			}else if ( parse_headers(p_msg, HDR_VIA1_F|HDR_CSEQ_F|HDR_CALLID_F, 0 )==-1) {
 				LOG(L_ERR, "ERROR: reply cannot be parsed\n");
 				goto error;
 			}
-			if ((p_msg->via1==0) || (p_msg->cseq==0)){
-				LOG(L_ERR, "ERROR: reply doesn't have a via or cseq"
+			if ((p_msg->via1==0) || (p_msg->cseq==0) || (p_msg->callid==0)){
+				LOG(L_ERR, "ERROR: reply doesn't have a via, cseq or call-id"
 							" header\n");
 				goto error;
 			}
