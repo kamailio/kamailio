@@ -64,6 +64,7 @@ int reload_trusted_table(void)
 	db_val_t* val;
 
 	struct trusted_list **new_hash_table;
+	struct trusted_list **old_hash_table;
 	int i;
 
 	char *pattern, *tag;
@@ -90,12 +91,11 @@ int reload_trusted_table(void)
 
 	/* Choose new hash table and free its old contents */
 	if (*hash_table == hash_table_1) {
-		empty_hash_table(hash_table_2);
 		new_hash_table = hash_table_2;
 	} else {
-		empty_hash_table(hash_table_1);
 		new_hash_table = hash_table_1;
 	}
+	empty_hash_table(new_hash_table);
 
 	row = RES_ROWS(res);
 
@@ -129,6 +129,7 @@ int reload_trusted_table(void)
 				      pattern, tag) == -1) {
 		    LM_ERR("hash table problem\n");
 		    perm_dbf.free_result(db_handle, res);
+		    empty_hash_table(new_hash_table);
 		    return -1;
 		}
 		LM_DBG("tuple <%s, %s, %s, %s> inserted into trusted hash "
@@ -137,13 +138,16 @@ int reload_trusted_table(void)
 	    } else {
 		LM_ERR("database problem\n");
 		perm_dbf.free_result(db_handle, res);
+		empty_hash_table(new_hash_table);
 		return -1;
 	    }
 	}
 
 	perm_dbf.free_result(db_handle, res);
 
+	old_hash_table = *hash_table;
 	*hash_table = new_hash_table;
+	empty_hash_table(old_hash_table);
 
 	LM_DBG("trusted table reloaded successfully.\n");
 	
