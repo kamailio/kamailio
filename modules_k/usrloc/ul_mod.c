@@ -355,8 +355,7 @@ static int child_init(int _rank)
 			break;
 	}
 
-	if (!ul_dbh)
-		ul_dbh = ul_dbf.init(&db_url); /* Get a new database connection */
+	ul_dbh = ul_dbf.init(&db_url); /* Get a database connection per child */
 	if (!ul_dbh) {
 		LM_ERR("child(%d): failed to connect to database\n", _rank);
 		return -1;
@@ -386,10 +385,6 @@ static int mi_child_init(void)
 		return 0;
 
 	if (db_mode != NO_DB) {
-		if (ul_dbh) {
-			done = 1;
-			return 0;
-		}
 		ul_dbh = ul_dbf.init(&db_url);
 		if (!ul_dbh) {
 			LM_ERR("failed to connect to database\n");
