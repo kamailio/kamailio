@@ -1026,9 +1026,9 @@ static int lua_sr_registrar_save(lua_State *L)
 	flags = 0;
 	env_L = sr_lua_env_get();
 
-	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_MAXFWD))
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_REGISTRAR))
 	{
-		LM_WARN("weird: maxfwd function executed but module not registered\n");
+		LM_WARN("weird: registrar function executed but module not registered\n");
 		return app_lua_return_error(L);
 	}
 	if(env_L->msg==NULL)
@@ -1067,9 +1067,9 @@ static int lua_sr_registrar_lookup(lua_State *L)
 
 	env_L = sr_lua_env_get();
 
-	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_MAXFWD))
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_REGISTRAR))
 	{
-		LM_WARN("weird: maxfwd function executed but module not registered\n");
+		LM_WARN("weird: registrar function executed but module not registered\n");
 		return app_lua_return_error(L);
 	}
 	if(env_L->msg==NULL)
