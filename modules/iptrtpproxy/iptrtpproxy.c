@@ -1228,6 +1228,10 @@ inline static void fill_in_session(int flags, int media_idx, struct sdp_session 
 		in_session->sh.ttl = global_params.ttl;
 		in_session->sh.flags |= XT_RTPPROXY_SOCKOPT_FLAG_SESSION_TTL;
 	}
+}
+
+inline static void fill_in_session_throttle(int flags, int media_idx, struct xt_rtpproxy_sockopt_session *in_session) {
+	int j;
 	if (global_params.throttle.mark > 0) {
 		for (j=0; j<2; j++) {			
 			in_session->dir[GATE_A_TO_B(flags)].stream[j].throttle.mark = global_params.throttle.mark;
@@ -1376,6 +1380,7 @@ ERR("DEBUG_RTPPROXY: module: do not allocate session for on-hold stream unless r
 				}
 			}
 			fill_in_session(flags, i, &global_sdp_sess, ipt_sess.sessions+ipt_sess.session_count);
+			fill_in_session_throttle(flags, i, ipt_sess.sessions+ipt_sess.session_count);
 			ipt_sess.sdp_media[i] = ipt_sess.session_count;
 		skip_fill:
 			ipt_sess.session_count++;
@@ -1666,6 +1671,7 @@ static int rtpproxy_update(struct sip_msg* msg, char* _flags, char* _session_ids
 			if (ipt_sess.sdp_media[i] >= 0) {
 				if (global_sdp_sess.media[i].active) {
 					fill_in_session(flags, i, &global_sdp_sess, ipt_sess.sessions+ipt_sess.sdp_media[i]);
+					fill_in_session_throttle(flags, i, ipt_sess.sessions+ipt_sess.sdp_media[i]);
 					ipt_sess.sessions[ipt_sess.sdp_media[i]].sh.flags &= ~XT_RTPPROXY_SOCKOPT_FLAG_SESSION_DESTROY;
 				}
 			}
@@ -1737,6 +1743,7 @@ static int rtpproxy_adjust_timeout(struct sip_msg* msg, char* _flags, char* _ses
 	for (i = 0; i < ipt_sess.sdp_media_count; i++) {
 		if (ipt_sess.sdp_media[i] >= 0) {
 			fill_in_session(flags, i, NULL, ipt_sess.sessions+ipt_sess.sdp_media[i]);
+			/* throttle not affected */
 		}
 	}
 //ERR("DEBUG_RTPPROXY: module: rtpproxy_adjust_timeout: xt_RTPPROXY_update_sessions(%d), flags:%d, sess:%.*s\n", ipt_sess.session_count, flags, STR_FMT(&session_ids));
