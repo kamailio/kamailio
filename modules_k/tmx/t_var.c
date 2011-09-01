@@ -39,6 +39,8 @@ static struct _pv_tmx_data _pv_treq;
 static struct _pv_tmx_data _pv_trpl;
 static struct _pv_tmx_data _pv_tinv;
 
+static str _empty_str = {"", 0};
+
 void pv_tmx_data_init(void)
 {
 	memset(&_pv_treq, 0, sizeof(struct _pv_tmx_data));
@@ -468,6 +470,60 @@ int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 
 	res->ri = code;
 	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
+	return 0;
+}
+
+int pv_get_tm_reply_reason(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	struct cell *t;
+	struct sip_msg *reply;
+	int branch;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	/* first get the transaction */
+	if (_tmx_tmb.t_check( msg , 0 )==-1) return -1;
+	if ( (t=_tmx_tmb.t_gett())==0) {
+		/* no T */
+		res->rs = _empty_str;
+	} else {
+		switch (get_route_type()) {
+			case CORE_ONREPLY_ROUTE:
+				/*  t_check() above has the side effect of setting T and
+				    REFerencing T => we must unref and unset it for the 
+				    main/core onreply_route. */
+				_tmx_tmb.t_unref(msg);
+				/* no break */
+			case TM_ONREPLY_ROUTE:
+				/* use the reason of the current reply */
+				res->rs.s = msg->first_line.u.reply.reason.s;
+				res->rs.len = msg->first_line.u.reply.reason.len;
+				break;
+			case FAILURE_ROUTE:
+				/* use the reason of the winning reply */
+				if ( (branch=_tmx_tmb.t_get_picked_branch())<0 ) {
+					LM_CRIT("no picked branch (%d) for a final response"
+							" in MODE_ONFAILURE\n", branch);
+					return -1;
+				}
+				reply = t->uac[branch].reply;
+				if (reply == FAKED_REPLY) {
+					res->rs.s = error_text(t->uac[branch].last_received);
+					res->rs.len = strlen(res->rs.s);
+				} else {
+					res->rs.s = reply->first_line.u.reply.reason.s;
+					res->rs.len = reply->first_line.u.reply.reason.len;
+				}
+				break;
+			default:
+				LM_ERR("unsupported route_type %d\n", get_route_type());
+				return -1;
+		}
+	}
+	LM_DBG("reply reason is [%.*s]\n", res->rs.len, res->rs.s);
+	res->flags = PV_VAL_STR;
 	return 0;
 }
 
