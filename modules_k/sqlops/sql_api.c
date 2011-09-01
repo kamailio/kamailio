@@ -710,7 +710,7 @@ int sqlops_get_value(str *sres, int i, int j, sql_val_t **val)
 		LM_ERR("row index out of bounds [%d/%d]\n", i, res->nrows);
 		goto error;
 	}
-	if(i>=res->ncols)
+	if(j>=res->ncols)
 	{
 		LM_ERR("column index out of bounds [%d/%d]\n", j, res->ncols);
 		goto error;
