@@ -32,8 +32,9 @@ Daniel-Constantin Mierla
               3.4. t_flush_flags()
               3.5. t_is_failure_route()
               3.6. t_is_branch_route()
-              3.7. t_suspend()
-              3.8. t_continue(tindex, tlabel, rtname)
+              3.7. t_is_reply_route()
+              3.8. t_suspend()
+              3.9. t_continue(tindex, tlabel, rtname)
 
         4. Exported pseudo-variables
         5. MI Commands
@@ -66,8 +67,9 @@ Daniel-Constantin Mierla
    1.4. t_flush_flags usage
    1.5. t_is_failure_route usage
    1.6. t_is_branch_route usage
-   1.7. t_suspend usage
-   1.8. t_continue usage
+   1.7. t_is_reply_route usage
+   1.8. t_suspend usage
+   1.9. t_continue usage
 
 Chapter 1. Admin Guide
 
@@ -87,8 +89,9 @@ Chapter 1. Admin Guide
         3.4. t_flush_flags()
         3.5. t_is_failure_route()
         3.6. t_is_branch_route()
-        3.7. t_suspend()
-        3.8. t_continue(tindex, tlabel, rtname)
+        3.7. t_is_reply_route()
+        3.8. t_suspend()
+        3.9. t_continue(tindex, tlabel, rtname)
 
    4. Exported pseudo-variables
    5. MI Commands
@@ -144,8 +147,9 @@ Chapter 1. Admin Guide
    3.4. t_flush_flags()
    3.5. t_is_failure_route()
    3.6. t_is_branch_route()
-   3.7. t_suspend()
-   3.8. t_continue(tindex, tlabel, rtname)
+   3.7. t_is_reply_route()
+   3.8. t_suspend()
+   3.9. t_continue(tindex, tlabel, rtname)
 
 3.1.  t_cancel_branches(which)
 
@@ -251,7 +255,24 @@ route[abc] {
 }
 ...
 
-3.7.  t_suspend()
+3.7.  t_is_reply_route()
+
+   Returns true if the top-executed route block is reply_route.
+
+   This function can be used from ANY_ROUTE .
+
+   Example 1.7. t_is_reply_route usage
+...
+reply_route[xyz] {
+    route(abc);
+}
+
+route[abc] {
+    if(t_is_reply_route()) { ... }
+}
+...
+
+3.8.  t_suspend()
 
    Suspend the execution of SIP request in a transaction. If transaction
    was not created yet, it is created by this function. Returns true in
@@ -260,7 +281,7 @@ route[abc] {
 
    This function can be used from ANY_ROUTE .
 
-   Example 1.7. t_suspend usage
+   Example 1.8. t_suspend usage
 ...
 if(t_suspend())
 {
@@ -269,7 +290,7 @@ if(t_suspend())
 }
 ...
 
-3.8.  t_continue(tindex, tlabel, rtname)
+3.9.  t_continue(tindex, tlabel, rtname)
 
    Continue the execution of the transaction identified by tindex and
    tlabel with the actions defined in route[rtname].
@@ -284,7 +305,7 @@ if(t_suspend())
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.8. t_continue usage
+   Example 1.9. t_continue usage
 ...
 tcontinue('123', '456', 'MYROUTE');
 ...
