@@ -2460,6 +2460,9 @@ int sctp_rcv_loop()
 				continue; /* goto skip;*/
 			else goto error;
 		}
+		/* update the local config */
+		cfg_update();
+		
 		if (unlikely(msg.msg_flags & MSG_NOTIFICATION)){
 			/* intercept useful notifications */
 			sctp_handle_notification(bind_address, &ri.src_su, buf, len);
@@ -2518,8 +2521,6 @@ int sctp_rcv_loop()
 #ifdef USE_COMP
 		ri.comp=COMP_NONE;
 #endif
-		/* update the local config */
-		cfg_update();
 #ifdef SCTP_CONN_REUSE
 		if (likely(cfg_get(sctp, sctp_cfg, assoc_tracking) && sinfo)){
 			ri.proto_reserved1 = sctp_con_track(sinfo->sinfo_assoc_id,
