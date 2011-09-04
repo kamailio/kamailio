@@ -69,10 +69,10 @@ typedef  int (*load_rr_f)( struct rr_binds* );
 
 /*!
 * \brief API bind function exported by the module - it will load the other functions
- * \param rr_binds record-route API export binding
+ * \param rrb record-route API export binding
  * \return 1
  */
-int load_rr( struct rr_binds * );
+int load_rr( struct rr_binds *rrb );
 
 
 /*!

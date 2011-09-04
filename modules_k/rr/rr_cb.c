@@ -86,13 +86,13 @@ int register_rrcb( rr_cb_t f, void *param )
  * \param req SIP request
  * \param rr_param callback list
  */
-void run_rr_callbacks( struct sip_msg *req, str *rr_params )
+void run_rr_callbacks( struct sip_msg *req, str *rr_param )
 {
 	str l_param;
 	struct rr_callback *cbp;
 
 	for ( cbp=rrcb_hl ; cbp ; cbp=cbp->next ) {
-		l_param = *rr_params;
+		l_param = *rr_param;
 		LM_DBG("callback id %d entered with <%.*s>\n",
 			cbp->id , l_param.len,l_param.s);
 		cbp->callback( req, &l_param, cbp->param );

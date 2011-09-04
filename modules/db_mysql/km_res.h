@@ -25,7 +25,6 @@
 
 /*! \file
  *  \brief DB_MYSQL :: Result related functions
- *  \ref res.c
  *  \ingroup db_mysql
  *  Module: \ref db_mysql
  */

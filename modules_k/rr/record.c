@@ -151,6 +151,7 @@ static inline struct lump *insert_rr_param_lump(struct lump *before,
 * Build a Record-Route header field, allocates new private memory for this.
  * \param _l first lump
  * \param _l2 second lump
+ * \param user user parameter
  * \param tag tag parameter
  * \param params parameter
  * \param _inbound inbound request

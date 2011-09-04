@@ -23,7 +23,6 @@
 
 /*! \file
  *  \brief DB_MYSQL :: Data conversions
- *  \ref val.c
  *  \ingroup db_mysql
  *  Module: \ref db_mysql
  */
