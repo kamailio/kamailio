@@ -125,7 +125,7 @@ static inline void parse_contact_class(param_hooks_t* _h, param_t* _p)
 		return;
 	}
 	if (!_h) {
-		LOG(L_CRIT, "BUG: parse_uri_class: NULL param hook pointer\n");
+		LOG(L_CRIT, "BUG: parse_contact_class: NULL param hook pointer\n");
 		return;
 	}
 	switch(_p->name.s[0]) {
