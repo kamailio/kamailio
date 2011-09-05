@@ -522,6 +522,8 @@ int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
 			/* Add column to current row, under the column's name */
 			LM_DBG("Adding column: %.*s\n", RES_NAMES(db_res)[j]->len, RES_NAMES(db_res)[j]->s);
 			xavp_add_value(RES_NAMES(db_res)[j], &val, &row);
+			if (val.type == SR_XTYPE_STR && val.v.s.len > 0)
+				pkg_free(val.v.s.s);
 		}
 		/* Add row to result xavp */
 		val.type = SR_XTYPE_XAVP;
