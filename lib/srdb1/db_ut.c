@@ -491,9 +491,14 @@ int db_val2pv_spec(struct sip_msg* msg, db_val_t *dbval, pv_spec_t *pvs)
 	if (pv_set_spec_value(msg, pvs, 0, &pv) != 0)
 	{
 		LM_ERR("Failed to add value to spec\n");
-		if (pv.flags == PV_VAL_STR)
+		if (pv.flags == PV_VAL_STR && pv.rs.len > 0)
 			pkg_free(pv.rs.s);
 		return -1;
+	}
+
+	/* free string memory */
+	if (pv.flags == PV_VAL_STR && pv.rs.len > 0) {
+		pkg_free(pv.rs.s);
 	}
 
 	return 0;
