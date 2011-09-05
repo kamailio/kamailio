@@ -31,6 +31,10 @@
  */
 
 
+#ifdef __OS_darwin
+#include "../../pvar.h"
+#endif
+
 /**
  * make strptime available
  * use 600 for 'Single UNIX Specification, Version 3'
@@ -47,8 +51,12 @@
 
 #include <time.h>
 
-#undef _XOPEN_SOURCE
-#undef _XOPEN_SOURCE_EXTENDED
+#ifndef __OS_solaris
+	#undef _XOPEN_SOURCE
+	#undef _XOPEN_SOURCE_EXTENDED
+#else
+	#undef _XOPEN_SOURCE_EXTENDED 1   /* solaris */
+#endif
 
 #include <limits.h>
 #include <errno.h>
