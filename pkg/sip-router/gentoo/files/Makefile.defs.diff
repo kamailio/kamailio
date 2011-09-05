@@ -1,0 +1,11 @@
+--- Makefile.defs~	2011-03-22 14:57:24.759454311 -0300
++++ Makefile.defs	2011-03-23 10:06:57.997000132 -0300
+@@ -133,7 +133,7 @@
+ 
+ ifeq ($(FLAVOUR),sip-router)
+ # main binary name
+-MAIN_NAME=ser
++MAIN_NAME=siprouter
+ else ifeq ($(FLAVOUR),ser)
+ # main binary name
+ MAIN_NAME=ser

@@ -1,0 +1,15 @@
+# Copyright 1999-2011 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: $
+
+# Additional options to start Sip-Router with.
+#
+# see "siprouter -h" for a list of options
+#
+# default: run SER as user:group = siprouter:siprouter
+#
+SR_USER="siprouter"
+SR_GROUP="siprouter"
+CONFIGFILE="${CONFIGFILE:-/etc/siprouter/siprouter.cfg}"
+CONFIGDEFS="" # eg: "-A WITH_DEBUG -A WITH_NAT -A WITH_TLS"
+SR_OPTS="-u $SR_USER -g $SR_GROUP -f ${CONFIGFILE} ${CONFIGDEFS}"
