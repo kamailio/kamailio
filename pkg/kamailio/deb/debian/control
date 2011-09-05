@@ -102,7 +102,7 @@ Package: kamailio-xml-modules
 Architecture: any
 Depends: ${shlibs:Depends}, kamailio (= ${binary:Version})
 Replaces: kamailio-xml-module, kamailio-xmlrpc-module
-Provides: kamailio-xmlrcp-modules
+Provides: kamailio-xmlrpc-modules
 Description: XML based extensions for Kamailio's Management Interface
  Kamailio is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, Kamailio can handle thousands calls
