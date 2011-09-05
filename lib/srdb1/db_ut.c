@@ -30,16 +30,36 @@
  * \ingroup db1
  */
 
-#include "db_ut.h"
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../pvar.h"
+/**
+ * make strptime available
+ * use 600 for 'Single UNIX Specification, Version 3'
+ * _XOPEN_SOURCE creates conflict in swab definition in Solaris
+ */
+#ifndef __OS_solaris
+	#define _XOPEN_SOURCE 600          /* glibc2 on linux, bsd */
+	#define _BSD_SOURCE 1              /* needed on linux to "fix" the effect
+										 of the above define on 
+										 features.h/unistd.h syscall() */
+#else
+	#define _XOPEN_SOURCE_EXTENDED 1   /* solaris */
+#endif
+
+#include <time.h>
+
+#undef _XOPEN_SOURCE
+#undef _XOPEN_SOURCE_EXTENDED
+
 #include <limits.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "../../mem/mem.h"
+#include "../../dprint.h"
+
+#include "db_ut.h"
 
 
 inline int db_str2int(const char* _s, int* _v)
