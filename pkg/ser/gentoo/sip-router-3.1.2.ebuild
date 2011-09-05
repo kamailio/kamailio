@@ -106,9 +106,6 @@ src_unpack() {
 
 	use ipv6 || \
 		sed -i -e "s/-DUSE_IPV6//g" Makefile.defs || die
-
-	# Patch for sip-router flavour binaries names
-	epatch "${FILESDIR}/Makefile.defs.diff"
 }
 
 src_compile() {
