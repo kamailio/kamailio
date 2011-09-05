@@ -1,0 +1,34 @@
+#!/sbin/runscript
+# Copyright 1999-2011 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: $
+
+depend() {
+	need net
+}
+
+check_config() {
+	out=`(/usr/sbin/siprouter -f ${CONFIGFILE} -c > /dev/null || true) 2>&1`
+	echo "$out" | grep -q 'config file ok, exiting...'
+	if [ "$?" == 1 ]; then
+		echo -e "There are errors in the configuration. Please fix them first"
+		echo -e "\n$out\n"
+		return 1
+	fi
+}
+
+start() {
+	check_config || return 1
+	ebegin "Starting siprouter"
+	start-stop-daemon --start --quiet --pidfile /var/run/siprouter.pid \
+		--exec /usr/sbin/siprouter -- -P /var/run/siprouter.pid \
+                ${SR_OPTS}
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping siprouter"
+	start-stop-daemon --stop --quiet --pidfile /var/run/siprouter.pid
+	eend $?
+}
+
