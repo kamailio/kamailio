@@ -209,9 +209,6 @@ int db_print_set(const db1_con_t* _c, char* _b, const int _l,
 
 /**
  * Convert db_val_t to pv_spec_t
- *
- * On success, when the PV type is string and longer than 0 chars,
- * the string must be freed by the caller after use.
  * 
  * \param msg sip msg structure
  * \param dbval database value
