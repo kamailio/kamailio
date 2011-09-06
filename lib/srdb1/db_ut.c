@@ -407,8 +407,7 @@ int db_print_set(const db1_con_t* _c, char* _b, const int _l, const db_key_t* _k
 int db_val2pv_spec(struct sip_msg* msg, db_val_t *dbval, pv_spec_t *pvs)
 {
 	pv_value_t pv;
-	str sv = {NULL, 0};
-	static str _str_empty = { "", 0 };
+	char ll_buf[21];  /* sign, 19 digits and \0 */
 
 	if(dbval->nul)
 	{
@@ -419,18 +418,18 @@ int db_val2pv_spec(struct sip_msg* msg, db_val_t *dbval, pv_spec_t *pvs)
 		{
 			case DB1_STRING:
 				pv.flags = PV_VAL_STR;
-				sv.s = (char*)dbval->val.string_val;
-				sv.len = strlen(sv.s);
+				pv.rs.s = (char*)dbval->val.string_val;
+				pv.rs.len = strlen(pv.rs.s);
 			break;
 			case DB1_STR:
 				pv.flags = PV_VAL_STR;
-				sv.s = (char*)dbval->val.str_val.s;
-				sv.len = dbval->val.str_val.len;
+				pv.rs.s = (char*)dbval->val.str_val.s;
+				pv.rs.len = dbval->val.str_val.len;
 			break;
 			case DB1_BLOB:
 				pv.flags = PV_VAL_STR;
-				sv.s = (char*)dbval->val.blob_val.s;
-				sv.len = dbval->val.blob_val.len;
+				pv.rs.s = (char*)dbval->val.blob_val.s;
+				pv.rs.len = dbval->val.blob_val.len;
 			break;
 			case DB1_INT:
 				pv.flags = PV_VAL_INT | PV_TYPE_INT;
@@ -447,14 +446,8 @@ int db_val2pv_spec(struct sip_msg* msg, db_val_t *dbval, pv_spec_t *pvs)
 			case DB1_BIGINT:
 				/* BIGINT is stored as string */
 				pv.flags = PV_VAL_STR;
-				pv.rs.len = 21*sizeof(char);
-				pv.rs.s = (char*)pkg_malloc(pv.rs.len);
-				if (pv.rs.s==NULL)
-				{
-					LM_ERR("no more memory\n");
-					return -1;
-				}
-				db_longlong2str(dbval->val.ll_val, pv.rs.s, &pv.rs.len);
+				db_longlong2str(dbval->val.ll_val, ll_buf, &pv.rs.len);
+				pv.rs.s = ll_buf;
 			break;
 			default:
 				LM_NOTICE("unknown field type: %d, setting value to null\n",
@@ -467,38 +460,11 @@ int db_val2pv_spec(struct sip_msg* msg, db_val_t *dbval, pv_spec_t *pvs)
 	if (pv.flags == PV_VAL_NULL && pvs->type == PVT_AVP)
 		return 0;
 
-	/* handle string values */
-	if(pv.flags == PV_VAL_STR && sv.s)
-	{
-		if(sv.len==0)
-		{
-			pv.rs = _str_empty;
-		} else
-		{
-			/* create copy of string value in pkg mem */
-			pv.rs.s = (char*)pkg_malloc(sv.len*sizeof(char));
-			if(pv.rs.s==NULL)
-			{
-				LM_ERR("no more memory\n");
-				return -1;
-			}
-			memcpy(pv.rs.s, sv.s, sv.len);
-			pv.rs.len = sv.len;
-		}
-	}
-
 	/* add value to result pv */
 	if (pv_set_spec_value(msg, pvs, 0, &pv) != 0)
 	{
 		LM_ERR("Failed to add value to spec\n");
-		if (pv.flags == PV_VAL_STR && pv.rs.len > 0)
-			pkg_free(pv.rs.s);
 		return -1;
-	}
-
-	/* free string memory */
-	if (pv.flags == PV_VAL_STR && pv.rs.len > 0) {
-		pkg_free(pv.rs.s);
 	}
 
 	return 0;
