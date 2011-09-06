@@ -40,8 +40,9 @@
 #include "pvapi.h"
 #include "pvar.h"
 
-#define PV_TABLE_SIZE	16 /*!< pseudo-variable table size */
-#define TR_TABLE_SIZE	4  /*!< PV transformation size */
+#define PV_TABLE_SIZE	32  /*!< pseudo-variables table size */
+#define PV_CACHE_SIZE	32  /*!< pseudo-variables table size */
+#define TR_TABLE_SIZE	16  /*!< transformations table size */
 
 
 void tr_destroy(trans_t *t);
@@ -57,6 +58,16 @@ typedef struct _pv_item
 static pv_item_t* _pv_table[PV_TABLE_SIZE];
 static int _pv_table_set = 0;
 
+typedef struct _pv_cache
+{
+	str pvname;
+	unsigned int pvid;
+	pv_spec_t spec;
+	struct _pv_cache *next;
+} pv_cache_t;
+
+static pv_cache_t* _pv_cache[PV_CACHE_SIZE];
+static int _pv_cache_set = 0;
 
 /**
  *
@@ -66,6 +77,16 @@ void pv_init_table(void)
 	memset(_pv_table, 0, sizeof(pv_item_t*)*PV_TABLE_SIZE);
 	_pv_table_set = 1;
 }
+
+/**
+ *
+ */
+void pv_init_cache(void)
+{
+	memset(_pv_cache, 0, sizeof(pv_cache_t*)*PV_CACHE_SIZE);
+	_pv_cache_set = 1;
+}
+
 
 /**
  * @brief Check if a char is valid according to the PV syntax
@@ -78,6 +99,75 @@ static int is_pv_valid_char(char c)
 			|| (c=='_') || (c=='.') || (c=='?') /* ser $? */)
 		return 1;
 	return 0;
+}
+
+/**
+ *
+ */
+int pv_locate_name(str *in)
+{
+	int i;
+	int pcount;
+
+	if(in==NULL || in->s==NULL || in->len<2)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	if(in->s[0]!=PV_MARKER)
+	{
+		LM_ERR("missing pv marker [%.*s]\n", in->len, in->s);
+		return -1;
+	}
+	pcount = 0;
+	if(in->s[1]==PV_LNBRACKET)
+	{
+		/* name with parenthesis: $(...) */
+		pcount = 1;
+		for(i=1; i<in->len; i++)
+		{
+			if(in->s[i]==PV_LNBRACKET)
+				pcount++;
+			else if(in->s[i]==PV_RNBRACKET)
+				pcount--;
+			if(pcount==0)
+				return i+1;
+		}
+		/* non-closing name parenthesis */
+		return -1;
+	}
+
+	/* name without parenthesis: $xyz(...) */
+	for(i=1; i<in->len; i++)
+	{
+		if(!is_pv_valid_char(in->s[i]))
+		{
+			if(in->s[i]==PV_LNBRACKET)
+			{
+				/* inner-name parenthesis */
+				pcount = 1;
+				break;
+			} else {
+				return i;
+			}
+		}
+	}
+	if(pcount==0)
+		return i;
+
+	i++;
+	for( ; i<in->len; i++)
+	{
+		if(in->s[i]==PV_LNBRACKET)
+			pcount++;
+		else if(in->s[i]==PV_RNBRACKET)
+			pcount--;
+		if(pcount==0)
+			return i+1;
+	}
+	/* non-closing inner-name parenthesis */
+	return -1;
 }
 
 /**
@@ -157,6 +247,108 @@ int pv_table_add(pv_export_t *e)
 
 done:
 	return 0;
+}
+
+/**
+ *
+ */
+pv_spec_t* pv_cache_add(str *name)
+{
+	pv_cache_t *pvn;
+	unsigned int pvid;
+	char *p;
+
+	if(_pv_cache_set==0)
+	{
+		LM_DBG("PV cache not initialized, doing it now\n");
+		pv_init_cache();
+	}
+	pvid = get_hash1_raw(name->s, name->len);
+	pvn = (pv_cache_t*)pkg_malloc(sizeof(pv_cache_t) + name->len + 1);
+	if(pvn==0)
+	{
+		LM_ERR("no more memory\n");
+		return NULL;
+	}
+	memset(pvn, 0, sizeof(pv_item_t) + name->len + 1);
+	p = pv_parse_spec(name, &pvn->spec);
+
+	if(p==NULL)
+	{
+		pkg_free(pvn);
+		return NULL;
+	}
+	pvn->pvname.len = name->len;
+	pvn->pvname.s = (char*)pvn + sizeof(pv_cache_t);
+	memcpy(pvn->pvname.s, name->s, name->len);
+	pvn->pvid = pvid;
+	pvn->next = _pv_cache[pvid%PV_CACHE_SIZE];
+	_pv_cache[pvid%PV_CACHE_SIZE] = pvn;
+
+	LM_DBG("pvar [%.*s] added in cache\n", name->len, name->s);
+	return &pvn->spec;
+}
+
+/**
+ *
+ */
+pv_spec_t* pv_cache_lookup(str *name)
+{
+	pv_cache_t *pvi;
+	unsigned int pvid;
+	int found;
+
+	if(_pv_cache_set==0)
+		return NULL;
+
+	pvid = get_hash1_raw(name->s, name->len);
+	pvi = _pv_cache[pvid%PV_CACHE_SIZE];
+	while(pvi)
+	{
+		if(pvi->pvid == pvid) {
+			if(pvi->pvname.len==name->len)
+			{
+				found = strncmp(pvi->pvname.s, name->s, name->len);
+
+				if(found==0)
+				{
+					LM_DBG("pvar [%.*s] found in cache\n",
+							name->len, name->s);
+					return &pvi->spec;
+				}
+			}
+		}
+		pvi = pvi->next;
+	}
+	return NULL;
+}
+
+/**
+ *
+ */
+pv_spec_t* pv_cache_get(str *name)
+{
+	pv_spec_t *pvs;
+	str tname;
+
+	if(name->s==NULL || name->len==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return NULL;
+	}
+
+	tname.s = name->s;
+	tname.len = pv_locate_name(name);
+
+	if(tname.len < 0)
+		return NULL;
+
+	pvs = pv_cache_lookup(&tname);
+
+	if(pvs!=NULL)
+		return pvs;
+
+	return pv_cache_add(&tname);
 }
 
 /**

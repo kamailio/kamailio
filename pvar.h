@@ -204,6 +204,9 @@ pvname_list_t* parse_pvname_list(str *in, unsigned int type);
 int register_pvars_mod(char *mod_name, pv_export_t *items);
 int pv_free_extra_list(void);
 
+int pv_locate_name(str *in);
+pv_spec_t* pv_cache_get(str *name);
+
 /*! \brief PV helper functions */
 int pv_get_null(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
