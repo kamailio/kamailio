@@ -968,11 +968,13 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		on_failure = t->on_negative;
 		t->on_negative=0;
 		if (exec_pre_script_cb(&faked_req, FAILURE_CB_TYPE)>0) {
-			/* run a reply_route action if some was marked */
+			/* run a failure_route action if some was marked */
 			if (run_top_route(failure_rt.rlist[on_failure], &faked_req, 0)<0)
 				LOG(L_ERR, "ERROR: run_failure_handlers: Error in run_top_route\n");
 			exec_post_script_cb(&faked_req, FAILURE_CB_TYPE);
 		}
+		/* update message flags, if changed in failure route */
+		t->uas.request->flags = faked_req.flags;
 	}
 
 	/* restore original environment and free the fake msg */
