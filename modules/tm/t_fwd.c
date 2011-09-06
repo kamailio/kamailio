@@ -1517,6 +1517,9 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 
 	setbflagsval(0, backup_bflags);
 
+	/* update message flags, if changed in branch route */
+	t->uas.request->flags = p_msg->flags;
+
 	/* don't forget to clear all branches processed so far */
 
 	/* things went wrong ... no new branch has been fwd-ed at all */
