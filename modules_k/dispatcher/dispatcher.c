@@ -282,10 +282,13 @@ static int mod_init(void)
 	if (ds_ping_from.s) ds_ping_from.len = strlen(ds_ping_from.s);
 	if (ds_ping_method.s) ds_ping_method.len = strlen(ds_ping_method.s);
 
-        if(cfg_declare("dispatcher", dispatcher_cfg_def, &default_dispatcher_cfg, cfg_sizeof(dispatcher), &dispatcher_cfg)){
-                LM_ERR("Fail to declare the configuration\n");
-                return -1;
-        }
+	if(cfg_declare("dispatcher", dispatcher_cfg_def,
+				&default_dispatcher_cfg, cfg_sizeof(dispatcher),
+				&dispatcher_cfg)){
+		LM_ERR("Fail to declare the configuration\n");
+		return -1;
+	}
+
 	/* Initialize the counter */
 	ds_ping_reply_codes = (int**)shm_malloc(sizeof(unsigned int*));
 	*ds_ping_reply_codes = 0;
@@ -293,14 +296,16 @@ static int mod_init(void)
 	*ds_ping_reply_codes_cnt = 0;
 	if(ds_ping_reply_codes_str.s) {
 		ds_ping_reply_codes_str.len = strlen(ds_ping_reply_codes_str.s);
-		cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str) = ds_ping_reply_codes_str;
+		cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str)
+			= ds_ping_reply_codes_str;
 		if(ds_parse_reply_codes()< 0)
 		{
 			return -1;
 		}
 	}	
 	/* Copy Threshhold to Config */
-	cfg_get(dispatcher, dispatcher_cfg, probing_threshhold) = probing_threshhold;
+	cfg_get(dispatcher, dispatcher_cfg, probing_threshhold)
+		= probing_threshhold;
 
 
 	if(init_data()!= 0)
