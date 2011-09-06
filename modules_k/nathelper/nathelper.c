@@ -790,7 +790,7 @@ add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
     struct lump *anchor;
     struct sip_uri uri;
     struct ip_addr *ip;
-    char *lt, *gt, *param, *at, *port, *start;
+    char *bracket, *lt, *param, *at, *port, *start;
 
     /* Do nothing if Contact header does not exist */
     if (!msg->contact) {
@@ -827,9 +827,10 @@ add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
     }
 
     /* Check if Contact URI needs to be enclosed in <>s */
-    lt = gt = param = NULL;
-    at = memchr(msg->contact->body.s, '<', msg->contact->body.len);
-    if (at == NULL) {
+    lt = param = NULL;
+    bracket = memchr(msg->contact->body.s, '<', msg->contact->body.len);
+    if (bracket == NULL) {
+	/* add opening < */
 	lt = (char*)pkg_malloc(1);
 	if (!lt) {
 	    LM_ERR("no pkg memory left for lt sign\n");
@@ -845,33 +846,18 @@ add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
 	    LM_ERR("insert_new_lump_before for \"<\" failed\n");
 	    goto err;
 	}
-	gt = (char*)pkg_malloc(1);
-	if (!gt) {
-	    LM_ERR("no pkg memory left for gt sign\n");
-	    goto err;
-	}
-	*gt = '>';
-	anchor = anchor_lump(msg, msg->contact->body.s +
-			     msg->contact->body.len - msg->buf, 0, 0);
-	if (anchor == NULL) {
-	    LM_ERR("anchor_lump for end of contact body failed\n");
-	    goto err;
-	}
-	if (insert_new_lump_before(anchor, gt, 1, 0) == 0) {
-	    LM_ERR("insert_new_lump_before for \">\" failed\n");
-	    goto err;
-	}
     }
 
     /* Create  ;alias param */
     param_len = SALIAS_LEN + IP6_MAX_STR_SIZE + 1 /* ~ */ + 5 /* port */ +
-	1 /* ~ */ + 1 /* proto */;
+	1 /* ~ */ + 1 /* proto */ + 1 /* closing > */;
     param = (char*)pkg_malloc(param_len);
     if (!param) {
 	LM_ERR("no pkg memory left for alias param\n");
 	goto err;
     }
     at = param;
+    /* ip address */
     append_str(at, SALIAS, SALIAS_LEN);
     ip_len = ip_addr2sbuf(&(msg->rcv.src_ip), at, param_len - SALIAS_LEN);
     if (ip_len <= 0) {
@@ -879,24 +865,30 @@ add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
 	goto err;
     }
     at = at + ip_len;
+    /* port */
     append_chr(at, '~');
     port = int2str(msg->rcv.src_port, &len);
     append_str(at, port, len);
+    /* proto */
     append_chr(at, '~');
     if ((msg->rcv.proto < PROTO_UDP) || (msg->rcv.proto > PROTO_SCTP)) {
 	LM_ERR("invalid transport protocol\n");
 	goto err;
     }
     append_chr(at, msg->rcv.proto + '0');
+    /* closing > */
+    if (bracket == NULL) {
+	append_chr(at, '>');
+    }
     param_len = at - param;
+
+    /* Add  ;alias param */
     LM_DBG("adding param <%.*s>\n", param_len, param);
     if (uri.port.len > 0) {
 	start = uri.port.s + uri.port.len;
     } else {
 	start = uri.host.s + uri.host.len;
     }
-
-    /* Add  ;alias param */
     anchor = anchor_lump(msg, start - msg->buf, 0, 0);
     if (anchor == NULL) {
 	LM_ERR("anchor_lump for ;alias param failed\n");
@@ -910,7 +902,6 @@ add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
 
  err:
     if (lt) pkg_free(lt);
-    if (gt) pkg_free(gt);
     if (param) pkg_free(param);
     return -1;
 }
