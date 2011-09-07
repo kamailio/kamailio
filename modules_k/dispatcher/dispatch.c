@@ -349,7 +349,6 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 	if (he==0)
 	{
 		LM_ERR("could not resolve %.*s\n", puri.host.len, puri.host.s);
-		pkg_free(hn);
 		goto err;
 	}
 	/* Free the hostname */
@@ -841,7 +840,8 @@ void destroy_list(int list_id)
    				dest->uri.s = NULL;
 	   		}
 		}
-		shm_free(sp->dlist);
+		if (sp->dlist != NULL)
+			shm_free(sp->dlist);
 		sp = sp->next;
 	}
 	
