@@ -825,6 +825,9 @@ static int parse_sdp_content(struct sip_msg* msg, struct sdp_session *sess) {
 
 				break;
 			case 'a':
+				if (sess_fl == 2 && sess->media[sess->media_count-1].port == 0) {
+					 break;  /* ignore parameters of disabled media section */
+				}
 				i = name2enum(&lvalue, &send_rec_modifiers);
 				if (i > 0) {
 					switch (sess_fl) {
