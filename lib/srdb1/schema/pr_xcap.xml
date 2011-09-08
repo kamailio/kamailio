@@ -72,7 +72,7 @@
     <column id="doc_uri">
         <name>doc_uri</name>
         <type>string</type>
-        <size>&uri_len;</size>
+        <size>&xcap_uri_len;</size>
         <description>Document uri</description>
     </column>
 
