@@ -60,7 +60,7 @@ CREATE TABLE xcap (
     doc_type INTEGER NOT NULL,
     etag VARCHAR(64) NOT NULL,
     source INTEGER NOT NULL,
-    doc_uri VARCHAR(128) NOT NULL,
+    doc_uri VARCHAR(255) NOT NULL,
     port INTEGER NOT NULL,
     CONSTRAINT xcap_account_doc_type_idx UNIQUE (username, domain, doc_type, doc_uri)
 );

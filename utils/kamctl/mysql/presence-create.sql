@@ -60,7 +60,7 @@ CREATE TABLE xcap (
     doc_type INT(11) NOT NULL,
     etag VARCHAR(64) NOT NULL,
     source INT(11) NOT NULL,
-    doc_uri VARCHAR(128) NOT NULL,
+    doc_uri VARCHAR(255) NOT NULL,
     port INT(11) NOT NULL,
     CONSTRAINT account_doc_type_idx UNIQUE (username, domain, doc_type, doc_uri)
 ) ENGINE=MyISAM;

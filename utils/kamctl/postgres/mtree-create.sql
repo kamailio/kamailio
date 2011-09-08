@@ -6,3 +6,12 @@ CREATE TABLE mtree (
     CONSTRAINT mtree_tprefix_idx UNIQUE (tprefix)
 );
 
+INSERT INTO version (table_name, table_version) values ('mtrees','1');
+CREATE TABLE mtrees (
+    id SERIAL PRIMARY KEY NOT NULL,
+    tname VARCHAR(128) DEFAULT '' NOT NULL,
+    tprefix VARCHAR(32) DEFAULT '' NOT NULL,
+    tvalue VARCHAR(128) DEFAULT '' NOT NULL,
+    CONSTRAINT mtrees_tname_tprefix_idx UNIQUE (tname, tprefix)
+);
+
