@@ -433,13 +433,18 @@ int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf)
 	xmlNodePtr parent = NULL;
 	int size;
 	int i;
+	char *p;
 
 	doc = xmlParseMemory(inbuf->s, inbuf->len);
 	if(doc == NULL)
 		return -1;
 
 	if(val!=NULL)
+	{
 		newnode = xmlParseMemory(val->s, val->len);
+		if(newnode==NULL)
+			goto error;
+	}
 
 	outbuf->s   = NULL;
 	outbuf->len = 0;
@@ -459,15 +464,56 @@ int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf)
 		LM_ERR("unable to evaluate xpath expression [%s]\n", xpaths->s);
 		goto error;
 	}
-    nodes = xpathObj->nodesetval;
-	if(nodes==NULL)
+	nodes = xpathObj->nodesetval;
+	if(nodes==NULL || nodes->nodeNr==0 || nodes->nodeTab == NULL)
 	{
+		/* no selection for xpath expression */
 		LM_DBG("no selection for xpath expression [%s]\n", xpaths->s);
-		goto done;
-	}
-	size = nodes->nodeNr;
-	if(val!=NULL)
-		value = (const xmlChar*)val->s;
+		if(val==NULL)
+			goto done;
+		/* could be an insert - locate the selection of parent node */
+		p = strrchr(xpaths->s, '/');
+		if(p==NULL)
+			goto done;
+		/* evaluate xpath expression for parrent node */
+		*p = 0;
+		xpathObj = xmlXPathEvalExpression(
+					(const xmlChar*)xpaths->s, xpathCtx);
+		if(xpathObj == NULL)
+		{
+			LM_DBG("unable to evaluate xpath parent expression [%s]\n",
+					xpaths->s);
+			*p = '/';
+			goto done;
+		}
+		*p = '/';
+		nodes = xpathObj->nodesetval;
+		if(nodes==NULL || nodes->nodeNr==0 || nodes->nodeTab == NULL)
+		{
+			LM_DBG("no selection for xpath parent expression [%s]\n",
+					xpaths->s);
+			goto done;
+		}
+		/* add the new content as child to first selected element node */
+		if(nodes->nodeTab[0]==NULL)
+		{
+			LM_DBG("selection for xpath parent expression has first child"
+					" NULL [%s]\n", xpaths->s);
+			goto done;
+		}
+		if(nodes->nodeTab[0]->type==XML_ELEMENT_NODE)
+		{
+			xmlAddChild(nodes->nodeTab[0], xmlCopyNode(newnode->children, 1));
+		} else {
+			LM_DBG("selection for xpath parent expression is not element"
+					" node [%s]\n", xpaths->s);
+			goto done;
+		}
+	} else {
+		/* selection for xpath expression */
+		size = nodes->nodeNr;
+		if(val!=NULL)
+			value = (const xmlChar*)val->s;
     
 	/*
 	 * NOTE: the nodes are processed in reverse order, i.e. reverse document
@@ -477,22 +523,22 @@ int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf)
 	 *       they get removed. Mixing XPath and modifications on a tree must be
 	 *       done carefully !
 	 */
-	for(i = size - 1; i >= 0; i--) {
-		if(nodes->nodeTab[i]==NULL)
-			continue;
-	
-		if(nodes->nodeTab[i]->type==XML_ELEMENT_NODE)
-		{
-			parent = nodes->nodeTab[i]->parent;
-			xmlUnlinkNode(nodes->nodeTab[i]);
-			if(val!=NULL && newnode!=NULL)
-				xmlAddChild(parent, xmlCopyNode(newnode->children, 1));
-		} else {
-			if(val!=NULL)
-				xmlNodeSetContent(nodes->nodeTab[i], value);
-			else
-				xmlNodeSetContent(nodes->nodeTab[i], (const xmlChar*)"");
-		}
+		for(i = size - 1; i >= 0; i--) {
+			if(nodes->nodeTab[i]==NULL)
+				continue;
+
+			if(nodes->nodeTab[i]->type==XML_ELEMENT_NODE)
+			{
+				parent = nodes->nodeTab[i]->parent;
+				xmlUnlinkNode(nodes->nodeTab[i]);
+				if(val!=NULL && newnode!=NULL)
+					xmlAddChild(parent, xmlCopyNode(newnode->children, 1));
+			} else {
+				if(val!=NULL)
+					xmlNodeSetContent(nodes->nodeTab[i], value);
+				else
+					xmlNodeSetContent(nodes->nodeTab[i], (const xmlChar*)"");
+			}
 		/*
 		 * All the elements returned by an XPath query are pointers to
 		 * elements from the tree *except* namespace nodes where the XPath
@@ -510,8 +556,9 @@ int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf)
 		 *   - remove the reference to the modified nodes from the node set
 		 *     as they are processed, if they are not namespace nodes.
 		 */
-		if (nodes->nodeTab[i]->type != XML_NAMESPACE_DECL)
-			nodes->nodeTab[i] = NULL;
+			if (nodes->nodeTab[i]->type != XML_NAMESPACE_DECL)
+				nodes->nodeTab[i] = NULL;
+		}
 	}
 
 	xmlDocDumpMemory(doc, &xmem, &size);
