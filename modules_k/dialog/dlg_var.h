@@ -62,7 +62,7 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 struct dlg_var * get_local_varlist_pointer(struct sip_msg *msg, int clear_pointer);
 
 /* Adds, updates and deletes dialog variables */
-int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val, int new);
+int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val);
 
 extern dlg_ctx_t _dlg_ctx;
 
