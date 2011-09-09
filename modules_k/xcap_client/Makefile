@@ -10,9 +10,19 @@ auto_gen=
 NAME=xcap_client.so
 LIBS=
 
-DEFS+=-I$(LOCALBASE)/include
+CURLCFG=$(shell which curl-config)
 
-LIBS+=-L$(SYSBASE)/lib -L$(LOCALBASE)/lib -lcurl
+ifneq ($(CURLCFG),)
+
+	DEFS += $(shell $(CURLCFG) --cflags)
+	LIBS += $(shell $(CURLCFG) --libs)
+
+else
+
+	DEFS+=-I$(LOCALBASE)/include
+	LIBS+=-L$(SYSBASE)/lib -L$(LOCALBASE)/lib -lcurl
+
+endif
 
 DEFS+=-DOPENSER_MOD_INTERFACE
 
