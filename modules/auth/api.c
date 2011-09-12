@@ -94,6 +94,11 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 			c->digest.alg.alg_str.len, c->digest.alg.alg_str.s,
 			c->digest.alg.alg_parsed);
 
+	if (mark_authorized_cred(msg, *hdr) < 0) {
+		LOG(L_ERR, "auth:pre_auth: Error while marking parsed credentials\n");
+		return ERROR;
+	}
+
 	    /* check authorization header field's validity */
 	if (check_auth_hdr == NULL) {
 		check_hf = auth_check_hdr_md5;
@@ -171,11 +176,6 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr)
 			c->stale = 1;
 			res = NOT_AUTHENTICATED;
 		}
-	}
-
-	if (mark_authorized_cred(msg, hdr) < 0) {
-		LOG(L_ERR, "auth:post_auth: Error while marking parsed credentials\n");
-		res = ERROR;
 	}
 
 	return res;
