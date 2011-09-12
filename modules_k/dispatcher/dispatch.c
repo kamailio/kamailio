@@ -1954,9 +1954,9 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 	{
 		prev_avp = search_first_avp(dstid_avp_type, dstid_avp_name,
 				&avp_value, &st);
-		if(prev_avp!=NULL)
+		if(prev_avp==NULL)
 		{
-			LM_ERR("cannot uid for dst addr\n");
+			LM_ERR("cannot find uid avp for destination address\n");
 			return -1;
 		}
 		if(ds_load_replace(msg, &avp_value.s)<0)
