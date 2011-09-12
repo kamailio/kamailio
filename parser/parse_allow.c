@@ -37,7 +37,7 @@
 /*! \brief
  * This method is used to parse Allow header.
  *
- * \param hf message header field
+ * \param _hf message header field
  * \return 0 on success, -1 on failure.
  */
 int parse_allow_header(struct hdr_field* _hf)

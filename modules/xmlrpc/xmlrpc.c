@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2005 iptelorg GmbH
  * Written by Jan Janak <jan@iptel.org>
  *
@@ -1326,9 +1324,10 @@ static int get_double(double* val, struct xmlrpc_reply* reply,
  * @param doc A pointer to the XML-RPC request document.
  * @param value A pointer to the element containing the parameter to be 
  *              converted within the document.
- * @param flags : GET_X_AUTOCONV - try autoconverting
- *                GET_X_LFLF2CRLF - replace double '\n' with `\r\n'
- *                GET_X_NOREPLY - do not reply
+ * @param flags 
+ *              - GET_X_AUTOCONV - try autoconverting
+ *              - GET_X_LFLF2CRLF - replace double '\\n' with `\\r\\n'
+ *              - GET_X_NOREPLY - do not reply
  * @return <0 on error, 0 on success
  */
 static int get_string(char** val, struct xmlrpc_reply* reply, 
