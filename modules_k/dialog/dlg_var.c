@@ -150,10 +150,9 @@ int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val)
 	}
 
 	/* not found: */
-
 	if (!var) {
-		LM_ERR("dialog variable <%.*s> does not exist in variable list\n", key->len, key->s);
-		return -1;
+		LM_DBG("dialog variable <%.*s> does not exist in variable list\n", key->len, key->s);
+		return 1;
 	}
 
 	/* insert a new one at the beginning of the list */
@@ -240,6 +239,7 @@ str * get_dlg_variable(struct dlg_cell *dlg, str *key)
 
 int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
 {
+    int ret = -1;
     if( !dlg || !key || key->len > strlen(key->s) || (val && val->len > strlen(val->s)))
     {
         LM_ERR("BUG - bad parameters\n");
@@ -248,18 +248,9 @@ int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
 
     dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
 
-    if( !val)
-    {
-        if (set_dlg_variable_unsafe(dlg, key, NULL)!=0) {
-            LM_ERR("failed to delete dialog variable <%.*s>\n", key->len,key->s);
-            goto error;
-        }
-    } else {
-        if (set_dlg_variable_unsafe(dlg, key, val)!=0) {
-            LM_ERR("failed to store dialog values <%.*s>\n",key->len,key->s);
-            goto error;
-        }
-    }
+    ret = set_dlg_variable_unsafe(dlg, key, val);
+    if(ret!= 0)
+        goto done;
 
     dlg->dflags &= DLG_FLAG_CHANGED_VARS;
     dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
@@ -270,9 +261,9 @@ int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
 
     return 0;
 
-error:
+done:
     dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
-    return -1;
+    return ret;
 }
 
 int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
@@ -313,6 +304,7 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val)
 {
 	struct dlg_cell *dlg;
+	int ret = -1;
 
 	/* Retrieve the current dialog */
 	dlg=get_current_dialog( msg);
@@ -332,11 +324,11 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 
 	if (val==NULL || val->flags&(PV_VAL_NONE|PV_VAL_NULL|PV_VAL_EMPTY)) {
 		/* if NULL, remove the value */
-		if (set_dlg_variable_unsafe(dlg, &param->pvn.u.isname.name.s, NULL)!=0) {
-			LM_ERR("failed to delete dialog variable <%.*s>\n", param->pvn.u.isname.name.s.len,param->pvn.u.isname.name.s.s);
+		ret = set_dlg_variable_unsafe(dlg, &param->pvn.u.isname.name.s, NULL);
+		if(ret!= 0) {
 			/* unlock dialog */
 			if (dlg) dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
-			return -1;
+			return ret;
 		}
 	} else {
 		/* if value, must be string */
@@ -347,8 +339,8 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 			return -1;
 		}
 
-		if (set_dlg_variable_unsafe(dlg, &param->pvn.u.isname.name.s, &val->rs)!=0) {
-			LM_ERR("failed to store dialog values <%.*s>\n",param->pvn.u.isname.name.s.len,param->pvn.u.isname.name.s.s);
+		ret = set_dlg_variable_unsafe(dlg, &param->pvn.u.isname.name.s, &val->rs);
+		if(ret!= 0) {
 			/* unlock dialog */
 			if (dlg) dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 			return -1;
