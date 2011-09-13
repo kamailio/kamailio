@@ -419,6 +419,7 @@ static int mod_init(void);
 static void mod_destroy(void);
 static int pv_isset(struct sip_msg* msg, char* pvid, char *foo);
 static int pv_unset(struct sip_msg* msg, char* pvid, char *foo);
+static int is_int(struct sip_msg* msg, char* pvar, char* s2);
 
 static cmd_export_t cmds[]={
 	{"pv_isset",  (cmd_function)pv_isset,  1, fixup_pvar_null, 0, 
@@ -429,6 +430,9 @@ static cmd_export_t cmds[]={
 	{"pv_xavp_print",  (cmd_function)pv_xavp_print,  0, 0, 0, 
 		ANY_ROUTE },
 #endif
+	{"is_int", (cmd_function)is_int, 1, fixup_pvar_null, fixup_free_pvar_null,
+		ANY_ROUTE},
+
 	{0,0,0,0,0,0}
 };
 
@@ -509,3 +513,21 @@ static int add_avp_aliases(modparam_t type, void* val)
 	return 0;
 }
 
+/**
+ * Copyright (C) 2011 Juha Heinanen
+ *
+ * Checks if pvar argument contains int value
+ */
+static int is_int(struct sip_msg* msg, char* pvar, char* s2)
+{
+	pv_spec_t *pvar_sp;
+	pv_value_t pv_val;
+
+	pvar_sp = (pv_spec_t *)pvar;
+
+	if (pvar_sp && (pv_get_spec_value(msg, pvar_sp, &pv_val) == 0)) {
+		return (pv_val.flags & PV_VAL_INT)?1:-1;
+	}
+
+	return -1;
+}
