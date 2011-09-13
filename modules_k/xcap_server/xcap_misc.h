@@ -53,6 +53,7 @@ typedef struct xcap_uri {
 int xcap_parse_uri(str *huri, str *xroot, xcap_uri_t *xuri);
 int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf);
 int xcaps_xpath_get(str *inbuf, str *xpaths, str *outbuf);
+int xcaps_check_doc_validity(str *doc);
 
 int pv_get_xcap_uri(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);

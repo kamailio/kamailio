@@ -335,6 +335,11 @@ static int xcaps_put_db(str* user, str *domain, xcap_uri_t *xuri, str *etag,
 	db_val_t qvals[9];
 	int ncols = 0;
 
+	if(xcaps_check_doc_validity(doc)<0)
+	{
+		LM_ERR("invalid xml doc to insert in database\n");
+		goto error;
+	}
 
 	/* insert in xcap table*/
 	qcols[ncols] = &str_username_col;
@@ -680,6 +685,12 @@ static int xcaps_get_db_doc(str* user, str *domain, xcap_uri_t *xuri, str *doc)
 	memcpy(doc->s, s.s, s.len);
 	doc->s[doc->len] = '\0';
 
+	if(xcaps_check_doc_validity(doc)<0)
+	{
+		LM_ERR("invalid xml doc retrieved from database\n");
+		goto error;
+	}
+
 	xcaps_dbf.free_result(xcaps_db, db_res);
 	return 0;
 
@@ -694,6 +705,8 @@ error:
 }
 
 /**
+ * get the etag from database record for (user@domain, xuri)
+ * - return: -1 error; 0 - found; 1 - not found
  *
  */
 static int xcaps_get_db_etag(str* user, str *domain, xcap_uri_t *xuri, str *etag)
@@ -970,9 +983,9 @@ static int w_xcaps_del(sip_msg_t* msg, char* puri, char* ppath)
 	str uri;
 	str path;
 	xcap_uri_t xuri;
-	str body;
-	str etag_hdr;
-	str etag;
+	str body = {0, 0};
+	str etag_hdr = {0, 0};
+	str etag = {0, 0};
 	str tbuf;
 
 	if(puri==0 || ppath==0)
@@ -1016,7 +1029,7 @@ static int w_xcaps_del(sip_msg_t* msg, char* puri, char* ppath)
 		goto error;
 	}
 
-	if(xcaps_get_db_etag(&turi.user, &turi.host, &xuri, &etag)<0)
+	if(xcaps_get_db_etag(&turi.user, &turi.host, &xuri, &etag)!=0)
 	{ 
 		LM_ERR("could not fetch etag for xcap document\n");
 		goto error;

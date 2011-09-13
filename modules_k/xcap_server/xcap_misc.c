@@ -665,6 +665,26 @@ error:
 }
 
 /**
+ * check if provided XML doc is valid
+ * - return -1 if document is invalid or 0 if document is valid
+ */
+int xcaps_check_doc_validity(str *doc)
+{
+
+	xmlDocPtr docxml = NULL;
+
+	if(doc==NULL || doc->s==NULL || doc->len<0)
+		return -1;
+
+	docxml = xmlParseMemory(doc->s, doc->len);
+	if(docxml==NULL)
+		return -1;
+	xmlFreeDoc(docxml);
+	return 0;
+}
+
+
+/**
  * xcapuri PV export
  */
 typedef struct _pv_xcap_uri {
