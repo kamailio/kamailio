@@ -350,6 +350,8 @@ char* proto2a(enum sip_protos proto)
 			return "tls";
 		case PROTO_SCTP:
 			return "sctp";
+		case PROTO_OTHER:
+			return "other";
 	}
 	return "unknown";
 }

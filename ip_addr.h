@@ -52,8 +52,8 @@
 
 #include "dprint.h"
 
-enum sip_protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_TLS, PROTO_SCTP };
-#define PROTO_LAST PROTO_SCTP
+enum sip_protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_TLS, PROTO_SCTP, PROTO_OTHER };
+#define PROTO_LAST PROTO_OTHER
 
 #ifdef USE_COMP
 enum comp_methods { COMP_NONE, COMP_SIGCOMP, COMP_SERGZ };
