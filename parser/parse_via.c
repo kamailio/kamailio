@@ -1463,7 +1463,8 @@ parse_again:
 						/* finished proto parsing */
 						vb->transport.len=tmp-vb->transport.s;
 						vb->proto=PROTO_OTHER;
-						state=F_HOST; /* start looking for host*/
+						state=F_LF;
+						saved_state=F_HOST; /* start looking for host*/
 						goto main_via;
 					case FIN_SIP:
 						vb->name.len=tmp-vb->name.s;
@@ -1539,7 +1540,8 @@ parse_again:
 						/* finished proto parsing */
 						vb->transport.len=tmp-vb->transport.s;
 						vb->proto=PROTO_OTHER;
-						state=F_HOST; /* start looking for host*/
+						state=F_CR;
+						saved_state=F_HOST;
 						goto main_via;
 					case FIN_SIP:
 						vb->name.len=tmp-vb->name.s;
