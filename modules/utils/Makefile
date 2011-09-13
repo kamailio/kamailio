@@ -11,7 +11,7 @@ LIBS=
 
 DEFS+=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
       -I$(LOCALBASE)/include
-LIBS+=-L$(SYSBASE)/include/lib -L$(LOCALBASE)/lib -lcurl -lxml2
+LIBS+=-L$(LOCALBASE)/lib -lcurl -lxml2
 
 DEFS+=-DOPENSER_MOD_INTERFACE
 
