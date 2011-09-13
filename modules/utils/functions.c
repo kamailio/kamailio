@@ -139,21 +139,3 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst)
 	
     return stat;
 }
-
-
-/* 
- * Checks if pvar argument contains int value
- */
-int is_int(struct sip_msg* _m, char* _pvar, char* _s2)
-{
-    pv_spec_t *pvar_sp;
-    pv_value_t pv_val;
-
-    pvar_sp = (pv_spec_t *)_pvar;
-   
-    if (pvar_sp && (pv_get_spec_value(_m, pvar_sp, &pv_val) == 0)) {
-	return (pv_val.flags & PV_VAL_INT)?1:-1;
-    }
-
-    return -1;
-}

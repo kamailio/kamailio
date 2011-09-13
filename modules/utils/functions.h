@@ -42,9 +42,4 @@
 int http_query(struct sip_msg* _m, char* _page, char* _params, char* _dst);
 
 
-/* 
- * Checks if pvar argument contains int value
- */
-int is_int(struct sip_msg* _m, char* _pvar, char* _s2);
-
 #endif /* UTILS_FUNCTIONS_H */
