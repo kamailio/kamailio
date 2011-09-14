@@ -111,6 +111,9 @@ static void dump_gws(rpc_t* rpc, void* c)
 	    case PROTO_SCTP:
 		rpc->struct_add(st, "s", "transport", "SCTP");
 		break;
+	    case PROTO_OTHER:
+		rpc->struct_add(st, "s", "transport", "OTHER");
+		break;
 	    case PROTO_NONE:
 		break;
 	    }
