@@ -1,3 +1,905 @@
+===================== 2011-09-14 Version 3.1.5 Released =====================
+
+===================== Changes Since Version 3.1.4 ===========================
+
+commit df2ff926c990b4123bf02cd51a15c9e1390cc55b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 14 18:53:56 2011 +0200
+
+    pkg: version set to 3.1.5 for kamailio rpms
+
+commit 97607a0da2bc284500e03bce77247e9588a7a9db
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 14 18:52:10 2011 +0200
+
+    pkg: version set to 3.1.5 for kamailio debs
+
+commit d616d8372da87a3cf404c8573467a3d64eb37f14
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 14 18:49:49 2011 +0200
+
+    Makefile: version set to 3.1.5
+
+commit 53ee5d0e7e387cdf0f39a371b356ff44f3d36fa9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 14 18:39:37 2011 +0200
+
+    tm: backup X/AVP lists when building new T in t_uac()
+    
+    - build_cell() is setting core X/AVP lists to new T structure, losing
+      the lists that existed in case another T was set already. This is in
+      t_uac() which is used for local generated requests, such as
+      uac_req_send(), presence notifications, msilo...
+    - a revious patch was backing up only X/AVPs lists for
+      execution of event_route[tm:local-request]
+    - reported by Vitaliy Aleksandrov
+    (cherry picked from commit 1e83919bcb3f1a2fb2890a6766a007b8f50cb986)
+
+commit b4fae8b9eee6d893aa2591bcc9039ea53a142161
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 14 11:19:56 2011 +0200
+
+    rr(k): execute callbacks only for local route uri
+    
+    - parameters callback are executed only if there is a list with
+      parameters in Route URI and for loose routing the URI has to match
+      myself condition
+    - should fix bogus value of Route URI params in callback function when
+      URI of top Route is not myself
+    - reported by Andreas Granig
+    (cherry picked from commit 10eac9b125ff2a13a2ae240897a3f17bc1243c71)
+
+commit 471b7780706efa2086fe2d1a614ec84cb1c4b19d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 14 10:54:15 2011 +0200
+
+    Revert "auth_radius(s): use the update pre_auth"
+    
+    - reverted invalid backport mistakenly selected
+    This reverts commit 7c9a316c78c670889ee55772a5d2e8e72a6808d3.
+
+commit 13703fac521feb3662cbce921a8ba0f299d001e2
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Fri May 20 23:08:24 2011 +0300
+
+    core: fixed via branch value in ack to 200 ok
+    
+    - By default, sr was using non-rfc3261 compliant via branch value when
+      it generated ack to 200 ok.
+    (cherry picked from commit ebb3b085c15b398192cd8e242d46914252278448)
+
+commit 39387157697847f6cb87531956a9da7c3c4e530d
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Fri Sep 2 10:22:35 2011 +0200
+
+    sctp: update the cfg before handling notifications
+    
+    Update the local config immediately after successfully reading
+    a message (before processing notifications, since some of the
+    notifications processing makes use of cfg values).
+    (cherry picked from commit 5813703a7931f288b95840b9a93c628773c33a03)
+
+commit 7c9a316c78c670889ee55772a5d2e8e72a6808d3
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Mon Aug 22 11:45:38 2011 +0200
+
+    auth_radius(s): use the update pre_auth
+    
+    Handle the new pre_auth returns.
+    (cherry picked from commit 01a0bfd830a4efb5e2f8d26fbaf80297eb5a1ba3)
+
+commit cd1290e5602f06be16589cde193d1443aee4dcd2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 12 12:52:33 2011 +0200
+
+    dispatcher(k): typo in ds_next_dst() dstid avp handling
+    
+    - fixes wrong condition in finding dstid avp
+    - patch by Bogdan Pintea
+    (cherry picked from commit 11f7ddaf80d2865a649d35581f8d0ff06857af04)
+
+commit 266167598becf8711f29c4d3a6838ba22b8bb1d6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 11 11:36:10 2011 +0200
+
+    pua_xmpp: removed invalid lib path from Makefile
+
+commit 30fd945c4ec528d6cb451f9e1c0d14f40a71408a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 11 11:34:24 2011 +0200
+
+    presence_xml: removed invalid lib path from Makefile
+
+commit 2b7c8a947a1a34a2b8d9846754e9cd0015d69c0d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 11 11:32:34 2011 +0200
+
+    presence(k): removed invalid lib path from Makefile
+
+commit 7723e6b6da380d18675316fb39f8b850d2109fb6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 12 12:27:52 2011 +0100
+
+    tmx: added the docs for t_flush_flags()
+    (cherry picked from commit ce7aa8e46e839a56d5759a688d03515f94497267)
+
+commit b5ba5f8f0aa8b38819922751743cacedab54742e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 12 12:22:51 2011 +0100
+
+    tmx: restored t_flush_flags()
+    
+    - function to sycn the msg flags back to transaction when the
+      transaction was created before modifying the flags
+    - reported by Juha Heinanen
+    (cherry picked from commit 83620cb7cd14ee3b509eef72d99337567f53967f)
+
+commit 14d457543beebdff71eaa4dfdb90ef115c2e1877
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jun 26 11:48:39 2011 +0200
+
+    tm: renamed typedef cell_type to tm_cell_t
+    (cherry picked from commit c4c3773622a5419d890a13a5226d721ff0a7bcfa)
+
+commit 8027fd1dbf27b5de2ba7e90b0feef9c1772242ea
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 9 10:25:02 2011 +0200
+
+    xcap_client: use curl-config to get include and lib compile flags
+
+commit f31b2a60e861eef20866004bdd82eaae8dbd45c2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 9 10:08:33 2011 +0200
+
+    xcap_server: use xml2-config to get include and libs compile flags
+    (cherry picked from commit 3e502e2ac387999306d4a472784ed0699b8c7f77)
+
+commit b0bc86360334237095ad764cf8552a12907d8996
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 7 21:57:03 2011 +0200
+
+    xcap_server: remove invalid lib dir from Makefile
+    (cherry picked from commit 7e1564b7e67a25eb22c26f4ae235d9b380ce8417)
+
+commit 2f4a52c9e4a1c058d1355dbb5f45d3589d7554a7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 6 14:12:00 2011 +0200
+
+    tm: update T msg flags after {branch/failure}_route
+    
+    - after execution of branch_route or failure_route, set the message
+      flags of the temporary request back to transaction request
+    - 1.x behaviour
+    - reported and partial patch by Alex Hermann
+    (cherry picked from commit c589ca35b2aa3097a3c9e2a5a050514337300c05)
+
+commit b7edd05ca05020f5a40f6c177d309894a7e958d8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 23 00:27:10 2011 +0200
+
+    app_lua: fixed assignments for Makefile vars
+    (cherry picked from commit 1d4f8bbf2e3889c9c5279bf81ec832fb86b69112)
+
+commit ee121bfbda8c4d27ef606e0003506de18b5ca911
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 12 22:51:20 2011 +0200
+
+    pua_xmpp: fixes to SIP-XMPP presence status translations
+    
+    * patch by Laura Testi to fix:
+    - the online/offline status is ok in both direction (SIP<-->XMPP)
+    - other status (away/busy) is not ok from XMPP to SIP
+    - busy status is not ok from SIP to XMPP
+    - each time XMPP contact change the status, triger a new SUBSCRIBE in  xmpp
+      gateway which generate multiple same subscriptions with different callid
+      in both active_watchers and pua tables. This also makes multiple NOTIFY
+      generation from the main Presence Server to GW when the SIP contact change
+      it's status
+    (cherry picked from commit d1097d6ac9295c529ad6e682534ee4b3f0a9daae)
+
+commit 6b07dd067f55ff9ff418a4646d8efe967f6cc8f5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 4 11:41:32 2011 +0200
+
+    tls: safety check for current cipher
+    
+    - SSL_get_current_cipher(...) may return NULL, in case of the cipher was
+      not set yet for the connection
+    - caused crash when RPC command tls.list was used in such moment
+    - cipher description is set to 'unknown' for such case
+    - reported by Francesco Castellano
+    (cherry picked from commit 816a0218130782ea86a3cc16feb2a008fe6fff68)
+
+commit a38f6184044e964a1eff56da80c2ae6bfdf50a06
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 3 23:03:54 2011 +0200
+
+    tm: don't set dst_uri to next hop for branch_route
+    
+    - added flag to skip setting dst_uri to next hop for branch_route if the
+      dst_uri was not set before
+    - there is already a  select and a pseudo-variable to access next hop value,
+      in case it is needed in branch route
+    - reported by Alex Hermann
+    (cherry picked from commit fb4ecbf986f4af366e5be9cbad26ceba924c77fd)
+
+commit 0dcf964514ba3fb9d09f21340bbeb01626bd8109
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 3 19:34:09 2011 +0200
+
+    tm: allow nested backup of avp lists when sending local requests
+    
+    - added ability to use a local variable instead static var to
+      backup/restore avps lists for local generated transactions
+    (cherry picked from commit 08798a6d06b628fa5888ded867c5d18416b9f013)
+
+commit ab9451afe5cc27a8253d9273a2d50d6470d6cc78
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 1 14:36:39 2011 +0200
+
+    tm: backup/restore lists of avps for usage t_uac
+    
+    - when sending a self-generated request while processing other sip
+      message, backup the list of avps and restore afterwards
+    - reported by Sebastian Damm
+    - added helper function to backup/restore the lists of avps from msg
+      context to static var and use transaction lists
+    (cherry picked from commit 203b2678a7115f2ba744eeda5279108fdd5b139d)
+
+commit 3585f8f08d55d150aa78b566e2a817c0d78a6766
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 17 00:28:26 2011 +0200
+
+    app_python: provide a clone string to dirname and basename
+    
+    - script name value is cloned before execution of dirname and basename
+      since they may modify the parameter
+    - reported by Arnaud Chong, FS#137
+    (cherry picked from commit 53605f2ca1718e42f1f1fcb87bb67935c889249a)
+
+commit 25bebfc6a398820d507c75ecfbab3677c6b016ab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jul 17 00:17:58 2011 +0200
+
+    app_python: fixed compile warning
+    
+    - warning: dereferencing type-punned pointer will break strict-aliasing
+      rules
+
+commit 66e3531def2e011aa640033a161c9a2fd6e4578c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 7 13:23:07 2011 +0200
+
+    dispatcher(k): fix segfault if dispatcher cannot resolve hostnames
+    
+    - applies if the dispatcher module cannot resolve hostnames during
+      startup (and tries to shutdown)
+    - patch by Hugh Waite
+    (cherry picked from commit cad2daebf295443f2318abbb608102bb99111948)
+
+commit 19f3a0d6a6951ddae4734f9d217ae8f223d60de7
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon Sep 5 21:50:23 2011 +0200
+
+    pgk: add symlink to kamailio directory for new gentoo ebuild
+    (cherry picked from commit a89e2b1a2f71c932f38c0bfdcceb2fa1880431f5)
+
+commit b76666deb6221fedfdf2927b2db6e07e8440864c
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon Sep 5 21:46:12 2011 +0200
+
+    pkg: also remove Makefile.defs.diff from calling files
+    (cherry picked from commit 4c201e8c08e607f60efe695b5b9bb22042b7dbbe)
+
+commit 738f0b36bf416de6cd1232f18e4f9dbaf650f2c8
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon Sep 5 21:42:03 2011 +0200
+
+    pkg: remove Makefile.defs.diff file, which set special daemon name - use the default
+    (cherry picked from commit 65340ae5b19f20d904d6a80b2e80711c93d44f7d)
+
+commit 007cd3ffdadf0964f6e338d2999658bac6676f74
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon Sep 5 21:33:21 2011 +0200
+
+    pkg: move gentoo ebuild to ser directory, remove obselete 0.8.X ebuild
+
+commit f1252f026d12624908b2cf79e3a433472f038392
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon Sep 5 18:17:40 2011 +0200
+
+    pkg: remove obselete gentoo ebuild, add new generic ebuild from Claudio Furrer (FS#134)
+    (cherry picked from commit d7b0e82c14caa1809bb6f0d96646354eabf2c253)
+
+commit 535c86ef0c297a4f08f82e0d1a66fca0882fd2fb
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon Sep 5 18:10:39 2011 +0200
+
+    pkg: fix wrong package name, closes FS#148, reported from Andrew Pogrebennyk
+    (cherry picked from commit 15adc86286e05805cb99617686ae2c6fe1e69d27)
+
+commit 5e827db17414a02902ee8899d762af9933baec66
+Author: Sven Knoblich <sven.knoblich@1und1.de>
+Date:   Mon Sep 5 13:35:50 2011 +0200
+
+    core: fix typo in parser.
+    
+    - use correct function-name in log message of parse_param.c:parse_contact_class.
+      (fixes flyspray-issue 147)
+    (cherry picked from commit 21ff48876956bf1df67ace6651ea9782e297946b)
+
+commit 97f788a3f1e4e993c99fb1225a1fbcbe4ff0ffc8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 31 09:38:28 2011 +0200
+
+    usrloc(k): request a db connection per child
+    
+    - avoid sharing the connection between processes
+    - reported by MÃSZÃROS MihÃ¡ly
+    (cherry picked from commit d593078c2e0bb123d56de2d440473cc12a08fba6)
+
+commit 18881421102eaac97c85d84cbbd1597c3f342d23
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Wed Aug 17 15:00:00 2011 +0300
+
+    modules_k/dialog When hash_size was smaller then 1, consider this as a value(1 == 2^0)
+    
+    The 1<<(n-1) check for the power of two smaller than the given number doesn't work for n == 0 (undefined behavior),
+    so values of dlg_hash_size smaller than 1 where not checked correctly.
+    (cherry picked from commit 11033b05be673593a87afdc2a1d8a2c887fb9ab7)
+
+commit cb21425e6fa9e824a51b44829b0ad9d9bf9beb99
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Sat Aug 27 02:20:00 2011 +0200
+
+    modules_k/dialog: Fix commit backport mistakes in dlg_handlers.c
+    causing compiler run to fail.
+    
+    - Add and set missing "spiral_detected" flag variable.
+    - Use correct SIP message variable name (req -> msg).
+
+commit d5e90ab587746a39c9be44d9f9f1c325b8d4902d
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Sat Aug 27 01:44:03 2011 +0200
+
+    modules_k/dialog: Improve error handling during dialog creation.
+    
+    - Set current dialog only after all other setup work succeeded.
+      (Eliminates call to profile_cleanup() and guarantees that dialog
+      profiling does not yield to segfault if dialog creation fails
+      for certain reasons.)
+    - During error handling, refrain from decrementing the reference
+      counter for dialog linking if this is a spiraled request
+      (because positive spiral detection skips the linkage code path).
+    (cherry picked from commit 71dd754818d8c3ec304298f1002a45889c2da0aa)
+    
+    Conflicts:
+    
+    	modules_k/dialog/dlg_handlers.c
+
+commit 8ff999c7641bf08f0e6d52a14d1f612511525eb3
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Thu Aug 25 15:17:48 2011 +0200
+
+    modules_k/dialog: Simplify and refactor parts of reference counter
+    handling.
+    
+    - Remove special handling for dialogs in the "deleted" state to
+      allow accessing such dialogs (e.g., from the configuration
+      script).
+      Besides making the code easier to understand, this also fixes a
+      bug where the reference counter would be decremented after
+      detecting a spiral (dlg_handlers.c) even though get_dlg() does
+      not increment it for "deleted" dialogs.
+    - Adapt interfaces for lookup_dlg() and get_dlg() accordingly,
+      i.e., remove "del" parameter and update in-code documentation.
+    - Replace direct increments on a dialog structure's ref variable
+      by calls to ref_dlg_unsafe().
+    - Move {un}ref_dlg_unsafe() definitions towards the head of the
+      file to make declaration available earlier.
+    - Improve store_dlg_in_tm():
+        * Return and evaluate result code.
+        * Replace second register call by passing unreference_dialog()
+          as release function to the first register call.
+    - Document various places in the code dealing with reference
+      counting.
+    (cherry picked from commit f44534cbe841046079e176512b04a6b9c5a68bdc)
+    
+    Conflicts:
+    
+    modules_k/dialog/dlg_handlers.c
+    modules_k/dialog/dlg_hash.c
+    modules_k/dialog/dlg_hash.h
+
+commit 084da0afc666fef6f92c00754bbfb3c192751ff6
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Thu Aug 25 13:26:32 2011 +0200
+
+    modules_k/dialog: Provide in-code documentation for tricky part in
+    dlg_new_dialog().
+    (cherry picked from commit d903b7707d1f9c5ecb4110de9ab9d8a573a6f8cd)
+
+commit e17caaf8354f8fefb1d9558347c18fc96b3a6011
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Tue Aug 23 15:36:45 2011 +0200
+
+    modules_k/dialog: Add reference count to list of items returned
+    via RPC.
+    (cherry picked from commit cf8e80cbe53380e628476edf0cff0e05b77e25f9)
+
+commit e57897b4b3f5c3bb535164dc7349f36538ea3d79
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Tue Aug 23 11:05:59 2011 +0200
+
+    modules_k/auth_db: Fix error in docs.
+    (cherry picked from commit d702484d2021cf132f48aa2fe3ed9f0984f028f1)
+
+commit e46b74fb4d32a6b2f8f1f0e8c68e9b33a8a38dbd
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Sun Aug 21 23:05:19 2011 +0200
+
+    modules_k/rls: Remove definitions of CONT_COPY{,_1} as they are
+    not used within the module and produce compiler warnings.
+    
+    (Fits commit bdfdf6b7e35db04dd3fd48924082dba4dd4a63d5 done in master;
+    cherry pick avoided, however, because automatic merge introduced too
+    many changes.)
+
+commit acf576857af94c99cb9fa96bff5c6f52af2177e1
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Wed Aug 17 11:19:38 2011 +0200
+
+    modules_k/dialog: Remove superfluous node check.
+    
+    (cherry picked from commit
+    0e54244acb0064760844e709d9e949e32f827ba9)
+
+commit 410be63cfcd6368079dcf23d3118ec986e227fac
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Sun Aug 21 22:54:11 2011 +0200
+
+    modules_k/dialog: Clear dialog table after loading dialogs from
+    database into memory if DB_MODE_SHUTDOWN is used.
+    
+    - Closes Flyspray issue #126 ('3.x dialog module: dialogs stay in
+      database when in "shutdown only" mode').
+    (cherry picked from commit 76fc55be0107da80997f9515bb940e837ff899de)
+    
+    Conflicts:
+    
+    	modules_k/dialog/dlg_db_handler.c
+
+commit a914d2fe78c042d9d9d753e56c1f1368821941c1
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Sun Aug 21 22:21:12 2011 +0200
+
+    modules_k/dialog: Add multiple features.
+    
+    - Move unreference_dialog() to a more suitable location.
+    - Provide functions to add and remove a dialog from a transaction
+      (required for referencing at certain occassions).
+    - Move spiral detection functionality into dlg_new_dialog() to
+      faciliate spiral detection when dlg_manage() is used.
+    - Add a dialog's reference count to list of printable statistics.
+    
+    Credits to Sven Knoblich, sven.knoblich@1und1.de .
+    
+    (cherry picked and restricted to bug-fixes only from commit
+    c021559e414892b9bafae0f1ce40081945fff49a)
+    
+    Conflicts:
+    
+    	modules_k/dialog/dlg_handlers.c
+    	modules_k/dialog/dlg_var.c
+    	modules_k/dialog/dlg_var.h
+
+commit 2cfe776481ce70f18557d9e376e584b6d29e8046
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Thu Mar 10 20:13:41 2011 +0100
+
+    dialog(k): Fix indention in spiral detection example code (docs).
+    
+    (cherry picked from commit
+    acca0fad60183745d8b9317f11326bfa601c5b02)
+
+commit 3ca04c644ee40c22b242ae50c7d87d71cc2f63c5
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Fri Aug 12 14:08:02 2011 +0200
+
+    modules_k/dialog: Fix a bug that would cause a segfault when
+    caller bind address information could not be retrieved from
+    database and "dlg_list" was fifo-issued.
+    
+    - Check nulliness of dlg->bind_addr[DLG_CALLER_LEG] before
+      printing.
+      (May be NULL when server doesn't feel responsible for a bound
+      address loaded from dialog database.)
+    - Move check-and-print code for both directions (caller and
+      callee) next to each other.
+    (cherry picked from commit ab21b25652a8a1b44c1ec1ece01767d24e0ba33b)
+
+commit 4fa1e1b5e4dbd9939b8dca2b2440bfde1dab72f0
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Thu Aug 11 17:19:20 2011 +0200
+
+    modules_k/dialog: Improve dialog timer list handling.
+    
+    - Avoid updating a dialog timer item if it is not yet linked into
+      the timer list.
+      (Avoids reference counting bugs due to race conditions where the
+      timer list has not been initialized yet prior to any update
+      attempts.)
+    - In case of bogus dialog during timer insertion, postpone release
+      of dialog timer lock until error log message has been emitted.
+    (cherry picked from commit 7afb2cf8e4640bbaadfc80fcc052b34d5ae3cfae)
+
+commit e66d50297ca9a4b1eb3f0c7c61095ffb26a44af8
+Author: Alex Hermann <alex@speakup.nl>
+Date:   Mon Aug 1 16:09:38 2011 +0200
+
+    modules/tm: fix t_load_contacts for failure_route. Ignore ruri if it has already been used.
+    
+    Commit e973bbe5e7310861f77b17ce0afaf1cca35fe48a removed the logic for handling
+    failure_route. The result was that when t_load_contacts is called from
+    failure_route, the current request-uri is added as branch _again_.
+    
+    This commit restores the original functionality by ignoring the request uri
+    if it is marked as consumed.
+
+commit cc4bcb18b064f7d66b16db2b452c0e36f14aecc3
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Mon Aug 8 11:22:23 2011 +0300
+
+    modules/tm:  reverted previous commit on t_load_contacts()
+
+commit 8268c8e6e6af3acf4dafdbd13bbf3d223662b35d
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Mon Aug 8 10:55:24 2011 +0300
+
+    modules/tm: t_load_contacts() now ignores ruri if it has already been used
+    - Thanks to Alex Hermann for the patch.
+    (cherry picked from commit 9efc7014638e2c7ead56ac36d880b303f2873b85)
+
+commit 6239efef5fe047248843da847d1cc458a44bd658
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 3 18:03:05 2011 +0200
+
+    kamctl: added missing db tables creation scripts
+    
+    - pipelimit was not generated after cherry-picking the xml schema
+      definition, reported by Hala Alramli
+    - other tables were ignored due to match of 'kamailio' token in
+      path due to gitignore rules
+
+commit d7783646cc965cb15780cd2bdfc4909073f39cdd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 3 18:00:56 2011 +0200
+
+    kamctl: updated the db screation scripts based on latest xml schema definitions
+    
+    - dbtext and db_berkely folders were matched by gitignore rules due to
+      'kamailio' token
+
+commit 2a080ba89d057ca5460d0df6d31c2d3d5dc6c9ce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 1 14:33:15 2011 +0200
+
+    .gitingnore: set root path for binary names
+    
+    - some directories containing the binary name (e.g., kamailio like in
+      utils/kamctl/dbtext/kamailio/...) in path were ignored. Updated
+      .gitignore to use /kamailio and /ser which according to manual should
+      match on the root folder of GIT tree
+    (cherry picked from commit 285566bd31379ee4b6199f72c8c589a6b313bf07)
+
+commit 8b801716e9f86950a9ec3a7b54374963e890dbfa
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sun Jul 31 19:04:43 2011 +0300
+
+    lib/srdb1/schema: removed index that included missing columns
+    (cherry picked from commit 27f722f44ac080df47bb4c64e513f50be611aa7a)
+
+commit 9213ce40cc77d388033e5bf70f10aa9457c4aacf
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Wed Aug 3 17:48:44 2011 +0200
+
+    pdbt: off-by-one error fixed in carrier.c, better output for pdbt command-line interface (parseable)
+    (cherry picked from commit 91f79909c53d3b86d497193a4671699b4ec09782)
+
+commit 956e4c18955ea0d9ddd5c85d4d11a05452b6be32
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 21 12:33:00 2011 +0200
+
+    core: added some binary operators
+    
+    - not, xor, left shift and right shift
+    (cherry picked from commit 508ad1c0011352e6d24234dbef70a3f6abbdc276)
+
+commit 505e4b790578e2cfe372ae318fab967b71cd265c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 28 13:18:11 2011 +0200
+
+    textops(k): internal API bind function exported via module interface
+    
+    - internal API was defined but no function to bind it was available in
+      the module interface, reported by Timo Klecker
+    - rename of functions and typedef'ed struct to match the patterns of
+      exporting modules internal API
+    (cherry picked from commit db188fbcf4d752a2afab2e298a2f081f836d7e92)
+
+commit 9dbf735878acc87bab1a0740476f1d106f89412f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 27 19:34:35 2011 +0200
+
+    core: allow forcing send socket for replies
+    
+    - patch by Marcus Hunger, closes FS#142
+    (cherry picked from commit bf48d46366eb50ebcaf0972d2524b65d3accdffa)
+
+commit 66b15ad5369a24ea6fce563215e6efe6f8ba35ed
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 21 08:07:22 2011 +0200
+
+    presence(k): removed mistakenly typed } before the previous commit
+    (cherry picked from commit 403ba772771545f4410ba4a5cf396125be353b12)
+
+commit 97131c94922d48ed7aed632bb34293af034a5fee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 21 00:31:49 2011 +0200
+
+    presence(k): insert empty string as sender in db if missing
+    
+    - if sender_uri parameter is not given to handle_publish(), insert empty
+      string for sender column in presentity table
+    - the field is used for SLA/BLA
+    - fixes constraint of non-null value in db table, reported by Roberto
+      Fichera
+    (cherry picked from commit b39747e213e350609761d14583db3e689ad6fefc)
+
+commit 3b23a42d19b3f53e2670cf1407c0ec029a0c443a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 21 00:08:42 2011 +0200
+
+    presence(k): log message abour not supported event printed as warning
+    (cherry picked from commit 460fc8bf6ad5108ff3779c85ff150e4f5145b189)
+
+commit dd8b88da870eee544e2e05e6075436b884d16d99
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 20 23:42:05 2011 +0200
+
+    kamdbctl: added pipelimit to the list of extra tables to create
+    (cherry picked from commit 0be9f5a4efeba2eb297a2e3286b9795f33f2dbe2)
+
+commit 55e4811d4d0620d1dcbb94b1462f443195564594
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 20 23:35:01 2011 +0200
+
+    srdb1: added definition of pipelimit module db table
+    (cherry picked from commit e8a949e3032b9cadf40ce2be0027c780b29637a7)
+
+commit 8ebbed77f2be9277b6296c95952b17e5a4a5c9b7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 19 19:41:20 2011 +0200
+
+    tm: be sure branch PV is set when t_check_trans() is used for reply
+    
+    - reported by Alex Hermann, FS#117
+    (cherry picked from commit 2e426419ab2f3f15adc4a50de6efe3bb06dc77b8)
+
+commit c9a4e86fb196aaa1024ac08f25c8fa7d7d3a400f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 18 22:37:07 2011 +0200
+
+    pv: use suip2a(...) for $snd(..)
+    
+    - fixes FS#140, reported by Klaus Darilion
+    (cherry picked from commit e151a9e99b1fed7805eaed5d16ca3d6466e1f517)
+
+commit 189644b5100b8a7285688c87d2081bb3c8937500
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 18 22:34:47 2011 +0200
+
+    core: new function to get IP address from su structure
+    
+    - suip2a(...) returns zero-terminated string representation of IPv4/IPv6
+      address
+    (cherry picked from commit fabaa667795e5162fe17afd3e4a073bc99057144)
+
+commit e9a61dd16dffb6e6e74810431741a297b62524c1
+Author: Elena-Ramona Modroiu <ramona@asipto.com>
+Date:   Tue Jul 19 09:46:35 2011 +0200
+
+    mqueue: decrease number of items when size limit is reached
+    
+    - proper counting of intems in the queue
+    - patch by Denis Chukhryaev
+
+commit acf25edbf8047a7511b304e0941d8c6365980e48
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 6 19:39:36 2011 +0200
+
+    presence(k): switch to terminated status if no longer active
+    
+    - if contact is removed via xcap, making the status different than
+      active, set it to terminated states
+    - patch by Laura Testi, FS#133
+    (cherry picked from commit 73ec9511e3c740304f6376890f0c0b416d84dd8f)
+
+commit ec63ebad94faaf2800aa9738b9da9c25687dfe3a
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Wed Jul 6 18:26:16 2011 +0200
+
+    utils: fix kamctl start if installed in a custom prefix, tested from Fabian Borot
+    (cherry picked from commit 7ca54b8867ca325fd318536e29f8ae8e028611c9)
+
+commit 1971e78a51ca7d5b6ca614cfd9fd24d1bb50d12d
+Author: IÃ±aki Baz Castillo <ibc@aliax.net>
+Date:   Wed Jun 22 17:42:13 2011 +0200
+
+    dns: typo fixed (dns_a_resovle -> dns_a_resolve)
+    (cherry picked from commit 12cc6b39ecafedd611fde7eb917becaa78038cbf)
+
+commit 57092200dbc11a61510988b7bb6939284618f5ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 22 11:42:30 2011 +0200
+
+    uac: more verbose debug message
+    
+    - give hint of how to get rid of append_fromtag requirement on rr module
+    (cherry picked from commit 70ae31556b09d300f6d708b0e4edf287927748d2)
+
+commit fba61d177eb87879925a44a1b1ad0ea51864da57
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 7 23:19:18 2011 +0200
+
+    core: IPv6 addr enclosed in square brackets for process descripton
+    
+    - UDP and SCTP listeners will have the IPv6 address in between square
+      brackets inside the description string
+    (cherry picked from commit 5629f449af98134c05c0679588de906a414364ab)
+
+commit a568684930e5dfea48b0044e17ee2ee57bfede57
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 7 22:57:32 2011 +0200
+
+    kamctl: don't require sercmd all the time
+    
+    - sercmd is not needed for all commands - throw error only when it is
+      going to be executed but it is not found
+    (cherry picked from commit 8b445f464c7d3904eae5d62a571148c621c3c6f8)
+
+commit 69443e87325aea1f5a4286e7a8df7ac778f91f83
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 30 15:54:42 2011 +0200
+
+    db_mysql: search also for mysql_config5 in Makefile
+    
+    - on some OSes, the mysql_config tool might have the name mysql_config5
+    (cherry picked from commit d0858edd95726117d2ccc9567b9f7bf012204448)
+
+commit e2d6f0e3e0a3b9511f05be79d11a097a99d70eb7
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Sat Jun 11 10:38:10 2011 +0200
+
+    dns: case insensitive check for NAPTR record flags
+    
+    The NAPTR records flags where not checked in case insensitive
+    mode. Records with the 'S' flags where ignored ('s' was expected).
+    
+    Closes: FS#135
+    Reported-by: Inaki Baz Castillo  ibc aliax net
+    (cherry picked from commit fa00eaf013a1787f0523559595a1a73ab469de83)
+
+commit e23e5140bc90627ee7c4e15580cde037e3fefc11
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 10 11:19:44 2011 +0200
+
+    debugger: safety check for pid list
+    
+    - some event route blocks can be executed before all children
+      initialization and the internal pid list structure is not created,
+      disable debugging in this case
+    (cherry picked from commit 35ef4b0d8f85f1e902e0d99d513f311ebd39bc6d)
+
+commit 65951e6f0573858cfedcb5676dee56ad9cc529bc
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Mon Jun 6 15:44:16 2011 +0300
+
+    pkg/kamailio/squeeze : Make lintian happy(er) by adding dependancy on $remote_fs
+    
+    As Kamailio need /usr paths to be available, this requires a LSB dependancy on $remote_fs.
+
+commit b981181c4dc90eee4b324180716bc786433507f7
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Thu Apr 28 10:30:55 2011 +0300
+
+    module_k/pv Changed the nameaddr transformation by relaxing the requirements on the input.
+    
+    As some headers might be either uri or nameaddr form, using a single transformation for parsing them was
+    impossible, as nameaddr.uri returns "" on an uri input(e.g. sip:12345@example.com). With this change, the
+    nameaddr transformation succedes and the resulting transformation places the whole string in the .uri field,
+    .name field being empty. A transformation chaning like the one below will work as expected on both SIP URIs and
+    SIP Nameaddr
+    $(val(test){nameaddr.uri}{uri.domain})
+    (cherry picked from commit 9287609db4ac64c709aa500e6326ac33af2c2061)
+
+commit 16183d4553aca270da1284255f3f6862132a3aeb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jun 4 10:22:09 2011 +0200
+
+    registrar(k): reset local interator to contacts headers
+    
+    - when the REGISTER request had more than one Contact header and
+      max_contacts parameter was set, there were two iterations through the
+      list fo Contacts header without reseting the iterator, resulting in
+      not processing all Contact headers in save() - reported by Andreas Granig
+    - instead of parsing the fist contact header as parameter to several
+      functions, take it from sip msg structure hook
+    (cherry picked from commit a74f12d633188a7e70b09238c0d48b207efc66c3)
+
+commit 1312f780d4c2409536e909ea472d01489d1e7182
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jun 4 10:00:55 2011 +0200
+
+    kamailio.cfg: use defined branch flag id
+    
+    - use FLB_NATB instead of 6, like everywhere else
+
+commit 1127790f97fd37767fa3e4439fb9daf67e5ec465
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 3 10:25:19 2011 +0200
+
+    imc: fix announcing attepts to join private rooms
+    
+    - if an user cannot join a private room, the announcement was wrong,
+      using invalid structure
+    - reported by Ozren Lapcevic
+    (cherry picked from commit f375eef5e2559847bb42381fdb6a9727692004b4)
+
+commit d8c08a50fd1366ddd10ee079a4594cba6684236e
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon May 30 14:17:32 2011 +0200
+
+    deb pkg: add start suggestions for mysql, postgresql and radius, suggested from Rick Aldred
+    (cherry picked from commit 33f7e045768298e8e48231820fb0116398d80c2f)
+
+commit 8c763b4f2565dba4f640ab22a83e101946fdbc4e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 1 12:36:09 2011 +0200
+
+    imc: keep db handle open for main process
+    
+    - the module sync's back to database at shutdown
+    - dicovered based on an email by Ozren Lapcevic
+    (cherry picked from commit 3402cfd8461c6c94dfc601d9f40116bdbdf8e0a4)
+
+commit 3b4da7610c57073b98afb34e8e663648366db1d4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 26 18:42:03 2011 +0200
+
+    ChangeLog: updated for 3.1.4
+
+commit eac6d9e89e83edb962c14b35e7d3803adb9eb4bd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 26 18:04:32 2011 +0200
+
+    Makefile: version set to 3.1.4
+
+commit 06b74b600e6644f4bf289d256538d463f6734717
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Fri Apr 29 19:40:36 2011 +0200
+
+    tm: recursive hash locks
+    
+    The hash locks are now recursive/re-entrant.
+    This removes some of the TMCB_REQUEST_IN and TMCB_LOCAL_REQUEST_IN
+    callback restrictions (like do not create new transactions,
+    do not  call t_lookup_*()) solving problems like the one
+    described in
+    http://lists.sip-router.org/pipermail/sr-users/2011-April/068331.html
+    (cherry picked from commit 1699b6a4c479031c116fb081a805635a4d088bcb)
+
+
 ===================== 2011-05-26 Version 3.1.4 Released =====================
 
 ===================== Changes Since Version 3.1.3 ===========================
