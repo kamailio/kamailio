@@ -57,7 +57,7 @@
 
 MODULE_VERSION
 
-#define XCAP_TABLE_VERSION 3
+#define XCAP_TABLE_VERSION 4
 
 /* Module parameter variables */
 int http_query_timeout = 4;
