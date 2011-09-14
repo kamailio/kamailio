@@ -581,6 +581,11 @@ static inline int after_strict(struct sip_msg* _m)
 	rt = (rr_t*)hdr->parsed;
 	uri = rt->nameaddr.uri;
 
+	/* reset rr handling static vars for safety in error case */
+	routed_msg_id = 0;
+	routed_params.s = NULL;
+	routed_params.len = 0;
+
 	if (parse_uri(uri.s, uri.len, &puri) < 0) {
 		LM_ERR("failed to parse the first route URI\n");
 		return RR_ERROR;
@@ -734,8 +739,9 @@ static inline int after_strict(struct sip_msg* _m)
 		}
 	}
 	
-	/* run RR callbacks */
-	run_rr_callbacks( _m, &routed_params );
+	/* run RR callbacks only if we have Route URI parameters */
+	if(routed_params.len > 0)
+		run_rr_callbacks( _m, &routed_params );
 
 	return RR_DRIVEN;
 }
@@ -763,6 +769,11 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
 	uri = rt->nameaddr.uri;
+
+	/* reset rr handling static vars for safety in error case */
+	routed_msg_id = 0;
+	routed_params.s = NULL;
+	routed_params.len = 0;
 
 	if (parse_uri(uri.s, uri.len, &puri) < 0) {
 		LM_ERR("failed to parse the first route URI\n");
@@ -889,8 +900,9 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	status = RR_DRIVEN;
 
 done:
-	/* run RR callbacks */
-	run_rr_callbacks( _m, &routed_params );
+	/* run RR callbacks only if we have Route URI parameters */
+	if(routed_params.len > 0)
+		run_rr_callbacks( _m, &routed_params );
 	return status;
 }
 
