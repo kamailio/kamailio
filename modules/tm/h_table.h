@@ -312,7 +312,7 @@ typedef struct tm_xdata
 	struct usr_avp *domain_avps_from;
 	struct usr_avp *domain_avps_to;
 #ifdef WITH_XAVP
-	sr_xavp_t **xavps_list;
+	sr_xavp_t *xavps_list;
 #endif
 } tm_xdata_t;
 
