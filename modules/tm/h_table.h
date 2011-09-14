@@ -300,13 +300,30 @@ struct totag_elem {
  * saves us 2*2 bytes */
 typedef unsigned short retr_timeout_t;
 
-
 /**
  * extra data from SIP message context to transaction storage
  */
 typedef struct tm_xdata
 {
 	/* lists with avps */
+	struct usr_avp *uri_avps_from;
+	struct usr_avp *uri_avps_to;
+	struct usr_avp *user_avps_from;
+	struct usr_avp *user_avps_to;
+	struct usr_avp *domain_avps_from;
+	struct usr_avp *domain_avps_to;
+#ifdef WITH_XAVP
+	sr_xavp_t **xavps_list;
+#endif
+} tm_xdata_t;
+
+
+/**
+ * links to extra data from SIP message context to transaction storage
+ */
+typedef struct tm_xlinks
+{
+	/* links to lists with avps */
 	struct usr_avp **uri_avps_from;
 	struct usr_avp **uri_avps_to;
 	struct usr_avp **user_avps_from;
@@ -316,7 +333,7 @@ typedef struct tm_xdata
 #ifdef WITH_XAVP
 	sr_xavp_t **xavps_list;
 #endif
-} tm_xdata_t;
+} tm_xlinks_t;
 
 
 /* transaction context */
@@ -565,7 +582,9 @@ inline static void remove_from_hash_table_unsafe( struct cell * p_cell)
 /**
  * backup xdata from/to msg context to local var and use T lists
  */
-void tm_xdata_swap(tm_cell_t *t, tm_xdata_t *xd, int mode);
+void tm_xdata_swap(tm_cell_t *t, tm_xlinks_t *xd, int mode);
+
+void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd);
 
 #endif
 
