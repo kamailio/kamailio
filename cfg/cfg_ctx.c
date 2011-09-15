@@ -649,7 +649,7 @@ error:
 	if (cfg_shmized) CFG_WRITER_UNLOCK();
 	if (block) cfg_block_free(block);
 	if (new_array) shm_free(new_array);
-	if (child_cb) cfg_child_cb_free(child_cb);
+	if (child_cb) cfg_child_cb_free_list(child_cb);
 	if (replaced) shm_free(replaced);
 
 error0:
@@ -1235,7 +1235,7 @@ error:
 error0:
 	CFG_CTX_UNLOCK(ctx);
 
-	if (child_cb_first) cfg_child_cb_free(child_cb_first);
+	if (child_cb_first) cfg_child_cb_free_list(child_cb_first);
 	if (replaced) shm_free(replaced);
 
 	return -1;

@@ -136,10 +136,6 @@ typedef struct _cfg_block {
 	atomic_t	refcnt;		/*!< reference counter,
 					the block is automatically deleted
 					when it reaches 0 */
-	void		**replaced;	/*!< set of the strings and other memory segments
-					that must be freed
-					together with the block. The content depends
-					on the block that replaces this one */
 	unsigned char	vars[1];	/*!< blob that contains the values */
 } cfg_block_t;
 
@@ -159,7 +155,12 @@ typedef struct _cfg_child_cb {
 						 * <=0 the cb no longer needs to be executed
 						 */
 	str			gname, name;	/*!< name of the variable that has changed */
-	cfg_on_set_child	cb;	/*!< callback function that has to be called */
+	cfg_on_set_child	cb;		/*!< callback function that has to be called */
+	void			**replaced;	/*!< set of strings and other memory segments
+						that must be freed together with this structure.
+						The content depends on the new config block.
+						This makes sure that the replaced strings are freed
+						after all the child processes release the old configuration. */
 
 	struct _cfg_child_cb	*next;
 } cfg_child_cb_t;
@@ -274,19 +275,22 @@ void cfg_set_group(cfg_group_t *group,
 /* copy the variables to shm mem */
 int cfg_shmize(void);
 
-/* free the memory of a config block */
-static inline void cfg_block_free(cfg_block_t *block)
+/* free the memory of a child cb structure */
+static inline void cfg_child_cb_free_item(cfg_child_cb_t *cb)
 {
 	int	i;
 
 	/* free the changed variables */
-	if (block->replaced) {
-		for (i=0; block->replaced[i]; i++)
-			shm_free(block->replaced[i]);
-		shm_free(block->replaced);
+	if (cb->replaced) {
+		for (i=0; cb->replaced[i]; i++)
+			shm_free(cb->replaced[i]);
+		shm_free(cb->replaced);
 	}
-	shm_free(block);
+	shm_free(cb);
 }
+
+#define cfg_block_free(block) \
+	shm_free(block)
 
 /* Move the group handle to the specified group instance pointed by dst_ginst.
  * src_ginst shall point to the active group instance.
@@ -369,13 +373,15 @@ static inline void cfg_update_local(int no_cbs)
 				/* yes, this process was blocking the deletion */
 				*cfg_child_cb_first = cfg_child_cb;
 				CFG_UNLOCK();
-				shm_free(prev_cb);
+				cfg_child_cb_free_item(prev_cb);
 			} else {
 				CFG_UNLOCK();
 			}
 		}
-		if (atomic_add(&cfg_child_cb->cb_count, -1) >= 0) /* the new value is returned
-								by atomic_add() */
+		if (cfg_child_cb->cb
+			&& (atomic_add(&cfg_child_cb->cb_count, -1) >= 0) /* the new value is returned
+									by atomic_add() */
+		)
 			/* execute the callback */
 			cfg_child_cb->cb(&cfg_child_cb->gname, &cfg_child_cb->name);
 		/* else the callback no longer needs to be executed */
@@ -500,7 +506,7 @@ cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name,
 			unsigned int type);
 
 /* free the memory allocated for a child cb list */
-void cfg_child_cb_free(cfg_child_cb_t *child_cb_first);
+void cfg_child_cb_free_list(cfg_child_cb_t *child_cb_first);
 
 /* Allocate memory for a new additional variable
  * and link it to a configuration group.

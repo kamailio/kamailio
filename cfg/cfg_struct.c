@@ -401,7 +401,7 @@ void cfg_destroy(void)
 	cfg_free_selects();
 
 	if (cfg_child_cb_first) {
-		if (*cfg_child_cb_first) cfg_child_cb_free(*cfg_child_cb_first);
+		if (*cfg_child_cb_first) cfg_child_cb_free_list(*cfg_child_cb_first);
 		shm_free(cfg_child_cb_first);
 		cfg_child_cb_first = NULL;
 	}
@@ -533,7 +533,7 @@ void cfg_child_destroy(void)
 			if (*cfg_child_cb_first == prev_cb) {
 				/* yes, this process was blocking the deletion */
 				*cfg_child_cb_first = cfg_child_cb;
-				shm_free(prev_cb);
+				cfg_child_cb_free_item(prev_cb);
 			}
 		} else {
 			/* no need to continue, because there is at least
@@ -793,6 +793,26 @@ void cfg_install_global(cfg_block_t *block, void **replaced,
 	
 	CFG_REF(block);
 
+	if (replaced) {
+		/* The replaced array is specified, it has to be linked to the child cb structure.
+		 * The last child process processing this structure will free the old strings and the array. */
+		if (cb_first) {
+			cb_first->replaced = replaced;
+		} else {
+			/* At least one child cb structure is needed. */
+			cb_first = cfg_child_cb_new(NULL, NULL, NULL, 0 /* gname, name, cb, type */);
+			if (cb_first) {
+				cb_last = cb_first;
+				cb_first->replaced = replaced;
+			} else {
+				LOG(L_ERR, "ERROR: cfg_install_global(): not enough shm memory\n");
+				/* Nothing more can be done here, the replaced strings are still needed,
+				 * they cannot be freed at this moment.
+				 */
+			}
+		}
+	}
+
 	CFG_LOCK();
 
 	old_cfg = *cfg_global;
@@ -803,11 +823,8 @@ void cfg_install_global(cfg_block_t *block, void **replaced,
 
 	CFG_UNLOCK();
 	
-	if (old_cfg) {
-		if (replaced) (old_cfg)->replaced = replaced;
+	if (old_cfg)
 		CFG_UNREF(old_cfg);
-	}
-
 }
 
 /* creates a structure for a per-child process callback */
@@ -854,7 +871,7 @@ cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name,
 }
 
 /* free the memory allocated for a child cb list */
-void cfg_child_cb_free(cfg_child_cb_t *child_cb_first)
+void cfg_child_cb_free_list(cfg_child_cb_t *child_cb_first)
 {
 	cfg_child_cb_t	*cb, *cb_next;
 
@@ -863,7 +880,7 @@ void cfg_child_cb_free(cfg_child_cb_t *child_cb_first)
 		cb = cb_next
 	) {
 		cb_next = cb->next;
-		shm_free(cb);
+		cfg_child_cb_free_item(cb);
 	}
 }
 
