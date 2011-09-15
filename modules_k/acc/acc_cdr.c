@@ -199,7 +199,7 @@ static int write_cdr( struct dlg_cell* dialog,
 /* convert a string into a timeb struct */
 static struct timeb time_from_string( str* time_value)
 {    
-    char* dot_adress = NULL;
+    char* dot_address = NULL;
     int dot_position = -1;
     char zero_terminated_value[TIME_STR_BUFFER_SIZE];
 
@@ -220,9 +220,9 @@ static struct timeb time_from_string( str* time_value)
     memcpy( zero_terminated_value, time_value->s, time_value->len);
     zero_terminated_value[time_value->len] = '\0';
     
-    dot_adress = strchr( zero_terminated_value, time_separator);
+    dot_address = strchr( zero_terminated_value, time_separator);
     
-    if( !dot_adress)
+    if( !dot_address)
     {
         LM_ERR( "failed to find separator('%c') in '%s'!\n",
                 time_separator,
@@ -230,17 +230,17 @@ static struct timeb time_from_string( str* time_value)
         return time_error;
     }
     
-    dot_position = dot_adress-zero_terminated_value + 1;
+    dot_position = dot_address-zero_terminated_value + 1;
     
     if( dot_position >= strlen(zero_terminated_value) ||
-        strchr(dot_adress + 1, time_separator))
+        strchr(dot_address + 1, time_separator))
     {
         LM_ERR( "invalid time-string '%s'\n", zero_terminated_value);
         return time_error;
     }
     
     return (struct timeb) { atoi( zero_terminated_value),
-                            atoi( dot_adress + 1),
+                            atoi( dot_address + 1),
                             0,
                             0};
 }
