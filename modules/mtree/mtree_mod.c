@@ -445,7 +445,7 @@ again:
 
 	if(mt_match_prefix(msg, tr, &tomatch, mval)<0)
 	{
-		LM_INFO("no prefix found in [%.*s] for [%.*s]\n",
+		LM_DBG("no prefix found in [%.*s] for [%.*s]\n",
 				tname.len, tname.s,
 				tomatch.len, tomatch.s);
 		goto error;
