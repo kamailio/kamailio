@@ -47,6 +47,7 @@
  * 2006-11-22  arm early clobber added: according to the swp instruction 
  *              specification the address register must be != from the other 2
  *              (Julien Blache <jblache@debian.org>)
+ * 2011-09-19  arm v7 and arm v6 smp experimental support (andrei)
  *
  */
 
@@ -91,7 +92,7 @@ typedef  volatile int fl_lock_t;
 #elif defined(__CPU_sparc64)
 #ifndef NOSMP
 #define membar_getlock() \
-	asm volatile ("membar #StoreStore | #StoreLoad \n\t" : : : "memory");
+	asm volatile ("membar #StoreStore | #StoreLoad \n\t" : : : "memory")
 	/* can be either StoreStore|StoreLoad or LoadStore|LoadLoad
 	 * since ldstub acts both as a store and as a load */
 #else
@@ -102,40 +103,55 @@ typedef  volatile int fl_lock_t;
 #elif  defined(__CPU_sparc)
 #define membar_getlock()/* no need for a compiler barrier, already included */
 
-#elif defined __CPU_arm || defined __CPU_arm6
+#elif defined __CPU_arm
 #ifndef NOSMP
-#warning smp not supported on arm* (no membars), try compiling with -DNOSMP
+#warning smp not supported on arm < 6 (no membars), try compiling with -DNOSMP
 #endif /* NOSMP */
-#define membar_getlock() 
+#define membar_getlock()
+
+#elif defined __CPU_arm6
+#ifndef NOSMP
+#define membar_getlock() asm volatile ("mcr p15, 0, %0, c7, c10, 5" \
+										: : "r"(0) : "memory")
+#else /* NOSMP */
+#define membar_getlock()
+#endif /* NOSMP */
+
+#elif defined __CPU_arm7
+#ifndef NOSMP
+#define membar_getlock() asm volatile ("dmb" : : : "memory")
+#else /* NOSMP */
+#define membar_getlock()
+#endif /* NOSMP */
 
 #elif defined(__CPU_ppc) || defined(__CPU_ppc64)
 #ifndef NOSMP
 #define membar_getlock() \
-	asm volatile("lwsync \n\t" : : : "memory");
+	asm volatile("lwsync \n\t" : : : "memory")
 #else
-#define membar_getlock() 
+#define membar_getlock()
 #endif /* NOSMP */
 
 #elif defined __CPU_mips2 || defined __CPU_mips64
 #ifndef NOSMP
 #define membar_getlock() \
-	asm volatile("sync \n\t" : : : "memory");
+	asm volatile("sync \n\t" : : : "memory")
 #else
-#define membar_getlock() 
+#define membar_getlock()
 #endif /* NOSMP */
 
 #elif defined __CPU_mips
 #ifndef NOSMP
 #warning smp not supported on mips1 (no membars), try compiling with -DNOSMP
 #endif
-#define membar_getlock() 
+#define membar_getlock()
 
 #elif defined __CPU_alpha
 #ifndef NOSMP
 #define membar_getlock() \
-	asm volatile("mb \n\t" : : : "memory");
+	asm volatile("mb \n\t" : : : "memory")
 #else
-#define membar_getlock() 
+#define membar_getlock()
 #endif /* NOSMP */
 
 #else /* __CPU_xxx */
@@ -211,7 +227,7 @@ inline static int tsl(fl_lock_t* lock)
 			"swp %0, %2, [%3] \n\t"
 			: "=&r" (val), "=m"(*lock) : "r"(1), "r" (lock) : "memory"
 	);
-#elif defined __CPU_arm6
+#elif defined __CPU_arm6 || defined __CPU_arm7
 	asm volatile(
 			"   ldrex %0, [%2] \n\t" 
 			"   cmp %0, #0 \n\t"
@@ -219,6 +235,7 @@ inline static int tsl(fl_lock_t* lock)
 			/* if %0!=0 => either it was 1 initially or was 0
 			 * and somebody changed it just before the strexeq (so the 
 			 * lock is taken) => it's safe to return %0 */
+			/* membar_getlock must be  called outside this function */
 			: "=&r"(val), "=m"(*lock) : "r"(lock), "r"(1) : "cc"
 	);
 #elif defined(__CPU_ppc) || defined(__CPU_ppc64)
@@ -362,14 +379,28 @@ inline static void release_lock(fl_lock_t* lock)
 			"stb %%g0, [%1] \n\t"
 			: "=m"(*lock) : "r" (lock) : "memory"
 	);
-#elif defined __CPU_arm || defined __CPU_arm6
-#ifndef NOSMP
+#elif defined __CPU_arm || defined __CPU_arm6 || defined __CPU_arm7
+#if !defined NOSMP && defined __CPU_arm
 #warning arm* smp mode not supported (no membars), try compiling with -DNOSMP
 #endif
+	/* missuse membar_getlock */
+	membar_getlock();
 	asm volatile(
-		" str %1, [%2] \n\r" 
-		: "=m"(*lock) : "r"(0), "r"(lock) : "memory"
+		" str %1, [%2] \n\r"
+		: "=m"(*lock) : "r"(0), "r"(lock) : "cc", "memory"
 	);
+#ifdef __CPU_arm6
+	/* drain store buffer: drain the per processor buffer into the L1 cache
+	   making all the changes visible to other processors */
+	asm volatile(
+			"mcr p15, 0, %0, c7, c10, 4 \n\r"  /* DSB equiv. on arm6*/
+			: : "r" (0) : "memory"
+			);
+#elif defined __CPU_arm7
+	/* drain store buffer: drain the per processor buffer into the L1 cache
+	   making all the changes visible to other processors */
+	asm volatile( "dsb \n\r" : : : "memory");
+#endif /* __CPU_arm6 / __CPU_arm7 */
 #elif defined(__CPU_ppc) || defined(__CPU_ppc64)
 	asm volatile(
 			/* "sync\n\t"  lwsync is faster and will work
