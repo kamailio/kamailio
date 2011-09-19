@@ -66,7 +66,7 @@ int parse_rpid_header( struct sip_msg *msg )
  	parse_to(msg->rpid->body.s,msg->rpid->body.s+msg->rpid->body.len+1,rpid_b);
  	if (rpid_b->error == PARSE_ERROR) {
  		LOG(L_ERR, "ERROR:parse_rpid_header: bad rpid header\n");
- 		pkg_free(rpid_b);
+ 		free_to(rpid_b);
  		goto error;
  	}
  	msg->rpid->parsed = rpid_b;
