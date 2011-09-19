@@ -77,6 +77,7 @@
 #  2010-03-10  added CC_MKDEP_OPTS, which contains to the list of options
 #               needed to generate dependencies on-the-fly while compiling
 #               or is empty if the compiler doesn't support it (andrei)
+#  2011-09-18  armv7 support added
 
 
 # default silent, unless Q= 0|no|off|verbose|noisy
@@ -185,7 +186,7 @@ else
 endif
 
 HOST_ARCH := $(shell $(GETARCH) |sed -e s/i.86/i386/ -e s/sun4[uv]/sparc64/  \
-			-e s/armv[3-5].*/arm/  -e s/armv6.*/arm6/ \
+			-e s/armv[3-5].*/arm/  -e s/armv6.*/arm6/ -e s/armv7.*/arm7/ \
 			-e "s/Power Macintosh/ppc/" \
 			-e "s/cobalt/mips2/" \
 			-e s/amd64/x86_64/ -e s/sparcv9/sparc64/ )
@@ -344,6 +345,7 @@ sparc64_macros= __sparcv9 __sparc_v9__
 
 arm_macros= __arm__ __thumb__
 arm6_macros= __ARM_ARCH_6__
+arm7_macros= __ARM_ARCH_7A__
 
 ppc_macros= __powerpc __powerpc__ __POWERPC__ __ppc__ _ARCH_PPC
 ppc64_macros= __ppc64__ _ARCH_PPC64
@@ -374,11 +376,15 @@ endif # sparc64_macros
 
 else ifneq ($(strip $(filter $(arm_macros), $(predef_macros))),)
 
+ifneq ($(strip $(filter $(arm7_macros), $(predef_macros))),)
+CC_ARCH=arm7
+else
 ifneq ($(strip $(filter $(arm6_macros), $(predef_macros))),)
 CC_ARCH=arm6
 else # arm6_macros
 CC_ARCH=arm
 endif # arm6_macros
+endif #arm7_macros
 
 else ifneq ($(strip $(filter $(ppc64_macros), $(predef_macros))),)
 CC_ARCH=ppc64
@@ -816,6 +822,10 @@ ifeq ($(ARCH), arm)
 endif
 
 ifeq ($(ARCH), arm6)
+	use_fast_lock=yes
+endif
+
+ifeq ($(ARCH), arm7)
 	use_fast_lock=yes
 endif
 
@@ -1270,6 +1280,54 @@ else		# CC_NAME, gcc
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
 endif	#ARCH, arm6
+
+
+	#if armv7 cpu 
+ifeq	($(ARCH), arm7)
+		# if gcc 
+ifeq		($(CC_NAME), gcc)
+				C_DEFS+=-DCC_GCC_LIKE_ASM
+				#common stuff
+				CFLAGS=-march=armv7-a -O9 -funroll-loops -fsigned-char \
+						$(PROFILE)
+			#if gcc 4.5 or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5,$(CC_SHORTVER))))
+					CFLAGS+= -ftree-vectorize -fno-strict-overflow
+else
+			#if gcc 4.x+
+ifeq			($(CC_SHORTVER), 4.x)
+					CFLAGS+= -ftree-vectorize
+else
+			#if gcc 3.4+
+ifeq			($(CC_SHORTVER), 3.4)
+					CFLAGS+=
+else
+			#if gcc 3.0
+ifeq			($(CC_SHORTVER), 3.0)
+					CFLAGS+= 
+							#-mcpu=athlon
+else
+ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
+$(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc 3.0.x \
+					for better results)
+					
+					CFLAGS+=
+else
+				#really old version
+$(warning			You are using an old and unsupported gcc \
+					 version ($(CC_SHORTVER)), compile at your own risk!)
+	
+endif			# CC_SHORTVER, 2.9x
+endif			# CC_SHORTVER, 3.0
+endif			# CC_SHORTVER, 3.4
+endif			# CC_SHORTVER, 4.x
+endif			# CC_SHORTVER, 4.5 or 4.2+
+	
+else		# CC_NAME, gcc
+				#other compilers
+$(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
+endif		#CC_NAME, gcc
+endif	#ARCH, arm7
 
 	#if  mips (R3000)
 ifeq	($(ARCH), mips)
