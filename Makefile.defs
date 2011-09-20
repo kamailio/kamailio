@@ -1287,8 +1287,11 @@ ifeq	($(ARCH), arm7)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
-				#common stuff
+				#common stuff + inform the assembler about THUMB
+				# (some assemblers default to ARM, see
+				# https://wiki.ubuntu.com/ARM/Thumb2)
 				CFLAGS=-march=armv7-a -O9 -funroll-loops -fsigned-char \
+						-Wa,-mimplicit-it=thumb \
 						$(PROFILE)
 			#if gcc 4.5 or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5,$(CC_SHORTVER))))
