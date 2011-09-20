@@ -51,13 +51,12 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id, int is_te
 
 int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 {
-	struct to_body *pto, TO, *pfrom= NULL;
+	struct to_body *pto, TO = {0}, *pfrom = NULL;
 	str to_uri;
 	char* uri= NULL;
 	str from_uri;
 	struct hdr_field* hdr= NULL;
 	str body;
-	xmlDocPtr doc= NULL;
 	int is_terminated= 0;
 	str id;
 	ua_pres_t dialog;
@@ -91,12 +90,11 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	}
 	else
 	{
-		memset( &TO , 0, sizeof(TO) );
 		parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO);
 		if(TO.uri.len <= 0) 
 		{
 			LM_ERR("'To' header NOT parsed\n");
-			return -1;
+			goto error;
 		}
 		pto = &TO;
 	}
@@ -107,7 +105,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	if(uri== NULL)
 	{
 		LM_ERR("no more memory\n");
-		return -1;
+		goto error;
 	}
 	memcpy(uri, pto->uri.s, pto->uri.len);
 	uri[pto->uri.len]= '\0';
@@ -115,12 +113,13 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	if(to_uri.s== NULL)
 	{
 		LM_ERR("while decoding sip uri in xmpp\n");
-		return -1;	
+		pkg_free(uri);
+		goto error;
 	}	
 	to_uri.len= strlen(to_uri.s);
 	pkg_free(uri);
 
-    if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
+	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
 	{  
 		LM_ERR("to tag value not parsed\n");
 		goto error;
@@ -166,6 +165,7 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 	if(from_uri.s== NULL)
 	{
 		LM_ERR("while encoding sip uri in xmpp\n");
+		pkg_free(uri);
 		goto error;
 	}	
 	from_uri.len= strlen(from_uri.s);
@@ -244,7 +244,6 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 			LM_ERR("in function build_xmpp_content\n");	
 			goto error;
 		}
-		xmlFreeDoc(doc);
 	}	
 	else
 	{	
@@ -278,11 +277,11 @@ int Notify2Xmpp(struct sip_msg* msg, char* s1, char* s2)
 		}
 
 	}
+	free_to_params(&TO);
 	return 1;
 
 error:
-	if(doc)
-		xmlFreeDoc(doc);
+	free_to_params(&TO);
 	return 0;
 }
 
@@ -793,6 +792,7 @@ int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg)
 	if(to_uri.s== NULL)
 	{
 		LM_ERR("whil decoding sip uri in xmpp\n");
+		pkg_free(uri);
 		goto error;	
 	}	
 
@@ -811,6 +811,7 @@ int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg)
 	if(from_uri.s== NULL)
 	{
 		LM_ERR("while encoding sip uri in xmpp\n");
+		pkg_free(uri);
 		goto error;
 	}
 
