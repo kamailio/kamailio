@@ -468,6 +468,7 @@ not_found:
 /*!
  * \brief Helper function to get a dialog corresponding to a SIP message
  * \see get_dlg
+ * \param h_entry hash index in the directory list
  * \param callid callid
  * \param ftag from tag
  * \param ttag to tag
