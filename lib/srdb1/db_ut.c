@@ -464,6 +464,11 @@ int db_val2pv_spec(struct sip_msg* msg, db_val_t *dbval, pv_spec_t *pvs)
 				pv.rs.len = LL_LEN;
 				db_longlong2str(dbval->val.ll_val, ll_buf, &pv.rs.len);
 				pv.rs.s = ll_buf;
+				/* if it fits, also store as 32 bit integer*/
+				if (! ((unsigned long)dbval->val.ll_val & 0xffffffff00000000)) {
+					pv.flags |= PV_VAL_INT | PV_TYPE_INT;
+					pv.ri = (int)dbval->val.ll_val;
+				}
 			break;
 			default:
 				LM_NOTICE("unknown field type: %d, setting value to null\n",
