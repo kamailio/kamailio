@@ -100,6 +100,8 @@ struct acc_enviroment acc_env;
 #define skip_cancel(_rq) \
 	(((_rq)->REQ_METHOD==METHOD_CANCEL) && report_cancels==0)
 
+#define is_acc_prepare_on(_rq) \
+	(is_acc_flag_set(_rq,acc_prepare_flag))
 
 
 
@@ -228,7 +230,8 @@ void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 	int is_invite;
 
 	if ( ps->req && !skip_cancel(ps->req) &&
-	(is_acc_on(ps->req) || is_mc_on(ps->req)) ) {
+			( is_acc_on(ps->req) || is_mc_on(ps->req)
+				|| is_acc_prepare_on(ps->req) ) ) {
 		/* do some parsing in advance */
 		if (acc_preparse_req(ps->req)<0)
 			return;

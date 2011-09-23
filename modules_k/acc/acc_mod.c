@@ -108,6 +108,7 @@ static char *failed_filter_str = 0;  /* by default, do not filter logging of
 unsigned short failed_filter[MAX_FAILED_FILTER_COUNT + 1];
 static char* leg_info_str = 0;	/*!< multi call-leg support */
 struct acc_extra *leg_info = 0;
+int acc_prepare_flag = -1; /*!< should the request be prepared for later acc */
 
 
 /* ----- SYSLOG acc variables ----------- */
@@ -236,6 +237,7 @@ static param_export_t params[] = {
 	{"report_cancels",          INT_PARAM, &report_cancels          },
 	{"multi_leg_info",          STR_PARAM, &leg_info_str            },
 	{"detect_direction",        INT_PARAM, &detect_direction        },
+	{"acc_prepare_flag",        INT_PARAM, &acc_prepare_flag        },
 	/* syslog specific */
 	{"log_flag",             INT_PARAM, &log_flag             },
 	{"log_missed_flag",      INT_PARAM, &log_missed_flag      },
