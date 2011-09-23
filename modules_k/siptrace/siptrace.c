@@ -993,8 +993,21 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	}
 	msg=ps->req;
 	if(msg==NULL) {
-		LM_DBG("no uas msg, local transaction\n");
-		return;
+		/* check if it is outgoing cancel, t is INVITE
+		 * and send_buf starts with CANCEL */
+		if(is_invite(t) && ps->send_buf.len>7
+				&& strncmp(ps->send_buf.s, "CANCEL ", 7)==0) {
+			msg = t->uas.request;
+			if(msg==NULL) {
+				LM_DBG("no uas msg for INVITE transaction\n");
+				return;
+			} else {
+				LM_DBG("recording CANCEL based on INVITE transaction\n");
+			}
+		} else {
+			LM_DBG("no uas msg, local transaction\n");
+			return;
+		}
 	}
 	memset(&sto, 0, sizeof(struct _siptrace_data));
 
