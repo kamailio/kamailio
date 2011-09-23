@@ -461,11 +461,13 @@ int pv_parse_t_name(pv_spec_p sp, str *in)
 		case 10:
 			if(strncmp(in->s, "reply_code", 10)==0)
 				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "reply_type", 10)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
 			else goto error;
 		break;
 		case 12:
 			if(strncmp(in->s, "branch_index", 12)==0)
-				sp->pvp.pvn.u.isname.name.n = 3;
+				sp->pvp.pvn.u.isname.name.n = 4;
 			else goto error;
 		break;
 		default:
@@ -495,7 +497,7 @@ int pv_get_t(struct sip_msg *msg,  pv_param_t *param,
 	{
 		case 2:
 			return pv_get_tm_reply_code(msg, param, res);
-		case 3:
+		case 4:
 			return pv_get_tm_branch_idx(msg, param, res);
 	}
 
@@ -508,6 +510,14 @@ int pv_get_t(struct sip_msg *msg,  pv_param_t *param,
 	{
 		case 1:
 			return pv_get_uintval(msg, param, res, t->hash_index);
+		case 3:
+			if(get_route_type()==FAILURE_ROUTE) {
+				if(_tmx_tmb.t_get_picked_branch()<0 )
+					return pv_get_uintval(msg, param, res, 0);
+				if(t->uac[_tmx_tmb.t_get_picked_branch()].reply==FAKED_REPLY)
+					return pv_get_uintval(msg, param, res, 1);
+			}
+			return pv_get_uintval(msg, param, res, 0);
 		default:
 			return pv_get_uintval(msg, param, res, t->label);
 	}
