@@ -208,7 +208,8 @@ module_group_kstandard=acc alias_db auth auth_db benchmark call_control \
 				avpops cfg_db cfg_rpc ctl db_flatstore dialplan enum \
 				iptrtpproxy lcr mediaproxy mi_rpc pdb sanity tm topoh \
 				blst prefix_route counters debugger matrix mqueue mtree \
-				pipelimit rtpproxy textopsx xhttp ipops p_usrloc sdpops async
+				pipelimit rtpproxy textopsx xhttp ipops p_usrloc sdpops \
+				async sipcapture
 
 # K mysql module
 module_group_kmysql=db_mysql
