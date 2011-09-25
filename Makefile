@@ -135,7 +135,7 @@ module_group_standard=acc_syslog auth avp ctl dispatcher diversion enum\
 				eval exec fifo db_flatstore gflags maxfwd mediaproxy \
 				nathelper options pdt permissions pike print ratelimit \
 				registrar rr rtpproxy sanity sl textops timer tm uac \
-				unixsock uri usrloc xlog cfg_rpc
+				unixsock uri usrloc xlog cfg_rpc sipcapture
 
 # Modules in this group are considered a standard part of SER (due to 
 # widespread usage) but they have dependencies that must be satisfied for 
