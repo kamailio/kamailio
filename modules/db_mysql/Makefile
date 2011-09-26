@@ -69,7 +69,7 @@ else ifeq ($(INSTALL_FLAVOUR),kamailio)
 # extra install for kamailio
 
 install-mysql-scripts: $(bin_prefix)/$(bin_dir)
-		MYSQLON=yes make -C ../../utils/kamctl/ install-modules
+		MYSQLON=yes $(MAKE) -C ../../utils/kamctl/ install-modules
 
 install-scripts: install-mysql-scripts
 
