@@ -31,7 +31,7 @@
  */
 
 
-#ifdef __OS_darwin
+#if defined (__OS_darwin) || defined (__OS_freebsd)
 #include "../../pvar.h"
 #endif
 
