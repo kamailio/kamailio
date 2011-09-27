@@ -109,8 +109,8 @@ Chapter 1. Admin Guide
 
 3.1. sampling_time_unit (integer)
 
-   Time period used for sampling (or the sampling accuracy ;-) ). The
-   smaller the better, but slower. If you want to detect peeks, use a
+   Time period in seconds used for sampling (or the sampling accuracy).
+   The smaller the better, but slower. If you want to detect peeks, use a
    small one. To limit the access (like total number of requests on a long
    period of time) to a proxy resource (a gateway for ex), use a bigger
    value of this parameter.
@@ -142,12 +142,12 @@ modparam("pike", "reqs_density_per_unit", 30)
 3.3. remove_latency (integer)
 
    For how long the IP address will be kept in memory after the last
-   request from that IP address. It's a sort of timeout value. Note that
-   it is not the duration to keep the IP in state 'blocked'. An IP is
-   unblocked next occurence of 'sampling_time_unit' that does not exceed
-   'reqs_density_per_unit'. Keeping an IP in memory results in faster
-   reaching of blocked state -- see the notes about the limits of getting
-   to state 'blocked'.
+   request from that IP address. It's a sort of timeout value, in seconds.
+   Note that it is not the duration to keep the IP in state 'blocked'. An
+   IP is unblocked next occurence of 'sampling_time_unit' that does not
+   exceed 'reqs_density_per_unit'. Keeping an IP in memory results in
+   faster reaching of blocked state -- see the notes about the limits of
+   getting to state 'blocked'.
 
    Default value is 120.
 
