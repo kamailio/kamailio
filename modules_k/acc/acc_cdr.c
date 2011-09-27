@@ -237,8 +237,9 @@ static struct timeval time_from_string( str* time_value)
         return time_error;
     }
     
-    return (struct timeval) { atoi( zero_terminated_value),
-                            atoi( dot_address + 1)};
+    time_res->tv_sec = strtol( zero_terminated_value, (char **)NULL, 10);
+    time_res->tv_usec = strtol( dot_address + 1, (char **)NULL, 10);
+    return 0;
 }
 
 /* set the duration in the dialog struct */
