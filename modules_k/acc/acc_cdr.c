@@ -244,8 +244,8 @@ static struct timeval time_from_string( str* time_value)
 /* set the duration in the dialog struct */
 static int set_duration( struct dlg_cell* dialog)
 {
-    struct timeval start_timeval = time_error;
-    struct timeval end_timeval = time_error;
+    struct timeval start_time = time_error;
+    struct timeval end_time = time_error;
     int milliseconds = -1;
     int seconds = -1;
     char buffer[ time_buffer_length];
@@ -258,35 +258,35 @@ static int set_duration( struct dlg_cell* dialog)
         return -1;
     }
 
-    start_timeval = time_from_string( dlgb.get_dlg_var( dialog, (str*)&start_id));
-    end_timeval  = time_from_string( dlgb.get_dlg_var( dialog, (str*)&end_id));
+    start_time = time_from_string( dlgb.get_dlg_var( dialog, (str*)&start_id));
+    end_time  = time_from_string( dlgb.get_dlg_var( dialog, (str*)&end_id));
 
-    if( is_time_equal( start_timeval, time_error) ||
-        is_time_equal( end_timeval, time_error))
+    if( is_time_equal( start_time, time_error) ||
+        is_time_equal( end_time, time_error))
     {
         LM_ERR( "failed to extract time from start or/and end-time\n");
         return -1;
     }
 
-    if( start_timeval.tv_usec >= milliseconds_max ||
-        end_timeval.tv_usec >= milliseconds_max)
+    if( start_time.tv_usec >= milliseconds_max ||
+        end_time.tv_usec >= milliseconds_max)
     {
         LM_ERR( "start-(%d) or/and end-time(%d) is out of the maximum of %d\n",
-                start_timeval.tv_usec,
-                end_timeval.tv_usec,
+                start_time.tv_usec,
+                end_time.tv_usec,
                 milliseconds_max);
         return -1;
     }
 
-    milliseconds = end_timeval.tv_usec < start_timeval.tv_usec ?
+    milliseconds = end_time.tv_usec < start_time.tv_usec ?
                                 ( milliseconds_max +
-                                  end_timeval.tv_usec -
-                                  start_timeval.tv_usec) :
-                                ( end_timeval.tv_usec - start_timeval.tv_usec);
+                                  end_time.tv_usec -
+                                  start_time.tv_usec) :
+                                ( end_time.tv_usec - start_time.tv_usec);
 
-    seconds = end_timeval.tv_sec -
-              start_timeval.tv_sec -
-              ( end_timeval.tv_usec < start_timeval.tv_usec ? 1 : 0);
+    seconds = end_time.tv_sec -
+              start_time.tv_sec -
+              ( end_time.tv_usec < start_time.tv_usec ? 1 : 0);
 
     if( seconds < 0)
     {
