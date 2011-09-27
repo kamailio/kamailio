@@ -44,7 +44,7 @@
 #include "acc_extra.h"
 #include "acc.h"
 
-#include <sys/timeb.h>
+#include <sys/time.h>
 
 #define TIME_STR_BUFFER_SIZE 20
 
@@ -56,9 +56,9 @@ static const str start_id = { "sz", 2};
 static const str end_id = { "ez", 2};
 static const str duration_id = { "d", 1};
 static const str zero_duration = { "0", 1};
-static const struct timeb time_error = {0,0,0,0};
+static const struct timeval time_error = {0,0};
 static const char time_separator = {'.'};
-static const int milliseconds_max = 1000;
+static const int milliseconds_max = 1000000;
 static const unsigned int time_buffer_length = 256;
 static const str empty_string = { "", 0};
 
@@ -71,13 +71,11 @@ static char cdr_type_array[ MAX_CDR_CORE + MAX_CDR_EXTRA];
 extern struct tm_binds tmb;
 
 /* compare two times */
-static int is_time_equal( struct timeb first_time,
-                          struct timeb second_time)
+static int is_time_equal( struct timeval first_time,
+                          struct timeval second_time)
 {
-    if( first_time.time == second_time.time &&
-        first_time.millitm == second_time.millitm &&
-        first_time.timezone == second_time.timezone &&
-        first_time.dstflag == second_time.dstflag )
+    if( first_time.tv_sec == second_time.tv_sec &&
+        first_time.tv_usec == second_time.tv_usec )
     {
         return 1;
     }
@@ -197,7 +195,7 @@ static int write_cdr( struct dlg_cell* dialog,
 }
 
 /* convert a string into a timeb struct */
-static struct timeb time_from_string( str* time_value)
+static struct timeval time_from_string( str* time_value)
 {    
     char* dot_address = NULL;
     int dot_position = -1;
@@ -239,17 +237,15 @@ static struct timeb time_from_string( str* time_value)
         return time_error;
     }
     
-    return (struct timeb) { atoi( zero_terminated_value),
-                            atoi( dot_address + 1),
-                            0,
-                            0};
+    return (struct timeval) { atoi( zero_terminated_value),
+                            atoi( dot_address + 1)};
 }
 
 /* set the duration in the dialog struct */
 static int set_duration( struct dlg_cell* dialog)
 {
-    struct timeb start_timeb = time_error;
-    struct timeb end_timeb = time_error;
+    struct timeval start_timeval = time_error;
+    struct timeval end_timeval = time_error;
     int milliseconds = -1;
     int seconds = -1;
     char buffer[ time_buffer_length];
@@ -262,35 +258,35 @@ static int set_duration( struct dlg_cell* dialog)
         return -1;
     }
 
-    start_timeb = time_from_string( dlgb.get_dlg_var( dialog, (str*)&start_id));
-    end_timeb  = time_from_string( dlgb.get_dlg_var( dialog, (str*)&end_id));
+    start_timeval = time_from_string( dlgb.get_dlg_var( dialog, (str*)&start_id));
+    end_timeval  = time_from_string( dlgb.get_dlg_var( dialog, (str*)&end_id));
 
-    if( is_time_equal( start_timeb, time_error) ||
-        is_time_equal( end_timeb, time_error))
+    if( is_time_equal( start_timeval, time_error) ||
+        is_time_equal( end_timeval, time_error))
     {
         LM_ERR( "failed to extract time from start or/and end-time\n");
         return -1;
     }
 
-    if( start_timeb.millitm >= milliseconds_max ||
-        end_timeb.millitm >= milliseconds_max)
+    if( start_timeval.tv_usec >= milliseconds_max ||
+        end_timeval.tv_usec >= milliseconds_max)
     {
         LM_ERR( "start-(%d) or/and end-time(%d) is out of the maximum of %d\n",
-                start_timeb.millitm,
-                end_timeb.millitm,
+                start_timeval.tv_usec,
+                end_timeval.tv_usec,
                 milliseconds_max);
         return -1;
     }
 
-    milliseconds = end_timeb.millitm < start_timeb.millitm ?
+    milliseconds = end_timeval.tv_usec < start_timeval.tv_usec ?
                                 ( milliseconds_max +
-                                  end_timeb.millitm -
-                                  start_timeb.millitm) :
-                                ( end_timeb.millitm - start_timeb.millitm);
+                                  end_timeval.tv_usec -
+                                  start_timeval.tv_usec) :
+                                ( end_timeval.tv_usec - start_timeval.tv_usec);
 
-    seconds = end_timeb.time -
-              start_timeb.time -
-              ( end_timeb.millitm < start_timeb.millitm ? 1 : 0);
+    seconds = end_timeval.tv_sec -
+              start_timeval.tv_sec -
+              ( end_timeval.tv_usec < start_timeval.tv_usec ? 1 : 0);
 
     if( seconds < 0)
     {
@@ -336,7 +332,7 @@ static int set_duration( struct dlg_cell* dialog)
 static int set_start_time( struct dlg_cell* dialog)
 {
     char buffer[ time_buffer_length];
-    struct timeb current_time = time_error;
+    struct timeval current_time;
     int buffer_length = -1;
     str start_time = empty_string;
 
@@ -346,7 +342,7 @@ static int set_start_time( struct dlg_cell* dialog)
         return -1;
     }
 
-    if( ftime( &current_time) < 0)
+    if( gettimeofday( &current_time, NULL) < 0)
     {
         LM_ERR( "failed to get current time!\n");
         return -1;
@@ -355,9 +351,9 @@ static int set_start_time( struct dlg_cell* dialog)
     buffer_length = snprintf( buffer,
                               time_buffer_length,
                               "%d%c%03d",
-                              (int)current_time.time,
+                              (int)current_time.tv_sec,
                               time_separator,
-                              (int)current_time.millitm);
+                              (int)current_time.tv_usec);
 
     if( buffer_length < 0)
     {
@@ -398,7 +394,7 @@ static int set_start_time( struct dlg_cell* dialog)
 static int set_end_time( struct dlg_cell* dialog)
 {
     char buffer[ time_buffer_length];
-    struct timeb current_time = time_error;
+    struct timeval current_time;
     int buffer_length = -1;
     str end_time = empty_string;
 
@@ -408,7 +404,7 @@ static int set_end_time( struct dlg_cell* dialog)
         return -1;
     }
 
-    if( ftime( &current_time) < 0)
+    if( gettimeofday( &current_time, NULL) < 0)
     {
         LM_ERR( "failed to set time!\n");
         return -1;
@@ -417,9 +413,9 @@ static int set_end_time( struct dlg_cell* dialog)
     buffer_length = snprintf( buffer,
                               time_buffer_length,
                               "%d%c%03d",
-                              (int)current_time.time,
+                              (int)current_time.tv_sec,
                               time_separator,
-                              (int)current_time.millitm);
+                              (int)current_time.tv_usec);
 
     if( buffer_length < 0)
     {
