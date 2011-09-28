@@ -71,10 +71,10 @@ int redisc_init(void)
 				addr = pit->body.s;
 				addr[pit->body.len] = '\0';
 			} else if(pit->name.len==4 && strncmp(pit->name.s, "port", 4)==0) {
-				if(!str2int(&pit->body, &port) < 0)
+				if(str2int(&pit->body, &port) < 0)
 					port = 6379;
 			} else if(pit->name.len==2 && strncmp(pit->name.s, "db", 2)==0) {
-				if(!str2int(&pit->body, &db) < 0)
+				if(str2int(&pit->body, &db) < 0)
 					db = 0;
 			}
 		}
