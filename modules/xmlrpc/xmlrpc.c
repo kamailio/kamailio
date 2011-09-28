@@ -147,9 +147,6 @@
 
 MODULE_VERSION
 
-int snprintf(char *str, size_t size, const char *format, ...);
-int vsnprintf(char *str, size_t size, const char *format, va_list ap);
-
 static int process_xmlrpc(sip_msg_t* msg);
 static int dispatch_rpc(sip_msg_t* msg, char* s1, char* s2);
 static int xmlrpc_reply(sip_msg_t* msg, char* code, char* reason);
