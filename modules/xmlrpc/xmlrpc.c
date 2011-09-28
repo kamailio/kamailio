@@ -2462,6 +2462,16 @@ static int mod_init(void)
 }
 
 
+/**
+ * advertise that sip workers handle rpc commands
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	set_sip_rpc_mode(1);
+	return 0;
+}
+
+
 static int fixup_xmlrpc_reply(void** param, int param_no)
 {
 	int ret;
