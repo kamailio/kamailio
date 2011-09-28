@@ -553,11 +553,13 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 				a1p = stream->max_size.s + stream->max_size.len;
 			} else if (extract_path(&tmpstr1, &stream->path) == 0) {
 				a1p = stream->path.s + stream->path.len;
-			/*} else { */
-			/*	LM_DBG("else: `%.*s'\n", tmpstr1.len, tmpstr1.s); */
+			} else {
+				/* unknown a= line, ignore -- jump over it */
+				LM_DBG("ignoring unknown type in a= line: `%.*s'\n", tmpstr1.len, tmpstr1.s);
+				a1p += 2;
 			}
 
-			a2p = find_next_sdp_line(a2p, m2p, 'a', m2p);
+			a2p = find_first_sdp_line(a1p, m2p, 'a', m2p);
 		}
 		/* Let's detect if the media is on hold by checking
 		 * the good old "0.0.0.0" connection address */

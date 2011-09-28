@@ -606,6 +606,18 @@ char * find_next_sdp_line(char* p, char* plimit, char linechar, char* defptr)
 }
 
 
+/* Find first SDP line starting with linechar. Return defptr if not found */
+char * find_first_sdp_line(char* pstart, char* plimit, char linechar,
+		char* defptr)
+{
+	char *t;
+	if (pstart >= plimit || plimit - pstart < 3)
+		return defptr;
+	t = find_sdp_line(pstart, plimit, linechar);
+	return t ? t : defptr;
+}
+
+
 /* returns pointer to next header line, and fill hdr_f ;
  * if at end of header returns pointer to the last crlf  (always buf)*/
 char* get_sdp_hdr_field(char* buf, char* end, struct hdr_field* hdr)

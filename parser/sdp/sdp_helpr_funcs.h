@@ -68,4 +68,6 @@ char* get_sdp_hdr_field(char* , char* , struct hdr_field* );
 
 char *find_sdp_line_delimiter(char *p, char *plimit, str delimiter);
 char *find_next_sdp_line_delimiter(char *p, char *plimit, str delimiter, char *defptr); 
+char * find_first_sdp_line(char* pstart, char* plimit, char linechar,
+		 char* defptr);
 #endif
