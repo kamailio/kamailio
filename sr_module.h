@@ -655,8 +655,9 @@ int fixup_free_fparam_2(void** param, int param_no);
  */
 free_fixup_function get_fixup_free(fixup_function f);
 
-void set_sip_rpc_mode(int mode);
-int get_sip_rpc_mode(void);
+void set_child_sip_rpc_mode(void);
+void set_child_rpc_sip_mode(void);
+int is_sip_worker(int rank);
 int is_rpc_worker(int rank);
 
 #endif /* sr_module_h */

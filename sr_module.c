@@ -113,23 +113,37 @@ int mod_response_cbk_no=0;
 response_function* mod_response_cbks=0;
 
 /**
- * if set to 1, SIP worker processes handle RPC commands as well
+ * if bit 1 set, SIP worker processes handle RPC commands as well
+ * if bit 2 set, RPC worker processes handle SIP commands as well
  */
 static int child_sip_rpc_mode = 0;
 
-void set_sip_rpc_mode(int mode)
+#define CHILD_SIP_RPC	1<<0
+#define CHILD_RPC_SIP	1<<1
+
+void set_child_sip_rpc_mode(void)
 {
-	child_sip_rpc_mode = mode;
+	child_sip_rpc_mode |= CHILD_SIP_RPC;
 }
 
-int get_sip_rpc_mode(void)
+void set_child_rpc_sip_mode(void)
 {
-	return child_sip_rpc_mode;
+	child_sip_rpc_mode |= CHILD_RPC_SIP;
 }
 
 int is_rpc_worker(int rank)
 {
-	if(rank==PROC_RPC || (rank>PROC_MAIN && child_sip_rpc_mode!=0))
+	if(rank==PROC_RPC
+			|| (rank>PROC_MAIN && (child_sip_rpc_mode&CHILD_SIP_RPC)!=0))
+		return 1;
+	return 0;
+}
+
+int is_sip_worker(int rank)
+{
+	if(rank>PROC_MAIN
+			|| ((rank==PROC_RPC || rank==PROC_NOCHLDINIT)
+					&& (child_sip_rpc_mode&CHILD_RPC_SIP)!=0))
 		return 1;
 	return 0;
 }
