@@ -2467,7 +2467,7 @@ static int mod_init(void)
  */
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
-	set_sip_rpc_mode(1);
+	set_child_sip_rpc_mode();
 	return 0;
 }
 
