@@ -134,6 +134,7 @@ static char* hash_file = NULL;
 
 static int initial_gflags=0;
 static unsigned int *gflags=0;
+static gen_lock_t *gflags_lock = NULL;
 
 static gen_lock_set_t *_cfg_lock_set = NULL;
 static unsigned int _cfg_lock_size = 0;
@@ -291,14 +292,18 @@ static int fixup_gflags( void** param, int param_no)
 
 static int set_gflag(struct sip_msg *bar, char *flag, char *foo) 
 {
+	lock_get(gflags_lock);
 	(*gflags) |= (unsigned int)(long)flag;
+	lock_release(gflags_lock);
 	return 1;
 }
 
 
 static int reset_gflag(struct sip_msg *bar, char *flag, char *foo)
 {
+	lock_get(gflags_lock);
 	(*gflags) &= ~ ((unsigned int)(long)flag);
+	lock_release(gflags_lock);
 	return 1;
 }
 
@@ -326,7 +331,9 @@ static struct mi_root* mi_set_gflag(struct mi_root* cmd_tree, void* param )
 		goto error;
 	}
 
+	lock_get(gflags_lock);
 	(*gflags) |= flag;
+	lock_release(gflags_lock);
 
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 error:
@@ -351,7 +358,9 @@ static struct mi_root*  mi_reset_gflag(struct mi_root* cmd_tree, void* param )
 		goto error;
 	}
 
+	lock_get(gflags_lock);
 	(*gflags) &= ~ flag;
+	lock_release(gflags_lock);
 
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 error:
@@ -403,16 +412,19 @@ static struct mi_root*  mi_get_gflags(struct mi_root* cmd_tree, void* param )
 {
 	struct mi_root* rpl_tree= NULL;
 	struct mi_node* node= NULL;
+	static unsigned int flags;
 
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
 	if(rpl_tree == NULL)
 		return 0;
 
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "0x%X",(*gflags));
+	flags = *gflags;
+
+	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "0x%X",(flags));
 	if(node == NULL)
 		goto error;
 
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%u",(*gflags));
+	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%u",(flags));
 	if(node == NULL)
 		goto error;
 
@@ -764,6 +776,16 @@ static int mod_init(void)
 		return -1;
 	}
 	*gflags=initial_gflags;
+	gflags_lock = lock_alloc();
+	if (gflags_lock==0) {
+		LM_ERR("cannot allocate gflgas lock\n");
+		return -1;
+	}
+	if (lock_init(gflags_lock)==NULL) {
+		LM_ERR("cannot initiate gflags lock\n");
+		lock_dealloc(gflags_lock);
+		return -1;
+	}
 	if(_cfg_lock_size>0 && _cfg_lock_size<=10)
 	{
 		_cfg_lock_size = 1<<_cfg_lock_size;
@@ -784,6 +806,10 @@ static void mod_destroy(void)
 		shm_free(probability);
 	if (gflags)
 		shm_free(gflags);
+	if (gflags_lock) {
+		lock_destroy(gflags_lock);
+		lock_dealloc(gflags_lock);
+	}
 	if(_cfg_lock_set!=NULL)
 	{
 		lock_set_destroy(_cfg_lock_set);
