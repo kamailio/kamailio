@@ -46,6 +46,7 @@
 #include <string.h>
 
 #include "../../dprint.h"
+#include "../../sr_module.h"
 #include "mi_mem.h"
 #include "mi.h"
 
@@ -109,6 +110,13 @@ int init_mi_child(void)
 		if ( mi_cmds[i].init_f && mi_cmds[i].init_f()!=0 ) {
 			LM_ERR("failed to init <%.*s>\n",
 					mi_cmds[i].name.len,mi_cmds[i].name.s);
+			return -1;
+		}
+	}
+	if(is_sip_worker(PROC_NOCHLDINIT)) {
+		LM_DBG("initalizing proc rpc for sip handling\n");
+		if(init_child(PROC_SIPRPC)<0) {
+			LM_DBG("failed to init proc rpc for sip handling\n");
 			return -1;
 		}
 	}
