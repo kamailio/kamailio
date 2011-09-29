@@ -1390,7 +1390,7 @@ int main_loop()
 		 * in fact we behave like a child, not like main process
 		 */
 
-		if (init_child(1) < 0) {
+		if (init_child(PROC_SIPINIT) < 0) {
 			LOG(L_ERR, "main_dontfork: init_child failed\n");
 			goto error;
 		}
