@@ -204,6 +204,13 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 #define PROC_NOCHLDINIT -128 /**< no child init functions will be called
                                 if this rank is used in fork_process() */
 
+#define PROC_SIPINIT      1  /**< First SIP worker - some modules do special
+							 processing in this child, like loading db data */
+#define PROC_SIPRPC       127  /**< Used to init RPC worker as SIP commands
+							   handler. Don't do any special processing in the
+							   child init with this rank - just bare child
+							   initialization */
+
 #define PROC_MIN PROC_NOCHLDINIT /**< Minimum process rank */
 
 
