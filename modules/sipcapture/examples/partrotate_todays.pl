@@ -74,8 +74,9 @@ for(my $i=0; $i<$newparts; $i++) {
     
     if(!$exist) {
     
-        $query = "ALTER TABLE ".$table." ADD PARTITION (PARTITION ".$newpartname
-             ."\n VALUES LESS THAN (".$curtodays.") ENGINE = MyISAM)";
+        # Fix MAXVALUE. Thanks Dorn B. <djbinter@gmail.com> for report and fix.
+        $query = "ALTER TABLE ".$table." REORGANIZE PARTITION pmax INTO (PARTITION ".$newpartname
+                                        ."\n VALUES LESS THAN (".$curtodays.") ENGINE = MyISAM, PARTITION pmax VALUES LESS THAN MAXVALUE ENGINE = MyISAM)";                                                         
         $db->do($query);
         if (!$db->{Executed}) {
              print "Couldn't add partition: $newpartname\n";
