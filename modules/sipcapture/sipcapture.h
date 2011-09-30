@@ -45,8 +45,6 @@ struct hep_ip6hdr {
 };
 #endif
 
-#define ETHHDR 14 /* sizeof of ethhdr structure */
-
 /* Make it independed */
 /* Copied from linux/filter.h */
 struct my_sock_filter      /* Filter block */
