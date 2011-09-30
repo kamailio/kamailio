@@ -80,7 +80,7 @@ static int child_init(int rank)
 {
 	if(is_rpc_worker(rank)) {
 		LM_DBG("initializing child[%d] for rpc handling\n", rank);
-		if(init_mi_child()!=0) {
+		if(init_mi_child(rank, 0)!=0) {
 			LM_CRIT("Failed to init the mi commands\n");
 			return -1;
 		}

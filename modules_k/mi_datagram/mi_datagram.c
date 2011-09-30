@@ -329,7 +329,7 @@ static void datagram_process(int rank)
 	LM_INFO("a new child %d/%d\n", rank, getpid());
 
 	/*child's initial settings*/
-	if ( init_mi_child()!=0) {
+	if ( init_mi_child(PROC_NOCHLDINIT, 1)!=0) {
 		LM_CRIT("failed to init the mi process\n");
 		exit(-1);
 	}

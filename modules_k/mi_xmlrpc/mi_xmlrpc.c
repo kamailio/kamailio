@@ -231,7 +231,7 @@ static void xmlrpc_process(int rank)
 
 	ServerInit(&srv);
 
-	if( init_mi_child() != 0 ) {
+	if( init_mi_child(PROC_NOCHLDINIT, 1) != 0 ) {
 		LM_CRIT("failed to init the mi process\n");
 		goto error;
 	}
