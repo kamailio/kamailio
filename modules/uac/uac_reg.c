@@ -637,16 +637,19 @@ reg_uac_t *reg_ht_get_byuuid(str *uuid)
 
 	hash = reg_compute_hash(uuid);
 	slot = reg_get_entry(hash, _reg_htable->htsize);
+	lock_get(&_reg_htable->entries[slot].lock);
 	it = _reg_htable->entries[slot].byuuid;
 	while(it)
 	{
 		if((it->r->h_uuid==hash) && (it->r->l_uuid.len==uuid->len)
 				&& (strncmp(it->r->l_uuid.s, uuid->s, uuid->len)==0))
 		{
+			lock_release(&_reg_htable->entries[slot].lock);
 			return it->r;
 		}
 		it = it->next;
 	}
+	lock_release(&_reg_htable->entries[slot].lock);
 	return NULL;
 }
 
@@ -667,6 +670,7 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 
 	hash = reg_compute_hash(user);
 	slot = reg_get_entry(hash, _reg_htable->htsize);
+	lock_get(&_reg_htable->entries[slot].lock);
 	it = _reg_htable->entries[slot].byuser;
 	while(it)
 	{
@@ -678,14 +682,17 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 				if((it->r->l_domain.len==domain->len)
 						&& (strncmp(it->r->l_domain.s, domain->s, domain->len)==0))
 				{
+					lock_release(&_reg_htable->entries[slot].lock);
 					return it->r;
 				}
 			} else {
+				lock_release(&_reg_htable->entries[slot].lock);
 				return it->r;
 			}
 		}
 		it = it->next;
 	}
+	lock_release(&_reg_htable->entries[slot].lock);
 	return NULL;
 }
 
@@ -1066,12 +1073,14 @@ void uac_reg_timer(unsigned int ticks)
 	for(i=0; i<_reg_htable->htsize; i++)
 	{
 		/* walk through entries */
+		lock_get(&_reg_htable->entries[i].lock);
 		it = _reg_htable->entries[i].byuuid;
 		while(it)
 		{
 			uac_reg_update(it->r, tn);
 			it = it->next;
 		}
+		lock_release(&_reg_htable->entries[i].lock);
 	}
 
 	if(_reg_htable_gc!=NULL)
