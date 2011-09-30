@@ -229,7 +229,7 @@ static void fifo_process(int rank)
 		exit(-1);
 	}
 
-	if( init_mi_child()!=0) {
+	if( init_mi_child(PROC_NOCHLDINIT, 1)!=0) {
 		LM_CRIT("Failed to init the mi process\n");
 		exit(-1);
 	}

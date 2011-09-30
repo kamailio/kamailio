@@ -68,7 +68,7 @@ int register_mi_cmd( mi_cmd_f f, char *name, void *param,
 
 int register_mi_mod( char *mod_name, mi_export_t *mis);
 
-int init_mi_child(void);
+int init_mi_child(int rank, int mode);
 
 struct mi_cmd* lookup_mi_cmd( char *name, int len);
 
