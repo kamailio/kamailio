@@ -106,6 +106,7 @@ int init_mi_child(void)
 
 	if(mi_commands_initialized)
 		return 0;
+	mi_commands_initialized = 1;
 	for ( i=0 ; i<mi_cmds_no ; i++ ) {
 		if ( mi_cmds[i].init_f && mi_cmds[i].init_f()!=0 ) {
 			LM_ERR("failed to init <%.*s>\n",
@@ -120,7 +121,6 @@ int init_mi_child(void)
 			return -1;
 		}
 	}
-	mi_commands_initialized = 1;
 	return 0;
 }
 
