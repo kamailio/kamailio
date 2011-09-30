@@ -670,7 +670,7 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 	it = _reg_htable->entries[slot].byuser;
 	while(it)
 	{
-		if((it->r->h_uuid==hash) && (it->r->l_username.len==user->len)
+		if((it->r->h_user==hash) && (it->r->l_username.len==user->len)
 				&& (strncmp(it->r->l_username.s, user->s, user->len)==0))
 		{
 			if(domain!=NULL && domain->s!=NULL)
