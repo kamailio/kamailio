@@ -116,7 +116,7 @@ int init_mi_child(void)
 	if(is_sip_worker(PROC_NOCHLDINIT)) {
 		LM_DBG("initalizing proc rpc for sip handling\n");
 		if(init_child(PROC_SIPRPC)<0) {
-			LM_DBG("failed to init proc rpc for sip handling\n");
+			LM_ERR("failed to init proc rpc for sip handling\n");
 			return -1;
 		}
 	}
