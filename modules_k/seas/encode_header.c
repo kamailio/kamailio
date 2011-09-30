@@ -139,7 +139,7 @@ int encode_header(struct sip_msg *sipmsg,struct hdr_field *hdr,unsigned char *pa
 	    parse_to(hdr->body.s,hdr->body.s+hdr->body.len+1,tobody);
 	    if (tobody->error == PARSE_ERROR) {
 	       myerror="bad (REFER,TO,FROM,RPID) header\n";
-	       pkg_free(tobody);
+	       free_to(tobody);
 	       return 5;
 	       goto error;
 	    }

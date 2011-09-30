@@ -124,11 +124,12 @@ void dlg_ontimeout( struct dlg_tl *tl);
  * from the dlg_manage function in the configuration script.
  * \see dlg_onreq
  * \see w_dlg_manage
- * \param msg SIP message
+ * \param req SIP message
  * \param t transaction
+ * \param run_initial_cbs if set zero, initial callbacks are not executed
  * \return 0 on success, -1 on failure
  */ 
-int dlg_new_dialog(struct sip_msg *msg, struct cell *t, const int run_initial_cbs);
+int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cbs);
 
 
 /*!

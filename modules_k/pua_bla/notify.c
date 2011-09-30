@@ -39,7 +39,7 @@
 int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
 {
  	publ_info_t publ;
- 	struct to_body *pto= NULL, TO, *pfrom = NULL;
+	struct to_body *pto = NULL, TO = {0}, *pfrom = NULL;
  	str body;
  	ua_pres_t dialog;
  	unsigned int expires= 0;
@@ -48,7 +48,6 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
 	int found= 0;
  	str extra_headers= {0, 0};
  	static char buf[255];
- 	xmlDoc* doc= NULL;
 	str contact;
 
 	memset(&publ, 0, sizeof(publ_info_t));
@@ -76,7 +75,6 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
   	}
  	else
   	{
-  		memset( &TO , 0, sizeof(TO) );
   		parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO);
   		if(TO.uri.len <= 0)
   		{
@@ -245,13 +243,12 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
       
    	xmlCleanupParser();
    	xmlMemoryDump();
-   
-  	return 1;
+
+	free_to_params(&TO);
+	return 1;
    
 error:
-   	if(doc)
-   		xmlFreeDoc(doc);
-   
+	free_to_params(&TO);
    	return 0;
 }
 

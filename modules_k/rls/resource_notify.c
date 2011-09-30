@@ -510,7 +510,7 @@ error:
 
 int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 {
-	struct to_body *pto, TO, *pfrom= NULL;
+	struct to_body *pto, TO = {0}, *pfrom = NULL;
 	str body= {0, 0};
 	ua_pres_t dialog;
 	str* res_id= NULL;
@@ -543,22 +543,21 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	{
 		LM_ERR("cannot parse TO header\n");
 		return -1;
-    }
+	}
 	if(msg->to->parsed != NULL)
-    {
+	{
 		pto = (struct to_body*)msg->to->parsed;
 		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",
 				pto->uri.len, pto->uri.s );	
 	}
 	else
 	{
-		memset( &TO , 0, sizeof(TO) );
 		parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO);
 		if(TO.uri.len <= 0) 
 		{
 			LM_ERR(" 'To' header NOT parsed\n");
-			return -1;
-	}
+			goto error;
+		}
 		pto = &TO;
 	}
 	memset(&dialog, 0, sizeof(ua_pres_t));
@@ -588,8 +587,8 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 		if ( parse_from_header( msg )<0 ) 
 		{
 			LM_ERR("cannot parse From header\n");
-            goto error;
-        }
+			goto error;
+		}
 	}
 	pfrom = (struct to_body*)msg->from->parsed;
 	dialog.pres_uri= &pfrom->uri;
@@ -790,6 +789,7 @@ done:
 		pkg_free(res_id->s);
 		pkg_free(res_id);
 	}
+	free_to_params(&TO);
 	return 1;
 
 error:
@@ -798,8 +798,9 @@ error:
 		pkg_free(res_id->s);
 		pkg_free(res_id);
 	}
+	free_to_params(&TO);
 	return -1;
-	}
+}
 /* callid, from_tag, to_tag parameters must be allocated */
 
 void timer_send_notify(unsigned int ticks,void *param)

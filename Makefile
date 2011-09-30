@@ -135,7 +135,7 @@ module_group_standard=acc_syslog auth avp ctl dispatcher diversion enum\
 				eval exec fifo db_flatstore gflags maxfwd mediaproxy \
 				nathelper options pdt permissions pike print ratelimit \
 				registrar rr rtpproxy sanity sl textops timer tm uac \
-				unixsock uri usrloc xlog cfg_rpc
+				unixsock uri usrloc xlog cfg_rpc sipcapture
 
 # Modules in this group are considered a standard part of SER (due to 
 # widespread usage) but they have dependencies that must be satisfied for 
@@ -208,7 +208,8 @@ module_group_kstandard=acc alias_db auth auth_db benchmark call_control \
 				avpops cfg_db cfg_rpc ctl db_flatstore dialplan enum \
 				iptrtpproxy lcr mediaproxy mi_rpc pdb sanity tm topoh \
 				blst prefix_route counters debugger matrix mqueue mtree \
-				pipelimit rtpproxy textopsx xhttp ipops p_usrloc sdpops async
+				pipelimit rtpproxy textopsx xhttp ipops p_usrloc sdpops \
+				async sipcapture
 
 # K mysql module
 module_group_kmysql=db_mysql

@@ -8,7 +8,7 @@ depend() {
 }
 
 check_config() {
-	out=`(/usr/sbin/siprouter -f ${CONFIGFILE} -c > /dev/null || true) 2>&1`
+	out=`(/usr/sbin/sip-router -f ${CONFIGFILE} -c > /dev/null || true) 2>&1`
 	echo "$out" | grep -q 'config file ok, exiting...'
 	if [ "$?" == 1 ]; then
 		echo -e "There are errors in the configuration. Please fix them first"
@@ -19,16 +19,16 @@ check_config() {
 
 start() {
 	check_config || return 1
-	ebegin "Starting siprouter"
-	start-stop-daemon --start --quiet --pidfile /var/run/siprouter.pid \
-		--exec /usr/sbin/siprouter -- -P /var/run/siprouter.pid \
+	ebegin "Starting sip-router"
+	start-stop-daemon --start --quiet --pidfile /var/run/sip-router.pid \
+		--exec /usr/sbin/sip-router -- -P /var/run/sip-router.pid \
                 ${SR_OPTS}
 	eend $?
 }
 
 stop() {
-	ebegin "Stopping siprouter"
-	start-stop-daemon --stop --quiet --pidfile /var/run/siprouter.pid
+	ebegin "Stopping sip-router"
+	start-stop-daemon --stop --quiet --pidfile /var/run/sip-router.pid
 	eend $?
 }
 

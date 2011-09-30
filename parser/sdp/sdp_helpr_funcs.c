@@ -98,6 +98,36 @@ static void * ser_memmem(const void *b1, const void *b2, size_t len1, size_t len
 	return NULL;
 }
 
+/*
+ * ser_memrmem() returns the location of the last occurrence of data
+ * pattern b2 of size len2 in memory block b1 of size len1 or
+ * NULL if none is found.
+ */
+static void * ser_memrmem(const void *b1, const void *b2, size_t len1, size_t len2)
+{
+	/* Initialize search pointer */
+	char *sp = (char *) b1 + len1 - len2;
+
+	/* Initialize pattern pointer */
+	char *pp = (char *) b2;
+
+	/* Initialize end of search address space pointer */
+	char *eos = (char *) b1;
+
+	/* Sanity check */
+	if(!(b1 && b2 && len1 && len2))
+		return NULL;
+
+	while (sp >= eos) {
+		if (*sp == *pp)
+			if (memcmp(sp, pp, len2) == 0)
+				return sp;
+
+			sp--;
+	}
+
+	return NULL;
+}
 
 int get_mixed_part_delimiter(str* body, str *mp_delimiter)
 {
@@ -387,7 +417,7 @@ int extract_bwidth(str *body, str *bwtype, str *bwwitdth)
 int extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 {
 	char *cp, *cp1;
-	int len, nextisip;
+	int len;
 
 	cp1 = NULL;
 	for (cp = body->s; (len = body->s + body->len - cp) > 0;) {
@@ -402,38 +432,44 @@ int extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 	mediaip->s = cp1 + 2;
 	mediaip->len = eat_line(mediaip->s, body->s + body->len - mediaip->s) - mediaip->s;
 	trim_len(mediaip->len, mediaip->s, *mediaip);
-
-	nextisip = 0;
-	for (cp = mediaip->s; cp < mediaip->s + mediaip->len;) {
-		len = eat_token_end(cp, mediaip->s + mediaip->len) - cp;
-		if (nextisip == 1) {
-			mediaip->s = cp;
-			mediaip->len = len;
-			nextisip++;
-			break;
-		}
-		if (len == 3 && memcmp(cp, "IP", 2) == 0) {
-			switch (cp[2]) {
-			case '4':
-				nextisip = 1;
-				*pf = AF_INET;
-				break;
-
-			case '6':
-				nextisip = 1;
-				*pf = AF_INET6;
-				break;
-
-			default:
-				break;
-			}
-		}
-		cp = eat_space_end(cp + len, mediaip->s + mediaip->len);
+	if (mediaip->len == 0) {
+		LM_ERR("no [%s] line in SDP\n",line);
+		return -1;
 	}
-	if (nextisip != 2 || mediaip->len == 0) {
+
+	/* search reverse for IP[4|6] in c=/o= line */
+	cp = (char*)ser_memrmem(mediaip->s, " IP", mediaip->len, 3);
+	if (cp == NULL) {
 		LM_ERR("no `IP[4|6]' in `%s' field\n",line);
 		return -1;
 	}
+	/* safety checks:
+	 * - for lenght, at least 6: ' IP[4|6] x...'
+	 * - white space after
+	 */
+	if(cp + 6 > mediaip->s + mediaip->len && cp[4]!=' ') {
+		LM_ERR("invalid content for `%s' line\n",line);
+		return -1;
+	}
+	if(cp[3]!='4' && cp[3]!='6') {
+		LM_ERR("invalid addrtype IPx for `%s' line\n",line);
+		return -1;
+	}
+	cp += 5;
+
+	/* next token is the IP address */
+	cp = eat_space_end(cp, mediaip->s + mediaip->len);
+	len = eat_token_end(cp, mediaip->s + mediaip->len) - cp;
+	mediaip->s = cp;
+	mediaip->len = len;
+
+	if (mediaip->len == 0) {
+		LM_ERR("no `IP[4|6]' address in `%s' field\n",line);
+		return -1;
+	}
+
+	LM_ERR("located IP address [%.*s] in `%s' field\n",
+			mediaip->len, mediaip->s, line);
 	return 1;
 }
 
@@ -566,6 +602,18 @@ char * find_next_sdp_line(char* p, char* plimit, char linechar, char* defptr)
 	if (p >= plimit || plimit - p < 3)
 		return defptr;
 	t = find_sdp_line(p + 2, plimit, linechar);
+	return t ? t : defptr;
+}
+
+
+/* Find first SDP line starting with linechar. Return defptr if not found */
+char * find_first_sdp_line(char* pstart, char* plimit, char linechar,
+		char* defptr)
+{
+	char *t;
+	if (pstart >= plimit || plimit - pstart < 3)
+		return defptr;
+	t = find_sdp_line(pstart, plimit, linechar);
 	return t ? t : defptr;
 }
 

@@ -285,7 +285,7 @@ error0:
  * \brief Function that executes BYE reply callbacks
  * \param t transaction, unused
  * \param type type of the callback, should be TMCB_RESPONSE_FWDED
- * \param param saved dialog structure inside the callback
+ * \param params saved dialog structure inside the callback
  */
 static void dlg_terminated_confirmed(struct cell* t,
                                      int type,
@@ -665,9 +665,9 @@ void dlg_tmcb_dummy(struct cell* t, int type, struct tmcb_params *param)
 
 /*!
  * \brief Register a transaction on a dialog
- * \param t transaction
- * \param type type of the entered callback
- * \param param saved dialog structure in the callback
+ * \param msg SIP message
+ * \param t registered transaction
+ * \param dlg dialog to which the transaction should registered
  */
 static int store_dlg_in_tm(struct sip_msg* msg,
                             struct cell* t,
@@ -732,8 +732,9 @@ static void store_dlg_in_tm_cb (struct cell* t,
  * from the dlg_manage function in the configuration script.
  * \see dlg_onreq
  * \see w_dlg_manage
- * \param msg SIP message
+ * \param req SIP message
  * \param t transaction
+ * \param run_initial_cbs if set zero, initial callbacks are not executed
  * \return 0 on success, -1 on failure
  */ 
 int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cbs)

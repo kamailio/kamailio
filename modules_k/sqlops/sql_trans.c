@@ -42,7 +42,7 @@ static int _tr_eval_sql_val(pv_value_t *val)
 	static char _tr_buffer[TR_BUFFER_SIZE];
 
 	if(val->flags&PV_TYPE_INT || !(val->flags&PV_VAL_STR)) {
-		val->rs.s = int2str(val->ri, &val->rs.len);
+		val->rs.s = sint2str(val->ri, &val->rs.len);
 		val->flags = PV_VAL_STR;
 		return 0;
 	}

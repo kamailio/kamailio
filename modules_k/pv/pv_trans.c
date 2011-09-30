@@ -1030,9 +1030,10 @@ int tr_eval_nameaddr(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	{
 		if(val->rs.len>_tr_nameaddr_str.len)
 		{
-			if(_tr_nameaddr_str.s) pkg_free(_tr_nameaddr_str.s);
-			_tr_nameaddr_str.s =
-						(char*)pkg_malloc((val->rs.len+1)*sizeof(char));
+			if(_tr_nameaddr_str.s)
+				pkg_free(_tr_nameaddr_str.s);
+			_tr_nameaddr_str.s = (char*)pkg_malloc((val->rs.len+1)*sizeof(char));
+
 			if(_tr_nameaddr_str.s==NULL)
 			{
 				LM_ERR("no more private memory\n");
@@ -1086,7 +1087,7 @@ int tr_eval_nameaddr(struct sip_msg *msg, tr_param_t *tp, int subtype,
 }
 
 static str _tr_tobody_str = {0, 0};
-static struct to_body _tr_tobody;
+static struct to_body _tr_tobody = {0};
 
 /*!
  * \brief Evaluate To-Body transformations
@@ -1107,18 +1108,18 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	if(_tr_tobody_str.len==0 || _tr_tobody_str.len!=val->rs.len ||
 			strncmp(_tr_tobody_str.s, val->rs.s, val->rs.len)!=0)
 	{
-		if(_tr_tobody_str.len==0)
-			memset(&_tr_tobody, 0, sizeof(struct to_body));
 		if(_tr_tobody_str.s==NULL || val->rs.len>_tr_tobody_str.len)
 		{
-			if(_tr_tobody_str.s) pkg_free(_tr_tobody_str.s);
-				_tr_tobody_str.s =
-						(char*)pkg_malloc((val->rs.len+3)*sizeof(char));
+			if(_tr_tobody_str.s)
+				pkg_free(_tr_tobody_str.s);
+			_tr_tobody_str.s = (char*)pkg_malloc((val->rs.len+3)*sizeof(char));
+
 			if(_tr_tobody_str.s==NULL)
 			{
 				LM_ERR("no more private memory\n");
-				memset(&_tr_tobody_str, 0, sizeof(str));
+				free_to_params(&_tr_tobody);
 				memset(&_tr_tobody, 0, sizeof(struct to_body));
+				memset(&_tr_tobody_str, 0, sizeof(str));
 				return -1;
 			}
 		}
@@ -1137,6 +1138,7 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		parse_to(sv.s, sv.s + sv.len + 2, &_tr_tobody);
 		if (_tr_tobody.error == PARSE_ERROR)
 		{
+			free_to_params(&_tr_tobody);
 			memset(&_tr_tobody, 0, sizeof(struct to_body));
 			pkg_free(_tr_tobody_str.s);
 			memset(&_tr_tobody_str, 0, sizeof(str));
@@ -1151,7 +1153,6 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			memset(&_tr_tobody_str, 0, sizeof(str));
 			return -1;
 		}
-
 	}
 	
 	memset(val, 0, sizeof(pv_value_t));

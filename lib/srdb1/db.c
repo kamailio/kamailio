@@ -172,7 +172,7 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 	if (mod->len > MAX_URL_LENGTH)
 	{
 		LM_ERR("SQL URL too long\n");
-		return 0;
+		return -1;
 	}
 	// add the prefix
 	name = pkg_malloc(mod->len + 4);

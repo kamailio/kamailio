@@ -147,9 +147,6 @@
 
 MODULE_VERSION
 
-int snprintf(char *str, size_t size, const char *format, ...);
-int vsnprintf(char *str, size_t size, const char *format, va_list ap);
-
 static int process_xmlrpc(sip_msg_t* msg);
 static int dispatch_rpc(sip_msg_t* msg, char* s1, char* s2);
 static int xmlrpc_reply(sip_msg_t* msg, char* code, char* reason);
@@ -2461,6 +2458,16 @@ static int mod_init(void)
 		}
 	}
 
+	return 0;
+}
+
+
+/**
+ * advertise that sip workers handle rpc commands
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	set_child_sip_rpc_mode();
 	return 0;
 }
 

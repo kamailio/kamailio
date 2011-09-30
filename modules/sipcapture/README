@@ -39,7 +39,8 @@ Alexandr Dubovikov
               3.10. raw_interface (string)
               3.11. raw_sock_children (integer)
               3.12. promiscuous_on (integer)
-              3.13. capture_node (str)
+              3.13. raw_moni_bpf_on (integer)
+              3.14. capture_node (str)
 
         4. Exported MI Functions
 
@@ -62,7 +63,8 @@ Alexandr Dubovikov
    1.10. Set raw_socket_listen parameter
    1.11. Set raw_socket_listen parameter
    1.12. Set hep_capture_on parameter
-   1.13. Set capture_node parameter
+   1.13. Set raw_moni_bpf_on parameter
+   1.14. Set capture_node parameter
 
 Chapter 1. Admin Guide
 
@@ -88,7 +90,8 @@ Chapter 1. Admin Guide
         3.10. raw_interface (string)
         3.11. raw_sock_children (integer)
         3.12. promiscuous_on (integer)
-        3.13. capture_node (str)
+        3.13. raw_moni_bpf_on (integer)
+        3.14. capture_node (str)
 
    4. Exported MI Functions
 
@@ -143,7 +146,8 @@ Chapter 1. Admin Guide
    3.10. raw_interface (string)
    3.11. raw_sock_children (integer)
    3.12. promiscuous_on (integer)
-   3.13. capture_node (str)
+   3.13. raw_moni_bpf_on (integer)
+   3.14. capture_node (str)
 
 3.1. db_url (str)
 
@@ -286,13 +290,26 @@ modparam("sipcapture", "raw_sock_children", 6)
 modparam("sipcapture", "promiscuous_on", 1)
 ...
 
-3.13. capture_node (str)
+3.13. raw_moni_bpf_on (integer)
+
+   Activate BPF on the mirroring interface. The structure is defined in
+   sipcapture.h. The default BPF accept a portrange from the
+   raw_socket_listen param.
+
+   Default value is "0".
+
+   Example 1.13. Set raw_moni_bpf_on parameter
+...
+modparam("sipcapture", "raw_moni_bpf_on", 1)
+...
+
+3.14. capture_node (str)
 
    Name of the capture node.
 
    Default value is "homer01".
 
-   Example 1.13. Set capture_node parameter
+   Example 1.14. Set capture_node parameter
 ...
 modparam("sipcapture", "capture_node", "homer03")
 ...

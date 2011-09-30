@@ -216,7 +216,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	int lexpire= 0;
 	unsigned int cseq;
 	ua_pres_t* presentity= NULL, *hentity= NULL;
-	struct to_body *pto= NULL, *pfrom = NULL, TO;
+	struct to_body *pto = NULL, TO = {0}, *pfrom = NULL;
 	int size= 0;
 	unsigned int hash_code;
 	int flag ;
@@ -326,7 +326,6 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		}
 		else
 		{
-			memset( &TO , 0, sizeof(TO) );
 			parse_to(msg->to->body.s,msg->to->body.s +
 				msg->to->body.len + 1, &TO);
 			if(TO.uri.len <= 0) 
@@ -618,8 +617,9 @@ error:
 		shm_free(hentity);
 		hentity= NULL;
 	}
-	return;
 
+	free_to_params(&TO);
+	return;
 }
 
 ua_pres_t* subscribe_cbparam(subs_info_t* subs, int ua_flag)

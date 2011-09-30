@@ -756,7 +756,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 				LOG(L_WARN, "sanity_check(): check_parse_uris():"
 						" failed to parse From header [%.*s]\n",
 						_msg->from->body.len, _msg->from->body.s);
-				pkg_free(ft_body);
+				free_to(ft_body);
 				if (_msg->REQ_METHOD != METHOD_ACK) {
 					if (slb.zreply(_msg, 400, "Bad From header") < 0) {
 						LOG(L_WARN, "sanity_check(): check_parse_uris():"

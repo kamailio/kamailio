@@ -594,6 +594,26 @@ modparam("acc", "detect_direction", 1)
 		</example>
 	</section>
 	<section>
+		<title><varname>acc_prepare_flag</varname> (integer)</title>
+		<para>
+		Per transaction flag which says if the transaction may be accounted
+		later, with flags set in TM module specific routes (e.g., like
+		failure_route). If this flag is not set and acc or missed_call flag
+		are not set either in request route block, there is no way to mark the
+		request for transaction later. If either acc or missed_call flags are
+		set in request route block, it is no need to set this flag.
+		</para>
+		<para>
+		Default value is not-set (no flag).
+		</para>
+		<example>
+		<title>acc_prepare_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "acc_prepare_flag", 5)
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>multi_leg_info</varname> (string)</title>
 		<para>
 		Defines the AVP set to be used in per-call-leg accounting.

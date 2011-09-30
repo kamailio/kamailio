@@ -468,6 +468,7 @@ not_found:
 /*!
  * \brief Helper function to get a dialog corresponding to a SIP message
  * \see get_dlg
+ * \param h_entry hash index in the directory list
  * \param callid callid
  * \param ftag from tag
  * \param ttag to tag
@@ -736,6 +737,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 			switch (dlg->state) {
 				case DLG_STATE_EARLY:
 				case DLG_STATE_CONFIRMED_NA:
+				case DLG_STATE_DELETED:
 					break;
 				default:
 					log_next_state_dlg(event, dlg);
@@ -746,6 +748,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 				case DLG_STATE_EARLY:
 				case DLG_STATE_CONFIRMED_NA:
 				case DLG_STATE_CONFIRMED:
+				case DLG_STATE_DELETED:
 					break;
 				default:
 					log_next_state_dlg(event, dlg);

@@ -4,12 +4,13 @@
 
 # Additional options to start Sip-Router with.
 #
-# see "siprouter -h" for a list of options
+# see "sip-router -h" for a list of options
 #
-# default: run SER as user:group = siprouter:siprouter
+# default: run SER as user:group = ser:ser
 #
-SR_USER="siprouter"
-SR_GROUP="siprouter"
-CONFIGFILE="${CONFIGFILE:-/etc/siprouter/siprouter.cfg}"
+MAIN_NAME="sip-router"
+SR_USER="sip-router"
+SR_GROUP="sip-router"
+CONFIGFILE="${CONFIGFILE:-/etc/${MAIN_NAME}/sip-router.cfg}"
 CONFIGDEFS="" # eg: "-A WITH_DEBUG -A WITH_NAT -A WITH_TLS"
 SR_OPTS="-u $SR_USER -g $SR_GROUP -f ${CONFIGFILE} ${CONFIGDEFS}"

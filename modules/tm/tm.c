@@ -842,6 +842,8 @@ static int mod_init(void)
 	goto_on_local_req=route_lookup(&event_rt, "tm:local-request");
 	if (goto_on_local_req>=0 && event_rt.rlist[goto_on_local_req]==0)
 		goto_on_local_req=-1; /* disable */
+	if (goto_on_local_req>=0)
+		set_child_rpc_sip_mode();
 #endif /* WITH_EVENT_LOCAL_REQUEST */
 	if (goto_on_sl_reply && onreply_rt.rlist[goto_on_sl_reply]==0)
 		WARN("empty/non existing on_sl_reply route\n");

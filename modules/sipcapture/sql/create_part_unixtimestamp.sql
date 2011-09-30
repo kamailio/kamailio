@@ -5,7 +5,7 @@
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `sip_capture` (
-  `id` int(20) NOT NULL AUTO_INCREMENT,
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   `micro_ts` bigint(18) NOT NULL DEFAULT '0',
   `method` varchar(50) NOT NULL DEFAULT '',
@@ -42,7 +42,7 @@ CREATE TABLE `sip_capture` (
   `rtp_stat` varchar(256) NOT NULL,
   `type` int(2) NOT NULL,
   `node` varchar(125) NOT NULL,
-  `msg` longblob NOT NULL,
+  `msg` blob NOT NULL,
   PRIMARY KEY (`id`,`date`),
   KEY `ruri_user` (`ruri_user`),
   KEY `from_user` (`from_user`),
@@ -81,6 +81,3 @@ PARTITION p2011082523 VALUES LESS THAN (1314298800) ENGINE = MyISAM,
 PARTITION pmax VALUES LESS THAN (MAXVALUE)
 );
 
-
-/* if your mysql < 5.5 drop maxvalue partition */
-/* alter table homer_capture drop partition pmax; */

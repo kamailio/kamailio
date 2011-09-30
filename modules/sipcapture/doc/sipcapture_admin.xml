@@ -315,6 +315,27 @@ modparam("sipcapture", "promiscuous_on", 1)
 </programlisting>
                 </example>
         </section>
+        <section>
+                <title><varname>raw_moni_bpf_on</varname> (integer)</title>
+                <para>
+                Activate BPF on the mirroring interface. The structure is
+                defined in sipcapture.h. The default BPF accept a portrange
+                from the raw_socket_listen param.
+                </para>
+                <para>
+                <emphasis>
+                        Default value is "0".
+                </emphasis>
+                </para>
+                <example>
+                <title>Set <varname>raw_moni_bpf_on</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("sipcapture", "raw_moni_bpf_on", 1)
+...
+</programlisting>
+                </example>
+        </section>        
 	<section>
 		<title><varname>capture_node</varname> (str)</title>
 		<para>

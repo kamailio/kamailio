@@ -49,6 +49,7 @@ extern int early_media;
 extern int failed_transaction_flag;
 extern unsigned short failed_filter[];
 extern int detect_direction;
+extern int acc_prepare_flag;
 
 extern int log_facility;
 extern int log_level;

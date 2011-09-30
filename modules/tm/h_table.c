@@ -492,10 +492,10 @@ error0:
  * - mode = 0 - from msg context to _txdata and use T lists
  * - mode = 1 - restore to msg context from _txdata
  */
-void tm_xdata_swap(tm_cell_t *t, tm_xdata_t *xd, int mode)
+void tm_xdata_swap(tm_cell_t *t, tm_xlinks_t *xd, int mode)
 {
-	static tm_xdata_t _txdata;
-	tm_xdata_t *x;
+	static tm_xlinks_t _txdata;
+	tm_xlinks_t *x;
 
 	if(xd==NULL)
 		x = &_txdata;
@@ -527,4 +527,42 @@ void tm_xdata_swap(tm_cell_t *t, tm_xdata_t *xd, int mode)
 #endif
 	}
 
+}
+
+/**
+ * replace existing lists with newxd and backup in bakxd or restore from bakxd
+ */
+void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
+{
+	if(newxd==NULL && bakxd!=NULL) {
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, bakxd->uri_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, bakxd->uri_avps_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, bakxd->user_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, bakxd->user_avps_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, bakxd->domain_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, bakxd->domain_avps_to);
+#ifdef WITH_XAVP
+		xavp_set_list(bakxd->xavps_list);
+#endif
+		return;
+	}
+
+	if(newxd!=NULL && bakxd!=NULL) {
+		bakxd->uri_avps_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI,
+				&newxd->uri_avps_from);
+		bakxd->uri_avps_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI,
+				&newxd->uri_avps_to);
+		bakxd->user_avps_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER,
+				&newxd->user_avps_from);
+		bakxd->user_avps_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER,
+				&newxd->user_avps_to);
+		bakxd->domain_avps_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN,
+				&newxd->domain_avps_from);
+		bakxd->domain_avps_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN,
+				&newxd->domain_avps_to);
+#ifdef WITH_XAVP
+		bakxd->xavps_list = xavp_set_list(&newxd->xavps_list);
+#endif
+		return;
+	}
 }

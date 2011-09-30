@@ -874,10 +874,11 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 
 bad_event:
 
-	LM_ERR("Missing or unsupported event header field value\n");
-		
-	if(parsed_event && parsed_event->name.s)
-		LM_ERR("\tevent= %.*s\n",parsed_event->name.len,parsed_event->name.s);
+	if (parsed_event && parsed_event->name.s)
+	    LM_ERR("Unsupported event header field value %.*s\n",
+		   parsed_event->name.len,parsed_event->name.s);
+	else
+	    LM_ERR("Missing event header field value\n");
 	
 	reply_code= BAD_EVENT_CODE;
 	reply_str= pu_489_rpl;
@@ -922,7 +923,7 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
 	str rec_route= {0, 0};
 	int rt  = 0;
 	contact_body_t *b;
-	struct to_body *pto, *pfrom = NULL, TO;
+	struct to_body *pto, TO = {0}, *pfrom = NULL;
 	int lexpire;
 	str rtag_value;
 	struct sip_uri uri;
@@ -962,7 +963,6 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
 	}
 	else
 	{
-		memset( &TO , 0, sizeof(TO) );
 		parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO);
 		if( TO.uri.len <= 0 )
 		{
@@ -1135,11 +1135,12 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
 	}
 	else
 		subs->local_contact= scontact;
-	
+
+	free_to_params(&TO);
 	return 0;
 	
 error:
-
+	free_to_params(&TO);
 	return -1;
 }
 

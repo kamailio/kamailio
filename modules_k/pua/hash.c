@@ -446,7 +446,7 @@ int update_contact(struct sip_msg* msg, char* str1, char* str2)
 {
 	ua_pres_t* p, hentity;
 	str contact;
-	struct to_body *pto= NULL, TO, *pfrom = NULL;
+	struct to_body *pto = NULL, TO = {0}, *pfrom = NULL;
 	unsigned int hash_code;
 
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
@@ -497,20 +497,19 @@ int update_contact(struct sip_msg* msg, char* str1, char* str2)
 	}
 	else
 	{
-		memset( &TO , 0, sizeof(TO) );
 		parse_to(msg->to->body.s,msg->to->body.s +
 			msg->to->body.len + 1, &TO);
 		if(TO.uri.len <= 0) 
 		{
 			LM_DBG("'To' header NOT parsed\n");
-			return -1;
+			goto error;
 		}
 		pto = &TO;
 	}			
 	if( pto->tag_value.s ==NULL || pto->tag_value.len == 0)
 	{
 		LM_ERR("no from tag value present\n");
-		return -1;
+		goto error;
 	}
 	hentity.watcher_uri= &pto->uri;
 	hentity.pres_uri= &pfrom->uri; 
@@ -525,7 +524,7 @@ int update_contact(struct sip_msg* msg, char* str1, char* str2)
 	if(msg->contact== NULL || msg->contact->body.s== NULL)
 	{
 		LM_ERR("no contact header found in 200 OK reply");
-		return -1;
+		goto error;
 	}
 	contact= msg->contact->body;
 
@@ -536,7 +535,7 @@ int update_contact(struct sip_msg* msg, char* str1, char* str2)
 	{
 		lock_release(&HashT->p_records[hash_code].lock);
 		LM_ERR("no record for the dialog found in hash table\n");
-		return -1;
+		goto error;
 	}
 
 	shm_free(p->remote_contact.s);
@@ -551,7 +550,7 @@ int update_contact(struct sip_msg* msg, char* str1, char* str2)
 		{
 			LM_ERR("no more shared memory\n");
 			lock_release(&HashT->p_records[hash_code].lock);
-			return -1;
+			goto error;
 		}
 		memcpy(p->remote_contact.s, contact.s, contact.len);
 		p->remote_contact.len= contact.len;
@@ -559,7 +558,11 @@ int update_contact(struct sip_msg* msg, char* str1, char* str2)
 
 	lock_release(&HashT->p_records[hash_code].lock);
 
+	free_to_params(&TO);
 	return 1;
 
+error:
+	free_to_params(&TO);
+	return -1;
 }
 

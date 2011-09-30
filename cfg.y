@@ -3348,8 +3348,10 @@ cmd:
 		if (mod_func_action->val[0].u.data == 0) {
 			if (find_export_record($1, mod_func_action->val[1].u.number, 0,
 									&u_tmp) ) {
+					LOG(L_ERR, "misused command %s\n", $1);
 					yyerror("Command cannot be used in the block\n");
 			} else {
+				LOG(L_ERR, "cfg. parser: failed to find command %s\n", $1);
 				yyerror("unknown command, missing loadmodule?\n");
 			}
 			free_mod_func_action(mod_func_action);

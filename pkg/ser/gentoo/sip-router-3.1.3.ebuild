@@ -7,7 +7,6 @@ inherit eutils flag-o-matic toolchain-funcs multilib
 DESCRIPTION="Sip-Router (Kamailio/SER) is an Open Source SIP Server"
 HOMEPAGE="http://sip-router.org/"
 MY_P="${P/sip-router/kamailio}"
-MY_PN="${PN/-/}"
 SRC_URI="http://www.kamailio.org/pub/kamailio/${PV}/src/${MY_P}_src.tar.gz"
 S=${WORKDIR}/${MY_P}
 
@@ -18,6 +17,7 @@ KEYWORDS="~amd64 ~x86"
 #Documentation can be found here: http://www.kamailio.org/docs/modules/3.1.x/
 IUSE="flavour_kamailio flavour_ser debug ipv6 sctp
 group_standard group_standard_dep group_mysql group_radius group_postgres group_presence group_stable group_experimental
+group_kstandard group_kmysql group_kradius group_kpostgres group_kpresence group_kxml group_kperl group_kldap
 acc acc_radius alias_db app_lua app_python auth auth_identity auth_db auth_diameter auth_radius avpops
 benchmark blst
 call_control carrierroute cfg_db cfg_rpc cfgutils counters cpl-c ctl
@@ -52,6 +52,14 @@ RDEPEND="
 	group_presence? ( dev-libs/libxml2 net-misc/curl )
 	group_postgres? ( dev-db/postgresql-base )
 	group_standard? ( dev-libs/libxml2 dev-libs/openssl net-misc/curl )
+	group_kmysql? ( >=dev-db/mysql-5.1.50 sys-libs/zlib )
+	group_kradius? ( >=net-dialup/radiusclient-ng-0.5.0 )
+	group_kpresence? ( dev-libs/libxml2 net-misc/curl )
+	group_kpostgres? ( dev-db/postgresql-base )
+	group_kstandard? ( dev-libs/libxml2 dev-libs/openssl net-misc/curl )
+	group_kxml? ( dev-libs/libxml2 dev-libs/xmlrpc-c )
+	group_kperl? ( dev-lang/perl dev-perl/perl-ldap )
+	group_kldap? ( net-nds/openldap )
 	acc_radius? ( net-dialup/radiusclient-ng )
 	app_lua? ( dev-lang/lua )
 	app_python? ( dev-lang/python )
@@ -109,23 +117,38 @@ src_unpack() {
 }
 
 src_compile() {
-	#iptrtpproxy broken as the needed netfilter module is not supported
-	#local mod_exc="iptrtpproxy"
-	local mod_exc=""
+	# iptrtpproxy broken as the needed netfilter module is not supported
+	local mod_exc="iptrtpproxy"
 	local group_inc=""
-	use group_standard && group_inc="${group_inc} standard"
+	local k=""
+	if use flavour_kamailio; then
+		k="k"
+		use group_kxml && group_inc="${group_inc} kxml"
+		use group_kperl && group_inc="${group_inc} kperl"
+		use group_kldap && group_inc="${group_inc} kldap"
+	fi
+	# you can USE flavour=kamailio but also group_standard. It will be converted to group_kstandard
+	# same as mysql/kmysql, postgres/kpostgres, radius/kradius, presence/kpresence
+	(use group_standard || use group_kstandard) && group_inc="${group_inc} ${k}standard"
 	use group_standard_dep && group_inc="${group_inc} standard_dep"
-	use group_mysql && group_inc="${group_inc} mysql"
-	use group_radius && group_inc="${group_inc} radius"
-	use group_postgres && group_inc="${group_inc} postgres"
-	use group_presence && group_inc="${group_inc} presence"
+	(use group_mysql || use group_kmysql) && group_inc="${group_inc} ${k}mysql"
+	(use group_radius || use group_kradius) && group_inc="${group_inc} ${k}radius"
+	(use group_postgres || use group_kpostgres) && group_inc="${group_inc} ${k}postgres"
+	(use group_presence || use group_kpresence) && group_inc="${group_inc} ${k}presence"
 	use group_stable && group_inc="${group_inc} stable"
 	use group_experimental && group_inc="${group_inc} experimental"
 	# TODO: skip_modules?
 
 	local mod_inc=""
+	# some IUSE flags must not be included here in mod_inc
+	# e.g.: flavour_kamailio, flavour_ser, debug, sctp, ipv6
 	for i in ${IUSE[@]}; do
 		for j in ${i[@]}; do
+			[[ ! "${i}" =~ "flavour_" ]] && \
+				[ ! "${i}" == "debug" ] && \
+				[ ! "${i}" == "ipv6" ] && \
+				[ ! "${i}" == "sctp" ] && \
+				[[ ! "${i}" =~ "group_" ]] && \
 			use "${i}" && mod_inc="${mod_inc} ${i}"
 		done
 	done
@@ -144,10 +167,8 @@ src_compile() {
 
 	if use flavour_kamailio; then
 		flavour=kamailio
-	elif use flavour_ser; then
-		flavour=ser # SER compatibility names
 	else
-		flavour=sip-router # defaults: Siprouter compatibility names
+		flavour=ser # defaults to SER compatibility names
 	fi
 
 	if use sctp; then
@@ -177,48 +198,53 @@ src_install() {
 		FLAVOUR="${flavour}" \
 		prefix="/" \
 		bin_dir=/usr/sbin/ \
-		cfg_dir=/etc/${MY_PN}/ \
-		lib_dir=/usr/$(get_libdir)/${MY_PN}/ \
-		modules_dir="/usr/$(get_libdir)/${MY_PN}/" \
+		cfg_dir=/etc/${flavour}/ \
+		lib_dir=/usr/$(get_libdir)/${flavour}/ \
+		modules_dir="/usr/$(get_libdir)/${flavour}/" \
 		man_dir="/usr/share/man/" \
-		doc_dir="/usr/share/doc/${P}/" \
+		doc_dir="/usr/share/doc/${flavour}/" \
 		install || die "emake install failed"
 
-	newinitd "${FILESDIR}/${MY_PN}".init "${MY_PN}"
-	newconfd "${FILESDIR}/${MY_PN}".confd "${MY_PN}"
+	sed -e "s/sip-router/${flavour}/g" \
+		${FILESDIR}/ser.initd > ${flavour}.initd || die
+	sed -e "s/sip-router/${flavour}/g" \
+		${FILESDIR}/ser.confd > ${flavour}.confd || die
+
+	newinitd "${flavour}".initd "${flavour}"
+	newconfd "${flavour}".confd "${flavour}"
 }
 
 pkg_preinst() {
-	if [[ -z "$(egetent passwd ${MY_PN})" ]]; then
-		einfo "Adding ${MY_PN} user and group"
-		enewgroup "${MY_PN}"
-		enewuser  "${MY_PN}" -1 -1 /dev/null "${MY_PN}"
+	if [[ -z "$(egetent passwd ${flavour})" ]]; then
+		einfo "Adding ${flavour} user and group"
+		enewgroup "${flavour}"
+		enewuser  "${flavour}" -1 -1 /dev/null "${flavour}"
 	fi
 
-	chown -R root:"${MY_PN}"  "${D}/etc/${MY_PN}"
-	chmod -R u=rwX,g=rX,o= "${D}/etc/${MY_PN}"
+	chown -R root:"${flavour}"  "${D}/etc/${flavour}"
+	chmod -R u=rwX,g=rX,o= "${D}/etc/${flavour}"
 
-	has_version "${CATEGORY}/ser"
+	has_version <="${CATEGORY}/ser-0.9.8"
 	previous_installed_version=$?
+	if [[ $previous_installed_version = 1 ]] ; then
+		elog "You have a previous version of SER on ${ROOT}etc/ser"
+		elog "Consider or verify to remove it (emerge -C ser)."
+		elog
+		elog "Sip-Router may not could be installed/merged. See your elog."
+	fi
 }
 
 pkg_postinst() {
-	if [[ $previous_installed_version = 1 ]] ; then
-		einfo "You have a previous version of SER on ${ROOT}etc/ser"
-		einfo "Consider or verify to remove it"
-		einfo
-		einfo "Now you've installed Sip-Router ON ${ROOT}etc/${MY_PN}"
-	fi
 	if [ use mediaproxy ]; then
-		echo "You have enabled mediaproxy support. In order to use it, you have
+		einfo "You have enabled mediaproxy support. In order to use it, you have
 		to run it somewhere."
 	fi
 	if [ use rtpproxy ]; then
-		"You have enabled rtpproxy support. In order to use it, you have to run
-		it somewhere."
+		einfo "You have enabled rtpproxy support. In order to use it, you have
+		to run it somewhere."
 	fi
 }
 
 pkg_prerm () {
-	/etc/init.d/"${MY_PN}" stop >/dev/null
+	/etc/init.d/"${flavour}" stop >/dev/null
 }

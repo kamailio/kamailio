@@ -69,7 +69,7 @@ int parse_diversion_header(struct sip_msg *msg)
  	parse_to(msg->diversion->body.s, msg->diversion->body.s + msg->diversion->body.len + 1, diversion_b);
  	if (diversion_b->error == PARSE_ERROR) {
  		LOG(L_ERR, "ERROR:parse_diversion_header: bad diversion header\n");
- 		pkg_free(diversion_b);
+ 		free_to(diversion_b);
  		goto error;
  	}
  	msg->diversion->parsed = diversion_b;

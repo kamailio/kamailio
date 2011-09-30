@@ -31,7 +31,7 @@
  */
 
 
-#ifdef __OS_darwin
+#if defined (__OS_darwin) || defined (__OS_freebsd)
 #include "../../pvar.h"
 #endif
 
@@ -407,7 +407,8 @@ int db_print_set(const db1_con_t* _c, char* _b, const int _l, const db_key_t* _k
 int db_val2pv_spec(struct sip_msg* msg, db_val_t *dbval, pv_spec_t *pvs)
 {
 	pv_value_t pv;
-	char ll_buf[21];  /* sign, 19 digits and \0 */
+#define LL_LEN 21   /* sign, 19 digits and \0 */
+	static char ll_buf[LL_LEN];
 
 	if(dbval->nul)
 	{
@@ -446,6 +447,7 @@ int db_val2pv_spec(struct sip_msg* msg, db_val_t *dbval, pv_spec_t *pvs)
 			case DB1_BIGINT:
 				/* BIGINT is stored as string */
 				pv.flags = PV_VAL_STR;
+				pv.rs.len = LL_LEN;
 				db_longlong2str(dbval->val.ll_val, ll_buf, &pv.rs.len);
 				pv.rs.s = ll_buf;
 			break;

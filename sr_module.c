@@ -112,6 +112,42 @@ struct sr_module* modules=0;
 int mod_response_cbk_no=0;
 response_function* mod_response_cbks=0;
 
+/**
+ * if bit 1 set, SIP worker processes handle RPC commands as well
+ * if bit 2 set, RPC worker processes handle SIP commands as well
+ */
+static int child_sip_rpc_mode = 0;
+
+#define CHILD_SIP_RPC	1<<0
+#define CHILD_RPC_SIP	1<<1
+
+void set_child_sip_rpc_mode(void)
+{
+	child_sip_rpc_mode |= CHILD_SIP_RPC;
+}
+
+void set_child_rpc_sip_mode(void)
+{
+	child_sip_rpc_mode |= CHILD_RPC_SIP;
+}
+
+int is_rpc_worker(int rank)
+{
+	if(rank==PROC_RPC
+			|| (rank>PROC_MAIN && (child_sip_rpc_mode&CHILD_SIP_RPC)!=0))
+		return 1;
+	return 0;
+}
+
+int is_sip_worker(int rank)
+{
+	if(rank>PROC_MAIN
+			|| ((rank==PROC_RPC || rank==PROC_NOCHLDINIT)
+					&& (child_sip_rpc_mode&CHILD_RPC_SIP)!=0))
+		return 1;
+	return 0;
+}
+
 /* initializes statically built (compiled in) modules*/
 int register_builtin_modules()
 {

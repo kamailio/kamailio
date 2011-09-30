@@ -360,8 +360,8 @@ static int child_init(int _rank)
 		LM_ERR("child(%d): failed to connect to database\n", _rank);
 		return -1;
 	}
-	/* _rank==1 is used even when fork is disabled */
-	if (_rank==1 && db_mode!= DB_ONLY) {
+	/* _rank==PROC_SIPINIT is used even when fork is disabled */
+	if (_rank==PROC_SIPINIT && db_mode!= DB_ONLY) {
 		/* if cache is used, populate domains from DB */
 		for( ptr=root ; ptr ; ptr=ptr->next) {
 			if (preload_udomain(ul_dbh, ptr->d) < 0) {

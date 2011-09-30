@@ -46,6 +46,8 @@
 
 #include <sys/timeb.h>
 
+#define TIME_STR_BUFFER_SIZE 20
+
 struct dlg_binds dlgb;
 struct acc_extra* cdr_extra = NULL;
 int cdr_facility = LOG_DAEMON;
@@ -196,37 +198,49 @@ static int write_cdr( struct dlg_cell* dialog,
 
 /* convert a string into a timeb struct */
 static struct timeb time_from_string( str* time_value)
-{
-    char* point_adresse = NULL;
-    int point_position = -1;
+{    
+    char* dot_address = NULL;
+    int dot_position = -1;
+    char zero_terminated_value[TIME_STR_BUFFER_SIZE];
 
     if( !time_value)
     {
         LM_ERR( "time_value is empty!");
         return time_error;
     }
-
-    point_adresse = strchr( time_value->s, time_separator);
-
-    if( !point_adresse)
+    
+    if( time_value->len >= TIME_STR_BUFFER_SIZE)
+    {
+        LM_ERR( "time_value is to long %d >= %d!", 
+		time_value->len, 
+		TIME_STR_BUFFER_SIZE);
+        return time_error;
+    }
+    
+    memcpy( zero_terminated_value, time_value->s, time_value->len);
+    zero_terminated_value[time_value->len] = '\0';
+    
+    dot_address = strchr( zero_terminated_value, time_separator);
+    
+    if( !dot_address)
     {
         LM_ERR( "failed to find separator('%c') in '%s'!\n",
                 time_separator,
-                time_value->s);
+                zero_terminated_value);
         return time_error;
     }
-
-    point_position = point_adresse-time_value->s + 1;
-
-    if( point_position >= strlen(time_value->s) ||
-        strchr(point_adresse + 1, time_separator))
+    
+    dot_position = dot_address-zero_terminated_value + 1;
+    
+    if( dot_position >= strlen(zero_terminated_value) ||
+        strchr(dot_address + 1, time_separator))
     {
-        LM_ERR( "invalid time-string '%s'\n", time_value->s);
+        LM_ERR( "invalid time-string '%s'\n", zero_terminated_value);
         return time_error;
     }
-
-    return (struct timeb) { atoi( time_value->s),
-                            atoi( point_adresse + 1),
+    
+    return (struct timeb) { atoi( zero_terminated_value),
+                            atoi( dot_address + 1),
                             0,
                             0};
 }

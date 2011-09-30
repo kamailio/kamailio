@@ -78,18 +78,11 @@ struct module_exports exports = {
 
 static int child_init(int rank)
 {
-	if(rank==PROC_RPC) {
+	if(is_rpc_worker(rank)) {
+		LM_DBG("initializing child[%d] for rpc handling\n", rank);
 		if(init_mi_child()!=0) {
 			LM_CRIT("Failed to init the mi commands\n");
 			return -1;
-		}
-	} else if(rank>0) {
-		if(find_module_by_name("xmlrpc")!=0)
-		{
-			if(init_mi_child()!=0) {
-				LM_CRIT("Failed to init the mi commands for xmlrpc usage\n");
-				return -1;
-			}
 		}
 	}
 
