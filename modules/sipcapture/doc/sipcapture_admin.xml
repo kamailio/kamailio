@@ -218,7 +218,8 @@ modparam("sipcapture", "raw_ipip_capture_on", 1)
                 <title><varname>raw_moni_capture_on</varname> (integer)</title>
                 <para>
                 Parameter to enable/disable monitoring/mirroring port capturing (on(1)/off(0))
-		Only one mode on raw socket can be enabled!
+		Only one mode on raw socket can be enabled! Monitoring port capturing currently 
+		supported only on Linux.
                 </para>
                 <para>
                 <emphasis>
@@ -318,9 +319,9 @@ modparam("sipcapture", "promiscuous_on", 1)
         <section>
                 <title><varname>raw_moni_bpf_on</varname> (integer)</title>
                 <para>
-                Activate BPF on the mirroring interface. The structure is
-                defined in sipcapture.h. The default BPF accept a portrange
-                from the raw_socket_listen param.
+                Activate Linux Socket Filter (LSF based on BPF) on the mirroring interface. 
+                The structure is defined in linux/filter.h. The default LSF accept a portrange
+                from the raw_socket_listen param. Currently LSF supported only on Linux.
                 </para>
                 <para>
                 <emphasis>
@@ -415,7 +416,7 @@ modparam("sipcapture", "capture_node", "homer03")
 		   Don't activate both at the same time.
 		2. By default MySQL doesn't support INSERT DELAYED for partitioning table. You can patch MySQL 
 		  (http://bugs.mysql.com/bug.php?id=50393) or use separate tables (pseudo partitioning)
-		3. Promiscuous mode works only on Linux.
+		3. Mirroring port capturing works only on Linux.
 	
         </para>
         </section>
