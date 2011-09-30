@@ -76,6 +76,7 @@
 #include "../../lib/kcore/statistics.h"
 #endif
 
+
 MODULE_VERSION
 
 struct _sipcapture_object {
@@ -118,6 +119,8 @@ struct _sipcapture_object {
 	stat_var *stat;
 #endif
 };
+
+#define ETHHDR 14 /* sizeof of ethhdr structure */
 
 #define EMPTY_STR(val) val.s=""; val.len=0;
 
