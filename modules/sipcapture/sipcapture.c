@@ -40,6 +40,11 @@
 #include <net/if.h> 
 #include <netdb.h>
 
+/* BPF structure */
+#ifdef __OS_linux
+#include <linux/filter.h>
+#endif
+
 #ifndef __USE_BSD
 #define __USE_BSD  /* on linux use bsd version of iphdr (more portable) */
 #endif /* __USE_BSD */
@@ -205,6 +210,19 @@ str raw_interface = { 0, 0 };
 
 struct ifreq ifr; 	/* interface structure */
 
+#ifdef __OS_linux
+/* Linux socket filter */
+/* tcpdump -s 0 udp and portrange 5060-5090 -dd */
+static struct sock_filter BPF_code[] = { { 0x28, 0, 0, 0x0000000c }, { 0x15, 0, 7, 0x000086dd },
+        { 0x30, 0, 0, 0x00000014 },   { 0x15, 0, 18, 0x00000011 }, { 0x28, 0, 0, 0x00000036 },
+        { 0x35, 0, 1, 0x000013c4 },   { 0x25, 0, 14, 0x000013e2 }, { 0x28, 0, 0, 0x00000038 },
+        { 0x35, 11, 13, 0x000013c4 }, { 0x15, 0, 12, 0x00000800 }, { 0x30, 0, 0, 0x00000017 },
+        { 0x15, 0, 10, 0x00000011 },  { 0x28, 0, 0, 0x00000014 },  { 0x45, 8, 0, 0x00001fff },
+        { 0xb1, 0, 0, 0x0000000e },   { 0x48, 0, 0, 0x0000000e },  { 0x35, 0, 1, 0x000013c4 },
+        { 0x25, 0, 3, 0x000013e2 },   { 0x48, 0, 0, 0x00000010 },  { 0x35, 0, 2, 0x000013c4 },
+        { 0x25, 1, 0, 0x000013e2 },   { 0x6, 0, 0, 0x0000ffff },   { 0x6, 0, 0, 0x00000000 },
+};
+#endif
 
 db1_con_t *db_con = NULL; 		/*!< database connection */
 db_func_t db_funcs;      		/*!< Database functions */
@@ -1301,13 +1319,14 @@ static struct mi_root* sip_capture_mi(struct mi_root* cmd_tree, void* param )
 
 int raw_moni_socket(str* iface, int port_start, int port_end)
 {
-	int sock;
+
+	int sock;	
 	
-#if defined (SO_BINDTODEVICE)
+#ifdef __OS_linux
+	struct sock_fprog pf;
 	char short_ifname[sizeof(int)];
 	int ifname_len;
 	char* ifname;
-#endif /* SO_BINDTODEVICE */
  
  	//0x0003 - all packets
 	sock = socket(PF_PACKET, SOCK_RAW, htons(0x0800));
@@ -1317,7 +1336,7 @@ int raw_moni_socket(str* iface, int port_start, int port_end)
 
 	/* set socket options */
 	if (iface && iface->s){
-#if defined (SO_BINDTODEVICE)
+
 		/* workaround for linux bug: arg to setsockopt must have at least
 		 * sizeof(int) size or EINVAL would be returned */
 		if (iface->len<sizeof(int)){
@@ -1329,44 +1348,52 @@ int raw_moni_socket(str* iface, int port_start, int port_end)
 			ifname_len=iface->len;
 			ifname=iface->s;
 		}
-		if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, ifname, ifname_len)
-						<0){
+		if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, ifname, ifname_len) <0){
 				ERR("raw_socket: could not bind to %.*s: %s [%d]\n",
 							iface->len, ZSW(iface->s), strerror(errno), errno);
 				goto error;
 		}
-#else /* !SO_BINDTODEVICE */
-		/* SO_BINDTODEVICE is linux specific => cannot bind to a device */
-		ERR("raw_socket: bind to device supported only on linux\n");
-		goto error;
-#endif /* SO_BINDTODEVICE */
 	}
 
 	if(bpf_on) {
-	
+
+		memset(&pf, 0, sizeof(pf));
+	        pf.len = sizeof(BPF_code) / sizeof(BPF_code[0]);
+        	pf.filter = (struct sock_filter *) BPF_code;
+
         	/* Start PORT */
-        	BPF_code[5]  = (struct my_sock_filter)BPF_JUMP(0x35, port_start, 0, 1);
-        	BPF_code[8] = (struct my_sock_filter)BPF_JUMP(0x35, port_start, 11, 13);
-        	BPF_code[16] = (struct my_sock_filter)BPF_JUMP(0x35, port_start, 0, 1);
-        	BPF_code[19] = (struct my_sock_filter)BPF_JUMP(0x35, port_start, 0, 2);
+        	BPF_code[5]  = (struct sock_filter)BPF_JUMP(0x35, port_start, 0, 1);
+        	BPF_code[8] = (struct  sock_filter)BPF_JUMP(0x35, port_start, 11, 13);
+        	BPF_code[16] = (struct sock_filter)BPF_JUMP(0x35, port_start, 0, 1);
+        	BPF_code[19] = (struct sock_filter)BPF_JUMP(0x35, port_start, 0, 2);
         	/* Stop PORT */
-        	BPF_code[6]  = (struct my_sock_filter)BPF_JUMP(0x25, port_end, 0, 14);
-        	BPF_code[17] = (struct my_sock_filter)BPF_JUMP(0x25, port_end, 0, 3);	
-        	BPF_code[20] = (struct my_sock_filter)BPF_JUMP(0x25, port_end, 1, 0);			                                                
+        	BPF_code[6]  = (struct sock_filter)BPF_JUMP(0x25, port_end, 0, 14);
+        	BPF_code[17] = (struct sock_filter)BPF_JUMP(0x25, port_end, 0, 3);	
+        	BPF_code[20] = (struct sock_filter)BPF_JUMP(0x25, port_end, 1, 0);			                                                
 	
         	/* Attach the filter to the socket */
-        	if(setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &Filter, sizeof(Filter)) < 0 ) {
+        	if(setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &pf, sizeof(pf)) < 0 ) {
                         ERR(" setsockopt filter: [%s] [%d]\n", strerror(errno), errno);
                 }		
+
+
         }
-	
+
+#else
+        ERR("raw_moni_socket: currently suppoted only on linux\n");
+        goto error;
+#endif
+
 	return sock;
+	
 error:
 	if (sock!=-1) close(sock);
-	return -1;
+	return -1;		
+               		
 }
 
 int raw_moni_rcv_loop(int rsock, int port1, int port2) {
+
 
 	static char buf [BUF_SIZE+1];
 	union sockaddr_union from;
