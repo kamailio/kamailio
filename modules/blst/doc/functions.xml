@@ -104,10 +104,7 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 
 	<section id="blst_set_ignore">
 	<title>
-		<function>blst_set_ignore()</function>
-		<function>blst_set_ignore(flags)</function>
-		<function>blst_rpl_set_ignore()</function>
-		<function>blst_rpl_set_ignore(flags)</function>
+		<function>blst_set_ignore([flags])</function>
 	</title>
 	<para>
 		Set errors that will not be taken into account when deciding
@@ -160,12 +157,18 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
 	</example>
 	</section>
 
+	<section id="blst_rpl_set_ignore">
+	<title>
+		<function>blst_rpl_set_ignore([flags])</function>
+	</title>
+	<para>
+		See function <function>blst_set_ignore([flags])</function>.
+	</para>
+	</section>
+
 	<section id="blst_clear_ignore">
 	<title>
-		<function>blst_clear_ignore()</function>
-		<function>blst_clear_ignore(flags)</function>
-		<function>blst_rpl_clear_ignore()</function>
-		<function>blst_rpl_clear_ignore(flags)</function>
+		<function>blst_clear_ignore([flags])</function>
 	</title>
 	<para>
 		Clears blacklist ignore flags previously set by the corresponding
@@ -181,6 +184,15 @@ if (msg_status==503){ # blacklist 503 source for Retry-After seconds
     blst_clear_ignore(4); # ignore connect errors
 		</programlisting>
 	</example>
+	</section>
+
+	<section id="blst_rpl_clear_ignore">
+	<title>
+		<function>blst_rpl_clear_ignore([flags])</function>
+	</title>
+	<para>
+		See function <function>blst_clear_ignore([flags])</function>.
+	</para>
 	</section>
 
 </section>

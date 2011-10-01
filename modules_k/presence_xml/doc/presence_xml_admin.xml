@@ -317,7 +317,7 @@ modparam("presence_xml", "passive_mode", 1)
 	<title>Exported Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">pres_check_basic(char *presentity_uri, char *status)</function>
+		<function moreinfo="none">pres_check_basic(presentity_uri, status)</function>
 		</title>
 		<para>
 		Checks the /presence/tuple/status/basic nodes in the presentity for
@@ -359,7 +359,7 @@ modparam("presence_xml", "passive_mode", 1)
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">pres_check_activities(char *presentity_uri, char *activity)</function>
+		<function moreinfo="none">pres_check_activities(presentity_uri, activity)</function>
 		</title>
 		<para>
 		Checks whether a /presence/person/activities/<emphasis>activity</emphasis>

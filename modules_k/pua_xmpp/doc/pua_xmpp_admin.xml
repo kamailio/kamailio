@@ -117,7 +117,7 @@ modparam("pua_xmpp", "server_address", "sip:160.23.23.10")
 
 	<section>
 		<title>
-		<function moreinfo="none">pua_xmpp_req_winfo(char* request_uri, char* expires)</function>
+		<function moreinfo="none">pua_xmpp_req_winfo(request_uri, expires)</function>
 		</title>
 		<para>
 		Function called when a Subscribe addressed to a user from a
