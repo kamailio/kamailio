@@ -534,6 +534,49 @@ Aggregation will take <emphasis>sip-addr</emphasis> from the first switchboard o
 		</para>
 		</section>
 
+		<section id="iptrtpproxy_set_param(o_name)">
+		<title>
+			<function>iptrtpproxy_set_param("o_name", value)</function>
+		</title>
+		<para>
+		Username to be rewritten at <emphasis>o=</emphasis> line by <function>iptrtpproxy_alloc/update</function> 
+		to hide caller identity. If value is blank then username is left unchanged.
+		</para>
+		</section>
+
+		<section id="iptrtpproxy_set_param(o_addr)">
+		<title>
+			<function>iptrtpproxy_set_param("o_addr", value)</function>
+		</title>
+		<para>
+		Address to be rewritten at <emphasis>o=</emphasis> line by <function>iptrtpproxy_alloc/update</function> 
+		to hide caller identity. If value is blank then address is left unchanged.
+		</para>
+		</section>
+
+		<section id="iptrtpproxy_set_param(codec_set)">
+		<title>
+			<function>iptrtpproxy_set_param("codec_set", value)</function>
+		</title>
+		<para>
+		Codec set for <function>iptrtpproxy_authorize_media</function>. Current codec set
+		may be obtained by <function>@iptrtpproxy.codec_set</function>.
+		</para>
+		</section>
+
+		<section id="iptrtpproxy_set_param(remove_codec_mask)">
+		<title>
+			<function>iptrtpproxy_set_param("remove_codec_mask", value)</function>
+		</title>
+		<para>
+		Mask used in <function>iptrtpproxy_authorize_media</function>. Current mask 
+		may be obtained by <function>@iptrtpproxy.remove_codec_mask</function>.
+		</para>
+		</section>
+	</section>
+	<section>
+		<title>Selects</title>
+
 		<section id="iptrtpproxy.session_ids">
 		<title>
 			<function>@iptrtpproxy.session_ids</function>
@@ -573,52 +616,12 @@ Aggregation will take <emphasis>sip-addr</emphasis> from the first switchboard o
 		</para>
 		</section>
 
-		<section id="iptrtpproxy_set_param(o_name)">
-		<title>
-			<function>iptrtpproxy_set_param("o_name", value)</function>
-		</title>
-		<para>
-		Username to be rewritten at <emphasis>o=</emphasis> line by <function>iptrtpproxy_alloc/update</function> 
-		to hide caller identity. If value is blank then username is left unchanged.
-		</para>
-		</section>
-
 		<section id="iptrtpproxy.o_addr">
 		<title>
 			<function>@iptrtpproxy.o_addr</function>
 		</title>
 		<para>
 		Return address from original <emphasis>o=</emphasis> line.
-		</para>
-		</section>
-
-		<section id="iptrtpproxy_set_param(o_addr)">
-		<title>
-			<function>iptrtpproxy_set_param("o_addr", value)</function>
-		</title>
-		<para>
-		Address to be rewritten at <emphasis>o=</emphasis> line by <function>iptrtpproxy_alloc/update</function> 
-		to hide caller identity. If value is blank then address is left unchanged.
-		</para>
-		</section>
-
-		<section id="iptrtpproxy_set_param(codec_set)">
-		<title>
-			<function>iptrtpproxy_set_param("codec_set", value)</function>
-		</title>
-		<para>
-		Codec set for <function>iptrtpproxy_authorize_media</function>. Current codec set
-		may be obtained by <function>@iptrtpproxy.codec_set</function>.
-		</para>
-		</section>
-
-		<section id="iptrtpproxy_set_param(remove_codec_mask)">
-		<title>
-			<function>iptrtpproxy_set_param("remove_codec_mask", value)</function>
-		</title>
-		<para>
-		Mask used in <function>iptrtpproxy_authorize_media</function>. Current mask 
-		may be obtained by <function>@iptrtpproxy.remove_codec_mask</function>.
 		</para>
 		</section>
 
