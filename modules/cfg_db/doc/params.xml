@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+	"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="cfg_db.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+	<title>Parameters</title>
+
+	<section id="db_url">
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+		Default database URL. 
+		</para>
+		<para>
+		The format is:
+		</para>
+		<programlisting>
+		db_url = database
+		</programlisting>
+		<example>
+			<title>Example <varname>db_url</varname></title>
+			<programlisting>
+loadmodule("mysql.so");
+loadmodule("cfg_db.so");
+...
+modparam("cfg_db", "db_url", "mysql://&ser;:123@127.0.0.1:12345/&ser;");
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="transl_tbl">
+		<title><varname>transl_tbl</varname> (string) := "cfg_transl"</title>
+		<para>
+		Name of table used for pointing group_name+name into
+		configuration table. If empty/null field values are found
+		then default values will be used. The default
+		values are declared in record having <emphasis>group_name</emphasis>
+		called <emphasis>&lt;default&gt;</emphasis>. The C-code
+		"absolutely" default values ("cfg_var", "group_name", "name", "value").
+		The other keyword is asterisk <emphasis>*</emphasis> which matches
+		all parameters and will be used if parameter is not
+		explicitely mentioned.
+		</para>		
+	</section>
+	<section id="custom_tbl">
+		<title><varname>custom_tbl</varname> (string) := "cfg_custom"</title>
+		<para>
+		Name of table used for extra param declaration (group_name, name,
+		type, min/max value, description).
+		</para>		
+	</section>		
+</section>
+
+
