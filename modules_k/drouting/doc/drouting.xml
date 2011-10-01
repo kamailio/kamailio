@@ -3,16 +3,13 @@
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
 
-<!ENTITY admin SYSTEM "drouting_admin.xml">
-<!ENTITY devel SYSTEM "drouting_devel.xml">
-
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
 %docentities;
 
 ]>
 
-<book>
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
 	<bookinfo>
 	<title>Dynamic Routing Module</title>
 	<productname class="trade">&kamailioname;</productname>
@@ -40,8 +37,8 @@
 	</bookinfo>
 	<toc></toc>
 
-	&admin;
-	&devel;
+	<xi:include href="drouting_admin.xml"/>
+	<xi:include href="drouting_devel.xml"/>
 
 </book>
 
