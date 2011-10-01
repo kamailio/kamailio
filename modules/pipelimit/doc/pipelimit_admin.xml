@@ -296,7 +296,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">pl_drop([[min ], max])</function>
+		<function moreinfo="none">pl_drop([ [min ], max ])</function>
 		</title>
 		<para>
 		For the current request, a "503 - Server Unavailable" reply is sent back.
