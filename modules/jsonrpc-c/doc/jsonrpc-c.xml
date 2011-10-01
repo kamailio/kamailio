@@ -31,7 +31,7 @@
     </bookinfo>
     <toc></toc>
     
-    <xi:include href="jsonrpc_admin.xml"/>
+    <xi:include href="jsonrpc-c_admin.xml"/>
     
     
 </book>
