@@ -11,14 +11,19 @@ Gergely Kovacs
    1.2. Dependencies
    1.3. Compilation
    1.4. Installation And Running
-   1.5. Authorizer service parameters
+   1.5. Parameters
 
         1.5.1. privatekey_path (string)
         1.5.2. certificate_path (string)
         1.5.3. certificate_url (string)
         1.5.4. msg_timeout (integer)
+        1.5.5. auth_validity_time (integer)
+        1.5.6. callid_cache_limit (integer)
+        1.5.7. certificate_cache_limit (integer)
+        1.5.8. cainfo_path (string)
+        1.5.9. accept_pem_certs ([0|1])
 
-   1.6. Authorizer service functions
+   1.6. Functions
 
         1.6.1. auth_date_proc()
 
@@ -28,38 +33,28 @@ Gergely Kovacs
 
               1.6.2.1. Dependencies
 
+        1.6.3. vrfy_check_date()
+
+              1.6.3.1. Dependencies
+
+        1.6.4. vrfy_get_certificate()
+
+              1.6.4.1. Dependencies
+
+        1.6.5. vrfy_check_certificate()
+
+              1.6.5.1. Dependencies
+
+        1.6.6. vrfy_check_msgvalidity()
+
+              1.6.6.1. Dependencies
+
+        1.6.7. vrfy_check_callid()
+
+              1.6.7.1. Dependencies
+
    1.7. Authorizer service examples
-   1.8. Verifier service parameters
-
-        1.8.1. auth_validity_time (integer)
-        1.8.2. callid_cache_limit (integer)
-        1.8.3. certificate_cache_limit (integer)
-        1.8.4. cainfo_path (string)
-        1.8.5. accept_pem_certs ([0|1])
-
-   1.9. Verifier service functions
-
-        1.9.1. vrfy_check_date()
-
-              1.9.1.1. Dependencies
-
-        1.9.2. vrfy_get_certificate()
-
-              1.9.2.1. Dependencies
-
-        1.9.3. vrfy_check_certificate()
-
-              1.9.3.1. Dependencies
-
-        1.9.4. vrfy_check_msgvalidity()
-
-              1.9.4.1. Dependencies
-
-        1.9.5. vrfy_check_callid()
-
-              1.9.5.1. Dependencies
-
-   1.10. Verifier service examples
+   1.8. Verifier service examples
 
 1.1. Overview
 
@@ -96,9 +91,11 @@ Gergely Kovacs
    certificate must be the same. This service needs access to the private
    key too.
 
-1.5. Authorizer service parameters
+1.5. Parameters
 
 1.5.1. privatekey_path (string)
+
+   Note: this parameter is for authorizer service.
 
    The path of private key of the authentication service. The key must be
    in PEM format.
@@ -112,6 +109,8 @@ modparam("auth_identity","privatekey_path","/etc/ssl/private/key.pem")
 
 1.5.2. certificate_path (string)
 
+   Note: this parameter is for authorizer service.
+
    The path of certificate of the authentication service. The certificate
    must be in PEM format.
 
@@ -123,6 +122,8 @@ modparam("auth_identity","certificate_path","/var/www/ssl/mycert.pem")
 ...
 
 1.5.3. certificate_url (string)
+
+   Note: this parameter is for authorizer service.
 
    The url where certificate is available for other verifier services.
    (value of Identity-info header) The certificate should be in DER
@@ -137,6 +138,8 @@ modparam("auth_identity","certificate_url","https://foo.bar/mycert.der")
 
 1.5.4. msg_timeout (integer)
 
+   Note: this parameter is for authorizer service.
+
    If the Date header of message which is needed to be authenticated
    contains a time different by more than this seconds from the current
    time noted by the authentication service then it rejects the message.
@@ -148,9 +151,86 @@ modparam("auth_identity","certificate_url","https://foo.bar/mycert.der")
 modparam("auth_identity","msg_timeout",600)
 ...
 
-1.6. Authorizer service functions
+1.5.5. auth_validity_time (integer)
+
+   Note: this parameter is for verifier service.
+
+   The validity time of an authenticated message. The message will be
+   refused if it contains a time different by more than this seconds from
+   the current time noted by the verification service.
+
+   This parameter is optional. The default value is "3600".
+
+   Example 5. Set auth_validity_time parameter
+...
+modparam("auth_identity","auth_validity_time",3600)
+...
+
+1.5.6. callid_cache_limit (integer)
+
+   Note: this parameter is for verifier service.
+
+   The number of Call-IDs stored in order to recognize call replay
+   attacks. A Call-ID is stored auth_validity_time long and uses
+   approximately 100 bytes memory.
+
+   This parameter is optional. The default value is "32768". (you should
+   increase the size of shared memory with -m command line switch if you
+   liked to store more callid than 10000)
+
+   Example 6. Set auth_validity_time parameter
+...
+modparam("auth_identity","callid_cache_limit",32768)
+...
+
+1.5.7. certificate_cache_limit (integer)
+
+   Note: this parameter is for verifier service.
+
+   The number of certificates stored in order to avoid needless download.
+   A certificate is stored until its expiration date and uses
+   approximately 600 bytes memory.
+
+   This parameter is optional. The default value is "4096".
+
+   Example 7. Set certificate_cache_limit parameter
+...
+modparam("auth_identity","certificate_cache_limit",4096)
+...
+
+1.5.8. cainfo_path (string)
+
+   Note: this parameter is for verifier service.
+
+   A file of trusted certificates. The file should contain multiple
+   certificates in PEM format concatenated together. It could be useful
+   for verifying a certificate signed by a private CA.
+
+   This parameter is optional. It has not got default value.
+
+   Example 8. Set cainfo_path parameter
+...
+modparam("auth_identity","cainfo_path","/etc/ssl/certs/ca-certificates.crt")
+...
+
+1.5.9. accept_pem_certs ([0|1])
+
+   Note: this parameter is for verifier service.
+
+   Enables the acquired certificate processing if it is in PEM format.
+
+   This parameter is optional. The default value is "0".
+
+   Example 9. Set accept_pem_certs parameter
+...
+modparam("auth_identity","accept_pem_certs",1)
+...
+
+1.6. Functions
 
 1.6.1. auth_date_proc()
+
+   Note: this function is for authorizer service.
 
    If a message, the auth service should authorize, contains Date header
    then this function checks whether it falls in message timeout (set by
@@ -164,6 +244,8 @@ modparam("auth_identity","msg_timeout",600)
    No dependencies
 
 1.6.2. auth_add_identity()
+
+   Note: this function is for authorizer service.
 
    Assembles digest-string from the message, calculates its SHA1 hash,
    encrypts it with the private key (set by privatekey_path parameter) of
@@ -180,6 +262,68 @@ modparam("auth_identity","msg_timeout",600)
 1.6.2.1. Dependencies
 
    auth_date_proc() must be called before
+
+1.6.3. vrfy_check_date()
+
+   Note: this function is for verifier service.
+
+   Checks Date header of the incoming message whether falls in validity
+   time (set by auth_validity_time parameter)
+
+1.6.3.1. Dependencies
+
+   No dependencies
+
+1.6.4. vrfy_get_certificate()
+
+   Note: this function is for verifier service.
+
+   Tries to get certificate defined by the value of Identity-info header
+   from certificate table (which size is set by certificate_cache_limit
+   parameter). If the required certificate is not found there then this
+   function downloads it.
+
+1.6.4.1. Dependencies
+
+   No dependencies
+
+1.6.5. vrfy_check_certificate()
+
+   Note: this function is for verifier service.
+
+   Checks whether the downloaded certificate is valid (is not expired, its
+   subject and the domain part of the URL are the same) and adds it to
+   certificate table.
+
+1.6.5.1. Dependencies
+
+   vrfy_get_certificate() must be called before
+
+1.6.6. vrfy_check_msgvalidity()
+
+   Note: this function is for verifier service.
+
+   Assembles digest-string from the message, create SHA1 hash and compares
+   it with the decrypted value of Identity header.
+
+1.6.6.1. Dependencies
+
+   vrfy_get_certificate() must be called before and
+   vrfy_check_certificate() should be called before
+
+1.6.7. vrfy_check_callid()
+
+   Note: this function is for verifier service.
+
+   Checks whether the current call's been already processed in validity
+   time (set by auth_validity_time) to recognize call replay attacks. If
+   this call (identified by Call-id, Cseq, and tag of From header triple)
+   has not been replayed then adds it to callid table (which size is set
+   by callid_cache_limit parameter).
+
+1.6.7.1. Dependencies
+
+   This function should be called for the last time.
 
 1.7. Authorizer service examples
 
@@ -224,128 +368,7 @@ route[OUTBOUND]
 }
 ...
 
-1.8. Verifier service parameters
-
-1.8.1. auth_validity_time (integer)
-
-   The validity time of an authenticated message. The message will be
-   refused if it contains a time different by more than this seconds from
-   the current time noted by the verification service.
-
-   This parameter is optional. The default value is "3600".
-
-   Example 5. Set auth_validity_time parameter
-...
-modparam("auth_identity","auth_validity_time",3600)
-...
-
-1.8.2. callid_cache_limit (integer)
-
-   The number of Call-IDs stored in order to recognize call replay
-   attacks. A Call-ID is stored auth_validity_time long and uses
-   approximately 100 bytes memory.
-
-   This parameter is optional. The default value is "32768". (you should
-   increase the size of shared memory with -m command line switch if you
-   liked to store more callid than 10000)
-
-   Example 6. Set auth_validity_time parameter
-...
-modparam("auth_identity","callid_cache_limit",32768)
-...
-
-1.8.3. certificate_cache_limit (integer)
-
-   The number of certificates stored in order to avoid needless download.
-   A certificate is stored until its expiration date and uses
-   approximately 600 bytes memory.
-
-   This parameter is optional. The default value is "4096".
-
-   Example 7. Set certificate_cache_limit parameter
-...
-modparam("auth_identity","certificate_cache_limit",4096)
-...
-
-1.8.4. cainfo_path (string)
-
-   A file of trusted certificates. The file should contain multiple
-   certificates in PEM format concatenated together. It could be useful
-   for verifying a certificate signed by a private CA.
-
-   This parameter is optional. It has not got default value.
-
-   Example 8. Set cainfo_path parameter
-...
-modparam("auth_identity","cainfo_path","/etc/ssl/certs/ca-certificates.crt")
-...
-
-1.8.5. accept_pem_certs ([0|1])
-
-   Enables the acquired certificate processing if it is in PEM format.
-
-   This parameter is optional. The default value is "0".
-
-   Example 9. Set accept_pem_certs parameter
-...
-modparam("auth_identity","accept_pem_certs",1)
-...
-
-1.9. Verifier service functions
-
-1.9.1. vrfy_check_date()
-
-   Checks Date header of the incoming message whether falls in validity
-   time (set by auth_validity_time parameter)
-
-1.9.1.1. Dependencies
-
-   No dependencies
-
-1.9.2. vrfy_get_certificate()
-
-   Tries to get certificate defined by the value of Identity-info header
-   from certificate table (which size is set by certificate_cache_limit
-   parameter). If the required certificate is not found there then this
-   function downloads it.
-
-1.9.2.1. Dependencies
-
-   No dependencies
-
-1.9.3. vrfy_check_certificate()
-
-   Checks whether the downloaded certificate is valid (is not expired, its
-   subject and the domain part of the URL are the same) and adds it to
-   certificate table.
-
-1.9.3.1. Dependencies
-
-   vrfy_get_certificate() must be called before
-
-1.9.4. vrfy_check_msgvalidity()
-
-   Assembles digest-string from the message, create SHA1 hash and compares
-   it with the decrypted value of Identity header.
-
-1.9.4.1. Dependencies
-
-   vrfy_get_certificate() must be called before and
-   vrfy_check_certificate() should be called before
-
-1.9.5. vrfy_check_callid()
-
-   Checks whether the current call's been already processed in validity
-   time (set by auth_validity_time) to recognize call replay attacks. If
-   this call (identified by Call-id, Cseq, and tag of From header triple)
-   has not been replayed then adds it to callid table (which size is set
-   by callid_cache_limit parameter).
-
-1.9.5.1. Dependencies
-
-   This function should be called for the last time.
-
-1.10. Verifier service examples
+1.8. Verifier service examples
 
 ...
 route[INIT]
