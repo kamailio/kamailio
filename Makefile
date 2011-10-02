@@ -211,7 +211,7 @@ module_group_kstandard=acc alias_db auth auth_db benchmark call_control \
 				iptrtpproxy lcr mediaproxy mi_rpc pdb sanity tm topoh \
 				blst prefix_route counters debugger matrix mqueue mtree \
 				pipelimit rtpproxy textopsx xhttp ipops p_usrloc sdpops \
-				async sipcapture
+				async sipcapture, dmq
 
 # K mysql module
 module_group_kmysql=db_mysql
@@ -308,7 +308,7 @@ else
 							presence_dialoginfo presence_xml pua pua_bla \
 							pua_dialoginfo pua_usrloc pua_xmpp \
 							regex xcap_client xcap_server presence_conference \
-							presence_reginfo pua_reginfo async
+							presence_reginfo pua_reginfo async, dmq
 	#excluded because they depend on external *.h files
 	exclude_modules+= h350
 	# excluded because they do not compile (remove them only after they are
