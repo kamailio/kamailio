@@ -85,12 +85,12 @@
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>libxmlrpc-c3</emphasis> version 0.9.10.
+				<emphasis>libxmlrpc-c3</emphasis> version 0.9.10 or version 1.06.[10-30].
 			</para>
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>libxmlrpc-c3-dev</emphasis> version 0.9.10.
+				<emphasis>libxmlrpc-c3-dev</emphasis> version 0.9.10 or version 1.06.[10-30].
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -101,8 +101,7 @@
 		<quote>xmlrpc-c</quote>project 
 		(<ulink url='http://xmlrpc-c.sourceforge.net/'>
 		http://xmlrpc-c.sourceforge.net/</ulink>). Otherwise you need
-		to install the library and devel headers from the sources. In both
-		cases, keep in mind to use the 0.9.10 version!!.
+		to install the library and devel headers from the sources.
 		</para>
 	</section>
 	</section>
