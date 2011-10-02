@@ -194,7 +194,7 @@ module_group_stable=cpl-c dbtext jabber osp sms pdb
 # Modules in this group are either not complete, untested, or without enough
 # reports of usage to allow the module into the stable group. They may or may
 # not have dependencies
-module_group_experimental=tls oracle iptrtpproxy ndb_redis
+module_group_experimental=tls oracle iptrtpproxy ndb_redis async
 
 
 
@@ -308,7 +308,7 @@ else
 							presence_dialoginfo presence_xml pua pua_bla \
 							pua_dialoginfo pua_usrloc pua_xmpp \
 							regex xcap_client xcap_server presence_conference \
-							presence_reginfo pua_reginfo
+							presence_reginfo pua_reginfo async
 	#excluded because they depend on external *.h files
 	exclude_modules+= h350
 	# excluded because they do not compile (remove them only after they are
