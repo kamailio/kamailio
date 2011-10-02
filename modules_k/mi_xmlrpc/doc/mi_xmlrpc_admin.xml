@@ -108,7 +108,7 @@
 	</section>
 	
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>port</varname>(integer)</title>
 		<para>
@@ -192,7 +192,7 @@ modparam("mi_xmlrpc", "buffer_size", 8192)
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		<para>
 		No function exported to be used from configuration file.
 		</para>

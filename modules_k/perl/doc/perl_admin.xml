@@ -151,7 +151,7 @@ if (perl_exec("ldap_alias")) {
 	</section>
 
 	<section>
-		<title>Exported Parameters</title>
+		<title>Parameters</title>
 		<section>
 			<title><varname>filename</varname> (string)</title>
 			<para>
@@ -195,7 +195,7 @@ modparam("perl", "modpath", "/usr/local/lib/openser/perl/")
 	</section>
 
 	<section>
-		<title>Exported Functions</title>
+		<title>Functions</title>
 		<section>
 			<title>
 			<function moreinfo="none">perl_exec_simple(func, [param])</function>

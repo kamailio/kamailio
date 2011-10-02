@@ -58,7 +58,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 
 	<section>
 		<title><varname>enable</varname> (int)</title>
@@ -156,7 +156,7 @@ modparam("benchmark", "loglevel", 4)
 
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">bm_start_timer(name)</function>
@@ -272,7 +272,7 @@ bm_log_timer("test");
 	</section>
 
 	<section>
-		<title>Exported MI Functions</title>
+		<title>MI Commands</title>
 		<section>
 			<title><function moreinfo="none">bm_enable_global</function></title>
 			<para>

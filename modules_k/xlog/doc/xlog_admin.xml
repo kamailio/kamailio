@@ -92,7 +92,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>buf_size</varname> (integer)</title>
 		<para>
@@ -191,7 +191,7 @@ modparam("xlog", "log_facility", "LOG_DAEMON")
 
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">xlog([level,] format)</function>

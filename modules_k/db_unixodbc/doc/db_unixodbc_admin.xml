@@ -63,7 +63,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>ping_interval</varname> (int)</title>
 		<para>
@@ -134,7 +134,7 @@ modparam("db_unixodbc", "use_escape_common", 1)
     </section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		<para>
 		NONE
 		</para>

@@ -97,7 +97,7 @@
 	</section>
 	
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname>(str)</title>
 		<para>
@@ -314,7 +314,7 @@ modparam("presence_xml", "passive_mode", 1)
 </section>
 
 <section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">pres_check_basic(presentity_uri, status)</function>

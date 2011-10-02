@@ -57,7 +57,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>sampling_time_unit</varname> (integer)</title>
 		<para>
@@ -156,7 +156,7 @@ modparam("pike", "pike_log_level", -1)
 
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">pike_check_req()</function>
@@ -207,7 +207,7 @@ if (!pike_check_req()) { exit; };
 	</section>
 
 	<section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 	<section>
 		<title>
 		<function moreinfo="none">pike_list</function>

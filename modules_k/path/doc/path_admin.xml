@@ -107,7 +107,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>use_received</varname> (int)</title>
 		<para>
@@ -131,7 +131,7 @@ modparam("path", "use_received", 1)
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">add_path()</function>

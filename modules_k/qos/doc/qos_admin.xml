@@ -107,7 +107,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>qos_flag</varname> (integer)</title>
 		
@@ -153,7 +153,7 @@ route {
 
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<para>There are no exported functions that could be used in scripts.
 	</para>
 	</section>
@@ -164,7 +164,7 @@ route {
 	</section>
 
 	<section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 	<para>There are no exported MI functions for the qos module.
 	Check the dialog MI functions for a way to inspect the internals
 	of a dialog.

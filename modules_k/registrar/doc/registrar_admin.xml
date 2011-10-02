@@ -108,7 +108,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>default_expires</varname> (integer)</title>
 		<para>
@@ -627,7 +627,7 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 
 	
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">save(domain)</function>

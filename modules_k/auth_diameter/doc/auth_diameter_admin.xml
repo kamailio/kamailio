@@ -96,7 +96,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>diameter_client_host</varname> (string)</title>
 		<para>
@@ -157,7 +157,7 @@ modparam("auth_diameter", "use_domain", 1)
 	</section>
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">diameter_www_authorize(realm)</function>

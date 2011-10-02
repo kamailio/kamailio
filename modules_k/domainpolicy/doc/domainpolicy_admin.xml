@@ -49,7 +49,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname> (string)</title>
 		<para>
@@ -258,7 +258,7 @@ modparam("domainpolicy", "send_socket_avp", "sendsocket")
 
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title><function moreinfo="none">dp_can_connect()</function></title>
 		<para>

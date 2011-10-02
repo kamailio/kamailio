@@ -87,7 +87,7 @@
 	</section>
 	
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname>(str)</title>
 		<para>
@@ -429,7 +429,7 @@ modparam("presence", "timeout_rm_subs", 0)
 </section>
 
 <section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">handle_publish(char* sender_uri)</function>
@@ -648,7 +648,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 </section>
 
 <section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 	<section>
 		<title>
 		<function moreinfo="none">refreshWatchers</function>

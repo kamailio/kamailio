@@ -189,7 +189,7 @@ alice@example    server     server     bob@example   watcher@example
 	</section>
 	
 	<section>
-		<title>Exported Parameters</title>
+		<title>Parameters</title>
 
 		<section>
 		<title><varname>force_single_dialog</varname> (int)</title>
@@ -226,7 +226,7 @@ modparam("presence_dialoginfo", "force_single_dialog", 1)
 	</section>
 
 	<section>
-		<title>Exported Functions</title>
+		<title>Functions</title>
 		<para>
 			None to be used in configuration file.
 		</para>

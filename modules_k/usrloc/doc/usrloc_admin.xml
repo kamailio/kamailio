@@ -103,7 +103,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>nat_bflag</varname> (integer)</title>
 		<para>
@@ -716,7 +716,7 @@ modparam("usrloc", "preload", "location")
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<para>
 		There are no exported functions that could be used in scripts.
 	</para>
@@ -724,7 +724,7 @@ modparam("usrloc", "preload", "location")
 
 
 	<section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 
 	<section>
 		<title>

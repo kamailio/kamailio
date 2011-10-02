@@ -51,7 +51,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<para>
 			<emphasis>None</emphasis>
@@ -60,7 +60,7 @@
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 	    <title>
 		<function moreinfo="none">json_get_field(json_string, field_name, destination)</function>

@@ -73,7 +73,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>list_file</varname> (string)</title>
 		<para>
@@ -692,7 +692,7 @@ modparam("dispatcher", "force_dst", 1)
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">ds_select_dst(set, alg)</function>
@@ -1009,7 +1009,7 @@ onreply_route {
 	</section>
 
 	<section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 	<section>
 		<title>
 		<function moreinfo="none">ds_set_state</function>

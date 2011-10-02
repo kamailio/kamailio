@@ -350,7 +350,7 @@ route {
   </section>
 
   <section>
-  <title>Exported Functions</title>
+  <title>Functions</title>
     <section>
     <title><function moreinfo="none">call_control()</function></title>
       <para>

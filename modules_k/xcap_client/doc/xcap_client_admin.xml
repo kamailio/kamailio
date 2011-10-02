@@ -74,7 +74,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname>(str)</title>
 		<para>
@@ -162,7 +162,7 @@ modparam("xcap_client", "query_period", 50)
 	</section>
 
 <section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<para>
 	None to be used in configuration file.
 	</para>

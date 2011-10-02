@@ -80,7 +80,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>radius_config</varname> (string)</title>
 		<para>
@@ -137,7 +137,7 @@ modparam("peering", "verify_source_service_type", 22)
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title><function moreinfo="none">verify_destination()</function></title>
 		<para>

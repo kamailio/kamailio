@@ -53,7 +53,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname> (string)</title>
 		<para>
@@ -138,7 +138,7 @@ modparam("domain", "register_myself", 1)
 	
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title><function moreinfo="none">is_from_local()</function></title>
 		<para>
@@ -235,7 +235,7 @@ if (is_domain_local("$avp(s:some_avp)")) {
 	</section>
 	</section>
 	<section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 	<section>
 		<title><function moreinfo="none">domain_reload</function></title>
 		<para>

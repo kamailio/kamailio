@@ -146,7 +146,7 @@ xlog("stored value is $mct(test)"); # will return &lt;null&gt;
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>servers</varname> (str)</title>
 		<para>

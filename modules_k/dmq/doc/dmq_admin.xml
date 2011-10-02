@@ -61,7 +61,7 @@
 	</section>
 	
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>dmq_server_address</varname>(str)</title>
 		<para>

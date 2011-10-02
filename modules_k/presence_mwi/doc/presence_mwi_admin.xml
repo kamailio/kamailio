@@ -67,14 +67,14 @@
 	</section>
 	
 	<section>
-	  <title>Exported Parameters</title>
+	  <title>Parameters</title>
 		<para>
 		  None.
 		</para>
         </section>
 
         <section>
-	  <title>Exported Functions</title>
+	  <title>Functions</title>
 	      <para>
 	        None to be used in configuration file.
 	      </para>

@@ -104,7 +104,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>domain_suffix</varname> (string)</title>
 		<para>
@@ -233,7 +233,7 @@ modparam("enum", "bl_algorithm", "txt")
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">enum_query(["suffix"[,"service"]])</function>

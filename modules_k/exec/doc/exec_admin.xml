@@ -112,7 +112,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>setvars</varname> (integer)</title>
 		<para>
@@ -156,7 +156,7 @@ modparam("exec", "time_to_kill", 20)
 	</section>
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">exec_dset(command)</function>

@@ -95,7 +95,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>url_skip</varname> (str)</title>
 		<para>
@@ -141,7 +141,7 @@ modparam("xhttp", "url_match", "^/sip/")
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
  	<section>
 	    <title>
 		<function moreinfo="none">xhttp_reply(code, reason, ctype, body)</function>

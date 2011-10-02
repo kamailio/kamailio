@@ -127,7 +127,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>natping_interval</varname> (integer)</title>
 		<para>
@@ -337,7 +337,7 @@ modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">fix_nated_contact()</function>

@@ -112,7 +112,7 @@
 	</section>
     </section>
     <section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
     <section>
 	    <title><varname>subscriber_table</varname> (string)</title>
 	    <para>
@@ -355,7 +355,7 @@ modparam("carrierroute", "match_mode", 10)
 </section>
 
     <section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<para>
     Previous versions of carrierroute had some more function. All the
     old semantics can be achieved by using the few new functions

@@ -61,7 +61,7 @@
 		</section>
 	</section>
 	<section>
-		<title>Exported Parameters</title>
+		<title>Parameters</title>
 		<section>
 			<title><varname>servers</varname> (string)</title>
 			<para>
@@ -78,7 +78,7 @@ modparam("jsonrpc", "servers", "localhost:9999,2 10.10.0.1:9999,2 backup.server:
 		</section>
 	</section>
 	<section>
-		<title>Exported Functions</title>
+		<title>Functions</title>
 		<section>
 			<title>
 				<function moreinfo="none">jsonrpc_notification(method, parameters)</function>

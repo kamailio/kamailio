@@ -53,7 +53,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>max_limit</varname> (integer)</title>
 		<para>
@@ -87,7 +87,7 @@ modparam("maxfwd", "max_limit", 32)
 
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">mf_process_maxfwd_header(max_value)</function>

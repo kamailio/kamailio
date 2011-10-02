@@ -65,7 +65,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 		<section>
 		<title><varname>server_address</varname>(str)</title>
 		<para>
@@ -83,7 +83,7 @@ modparam("pua_xmpp", "server_address", "sip:160.23.23.10")
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<para>
 	Functions exported to be used in configuration file.
 	</para>

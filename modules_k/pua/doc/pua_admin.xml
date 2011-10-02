@@ -75,7 +75,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>hash_size</varname> (int)</title>
 		<para>
@@ -286,7 +286,7 @@ modparam("pua", "check_remote_contact", 0)
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		
 	<section>
 		<title>

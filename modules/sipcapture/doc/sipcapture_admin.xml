@@ -81,7 +81,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname> (str)</title>
 		<para>
@@ -358,7 +358,7 @@ modparam("sipcapture", "capture_node", "homer03")
 	</section>
 </section>	
     <section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 	<section>
 		<title>
 		<function moreinfo="none">sip_capture</function>

@@ -65,7 +65,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>mask_key</varname> (str)</title>
 		<para>
@@ -250,7 +250,7 @@ modparam("topoh", "sanity_checks", 1)
 
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<para>
 			None.

@@ -99,7 +99,7 @@
 	</section>
 	
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname>(str)</title>
 		<para>
@@ -398,7 +398,7 @@ modparam("rls", "max_notify_body_length", 32000)
 </section>
 
 <section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">rls_handle_subscribe()</function>

@@ -122,7 +122,7 @@
 	</section>
 
 	<section>
-		<title>Exported Parameters</title>
+		<title>Parameters</title>
 		<section>
 			<title><varname>default_filter</varname> (string)</title>
 			<para>
@@ -305,7 +305,7 @@ branch_route[1] {
 	</section>
 
 	<section>
-		<title>Exported Functions</title>
+		<title>Functions</title>
 		<section>
 			<title>
 				<function moreinfo="none">set_deny_filter(filter,flags)

@@ -117,7 +117,7 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
 	</section>
     </section>
     <section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 	    <title><varname>db_url</varname> (string)</title>
 	    <para>
@@ -306,7 +306,7 @@ modparam("pdt", "check_domain", 0)
     </section>
 	
     <section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
  	<section>
 	    <title>
 		<function moreinfo="none">prefix2domain(rewrite_mode, multidomain_mode)</function>
@@ -414,7 +414,7 @@ prefix2domain();
     </section>
 	
 		<section>
-		<title>Exported MI Functions</title>
+		<title>MI Commands</title>
 		<para>
 		The database is loaded by &kamailio; at start up time.
 		The module uses only the cache to look up domains. If you want to

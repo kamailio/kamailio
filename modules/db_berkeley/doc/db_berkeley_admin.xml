@@ -52,7 +52,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>auto_reload</varname> (integer)</title>
 		<para>
@@ -128,14 +128,14 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 	</section>
 	
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		<para>
 		No function exported to be used from configuration file.
 		</para>
 	</section>
 	
 	<section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 	<section>
 		<title><function moreinfo="none">bdb_reload</function></title>
 		

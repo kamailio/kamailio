@@ -58,7 +58,7 @@
 	</section>
     </section>
     <section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 
 	<section>
 	    <title><varname>mqueue</varname> (string)</title>
@@ -94,7 +94,7 @@ modparam("mqueue", "mqueue", "name=qaz")
 	</section>
 	
     <section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
  	<section>
 	    <title>
 		<function moreinfo="none">mq_add(queue, key, value)</function>

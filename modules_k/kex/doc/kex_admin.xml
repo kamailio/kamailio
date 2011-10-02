@@ -57,7 +57,7 @@
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		<section>
 		<title><function moreinfo="none">setsflag(flag)</function></title>
 		<para>
@@ -457,7 +457,7 @@ resetdebug();
 	</section>
 
 	<section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 	<section>
 		<title>
 		<function moreinfo="none">arg</function>

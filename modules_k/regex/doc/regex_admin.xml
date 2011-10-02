@@ -74,7 +74,7 @@
 	</section>
 	
 	<section>
-		<title>Exported Parameters</title>
+		<title>Parameters</title>
 
 		<section>
 			<title><varname>file</varname> (string)</title>
@@ -228,7 +228,7 @@ modparam("regex", "pcre_extended", 1)
 	</section>
 
 	<section>
-		<title>Exported Functions</title>
+		<title>Functions</title>
 
 		<section>
 			<title>
@@ -359,7 +359,7 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 	</section>
 
 	<section>
-		<title>Exported MI Functions</title>
+		<title>MI Commands</title>
 
 		<section>
 			<title>

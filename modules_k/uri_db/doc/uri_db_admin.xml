@@ -48,7 +48,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 
 	<section>
 		<title><varname>db_url</varname> (string)</title>
@@ -206,7 +206,7 @@ modparam("uri_db", "use_domain", 1)
 
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">check_to()</function>

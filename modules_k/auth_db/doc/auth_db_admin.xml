@@ -63,7 +63,7 @@
 
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname> (string)</title>
 		<para>
@@ -302,7 +302,7 @@ modparam("auth_db", "version_table", 0)
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 			<function moreinfo="none">www_authenticate(realm, table)</function>

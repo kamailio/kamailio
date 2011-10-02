@@ -76,14 +76,14 @@ modparam("acc", "db_url", "perlvdb:OpenSER::VDB::Adapter::AccountingSIPtrace")
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 		<para>
 			<emphasis>None</emphasis>.
 		</para>
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		<para>
 			<emphasis>None</emphasis>.
 		</para>

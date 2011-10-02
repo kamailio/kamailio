@@ -103,7 +103,7 @@
 
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname> (string)</title>
 		<para>
@@ -353,7 +353,7 @@ modparam("dialplan", "fetch_rows", 4000)
 
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	
 	<section>
 	<title>
@@ -462,7 +462,7 @@ xlog("translated to var $var(y) \n");
 
 
 	<section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 
 		<section>
 			<title><varname>dp_reload</varname></title>

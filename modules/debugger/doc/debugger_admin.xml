@@ -73,7 +73,7 @@
 	</section>
     </section>
     <section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 	    <title><varname>cfgtrace</varname> (int)</title>
 	    <para>
@@ -224,7 +224,7 @@ modparam("debugger", "step_loops", 100)
 	</section>
 	
     <section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
  	<section>
 	    <title>
 		<function moreinfo="none">dbg_breakpoint(mode)</function>

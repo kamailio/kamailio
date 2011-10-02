@@ -73,7 +73,7 @@
 
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
     <section>
 	    <title><varname>use_domain</varname> (integer)</title>
 	    <para>
@@ -120,7 +120,7 @@ modparam("userblacklist", "match_mode", 128)
 
 </section>
 <section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 	    <title>
 		<function moreinfo="none">check_user_blacklist (string user, string domain, string number, string table)</function>

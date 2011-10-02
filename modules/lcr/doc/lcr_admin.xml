@@ -143,7 +143,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname> (string)</title>
 		<para>
@@ -970,7 +970,7 @@ modparam("lcr", "fetch_rows", 3000)
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">load_gws(lcr_id[, uri_user[, caller_uri]])
