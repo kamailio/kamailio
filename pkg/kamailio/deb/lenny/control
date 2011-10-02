@@ -288,6 +288,17 @@ Description: SQLite database connectivity module for Kamailio
  .
  This package provides the SQLite database driver for Kamailio.
 
+#Package: kamailio-json-modules
+#Architecture: any
+#Depends: ${shlibs:Depends}, kamailio (= ${binary:Version}), libjson0
+#Description: Json parser and jsonrpc modules for Kamailio
+# Kamailio is a very fast and flexible SIP (RFC3261)
+# proxy server. Written entirely in C, Kamailio can handle thousands calls
+# per second even on low-budget hardware.
+# .
+# This package provides json parser for Kamailio's configuration file 
+# and the JSON-RPC client over netstrings.
+
 Package: kamailio-nth
 Architecture: any
 Depends: screen, gdb, binutils, gcc, bison, flex, ngrep, tcpdump, iftop, lsof, psmisc, vim, bvi, most, mc, sipsak
