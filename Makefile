@@ -308,7 +308,7 @@ else
 							presence_dialoginfo presence_xml pua pua_bla \
 							pua_dialoginfo pua_usrloc pua_xmpp \
 							regex xcap_client xcap_server presence_conference \
-							presence_reginfo pua_reginfo async, dmq
+							presence_reginfo pua_reginfo
 	#excluded because they depend on external *.h files
 	exclude_modules+= h350
 	# excluded because they do not compile (remove them only after they are
