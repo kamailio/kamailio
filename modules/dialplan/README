@@ -29,7 +29,7 @@ Juha Heinanen
               4.1. Kamailio Modules
               4.2. External Libraries or Applications
 
-        5. Exported Parameters
+        5. Parameters
 
               5.1. db_url (string)
               5.2. table_name (string)
@@ -44,11 +44,11 @@ Juha Heinanen
               5.11. attrs_pvar (string)
               5.12. fetch_rows (int)
 
-        6. Exported Functions
+        6. Functions
 
               6.1. dp_translate(id, src[/dest])
 
-        7. Exported MI Functions
+        7. MI Commands
 
               7.1. dp_reload
               7.2. dp_translate
@@ -91,7 +91,7 @@ Chapter 1. Admin Guide
         4.1. Kamailio Modules
         4.2. External Libraries or Applications
 
-   5. Exported Parameters
+   5. Parameters
 
         5.1. db_url (string)
         5.2. table_name (string)
@@ -106,11 +106,11 @@ Chapter 1. Admin Guide
         5.11. attrs_pvar (string)
         5.12. fetch_rows (int)
 
-   6. Exported Functions
+   6. Functions
 
         6.1. dp_translate(id, src[/dest])
 
-   7. Exported MI Functions
+   7. MI Commands
 
         7.1. dp_reload
         7.2. dp_translate
@@ -179,7 +179,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * libpcre - the libraries of PCRE.
 
-5. Exported Parameters
+5. Parameters
 
    5.1. db_url (string)
    5.2. table_name (string)
@@ -331,7 +331,7 @@ modparam("dialplan", "attrs_pvar", "$avp(s:dest)")
 modparam("dialplan", "fetch_rows", 4000)
 ...
 
-6. Exported Functions
+6. Functions
 
    6.1. dp_translate(id, src[/dest])
 
@@ -383,7 +383,7 @@ dp_translate("$var(x)", "$avp(s:src)/$var(y)");
 xlog("translated to var $var(y) \n");
 ...
 
-7. Exported MI Functions
+7. MI Commands
 
    7.1. dp_reload
    7.2. dp_translate

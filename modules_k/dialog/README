@@ -33,7 +33,7 @@ Carsten Bock
               4.1. Kamailio Modules
               4.2. External Libraries or Applications
 
-        5. Exported Parameters
+        5. Parameters
 
               5.1. enable_stats (integer)
               5.2. hash_size (integer)
@@ -77,8 +77,9 @@ Carsten Bock
               5.40. profiles_with_value (string)
               5.41. profiles_no_value (string)
               5.42. bridge_controller (string)
+              5.43. initial_cbs_inscript (string)
 
-        6. Exported Functions
+        6. Functions
 
               6.1. set_dlg_profile(profile,[value])
               6.2. unset_dlg_profile(profile,[value])
@@ -102,7 +103,7 @@ Carsten Bock
               7.4. expired_dialogs
               7.5. failed_dialogs
 
-        8. Exported MI Functions
+        8. MI Commands
 
               8.1. dlg_list
               8.2. dlg_list_ctx
@@ -137,6 +138,8 @@ Carsten Bock
         1. Available Functions
 
               1.1. register_dlgcb (dialog, type, cb, param, free_param_cb)
+
+              1.2. terminate_dlg (dlg, hdrs)
 
    3. Frequently Asked Questions
 
@@ -184,19 +187,20 @@ Carsten Bock
    1.40. Set profiles_with_value parameter
    1.41. Set profiles_no_value parameter
    1.42. Set bridge_controller parameter
-   1.43. set_dlg_profile usage
-   1.44. unset_dlg_profile usage
-   1.45. is_in_profile usage
-   1.46. get_profile_size usage
-   1.47. dlg_isflagset usage
-   1.48. dlg_setflag usage
-   1.49. dlg_resetflag usage
-   1.50. dlg_bye usage
-   1.51. dlg_refer usage
-   1.52. dlg_manage usage
-   1.53. dlg_bridge usage
-   1.54. dlg_get usage
-   1.55. is_known_dlg() usage
+   1.43. Set initial_cbs_inscript parameter
+   1.44. set_dlg_profile usage
+   1.45. unset_dlg_profile usage
+   1.46. is_in_profile usage
+   1.47. get_profile_size usage
+   1.48. dlg_isflagset usage
+   1.49. dlg_setflag usage
+   1.50. dlg_resetflag usage
+   1.51. dlg_bye usage
+   1.52. dlg_refer usage
+   1.53. dlg_manage usage
+   1.54. dlg_bridge usage
+   1.55. dlg_get usage
+   1.56. is_known_dlg() usage
 
 Chapter 1. Admin Guide
 
@@ -210,7 +214,7 @@ Chapter 1. Admin Guide
         4.1. Kamailio Modules
         4.2. External Libraries or Applications
 
-   5. Exported Parameters
+   5. Parameters
 
         5.1. enable_stats (integer)
         5.2. hash_size (integer)
@@ -254,8 +258,9 @@ Chapter 1. Admin Guide
         5.40. profiles_with_value (string)
         5.41. profiles_no_value (string)
         5.42. bridge_controller (string)
+        5.43. initial_cbs_inscript (string)
 
-   6. Exported Functions
+   6. Functions
 
         6.1. set_dlg_profile(profile,[value])
         6.2. unset_dlg_profile(profile,[value])
@@ -279,7 +284,7 @@ Chapter 1. Admin Guide
         7.4. expired_dialogs
         7.5. failed_dialogs
 
-   8. Exported MI Functions
+   8. MI Commands
 
         8.1. dlg_list
         8.2. dlg_list_ctx
@@ -375,7 +380,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-5. Exported Parameters
+5. Parameters
 
    5.1. enable_stats (integer)
    5.2. hash_size (integer)
@@ -419,6 +424,7 @@ Chapter 1. Admin Guide
    5.40. profiles_with_value (string)
    5.41. profiles_no_value (string)
    5.42. bridge_controller (string)
+   5.43. initial_cbs_inscript (string)
 
 5.1. enable_stats (integer)
 
@@ -545,9 +551,9 @@ modparam("dialog", "dlg_match_mode", 1)
    Default value is 1.
 
    Example 1.9. Set detect_spirals parameter
-                                ...
-                                modparam("dialog", "detect_spirals", 1)
-                                ...
+...
+modparam("dialog", "detect_spirals", 1)
+...
 
 5.10. db_url (string)
 
@@ -944,7 +950,30 @@ modparam("dialog", "profiles_no_value", "inbound ; outbound")
 modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
 ...
 
-6. Exported Functions
+5.43. initial_cbs_inscript (string)
+
+   If the initial dialog callbacks (i.e., DLGCB_CREATED and
+   DLGCB_SPIRALED) should be executed in-script or post-script. If
+   dlg_manage() is not used, the setting of this parameter does not
+   matter; otherwise, initial callbacks will be executed directly after
+   dlg_manage() is called if this parameter is enabled. If it is disabled,
+   initial callback execution will be postponed until configuration script
+   execution completes.
+
+   The supported values are:
+     * 0 - POST-SCRIPT - execute initial callbacks after the script
+       completes;
+     * 1 - IN-SCRIPT - execute initial callbacks during script execution,
+       i.e., right after dlg_manage() is called;
+
+   Default value is “1”.
+
+   Example 1.43. Set initial_cbs_inscript parameter
+...
+modparam("dialog", "initial_cbs_inscript", "0")
+...
+
+6. Functions
 
    6.1. set_dlg_profile(profile,[value])
    6.2. unset_dlg_profile(profile,[value])
@@ -976,7 +1005,7 @@ modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.43. set_dlg_profile usage
+   Example 1.44. set_dlg_profile usage
 ...
 set_dlg_profile("inbound_call");
 set_dlg_profile("caller","$fu");
@@ -995,7 +1024,7 @@ set_dlg_profile("caller","$fu");
    This function can be used from BRANCH_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.44. unset_dlg_profile usage
+   Example 1.45. unset_dlg_profile usage
 ...
 unset_dlg_profile("inbound_call");
 unset_dlg_profile("caller","$fu");
@@ -1018,7 +1047,7 @@ unset_dlg_profile("caller","$fu");
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.45. is_in_profile usage
+   Example 1.46. is_in_profile usage
 ...
 if (is_in_profile("inbound_call")) {
         log("this request belongs to a inbound call\n");
@@ -1047,7 +1076,7 @@ if (is_in_profile("caller","XX")) {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.46. get_profile_size usage
+   Example 1.47. get_profile_size usage
 ...
 if(get_profile_size("inbound_call","$avp(size)"))
     xlog("currently there are $avp(size) inbound calls\n");
@@ -1066,7 +1095,7 @@ if(get_profile_size("caller","$fu","$avp(size)"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.47. dlg_isflagset usage
+   Example 1.48. dlg_isflagset usage
 ...
 if(dlg_isflagset("1"))
 {
@@ -1084,7 +1113,7 @@ if(dlg_isflagset("1"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.48. dlg_setflag usage
+   Example 1.49. dlg_setflag usage
 ...
 dlg_setflag("1");
 ...
@@ -1099,7 +1128,7 @@ dlg_setflag("1");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.49. dlg_resetflag usage
+   Example 1.50. dlg_resetflag usage
 ...
 redlg_setflag("1");
 ...
@@ -1115,7 +1144,7 @@ redlg_setflag("1");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.50. dlg_bye usage
+   Example 1.51. dlg_bye usage
 ...
 dlg_bye("all");
 ...
@@ -1131,7 +1160,7 @@ dlg_bye("all");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.51. dlg_refer usage
+   Example 1.52. dlg_refer usage
 ...
 dlg_refer("caller", "sip:annoucement@kamailio.org");
 ...
@@ -1144,7 +1173,7 @@ dlg_refer("caller", "sip:annoucement@kamailio.org");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.52. dlg_manage usage
+   Example 1.53. dlg_manage usage
 ...
 modparam("dialog", "default_timeout", 100)
 ...
@@ -1172,7 +1201,7 @@ route {
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.53. dlg_bridge usage
+   Example 1.54. dlg_bridge usage
 ...
 dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    "sip:kamailio.org:5080");
@@ -1191,7 +1220,7 @@ dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.54. dlg_get usage
+   Example 1.55. dlg_get usage
 ...
 if(dlg_get("abcdef", "123", "456"))
 {
@@ -1215,7 +1244,7 @@ if(dlg_get("abcdef", "123", "456"))
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.55. is_known_dlg() usage
+   Example 1.56. is_known_dlg() usage
 ...
 if(!uri == myself) {
         if(is_known_dlg()) {
@@ -1253,7 +1282,7 @@ if(!uri == myself) {
 
    Returns the number of failed dialogs.
 
-8. Exported MI Functions
+8. MI Commands
 
    8.1. dlg_list
    8.2. dlg_list_ctx
@@ -1589,10 +1618,12 @@ Chapter 2. Developer Guide
    1. Available Functions
 
         1.1. register_dlgcb (dialog, type, cb, param, free_param_cb)
+        1.2. terminate_dlg (dlg, hdrs)
 
 1. Available Functions
 
    1.1. register_dlgcb (dialog, type, cb, param, free_param_cb)
+   1.2. terminate_dlg (dlg, hdrs)
 
 1.1.  register_dlgcb (dialog, type, cb, param, free_param_cb)
 
@@ -1610,13 +1641,19 @@ Chapter 2. Developer Guide
             global type (not associated to any dialog)
           + DLGCB_FAILED - called when the dialog was negatively replied
             (non-2xx) - it's a per dialog type.
+          + DLGCB_CONFIRMED_NA - called when the dialog is confirmed (2xx
+            replied) but the setup-concluding ACK message from the caller
+            is yet pending - it's a per dialog type.
           + DLGCB_CONFIRMED - called when the dialog is confirmed (2xx
             replied) and the setup-concluding ACK message from the caller
             has been seen - it's a per dialog type.
           + DLGCB_REQ_WITHIN - called when the dialog matches a sequential
-            request - it's a per dialog type.
+            request (excluding setup-concluding ACK messages which are
+            handled in DLGCB_CONFIRMED) - it's a per dialog type.
           + DLGCB_TERMINATED - called when the dialog is terminated via
             BYE - it's a per dialog type.
+          + DLGCB_TERMINATED_CONFIRMED - called when response to a BYE
+            request is received - it's a per dialog type.
           + DLGCB_EXPIRED - called when the dialog expires without
             receiving a BYE - it's a per dialog type.
           + DLGCB_EARLY - called when the dialog is created in an early
@@ -1636,6 +1673,15 @@ Chapter 2. Developer Guide
      * void *param - parameter to be passed to the callback function.
      * param_free callback_param_free - callback function to be called to
        free the param. Prototype is: “void (param_free_cb) (void *param);”
+
+1.2.  terminate_dlg (dlg, hdrs)
+
+   Terminate a Dialog
+
+   Meaning of parameters is as follows:
+     * struct dlg_cell* dlg - dialog to terminate.
+     * str* hdrs - string containg extra headers (full format) to be added
+       to the BYE requests of the dialog.
 
 Chapter 3. Frequently Asked Questions
 

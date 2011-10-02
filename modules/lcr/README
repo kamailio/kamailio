@@ -23,7 +23,7 @@ Juha Heinanen
               2.1. SIP Router modules
               2.2. External libraries or applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (string)
               3.2. lcr_gw_table (string)
@@ -63,7 +63,7 @@ Juha Heinanen
               3.36. dont_strip_or_tag_flag (integer)
               3.37. fetch_rows (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. load_gws(lcr_id[, uri_user[, caller_uri]])
               4.2. next_gw()
@@ -142,7 +142,7 @@ Chapter 1. Admin Guide
         2.1. SIP Router modules
         2.2. External libraries or applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (string)
         3.2. lcr_gw_table (string)
@@ -182,7 +182,7 @@ Chapter 1. Admin Guide
         3.36. dont_strip_or_tag_flag (integer)
         3.37. fetch_rows (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. load_gws(lcr_id[, uri_user[, caller_uri]])
         4.2. next_gw()
@@ -280,7 +280,7 @@ Chapter 1. Admin Guide
    running SIP Router with this module:
      * libpcre
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (string)
    3.2. lcr_gw_table (string)
@@ -761,7 +761,7 @@ modparam("lcr", "dont_strip_or_tag_flag", 10)
 modparam("lcr", "fetch_rows", 3000)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. load_gws(lcr_id[, uri_user[, caller_uri]])
    4.2. next_gw()
@@ -865,8 +865,9 @@ defunct_gw(60);
 
    lcr_id can be an integer constant or a pseudo variable holding an
    integer value. ip_addr can be a string or a pseudo variable holding a
-   string value. proto can be an integer constant (0 = ANY, 1 = UDP, 2 = TCP, 3
-   = TLS, 4 = SCTP) or a pseudo variable holding such an integer value.
+   string value. proto can be an integer constant (0 = ANY, 1 = UDP, 2 =
+   TCP, 3 = TLS, 4 = SCTP) or a pseudo variable holding such an integer
+   value.
 
    If request comes from a gateway, gateway's tag and flags are stored as
    a side effect to tag_avp and flags_avp, respectively, if the

@@ -21,11 +21,11 @@ Jan Janak
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. suffix (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. add_diversion(reason)
 
@@ -48,11 +48,11 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. suffix (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. add_diversion(reason)
 
@@ -85,7 +85,7 @@ Warning
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. suffix (string)
 
@@ -100,7 +100,7 @@ Warning
    Example 1.1. suffix usage
 modparam("diversion", "suffix", ";privacy=full")
 
-4. Exported Functions
+4. Functions
 
    4.1. add_diversion(reason)
 

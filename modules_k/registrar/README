@@ -32,7 +32,7 @@ Bogdan-Andre Iancu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. default_expires (integer)
               3.2. default_expires_range (integer)
@@ -55,7 +55,7 @@ Bogdan-Andre Iancu
               3.19. path_use_received (integer)
               3.20. reg_callid_avp (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. save(domain)
               4.2. save(domain,flags)
@@ -125,7 +125,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. default_expires (integer)
         3.2. default_expires_range (integer)
@@ -148,7 +148,7 @@ Chapter 1. Admin Guide
         3.19. path_use_received (integer)
         3.20. reg_callid_avp (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. save(domain)
         4.2. save(domain,flags)
@@ -222,7 +222,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. default_expires (integer)
    3.2. default_expires_range (integer)
@@ -555,7 +555,7 @@ modparam("registrar", "path_use_received", 1)
 modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. save(domain)
    4.2. save(domain,flags)

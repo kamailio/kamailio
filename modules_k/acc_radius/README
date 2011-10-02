@@ -29,7 +29,7 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. radius_config (string)
               3.2. radius_flag (integer)
@@ -37,7 +37,7 @@ Daniel-Constantin Mierla
               3.4. service_type (integer)
               3.5. radius_extra (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. acc_rad_request(comment)
 
@@ -60,7 +60,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. radius_config (string)
         3.2. radius_flag (integer)
@@ -68,7 +68,7 @@ Chapter 1. Admin Guide
         3.4. service_type (integer)
         3.5. radius_extra (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. acc_rad_request(comment)
 
@@ -100,7 +100,7 @@ Chapter 1. Admin Guide
      * radiusclient-ng 0.5.0 or higher. See
        http://developer.berlios.de/projects/radiusclient-ng/.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. radius_config (string)
    3.2. radius_flag (integer)
@@ -172,7 +172,7 @@ modparam("acc_radius", "service_type", 16)
 modparam("acc_radius", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. acc_rad_request(comment)
 

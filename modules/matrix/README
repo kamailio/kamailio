@@ -24,7 +24,7 @@ Henning Westerholt
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (string)
               3.2. matrix_table (string)
@@ -32,7 +32,7 @@ Henning Westerholt
               3.4. matrix_second_col (string)
               3.5. matrix_res_col (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. matrix (string first, string second, string dstavp)
 
@@ -78,7 +78,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (string)
         3.2. matrix_table (string)
@@ -86,7 +86,7 @@ Chapter 1. Admin Guide
         3.4. matrix_second_col (string)
         3.5. matrix_res_col (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. matrix (string first, string second, string dstavp)
 
@@ -127,7 +127,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * none
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (string)
    3.2. matrix_table (string)
@@ -190,7 +190,7 @@ modparam("matrix", "matrix_second_col", "second")
 modparam("matrix", "matrix_res_col", "res")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. matrix (string first, string second, string dstavp)
 

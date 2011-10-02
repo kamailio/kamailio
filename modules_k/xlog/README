@@ -27,7 +27,7 @@ Elena-Ramona Modroiu
               3.1. Kamailio Modules
               3.2. External Libraries or Applications
 
-        4. Exported Parameters
+        4. Parameters
 
               4.1. buf_size (integer)
               4.2. force_color (integer)
@@ -35,7 +35,7 @@ Elena-Ramona Modroiu
               4.4. prefix (str)
               4.5. log_facility (string)
 
-        5. Exported Functions
+        5. Functions
 
               5.1. xlog([level,] format)
               5.2. xdbg(format)
@@ -63,7 +63,7 @@ Chapter 1. Admin Guide
         3.1. Kamailio Modules
         3.2. External Libraries or Applications
 
-   4. Exported Parameters
+   4. Parameters
 
         4.1. buf_size (integer)
         4.2. force_color (integer)
@@ -71,7 +71,7 @@ Chapter 1. Admin Guide
         4.4. prefix (str)
         4.5. log_facility (string)
 
-   5. Exported Functions
+   5. Functions
 
         5.1. xlog([level,] format)
         5.2. xdbg(format)
@@ -119,7 +119,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-4. Exported Parameters
+4. Parameters
 
    4.1. buf_size (integer)
    4.2. force_color (integer)
@@ -184,7 +184,7 @@ modparam("xlog", "prefix", "-xlog: ")
    Example 1.5. log_facility example
 modparam("xlog", "log_facility", "LOG_DAEMON")
 
-5. Exported Functions
+5. Functions
 
    5.1. xlog([level,] format)
    5.2. xdbg(format)

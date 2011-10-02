@@ -30,13 +30,13 @@ Bastian Friedrich
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. enable (int)
               3.2. granularity (int)
               3.3. loglevel (int)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. bm_start_timer(name)
               4.2. bm_log_timer(name)
@@ -45,7 +45,7 @@ Bastian Friedrich
 
               5.1. $BM_time_diff
 
-        6. Exported MI Functions
+        6. MI Commands
 
               6.1. bm_enable_global
               6.2. bm_enable_timer
@@ -85,13 +85,13 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. enable (int)
         3.2. granularity (int)
         3.3. loglevel (int)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. bm_start_timer(name)
         4.2. bm_log_timer(name)
@@ -100,7 +100,7 @@ Chapter 1. Admin Guide
 
         5.1. $BM_time_diff
 
-   6. Exported MI Functions
+   6. MI Commands
 
         6.1. bm_enable_global
         6.2. bm_enable_timer
@@ -135,7 +135,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. enable (int)
    3.2. granularity (int)
@@ -191,7 +191,7 @@ modparam("benchmark", "loglevel", 4)
 
    This will set the logging level to L_DBG.
 
-4. Exported Functions
+4. Functions
 
    4.1. bm_start_timer(name)
    4.2. bm_log_timer(name)
@@ -250,7 +250,7 @@ bm_log_timer("test");
    bm_start_timer(name) and bm_log_timer(name). The value is 0 if no
    bm_log_timer() was called.
 
-6. Exported MI Functions
+6. MI Commands
 
    6.1. bm_enable_global
    6.2. bm_enable_timer

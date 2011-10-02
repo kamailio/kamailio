@@ -23,7 +23,7 @@ Di-Shi Sun
 
         1. Overview
         2. Dependencies
-        3. Exported Parameters
+        3. Parameters
 
               3.1. sp1_uri, sp2_uri, ..., sp16_uri
               3.2. sp1_weight, sp2_weight, ..., sp16_weight
@@ -43,7 +43,7 @@ Di-Shi Sun
               3.16. redirection_uri_format
               3.17. source_networkid_avp
 
-        4. Exported Functions
+        4. Functions
 
               4.1. checkospheader()
               4.2. validateospheader()
@@ -90,7 +90,7 @@ Chapter 1. Admin Guide
 
    1. Overview
    2. Dependencies
-   3. Exported Parameters
+   3. Parameters
 
         3.1. sp1_uri, sp2_uri, ..., sp16_uri
         3.2. sp1_weight, sp2_weight, ..., sp16_weight
@@ -110,7 +110,7 @@ Chapter 1. Admin Guide
         3.16. redirection_uri_format
         3.17. source_networkid_avp
 
-   4. Exported Functions
+   4. Functions
 
         4.1. checkospheader()
         4.2. validateospheader()
@@ -147,7 +147,7 @@ Chapter 1. Admin Guide
        http://www.transnexus.com/White%20Papers/Multi-Lateral_Peering_with
        _Kamailio_V1.4.pdf
 
-3. Exported Parameters
+3. Parameters
 
    3.1. sp1_uri, sp2_uri, ..., sp16_uri
    3.2. sp1_weight, sp2_weight, ..., sp16_weight
@@ -398,7 +398,7 @@ modparam("osp","redirection_uri_format",1)
    Example 1.17. Setting the source network ID AVP
 modparam("osp","source_networkid_avp","$avp(s:snid)")
 
-4. Exported Functions
+4. Functions
 
    4.1. checkospheader()
    4.2. validateospheader()

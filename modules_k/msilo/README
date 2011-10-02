@@ -35,7 +35,7 @@ Juha Heinanen
               2.1. Kamailio modules
               2.2. External libraries or applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (string)
               3.2. db_table (string)
@@ -66,7 +66,7 @@ Juha Heinanen
               3.27. max_messages (int)
               3.28. add_contact (int)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. m_store([owner])
               4.2. m_dump([owner])
@@ -127,7 +127,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio modules
         2.2. External libraries or applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (string)
         3.2. db_table (string)
@@ -158,7 +158,7 @@ Chapter 1. Admin Guide
         3.27. max_messages (int)
         3.28. add_contact (int)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. m_store([owner])
         4.2. m_dump([owner])
@@ -224,7 +224,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module:
      * none.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (string)
    3.2. db_table (string)
@@ -596,7 +596,7 @@ modparam("msilo", "max_messages", 0)
 modparam("msilo", "add_contact", 1)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. m_store([owner])
    4.2. m_dump([owner])

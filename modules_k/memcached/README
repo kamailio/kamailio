@@ -21,7 +21,7 @@ Henning Westerholt
               3.1. Kamailio Modules
               3.2. External Libraries or Applications
 
-        4. Exported Parameters
+        4. Parameters
 
               4.1. servers (str)
               4.2. expire (integer)
@@ -58,7 +58,7 @@ Chapter 1. Admin Guide
         3.1. Kamailio Modules
         3.2. External Libraries or Applications
 
-   4. Exported Parameters
+   4. Parameters
 
         4.1. servers (str)
         4.2. expire (integer)
@@ -174,7 +174,7 @@ xlog("stored value is $mct(test)"); # will return <null>
      * the libmemcache library.
      * the memcached server implementation.
 
-4. Exported Parameters
+4. Parameters
 
    4.1. servers (str)
    4.2. expire (integer)

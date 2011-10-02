@@ -21,13 +21,13 @@ Christian Schlatter
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. ldap_session (string)
               3.2. base_dn (string)
               3.3. search_scope (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. h350_sipuri_lookup(sip_uri)
               4.2. h350_auth_lookup(auth_username,
@@ -64,13 +64,13 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. ldap_session (string)
         3.2. base_dn (string)
         3.3. search_scope (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. h350_sipuri_lookup(sip_uri)
         4.2. h350_auth_lookup(auth_username,
@@ -176,7 +176,7 @@ objectClass                   top
      * OpenLDAP library (libldap), libldap header files (libldap-dev) are
        needed for compilation
 
-3. Exported Parameters
+3. Parameters
 
    3.1. ldap_session (string)
    3.2. base_dn (string)
@@ -212,7 +212,7 @@ modparam("h350", "base_dn", "ou=h350,dc=example,dc=com");
    Example 1.4. search_scope parameter usage
 modparam("h350", "search_scope", "sub");
 
-4. Exported Functions
+4. Functions
 
    4.1. h350_sipuri_lookup(sip_uri)
    4.2. h350_auth_lookup(auth_username, "username_avp_spec/pwd_avp_spec")

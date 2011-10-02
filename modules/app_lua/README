@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -23,12 +23,12 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. load (string)
               3.2. register (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. lua_dofile(path)
               4.2. lua_dostring(script)
@@ -56,12 +56,12 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. load (string)
         3.2. register (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. lua_dofile(path)
         4.2. lua_dostring(script)
@@ -105,7 +105,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * liblua5.1-dev - Lua devel library.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. load (string)
    3.2. register (string)
@@ -116,7 +116,7 @@ Chapter 1. Admin Guide
    use lua_run(function, params) to execute a function from the script at
    runtime.
 
-   Default value is "null".
+   Default value is “null”.
 
    Example 1.1. Set load parameter
 ...
@@ -144,21 +144,21 @@ modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
    Note that 'sr', 'sr.hdr' and 'sr.pv' modules are always registered to
    Lua.
 
-   Default value is "null".
+   Default value is “null”.
 
    Example 1.2. Set register parameter
 ...
 modparam("app_lua", "register", "sl")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. lua_dofile(path)
    4.2. lua_dostring(script)
    4.3. lua_run(function, params)
    4.4. lua_runstring(script)
 
-4.1. lua_dofile(path)
+4.1.  lua_dofile(path)
 
    Execute the Lua script stored in 'path'. The parameter can be a string
    with pseudo-variables evaluated at runtime.
@@ -168,7 +168,7 @@ modparam("app_lua", "register", "sl")
 lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
 ...
 
-4.2. lua_dostring(script)
+4.2.  lua_dostring(script)
 
    Execute the Lua script stored in parameter. The parameter can be a
    string with pseudo-variables.
@@ -181,7 +181,7 @@ if(!lua_dostring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 }
 ...
 
-4.3. lua_run(function, params)
+4.3.  lua_run(function, params)
 
    Execute the Lua function 'func' giving params as parameters. There can
    be up to 3 string parameters. The function must exist in the script
@@ -198,7 +198,7 @@ if(!lua_run("sr_append_fu_to_reply"))
 lua_run("lua_funcx", "$rU", "2");
 ...
 
-4.4. lua_runstring(script)
+4.4.  lua_runstring(script)
 
    Execute the Lua script stored in parameter. The parameter can be a
    string with pseudo-variables. The script is executed in Lua context

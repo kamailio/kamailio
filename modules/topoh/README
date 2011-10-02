@@ -23,7 +23,7 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. mask_key (str)
               3.2. mask_ip (str)
@@ -35,7 +35,7 @@ Daniel-Constantin Mierla
               3.8. callid_prefix (str)
               3.9. sanity_checks (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1.
 
@@ -61,7 +61,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. mask_key (str)
         3.2. mask_ip (str)
@@ -73,7 +73,7 @@ Chapter 1. Admin Guide
         3.8. callid_prefix (str)
         3.9. sanity_checks (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1.
 
@@ -110,7 +110,7 @@ Chapter 1. Admin Guide
      * None. In the future the module can be enhanced to use a stronger
        encryption algorithm.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. mask_key (str)
    3.2. mask_ip (str)
@@ -230,7 +230,7 @@ modparam("topoh", "callid_prefix", "***")
 modparam("topoh", "sanity_checks", 1)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1.
 

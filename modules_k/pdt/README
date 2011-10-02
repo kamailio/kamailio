@@ -28,7 +28,7 @@ Elena-Ramona Modroiu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (string)
               3.2. db_table (string)
@@ -40,13 +40,13 @@ Elena-Ramona Modroiu
               3.8. char_list (string)
               3.9. check_domain (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. prefix2domain(rewrite_mode, multidomain_mode)
               4.2. prefix2domain(rewrite_mode)
               4.3. prefix2domain()
 
-        5. Exported MI Functions
+        5. MI Commands
 
               5.1. pdt_list
               5.2. pdt_reload
@@ -77,7 +77,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (string)
         3.2. db_table (string)
@@ -89,13 +89,13 @@ Chapter 1. Admin Guide
         3.8. char_list (string)
         3.9. check_domain (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. prefix2domain(rewrite_mode, multidomain_mode)
         4.2. prefix2domain(rewrite_mode)
         4.3. prefix2domain()
 
-   5. Exported MI Functions
+   5. MI Commands
 
         5.1. pdt_list
         5.2. pdt_reload
@@ -162,7 +162,7 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (string)
    3.2. db_table (string)
@@ -278,7 +278,7 @@ modparam("pdt", "char_list", "0123456789*+")
 modparam("pdt", "check_domain", 0)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. prefix2domain(rewrite_mode, multidomain_mode)
    4.2. prefix2domain(rewrite_mode)
@@ -344,7 +344,7 @@ prefix2domain("2");
 prefix2domain();
 ...
 
-5. Exported MI Functions
+5. MI Commands
 
    5.1. pdt_list
    5.2. pdt_reload

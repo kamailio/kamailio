@@ -26,14 +26,14 @@ Juha Heinanen
               3.1. Kamailio Modules
               3.2. External Libraries or Applications
 
-        4. Exported Parameters
+        4. Parameters
 
               4.1. port(integer)
               4.2. log_file(string)
               4.3. reply_option (integer)
               4.4. buffer_size (integer)
 
-        5. Exported Functions
+        5. Functions
         6. Example
 
    List of Examples
@@ -55,14 +55,14 @@ Chapter 1. Admin Guide
         3.1. Kamailio Modules
         3.2. External Libraries or Applications
 
-   4. Exported Parameters
+   4. Parameters
 
         4.1. port(integer)
         4.2. log_file(string)
         4.3. reply_option (integer)
         4.4. buffer_size (integer)
 
-   5. Exported Functions
+   5. Functions
    6. Example
 
 1. Overview
@@ -117,7 +117,7 @@ Chapter 1. Admin Guide
    need to install the library and devel headers from the sources. In both
    cases, keep in mind to use the 0.9.10 version!!.
 
-4. Exported Parameters
+4. Parameters
 
    4.1. port(integer)
    4.2. log_file(string)
@@ -178,7 +178,7 @@ modparam("mi_xmlrpc", "reply_option", 0)
 modparam("mi_xmlrpc", "buffer_size", 8192)
 ...
 
-5. Exported Functions
+5. Functions
 
    No function exported to be used from configuration file.
 

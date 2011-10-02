@@ -21,14 +21,14 @@ Will Quan
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. auto_reload (integer)
               3.2. log_enable (integer)
               3.3. journal_roll_interval (integer seconds)
 
-        4. Exported Functions
-        5. Exported MI Functions
+        4. Functions
+        5. MI Commands
 
               5.1. bdb_reload
 
@@ -65,14 +65,14 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. auto_reload (integer)
         3.2. log_enable (integer)
         3.3. journal_roll_interval (integer seconds)
 
-   4. Exported Functions
-   5. Exported MI Functions
+   4. Functions
+   5. MI Commands
 
         5.1. bdb_reload
 
@@ -107,7 +107,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * Berkeley Berkeley DB - an embedded database. Version >= 4.6.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. auto_reload (integer)
    3.2. log_enable (integer)
@@ -158,11 +158,11 @@ modparam("db_berkeley", "log_enable", 1)
 modparam("db_berkeley", "journal_roll_interval", 3600)
 ...
 
-4. Exported Functions
+4. Functions
 
    No function exported to be used from configuration file.
 
-5. Exported MI Functions
+5. MI Commands
 
    5.1. bdb_reload
 

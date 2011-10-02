@@ -22,13 +22,13 @@ Ovidiu Sas
               3.1. Kamailio Modules
               3.2. External Libraries or Applications
 
-        4. Exported Parameters
+        4. Parameters
 
               4.1. qos_flag (integer)
 
-        5. Exported Functions
+        5. Functions
         6. Exported Statistics
-        7. Exported MI Functions
+        7. MI Commands
         8. Exported pseudo-variables
         9. Installation and Running
 
@@ -53,13 +53,13 @@ Chapter 1. Admin Guide
         3.1. Kamailio Modules
         3.2. External Libraries or Applications
 
-   4. Exported Parameters
+   4. Parameters
 
         4.1. qos_flag (integer)
 
-   5. Exported Functions
+   5. Functions
    6. Exported Statistics
-   7. Exported MI Functions
+   7. MI Commands
    8. Exported pseudo-variables
    9. Installation and Running
 
@@ -109,7 +109,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-4. Exported Parameters
+4. Parameters
 
    4.1. qos_flag (integer)
 
@@ -143,7 +143,7 @@ route {
   ...
 }
 
-5. Exported Functions
+5. Functions
 
    There are no exported functions that could be used in scripts.
 
@@ -151,7 +151,7 @@ route {
 
    There are no exported statistics for the qos module.
 
-7. Exported MI Functions
+7. MI Commands
 
    There are no exported MI functions for the qos module. Check the dialog
    MI functions for a way to inspect the internals of a dialog.

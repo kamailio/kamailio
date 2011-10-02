@@ -29,7 +29,7 @@ Klaus Darilion
 
         1. Overview
         2. Dependencies
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (string)
               3.2. dp_table (string)
@@ -44,7 +44,7 @@ Klaus Darilion
               3.11. domain_suffix_avp (string)
               3.12. send_socket_avp (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. dp_can_connect()
               4.2. dp_apply_policy()
@@ -81,7 +81,7 @@ Chapter 1. Admin Guide
 
    1. Overview
    2. Dependencies
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (string)
         3.2. dp_table (string)
@@ -96,7 +96,7 @@ Chapter 1. Admin Guide
         3.11. domain_suffix_avp (string)
         3.12. send_socket_avp (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. dp_can_connect()
         4.2. dp_apply_policy()
@@ -132,7 +132,7 @@ Chapter 1. Admin Guide
    listed modules must be loaded before this module):
      * database -- Any database module
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (string)
    3.2. dp_table (string)
@@ -273,7 +273,7 @@ modparam("domainpolicy", "domain_suffix_avp", "domainsuffix")
 # string named AVP
 modparam("domainpolicy", "send_socket_avp", "sendsocket")
 
-4. Exported Functions
+4. Functions
 
    4.1. dp_can_connect()
    4.2. dp_apply_policy()

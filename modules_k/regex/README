@@ -23,7 +23,7 @@ Iñaki Baz Castillo
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. file (string)
               3.2. max_groups (int)
@@ -33,12 +33,12 @@ Iñaki Baz Castillo
               3.6. pcre_dotall (int)
               3.7. pcre_extended (int)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. pcre_match (string, pcre_regex)
               4.2. pcre_match_group (string [, group])
 
-        5. Exported MI Functions
+        5. MI Commands
 
               5.1. regex_reload
 
@@ -73,7 +73,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. file (string)
         3.2. max_groups (int)
@@ -83,12 +83,12 @@ Chapter 1. Admin Guide
         3.6. pcre_dotall (int)
         3.7. pcre_extended (int)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. pcre_match (string, pcre_regex)
         4.2. pcre_match_group (string [, group])
 
-   5. Exported MI Functions
+   5. MI Commands
 
         5.1. regex_reload
 
@@ -127,7 +127,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * libpcre - the libraries of PCRE.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. file (string)
    3.2. max_groups (int)
@@ -239,7 +239,7 @@ modparam("regex", "pcre_dotall", 1)
 modparam("regex", "pcre_extended", 1)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. pcre_match (string, pcre_regex)
    4.2. pcre_match_group (string [, group])
@@ -306,7 +306,7 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 }
 ...
 
-5. Exported MI Functions
+5. MI Commands
 
    5.1. regex_reload
 

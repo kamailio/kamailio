@@ -39,7 +39,7 @@ Juha Heinanen
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Functions
+        3. Functions
 
               3.1. search(re)
               3.2. search_body(re)
@@ -136,7 +136,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Functions
+   3. Functions
 
         3.1. search(re)
         3.2. search_body(re)
@@ -210,7 +210,7 @@ From: medabeda
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Functions
+3. Functions
 
    3.1. search(re)
    3.2. search_body(re)

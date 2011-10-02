@@ -4,7 +4,7 @@ Juha Heinanen
 
    TutPro Inc.
 
-   Copyright � 2008-2009 Juha Heinanen
+   Copyright © 2008-2009 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -17,14 +17,14 @@ Juha Heinanen
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. http_query_timeout (int)
               3.2. forward_active (int)
               3.3. pres_db_url (string)
               3.4. xcap_table (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. http_query(url, result)
               4.2. xcap_auth_status(watcher_uri, presentity_uri)
@@ -61,14 +61,14 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. http_query_timeout (int)
         3.2. forward_active (int)
         3.3. pres_db_url (string)
         3.4. xcap_table (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. http_query(url, result)
         4.2. xcap_auth_status(watcher_uri, presentity_uri)
@@ -98,7 +98,7 @@ Chapter 1. Admin Guide
    deactivated.
 
    Function xcap_auth_status can be used to check from presence server
-   database, if watcher is authorized to subscribe event "presence" of
+   database, if watcher is authorized to subscribe event “presence” of
    presentity.
 
 2. Dependencies
@@ -117,7 +117,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * libcurl.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. http_query_timeout (int)
    3.2. forward_active (int)
@@ -139,7 +139,7 @@ modparam("utils", "http_query_timeout", 2)
 
    Defines if the forwarding callback should be installed.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.2. Set forward_active parameter
                                         ...
@@ -162,25 +162,25 @@ modparam("utils", "pres_db_url", "mysql://foo:secret@localhost/pres")
 
    Defines name of xcap table in presence server database.
 
-   Default value is "xcap".
+   Default value is “xcap”.
 
    Example 1.4. Set xcap_table parameter
 ...
 modparam("utils", "xcap_table", "pres_xcap")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. http_query(url, result)
    4.2. xcap_auth_status(watcher_uri, presentity_uri)
 
-4.1. http_query(url, result)
+4.1.  http_query(url, result)
 
-   Sends HTTP GET request according to URL given in "url" parameter, which
+   Sends HTTP GET request according to URL given in “url” parameter, which
    is a string that may contain pseudo variables.
 
    If HTTP server returns a class 2xx or 3xx reply, first line of reply's
-   body (if any) is stored in "result" parameter, which must be a writable
+   body (if any) is stored in “result” parameter, which must be a writable
    pseudo variable.
 
    Function returns reply code of HTTP reply or -1 if something went
@@ -199,10 +199,10 @@ switch ($retcode) {
 }
 ...
 
-4.2. xcap_auth_status(watcher_uri, presentity_uri)
+4.2.  xcap_auth_status(watcher_uri, presentity_uri)
 
    Function checks from presence server database if watcher is authorized
-   to subscribe event "presence" of presentity. Sphere checking is not
+   to subscribe event “presence” of presentity. Sphere checking is not
    included.
 
    Both watcher_uri and presentity_uri are pseudo variables. Function

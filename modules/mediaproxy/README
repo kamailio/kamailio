@@ -35,7 +35,7 @@ Dan Pascu
               5.6. ice_candidate (string)
               5.7. ice_candidate_avp (string)
 
-        6. Exported Functions
+        6. Functions
 
               6.1. engage_media_proxy()
               6.2. use_media_proxy()
@@ -76,7 +76,7 @@ Chapter 1. Admin Guide
         5.6. ice_candidate (string)
         5.7. ice_candidate_avp (string)
 
-   6. Exported Functions
+   6. Functions
 
         6.1. engage_media_proxy()
         6.2. use_media_proxy()
@@ -279,7 +279,7 @@ modparam("mediaproxy", "ice_candidate", "low-priority")
 modparam("mediaproxy", "ice_candidate_avp", "$avp(s:ice_candidate)")
 ...
 
-6. Exported Functions
+6. Functions
 
    6.1. engage_media_proxy()
    6.2. use_media_proxy()

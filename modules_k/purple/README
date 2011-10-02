@@ -25,14 +25,14 @@ Eric Ptak
               2.2. External Libraries or Applications
 
         3. Database
-        4. Exported Parameters
+        4. Parameters
 
               4.1. db_url (str)
               4.2. db_table (str)
               4.3. httpProxy_host (str)
               4.4. httpProxy_port (int)
 
-        5. Exported Functions
+        5. Functions
 
               5.1. purple_send_message()
               5.2. purple_handle_publish()
@@ -62,14 +62,14 @@ Chapter 1. Admin Guide
         2.2. External Libraries or Applications
 
    3. Database
-   4. Exported Parameters
+   4. Parameters
 
         4.1. db_url (str)
         4.2. db_table (str)
         4.3. httpProxy_host (str)
         4.4. httpProxy_port (int)
 
-   5. Exported Functions
+   5. Functions
 
         5.1. purple_send_message()
         5.2. purple_handle_publish()
@@ -167,7 +167,7 @@ CREATE TABLE purplemap (
 );
 ...
 
-4. Exported Parameters
+4. Parameters
 
    4.1. db_url (str)
    4.2. db_table (str)
@@ -218,7 +218,7 @@ modparam("purple", "httpProxy_host", "10.26.52.12")
 modparam("purple", "httpProxy_port", 3128)
 ...
 
-5. Exported Functions
+5. Functions
 
    5.1. purple_send_message()
    5.2. purple_handle_publish()

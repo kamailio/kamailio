@@ -21,13 +21,13 @@ Marco Lorrai
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. ping_interval (int)
               3.2. auto_reconnect (int)
               3.3. use_escape_common (int)
 
-        4. Exported Functions
+        4. Functions
         5. Installation and Running
 
               5.1. Installing
@@ -51,13 +51,13 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. ping_interval (int)
         3.2. auto_reconnect (int)
         3.3. use_escape_common (int)
 
-   4. Exported Functions
+   4. Functions
    5. Installation and Running
 
         5.1. Installing
@@ -91,7 +91,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. ping_interval (int)
    3.2. auto_reconnect (int)
@@ -137,7 +137,7 @@ modparam("db_unixodbc", "auto_reconnect", 0)
 modparam("db_unixodbc", "use_escape_common", 1)
 ...
 
-4. Exported Functions
+4. Functions
 
    NONE
 

@@ -22,7 +22,7 @@ Ron Winacott
               3.1. Kamailio Modules
               3.2. External Libraries or Applications
 
-        4. Exported Parameters
+        4. Parameters
 
               4.1. enable_stats (integer)
               4.2. min_se (integer)
@@ -30,7 +30,7 @@ Ron Winacott
               4.4. reject_to_small (integer)
               4.5. sst_flag (integer)
 
-        5. Exported Functions
+        5. Functions
 
               5.1. sstCheckMin(send_reply_flag)
 
@@ -61,7 +61,7 @@ Chapter 1. Admin Guide
         3.1. Kamailio Modules
         3.2. External Libraries or Applications
 
-   4. Exported Parameters
+   4. Parameters
 
         4.1. enable_stats (integer)
         4.2. min_se (integer)
@@ -69,7 +69,7 @@ Chapter 1. Admin Guide
         4.4. reject_to_small (integer)
         4.5. sst_flag (integer)
 
-   5. Exported Functions
+   5. Functions
 
         5.1. sstCheckMin(send_reply_flag)
 
@@ -179,7 +179,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-4. Exported Parameters
+4. Parameters
 
    4.1. enable_stats (integer)
    4.2. min_se (integer)
@@ -284,7 +284,7 @@ route {
   ...
 }
 
-5. Exported Functions
+5. Functions
 
    5.1. sstCheckMin(send_reply_flag)
 

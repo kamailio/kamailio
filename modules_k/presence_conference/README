@@ -19,11 +19,11 @@ Marius-Ovidiu Bucur
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. use_partial_states (int)
 
-        4. Exported MI Functions
+        4. MI Commands
 
               4.1. conference_reset
 
@@ -41,11 +41,11 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. use_partial_states (int)
 
-   4. Exported MI Functions
+   4. MI Commands
 
         4.1. conference_reset
 
@@ -73,7 +73,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * libxml2 - xml handling library.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. use_partial_states (int)
 
@@ -88,7 +88,7 @@ Chapter 1. Admin Guide
 modparam("presence_conference", "use_partial_states", 0)
 ...
 
-4. Exported MI Functions
+4. MI Commands
 
    4.1. conference_reset
 

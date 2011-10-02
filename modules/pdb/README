@@ -24,12 +24,12 @@ Henning Westerholt
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. timeout (integer)
               3.2. server (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. pdb_query (string query, string dstavp)
 
@@ -58,12 +58,12 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. timeout (integer)
         3.2. server (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. pdb_query (string query, string dstavp)
 
@@ -104,7 +104,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * The PDB server
 
-3. Exported Parameters
+3. Parameters
 
    3.1. timeout (integer)
    3.2. server (string)
@@ -131,7 +131,7 @@ modparam("pdb", "timeout", 10)
 modparam("pdb", "server", "localhost:10001,host.name:10001,192.168.1.7:10002")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. pdb_query (string query, string dstavp)
 

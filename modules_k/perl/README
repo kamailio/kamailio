@@ -23,12 +23,12 @@ Bastian Friedrich
               4.1. Kamailio Modules
               4.2. External Libraries or Applications
 
-        5. Exported Parameters
+        5. Parameters
 
               5.1. filename (string)
               5.2. modpath (string)
 
-        6. Exported Functions
+        6. Functions
 
               6.1. perl_exec_simple(func, [param])
               6.2. perl_exec(func, [param])
@@ -202,12 +202,12 @@ Chapter 1. Admin Guide
         4.1. Kamailio Modules
         4.2. External Libraries or Applications
 
-   5. Exported Parameters
+   5. Parameters
 
         5.1. filename (string)
         5.2. modpath (string)
 
-   6. Exported Functions
+   6. Functions
 
         6.1. perl_exec_simple(func, [param])
         6.2. perl_exec(func, [param])
@@ -315,7 +315,7 @@ if (perl_exec("ldap_alias")) {
    fetched from CPAN. Consider using the program “cpan2rpm” - which, in
    turn, is available on CPAN. It creates RPM files from CPAN.
 
-5. Exported Parameters
+5. Parameters
 
    5.1. filename (string)
    5.2. modpath (string)
@@ -347,7 +347,7 @@ modparam("perl", "filename", "/home/john/openser/myperl.pl")
 modparam("perl", "modpath", "/usr/local/lib/openser/perl/")
 ...
 
-6. Exported Functions
+6. Functions
 
    6.1. perl_exec_simple(func, [param])
    6.2. perl_exec(func, [param])

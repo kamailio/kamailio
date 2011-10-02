@@ -27,7 +27,7 @@ Anca-Maria Vamanu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (str)
               3.2. rooms_table (str)
@@ -37,11 +37,11 @@ Anca-Maria Vamanu
               3.6. outbound_proxy (str)
               3.7. extra_hdrs (str)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. imc_manager()
 
-        5. Exported MI Functions
+        5. MI Commands
 
               5.1. imc_list_rooms
               5.2. imc_list_members
@@ -75,7 +75,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (str)
         3.2. rooms_table (str)
@@ -85,11 +85,11 @@ Chapter 1. Admin Guide
         3.6. outbound_proxy (str)
         3.7. extra_hdrs (str)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. imc_manager()
 
-   5. Exported MI Functions
+   5. MI Commands
 
         5.1. imc_list_rooms
         5.2. imc_list_members
@@ -135,7 +135,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (str)
    3.2. rooms_table (str)
@@ -228,7 +228,7 @@ modparam("imc", "outbound_proxy", "sip:kamailio.org;transport=tcp")
 modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. imc_manager()
 
@@ -256,7 +256,7 @@ if(is_method("MESSAGE)
 }
 ...
 
-5. Exported MI Functions
+5. MI Commands
 
    5.1. imc_list_rooms
    5.2. imc_list_members

@@ -17,7 +17,7 @@ Otmar Lendl
 
         1. Overview
         2. Dependencies
-        3. Exported Parameters
+        3. Parameters
 
               3.1. domain_suffix (string)
               3.2. tel_uri_params (string)
@@ -25,7 +25,7 @@ Otmar Lendl
               3.4. branchlabel (string)
               3.5. bl_algorithm (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. enum_query(["suffix"[,"service"]])
               4.2. enum_pv_query("pvar"[,"suffix"[,"service"]])
@@ -51,7 +51,7 @@ Chapter 1. Admin Guide
 
    1. Overview
    2. Dependencies
-   3. Exported Parameters
+   3. Parameters
 
         3.1. domain_suffix (string)
         3.2. tel_uri_params (string)
@@ -59,7 +59,7 @@ Chapter 1. Admin Guide
         3.4. branchlabel (string)
         3.5. bl_algorithm (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. enum_query(["suffix"[,"service"]])
         4.2. enum_pv_query("pvar"[,"suffix"[,"service"]])
@@ -129,7 +129,7 @@ Chapter 1. Admin Guide
    modules must be loaded before this module):
      * No dependencies.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. domain_suffix (string)
    3.2. tel_uri_params (string)
@@ -222,7 +222,7 @@ i.1.e164.arpa.     TYPE65300  \# 14 (
    Example 1.7. Setting the bl_algorithm module parameter
 modparam("enum", "bl_algorithm", "txt")
 
-4. Exported Functions
+4. Functions
 
    4.1. enum_query(["suffix"[,"service"]])
    4.2. enum_pv_query("pvar"[,"suffix"[,"service"]])

@@ -36,7 +36,7 @@ Juha Heinanen
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. default_allow_file (string)
               3.2. default_deny_file (string)
@@ -58,7 +58,7 @@ Juha Heinanen
               3.18. peer_tag_avp (AVP string)
               3.19. peer_tag_mode (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. allow_routing()
               4.2. allow_routing(basename)
@@ -71,7 +71,7 @@ Juha Heinanen
               4.9. allow_source_address_group()
               4.10. allow_trusted([src_ip_pvar, proto_pvar])
 
-        5. Exported MI Functions
+        5. MI Commands
 
               5.1. address_reload
               5.2. address_dump
@@ -129,7 +129,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. default_allow_file (string)
         3.2. default_deny_file (string)
@@ -151,7 +151,7 @@ Chapter 1. Admin Guide
         3.18. peer_tag_avp (AVP string)
         3.19. peer_tag_mode (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. allow_routing()
         4.2. allow_routing(basename)
@@ -164,7 +164,7 @@ Chapter 1. Admin Guide
         4.9. allow_source_address_group()
         4.10. allow_trusted([src_ip_pvar, proto_pvar])
 
-   5. Exported MI Functions
+   5. MI Commands
 
         5.1. address_reload
         5.2. address_dump
@@ -329,7 +329,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. default_allow_file (string)
    3.2. default_deny_file (string)
@@ -513,7 +513,7 @@ modparam("permissions", "db_mode", 1)
 
 3.13. trusted_table (string)
 
-   Name of database table containing matching rules used by allow_register
+   Name of database table containing matching rules used by allow_trusted
    function.
 
    Default value is “trusted”.
@@ -599,7 +599,7 @@ modparam("permissions", "peer_tag_avp", "$avp(i:707)")
 modparam("permissions", "peer_tag_mode", "1")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. allow_routing()
    4.2. allow_routing(basename)
@@ -844,7 +844,7 @@ if (allow_trusted("$si", "$proto")) {
 };
 ...
 
-5. Exported MI Functions
+5. MI Commands
 
    5.1. address_reload
    5.2. address_dump

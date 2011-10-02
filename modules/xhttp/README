@@ -30,12 +30,12 @@ Alex Balashov
               3.1. Kamailio Modules
               3.2. External Libraries or Applications
 
-        4. Exported Parameters
+        4. Parameters
 
               4.1. url_skip (str)
               4.2. url_match (str)
 
-        5. Exported Functions
+        5. Functions
 
               5.1. xhttp_reply(code, reason, ctype, body)
 
@@ -56,12 +56,12 @@ Chapter 1. Admin Guide
         3.1. Kamailio Modules
         3.2. External Libraries or Applications
 
-   4. Exported Parameters
+   4. Parameters
 
         4.1. url_skip (str)
         4.2. url_match (str)
 
-   5. Exported Functions
+   5. Functions
 
         5.1. xhttp_reply(code, reason, ctype, body)
 
@@ -122,7 +122,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None
 
-4. Exported Parameters
+4. Parameters
 
    4.1. url_skip (str)
    4.2. url_match (str)
@@ -153,7 +153,7 @@ modparam("xhttp", "url_skip", "^/RPC2")
 modparam("xhttp", "url_match", "^/sip/")
 ...
 
-5. Exported Functions
+5. Functions
 
    5.1. xhttp_reply(code, reason, ctype, body)
 

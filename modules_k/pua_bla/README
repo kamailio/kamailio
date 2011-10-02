@@ -21,14 +21,14 @@ Anca-Maria Vamanu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. default_domain(str)
               3.2. header_name(str)
               3.3. outbound_proxy(str)
               3.4. server_address(str)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. bla_set_flag
               4.2. bla_handle_notify
@@ -52,14 +52,14 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. default_domain(str)
         3.2. header_name(str)
         3.3. outbound_proxy(str)
         3.4. server_address(str)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. bla_set_flag
         4.2. bla_handle_notify
@@ -87,7 +87,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * libxml.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. default_domain(str)
    3.2. header_name(str)
@@ -140,7 +140,7 @@ modparam("pua_bla", "outbound_proxy", "sip:proxy@kamailio.org")
 modparam("pua_bla", "server_address", "sip:bla@160.34.23.12")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. bla_set_flag
    4.2. bla_handle_notify

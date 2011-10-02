@@ -27,7 +27,7 @@ Bogdan-Andrei Iancu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (string)
               3.2. db_table (string)
@@ -37,7 +37,7 @@ Bogdan-Andrei Iancu
               3.6. use_uri_table (integer)
               3.7. use_domain (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. check_to()
               4.2. check_from()
@@ -66,7 +66,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (string)
         3.2. db_table (string)
@@ -76,7 +76,7 @@ Chapter 1. Admin Guide
         3.6. use_uri_table (integer)
         3.7. use_domain (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. check_to()
         4.2. check_from()
@@ -102,7 +102,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (string)
    3.2. db_table (string)
@@ -200,7 +200,7 @@ modparam("uri_db", "use_uri_table", 1)
 modparam("uri_db", "use_domain", 1)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. check_to()
    4.2. check_from()

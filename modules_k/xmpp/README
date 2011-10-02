@@ -23,7 +23,7 @@ Andreea Spirea
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. backend(string)
               3.2. domain_separator (string)
@@ -34,7 +34,7 @@ Andreea Spirea
               3.7. xmpp_password (string)
               3.8. outbound_proxy (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. xmpp_send_message()
 
@@ -62,7 +62,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. backend(string)
         3.2. domain_separator (string)
@@ -73,7 +73,7 @@ Chapter 1. Admin Guide
         3.7. xmpp_password (string)
         3.8. outbound_proxy (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. xmpp_send_message()
 
@@ -169,7 +169,7 @@ Chapter 1. Admin Guide
      * expat - used for parsing/building XML. Linux package:
        libexpat1-devel
 
-3. Exported Parameters
+3. Parameters
 
    3.1. backend(string)
    3.2. domain_separator (string)
@@ -297,7 +297,7 @@ Chapter 1. Admin Guide
  modparam("xmpp", "outbound_proxy", "sip:kamailio.org;transport=tcp")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. xmpp_send_message()
 

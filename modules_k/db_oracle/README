@@ -31,12 +31,12 @@ Iouri Kharon
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. timeout (fixedpoint)
               3.2. reconnect (fixedpoint)
 
-        4. Exported Functions
+        4. Functions
         5. Installation
         6. Utility openser_orasel
 
@@ -56,12 +56,12 @@ Chapter 1. User's Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. timeout (fixedpoint)
         3.2. reconnect (fixedpoint)
 
-   4. Exported Functions
+   4. Functions
    5. Installation
    6. Utility openser_orasel
 
@@ -90,7 +90,7 @@ Chapter 1. User's Guide
      * instantclient-sdk-10.2.0.3 - the development headers and libraries
        of OCI.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. timeout (fixedpoint)
    3.2. reconnect (fixedpoint)
@@ -129,7 +129,7 @@ modparam("db_oracle", "timeout", 0)
 modparam("db_oracle", "reconnect", 0.5)
 ...
 
-4. Exported Functions
+4. Functions
 
    No function exported to be used from configuration file.
 

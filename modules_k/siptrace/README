@@ -31,7 +31,7 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (str)
               3.2. table (str)
@@ -47,11 +47,11 @@ Daniel-Constantin Mierla
               3.12. xheaders_read (integer)
               3.13. hep_mode_on (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. sip_trace()
 
-        5. Exported MI Functions
+        5. MI Commands
 
               5.1. sip_trace
 
@@ -85,7 +85,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (str)
         3.2. table (str)
@@ -101,11 +101,11 @@ Chapter 1. Admin Guide
         3.12. xheaders_read (integer)
         3.13. hep_mode_on (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. sip_trace()
 
-   5. Exported MI Functions
+   5. MI Commands
 
         5.1. sip_trace
 
@@ -151,7 +151,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (str)
    3.2. table (str)
@@ -347,7 +347,7 @@ modparam("siptrace", "xheaders_read", 0)
 modparam("siptrace", "hep_mode_on", 1)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. sip_trace()
 
@@ -364,7 +364,7 @@ modparam("siptrace", "hep_mode_on", 1)
 sip_trace();
 ...
 
-5. Exported MI Functions
+5. MI Commands
 
    5.1. sip_trace
 

@@ -21,18 +21,18 @@ Bogdan-Andrei Iancu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. sampling_time_unit (integer)
               3.2. reqs_density_per_unit (integer)
               3.3. remove_latency (integer)
               3.4. pike_log_level (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. pike_check_req()
 
-        5. Exported MI Functions
+        5. MI Commands
 
               5.1. pike_list
 
@@ -57,18 +57,18 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. sampling_time_unit (integer)
         3.2. reqs_density_per_unit (integer)
         3.3. remove_latency (integer)
         3.4. pike_log_level (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. pike_check_req()
 
-   5. Exported MI Functions
+   5. MI Commands
 
         5.1. pike_list
 
@@ -98,7 +98,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. sampling_time_unit (integer)
    3.2. reqs_density_per_unit (integer)
@@ -166,7 +166,7 @@ modparam("pike", "remove_latency", 130)
 modparam("pike", "pike_log_level", -1)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. pike_check_req()
 
@@ -192,7 +192,7 @@ Warning
 if (!pike_check_req()) { exit; };
 ...
 
-5. Exported MI Functions
+5. MI Commands
 
    5.1. pike_list
 

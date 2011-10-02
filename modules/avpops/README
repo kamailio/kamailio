@@ -24,7 +24,7 @@ Ramona-Elena Modroiu
               2.2. External Libraries or Applications
 
         3. AVP naming format
-        4. Exported Parameters
+        4. Parameters
 
               4.1. db_url (string)
               4.2. avp_table (string)
@@ -37,7 +37,7 @@ Ramona-Elena Modroiu
               4.9. type_column (string)
               4.10. db_scheme (string)
 
-        5. Exported Functions
+        5. Functions
 
               5.1. avp_db_load(source,name)
               5.2. avp_db_store(source,name)
@@ -91,7 +91,7 @@ Chapter 1. Admin Guide
         2.2. External Libraries or Applications
 
    3. AVP naming format
-   4. Exported Parameters
+   4. Parameters
 
         4.1. db_url (string)
         4.2. avp_table (string)
@@ -104,7 +104,7 @@ Chapter 1. Admin Guide
         4.9. type_column (string)
         4.10. db_scheme (string)
 
-   5. Exported Functions
+   5. Functions
 
         5.1. avp_db_load(source,name)
         5.2. avp_db_store(source,name)
@@ -187,7 +187,7 @@ $avp(i3:123) - the AVP identified by the integer 123 which has script flags 1
     and 2 set
 ...
 
-4. Exported Parameters
+4. Parameters
 
    4.1. db_url (string)
    4.2. avp_table (string)
@@ -330,7 +330,7 @@ modparam("avpops","db_scheme",
 "scheme1:table=subscriber;uuid_col=uuid;value_col=first_name")
 ...
 
-5. Exported Functions
+5. Functions
 
    5.1. avp_db_load(source,name)
    5.2. avp_db_store(source,name)

@@ -23,13 +23,13 @@ Juha Heinanen
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. radius_config (string)
               3.2. verify_destination_service_type (integer)
               3.3. verify_source_service_type (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. verify_destination()
               4.2. verify_source()
@@ -52,13 +52,13 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. radius_config (string)
         3.2. verify_destination_service_type (integer)
         3.3. verify_source_service_type (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. verify_destination()
         4.2. verify_source()
@@ -105,7 +105,7 @@ Chapter 1. Admin Guide
      * radiusclient-ng 0.5.0 or higher -- library and development files.
        See http://developer.berlios.de/projects/radiusclient-ng/.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. radius_config (string)
    3.2. verify_destination_service_type (integer)
@@ -145,7 +145,7 @@ modparam("peering", "verify_destination_service_type", 21)
    Example 1.3. verify_source_service_type parameter usage
 modparam("peering", "verify_source_service_type", 22)
 
-4. Exported Functions
+4. Functions
 
    4.1. verify_destination()
    4.2. verify_source()

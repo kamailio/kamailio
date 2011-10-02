@@ -21,7 +21,7 @@ Bogdan-Andrei Iancu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (string)
               3.2. db_table (string)
@@ -40,13 +40,13 @@ Bogdan-Andrei Iancu
               3.15. lookup_append_branches (int)
               3.16. use_domain (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. cpl_run_script(type,mode)
               4.2. cpl_process_register()
               4.3. cpl_process_register_norpl()
 
-        5. Exported MI Functions
+        5. MI Commands
 
               5.1. LOAD_CPL
               5.2. REMOVE_CPL
@@ -88,7 +88,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (string)
         3.2. db_table (string)
@@ -107,13 +107,13 @@ Chapter 1. Admin Guide
         3.15. lookup_append_branches (int)
         3.16. use_domain (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. cpl_run_script(type,mode)
         4.2. cpl_process_register()
         4.3. cpl_process_register_norpl()
 
-   5. Exported MI Functions
+   5. MI Commands
 
         5.1. LOAD_CPL
         5.2. REMOVE_CPL
@@ -154,7 +154,7 @@ Chapter 1. Admin Guide
        merged into libxml2. This library contains an engine for XML
        parsing, DTD validation and DOM manipulation.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (string)
    3.2. db_table (string)
@@ -385,7 +385,7 @@ modparam("cpl-c","lookup_append_branches",1)
 modparam("cpl-c","use_domain",1)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. cpl_run_script(type,mode)
    4.2. cpl_process_register()
@@ -494,7 +494,7 @@ if (method=="REGISTER") {
 }
 ...
 
-5. Exported MI Functions
+5. MI Commands
 
    5.1. LOAD_CPL
    5.2. REMOVE_CPL

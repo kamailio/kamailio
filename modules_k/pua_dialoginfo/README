@@ -36,7 +36,7 @@ Klaus Darilion
               4.1. Kamailio Modules
               4.2. External Libraries or Applications
 
-        5. Exported Parameters
+        5. Parameters
 
               5.1. include_callid (int)
               5.2. include_tags (int)
@@ -44,7 +44,7 @@ Klaus Darilion
               5.4. override_lifetime (int)
               5.5. caller_confirmed (int)
 
-        6. Exported Functions
+        6. Functions
 
    List of Examples
 
@@ -66,7 +66,7 @@ Chapter 1. Admin Guide
         4.1. Kamailio Modules
         4.2. External Libraries or Applications
 
-   5. Exported Parameters
+   5. Parameters
 
         5.1. include_callid (int)
         5.2. include_tags (int)
@@ -74,7 +74,7 @@ Chapter 1. Admin Guide
         5.4. override_lifetime (int)
         5.5. caller_confirmed (int)
 
-   6. Exported Functions
+   6. Functions
 
 1. Overview
 
@@ -239,7 +239,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * libxml.
 
-5. Exported Parameters
+5. Parameters
 
    5.1. include_callid (int)
    5.2. include_tags (int)
@@ -319,4 +319,4 @@ modparam("pua_dialoginfo", "override_lifetime", 300)
 modparam("pua_dialoginfo", "caller_confirmed", 1)
 ...
 
-6. Exported Functions
+6. Functions

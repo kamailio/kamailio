@@ -21,7 +21,7 @@ Anca-Maria Vamanu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. hash_size (int)
               3.2. db_url (str)
@@ -34,7 +34,7 @@ Anca-Maria Vamanu
               3.9. reginfo_increase_version (int)
               3.10. check_remote_contact (int)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. pua_update_contact()
 
@@ -77,7 +77,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. hash_size (int)
         3.2. db_url (str)
@@ -90,7 +90,7 @@ Chapter 1. Admin Guide
         3.9. reginfo_increase_version (int)
         3.10. check_remote_contact (int)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. pua_update_contact()
 
@@ -137,7 +137,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * libxml.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. hash_size (int)
    3.2. db_url (str)
@@ -285,7 +285,7 @@ modparam("pua", "reginfo_increase_version", 1)
 modparam("pua", "check_remote_contact", 0)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. pua_update_contact()
 

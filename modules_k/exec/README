@@ -25,12 +25,12 @@ Jan Janak
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. setvars (integer)
               3.2. time_to_kill (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. exec_dset(command)
               4.2. exec_msg(command)
@@ -56,12 +56,12 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. setvars (integer)
         3.2. time_to_kill (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. exec_dset(command)
         4.2. exec_msg(command)
@@ -110,7 +110,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. setvars (integer)
    3.2. time_to_kill (integer)
@@ -139,7 +139,7 @@ modparam("exec", "setvars", 1)
 modparam("exec", "time_to_kill", 20)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. exec_dset(command)
    4.2. exec_msg(command)

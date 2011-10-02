@@ -19,13 +19,13 @@ Maxim Sobolev
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. script_name (string)
               3.2. mod_init_function (string)
               3.3. child_init_method (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. python_exec(method [, mystr])
 
@@ -46,13 +46,13 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. script_name (string)
         3.2. mod_init_function (string)
         3.3. child_init_method (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. python_exec(method [, mystr])
 
@@ -77,7 +77,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * python-dev - Python devel library.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. script_name (string)
    3.2. mod_init_function (string)
@@ -116,7 +116,7 @@ modparam("app_python", "mod_init_function", "my_mod_init")
 modparam("app_python", "child_init_method", "my_child_init")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. python_exec(method [, mystr])
 

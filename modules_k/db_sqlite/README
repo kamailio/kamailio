@@ -19,8 +19,8 @@ Timo Teräs
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
-        4. Exported Functions
+        3. Parameters
+        4. Functions
 
 Chapter 1. Admin Guide
 
@@ -32,8 +32,8 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
-   4. Exported Functions
+   3. Parameters
+   4. Functions
 
 1. Overview
 
@@ -58,10 +58,10 @@ Chapter 1. Admin Guide
      * SQlite 3 devel library - to compile the module e.g. libsqlite3-dev
      * SQlite 3 utilities - for kamdbctl e.g. sqlite3
 
-3. Exported Parameters
+3. Parameters
 
    NONE
 
-4. Exported Functions
+4. Functions
 
    NONE

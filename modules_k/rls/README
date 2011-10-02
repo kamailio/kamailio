@@ -21,7 +21,7 @@ Anca-Maria Vamanu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url(str)
               3.2. xcap_table(str)
@@ -39,7 +39,7 @@ Anca-Maria Vamanu
               3.14. server_address (str)
               3.15. max_notify_body_length (int)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. rls_handle_subscribe()
               4.2. rls_handle_notify()
@@ -80,7 +80,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url(str)
         3.2. xcap_table(str)
@@ -98,7 +98,7 @@ Chapter 1. Admin Guide
         3.14. server_address (str)
         3.15. max_notify_body_length (int)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. rls_handle_subscribe()
         4.2. rls_handle_notify()
@@ -153,7 +153,7 @@ Chapter 1. Admin Guide
 
      * libxml.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url(str)
    3.2. xcap_table(str)
@@ -353,7 +353,7 @@ modparam("rls", "server_address", "sip:rls@ip.address.ofyour.proxy:5060")
 modparam("rls", "max_notify_body_length", 32000)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. rls_handle_subscribe()
    4.2. rls_handle_notify()

@@ -44,13 +44,13 @@ Hendrik Scholz
               5.1. Kamailio Modules
               5.2. External Libraries or Applications
 
-        6. Exported Parameters
+        6. Parameters
 
               6.1. timer_interval (integer)
               6.2. queue (integer:string)
               6.3. pipe (integer:string:integer)
 
-        7. Exported Functions
+        7. Functions
 
               7.1. rl_check([pvar])
               7.2. rl_check_pipe([pipe_no])
@@ -98,13 +98,13 @@ Chapter 1. Admin Guide
         5.1. Kamailio Modules
         5.2. External Libraries or Applications
 
-   6. Exported Parameters
+   6. Parameters
 
         6.1. timer_interval (integer)
         6.2. queue (integer:string)
         6.3. pipe (integer:string:integer)
 
-   7. Exported Functions
+   7. Functions
 
         7.1. rl_check([pvar])
         7.2. rl_check_pipe([pipe_no])
@@ -253,7 +253,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-6. Exported Parameters
+6. Parameters
 
    6.1. timer_interval (integer)
    6.2. queue (integer:string)
@@ -322,7 +322,7 @@ modparam("ratelimit", "pipe", "3:FEEDBACK:80")
 modparam("ratelimit", "pipe", "4:NETWORK:10000")
 ...
 
-7. Exported Functions
+7. Functions
 
    7.1. rl_check([pvar])
    7.2. rl_check_pipe([pipe_no])

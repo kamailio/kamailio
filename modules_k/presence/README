@@ -31,7 +31,7 @@ Juha Heinanen
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url(str)
               3.2. presentity_table(str)
@@ -51,7 +51,7 @@ Juha Heinanen
               3.16. enable_sphere_check (int)
               3.17. timeout_rm_subs (int)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. handle_publish(char* sender_uri)
               4.2. handle_subscribe()
@@ -59,7 +59,7 @@ Juha Heinanen
               4.4. pres_refresh_watchers(uri, event, type)
               4.5. pres_update_watchers(uri, event)
 
-        5. Exported MI Functions
+        5. MI Commands
 
               5.1. refreshWatchers
               5.2. cleanup
@@ -122,7 +122,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url(str)
         3.2. presentity_table(str)
@@ -142,7 +142,7 @@ Chapter 1. Admin Guide
         3.16. enable_sphere_check (int)
         3.17. timeout_rm_subs (int)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. handle_publish(char* sender_uri)
         4.2. handle_subscribe()
@@ -150,7 +150,7 @@ Chapter 1. Admin Guide
         4.4. pres_refresh_watchers(uri, event, type)
         4.5. pres_update_watchers(uri, event)
 
-   5. Exported MI Functions
+   5. MI Commands
 
         5.1. refreshWatchers
         5.2. cleanup
@@ -209,7 +209,7 @@ Chapter 1. Admin Guide
 
      * libxml.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url(str)
    3.2. presentity_table(str)
@@ -452,7 +452,7 @@ modparam("presence", "enable_sphere_check", 1)
 modparam("presence", "timeout_rm_subs", 0)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. handle_publish(char* sender_uri)
    4.2. handle_subscribe()
@@ -577,7 +577,7 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
 
-5. Exported MI Functions
+5. MI Commands
 
    5.1. refreshWatchers
    5.2. cleanup

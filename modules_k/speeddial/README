@@ -23,7 +23,7 @@ Elena-Ramona Modroiu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (string)
               3.2. user_column (string)
@@ -34,7 +34,7 @@ Elena-Ramona Modroiu
               3.7. domain_prefix (string)
               3.8. use_domain (int)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. sd_lookup(table [, owner])
 
@@ -65,7 +65,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (string)
         3.2. user_column (string)
@@ -76,7 +76,7 @@ Chapter 1. Admin Guide
         3.7. domain_prefix (string)
         3.8. use_domain (int)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. sd_lookup(table [, owner])
 
@@ -107,7 +107,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (string)
    3.2. user_column (string)
@@ -213,7 +213,7 @@ modparam("speeddial", "domain_prefix", "tel.")
 modparam("speeddial", "use_domain", 1)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. sd_lookup(table [, owner])
 

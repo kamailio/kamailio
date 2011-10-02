@@ -40,14 +40,14 @@ Jan Janak
               3.1. Modules
               3.2. External Libraries or Applications
 
-        4. Exported Parameters
+        4. Parameters
 
               4.1. radius_config (string)
               4.2. service_type (integer)
               4.3. auth_extra (string)
               4.4. use_ruri_flag (integer)
 
-        5. Exported Functions
+        5. Functions
 
               5.1. radius_www_authorize(realm [, uri_user])
               5.2. radius_proxy_authorize(realm [, uri_user])
@@ -73,14 +73,14 @@ Chapter 1. Admin Guide
         3.1. Modules
         3.2. External Libraries or Applications
 
-   4. Exported Parameters
+   4. Parameters
 
         4.1. radius_config (string)
         4.2. service_type (integer)
         4.3. auth_extra (string)
         4.4. use_ruri_flag (integer)
 
-   5. Exported Functions
+   5. Functions
 
         5.1. radius_www_authorize(realm [, uri_user])
         5.2. radius_proxy_authorize(realm [, uri_user])
@@ -147,7 +147,7 @@ Chapter 1. Admin Guide
      * radiusclient-ng 0.5.0 or higher -- library and development files.
        See http://developer.berlios.de/projects/radiusclient-ng/.
 
-4. Exported Parameters
+4. Parameters
 
    4.1. radius_config (string)
    4.2. service_type (integer)
@@ -204,7 +204,7 @@ modparam("auth_radius", "auth_extra", "Acct-Session-Id=$ci")
    Example 1.5. use_ruri_flag parameter usage
 modparam("auth_radius", "use_ruri_flag", 22)
 
-5. Exported Functions
+5. Functions
 
    5.1. radius_www_authorize(realm [, uri_user])
    5.2. radius_proxy_authorize(realm [, uri_user])
