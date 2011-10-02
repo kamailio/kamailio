@@ -56,6 +56,11 @@
 							<emphasis>libjson</emphasis> - http://metaparadigm.com/json-c/
 						</para>
 					</listitem>
+					<listitem>
+						<para>
+							<emphasis>libevent</emphasis> - http://libevent.org/
+						</para>
+					</listitem>
 				</itemizedlist>
 			</para>
 		</section>
