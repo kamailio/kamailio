@@ -79,6 +79,7 @@ typedef struct _reg_uac
 	time_t timer_expires;
 	unsigned int reg_delay;
 	time_t reg_init;
+	gen_lock_t *lock;
 } reg_uac_t;
 
 typedef struct _reg_item
@@ -717,7 +718,7 @@ reg_uac_t *reg_ht_get_byuuid(str *uuid)
 		if((it->r->h_uuid==hash) && (it->r->l_uuid.len==uuid->len)
 				&& (strncmp(it->r->l_uuid.s, uuid->s, uuid->len)==0))
 		{
-			lock_release(&_reg_htable->entries[slot].lock);
+			it->r->lock = &_reg_htable->entries[slot].lock;
 			return it->r;
 		}
 		it = it->next;
@@ -755,11 +756,11 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 				if((it->r->l_domain.len==domain->len)
 						&& (strncmp(it->r->l_domain.s, domain->s, domain->len)==0))
 				{
-					lock_release(&_reg_htable->entries[slot].lock);
+					it->r->lock = &_reg_htable->entries[slot].lock;
 					return it->r;
 				}
 			} else {
-				lock_release(&_reg_htable->entries[slot].lock);
+				it->r->lock = &_reg_htable->entries[slot].lock;
 				return it->r;
 			}
 		}
@@ -1010,6 +1011,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		}
 
 		ri->flags |= UAC_REG_AUTHSENT;
+		lock_release(ri->lock);
 		return;
 	} else {
 		LM_ERR("got sip response %d while registering [%.*s]\n",
@@ -1025,8 +1027,10 @@ error:
 		counter_inc(regdisabled);
 	}
 done:
-	if(ri)
+	if(ri) {
 		ri->flags &= ~(UAC_REG_ONGOING|UAC_REG_AUTHSENT);
+		lock_release(ri->lock);
+	}
 	shm_free(uuid);
 	counter_inc(regactive);
 }
@@ -1336,6 +1340,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 	db1_con_t *reg_db_con = NULL;
 	db_func_t reg_dbf;
 	reg_uac_t reg;
+	reg_uac_t *cur_reg;
 	db_key_t db_cols[12] = {
 		&l_uuid_column,
 		&l_username_column,
@@ -1432,10 +1437,12 @@ int uac_reg_db_refresh(str *pl_uuid)
 	reg.reg_delay = (unsigned int)RES_ROWS(db_res)[i].values[11].val.int_val;
 
 	lock_get(_reg_htable_gc_lock);
-	if(reg_ht_get_byuuid(pl_uuid)!=NULL)
+	if((cur_reg=reg_ht_get_byuuid(pl_uuid))!=NULL)
 	{
+		lock_release(cur_reg->lock);
 		if(reg_ht_update_attrs(&reg)<0)
 		{
+			lock_release(cur_reg->lock);
 			lock_release(_reg_htable_gc_lock);
 			LM_ERR("Error updating reg to htable\n");
 			goto error;
@@ -1509,6 +1516,7 @@ int  uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode)
 				reg->l_uuid.len, reg->l_uuid.s);
 		s_ruri.s = b_ruri; s_ruri.len = strlen(s_ruri.s);
 	}
+	lock_release(reg->lock);
 	memset(&val, 0, sizeof(pv_value_t));
 	val.flags |= PV_VAL_STR;
 	val.rs = s_ruri;
@@ -1558,6 +1566,7 @@ int uac_reg_status(struct sip_msg *msg, str *src, int mode)
 	else
 		ret = -99;
 
+	lock_release(reg->lock);
 	return ret;
 }
 
@@ -1613,13 +1622,13 @@ int uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode)
 	init_run_actions_ctx(&ra_ctx);
 	if (do_action(&ra_ctx, &act, msg) < 0) {
 		LM_ERR("error while setting request uri\n");
-		return -1;
+		goto error;
 	}
 
 	// Set auth_proxy ($du)
 	if (set_dst_uri(msg, &reg->auth_proxy) < 0) {
 		LM_ERR("error while setting outbound proxy\n");
-		return -1;
+		goto error;
 	}
 
 	memset(&val, 0, sizeof(pv_value_t));
@@ -1629,24 +1638,29 @@ int uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode)
 	val.rs = reg->realm;
 	if(pv_set_spec_value(msg, &auth_realm_spec, 0, &val)!=0) {
 		LM_ERR("error while setting auth_realm\n");
-		return -1;
+		goto error;
 	}
 
 	// Set auth_username
 	val.rs = reg->auth_username;
 	if(pv_set_spec_value(msg, &auth_username_spec, 0, &val)!=0) {
 		LM_ERR("error while setting auth_username\n");
-		return -1;
+		goto error;
 	}
 
 	// Set auth_password
 	val.rs = reg->auth_password;
 	if(pv_set_spec_value(msg, &auth_password_spec, 0, &val)!=0) {
 		LM_ERR("error while setting auth_password\n");
-		return -1;
+		goto error;
 	}
 
+	lock_release(reg->lock);
 	return 1;
+
+error:
+	lock_release(reg->lock);
+	return -1;
 }
 
 static const char* rpc_uac_reg_dump_doc[2] = {
