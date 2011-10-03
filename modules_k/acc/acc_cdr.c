@@ -58,7 +58,6 @@ static const str end_id = { "et", 2};
 static const str duration_id = { "d", 1};
 static const str zero_duration = { "0", 1};
 static const char time_separator = {'.'};
-static const int milliseconds_max = 1000;
 static char time_buffer[ TIME_BUFFER_LENGTH];
 static const str empty_string = { "", 0};
 
@@ -225,7 +224,7 @@ static int string2time( str* time_str, struct timeval* time_value)
     }
     
     time_value->tv_sec = strtol( zero_terminated_value, (char **)NULL, 10);
-    time_value->tv_usec = strtol( dot_address + 1, (char **)NULL, 10);
+    time_value->tv_usec = strtol( dot_address + 1, (char **)NULL, 10) * 1000; // restore usec precision
     return 0;
 }
 
@@ -263,9 +262,8 @@ static int set_duration( struct dlg_cell* dialog)
 {
     struct timeval start_time;
     struct timeval end_time;
-    int milliseconds = -1;
-    int seconds = -1;
-    str duration_time;
+    struct timeval duration_time;
+    str duration_str;
 
     if( !dialog)
     {
@@ -282,48 +280,16 @@ static int set_duration( struct dlg_cell* dialog)
         return -1;
     }
 
-    if( start_time.tv_usec >= milliseconds_max ||
-        end_time.tv_usec >= milliseconds_max)
-    {
-        LM_ERR( "start-(%d) or/and end-time(%d) is out of the maximum of %d\n",
-                start_time.tv_usec,
-                end_time.tv_usec,
-                milliseconds_max);
-        return -1;
-    }
+    timersub(&end_time, &start_time, &duration_time);
 
-    milliseconds = end_time.tv_usec < start_time.tv_usec ?
-                                ( milliseconds_max +
-                                  end_time.tv_usec -
-                                  start_time.tv_usec) :
-                                ( end_time.tv_usec - start_time.tv_usec);
-
-    seconds = end_time.tv_sec -
-              start_time.tv_sec -
-              ( end_time.tv_usec < start_time.tv_usec ? 1 : 0);
-
-    if( seconds < 0)
-    {
-        LM_ERR( "negativ seconds(%d) for duration calculated.\n", seconds);
-        return -1;
-    }
-
-    if( milliseconds < 0 || milliseconds >= milliseconds_max)
-    {
-        LM_ERR( "milliseconds %d are out of range 0 < x < %d.\n",
-                milliseconds,
-                milliseconds_max);
-        return -1;
-    }
-
-    if( time2string(&(struct timeval){seconds, milliseconds}, &duration_time) < 0) {
+    if( time2string(&duration_time, &duration_str) < 0) {
         LM_ERR( "failed to convert current time to string\n");
         return -1;
     }
 
     if( dlgb.set_dlg_var( dialog,
                           (str*)&duration_id,
-                          (str*)&duration_time) != 0)
+                          (str*)&duration_str) != 0)
     {
         LM_ERR( "failed to set duration time");
         return -1;
