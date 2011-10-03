@@ -90,6 +90,7 @@ unsigned long tmx_stats_trans_4xx(void);
 unsigned long tmx_stats_trans_5xx(void);
 unsigned long tmx_stats_trans_6xx(void);
 unsigned long tmx_stats_trans_inuse(void);
+unsigned long tmx_stats_trans_active(void);
 #if 0
 unsigned long tmx_stats_rcv_rpls(void);
 unsigned long tmx_stats_rld_rpls(void);
@@ -105,6 +106,7 @@ static stat_export_t mod_stats[] = {
 	{"5xx_transactions" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_trans_5xx   },
 	{"6xx_transactions" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_trans_6xx   },
 	{"inuse_transactions" ,  STAT_IS_FUNC, (stat_var**)tmx_stats_trans_inuse },
+	{"active_transactions" , STAT_IS_FUNC, (stat_var**)tmx_stats_trans_active},
 #if 0
 	{"received_replies" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_rcv_rpls    },
 	{"relayed_replies" ,     STAT_IS_FUNC, (stat_var**)tmx_stats_rld_rpls    },
@@ -651,6 +653,12 @@ unsigned long tmx_stats_trans_inuse(void)
 {
 	tmx_stats_update();
 	return (_tmx_stats_all.transactions - _tmx_stats_all.deleted);
+}
+
+unsigned long tmx_stats_trans_active(void)
+{
+	tmx_stats_update();
+	return (_tmx_stats_all.transactions - _tmx_stats_all.waiting);
 }
 
 #if 0
