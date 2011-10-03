@@ -181,7 +181,7 @@ static int write_cdr( struct dlg_cell* dialog,
 }
 
 /* convert a string into a timeval struct */
-static int time_from_string( str* time_str, struct timeval* time_value)
+static int string2time( str* time_str, struct timeval* time_value)
 {    
     char* dot_address = NULL;
     int dot_position = -1;
@@ -245,11 +245,11 @@ static int set_duration( struct dlg_cell* dialog)
         return -1;
     }
 
-    if ( time_from_string( dlgb.get_dlg_var( dialog, (str*)&start_id), &start_time) < 0) {
+    if ( string2time( dlgb.get_dlg_var( dialog, (str*)&start_id), &start_time) < 0) {
         LM_ERR( "failed to extract start time\n");
         return -1;
     }
-    if ( time_from_string( dlgb.get_dlg_var( dialog, (str*)&end_id), &end_time) < 0) {
+    if ( string2time( dlgb.get_dlg_var( dialog, (str*)&end_id), &end_time) < 0) {
         LM_ERR( "failed to extract end time\n");
         return -1;
     }
