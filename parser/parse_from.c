@@ -76,7 +76,8 @@ int parse_from_header( struct sip_msg *msg)
 	memset(from_b, 0, sizeof(struct to_body));
 	parse_to(msg->from->body.s,msg->from->body.s+msg->from->body.len+1,from_b);
 	if (from_b->error == PARSE_ERROR) {
-		LOG(L_ERR, "ERROR:parse_from_header: bad from header\n");
+		LOG(L_ERR, "ERROR:parse_from_header: bad from header [%.*s]\n",
+				msg->from->body.len, msg->from->body.s);
 		free_to(from_b);
 		goto error;
 	}
