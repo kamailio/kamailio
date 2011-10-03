@@ -47,6 +47,7 @@
 #include <sys/time.h>
 
 #define TIME_STR_BUFFER_SIZE 20
+#define TIME_BUFFER_LENGTH 256
 
 struct dlg_binds dlgb;
 struct acc_extra* cdr_extra = NULL;
@@ -57,8 +58,8 @@ static const str end_id = { "et", 2};
 static const str duration_id = { "d", 1};
 static const str zero_duration = { "0", 1};
 static const char time_separator = {'.'};
-static const int milliseconds_max = 1000000;
-static const unsigned int time_buffer_length = 256;
+static const int milliseconds_max = 1000;
+static char time_buffer[ TIME_BUFFER_LENGTH];
 static const str empty_string = { "", 0};
 
 // buffers which are used to collect the crd data for writing
@@ -228,6 +229,35 @@ static int string2time( str* time_str, struct timeval* time_value)
     return 0;
 }
 
+/* convert a timeval struct into a string */
+static int time2string( struct timeval* time_value, str* time_str)
+{
+    int buffer_length;
+
+    if( !time_value)
+    {
+        LM_ERR( "time_value or any of its fields is empty!\n");
+        return -1;
+    }
+
+    buffer_length = snprintf( time_buffer,
+                              TIME_BUFFER_LENGTH,
+                              "%ld%c%03d",
+                              time_value->tv_sec,
+                              time_separator,
+                              (int)time_value->tv_usec/1000);
+
+    if( buffer_length < 0)
+    {
+        LM_ERR( "failed to write to buffer.\n");
+        return -1;
+    }
+
+    time_str->s = time_buffer;
+    time_str->len = buffer_length;
+    return 0;
+}
+
 /* set the duration in the dialog struct */
 static int set_duration( struct dlg_cell* dialog)
 {
@@ -235,9 +265,7 @@ static int set_duration( struct dlg_cell* dialog)
     struct timeval end_time;
     int milliseconds = -1;
     int seconds = -1;
-    char buffer[ time_buffer_length];
-    int buffer_length = -1;
-    str duration_time = empty_string;
+    str duration_time;
 
     if( !dialog)
     {
@@ -288,20 +316,10 @@ static int set_duration( struct dlg_cell* dialog)
         return -1;
     }
 
-    buffer_length = snprintf( buffer,
-                              time_buffer_length,
-                              "%d%c%03d",
-                              seconds,
-                              time_separator,
-                              milliseconds);
-
-    if( buffer_length < 0)
-    {
-        LM_ERR( "failed to write to buffer.\n");
+    if( time2string(&(struct timeval){seconds, milliseconds}, &duration_time) < 0) {
+        LM_ERR( "failed to convert current time to string\n");
         return -1;
     }
-
-    duration_time = ( str){ buffer, buffer_length};
 
     if( dlgb.set_dlg_var( dialog,
                           (str*)&duration_id,
@@ -317,10 +335,8 @@ static int set_duration( struct dlg_cell* dialog)
 /* set the current time as start-time in the dialog struct */
 static int set_start_time( struct dlg_cell* dialog)
 {
-    char buffer[ time_buffer_length];
     struct timeval current_time;
-    int buffer_length = -1;
-    str start_time = empty_string;
+    str start_time;
 
     if( !dialog)
     {
@@ -334,20 +350,10 @@ static int set_start_time( struct dlg_cell* dialog)
         return -1;
     }
 
-    buffer_length = snprintf( buffer,
-                              time_buffer_length,
-                              "%d%c%03d",
-                              (int)current_time.tv_sec,
-                              time_separator,
-                              (int)current_time.tv_usec);
-
-    if( buffer_length < 0)
-    {
-        LM_ERR( "reach buffer size\n");
+    if( time2string(&current_time, &start_time) < 0) {
+        LM_ERR( "failed to convert current time to string\n");
         return -1;
     }
-
-    start_time = (str){ buffer, buffer_length};
 
     if( dlgb.set_dlg_var( dialog,
                           (str*)&start_id,
@@ -379,10 +385,8 @@ static int set_start_time( struct dlg_cell* dialog)
 /* set the current time as end-time in the dialog struct */
 static int set_end_time( struct dlg_cell* dialog)
 {
-    char buffer[ time_buffer_length];
     struct timeval current_time;
-    int buffer_length = -1;
-    str end_time = empty_string;
+    str end_time;
 
     if( !dialog)
     {
@@ -396,20 +400,10 @@ static int set_end_time( struct dlg_cell* dialog)
         return -1;
     }
 
-    buffer_length = snprintf( buffer,
-                              time_buffer_length,
-                              "%d%c%03d",
-                              (int)current_time.tv_sec,
-                              time_separator,
-                              (int)current_time.tv_usec);
-
-    if( buffer_length < 0)
-    {
-        LM_ERR( "failed to write buffer\n");
+    if( time2string(&current_time, &end_time) < 0) {
+        LM_ERR( "failed to convert current time to string\n");
         return -1;
     }
-
-    end_time = ( str){ buffer, buffer_length};
 
     if( dlgb.set_dlg_var( dialog,
                           (str*)&end_id,
