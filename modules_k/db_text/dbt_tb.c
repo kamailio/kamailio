@@ -149,6 +149,7 @@ dbt_table_p dbt_table_new(const str *_tbname, const str *_dbname, const char *pa
 	dtp = (dbt_table_p)shm_malloc(sizeof(dbt_table_t));
 	if(!dtp)
 		goto done;
+	memset(dtp, 0, sizeof(dbt_table_t));
 	dtp->name.s = (char*)shm_malloc((_tbname->len+1)*sizeof(char));
 	if(!dtp->name.s)
 	{
