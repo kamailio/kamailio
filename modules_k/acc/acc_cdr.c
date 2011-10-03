@@ -52,8 +52,8 @@ struct dlg_binds dlgb;
 struct acc_extra* cdr_extra = NULL;
 int cdr_facility = LOG_DAEMON;
 
-static const str start_id = { "sz", 2};
-static const str end_id = { "ez", 2};
+static const str start_id = { "st", 2};
+static const str end_id = { "et", 2};
 static const str duration_id = { "d", 1};
 static const str zero_duration = { "0", 1};
 static const struct timeval time_error = {0,0};
