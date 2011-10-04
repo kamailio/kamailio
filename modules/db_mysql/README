@@ -23,13 +23,13 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. ping_interval (integer)
               3.2. timeout_interval (integer)
               3.3. auto_reconnect (integer)
 
-        4. Exported Functions
+        4. Functions
         5. Installation
         6. Reading configuration from my.cnf
 
@@ -52,13 +52,13 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. ping_interval (integer)
         3.2. timeout_interval (integer)
         3.3. auto_reconnect (integer)
 
-   4. Exported Functions
+   4. Functions
    5. Installation
    6. Reading configuration from my.cnf
 
@@ -84,7 +84,7 @@ Chapter 1. Admin Guide
      * mysql - the development libraries forthe Mysql database. In some
        Linux distributions named "libmysqlclient-dev".
 
-3. Exported Parameters
+3. Parameters
 
    3.1. ping_interval (integer)
    3.2. timeout_interval (integer)
@@ -132,7 +132,7 @@ modparam("db_mysql", "timeout_interval", 2)
 modparam("db_mysql", "auto_reconnect", 0)
 ...
 
-4. Exported Functions
+4. Functions
 
    No function exported to be used from configuration file.
 

@@ -22,7 +22,7 @@ Andreea-Ancuta Onofrei
               3.1. Kamailio Modules
               3.2. External Libraries or Applications
 
-        4. Exported Parameters
+        4. Parameters
 
               4.1. socket_name (string)
               4.2. children_count (string)
@@ -32,7 +32,7 @@ Andreea-Ancuta Onofrei
               4.6. socket_timeout (integer)
               4.7. reply_indent (string)
 
-        5. Exported Functions
+        5. Functions
         6. Example
 
    2. Frequently Asked Questions
@@ -59,7 +59,7 @@ Chapter 1. Admin Guide
         3.1. Kamailio Modules
         3.2. External Libraries or Applications
 
-   4. Exported Parameters
+   4. Parameters
 
         4.1. socket_name (string)
         4.2. children_count (string)
@@ -69,7 +69,7 @@ Chapter 1. Admin Guide
         4.6. socket_timeout (integer)
         4.7. reply_indent (string)
 
-   5. Exported Functions
+   5. Functions
    6. Example
 
 1. Overview
@@ -104,7 +104,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * none
 
-4. Exported Parameters
+4. Parameters
 
    4.1. socket_name (string)
    4.2. children_count (string)
@@ -201,7 +201,7 @@ modparam("mi_datagram", "socket_timeout", 2000)
 modparam("mi_datagram", "reply_ident", "    ")
 ...
 
-5. Exported Functions
+5. Functions
 
    No function exported to be used from configuration file.
 

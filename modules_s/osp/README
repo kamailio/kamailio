@@ -14,7 +14,7 @@ Di-Shi Sun
 
    <support@transnexus.com>
 
-   Copyright Â© 2003 FhG FOKUS
+   Copyright © 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -545,44 +545,44 @@ Chapter 3. Frequently Asked Questions
 
    3.1.
 
-       What platforms does this module work on?
+   What platforms does this module work on?
 
-       The module has been implemented using Linux, the underlying toolkit and
-       the module code itself should compile and work on Solaris, *BSD, and
-       probably most other unix platforms with ssl and pthreads available, but
-       the OSP Module has only been tested Linux.
+   The module has been implemented using Linux, the underlying toolkit and
+   the module code itself should compile and work on Solaris, *BSD, and
+   probably most other unix platforms with ssl and pthreads available, but
+   the OSP Module has only been tested Linux.
 
    3.2.
 
-       Where can I get more information on this module?
+   Where can I get more information on this module?
 
-       Please see http://www.iptel.org/views/moduledocs/ or post a message on
-       the SER mailing list.
+   Please see http://www.iptel.org/views/moduledocs/ or post a message on
+   the SER mailing list.
 
    3.3.
 
-       Where can I get more information on OSP?
+   Where can I get more information on OSP?
 
-       The OSP technical specification (ETSI TS 101 321) may be obtained from
-       www.etsi.org. You can also post a message on the OSP Toolkit mailing
-       list at
-       https://lists.sourceforge.net/lists/listinfo/osp-toolkit-client.
+   The OSP technical specification (ETSI TS 101 321) may be obtained from
+   www.etsi.org. You can also post a message on the OSP Toolkit mailing
+   list at
+   https://lists.sourceforge.net/lists/listinfo/osp-toolkit-client.
 
    3.4.
 
-       How do I obtain an OSP server for testing?
+   How do I obtain an OSP server for testing?
 
-       OSP peering servers are available from the following sources:
-         * OpenOSP is an OSP server reference implementation created by Cisco
-           Systems and available at
-           http://www.vovida.org/applications/downloads/openosp/
-         * RAMS is an open source, java based OSP server project available
-           from http://sourceforge.net/projects/rams/
-         * A free version of the commercial TransNexus OSP peering server is
-           available at www.transnexus.com.
+   OSP peering servers are available from the following sources:
+     * OpenOSP is an OSP server reference implementation created by Cisco
+       Systems and available at
+       http://www.vovida.org/applications/downloads/openosp/
+     * RAMS is an open source, java based OSP server project available
+       from http://sourceforge.net/projects/rams/
+     * A free version of the commercial TransNexus OSP peering server is
+       available at www.transnexus.com.
 
    3.5.
 
-       How are the exported functions used by the OSP module?
+   How are the exported functions used by the OSP module?
 
-       See sample-osp-ser.cfg in modules/osp/etc for examples
+   See sample-osp-ser.cfg in modules/osp/etc for examples

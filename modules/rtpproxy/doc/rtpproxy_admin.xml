@@ -96,7 +96,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>rtpproxy_sock</varname> (string)</title>
 		<para>
@@ -257,7 +257,7 @@ modparam("nathelper", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">set_rtp_proxy_set()</function>
@@ -524,10 +524,9 @@ rtpproxy_manage();
 		</example>
         </section>
 
-	<section id="rtpproxy_stream2xxx">
+	<section id="rtpproxy_stream2uac">
 	<title>
 	    <function>rtpproxy_stream2uac(prompt_name, count)</function>,
-	    <function>rtpproxy_stream2uas(prompt_name, count)</function>
 	</title>
 	<para>
 	    Instruct the RTPproxy to stream prompt/announcement pre-encoded with
@@ -589,10 +588,17 @@ rtpproxy_manage();
 	    </programlisting>
 	</example>
 	</section>
-	<section id="rtpproxy_stop_stream2xxx">
+	<section id="rtpproxy_stream2uas">
+	<title>
+	    <function>rtpproxy_stream2uas(prompt_name, count)</function>
+	</title>
+	<para>
+		See function <function>rtpproxy_stream2uac(prompt_name, count)</function>.
+	</para>
+	</section>
+	<section id="rtpproxy_stop_stream2uac">
 	<title>
 	    <function>rtpproxy_stop_stream2uac()</function>,
-	    <function>rtpproxy_stop_stream2uas()</function>
 	</title>
 	<para>
 	    Stop streaming of announcement/prompt/MOH started previously by the
@@ -623,6 +629,14 @@ start_recording();
 ...
 		</programlisting>
 		</example>
+	</section>
+	<section id="rtpproxy_stop_stream2uas">
+	<title>
+	    <function>rtpproxy_stop_stream2uas(prompt_name, count)</function>
+	</title>
+	<para>
+		See function <function>rtpproxy_stop_stream2uac(prompt_name, count)</function>.
+	</para>
 	</section>
 
 

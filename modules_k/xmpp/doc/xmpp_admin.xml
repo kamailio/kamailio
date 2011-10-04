@@ -123,7 +123,7 @@
 
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>backend(string)</varname></title>
 		<para>
@@ -303,7 +303,7 @@
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">xmpp_send_message()</function>

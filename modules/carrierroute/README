@@ -25,7 +25,7 @@ Henning Westerholt
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. subscriber_table (string)
               3.2. subscriber_user_col (string)
@@ -39,7 +39,7 @@ Henning Westerholt
               3.10. fetch_rows (integer)
               3.11. match_mode (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. cr_user_carrier(user, domain, dstavp)
               4.2. cr_route(carrier, domain, prefix_matching,
@@ -171,7 +171,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. subscriber_table (string)
         3.2. subscriber_user_col (string)
@@ -185,7 +185,7 @@ Chapter 1. Admin Guide
         3.10. fetch_rows (integer)
         3.11. match_mode (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. cr_user_carrier(user, domain, dstavp)
         4.2. cr_route(carrier, domain, prefix_matching, rewrite_user,
@@ -298,7 +298,7 @@ Chapter 1. Admin Guide
      * libconfuse, a configuration file parser library. (
        http://www.nongnu.org/confuse/ )
 
-3. Exported Parameters
+3. Parameters
 
    3.1. subscriber_table (string)
    3.2. subscriber_user_col (string)
@@ -452,7 +452,7 @@ modparam("carrierroute", "fetch_rows", 3000)
 modparam("carrierroute", "match_mode", 10)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. cr_user_carrier(user, domain, dstavp)
    4.2. cr_route(carrier, domain, prefix_matching, rewrite_user,

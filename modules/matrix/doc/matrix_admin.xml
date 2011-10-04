@@ -61,7 +61,7 @@
 
 
 <section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname> (string)</title>
 	  <para>
@@ -159,7 +159,7 @@ modparam("matrix", "matrix_res_col", "res")
   </section>
 </section>
 <section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 	  <title>
 			<function moreinfo="none">matrix (string first, string second, string dstavp)</function>

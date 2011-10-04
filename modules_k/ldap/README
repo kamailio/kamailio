@@ -28,11 +28,11 @@ Christian Schlatter
               3.2. LDAP Session Settings
               3.3. Configuration File Example
 
-        4. Exported Parameters
+        4. Parameters
 
               4.1. config_file (string)
 
-        5. Exported Functions
+        5. Functions
 
               5.1. ldap_search(ldap_url)
               5.2. ldap_result("ldap_attr_name/avp_spec[/avp_type]" [,
@@ -111,11 +111,11 @@ Chapter 1. Admin Guide
         3.2. LDAP Session Settings
         3.3. Configuration File Example
 
-   4. Exported Parameters
+   4. Parameters
 
         4.1. config_file (string)
 
-   5. Exported Functions
+   5. Functions
 
         5.1. ldap_search(ldap_url)
         5.2. ldap_result("ldap_attr_name/avp_spec[/avp_type]" [,
@@ -415,7 +415,7 @@ ldap_server_url = "ldap://ldap.example.com"
 ldap_network_timeout = 500
 ldap_client_bind_timeout = 500
 
-4. Exported Parameters
+4. Parameters
 
    4.1. config_file (string)
 
@@ -428,7 +428,7 @@ ldap_client_bind_timeout = 500
    Example 1.8. config_file parameter usage
 modparam("ldap", "config_file", "/usr/local/etc/kamailio/ldap.ini")
 
-5. Exported Functions
+5. Functions
 
    5.1. ldap_search(ldap_url)
    5.2. ldap_result("ldap_attr_name/avp_spec[/avp_type]" [, regex_subst])

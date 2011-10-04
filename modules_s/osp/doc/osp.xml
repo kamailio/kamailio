@@ -2,7 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
 
-<!ENTITY user SYSTEM "osp_user.xml">
+<!ENTITY admin SYSTEM "osp_admin.xml">
 <!ENTITY devel SYSTEM "osp_devel.xml">
 <!ENTITY faq SYSTEM "osp_faq.xml">
 
@@ -41,7 +41,7 @@
   </bookinfo>
   <toc></toc>
 
-  &user;
+  &admin;
   &devel;
   &faq;
 

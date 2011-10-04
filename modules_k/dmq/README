@@ -6,7 +6,7 @@ Edited by
 
 Marius Ovidiu Bucur
 
-   Copyright � 2011 Marius Bucur
+   Copyright © 2011 Marius Bucur
      __________________________________________________________________
 
    Table of Contents
@@ -19,7 +19,7 @@ Marius Ovidiu Bucur
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. dmq_server_address(str)
               3.2. dmq_notification_address(str)
@@ -44,7 +44,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. dmq_server_address(str)
         3.2. dmq_notification_address(str)
@@ -74,7 +74,7 @@ Chapter 1. Admin Guide
      * Each peer needs to use its own serialization mechanism. Some
        examples are libtpl, protobuf. .
 
-3. Exported Parameters
+3. Parameters
 
    3.1. dmq_server_address(str)
    3.2. dmq_notification_address(str)
@@ -86,7 +86,7 @@ Chapter 1. Admin Guide
    The modules needs it to know on which interface the DMQ engine should
    send and receive messages.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.1. Set dmq_server_address parameter
 ...
@@ -99,7 +99,7 @@ er")
    The address of the DMQ node from which the local node should retrieve
    initial information.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.2. Set dmq_notification_address parameter
 ...
@@ -116,7 +116,7 @@ Chapter 2. Developer Guide
    The module provides the following functions that can be used in other
    Kamailio modules.
 
-1. dmq_load_api(dmq_api_t* api)
+1.  dmq_load_api(dmq_api_t* api)
 
    This function binds the dmq modules and fills the structure with the
    exported functions -> register_dmq_peer - registers an entity as a DMQ

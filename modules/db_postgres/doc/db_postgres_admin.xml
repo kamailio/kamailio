@@ -58,7 +58,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>retries</varname> (integer)</title>
 		<para>
@@ -84,7 +84,7 @@ modparam("db_mysql", "retries", 3)
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		<para>
 		NONE
 		</para>

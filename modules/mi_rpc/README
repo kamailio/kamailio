@@ -24,8 +24,8 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
-        4. Exported Functions
+        3. Parameters
+        4. Functions
         5. Exported RPC commands
 
               5.1. mi mi_dg mi_fifo mi_xmlrpc
@@ -40,8 +40,8 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
-   4. Exported Functions
+   3. Parameters
+   4. Functions
    5. Exported RPC commands
 
         5.1. mi mi_dg mi_fifo mi_xmlrpc
@@ -69,11 +69,11 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    none
 
-4. Exported Functions
+4. Functions
 
    none
 

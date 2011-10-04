@@ -58,7 +58,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>server</varname> (int)</title>
 		<para>
@@ -85,7 +85,7 @@ modparam("ndb_redis", "server", "name=srvN;addr=127.0.0.1;port=6379;db=1")
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 	    <title>
 		<function moreinfo="none">redis_cmd(srvname, command, replyid)</function>

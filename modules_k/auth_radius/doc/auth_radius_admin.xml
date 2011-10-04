@@ -110,7 +110,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>radius_config</varname> (string)</title>
 		<para>
@@ -191,7 +191,7 @@ modparam("auth_radius", "use_ruri_flag", 22)
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title><function moreinfo="none">radius_www_authorize(realm [, uri_user])</function></title>
 		<para>

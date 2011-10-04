@@ -4,7 +4,7 @@ Tomas Mandys
 
    Iptel.org
 
-   Copyright Â© 2008 Tomas Mandys
+   Copyright © 2008 Tomas Mandys
      __________________________________________________________________
 
    1.1. Overview
@@ -15,8 +15,7 @@ Tomas Mandys
         1.3.2. transl_tbl (string) := "cfg_transl"
         1.3.3. custom_tbl (string) := "cfg_custom"
 
-   1.4. Functions
-   1.5. Examples
+   1.4. Examples
 
 1.1. Overview
 
@@ -58,14 +57,14 @@ Tomas Mandys
    Default database URL.
 
    The format is:
-                        db_url = database
+                db_url = database
 
    Example 1. Example db_url
-        loadmodule("mysql.so");
-        loadmodule("cfg_db.so");
-        ...
-        modparam("cfg_db", "db_url", "mysql://SER:123@127.0.0.1:12345/SER");
-        ...
+loadmodule("mysql.so");
+loadmodule("cfg_db.so");
+...
+modparam("cfg_db", "db_url", "mysql://SER:123@127.0.0.1:12345/SER");
+...
 
 1.3.2. transl_tbl (string) := "cfg_transl"
 
@@ -82,11 +81,7 @@ Tomas Mandys
    Name of table used for extra param declaration (group_name, name, type,
    min/max value, description).
 
-1.4. Functions
-
-   None.
-
-1.5. Examples
+1.4. Examples
 
    Example 2. Content of tables
         cfg_transl table:

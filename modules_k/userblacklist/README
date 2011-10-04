@@ -24,12 +24,12 @@ Henning Westerholt
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. use_domain (integer)
               3.2. match_mode (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. check_user_blacklist (string user, string domain,
                       string number, string table)
@@ -95,12 +95,12 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. use_domain (integer)
         3.2. match_mode (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. check_user_blacklist (string user, string domain, string
                 number, string table)
@@ -162,7 +162,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * none
 
-3. Exported Parameters
+3. Parameters
 
    3.1. use_domain (integer)
    3.2. match_mode (integer)
@@ -195,7 +195,7 @@ modparam("userblacklist", "use_domain", 0)
 modparam("userblacklist", "match_mode", 128)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. check_user_blacklist (string user, string domain, string number,
           string table)

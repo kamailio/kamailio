@@ -118,7 +118,7 @@ objectClass                   top
 </section>
 
 <section>
-    <title>Exported Parameters</title>
+    <title>Parameters</title>
 
     <section>
         <title>ldap_session (string)</title>
@@ -182,7 +182,7 @@ modparam("h350", "search_scope", "sub");
 </section>
 
 <section>
-    <title>Exported Functions</title>
+    <title>Functions</title>
 
     <section>
         <title>h350_sipuri_lookup(sip_uri)</title>

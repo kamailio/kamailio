@@ -61,7 +61,7 @@
 	</section>
 
 	<section id="ACC-param-id">
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>radius_config</varname> (string)</title>
 		<para>
@@ -161,7 +161,7 @@ modparam("acc_radius", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 			<function moreinfo="none">acc_rad_request(comment)</function>

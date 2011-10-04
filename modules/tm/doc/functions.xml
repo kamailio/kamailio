@@ -8,16 +8,50 @@
 
     <title>Functions</title>
 
+    <section id="t_relay">
+	<title>
+	    <function>t_relay([host, port])</function>
+	</title>
+	<para>
+	    Relay a message statefully either to the destination indicated in the
+		current URI (if called without any parameters) or to the specified 
+		host and port. In the later case (host and port specified) the protocol
+		used is the same protocol on which the message was received.
+	</para>
+	<para>
+		<function>t_relay()</function> is the statefull version for 
+		<function>forward()</function>
+		while <function>t_relay(host, port)</function> is similar to 
+		<function>forward(host, port)</function>.
+	</para>
+	<para>
+		In the forward to uri case (<function>t_relay()</function>), if the
+	    original URI was rewritten (by UsrLoc, RR, strip/prefix, etc.) the new
+		URI will be taken). The destination (including the protocol) is 
+		determined from the uri, using SIP specific DNS resolving if needed
+		(NAPTR, SRV a.s.o depending also on the dns options).
+	</para>
+	<para>
+		Returns a negative value on failure -- you may still want to send a
+	    negative reply upstream statelessly not to leave upstream UAC in lurch.
+	</para>
+	<example>
+	    <title><function>t_relay</function> usage</title>
+	    <programlisting>
+...
+if (!t_relay()) 
+{ 
+    sl_reply_error(); 
+    break; 
+};
+...
+	    </programlisting>
+	</example>
+    </section>
+
     <section id="t_relay_to_udp">
 	<title>
-	    <function>t_relay_to_udp(ip, port)</function>,
-	    <function>t_relay_to_udp()</function>,
-	    <function>t_relay_to_tcp(ip, port)</function>
-	    <function>t_relay_to_tcp()</function>
-	    <function>t_relay_to_tls(ip, port)</function>
-	    <function>t_relay_to_tls()</function>
-	    <function>t_relay_to_sctp(ip, port)</function>
-	    <function>t_relay_to_sctp()</function>
+	    <function>t_relay_to_udp([ip, port])</function>
 	</title>
 	<para>
 	    Relay a message statefully using a fixed protocol either to the 
@@ -56,48 +90,33 @@ else
 	</example>
     </section>
 
-    <section id="t_relay">
+    <section id="t_relay_to_tcp">
 	<title>
-	    <function>t_relay()</function>
-	    <function>t_relay(host, port)</function>
+	    <function>t_relay_to_tcp([ip, port])</function>
 	</title>
 	<para>
-	    Relay a message statefully either to the destination indicated in the
-		current URI (if called without any parameters) or to the specified 
-		host and port. In the later case (host and port specified) the protocol
-		 used is the same protocol on which the message was received.
+		See function <function>t_relay_to_udp([ip, port])</function>.
 	</para>
-	<para>
-		<function>t_relay()</function> is the statefull version for 
-		<function>forward(uri:host, uri:port)</function>
-		while <function>t_relay(host, port)</function> is similar to 
-		<function>forward(host, port)</function>.
-	</para>
-	<para>
-		In the forward to uri case (<function>t_relay()</function>), if the
-	    original URI was rewritten (by UsrLoc, RR, strip/prefix, etc.) the new
-		URI will be taken). The destination (including the protocol) is 
-		determined from the uri, using SIP specific DNS resolving if needed
-		(NAPTR, SRV a.s.o depending also on the dns options).
-	</para>
-	<para>
-		Returns a negative value on failure--you may still want to send a
-	    negative reply upstream statelessly not to leave upstream UAC in lurch.
-	</para>
-	<example>
-	    <title><function>t_relay</function> usage</title>
-	    <programlisting>
-...
-if (!t_relay()) 
-{ 
-    sl_reply_error(); 
-    break; 
-};
-...
-	    </programlisting>
-	</example>
     </section>
-    
+
+    <section id="t_relay_to_tls">
+	<title>
+	    <function>t_relay_to_tls([ip, port])</function>
+	</title>
+	<para>
+		See function <function>t_relay_to_udp([ip, port])</function>.
+	</para>
+    </section>
+
+    <section id="t_relay_to_sctp">
+	<title>
+	    <function>t_relay_to_sctp([ip, port])</function>
+	</title>
+	<para>
+		See function <function>t_relay_to_udp([ip, port])</function>.
+	</para>
+    </section>
+
     <section id="t_on_failure">
 	<title>
 	    <function>t_on_failure(failure_route)</function>
@@ -367,15 +386,11 @@ t_release();
 
     <section id="t_forward_nonack">
 	<title>
-	    <function>t_forward_nonack()</function>
-	    <function>t_forward_nonack(ip, port)</function>
-	    <function>t_forward_nonack_udp(ip, port)</function>
-	    <function>t_forward_nonack_tcp(ip, port)</function>
-	    <function>t_forward_nonack_tls(ip, port)</function>
-	    <function>t_forward_nonack_sctp(ip, port)</function>
+	    <function>t_forward_nonack([ip, port])</function>
 	</title>
 	<para>
-	    mainly for internal usage--forward a non-ACK request statefully.
+		Mainly for internal usage -- forward a non-ACK request statefully.
+		Variants of this functions can enforce a specific transport protocol.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>
@@ -396,6 +411,42 @@ t_forward_nonack("1.2.3.4", "5060");
 ...
 	    </programlisting>
 	</example>
+    </section>
+
+   <section id="t_forward_nonack_udp">
+	<title>
+	    <function>t_forward_nonack_udp(ip, port)</function>
+	</title>
+	<para>
+	    See function <function>t_forward_nonack([ip, port])</function>.
+	</para>
+    </section>
+
+   <section id="t_forward_nonack_tcp">
+	<title>
+	    <function>t_forward_nonack_tcp(ip, port)</function>
+	</title>
+	<para>
+	    See function <function>t_forward_nonack([ip, port])</function>.
+	</para>
+    </section>
+
+   <section id="t_forward_nonack_tls">
+	<title>
+	    <function>t_forward_nonack_tls(ip, port)</function>
+	</title>
+	<para>
+	    See function <function>t_forward_nonack([ip, port])</function>.
+	</para>
+    </section>
+
+   <section id="t_forward_nonack_sctp">
+	<title>
+	    <function>t_forward_nonack_sctp(ip, port)</function>
+	</title>
+	<para>
+	    See function <function>t_forward_nonack([ip, port])</function>.
+	</para>
     </section>
 
 	<section id="t_set_fr">
@@ -896,8 +947,7 @@ if (method == CANCEL) {
 
     <section id="t_lookup_cancel">
 	<title>
-	    <function>t_lookup_cancel()</function>,
-	    <function>t_lookup_cancel(1)</function>
+	    <function>t_lookup_cancel([1])</function>
 	</title>
 	<para>
 		Returns true if the corresponding INVITE transaction exists

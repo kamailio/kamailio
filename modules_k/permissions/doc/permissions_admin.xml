@@ -277,7 +277,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>default_allow_file</varname> (string)</title>
 		<para>
@@ -696,7 +696,7 @@ modparam("permissions", "peer_tag_mode", "1")
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">allow_routing()</function>
@@ -1067,7 +1067,7 @@ if (allow_trusted("$si", "$proto")) {
 	</section>
 	
 	<section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 	<section>
 		<title>
 		<function moreinfo="none">address_reload</function>

@@ -23,11 +23,11 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. server (int)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. redis_cmd(srvname, command, replyid)
 
@@ -46,11 +46,11 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. server (int)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. redis_cmd(srvname, command, replyid)
 
@@ -79,7 +79,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * hiredis - available at https://github.com/antirez/hiredis .
 
-3. Exported Parameters
+3. Parameters
 
    3.1. server (int)
 
@@ -89,7 +89,8 @@ Chapter 1. Admin Guide
    attribute=value separated by semicolon, the attributes can be name,
    addr, port and db. Name is a generic identifier to be used with module
    functions. addr and port are the IP address and the port to connect to
-   REDIS server. db is the DB number to use (defaults to 0 if not specified).
+   REDIS server. db is the DB number to use (defaults to 0 if not
+   specified).
 
    Default value is NULL.
 
@@ -98,7 +99,7 @@ Chapter 1. Admin Guide
 modparam("ndb_redis", "server", "name=srvN;addr=127.0.0.1;port=6379;db=1")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. redis_cmd(srvname, command, replyid)
 

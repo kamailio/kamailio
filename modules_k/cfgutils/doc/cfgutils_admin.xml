@@ -91,7 +91,7 @@
 	</para>
     </section>
     <section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>initial_probability</varname> (string)</title>
 		<para>
@@ -164,7 +164,7 @@ modparam("cfgutils", "lock_set_size", 4)
 </section>
 
     <section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title><function moreinfo="none">rand_event()</function></title>
 		<para>

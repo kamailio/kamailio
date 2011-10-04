@@ -59,14 +59,14 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 		<para>
 		The module does not export any config parameter yet.
 		</para>
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 	    <title>
 		<function moreinfo="none">sdp_remove_codecs_by_id(list)</function>

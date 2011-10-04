@@ -180,7 +180,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>timer_interval</varname> (integer)</title>
 		<para>
@@ -267,7 +267,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 	</section>
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">rl_check([pvar])</function>

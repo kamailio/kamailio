@@ -104,7 +104,7 @@
 
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>sqlcon</varname> (str)</title>
 		<para>
@@ -176,7 +176,7 @@ modparam("sqlops", "sqlres", "ra")
 	</section>
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">sql_query(connection, query[, result])</function>

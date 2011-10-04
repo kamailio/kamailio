@@ -30,11 +30,11 @@ Alex Balashov
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. path (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. geoip_match(ipaddr, pvc)
 
@@ -55,11 +55,11 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. path (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. geoip_match(ipaddr, pvc)
 
@@ -112,7 +112,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * libgeoip - the GeoIP library.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. path (string)
 
@@ -127,7 +127,7 @@ Chapter 1. Admin Guide
 modparam("geoip", "path", "/usr/local/share/GeoLiteCity.dat")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. geoip_match(ipaddr, pvc)
 

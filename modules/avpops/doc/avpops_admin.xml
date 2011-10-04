@@ -131,7 +131,7 @@ $avp(i3:123) - the AVP identified by the integer 123 which has script flags 1
 			</example>
 	</section>
 	<section>
-		<title>Exported Parameters</title>
+		<title>Parameters</title>
 		<section>
 			<title><varname>db_url</varname> (string)</title>
 			<para>
@@ -369,7 +369,7 @@ modparam("avpops","db_scheme",
 
 
 	<section>
-		<title>Exported Functions</title>
+		<title>Functions</title>
 		<section>
 			<title>
 				<function moreinfo="none">avp_db_load(source,name)

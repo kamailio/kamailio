@@ -25,11 +25,11 @@ Andreas Granig
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. use_received (int)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. add_path()
               4.2. add_path(user)
@@ -58,11 +58,11 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. use_received (int)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. add_path()
         4.2. add_path(user)
@@ -129,7 +129,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. use_received (int)
 
@@ -145,7 +145,7 @@ Chapter 1. Admin Guide
 modparam("path", "use_received", 1)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. add_path()
    4.2. add_path(user)

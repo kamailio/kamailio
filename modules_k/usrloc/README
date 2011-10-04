@@ -34,7 +34,7 @@ Bogdan-Andrei Iancu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. nat_bflag (integer)
               3.2. user_column (string)
@@ -62,8 +62,8 @@ Bogdan-Andrei Iancu
               3.24. hash_size (integer)
               3.25. preload (string)
 
-        4. Exported Functions
-        5. Exported MI Functions
+        4. Functions
+        5. MI Commands
 
               5.1. ul_rm
               5.2. ul_rm_contact
@@ -144,7 +144,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. nat_bflag (integer)
         3.2. user_column (string)
@@ -172,8 +172,8 @@ Chapter 1. Admin Guide
         3.24. hash_size (integer)
         3.25. preload (string)
 
-   4. Exported Functions
-   5. Exported MI Functions
+   4. Functions
+   5. MI Commands
 
         5.1. ul_rm
         5.2. ul_rm_contact
@@ -245,7 +245,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. nat_bflag (integer)
    3.2. user_column (string)
@@ -616,11 +616,11 @@ modparam("usrloc", "hash_size", 10)
 modparam("usrloc", "preload", "location")
 ...
 
-4. Exported Functions
+4. Functions
 
    There are no exported functions that could be used in scripts.
 
-5. Exported MI Functions
+5. MI Commands
 
    5.1. ul_rm
    5.2. ul_rm_contact

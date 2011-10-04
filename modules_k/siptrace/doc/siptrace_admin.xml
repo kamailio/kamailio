@@ -88,7 +88,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname> (str)</title>
 		<para>
@@ -389,7 +389,7 @@ modparam("siptrace", "hep_mode_on", 1)
 	</section>
 	
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">sip_trace()</function>
@@ -415,7 +415,7 @@ sip_trace();
 	</section>
 
     <section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 	<section>
 		<title>
 		<function moreinfo="none">sip_trace</function>

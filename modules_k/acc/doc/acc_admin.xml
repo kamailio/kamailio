@@ -485,7 +485,7 @@ $dlg_var(callee) = $avp(callee); #callee='C'
 	</section>
 
 	<section id="ACC-param-id">
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<!-- Generic ACC parameters -->
 	<section>
 		<title><varname>early_media</varname> (integer)</title>
@@ -1183,7 +1183,7 @@ modparam("acc", "cdr_log_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 			<function moreinfo="none">acc_log_request(comment)</function>

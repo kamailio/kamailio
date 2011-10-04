@@ -57,7 +57,7 @@
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">t_cancel_branches(which)</function>
@@ -332,7 +332,7 @@ tcontinue('123', '456', 'MYROUTE');
 
 
 	<section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 
 	<section>
 		<title>

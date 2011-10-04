@@ -64,7 +64,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 	    <title><varname>db_url</varname> (string)</title>
 	    <para>
@@ -253,7 +253,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 	</section>
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">pl_check(name)</function>
@@ -296,7 +296,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">pl_drop([[min ], max])</function>
+		<function moreinfo="none">pl_drop([ [min ], max ])</function>
 		</title>
 		<para>
 		For the current request, a "503 - Server Unavailable" reply is sent back.
@@ -340,7 +340,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 	</section>
 
 	<section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 	<section>
 		<title>
 		<function moreinfo="none">pl_stats</function>

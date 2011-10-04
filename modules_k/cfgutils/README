@@ -34,14 +34,14 @@ Daniel-Constantin Mierla
 
         1. Overview
         2. Dependencies
-        3. Exported Parameters
+        3. Parameters
 
               3.1. initial_probability (string)
               3.2. hash_file (string)
               3.3. initial_gflags (integer)
               3.4. lock_set_size (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. rand_event()
               4.2. rand_set_prob(probabiltiy)
@@ -115,14 +115,14 @@ Chapter 1. Admin Guide
 
    1. Overview
    2. Dependencies
-   3. Exported Parameters
+   3. Parameters
 
         3.1. initial_probability (string)
         3.2. hash_file (string)
         3.3. initial_gflags (integer)
         3.4. lock_set_size (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. rand_event()
         4.2. rand_set_prob(probabiltiy)
@@ -214,7 +214,7 @@ Chapter 1. Admin Guide
    listed modules must be loaded before this module):
      * none
 
-3. Exported Parameters
+3. Parameters
 
    3.1. initial_probability (string)
    3.2. hash_file (string)
@@ -260,7 +260,7 @@ modparam("cfgutils", "initial_gflags", 15)
    Example 1.4. lock_set_size parameter usage
 modparam("cfgutils", "lock_set_size", 4)
 
-4. Exported Functions
+4. Functions
 
    4.1. rand_event()
    4.2. rand_set_prob(probabiltiy)

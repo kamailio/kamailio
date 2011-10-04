@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2011 asipto.com
+   Copyright Â© 2011 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -23,8 +23,8 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
-        4. Exported Functions
+        3. Parameters
+        4. Functions
 
               4.1. sdp_remove_codecs_by_id(list)
               4.2. sdp_remove_codecs_by_name(list)
@@ -52,8 +52,8 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
-   4. Exported Functions
+   3. Parameters
+   4. Functions
 
         4.1. sdp_remove_codecs_by_id(list)
         4.2. sdp_remove_codecs_by_name(list)
@@ -88,11 +88,11 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None
 
-3. Exported Parameters
+3. Parameters
 
    The module does not export any config parameter yet.
 
-4. Exported Functions
+4. Functions
 
    4.1. sdp_remove_codecs_by_id(list)
    4.2. sdp_remove_codecs_by_name(list)
@@ -101,7 +101,7 @@ Chapter 1. Admin Guide
    4.5. sdp_with_media(type)
    4.6. sdp_print(level)
 
-4.1. sdp_remove_codecs_by_id(list)
+4.1.  sdp_remove_codecs_by_id(list)
 
    Remove the codecs provided in the parameter 'list' from all media
    streams found in SDP payload. The parameter 'list' must be one or a
@@ -118,7 +118,7 @@ sdp_remove_codecs_by_id("0");
 sdp_remove_codecs_by_id("0,8,3");
 ...
 
-4.2. sdp_remove_codecs_by_name(list)
+4.2.  sdp_remove_codecs_by_name(list)
 
    Remove the codecs provided in the parameter 'list' from all media
    streams found in SDP payload. The parameter 'list' must be one or a
@@ -135,7 +135,7 @@ sdp_remove_codecs_by_name("PCMU");
 sdp_remove_codecs_by_name("PCMU,PCMA,GSM");
 ...
 
-4.3. sdp_keep_codecs_by_id(list)
+4.3.  sdp_keep_codecs_by_id(list)
 
    Keep only the codecs provided in the parameter 'list' from all media
    streams found in SDP payload. The parameter 'list' must be one or a
@@ -152,7 +152,7 @@ sdp_keep_codecs_by_id("0");
 sdp_keep_codecs_by_id("0,8,3");
 ...
 
-4.4. sdp_keep_codecs_by_name(list)
+4.4.  sdp_keep_codecs_by_name(list)
 
    Keep only the codecs provided in the parameter 'list' from all media
    streams found in SDP payload. The parameter 'list' must be one or a
@@ -169,7 +169,7 @@ sdp_keep_codecs_by_name("PCMU");
 sdp_keep_codecs_by_name("PCMU,PCMA,GSM");
 ...
 
-4.5. sdp_with_media(type)
+4.5.  sdp_with_media(type)
 
    Return true of the SDP has 'media=type ...' line. Useful to check the
    content of the RTP sessions, such as 'audio' or 'video'. The parameter
@@ -186,7 +186,7 @@ if(sdp_with_media("video"))
 }
 ...
 
-4.6. sdp_print(level)
+4.6.  sdp_print(level)
 
    Print the SDP internal structure to log 'level'. The parameter can be
    static integer or variable holding the integer value of the log level.

@@ -35,7 +35,7 @@ Juha Heinanen
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (string)
               3.2. db_table (string)
@@ -51,11 +51,11 @@ Juha Heinanen
               3.12. mt_ignore_duplicates (integer)
               3.13. mt_allow_duplicates (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. mt_match(mtree, pv, mode)
 
-        5. Exported MI Functions
+        5. MI Commands
 
               5.1. mt_list
               5.2. mt_reload
@@ -88,7 +88,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (string)
         3.2. db_table (string)
@@ -104,11 +104,11 @@ Chapter 1. Admin Guide
         3.12. mt_ignore_duplicates (integer)
         3.13. mt_allow_duplicates (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. mt_match(mtree, pv, mode)
 
-   5. Exported MI Functions
+   5. MI Commands
 
         5.1. mt_list
         5.2. mt_reload
@@ -135,7 +135,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (string)
    3.2. db_table (string)
@@ -298,7 +298,7 @@ modparam("mtree", "mt_ignore_duplicates", 1)
 modparam("mtree", "mt_allow_duplicates", 1)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. mt_match(mtree, pv, mode)
 
@@ -317,7 +317,7 @@ modparam("mtree", "mt_allow_duplicates", 1)
 mt_match("mytree", "$rU", "0");
 ...
 
-5. Exported MI Functions
+5. MI Commands
 
    5.1. mt_list
    5.2. mt_reload

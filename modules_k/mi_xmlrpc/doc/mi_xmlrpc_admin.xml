@@ -85,12 +85,12 @@
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>libxmlrpc-c3</emphasis> version 0.9.10.
+				<emphasis>libxmlrpc-c3</emphasis> version 0.9.10 or version 1.06.[10-30].
 			</para>
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>libxmlrpc-c3-dev</emphasis> version 0.9.10.
+				<emphasis>libxmlrpc-c3-dev</emphasis> version 0.9.10 or version 1.06.[10-30].
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -101,14 +101,13 @@
 		<quote>xmlrpc-c</quote>project 
 		(<ulink url='http://xmlrpc-c.sourceforge.net/'>
 		http://xmlrpc-c.sourceforge.net/</ulink>). Otherwise you need
-		to install the library and devel headers from the sources. In both
-		cases, keep in mind to use the 0.9.10 version!!.
+		to install the library and devel headers from the sources.
 		</para>
 	</section>
 	</section>
 	
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>port</varname>(integer)</title>
 		<para>
@@ -192,7 +191,7 @@ modparam("mi_xmlrpc", "buffer_size", 8192)
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		<para>
 		No function exported to be used from configuration file.
 		</para>

@@ -339,7 +339,7 @@ modparam("mediaproxy", "ice_candidate_avp", "$avp(s:ice_candidate)")
   </section>
 
   <section>
-  <title>Exported Functions</title>
+  <title>Functions</title>
     <section>
     <title><function moreinfo="none">engage_media_proxy()</function></title>
       <para>

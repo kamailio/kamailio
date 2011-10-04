@@ -71,7 +71,7 @@
 	</section>
 	
 	<section>
-		<title>Exported Parameters</title>
+		<title>Parameters</title>
 		<section>
 			<title><varname>http_query_timeout</varname> (int)</title>
 			<para>
@@ -154,7 +154,7 @@ modparam("utils", "xcap_table", "pres_xcap")
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		<section>
 			<title>
 				<function moreinfo="none">http_query(url, result)</function>

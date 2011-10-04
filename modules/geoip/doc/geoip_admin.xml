@@ -87,7 +87,7 @@
 	</section>
     </section>
     <section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 	    <title><varname>path</varname> (string)</title>
 	    <para>
@@ -111,7 +111,7 @@ modparam("geoip", "path", "/usr/local/share/GeoLiteCity.dat")
 	</section>
 	
     <section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
  	<section>
 	    <title>
 		<function moreinfo="none">geoip_match(ipaddr, pvc)</function>

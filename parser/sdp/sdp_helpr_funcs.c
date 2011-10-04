@@ -468,7 +468,7 @@ int extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 		return -1;
 	}
 
-	LM_ERR("located IP address [%.*s] in `%s' field\n",
+	LM_DBG("located IP address [%.*s] in `%s' field\n",
 			mediaip->len, mediaip->s, line);
 	return 1;
 }

@@ -71,7 +71,7 @@
 	</section>
 	
 	<section>
-		<title>Exported Parameters</title>
+		<title>Parameters</title>
 		<section>
 			<title><varname>ring_timeout</varname> (int)</title>
 			<para>
@@ -272,7 +272,7 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		<section>
 			<title>
 				<function moreinfo="none">ring_insert_callid()</function>

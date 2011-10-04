@@ -11,7 +11,7 @@ Elena-Ramona Modroiu
 
    <ramona@rosdev.ro>
 
-   Copyright � 2008-2011 http://www.asipto.com
+   Copyright © 2008-2011 http://www.asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -25,7 +25,7 @@ Elena-Ramona Modroiu
               2.2. External Libraries or Applications
               2.3. Loading from database
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. htable (str)
               3.2. db_url (str)
@@ -40,14 +40,14 @@ Elena-Ramona Modroiu
               3.11. timer_mode (integer)
               3.12. db_expires (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. sht_print()
               4.2. sht_rm_name_re(htable=>regexp)
               4.3. sht_rm_value_re(htable=>regexp)
 
         5. Exported pseudo-variables
-        6. Exported MI Functions
+        6. MI Commands
 
               6.1. sht_reload
               6.2. sht_dump
@@ -87,7 +87,7 @@ Chapter 1. Admin Guide
         2.2. External Libraries or Applications
         2.3. Loading from database
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. htable (str)
         3.2. db_url (str)
@@ -102,14 +102,14 @@ Chapter 1. Admin Guide
         3.11. timer_mode (integer)
         3.12. db_expires (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. sht_print()
         4.2. sht_rm_name_re(htable=>regexp)
         4.3. sht_rm_value_re(htable=>regexp)
 
    5. Exported pseudo-variables
-   6. Exported MI Functions
+   6. MI Commands
 
         6.1. sht_reload
         6.2. sht_dump
@@ -136,7 +136,7 @@ Chapter 1. Admin Guide
    You can read more about hash tables at:
    http://en.wikipedia.org/wiki/Hash_table.
 
-   The "name" can be a static string or can include pseudo- variables that
+   The “name” can be a static string or can include pseudo- variables that
    will be replaced at runtime.
 
    Example 1.1. Accessing $sht(htname=>key)
@@ -159,7 +159,7 @@ $sht(a=>$ci::srcip) = $si;
    the failed authentications per user and one for storing the time of
    last authentication attempt. To ensure unique name per user, the hash
    table uses a combination of authentication username and text
-   "::auth_count" and "::last_auth".
+   “::auth_count” and “::last_auth”.
 
    Example 1.2. Dictionary attack limitation
 ...
@@ -237,7 +237,7 @@ if(is_present_hf("Authorization"))
           + 1 - value is integer.
      * key value - string containing the value of the key.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. htable (str)
    3.2. db_url (str)
@@ -413,13 +413,13 @@ modparam("htable", "timer_mode", 1)
 modparam("htable", "db_expires", 1)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. sht_print()
    4.2. sht_rm_name_re(htable=>regexp)
    4.3. sht_rm_value_re(htable=>regexp)
 
-4.1. sht_print()
+4.1.  sht_print()
 
    Dump content of hash table to L_ERR log level. Intended for debug
    purposes.
@@ -432,7 +432,7 @@ modparam("htable", "db_expires", 1)
 sht_print();
 ...
 
-4.2. sht_rm_name_re(htable=>regexp)
+4.2.  sht_rm_name_re(htable=>regexp)
 
    Delete all entries in the htable that match the name against regular
    expression.
@@ -445,7 +445,7 @@ sht_print();
 sht_rm_name_re("ha=>.*");
 ...
 
-4.3. sht_rm_value_re(htable=>regexp)
+4.3.  sht_rm_value_re(htable=>regexp)
 
    Delete all entries in the htable that match the value against regular
    expression.
@@ -470,12 +470,12 @@ sht_rm_value_re("ha=>.*");
    Exported pseudo-variables are documented at
    http://www.kamailio.org/dokuwiki/.
 
-6. Exported MI Functions
+6. MI Commands
 
    6.1. sht_reload
    6.2. sht_dump
 
-6.1. sht_reload
+6.1.  sht_reload
 
    Reload a hash table from database.
 
@@ -488,7 +488,7 @@ sht_rm_value_re("ha=>.*");
                 _hash_table_name_
                 _empty_line_
 
-6.2. sht_dump
+6.2.  sht_dump
 
    Dump content of a hash table via MI.
 
@@ -505,7 +505,7 @@ sht_rm_value_re("ha=>.*");
 
    7.1. htable:mod-init
 
-7.1. htable:mod-init
+7.1.  htable:mod-init
 
    When defined, the module calls event_route[htable:mod-init] after all
    modules have been initialised. A typical use case is to initialise

@@ -112,7 +112,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname> (string)</title>
 		<para>
@@ -217,7 +217,7 @@ modparam("xcap_server", "xml_ns",
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
  	<section>
 	    <title>
 		<function moreinfo="none">xcaps_put(uri, path, doc)</function>

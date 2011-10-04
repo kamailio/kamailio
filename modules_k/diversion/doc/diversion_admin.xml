@@ -51,7 +51,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>suffix</varname> (string)</title>
 		<para>
@@ -71,7 +71,7 @@ modparam("diversion", "suffix", ";privacy=full")
 	</section>
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title><function moreinfo="none">add_diversion(reason)</function></title>
 		<para>

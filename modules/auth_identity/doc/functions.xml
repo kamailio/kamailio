@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	 <!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+	 %docentities;
+	]
+>
+
+	<section id="auth_identity.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+		<title>Functions</title>
+
+		<section>
+			<title>
+				<function>auth_date_proc()</function>
+			</title>
+			<para>Note: this function is for authorizer service.</para>
+			<para>
+				If a message, the auth service should authorize, contains Date header
+				then this function checks whether it falls in message timeout (set by
+				<emphasis>msg_timeout</emphasis> parameter). If there is not any Date
+				header then the module adds one. This function also checks whether the certificate
+				of the authentication service (set by <emphasis>certificate_path</emphasis> parameter)
+				has been expired.
+			</para>
+			<section>
+				<title>Dependencies</title>
+				<para>
+					No dependencies
+				</para>
+			</section>
+		</section>
+
+		<section>
+			<title>
+				<function>auth_add_identity()</function>
+			</title>
+			<para>Note: this function is for authorizer service.</para>
+			<para>
+				Assembles digest-string from the message, calculates its SHA1 hash,
+				encrypts it with the private key (set by <emphasis>privatekey_path</emphasis>
+				parameter) of the authorizer service, base64 encodes it and adds to the
+				outgoing message as the value of <emphasis>Identity</emphasis> header.
+				This function also adds Identity-Info header which contains an URI
+				(set by <emphasis>certificate_url</emphasis> parameter) from which
+				the certificate of auth service can be acquired.
+			</para>
+			<para>
+				<emphasis>Note: this function needs the final outgoing
+				message for authorization, so no module may modify any
+				digest string related headers (From, To, Call-ID, CSeq,
+				Date, Contact) and body after auth_add_identity()'s been called</emphasis>
+			</para>
+			<section>
+				<title>Dependencies</title>
+				<para>
+					auth_date_proc() must be called before
+				</para>
+			</section>
+		</section>
+
+		<section id="vrfy_check_date">
+			<title>
+				<function>vrfy_check_date()</function>
+			</title>
+			<para>Note: this function is for verifier service.</para>
+			<para>
+				Checks Date header of the incoming message whether falls in validity
+				time (set by <emphasis>auth_validity_time</emphasis> parameter)
+			</para>
+			<section id="vrfy_check_date.dep">
+				<title>Dependencies</title>
+				<para>
+					No dependencies
+				</para>
+			</section>
+		</section>
+
+		<section id="vrfy_get_certificate">
+			<title>
+				<function>vrfy_get_certificate()</function>
+			</title>
+			<para>Note: this function is for verifier service.</para>
+			<para>
+				Tries to get certificate defined by the value of
+				<emphasis>Identity-info</emphasis> header from certificate table
+				(which size is set by <emphasis>certificate_cache_limit</emphasis>
+				parameter). If the required certificate is not found there then
+				this function downloads it.
+			</para>
+			<section id="vrfy_get_certificate.dep">
+				<title>Dependencies</title>
+				<para>
+					No dependencies
+				</para>
+			</section>
+		</section>
+
+		<section id="vrfy_check_certificate">
+			<title>
+				<function>vrfy_check_certificate()</function>
+			</title>
+			<para>Note: this function is for verifier service.</para>
+			<para>
+				Checks whether the downloaded certificate is valid (is not expired,
+				its subject and the domain part of the URL are the same) and adds it
+				to certificate table.
+			</para>
+			<section id="vrfy_check_certificate.dep">
+				<title>Dependencies</title>
+				<para>
+					vrfy_get_certificate() must be called before
+				</para>
+			</section>
+		</section>
+
+		<section id="vrfy_check_msgvalidity">
+			<title>
+				<function>vrfy_check_msgvalidity()</function>
+			</title>
+			<para>Note: this function is for verifier service.</para>
+			<para>
+				Assembles digest-string from the message, create SHA1 hash and
+				compares it with the decrypted value of <emphasis>Identity</emphasis>
+				header.
+			</para>
+			<section id="vrfy_check_msgvalidity.dep">
+				<title>Dependencies</title>
+				<para>
+					vrfy_get_certificate() must be called before and
+					vrfy_check_certificate() should be called before
+				</para>
+			</section>
+		</section>
+
+		<section id="vrfy_check_callid">
+			<title>
+				<function>vrfy_check_callid()</function>
+			</title>
+			<para>Note: this function is for verifier service.</para>
+			<para>
+				Checks whether the current call's been already processed in validity
+				time (set by <emphasis>auth_validity_time</emphasis>) to recognize
+				call replay attacks. If this call (identified by Call-id, Cseq,
+				and tag of From header triple) has not been replayed then adds it to
+				callid table (which size is set by <emphasis>callid_cache_limit</emphasis>
+				parameter).
+			</para>
+			<section id="vrfy_check_callid.dep">
+				<title>Dependencies</title>
+				<para>
+					This function should be called for the last time.
+				</para>
+			</section>
+		</section>
+	</section>

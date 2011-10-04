@@ -81,7 +81,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>fifo_name</varname> (string)</title>
 		<para>
@@ -212,7 +212,7 @@ modparam("mi_fifo", "reply_indent", "    ")
 
 	<section>
 
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		<para>
 		No function exported to be used from configuration file.
 		</para>

@@ -63,7 +63,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>default_domain</varname> (str)</title>
 		<para>
@@ -106,7 +106,7 @@ modparam("pua_usrloc", "entity_prefix", "pres")
 
 </section>
 <section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		<section>
 				<title>
 				<function moreinfo="none">pua_set_publish()</function>

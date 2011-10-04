@@ -120,7 +120,7 @@ UAC                       &kamailio; PROXY                          UAS
 
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>enable_full_lr</varname> (integer)</title>
 		<para>
@@ -241,7 +241,7 @@ modparam("rr", "enable_socket_mismatch_warning", 0)
 
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section id="loose-route-id">
 		<title>
 		<function moreinfo="none">loose_route()</function>

@@ -84,7 +84,7 @@
 	  </section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>default_domain</varname>(str)</title>
 		<para>
@@ -170,7 +170,7 @@ modparam("pua_reginfo", "server_address", "sip:reginfo@160.34.23.12")
 	</section>
 	</section>	
 	<section>
-		<title>Exported Functions</title>
+		<title>Functions</title>
 		<section>
 			<title>
 				<function moreinfo="none">reginfo_handle_notify</function>

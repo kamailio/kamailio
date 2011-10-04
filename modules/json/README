@@ -10,7 +10,7 @@ Matthew Williams
 
    <matthew@flowroute.com>
 
-   Copyright (c) 2011 FlowRoute LLC (flowroute.com)
+   Copyright © 2011 Flowroute LLC (flowroute.com)
      __________________________________________________________________
 
    Table of Contents
@@ -23,11 +23,11 @@ Matthew Williams
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1.
 
-        4. Exported Functions
+        4. Functions
 
               4.1. json_get_field(json_string, field_name, destination)
 
@@ -45,11 +45,11 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1.
 
-   4. Exported Functions
+   4. Functions
 
         4.1. json_get_field(json_string, field_name, destination)
 
@@ -73,13 +73,13 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * libjson (http://metaparadigm.com/json-c/)
 
-3. Exported Parameters
+3. Parameters
 
    3.1.
 
    None
 
-4. Exported Functions
+4. Functions
 
    4.1. json_get_field(json_string, field_name, destination)
 

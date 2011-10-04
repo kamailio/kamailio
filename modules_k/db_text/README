@@ -28,11 +28,11 @@ Daniel-Constantin Mierla
               2.1. Kamailio modules
               2.2. External libraries or applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_mode (integer)
 
-        4. Exported Functions
+        4. Functions
         5. Installation and Running
 
               5.1. Using dbtext with basic Kamailio configuration
@@ -66,11 +66,11 @@ Chapter 1. Admin Guide
         2.1. Kamailio modules
         2.2. External libraries or applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_mode (integer)
 
-   4. Exported Functions
+   4. Functions
    5. Installation and Running
 
         5.1. Using dbtext with basic Kamailio configuration
@@ -182,7 +182,7 @@ suser:supasswd:xxx:alpha.org:xxx
    Kamailio with this module:
      * none.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_mode (integer)
 
@@ -202,7 +202,7 @@ suser:supasswd:xxx:alpha.org:xxx
 modparam("db_text", "db_mode", 1)
 ...
 
-4. Exported Functions
+4. Functions
 
    None.
 

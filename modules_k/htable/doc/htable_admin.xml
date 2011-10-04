@@ -205,7 +205,7 @@ if(is_present_hf("Authorization"))
 
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>htable</varname> (str)</title>
 		<para>
@@ -501,7 +501,7 @@ modparam("htable", "db_expires", 1)
 	</section>
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">sht_print()</function>
@@ -593,7 +593,7 @@ sht_rm_value_re("ha=>.*");
 		</para>
 	</section>
 	<section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 	<section>
 		<title>
 		<function moreinfo="none">sht_reload</function>

@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	 <!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+	 %docentities;
+	]
+>
+
+	<section id="auth_identity.params" xmlns:xi="http://www.w3.org/2001/XInclude">
+		<title>Parameters</title>
+		<section>
+			<title><varname>privatekey_path</varname> (string)</title>
+			<para>Note: this parameter is for authorizer service.</para>
+			<para>
+				The path of private key of the authentication service. The key
+				must be in PEM format.
+			</para>
+			<para>
+				This parameter is required by authentication service.
+			</para>
+			<example>
+				<title>Set <varname>privatekey_path</varname> parameter</title>
+				<programlisting>
+...
+modparam("auth_identity","privatekey_path","/etc/ssl/private/key.pem")
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section>
+			<title><varname>certificate_path</varname> (string)</title>
+			<para>Note: this parameter is for authorizer service.</para>
+			<para>
+				The path of certificate of the authentication service. The
+				certificate must be in PEM format.
+			</para>
+			<para>
+				This parameter is required by authentication service.
+			</para>
+			<example>
+				<title>Set <varname>certificate_path</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","certificate_path","/var/www/ssl/mycert.pem")
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section>
+			<title><varname>certificate_url</varname> (string)</title>
+			<para>Note: this parameter is for authorizer service.</para>
+			<para>
+				The url where certificate is available for other verifier
+				services. (value of Identity-info header) The
+				certificate should be in DER format.
+			</para>
+			<para>
+				This parameter is required by authentication service.
+			</para>
+			<example>
+				<title>Set <varname>certificate_url</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","certificate_url","https://foo.bar/mycert.der")
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section>
+			<title><varname>msg_timeout</varname> (integer)</title>
+			<para>Note: this parameter is for authorizer service.</para>
+			<para>
+				If the Date header of message which is needed to be authenticated
+				contains a time different by more than this seconds from the current
+				time noted by the authentication service then it rejects the
+				message.
+			</para>
+			<para>
+				This parameter is optional. The default value is "600".
+			</para>
+			<example>
+				<title>Set <varname>msg_timeout</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","msg_timeout",600)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="auth_validity_time">
+			<title><varname>auth_validity_time</varname> (integer)</title>
+			<para>Note: this parameter is for verifier service.</para>
+			<para>
+				The validity time of an authenticated message. The message
+				will be refused if it contains a time different by more
+				than this seconds from the current time noted by the verification
+				service.
+			</para>
+			<para>
+				This parameter is optional. The default value is "3600".
+			</para>
+			<example>
+				<title>Set <varname>auth_validity_time</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","auth_validity_time",3600)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="callid_cache_limit">
+			<title><varname>callid_cache_limit</varname> (integer)</title>
+			<para>Note: this parameter is for verifier service.</para>
+			<para>
+				The number of Call-IDs stored in order to recognize call replay
+				attacks. A Call-ID is stored <varname>auth_validity_time</varname> long and
+				uses approximately 100 bytes memory.
+			</para>
+			<para>
+				This parameter is optional. The default value is "32768".
+				(you should increase the size of shared memory with -m
+				 command line switch if you liked to store more callid than
+				 10000)
+			</para>
+			<example>
+				<title>Set <varname>auth_validity_time</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","callid_cache_limit",32768)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="certificate_cache_limit">
+			<title><varname>certificate_cache_limit</varname> (integer)</title>
+			<para>Note: this parameter is for verifier service.</para>
+			<para>
+				The number of certificates stored in order to avoid needless
+				download. A certificate is stored until its expiration date and
+				uses approximately 600 bytes memory.
+			</para>
+			<para>
+				This parameter is optional. The default value is "4096".
+			</para>
+			<example>
+				<title>Set <varname>certificate_cache_limit</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","certificate_cache_limit",4096)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="cainfo_path">
+			<title><varname>cainfo_path</varname> (string)</title>
+			<para>Note: this parameter is for verifier service.</para>
+			<para>
+				A file of trusted certificates. The file should contain multiple
+				certificates in PEM format concatenated together. It could be useful
+				for verifying a certificate signed by a private CA.
+			</para>
+			<para>
+				This parameter is optional. It has not got default value.
+			</para>
+			<example>
+				<title>Set <varname>cainfo_path</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","cainfo_path","/etc/ssl/certs/ca-certificates.crt")
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="accept_pem_certs">
+			<title><varname>accept_pem_certs</varname> ([0|1])</title>
+			<para>Note: this parameter is for verifier service.</para>
+			<para>
+				Enables the acquired certificate processing if it is in PEM
+				format.
+			</para>
+			<para>
+				This parameter is optional. The default value is "0".
+			</para>
+			<example>
+				<title>Set <varname>accept_pem_certs</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","accept_pem_certs",1)
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+

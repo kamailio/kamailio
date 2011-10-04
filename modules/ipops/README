@@ -23,8 +23,8 @@ Iñaki Baz Castillo
               2.1. SIP Router Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
-        4. Exported Functions
+        3. Parameters
+        4. Functions
 
               4.1. is_ip (ip)
               4.2. is_pure_ip (ip)
@@ -58,8 +58,8 @@ Chapter 1. Admin Guide
         2.1. SIP Router Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
-   4. Exported Functions
+   3. Parameters
+   4. Functions
 
         4.1. is_ip (ip)
         4.2. is_pure_ip (ip)
@@ -104,9 +104,9 @@ Chapter 1. Admin Guide
    running SIP Router with this module loaded:
      * No dependencies on external libraries
 
-3. Exported Parameters
+3. Parameters
 
-4. Exported Functions
+4. Functions
 
    4.1. is_ip (ip)
    4.2. is_pure_ip (ip)

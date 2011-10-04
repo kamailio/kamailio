@@ -65,7 +65,7 @@
 	</section>
 	
 	<section>
-		<title>Exported Parameters</title>
+		<title>Parameters</title>
 		<itemizedlist>
 			<listitem>
 			<para>
@@ -76,7 +76,7 @@
 	</section>	
 
 	<section>
-		<title>Exported Functions</title>
+		<title>Functions</title>
 		<para>The module does not export functions to be used
 		in configuration script.</para>
 	</section>	

@@ -194,9 +194,11 @@ module_group_stable=cpl-c dbtext jabber osp sms pdb
 # Modules in this group are either not complete, untested, or without enough
 # reports of usage to allow the module into the stable group. They may or may
 # not have dependencies
-module_group_experimental=tls oracle iptrtpproxy
+module_group_experimental=tls oracle iptrtpproxy ndb_redis async
 
-# Kamailio specific groups
+
+
+### Kamailio specific groups ###
 # Standard modules in K Debian distro
 module_group_kstandard=acc alias_db auth auth_db benchmark call_control \
 				cfgutils db_text dialog dispatcher diversion domain drouting \
@@ -209,7 +211,7 @@ module_group_kstandard=acc alias_db auth auth_db benchmark call_control \
 				iptrtpproxy lcr mediaproxy mi_rpc pdb sanity tm topoh \
 				blst prefix_route counters debugger matrix mqueue mtree \
 				pipelimit rtpproxy textopsx xhttp ipops p_usrloc sdpops \
-				async sipcapture
+				async sipcapture, dmq
 
 # K mysql module
 module_group_kmysql=db_mysql
@@ -280,6 +282,9 @@ module_group_ksqlite=db_sqlite
 # K json modules
 module_group_kjson=json jsonrpc-c
 
+# K redis module
+module_group_kredis=ndb_redis
+
 # if not set on the cmd. line, env or in the modules.lst (cfg_group_include)
 # exclude the below modules.
 ifneq ($(group_include)$(cfg_group_include),)
@@ -296,7 +301,7 @@ else
 							unixsock dbg print_lib auth_identity ldap \
 							db_berkeley db_mysql db_postgres db_oracle \
 							db_sqlite db_unixodbc memcached mi_xmlrpc \
-							ndb_redis perl perlvdb purple \
+							perl perlvdb purple \
 							snmpstats xmpp \
 							carrierroute peering \
 							dialplan lcr utils presence presence_mwi \
@@ -319,6 +324,8 @@ else
 	exclude_modules+= xmlops
 	# depends on jsoc-c
 	exclude_modules+= json jsonrpc-c
+	# depends on libhiredis
+	exclude_modules+= ndb_redis
 	# depends on tm being compiled with -DWITH_AS_SUPPORT support
 ifeq (,$(findstring -DWITH_AS_SUPPORT, $(C_DEFS)))
 		exclude_modules+= seas

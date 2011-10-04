@@ -126,7 +126,7 @@
 
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>enable_stats</varname> (integer)</title>
 		<para>
@@ -1098,7 +1098,7 @@ modparam("dialog", "initial_cbs_inscript", "0")
 
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">set_dlg_profile(profile,[value])</function>
@@ -1608,7 +1608,7 @@ if(!uri == myself) {
 
 
 	<section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 
 		<section>
 		<title><varname>dlg_list</varname></title>

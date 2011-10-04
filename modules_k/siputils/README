@@ -54,7 +54,7 @@ Gabriel Vasile
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. ring_timeout (int)
               3.2. options_accept (string)
@@ -66,7 +66,7 @@ Gabriel Vasile
               3.8. rpid_suffix (string)
               3.9. rpid_avp (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. ring_insert_callid()
               4.2. options_reply()
@@ -137,7 +137,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. ring_timeout (int)
         3.2. options_accept (string)
@@ -149,7 +149,7 @@ Chapter 1. Admin Guide
         3.8. rpid_suffix (string)
         3.9. rpid_avp (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. ring_insert_callid()
         4.2. options_reply()
@@ -212,7 +212,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. ring_timeout (int)
    3.2. options_accept (string)
@@ -346,7 +346,7 @@ modparam("auth", "rpid_suffix", "@1.2.3.4>")
    Example 1.9. rpid_avp parameter example
 modparam("auth", "rpid_avp", "$avp(myrpid)")
 
-4. Exported Functions
+4. Functions
 
    4.1. ring_insert_callid()
    4.2. options_reply()

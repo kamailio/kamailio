@@ -22,7 +22,7 @@ Bogdan-Andrei Iancu
               3.1. Kamailio Modules
               3.2. External Libraries or Applications
 
-        4. Exported Parameters
+        4. Parameters
 
               4.1. default_filter (string)
               4.2. deny_filter (string)
@@ -31,7 +31,7 @@ Bogdan-Andrei Iancu
               4.5. acc_db_table (string)
               4.6. bflags (int)
 
-        5. Exported Functions
+        5. Functions
 
               5.1. set_deny_filter(filter,flags)
               5.2. set_accept_filter(filter,flags)
@@ -65,7 +65,7 @@ Chapter 1. Admin Guide
         3.1. Kamailio Modules
         3.2. External Libraries or Applications
 
-   4. Exported Parameters
+   4. Parameters
 
         4.1. default_filter (string)
         4.2. deny_filter (string)
@@ -74,7 +74,7 @@ Chapter 1. Admin Guide
         4.5. acc_db_table (string)
         4.6. bflags (int)
 
-   5. Exported Functions
+   5. Functions
 
         5.1. set_deny_filter(filter,flags)
         5.2. set_accept_filter(filter,flags)
@@ -137,7 +137,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None
 
-4. Exported Parameters
+4. Parameters
 
    4.1. default_filter (string)
    4.2. deny_filter (string)
@@ -249,7 +249,7 @@ branch_route[1] {
         }
 }
 
-5. Exported Functions
+5. Functions
 
    5.1. set_deny_filter(filter,flags)
    5.2. set_accept_filter(filter,flags)

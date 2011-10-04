@@ -31,7 +31,7 @@ Jeffrey Magder
               3.1. Kamailio Modules
               3.2. External Libraries or Applications
 
-        4. Exported Parameters
+        4. Parameters
 
               4.1. sipEntityType (String)
               4.2. MsgQueueMinorThreshold (Integer)
@@ -41,7 +41,7 @@ Jeffrey Magder
               4.6. snmpgetPath (String)
               4.7. snmpCommunity (String)
 
-        5. Exported Functions
+        5. Functions
         6. Installation and Running
 
               6.1. Compiling the SNMPStats Module
@@ -85,7 +85,7 @@ Chapter 1. Admin Guide
         3.1. Kamailio Modules
         3.2. External Libraries or Applications
 
-   4. Exported Parameters
+   4. Parameters
 
         4.1. sipEntityType (String)
         4.2. MsgQueueMinorThreshold (Integer)
@@ -95,7 +95,7 @@ Chapter 1. Admin Guide
         4.6. snmpgetPath (String)
         4.7. snmpCommunity (String)
 
-   5. Exported Functions
+   5. Functions
    6. Installation and Running
 
         6.1. Compiling the SNMPStats Module
@@ -266,7 +266,7 @@ Chapter 1. Admin Guide
      * lm_sensors-dev - on some OS-es, this lib is required for
        compilation (http://www.lm-sensors.org/).
 
-4. Exported Parameters
+4. Parameters
 
    4.1. sipEntityType (String)
    4.2. MsgQueueMinorThreshold (Integer)
@@ -388,7 +388,7 @@ modparam("snmpstats", "snmpgetPath",     "/my/custom/path/")
 modparam("snmpstats", "snmpCommunity", "customCommunityString")
 ...
 
-5. Exported Functions
+5. Functions
 
    Currently, there are no exported functions.
 

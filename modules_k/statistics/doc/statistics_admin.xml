@@ -58,7 +58,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>variable</varname> (string)</title>
 		<para>
@@ -83,7 +83,7 @@ modparam("statistics", "variable", "active_calls/no_reset")
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">update_stat(variable,value)</function>

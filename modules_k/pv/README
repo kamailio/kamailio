@@ -11,9 +11,9 @@ Daniel-Constantin Mierla
 
    <daniel@asipto.com>
 
-   Copyright � 2008-2011 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2008-2011 Daniel-Constantin Mierla (asipto.com)
 
-   Copyright � 2011 Juha Heinanen
+   Copyright © 2011 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -26,13 +26,13 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. shvset (string)
               3.2. varset (string)
               3.3. avp_aliases (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. pv_isset(pvar)
               4.2. pv_unset(pvar)
@@ -64,13 +64,13 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. shvset (string)
         3.2. varset (string)
         3.3. avp_aliases (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. pv_isset(pvar)
         4.2. pv_unset(pvar)
@@ -103,7 +103,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. shvset (string)
    3.2. varset (string)
@@ -118,11 +118,11 @@ Chapter 1. Admin Guide
    _value_
      * _name_: shared variable name
      * _type_: type of the value
-          + "i": integer value
-          + "s": string value
+          + “i”: integer value
+          + “s”: string value
      * _value_: value to be set
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.1. shvset parameter usage
 ...
@@ -139,11 +139,11 @@ modparam("pv", "shvset", "pstngw=s:sip:10.10.10.10")
    _value_
      * _name_: shared variable name
      * _type_: type of the value
-          + "i": integer value
-          + "s": string value
+          + “i”: integer value
+          + “s”: string value
      * _value_: value to be set
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.2. varset parameter usage
 ...
@@ -162,7 +162,7 @@ modparam("pv", "varset", "gw=s:sip:11.11.11.11;transport=tcp")
 modparam("pv","avp_aliases","email=s:email_addr;tmp=i:100")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. pv_isset(pvar)
    4.2. pv_unset(pvar)
@@ -199,7 +199,7 @@ if(pv_isset("$avp("s:x")"))
 pv_unset("$avp("s:x")");
 ...
 
-4.3. is_int(pvar)
+4.3.  is_int(pvar)
 
    Function checks if pvar argument contains integer value and returns 1
    if it does and -1 otherwise.
@@ -225,8 +225,8 @@ if (is_int("$var(foo)")) {
    Parameters:
      * _name_: shared variable name
      * _type_: type of the value
-          + "int": integer value
-          + "str": string value
+          + “int”: integer value
+          + “str”: string value
      * _value_: value to be set
 
    MI FIFO Command Format:

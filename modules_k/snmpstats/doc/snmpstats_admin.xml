@@ -238,7 +238,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>sipEntityType</varname> (String) </title>
 
@@ -423,7 +423,7 @@ modparam("snmpstats", "snmpCommunity", "customCommunityString")
 
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		<para>
 		Currently, there are no exported functions.
 		</para>

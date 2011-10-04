@@ -437,7 +437,7 @@ ldap_client_bind_timeout = 500
     </section>
 
     <section>
-      <title>Exported Parameters</title>
+      <title>Parameters</title>
 
       <section>
         <title>config_file (string)</title>
@@ -458,7 +458,7 @@ modparam("ldap", "config_file", "/usr/local/etc/&kamailiobinary;/ldap.ini")
     </section>
 
     <section>
-      <title>Exported Functions</title>
+      <title>Functions</title>
 
       <section id="ldap-search-fn">
         <title>ldap_search(ldap_url)</title>

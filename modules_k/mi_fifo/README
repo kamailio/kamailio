@@ -22,7 +22,7 @@ Bogdan-Andrei Iancu
               3.1. Kamailio Modules
               3.2. External Libraries or Applications
 
-        4. Exported Parameters
+        4. Parameters
 
               4.1. fifo_name (string)
               4.2. fifo_mode (integer)
@@ -31,7 +31,7 @@ Bogdan-Andrei Iancu
               4.5. reply_dir (string)
               4.6. reply_indent (string)
 
-        5. Exported Functions
+        5. Functions
         6. Example
 
    List of Examples
@@ -55,7 +55,7 @@ Chapter 1. Admin Guide
         3.1. Kamailio Modules
         3.2. External Libraries or Applications
 
-   4. Exported Parameters
+   4. Parameters
 
         4.1. fifo_name (string)
         4.2. fifo_mode (integer)
@@ -64,7 +64,7 @@ Chapter 1. Admin Guide
         4.5. reply_dir (string)
         4.6. reply_indent (string)
 
-   5. Exported Functions
+   5. Functions
    6. Example
 
 1. Overview
@@ -99,7 +99,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * none
 
-4. Exported Parameters
+4. Parameters
 
    4.1. fifo_name (string)
    4.2. fifo_mode (integer)
@@ -179,7 +179,7 @@ modparam("mi_fifo", "reply_dir", "/home/kamailio/tmp/")
 modparam("mi_fifo", "reply_indent", "    ")
 ...
 
-5. Exported Functions
+5. Functions
 
    No function exported to be used from configuration file.
 

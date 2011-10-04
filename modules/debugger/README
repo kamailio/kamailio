@@ -23,7 +23,7 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. cfgtrace (int)
               3.2. breakpoint (int)
@@ -33,7 +33,7 @@ Daniel-Constantin Mierla
               3.6. step_usleep (int)
               3.7. step_loops (int)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. dbg_breakpoint(mode)
 
@@ -66,7 +66,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. cfgtrace (int)
         3.2. breakpoint (int)
@@ -76,7 +76,7 @@ Chapter 1. Admin Guide
         3.6. step_usleep (int)
         3.7. step_loops (int)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. dbg_breakpoint(mode)
 
@@ -127,7 +127,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. cfgtrace (int)
    3.2. breakpoint (int)
@@ -221,7 +221,7 @@ modparam("debugger", "step_usleep", 500000)
 modparam("debugger", "step_loops", 100)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. dbg_breakpoint(mode)
 

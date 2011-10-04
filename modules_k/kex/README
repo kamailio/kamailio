@@ -24,7 +24,7 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Functions
+        3. Functions
 
               3.1. setsflag(flag)
               3.2. issflagset(flag)
@@ -41,7 +41,7 @@ Daniel-Constantin Mierla
               3.13. setdebug(level)
               3.14. resetdebug()
 
-        4. Exported MI Functions
+        4. MI Commands
 
               4.1. arg
               4.2. kill
@@ -81,7 +81,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Functions
+   3. Functions
 
         3.1. setsflag(flag)
         3.2. issflagset(flag)
@@ -98,7 +98,7 @@ Chapter 1. Admin Guide
         3.13. setdebug(level)
         3.14. resetdebug()
 
-   4. Exported MI Functions
+   4. MI Commands
 
         4.1. arg
         4.2. kill
@@ -133,7 +133,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Functions
+3. Functions
 
    3.1. setsflag(flag)
    3.2. issflagset(flag)
@@ -389,7 +389,7 @@ setdebug("$var(level)");
 resetdebug();
 ...
 
-4. Exported MI Functions
+4. MI Commands
 
    4.1. arg
    4.2. kill

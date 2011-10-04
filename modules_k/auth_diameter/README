@@ -21,13 +21,13 @@ Elena-Ramona Modroiu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. diameter_client_host (string)
               3.2. diameter_client_port (int)
               3.3. use_domain (int)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. diameter_www_authorize(realm)
               4.2. diameter_proxy_authorize(realm)
@@ -55,13 +55,13 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. diameter_client_host (string)
         3.2. diameter_client_port (int)
         3.3. use_domain (int)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. diameter_www_authorize(realm)
         4.2. diameter_proxy_authorize(realm)
@@ -127,7 +127,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. diameter_client_host (string)
    3.2. diameter_client_port (int)
@@ -167,7 +167,7 @@ modparam("auth_diameter", "diameter_client_port", 3000)
 modparam("auth_diameter", "use_domain", 1)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. diameter_www_authorize(realm)
    4.2. diameter_proxy_authorize(realm)

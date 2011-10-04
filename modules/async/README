@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2011 asipto.com
+   Copyright Â© 2011 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -23,11 +23,11 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. workers (int)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. async_route(routename, seconds)
               4.2. async_sleep(seconds)
@@ -48,11 +48,11 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. workers (int)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. async_route(routename, seconds)
         4.2. async_sleep(seconds)
@@ -86,7 +86,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None
 
-3. Exported Parameters
+3. Parameters
 
    3.1. workers (int)
 
@@ -102,12 +102,12 @@ Chapter 1. Admin Guide
 modparam("async", "workers", 2)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. async_route(routename, seconds)
    4.2. async_sleep(seconds)
 
-4.1. async_route(routename, seconds)
+4.1.  async_route(routename, seconds)
 
    Simulate a sleep of 'seconds' and then continue the processing of SIP
    request with the route[routename]. In case of internal errors, the
@@ -136,7 +136,7 @@ route[RESUME] {
 }
 ...
 
-4.2. async_sleep(seconds)
+4.2.  async_sleep(seconds)
 
    Simulate a sleep of 'seconds' and then continue the processing of SIP
    request with the next action. In case of internal errors, the function

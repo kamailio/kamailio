@@ -61,7 +61,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>default_domain</varname>(str)</title>
 		<para>
@@ -140,7 +140,7 @@ modparam("pua_bla", "server_address", "sip:bla@160.34.23.12")
 	
 	
 <section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		<section>
 				<title>
 				<function moreinfo="none">bla_set_flag</function>

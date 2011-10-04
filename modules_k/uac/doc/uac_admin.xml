@@ -87,7 +87,7 @@
 	</section>
 
 	<section>
-		<title>Exported Parameters</title>
+		<title>Parameters</title>
 		<section>
 			<title><varname>rr_store_param</varname> (string)</title>
 			<para>
@@ -291,7 +291,7 @@ modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
 
 
 	<section>
-		<title>Exported Functions</title>
+		<title>Functions</title>
 		<section>
 			<title>
 				<function moreinfo="none">uac_replace_from(display,uri)</function>

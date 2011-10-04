@@ -52,7 +52,7 @@
     </itemizedlist>
   </section>
   <section>
-    <title>Exported Parameters</title>
+    <title>Parameters</title>
     <section>
       <title><varname>sp1_uri</varname>, <varname>sp2_uri</varname>, ..., <varname>sp16_uri</varname></title>
       <para>These sp_uri (string) parameters define peering servers to be used for requesting peering authorization and routing information. At least one peering server must be configured. Others are required only if there are more than one peering servers. Each peering server address takes the form of a standard URL, and consists of up to four components:</para>
@@ -244,7 +244,7 @@ modparam("osp","source_networkid_avp","$avp(s:snid)")
     </section>
   </section>
   <section>
-    <title>Exported Functions</title>
+    <title>Functions</title>
     <section>
       <title><function moreinfo="none">checkospheader()</function></title>
       <para>This function checks for the existence of the OSP-Auth-Token header field.</para>

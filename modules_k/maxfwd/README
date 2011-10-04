@@ -21,11 +21,11 @@ Bogdan-Andrei Iancu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. max_limit (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. mf_process_maxfwd_header(max_value)
               4.2. is_maxfwd_lt(max_value)
@@ -46,11 +46,11 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. max_limit (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. mf_process_maxfwd_header(max_value)
         4.2. is_maxfwd_lt(max_value)
@@ -77,7 +77,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. max_limit (integer)
 
@@ -101,7 +101,7 @@ Chapter 1. Admin Guide
 modparam("maxfwd", "max_limit", 32)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. mf_process_maxfwd_header(max_value)
    4.2. is_maxfwd_lt(max_value)

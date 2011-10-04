@@ -70,7 +70,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname> (str)</title>
 		<para>
@@ -214,7 +214,7 @@ modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
 
 	</section>
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">imc_manager()</function>
@@ -250,7 +250,7 @@ if(is_method("MESSAGE)
 	</section>
 
 	<section>
-	<title>Exported MI Functions</title>
+	<title>MI Commands</title>
 	<section>
 		<title>
 		<function moreinfo="none">imc_list_rooms</function>

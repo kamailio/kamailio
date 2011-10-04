@@ -58,7 +58,7 @@
 
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
     <section>
 	    <title><varname>timeout</varname> (integer)</title>
 	    <para>
@@ -96,7 +96,7 @@ modparam("pdb", "server", "localhost:10001,host.name:10001,192.168.1.7:10002")
     </section>
 	</section>
 	<section>
-		<title>Exported Functions</title>
+		<title>Functions</title>
 		<section>
 	    <title>
 				<function moreinfo="none">pdb_query (string query, string dstavp)</function>

@@ -231,7 +231,7 @@
 	</section>
 
 	<section>
-		<title>Exported Parameters</title>
+		<title>Parameters</title>
 
 		<section>
 		<title><varname>include_callid</varname> (int)</title>
@@ -343,7 +343,7 @@ modparam("pua_dialoginfo", "caller_confirmed", 1)
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	</section>		
 
 </chapter>

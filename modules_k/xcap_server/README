@@ -23,7 +23,7 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (string)
               3.2. xcap_table (string)
@@ -31,7 +31,7 @@ Daniel-Constantin Mierla
               3.4. buf_size (int)
               3.5. xml_ns (str)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. xcaps_put(uri, path, doc)
               4.2. xcaps_get(uri, path)
@@ -63,7 +63,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (string)
         3.2. xcap_table (string)
@@ -71,7 +71,7 @@ Chapter 1. Admin Guide
         3.4. buf_size (int)
         3.5. xml_ns (str)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. xcaps_put(uri, path, doc)
         4.2. xcaps_get(uri, path)
@@ -126,7 +126,7 @@ Chapter 1. Admin Guide
      * libxml2 - libxml2 library for runtime and libxml2-dev for
        compilation.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (string)
    3.2. xcap_table (string)
@@ -194,7 +194,7 @@ modparam("xcap_server", "xml_ns",
     "my=urn:my:prefix")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. xcaps_put(uri, path, doc)
    4.2. xcaps_get(uri, path)

@@ -21,11 +21,11 @@ Greg Fausak
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. retries (integer)
 
-        4. Exported Functions
+        4. Functions
 
    List of Examples
 
@@ -41,11 +41,11 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. retries (integer)
 
-   4. Exported Functions
+   4. Functions
 
 1. Overview
 
@@ -70,7 +70,7 @@ Chapter 1. Admin Guide
      * PostgreSQL library - e.g., libpq5.
      * PostgreSQL devel library - to compile the module (e.g., libpq-dev).
 
-3. Exported Parameters
+3. Parameters
 
    3.1. retries (integer)
 
@@ -88,6 +88,6 @@ Chapter 1. Admin Guide
 modparam("db_mysql", "retries", 3)
 ...
 
-4. Exported Functions
+4. Functions
 
    NONE

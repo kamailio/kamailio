@@ -62,7 +62,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>db_url</varname> (str)</title>
 		<para>
@@ -230,7 +230,7 @@ modparam("alias_db", "append_branches", 1)
 	</section>
 	
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 		<title>
 		<function moreinfo="none">alias_db_lookup(table_name)</function>

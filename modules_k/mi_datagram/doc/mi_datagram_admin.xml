@@ -81,7 +81,7 @@
 	</section>
 
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>socket_name</varname> (string)</title>
 		<para>
@@ -239,7 +239,7 @@ modparam("mi_datagram", "reply_ident", "    ")
 
 	<section>
 
-	<title>Exported Functions</title>
+	<title>Functions</title>
 		<para>
 		No function exported to be used from configuration file.
 		</para>

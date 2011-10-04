@@ -8,9 +8,9 @@ Edited by
 
 Daniel-Constantin Mierla
 
-   Copyright © 2010 Asipto.com
+   Copyright � 2010 Asipto.com
 
-   Copyright © 2006 Freenet Cityline GmbH
+   Copyright � 2006 Freenet Cityline GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -37,7 +37,7 @@ Daniel-Constantin Mierla
         4. Exported Functions
 
               4.1. pl_check(name)
-              4.2. pl_drop([[min ], max])
+              4.2. pl_drop([ [min ], max ])
 
         5. Exported MI Functions
 
@@ -87,7 +87,7 @@ Chapter 1. Admin Guide
    4. Exported Functions
 
         4.1. pl_check(name)
-        4.2. pl_drop([[min ], max])
+        4.2. pl_drop([ [min ], max ])
 
    5. Exported MI Functions
 
@@ -145,7 +145,7 @@ Chapter 1. Admin Guide
 
    URL of the database server to be used.
 
-   Default value is “mysql://openser:openserrw@localhost/openser”.
+   Default value is "mysql://openser:openserrw@localhost/openser".
 
    Example 1.1. Set db_url parameter
 ...
@@ -156,7 +156,7 @@ modparam("pipelimit", "db_url", "dbdriver://username:password@dbhost/dbname")
 
    Name of DB table where data definition for pipes is stores.
 
-   Default value is “pl_pipes”.
+   Default value is "pl_pipes".
 
    Example 1.2. Set plp_table_name parameter
 ...
@@ -167,7 +167,7 @@ modparam("pipelimit", "plp_table_name", "mypipes")
 
    Name of 'pipeid' column.
 
-   Default value is “pipeid”.
+   Default value is "pipeid".
 
    Example 1.3. Set plp_pipeid_column parameter
 ...
@@ -178,7 +178,7 @@ modparam("pipelimit", "plp_pipeid_column", "name")
 
    Name of 'limit' column.
 
-   Default value is “limit”.
+   Default value is "limit".
 
    Example 1.4. Set plp_limit_column parameter
 ...
@@ -189,7 +189,7 @@ modparam("pipelimit", "plp_limit_column", "name")
 
    Name of 'algorithm' column.
 
-   Default value is “algorithm”.
+   Default value is "algorithm".
 
    Example 1.5. Set plp_algorithm_column parameter
 ...
@@ -247,9 +247,9 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 4. Exported Functions
 
    4.1. pl_check(name)
-   4.2. pl_drop([[min ], max])
+   4.2. pl_drop([ [min ], max ])
 
-4.1.  pl_check(name)
+4.1. pl_check(name)
 
    Check the current request against the 'name' pipe. The pipe name can be
    provided via a pseudo variabile.
@@ -278,7 +278,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
         }
 ...
 
-4.2.  pl_drop([[min ], max])
+4.2. pl_drop([ [min ], max ])
 
    For the current request, a "503 - Server Unavailable" reply is sent
    back. The reply may or may not have a "Retry-After" header. If no
@@ -313,7 +313,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
    5.5. pl_get_pid
    5.6. pl_push_load
 
-5.1.  pl_stats
+5.1. pl_stats
 
    Lists the parameters and variabiles in the pipelimit module.
 
@@ -325,7 +325,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
                 :pl_stats:_reply_fifo_file_
                 _empty_line_
 
-5.2.  pl_set_pipe
+5.2. pl_set_pipe
 
    Sets the pipe parameters for the given pipe id.
 
@@ -343,7 +343,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
                 10
                 _empty_line_
 
-5.3.  pl_get_pipes
+5.3. pl_get_pipes
 
    Gets the list of in use pipes.
 
@@ -355,7 +355,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
                 :pl_get_pipes:_reply_fifo_file_
                 _empty_line_
 
-5.4.  pl_set_pid
+5.4. pl_set_pid
 
    Sets the PID Controller parameters for the Feedback Algorithm.
 
@@ -373,7 +373,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
                 0.5
                 _empty_line_
 
-5.5.  pl_get_pid
+5.5. pl_get_pid
 
    Gets the list of in use PID Controller parameters.
 
@@ -385,7 +385,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
                 :pl_get_pid:_reply_fifo_file_
                 _empty_line_
 
-5.6.  pl_push_load
+5.6. pl_push_load
 
    Force the value of the load parameter. This command is useful for
    testing the Feedback algorithm.

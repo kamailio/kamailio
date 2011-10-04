@@ -27,11 +27,11 @@ Elias Baixas
                     1.3.1. Kamailio Modules
                     1.3.2. External Applications
 
-              1.4. Exported Parameters
+              1.4. Parameters
 
                     1.4.1. listen_sockets (string)
 
-              1.5. Exported Functions
+              1.5. Functions
 
                     1.5.1. as_relay_t(String name)
 
@@ -126,11 +126,11 @@ Chapter 1. The Sip Express Application Server User's Guide
               1.3.1. Kamailio Modules
               1.3.2. External Applications
 
-        1.4. Exported Parameters
+        1.4. Parameters
 
               1.4.1. listen_sockets (string)
 
-        1.5. Exported Functions
+        1.5. Functions
 
               1.5.1. as_relay_t(String name)
 
@@ -168,11 +168,11 @@ Chapter 1. The Sip Express Application Server User's Guide
         1.3.1. Kamailio Modules
         1.3.2. External Applications
 
-   1.4. Exported Parameters
+   1.4. Parameters
 
         1.4.1. listen_sockets (string)
 
-   1.5. Exported Functions
+   1.5. Functions
 
         1.5.1. as_relay_t(String name)
 
@@ -257,7 +257,7 @@ Chapter 1. The Sip Express Application Server User's Guide
    WeSIP Application Server, which can be downloaded from www.wesip.eu,
    and used freely for non-comercial purposes.
 
-1.4. Exported Parameters
+1.4. Parameters
 
 1.4.1. listen_sockets (string)
 
@@ -276,7 +276,7 @@ Chapter 1. The Sip Express Application Server User's Guide
 modparam("seas", "listen_sockets","127.0.0.1:5080")
 ...
 
-1.5. Exported Functions
+1.5. Functions
 
 1.5.1. as_relay_t(String name)
 

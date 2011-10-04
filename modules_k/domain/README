@@ -19,7 +19,7 @@ Juha Heinanen
 
         1. Overview
         2. Dependencies
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (string)
               3.2. db_mode (integer)
@@ -27,13 +27,13 @@ Juha Heinanen
               3.4. domain_col (string)
               3.5. register_myself (integer)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. is_from_local()
               4.2. is_uri_host_local()
               4.3. is_domain_local(pseudo_variable)
 
-        5. Exported MI Functions
+        5. MI Commands
 
               5.1. domain_reload
               5.2. domain_dump
@@ -68,7 +68,7 @@ Chapter 1. Admin Guide
 
    1. Overview
    2. Dependencies
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (string)
         3.2. db_mode (integer)
@@ -76,13 +76,13 @@ Chapter 1. Admin Guide
         3.4. domain_col (string)
         3.5. register_myself (integer)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. is_from_local()
         4.2. is_uri_host_local()
         4.3. is_domain_local(pseudo_variable)
 
-   5. Exported MI Functions
+   5. MI Commands
 
         5.1. domain_reload
         5.2. domain_dump
@@ -119,7 +119,7 @@ Chapter 1. Admin Guide
    listed modules must be loaded before this module):
      * database -- Any database module
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (string)
    3.2. db_mode (integer)
@@ -175,7 +175,7 @@ modparam("domain", "domain_col", "domain_name")
    Example 1.5. register_myself example
 modparam("domain", "register_myself", 1)
 
-4. Exported Functions
+4. Functions
 
    4.1. is_from_local()
    4.2. is_uri_host_local()
@@ -247,7 +247,7 @@ if (is_domain_local("$avp(s:some_avp)")) {
 };
 ...
 
-5. Exported MI Functions
+5. MI Commands
 
    5.1. domain_reload
    5.2. domain_dump

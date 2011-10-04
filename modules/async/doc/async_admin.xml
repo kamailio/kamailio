@@ -62,7 +62,7 @@
 	</section>
 	</section>
 	<section>
-	<title>Exported Parameters</title>
+	<title>Parameters</title>
 	<section>
 		<title><varname>workers</varname> (int)</title>
 		<para>
@@ -86,7 +86,7 @@ modparam("async", "workers", 2)
 	</section>
 
 	<section>
-	<title>Exported Functions</title>
+	<title>Functions</title>
 	<section>
 	    <title>
 		<function moreinfo="none">async_route(routename, seconds)</function>
