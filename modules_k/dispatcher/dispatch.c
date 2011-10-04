@@ -2342,9 +2342,7 @@ static void ds_options_callback( struct cell *t, int type,
 			LM_ERR("Setting the state failed (%.*s, group %d)\n", uri.len,
 					uri.s, group);
 		}
-	}
-	if(ds_probing_mode==1 && ps->code == 408)
-	{
+	} else if (ds_probing_mode==1) {
 
 		if (faked_msg_init() < 0)
 		{
