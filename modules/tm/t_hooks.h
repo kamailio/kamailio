@@ -59,34 +59,36 @@ struct cell;
 #define TMCB_REQUEST_IN_N       0
 #define TMCB_RESPONSE_IN_N      1
 #define TMCB_E2EACK_IN_N        2
-#define TMCB_REQUEST_FWDED_N    3
-#define TMCB_RESPONSE_FWDED_N   4
-#define TMCB_ON_FAILURE_RO_N    5
-#define TMCB_ON_FAILURE_N       6
-#define TMCB_REQUEST_OUT_N      7
-#define TMCB_RESPONSE_OUT_N     8
-#define TMCB_LOCAL_COMPLETED_N  9
-#define TMCB_LOCAL_RESPONSE_OUT_N 10
-#define TMCB_ACK_NEG_IN_N       11
-#define TMCB_REQ_RETR_IN_N      12
-#define TMCB_LOCAL_RESPONSE_IN_N 13
-#define TMCB_LOCAL_REQUEST_IN_N  14
-#define TMCB_DLG_N              15
-#define TMCB_DESTROY_N          16  /* called on transaction destroy */
-#define TMCB_E2ECANCEL_IN_N     17
-#define TMCB_E2EACK_RETR_IN_N   18
-#define TMCB_RESPONSE_READY_N	19
+#define TMCB_REQUEST_PENDING_N  3
+#define TMCB_REQUEST_FWDED_N    4
+#define TMCB_RESPONSE_FWDED_N   5
+#define TMCB_ON_FAILURE_RO_N    6
+#define TMCB_ON_FAILURE_N       7
+#define TMCB_REQUEST_OUT_N      8
+#define TMCB_RESPONSE_OUT_N     9
+#define TMCB_LOCAL_COMPLETED_N  10
+#define TMCB_LOCAL_RESPONSE_OUT_N 11
+#define TMCB_ACK_NEG_IN_N       12
+#define TMCB_REQ_RETR_IN_N      13
+#define TMCB_LOCAL_RESPONSE_IN_N 14
+#define TMCB_LOCAL_REQUEST_IN_N  15
+#define TMCB_DLG_N              16
+#define TMCB_DESTROY_N          17  /* called on transaction destroy */
+#define TMCB_E2ECANCEL_IN_N     18
+#define TMCB_E2EACK_RETR_IN_N   19
+#define TMCB_RESPONSE_READY_N	20
 #ifdef WITH_AS_SUPPORT
-#define TMCB_DONT_ACK_N         20 /* TM shoudn't ACK a local UAC  */
+#define TMCB_DONT_ACK_N         21 /* TM shoudn't ACK a local UAC  */
 #endif
-#define TMCB_REQUEST_SENT_N     21
-#define TMCB_RESPONSE_SENT_N    22
-#define TMCB_MAX_N              22
+#define TMCB_REQUEST_SENT_N     22
+#define TMCB_RESPONSE_SENT_N    23
+#define TMCB_MAX_N              23
 
 
 #define TMCB_REQUEST_IN       (1<<TMCB_REQUEST_IN_N)
 #define TMCB_RESPONSE_IN      (1<<TMCB_RESPONSE_IN_N)
 #define TMCB_E2EACK_IN        (1<<TMCB_E2EACK_IN_N)
+#define TMCB_REQUEST_PENDING  (1<<TMCB_REQUEST_PENDING_N)
 #define TMCB_REQUEST_FWDED    (1<<TMCB_REQUEST_FWDED_N)
 #define TMCB_RESPONSE_FWDED   (1<<TMCB_RESPONSE_FWDED_N)
 #define TMCB_ON_FAILURE_RO    (1<<TMCB_ON_FAILURE_RO_N)

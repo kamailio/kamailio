@@ -632,6 +632,12 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		start_final_repl_retr(  trans );
 	}
 
+	if (code==100) {
+		if(unlikely(has_tran_tmcbs(trans, TMCB_REQUEST_PENDING)))
+			run_trans_callbacks_with_buf(TMCB_REQUEST_PENDING, rb,
+					trans->uas.request, FAKED_REPLY, code);
+	}
+
 	/* send it out */
 	/* first check if we managed to resolve topmost Via -- if
 	   not yet, don't try to retransmit
