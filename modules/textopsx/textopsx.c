@@ -128,6 +128,7 @@ static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2)
 	msg->set_global_port    = tmp.set_global_port;
 	msg->flags              = tmp.flags;
 	msg->msg_flags          = tmp.msg_flags;
+	msg->hash_index         = tmp.hash_index;
 	msg->force_send_socket  = tmp.force_send_socket;
 	msg->fwd_send_flags     = tmp.fwd_send_flags;
 	msg->rpl_send_flags     = tmp.rpl_send_flags;
