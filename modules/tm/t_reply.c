@@ -649,8 +649,11 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		if (likely(SEND_PR_BUFFER( rb, buf, len )>=0)){
 			if (unlikely(code>=200 && !is_local(trans) &&
 						has_tran_tmcbs(trans, TMCB_RESPONSE_OUT)) )
-				run_trans_callbacks(TMCB_RESPONSE_OUT, trans,
-									trans->uas.request, FAKED_REPLY, code);
+				INIT_TMCB_ONSEND_PARAMS(onsend_params, trans->uas.request,
+								FAKED_REPLY, rb, &rb->dst,
+								buf, len, TMCB_LOCAL_F, rb->branch, code);
+				run_trans_callbacks_off_params(TMCB_RESPONSE_OUT, trans,
+				                               &onsend_params);
 			if (unlikely(has_tran_tmcbs(trans, TMCB_RESPONSE_SENT))){
 				INIT_TMCB_ONSEND_PARAMS(onsend_params, trans->uas.request,
 								FAKED_REPLY, rb, &rb->dst, 
@@ -1820,8 +1823,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		if (likely(uas_rb->dst.send_sock &&
 					SEND_PR_BUFFER( uas_rb, buf, res_len ) >= 0)){
 			if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
-				run_trans_callbacks( TMCB_RESPONSE_OUT, t, t->uas.request,
-					relayed_msg, relayed_code);
+				run_trans_callbacks_with_buf( TMCB_RESPONSE_OUT, uas_rb, t->uas.request,
+				                              relayed_msg, relayed_code);
 			}
 			if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){
 				INIT_TMCB_ONSEND_PARAMS(onsend_params, t->uas.request,
