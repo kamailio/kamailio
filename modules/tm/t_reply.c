@@ -564,9 +564,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	struct retr_buf *rb;
 	unsigned int buf_len;
 	struct cancel_info cancel_data;
-#ifdef TMCB_ONSEND
 	struct tmcb_params onsend_params;
-#endif
 
 	init_cancel_info(&cancel_data);
 	if (!buf)
@@ -653,7 +651,6 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 						has_tran_tmcbs(trans, TMCB_RESPONSE_OUT)) )
 				run_trans_callbacks(TMCB_RESPONSE_OUT, trans,
 									trans->uas.request, FAKED_REPLY, code);
-#ifdef TMCB_ONSEND
 			if (unlikely(has_tran_tmcbs(trans, TMCB_RESPONSE_SENT))){
 				INIT_TMCB_ONSEND_PARAMS(onsend_params, trans->uas.request,
 								FAKED_REPLY, rb, &rb->dst, 
@@ -661,7 +658,6 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 				run_onsend_callbacks2(TMCB_RESPONSE_SENT, trans,
 										&onsend_params);
 			}
-#endif /* TMCB_ONSEND */
 		}
 		DBG("DEBUG: reply sent out. buf=%p: %.20s..., shmem=%p: %.20s\n",
 			buf, buf, rb->buffer, rb->buffer );
@@ -1444,14 +1440,12 @@ int t_retransmit_reply( struct cell *t )
 	memcpy( b, t->uas.response.buffer, len );
 	UNLOCK_REPLIES( t );
 	SEND_PR_BUFFER( & t->uas.response, b, len );
-#ifdef TMCB_ONSEND
 	if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){ 
 		/* we don't know if it's a retransmission of a local reply or a 
 		 * forwarded reply */
 		run_onsend_callbacks(TMCB_RESPONSE_SENT, &t->uas.response, 0, 0,
 								TMCB_RETR_F);
 	}
-#endif
 	DBG("DEBUG: reply retransmitted. buf=%p: %.9s..., shmem=%p: %.9s\n",
 		b, b, t->uas.response.buffer, t->uas.response.buffer );
 	return 1;
@@ -1635,9 +1629,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	struct retr_buf *uas_rb;
 	str* to_tag;
 	str reason;
-#ifdef TMCB_ONSEND
 	struct tmcb_params onsend_params;
-#endif
 
 	/* keep compiler warnings about use of uninit vars silent */
 	res_len=0;
@@ -1831,7 +1823,6 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				run_trans_callbacks( TMCB_RESPONSE_OUT, t, t->uas.request,
 					relayed_msg, relayed_code);
 			}
-#ifdef TMCB_ONSEND
 			if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){
 				INIT_TMCB_ONSEND_PARAMS(onsend_params, t->uas.request,
 									relayed_msg, uas_rb, &uas_rb->dst, buf,
@@ -1840,7 +1831,6 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 									uas_rb->branch, relayed_code);
 				run_onsend_callbacks2(TMCB_RESPONSE_SENT, t, &onsend_params);
 			}
-#endif
 		} else if (unlikely(uas_rb->dst.send_sock == 0))
 			ERR("no resolved dst to send reply to\n");
 		/* Call put_on_wait() only if we really send out
@@ -2013,9 +2003,7 @@ int reply_received( struct sip_msg  *p_msg )
 	int blst_503_timeout;
 	struct hdr_field* hf;
 #endif
-#ifdef TMCB_ONSEND
 	struct tmcb_params onsend_params;
-#endif
 	struct run_act_ctx ctx;
 
 	/* make sure we know the associated transaction ... */
@@ -2074,7 +2062,6 @@ int reply_received( struct sip_msg  *p_msg )
 			if (msg_status >= 300) {
 				ack = build_ack(p_msg, t, branch, &ack_len);
 				if (ack) {
-#ifdef	TMCB_ONSEND
 					if (SEND_PR_BUFFER(&uac->request, ack, ack_len)>=0)
 						if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT))){ 
 							INIT_TMCB_ONSEND_PARAMS(onsend_params, 
@@ -2084,9 +2071,6 @@ int reply_received( struct sip_msg  *p_msg )
 							run_onsend_callbacks2(TMCB_REQUEST_SENT, t,
 													&onsend_params);
 						}
-#else
-					SEND_PR_BUFFER(&uac->request, ack, ack_len);
-#endif
 					shm_free(ack);
 				}
 			} else if (is_local(t) /*&& 200 <= msg_status < 300*/) {
@@ -2094,7 +2078,6 @@ int reply_received( struct sip_msg  *p_msg )
 				if (ack) {
 					if (msg_send(&lack_dst, ack, ack_len)<0)
 						LOG(L_ERR, "Error while sending local ACK\n");
-#ifdef	TMCB_ONSEND
 					else if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT))){
 							INIT_TMCB_ONSEND_PARAMS(onsend_params, 
 									t->uas.request, p_msg, &uac->request,
@@ -2103,7 +2086,6 @@ int reply_received( struct sip_msg  *p_msg )
 							run_onsend_callbacks2(TMCB_REQUEST_SENT, t,
 													&onsend_params);
 					}
-#endif
 #ifndef WITH_AS_SUPPORT
 					shm_free(ack);
 #endif
@@ -2119,16 +2101,12 @@ int reply_received( struct sip_msg  *p_msg )
 								  local_cancel */
 				/* re-transmit if cancel already built */
 				DBG("tm: reply_received: branch CANCEL retransmit\n");
-#ifdef TMCB_ONSEND
 				if (SEND_BUFFER( &uac->local_cancel)>=0){
 					if (unlikely (has_tran_tmcbs(t, TMCB_REQUEST_SENT)))
 						run_onsend_callbacks(TMCB_REQUEST_SENT,
 											&uac->local_cancel,
 											0, 0, TMCB_LOCAL_F);
 				}
-#else
-				SEND_BUFFER( &uac->local_cancel );
-#endif
 				/* retrs. should be already started so do nothing */
 			}else if (atomic_cmpxchg_long((void*)&uac->local_cancel.buffer, 0,
 										(long)BUSY_BUFFER)==0){

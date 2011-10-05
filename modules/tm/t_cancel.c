@@ -326,14 +326,10 @@ int cancel_branch( struct cell *t, int branch,
 	crb->buffer_len = len;
 
 	DBG("DEBUG: cancel_branch: sending cancel...\n");
-#ifdef TMCB_ONSEND
 	if (SEND_BUFFER( crb )>=0){
 		if (unlikely (has_tran_tmcbs(t, TMCB_REQUEST_SENT)))
 			run_onsend_callbacks(TMCB_REQUEST_SENT, crb, 0, 0, TMCB_LOCAL_F);
 	}
-#else
-	SEND_BUFFER( crb );
-#endif
 	/*sets and starts the FINAL RESPONSE timer */
 	if (start_retr( crb )!=0)
 		LOG(L_CRIT, "BUG: cancel_branch: failed to start retransmission"

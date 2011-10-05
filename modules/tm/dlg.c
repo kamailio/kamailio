@@ -141,14 +141,12 @@ void run_trans_dlg_callbacks(dlg_t* dlg, struct cell* trans,
 	if (dlg->dlg_callbacks.first==0)
 		return;
 	memset(&params, 0, sizeof(params));
-#ifdef TMCB_ONSEND
 	if (rbuf){
 		params.t_rbuf=rbuf;
 		params.dst=&rbuf->dst;
 		params.send_buf.s=rbuf->buffer;
 		params.send_buf.len=rbuf->buffer_len;
 	}
-#endif
 	
 	run_trans_callbacks_internal(&dlg->dlg_callbacks, TMCB_DLG, trans, 
 									&params);

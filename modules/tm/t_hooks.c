@@ -319,7 +319,6 @@ void run_trans_callbacks( int type , struct cell *trans,
 
 
 
-#ifdef TMCB_ONSEND
 void run_onsend_callbacks(int type, struct retr_buf* rbuf,
 					struct sip_msg* req, struct sip_msg* repl, short flags)
 {
@@ -347,7 +346,6 @@ void run_onsend_callbacks2(int type, struct cell* trans, struct tmcb_params* p)
 	run_trans_callbacks_internal(&trans->tmcb_hl, type, p->t_rbuf->my_T, p);
 }
 
-#endif
 
 static void run_reqin_callbacks_internal(struct tmcb_head_list* hl,
 							struct cell *trans, struct tmcb_params* params)

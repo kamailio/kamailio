@@ -46,12 +46,12 @@
 
 #include "defs.h"
 
-/* if defined support for ONSEND callbacks will be added and
- * the tmcb_params structure will get some additional members */
+/* TMCB_ONSEND used to enable certain callback-related features when
+ * ONSEND was set, these days it's always enabled. For compatibility
+ * reasons with modules that check ONSEND, continue to set it
+ * unconditionally*/
 #define TMCB_ONSEND
-#ifdef TMCB_ONSEND
 #include "../../ip_addr.h" /* dest_info */
-#endif
 
 struct sip_msg;
 struct cell;
@@ -78,13 +78,9 @@ struct cell;
 #ifdef WITH_AS_SUPPORT
 #define TMCB_DONT_ACK_N         19 /* TM shoudn't ACK a local UAC  */
 #endif
-#ifdef TMCB_ONSEND
 #define TMCB_REQUEST_SENT_N     20
 #define TMCB_RESPONSE_SENT_N    21
 #define TMCB_MAX_N              21
-#else
-#define TMCB_MAX_N              19
-#endif
 
 
 #define TMCB_REQUEST_IN       (1<<TMCB_REQUEST_IN_N)
@@ -109,10 +105,8 @@ struct cell;
 #ifdef WITH_AS_SUPPORT
 #define TMCB_DONT_ACK         (1<<TMCB_DONT_ACK_N)
 #endif
-#ifdef TMCB_ONSEND
 #define TMCB_REQUEST_SENT      (1<<TMCB_REQUEST_SENT_N)
 #define TMCB_RESPONSE_SENT     (1<<TMCB_RESPONSE_SENT_N)
-#endif
 #define TMCB_MAX              ((1<<(TMCB_MAX_N+1))-1)
 
 
@@ -294,17 +288,15 @@ struct cell;
  *  t_uac.
  *   For a reply the code is the response status (which is always >0, e.g. 200,
  *   408, a.s.o).
- *  Note: - these callbacks can be used only if TMCB_ONSEND is defined.
  *        - the callbacks will be called sometimes with the REPLY lock held
  *          and sometimes without it, so trying to acquire the REPLY lock
  *          from these callbacks could lead to deadlocks (avoid it unless
  *           you really know what you're doing).
  *
- *  TMCB_REQUEST_SENT (present only if TMCB_ONSEND is defined) -- called 
- *  each time a request was sent (even for retransmissions), it includes 
- *  local and forwarded request, ser generated CANCELs and ACKs. The 
- *  tmcb_params structure will have the t_rbuf, dst, send_buf and is_retr
- *  members  filled.
+ *  TMCB_REQUEST_SENT -- called each time a request was sent (even for
+ *  retransmissions), it includes *  local and forwarded request, ser generated
+ *  CANCELs and ACKs. The tmcb_params structure will have the t_rbuf, dst,
+ *  send_buf and is_retr members filled.
  *  This callback is "read-only", the message was already sent and no changes
  *  are allowed.
  *  Note: send_buf can be different from t_rbuf->buffer for ACKs (in this
@@ -312,11 +304,11 @@ struct cell;
  *   its destination). The same goes for t_rbuf->dst and tmcb->dst for local 
  *   transactions ACKs to 2xxs.
  *
- *  TMCB_RESPONSE_SENT  (present only if TMCB_ONSEND is defined) -- called 
- *  each time a response was sent (even for retransmissions). The tmcb_params
- *   structure will have t_rbuf set to the reply retransmission buffer and
- *   send_buf set to the data sent (in this case it will always be the same 
- *   with t_rbuf->buf). is_retr will also be set if the reply is retransmitted
+ *  TMCB_RESPONSE_SENT -- called each time a response was sent (even for
+ *  retransmissions). The tmcb_params structure will have t_rbuf set to the
+ *  reply retransmission buffer and send_buf set to the data sent (in this case
+ *  it will always be the same with t_rbuf->buf). is_retr will also be set if
+ *  the reply is retransmitted
  *   by ser.
  *  This callback is "read-only", the message was already sent and no changes
  *  are allowed.
@@ -343,10 +335,8 @@ struct cell;
 	).
 */
 
-#ifdef TMCB_ONSEND
 #define TMCB_RETR_F 1
 #define TMCB_LOCAL_F 2
-#endif
 
 /* pack structure with all params passed to callback function */
 struct tmcb_params {
@@ -354,7 +344,6 @@ struct tmcb_params {
 	struct sip_msg* rpl;
 	void **param;
 	int code;
-#ifdef TMCB_ONSEND
 	unsigned short flags; /* set to a combination of:
 							 TMCB_RETR_F if this is a _ser_ retransmission
 							 (but not if if it's a "forwarded" retr., like a 
@@ -370,7 +359,6 @@ struct tmcb_params {
 	struct dest_info* dst; /* destination */
 	str send_buf; /* what was/will be sent on the net, used for ACKs
 					(which don't have a retr_buf). */
-#endif
 };
 
 #define INIT_TMCB_PARAMS(tmcb, request, reply, r_code)\
@@ -380,7 +368,6 @@ do{\
 	(tmcb).code=(r_code); \
 }while(0)
 
-#ifdef TMCB_ONSEND
 #define INIT_TMCB_ONSEND_PARAMS(tmcb, req, repl, rbuf, dest, buf, buf_len, \
 								onsend_flags, t_branch, code) \
 do{ \
@@ -389,7 +376,6 @@ do{ \
 	tmcb.send_buf.s=(buf); tmcb.send_buf.len=(buf_len); \
 	tmcb.flags=(onsend_flags); tmcb.branch=(t_branch); \
 }while(0)
-#endif
 
 /* callback function prototype */
 typedef void (transaction_cb) (struct cell* t, int type, struct tmcb_params*);
@@ -458,11 +444,9 @@ void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code );
 void run_local_reqin_callbacks( struct cell *trans, struct sip_msg *req, 
 		int code );
 
-#ifdef TMCB_ONSEND
-
+/* TBD: explanation */
 void run_onsend_callbacks(int type, struct retr_buf* rbuf, struct sip_msg* req,
 									struct sip_msg* repl, short flags);
 void run_onsend_callbacks2(int type, struct cell* t, struct tmcb_params* p);
-#endif
 
 #endif
