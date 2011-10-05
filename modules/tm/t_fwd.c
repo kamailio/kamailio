@@ -1542,8 +1542,12 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 			
 			branch_ret=t_send_branch(t, i, p_msg , proxy, lock_replies);
 			if (branch_ret>=0){ /* some kind of success */
-				if (branch_ret==i) /* success */
+				if (branch_ret==i) { /* success */
 					success_branch++;
+					if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_OUT)))
+						run_trans_callbacks_with_buf( TMCB_REQUEST_OUT, &t->uac[i].request,
+						                              p_msg, 0, -p_msg->REQ_METHOD);
+				}
 				else /* new branch added */
 					added_branches |= 1<<branch_ret;
 			}

@@ -63,24 +63,25 @@ struct cell;
 #define TMCB_RESPONSE_FWDED_N   4
 #define TMCB_ON_FAILURE_RO_N    5
 #define TMCB_ON_FAILURE_N       6
-#define TMCB_RESPONSE_OUT_N     7
-#define TMCB_LOCAL_COMPLETED_N  8
-#define TMCB_LOCAL_RESPONSE_OUT_N 9
-#define TMCB_ACK_NEG_IN_N       10
-#define TMCB_REQ_RETR_IN_N      11
-#define TMCB_LOCAL_RESPONSE_IN_N 12
-#define TMCB_LOCAL_REQUEST_IN_N  13
-#define TMCB_DLG_N              14
-#define TMCB_DESTROY_N          15  /* called on transaction destroy */
-#define TMCB_E2ECANCEL_IN_N     16
-#define TMCB_E2EACK_RETR_IN_N   17
-#define TMCB_RESPONSE_READY_N	18
+#define TMCB_REQUEST_OUT_N      7
+#define TMCB_RESPONSE_OUT_N     8
+#define TMCB_LOCAL_COMPLETED_N  9
+#define TMCB_LOCAL_RESPONSE_OUT_N 10
+#define TMCB_ACK_NEG_IN_N       11
+#define TMCB_REQ_RETR_IN_N      12
+#define TMCB_LOCAL_RESPONSE_IN_N 13
+#define TMCB_LOCAL_REQUEST_IN_N  14
+#define TMCB_DLG_N              15
+#define TMCB_DESTROY_N          16  /* called on transaction destroy */
+#define TMCB_E2ECANCEL_IN_N     17
+#define TMCB_E2EACK_RETR_IN_N   18
+#define TMCB_RESPONSE_READY_N	19
 #ifdef WITH_AS_SUPPORT
-#define TMCB_DONT_ACK_N         19 /* TM shoudn't ACK a local UAC  */
+#define TMCB_DONT_ACK_N         20 /* TM shoudn't ACK a local UAC  */
 #endif
-#define TMCB_REQUEST_SENT_N     20
-#define TMCB_RESPONSE_SENT_N    21
-#define TMCB_MAX_N              21
+#define TMCB_REQUEST_SENT_N     21
+#define TMCB_RESPONSE_SENT_N    22
+#define TMCB_MAX_N              22
 
 
 #define TMCB_REQUEST_IN       (1<<TMCB_REQUEST_IN_N)
@@ -90,6 +91,7 @@ struct cell;
 #define TMCB_RESPONSE_FWDED   (1<<TMCB_RESPONSE_FWDED_N)
 #define TMCB_ON_FAILURE_RO    (1<<TMCB_ON_FAILURE_RO_N)
 #define TMCB_ON_FAILURE       (1<<TMCB_ON_FAILURE_N)
+#define TMCB_REQUEST_OUT      (1<<TMCB_REQUEST_OUT_N)
 #define TMCB_RESPONSE_OUT     (1<<TMCB_RESPONSE_OUT_N)
 #define TMCB_LOCAL_COMPLETED  (1<<TMCB_LOCAL_COMPLETED_N)
 #define TMCB_LOCAL_RESPONSE_OUT (1<<TMCB_LOCAL_RESPONSE_OUT_N)
@@ -241,6 +243,12 @@ struct cell;
  *  chance to change its shape. It can also be called from the failure
  *   router (via t_relay/t_forward_nonack) and in this case the REPLY lock 
  *   will be held.
+ *
+ *  TMCB_REQUEST_OUT -- request was sent out successfully.
+ *  There is nothing more you can change from the callback, it is good for
+ *  accounting-like uses.
+ *  Note: if the send fails or via cannot be resolved, this callback is
+ *  _not_ called.
  *
  *  TMCB_LOCAL_COMPLETED -- final reply for localy initiated
  *  transaction arrived. Message may be FAKED_REPLY. Can be called multiple

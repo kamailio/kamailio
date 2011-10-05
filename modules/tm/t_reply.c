@@ -648,12 +648,13 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	} else {
 		if (likely(SEND_PR_BUFFER( rb, buf, len )>=0)){
 			if (unlikely(code>=200 && !is_local(trans) &&
-						has_tran_tmcbs(trans, TMCB_RESPONSE_OUT)) )
+						has_tran_tmcbs(trans, TMCB_RESPONSE_OUT)) ){
 				INIT_TMCB_ONSEND_PARAMS(onsend_params, trans->uas.request,
 								FAKED_REPLY, rb, &rb->dst,
 								buf, len, TMCB_LOCAL_F, rb->branch, code);
 				run_trans_callbacks_off_params(TMCB_RESPONSE_OUT, trans,
 				                               &onsend_params);
+			}
 			if (unlikely(has_tran_tmcbs(trans, TMCB_RESPONSE_SENT))){
 				INIT_TMCB_ONSEND_PARAMS(onsend_params, trans->uas.request,
 								FAKED_REPLY, rb, &rb->dst, 
