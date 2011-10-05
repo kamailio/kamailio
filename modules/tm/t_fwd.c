@@ -1190,9 +1190,9 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 				}
 				else{
 					if (unlikely(has_tran_tmcbs(t_cancel, TMCB_REQUEST_SENT)))
-						run_onsend_callbacks(TMCB_REQUEST_SENT, 
-												&t_cancel->uac[i].request,
-												cancel_msg, 0, TMCB_LOCAL_F);
+						run_trans_callbacks_with_buf(TMCB_REQUEST_SENT,
+						                             &t_cancel->uac[i].request,
+						                             cancel_msg, 0, TMCB_LOCAL_F);
 				}
 				if (start_retr( &t_cancel->uac[i].request )!=0)
 					LOG(L_CRIT, "BUG: e2e_cancel: failed to start retr."
@@ -1381,7 +1381,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 		return -2;
 	} else {
 		if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT)))
-			run_onsend_callbacks(TMCB_REQUEST_SENT, &uac->request, p_msg, 0,0);
+			run_trans_callbacks_with_buf(TMCB_REQUEST_SENT, &uac->request, p_msg, 0,0);
 		/* start retr. only if the send succeeded */
 		if (start_retr( &uac->request )!=0){
 			LOG(L_CRIT, "BUG: t_send_branch: retr. already started for %p\n",

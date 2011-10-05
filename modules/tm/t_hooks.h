@@ -294,7 +294,7 @@ struct cell;
  *           you really know what you're doing).
  *
  *  TMCB_REQUEST_SENT -- called each time a request was sent (even for
- *  retransmissions), it includes *  local and forwarded request, ser generated
+ *  retransmissions), it includes local and forwarded request, ser generated
  *  CANCELs and ACKs. The tmcb_params structure will have the t_rbuf, dst,
  *  send_buf and is_retr members filled.
  *  This callback is "read-only", the message was already sent and no changes
@@ -444,9 +444,12 @@ void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code );
 void run_local_reqin_callbacks( struct cell *trans, struct sip_msg *req, 
 		int code );
 
-/* TBD: explanation */
-void run_onsend_callbacks(int type, struct retr_buf* rbuf, struct sip_msg* req,
-									struct sip_msg* repl, short flags);
-void run_onsend_callbacks2(int type, struct cell* t, struct tmcb_params* p);
+/* like run_trans_callbacks but provide outgoing buffer (i.e., the
+ * processed message) to callback */
+void run_trans_callbacks_with_buf(int type, struct retr_buf* rbuf, struct sip_msg* req,
+								  struct sip_msg* repl, short flags);
+
+/* like run_trans_callbacks but tmcb_params assumed to contain data already */
+void run_trans_callbacks_off_params(int type, struct cell* t, struct tmcb_params* p);
 
 #endif

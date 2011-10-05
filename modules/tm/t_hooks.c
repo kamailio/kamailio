@@ -319,8 +319,9 @@ void run_trans_callbacks( int type , struct cell *trans,
 
 
 
-void run_onsend_callbacks(int type, struct retr_buf* rbuf,
-					struct sip_msg* req, struct sip_msg* repl, short flags)
+void run_trans_callbacks_with_buf(int type, struct retr_buf* rbuf,
+                                  struct sip_msg* req, struct sip_msg* repl,
+                                  short flags)
 {
 	struct tmcb_params params;
 	struct cell * trans;
@@ -336,7 +337,8 @@ void run_onsend_callbacks(int type, struct retr_buf* rbuf,
 }
 
 
-void run_onsend_callbacks2(int type, struct cell* trans, struct tmcb_params* p)
+void run_trans_callbacks_off_params(int type, struct cell* trans,
+                                    struct tmcb_params* p)
 {
 
 	if (p->t_rbuf==0) return;

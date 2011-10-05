@@ -497,8 +497,8 @@ static inline void send_prepared_request_impl(struct retr_buf *request, int retr
 	}
 	else if (unlikely(has_tran_tmcbs(request->my_T, TMCB_REQUEST_SENT)))
 		/* we don't know the method here */
-			run_onsend_callbacks(TMCB_REQUEST_SENT, request, 0, 0,
-									TMCB_LOCAL_F);
+			run_trans_callbacks_with_buf(TMCB_REQUEST_SENT, request, 0, 0,
+			TMCB_LOCAL_F);
 	
 	if (retransmit && (start_retr(request)!=0))
 		LOG(L_CRIT, "BUG: t_uac: failed to start retr. for %p\n", request);
@@ -662,7 +662,7 @@ int ack_local_uac(struct cell *trans, str *hdrs, str *body)
 								&local_ack->dst,
 								local_ack->buffer, local_ack->buffer_len,
 								TMCB_LOCAL_F, 0 /* branch */, TYPE_LOCAL_ACK);
-		run_onsend_callbacks2(TMCB_REQUEST_SENT, trans, &onsend_params);
+		run_trans_callbacks_off_params(TMCB_REQUEST_SENT, trans, &onsend_params);
 	}
 
 	ret = 0;

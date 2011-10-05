@@ -328,7 +328,7 @@ int cancel_branch( struct cell *t, int branch,
 	DBG("DEBUG: cancel_branch: sending cancel...\n");
 	if (SEND_BUFFER( crb )>=0){
 		if (unlikely (has_tran_tmcbs(t, TMCB_REQUEST_SENT)))
-			run_onsend_callbacks(TMCB_REQUEST_SENT, crb, 0, 0, TMCB_LOCAL_F);
+			run_trans_callbacks_with_buf(TMCB_REQUEST_SENT, crb, 0, 0, TMCB_LOCAL_F);
 	}
 	/*sets and starts the FINAL RESPONSE timer */
 	if (start_retr( crb )!=0)
