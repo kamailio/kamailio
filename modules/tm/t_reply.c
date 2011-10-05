@@ -617,7 +617,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 									0, FAKED_REPLY, code);
 		} else {
 			if(unlikely(has_tran_tmcbs(trans, TMCB_RESPONSE_READY))) {
-				run_trans_callbacks(TMCB_RESPONSE_READY, trans,
+				run_trans_callbacks_with_buf(TMCB_RESPONSE_READY, rb,
 					trans->uas.request, FAKED_REPLY, code);
 			}
 		}
@@ -1806,7 +1806,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	/* send it now (from the private buffer) */
 	if (relay >= 0) {
 		if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_READY))){
-			run_trans_callbacks(TMCB_RESPONSE_READY, t,
+			run_trans_callbacks_with_buf(TMCB_RESPONSE_READY, uas_rb,
 					t->uas.request, relayed_msg, relayed_code);
 		}
 		/* Set retransmission timer before the reply is sent out to avoid
