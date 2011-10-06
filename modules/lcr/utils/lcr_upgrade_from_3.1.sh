@@ -45,9 +45,12 @@ function upgrade_lcr_gw_table() {
     or die("Failed to alter 'ser/lcr_gw' table!\n");
   mysql_query("ALTER TABLE lcr_gw ADD COLUMN tag VARCHAR(64) DEFAULT NULL AFTER prefix")
     or die("Failed to alter 'ser/lcr_gw' table!\n");
+  mysql_query("ALTER TABLE lcr_gw DROP INDEX lcr_id_ip_addr_port_hostname_idx")
+    or die ("Failed to drop 'ser/lcr_gw' index\n");
+  mysql_query("ALTER TABLE lcr_gw ADD INDEX lcr_id_idx (lcr_id)")
+    or die ("Failed to add 'ser/lcr_gw' index\n");
   mysql_query("UPDATE version SET table_version=2 WHERE table_name='lcr_gw'")
     or die ("Failed to update into 'ser/version' table\n");
-
   db_disconnect();
 
   echo "Table 'ser/lcr_gw' upgraded\n";
