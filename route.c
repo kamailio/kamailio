@@ -1813,8 +1813,19 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 	}
 	switch(e->l_type){
 	case METHOD_O:
-		ret=comp_str(e->op, &msg->first_line.u.request.method,
+		if(msg->first_line.type==SIP_REQUEST)
+		{
+			ret=comp_str(e->op, &msg->first_line.u.request.method,
 			 			e->r_type, &e->r, msg, h);
+		} else {
+			if(parse_headers(msg, HDR_CSEQ_F, 0)!=0 || msg->cseq==NULL)
+			{
+				LM_ERR("cannot parse cseq header\n");
+				goto error;
+			}
+			ret=comp_str(e->op, &get_cseq(msg)->method,
+						e->r_type, &e->r, msg, h);
+		}
 		break;
 	case URI_O:
 		if(msg->new_uri.s) {
