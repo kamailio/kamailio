@@ -750,7 +750,7 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
     if(current_dlg_pointer != NULL)
         return -1;
 
-	if(req->first_line.u.request.method_value == METHOD_CANCEL)
+	if(req->first_line.u.request.method_value != METHOD_INVITE)
 		return -1;
 
     if(pre_match_parse( req, &callid, &ftag, &ttag, 0)<0) {

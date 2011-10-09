@@ -88,7 +88,7 @@
 
 
 /*! entries in the dialog list */
-struct dlg_cell
+typedef struct dlg_cell
 {
 	volatile int         ref;		/*!< reference counter */
 	struct dlg_cell      *next;		/*!< next entry in the list */
@@ -116,7 +116,7 @@ struct dlg_cell
 	struct dlg_head_cbl  cbs;		/*!< dialog callbacks */
 	struct dlg_profile_link *profile_links; /*!< dialog profiles */
 	struct dlg_var       *vars;		/*!< dialog variables */
-};
+} dlg_cell_t;
 
 
 /*! entries in the main dialog table */
