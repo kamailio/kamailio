@@ -28,8 +28,8 @@ dbaliases|
 dbaliases|1
 dialog|
 dialog|5
-METADATA_DEFAULTS
-NIL|NIL|NIL|NIL|NIL
+dialog_vars|
+dialog_vars|1
 dialplan|
 dialplan|1
 dispatcher|
@@ -72,6 +72,8 @@ missed_calls|
 missed_calls|3
 mtree|
 mtree|1
+mtrees|
+mtrees|1
 pdt|
 pdt|1
 pl_pipes|
