@@ -41,8 +41,6 @@
 #ifndef _ACC_ACC_H_
 #define _ACC_ACC_H_
 
-#define ACC_CORE_LEN 6
-
 /* leading text for a request accounted from a script */
 #define ACC "ACC: "
 #define ACC_REQUEST ACC"request accounted: "
