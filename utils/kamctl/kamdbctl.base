@@ -35,7 +35,7 @@ INSTALL_PRESENCE_TABLES=${INSTALL_PRESENCE_TABLES:-ask}
 STANDARD_TABLES=${STANDARD_TABLES:-version acc dbaliases domain grp
 		uri speed_dial lcr_gw lcr_rule lcr_rule_target pdt subscriber
 		location re_grp trusted address missed_calls usr_preferences
-		aliases silo dialog dispatcher dialplan}
+		aliases silo dialog dialog_vars dispatcher dialplan}
 EXTRA_TABLES=${EXTRA_TABLES:-imc_members imc_rooms cpl sip_trace domainpolicy
 		carrierroute carrier_name domain_name carrierfailureroute userblacklist
 		globalblacklist htable purplemap uacreg pl_pipes}

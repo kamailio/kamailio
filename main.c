@@ -699,9 +699,9 @@ void handle_sigs()
 				DBG("INT received, program terminates\n");
 			else
 				DBG("SIGTERM received, program terminates\n");
+			LOG(L_NOTICE, "Thank you for flying " NAME "!!!\n");
 			/* shutdown/kill all the children */
 			shutdown_children(SIGTERM, 1);
-			LOG(L_NOTICE, "Thank you for flying " NAME "\n");
 			exit(0);
 			break;
 

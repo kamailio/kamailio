@@ -178,7 +178,7 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 	int ret = 0;
 	struct dlg_var *var;
 
-	LM_DBG("destroying dialog %p\n",dlg);
+	LM_DBG("destroying dialog %p (ref %d)\n", dlg, dlg->ref);
 
 	ret = remove_dialog_timer(&dlg->tl);
 	if (ret < 0) {
@@ -199,10 +199,6 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 
 	run_dlg_callbacks( DLGCB_DESTROY , dlg, NULL, NULL, DLG_DIR_NONE, 0);
 
-
-	/* reset the global shortcut, if it is the case */
-	if(current_dlg_pointer == dlg)
-		current_dlg_pointer = NULL;
 
 	/* delete the dialog from DB*/
 	if (dlg_db_mode)
