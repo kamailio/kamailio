@@ -1712,9 +1712,9 @@ int fix_all_socket_lists()
 		if ( ( (add_interfaces(0, AF_INET, 0,  PROTO_UDP, &ai_lst)==0)
 #ifdef USE_IPV6
 #ifdef __OS_linux
-		&& (add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_UDP, &ai_lst) == 0)
+		&&  (!(cfg_get(core, core_cfg, auto_bind_ipv6)) || add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_UDP, &ai_lst) == 0)
 #else
-		&& (add_interfaces(0, AF_INET6, 0,  PROTO_UDP, &ai_lst)==0) /* add_interface does not work for IPv6 on Linux */
+		&& ( !(cfg_get(core, core_cfg, auto_bind_ipv6)) || add_interfaces(0, AF_INET6, 0,  PROTO_UDP, &ai_lst) !=0 ) /* add_interface does not work for IPv6 on Linux */
 #endif /* __OS_linux */
 #endif /* USE_IPV6 */
 			 ) && (addr_info_to_si_lst(ai_lst, 0, PROTO_UDP, 0, &udp_listen)==0)){
@@ -1726,12 +1726,12 @@ int fix_all_socket_lists()
 				if ( ((add_interfaces(0, AF_INET, 0,  PROTO_TCP, &ai_lst)!=0)
 #ifdef USE_IPV6
 #ifdef __OS_linux
-    				|| (add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_TCP, &ai_lst) != 0)
+    				|| (cfg_get(core, core_cfg, auto_bind_ipv6) && add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_TCP, &ai_lst) != 0)
 #else
-				|| (add_interfaces(0, AF_INET6, 0,  PROTO_TCP, &ai_lst)!=0)
+				|| (cfg_get(core, core_cfg, auto_bind_ipv6) && add_interfaces(0, AF_INET6, 0,  PROTO_TCP, &ai_lst) !=0 )
 #endif /* __OS_linux */
 #endif /* USE_IPV6 */
-				)|| (addr_info_to_si_lst(ai_lst, 0, PROTO_TCP, 0,
+				) || (addr_info_to_si_lst(ai_lst, 0, PROTO_TCP, 0,
 										 				&tcp_listen)!=0))
 					goto error;
 				free_addr_info_lst(&ai_lst);
@@ -1742,9 +1742,9 @@ int fix_all_socket_lists()
 										&ai_lst)!=0)
 #ifdef USE_IPV6
 #ifdef __OS_linux
-    				|| (add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_TLS, &ai_lst) != 0)
+    				|| (cfg_get(core, core_cfg, auto_bind_ipv6) && add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_TLS, &ai_lst) != 0)
 #else
-				|| (add_interfaces(0, AF_INET6, 0,  PROTO_TLS, &ai_lst)!=0)
+				|| (cfg_get(core, core_cfg, auto_bind_ipv6) && add_interfaces(0, AF_INET6, 0,  PROTO_TLS, &ai_lst)!=0)
 #endif /* __OS_linux */
 #endif /* USE_IPV6 */
 					) || (addr_info_to_si_lst(ai_lst, 0, PROTO_TLS, 0,
@@ -1761,9 +1761,9 @@ int fix_all_socket_lists()
 				if (((add_interfaces(0, AF_INET, 0,  PROTO_SCTP, &ai_lst)!=0)
 #ifdef USE_IPV6
 #ifdef __OS_linux
-    				|| (add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_SCTP, &ai_lst) != 0)
+    				|| (cfg_get(core, core_cfg, auto_bind_ipv6) && add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_SCTP, &ai_lst) != 0)
 #else
-				|| (add_interfaces(0, AF_INET6, 0,  PROTO_SCTP, &ai_lst)!=0)
+				|| (cfg_get(core, core_cfg, auto_bind_ipv6) && add_interfaces(0, AF_INET6, 0,  PROTO_SCTP, &ai_lst) != 0)
 #endif /* __OS_linux */
 #endif /* USE_IPV6 */
 					) || (addr_info_to_si_lst(ai_lst, 0, PROTO_SCTP, 0,
