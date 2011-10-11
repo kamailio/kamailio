@@ -25,7 +25,7 @@ Alexandr Dubovikov
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (str)
               3.2. table_name (str)
@@ -42,7 +42,7 @@ Alexandr Dubovikov
               3.13. raw_moni_bpf_on (integer)
               3.14. capture_node (str)
 
-        4. Exported MI Functions
+        4. MI Commands
 
               4.1. sip_capture
 
@@ -76,7 +76,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (str)
         3.2. table_name (str)
@@ -93,7 +93,7 @@ Chapter 1. Admin Guide
         3.13. raw_moni_bpf_on (integer)
         3.14. capture_node (str)
 
-   4. Exported MI Functions
+   4. MI Commands
 
         4.1. sip_capture
 
@@ -132,7 +132,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (str)
    3.2. table_name (str)
@@ -243,9 +243,19 @@ modparam("sipcapture", "raw_moni_capture_on", 1)
 
 3.9. raw_socket_listen (string)
 
-   Parameter indicate an listen IP address of RAW socket. You can also
-   define a port or portrange, which make sense only in
-   monitoring/mirroring capture mode.
+   Parameter indicate an listen IP address of RAW socket for IPIP
+   capturing. You can also define a port/portrange for IPIP/Mirroring
+   mode, to capture SIP messages in specific ports:
+
+   "10.0.0.1:5060" - the source/destination port of the SIP message must
+   be equal 5060
+
+   "10.0.0.1:5060-5090" - the source/destination port of the SIP message
+   must be equal or be between 5060 and 5090.
+
+   The port/portrange must be defined if you are planning to use mirroring
+   capture! In this case, the part with IP address will be ignored, but to
+   make parser happy, use i.e. 10.0.0.0
 
    Default value is "".
 
@@ -295,7 +305,7 @@ modparam("sipcapture", "promiscuous_on", 1)
 
    Activate Linux Socket Filter (LSF based on BPF) on the mirroring
    interface. The structure is defined in linux/filter.h. The default LSF
-   accept a portrange from the raw_socket_listen param. Currently LSF
+   accept a port/portrange from the raw_socket_listen param. Currently LSF
    supported only on Linux.
 
    Default value is "0".
@@ -316,7 +326,7 @@ modparam("sipcapture", "raw_moni_bpf_on", 1)
 modparam("sipcapture", "capture_node", "homer03")
 ...
 
-4. Exported MI Functions
+4. MI Commands
 
    4.1. sip_capture
 
