@@ -611,7 +611,7 @@ int hep_msg_received(void *data)
 
 	void **srevp;
 	char *buf;
-	unsigned len;
+	unsigned *len;
 	struct receive_info *ri;
 	
 	int offset = 0, hl;
@@ -632,14 +632,14 @@ int hep_msg_received(void *data)
 	srevp = (void**)data;
 	        
 	buf = (char *)srevp[0];
-	len = *((unsigned *)srevp[1]);
+	len = (unsigned *)srevp[1];
 	ri = (struct receive_info *)srevp[2];
 
 
 	hl = offset = sizeof(struct hep_hdr);
-        end = buf + len;
-        if (unlikely(len<offset)) {
-        	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received len less than offset [%i] vs [%i]\n", len, offset);
+        end = buf + *len;
+        if (unlikely(*len<offset)) {
+        	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received len less than offset [%i] vs [%i]\n", *len, offset);
                 return -1;
         }
 
@@ -737,7 +737,7 @@ int hep_msg_received(void *data)
         ri->dst_port = ntohs(heph->hp_dport);
 
 	/* cut off the offset */
-        len -= offset;
+        *len -= offset;
         p = buf + offset;
         memmove(buf, p, BUF_SIZE+1);
 	

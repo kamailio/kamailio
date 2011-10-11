@@ -2,5 +2,6 @@ SQL creation *must* follow the naming pattern
 
   <tablename>-create.sql
 
-Note that dashes ("-") in <tablename> must be replaced by underscores
-("_").
+where <tablename> corresponds to the name of the database table. Please use
+underscores ("_") instead of dashes ("-") in database table names to ensure
+compatibility with all types of databases.
