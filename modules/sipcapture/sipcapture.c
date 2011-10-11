@@ -71,8 +71,6 @@
 #include "../../pvar.h"
 #include "../../str.h"
 #include "../../onsend.h"
-#include "../../raw_sock.h"
-#include "../../raw_listener.h"
 #include "../../resolve.h"
 #include "../../receive.h"
 #include "sipcapture.h"
@@ -141,8 +139,8 @@ static int sip_capture(struct sip_msg *msg, char *s1, char *s2);
 int hep_msg_received(void *data);
 int init_rawsock_children(void);
 int extract_host_port(void);
-int raw_moni_socket(str* iface, int port_start, int port_end);
-int raw_moni_rcv_loop(int rsock, int port1, int port2);
+int raw_capture_socket(struct ip_addr* ip, str* iface, int port_start, int port_end, int proto);
+int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip);
 
 
 
@@ -197,7 +195,7 @@ int capture_on   = 0;
 int hep_capture_on   = 0;
 int ipip_capture_on   = 0;
 int moni_capture_on   = 0;
-int moni_port_start = 5060;
+int moni_port_start = 0;
 int moni_port_end   = 0;
 int *capture_on_flag = NULL;
 int db_insert_mode = 0;
@@ -443,7 +441,9 @@ static int mod_init(void) {
 	if(ipip_capture_on && moni_capture_on) {
 		LM_ERR("ERROR:sipcapture:mod_init: only one RAW mode is supported. Please disable ipip_capture_on or moni_capture_on\n");
 		return -1;		                		
-	}		
+	}
+	
+
 
 	/* raw processes for IPIP encapsulation */
 	if (ipip_capture_on || moni_capture_on) {
@@ -459,10 +459,14 @@ static int mod_init(void) {
 			return -1;
 		}		
 			
-		raw_sock_desc = ipip_capture_on ? raw_socket( IPPROTO_IPIP, raw_socket_listen.len ? ip : 0, 
-						raw_interface.len ? &raw_interface : 0, 0) : 
-						 raw_moni_socket(raw_interface.len ? &raw_interface : 0, 
-						         moni_port_start, moni_port_end ? moni_port_end : moni_port_start);				
+        	if(moni_capture_on && !moni_port_start) {
+	        	LM_ERR("ERROR:sipcapture:mod_init: Please define port/portrange in 'raw_socket_listen', before \
+	        	                        activate monitoring capture\n");
+        		return -1;		                		
+                }			
+			
+		raw_sock_desc = raw_capture_socket(raw_socket_listen.len ? ip : 0, raw_interface.len ? &raw_interface : 0, 
+		                                moni_port_start, moni_port_end , ipip_capture_on ? IPPROTO_IPIP : htons(0x0800));						         
 						
 		if(raw_sock_desc < 0) {
 			LM_ERR("could not initialize raw udp socket:"
@@ -474,8 +478,6 @@ static int mod_init(void) {
                                 
 			return -1;		
 		}
-
-		if(ipip_capture_on) raw_ipip = 1; /* IPIP mode for raw socket */
 
 		if(promisc_on && raw_interface.len) {
 
@@ -567,10 +569,7 @@ int init_rawsock_children(void)
                         ERR("Unable to fork: %s\n", strerror(errno));
                         return -1;
                 } else if (pid == 0) { /* child */
-			if(moni_capture_on) 
-				raw_moni_rcv_loop(raw_sock_desc, moni_port_start, moni_port_end);
-			else 
-				raw_udp4_rcv_loop(raw_sock_desc, 0, 0); 
+			raw_capture_rcv_loop(raw_sock_desc, moni_port_start, moni_port_end, moni_capture_on ? 0 : 1);
                 }
                 /* Parent */
         }
@@ -962,7 +961,7 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 	db_vals[36].nul = 0;
 	db_vals[36].val.blob_val = sco->msg;	
 		
-	DBG("TABLE =====================: [%.*s]\n", table_name.len, table_name.s);		
+	DBG("homer table: [%.*s]\n", table_name.len, table_name.s);		
 	if(!partitioning_mode) {
                 ret = snprintf(tmptable, TABLE_LEN, "%.*s_%02d_%02d",
                         table_name.len, table_name.s, (t->tm_wday == 0) ? 7 : t->tm_wday , t->tm_hour);
@@ -1317,22 +1316,37 @@ static struct mi_root* sip_capture_mi(struct mi_root* cmd_tree, void* param )
 	}
 }
 
-int raw_moni_socket(str* iface, int port_start, int port_end)
+/* Local raw socket */
+int raw_capture_socket(struct ip_addr* ip, str* iface, int port_start, int port_end, int proto)
 {
 
-	int sock;	
-	
+	int sock = -1;	
+	union sockaddr_union su;
+
 #ifdef __OS_linux
 	struct sock_fprog pf;
 	char short_ifname[sizeof(int)];
 	int ifname_len;
 	char* ifname;
- 
+#endif 
  	//0x0003 - all packets
-	sock = socket(PF_PACKET, SOCK_RAW, htons(0x0800));
-
+ 	if(proto == IPPROTO_IPIP) {
+        	sock = socket(PF_INET, SOCK_RAW, proto);
+        }
+#ifdef __OS_linux
+ 	else if(proto == htons(0x800)) {
+        	sock = socket(PF_PACKET, SOCK_RAW, proto);
+        }
+#endif
+        else {
+                ERR("raw_capture_socket: LSF currently suppoted only on linux\n");
+                goto error;                        
+        }
+                
 	if (sock==-1)
 		goto error;
+
+#ifdef __OS_linux
 
 	/* set socket options */
 	if (iface && iface->s){
@@ -1361,6 +1375,8 @@ int raw_moni_socket(str* iface, int port_start, int port_end)
 	        pf.len = sizeof(BPF_code) / sizeof(BPF_code[0]);
         	pf.filter = (struct sock_filter *) BPF_code;
 
+                if(!port_end) port_end = port_start;
+                
         	/* Start PORT */
         	BPF_code[5]  = (struct sock_filter)BPF_JUMP(0x35, port_start, 0, 1);
         	BPF_code[8] = (struct  sock_filter)BPF_JUMP(0x35, port_start, 11, 13);
@@ -1375,14 +1391,17 @@ int raw_moni_socket(str* iface, int port_start, int port_end)
         	if(setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &pf, sizeof(pf)) < 0 ) {
                         ERR(" setsockopt filter: [%s] [%d]\n", strerror(errno), errno);
                 }		
-
-
         }
-
-#else
-        ERR("raw_moni_socket: currently suppoted only on linux\n");
-        goto error;
 #endif
+
+        if (ip && proto == IPPROTO_IPIP){
+                init_su(&su, ip, 0);
+                if (bind(sock, &su.s, sockaddru_len(su))==-1){
+                        ERR("raw_capture_socket: bind(%s) failed: %s [%d]\n",
+                                ip_addr2a(ip), strerror(errno), errno);
+                        goto error;
+                }
+        }
 
 	return sock;
 	
@@ -1392,7 +1411,8 @@ error:
                		
 }
 
-int raw_moni_rcv_loop(int rsock, int port1, int port2) {
+/* Local raw receive loop */
+int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip) {
 
 
 	static char buf [BUF_SIZE+1];
@@ -1402,6 +1422,8 @@ int raw_moni_rcv_loop(int rsock, int port1, int port2) {
 	int len;
 	struct ip *iph;
         struct udphdr *udph;
+        char* udph_start;
+        unsigned short udp_len;
 	int offset = 0; 
 	char* end;
 	unsigned short dst_port;
@@ -1426,24 +1448,35 @@ int raw_moni_rcv_loop(int rsock, int port1, int port2) {
 
 		end=buf+len;
 		
+		offset =  ipip ? sizeof(struct ip) : ETHHDR;
 		
-		if (unlikely(len<(sizeof(struct ip)+sizeof(struct udphdr) + ETHHDR))) {
-			LOG(L_ERR, "ERROR: small packet: %d\n",len);
+		if (unlikely(len<(sizeof(struct ip)+sizeof(struct udphdr) + offset))) {
+			DBG("received small packet: %d. Ignore it\n",len);
                 	continue;
         	}
-
-        	offset = ETHHDR;
 		
 		iph = (struct ip*) (buf + offset);				
+
 		offset+=iph->ip_hl*4;
+
+		udph_start = buf+offset;
 		
-		udph = (struct udphdr*)(buf + offset);
+		udph = (struct udphdr*) udph_start;
 		offset +=sizeof(struct udphdr);
 
         	if (unlikely((buf+offset)>end)){
-                	continue;
-	                
+                	continue;	                
         	}
+
+		udp_len=ntohs(udph->uh_ulen);
+	        if (unlikely((udph_start+udp_len)!=end)){
+        	        if ((udph_start+udp_len)>end){
+				continue;
+        	        }else{
+                	        DBG("udp length too small: %d/%d\n", (int)udp_len, (int)(end-udph_start));
+	                        continue;
+        	        }
+	        }
         									
 		/*FIL IPs*/
 		dst_ip.af=AF_INET;
@@ -1465,6 +1498,7 @@ int raw_moni_rcv_loop(int rsock, int port1, int port2) {
                 ri.src_port=src_port;
                 su2ip_addr(&ri.dst_ip, &to);
                 ri.dst_port=dst_port;
+                ri.proto=PROTO_UDP;                                
 
 		/* cut off the offset */
 	        len -= offset;
@@ -1474,7 +1508,11 @@ int raw_moni_rcv_loop(int rsock, int port1, int port2) {
                         continue;
                 }
 
-		if((src_port >= port1 && src_port <= port2) || (dst_port >= port1 && dst_port <= port2))
+                DBG("PORT: [%d] and [%d]\n", port1, port2);
+                
+		if((!port1 && !port2) 
+		        || (src_port >= port1 && src_port <= port2) || (dst_port >= port1 && dst_port <= port2) 
+		        || (!port2 && (src_port == port1 || dst_port == port1)))
 		                          receive_msg(buf+offset, len, &ri);
 	}
 

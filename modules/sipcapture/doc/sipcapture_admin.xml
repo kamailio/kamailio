@@ -238,9 +238,21 @@ modparam("sipcapture", "raw_moni_capture_on", 1)
 	<section>
                 <title><varname>raw_socket_listen</varname> (string)</title>
                 <para>
-                Parameter indicate an listen IP address of RAW socket. You can also define
-		a port or portrange, which make sense only in monitoring/mirroring 
-		capture mode. 
+                Parameter indicate an listen IP address of RAW socket for IPIP capturing. 
+                You can also define a port/portrange for IPIP/Mirroring mode, to capture 
+                SIP messages in specific ports:
+		<para>
+		"10.0.0.1:5060" - the source/destination port of the SIP message must be equal 5060
+		</para>
+		<para>
+		"10.0.0.1:5060-5090" - the source/destination port of the SIP message must be 
+		equal or be between 5060 and 5090.
+		</para>
+		<para>
+		The port/portrange must be defined if you are planning to
+		use mirroring capture! In this case, the part with IP address will be
+                ignored, but to make parser happy, use i.e. 10.0.0.0
+		</para>
                 </para>
                 <para>
                 <emphasis>
@@ -320,7 +332,7 @@ modparam("sipcapture", "promiscuous_on", 1)
                 <title><varname>raw_moni_bpf_on</varname> (integer)</title>
                 <para>
                 Activate Linux Socket Filter (LSF based on BPF) on the mirroring interface. 
-                The structure is defined in linux/filter.h. The default LSF accept a portrange
+                The structure is defined in linux/filter.h. The default LSF accept a port/portrange
                 from the raw_socket_listen param. Currently LSF supported only on Linux.
                 </para>
                 <para>
