@@ -533,7 +533,7 @@ static int mod_init( void )
 
     if( cdr_enable)
     {
-        if( cdr_log_extra_str && set_cdr_extra( cdr_log_extra_str) != 0)
+        if( set_cdr_extra( cdr_log_extra_str) != 0)
         {
             LM_ERR( "failed to set cdr extra '%s'\n", cdr_log_extra_str);
             return -1;
