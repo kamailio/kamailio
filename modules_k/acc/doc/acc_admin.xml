@@ -361,13 +361,13 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 					</para>
 					<itemizedlist>
 						<listitem><para><emphasis>
-						cdr_log_extra = cdr_extra_definition (';'cdr_extra_definition)*
+						cdr_extra = cdr_extra_definition (';'cdr_extra_definition)*
 						</emphasis></para></listitem>
 						<listitem><para><emphasis>
 						cdr_extra_definition = cdr_log_name '=' pseudo_variable
 						</emphasis></para></listitem>
 					</itemizedlist>
-					See also <xref linkend="cdr_log_extra"/>.
+					See also <xref linkend="cdr_extra"/>.
 					<para>
 					The full list of supported pseudo-variables in Sip-Router is
 					available at:
@@ -1130,7 +1130,7 @@ modparam("acc", "cdr_enable", 1)
 		</example>
 	</section>
 	<section>
-		<title><varname>cdr_start_when_confirmed</varname> (integer)</title>
+		<title><varname>cdr_start_on_confirmed</varname> (integer)</title>
 		<para>
 		Should the start time be taken from the time when the dialog is created,
         or when the dialog is confirmed?
@@ -1140,14 +1140,14 @@ modparam("acc", "cdr_enable", 1)
 		1 - use time of dialog confirmation.
 		</para>
 		<example>
-		<title>cdr_start_when_confirmed example</title>
+		<title>cdr_start_on_confirmed example</title>
 		<programlisting format="linespecific">
-modparam("acc", "cdr_start_when_confirmed", 1)
+modparam("acc", "cdr_start_on_confirmed", 1)
 </programlisting>
 		</example>
 	</section>
 	<section>
-		<title><varname>cdr_log_facility</varname> (integer)</title>
+		<title><varname>cdr_facility</varname> (integer)</title>
 		<para>
 		Log facility to which CDR messages are issued to syslog.
 		This allows to easily seperate CDR-specific logging from
@@ -1157,14 +1157,14 @@ modparam("acc", "cdr_start_when_confirmed", 1)
 		Default value is LOG_DAEMON.
 		</para>
 		<example>
-		<title>cdr_log_facility example</title>
+		<title>cdr_facility example</title>
 		<programlisting format="linespecific">
-modparam("acc", "cdr_log_facility", "LOG_DAEMON")
+modparam("acc", "cdr_facility", "LOG_DAEMON")
 </programlisting>
 		</example>
 	</section>
-	<section id="cdr_log_extra">
-		<title><varname>cdr_log_extra</varname> (string)</title>
+	<section id="cdr_extra">
+		<title><varname>cdr_extra</varname> (string)</title>
 		<para>
 		Set of pseudo-variables defining custom CDR fields. See
         <xref linkend="cdr-extra-id"/> for more details.
@@ -1173,9 +1173,9 @@ modparam("acc", "cdr_log_facility", "LOG_DAEMON")
 		Default value is NULL.
 		</para>
 		<example>
-		<title>cdr_log_extra example</title>
+		<title>cdr_extra example</title>
 		<programlisting format="linespecific">
-modparam("acc", "cdr_log_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
+modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
 </programlisting>
 		</example>
 	</section>
