@@ -1,0 +1,125 @@
+msg shooter module
+
+   Copyright (C) 2011 iptelorg GmbH
+   Created and maintained by Miklos Tirpak
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. SER Modules
+
+        1.3. Exported Parameters
+
+        1.4. Exported Functions
+
+              1.4.1. smsg_from_to(from, to)
+              1.4.2. smsg_create(method)
+              1.4.3. smsg_append_hdrs(headers, [body])
+              1.4.4. smsg_on_reply(route_name)
+              1.4.5. shoot_msg([ruri, [destination] ])
+
+        1.5. Example
+
+     _________________________________________________________
+
+1.1. Overview
+
+   The module can be used to send SIP requests outside of the
+   current transaction. For example it can send REGISTER requests
+   to another registrar server as notifications.
+
+   The module creates a UAC and may append additional headers
+   and body to it. Finaly the constructed request can be sent to
+   several destinations.
+
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. SER Modules
+
+   The following modules must be loaded before this module:
+
+     * tm module
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+   None
+
+   _________________________________________________________
+   
+1.4. Exported Functions
+
+1.4.1. smsg_from_to(from, to)
+
+   Sets the From and To URIs of the UAC, must be called before
+   smsg_create(). Parameters can be string, AVP or select call.
+
+   _________________________________________________________
+
+1.4.2. smsg_create(method)
+
+   Creates an UAC and sets the method of the request.
+   method must be static string.
+
+   Can be called multiple times, but destroys the previously
+   created UAC.
+
+   _________________________________________________________
+
+1.4.3. smsg_append_hdrs(headers, [body])
+
+   Appends additional headers and body to the request.
+   Parameters can be string, AVP or select call.
+
+   _________________________________________________________
+
+1.4.4. smsg_on_reply(route_name)
+
+   Sets onreply_route block which will be executed upon a reply
+   is received for the shooted request. Must be called before
+   every shoot_msg() function if required.
+
+   Note that failure_route is curretly not supported (neither for
+   negative responses nor for timer hit)!
+
+   Also note that the transaction created by the new request does not
+   contain the AVPs of the old transaction, thus onreply_route will
+   not have any AVPs.
+
+   _________________________________________________________
+
+1.4.5. shoot_msg([ruri, [destination] ])
+
+   Shoots the request with the previously created UAC.
+   ruri and destination can be string, AVP or select call.
+   To HF is used for ruri when ruri parameter is not defined.
+
+   Can be called multiple times with the same UAC.
+
+   _________________________________________________________
+
+1.5. Example
+
+   The following example creates 2 UACs and sends the requests
+   to 3 different destinations
+
+onreply_route[notification] {
+
+	smsg_from_to("@from.uri", "@to.uri");
+	smsg_create("REGISTER");
+	$hdrs = "Contact: sip:miklos@iptel.org\r\nP-info: created by msg_shooter\r\n";
+	smsg_append_hdrs("$hdrs");
+
+	smsg_on_reply("first");
+	shoot_msg("sip:alice@iptel.org", "sip:192.168.1.1");
+
+	smsg_on_reply("second");
+	shoot_msg("sip:alice@mydomain.com");
+
+	smsg_create("NOTIFY");
+	smsg_append_hdrs("P-info: another request\r\n", "Fake body\r\n");
+	shoot_msg("sip:alice@iptel.org");
+
+}
