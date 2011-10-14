@@ -23,6 +23,12 @@
  *
  */
 
+#ifdef __OS_solaris
+typedef uint8_t u_int8_t;
+typedef uint16_t u_int16_t;
+#define IPPROTO_IPIP IPPROTO_ENCAP /* Solaris IPIP protocol has name ENCAP */
+#endif
+
 
 struct hep_hdr{
     u_int8_t hp_v;            /* version */
