@@ -154,7 +154,7 @@ static cmd_export_t cmds[]={
 		    fixup_free_set_uri,	ANY_ROUTE},
 	{"set_uri_host", (cmd_function)set_uri_host,             2, fixup_set_uri,
 		    fixup_free_set_uri,	ANY_ROUTE},
-	{"bind_siputils",       (cmd_function)bind_siputils,           0, 0,
+	{"bind_siputils",       (cmd_function)bind_siputils,           1, 0,
 			0, 0},
 	{"is_request",          (cmd_function)w_is_request,            0, 0,
 			0, ANY_ROUTE},
