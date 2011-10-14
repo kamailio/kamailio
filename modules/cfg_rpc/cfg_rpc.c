@@ -535,7 +535,9 @@ static void rpc_del_group_inst(rpc_t* rpc, void* c)
 static rpc_export_t rpc_calls[] = {
 	{"cfg.set",		rpc_set,		rpc_set_now_doc,	0},
 	{"cfg.set_now_int",	rpc_set_now_int,	rpc_set_now_doc,	0},
+	{"cfg.seti",	rpc_set_now_int,	rpc_set_now_doc,	0},
 	{"cfg.set_now_string",	rpc_set_now_string,	rpc_set_now_doc,	0},
+	{"cfg.sets",	rpc_set_now_string,	rpc_set_now_doc,	0},
 	{"cfg.del",		rpc_del,		rpc_del_now_doc,	0},
 	{"cfg.set_delayed",	rpc_set_delayed,	rpc_set_delayed_doc,	0},
 	{"cfg.set_delayed_int",	rpc_set_delayed_int,	rpc_set_delayed_doc,	0},
