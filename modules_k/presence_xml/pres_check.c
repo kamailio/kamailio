@@ -162,9 +162,19 @@ int presxml_check_activities(struct sip_msg *msg, str presentity_uri, str activi
 		{
 			if ((activitiesNode = xmlNodeGetNodeByName(person, "activities", NULL)) == NULL)
 			{
-				LM_DBG("unable to extract 'actvities' node\n");
-				retval = -2;
-				goto error;
+				LM_DBG("unable to extract 'activities' node\n");
+				if (retval <= 0)
+				{
+					retval = -2;
+				}
+			}
+			if (activitiesNode->children == NULL)
+			{
+				LM_DBG("activities node has no children\n");
+				if (retval <= 0)
+				{
+					retval = -2;
+				}
 			}
 
 			if ((activityNode = xmlNodeGetNodeByName(activitiesNode, nodeName, NULL)) != NULL)
