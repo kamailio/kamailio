@@ -105,9 +105,6 @@ struct cfg_group_core default_core_cfg = {
 	0, /*!< dns_cache_del_nonexp -- delete only expired entries by default */
 	0, /*!< dns_cache_rec_pref -- 0 by default, do not check the existing entries. */
 #endif
-#ifdef USE_IPV6
-	0, /*!< auto_bind_ipv6 -- off by default */
-#endif
 #ifdef PKG_MALLOC
 	0, /*!< mem_dump_pkg */
 #endif
@@ -274,11 +271,6 @@ cfg_def_t core_cfg_def[] = {
 		" 1 - prefer old records"
 		" 2 - prefer new records"
 		" 3 - prefer records with longer lifetime"},
-#endif
-#ifdef USE_IPV6
-	{"auto_bind_ipv6", 	CFG_VAR_INT,	0, 1, 0, 0, 0,
-		"enable/disable auto binding of proxy to IPV6 interfaces."
-		"default is disabled 0"},
 #endif
 #ifdef PKG_MALLOC
 	{"mem_dump_pkg",	CFG_VAR_INT,	0, 0, 0, mem_dump_pkg_cb,

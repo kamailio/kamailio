@@ -137,6 +137,10 @@ extern int stun_allow_stun;
 extern int stun_allow_fp;
 #endif
 
+#ifdef USE_IPV6
+extern int auto_bind_ipv6;
+#endif
+
 extern int tos;
 extern int pmtu_discovery;
 

@@ -93,11 +93,6 @@ struct cfg_group_core {
 	int dns_cache_del_nonexp;
 	int dns_cache_rec_pref;
 #endif
-
-#ifdef USE_IPV6
-	int auto_bind_ipv6;
-#endif
-
 #ifdef PKG_MALLOC
 	int mem_dump_pkg;
 #endif

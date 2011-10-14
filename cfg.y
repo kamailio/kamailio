@@ -886,7 +886,7 @@ assign_stm:
 	| DNS_CACHE_GC_INT error { yyerror("boolean value expected"); }
 	| DNS_CACHE_DEL_NONEXP EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_cache_del_nonexp=$3); }
 	| DNS_CACHE_DEL_NONEXP error { yyerror("boolean value expected"); }
-	| AUTO_BIND_IPV6 EQUAL NUMBER {IF_AUTO_BIND_IPV6(default_core_cfg.auto_bind_ipv6 = $3);}
+	| AUTO_BIND_IPV6 EQUAL NUMBER {IF_AUTO_BIND_IPV6(auto_bind_ipv6 = $3);}
 	| AUTO_BIND_IPV6 error { yyerror("boolean value expected"); }
 	| DST_BLST_INIT EQUAL NUMBER   { IF_DST_BLACKLIST(dst_blacklist_init=$3); }
 	| DST_BLST_INIT error { yyerror("boolean value expected"); }
