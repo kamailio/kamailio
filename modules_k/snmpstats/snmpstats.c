@@ -107,6 +107,10 @@
 /* Required in every Kamailio Module. */
 MODULE_VERSION
 
+/* module parameter to register for usrloc callbacks or not,
+ * in order to export registrar records (0 - don't export, 1 - export) */
+static int snmp_export_registrar = 0;
+
 /*! This is the first function to be called by Kamailio, to initialize the module.
  * This call must always return a value as soon as possible.  If it were not to
  * return, then Kamailio would not be able to initialize any of the other
@@ -150,6 +154,10 @@ static param_export_t mod_params[] =
 			(void *)set_snmpget_path          },
 	{ "snmpCommunity",          STR_PARAM|USE_FUNC_PARAM,
 			(void *)set_snmp_community        },
+	{ "snmpCommunity",          STR_PARAM|USE_FUNC_PARAM,
+			(void *)set_snmp_community        },
+	{ "export_registrar",       INT_PARAM,
+			&snmp_export_registrar            },
 	{ 0,0,0 }
 };
 
@@ -318,24 +326,26 @@ static int mod_init(void)
 	 * the database.  That load will happen if a lookup() function is come
 	 * across in kamailio.cfg. */
 
-	if (!registerForUSRLOCCallbacks()) 
+	if (snmp_export_registrar!=0)
 	{
-		/* Originally there were descriptive error messages here to help
-		 * the operator debug problems.  Turns out this may instead
-		 * alarm them about problems they don't need to worry about.  So
-		 * the messages are commented out for now */
+		if(!registerForUSRLOCCallbacks())
+		{
+			/* Originally there were descriptive error messages here to help
+			 * the operator debug problems.  Turns out this may instead
+			 * alarm them about problems they don't need to worry about.  So
+			 * the messages are commented out for now */
 		
-		/*
-		LM_ERR("snmpstats module was unable to register callbacks" 
-						" with the usrloc module\n");
-		LM_ERR("Are you sure that the usrloc module was loaded"
-				" before the snmpstats module in ");
-		LM_ERR("kamailio.cfg?  openserSIPRegUserTable will not be "
-			   "updated.");
-		*/
-	} 
+			/*
+			LM_ERR("snmpstats module was unable to register callbacks"
+					" with the usrloc module\n");
+			LM_ERR("Are you sure that the usrloc module was loaded"
+					" before the snmpstats module in ");
+			LM_ERR("kamailio.cfg?  openserSIPRegUserTable will not be "
+				   "updated.");
+			*/
+		}
+	}
 
-	
 	/* Register the alarm checking function to run periodically */
 	register_timer(run_alarm_check, 0, ALARM_AGENT_FREQUENCY_IN_SECONDS);
 

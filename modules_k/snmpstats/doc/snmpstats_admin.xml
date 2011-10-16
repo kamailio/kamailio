@@ -421,6 +421,31 @@ modparam("snmpstats", "snmpCommunity", "customCommunityString")
 		</example>
 	</section>
 
+	<section>
+		<title><varname>export_registrar</varname> (int)</title>
+
+		<para>
+		The SNMPStats module will export registrar (usrloc) records if
+		this parameter is set to 1. This will result in more memory usage
+		and bigger exporter structure.
+		</para>
+
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (don't export).
+		</emphasis>
+		</para>
+
+		<example>
+		<title>Setting the <varname>export_registrar</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("snmpstats", "export_registrar", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
 	</section>
 	<section>
 	<title>Exported Functions</title>
