@@ -111,9 +111,9 @@ static mi_export_t mi_cmds[] = {
 
 static cmd_export_t cmds[]={
 	{"dp_translate",(cmd_function)dp_translate_f,	2,	dp_trans_fixup,  0,
-				ANY_ROUTE},
+		ANY_ROUTE},
 	{"dp_translate",(cmd_function)dp_translate_f,	1,	dp_trans_fixup,  0,
-				ANY_ROUTE},
+		ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -168,10 +168,10 @@ static int mod_init(void)
 
 		attr_pvar_s.len = strlen(attr_pvar_s.s);
 		if( (pv_parse_spec(&attr_pvar_s, attr_pvar)==NULL) ||
-		((attr_pvar->type != PVT_AVP) && (attr_pvar->type!=PVT_SCRIPTVAR))) {
-				LM_ERR("invalid pvar name\n");
-				return -1;
-			}
+				((attr_pvar->type != PVT_AVP) && (attr_pvar->type!=PVT_SCRIPTVAR))) {
+			LM_ERR("invalid pvar name\n");
+			return -1;
+		}
 	}
 
 	default_par2 = (dp_param_p)shm_malloc(sizeof(dp_param_t));
@@ -228,7 +228,7 @@ static void mod_destroy(void)
 
 static int mi_child_init(void)
 {
-    return 0;
+	return 0;
 }
 
 
@@ -245,7 +245,7 @@ static int dp_get_ivalue(struct sip_msg* msg, dp_param_p dp, int *val)
 	LM_DBG("searching %d\n",dp->v.sp[0].type);
 
 	if( pv_get_spec_value( msg, &dp->v.sp[0], &value)!=0
-	|| value.flags&(PV_VAL_NULL|PV_VAL_EMPTY) || !(value.flags&PV_VAL_INT)) {
+			|| value.flags&(PV_VAL_NULL|PV_VAL_EMPTY) || !(value.flags&PV_VAL_INT)) {
 		LM_ERR("no AVP or SCRIPTVAR found (error in scripts)\n");
 		return -1;
 	}
@@ -261,9 +261,9 @@ static int dp_get_svalue(struct sip_msg * msg, pv_spec_t spec, str* val)
 	LM_DBG("searching %d \n", spec.type);
 
 	if ( pv_get_spec_value(msg,&spec,&value)!=0 || value.flags&PV_VAL_NULL
-	|| value.flags&PV_VAL_EMPTY || !(value.flags&PV_VAL_STR)){
-			LM_ERR("no AVP or SCRIPTVAR found (error in scripts)\n");
-			return -1;
+			|| value.flags&PV_VAL_EMPTY || !(value.flags&PV_VAL_STR)){
+		LM_ERR("no AVP or SCRIPTVAR found (error in scripts)\n");
+		return -1;
 	}
 
 	*val = value.rs;
@@ -272,7 +272,7 @@ static int dp_get_svalue(struct sip_msg * msg, pv_spec_t spec, str* val)
 
 
 static int dp_update(struct sip_msg * msg, pv_spec_t * src, pv_spec_t * dest,
-		     str * repl, str * attrs)
+		str * repl, str * attrs)
 {
 	int no_change;
 	pv_value_t val;
@@ -293,7 +293,7 @@ static int dp_update(struct sip_msg * msg, pv_spec_t * src, pv_spec_t * dest,
 	}
 
 	if(is_route_type(FAILURE_ROUTE)
-				&& (dest->type==PVT_RURI || dest->type==PVT_RURI_USERNAME)) {
+			&& (dest->type==PVT_RURI || dest->type==PVT_RURI_USERNAME)) {
 		if (append_branch(msg, 0, 0, 0, Q_UNSPECIFIED, 0, 0)!=1 ){
 			LM_ERR("append_branch action failed\n");
 			return -1;
@@ -304,7 +304,7 @@ set_attr_pvar:
 
 	if(!attr_pvar)
 		return 0;
-	
+
 	val.rs = *attrs;
 	if(attr_pvar->setf(msg, &attr_pvar->pvp, (int)EQ_T, &val)<0)
 	{
@@ -350,7 +350,7 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 	attrs_par = (!attr_pvar)?NULL:&attrs;
 	if (translate(msg, input, &output, idp, attrs_par)!=0){
 		LM_DBG("could not translate %.*s "
-			"with dpid %i\n", input.len, input.s, idp->dp_id);
+				"with dpid %i\n", input.len, input.s, idp->dp_id);
 		return -1;
 	}
 	LM_DBG("input %.*s with dpid %i => output %.*s\n",
@@ -358,26 +358,26 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 
 	/*set the output*/
 	if (dp_update(msg, &repl_par->v.sp[0], &repl_par->v.sp[1], 
-	&output, attrs_par) !=0){
+				&output, attrs_par) !=0){
 		LM_ERR("cannot set the output\n");
 		return -1;
 	}
 
 	return 1;
-		
+
 }
 
 #define verify_par_type(_par_no, _spec)\
 	do{\
 		if( ((_par_no == 1) \
-			&& ((_spec).type != PVT_AVP) && ((_spec).type!=PVT_SCRIPTVAR) )\
-		  ||((_par_no == 2) \
-			&& ((_spec).type != PVT_AVP) && ((_spec).type!=PVT_SCRIPTVAR) \
-		  	&& ((_spec).type!=PVT_RURI) && (_spec.type!=PVT_RURI_USERNAME))){\
-				\
+					&& ((_spec).type != PVT_AVP) && ((_spec).type!=PVT_SCRIPTVAR) )\
+				||((_par_no == 2) \
+					&& ((_spec).type != PVT_AVP) && ((_spec).type!=PVT_SCRIPTVAR) \
+					&& ((_spec).type!=PVT_RURI) && (_spec.type!=PVT_RURI_USERNAME))){\
+			\
 			LM_ERR("Unsupported Parameter TYPE\n");\
-				return E_UNSPEC;\
-			}\
+			return E_UNSPEC;\
+		}\
 	}while(0);
 
 
@@ -433,30 +433,30 @@ static int dp_trans_fixup(void ** param, int param_no){
 		}
 	} else {
 
-	    if (((s = strchr(p, '/')) != 0) && (*(s+1)=='\0'))
-		goto error;
+		if (((s = strchr(p, '/')) != 0) && (*(s+1)=='\0'))
+			goto error;
 
-	    if (s != 0) {
-		*s = '\0'; s++;
-	    }
+		if (s != 0) {
+			*s = '\0'; s++;
+		}
 
-	    lstr.s = p; lstr.len = strlen(p);
-	    if(pv_parse_spec( &lstr, &dp_par->v.sp[0])==NULL)
-		goto error;
+		lstr.s = p; lstr.len = strlen(p);
+		if(pv_parse_spec( &lstr, &dp_par->v.sp[0])==NULL)
+			goto error;
 
-	    if (s != 0) {
-		lstr.s = s; lstr.len = strlen(s);
-		if (pv_parse_spec( &lstr, &dp_par->v.sp[1] )==NULL)
-		    goto error;
-		verify_par_type(param_no, dp_par->v.sp[1]);
-	    } else {
-		dp_par->v.sp[1].type = PVT_NONE;
-	    }
+		if (s != 0) {
+			lstr.s = s; lstr.len = strlen(s);
+			if (pv_parse_spec( &lstr, &dp_par->v.sp[1] )==NULL)
+				goto error;
+			verify_par_type(param_no, dp_par->v.sp[1]);
+		} else {
+			dp_par->v.sp[1].type = PVT_NONE;
+		}
 
-	    dp_par->type = DP_VAL_SPEC;
+		dp_par->type = DP_VAL_SPEC;
 
 	}
-	
+
 	*param = (void *)dp_par;
 
 	return 0;
@@ -472,14 +472,14 @@ static struct mi_root * mi_reload_rules(struct mi_root *cmd_tree, void *param)
 	struct mi_root* rpl_tree= NULL;
 
 	if (dp_connect_db() < 0) {
-	    LM_ERR("failed to reload rules fron database (db connect)\n");
-	    return 0;
+		LM_ERR("failed to reload rules fron database (db connect)\n");
+		return 0;
 	}
-	    
+
 	if(dp_load_db() != 0){
-	    LM_ERR("failed to reload rules fron database (db load)\n");
-	    dp_disconnect_db();
-	    return 0;
+		LM_ERR("failed to reload rules fron database (db load)\n");
+		dp_disconnect_db();
+		return 0;
 	}
 
 	dp_disconnect_db();
@@ -487,7 +487,7 @@ static struct mi_root * mi_reload_rules(struct mi_root *cmd_tree, void *param)
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 	if (rpl_tree==0)
 		return 0;
-	
+
 	return rpl_tree;
 }
 
@@ -546,7 +546,7 @@ static struct mi_root * mi_translate(struct mi_root *cmd, void *param)
 			input.len, input.s, idp->dp_id);
 	if (translate(NULL, input, &output, idp, &attrs)!=0){
 		LM_DBG("could not translate %.*s with dpid %i\n", 
-			input.len, input.s, idp->dp_id);
+				input.len, input.s, idp->dp_id);
 		return init_mi_tree(404, "No translation", 14);
 	}
 	LM_DBG("input %.*s with dpid %i => output %.*s\n",
@@ -586,16 +586,16 @@ static const char* dialplan_rpc_reload_doc[2] = {
 static void dialplan_rpc_reload(rpc_t* rpc, void* ctx)
 {
 	if (dp_connect_db() < 0) {
-	    LM_ERR("failed to reload rules fron database (db connect)\n");
+		LM_ERR("failed to reload rules fron database (db connect)\n");
 		rpc->fault(ctx, 500, "DB Connection Error");
-	    return;
+		return;
 	}
 
 	if(dp_load_db() != 0){
-	    LM_ERR("failed to reload rules fron database (db load)\n");
-	    dp_disconnect_db();
+		LM_ERR("failed to reload rules fron database (db load)\n");
+		dp_disconnect_db();
 		rpc->fault(ctx, 500, "Dialplan Reload Failed");
-	    return;
+		return;
 	}
 
 	dp_disconnect_db();
@@ -644,7 +644,7 @@ static void dialplan_rpc_translate(rpc_t* rpc, void* ctx)
 			input.len, input.s, idp->dp_id);
 	if (translate(NULL, input, &output, idp, &attrs)!=0){
 		LM_DBG("could not translate %.*s with dpid %i\n",
-			input.len, input.s, idp->dp_id);
+				input.len, input.s, idp->dp_id);
 		rpc->fault(ctx, 500, "No translation");
 		return;
 	}
@@ -657,8 +657,8 @@ static void dialplan_rpc_translate(rpc_t* rpc, void* ctx)
 		return;
 	}
 	if(rpc->struct_add(th, "SS",
-			"Output", &output,
-			"Attributes", &attrs)<0)
+				"Output", &output,
+				"Attributes", &attrs)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error creating rpc");
 		return;
