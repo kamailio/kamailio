@@ -190,7 +190,7 @@ int extra2strar( struct extra_attr *extra, struct sip_msg *rq, str *val_arr)
 	    val_arr[n].len = 0;
 	} else if (value.flags&PV_VAL_INT) {
 	    /* len = -1 denotes int type */
-	    val_arr[n].s = (char *)value.ri;
+	    val_arr[n].s = (char *)(long)value.ri;
 	    val_arr[n].len = -1;
 	} else {
 	    /* set the value into the acc buffer */

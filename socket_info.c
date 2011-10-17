@@ -1,3 +1,4 @@
+
 /* $Id$
  *
  * find & manage listen addresses 
@@ -713,7 +714,369 @@ error:
 	return -1;
 }
 
+#ifdef __OS_linux
 
+#include "linux/netlink.h"
+#include "linux/rtnetlink.h"
+#include "arpa/inet.h"
+
+
+#define MAX_IF_LEN 64
+struct idx
+{
+	struct idx * 	next;
+	int 		family;
+	unsigned	ifa_flags;
+	char		addr[MAX_IF_LEN];
+
+};
+
+struct idxlist{
+	struct idx* 	addresses;
+	int 		index;
+	char 		name[MAX_IF_LEN];
+	unsigned 	flags;
+};
+
+#define MAX_IFACE_NO 32
+
+static struct idxlist *ifaces = NULL;
+static int seq = 0;
+
+#define SADDR(s) ((struct sockaddr_in*)s)->sin_addr.s_addr
+
+#define NLMSG_TAIL(nmsg) \
+	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
+
+int addattr_l(struct nlmsghdr *n, int maxlen, int type, const void *data,
+	      int alen)
+{
+	int len = RTA_LENGTH(alen);
+	struct rtattr *rta;
+
+	if (NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len) > maxlen) {
+		fprintf(stderr, "addattr_l ERROR: message exceeded bound of %d\n",maxlen);
+		return -1;
+	}
+	rta = NLMSG_TAIL(n);
+	rta->rta_type = type;
+	rta->rta_len = len;
+	memcpy(RTA_DATA(rta), data, alen);
+	n->nlmsg_len = NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len);
+	return 0;
+}
+
+
+
+static int nl_bound_sock(void)
+{
+	int sock;
+	struct sockaddr_nl la;
+
+	sock = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+	if(sock <= 0){
+		LM_ERR("could not create NETLINK sock to get interface list");
+		goto error;
+	}
+
+	/* bind NETLINK socket to pid */
+	bzero(&la, sizeof(la));
+	la.nl_family = AF_NETLINK;
+	la.nl_pad = 0;
+	la.nl_pid = getpid();
+	la.nl_groups = 0;
+	if ( bind(sock, (struct sockaddr*) &la, sizeof(la)) < 0){
+		LM_ERR("could not bind NETLINK sock to sockaddr_nl\n");
+		goto error;
+	}
+
+	return sock;
+error:
+	if(sock > 0) close(sock);
+	return -1;
+}
+
+#define fill_nl_req(req, type, family) do {\
+	memset(&req, 0, sizeof(req));\
+	req.nlh.nlmsg_len = sizeof(req);\
+	req.nlh.nlmsg_type = type;\
+	req.nlh.nlmsg_flags = NLM_F_ROOT|NLM_F_MATCH|NLM_F_REQUEST|NLM_F_DUMP;\
+	req.nlh.nlmsg_pid = getpid();\
+	req.nlh.nlmsg_seq = seq++;\
+	req.g.rtgen_family = family;\
+	} while(0);
+
+	
+static int get_flags(int family){
+	struct {
+		struct nlmsghdr nlh;
+		struct rtgenmsg g;
+	} req;
+	int rtn = 0;
+	struct nlmsghdr*  nlp;
+	struct ifinfomsg *ifi;
+	char buf[8192];
+	char *p = buf;
+	int nll = 0;
+        int nl_sock = 0;
+
+	fill_nl_req(req, RTM_GETLINK, AF_INET);
+
+	if((nl_sock = nl_bound_sock()) < 0) return -1;
+
+	if(send(nl_sock, (void*)&req, sizeof(req), 0) < 0)
+	{
+		LM_ERR("error sending NETLINK request\n");
+		goto error;
+	}
+
+	while(1) {
+		rtn = recv(nl_sock, p, sizeof(buf) - nll, 0);
+		nlp = (struct nlmsghdr *) p;
+		if(nlp->nlmsg_type == NLMSG_DONE){
+			LM_DBG("done\n");
+			 break;
+		}
+		if(nlp->nlmsg_type == NLMSG_ERROR){
+			 LM_DBG("Error on message to netlink");
+			 break;
+		}
+		p += rtn;
+
+		nll += rtn;
+	}
+
+	nlp = (struct nlmsghdr *) buf;
+	for(;NLMSG_OK(nlp, nll);nlp=NLMSG_NEXT(nlp, nll)){
+		ifi = NLMSG_DATA(nlp);
+
+		if (nlp->nlmsg_len < NLMSG_LENGTH(sizeof(ifi)))
+			goto error;
+
+		LM_ERR("Interface with index %d has flags %d\n", ifi->ifi_index, ifi->ifi_flags);
+		if(ifaces == NULL){
+			LM_ERR("get_flags must not be called on empty interface list");
+			goto error;
+		}
+		if(ifi->ifi_index >= MAX_IFACE_NO){
+			LM_ERR("invalid network interface index returned %d", ifi->ifi_index);
+			goto error;
+		}
+		ifaces[ifi->ifi_index].flags = ifi->ifi_flags;
+	}
+
+	if(nl_sock>0) close(nl_sock);
+	return 0;
+
+error:
+	if(nl_sock>0) close(nl_sock);
+	return -1;
+}
+
+static int build_iface_list(void)
+{
+	struct {
+		struct nlmsghdr nlh;
+		struct rtgenmsg g;
+	} req;
+
+	int seq = 0;
+	int rtn = 0;
+	struct nlmsghdr*  nlp;
+	struct ifaddrmsg *ifi;
+	int rtl;
+	char buf[8192];
+	char *p = buf;
+	int nll = 0;
+	struct rtattr * rtap;
+	int index, i;
+	struct idx* entry;
+	struct idx* tmp;
+        int nl_sock = 0;
+        int families[] = {AF_INET, AF_INET6};
+        char name[MAX_IF_LEN];
+	int is_link_local = 0;
+
+	if(ifaces == NULL){
+		if((ifaces = (struct idxlist*)pkg_malloc(MAX_IFACE_NO*sizeof(struct idxlist))) == NULL){
+			LM_ERR("No more pkg memory\n");
+			return -1;
+		}
+		memset(ifaces, 0, sizeof(struct idxlist)*MAX_IFACE_NO);
+	}
+
+	/* bind netlink socket */
+	if((nl_sock = nl_bound_sock()) < 0) return -1;
+
+	for (i = 0 ; i < sizeof(families)/sizeof(int); i++) {
+		fill_nl_req(req, RTM_GETADDR, families[i]);
+
+		if(send(nl_sock, (void*)&req, sizeof(req), 0) < 0){
+			LM_ERR("error sending NETLINK request\n");
+			goto error;
+		};
+
+		memset(buf, 0, sizeof(buf));
+		nll = 0;
+		p = buf;
+		while(1) {
+			rtn = recv(nl_sock, p, sizeof(buf) - nll, 0);
+			LM_DBG("received %d byles \n", rtn);
+			nlp = (struct nlmsghdr *) p;
+			if(nlp->nlmsg_type == NLMSG_DONE){
+				LM_DBG("done receiving netlink info \n");
+				 break;
+			}
+			if(nlp->nlmsg_type == NLMSG_ERROR){
+				 LM_ERR("Error on message to netlink");
+				 break;
+			}
+			p += rtn;
+
+			nll += rtn;
+		}
+
+		nlp = (struct nlmsghdr *) buf;
+		for(;NLMSG_OK(nlp, nll);nlp=NLMSG_NEXT(nlp, nll)){
+			ifi = NLMSG_DATA(nlp);
+
+			if (nlp->nlmsg_len < NLMSG_LENGTH(sizeof(ifi)))
+				continue;
+			// init all the strings
+			// inner loop: loop thru all the attributes of
+			// one route entry
+			rtap = (struct rtattr *) IFA_RTA(ifi);
+
+			rtl = IFA_PAYLOAD(nlp);
+
+			index = ifi->ifa_index;
+			if(index >= MAX_IFACE_NO){
+				LM_ERR("Invalid interface index returned: %d\n", index);
+				goto error;
+			}
+
+			entry = (struct idx*)pkg_malloc(sizeof(struct idx));
+			if(entry == 0)
+			{
+				LM_ERR("could not allocate memory\n");
+				goto error;
+			}
+
+			entry->next = 0;
+			entry->family = families[i];
+			entry->ifa_flags = ifi->ifa_flags;
+                        is_link_local = 0;
+
+			for(;RTA_OK(rtap, rtl);rtap=RTA_NEXT(rtap,rtl)){
+				switch(rtap->rta_type){
+					case IFA_ADDRESS:
+						if((*(int*)RTA_DATA(rtap))== htons(0xfe80)){
+							LM_DBG("Link Local Address, ignoring ...\n");
+							is_link_local = 1;
+							break;
+						}
+						inet_ntop(families[i], RTA_DATA(rtap), entry->addr, MAX_IF_LEN);
+						LM_DBG("iface <IFA_ADDRESS> addr is  %s\n", entry->addr);
+						break;
+					case IFA_LOCAL:
+						if((*(int*)RTA_DATA(rtap))== htons(0xfe80)){
+							LM_DBG("Link Local Address, ignoring ...\n");
+							is_link_local = 1;
+						}
+						inet_ntop(families[i], RTA_DATA(rtap), entry->addr, MAX_IF_LEN);
+						LM_DBG("iface <IFA_LOCAL> addr is %s\n", entry->addr);
+						break;
+					case IFA_LABEL:
+						LM_DBG("iface name is %s\n", (char*)RTA_DATA(rtap));
+						strncpy(name, (char*)RTA_DATA(rtap), MAX_IF_LEN);
+						break;
+					case IFA_BROADCAST:
+					case IFA_ANYCAST:
+					case IFA_UNSPEC:
+					case IFA_CACHEINFO:
+					default:
+						break;
+				}
+			}
+			if(is_link_local) continue;    /* link local addresses are not bindable */
+
+			if(strlen(ifaces[index].name)==0)
+				strncpy(ifaces[index].name, name, MAX_IF_LEN);
+
+			ifaces[index].index = index;
+
+			if(ifaces[index].addresses == 0 )
+				ifaces[index].addresses = entry;
+			else {
+				for(tmp = ifaces[index].addresses; tmp->next ; tmp = tmp->next)/*empty*/;
+				tmp->next = entry;
+			}
+		}
+	}
+	if(nl_sock>0) close(nl_sock);
+	/* the socket should be closed so we can bind again */
+	for(i = 0; i < sizeof(families)/sizeof(int); i++){
+		/* get device flags */
+		get_flags(families[i]); /* AF_INET or AF_INET6 */
+	}
+
+	return 0;
+error:
+	if(nl_sock>0) close(nl_sock);
+	return -1;
+
+}
+/* add all family type addresses of interface if_to the socket_info array
+ * if if_name==0, adds all addresses on all interfaces
+ * uses RTNETLINK sockets to get addresses on the present interface on LINUX
+ * return: -1 on error, 0 on success
+ */
+int add_interfaces_via_netlink(char* if_name, int family, unsigned short port,
+					unsigned short proto,
+					struct addr_info** ai_l)
+{
+	int i;
+	struct idx* tmp;
+	enum si_flags flags;
+
+	if(ifaces == NULL && (build_iface_list()!=0)){
+		LM_ERR("Could not get network interface list\n");
+		return -1;
+	}
+
+	flags=SI_NONE;
+	for(i=0; i< MAX_IFACE_NO; ++i){
+		if(ifaces[i].addresses == NULL) continue; /* not present/configured */
+		if ((if_name==0)||
+			(strncmp(if_name, ifaces[i].name, strlen(ifaces[i].name))==0)){
+
+			/* check if iface is up */
+			//if(! (ifaces[i].flags & IFF_UP) ) continue;
+
+			for(tmp = ifaces[i].addresses; tmp; tmp = tmp->next){
+				LM_DBG("\t in add_iface_via_netlink Name %s Adress %s\n", ifaces[i].name, tmp->addr);
+		                /* match family */
+                                if (family == tmp->family){
+					/* check if loopback */
+					if (ifaces[i].flags & IFF_LOOPBACK){
+						LM_DBG("INTERFACE %s is loopback", ifaces[i].name);
+						flags|=SI_IS_LO;
+					}
+					/* save the info */
+					if (new_addr_info2list(tmp->addr, flags, ai_l)!=0){
+						LOG(L_ERR, "ERROR: add_interfaces: "
+							"new_addr_info2list failed\n");
+						goto error;
+			    		}
+				}
+			}
+		}
+	}
+	return 0;
+error:
+	return -1;
+}
+#endif /* __OS_linux */
 
 /* add all family type addresses of interface if_name to the socket_info array
  * if if_name==0, adds all addresses on all interfaces
@@ -736,7 +1099,7 @@ int add_interfaces(char* if_name, int family, unsigned short port,
 	struct ip_addr addr;
 	int ret;
 	enum si_flags flags;
-	
+
 #ifdef HAVE_SOCKADDR_SA_LEN
 	#ifndef MAX
 		#define MAX(a,b) ( ((a)>(b))?(a):(b))
@@ -1345,25 +1708,46 @@ int fix_all_socket_lists()
 			&& (sctp_listen==0)
 #endif
 		){
-		/* get all listening ipv4 interfaces */
-		if ((add_interfaces(0, AF_INET, 0,  PROTO_UDP, &ai_lst)==0) &&
-			(addr_info_to_si_lst(ai_lst, 0, PROTO_UDP, 0, &udp_listen)==0)){
+		/* get all listening ipv4/ipv6 interfaces */
+		if ( ( (add_interfaces(0, AF_INET, 0,  PROTO_UDP, &ai_lst)==0)
+#ifdef USE_IPV6
+#ifdef __OS_linux
+		&&  (!auto_bind_ipv6 || add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_UDP, &ai_lst) == 0)
+#else
+		&& ( !auto_bind_ipv6 || add_interfaces(0, AF_INET6, 0,  PROTO_UDP, &ai_lst) !=0 ) /* add_interface does not work for IPv6 on Linux */
+#endif /* __OS_linux */
+#endif /* USE_IPV6 */
+			 ) && (addr_info_to_si_lst(ai_lst, 0, PROTO_UDP, 0, &udp_listen)==0)){
 			free_addr_info_lst(&ai_lst);
 			ai_lst=0;
 			/* if ok, try to add the others too */
 #ifdef USE_TCP
 			if (!tcp_disable){
-				if ((add_interfaces(0, AF_INET, 0,  PROTO_TCP, &ai_lst)!=0) ||
-					(addr_info_to_si_lst(ai_lst, 0, PROTO_TCP, 0,
+				if ( ((add_interfaces(0, AF_INET, 0,  PROTO_TCP, &ai_lst)!=0)
+#ifdef USE_IPV6
+#ifdef __OS_linux
+    				|| (auto_bind_ipv6 && add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_TCP, &ai_lst) != 0)
+#else
+				|| (auto_bind_ipv6 && add_interfaces(0, AF_INET6, 0,  PROTO_TCP, &ai_lst) !=0 )
+#endif /* __OS_linux */
+#endif /* USE_IPV6 */
+				) || (addr_info_to_si_lst(ai_lst, 0, PROTO_TCP, 0,
 										 				&tcp_listen)!=0))
 					goto error;
 				free_addr_info_lst(&ai_lst);
 				ai_lst=0;
 #ifdef USE_TLS
 				if (!tls_disable){
-					if ((add_interfaces(0, AF_INET, 0, PROTO_TLS,
-										&ai_lst)!=0) ||
-						(addr_info_to_si_lst(ai_lst, 0, PROTO_TLS, 0,
+					if (((add_interfaces(0, AF_INET, 0, PROTO_TLS,
+										&ai_lst)!=0)
+#ifdef USE_IPV6
+#ifdef __OS_linux
+    				|| (auto_bind_ipv6 && add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_TLS, &ai_lst) != 0)
+#else
+				|| (auto_bind_ipv6 && add_interfaces(0, AF_INET6, 0,  PROTO_TLS, &ai_lst)!=0)
+#endif /* __OS_linux */
+#endif /* USE_IPV6 */
+					) || (addr_info_to_si_lst(ai_lst, 0, PROTO_TLS, 0,
 										 				&tls_listen)!=0))
 						goto error;
 				}
@@ -1374,9 +1758,16 @@ int fix_all_socket_lists()
 #endif
 #ifdef USE_SCTP
 			if (!sctp_disable){
-				if ((add_interfaces(0, AF_INET, 0,  PROTO_SCTP, &ai_lst)!=0)||
-					(addr_info_to_si_lst(ai_lst, 0, PROTO_SCTP, 0,
-										 				&sctp_listen)!=0))
+				if (((add_interfaces(0, AF_INET, 0,  PROTO_SCTP, &ai_lst)!=0)
+#ifdef USE_IPV6
+#ifdef __OS_linux
+    				|| (auto_bind_ipv6 && add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_SCTP, &ai_lst) != 0)
+#else
+				|| (auto_bind_ipv6 && add_interfaces(0, AF_INET6, 0,  PROTO_SCTP, &ai_lst) != 0)
+#endif /* __OS_linux */
+#endif /* USE_IPV6 */
+					) || (addr_info_to_si_lst(ai_lst, 0, PROTO_SCTP, 0,
+							 				&sctp_listen)!=0))
 					goto error;
 				free_addr_info_lst(&ai_lst);
 				ai_lst=0;

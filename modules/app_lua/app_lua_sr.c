@@ -1081,8 +1081,9 @@ static int lua_sr_pv_is_null (lua_State *L)
 	memset(&val, 0, sizeof(pv_value_t));
 	if(pv_get_spec_value(env_L->msg, &pvs, &val) != 0)
 	{
-		LM_ERR("unable to get pv value for [%s]\n", pvn.s);
-		return 0;
+		LM_NOTICE("unable to get pv value for [%s]\n", pvn.s);
+		lua_pushboolean(L, 1);
+		return 1;
 	}
 	if(val.flags&PV_VAL_NULL)
 	{

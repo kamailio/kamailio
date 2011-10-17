@@ -252,6 +252,8 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 	static char hn[256];
 	struct hostent* he;
 	struct sip_uri puri;
+	int orig_id = 0, orig_nr = 0;
+	ds_set_t *orig_ds_lists = ds_lists[list_idx];
 
 	/* check uri */
 	if(parse_uri(uri.s, uri.len, &puri)!=0 || puri.host.len>254)
@@ -283,6 +285,8 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 		ds_lists[list_idx] = sp;
 		*setn = *setn+1;
 	}
+	orig_id = sp->id;
+	orig_nr = sp->nr;
 	sp->id = id;
 	sp->nr++;
 
@@ -365,6 +369,18 @@ err:
 			shm_free(dp->uri.s);
 		shm_free(dp);
 	}
+
+	if (sp != NULL)
+	{
+		sp->id = orig_id;
+		sp->nr = orig_nr;
+		if (sp->nr == 0)
+		{
+			shm_free(sp);
+			ds_lists[list_idx] = orig_ds_lists;
+		}
+	}
+
 	return -1;
 }
 
@@ -566,9 +582,8 @@ int ds_load_list(char *lfile)
 add_destination:
 		if(add_dest2list(id, uri, flags, priority, &attrs,
 					*next_idx, &setn) != 0)
-			goto error;
-					
-		
+			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
+					uri.len, uri.s, id);
 next_line:
 		p = fgets(line, 256, f);
 	}
@@ -720,11 +735,7 @@ int ds_load_db(void)
 	nr_rows = RES_ROW_N(res);
 	rows 	= RES_ROWS(res);
 	if(nr_rows == 0)
-	{
 		LM_WARN("no dispatching data in the db -- empty destination set\n");
-		ds_dbf.free_result(ds_db_handle, res);
-		return 0;
-	}
 
 	setn = 0;
 	*next_idx = (*crt_idx + 1)%2;
@@ -752,8 +763,8 @@ int ds_load_db(void)
 		}
 		if(add_dest2list(id, uri, flags, priority, &attrs,
 					*next_idx, &setn) != 0)
-			goto err2;
-
+			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
+					uri.len, uri.s, id);
 	}
 	ds_dbf.free_result(ds_db_handle, res);
 

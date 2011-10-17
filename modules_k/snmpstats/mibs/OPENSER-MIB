@@ -399,6 +399,16 @@ OPENSER-MIB DEFINITIONS ::= BEGIN
              -1 indicates the value is not configured, and alarms will never be 
              set, and the usage state will never be reported as 'busy'."
         ::= { openserDialogStats 6 }
+
+    openserTotalNumDialogSetups     OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of calls (answered and failed)."
+        ::= { openserDialogStats 7 }
+
+
 --
 -- Dialog State
 --
@@ -601,7 +611,8 @@ OPENSER-MIB DEFINITIONS ::= BEGIN
             openserCurNumDialogsInSetup,
             openserTotalNumFailedDialogSetups,
             openserDialogLimitMinorThreshold,
-            openserDialogLimitMajorThreshold           
+            openserDialogLimitMajorThreshold,
+            openserTotalNumDialogSetups
         }
         STATUS  current
         DESCRIPTION

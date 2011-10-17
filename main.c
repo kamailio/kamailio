@@ -421,6 +421,10 @@ int mcast_ttl = -1; /* if -1, don't touch it, use the default (usually 1) */
 int tos = IPTOS_LOWDELAY;
 int pmtu_discovery = 0;
 
+#ifdef USE_IPV6
+int auto_bind_ipv6 = 0;
+#endif
+
 #if 0
 char* names[MAX_LISTEN];              /* our names */
 int names_len[MAX_LISTEN];            /* lengths of the names*/

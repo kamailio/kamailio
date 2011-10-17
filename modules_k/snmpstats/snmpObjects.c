@@ -94,6 +94,9 @@ void init_openserObjects(void)
 	static oid openserDialogLimitMajorThreshold_oid[]  = 
 		{ OPENSER_OID,3,1,3,1,3,2,6 };
 
+	static oid openserTotalNumDialogSetups_oid[] =
+		{ OPENSER_OID,3,1,3,1,3,2,7 };
+
 	static oid openserDialogUsageState_oid[]       = 
 		{ OPENSER_OID,3,1,3,1,3,3,1 };
 
@@ -215,6 +218,15 @@ void init_openserObjects(void)
 			openserDialogLimitMajorThreshold_oid, 
 			OID_LENGTH(openserDialogLimitMajorThreshold_oid),
 			HANDLER_CAN_RONLY)
+		);
+
+	netsnmp_register_scalar(
+		netsnmp_create_handler_registration(
+			"openserTotalNumDialogSetups",
+		handle_openserTotalNumDialogSetups,
+		openserTotalNumDialogSetups_oid,
+		OID_LENGTH(openserTotalNumDialogSetups_oid),
+		HANDLER_CAN_RONLY)
 		);
 
 	netsnmp_register_scalar(
@@ -458,6 +470,22 @@ int handle_openserTotalNumFailedDialogSetups(netsnmp_mib_handler *handler,
 {
 	int result = get_statistic("failed_dialogs");
 	
+	if (reqinfo->mode == MODE_GET) {
+		snmp_set_var_typed_value(requests->requestvb, ASN_COUNTER,
+			(u_char *) &result, sizeof(int));
+		return SNMP_ERR_NOERROR;
+	}
+
+	return SNMP_ERR_GENERR;
+}
+
+int handle_openserTotalNumDialogSetups(netsnmp_mib_handler *handler,
+		netsnmp_handler_registration *reginfo,
+		netsnmp_agent_request_info   *reqinfo,
+		netsnmp_request_info         *requests)
+{
+	int result = get_statistic("processed_dialogs");
+
 	if (reqinfo->mode == MODE_GET) {
 		snmp_set_var_typed_value(requests->requestvb, ASN_COUNTER,
 			(u_char *) &result, sizeof(int));

@@ -164,6 +164,11 @@
 		if (rt!=ONSEND_ROUTE) yyerror( s " allowed only in onsend_routes");\
 	}while(0)
 
+#ifdef USE_IPV6
+	#define IF_AUTO_BIND_IPV6(x) x
+#else
+	#define IF_AUTO_BIND_IPV6(x) warn("IPV6 support not compiled");
+#endif
 
 #ifdef USE_DNS_CACHE
 	#define IF_DNS_CACHE(x) x
@@ -419,6 +424,10 @@ extern char *finame;
 %token DNS_CACHE_MEM
 %token DNS_CACHE_GC_INT
 %token DNS_CACHE_DEL_NONEXP
+
+/* ipv6 auto bind */
+%token AUTO_BIND_IPV6
+
 /*blacklist*/
 %token DST_BLST_INIT
 %token USE_DST_BLST
@@ -877,6 +886,8 @@ assign_stm:
 	| DNS_CACHE_GC_INT error { yyerror("boolean value expected"); }
 	| DNS_CACHE_DEL_NONEXP EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_cache_del_nonexp=$3); }
 	| DNS_CACHE_DEL_NONEXP error { yyerror("boolean value expected"); }
+	| AUTO_BIND_IPV6 EQUAL NUMBER {IF_AUTO_BIND_IPV6(auto_bind_ipv6 = $3);}
+	| AUTO_BIND_IPV6 error { yyerror("boolean value expected"); }
 	| DST_BLST_INIT EQUAL NUMBER   { IF_DST_BLACKLIST(dst_blacklist_init=$3); }
 	| DST_BLST_INIT error { yyerror("boolean value expected"); }
 	| USE_DST_BLST EQUAL NUMBER {

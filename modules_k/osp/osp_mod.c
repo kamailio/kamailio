@@ -182,7 +182,7 @@ static int ospInitMod(void)
     }
 
     /* Load the AUTH API */
-    bind_su = (bind_siputils_t)find_export("bind_siputils", 0, 0);
+    bind_su = (bind_siputils_t)find_export("bind_siputils", 1, 0);
     if ((bind_su == NULL) || (bind_su(&osp_siputils) != 0)) {
         LM_WARN("failed to load the SIPUTILS API. Check if you load the auth module.\n");
         LM_WARN("rpid_avp & rpid_avp_type is required for calling number translation\n");
