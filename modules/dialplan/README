@@ -78,6 +78,7 @@ Juha Heinanen
    1.12. Set fetch_rows parameter
    1.13. dp_translate usage
    1.14. dp_translate usage
+   1.15. Example of rules
 
 Chapter 1. Admin Guide
 
@@ -455,6 +456,37 @@ xlog("translated to var $var(y) \n");
    database directories in the kamailio/scripts folder. You can also find
    the complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+
+   Some sample records fromd dialplan table are presented in the next
+   figure.
+
+   Example 1.15. Example of rules
+...
+dpid: 1
+pr: 1
+match_op: 1
+match_exp: ^0([1-9][0-9]+)$
+match_len: 0
+subst_exp: ^0([1-9][0-9]+)$
+repl_exp: 0049\1
+attrs: xyz
+...
+dpid: 1
+pr: 1
+match_op: 1
+match_exp: ^0([1-9][0-9]+)$
+match_len: 0
+subst_exp: ^0(.+)$
+repl_exp: $var(prefix)\1
+attrs: xyz
+...
+
+   Note that you can use config variables in the replacement expression
+   (repl_exp) field. However, not all of config variables are safe to use
+   there - specifically the variables that have in their name other
+   variables (variables with dinamic name). References to sip message,
+   private variables ($var(...)) and AVPs with static name are among those
+   that are safe to use in replacement expressions.
 
 Chapter 2. Developer's Guide
 

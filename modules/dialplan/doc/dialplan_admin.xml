@@ -563,12 +563,48 @@ xlog("translated to var $var(y) \n");
     <section>
 	    <title>Installation</title>
 	    <para>
-        The modules requires one table in &kamailio; database: dialplan. The SQL 
-        syntax to create them can be found in dialplan-create.sql     
+		The modules requires one table in &kamailio; database: dialplan.
+		The SQL syntax to create them can be found in dialplan-create.sql     
         script in the database directories in the kamailio/scripts folder.
         You can also find the complete database documentation on the
         project webpage, &kamailiodbdocslink;.
         </para>
+		<para>
+		Some sample records fromd dialplan table are presented in the next
+		figure.
+        </para>
+		<example>
+		<title>Example of rules</title>
+		<programlisting format="linespecific">
+...
+dpid: 1
+pr: 1
+match_op: 1
+match_exp: ^0([1-9][0-9]+)$
+match_len: 0
+subst_exp: ^0([1-9][0-9]+)$
+repl_exp: 0049\1
+attrs: xyz
+...
+dpid: 1
+pr: 1
+match_op: 1
+match_exp: ^0([1-9][0-9]+)$
+match_len: 0
+subst_exp: ^0(.+)$
+repl_exp: $var(prefix)\1
+attrs: xyz
+...
+		</programlisting>
+		</example>
+		<para>
+		Note that you can use config variables in the replacement expression
+		(repl_exp) field. However, not all of config variables are safe to use
+		there - specifically the variables that have in their name other
+		variables (variables with dinamic name). References to sip message,
+		private variables ($var(...)) and AVPs with static name are among
+		those that are safe to use in replacement expressions.
+		</para>
     </section>
 
 </chapter>
