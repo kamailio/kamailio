@@ -9,3 +9,4 @@ int bind_dmq(dmq_api_t* api) {
 	api->bcast_message = bcast_dmq_message;
 	return 0;
 }
+

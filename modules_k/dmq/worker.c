@@ -183,3 +183,4 @@ dmq_job_t* job_queue_pop(job_queue_t* queue) {
 	lock_release(&queue->lock);
 	return front;
 }
+

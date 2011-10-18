@@ -42,3 +42,4 @@ dmq_peer_t* find_peer(str peer_id) {
 	foo_peer.peer_id = peer_id;
 	return search_peer_list(peer_list, &foo_peer);
 }
+

@@ -55,3 +55,4 @@ extern dmq_node_t* self_node;
 extern dmq_node_t* notification_node;	
 
 #endif
+

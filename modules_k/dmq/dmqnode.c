@@ -246,3 +246,4 @@ int build_node_str(dmq_node_t* node, char* buf, int buflen) {
 	len += get_status_str(node->status)->len;
 	return len;
 }
+
