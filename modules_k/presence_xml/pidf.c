@@ -31,7 +31,6 @@
  * \ingroup presence_xml
  */
 
-#include "../../sr_module.h"
 
 /**
  * make strptime available
