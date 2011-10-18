@@ -31,13 +31,6 @@
  * \ingroup presence_xml
  */
 
-#include <string.h>
-#include <stdlib.h>
-#include <libxml/parser.h>
-#include "../../dprint.h"
-#include "../../sr_module.h"
-#include "pidf.h"
-
 /**
  * make strptime available
  * use 600 for 'Single UNIX Specification, Version 3'
@@ -48,6 +41,7 @@
 	#define _BSD_SOURCE 1				/* needed on linux to "fix" the effect
 										  of the above define on
 										  features.h/unistd.h syscall() */
+   #define _DARWIN_C_SOURCE 1
 #else
 	#define _XOPEN_SOURCE_EXTENDED 1   /* solaris */
 #endif
@@ -56,6 +50,13 @@
 
 #undef _XOPEN_SOURCE
 #undef _XOPEN_SOURCE_EXTENDED
+
+#include <string.h>
+#include <stdlib.h>
+#include <libxml/parser.h>
+#include "../../dprint.h"
+#include "../../sr_module.h"
+#include "pidf.h"
 
 xmlAttrPtr xmlNodeGetAttrByName(xmlNodePtr node, const char *name)
 {
