@@ -41,3 +41,4 @@ dmq_job_t* job_queue_pop(job_queue_t* queue);
 int job_queue_size(job_queue_t* queue);
 
 #endif
+

@@ -1626,8 +1626,8 @@ save_keepalive_state(void)
             fprintf(f, "%s %.*s %ld %ld\n",
                     contact->uri,
                     contact->socket->sock_str.len, contact->socket->sock_str.s,
-                    contact->registration_expire,
-                    contact->subscription_expire);
+                    (long int)contact->registration_expire,
+                    (long int)contact->subscription_expire);
             contact = contact->next;
         }
     }

@@ -242,9 +242,9 @@ static int time2string( struct timeval* time_value, str* time_str)
     buffer_length = snprintf( time_buffer,
                               TIME_BUFFER_LENGTH,
                               "%ld%c%03d",
-                              time_value->tv_sec,
+                              (long int)time_value->tv_sec,
                               time_separator,
-                              (int)time_value->tv_usec/1000);
+                              (int)(time_value->tv_usec/1000));
 
     if( buffer_length < 0)
     {
