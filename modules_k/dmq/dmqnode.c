@@ -36,7 +36,7 @@ dmq_node_list_t* init_dmq_node_list() {
 	return node_list;
 }
 
-inline int cmp_dmq_node(dmq_node_t* node, dmq_node_t* cmpnode) {
+int cmp_dmq_node(dmq_node_t* node, dmq_node_t* cmpnode) {
 	if(!node || !cmpnode) {
 		LM_ERR("cmp_dmq_node - null node received\n");
 		return -1;
@@ -45,7 +45,7 @@ inline int cmp_dmq_node(dmq_node_t* node, dmq_node_t* cmpnode) {
 	       STR_EQ(node->uri.port, cmpnode->uri.port);
 }
 
-static str* get_param_value(param_t* params, str* param) {
+str* get_param_value(param_t* params, str* param) {
 	while (params) {
 		if ((params->name.len == param->len) &&
 		    (strncmp(params->name.s, param->s, param->len) == 0)) {
@@ -56,7 +56,7 @@ static str* get_param_value(param_t* params, str* param) {
 	return NULL;
 }
 
-inline int set_dmq_node_params(dmq_node_t* node, param_t* params) {
+int set_dmq_node_params(dmq_node_t* node, param_t* params) {
 	str* status;
 	if(!params) {
 		LM_DBG("no parameters given\n");
@@ -80,12 +80,12 @@ error:
 	return -1;
 }
 
-inline int set_default_dmq_node_params(dmq_node_t* node) {
+int set_default_dmq_node_params(dmq_node_t* node) {
 	node->status = DMQ_NODE_ACTIVE;
 	return 0;
 }
 
-inline dmq_node_t* build_dmq_node(str* uri, int shm) {
+dmq_node_t* build_dmq_node(str* uri, int shm) {
 	dmq_node_t* ret;
 	param_hooks_t hooks;
 	param_t* params;
@@ -135,7 +135,7 @@ error:
 	return NULL;
 }
 
-inline dmq_node_t* find_dmq_node_uri(dmq_node_list_t* list, str* uri) {
+dmq_node_t* find_dmq_node_uri(dmq_node_list_t* list, str* uri) {
 	dmq_node_t *ret, *find;
 	find =  build_dmq_node(uri, 0);
 	ret = find_dmq_node(list, find);
@@ -143,7 +143,7 @@ inline dmq_node_t* find_dmq_node_uri(dmq_node_list_t* list, str* uri) {
 	return ret;
 }
 
-inline void destroy_dmq_node(dmq_node_t* node, int shm) {
+void destroy_dmq_node(dmq_node_t* node, int shm) {
 	if(shm) {
 		shm_free_node(node);
 	} else {
@@ -151,7 +151,7 @@ inline void destroy_dmq_node(dmq_node_t* node, int shm) {
 	}
 }
 
-inline dmq_node_t* find_dmq_node(dmq_node_list_t* list, dmq_node_t* node) {
+dmq_node_t* find_dmq_node(dmq_node_list_t* list, dmq_node_t* node) {
 	dmq_node_t* cur = list->nodes;
 	while(cur) {
 		if(cmp_dmq_node(cur, node)) {
@@ -162,7 +162,7 @@ inline dmq_node_t* find_dmq_node(dmq_node_list_t* list, dmq_node_t* node) {
 	return NULL;
 }
 
-inline dmq_node_t* shm_dup_node(dmq_node_t* node) {
+dmq_node_t* shm_dup_node(dmq_node_t* node) {
 	dmq_node_t* newnode = shm_malloc(sizeof(dmq_node_t));
 	memcpy(newnode, node, sizeof(dmq_node_t));
 	shm_str_dup(&newnode->orig_uri, &node->orig_uri);
@@ -177,17 +177,17 @@ error:
 	return NULL;
 }
 
-inline void shm_free_node(dmq_node_t* node) {
+void shm_free_node(dmq_node_t* node) {
 	shm_free(node->orig_uri.s);
 	shm_free(node);
 }
 
-inline void pkg_free_node(dmq_node_t* node) {
+void pkg_free_node(dmq_node_t* node) {
 	pkg_free(node->orig_uri.s);
 	pkg_free(node);
 }
 
-inline int del_dmq_node(dmq_node_list_t* list, dmq_node_t* node) {
+int del_dmq_node(dmq_node_list_t* list, dmq_node_t* node) {
 	dmq_node_t *cur, **prev;
 	lock_get(&list->lock);
 	cur = list->nodes;
@@ -206,7 +206,7 @@ inline int del_dmq_node(dmq_node_list_t* list, dmq_node_t* node) {
 	return 0;
 }
 
-inline dmq_node_t* add_dmq_node(dmq_node_list_t* list, str* uri) {
+dmq_node_t* add_dmq_node(dmq_node_list_t* list, str* uri) {
 	dmq_node_t* newnode = build_dmq_node(uri, 1);
 	if(!newnode) {
 		LM_ERR("error creating node\n");

@@ -428,7 +428,8 @@ void xavp_print_list_content(sr_xavp_t **head, int level)
 				LM_INFO("     XAVP value: %s\n", avp->val.v.s.s);
 			break;
 			case SR_XTYPE_TIME:
-				LM_INFO("     XAVP value: %lu\n", avp->val.v.t);
+				LM_INFO("     XAVP value: %lu\n",
+						(long unsigned int)avp->val.v.t);
 			break;
 			case SR_XTYPE_LONG:
 				LM_INFO("     XAVP value: %ld\n", avp->val.v.l);
