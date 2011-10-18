@@ -24,3 +24,4 @@ dmq_node_t* add_server_and_notify(str* server_address);
 /* helper functions */
 extern int notification_resp_callback_f(struct sip_msg* msg, int code, dmq_node_t* node, void* param);
 extern dmq_resp_cback_t notification_callback;
+

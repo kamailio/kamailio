@@ -71,6 +71,7 @@ db_uri_t* db_uri(const char* uri)
 	char* colon;
 	int len;
 	db_uri_t* newp;
+	char *turi;
     
 	newp = (db_uri_t*)pkg_malloc(sizeof(db_uri_t));
 	if (newp == NULL) goto error;
@@ -78,7 +79,8 @@ db_uri_t* db_uri(const char* uri)
 	if (db_gen_init(&newp->gen) < 0) goto error;	
 
 	len = strlen(uri);
-	colon = q_memchr((char *)uri, ':', len);
+	turi = (char*)uri;
+	colon = q_memchr(turi, ':', len);
 	if (colon == NULL) {
 		newp->scheme.s = pkg_malloc(len + 1);
 		if (newp->scheme.s == NULL) goto error;

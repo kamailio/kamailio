@@ -19,3 +19,4 @@ typedef int (*bind_dmq_f)(dmq_api_t* api);
 int bind_dmq(dmq_api_t* api);
 
 #endif
+

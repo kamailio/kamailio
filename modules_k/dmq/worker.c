@@ -91,7 +91,7 @@ void worker_loop(int id) {
 
 int add_dmq_job(struct sip_msg* msg, dmq_peer_t* peer) {
 	int i, found_available = 0;
-	dmq_job_t new_job;
+	dmq_job_t new_job = { 0 };
 	dmq_worker_t* worker;
 	new_job.f = peer->callback;
 	new_job.msg = msg;
@@ -183,3 +183,4 @@ dmq_job_t* job_queue_pop(job_queue_t* queue) {
 	lock_release(&queue->lock);
 	return front;
 }
+

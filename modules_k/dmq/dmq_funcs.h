@@ -26,3 +26,4 @@ int send_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cba
 int bcast_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* except, dmq_resp_cback_t* resp_cback, int max_forwards);
 
 #endif
+
