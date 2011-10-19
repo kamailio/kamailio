@@ -54,6 +54,7 @@
 #include "../usrloc/ul_callback.h"
 #include "../pua/pua_bind.h"
 #include "pua_usrloc.h"
+#include "api.h"
 
 MODULE_VERSION
 
@@ -76,7 +77,8 @@ send_subscribe_t pua_send_subscribe;
 
 static cmd_export_t cmds[]=
 {
-	{"pua_set_publish", (cmd_function)pua_set_publish, 0, 0, 0, REQUEST_ROUTE}, 	
+	{"pua_set_publish", (cmd_function)pua_set_publish, 0, 0, 0, REQUEST_ROUTE},
+	{"bind_pua_usrloc", (cmd_function)bind_pua_usrloc, 1, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0} 
 };
 
@@ -199,5 +201,17 @@ static int mod_init(void)
 	}
 
 
+	return 0;
+}
+
+int bind_pua_usrloc(struct pua_usrloc_binds *pxb)
+{
+	if (pxb == NULL)
+	{
+		LM_WARN("bind_pua_usrloc: Cannot load pua_usrloc API into a NULL pointer\n");
+		return -1;
+	}
+
+	pxb->pua_set_publish = pua_set_publish;
 	return 0;
 }
