@@ -42,7 +42,7 @@
 #define OP_GEQ ">="
 /** operator negation */
 #define OP_NEQ "!="
-/** bitise AND */
+/** bitwise AND */
 #define OP_BITWISE_AND "&"
 
 
