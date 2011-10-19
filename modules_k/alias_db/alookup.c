@@ -70,20 +70,14 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
 /**
  *
  */
-int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
+int alias_db_lookup(struct sip_msg* _msg, str table_s)
 {
-	str user_s, table_s;
+	str user_s;
 	db_key_t db_keys[2] = {&alias_user_column, &alias_domain_column};
 	db_val_t db_vals[2];
 	db_key_t db_cols[] = {&user_column, &domain_column};
 	db1_res_t* db_res = NULL;
 	int i;
-	
-	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0)
-	{
-		LM_ERR("invalid table parameter\n");
-		return -1;
-	}
 
 	if (parse_sip_msg_uri(_msg) < 0)
 		return -1;
