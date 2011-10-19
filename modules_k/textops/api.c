@@ -100,6 +100,22 @@ int search_api(struct sip_msg *msg, str *regex){
 	return retval;
 	
 }
+
+int is_privacy_api(struct sip_msg *msg, str* privacy_type){
+	int retval;
+	void **param=pkg_malloc(sizeof(void*));
+	*param=pkg_malloc(privacy_type->len+1);
+	memcpy(*param,privacy_type->s,privacy_type->len);
+	memset(*param+privacy_type->len,0,1);
+
+	fixup_privacy(param, 1);
+	retval = is_privacy_f(msg, *param, NULL);
+
+	pkg_free(param);
+
+	return retval;
+}
+
 /*
  * Function to load the textops api.
  */
@@ -112,5 +128,6 @@ int bind_textops(textops_api_t *tob){
 	tob->remove_hf=remove_hf_api;
 	tob->search_append=search_append_api;
 	tob->search=search_api;
+	tob->is_privacy=is_privacy_api;
 	return 0;
 }
