@@ -66,6 +66,21 @@ int regapi_lookup(struct sip_msg *msg, char *table)
 /**
  *
  */
+int regapi_registered(struct sip_msg *msg, char *table)
+{
+	udomain_t* d;
+
+	if(ul.get_udomain(table, &d)<0)
+	{
+		LM_ERR("usrloc domain [%s] not found\n", table);
+		return -1;
+	}
+	return registered(msg, (char*)d, NULL);
+}
+
+/**
+ *
+ */
 int bind_registrar(registrar_api_t* api)
 {
 	if (!api) {
@@ -74,6 +89,7 @@ int bind_registrar(registrar_api_t* api)
 	}
 	api->save   = regapi_save;
 	api->lookup = regapi_lookup;
+	api->registered = regapi_registered;
 
 	return 0;
 }
