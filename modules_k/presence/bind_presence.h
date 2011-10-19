@@ -44,6 +44,8 @@ typedef int (*update_watchers_t)(str pres_uri, pres_ev_t* ev, str* rules_doc);
 typedef str* (*pres_get_presentity_t)(str pres_uri, pres_ev_t *ev, str *etag, str *contact);
 typedef void (*pres_free_presentity_t)(str *presentity, pres_ev_t *ev);
 typedef int (*pres_auth_status_t)(struct sip_msg* msg, str watcher_uri, str presentity_uri);
+typedef int (*pres_handle_publish_t)(struct sip_msg* msg, char *str1, char* str2);
+typedef int (*pres_handle_subscribe_t)(struct sip_msg* msg, char *str1, char *str2);
 
 typedef struct presence_api {
 	add_event_t add_event;
@@ -65,6 +67,8 @@ typedef struct presence_api {
 	pres_get_presentity_t get_presentity;
 	pres_free_presentity_t free_presentity;
 	pres_auth_status_t pres_auth_status;
+	pres_handle_publish_t handle_publish;
+	pres_handle_subscribe_t handle_subscribe;
 } presence_api_t;
 
 int bind_presence(presence_api_t* api);
