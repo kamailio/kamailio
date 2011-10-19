@@ -24,10 +24,13 @@
 #ifndef _SIPUTILS_H_
 #define _SIPUTILS_H_
 
+typedef int (*siputils_has_totag_t)(struct sip_msg*, char*, char*);
+
 /*! Siputils module API */
 typedef struct siputils_api {
 	int_str rpid_avp;      /*!< Name of AVP containing Remote-Party-ID */
 	int     rpid_avp_type; /*!< type of the RPID AVP */
+	siputils_has_totag_t has_totag;
 } siputils_api_t;
 
 typedef int (*bind_siputils_t)(siputils_api_t* api);
@@ -38,5 +41,16 @@ typedef int (*bind_siputils_t)(siputils_api_t* api);
  * \return 0 on success, -1 on failure
  */
 int bind_siputils(siputils_api_t* api);
+
+inline static int siputils_load_api(siputils_api_t *pxb)
+{
+        bind_siputils_t bind_siputils_exports;
+        if (!(bind_siputils_exports = (bind_siputils_t)find_export("bind_siputils", 1, 0)))
+        {
+                LM_ERR("Failed to import bind_siputils\n");
+                return -1;
+        }
+        return bind_siputils_exports(pxb);
+}
 
 #endif
