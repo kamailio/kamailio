@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('silo','5');
+INSERT INTO version (table_name, table_version) values ('silo','6');
 CREATE TABLE silo (
     id SERIAL PRIMARY KEY NOT NULL,
     src_addr VARCHAR(128) DEFAULT '' NOT NULL,
@@ -9,7 +9,8 @@ CREATE TABLE silo (
     exp_time INTEGER DEFAULT 0 NOT NULL,
     snd_time INTEGER DEFAULT 0 NOT NULL,
     ctype VARCHAR(32) DEFAULT 'text/plain' NOT NULL,
-    body BYTEA DEFAULT '' NOT NULL
+    body BYTEA DEFAULT '' NOT NULL,
+    extra_hdrs TEXT DEFAULT '' NOT NULL
 );
 
 CREATE INDEX silo_account_idx ON silo (username, domain);
