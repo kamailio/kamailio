@@ -33,6 +33,7 @@
 #include "../../data_lump.h"
 #include "../../msg_translator.h"
 
+#include "api.h"
 
 MODULE_VERSION
 
@@ -42,6 +43,7 @@ static int change_reply_status_f(struct sip_msg*, char*, char *);
 static int change_reply_status_fixup(void** param, int param_no);
 
 static int w_remove_body_f(struct sip_msg*, char*, char *);
+static int bind_textopsx(textopsx_api_t *tob);
 
 /* cfg functions */
 static cmd_export_t cmds[] = {
@@ -50,6 +52,8 @@ static cmd_export_t cmds[] = {
 	{"change_reply_status",	 change_reply_status_f,	                2,
 		change_reply_status_fixup, ONREPLY_ROUTE },
 	{"remove_body",          (cmd_function)w_remove_body_f,         0,
+		0, ANY_ROUTE },
+	{"bind_textopsx",        (cmd_function)bind_textopsx,           1,
 		0, ANY_ROUTE },
 
 
@@ -256,4 +260,16 @@ static int w_remove_body_f(struct sip_msg *msg, char *p1, char *p2)
 		return -1;
 	}
 	return 1;
+}
+
+/*
+ * Function to load the textops api.
+ */
+static int bind_textopsx(textopsx_api_t *tob){
+	if(tob==NULL){
+		LM_WARN("textopsx_binds: Cannot load textopsx API into a NULL pointer\n");
+		return -1;
+	}
+	tob->msg_apply_changes = msg_apply_changes_f;
+	return 0;
 }
