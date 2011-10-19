@@ -93,25 +93,47 @@ void get_dialog_from_did(char* did, subs_t **dialog, unsigned int *hash_code)
             "resource list Subscribe dialog indentifier(rlsubs did)\n");
         return;
 	}
-    *hash_code= core_hash(&callid, &to_tag, hash_size);
-    
-    lock_get(&rls_table[*hash_code].lock);
-    s= pres_search_shtable(rls_table,callid,to_tag,from_tag,*hash_code);
-    if(s== NULL)
+
+	if (dbmode == RLS_DB_ONLY)
 	{
-        LM_ERR("record not found in hash_table [rlsubs_did]= %s\n",
-                did);
-        lock_release(&rls_table[*hash_code].lock);
-        return;
+		*dialog = get_dialog_rlsdb(callid,to_tag,from_tag);
+
+		if(*dialog==NULL)
+		{
+			LM_ERR("record not retrieved from db [rlsubs_did]= %s\n", did);
+			return;
+		}
+	}
+	else
+	{
+		*hash_code= core_hash(&callid, &to_tag, hash_size);
+
+		lock_get(&rls_table[*hash_code].lock);
+		s= pres_search_shtable(rls_table,callid,to_tag,from_tag,*hash_code);
+
+		if(s== NULL)
+		{
+			LM_ERR("record not found in hash_table [rlsubs_did]= %s\n",
+					did);
+			lock_release(&rls_table[*hash_code].lock);
+			return;
+		}
+
+		/* save dialog info */
+		*dialog= pres_copy_subs(s, PKG_MEM_TYPE);
 	}
 
-    /* save dialog info */
-    *dialog= pres_copy_subs(s, PKG_MEM_TYPE);
     if(*dialog== NULL)
 	{
         LM_ERR("while copying subs_t structure\n");
 	}
-    lock_release(&rls_table[*hash_code].lock);
+	else
+	{
+		dump_dialog( *dialog );
+	}
+
+	if (dbmode != RLS_DB_ONLY)
+		lock_release(&rls_table[*hash_code].lock);
 	
 }
 

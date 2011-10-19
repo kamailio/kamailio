@@ -40,6 +40,10 @@
 #include "../../lib/srdb1/db_con.h"
 #include "../../lib/srdb1/db.h"
 
+#define RLS_DB_DEFAULT 0
+#define RLS_DB_RESERVED 1
+#define RLS_DB_ONLY 2
+
 #define NO_UPDATE_TYPE     -1 
 #define UPDATED_TYPE        1 
 
@@ -79,7 +83,7 @@ typedef struct rls_resource
 	/* the last 2 parameters say if a query in database is needed */
 }rls_res_t;
 
-
+extern int dbmode;
 extern char* xcap_root;
 extern unsigned int xcap_port;
 extern str rls_server_address;
@@ -97,10 +101,13 @@ extern int rls_events;
 extern int to_presence_code;
 extern str rls_outbound_proxy;
 extern int rls_max_notify_body_len;
+extern int rls_expires_offset;
 
 /* database connection */
 extern db1_con_t *rls_db;
 extern db_func_t rls_dbf;
+extern db1_con_t *rls_xcap_db;
+extern db_func_t rls_xcap_dbf;
 
 extern struct tm_binds tmb;
 extern sl_api_t slb;
@@ -136,6 +143,17 @@ extern xcap_nodeSel_init_t xcap_IntNodeSel;
 extern xcap_nodeSel_add_step_t xcap_AddStep;
 extern xcap_nodeSel_add_terminal_t xcap_AddTerminal;
 extern xcap_nodeSel_free_t xcap_FreeNodeSel;
+
+/* rlsdb functions*/
+int delete_expired_subs_rlsdb( void );
+void dump_dialog( subs_t *s );
+extern int delete_rlsdb( str *callid, str *to_tag, str *from_tag );
+extern int update_rlsdb( subs_t *s, int type );
+extern int update_subs_rlsdb( subs_t *s );
+extern int insert_rlsdb( subs_t *s );
+extern int matches_in_rlsdb( str callid, str to_tag, str from_tag );
+extern int update_all_subs_rlsdb( str *from_user, str *from_domain, str *evt );
+subs_t *get_dialog_rlsdb( str callid, str to_tag, str from_tag );
 
 extern str str_rlsubs_did_col;
 extern str str_resource_uri_col;

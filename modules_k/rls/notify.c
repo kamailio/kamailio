@@ -341,11 +341,23 @@ int agg_body_sendn_update(str* rl_uri, char* boundary_string, str* rlmi_body,
 	pkg_free(body.s);
 	body.s= NULL;
 
-	if(pres_update_shtable(rls_table, hash_code,subs, LOCAL_TYPE)< 0)
+	if (dbmode==RLS_DB_ONLY)
 	{
-		LM_ERR("updating in hash table\n");
-		goto error;
+		if ( update_rlsdb(subs, LOCAL_TYPE) <0 )
+		{
+			LM_ERR( "updating DB\n" );
+			goto error;
+		}
 	}
+	else
+	{
+		if(pres_update_shtable(rls_table, hash_code,subs, LOCAL_TYPE)< 0)
+		{
+			LM_ERR("updating in hash table\n");
+			goto error;
+		}
+	}
+
 	return 0;
 
 error:
@@ -884,7 +896,6 @@ void rls_notify_callback( struct cell *t, int type, struct tmcb_params *ps)
 
 	if(ps->code >= 300)
 	{
-		/* delete from database table */
 		db_key_t db_keys[2];
 		db_val_t db_vals[2];
 		unsigned int hash_code;
@@ -896,32 +907,48 @@ void rls_notify_callback( struct cell *t, int type, struct tmcb_params *ps)
 		subs.from_tag= ((dialog_id_t*)(*ps->param))->from_tag;
 		subs.callid= ((dialog_id_t*)(*ps->param))->callid;
 
-		if (rls_dbf.use_table(rls_db, &rlsubs_table) < 0) 
+		if (dbmode != RLS_DB_ONLY)
 		{
-			LM_ERR("in use_table\n");
-			goto done;
-		}
+			/* delete from database table */
+
+
+			if (rls_dbf.use_table(rls_db, &rlsubs_table) < 0) 
+			{
+				LM_ERR("in use_table\n");
+				goto done;
+			}
 		
-		db_keys[0] =&str_to_tag_col;
-		db_vals[0].type = DB1_STR;
-		db_vals[0].nul = 0;
-		db_vals[0].val.str_val = subs.to_tag;
+			db_keys[0] =&str_to_tag_col;
+			db_vals[0].type = DB1_STR;
+			db_vals[0].nul = 0;
+			db_vals[0].val.str_val = subs.to_tag;
 
-		db_keys[1] =&str_callid_col;
-		db_vals[1].type = DB1_STR;
-		db_vals[1].nul = 0;
-		db_vals[1].val.str_val = subs.callid;
+			db_keys[1] =&str_callid_col;
+			db_vals[1].type = DB1_STR;
+			db_vals[1].nul = 0;
+			db_vals[1].val.str_val = subs.callid;
 
 
-		if (rls_dbf.delete(rls_db, db_keys, 0, db_vals, 2) < 0) 
-			LM_ERR("cleaning expired messages\n");	
+			if (rls_dbf.delete(rls_db, db_keys, 0, db_vals, 2) < 0) 
+				LM_ERR("cleaning expired messages\n");	
+		}
 
 		/* delete from cache table */
-		hash_code= core_hash(&subs.callid, &subs.to_tag , hash_size);
-
-		if(pres_delete_shtable(rls_table,hash_code, subs.to_tag)< 0)
+		if (dbmode == RLS_DB_ONLY)
 		{
-			LM_ERR("record not found in hash table\n");
+			if (delete_rlsdb(&subs.callid, &subs.to_tag, NULL) < 0 )
+			{
+				LM_ERR( "unable to delete record from DB\n" );
+			}
+		}
+		else
+		{
+			hash_code= core_hash(&subs.callid, &subs.to_tag , hash_size);
+
+			if(pres_delete_shtable(rls_table,hash_code, subs.to_tag)< 0)
+			{
+				LM_ERR("record not found in hash table\n");
+			}
 		}
 	}	
 
@@ -960,7 +987,7 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 			{
 				if (rls_integrated_xcap_server == 1
 					&& (hostname.len == 0
-						|| check_self(&hostname, port, PROTO_NONE) == 1))
+						|| check_self(&hostname, 0, PROTO_NONE) == 1))
 				{
 					LM_DBG("fetching local <resource-list/>\n");
 					if (rls_get_resource_list(&rl_uri, &username, &domain, &rl_node, &rl_doc)>0)
@@ -1234,7 +1261,7 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 	query_vals[n_query_cols].val.str_val = root;
 	n_query_cols++;
 
-	if(rls_dbf.use_table(rls_db, &rls_xcap_table) < 0)
+	if(rls_xcap_dbf.use_table(rls_xcap_db, &rls_xcap_table) < 0)
 	{
 		LM_ERR("in use_table-[table]=%.*s\n",
 			rls_xcap_table.len, rls_xcap_table.s);
@@ -1243,20 +1270,20 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 
 	result_cols[xcap_col= n_result_cols++] = &str_doc_col;
 
-	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
+	if(rls_xcap_dbf.query(rls_xcap_db, query_cols, 0, query_vals, result_cols,
 				n_query_cols, n_result_cols, 0, &result)<0)
 	{
 		LM_ERR("failed querying table xcap for document: %.*s\n",
 				root.len, root.s);
 		if(result)
-			rls_dbf.free_result(rls_db, result);
+			rls_xcap_dbf.free_result(rls_xcap_db, result);
 		return -1;
 	}
 
 	if(result->n<=0)
 	{
 		LM_DBG("No rl document found\n");
-		rls_dbf.free_result(rls_db, result);
+		rls_xcap_dbf.free_result(rls_xcap_db, result);
 		return -1;
 	}
 
@@ -1334,12 +1361,12 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 		xmlXPathFreeContext(xpathCtx);
 	}
 	
-	rls_dbf.free_result(rls_db, result);
+	rls_xcap_dbf.free_result(rls_xcap_db, result);
 	return 1;
 
 error:
 	if(result!=NULL)
-		rls_dbf.free_result(rls_db, result);
+		rls_xcap_dbf.free_result(rls_xcap_db, result);
 	if(xpathObj!=NULL)
 		xmlXPathFreeObject(xpathObj);
 	
