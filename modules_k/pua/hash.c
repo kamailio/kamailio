@@ -35,6 +35,7 @@
 #include "../../parser/parse_from.h"
 #include "hash.h" 
 #include "pua.h"
+#include "pua_db.h"
 #include "send_publish.h"
 
 void print_ua_pres(ua_pres_t* p)
@@ -62,8 +63,14 @@ htable_t* new_htable(void)
 {
 	htable_t* H= NULL;
 	int i= 0, j;
-
 	H= (htable_t*)shm_malloc(sizeof(htable_t));
+
+	if (dbmode==PUA_DB_ONLY)
+	{
+		LM_ERR( "new_htable shouldn't be called in PUA_DB_ONLY mode\n" );
+		return(NULL);
+	}
+
 	if(H== NULL)
 	{
 		LM_ERR("No more memory\n");
@@ -116,8 +123,14 @@ error:
 ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code)
 {
 	ua_pres_t* p= NULL,* L= NULL;
-
 	L= HashT->p_records[hash_code].entity;
+
+	if (dbmode==PUA_DB_ONLY)
+	{
+		LM_ERR( "search_htable shouldn't be called in PUA_DB_ONLY mode\n" );
+		return(NULL);
+	}
+
 	LM_DBG("core_hash= %u\n", hash_code);
 
 	for(p= L->next; p; p=p->next)
@@ -179,6 +192,13 @@ ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code)
 void update_htable(ua_pres_t* p, time_t desired_expires, int expires,
 		str* etag, unsigned int hash_code, str* contact)
 {
+
+	if (dbmode==PUA_DB_ONLY)
+	{
+		LM_ERR( "update_htable shouldn't be called in PUA_DB_ONLY mode\n" );
+		return;
+	}
+
 	if(etag)
 	{	
 		shm_free(p->etag.s);
@@ -220,6 +240,12 @@ void insert_htable(ua_pres_t* presentity)
 	ua_pres_t* p= NULL;
 	unsigned int hash_code;
 
+	if (dbmode==PUA_DB_ONLY)
+	{
+		LM_ERR( "insert_htable shouldn't be called in PUA_DB_ONLY mode\n" );
+		return;
+	}
+
 	hash_code= core_hash(presentity->pres_uri,presentity->watcher_uri, 
 			HASH_SIZE);
 	
@@ -252,6 +278,12 @@ void delete_htable(ua_pres_t* presentity, unsigned int hash_code)
 { 
 	ua_pres_t *q = NULL;
 
+	if (dbmode==PUA_DB_ONLY)
+	{
+		LM_ERR( "delete_htable shouldn't be called in PUA_DB_ONLY mode\n" );
+		return;
+	}
+
 	if (presentity == NULL)
 		return;
 
@@ -276,6 +308,12 @@ void destroy_htable(void)
 {
 	ua_pres_t* p= NULL,*q= NULL;
 	int i;
+
+	if (dbmode==PUA_DB_ONLY)
+	{
+		LM_ERR( "destroy_htable shouldn't be called in PUA_DB_ONLY mode\n" );
+		return;
+	}
 
 	for(i=0; i<HASH_SIZE; i++)
 	{	
@@ -306,6 +344,13 @@ void destroy_htable(void)
 ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code)
 {
 	ua_pres_t* p= NULL, *L;
+
+	if (dbmode==PUA_DB_ONLY)
+	{
+		LM_ERR( "get_dialog shouldn't be called in PUA_DB_ONLY mode\n" );
+		return(NULL);
+	}
+
 	LM_DBG("core_hash= %u\n", hash_code);
 
 	L= HashT->p_records[hash_code].entity;
@@ -380,6 +425,11 @@ int get_record_id(ua_pres_t* dialog, str** rec_id)
 	ua_pres_t* rec;
 	str* id;
 
+	if (dbmode==PUA_DB_ONLY)
+	{
+		return( get_record_id_puadb( dialog, rec_id ) );
+	}
+
 	*rec_id= NULL;
 
 	hash_code= core_hash(dialog->pres_uri, dialog->watcher_uri, HASH_SIZE);
@@ -428,7 +478,12 @@ int is_dialog(ua_pres_t* dialog)
 {
 	int ret_code= 0;
 	unsigned int hash_code;
-	
+
+	if (dbmode==PUA_DB_ONLY)
+	{
+		return( is_dialog_puadb(dialog) );
+	}	
+
 	hash_code= core_hash(dialog->pres_uri, dialog->watcher_uri, HASH_SIZE);
 	lock_get(&HashT->p_records[hash_code].lock);
 
@@ -517,8 +572,6 @@ int update_contact(struct sip_msg* msg, char* str1, char* str2)
 	hentity.to_tag= pto->tag_value;
 	hentity.from_tag= pfrom->tag_value;
 	
-	hash_code= core_hash(hentity.pres_uri,hentity.watcher_uri,
-				HASH_SIZE);
 
 	/* extract the contact */
 	if(msg->contact== NULL || msg->contact->body.s== NULL)
@@ -527,6 +580,16 @@ int update_contact(struct sip_msg* msg, char* str1, char* str2)
 		goto error;
 	}
 	contact= msg->contact->body;
+
+	if (dbmode==PUA_DB_ONLY)
+	{
+		update_contact_puadb(&hentity, &contact );
+		free_to_params(&TO);
+		return(1);
+	}
+
+	hash_code= core_hash(hentity.pres_uri,hentity.watcher_uri,
+				HASH_SIZE);
 
 	lock_get(&HashT->p_records[hash_code].lock);
 

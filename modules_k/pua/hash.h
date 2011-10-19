@@ -80,8 +80,8 @@ typedef struct ua_pres{
 	/* publish */
 	str etag;
 	str tuple_id;
-	str* body;
-	str content_type;
+	str* body;        /* croc-not stored in db_only mode */
+	str content_type; /* croc-not stored in db_only mode */
 
 	/* subscribe */
 	str* watcher_uri;
@@ -90,8 +90,8 @@ typedef struct ua_pres{
     str from_tag;
 	int cseq;
 	int version;
-    int watcher_count;
-	str* outbound_proxy;
+/*  int watcher_count; croc-nolonger used!! */
+	str* outbound_proxy; /* croc-not sored in db_only mode */
 	str* extra_headers;
 	str record_route;
 	str remote_contact;

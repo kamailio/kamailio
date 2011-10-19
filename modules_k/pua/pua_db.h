@@ -1,0 +1,64 @@
+/*
+ * $Id$
+ *
+ * pua_db headers - presence user agent db headers
+ *
+ * Copyright (C) 2011 Crocodile RCS Ltd
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#ifndef PUA_DB_H
+#define PUA_DB_H
+
+#include "../../lib/srdb1/db.h"
+
+#define PUA_PRES_URI (1<<0) 
+#define PUA_PRES_ID (1<<1)
+#define PUA_EVENT (1<<2)
+#define PUA_EXPIRES (1<<3)
+#define PUA_DESIRED_EXPIRES (1<<4)
+#define PUA_FLAG (1<<5)
+#define PUA_ETAG (1<<6)
+#define PUA_TUPLE_ID (1<<7)
+#define PUA_WATCHER_URI (1<<8)
+#define PUA_CALL_ID (1<<9)
+#define PUA_TO_TAG (1<<10)
+#define PUA_FROM_TAG (1<<11)
+#define PUA_CSEQ  (1<<12)
+#define PUA_RECORD_ROUTE (1<<13)
+#define PUA_CONTACT (1<<14)
+#define PUA_REMOTE_CONTACT (1<<15)
+#define PUA_VERSION (1<<16)
+#define PUA_EXTRA_HEADERS (1<<17)
+
+void free_results_puadb( db1_res_t *res );
+int matches_in_puadb(ua_pres_t *pres);
+ua_pres_t* search_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **res );
+ua_pres_t* get_dialog_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **res);
+int is_dialog_puadb(ua_pres_t *pres);
+int get_record_id_puadb(ua_pres_t *pres, str **rec_id );
+int delete_temporary_dialog_puadb(ua_pres_t *pres );
+int delete_puadb(ua_pres_t *pres );
+int update_version_puadb(ua_pres_t *pres, int version );
+int update_contact_puadb(ua_pres_t *pres, str *contact);
+void update_puadb(ua_pres_t* pres, time_t desired_expires, 
+                       int expires, str* etag, str *contact);
+void insert_puadb(ua_pres_t* pres);
+
+
+#endif

@@ -70,6 +70,7 @@ int startup_time = 0;
 int dlginfo_increase_version = 0;
 int reginfo_increase_version = 0;
 pua_event_t* pua_evlist= NULL;
+int dbmode = 0;
 
 /* database connection */
 db1_con_t *pua_db = NULL;
@@ -101,7 +102,6 @@ static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
 
-static int update_pua(ua_pres_t* p, unsigned int hash_code);
 static ua_pres_t* build_uppubl_cbparam(ua_pres_t* p);
 
 static int db_restore(void);
@@ -127,6 +127,7 @@ static param_export_t params[]={
 	{"dlginfo_increase_version",	 INT_PARAM, &dlginfo_increase_version},
 	{"reginfo_increase_version",	 INT_PARAM, &reginfo_increase_version},
 	{"check_remote_contact", INT_PARAM, &check_remote_contact	},
+	{ "db_mode",                INT_PARAM, &dbmode},
 	{0,							 0,			0            }
 };
 
@@ -170,6 +171,9 @@ static int mod_init(void)
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
 	db_table.len = db_table.s ? strlen(db_table.s) : 0;
 	
+	if (dbmode==PUA_DB_ONLY) 
+		LM_ERR( "DB ONLY MODE ACTIVE\n" );
+
 	/* binding to database module  */
 	if (db_bind_mod(&db_url, &pua_dbf))
 	{
@@ -194,24 +198,33 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(HASH_SIZE<=1)
-		HASH_SIZE= 512;
-	else
-		HASH_SIZE = 1<<HASH_SIZE;
+	if (dbmode != PUA_DB_ONLY)
+	{ 
+		if(HASH_SIZE<=1)
+			HASH_SIZE= 512;
+		else
+			HASH_SIZE = 1<<HASH_SIZE;
 
-	HashT= new_htable();
-	if(HashT== NULL)
-	{
-		LM_ERR("while creating new hash table\n");
-		return -1;
-	}
-	if(db_restore()< 0)
-	{
+		HashT= new_htable();
+		if(HashT== NULL)
+		{
+			LM_ERR("while creating new hash table\n");
+			return -1;
+		}
+  		if(db_restore()< 0)
+		{
 		LM_ERR("while restoring hash_table\n");
 		return -1;
+		}
+	} 
+
+	if (dbmode != PUA_DB_DEFAULT && dbmode != PUA_DB_ONLY)
+	{
+		dbmode = PUA_DB_DEFAULT;
+		LM_ERR( "Invalid dbmode-using default mode\n" );
 	}
 
-	if(update_period<=0)
+	if(update_period<0)
 	{
 		LM_ERR("wrong clean_period\n");
 		return -1;
@@ -241,10 +254,14 @@ static int mod_init(void)
 
 	startup_time = (int) time(NULL);
 	
-	register_timer(hashT_clean, 0, update_period- 5);
+	if (update_period > 0) /* probably should check > 5 here!! -croc */
+		register_timer(hashT_clean, 0, update_period- 5);
 
-	register_timer(db_update, 0, update_period);
-
+	if (dbmode != PUA_DB_ONLY) 
+	{        
+		if (update_period > 0) 
+			register_timer(db_update, 0, update_period);
+	}
 
 	if(pua_db)
 		pua_dbf.close(pua_db);
@@ -288,6 +305,8 @@ static void destroy(void)
 	if (puacb_list)
 		destroy_puacb_list();
 
+	/* if dbmode is PUA_DB_ONLY, then HashT will be NULL 
+		so db_update and destroy_htable won't get called */ 
 	if(pua_db && HashT)
 		db_update(0,0);
 	
@@ -320,6 +339,12 @@ static int db_restore(void)
 	int watcher_col,callid_col,totag_col,fromtag_col,cseq_col,remote_contact_col;
 	int event_col,contact_col,tuple_col,record_route_col, extra_headers_col;
 	int version_col;
+
+	if (dbmode==PUA_DB_ONLY)
+	{
+		LM_ERR( "db_restore shouldn't be called in PUA_DB_ONLY mode\n" );
+		return(-1);
+	}
 
 	result_cols[puri_col=n_result_cols++]	= &str_pres_uri_col;
 	result_cols[pid_col=n_result_cols++]	= &str_pres_id_col;
@@ -595,6 +620,12 @@ static void hashT_clean(unsigned int ticks,void *param)
 	time_t now;
 	ua_pres_t* p= NULL, *q= NULL;
 
+	if (dbmode==PUA_DB_ONLY) 
+	{
+		clean_puadb(update_period, min_expires );
+		return;
+	}
+
 	now = time(NULL);
 	for(i= 0;i< HASH_SIZE; i++)
 	{
@@ -608,7 +639,7 @@ static void hashT_clean(unsigned int ticks,void *param)
 				if((p->desired_expires> p->expires + min_expires) || 
 						(p->desired_expires== 0 ))
 				{
-					if(update_pua(p, i)< 0)
+					if(update_pua(p)< 0)
 					{
 						LM_ERR("while updating record\n");
 						lock_release(&HashT->p_records[i].lock);
@@ -637,7 +668,7 @@ static void hashT_clean(unsigned int ticks,void *param)
 
 }
 
-int update_pua(ua_pres_t* p, unsigned int hash_code)
+int update_pua(ua_pres_t* p)
 {
 	str* str_hdr= NULL;
 	int expires;
@@ -756,6 +787,8 @@ static void db_update(unsigned int ticks,void *param)
 	int watcher_col,callid_col,totag_col,fromtag_col,record_route_col,cseq_col;
 	int no_lock= 0, contact_col, desired_expires_col, extra_headers_col;
 	int remote_contact_col, version_col;
+
+	if (dbmode==PUA_DB_ONLY) return;
 
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;

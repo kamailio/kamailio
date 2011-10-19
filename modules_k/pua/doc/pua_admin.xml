@@ -34,9 +34,11 @@
 		 jabber and SIP clients can exchange presence information. 
 	</para>
 	<para>
-		The module use a cache to store the presentity list and writes to database
-		on timer to be able to recover upon restart. The presence is kept in-memory
-		during run-time.
+		The module supports 2 modes of operation. In the first a cache is used to store
+		the presentity list and writes to database on timer to be able to recover upon
+		restart. The presence is kept in-memory	during run-time. The second is a database
+		only mode where the presentity list is stored purely in a database, allowing
+		both scalability and resilience.
 	</para>
 	</section>
 		<section>
@@ -173,7 +175,8 @@ modparam("pua", "default_expires", 3600)
 		<para>
 		The interval at which the information in database and hash table
 		should be updated. In the case of the hash table updating means 
-		deleting expired messages.
+		deleting expired messages. 
+		Setting a value less than or equal to zero, disables updates.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>100</quote>.
@@ -255,6 +258,27 @@ modparam("pua", "dlginfo_increase_version", 1)
 		<programlisting format="linespecific">
 ...
 modparam("pua", "reginfo_increase_version", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_mode</varname> (int)</title>
+		<para>
+		The module supports 2 modes of operation, high speed memory
+		based storage (mode 0), and database only (mode 2) where all 
+		data is stored in a database, allowing scalability at the expense of speed.
+		Mode 1 is reserved.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "db_mode", 0)
 ...
 </programlisting>
 		</example>
