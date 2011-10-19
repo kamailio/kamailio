@@ -56,6 +56,7 @@ typedef  int (*loose_route_f)(struct sip_msg*);
 /*! record-route API export binding */
 typedef struct rr_binds {
 	record_route_f       record_route;
+	record_route_f       record_route_preset;
 	loose_route_f        loose_route;
 	add_rr_param_t       add_rr_param;
 	check_route_param_t  check_route_param;
