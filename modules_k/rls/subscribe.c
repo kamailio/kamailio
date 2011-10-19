@@ -668,7 +668,6 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 	{
 		if(subs.expires==0)
 		{
-			LM_ERR( "rls_db removing expired rls subs\n" );
 			delete_rlsdb( &subs.callid, &subs.to_tag, &subs.from_tag );
 		}
 	}
