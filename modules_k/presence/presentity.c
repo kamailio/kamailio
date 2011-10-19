@@ -336,8 +336,9 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	if(new_t) 
 	{
 		/* insert new record in hash_table */
-	
-		if(insert_phtable(&pres_uri, presentity->event->evp->type, sphere)< 0)
+
+		if ( dbmode != DB_ONLY && 
+			insert_phtable(&pres_uri, presentity->event->evp->type, sphere)< 0)
 		{
 			LM_ERR("inserting record in hash table\n");
 			goto error;
@@ -489,7 +490,8 @@ after_dialog_check:
 
 				/* delete from hash table */
 	
-				if(delete_phtable(&pres_uri, presentity->event->evp->type)< 0)
+				if(dbmode != DB_ONLY && 
+					delete_phtable(&pres_uri, presentity->event->evp->type)< 0)
 				{
 					LM_ERR("deleting record from hash table\n");
 					goto error;
@@ -584,7 +586,8 @@ after_dialog_check:
 				if(sphere_enable && 
 						presentity->event->evp->type== EVENT_PRESENCE)
 				{
-					if(update_phtable(presentity, pres_uri, *body)< 0)
+					if(dbmode != DB_ONLY && 
+						update_phtable(presentity, pres_uri, *body)< 0)
 					{
 						LM_ERR("failed to update sphere for presentity\n");
 						goto error;
@@ -694,6 +697,12 @@ int pres_htable_restore(void)
 	int event;
 	event_t ev;
 	char* sphere= NULL;
+
+	if ( dbmode == DB_ONLY )
+	{
+		LM_ERR( "Can't restore when dbmode is DB_ONLY\n" );
+		return(-1);
+	} 
 
 	result_cols[user_col= n_result_cols++]= &str_username_col;
 	result_cols[domain_col= n_result_cols++]= &str_domain_col;
@@ -871,30 +880,32 @@ char* get_sphere(str* pres_uri)
 	if(!sphere_enable)
 		return NULL;
 
-	/* search in hash table*/
-	hash_code= core_hash(pres_uri, NULL, phtable_size);
-
-	lock_get(&pres_htable[hash_code].lock);
-
-	p= search_phtable(pres_uri, EVENT_PRESENCE, hash_code);
-
-	if(p)
+	if ( dbmode != DB_ONLY )
 	{
-		if(p->sphere)
+		/* search in hash table*/
+		hash_code= core_hash(pres_uri, NULL, phtable_size);
+
+		lock_get(&pres_htable[hash_code].lock);
+
+		p= search_phtable(pres_uri, EVENT_PRESENCE, hash_code);
+
+		if(p)
 		{
-			sphere= (char*)pkg_malloc(strlen(p->sphere)* sizeof(char));
-			if(sphere== NULL)
+			if(p->sphere)
 			{
-				lock_release(&pres_htable[hash_code].lock);
-				ERR_MEM(PKG_MEM_STR);
+				sphere= (char*)pkg_malloc(strlen(p->sphere)* sizeof(char));
+				if(sphere== NULL)
+				{
+					lock_release(&pres_htable[hash_code].lock);
+					ERR_MEM(PKG_MEM_STR);
+				}
+				strcpy(sphere, p->sphere);
 			}
-			strcpy(sphere, p->sphere);
+			lock_release(&pres_htable[hash_code].lock);
+			return sphere;
 		}
 		lock_release(&pres_htable[hash_code].lock);
-		return sphere;
 	}
-	lock_release(&pres_htable[hash_code].lock);
-
 
 	/* if record not found and subscriptions are held also in database, query database*/
 	if(dbmode == DB_MEMORY_ONLY)

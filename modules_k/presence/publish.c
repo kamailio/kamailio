@@ -187,7 +187,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		}
 		
 		/* delete from hash table */
-		if(delete_phtable(&p[i].uri, ev.type)< 0)
+		if(dbmode != DB_ONLY && delete_phtable(&p[i].uri, ev.type)< 0)
 		{
 			LM_ERR("deleting from pres hash table\n");
 			free_event_params(ev.params.list, PKG_MEM_TYPE);

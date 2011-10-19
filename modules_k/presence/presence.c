@@ -140,7 +140,7 @@ int timeout_rm_subs = 1;
 int send_fast_notify = 1;
 
 int phtable_size= 9;
-phtable_t* pres_htable;
+phtable_t* pres_htable=NULL;
 
 static cmd_export_t cmds[]=
 {
@@ -330,22 +330,25 @@ static int mod_init(void)
 		}
 	}
 
-	if(phtable_size< 1)
-		phtable_size= 256;
-	else
-		phtable_size= 1<< phtable_size;
+	if(dbmode != DB_ONLY)
+	{	
+		if(phtable_size< 1)
+			phtable_size= 256;
+		else
+			phtable_size= 1<< phtable_size;
 
-	pres_htable= new_phtable();
-	if(pres_htable== NULL)
-	{
-		LM_ERR("initializing presentity hash table\n");
-		return -1;
-	}
+		pres_htable= new_phtable();
+		if(pres_htable== NULL)
+		{
+			LM_ERR("initializing presentity hash table\n");
+			return -1;
+		}
 
-	if(pres_htable_restore()< 0)
-	{
-		LM_ERR("filling in presentity hash table from database\n");
-		return -1;
+		if(pres_htable_restore()< 0)
+		{
+			LM_ERR("filling in presentity hash table from database\n");
+			return -1;
+		}
 	}
 
 	startup_time = (int) time(NULL);
@@ -366,9 +369,14 @@ static int mod_init(void)
 	/* for legacy, we also keep the fallback2db parameter, but make sure for consistency */
 	if(fallback2db)
 	{
-		dbmode = DB_FALLBACK;
+		if (dbmode == DB_ONLY) 
+			LM_ERR( "fallback2db ignored as in DB_ONLY mode\n" );
+		else
+			dbmode = DB_FALLBACK;
 	}
 
+	if (dbmode == DB_ONLY)
+		LM_INFO( "Database mode set to DB_ONLY\n" );
 	return 0;
 }
 
@@ -751,7 +759,7 @@ int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
 		}
 		/* save in the list all affected dialogs */
 		/* if status switches to terminated -> delete dialog */
-		if(update_pw_dialogs(&subs, subs.db_flag, subs_array)< 0)
+		if(dbmode != DB_ONLY && update_pw_dialogs(&subs, subs.db_flag, subs_array)< 0)
 		{
 			LM_ERR( "extracting dialogs from [watcher]=%.*s@%.*s to"
 				" [presentity]=%.*s\n",	subs.from_user.len, subs.from_user.s,
