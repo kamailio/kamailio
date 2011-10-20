@@ -52,7 +52,10 @@
 #define DS_INACTIVE_DST		1  /*!< inactive destination */
 #define DS_PROBING_DST		2  /*!< checking destination */
 #define DS_DISABLED_DST		4  /*!< admin disabled destination */
+#define DS_STATES_ALL		7  /*!< all bits for the states of destination */
 #define DS_RESET_FAIL_DST	8  /*!< Reset-Failure-Counter */
+
+#define ds_skip_dst(flags)	((flags) & (DS_INACTIVE_DST|DS_DISABLED_DST))
 
 extern str ds_db_url;
 extern str ds_table_name;
