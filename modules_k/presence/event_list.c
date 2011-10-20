@@ -356,7 +356,7 @@ pres_ev_t* search_event(event_t* event)
 				strncasecmp(pres_ev->evp->name.s,event->name.s,
 					pres_ev->evp->name.len)== 0))
 		{
-			if(event->params.list== NULL && pres_ev->evp->params.list== NULL)
+			if((event->params.list== NULL && pres_ev->evp->params.list== NULL) || event->type==EVENT_UA_PROFILE)
 			{
 				return pres_ev;
 			}
