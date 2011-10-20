@@ -1221,8 +1221,7 @@ int ds_get_leastloaded(ds_set_t *dset)
 	t = dset->dlist[k].dload;
 	for(j=1; j<dset->nr; j++)
 	{
-		if(!((dset->dlist[j].flags & DS_INACTIVE_DST)
-				|| (dset->dlist[j].flags & DS_PROBING_DST)))
+		if(!ds_skip_dst(dset->dlist[j].flags & DS_PROBING_DST))
 		{
 			if(dset->dlist[j].dload<t)
 			{
@@ -1692,8 +1691,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 	else
 		hash = hash%idx->nr;
 	i=hash;
-	while ((idx->dlist[i].flags & DS_INACTIVE_DST)
-			|| (idx->dlist[i].flags & DS_PROBING_DST))
+	while (ds_skip_dst(idx->dlist[i].flags))
 	{
 		if(ds_use_default!=0 && idx->nr!=1)
 			i = (i+1)%(idx->nr-1);
@@ -1705,8 +1703,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 			if(ds_use_default!=0)
 			{
 				i = idx->nr-1;
-				if((idx->dlist[i].flags & DS_INACTIVE_DST)
-						|| (idx->dlist[i].flags & DS_PROBING_DST))
+				if(ds_skip_dst(idx->dlist[i].flags))
 					return -1;
 				break;
 			} else {
@@ -1769,7 +1766,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 
 		for(i=hash-1; i>=0; i--)
 		{	
-			if((idx->dlist[i].flags & DS_INACTIVE_DST)
+			if(ds_skip_dst(idx->dlist[i].flags)
 					|| (ds_use_default!=0 && i==(idx->nr-1)))
 				continue;
 			LM_DBG("using entry [%d/%d]\n", set, i);
@@ -1803,7 +1800,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 
 		for(i=idx->nr-1; i>hash; i--)
 		{	
-			if((idx->dlist[i].flags & DS_INACTIVE_DST)
+			if(ds_skip_dst(idx->dlist[i].flags)
 					|| (ds_use_default!=0 && i==(idx->nr-1)))
 				continue;
 			LM_DBG("using entry [%d/%d]\n", set, i);
@@ -2026,9 +2023,9 @@ int ds_set_state(int group, str *address, int state, int type, struct sip_msg *m
 			/* remove the Probing/Inactive-State? Set the fail-count to 0. */
 			if (state == DS_PROBING_DST) {
 				if (type) {
-					if (idx->dlist[i].flags & DS_INACTIVE_DST) {
+					if (idx->dlist[i].flags & DS_DISABLED_DST) {
 						LM_INFO("Ignoring the request to set this destination"
-								" to probing: It is already inactive!\n");
+								" to probing: It is disabled by admin!\n");
 						return 0;
 					}
 					
@@ -2050,7 +2047,7 @@ int ds_set_state(int group, str *address, int state, int type, struct sip_msg *m
 	
 			/*  Type 2 means reply from OPTIONS-Ping */
 			if (type == 2) {
-				if (idx->dlist[i].flags & DS_INACTIVE_DST) {
+				if (idx->dlist[i].flags & DS_DISABLED_DST) {
 					LM_INFO("Ignoring the request to set this destination"
 							" to active: It is already administratively deactivated!\n");
 					return 0;
@@ -2135,6 +2132,9 @@ int ds_reinit_state(int group, str *address, int state)
 				&& strncasecmp(idx->dlist[i].uri.s, address->s,
 					address->len)==0)
 		{
+			/* reset the bits used for states */
+			idx->dlist[i].flags &= ~(DS_STATES_ALL);
+			/* set the new states */
 			idx->dlist[i].flags |= state;
 			return 0;
 		}
@@ -2165,10 +2165,10 @@ int ds_print_list(FILE *fout)
 		{
 			fprintf(fout, "\n set #%d\n", list->id);
 		
-			if (list->dlist[j].flags&DS_INACTIVE_DST)
+			if (list->dlist[j].flags&DS_DISABLED_DST)
   				fprintf(fout, "    Disabled         ");
-  			else if (list->dlist[j].flags&DS_PROBING_DST)
-  				fprintf(fout, "    Probing          ");
+			else if (list->dlist[j].flags&DS_INACTIVE_DST)
+				fprintf(fout, "    Inactive         ");
   			else {
   				fprintf(fout, "    Active");
   				/* Optional: Print the tries for this host. */
@@ -2180,6 +2180,10 @@ int ds_print_list(FILE *fout)
   					fprintf(fout, "           ");
   				}
   			}
+			if (list->dlist[j].flags&DS_PROBING_DST)
+				fprintf(fout, "(P)");
+			else
+				fprintf(fout, "(*)");
 
   			fprintf(fout, "   %.*s\n",
   				list->dlist[j].uri.len, list->dlist[j].uri.s);		
