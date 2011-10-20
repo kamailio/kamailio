@@ -50,5 +50,6 @@ void uac_reg_timer(unsigned int ticks);
 int uac_reg_init_rpc(void);
 
 int  uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode);
+int  uac_reg_status(struct sip_msg *msg, str *src, int mode);
 int  uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode);
 #endif

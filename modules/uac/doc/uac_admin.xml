@@ -769,6 +769,57 @@ if(uac_reg_lookup("$rU", "$ru"))
 				</programlisting>
 			</example>
 		</section>
+		<section id="uac.f.uac_reg_status(uuid)">
+			<title>
+				<function moreinfo="none">uac_reg_status(uuid)</function>
+			</title>
+			<para>
+			This function returns the current registration status for the uuid.
+			</para>
+			<para>
+			Return values:
+			<itemizedlist>
+			<listitem>
+				<para>
+				1 - a valid registration exists.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				-1 - uuid does not exist or an error occurred while executing
+				the function.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				-2 - a registration attempt is ongoing (and currently there is
+				no valid registration).
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				-3 - registration is disabled.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				-99 - no valid registration, waiting for new registration attempt.
+				</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_reg_status</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(status) = uac_reg_status("$rU");
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="uac.f.uac_reg_request_to(user, mode)">
 			<title>
 				<function moreinfo="none">uac_reg_request_to(user, mode)</function>

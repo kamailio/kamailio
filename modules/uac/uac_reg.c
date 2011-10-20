@@ -1439,6 +1439,49 @@ int  uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode)
 /**
  *
  */
+int uac_reg_status(struct sip_msg *msg, str *src, int mode)
+{
+	struct sip_uri puri;
+	reg_uac_t *reg = NULL;
+	int ret;
+
+	if(mode==0)
+	{
+		reg = reg_ht_get_byuuid(src);
+		if(reg==NULL)
+		{
+			LM_DBG("no uuid: %.*s\n", src->len, src->s);
+			return -1;
+		}
+	} else {
+		if(parse_uri(src->s, src->len, &puri)!=0)
+		{
+			LM_ERR("failed to parse uri\n");
+			return -1;
+		}
+		reg = reg_ht_get_byuser(&puri.user, (reg_use_domain)?&puri.host:NULL);
+		if(reg==NULL)
+		{
+			LM_DBG("no user: %.*s\n", src->len, src->s);
+			return -1;
+		}
+	}
+
+	if ((reg->flags & UAC_REG_ONLINE) && (reg->timer_expires > time(NULL)))
+		ret = 1;
+	else if (reg->flags & UAC_REG_ONGOING)
+		ret = -2;
+	else if (reg->flags & UAC_REG_DISABLED)
+		ret = -3;
+	else
+		ret = -99;
+
+	return ret;
+}
+
+/**
+ *
+ */
 int uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode)
 {
 	char ruri[MAX_URI_SIZE];
