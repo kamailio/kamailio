@@ -488,21 +488,6 @@ int update_all_subs_rlsdb( str *from_user, str *from_domain, str *evt )
 
 	nr_rows = RES_ROW_N(result);
 
-	if (nr_rows == 0)
-	{
-		/* no match */ 
-		LM_ERR( "update_all_subs_rlsdb: NO MATCH\n" );
-		rls2_dbf.free_result(rls2_db, result);
-		return(-1);
-	}
-
-	if (nr_rows != 1)
-	{
-		LM_ERR( "update_all_subs_rlsdb: TOO MANY MATCHES=%d\n", nr_rows);
-		rls2_dbf.free_result(rls2_db, result);
-		return(-1);
-	}
-
 	/* get the results and fill in return data structure */
 	for (loop=0; loop <nr_rows; loop++)
 	{
