@@ -38,6 +38,7 @@
  * 2004-06-07 updated to the new DB api (andrei)
  * 2006-09-10 m_dump now checks if registering UA supports MESSAGE method (jh)
  * 2006-10-05 added max_messages module variable (jh)
+ * 2011-10-19 added storage of extra SIP headers (hpw)
  */
 
 #include <stdio.h>
@@ -73,17 +74,17 @@
 #define MAX_DEL_KEYS	1	
 #define NR_KEYS			11
 
-static str sc_mid        = str_init("id");         /*  0 */
-static str sc_from       = str_init("src_addr");   /*  1 */
-static str sc_to         = str_init("dst_addr");   /*  2 */
-static str sc_uri_user   = str_init("username");   /*  3 */
-static str sc_uri_host   = str_init("domain");     /*  4 */
-static str sc_body       = str_init("body");       /*  5 */
-static str sc_ctype      = str_init("ctype");      /*  6 */
-static str sc_exp_time   = str_init("exp_time");   /*  7 */
-static str sc_inc_time   = str_init("inc_time");   /*  8 */
-static str sc_snd_time   = str_init("snd_time");   /*  9 */
-static str sc_extra_hdrs = str_init("extra_hdrs"); /* 10 */
+static str sc_mid         = str_init("id");         /*  0 */
+static str sc_from        = str_init("src_addr");   /*  1 */
+static str sc_to          = str_init("dst_addr");   /*  2 */
+static str sc_uri_user    = str_init("username");   /*  3 */
+static str sc_uri_host    = str_init("domain");     /*  4 */
+static str sc_body        = str_init("body");       /*  5 */
+static str sc_ctype       = str_init("ctype");      /*  6 */
+static str sc_exp_time    = str_init("exp_time");   /*  7 */
+static str sc_inc_time    = str_init("inc_time");   /*  8 */
+static str sc_snd_time    = str_init("snd_time");   /*  9 */
+static str sc_stored_hdrs = str_init("extra_hdrs"); /* 10 */
 
 #define SET_STR_VAL(_str, _res, _r, _c)	\
 	if (RES_ROWS(_res)[_r].values[_c].nul == 0) \
@@ -217,7 +218,7 @@ static param_export_t params[]={
 	{ "sc_exp_time",      STR_PARAM, &sc_exp_time.s           },
 	{ "sc_inc_time",      STR_PARAM, &sc_inc_time.s           },
 	{ "sc_snd_time",      STR_PARAM, &sc_snd_time.s           },
-	{ "sc_extra_hdrs",    STR_PARAM, &sc_extra_hdrs.s         },
+	{ "sc_stored_hdrs",   STR_PARAM, &sc_stored_hdrs.s        },
 	{ "snd_time_avp",     STR_PARAM, &ms_snd_time_avp_param.s },
 	{ "add_date",         INT_PARAM, &ms_add_date             },
 	{ "max_messages",     INT_PARAM, &ms_max_messages         },
@@ -790,7 +791,7 @@ static int m_store(struct sip_msg* msg, str *owner_s)
 	  goto error;
 	}
 
-	db_keys[nr_keys] = &sc_extra_hdrs;
+	db_keys[nr_keys] = &sc_stored_hdrs;
 
 	db_vals[nr_keys].type = DB1_BLOB;
 	db_vals[nr_keys].nul = 0;
@@ -928,7 +929,7 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 	static char body_buf[1024];
 	struct sip_uri puri;
 	uac_req_t uac_r;
-	str str_vals[5], hdr_str, body_str, extra_hdrs_str;
+	str str_vals[5], hdr_str, body_str, extra_hdrs_str, tmp_extra_hdrs;
 	time_t rtime;
 	
 	/* init */
@@ -947,7 +948,7 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 	db_cols[3]=&sc_body;
 	db_cols[4]=&sc_ctype;
 	db_cols[5]=&sc_inc_time;
-	db_cols[6]=&sc_extra_hdrs;
+	db_cols[6]=&sc_stored_hdrs;
 
 	
 	LM_DBG("------------ start ------------\n");
@@ -1063,18 +1064,32 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 		} else {
 		    extra_hdrs_str.len = 0;
 		}
-		
-		hdr_str.len = 1024;
-		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
-				   str_vals[0]/*from*/, rtime /*Date*/,
-				   str_vals[4] /*stored_hdrs*/) < 0)
+
+		tmp_extra_hdrs.len = extra_hdrs_str.len+str_vals[4].len;
+		if ((tmp_extra_hdrs.s = pkg_malloc(tmp_extra_hdrs.len+1)) == NULL)
 		{
-			LM_ERR("headers building failed [%d]\n", mid);
+			LM_ERR("Out of pkg memory");
 			if (msilo_dbf.free_result(db_con, db_res) < 0)
 				LM_ERR("failed to free the query result\n");
 			msg_list_set_flag(ml, mid, MS_MSG_ERRO);
 			goto error;
 		}
+		snprintf(tmp_extra_hdrs.s, tmp_extra_hdrs.len, "%.*s%.*s", extra_hdrs_str.len, extra_hdrs_str.s,
+						str_vals[4].len, str_vals[4].s);
+		
+		hdr_str.len = 1024;
+		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
+				   str_vals[0]/*from*/, rtime /*Date*/,
+				   tmp_extra_hdrs /*extra_hdrs*/) < 0)
+		{
+			LM_ERR("headers building failed [%d]\n", mid);
+			pkg_free(tmp_extra_hdrs.s);
+			if (msilo_dbf.free_result(db_con, db_res) < 0)
+				LM_ERR("failed to free the query result\n");
+			msg_list_set_flag(ml, mid, MS_MSG_ERRO);
+			goto error;
+		}
+		pkg_free(tmp_extra_hdrs.s);
 			
 		LM_DBG("msg [%d-%d] for: %.*s\n", i+1, mid,	pto->uri.len, pto->uri.s);
 			
