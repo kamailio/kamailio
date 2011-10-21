@@ -2211,15 +2211,18 @@ int insert_db_subs_auth(subs_t* subs)
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.int_val= (int)time(NULL);
 	n_query_cols++;
-	
+
+	db_keys[n_query_cols] =&str_reason_col;
+	db_vals[n_query_cols].type = DB1_STR;
+	db_vals[n_query_cols].nul = 0;
 	if(subs->reason.s && subs->reason.len)
-	{
-		db_keys[n_query_cols] =&str_reason_col;
-		db_vals[n_query_cols].type = DB1_STR;
-		db_vals[n_query_cols].nul = 0;
 		db_vals[n_query_cols].val.str_val = subs->reason;
-		n_query_cols++;	
-	}	
+	else
+	{
+		db_vals[n_query_cols].val.str_val.s = ""; 
+		db_vals[n_query_cols].val.str_val.len = 0; 
+	}
+	n_query_cols++;	
 	
 	if (pa_dbf.use_table(pa_db, &watchers_table) < 0) 
 	{

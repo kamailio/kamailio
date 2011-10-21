@@ -171,9 +171,6 @@ static int mod_init(void)
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
 	db_table.len = db_table.s ? strlen(db_table.s) : 0;
 	
-	if (dbmode==PUA_DB_ONLY) 
-		LM_ERR( "DB ONLY MODE ACTIVE\n" );
-
 	/* binding to database module  */
 	if (db_bind_mod(&db_url, &pua_dbf))
 	{
@@ -780,7 +777,7 @@ static void db_update(unsigned int ticks,void *param)
 	db_key_t db_cols[5];
 	db_val_t q_vals[20], db_vals[5];
 	db_op_t  db_ops[1] ;
-	int n_query_cols= 0, n_query_update= 0, n_actual_query_cols= 0;
+	int n_query_cols= 0, n_query_update= 0;
 	int n_update_cols= 0;
 	int i;
 	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col,event_col;
@@ -1101,14 +1098,14 @@ static void db_update(unsigned int ticks,void *param)
 					}
 
 					if(p->extra_headers)
-					{
-						n_actual_query_cols = n_query_cols;
 						q_vals[extra_headers_col].val.str_val = *(p->extra_headers);
-					}
 					else
-						n_actual_query_cols = n_query_cols - 1;
-						
-					if(pua_dbf.insert(pua_db, q_cols, q_vals,n_actual_query_cols )<0)
+					{
+						q_vals[extra_headers_col].val.str_val.s = "";
+						q_vals[extra_headers_col].val.str_val.len = 0;
+					}
+					
+					if(pua_dbf.insert(pua_db, q_cols, q_vals,n_query_cols )<0)
 					{
 						LM_ERR("while inserting in db table pua\n");
 						if(!no_lock)

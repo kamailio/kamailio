@@ -1634,6 +1634,15 @@ void insert_puadb(ua_pres_t* pres)
     db_vals[n_cols].val.str_val.len = pres->extra_headers->len;
     n_cols++;
   }
+  else
+  {
+    db_cols[n_cols] = &str_extra_headers_col;
+    db_vals[n_cols].type = DB1_STR;
+    db_vals[n_cols].nul = 0; 
+    db_vals[n_cols].val.str_val.s = "";
+    db_vals[n_cols].val.str_val.len = 0;
+    n_cols++;
+  }
 
 
   if(pua_db == NULL)

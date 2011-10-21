@@ -730,14 +730,18 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	query_vals[n_query_cols].val.int_val= auth_flag; 
 	n_query_cols++;
 
+	query_cols[n_query_cols]= &str_reason_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
 	if(reason)
-	{
-		query_cols[n_query_cols]= &str_reason_col;
-		query_vals[n_query_cols].type = DB1_STR;
-		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.str_val= *reason;
-		n_query_cols++;
+	else
+	{
+		query_vals[n_query_cols].val.str_val.s = "";
+		query_vals[n_query_cols].val.str_val.len = 0;
 	}
+	n_query_cols++;
+
 	query_cols[n_query_cols]= &str_content_type_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
