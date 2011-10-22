@@ -730,6 +730,15 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 
 	link_dlg(dlg,0);
 
+	dlg->lifetime = get_dlg_timeout(msg);
+	s.s   = _dlg_ctx.to_route_name;
+	s.len = strlen(s.s);
+	dlg_set_toroute(dlg, &s);
+	dlg->sflags |= _dlg_ctx.flags;
+
+	if (_dlg_ctx.to_bye!=0)
+		dlg->dflags |= DLG_FLAG_TOBYE;
+
 	run_create_callbacks(dlg, msg);
 
 	/* first INVITE seen (dialog created, unconfirmed) */
@@ -747,15 +756,6 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 	}
 	// increase reference counter because of registered callback
 	ref_dlg(dlg, 1);
-
-	dlg->lifetime = get_dlg_timeout(msg);
-	s.s   = _dlg_ctx.to_route_name;
-	s.len = strlen(s.s);
-	dlg_set_toroute(dlg, &s);
-	dlg->sflags |= _dlg_ctx.flags;
-
-	if (_dlg_ctx.to_bye!=0)
-		dlg->dflags |= DLG_FLAG_TOBYE;
 
 	if_update_stat( dlg_enable_stats, processed_dlgs, 1);
 
