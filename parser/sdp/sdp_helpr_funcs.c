@@ -451,9 +451,16 @@ int extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 		LM_ERR("invalid content for `%s' line\n",line);
 		return -1;
 	}
-	if(cp[3]!='4' && cp[3]!='6') {
-		LM_ERR("invalid addrtype IPx for `%s' line\n",line);
-		return -1;
+	switch(cp[3]) {
+		case '4':
+			*pf = AF_INET;
+		break;
+		case '6':
+			*pf = AF_INET6;
+		break;
+		default:
+			LM_ERR("invalid addrtype IPx for `%s' line\n",line);
+			return -1;
 	}
 	cp += 5;
 
