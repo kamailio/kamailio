@@ -872,31 +872,21 @@ ds_select_dst("1", "$var(a)");
  	</section>
   	<section>
  		<title>
- 		<function moreinfo="none">ds_mark_dst()</function>
- 		</title>
- 		<para>
- 		Mark the last used address from destination set as inactive, in order
-		to be ingnored in the future. In this way it can be implemented an
-		automatic detection of failed gateways. When an address is marked as
-		inactive, it will be ignored by 'ds_select_dst' and 'ds_select_domain'.
- 		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
-		</para>
- 	</section>
-  	<section>
- 		<title>
- 		<function moreinfo="none">ds_mark_dst("s")</function>
+ 		<function moreinfo="none">ds_mark_dst([state])</function>
  		</title>
  		<para>
 		Mark the last used address from destination set as inactive
 		("i"/"I"/"0"), active ("a"/"A"/"1") or probing ("p"/"P"/"2").
 		With this function, an automatic detection of failed gateways
 		can be implemented. When an address is marked as
-		inactive or probing, it will be ignored by 'ds_select_dst' and
+		inactive, it will be ignored by 'ds_select_dst' and
 		'ds_select_domain'.
  		</para>
-		<para>possible parameters:</para>
+ 		<para>
+		The parameter state is optional, when it is missing, then
+		the destination will be marked inactive (i.e., same as 'i').
+ 		</para>
+		<para>Possible values for state parameter:</para>
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>"i", "I" or "0"</emphasis> - the last destination
@@ -909,7 +899,9 @@ ds_select_dst("1", "$var(a)");
 		</listitem>
 		<listitem>
 			<para><emphasis>"p", "P" or "2"</emphasis> - the last destination
-				will be set to probing. Note: You will need to call this
+				will be set to probing. This mean the destination will be pinged
+				with SIP OPTIONS requests from time to time to detect if it is
+				up running or down. Note: You will need to call this
 				function "threshhold"-times, before it will be actually set
 				to probing.</para>
 		</listitem>
@@ -917,32 +909,46 @@ ds_select_dst("1", "$var(a)");
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
+		<example>
+		<title><function>ds_mark_dst</function> usage</title>
+		<programlisting format="linespecific">
+...
+failure_route[tryagain] {
+...
+   if(t_check_status("500"))
+      ds_mark_dst("i");
+...
+}
+...
+</programlisting>
+		</example>
  	</section>
   	<section>
  		<title>
- 		<function moreinfo="none">ds_is_from_list()</function>
- 		</title>
- 		<para>
-			This function returns true, if the current request comes from a
-			host from the dispatcher-list; otherwise false.
- 		</para>
-		<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			BRANCH_ROUTE and ONREPLY_ROUTE.
-		</para>
- 	</section>
-  	<section>
- 		<title>
- 		<function moreinfo="none">ds_is_from_list("group")</function>
+ 		<function moreinfo="none">ds_is_from_list([groupid])</function>
  		</title>
  		<para>
 		This function returns true, if the current request comes from a host
 		in the given group of the dispatcher-list; otherwise false.
  		</para>
 		<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			BRANCH_ROUTE and ONREPLY_ROUTE.
+		Parameter groupid is optional, when it is missing, then the matching
+		will be done against all addresses in all groups. Upon a match, the
+		'grp_avp' will be set to groupid of matching address.
+ 		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
 		</para>
+		<example>
+		<title><function>ds_mark_dst</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(ds_is_from_list("10")) {
+    ...
+}
+...
+</programlisting>
+		</example>
  	</section>
   	<section>
  		<title>
