@@ -138,9 +138,53 @@ int sdpops_get_ids_by_name(str *name, str *ids)
 }
 
 /**
+ * get codec ID from a= line based on name
+ */
+int sdpops_sdp_get_ids_by_name(sdp_info_t *sdp, str *cname, str *cid)
+{
+	int sdp_session_num;
+	int sdp_stream_num;
+	sdp_session_cell_t *sdp_session;
+	sdp_stream_cell_t *sdp_stream;
+	sdp_payload_attr_t *sdp_payload;
+
+	sdp_session_num = 0;
+	for(;;)
+	{
+		sdp_session = get_sdp_session_sdp(sdp, sdp_session_num);
+		if(!sdp_session) break;
+		sdp_stream_num = 0;
+		for(;;)
+		{
+			sdp_stream = get_sdp_stream_sdp(sdp, sdp_session_num,
+							sdp_stream_num);
+			if(!sdp_stream) break;
+			sdp_payload = sdp_stream->payload_attr;
+			while (sdp_payload) {
+				if(sdp_payload->rtp_enc.len==cname->len
+						&& strncasecmp(cname->s, sdp_payload->rtp_enc.s,
+								cname->len)==0)
+				{
+					*cid = sdp_payload->rtp_payload;
+					return 0;
+				}
+
+				sdp_payload=sdp_payload->next;
+			}
+			sdp_stream_num++;
+		}
+		sdp_session_num++;
+	}
+
+	cid->s = NULL;
+	cid->len = 0;
+	return -1;
+}
+
+/**
  * build the csv list of ids from csv list of names
  */
-int sdpops_build_ids_list(str *names, str *ids)
+int sdpops_build_ids_list(sdp_info_t *sdp, str *names, str *ids)
 {
 #define SDPOPS_MAX_LIST_SIZE	64
 	static char _local_idslist[SDPOPS_MAX_LIST_SIZE];
@@ -159,11 +203,21 @@ int sdpops_build_ids_list(str *names, str *ids)
 		tmp.len -= (int)(&codec.s[codec.len]-codec.s);
 		tmp.s = codec.s + codec.len;
 
-		if( sdpops_get_ids_by_name(&codec, &cids)==0) {
-			LM_DBG("codecs list [%.*s] - at name [%.*s] with ids [%.*s]\n",
+		cids.s = NULL;
+		if(sdpops_get_ids_by_name(&codec, &cids)==0) {
+			LM_DBG("codecs list [%.*s] - at name [%.*s] with list ids [%.*s]\n",
 				names->len, names->s,
 				codec.len, codec.s,
 				cids.len,  cids.s);
+		} else {
+			if(sdpops_sdp_get_ids_by_name(sdp, &codec, &cids)==0) {
+				LM_DBG("codecs list [%.*s] - at name [%.*s] with sdp id [%.*s]\n",
+					names->len, names->s,
+					codec.len, codec.s,
+					cids.len,  cids.s);
+			}
+		}
+		if(cids.s!=NULL) {
 			if(ids->len + cids.len>=SDPOPS_MAX_LIST_SIZE)
 			{
 				LM_ERR("the list with codecs ids is too big\n");

@@ -356,7 +356,7 @@ int sdp_remove_codecs_by_name(sip_msg_t* msg, str* codecs)
 	LM_ERR("attempting to remove codecs from sdp: [%.*s]\n",
 			codecs->len, codecs->s);
 
-	if(sdpops_build_ids_list(codecs, &idslist)<0)
+	if(sdpops_build_ids_list((sdp_info_t*)msg->body, codecs, &idslist)<0)
 		return -1;
 
 	if(sdp_remove_codecs_by_id(msg, &idslist)<0)
@@ -491,7 +491,7 @@ int sdp_keep_codecs_by_name(sip_msg_t* msg, str* codecs)
 	LM_ERR("attempting to keep codecs in sdp: [%.*s]\n",
 			codecs->len, codecs->s);
 
-	if(sdpops_build_ids_list(codecs, &idslist)<0)
+	if(sdpops_build_ids_list((sdp_info_t*)msg->body, codecs, &idslist)<0)
 		return -1;
 
 	if(sdp_keep_codecs_by_id(msg, &idslist)<0)
