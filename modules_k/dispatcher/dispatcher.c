@@ -104,7 +104,7 @@ unsigned short attrs_avp_type;
 
 pv_elem_t * hash_param_model = NULL;
 
-int probing_threshhold = 3; /* number of failed requests, before a destination
+int probing_threshhold = 1; /* number of failed requests, before a destination
 							   is taken into probing */
 str ds_ping_method = {"OPTIONS",7};
 str ds_ping_from   = {"sip:dispatcher@localhost", 24};
