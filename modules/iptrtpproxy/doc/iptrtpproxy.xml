@@ -38,7 +38,7 @@
 	<emphasis>libipt_RTPPROXY</emphasis> userspace library. 
 	See <ulink url="http://www.2p.cz/en/netfilter_rtp_proxy">http://www.2p.cz/en/netfilter_rtp_proxy</ulink>
 	All RTP streams are 
-	manipulated directly in kernel space, no data is copied from 
+	manipulated directly in kernel space, no data are copied from 
 	kernel to userspace and back, it reduces load and delay. 
 	See <ulink url="http://www.2p.cz/en/netfilter_rtp_proxy">
 	http://www.2p.cz/en/netfilter_rtp_proxy</ulink> for more details.
@@ -439,7 +439,8 @@ Aggregation will take <emphasis>sip-addr</emphasis> from the first switchboard o
 		between rights in codec set and <function>remove_codec_mask</function> is non zero then
 		such a codec are to be removed. The result may be obtained from
 		<function>@iptrtpproxy.auth_rights</function> which returns max. right which has been applied when
-		processing all codecs of enabled streams.
+		processing all codecs of enabled streams. <function>@iptrtpproxy.active_media_num</function> may
+		be used to get info if some media stream is to be throttled.
 		</para>
 		<para>
 		The function MUST NOT be called after <function>iptrtpproxy_alloc/update</function>! 
@@ -488,7 +489,7 @@ Aggregation will take <emphasis>sip-addr</emphasis> from the first switchboard o
 			<listitem>
 			<para>
 				Supported parameters: <emphasis>expiration_timeout</emphasis>, <emphasis>ttl</emphasis>, <emphasis>learning_timeout</emphasis>, 
-				<emphasis>always_learn</emphasis>,
+				<emphasis>always_flags</emphasis>,
 				<emphasis>aggregation_a</emphasis>, <emphasis>aggregation_b</emphasis>, 
 				<emphasis>switchboard_a</emphasis>, <emphasis>switchboard_b</emphasis>,
 				<emphasis>throttle_mark</emphasis>,
@@ -641,6 +642,15 @@ Aggregation will take <emphasis>sip-addr</emphasis> from the first switchboard o
 		</para>
 		</section>
 
+		<section id="iptrtpproxy.auth_throttling">
+		<title>
+			<function>@iptrtpproxy.auth_throttling</function>
+		</title>
+		<para>
+		Returns 1 if <function>iptrtpproxy_authorize_media</function> detected that some media stream is to be throttled.
+		In this case RTP proxy should be applied.
+		</para>
+		</section>
 	</section>
 
 </section>
