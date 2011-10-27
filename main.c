@@ -282,6 +282,34 @@ void print_ct_constants()
 #endif
 }
 
+/* print compile-time constants */
+void print_internals()
+{
+	printf("Print out of %s internals\n", NAME);
+	printf("  Version: %s\n", full_version);
+	printf("  Default config: %s\n", CFG_FILE);
+	printf("  Default paths to modules: %s\n", MODS_DIR);
+	printf("  Compile flags: %s\n", ver_flags );
+	printf("  MAX_RECV_BUFFER_SIZE=%d\n", MAX_RECV_BUFFER_SIZE);
+	printf("  MAX_LISTEN=%d\n", MAX_LISTEN);
+	printf("  MAX_URI_SIZE=%d\n", MAX_URI_SIZE);
+	printf("  BUF_SIZE=%d\n", BUF_SIZE);
+	printf("  DEFAULT PKG_SIZE=%uMB\n", PKG_MEM_SIZE);
+#ifdef SHM_MEM
+	printf("  DEFAULT SHM_SIZE=%uMB\n", SHM_MEM_SIZE);
+#endif
+#ifdef ADAPTIVE_WAIT
+	printf("  ADAPTIVE_WAIT_LOOPS=%d\n", ADAPTIVE_WAIT_LOOPS);
+#endif
+#ifdef USE_TCP
+	printf("  TCP poll methods: %s\n", poll_support);
+#endif
+	printf("  Source code revision ID: %s\n", ver_id);
+	printf("  Compiled with: %s\n", ver_compiler);
+	printf("  Compiled on: %s\n", ver_compiled_time);
+	printf("Thank you for flying %s!\n", NAME);
+}
+
 /* debugging function */
 /*
 void receive_stdin_loop()
@@ -1788,7 +1816,7 @@ int main(int argc, char** argv)
 
 	daemon_status_init();
 	/* command line options */
-	options=  ":f:cm:M:dVhEb:l:L:n:vrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:"
+	options=  ":f:cm:M:dVIhEb:l:L:n:vrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:"
 #ifdef STATS
 		"s:"
 #endif
@@ -1896,6 +1924,10 @@ int main(int argc, char** argv)
 					printf("compiled on %s with %s\n",
 							ver_compiled_time, ver_compiler );
 
+					exit(0);
+					break;
+			case 'I':
+					print_internals();
 					exit(0);
 					break;
 			case 'E':
@@ -2048,6 +2080,7 @@ try_again:
 			case 'M':
 			case 'd':
 			case 'V':
+			case 'I':
 			case 'h':
 			case 'O':
 			case 'A':
