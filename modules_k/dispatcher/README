@@ -559,12 +559,14 @@ Note
 
 3.21. ds_probing_threshhold (int)
 
-   If you want to set a gateway into probing mode, you will need a
-   specific number of requests until it will change from "active" to
-   probing. The number of attempts can be set with this parameter. This
-   parameter can be modified via ser config framework.
+   If you want to set a gateway into inactive mode, there can be a
+   specific number of failed requests until it will change from "active"
+   to "inactive". It is using the state "trying", that allows selection of
+   gateway but indicates there was a failure previously with the gateway.
+   The number of attempts can be set with this parameter. This parameter
+   can be modified via ser config framework.
 
-   Default value is "3".
+   Default value is "1" (set inactive with first failure).
 
    Example 1.22. Set the "ds_probing_threshhold" parameter
  ...
