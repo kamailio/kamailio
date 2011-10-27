@@ -507,7 +507,8 @@ static int mod_init(void)
 	}
 
 	if (initial_cbs_inscript != 0 && initial_cbs_inscript != 1) {
-		LM_ERR("invalid parameter for running initial callbacks in-script (must be either 0 or 1)\n");
+		LM_ERR("invalid parameter for running initial callbacks in-script"
+				" (must be either 0 or 1)\n");
 		return -1;
 	}
 

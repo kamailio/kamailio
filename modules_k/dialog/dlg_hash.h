@@ -79,6 +79,8 @@
 /* dialog-variable flags (in addition to dialog-flags) */
 #define DLG_FLAG_DEL           (1<<8) /*!< delete this var */
 
+#define DLG_FLAG_TM            (1<<9) /*!< dialog is set in transaction */
+
 #define DLG_CALLER_LEG         0 /*!< attribute that belongs to a caller leg */
 #define DLG_CALLEE_LEG         1 /*!< attribute that belongs to a callee leg */
 
