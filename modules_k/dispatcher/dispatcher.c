@@ -448,7 +448,7 @@ static int mod_init(void)
 	} else {
 		hash_param_model = NULL;
 	}
-	
+
 	if(ds_setid_pvname.s!=0)
 	{
 		if(pv_parse_spec(&ds_setid_pvname, &ds_setid_pv)==NULL
@@ -477,7 +477,7 @@ static int mod_init(void)
 	{
 		/*****************************************************
 		 * TM-Bindings
-	  	 *****************************************************/
+		 *****************************************************/
 		if (load_tm_api( &tmb ) == -1)
 		{
 			LM_ERR("could not load the TM-functions - disable DS ping\n");
@@ -504,7 +504,7 @@ static int child_init(int rank)
 
 static int mi_child_init(void)
 {
-	
+
 	if(ds_db_url.s)
 		return ds_connect_db();
 	return 0;
@@ -531,7 +531,7 @@ static void destroy(void)
 static int w_ds_select_dst(struct sip_msg* msg, char* set, char* alg)
 {
 	int a, s;
-	
+
 	if(msg==NULL)
 		return -1;
 	if(fixup_get_ivalue(msg, (gparam_p)set, &s)!=0)
@@ -592,7 +592,13 @@ static int w_ds_next_domain(struct sip_msg *msg, char *str1, char *str2)
  */
 static int w_ds_mark_dst0(struct sip_msg *msg, char *str1, char *str2)
 {
-	return ds_mark_dst(msg, 0);
+	int state;
+
+	state = DS_INACTIVE_DST;
+	if (ds_probing_mode==1)
+		state |= DS_PROBING_DST;
+
+	return ds_mark_dst(msg, state);
 }
 
 /**
@@ -600,12 +606,26 @@ static int w_ds_mark_dst0(struct sip_msg *msg, char *str1, char *str2)
  */
 static int w_ds_mark_dst1(struct sip_msg *msg, char *str1, char *str2)
 {
-	if(str1 && (str1[0]=='i' || str1[0]=='I' || str1[0]=='0'))
-		return ds_mark_dst(msg, 0);
-	else if(str1 && (str1[0]=='p' || str1[0]=='P' || str1[0]=='2'))
-		return ds_mark_dst(msg, 2);
-	else
-		return ds_mark_dst(msg, 1);
+	int state;
+	int len;
+
+	if(str1==NULL)
+		return w_ds_mark_dst0(msg, NULL, NULL);
+
+	len = strlen(str1);
+	state = 0;
+	if (len>1 && (str1[1]=='p' || str1[1]=='P'))
+		state |= DS_PROBING_DST;
+
+	if(str1[0]=='i' || str1[0]=='I')
+		state |= DS_INACTIVE_DST;
+	else if(str1[0]=='t' || str1[0]=='T')
+		state |= DS_TRYING_DST;
+	else if(str1[0]=='d' || str1[0]=='D')
+		state = DS_DISABLED_DST;
+	else if(str1[0]=='p' || str1[0]=='P')
+		state =  DS_INACTIVE_DST|DS_PROBING_DST;
+	return ds_mark_dst(msg, state);
 }
 
 
@@ -674,6 +694,11 @@ static struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
 	} else if(sp.s[0]=='2' || sp.s[0]=='D' || sp.s[0]=='d') {
 		/* set disabled */
 		state |= DS_DISABLED_DST;
+	} else if(sp.s[0]=='3' || sp.s[0]=='T' || sp.s[0]=='t') {
+		/* set trying */
+		state |= DS_TRYING_DST;
+		if((sp.len>1) && (sp.s[1]=='P' || sp.s[1]=='p'))
+			state |= DS_PROBING_DST;
 	} else {
 		LM_ERR("unknow state value\n");
 		return init_mi_tree(500, "unknown state value", 19);
@@ -784,13 +809,13 @@ static int ds_parse_reply_codes() {
 
 	/* Validate String: */
 	if (cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).s == 0 
-		|| cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).len<=0)
+			|| cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).len<=0)
 		return 0;
 
 	/* parse_params will modify the string pointer of .s, so we need to make a copy. */
 	input.s = cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).s;
 	input.len = cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).len;
-	
+
 	/* Parse the parameters: */
 	if (parse_params(&input, CLASS_ANY, 0, &params_list)<0)
 		return -1;
@@ -821,7 +846,7 @@ static int ds_parse_reply_codes() {
 			LM_ERR("no more memory\n");
 			return -1;
 		}
-	 
+
 		/* Now create the list of valid reply-codes: */
 		for (pit = params_list; pit; pit=pit->next)
 		{
@@ -855,7 +880,7 @@ static int ds_parse_reply_codes() {
 		// Free the old memory area:
 		if(ds_ping_reply_codes_old)
 			shm_free(ds_ping_reply_codes_old);	
-	/* Less or equal? Set the number of codes first. */
+		/* Less or equal? Set the number of codes first. */
 	} else {
 		// Done:
 		*ds_ping_reply_codes_cnt = list_size;
@@ -870,7 +895,7 @@ static int ds_parse_reply_codes() {
 	for (i =0; i< *ds_ping_reply_codes_cnt; i++)
 	{
 		LM_DBG("Dispatcher: Now accepting Reply-Code %d (%d/%d) as valid\n",
-			(*ds_ping_reply_codes)[i], (i+1), *ds_ping_reply_codes_cnt);
+				(*ds_ping_reply_codes)[i], (i+1), *ds_ping_reply_codes_cnt);
 	}
 	return 0;
 }
@@ -878,7 +903,7 @@ static int ds_parse_reply_codes() {
 int ds_ping_check_rplcode(int code)
 {
 	int i;
-	
+
 	for (i =0; i< *ds_ping_reply_codes_cnt; i++)
 	{
 		if((*ds_ping_reply_codes)[i] == code)
@@ -977,7 +1002,7 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 	for(list = ds_list; list!= NULL; list= list->next)
 	{
 		if(rpc->struct_add(ih, "d",
-				"SET_ID", list->id)<0)
+					"SET_ID", list->id)<0)
 		{
 			rpc->fault(c, 500, "Internal error creating set id");
 			return;
@@ -986,7 +1011,7 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 		for(j=0; j<list->nr; j++)
 		{
 			if(rpc->struct_add(ih, "{",
-				"DEST", &vh)<0)
+						"DEST", &vh)<0)
 			{
 				rpc->fault(c, 500, "Internal error creating dest");
 				return;
@@ -997,6 +1022,8 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 				c[0] = 'I';
 			else if (list->dlist[j].flags & DS_DISABLED_DST)
 				c[0] = 'D';
+			else if (list->dlist[j].flags & DS_TRYING_DST)
+				c[0] = 'T';
 			else
 				c[0] = 'A';
 
@@ -1006,11 +1033,11 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 				c[1] = 'X';
 
 			if(rpc->struct_add(vh, "SsdS",
-				"URI", &list->dlist[j].uri,
-				"FLAGS", c,
-				"PRIORITY", list->dlist[j].priority,
-				"ATTRS", (list->dlist[j].attrs.body.s)?
-							&(list->dlist[j].attrs.body):&data)<0)
+						"URI", &list->dlist[j].uri,
+						"FLAGS", c,
+						"PRIORITY", list->dlist[j].priority,
+						"ATTRS", (list->dlist[j].attrs.body.s)?
+						&(list->dlist[j].attrs.body):&data)<0)
 			{
 				rpc->fault(c, 500, "Internal error creating dest struct");
 				return;
@@ -1063,6 +1090,11 @@ static void dispatcher_rpc_set_state(rpc_t* rpc, void* ctx)
 	} else if(state.s[0]=='2' || state.s[0]=='D' || state.s[0]=='d') {
 		/* set disabled */
 		stval |= DS_DISABLED_DST;
+	} else if(state.s[0]=='3' || state.s[0]=='T' || state.s[0]=='t') {
+		/* set trying */
+		stval |= DS_TRYING_DST;
+		if((state.len>1) && (state.s[1]=='P' || state.s[1]=='p'))
+			stval |= DS_PROBING_DST;
 	} else {
 		LM_ERR("unknow state value\n");
 		rpc->fault(ctx, 500, "Unknown State Value");
