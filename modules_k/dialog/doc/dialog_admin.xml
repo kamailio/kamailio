@@ -1435,7 +1435,7 @@ dlg_refer("caller", "sip:annoucement@kamailio.org");
 		This function can be used from REQUEST_ROUTE.
 		</para>
 		<para>
-		<b>IMPORTANT</b>: Users of this function should make sure that the
+		IMPORTANT: Users of this function should make sure that the
 		dialog created is further processed statefully. Specifically, if a
 		stateless response is sent out after dlg_manage() is called, the
 		dialog cannot be handled properly. So make sure that a transaction
