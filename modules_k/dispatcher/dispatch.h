@@ -50,10 +50,10 @@
 #define DS_FAILOVER_ON		2  /*!< store the other dest in avps */
 
 #define DS_INACTIVE_DST		1  /*!< inactive destination */
-#define DS_PROBING_DST		2  /*!< checking destination */
+#define DS_TRYING_DST		2  /*!< temporary trying destination */
 #define DS_DISABLED_DST		4  /*!< admin disabled destination */
-#define DS_STATES_ALL		7  /*!< all bits for the states of destination */
-#define DS_RESET_FAIL_DST	8  /*!< Reset-Failure-Counter */
+#define DS_PROBING_DST		8  /*!< checking destination */
+#define DS_STATES_ALL		15  /*!< all bits for the states of destination */
 
 #define ds_skip_dst(flags)	((flags) & (DS_INACTIVE_DST|DS_DISABLED_DST))
 
@@ -89,7 +89,7 @@ extern struct tm_binds tmb;
 extern str ds_ping_method;
 extern str ds_ping_from;
 extern int probing_threshhold; /*!< number of failed requests,
-						before a destination is taken into probing */ 
+								 before a destination is taken into probing */ 
 extern int ds_probing_mode;
 
 int init_data(void);
@@ -101,7 +101,7 @@ int ds_load_db(void);
 int ds_destroy_list(void);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_next_dst(struct sip_msg *msg, int mode);
-int ds_set_state(int group, str *address, int state, int type, struct sip_msg *msg);
+int ds_update_state(sip_msg_t *msg, int group, str *address, int state);
 int ds_reinit_state(int group, str *address, int state);
 int ds_mark_dst(struct sip_msg *msg, int mode);
 int ds_print_list(FILE *fout);
