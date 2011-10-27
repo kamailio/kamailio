@@ -106,6 +106,8 @@ static unsigned int CURR_DLG_ID  = 0xffffffff;	/*!< current dialog id */
 /*! separator inside the record-route paramter */
 #define DLG_SEPARATOR      '.'
 
+int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
+		int mode);
 
 /*!
  * \brief Initialize the dialog handlers
@@ -609,19 +611,28 @@ static inline int pre_match_parse( struct sip_msg *req, str *callid,
  */
 void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 {
-	struct sip_msg *req = param->req;
+	sip_msg_t *req = param->req;
 
-	if (!initial_cbs_inscript) {
-		if (spiral_detected == 1)
-			run_dlg_callbacks( DLGCB_SPIRALED, current_dlg_pointer, req, NULL, DLG_DIR_DOWNSTREAM, 0);
-		else if (spiral_detected == 0)
-			run_create_callbacks( current_dlg_pointer, req);
+	if(req->first_line.u.request.method_value != METHOD_INVITE)
+		return;
+
+	if (current_dlg_pointer!=NULL) {
+		if (!initial_cbs_inscript) {
+			if (spiral_detected == 1)
+				run_dlg_callbacks( DLGCB_SPIRALED, current_dlg_pointer,
+						req, NULL, DLG_DIR_DOWNSTREAM, 0);
+			else if (spiral_detected == 0)
+				run_create_callbacks( current_dlg_pointer, req);
+		}
 	}
-	if((req->flags&dlg_flag)!=dlg_flag)
-		return;
-	if (current_dlg_pointer!=NULL)
-		return;
-	dlg_new_dialog(req, t, 1);
+	if (current_dlg_pointer==NULL) {
+		if((req->flags&dlg_flag)!=dlg_flag)
+			return;
+		dlg_new_dialog(req, t, 1);
+	}
+	if (current_dlg_pointer!=NULL) {
+		dlg_set_tm_callbacks(t, req, current_dlg_pointer, spiral_detected);
+	}
 }
 
 
@@ -782,9 +793,10 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
             spiral_detected = 1;
 
             if (run_initial_cbs)
-                run_dlg_callbacks( DLGCB_SPIRALED, dlg, req, NULL, DLG_DIR_DOWNSTREAM, 0);
-            // get_dlg has incremented the ref count by 1
-            unref_dlg(dlg, 1);
+                run_dlg_callbacks( DLGCB_SPIRALED, dlg, req, NULL,
+						DLG_DIR_DOWNSTREAM, 0);
+            /* get_dlg() has incremented the ref count by 1
+			 * - it's ok, dlg will be used to set current_dialog_pointer */
             goto finish;
         }
     }
@@ -811,7 +823,6 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
 		return -1;
 	}
 
-
 	/* Populate initial varlist: */
 	dlg->vars = get_local_varlist_pointer(req, 1);
 
@@ -826,13 +837,7 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
 		goto error;
 	}
 
-	if ( d_tmb.register_tmcb( req, t,
-				TMCB_RESPONSE_READY|TMCB_RESPONSE_FWDED,
-				dlg_onreply, (void*)dlg, unref_new_dialog)<0 ) {
-		LM_ERR("failed to register TMCB\n");
-		goto error;
-	}
-    // increase reference counter because of registered callback
+	/* reference it once for current_dialog_pointer */
     ref_dlg(dlg, 1);
 
 	dlg->lifetime = get_dlg_timeout(req);
@@ -847,6 +852,40 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
     if_update_stat( dlg_enable_stats, processed_dlgs, 1);
 
 finish:
+    set_current_dialog(req, dlg);
+    _dlg_ctx.dlg = dlg;
+
+	return 0;
+
+error:
+	if (!spiral_detected)
+		unref_dlg(dlg,1);               // undo ref regarding linking
+	return -1;
+}
+
+
+/*!
+ * \brief add dlg structure to tm callbacks
+ * \param t current transaction
+ * \param req current sip request
+ * \param dlg current dialog
+ * \param smode if the sip request was spiraled
+ * \return 0 on success, -1 on failure
+ */
+int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
+		int smode)
+{
+	if(smode==0) {
+		if ( d_tmb.register_tmcb( req, t,
+				TMCB_RESPONSE_READY|TMCB_RESPONSE_FWDED,
+				dlg_onreply, (void*)dlg, unref_new_dialog)<0 ) {
+			LM_ERR("failed to register TMCB\n");
+			goto error;
+		}
+		// increase reference counter because of registered callback
+		ref_dlg(dlg, 1);
+	}
+
 	if (t) {
 		// transaction exists ==> keep ref counter large enough to
 		// avoid premature cleanup and ensure proper dialog referencing
@@ -854,9 +893,7 @@ finish:
 			LM_ERR("failed to store dialog in transaction\n");
 			goto error;
 		}
-	}
-	else
-	{
+	} else {
 		// no transaction exists ==> postpone work until we see the
 		// request being forwarded statefully
         if ( d_tmb.register_tmcb( req, NULL, TMCB_REQUEST_FWDED,
@@ -865,16 +902,10 @@ finish:
 			goto error;
         }
 	}
-
-    set_current_dialog(req, dlg);
-    _dlg_ctx.dlg = dlg;
-    ref_dlg(dlg, 1);
+	dlg->dflags |= DLG_FLAG_TM;
 
 	return 0;
-
 error:
-	if (!spiral_detected)
-		unref_dlg(dlg,1);               // undo ref regarding linking
 	return -1;
 }
 

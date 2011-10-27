@@ -312,7 +312,12 @@ int profile_cleanup( struct sip_msg *msg, unsigned int flags, void *param )
 {
 	current_dlg_msg_id = 0;
 	if (current_dlg_pointer) {
-		unref_dlg( current_dlg_pointer, 1);
+		if(current_dlg_pointer->dflags & DLG_FLAG_TM) {
+			unref_dlg( current_dlg_pointer, 1);
+		} else {
+			/* dialog didn't make it to tm */
+			unref_dlg( current_dlg_pointer, 2);
+		}
 		current_dlg_pointer = NULL;
 	}
 	if (current_pending_linkers) {
