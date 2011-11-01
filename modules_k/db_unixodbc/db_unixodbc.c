@@ -100,8 +100,15 @@ int db_unixodbc_bind_api(db_func_t *dbb)
 	return 0;
 }
 
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	if(db_api_init()<0)
+		return -1;
+	return 0;
+}
+
 int unixodbc_mod_init(void)
 {
-	return db_query_init();
+	return 0;
 }
 
