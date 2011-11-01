@@ -73,7 +73,7 @@ struct kam_module_exports kam_exports = {
 
 int km_postgres_mod_init(void)
 {
-	return db_query_init();
+	return 0;
 }
 
 int db_postgres_bind_api(db_func_t *dbb)
