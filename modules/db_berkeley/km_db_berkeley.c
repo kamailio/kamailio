@@ -129,7 +129,7 @@ int km_mod_init(void)
 	if(km_bdblib_init(&p))
 		return -1;
 
-	return db_query_init();
+	return 0;
 }
 
 void km_destroy(void)
