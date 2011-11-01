@@ -532,7 +532,7 @@ int pg_test(void)
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
-	if(db_query_init()<0)
+	if(db_api_init()<0)
 		return -1;
 	return 0;
 }
