@@ -139,6 +139,13 @@ struct module_exports exports = {
 };
 
 
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	if(db_api_init()<0)
+		return -1;
+	return 0;
+}
+
 static int mod_init(void)
 {
 	if (flat_delimiter.len != 1) {
