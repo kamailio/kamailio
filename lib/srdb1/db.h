@@ -443,4 +443,14 @@ typedef int (*db_bind_api_f)(db_func_t *dbb);
 int db_load_bulk_data(db_func_t* binding, db1_con_t* handle, str* name, db_key_t* cols,
 		      unsigned int count, unsigned int strict, db1_res_t* res);
 
+/**
+ * \brief DB API init function.
+ *
+ * This function must be executed by DB connector modules at load time to
+ * initialize the internals of DB API library.
+ * \return returns 0 on successful initialization, -1 on error.
+ */
+int db_api_init(void);
+
+
 #endif /* DB1_H */
