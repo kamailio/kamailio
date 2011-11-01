@@ -64,6 +64,7 @@
 #include "db_cap.h"
 #include "db_id.h"
 #include "db_pool.h"
+#include "db_query.h"
 #include "db.h"
 
 static unsigned int MAX_URL_LENGTH = 255;	/*!< maximum length of a SQL URL */
@@ -488,5 +489,19 @@ int db_load_bulk_data(db_func_t* binding, db1_con_t* handle, str* name, db_key_t
 		}
 	}
 
+	return 0;
+}
+
+/**
+ * \brief DB API init function.
+ *
+ * This function must be executed by DB connector modules at load time to
+ * initialize the internals of DB API library.
+ * \return returns 0 on successful initialization, -1 on error.
+ */
+int db_api_init(void)
+{
+	if(db_query_init()<0)
+		return -1;
 	return 0;
 }
