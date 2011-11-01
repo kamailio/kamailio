@@ -200,7 +200,7 @@ int sdp_codec_in_str(str *allcodecs, str* codec, char delim)
 				}
 			}
 		}
-		if(allcodecs->s[i]==' ')
+		if(allcodecs->s[i]==delim)
 			cmp = 1;
 		else
 			cmp = 0;
