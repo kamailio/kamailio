@@ -47,4 +47,11 @@ int db_mysql_bind_api(db_func_t *dbb);
 
 int kam_mysql_mod_init(void);
 
+/**
+ * Allocate a buffer for database module
+ * No function should be called before this
+ * \return zero on success, negative value on failure
+ */
+int db_mysql_alloc_buffer(void);
+
 #endif /* KM_DB_MOD_H */

@@ -139,11 +139,4 @@ int db_mysql_insert_delayed(const db1_con_t* _h, const db_key_t* _k,
 int db_mysql_use_table(db1_con_t* _h, const str* _t);
 
 
-/**
- * Allocate a buffer for database module
- * No function should be called before this
- * \return zero on success, negative value on failure
- */
-int db_mysql_alloc_buffer(void);
-
 #endif /* KM_DBASE_H */
