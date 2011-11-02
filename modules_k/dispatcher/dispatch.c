@@ -2016,11 +2016,21 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 			/* reset the bits used for states */
 			idx->dlist[i].flags &= ~(DS_STATES_ALL);
 
+			if((state & DS_TRYING_DST) && (old_state & DS_INACTIVE_DST))
+			{
+				/* old state is inactive, new state is trying => keep it inactive
+				 * - it has to go first to active state and then to trying */
+				state &= ~ DS_TRYING_DST;
+				state |= ~ DS_INACTIVE_DST;
+			}
+
 			/* set the new states */
 			if(state & DS_DISABLED_DST)
+			{
 				idx->dlist[i].flags |= DS_DISABLED_DST;
-			else
+			} else {
 				idx->dlist[i].flags |= state;
+			}
 
 			if(state & DS_TRYING_DST)
 			{
@@ -2330,7 +2340,7 @@ static void ds_options_callback( struct cell *t, int type,
 
 		/* Set the according entry back to "Active" */
 		state = 0;
-		if (ds_probing_mode==1)
+		if (ds_probing_mode==DS_PROBE_ALL)
 			state |= DS_PROBING_DST;
 		if (ds_update_state(fmsg, group, &uri, state) != 0)
 		{
@@ -2339,7 +2349,7 @@ static void ds_options_callback( struct cell *t, int type,
 		}
 	} else {
 		state = DS_TRYING_DST;
-		if (ds_probing_mode==1)
+		if (ds_probing_mode!=DS_PROBE_NONE)
 			state |= DS_PROBING_DST;
 
 		if (faked_msg_init() < 0)
@@ -2388,7 +2398,7 @@ void ds_check_timer(unsigned int ticks, void* param)
 			if((list->dlist[j].flags&DS_DISABLED_DST) != 0)
 				continue;
 			/* If the Flag of the entry has "Probing set, send a probe:	*/
-			if (ds_probing_mode==1 ||
+			if (ds_probing_mode==DS_PROBE_ALL ||
 					(list->dlist[j].flags&DS_PROBING_DST) != 0)
 			{
 				LM_DBG("probing set #%d, URI %.*s\n", list->id,
