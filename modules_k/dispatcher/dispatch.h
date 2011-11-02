@@ -57,6 +57,10 @@
 
 #define ds_skip_dst(flags)	((flags) & (DS_INACTIVE_DST|DS_DISABLED_DST))
 
+#define DS_PROBE_NONE		0
+#define DS_PROBE_ALL		1
+#define DS_PROBE_INACTIVE	2
+
 extern str ds_db_url;
 extern str ds_table_name;
 extern str ds_set_id_col;

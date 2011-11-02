@@ -109,7 +109,7 @@ int probing_threshhold = 1; /* number of failed requests, before a destination
 str ds_ping_method = {"OPTIONS",7};
 str ds_ping_from   = {"sip:dispatcher@localhost", 24};
 static int ds_ping_interval = 0;
-int ds_probing_mode  = 0;
+int ds_probing_mode  = DS_PROBE_NONE;
 
 static str ds_ping_reply_codes_str= {NULL, 0};
 static int** ds_ping_reply_codes = NULL;
@@ -595,7 +595,7 @@ static int w_ds_mark_dst0(struct sip_msg *msg, char *str1, char *str2)
 	int state;
 
 	state = DS_INACTIVE_DST;
-	if (ds_probing_mode==1)
+	if (ds_probing_mode==DS_PROBE_ALL)
 		state |= DS_PROBING_DST;
 
 	return ds_mark_dst(msg, state);
