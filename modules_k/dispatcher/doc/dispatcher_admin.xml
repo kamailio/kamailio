@@ -588,9 +588,10 @@ modparam("dispatcher", "force_dst", 1)
  		<title><varname>ds_probing_mode</varname> (int)</title>
  		<para>
 		Controls what gateways are tested to see if they are reachable. If set
-		to 0, only the gateways with state PROBING are tested, if set to 1, all
-		gateways are tested. If set to 1 and the is failure to the above list,
-		an active gateway is set to PROBING state.
+		to 0, only the gateways with state PROBING are tested; if set to 1, all
+		gateways are tested; if set to 2, only gateways in inactive state with
+		probing mode set are tested. If set to 1 and there is a failure of keepalive
+		to an active gateway, then it is set to TRYING state.
  		</para>
  		<para>
  		<emphasis>
