@@ -103,7 +103,7 @@ int *next_idx   = NULL;
 #define _ds_list 	(ds_lists[*crt_idx])
 #define _ds_list_nr (*ds_list_nr)
 
-static void ds_run_route(struct sip_msg *msg, char *route);
+static void ds_run_route(struct sip_msg *msg, str *uri, char *route);
 
 void destroy_list(int);
 
@@ -2020,8 +2020,8 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 			{
 				/* old state is inactive, new state is trying => keep it inactive
 				 * - it has to go first to active state and then to trying */
-				state &= ~ DS_TRYING_DST;
-				state |= ~ DS_INACTIVE_DST;
+				state &= ~(DS_TRYING_DST);
+				state |= DS_INACTIVE_DST;
 			}
 
 			/* set the new states */
@@ -2047,11 +2047,11 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 
 			if (!ds_skip_dst(old_state) && ds_skip_dst(idx->dlist[i].flags))
 			{
-				ds_run_route(msg, "dispatcher:dst-down");
+				ds_run_route(msg, address, "dispatcher:dst-down");
 
 			} else {
 				if(ds_skip_dst(old_state) && !ds_skip_dst(idx->dlist[i].flags))
-					ds_run_route(msg, "dispatcher:dst-up");
+					ds_run_route(msg, address, "dispatcher:dst-up");
 			}
 
 			return 0;
@@ -2062,18 +2062,19 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 	return -1;
 }
 
-static void ds_run_route(struct sip_msg *msg, char *route)
+static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 {
-	int rt, backup_rt = get_route_type();
+	int rt, backup_rt;
 	struct run_act_ctx ctx;
-
-	LM_DBG("ds_run_route\n");
+	sip_msg_t *fmsg;
 
 	if (route == NULL)
 	{
 		LM_ERR("bad route\n");
 		return;
 	}
+
+	LM_DBG("ds_run_route\n");
 
 	rt = route_get(&event_rt, route);
 	if (rt < 0 || event_rt.rlist[rt] == NULL)
@@ -2082,6 +2083,21 @@ static void ds_run_route(struct sip_msg *msg, char *route)
 		return;
 	}
 
+	if(msg==NULL)
+	{
+		if (faked_msg_init() < 0)
+		{
+			LM_ERR("faked_msg_init() failed\n");
+			return;
+		}
+		fmsg = faked_msg_next();
+		fmsg->parsed_orig_ruri_ok = 0;
+		fmsg->new_uri = *uri;
+	} else {
+		fmsg = msg;
+	}
+
+	backup_rt = get_route_type();
 	set_route_type(REQUEST_ROUTE);
 	init_run_actions_ctx(&ctx);
 	run_top_route(event_rt.rlist[rt], msg, 0);
@@ -2303,7 +2319,7 @@ static void ds_options_callback( struct cell *t, int type,
 {
 	int group = 0;
 	str uri = {0, 0};
-	struct sip_msg *fmsg;
+	sip_msg_t *fmsg;
 	int state;
 
 	/* The Param does contain the group, in which the failed host
@@ -2314,6 +2330,9 @@ static void ds_options_callback( struct cell *t, int type,
 				" with code %d\n", ps->code);
 		return;
 	}
+
+	fmsg = NULL;
+
 	/* The param is a (void*) Pointer, so we need to dereference it and
 	 *  cast it to an int. */
 	group = (int)(long)(*ps->param);
@@ -2329,15 +2348,6 @@ static void ds_options_callback( struct cell *t, int type,
 	 * We accept both a "200 OK" or the configured reply as a valid response */
 	if((ps->code>=200 && ps->code<=299) || ds_ping_check_rplcode(ps->code))
 	{
-		if (faked_msg_init() < 0)
-		{
-			LM_ERR("faked_msg_init() failed\n");
-			return;
-		}
-		fmsg = faked_msg_next();
-		fmsg->parsed_orig_ruri_ok = 0;
-		fmsg->new_uri = uri;
-
 		/* Set the according entry back to "Active" */
 		state = 0;
 		if (ds_probing_mode==DS_PROBE_ALL)
@@ -2351,15 +2361,6 @@ static void ds_options_callback( struct cell *t, int type,
 		state = DS_TRYING_DST;
 		if (ds_probing_mode!=DS_PROBE_NONE)
 			state |= DS_PROBING_DST;
-
-		if (faked_msg_init() < 0)
-		{
-			LM_ERR("faked_msg_init() failed\n");
-			return;
-		}
-		fmsg = faked_msg_next();
-		fmsg->parsed_orig_ruri_ok = 0;
-		fmsg->new_uri = uri;
 
 		if (ds_update_state(fmsg, group, &uri, state) != 0)
 		{
