@@ -116,7 +116,7 @@ endif
 ifeq ($(nocatalog),yes)
 XMLCATALOGX=
 else
-XMLCATALOGX="XML_CATALOG_FILES=$(catalog)"
+XMLCATALOGX=XML_CATALOG_FILES=$(catalog)
 endif
 
 all_deps = Makefile $(docbook_dir)/Makefile $(docbook_dir)/entities.xml \
