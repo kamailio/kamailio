@@ -21,9 +21,15 @@
 	    </question>
 	    <answer>
 		<para>
-		    There is no guarantee of that. You should do some measurements
-			to decide what distribution algorithm fits better in your
+			The algoritms doing hashing over parts of SIP message don't
+			guarantee a fair distribution. You should do some measurements
+			to decide what hashing algorithm fits better in your
 			environment.
+		</para>
+		<para>
+			Other distribution algorithms such as round robin or call load
+			dispatching do a fair distribution in terms of delivered calls
+			to gateways.
 		</para>
 	    </answer>
 	</qandaentry>
