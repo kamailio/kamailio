@@ -527,7 +527,7 @@ static int load_dialog_vars_from_db(int fetch_num_rows)
 				while (dlg) {
 					if (dlg->h_id == VAL_INT(values+1)) {
 						set_dlg_variable_unsafe(dlg, &VAL_STR(values+2), &VAL_STR(values+3));
-						continue;
+						break;
 					}
 					dlg = dlg->next;
 					if (!dlg) {
