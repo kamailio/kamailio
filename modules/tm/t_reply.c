@@ -2081,6 +2081,14 @@ int reply_received( struct sip_msg  *p_msg )
 							run_trans_callbacks_off_params(TMCB_REQUEST_SENT, t,
 							                               &onsend_params);
 						}
+						if (unlikely(has_tran_tmcbs(t, TMCB_ACK_NEG_IN))){
+							INIT_TMCB_ONSEND_PARAMS(onsend_params,
+									t->uas.request, p_msg, &uac->request,
+									&uac->request.dst, ack, ack_len,
+									TMCB_LOCAL_F, branch, TYPE_LOCAL_ACK);
+							run_trans_callbacks_off_params(TMCB_ACK_NEG_IN, t,
+							                               &onsend_params);
+						}
 					shm_free(ack);
 				}
 			} else if (is_local(t) /*&& 200 <= msg_status < 300*/) {
