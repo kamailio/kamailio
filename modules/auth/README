@@ -15,7 +15,7 @@ Daniel-Constantin Mierla
    asipto.com
    <miconda@gmail.com>
 
-   Copyright © 2002, 2003 FhG FOKUS
+   Copyright � 2002, 2003 FhG FOKUS
      __________________________________________________________________
 
    1.1. Overview
@@ -43,8 +43,9 @@ Daniel-Constantin Mierla
         1.4.1. consume_credentials()
         1.4.2. www_challenge(realm, flags)
         1.4.3. proxy_challenge(realm, flags)
-        1.4.4. pv_www_authenticate(realm, passwd, flags)
-        1.4.5. pv_proxy_authenticate(realm, passwd, flags)
+        1.4.4. auth_challenge(realm, flags)
+        1.4.5. pv_www_authenticate(realm, passwd, flags)
+        1.4.6. pv_proxy_authenticate(realm, passwd, flags)
 
 1.1. Overview
 
@@ -66,7 +67,7 @@ Daniel-Constantin Mierla
 
 1.3. Parameters
 
-1.3.1.  auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg
+1.3.1. auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg
 (flags)
 
    These three module parameters control which optional integrity checks
@@ -514,7 +515,7 @@ if (www_authenticate("realm", "subscriber)) {
 };
 ...
 
-1.4.2.  www_challenge(realm, flags)
+1.4.2. www_challenge(realm, flags)
 
    The function challenges a user agent. It will generate a WWW-Authorize
    header field containing a digest challenge, it will put the header
@@ -528,7 +529,7 @@ if (www_authenticate("realm", "subscriber)) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string “”. In case of REGISTER requests To
+       It must not be empty string "". In case of REGISTER requests To
        header field domain (e.g., variable $td) can be used (because this
        header field represents the user being registered), for all other
        messages From header field domain can be used (e.g., variable $fd).
@@ -550,7 +551,7 @@ if (!www_authenticate("$td", "subscriber")) {
 }
 ...
 
-1.4.3.  proxy_challenge(realm, flags)
+1.4.3. proxy_challenge(realm, flags)
 
    The function challenges a user agent. It will generate a
    Proxy-Authorize header field containing a digest challenge, it will put
@@ -567,12 +568,31 @@ if (!www_authenticate("$td", "subscriber")) {
 
    Example 16. proxy_challenge usage
 ...
-if (!proxy_authenticate("$fd", "subscriber)) {
+if (!proxy_authenticate("$fd", "subscriber")) {
         proxy_challenge("$fd", "1");
 };
 ...
 
-1.4.4.  pv_www_authenticate(realm, passwd, flags)
+1.4.4. auth_challenge(realm, flags)
+
+   The function challenges a user agent for authentication. It combines
+   the functions www_challenge() and proxy_challenge(), by calling
+   internally the first one for REGISTER requests and the second one for
+   the rest of the request types.
+
+   Meaning of the parameters the same as for function www_challenge(realm,
+   flags)
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 17. proxy_challenge usage
+...
+if (!auth_check("$fd", "subscriber", "1")) {
+        auth_challenge("$fd", "1");
+};
+...
+
+1.4.5. pv_www_authenticate(realm, passwd, flags)
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will succeed
@@ -596,7 +616,7 @@ if (!proxy_authenticate("$fd", "subscriber)) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string “”. In case of REGISTER requests To
+       It must not be empty string "". In case of REGISTER requests To
        header field domain (e.g., varibale $td) can be used (because this
        header field represents a user being registered), for all other
        messages From header field domain can be used (e.g., varibale $fd).
@@ -616,14 +636,14 @@ if (!proxy_authenticate("$fd", "subscriber)) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 17. pv_www_authenticate usage
+   Example 18. pv_www_authenticate usage
 ...
 if (!pv_www_authenticate("$td", "123abc", "0")) {
         www_challenge("$td", "1");
 };
 ...
 
-1.4.5.  pv_proxy_authenticate(realm, passwd, flags)
+1.4.6. pv_proxy_authenticate(realm, passwd, flags)
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will succeed
@@ -638,7 +658,7 @@ if (!pv_www_authenticate("$td", "123abc", "0")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 18. pv_proxy_authenticate usage
+   Example 19. pv_proxy_authenticate usage
 ...
 $avp(password)="xyz";
 if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {

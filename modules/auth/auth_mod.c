@@ -87,6 +87,7 @@ static int fixup_pv_auth(void **param, int param_no);
 
 static int proxy_challenge(struct sip_msg *msg, char* realm, char *flags);
 static int www_challenge(struct sip_msg *msg, char* realm, char *flags);
+static int w_auth_challenge(struct sip_msg *msg, char* realm, char *flags);
 static int fixup_auth_challenge(void **param, int param_no);
 
 
@@ -137,6 +138,8 @@ static cmd_export_t cmds[] = {
     {"www_challenge",          (cmd_function)www_challenge,          2,
 			fixup_auth_challenge, REQUEST_ROUTE},
     {"proxy_challenge",        (cmd_function)proxy_challenge,        2,
+			fixup_auth_challenge, REQUEST_ROUTE},
+    {"auth_challenge",         (cmd_function)w_auth_challenge,       2,
 			fixup_auth_challenge, REQUEST_ROUTE},
     {"pv_www_authorize",       (cmd_function)pv_www_authenticate,    3,
 			fixup_pv_auth, REQUEST_ROUTE},
@@ -748,6 +751,47 @@ error:
 	}
 	return -1;
 }
+
+/**
+ *
+ */
+static int w_auth_challenge(struct sip_msg *msg, char* realm, char *flags)
+{
+	int vflags = 0;
+	str srealm  = {0, 0};
+
+	if((msg->REQ_METHOD == METHOD_ACK) || (msg->REQ_METHOD == METHOD_CANCEL)) {
+		return 1;
+	}
+
+	if(get_str_fparam(&srealm, msg, (fparam_t*)realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		goto error;
+	}
+
+	if(srealm.len==0) {
+		LM_ERR("invalid realm value - empty content\n");
+		goto error;
+	}
+
+	if(get_int_fparam(&vflags, msg, (fparam_t*)flags) < 0) {
+		LM_ERR("invalid flags value\n");
+		goto error;
+	}
+
+	if(msg->REQ_METHOD==METHOD_REGISTER)
+		return auth_challenge(msg, &srealm, vflags, HDR_AUTHORIZATION_T);
+	else
+		return auth_challenge(msg, &srealm, vflags, HDR_PROXYAUTH_T);
+
+error:
+	if(!(vflags&4)) {
+		if(auth_send_reply(msg, 500, "Internal Server Error", 0, 0) <0 )
+			return -4;
+	}
+	return -1;
+}
+
 
 /**
  * @brief fixup function for {www,proxy}_challenge
