@@ -69,6 +69,7 @@ static int mod_init(void);
 
 
 static int auth_fixup(void** param, int param_no);
+static int auth_check_fixup(void** param, int param_no);
 int parse_aaa_pvs(char *definition, pv_elem_t **pv_def, int *cnt);
 
 #define USER_COL "username"
@@ -118,6 +119,8 @@ static cmd_export_t cmds[] = {
 	{"proxy_authorize",    (cmd_function)proxy_authenticate, 2, auth_fixup, 0,
 		REQUEST_ROUTE},
 	{"proxy_authenticate", (cmd_function)proxy_authenticate, 2, auth_fixup, 0,
+		REQUEST_ROUTE},
+	{"auth_check",         (cmd_function)auth_check,         3, auth_check_fixup, 0,
 		REQUEST_ROUTE},
 	{"bind_auth_db",       (cmd_function)bind_auth_db,       0, 0, 0,
 		0},
@@ -261,6 +264,27 @@ static int auth_fixup(void** param, int param_no)
 			return -1;
 		}
 		auth_dbf.close(dbh);
+	}
+	return 0;
+}
+
+/*
+ * Convert cfg parameters to run-time structures
+ */
+static int auth_check_fixup(void** param, int param_no)
+{
+	if(strlen((char*)*param)<=0) {
+		LM_ERR("empty parameter %d not allowed\n", param_no);
+		return -1;
+	}
+	if (param_no == 1) {
+		return fixup_var_str_12(param, 1);
+	}
+	if (param_no == 2) {
+		return fixup_var_str_12(param, 2);
+	}
+	if (param_no == 3) {
+		return fixup_igp_null(param, 1);
 	}
 	return 0;
 }
