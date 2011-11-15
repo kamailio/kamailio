@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright Â© 2011 asipto.com
+   Copyright © 2011 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -25,7 +25,7 @@ Daniel-Constantin Mierla
 
         3. Parameters
 
-              3.1. server (int)
+              3.1. server (str)
 
         4. Functions
 
@@ -48,7 +48,7 @@ Chapter 1. Admin Guide
 
    3. Parameters
 
-        3.1. server (int)
+        3.1. server (str)
 
    4. Functions
 
@@ -81,9 +81,9 @@ Chapter 1. Admin Guide
 
 3. Parameters
 
-   3.1. server (int)
+   3.1. server (str)
 
-3.1. server (int)
+3.1. server (str)
 
    Specify the details to connect to REDIS server. It takes a list of
    attribute=value separated by semicolon, the attributes can be name,
@@ -92,18 +92,23 @@ Chapter 1. Admin Guide
    REDIS server. db is the DB number to use (defaults to 0 if not
    specified).
 
+   You can set this parameter many times, in case you want to connect to
+   many REDIS servers, just give different attributes and use the specific
+   server name when querying the REDIS instance.
+
    Default value is NULL.
 
    Example 1.1. Set server parameter
 ...
 modparam("ndb_redis", "server", "name=srvN;addr=127.0.0.1;port=6379;db=1")
+modparam("ndb_redis", "server", "name=srvX;addr=127.0.0.2;port=6379;db=4")
 ...
 
 4. Functions
 
    4.1. redis_cmd(srvname, command, replyid)
 
-4.1.  redis_cmd(srvname, command, replyid)
+4.1. redis_cmd(srvname, command, replyid)
 
    Send a command to REDIS server identified by srvname. The reply will be
    stored in a local continer identified by replyid. All the parameters
