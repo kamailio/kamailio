@@ -725,12 +725,19 @@ void destroy_modules()
 {
 	struct sr_module* t, *foo;
 
+	/* call first destroy function from each module */
 	t=modules;
 	while(t) {
 		foo=t->next;
 		if (t->exports.destroy_f){
 			t->exports.destroy_f();
 		}
+		t=foo;
+	}
+	/* free module exports structures */
+	t=modules;
+	while(t) {
+		foo=t->next;
 		pkg_free(t);
 		t=foo;
 	}
