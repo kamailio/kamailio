@@ -174,7 +174,7 @@ module_group_radius=acc_radius auth_radius misc_radius avp_radius uri_radius \
 
 # For presence
 # kamailio modules
-module_group_presence=presence presence_dialoginfo presence_mwi presence_xml \
+module_group_presence=presence presence_dialoginfo presence_mwi presence_xml presence_profile\
 						pua pua_bla pua_dialoginfo pua_mi pua_usrloc pua_xmpp \
 						rls xcap_client xcap_server presence_conference \
 						presence_reginfo pua_reginfo
@@ -262,7 +262,7 @@ module_group_kmemcached=memcached
 module_group_ktls=tls
 
 # K presence modules
-module_group_kpresence=presence presence_dialoginfo presence_mwi presence_xml \
+module_group_kpresence=presence presence_dialoginfo presence_mwi presence_xml presence_profile\
 						pua pua_bla pua_dialoginfo pua_mi pua_usrloc pua_xmpp \
 						rls xcap_client xcap_server presence_conference \
 						presence_reginfo pua_reginfo
