@@ -1,16 +1,16 @@
 Presence_Profile Module
 
-MihÃ¡ly MÃ©szÃ¡ros
+Mihály Mészáros
 
    <misi@niif.hu>
 
 Edited by
 
-MÃ©szÃ¡ros MihÃ¡ly
+Mészáros Mihály
 
    <misi@niif.hu>
 
-   Copyright © 2011 MÃ©szÃ¡ros MihÃ¡ly
+   Copyright � 2011 Mészáros Mihály
      __________________________________________________________________
 
    Table of Contents
@@ -41,18 +41,22 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The module does a very basic handling for ua-profile. You can subscribe
-   to ua-profile provisioning information if you add a provisioning
-   document to presentity table.
+   The module extends presence server implementation with ability of
+   handling ua-profile event. When an user agent subscribes to ua-profile
+   event for its own AoR, it will retrieve profile data document via body
+   of NOTIFY request.
 
-   Warning: When you add provisioning config to presentity table, then you
-   must make sure that you set the presentity table expires field to a
-   time value in long future
+   The profile data document format is usually specific per user agent,
+   such documents have to be built and added to presentity table by the
+   admin or a third party application.
 
-   If your user agent is subscribing to AoR and if the subscription event
-   is ua-profile, then it will receive provisioning data in the
-   notification body. Read more about sip user agent configuration
-   framework in RFC6080. http://tools.ietf.org/html/rfc6080
+   Warning: When you add profile data document (i.e., user agent's
+   provisioning config) to presentity table, then you must make sure that
+   you set the presentity table expires field to a time value in long
+   future.
+
+   Read more about SIP user agent configuration framework in RFC6080:
+   http://tools.ietf.org/html/rfc6080.
 
 2. Dependencies
 
