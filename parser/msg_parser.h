@@ -257,6 +257,7 @@ typedef struct msg_body {
 /*! \brief The SIP message */
 typedef struct sip_msg {
 	unsigned int id;               /*!< message id, unique/process*/
+	int pid;                       /*!< process id */
 	snd_flags_t fwd_send_flags;    /*!< send flags for forwarding */
 	snd_flags_t rpl_send_flags;    /*!< send flags for replies */
 	struct msg_start first_line;   /*!< Message first line */
