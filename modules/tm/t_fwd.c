@@ -374,6 +374,10 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 			   ignored) */
 			next_hop=&i_req->dst_uri;
 		}
+		/* no path vector initially, but now is set after branch route and
+		 * callbacks execution */
+		if(i_req->path_vec.s!=0 && free_path==0)
+			free_path=1;
 	}else{
 		/* no branch route and no TMCB_REQUEST_FWDED callback => set
 		   msg uri and path to the new values (if needed) */
