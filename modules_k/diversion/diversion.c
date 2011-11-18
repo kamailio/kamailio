@@ -104,15 +104,10 @@ static int mod_init(void)
 static inline int add_diversion_helper(struct sip_msg* msg, str* s)
 {
 	char *ptr;
+	int is_ref;
 
-	static struct lump* anchor = 0;
-	static unsigned int msg_id = 0;
+	struct lump* anchor = 0;
 
-	if (msg_id != msg->id) {
-		msg_id = msg->id;
-		anchor = 0;
-	}
-	
 	if (!msg->diversion && parse_headers(msg, HDR_DIVERSION_F, 0) == -1) {
 		LM_ERR("header parsing failed\n");
 		return -1;
@@ -126,12 +121,10 @@ static inline int add_diversion_helper(struct sip_msg* msg, str* s)
 		ptr = msg->unparsed;
 	}
 
+	anchor = anchor_lump2(msg, ptr - msg->buf, 0, 0, &is_ref);
 	if (!anchor) {
-		anchor = anchor_lump(msg, ptr - msg->buf, 0, 0);
-		if (!anchor) {
-			LM_ERR("can't get anchor\n");
-			return -2;
-		}
+		LM_ERR("can't get anchor\n");
+		return -2;
 	}
 	
 	if (!insert_new_lump_before(anchor, s->s, s->len, 0)) {
