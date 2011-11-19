@@ -474,29 +474,25 @@ static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 
 	xm = (pv_elem_t*)pbody;
 	body.len = xcaps_buf.len - 1;
-	body.s   = xcaps_buf.s;
-	if(pv_printf(msg, xm, body.s, &body.len)<0)
+	if(pv_printf(msg, xm, xcaps_buf.s, &body.len)<0)
 	{
 		LM_ERR("unable to get body\n");
 		goto error;
 	}
-	if(body.s==NULL || body.len <= 0)
+	if(body.len <= 0)
 	{
 		LM_ERR("invalid body parameter\n");
 		goto error;
 	}
-	nbuf.s = (char*)pkg_malloc(body.len+1);
-	if(nbuf.s==NULL)
+	body.s = (char*)pkg_malloc(body.len+1);
+	if(body.s==NULL)
 	{
 		LM_ERR("no more pkg\n");
-		body.s = NULL;
 		goto error;
 	}
 
-	memcpy(nbuf.s, body.s, body.len);
-	body.s = nbuf.s;
+	memcpy(body.s, xcaps_buf.s, body.len);
 	body.s[body.len] = '\0';
-	nbuf.s = NULL;
 
 	if(parse_uri(uri.s, uri.len, &turi)!=0)
 	{
@@ -517,6 +513,8 @@ static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 	{
 		xcaps_send_reply(msg, 412, &xcaps_str_precon, &xcaps_str_empty,
 				&xcaps_str_empty, &xcaps_str_empty);
+
+		pkg_free(body.s);
 		return -2;
 	}
 
