@@ -1066,7 +1066,7 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 		}
 
 		tmp_extra_hdrs.len = extra_hdrs_str.len+str_vals[4].len;
-		if ((tmp_extra_hdrs.s = pkg_malloc(tmp_extra_hdrs.len+1)) == NULL)
+		if ((tmp_extra_hdrs.s = pkg_malloc(tmp_extra_hdrs.len)) == NULL)
 		{
 			LM_ERR("Out of pkg memory");
 			if (msilo_dbf.free_result(db_con, db_res) < 0)
@@ -1074,8 +1074,8 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 			msg_list_set_flag(ml, mid, MS_MSG_ERRO);
 			goto error;
 		}
-		snprintf(tmp_extra_hdrs.s, tmp_extra_hdrs.len, "%.*s%.*s", extra_hdrs_str.len, extra_hdrs_str.s,
-						str_vals[4].len, str_vals[4].s);
+		memcpy(tmp_extra_hdrs.s, extra_hdrs_str.s, extra_hdrs_str.len);
+		memcpy(tmp_extra_hdrs.s+extra_hdrs_str.len, str_vals[4].s, str_vals[4].len);
 		
 		hdr_str.len = 1024;
 		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
