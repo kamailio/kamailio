@@ -25,10 +25,21 @@ Daniel-Constantin Mierla
               2.2. External Libraries or Applications
 
         3. Parameters
+
+              3.1. rpc_url (string)
+
         4. Functions
         5. Exported RPC commands
 
               5.1. mi mi_dg mi_fifo mi_xmlrpc
+
+        6. MI Commands
+
+              6.1. rpc
+
+   List of Examples
+
+   1.1. Set rpc_url parameter
 
 Chapter 1. Admin Guide
 
@@ -41,17 +52,22 @@ Chapter 1. Admin Guide
         2.2. External Libraries or Applications
 
    3. Parameters
+
+        3.1. rpc_url (string)
+
    4. Functions
    5. Exported RPC commands
 
         5.1. mi mi_dg mi_fifo mi_xmlrpc
 
+   6. MI Commands
+
+        6.1. rpc
+
 1. Overview
 
-   The module exports a RPC command to execute MI commands.
-
-   The other way around not implemented (MI command to execute RPC) -- to
-   be investigated if worth the effort.
+   The module exports a RPC command to execute MI commands and an MI
+   command to run RPC commands.
 
 2. Dependencies
 
@@ -71,7 +87,22 @@ Chapter 1. Admin Guide
 
 3. Parameters
 
-   none
+   3.1. rpc_url (string)
+
+3.1. rpc_url (string)
+
+   Note: this parameter is used for MI to RPC connections.
+
+   This parameters specifies the connection to use for running RPC
+   commands from the mangement interface.
+
+   This parameter is required if you need to run RPC commands from the MI.
+   It must match a URL to which the RPC is bound.
+
+   Example 1.1. Set rpc_url parameter
+...
+modparam("mi_rpc","rpc_url","tcp:localhost:2046")
+...
 
 4. Functions
 
@@ -109,3 +140,14 @@ sercmd> mi uptime
 Now:: Thu Sep 24 18:17:15 2009
 Up since:: Thu Sep 24 17:35:45 2009
 Up time:: 2490 [sec]
+
+6. MI Commands
+
+   6.1. rpc
+
+6.1. rpc
+
+   This MI commands runs a RPC command.
+
+   It must be passed the name of the RPC command, and any parameters that
+   the RPC command requires.

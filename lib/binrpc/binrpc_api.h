@@ -34,7 +34,7 @@
 #ifndef BINRPC_API_H_
 #define BINRPC_API_H_
 
-#include "../../modules_s/ctl/binrpc.h"
+#include "../../modules/ctl/binrpc.h"
 
 struct binrpc_handle {
 	int socket;

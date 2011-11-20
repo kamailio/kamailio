@@ -44,9 +44,9 @@
 #include <time.h> /* time */
 /* #include <stropts.h>  - is this really needed? --andrei */
 
-#include "../../modules_s/ctl/ctl_defaults.h" /* default socket & port */
-#include "../../modules_s/ctl/init_socks.h"
-#include "../../modules_s/ctl/binrpc.c" /* ugly hack */
+#include "../../modules/ctl/ctl_defaults.h" /* default socket & port */
+#include "../../modules/ctl/init_socks.h"
+#include "../../modules/ctl/binrpc.c" /* ugly hack */
 
 #include "binrpc_api.h"
 
