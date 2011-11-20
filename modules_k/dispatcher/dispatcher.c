@@ -120,6 +120,8 @@ int ds_hash_expire = 7200;
 int ds_hash_initexpire = 7200;
 int ds_hash_check_interval = 30;
 
+str ds_outbound_proxy = {0, 0};
+
 /* tm */
 struct tm_binds tmb;
 
@@ -219,6 +221,7 @@ static param_export_t params[]={
 	{"ds_hash_expire",     INT_PARAM, &ds_hash_expire},
 	{"ds_hash_initexpire", INT_PARAM, &ds_hash_initexpire},
 	{"ds_hash_check_interval", INT_PARAM, &ds_hash_check_interval},
+	{"outbound_proxy",  STR_PARAM, &ds_outbound_proxy.s},
 	{0,0,0}
 };
 
@@ -281,6 +284,7 @@ static int mod_init(void)
 		ds_setid_pvname.len = strlen(ds_setid_pvname.s);
 	if (ds_ping_from.s) ds_ping_from.len = strlen(ds_ping_from.s);
 	if (ds_ping_method.s) ds_ping_method.len = strlen(ds_ping_method.s);
+	if (ds_outbound_proxy.s) ds_outbound_proxy.len = strlen(ds_outbound_proxy.s);
 
 	if(cfg_declare("dispatcher", dispatcher_cfg_def,
 				&default_dispatcher_cfg, cfg_sizeof(dispatcher),

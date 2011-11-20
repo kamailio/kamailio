@@ -692,6 +692,25 @@ modparam("dispatcher", "force_dst", 1)
  </programlisting>
  		</example>
 	</section>
+ 	<section>
+ 		<title><varname>outbound_proxy</varname> (str)</title>
+ 		<para>
+		SIP URI of outbound proxy to be used when sending pings.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			By default no outbound proxy is defined.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>outbound_proxy</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "outbound_proxy", "sip:outbound.example.com")
+ ...
+ </programlisting>
+ 		</example>
+	</section>
 
 	</section>
 

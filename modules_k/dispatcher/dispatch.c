@@ -2416,7 +2416,7 @@ void ds_check_timer(unsigned int ticks, void* param)
 							&list->dlist[j].uri,
 							&list->dlist[j].uri,
 							&ds_ping_from,
-							0) < 0) {
+							&ds_outbound_proxy) < 0) {
 					LM_ERR("unable to ping [%.*s]\n",
 							list->dlist[j].uri.len, list->dlist[j].uri.s);
 				}
