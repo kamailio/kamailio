@@ -675,6 +675,7 @@ int update_subs_rlsdb( subs_t *subs )
 	if ( r_remote_cseq >= subs->remote_cseq)
 	{
 		LM_DBG("stored cseq= %d\n", r_remote_cseq);
+		rls2_dbf.free_result(rls2_db, result);
 		return(401); /*stale cseq code */
 	}
 

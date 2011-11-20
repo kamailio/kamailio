@@ -1044,7 +1044,10 @@ static void db_update(unsigned int ticks,void *param)
 					if((p->watcher_uri))
 						q_vals[watcher_col].val.str_val = *(p->watcher_uri);
 					else
-						memset(& q_vals[watcher_col].val.str_val ,0, sizeof(str));
+					{
+						q_vals[watcher_col].val.str_val.s = "";
+						q_vals[watcher_col].val.str_val.len = 0;
+					}
 
 					if(p->tuple_id.s == NULL)
 					{

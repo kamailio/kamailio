@@ -65,51 +65,6 @@ static int puadb_debug=0;
 
 /******************************************************************************/
 
-void pua_trace( char *func_name, char *text, ua_pres_t *pres )
-{
-  str *w=pres->watcher_uri;
-
-  if (!puadb_debug) return;	
-
-    /*LM_ERR( "%s %s pres_uri=%.*s watcher_uri=%.*s\n", */
-    LM_ERR( "%s %s pres_uri=%.*s pres_id=%.*s flag=%d event=%d watcher_uri=%.*s\n", 
-           func_name, text, pres->pres_uri->len, pres->pres_uri->s,
-           pres->id.len, pres->id.s, pres->flag, pres->event,
-           w?w->len:0, w?w->s:"" );
-} 
-
-/******************************************************************************/
-
-void pua_trace_int( char *func_name, char *text, int val, ua_pres_t *pres )
-{
-  str *w=pres->watcher_uri;
-
-  if (!puadb_debug) return;
-
-    /*LM_ERR( "%s %s %d pres_uri=%.*s watcher_uri=%.*s\n", */
-    LM_ERR( "%s %s %d pres_uri=%.*s pres_id=%.*s flag=%d event=%d watcher_uri=%.*s\n", 
-           func_name, text, val, pres->pres_uri->len, pres->pres_uri->s,
-          pres->id.len, pres->id.s, pres->flag, pres->event,
-            w?w->len:0, w?w->s:"" );
-} 
-
-/******************************************************************************/
-
-void pua_trace_string( char *func_name, char *text, const char *val, ua_pres_t *pres )
-{
-  str *w=pres->watcher_uri;
-
-  if (!puadb_debug) return;
-
-    /*LM_ERR( "%s %s %s pres_uri=%.*s watcher_uri=%.*s\n", */
-    LM_ERR( "%s %s %s pres_uri=%.*s pres_id=%.*s flag=%d event=%d watcher_uri=%.*s\n", 
-           func_name, text, "val", pres->pres_uri->len, pres->pres_uri->s,
-           pres->id.len, pres->id.s, pres->flag, pres->event,
-            w?w->len:0, w?w->s:"" );
-} 
-
-/******************************************************************************/
-
 void free_results_puadb( db1_res_t *res )
 
 {
@@ -420,7 +375,7 @@ int matches_in_puadb(ua_pres_t *pres)
   nr_rows = RES_ROW_N(res);
 
   pua_dbf.free_result(pua_db, res);
-  pua_trace_int( "matches_in_puadb", "DONE rval=", nr_rows, pres );
+  LM_DBG("Found %d rows\n", nr_rows);
   return(nr_rows);
 }
 
@@ -539,14 +494,14 @@ ua_pres_t* search_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **dbres)
   if (nr_rows == 0)
   {
     /* no match */ 
-    pua_trace( "search_puadb", "NO MATCH", pres );
+    LM_DBG("No rows found\n");
     pua_dbf.free_result(pua_db, res);
     return(NULL);
   }
 
   if (nr_rows != 1)
   {
-    pua_trace_int( "search_puadb", "TOO MANY MATCHES=", nr_rows, pres );   
+    LM_ERR("Too many rows found (%d)\n", nr_rows);
     pua_dbf.free_result(pua_db, res);
     return(NULL);
   }
@@ -560,8 +515,6 @@ ua_pres_t* search_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **dbres)
  
   /*pua_dbf.free_result(pua_db, res);*/
   *dbres = res;
-
-  pua_trace( "search_puadb", "DONE", pres );  
 
   return(result);
 }
@@ -665,14 +618,14 @@ ua_pres_t* get_dialog_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **dbre
   if (nr_rows == 0)
   {
     /* no match */ 
-    pua_trace( "get_dialog_puadb", "NO MATCH", pres );  
+    LM_DBG("No rows found\n");
     pua_dbf.free_result(pua_db, res);
     return(NULL);
   }
 
   if (nr_rows != 1)
   {
-    pua_trace_int( "get_dialog_puadb", "TOO MANY RESULTS=", nr_rows, pres );  
+    LM_ERR("Too many rows found (%d)\n", nr_rows);
     return(NULL);
   }
 
@@ -686,7 +639,6 @@ ua_pres_t* get_dialog_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **dbre
   /*pua_dbf.free_result(pua_db, res);*/
   *dbres = res;
 
-  pua_trace( "get_dialog_puadb", "DONE", pres );  
   return(result);
 }
 
@@ -783,18 +735,16 @@ int is_dialog_puadb(ua_pres_t *pres)
   if (nr_rows == 0)
   {
     /* no match */ 
-    pua_trace( "is_dialog_puadb", "NO MATCH", pres );  
+    LM_ERR("No rows found.\n");
     return(-1);
   }
 
   if (nr_rows != 1)
   {
-    pua_trace_int( "is_dialog_puadb", "TOO MANY RESULTS=", nr_rows, pres );
+    LM_ERR("Too many rows found (%d)\n", nr_rows);
     return(-1);
   }
 
-
-  pua_trace( "is_dialog_puadb", "MATCH", pres );
   return(0);
 }
 
@@ -895,15 +845,15 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 
   if (nr_rows == 0)
   {
-    /* no match */ 
-    pua_trace( "get_record_id_puadb", "NO MATCH", pres );
+    /* no match */
+    LM_DBG("No rows found.\n");
     pua_dbf.free_result(pua_db, res);
     return(0);
   }
 
   if (nr_rows != 1)
   {
-    pua_trace_int( "get_record_id_puadb", "TOO MANY MATCHES=", nr_rows, pres );
+    LM_ERR("Too many rows found (%d)\n", nr_rows);
     pua_dbf.free_result(pua_db, res);
     return(-1);
   }
@@ -940,7 +890,7 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
   *rec_id= id;
   pua_dbf.free_result(pua_db, res);
 
-  pua_trace_string( "get_record_id_puadb", "FOUND id=", VAL_STRING(values+1), pres );
+  LM_DBG("Found id=%.*s\n", id->len, id->s);
   return(0);
 }
 
@@ -1022,11 +972,11 @@ int delete_temporary_dialog_puadb(ua_pres_t *pres )
 
   if ( rval < 0 ) 
   {
-    pua_trace( "delete_temporary_dialog_puad", "NOT FOUND", pres );
+    LM_DBG("No temporary dialog found and deleted\n");
   }
   else
   {
-    pua_trace( "delete_temporary_dialog_puad", "DONE", pres );
+    LM_DBG("Temporary dialog found and deleted\n");
   }
 
   return(rval);
@@ -1133,11 +1083,11 @@ int delete_puadb(ua_pres_t *pres )
 
   if ( rval < 0 ) 
   {
-    pua_trace( "delete_puad", "NOT FOUND", pres );
+    LM_DBG("No dialog found and deleted\n");
   }
   else
   {
-    pua_trace( "delete_puad", "DONE", pres );
+    LM_DBG("Dialog found and deleted\n");
   }
 
   return(rval);
@@ -1228,11 +1178,10 @@ int update_contact_puadb(ua_pres_t *pres, str *contact)
   if(pua_dbf.update(pua_db, q_cols, q_ops, q_vals,
                     db_cols,db_vals,n_query_cols,n_update_cols) < 0)
   {
-    pua_trace( "update_contact_puad", "FAILED", pres );
+    LM_ERR("DB update failed\n");
     return(-1);
   }
   
-  pua_trace( "update_contact_puad", "DONE", pres );
   return(0);
 }
 
@@ -1274,10 +1223,6 @@ int update_version_puadb(ua_pres_t *pres, int version )
     q_ops[watcher_col] = OP_EQ;
     n_query_cols++;
   }
-  else
-  {
-    LM_ERR( "update_version_puadb has NULL watcher_uri\n" );
-  }
 
   q_cols[callid_col= n_query_cols] = &str_call_id_col;	
   q_vals[callid_col].type = DB1_STR;
@@ -1307,6 +1252,7 @@ int update_version_puadb(ua_pres_t *pres, int version )
   /* we overwrite contact even if not changed */
   db_cols[n_update_cols] = &str_version_col;
   db_vals[n_update_cols].type = DB1_INT;
+  db_vals[n_update_cols].nul = 0;
   db_vals[n_update_cols].val.int_val = version;
   n_update_cols++;
  
@@ -1321,11 +1267,10 @@ int update_version_puadb(ua_pres_t *pres, int version )
                     db_cols,db_vals,n_query_cols,n_update_cols) < 0)
   
   {
-    pua_trace( "update_version_puad", "FAILED", pres );
+    LM_ERR("DB update failed\n");
     return(-1);
   }
   
-  pua_trace( "update_version_puad", "DONE", pres );
   return(0);
 }
 
@@ -1475,13 +1420,8 @@ void update_puadb(ua_pres_t* pres, time_t desired_expires,
   if(pua_dbf.update(pua_db, q_cols, q_ops, q_vals,
                     db_cols,db_vals,n_query_cols,n_update_cols) < 0)
   {
-    pua_trace( "update_puad", "FAILED", pres );
+    LM_ERR("DB update failed\n");
   }
-  else
-  {
-    pua_trace( "update_puad", "DONE", pres );
-  }	
-
 }
 
 /******************************************************************************/
@@ -1561,16 +1501,23 @@ void insert_puadb(ua_pres_t* pres)
   n_cols++;
 
   /* subscribe */
+  db_cols[n_cols] = &str_watcher_uri_col;
+  db_vals[n_cols].type = DB1_STR;
+  db_vals[n_cols].nul = 0; 
+ 
   if (pres->watcher_uri)
   {
-    db_cols[n_cols] = &str_watcher_uri_col;
-    db_vals[n_cols].type = DB1_STR;
-    db_vals[n_cols].nul = 0; 
     db_vals[n_cols].val.str_val.s = pres->watcher_uri->s;
     db_vals[n_cols].val.str_val.len = pres->watcher_uri->len;
-    n_cols++;
+  }
+  else
+  {
+    db_vals[n_cols].val.str_val.s = "";
+    db_vals[n_cols].val.str_val.len = 0;
   }
 
+  n_cols++;
+ 
   db_cols[n_cols] = &str_call_id_col;
   db_vals[n_cols].type = DB1_STR;
   db_vals[n_cols].nul = 0; 
@@ -1653,13 +1600,8 @@ void insert_puadb(ua_pres_t* pres)
 
   if(pua_dbf.insert(pua_db, db_cols, db_vals, n_cols) < 0)  
   {
-    pua_trace( "insert_puad", "FAILED", pres );
+    LM_ERR("DB insert failed\n");
   }
-  else
-  {
-    pua_trace( "insert_puad", "DONE", pres );  
-  }
-  
 }
 
 /******************************************************************************/
