@@ -30,6 +30,68 @@
 	<section>
 	<title>Available Functions</title>
 
+	<section id="record-route-id-dev">
+		<title>
+		<function moreinfo="none">record_route(string)</function>
+		</title>
+		<para>
+		The function adds a new Record-Route header field. The header field 
+		will be inserted in the message before any other Record-Route header 
+		fields.
+		</para>
+		<para>
+		If any string is passed as parameter, it will be appended as URI
+		parameter to the Record-Route header. The string must follow the 
+		<quote>;name=value</quote> scheme and it may contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and 
+		FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>record_route</function> usage</title>
+		<programlisting format="linespecific">
+...
+record_route();
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">record_route_advertised_address(string)</function>
+		</title>
+		<para>
+		This function will add the string into a new Record-Route header field. Don't use 
+		unless you know what you are doing.
+		The header field will be inserted in the message before any other Record-Route
+		header fields.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>string</emphasis> - String to be inserted into the 
+				header field.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Calls to add_rr_param() will add parameters to the Record-Route header.
+		Note: A second Record-Route will be inserted if the transport used on the inbound
+		and outbound interfaces changes.
+		</para>
+		<example>
+		<title><function>record_route_advertised_address</function> usage</title>
+		<programlisting format="linespecific">
+...
+record_route_advertised_address("1.2.3.4:5090");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section>
 		<title>
 		<function moreinfo="none">add_rr_param( msg, param)</function>

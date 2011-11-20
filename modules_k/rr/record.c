@@ -449,6 +449,188 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	return 1;
 }
 
+/*!
+ * \brief Insert manually created Record-Route header
+ *
+ * Insert manually created Record-Route header, no checks, no restrictions,
+ * always adds lr parameter, only fromtag is added automatically when requested.
+ * Allocates new private memory for this.
+ * \param _m SIP message
+ * \param _data manually created RR header
+ * \return 1 on success, negative on failure
+ */
+
+#define RR_TRANS_LEN 11
+#define RR_TRANS ";transport="
+static inline int build_advertised_rr(struct lump* _l, struct lump* _l2, str *_data,
+				str* user, str *tag, int _inbound)
+{
+	char *p;
+	char *hdr, *trans, *r2, *suffix, *term;
+	int hdr_len, suffix_len;
+
+	hdr_len = RR_PREFIX_LEN;
+	if (user && user->len)
+		hdr_len += user->len + 1; /* @ */
+	hdr_len += _data->len;
+
+	suffix_len = 0;
+	if (tag && tag->len) {
+		suffix_len += RR_FROMTAG_LEN + tag->len;
+	}
+	
+	if (enable_full_lr) {
+		suffix_len += RR_LR_FULL_LEN;
+	} else {
+		suffix_len += RR_LR_LEN;
+	}
+
+	hdr = pkg_malloc(hdr_len);
+	trans = pkg_malloc(RR_TRANS_LEN);
+	suffix = pkg_malloc(suffix_len);
+	r2 = pkg_malloc(RR_R2_LEN);
+	term = pkg_malloc(RR_TERM_LEN);
+	if (!hdr || !trans || !suffix || !term || !r2) {
+		LM_ERR("no pkg memory left\n");
+		if (hdr) pkg_free(hdr);
+		if (trans) pkg_free(trans);
+		if (suffix) pkg_free(suffix);
+		if (r2) pkg_free(r2);
+		if (term) pkg_free(term);
+		return -1;
+	}
+
+	p = hdr;
+	memcpy(p, RR_PREFIX, RR_PREFIX_LEN);
+	p += RR_PREFIX_LEN;
+
+	if (user->len) {
+		memcpy(p, user->s, user->len);
+		p += user->len;
+		*p = '@';
+		p++;
+	}
+
+	memcpy(p, _data->s, _data->len);
+	p += _data->len;
+	
+	p = suffix;
+	if (tag && tag->len) {
+		memcpy(p, RR_FROMTAG, RR_FROMTAG_LEN);
+		p += RR_FROMTAG_LEN;
+		memcpy(p, tag->s, tag->len);
+		p += tag->len;
+	}
+
+	if (enable_full_lr) {
+		memcpy(p, RR_LR_FULL, RR_LR_FULL_LEN);
+		p += RR_LR_FULL_LEN;
+	} else {
+		memcpy(p, RR_LR, RR_LR_LEN);
+		p += RR_LR_LEN;
+	}
+
+	memcpy(trans, RR_TRANS, RR_TRANS_LEN);
+	memcpy(term, RR_TERM, RR_TERM_LEN);
+	memcpy(r2, RR_R2, RR_R2_LEN);
+
+	if (!(_l = insert_new_lump_after(_l, hdr, hdr_len, 0))) {
+		LM_ERR("failed to insert new lump\n");
+		goto lump_err;
+	}
+	hdr = NULL;
+	if (!(_l = insert_cond_lump_after(_l, COND_IF_DIFF_PROTO, 0)))
+		goto lump_err;
+	if (!(_l = insert_new_lump_after(_l, trans, RR_TRANS_LEN, 0)))
+		goto lump_err;
+	if (!(_l = insert_subst_lump_after(_l, _inbound?SUBST_RCV_PROTO:SUBST_SND_PROTO, 0)))
+		goto lump_err;
+	if (enable_double_rr) {
+		if (!(_l = insert_cond_lump_after(_l, COND_IF_DIFF_REALMS, 0)))
+			goto lump_err;
+		if (!(_l = insert_new_lump_after(_l, r2, RR_R2_LEN, 0)))
+			goto lump_err;
+		r2 = 0;
+	} else {
+		pkg_free(r2);
+		r2 = 0;
+	}
+	if (!(_l2 = insert_new_lump_before(_l2, suffix, suffix_len, HDR_RECORDROUTE_T)))
+		goto lump_err;
+	suffix = NULL;
+	if (rr_param_buf.len) {
+		if (!(_l2 = insert_rr_param_lump(_l2, rr_param_buf.s, rr_param_buf.len)))
+			goto lump_err;
+	}
+	if (!(_l2 = insert_new_lump_before(_l2, term, RR_TERM_LEN, 0)))
+		goto lump_err;
+	return 1;
+lump_err:
+	if (hdr) pkg_free(hdr);
+	if (suffix) pkg_free(suffix);
+	if (term) pkg_free(term);
+	if (r2) pkg_free(r2);
+	return -7;
+}
+
+int record_route_advertised_address(struct sip_msg* _m, str* _data)
+{
+	str user;
+	str *tag = NULL;
+	struct lump* l;
+	struct lump* l2;
+
+	user.len = 0;
+	user.s = 0;
+
+	if (add_username) {
+		if (get_username(_m, &user) < 0) {
+			LM_ERR("failed to extract username\n");
+			return -1;
+		}
+	}
+
+	if (append_fromtag) {
+		if (parse_from_header(_m) < 0) {
+			LM_ERR("From parsing failed\n");
+			return -2;
+		}
+		tag = &((struct to_body*)_m->from->parsed)->tag_value;
+	}
+
+	if (enable_double_rr) {
+		l = anchor_lump(_m, _m->headers->name.s - _m->buf,0,HDR_RECORDROUTE_T);
+		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+		if (!l || !l2) {
+			LM_ERR("failed to create an anchor\n");
+			return -3;
+		}
+		l = insert_cond_lump_after(l, COND_IF_DIFF_PROTO, 0);
+		l2 = insert_cond_lump_before(l2, COND_IF_DIFF_PROTO, 0);
+		if (!l || !l2) {
+			LM_ERR("failed to insert conditional lump\n");
+			return -4;
+		}
+		if (build_advertised_rr(l, l2, _data, &user, tag, OUTBOUND) < 0) {
+			LM_ERR("failed to insert outbound Record-Route\n");
+			return -5;
+		}
+	}
+	
+	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
+	l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+	if (!l || !l2) {
+		LM_ERR("failed to create an anchor\n");
+		return -6;
+	}
+	
+	if (build_advertised_rr(l, l2, _data, &user, tag, INBOUND) < 0) {
+		LM_ERR("failed to insert outbound Record-Route\n");
+		return -7;
+	}
+	return 1;
+}
+
 
 /*!
  * \brief Get the RR parameter lump
