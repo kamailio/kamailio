@@ -25,12 +25,14 @@
 #define _SIPUTILS_H_
 
 typedef int (*siputils_has_totag_t)(struct sip_msg*, char*, char*);
+typedef int (*siputils_is_uri_user_e164_t)(struct sip_msg*, str*);
 
 /*! Siputils module API */
 typedef struct siputils_api {
 	int_str rpid_avp;      /*!< Name of AVP containing Remote-Party-ID */
 	int     rpid_avp_type; /*!< type of the RPID AVP */
 	siputils_has_totag_t has_totag;
+	siputils_is_uri_user_e164_t is_uri_user_e164;
 } siputils_api_t;
 
 typedef int (*bind_siputils_t)(siputils_api_t* api);

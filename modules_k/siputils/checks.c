@@ -467,11 +467,10 @@ int is_e164(struct sip_msg* _m, char* _sp, char* _s2)
 /*
  * Check if user part of URI in pseudo variable is an e164 number
  */
-int is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2)
+int w_is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2)
 {
     pv_spec_t *sp;
     pv_value_t pv_val;
-    struct sip_uri puri;
 
     sp = (pv_spec_t *)_sp;
 
@@ -481,11 +480,7 @@ int is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2)
 		LM_DBG("missing uri\n");
 		return -1;
 	    }
-	    if (parse_uri(pv_val.rs.s, pv_val.rs.len, &puri) < 0) {
-		LM_ERR("parsing URI failed\n");
-		return -1;
-	    }
-	    return e164_check(&(puri.user));
+	    return is_uri_user_e164(_m, &pv_val.rs);
 	} else {
 	    LM_ERR("pseudo variable value is not string\n");
 	    return -1;
@@ -494,6 +489,19 @@ int is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2)
 	LM_ERR("failed to get pseudo variable value\n");
 	return -1;
     }
+}
+
+
+int is_uri_user_e164(struct sip_msg *msg, str *uri)
+{
+    struct sip_uri puri;
+
+    if (parse_uri(uri->s, uri->len, &puri) < 0) {
+	LM_ERR("parsing URI failed\n");
+	return -1;
+    }
+
+    return e164_check(&(puri.user));
 }
 
 /*

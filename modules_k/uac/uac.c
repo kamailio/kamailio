@@ -57,6 +57,7 @@
 #include "auth.h"
 #include "uac_send.h"
 #include "uac_reg.h"
+#include "api.h"
 
 
 MODULE_VERSION
@@ -115,7 +116,8 @@ static cmd_export_t cmds[]={
 		fixup_free_pvar_pvar, ANY_ROUTE },
 	{"uac_reg_request_to",  (cmd_function)w_uac_reg_request_to,  2, fixup_pvar_uint, fixup_free_pvar_uint,
 		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
-
+	{"bind_uac", (cmd_function)bind_uac,                  1,                  0, 0,
+		0},
 	{0,0,0,0,0,0}
 };
 
@@ -496,3 +498,15 @@ static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* mode_s)
 	return uac_reg_request_to(msg, &val.rs, mode);
 }
 
+
+int bind_uac(struct uac_binds *uacb)
+{
+	if (uacb == NULL)
+        {
+                LM_WARN("bind_uac: Cannot load uac API into a NULL pointer\n");
+                return -1;
+        }
+
+        uacb->replace_from = replace_from;
+        return 0;
+}

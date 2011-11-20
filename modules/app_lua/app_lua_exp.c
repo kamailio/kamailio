@@ -50,6 +50,7 @@
 #include "../../modules_k/rls/api.h"
 #include "../../modules_k/alias_db/api.h"
 #include "../../modules_k/msilo/api.h"
+#include "../../modules_k/uac/api.h"
 
 #include "app_lua_api.h"
 
@@ -72,6 +73,7 @@
 #define SR_LUA_EXP_MOD_RLS        (1<<16)
 #define SR_LUA_EXP_MOD_ALIAS_DB   (1<<17)
 #define SR_LUA_EXP_MOD_MSILO      (1<<18)
+#define SR_LUA_EXP_MOD_UAC        (1<<19)
 
 /**
  *
@@ -173,6 +175,11 @@ static alias_db_api_t _lua_alias_dbb;
  * msilo 
  */
 static msilo_api_t _lua_msilob;
+
+/**
+ * uac
+ */
+static uac_api_t _lua_uacb;
 
 /**
  *
@@ -1837,8 +1844,48 @@ static int lua_sr_siputils_has_totag(lua_State *L)
 /**
  *
  */
+static int lua_sr_siputils_is_uri_user_e164(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+	str param[1];
+
+	env_L = sr_lua_env_get();
+	
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SIPUTILS))
+	{
+		LM_WARN("weird: siputils function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=1)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	param[0].s = (char *) lua_tostring(L, -1);
+	param[0].len = strlen(param[0].s);
+	
+	ret = _lua_siputilsb.is_uri_user_e164(env_L->msg, &param[0]);
+	if (ret < 0)
+		return app_lua_return_false(L);
+
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
 static const luaL_reg _sr_siputils_Map [] = {
 	{"has_totag",            lua_sr_siputils_has_totag},
+	{"is_uri_user_e164",     lua_sr_siputils_is_uri_user_e164},
 	{NULL, NULL}
 };
 
@@ -2063,6 +2110,62 @@ static const luaL_reg _sr_msilo_Map [] = {
 /**
  *
  */
+static int lua_sr_uac_replace_from(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+	str param[2];
+
+	env_L = sr_lua_env_get();
+
+	if (!(_sr_lua_exp_reg_mods & SR_LUA_EXP_MOD_UAC))
+	{
+		LM_WARN("weird:uac function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if (env_L->msg == NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if (lua_gettop(L) == 1)
+	{
+		param[0].s = "";
+		param[0].len = 0;
+		param[1].s = (char *) lua_tostring(L, -1);
+		param[1].len = strlen(param[1].s);
+	
+	}
+	else if (lua_gettop(L) == 2)
+	{
+		param[0].s = (char *) lua_tostring(L, -2);
+		param[0].len = strlen(param[0].s);
+		param[1].s = (char *) lua_tostring(L, -1);
+		param[1].len = strlen(param[1].s);
+	}
+	else
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_uacb.replace_from(env_L->msg, &param[0], &param[1]);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_uac_Map [] = {
+	{"replace_from",lua_sr_uac_replace_from},
+	{NULL, NULL}
+};
+
+/**
+ *
+ */
 int lua_sr_exp_init_mod(void)
 {
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SL)
@@ -2261,6 +2364,16 @@ int lua_sr_exp_init_mod(void)
 		}
 		LM_DBG("loaded msilo api\n");
 	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_UAC)
+	{
+		/* bind the UAC API */
+		if (load_uac_api(&_lua_uacb) < 0)
+		{
+			LM_ERR("cannot bind to UAC API\n");
+			return -1;
+		}
+		LM_DBG("loaded uac api\n");
+	}
 	return 0;
 }
 
@@ -2331,6 +2444,9 @@ int lua_sr_exp_register_mod(char *mname)
 	} else 	if(len==5 && strcmp(mname, "msilo")==0) {
 		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_MSILO;
 		return 0;
+	} else 	if(len==3 && strcmp(mname, "uac")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_UAC;
+		return 0;
 	}
 
 	return -1;
@@ -2379,5 +2495,7 @@ void lua_sr_exp_openlibs(lua_State *L)
 		luaL_openlib(L, "sr.alias_db", _sr_alias_db_Map,      0);
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_MSILO)
 		luaL_openlib(L, "sr.msilo", _sr_msilo_Map,            0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_UAC)
+		luaL_openlib(L, "sr.uac", _sr_uac_Map,                0);
 }
 
