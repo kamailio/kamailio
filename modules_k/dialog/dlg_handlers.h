@@ -81,8 +81,8 @@ void destroy_dlg_handlers(void);
  * \note for a request: get record route in normal order, for a reply get
  * in reverse order, skipping the ones from the request and the proxies' own
  */
-int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
-	struct cell* t, unsigned int leg, str *tag);
+int populate_leg_info(dlg_cell_t *dlg, sip_msg_t *msg,
+	tm_cell_t *t, unsigned int leg, str *tag);
 
 
 /*!
@@ -91,7 +91,7 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
  * \param type type of the entered callback
  * \param param saved dialog structure in the callback
  */
-void dlg_onreq(struct cell* t, int type, struct tmcb_params *param);
+void dlg_onreq(tm_cell_t *t, int type, struct tmcb_params *param);
 
 
 /*!
@@ -105,14 +105,14 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param);
  * \param route_params record-route parameter
  * \param param unused
  */
-void dlg_onroute(struct sip_msg* req, str *rr_param, void *param);
+void dlg_onroute(sip_msg_t *req, str *rr_param, void *param);
 
 
 /*!
  * \brief Timer function that removes expired dialogs, run timeout route
  * \param tl dialog timer list
  */
-void dlg_ontimeout( struct dlg_tl *tl);
+void dlg_ontimeout(dlg_tl_t *tl);
 
 
 /*!
@@ -129,7 +129,7 @@ void dlg_ontimeout( struct dlg_tl *tl);
  * \param run_initial_cbs if set zero, initial callbacks are not executed
  * \return 0 on success, -1 on failure
  */ 
-int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cbs);
+int dlg_new_dialog(sip_msg_t *req, tm_cell_t *t, const int run_initial_cbs);
 
 
 /*!
@@ -139,7 +139,7 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
  * \param res pseudo-variable result
  * \return 0 on success, -1 on failure
  */
-int pv_get_dlg_lifetime(struct sip_msg *msg, pv_param_t *param,
+int pv_get_dlg_lifetime(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
 
 
@@ -150,7 +150,7 @@ int pv_get_dlg_lifetime(struct sip_msg *msg, pv_param_t *param,
  * \param res pseudo-variable result
  * \return 0 on success, -1 on failure
  */
-int pv_get_dlg_status(struct sip_msg *msg, pv_param_t *param,
+int pv_get_dlg_status(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
 
 
@@ -160,6 +160,11 @@ int pv_get_dlg_status(struct sip_msg *msg, pv_param_t *param,
  * \param type unused
  * \param param unused
  */
-void dlg_tmcb_dummy(struct cell* t, int type, struct tmcb_params *param);
+void dlg_tmcb_dummy(tm_cell_t *t, int type, struct tmcb_params *param);
+
+/*!
+ * \brief Get the dialog structure for the SIP message
+ */
+dlg_cell_t *dlg_get_msg_dialog(sip_msg_t *msg);
 
 #endif

@@ -37,20 +37,20 @@
 
 
 /*! dialog timeout list */
-struct dlg_tl
+typedef struct dlg_tl
 {
 	struct dlg_tl     *next;
 	struct dlg_tl     *prev;
 	volatile unsigned int  timeout; /*!< timeout in seconds */
-};
+} dlg_tl_t;
 
 
 /*! dialog timer */
-struct dlg_timer
+typedef struct dlg_timer
 {
 	struct dlg_tl   first; /*!< dialog timeout list */
 	gen_lock_t      *lock; /*!< lock for the list */
-};
+} dlg_timer_t;
 
 
 /*! dialog timer handler */

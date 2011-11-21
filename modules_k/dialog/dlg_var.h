@@ -36,53 +36,55 @@ typedef struct _dlg_ctx {
 	char to_route_name[DLG_TOROUTE_SIZE];
 	int to_bye;
 	int timeout;
-	struct dlg_cell *dlg;
+	dlg_cell_t *dlg1;
+	dlg_iuid_t iuid;
 	int set;
 	unsigned int dir;
 } dlg_ctx_t;
 
 /* A dialog-variable */
-struct dlg_var {
+typedef struct dlg_var {
 	str key;
 	str value;
 	unsigned int vflags;		/*!< internal variable flags */
 	struct dlg_var *next;
-};
+} dlg_var_t;
 
-str * get_dlg_variable(struct dlg_cell *dlg, str *key);
-int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val);
+str* get_dlg_variable(dlg_cell_t *dlg, str *key);
+int set_dlg_variable(dlg_cell_t *dlg, str *key, str *val);
 
 int pv_parse_dialog_var_name(pv_spec_p sp, str *in);
 
-int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_dlg_variable(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 
-int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val);
+int pv_set_dlg_variable(sip_msg_t *msg, pv_param_t *param, int op, pv_value_t *val);
 
 /*! Retrieve the current var-list */
-struct dlg_var * get_local_varlist_pointer(struct sip_msg *msg, int clear_pointer);
+dlg_var_t *get_local_varlist_pointer(sip_msg_t *msg, int clear_pointer);
 
 /* Adds, updates and deletes dialog variables */
-int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val);
+int set_dlg_variable_unsafe(dlg_cell_t *dlg, str *key, str *val);
 
 extern dlg_ctx_t _dlg_ctx;
 
-int pv_get_dlg_ctx(struct sip_msg *msg,  pv_param_t *param,
+int pv_get_dlg_ctx(sip_msg_t *msg,  pv_param_t *param,
 		pv_value_t *res);
-int pv_set_dlg_ctx(struct sip_msg* msg, pv_param_t *param,
+int pv_set_dlg_ctx(sip_msg_t *msg, pv_param_t *param,
 		int op, pv_value_t *val);
 int pv_parse_dlg_ctx_name(pv_spec_p sp, str *in);
 
-int pv_get_dlg(struct sip_msg *msg,  pv_param_t *param,
+int pv_get_dlg(sip_msg_t *msg,  pv_param_t *param,
 		pv_value_t *res);
 int pv_parse_dlg_name(pv_spec_p sp, str *in);
 
-int dlg_cfg_cb(struct sip_msg *foo, unsigned int flags, void *bar);
+int dlg_cfg_cb(sip_msg_t *foo, unsigned int flags, void *bar);
 
-void dlg_set_ctx_dialog(struct dlg_cell *dlg);
-struct dlg_cell* dlg_get_ctx_dialog(void);
+void dlg_set_ctx_iuid(dlg_cell_t *dlg);
+void dlg_reset_ctx_iuid(void);
+dlg_cell_t* dlg_get_ctx_dialog(void);
 
 dlg_ctx_t* dlg_get_dlg_ctx(void);
 
-int spiral_detect_reset(struct sip_msg *foo, unsigned int flags, void *bar);
+int spiral_detect_reset(sip_msg_t *foo, unsigned int flags, void *bar);
 
 #endif
