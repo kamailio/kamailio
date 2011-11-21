@@ -22,10 +22,12 @@
  */
 		       
 #include "../../route.h"
+#include "../../pvapi.h"
 
 #include "dlg_var.h"
 #include "dlg_hash.h"
 #include "dlg_profile.h"
+#include "dlg_handlers.h"
 #include "dlg_db_handler.h"
 
 dlg_ctx_t _dlg_ctx;
@@ -268,16 +270,18 @@ done:
 
 int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	struct dlg_cell *dlg;
+	dlg_cell_t *dlg;
 	str * value;
 
-	if (param==NULL || param->pvn.type!=PV_NAME_INTSTR || param->pvn.u.isname.type!=AVP_NAME_STR || param->pvn.u.isname.name.s.s==NULL) {
+	if (param==NULL || param->pvn.type!=PV_NAME_INTSTR
+			|| param->pvn.u.isname.type!=AVP_NAME_STR
+			|| param->pvn.u.isname.name.s.s==NULL) {
 		LM_CRIT("BUG - bad parameters\n");
 		return -1;
 	}
 
-	/* Retrieve the current dialog */
-	dlg=get_current_dialog( msg);
+	/* Retrieve the dialog for current message */
+	dlg=dlg_get_msg_dialog( msg);
 
 	if (dlg) {
 		/* Lock the dialog */
@@ -287,12 +291,16 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		get_local_varlist_pointer(msg, 0);
 	}
 
+	/* dcm: todo - the value should be cloned for safe usage */
 	value = get_dlg_variable_unsafe(dlg, &param->pvn.u.isname.name.s);
 
 	print_lists(dlg);
 
 	/* unlock dialog */
-	if (dlg) dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+	if (dlg) {
+		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+		dlg_release(dlg);
+	}
 
 	if (value)
 		return pv_get_strval(msg, param, res, value);
@@ -303,11 +311,18 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 
 int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val)
 {
-	struct dlg_cell *dlg;
+	dlg_cell_t *dlg = NULL;
 	int ret = -1;
 
-	/* Retrieve the current dialog */
-	dlg=get_current_dialog( msg);
+	if (param==NULL || param->pvn.type!=PV_NAME_INTSTR
+			|| param->pvn.u.isname.type!=AVP_NAME_STR
+			|| param->pvn.u.isname.name.s.s==NULL ) {
+		LM_CRIT("BUG - bad parameters\n");
+		goto error;
+	}
+
+	/* Retrieve the dialog for current message */
+	dlg=dlg_get_msg_dialog( msg);
 	
 	if (dlg) {
 		/* Lock the dialog */
@@ -317,17 +332,15 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 		get_local_varlist_pointer(msg, 0);
 	}
 
-	if (param==NULL || param->pvn.type!=PV_NAME_INTSTR || param->pvn.u.isname.type!=AVP_NAME_STR || param->pvn.u.isname.name.s.s==NULL ) {
-		LM_CRIT("BUG - bad parameters\n");
-		return -1;
-	}
-
 	if (val==NULL || val->flags&(PV_VAL_NONE|PV_VAL_NULL|PV_VAL_EMPTY)) {
 		/* if NULL, remove the value */
 		ret = set_dlg_variable_unsafe(dlg, &param->pvn.u.isname.name.s, NULL);
 		if(ret!= 0) {
 			/* unlock dialog */
-			if (dlg) dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+			if (dlg) {
+				dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+				dlg_release(dlg);
+			}
 			return ret;
 		}
 	} else {
@@ -336,14 +349,14 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 			LM_ERR("non-string values are not supported\n");
 			/* unlock dialog */
 			if (dlg) dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
-			return -1;
+			goto error;
 		}
 
 		ret = set_dlg_variable_unsafe(dlg, &param->pvn.u.isname.name.s, &val->rs);
 		if(ret!= 0) {
 			/* unlock dialog */
 			if (dlg) dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
-			return -1;
+			goto error;
 		}
 	}
 	/* unlock dialog */
@@ -356,7 +369,11 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 	}
 	print_lists(dlg);
 
+	dlg_release(dlg);
 	return 0;
+error:
+	dlg_release(dlg);
+	return -1;
 }
 
 int pv_get_dlg_ctx(struct sip_msg *msg,  pv_param_t *param,
@@ -379,7 +396,7 @@ int pv_get_dlg_ctx(struct sip_msg *msg,  pv_param_t *param,
 			return pv_get_uintval(msg, param, res,
 					(unsigned int)_dlg_ctx.to_route);
 		case 5:
-			_dlg_ctx.set = (_dlg_ctx.dlg==NULL)?0:1;
+			_dlg_ctx.set = (_dlg_ctx.iuid.h_id==0)?0:1;
 			return pv_get_uintval(msg, param, res,
 					(unsigned int)_dlg_ctx.set);
 		case 6:
@@ -495,117 +512,223 @@ error:
 int pv_get_dlg(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
+	dlg_cell_t *dlg = NULL;
+	int res_type = 0;
+	str sv = { 0 };
+	unsigned int ui = 0;
+
 	if(param==NULL)
 		return -1;
-	if(_dlg_ctx.dlg == NULL)
+
+	/* Retrieve the dialog for current message */
+	dlg=dlg_get_msg_dialog( msg);
+	if(dlg == NULL)
 		return pv_get_null(msg, param, res);
+
 	switch(param->pvn.u.isname.name.n)
 	{
 		case 1:
-			return pv_get_uintval(msg, param, res,
-					(unsigned int)_dlg_ctx.dlg->h_id);
+			res_type = 1;
+			ui = (unsigned int)dlg->h_id;
+			break;
 		case 2:
-			return pv_get_uintval(msg, param, res,
-					(unsigned int)_dlg_ctx.dlg->state);
+			res_type = 1;
+			ui = (unsigned int)dlg->state;
+			break;
 		case 3:
-			if(_dlg_ctx.dlg->route_set[DLG_CALLEE_LEG].s==NULL
-					|| _dlg_ctx.dlg->route_set[DLG_CALLEE_LEG].len<=0)
-				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res,
-					&_dlg_ctx.dlg->route_set[DLG_CALLEE_LEG]);
+			if(dlg->route_set[DLG_CALLEE_LEG].s==NULL
+					|| dlg->route_set[DLG_CALLEE_LEG].len<=0)
+				goto done;
+			sv.s = pv_get_buffer();
+			sv.len = dlg->route_set[DLG_CALLEE_LEG].len;
+			if(pv_get_buffer_size()<sv.len)
+				goto done;
+			res_type = 2;
+			strncpy(sv.s, dlg->route_set[DLG_CALLEE_LEG].s, sv.len);
+			sv.s[sv.len] = '\0';
+			break;
 		case 4:
-			return pv_get_uintval(msg, param, res,
-					(unsigned int)_dlg_ctx.dlg->dflags);
+			res_type = 1;
+			ui = (unsigned int)dlg->dflags;
+			break;
 		case 5:
-			return pv_get_uintval(msg, param, res,
-					(unsigned int)_dlg_ctx.dlg->sflags);
+			res_type = 1;
+			ui = (unsigned int)dlg->sflags;
+			break;
 		case 6:
-			if(_dlg_ctx.dlg->callid.s==NULL
-					|| _dlg_ctx.dlg->callid.len<=0)
-				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res,
-					&_dlg_ctx.dlg->callid);
+			if(dlg->callid.s==NULL
+					|| dlg->callid.len<=0)
+				goto done;
+			sv.s = pv_get_buffer();
+			sv.len = dlg->callid.len;
+			if(pv_get_buffer_size()<sv.len)
+				goto done;
+			res_type = 2;
+			strncpy(sv.s, dlg->callid.s, sv.len);
+			sv.s[sv.len] = '\0';
+			break;
 		case 7:
-			if(_dlg_ctx.dlg->to_uri.s==NULL
-					|| _dlg_ctx.dlg->to_uri.len<=0)
-				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res,
-					&_dlg_ctx.dlg->to_uri);
+			if(dlg->to_uri.s==NULL
+					|| dlg->to_uri.len<=0)
+				goto done;
+			sv.s = pv_get_buffer();
+			sv.len = dlg->to_uri.len;
+			if(pv_get_buffer_size()<sv.len)
+				goto done;
+			res_type = 2;
+			strncpy(sv.s, dlg->to_uri.s, sv.len);
+			sv.s[sv.len] = '\0';
+			break;
 		case 8:
-			if(_dlg_ctx.dlg->tag[DLG_CALLEE_LEG].s==NULL
-					|| _dlg_ctx.dlg->tag[DLG_CALLEE_LEG].len<=0)
-				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res,
-					&_dlg_ctx.dlg->tag[DLG_CALLEE_LEG]);
+			if(dlg->tag[DLG_CALLEE_LEG].s==NULL
+					|| dlg->tag[DLG_CALLEE_LEG].len<=0)
+				goto done;
+			sv.s = pv_get_buffer();
+			sv.len = dlg->tag[DLG_CALLEE_LEG].len;
+			if(pv_get_buffer_size()<sv.len)
+				goto done;
+			res_type = 2;
+			strncpy(sv.s, dlg->tag[DLG_CALLEE_LEG].s, sv.len);
+			sv.s[sv.len] = '\0';
+			break;
 		case 9:
-			return pv_get_uintval(msg, param, res,
-					(unsigned int)_dlg_ctx.dlg->toroute);
+			res_type = 1;
+			ui = (unsigned int)dlg->toroute;
+			break;
 		case 10:
-			if(_dlg_ctx.dlg->cseq[DLG_CALLEE_LEG].s==NULL
-					|| _dlg_ctx.dlg->cseq[DLG_CALLEE_LEG].len<=0)
-				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res,
-					&_dlg_ctx.dlg->cseq[DLG_CALLEE_LEG]);
+			if(dlg->cseq[DLG_CALLEE_LEG].s==NULL
+					|| dlg->cseq[DLG_CALLEE_LEG].len<=0)
+				goto done;
+			sv.s = pv_get_buffer();
+			sv.len = dlg->cseq[DLG_CALLEE_LEG].len;
+			if(pv_get_buffer_size()<sv.len)
+				goto done;
+			res_type = 2;
+			strncpy(sv.s, dlg->cseq[DLG_CALLEE_LEG].s, sv.len);
+			sv.s[sv.len] = '\0';
+			break;
 		case 11:
-			if(_dlg_ctx.dlg->route_set[DLG_CALLER_LEG].s==NULL
-					|| _dlg_ctx.dlg->route_set[DLG_CALLER_LEG].len<=0)
-				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res,
-					&_dlg_ctx.dlg->route_set[DLG_CALLER_LEG]);
+			if(dlg->route_set[DLG_CALLER_LEG].s==NULL
+					|| dlg->route_set[DLG_CALLER_LEG].len<=0)
+				goto done;
+			sv.s = pv_get_buffer();
+			sv.len = dlg->route_set[DLG_CALLER_LEG].len;
+			if(pv_get_buffer_size()<sv.len)
+				goto done;
+			res_type = 2;
+			strncpy(sv.s, dlg->route_set[DLG_CALLER_LEG].s, sv.len);
+			sv.s[sv.len] = '\0';
+			break;
 		case 12:
-			if(_dlg_ctx.dlg->from_uri.s==NULL
-					|| _dlg_ctx.dlg->from_uri.len<=0)
-				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res,
-					&_dlg_ctx.dlg->from_uri);
+			if(dlg->from_uri.s==NULL
+					|| dlg->from_uri.len<=0)
+				goto done;
+			sv.s = pv_get_buffer();
+			sv.len = dlg->from_uri.len;
+			if(pv_get_buffer_size()<sv.len)
+				goto done;
+			res_type = 2;
+			strncpy(sv.s, dlg->from_uri.s, sv.len);
+			sv.s[sv.len] = '\0';
+			break;
 		case 13:
-			if(_dlg_ctx.dlg->tag[DLG_CALLER_LEG].s==NULL
-					|| _dlg_ctx.dlg->tag[DLG_CALLER_LEG].len<=0)
-				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res,
-					&_dlg_ctx.dlg->tag[DLG_CALLER_LEG]);
+			if(dlg->tag[DLG_CALLER_LEG].s==NULL
+					|| dlg->tag[DLG_CALLER_LEG].len<=0)
+				goto done;
+			sv.s = pv_get_buffer();
+			sv.len = dlg->tag[DLG_CALLER_LEG].len;
+			if(pv_get_buffer_size()<sv.len)
+				goto done;
+			res_type = 2;
+			strncpy(sv.s, dlg->tag[DLG_CALLER_LEG].s, sv.len);
+			sv.s[sv.len] = '\0';
+			break;
 		case 14:
-			return pv_get_uintval(msg, param, res,
-					(unsigned int)_dlg_ctx.dlg->lifetime);
+			res_type = 1;
+			ui = (unsigned int)dlg->lifetime;
+			break;
 		case 15:
-			return pv_get_uintval(msg, param, res,
-					(unsigned int)_dlg_ctx.dlg->start_ts);
+			res_type = 1;
+			ui = (unsigned int)dlg->start_ts;
+			break;
 		case 16:
-			if(_dlg_ctx.dlg->cseq[DLG_CALLER_LEG].s==NULL
-					|| _dlg_ctx.dlg->cseq[DLG_CALLER_LEG].len<=0)
-				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res,
-					&_dlg_ctx.dlg->cseq[DLG_CALLER_LEG]);
+			if(dlg->cseq[DLG_CALLER_LEG].s==NULL
+					|| dlg->cseq[DLG_CALLER_LEG].len<=0)
+				goto done;
+			sv.s = pv_get_buffer();
+			sv.len = dlg->cseq[DLG_CALLER_LEG].len;
+			if(pv_get_buffer_size()<sv.len)
+				goto done;
+			res_type = 2;
+			strncpy(sv.s, dlg->cseq[DLG_CALLER_LEG].s, sv.len);
+			sv.s[sv.len] = '\0';
+			break;
 		case 17:
-			if(_dlg_ctx.dlg->contact[DLG_CALLEE_LEG].s==NULL
-					|| _dlg_ctx.dlg->contact[DLG_CALLEE_LEG].len<=0)
-				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res,
-					&_dlg_ctx.dlg->contact[DLG_CALLEE_LEG]);
+			if(dlg->contact[DLG_CALLEE_LEG].s==NULL
+					|| dlg->contact[DLG_CALLEE_LEG].len<=0)
+				goto done;
+			sv.s = pv_get_buffer();
+			sv.len = dlg->contact[DLG_CALLEE_LEG].len;
+			if(pv_get_buffer_size()<sv.len)
+				goto done;
+			res_type = 2;
+			strncpy(sv.s, dlg->contact[DLG_CALLEE_LEG].s, sv.len);
+			sv.s[sv.len] = '\0';
+			break;
 		case 18:
-			if(_dlg_ctx.dlg->bind_addr[DLG_CALLEE_LEG]==NULL)
-				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res,
-					&_dlg_ctx.dlg->bind_addr[DLG_CALLEE_LEG]->sock_str);
+			if(dlg->bind_addr[DLG_CALLEE_LEG]==NULL)
+				goto done;
+			sv.s = pv_get_buffer();
+			sv.len = dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.len;
+			if(pv_get_buffer_size()<sv.len)
+				goto done;
+			res_type = 2;
+			strncpy(sv.s, dlg->bind_addr[DLG_CALLEE_LEG]->sock_str.s, sv.len);
+			sv.s[sv.len] = '\0';
+			break;
 		case 19:
-			if(_dlg_ctx.dlg->contact[DLG_CALLER_LEG].s==NULL
-					|| _dlg_ctx.dlg->contact[DLG_CALLER_LEG].len<=0)
-				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res,
-					&_dlg_ctx.dlg->contact[DLG_CALLER_LEG]);
+			if(dlg->contact[DLG_CALLER_LEG].s==NULL
+					|| dlg->contact[DLG_CALLER_LEG].len<=0)
+				goto done;
+			sv.s = pv_get_buffer();
+			sv.len = dlg->contact[DLG_CALLER_LEG].len;
+			if(pv_get_buffer_size()<sv.len)
+				goto done;
+			res_type = 2;
+			strncpy(sv.s, dlg->contact[DLG_CALLER_LEG].s, sv.len);
+			sv.s[sv.len] = '\0';
+			break;
 		case 20:
-			if(_dlg_ctx.dlg->bind_addr[DLG_CALLER_LEG]==NULL)
-				return pv_get_null(msg, param, res);
-			return pv_get_strval(msg, param, res,
-					&_dlg_ctx.dlg->bind_addr[DLG_CALLER_LEG]->sock_str);
+			if(dlg->bind_addr[DLG_CALLER_LEG]==NULL)
+				goto done;
+			sv.s = pv_get_buffer();
+			sv.len = dlg->bind_addr[DLG_CALLER_LEG]->sock_str.len;
+			if(pv_get_buffer_size()<sv.len)
+				goto done;
+			res_type = 2;
+			strncpy(sv.s, dlg->bind_addr[DLG_CALLER_LEG]->sock_str.s, sv.len);
+			sv.s[sv.len] = '\0';
+			break;
 		case 21:
-			return pv_get_uintval(msg, param, res,
-					(unsigned int)_dlg_ctx.dlg->h_entry);
+			res_type = 1;
+			ui = (unsigned int)dlg->h_entry;
+			break;
 		default:
-			return pv_get_uintval(msg, param, res,
-					(unsigned int)_dlg_ctx.dlg->ref);
+			res_type = 1;
+			ui = (unsigned int)dlg->ref;
 	}
-	return 0;
+
+done:
+	dlg_release(dlg);
+
+	switch(res_type) {
+		case 1:
+			return pv_get_uintval(msg, param, res, ui);
+		case 2:
+			return pv_get_strval(msg, param, res, &sv);
+		default:
+			return pv_get_null(msg, param, res);
+	}
 }
 
 int pv_parse_dlg_name(pv_spec_p sp, str *in)
@@ -705,14 +828,21 @@ error:
 	return -1;
 }
 
-void dlg_set_ctx_dialog(struct dlg_cell *dlg)
+void dlg_set_ctx_iuid(dlg_cell_t *dlg)
 {
-	_dlg_ctx.dlg = dlg;
+	_dlg_ctx.iuid.h_entry = dlg->h_entry;
+	_dlg_ctx.iuid.h_id = dlg->h_id;
 }
 
-struct dlg_cell* dlg_get_ctx_dialog(void)
+void dlg_reset_ctx_iuid(void)
 {
-	return _dlg_ctx.dlg;
+	_dlg_ctx.iuid.h_entry = 0;
+	_dlg_ctx.iuid.h_id = 0;
+}
+
+dlg_cell_t* dlg_get_ctx_dialog(void)
+{
+	return dlg_get_by_iuid(&_dlg_ctx.iuid);
 }
 
 dlg_ctx_t* dlg_get_dlg_ctx(void)

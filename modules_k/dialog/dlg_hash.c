@@ -209,9 +209,6 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 	if (dlg_db_mode)
 		remove_dialog_from_db(dlg);
 
-	if(dlg==get_current_dlg_pointer())
-		reset_current_dlg_pointer();
-
 	if (dlg->cbs.first)
 		destroy_dlg_callbacks_list(dlg->cbs.first);
 
@@ -442,10 +439,10 @@ error:
  * \param h_id id of the hash table entry
  * \return dialog structure on success, NULL on failure
  */
-struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id)
+dlg_cell_t *dlg_lookup( unsigned int h_entry, unsigned int h_id)
 {
-	struct dlg_cell *dlg;
-	struct dlg_entry *d_entry;
+	dlg_cell_t *dlg;
+	dlg_entry_t *d_entry;
 
 	if (h_entry>=d_table->size)
 		goto not_found;
@@ -469,6 +466,24 @@ not_found:
 	return 0;
 }
 
+
+/*!
+ * \brief Search a dialog in the global list by iuid
+ *
+ * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again if a dialog has been found.
+ * \param diuid internal unique id per dialog
+ * \return dialog structure on success, NULL on failure
+ */
+dlg_cell_t* dlg_get_by_iuid(dlg_iuid_t *diuid)
+{
+	if(diuid==NULL)
+		return NULL;
+	if(diuid->h_id==0)
+		return NULL;
+	/* dlg ref counter is increased by next line */
+	return dlg_lookup(diuid->h_entry, diuid->h_id);
+}
 
 /*!
  * \brief Helper function to get a dialog corresponding to a SIP message
@@ -552,7 +567,8 @@ void link_dlg(struct dlg_cell *dlg, int n)
 
 	dlg_lock( d_table, d_entry);
 
-	dlg->h_id = d_entry->next_id++;
+	/* keep id 0 for special cases */
+	dlg->h_id = 1 + d_entry->next_id++;
 	if (d_entry->first==0) {
 		d_entry->first = d_entry->last = dlg;
 	} else {
@@ -574,9 +590,9 @@ void link_dlg(struct dlg_cell *dlg, int n)
  * \param dlg dialog
  * \param cnt increment for the reference counter
  */
-void ref_dlg(struct dlg_cell *dlg, unsigned int cnt)
+void dlg_ref(dlg_cell_t *dlg, unsigned int cnt)
 {
-	struct dlg_entry *d_entry;
+	dlg_entry_t *d_entry;
 
 	d_entry = &(d_table->entries[dlg->h_entry]);
 
@@ -592,9 +608,9 @@ void ref_dlg(struct dlg_cell *dlg, unsigned int cnt)
  * \param dlg dialog
  * \param cnt decrement for the reference counter
  */
-void unref_dlg(struct dlg_cell *dlg, unsigned int cnt)
+void dlg_unref(dlg_cell_t *dlg, unsigned int cnt)
 {
-	struct dlg_entry *d_entry;
+	dlg_entry_t *d_entry;
 
 	d_entry = &(d_table->entries[dlg->h_entry]);
 
@@ -605,7 +621,20 @@ void unref_dlg(struct dlg_cell *dlg, unsigned int cnt)
 
 
 /*!
- * Small logging helper functions for next_state_dlg.
+ * \brief Release a dialog from ref counter by 1
+ * \see dlg_unref
+ * \param dlg dialog
+ */
+void dlg_release(dlg_cell_t *dlg)
+{
+	if(dlg==NULL)
+		return;
+	dlg_unref(dlg, 1);
+}
+
+
+/*!
+ * \brief Small logging helper functions for next_state_dlg.
  * \param event logged event
  * \param dlg dialog data
  * \see next_state_dlg
@@ -632,10 +661,10 @@ static inline void log_next_state_dlg(const int event, const struct dlg_cell *dl
  * \param new_state new dialog state
  * \param unref set to 1 when the dialog was deleted, 0 otherwise
  */
-void next_state_dlg(struct dlg_cell *dlg, int event,
+void next_state_dlg(dlg_cell_t *dlg, int event,
 		int *old_state, int *new_state, int *unref)
 {
-	struct dlg_entry *d_entry;
+	dlg_entry_t *d_entry;
 
 	d_entry = &(d_table->entries[dlg->h_entry]);
 
@@ -772,7 +801,8 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 	dlg_unlock( d_table, d_entry);
 
 	LM_DBG("dialog %p changed from state %d to "
-		"state %d, due event %d\n",dlg,*old_state,*new_state,event);
+		"state %d, due event %d (ref %d)\n", dlg, *old_state, *new_state, event,
+		dlg->ref);
 }
 
 /**
