@@ -91,6 +91,7 @@ static int mod_init(void);
 static void mod_destroy(void);
 static int child_init(int rank);
 
+extern int reg_timer_interval;
 
 static pv_export_t mod_pvs[] = {
 	{ {"uac_req", sizeof("uac_req")-1}, PVT_OTHER, pv_get_uac_req, pv_set_uac_req,
@@ -134,6 +135,7 @@ static param_export_t params[] = {
 	{"auth_password_avp", STR_PARAM,                &auth_password_avp     },
 	{"reg_db_url",        STR_PARAM,                &reg_db_url.s          },
 	{"reg_contact_addr",  STR_PARAM,                &reg_contact_addr.s    },
+	{"reg_timer_interval", STR_PARAM,		&reg_timer_interval	},
 	{0, 0, 0}
 };
 
