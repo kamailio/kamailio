@@ -135,7 +135,7 @@ static param_export_t params[] = {
 	{"auth_password_avp", STR_PARAM,                &auth_password_avp     },
 	{"reg_db_url",        STR_PARAM,                &reg_db_url.s          },
 	{"reg_contact_addr",  STR_PARAM,                &reg_contact_addr.s    },
-	{"reg_timer_interval", STR_PARAM,		&reg_timer_interval	},
+	{"reg_timer_interval", INT_PARAM,		&reg_timer_interval	},
 	{0, 0, 0}
 };
 
