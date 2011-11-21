@@ -39,20 +39,21 @@ Ramona-Elena Modroiu
               3.6. auth_username_avp (string)
               3.7. auth_password_avp (string)
               3.8. reg_db_url (string)
-              3.9. reg_contact_addr (string)
+              3.9. reg_timer_interval (string)
 
-        4. Functions
+        4. reg_contact_addr (string)
+        5. Functions
 
-              4.1. uac_replace_from(display,uri)
-              4.2. uac_replace_from(uri)
-              4.3. uac_restore_from()
-              4.4. uac_auth()
-              4.5. uac_req_send()
-              4.6. uac_reg_lookup(uuid, dst)
-              4.7. uac_reg_request_to(user, mode)
+              5.1. uac_replace_from(display,uri)
+              5.2. uac_replace_from(uri)
+              5.3. uac_restore_from()
+              5.4. uac_auth()
+              5.5. uac_req_send()
+              5.6. uac_reg_lookup(uuid, dst)
+              5.7. uac_reg_request_to(user, mode)
 
-        5. Exported pseudo-variables
-        6. Remote Registration
+        6. Exported pseudo-variables
+        7. Remote Registration
 
    List of Examples
 
@@ -64,15 +65,16 @@ Ramona-Elena Modroiu
    1.6. Set auth_username_avp parameter
    1.7. Set auth_password_avp parameter
    1.8. Set reg_db_url parameter
-   1.9. Set reg_contact_addr parameter
-   1.10. uac_replace_from usage
+   1.9. Set reg_timer_inteval parameter
+   1.10. Set reg_contact_addr parameter
    1.11. uac_replace_from usage
-   1.12. uac_restore_from usage
-   1.13. uac_auth usage
-   1.14. uac_req_send usage
-   1.15. uac_reg_lookup usage
-   1.16. uac_reg_request_to usage
-   1.17. lookup remote registrations usage
+   1.12. uac_replace_from usage
+   1.13. uac_restore_from usage
+   1.14. uac_auth usage
+   1.15. uac_req_send usage
+   1.16. uac_reg_lookup usage
+   1.17. uac_reg_request_to usage
+   1.18. lookup remote registrations usage
 
 Chapter 1. Admin Guide
 
@@ -94,20 +96,21 @@ Chapter 1. Admin Guide
         3.6. auth_username_avp (string)
         3.7. auth_password_avp (string)
         3.8. reg_db_url (string)
-        3.9. reg_contact_addr (string)
+        3.9. reg_timer_interval (string)
 
-   4. Functions
+   4. reg_contact_addr (string)
+   5. Functions
 
-        4.1. uac_replace_from(display,uri)
-        4.2. uac_replace_from(uri)
-        4.3. uac_restore_from()
-        4.4. uac_auth()
-        4.5. uac_req_send()
-        4.6. uac_reg_lookup(uuid, dst)
-        4.7. uac_reg_request_to(user, mode)
+        5.1. uac_replace_from(display,uri)
+        5.2. uac_replace_from(uri)
+        5.3. uac_restore_from()
+        5.4. uac_auth()
+        5.5. uac_req_send()
+        5.6. uac_reg_lookup(uuid, dst)
+        5.7. uac_reg_request_to(user, mode)
 
-   5. Exported pseudo-variables
-   6. Remote Registration
+   6. Exported pseudo-variables
+   7. Remote Registration
 
 1. Overview
 
@@ -155,7 +158,7 @@ Chapter 1. Admin Guide
    3.6. auth_username_avp (string)
    3.7. auth_password_avp (string)
    3.8. reg_db_url (string)
-   3.9. reg_contact_addr (string)
+   3.9. reg_timer_interval (string)
 
 3.1. rr_store_param (string)
 
@@ -263,27 +266,39 @@ modparam("uac", "reg_db_url",
     "mysql://openser:openserrw@localhost/openser")
 ...
 
-3.9. reg_contact_addr (string)
+3.9. reg_timer_interval (string)
+
+   Timer interval (in seconds) at which registrations are managed, e.g.
+   renewed as needed.
+
+   The default value is 90 seconds.
+
+   Example 1.9. Set reg_timer_inteval parameter
+...
+modparam("uac", "reg_timer_interval", 60)
+...
+
+4. reg_contact_addr (string)
 
    Address to be used to build contact address. Must be at least host
    part, can have port and parameters. Must not include 'sip:'.
 
-   Example 1.9. Set reg_contact_addr parameter
+   Example 1.10. Set reg_contact_addr parameter
 ...
 modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
 ...
 
-4. Functions
+5. Functions
 
-   4.1. uac_replace_from(display,uri)
-   4.2. uac_replace_from(uri)
-   4.3. uac_restore_from()
-   4.4. uac_auth()
-   4.5. uac_req_send()
-   4.6. uac_reg_lookup(uuid, dst)
-   4.7. uac_reg_request_to(user, mode)
+   5.1. uac_replace_from(display,uri)
+   5.2. uac_replace_from(uri)
+   5.3. uac_restore_from()
+   5.4. uac_auth()
+   5.5. uac_req_send()
+   5.6. uac_reg_lookup(uuid, dst)
+   5.7. uac_reg_request_to(user, mode)
 
-4.1.  uac_replace_from(display,uri)
+5.1.  uac_replace_from(display,uri)
 
    Replace in FROM header the display name and the URI part.
 
@@ -291,7 +306,7 @@ modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
 
    This function can be used from REQUEST_ROUTE and from BRANCH_ROUTE.
 
-   Example 1.10. uac_replace_from usage
+   Example 1.11. uac_replace_from usage
 ...
 # replace both display and uri
 uac_replace_from("$avp(s:display)","$avp(s:uri)");
@@ -303,7 +318,7 @@ uac_replace_from("","sip:robin@gotham.org");
 uac_replace_from("","");
 ...
 
-4.2.  uac_replace_from(uri)
+5.2.  uac_replace_from(uri)
 
    Replace in FROM header the URI part without altering the display name.
 
@@ -311,12 +326,12 @@ uac_replace_from("","");
 
    This function can be used from REQUEST_ROUTE and from BRANCH_ROUTE.
 
-   Example 1.11. uac_replace_from usage
+   Example 1.12. uac_replace_from usage
 ...
 uac_replace_from("sip:batman@gotham.org");
 ...
 
-4.3.  uac_restore_from()
+5.3.  uac_restore_from()
 
    This function will check if the FROM URI was modified and will use the
    information stored in header parameter to restore the original FROM URI
@@ -324,12 +339,12 @@ uac_replace_from("sip:batman@gotham.org");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.12. uac_restore_from usage
+   Example 1.13. uac_restore_from usage
 ...
 uac_restore_from();
 ...
 
-4.4.  uac_auth()
+5.4.  uac_auth()
 
    This function can be called only from failure route and will build the
    authentication response header and insert it into the request without
@@ -337,12 +352,12 @@ uac_restore_from();
 
    This function can be used from FAILURE_ROUTE.
 
-   Example 1.13. uac_auth usage
+   Example 1.14. uac_auth usage
 ...
 uac_auth();
 ...
 
-4.5.  uac_req_send()
+5.5.  uac_req_send()
 
    This function sends a SIP message from the configuration file. The
    message is built out of $uac_req(...) pseudo-variable.
@@ -350,7 +365,7 @@ uac_auth();
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, ONREPLY_ROUTE, LOCAL_ROUTE.
 
-   Example 1.14. uac_req_send usage
+   Example 1.15. uac_req_send usage
 ...
 $uac_req(method)="OPTIONS";
 $uac_req(ruri)="sip:kamailio.org";
@@ -359,14 +374,14 @@ $uac_req(turi)="sip:kamailio.org";
 uac_req_send();
 ...
 
-4.6.  uac_reg_lookup(uuid, dst)
+5.6.  uac_reg_lookup(uuid, dst)
 
    This function sets the PV dst to SIP URI that correspond to uuid in uac
    registations table. uuid and dst must be pseudo-variables.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.15. uac_reg_lookup usage
+   Example 1.16. uac_reg_lookup usage
 ...
 
 if(uac_reg_lookup("$rU", "$ru"))
@@ -375,7 +390,7 @@ if(uac_reg_lookup("$rU", "$ru"))
 }
 ...
 
-4.7.  uac_reg_request_to(user, mode)
+5.7.  uac_reg_request_to(user, mode)
 
    This function can be used to send an authenticated request to a remote
    user in the uac registrations table. It sets the request-uri, dst-uri
@@ -389,7 +404,7 @@ if(uac_reg_lookup("$rU", "$ru"))
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.16. uac_reg_request_to usage
+   Example 1.17. uac_reg_request_to usage
 ...
 
 if(uac_reg_request_to("$fU", 0))
@@ -408,14 +423,14 @@ failure_route[REMOTE_AUTH] {
 }
 ...
 
-5. Exported pseudo-variables
+6. Exported pseudo-variables
 
      * $uac_req(key)
 
    Exported pseudo-variables are documented at
    http://www.kamailio.org/dokuwiki/.
 
-6. Remote Registration
+7. Remote Registration
 
    The module can register contact addresses to remote REGISTRAR servers.
    You have to add records to uacreg table. The table stores following
@@ -448,7 +463,7 @@ failure_route[REMOTE_AUTH] {
    if the call is coming from a remote SIP provider and can change the
    R-URI to local username@domain. Afterwards you can run location lookup.
 
-   Example 1.17. lookup remote registrations usage
+   Example 1.18. lookup remote registrations usage
 ...
     if(uac_reg_lookup("$rU", "$ru")) {
         xlog("request from a remote SIP provider [$ou => $ru]\n");

@@ -273,22 +273,6 @@ modparam("uac", "reg_db_url",
 			</example>
 		</section>
 
-		<section id="reg-contact-addr-id">
-			<title><varname>reg_contact_addr</varname> (string)</title>
-			<para>
-			Address to be used to build contact address. Must be at least
-			host part, can have port and parameters. Must not include 'sip:'.
-			</para>
-			<example>
-				<title>Set <varname>reg_contact_addr</varname> parameter</title>
-				<programlisting format="linespecific">
-...
-modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
-...
-				</programlisting>
-			</example>
-		</section>
-
 		<section id="reg-timer-interval-id">
 			<title><varname>reg_timer_interval</varname> (string)</title>
 			<para>
