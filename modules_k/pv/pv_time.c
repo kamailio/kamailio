@@ -35,13 +35,16 @@
 #include "pv_time.h"
 
 static unsigned int _pv_msg_id = 0;
+static int _pv_msg_pid = 0;
 static time_t _pv_msg_tm = 0;
+
 static int pv_update_time(struct sip_msg *msg, time_t *t)
 {
-	if(_pv_msg_id != msg->id || _pv_msg_tm==0)
+	if(_pv_msg_id != msg->id || _pv_msg_pid != msg->pid || _pv_msg_tm==0)
 	{
 		_pv_msg_tm = time(NULL);
 		_pv_msg_id = msg->id;
+		_pv_msg_pid = msg->pid;
 		
 		if(t!=NULL)
 			*t=_pv_msg_tm;
