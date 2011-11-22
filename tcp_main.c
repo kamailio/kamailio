@@ -2716,7 +2716,10 @@ static int tcpconn_1st_send(int fd, struct tcp_connection* c,
 	
 	n=_tcpconn_write_nb(fd, c, buf, len);
 	if (unlikely(n<(int)len)){
-		if ((n>=0) || errno==EAGAIN || errno==EWOULDBLOCK){
+		/* on EAGAIN or ENOTCONN return success.
+		   ENOTCONN appears on newer FreeBSD versions (non-blocking socket,
+		   connect() & send immediately) */
+		if ((n>=0) || errno==EAGAIN || errno==EWOULDBLOCK || errno==ENOTCONN){
 			DBG("pending write on new connection %p "
 				" (%d/%d bytes written)\n", c, n, len);
 			if (unlikely(n<0)) n=0;
