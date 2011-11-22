@@ -92,6 +92,11 @@ struct dlg_table *d_table = 0;
  */
 #define unref_dlg_unsafe(_dlg,_cnt,_d_entry)   \
 	do { \
+		if((_dlg)->ref <= 0 ) { \
+			LM_WARN("invalid unref'ing dlg %p with ref %d by %d\n",\
+					(_dlg),(_dlg)->ref,(_cnt));\
+			break; \
+		} \
 		(_dlg)->ref -= (_cnt); \
 		LM_DBG("unref dlg %p with %d -> %d\n",\
 			(_dlg),(_cnt),(_dlg)->ref);\
