@@ -764,6 +764,11 @@ void faked_env( struct cell *t, struct sip_msg *msg)
 #endif
 	static struct socket_info* backup_si;
 
+	static struct lump *backup_add_rm;
+	static struct lump *backup_body_lumps;
+	static struct lump_rpl *backup_reply_lump;
+
+
 	if (msg) {
 		/* remember we are back in request processing, but process
 		 * a shmem-ed replica of the request; advertise it in route type;
@@ -803,6 +808,10 @@ void faked_env( struct cell *t, struct sip_msg *msg)
 		/* set default send address to the saved value */
 		backup_si=bind_address;
 		bind_address=t->uac[0].request.dst.send_sock;
+		/* backup lump lists */
+		backup_add_rm = t->uas.request->add_rm;
+		backup_body_lumps = t->uas.request->body_lumps;
+		backup_reply_lump = t->uas.request->reply_lump;
 	} else {
 		/* restore original environment */
 		set_t(backup_t, backup_branch);
@@ -819,6 +828,10 @@ void faked_env( struct cell *t, struct sip_msg *msg)
 		xavp_set_list(backup_xavps);
 #endif
 		bind_address=backup_si;
+		/* restore lump lists */
+		t->uas.request->add_rm = backup_add_rm;
+		t->uas.request->body_lumps = backup_body_lumps;
+		t->uas.request->reply_lump = backup_reply_lump;
 	}
 }
 
