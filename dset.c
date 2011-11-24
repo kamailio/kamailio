@@ -191,11 +191,21 @@ void init_branch_iterator(void)
 	branch_iterator = 0;
 }
 
+/**
+ * return the value of current branch iterator
+ */
 int get_branch_iterator(void)
 {
 	return branch_iterator;
 }
 
+/**
+ * set the value of current branch interator
+ */
+void set_branch_iterator(int n)
+{
+	branch_iterator = n;
+}
 
 
 /** \brief Get a branch from the destination set
@@ -371,6 +381,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 	qvalue_t q;
 	str uri;
 	char* p, *qbuf;
+	int crt_branch;
 	static char dset[MAX_REDIRECTION_LEN];
 
 	if (msg->new_uri.s) {
@@ -383,6 +394,9 @@ char* print_dset(struct sip_msg* msg, int* len)
 		cnt = 0;
 		*len = 0;
 	}
+
+	/* backup current branch index to restore it later */
+	crt_branch = get_branch_iterator();
 
 	init_branch_iterator();
 	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0))) {
@@ -399,7 +413,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 
 	if (*len + 1 > MAX_REDIRECTION_LEN) {
 		LOG(L_ERR, "ERROR: redirection buffer length exceed\n");
-		return 0;
+		goto error;
 	}
 
 	memcpy(dset, CONTACT, CONTACT_LEN);
@@ -450,7 +464,12 @@ char* print_dset(struct sip_msg* msg, int* len)
 	}
 
 	memcpy(p, CRLF " ", CRLF_LEN + 1);
+	set_branch_iterator(crt_branch);
 	return dset;
+
+error:
+	set_branch_iterator(crt_branch);
+	return 0;
 }
 
 
