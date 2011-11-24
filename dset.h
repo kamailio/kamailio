@@ -107,15 +107,19 @@ static inline int ser_append_branch(struct sip_msg* msg,
 
 
 /*! \brief
- * Iterate through the list of transaction branches 
+ * Init the index to iterate through the list of transaction branches
  */
 void init_branch_iterator(void);
 
 /*! \brief
- * Return branch iterator position 
+ * Return branch iterator position
  */
 int get_branch_iterator(void);
 
+/*! \brief
+ * Set branch iterator position
+ */
+void set_branch_iterator(int n);
 
 /*! \brief Get the next branch in the current transaction.
  * @return pointer to the uri of the next branch (which the length written in
