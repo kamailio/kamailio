@@ -53,7 +53,7 @@ enum {
 
 
 
-#define add_param( _param , _body ) \
+#define add_param( _param , _body , _newparam ) \
 	do{\
 		DBG("DEBUG: add_param: %.*s=%.*s\n",param->name.len,ZSW(param->name.s),\
 			param->value.len,ZSW(param->value.s));\
@@ -62,6 +62,7 @@ enum {
 		(_body)->last_param =(_param);\
 		if ((_param)->type==TAG_PARAM)\
 			memcpy(&((_body)->tag_value),&((_param)->value),sizeof(str));\
+		_newparam = 0;\
 	}while(0);
 
 
@@ -73,11 +74,13 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 					int *returned_status)
 {
 	struct to_param *param;
+	struct to_param *newparam;
 	int status;
 	int saved_status;
 	char  *tmp;
 
 	param=0;
+	newparam=0;
 	status=E_PARA_VALUE;
 	saved_status=E_PARA_VALUE;
 	for( tmp=buffer; tmp<end; tmp++)
@@ -99,7 +102,7 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 					case PARA_VALUE_TOKEN:
 						param->value.len = tmp-param->value.s;
 						status = E_PARA_VALUE;
-						add_param( param , to_b );
+						add_param(param, to_b, newparam);
 						break;
 					case F_CRLF:
 					case F_LF:
@@ -132,7 +135,7 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 						param->value.len = tmp-param->value.s;
 						saved_status = E_PARA_VALUE;
 						status = F_LF;
-						add_param( param , to_b );
+						add_param(param, to_b, newparam);
 						break;
 					case F_CR:
 						status=F_CRLF;
@@ -171,7 +174,7 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 						param->value.len = tmp-param->value.s;
 						saved_status = E_PARA_VALUE;
 						status = F_CR;
-						add_param( param , to_b );
+						add_param(param, to_b, newparam);
 						break;
 					case F_CRLF:
 					case F_CR:
@@ -202,7 +205,7 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 					case PARA_VALUE_TOKEN:
 						status = E_PARA_VALUE;
 						param->value.len = tmp-param->value.s;
-						add_param( param , to_b );
+						add_param(param , to_b, newparam);
 					case E_PARA_VALUE:
 						saved_status = status;
 						goto endofheader;
@@ -242,7 +245,7 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 						break;
 					case PARA_VALUE_QUOTED:
 						param->value.len=tmp-param->value.s;
-						add_param( param , to_b );
+						add_param(param, to_b, newparam);
 						status = E_PARA_VALUE;
 						break;
 					case F_CRLF:
@@ -277,7 +280,7 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 					case PARA_VALUE_TOKEN:
 						param->value.len=tmp-param->value.s;
 semicolon_add_param:
-						add_param(param,to_b);
+						add_param(param, to_b, newparam);
 					case E_PARA_VALUE:
 						param = (struct to_param*)
 							pkg_malloc(sizeof(struct to_param));
@@ -289,6 +292,8 @@ semicolon_add_param:
 						memset(param,0,sizeof(struct to_param));
 						param->type=GENERAL_PARAM;
 						status = S_PARA_NAME;
+						/* link to free mem if not added in to_body list */
+						newparam = param;
 						break;
 					case F_CRLF:
 					case F_LF:
@@ -483,19 +488,19 @@ endofheader:
 			/* parameter without '=', e.g. foo */
 			param->value.s=0;
 			param->value.len=0;
-			add_param(param, to_b);
+			add_param(param, to_b, newparam);
 			saved_status=E_PARA_VALUE;
 			break;
 		case S_PARA_VALUE:
 			/* parameter with null value, e.g. foo= */
 			param->value.s=tmp;
 			param->value.len=0;
-			add_param(param, to_b);
+			add_param(param, to_b, newparam);
 			saved_status=E_PARA_VALUE;
 			break;
 		case PARA_VALUE_TOKEN:
 			param->value.len=tmp-param->value.s;
-			add_param(param, to_b);
+			add_param(param, to_b, newparam);
 			saved_status=E_PARA_VALUE;
 			break;
 		case E_PARA_VALUE:
@@ -510,7 +515,7 @@ endofheader:
 	return tmp;
 
 error:
-	if (param) pkg_free(param);
+	if (newparam) pkg_free(newparam);
 	to_b->error=PARSE_ERROR;
 	*returned_status = status;
 	return tmp;
@@ -527,15 +532,8 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 	
 	saved_status=START_TO; /* fixes gcc 4.x warning */
 	status=START_TO;
+	memset(to_b, 0, sizeof(struct to_body));
 	to_b->error=PARSE_OK;
-	to_b->uri.len = 0;
-	to_b->uri.s= 0;
-	to_b->display.len = 0;
-	to_b->display.s = 0;
-	to_b->tag_value.len = 0;
-	to_b->tag_value.s = 0;
-	to_b->param_lst = 0;
-	to_b->last_param = 0;
 	foo=0;
 
 	for( tmp=buffer; tmp<end; tmp++)
