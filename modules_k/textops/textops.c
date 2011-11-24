@@ -1254,7 +1254,7 @@ static int set_body_f(struct sip_msg* msg, char* p1, char* p2)
 		return -1;
 	}
 
-	free_lump_list(msg->body_lumps);
+	del_nonshm_lump( &(msg->body_lumps) );
 	msg->body_lumps = NULL;
 
 	if (msg->content_length) 
