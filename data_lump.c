@@ -650,7 +650,7 @@ void del_nonshm_lump( struct lump** lump_list )
 	crt = *lump_list;
 
 	while (crt) {
-		if (crt->flags!=LUMPFLAG_SHMEM) {
+		if (!(crt->flags&LUMPFLAG_SHMEM)) {
 			/* unlink it */
 			foo = crt;
 			crt = crt->next;
@@ -665,7 +665,7 @@ void del_nonshm_lump( struct lump** lump_list )
 			prev_r = crt;
 			while(r){
 				foo=r; r=r->after;
-				if (foo->flags!=LUMPFLAG_SHMEM) {
+				if (!(foo->flags&LUMPFLAG_SHMEM)) {
 					prev_r->after = r;
 					free_lump(foo);
 					pkg_free(foo);
@@ -678,7 +678,7 @@ void del_nonshm_lump( struct lump** lump_list )
 			prev_r = crt;
 			while(r){
 				foo=r; r=r->before;
-				if (foo->flags!=LUMPFLAG_SHMEM) {
+				if (!(foo->flags&LUMPFLAG_SHMEM)) {
 					prev_r->before = r;
 					free_lump(foo);
 					pkg_free(foo);
