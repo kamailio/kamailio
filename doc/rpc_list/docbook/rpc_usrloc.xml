@@ -8,69 +8,11 @@ RPC Exports for usrloc
 	</title>
 
 
-<section id="usrloc.stats"><title>usrloc.stats</title>
+<section id="ul.dump"><title>ul.dump</title>
 <para>
-        Documentation missing (rpc_stats_doc).
+        Dump user location tables
 </para>
 <para>
-        Returns an array.
-</para>
-</section>
-
-<section id="usrloc.delete_uid"><title>usrloc.delete_uid</title>
-<para>
-        Documentation missing (rpc_delete_uid_doc).
-</para>
-<para>
-</para>
-</section>
-
-<section id="usrloc.delete_contact"><title>usrloc.delete_contact</title>
-<para>
-        Documentation missing (rpc_delete_contact_doc).
-</para>
-<para>
-</para>
-</section>
-
-<section id="usrloc.dump"><title>usrloc.dump</title>
-<para>
-        Documentation missing (rpc_dump_doc).
-</para>
-<para>
-</para>
-</section>
-
-<section id="usrloc.dump_file"><title>usrloc.dump_file</title>
-<para>
-        Documentation missing (rpc_dump_file_doc).
-</para>
-<para>
-</para>
-</section>
-
-<section id="usrloc.flush"><title>usrloc.flush</title>
-<para>
-        Documentation missing (rpc_flush_doc).
-</para>
-<para>
-</para>
-</section>
-
-<section id="usrloc.add_contact"><title>usrloc.add_contact</title>
-<para>
-        Documentation missing (rpc_add_contact_doc).
-</para>
-<para>
-</para>
-</section>
-
-<section id="usrloc.show_contacts"><title>usrloc.show_contacts</title>
-<para>
-        Documentation missing (rpc_show_contacts_doc).
-</para>
-<para>
-        Returns an array.
 </para>
 </section>
 
