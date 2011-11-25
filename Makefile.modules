@@ -75,6 +75,14 @@ override static_modules_path=
 # temporary def (visible only in the module, not exported)
 DEFS += -DMOD_NAME='"$(MOD_NAME)"'
 
+
+ifeq (,$(findstring -DSER_MOD_INTERFACE, $(DEFS)))
+	MODIFACE=-DOPENSER_MOD_INTERFACE
+else
+	MODIFACE=-DSER_MOD_INTERFACE
+endif
+
+
 ifneq ($(makefile_defs_included),1)
 $(error "the local makefile does not include Makefile.defs!")
 endif
@@ -296,6 +304,10 @@ else
 man:
 
 endif
+
+
+printmiface:
+	@echo $(MODIFACE)
 
 endif # ifeq($(makefile_defs),1)
 
