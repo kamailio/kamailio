@@ -5,7 +5,7 @@ RPC Exports for debugger
 
 
  1. dbg.bp
-        Breakpoint command
+        Documentation missing (dbg_rpc_bp_doc).
 
  2. dbg.ls
         List debugging process array

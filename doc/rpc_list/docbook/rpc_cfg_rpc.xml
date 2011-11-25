@@ -8,7 +8,25 @@ RPC Exports for cfg_rpc
 	</title>
 
 
+<section id="cfg.set"><title>cfg.set</title>
+<para>
+        Set the value of a configuration variable and commit the change
+        immediately
+</para>
+<para>
+</para>
+</section>
+
 <section id="cfg.set_now_int"><title>cfg.set_now_int</title>
+<para>
+        Set the value of a configuration variable and commit the change
+        immediately
+</para>
+<para>
+</para>
+</section>
+
+<section id="cfg.seti"><title>cfg.seti</title>
 <para>
         Set the value of a configuration variable and commit the change
         immediately
@@ -21,6 +39,33 @@ RPC Exports for cfg_rpc
 <para>
         Set the value of a configuration variable and commit the change
         immediately
+</para>
+<para>
+</para>
+</section>
+
+<section id="cfg.sets"><title>cfg.sets</title>
+<para>
+        Set the value of a configuration variable and commit the change
+        immediately
+</para>
+<para>
+</para>
+</section>
+
+<section id="cfg.del"><title>cfg.del</title>
+<para>
+        Delete the value of a configuration variable from a group
+        instance and commit the change immediately
+</para>
+<para>
+</para>
+</section>
+
+<section id="cfg.set_delayed"><title>cfg.set_delayed</title>
+<para>
+        Prepare the change of a configuration variable, but does not
+        commit the new value yet
 </para>
 <para>
 </para>
@@ -39,6 +84,15 @@ RPC Exports for cfg_rpc
 <para>
         Prepare the change of a configuration variable, but does not
         commit the new value yet
+</para>
+<para>
+</para>
+</section>
+
+<section id="cfg.del_delayed"><title>cfg.del_delayed</title>
+<para>
+        Prepare the deletion of the value of a configuration variable
+        from a group instance, but does not commit the change yet
 </para>
 <para>
 </para>
@@ -88,6 +142,22 @@ RPC Exports for cfg_rpc
 <para>
         List the pending configuration changes that have not been
         committed yet
+</para>
+<para>
+</para>
+</section>
+
+<section id="cfg.add_group_inst"><title>cfg.add_group_inst</title>
+<para>
+        Add a new instance to an existing configuration group
+</para>
+<para>
+</para>
+</section>
+
+<section id="cfg.del_group_inst"><title>cfg.del_group_inst</title>
+<para>
+        Delte an instance of a configuration group
 </para>
 <para>
 </para>

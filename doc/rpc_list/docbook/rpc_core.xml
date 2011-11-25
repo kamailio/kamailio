@@ -102,6 +102,14 @@ RPC Exports for core
 </para>
 </section>
 
+<section id="core.psx"><title>core.psx</title>
+<para>
+        Returns the detailed description of running SER processes.
+</para>
+<para>
+</para>
+</section>
+
 <section id="core.pwd"><title>core.pwd</title>
 <para>
         Returns the working directory of SER server.
