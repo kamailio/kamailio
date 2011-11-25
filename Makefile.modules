@@ -307,7 +307,7 @@ endif
 
 
 printmiface:
-	@echo $(MODIFACE)
+	@echo -n $(MODIFACE)
 
 endif # ifeq($(makefile_defs),1)
 

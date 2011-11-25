@@ -1189,3 +1189,7 @@ dbschema:
 	-@echo "Build database schemas"
 	$(MAKE) -C lib/srdb1/schema
 	-@echo "Done"
+
+.PHONY: printcdefs
+printcdefs:
+	@echo -n $(C_DEFS)
