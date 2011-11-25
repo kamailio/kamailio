@@ -444,6 +444,9 @@ dlg_cell_t *dlg_lookup( unsigned int h_entry, unsigned int h_id)
 	dlg_cell_t *dlg;
 	dlg_entry_t *d_entry;
 
+	if(d_table==NULL)
+		return 0;
+
 	if (h_entry>=d_table->size)
 		goto not_found;
 
