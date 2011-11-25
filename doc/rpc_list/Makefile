@@ -24,27 +24,30 @@ files_list= \
 	$(COREPATH)/modules/ctl/ctl.c:ctl \
 	$(COREPATH)/modules/db_flatstore/flat_rpc.c:db_flatstore \
 	$(COREPATH)/modules/debugger/debugger_api.c:debugger \
+	$(COREPATH)/modules/dialplan/dialplan.c:dialplan \
 	$(COREPATH)/modules/lcr/lcr_rpc.c:lcr \
 	$(COREPATH)/modules/malloc_test/malloc_test.c:malloc_test \
 	$(COREPATH)/modules/mi_rpc/mi_rpc_mod.c:mi_rpc \
+	$(COREPATH)/modules/prefix_route/pr_rpc.c:prefix_route \
+	$(COREPATH)/modules/ratelimit/ratelimit.c:ratelimit \
 	$(COREPATH)/modules/sl/sl_stats.c:sl \
 	$(COREPATH)/modules/tls/tls_rpc.c:tls \
 	$(COREPATH)/modules/tm/tm.c:tm \
 	$(COREPATH)/modules_k/dialog/dialog.c:dialog \
+	$(COREPATH)/modules_k/dispatcher/dispatcher.c:dispatcher \
+	$(COREPATH)/modules_k/domain/domain_mod.c:domain \
 	$(COREPATH)/modules_k/htable/htable.c:htable \
-	$(COREPATH)/modules/ratelimit/ratelimit.c:ratelimit \
+	$(COREPATH)/modules_k/kex/pkg_stats.c:kex \
 	$(COREPATH)/modules_k/uac/uac_reg.c:uac \
-	$(COREPATH)/modules_k/usrloc/ul_rpc.c:usrloc_k \
+	$(COREPATH)/modules_k/usrloc/ul_rpc.c:usrloc \
 	$(COREPATH)/modules_s/cpl-c/cpl_rpc.c:cpl-c \
-	$(COREPATH)/modules_s/dispatcher/ds_rpc.c:dispatcher \
-	$(COREPATH)/modules_s/domain/domain_rpc.c:domain \
+	$(COREPATH)/modules_s/dispatcher/ds_rpc.c:dispatcher_s \
+	$(COREPATH)/modules_s/domain/domain_rpc.c:domain_s \
 	$(COREPATH)/modules_s/gflags/gflags.c:gflags \
 	$(COREPATH)/modules_s/pdt/pdt.c:pdt \
 	$(COREPATH)/modules_s/pike/rpc.c:pike \
-	$(COREPATH)/modules/prefix_route/pr_rpc.c:prefix_route \
 	$(COREPATH)/modules_s/presence_b2b/rpc.c:presence_b2b \
 	$(COREPATH)/modules_s/usrloc/ul_rpc.c:usrloc_s
-
 
 
 # list of excluded groups
@@ -105,6 +108,9 @@ get_prereq=$(firstword $(subst :, ,$(1)))
 
 # get grp from file:grp (get_grp(file:grp) => grp)
 get_listed_grp=$(word 2, $(subst :, ,$(1)))
+
+# get module interface define
+get_modiface=$(shell make -C $(shell dirname $(1)) printmiface)
 
 # get base file name from file:grp: get_bname(file:grp) 
 # => basename(file) without extension (e.g. get_bname(foo/bar.c:x) => bar)
@@ -195,7 +201,7 @@ $(docbook_output_dir)/$$(call get_target,$(1)).xml: \
 								$$(call get_prereq,$(1)) Makefile $(CFG2TXT)
 	$(CFG2DOCBOOK) --file $$< --$(force_grp)grp=$$(call get_grp,$(1)) \
 		--gcc="$(gcc)" --docbook \
-		--defs="$(c_defs) $$(e_idefs_$$(call get_grp,$(1)))" \
+		--defs="$(c_defs) $$(call get_modiface,$(1)) $$(e_idefs_$$(call get_grp,$(1)))" \
 		> "$$@" || (rm -f "$$@"; exit 1)
 
 
