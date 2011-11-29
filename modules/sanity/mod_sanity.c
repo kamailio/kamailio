@@ -59,11 +59,11 @@ static int bind_sanity(sanity_api_t* api);
  */
 static cmd_export_t cmds[] = {
 	{"sanity_check", (cmd_function)w_sanity_check, 0, 0,
-		REQUEST_ROUTE},
+		REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"sanity_check", (cmd_function)w_sanity_check, 1, sanity_fixup,
-		REQUEST_ROUTE},
+		REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"sanity_check", (cmd_function)w_sanity_check, 2, sanity_fixup,
-		REQUEST_ROUTE},
+		REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"bind_sanity",  (cmd_function)bind_sanity,    0, 0, 0},
 	{0, 0, 0, 0}
 };

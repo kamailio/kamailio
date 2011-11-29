@@ -44,6 +44,26 @@
 #define UNSUPPORTED_HEADER "Unsupported: "
 #define UNSUPPORTED_HEADER_LEN (sizeof(UNSUPPORTED_HEADER)-1)
 
+
+/**
+ * wrapper to SL send reply function
+ * - check if it is the case for sending a reply before doing it
+ */
+int sanity_reply(sip_msg_t *msg, int code, char *reason)
+{
+	if(msg->first_line.type == SIP_REPLY) {
+		return 1;
+	}
+
+	if(msg->REQ_METHOD == METHOD_ACK) {
+		return 1;
+	}
+	if(slb.zreply(msg, code, reason) < 0) {
+		return -1;
+	}
+	return 0;
+}
+
 /* check if the given string is a valid unsigned int value */
 int str2valid_uint(str* _number, unsigned int* _result) {
 	int i;
@@ -190,7 +210,7 @@ int check_ruri_sip_version(struct sip_msg* _msg) {
 			(memcmp(version.s, SIP_VERSION_TWO_POINT_ZERO, 
 				SIP_VERSION_TWO_POINT_ZERO_LENGTH) != 0)) {
 			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (slb.zreply(_msg, 505, "Version Not Supported (R-URI)")
+				if (sanity_reply(_msg, 505, "Version Not Supported (R-URI)")
 						< 0) {
 					LOG(L_WARN, "sanity_check(): check_ruri_sip_version():"
 							" failed to send 505 via sl reply\n");
@@ -223,7 +243,7 @@ int check_ruri_scheme(struct sip_msg* _msg) {
 	}
 	if (_msg->parsed_uri.type == ERROR_URI_T) {
 		if (_msg->REQ_METHOD != METHOD_ACK) {
-			if (slb.zreply(_msg, 416, "Unsupported URI Scheme in Request URI")
+			if (sanity_reply(_msg, 416, "Unsupported URI Scheme in Request URI")
 					< 0) {
 				LOG(L_WARN, "sanity_check(): check_ruri_scheme():"
 						" failed to send 416 via sl reply\n");
@@ -248,7 +268,7 @@ int check_required_headers(struct sip_msg* _msg) {
 
 	if (!check_transaction_quadruple(_msg)) {
 		if (_msg->REQ_METHOD != METHOD_ACK) {
-			if (slb.zreply(_msg, 400, "Missing Required Header in Request")
+			if (sanity_reply(_msg, 400, "Missing Required Header in Request")
 					< 0) {
 				LOG(L_WARN, "sanity_check(): check_required_headers():"
 						" failed to send 400 via sl reply\n");
@@ -287,7 +307,7 @@ int check_via_sip_version(struct sip_msg* _msg) {
 			memcmp(_msg->via1->version.s, SIP_VERSION_TWO_POINT_ZERO, 
 					SIP_VERSION_TWO_POINT_ZERO_LENGTH ) != 0) {
 		if (_msg->REQ_METHOD != METHOD_ACK) {
-			if (slb.zreply(_msg, 505, "Version Not Supported (Via)") < 0) {
+			if (sanity_reply(_msg, 505, "Version Not Supported (Via)") < 0) {
 				LOG(L_WARN, "sanity_check(): check_via_sip_version():"
 					" failed to send 505 via sl reply\n");
 			}
@@ -323,7 +343,7 @@ int check_via_protocol(struct sip_msg* _msg) {
 	if (_msg->via1->transport.len != 3 &&
 			_msg->via1->transport.len != 4) {
 		if (_msg->REQ_METHOD != METHOD_ACK) {
-			if (slb.zreply(_msg, 400, "Unsupported Transport in Topmost Via")
+			if (sanity_reply(_msg, 400, "Unsupported Transport in Topmost Via")
 					< 0) {
 				LOG(L_WARN, "sanity_check(): check_via_protocol():"
 					" failed to send 400 via sl reply\n");
@@ -336,7 +356,7 @@ int check_via_protocol(struct sip_msg* _msg) {
 		case PROTO_UDP:
 			if (memcmp(_msg->via1->transport.s, "UDP", 3) != 0) {
 				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (slb.zreply(_msg, 400,
+					if (sanity_reply(_msg, 400,
 							"Transport Missmatch in Topmost Via") < 0) {
 						LOG(L_WARN, "sanity_check(): check_via_protocol():"
 								" failed to send 505 via sl reply\n");
@@ -349,7 +369,7 @@ int check_via_protocol(struct sip_msg* _msg) {
 		case PROTO_TCP:
 			if (memcmp(_msg->via1->transport.s, "TCP", 3) != 0) {
 				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (slb.zreply(_msg, 400,
+					if (sanity_reply(_msg, 400,
 							"Transport Missmatch in Topmost Via") < 0) {
 						LOG(L_WARN, "sanity_check(): check_via_protocol():"
 								" failed to send 505 via sl reply\n");
@@ -362,7 +382,7 @@ int check_via_protocol(struct sip_msg* _msg) {
 		case PROTO_TLS:
 			if (memcmp(_msg->via1->transport.s, "TLS", 3) != 0) {
 				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (slb.zreply(_msg, 400,
+					if (sanity_reply(_msg, 400,
 							"Transport Missmatch in Topmost Via") < 0) {
 						LOG(L_WARN, "sanity_check(): check_via_protocol():"
 								" failed to send 505 via sl reply\n");
@@ -375,7 +395,7 @@ int check_via_protocol(struct sip_msg* _msg) {
 		case PROTO_SCTP:
 			if (memcmp(_msg->via1->transport.s, "SCTP", 4) != 0) {
 				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (slb.zreply(_msg, 400,
+					if (sanity_reply(_msg, 400,
 							"Transport Missmatch in Topmost Via") < 0) {
 						LOG(L_WARN, "sanity_check(): check_via_protocol():"
 								" failed to send 505 via sl reply\n");
@@ -413,7 +433,7 @@ int check_cseq_method(struct sip_msg* _msg) {
 	if (_msg->cseq != NULL && _msg->cseq->parsed != NULL) {
 		if (((struct cseq_body*)_msg->cseq->parsed)->method.len == 0) {
 			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (slb.zreply(_msg, 400, "Missing method in CSeq header")
+				if (sanity_reply(_msg, 400, "Missing method in CSeq header")
 						< 0) {
 					LOG(L_WARN, "sanity_check(): check_cseq_method():"
 							" failed to send 400 via sl reply\n");
@@ -429,7 +449,7 @@ int check_cseq_method(struct sip_msg* _msg) {
 				_msg->first_line.u.request.method.s,
 				((struct cseq_body*)_msg->cseq->parsed)->method.len) != 0) {
 			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (slb.zreply(_msg, 400,
+				if (sanity_reply(_msg, 400,
 							"CSeq method does not match request method") < 0) {
 					LOG(L_WARN, "sanity_check(): check_cseq_method():"
 							" failed to send 400 via sl reply 2\n");
@@ -467,7 +487,7 @@ int check_cseq_value(struct sip_msg* _msg) {
 	if (_msg->cseq != NULL && _msg->cseq->parsed != NULL) {
 		if (((struct cseq_body*)_msg->cseq->parsed)->number.len == 0) {
 			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (slb.zreply(_msg, 400, "Missing number in CSeq header")
+				if (sanity_reply(_msg, 400, "Missing number in CSeq header")
 						< 0) {
 					LOG(L_WARN, "sanity_check(): check_cseq_value():"
 							" failed to send 400 via sl reply\n");
@@ -478,7 +498,7 @@ int check_cseq_value(struct sip_msg* _msg) {
 		if (str2valid_uint(&((struct cseq_body*)_msg->cseq->parsed)->number,
 					&cseq) != 0) {
 			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (slb.zreply(_msg, 400, "CSeq number is illegal") < 0) {
+				if (sanity_reply(_msg, 400, "CSeq number is illegal") < 0) {
 					LOG(L_WARN, "sanity_check(): check_cseq_value():"
 							" failed to send 400 via sl reply 2\n");
 				}
@@ -522,7 +542,7 @@ int check_cl(struct sip_msg* _msg) {
 		}
 		if ((_msg->len - (body - _msg->buf)) != get_content_length(_msg)) {
 			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (slb.zreply(_msg, 400, "Content-Length mis-match") < 0) {
+				if (sanity_reply(_msg, 400, "Content-Length mis-match") < 0) {
 					LOG(L_WARN, "sanity_check(): check_cl():"
 							" failed to send 400 via sl reply\n");
 				}
@@ -566,7 +586,7 @@ int check_expires_value(struct sip_msg* _msg) {
 		}
 		if (((struct exp_body*)_msg->expires->parsed)->text.len == 0) {
 			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (slb.zreply(_msg, 400, "Missing number in Expires header")
+				if (sanity_reply(_msg, 400, "Missing number in Expires header")
 						< 0) {
 					LOG(L_WARN, "sanity_check(): check_expires_value():"
 							" failed to send 400 via sl reply\n");
@@ -577,7 +597,7 @@ int check_expires_value(struct sip_msg* _msg) {
 		}
 		if (str2valid_uint(&((struct exp_body*)_msg->expires->parsed)->text, &expires) != 0) {
 			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (slb.zreply(_msg, 400, "Expires value is illegal") < 0) {
+				if (sanity_reply(_msg, 400, "Expires value is illegal") < 0) {
 					LOG(L_WARN, "sanity_check(): check_expires_value():"
 							" failed to send 400 via sl reply 2\n");
 				}
@@ -658,7 +678,7 @@ int check_proxy_require(struct sip_msg* _msg) {
 				}
 
 				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (slb.zreply(_msg, 420, "Bad Extension") < 0) {
+					if (sanity_reply(_msg, 420, "Bad Extension") < 0) {
 						LOG(L_WARN, "sanity_check(): check_proxy_require():"
 								" failed to send 420 via sl reply\n");
 					}
@@ -712,7 +732,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 			LOG(L_WARN, "sanity_check(): check_parse_uris():"
 					" failed to parse request uri\n");
 			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (slb.zreply(_msg, 400, "Bad Request URI") < 0) {
+				if (sanity_reply(_msg, 400, "Bad Request URI") < 0) {
 					LOG(L_WARN, "sanity_check(): check_parse_uris():"
 							" failed to send 400 via sl reply (bad ruri)\n");
 				}
@@ -732,7 +752,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 			LOG(L_WARN, "sanity_check(): check_parse_uris():"
 					" missing from header\n");
 			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (slb.zreply(_msg, 400, "Missing From Header") < 0) {
+				if (sanity_reply(_msg, 400, "Missing From Header") < 0) {
 					LOG(L_WARN, "sanity_check(): check_parse_uris():"
 						" failed to send 400 via sl reply (missing From)\n");
 				}
@@ -758,7 +778,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 						_msg->from->body.len, _msg->from->body.s);
 				free_to(ft_body);
 				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (slb.zreply(_msg, 400, "Bad From header") < 0) {
+					if (sanity_reply(_msg, 400, "Bad From header") < 0) {
 						LOG(L_WARN, "sanity_check(): check_parse_uris():"
 								" failed to send 400 via sl reply"
 								" (bad from header)\n");
@@ -778,7 +798,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 			    LOG(L_WARN, "sanity_check(): check_parse_uris():"
 						" failed to parse From uri\n");
 			    if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (slb.zreply(_msg, 400, "Bad From URI") < 0) {
+				if (sanity_reply(_msg, 400, "Bad From URI") < 0) {
 				    LOG(L_WARN, "sanity_check(): check_parse_uris():"
 							" failed to send 400 via sl reply"
 							" (bad from uri)\n");
@@ -802,7 +822,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 			LOG(L_WARN, "sanity_check(): check_parse_uris():"
 					" missing to header\n");
 			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (slb.zreply(_msg, 400, "Missing To Header") < 0) {
+				if (sanity_reply(_msg, 400, "Missing To Header") < 0) {
 					LOG(L_WARN, "sanity_check(): check_parse_uris():"
 							" failed to send 400 via sl reply (missing To)\n");
 				}
@@ -814,7 +834,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 			LOG(L_WARN, "sanity_check(): check_parse_uris():"
 					" failed to parse To header\n");
 			if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (slb.zreply(_msg, 400, "Bad To URI") < 0) {
+				if (sanity_reply(_msg, 400, "Bad To URI") < 0) {
 					LOG(L_WARN, "sanity_check(): check_parse_uris():"
 							" failed to send 400 via sl reply (bad to uri)\n");
 				}
@@ -830,7 +850,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 				LOG(L_WARN, "sanity_check(): check_parse_uris():"
 						" failed to parse To uri\n");
 				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (slb.zreply(_msg, 400, "Bad To URI") < 0) {
+					if (sanity_reply(_msg, 400, "Bad To URI") < 0) {
 						LOG(L_WARN, "sanity_check(): check_parse_uris():"
 								" failed to send 400 via sl reply"
 								" (bad to uri)\n");
@@ -862,7 +882,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 				LOG(L_WARN, "sanity_check(): check_parse_uris():"
 						" failed to parse Contact header\n");
 				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (slb.zreply(_msg, 400, "Bad Contact Header") < 0) {
+					if (sanity_reply(_msg, 400, "Bad Contact Header") < 0) {
 						LOG(L_WARN, "sanity_check(): check_parse_uris():"
 								" failed to send 400 via send_reply"
 								" (bad Contact)\n");
@@ -877,7 +897,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 				LOG(L_WARN, "sanity_check(): check_parse_uris():"
 						" failed to parse Contact uri\n");
 				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (slb.zreply(_msg, 400, "Bad Contact URI") < 0) {
+					if (sanity_reply(_msg, 400, "Bad Contact URI") < 0) {
 						LOG(L_WARN, "sanity_check(): check_parse_uris():"
 								" failed to send 400 via send_reply"
 								" (bad Contact uri)\n");
