@@ -142,7 +142,7 @@ char *lw_get_hf_name(char *begin, char *end,
 
 		case __id1_:
 		case __id2_:
-			p += 7;
+			p += 3;
 			*type = HDR_CALLID_T;
 			break;
 
