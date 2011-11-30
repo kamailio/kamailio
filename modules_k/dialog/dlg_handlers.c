@@ -705,6 +705,7 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
  * \see dlg_onreq
  * \param dialog unreferenced dialog
  */
+#if 0
 static void unref_new_dialog(void *iuid)
 {
 	struct tmcb_params p;
@@ -713,6 +714,7 @@ static void unref_new_dialog(void *iuid)
 	p.param = (void*)&iuid;
 	dlg_onreply(0, TMCB_DESTROY, &p);
 }
+#endif
 
 
 /*!
