@@ -452,5 +452,21 @@ int db_load_bulk_data(db_func_t* binding, db1_con_t* handle, str* name, db_key_t
  */
 int db_api_init(void);
 
+/**
+ * \brief wrapper around db query to handle fetch capability
+ * \return -1 error; 0 ok with no fetch capability; 1 ok with fetch capability
+ */
+int db_fetch_query(db_func_t *dbf, int frows,
+		db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+		const db_key_t _o, db1_res_t** _r);
+
+/**
+ * \brief wrapper around db fetch to handle fetch capability
+ * \return -1 error; 0 ok with no fetch capability; 1 ok with fetch capability
+ */
+int db_fetch_next(db_func_t *dbf, int frows, db1_con_t* _h,
+		db1_res_t** _r);
+
 
 #endif /* DB1_H */
