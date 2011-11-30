@@ -174,19 +174,6 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
 (((m)->new_uri.s && (m)->new_uri.len) ? (&(m)->new_uri) : (&(m)->first_line.u.request.uri))
 
 
-#if 0
-	/* old version */
-struct sip_uri {
-	str user;     /* Username */
-	str passwd;   /* Password */
-	str host;     /* Host name */
-	str port;     /* Port number */
-	str params;   /* Parameters */
-	str headers;
-	unsigned short port_no;
-};
-#endif
-
 enum _uri_type{ERROR_URI_T=0, SIP_URI_T, SIPS_URI_T, TEL_URI_T, TELS_URI_T};
 typedef enum _uri_type uri_type;
 enum _uri_flags{
