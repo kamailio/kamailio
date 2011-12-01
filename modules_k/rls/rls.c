@@ -176,6 +176,8 @@ str str_doc_uri_col = str_init("doc_uri");
 /* outbound proxy address */
 str rls_outbound_proxy = {0, 0};
 
+int rls_fetch_rows = 500;
+
 /** module functions */
 
 static int mod_init(void);
@@ -219,8 +221,9 @@ static param_export_t params[]={
 	{ "outbound_proxy",         STR_PARAM,   &rls_outbound_proxy.s           },
 	{ "reload_db_subs",         INT_PARAM,   &rls_reload_db_subs             },
 	{ "max_notify_body_length", INT_PARAM,	 &rls_max_notify_body_len	     },
-	{ "db_mode",                INT_PARAM,	 &dbmode			 },
-	{ "expires_offset",         INT_PARAM,	 &rls_expires_offset		 },
+	{ "db_mode",                INT_PARAM,	 &dbmode                         },
+	{ "expires_offset",         INT_PARAM,	 &rls_expires_offset             },
+	{ "fetch_rows",             INT_PARAM,   &rls_fetch_rows                 },
 	{0,                         0,           0                               }
 };
 
@@ -768,7 +771,8 @@ int rls_restore_db_subs(void)
 		return -1;
 	}
 
-	if(rls_dbf.query(rls_db,0, 0, 0, result_cols,0, n_result_cols, 0,&res)< 0)
+	if(db_fetch_query(&rls_dbf, rls_fetch_rows, rls_db, 0, 0, 0,
+				result_cols,0, n_result_cols, 0, &res)< 0)
 	{
 		LM_ERR("while querrying table\n");
 		if(res)
@@ -789,89 +793,92 @@ int rls_restore_db_subs(void)
 		return 0;
 	}
 
-	LM_DBG("found %d db entries\n", res->n);
+	do {
+		LM_DBG("found %d db entries\n", res->n);
 
-	for(i =0 ; i< res->n ; i++)
-	{
-		row = &res->rows[i];
-		row_vals = ROW_VALUES(row);
-		memset(&s, 0, sizeof(subs_t));
-
-		expires= row_vals[expires_col].val.int_val;
-		
-		if(expires< (int)time(NULL))
-			continue;
-	
-		s.pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
-		s.pres_uri.len= strlen(s.pres_uri.s);
-		
-		s.to_user.s=(char*)row_vals[to_user_col].val.string_val;
-		s.to_user.len= strlen(s.to_user.s);
-
-		s.to_domain.s=(char*)row_vals[to_domain_col].val.string_val;
-		s.to_domain.len= strlen(s.to_domain.s);
-
-		s.from_user.s=(char*)row_vals[from_user_col].val.string_val;
-		s.from_user.len= strlen(s.from_user.s);
-		
-		s.from_domain.s=(char*)row_vals[from_domain_col].val.string_val;
-		s.from_domain.len= strlen(s.from_domain.s);
-
-		s.to_tag.s=(char*)row_vals[totag_col].val.string_val;
-		s.to_tag.len= strlen(s.to_tag.s);
-
-		s.from_tag.s=(char*)row_vals[fromtag_col].val.string_val;
-		s.from_tag.len= strlen(s.from_tag.s);
-
-		s.callid.s=(char*)row_vals[callid_col].val.string_val;
-		s.callid.len= strlen(s.callid.s);
-
-		ev_sname.s= (char*)row_vals[event_col].val.string_val;
-		ev_sname.len= strlen(ev_sname.s);
-		
-		event= pres_contains_event(&ev_sname, &parsed_event);
-		if(event== NULL)
+		for(i =0 ; i< res->n ; i++)
 		{
-			LM_ERR("event not found in list\n");
-			goto error;
-		}
-		s.event= event;
+			row = &res->rows[i];
+			row_vals = ROW_VALUES(row);
+			memset(&s, 0, sizeof(subs_t));
 
-		s.event_id.s=(char*)row_vals[event_id_col].val.string_val;
-		if(s.event_id.s)
-			s.event_id.len= strlen(s.event_id.s);
-
-		s.remote_cseq= row_vals[remote_cseq_col].val.int_val;
-		s.local_cseq= row_vals[local_cseq_col].val.int_val;
-		s.version= row_vals[version_col].val.int_val;
+			expires= row_vals[expires_col].val.int_val;
 		
-		s.expires= expires- (int)time(NULL);
-		s.status= row_vals[status_col].val.int_val;
-
-		s.reason.s= (char*)row_vals[reason_col].val.string_val;
-		if(s.reason.s)
-			s.reason.len= strlen(s.reason.s);
-
-		s.contact.s=(char*)row_vals[contact_col].val.string_val;
-		s.contact.len= strlen(s.contact.s);
-
-		s.local_contact.s=(char*)row_vals[local_contact_col].val.string_val;
-		s.local_contact.len= strlen(s.local_contact.s);
+			if(expires< (int)time(NULL))
+				continue;
 	
-		s.record_route.s=(char*)row_vals[record_route_col].val.string_val;
-		if(s.record_route.s)
-			s.record_route.len= strlen(s.record_route.s);
-	
-		s.sockinfo_str.s=(char*)row_vals[sockinfo_col].val.string_val;
-		s.sockinfo_str.len= strlen(s.sockinfo_str.s);
+			s.pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
+			s.pres_uri.len= strlen(s.pres_uri.s);
+		
+			s.to_user.s=(char*)row_vals[to_user_col].val.string_val;
+			s.to_user.len= strlen(s.to_user.s);
 
-		hash_code= core_hash(&s.pres_uri, &s.event->name, hash_size);
-		if(pres_insert_shtable(rls_table, hash_code, &s)< 0)
-		{
-			LM_ERR("adding new record in hash table\n");
-			goto error;
+			s.to_domain.s=(char*)row_vals[to_domain_col].val.string_val;
+			s.to_domain.len= strlen(s.to_domain.s);
+
+			s.from_user.s=(char*)row_vals[from_user_col].val.string_val;
+			s.from_user.len= strlen(s.from_user.s);
+		
+			s.from_domain.s=(char*)row_vals[from_domain_col].val.string_val;
+			s.from_domain.len= strlen(s.from_domain.s);
+
+			s.to_tag.s=(char*)row_vals[totag_col].val.string_val;
+			s.to_tag.len= strlen(s.to_tag.s);
+
+			s.from_tag.s=(char*)row_vals[fromtag_col].val.string_val;
+			s.from_tag.len= strlen(s.from_tag.s);
+
+			s.callid.s=(char*)row_vals[callid_col].val.string_val;
+			s.callid.len= strlen(s.callid.s);
+
+			ev_sname.s= (char*)row_vals[event_col].val.string_val;
+			ev_sname.len= strlen(ev_sname.s);
+		
+			event= pres_contains_event(&ev_sname, &parsed_event);
+			if(event== NULL)
+			{
+				LM_ERR("event not found in list\n");
+				goto error;
+			}
+			s.event= event;
+
+			s.event_id.s=(char*)row_vals[event_id_col].val.string_val;
+			if(s.event_id.s)
+				s.event_id.len= strlen(s.event_id.s);
+
+			s.remote_cseq= row_vals[remote_cseq_col].val.int_val;
+			s.local_cseq= row_vals[local_cseq_col].val.int_val;
+			s.version= row_vals[version_col].val.int_val;
+		
+			s.expires= expires- (int)time(NULL);
+			s.status= row_vals[status_col].val.int_val;
+
+			s.reason.s= (char*)row_vals[reason_col].val.string_val;
+			if(s.reason.s)
+				s.reason.len= strlen(s.reason.s);
+
+			s.contact.s=(char*)row_vals[contact_col].val.string_val;
+			s.contact.len= strlen(s.contact.s);
+
+			s.local_contact.s=(char*)row_vals[local_contact_col].val.string_val;
+			s.local_contact.len= strlen(s.local_contact.s);
+	
+			s.record_route.s=(char*)row_vals[record_route_col].val.string_val;
+			if(s.record_route.s)
+				s.record_route.len= strlen(s.record_route.s);
+	
+			s.sockinfo_str.s=(char*)row_vals[sockinfo_col].val.string_val;
+			s.sockinfo_str.len= strlen(s.sockinfo_str.s);
+
+			hash_code= core_hash(&s.pres_uri, &s.event->name, hash_size);
+			if(pres_insert_shtable(rls_table, hash_code, &s)< 0)
+			{
+				LM_ERR("adding new record in hash table\n");
+				goto error;
+			}
 		}
-	}
+	} while((db_fetch_next(&rls_dbf, rls_fetch_rows, rls_db, &res)==1)
+			&& (RES_ROW_N(res)>0));
 
 	rls_dbf.free_result(rls_db, res);
 
