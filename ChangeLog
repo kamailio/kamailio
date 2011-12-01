@@ -1,3 +1,631 @@
+===================== 2011-12-01 Version 3.2.1 Released =====================
+
+===================== Changes Since Version 3.2.0 ===========================
+
+commit 7ba0e2a44b989357c9d2b677075d4c49d0330ed0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 1 15:22:04 2011 +0100
+
+    Makefile: version set to 3.2.1
+
+commit f33ea2538178633d0f53a89fdc049dd22234e07c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 1 11:13:09 2011 +0100
+
+    pkg/rpm: set version to 3.2.1 for kamailio rpm specs
+
+commit a424da7f9ad2b82aa9557d95f71b35a744f40342
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 1 11:10:19 2011 +0100
+
+    pkg/debs: set version to 3.2.1 for kamailio debs
+
+commit e80ca150ece624be1faf6abadf1ee692b6ee1b19
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Dec 1 12:00:32 2011 +0200
+
+    modules/lcr: fixed testing of transport protocol by to_gw functions
+    
+    - Test failed when transport protocol is taken from Request-URI and
+      there is not any.
+    (cherry picked from commit 5cd8e582f833243884fa4daf891d24c4c0dcf1f9)
+
+commit 3bc0cc561630cb24332bd2e1ae2c84d8dba2826c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 30 18:57:21 2011 +0100
+
+    dialog(k): disable unused functionunref_new_dialog()
+    
+    - get rid of compliler warning
+    (cherry picked from commit 880b447b43bb75328a3cd2f245d969272812ae42)
+
+commit 926caef8f2b37dc83aab12aa5b8f717a9eeff328
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Nov 26 00:32:23 2011 +0100
+
+    dialog(k): safety check for lookup in dialog table at shutdown
+    (cherry picked from commit 017ea5779710223df8f5a28829f77eff8395affc)
+    (cherry picked from commit b018f09abbecc6b057c6f9446406c6f20f43a235)
+
+commit e8dd7fee405a375e0ad501018b05700401e8d26a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 21 23:52:43 2011 +0100
+
+    dialog(k): refactored dlg ref counting
+    
+    - dlg pointer is no longer stored in tm callbacks parameter and ref
+      counting for these kind of needs was removed
+    - the internal id (hash entry, dlg id) is given now to tm callbacks. The
+      callbacks will do dlg lookup to get the structure
+    - there are longer-time persistent ref counting for:
+      * storing dlg structure in dialog hash table
+      * keeping dlg in timer list
+      * waiting for the reply of BYE to destroy dialog structure
+    - all the other ref countings are for short time, only for the period of
+      doing specific processing
+    - the new ref counting is safer in relation with tm callbacks and avoids
+      tight dependecy which may have been easily broken by future tm changes
+    (cherry picked from commit 9ba4ee25e32368a9c17c3f86784a52a97b748b93)
+    (cherry picked from commit 5bdee1ffe820d3e9e75898bb252d1660b4bbad60)
+
+commit a56b17e065d175f213688cacd3db3aa88fe48e2a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 24 17:22:26 2011 +0100
+
+    parser: don't free on error To param linked in to_body struct
+    
+    - if a To header parameter was already linked in to_body struct, don't
+      free if there is a parsing error for it later, it will be freed by
+      free_to_params()
+    - reported by Bayan Towfiq in FS#180
+    (cherry picked from commit 6299704ebb280214f35fc86968d86be972219e51)
+
+commit ec8535487fd06e5de7b5efa218f764a6e850b42b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 24 15:30:15 2011 +0100
+
+    textops(k): free only pkg body lumps for set_body()
+    
+    - if set_body() is used in failure_route, it should not destroy
+      completely the lumps cloned in tm, just ignore them and free the ones
+      added in failure_route before execution of itself
+    - reported by Brandon Armstead, FS#181
+    (cherry picked from commit c22a3ec7366ad1a3cc0b5e8229fbabe2c179cca1)
+
+commit 6fd2307f66d7207721e6a346d6287a3b9c043107
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 24 15:28:04 2011 +0100
+
+    tm: backup/restore lump lists for faked requests
+    
+    - some cfg functions that can be used in failure_route can destroy the
+      head of lump lists, thus better backup before and restore after failure_route
+      execution
+    (cherry picked from commit b6d90904de590a3f6a95bca8f89cf2521d630902)
+
+commit 50d96b4fa2b8a8b5998c45dc01f08617606aca8d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 24 15:26:47 2011 +0100
+
+    core: better check for cloned lumps in shared memory
+    
+    - bitwise test for LUMPFLAG_SHMEM
+    (cherry picked from commit 8652f5f5fb2b10210c65b04772064c452608c728)
+
+commit d44956c4f3d5fb98bc2af42d8718a420d624d259
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 24 12:56:28 2011 +0100
+
+    core: save and restore branch_iterator in print_dset
+    
+    - safe usage in branch_route where branch_interator is used to add the
+      new brnaches, but some variables can change it if used in config
+      branch_route
+    - closes FS#182, reported by Pawel Sternal
+    (cherry picked from commit c5f101dfac9a50f428e3452893c402d8b1e0400b)
+
+commit ae248a3744ab06a61c962415a8ac55a9c53fba82
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 22 11:30:56 2011 +0100
+
+    dialog(k): destroy dlg structure first time ref counter gets to 0
+    
+    - reported by Bayan Towfix, FS#173
+    (cherry picked from commit 5949e296b7bafab42a4ac3261f453f286d98e41c)
+
+commit 24f138c9c39ac6475347ed76e311e1759d4d8531
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 22 11:30:02 2011 +0100
+
+    pv: use msg pid to check the integrity of cached time
+    
+    - safer when dealing with async or failure processing
+    (cherry picked from commit cc33486a8c17ae2cb4cbb5fce42f7a73646cd3c1)
+
+commit addbd17723585197ea41c58904be1c4b6be2fe7d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 18 00:10:26 2011 +0100
+
+    libkcore: set pid attribute for fake msg
+    (cherry picked from commit 950b1e52ed8a94462be17e206d6970fd13a41661)
+
+commit 4eadcbaa1db1157ad7b967b7177200a937696891
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 18 00:08:44 2011 +0100
+
+    core: store pid per sip message
+    
+    - when a sip message is received, store pid in sip_msg_t structure
+    - help identifying same sip msg across many processes
+    (cherry picked from commit 76f7847fe6245e06aa88d104b60245c7c03b04f0)
+
+commit 5d46e1bb59fb39bd539ace1840d502b14225c924
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 18 09:22:26 2011 +0100
+
+    diversion: user anchor_lump2 to insert diversion header
+    
+    - remove the caching of anchor, is not save across many processes, when
+      handling diversion in request_route and failure_route
+    (cherry picked from commit 55615d11ece77074ad779d1ad09361b1fd2b2bad)
+
+commit 609b0aa86624416828c0c117e0cfdbeb7643bcb8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 17 23:14:32 2011 +0100
+
+    tm: free path if set first time in a branch route
+    (cherry picked from commit 7b612d999e061d05b60054e7749052d0abdf514c)
+
+commit d3408c64b6c07806a51e1e72589f8e124c8c651c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 16 07:50:42 2011 +0100
+
+    core: at shutdown, first call the destroy module functions then free module exports structure
+    
+    - some modules may need access to other modules at shut down
+    - reported by Juha Heinanen
+    (cherry picked from commit 2396dde7230e04f853e6936cfff9059661c55635)
+
+commit 2ffbba2004371c1136157bcf8ba60fab787de9ad
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 15 09:27:46 2011 +0100
+
+    ndb_redis: docs update - server parameter type is string
+    
+    - more details to server parameters to show that many redis servers can
+      be used
+    (cherry picked from commit da07d2a093a4aec9673ae2e5a0bd4bccb9d3cd70)
+
+commit 97738606ba186fd41a4137e6b4c28f5d97a403e9
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Sun Nov 20 21:42:14 2011 +0000
+
+    modules_k/presence_xml: Fixed segmentation fault in pres_check_activities()
+
+commit d50bf0933db8925d75da09de0036d559c9b34b64
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Sat Nov 19 22:44:21 2011 +0000
+
+    modules_k/xcap_server: xcaps_buf sometimes freed in w_xcaps_put()
+    
+    - The buffer is alloc'd at module startup so should not be freed here.
+    - When freed here the buffer memory can be alloc'd for other things and then
+      future XCAP server operations will trample over it causing segmentation
+      faults.
+    - Fix by Hugh Waite @ Crocodile RCS.
+
+commit fb75114b7c5e220c4fcfbd1a0ad583c0d9e2fb4b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 14 19:10:05 2011 +0100
+
+    Makefile: remove typo comma at the end of the sipcapture module name
+
+commit a823c40f18b7f7481dd1c7f114f9e68704042dd4
+Author: Timo Reimann <sr@foo-lounge.de>
+Date:   Tue Nov 8 23:46:37 2011 +0100
+
+    dialog(k): Remove warning in docs regarding usage of stateless replies
+    (resolved by now).
+    (cherry picked from commit 378a6e03ac35000212ff0263a997807f6e178f01)
+
+commit baed413617a0c9eac9241564708b8330276ef023
+Author: Timo Reimann <sr@foo-lounge.de>
+Date:   Mon Nov 7 23:36:36 2011 +0100
+
+    dialog(k): Use correct logical operation to enable DLG_FLAG_CHANGED_VARS
+    flag.
+    (cherry picked from commit 8ca6de5604ee32076aea5924472f5081a48c99b7)
+
+commit 9442bf0249cab256c6bc68a219b2c44aee17c916
+Author: Timo Reimann <sr@foo-lounge.de>
+Date:   Sun Nov 6 02:21:08 2011 +0100
+
+    dialog(k): When restoring dialog variables from database calculate and
+    set variable string length.
+    
+    - Fixes Flyspray #172.
+    (cherry picked from commit ae76e2183c9966cfe44c0519de7d5a53be08041c)
+
+commit 406ecb7c981a37e789402990dbdfd7eaf1157cec
+Author: Timo Reimann <sr@foo-lounge.de>
+Date:   Sat Nov 5 02:41:19 2011 +0100
+
+    acc(k): Define timersub macro for Solaris as it is not provided in
+    <sys/time.h>.
+    (cherry picked from commit 456903d2b4775e3d968e2eaa08b46e64993f4053)
+
+commit 271a02a29975611cb6de9c82b185dd37932a462e
+Author: Timo Reimann <sr@foo-lounge.de>
+Date:   Fri Nov 4 23:09:02 2011 +0100
+
+    dialog(k): When restoring dialog variables from database, stop iterating
+    through given dialog hash table bucket once matching dialog is found.
+    
+    - Fixes FS #171.
+    - Credits to Daniel-Constantin Mierla.
+    (cherry picked from commit 34fc972291e965a40086b59f077a4b34fba2d12d)
+
+commit 24eb7d2dbd1841b9e61c35f52b271431c49e911a
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Thu Nov 3 23:10:38 2011 +0100
+
+    dialog(k): Set dialog parameters (timeout, etc.) before create callback
+    is executed to provide these parameters to registered functions.
+    (cherry picked from commit 987c8a5fbfa0f23e1211e4253e7113f4ea79b22b)
+
+commit 019c69196f96c929f5aee2763fa619ce17d5debb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 3 22:10:52 2011 +0100
+
+    docbook: remove double quotes around XML_CATALOG_FILES
+    (cherry picked from commit c22415ba7a65e0a054cb625440812aae292ea2d5)
+
+commit 966851f9d25775b1990de8951713448ddb264a53
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 3 21:12:46 2011 +0100
+
+    dispatcher(k): sample cfg file updated
+    
+    - some clarifications added to faq
+    (cherry picked from commit 60670bd00570adc5fff2de30929d88b7d956d3ea)
+
+commit c5ca8379095e2532f0889c706204bed3c194402b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 3 11:48:30 2011 +0100
+
+    dispatcher(k): fixed copy&paste typo of maintaining inactive state
+    
+    - instead of setting the inactive state, it was resetting it
+    - restructured the usage of fake msg for running event routes for
+      keepalive replies, so that it is generated only if event routes are
+      defined
+    (cherry picked from commit 1f63d8d3e619ec1e9a0d15f45c507547a72dc715)
+
+commit 29fce242772f2875066c366465c5957f845b31f0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 2 10:42:52 2011 +0100
+
+    dispatcher(k): added clarifications to ds_probing_mode parameter
+    (cherry picked from commit b589e42a06feba2382c2b4dbb9e0d56ebe4b6ed1)
+
+commit aec0f940786c300de4be733281e0b58e8462d63c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 2 10:35:22 2011 +0100
+
+    dispatcher(k): use defines for probing modes
+    
+    - it can be DS_PROBE_NONE (0), DS_PROBE_ALL (1) or DS_PROBE_INACTIVE (2)
+    - when ds_probing_mode is set to 2, keep probing inactive gateways until
+      they become active. Note that the gateway must be set to probing when
+      it goes in trying or inactive state
+    (cherry picked from commit d665458442aed734bf1831e37ccf666ab2846f25)
+
+commit 4152e6e2e599669c5a427dded0bc6ea7ad20926b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 1 20:32:42 2011 +0100
+
+    db_text(k): init DB API lib in mod_register()
+    (cherry picked from commit fa9e7de6bbef15110cb4940769b27d90b2c000c8)
+
+commit 9ef9a9edc7c1862d6d427b3784284b4b43e7c743
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 1 20:30:15 2011 +0100
+
+    db_oracle(k): init DB API lib in mod_register()
+    (cherry picked from commit d0ede402a4e5a9163405fa3da66b2cb38ab24552)
+
+commit 959d06b65596dc87da1e0692ee3439d88914b579
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 1 20:28:26 2011 +0100
+
+    db_unixodbc: init DB API lib in mod_register()
+    (cherry picked from commit f122ee6e63087d15cee95642c4e8ac9249b4f958)
+
+commit 2018f85239ebb9ee2d1238a39cf3837430dcb915
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 1 20:26:37 2011 +0100
+
+    db_sqlite: init DB API lib in mod_register()
+    (cherry picked from commit 4040fead1833abddee710d18e7c655ca53cfb0ed)
+
+commit d422ab1114dfe2a7c4199e05a91226ad4c5d4c3a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 1 20:26:07 2011 +0100
+
+    db_postgres: use db_api_init() to initialize srdb1 lib
+    (cherry picked from commit 4578f6eba8b3539202dffa756cf0813dfa7eb328)
+
+commit 4f8c2466982ec00eadc0e864b4c5182b7a2b1173
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 1 20:22:30 2011 +0100
+
+    db_berkeley: init DB API lib in mod_register()
+    (cherry picked from commit 41225392808b1e5462be40e37ba85700e8eab632)
+
+commit 244cdf2a863d85b82112b39ee2eeb721d315dbfe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 1 20:21:19 2011 +0100
+
+    db_postgres: init DB API lib in mod_register()
+    
+    - this will initialize the sql buffer at module load time, avoiding
+      crash at startup if a module using the DB driver is loaded before the
+      db driver itself
+    - reported by Timo Teras
+    (cherry picked from commit b3b34accb2f65ccef6045b083879166cb1a1e060)
+
+commit 1335ac992736172ac3e366d7f9a73f1593c98032
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 1 20:20:38 2011 +0100
+
+    db_flatstore: init DB API lib in mod_register()
+    (cherry picked from commit cc88761be68212c7c08dcdef182fe2e16b42a3e1)
+
+commit 590366ca79ea875bf10e678e5d4ffec881230993
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 1 20:18:36 2011 +0100
+
+    db_mysql: initialize DB API in mod_register() function
+    
+    - internal buffer sql_buf initialized in this function
+    - renamed sql_buf to mysql_sql_buf to avoid potential conflict with
+      global variable in srdb1 library
+    (cherry picked from commit 9a7e99d01e1c60dae8bec62037e8321c7d671c1d)
+
+commit f96f053af7492c69ea5c51a4aa353f9ca89fbd81
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 1 20:15:50 2011 +0100
+
+    srdb1: added db_api_init() function
+    
+    - to be executed to initialize internas of DB API library
+    - calls internal function db_query_init() that initialize the buffer to
+      print db queries
+    (cherry picked from commit 86e28b07474e75582423f50f560cf6156022da86)
+
+commit 0f9c491423c327fa1df273d49be6668d94426b31
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 1 16:18:34 2011 +0100
+
+    sdpops: support for codecs with same name and many different ids
+    
+    - reported by Juha Heinanen
+    (cherry picked from commit e4d2b647d1b0e8764b1eb0cfe07d446231af0df8)
+
+commit 31ec432c587403d526c3d1fcd72ac24d4be796a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 1 11:38:51 2011 +0100
+
+    sdpops: fixed usage of delim param in sdp_codec_in_str()
+    
+    - matching codecs in a comma separated list should work now
+    - reported by Juha Heinanen as part of testing keep_codecs_by_name()
+    (cherry picked from commit 83253d3a5cc08ce581fad88378de5eb3bd7fc784)
+
+commit eb5bbb29e9b7a72de94270f877d8fc686d4d5bd6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 31 11:43:28 2011 +0100
+
+    parser/sdp: updated parse_sdp() description
+    
+    - reflect properly return codes
+    (cherry picked from commit e1c6eafe29973a05f9f9358efbac9bf6be16a92d)
+
+commit 258422027eec9bbfc4bc3bfd926a97e5b9c5b7ce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 31 11:22:37 2011 +0100
+
+    snmpstats: removed c&p duplicated module parameter
+    
+    - reported by Klaus Darilion
+    (cherry picked from commit 50880207fe208df5de065e0f915c560ac255a9d8)
+
+commit 9c79ed2ea7891b720dcae415d0d1d48ff6177d67
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 31 11:20:05 2011 +0100
+
+    sdpops: check for sdp structure after parse_sdp()
+    
+    - the function can return 1 in case of no body
+    - reported by Juha Heinanen
+    (cherry picked from commit 704c619f401b6286588c43c8dec9e04670f4ad43)
+
+commit 524bf120a2b86f5ef25e42cab4472dcdd9b49060
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 27 16:45:17 2011 +0200
+
+    dispatcher(k): clarification about trying transition state from active to inactive
+    (cherry picked from commit 0b8f2ee4c128cd2b532356087272445519c1c08b)
+
+commit 0b5e236808bec4501a18af49c71156b2a93c56bf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 27 16:44:44 2011 +0200
+
+    dispatcher(k): default probing threshold set to 1
+    (cherry picked from commit 7330cbc114821732b4f8bed5a43893226a800198)
+
+commit beb683f7b116afb019caa8d9203ed05d3de3d5ce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 27 16:07:33 2011 +0200
+
+    dispatcher(k): docs update and rebuild readme file
+    (cherry picked from commit 372b113b6bd4447dfd73b8b6da6a5672730a5636)
+
+commit b017f6f9d85a7d0bbe1032d23c64d89757438876
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 27 16:00:55 2011 +0200
+
+    dispatcher(k): new state trying for destination addresses
+    
+    - the state trying (t) is a transition between active to inactive, when
+      inactive state is wanted after a certain number of failures specified
+      in probing threshold
+    - when in trying state, the destination is still selected, but
+      additional settings of trying state will increment an internal failure
+      counter which results in setting inactive state when probing threshold
+      is matched
+    - the functionality was before based on probing mode, but since 3.2
+      probing is not longer related to destination selection. This will
+      provide back the lost functionality
+    - ds_mark_dst(x) can have as parameter a combination between state and
+      probing mode, such as 'ip' - inactive and probing, or ap - active and
+      probing, or 'tp' - trying and probing
+    (cherry picked from commit cbe2e236846e6527a2fc9e6b40b80befe329825b)
+
+commit c928129c08660934dcfee585fb69fe5a41f2c897
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 27 07:17:52 2011 +0200
+
+    dialog(k): postpone setting tm callbacks until T is created
+    
+    - add dialog in tm callbacks when transaction is created
+    - when using dlg_manage(), if dialog does not makes it to transaction,
+      clean it up
+    - fixes case when stateless reply is used after dlg_manage() to create a
+      new dialog
+    (cherry picked from commit ad4cfe8a3410059bc5c0b4951e49a952c4b01dfe)
+
+commit a623f8ed8b08e92a8df4c581d22201da0f0df160
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 27 04:21:24 2011 +0200
+
+    docbook/Makefile: option to not use local catalog
+    
+    - if nocatalog=yes, the xsltproc is started without XML_CATALOG_FILES
+      and the default ones from system are used
+    (cherry picked from commit a5c9d7e4bfe5949177290671072616ab054722bc)
+
+commit 14bc519b2a496f2f5f7a7bfc4403e942ff5d7c09
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 26 21:21:22 2011 +0200
+
+    sdpops: find codec ids in sdp when not found in static table
+    
+    - functions to keep/remove codecs by name work now with dynamic ids for
+      codecs
+    - reported by Juha Heinanen
+    (cherry picked from commit 511dc62e6a6ca74324f42b66a23bd9d80b377252)
+
+commit 233b229e00aa1d1be3a6d9b1484aa2c9ece3407e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 31 17:16:36 2011 +0100
+
+    ctl: use SRNAME define to build default ctl file path
+    
+    - this define is set by sercmd comilation (NAME is set to sercmd in this
+      case)
+    - otherwise use NAME, which is set by sip server compilation
+    - reported by Henning Westerholt
+    (cherry picked from commit b515ac33300f3c1d47195961409812d49fafb58f)
+
+commit 1e7488d5a94554cf8e2845240b9c61170537c5f5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 31 17:18:11 2011 +0100
+
+    utils/sercmd: set SRNAME at compile time
+    
+    - it is set to sip server name (e.g., ser, kamailio)
+    - it is used to build the default path to ctl file used to communicate
+      with sip server via ctl module
+    - reported by Henning Westerholt
+    (cherry picked from commit 1b58b26b7ccf7b2c01185a22ad076a3655e43664)
+
+commit abd0a077a626bd780e4719e38c9338d7ba6aa81b
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Wed Nov 2 12:20:54 2011 +0100
+
+    pkg/deb Add libncurses to build-dep
+
+commit 395b4707025241f8de07a679c04c385a9bfc5937
+Author: Michal Karas <largon@largon.net>
+Date:   Mon Oct 17 11:18:51 2011 +0200
+
+    app_python: fixing clone string for dirname and basename
+    
+    - variable tname replaced by dname_src and bname_src, because both
+      dirname() and basename() requires it's argument not to change: "These
+      functions may return pointers to statically allocated memory which may
+      be overwritten by subsequent calls. Alternatively, they may return a
+      pointer to some part of path, so that the string referred to by path
+      should not be modified or freed until the pointer returned by the
+      function is no longer required."
+    - related to FS#137
+    
+    Signed-off-by: Daniel-Constantin Mierla <miconda@gmail.com>
+    (cherry picked from commit d05616d81960e6b1647981d8d8b5e0dbe04a3dcb)
+
+commit 639f0a4b7608217679e63e9121fcff34a5c6424c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 27 03:50:56 2011 +0200
+
+    dialog(k): removed invalid html tag for docbook source
+    (cherry picked from commit 1d917dac68bdaf3a6aabcb644e08c00fd2f9ae0f)
+
+commit 6eeaecbf81f07ee4f3d9453c5c3090ef8e90954b
+Author: Jason Penton <jason.penton@gmail.com>
+Date:   Wed Oct 26 14:32:00 2011 +0200
+
+    Dialog: Fixed lurking html tag in XML doc
+    (cherry picked from commit db308939b551a920b31bdebd76c28b5b104db68c)
+
+commit 7c241cea37d31313949bf252ddb063a36c8f1436
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 26 18:59:39 2011 +0200
+
+    dispatcher(k): clarified notes about probing mode
+    (cherry picked from commit 9056b574f3df2d3358c3e726772d63bbbcd6dc23)
+
+commit a356ec5e2ce2daa16b1e2339880cb29a39ebc975
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 25 17:35:25 2011 +0200
+
+    core/sdp: restore setting of IP address type
+    
+    - refactoring of extract_mediaip() skipped setting IPv4/IPv6 type in sdp
+      structure
+    - reported by Jason Penton
+    (cherry picked from commit 6e1af068c99e84d0bfd5f713ced1e5f484ff9c5c)
+
+commit 4bdb5ecc0853968f55cc6fadf12ed05b47c39fdc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 20 23:50:08 2011 +0200
+
+    dispatcher(k): restore actve state via MI
+    
+    - resetting the state flags were not in effect for active state,
+      reported by Asgaroth
+    - added define to check whether a destionation addres should be skipped
+      or not based on its state
+    (cherry picked from commit 25bedcd991bc0225c50467abf0b6e48618893cbf)
+
+commit e19bb840fdb581ca8dbed6410e167b67ee899c77
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 20 20:02:47 2011 +0200
+
+    kamctl: version set to 3.2.0 to match kamailio stable branch
+
+
+
 ===================== 2011-10-18 Version 3.2.0 Released =====================
 
 ===================== Changes Since Version 3.1.0 ===========================
