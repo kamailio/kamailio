@@ -54,6 +54,8 @@ xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name,
 static str pu_200_rpl  = str_init("OK");
 static str pu_412_rpl  = str_init("Conditional request failed");
 
+extern int pres_fetch_rows;
+
 #define ETAG_LEN  128
 
 char* generate_ETag(int publ_count)
@@ -717,8 +719,8 @@ int pres_htable_restore(void)
 		goto error;
 	}
 	static str query_str = str_init("username");
-	if (pa_dbf.query (pa_db, 0, 0, 0,result_cols,0, n_result_cols,
-				&query_str, &result) < 0)
+	if (db_fetch_query(&pa_dbf, pres_fetch_rows, pa_db, 0, 0, 0, result_cols,
+				0, n_result_cols, &query_str, &result) < 0)
 	{
 		LM_ERR("querying presentity\n");
 		goto error;
@@ -731,58 +733,62 @@ int pres_htable_restore(void)
 		pa_dbf.free_result(pa_db, result);
 		return 0;
 	}
-		
-	for(i= 0; i< result->n; i++)
-	{
-		row = &result->rows[i];
-		row_vals = ROW_VALUES(row);
 
-		if(row_vals[expires_col].val.int_val< (int)time(NULL))
-			continue;
-		
-		sphere= NULL;
-		user.s= (char*)row_vals[user_col].val.string_val;
-		user.len= strlen(user.s);
-		domain.s= (char*)row_vals[domain_col].val.string_val;
-		domain.len= strlen(domain.s);
-		ev_str.s= (char*)row_vals[event_col].val.string_val;
-		ev_str.len= strlen(ev_str.s);
-
-		if(event_parser(ev_str.s, ev_str.len, &ev)< 0)
+	do {
+		for(i= 0; i< result->n; i++)
 		{
-			LM_ERR("parsing event\n");
+			row = &result->rows[i];
+			row_vals = ROW_VALUES(row);
+
+			if(row_vals[expires_col].val.int_val< (int)time(NULL))
+				continue;
+		
+			sphere= NULL;
+			user.s= (char*)row_vals[user_col].val.string_val;
+			user.len= strlen(user.s);
+			domain.s= (char*)row_vals[domain_col].val.string_val;
+			domain.len= strlen(domain.s);
+			ev_str.s= (char*)row_vals[event_col].val.string_val;
+			ev_str.len= strlen(ev_str.s);
+
+			if(event_parser(ev_str.s, ev_str.len, &ev)< 0)
+			{
+				LM_ERR("parsing event\n");
+				free_event_params(ev.params.list, PKG_MEM_TYPE);
+				goto error;
+			}
+			event= ev.type;
 			free_event_params(ev.params.list, PKG_MEM_TYPE);
-			goto error;
-		}
-		event= ev.type;
-		free_event_params(ev.params.list, PKG_MEM_TYPE);
 
-		if(uandd_to_uri(user, domain, &uri)< 0)
-		{
-			LM_ERR("constructing uri\n");
-			goto error;
-		}
-		/* insert in hash_table*/
+			if(uandd_to_uri(user, domain, &uri)< 0)
+			{
+				LM_ERR("constructing uri\n");
+				goto error;
+			}
+			/* insert in hash_table*/
 	
-		if(sphere_enable && event== EVENT_PRESENCE )
-		{
-			body.s= (char*)row_vals[body_col].val.string_val;
-			body.len= strlen(body.s);
-			sphere= extract_sphere(body);
-		}
+			if(sphere_enable && event== EVENT_PRESENCE )
+			{
+				body.s= (char*)row_vals[body_col].val.string_val;
+				body.len= strlen(body.s);
+				sphere= extract_sphere(body);
+			}
 
-		if(insert_phtable(&uri, event, sphere)< 0)
-		{
-			LM_ERR("inserting record in presentity hash table");
-			pkg_free(uri.s);
+			if(insert_phtable(&uri, event, sphere)< 0)
+			{
+				LM_ERR("inserting record in presentity hash table");
+				pkg_free(uri.s);
+				if(sphere)
+					pkg_free(sphere);
+				goto error;
+			}
 			if(sphere)
 				pkg_free(sphere);
-			goto error;
+			pkg_free(uri.s);
 		}
-		if(sphere)
-			pkg_free(sphere);
-		pkg_free(uri.s);
-	}
+	} while((db_fetch_next(&pa_dbf, pres_fetch_rows, pa_db, &result)==1)
+			&& (RES_ROW_N(result)>0));
+
 	pa_dbf.free_result(pa_db, result);
 
 	return 0;

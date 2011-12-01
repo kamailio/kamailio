@@ -46,8 +46,6 @@
 #include "notify.h"
 #include "../pua/hash.h"
 
-#define ACTW_FETCH_SIZE  128
-
 int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret,
 		str* reply_str);
 int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret,
@@ -61,6 +59,7 @@ static str pu_400_rpl  = str_init("Bad request");
 static str pu_500_rpl  = str_init("Server Internal Error");
 static str pu_489_rpl  = str_init("Bad Event");
 
+extern int pres_fetch_rows;
 
 int send_2XX_reply(struct sip_msg * msg, int reply_code, int lexpire,
 		str* local_contact)
@@ -1837,27 +1836,11 @@ int restore_db_subs(void)
 	}
 
 	/* select the whole table and all the columns */
-	if (DB_CAPABILITY(pa_dbf, DB_CAP_FETCH)) 
+	if (db_fetch_query(&pa_dbf, pres_fetch_rows, pa_db, 0, 0, 0, result_cols,
+				0, n_result_cols, 0, &result) < 0)
 	{
-		if(pa_dbf.query(pa_db,0,0,0,result_cols, 0,
-		n_result_cols, 0, 0) < 0) 
-		{
-			LM_ERR("Error while querying (fetch) database\n");
-			return -1;
-		}
-		if(pa_dbf.fetch_result(pa_db,&result,ACTW_FETCH_SIZE)<0)
-		{
-			LM_ERR("fetching rows failed\n");
-			return -1;
-		}
-	} else 
-	{
-		if (pa_dbf.query (pa_db, 0, 0, 0,result_cols,0, n_result_cols,
-					0, &result) < 0)
-		{
-			LM_ERR("querying presentity\n");
-			goto error;
-		}
+		LM_ERR("querying presentity\n");
+		goto error;
 	}
 
 	nr_rows = RES_ROW_N(result);
@@ -1983,19 +1966,8 @@ int restore_db_subs(void)
 			}
 		}
 
-		/* any more data to be fetched ?*/
-		if (DB_CAPABILITY(pa_dbf, DB_CAP_FETCH)) {
-		    if (pa_dbf.fetch_result( pa_db, &result,
-					     ACTW_FETCH_SIZE ) < 0) {
-			LM_ERR("fetching more rows failed\n");
-			goto error;
-		    }
-		    nr_rows = RES_ROW_N(result);
-		} else {
-		    nr_rows = 0;
-		}
-
-	}while (nr_rows>0);
+	} while((db_fetch_next(&pa_dbf, pres_fetch_rows, pa_db, &result)==1)
+			&& (RES_ROW_N(result)>0));
 
 	pa_dbf.free_result(pa_db, result);
 

@@ -90,6 +90,7 @@ str presentity_table= str_init("presentity");
 str active_watchers_table = str_init("active_watchers");
 str watchers_table= str_init("watchers");
 
+int pres_fetch_rows = 500;
 int library_mode= 0;
 str server_address= {0, 0};
 evlist_t* EvList= NULL;
@@ -179,6 +180,7 @@ static param_export_t params[]={
 	{ "enable_sphere_check",    INT_PARAM, &sphere_enable},
 	{ "timeout_rm_subs",        INT_PARAM, &timeout_rm_subs},
 	{ "send_fast_notify",	    INT_PARAM, &send_fast_notify},
+	{ "fetch_rows",             INT_PARAM, &pres_fetch_rows},
     {0,0,0}
 };
 
