@@ -464,6 +464,25 @@ modparam("rls", "max_notify_body_length", 32000)
 		</programlisting>
 		</example>
 	</section>
+	<section>
+	    <title><varname>fetch_rows</varname> (integer)</title>
+	    <para>
+		Number of rows to be loaded in one step from database.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 500.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>fetch_rows</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "fetch_rows", 1000)
+...
+</programlisting>
+	    </example>
+	</section>
 
 </section>
 
