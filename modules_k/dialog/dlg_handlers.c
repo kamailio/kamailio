@@ -975,8 +975,9 @@ dlg_cell_t *dlg_get_msg_dialog(sip_msg_t *msg)
 {
 	dlg_cell_t *dlg = NULL;
 	str callid;
-    str ftag;
-    str ttag;
+	str ftag;
+	str ttag;
+	unsigned int dir;
 
 	/* Retrieve the current dialog */
 	dlg = dlg_get_ctx_dialog();
@@ -985,7 +986,8 @@ dlg_cell_t *dlg_get_msg_dialog(sip_msg_t *msg)
 	
 	if (pre_match_parse(msg, &callid, &ftag, &ttag, 0)<0)
 		return NULL;
-	dlg = get_dlg(&callid, &ftag, &ttag, NULL);
+	dir = DLG_DIR_NONE;
+	dlg = get_dlg(&callid, &ftag, &ttag, &dir);
 	if (dlg==NULL){
 		LM_DBG("dlg with callid '%.*s' not found\n",
 				msg->callid->body.len, msg->callid->body.s);
