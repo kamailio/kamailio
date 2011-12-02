@@ -848,6 +848,62 @@ skip:
 }
 
 
+/**
+ * @brief wrapper around receive_msg() to clone the tcpbuf content
+ *
+ * When receiving over TCP, tcpbuf points inside the TCP stream buffer, but during
+ * processing of config, msg->buf content might be changed and may corrupt
+ * the content of the stream. Safer, make a clone of buf content in a local
+ * buffer and give that to receive_msg() to link to msg->buf
+ */
+int receive_tcp_msg(char* tcpbuf, unsigned int len, struct receive_info* rcv_info)
+{
+#ifdef DYN_BUF
+	char *buf = NULL;
+#else
+	static char *buf = NULL;
+	static unsigned int bsize = 0;
+#endif
+	int blen;
+
+	/* min buffer size is BUF_SIZE */
+	blen = len;
+	if(blen < BUF_SIZE)
+		blen = BUF_SIZE;
+
+#ifdef DYN_BUF
+	buf=pkg_malloc(blen+1);
+	if (buf==0) {
+		LM_ERR("could not allocate receive buffer\n");
+		return -1;
+	}
+#else
+	/* allocate buffer when needed
+	 * - no buffer yet
+	 * - existing buffer too small (min size is BUF_SIZE - to accomodate most
+	 *   of SIP messages; expected larger for HTTP/XCAP)
+	 * - existing buffer too large (e.g., we got a too big message in the past,
+	 *   let's free it)
+	 *
+	 * - also, use system memory, not to eat from PKG (same as static buffer
+	 *   from PKG pov)
+	 */
+	if(buf==NULL || bsize < blen || blen < bsize/2) {
+		if(buf!=NULL)
+			free(buf);
+		buf=malloc(blen+1);
+		if (buf==0) {
+			LM_ERR("could not allocate receive buffer\n");
+			return -1;
+		}
+		bsize = blen;
+	}
+#endif
+
+	memcpy(buf, tcpbuf, len);
+	buf[len] = '\0';
+	return receive_msg(buf, len, rcv_info);
+}
 
 int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 {
@@ -932,7 +988,7 @@ again:
 			/* if we are here everything is nice and ok*/
 			resp=CONN_RELEASE;
 #ifdef EXTRA_DEBUG
-			DBG("calling receive_msg(%p, %d, )\n",
+			DBG("receiving msg(%p, %d, )\n",
 					req->start, (int)(req->parsed-req->start));
 #endif
 			/* rcv.bind_address should always be !=0 */
@@ -970,12 +1026,12 @@ again:
 			if (unlikely(req->state==H_HTTP11_CHUNK_FINISH)){
 				/* http chunked request */
 				req->body[req->content_len] = 0;
-				ret = receive_msg(req->start,
+				ret = receive_tcp_msg(req->start,
 						req->body + req->content_len - req->start,
 						&con->rcv);
 			}else
 #endif
-				ret = receive_msg(req->start, req->parsed-req->start,
+				ret = receive_tcp_msg(req->start, req->parsed-req->start,
 									&con->rcv);
 				
 			if (unlikely(ret < 0)) {
