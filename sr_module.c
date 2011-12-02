@@ -76,6 +76,13 @@
 
 struct sr_module* modules=0;
 
+/*We need to define this symbol on Solaris becuase libcurl relies on libnspr which looks for this symbol.
+  If it is not defined, dynamic module loading (dlsym) fails */
+#ifdef __OS_solaris
+	int nspr_use_zone_allocator = 0;
+#endif
+
+
 #ifdef STATIC_EXEC
 	extern struct module_exports exec_exports;
 #endif
