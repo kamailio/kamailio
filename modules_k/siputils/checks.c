@@ -494,14 +494,20 @@ int w_is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2)
 
 int is_uri_user_e164(struct sip_msg *msg, str *uri)
 {
-    struct sip_uri puri;
+    char *chr;
+    str user;
 
-    if (parse_uri(uri->s, uri->len, &puri) < 0) {
+    chr = memchr(uri->s, ':', uri->len);
+    if (chr == NULL) {
 	LM_ERR("parsing URI failed\n");
 	return -1;
-    }
+    };
+    user.s = chr + 1;
+    chr = memchr(user.s, '@', uri->len - (user.s - uri->s));
+    if (chr == NULL) return -1;
+    user.len = chr - user.s;
 
-    return e164_check(&(puri.user));
+    return e164_check(&user);
 }
 
 /*
