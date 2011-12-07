@@ -39,6 +39,7 @@
  * 2006-09-10 m_dump now checks if registering UA supports MESSAGE method (jh)
  * 2006-10-05 added max_messages module variable (jh)
  * 2011-10-19 added storage of extra SIP headers (hpw)
+ * 2011-12-07 added storage of extra SIP headers from AVP (jh)
  */
 
 #include <stdio.h>
@@ -154,6 +155,10 @@ static str ms_snd_time_avp_param = {NULL, 0};
 int_str ms_snd_time_avp_name;
 unsigned short ms_snd_time_avp_type;
 
+static str ms_extra_hdrs_avp_param = {NULL, 0};
+int_str ms_extra_hdrs_avp_name;
+unsigned short ms_extra_hdrs_avp_type;
+
 str msg_type = str_init("MESSAGE");
 
 /** module functions */
@@ -220,6 +225,7 @@ static param_export_t params[]={
 	{ "sc_snd_time",      STR_PARAM, &sc_snd_time.s           },
 	{ "sc_stored_hdrs",   STR_PARAM, &sc_stored_hdrs.s        },
 	{ "snd_time_avp",     STR_PARAM, &ms_snd_time_avp_param.s },
+	{ "extra_hdrs_avp",   STR_PARAM, &ms_extra_hdrs_avp_param.s },
 	{ "add_date",         INT_PARAM, &ms_add_date             },
 	{ "max_messages",     INT_PARAM, &ms_max_messages         },
 	{ "add_contact",      INT_PARAM, &ms_add_contact          },
@@ -303,6 +309,8 @@ static int mod_init(void)
 	sc_snd_time.len = strlen(sc_snd_time.s);
 	if (ms_snd_time_avp_param.s)
 		ms_snd_time_avp_param.len = strlen(ms_snd_time_avp_param.s);
+	if (ms_extra_hdrs_avp_param.s)
+		ms_extra_hdrs_avp_param.len = strlen(ms_extra_hdrs_avp_param.s);
 
 	/* binding to mysql module  */
 	if (db_bind_mod(&ms_db_url, &msilo_dbf))
@@ -332,6 +340,22 @@ static int mod_init(void)
 					ms_snd_time_avp_param.len, ms_snd_time_avp_param.s);
 			return -1;
 		}
+	}
+
+	if (ms_extra_hdrs_avp_param.s && ms_extra_hdrs_avp_param.len > 0) {
+	    if (pv_parse_spec(&ms_extra_hdrs_avp_param, &avp_spec)==0
+		|| avp_spec.type!=PVT_AVP) {
+		LM_ERR("malformed or non AVP %.*s AVP definition\n",
+		       ms_extra_hdrs_avp_param.len, ms_extra_hdrs_avp_param.s);
+		return -1;
+	    }
+
+	    if (pv_get_avp_name(0, &(avp_spec.pvp), &ms_extra_hdrs_avp_name,
+			       &ms_extra_hdrs_avp_type) != 0) {
+		LM_ERR("[%.*s]- invalid AVP definition\n",
+		       ms_extra_hdrs_avp_param.len, ms_extra_hdrs_avp_param.s);
+		return -1;
+	    }
 	}
 
 	db_con = msilo_dbf.init(&ms_db_url);
@@ -502,6 +526,24 @@ static int get_non_mandatory_headers(struct sip_msg *msg, char *buf, int buf_len
 {
 	struct hdr_field *hdrs;
 	int len = 0;
+	int_str avp_value;
+	struct usr_avp *avp;
+
+	if (ms_extra_hdrs_avp_name.n != 0) {
+	    avp = NULL;
+	    avp = search_first_avp(ms_extra_hdrs_avp_type,
+				   ms_extra_hdrs_avp_name, &avp_value, 0);
+	    if ((avp != NULL) && is_avp_str_val(avp)) {
+		if (buf_len <= avp_value.s.len) {
+		    LM_ERR("insufficient space to store headers in silo\n");
+		    return -1;
+		}
+		memcpy(buf, avp_value.s.s, avp_value.s.len);
+		LM_INFO("copied '%.*s' to buf\n", avp_value.s.len,
+			avp_value.s.s);
+		return avp_value.s.len;
+	    }
+	}
 
 	for (hdrs = msg->headers; hdrs != NULL; hdrs = hdrs->next)
 	{
