@@ -539,8 +539,6 @@ static int get_non_mandatory_headers(struct sip_msg *msg, char *buf, int buf_len
 		    return -1;
 		}
 		memcpy(buf, avp_value.s.s, avp_value.s.len);
-		LM_INFO("copied '%.*s' to buf\n", avp_value.s.len,
-			avp_value.s.s);
 		return avp_value.s.len;
 	    }
 	}
