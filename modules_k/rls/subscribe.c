@@ -1029,7 +1029,11 @@ int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
 
 	if (dbmode==RLS_DB_ONLY)
 	{
-		return(update_all_subs_rlsdb(&parsed_uri.user, &parsed_uri.host, &event));
+		int ret;
+		lock_get(rls_update_subs_lock);
+		ret = (update_all_subs_rlsdb(&parsed_uri.user, &parsed_uri.host, &event));
+		lock_release(rls_update_subs_lock);
+		return ret;
 	}
 
 

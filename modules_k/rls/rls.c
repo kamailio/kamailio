@@ -88,6 +88,10 @@ search_event_t pres_search_event;
 get_event_list_t pres_get_ev_list;
 int clean_period = 100;
 
+/* Lock for rls_update_subs */
+gen_lock_t *rls_update_subs_lock = NULL;
+
+
 /* address and port(default: 80):"http://192.168.2.132:8000/xcap-root"*/
 char* xcap_root;
 unsigned int xcap_port = 8000;
@@ -574,6 +578,17 @@ static int mod_init(void)
 		register_timer(rlsubs_table_update, 0, clean_period);
 	}
 
+	if ((rls_update_subs_lock = lock_alloc()) == NULL)
+	{
+		LM_ERR("Failed to alloc rls_updae_subs_lock\n");
+		return -1;
+	}
+	if (lock_init(rls_update_subs_lock) == NULL)
+	{
+		LM_ERR("Failed to init rls_updae_subs_lock\n");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -678,6 +693,12 @@ static void destroy(void)
 
 	if(rls2_db && rls2_dbf.close)
 		rls2_dbf.close(rls2_db);
+
+	if (rls_update_subs_lock != NULL)
+	{
+		lock_destroy(rls_update_subs_lock);
+		lock_dealloc(rls_update_subs_lock);
+	}
 }
 
 int handle_expired_record(subs_t* s)
