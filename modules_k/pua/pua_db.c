@@ -301,13 +301,16 @@ int matches_in_puadb(ua_pres_t *pres)
 	q_ops[puri_col] = OP_EQ; 
 	n_query_cols++;
 
-	q_cols[pid_col= n_query_cols] = &str_pres_id_col;	
-	q_vals[pid_col].type = DB1_STR;
-	q_vals[pid_col].nul = 0;
-	q_vals[pid_col].val.str_val.s = pres->id.s;
-	q_vals[pid_col].val.str_val.len = pres->id.len;
-	q_ops[pid_col] = OP_EQ;
-	n_query_cols++;
+	if (pres->id.s && pres->id.len)
+	{
+		q_cols[pid_col= n_query_cols] = &str_pres_id_col;	
+		q_vals[pid_col].type = DB1_STR;
+		q_vals[pid_col].nul = 0;
+		q_vals[pid_col].val.str_val.s = pres->id.s;
+		q_vals[pid_col].val.str_val.len = pres->id.len;
+		q_ops[pid_col] = OP_EQ;
+		n_query_cols++;
+	}
 
 	q_cols[flag_col= n_query_cols] = &str_flag_col;
 	q_vals[flag_col].type = DB1_INT;
@@ -359,7 +362,10 @@ int matches_in_puadb(ua_pres_t *pres)
 			q_ops[etag_col] = OP_EQ;
 			n_query_cols++;						
 		}
-
+		else
+		{
+			LM_DBG("no etag restriction\n");
+		}
 	}
 
 
@@ -419,13 +425,16 @@ ua_pres_t* search_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **dbres)
 	q_ops[puri_col] = OP_EQ; 
 	n_query_cols++;
 
-	q_cols[pid_col= n_query_cols] = &str_pres_id_col;	
-	q_vals[pid_col].type = DB1_STR;
-	q_vals[pid_col].nul = 0;
-	q_vals[pid_col].val.str_val.s = pres->id.s;
-	q_vals[pid_col].val.str_val.len = pres->id.len;
-	q_ops[pid_col] = OP_EQ;
-	n_query_cols++;
+	if (pres->id.s && pres->id.len)
+	{
+		q_cols[pid_col= n_query_cols] = &str_pres_id_col;	
+		q_vals[pid_col].type = DB1_STR;
+		q_vals[pid_col].nul = 0;
+		q_vals[pid_col].val.str_val.s = pres->id.s;
+		q_vals[pid_col].val.str_val.len = pres->id.len;
+		q_ops[pid_col] = OP_EQ;
+		n_query_cols++;
+	}
 
 	q_cols[flag_col= n_query_cols] = &str_flag_col;
 	q_vals[flag_col].type = DB1_INT;
@@ -476,7 +485,10 @@ ua_pres_t* search_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **dbres)
 			q_ops[etag_col] = OP_EQ;
 			n_query_cols++;						
 		}
-
+		else
+		{
+			LM_DBG("no etag restriction\n");
+		}
 	}
 
 
@@ -850,9 +862,30 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 	if (nr_rows == 0)
 	{
 		/* no match */
-		LM_DBG("No rows found.\n");
+		LM_DBG("No rows found. Looking for temporary dialog\n");
 		pua_dbf.free_result(pua_db, res);
-		return(0);
+
+		q_vals[totag_col].val.str_val.s = "";
+		q_vals[totag_col].val.str_val.len = 0;
+
+
+		if(pua_dbf.query(pua_db, q_cols, q_ops, q_vals,
+			res_cols,n_query_cols,n_res_cols,0,&res) < 0)
+		{
+			LM_ERR("DB query error\n");
+			return(-1);
+		}
+
+		nr_rows = RES_ROW_N(res);
+
+		if (nr_rows == 0)
+		{
+			LM_DBG( "Temporary Dialog Not found\n" );
+			pua_dbf.free_result(pua_db, res);
+			return(0);
+		}
+
+		LM_DBG( "Found a temporary Dialog\n" );
 	}
 
 	if (nr_rows != 1)
