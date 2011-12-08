@@ -1053,8 +1053,12 @@ insert:
 		presentity->id.len = subs->id.len;
 		size += subs->id.len;
 
+		presentity->event = pres.event;
+		presentity->flag = pres.flag;
+
 		/* Set the temporary record expiry for 2 * 64T1 seconds from now */
 		presentity->expires= (int)time(NULL) + 64;
+		presentity->desired_expires= presentity->expires;
 
 		if (dbmode==PUA_DB_ONLY)
 		{
