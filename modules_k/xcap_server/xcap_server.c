@@ -88,6 +88,7 @@ static str xcaps_buf = {0, 8192};
 #define XCAPS_ETAG_SIZE	128
 static char xcaps_etag_buf[XCAPS_ETAG_SIZE];
 
+static str str_id_col = str_init("id");
 static str str_source_col = str_init("source");
 static str str_doc_col = str_init("doc");
 static str str_etag_col = str_init("etag");
@@ -331,9 +332,10 @@ int xcaps_xpath_hack(str *buf, int type)
 static int xcaps_put_db(str* user, str *domain, xcap_uri_t *xuri, str *etag,
 		str* doc)
 {
-	db_key_t qcols[9];
-	db_val_t qvals[9];
-	int ncols = 0;
+	db_key_t qcols[9], rcols[2], ucols[5];
+	db_val_t qvals[9], uvals[5];
+	db1_res_t *res = NULL;
+	int ncols = 0, num_ucols = 0, nrows = 0;
 
 	if(xcaps_check_doc_validity(doc)<0)
 	{
@@ -341,7 +343,6 @@ static int xcaps_put_db(str* user, str *domain, xcap_uri_t *xuri, str *etag,
 		goto error;
 	}
 
-	/* insert in xcap table*/
 	qcols[ncols] = &str_username_col;
 	qvals[ncols].type = DB1_STR;
 	qvals[ncols].nul = 0;
@@ -360,35 +361,13 @@ static int xcaps_put_db(str* user, str *domain, xcap_uri_t *xuri, str *etag,
 	qvals[ncols].val.int_val= xuri->type;
 	ncols++;
 
-	qcols[ncols] = &str_doc_col;
-	qvals[ncols].type = DB1_BLOB;
-	qvals[ncols].nul = 0;
-	qvals[ncols].val.str_val= *doc;
-	ncols++;
-
-	qcols[ncols] = &str_etag_col;
-	qvals[ncols].type = DB1_STR;
-	qvals[ncols].nul = 0;
-	qvals[ncols].val.str_val= *etag;
-	ncols++;
-
-	qcols[ncols] = &str_source_col;
-	qvals[ncols].type = DB1_INT;
-	qvals[ncols].nul = 0;
-	qvals[ncols].val.int_val = 0;
-	ncols++;
-
 	qcols[ncols] = &str_doc_uri_col;
 	qvals[ncols].type = DB1_STR;
 	qvals[ncols].nul = 0;
 	qvals[ncols].val.str_val= xuri->adoc;
 	ncols++;
 
-	qcols[ncols] = &str_port_col;
-	qvals[ncols].type = DB1_INT;
-	qvals[ncols].nul = 0;
-	qvals[ncols].val.int_val= 0;
-	ncols++;
+	rcols[0] = &str_id_col;
 
 	if (xcaps_dbf.use_table(xcaps_db, &xcaps_db_table) < 0) 
 	{
@@ -396,10 +375,83 @@ static int xcaps_put_db(str* user, str *domain, xcap_uri_t *xuri, str *etag,
 				xcaps_db_table.s);
 		goto error;
 	}
-	
-	if(xcaps_dbf.insert(xcaps_db, qcols, qvals, ncols)< 0)
+
+	if (xcaps_dbf.query(xcaps_db, qcols, 0, qvals, rcols, ncols, 1, 0, &res) < 0)
 	{
-		LM_ERR("in sql insert\n");
+		LM_ERR("in sql query\n");
+		goto error;
+	}
+
+	nrows = RES_ROW_N(res);
+	xcaps_dbf.free_result(xcaps_db, res);
+
+	if (nrows == 0)
+	{
+		qcols[ncols] = &str_doc_col;
+		qvals[ncols].type = DB1_BLOB;
+		qvals[ncols].nul = 0;
+		qvals[ncols].val.str_val= *doc;
+		ncols++;
+
+		qcols[ncols] = &str_etag_col;
+		qvals[ncols].type = DB1_STR;
+		qvals[ncols].nul = 0;
+		qvals[ncols].val.str_val= *etag;
+		ncols++;
+
+		qcols[ncols] = &str_source_col;
+		qvals[ncols].type = DB1_INT;
+		qvals[ncols].nul = 0;
+		qvals[ncols].val.int_val = 0;
+		ncols++;
+
+		qcols[ncols] = &str_port_col;
+		qvals[ncols].type = DB1_INT;
+		qvals[ncols].nul = 0;
+		qvals[ncols].val.int_val = 0;
+		ncols++;
+
+		if(xcaps_dbf.insert(xcaps_db, qcols, qvals, ncols)< 0)
+		{
+			LM_ERR("in sql insert\n");
+			goto error;
+		}
+	}
+	else if (nrows == 1)
+	{
+		ucols[num_ucols] = &str_doc_col;
+		uvals[num_ucols].type = DB1_BLOB;
+		uvals[num_ucols].nul = 0;
+		uvals[num_ucols].val.str_val= *doc;
+		num_ucols++;
+
+		ucols[num_ucols] = &str_etag_col;
+		uvals[num_ucols].type = DB1_STR;
+		uvals[num_ucols].nul = 0;
+		uvals[num_ucols].val.str_val= *etag;
+		num_ucols++;
+
+		ucols[num_ucols] = &str_source_col;
+		uvals[num_ucols].type = DB1_INT;
+		uvals[num_ucols].nul = 0;
+		uvals[num_ucols].val.int_val = 0;
+		num_ucols++;
+
+		ucols[num_ucols] = &str_port_col;
+		uvals[num_ucols].type = DB1_INT;
+		uvals[num_ucols].nul = 0;
+		uvals[num_ucols].val.int_val = 0;
+		num_ucols++;
+
+		if (xcaps_dbf.update(xcaps_db, qcols, 0, qvals, ucols, uvals, ncols, num_ucols) < 0)
+		{
+			LM_ERR("in sql update\n");
+			goto error;
+		}
+	}
+	else
+	{
+		LM_ERR("found %d copies of the same document in XCAP Server\n", nrows);
 		goto error;
 	}
 
@@ -518,18 +570,8 @@ static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 		return -2;
 	}
 
-	if(xuri.nss==NULL || xuri.node.len<=0)
+	if(xuri.nss!=NULL && xuri.node.len>0)
 	{
-		/* full document upload
-		 *   - fetch and then delete is too expensive if record in db
-		 *   - just try to delete
-		 */
-		if(xcaps_del_db(&turi.user, &turi.host, &xuri)<0)
-		{
-			LM_ERR("could not delete document\n");
-			goto error;
-		}
-	} else {
 		/* partial document upload
 		 *   - fetch, update, delete and store
 		 */
@@ -558,11 +600,6 @@ static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 		if(xcaps_xpath_hack(&body, 1)<0)
 		{
 			LM_ERR("could not hack xcap document\n");
-			goto error;
-		}
-		if(xcaps_del_db(&turi.user, &turi.host, &xuri)<0)
-		{
-			LM_ERR("could not delete document\n");
 			goto error;
 		}
 	}
@@ -1075,11 +1112,6 @@ static int w_xcaps_del(sip_msg_t* msg, char* puri, char* ppath)
 		if(xcaps_xpath_hack(&body, 1)<0)
 		{
 			LM_ERR("could not hack xcap document\n");
-			goto error;
-		}
-		if(xcaps_del_db(&turi.user, &turi.host, &xuri)<0)
-		{
-			LM_ERR("could not delete document\n");
 			goto error;
 		}
 		if(xcaps_generate_etag_hdr(&etag_hdr)<0)
