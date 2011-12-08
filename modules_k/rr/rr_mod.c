@@ -70,6 +70,7 @@ static int it_list_fixup(void** param, int param_no);
 static int w_loose_route(struct sip_msg *, char *, char *);
 static int w_record_route(struct sip_msg *, char *, char *);
 static int w_record_route_preset(struct sip_msg *,char *, char *);
+static int w_record_route_advertised_address(struct sip_msg *, char *, char *);
 static int w_add_rr_param(struct sip_msg *,char *, char *);
 static int w_check_route_param(struct sip_msg *,char *, char *);
 static int w_is_direction(struct sip_msg *,char *, char *);
@@ -88,6 +89,8 @@ static cmd_export_t cmds[] = {
 	{"record_route_preset",  (cmd_function)w_record_route_preset, 1, it_list_fixup, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"record_route_preset",  (cmd_function)w_record_route_preset, 2, it_list_fixup, 0,
+			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"record_route_advertised_address",  (cmd_function)w_record_route_advertised_address, 1, it_list_fixup, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"add_rr_param",         (cmd_function)w_add_rr_param,	1, it_list_fixup, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
@@ -276,6 +279,30 @@ static int w_record_route_preset(struct sip_msg *msg, char *key, char *key2)
 		return -1;
 
 done:
+	last_rr_msg = msg->id;
+	return 1;
+}
+
+
+/**
+ * wrapper for record_route(msg, params)
+ */
+static int w_record_route_advertised_address(struct sip_msg *msg, char *addr, char *bar)
+{
+	str s;
+
+	if (msg->id == last_rr_msg) {
+		LM_ERR("Double attempt to record-route\n");
+		return -1;
+	}
+
+	if (pv_printf_s(msg, (pv_elem_t*)addr, &s) < 0) {
+		LM_ERR("failed to print the format\n");
+		return -1;
+	}
+	if ( record_route_advertised_address( msg, &s ) < 0)
+		return -1;
+
 	last_rr_msg = msg->id;
 	return 1;
 }
