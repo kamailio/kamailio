@@ -739,14 +739,14 @@ int is_dialog_puadb(ua_pres_t *pres)
 	if (nr_rows == 0)
 	{
 		/* no match */ 
-		LM_ERR("No rows found.\n");
+		LM_DBG("No rows found.\n");
 		return(-1);
 	}
 
 	if (nr_rows != 1)
 	{
-		LM_ERR("Too many rows found (%d)\n", nr_rows);
-		return(-1);
+		LM_WARN("Too many rows found (%d)\n", nr_rows);
+		/* no need to return here - drop thro */
 	}
 
 	return(0);
@@ -1430,7 +1430,7 @@ void update_puadb(ua_pres_t* pres, time_t desired_expires,
 
 /******************************************************************************/
 
-void insert_puadb(ua_pres_t* pres)
+int insert_puadb(ua_pres_t* pres)
 
 {
 	db_key_t db_cols[20];
@@ -1440,7 +1440,7 @@ void insert_puadb(ua_pres_t* pres)
 	if (pres==NULL)
 	{
 		LM_ERR("called with NULL param\n");
-		return;
+		return(-1);
 	}
 
 	if (pres->pres_uri)
@@ -1599,13 +1599,16 @@ void insert_puadb(ua_pres_t* pres)
 	if(pua_db == NULL)
 	{
 		LM_ERR("null database connection\n");
-		return;
+		return(-1);
 	}
 
 	if(pua_dbf.insert(pua_db, db_cols, db_vals, n_cols) < 0)  
 	{
 		LM_ERR("DB insert failed\n");
+		return(-1);
 	}
+
+	return(0);
 }
 
 /******************************************************************************/

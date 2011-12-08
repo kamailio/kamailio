@@ -58,7 +58,7 @@ int update_version_puadb(ua_pres_t *pres, int version );
 int update_contact_puadb(ua_pres_t *pres, str *contact);
 void update_puadb(ua_pres_t* pres, time_t desired_expires, 
                        int expires, str* etag, str *contact);
-void insert_puadb(ua_pres_t* pres);
+int insert_puadb(ua_pres_t* pres);
 
 
 #endif
