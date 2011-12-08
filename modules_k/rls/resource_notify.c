@@ -371,7 +371,7 @@ void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int aut
 			if(cid.s)
 			{
 	
-				if(buf_len + chunk_len >= size)
+				while(buf_len + chunk_len >= size)
 				{
 					REALLOC_BUF
 				}
