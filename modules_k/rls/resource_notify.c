@@ -100,7 +100,7 @@ void get_dialog_from_did(char* did, subs_t **dialog, unsigned int *hash_code)
 
 		if(*dialog==NULL)
 		{
-			LM_ERR("record not retrieved from db [rlsubs_did]= %s\n", did);
+			LM_INFO("record not retrieved from db [rlsubs_did]= %s\n", did);
 			return;
 		}
 	}
@@ -113,7 +113,7 @@ void get_dialog_from_did(char* did, subs_t **dialog, unsigned int *hash_code)
 
 		if(s== NULL)
 		{
-			LM_ERR("record not found in hash_table [rlsubs_did]= %s\n",
+			LM_INFO("record not found in hash_table [rlsubs_did]= %s\n",
 					did);
 			lock_release(&rls_table[*hash_code].lock);
 			return;
@@ -250,7 +250,7 @@ void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int aut
                 if(dialog== NULL)
                 {
                     prev_did = NULL;
-                    LM_ERR("Dialog is NULL\n");
+                    LM_INFO("Dialog is NULL\n");
                     continue;
                 }
             }

@@ -1080,14 +1080,14 @@ subs_t *get_dialog_rlsdb( str callid, str to_tag, str from_tag )
 	if (nr_rows == 0)
 	{
 		/* no match */ 
-		LM_ERR( "get_dialog_rlsb No matching records\n" );
+		LM_INFO( "get_dialog_rlsdb No matching records\n" );
 		rls2_dbf.free_result(rls2_db, result);
 		return(NULL);
 	}
 
 	if (nr_rows != 1)
 	{
-		LM_ERR( "get_dialog_rlsb multiple matching records\n" );
+		LM_ERR( "get_dialog_rlsdb multiple matching records\n" );
 		rls2_dbf.free_result(rls2_db, result);
 		return(NULL);
 	}
