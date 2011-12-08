@@ -46,6 +46,7 @@
 #include "send_subscribe.h"
 #include "pua_callback.h"
 #include "event_list.h"
+#include "../presence/subscribe.h"
 
 
 void print_subs(subs_info_t* subs)
@@ -1019,6 +1020,19 @@ insert:
         */
 
 		dlg_t* td= NULL;
+
+		if (subs->internal_update_flag == INTERNAL_UPDATE_TRUE)
+		{
+			LM_INFO("attempting to re-SUBSCRIBE on internal (rls_update_subs()) update - skipping\n");
+			goto done;
+		}
+
+		if (presentity->to_tag.len == 0)
+		{
+			LM_WARN("attempting to re-SUBSCRIBE to temporary (non-established) dialog - skipping\n");
+			goto done;
+		}
+
 		td= pua_build_dlg_t(presentity);
 		if(td== NULL)
 		{

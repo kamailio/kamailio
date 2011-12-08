@@ -852,6 +852,8 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 	extra_headers.len = strlen(extra_headers.s);
 
 	s.extra_headers = &extra_headers;
+
+	s.internal_update_flag = subs->internal_update_flag;
 	
 	if(process_list_and_exec(xmlnode, subs->from_user, subs->from_domain,
 			send_resource_subs, (void*)(&s))<0)
@@ -992,6 +994,8 @@ int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
 						subs_copy->pres_uri.len, subs_copy->pres_uri.s);
 					goto loop_done;
 				}
+
+				subs_copy->internal_update_flag = INTERNAL_UPDATE_TRUE;
 
 				if(resource_subscriptions(subs_copy, service_node)< 0)
 				{
