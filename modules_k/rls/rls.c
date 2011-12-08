@@ -381,9 +381,6 @@ static int mod_init(void)
 
 	if(waitn_time<= 0)
 		waitn_time= 5;
-	
-	if(waitn_time<= 0)
-		waitn_time= 100;
 
 	/* bind libxml wrapper functions */
 
