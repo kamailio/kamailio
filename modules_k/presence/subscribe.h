@@ -47,6 +47,9 @@ struct pres_ev;
 #define TERMINATED_STATUS    3
 #define WAITING_STATUS       4
 
+#define INTERNAL_UPDATE_FALSE	0
+#define INTERNAL_UPDATE_TRUE	1
+
 struct subscription
 {
 	str pres_uri;
@@ -72,6 +75,7 @@ struct subscription
 	int send_on_cback;
 	int db_flag;
 	str* auth_rules_doc;
+	int internal_update_flag;
 	struct subscription* next;
 
 };
