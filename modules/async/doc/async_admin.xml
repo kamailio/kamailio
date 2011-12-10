@@ -114,6 +114,7 @@ modparam("async", "workers", 2)
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>async_sleep</function> usage</title>
 		<programlisting format="linespecific">
@@ -152,6 +153,7 @@ route[RESUME] {
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>async_sleep</function> usage</title>
 		<programlisting format="linespecific">
