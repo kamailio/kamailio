@@ -56,9 +56,9 @@ struct tm_binds tmb;
 
 static cmd_export_t cmds[]={
 	{"async_route", (cmd_function)w_async_route, 2, fixup_async_route,
-		0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"async_sleep", (cmd_function)w_async_sleep, 1, fixup_async_sleep,
-		0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
