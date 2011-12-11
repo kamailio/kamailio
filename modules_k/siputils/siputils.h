@@ -25,7 +25,7 @@
 #define _SIPUTILS_H_
 
 typedef int (*siputils_has_totag_t)(struct sip_msg*, char*, char*);
-typedef int (*siputils_is_uri_user_e164_t)(struct sip_msg*, str*);
+typedef int (*siputils_is_uri_user_e164_t)(str*);
 
 /*! Siputils module API */
 typedef struct siputils_api {

@@ -480,7 +480,7 @@ int w_is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2)
 		LM_DBG("missing uri\n");
 		return -1;
 	    }
-	    return is_uri_user_e164(_m, &pv_val.rs);
+	    return is_uri_user_e164(&pv_val.rs);
 	} else {
 	    LM_ERR("pseudo variable value is not string\n");
 	    return -1;
@@ -492,7 +492,7 @@ int w_is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2)
 }
 
 
-int is_uri_user_e164(struct sip_msg *msg, str *uri)
+int is_uri_user_e164(str *uri)
 {
     char *chr;
     str user;

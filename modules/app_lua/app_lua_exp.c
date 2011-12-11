@@ -1873,7 +1873,7 @@ static int lua_sr_siputils_is_uri_user_e164(lua_State *L)
 	param[0].s = (char *) lua_tostring(L, -1);
 	param[0].len = strlen(param[0].s);
 	
-	ret = _lua_siputilsb.is_uri_user_e164(env_L->msg, &param[0]);
+	ret = _lua_siputilsb.is_uri_user_e164(&param[0]);
 	if (ret < 0)
 		return app_lua_return_false(L);
 
