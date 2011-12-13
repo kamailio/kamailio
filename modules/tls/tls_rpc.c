@@ -29,6 +29,7 @@
 
 #include "../../rpc.h"
 #include "../../tcp_conn.h"
+#include "../../tcp_info.h"
 #include "../../timer.h"
 #include "../../cfg/cfg.h"
 #include "tls_init.h"
@@ -191,9 +192,14 @@ static const char* tls_info_doc[2] = {
 
 static void tls_info(rpc_t* rpc, void* c)
 {
+	struct tcp_gen_info ti;
 	void* handle;
+
+	tcp_get_info(&ti);
 	rpc->add(c, "{", &handle);
-	rpc->struct_add(handle, "d",
+	rpc->struct_add(handle, "ddd",
+			"max_connections", ti.tls_max_connections,
+			"opened_connections", ti.tls_connections_no,
 			"clear_text_write_queued_bytes", tls_ct_wq_total_bytes());
 }
 
