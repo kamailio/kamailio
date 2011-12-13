@@ -57,6 +57,7 @@
 #include "../../timer.h" /* ticks_t */
 #include "../../tls_hooks.h"
 #include "../../ut.h"
+#include "../../shm_init.h"
 #include "../../rpc_lookup.h"
 #include "../../cfg/cfg.h"
 #include "tls_init.h"
@@ -269,7 +270,16 @@ static tls_domains_cfg_t* tls_use_modparams(void)
 }
 #endif
 
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	/* shm is used, be sure it is initialized */
+	if(!shm_initialized() && init_shm()<0)
+		return -1;
 
+	if(tls_pre_init()<0)
+		return -1;
+	return 0;
+}
 
 static int mod_init(void)
 {
