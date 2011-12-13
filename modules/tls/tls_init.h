@@ -61,6 +61,11 @@ extern const SSL_METHOD* ssl_methods[];
 
 
 /*
+ * just once, pre-initialize the tls subsystem
+ */
+int tls_pre_init(void);
+
+/*
  * just once, initialize the tls subsystem 
  */
 int init_tls_h(void);
