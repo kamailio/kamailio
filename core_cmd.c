@@ -40,6 +40,7 @@
 #include "pt.h"
 #include "ut.h"
 #include "tcp_info.h"
+#include "tcp_conn.h"
 #include "tcp_options.h"
 #include "core_cmd.h"
 #include "cfg_core.h"
@@ -739,6 +740,89 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 }
 
 
+static const char* core_tcp_list_doc[] = {
+	"Returns tcp connections details.",    /* Documentation string */
+	0                               /* Method signature(s) */
+};
+
+extern gen_lock_t* tcpconn_lock;
+extern struct tcp_connection** tcpconn_id_hash;
+
+static void core_tcp_list(rpc_t* rpc, void* c)
+{
+#ifdef USE_TCP
+	char src_ip[IP_ADDR_MAX_STR_SIZE];
+	char dst_ip[IP_ADDR_MAX_STR_SIZE];
+	void* handle;
+	char* state;
+	char* type;
+	struct tcp_connection* con;
+	int i, len, timeout;
+
+	TCPCONN_LOCK;
+	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
+		for (con = tcpconn_id_hash[i]; con; con = con->id_next) {
+			rpc->add(c, "{", &handle);
+			/* tcp data */
+			if (con->rcv.proto == PROTO_TCP)
+				type = "TCP";
+			else if (con->rcv.proto == PROTO_TCP)
+				type = "TLS";
+			else
+				type = "UNKNOWN";
+
+			if ((len = ip_addr2sbuf(&con->rcv.src_ip, src_ip, sizeof(src_ip)))
+					== 0)
+				BUG("failed to convert source ip");
+			src_ip[len] = 0;
+			if ((len = ip_addr2sbuf(&con->rcv.dst_ip, dst_ip, sizeof(dst_ip)))
+					== 0)
+				BUG("failed to convert destination ip");
+			dst_ip[len] = 0;
+			timeout = TICKS_TO_S(con->timeout - get_ticks_raw());
+			switch(con->state) {
+				case S_CONN_ERROR:
+					state = "CONN_ERROR";
+				break;
+				case S_CONN_BAD:
+					state = "CONN_BAD";
+				break;
+				case S_CONN_OK:
+					state = "CONN_OK";
+				break;
+				case S_CONN_INIT:
+					state = "CONN_INIT";
+				break;
+				case S_CONN_EOF:
+					state = "CONN_EOF";
+				break;
+				case S_CONN_ACCEPT:
+					state = "CONN_ACCEPT";
+				break;
+				case S_CONN_CONNECT:
+					state = "CONN_CONNECT";
+				break;
+				default:
+					state = "UNKNOWN";
+			}
+			rpc->struct_add(handle, "dssdsdsd",
+					"id", con->id,
+					"type", type,
+					"state", state,
+					"timeout", timeout,
+					"src_ip", src_ip,
+					"src_port", con->rcv.src_port,
+					"dst_ip", dst_ip,
+					"dst_port", con->rcv.dst_port);
+		}
+	}
+	TCPCONN_UNLOCK;
+#else
+	rpc->fault(c, 500, "tcp support not compiled");
+#endif
+}
+
+
 
 static const char* core_sctp_options_doc[] = {
 	"Returns active sctp options. With one parameter"
@@ -920,6 +1004,7 @@ static rpc_export_t core_rpc_methods[] = {
 #endif
 	{"core.tcp_info",          core_tcpinfo,           core_tcpinfo_doc,    0},
 	{"core.tcp_options",       core_tcp_options,       core_tcp_options_doc,0},
+	{"core.tcp_list",          core_tcp_list,          core_tcp_list_doc,0},
 	{"core.sctp_options",      core_sctp_options,      core_sctp_options_doc,
 		0},
 	{"core.sctp_info",         core_sctpinfo,          core_sctpinfo_doc,   0},
