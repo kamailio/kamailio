@@ -69,7 +69,10 @@ static cfg_def_t tcp_cfg_def[] = {
 		"connection lifetime (in seconds)"},
 	{ "max_connections", CFG_VAR_INT | CFG_ATOMIC, 0, (1U<<31)-1,
 													       fix_max_conns,    0,
-		"maximum connection number, soft limit"},
+		"maximum tcp connections number, soft limit"},
+	{ "max_tls_connections", CFG_VAR_INT | CFG_ATOMIC, 0, (1U<<31)-1,
+													       fix_max_conns,    0,
+		"maximum tls connections number, soft limit"},
 	{ "no_connect",   CFG_VAR_INT | CFG_ATOMIC,      0,   1,      0,         0,
 		"if set only accept new connections, never actively open new ones"},
 	{ "fd_cache",     CFG_VAR_INT | CFG_READONLY,    0,   1,      0,         0,
@@ -132,6 +135,7 @@ void init_tcp_options()
 	tcp_default_cfg.con_lifetime=S_TO_TICKS(DEFAULT_TCP_CONNECTION_LIFETIME_S);
 #ifdef USE_TCP
 	tcp_default_cfg.max_connections=tcp_max_connections;
+	tcp_default_cfg.max_tls_connections=tls_max_connections;
 #else /*USE_TCP*/
 	tcp_default_cfg.max_connections=0;
 #endif /*USE_TCP*/

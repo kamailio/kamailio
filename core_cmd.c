@@ -677,10 +677,12 @@ static void core_tcpinfo(rpc_t* rpc, void* c)
 	if (!tcp_disable){
 		tcp_get_info(&ti);
 		rpc->add(c, "{", &handle);
-		rpc->struct_add(handle, "dddd",
+		rpc->struct_add(handle, "dddddd",
 			"readers", ti.tcp_readers,
 			"max_connections", ti.tcp_max_connections,
+			"max_tls_connections", ti.tls_max_connections,
 			"opened_connections", ti.tcp_connections_no,
+			"opened_tls_connections", ti.tls_connections_no,
 			"write_queued_bytes", ti.tcp_write_queued
 		);
 	}else{
@@ -707,11 +709,12 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 	if (!tcp_disable){
 		tcp_options_get(&t);
 		rpc->add(c, "{", &handle);
-		rpc->struct_add(handle, "dddddddddddddddddddddd",
+		rpc->struct_add(handle, "ddddddddddddddddddddddd",
 			"connect_timeout", t.connect_timeout_s,
 			"send_timeout",  TICKS_TO_S(t.send_timeout),
 			"connection_lifetime",  TICKS_TO_S(t.con_lifetime),
 			"max_connections(soft)", t.max_connections,
+			"max_tls_connections(soft)", t.max_tls_connections,
 			"no_connect",	t.no_connect,
 			"fd_cache",		t.fd_cache,
 			"async",		t.async,
