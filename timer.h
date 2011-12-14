@@ -76,6 +76,8 @@ typedef void (timer_function)(unsigned int ticks, void* param);
 	timer_ticks.h (.e.g TICKS_TO_S(tick) to convert to s or ms )*/
 #define TIMER_TICK 1 /* 1 s, kept for compatibility */
 
+/*function prototype to execute on mili-second based basic timers */
+typedef void (utimer_function)(unsigned int uticks, void* param);
 
 struct timer_ln; /* forward decl */
 /* new 
