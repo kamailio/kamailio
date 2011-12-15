@@ -37,6 +37,9 @@
 #include "dprint.h"
 #include "core_cmd.h"
 #include "globals.h"
+#include "forward.h"
+#include "socket_info.h"
+#include "name_alias.h"
 #include "pt.h"
 #include "ut.h"
 #include "tcp_info.h"
@@ -974,6 +977,96 @@ static void core_udp4rawinfo(rpc_t* rpc, void* c)
 #endif /* USE_RAW_SOCKS */
 }
 
+/**
+ *
+ */
+static const char* core_aliases_list_doc[] = {
+	"List local SIP server host aliases",    /* Documentation string */
+	0                                     /* Method signature(s) */
+};
+
+/**
+ * list the name aliases for SIP server
+ */
+static void core_aliases_list(rpc_t* rpc, void* c)
+{
+	void *hr;
+	void *ha;
+	struct host_alias* a;
+
+	rpc->add(c, "{", &hr);
+	rpc->struct_add(hr, "s",
+			"myself_callbacks", is_check_self_func_list_set()?"yes":"no");
+	for(a=aliases; a; a=a->next) {
+		rpc->struct_add(hr, "{", "alias", &ha);
+		rpc->struct_add(ha, "sS",
+				"proto",  proto2a(a->proto),
+				"address", &a->alias
+			);
+		if (a->port)
+			rpc->struct_add(ha, "d",
+					"port", a->port);
+		else
+			rpc->struct_add(ha, "s",
+					"port", "*");
+	}
+}
+
+/**
+ *
+ */
+static const char* core_sockets_list_doc[] = {
+	"List local SIP server listen sockets",    /* Documentation string */
+	0                                     /* Method signature(s) */
+};
+
+/**
+ * list listen sockets for SIP server
+ */
+static void core_sockets_list(rpc_t* rpc, void* c)
+{
+	void *hr;
+	void *ha;
+	struct socket_info *si;
+	struct socket_info** list;
+	struct addr_info* ai;
+	unsigned short proto;
+
+	proto=PROTO_UDP;
+	rpc->add(c, "{", &hr);
+	do{
+		list=get_sock_info_list(proto);
+		for(si=list?*list:0; si; si=si->next){
+			rpc->struct_add(hr, "{", "socket", &ha);
+			if (si->addr_info_lst){
+				rpc->struct_add(ha, "ss",
+						"proto", get_proto_name(proto),
+						"address", si->address_str.s);
+				for (ai=si->addr_info_lst; ai; ai=ai->next)
+					rpc->struct_add(ha, "ss",
+						"address", ai->address_str.s);
+				rpc->struct_add(ha, "sss",
+						"proto", si->port_no_str.s,
+						"mcast", si->flags & SI_IS_MCAST ? "yes" : "no",
+						"mhomed", si->flags & SI_IS_MHOMED ? "yes" : "no");
+			} else {
+				printf("             %s: %s",
+						get_proto_name(proto),
+						si->name.s);
+				rpc->struct_add(ha, "ss",
+						"proto", get_proto_name(proto),
+						"address", si->name.s);
+				if (!si->flags & SI_IS_IP)
+					rpc->struct_add(ha, "ss",
+						"ipaddress", si->address_str.s);
+				rpc->struct_add(ha, "sss",
+						"proto", si->port_no_str.s,
+						"mcast", si->flags & SI_IS_MCAST ? "yes" : "no",
+						"mhomed", si->flags & SI_IS_MHOMED ? "yes" : "no");
+			}
+		}
+	} while((proto=next_proto(proto)));
+}
 
 
 /*
@@ -1013,6 +1106,8 @@ static rpc_export_t core_rpc_methods[] = {
 	{"core.sctp_info",         core_sctpinfo,          core_sctpinfo_doc,   0},
 	{"core.udp4_raw_info",     core_udp4rawinfo,       core_udp4rawinfo_doc,
 		0},
+	{"core.aliases_list",      core_aliases_list,      core_aliases_list_doc,   0},
+	{"core.sockets_list",      core_sockets_list,      core_sockets_list_doc,   0},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,
 		0	},
