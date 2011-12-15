@@ -66,4 +66,6 @@ char* tr_parse_paramlist(str *in, trans_t *tr);
 char* tr_parse_nameaddr(str *in, trans_t *tr);
 char* tr_parse_tobody(str* in, trans_t *t);
 
+int tr_init_buffers(void);
+
 #endif

@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <time.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -51,10 +52,42 @@
 
 /*! transformation buffer size */
 #define TR_BUFFER_SIZE 65536
+#define TR_BUFFER_SLOTS	4
 
 /*! transformation buffer */
-static char _tr_buffer[TR_BUFFER_SIZE];
+static char **_tr_buffer_list = NULL;
 
+static char *_tr_buffer = NULL;
+
+static int _tr_buffer_idx = 0;
+
+/*!
+ *
+ */
+int tr_init_buffers(void)
+{
+	int i;
+
+	_tr_buffer_list = (char**)malloc(TR_BUFFER_SLOTS);
+	if(_tr_buffer_list==NULL)
+		return -1;
+	for(i=0; i<TR_BUFFER_SLOTS; i++) {
+		_tr_buffer_list[i] = (char*)malloc(TR_BUFFER_SIZE);
+		if(_tr_buffer_list[i]==NULL)
+			return -1;
+	}
+	return 0;
+}
+
+/*!
+ *
+ */
+char *tr_set_crt_buffer(void)
+{
+	_tr_buffer = _tr_buffer_list[_tr_buffer_idx];
+	_tr_buffer_idx = (_tr_buffer_idx + 1) % TR_BUFFER_SLOTS;
+	return _tr_buffer;
+}
 
 /*!
  * \brief Evaluate string transformations
@@ -75,6 +108,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 
 	if(val==NULL || val->flags&PV_VAL_NULL)
 		return -1;
+
+	tr_set_crt_buffer();
 
 	switch(subtype)
 	{
