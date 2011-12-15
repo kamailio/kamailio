@@ -337,7 +337,7 @@ int is_mcast(struct ip_addr* ip)
  * @param proto - protocol number
  * @return  string with the protocol name or "unknown".
  */
-char* proto2a(enum sip_protos proto)
+char* get_proto_name(unsigned int proto)
 {
 	switch(proto){
 		case PROTO_NONE:
@@ -350,8 +350,7 @@ char* proto2a(enum sip_protos proto)
 			return "tls";
 		case PROTO_SCTP:
 			return "sctp";
-		case PROTO_OTHER:
-			return "other";
+		default:
+			return "unknown";
 	}
-	return "unknown";
 }

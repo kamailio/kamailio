@@ -282,7 +282,7 @@ static void free_sock_info(struct socket_info* si)
 
 
 
-static char* get_proto_name(unsigned short proto)
+static char* get_valid_proto_name(unsigned short proto)
 {
 	switch(proto){
 		case PROTO_NONE:
@@ -325,7 +325,7 @@ int socket2str(char* s, int* len, struct socket_info* si)
 	str proto;
 	int l;
 	
-	proto.s = get_proto_name(si->proto);
+	proto.s = get_valid_proto_name(si->proto);
 	proto.len = strlen(proto.s);
 	
 	l = proto.len + si->address_str.len + si->port_no_str.len + 2;
@@ -1650,7 +1650,7 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 			){
 			if (si->flags & SI_IS_MCAST){
 				LOG(L_WARN, "WARNING: removing entry %s:%s [%s]:%s\n",
-					get_proto_name(si->proto), si->name.s, 
+					get_valid_proto_name(si->proto), si->name.s, 
 					si->address_str.s, si->port_no_str.s);
 				l = si;
 				si=si->next;
@@ -1662,7 +1662,7 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 					if (ail->flags & SI_IS_MCAST){
 						LOG(L_WARN, "WARNING: removing mh entry %s:%s"
 								" [%s]:%s\n",
-								get_proto_name(si->proto), ail->name.s, 
+								get_valid_proto_name(si->proto), ail->name.s, 
 								ail->address_str.s, si->port_no_str.s);
 						tmp_ail=ail;
 						ail=ail->next;
@@ -1866,7 +1866,7 @@ void print_all_socket_lists()
 		for(si=list?*list:0; si; si=si->next){
 			if (si->addr_info_lst){
 				printf("             %s: (%s",
-						get_proto_name(proto),
+						get_valid_proto_name(proto),
 						si->address_str.s);
 				for (ai=si->addr_info_lst; ai; ai=ai->next)
 					printf(", %s", ai->address_str.s);
@@ -1876,7 +1876,7 @@ void print_all_socket_lists()
 						si->flags & SI_IS_MHOMED? " mhomed" : "");
 			}else{
 				printf("             %s: %s",
-						get_proto_name(proto),
+						get_valid_proto_name(proto),
 						si->name.s);
 				if (!si->flags & SI_IS_IP)
 					printf(" [%s]", si->address_str.s);
@@ -1896,10 +1896,10 @@ void print_aliases()
 
 	for(a=aliases; a; a=a->next) 
 		if (a->port)
-			printf("             %s: %.*s:%d\n", get_proto_name(a->proto), 
+			printf("             %s: %.*s:%d\n", get_valid_proto_name(a->proto), 
 					a->alias.len, a->alias.s, a->port);
 		else
-			printf("             %s: %.*s:*\n", get_proto_name(a->proto), 
+			printf("             %s: %.*s:*\n", get_valid_proto_name(a->proto), 
 					a->alias.len, a->alias.s);
 }
 

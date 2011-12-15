@@ -250,7 +250,8 @@ void print_ip(char* prefix, struct ip_addr* ip, char* suffix);
 void stdout_print_ip(struct ip_addr* ip);
 void print_net(struct net* net);
 
-char* proto2a(enum sip_protos proto);
+char* get_proto_name(unsigned int proto);
+#define proto2a get_proto_name
 
 
 

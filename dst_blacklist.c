@@ -937,24 +937,6 @@ void dst_blst_mem_info(rpc_t* rpc, void* ctx)
 
 
 
-static char* get_proto_name(unsigned char proto)
-{
-	switch(proto){
-		case PROTO_NONE:
-			return "*";
-		case PROTO_UDP:
-			return "udp";
-		case PROTO_TCP:
-			return "tcp";
-		case PROTO_TLS:
-			return "tls";
-		case PROTO_SCTP:
-			return "sctp";
-		default:
-			return "unknown";
-	}
-}
-
 
 #ifdef USE_DST_BLACKLIST_STATS
 

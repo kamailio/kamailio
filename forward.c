@@ -399,6 +399,14 @@ static struct _check_self_func {
 	struct _check_self_func *next;
 } *_check_self_func_list = NULL;
 
+/* check if _check_self_func_list is set
+ * - return 1 if yes, 0 if no
+ */
+int is_check_self_func_list_set(void)
+{
+	return (_check_self_func_list)?1:0;
+}
+
 /* register a function to be called when matching for myself
  * - return 0 on success, -1 on error
  * - f must have same prototype as check_self() and return same kind of values
