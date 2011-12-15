@@ -592,6 +592,42 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->rs.s = _tr_buffer;
 			break;
 
+		case TR_S_TRIM:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len>TR_BUFFER_SIZE-2)
+				return -1;
+			memcpy(_tr_buffer, val->rs.s, val->rs.len);
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			trim(&val->rs);
+			val->rs.s[val->rs.len] = '\0';
+			break;
+
+		case TR_S_RTRIM:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len>TR_BUFFER_SIZE-2)
+				return -1;
+			memcpy(_tr_buffer, val->rs.s, val->rs.len);
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			trim_trailing(&val->rs);
+			val->rs.s[val->rs.len] = '\0';
+			break;
+
+		case TR_S_LTRIM:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len>TR_BUFFER_SIZE-2)
+				return -1;
+			memcpy(_tr_buffer, val->rs.s, val->rs.len);
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			trim_leading(&val->rs);
+			val->rs.s[val->rs.len] = '\0';
+			break;
+
 		default:
 			LM_ERR("unknown subtype %d\n",
 					subtype);
@@ -1579,6 +1615,15 @@ char* tr_parse_string(str* in, trans_t *t)
 				in->len, in->s);
 			goto error;
 		}
+		goto done;
+	} else if(name.len==4 && strncasecmp(name.s, "trim", 4)==0) {
+		t->subtype = TR_S_TRIM;
+		goto done;
+	} else if(name.len==5 && strncasecmp(name.s, "rtrim", 5)==0) {
+		t->subtype = TR_S_RTRIM;
+		goto done;
+	} else if(name.len==5 && strncasecmp(name.s, "ltrim", 5)==0) {
+		t->subtype = TR_S_LTRIM;
 		goto done;
 	}
 
