@@ -628,6 +628,47 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->rs.s[val->rs.len] = '\0';
 			break;
 
+		case TR_S_RM:
+			if(tp==NULL)
+			{
+				LM_ERR("invalid parameters\n");
+				return -1;
+			}
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(val->rs.len>TR_BUFFER_SIZE-2)
+				return -1;
+			if(tp->type==TR_PARAM_STRING)
+			{
+				st = tp->v.s;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
+				{
+					LM_ERR("cannot get parameter value\n");
+					return -1;
+				}
+				st = v.rs;
+			}
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+
+			i = 0;
+			j = 0;
+			max = val->rs.len - st.len;
+			while (i < val->rs.len && j < TR_BUFFER_SIZE) {
+				if (i <= max && val->rs.s[i] == st.s[0]
+						&& strncmp(val->rs.s+i, st.s, st.len) == 0) {
+					i += st.len;
+				} else {
+					_tr_buffer[j++] = val->rs.s[i++];
+				}
+			}
+			val->rs.s = _tr_buffer;
+			val->rs.s[j] = '\0';
+			val->rs.len = j;
+			break;
+
 		default:
 			LM_ERR("unknown subtype %d\n",
 					subtype);
@@ -1624,6 +1665,26 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==5 && strncasecmp(name.s, "ltrim", 5)==0) {
 		t->subtype = TR_S_LTRIM;
+		goto done;
+	} else if(name.len==2 && strncasecmp(name.s, "rm", 2)==0) {
+		t->subtype = TR_S_RM;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid ftime transformation: %.*s!\n",
+					in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid ftime transformation: %.*s!!\n",
+				in->len, in->s);
+			goto error;
+		}
 		goto done;
 	}
 
