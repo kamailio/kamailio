@@ -36,6 +36,7 @@
 #include "../../mem/mem.h"
 #include "../../ut.h" 
 #include "../../trim.h" 
+#include "../../pvapi.h"
 #include "../../dset.h"
 #include "../../lib/kcore/errinfo.h"
 
@@ -641,6 +642,40 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			if(tp->type==TR_PARAM_STRING)
 			{
 				st = tp->v.s;
+				if(memchr(st.s, '\\', st.len)) {
+					p = pv_get_buffer();
+					if(st.len>=pv_get_buffer_size()-1)
+						return -1;
+					j=0;
+					for(i=0; i<st.len-1; i++) {
+						if(st.s[i]=='\\') {
+							switch(st.s[i+1]) {
+								case 'n':
+									p[j++] = '\n';
+								break;
+								case 'r':
+									p[j++] = '\r';
+								break;
+								case 't':
+									p[j++] = '\t';
+								break;
+								case '\\':
+									p[j++] = '\\';
+								break;
+								default:
+									p[j++] = st.s[i+1];
+							}
+							i++;
+						} else {
+							p[j++] = st.s[i];
+						}
+					}
+					if(i==st.len-1)
+						p[j++] = st.s[i];
+					p[j] = '\0';
+					st.s = p;
+					st.len = j;
+				}
 			} else {
 				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
 						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
@@ -650,6 +685,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				}
 				st = v.rs;
 			}
+			LM_DBG("removing [%.*s](%d) in [%.*s](%d)\n",
+					st.len, st.s, st.len, val->rs.len, val->rs.s, val->rs.len);
 			val->flags = PV_VAL_STR;
 			val->ri = 0;
 
