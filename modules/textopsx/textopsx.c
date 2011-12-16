@@ -32,6 +32,7 @@
 #include "../../dprint.h"
 #include "../../data_lump.h"
 #include "../../msg_translator.h"
+#include "../../mod_fix.h"
 
 #include "api.h"
 
@@ -41,6 +42,8 @@ static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2);
 
 static int change_reply_status_f(struct sip_msg*, char*, char *);
 static int change_reply_status_fixup(void** param, int param_no);
+
+static int w_keep_hf_f(struct sip_msg*, char*, char *);
 
 static int w_remove_body_f(struct sip_msg*, char*, char *);
 static int bind_textopsx(textopsx_api_t *tob);
@@ -53,6 +56,8 @@ static cmd_export_t cmds[] = {
 		change_reply_status_fixup, ONREPLY_ROUTE },
 	{"remove_body",          (cmd_function)w_remove_body_f,         0,
 		0, ANY_ROUTE },
+	{"keep_hf",              (cmd_function)w_keep_hf_f,             1,
+		fixup_regexp_null, ANY_ROUTE },
 	{"bind_textopsx",        (cmd_function)bind_textopsx,           1,
 		0, ANY_ROUTE },
 
@@ -260,6 +265,62 @@ static int w_remove_body_f(struct sip_msg *msg, char *p1, char *p2)
 		return -1;
 	}
 	return 1;
+}
+
+
+/**
+ *
+ */
+static int w_keep_hf_f(struct sip_msg* msg, char* key, char* foo)
+{
+	struct hdr_field *hf;
+	regex_t *re;
+	regmatch_t pmatch;
+	char c;
+	struct lump* l;
+
+	re = (regex_t*)key;
+
+	/* we need to be sure we have seen all HFs */
+	parse_headers(msg, HDR_EOH_F, 0);
+	for (hf=msg->headers; hf; hf=hf->next)
+	{
+		switch(hf->type) {
+			case HDR_FROM_T:
+			case HDR_TO_T:
+			case HDR_CALLID_T:
+			case HDR_CSEQ_T:
+			case HDR_VIA_T:
+			case HDR_VIA2_T:
+			case HDR_CONTACT_T:
+			case HDR_CONTENTLENGTH_T:
+			case HDR_CONTENTTYPE_T:
+			case HDR_ROUTE_T:
+			case HDR_RECORDROUTE_T:
+			case HDR_MAXFORWARDS_T:
+				continue;
+			default:
+				;
+		}
+
+		c = hf->name.s[hf->name.len];
+		hf->name.s[hf->name.len] = '\0';
+		if (regexec(re, hf->name.s, 1, &pmatch, 0)!=0)
+		{
+			/* no match => remove */
+			hf->name.s[hf->name.len] = c;
+			l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
+			if (l==0)
+			{
+				LM_ERR("cannot remove header\n");
+				return -1;
+			}
+		} else {
+			hf->name.s[hf->name.len] = c;
+		}
+	}
+
+	return -1;
 }
 
 /*
