@@ -5,7 +5,7 @@
 <section id="textopsx.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
     <title>Functions</title>
 
-	<section id="msg_apply_changes">
+	<section id="textopsx.msg_apply_changes">
 		<title>
 		<function moreinfo="none">msg_apply_changes()</function>
 		</title>
@@ -36,7 +36,7 @@ if(msg_apply_changes())
 		</example>
 	</section>
 
-    <section id="change_reply_status">
+    <section id="textopsx.change_reply_status">
 	<title>
 	    <function>change_reply_status(code, reason)</function>
 	</title>
@@ -93,5 +93,28 @@ remove_body();
 		</example>
 	</section>
 
+	<section id="textopsx.keep_hf">
+		<title>
+		<function moreinfo="none">keep_hf(regexp)</function>
+		</title>
+		<para>
+			Remove headers that don't match the regular expression regexp.
+			Several header are ignored always (thus not removed): Via, From,
+			To, Call-ID, CSeq, Content-Lenght, Content-Type, Max-Forwards,
+			Contact, Route, Record-Route -- these can be removed one by one
+			with remove_hf().
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>keep_hf()</function> usage</title>
+		<programlisting format="linespecific">
+...
+keep_hf("User-Agent");
+...
+</programlisting>
+		</example>
+	</section>
 
 </section>

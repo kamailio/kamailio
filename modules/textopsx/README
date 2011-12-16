@@ -9,7 +9,7 @@ Daniel-Constantin Mierla
    asipto.com
    <miconda@gmail.com>
 
-   Copyright Â© 2003 FhG FOKUS
+   Copyright © 2003 FhG FOKUS
      __________________________________________________________________
 
    1.1. Overview
@@ -18,6 +18,7 @@ Daniel-Constantin Mierla
         1.2.1. msg_apply_changes()
         1.2.2. change_reply_status(code, reason)
         1.2.3. remove_body()
+        1.2.4. keep_hf(regexp)
 
 1.1. Overview
 
@@ -27,7 +28,7 @@ Daniel-Constantin Mierla
 
 1.2. Functions
 
-1.2.1.  msg_apply_changes()
+1.2.1. msg_apply_changes()
 
    Use this function to apply changes performed on SIP request content. Be
    careful when using this function; due to special handling of changes
@@ -49,7 +50,7 @@ if(msg_apply_changes())
 }
 ...
 
-1.2.2.  change_reply_status(code, reason)
+1.2.2. change_reply_status(code, reason)
 
    Intercept a SIP reply (in an onreply_route) and change its status code
    and reason phrase prior to propogating it.
@@ -70,7 +71,7 @@ onreply_route {
 }
 ...
 
-1.2.3.  remove_body()
+1.2.3. remove_body()
 
    Use this function to remove body of SIP requests or replies.
 
@@ -79,4 +80,18 @@ onreply_route {
    Example 3. remove_body() usage
 ...
 remove_body();
+...
+
+1.2.4. keep_hf(regexp)
+
+   Remove headers that don't match the regular expression regexp. Several
+   header are ignored always (thus not removed): Via, From, To, Call-ID,
+   CSeq, Content-Lenght, Content-Type, Max-Forwards, Contact, Route,
+   Record-Route -- these can be removed one by one with remove_hf().
+
+   This function can be used from ANY_ROUTE.
+
+   Example 4. keep_hf() usage
+...
+keep_hf("User-Agent");
 ...
