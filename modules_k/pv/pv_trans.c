@@ -1342,6 +1342,202 @@ int tr_eval_tobody(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	return 0;
 }
 
+void *memfindrchr(const void *buf, int c, size_t n)
+{
+	int i;
+	unsigned char *p;
+
+	p = (unsigned char*)buf;
+
+	for (i=n-1; i>=0; i--) {
+		if (p[i] == (unsigned char)c) {
+			return (void*)(p+i);
+		}
+	}
+	return NULL;
+}
+
+/*!
+ * \brief Evaluate line transformations
+ * \param msg SIP message
+ * \param tp transformation
+ * \param subtype transformation type
+ * \param val pseudo-variable
+ * \return 0 on success, -1 on error
+ */
+int tr_eval_line(struct sip_msg *msg, tr_param_t *tp, int subtype,
+		pv_value_t *val)
+{
+	pv_value_t v;
+	str sv;
+	str mv;
+	char *p;
+	int n, i;
+
+	if(val==NULL || (!(val->flags&PV_VAL_STR)) || val->rs.len<=0)
+		return -1;
+
+	switch(subtype)
+	{
+		case TR_LINE_SW:
+			if(tp==NULL)
+			{
+				LM_ERR("value invalid parameters\n");
+				return -1;
+			}
+
+			if(tp->type==TR_PARAM_STRING)
+			{
+				sv = tp->v.s;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
+				{
+					LM_ERR("value cannot get p1\n");
+					return -1;
+				}
+				sv = v.rs;
+			}
+
+			if(val->rs.len < sv.len)
+			{
+				val->rs = _tr_empty;
+				goto done;
+			}
+			p = val->rs.s;
+			do {
+				if(strncmp(p, sv.s, sv.len)==0)
+				{
+					/* match */
+					mv.s = p;
+					p += sv.len;
+					p = memchr(p, '\n', (val->rs.s + val->rs.len) - p);
+					if(p==NULL)
+					{
+						/* last line */
+						mv.len = (val->rs.s + val->rs.len) - p;
+					} else {
+						mv.len = p - mv.s;
+					}
+					val->rs = mv;
+					goto done;
+				}
+				p = memchr(p, '\n', (val->rs.s + val->rs.len) - p);
+			} while(p && ((++p)<=val->rs.s+val->rs.len-sv.len));
+			val->rs = _tr_empty;
+			break;
+
+		case TR_LINE_AT:
+			if(tp==NULL)
+			{
+				LM_ERR("name invalid parameters\n");
+				return -1;
+			}
+
+			if(tp->type==TR_PARAM_NUMBER)
+			{
+				n = tp->v.n;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+						|| (!(v.flags&PV_VAL_INT)))
+				{
+					LM_ERR("name cannot get p1\n");
+					return -1;
+				}
+				n = v.ri;
+			}
+			if(n<0)
+			{
+				p = val->rs.s + val->rs.len - 1;
+				if(*p=='\n')
+					p--;
+				mv.s = p;
+				n = -n;
+				i=1;
+				p = memfindrchr(val->rs.s, '\n', p - val->rs.s);
+				if(p!=NULL)
+					p--;
+				while(i<n && p)
+				{
+					mv.s = p;
+					p = memfindrchr(val->rs.s, '\n', p - val->rs.s);
+					if(p!=NULL)
+						p--;
+					i++;
+				}
+				if(i==n)
+				{
+					if(p==NULL)
+					{
+						/* first line */
+						mv.len = mv.s - val->rs.s + 1;
+						mv.s = val->rs.s;
+					} else {
+						mv.len = mv.s - p - 1;
+						mv.s = p + 2;
+					}
+					val->rs = mv;
+					goto done;
+				}
+			} else {
+				p = val->rs.s;
+				i = 0;
+				while(i<n && p)
+				{
+					p = memchr(p, '\n', (val->rs.s + val->rs.len) - p);
+					if(p!=NULL)
+						p++;
+					i++;
+				}
+				if(i==n && p!=NULL)
+				{
+					/* line found */
+					mv.s = p;
+					p = memchr(p, '\n', (val->rs.s + val->rs.len) - p);
+					if(p==NULL)
+					{
+						/* last line */
+						mv.len = (val->rs.s + val->rs.len) - p;
+					} else {
+						mv.len = p - mv.s;
+					}
+					val->rs = mv;
+					goto done;
+				}
+			}
+			val->rs = _tr_empty;
+			break;
+
+		case TR_LINE_COUNT:
+			n=0;
+			for(i=0; i<val->rs.len; i++)
+				if(val->rs.s[i]=='\n')
+					n++;
+			if(n==0 && val->rs.len>0)
+				n = 1;
+			val->flags = PV_TYPE_INT|PV_VAL_INT|PV_VAL_STR;
+			val->ri = n;
+			val->rs.s = int2str(val->ri, &val->rs.len);
+			break;
+
+			break;
+
+		default:
+			LM_ERR("unknown subtype %d\n",
+					subtype);
+			return -1;
+	}
+done:
+	if(val->rs.len>0)
+	{
+		/* skip ending '\r' if present */
+		if(val->rs.s[val->rs.len-1]=='\r')
+			val->rs.len--;
+	}
+	val->flags = PV_VAL_STR;
+	return 0;
+}
+
 
 #define _tr_parse_nparam(_p, _p0, _tp, _spec, _n, _sign, _in, _s) \
 	while(is_in_str(_p, _in) && (*_p==' ' || *_p=='\t' || *_p=='\n')) _p++; \
@@ -2101,6 +2297,101 @@ char* tr_parse_tobody(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==7 && strncasecmp(name.s, "display", 7)==0) {
 		t->subtype = TR_TOBODY_DISPLAY;
+		goto done;
+	}
+
+
+	LM_ERR("unknown transformation: %.*s/%.*s/%d!\n", in->len, in->s,
+			name.len, name.s, name.len);
+error:
+	return NULL;
+done:
+	t->name = name;
+	return p;
+}
+
+/*!
+ * \brief Helper fuction to parse a line transformation
+ * \param in parsed string
+ * \param t transformation
+ * \return pointer to the end of the transformation in the string - '}', null on error
+ */
+char* tr_parse_line(str* in, trans_t *t)
+{
+	char *p;
+	char *p0;
+	char *ps;
+	str s;
+	str name;
+	int n;
+	int sign;
+	pv_spec_t *spec = NULL;
+	tr_param_t *tp = NULL;
+
+
+	if(in==NULL || t==NULL)
+		return NULL;
+
+	p = in->s;
+	name.s = in->s;
+	t->type = TR_LINE;
+	t->trf = tr_eval_line;
+
+	/* find next token */
+	while(is_in_str(p, in) && *p!=TR_PARAM_MARKER && *p!=TR_RBRACKET) p++;
+	if(*p=='\0')
+	{
+		LM_ERR("invalid transformation: %.*s\n",
+				in->len, in->s);
+		goto error;
+	}
+	name.len = p - name.s;
+	trim(&name);
+
+	if(name.len==2 && strncasecmp(name.s, "at", 2)==0)
+	{
+		t->subtype = TR_LINE_AT;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid name transformation: %.*s\n",
+					in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_nparam(p, p0, tp, spec, n, sign, in, s)
+		t->params = tp;
+		tp = 0;
+		while(is_in_str(p, in) && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid name transformation: %.*s!\n",
+					in->len, in->s);
+			goto error;
+		}
+
+		goto done;
+	} else if(name.len==2 && strncasecmp(name.s, "sw", 2)==0) {
+		t->subtype = TR_LINE_SW;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid value transformation: %.*s\n",
+					in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid value transformation: %.*s!\n",
+					in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len==5 && strncasecmp(name.s, "count", 5)==0) {
+		t->subtype = TR_LINE_COUNT;
 		goto done;
 	}
 
