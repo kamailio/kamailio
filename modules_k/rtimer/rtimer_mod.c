@@ -53,10 +53,13 @@ typedef struct _stm_route {
 typedef struct _stm_timer {
 	str name;
 	unsigned int mode;
+	unsigned int flags;
 	unsigned int interval;
 	stm_route_t *rt;
 	struct _stm_timer *next;
 } stm_timer_t;
+
+#define RTIMER_INTERVAL_USEC	(1<<0)
 
 stm_timer_t *_stm_list = NULL;
 
@@ -118,7 +121,7 @@ static int mod_init(void)
 				return -1;
 			}
 		} else {
-			register_dummy_timers(1);
+			register_basic_timers(1);
 		}
 		it = it->next;
 	}
@@ -158,11 +161,21 @@ static int child_init(int rank)
 	{
 		if(it->mode!=0)
 		{
-			if(fork_dummy_timer(PROC_TIMER, "TIMER RT", 1 /*socks flag*/,
+			if(it->flags & RTIMER_INTERVAL_USEC)
+			{
+				if(fork_basic_utimer(PROC_TIMER, "RTIMER USEC EXEC", 1 /*socks flag*/,
+								stm_timer_exec, (void*)it, it->interval
+								/*usec*/)<0) {
+					LM_ERR("failed to start utimer routine as process\n");
+					return -1; /* error */
+				}
+			} else {
+				if(fork_basic_timer(PROC_TIMER, "RTIMER SEC EXEC", 1 /*socks flag*/,
 								stm_timer_exec, (void*)it, it->interval
 								/*sec*/)<0) {
-				LM_ERR("failed to register timer routine as process\n");
-				return -1; /* error */
+					LM_ERR("failed to start timer routine as process\n");
+					return -1; /* error */
+				}
 			}
 		}
 		it = it->next;
@@ -221,9 +234,16 @@ int stm_t_param(modparam_t type, void *val)
 			tmp.name = pit->body;
 		} else if(pit->name.len==4
 				&& strncasecmp(pit->name.s, "mode", 4)==0) {
-			str2int(&pit->body, &tmp.mode);
+			if(tmp.mode==0)
+				str2int(&pit->body, &tmp.mode);
 		}  else if(pit->name.len==8
 				&& strncasecmp(pit->name.s, "interval", 8)==0) {
+			if(pit->body.s[pit->body.len-1]=='u'
+					|| pit->body.s[pit->body.len-1]=='U') {
+				pit->body.len--;
+				tmp.flags |= RTIMER_INTERVAL_USEC;
+				tmp.mode = 1;
+			}
 			str2int(&pit->body, &tmp.interval);
 		}
 	}
