@@ -53,4 +53,6 @@ extern tls_domain_t srv_defaults;
 
 extern str tls_domains_cfg_file;
 
+extern int sr_tls_renegotiation;
+
 #endif /* _TLS_MOD_H */
