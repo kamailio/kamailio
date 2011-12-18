@@ -1465,6 +1465,8 @@ int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri)
 	   subs.status);
     pkg_free(rules_doc->s);
     pkg_free(rules_doc);
+    if ((subs.reason.len == 12) && (strncmp(subs.reason.s, "polite-block", 12) == 0))
+		return POLITE_BLOCK_STATUS;
     return subs.status;
 
  err:
