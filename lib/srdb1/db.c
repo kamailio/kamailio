@@ -182,8 +182,17 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 		return -1;
 	}
 	memcpy(name, "db_", 3);
-	memcpy(name+3, mod->s, mod->len);
-	name[mod->len+3] = 0;
+
+	if (mod->s[0]=='*' )
+	{
+		memcpy(name+3, (mod->s)+1, (mod->len)-1);
+		name[mod->len-1+3] = 0;
+	}
+	else
+	{
+		memcpy(name+3, mod->s, mod->len);
+		name[mod->len+3] = 0;
+	}
 
 	/* for safety we initialize mydbf with 0 (this will cause
 	 *  a segfault immediately if someone tries to call a function

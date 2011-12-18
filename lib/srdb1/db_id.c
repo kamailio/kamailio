@@ -65,12 +65,13 @@ static int dupl_string(char** dst, const char* begin, const char* end)
  * \param url parsed URL
  * \return 0 if parsing was successful and -1 otherwise
  */
-static int parse_db_url(struct db_id* id, const str* url)
+static int parse_db_url(struct db_id* id, const str* url, int *poolid )
 {
 #define SHORTEST_DB_URL "s://a/b"
 #define SHORTEST_DB_URL_LEN (sizeof(SHORTEST_DB_URL) - 1)
 
 	enum state {
+		ST_NONPOOL,    /* Non pooling flag */
 		ST_SCHEME,     /* Scheme part */
 		ST_SLASH1,     /* First slash */
 		ST_SLASH2,     /* Second slash */
@@ -99,11 +100,25 @@ static int parse_db_url(struct db_id* id, const str* url)
 	
 	/* Initialize all attributes to 0 */
 	memset(id, 0, sizeof(struct db_id));
-	st = ST_SCHEME;
+	st = ST_NONPOOL;
 	begin = url->s;
 
 	for(i = 0; i < len; i++) {
 		switch(st) {
+		case ST_NONPOOL:
+			st = ST_SCHEME;
+			switch(url->s[i]) {
+			case '*':
+				id->poolid = ++(*poolid);
+				begin++;
+				break;
+
+			default:
+				id->poolid = 0;
+				break;
+			}
+			break;
+
 		case ST_SCHEME:
 			switch(url->s[i]) {
 			case ':':
@@ -229,6 +244,7 @@ static int parse_db_url(struct db_id* id, const str* url)
  */
 struct db_id* new_db_id(const str* url)
 {
+	static int poolid=0;
 	struct db_id* ptr;
 
 	if (!url || !url->s) {
@@ -243,7 +259,7 @@ struct db_id* new_db_id(const str* url)
 	}
 	memset(ptr, 0, sizeof(struct db_id));
 
-	if (parse_db_url(ptr, url) < 0) {
+	if (parse_db_url(ptr, url, &poolid) < 0) {
 		LM_ERR("error while parsing database URL: '%.*s' \n", url->len, url->s);
 		goto err;
 	}
@@ -284,6 +300,11 @@ unsigned char cmp_db_id(const struct db_id* id1, const struct db_id* id2)
 	if(id1->pid!=id2->pid) {
 		LM_DBG("identical DB URLs, but different DB connection pid [%d/%d]\n",
 				id1->pid, id2->pid);
+		return 0;
+	}
+	if(id1->poolid!=id2->poolid) {
+		LM_DBG("identical DB URLs, but different poolids [%d/%d]\n",
+				id1->poolid, id2->poolid);
 		return 0;
 	}
 	return 1;
