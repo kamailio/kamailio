@@ -117,4 +117,33 @@ keep_hf("User-Agent");
 		</example>
 	</section>
 
+	<section id="textopsx.fnmatch">
+		<title>
+		<function moreinfo="none">fnmatch(value, expr [, flags])</function>
+		</title>
+		<para>
+			Match the value against the expr using the shell-style pattern
+			for file name matching (see man page for C function fnmatch()).
+			It is known to be faster and uses less-memory than regexp.
+		</para>
+		<para>
+			Parameters flags is optional and can be 'i' to do case insensitive
+			matching.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>fnmatch()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(fnmatch("$rU", "123*"))
+{
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 </section>

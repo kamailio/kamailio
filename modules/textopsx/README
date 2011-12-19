@@ -19,6 +19,7 @@ Daniel-Constantin Mierla
         1.2.2. change_reply_status(code, reason)
         1.2.3. remove_body()
         1.2.4. keep_hf(regexp)
+        1.2.5. fnmatch(value, expr [, flags])
 
 1.1. Overview
 
@@ -94,4 +95,23 @@ remove_body();
    Example 4. keep_hf() usage
 ...
 keep_hf("User-Agent");
+...
+
+1.2.5. fnmatch(value, expr [, flags])
+
+   Match the value against the expr using the shell-style pattern for file
+   name matching (see man page for C function fnmatch()). It is known to
+   be faster and uses less-memory than regexp.
+
+   Parameters flags is optional and can be 'i' to do case insensitive
+   matching.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 5. fnmatch() usage
+...
+if(fnmatch("$rU", "123*"))
+{
+    ...
+}
 ...
