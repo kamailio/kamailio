@@ -2332,6 +2332,9 @@ static cfg_option_t section_dummy_options[] = {
 static int parse_section_name(void* param, cfg_parser_t* st, unsigned int flags) {
 	cfg_token_t t;
 	int ret, fl;
+	str tok;
+	char buf[MAX_TOKEN_LEN];
+
 	ret = safe_parsed_values();
 	if (ret != 0) return ret;
 
@@ -2354,8 +2357,31 @@ static int parse_section_name(void* param, cfg_parser_t* st, unsigned int flags)
 	if (ret != 0) return ret;
 	if (t.type != ':') 
 		goto skip;
-	ret = cfg_parse_section(&parse_config_vals.name, st, CFG_STR_PKGMEM);
-	if (ret != 0) return ret;
+	
+	/* we need override cfg_parse_section() because of possible dash '-' in section name */
+	tok.s = buf;
+	tok.len = 0;
+	while (1) {
+		ret = cfg_get_token(&t, st, 0);
+		if (ret != 0) return ret;
+		if (t.type == ']')
+			break;
+		if (tok.len+t.val.len >= sizeof(buf)-1) goto skip;
+		memcpy(tok.s+tok.len, t.val.s, t.val.len);
+		tok.len += t.val.len;
+		
+	}
+	tok.s[tok.len] = '\0';
+
+	ret = cfg_eat_eol(st, 0);
+	if (ret != 0) {
+		return ret;
+	}
+
+	parse_config_vals.name.s = pkg_malloc(tok.len+1);
+	if (!parse_config_vals.name.s) return -1;
+	memcpy(parse_config_vals.name.s, tok.s, tok.len+1);
+	parse_config_vals.name.len = tok.len;
 
 	if (fl==iptrtpproxy_default) {
 		if (parse_config_vals.name.len == (sizeof(SWITCHBOARD_PREFIX)-1) && strncmp(parse_config_vals.name.s, SWITCHBOARD_PREFIX, parse_config_vals.name.len) == 0) {
