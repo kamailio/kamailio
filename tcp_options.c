@@ -51,6 +51,7 @@ static int fix_connect_to(void* cfg_h, str* gname, str* name, void** val);
 static int fix_send_to(void* cfg_h, str* gname, str* name, void** val);
 static int fix_con_lt(void* cfg_h, str* gname, str* name, void** val);
 static int fix_max_conns(void* cfg_h, str* gname, str* name, void** val);
+static int fix_max_tls_conns(void* cfg_h, str* gname, str* name, void** val);
 
 
 
@@ -71,7 +72,7 @@ static cfg_def_t tcp_cfg_def[] = {
 													       fix_max_conns,    0,
 		"maximum tcp connections number, soft limit"},
 	{ "max_tls_connections", CFG_VAR_INT | CFG_ATOMIC, 0, (1U<<31)-1,
-													       fix_max_conns,    0,
+													       fix_max_tls_conns,0,
 		"maximum tls connections number, soft limit"},
 	{ "no_connect",   CFG_VAR_INT | CFG_ATOMIC,      0,   1,      0,         0,
 		"if set only accept new connections, never actively open new ones"},
@@ -138,6 +139,7 @@ void init_tcp_options()
 	tcp_default_cfg.max_tls_connections=tls_max_connections;
 #else /*USE_TCP*/
 	tcp_default_cfg.max_connections=0;
+	tcp_default_cfg.max_tls_connections=0;
 #endif /*USE_TCP*/
 #ifdef TCP_ASYNC
 	tcp_default_cfg.async=1;
@@ -254,6 +256,27 @@ static int fix_max_conns(void* cfg_h, str* gname, str* name, void** val)
 		v=0;
 	}
 #endif /*USE_TCP */
+	*val=(void*)(long)v;
+	return 0;
+}
+
+static int fix_max_tls_conns(void* cfg_h, str* gname, str* name, void** val)
+{
+	int v;
+	v=(int)(long)*val;
+#ifdef USE_TLS
+	if (v>tls_max_connections){
+		INFO("cannot override hard tls_max_connections limit, please"
+				" restart and increase tls_max_connections in the cfg.\n");
+		v=tls_max_connections;
+	}
+#else /* USE_TLS */
+	if (v){
+		ERR("TLS support disabled at compile-time, tls_max_connection is"
+				" hardwired to 0.\n");
+		v=0;
+	}
+#endif /*USE_TLS */
 	*val=(void*)(long)v;
 	return 0;
 }
