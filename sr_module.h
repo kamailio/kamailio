@@ -542,6 +542,9 @@ int fixup_var_str_1(void** param, int param_no);
 /** Same as fixup_var_str_12 but applies to the 2nd parameter only */
 int fixup_var_str_2(void** param, int param_no);
 
+/** fixup variable-pve-only-string. */
+int fixup_var_pve_12(void** param, int param_no);
+
 /** fixup variable-pve-string.
  * The parameter can be a PVAR, AVP, SELECT, PVE (pv based format string)
  * or string.
