@@ -54,6 +54,8 @@
 #include "../../action.h"
 #include "../../mod_fix.h"
 #include "../../parser/parse_from.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 
 #include "pdtree.h"
 
@@ -98,10 +100,11 @@ static void mod_destroy(void);
 static int  child_init(int rank);
 static int  pd_translate(sip_msg_t *msg, str *sdomain, int rmode, int fmode);
 
-static int  w_pd_translate(struct sip_msg* msg, char* str1, char* str2);
+static int w_pd_translate(struct sip_msg* msg, char* str1, char* str2);
 static int fixup_translate(void** param, int param_no);
 
 static int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode);
+static int pdt_init_rpc(void);
 
 static cmd_export_t cmds[]={
 	{"prefix2domain", (cmd_function)w_prefix2domain,   0, 0,
@@ -159,6 +162,12 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
+
+	if(pdt_init_rpc()<0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 
 	db_url.len = strlen(db_url.s);
 	db_table.len = strlen(db_table.s);
@@ -702,4 +711,47 @@ str* pdt_get_char_list(void)
 pdt_tree_t **pdt_get_ptree(void)
 {
 	return _ptree;
+}
+
+
+/*** RPC commands implementation ***/
+
+static const char* pdt_rpc_reload_doc[2] = {
+	"Reload PDT database records",
+	0
+};
+
+
+/*
+ * RPC command to reload pdt db records
+ */
+static void pdt_rpc_reload(rpc_t* rpc, void* ctx)
+{
+	if(pdt_load_db()<0) {
+		LM_ERR("cannot re-load pdt records from database\n");	
+		rpc->fault(ctx, 500, "Reload Failed");
+		return;
+	}
+	return;
+}
+
+
+rpc_export_t pdt_rpc_cmds[] = {
+	{"pdt.reload", pdt_rpc_reload,
+		pdt_rpc_reload_doc, 0},
+	{0, 0, 0, 0}
+};
+
+
+/**
+ * register RPC commands
+ */
+static int pdt_init_rpc(void)
+{
+	if (rpc_register_array(pdt_rpc_cmds)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
 }
