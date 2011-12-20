@@ -375,8 +375,10 @@ void tcp_options_check()
 						MAX_TCP_CON_LIFETIME, MAX_TCP_CON_LIFETIME);
 #ifdef USE_TCP
 	tcp_default_cfg.max_connections=tcp_max_connections;
+	tcp_default_cfg.max_tls_connections=tls_max_connections;
 #else /* USE_TCP */
 	tcp_default_cfg.max_connections=0;
+	tcp_default_cfg.max_tls_connections=0;
 #endif /* USE_TCP */
 	tcp_cfg_def_fix("rd_buf_size", (int*)&tcp_default_cfg.rd_buf_size);
 	tcp_cfg_def_fix("wq_blk_size", (int*)&tcp_default_cfg.wq_blk_size);
