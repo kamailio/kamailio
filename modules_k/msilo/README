@@ -20,9 +20,9 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
-   Copyright © 2003 FhG FOKUS
+   Copyright � 2003 FhG FOKUS
 
-   Copyright © 2009 Juha Heinanen
+   Copyright � 2009 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -72,7 +72,7 @@ Juha Heinanen
               4.1. m_store([owner])
               4.2. m_dump([owner])
 
-        5. Exported Statistics
+        5. Statistics
 
               5.1. stored_messages
               5.2. dumped_messages
@@ -86,35 +86,35 @@ Juha Heinanen
 
    List of Examples
 
-   1.1. Set the “db_url” parameter
-   1.2. Set the “db_table” parameter
-   1.3. Set the “from_address” parameter
-   1.4. Set the “contact_hdr” parameter
-   1.5. Set the “extra_hdrs” parameter
-   1.6. Set the “offline_message” parameter
-   1.7. Set the “content_type_hdr” parameter
-   1.8. Set the “reminder” parameter
-   1.9. Set the “outbound_proxy” parameter
-   1.10. Set the “expire_time” parameter
-   1.11. Set the “check_time” parameter
-   1.12. Set the “send_time” parameter
-   1.13. Set the “clean_period” parameter
-   1.14. Set the “use_contact” parameter
-   1.15. Set the “sc_mid” parameter
-   1.16. Set the “sc_from” parameter
-   1.17. Set the “sc_to” parameter
-   1.18. Set the “sc_uri_user” parameter
-   1.19. Set the “sc_uri_host” parameter
-   1.20. Set the “sc_body” parameter
-   1.21. Set the “sc_ctype” parameter
-   1.22. Set the “sc_exp_time” parameter
-   1.23. Set the “sc_inc_time” parameter
-   1.24. Set the “sc_snd_time” parameter
-   1.25. Set the “snd_time_avp” parameter
-   1.26. Set the “add_date” parameter
-   1.27. Set the “max_messages” parameter
-   1.28. Set the “add_contact” parameter
-   1.29. Set the “extra_hdrs_avp” parameter
+   1.1. Set the "db_url" parameter
+   1.2. Set the "db_table" parameter
+   1.3. Set the "from_address" parameter
+   1.4. Set the "contact_hdr" parameter
+   1.5. Set the "extra_hdrs" parameter
+   1.6. Set the "offline_message" parameter
+   1.7. Set the "content_type_hdr" parameter
+   1.8. Set the "reminder" parameter
+   1.9. Set the "outbound_proxy" parameter
+   1.10. Set the "expire_time" parameter
+   1.11. Set the "check_time" parameter
+   1.12. Set the "send_time" parameter
+   1.13. Set the "clean_period" parameter
+   1.14. Set the "use_contact" parameter
+   1.15. Set the "sc_mid" parameter
+   1.16. Set the "sc_from" parameter
+   1.17. Set the "sc_to" parameter
+   1.18. Set the "sc_uri_user" parameter
+   1.19. Set the "sc_uri_host" parameter
+   1.20. Set the "sc_body" parameter
+   1.21. Set the "sc_ctype" parameter
+   1.22. Set the "sc_exp_time" parameter
+   1.23. Set the "sc_inc_time" parameter
+   1.24. Set the "sc_snd_time" parameter
+   1.25. Set the "snd_time_avp" parameter
+   1.26. Set the "add_date" parameter
+   1.27. Set the "max_messages" parameter
+   1.28. Set the "add_contact" parameter
+   1.29. Set the "extra_hdrs_avp" parameter
    1.30. m_store usage
    1.31. m_dump usage
    1.32. Kamailio config script - sample msilo usage
@@ -166,7 +166,7 @@ Chapter 1. Admin Guide
         4.1. m_store([owner])
         4.2. m_dump([owner])
 
-   5. Exported Statistics
+   5. Statistics
 
         5.1. stored_messages
         5.2. dumped_messages
@@ -184,12 +184,12 @@ Chapter 1. Admin Guide
    Server Platform. It stores received messages for an offline user and
    sends them when the user becomes online.
 
-   For each message, the modules stores “Request-URI” (“R-URI”) only if it
-   is a complete address of record (“username@hostname”), URI from “To”
-   header, URI from “From” header, incoming time, expiration time, content
-   type and body of the message. If “R-URI” is not an address of record
+   For each message, the modules stores "Request-URI" ("R-URI") only if it
+   is a complete address of record ("username@hostname"), URI from "To"
+   header, URI from "From" header, incoming time, expiration time, content
+   type and body of the message. If "R-URI" is not an address of record
    (it might be the contact address for current SIP session) the URI from
-   “To” header will be used as R-URI.
+   "To" header will be used as R-URI.
 
    When the expiration time passed, the message is discarded from
    database. Expiration time is computed based on incoming time and one of
@@ -201,7 +201,7 @@ Chapter 1. Admin Guide
 
    It may happen the SIP user to be registered but his SIP User Agent to
    have no support for MESSAGE request. In this case it should be used the
-   “failure_route” to store the undelivered requests.
+   "failure_route" to store the undelivered requests.
 
    Another functionality provided by the modules is to send messages at a
    certain time -- the reminder functionality. Using config logic, a
@@ -217,7 +217,7 @@ Chapter 1. Admin Guide
 
    The following modules must be loaded before this module:
      * database module - mysql, dbtext or other module that implements the
-       “db” interface and provides support for storing/receiving data
+       "db" interface and provides support for storing/receiving data
        to/from a database system.
      * TM--transaction module--is used to send SIP requests.
 
@@ -263,9 +263,9 @@ Chapter 1. Admin Guide
 
    Database URL.
 
-   Default value is “mysql://openser:openserrw@localhost/openser”.
+   Default value is "mysql://openser:openserrw@localhost/openser".
 
-   Example 1.1. Set the “db_url” parameter
+   Example 1.1. Set the "db_url" parameter
 ...
 modparam("msilo", "db_url", "mysql://user:passwd@host.com/dbname")
 ...
@@ -274,9 +274,9 @@ modparam("msilo", "db_url", "mysql://user:passwd@host.com/dbname")
 
    The name of table where to store the messages.
 
-   Default value is “silo”.
+   Default value is "silo".
 
-   Example 1.2. Set the “db_table” parameter
+   Example 1.2. Set the "db_table" parameter
 ...
 modparam("msilo", "db_table", "silo")
 ...
@@ -288,9 +288,9 @@ modparam("msilo", "db_table", "silo")
    user goes online. If the parameter is not set, the module will not send
    any notification. It can contain pseudo-variables.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
-   Example 1.3. Set the “from_address” parameter
+   Example 1.3. Set the "from_address" parameter
 ...
 modparam("msilo", "from_address", "sip:registrar@example.org")
 modparam("msilo", "from_address", "sip:$rU@example.org")
@@ -301,9 +301,9 @@ modparam("msilo", "from_address", "sip:$rU@example.org")
    The value of the Contact header (including header name and ending \r\n)
    to be added in notification messages. It can contain pseudo-variables.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
-   Example 1.4. Set the “contact_hdr” parameter
+   Example 1.4. Set the "contact_hdr" parameter
 ...
 modparam("msilo", "contact_hdr", "Contact: <sip:null@example.com>\r\n")
 ...
@@ -313,9 +313,9 @@ modparam("msilo", "contact_hdr", "Contact: <sip:null@example.com>\r\n")
    Extra headers (each ending with \r\n) to be added in messages sent from
    silo by m_dump. It can contain pseudo-variables.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
-   Example 1.5. Set the “extra_hdrs” parameter
+   Example 1.5. Set the "extra_hdrs" parameter
 ...
 modparam("msilo", "contact_hdr", "X-Extra: $tu\r\nY-Extra: foo\r\n")
 ...
@@ -324,9 +324,9 @@ modparam("msilo", "contact_hdr", "X-Extra: $tu\r\nY-Extra: foo\r\n")
 
    The body of the notification message. It can contain pseudo-variables.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
-   Example 1.6. Set the “offline_message” parameter
+   Example 1.6. Set the "offline_message" parameter
 ...
 modparam("msilo", "offline_message", "*** User $rU is offline!")
 modparam("msilo", "offline_message", "<em>I am offline!</em>")
@@ -338,9 +338,9 @@ modparam("msilo", "offline_message", "<em>I am offline!</em>")
    \r\n) to be added in notification messages. It must reflect what the
    'offline_message' contains. It can contain pseudo-variables.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
-   Example 1.7. Set the “content_type_hdr” parameter
+   Example 1.7. Set the "content_type_hdr" parameter
 ...
 modparam("msilo", "content_type_hdr", "Content-Type: text/plain\r\n")
 modparam("msilo", "content_type_hdr", "Content-Type: text/html\r\n")
@@ -351,9 +351,9 @@ modparam("msilo", "content_type_hdr", "Content-Type: text/html\r\n")
    The SIP address used to send reminder messages. If this value is not
    set, the reminder feature is disabled.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
-   Example 1.8. Set the “reminder” parameter
+   Example 1.8. Set the "reminder" parameter
 ...
 modparam("msilo", "reminder", "sip:registrar@example.org")
 ...
@@ -365,9 +365,9 @@ modparam("msilo", "reminder", "sip:registrar@example.org")
    separate Kamailio instance for msilo processing. If not set, the
    message will be sent to the address in destination URI.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
-   Example 1.9. Set the “outbound_proxy” parameter
+   Example 1.9. Set the "outbound_proxy" parameter
 ...
 modparam("msilo", "outbound_proxy", "sip:kamailio.org;transport=tcp")
 ...
@@ -377,9 +377,9 @@ modparam("msilo", "outbound_proxy", "sip:kamailio.org;transport=tcp")
    Expire time of stored messages - seconds. When this time passed, the
    message is silently discarded from database.
 
-   Default value is “259200 (72 hours = 3 days)”.
+   Default value is "259200 (72 hours = 3 days)".
 
-   Example 1.10. Set the “expire_time” parameter
+   Example 1.10. Set the "expire_time" parameter
 ...
 modparam("msilo", "expire_time", 36000)
 ...
@@ -390,9 +390,9 @@ modparam("msilo", "expire_time", 36000)
    module keeps each request send by itself for a new online user and if
    the reply is 2xx then the message is deleted from database.
 
-   Default value is “30”.
+   Default value is "30".
 
-   Example 1.11. Set the “check_time” parameter
+   Example 1.11. Set the "check_time" parameter
 ...
 modparam("msilo", "check_time", 10)
 ...
@@ -405,21 +405,21 @@ modparam("msilo", "check_time", 10)
 
    If the value is 0, the reminder feature is disabled.
 
-   Default value is “0”.
+   Default value is "0".
 
-   Example 1.12. Set the “send_time” parameter
+   Example 1.12. Set the "send_time" parameter
 ...
 modparam("msilo", "send_time", 60)
 ...
 
 3.13. clean_period (int)
 
-   Number of “check_time” cycles when to check if there are expired
+   Number of "check_time" cycles when to check if there are expired
    messages in database.
 
-   Default value is “5”.
+   Default value is "5".
 
-   Example 1.13. Set the “clean_period” parameter
+   Example 1.13. Set the "clean_period" parameter
 ...
 modparam("msilo", "clean_period", 3)
 ...
@@ -429,9 +429,9 @@ modparam("msilo", "clean_period", 3)
    Turns on/off the usage of the Contact address to send notification back
    to sender whose message is stored by MSILO.
 
-   Default value is “1 (0 = off, 1 = on)”.
+   Default value is "1 (0 = off, 1 = on)".
 
-   Example 1.14. Set the “use_contact” parameter
+   Example 1.14. Set the "use_contact" parameter
 ...
 modparam("msilo", "use_contact", 0)
 ...
@@ -440,9 +440,9 @@ modparam("msilo", "use_contact", 0)
 
    The name of the column in silo table, storing message id.
 
-   Default value is “mid”.
+   Default value is "mid".
 
-   Example 1.15. Set the “sc_mid” parameter
+   Example 1.15. Set the "sc_mid" parameter
 ...
 modparam("msilo", "sc_mid", "other_mid")
 ...
@@ -451,9 +451,9 @@ modparam("msilo", "sc_mid", "other_mid")
 
    The name of the column in silo table, storing the source address.
 
-   Default value is “src_addr”.
+   Default value is "src_addr".
 
-   Example 1.16. Set the “sc_from” parameter
+   Example 1.16. Set the "sc_from" parameter
 ...
 modparam("msilo", "sc_from", "source_address")
 ...
@@ -462,9 +462,9 @@ modparam("msilo", "sc_from", "source_address")
 
    The name of the column in silo table, storing the destination address.
 
-   Default value is “dst_addr”.
+   Default value is "dst_addr".
 
-   Example 1.17. Set the “sc_to” parameter
+   Example 1.17. Set the "sc_to" parameter
 ...
 modparam("msilo", "sc_to", "destination_address")
 ...
@@ -473,9 +473,9 @@ modparam("msilo", "sc_to", "destination_address")
 
    The name of the column in silo table, storing the user name.
 
-   Default value is “username”.
+   Default value is "username".
 
-   Example 1.18. Set the “sc_uri_user” parameter
+   Example 1.18. Set the "sc_uri_user" parameter
 ...
 modparam("msilo", "sc_uri_user", "user")
 ...
@@ -484,9 +484,9 @@ modparam("msilo", "sc_uri_user", "user")
 
    The name of the column in silo table, storing the domain.
 
-   Default value is “domain”.
+   Default value is "domain".
 
-   Example 1.19. Set the “sc_uri_host” parameter
+   Example 1.19. Set the "sc_uri_host" parameter
 ...
 modparam("msilo", "sc_uri_host", "domain")
 ...
@@ -495,9 +495,9 @@ modparam("msilo", "sc_uri_host", "domain")
 
    The name of the column storing the message body in silo table.
 
-   Default value is “body”.
+   Default value is "body".
 
-   Example 1.20. Set the “sc_body” parameter
+   Example 1.20. Set the "sc_body" parameter
 ...
 modparam("msilo", "sc_body", "message_body")
 ...
@@ -506,9 +506,9 @@ modparam("msilo", "sc_body", "message_body")
 
    The name of the column in silo table, storing content type.
 
-   Default value is “ctype”.
+   Default value is "ctype".
 
-   Example 1.21. Set the “sc_ctype” parameter
+   Example 1.21. Set the "sc_ctype" parameter
 ...
 modparam("msilo", "sc_ctype", "content_type")
 ...
@@ -518,9 +518,9 @@ modparam("msilo", "sc_ctype", "content_type")
    The name of the column in silo table, storing the expire time of the
    message.
 
-   Default value is “exp_time”.
+   Default value is "exp_time".
 
-   Example 1.22. Set the “sc_exp_time” parameter
+   Example 1.22. Set the "sc_exp_time" parameter
 ...
 modparam("msilo", "sc_exp_time", "expire_time")
 ...
@@ -530,9 +530,9 @@ modparam("msilo", "sc_exp_time", "expire_time")
    The name of the column in silo table, storing the incoming time of the
    message.
 
-   Default value is “inc_time”.
+   Default value is "inc_time".
 
-   Example 1.23. Set the “sc_inc_time” parameter
+   Example 1.23. Set the "sc_inc_time" parameter
 ...
 modparam("msilo", "sc_inc_time", "incoming_time")
 ...
@@ -542,9 +542,9 @@ modparam("msilo", "sc_inc_time", "incoming_time")
    The name of the column in silo table, storing the send time for the
    reminder.
 
-   Default value is “snd_time”.
+   Default value is "snd_time".
 
-   Example 1.24. Set the “sc_snd_time” parameter
+   Example 1.24. Set the "sc_snd_time" parameter
 ...
 modparam("msilo", "sc_snd_time", "send_reminder_time")
 ...
@@ -558,9 +558,9 @@ modparam("msilo", "sc_snd_time", "send_reminder_time")
    the value is set to a valid AVP name, then the module expects in the
    AVP to be a time value in format YYYYMMDDHHMMSS (e.g., 20060101201500).
 
-   Default value is “null”.
+   Default value is "null".
 
-   Example 1.25. Set the “snd_time_avp” parameter
+   Example 1.25. Set the "snd_time_avp" parameter
 ...
 modparam("msilo", "snd_time_avp", "$avp(i:123)")
 ...
@@ -569,9 +569,9 @@ modparam("msilo", "snd_time_avp", "$avp(i:123)")
 
    Wheter to add as prefix the date when the message was stored.
 
-   Default value is “1” (1==on/0==off).
+   Default value is "1" (1==on/0==off).
 
-   Example 1.26. Set the “add_date” parameter
+   Example 1.26. Set the "add_date" parameter
 ...
 modparam("msilo", "add_date", 0)
 ...
@@ -583,7 +583,7 @@ modparam("msilo", "add_date", 0)
 
    Default value is 0.
 
-   Example 1.27. Set the “max_messages” parameter
+   Example 1.27. Set the "max_messages" parameter
 ...
 modparam("msilo", "max_messages", 0)
 ...
@@ -593,9 +593,9 @@ modparam("msilo", "max_messages", 0)
    Wheter to add contact header to generated messages. The contact address
    is the From URI.
 
-   Default value is “0” (1==on; 0==off as per RFC3428).
+   Default value is "0" (1==on; 0==off as per RFC3428).
 
-   Example 1.28. Set the “add_contact” parameter
+   Example 1.28. Set the "add_contact" parameter
 ...
 modparam("msilo", "add_contact", 1)
 ...
@@ -609,9 +609,9 @@ modparam("msilo", "add_contact", 1)
    If the parameter is not set, m_store() does not look for extra headers
    from any AVP.
 
-   Default value is “null”.
+   Default value is "null".
 
-   Example 1.29. Set the “extra_hdrs_avp” parameter
+   Example 1.29. Set the "extra_hdrs_avp" parameter
 ...
 modparam("msilo", "extra_hdrs_avp", "$avp(msilo_extra_hdrs)")
 ...
@@ -627,7 +627,7 @@ modparam("msilo", "extra_hdrs_avp", "$avp(msilo_extra_hdrs)")
    be called when the request type is MESSAGE and the destination user is
    offline or his UA does not support MESSAGE requests). If the user is
    registered with a UA which does not support MESSAGE requests you should
-   not use mode=“0” if you have changed the request uri with the contact
+   not use mode="0" if you have changed the request uri with the contact
    address of user's UA.
 
    Meaning of the parameters is as follows:
@@ -647,7 +647,7 @@ m_store("$tu");
 
    The method sends stored messages for the SIP user that is going to
    register to his actual contact address. The method should be called
-   when a REGISTER request is received and the “Expire” header has a value
+   when a REGISTER request is received and the "Expire" header has a value
    greater than zero.
 
    Meaning of the parameters is as follows:
@@ -663,7 +663,7 @@ m_dump();
 m_dump("$fu");
 ...
 
-5. Exported Statistics
+5. Statistics
 
    5.1. stored_messages
    5.2. dumped_messages
