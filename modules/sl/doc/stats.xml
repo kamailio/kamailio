@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="sl.stats" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+    <title>Statistics</title>
+
+	<section id="sl.stats.1xx_replies">
+		<title><varname>1xx_replies</varname></title>
+		<para>
+			Number of 1xx replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.200_replies">
+		<title><varname>200_replies</varname></title>
+		<para>
+			Number of 201 replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.202_replies">
+		<title><varname>202_replies</varname></title>
+		<para>
+			Number of 202 replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.2xx_replies">
+		<title><varname>2xx_replies</varname></title>
+		<para>
+			Number of 2xx replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.300_replies">
+		<title><varname>300_replies</varname></title>
+		<para>
+			Number of 300 replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.301_replies">
+		<title><varname>301_replies</varname></title>
+		<para>
+			Number of 301 replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.302_replies">
+		<title><varname>302_replies</varname></title>
+		<para>
+			Number of 302 replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.3xx_replies">
+		<title><varname>3xx_replies</varname></title>
+		<para>
+			Number of 3xx replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.400_replies">
+		<title><varname>400_replies</varname></title>
+		<para>
+			Number of 400 replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.401_replies">
+		<title><varname>401_replies</varname></title>
+		<para>
+			Number of 401 replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.403_replies">
+		<title><varname>403_replies</varname></title>
+		<para>
+			Number of 403 replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.404_replies">
+		<title><varname>404_replies</varname></title>
+		<para>
+			Number of 404 replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.407_replies">
+		<title><varname>407_replies</varname></title>
+		<para>
+			Number of 407 replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.408_replies">
+		<title><varname>408_replies</varname></title>
+		<para>
+			Number of 408 replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.483_replies">
+		<title><varname>483_replies</varname></title>
+		<para>
+			Number of 483 replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.4xx_replies">
+		<title><varname>4xx_replies</varname></title>
+		<para>
+			Number of 4xx replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.500_replies">
+		<title><varname>500_replies</varname></title>
+		<para>
+			Number of 500 replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.5xx_replies">
+		<title><varname>5xx_replies</varname></title>
+		<para>
+			Number of 5xx replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.6xx_replies">
+		<title><varname>6xx_replies</varname></title>
+		<para>
+			Number of 6xx replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.xxx_replies">
+		<title><varname>xxx_replies</varname></title>
+		<para>
+			Number of replies whose code don't match any above.
+		</para>
+	</section>
+
+	<section id="sl.stats.sent_replies">
+		<title><varname>sent_replies</varname></title>
+		<para>
+			Number of all sent replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.sent_err_replies">
+		<title><varname>sent_err_replies</varname></title>
+		<para>
+			Number of sent error replies.
+		</para>
+	</section>
+
+	<section id="sl.stats.failures">
+		<title><varname>failures</varname></title>
+		<para>
+			Number of failures.
+		</para>
+	</section>
+
+	<section id="sl.stats.received_ACKs">
+		<title><varname>received_ACKs</varname></title>
+		<para>
+			Number of received ACKs filtered by SL module.
+		</para>
+	</section>
+
+</section>

@@ -68,5 +68,6 @@
 
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
+    <xi:include href="stats.xml"/>
 
 </section>
