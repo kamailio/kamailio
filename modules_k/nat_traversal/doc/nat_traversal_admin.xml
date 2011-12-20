@@ -618,7 +618,7 @@ if ((method=="REGISTER" || method=="SUBSCRIBE" ||
   </section>
 
   <section>
-  <title>Exported statistics</title>
+  <title>Statistics</title>
     <section>
     <title><varname>keepalive_endpoints</varname></title>
       <para>

@@ -868,7 +868,7 @@ modparam("usrloc", "preload", "location")
 
 
 	<section>
-		<title>Exported statistics</title>
+		<title>Statistics</title>
 		<para>
 		Exported statistics are listed in the next sections.
 		</para>

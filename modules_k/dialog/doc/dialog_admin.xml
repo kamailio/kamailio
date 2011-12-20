@@ -1572,7 +1572,7 @@ if(!uri == myself) {
 
 
 	<section>
-	<title>Exported statistics</title>
+	<title>Statistics</title>
 		<section>
 			<title><varname>active_dialogs</varname></title>
 			<para>

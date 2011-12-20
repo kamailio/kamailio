@@ -484,7 +484,7 @@ tcontinue('123', '456', 'MYROUTE');
 
 
 	<section>
-		<title>Exported statistics</title>
+		<title>Statistics</title>
 		<para>
 		Exported statistics are listed in the next sections. All statistics
 		except <quote>inuse_transactions</quote> can be reset.
