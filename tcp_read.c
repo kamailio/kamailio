@@ -856,8 +856,10 @@ skip:
  * the content of the stream. Safer, make a clone of buf content in a local
  * buffer and give that to receive_msg() to link to msg->buf
  */
+#define TCP_CLONE_RCVBUF
 int receive_tcp_msg(char* tcpbuf, unsigned int len, struct receive_info* rcv_info)
 {
+#ifdef TCP_CLONE_RCVBUF
 #ifdef DYN_BUF
 	char *buf = NULL;
 #else
@@ -903,6 +905,9 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len, struct receive_info* rcv_inf
 	memcpy(buf, tcpbuf, len);
 	buf[len] = '\0';
 	return receive_msg(buf, len, rcv_info);
+#else /* TCP_CLONE_RCVBUF */
+	return receive_msg(tcpbuf, len, rcv_info);
+#endif /* TCP_CLONE_RCVBUF */
 }
 
 int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
