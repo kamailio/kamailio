@@ -33,8 +33,9 @@
 	</para>
 	<para>
 	The module expects an input value which will be matched against a rule
-	by using regular expressions (see 'man pcresyntax' for syntax) or string
-	matching. Overlapping matching expressions can be controlled via priorities. 
+	by using regular expressions (see 'man pcresyntax' for syntax), string
+	or fnmatch (see 'man fnmatch') matching. Overlapping matching expressions
+	can be controlled via priorities. 
 	Once a rule is matched, the defined transformation (if any) is applied and 
 	the result is returned as output value. Also, if any string attribute is 
 	associated to the rule, this will be returned to the script along with
@@ -434,7 +435,7 @@ modparam("dialplan", "fetch_rows", 4000)
         </listitem>
 	</itemizedlist>
 	<para>
-	This function can be used from REQUEST_ROUTE, BRANCH_ROUTE.
+	This function can be used from ANY_ROUTE.
 	</para>
 	<example>
 	<title><function>dp_translate</function> usage</title>
@@ -604,6 +605,11 @@ attrs: xyz
 		variables (variables with dinamic name). References to sip message,
 		private variables ($var(...)) and AVPs with static name are among
 		those that are safe to use in replacement expressions.
+		</para>
+		<para>
+		The match_op field specify matching operator, valid value being:
+		0 - string comparison; 1 - regular expression matching (pcre);
+		2 - fnmatch (shell-like pattern) matching.
 		</para>
     </section>
 

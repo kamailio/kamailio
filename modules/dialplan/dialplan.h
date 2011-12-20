@@ -40,8 +40,9 @@
 #include "../../pvar.h"
 #include "../../parser/msg_parser.h"
 
-#define REGEX_OP	1
-#define EQUAL_OP	0
+#define DP_EQUAL_OP		0
+#define DP_REGEX_OP		1
+#define DP_FNMATCH_OP	2
 
 #define MAX_REPLACE_WITH	10
 

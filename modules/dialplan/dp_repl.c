@@ -34,6 +34,8 @@
  */
 
 
+#include <fnmatch.h>
+
 #include "../../re.h"
 #include "../../mem/shm_mem.h"
 #include "dialplan.h"
@@ -306,7 +308,7 @@ error:
 	return -1;
 }
 
-#define DP_MAX_ATTRS_LEN	32
+#define DP_MAX_ATTRS_LEN	128
 static char dp_attrs_buf[DP_MAX_ATTRS_LEN+1];
 int translate(struct sip_msg *msg, str input, str *output, dpl_id_p idp,
 		str *attrs)
@@ -314,6 +316,7 @@ int translate(struct sip_msg *msg, str input, str *output, dpl_id_p idp,
 	dpl_node_p rulep;
 	dpl_index_p indexp;
 	int user_len, rez;
+	char b;
 
 	if(!input.s || !input.len) {
 		LM_ERR("invalid input string\n");
@@ -334,13 +337,13 @@ search_rule:
 	for(rulep=indexp->first_rule; rulep!=NULL; rulep= rulep->next) {
 		switch(rulep->matchop) {
 
-			case REGEX_OP:
+			case DP_REGEX_OP:
 				LM_DBG("regex operator testing\n");
 				rez = pcre_exec(rulep->match_comp, NULL, input.s, input.len,
 						0, 0, NULL, 0);
 				break;
 
-			case EQUAL_OP:
+			case DP_EQUAL_OP:
 				LM_DBG("equal operator testing\n");
 				if(rulep->match_exp.len != input.len) {
 					rez = -1;
@@ -348,6 +351,15 @@ search_rule:
 					rez = strncmp(rulep->match_exp.s,input.s,input.len);
 					rez = (rez==0)?0:-1;
 				}
+				break;
+
+			case DP_FNMATCH_OP:
+				LM_DBG("fnmatch operator testing\n");
+				b = input.s[input.len];
+				input.s[input.len] = '\0';
+				rez = fnmatch(rulep->match_exp.s, input.s, 0);
+				input.s[input.len] = b;
+				rez = (rez==0)?0:-1;
 				break;
 
 			default:

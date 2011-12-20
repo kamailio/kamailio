@@ -364,7 +364,8 @@ dpl_node_t * build_rule(db_val_t * values)
 
 	matchop = VAL_INT(values+2);
 
-	if((matchop != REGEX_OP) && (matchop!=EQUAL_OP)){
+	if((matchop != DP_REGEX_OP) && (matchop!=DP_EQUAL_OP)
+			&& (matchop!=DP_FNMATCH_OP)){
 		LM_ERR("invalid value for match operator\n");
 		return NULL;
 	}
@@ -374,7 +375,7 @@ dpl_node_t * build_rule(db_val_t * values)
 	new_rule = 0;
 
 	GET_STR_VALUE(match_exp, values, 3);
-	if(matchop == REGEX_OP){
+	if(matchop == DP_REGEX_OP){
 		match_comp = reg_ex_comp(match_exp.s, &cap_cnt);
 		if(!match_comp){
 			LM_ERR("failed to compile match expression %.*s\n",
@@ -660,9 +661,10 @@ void list_hash(int h_index)
 
 void list_rule(dpl_node_t * rule)
 {
-	LM_DBG("RULE %p: pr %i next %p match_exp %.*s, "
+	LM_DBG("RULE %p: pr %i next %p op %d match_exp %.*s, "
 			"subst_exp %.*s, repl_exp %.*s and attrs %.*s\n", rule,
 			rule->pr, rule->next,
+			rule->matchop,
 			rule->match_exp.len, rule->match_exp.s, 
 			rule->subst_exp.len, rule->subst_exp.s,
 			rule->repl_exp.len, rule->repl_exp.s,
