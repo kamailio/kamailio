@@ -371,6 +371,11 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	int parse_payload_attr;
 	str fmtp_string;
 
+	/* hook the start and lenght of sdp body inside structure
+	 * - shorcut useful for multi-part bodies and sdp operations
+	 */
+	_sdp->text = *sdp_body;
+
 	/*
 	 * Parsing of SDP body.
 	 * Each session starts with v-line and each session may contain a few

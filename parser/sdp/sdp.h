@@ -101,6 +101,7 @@ typedef struct sdp_session_cell {
 typedef struct sdp_info {
 	msg_body_type_t type;
 	free_msg_body_f free;
+	str text; /**< link to start of sdp and its length */
 	int sessions_num;	/**< number of SDP sessions */
 	int streams_num;  /**< total number of streams for all SDP sessions */
 	struct sdp_session_cell *sessions;
