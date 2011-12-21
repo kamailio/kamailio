@@ -44,6 +44,8 @@ static int w_sdp_remove_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar);
 static int w_sdp_keep_codecs_by_id(sip_msg_t* msg, char* codecs, char *bar);
 static int w_sdp_keep_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar);
 static int w_sdp_with_media(sip_msg_t* msg, char* media, char *bar);
+static int w_sdp_with_codecs_by_id(sip_msg_t* msg, char* codec, char *bar);
+static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codec, char *bar);
 static int w_sdp_print(sip_msg_t* msg, char* level, char *bar);
 
 static int mod_init(void);
@@ -58,6 +60,10 @@ static cmd_export_t cmds[] = {
 	{"sdp_keep_codecs_by_name",  (cmd_function)w_sdp_keep_codecs_by_name,
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_with_media",             (cmd_function)w_sdp_with_media,
+		1, fixup_spve_null,  0, ANY_ROUTE},
+	{"sdp_with_codecs_by_id",      (cmd_function)w_sdp_with_codecs_by_id,
+		1, fixup_spve_null,  0, ANY_ROUTE},
+	{"sdp_with_codecs_by_name",    (cmd_function)w_sdp_with_codecs_by_name,
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_print",                  (cmd_function)w_sdp_print,
 		1, fixup_igp_null,  0, ANY_ROUTE},
@@ -623,6 +629,149 @@ static int w_sdp_with_media(sip_msg_t* msg, char* media, char *bar)
 	return 1;
 }
 
+/**
+ *
+ */
+int sdp_with_codecs_by_id(sip_msg_t* msg, str* codecs)
+{
+	sdp_info_t *sdp = NULL;
+	int sdp_session_num;
+	int sdp_stream_num;
+	sdp_session_cell_t* sdp_session;
+	sdp_stream_cell_t* sdp_stream;
+	str sdp_codecs;
+	str tmp_codecs;
+	str fnd_codec;
+	int foundone = 0;
+	int notfound = 0;
+
+	if(parse_sdp(msg) < 0) {
+		LM_ERR("Unable to parse sdp\n");
+		return -1;
+	}
+
+	sdp = (sdp_info_t*)msg->body;
+
+	if(sdp==NULL) {
+		LM_DBG("No sdp body\n");
+		return -1;
+	}
+
+	LM_DBG("attempting to search codecs in sdp: [%.*s]\n",
+			codecs->len, codecs->s);
+
+	sdp_session_num = 0;
+	for(;;)
+	{
+		sdp_session = get_sdp_session(msg, sdp_session_num);
+		if(!sdp_session) break;
+		sdp_stream_num = 0;
+		for(;;)
+		{
+			sdp_stream = get_sdp_stream(msg, sdp_session_num, sdp_stream_num);
+			if(!sdp_stream) break;
+
+			LM_DBG("stream %d of %d - payloads [%.*s]\n",
+				sdp_stream_num, sdp_session_num,
+				sdp_stream->payloads.len, sdp_stream->payloads.s);
+			sdp_codecs = sdp_stream->payloads;
+			tmp_codecs = *codecs;
+			while(str_find_token(&tmp_codecs, &fnd_codec, ',')==0
+					&& fnd_codec.len>0)
+			{
+				tmp_codecs.len -=(int)(&fnd_codec.s[fnd_codec.len]-tmp_codecs.s);
+				tmp_codecs.s = fnd_codec.s + fnd_codec.len;
+
+				if(sdp_codec_in_str(&sdp_codecs, &fnd_codec, ' ')==0) {
+					LM_DBG("codecs [%.*s] - not found [%.*s]\n",
+						sdp_codecs.len, sdp_codecs.s,
+						fnd_codec.len, fnd_codec.s);
+					notfound = 1;
+				} else {
+					LM_DBG("codecs [%.*s] - found [%.*s]\n",
+						sdp_codecs.len, sdp_codecs.s,
+						fnd_codec.len, fnd_codec.s);
+					foundone = 1;
+				}
+			}
+			sdp_stream_num++;
+		}
+		sdp_session_num++;
+	}
+
+	return (foundone + ((foundone)?notfound:0));
+}
+
+/**
+ *
+ */
+static int w_sdp_with_codecs_by_id(sip_msg_t* msg, char* codecs, char *bar)
+{
+	str lcodecs = {0, 0};
+	int ret;
+
+	if(codecs==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)codecs, &lcodecs)!=0)
+	{
+		LM_ERR("unable to get the codecs\n");
+		return -1;
+	}
+
+	ret = sdp_with_codecs_by_id(msg, &lcodecs);
+	/* ret: -1 error; 0 not found */
+	if(ret<=0)
+		return (ret - 1);
+	return ret;
+}
+
+/**
+ *
+ */
+static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar)
+{
+	str lcodecs = {0, 0};
+	str idslist;
+	sdp_info_t *sdp = NULL;
+	int ret;
+
+	if(codecs==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)codecs, &lcodecs)!=0)
+	{
+		LM_ERR("unable to get the codecs\n");
+		return -1;
+	}
+
+	if(parse_sdp(msg) < 0) {
+		LM_ERR("Unable to parse sdp\n");
+		return -1;
+	}
+
+	sdp = (sdp_info_t*)msg->body;
+
+	if(sdp==NULL) {
+		LM_DBG("No sdp body\n");
+		return -1;
+	}
+
+	if(sdpops_build_ids_list(sdp, &lcodecs, &idslist)<0)
+		return -1;
+
+	ret = sdp_with_codecs_by_id(msg, &idslist);
+	/* ret: -1 error; 0 not found */
+	if(ret<=0)
+		return (ret - 1);
+	return ret;
+}
 
 /**
  *
