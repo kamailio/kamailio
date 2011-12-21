@@ -3,7 +3,7 @@ CREATE TABLE lcr_gw (
     id NUMBER(10) PRIMARY KEY,
     lcr_id NUMBER(5),
     gw_name VARCHAR2(128),
-    ip_addr VARCHAR2(15),
+    ip_addr VARCHAR2(47),
     hostname VARCHAR2(64),
     port NUMBER(5),
     params VARCHAR2(64),

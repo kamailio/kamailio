@@ -3,7 +3,7 @@ CREATE TABLE lcr_gw (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     lcr_id SMALLINT UNSIGNED NOT NULL,
     gw_name VARCHAR(128),
-    ip_addr VARCHAR(15),
+    ip_addr VARCHAR(47),
     hostname VARCHAR(64),
     port SMALLINT UNSIGNED,
     params VARCHAR(64),

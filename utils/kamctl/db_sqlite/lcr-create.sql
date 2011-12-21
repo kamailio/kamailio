@@ -3,7 +3,7 @@ CREATE TABLE lcr_gw (
     id INTEGER PRIMARY KEY NOT NULL,
     lcr_id SMALLINT NOT NULL,
     gw_name VARCHAR(128),
-    ip_addr VARCHAR(15),
+    ip_addr VARCHAR(47),
     hostname VARCHAR(64),
     port SMALLINT,
     params VARCHAR(64),
