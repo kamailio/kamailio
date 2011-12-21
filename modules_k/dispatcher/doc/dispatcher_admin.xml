@@ -542,13 +542,16 @@ modparam("dispatcher", "force_dst", 1)
  	<section>
  		<title><varname>ds_probing_threshhold</varname> (int)</title>
  		<para>
-		If you want to set a gateway into probing mode, you will need a specific number of requests until it will change from "active" to probing.
-		The number of attempts can be set with this parameter.
+		If you want to set a gateway into inactive mode, there can be
+		a specific number of failed requests until it will change from "active"
+		to "inactive". It is using the state "trying", that allows selection
+		of gateway but indicates there was a failure previously with the
+		gateway. The number of attempts can be set with this parameter.
 		This parameter can be modified via ser config framework.
  		</para>
  		<para>
  		<emphasis>
- 			Default value is <quote>3</quote>.
+		Default value is <quote>1</quote> (set inactive with first failure).
  		</emphasis>
  		</para>
  		<example>
@@ -585,9 +588,10 @@ modparam("dispatcher", "force_dst", 1)
  		<title><varname>ds_probing_mode</varname> (int)</title>
  		<para>
 		Controls what gateways are tested to see if they are reachable. If set
-		to 0, only the gateways with state PROBING are tested, if set to 1, all
-		gateways are tested. If set to 1 and the is failure to the above list,
-		an active gateway is set to PROBING state.
+		to 0, only the gateways with state PROBING are tested; if set to 1, all
+		gateways are tested; if set to 2, only gateways in inactive state with
+		probing mode set are tested. If set to 1 and there is a failure of keepalive
+		to an active gateway, then it is set to TRYING state.
  		</para>
  		<para>
  		<emphasis>
@@ -684,6 +688,25 @@ modparam("dispatcher", "force_dst", 1)
  <programlisting format="linespecific">
  ...
  modparam("dispatcher", "ds_hash_check_interval", 60)
+ ...
+ </programlisting>
+ 		</example>
+	</section>
+ 	<section>
+ 		<title><varname>outbound_proxy</varname> (str)</title>
+ 		<para>
+		SIP URI of outbound proxy to be used when sending pings.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			By default no outbound proxy is defined.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>outbound_proxy</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "outbound_proxy", "sip:outbound.example.com")
  ...
  </programlisting>
  		</example>
@@ -872,77 +895,91 @@ ds_select_dst("1", "$var(a)");
  	</section>
   	<section>
  		<title>
- 		<function moreinfo="none">ds_mark_dst()</function>
- 		</title>
- 		<para>
- 		Mark the last used address from destination set as inactive, in order
-		to be ingnored in the future. In this way it can be implemented an
-		automatic detection of failed gateways. When an address is marked as
-		inactive, it will be ignored by 'ds_select_dst' and 'ds_select_domain'.
- 		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
-		</para>
- 	</section>
-  	<section>
- 		<title>
- 		<function moreinfo="none">ds_mark_dst("s")</function>
+ 		<function moreinfo="none">ds_mark_dst([state])</function>
  		</title>
  		<para>
 		Mark the last used address from destination set as inactive
-		("i"/"I"/"0"), active ("a"/"A"/"1") or probing ("p"/"P"/"2").
-		With this function, an automatic detection of failed gateways
-		can be implemented. When an address is marked as
-		inactive or probing, it will be ignored by 'ds_select_dst' and
+		("i"/"I"), active ("a"/"A"), disabled ("d"/"D") or trying ("t"/"T").
+		Apart of disabled state, a destination can be set in probing mode by
+		adding ("p"/"P") flag. With this function, an automatic detection
+		of failed gateways can be implemented. When an address is marked as
+		inactive or disabled, it will be ignored by 'ds_select_dst' and
 		'ds_select_domain'.
  		</para>
-		<para>possible parameters:</para>
+ 		<para>
+		The parameter state is optional, when it is missing, then
+		the destination will be marked inactive (i.e., same as 'i').
+ 		</para>
+		<para>Possible values for state parameter:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>"i", "I" or "0"</emphasis> - the last destination
+			<para><emphasis>"a" or "A"</emphasis> - the last destination
+				should be set to active and the error-counter should set to "0".
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>"i" or "I"</emphasis> - the last destination
 				should be set to inactive and will be ignored in future
 				requests.</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>"a", "A" or "1"</emphasis> - the last destination
-				should be set to active and the error-counter should set to "0".</para>
+			<para><emphasis>"t" or "T"</emphasis> - the last destination
+				should be set to temporary trying state and failure counter
+				is incremented. When the failure counter reaches the threshold,
+				the destination will be set inactive.
+			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>"p", "P" or "2"</emphasis> - the last destination
-				will be set to probing. Note: You will need to call this
-				function "threshhold"-times, before it will be actually set
-				to probing.</para>
+			<para><emphasis>"p" and "P"</emphasis> - this has to be used in
+				addition to one of the previous flags - the last destination
+				will be set to probing. This mean the destination will be pinged
+				with SIP OPTIONS requests from time to time to detect if it is
+				up running or down.</para>
 		</listitem>
 		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
+		<example>
+		<title><function>ds_mark_dst</function> usage</title>
+		<programlisting format="linespecific">
+...
+failure_route[tryagain] {
+...
+   if(t_check_status("500"))
+      ds_mark_dst("ip"); # set to inactive and probing
+...
+}
+...
+</programlisting>
+		</example>
  	</section>
   	<section>
  		<title>
- 		<function moreinfo="none">ds_is_from_list()</function>
- 		</title>
- 		<para>
-			This function returns true, if the current request comes from a
-			host from the dispatcher-list; otherwise false.
- 		</para>
-		<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			BRANCH_ROUTE and ONREPLY_ROUTE.
-		</para>
- 	</section>
-  	<section>
- 		<title>
- 		<function moreinfo="none">ds_is_from_list("group")</function>
+ 		<function moreinfo="none">ds_is_from_list([groupid])</function>
  		</title>
  		<para>
 		This function returns true, if the current request comes from a host
 		in the given group of the dispatcher-list; otherwise false.
  		</para>
 		<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			BRANCH_ROUTE and ONREPLY_ROUTE.
+		Parameter groupid is optional, when it is missing, then the matching
+		will be done against all addresses in all groups. Upon a match, the
+		'grp_avp' will be set to groupid of matching address.
+ 		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
 		</para>
+		<example>
+		<title><function>ds_mark_dst</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(ds_is_from_list("10")) {
+    ...
+}
+...
+</programlisting>
+		</example>
  	</section>
   	<section>
  		<title>
@@ -1027,11 +1064,12 @@ onreply_route {
 			      <itemizedlist>
 	                 <listitem><para> <quote>a</quote>: active</para></listitem> 
 			         <listitem><para> <quote>i</quote>: inactive</para></listitem>	
+			         <listitem><para> <quote>t</quote>: trying</para></listitem>	
 			         <listitem><para> <quote>d</quote>: disabled</para></listitem>	
 				  </itemizedlist>
-				  <para>The states <quote>a</quote> or <quote>i</quote> can be
-					  followed by <quote>p</quote> to set probing mode (e.g. 'ap'
-					  or 'ip')</para>
+				  <para>The states <quote>a</quote>, <quote>i</quote> or
+					  <quote>t</quote> can be followed by <quote>p</quote>
+					  to set probing mode (e.g. 'ap', 'ip' or 'tp').</para>
 			</listitem>	  
 
 			<listitem><para>_group_: destination group id</para></listitem>
@@ -1111,11 +1149,12 @@ onreply_route {
 			      <itemizedlist>
 	                 <listitem><para> <quote>a</quote>: active</para></listitem>
 			         <listitem><para> <quote>i</quote>: inactive</para></listitem>
+			         <listitem><para> <quote>t</quote>: trying</para></listitem>
 			         <listitem><para> <quote>d</quote>: disabled</para></listitem>
 				  </itemizedlist>
-				  <para>The states <quote>a</quote> or <quote>i</quote> can be
-					  followed by <quote>p</quote> to set probing mode (e.g. 'ap'
-					  or 'ip')</para>
+				  <para>The states <quote>a</quote>, <quote>i</quote> or
+					  <quote>t</quote> can be followed by <quote>p</quote>
+					  to set probing mode (e.g. 'ap', 'ip' or 'tp').</para>
 			</listitem>
 
 			<listitem><para>_group_: destination group id</para></listitem>
@@ -1125,9 +1164,12 @@ onreply_route {
 		<para>
 		Example:
 		</para>
-        <programlisting  format="linespecific">
-		sercmd dispatcher.set_state _state_ _group_ _address_
-		</programlisting>
+<programlisting  format="linespecific">
+...
+# prototype: sercmd dispatcher.set_state _state_ _group_ _address_
+sercmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
+...
+</programlisting>
     </section>
 	<section>
 		<title>

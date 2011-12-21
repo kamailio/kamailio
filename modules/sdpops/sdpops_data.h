@@ -24,10 +24,12 @@
 
 #ifndef _SDPOPS_DATA_H_
 #define _SDPOPS_DATA_H_
+
 #include "../../str.h"
+#include "../../parser/sdp/sdp.h"
 
 int sdpops_get_ids_by_name(str *name, str *ids);
 int str_find_token(str *text, str *result, char delim);
-int sdpops_build_ids_list(str *names, str *ids);
+int sdpops_build_ids_list(sdp_info_t *sdp, str *names, str *ids);
 
 #endif

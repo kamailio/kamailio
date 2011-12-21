@@ -38,17 +38,18 @@
 #include "timer_proc.h"
 #include "cfg/cfg_struct.h"
 #include "pt.h"
+#include "ut.h"
 #include "mem/shm_mem.h"
 
 #include <unistd.h>
 
 
 /**
- * \brief update internal counters for running new dummy timers
- * @param timers number of dummy timer processes
+ * \brief update internal counters for running new basic sec. timers
+ * @param timers number of basic timer processes
  * @return 0 on success; -1 on error
  */
-int register_dummy_timers(int timers)
+int register_basic_timers(int timers)
 {
 	if(register_procs(timers)<0)
 		return -1;
@@ -61,9 +62,9 @@ int register_dummy_timers(int timers)
  * 
  * Forks a very basic periodic timer process, that just sleep()s for 
  * the specified interval and then calls the timer function.
- * The new "dummy timer" process execution start immediately, the sleep()
+ * The new "basic timer" process execution start immediately, the sleep()
  * is called first (so the first call to the timer function will happen
- * \<interval\> seconds after the call to fork_dummy_timer)
+ * \<interval\> seconds after the call to fork_basic_timer)
  * @param child_id  @see fork_process()
  * @param desc      @see fork_process()
  * @param make_sock @see fork_process()
@@ -73,7 +74,7 @@ int register_dummy_timers(int timers)
  * @return pid of the new process on success, -1 on error
  * (doesn't return anything in the child process)
  */
-int fork_dummy_timer(int child_id, char* desc, int make_sock,
+int fork_basic_timer(int child_id, char* desc, int make_sock,
 						timer_function* f, void* param, int interval)
 {
 	int pid;
@@ -94,6 +95,44 @@ int fork_dummy_timer(int child_id, char* desc, int make_sock,
 	return pid;
 }
 
+/**
+ * \brief Forks a separate simple milisecond-sleep() periodic timer
+ * 
+ * Forks a very basic periodic timer process, that just ms-sleep()s for 
+ * the specified interval and then calls the timer function.
+ * The new "basic timer" process execution start immediately, the ms-sleep()
+ * is called first (so the first call to the timer function will happen
+ * \<interval\> seconds after the call to fork_basic_utimer)
+ * @param child_id  @see fork_process()
+ * @param desc      @see fork_process()
+ * @param make_sock @see fork_process()
+ * @param f         timer function/callback
+ * @param param     parameter passed to the timer function
+ * @param uinterval  interval in mili-seconds.
+ * @return pid of the new process on success, -1 on error
+ * (doesn't return anything in the child process)
+ */
+int fork_basic_utimer(int child_id, char* desc, int make_sock,
+						utimer_function* f, void* param, int uinterval)
+{
+	int pid;
+	ticks_t ts;
+	
+	pid=fork_process(child_id, desc, make_sock);
+	if (pid<0) return -1;
+	if (pid==0){
+		/* child */
+		if (cfg_child_init()) return -1;
+		for(;;){
+			sleep_us(uinterval);
+			cfg_update();
+			ts = get_ticks_raw();
+			f(TICKS_TO_MS(ts), param); /* ticks in mili-seconds */
+		}
+	}
+	/* parent */
+	return pid;
+}
 
 
 /**

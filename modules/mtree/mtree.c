@@ -45,6 +45,7 @@ extern pv_spec_t pv_dstid;
 extern pv_spec_t pv_weight;
 extern int _mt_tree_type;
 extern int _mt_ignore_duplicates;
+extern int _mt_allow_duplicates;
 
 /** structures containing prefix-value pairs */
 static m_tree_t **_ptree = NULL; 
@@ -136,13 +137,14 @@ m_tree_t* mt_init_tree(str* tname, str *dbtable, int type)
 	return pt;
 }
 
-int mt_add_to_tree(m_tree_t *pt, str *sp, str *sv)
+int mt_add_to_tree(m_tree_t *pt, str *sp, str *svalue)
 {
-	int l;
+        int l, ivalue = 0;
 	mt_node_t *itn, *itn0;
+	mt_is_t *tvalues;
 	
 	if(pt==NULL || sp==NULL || sp->s==NULL
-			|| sv==NULL || sv->s==NULL)
+			|| svalue==NULL || svalue->s==NULL)
 	{
 		LM_ERR("bad parameters\n");
 		return -1;
@@ -153,7 +155,12 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *sv)
 		LM_ERR("max prefix len exceeded\n");
 		return -1;
 	}
-	
+
+	if ((pt->type == MT_TREE_IVAL) && (str2sint(svalue, &ivalue) != 0)) {
+	    LM_ERR("bad integer string <%.*s>\n", svalue->len, svalue->s);
+	    return -1;
+	}
+
 	l = 0;
 	if(pt->head == NULL)
 	{
@@ -203,33 +210,44 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *sv)
 		itn = itn0[_mt_char_table[(unsigned int)sp->s[l]]].child;
 	}
 
-	if(itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalue.s!=NULL)
-	{
-		LM_ERR("prefix already allocated [%.*s/%.*s] old: %.*s\n",
-			sp->len, sp->s, sv->len, sv->s,
-			itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalue.len,
-			itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalue.s);
-		if(_mt_ignore_duplicates!=0)
-			return 1;
+	if(itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalues != NULL) {
+	    if(_mt_ignore_duplicates != 0) {
+		LM_NOTICE("prefix already allocated [%.*s/%.*s]\n",
+			  sp->len, sp->s, svalue->len, svalue->s);
+		return 1;
+	    } else if (_mt_allow_duplicates == 0) {
+		LM_ERR("prefix already allocated [%.*s/%.*s]\n",
+		       sp->len, sp->s, svalue->len, svalue->s);
 		return -1;
+	    }
 	}
 
-	itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalue.s
-			= (char*)shm_malloc((sv->len+1)*sizeof(char));
-	if(itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalue.s==NULL)
-	{
-		LM_ERR("no more shm mem!\n");
-		return -1;
+	tvalues = (mt_is_t *)shm_malloc(sizeof(mt_is_t));
+	if (tvalues == NULL) {
+	    LM_ERR("no more shm mem for tvalue\n");
+	    return -1;
 	}
-	pt->memsize +=  (sv->len+1)*sizeof(char);
-	pt->nritems++;
-	strncpy(itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalue.s, sv->s,
-			sv->len);
-	itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalue.len = sv->len;
-	itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalue.s[sv->len] = '\0';
+	memset(tvalues, 0, sizeof(mt_is_t));
+
+	if (pt->type == MT_TREE_IVAL) {
+	    tvalues->tvalue.n = ivalue;
+	} else { /* pt->type == MT_TREE_SVAL or MT_TREE_DW */
+	    tvalues->tvalue.s.s = (char*)shm_malloc((svalue->len+1)*sizeof(char));
+	    if (tvalues->tvalue.s.s == NULL) {
+		LM_ERR("no more shm mem for string\n");
+		return -1;
+	    }
+	    tvalues->tvalue.s.len = svalue->len;
+	    pt->memsize +=  (svalue->len+1)*sizeof(char);
+	    pt->nritems++;
+	    strncpy(tvalues->tvalue.s.s, svalue->s, svalue->len);
+	    tvalues->tvalue.s.s[svalue->len] = '\0';
+	}
+	tvalues->next = itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalues;
+	itn0[_mt_char_table[(unsigned int)sp->s[l]]].tvalues = tvalues;
+
 	mt_node_set_payload(&itn0[_mt_char_table[(unsigned int)sp->s[l]]],
-			pt->type);
-	
+			    pt->type);
 	return 0;
 }
 
@@ -270,11 +288,11 @@ m_tree_t* mt_get_first_tree()
 }
 
 
-str* mt_get_tvalue(m_tree_t *pt, str *tomatch, int *plen)
+is_t* mt_get_tvalue(m_tree_t *pt, str *tomatch)
 {
-	int l, len;
+	int l;
 	mt_node_t *itn;
-	str *tvalue;
+	is_t *tvalue;
 
 	if(pt==NULL || tomatch==NULL || tomatch->s==NULL)
 	{
@@ -282,7 +300,7 @@ str* mt_get_tvalue(m_tree_t *pt, str *tomatch, int *plen)
 		return NULL;
 	}
 	
-	l = len = 0;
+	l = 0;
 	itn = pt->head;
 	tvalue = NULL;
 
@@ -296,18 +314,14 @@ str* mt_get_tvalue(m_tree_t *pt, str *tomatch, int *plen)
 			return NULL;
 		}
 
-		if(itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalue.s!=NULL)
+		if(itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalues!=NULL)
 		{
-			tvalue = &itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalue;
-			len = l+1;
+			tvalue = &itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalues->tvalue;
 		}
 		
 		itn = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].child;
 		l++;	
 	}
-	
-	if(plen!=NULL)
-		*plen = len;
 	
 	return tvalue;
 }
@@ -318,6 +332,7 @@ int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
     mt_node_t *itn;
     int_str val, values_avp_name;
     unsigned short values_name_type;
+    mt_is_t *tvalues;
 
     if (pt == NULL || tomatch == NULL || tomatch->s == NULL) {
 	LM_ERR("bad parameters\n");
@@ -340,13 +355,21 @@ int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
 		   l, tomatch->len, tomatch->s);
 	    return -1;
 	}
-
-	if (itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalue.s != NULL) {
-	    val.s = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalue;
-	    LM_DBG("adding avp <%.*s> with value <%.*s>\n",
-		   values_avp_name.s.len, values_avp_name.s.s,
-		   val.s.len, val.s.s);
-	    add_avp(values_name_type|AVP_VAL_STR, values_avp_name, val);
+	tvalues = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalues;
+	while (tvalues != NULL) {
+	    if (pt->type == MT_TREE_IVAL) {
+		val.n = tvalues->tvalue.n;
+		LM_DBG("adding avp <%.*s> with value <i:%d>\n",
+		       values_avp_name.s.len, values_avp_name.s.s, val.n);
+		add_avp(values_name_type, values_avp_name, val);
+	    } else {  /* pt->type == MT_TREE_SVAL */
+		val.s = tvalues->tvalue.s;
+		LM_DBG("adding avp <%.*s> with value <s:%.*s>\n",
+		       values_avp_name.s.len, values_avp_name.s.s, val.s.len,
+		       val.s.s);
+		add_avp(values_name_type|AVP_VAL_STR, values_avp_name, val);
+	    }
+	    tvalues = tvalues->next;
 	}
 		
 	itn = itn[_mt_char_table[(unsigned int)tomatch->s[l]]].child;
@@ -363,7 +386,7 @@ int mt_match_prefix(struct sip_msg *msg, m_tree_t *it,
 	int i, j;
 	mt_node_t *itn;
 	int ret;
-	str *tvalue;
+	is_t *tvalue;
 	int_str dstid_avp_name;
 	unsigned short dstid_name_type;
 	int_str weight_avp_name;
@@ -386,26 +409,31 @@ int mt_match_prefix(struct sip_msg *msg, m_tree_t *it,
 
 	l = len = 0;
 	n = 0;
-	if(it->type==MT_TREE_SVAL)
-	{
-	        if (mode == 2) 
-		    return mt_add_tvalues(msg, it, tomatch);
-
-		tvalue = mt_get_tvalue(it, tomatch, &len);
-		if(tvalue==NULL)
-		{
-			LM_DBG("no match for: %.*s\n", tomatch->len, tomatch->s);
-			return -1;
-		}
-		memset(&val, 0, sizeof(pv_value_t));
+	if ((it->type==MT_TREE_SVAL) || (it->type==MT_TREE_IVAL)) {
+	    if (mode == 2) 
+		return mt_add_tvalues(msg, it, tomatch);
+	    tvalue = mt_get_tvalue(it, tomatch);
+	    if (tvalue == NULL) {
+		LM_DBG("no match for: %.*s\n", tomatch->len, tomatch->s);
+		return -1;
+	    }
+	    memset(&val, 0, sizeof(pv_value_t));
+	    if (it->type==MT_TREE_SVAL) {
 		val.flags = PV_VAL_STR;
-		val.rs = *tvalue;
-		if(pv_value.setf(msg, &pv_value.pvp, (int)EQ_T, &val)<0)
-		{
-			LM_ERR("setting PV failed\n");
-			return -2;
+		val.rs = tvalue->s;
+		if(pv_value.setf(msg, &pv_value.pvp, (int)EQ_T, &val)<0) {
+		    LM_ERR("setting PV failed\n");
+		    return -2;
 		}
-		return 0;
+	    } else {
+		val.flags = PV_VAL_INT;
+		val.ri = tvalue->n;
+		if(pv_value.setf(msg, &pv_value.pvp, (int)EQ_T, &val)<0) {
+		    LM_ERR("setting PV failed\n");
+		    return -2;
+		}
+	    }
+	    return 0;
 	}
 
 	if(it->type!=MT_TREE_DW)
@@ -437,7 +465,7 @@ int mt_match_prefix(struct sip_msg *msg, m_tree_t *it,
 			return -1;
 		}
 
-		if(itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalue.s!=NULL)
+		if(itn[_mt_char_table[(unsigned int)tomatch->s[l]]].tvalues!=NULL)
 		{
 			dw = (mt_dw_t*)itn[_mt_char_table[(unsigned int)tomatch->s[l]]].data;
 			while(dw) {
@@ -503,24 +531,29 @@ int mt_match_prefix(struct sip_msg *msg, m_tree_t *it,
 void mt_free_node(mt_node_t *pn, int type)
 {
 	int i;
+        mt_is_t *tvalues, *next;
+
 	if(pn==NULL)
 		return;
 
-	for(i=0; i<MT_NODE_SIZE; i++)
-	{
-		if(pn[i].tvalue.s!=NULL)
-		{
-			shm_free(pn[i].tvalue.s);
-			pn[i].tvalue.s   = NULL;
-			pn[i].tvalue.len = 0;
-			if(type==MT_TREE_DW)
-				mt_node_unset_payload(&pn[i], type);
+	for(i=0; i<MT_NODE_SIZE; i++) {
+	    tvalues = pn[i].tvalues;
+	    while (tvalues != NULL) {
+		if ((type == MT_TREE_SVAL) && (tvalues->tvalue.s.s != NULL)) {
+		    shm_free(tvalues->tvalue.s.s);
+		    tvalues->tvalue.s.s   = NULL;
+		    tvalues->tvalue.s.len = 0;
 		}
-		if(pn[i].child!=NULL)
-		{
-			mt_free_node(pn[i].child, type);
-			pn[i].child = NULL;
-		}
+		next = tvalues->next;
+		shm_free(tvalues);
+		tvalues = next;
+	    }
+	    if(type==MT_TREE_DW)
+		mt_node_unset_payload(&pn[i], type);
+	    if(pn[i].child!=NULL) {
+		mt_free_node(pn[i].child, type);
+		pn[i].child = NULL;
+	    }
 	}
 	shm_free(pn);
 	pn = NULL;
@@ -547,9 +580,10 @@ void mt_free_tree(m_tree_t *pt)
 	return;
 }
 
-int mt_print_node(mt_node_t *pn, char *code, int len)
+int mt_print_node(mt_node_t *pn, char *code, int len, int type)
 {
 	int i;
+	mt_is_t *tvalues;
 
 	if(pn==NULL || code==NULL || len>=MT_MAX_DEPTH)
 		return 0;
@@ -557,10 +591,17 @@ int mt_print_node(mt_node_t *pn, char *code, int len)
 	for(i=0; i<MT_NODE_SIZE; i++)
 	{
 		code[len]=mt_char_list.s[i];
-		if(pn[i].tvalue.s!=NULL)
-			LM_DBG("[%.*s] [%.*s]\n",
-					len+1, code, pn[i].tvalue.len, pn[i].tvalue.s);
-		mt_print_node(pn[i].child, code, len+1);
+		tvalues = pn[i].tvalues;
+		while (tvalues != NULL) {
+		    if (type == MT_TREE_IVAL) {
+			LM_INFO("[%.*s] [i:%d]\n",	len+1, code, tvalues->tvalue.n);
+		    } else if (tvalues->tvalue.s.s != NULL) {
+			LM_INFO("[%.*s] [s:%.*s]\n",
+			       len+1, code, tvalues->tvalue.s.len, tvalues->tvalue.s.s);
+		    }
+		    tvalues = tvalues->next;
+		}
+		mt_print_node(pn[i].child, code, len+1, type);
 	}
 
 	return 0;
@@ -577,9 +618,9 @@ int mt_print_tree(m_tree_t *pt)
 		return 0;
 	}
 	
-	LM_DBG("[%.*s]\n", pt->tname.len, pt->tname.s);
+	LM_INFO("[%.*s]\n", pt->tname.len, pt->tname.s);
 	len = 0;
-	mt_print_node(pt->head, mt_code_buf, len);
+	mt_print_node(pt->head, mt_code_buf, len, pt->type);
 	return mt_print_tree(pt->next);
 }
 
@@ -594,7 +635,7 @@ int mt_node_set_payload(mt_node_t *node, int type)
 
 	if(type!=MT_TREE_DW)
 		return 0;
-	s = node->tvalue;
+	s = node->tvalues->tvalue.s;
 	if(s.s[s.len-1]==';')
 		s.len--;
 	if(parse_params(&s, CLASS_ANY, &hooks, &list)<0)
@@ -690,8 +731,7 @@ int mt_table_spec(char* val)
 	if(tmp.tname.s==NULL)
 	{
 		LM_ERR("invalid mtree name\n");
-		free_params(params_list);
-		return -1;
+		goto error;
 	}
 	if(tmp.dbtable.s==NULL)
 	{
@@ -699,8 +739,10 @@ int mt_table_spec(char* val)
 		tmp.dbtable.s = "mtree";
 		tmp.dbtable.len = 5;
 	}
-	if(tmp.type!=1)
-		tmp.type = 0;
+	if ((tmp.type != 0) && (tmp.type != 1) && (tmp.type != 2)) {
+	    LM_ERR("unknown tree type <%d>\n", tmp.type);
+	    goto error;
+	}
 	
 	/* check for same tree */
 	if(_ptree == 0)

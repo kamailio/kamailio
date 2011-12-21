@@ -416,7 +416,7 @@ if (!www_authorize("kamailio.org", "subscriber")) {
 			</para>
 			<para>
 			It must not be empty string <quote></quote>. Apart of a static
-			strinh, typical value is From header field domain
+			string, typical value is From header field domain
 			(e.g., variable $fd).
 			</para>
 			<para>
@@ -459,6 +459,74 @@ if (!proxy_authorize("$fd", "subscriber)) {
 			first time but it actually does user authentication.
 		</para>
 	</section>
+
+	<section>
+		<title>
+			<function moreinfo="none">auth_check(realm, table, flags)</function>
+		</title>
+		<para>The function combines the functionalities of
+		<function moreinfo="none">www_authenticate</function> and
+		<function moreinfo="none">proxy_authenticate</function>, first being
+		exectuted if the SIP request is a REGISTER, the second for the rest.
+		</para>
+		<para>
+		In addition, a matter of <emphasis>flags</emphasis> parameter value,
+		the function checks if authentication username matches From/To header
+		username.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>realm</emphasis> - Realm is a opaque string that
+			the user agent should present to the user so he can decide what
+			username and password to use. Usually this is domain of the host
+			the server is running on.
+			</para>
+			<para>
+			It must not be empty string <quote></quote>. Apart of a static
+			string, typical value is From header field domain
+			(e.g., variable $fd).
+			</para>
+			<para>
+			The string may contain pseudo variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>table</emphasis> - Table to be used to lookup
+			usernames and passwords (usually subscribers table).
+			</para>
+			<para>
+			The string may contain pseudo variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>flags</emphasis> - set of flags to control the
+			behaviour of the function. If it is 1, then the function will
+			check to see if the authentication username matches either To or
+			From header username, a matter of whether it is for a REGISTER
+			request or not..
+			</para>
+			<para>
+			The string may contain pseudo variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title>auth_check usage</title>
+		<programlisting format="linespecific">
+...
+if (!auth_check("$fd", "subscriber", "1")) {
+    auth_challenge("$fd", "1");
+    exit;
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 
 	</section>
 </chapter>

@@ -11,7 +11,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright Â© 2009 http://www.asipto.com
+   Copyright © 2009 http://www.asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -88,13 +88,18 @@ Chapter 1. Admin Guide
    configuration file.
      * name - name of the timer.
      * mode - if set to 1, will create a new timer process.
-     * interval - timer interval in seconds.
+     * interval - timer interval in seconds or micro-seconds (the value
+       must be ended in 'u'). For micro-seconds intervals, mode is set
+       always to 1.
 
    Default value is NULL.
 
    Example 1.1. Set timer parameter
 ...
+# time interval set to 10 seconds
 modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
+# time interval set to 100 mili-seconds
+modparam("rtimer", "timer", "name=ta;interval=100000u;mode=1;")
 ...
 
 3.2. exec (str)

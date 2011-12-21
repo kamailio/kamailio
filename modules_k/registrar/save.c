@@ -563,7 +563,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 		goto error;
 	}
 
-	if (cfg_get(registrar, registrar_cfg, max_contacts)) {
+	if (!_mode && cfg_get(registrar, registrar_cfg, max_contacts)) {
 		_c = get_first_contact(_m);
 		if(test_max_contacts(_m, _r, _c, ci) != 0)
 			goto error;

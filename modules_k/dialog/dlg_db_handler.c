@@ -103,7 +103,7 @@ extern int early_dlgs_cnt;
 	do{\
 		if (VAL_NULL((_values)+ (_index))) { \
 			if (_not_null) {\
-				if (_unref) unref_dlg(dlg,1);\
+				if (_unref) dlg_unref(dlg,1);\
 				goto next_dialog; \
 			} else { \
 				(_res).s = 0; \
@@ -392,7 +392,7 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			(dlg_set_leg_info( dlg, &to_tag, &rroute2, &contact2,
 			&cseq2, DLG_CALLEE_LEG)!=0) ) {
 				LM_ERR("dlg_set_leg_info failed\n");
-				unref_dlg(dlg,1);
+				dlg_unref(dlg,1);
 				continue;
 			}
 
@@ -410,10 +410,10 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 					dlg->callid.len, dlg->callid.s,
 					dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
 					dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
-				unref_dlg(dlg,1);
+				dlg_unref(dlg,1);
 				continue;
 			}
-			ref_dlg(dlg,1);
+			dlg_ref(dlg,1);
 			LM_DBG("current dialog timeout is %u\n", dlg->tl.timeout);
 
 			dlg->lifetime = 0;
@@ -526,8 +526,10 @@ static int load_dialog_vars_from_db(int fetch_num_rows)
 				dlg = (d_table->entries)[VAL_INT(values)].first;
 				while (dlg) {
 					if (dlg->h_id == VAL_INT(values+1)) {
-						set_dlg_variable_unsafe(dlg, &VAL_STR(values+2), &VAL_STR(values+3));
-						continue;
+						str key = { VAL_STR(values+2).s, strlen(VAL_STRING(values+2)) };
+						str value = { VAL_STR(values+3).s, strlen(VAL_STRING(values+3)) };
+						set_dlg_variable_unsafe(dlg, &key, &value);
+						break;
 					}
 					dlg = dlg->next;
 					if (!dlg) {

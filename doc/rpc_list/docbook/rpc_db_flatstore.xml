@@ -10,7 +10,7 @@ RPC Exports for db_flatstore
 
 <section id="flatstore.rotate"><title>flatstore.rotate</title>
 <para>
-        Close and reopen flatrotate files during log rotation.
+        Documentation missing (flat_rotate_doc).
 </para>
 <para>
 </para>

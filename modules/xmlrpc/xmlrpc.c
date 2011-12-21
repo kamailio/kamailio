@@ -23,7 +23,10 @@
  * Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#define _XOPEN_SOURCE 4           /* strptime */
+/*This define breaks on Solaris OS */
+#ifndef __OS_solaris
+	#define _XOPEN_SOURCE 4           /* strptime */
+#endif
 #define _XOPEN_SOURCE_EXTENDED 1  /* solaris */
 #define _SVID_SOURCE 1            /* timegm */
 

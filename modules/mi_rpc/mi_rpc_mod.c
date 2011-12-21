@@ -27,19 +27,25 @@
 
 #include "../../lib/kmi/mi.h"
 #include "../../rpc.h"
+#include "../../lib/binrpc/binrpc_api.h"
 
 MODULE_VERSION
 
 static int child_init(int rank);
+static int mod_init(void);
 
 static str mi_rpc_indent = { "\t", 1 };
+static char *rpc_url = "";
 
 static const char* rpc_mi_exec_doc[2] = {
 	"Execute MI command",
 	0
 };
 
-
+static param_export_t parameters[] = {
+    {"rpc_url",            STR_PARAM, &rpc_url},
+    {0, 0, 0}
+};
 
 enum mi_rpc_print_mode {
 	MI_PRETTY_PRINT,
@@ -67,14 +73,32 @@ struct module_exports exports = {
 	"mi_rpc",
 	0,           /* Exported functions */
 	mr_rpc,      /* RPC methods */
-	0,           /* Export parameters */
-	0,           /* Module initialization function */
+	parameters,  /* Export parameters */
+	mod_init,    /* Module initialization function */
 	0,           /* Response function */
 	0,           /* Destroy function */
 	0,           /* OnCancel function */
 	child_init   /* Child initialization function */
 };
 
+static struct mi_root* mi_run_rpc(struct mi_root* cmd_tree, void* param);
+
+static mi_export_t mi_cmds[] = 
+{
+  { "rpc", mi_run_rpc, 0, 0, 0,},
+  { 0, 0, 0, 0, 0 }
+};
+
+
+static int mod_init(void)
+{
+  if(register_mi_mod(exports.name, mi_cmds)!=0)
+  {
+    LM_ERR("Failed to register MI commands\n");
+    return(-1);
+  }
+  return 0;
+}
 
 static int child_init(int rank)
 {
@@ -464,4 +488,144 @@ static void rpc_mi_dg_exec(rpc_t* rpc, void* c)
 static void rpc_mi_xmlrpc_exec(rpc_t* rpc, void* c)
 {
 	rpc_mi_exec(rpc, c, MI_XMLRPC_PRINT);
+}
+
+
+static struct mi_root* mi_run_rpc(struct mi_root* cmd_tree, void* param)
+{
+	const char* FAILED = "Failed";
+	const char* CONNECT_FAILED = "Connection to RPC failed";
+	struct binrpc_handle rpc_handle;
+	struct binrpc_response_handle resp_handle;
+	int i;
+	
+	str *fn;
+	struct mi_node *node;
+	int len;
+	char *command = NULL;
+	int param_count = 0;
+	char **parameters = NULL;
+	struct mi_root* result;
+	
+	int resp_type;
+	int resp_code;
+	char *resp;
+
+	/* response will be malloced by binrpc_response_to_text. 
+	   We do not free it. It must remain after this call.
+	   It will be reused by subsequent calls */
+	static char *response = NULL;
+	static int resp_len = 0;
+	
+	if (binrpc_open_connection_url(&rpc_handle, rpc_url) != 0) 
+	{
+		LM_ERR( "Open connect to %s failed\n", rpc_url);
+		result = init_mi_tree( 500, (char *)CONNECT_FAILED, strlen(CONNECT_FAILED) );
+		goto end;
+	}
+
+	node = cmd_tree->node.kids;
+
+	if (node==NULL || node->value.s == NULL)
+		return( init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN ));
+
+	fn = &node->value;
+	len = fn->len +1;
+	
+	/* find_rpc_exports needs 0 terminated strings */
+	command = pkg_malloc(fn->len+1);
+    memcpy(command, fn->s, fn->len);
+	command[fn->len] = '\0';
+	
+	/* Count the parameters. */
+	node = node->next;
+	while (node) {
+		if (node->value.s) {
+			param_count++;
+		}
+		node = node->next;
+	}
+	if (param_count > 0)
+	{
+		/* Copy them into an array of NULL terminated strings. */
+		parameters = pkg_malloc(param_count * sizeof(char *));
+
+		node = cmd_tree->node.kids;
+		node = node->next;
+		param_count = 0;
+		while (node) {
+			if (node->value.s) {
+				parameters[param_count] = pkg_malloc(node->value.len + 1);
+				memcpy(parameters[param_count], node->value.s, node->value.len);
+				parameters[param_count][node->value.len] = '\0';
+				param_count++;
+			}
+			node = node->next;
+		}
+	}
+	if (binrpc_send_command(&rpc_handle, command, parameters, param_count, &resp_handle))
+	{
+		result = init_mi_tree( 500, (char *)FAILED, strlen(FAILED) );
+		goto end;
+	}
+	
+	resp_type = binrpc_get_response_type(&resp_handle);
+	
+	/* If we already have a buffer make it NULL terminated to discard any previous content */
+	if (resp_len > 0)
+		response[0]='\0';
+
+	switch (resp_type)
+	{
+		case 0:
+			/* Success */
+			binrpc_response_to_text(&resp_handle, (unsigned char **)&response, &resp_len, '\n');
+			if (strlen(response) > 0)
+				result = init_mi_tree( 200, response, strlen(response) );
+			else
+				/* Some functions don't give a text answer; use a default */
+				result = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
+			break;
+			
+		case 1:
+			/* Valid failure */
+			binrpc_parse_error_response(&resp_handle, &resp_code, &resp);
+			if (resp_len < strlen(resp) + 1)
+			{ 
+				if (resp_len==0)
+					response = malloc(strlen(resp) + 1);
+				else
+					response = realloc(response, strlen(resp) + 1);
+			}
+			memcpy(response, resp, strlen(resp));
+			response[strlen(resp)]='\0';
+			if (strlen(response) > 0)
+				result = init_mi_tree( resp_code, response, strlen(response) );
+			else
+				/* Some functions don't give a text answer; use a default */
+				result = init_mi_tree( resp_code, (char *)FAILED, strlen(FAILED) );
+			break;
+			
+		default:
+			result = init_mi_tree( 500, (char *)FAILED, strlen(FAILED) );
+			goto end;
+	}
+
+end:
+	if (param_count > 0)
+	{
+		for (i=0; i<param_count; i++) 
+		{
+			pkg_free(parameters[i]);
+		}
+		pkg_free(parameters);
+	}
+	if (command != NULL)
+	{
+		pkg_free(command);
+		command = NULL;
+	}
+	binrpc_close_connection(&rpc_handle);
+	binrpc_release_response(&resp_handle);
+	return( result );
 }

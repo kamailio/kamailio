@@ -37,7 +37,9 @@
 									   timeout */
 #define DEFAULT_TCP_CONNECT_TIMEOUT 10 /* if a connect doesn't complete in this
 										  time, timeout */
-#define DEFAULT_TCP_MAX_CONNECTIONS 2048 /* maximum connections */
+#define DEFAULT_TCP_MAX_CONNECTIONS 2048 /* maximum tcp connections */
+
+#define DEFAULT_TLS_MAX_CONNECTIONS 2048 /* maximum tls connections */
 
 #define DEFAULT_TCP_BUF_SIZE	4096  /* buffer size used for reads */
 

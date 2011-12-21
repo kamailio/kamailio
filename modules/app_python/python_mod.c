@@ -85,7 +85,7 @@ struct module_exports exports = {
 static int
 mod_init(void)
 {
-    char *dname, *bname, *tname;
+    char *dname, *bname, *dname_src, *bname_src;
     int i;
     PyObject *sys_path, *pDir, *pModule, *pFunc, *pArgs;
     PyThreadState *mainThreadState;
@@ -100,19 +100,19 @@ mod_init(void)
         child_init_mname.len = strlen(child_init_mname.s);
     }
 
-    tname = as_asciiz(&script_name);
-	if(tname==NULL)
-	{
-		LM_ERR("no more pkg memory\n");
-		return -1;
-	}
-    dname = dirname(tname);
+    dname_src = as_asciiz(&script_name);
+    bname_src = as_asciiz(&script_name);
+    if(dname_src==NULL || bname_src==NULL)
+    {
+            LM_ERR("no more pkg memory\n");
+            return -1;
+    }
+
+    dname = dirname(dname_src);
     if (strlen(dname) == 0)
         dname = ".";
-	memcpy(tname, script_name.s, script_name.len);
-    bname = basename(tname);
+    bname = basename(bname_src);
     i = strlen(bname);
-	pkg_free(tname);
     if (bname[i - 1] == 'c' || bname[i - 1] == 'o')
         i -= 1;
     if (bname[i - 3] == '.' && bname[i - 2] == 'p' && bname[i - 1] == 'y') {
@@ -158,6 +158,9 @@ mod_init(void)
         PyEval_ReleaseLock();
         return -1;
     }
+
+    pkg_free(dname_src);
+    pkg_free(bname_src);
 
     pFunc = PyObject_GetAttrString(pModule, mod_init_fname.s);
     Py_DECREF(pModule);

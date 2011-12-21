@@ -44,9 +44,9 @@
 #include <time.h> /* time */
 /* #include <stropts.h>  - is this really needed? --andrei */
 
-#include "../../modules_s/ctl/ctl_defaults.h" /* default socket & port */
-#include "../../modules_s/ctl/init_socks.h"
-#include "../../modules_s/ctl/binrpc.c" /* ugly hack */
+#include "../../modules/ctl/ctl_defaults.h" /* default socket & port */
+#include "../../modules/ctl/init_socks.h"
+#include "../../modules/ctl/binrpc.c" /* ugly hack */
 
 #include "binrpc_api.h"
 
@@ -67,7 +67,9 @@
 #define UNIX_PATH_MAX 108
 #endif
 
+#ifndef INT2STR_MAX_LEN
 #define INT2STR_MAX_LEN  (19+1+1) /* 2^64~= 16*10^18 => 19+1 digits + \0 */
+#endif
 
 static void* (*internal_malloc)(size_t size) = malloc;
 static void* (*internal_realloc)(void* ptr, size_t size) = realloc;
@@ -501,7 +503,7 @@ static int get_reply(struct binrpc_handle *handle,
 		if (crt - hdr_end < tl) {
 			snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 				"get_reply: datagram truncated. Received: %ld, Expected: %d.",
-				crt-hdr_end, tl);
+				(long int)(crt-hdr_end), tl);
 			return FATAL_ERROR;		
 		}
 	}

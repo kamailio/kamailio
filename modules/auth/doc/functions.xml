@@ -126,8 +126,35 @@ if (!www_authenticate("$td", "subscriber")) {
 		<title>proxy_challenge usage</title>
 		<programlisting format="linespecific">
 ...
-if (!proxy_authenticate("$fd", "subscriber)) {
+if (!proxy_authenticate("$fd", "subscriber")) {
 	proxy_challenge("$fd", "1");
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="auth_challenge">
+		<title>
+			<function moreinfo="none">auth_challenge(realm, flags)</function>
+		</title>
+		<para>
+		The function challenges a user agent for authentication. It combines
+		the functions www_challenge() and proxy_challenge(), by calling
+		internally the first one for REGISTER requests and the second one for
+		the rest of the request types.
+		</para>
+		<para>Meaning of the parameters the same as for function
+		www_challenge(realm, flags)</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title>proxy_challenge usage</title>
+		<programlisting format="linespecific">
+...
+if (!auth_check("$fd", "subscriber", "1")) {
+	auth_challenge("$fd", "1");
 };
 ...
 </programlisting>

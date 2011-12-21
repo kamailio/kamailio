@@ -90,6 +90,7 @@ str presentity_table= str_init("presentity");
 str active_watchers_table = str_init("active_watchers");
 str watchers_table= str_init("watchers");
 
+int pres_fetch_rows = 500;
 int library_mode= 0;
 str server_address= {0, 0};
 evlist_t* EvList= NULL;
@@ -140,7 +141,7 @@ int timeout_rm_subs = 1;
 int send_fast_notify = 1;
 
 int phtable_size= 9;
-phtable_t* pres_htable;
+phtable_t* pres_htable=NULL;
 
 static cmd_export_t cmds[]=
 {
@@ -179,6 +180,7 @@ static param_export_t params[]={
 	{ "enable_sphere_check",    INT_PARAM, &sphere_enable},
 	{ "timeout_rm_subs",        INT_PARAM, &timeout_rm_subs},
 	{ "send_fast_notify",	    INT_PARAM, &send_fast_notify},
+	{ "fetch_rows",             INT_PARAM, &pres_fetch_rows},
     {0,0,0}
 };
 
@@ -330,22 +332,25 @@ static int mod_init(void)
 		}
 	}
 
-	if(phtable_size< 1)
-		phtable_size= 256;
-	else
-		phtable_size= 1<< phtable_size;
+	if(dbmode != DB_ONLY)
+	{	
+		if(phtable_size< 1)
+			phtable_size= 256;
+		else
+			phtable_size= 1<< phtable_size;
 
-	pres_htable= new_phtable();
-	if(pres_htable== NULL)
-	{
-		LM_ERR("initializing presentity hash table\n");
-		return -1;
-	}
+		pres_htable= new_phtable();
+		if(pres_htable== NULL)
+		{
+			LM_ERR("initializing presentity hash table\n");
+			return -1;
+		}
 
-	if(pres_htable_restore()< 0)
-	{
-		LM_ERR("filling in presentity hash table from database\n");
-		return -1;
+		if(pres_htable_restore()< 0)
+		{
+			LM_ERR("filling in presentity hash table from database\n");
+			return -1;
+		}
 	}
 
 	startup_time = (int) time(NULL);
@@ -366,9 +371,14 @@ static int mod_init(void)
 	/* for legacy, we also keep the fallback2db parameter, but make sure for consistency */
 	if(fallback2db)
 	{
-		dbmode = DB_FALLBACK;
+		if (dbmode == DB_ONLY) 
+			LM_ERR( "fallback2db ignored as in DB_ONLY mode\n" );
+		else
+			dbmode = DB_FALLBACK;
 	}
 
+	if (dbmode == DB_ONLY)
+		LM_INFO( "Database mode set to DB_ONLY\n" );
 	return 0;
 }
 
@@ -1073,15 +1083,244 @@ done:
 	return err_ret;
 }
 
+/********************************************************************************/
+
+static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
+{
+	db_key_t query_cols[5], db_cols[2];
+	db_val_t query_vals[5], db_vals[2];
+	db_key_t result_cols[22];
+	int n_query_cols=0, n_result_cols=0, n_update_cols=0;
+	int event_col, pres_uri_col, from_user_col, from_domain_col;
+	int r_pres_uri_col,r_to_user_col,r_to_domain_col;
+	int r_from_user_col,r_from_domain_col,r_callid_col;
+	int r_to_tag_col,r_from_tag_col,r_sockinfo_col;
+	int r_event_id_col,r_local_contact_col,r_contact_col;
+	int r_record_route_col, r_reason_col;
+	int r_event_col, r_local_cseq_col, r_remote_cseq_col;
+	int r_status_col, r_version_col;
+	int r_expires_col;
+	db1_res_t *result= NULL;
+ 	db_val_t *row_vals;
+	db_row_t *rows;
+	int nr_rows, loop;
+	subs_t s, *cs;
+	event_t parsed_event;
+	str ev_sname;
+
+	if(pa_db == NULL)
+	{
+		LM_ERR("null database connection\n");
+		return(-1);
+	}
+
+	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0) 
+	{
+		LM_ERR("use table failed\n");
+		return(-1);
+	}
+
+	query_cols[event_col=n_query_cols]= &str_event_col;
+	query_vals[event_col].nul= 0;
+	query_vals[event_col].type= DB1_STR;
+	query_vals[event_col].val.str_val= subs->event->name ;
+	n_query_cols++;
+
+	query_cols[pres_uri_col=n_query_cols]= &str_presentity_uri_col;
+	query_vals[pres_uri_col].nul= 0;
+	query_vals[pres_uri_col].type= DB1_STR;
+	query_vals[pres_uri_col].val.str_val= subs->pres_uri;
+	n_query_cols++;
+
+	query_cols[from_user_col=n_query_cols]= &str_watcher_username_col;
+	query_vals[from_user_col].nul= 0;
+	query_vals[from_user_col].type= DB1_STR;
+	query_vals[from_user_col].val.str_val= subs->from_user;
+	n_query_cols++;
+
+	query_cols[from_domain_col=n_query_cols]= &str_watcher_domain_col;
+	query_vals[from_domain_col].nul= 0;
+	query_vals[from_domain_col].type= DB1_STR;
+	query_vals[from_domain_col].val.str_val= subs->from_domain;
+	n_query_cols++;
+
+
+	result_cols[r_to_user_col=n_result_cols++] = &str_to_user_col;
+	result_cols[r_to_domain_col=n_result_cols++] = &str_to_domain_col;
+	result_cols[r_from_user_col=n_result_cols++] = &str_watcher_username_col;
+	result_cols[r_from_domain_col=n_result_cols++] = &str_watcher_domain_col;
+	result_cols[r_callid_col=n_result_cols++] = &str_callid_col;
+	result_cols[r_to_tag_col=n_result_cols++] = &str_to_tag_col;
+	result_cols[r_from_tag_col=n_result_cols++] = &str_from_tag_col;
+	result_cols[r_sockinfo_col=n_result_cols++] = &str_socket_info_col;
+	result_cols[r_event_id_col=n_result_cols++] = &str_event_id_col;
+	result_cols[r_local_contact_col=n_result_cols++] = &str_local_contact_col;
+	result_cols[r_record_route_col=n_result_cols++] = &str_record_route_col;
+	result_cols[r_reason_col=n_result_cols++] = &str_reason_col;
+	result_cols[r_local_cseq_col=n_result_cols++] = &str_local_cseq_col;
+	result_cols[r_version_col=n_result_cols++] = &str_version_col;
+	result_cols[r_expires_col=n_result_cols++] = &str_expires_col;
+	result_cols[r_event_col=n_result_cols++] = &str_event_col;
+	result_cols[r_pres_uri_col=n_result_cols++] = &str_presentity_uri_col;
+	result_cols[r_contact_col=n_result_cols++] = &str_contact_col;
+
+	/* these ones are unused for some reason !!! */
+	result_cols[r_remote_cseq_col=n_result_cols++] = &str_remote_cseq_col;
+	result_cols[r_status_col=n_result_cols++] = &str_status_col;
+	/*********************************************/
+
+	if(pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols, 
+				n_query_cols, n_result_cols, 0, &result )< 0)
+	{
+		LM_ERR("Can't query db\n");
+		if(result) pa_dbf.free_result(pa_db, result);
+		return(-1);
+	}
+
+	if(result == NULL) return(-1);
+
+	nr_rows = RES_ROW_N(result);
+
+	LM_DBG("found %d matching dialogs\n", nr_rows);
+
+	/* get the results and fill in return data structure */
+	for (loop=0; loop <nr_rows; loop++)
+	{
+		rows = RES_ROWS(result);
+		row_vals = ROW_VALUES(rows);	
+
+		memset(&s, 0, sizeof(subs_t));
+		s.status= subs->status;
+
+		s.reason.s= subs->reason.s;
+		s.reason.len= s.reason.s?strlen(s.reason.s):0;	//>>>>>>>>>>
+
+		s.pres_uri.s= (char*)row_vals[r_pres_uri_col].val.string_val;
+		s.pres_uri.len= s.pres_uri.s?strlen(s.pres_uri.s):0;
+
+		s.to_user.s= (char*)row_vals[r_to_user_col].val.string_val;
+		s.to_user.len= s.to_user.s?strlen(s.to_user.s):0;
+
+		s.to_domain.s= (char*)row_vals[r_to_domain_col].val.string_val;
+		s.to_domain.len= s.to_domain.s?strlen(s.to_domain.s):0;
+		
+		s.from_user.s= (char*)row_vals[r_from_user_col].val.string_val;
+		s.from_user.len= s.from_user.s?strlen(s.from_user.s):0;
+		
+		s.from_domain.s= (char*)row_vals[r_from_domain_col].val.string_val;
+		s.from_domain.len= s.from_domain.s?strlen(s.from_domain.s):0;
+		
+		s.event_id.s=(char*)row_vals[r_event_id_col].val.string_val;
+		s.event_id.len= (s.event_id.s)?strlen(s.event_id.s):0;
+	
+		s.to_tag.s= (char*)row_vals[r_to_tag_col].val.string_val;
+		s.to_tag.len= s.to_tag.s?strlen(s.to_tag.s):0;
+		
+		s.from_tag.s= (char*)row_vals[r_from_tag_col].val.string_val; 
+		s.from_tag.len= s.from_tag.s?strlen(s.from_tag.s):0;
+		
+		s.callid.s= (char*)row_vals[r_callid_col].val.string_val;
+		s.callid.len= s.callid.s?strlen(s.callid.s):0;
+		
+		s.record_route.s=  (char*)row_vals[r_record_route_col].val.string_val;
+		s.record_route.len= (s.record_route.s)?strlen(s.record_route.s):0;
+
+		s.contact.s= (char*)row_vals[r_contact_col].val.string_val;
+		s.contact.len= s.contact.s?strlen(s.contact.s):0;
+		
+		s.sockinfo_str.s = (char*)row_vals[r_sockinfo_col].val.string_val;
+		s.sockinfo_str.len = s.sockinfo_str.s?strlen(s.sockinfo_str.s):0;
+
+		s.local_contact.s = (char*)row_vals[r_local_contact_col].val.string_val;
+		s.local_contact.len = s.local_contact.s?strlen(s.local_contact.s):0;
+
+		ev_sname.s= (char*)row_vals[r_event_col].val.string_val;
+		ev_sname.len= ev_sname.s?strlen(ev_sname.s):0;
+		
+		s.event = contains_event(&ev_sname, &parsed_event); /*2nd param can be NULL?? */
+
+		if(s.event == NULL)
+		{
+			LM_ERR("event not found and set to NULL\n");
+		}
+		
+		s.local_cseq = row_vals[r_local_cseq_col].val.int_val;
+
+		s.expires = row_vals[r_expires_col].val.int_val;
+
+		if( s.expires < (int)time(NULL) )
+		    s.expires = 0;
+		else
+		    s.expires -= (int)time(NULL);
+
+		s.version = row_vals[r_version_col].val.int_val;
+
+		cs = mem_copy_subs(&s, PKG_MEM_TYPE);
+		if (cs == NULL)
+		{
+			LM_ERR("while copying subs_t structure\n");
+			/* tidy up and return */
+			pa_dbf.free_result(pa_db, result);
+			return(-1);
+		}
+
+		cs->next= (*subs_array);
+		(*subs_array)= cs;
+
+		printf_subs(cs);
+	}
+
+	pa_dbf.free_result(pa_db, result);
+
+	if (subs->status == TERMINATED_STATUS)
+	{
+		/* delete the records */
+		if(pa_dbf.delete(pa_db, query_cols, 0, query_vals, n_query_cols)< 0)
+		{
+			LM_ERR("sql delete failed\n");
+			return(-1);
+		}
+
+		return(0);
+	}
+
+	/* otherwise we update the records */
+	db_cols[n_update_cols] = &str_status_col; 
+	db_vals[n_update_cols].type = DB1_INT;
+	db_vals[n_update_cols].nul = 0; 
+	db_vals[n_update_cols].val.int_val = subs->status;
+	n_update_cols++;
+ 
+	db_cols[n_update_cols] = &str_reason_col; 
+	db_vals[n_update_cols].type = DB1_STR;
+	db_vals[n_update_cols].nul = 0; 
+	db_vals[n_update_cols].val.str_val= subs->reason;
+	n_update_cols++;
+
+	if(pa_dbf.update(pa_db, query_cols, 0, query_vals,
+				db_cols,db_vals,n_query_cols,n_update_cols) < 0)
+	{
+		LM_ERR("DB update failed\n");
+		return(-1);
+	}
+
+	return(0);
+}
+
+/********************************************************************************/
+
 static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
 {
 	subs_t* s, *ps, *cs;
 	int i= 0;
 
-    LM_DBG("start\n");
+	LM_DBG("start\n");
+
+	if (dbmode == DB_ONLY) return(update_pw_dialogs_dbonlymode(subs, subs_array));
+
 	lock_get(&subs_htable[hash_code].lock);
 	
-    ps= subs_htable[hash_code].entries;
+	ps= subs_htable[hash_code].entries;
 	
 	while(ps && ps->next)
 	{
@@ -1103,8 +1342,8 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 			if(cs== NULL)
 			{
 				LM_ERR( "copying subs_t stucture\n");
-                lock_release(&subs_htable[hash_code].lock);
-                return -1;
+				lock_release(&subs_htable[hash_code].lock);
+				return -1;
 			}
 			cs->expires-= (int)time(NULL);
 			cs->next= (*subs_array);
@@ -1113,9 +1352,9 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 			{
 				ps->next= s->next;
 				shm_free(s->contact.s);
-                shm_free(s);
-                LM_DBG(" deleted terminated dialog from hash table\n");
-            }
+				shm_free(s);
+				LM_DBG(" deleted terminated dialog from hash table\n");
+			}
 			else
 				ps= s;
 
@@ -1125,10 +1364,10 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 			ps= s;
 	}
 	
-    LM_DBG("found %d matching dialogs\n", i);
-    lock_release(&subs_htable[hash_code].lock);
+	LM_DBG("found %d matching dialogs\n", i);
+	lock_release(&subs_htable[hash_code].lock);
 	
-    return 0;
+	return 0;
 }
 
 static int w_pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
@@ -1226,6 +1465,8 @@ int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri)
 	   subs.status);
     pkg_free(rules_doc->s);
     pkg_free(rules_doc);
+    if ((subs.reason.len == 12) && (strncmp(subs.reason.s, "polite-block", 12) == 0))
+		return POLITE_BLOCK_STATUS;
     return subs.status;
 
  err:

@@ -1,4 +1,4 @@
-1.  SER Management Interface
+1. RPC Control Interface
      __________________________________________________________________
 
    1.1. Overview of Operation
@@ -10,6 +10,7 @@
 
               1.2.3.1. scan
               1.2.3.2. struct_scan
+              1.2.3.3. Retrieving Parameters Example
 
         1.2.4. Building Reply
 
@@ -27,14 +28,14 @@
 
 1.1. Overview of Operation
 
-   The RPC (Remote Procedure Call) interface of SER is an interface for
+   The RPC (Remote Procedure Call) interface is an interface for
    communicating with external applications. Using it an external
    application can call a function or procedure that will be executed
-   inside SER. Function parameters are supported as well as returning
-   multiple values as results.
+   inside SIP Server (SER or Kamailio). Function parameters are supported
+   as well as returning multiple values as results.
 
-   By itself SER RPC consists of two APIs, one for defining RPC functions
-   in a transport independent way (called the rpc module api) and one for
+   By itself RPC consists of two APIs, one for defining RPC functions in a
+   transport independent way (called the rpc module api) and one for
    implementing RPC transports.
 
    The RPC transports are implemented by writting a RPC transport module.
@@ -45,8 +46,8 @@
    information about the existing transport modules, please refer to their
    documentation.
 
-   When writing a SER RPC procedure or function, one needs only use the
-   RPC API and it will work automatically with all the transports and
+   When writing a RPC procedure or function, one needs only use the RPC
+   API and it will work automatically with all the transports and
    encodings. One needs only to load the desired RPC transport module
    (e.g. xmlrpc).
 
@@ -56,11 +57,12 @@
 
 1.2. Module API
 
-   Each SER module can export RPC functions just like it can export
-   parameters and functions to be called from the script. Whenever SER
+   Each module can export RPC functions just like it can export parameters
+   and functions to be called from the script. Whenever SIP server
    receives an RPC request, it will search through the list of exported
    RPC functions and the function with matching name will be executed. A
-   couple of essential RPC functions are also embedded into the SER core.
+   couple of essential RPC functions are also embedded into the SIP server
+   core.
 
    This section gives a detailed overview of the whole RPC API.
    Section 1.2.1, "RPC Functions" describes the prototype and conventions
@@ -82,14 +84,14 @@
 1.2.1. RPC Functions
 
    RPC functions are standard C functions with the following prototype:
-typedef void (*rpc_function_t)(rpc_t* rpc);
+typedef void (*rpc_function_t)(rpc_t* rpc, void* ctx);
 
-   RPC functions take one parameter, this parameter is a pointer to rpc_t
-   structure and is called RPC context. The context contains references to
-   all API functions available to the RPC function as well as all data
-   necessary to create the response. RPC functions do not return any
-   value, instead the return value is created using functions from the
-   context. The motivation for this decision is the fact that RPC
+   RPC functions take two parameters, first parameter is a pointer to
+   rpc_t structure and the context. The rpc_t structure contains
+   references to all API functions available to the RPC function as well
+   as all data necessary to create the response. RPC functions do not
+   return any value, instead the return value is created using functions
+   from the context. The motivation for this decision is the fact that RPC
    functions should always return a response and even the API functions
    called from RPC functions should have the possibility to indicate an
    error (and should not rely on RPC functions doing so).
@@ -108,7 +110,7 @@ typedef void (*rpc_function_t)(rpc_t* rpc);
    function with "_doc" suffix.
 
    Each module containing RPC functions has to export all the RPC
-   functions to SER core in order to make them visible to the RPC
+   functions to SIP server core in order to make them visible to the RPC
    transport modules. The export process involves a rpc_export_t structure
    (either by itself or in an array):
 typedef struct rpc_export {
@@ -122,13 +124,14 @@ ription */
    The flags attribute of the rpc_export structure is reserved for future
    use and is currently unused.
 
-   There are several ways of exporting the RPC functions to the SER core:
+   There are several ways of exporting the RPC functions to the SIP server
+   core:
      * register a null terminated array of rpc_export_t structures using
        the rpc_register_array() function (defined in rpc_lookup.h), from
        the module init function (mod_init()). This is the recommended
        method for all the new modules.
-       Example 1.
-       The rpc_export_t array for the usrloc module looks like:
+       Example 1. usrloc RPC Exports Declaration
+       The rpc_export_t array for the modules_s/usrloc module looks like:
 rpc_export_t ul_rpc[] = {
     {"usrloc.statistics",      rpc_stats,           rpc_stats_doc,          0},
     {"usrloc.delete_aor",      rpc_delete_aor,      rpc_delete_aor_doc,     0},
@@ -149,9 +152,9 @@ rpc_export_t ul_rpc[] = {
      * register RPCs one by one using the rpc_register_function() (defined
        in rpc_lookup.h), from the module init function.
      * register a null terminated array of rpc_export_t structures using
-       the SER module interface. For this purpose, the module_exports
-       structure of SER module API contains a new attribute called
-       rpc_methods:
+       the SIP server module interface SER_MOD_INTERFACE (specific for SER
+       flavour). For this purpose, the module_exports structure of SIP
+       server module API contains a new attribute called rpc_methods:
 struct module_exports {
     char* name;                 /* null terminated module name */
     cmd_export_t* cmds;         /* null terminated array of the exported command
@@ -163,7 +166,7 @@ parameters */
 
     init_function init_f;         /* Initialization function */
     response_function response_f; /* function used for responses */
-    destroy_function destroy_f;   /* function called upon SER shutdown */
+    destroy_function destroy_f;   /* function called upon shutdown */
     onbreak_function onbreak_f;
     child_init_function init_child_f;  /* function called by all processes after
  the fork */
@@ -171,10 +174,10 @@ parameters */
        rpc_methods is a pointer to an array of rpc_export_t structures.
        The last element of the array is a bumper containing zeroes in all
        the attributes of the structure. The following program listing
-       shows the exported RPC functions of the usrloc module, using the
-       rpc_export_t array ul_rpc defined above, in the
+       shows the exported RPC functions of the modules_s/usrloc module,
+       using the rpc_export_t array ul_rpc defined above, in the
        rpc_register_array() example:
-       Example 2.
+       Example 2. usrloc Module Exports Declaration
 struct module_exports exports = {
     "usrloc",
     cmds,      /* Exported functions */
@@ -187,15 +190,15 @@ struct module_exports exports = {
     child_init /* Child initialization function */ };
 
 Note
-       This mode works only with modules using the SER module interface.
-       It does not work for kamailio modules and it will probably not work
-       for future sip-router modules. It is safer and recommended to use
-       instead the rpc_register_array() function.
+       This mode works only with modules using the SER flavour module
+       interface. It does not work for kamailio modules and it will
+       probably not work for future sip-router modules. It is safer and
+       recommended to use instead the rpc_register_array() function.
 
    By convention the name of every exported function consists of two parts
-   delimited by a dot. The first part is the name of the module or SER
-   subsystem this function belongs to. The second part is the name of the
-   function.
+   delimited by a dot. The first part is the name of the module or SIP
+   server subsystem this function belongs to. The second part is the name
+   of the function.
 
 1.2.2. Data Types
 
@@ -311,17 +314,17 @@ Warning
    used and the error is lack of more parameters).
 
    The prototype of the function is:
-int scan(char* fmt, ...)
+int scan((void* ctx, char* fmt, ...)
 
    It is possible to either call the function once to scan all the
    parameters:
-rpc->scan("sdf", &string_val, &int_val, &double_val);
+rpc->scan(ctx, "sdf", &string_val, &int_val, &double_val);
 
    Or you can call the same function several times and it will continue
    where it left off previously:
-rpc->scan("s", &string_val);
-rpc->scan("d", &int_val);
-rpc->scan("f", &double_val);
+rpc->scan(ctx, "s", &string_val);
+rpc->scan(ctx, "d", &int_val);
+rpc->scan(ctx, "f", &double_val);
 
 1.2.3.2. struct_scan
 
@@ -334,7 +337,7 @@ Note
    (e.g.: ctl / binrpc). Consider using the normal scan instead.
 
    When retrieving a structure parameter from the parameter set:
-rpc->scan("{", &handle);
+rpc->scan(ctx, "{", &handle);
 
    The corresponding variable (named handle in the example above) will
    contain the index of the structure parameter within the parameter set,
@@ -352,8 +355,10 @@ rpc->struct_scan(handle, "sd", "str_attr", &str_val, "int_attr", &int_val);
    the scan function). The function also indicates an error if a requested
    attribute is missing in the structure.
 
+1.2.3.3. Retrieving Parameters Example
+
    Example 3. Retrieving Parameters
-static void rpc_delete_contact(rpc_t* rpc)
+static void rpc_delete_contact(rpc_t* rpc, void* ctx)
 {
     str aor, contact;
     char* table;
@@ -361,7 +366,7 @@ static void rpc_delete_contact(rpc_t* rpc)
     int   expires;
     double q;
 
-    if (rpc->scan("sS{", &table, &aor, &handle) < 0) {
+    if (rpc->scan(ctx, "sS{", &table, &aor, &handle) < 0) {
         /* Reply is set automatically by scan upon failure,
          * no need to do anything here
          */
@@ -417,7 +422,7 @@ static void core_echo(rpc_t* rpc, void* c)
    the reply-related functions described in this section.
 
    Example 4. Sending default reply
-static void rpc_dummy(rpc_t* rpc)
+static void rpc_dummy(rpc_t* rpc, void *ctx)
 {
   /* 200 OK with no data will be returned */
 }
@@ -428,41 +433,41 @@ static void rpc_dummy(rpc_t* rpc)
    the server to the caller. The function accepts two parameters. The
    first parameter is the status code and the second parameter is the
    reason phrase.
-static void rpc_my_function(rpc_t* rpc)
+static void rpc_my_function(rpc_t* rpc, void *ctx)
 {
-    rpc->fault(600, "Not Yet Implemented");
+    rpc->fault(ctx, 600, "Not Yet Implemented");
 }
 
    If your function first creates some result using add, or printf
    functions then all the data will be lost once you call fault function.
    Failure replies must not contain any data:
-static void rpc_my_function(rpc_t* rpc)
+static void rpc_my_function(rpc_t* rpc, void *ctx)
 {
-    rpc->add("s", "result1");
-    rpc->add("d", variable);
+    rpc->add(ctx, "s", "result1");
+    rpc->add(ctx, "d", variable);
 
     /* Reply created by previous functions will be
      * deleted and a failure reply 600 Not Yet Implemented
      * will be created instead
      */
-    rpc->fault(600, "Not Yet Implemented");
+    rpc->fault(ctx, 600, "Not Yet Implemented");
 
     /* You can also add data here, but that will have no
      * effect
      */
-    rpc->add("s", "result2");
+    rpc->add(ctx, "s", "result2");
 }
 
    Similarly you can also call add or printf functions after calling
    fault, in this case they will have no effect:
-static void rpc_my_function(rpc_t* rpc)
+static void rpc_my_function(rpc_t* rpc, void *ctx)
 {
-    rpc->fault(600, "Not Yet Implemented");
+    rpc->fault(ctx, 600, "Not Yet Implemented");
 
     /* You can also add data here, but that will have no
      * effect and only 600 Not Yet Implemented will be returned
      */
-    rpc->add("s", "result2");
+    rpc->add(ctx, "s", "result2");
 }
 
 1.2.4.2. send
@@ -475,12 +480,12 @@ static void rpc_my_function(rpc_t* rpc)
    the reply has been sent.
 
    Example 5. Kill the server
-static void core_kill(rpc_t* rpc)
+static void core_kill(rpc_t* rpc, void *ctx)
 {
     int sig_no;
 
-    if (rpc->scan("d", &sig_no) < 0) return;
-    rpc->send();     /* First send a reply */
+    if (rpc->scan(ctx, "d", &sig_no) < 0) return;
+    rpc->send(ctx, );     /* First send a reply */
     kill(0, sig_no); /* Then kill the server */
 }
 
@@ -490,15 +495,15 @@ static void core_kill(rpc_t* rpc)
    parameters and use are analogical to scan function described in
    Section 1.2.3.1, "scan". The first parameter of the function is the
    formatting string that determines the types of additional parameters:
-static void rpc_func(rpc_t* rpc)
+static void rpc_func(rpc_t* rpc, void *ctx)
 {
     str str_result;
     int int_result;
     void *handle;
     double float_result;
 
-    if (rpc->add("Sdf{", &str_result, int_result, float_result, &handle) < 0) re
-turn;
+    if (rpc->add(ctx, "Sdf{", &str_result, int_result, float_result, &handle) <
+0) return;
 }
 
    Naturally you can call this function several times, adding only one
@@ -523,8 +528,8 @@ turn;
    printf is a convenience function. The function adds data of type string
    to the result set. The first parameter of the function is again a
    formatting string, but this time it is printf-like formatting string:
-if (rpc->printf("Unable to delete %d entries from table %s", num_entries, table_
-name) < 0) return;
+if (rpc->printf(ctx, "Unable to delete %d entries from table %s", num_entries, t
+able_name) < 0) return;
 
    The return value of the function is the same as of add function.
 
@@ -539,12 +544,12 @@ name) < 0) return;
    second parameter is the value of the attribute. If a parameter with
    such a name already exist in the structure then it will be overwritten
    with the new value.
-static void rpc_func(rpc_t* rpc)
+static void rpc_func(rpc_t* rpc, void *ctx)
 {
     void *handle;
 
         /* Create empty structure and obtain its handle */
-    if (rpc->add("{", &handle) < 0) return;
+    if (rpc->add(ctx, "{", &handle) < 0) return;
         /* Fill-in the structure */
     if (rpc->struct_add(handle, "sd", "attr1", str_val,
                                       "attr2", int_val ) < 0)
@@ -560,7 +565,7 @@ static void rpc_func(rpc_t* rpc)
    the API together:
 
    Example 6. Real World Example RPC Function
-static void rpc_register(rpc_t* rpc)
+static void rpc_register(rpc_t* rpc, void *ctx)
 {
     char* domain;
     str aor;
@@ -568,7 +573,7 @@ static void rpc_register(rpc_t* rpc)
     void *handle;
 
         /* Extract the domain, address of record from the request */
-    if (rpc->scan("sS{", &domain, &aor, &handle) < 0) return;
+    if (rpc->scan(ctx, "sS{", &domain, &aor, &handle) < 0) return;
         /* Extract the structure describing the contact to be processed */
     if (rpc->struct_scan(handle, "Sdf", "Contact", &contact.c,
                                         "Expires", &contact.expires,
@@ -579,12 +584,12 @@ static void rpc_register(rpc_t* rpc)
 cessing */
     if (process_contact(domain, &aor, &new_contact, &contact) < 0) {
            /* Processing failed, indicate the failure to the caller */
-        rpc->fault(500, "Error While Processing Contact");
+        rpc->fault(ctx, 500, "Error While Processing Contact");
         return;
     }
 
         /* Return the domain and the address of record */
-    rpc->add("sS{", &domain, &aor, &handle) < 0) return;
+    rpc->add(ctx, "sS{", &domain, &aor, &handle) < 0) return;
         /* And also add the new values for contact, q, and expires parameters */
     rpc->struct_add(handle, "Sdf", "Contact", &new_contact.c,
                                    "Expires", &new_contact.expires,

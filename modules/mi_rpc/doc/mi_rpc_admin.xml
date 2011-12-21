@@ -16,11 +16,8 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		The module exports a RPC command to execute MI commands.
-	</para>
-	<para>
-		The other way around not implemented (MI command to execute RPC)
-		-- to be investigated if worth the effort.
+		The module exports a RPC command to execute MI commands and
+        an MI command to run RPC commands.
 	</para>
 
 	</section>
@@ -57,7 +54,24 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<para>none</para>
+	<section>
+			<title><varname>rpc_url</varname> (string)</title>
+			<para>Note: this parameter is used for MI to RPC connections.</para>
+			<para>
+				This parameters specifies the connection to use for running RPC commands from the mangement interface.
+			</para>
+			<para>
+				This parameter is required if you need to run RPC commands from the MI. It must match a URL to which the RPC is bound.
+			</para>
+			<example>
+				<title>Set <varname>rpc_url</varname> parameter</title>
+				<programlisting>
+...
+modparam("mi_rpc","rpc_url","tcp:localhost:2046")
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 	<section>
 	<title>Functions</title>
@@ -120,6 +134,19 @@ Up since:: Thu Sep 24 17:35:45 2009
 Up time:: 2490 [sec]
 		</programlisting>
     </section>
+    </section>
+    
+    <section>
+	    <title><acronym>MI</acronym> Commands</title>
+        <section>
+            <title><function moreinfo="none">rpc</function></title>
+            <para>
+            This MI commands runs a RPC command.
+            </para>
+            <para>
+            It must be passed the name of the RPC command, and any parameters that the RPC command requires.
+            </para>
+        </section>
     </section>
 
 </chapter>

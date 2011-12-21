@@ -64,6 +64,9 @@ very few, Kamailio enabling next compile time flags:
 
 Switching between flavours is a matter of 'make' command parameters.
 
+Several installation tutorials for Kamailio are available on the web wiki:
+  - http://www.kamailio.org/wiki/
+
 
 2. Supported Architectures and Requirements
 -------------------------------------------

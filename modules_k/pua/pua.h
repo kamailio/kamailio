@@ -34,6 +34,10 @@
 #define REQ_OTHER  0
 #define REQ_ME     1
 
+#define PUA_DB_DEFAULT 0
+#define PUA_DB_MODE1_RESERVED 1
+#define PUA_DB_ONLY 2
+
 extern str default_domain;
 extern struct tm_binds tmb;
 extern htable_t* HashT;
@@ -43,7 +47,11 @@ extern int pua_ul_publish;
 extern int default_expires;
 extern str outbound_proxy;
 extern int check_remote_contact;
+extern int dbmode;
 
 int reginfo_increase_version;
+
+extern int update_pua(ua_pres_t* p);
+extern int clean_puadb( int update_period, int min_expires );
 
 #endif

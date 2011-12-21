@@ -38,6 +38,7 @@
 #include "../../mod_fix.h"
 
 #include "alookup.h"
+#include "api.h"
 
 MODULE_VERSION
 
@@ -53,6 +54,7 @@ static int child_init(int rank);
 /* Module initialization function prototype */
 static int mod_init(void);
 
+static int w_alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2);
 
 /* Module parameter variables */
 static str db_url       = str_init(DEFAULT_RODB_URL);
@@ -69,8 +71,10 @@ db_func_t adbf;  /* DB functions */
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"alias_db_lookup", (cmd_function)alias_db_lookup, 1, fixup_spve_null, 0,
+	{"alias_db_lookup", (cmd_function)w_alias_db_lookup, 1, fixup_spve_null, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE},
+	{"bind_alias_db",   (cmd_function)bind_alias_db, 1, 0, 0,
+		0},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -166,3 +170,27 @@ static void destroy(void)
 	}
 }
 
+static int w_alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
+{
+        str table_s;
+
+        if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0)
+        {
+                LM_ERR("invalid table parameter\n");
+                return -1;
+        }
+
+        return alias_db_lookup(_msg, table_s);
+}
+
+int bind_alias_db(struct alias_db_binds *pxb)
+{
+        if (pxb == NULL)
+        {
+                LM_WARN("bind_alias_db: Cannot load alias_db API into a NULL pointer\n");
+                return -1;
+        }
+
+        pxb->alias_db_lookup = alias_db_lookup;
+        return 0;
+}

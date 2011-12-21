@@ -31,6 +31,7 @@
  * \ingroup presence_xml
  */
 
+
 /**
  * make strptime available
  * use 600 for 'Single UNIX Specification, Version 3'
@@ -55,7 +56,6 @@
 #include <stdlib.h>
 #include <libxml/parser.h>
 #include "../../dprint.h"
-#include "../../sr_module.h"
 #include "pidf.h"
 
 xmlAttrPtr xmlNodeGetAttrByName(xmlNodePtr node, const char *name)

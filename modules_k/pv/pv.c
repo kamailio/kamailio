@@ -53,6 +53,8 @@ static tr_export_t mod_trans[] = {
 		tr_parse_paramlist },
 	{ {"tobody", sizeof("tobody")-1}, /* param class */
 		tr_parse_tobody },
+	{ {"line", sizeof("line")-1}, /* line class */
+		tr_parse_line },
 
 	{ { 0, 0 }, 0 }
 };
@@ -473,6 +475,11 @@ static void mod_destroy(void)
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
+	if(tr_init_buffers()<0)
+	{
+		LM_ERR("failed to initialize transformations buffers\n");
+		return -1;
+	}
 	return register_trans_mod(path, mod_trans);
 }
 

@@ -357,3 +357,78 @@ int db_query_init(void)
     }
     return 0;
 }
+
+/**
+ * wrapper around db query to handle fetch capability
+ * return: -1 error; 0 ok with no fetch capability; 1 ok with fetch capability
+ */
+int db_fetch_query(db_func_t *dbf, int frows,
+		db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+		const db_key_t _o, db1_res_t** _r)
+{
+
+	int ret;
+
+	ret = 0;
+	*_r = NULL;
+
+	if (DB_CAPABILITY(*dbf, DB_CAP_FETCH)) {
+		if(dbf->query(_h, _k, _op, _v, _c, _n, _nc, _o, 0) < 0)
+		{
+			LM_ERR("unable to query db for fetch\n");
+			goto error;
+		}
+		if(dbf->fetch_result(_h, _r, frows)<0)
+		{
+			LM_ERR("unable to fetch the db result\n");
+			goto error;
+		}
+		ret = 1;
+	} else {
+		if(dbf->query(_h, _k, _op, _v, _c, _n, _nc, _o, _r) < 0)
+		{
+			LM_ERR("unable to do full db querry\n");
+			goto error;
+		}
+	}
+
+	return ret;
+
+error:
+	if(*_r)
+	{
+		dbf->free_result(_h, *_r);
+		*_r = NULL;
+	}
+	return -1;
+}
+
+/**
+ * wrapper around db fetch to handle fetch capability
+ * return: -1 error; 0 ok with no fetch capability; 1 ok with fetch capability
+ */
+int db_fetch_next(db_func_t *dbf, int frows, db1_con_t* _h,
+		db1_res_t** _r)
+{
+	int ret;
+
+	ret = 0;
+
+	if (DB_CAPABILITY(*dbf, DB_CAP_FETCH)) {
+		if(dbf->fetch_result(_h, _r, frows)<0) {
+			LM_ERR("unable to fetch next rows\n");
+			goto error;
+		}
+		ret = 1;
+	}
+	return ret;
+
+error:
+	if(*_r)
+	{
+		dbf->free_result(_h, *_r);
+		*_r = NULL;
+	}
+	return -1;
+}

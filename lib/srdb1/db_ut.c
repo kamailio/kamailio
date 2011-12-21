@@ -334,21 +334,35 @@ int db_print_where(const db1_con_t* _c, char* _b, const int _l, const db_key_t* 
 	}
 
 	for(i = 0; i < _n; i++) {
-		if (_o) {
-			ret = snprintf(_b + len, _l - len, "%.*s%s", _k[i]->len, _k[i]->s, _o[i]);
+		if (_o && strncmp(_o[i], OP_BITWISE_AND, 1) == 0) {
+			char tmp_buf[16];
+			int tmp_len = 15;
+			memset(tmp_buf, '0', 16);
+			if ((*val2str)(_c, &(_v[i]), tmp_buf, &tmp_len) < 0) {
+				LM_ERR("Error while converting value to string\n");
+				return -1;
+			}
+			ret = snprintf(_b + len, _l - len, "%.*s&%.*s=%.*s", _k[i]->len, _k[i]->s, tmp_len, tmp_buf, tmp_len, tmp_buf);
 			if (ret < 0 || ret >= (_l - len)) goto error;
 			len += ret;
 		} else {
-			ret = snprintf(_b + len, _l - len, "%.*s=", _k[i]->len, _k[i]->s);
-			if (ret < 0 || ret >= (_l - len)) goto error;
-			len += ret;
+			if (_o) {
+				ret = snprintf(_b + len, _l - len, "%.*s%s", _k[i]->len, _k[i]->s, _o[i]);
+				if (ret < 0 || ret >= (_l - len)) goto error;
+				len += ret;
+			} else {
+				ret = snprintf(_b + len, _l - len, "%.*s=", _k[i]->len, _k[i]->s);
+				if (ret < 0 || ret >= (_l - len)) goto error;
+				len += ret;
+			}
+			l = _l - len;
+			if ( (*val2str)(_c, &(_v[i]), _b + len, &l) < 0) {
+				LM_ERR("Error while converting value to string\n");
+				return -1;
+			}
+			len += l;
 		}
-		l = _l - len;
-		if ( (*val2str)(_c, &(_v[i]), _b + len, &l) < 0) {
-			LM_ERR("Error while converting value to string\n");
-			return -1;
-		}
-		len += l;
+
 		if (i != (_n - 1)) {
 			ret = snprintf(_b + len, _l - len, " AND ");
 			if (ret < 0 || ret >= (_l - len)) goto error;

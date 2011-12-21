@@ -93,7 +93,8 @@ extern int tcp_main_pid;
 extern int tcp_children_no;
 extern int tcp_disable;
 extern enum poll_types tcp_poll_method;
-extern int tcp_max_connections; /* maximum connections, hard limit */
+extern int tcp_max_connections; /* maximum tcp connections, hard limit */
+extern int tls_max_connections; /* maximum tls connections, hard limit */
 #endif
 #ifdef USE_TLS
 extern int tls_disable;

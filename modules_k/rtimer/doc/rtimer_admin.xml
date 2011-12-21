@@ -87,7 +87,9 @@
 		</listitem>
 		<listitem>
 		<para>
-			<emphasis>interval</emphasis> - timer interval in seconds.
+			<emphasis>interval</emphasis> - timer interval in seconds or
+			micro-seconds (the value must be ended in 'u'). For micro-seconds
+			intervals, mode is set always to 1.
 		</para>
 		</listitem>
 		</itemizedlist>
@@ -100,7 +102,10 @@
 		<title>Set <varname>timer</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
+# time interval set to 10 seconds
 modparam("rtimer", "timer", "name=ta;interval=10;mode=1;")
+# time interval set to 100 mili-seconds
+modparam("rtimer", "timer", "name=ta;interval=100000u;mode=1;")
 ...
 </programlisting>
 		</example>

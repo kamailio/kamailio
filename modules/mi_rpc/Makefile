@@ -14,5 +14,6 @@ DEFS+=-DSER_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kmi/kmi
+SER_LIBS+=$(SERLIBPATH)/binrpc/binrpc
 
 include ../../Makefile.modules

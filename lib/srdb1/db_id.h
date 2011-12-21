@@ -41,6 +41,7 @@ struct db_id {
 	unsigned short port; /**< Port number */
 	char* database;      /**< Database, case sensitive */
 	int   pid;           /**< Process ID (detect cross connections) */
+	int   poolid;        /**< poolid within a pid */
 };
 
 

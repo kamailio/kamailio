@@ -34,6 +34,8 @@
  */
 
 
+#include <fnmatch.h>
+
 #include "../../re.h"
 #include "../../mem/shm_mem.h"
 #include "dialplan.h"
@@ -41,7 +43,7 @@
 
 void repl_expr_free(struct subst_expr *se)
 {
-    if(!se)
+	if(!se)
 		return;
 
 	if(se->replacement.s){
@@ -62,11 +64,22 @@ struct subst_expr* repl_exp_parse(str subst)
 	int replace_all;
 	char * p, *end, *repl, *repl_end;
 	int max_pmatch, r;
+	str shms;
 
 	se = 0;
 	replace_all = 0;
-	p = subst.s;
-	end = p + subst.len;
+	shms.s = NULL;
+
+	if (!(shms.s=shm_malloc((subst.len+1) * sizeof(char))) ){
+		LM_ERR("out of shm memory\n");
+		goto error;
+	}
+	memcpy(shms.s, subst.s, subst.len);
+	shms.len = subst.len;
+	shms.s[shms.len] = '\0';
+
+	p = shms.s;
+	end = p + shms.len;
 	rw_no = 0;
 
 	repl = p;
@@ -75,7 +88,7 @@ struct subst_expr* repl_exp_parse(str subst)
 
 	repl_end=p;
 
-    /* construct the subst_expr structure */
+	/* construct the subst_expr structure */
 	se = shm_malloc(sizeof(struct subst_expr)+
 			((rw_no)?(rw_no-1)*sizeof(struct replace_with):0));
 	/* 1 replace_with structure is  already included in subst_expr */
@@ -85,26 +98,27 @@ struct subst_expr* repl_exp_parse(str subst)
 	}
 	memset((void*)se, 0, sizeof(struct subst_expr));
 
+	se->replacement.s = shms.s;
+	shms.s = NULL;
 	se->replacement.len=repl_end-repl;
-	if (!(se->replacement.s=shm_malloc(se->replacement.len * sizeof(char))) ){
-		LM_ERR("out of shm memory \n");
-		goto error;
-	}
 	if(!rw_no){
 		replace_all = 1;
 	}
 	/* start copying */
-	memcpy(se->replacement.s, repl, se->replacement.len);
+	LM_DBG("replacement expression is [%.*s]\n", se->replacement.len,
+			se->replacement.s);
 	se->re=0;
 	se->replace_all=replace_all;
 	se->n_escapes=rw_no;
 	se->max_pmatch=max_pmatch;
 
-    /*replace_with is a simple structure, no shm alloc needed*/
+	/*replace_with is a simple structure, no shm alloc needed*/
 	for (r=0; r<rw_no; r++) se->replace[r]=rw[r];
 	return se;
 
 error:
+	if(shms.s != NULL)
+		shm_free(shms.s);
 	if (se) { repl_expr_free(se);}
 	return NULL;
 }
@@ -113,7 +127,7 @@ error:
 #define MAX_PHONE_NB_DIGITS		127
 static char dp_output_buf[MAX_PHONE_NB_DIGITS+1];
 int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
-		   str * result)
+		str * result)
 {
 	int repl_nb, offset, match_nb, rc, cap_cnt;
 	struct replace_with token;
@@ -144,23 +158,23 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 				&cap_cnt);
 		if (rc != 0) {
 			LM_ERR("pcre_fullinfo on compiled pattern yielded error: %d\n",
-				rc);
+					rc);
 			return -1;;
 		}
 		if(repl_comp->max_pmatch > cap_cnt){
 			LM_ERR("illegal access to the %i-th subexpr of the subst expr\n",
-				repl_comp->max_pmatch);
+					repl_comp->max_pmatch);
 			return -1;
 		}
 
 		/*search for the pattern from the compiled subst_exp*/
 		if (pcre_exec(rule->subst_comp, NULL, string.s, string.len,
-				0, 0, ovector, 3 * (MAX_REPLACE_WITH + 1)) <= 0) {
+					0, 0, ovector, 3 * (MAX_REPLACE_WITH + 1)) <= 0) {
 			LM_ERR("the string %.*s matched "
-				"the match_exp %.*s but not the subst_exp %.*s!\n", 
-				string.len, string.s, 
-				rule->match_exp.len, rule->match_exp.s,
-				rule->subst_exp.len, rule->subst_exp.s);
+					"the match_exp %.*s but not the subst_exp %.*s!\n", 
+					string.len, string.s, 
+					rule->match_exp.len, rule->match_exp.s,
+					rule->subst_exp.len, rule->subst_exp.s);
 			return -1;
 		}
 	}
@@ -187,10 +201,10 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 	while( repl_nb < repl_comp->n_escapes){
 
 		token = repl_comp->replace[repl_nb];
-		
+
 		if(offset< token.offset){
 			if((repl_comp->replacement.len < offset)||
-				(result->len + token.offset -offset >= MAX_PHONE_NB_DIGITS)){
+					(result->len + token.offset -offset >= MAX_PHONE_NB_DIGITS)){
 				LM_ERR("invalid length\n");
 				goto error;
 			}
@@ -198,7 +212,7 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 			size = token.offset - offset;
 			memcpy(result->s + result->len, p + offset, size);
 			LM_DBG("copying <%.*s> from replacing string\n",
-			       size, p + offset);
+					size, p + offset);
 			result->len += size;
 			offset = token.offset;
 		}
@@ -216,10 +230,10 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 
 				memcpy(result->s + result->len, match.s, match.len);
 				LM_DBG("copying match <%.*s> token size %d\n",
-				       match.len, match.s, token.size);
+						match.len, match.s, token.size);
 				result->len += match.len;
 				offset += token.size;
-			break;
+				break;
 			case REPLACE_CHAR:
 				if(result->len + 1>= MAX_PHONE_NB_DIGITS){
 					LM_ERR("overflow\n");
@@ -227,14 +241,14 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 				}
 				*(result->s + result->len) = token.u.c;
 				LM_DBG("copying char <%c> token size %d\n",
-					token.u.c, token.size);
+						token.u.c, token.size);
 				result->len++;
 				offset += token.size;
-			break;
+				break;
 			case REPLACE_URI:	
 				if ( msg== NULL || msg->first_line.type!=SIP_REQUEST){
 					LM_CRIT("uri substitution attempt on no request"
-						" message\n");
+							" message\n");
 					break; /* ignore, we can continue */
 				}
 				uri= (msg->new_uri.s)?(&msg->new_uri):
@@ -245,10 +259,10 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 				}
 				memcpy(result->s + result->len, uri->s, uri->len);
 				LM_DBG("copying uri <%.*s> token size %d\n",
-					uri->len, uri->s, token.size);
+						uri->len, uri->s, token.size);
 				result->len+=uri->len;
 				offset += token.size;
-			break;
+				break;
 			case REPLACE_SPEC:
 				if (msg== NULL) {
 					LM_DBG("replace spec attempted on no message\n");
@@ -263,12 +277,12 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 					goto error;
 				}
 				memcpy(result->s + result->len, sv.rs.s,
-				       sv.rs.len);
+						sv.rs.len);
 				LM_DBG("copying pvar value <%.*s> token size %d\n",
-					sv.rs.len, sv.rs.s, token.size);
+						sv.rs.len, sv.rs.s, token.size);
 				result->len+=sv.rs.len;
 				offset += token.size;
-			break;
+				break;
 			default:
 				LM_CRIT("unknown type %d\n", repl_comp->replace[repl_nb].type);
 				/* ignore it */
@@ -281,7 +295,7 @@ int rule_translate(struct sip_msg *msg, str string, dpl_node_t * rule,
 		size = repl_comp->replacement.len - offset;
 		memcpy(result->s + result->len, p + offset, size);
 		LM_DBG("copying leftover <%.*s> from replacing string\n",
-		       size, p + offset);
+				size, p + offset);
 		result->len += size;
 	}
 
@@ -294,15 +308,16 @@ error:
 	return -1;
 }
 
-#define DP_MAX_ATTRS_LEN	32
+#define DP_MAX_ATTRS_LEN	128
 static char dp_attrs_buf[DP_MAX_ATTRS_LEN+1];
 int translate(struct sip_msg *msg, str input, str *output, dpl_id_p idp,
-	      str *attrs)
+		str *attrs)
 {
 	dpl_node_p rulep;
 	dpl_index_p indexp;
 	int user_len, rez;
-	
+	char b;
+
 	if(!input.s || !input.len) {
 		LM_ERR("invalid input string\n");
 		return -1;
@@ -322,22 +337,31 @@ search_rule:
 	for(rulep=indexp->first_rule; rulep!=NULL; rulep= rulep->next) {
 		switch(rulep->matchop) {
 
-			case REGEX_OP:
-			    LM_DBG("regex operator testing\n");
+			case DP_REGEX_OP:
+				LM_DBG("regex operator testing\n");
 				rez = pcre_exec(rulep->match_comp, NULL, input.s, input.len,
-				    0, 0, NULL, 0);
-		    break;
+						0, 0, NULL, 0);
+				break;
 
-			case EQUAL_OP:
+			case DP_EQUAL_OP:
 				LM_DBG("equal operator testing\n");
-			    if(rulep->match_exp.len != input.len) {
+				if(rulep->match_exp.len != input.len) {
 					rez = -1;
 				} else {
 					rez = strncmp(rulep->match_exp.s,input.s,input.len);
 					rez = (rez==0)?0:-1;
 				}
-			break;
-	    
+				break;
+
+			case DP_FNMATCH_OP:
+				LM_DBG("fnmatch operator testing\n");
+				b = input.s[input.len];
+				input.s[input.len] = '\0';
+				rez = fnmatch(rulep->match_exp.s, input.s, 0);
+				input.s[input.len] = b;
+				rez = (rez==0)?0:-1;
+				break;
+
 			default:
 				LM_ERR("bogus match operator code %i\n", rulep->matchop);
 				return -1;
@@ -351,33 +375,33 @@ search_rule:
 			if(!indexp->len)
 				break;
 		if(indexp)
-		    goto search_rule;
+			goto search_rule;
 	}
-	
-    LM_DBG("no matching rule\n");
-    return -1;
+
+	LM_DBG("no matching rule\n");
+	return -1;
 
 repl:
 	LM_DBG("found a matching rule %p: pr %i, match_exp %.*s\n",
-		rulep, rulep->pr, rulep->match_exp.len, rulep->match_exp.s);
+			rulep, rulep->pr, rulep->match_exp.len, rulep->match_exp.s);
 
 	if(attrs) {
 		attrs->len = 0;
 		attrs->s = 0;
 		if(rulep->attrs.len>0) {
 			LM_DBG("the rule's attrs are %.*s\n",
-				rulep->attrs.len, rulep->attrs.s);
+					rulep->attrs.len, rulep->attrs.s);
 			if(rulep->attrs.len >= DP_MAX_ATTRS_LEN) {
 				LM_ERR("out of memory for attributes\n");
 				return -1;
-		    }
+			}
 			attrs->s = dp_attrs_buf;
 			memcpy(attrs->s, rulep->attrs.s, rulep->attrs.len*sizeof(char));
 			attrs->len = rulep->attrs.len;
 			attrs->s[attrs->len] = '\0';
 
 			LM_DBG("the copied attributes are: %.*s\n",
-				attrs->len, attrs->s);
+					attrs->len, attrs->s);
 		}
 	}
 

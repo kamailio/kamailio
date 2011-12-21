@@ -507,7 +507,8 @@ static int mod_init(void)
 	}
 
 	if (initial_cbs_inscript != 0 && initial_cbs_inscript != 1) {
-		LM_ERR("invalid parameter for running initial callbacks in-script (must be either 0 or 1)\n");
+		LM_ERR("invalid parameter for running initial callbacks in-script"
+				" (must be either 0 or 1)\n");
 		return -1;
 	}
 
@@ -841,6 +842,7 @@ static int w_get_profile_size2(struct sip_msg *msg, char *profile, char *result)
 static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2)
 {
 	dlg_ctx_t *dctx;
+	dlg_cell_t *d;
 	int val;
 
 	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
@@ -854,8 +856,11 @@ static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2)
 		return -1;
 
 	dctx->flags |= 1<<val;
-	if(dctx->dlg)
-		dctx->dlg->sflags |= 1<<val;
+	d = dlg_get_by_iuid(&dctx->iuid);
+	if(d!=NULL) {
+		d->sflags |= 1<<val;
+		dlg_release(d);
+	}
 	return 1;
 }
 
@@ -863,6 +868,7 @@ static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2)
 static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2)
 {
 	dlg_ctx_t *dctx;
+	dlg_cell_t *d;
 	int val;
 
 	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
@@ -877,8 +883,11 @@ static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2)
 		return -1;
 
 	dctx->flags &= ~(1<<val);
-	if(dctx->dlg)
-		dctx->dlg->sflags &= ~(1<<val);
+	d = dlg_get_by_iuid(&dctx->iuid);
+	if(d!=NULL) {
+		d->sflags &= ~(1<<val);
+		dlg_release(d);
+	}
 	return 1;
 }
 
@@ -886,7 +895,9 @@ static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2)
 static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2)
 {
 	dlg_ctx_t *dctx;
+	dlg_cell_t *d;
 	int val;
+	int ret;
 
 	if(fixup_get_ivalue(msg, (gparam_p)flag, &val)!=0)
 	{
@@ -899,8 +910,12 @@ static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2)
 	if ( (dctx=dlg_get_dlg_ctx())==NULL )
 		return -1;
 
-	if(dctx->dlg)
-		return (dctx->dlg->sflags&(1<<val))?1:-1;
+	d = dlg_get_by_iuid(&dctx->iuid);
+	if(d!=NULL) {
+		ret = (d->sflags&(1<<val))?1:-1;
+		dlg_release(d);
+		return ret;
+	}
 	return (dctx->flags&(1<<val))?1:-1;
 }
 
@@ -930,7 +945,7 @@ static int w_dlg_manage(struct sip_msg *msg, char *s1, char *s2)
 
 static int w_dlg_bye(struct sip_msg *msg, char *side, char *s2)
 {
-	struct dlg_cell *dlg;
+	dlg_cell_t *dlg = NULL;
 	int n;
 
 	dlg = dlg_get_ctx_dialog();
@@ -941,22 +956,30 @@ static int w_dlg_bye(struct sip_msg *msg, char *side, char *s2)
 	if(n==1)
 	{
 		if(dlg_bye(dlg, NULL, DLG_CALLER_LEG)!=0)
-			return -1;
-		return 1;
+			goto error;
+		goto done;
 	} else if(n==2) {
 		if(dlg_bye(dlg, NULL, DLG_CALLEE_LEG)!=0)
-			return -1;
-		return 1;
+			goto error;
+		goto done;
 	} else {
 		if(dlg_bye_all(dlg, NULL)!=0)
-			return -1;
-		return 1;
+			goto error;
+		goto done;
 	}
+
+done:
+	dlg_release(dlg);
+	return 1;
+
+error:
+	dlg_release(dlg);
+	return -1;
 }
 
 static int w_dlg_refer(struct sip_msg *msg, char *side, char *to)
 {
-	struct dlg_cell *dlg;
+	dlg_cell_t *dlg;
 	int n;
 	str st = {0,0};
 
@@ -969,22 +992,28 @@ static int w_dlg_refer(struct sip_msg *msg, char *side, char *to)
 	if(fixup_get_svalue(msg, (gparam_p)to, &st)!=0)
 	{
 		LM_ERR("unable to get To\n");
-		return -1;
+		goto error;
 	}
 	if(st.s==NULL || st.len == 0)
 	{
 		LM_ERR("invalid To parameter\n");
-		return -1;
+		goto error;
 	}
 	if(n==1)
 	{
 		if(dlg_transfer(dlg, &st, DLG_CALLER_LEG)!=0)
-			return -1;
+			goto error;
 	} else {
 		if(dlg_transfer(dlg, &st, DLG_CALLEE_LEG)!=0)
-			return -1;
+			goto error;
 	}
+
+	dlg_release(dlg);
 	return 1;
+
+error:
+	dlg_release(dlg);
+	return -1;
 }
 
 static int w_dlg_bridge(struct sip_msg *msg, char *from, char *to, char *op)
@@ -1096,7 +1125,7 @@ static int fixup_dlg_bridge(void** param, int param_no)
 
 static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 {
-	struct dlg_cell *dlg = NULL;
+	dlg_cell_t *dlg = NULL;
 	str sc = {0,0};
 	str sf = {0,0};
 	str st = {0,0};
@@ -1142,10 +1171,11 @@ static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 	dlg = get_dlg(&sc, &sf, &st, &dir);
 	if(dlg==NULL)
 		return -1;
-    /* set current dialog pointer - re-use ref increment from dlg_get() above */
-	current_dlg_pointer = dlg;
-	_dlg_ctx.dlg = dlg;
+    /* set shorcut to dialog internal unique id */
+	_dlg_ctx.iuid.h_entry = dlg->h_entry;
+	_dlg_ctx.iuid.h_id = dlg->h_id;
 	_dlg_ctx.dir = dir;
+	dlg_release(dlg);
 	return 1;
 }
 
@@ -1201,7 +1231,8 @@ struct mi_root * mi_dlg_bridge(struct mi_root *cmd_tree, void *param)
  * \param with_context if 1 then the dialog context will be also printed
  * \return 0 on success, -1 on failure
  */
-static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, struct dlg_cell *dlg, int with_context)
+static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
+		int with_context)
 {
 	rpc_cb_ctx_t rpc_cb;
 
@@ -1247,7 +1278,7 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, struct dlg_cell *
  */
 static void internal_rpc_print_dlgs(rpc_t *rpc, void *c, int with_context)
 {
-	struct dlg_cell *dlg;
+	dlg_cell_t *dlg;
 	unsigned int i;
 
 	for( i=0 ; i<d_table->size ; i++ ) {
@@ -1269,8 +1300,8 @@ static void internal_rpc_print_dlgs(rpc_t *rpc, void *c, int with_context)
  */
 static void internal_rpc_print_single_dlg(rpc_t *rpc, void *c, int with_context) {
 	str callid, from_tag;
-	struct dlg_entry *d_entry;
-	struct dlg_cell *dlg;
+	dlg_entry_t *d_entry;
+	dlg_cell_t *dlg;
 	unsigned int h_entry;
 
 	if (rpc->scan(c, ".S.S", &callid, &from_tag) < 2) return;
@@ -1295,9 +1326,10 @@ static void internal_rpc_print_single_dlg(rpc_t *rpc, void *c, int with_context)
  * \param profile_name the given profile
  * \param value the given profile value
  */
-static void internal_rpc_profile_get_size(rpc_t *rpc, void *c, str *profile_name, str *value) {
+static void internal_rpc_profile_get_size(rpc_t *rpc, void *c, str *profile_name,
+		str *value) {
 	unsigned int size;
-	struct dlg_profile_table *profile;
+	dlg_profile_table_t *profile;
 
 	profile = search_dlg_profile( profile_name );
 	if (!profile) {
@@ -1331,9 +1363,10 @@ static void internal_rpc_profile_get_size(rpc_t *rpc, void *c, str *profile_name
  * \param value the given profile value
  * \param with_context if 1 then the dialog context will be also printed
  */
-static void internal_rpc_profile_print_dlgs(rpc_t *rpc, void *c, str *profile_name, str *value) {
-	struct dlg_profile_table *profile;
-	struct dlg_profile_hash *ph;
+static void internal_rpc_profile_print_dlgs(rpc_t *rpc, void *c, str *profile_name,
+		str *value) {
+	dlg_profile_table_t *profile;
+	dlg_profile_hash_t *ph;
 	unsigned int i;
 
 	profile = search_dlg_profile( profile_name );
@@ -1384,7 +1417,7 @@ static void internal_rpc_profile_print_dlgs(rpc_t *rpc, void *c, str *profile_na
  * Wrapper around is_known_dlg().
  */
 
-static int w_is_known_dlg(struct sip_msg *msg) {
+static int w_is_known_dlg(sip_msg_t *msg) {
 	return	is_known_dlg(msg);
 }
 
@@ -1429,15 +1462,15 @@ static void rpc_print_dlg_ctx(rpc_t *rpc, void *c) {
 }
 static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
 	unsigned int h_entry, h_id;
-	struct dlg_cell * dlg = NULL;
+	dlg_cell_t * dlg = NULL;
 	str rpc_extra_hdrs = {NULL,0};
 
 	if (rpc->scan(c, "ddS", &h_entry, &h_id, &rpc_extra_hdrs) < 2) return;
 
-	dlg = lookup_dlg(h_entry, h_id);
+	dlg = dlg_lookup(h_entry, h_id);
 	if(dlg){
 		dlg_bye_all(dlg, (rpc_extra_hdrs.len>0)?&rpc_extra_hdrs:NULL);
-		unref_dlg(dlg, 1);
+		dlg_release(dlg);
 	}
 }
 static void rpc_profile_get_size(rpc_t *rpc, void *c) {

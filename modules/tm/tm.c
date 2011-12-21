@@ -1286,6 +1286,12 @@ inline static int w_t_release(struct sip_msg* msg, char* str, char* str2)
 	struct cell *t;
 	int ret;
 	
+	if(get_route_type()!=REQUEST_ROUTE)
+	{
+		LM_INFO("invalid usage - not in request route\n");
+		return -1;
+	}
+
 	if (t_check( msg  , 0  )==-1) return -1;
 	t=get_t();
 	if ( t && t!=T_UNDEFINED ) {

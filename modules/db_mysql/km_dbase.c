@@ -50,7 +50,7 @@
 #include "km_db_mysql.h"
 #include "km_dbase.h"
 
-static char *sql_buf;
+static char *mysql_sql_buf;
 
 
 /**
@@ -513,32 +513,32 @@ int db_mysql_affected_rows(const db1_con_t* _h)
 		return -1;
 	}
  
-	ret = snprintf(sql_buf, sql_buffer_size, "insert into %.*s (", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+	ret = snprintf(mysql_sql_buf, sql_buffer_size, "insert into %.*s (", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 	if (ret < 0 || ret >= sql_buffer_size) goto error;
 	off = ret;
 
-	ret = db_print_columns(sql_buf + off, sql_buffer_size - off, _k, _n);
+	ret = db_print_columns(mysql_sql_buf + off, sql_buffer_size - off, _k, _n);
 	if (ret < 0) return -1;
 	off += ret;
 
-	ret = snprintf(sql_buf + off, sql_buffer_size - off, ") values (");
+	ret = snprintf(mysql_sql_buf + off, sql_buffer_size - off, ") values (");
 	if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
 	off += ret;
-	ret = db_print_values(_h, sql_buf + off, sql_buffer_size - off, _v, _n, db_mysql_val2str);
+	ret = db_print_values(_h, mysql_sql_buf + off, sql_buffer_size - off, _v, _n, db_mysql_val2str);
 	if (ret < 0) return -1;
 	off += ret;
 
-	*(sql_buf + off++) = ')';
+	*(mysql_sql_buf + off++) = ')';
 	
-	ret = snprintf(sql_buf + off, sql_buffer_size - off, " on duplicate key update ");
+	ret = snprintf(mysql_sql_buf + off, sql_buffer_size - off, " on duplicate key update ");
 	if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
 	off += ret;
 	
-	ret = db_print_set(_h, sql_buf + off, sql_buffer_size - off, _k, _v, _n, db_mysql_val2str);
+	ret = db_print_set(_h, mysql_sql_buf + off, sql_buffer_size - off, _k, _v, _n, db_mysql_val2str);
 	if (ret < 0) return -1;
 	off += ret;
 	
-	sql_str.s = sql_buf;
+	sql_str.s = mysql_sql_buf;
 	sql_str.len = off;
  
 	if (db_mysql_submit_query(_h, &sql_str) < 0) {
@@ -587,14 +587,14 @@ int db_mysql_use_table(db1_con_t* _h, const str* _t)
  */
 int db_mysql_alloc_buffer(void)
 {
-    if (db_query_init())
+    if (db_api_init())
     {
-        LM_ERR("Failed to initialise db_query\n");
+        LM_ERR("Failed to initialise db api\n");
 		return -1;
     }
 
-    sql_buf = (char*)malloc(sql_buffer_size);
-    if (sql_buf == NULL)
+    mysql_sql_buf = (char*)malloc(sql_buffer_size);
+    if (mysql_sql_buf == NULL)
         return -1;
     else
         return 0;

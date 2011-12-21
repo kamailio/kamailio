@@ -112,6 +112,9 @@ modparam("async", "workers", 2)
 		that the execution of config after resume will end once the
 		route[routename] is finished.
 		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
 		<title><function>async_sleep</function> usage</title>
 		<programlisting format="linespecific">
@@ -147,6 +150,9 @@ route[RESUME] {
 		practically the config file execution state is lost. Therefore beware
 		that the execution of config after resume will end once the route block
 		where async_sleep() is called is finished.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
 		<title><function>async_sleep</function> usage</title>

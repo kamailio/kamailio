@@ -23,6 +23,8 @@
  *
  */
 
+#ifndef PDT_NO_MI
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -281,3 +283,4 @@ error:
 	return 0;
 }
 
+#endif

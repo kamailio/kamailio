@@ -76,6 +76,13 @@
 
 struct sr_module* modules=0;
 
+/*We need to define this symbol on Solaris becuase libcurl relies on libnspr which looks for this symbol.
+  If it is not defined, dynamic module loading (dlsym) fails */
+#ifdef __OS_solaris
+	int nspr_use_zone_allocator = 0;
+#endif
+
+
 #ifdef STATIC_EXEC
 	extern struct module_exports exec_exports;
 #endif
@@ -775,12 +782,19 @@ void destroy_modules()
 {
 	struct sr_module* t, *foo;
 
+	/* call first destroy function from each module */
 	t=modules;
 	while(t) {
 		foo=t->next;
 		if (t->exports.destroy_f){
 			t->exports.destroy_f();
 		}
+		t=foo;
+	}
+	/* free module exports structures */
+	t=modules;
+	while(t) {
+		foo=t->next;
 		pkg_free(t);
 		t=foo;
 	}
@@ -1369,6 +1383,43 @@ int fixup_var_str_2(void** param, int param_no)
 {
 	if (param_no == 2) return fixup_var_str_12(param, param_no);
 	else return 0;
+}
+
+/** fixup variable-pve-only-string.
+ * The parameter can be a PVE (pv based format string)
+ * or string.
+ * non-static PVEs  identifiers will be resolved to
+ * their values during runtime.
+ * The parameter value will be converted to fparam structure
+ * @param  param - double pointer to param, as for normal fixup functions.
+ * @param  param_no - parameter number, ignored.
+ * @return -1 on an error, 0 on success.
+ */
+int fixup_var_pve_12(void** param, int param_no)
+{
+	int ret;
+	fparam_t* fp;
+	if (fixup_get_param_type(param) != STRING_RVE_ST) {
+		/* if called with a RVE already converted to string =>
+		   don't try PVE again (to avoid double
+		   deref., e.g.: $foo="$bar"; f($foo) ) */
+		if ((ret = fix_param(FPARAM_PVE, param)) <= 0) {
+			if (ret < 0)
+				return ret;
+			/* check if it resolved to a dynamic or "static" PVE.
+			   If the resulting PVE is static (normal string), discard
+			   it and use the normal string fixup (faster at runtime) */
+			fp = (fparam_t*)*param;
+			if (fp->v.pve->spec.getf == 0)
+				fparam_free_restore(param); /* fallback to STR below */
+			else
+				return ret; /* dynamic PVE => return */
+		}
+		
+	}
+	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
+	ERR("Error while fixing parameter - PVE or str conversions failed\n");
+	return -1;
 }
 
 

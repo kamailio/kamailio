@@ -300,7 +300,7 @@ if(is_method("MESSAGE)
 
 
 	<section>
-	<title>Exported Statistics</title>
+	<title>Statistics</title>
 	<section>
 		<title>
 		<function moreinfo="none">active_rooms</function>
@@ -308,7 +308,6 @@ if(is_method("MESSAGE)
 		<para>
 		Number of active IM Conferencing rooms.
 		</para>
-		
 	</section>
 	</section>
 

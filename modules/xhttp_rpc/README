@@ -1,0 +1,165 @@
+xHTTP_RPC Module
+
+Ovidiu Sas
+
+   <osas@voipembedded.com>
+
+Edited by
+
+Ovidiu Sas
+
+   <osas@voipembedded.com>
+
+   Copyright © 2011 VoIPEmbedded Inc.
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+
+              1.1. Limitations
+
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. xhttp_rpc_root (str)
+              3.2. xhttp_rpc_buf_size (str)
+
+        4. Functions
+
+              4.1. dispatch_xhttp_rpc()
+
+   List of Examples
+
+   1.1. Set xhttp_rpc_root parameter
+   1.2. Set xhttp_rpc_buf_size parameter
+   1.3. dispatch_xhttp_rpc usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+
+        1.1. Limitations
+
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. xhttp_rpc_root (str)
+        3.2. xhttp_rpc_buf_size (str)
+
+   4. Functions
+
+        4.1. dispatch_xhttp_rpc()
+
+1. Overview
+
+   1.1. Limitations
+
+   This module provides an HTTP transport layer implementation for the RPC
+   management interface in a human easy readable format.
+
+   The xHTTP_RPC module uses the xHTTP module to handle HTTP requests.
+   Read the documentation of the xHTTP module for more details.
+
+1.1. Limitations
+
+   This module does not implement asynchronous RPC commands. It is
+   unlikely that asynchronous RPC commands will be executed from an RPC
+   web interface.
+
+   This module does not accept parameters embedded in a structure (see RPC
+   documentation for more info about how parameters can be passed to RPC).
+
+   At startup, all RPC commands are sorted and grouped based on their
+   format. The expected format is [group].[subcommand]. The initial
+   xhttp_rpc webpage displays all the retrieved groups. All RPC commands
+   are disponible as submenus of each [group]. If an RPC command is not in
+   the expected format, it will be dropped from the initial xhttp_rpc home
+   page menu.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * xhttp - xHTTP.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+3. Parameters
+
+   3.1. xhttp_rpc_root (str)
+   3.2. xhttp_rpc_buf_size (str)
+
+3.1. xhttp_rpc_root (str)
+
+   It specifies the root path for RPC http requests. The link to the RPC
+   web interface must be constructed using the following patern:
+   http://[server_IP]:[tcp_port]/[xhttp_rpc_root]
+
+   Default value is "rpc".
+
+   Example 1.1. Set xhttp_rpc_root parameter
+...
+modparam("xhttp_rpc", "xhttp_rpc_root", "http_rpc")
+...
+
+3.2. xhttp_rpc_buf_size (str)
+
+   It specifies the maximum length of the buffer used to write in the RPC
+   reply information in order to build the html response.
+
+   Default value is 0 (auto set to 1/3 of the size of the configured pkg
+   mem).
+
+   Example 1.2. Set xhttp_rpc_buf_size parameter
+...
+modparam("xhttp", "xhttp_rpc_buf_size", )
+...
+
+4. Functions
+
+   4.1. dispatch_xhttp_rpc()
+
+4.1.  dispatch_xhttp_rpc()
+
+   Handle the HTTP request and generate back a response.
+
+   Example 1.3. dispatch_xhttp_rpc usage
+...
+tcp_accept_no_cl=yes
+...
+loadmodule "sl.so"
+loadmodule "xhttp.so"
+loadmodule "xhttp_rpc.so"
+...
+modparam("xhttp_rpc", "xhttp_rpc_root", "http_rpc")
+...
+event_route[xhttp:request] {
+        $var(xhttp_rpc_root) = $(hu{s.substr,0,9});
+        if ($var(xhttp_rpc_root) == "/http_rpc")
+                dispatch_xhttp_rpc();
+        else
+                xhttp_reply("200", "OK", "text/html",
+                        "<html><body>Wrong URL $hu</body></html>");
+}
+...

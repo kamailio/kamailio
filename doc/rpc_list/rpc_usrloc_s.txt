@@ -5,28 +5,28 @@ RPC Exports for usrloc_s
 
 
  1. usrloc.stats
-        Print usrloc statistics
+        Documentation missing (rpc_stats_doc).
         Returns an array.
 
  2. usrloc.delete_uid
-        Delete all registered contacts for address of record.
+        Documentation missing (rpc_delete_uid_doc).
 
  3. usrloc.delete_contact
-        Delete a contact if it exists.
+        Documentation missing (rpc_delete_contact_doc).
 
  4. usrloc.dump
-        Print all registered contacts.
+        Documentation missing (rpc_dump_doc).
 
  5. usrloc.dump_file
-        Print all registered contacts into a file.
+        Documentation missing (rpc_dump_file_doc).
 
  6. usrloc.flush
-        Flush cache into database.
+        Documentation missing (rpc_flush_doc).
 
  7. usrloc.add_contact
-        Create a new contact.
+        Documentation missing (rpc_add_contact_doc).
 
  8. usrloc.show_contacts
-        List all registered contacts for address of record
+        Documentation missing (rpc_show_contacts_doc).
         Returns an array.
 

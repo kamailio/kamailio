@@ -986,7 +986,7 @@ reg_free_contacts("callee");
 	</section>
 
 <section>
-	<title>Exported Statistics</title>
+	<title>Statistics</title>
 	<section>
 		<title><varname>max_expires</varname></title>
 		<para>

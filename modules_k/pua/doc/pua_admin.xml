@@ -24,19 +24,21 @@
 	<para>
 		 It can be used with the following modules: pua_mi and pua_usrloc,
 		 pua_bla and pua_xmpp.
-		 The <emphasize>pua_mi</emphasize> offer the possibility to publish any kind of information
+		 The <emphasis>pua_mi</emphasis> offer the possibility to publish any kind of information
 		 or subscribing to a resource through the manager interface.
-		 The <emphasize>pua_usrloc</emphasize> module calls a function exported by pua modules to publish
+		 The <emphasis>pua_usrloc</emphasis> module calls a function exported by pua modules to publish
 		 elementary presence information, such as basic status "open" or "closed",
 		 for clients that do not implement client-to-server presence.
-		 Through <emphasize>pua_bla</emphasize> , BRIDGED LINE APPEARANCE features are added to openser.
-		 The <emphasize>pua_xmpp</emphasize> module represents a gateway between SIP and XMPP, so that 
+		 Through <emphasis>pua_bla</emphasis> , BRIDGED LINE APPEARANCE features are added to openser.
+		 The <emphasis>pua_xmpp</emphasis> module represents a gateway between SIP and XMPP, so that 
 		 jabber and SIP clients can exchange presence information. 
 	</para>
 	<para>
-		The module use a cache to store the presentity list and writes to database
-		on timer to be able to recover upon restart. The presence is kept in-memory
-		during run-time.
+		The module supports 2 modes of operation. In the first a cache is used to store
+		the presentity list and writes to database on timer to be able to recover upon
+		restart. The presence is kept in-memory	during run-time. The second is a database
+		only mode where the presentity list is stored purely in a database, allowing
+		both scalability and resilience.
 	</para>
 	</section>
 		<section>
@@ -173,7 +175,8 @@ modparam("pua", "default_expires", 3600)
 		<para>
 		The interval at which the information in database and hash table
 		should be updated. In the case of the hash table updating means 
-		deleting expired messages.
+		deleting expired messages. 
+		Setting a value less than or equal to zero, disables updates.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>100</quote>.
@@ -260,6 +263,27 @@ modparam("pua", "reginfo_increase_version", 1)
 		</example>
 	</section>
 	<section>
+		<title><varname>db_mode</varname> (int)</title>
+		<para>
+		The module supports 2 modes of operation, high speed memory
+		based storage (mode 0), and database only (mode 2) where all 
+		data is stored in a database, allowing scalability at the expense of speed.
+		Mode 1 is reserved.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "db_mode", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>check_remote_contact</varname> (int)</title>
 		<para>
 		When sending a SUBSCRIBE check that the remote contact matches the
@@ -283,6 +307,26 @@ modparam("pua", "check_remote_contact", 0)
 </programlisting>
 		</example>
 	</section>
+	<section>
+	    <title><varname>fetch_rows</varname> (integer)</title>
+	    <para>
+		Number of rows to be loaded in one step from database.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 500.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>fetch_rows</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "fetch_rows", 1000)
+...
+</programlisting>
+	    </example>
+	</section>
+
 	</section>
 
 	<section>

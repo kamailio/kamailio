@@ -37,9 +37,13 @@
 #include "dprint.h"
 #include "core_cmd.h"
 #include "globals.h"
+#include "forward.h"
+#include "socket_info.h"
+#include "name_alias.h"
 #include "pt.h"
 #include "ut.h"
 #include "tcp_info.h"
+#include "tcp_conn.h"
 #include "tcp_options.h"
 #include "core_cmd.h"
 #include "cfg_core.h"
@@ -676,10 +680,12 @@ static void core_tcpinfo(rpc_t* rpc, void* c)
 	if (!tcp_disable){
 		tcp_get_info(&ti);
 		rpc->add(c, "{", &handle);
-		rpc->struct_add(handle, "dddd",
+		rpc->struct_add(handle, "dddddd",
 			"readers", ti.tcp_readers,
 			"max_connections", ti.tcp_max_connections,
+			"max_tls_connections", ti.tls_max_connections,
 			"opened_connections", ti.tcp_connections_no,
+			"opened_tls_connections", ti.tls_connections_no,
 			"write_queued_bytes", ti.tcp_write_queued
 		);
 	}else{
@@ -706,11 +712,12 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 	if (!tcp_disable){
 		tcp_options_get(&t);
 		rpc->add(c, "{", &handle);
-		rpc->struct_add(handle, "dddddddddddddddddddddd",
+		rpc->struct_add(handle, "ddddddddddddddddddddddd",
 			"connect_timeout", t.connect_timeout_s,
 			"send_timeout",  TICKS_TO_S(t.send_timeout),
 			"connection_lifetime",  TICKS_TO_S(t.con_lifetime),
 			"max_connections(soft)", t.max_connections,
+			"max_tls_connections(soft)", t.max_tls_connections,
 			"no_connect",	t.no_connect,
 			"fd_cache",		t.fd_cache,
 			"async",		t.async,
@@ -733,6 +740,89 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 	}else{
 		rpc->fault(c, 500, "tcp support disabled");
 	}
+#else
+	rpc->fault(c, 500, "tcp support not compiled");
+#endif
+}
+
+
+static const char* core_tcp_list_doc[] = {
+	"Returns tcp connections details.",    /* Documentation string */
+	0                               /* Method signature(s) */
+};
+
+extern gen_lock_t* tcpconn_lock;
+extern struct tcp_connection** tcpconn_id_hash;
+
+static void core_tcp_list(rpc_t* rpc, void* c)
+{
+#ifdef USE_TCP
+	char src_ip[IP_ADDR_MAX_STR_SIZE];
+	char dst_ip[IP_ADDR_MAX_STR_SIZE];
+	void* handle;
+	char* state;
+	char* type;
+	struct tcp_connection* con;
+	int i, len, timeout;
+
+	TCPCONN_LOCK;
+	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
+		for (con = tcpconn_id_hash[i]; con; con = con->id_next) {
+			rpc->add(c, "{", &handle);
+			/* tcp data */
+			if (con->rcv.proto == PROTO_TCP)
+				type = "TCP";
+			else if (con->rcv.proto == PROTO_TCP)
+				type = "TLS";
+			else
+				type = "UNKNOWN";
+
+			if ((len = ip_addr2sbuf(&con->rcv.src_ip, src_ip, sizeof(src_ip)))
+					== 0)
+				BUG("failed to convert source ip");
+			src_ip[len] = 0;
+			if ((len = ip_addr2sbuf(&con->rcv.dst_ip, dst_ip, sizeof(dst_ip)))
+					== 0)
+				BUG("failed to convert destination ip");
+			dst_ip[len] = 0;
+			timeout = TICKS_TO_S(con->timeout - get_ticks_raw());
+			switch(con->state) {
+				case S_CONN_ERROR:
+					state = "CONN_ERROR";
+				break;
+				case S_CONN_BAD:
+					state = "CONN_BAD";
+				break;
+				case S_CONN_OK:
+					state = "CONN_OK";
+				break;
+				case S_CONN_INIT:
+					state = "CONN_INIT";
+				break;
+				case S_CONN_EOF:
+					state = "CONN_EOF";
+				break;
+				case S_CONN_ACCEPT:
+					state = "CONN_ACCEPT";
+				break;
+				case S_CONN_CONNECT:
+					state = "CONN_CONNECT";
+				break;
+				default:
+					state = "UNKNOWN";
+			}
+			rpc->struct_add(handle, "dssdsdsd",
+					"id", con->id,
+					"type", type,
+					"state", state,
+					"timeout", timeout,
+					"src_ip", src_ip,
+					"src_port", con->rcv.src_port,
+					"dst_ip", dst_ip,
+					"dst_port", con->rcv.dst_port);
+		}
+	}
+	TCPCONN_UNLOCK;
 #else
 	rpc->fault(c, 500, "tcp support not compiled");
 #endif
@@ -887,6 +977,96 @@ static void core_udp4rawinfo(rpc_t* rpc, void* c)
 #endif /* USE_RAW_SOCKS */
 }
 
+/**
+ *
+ */
+static const char* core_aliases_list_doc[] = {
+	"List local SIP server host aliases",    /* Documentation string */
+	0                                     /* Method signature(s) */
+};
+
+/**
+ * list the name aliases for SIP server
+ */
+static void core_aliases_list(rpc_t* rpc, void* c)
+{
+	void *hr;
+	void *ha;
+	struct host_alias* a;
+
+	rpc->add(c, "{", &hr);
+	rpc->struct_add(hr, "s",
+			"myself_callbacks", is_check_self_func_list_set()?"yes":"no");
+	for(a=aliases; a; a=a->next) {
+		rpc->struct_add(hr, "{", "alias", &ha);
+		rpc->struct_add(ha, "sS",
+				"proto",  proto2a(a->proto),
+				"address", &a->alias
+			);
+		if (a->port)
+			rpc->struct_add(ha, "d",
+					"port", a->port);
+		else
+			rpc->struct_add(ha, "s",
+					"port", "*");
+	}
+}
+
+/**
+ *
+ */
+static const char* core_sockets_list_doc[] = {
+	"List local SIP server listen sockets",    /* Documentation string */
+	0                                     /* Method signature(s) */
+};
+
+/**
+ * list listen sockets for SIP server
+ */
+static void core_sockets_list(rpc_t* rpc, void* c)
+{
+	void *hr;
+	void *ha;
+	struct socket_info *si;
+	struct socket_info** list;
+	struct addr_info* ai;
+	unsigned short proto;
+
+	proto=PROTO_UDP;
+	rpc->add(c, "{", &hr);
+	do{
+		list=get_sock_info_list(proto);
+		for(si=list?*list:0; si; si=si->next){
+			rpc->struct_add(hr, "{", "socket", &ha);
+			if (si->addr_info_lst){
+				rpc->struct_add(ha, "ss",
+						"proto", get_proto_name(proto),
+						"address", si->address_str.s);
+				for (ai=si->addr_info_lst; ai; ai=ai->next)
+					rpc->struct_add(ha, "ss",
+						"address", ai->address_str.s);
+				rpc->struct_add(ha, "sss",
+						"proto", si->port_no_str.s,
+						"mcast", si->flags & SI_IS_MCAST ? "yes" : "no",
+						"mhomed", si->flags & SI_IS_MHOMED ? "yes" : "no");
+			} else {
+				printf("             %s: %s",
+						get_proto_name(proto),
+						si->name.s);
+				rpc->struct_add(ha, "ss",
+						"proto", get_proto_name(proto),
+						"address", si->name.s);
+				if (!si->flags & SI_IS_IP)
+					rpc->struct_add(ha, "ss",
+						"ipaddress", si->address_str.s);
+				rpc->struct_add(ha, "sss",
+						"proto", si->port_no_str.s,
+						"mcast", si->flags & SI_IS_MCAST ? "yes" : "no",
+						"mhomed", si->flags & SI_IS_MHOMED ? "yes" : "no");
+			}
+		}
+	} while((proto=next_proto(proto)));
+}
 
 
 /*
@@ -920,11 +1100,14 @@ static rpc_export_t core_rpc_methods[] = {
 #endif
 	{"core.tcp_info",          core_tcpinfo,           core_tcpinfo_doc,    0},
 	{"core.tcp_options",       core_tcp_options,       core_tcp_options_doc,0},
+	{"core.tcp_list",          core_tcp_list,          core_tcp_list_doc,0},
 	{"core.sctp_options",      core_sctp_options,      core_sctp_options_doc,
 		0},
 	{"core.sctp_info",         core_sctpinfo,          core_sctpinfo_doc,   0},
 	{"core.udp4_raw_info",     core_udp4rawinfo,       core_udp4rawinfo_doc,
 		0},
+	{"core.aliases_list",      core_aliases_list,      core_aliases_list_doc,   0},
+	{"core.sockets_list",      core_sockets_list,      core_sockets_list_doc,   0},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,
 		0	},

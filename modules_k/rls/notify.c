@@ -51,6 +51,9 @@
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
+static str *multipart_body = NULL;
+static int multipart_body_size = 0;
+
 typedef struct res_param
 {
     struct uri_link **next;
@@ -68,7 +71,7 @@ int resource_uri_col=0, content_type_col, pres_state_col= 0,
 xmlDocPtr constr_rlmi_doc(db1_res_t* result, str* rl_uri, int version,
 		xmlNodePtr rl_node, char*** cid_array,
 		str username, str domain);
-void constr_multipart_body(str *multipart_body, const str *const content_type, const str *const body, str *cid, int boundary_len, char *boundary_string);
+void constr_multipart_body(const str *const content_type, const str *const body, str *cid, int boundary_len, char *boundary_string);
 
 dlg_t* rls_notify_dlg(subs_t* subs);
 
@@ -78,14 +81,13 @@ int parse_xcap_uri(char *uri, str *host, unsigned short *port, str *path);
 int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 		xmlNodePtr *rl_node, xmlDocPtr *xmldoc);
 int add_resource_to_list(char* uri, void* param);
-int add_resource(char* uri, xmlNodePtr list_node, str *multipart_body, char * boundary_string, db1_res_t *result, int *len_est);
+int add_resource(char* uri, xmlNodePtr list_node, char * boundary_string, db1_res_t *result, int *len_est);
 
 int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 		unsigned int hash_code)
 {
 	xmlDocPtr rlmi_body= NULL;
     xmlNodePtr list_node= NULL;
-	str* multipart_body= NULL;
 	db_key_t query_cols[2], update_cols[2], result_cols[7];
 	db_val_t query_vals[2], update_vals[2];
 	db1_res_t *result= NULL;
@@ -96,8 +98,6 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
     uri_link_t *uri_list_head = NULL;
     int len_est;
     res_param_t param;
-    char* body_buffer;
-    int size= BUF_REALLOC_SIZE;
     int resource_added = 0; /* Flag to indicate that we have added at least one resource */
 
 	LM_DBG("start\n");
@@ -137,19 +137,20 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 
     /* Allocate an initial buffer for the multipart body.
 	 * This buffer will be reallocated if neccessary */
-    body_buffer= (char *)pkg_malloc(size);
-	if(body_buffer== NULL)
-	{
-		ERR_MEM(PKG_MEM_STR);
-	}
-    
-    multipart_body= (str*)pkg_malloc(sizeof(str));
+	multipart_body= (str*)pkg_malloc(sizeof(str));
 	if(multipart_body== NULL)
 	{
 		ERR_MEM(PKG_MEM_STR);
 	}
 
-	multipart_body->s= body_buffer;
+    multipart_body_size = BUF_REALLOC_SIZE;
+    multipart_body->s = (char *)pkg_malloc(multipart_body_size);
+
+	if(multipart_body->s== NULL)
+	{
+		ERR_MEM(PKG_MEM_STR);
+	}
+    
 	multipart_body->len= 0;
 
     /* Create an empty rlmi document */
@@ -169,7 +170,7 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
     while (uri_list_head)
 	{
         uri_link_t *last = uri_list_head;
-        if (add_resource(uri_list_head->uri, list_node, multipart_body, boundary_string, result, &len_est) >0)
+        if (add_resource(uri_list_head->uri, list_node, boundary_string, result, &len_est) >0)
         {
             if (resource_added == 0)
             {
@@ -257,9 +258,11 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 
 	if(multipart_body)			
 	{
-		pkg_free(multipart_body->s);
+	    if (multipart_body->s)
+			pkg_free(multipart_body->s);
 		pkg_free(multipart_body);
 	}
+	multipart_body_size = 0;
 	pkg_free(rlsubs_did.s);
 
 	return 0;
@@ -277,6 +280,7 @@ error:
 			pkg_free(multipart_body->s);
 		pkg_free(multipart_body);
 	}
+	multipart_body_size = 0;
 	
 	if(result)
 		rls_dbf.free_result(rls_db, result);
@@ -341,11 +345,23 @@ int agg_body_sendn_update(str* rl_uri, char* boundary_string, str* rlmi_body,
 	pkg_free(body.s);
 	body.s= NULL;
 
-	if(pres_update_shtable(rls_table, hash_code,subs, LOCAL_TYPE)< 0)
+	if (dbmode==RLS_DB_ONLY)
 	{
-		LM_ERR("updating in hash table\n");
-		goto error;
+		if ( update_rlsdb(subs, LOCAL_TYPE) <0 )
+		{
+			LM_ERR( "updating DB\n" );
+			goto error;
+		}
 	}
+	else
+	{
+		if(pres_update_shtable(rls_table, hash_code,subs, LOCAL_TYPE)< 0)
+		{
+			LM_ERR("updating in hash table\n");
+			goto error;
+		}
+	}
+
 	return 0;
 
 error:
@@ -357,7 +373,7 @@ error:
 
 
 int add_resource_instance(char* uri, xmlNodePtr resource_node,
-		db1_res_t* result, str *multipart_body, char * boundary_string,
+		db1_res_t* result, char * boundary_string,
         int *len_est)
 {
 	xmlNodePtr instance_node= NULL;
@@ -438,7 +454,7 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 
 			if(auth_state_flag & ACTIVE_STATE)
 			{
-                constr_multipart_body (multipart_body, &content_type, &body, &cid, boundary_len, boundary_string);
+                constr_multipart_body (&content_type, &body, &cid, boundary_len, boundary_string);
 
 				xmlNewProp(instance_node, BAD_CAST "cid", BAD_CAST cid.s);
 			}
@@ -457,7 +473,7 @@ error:
 	return -1;
 }
 
-int add_resource(char* uri, xmlNodePtr list_node, str *multipart_body, char * boundary_string, db1_res_t *result, int *len_est)
+int add_resource(char* uri, xmlNodePtr list_node, char * boundary_string, db1_res_t *result, int *len_est)
 {
 	xmlNodePtr resource_node= NULL;
     int res;
@@ -477,7 +493,7 @@ int add_resource(char* uri, xmlNodePtr list_node, str *multipart_body, char * bo
 	}
 	xmlNewProp(resource_node, BAD_CAST "uri", BAD_CAST uri);
 
-    res = add_resource_instance(uri, resource_node, result, multipart_body, boundary_string, len_est);
+    res = add_resource_instance(uri, resource_node, result, boundary_string, len_est);
 	if(res < 0)
 	{
 		LM_ERR("while adding resource instance node\n");
@@ -575,10 +591,9 @@ error:
 }
 
 
-void constr_multipart_body(str *multipart_body, const str *const content_type, const str *const body, str *cid, int boundary_len, char *boundary_string)
+void constr_multipart_body(const str *const content_type, const str *const body, str *cid, int boundary_len, char *boundary_string)
 {
 	char* buf= multipart_body->s;
-	int size= BUF_REALLOC_SIZE;
 	int length= multipart_body->len;
 	int chunk_len;
 	
@@ -589,10 +604,16 @@ void constr_multipart_body(str *multipart_body, const str *const content_type, c
                 + 16 + cid->len
                 + 18 + content_type->len
                 + 4 + body->len + 8;
-		if(length + chunk_len >= size)
+		while(length + chunk_len >= multipart_body_size)
 		{
-			REALLOC_BUF
+			multipart_body_size += BUF_REALLOC_SIZE;
+			multipart_body->s = (char*)pkg_realloc(multipart_body->s, multipart_body_size);
+			if(multipart_body->s == NULL) 
+			{
+				ERR_MEM("constr_multipart_body");
+			}
 		}
+		buf = multipart_body->s;
 
 		length+= sprintf(buf+ length, "--%.*s\r\n",
             boundary_len, boundary_string);
@@ -603,6 +624,8 @@ void constr_multipart_body(str *multipart_body, const str *const content_type, c
             content_type->len, content_type->s);
 		length+= sprintf(buf+length,"%.*s\r\n\r\n",
             body->len, body->s);
+
+	multipart_body->len = length;
 
 error:
 
@@ -884,7 +907,6 @@ void rls_notify_callback( struct cell *t, int type, struct tmcb_params *ps)
 
 	if(ps->code >= 300)
 	{
-		/* delete from database table */
 		db_key_t db_keys[2];
 		db_val_t db_vals[2];
 		unsigned int hash_code;
@@ -896,32 +918,48 @@ void rls_notify_callback( struct cell *t, int type, struct tmcb_params *ps)
 		subs.from_tag= ((dialog_id_t*)(*ps->param))->from_tag;
 		subs.callid= ((dialog_id_t*)(*ps->param))->callid;
 
-		if (rls_dbf.use_table(rls_db, &rlsubs_table) < 0) 
+		if (dbmode != RLS_DB_ONLY)
 		{
-			LM_ERR("in use_table\n");
-			goto done;
-		}
+			/* delete from database table */
+
+
+			if (rls_dbf.use_table(rls_db, &rlsubs_table) < 0) 
+			{
+				LM_ERR("in use_table\n");
+				goto done;
+			}
 		
-		db_keys[0] =&str_to_tag_col;
-		db_vals[0].type = DB1_STR;
-		db_vals[0].nul = 0;
-		db_vals[0].val.str_val = subs.to_tag;
+			db_keys[0] =&str_to_tag_col;
+			db_vals[0].type = DB1_STR;
+			db_vals[0].nul = 0;
+			db_vals[0].val.str_val = subs.to_tag;
 
-		db_keys[1] =&str_callid_col;
-		db_vals[1].type = DB1_STR;
-		db_vals[1].nul = 0;
-		db_vals[1].val.str_val = subs.callid;
+			db_keys[1] =&str_callid_col;
+			db_vals[1].type = DB1_STR;
+			db_vals[1].nul = 0;
+			db_vals[1].val.str_val = subs.callid;
 
 
-		if (rls_dbf.delete(rls_db, db_keys, 0, db_vals, 2) < 0) 
-			LM_ERR("cleaning expired messages\n");	
+			if (rls_dbf.delete(rls_db, db_keys, 0, db_vals, 2) < 0) 
+				LM_ERR("cleaning expired messages\n");	
+		}
 
 		/* delete from cache table */
-		hash_code= core_hash(&subs.callid, &subs.to_tag , hash_size);
-
-		if(pres_delete_shtable(rls_table,hash_code, subs.to_tag)< 0)
+		if (dbmode == RLS_DB_ONLY)
 		{
-			LM_ERR("record not found in hash table\n");
+			if (delete_rlsdb(&subs.callid, &subs.to_tag, NULL) < 0 )
+			{
+				LM_ERR( "unable to delete record from DB\n" );
+			}
+		}
+		else
+		{
+			hash_code= core_hash(&subs.callid, &subs.to_tag , hash_size);
+
+			if(pres_delete_shtable(rls_table,hash_code, subs.to_tag)< 0)
+			{
+				LM_ERR("record not found in hash table\n");
+			}
 		}
 	}	
 
@@ -960,7 +998,7 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 			{
 				if (rls_integrated_xcap_server == 1
 					&& (hostname.len == 0
-						|| check_self(&hostname, port, PROTO_NONE) == 1))
+						|| check_self(&hostname, 0, PROTO_NONE) == 1))
 				{
 					LM_DBG("fetching local <resource-list/>\n");
 					if (rls_get_resource_list(&rl_uri, &username, &domain, &rl_node, &rl_doc)>0)
@@ -1234,7 +1272,7 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 	query_vals[n_query_cols].val.str_val = root;
 	n_query_cols++;
 
-	if(rls_dbf.use_table(rls_db, &rls_xcap_table) < 0)
+	if(rls_xcap_dbf.use_table(rls_xcap_db, &rls_xcap_table) < 0)
 	{
 		LM_ERR("in use_table-[table]=%.*s\n",
 			rls_xcap_table.len, rls_xcap_table.s);
@@ -1243,20 +1281,20 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 
 	result_cols[xcap_col= n_result_cols++] = &str_doc_col;
 
-	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
+	if(rls_xcap_dbf.query(rls_xcap_db, query_cols, 0, query_vals, result_cols,
 				n_query_cols, n_result_cols, 0, &result)<0)
 	{
 		LM_ERR("failed querying table xcap for document: %.*s\n",
 				root.len, root.s);
 		if(result)
-			rls_dbf.free_result(rls_db, result);
+			rls_xcap_dbf.free_result(rls_xcap_db, result);
 		return -1;
 	}
 
 	if(result->n<=0)
 	{
 		LM_DBG("No rl document found\n");
-		rls_dbf.free_result(rls_db, result);
+		rls_xcap_dbf.free_result(rls_xcap_db, result);
 		return -1;
 	}
 
@@ -1334,12 +1372,12 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 		xmlXPathFreeContext(xpathCtx);
 	}
 	
-	rls_dbf.free_result(rls_db, result);
+	rls_xcap_dbf.free_result(rls_xcap_db, result);
 	return 1;
 
 error:
 	if(result!=NULL)
-		rls_dbf.free_result(rls_db, result);
+		rls_xcap_dbf.free_result(rls_xcap_db, result);
 	if(xpathObj!=NULL)
 		xmlXPathFreeObject(xpathObj);
 	

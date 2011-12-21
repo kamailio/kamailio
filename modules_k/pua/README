@@ -8,7 +8,7 @@ Edited by
 
 Anca-Maria Vamanu
 
-   Copyright © 2006 Voice Sistem SRL
+   Copyright � 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -32,7 +32,9 @@ Anca-Maria Vamanu
               3.7. outbound_proxy (str)
               3.8. dlginfo_increase_version (int)
               3.9. reginfo_increase_version (int)
-              3.10. check_remote_contact (int)
+              3.10. db_mode (int)
+              3.11. check_remote_contact (int)
+              3.12. fetch_rows (integer)
 
         4. Functions
 
@@ -60,8 +62,10 @@ Anca-Maria Vamanu
    1.7. Set outbound_proxy parameter
    1.8. Set dlginfo_increase_version parameter
    1.9. Set reginfo_increase_version parameter
-   1.10. Set check_remote_contact parameter
-   1.11. pua_update_contact usage
+   1.10. Set db_mode parameter
+   1.11. Set check_remote_contact parameter
+   1.12. Set fetch_rows parameter
+   1.13. pua_update_contact usage
    2.1. pua_api structure
    2.2. pua_is_dialog usage example
    2.3. register_puacb usage example
@@ -88,7 +92,9 @@ Chapter 1. Admin Guide
         3.7. outbound_proxy (str)
         3.8. dlginfo_increase_version (int)
         3.9. reginfo_increase_version (int)
-        3.10. check_remote_contact (int)
+        3.10. db_mode (int)
+        3.11. check_remote_contact (int)
+        3.12. fetch_rows (integer)
 
    4. Functions
 
@@ -104,21 +110,22 @@ Chapter 1. Admin Guide
    appearance implementations.
 
    It can be used with the following modules: pua_mi and pua_usrloc,
-   pua_bla and pua_xmpp. The <emphasize>pua_mi</emphasize> offer the
-   possibility to publish any kind of information or subscribing to a
-   resource through the manager interface. The
-   <emphasize>pua_usrloc</emphasize> module calls a function exported by
-   pua modules to publish elementary presence information, such as basic
+   pua_bla and pua_xmpp. The pua_mi offer the possibility to publish any
+   kind of information or subscribing to a resource through the manager
+   interface. The pua_usrloc module calls a function exported by pua
+   modules to publish elementary presence information, such as basic
    status "open" or "closed", for clients that do not implement
-   client-to-server presence. Through <emphasize>pua_bla</emphasize> ,
-   BRIDGED LINE APPEARANCE features are added to openser. The
-   <emphasize>pua_xmpp</emphasize> module represents a gateway between SIP
-   and XMPP, so that jabber and SIP clients can exchange presence
-   information.
+   client-to-server presence. Through pua_bla , BRIDGED LINE APPEARANCE
+   features are added to openser. The pua_xmpp module represents a gateway
+   between SIP and XMPP, so that jabber and SIP clients can exchange
+   presence information.
 
-   The module use a cache to store the presentity list and writes to
-   database on timer to be able to recover upon restart. The presence is
-   kept in-memory during run-time.
+   The module supports 2 modes of operation. In the first a cache is used
+   to store the presentity list and writes to database on timer to be able
+   to recover upon restart. The presence is kept in-memory during
+   run-time. The second is a database only mode where the presentity list
+   is stored purely in a database, allowing both scalability and
+   resilience.
 
 2. Dependencies
 
@@ -148,7 +155,9 @@ Chapter 1. Admin Guide
    3.7. outbound_proxy (str)
    3.8. dlginfo_increase_version (int)
    3.9. reginfo_increase_version (int)
-   3.10. check_remote_contact (int)
+   3.10. db_mode (int)
+   3.11. check_remote_contact (int)
+   3.12. fetch_rows (integer)
 
 3.1. hash_size (int)
 
@@ -156,7 +165,7 @@ Chapter 1. Admin Guide
    information. This parameter will be used as the power of 2 when
    computing table size.
 
-   Default value is “9”.
+   Default value is "9".
 
    Example 1.1. Set hash_size parameter
 ...
@@ -167,7 +176,7 @@ modparam("pua", "hash_size", 11)
 
    Database url.
 
-   Default value is “>mysql://openser:openserrw@localhost/openser”.
+   Default value is ">mysql://openser:openserrw@localhost/openser".
 
    Example 1.2. Set db_url parameter
 ...
@@ -178,7 +187,7 @@ modparam("pua", "db_url" "dbdriver://username:password@dbhost/dbname")
 
    The name of the database table.
 
-   Default value is “pua”.
+   Default value is "pua".
 
    Example 1.3. Set db_table parameter
 ...
@@ -189,7 +198,7 @@ modparam("pua", "db_table", "pua")
 
    The inferior expires limit for both Publish and Subscribe.
 
-   Default value is “0”.
+   Default value is "0".
 
    Example 1.4. Set min_expires parameter
 ...
@@ -201,7 +210,7 @@ modparam("pua", "min_expires", 0)
    The default expires value used in case this information is not
    provisioned.
 
-   Default value is “3600”.
+   Default value is "3600".
 
    Example 1.5. Set default_expires parameter
 ...
@@ -212,9 +221,10 @@ modparam("pua", "default_expires", 3600)
 
    The interval at which the information in database and hash table should
    be updated. In the case of the hash table updating means deleting
-   expired messages.
+   expired messages. Setting a value less than or equal to zero, disables
+   updates.
 
-   Default value is “100”.
+   Default value is "100".
 
    Example 1.6. Set update_period parameter
 ...
@@ -243,7 +253,7 @@ modparam("pua", "outbound_proxy", "sip:outbound.example.com")
    presence_dialoginfo module) it makes no sense to waste CPU resources
    for parsing the XML body and the parameter should be set to 0.
 
-   Default value is “0”.
+   Default value is "0".
 
    Example 1.8. Set dlginfo_increase_version parameter
 ...
@@ -261,14 +271,28 @@ modparam("pua", "dlginfo_increase_version", 1)
    presence_reginfo module) it makes no sense to waste CPU resources for
    parsing the XML body and the parameter should be set to 0.
 
-   Default value is “0”.
+   Default value is "0".
 
    Example 1.9. Set reginfo_increase_version parameter
 ...
 modparam("pua", "reginfo_increase_version", 1)
 ...
 
-3.10. check_remote_contact (int)
+3.10. db_mode (int)
+
+   The module supports 2 modes of operation, high speed memory based
+   storage (mode 0), and database only (mode 2) where all data is stored
+   in a database, allowing scalability at the expense of speed. Mode 1 is
+   reserved.
+
+   Default value is "0".
+
+   Example 1.10. Set db_mode parameter
+...
+modparam("pua", "db_mode", 0)
+...
+
+3.11. check_remote_contact (int)
 
    When sending a SUBSCRIBE check that the remote contact matches the one
    in the stored dialog or not. If the remote contact is checked and does
@@ -278,18 +302,29 @@ modparam("pua", "reginfo_increase_version", 1)
    anyway. Set this parameter to 0 to disable checking of remote contact
    for SUBSCRIBE dialog matching.
 
-   Default value is “1”.
+   Default value is "1".
 
-   Example 1.10. Set check_remote_contact parameter
+   Example 1.11. Set check_remote_contact parameter
 ...
 modparam("pua", "check_remote_contact", 0)
+...
+
+3.12. fetch_rows (integer)
+
+   Number of rows to be loaded in one step from database.
+
+   Default value is 500.
+
+   Example 1.12. Set fetch_rows parameter
+...
+modparam("pua", "fetch_rows", 1000)
 ...
 
 4. Functions
 
    4.1. pua_update_contact()
 
-4.1.  pua_update_contact()
+4.1. pua_update_contact()
 
    The remote target can be updated by the Contact of a subsequent in
    dialog request. In the PUA watcher case (sending a SUBSCRIBE messages),
@@ -304,7 +339,7 @@ modparam("pua", "check_remote_contact", 0)
      * 1 - if success.
      * -1 - if error.
 
-   Example 1.11. pua_update_contact usage
+   Example 1.13. pua_update_contact usage
 ...
 if(method=="NOTIFY")
     pua_update_contact();
@@ -332,7 +367,7 @@ Chapter 2. Developer Guide
    The module provides the following functions that can be used by other
    Kamailio modules.
 
-1.  bind_pua(pua_api_t* api)
+1. bind_pua(pua_api_t* api)
 
    This function binds the pua modules and fills the structure with the
    two exported functions.
@@ -348,7 +383,7 @@ typedef struct pua_api {
 } pua_api_t;
 ...
 
-2.  send_publish
+2. send_publish
 
    Field type:
 ...
@@ -388,7 +423,7 @@ typedef struct publ_info
 }publ_info_t;
 ...
 
-3.  send_subscribe
+3. send_subscribe
 
    Field type:
 ...
@@ -427,7 +462,7 @@ typedef struct subs_info
 }subs_info_t;
 ...
 
-4.  is_dialog
+4. is_dialog
 
    Field type:
 ...
@@ -446,7 +481,7 @@ typedef int  (*query_dialog_t)(ua_pres_t* presentity);
         }
 ...
 
-5.  register_puacb
+5. register_puacb
 
    Field type:
 ...
@@ -475,7 +510,7 @@ typedef int (*register_puacb_t)(int types, pua_cb f, void* param );
 typedef int (pua_cb)(ua_pres_t* hentity, struct sip_msg*);
 ...
 
-6.  add_event
+6. add_event
 
    Field type:
 ...

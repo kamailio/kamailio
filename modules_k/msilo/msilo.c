@@ -38,6 +38,8 @@
  * 2004-06-07 updated to the new DB api (andrei)
  * 2006-09-10 m_dump now checks if registering UA supports MESSAGE method (jh)
  * 2006-10-05 added max_messages module variable (jh)
+ * 2011-10-19 added storage of extra SIP headers (hpw)
+ * 2011-12-07 added storage of extra SIP headers from AVP (jh)
  */
 
 #include <stdio.h>
@@ -68,20 +70,22 @@
 
 #include "ms_msg_list.h"
 #include "msfuncs.h"
+#include "api.h"
 
 #define MAX_DEL_KEYS	1	
-#define NR_KEYS			10
+#define NR_KEYS			11
 
-static str sc_mid      = str_init("id");        /* 0 */
-static str sc_from     = str_init("src_addr");  /* 1 */
-static str sc_to       = str_init("dst_addr");  /* 2 */
-static str sc_uri_user = str_init("username");  /* 3 */
-static str sc_uri_host = str_init("domain");    /* 4 */
-static str sc_body     = str_init("body");      /* 5 */
-static str sc_ctype    = str_init("ctype");     /* 6 */
-static str sc_exp_time = str_init("exp_time");  /* 7 */
-static str sc_inc_time = str_init("inc_time");  /* 8 */
-static str sc_snd_time = str_init("snd_time");  /* 9 */
+static str sc_mid         = str_init("id");         /*  0 */
+static str sc_from        = str_init("src_addr");   /*  1 */
+static str sc_to          = str_init("dst_addr");   /*  2 */
+static str sc_uri_user    = str_init("username");   /*  3 */
+static str sc_uri_host    = str_init("domain");     /*  4 */
+static str sc_body        = str_init("body");       /*  5 */
+static str sc_ctype       = str_init("ctype");      /*  6 */
+static str sc_exp_time    = str_init("exp_time");   /*  7 */
+static str sc_inc_time    = str_init("inc_time");   /*  8 */
+static str sc_snd_time    = str_init("snd_time");   /*  9 */
+static str sc_stored_hdrs = str_init("extra_hdrs"); /* 10 */
 
 #define SET_STR_VAL(_str, _res, _r, _c)	\
 	if (RES_ROWS(_res)[_r].values[_c].nul == 0) \
@@ -108,7 +112,7 @@ static str sc_snd_time = str_init("snd_time");  /* 9 */
 
 MODULE_VERSION
 
-#define S_TABLE_VERSION 5
+#define S_TABLE_VERSION 6
 
 /** database connection */
 static db1_con_t *db_con = NULL;
@@ -151,16 +155,25 @@ static str ms_snd_time_avp_param = {NULL, 0};
 int_str ms_snd_time_avp_name;
 unsigned short ms_snd_time_avp_type;
 
+static str ms_extra_hdrs_avp_param = {NULL, 0};
+int_str ms_extra_hdrs_avp_name;
+unsigned short ms_extra_hdrs_avp_type;
+
 str msg_type = str_init("MESSAGE");
 
 /** module functions */
 static int mod_init(void);
 static int child_init(int);
 
-static int m_store(struct sip_msg*, char*, char*);
-static int m_dump(struct sip_msg*, char*, char*);
+static int m_store(struct sip_msg*, str*);
+static int m_dump(struct sip_msg*, str*);
+
+static int m_store_2(struct sip_msg*, char*, char*);
+static int m_dump_2(struct sip_msg*, char*, char*);
 
 static void destroy(void);
+
+static int bind_msilo(msilo_api_t* api);
 
 void m_clean_silo(unsigned int ticks, void *);
 void m_send_ontimer(unsigned int ticks, void *);
@@ -169,16 +182,18 @@ int ms_reset_stime(int mid);
 
 int check_message_support(struct sip_msg* msg);
 
+
 /** TM callback function */
 static void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
 
 static cmd_export_t cmds[]={
-	{"m_store",  (cmd_function)m_store, 0, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"m_store",  (cmd_function)m_store, 1, fixup_spve_null, 0,
+	{"m_store",  (cmd_function)m_store_2, 0, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"m_store",  (cmd_function)m_store_2, 1, fixup_spve_null, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"m_dump",   (cmd_function)m_dump,  0, 0, 0, REQUEST_ROUTE},
-	{"m_dump",   (cmd_function)m_dump,  1, fixup_spve_null, 0,
+	{"m_dump",   (cmd_function)m_dump_2,  0, 0, 0, REQUEST_ROUTE},
+	{"m_dump",   (cmd_function)m_dump_2,  1, fixup_spve_null, 0,
 		REQUEST_ROUTE},
+	{"bind_msilo",(cmd_function)bind_msilo, 1, 0, 0, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -208,7 +223,9 @@ static param_export_t params[]={
 	{ "sc_exp_time",      STR_PARAM, &sc_exp_time.s           },
 	{ "sc_inc_time",      STR_PARAM, &sc_inc_time.s           },
 	{ "sc_snd_time",      STR_PARAM, &sc_snd_time.s           },
+	{ "sc_stored_hdrs",   STR_PARAM, &sc_stored_hdrs.s        },
 	{ "snd_time_avp",     STR_PARAM, &ms_snd_time_avp_param.s },
+	{ "extra_hdrs_avp",   STR_PARAM, &ms_extra_hdrs_avp_param.s },
 	{ "add_date",         INT_PARAM, &ms_add_date             },
 	{ "max_messages",     INT_PARAM, &ms_max_messages         },
 	{ "add_contact",      INT_PARAM, &ms_add_contact          },
@@ -254,6 +271,16 @@ struct module_exports exports= {
 	child_init  /* per-child init function */
 };
 
+static int bind_msilo(msilo_api_t* api)
+{
+	if (!api) {
+		return -1;
+	}
+	api->m_store = m_store;
+	api->m_dump = m_dump;
+	return 0;
+}
+
 /**
  * init module function
  */
@@ -282,6 +309,8 @@ static int mod_init(void)
 	sc_snd_time.len = strlen(sc_snd_time.s);
 	if (ms_snd_time_avp_param.s)
 		ms_snd_time_avp_param.len = strlen(ms_snd_time_avp_param.s);
+	if (ms_extra_hdrs_avp_param.s)
+		ms_extra_hdrs_avp_param.len = strlen(ms_extra_hdrs_avp_param.s);
 
 	/* binding to mysql module  */
 	if (db_bind_mod(&ms_db_url, &msilo_dbf))
@@ -311,6 +340,22 @@ static int mod_init(void)
 					ms_snd_time_avp_param.len, ms_snd_time_avp_param.s);
 			return -1;
 		}
+	}
+
+	if (ms_extra_hdrs_avp_param.s && ms_extra_hdrs_avp_param.len > 0) {
+	    if (pv_parse_spec(&ms_extra_hdrs_avp_param, &avp_spec)==0
+		|| avp_spec.type!=PVT_AVP) {
+		LM_ERR("malformed or non AVP %.*s AVP definition\n",
+		       ms_extra_hdrs_avp_param.len, ms_extra_hdrs_avp_param.s);
+		return -1;
+	    }
+
+	    if (pv_get_avp_name(0, &(avp_spec.pvp), &ms_extra_hdrs_avp_name,
+			       &ms_extra_hdrs_avp_type) != 0) {
+		LM_ERR("[%.*s]- invalid AVP definition\n",
+		       ms_extra_hdrs_avp_param.len, ms_extra_hdrs_avp_param.s);
+		return -1;
+	    }
 	}
 
 	db_con = msilo_dbf.init(&ms_db_url);
@@ -471,18 +516,73 @@ static int child_init(int rank)
 }
 
 /**
+ * get_non_mandatory_headers
+ * Extracts additional headers into the given buffer for storing alongside the message
+ * returns the length of the created data
+ *
+ * It is assumed that all headers have been parsed at this point
+ */
+static int get_non_mandatory_headers(struct sip_msg *msg, char *buf, int buf_len)
+{
+	struct hdr_field *hdrs;
+	int len = 0;
+	int_str avp_value;
+	struct usr_avp *avp;
+
+	if (ms_extra_hdrs_avp_name.n != 0) {
+	    avp = NULL;
+	    avp = search_first_avp(ms_extra_hdrs_avp_type,
+				   ms_extra_hdrs_avp_name, &avp_value, 0);
+	    if ((avp != NULL) && is_avp_str_val(avp)) {
+		if (buf_len <= avp_value.s.len) {
+		    LM_ERR("insufficient space to store headers in silo\n");
+		    return -1;
+		}
+		memcpy(buf, avp_value.s.s, avp_value.s.len);
+		return avp_value.s.len;
+	    }
+	}
+
+	for (hdrs = msg->headers; hdrs != NULL; hdrs = hdrs->next)
+	{
+		switch (hdrs->type) {
+			case HDR_OTHER_T:
+			case HDR_PPI_T:
+			case HDR_PAI_T:
+			case HDR_PRIVACY_T:
+				if (buf_len <= hdrs->len)
+				{
+					LM_ERR("Insufficient space to store headers in silo\n");
+					return -1;
+				}
+				memcpy(buf, hdrs->name.s, hdrs->len);
+				len += hdrs->len;
+				buf += hdrs->len;
+				buf_len -= hdrs->len;
+				break;
+			default:
+				break;
+		}
+	}
+	return len;
+}
+
+/**
  * store message
  * mode = "0" -- look for outgoing URI starting with new_uri
  * 		= "1" -- look for outgoing URI starting with r-uri
  * 		= "2" -- look for outgoing URI only at to header
  */
 
-static int m_store(struct sip_msg* msg, char* owner, char* s2)
+static int m_store(struct sip_msg* msg, str *owner_s)
 {
 	str body, str_hdr, ctaddr;
 	struct to_body *pto, *pfrom;
 	struct sip_uri puri;
-	str duri, owner_s;
+	str duri;
+#define EXTRA_HDRS_BUF_LEN	1024
+	static char extra_hdrs_buf[EXTRA_HDRS_BUF_LEN];
+	str extra_hdrs;
 	db_key_t db_keys[NR_KEYS-1];
 	db_val_t db_vals[NR_KEYS-1];
 	db_key_t db_cols[1]; 
@@ -538,19 +638,14 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	
 	/* get the owner */
 	memset(&puri, 0, sizeof(struct sip_uri));
-	if(owner)
+	if(owner_s != NULL)
 	{
-		if(fixup_get_svalue(msg, (gparam_p)owner, &owner_s)!=0)
-		{
-			LM_ERR("invalid owner uri parameter");
-			return -1;
-		}
-		if(parse_uri(owner_s.s, owner_s.len, &puri)!=0)
+		if(parse_uri(owner_s->s, owner_s->len, &puri)!=0)
 		{
 			LM_ERR("bad owner SIP address!\n");
 			goto error;
 		} else {
-			LM_DBG("using user id [%.*s]\n", owner_s.len, owner_s.s);
+			LM_DBG("using user id [%.*s]\n", owner_s->len, owner_s->s);
 		}
 	} else { /* get it from R-URI */
 		if(msg->new_uri.len <= 0)
@@ -646,16 +741,16 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	nr_keys++;
 
 	/* add the message's body in SQL query */
-	
+
 	db_keys[nr_keys] = &sc_body;
-	
+
 	db_vals[nr_keys].type = DB1_BLOB;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.blob_val.s = body.s;
 	db_vals[nr_keys].val.blob_val.len = body.len;
 
 	nr_keys++;
-	
+
 	lexpire = ms_expire_time;
 	/* add 'content-type' -- parse the content-type header */
 	if ((mime=parse_content_type_hdr(msg))<1 ) 
@@ -695,7 +790,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 
 	/* current time */
 	val = (int)time(NULL);
-	
+
 	/* add expiration time */
 	db_keys[nr_keys] = &sc_exp_time;
 	db_vals[nr_keys].type = DB1_INT;
@@ -728,6 +823,23 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	}
 	nr_keys++;
 
+	/* add the extra headers in SQL query */
+	extra_hdrs.s = extra_hdrs_buf;
+	extra_hdrs.len = get_non_mandatory_headers(msg, extra_hdrs_buf, EXTRA_HDRS_BUF_LEN);
+	if (extra_hdrs.len < 0)
+	{
+	  goto error;
+	}
+
+	db_keys[nr_keys] = &sc_stored_hdrs;
+
+	db_vals[nr_keys].type = DB1_BLOB;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.blob_val.s = extra_hdrs.s;
+	db_vals[nr_keys].val.blob_val.len = extra_hdrs.len;
+
+	nr_keys++;
+	
 	if(msilo_dbf.insert(db_con, db_keys, db_vals, nr_keys) < 0)
 	{
 		LM_ERR("failed to store message\n");
@@ -823,24 +935,41 @@ error:
 }
 
 /**
+ * store message
+ */
+static int m_store_2(struct sip_msg* msg, char* owner, char* s2)
+{
+	str owner_s;
+	if (owner != NULL)
+	{
+		if(fixup_get_svalue(msg, (gparam_p)owner, &owner_s)!=0)
+		{
+			LM_ERR("invalid owner uri parameter");
+			return -1;
+		}
+		return m_store(msg, &owner_s);
+	}
+	return m_store(msg, NULL);
+}
+
+/**
  * dump message
  */
-static int m_dump(struct sip_msg* msg, char* owner, char* str2)
+static int m_dump(struct sip_msg* msg, str* owner_s)
 {
 	struct to_body *pto = NULL;
 	db_key_t db_keys[3];
 	db_key_t ob_key;
 	db_op_t  db_ops[3];
 	db_val_t db_vals[3];
-	db_key_t db_cols[6];
+	db_key_t db_cols[7];
 	db1_res_t* db_res = NULL;
-	int i, db_no_cols = 6, db_no_keys = 3, mid, n;
+	int i, db_no_cols = 7, db_no_keys = 3, mid, n;
 	static char hdr_buf[1024];
 	static char body_buf[1024];
 	struct sip_uri puri;
-	str owner_s;
 	uac_req_t uac_r;
-	str str_vals[4], hdr_str, body_str, extra_hdrs_str;
+	str str_vals[5], hdr_str, body_str, extra_hdrs_str, tmp_extra_hdrs;
 	time_t rtime;
 	
 	/* init */
@@ -859,6 +988,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	db_cols[3]=&sc_body;
 	db_cols[4]=&sc_ctype;
 	db_cols[5]=&sc_inc_time;
+	db_cols[6]=&sc_stored_hdrs;
 
 	
 	LM_DBG("------------ start ------------\n");
@@ -889,19 +1019,14 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	 
 	/* get the owner */
 	memset(&puri, 0, sizeof(struct sip_uri));
-	if(owner)
+	if(owner_s)
 	{
-		if(fixup_get_svalue(msg, (gparam_p)owner, &owner_s)!=0)
-		{
-			LM_ERR("invalid owner uri parameter");
-			return -1;
-		}
-		if(parse_uri(owner_s.s, owner_s.len, &puri)!=0)
+		if(parse_uri(owner_s->s, owner_s->len, &puri)!=0)
 		{
 			LM_ERR("bad owner SIP address!\n");
 			goto error;
 		} else {
-			LM_DBG("using user id [%.*s]\n", owner_s.len, owner_s.s);
+			LM_DBG("using user id [%.*s]\n", owner_s->len, owner_s->s);
 		}
 	} else { /* get it from  To URI */
 		if(parse_uri(pto->uri.s, pto->uri.len, &puri)!=0)
@@ -959,11 +1084,12 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 			continue;
 		}
 		
-		memset(str_vals, 0, 4*sizeof(str));
+		memset(str_vals, 0, 5*sizeof(str));
 		SET_STR_VAL(str_vals[0], db_res, i, 1); /* from */
 		SET_STR_VAL(str_vals[1], db_res, i, 2); /* to */
 		SET_STR_VAL(str_vals[2], db_res, i, 3); /* body */
 		SET_STR_VAL(str_vals[3], db_res, i, 4); /* ctype */
+		SET_STR_VAL(str_vals[4], db_res, i, 6); /* stored hdrs */
 		rtime = 
 			(time_t)RES_ROWS(db_res)[i].values[5/*inc time*/].val.int_val;
 		
@@ -978,18 +1104,32 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 		} else {
 		    extra_hdrs_str.len = 0;
 		}
-		
-		hdr_str.len = 1024;
-		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
-				   str_vals[0]/*from*/, rtime /*Date*/,
-				   extra_hdrs_str /*extra_hdrs*/) < 0)
+
+		tmp_extra_hdrs.len = extra_hdrs_str.len+str_vals[4].len;
+		if ((tmp_extra_hdrs.s = pkg_malloc(tmp_extra_hdrs.len)) == NULL)
 		{
-			LM_ERR("headers building failed [%d]\n", mid);
+			LM_ERR("Out of pkg memory");
 			if (msilo_dbf.free_result(db_con, db_res) < 0)
 				LM_ERR("failed to free the query result\n");
 			msg_list_set_flag(ml, mid, MS_MSG_ERRO);
 			goto error;
 		}
+		memcpy(tmp_extra_hdrs.s, extra_hdrs_str.s, extra_hdrs_str.len);
+		memcpy(tmp_extra_hdrs.s+extra_hdrs_str.len, str_vals[4].s, str_vals[4].len);
+		
+		hdr_str.len = 1024;
+		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
+				   str_vals[0]/*from*/, rtime /*Date*/,
+				   tmp_extra_hdrs /*extra_hdrs*/) < 0)
+		{
+			LM_ERR("headers building failed [%d]\n", mid);
+			pkg_free(tmp_extra_hdrs.s);
+			if (msilo_dbf.free_result(db_con, db_res) < 0)
+				LM_ERR("failed to free the query result\n");
+			msg_list_set_flag(ml, mid, MS_MSG_ERRO);
+			goto error;
+		}
+		pkg_free(tmp_extra_hdrs.s);
 			
 		LM_DBG("msg [%d-%d] for: %.*s\n", i+1, mid,	pto->uri.len, pto->uri.s);
 			
@@ -1034,6 +1174,24 @@ done:
 	return 1;
 error:
 	return -1;
+}
+
+/**
+ * dump message
+ */
+static int m_dump_2(struct sip_msg* msg, char* owner, char* s2)
+{
+	str owner_s;
+	if (owner != NULL)
+	{
+		if(fixup_get_svalue(msg, (gparam_p)owner, &owner_s)!=0)
+		{
+			LM_ERR("invalid owner uri parameter");
+			return -1;
+		}
+		return m_dump(msg, &owner_s);
+	}
+	return m_dump(msg, NULL);
 }
 
 /**

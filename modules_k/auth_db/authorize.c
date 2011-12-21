@@ -45,6 +45,7 @@
 #include "../../usr_avp.h"
 #include "../../mod_fix.h"
 #include "../../mem/mem.h"
+#include "../../lib/kcore/parser_helpers.h"
 #include "api.h"
 #include "authdb_mod.h"
 
@@ -304,6 +305,83 @@ int www_authenticate(struct sip_msg* _m, char* _realm, char* _table)
 
 	return digest_authenticate(_m, &srealm, &stable, HDR_AUTHORIZATION_T);
 }
+
+/*
+ * Authenticate using WWW/Proxy-Authorize header field
+ */
+#define AUTH_CHECK_ID_F 1<<0
+
+int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags)
+{
+	str srealm;
+	str stable;
+	int iflags;
+	int ret;
+	hdr_field_t *hdr;
+	sip_uri_t *uri;
+
+	if ((_m->REQ_METHOD == METHOD_ACK) || (_m->REQ_METHOD == METHOD_CANCEL)) {
+		return AUTH_OK;
+	}
+
+	if(_m==NULL || _realm==NULL || _table==NULL || _flags==NULL) {
+		LM_ERR("invalid parameters\n");
+		return AUTH_ERROR;
+	}
+
+	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		return AUTH_ERROR;
+	}
+
+	if (srealm.len==0) {
+		LM_ERR("invalid realm parameter - empty value\n");
+		return AUTH_ERROR;
+	}
+
+	if (get_str_fparam(&stable, _m, (fparam_t*)_table) < 0) {
+		LM_ERR("failed to get realm value\n");
+		return AUTH_ERROR;
+	}
+
+	if (stable.len==0) {
+		LM_ERR("invalid table parameter - empty value\n");
+		return AUTH_ERROR;
+	}
+
+	if(fixup_get_ivalue(_m, (gparam_p)_flags, &iflags)!=0)
+	{
+		LM_ERR("invalid flags parameter\n");
+		return -1;
+	}
+
+	LM_DBG("realm [%.*s] table [%.*s] flags [%d]\n", srealm.len, srealm.s,
+			stable.len,  stable.s, iflags);
+
+	if(_m->REQ_METHOD==METHOD_REGISTER)
+		ret = digest_authenticate(_m, &srealm, &stable, HDR_AUTHORIZATION_T);
+	else
+		ret = digest_authenticate(_m, &srealm, &stable, HDR_PROXYAUTH_T);
+
+	if(ret==AUTH_OK && (iflags&AUTH_CHECK_ID_F)) {
+		hdr = (_m->proxy_auth==0)?_m->authorization:_m->proxy_auth;
+		srealm = ((auth_body_t*)(hdr->parsed))->digest.username.user;
+		if(_m->REQ_METHOD==METHOD_REGISTER) {
+			if((uri=parse_to_uri(_m))==NULL)
+				return AUTH_ERROR;
+		} else {
+			if((uri=parse_from_uri(_m))==NULL)
+				return AUTH_ERROR;
+		}
+		if(srealm.len==uri->user.len
+					&& strncmp(srealm.s, uri->user.s, srealm.len)==0)
+			return ret;
+		return AUTH_USER_MISMATCH;
+	}
+
+	return ret;
+}
+
 
 /**
  * @brief bind functions to AUTH_DB API structure

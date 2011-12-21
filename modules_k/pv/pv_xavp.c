@@ -42,11 +42,11 @@ int pv_xavp_get_value(struct sip_msg *msg, pv_param_t *param,
 			return pv_get_strval(msg, param, res, &avp->val.v.s);
 		break;
 		case SR_XTYPE_TIME:
-			if(snprintf(_pv_xavp_buf, 128, "%lu", avp->val.v.t)<0)
+			if(snprintf(_pv_xavp_buf, 128, "%lu", (long unsigned)avp->val.v.t)<0)
 				return pv_get_null(msg, param, res);
 		break;
 		case SR_XTYPE_LONG:
-			if(snprintf(_pv_xavp_buf, 128, "%ld", avp->val.v.l)<0)
+			if(snprintf(_pv_xavp_buf, 128, "%ld", (long unsigned)avp->val.v.l)<0)
 				return pv_get_null(msg, param, res);
 		break;
 		case SR_XTYPE_LLONG:

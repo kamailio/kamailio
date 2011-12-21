@@ -250,6 +250,7 @@ static int is_tcp_main=0;
 enum poll_types tcp_poll_method=0; /* by default choose the best method */
 int tcp_main_max_fd_no=0;
 int tcp_max_connections=DEFAULT_TCP_MAX_CONNECTIONS;
+int tls_max_connections=DEFAULT_TLS_MAX_CONNECTIONS;
 
 static union sockaddr_union tcp_source_ipv4_addr; /* saved bind/srv v4 addr. */
 static union sockaddr_union* tcp_source_ipv4=0;
@@ -258,7 +259,8 @@ static union sockaddr_union tcp_source_ipv6_addr; /* saved bind/src v6 addr. */
 static union sockaddr_union* tcp_source_ipv6=0;
 #endif
 
-static int* tcp_connections_no=0; /* current open connections */
+static int* tcp_connections_no=0; /* current tcp (+tls) open connections */
+static int* tls_connections_no=0; /* current tls open connections */
 
 /* connection hash table (after ip&port) , includes also aliases */
 struct tcp_conn_alias** tcpconn_aliases_hash=0;
@@ -1261,6 +1263,16 @@ struct tcp_connection* tcpconn_connect( union sockaddr_union* server,
 					cfg_get(tcp, tcp_cfg, max_connections));
 		goto error;
 	}
+	if (unlikely(type==PROTO_TLS)) {
+		if (*tls_connections_no >= cfg_get(tcp, tcp_cfg, max_tls_connections)){
+			LM_ERR("ERROR: maximum number of tls connections"
+						" exceeded (%d/%d)\n",
+						*tls_connections_no,
+						cfg_get(tcp, tcp_cfg, max_tls_connections));
+			goto error;
+		}
+	}
+
 	s=tcp_do_connect(server, from, type,  send_flags, &my_name, &si, &state);
 	if (s==-1){
 		LOG(L_ERR, "ERROR: tcp_do_connect %s: failed (%d) %s\n",
@@ -1848,6 +1860,17 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 							*tcp_connections_no,
 							cfg_get(tcp, tcp_cfg, max_connections));
 				return -1;
+			}
+			if (unlikely(dst->proto==PROTO_TLS)) {
+				if (unlikely(*tls_connections_no >=
+							cfg_get(tcp, tcp_cfg, max_tls_connections))){
+					LM_ERR("tcp_send %s: maximum number of"
+							" tls connections exceeded (%d/%d)\n",
+							su2a(&dst->to, sizeof(dst->to)),
+							*tls_connections_no,
+							cfg_get(tcp, tcp_cfg, max_tls_connections));
+					return -1;
+				}
 			}
 			c=tcpconn_new(-1, &dst->to, from, 0, dst->proto,
 							S_CONN_CONNECT);
@@ -2693,7 +2716,10 @@ static int tcpconn_1st_send(int fd, struct tcp_connection* c,
 	
 	n=_tcpconn_write_nb(fd, c, buf, len);
 	if (unlikely(n<(int)len)){
-		if ((n>=0) || errno==EAGAIN || errno==EWOULDBLOCK){
+		/* on EAGAIN or ENOTCONN return success.
+		   ENOTCONN appears on newer FreeBSD versions (non-blocking socket,
+		   connect() & send immediately) */
+		if ((n>=0) || errno==EAGAIN || errno==EWOULDBLOCK || errno==ENOTCONN){
 			DBG("pending write on new connection %p "
 				" (%d/%d bytes written)\n", c, n, len);
 			if (unlikely(n<0)) n=0;
@@ -2992,6 +3018,8 @@ inline static void tcpconn_destroy(struct tcp_connection* tcpconn)
 			tcpconn_close_main_fd(tcpconn);
 			tcpconn->flags|=F_CONN_FD_CLOSED;
 			(*tcp_connections_no)--;
+			if (unlikely(tcpconn->type==PROTO_TLS))
+				(*tls_connections_no)--;
 		}
 		_tcpconn_free(tcpconn); /* destroys also the wbuf_q if still present*/
 }
@@ -3038,6 +3066,8 @@ inline static int tcpconn_put_destroy(struct tcp_connection* tcpconn)
 		tcpconn_close_main_fd(tcpconn);
 		tcpconn->flags|=F_CONN_FD_CLOSED;
 		(*tcp_connections_no)--;
+		if (unlikely(tcpconn->type==PROTO_TLS))
+				(*tls_connections_no)--;
 	}
 	/* all the flags / ops on the tcpconn must be done prior to decrementing
 	 * the refcnt. and at least a membar_write_atomic_op() mem. barrier or
@@ -3656,6 +3686,8 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 				break;
 			}
 			(*tcp_connections_no)++;
+			if (unlikely(tcpconn->type==PROTO_TLS))
+				(*tls_connections_no)++;
 			tcpconn->s=fd;
 			/* add tcpconn to the list*/
 			tcpconn_add(tcpconn);
@@ -3787,6 +3819,8 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 				break;
 			}
 			(*tcp_connections_no)++;
+			if (unlikely(tcpconn->type==PROTO_TLS))
+				(*tls_connections_no)++;
 			tcpconn->s=fd;
 			/* update the timeout*/
 			t=get_ticks_raw();
@@ -3974,12 +4008,24 @@ static inline int handle_new_connect(struct socket_info* si)
 		TCP_STATS_LOCAL_REJECT();
 		return 1; /* success, because the accept was succesfull */
 	}
+	if (unlikely(si->proto==PROTO_TLS)) {
+		if (unlikely(*tls_connections_no>=cfg_get(tcp, tcp_cfg, max_tls_connections))){
+			LM_ERR("maximum number of tls connections exceeded: %d/%d\n",
+					*tls_connections_no,
+					cfg_get(tcp, tcp_cfg, max_tls_connections));
+			tcp_safe_close(new_sock);
+			TCP_STATS_LOCAL_REJECT();
+			return 1; /* success, because the accept was succesfull */
+		}
+	}
 	if (unlikely(init_sock_opt_accept(new_sock)<0)){
 		LOG(L_ERR, "ERROR: handle_new_connect: init_sock_opt failed\n");
 		tcp_safe_close(new_sock);
 		return 1; /* success, because the accept was succesfull */
 	}
 	(*tcp_connections_no)++;
+	if (unlikely(si->proto==PROTO_TLS))
+		(*tls_connections_no)++;
 	/* stats for established connections are incremented after
 	   the first received or sent packet.
 	   Alternatively they could be incremented here for accepted
@@ -4044,6 +4090,8 @@ static inline int handle_new_connect(struct socket_info* si)
 				"closing socket\n");
 		tcp_safe_close(new_sock);
 		(*tcp_connections_no)--;
+		if (unlikely(si->proto==PROTO_TLS))
+			(*tls_connections_no)--;
 	}
 	return 1; /* accept() was succesfull */
 }
@@ -4428,6 +4476,8 @@ static inline void tcpconn_destroy_all()
 					tcp_safe_close(fd);
 				}
 				(*tcp_connections_no)--;
+				if (unlikely(c->type==PROTO_TLS))
+					(*tls_connections_no)--;
 			c=next;
 		}
 	}
@@ -4621,6 +4671,10 @@ void destroy_tcp()
 			shm_free(tcp_connections_no);
 			tcp_connections_no=0;
 		}
+		if (tls_connections_no){
+			shm_free(tls_connections_no);
+			tls_connections_no=0;
+		}
 #ifdef TCP_ASYNC
 		if (tcp_total_wq){
 			shm_free(tcp_total_wq);
@@ -4677,6 +4731,12 @@ int init_tcp()
 		goto error;
 	}
 	*tcp_connections_no=0;
+	tls_connections_no=shm_malloc(sizeof(int));
+	if (tls_connections_no==0){
+		LOG(L_CRIT, "ERROR: init_tcp: could not alloc globals\n");
+		goto error;
+	}
+	*tls_connections_no=0;
 	if (INIT_TCP_STATS()!=0) goto error;
 	connection_id=shm_malloc(sizeof(int));
 	if (connection_id==0){
@@ -4838,7 +4898,9 @@ void tcp_get_info(struct tcp_gen_info *ti)
 {
 	ti->tcp_readers=tcp_children_no;
 	ti->tcp_max_connections=tcp_max_connections;
+	ti->tls_max_connections=tls_max_connections;
 	ti->tcp_connections_no=*tcp_connections_no;
+	ti->tls_connections_no=*tls_connections_no;
 #ifdef TCP_ASYNC
 	ti->tcp_write_queued=*tcp_total_wq;
 #else

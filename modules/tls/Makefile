@@ -9,14 +9,28 @@ include ../../Makefile.defs
 auto_gen=
 NAME=tls.so
 
-DEFS+= -I$(LOCALBASE)/ssl/include
-LIBS+=	-L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib \
-		-L$(LOCALBASE)/lib64 -L$(LOCALBASE)/ssl/lib64 \
-		-lssl  -lcrypto \
-		$(TLS_EXTRA_LIBS)
-# NOTE: depending on the way in which libssl was compiled you might
-#       have to add -lz -lkrb5   (zlib and kerberos5).
-#       E.g.: make TLS_HOOKS=1 TLS_EXTRA_LIBS="-lz -lkrb5"
+CFLASFOUND = 0
+BUILDER = $(shell which pkg-config)
+ifneq ($(BUILDER),)
+	SSLLIBS = $(shell pkg-config --silence-errors --libs libssl)
+	ifneq ($(SSLLIBS),)
+		DEFS+= $(shell pkg-config --silence-errors --cflags libssl)
+		LIBS+= $(shell pkg-config --silence-errors --libs libssl)
+		LIBS+= $(TLS_EXTRA_LIBS)
+		CFLASFOUND = 1
+	endif
+endif
+
+ifeq ($(CFLASFOUND),0)
+	DEFS+= -I$(LOCALBASE)/ssl/include
+	LIBS+=	-L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib \
+			-L$(LOCALBASE)/lib64 -L$(LOCALBASE)/ssl/lib64 \
+			-lssl  -lcrypto \
+			$(TLS_EXTRA_LIBS)
+	# NOTE: depending on the way in which libssl was compiled you might
+	#       have to add -lz -lkrb5   (zlib and kerberos5).
+	#       E.g.: make TLS_HOOKS=1 TLS_EXTRA_LIBS="-lz -lkrb5"
+endif
 
 # dcm: tls.cfg installed via local 'install-cfg' to update paths
 #MOD_INSTALL_CFGS=tls.cfg

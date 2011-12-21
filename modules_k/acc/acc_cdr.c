@@ -46,6 +46,19 @@
 
 #include <sys/time.h>
 
+/* Solaris does not provide timersub macro in <sys/time.h> */
+#ifdef __OS_solaris
+#define timersub(tvp, uvp, vvp)                     \
+    do {                                \
+        (vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;      \
+        (vvp)->tv_usec = (tvp)->tv_usec - (uvp)->tv_usec;   \
+        if ((vvp)->tv_usec < 0) {               \
+            (vvp)->tv_sec--;                \
+            (vvp)->tv_usec += 1000000;          \
+        }                           \
+    } while (0)
+#endif // __OS_solaris
+
 #define TIME_STR_BUFFER_SIZE 20
 #define TIME_BUFFER_LENGTH 256
 
@@ -242,9 +255,9 @@ static int time2string( struct timeval* time_value, str* time_str)
     buffer_length = snprintf( time_buffer,
                               TIME_BUFFER_LENGTH,
                               "%ld%c%03d",
-                              time_value->tv_sec,
+                              (long int)time_value->tv_sec,
                               time_separator,
-                              (int)time_value->tv_usec/1000);
+                              (int)(time_value->tv_usec/1000));
 
     if( buffer_length < 0)
     {

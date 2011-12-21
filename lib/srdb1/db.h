@@ -443,4 +443,30 @@ typedef int (*db_bind_api_f)(db_func_t *dbb);
 int db_load_bulk_data(db_func_t* binding, db1_con_t* handle, str* name, db_key_t* cols,
 		      unsigned int count, unsigned int strict, db1_res_t* res);
 
+/**
+ * \brief DB API init function.
+ *
+ * This function must be executed by DB connector modules at load time to
+ * initialize the internals of DB API library.
+ * \return returns 0 on successful initialization, -1 on error.
+ */
+int db_api_init(void);
+
+/**
+ * \brief wrapper around db query to handle fetch capability
+ * \return -1 error; 0 ok with no fetch capability; 1 ok with fetch capability
+ */
+int db_fetch_query(db_func_t *dbf, int frows,
+		db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+		const db_key_t _o, db1_res_t** _r);
+
+/**
+ * \brief wrapper around db fetch to handle fetch capability
+ * \return -1 error; 0 ok with no fetch capability; 1 ok with fetch capability
+ */
+int db_fetch_next(db_func_t *dbf, int frows, db1_con_t* _h,
+		db1_res_t** _r);
+
+
 #endif /* DB1_H */

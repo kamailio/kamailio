@@ -123,7 +123,8 @@ static int set_body_f(struct sip_msg* msg, char*, char *);
 static int set_rpl_body_f(struct sip_msg* msg, char*, char *);
 static int is_method_f(struct sip_msg* msg, char* , char *);
 static int has_body_f(struct sip_msg *msg, char *type, char *str2 );
-static int is_privacy_f(struct sip_msg *msg, char *privacy, char *str2 );
+static int in_list_f(struct sip_msg* _msg, char* _subject, char* _list,
+ 		     char* _sep);
 static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 );
 static int cmp_istr_f(struct sip_msg *msg, char *str1, char *str2 );
 static int starts_with_f(struct sip_msg *msg, char *str1, char *str2 );
@@ -136,7 +137,8 @@ static int free_hname_fixup(void** param, int param_no);
 static int fixup_method(void** param, int param_no);
 static int add_header_fixup(void** param, int param_no);
 static int fixup_body_type(void** param, int param_no);
-static int fixup_privacy(void** param, int param_no);
+static int fixup_in_list(void** param, int param_no);
+static int fixup_free_in_list(void** param, int param_no);
 int fixup_regexpNL_none(void** param, int param_no);
 
 static int mod_init(void);
@@ -242,6 +244,9 @@ static cmd_export_t cmds[]={
 	{"is_privacy",       (cmd_function)is_privacy_f,      1,
 		fixup_privacy, 0,
 		ANY_ROUTE},
+ 	{"in_list", (cmd_function)in_list_f, 3, fixup_in_list,
+	        fixup_free_in_list,
+ 	        ANY_ROUTE},
 	{"cmp_str",  (cmd_function)cmp_str_f, 2,
 		fixup_spve_spve, 0,
 		ANY_ROUTE},
@@ -1254,7 +1259,7 @@ static int set_body_f(struct sip_msg* msg, char* p1, char* p2)
 		return -1;
 	}
 
-	free_lump_list(msg->body_lumps);
+	del_nonshm_lump( &(msg->body_lumps) );
 	msg->body_lumps = NULL;
 
 	if (msg->content_length) 
@@ -1750,7 +1755,7 @@ static int fixup_method(void** param, int param_no)
 /*
  * Convert char* privacy value to corresponding bit value
  */
-static int fixup_privacy(void** param, int param_no)
+int fixup_privacy(void** param, int param_no)
 {
     str p;
     unsigned int val;
@@ -1770,6 +1775,42 @@ static int fixup_privacy(void** param, int param_no)
     
     *param = (void *)(long)val;
     return 0;
+}
+
+/*
+ * Fix in_list params: subject and list (strings that may contain pvars),
+ * separator (string)
+ */
+static int fixup_in_list(void** param, int param_no)
+{
+    if ((param_no == 1) || (param_no == 2)) return fixup_spve_null(param, 1);
+    
+    if (param_no == 3) {
+	if ((strlen((char *)*param) != 1) || (*((char *)(*param)) == 0)) {
+	    LM_ERR("invalid separator parameter\n");
+ 	    return -1;
+ 	}
+ 	return 0;
+    }
+ 
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
+}
+ 
+/*
+ * Free in_list params
+ */
+static int fixup_free_in_list(void** param, int param_no)
+{
+    if ((param_no == 1) || (param_no == 2)) {
+ 	LM_WARN("free function has not been defined for spve\n");
+ 	return 0;
+    }
+ 
+    if (param_no == 3) return 0;
+     
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
 }
 
 static int add_header_fixup(void** param, int param_no)
@@ -1854,13 +1895,66 @@ static int has_body_f(struct sip_msg *msg, char *type, char *str2 )
 }
 
 
-static int is_privacy_f(struct sip_msg *msg, char *_privacy, char *str2 )
+int is_privacy_f(struct sip_msg *msg, char *_privacy, char *str2 )
 {
     if (parse_privacy(msg) == -1)
 	return -1;
 
     return get_privacy_values(msg) & ((unsigned int)(long)_privacy) ? 1 : -1;
 
+}
+
+/* 
+ * Checks if subject is found in list
+ */
+int in_list_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
+{
+    str subject, list;
+    int sep;
+    char *at, *past, *s;
+
+    if (fixup_get_svalue(_m, (gparam_p)_subject, &subject) != 0) {
+	LM_ERR("cannot get subject value\n");
+	return -1;
+    } else {
+	if (subject.len == 0) {
+	    LM_ERR("subject cannot be empty string\n");
+	    return -1;
+	}
+    }
+
+    if (fixup_get_svalue(_m, (gparam_p)_list, &list) != 0) {
+	LM_ERR("cannot get list value\n");
+	return -1;
+    } else {
+	if (list.len == 0) return -1;
+    }
+
+    sep = _sep[0];
+
+    at = list.s;
+    past = list.s + list.len;
+
+    while (at < past) {
+	s = index(at, sep);
+	if (s == NULL) {
+	    if ((subject.len == (past - at)) &&
+		strncmp(at, subject.s, subject.len) == 0) {
+		return 1;
+	    } else {
+		return -1;
+	    }
+	} else {
+	    if ((subject.len == (s - at)) &&
+		strncmp(at, subject.s, subject.len) == 0) {
+		return 1;
+	    } else {
+		at = s + 1;
+	    }
+	}
+    }
+
+    return -1;
 }
 
 static int cmp_str_f(struct sip_msg *msg, char *str1, char *str2 )

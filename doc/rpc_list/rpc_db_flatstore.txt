@@ -5,5 +5,5 @@ RPC Exports for db_flatstore
 
 
  1. flatstore.rotate
-        Close and reopen flatrotate files during log rotation.
+        Documentation missing (flat_rotate_doc).
 

@@ -179,7 +179,7 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 
 		LM_DBG("first final reply\n");
 		/* derefering the dialog */
-		unref_dlg(dlg, unref+1);
+		dlg_unref(dlg, unref+1);
 
 		if_update_stat( dlg_enable_stats, active_dlgs, -1);
 	}
@@ -191,7 +191,7 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 		if (dlg_db_mode)
 			remove_dialog_from_db(dlg);
 		/* force delete from mem */
-		unref_dlg(dlg, 1);
+		dlg_unref(dlg, 1);
 	}
 
 }
@@ -256,7 +256,7 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 
 	LM_DBG("sending BYE to %s\n", (dir==DLG_CALLER_LEG)?"caller":"callee");
 
-	ref_dlg(cell, 1);
+	dlg_ref(cell, 1);
 
 	memset(&uac_r,'\0', sizeof(uac_req_t));
 	set_uac_req(&uac_r, &met, hdrs, NULL, dialog_info, TMCB_LOCAL_COMPLETED,
@@ -274,7 +274,7 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 	return 0;
 
 err1:
-	unref_dlg(cell, 1);
+	dlg_unref(cell, 1);
 err:
 	if(dialog_info)
 		free_tm_dlg(dialog_info);
@@ -318,7 +318,7 @@ struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param ){
 
 	LM_DBG("h_entry %u h_id %u\n", h_entry, h_id);
 
-	dlg = lookup_dlg(h_entry, h_id);
+	dlg = dlg_lookup(h_entry, h_id);
 
 	// lookup_dlg has incremented the reference count
 
@@ -333,7 +333,7 @@ struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param ){
 			msg_len = MI_OK_LEN;
 		}
 
-		unref_dlg(dlg, 1);
+		dlg_release(dlg);
 
 		return init_mi_tree(status, msg, msg_len);
 	}

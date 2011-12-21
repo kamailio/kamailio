@@ -34,7 +34,9 @@
 struct tcp_gen_info{
 	int tcp_readers;
 	int tcp_max_connections; /* startup connection limit, cannot be exceeded*/
-	int tcp_connections_no; /* crt. number */
+	int tls_max_connections; /* startup tls limit, cannot exceed tcp limit*/
+	int tcp_connections_no; /* crt. connections number */
+	int tls_connections_no; /* crt. tls connections number */
 	int tcp_write_queued; /* total bytes queued for write, 0 if no
 							 write queued support is enabled */
 };

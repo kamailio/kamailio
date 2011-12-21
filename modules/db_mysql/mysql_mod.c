@@ -124,6 +124,13 @@ struct module_exports exports = {
 };
 
 
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	if(db_mysql_alloc_buffer()<0)
+		return -1;
+	return 0;
+}
+
 static int mysql_mod_init(void)
 {
 #if MYSQL_VERSION_ID >= 40101

@@ -57,6 +57,7 @@
 #include "auth.h"
 #include "uac_send.h"
 #include "uac_reg.h"
+#include "api.h"
 
 
 MODULE_VERSION
@@ -90,6 +91,7 @@ static int mod_init(void);
 static void mod_destroy(void);
 static int child_init(int rank);
 
+extern int reg_timer_interval;
 
 static pv_export_t mod_pvs[] = {
 	{ {"uac_req", sizeof("uac_req")-1}, PVT_OTHER, pv_get_uac_req, pv_set_uac_req,
@@ -115,7 +117,8 @@ static cmd_export_t cmds[]={
 		fixup_free_pvar_pvar, ANY_ROUTE },
 	{"uac_reg_request_to",  (cmd_function)w_uac_reg_request_to,  2, fixup_pvar_uint, fixup_free_pvar_uint,
 		REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
-
+	{"bind_uac", (cmd_function)bind_uac,                  1,                  0, 0,
+		0},
 	{0,0,0,0,0,0}
 };
 
@@ -132,6 +135,7 @@ static param_export_t params[] = {
 	{"auth_password_avp", STR_PARAM,                &auth_password_avp     },
 	{"reg_db_url",        STR_PARAM,                &reg_db_url.s          },
 	{"reg_contact_addr",  STR_PARAM,                &reg_contact_addr.s    },
+	{"reg_timer_interval", INT_PARAM,		&reg_timer_interval	},
 	{0, 0, 0}
 };
 
@@ -496,3 +500,15 @@ static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* mode_s)
 	return uac_reg_request_to(msg, &val.rs, mode);
 }
 
+
+int bind_uac(struct uac_binds *uacb)
+{
+	if (uacb == NULL)
+        {
+                LM_WARN("bind_uac: Cannot load uac API into a NULL pointer\n");
+                return -1;
+        }
+
+        uacb->replace_from = replace_from;
+        return 0;
+}

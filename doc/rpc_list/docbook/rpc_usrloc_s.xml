@@ -10,7 +10,7 @@ RPC Exports for usrloc_s
 
 <section id="usrloc.stats"><title>usrloc.stats</title>
 <para>
-        Print usrloc statistics
+        Documentation missing (rpc_stats_doc).
 </para>
 <para>
         Returns an array.
@@ -19,7 +19,7 @@ RPC Exports for usrloc_s
 
 <section id="usrloc.delete_uid"><title>usrloc.delete_uid</title>
 <para>
-        Delete all registered contacts for address of record.
+        Documentation missing (rpc_delete_uid_doc).
 </para>
 <para>
 </para>
@@ -27,7 +27,7 @@ RPC Exports for usrloc_s
 
 <section id="usrloc.delete_contact"><title>usrloc.delete_contact</title>
 <para>
-        Delete a contact if it exists.
+        Documentation missing (rpc_delete_contact_doc).
 </para>
 <para>
 </para>
@@ -35,7 +35,7 @@ RPC Exports for usrloc_s
 
 <section id="usrloc.dump"><title>usrloc.dump</title>
 <para>
-        Print all registered contacts.
+        Documentation missing (rpc_dump_doc).
 </para>
 <para>
 </para>
@@ -43,7 +43,7 @@ RPC Exports for usrloc_s
 
 <section id="usrloc.dump_file"><title>usrloc.dump_file</title>
 <para>
-        Print all registered contacts into a file.
+        Documentation missing (rpc_dump_file_doc).
 </para>
 <para>
 </para>
@@ -51,7 +51,7 @@ RPC Exports for usrloc_s
 
 <section id="usrloc.flush"><title>usrloc.flush</title>
 <para>
-        Flush cache into database.
+        Documentation missing (rpc_flush_doc).
 </para>
 <para>
 </para>
@@ -59,7 +59,7 @@ RPC Exports for usrloc_s
 
 <section id="usrloc.add_contact"><title>usrloc.add_contact</title>
 <para>
-        Create a new contact.
+        Documentation missing (rpc_add_contact_doc).
 </para>
 <para>
 </para>
@@ -67,7 +67,7 @@ RPC Exports for usrloc_s
 
 <section id="usrloc.show_contacts"><title>usrloc.show_contacts</title>
 <para>
-        List all registered contacts for address of record
+        Documentation missing (rpc_show_contacts_doc).
 </para>
 <para>
         Returns an array.

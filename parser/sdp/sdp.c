@@ -670,10 +670,10 @@ static int parse_mixed_content(str *mixed_body, str delimiter, sdp_info_t* _sdp)
 }
 
 /**
- * Parse SDP.
+ * @brief Parse SIP SDP body and store in _m->body.
  *
- * returns 0 on success.
- * non zero on error.
+ * @param _m the SIP message structure
+ * @return 0 on success, < 0 on error and 1 if there is no message body
  */
 int parse_sdp(struct sip_msg* _m)
 {

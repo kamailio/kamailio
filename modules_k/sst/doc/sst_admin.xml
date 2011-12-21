@@ -376,7 +376,7 @@ route {
 
 
 	<section>
-	<title>Exported Statistics</title>
+	<title>Statistics</title>
 	<section>
 		<title><varname>expired_sst</varname></title>
 		<para>

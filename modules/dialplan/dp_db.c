@@ -102,7 +102,7 @@ int init_db_data(void)
 		return -1;
 
 	if(db_check_table_version(&dp_dbf, dp_db_handle, &dp_table_name,
-	DP_TABLE_VERSION) < 0) {
+				DP_TABLE_VERSION) < 0) {
 		LM_ERR("error during table version check.\n");
 		goto error;
 	}
@@ -116,7 +116,7 @@ int init_db_data(void)
 
 	return 0;
 error:
-	
+
 	dp_disconnect_db();
 	return -1;
 }
@@ -217,13 +217,13 @@ int dp_load_db(void)
 	}
 
 	if (dp_dbf.use_table(dp_db_handle, &dp_table_name) < 0){
-	    LM_ERR("error in use_table %.*s\n", dp_table_name.len, dp_table_name.s);
+		LM_ERR("error in use_table %.*s\n", dp_table_name.len, dp_table_name.s);
 		return -1;
 	}
 
 	if (DB_CAPABILITY(dp_dbf, DB_CAP_FETCH)) {
 		if(dp_dbf.query(dp_db_handle,0,0,0,query_cols, 0, 
-				DP_TABLE_COL_NO, order, 0) < 0){
+					DP_TABLE_COL_NO, order, 0) < 0){
 			LM_ERR("failed to query database!\n");
 			return -1;
 		}
@@ -236,8 +236,8 @@ int dp_load_db(void)
 	} else {
 		/*select the whole table and all the columns*/
 		if(dp_dbf.query(dp_db_handle,0,0,0,query_cols, 0, 
-			DP_TABLE_COL_NO, order, &res) < 0){
-				LM_ERR("failed to query database\n");
+					DP_TABLE_COL_NO, order, &res) < 0){
+			LM_ERR("failed to query database\n");
 			return -1;
 		}
 	}
@@ -276,7 +276,7 @@ int dp_load_db(void)
 			break;
 		}
 	}  while(RES_ROW_N(res)>0);
-	
+
 
 end:
 	/*update data*/
@@ -324,21 +324,21 @@ static pcre *reg_ex_comp(const char *pattern, int *cap_cnt)
 	re = pcre_compile(pattern, 0, &error, &err_offset, NULL);
 	if (re == NULL) {
 		LM_ERR("PCRE compilation of '%s' failed at offset %d: %s\n",
-			pattern, err_offset, error);
+				pattern, err_offset, error);
 		return (pcre *)0;
 	}
 	rc = pcre_fullinfo(re, NULL, PCRE_INFO_SIZE, &size);
 	if (rc != 0) {
 		pcre_free(re);
 		LM_ERR("pcre_fullinfo on compiled pattern '%s' yielded error: %d\n",
-			pattern, rc);
+				pattern, rc);
 		return (pcre *)0;
 	}
 	rc = pcre_fullinfo(re, NULL, PCRE_INFO_CAPTURECOUNT, cap_cnt);
 	if (rc != 0) {
 		pcre_free(re);
 		LM_ERR("pcre_fullinfo on compiled pattern '%s' yielded error: %d\n",
-			pattern, rc);
+				pattern, rc);
 		return (pcre *)0;
 	}
 	result = (pcre *)shm_malloc(size);
@@ -358,14 +358,14 @@ dpl_node_t * build_rule(db_val_t * values)
 {
 	pcre *match_comp, *subst_comp;
 	struct subst_expr *repl_comp;
-	const char *error;
 	dpl_node_t * new_rule;
 	str match_exp, subst_exp, repl_exp, attrs;
 	int matchop, cap_cnt;
 
 	matchop = VAL_INT(values+2);
 
-	if((matchop != REGEX_OP) && (matchop!=EQUAL_OP)){
+	if((matchop != DP_REGEX_OP) && (matchop!=DP_EQUAL_OP)
+			&& (matchop!=DP_FNMATCH_OP)){
 		LM_ERR("invalid value for match operator\n");
 		return NULL;
 	}
@@ -373,51 +373,50 @@ dpl_node_t * build_rule(db_val_t * values)
 	match_comp = subst_comp =0;
 	repl_comp = 0;
 	new_rule = 0;
-	error = NULL;
 
 	GET_STR_VALUE(match_exp, values, 3);
-	if(matchop == REGEX_OP){
-	    match_comp = reg_ex_comp(match_exp.s, &cap_cnt);
-	    if(!match_comp){
-		LM_ERR("failed to compile match expression %.*s\n",
-		       match_exp.len, match_exp.s);
-		goto err;
-	    }
+	if(matchop == DP_REGEX_OP){
+		match_comp = reg_ex_comp(match_exp.s, &cap_cnt);
+		if(!match_comp){
+			LM_ERR("failed to compile match expression %.*s\n",
+					match_exp.len, match_exp.s);
+			goto err;
+		}
 	}
-	
+
 	LM_DBG("build_rule\n");
 	GET_STR_VALUE(repl_exp, values, 6);
 	if(repl_exp.len && repl_exp.s){
-	    repl_comp = repl_exp_parse(repl_exp);
-	    if(!repl_comp){
-		LM_ERR("failed to compile replacing expression %.*s\n",
-		       repl_exp.len, repl_exp.s);
-		goto err;
-	    }
+		repl_comp = repl_exp_parse(repl_exp);
+		if(!repl_comp){
+			LM_ERR("failed to compile replacing expression %.*s\n",
+					repl_exp.len, repl_exp.s);
+			goto err;
+		}
 	}
 
 	GET_STR_VALUE(subst_exp, values, 5);
 	if(subst_exp.s && subst_exp.len){
-	    subst_comp = reg_ex_comp(subst_exp.s, &cap_cnt);
-	    if(!subst_comp){
-		LM_ERR("failed to compile subst expression %.*s\n",
-		       subst_exp.len, subst_exp.s);
-		goto err;
-	    }
-	    if (cap_cnt > MAX_REPLACE_WITH) {
-		LM_ERR("subst expression %.*s has too many sub-expressions\n",
-		       subst_exp.len, subst_exp.s);
-		goto err;
-	    }
+		subst_comp = reg_ex_comp(subst_exp.s, &cap_cnt);
+		if(!subst_comp){
+			LM_ERR("failed to compile subst expression %.*s\n",
+					subst_exp.len, subst_exp.s);
+			goto err;
+		}
+		if (cap_cnt > MAX_REPLACE_WITH) {
+			LM_ERR("subst expression %.*s has too many sub-expressions\n",
+					subst_exp.len, subst_exp.s);
+			goto err;
+		}
 	}
 
 	if (repl_comp && (cap_cnt < repl_comp->max_pmatch) && 
-	    (repl_comp->max_pmatch != 0)) {
-	    LM_ERR("repl_exp %.*s refers to %d sub-expressions, but "
-		   "subst_exp %.*s has only %d\n",
-		   repl_exp.len, repl_exp.s, repl_comp->max_pmatch,
-		   subst_exp.len, subst_exp.s, cap_cnt);
-	    goto err;
+			(repl_comp->max_pmatch != 0)) {
+		LM_ERR("repl_exp %.*s refers to %d sub-expressions, but "
+				"subst_exp %.*s has only %d\n",
+				repl_exp.len, repl_exp.s, repl_comp->max_pmatch,
+				subst_exp.len, subst_exp.s, cap_cnt);
+		goto err;
 	}
 
 	new_rule = (dpl_node_t *)shm_malloc(sizeof(dpl_node_t));
@@ -477,7 +476,7 @@ int add_rule2hash(dpl_node_t * rule, int h_index)
 
 	/*search for the corresponding dpl_id*/
 	for(crt_idp = last_idp =rules_hash[h_index]; crt_idp!= NULL; 
-		last_idp = crt_idp, crt_idp = crt_idp->next)
+			last_idp = crt_idp, crt_idp = crt_idp->next)
 		if(crt_idp->dp_id == rule->dpid)
 			break;
 
@@ -496,7 +495,7 @@ int add_rule2hash(dpl_node_t * rule, int h_index)
 
 	/*search for the corresponding dpl_index*/
 	for(indexp = last_indexp =crt_idp->first_index; indexp!=NULL; 
-		last_indexp = indexp, indexp = indexp->next){
+			last_indexp = indexp, indexp = indexp->next){
 		if(indexp->len == rule->matchlen)
 			goto add_rule;
 		if((rule->matchlen!=0)&&((indexp->len)?(indexp->len>rule->matchlen):1))
@@ -514,7 +513,7 @@ add_index:
 	memset(new_indexp , 0, sizeof(dpl_index_t));
 	new_indexp->next = indexp;
 	new_indexp->len = rule->matchlen;
-		
+
 	/*add as first index*/
 	if(last_indexp == indexp){
 		crt_idp->first_index = new_indexp;
@@ -531,16 +530,16 @@ add_rule:
 
 	if(indexp->last_rule)
 		indexp->last_rule->next = rule;
-	
+
 	indexp->last_rule = rule;
 
 	if(new_id){
-			crt_idp->next = rules_hash[h_index];
-			rules_hash[h_index] = crt_idp;
+		crt_idp->next = rules_hash[h_index];
+		rules_hash[h_index] = crt_idp;
 	}
 	LM_DBG("added the rule id %i index %i pr %i next %p to the "
-		"index with %i len\n", rule->dpid, rule->matchlen,
-		rule->pr, rule->next, indexp->len);
+			"index with %i len\n", rule->dpid, rule->matchlen,
+			rule->pr, rule->next, indexp->len);
 
 	return 0;
 
@@ -577,7 +576,7 @@ void destroy_hash(int index)
 			shm_free(indexp);
 			indexp=0;
 			indexp = crt_idp->first_index;
-			
+
 		}
 
 		rules_hash[index] = crt_idp->next;
@@ -596,7 +595,7 @@ void destroy_rule(dpl_node_t * rule){
 		return;
 
 	LM_DBG("destroying rule with priority %i\n", 
-		rule->pr);
+			rule->pr);
 
 	if(rule->match_comp)
 		shm_free(rule->match_comp);
@@ -613,10 +612,10 @@ void destroy_rule(dpl_node_t * rule){
 
 	if(rule->subst_exp.s)
 		shm_free(rule->subst_exp.s);
-	
+
 	if(rule->repl_exp.s)
 		shm_free(rule->repl_exp.s);
-	
+
 	if(rule->attrs.s)
 		shm_free(rule->attrs.s);
 }
@@ -632,7 +631,7 @@ dpl_id_p select_dpid(int id)
 	for(idp = rules_hash[*crt_idx]; idp!=NULL; idp = idp->next)
 		if(idp->dp_id == id)
 			return idp;
-	
+
 	return NULL;
 }
 
@@ -662,12 +661,13 @@ void list_hash(int h_index)
 
 void list_rule(dpl_node_t * rule)
 {
-	LM_DBG("RULE %p: pr %i next %p match_exp %.*s, "
-		"subst_exp %.*s, repl_exp %.*s and attrs %.*s\n", rule,
-		rule->pr, rule->next,
-		rule->match_exp.len, rule->match_exp.s, 
-		rule->subst_exp.len, rule->subst_exp.s,
-		rule->repl_exp.len, rule->repl_exp.s,
-		rule->attrs.len,	rule->attrs.s);
-	
+	LM_DBG("RULE %p: pr %i next %p op %d match_exp %.*s, "
+			"subst_exp %.*s, repl_exp %.*s and attrs %.*s\n", rule,
+			rule->pr, rule->next,
+			rule->matchop,
+			rule->match_exp.len, rule->match_exp.s, 
+			rule->subst_exp.len, rule->subst_exp.s,
+			rule->repl_exp.len, rule->repl_exp.s,
+			rule->attrs.len,	rule->attrs.s);
+
 }

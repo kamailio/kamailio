@@ -591,6 +591,40 @@ static int set_verification(tls_domain_t* d)
 }
 
 
+/* This callback function is executed when libssl processes the SSL
+ * handshake and does SSL record layer stuff. It's used to trap
+ * client-initiated renegotiations.
+ */
+
+static void sr_ssl_ctx_info_callback(const SSL *ssl, int event, int ret)
+{
+	struct tls_extra_data* data = 0;
+	int tls_dbg;
+
+	if (event & SSL_CB_HANDSHAKE_START) {
+		tls_dbg = cfg_get(tls, tls_cfg, debug);
+		LOG(tls_dbg, "SSL handshake started\n");
+		if(data==0)
+			data = (struct tls_extra_data*)SSL_get_app_data(ssl);
+		if(data->flags & F_TLS_CON_HANDSHAKED) {
+			LOG(tls_dbg, "SSL renegotiation initiated by client\n");
+			data->flags |= F_TLS_CON_RENEGOTIATION;
+		}
+	}
+	if (event & SSL_CB_HANDSHAKE_DONE) {
+		tls_dbg = cfg_get(tls, tls_cfg, debug);
+		if(data==0)
+			data = (struct tls_extra_data*)SSL_get_app_data(ssl);
+		LOG(tls_dbg, "SSL handshake done\n");
+		/* CVE-2009-3555 - disable renegotiation */
+		if (ssl->s3) {
+			LOG(tls_dbg, "SSL disable renegotiation\n");
+			ssl->s3->flags |= SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS;
+		}
+		data->flags |= F_TLS_CON_HANDSHAKED;
+	}
+}
+
 /**
  * @brief Configure generic SSL parameters 
  * @param d domain
@@ -635,6 +669,8 @@ static int set_ssl_options(tls_domain_t* d)
 #endif
 	for(i = 0; i < procs_no; i++) {
 		SSL_CTX_set_options(d->ctx[i], options);
+		if(sr_tls_renegotiation==0)
+			SSL_CTX_set_info_callback(d->ctx[i], sr_ssl_ctx_info_callback);
 	}
 	return 0;
 }

@@ -41,6 +41,8 @@
 #include "presence.h"
 #include "bind_presence.h"
 #include "notify.h"
+#include "publish.h"
+#include "subscribe.h"
 
 int bind_presence(presence_api_t* api)
 {
@@ -67,6 +69,8 @@ int bind_presence(presence_api_t* api)
 	api->get_presentity= get_p_notify_body;
 	api->free_presentity= free_notify_body;
 	api->pres_auth_status= pres_auth_status;
+	api->handle_publish= handle_publish;
+	api->handle_subscribe= handle_subscribe;
 	return 0;
 }
 

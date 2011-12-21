@@ -174,7 +174,7 @@ module_group_radius=acc_radius auth_radius misc_radius avp_radius uri_radius \
 
 # For presence
 # kamailio modules
-module_group_presence=presence presence_dialoginfo presence_mwi presence_xml \
+module_group_presence=presence presence_dialoginfo presence_mwi presence_xml presence_profile\
 						pua pua_bla pua_dialoginfo pua_mi pua_usrloc pua_xmpp \
 						rls xcap_client xcap_server presence_conference \
 						presence_reginfo pua_reginfo
@@ -210,8 +210,8 @@ module_group_kstandard=acc alias_db auth auth_db benchmark call_control \
 				avpops cfg_db cfg_rpc ctl db_flatstore dialplan enum \
 				iptrtpproxy lcr mediaproxy mi_rpc pdb sanity tm topoh \
 				blst prefix_route counters debugger matrix mqueue mtree \
-				pipelimit rtpproxy textopsx xhttp ipops p_usrloc sdpops \
-				async sipcapture, dmq
+				pipelimit rtpproxy textopsx xhttp xhttp_rpc ipops p_usrloc \
+				sdpops async sipcapture dmq
 
 # K mysql module
 module_group_kmysql=db_mysql
@@ -262,7 +262,7 @@ module_group_kmemcached=memcached
 module_group_ktls=tls
 
 # K presence modules
-module_group_kpresence=presence presence_dialoginfo presence_mwi presence_xml \
+module_group_kpresence=presence presence_dialoginfo presence_mwi presence_xml presence_profile\
 						pua pua_bla pua_dialoginfo pua_mi pua_usrloc pua_xmpp \
 						rls xcap_client xcap_server presence_conference \
 						presence_reginfo pua_reginfo
@@ -1189,3 +1189,7 @@ dbschema:
 	-@echo "Build database schemas"
 	$(MAKE) -C lib/srdb1/schema
 	-@echo "Done"
+
+.PHONY: printcdefs
+printcdefs:
+	@echo -n $(C_DEFS)

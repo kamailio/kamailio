@@ -41,6 +41,7 @@
 #include <stdlib.h>
 
 #include "../../lib/srdb1/db_op.h"
+#include "../../lib/kcore/parser_helpers.h"
 #include "../../sr_module.h"
 #include "../../lib/srdb1/db.h"
 #include "../../mem/shm_mem.h"
@@ -53,6 +54,8 @@
 #include "../../action.h"
 #include "../../mod_fix.h"
 #include "../../parser/parse_from.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 
 #include "pdtree.h"
 
@@ -79,8 +82,8 @@ static str prefix_column  = str_init("prefix");
 static str domain_column  = str_init("domain");
 static int pdt_check_domain  = 1;
 
-/** pstn prefix */
-str prefix = {"", 0};
+/** translation prefix */
+str pdt_prefix = {"", 0};
 /* List of allowed chars for a prefix*/
 str pdt_char_list = {"0123456789", 10};
 
@@ -95,9 +98,13 @@ static int  w_prefix2domain_2(struct sip_msg* msg, char* mode, char* sd_en);
 static int  mod_init(void);
 static void mod_destroy(void);
 static int  child_init(int rank);
-static int prefix2domain(struct sip_msg*, int mode, int sd_en);
+static int  pd_translate(sip_msg_t *msg, str *sdomain, int rmode, int fmode);
+
+static int w_pd_translate(struct sip_msg* msg, char* str1, char* str2);
+static int fixup_translate(void** param, int param_no);
 
 static int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode);
+static int pdt_init_rpc(void);
 
 static cmd_export_t cmds[]={
 	{"prefix2domain", (cmd_function)w_prefix2domain,   0, 0,
@@ -106,6 +113,8 @@ static cmd_export_t cmds[]={
 		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"prefix2domain", (cmd_function)w_prefix2domain_2, 2, fixup_igp_igp,
 		0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"pd_translate", (cmd_function)w_pd_translate,     2, fixup_translate,
+		0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -115,7 +124,7 @@ static param_export_t params[]={
 	{"sdomain_column", STR_PARAM, &sdomain_column.s},
 	{"prefix_column",  STR_PARAM, &prefix_column.s},
 	{"domain_column",  STR_PARAM, &domain_column.s},
-	{"prefix",         STR_PARAM, &prefix.s},
+	{"prefix",         STR_PARAM, &pdt_prefix.s},
 	{"char_list",      STR_PARAM, &pdt_char_list.s},
 	{"fetch_rows",     INT_PARAM, &pdt_fetch_rows},
 	{"check_domain",   INT_PARAM, &pdt_check_domain},
@@ -145,17 +154,27 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+
+#ifndef PDT_NO_MI
 	if(pdt_init_mi(exports.name)<0)
 	{
 		LM_ERR("cannot register MI commands\n");
 		return -1;
 	}
+#endif
+
+	if(pdt_init_rpc()<0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+
 	db_url.len = strlen(db_url.s);
 	db_table.len = strlen(db_table.s);
 	sdomain_column.len = strlen(sdomain_column.s);
 	prefix_column.len = strlen(prefix_column.s);
 	domain_column.len = strlen(domain_column.s);
-	prefix.len = strlen(prefix.s);
+	pdt_prefix.len = strlen(pdt_prefix.s);
 
 	if(pdt_fetch_rows<=0)
 		pdt_fetch_rows = 1000;
@@ -292,28 +311,32 @@ static void mod_destroy(void)
 
 static int w_prefix2domain(struct sip_msg* msg, char* str1, char* str2)
 {
-	return prefix2domain(msg, 0, 0);
+	str sdall={"*",1};
+	return pd_translate(msg, &sdall, 0, 0);
 }
 
 static int w_prefix2domain_1(struct sip_msg* msg, char* mode, char* str2)
 {
-	int m;
+	str sdall={"*",1};
+	int md;
 
-	if(fixup_get_ivalue(msg, (gparam_p)mode, &m)!=0)
+	if(fixup_get_ivalue(msg, (gparam_p)mode, &md)!=0)
 	{
 		LM_ERR("no mode value\n");
 		return -1;
 	}
 
-	if(m!=1 && m!=2)
-		m = 0;
+	if(md!=1 && md!=2)
+		md = 0;
 
-	return prefix2domain(msg, m, 0);
+	return pd_translate(msg, &sdall, md, 0);
 }
 
 static int w_prefix2domain_2(struct sip_msg* msg, char* mode, char* sdm)
 {
-	int m, s;
+	int m, s, f;
+	str sdomain={"*",1};
+	sip_uri_t *furi;
 
 	if(fixup_get_ivalue(msg, (gparam_p)mode, &m)!=0)
 	{
@@ -333,15 +356,36 @@ static int w_prefix2domain_2(struct sip_msg* msg, char* mode, char* sdm)
 	if(s!=1 && s!=2)
 		s = 0;
 
-	return prefix2domain(msg, m, s);
+	f = 0;
+	if(s==1 || s==2)
+	{
+		/* take the domain from  FROM uri as sdomain */
+		if((furi = parse_from_uri(msg))==NULL)
+		{
+			LM_ERR("cannot parse FROM header URI\n");
+			return -1;
+		}
+		sdomain = furi->host;
+		if(s==2)
+			f = 1;
+	}
+	return pd_translate(msg, &sdomain, m, f);
 }
 
-/* change the r-uri if it is a PSTN format */
-static int prefix2domain(struct sip_msg* msg, int mode, int sd_en)
+/**
+ * @brief change the r-uri domain based on source domain and prefix
+ *
+ * @param msg the sip message structure
+ * @param sdomain the source domain
+ * @param rmode the r-uri rewrite mode
+ * @param fmode the source domain fallback mode
+ * @return 1 if translation is done; -1 otherwise
+ */
+static int pd_translate(sip_msg_t *msg, str *sdomain, int rmode, int fmode)
 {
-	str *d, p, all={"*",1};
+	str *d, p;
+	str sdall={"*",1};
 	int plen;
-	struct sip_uri uri;
 	
 	if(msg==NULL)
 	{
@@ -349,45 +393,36 @@ static int prefix2domain(struct sip_msg* msg, int mode, int sd_en)
 		return -1;
 	}
 	
-	/* parse the uri, if not yet */
-	if(msg->parsed_uri_ok==0)
-		if(parse_sip_msg_uri(msg)<0)
-		{
-			LM_ERR("failed to parse the R-URI\n");
-			return -1;
-		}
+	if(parse_sip_msg_uri(msg)<0)
+	{
+		LM_ERR("failed to parse the R-URI\n");
+		return -1;
+	}
 
-    /* if the user part begin with the prefix for PSTN users, extract the code*/
+    /* if the user part begin with the prefix, extract the code*/
 	if (msg->parsed_uri.user.len<=0)
 	{
 		LM_DBG("user part of the message is empty\n");
 		return -1;
 	}   
     
-	if(prefix.len>0)
+	if(pdt_prefix.len>0)
 	{
-		if (msg->parsed_uri.user.len<=prefix.len)
+		if (msg->parsed_uri.user.len<=pdt_prefix.len)
 		{
-			LM_DBG("user part is less than prefix\n");
+			LM_DBG("user part is less than prefix parameter\n");
 			return -1;
 		}   
-		if(strncasecmp(prefix.s, msg->parsed_uri.user.s, prefix.len)!=0)
+		if(strncasecmp(pdt_prefix.s, msg->parsed_uri.user.s,
+					pdt_prefix.len)!=0)
 		{
-			LM_DBG("PSTN prefix did not matched\n");
+			LM_DBG("prefix parameter did not matched\n");
 			return -1;
 		}
 	}   
 	
-	if(prefix.len>0 && prefix.len < msg->parsed_uri.user.len
-			&& strncasecmp(prefix.s, msg->parsed_uri.user.s, prefix.len)!=0)
-	{
-		LM_DBG("PSTN prefix did not matched\n");
-		return -1;
-			
-	}
-
-	p.s   = msg->parsed_uri.user.s + prefix.len;
-	p.len = msg->parsed_uri.user.len - prefix.len;
+	p.s   = msg->parsed_uri.user.s + pdt_prefix.len;
+	p.len = msg->parsed_uri.user.len - pdt_prefix.len;
 
 again:
 	lock_get( pdt_lock );
@@ -399,69 +434,20 @@ again:
 	pdt_tree_refcnt++;
 	lock_release( pdt_lock );
 
-	if(sd_en==2)
-	{	
-		/* take the domain from  FROM uri as sdomain */
-		if(parse_from_header(msg)<0 ||  msg->from == NULL 
-				|| get_from(msg)==NULL)
-		{
-			LM_ERR("cannot parse FROM header\n");
-			goto error;
-		}	
-		
-		memset(&uri, 0, sizeof(struct sip_uri));
-		if (parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len , &uri)<0)
-		{
-			LM_ERR("failed to parse From uri\n");
-			goto error;
-		}
-	
-		/* find the domain that corresponds to this prefix */
+
+	if((d=pdt_get_domain(*_ptree, sdomain, &p, &plen))==NULL)
+	{
 		plen = 0;
-		if((d=pdt_get_domain(*_ptree, &uri.host, &p, &plen))==NULL)
+		if((fmode==0) || (d=pdt_get_domain(*_ptree, &sdall, &p, &plen))==NULL)
 		{
-			plen = 0;
-			if((d=pdt_get_domain(*_ptree, &all, &p, &plen))==NULL)
-			{
-				LM_INFO("no prefix found in [%.*s]\n", p.len, p.s);
-				goto error;
-			}
-		}
-	} else if(sd_en==1) {	
-		/* take the domain from  FROM uri as sdomain */
-		if(parse_from_header(msg)<0 ||  msg->from == NULL
-				|| get_from(msg)==NULL)
-		{
-			LM_ERR("ERROR cannot parse FROM header\n");
-			goto error;
-		}	
-		
-		memset(&uri, 0, sizeof(struct sip_uri));
-		if (parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len , &uri)<0)
-		{
-			LM_ERR("failed to parse From uri\n");
-			goto error;
-		}
-	
-		/* find the domain that corresponds to this prefix */
-		plen = 0;
-		if((d=pdt_get_domain(*_ptree, &uri.host, &p, &plen))==NULL)
-		{
-			LM_INFO("no prefix found in [%.*s]\n", p.len, p.s);
-			goto error;
-		}
-	} else {
-		/* find the domain that corresponds to this prefix */
-		plen = 0;
-		if((d=pdt_get_domain(*_ptree, &all, &p, &plen))==NULL)
-		{
-			LM_INFO("no prefix found in [%.*s]\n", p.len, p.s);
+			LM_INFO("no prefix PDT prefix matched [%.*s]\n", p.len, p.s);
 			goto error;
 		}
 	}
+
 	
 	/* update the new uri */
-	if(update_new_uri(msg, plen, d, mode)<0)
+	if(update_new_uri(msg, plen, d, rmode)<0)
 	{
 		LM_ERR("new_uri cannot be updated\n");
 		goto error;
@@ -479,7 +465,48 @@ error:
 	return -1;
 }
 
-/* change the uri according to translation of the prefix */
+/**
+ *
+ */
+static int fixup_translate(void** param, int param_no)
+{
+	if(param_no==1)
+		return fixup_spve_null(param, 1);
+	if(param_no==2)
+		return fixup_igp_null(param, 1);
+	return 0;
+}
+
+/**
+ *
+ */
+static int w_pd_translate(sip_msg_t* msg, char* sdomain, char* mode)
+{
+	int md;
+	str sd;
+
+	if(fixup_get_svalue(msg, (gparam_p)sdomain, &sd)!=0)
+	{
+		LM_ERR("no source domain value\n");
+		return -1;
+	}
+
+
+	if(fixup_get_ivalue(msg, (gparam_p)mode, &md)!=0)
+	{
+		LM_ERR("no multi-domain mode value\n");
+		return -1;
+	}
+
+	if(md!=1 && md!=2)
+		md = 0;
+
+	return pd_translate(msg, &sd, md, 0);
+}
+
+/**
+ * change the uri according to update mode
+ */
 static int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 {
 	struct action act;
@@ -490,26 +517,26 @@ static int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 		return -1;
 	}
 	
-	if(mode==0 || (mode==1 && prefix.len>0))
+	if(mode==0 || (mode==1 && pdt_prefix.len>0))
 	{
 		memset(&act, '\0', sizeof(act));
 		act.type = STRIP_T;
 		act.val[0].type = NUMBER_ST;
 		if(mode==0)
-			act.val[0].u.number = plen + prefix.len;
+			act.val[0].u.number = plen + pdt_prefix.len;
 		else
-			act.val[0].u.number = prefix.len;
+			act.val[0].u.number = pdt_prefix.len;
 
 		init_run_actions_ctx(&ra_ctx);
 		if (do_action(&ra_ctx, &act, msg) < 0)
 		{
-			LM_ERR("failed to remove prefix\n");
+			LM_ERR("failed to remove prefix parameter\n");
 			return -1;
 		}
 	}
 	
 	memset(&act, '\0', sizeof(act));
-	act.type = SET_HOSTPORT_T;
+	act.type = SET_HOSTALL_T;
 	act.val[0].type = STRING_ST;
 	act.val[0].u.string = d->s;
 	init_run_actions_ctx(&ra_ctx);
@@ -684,4 +711,47 @@ str* pdt_get_char_list(void)
 pdt_tree_t **pdt_get_ptree(void)
 {
 	return _ptree;
+}
+
+
+/*** RPC commands implementation ***/
+
+static const char* pdt_rpc_reload_doc[2] = {
+	"Reload PDT database records",
+	0
+};
+
+
+/*
+ * RPC command to reload pdt db records
+ */
+static void pdt_rpc_reload(rpc_t* rpc, void* ctx)
+{
+	if(pdt_load_db()<0) {
+		LM_ERR("cannot re-load pdt records from database\n");	
+		rpc->fault(ctx, 500, "Reload Failed");
+		return;
+	}
+	return;
+}
+
+
+rpc_export_t pdt_rpc_cmds[] = {
+	{"pdt.reload", pdt_rpc_reload,
+		pdt_rpc_reload_doc, 0},
+	{0, 0, 0, 0}
+};
+
+
+/**
+ * register RPC commands
+ */
+static int pdt_init_rpc(void)
+{
+	if (rpc_register_array(pdt_rpc_cmds)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
 }

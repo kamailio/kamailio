@@ -360,6 +360,42 @@ record_route_preset("1.2.3.4:5090");
 		</example>
 	</section>
 
+	<section id="record-route-adv-addr-id">
+		<title>
+		<function moreinfo="none">record_route_advertised_address(address)</function>
+		</title>
+		<para>
+		The function adds a new Record-Route header field using the address given. The
+		header field will be inserted in the message before any other Record-Route header
+		fields.
+		</para>
+		<para>Meaning of the parameter is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>address</emphasis> - Advertised address to use in the header;
+				it may contain pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		If double record-routing is enabled two Record-Route headers will be inserted
+		with the same given address with different transports if the transport changes.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and 
+		FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>record_route_advertised_address</function> usage</title>
+		<programlisting format="linespecific">
+...
+record_route_advertised_address("1.2.3.4:5080");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="add-rr-param-id">
 		<title>
 		<function moreinfo="none">add_rr_param(param)</function>
@@ -367,8 +403,8 @@ record_route_preset("1.2.3.4:5090");
 		<para>
 		Adds a parameter to the Record-Route URI (param must be in 
 		<quote>;name=value</quote> format. The function may be called also 
-		before or after the record_route() call 
-		(see <xref linkend="record-route-id"/>).
+		before or after the record_route() or record_route_advertised_address() calls
+		(see <xref linkend="record-route-id"/> or <xref linkend="record-route-adv-addr-id"/>)).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>

@@ -66,10 +66,13 @@ int pdt_check_pd(pdt_tree_t *pt, str* sdomain, str *sp, str *sd);
 
 int pdt_init_db(void);
 int pdt_load_db(void);
-int pdt_init_mi(char *mod);
 str *pdt_get_char_list(void);
 
 pdt_tree_t **pdt_get_ptree(void);
+
+#ifndef PDT_NO_MI
+int pdt_init_mi(char *mod);
+#endif
 
 #endif
 

@@ -1,0 +1,81 @@
+Presence_Profile Module
+
+Mihály Mészáros
+
+   <misi@niif.hu>
+
+Edited by
+
+Mészáros Mihály
+
+   <misi@niif.hu>
+
+   Copyright � 2011 Mészáros Mihály
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Exported Parameters
+        4. Exported Functions
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Exported Parameters
+   4. Exported Functions
+
+1. Overview
+
+   The module extends presence server implementation with ability of
+   handling ua-profile event. When an user agent subscribes to ua-profile
+   event for its own AoR, it will retrieve profile data document via body
+   of NOTIFY request.
+
+   The profile data document format is usually specific per user agent,
+   such documents have to be built and added to presentity table by the
+   admin or a third party application.
+
+   Warning: When you add profile data document (i.e., user agent's
+   provisioning config) to presentity table, then you must make sure that
+   you set the presentity table expires field to a time value in long
+   future.
+
+   Read more about SIP user agent configuration framework in RFC6080:
+   http://tools.ietf.org/html/rfc6080.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * presence.
+
+2.2. External Libraries or Applications
+
+   None.
+
+3. Exported Parameters
+
+   None.
+
+4. Exported Functions
+
+   None to be used in configuration file.

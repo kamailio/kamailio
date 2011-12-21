@@ -56,6 +56,7 @@ static struct {
 	{STR_STATIC_INIT("sip-profile"),     EVENT_SIP_PROFILE},
 	{STR_STATIC_INIT("message-summary"), EVENT_MESSAGE_SUMMARY},
 	{STR_STATIC_INIT("dialog"),          EVENT_DIALOG},
+	{STR_STATIC_INIT("ua-profile"),      EVENT_UA_PROFILE},
 	/* The following must be the last element in the array */
 	{STR_NULL,                           EVENT_OTHER}
 };

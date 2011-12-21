@@ -472,6 +472,7 @@ extern char *finame;
 %token TCP_CON_LIFETIME
 %token TCP_POLL_METHOD
 %token TCP_MAX_CONNECTIONS
+%token TLS_MAX_CONNECTIONS
 %token TCP_NO_CONNECT
 %token TCP_SOURCE_IPV4
 %token TCP_SOURCE_IPV6
@@ -1063,6 +1064,14 @@ assign_stm:
 		#endif
 	}
 	| TCP_MAX_CONNECTIONS EQUAL error { yyerror("number expected"); }
+	| TLS_MAX_CONNECTIONS EQUAL NUMBER {
+		#ifdef USE_TLS
+			tls_max_connections=$3;
+		#else
+			warn("tls support not compiled in");
+		#endif
+	}
+	| TLS_MAX_CONNECTIONS EQUAL error { yyerror("number expected"); }
 	| TCP_NO_CONNECT EQUAL NUMBER {
 		#ifdef USE_TCP
 			tcp_default_cfg.no_connect=$3;

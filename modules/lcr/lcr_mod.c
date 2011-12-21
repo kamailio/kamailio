@@ -2320,7 +2320,7 @@ static int do_to_gw(struct sip_msg* _m, unsigned int lcr_id,
     /* Return result */
     if ((res != NULL) &&
 	((res->transport == transport) ||
-	 ((res->transport == PROTO_NONE) && (transport == PROTO_UDP)))) {
+	 ((transport == PROTO_NONE) && (res->transport == PROTO_UDP)))) {
 	LM_DBG("request goes to gw\n");
 	return 1;
     } else {

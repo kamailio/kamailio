@@ -76,6 +76,13 @@ struct module_exports exports = {
 };
 
 
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	if(db_api_init()<0)
+		return -1;
+	return 0;
+}
+
 static int oracle_mod_init(void)
 {
 	sword major, minor, update, patch, port;
@@ -83,7 +90,7 @@ static int oracle_mod_init(void)
 	OCIClientVersion(&major, &minor, &update, &patch, &port);
 	LM_DBG("Oracle client version is %d.%d.%d.%d.%d\n",
 		major, minor, update, patch, port);
-	return db_query_init();
+	return 0;
 }
 
 

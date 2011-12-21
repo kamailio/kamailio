@@ -135,6 +135,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	/* buf[len]=0; */ /* WARNING: zero term removed! */
 	msg->rcv=*rcv_info;
 	msg->id=msg_no;
+	msg->pid=my_pid();
 	msg->set_global_address=default_global_address;
 	msg->set_global_port=default_global_port;
 	

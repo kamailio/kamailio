@@ -45,6 +45,7 @@ Elena-Ramona Modroiu
               4.1. prefix2domain(rewrite_mode, multidomain_mode)
               4.2. prefix2domain(rewrite_mode)
               4.3. prefix2domain()
+              4.4. pd_translate(sdomain, rewrite_mode)
 
         5. MI Commands
 
@@ -66,6 +67,7 @@ Elena-Ramona Modroiu
    1.9. Set char_list parameter
    1.10. Set check_domain parameter
    1.11. prefix2domain usage
+   1.12. pd_translate usage
 
 Chapter 1. Admin Guide
 
@@ -94,6 +96,7 @@ Chapter 1. Admin Guide
         4.1. prefix2domain(rewrite_mode, multidomain_mode)
         4.2. prefix2domain(rewrite_mode)
         4.3. prefix2domain()
+        4.4. pd_translate(sdomain, rewrite_mode)
 
    5. MI Commands
 
@@ -283,6 +286,7 @@ modparam("pdt", "check_domain", 0)
    4.1. prefix2domain(rewrite_mode, multidomain_mode)
    4.2. prefix2domain(rewrite_mode)
    4.3. prefix2domain()
+   4.4. pd_translate(sdomain, rewrite_mode)
 
 4.1.  prefix2domain(rewrite_mode, multidomain_mode)
 
@@ -342,6 +346,36 @@ prefix2domain("2");
    The same as prefix2domain("0", "0").
 ...
 prefix2domain();
+...
+
+4.4.  pd_translate(sdomain, rewrite_mode)
+
+   Translate R-URI based on source domain and longest prefix matching.
+   Returns 1 when the translation was made or there was nothing to
+   translate. Returns -1 in error cases.
+
+   The translation is done based on lookup up for an entry in the database
+   where the sdomain parameter equals the sdomain in database table.
+
+   The “sdomain” parameter specifies the source domain to be used to match
+   the longest prefix. Can be a static string or dynamic parameter with
+   variables inside.
+
+   The “rewrite_mode” parameter specifies whether to strip or not the
+   prefix from user part. The possible values are:
+     * 0: the prefix is removed along with the leading prefix.
+     * 1: only the leading prefix is removed.
+     * 2: the user part of the URI is not changed.
+     * $PV : any PV holding one of the above values.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE or
+   BRANCH_ROUTE.
+
+   Example 1.12. pd_translate usage
+...
+pd_translate("$fd", "2");
+...
+pd_translate("*", "$var(a)");
 ...
 
 5. MI Commands

@@ -16,11 +16,11 @@ Carsten Bock
 
    ng-voice.com
 
-   Copyright © 2004 FhG FOKUS
+   Copyright � 2004 FhG FOKUS
 
-   Copyright © 2005 Voice Sistem
+   Copyright � 2005 Voice Sistem
 
-   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright � 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -62,6 +62,7 @@ Carsten Bock
               3.25. ds_hash_expire (int)
               3.26. ds_hash_initexpire (int)
               3.27. ds_hash_check_interval (int)
+              3.28. outbound_proxy (str)
 
         4. Functions
 
@@ -69,12 +70,10 @@ Carsten Bock
               4.2. ds_select_domain(set, alg)
               4.3. ds_next_dst()
               4.4. ds_next_domain()
-              4.5. ds_mark_dst()
-              4.6. ds_mark_dst("s")
-              4.7. ds_is_from_list()
-              4.8. ds_is_from_list("group")
-              4.9. ds_load_update()
-              4.10. ds_load_unset()
+              4.5. ds_mark_dst([state])
+              4.6. ds_is_from_list([groupid])
+              4.7. ds_load_update()
+              4.8. ds_load_unset()
 
         5. MI Commands
 
@@ -102,38 +101,41 @@ Carsten Bock
 
    List of Examples
 
-   1.1. Set the “list_file” parameter
-   1.2. Set “db_url” parameter
-   1.3. Set “table_name” parameter
-   1.4. Set “setid_col” parameter
-   1.5. Set “destination_col” parameter
-   1.6. Set “flags_col” parameter
-   1.7. Set “priority_col” parameter
-   1.8. Set the “force_dst” parameter
-   1.9. Set the “flags” parameter
-   1.10. Set the “use_default” parameter
-   1.11. Set the “dst_avp” parameter
-   1.12. Set the “grp_avp” parameter
-   1.13. Set the “cnt_avp” parameter
-   1.14. Set the “dstid_avp” parameter
-   1.15. Set the “attrs_avp” parameter
+   1.1. Set the "list_file" parameter
+   1.2. Set "db_url" parameter
+   1.3. Set "table_name" parameter
+   1.4. Set "setid_col" parameter
+   1.5. Set "destination_col" parameter
+   1.6. Set "flags_col" parameter
+   1.7. Set "priority_col" parameter
+   1.8. Set the "force_dst" parameter
+   1.9. Set the "flags" parameter
+   1.10. Set the "use_default" parameter
+   1.11. Set the "dst_avp" parameter
+   1.12. Set the "grp_avp" parameter
+   1.13. Set the "cnt_avp" parameter
+   1.14. Set the "dstid_avp" parameter
+   1.15. Set the "attrs_avp" parameter
    1.16. Use $avp(i:273) for hashing:
    1.17. Use combination of PVs for hashing:
-   1.18. Set the “setid_pvar” parameter
-   1.19. Set the “ds_ping_method” parameter
-   1.20. Set the “ds_ping_from” parameter
-   1.21. Set the “ds_ping_interval” parameter
-   1.22. Set the “ds_probing_threshhold” parameter
-   1.23. Set the “ds_ping_reply_codes” parameter
-   1.24. Set the “ds_probing_mode” parameter
-   1.25. Set the “ds_hash_size” parameter
-   1.26. Set the “ds_hash_expire” parameter
-   1.27. Set the “ds_hash_initexpire” parameter
-   1.28. Set the “ds_hash_check_interval” parameter
-   1.29. ds_select_dst usage
-   1.30. ds_load_unset usage
-   1.31. dispatcher list file
-   1.32. Kamailio config script - sample dispatcher usage
+   1.18. Set the "setid_pvar" parameter
+   1.19. Set the "ds_ping_method" parameter
+   1.20. Set the "ds_ping_from" parameter
+   1.21. Set the "ds_ping_interval" parameter
+   1.22. Set the "ds_probing_threshhold" parameter
+   1.23. Set the "ds_ping_reply_codes" parameter
+   1.24. Set the "ds_probing_mode" parameter
+   1.25. Set the "ds_hash_size" parameter
+   1.26. Set the "ds_hash_expire" parameter
+   1.27. Set the "ds_hash_initexpire" parameter
+   1.28. Set the "ds_hash_check_interval" parameter
+   1.29. Set the "outbound_proxy" parameter
+   1.30. ds_select_dst usage
+   1.31. ds_mark_dst usage
+   1.32. ds_mark_dst usage
+   1.33. ds_load_unset usage
+   1.34. dispatcher list file
+   1.35. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -174,6 +176,7 @@ Chapter 1. Admin Guide
         3.25. ds_hash_expire (int)
         3.26. ds_hash_initexpire (int)
         3.27. ds_hash_check_interval (int)
+        3.28. outbound_proxy (str)
 
    4. Functions
 
@@ -181,12 +184,10 @@ Chapter 1. Admin Guide
         4.2. ds_select_domain(set, alg)
         4.3. ds_next_dst()
         4.4. ds_next_domain()
-        4.5. ds_mark_dst()
-        4.6. ds_mark_dst("s")
-        4.7. ds_is_from_list()
-        4.8. ds_is_from_list("group")
-        4.9. ds_load_update()
-        4.10. ds_load_unset()
+        4.5. ds_mark_dst([state])
+        4.6. ds_is_from_list([groupid])
+        4.7. ds_load_update()
+        4.8. ds_load_unset()
 
    5. MI Commands
 
@@ -273,15 +274,16 @@ Chapter 1. Admin Guide
    3.25. ds_hash_expire (int)
    3.26. ds_hash_initexpire (int)
    3.27. ds_hash_check_interval (int)
+   3.28. outbound_proxy (str)
 
 3.1. list_file (string)
 
    Path to the file with destination sets.
 
-   Default value is “/etc/kamailio/dispatcher.list” or
-   “/usr/local/etc/kamailio/dispatcher.list”.
+   Default value is "/etc/kamailio/dispatcher.list" or
+   "/usr/local/etc/kamailio/dispatcher.list".
 
-   Example 1.1. Set the “list_file” parameter
+   Example 1.1. Set the "list_file" parameter
 ...
 modparam("dispatcher", "list_file", "/var/run/kamailio/dispatcher.list")
 ...
@@ -291,9 +293,9 @@ modparam("dispatcher", "list_file", "/var/run/kamailio/dispatcher.list")
    If you want to load the sets of gateways from the database you must set
    this parameter.
 
-   Default value is “NULL” (disable DB support).
+   Default value is "NULL" (disable DB support).
 
-   Example 1.2. Set “db_url” parameter
+   Example 1.2. Set "db_url" parameter
 ...
 modparam("dispatcher", "db_url", "mysql://user:passwb@localhost/database")
 ...
@@ -303,9 +305,9 @@ modparam("dispatcher", "db_url", "mysql://user:passwb@localhost/database")
    If you want to load the sets of gateways from the database you must set
    this parameter as the database name.
 
-   Default value is “dispatcher”.
+   Default value is "dispatcher".
 
-   Example 1.3. Set “table_name” parameter
+   Example 1.3. Set "table_name" parameter
 ...
 modparam("dispatcher", "table_name", "my_dispatcher")
 ...
@@ -314,9 +316,9 @@ modparam("dispatcher", "table_name", "my_dispatcher")
 
    The column's name in the database storing the gateway's group id.
 
-   Default value is “setid”.
+   Default value is "setid".
 
-   Example 1.4. Set “setid_col” parameter
+   Example 1.4. Set "setid_col" parameter
 ...
 modparam("dispatcher", "setid_col", "groupid")
 ...
@@ -325,9 +327,9 @@ modparam("dispatcher", "setid_col", "groupid")
 
    The column's name in the database storing the destination's sip uri.
 
-   Default value is “destination”.
+   Default value is "destination".
 
-   Example 1.5. Set “destination_col” parameter
+   Example 1.5. Set "destination_col" parameter
 ...
 modparam("dispatcher", "destination_col", "uri")
 ...
@@ -337,9 +339,9 @@ modparam("dispatcher", "destination_col", "uri")
    The column's name in the database storing the flags for destination
    uri.
 
-   Default value is “flags”.
+   Default value is "flags".
 
-   Example 1.6. Set “flags_col” parameter
+   Example 1.6. Set "flags_col" parameter
 ...
 modparam("dispatcher", "flags_col", "dstflags")
 ...
@@ -349,9 +351,9 @@ modparam("dispatcher", "flags_col", "dstflags")
    The column's name in the database storing the priority for destination
    uri.
 
-   Default value is “priority”.
+   Default value is "priority".
 
-   Example 1.7. Set “priority_col” parameter
+   Example 1.7. Set "priority_col" parameter
 ...
 modparam("dispatcher", "priority_col", "dstpriority")
 ...
@@ -362,9 +364,9 @@ modparam("dispatcher", "priority_col", "dstpriority")
    when that is already set. If set to 0, will return error when the
    destination address is already set.
 
-   Default value is “1”.
+   Default value is "1".
 
-   Example 1.8. Set the “force_dst” parameter
+   Example 1.8. Set the "force_dst" parameter
 ...
 modparam("dispatcher", "force_dst", 1)
 ...
@@ -383,9 +385,9 @@ modparam("dispatcher", "force_dst", 1)
    destination set in AVP, and use these AVPs to contact next address when
    the current-tried fails.
 
-   Default value is “0”.
+   Default value is "0".
 
-   Example 1.9. Set the “flags” parameter
+   Example 1.9. Set the "flags" parameter
  ...
  modparam("dispatcher", "flags", 3)
  ...
@@ -397,9 +399,9 @@ modparam("dispatcher", "force_dst", 1)
    wanting to send the call to an anouncement server saying: "the gateways
    are full, try later".
 
-   Default value is “0”.
+   Default value is "0".
 
-   Example 1.10. Set the “use_default” parameter
+   Example 1.10. Set the "use_default" parameter
  ...
  modparam("dispatcher", "use_default", 1)
  ...
@@ -417,9 +419,9 @@ Note
 
    You must set this parameter if you want to do load balancing fail over.
 
-   Default value is “null” - don't add AVPs.
+   Default value is "null" - don't add AVPs.
 
-   Example 1.11. Set the “dst_avp” parameter
+   Example 1.11. Set the "dst_avp" parameter
  ...
  modparam("dispatcher", "dst_avp", "$avp(dsdst)")
  ...
@@ -433,9 +435,9 @@ Note
 
    You must set this parameter if you want to do load balancing fail over.
 
-   Default value is “null” - don't add AVP.
+   Default value is "null" - don't add AVP.
 
-   Example 1.12. Set the “grp_avp” parameter
+   Example 1.12. Set the "grp_avp" parameter
  ...
  modparam("dispatcher", "grp_avp", "$avp(dsgrp)")
  ...
@@ -449,9 +451,9 @@ Note
 
    You must set this parameter if you want to do load balancing fail over.
 
-   Default value is “null” - don't add AVP.
+   Default value is "null" - don't add AVP.
 
-   Example 1.13. Set the “cnt_avp” parameter
+   Example 1.13. Set the "cnt_avp" parameter
  ...
  modparam("dispatcher", "cnt_avp", "$avp(dscnt)")
  ...
@@ -466,9 +468,9 @@ Note
    You must set this parameter if you want to do load balancing on call
    load (alg 10).
 
-   Default value is “null” - don't add AVP.
+   Default value is "null" - don't add AVP.
 
-   Example 1.14. Set the “dstid_avp” parameter
+   Example 1.14. Set the "dstid_avp" parameter
  ...
  modparam("dispatcher", "dstid_avp", "$avp(dsdstid)")
  ...
@@ -479,9 +481,9 @@ Note
 
 Note
 
-   Default value is “null” - don't add AVP.
+   Default value is "null" - don't add AVP.
 
-   Example 1.15. Set the “attrs_avp” parameter
+   Example 1.15. Set the "attrs_avp" parameter
  ...
  modparam("dispatcher", "attrs_avp", "$avp(dsattrs)")
  ...
@@ -495,7 +497,7 @@ Note
    You must set this parameter if you want do hashing over custom message
    parts.
 
-   Default value is “null” - disabled.
+   Default value is "null" - disabled.
 
    Example 1.16. Use $avp(i:273) for hashing:
  ...
@@ -512,9 +514,9 @@ Note
    The name of the PV where to store the set ID (group ID) when calling
    ds_is_from_list() with no parameter.
 
-   Default value is “null” - don't set PV.
+   Default value is "null" - don't set PV.
 
-   Example 1.18. Set the “setid_pvar” parameter
+   Example 1.18. Set the "setid_pvar" parameter
  ...
  modparam("dispatcher", "setid_pvar", "$var(setid)")
  ...
@@ -525,9 +527,9 @@ Note
    the gateways. Pinging gateways feature depends on ds_ping_interval
    parameter.
 
-   Default value is “OPTIONS”.
+   Default value is "OPTIONS".
 
-   Example 1.19. Set the “ds_ping_method” parameter
+   Example 1.19. Set the "ds_ping_method" parameter
  ...
  modparam("dispatcher", "ds_ping_method", "INFO")
  ...
@@ -538,9 +540,9 @@ Note
    to the failed gateways. This method is only available, if compiled with
    the probing of failed gateways enabled.
 
-   Default value is “sip:dispatcher@localhost”.
+   Default value is "sip:dispatcher@localhost".
 
-   Example 1.20. Set the “ds_ping_from” parameter
+   Example 1.20. Set the "ds_ping_from" parameter
  ...
  modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
  ...
@@ -550,25 +552,27 @@ Note
    With this parameter you can define the interval for sending a request
    to a gateway marked as inactive upon a failed request routing to it.
    This parameter is only used, when the TM-Module is loaded. If set to
-   “0”, the pinging of inactive gateway is disabled.
+   "0", the pinging of inactive gateway is disabled.
 
-   Default value is “0”.
+   Default value is "0".
 
-   Example 1.21. Set the “ds_ping_interval” parameter
+   Example 1.21. Set the "ds_ping_interval" parameter
  ...
  modparam("dispatcher", "ds_ping_interval", 30)
  ...
 
 3.21. ds_probing_threshhold (int)
 
-   If you want to set a gateway into probing mode, you will need a
-   specific number of requests until it will change from "active" to
-   probing. The number of attempts can be set with this parameter. This
-   parameter can be modified via ser config framework.
+   If you want to set a gateway into inactive mode, there can be a
+   specific number of failed requests until it will change from "active"
+   to "inactive". It is using the state "trying", that allows selection of
+   gateway but indicates there was a failure previously with the gateway.
+   The number of attempts can be set with this parameter. This parameter
+   can be modified via ser config framework.
 
-   Default value is “3”.
+   Default value is "1" (set inactive with first failure).
 
-   Example 1.22. Set the “ds_probing_threshhold” parameter
+   Example 1.22. Set the "ds_probing_threshhold" parameter
  ...
  modparam("dispatcher", "ds_probing_threshhold", 10)
  ...
@@ -583,9 +587,9 @@ Note
    valid response). This parameter can be modified via ser config
    framework.
 
-   Default value is “” (only 200 OK is accepted).
+   Default value is "" (only 200 OK is accepted).
 
-   Example 1.23. Set the “ds_ping_reply_codes” parameter
+   Example 1.23. Set the "ds_ping_reply_codes" parameter
  ...
  modparam("dispatcher", "ds_ping_reply_codes", "class=2;code=403;code=488;class=
 3")
@@ -594,13 +598,14 @@ Note
 3.23. ds_probing_mode (int)
 
    Controls what gateways are tested to see if they are reachable. If set
-   to 0, only the gateways with state PROBING are tested, if set to 1, all
-   gateways are tested. If set to 1 and the response is 408 (timeout), an
-   active gateway is set to PROBING state.
+   to 0, only the gateways with state PROBING are tested; if set to 1, all
+   gateways are tested; if set to 2, only gateways in inactive state with
+   probing mode set are tested. If set to 1 and there is a failure of
+   keepalive to an active gateway, then it is set to TRYING state.
 
-   Default value is “0”.
+   Default value is "0".
 
-   Example 1.24. Set the “ds_probing_mode” parameter
+   Example 1.24. Set the "ds_probing_mode" parameter
  ...
  modparam("dispatcher", "ds_probing_mode", 1)
  ...
@@ -612,9 +617,9 @@ Note
    a hash table with 256 slots). It must be greater than 0 to enable call
    load dispatching feature (alg 10).
 
-   Default value is “0”.
+   Default value is "0".
 
-   Example 1.25. Set the “ds_hash_size” parameter
+   Example 1.25. Set the "ds_hash_size" parameter
  ...
  modparam("dispatcher", "ds_hash_size", 9)
  ...
@@ -624,9 +629,9 @@ Note
    Expiration time in seconds to remove the load on a destination if no
    BYE was received meanwhile.
 
-   Default value is “7200”.
+   Default value is "7200".
 
-   Example 1.26. Set the “ds_hash_expire” parameter
+   Example 1.26. Set the "ds_hash_expire" parameter
  ...
  modparam("dispatcher", "ds_hash_expire", 3600)
  ...
@@ -637,9 +642,9 @@ Note
    200 for INVITE was received meanwhile and state updated with
    ds_load_update().
 
-   Default value is “7200”.
+   Default value is "7200".
 
-   Example 1.27. Set the “ds_hash_initexpire” parameter
+   Example 1.27. Set the "ds_hash_initexpire" parameter
  ...
  modparam("dispatcher", "ds_hash_initexpire", 60)
  ...
@@ -649,11 +654,22 @@ Note
    Time interval in seconds to scan internal hash table with call load
    dispatching data for expired items.
 
-   Default value is “30”.
+   Default value is "30".
 
-   Example 1.28. Set the “ds_hash_check_interval” parameter
+   Example 1.28. Set the "ds_hash_check_interval" parameter
  ...
  modparam("dispatcher", "ds_hash_check_interval", 60)
+ ...
+
+3.28. outbound_proxy (str)
+
+   SIP URI of outbound proxy to be used when sending pings.
+
+   By default no outbound proxy is defined.
+
+   Example 1.29. Set the "outbound_proxy" parameter
+ ...
+ modparam("dispatcher", "outbound_proxy", "sip:outbound.example.com")
  ...
 
 4. Functions
@@ -662,14 +678,12 @@ Note
    4.2. ds_select_domain(set, alg)
    4.3. ds_next_dst()
    4.4. ds_next_domain()
-   4.5. ds_mark_dst()
-   4.6. ds_mark_dst("s")
-   4.7. ds_is_from_list()
-   4.8. ds_is_from_list("group")
-   4.9. ds_load_update()
-   4.10. ds_load_unset()
+   4.5. ds_mark_dst([state])
+   4.6. ds_is_from_list([groupid])
+   4.7. ds_load_update()
+   4.8. ds_load_unset()
 
-4.1.  ds_select_dst(set, alg)
+4.1. ds_select_dst(set, alg)
 
    The method selects a destination from addresses set.
 
@@ -679,21 +693,21 @@ Note
        be an integer or a variable holding an interger.
      * alg - the algorithm used to select the destination address. The
        parameter can be an integer or a variable holding an interger.
-          + “0” - hash over callid
-          + “1” - hash over from uri.
-          + “2” - hash over to uri.
-          + “3” - hash over request-uri.
-          + “4” - round-robin (next destination).
-          + “5” - hash over authorization-username (Proxy-Authorization or
+          + "0" - hash over callid
+          + "1" - hash over from uri.
+          + "2" - hash over to uri.
+          + "3" - hash over request-uri.
+          + "4" - round-robin (next destination).
+          + "5" - hash over authorization-username (Proxy-Authorization or
             "normal" authorization). If no username is found, round robin
             is used.
-          + “6” - random (using rand()).
-          + “7” - hash over the content of PVs string. Note: This works
+          + "6" - random (using rand()).
+          + "7" - hash over the content of PVs string. Note: This works
             only when the parameter hash_pvar is set.
-          + “8” - use first destination (good for failover).
-          + “9” - use weight based load distribution. You have to set the
+          + "8" - use first destination (good for failover).
+          + "9" - use weight based load distribution. You have to set the
             attribute 'weight' per each address in destination set.
-          + “10” - use call load distribution. You have to set the
+          + "10" - use call load distribution. You have to set the
             attribute 'duid' (as an unique string id) per each address in
             destination set. Also, you must set parameters 'dstid_avp' and
             'ds_hash_size'.
@@ -708,7 +722,7 @@ Note
             on each address can change.
             This algorithm can be used only for dispatching INVITE
             requests as it is the only SIP method creating a SIP call.
-          + “X” - if the algorithm is not implemented, the first entry in
+          + "X" - if the algorithm is not implemented, the first entry in
             set is chosen.
 
    If the bit 2 in 'flags' is set, the rest of the addresses from the
@@ -718,7 +732,7 @@ Note
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.29. ds_select_dst usage
+   Example 1.30. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -726,7 +740,7 @@ $var(a) = 4;
 ds_select_dst("1", "$var(a)");
 ...
 
-4.2.  ds_select_domain(set, alg)
+4.2. ds_select_domain(set, alg)
 
    The method selects a destination from addresses set and rewrites the
    host and port from R-URI. The parameters have same meaning as for
@@ -739,65 +753,76 @@ ds_select_dst("1", "$var(a)");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.3.  ds_next_dst()
+4.3. ds_next_dst()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
    and sets the dst_uri (outbound proxy address).
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.4.  ds_next_domain()
+4.4. ds_next_domain()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
    and sets the domain part of the request uri.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.5.  ds_mark_dst()
+4.5. ds_mark_dst([state])
 
-   Mark the last used address from destination set as inactive, in order
-   to be ingnored in the future. In this way it can be implemented an
-   automatic detection of failed gateways. When an address is marked as
-   inactive, it will be ignored by 'ds_select_dst' and 'ds_select_domain'.
+   Mark the last used address from destination set as inactive ("i"/"I"),
+   active ("a"/"A"), disabled ("d"/"D") or trying ("t"/"T"). Apart of
+   disabled state, a destination can be set in probing mode by adding
+   ("p"/"P") flag. With this function, an automatic detection of failed
+   gateways can be implemented. When an address is marked as inactive or
+   disabled, it will be ignored by 'ds_select_dst' and 'ds_select_domain'.
+
+   The parameter state is optional, when it is missing, then the
+   destination will be marked inactive (i.e., same as 'i').
+
+   Possible values for state parameter:
+     * "a" or "A" - the last destination should be set to active and the
+       error-counter should set to "0".
+     * "i" or "I" - the last destination should be set to inactive and
+       will be ignored in future requests.
+     * "t" or "T" - the last destination should be set to temporary trying
+       state and failure counter is incremented. When the failure counter
+       reaches the threshold, the destination will be set inactive.
+     * "p" and "P" - this has to be used in addition to one of the
+       previous flags - the last destination will be set to probing. This
+       mean the destination will be pinged with SIP OPTIONS requests from
+       time to time to detect if it is up running or down.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.6.  ds_mark_dst("s")
+   Example 1.31. ds_mark_dst usage
+...
+failure_route[tryagain] {
+...
+   if(t_check_status("500"))
+      ds_mark_dst("ip"); # set to inactive and probing
+...
+}
+...
 
-   Mark the last used address from destination set as inactive
-   ("i"/"I"/"0"), active ("a"/"A"/"1") or probing ("p"/"P"/"2"). With this
-   function, an automatic detection of failed gateways can be implemented.
-   When an address is marked as inactive or probing, it will be ignored by
-   'ds_select_dst' and 'ds_select_domain'.
-
-   possible parameters:
-     * "i", "I" or "0" - the last destination should be set to inactive
-       and will be ignored in future requests.
-     * "a", "A" or "1" - the last destination should be set to active and
-       the error-counter should set to "0".
-     * "p", "P" or "2" - the last destination will be set to probing.
-       Note: You will need to call this function "threshhold"-times,
-       before it will be actually set to probing.
-
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
-
-4.7.  ds_is_from_list()
-
-   This function returns true, if the current request comes from a host
-   from the dispatcher-list; otherwise false.
-
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
-
-4.8.  ds_is_from_list("group")
+4.6. ds_is_from_list([groupid])
 
    This function returns true, if the current request comes from a host in
    the given group of the dispatcher-list; otherwise false.
 
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   Parameter groupid is optional, when it is missing, then the matching
+   will be done against all addresses in all groups. Upon a match, the
+   'grp_avp' will be set to groupid of matching address.
 
-4.9.  ds_load_update()
+   This function can be used from ANY_ROUTE.
+
+   Example 1.32. ds_mark_dst usage
+...
+if(ds_is_from_list("10")) {
+    ...
+}
+...
+
+4.7. ds_load_update()
 
    Updates the load state:
      * if it is a BYE or CANCEL - remove the load from destination address
@@ -808,14 +833,14 @@ ds_select_dst("1", "$var(a)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-4.10.  ds_load_unset()
+4.8. ds_load_unset()
 
    Remove the call load for the destination that routed the call.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.30. ds_load_unset usage
+   Example 1.33. ds_load_unset usage
 ...
 route {
     ...
@@ -845,7 +870,7 @@ onreply_route {
    5.2. ds_list
    5.3. ds_reload
 
-5.1.  ds_set_state
+5.1. ds_set_state
 
    Sets the status for a destination address (can be use to mark the
    destination as active or inactive).
@@ -854,11 +879,12 @@ onreply_route {
 
    Parameters:
      * _state_ : state of the destination address
-          + “a”: active
-          + “i”: inactive
-          + “d”: disabled
-       The states “a” or “i” can be followed by “p” to set probing mode
-       (e.g. 'ap' or 'ip')
+          + "a": active
+          + "i": inactive
+          + "t": trying
+          + "d": disabled
+       The states "a", "i" or "t" can be followed by "p" to set probing
+       mode (e.g. 'ap', 'ip' or 'tp').
      * _group_: destination group id
      * _address_: address of the destination in the _group_
 
@@ -869,7 +895,7 @@ onreply_route {
                 _address_
                 _empty_line_
 
-5.2.  ds_list
+5.2. ds_list
 
    It lists the groups and included destinations.
 
@@ -881,7 +907,7 @@ onreply_route {
                 :ds_list:_reply_fifo_file_
                 _empty_line_
 
-5.3.  ds_reload
+5.3. ds_reload
 
    It reloads the groups and included destinations. The command is
    disabled for call load based dispatching (algorithm 10) since removal
@@ -901,7 +927,7 @@ onreply_route {
    6.2. dispatcher.list
    6.3. dispatcher.reload
 
-6.1.  dispatcher.set_state
+6.1. dispatcher.set_state
 
    Sets the state for a destination address (can be use to mark the
    destination as active or inactive).
@@ -910,18 +936,22 @@ onreply_route {
 
    Parameters:
      * _state_ : state of the destination address
-          + “a”: active
-          + “i”: inactive
-          + “d”: disabled
-       The states “a” or “i” can be followed by “p” to set probing mode
-       (e.g. 'ap' or 'ip')
+          + "a": active
+          + "i": inactive
+          + "t": trying
+          + "d": disabled
+       The states "a", "i" or "t" can be followed by "p" to set probing
+       mode (e.g. 'ap', 'ip' or 'tp').
      * _group_: destination group id
      * _address_: address of the destination in the _group_
 
    Example:
-                sercmd dispatcher.set_state _state_ _group_ _address_
+...
+# prototype: sercmd dispatcher.set_state _state_ _group_ _address_
+sercmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
+...
 
-6.2.  dispatcher.list
+6.2. dispatcher.list
 
    It lists the groups and included destinations.
 
@@ -932,7 +962,7 @@ onreply_route {
    Example:
                 sercmd dispatcher.list
 
-6.3.  dispatcher.reload
+6.3. dispatcher.reload
 
    It reloads the groups and included destinations. The command is
    disabled for call load based dispatching (algorithm 10) since removal
@@ -979,7 +1009,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.31. dispatcher list file
+   Example 1.34. dispatcher list file
 ...
 # $Id$
 # dispatcher destination sets
@@ -1004,79 +1034,288 @@ r,opt)
 
    Next picture displays a sample usage of dispatcher.
 
-   Example 1.32. Kamailio config script - sample dispatcher usage
+   Example 1.35. Kamailio config script - sample dispatcher usage
 ...
-# $Id$
+#!KAMAILIO
+#
 # sample config file for dispatcher module
+# - load balancing of VoIP calls with round robin
+# - no TPC listening
+# - don't dispatch REGISTER and presence requests
+#
+# Kamailio (OpenSER) SIP Server v3.2
+#     - web: http://www.kamailio.org
+#     - git: http://sip-router.org
+#
+# Direct your questions about this file to: sr-users@lists.sip-router.org
+#
+# Refer to the Core CookBook at http://www.kamailio.org/dokuwiki/doku.php
+# for an explanation of possible statements, functions and parameters.
+#
+# Several features can be enabled using '#!define WITH_FEATURE' directives:
+#
+# *** To run in debug mode:
+#     - define WITH_DEBUG
 #
 
-debug=9          # debug level (cmd line: -dddddddddd)
-fork=no
-log_stderror=yes  # (cmd line: -E)
 
-children=2
-check_via=no      # (cmd. line: -v)
-dns=off           # (cmd. line: -r)
-rev_dns=off       # (cmd. line: -R)
+####### Global Parameters #########
+
+#!ifdef WITH_DEBUG
+debug=4
+log_stderror=yes
+#!else
+debug=2
+log_stderror=no
+#!endif
+
+memdbg=5
+memlog=5
+
+log_facility=LOG_LOCAL0
+
+fork=yes
+children=4
+
+/* comment the next line to enable TCP */
+disable_tcp=yes
+
+/* uncomment the next line to disable the auto discovery of local aliases
+   based on revers DNS on IPs (default on) */
+auto_aliases=no
+
+/* add local domain aliases */
+# alias="mysipserver.com"
+
 port=5060
 
-# for more info: sip_router -h
+/* uncomment and configure the following line if you want Kamailio to
+   bind on a specific interface/port/proto (default bind on all available) */
+# listen=udp:127.0.0.1:5060
 
-# ------------------ module loading ----------------------------------
-mpath="/usr/local/lib/kamailio/modules/"
-loadmodule "maxfwd.so"
-loadmodule "sl.so"
-loadmodule "dispatcher.so"
+sip_warning=no
+
+####### Modules Section ########
+
+#set module path
+mpath="/usr/local/lib/kamailio/modules_k/:/usr/local/lib/kamailio/modules/"
+
+loadmodule "db_mysql.so"
+loadmodule "mi_fifo.so"
+loadmodule "kex.so"
 loadmodule "tm.so"
+loadmodule "tmx.so"
+loadmodule "sl.so"
+loadmodule "rr.so"
+loadmodule "pv.so"
+loadmodule "maxfwd.so"
+loadmodule "textops.so"
+loadmodule "siputils.so"
+loadmodule "xlog.so"
+loadmodule "sanity.so"
+loadmodule "ctl.so"
+loadmodule "mi_rpc.so"
+loadmodule "acc.so"
+loadmodule "dispatcher.so"
+
 
 # ----------------- setting module-specific parameters ---------------
 
-# -- dispatcher params --
-modparam("dispatcher", "list_file", "/usr/local/etc/kamailio/dispatcher.list")
+
+# ----- mi_fifo params -----
+modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
+
+
+# ----- rr params -----
+# add value to ;lr param to cope with most of the UAs
+modparam("rr", "enable_full_lr", 1)
+# do not append from tag to the RR (no need for this script)
+modparam("rr", "append_fromtag", 0)
+
+
+# ----- acc params -----
+modparam("acc", "log_flag", 1)
+modparam("acc", "failed_transaction_flag", 3)
+modparam("acc", "log_extra",
+        "src_user=$fU;src_domain=$fd;dst_ouser=$tU;dst_user=$rU;dst_domain=$rd;s
+rc_ip=$si")
+
+# ----- tm params -----
+modparam("tm", "fr_timer", 2000)
+modparam("tm", "fr_inv_timer", 40000)
+
+# ----- dispatcher params -----
+modparam("dispatcher", "db_url",
+        "mysql://openser:openserro@localhost/openser")
+modparam("dispatcher", "table_name", "dispatcher")
 modparam("dispatcher", "flags", 2)
 modparam("dispatcher", "dst_avp", "$avp(AVP_DST)")
 modparam("dispatcher", "grp_avp", "$avp(AVP_GRP)")
 modparam("dispatcher", "cnt_avp", "$avp(AVP_CNT)")
 
-# main request routing block
+####### Routing Logic ########
+
+
+# main request routing logic
+
 route {
-        if ( !mf_process_maxfwd_header("10") )
+
+        # per request initial checks
+        route(REQINIT);
+
+        # handle requests within SIP dialogs
+        route(WITHINDLG);
+
+        ### only initial requests (no To tag)
+
+        # CANCEL processing
+        if (is_method("CANCEL"))
         {
-                sl_send_reply("483","To Many Hops");
+                if (t_check_trans())
+                        t_relay();
                 exit;
         }
 
-        # select from first dst group by round-robin
-        if(!ds_select_dst("1", "4"))
+        t_check_trans();
+
+        # record routing for dialog forming requests (in case they are routed)
+        # - remove preloaded route headers
+        remove_hf("Route");
+        if (is_method("INVITE|SUBSCRIBE"))
+                record_route();
+
+        # account only INVITEs
+        if (is_method("INVITE"))
         {
-                sl_send_reply("500", "No destination available");
+                setflag(1); # do accounting
+        }
+
+        # handle presence related requests
+        route(PRESENCE);
+
+        # handle registrations
+        route(REGISTRAR);
+
+        if ($rU==$null)
+        {
+                # request with no Username in RURI
+                sl_send_reply("484","Address Incomplete");
                 exit;
         }
 
-        t_on_failure("RTF_DISPATCH");
-        if(!t_relay())
-        {
+        # dispatch destinations
+        route(DISPATCH);
+
+        route(RELAY);
+}
+
+
+route[RELAY] {
+        if (!t_relay()) {
                 sl_reply_error();
+        }
+        exit;
+}
+
+# Per SIP request initial checks
+route[REQINIT] {
+        if (!mf_process_maxfwd_header("10")) {
+                sl_send_reply("483","Too Many Hops");
+                exit;
+        }
+
+        if(!sanity_check("1511", "7"))
+        {
+                xlog("Malformed SIP message from $si:$sp\n");
                 exit;
         }
 }
 
-# dispatcher failure routing block
+# Handle requests within SIP dialogs
+route[WITHINDLG] {
+        if (has_totag()) {
+                # sequential request withing a dialog should
+                # take the path determined by record-routing
+                if (loose_route()) {
+                        if (is_method("BYE")) {
+                                setflag(1); # do accounting ...
+                                setflag(3); # ... even if the transaction fails
+                        }
+                        route(RELAY);
+                } else {
+                        if (is_method("SUBSCRIBE") && uri == myself) {
+                                # in-dialog subscribe requests
+                                route(PRESENCE);
+                                exit;
+                        }
+                        if ( is_method("ACK") ) {
+                                if ( t_check_trans() ) {
+                                        # non loose-route, but stateful ACK;
+                                        # must be ACK after a 487 or e.g. 404 fr
+om upstream server
+                                        t_relay();
+                                        exit;
+                                } else {
+                                        # ACK without matching transaction ... i
+gnore and discard.
+                                        exit;
+                                }
+                        }
+                        sl_send_reply("404","Not here");
+                }
+                exit;
+        }
+}
+
+# Handle SIP registrations
+route[REGISTRAR] {
+        if(!is_method("REGISTER"))
+                return;
+        sl_send_reply("404", "No registrar");
+        exit;
+}
+
+# Presence server route
+route[PRESENCE] {
+        if(!is_method("PUBLISH|SUBSCRIBE"))
+                return;
+
+        sl_send_reply("404", "Not here");
+        exit;
+}
+
+# Dispatch requests
+route[DISPATCH] {
+        # round robin dispatching on gateways group '1'
+        if(!ds_select_dst("1", "4"))
+        {
+                send_reply("404", "No destination");
+                exit;
+        }
+        xlog("L_DBG", "--- SCRIPT: going to <$ru> via <$du>\n");
+        t_on_failure("RTF_DISPATCH");
+        return;
+}
+
+# Sample failure route
 failure_route[RTF_DISPATCH] {
         if (t_is_canceled()) {
                 exit;
         }
-        # select next destination only for local timeout
-        if (t_branch_timeout() &amp;&amp; !t_branch_replied())
+        # next DST - only for 500 or local timeout
+        if (t_check_status("500")
+                        or (t_branch_timeout() and !t_branch_replied()))
         {
                 if(ds_next_dst())
                 {
                         t_on_failure("RTF_DISPATCH");
-                        t_relay();
+                        route(RELAY);
                         exit;
                 }
         }
 }
+
+
 
 ...
 
@@ -1085,7 +1324,7 @@ failure_route[RTF_DISPATCH] {
    8.1. dispatcher:dst-down
    8.2. dispatcher:dst-up
 
-8.1.  dispatcher:dst-down
+8.1. dispatcher:dst-down
 
    When defined, the module calls event_route[dispatcher:ds-down] when a
    destination goes down (becomes probing). A typical use case is to
@@ -1096,7 +1335,7 @@ event_route[dispatcher:dst-down] {
 }
 ...
 
-8.2.  dispatcher:dst-up
+8.2. dispatcher:dst-up
 
    When defined, the module calls event_route[dispatcher:ds-up] when a
    destination that was previously down (probing) comes up. A typical use
@@ -1117,46 +1356,51 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-       Does dispatcher provide a fair distribution?
+   Does dispatcher provide a fair distribution?
 
-       There is no guarantee of that. You should do some measurements to
-       decide what distribution algorithm fits better in your environment.
+   The algoritms doing hashing over parts of SIP message don't guarantee a
+   fair distribution. You should do some measurements to decide what
+   hashing algorithm fits better in your environment.
+
+   Other distribution algorithms such as round robin or call load
+   dispatching do a fair distribution in terms of delivered calls to
+   gateways.
 
    2.2.
 
-       Is dispatcher dialog stateful?
+   Is dispatcher dialog stateful?
 
-       No. Dispatcher is stateless, although some distribution algorithms are
-       designed to select same destination for subsequent requests of the same
-       dialog (e.g., hashing the call-id).
+   No. Dispatcher is stateless, although some distribution algorithms are
+   designed to select same destination for subsequent requests of the same
+   dialog (e.g., hashing the call-id).
 
    2.3.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at http://www.kamailio.org/.
+   Take a look at http://www.kamailio.org/.
 
    2.4.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable version should be sent to
-       <sr-users@lists.sip-router.org> and e-mail regarding development
-       versions or CVS snapshots should be send to
-       <sr-dev@lists.sip-router.org>.
+   E-mails regarding any stable version should be sent to
+   <sr-users@lists.sip-router.org> and e-mail regarding development
+   versions or CVS snapshots should be send to
+   <sr-dev@lists.sip-router.org>.
 
-       If you want to keep the mail private, send it to
-       <sr-users@lists.sip-router.org>.
+   If you want to keep the mail private, send it to
+   <sr-users@lists.sip-router.org>.
 
    2.5.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at: http://sip-router.org/tracker
+   Please follow the guidelines provided at: http://sip-router.org/tracker

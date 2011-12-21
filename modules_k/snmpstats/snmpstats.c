@@ -154,8 +154,6 @@ static param_export_t mod_params[] =
 			(void *)set_snmpget_path          },
 	{ "snmpCommunity",          STR_PARAM|USE_FUNC_PARAM,
 			(void *)set_snmp_community        },
-	{ "snmpCommunity",          STR_PARAM|USE_FUNC_PARAM,
-			(void *)set_snmp_community        },
 	{ "export_registrar",       INT_PARAM,
 			&snmp_export_registrar            },
 	{ 0,0,0 }

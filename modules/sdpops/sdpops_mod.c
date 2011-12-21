@@ -200,7 +200,7 @@ int sdp_codec_in_str(str *allcodecs, str* codec, char delim)
 				}
 			}
 		}
-		if(allcodecs->s[i]==' ')
+		if(allcodecs->s[i]==delim)
 			cmp = 1;
 		else
 			cmp = 0;
@@ -276,10 +276,15 @@ int sdp_remove_codecs_by_id(sip_msg_t* msg, str* codecs)
 		return -1;
 	}
 
-	LM_ERR("attempting to remove codecs from sdp: [%.*s]\n",
-			codecs->len, codecs->s);
-
 	sdp = (sdp_info_t*)msg->body;
+
+	if(sdp==NULL) {
+		LM_DBG("No sdp body\n");
+		return -1;
+	}
+
+	LM_DBG("attempting to remove codecs from sdp: [%.*s]\n",
+			codecs->len, codecs->s);
 
 	sdp_session_num = 0;
 	for(;;)
@@ -346,6 +351,7 @@ static int w_sdp_remove_codecs_by_id(sip_msg_t* msg, char* codecs, char* bar)
  */
 int sdp_remove_codecs_by_name(sip_msg_t* msg, str* codecs)
 {
+	sdp_info_t *sdp = NULL;
 	str idslist;
 
 	if(parse_sdp(msg) < 0) {
@@ -353,10 +359,17 @@ int sdp_remove_codecs_by_name(sip_msg_t* msg, str* codecs)
 		return -1;
 	}
 
-	LM_ERR("attempting to remove codecs from sdp: [%.*s]\n",
+	sdp = (sdp_info_t*)msg->body;
+
+	if(sdp==NULL) {
+		LM_DBG("No sdp body\n");
+		return -1;
+	}
+
+	LM_DBG("attempting to remove codecs from sdp: [%.*s]\n",
 			codecs->len, codecs->s);
 
-	if(sdpops_build_ids_list(codecs, &idslist)<0)
+	if(sdpops_build_ids_list(sdp, codecs, &idslist)<0)
 		return -1;
 
 	if(sdp_remove_codecs_by_id(msg, &idslist)<0)
@@ -409,10 +422,15 @@ int sdp_keep_codecs_by_id(sip_msg_t* msg, str* codecs)
 		return -1;
 	}
 
-	LM_ERR("attempting to keep codecs in sdp: [%.*s]\n",
-			codecs->len, codecs->s);
-
 	sdp = (sdp_info_t*)msg->body;
+
+	if(sdp==NULL) {
+		LM_DBG("No sdp body\n");
+		return -1;
+	}
+
+	LM_DBG("attempting to keep codecs in sdp: [%.*s]\n",
+			codecs->len, codecs->s);
 
 	sdp_session_num = 0;
 	for(;;)
@@ -481,6 +499,7 @@ static int w_sdp_keep_codecs_by_id(sip_msg_t* msg, char* codecs, char* bar)
  */
 int sdp_keep_codecs_by_name(sip_msg_t* msg, str* codecs)
 {
+	sdp_info_t *sdp = NULL;
 	str idslist;
 
 	if(parse_sdp(msg) < 0) {
@@ -488,10 +507,17 @@ int sdp_keep_codecs_by_name(sip_msg_t* msg, str* codecs)
 		return -1;
 	}
 
-	LM_ERR("attempting to keep codecs in sdp: [%.*s]\n",
+	sdp = (sdp_info_t*)msg->body;
+
+	if(sdp==NULL) {
+		LM_DBG("No sdp body\n");
+		return -1;
+	}
+
+	LM_DBG("attempting to keep codecs in sdp: [%.*s]\n",
 			codecs->len, codecs->s);
 
-	if(sdpops_build_ids_list(codecs, &idslist)<0)
+	if(sdpops_build_ids_list(sdp, codecs, &idslist)<0)
 		return -1;
 
 	if(sdp_keep_codecs_by_id(msg, &idslist)<0)

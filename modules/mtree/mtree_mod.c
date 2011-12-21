@@ -93,6 +93,7 @@ pv_spec_t pv_weight;
 pv_spec_t pv_count;
 int _mt_tree_type = MT_TREE_SVAL;
 int _mt_ignore_duplicates = 0;
+int _mt_allow_duplicates = 0;
 
 /* lock, ref counter and flag used for reloading the date */
 static gen_lock_t *mt_lock = 0;
@@ -141,6 +142,7 @@ static param_export_t params[]={
 	{"pv_count",       STR_PARAM, &count_param.s},
 	{"mt_tree_type",   INT_PARAM, &_mt_tree_type},
 	{"mt_ignore_duplicates", INT_PARAM, &_mt_ignore_duplicates},
+	{"mt_allow_duplicates", INT_PARAM, &_mt_allow_duplicates},
 	{0, 0, 0}
 };
 
@@ -237,7 +239,7 @@ static int mod_init(void)
 		LM_ERR("invalid prefix char list\n");
 		return -1;
 	}
-	LM_INFO("mt_char_list=%s \n", mt_char_list.s);
+	LM_DBG("mt_char_list=%s \n", mt_char_list.s);
 	mt_char_table_init();
 
 	/* binding to mysql module */
@@ -805,6 +807,8 @@ int mt_print_mi_node(m_tree_t *tree, mt_node_t *pt, struct mi_node* rpl,
 	int i;
 	struct mi_node* node = NULL;
 	struct mi_attr* attr= NULL;
+	mt_is_t *tvalues;
+	str val;
 
 	if(pt==NULL || len>=MT_MAX_DEPTH)
 		return 0;
@@ -812,7 +816,8 @@ int mt_print_mi_node(m_tree_t *tree, mt_node_t *pt, struct mi_node* rpl,
 	for(i=0; i<MT_NODE_SIZE; i++)
 	{
 		code[len]=mt_char_list.s[i];
-		if(pt[i].tvalue.s!=NULL)
+		tvalues = pt[i].tvalues;
+		if (tvalues != NULL)
 		{
 			node = add_mi_node_child(rpl, 0, "MT", 2, 0, 0);
 			if(node == NULL)
@@ -825,11 +830,21 @@ int mt_print_mi_node(m_tree_t *tree, mt_node_t *pt, struct mi_node* rpl,
 						code, len+1);
 			if(attr == NULL)
 				goto error;
-					
-			attr = add_mi_attr(node, MI_DUP_VALUE, "TVALUE", 6,
-						pt[i].tvalue.s, pt[i].tvalue.len);
-			if(attr == NULL)
+
+			while (tvalues != NULL) {
+			    if (tree->type == MT_TREE_IVAL) {
+				val.s = int2str(tvalues->tvalue.n, &val.len);
+				attr = add_mi_attr(node, MI_DUP_VALUE, "TVALUE", 6,
+						   val.s, val.len);
+			    } else {
+				attr = add_mi_attr(node, MI_DUP_VALUE, "TVALUE", 6,
+						   tvalues->tvalue.s.s,
+						   tvalues->tvalue.s.len);
+			    }
+			    if(attr == NULL)
 				goto error;
+			    tvalues = tvalues->next;
+			}
 		}
 		if(mt_print_mi_node(tree, pt[i].child, rpl, code, len+1)<0)
 			goto error;

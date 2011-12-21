@@ -93,25 +93,47 @@ void get_dialog_from_did(char* did, subs_t **dialog, unsigned int *hash_code)
             "resource list Subscribe dialog indentifier(rlsubs did)\n");
         return;
 	}
-    *hash_code= core_hash(&callid, &to_tag, hash_size);
-    
-    lock_get(&rls_table[*hash_code].lock);
-    s= pres_search_shtable(rls_table,callid,to_tag,from_tag,*hash_code);
-    if(s== NULL)
+
+	if (dbmode == RLS_DB_ONLY)
 	{
-        LM_ERR("record not found in hash_table [rlsubs_did]= %s\n",
-                did);
-        lock_release(&rls_table[*hash_code].lock);
-        return;
+		*dialog = get_dialog_rlsdb(callid,to_tag,from_tag);
+
+		if(*dialog==NULL)
+		{
+			LM_INFO("record not retrieved from db [rlsubs_did]= %s\n", did);
+			return;
+		}
+	}
+	else
+	{
+		*hash_code= core_hash(&callid, &to_tag, hash_size);
+
+		lock_get(&rls_table[*hash_code].lock);
+		s= pres_search_shtable(rls_table,callid,to_tag,from_tag,*hash_code);
+
+		if(s== NULL)
+		{
+			LM_INFO("record not found in hash_table [rlsubs_did]= %s\n",
+					did);
+			lock_release(&rls_table[*hash_code].lock);
+			return;
+		}
+
+		/* save dialog info */
+		*dialog= pres_copy_subs(s, PKG_MEM_TYPE);
 	}
 
-    /* save dialog info */
-    *dialog= pres_copy_subs(s, PKG_MEM_TYPE);
     if(*dialog== NULL)
 	{
         LM_ERR("while copying subs_t structure\n");
 	}
-    lock_release(&rls_table[*hash_code].lock);
+	else
+	{
+		dump_dialog( *dialog );
+	}
+
+	if (dbmode != RLS_DB_ONLY)
+		lock_release(&rls_table[*hash_code].lock);
 	
 }
 
@@ -228,7 +250,7 @@ void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int aut
                 if(dialog== NULL)
                 {
                     prev_did = NULL;
-                    LM_ERR("Dialog is NULL\n");
+                    LM_INFO("Dialog is NULL\n");
                     continue;
                 }
             }
@@ -349,7 +371,7 @@ void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int aut
 			if(cid.s)
 			{
 	
-				if(buf_len + chunk_len >= size)
+				while(buf_len + chunk_len >= size)
 				{
 					REALLOC_BUF
 				}
@@ -708,14 +730,18 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	query_vals[n_query_cols].val.int_val= auth_flag; 
 	n_query_cols++;
 
+	query_cols[n_query_cols]= &str_reason_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
 	if(reason)
-	{
-		query_cols[n_query_cols]= &str_reason_col;
-		query_vals[n_query_cols].type = DB1_STR;
-		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.str_val= *reason;
-		n_query_cols++;
+	else
+	{
+		query_vals[n_query_cols].val.str_val.s = "";
+		query_vals[n_query_cols].val.str_val.len = 0;
 	}
+	n_query_cols++;
+
 	query_cols[n_query_cols]= &str_content_type_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;

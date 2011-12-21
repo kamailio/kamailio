@@ -46,6 +46,12 @@ struct pres_ev;
 #define PENDING_STATUS       2
 #define TERMINATED_STATUS    3
 #define WAITING_STATUS       4
+/* Additional value returned from pres_auth_status when the status is ACTIVE
+   and reason is polite-block */
+#define POLITE_BLOCK_STATUS  5
+
+#define INTERNAL_UPDATE_FALSE	0
+#define INTERNAL_UPDATE_TRUE	1
 
 struct subscription
 {
@@ -72,6 +78,7 @@ struct subscription
 	int send_on_cback;
 	int db_flag;
 	str* auth_rules_doc;
+	int internal_update_flag;
 	struct subscription* next;
 
 };

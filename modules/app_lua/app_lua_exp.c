@@ -44,6 +44,13 @@
 #include "../../modules/sdpops/api.h"
 #include "../../modules_k/presence/bind_presence.h"
 #include "../../modules_k/presence_xml/api.h"
+#include "../../modules_k/textops/api.h"
+#include "../../modules_k/pua_usrloc/api.h"
+#include "../../modules_k/siputils/siputils.h"
+#include "../../modules_k/rls/api.h"
+#include "../../modules_k/alias_db/api.h"
+#include "../../modules_k/msilo/api.h"
+#include "../../modules_k/uac/api.h"
 
 #include "app_lua_api.h"
 
@@ -60,6 +67,13 @@
 #define SR_LUA_EXP_MOD_SDPOPS     (1<<10)
 #define SR_LUA_EXP_MOD_PRESENCE   (1<<11)
 #define SR_LUA_EXP_MOD_PRESENCE_XML (1<<12)
+#define SR_LUA_EXP_MOD_TEXTOPS    (1<<13)
+#define SR_LUA_EXP_MOD_PUA_USRLOC (1<<14)
+#define SR_LUA_EXP_MOD_SIPUTILS   (1<<15)
+#define SR_LUA_EXP_MOD_RLS        (1<<16)
+#define SR_LUA_EXP_MOD_ALIAS_DB   (1<<17)
+#define SR_LUA_EXP_MOD_MSILO      (1<<18)
+#define SR_LUA_EXP_MOD_UAC        (1<<19)
 
 /**
  *
@@ -131,6 +145,41 @@ static presence_api_t _lua_presenceb;
  * presence_xml
  */
 static presence_xml_api_t _lua_presence_xmlb;
+
+/**
+ * textops
+ */
+static textops_api_t _lua_textopsb;
+
+/**
+ * pua_usrloc
+ */
+static pua_usrloc_api_t _lua_pua_usrlocb;
+
+/**
+ * siputils
+ */
+static siputils_api_t _lua_siputilsb;
+
+/**
+ * rls
+ */
+static rls_api_t _lua_rlsb;
+
+/**
+ * alias_db
+ */
+static alias_db_api_t _lua_alias_dbb;
+
+/**
+ * msilo 
+ */
+static msilo_api_t _lua_msilob;
+
+/**
+ * uac
+ */
+static uac_api_t _lua_uacb;
 
 /**
  *
@@ -443,6 +492,55 @@ static int lua_sr_tm_t_is_canceled(lua_State *L)
 	return app_lua_return_int(L, ret);
 }
 
+/**
+ *
+ */
+static int lua_sr_tm_t_newtran(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM))
+	{
+		LM_WARN("weird: tm function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_tmb.t_newtran(env_L->msg);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_tm_t_release(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM))
+	{
+		LM_WARN("weird: tm function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_tmb.t_release(env_L->msg);
+	return app_lua_return_int(L, ret);
+}
 
 /**
  *
@@ -455,6 +553,8 @@ static const luaL_reg _sr_tm_Map [] = {
 	{"t_on_reply",     lua_sr_tm_t_on_reply},
 	{"t_check_trans",  lua_sr_tm_t_check_trans},
 	{"t_is_canceled",  lua_sr_tm_t_is_canceled},
+	{"t_newtran",      lua_sr_tm_t_newtran},
+	{"t_release",      lua_sr_tm_t_release},
 	{NULL, NULL}
 };
 
@@ -740,9 +840,46 @@ static int lua_sr_rr_loose_route(lua_State *L)
 /**
  *
  */
+static int lua_sr_rr_add_rr_param(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+	str param;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_RR))
+	{
+		LM_WARN("weird: rr function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+	if(lua_gettop(L)!=1)
+	{
+		LM_WARN("invalid number of parameters\n");
+		return app_lua_return_error(L);
+	}
+
+	param.s = (char*)lua_tostring(L, -1);
+	if(param.s!=NULL)
+		param.len = strlen(param.s);
+
+	ret = _lua_rrb.add_rr_param(env_L->msg, &param);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
 static const luaL_reg _sr_rr_Map [] = {
 	{"record_route",    lua_sr_rr_record_route},
 	{"loose_route",     lua_sr_rr_loose_route},
+	{"add_rr_param",    lua_sr_rr_add_rr_param},
 	{NULL, NULL}
 };
 
@@ -1093,6 +1230,43 @@ static int lua_sr_registrar_lookup(lua_State *L)
 	return app_lua_return_int(L, ret);
 }
 
+/**
+ *
+ */
+static int lua_sr_registrar_registered(lua_State *L)
+{
+	int ret;
+	char *table;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_REGISTRAR))
+	{
+		LM_WARN("weird: registrar function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+	if(lua_gettop(L)!=1)
+	{
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+	table  = (char*)lua_tostring(L, -1);
+	if(table==NULL || strlen(table)==0)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+	ret = _lua_registrarb.registered(env_L->msg, table);
+
+	return app_lua_return_int(L, ret);
+}
+
 
 /**
  *
@@ -1100,6 +1274,7 @@ static int lua_sr_registrar_lookup(lua_State *L)
 static const luaL_reg _sr_registrar_Map [] = {
 	{"save",      lua_sr_registrar_save},
 	{"lookup",    lua_sr_registrar_lookup},
+	{"registered",lua_sr_registrar_registered},
 	{NULL, NULL}
 };
 
@@ -1394,8 +1569,74 @@ static int lua_sr_pres_auth_status(lua_State *L)
 /**
  *
  */
+static int lua_sr_pres_handle_publish(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PRESENCE))
+	{
+		LM_WARN("weird: presence function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=0)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_presenceb.handle_publish(env_L->msg, NULL, NULL);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_pres_handle_subscribe(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PRESENCE))
+	{
+		LM_WARN("weird: presence function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=0)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_presenceb.handle_subscribe(env_L->msg, NULL, NULL);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
 static const luaL_reg _sr_presence_Map [] = {
 	{"pres_auth_status",       lua_sr_pres_auth_status},
+	{"handle_publish",         lua_sr_pres_handle_publish},
+	{"handle_subscribe",       lua_sr_pres_handle_subscribe},
 	{NULL, NULL}
 };
 
@@ -1481,6 +1722,444 @@ static int lua_sr_pres_check_activities(lua_State *L)
 static const luaL_reg _sr_presence_xml_Map [] = {
 	{"pres_check_basic",       lua_sr_pres_check_basic},
 	{"pres_check_activities",  lua_sr_pres_check_activities},
+	{NULL, NULL}
+};
+
+/**
+ *
+ */
+static int lua_sr_textops_is_privacy(lua_State *L)
+{
+	str param[1];
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TEXTOPS))
+	{
+		LM_WARN("weird: textops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=1)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	param[0].s = (char *) lua_tostring(L, -1);
+	param[0].len = strlen(param[0].s);
+	
+	ret = _lua_textopsb.is_privacy(env_L->msg, &param[0]);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_textops_Map [] = {
+	{"is_privacy",       lua_sr_textops_is_privacy},
+	{NULL, NULL}
+};
+
+/**
+ *
+ */
+static int lua_sr_pua_usrloc_set_publish(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PUA_USRLOC))
+	{
+		LM_WARN("weird: pua_usrloc function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=0)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_pua_usrlocb.pua_set_publish(env_L->msg, NULL, NULL);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_pua_usrloc_Map [] = {
+	{"set_publish",            lua_sr_pua_usrloc_set_publish},
+	{NULL, NULL}
+};
+
+/**
+ *
+ */
+static int lua_sr_siputils_has_totag(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SIPUTILS))
+	{
+		LM_WARN("weird: siputils function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=0)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_siputilsb.has_totag(env_L->msg, NULL, NULL);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_siputils_is_uri_user_e164(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+	str param[1];
+
+	env_L = sr_lua_env_get();
+	
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SIPUTILS))
+	{
+		LM_WARN("weird: siputils function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=1)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	param[0].s = (char *) lua_tostring(L, -1);
+	param[0].len = strlen(param[0].s);
+	
+	ret = _lua_siputilsb.is_uri_user_e164(&param[0]);
+	if (ret < 0)
+		return app_lua_return_false(L);
+
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_siputils_Map [] = {
+	{"has_totag",            lua_sr_siputils_has_totag},
+	{"is_uri_user_e164",     lua_sr_siputils_is_uri_user_e164},
+	{NULL, NULL}
+};
+
+/**
+ *
+ */
+static int lua_sr_rls_handle_subscribe(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_RLS))
+	{
+		LM_WARN("weird: rls function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=0)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_rlsb.rls_handle_subscribe(env_L->msg, NULL, NULL);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_rls_handle_notify(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_RLS))
+	{
+		LM_WARN("weird: rls function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=0)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_rlsb.rls_handle_notify(env_L->msg, NULL, NULL);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_rls_Map [] = {
+	{"handle_subscribe",       lua_sr_rls_handle_subscribe},
+	{"handle_notify",          lua_sr_rls_handle_notify},
+	{NULL, NULL}
+};
+
+/**
+ *
+ */
+static int lua_sr_alias_db_lookup(lua_State *L)
+{
+	int ret;
+	str param[1];
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_ALIAS_DB))
+	{
+		LM_WARN("weird: alias_db function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=1)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	param[0].s = (char *) lua_tostring(L, -1);
+	param[0].len = strlen(param[0].s);
+	
+	ret = _lua_alias_dbb.alias_db_lookup(env_L->msg, param[0]);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_alias_db_Map [] = {
+	{"lookup",       lua_sr_alias_db_lookup},
+	{NULL, NULL}
+};
+
+/**
+ *
+ */
+static int lua_sr_msilo_store(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if (!(_sr_lua_exp_reg_mods & SR_LUA_EXP_MOD_MSILO))
+	{
+		LM_WARN("weird: msilo function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if (env_L->msg == NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if (lua_gettop(L) == 0)
+	{
+		ret = _lua_msilob.m_store(env_L->msg, NULL);
+	}
+	else if (lua_gettop(L) == 1)
+	{
+		str owner;
+		owner.s = (char*)lua_tostring(L, -1);
+		if (owner.s == NULL)
+		{
+			return app_lua_return_error(L);
+		}
+		owner.len = strlen(owner.s);
+		ret = _lua_msilob.m_store(env_L->msg, &owner);
+	}
+	else
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_msilo_dump(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if (!(_sr_lua_exp_reg_mods & SR_LUA_EXP_MOD_MSILO))
+	{
+		LM_WARN("weird: msilo function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if (env_L->msg == NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if (lua_gettop(L) == 0)
+	{
+		ret = _lua_msilob.m_dump(env_L->msg, NULL);
+	}
+	else if (lua_gettop(L) == 1)
+	{
+		str owner;
+		owner.s = (char*)lua_tostring(L, -1);
+		if (owner.s == NULL)
+		{
+			return app_lua_return_error(L);
+		}
+		owner.len = strlen(owner.s);
+		ret = _lua_msilob.m_dump(env_L->msg, &owner);
+	}
+	else
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_msilo_Map [] = {
+	{"store",       lua_sr_msilo_store},
+	{"dump",        lua_sr_msilo_dump},
+	{NULL, NULL}
+};
+
+/**
+ *
+ */
+static int lua_sr_uac_replace_from(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+	str param[2];
+
+	env_L = sr_lua_env_get();
+
+	if (!(_sr_lua_exp_reg_mods & SR_LUA_EXP_MOD_UAC))
+	{
+		LM_WARN("weird:uac function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if (env_L->msg == NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if (lua_gettop(L) == 1)
+	{
+		param[0].s = "";
+		param[0].len = 0;
+		param[1].s = (char *) lua_tostring(L, -1);
+		param[1].len = strlen(param[1].s);
+	
+	}
+	else if (lua_gettop(L) == 2)
+	{
+		param[0].s = (char *) lua_tostring(L, -2);
+		param[0].len = strlen(param[0].s);
+		param[1].s = (char *) lua_tostring(L, -1);
+		param[1].len = strlen(param[1].s);
+	}
+	else
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_uacb.replace_from(env_L->msg, &param[0], &param[1]);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_uac_Map [] = {
+	{"replace_from",lua_sr_uac_replace_from},
 	{NULL, NULL}
 };
 
@@ -1625,6 +2304,76 @@ int lua_sr_exp_init_mod(void)
 		}
 		LM_DBG("loaded presence_xml api\n");
 	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TEXTOPS)
+	{
+		/* bind the TEXTOPS API */
+		if (load_textops_api(&_lua_textopsb) < 0)
+		{
+			LM_ERR("cannot bind to TEXTOPS API\n");
+			return -1;
+		}
+		LM_DBG("loaded textops api\n");
+	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PUA_USRLOC)
+	{
+		/* bind the PUA_USRLOC API */
+		if (pua_usrloc_load_api(&_lua_pua_usrlocb) < 0)
+		{
+			LM_ERR("cannot bind to PUA_USRLOC API\n");
+			return -1;
+		}
+		LM_DBG("loaded pua_usrloc api\n");
+	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SIPUTILS)
+	{
+		/* bind the SIPUTILS API */
+		if (siputils_load_api(&_lua_siputilsb) < 0)
+		{
+			LM_ERR("cannot bind to SIPUTILS API\n");
+			return -1;
+		}
+		LM_DBG("loaded siputils api\n");
+	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_RLS)
+	{
+		/* bind the RLS API */
+		if (rls_load_api(&_lua_rlsb) < 0)
+		{
+			LM_ERR("cannot bind to RLS API\n");
+			return -1;
+		}
+		LM_DBG("loaded rls api\n");
+	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_ALIAS_DB)
+	{
+		/* bind the ALIAS_DB API */
+		if (alias_db_load_api(&_lua_alias_dbb) < 0)
+		{
+			LM_ERR("cannot bind to ALIAS_DB API\n");
+			return -1;
+		}
+		LM_DBG("loaded alias_db api\n");
+	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_MSILO)
+	{
+		/* bind the MSILO API */
+		if (load_msilo_api(&_lua_msilob) < 0)
+		{
+			LM_ERR("cannot bind to MSILO API\n");
+			return -1;
+		}
+		LM_DBG("loaded msilo api\n");
+	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_UAC)
+	{
+		/* bind the UAC API */
+		if (load_uac_api(&_lua_uacb) < 0)
+		{
+			LM_ERR("cannot bind to UAC API\n");
+			return -1;
+		}
+		LM_DBG("loaded uac api\n");
+	}
 	return 0;
 }
 
@@ -1677,6 +2426,27 @@ int lua_sr_exp_register_mod(char *mname)
 	} else 	if(len==12 && strcmp(mname, "presence_xml")==0) {
 		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_PRESENCE_XML;
 		return 0;
+	} else 	if(len==7 && strcmp(mname, "textops")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_TEXTOPS;
+		return 0;
+	} else 	if(len==10 && strcmp(mname, "pua_usrloc")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_PUA_USRLOC;
+		return 0;
+	} else 	if(len==8 && strcmp(mname, "siputils")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_SIPUTILS;
+		return 0;
+	} else 	if(len==3 && strcmp(mname, "rls")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_RLS;
+		return 0;
+	} else 	if(len==8 && strcmp(mname, "alias_db")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_ALIAS_DB;
+		return 0;
+	} else 	if(len==5 && strcmp(mname, "msilo")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_MSILO;
+		return 0;
+	} else 	if(len==3 && strcmp(mname, "uac")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_UAC;
+		return 0;
 	}
 
 	return -1;
@@ -1713,5 +2483,19 @@ void lua_sr_exp_openlibs(lua_State *L)
 		luaL_openlib(L, "sr.presence",     _sr_presence_Map,  0);
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PRESENCE_XML)
 		luaL_openlib(L, "sr.presence_xml", _sr_presence_xml_Map, 0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TEXTOPS)
+		luaL_openlib(L, "sr.textops", _sr_textops_Map,        0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PUA_USRLOC)
+		luaL_openlib(L, "sr.pua_usrloc", _sr_pua_usrloc_Map,  0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SIPUTILS)
+		luaL_openlib(L, "sr.siputils", _sr_siputils_Map,      0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_RLS)
+		luaL_openlib(L, "sr.rls", _sr_rls_Map,                0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_ALIAS_DB)
+		luaL_openlib(L, "sr.alias_db", _sr_alias_db_Map,      0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_MSILO)
+		luaL_openlib(L, "sr.msilo", _sr_msilo_Map,            0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_UAC)
+		luaL_openlib(L, "sr.uac", _sr_uac_Map,                0);
 }
 

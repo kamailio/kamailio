@@ -5,7 +5,7 @@
 	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">]
 >
 
-<section id="ser_rpc" xmlns:xi="http://www.w3.org/2001/XInclude">
+<section id="rpc.main" xmlns:xi="http://www.w3.org/2001/XInclude">
     <!--
     <sectioninfo>
         <releaseinfo role="cvs">$Revision$</releaseinfo>
@@ -14,20 +14,20 @@
     -->
  
     <title>
-	SER Management Interface
+	RPC Control Interface
     </title>
 
 	<section id="rpc.overview">
 	<title>Overview of Operation</title>
 	<para>
-		The RPC (Remote Procedure Call) interface of SER is an interface for
+		The RPC (Remote Procedure Call) interface is an interface for
 		communicating with external applications. Using it an external
 		application can call a function or procedure that will be executed
-		inside SER. Function parameters are supported as well as returning
-		multiple values as results.
+		inside SIP Server (SER or Kamailio). Function parameters are
+		supported as well as returning multiple values as results.
 	</para>
 	<para>
-		By itself SER RPC consists of two APIs, one for defining RPC functions
+		By itself RPC consists of two APIs, one for defining RPC functions
 		in a transport independent way (called the rpc module api) and one
 		for implementing RPC transports.
 	</para>
@@ -49,7 +49,7 @@
 		 refer to their documentation.
 	</para>
 	<para>
-		When writing a SER RPC procedure or function, one needs only use the
+		When writing a RPC procedure or function, one needs only use the
 		RPC API and it will work automatically with all the transports and
 		encodings. One needs only to load the desired RPC transport module
 		(e.g. xmlrpc).
@@ -64,12 +64,12 @@
     <section id="rpc.module_api">
 	<title>Module API</title>
 	<para>
-	    Each SER module can export RPC functions just like it can export
-	    parameters and functions to be called from the script. Whenever SER
+	    Each module can export RPC functions just like it can export
+	    parameters and functions to be called from the script. Whenever SIP server
 	    receives an RPC request, it will search through the list of
 	    exported RPC functions and the function with matching name will be
 	    executed. A couple of essential RPC functions are also embedded into
-	    the SER core.
+	    the SIP server core.
 	</para>
 	<para>
 	    This section gives a detailed overview of the whole RPC API. <xref
@@ -97,10 +97,10 @@
 		RPC functions are standard C functions with the following
 		prototype:
 		<programlisting>
-typedef void (*rpc_function_t)(rpc_t* rpc);
+typedef void (*rpc_function_t)(rpc_t* rpc, void* ctx);
 		</programlisting>
-		RPC functions take one parameter, this parameter is a pointer
-		to rpc_t structure and is called RPC context. The context
+		RPC functions take two parameters, first parameter is a pointer
+		to rpc_t structure and the context. The rpc_t structure
 		contains references to all API functions available to the RPC
 		function as well as all data necessary to create the
 		response. RPC functions do not return any value, instead the
@@ -129,7 +129,7 @@ typedef void (*rpc_function_t)(rpc_t* rpc);
 	    </para>
 	    <para>
 		Each module containing RPC functions has to export all the
-		RPC functions to SER core in order to make them visible to the RPC
+		RPC functions to SIP server core in order to make them visible to the RPC
 		transport modules.
 		The export process involves a <emphasis>rpc_export_t</emphasis> 
 		structure (either by itself or in an array):
@@ -150,7 +150,7 @@ typedef struct rpc_export {
 		use and is currently unused.
 	    </para>
 		<para>
-		There are several ways of exporting the RPC functions to the SER core:
+		There are several ways of exporting the RPC functions to the SIP server core:
 		<itemizedlist>
 			<listitem><para>
 				register a null terminated array of rpc_export_t structures
@@ -160,7 +160,7 @@ typedef struct rpc_export {
 				method for all the new modules.
 				<example><title>usrloc RPC Exports Declaration</title>
 					<para>
-					The <varname>rpc_export_t</varname> array for the usrloc
+					The <varname>rpc_export_t</varname> array for the modules_s/usrloc
 					module looks like:
 					</para>
 					<programlisting>
@@ -196,9 +196,10 @@ rpc_export_t ul_rpc[] = {
 			</para></listitem>
 			<listitem><para>
 				register a null terminated array of rpc_export_t structures
-				using the SER module interface.
+				using the SIP server module interface SER_MOD_INTERFACE (specific
+				for SER flavour).
 				For this purpose, the
-				<varname>module_exports</varname> structure of SER module API
+				<varname>module_exports</varname> structure of SIP server module API
 				contains a new attribute called <varname>rpc_methods</varname>:
 				<programlisting>
 struct module_exports {
@@ -209,7 +210,7 @@ struct module_exports {
     
     init_function init_f;         /* Initialization function */
     response_function response_f; /* function used for responses */
-    destroy_function destroy_f;   /* function called upon SER shutdown */
+    destroy_function destroy_f;   /* function called upon shutdown */
     onbreak_function onbreak_f;
     child_init_function init_child_f;  /* function called by all processes after the fork */
 };
@@ -218,7 +219,7 @@ struct module_exports {
 				rpc_export_t structures. The last element of the array is a
 				bumper containing zeroes in all the attributes of the
 				structure. The following program listing shows the exported RPC
-				functions of the usrloc module, using the rpc_export_t array
+				functions of the modules_s/usrloc module, using the rpc_export_t array
 				<emphasis>ul_rpc</emphasis> defined above, in the 
 				rpc_register_array() example:
 				<example><title>usrloc Module Exports Declaration</title>
@@ -237,7 +238,7 @@ struct module_exports exports = {
 					</programlisting>
 				</example>
 				<note><para>
-					This mode works only with modules using the SER module
+					This mode works only with modules using the SER flavour module
 					interface. It does not work for kamailio modules and it
 					will probably not work for future sip-router modules. It is
 					safer and recommended to use instead the
@@ -249,7 +250,7 @@ struct module_exports exports = {
 		<para>
 			By convention the name of every exported function consists of
 			two parts delimited by a dot. The first part is the name of the
-			module or SER subsystem this function belongs to. The second
+			module or SIP server subsystem this function belongs to. The second
 			part is the name of the function.
 		</para>
 	</section>
@@ -453,19 +454,19 @@ add("sd", string_param, int_param);
 		<para>
 			The prototype of the function is:
 		    <programlisting>
-int scan(char* fmt, ...)
+int scan((void* ctx, char* fmt, ...)
 		    </programlisting>
 		    It is possible to either call the function once to scan all
 		    the parameters:
 		    <programlisting>
-rpc->scan("sdf", &amp;string_val, &amp;int_val, &amp;double_val);
+rpc->scan(ctx, "sdf", &amp;string_val, &amp;int_val, &amp;double_val);
 		    </programlisting>
 		    Or you can call the same function several times and it will
 		    continue where it left off previously:
 		    <programlisting>
-rpc->scan("s", &amp;string_val);
-rpc->scan("d", &amp;int_val);
-rpc->scan("f", &amp;double_val);
+rpc->scan(ctx, "s", &amp;string_val);
+rpc->scan(ctx, "d", &amp;int_val);
+rpc->scan(ctx, "f", &amp;double_val);
 		    </programlisting>
 		</para>
 		<para>
@@ -485,7 +486,7 @@ rpc->scan("f", &amp;double_val);
 			When retrieving a structure parameter from the
 			parameter set:
 		    <programlisting>
-rpc->scan("{", &amp;handle);
+rpc->scan(ctx, "{", &amp;handle);
 		    </programlisting>
 		    The corresponding variable (named 
 		    <varname>handle</varname> in the example above) will contain
@@ -515,7 +516,7 @@ rpc->struct_scan(handle, "sd", "str_attr", &amp;str_val, "int_attr", &amp;int_va
 		<title>Retrieving Parameters</title>
 		<programlisting>
 <![CDATA[
-static void rpc_delete_contact(rpc_t* rpc)
+static void rpc_delete_contact(rpc_t* rpc, void* ctx)
 {
     str aor, contact;
     char* table;
@@ -523,7 +524,7 @@ static void rpc_delete_contact(rpc_t* rpc)
     int   expires;
     double q;
 
-    if (rpc->scan("sS{", &table, &aor, &handle) < 0) {
+    if (rpc->scan(ctx, "sS{", &table, &aor, &handle) < 0) {
         /* Reply is set automatically by scan upon failure,
          * no need to do anything here
          */
@@ -592,7 +593,7 @@ static void core_echo(rpc_t* rpc, void* c)
 		    <title>Sending default reply</title>
 		    <programlisting>
 <![CDATA[
-static void rpc_dummy(rpc_t* rpc)
+static void rpc_dummy(rpc_t* rpc, void *ctx)
 {
   /* 200 OK with no data will be returned */
 }
@@ -609,9 +610,9 @@ static void rpc_dummy(rpc_t* rpc)
 		    status code and the second parameter is the reason phrase.
 		    <programlisting>
 <![CDATA[
-static void rpc_my_function(rpc_t* rpc)
+static void rpc_my_function(rpc_t* rpc, void *ctx)
 {
-    rpc->fault(600, "Not Yet Implemented");
+    rpc->fault(ctx, 600, "Not Yet Implemented");
 }
 ]]>
 		    </programlisting>
@@ -622,21 +623,21 @@ static void rpc_my_function(rpc_t* rpc)
 		    not contain any data:
 		    <programlisting>
 <![CDATA[
-static void rpc_my_function(rpc_t* rpc)
+static void rpc_my_function(rpc_t* rpc, void *ctx)
 {
-    rpc->add("s", "result1");
-    rpc->add("d", variable);
+    rpc->add(ctx, "s", "result1");
+    rpc->add(ctx, "d", variable);
 
     /* Reply created by previous functions will be
      * deleted and a failure reply 600 Not Yet Implemented
      * will be created instead
      */
-    rpc->fault(600, "Not Yet Implemented");
+    rpc->fault(ctx, 600, "Not Yet Implemented");
 
     /* You can also add data here, but that will have no
      * effect
      */
-    rpc->add("s", "result2");
+    rpc->add(ctx, "s", "result2");
 }
 ]]>
 		    </programlisting>
@@ -646,14 +647,14 @@ static void rpc_my_function(rpc_t* rpc)
 		    effect:
 		    <programlisting>
 <![CDATA[
-static void rpc_my_function(rpc_t* rpc)
+static void rpc_my_function(rpc_t* rpc, void *ctx)
 {
-    rpc->fault(600, "Not Yet Implemented");
+    rpc->fault(ctx, 600, "Not Yet Implemented");
 
     /* You can also add data here, but that will have no
      * effect and only 600 Not Yet Implemented will be returned
      */
-    rpc->add("s", "result2");
+    rpc->add(ctx, "s", "result2");
 }
 ]]>
 		    </programlisting>
@@ -675,12 +676,12 @@ static void rpc_my_function(rpc_t* rpc)
 		    <title>Kill the server</title>
 		    <programlisting>
 <![CDATA[
-static void core_kill(rpc_t* rpc)
+static void core_kill(rpc_t* rpc, void *ctx)
 {
     int sig_no;
 
-    if (rpc->scan("d", &sig_no) < 0) return;
-    rpc->send();     /* First send a reply */
+    if (rpc->scan(ctx, "d", &sig_no) < 0) return;
+    rpc->send(ctx, );     /* First send a reply */
     kill(0, sig_no); /* Then kill the server */
 }
 ]]>
@@ -699,14 +700,14 @@ static void core_kill(rpc_t* rpc)
 		    determines the types of additional parameters:
 		    <programlisting>
 <![CDATA[
-static void rpc_func(rpc_t* rpc)
+static void rpc_func(rpc_t* rpc, void *ctx)
 {
     str str_result;
     int int_result;
     void *handle;
     double float_result;
 
-    if (rpc->add("Sdf{", &str_result, int_result, float_result, &handle) < 0) return;
+    if (rpc->add(ctx, "Sdf{", &str_result, int_result, float_result, &handle) < 0) return;
 }
 ]]>
 		    </programlisting>
@@ -745,7 +746,7 @@ static void rpc_func(rpc_t* rpc)
 		    string, but this time it is <function>printf</function>-like formatting string:
 		    <programlisting>
 <![CDATA[
-if (rpc->printf("Unable to delete %d entries from table %s", num_entries, table_name) < 0) return;
+if (rpc->printf(ctx, "Unable to delete %d entries from table %s", num_entries, table_name) < 0) return;
 ]]>
 		    </programlisting>
 		    The return value of the function is the same as of
@@ -769,12 +770,12 @@ if (rpc->printf("Unable to delete %d entries from table %s", num_entries, table_
 		    new value.
 		    <programlisting>
 <![CDATA[
-static void rpc_func(rpc_t* rpc)
+static void rpc_func(rpc_t* rpc, void *ctx)
 {
     void *handle;
 
         /* Create empty structure and obtain its handle */
-    if (rpc->add("{", &handle) < 0) return;
+    if (rpc->add(ctx, "{", &handle) < 0) return;
         /* Fill-in the structure */
     if (rpc->struct_add(handle, "sd", "attr1", str_val,
                                       "attr2", int_val ) < 0)
@@ -798,7 +799,7 @@ static void rpc_func(rpc_t* rpc)
 		<title>Real World Example RPC Function</title>
 		<programlisting>
 <![CDATA[
-static void rpc_register(rpc_t* rpc)
+static void rpc_register(rpc_t* rpc, void *ctx)
 {
     char* domain;
     str aor;
@@ -806,7 +807,7 @@ static void rpc_register(rpc_t* rpc)
     void *handle;
 
         /* Extract the domain, address of record from the request */
-    if (rpc->scan("sS{", &domain, &aor, &handle) < 0) return;
+    if (rpc->scan(ctx, "sS{", &domain, &aor, &handle) < 0) return;
         /* Extract the structure describing the contact to be processed */
     if (rpc->struct_scan(handle, "Sdf", "Contact", &contact.c,
                                         "Expires", &contact.expires,
@@ -816,12 +817,12 @@ static void rpc_register(rpc_t* rpc)
         /* Process the contact, new_contact will contain updated value after processing */
     if (process_contact(domain, &aor, &new_contact, &contact) < 0) {
            /* Processing failed, indicate the failure to the caller */
-        rpc->fault(500, "Error While Processing Contact");
+        rpc->fault(ctx, 500, "Error While Processing Contact");
         return;
     }
 
         /* Return the domain and the address of record */
-    rpc->add("sS{", &domain, &aor, &handle) < 0) return;
+    rpc->add(ctx, "sS{", &domain, &aor, &handle) < 0) return;
         /* And also add the new values for contact, q, and expires parameters */
     rpc->struct_add(handle, "Sdf", "Contact", &new_contact.c,
                                    "Expires", &new_contact.expires,

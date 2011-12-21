@@ -167,7 +167,9 @@ int presxml_check_activities(struct sip_msg *msg, str presentity_uri, str activi
 				{
 					retval = -2;
 				}
+				break;
 			}
+
 			if (activitiesNode->children == NULL)
 			{
 				LM_DBG("activities node has no children\n");
@@ -175,6 +177,7 @@ int presxml_check_activities(struct sip_msg *msg, str presentity_uri, str activi
 				{
 					retval = -2;
 				}
+				break;
 			}
 
 			if ((activityNode = xmlNodeGetNodeByName(activitiesNode, nodeName, NULL)) != NULL)

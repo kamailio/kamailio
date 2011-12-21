@@ -59,6 +59,22 @@ int record_route_preset(struct sip_msg* _m, str* _data);
 
 
 /*!
+ * \brief Insert manually created Record-Route header
+ *
+ * Insert manually created Record-Route header, no checks, no restrictions,
+ * always adds lr parameter, fromtag is added automatically when requested,
+ * Allows addition of rr parameters using add_rr_param.
+ * Adds a 2nd header with the same details if the protocol changes and double
+ * rr enabled
+ * Allocates new private memory for this.
+ * \param _m SIP message
+ * \param _data manually created RR header
+ * \return 1 on success, negative on failure
+ */
+int record_route_advertised_address(struct sip_msg* _m, str* _data);
+
+
+/*!
  * \brief Appends a new Record-Route parameter
  * \param msg SIP message
  * \param rr_param RR parameter

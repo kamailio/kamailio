@@ -47,6 +47,11 @@ int www_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
 
 
 /*
+ * Authenticate using WWW/Proxy-Authorize header field
+ */
+int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags);
+
+/*
  * Bind to AUTH_DB API
  */
 int bind_auth_db(auth_db_api_t* api);

@@ -1247,6 +1247,30 @@ if(is_privacy("id"))
 
 	<section>
 		<title>
+			<function moreinfo="none">in_list(subject, list, separator)</function>
+		</title>
+		<para>
+		Function checks if subject string is found in list string where list items are separated by separator string.  Subject and list strings may contain pseudo variables.  Separator string needs to be one character long.  Returns 1 if subject is found and -1 otherwise.
+    	        </para>
+		<para>
+		Function can be used from all kinds of routes.
+		</para>
+		<example>
+			<title><function>in_list()</function> usage</title>
+			<programlisting format="linespecific">
+...
+$var(subject) = "fi";
+$var(list) = "dk,fi,no,se";
+if (in_list("$var(subject)", "$var(list)", ",") {
+    xlog("L_INFO", "subject is found in list\n");
+}
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
 		<function moreinfo="none">cmp_str(str1, str2)</function>
 		</title>
 		<para>

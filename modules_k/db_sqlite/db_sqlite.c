@@ -26,6 +26,7 @@
 #include <sqlite3.h>
 
 #include "../../sr_module.h"
+#include "../../lib/srdb1/db_query.h"
 #include "../../lib/srdb1/db.h"
 #include "dbase.h"
 
@@ -56,6 +57,13 @@ static cmd_export_t cmds[] = {
 	{0, 0, 0, 0, 0, 0}
 };
 
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	if(db_api_init()<0)
+		return -1;
+	return 0;
+}
+
 static int sqlite_mod_init(void)
 {
 	sqlite3_initialize();
@@ -63,7 +71,7 @@ static int sqlite_mod_init(void)
 	LM_INFO("SQlite library version %s (compiled using %s)\n",
 		sqlite3_libversion(),
 		SQLITE_VERSION);
-	return db_query_init();
+	return 0;
 }
 
 

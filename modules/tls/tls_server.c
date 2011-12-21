@@ -209,6 +209,10 @@ static int tls_complete_init(struct tcp_connection* c)
 #endif
 	SSL_set_bio(data->ssl, data->rwbio, data->rwbio);
 	c->extra_data = data;
+
+	/* link the extra data struct inside ssl connection*/
+	SSL_set_app_data(data->ssl, data);
+
 	return 0;
 
  error:
@@ -908,6 +912,7 @@ int tls_read_f(struct tcp_connection* c, int* flags)
 	int n, flush_flags;
 	char* err_src;
 	int x;
+	int tls_dbg;
 	
 	TLS_RD_TRACE("(%p, %p (%d)) start (%s -> %s:%d*)\n",
 					c, flags, *flags,
@@ -1092,15 +1097,26 @@ continue_ssl_read:
 			 *  In the later case, this whole function should be called again
 			 *  once there is more output space (set RD_CONN_REPEAT_READ).
 			 */
-			if (unlikely(n <= 0)) {
-				ssl_error = SSL_get_error(ssl, n);
-				err_src = "TLS read:";
-				/*  errors handled below, outside the lock */
+
+			if (unlikely(tls_c->flags & F_TLS_CON_RENEGOTIATION)) {
+				/* Fix CVE-2009-3555 - disable renegotiation if started by client
+				 * - simulate SSL EOF to force close connection*/
+				tls_dbg = cfg_get(tls, tls_cfg, debug);
+				LOG(tls_dbg, "Reading on a renegotiation of connection (n:%d) (%d)\n",
+						n, SSL_get_error(ssl, n));
+				err_src = "TLS R-N read:";
+				ssl_error = SSL_ERROR_ZERO_RETURN;
 			} else {
-				ssl_error = SSL_ERROR_NONE;
-				r->pos += n;
-				ssl_read += n;
-				bytes_free -=n;
+				if (unlikely(n <= 0)) {
+					ssl_error = SSL_get_error(ssl, n);
+					err_src = "TLS read:";
+					/*  errors handled below, outside the lock */
+				} else {
+					ssl_error = SSL_ERROR_NONE;
+					r->pos += n;
+					ssl_read += n;
+					bytes_free -=n;
+				}
 			}
 			TLS_RD_TRACE("(%p, %p) SSL_read() => %d (err=%d) ssl_read=%d"
 							" *flags=%d tls_c->flags=%d\n",

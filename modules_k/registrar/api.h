@@ -43,6 +43,7 @@ int regapi_lookup(struct sip_msg *msg, char *table);
 typedef struct registrar_api {
 	regapi_save_f    save;
 	regapi_lookup_f  lookup;
+	regapi_lookup_f  registered;
 } registrar_api_t;
 
 typedef int (*bind_registrar_f)(registrar_api_t* api);
