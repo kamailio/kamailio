@@ -57,8 +57,12 @@ static cmd_export_t cmds[] = {
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_keep_codecs_by_id",    (cmd_function)w_sdp_keep_codecs_by_id,
 		1, fixup_spve_null,  0, ANY_ROUTE},
+	{"sdp_keep_codecs_by_id",    (cmd_function)w_sdp_keep_codecs_by_id,
+		2, fixup_spve_spve,  0, ANY_ROUTE},
 	{"sdp_keep_codecs_by_name",  (cmd_function)w_sdp_keep_codecs_by_name,
 		1, fixup_spve_null,  0, ANY_ROUTE},
+	{"sdp_keep_codecs_by_name",  (cmd_function)w_sdp_keep_codecs_by_name,
+		2, fixup_spve_spve,  0, ANY_ROUTE},
 	{"sdp_with_media",             (cmd_function)w_sdp_with_media,
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_with_codecs_by_id",      (cmd_function)w_sdp_with_codecs_by_id,
@@ -412,7 +416,7 @@ static int w_sdp_remove_codecs_by_name(sip_msg_t* msg, char* codecs, char* bar)
 /**
  *
  */
-int sdp_keep_codecs_by_id(sip_msg_t* msg, str* codecs)
+int sdp_keep_codecs_by_id(sip_msg_t* msg, str* codecs, str *media)
 {
 	sdp_info_t *sdp = NULL;
 	int sdp_session_num;
@@ -452,20 +456,26 @@ int sdp_keep_codecs_by_id(sip_msg_t* msg, str* codecs)
 			LM_DBG("stream %d of %d - payloads [%.*s]\n",
 				sdp_stream_num, sdp_session_num,
 				sdp_stream->payloads.len, sdp_stream->payloads.s);
-			sdp_codecs = sdp_stream->payloads;
-			tmp_codecs = sdp_stream->payloads;
-			while(str_find_token(&tmp_codecs, &rm_codec, ' ')==0
-					&& rm_codec.len>0)
+			if((media==NULL)
+					|| (media->len==sdp_stream->media.len
+						&& strncasecmp(sdp_stream->media.s, media->s,
+							media->len)==0))
 			{
-				tmp_codecs.len -=(int)(&rm_codec.s[rm_codec.len]-tmp_codecs.s);
-				tmp_codecs.s = rm_codec.s + rm_codec.len;
+				sdp_codecs = sdp_stream->payloads;
+				tmp_codecs = sdp_stream->payloads;
+				while(str_find_token(&tmp_codecs, &rm_codec, ' ')==0
+						&& rm_codec.len>0)
+				{
+					tmp_codecs.len -=(int)(&rm_codec.s[rm_codec.len]-tmp_codecs.s);
+					tmp_codecs.s = rm_codec.s + rm_codec.len;
 
-				if(sdp_codec_in_str(codecs, &rm_codec, ',')==0) {
-					LM_DBG("codecs [%.*s] - remove [%.*s]\n",
-						sdp_codecs.len, sdp_codecs.s,
-						rm_codec.len, rm_codec.s);
-					sdp_remove_str_codec_id(msg, &sdp_codecs, &rm_codec);
-					sdp_remove_str_codec_id_attrs(msg, sdp_stream, &rm_codec);
+					if(sdp_codec_in_str(codecs, &rm_codec, ',')==0) {
+						LM_DBG("codecs [%.*s] - remove [%.*s]\n",
+							sdp_codecs.len, sdp_codecs.s,
+							rm_codec.len, rm_codec.s);
+						sdp_remove_str_codec_id(msg, &sdp_codecs, &rm_codec);
+						sdp_remove_str_codec_id_attrs(msg, sdp_stream, &rm_codec);
+					}
 				}
 			}
 			sdp_stream_num++;
@@ -479,9 +489,10 @@ int sdp_keep_codecs_by_id(sip_msg_t* msg, str* codecs)
 /**
  *
  */
-static int w_sdp_keep_codecs_by_id(sip_msg_t* msg, char* codecs, char* bar)
+static int w_sdp_keep_codecs_by_id(sip_msg_t* msg, char* codecs, char* media)
 {
 	str lcodecs = {0, 0};
+	str lmedia = {0, 0};
 
 	if(codecs==0)
 	{
@@ -494,8 +505,16 @@ static int w_sdp_keep_codecs_by_id(sip_msg_t* msg, char* codecs, char* bar)
 		LM_ERR("unable to get the list of codecs\n");
 		return -1;
 	}
+	if(media!=NULL)
+	{
+		if(fixup_get_svalue(msg, (gparam_p)media, &lmedia)!=0)
+		{
+			LM_ERR("unable to get the media type\n");
+			return -1;
+		}
+	}
 
-	if(sdp_keep_codecs_by_id(msg, &lcodecs)<0)
+	if(sdp_keep_codecs_by_id(msg, &lcodecs, (media)?&lmedia:NULL)<0)
 		return -1;
 	return 1;
 }
@@ -503,7 +522,7 @@ static int w_sdp_keep_codecs_by_id(sip_msg_t* msg, char* codecs, char* bar)
 /**
  *
  */
-int sdp_keep_codecs_by_name(sip_msg_t* msg, str* codecs)
+int sdp_keep_codecs_by_name(sip_msg_t* msg, str* codecs, str *media)
 {
 	sdp_info_t *sdp = NULL;
 	str idslist;
@@ -526,7 +545,7 @@ int sdp_keep_codecs_by_name(sip_msg_t* msg, str* codecs)
 	if(sdpops_build_ids_list(sdp, codecs, &idslist)<0)
 		return -1;
 
-	if(sdp_keep_codecs_by_id(msg, &idslist)<0)
+	if(sdp_keep_codecs_by_id(msg, &idslist, media)<0)
 		return -1;
 
 	return 0;
@@ -536,9 +555,10 @@ int sdp_keep_codecs_by_name(sip_msg_t* msg, str* codecs)
 /**
  *
  */
-static int w_sdp_keep_codecs_by_name(sip_msg_t* msg, char* codecs, char* bar)
+static int w_sdp_keep_codecs_by_name(sip_msg_t* msg, char* codecs, char* media)
 {
 	str lcodecs = {0, 0};
+	str lmedia = {0, 0};
 
 	if(codecs==0)
 	{
@@ -552,7 +572,16 @@ static int w_sdp_keep_codecs_by_name(sip_msg_t* msg, char* codecs, char* bar)
 		return -1;
 	}
 
-	if(sdp_keep_codecs_by_name(msg, &lcodecs)<0)
+	if(media!=NULL)
+	{
+		if(fixup_get_svalue(msg, (gparam_p)media, &lmedia)!=0)
+		{
+			LM_ERR("unable to get the media type\n");
+			return -1;
+		}
+	}
+
+	if(sdp_keep_codecs_by_name(msg, &lcodecs, (media)?&lmedia:NULL)<0)
 		return -1;
 	return 1;
 }
