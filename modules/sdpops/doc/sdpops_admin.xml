@@ -121,7 +121,7 @@ sdp_remove_codecs_by_name("PCMU,PCMA,GSM");
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">sdp_keep_codecs_by_id(list)</function>
+		<function moreinfo="none">sdp_keep_codecs_by_id(list [, mtype])</function>
 	    </title>
 	    <para>
 			Keep only the codecs provided in the parameter 'list' from all
@@ -129,6 +129,10 @@ sdp_remove_codecs_by_name("PCMU,PCMA,GSM");
 			be one or a comma separated list of numeric codec IDs. The
 			parameter can be a static string or a variable holding the
 			list of numeric codec IDs.
+	    </para>
+		<para>
+			Optional parameter mtype can be provided to apply the operations
+			only to the streams matching m=mtype.
 	    </para>
 		<para>
 			This function can be used from ANY_ROUTE.
@@ -139,15 +143,15 @@ sdp_remove_codecs_by_name("PCMU,PCMA,GSM");
 ...
 # keep only PCMU
 sdp_keep_codecs_by_id("0");
-# keep PCMU, PCMA and GSM
-sdp_keep_codecs_by_id("0,8,3");
+# keep PCMU, PCMA and GSM in audio stream
+sdp_keep_codecs_by_id("0,8,3", "audio");
 ...
 </programlisting>
 	    </example>
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">sdp_keep_codecs_by_name(list)</function>
+		<function moreinfo="none">sdp_keep_codecs_by_name(list [, mtype])</function>
 	    </title>
 	    <para>
 			Keep only the codecs provided in the parameter 'list' from all
@@ -155,6 +159,10 @@ sdp_keep_codecs_by_id("0,8,3");
 			be one or a comma separated list of codec names. The
 			parameter can be a static string or a variable holding the
 			list of codec names.
+	    </para>
+		<para>
+			Optional parameter mtype can be provided to apply the operations
+			only to the streams matching m=mtype.
 	    </para>
 		<para>
 			This function can be used from ANY_ROUTE.
@@ -192,6 +200,79 @@ if(sdp_with_media("video"))
 {
     # the session has a video stream
 }
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">sdp_remove_media(type)</function>
+	    </title>
+	    <para>
+		Remove the streams that match on 'm=type ...' line. The
+		parameter can be static string or variable holding the media type.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_remove_media</function> usage</title>
+		<programlisting format="linespecific">
+...
+# remove video stream
+sdp_remove_media("video");
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">sdp_with_codecs_by_id(list)</function>
+	    </title>
+	    <para>
+			Returns true if any of the codecs provided in the parameter 'list'
+			from all media streams is found in SDP payload. The parameter
+			'list' must be one or a comma separated list of numeric codec IDs.
+			The parameter can be a static string or a variable holding the
+			list of numeric codec IDs.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_with_codecs_by_id</function> usage</title>
+		<programlisting format="linespecific">
+...
+# test for PCMU
+if(sdp_with_codecs_by_id("0")) { ... }
+# test for PCMU, PCMA or GSM
+if(sdp_with_codecs_by_id("0,8,3")) { ... }
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">sdp_with_codecs_by_name(list)</function>
+	    </title>
+	    <para>
+			Returns true if any of the codecs provided in the parameter 'list'
+			from all media streams is found in SDP payload. The parameter
+			'list' must be one or a comma separated list of codec names.
+			The parameter can be a static string or a variable holding the
+			list of codec names.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_with_codecs_by_name</function> usage</title>
+		<programlisting format="linespecific">
+...
+# test for PCMU
+if(sdp_with_codecs_by_id("PCMU")) { ... }
+# test for PCMU, PCMA or GSM
+if(sdp_with_codecs_by_id("PCMU,PCMA,GSM")) { ... }
 ...
 </programlisting>
 	    </example>
