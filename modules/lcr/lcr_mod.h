@@ -42,6 +42,7 @@
 #include "../../lib/kmi/mi.h"
 #include "../../locking.h"
 #include "../../parser/parse_uri.h"
+#include "../../ip_addr.h"
 
 #define MAX_PREFIX_LEN 16
 #define MAX_URI_LEN 256
@@ -84,7 +85,7 @@ struct gw_info {
     char gw_name[MAX_NAME_LEN];
     unsigned short gw_name_len;
     uri_type scheme;
-    unsigned int ip_addr;
+    struct ip_addr ip_addr;
     char hostname[MAX_HOST_LEN];
     unsigned short hostname_len;
     unsigned int port;

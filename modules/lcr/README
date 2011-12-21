@@ -379,7 +379,7 @@ modparam("lcr", "gw_name_column", "name")
 
 3.6. ip_addr_column (string)
 
-   Name of the column holding the IP address of the gateway.
+   Name of the column holding the IPv4 or IPv6 address of the gateway.
 
    Default value is “ip_addr”.
 

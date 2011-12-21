@@ -88,7 +88,7 @@ int get_gw_index(struct gw_info *gws, unsigned int gw_id,
 {
     unsigned short gw_count, i;
 
-    gw_count = gws[0].ip_addr;
+    gw_count = gws[0].ip_addr.u.addr32[0];
 
     for (i = 1; i <= gw_count; i++) {
 	if (gws[i].gw_id == gw_id) {
