@@ -46,6 +46,7 @@ static int w_sdp_keep_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar);
 static int w_sdp_with_media(sip_msg_t* msg, char* media, char *bar);
 static int w_sdp_with_codecs_by_id(sip_msg_t* msg, char* codec, char *bar);
 static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codec, char *bar);
+static int w_sdp_remove_media(sip_msg_t* msg, char* media, char *bar);
 static int w_sdp_print(sip_msg_t* msg, char* level, char *bar);
 
 static int mod_init(void);
@@ -64,6 +65,8 @@ static cmd_export_t cmds[] = {
 	{"sdp_keep_codecs_by_name",  (cmd_function)w_sdp_keep_codecs_by_name,
 		2, fixup_spve_spve,  0, ANY_ROUTE},
 	{"sdp_with_media",             (cmd_function)w_sdp_with_media,
+		1, fixup_spve_null,  0, ANY_ROUTE},
+	{"sdp_remove_media",             (cmd_function)w_sdp_remove_media,
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_with_codecs_by_id",      (cmd_function)w_sdp_with_codecs_by_id,
 		1, fixup_spve_null,  0, ANY_ROUTE},
@@ -657,6 +660,107 @@ static int w_sdp_with_media(sip_msg_t* msg, char* media, char *bar)
 		return -1;
 	return 1;
 }
+
+/**
+ * @brief remove streams matching the m='media'
+ * @return -1 - error; 0 - not found; >=1 - found
+ */
+static int sdp_remove_media(sip_msg_t *msg, str *media)
+{
+	sdp_info_t *sdp = NULL;
+	int sdp_session_num;
+	int sdp_stream_num;
+	sdp_session_cell_t* sdp_session;
+	sdp_stream_cell_t* sdp_stream;
+	sdp_stream_cell_t* nxt_stream;
+	int ret = 0;
+	char *dstart = NULL;
+	int dlen = 0;
+	struct lump *anchor;
+
+	if(parse_sdp(msg) < 0) {
+		LM_ERR("Unable to parse sdp\n");
+		return -1;
+	}
+
+	LM_DBG("attempting to search for media type: [%.*s]\n",
+			media->len, media->s);
+
+	sdp = (sdp_info_t*)msg->body;
+
+	sdp_session_num = 0;
+	for(;;)
+	{
+		sdp_session = get_sdp_session(msg, sdp_session_num);
+		if(!sdp_session) break;
+		sdp_stream_num = 0;
+		for(;;)
+		{
+			sdp_stream = get_sdp_stream(msg, sdp_session_num, sdp_stream_num);
+			if(!sdp_stream) break;
+
+			LM_DBG("stream %d of %d - media [%.*s]\n",
+				sdp_stream_num, sdp_session_num,
+				sdp_stream->media.len, sdp_stream->media.s);
+			if(media->len==sdp_stream->media.len
+					&& strncasecmp(sdp_stream->media.s, media->s,
+							media->len)==0)
+			{
+				/* found - remove */
+				LM_DBG("removing media stream: %.*s", media->len, media->s);
+				nxt_stream = get_sdp_stream(msg, sdp_session_num,
+								sdp_stream_num+1);
+				/* skip back 'm=' */
+				dstart = sdp_stream->media.s - 2;
+				if(!nxt_stream) {
+					/* delete to end of sdp */
+					dlen = (int)(sdp->text.s + sdp->text.len - dstart);
+				} else {
+					/* delete to start of next stream */
+					dlen = (int)(nxt_stream->media.s - 2 - dstart);
+				}
+				anchor = del_lump(msg, dstart - msg->buf, dlen, 0);
+				if (anchor == NULL) {
+					LM_ERR("failed to remove media type [%.*s]\n",
+						 media->len, media->s);
+					return -1;
+				}
+
+				ret++;
+			}
+			sdp_stream_num++;
+		}
+		sdp_session_num++;
+	}
+
+	return ret;
+}
+
+
+/**
+ *
+ */
+static int w_sdp_remove_media(sip_msg_t* msg, char* media, char *bar)
+{
+	str lmedia = {0, 0};
+
+	if(media==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)media, &lmedia)!=0)
+	{
+		LM_ERR("unable to get the media value\n");
+		return -1;
+	}
+
+	if(sdp_remove_media(msg, &lmedia)<=0)
+		return -1;
+	return 1;
+}
+
 
 /**
  *
