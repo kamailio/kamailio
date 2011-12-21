@@ -253,7 +253,8 @@ modparam("lcr", "gw_name_column", "name")
 	<section>
 		<title><varname>ip_addr_column</varname> (string)</title>
 		<para>
-		Name of the column holding the IP address of the gateway.
+		Name of the column holding the IPv4 or IPv6 address of
+		the gateway.
 		</para>
 		<para>
 		<emphasis>

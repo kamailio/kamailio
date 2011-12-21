@@ -72,7 +72,7 @@ static void dump_gws(rpc_t* rpc, void* c)
 
 	gws = gw_pt[j];
 
-	for (i = 1; i <= gws[0].ip_addr; i++) {
+	for (i = 1; i <= gws[0].ip_addr.u.addr32[0]; i++) {
 	    if (rpc->add(c, "{", &st) < 0) return;
 	    rpc->struct_add(st, "d", "lcr_id", j);
 	    rpc->struct_add(st, "d", "gw_id", gws[i].gw_id);
@@ -85,11 +85,22 @@ static void dump_gws(rpc_t* rpc, void* c)
 	    } else {
 		rpc->struct_add(st, "s", "scheme", "sips");
 	    }
-	    rpc->struct_printf(st, "ip_addr", "%d.%d.%d.%d",
-			       (gws[i].ip_addr << 24) >> 24,
-			       ((gws[i].ip_addr >> 8) << 24) >> 24,
-			       ((gws[i].ip_addr >> 16) << 24) >> 24,
-			       gws[i].ip_addr >> 24);
+	    if (gws[i].ip_addr.af == AF_INET)
+		rpc->struct_printf(st, "ip_addr", "%d.%d.%d.%d",
+					gws[i].ip_addr.u.addr32[0],
+					gws[i].ip_addr.u.addr32[1],
+					gws[i].ip_addr.u.addr32[2],
+					gws[i].ip_addr.u.addr32[3]);
+	    else /* AF_INET6 */
+		rpc->struct_printf(st, "ip_addr", "%x:%x:%x:%x:%x:%x:%x:%x",
+					gws[i].ip_addr.u.addr16[0],
+					gws[i].ip_addr.u.addr16[1],
+					gws[i].ip_addr.u.addr16[2],
+					gws[i].ip_addr.u.addr16[3],
+					gws[i].ip_addr.u.addr16[4],
+					gws[i].ip_addr.u.addr16[5],
+					gws[i].ip_addr.u.addr16[6],
+					gws[i].ip_addr.u.addr16[7]);
 	    hostname.s=gws[i].hostname;
 	    hostname.len=gws[i].hostname_len;
 	    rpc->struct_add(st, "S", "hostname", &hostname);
