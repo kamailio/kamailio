@@ -14,13 +14,13 @@ END mtree_tr;
 /
 BEGIN map2users('mtree'); END;
 /
-INSERT INTO version (table_name, table_version) values ('mtrees','1');
+INSERT INTO version (table_name, table_version) values ('mtrees','2');
 CREATE TABLE mtrees (
     id NUMBER(10) PRIMARY KEY,
     tname VARCHAR2(128) DEFAULT '',
     tprefix VARCHAR2(32) DEFAULT '',
     tvalue VARCHAR2(128) DEFAULT '',
-    CONSTRAINT mtrees_tname_tprefix_idx  UNIQUE (tname, tprefix)
+    CONSTRAINT ORA_tname_tprefix_tvalue_idx  UNIQUE (tname, tprefix, tvalue)
 );
 
 CREATE OR REPLACE TRIGGER mtrees_tr
