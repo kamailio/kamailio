@@ -970,7 +970,7 @@ static void timer_handler()
 		if ((slow_idx_t)(*t_idx-*s_idx) < (SLOW_LISTS_NO-1U))
 			(*t_idx)++;
 		else{
-			LOG(L_ERR, "ERROR: slow timer too slow: overflow (%d - %d = %d)\n",
+			LOG(L_WARN, "slow timer too slow: overflow (%d - %d = %d)\n",
 					*t_idx, *s_idx, *t_idx-*s_idx);
 			/* trying to continue */
 		}
