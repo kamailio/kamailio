@@ -327,41 +327,35 @@ static int mod_init(void)
 	*xheaders_read_flag = xheaders_read;
 
 	/* register callbacks to TM */
-	if (load_tm_api(&tmb)!=0)
-	{
-		LM_ERR("can't load tm api. Is module tm loaded?\n");
-		return -1;
-	}
-
-	if(tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, trace_onreq_in, 0, 0) <=0)
-	{
+	if (load_tm_api(&tmb)!=0) {
+		LM_WARN("can't load tm api. Will not install tm callbacks.\n");
+	} else if(tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, trace_onreq_in, 0, 0) <=0) {
 		LM_ERR("can't register trace_onreq_in\n");
 		return -1;
 	}
 
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
-		LM_ERR("cannot bind to SL API\n");
-		return -1;
-	}
+		LM_WARN("cannot bind to SL API. Will not install sl callbacks.\n");
+	} else {
+		/* register sl callbacks */
+		memset(&slcb, 0, sizeof(sl_cbelem_t));
 
-	/* register sl callbacks */
-	memset(&slcb, 0, sizeof(sl_cbelem_t));
-
-	slcb.type = SLCB_REPLY_READY;
-	slcb.cbf  = trace_sl_onreply_out;
-	if (slb.register_cb(&slcb) != 0) {
-		LM_ERR("can't register for SLCB_REPLY_READY\n");
-		return -1;
-	}
-
-	if(trace_sl_acks)
-	{
-		slcb.type = SLCB_ACK_FILTERED;
-		slcb.cbf  = trace_sl_ack_in;
+		slcb.type = SLCB_REPLY_READY;
+		slcb.cbf  = trace_sl_onreply_out;
 		if (slb.register_cb(&slcb) != 0) {
-			LM_ERR("can't register for SLCB_ACK_FILTERED\n");
+			LM_ERR("can't register for SLCB_REPLY_READY\n");
 			return -1;
+		}
+
+		if(trace_sl_acks)
+		{
+			slcb.type = SLCB_ACK_FILTERED;
+			slcb.cbf  = trace_sl_ack_in;
+			if (slb.register_cb(&slcb) != 0) {
+				LM_ERR("can't register for SLCB_ACK_FILTERED\n");
+				return -1;
+			}
 		}
 	}
 
