@@ -126,6 +126,13 @@ typedef struct {
 
 
 /**
+ * Use this macro if you need to access the integer value in the db_val_t structure
+ * casted to unsigned int.
+ */
+#define VAL_UINT(dv)    ((unsigned int)(dv)->val.int_val)
+
+
+/**
  * Use this macro if you need to access the long long value in the db_val_t structure.
  */
 #define VAL_BIGINT(dv)    ((dv)->val.ll_val)
