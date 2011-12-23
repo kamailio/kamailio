@@ -9,7 +9,7 @@
 
 <table id="address" xmlns:db="http://docbook.org/ns/docbook">
     <name>address</name>
-    <version>4</version>
+    <version>5</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used by the permissions module. More information is available at: &KAMAILIO_MOD_DOC;permissions.html
@@ -28,8 +28,8 @@
 
     <column>
         <name>grp</name>
-        <type>unsigned short</type>
-        <size>5</size>
+        <type>unsigned int</type>
+        <size>11</size>
         <default>1</default>
         <description>Group</description>
         <natural/>
@@ -38,15 +38,15 @@
     <column>
         <name>ip_addr</name>
         <type>string</type>
-        <size>15</size>
+        <size>48</size>
         <description>IP address</description>
     </column>
 
     <column>
         <name>mask</name>
-        <type>char</type>
+        <type>int</type>
         <default>32</default>
-		<description>Network mask - integer equal or less than 32</description>
+		<description>Network mask - integer equal or less than 128</description>
     </column>
 
     <column>
