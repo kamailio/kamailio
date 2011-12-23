@@ -22,7 +22,7 @@ NAME=iptrtpproxy.so
 #		-L $(iptdir)/extensions -lext
 # look for libipt_RTPPROXY first under /lib/xtables (default install dir)
 # and if not found in $(iptdir)/extensions (compile dir)
-LIBS = -L $(iptdir)/libiptc -L $(iptdir)/iptables/extensions -lipt_RTPPROXY
+LIBS = -L $(iptdir)/libiptc -L $(iptdir)/iptables/extensions -lxt_RTPPROXY
 LIBS+= -L $(xtablesmoduledir)
 INCLUDES = -I $(iptdir)/linux-2.6/include -I $(kerneldir) -I $(iptdir)/iptables/include
 

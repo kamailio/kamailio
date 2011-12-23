@@ -593,6 +593,17 @@ Aggregation will take <emphasis>sip-addr</emphasis> from the first switchboard o
 		</para>
 		</section>
 
+		<section id="iptrtpproxy.o_ip_ver">
+		<title>
+			<function>@iptrtpproxy.o_ip_ver</function>
+		</title>
+		<para>
+		Return IP version of address (i.e. <emphasis>4</emphasis> or <emphasis>6</emphasis>) 
+		at <emphasis>o=</emphasis> line to set correct address via
+		<function>iptrtpproxy_set_param(o_addr)</function>.
+		</para>
+		</section>
+
 		<section id="iptrtpproxy_set_param(o_addr)">
 		<title>
 			<function>iptrtpproxy_set_param("o_addr", value)</function>
@@ -600,6 +611,25 @@ Aggregation will take <emphasis>sip-addr</emphasis> from the first switchboard o
 		<para>
 		Address to be rewritten at <emphasis>o=</emphasis> line by <function>iptrtpproxy_alloc/update</function> 
 		to hide caller identity. If value is blank then address is left unchanged.
+		</para>
+		</section>
+
+		<section id="iptrtpproxy.session_mark">
+		<title>
+			<function>@iptrtpproxy.session_mark</function>
+		</title>
+		<para>
+		Return current session mark value.
+		</para>
+		</section>
+
+		<section id="iptrtpproxy_set_param(session_mark)">
+		<title>
+			<function>iptrtpproxy_set_param("session_mark", value)</function>
+		</title>
+		<para>
+		If set then all session RTP packets will be market by this value. It allow e.g. clone and redirect packet
+		for legal intercept purpose.
 		</para>
 		</section>
 
