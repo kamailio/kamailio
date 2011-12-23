@@ -211,6 +211,20 @@ dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 	return td;
 }
 
+/**
+ * free the field in dlg_t as filled/allocated by this module
+ */
+static int pua_free_tm_dlg(dlg_t *td)
+{
+	if(td)
+	{
+		if(td->route_set)
+			free_rr(&td->route_set);
+		pkg_free(td);
+	}
+	return 0;
+}
+
 void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 {
 	struct sip_msg* msg= NULL;
@@ -808,6 +822,10 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag)
 
 }	
 
+
+/**
+ *
+ */
 int send_subscribe(subs_info_t* subs)
 {
 	ua_pres_t* presentity= NULL;
@@ -1073,12 +1091,7 @@ insert:
 
 
 done:
-	if(td!=NULL) {
-		if(td->route_set)
-			free_rr(&td->route_set);
-		pkg_free(td);
-		td= NULL;
-	}
+	pua_free_tm_dlg(td);
 	pkg_free(str_hdr);
 	return ret;
 }
