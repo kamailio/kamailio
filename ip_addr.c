@@ -354,3 +354,60 @@ char* get_proto_name(unsigned int proto)
 			return "unknown";
 	}
 }
+
+
+/**
+ * match ip address with net address and bitmask
+ * - return 0 on match, -1 otherwise
+ */
+int ip_addr_match_net(ip_addr_t *iaddr, ip_addr_t *naddr,
+		int mask)
+{
+	unsigned char c;
+	int i;
+	int mbytes;
+	int mbits;
+
+	if(mask==0)
+		return 0;
+	if(iaddr==NULL || naddr==NULL || mask<0)
+		return -1;
+	if(iaddr->af != naddr->af)
+		return -1;
+
+	if(iaddr->af == AF_INET)
+	{
+		if(mask>32)
+			return -1;
+		if(mask==32)
+		{
+			if(ip_addr_cmp(iaddr, naddr))
+				return 0;
+			return -1;
+		}
+	} else if(iaddr->af ==  AF_INET6) {
+		if(mask>128)
+			return -1;
+
+		if(mask==128)
+		{
+			if(ip_addr_cmp(iaddr, naddr))
+				return 0;
+			return -1;
+		}
+	}
+
+	mbytes = mask / 8;
+	for(i=0; i<mbytes; i++)
+	{
+		if(iaddr->u.addr[i] != naddr->u.addr[i])
+			return -1;
+	}
+	mbits = mask % 8;
+	if(mbits==0)
+		return 0;
+	c = naddr->u.addr[i] & (~((1 << (8 - mbits)) - 1));
+	if((iaddr->u.addr[i] & c) == c)
+		return 0;
+	return -1;
+}
