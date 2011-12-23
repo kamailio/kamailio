@@ -444,6 +444,7 @@ void free_hash_table(  )
 			}
 		}
 		shm_free(_tm_table);
+		_tm_table = 0;
 	}
 }
 
