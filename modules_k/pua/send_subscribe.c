@@ -897,6 +897,8 @@ int send_subscribe(subs_info_t* subs)
 	db1_res_t *res=NULL;
 	ua_pres_t dbpres;
 	str pres_uri={0,0}, watcher_uri={0,0}, extra_headers={0,0};
+	dlg_t* td= NULL;
+
 
 	memset(&dbpres, 0, sizeof(dbpres));
 	dbpres.pres_uri = &pres_uri;
@@ -1120,8 +1122,6 @@ insert:
 		}	
         */
 
-		dlg_t* td= NULL;
-
 		if (subs->internal_update_flag == INTERNAL_UPDATE_TRUE)
 		{
 			LM_INFO("attempting to re-SUBSCRIBE on internal (rls_update_subs()) update - skipping\n");
@@ -1170,14 +1170,16 @@ insert:
 			LM_ERR("while sending request with t_request\n");
 			goto done;
 		}
+	}
 
+
+done:
+	if(td!=NULL) {
 		if(td->route_set)
 			free_rr(&td->route_set);
 		pkg_free(td);
 		td= NULL;
 	}
-
-done:
 	pkg_free(str_hdr);
 	free_results_puadb(res);
 	return ret;
