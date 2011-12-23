@@ -108,7 +108,7 @@ void empty_hash_table(struct trusted_list** hash_table);
  */
 struct addr_list {
     unsigned int grp;
-    unsigned int ip_addr;
+    ip_addr_t addr;
     unsigned int port;
 	str tag;
     struct addr_list *next;  /* Next element in the list */
@@ -137,7 +137,7 @@ void destroy_addr_hash_table(struct addr_list** table);
  * Add <group, ip_addr, port> into hash table
  */
 int addr_hash_table_insert(struct addr_list** hash_table, unsigned int grp,
-			   unsigned int ip_addr, unsigned int port, char *tagv);
+			    ip_addr_t *addr, unsigned int port, char *tagv);
 
 
 /* 
@@ -145,7 +145,7 @@ int addr_hash_table_insert(struct addr_list** hash_table, unsigned int grp,
  * port.  Port 0 in hash table matches any port.
  */
 int match_addr_hash_table(struct addr_list** table, unsigned int grp,
-			  unsigned int ip_addr, unsigned int port);
+			  ip_addr_t *addr, unsigned int port);
 
 
 /* 
@@ -154,7 +154,7 @@ int match_addr_hash_table(struct addr_list** table, unsigned int grp,
  * or -1 if no match is found.
  */
 int find_group_in_addr_hash_table(struct addr_list** table,
-				  unsigned int ip_addr, unsigned int port);
+				  ip_addr_t *addr, unsigned int port);
 
 
 /* 
@@ -179,7 +179,7 @@ void empty_addr_hash_table(struct addr_list** hash_table);
  */
 struct subnet {
     unsigned int grp;        /* address group, subnet count in last record */
-    unsigned int subnet;     /* IP subnet in host byte order with host bits shifted out */
+    ip_addr_t  subnet;       /* IP subnet in host byte order with host bits shifted out */
     unsigned int port;       /* port or 0 */
     unsigned int mask;       /* how many bits belong to network part */
 	str tag;
@@ -197,7 +197,7 @@ struct subnet* new_subnet_table(void);
  * and port.  Port 0 in subnet table matches any port.
  */
 int match_subnet_table(struct subnet* table, unsigned int group,
-		       unsigned int ip_addr, unsigned int port);
+		       ip_addr_t *addr, unsigned int port);
 
 
 /* 
@@ -206,7 +206,7 @@ int match_subnet_table(struct subnet* table, unsigned int group,
  * the first match or -1 if no match is found.
  */
 int find_group_in_subnet_table(struct subnet* table,
-			       unsigned int ip_addr, unsigned int port);
+			       ip_addr_t *addr, unsigned int port);
 
 /* 
  * Empty contents of subnet table
@@ -225,7 +225,7 @@ void free_subnet_table(struct subnet* table);
  * kept ordered according to subnet, port, grp.
  */
 int subnet_table_insert(struct subnet* table, unsigned int grp,
-			unsigned int subnet, unsigned int mask,
+			ip_addr_t *subnet, unsigned int mask,
 			unsigned int port, char *tagv);
 
 

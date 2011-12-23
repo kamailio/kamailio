@@ -24,7 +24,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
- 
+
 #include <stdio.h>
 #include "permissions.h"
 #include "parse_config.h"
@@ -102,6 +102,8 @@ static int single_fixup(void** param, int param_no);
  */
 static int double_fixup(void** param, int param_no);
 
+static int fixup_allow_address(void** param, int param_no);
+
 static int allow_routing_0(struct sip_msg* msg, char* str1, char* str2);
 static int allow_routing_1(struct sip_msg* msg, char* basename, char* str2);
 static int allow_routing_2(struct sip_msg* msg, char* allow_file, char* deny_file);
@@ -119,29 +121,29 @@ static int mi_addr_child_init();
 /* Exported functions */
 static cmd_export_t cmds[] = {
 	{"allow_routing",  (cmd_function)allow_routing_0,  0, 0, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"allow_routing",  (cmd_function)allow_routing_1,  1, single_fixup, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"allow_routing",  (cmd_function)allow_routing_2,  2, load_fixup, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"allow_register", (cmd_function)allow_register_1, 1, single_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_register", (cmd_function)allow_register_2, 2, load_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_trusted",  (cmd_function)allow_trusted_0,  0, 0, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
+		ANY_ROUTE},
 	{"allow_trusted",  (cmd_function)allow_trusted_2,  2, fixup_spve_spve,
-	        fixup_free_spve_spve, REQUEST_ROUTE | FAILURE_ROUTE},
+		fixup_free_spve_spve, ANY_ROUTE},
 	{"allow_uri",      (cmd_function)allow_uri, 2, double_fixup, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE|LOCAL_ROUTE},
-	{"allow_address",  (cmd_function)allow_address, 3, fixup_igp_pvar_pvar,
-	        fixup_free_igp_pvar_pvar, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
+		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_address",  (cmd_function)allow_address, 3, fixup_allow_address,
+		0, ANY_ROUTE},
 	{"allow_source_address", (cmd_function)allow_source_address, 1, fixup_igp_null, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
+		ANY_ROUTE},
 	{"allow_source_address", (cmd_function)allow_source_address, 0, 0, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
+		ANY_ROUTE},
 	{"allow_source_address_group", (cmd_function)allow_source_address_group, 0, 0, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
+		ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -174,10 +176,10 @@ static param_export_t params[] = {
  */
 static mi_export_t mi_cmds[] = {
 	{ MI_TRUSTED_RELOAD,  mi_trusted_reload,  MI_NO_INPUT_FLAG,  0,
-													mi_trusted_child_init },
+		mi_trusted_child_init },
 	{ MI_TRUSTED_DUMP,    mi_trusted_dump,    MI_NO_INPUT_FLAG,  0,  0 },
 	{ MI_ADDRESS_RELOAD,  mi_address_reload,  MI_NO_INPUT_FLAG,  0,
-													mi_addr_child_init },
+		mi_addr_child_init },
 	{ MI_ADDRESS_DUMP,    mi_address_dump,    MI_NO_INPUT_FLAG,  0,  0 },
 	{ MI_SUBNET_DUMP,     mi_subnet_dump,     MI_NO_INPUT_FLAG,  0,  0 },
 	{ MI_ALLOW_URI,       mi_allow_uri,       0,  0,  0 },
@@ -210,7 +212,7 @@ static int get_path(char* pathname)
 {
 	char* c;
 	if (!pathname) return 0;
-	
+
 	c = strrchr(pathname, '/');
 	if (!c) return 0;
 
@@ -227,7 +229,7 @@ static char* get_pathname(char* name)
 	int path_len, name_len;
 
 	if (!name) return 0;
-	
+
 	name_len = strlen(name);
 	if (strchr(name, '/')) {
 		buffer = (char*)pkg_malloc(name_len + 1);
@@ -244,7 +246,7 @@ static char* get_pathname(char* name)
 		return buffer;
 	}
 
- err:
+err:
 	LM_ERR("no pkg memory left\n");
 	return 0;
 }
@@ -285,7 +287,7 @@ static char* get_plain_uri(const str* uri)
 		LM_ERR("failed to parse URI\n");
 		return 0;
 	}
-	
+
 	if (puri.user.len) {
 		len = puri.user.len + puri.host.len + 5;
 	} else {
@@ -296,11 +298,11 @@ static char* get_plain_uri(const str* uri)
 		LM_ERR("Request-URI is too long: %d chars\n", len);
 		return 0;
 	}
-	
+
 	strcpy(buffer, "sip:");
 	if (puri.user.len) {
 		memcpy(buffer + 4, puri.user.s, puri.user.len);
-	        buffer[puri.user.len + 4] = '@';
+		buffer[puri.user.len + 4] = '@';
 		memcpy(buffer + puri.user.len + 5, puri.host.s, puri.host.len);
 	} else {
 		memcpy(buffer + 4, puri.host.s, puri.host.len);
@@ -332,59 +334,59 @@ static int check_routing(struct sip_msg* msg, int idx)
 		LM_DBG("no rules => allow any routing\n");
 		return 1;
 	}
-	
+
 	/* looking for FROM HF */
-        if ((!msg->from) && (parse_headers(msg, HDR_FROM_F, 0) == -1)) {
-                LM_ERR("failed to parse message\n");
-                return -1;
-        }
-	
+	if ((!msg->from) && (parse_headers(msg, HDR_FROM_F, 0) == -1)) {
+		LM_ERR("failed to parse message\n");
+		return -1;
+	}
+
 	if (!msg->from) {
 		LM_ERR("FROM header field not found\n");
 		return -1;
 	}
-	
+
 	/* we must call parse_from_header explicitly */
-        if ((!(msg->from)->parsed) && (parse_from_header(msg) < 0)) {
-                LM_ERR("failed to parse From body\n");
-                return -1;
-        }
-	
+	if ((!(msg->from)->parsed) && (parse_from_header(msg) < 0)) {
+		LM_ERR("failed to parse From body\n");
+		return -1;
+	}
+
 	from = msg->from;
 	len = ((struct to_body*)from->parsed)->uri.len;
 	if (len > EXPRESSION_LENGTH) {
-                LM_ERR("From header field is too long: %d chars\n", len);
-                return -1;
+		LM_ERR("From header field is too long: %d chars\n", len);
+		return -1;
 	}
 	strncpy(from_str, ((struct to_body*)from->parsed)->uri.s, len);
 	from_str[len] = '\0';
-	
+
 	/* looking for request URI */
 	if (parse_sip_msg_uri(msg) < 0) {
-	        LM_ERR("uri parsing failed\n");
-	        return -1;
+		LM_ERR("uri parsing failed\n");
+		return -1;
 	}
-	
+
 	len = msg->parsed_uri.user.len + msg->parsed_uri.host.len + 5;
 	if (len > EXPRESSION_LENGTH) {
-                LM_ERR("Request URI is too long: %d chars\n", len);
-                return -1;
+		LM_ERR("Request URI is too long: %d chars\n", len);
+		return -1;
 	}
-	
+
 	strcpy(ruri_str, "sip:");
 	memcpy(ruri_str + 4, msg->parsed_uri.user.s, msg->parsed_uri.user.len);
 	ruri_str[msg->parsed_uri.user.len + 4] = '@';
 	memcpy(ruri_str + msg->parsed_uri.user.len + 5, msg->parsed_uri.host.s, msg->parsed_uri.host.len);
 	ruri_str[len] = '\0';
-	
-        LM_DBG("looking for From: %s Request-URI: %s\n", from_str, ruri_str);
-	     /* rule exists in allow file */
+
+	LM_DBG("looking for From: %s Request-URI: %s\n", from_str, ruri_str);
+	/* rule exists in allow file */
 	if (search_rule(allow[idx].rules, from_str, ruri_str)) {
 		if (check_all_branches) goto check_branches;
-    		LM_DBG("allow rule found => routing is allowed\n");
+		LM_DBG("allow rule found => routing is allowed\n");
 		return 1;
 	}
-	
+
 	/* rule exists in deny file */
 	if (search_rule(deny[idx].rules, from_str, ruri_str)) {
 		LM_DBG("deny rule found => routing is denied\n");
@@ -396,27 +398,27 @@ static int check_routing(struct sip_msg* msg, int idx)
 		return 1;
 	}
 
- check_branches:
+check_branches:
 	for( br_idx=0 ; (branch.s=get_branch(br_idx,&branch.len,&q,0,0,0,0))!=0 ;
-	br_idx++ ) {
+			br_idx++ ) {
 		uri_str = get_plain_uri(&branch);
 		if (!uri_str) {
 			LM_ERR("failed to extract plain URI\n");
 			return -1;
 		}
 		LM_DBG("looking for From: %s Branch: %s\n", from_str, uri_str);
-		
+
 		if (search_rule(allow[idx].rules, from_str, uri_str)) {
 			continue;
 		}
-		
+
 		if (search_rule(deny[idx].rules, from_str, uri_str)) {
 			LM_DBG("deny rule found for one of branches => routing"
-			       "is denied\n");
+					"is denied\n");
 			return -1;
 		}
 	}
-	
+
 	LM_DBG("check of branches passed => routing is allowed\n");
 	return 1;
 }
@@ -441,7 +443,7 @@ static int load_fixup(void** param, int param_no)
 	idx = find_index(table, pathname);
 
 	if (idx == -1) {
-		     /* Not opened yet, open the file and parse it */
+		/* Not opened yet, open the file and parse it */
 		table[rules_num].filename = pathname;
 		table[rules_num].rules = parse_config_file(pathname);
 		if (table[rules_num].rules) {
@@ -452,7 +454,7 @@ static int load_fixup(void** param, int param_no)
 		*param = (void*)(long)rules_num;
 		if (param_no == 2) rules_num++;
 	} else {
-		     /* File already parsed, re-use it */
+		/* File already parsed, re-use it */
 		LM_DBG("file (%s) already loaded, re-using\n", pathname);
 		pkg_free(pathname);
 		*param = (void*)(long)idx;
@@ -515,56 +517,56 @@ static int double_fixup(void** param, int param_no)
 	str s;
 
 	if (param_no == 1) { /* basename */
-	    param_len = strlen((char*)*param);
-	    if (strlen(allow_suffix) > strlen(deny_suffix)) {
-		suffix_len = strlen(allow_suffix);
-	    } else {
-		suffix_len = strlen(deny_suffix);
-	    }
+		param_len = strlen((char*)*param);
+		if (strlen(allow_suffix) > strlen(deny_suffix)) {
+			suffix_len = strlen(allow_suffix);
+		} else {
+			suffix_len = strlen(deny_suffix);
+		}
 
-	    buffer = pkg_malloc(param_len + suffix_len + 1);
-	    if (!buffer) {
-		LM_ERR("no pkg memory left\n");
-		return -1;
-	    }
-	    
-	    strcpy(buffer, (char*)*param);
-	    strcat(buffer, allow_suffix);
-	    tmp = buffer; 
-	    ret = load_fixup(&tmp, 1);
+		buffer = pkg_malloc(param_len + suffix_len + 1);
+		if (!buffer) {
+			LM_ERR("no pkg memory left\n");
+			return -1;
+		}
 
-	    strcpy(buffer + param_len, deny_suffix);
-	    tmp = buffer;
-	    ret |= load_fixup(&tmp, 2);
+		strcpy(buffer, (char*)*param);
+		strcat(buffer, allow_suffix);
+		tmp = buffer; 
+		ret = load_fixup(&tmp, 1);
 
-	    *param = tmp;
-	    pkg_free(buffer);
+		strcpy(buffer + param_len, deny_suffix);
+		tmp = buffer;
+		ret |= load_fixup(&tmp, 2);
 
-	    return 0;
+		*param = tmp;
+		pkg_free(buffer);
+
+		return 0;
 
 	} else if (param_no == 2) { /* pseudo variable */
 
-	    sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
-	    if (sp == 0) {
-		LM_ERR("no pkg memory left\n");
-		return -1;
-	    }
+		sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
+		if (sp == 0) {
+			LM_ERR("no pkg memory left\n");
+			return -1;
+		}
 		s.s = (char*)*param; s.len = strlen(s.s);
-	    if (pv_parse_spec(&s, sp) == 0) {
-		LM_ERR("parsing of pseudo variable %s failed!\n", (char*)*param);
-		pkg_free(sp);
-		return -1;
-	    }
+		if (pv_parse_spec(&s, sp) == 0) {
+			LM_ERR("parsing of pseudo variable %s failed!\n", (char*)*param);
+			pkg_free(sp);
+			return -1;
+		}
 
-	    if (sp->type == PVT_NULL) {
-		LM_ERR("bad pseudo variable\n");
-		pkg_free(sp);
-		return -1;
-	    }
+		if (sp->type == PVT_NULL) {
+			LM_ERR("bad pseudo variable\n");
+			pkg_free(sp);
+			return -1;
+		}
 
-	    *param = (void*)sp;
+		*param = (void*)sp;
 
-	    return 0;
+		return 0;
 	}
 
 	*param = (void *)0;
@@ -605,7 +607,7 @@ static int mod_init(void)
 		LM_DBG("default allow file (%s) parsed\n", allow[0].filename);
 	} else {
 		LM_INFO("default allow file (%s) not found => empty rule set\n",
-			allow[0].filename);
+				allow[0].filename);
 	}
 
 	deny[0].filename = get_pathname(default_deny_file);
@@ -614,7 +616,7 @@ static int mod_init(void)
 		LM_DBG("default deny file (%s) parsed\n", deny[0].filename);
 	} else {
 		LM_INFO("default deny file (%s) not found => empty rule set\n",
-			deny[0].filename);
+				deny[0].filename);
 	}
 
 	if (init_trusted() != 0) {
@@ -633,10 +635,10 @@ static int mod_init(void)
 	}
 
 	if ((db_mode != DISABLE_CACHE) && (db_mode != ENABLE_CACHE)) {
-	        LM_ERR("invalid db_mode value: %d\n", db_mode);
+		LM_ERR("invalid db_mode value: %d\n", db_mode);
 		return -1;
 	}
-	    
+
 	rules_num = 1;
 	return 0;
 }
@@ -652,13 +654,13 @@ static int child_init(int rank)
 
 static int mi_trusted_child_init(void)
 {
-    return mi_init_trusted();
+	return mi_init_trusted();
 }
 
 
 static int mi_addr_child_init(void)
 {
-    return mi_init_addresses();
+	return mi_init_addresses();
 }
 
 
@@ -703,7 +705,7 @@ int allow_routing_1(struct sip_msg* msg, char* basename, char* s)
  */
 int allow_routing_2(struct sip_msg* msg, char* allow_file, char* deny_file)
 {
-	     /* Index converted by load_lookup */
+	/* Index converted by load_lookup */
 	return check_routing(msg, (int)(long)allow_file);
 }
 
@@ -722,18 +724,18 @@ static int check_register(struct sip_msg* msg, int idx)
 	char* contact_str;
 	contact_t* c;
 
-	     /* turn off control, allow any routing */
+	/* turn off control, allow any routing */
 	if ((!allow[idx].rules) && (!deny[idx].rules)) {
 		LM_DBG("no rules => allow any registration\n");
 		return 1;
 	}
 
-	     /*
-	      * Note: We do not parse the whole header field here although the message can
-	      * contain multiple Contact header fields. We try contacts one by one and if one
-	      * of them causes reject then we don't look at others, this could improve performance
-	      * a little bit in some situations
-	      */
+	/*
+	 * Note: We do not parse the whole header field here although the message can
+	 * contain multiple Contact header fields. We try contacts one by one and if one
+	 * of them causes reject then we don't look at others, this could improve performance
+	 * a little bit in some situations
+	 */
 	if (parse_headers(msg, HDR_TO_F | HDR_CONTACT_F, 0) == -1) {
 		LM_ERR("failed to parse headers\n");
 		return -1;
@@ -743,19 +745,19 @@ static int check_register(struct sip_msg* msg, int idx)
 		LM_ERR("To or Contact not found\n");
 		return -1;
 	}
-	
+
 	if (!msg->contact) {
-		     /* REGISTER messages that contain no Contact header field
-		      * are allowed. Such messages do not modify the contents of
-		      * the user location database anyway and thus are not harmful
-		      */
+		/* REGISTER messages that contain no Contact header field
+		 * are allowed. Such messages do not modify the contents of
+		 * the user location database anyway and thus are not harmful
+		 */
 		LM_DBG("no Contact found, allowing\n");
 		return 1;
 	}
 
-	     /* Check if the REGISTER message contains start Contact and if
-	      * so then allow it
-	      */
+	/* Check if the REGISTER message contains start Contact and if
+	 * so then allow it
+	 */
 	if (parse_contact(msg->contact) < 0) {
 		LM_ERR("failed to parse Contact HF\n");
 		return -1;
@@ -768,8 +770,8 @@ static int check_register(struct sip_msg* msg, int idx)
 
 	len = ((struct to_body*)msg->to->parsed)->uri.len;
 	if (len > EXPRESSION_LENGTH) {
-                LM_ERR("To header field is too long: %d chars\n", len);
-                return -1;
+		LM_ERR("To header field is too long: %d chars\n", len);
+		return -1;
 	}
 	strncpy(to_str, ((struct to_body*)msg->to->parsed)->uri.s, len);
 	to_str[len] = '\0';
@@ -787,18 +789,18 @@ static int check_register(struct sip_msg* msg, int idx)
 
 		LM_DBG("looking for To: %s Contact: %s\n", to_str, contact_str);
 
-		     /* rule exists in allow file */
+		/* rule exists in allow file */
 		if (search_rule(allow[idx].rules, to_str, contact_str)) {
 			if (check_all_branches) goto skip_deny;
 		}
-	
-		     /* rule exists in deny file */
+
+		/* rule exists in deny file */
 		if (search_rule(deny[idx].rules, to_str, contact_str)) {
 			LM_DBG("deny rule found => Register denied\n");
 			return -1;
 		}
 
-	skip_deny:
+skip_deny:
 		if (contact_iterator(&c, msg, c) < 0) {
 			return -1;
 		}
@@ -838,68 +840,68 @@ static int allow_uri(struct sip_msg* msg, char* _idx, char* _sp)
 
 	idx = (int)(long)_idx;
 	sp = (pv_spec_t *)_sp;
-	
+
 	/* turn off control, allow any uri */
 	if ((!allow[idx].rules) && (!deny[idx].rules)) {
 		LM_DBG("no rules => allow any uri\n");
 		return 1;
 	}
-	
+
 	/* looking for FROM HF */
-        if ((!msg->from) && (parse_headers(msg, HDR_FROM_F, 0) == -1)) {
-                LM_ERR("failed to parse message\n");
-                return -1;
-        }
-	
+	if ((!msg->from) && (parse_headers(msg, HDR_FROM_F, 0) == -1)) {
+		LM_ERR("failed to parse message\n");
+		return -1;
+	}
+
 	if (!msg->from) {
 		LM_ERR("FROM header field not found\n");
 		return -1;
 	}
-	
+
 	/* we must call parse_from_header explicitly */
-        if ((!(msg->from)->parsed) && (parse_from_header(msg) < 0)) {
-                LM_ERR("failed to parse From body\n");
-                return -1;
-        }
-	
+	if ((!(msg->from)->parsed) && (parse_from_header(msg) < 0)) {
+		LM_ERR("failed to parse From body\n");
+		return -1;
+	}
+
 	from = msg->from;
 	len = ((struct to_body*)from->parsed)->uri.len;
 	if (len > EXPRESSION_LENGTH) {
-               LM_ERR("From header field is too long: %d chars\n", len);
-                return -1;
+		LM_ERR("From header field is too long: %d chars\n", len);
+		return -1;
 	}
 	strncpy(from_str, ((struct to_body*)from->parsed)->uri.s, len);
 	from_str[len] = '\0';
 
 	if (sp && (pv_get_spec_value(msg, sp, &pv_val) == 0)) {
-	    if (pv_val.flags & PV_VAL_STR) {
-		if (pv_val.rs.len > EXPRESSION_LENGTH) {
-		    LM_ERR("pseudo variable value is too "
-					"long: %d chars\n", pv_val.rs.len);
-		    return -1;
+		if (pv_val.flags & PV_VAL_STR) {
+			if (pv_val.rs.len > EXPRESSION_LENGTH) {
+				LM_ERR("pseudo variable value is too "
+						"long: %d chars\n", pv_val.rs.len);
+				return -1;
+			}
+			strncpy(uri_str, pv_val.rs.s, pv_val.rs.len);
+			uri_str[pv_val.rs.len] = '\0';
+		} else {
+			LM_ERR("pseudo variable value is not string\n");
+			return -1;
 		}
-		strncpy(uri_str, pv_val.rs.s, pv_val.rs.len);
-		uri_str[pv_val.rs.len] = '\0';
-	    } else {
-		LM_ERR("pseudo variable value is not string\n");
-		return -1;
-	    }
 	} else {
-	    LM_ERR("cannot get pseudo variable value\n");
-	    return -1;
+		LM_ERR("cannot get pseudo variable value\n");
+		return -1;
 	}
 
-    LM_DBG("looking for From: %s URI: %s\n", from_str, uri_str);
-	     /* rule exists in allow file */
+	LM_DBG("looking for From: %s URI: %s\n", from_str, uri_str);
+	/* rule exists in allow file */
 	if (search_rule(allow[idx].rules, from_str, uri_str)) {
-    		LM_DBG("allow rule found => URI is allowed\n");
+		LM_DBG("allow rule found => URI is allowed\n");
 		return 1;
 	}
-	
+
 	/* rule exists in deny file */
 	if (search_rule(deny[idx].rules, from_str, uri_str)) {
-	    LM_DBG("deny rule found => URI is denied\n");
-	    return -1;
+		LM_DBG("deny rule found => URI is denied\n");
+		return -1;
 	}
 
 	LM_DBG("neither allow nor deny rule found => URI is allowed\n");
@@ -913,45 +915,59 @@ static int allow_uri(struct sip_msg* msg, char* _idx, char* _sp)
  */
 int allow_test(char *file, char *uri, char *contact)
 {
-    char *pathname;
-    int idx;
-    
-    pathname = get_pathname(file);
-    if (!pathname) {
-	LM_ERR("Cannot get pathname of <%s>\n", file);
-	return 0;
-    }
+	char *pathname;
+	int idx;
 
-    idx = find_index(allow, pathname);
-    if (idx == -1) {
-	LM_ERR("File <%s> has not been loaded\n", pathname);
+	pathname = get_pathname(file);
+	if (!pathname) {
+		LM_ERR("Cannot get pathname of <%s>\n", file);
+		return 0;
+	}
+
+	idx = find_index(allow, pathname);
+	if (idx == -1) {
+		LM_ERR("File <%s> has not been loaded\n", pathname);
+		pkg_free(pathname);
+		return 0;
+	}
+
 	pkg_free(pathname);
-	return 0;
-    }
 
-    pkg_free(pathname);
-	
-    /* turn off control, allow any routing */
-    if ((!allow[idx].rules) && (!deny[idx].rules)) {
-	LM_DBG("No rules => Allowed\n");
+	/* turn off control, allow any routing */
+	if ((!allow[idx].rules) && (!deny[idx].rules)) {
+		LM_DBG("No rules => Allowed\n");
+		return 1;
+	}
+
+	LM_DBG("Looking for URI: %s, Contact: %s\n", uri, contact);
+
+	/* rule exists in allow file */
+	if (search_rule(allow[idx].rules, uri, contact)) {
+		LM_DBG("Allow rule found => Allowed\n");
+		return 1;
+	}
+
+	/* rule exists in deny file */
+	if (search_rule(deny[idx].rules, uri, contact)) {
+		LM_DBG("Deny rule found => Denied\n");
+		return 0;
+	}
+
+	LM_DBG("Neither allow or deny rule found => Allowed\n");
 	return 1;
-    }
-    
-    LM_DBG("Looking for URI: %s, Contact: %s\n", uri, contact);
 
-    /* rule exists in allow file */
-    if (search_rule(allow[idx].rules, uri, contact)) {
-	LM_DBG("Allow rule found => Allowed\n");
-	return 1;
-    }
-	
-    /* rule exists in deny file */
-    if (search_rule(deny[idx].rules, uri, contact)) {
-	LM_DBG("Deny rule found => Denied\n");
+}
+
+/**
+ *
+ */
+static int fixup_allow_address(void** param, int param_no)
+{
+	if(param_no==1)
+		return fixup_igp_null(param, 1);
+	if(param_no==2)
+		return fixup_spve_null(param, 1);
+	if(param_no==3)
+		return fixup_igp_null(param, 1);
 	return 0;
-    }
-
-    LM_DBG("Neither allow or deny rule found => Allowed\n");
-    return 1;
-
 }
