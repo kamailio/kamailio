@@ -820,6 +820,7 @@ int send_subscribe(subs_info_t* subs)
 	int flag;
 	int result;
 	uac_req_t uac_r;
+	dlg_t* td= NULL;
 
 	print_subs(subs);
 
@@ -1023,8 +1024,6 @@ insert:
 		}	
         */
 
-		dlg_t* td= NULL;
-
 		if (subs->internal_update_flag == INTERNAL_UPDATE_TRUE)
 		{
 			LM_INFO("attempting to re-SUBSCRIBE on internal (rls_update_subs()) update - skipping\n");
@@ -1070,14 +1069,16 @@ insert:
 			LM_ERR("while sending request with t_request\n");
 			goto done;
 		}
+	}
 
+
+done:
+	if(td!=NULL) {
 		if(td->route_set)
 			free_rr(&td->route_set);
 		pkg_free(td);
 		td= NULL;
 	}
-
-done:
 	pkg_free(str_hdr);
 	return ret;
 }
