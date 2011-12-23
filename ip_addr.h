@@ -72,7 +72,7 @@ struct ip_addr{
 	}u;
 };
 
-
+typedef struct ip_addr ip_addr_t;
 
 struct net{
 	struct ip_addr ip;
@@ -825,5 +825,10 @@ inline static void init_dst_from_rcv(struct dest_info* dst,
 #endif
 }
 
+/**
+ * match ip address with net address and bitmask
+ * - return 0 on match, -1 otherwise
+ */
+int ip_addr_match_net(ip_addr_t *iaddr, ip_addr_t *naddr, int mask);
 
 #endif
