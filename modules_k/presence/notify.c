@@ -913,7 +913,7 @@ void free_notify_body(str *body, pres_ev_t *ev)
 	}
 }
 
-int free_tm_dlg(dlg_t *td)
+static int ps_free_tm_dlg(dlg_t *td)
 {
 	if(td)
 	{
@@ -929,7 +929,7 @@ int free_tm_dlg(dlg_t *td)
 	return 0;
 }
 
-dlg_t* build_dlg_t(subs_t* subs)
+dlg_t* ps_build_dlg_t(subs_t* subs)
 {
 	dlg_t* td =NULL;
 	int found_contact = 1;
@@ -1009,7 +1009,7 @@ dlg_t* build_dlg_t(subs_t* subs)
 	return td;
 
 error:		
-	free_tm_dlg(td);
+	ps_free_tm_dlg(td);
 	return NULL;
 }
 
@@ -1562,7 +1562,7 @@ jump_over_body:
 	LM_DBG("headers:\n%.*s\n", str_hdr.len, str_hdr.s);
 
 	/* construct the dlg_t structure */
-	td = build_dlg_t(subs);
+	td = ps_build_dlg_t(subs);
 	if(td ==NULL)
 	{
 		LM_ERR("while building dlg_t structure\n");
@@ -1592,7 +1592,7 @@ jump_over_body:
 		td->loc_uri.len, td->loc_uri.s, subs->event->name.len,
 		subs->event->name.s);
 
-	free_tm_dlg(td);
+	ps_free_tm_dlg(td);
 	
 	if(str_hdr.s) pkg_free(str_hdr.s);
 	
@@ -1602,7 +1602,7 @@ jump_over_body:
 	return 0;
 
 error:
-	free_tm_dlg(td);
+	ps_free_tm_dlg(td);
 	if(str_hdr.s!=NULL)
 		pkg_free(str_hdr.s);
 	if((int)(long)n_body!= (int)(long)notify_body)
