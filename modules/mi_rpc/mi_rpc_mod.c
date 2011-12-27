@@ -501,7 +501,6 @@ static struct mi_root* mi_run_rpc(struct mi_root* cmd_tree, void* param)
 	
 	str *fn;
 	struct mi_node *node;
-	int len;
 	char *command = NULL;
 	int param_count = 0;
 	char **parameters = NULL;
@@ -530,7 +529,6 @@ static struct mi_root* mi_run_rpc(struct mi_root* cmd_tree, void* param)
 		return( init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN ));
 
 	fn = &node->value;
-	len = fn->len +1;
 	
 	/* find_rpc_exports needs 0 terminated strings */
 	command = pkg_malloc(fn->len+1);

@@ -263,11 +263,10 @@ static int mi_send_dgram(int fd, char* buf, unsigned int len,
  * line is correct and exists*/
 static int identify_command(datagram_stream * dtgram, struct mi_cmd * *f)
 {
-	char *command,*p, *start;
+	char *command,*p;
 
 	/* default offset for the command: 0 */
 	p= dtgram->start;
-	start = p;
 	if (!p){
 		LM_ERR("null pointer  \n");
 		return -1;

@@ -213,12 +213,10 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 	struct fis_param *sp;
 	struct db_param  *dbp;
 	int flags;
-	int flags0;
 	str s;
 	char *p;
 
 	flags=0;
-	flags0=0;
 	if (db_url.s==0)
 	{
 		LM_ERR("you have to configure a db_url for using avp_db_xxx functions\n");

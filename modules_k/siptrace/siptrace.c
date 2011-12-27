@@ -1279,7 +1279,6 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 {
 	sip_msg_t *req;
 	struct _siptrace_data sto;
-	int faked = 0;
 	struct sip_msg* msg;
 	struct ip_addr to_ip;
 	int len;
@@ -1303,7 +1302,6 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 	}
 
 	msg = req;
-	faked = 1;
 
 	if(sip_trace_prepare(msg)<0)
 		return;
