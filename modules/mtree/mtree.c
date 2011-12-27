@@ -385,7 +385,6 @@ int mt_match_prefix(struct sip_msg *msg, m_tree_t *it,
 	int l, len, n;
 	int i, j;
 	mt_node_t *itn;
-	int ret;
 	is_t *tvalue;
 	int_str dstid_avp_name;
 	unsigned short dstid_name_type;
@@ -404,8 +403,6 @@ int mt_match_prefix(struct sip_msg *msg, m_tree_t *it,
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
-
-	ret = 0;
 
 	l = len = 0;
 	n = 0;

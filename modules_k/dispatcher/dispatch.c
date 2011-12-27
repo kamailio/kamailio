@@ -1511,7 +1511,6 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 {
 	struct action act;
 	struct run_act_ctx ra_ctx;
-	str *duri = NULL;
 	switch(mode)
 	{
 		case 1:
@@ -1530,7 +1529,6 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri, int mode)
 			}
 			break;
 		default:
-			duri = uri;
 			if (set_dst_uri(msg, uri) < 0) {
 				LM_ERR("error while setting dst uri\n");
 				return -1;

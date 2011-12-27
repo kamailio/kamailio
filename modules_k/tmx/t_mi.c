@@ -477,6 +477,8 @@ struct mi_root*  mi_tm_uac_dlg(struct mi_root* cmd_tree, void* param)
 	if ( !(n==5 || n==6) || node!=0)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
+	cseq = -1;
+
 	/* method name (param 1) */
 	node = cmd_tree->node.kids;
 	method = &node->value;

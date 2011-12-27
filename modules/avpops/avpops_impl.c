@@ -1469,7 +1469,6 @@ int ops_op_avp( struct sip_msg* msg, struct fis_param** av,
 	int_str           avp_name3;
 	int_str           avp_val;
 	int_str           op_val;
-	int               op_flags;
 	int               result;
 	pv_value_t        xvalue;
 
@@ -1526,7 +1525,6 @@ cycle1:
 	if (val->opd&AVPOPS_VAL_PVAR)
 	{
 		/* the 2nd operator is variable -> get value */
-		op_flags = 0;
 		if(val->u.sval.type==PVT_AVP)
 		{
 			/* search for the avp */

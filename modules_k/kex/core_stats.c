@@ -221,10 +221,9 @@ inline static int mi_add_stat(struct mi_node *rpl, stat_var *stat)
 static void mi_add_grp_vars_cbk(void* r, str* g, str* n, counter_handle_t h)
 {
 	struct mi_node *rpl;
-	struct mi_node *node;
 	
 	rpl = r;
-	node = addf_mi_node_child(rpl, 0, 0, 0, "%.*s:%.*s = %lu",
+	addf_mi_node_child(rpl, 0, 0, 0, "%.*s:%.*s = %lu",
 							g->len, g->s, n->len, n->s, counter_get_val(h));
 }
 
@@ -365,7 +364,6 @@ inline static int mi_reset_and_add_stat(struct mi_node *rpl, stat_var *stat)
 static void mi_add_grp_vars_cbk2(void* r, str* g, str* n, counter_handle_t h)
 {
 	struct mi_node *rpl;
-	struct mi_node *node;
 	counter_val_t old_val, new_val;
 
 	rpl = r;
@@ -375,10 +373,10 @@ static void mi_add_grp_vars_cbk2(void* r, str* g, str* n, counter_handle_t h)
 
 	if (old_val==new_val)
 	{
-		node = addf_mi_node_child(rpl, 0, 0, 0, "%.*s:%.*s = %lu",
+		addf_mi_node_child(rpl, 0, 0, 0, "%.*s:%.*s = %lu",
 					g->len, g->s, n->len, n->s, new_val);
 	} else {
-		node = addf_mi_node_child(rpl, 0, 0, 0, "%.*s:%.*s = %lu (%lu)",
+		addf_mi_node_child(rpl, 0, 0, 0, "%.*s:%.*s = %lu (%lu)",
 					g->len, g->s, n->len, n->s, new_val, old_val);
 	}
 }

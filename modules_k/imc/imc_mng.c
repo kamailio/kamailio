@@ -88,7 +88,7 @@ error:
  */
 int imc_htable_destroy(void)
 {
-	int i,room_deleted;
+	int i;
 	imc_room_p irp = NULL, irp_temp=NULL;
 	if(_imc_htable==NULL)
 		return -1;
@@ -101,7 +101,7 @@ int imc_htable_destroy(void)
 			irp = _imc_htable[i].rooms;
 			while(irp){
 				irp_temp = irp->next;
-				room_deleted = imc_del_room(&irp->name, &irp->domain);
+				imc_del_room(&irp->name, &irp->domain);
 				irp = irp_temp;
 			}
 	}

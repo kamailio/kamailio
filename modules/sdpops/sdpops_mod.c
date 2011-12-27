@@ -595,7 +595,6 @@ static int w_sdp_keep_codecs_by_name(sip_msg_t* msg, char* codecs, char* media)
  */
 static int sdp_with_media(sip_msg_t *msg, str *media)
 {
-	sdp_info_t *sdp = NULL;
 	int sdp_session_num;
 	int sdp_stream_num;
 	sdp_session_cell_t* sdp_session;
@@ -608,8 +607,6 @@ static int sdp_with_media(sip_msg_t *msg, str *media)
 
 	LM_DBG("attempting to search for media type: [%.*s]\n",
 			media->len, media->s);
-
-	sdp = (sdp_info_t*)msg->body;
 
 	sdp_session_num = 0;
 	for(;;)
