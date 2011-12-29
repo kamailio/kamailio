@@ -513,7 +513,7 @@ static struct mi_root* mi_run_rpc(struct mi_root* cmd_tree, void* param)
 	/* response will be malloced by binrpc_response_to_text. 
 	   We do not free it. It must remain after this call.
 	   It will be reused by subsequent calls */
-	static char *response = NULL;
+	static unsigned char *response = NULL;
 	static int resp_len = 0;
 	
 	if (binrpc_open_connection_url(&rpc_handle, rpc_url) != 0) 
@@ -577,9 +577,9 @@ static struct mi_root* mi_run_rpc(struct mi_root* cmd_tree, void* param)
 	{
 		case 0:
 			/* Success */
-			binrpc_response_to_text(&resp_handle, (unsigned char **)&response, &resp_len, '\n');
-			if (strlen(response) > 0)
-				result = init_mi_tree( 200, response, strlen(response) );
+			binrpc_response_to_text(&resp_handle, &response, &resp_len, '\n');
+			if (strlen((char*)response) > 0)
+				result = init_mi_tree( 200, (char*)response, strlen((char*)response) );
 			else
 				/* Some functions don't give a text answer; use a default */
 				result = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
@@ -597,8 +597,8 @@ static struct mi_root* mi_run_rpc(struct mi_root* cmd_tree, void* param)
 			}
 			memcpy(response, resp, strlen(resp));
 			response[strlen(resp)]='\0';
-			if (strlen(response) > 0)
-				result = init_mi_tree( resp_code, response, strlen(response) );
+			if (strlen((char*)response) > 0)
+				result = init_mi_tree( resp_code, (char*)response, strlen((char*)response) );
 			else
 				/* Some functions don't give a text answer; use a default */
 				result = init_mi_tree( resp_code, (char *)FAILED, strlen(FAILED) );
