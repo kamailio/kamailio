@@ -643,7 +643,9 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 	int expires;
 	int result;
 	uac_req_t uac_r;
-	
+	int ret_code = 0;
+	dlg_t* td = NULL;
+
 	if(p->desired_expires== 0)
 		expires= 3600;
 	else
@@ -659,7 +661,8 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 		if(str_hdr == NULL)
 		{
 			LM_ERR("while building extra_headers\n");
-			goto error;
+			ret_code = -1;
+			goto done;
 		}
 		LM_DBG("str_hdr:\n%.*s\n ", str_hdr->len, str_hdr->s);
 		
@@ -667,7 +670,8 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 		if(cb_param== NULL)
 		{
 			LM_ERR("while constructing publ callback param\n");
-			goto error;
+			ret_code = -1;
+			goto done;
 		}	
 		
 		set_uac_req(&uac_r, &met, str_hdr, 0, 0, TMCB_LOCAL_COMPLETED,
@@ -683,36 +687,37 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 		{
 			LM_ERR("in t_request function\n"); 
 			shm_free(cb_param);
-			goto error;
+			ret_code = -1;
+			goto done;
 		}
-		
 	}
 	else
 	{
 		str met= {"SUBSCRIBE", 9};
-		dlg_t* td= NULL;
 		ua_pres_t* cb_param= NULL;
 
 		td= pua_build_dlg_t(p);
 		if(td== NULL)
 		{
 			LM_ERR("while building tm dlg_t structure");		
-			goto error;
+			ret_code = -1;
+			goto done;
 		};
 	
 		str_hdr= subs_build_hdr(&p->contact, expires,p->event,p->extra_headers);
 		if(str_hdr== NULL || str_hdr->s== NULL)
 		{
-			LM_ERR("while building extra headers\n");
-			pkg_free(td);
-			return -1;
+			if(p->event!=0)
+				LM_ERR("while building extra headers\n");
+			ret_code = -1;
+			goto done;
 		}
 		cb_param= subs_cbparam_indlg(p, expires, REQ_ME);
 		if(cb_param== NULL)
 		{
 			LM_ERR("while constructing subs callback param\n");
-			goto error;
-
+			ret_code = -1;
+			goto done;
 		}	
 
 		set_uac_req(&uac_r, &met, str_hdr, 0, td, TMCB_LOCAL_COMPLETED,
@@ -723,21 +728,21 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 		{
 			LM_ERR("in t_request function\n"); 
 			shm_free(cb_param);
-			pkg_free(td);
-			goto error;
+			goto done;
 		}
-
+	}
+done:
+	if(td!=NULL)
+	{
+		if(td->route_set)
+			free_rr(&td->route_set);
 		pkg_free(td);
 		td= NULL;
-	}	
-
-	pkg_free(str_hdr);
-	return 0;
-
-error:
+	}
 	if(str_hdr)
 		pkg_free(str_hdr);
-	return -1;
+
+	return ret_code;
 
 }
 

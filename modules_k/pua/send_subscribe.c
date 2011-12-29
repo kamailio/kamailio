@@ -1069,7 +1069,6 @@ insert:
 			LM_ERR("while building callback param\n");
 			lock_release(&HashT->p_records[hash_code].lock);
 			ret= -1;
-			pkg_free(td);
 			goto done;
 		}
 		lock_release(&HashT->p_records[hash_code].lock);
