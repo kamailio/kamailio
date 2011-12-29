@@ -2074,7 +2074,7 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 		return;
 	}
 
-	LM_DBG("ds_run_route\n");
+	LM_DBG("ds_run_route event_route[%s]\n", route);
 
 	rt = route_get(&event_rt, route);
 	if (rt < 0 || event_rt.rlist[rt] == NULL)
@@ -2100,7 +2100,7 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 	backup_rt = get_route_type();
 	set_route_type(REQUEST_ROUTE);
 	init_run_actions_ctx(&ctx);
-	run_top_route(event_rt.rlist[rt], msg, 0);
+	run_top_route(event_rt.rlist[rt], fmsg, 0);
 	set_route_type(backup_rt);
 }
 
