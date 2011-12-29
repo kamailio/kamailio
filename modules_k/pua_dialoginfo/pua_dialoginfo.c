@@ -230,6 +230,7 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 		break;
 	case DLGCB_CONFIRMED:
 	case DLGCB_REQ_WITHIN:
+	case DLGCB_CONFIRMED_NA:
 		LM_DBG("dialog confirmed, from=%.*s\n", dlginfo->from_uri.len, dlginfo->from_uri.s);
 		dialog_publish("confirmed", &(dlginfo->from_uri), &uri, &(dlginfo->callid), 1, dlginfo->lifetime, 0, 0, &(dlginfo->from_contact), &target);
 		dialog_publish("confirmed", &uri, &(dlginfo->from_uri), &(dlginfo->callid), 0, dlginfo->lifetime, 0, 0, &target, &(dlginfo->from_contact));
