@@ -1952,7 +1952,7 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
     ice_data->priority = get_ice_candidate_priority(get_ice_candidate());
     ice_data->skip_next_reply = False;
 
-    if (dlg_api.register_dlgcb(dlg, DLGCB_REQ_WITHIN, __dialog_requests, (void*)ice_data, __free_dialog_data) != 0)
+    if (dlg_api.register_dlgcb(dlg, DLGCB_REQ_WITHIN | DLGCB_CONFIRMED, __dialog_requests, (void*)ice_data, __free_dialog_data) != 0)
         LM_ERR("cannot register callback for in-dialog requests\n");
     if (dlg_api.register_dlgcb(dlg, DLGCB_RESPONSE_FWDED | DLGCB_RESPONSE_WITHIN, __dialog_replies, (void*)ice_data, NULL) != 0)
         LM_ERR("cannot register callback for dialog and in-dialog replies\n");
