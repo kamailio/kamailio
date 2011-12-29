@@ -1169,7 +1169,6 @@ insert:
 			if (dbmode!=PUA_DB_ONLY)
 				lock_release(&HashT->p_records[hash_code].lock);
 			ret= -1;
-			pkg_free(td);
 			goto done;
 		}
 		if (dbmode!=PUA_DB_ONLY)

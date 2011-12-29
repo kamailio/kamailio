@@ -373,6 +373,7 @@ ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code)
 				(p->watcher_uri->len== dialog->watcher_uri->len) &&
 				(strncmp(p->watcher_uri->s,dialog->watcher_uri->s,p->watcher_uri->len )==0)&&
 				(strncmp(p->call_id.s, dialog->call_id.s, p->call_id.len)== 0) &&
+				p->to_tag.len > 0 &&
 				(strncmp(p->to_tag.s, dialog->to_tag.s, p->to_tag.len)== 0) &&
 				(strncmp(p->from_tag.s, dialog->from_tag.s, p->from_tag.len)== 0) )
 				{	
