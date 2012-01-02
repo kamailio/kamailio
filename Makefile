@@ -285,6 +285,9 @@ module_group_kjson=json jsonrpc-c
 # K redis module
 module_group_kredis=ndb_redis
 
+# K mono module
+module_group_kmono=app_mono
+
 # if not set on the cmd. line, env or in the modules.lst (cfg_group_include)
 # exclude the below modules.
 ifneq ($(group_include)$(cfg_group_include),)
@@ -326,6 +329,8 @@ else
 	exclude_modules+= json jsonrpc-c
 	# depends on libhiredis
 	exclude_modules+= ndb_redis
+	# depends on mono-devel
+	exclude_modules+= app_mono
 	# depends on tm being compiled with -DWITH_AS_SUPPORT support
 ifeq (,$(findstring -DWITH_AS_SUPPORT, $(C_DEFS)))
 		exclude_modules+= seas
