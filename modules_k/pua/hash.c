@@ -475,6 +475,9 @@ int get_record_id(ua_pres_t* dialog, str** rec_id)
 	return 0;
 }
 
+/**
+ * return -1 on not found, 0 on established dialog, 1 on temporary dialog
+ */
 int is_dialog(ua_pres_t* dialog)
 {
 	int ret_code= 0;
@@ -488,10 +491,15 @@ int is_dialog(ua_pres_t* dialog)
 	hash_code= core_hash(dialog->pres_uri, dialog->watcher_uri, HASH_SIZE);
 	lock_get(&HashT->p_records[hash_code].lock);
 
-	if(get_dialog(dialog, hash_code)== NULL)
-		ret_code= -1;
-	else
+	if(get_dialog(dialog, hash_code)==NULL)
+	{
+		if(get_temporary_dialog(dialog, hash_code)==NULL)
+			ret_code= -1;
+		else
+			ret_code= 1;
+	} else {
 		ret_code= 0;
+	}
 	lock_release(&HashT->p_records[hash_code].lock);
 	
 	return ret_code;

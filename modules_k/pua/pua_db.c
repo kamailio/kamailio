@@ -761,7 +761,11 @@ int is_dialog_puadb(ua_pres_t *pres)
 		/* no need to return here - drop thro */
 	}
 
-	return(0);
+	/* established dialog */
+	if(pres->to_tag.len>0)
+		return 0;
+	/* temporary dialog */
+	return 1;
 }
 
 /******************************************************************************/
