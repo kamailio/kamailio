@@ -53,4 +53,6 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 		str* nonce, str* algorithm, struct qp* qop, int hftype, str *ahf);
 
+void strip_realm(str* _realm);
+
 #endif /* CHALLENGE_H */

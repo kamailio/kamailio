@@ -100,6 +100,9 @@ int   nonce_expire = 300;   /* Nonce lifetime */
 int   protect_contacts = 0; /* Do not include contacts in nonce by default */
 int force_stateless_reply = 0; /* Always send reply statelessly */
 
+/*! Prefix to strip from realm */
+str auth_realm_prefix = {"", 0};
+
 str secret1;
 str secret2;
 char* sec_rand1 = 0;
@@ -177,6 +180,7 @@ static param_export_t params[] = {
 	{"otn_in_flight_order",    PARAM_INT,    &otn_in_flight_k       },
 	{"nid_pool_no",            PARAM_INT,    &nid_pool_no            },
     {"force_stateless_reply",  PARAM_INT,    &force_stateless_reply },
+	{"realm_prefix",           PARAM_STRING, &auth_realm_prefix.s   },
     {0, 0, 0}
 };
 
@@ -244,6 +248,8 @@ static int mod_init(void)
     
     DBG("auth module - initializing\n");
     
+	auth_realm_prefix.len = strlen(auth_realm_prefix.s);
+
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
 		LM_ERR("cannot bind to SL API\n");

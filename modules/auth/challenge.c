@@ -66,6 +66,31 @@
 #define DIGEST_ALGORITHM_LEN (sizeof(DIGEST_ALGORITHM)-1)
 
 
+extern str auth_realm_prefix;
+/**
+ * @brief Strip the beginning of a realm string
+ *
+ * Strip the beginning of a realm string, depending on the length of
+ * the realm_prefix.
+ * @param _realm realm string
+ */
+void strip_realm(str* _realm)
+{
+	/* no param defined -- return */
+	if (!auth_realm_prefix.len) return;
+
+	/* prefix longer than realm -- return */
+	if (auth_realm_prefix.len > _realm->len) return;
+
+	/* match ? -- if so, shorten realm -*/
+	if (memcmp(auth_realm_prefix.s, _realm->s, auth_realm_prefix.len) == 0) {
+		_realm->s += auth_realm_prefix.len;
+		_realm->len -= auth_realm_prefix.len;
+	}
+	return;
+}
+
+
 /**
  * Create and return {WWW,Proxy}-Authenticate header field
  * @param nonce nonce value
@@ -98,6 +123,7 @@ int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 		return -1;
 	}
 
+	strip_realm(realm);
     if (realm) {
         DEBUG("build_challenge_hf: realm='%.*s'\n", realm->len, realm->s);
     }

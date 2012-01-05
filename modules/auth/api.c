@@ -76,6 +76,7 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 	      * in the message, parse them and return pointer to
 	      * parsed structure
 	      */
+	strip_realm(realm);
 	ret = find_credentials(msg, realm, hftype, hdr);
 	if (ret < 0) {
 		LOG(L_ERR, "auth:pre_auth: Error while looking for credentials\n");
