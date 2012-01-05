@@ -37,6 +37,7 @@ Daniel-Constantin Mierla
         1.3.11. nonce_expire (integer)
         1.3.12. nonce_auth_max_drift (integer)
         1.3.13. force_stateless_reply (boolean)
+        1.3.14. realm_prefix (string)
 
    1.4. Functions
 
@@ -496,6 +497,20 @@ modparam("auth", "nonce_auth_max_drift", 1)   # set max drift to 1 s
 modparam("auth", "force_stateless_reply", 1)
 ...
 
+1.3.14. realm_prefix (string)
+
+   Prefix to be automatically strip from realm. As an alternative to SRV
+   records (not all SIP clients support SRV lookup), a subdomain of the
+   master domain can be defined for SIP purposes (like sip.mydomain.net
+   pointing to same IP address as the SRV record for mydomain.net). By
+   ignoring the realm_prefix "sip.", at authentication, sip.mydomain.net
+   will be equivalent to mydomain.net .
+
+   Default value is empty string.
+
+   Example 14. realm_prefix parameter example
+modparam("auth", "realm_prefix", "sip.")
+
 1.4. Functions
 
 1.4.1. consume_credentials()
@@ -508,7 +523,7 @@ modparam("auth", "force_stateless_reply", 1)
    little bit shorter. The function must be called after www_authorize,
    proxy_authorize, www_authenticate or proxy_authenticate.
 
-   Example 14. consume_credentials example
+   Example 15. consume_credentials example
 ...
 if (www_authenticate("realm", "subscriber)) {
     consume_credentials();
@@ -544,7 +559,7 @@ if (www_authenticate("realm", "subscriber)) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 15. www_challenge usage
+   Example 16. www_challenge usage
 ...
 if (!www_authenticate("$td", "subscriber")) {
         www_challenge("$td", "1");
@@ -566,7 +581,7 @@ if (!www_authenticate("$td", "subscriber")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 16. proxy_challenge usage
+   Example 17. proxy_challenge usage
 ...
 if (!proxy_authenticate("$fd", "subscriber")) {
         proxy_challenge("$fd", "1");
@@ -585,7 +600,7 @@ if (!proxy_authenticate("$fd", "subscriber")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 17. proxy_challenge usage
+   Example 18. proxy_challenge usage
 ...
 if (!auth_check("$fd", "subscriber", "1")) {
         auth_challenge("$fd", "1");
@@ -636,7 +651,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 18. pv_www_authenticate usage
+   Example 19. pv_www_authenticate usage
 ...
 if (!pv_www_authenticate("$td", "123abc", "0")) {
         www_challenge("$td", "1");
@@ -658,7 +673,7 @@ if (!pv_www_authenticate("$td", "123abc", "0")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 19. pv_proxy_authenticate usage
+   Example 20. pv_proxy_authenticate usage
 ...
 $avp(password)="xyz";
 if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
