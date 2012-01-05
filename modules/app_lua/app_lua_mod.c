@@ -106,7 +106,8 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	lua_sr_init_mod();
+	if(lua_sr_init_mod()<0)
+		return -1;
 	return 0;
 }
 
