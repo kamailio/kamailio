@@ -434,6 +434,7 @@ TCP_OPT_KEEPINTVL	"tcp_keepintvl"
 TCP_OPT_KEEPCNT		"tcp_keepcnt"
 TCP_OPT_CRLF_PING	"tcp_crlf_ping"
 TCP_OPT_ACCEPT_NO_CL	"tcp_accept_no_cl"
+TCP_CLONE_RCVBUF	"tcp_clone_rcvbuf"
 DISABLE_TLS		"disable_tls"|"tls_disable"
 ENABLE_TLS		"enable_tls"|"tls_enable"
 TLSLOG			"tlslog"|"tls_log"
@@ -846,6 +847,8 @@ IMPORTFILE      "import_file"
 									return TCP_OPT_CRLF_PING; }
 <INITIAL>{TCP_OPT_ACCEPT_NO_CL}	{ count(); yylval.strval=yytext;
 									return TCP_OPT_ACCEPT_NO_CL; }
+<INITIAL>{TCP_CLONE_RCVBUF}		{ count(); yylval.strval=yytext;
+									return TCP_CLONE_RCVBUF; }
 <INITIAL>{DISABLE_TLS}	{ count(); yylval.strval=yytext; return DISABLE_TLS; }
 <INITIAL>{ENABLE_TLS}	{ count(); yylval.strval=yytext; return ENABLE_TLS; }
 <INITIAL>{TLSLOG}		{ count(); yylval.strval=yytext; return TLS_PORT_NO; }

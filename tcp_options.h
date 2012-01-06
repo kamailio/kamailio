@@ -157,4 +157,8 @@ void tcp_options_check();
 int tcp_register_cfg();
 void tcp_options_get(struct cfg_group_tcp* t);
 
+#ifdef USE_TCP
+int tcp_set_clone_rcvbuf(int v);
+#endif /* USE_TCP */
+
 #endif /* tcp_options_h */
