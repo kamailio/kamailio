@@ -394,6 +394,7 @@ extern char *finame;
 /* config vars. */
 %token DEBUG_V
 %token FORK
+%token FORK_DELAY
 %token LOGSTDERROR
 %token LOGFACILITY
 %token LOGNAME
@@ -828,6 +829,8 @@ assign_stm:
 	| DEBUG_V EQUAL error  { yyerror("number  expected"); }
 	| FORK  EQUAL NUMBER { dont_fork= ! $3; }
 	| FORK  EQUAL error  { yyerror("boolean value expected"); }
+	| FORK_DELAY  EQUAL NUMBER { set_fork_delay($3); }
+	| FORK_DELAY  EQUAL error  { yyerror("number expected"); }
 	| LOGSTDERROR EQUAL NUMBER { if (!config_check) log_stderr=$3; }
 	| LOGSTDERROR EQUAL error { yyerror("boolean value expected"); }
 	| LOGFACILITY EQUAL ID {

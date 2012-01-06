@@ -103,4 +103,6 @@ void mem_dump_pkg_cb(str *gname, str *name);
 int mem_dump_shm_fixup(void *handle, str *gname, str *name, void **val);
 #endif
 
+unsigned int set_fork_delay(unsigned int v);
+
 #endif
