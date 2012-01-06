@@ -41,6 +41,7 @@
 #include "../../sr_module.h"
 #include "../../events.h"
 #include "../../dprint.h"
+#include "../../tcp_options.h"
 #include "../../ut.h"
 #include "../../forward.h"
 #include "../../parser/msg_parser.h"
@@ -184,6 +185,9 @@ static int mod_init(void)
 	th_mask_init();
 	sr_event_register_cb(SREV_NET_DATA_IN, th_msg_received);
 	sr_event_register_cb(SREV_NET_DATA_OUT, th_msg_sent);
+#ifdef USE_TCP
+	tcp_set_clone_rcvbuf(1);
+#endif
 	return 0;
 error:
 	return -1;
