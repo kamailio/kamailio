@@ -392,11 +392,9 @@ inline static ticks_t retransmission_handler( struct retr_buf *r_buf )
 				fake_reply(r_buf->my_T, r_buf->branch, 503 );
 				return (ticks_t)-1;
 			}
-#ifdef TMCB_ONSEND
 			if (unlikely(has_tran_tmcbs(r_buf->my_T, TMCB_REQUEST_SENT))) 
-				run_onsend_callbacks(TMCB_REQUEST_SENT, r_buf, 
-										0, 0, TMCB_RETR_F);
-#endif
+				run_trans_callbacks_with_buf(TMCB_REQUEST_SENT, r_buf, 
+				0, 0, TMCB_RETR_F);
 	} else {
 #ifdef EXTRA_DEBUG
 			DBG("DEBUG: retransmission_handler : "

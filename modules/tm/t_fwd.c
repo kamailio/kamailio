@@ -1192,14 +1192,12 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 				if (SEND_BUFFER(&t_cancel->uac[i].request) == -1) {
 					LOG(L_ERR, "ERROR: e2e_cancel: send failed\n");
 				}
-#ifdef TMCB_ONSEND
 				else{
 					if (unlikely(has_tran_tmcbs(t_cancel, TMCB_REQUEST_SENT)))
-						run_onsend_callbacks(TMCB_REQUEST_SENT, 
-												&t_cancel->uac[i].request,
-												cancel_msg, 0, TMCB_LOCAL_F);
+						run_trans_callbacks_with_buf(TMCB_REQUEST_SENT,
+						                             &t_cancel->uac[i].request,
+						                             cancel_msg, 0, TMCB_LOCAL_F);
 				}
-#endif
 				if (start_retr( &t_cancel->uac[i].request )!=0)
 					LOG(L_CRIT, "BUG: e2e_cancel: failed to start retr."
 							" for %p\n", &t_cancel->uac[i].request);
@@ -1386,10 +1384,8 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 		if (proxy) { proxy->errors++; proxy->ok=0; }
 		return -2;
 	} else {
-#ifdef TMCB_ONSEND
 		if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT)))
-			run_onsend_callbacks(TMCB_REQUEST_SENT, &uac->request, p_msg, 0,0);
-#endif
+			run_trans_callbacks_with_buf(TMCB_REQUEST_SENT, &uac->request, p_msg, 0,0);
 		/* start retr. only if the send succeeded */
 		if (start_retr( &uac->request )!=0){
 			LOG(L_CRIT, "BUG: t_send_branch: retr. already started for %p\n",
@@ -1550,8 +1546,12 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 			
 			branch_ret=t_send_branch(t, i, p_msg , proxy, lock_replies);
 			if (branch_ret>=0){ /* some kind of success */
-				if (branch_ret==i) /* success */
+				if (branch_ret==i) { /* success */
 					success_branch++;
+					if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_OUT)))
+						run_trans_callbacks_with_buf( TMCB_REQUEST_OUT, &t->uac[i].request,
+						                              p_msg, 0, -p_msg->REQ_METHOD);
+				}
 				else /* new branch added */
 					added_branches |= 1<<branch_ret;
 			}
