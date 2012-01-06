@@ -121,6 +121,22 @@ static int tcpmain_sock=-1;
 static struct local_timer tcp_reader_ltimer;
 static ticks_t tcp_reader_prev_ticks;
 
+/**
+ * control cloning of TCP receive buffer
+ * - needed for operations working directly inside the buffer
+ *   (like msg_apply_changes())
+ */
+#define TCP_CLONE_RCVBUF
+static int tcp_clone_rcvbuf = 0;
+
+int tcp_set_clone_rcvbuf(int v)
+{
+	int r;
+	r = tcp_clone_rcvbuf;
+	tcp_clone_rcvbuf = v;
+	return r;
+}
+
 #ifdef READ_HTTP11
 static inline char *strfindcasestrz(str *haystack, char *needlez)
 {
@@ -856,7 +872,6 @@ skip:
  * the content of the stream. Safer, make a clone of buf content in a local
  * buffer and give that to receive_msg() to link to msg->buf
  */
-#define TCP_CLONE_RCVBUF
 int receive_tcp_msg(char* tcpbuf, unsigned int len, struct receive_info* rcv_info)
 {
 #ifdef TCP_CLONE_RCVBUF
@@ -867,6 +882,10 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len, struct receive_info* rcv_inf
 	static unsigned int bsize = 0;
 #endif
 	int blen;
+
+	/* cloning is disabled via parameter */
+	if(likely(tcp_clone_rcvbuf==0))
+		return receive_msg(tcpbuf, len, rcv_info);
 
 	/* min buffer size is BUF_SIZE */
 	blen = len;
