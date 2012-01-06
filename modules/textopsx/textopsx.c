@@ -33,6 +33,7 @@
 #include "../../dprint.h"
 #include "../../data_lump.h"
 #include "../../msg_translator.h"
+#include "../../tcp_options.h"
 #include "../../mod_fix.h"
 
 #include "api.h"
@@ -52,6 +53,8 @@ static int fixup_fnmatch(void** param, int param_no);
 
 static int w_remove_body_f(struct sip_msg*, char*, char *);
 static int bind_textopsx(textopsx_api_t *tob);
+
+static int mod_init(void);
 
 /* cfg functions */
 static cmd_export_t cmds[] = {
@@ -80,13 +83,24 @@ struct module_exports exports= {
 	cmds, /* cfg functions */
 	0, /* RPC methods */
 	0, /* cfg parameters */
-	0, /* initialization function */
+	mod_init, /* initialization function */
 	0, /* response function */
 	0, /* destroy function */
 	0, /* on_cancel function */
 	0  /* per-child init function */
 };
 
+
+/**
+ * init module function
+ */
+static int mod_init(void)
+{
+#ifdef USE_TCP
+	tcp_set_clone_rcvbuf(1);
+#endif
+	return 0;
+}
 
 /**
  *
