@@ -68,6 +68,16 @@
 static int estimated_proc_no=0;
 static int estimated_fds_no=0;
 
+/* number of usec to wait before forking a process */
+static unsigned int fork_delay = 0;
+
+unsigned int set_fork_delay(unsigned int v)
+{
+	unsigned int r;
+	r =  fork_delay;
+	fork_delay = v;
+	return r;
+}
 
 /* number of known "common" used fds */
 static int calc_common_open_fds_no()
@@ -257,6 +267,9 @@ int fork_process(int child_id, char *desc, int make_sock)
 #ifdef USE_TCP
 	int sockfd[2];
 #endif
+
+	if(unlikely(fork_delay>0))
+		sleep_us(fork_delay);
 
 	ret=-1;
 	#ifdef USE_TCP
