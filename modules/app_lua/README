@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright � 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -116,7 +116,7 @@ Chapter 1. Admin Guide
    use lua_run(function, params) to execute a function from the script at
    runtime.
 
-   Default value is “null”.
+   Default value is "null".
 
    Example 1.1. Set load parameter
 ...
@@ -127,24 +127,40 @@ modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 
    Use this function to register optional SIP Router submodules to Lua.
    Available submodules are:
+     * alias_db - register functions from alias_db module under
+       'sr.alias_db'.
      * auth - register functions from auth module under 'sr.auth'.
      * auth_db - register functions from auth_db module under
        'sr.auth_db'.
      * dispatcher - register functions from dispatcher module under
        'sr.dispatcher'.
      * maxfwd - register functions from maxfwd module under 'sr.maxfwd'.
+     * msilo - register functions from msilo module under 'sr.msilo'.
+     * presence - register functions from presence module under
+       'sr.presence'.
+     * presence_xml - register functions from presence_xml module under
+       'sr.presence_xml'.
+     * pua_usrloc - register functions from pua_usrloc module under
+       'sr.pua_usrloc'.
      * registrar - register functions from registrar module under
        'sr.registrar'.
+     * rls - register functions from rls module under 'sr.rls'.
      * rr - register functions from rr module under 'sr.rr'.
-     * sqlops - register functions from sqlops module under 'sr.sqlops'.
+     * sanity - register functions from sanity module under 'sr.sanity'.
+     * sdpops - register functions from sdpops module under 'sr.sdpops'.
+     * siputils - register functions from siputils module under
+       'sr.siputils'.
      * sl - register functions from sl module under 'sr.sl'.
+     * sqlops - register functions from sqlops module under 'sr.sqlops'.
+     * textops - register functions from textops module under
+       'sr.textops'.
      * tm - register functions from tm module under 'sr.tm'.
      * xhttp - register functions from xhttp module under 'sr.xhttp'.
 
    Note that 'sr', 'sr.hdr' and 'sr.pv' modules are always registered to
    Lua.
 
-   Default value is “null”.
+   Default value is "null".
 
    Example 1.2. Set register parameter
 ...
@@ -158,7 +174,7 @@ modparam("app_lua", "register", "sl")
    4.3. lua_run(function, params)
    4.4. lua_runstring(script)
 
-4.1.  lua_dofile(path)
+4.1. lua_dofile(path)
 
    Execute the Lua script stored in 'path'. The parameter can be a string
    with pseudo-variables evaluated at runtime.
@@ -168,7 +184,7 @@ modparam("app_lua", "register", "sl")
 lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
 ...
 
-4.2.  lua_dostring(script)
+4.2. lua_dostring(script)
 
    Execute the Lua script stored in parameter. The parameter can be a
    string with pseudo-variables.
@@ -181,7 +197,7 @@ if(!lua_dostring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 }
 ...
 
-4.3.  lua_run(function, params)
+4.3. lua_run(function, params)
 
    Execute the Lua function 'func' giving params as parameters. There can
    be up to 3 string parameters. The function must exist in the script
@@ -198,7 +214,7 @@ if(!lua_run("sr_append_fu_to_reply"))
 lua_run("lua_funcx", "$rU", "2");
 ...
 
-4.4.  lua_runstring(script)
+4.4. lua_runstring(script)
 
    Execute the Lua script stored in parameter. The parameter can be a
    string with pseudo-variables. The script is executed in Lua context

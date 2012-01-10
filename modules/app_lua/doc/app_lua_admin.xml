@@ -111,6 +111,12 @@ modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 	    	<itemizedlist>
 		    <listitem>
 			<para>
+				<emphasis>alias_db</emphasis> - register functions from
+				alias_db module under 'sr.alias_db'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
 				<emphasis>auth</emphasis> - register functions from auth module
 				under 'sr.auth'.
 			</para>
@@ -135,8 +141,38 @@ modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 		    </listitem>
 		    <listitem>
 			<para>
+				<emphasis>msilo</emphasis> - register functions from
+				msilo module under 'sr.msilo'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>presence</emphasis> - register functions from
+				presence module under 'sr.presence'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>presence_xml</emphasis> - register functions from
+				presence_xml module under 'sr.presence_xml'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>pua_usrloc</emphasis> - register functions from
+				pua_usrloc module under 'sr.pua_usrloc'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
 				<emphasis>registrar</emphasis> - register functions from
 				registrar module under 'sr.registrar'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>rls</emphasis> - register functions from
+				rls module under 'sr.rls'.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -147,14 +183,38 @@ modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 		    </listitem>
 		    <listitem>
 			<para>
-				<emphasis>sqlops</emphasis> - register functions from sqlops
-				module under 'sr.sqlops'.
+				<emphasis>sanity</emphasis> - register functions from sanity
+				module under 'sr.sanity'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>sdpops</emphasis> - register functions from
+				sdpops module under 'sr.sdpops'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>siputils</emphasis> - register functions from
+				siputils module under 'sr.siputils'.
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
 				<emphasis>sl</emphasis> - register functions from sl module
 				under 'sr.sl'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>sqlops</emphasis> - register functions from sqlops
+				module under 'sr.sqlops'.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+				<emphasis>textops</emphasis> - register functions from
+				textops module under 'sr.textops'.
 			</para>
 		    </listitem>
 		    <listitem>
