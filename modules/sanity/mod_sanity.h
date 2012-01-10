@@ -47,7 +47,8 @@
 #define SANITY_PROXY_REQUIRE           (1<<9)
 #define SANITY_PARSE_URIS              (1<<10)
 #define SANITY_CHECK_DIGEST            (1<<11)
-#define SANITY_MAX_CHECKS              (1<<12)  /* Make sure this is the highest value */
+#define SANITY_CHECK_DUPTAGS           (1<<12)
+#define SANITY_MAX_CHECKS              (1<<13)  /* Make sure this is the highest value */
 
 /* VIA_SIP_VERSION and VIA_PROTOCOL do not work yet
  * and PARSE_URIS is very expensive */
@@ -59,13 +60,14 @@
 								SANITY_CL | \
 								SANITY_EXPIRES_VALUE | \
 								SANITY_PROXY_REQUIRE | \
-                                                                SANITY_CHECK_DIGEST
+                                SANITY_CHECK_DIGEST
 
 
 #define SANITY_URI_CHECK_RURI    (1<<0)
 #define SANITY_URI_CHECK_FROM    (1<<1)
 #define SANITY_URI_CHECK_TO      (1<<2)
 #define SANITY_URI_CHECK_CONTACT (1<<3)
+#define SANITY_URI_MAX_CHECKS    (1<<4)  /* Make sure this is the highest value */
 
 #define SANITY_DEFAULT_URI_CHECKS	SANITY_URI_CHECK_RURI | \
 									SANITY_URI_CHECK_FROM | \

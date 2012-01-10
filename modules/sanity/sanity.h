@@ -81,4 +81,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks);
  */
 int check_digest(struct sip_msg* _msg, int checks);
 
+/* check if there are duplicate tag params in From/To headers */
+int check_duptags(sip_msg_t* _msg);
+
 #endif /* SANITY_CHK_H */

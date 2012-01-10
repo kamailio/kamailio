@@ -145,8 +145,8 @@ static int sanity_fixup(void** param, int param_no) {
 			LOG(L_ERR, "sanity: failed to convert second integer argument\n");
 			return E_UNSPEC;
 		}
-		if ((checks < 1) || (checks > (SANITY_DEFAULT_URI_CHECKS))) {
-			LOG(L_ERR, "sanity: second input parameter (%i) outside of valid range 1-%i\n", checks, SANITY_DEFAULT_URI_CHECKS);
+		if ((checks < 1) || (checks >= (SANITY_URI_MAX_CHECKS))) {
+			LOG(L_ERR, "sanity: second input parameter (%i) outside of valid range <1-%i\n", checks, SANITY_URI_MAX_CHECKS);
 			return E_UNSPEC;
 		}
 		*param = (void*)(long)checks;
@@ -213,6 +213,10 @@ int sanity_check(struct sip_msg* _msg, int msg_checks, int uri_checks)
 
 	if (SANITY_CHECK_DIGEST & msg_checks &&
 			(ret = check_digest(_msg, uri_checks)) != SANITY_CHECK_PASSED) {
+		goto done;
+	}
+	if (SANITY_CHECK_DUPTAGS & msg_checks &&
+			(ret = check_duptags(_msg)) != SANITY_CHECK_PASSED) {
 		goto done;
 	}
 

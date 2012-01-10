@@ -40,6 +40,7 @@
 #include "../../parser/digest/digest.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_to.h"
+#include "../../parser/parse_from.h"
 
 #define UNSUPPORTED_HEADER "Unsupported: "
 #define UNSUPPORTED_HEADER_LEN (sizeof(UNSUPPORTED_HEADER)-1)
@@ -994,3 +995,45 @@ int check_digest(struct sip_msg* msg, int checks)
 
     return SANITY_CHECK_PASSED;
 }
+
+
+/* check for the presence of duplicate tag prameters in To/From headers */
+int check_duptags(sip_msg_t* _msg)
+{
+	to_body_t *tb;
+	to_param_t *tp;
+	int n;
+
+	if(parse_from_header(_msg)<0 || parse_to_header(_msg)<0) {
+		DBG("check_duptags failed while parsing\n");
+		return SANITY_CHECK_FAILED;
+	}
+	tb = get_from(_msg);
+	if(tb->tag_value.s!=NULL) {
+		n = 0;
+		for(tp = tb->param_lst; tp; tp = tp->next) {
+			if(tp->type==TAG_PARAM)
+				n++;
+		}
+		if(n>1) {
+			DBG("check_duptags failed for From header\n");
+			return SANITY_CHECK_FAILED;
+		}
+	}
+	tb = get_to(_msg);
+	if(tb->tag_value.s!=NULL) {
+		n = 0;
+		for(tp = tb->param_lst; tp; tp = tp->next) {
+			if(tp->type==TAG_PARAM)
+				n++;
+		}
+		if(n>1) {
+			DBG("check_duptags failed for To header\n");
+			return SANITY_CHECK_FAILED;
+		}
+	}
+
+	return SANITY_CHECK_PASSED;
+}
+
+
