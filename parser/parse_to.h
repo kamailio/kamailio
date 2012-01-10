@@ -36,15 +36,15 @@ enum {
 	TAG_PARAM = 400, GENERAL_PARAM
 };
 
-struct to_param{
+typedef struct to_param{
 	int type;              /*!< Type of parameter */
 	str name;              /*!< Name of parameter */
 	str value;             /*!< Parameter value */
 	struct to_param* next; /*!< Next parameter in the list */
-};
+} to_param_t;
 
 
-struct to_body{
+typedef struct to_body{
 	int error;                    /*!< Error code */
 	str body;                     /*!< The whole header field body */
 	str uri;                      /*!< URI */
@@ -53,7 +53,7 @@ struct to_body{
 	struct sip_uri parsed_uri;
 	struct to_param *param_lst;   /*!< Linked list of parameters */
 	struct to_param *last_param;  /*!< Last parameter in the list */
-};
+} to_body_t;
 
 
 /* casting macro for accessing To body */
