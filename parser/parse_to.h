@@ -73,4 +73,6 @@ void free_to(struct to_body* tb);
 
 int parse_to_header(struct sip_msg *msg);
 
+sip_uri_t *parse_to_uri(struct sip_msg* msg);
+
 #endif

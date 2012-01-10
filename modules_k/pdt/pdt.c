@@ -41,7 +41,6 @@
 #include <stdlib.h>
 
 #include "../../lib/srdb1/db_op.h"
-#include "../../lib/kcore/parser_helpers.h"
 #include "../../sr_module.h"
 #include "../../lib/srdb1/db.h"
 #include "../../mem/shm_mem.h"

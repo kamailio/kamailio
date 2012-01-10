@@ -42,10 +42,11 @@
 #include "../../parser/digest/digest.h"
 #include "../../parser/hf.h"
 #include "../../parser/parser_f.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_to.h"
 #include "../../usr_avp.h"
 #include "../../mod_fix.h"
 #include "../../mem/mem.h"
-#include "../../lib/kcore/parser_helpers.h"
 #include "api.h"
 #include "authdb_mod.h"
 

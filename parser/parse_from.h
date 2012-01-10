@@ -47,4 +47,6 @@
  */
 int parse_from_header( struct sip_msg *msg);
 
+sip_uri_t *parse_from_uri(sip_msg_t *msg);
+
 #endif

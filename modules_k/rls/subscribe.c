@@ -36,7 +36,6 @@
 #include "../../lib/kcore/cmpapi.h"
 #include "../../lib/kcore/hash_func.h"
 #include "../../lib/kcore/parse_supported.h"
-#include "../../lib/kcore/parser_helpers.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_event.h"
 #include "../../parser/parse_expires.h"

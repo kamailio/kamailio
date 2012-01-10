@@ -213,7 +213,6 @@
 #include "../../lib/kmi/attr.h"
 #include "../../lib/kmi/mi.h"
 #include "../../lib/kcore/km_ut.h"
-#include "../../lib/kcore/parser_helpers.h"
 #include "../../pvar.h"
 #include "../../lvalue.h"
 #include "../../msg_translator.h"

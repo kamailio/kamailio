@@ -35,7 +35,6 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../lib/srdb1/db.h"
-#include "../../lib/kcore/parser_helpers.h"
 
 #include "speeddial.h"
 #include "sdlookup.h"

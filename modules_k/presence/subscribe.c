@@ -39,7 +39,6 @@
 #include "../../parser/parse_event.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../lib/kcore/hash_func.h"
-#include "../../lib/kcore/parser_helpers.h"
 #include "presence.h"
 #include "subscribe.h"
 #include "utils_func.h"

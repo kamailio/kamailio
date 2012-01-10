@@ -42,7 +42,6 @@
 #include "../../parser/parse_diversion.h"
 #include "../../lib/kcore/parse_ppi.h"
 #include "../../lib/kcore/parse_pai.h"
-#include "../../lib/kcore/parser_helpers.h"
 #include "../../parser/digest/digest.h"
 
 #include "pv_core.h"

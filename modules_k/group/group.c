@@ -42,7 +42,6 @@
 #include "../../parser/hf.h"            /* Header Field types */
 #include "../../parser/parse_from.h"    /* From parser */
 #include "../../parser/parse_uri.h"
-#include "../../lib/kcore/parser_helpers.h"
 #include "group.h"
 #include "group_mod.h"                   /* Module parameters */
 

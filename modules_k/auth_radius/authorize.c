@@ -38,7 +38,6 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
-#include "../../lib/kcore/parser_helpers.h"
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../pvar.h"

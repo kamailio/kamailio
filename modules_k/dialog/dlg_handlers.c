@@ -59,7 +59,6 @@
 #include "../../action.h"
 #include "../../script_cb.h"
 #include "../../lib/kcore/faked_msg.h"
-#include "../../lib/kcore/parser_helpers.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_cseq.h"
 #include "../../parser/contact/parse_contact.h"

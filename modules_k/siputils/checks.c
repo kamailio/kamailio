@@ -48,7 +48,6 @@
 #include "../../parser/parse_param.h"
 #include "../../ut.h"                   /* Handy utilities */
 #include "../../lib/srdb1/db.h"                /* Database API */
-#include "../../lib/kcore/parser_helpers.h"
 #include "../../dset.h"
 #include "../../pvar.h"
 #include "../../lvalue.h"

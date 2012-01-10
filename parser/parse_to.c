@@ -35,6 +35,7 @@
 #include <string.h>
 #include "../dprint.h"
 #include "msg_parser.h"
+#include "parse_uri.h"
 #include "../ut.h"
 #include "../mem/mem.h"
 
@@ -853,4 +854,35 @@ int parse_to_header(struct sip_msg *msg)
 		return 0;
 	else
 		return -1;
+}
+
+sip_uri_t *parse_to_uri(sip_msg_t *msg)
+{
+	to_body_t *tb = NULL;
+	
+	if(msg==NULL)
+		return NULL;
+
+	if(parse_to_header(msg)<0)
+	{
+		LM_ERR("cannot parse TO header\n");
+		return NULL;
+	}
+
+	if(msg->to==NULL || get_to(msg)==NULL)
+		return NULL;
+
+	tb = get_to(msg);
+	
+	if(tb->parsed_uri.user.s!=NULL || tb->parsed_uri.host.s!=NULL)
+		return &tb->parsed_uri;
+
+	if (parse_uri(tb->uri.s, tb->uri.len , &tb->parsed_uri)<0)
+	{
+		LM_ERR("failed to parse To uri\n");
+		memset(&tb->parsed_uri, 0, sizeof(struct sip_uri));
+		return NULL;
+	}
+
+	return &tb->parsed_uri;
 }

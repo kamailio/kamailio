@@ -61,7 +61,6 @@
 #include "../../qvalue.h"
 #include "enum_mod.h"
 #include "../../lib/kcore/regexp.h"
-#include "../../lib/kcore/parser_helpers.h"
 #include "../../pvar.h"
 
 /*

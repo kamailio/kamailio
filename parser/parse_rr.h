@@ -177,4 +177,14 @@ static inline int is_2rr(str* _params)
 	else return 0;
 }
 
+/*!
+ * get first RR header and print comma separated bodies in oroute
+ * - order = 0 normal; order = 1 reverse
+ * - nb_recs - input=skip number of rr; output=number of printed rrs
+ */
+int print_rr_body(struct hdr_field *iroute, str *oroute, int order,
+				  unsigned int * nb_recs);
+
+int get_path_dst_uri(str *_p, str *_dst);
+
 #endif /* PARSE_RR_H */

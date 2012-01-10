@@ -40,7 +40,6 @@
 #include "../../parser/parse_expires.h"
 #include "../presence/hash.h"
 #include "../../lib/kcore/hash_func.h"
-#include "../../lib/kcore/parser_helpers.h"
 #include "hash.h"
 #include "pua.h"
 #include "send_subscribe.h"
