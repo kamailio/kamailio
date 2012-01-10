@@ -51,6 +51,7 @@
 #include "../../modules_k/alias_db/api.h"
 #include "../../modules_k/msilo/api.h"
 #include "../../modules_k/uac/api.h"
+#include "../../modules/sanity/api.h"
 
 #include "app_lua_api.h"
 
@@ -74,6 +75,7 @@
 #define SR_LUA_EXP_MOD_ALIAS_DB   (1<<17)
 #define SR_LUA_EXP_MOD_MSILO      (1<<18)
 #define SR_LUA_EXP_MOD_UAC        (1<<19)
+#define SR_LUA_EXP_MOD_SANITY     (1<<20)
 
 /**
  *
@@ -180,6 +182,12 @@ static msilo_api_t _lua_msilob;
  * uac
  */
 static uac_api_t _lua_uacb;
+
+/**
+ * sanity
+ */
+static sanity_api_t _lua_sanityb;
+
 
 /**
  *
@@ -2163,6 +2171,46 @@ static const luaL_reg _sr_uac_Map [] = {
 	{NULL, NULL}
 };
 
+
+/**
+ *
+ */
+static int lua_sr_sanity_check(lua_State *L)
+{
+	int msg_checks, uri_checks;
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SANITY))
+	{
+		LM_WARN("weird: sanity function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+	msg_checks = lua_tointeger(L, -1);
+	uri_checks = lua_tointeger(L, -2);
+
+	ret = _lua_sanityb.check(env_L->msg, msg_checks, uri_checks);
+	return app_lua_return_int(L, ret);
+}
+
+
+/**
+ *
+ */
+static const luaL_reg _sr_sanity_Map [] = {
+	{"sanity_check",       lua_sr_sanity_check},
+	{NULL, NULL}
+};
+
+
 /**
  *
  */
@@ -2374,6 +2422,16 @@ int lua_sr_exp_init_mod(void)
 		}
 		LM_DBG("loaded uac api\n");
 	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SANITY)
+	{
+		/* bind the SANITY API */
+		if (sanity_load_api(&_lua_sanityb) < 0)
+		{
+			LM_ERR("cannot bind to SANITY API\n");
+			return -1;
+		}
+		LM_DBG("loaded sanity api\n");
+	}
 	return 0;
 }
 
@@ -2447,6 +2505,9 @@ int lua_sr_exp_register_mod(char *mname)
 	} else 	if(len==3 && strcmp(mname, "uac")==0) {
 		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_UAC;
 		return 0;
+	} else 	if(len==6 && strcmp(mname, "sanity")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_SANITY;
+		return 0;
 	}
 
 	return -1;
@@ -2497,5 +2558,7 @@ void lua_sr_exp_openlibs(lua_State *L)
 		luaL_openlib(L, "sr.msilo", _sr_msilo_Map,            0);
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_UAC)
 		luaL_openlib(L, "sr.uac", _sr_uac_Map,                0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SANITY)
+		luaL_openlib(L, "sr.sanity", _sr_sanity_Map,          0);
 }
 
