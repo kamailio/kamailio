@@ -1,0 +1,231 @@
+TMREC Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2012 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. separator (str)
+
+        4. Functions
+
+              4.1. tmrec_match(timerec [, timestamp])
+              4.2. is_leap_year([year])
+
+   List of Examples
+
+   1.1. Set separator parameter
+   1.2. tmrec_match usage
+   1.3. is_leap_year usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. separator (str)
+
+   4. Functions
+
+        4.1. tmrec_match(timerec [, timestamp])
+        4.2. is_leap_year([year])
+
+1. Overview
+
+   This module provides time recurrence matching functions. Definitions of
+   recurrences are based on Internet Calendaring and Scheduling Core
+   Object Specification (Calendar COS - RFC 2445).
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+3. Parameters
+
+   3.1. separator (str)
+
+3.1. separator (str)
+
+   Separator character used to delimit the attributes in time reccurence
+   definitions.
+
+   Default value is '|'.
+
+   Example 1.1. Set separator parameter
+...
+modparam("tmrec", "separator", ";")
+...
+
+4. Functions
+
+   4.1. tmrec_match(timerec [, timestamp])
+   4.2. is_leap_year([year])
+
+4.1. tmrec_match(timerec [, timestamp])
+
+   Match a time recurrence rules against the timestamp. If timestamp
+   parameter is missing, the value of current unix timestamp is used.
+
+   The parameters can include pseudo-variables.
+
+   The timerec paramter is a list of attributes defined by RFC2445,
+   delimited by 'separator' (module parameter) character. The format of
+   timerec parameter, using '|' as separator, is (all in one line without
+   white spaces):
+...
+[startdate]|[duration]|[frequency]|[until]|[interval]|[byday]
+  |[bymonthday]|[byyearday]|[byweekno]|[bymonth]
+...
+
+   When an attribute is not specified, the corresponding place must be
+   left empty, whenever another attribute that follows in the list has to
+   be specified.
+
+   Description of time recurrence attributes:
+     * startdate - date for the start of the first period.
+     * duration - the duration of the time period. For a recurring
+       interval, the "duration" parameter MUST be small enough such that
+       subsequent intervals do not overlap. For non-recurring intervals,
+       durations of any positive length are permitted, zero-length
+       duration means "forever". Negative-length durations are not
+       allowed.
+     * frequency - can be one of the following values: "daily" - specify
+       repeating periods based on an interval of a day or more; "weekly" -
+       specify repeating periods based on an interval of a week or more;
+       "monthly" - specify repeating periods based on an interval of a
+       month or more; "yearly" - specify repeating periods based on an
+       interval of a year or more. These values are case insensitive.
+     * until - defines an iCalendar COS DATE or DATE-TIME value which
+       bounds the recurrence rule in an inclusive manner. If the value
+       specified by "until" is synchronized with the specified recurrence,
+       this date or date-time becomes the last instance of the recurrence.
+       If not present, the recurrence is considered to repeat forever.
+     * interval - a positive integer representing how often the recurrence
+       rule repeats. The default value is "1", meaning every day for a
+       "daily" rule, every week for a "weekly" rule, every month for a
+       "monthly" rule and every year for a "yearly" rule.
+     * byday - a comma-separated list short codes of days of the week. The
+       days are specified as: "MO" for Monday; "TU" for Tuesday; "WE" for
+       Wednesday; "TH" for Thursday; "FR" for Friday; "SA" for Saturday;
+       "SU" for Sunday. These values are case insensitive.
+       Each "byday" value can also be prefixed by a positive (+n) or
+       negative (-n) integer. If present, this indicates the n-th
+       occurrence of the specific day within the "monthly" or "yearly"
+       recurrence. For example, within a "monthly" rule, +1MO (or simply
+       1MO) represents the first Monday within the month, whereas -1MO
+       represents the last Monday of the month. If an integer modifier is
+       not present, it means all days of this type within the specified
+       frequency. For example, within a "monthly" rule, MO represents all
+       Mondays within the month.
+     * bymonthday - a comma-separated list of days of the month. Valid
+       values are 1 to 31 or -31 to -1. For example, -10 represents the
+       tenth to the last day of the month.
+     * byyearday - a comma-separated list of days of the year. Valid
+       values are 1 to 366 or -366 to -1. For example, -1 represents the
+       last day of the year (December 31st) and -306 represents the 306th
+       day before the last day of the year (March 1st).
+     * byweekno - a comma-separated list of ordinals specifying weeks of
+       the year. Valid values are 1 to 53 or -53 to -1.
+     * bymonth - parameter specifies a comma-separated list of months of
+       the year. Valid values are 1 to 12.
+
+   A recurrence is specified by including the "frequency" parameter, which
+   indicates the type of recurrence rule. Parameters other than
+   "startdate" and "duration" SHOULD NOT be specified unless "frequency"
+   is set.
+
+   If byxxx parameter values are found which are beyond the available
+   scope (ie, bymonthday="30" in February), they are simply ignored.
+
+   Byxxx parameters modify the recurrence rule matching. Byxxx rule, as
+   attribute for a period of time which is the same or greater than the
+   frequency, generally reduces or limits the number of occurrences for
+   the recurrence definition. For example, frequency="daily" bymonth="3"
+   reduces the number of recurrence instances from all days (if the
+   "bymonth" parameter is not present) to all days in March. Byxxx
+   parameters for a period of time less than the frequency generally
+   increases or expands the number of occurrences of the recurrence. For
+   example, frequency="yearly" bymonth="8,9" increases the number of days
+   within the yearly recurrence set from 1 (if "bymonth" parameter is not
+   present) to 2.
+
+   If multiple Byxxx parameters are specified, then after evaluating the
+   specified "frequency" and "interval" parameters, the Byxxx parameters
+   are applied to the current set of evaluated occurrences in the
+   following order: "bymonth", "byweekno", "byyearday", "bymonthday",
+   "byday"; then "until" is evaluated.
+
+   Next is an example of evaluating multiple Byxxx parameters.
+
+   startdate="20100101T093000" duration="10H30M" frequency="yearly"
+   interval="4" bymonth="3" byday="SU"
+
+   First, the interval="4" would be applied to frequency="yearly" to match
+   on "every 4th year" . Then, bymonth="1" would be applied to match on
+   "every March, every 4th year". Then, byday="SU" would be applied to
+   match on "every Sunday in March, every 4th year, from 9:30 to 20:00 ".
+   The start and end hours:minutes have been retrieved from the
+   "startdate" and "duration" parameters.
+
+   This function can be used in ANY_ROUTE.
+
+   Example 1.2. tmrec_match usage
+...
+        if(tmrec_match("20120101T000000|24H|weekly|||SA,SU")
+        xdbg("it is weekend!\n");
+    if(tmrec_match("20120101T083000|10H|weekly|||MO,TU,WE,TH,FR")
+        xdbg("it is with working hours\n");
+...
+
+4.2. is_leap_year([year])
+
+   Return true if the value from parameter is a leap year. If the
+   parameter is missing, then the year from current time is taken.
+
+   The parameter can be pseudo-variable.
+
+   This function can be used in ANY_ROUTE.
+
+   Example 1.3. is_leap_year usage
+...
+if(is_leap_year("2010"))
+...
