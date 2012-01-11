@@ -39,7 +39,7 @@ int faked_msg_init(void)
 	/* init faked sip msg */
 	memcpy(_faked_sip_buf, FAKED_SIP_MSG, FAKED_SIP_MSG_LEN);
 	_faked_sip_buf[FAKED_SIP_MSG_LEN] = '\0';
-	
+
 	memset(&_faked_msg, 0, sizeof(struct sip_msg));
 
 	_faked_msg.buf=_faked_sip_buf;
@@ -53,6 +53,17 @@ int faked_msg_init(void)
 		LM_ERR("parse_msg failed\n");
 		return -1;
 	}
+
+	_faked_msg.rcv.proto = PROTO_UDP;
+	_faked_msg.rcv.src_port = 5060;
+	_faked_msg.rcv.src_ip.u.addr32[0] = 0x7f000001;
+	_faked_msg.rcv.src_ip.af = AF_INET;
+	_faked_msg.rcv.src_ip.len = 4;
+	_faked_msg.rcv.dst_port = 5060;
+	_faked_msg.rcv.dst_ip.u.addr32[0] = 0x7f000001;
+	_faked_msg.rcv.dst_ip.af = AF_INET;
+	_faked_msg.rcv.dst_ip.len = 4;
+
 	return 0;
 }
 
