@@ -1027,9 +1027,10 @@ static int lua_sr_pv_sets (lua_State *L)
 static int lua_sr_pv_unset (lua_State *L)
 {
 	str pvn;
-	pv_spec_t pvs;
+	pv_spec_t *pvs;
     pv_value_t val;
 	sr_lua_env_t *env_L;
+	int pl;
 
 	env_L = sr_lua_env_get();
 
@@ -1039,14 +1040,21 @@ static int lua_sr_pv_unset (lua_State *L)
 
 	pvn.len = strlen(pvn.s);
 	LM_DBG("pv unset: %s\n", pvn.s);
-	if(pv_parse_spec(&pvn, &pvs)<0)
+	pl = pv_locate_name(&pvn);
+	if(pl != pvn.len)
 	{
-		LM_ERR("unable to parse pv [%s]\n", pvn.s);
+		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
+		return 0;
+	}
+	pvs = pv_cache_get(&pvn);
+	if(pvs==NULL)
+	{
+		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
 		return 0;
 	}
 	memset(&val, 0, sizeof(pv_value_t));
 	val.flags |= PV_VAL_NULL;
-	if(pv_set_spec_value(env_L->msg, &pvs, 0, &val)<0)
+	if(pv_set_spec_value(env_L->msg, pvs, 0, &val)<0)
 	{
 		LM_ERR("unable to unset pv [%s]\n", pvn.s);
 		return 0;
@@ -1061,9 +1069,10 @@ static int lua_sr_pv_unset (lua_State *L)
 static int lua_sr_pv_is_null (lua_State *L)
 {
 	str pvn;
-	pv_spec_t pvs;
+	pv_spec_t *pvs;
     pv_value_t val;
 	sr_lua_env_t *env_L;
+	int pl;
 
 	env_L = sr_lua_env_get();
 
@@ -1073,13 +1082,20 @@ static int lua_sr_pv_is_null (lua_State *L)
 
 	pvn.len = strlen(pvn.s);
 	LM_DBG("pv is null test: %s\n", pvn.s);
-	if(pv_parse_spec(&pvn, &pvs)<0)
+	pl = pv_locate_name(&pvn);
+	if(pl != pvn.len)
 	{
-		LM_ERR("unable to parse pv [%s]\n", pvn.s);
+		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
+		return 0;
+	}
+	pvs = pv_cache_get(&pvn);
+	if(pvs==NULL)
+	{
+		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
 		return 0;
 	}
 	memset(&val, 0, sizeof(pv_value_t));
-	if(pv_get_spec_value(env_L->msg, &pvs, &val) != 0)
+	if(pv_get_spec_value(env_L->msg, pvs, &val) != 0)
 	{
 		LM_NOTICE("unable to get pv value for [%s]\n", pvn.s);
 		lua_pushboolean(L, 1);
