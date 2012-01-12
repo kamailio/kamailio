@@ -39,8 +39,10 @@
 #include "fifo_server.h"
 #endif
 
+#include "ctl.h"
+
 /* parse proto:address:port   or proto:address */
-/* returns struct id_list on success (pkg_malloc'ed), 0 on error
+/* returns struct id_list on success (ctl_malloc'ed), 0 on error
  * WARNING: it will add \0 in the string*/
 /* parses:
  *     tcp|udp|unix:host_name:port
@@ -64,7 +66,7 @@ struct id_list* parse_listen_id(char* l, int len, enum socket_protos def)
 	char* s;
 	struct id_list* id;
 	
-	s=pkg_malloc((len+1)*sizeof(char));
+	s=ctl_malloc((len+1)*sizeof(char));
 	if (s==0){
 		LOG(L_ERR, "ERROR:parse_listen_id: out of memory\n");
 		goto error;
@@ -192,7 +194,7 @@ end:
 			}
 		}
 	}
-	id=pkg_malloc(sizeof(struct id_list));
+	id=ctl_malloc(sizeof(struct id_list));
 	if (id==0){
 		LOG(L_ERR, "ERROR:parse_listen_id: out of memory\n");
 		goto error;
@@ -205,7 +207,7 @@ end:
 	id->next=0;
 	return id;
 error:
-	if (s) pkg_free(s);
+	if (s) ctl_free(s);
 	return 0;
 }
 
@@ -213,7 +215,7 @@ error:
 void free_id_list_elem(struct id_list* id)
 {
 	if (id->buf){
-		pkg_free(id->buf);
+		ctl_free(id->buf);
 		id->buf=0;
 	}
 }
@@ -225,7 +227,7 @@ void free_id_list(struct id_list* l)
 	for (;l; l=nxt){
 		nxt=l->next;
 		free_id_list_elem(l);
-		pkg_free(l);
+		ctl_free(l);
 	}
 }
 
@@ -271,7 +273,7 @@ int init_ctrl_sockets(struct ctrl_socket** c_lst, struct id_list* lst,
 		}
 		if (s==-1) goto error;
 		/* add listener */
-		cs=pkg_malloc(sizeof(struct ctrl_socket));
+		cs=ctl_malloc(sizeof(struct ctrl_socket));
 		if (cs==0){
 			LOG(L_ERR, "ERROR: init_ctrl_listeners: out of memory\n");
 			goto error;
@@ -302,7 +304,7 @@ void free_ctrl_socket_list(struct ctrl_socket* l)
 	for (;l; l=nxt){
 		nxt=l->next;
 		if (l->data)
-			pkg_free(l->data);
-		pkg_free(l);
+			ctl_free(l->data);
+		ctl_free(l);
 	}
 }

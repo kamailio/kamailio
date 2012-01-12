@@ -46,6 +46,7 @@
 #endif
 
 #include "io_listener.h"
+#include "ctl.h"
 
 #define HANDLE_IO_INLINE
 #include "../../io_wait.h"
@@ -106,7 +107,7 @@ static struct stream_connection* s_conn_new(int sock,
 {
 	struct stream_connection* s_c;
 	
-	s_c=pkg_malloc(sizeof(struct stream_connection));
+	s_c=ctl_malloc(sizeof(struct stream_connection));
 	if (s_c){
 		memset(s_c, 0, sizeof(struct stream_connection));
 		s_c->fd=sock;
@@ -129,7 +130,7 @@ static struct stream_connection* s_conn_new(int sock,
 inline static void s_conn_rm(struct stream_connection* sc)
 {
 	clist_rm(sc, next, prev);
-	pkg_free(sc);
+	ctl_free(sc);
 	io_read_connections--;
 }
 

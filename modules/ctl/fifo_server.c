@@ -55,7 +55,7 @@
  * History:
  * --------
  *  2003-03-29  destroy pkg mem introduced (jiri)
- *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-03-19  replaced all mallocs/frees w/ ctl_malloc/ctl_free (andrei)
  *  2003-01-29  new built-in fifo commands: arg and pwd (jiri)
  *  2003-10-07  fifo security fixes: permissions, always delete old fifo,
  *               reply fifo checks -- added fifo_check (andrei)
@@ -101,6 +101,7 @@
 #include "../../tsend.h"
 #include "fifo_server.h"
 #include "io_listener.h"
+#include "ctl.h"
 
 
 #define MAX_FIFO_COMMAND        128    /* Maximum length of a FIFO server command */
@@ -303,15 +304,15 @@ struct text_chunk* new_chunk_escape(str* src, int escape_all)
 	struct text_chunk* l;
 	if (!src) return 0;
 
-        l = pkg_malloc(sizeof(struct text_chunk));
+        l = ctl_malloc(sizeof(struct text_chunk));
 	if (!l) {
 		ERR("No Memory Left\n");
 		return 0;
 	}
-	l->s.s = pkg_malloc(src->len * 2 + 1);
+	l->s.s = ctl_malloc(src->len * 2 + 1);
 	if (!l->s.s) {
 		ERR("No Memory Left\n");
-		pkg_free(l);
+		ctl_free(l);
 		return 0;
 	}
 	l->next = 0;
@@ -331,15 +332,15 @@ struct text_chunk* new_chunk(str* src)
 	struct text_chunk* l;
 	if (!src) return 0;
 
-        l = pkg_malloc(sizeof(struct text_chunk));
+        l = ctl_malloc(sizeof(struct text_chunk));
 	if (!l) {
 		ERR("No Memory Left\n");
 		return 0;
 	}
-	l->s.s = pkg_malloc(src->len + 1);
+	l->s.s = ctl_malloc(src->len + 1);
 	if (!l->s.s) {
 		ERR("No Memory Left\n");
-		pkg_free(l);
+		ctl_free(l);
 		return 0;
 	}
 	l->next = 0;
@@ -360,22 +361,22 @@ struct text_chunk* new_chunk_unescape(str* src)
 	struct text_chunk* l;
 	if (!src) return 0;
 
-        l = pkg_malloc(sizeof(struct text_chunk));
+        l = ctl_malloc(sizeof(struct text_chunk));
 	if (!l) {
 		ERR("No Memory Left\n");
 		return 0;
 	}
-	l->s.s = pkg_malloc(src->len + 1);
+	l->s.s = ctl_malloc(src->len + 1);
 	if (!l->s.s) {
 		ERR("No Memory Left\n");
-		pkg_free(l);
+		ctl_free(l);
 		return 0;
 	}
 	l->next = 0;
 	l->flags = 0;
 	if (unescape(&l->s, src->s, src->len) < 0) {
-		pkg_free(l->s.s);
-		pkg_free(l);
+		ctl_free(l->s.s);
+		ctl_free(l);
 		return 0;
 	}
 	l->s.s[l->s.len] = '\0';
@@ -385,8 +386,8 @@ struct text_chunk* new_chunk_unescape(str* src)
 
 static void free_chunk(struct text_chunk* c)
 {
-	if (c && c->s.s) pkg_free(c->s.s);
-	if (c) pkg_free(c);
+	if (c && c->s.s) ctl_free(c->s.s);
+	if (c) ctl_free(c);
 }
 
 
@@ -407,7 +408,7 @@ static void free_struct(struct rpc_struct* s)
 		free_chunk(c);
 	}
 
-	pkg_free(s);
+	ctl_free(s);
 }
 
 
@@ -427,7 +428,7 @@ static struct rpc_struct* new_struct(rpc_ctx_t* ctx, str* line)
 		return 0;
 	}
 
-	s = (struct rpc_struct*)pkg_malloc(sizeof(struct rpc_struct));
+	s = (struct rpc_struct*)ctl_malloc(sizeof(struct rpc_struct));
 	if (!s) {
 		rpc_fault(ctx, 500, "Internal Server Error (No Memory Left)");
 		return 0;
@@ -520,8 +521,8 @@ static int read_line(char** b, int* read, struct readline_handle* rh)
  * Remove directory path from filename and replace it
  * with the path configured through a module parameter.
  * 
- * The result is allocated using pkg_malloc and thus
- * has to be freed using pkg_free
+ * The result is allocated using ctl_malloc and thus
+ * has to be freed using ctl_free
  */
 static char *trim_filename(char * file)
 {
@@ -538,7 +539,7 @@ static char *trim_filename(char * file)
 		return 0;
 	}
 	prefix_len = strlen(fifo_dir); fn_len = strlen(file);
-	new_fn = pkg_malloc(prefix_len + fn_len + 1);
+	new_fn = ctl_malloc(prefix_len + fn_len + 1);
 	if (new_fn == 0) {
 		ERR("No memory left\n");
 		return 0;
@@ -787,7 +788,7 @@ process:
 		}
 
 		if (context.reply_file) { 
-			pkg_free(context.reply_file); 
+			ctl_free(context.reply_file); 
 			context.reply_file = 0; 
 		}
 		
@@ -1218,7 +1219,7 @@ static int rpc_struct_printf(struct text_chunk* c, char* name, char* fmt, ...)
 	rpc_ctx_t* ctx;
 	
 	ctx=(rpc_ctx_t*)c->ctx;
-	buf = (char*)pkg_malloc(RPC_BUF_SIZE);
+	buf = (char*)ctl_malloc(RPC_BUF_SIZE);
 	if (!buf) {
 		rpc_fault(ctx,  500, "Internal Server Error (No memory left)");
 		ERR("No memory left\n");
@@ -1268,7 +1269,7 @@ static int rpc_struct_printf(struct text_chunk* c, char* name, char* fmt, ...)
 		} else {          /* glibc 2.0 */
 			buf_size *= 2;  /* twice the old size */
 		}
-		if ((buf = pkg_realloc(buf, buf_size)) == 0) {
+		if ((buf = ctl_realloc(buf, buf_size)) == 0) {
 			rpc_fault(ctx, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left\n");
 			goto err;
@@ -1276,7 +1277,7 @@ static int rpc_struct_printf(struct text_chunk* c, char* name, char* fmt, ...)
 	}
 	return 0;
  err:
-	if (buf) pkg_free(buf);
+	if (buf) ctl_free(buf);
 	return -1;
 }
 
@@ -1289,7 +1290,7 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 	str s;
 	struct text_chunk* l;
 
-	buf = (char*)pkg_malloc(RPC_BUF_SIZE);
+	buf = (char*)ctl_malloc(RPC_BUF_SIZE);
 	if (!buf) {
 		rpc_fault(ctx,  500, "Internal Server Error (No memory left)");
 		ERR("No memory left\n");
@@ -1313,7 +1314,7 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 				goto err;
 			}
 			append_chunk(ctx, l);
-			pkg_free(buf);
+			ctl_free(buf);
 			return 0;
 		}
 		     /* Else try again with more space. */
@@ -1322,7 +1323,7 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 		} else {          /* glibc 2.0 */
 			buf_size *= 2;  /* twice the old size */
 		}
-		if ((buf = pkg_realloc(buf, buf_size)) == 0) {
+		if ((buf = ctl_realloc(buf, buf_size)) == 0) {
 			rpc_fault(ctx, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left\n");
 			goto err;
@@ -1330,7 +1331,7 @@ static int rpc_printf(rpc_ctx_t* ctx, char* fmt, ...)
 	}
 	return 0;
  err:
-	if (buf) pkg_free(buf);
+	if (buf) ctl_free(buf);
 	return -1;
 }
 

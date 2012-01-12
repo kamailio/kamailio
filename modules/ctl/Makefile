@@ -10,6 +10,8 @@ LIBS=
 MOD_INSTALL_UTILS=../../utils/sercmd
 # fifo support
 DEFS+=-DUSE_FIFO
+# use system malloc
+DEFS+=-DCTL_SYSTEM_MALLOC
 
 DEFS+=-DSER_MOD_INTERFACE
 
