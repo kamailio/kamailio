@@ -268,7 +268,7 @@ struct tcp_conn_alias** tcpconn_aliases_hash=0;
 struct tcp_connection** tcpconn_id_hash=0;
 gen_lock_t* tcpconn_lock=0;
 
-struct tcp_child* tcp_children;
+struct tcp_child* tcp_children=0;
 static int* connection_id=0; /*  unique for each connection, used for 
 								quickly finding the corresponding connection
 								for a reply */
@@ -282,6 +282,12 @@ static io_wait_h io_h;
 static struct local_timer tcp_main_ltimer;
 static ticks_t tcp_main_prev_ticks;
 
+/* tell if there are tcp workers that should handle only specific socket
+ * - used to optimize the search of least loaded worker for a tcp socket
+ * - 0 - no workers per tcp sockets have been set
+ * - 1 + generic_workers - when there are workers per tcp sockets
+ */
+static int tcp_sockets_gworkers = 0;
 
 static ticks_t tcpconn_main_timeout(ticks_t , struct timer_ln* , void* );
 
@@ -3890,24 +3896,63 @@ inline static int send2child(struct tcp_connection* tcpconn)
 	int i;
 	int min_busy;
 	int idx;
+	int wfirst;
+	int wlast;
 	static int crt=0; /* current child */
 	int last;
 	
-	min_busy=tcp_children[0].busy;
-	idx=0;
-	last=crt+tcp_children_no;
-	for (; crt<last; crt++){
-		i=crt%tcp_children_no;
-		if (!tcp_children[i].busy){
-			idx=i;
-			min_busy=0;
-			break;
-		}else if (min_busy>tcp_children[i].busy){
-			min_busy=tcp_children[i].busy;
-			idx=i;
+	if(likely(tcp_sockets_gworkers==0)) {
+		/* no child selection based on received socket
+		 * - use least loaded over all */
+		min_busy=tcp_children[0].busy;
+		idx=0;
+		last=crt+tcp_children_no;
+		for (; crt<last; crt++){
+			i=crt%tcp_children_no;
+			if (!tcp_children[i].busy){
+				idx=i;
+				min_busy=0;
+				break;
+			}else if (min_busy>tcp_children[i].busy){
+				min_busy=tcp_children[i].busy;
+				idx=i;
+			}
+		}
+		crt=idx+1; /* next time we start with crt%tcp_children_no */
+	} else {
+		/* child selection based on received socket
+		 * - use least loaded per received socket, starting with the first
+		 *   in its group */
+		if(tcpconn->rcv.bind_address->workers>0) {
+			wfirst = tcpconn->rcv.bind_address->workers_tcpidx;
+			wlast = wfirst + tcpconn->rcv.bind_address->workers;
+			LM_DBG("===== checking per-socket specific workers (%d/%d..%d/%d) [%s]\n",
+					tcp_children[wfirst].pid, tcp_children[wfirst].proc_no,
+					tcp_children[wlast-1].pid, tcp_children[wlast-1].proc_no,
+					tcpconn->rcv.bind_address->sock_str.s);
+		} else {
+			wfirst = 0;
+			wlast = tcp_sockets_gworkers - 1;
+			LM_DBG("+++++ checking per-socket generic workers (%d/%d..%d/%d) [%s]\n",
+					tcp_children[wfirst].pid, tcp_children[wfirst].proc_no,
+					tcp_children[wlast-1].pid, tcp_children[wlast-1].proc_no,
+					tcpconn->rcv.bind_address->sock_str.s);
+		}
+		idx = wfirst;
+		min_busy = tcp_children[idx].busy;
+		for(i=wfirst; i<wlast; i++) {
+			if (!tcp_children[i].busy){
+				idx=i;
+				min_busy=0;
+				break;
+			} else {
+				if (min_busy>tcp_children[i].busy) {
+					min_busy=tcp_children[i].busy;
+					idx=i;
+				}
+			}
 		}
 	}
-	crt=idx+1; /* next time we start with crt%tcp_children_no */
 	
 	tcp_children[idx].busy++;
 	tcp_children[idx].n_reqs++;
@@ -3916,9 +3961,9 @@ inline static int send2child(struct tcp_connection* tcpconn)
 				" connection passed to the least busy one (%d)\n",
 				min_busy);
 	}
-	DBG("send2child: to tcp child %d %d(%ld), %p\n", idx, 
-					tcp_children[idx].proc_no,
-					(long)tcp_children[idx].pid, tcpconn);
+	LM_DBG("selected tcp worker %d %d(%ld) for activity on [%s], %p\n",
+			idx, tcp_children[idx].proc_no, (long)tcp_children[idx].pid,
+			tcpconn->rcv.bind_address->sock_str.s, tcpconn);
 	/* first make sure this child doesn't have pending request for
 	 * tcp_main (to avoid a possible deadlock: e.g. child wants to
 	 * send a release command, but the master fills its socket buffer
@@ -4838,9 +4883,10 @@ int tcp_fix_child_sockets(int* fd)
 /* starts the tcp processes */
 int tcp_init_children()
 {
-	int r;
+	int r, i;
 	int reader_fd_1; /* for comm. with the tcp children read  */
 	pid_t pid;
+	char si_desc[MAX_PT_DESC];
 	struct socket_info *si;
 	
 	/* estimate max fd. no:
@@ -4867,13 +4913,32 @@ int tcp_init_children()
 			LOG(L_ERR, "ERROR: tcp_init_children: out of memory\n");
 			goto error;
 	}
+	memset(tcp_children, 0, sizeof(struct tcp_child)*tcp_children_no);
+	/* assign own socket for tcp workers, if it is the case
+	 * - add them from end to start of tcp children array
+	 * - thus, have generic tcp workers at beginning */
+	i = tcp_children_no-1;
+	for(si=tcp_listen; si; si=si->next) {
+		if(si->workers>0) {
+			si->workers_tcpidx = i - si->workers + 1;
+			for(r=0; r<si->workers; r++) {
+				tcp_children[i].mysocket = si;
+				i--;
+			}
+		}
+	}
+	tcp_sockets_gworkers = (i != tcp_children_no-1)?(1 + i + 1):0;
+
 	/* create the tcp sock_info structures */
 	/* copy the sockets --moved to main_loop*/
 	
 	/* fork children & create the socket pairs*/
 	for(r=0; r<tcp_children_no; r++){
 		child_rank++;
-		pid=fork_tcp_process(child_rank, "tcp receiver", r, &reader_fd_1);
+		snprintf(si_desc, MAX_PT_DESC, "tcp receiver (%s)",
+				(tcp_children[r].mysocket!=NULL)?
+					tcp_children[r].mysocket->sock_str.s:"generic");
+		pid=fork_tcp_process(child_rank, si_desc, r, &reader_fd_1);
 		if (pid<0){
 			LOG(L_ERR, "ERROR: tcp_main: fork failed: %s\n",
 					strerror(errno));

@@ -116,6 +116,8 @@ struct socket_info{
 	char proto; /* tcp or udp*/
 	str sock_str; /* Socket proto, ip, and port as string */
 	struct addr_info* addr_info_lst; /* extra addresses (e.g. SCTP mh) */
+	int workers; /* number of worker processes for this socket */
+	int workers_tcpidx; /* index of workers in tcp children array */
 };
 
 

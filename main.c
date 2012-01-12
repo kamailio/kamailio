@@ -341,9 +341,12 @@ unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
 												  be re-configured */
 unsigned int sql_buffer_size = 65535; /* Size for the SQL buffer. Defaults to 64k. 
                                          This may be re-configured */
-int children_no = 0;			/* number of children processing requests */
+int socket_workers = 0;		/* number of workers processing requests for a socket
+							   - it's reset everytime with a new listen socket */
+int children_no = 0;		/* number of children processing requests */
 #ifdef USE_TCP
-int tcp_children_no = 0;
+int tcp_cfg_children_no = 0; /* set via config or command line option */
+int tcp_children_no = 0; /* based on socket_workers and tcp_cfg_children_no */
 int tcp_disable = 0; /* 1 if tcp is disabled */
 #endif
 #ifdef USE_TLS
@@ -1265,6 +1268,7 @@ int main_loop()
 #ifdef EXTRA_DEBUG
 	int r;
 #endif
+	int nrprocs;
 
 	/* one "main" process and n children handling i/o */
 	if (dont_fork){
@@ -1453,7 +1457,7 @@ int main_loop()
 				sendipv6=si;
 	#endif
 			/* children_no per each socket */
-			cfg_register_child(children_no);
+			cfg_register_child((si->workers>0)?si->workers:children_no);
 		}
 #ifdef USE_RAW_SOCKS
 		/* always try to have a raw socket opened if we are using ipv4 */
@@ -1507,7 +1511,7 @@ int main_loop()
 					sendipv6_sctp=si;
 		#endif
 				/* sctp_children_no per each socket */
-				cfg_register_child(sctp_children_no);
+				cfg_register_child((si->workers>0)?si->workers:sctp_children_no);
 			}
 		}
 #endif /* USE_SCTP */
@@ -1589,7 +1593,8 @@ int main_loop()
 
 		/* udp processes */
 		for(si=udp_listen; si; si=si->next){
-			for(i=0;i<children_no;i++){
+			nrprocs = (si->workers>0)?si->workers:children_no;
+			for(i=0;i<nrprocs;i++){
 				if(si->address.af==AF_INET6) {
 					snprintf(si_desc, MAX_PT_DESC, "udp receiver child=%d "
 						"sock=[%s]:%s",
@@ -1620,7 +1625,8 @@ int main_loop()
 		/* sctp processes */
 		if (!sctp_disable){
 			for(si=sctp_listen; si; si=si->next){
-				for(i=0;i<sctp_children_no;i++){
+				nrprocs = (si->workers>0)?si->workers:sctp_children_no;
+				for(i=0;i<nrprocs;i++){
 					if(si->address.af==AF_INET6) {
 						snprintf(si_desc, MAX_PT_DESC, "sctp receiver child=%d "
 								"sock=[%s]:%s",
@@ -1762,17 +1768,33 @@ static int calc_proc_no(void)
 {
 	int udp_listeners;
 	struct socket_info* si;
+#ifdef USE_TCP
+	int tcp_listeners;
+	int tcp_e_listeners;
+#endif
 #ifdef USE_SCTP
 	int sctp_listeners;
 #endif
 
-	for (si=udp_listen, udp_listeners=0; si; si=si->next, udp_listeners++);
+	for (si=udp_listen, udp_listeners=0; si; si=si->next)
+		udp_listeners += (si->workers>0)?si->workers:children_no;
+#ifdef USE_TCP
+	for (si=tcp_listen, tcp_listeners=0, tcp_e_listeners=0; si; si=si->next) {
+		if(si->workers>0)
+			tcp_listeners += si->workers;
+		else
+			 tcp_e_listeners = tcp_cfg_children_no;
+	}
+	tcp_listeners += tcp_e_listeners;
+	tcp_children_no = tcp_listeners;
+#endif
 #ifdef USE_SCTP
-	for (si=sctp_listen, sctp_listeners=0; si; si=si->next, sctp_listeners++);
+	for (si=sctp_listen, sctp_listeners=0; si; si=si->next)
+		sctp_listeners += (si->workers>0)?si->workers:sctp_children_no;
 #endif
 	return
 		     /* receivers and attendant */
-		(dont_fork ? 1 : children_no * udp_listeners + 1)
+		(dont_fork ? 1 : udp_listeners + 1)
 		     /* timer process */
 		+ 1 /* always, we need it in most cases, and we can't tell here
 		       & now if we don't need it */
@@ -1780,10 +1802,10 @@ static int calc_proc_no(void)
 		+ 1 /* slow timer process */
 #endif
 #ifdef USE_TCP
-		+((!tcp_disable)?( 1/* tcp main */ + tcp_children_no ):0)
+		+((!tcp_disable)?( 1/* tcp main */ + tcp_listeners ):0)
 #endif
 #ifdef USE_SCTP
-		+((!sctp_disable)?sctp_children_no*sctp_listeners:0)
+		+((!sctp_disable)?sctp_listeners:0)
 #endif
 		;
 }
@@ -2142,7 +2164,7 @@ try_again:
 					break;
 			case 'N':
 				#ifdef USE_TCP
-					tcp_children_no=strtol(optarg, &tmp, 10);
+					tcp_cfg_children_no=strtol(optarg, &tmp, 10);
 					if ((tmp==0) ||(*tmp)){
 						fprintf(stderr, "bad process number: -N %s\n",
 									optarg);
@@ -2274,7 +2296,8 @@ try_again:
 	if (children_no<=0) children_no=CHILD_NO;
 #ifdef USE_TCP
 	if (!tcp_disable){
-		if (tcp_children_no<=0) tcp_children_no=children_no;
+		if (tcp_cfg_children_no<=0) tcp_cfg_children_no=children_no;
+		tcp_children_no = tcp_cfg_children_no;
 	}
 #endif
 #ifdef USE_SCTP

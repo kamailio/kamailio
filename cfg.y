@@ -443,6 +443,7 @@ extern char *finame;
 %token PORT
 %token STAT
 %token CHILDREN
+%token SOCKET_WORKERS
 %token CHECK_VIA
 %token PHONE2TEL
 %token SYN_BRANCH
@@ -938,6 +939,8 @@ assign_stm:
 	| PORT EQUAL error    { yyerror("number expected"); }
 	| CHILDREN EQUAL NUMBER { children_no=$3; }
 	| CHILDREN EQUAL error { yyerror("number expected"); }
+	| SOCKET_WORKERS EQUAL NUMBER { socket_workers=$3; }
+	| SOCKET_WORKERS EQUAL error { yyerror("number expected"); }
 	| CHECK_VIA EQUAL NUMBER { check_via=$3; }
 	| CHECK_VIA EQUAL error { yyerror("boolean value expected"); }
 	| PHONE2TEL EQUAL NUMBER { phone2tel=$3; }
@@ -998,7 +1001,7 @@ assign_stm:
 	| TCP_ACCEPT_ALIASES EQUAL error { yyerror("boolean value expected"); }
 	| TCP_CHILDREN EQUAL NUMBER {
 		#ifdef USE_TCP
-			tcp_children_no=$3;
+			tcp_cfg_children_no=$3;
 		#else
 			warn("tcp support not compiled in");
 		#endif

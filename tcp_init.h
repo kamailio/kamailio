@@ -50,6 +50,7 @@ struct tcp_child{
 	int proc_no; /* ser proc_no, for debugging */
 	int unix_sock; /* unix "read child" sock fd */
 	int busy;
+	struct socket_info *mysocket; /* listen socket to handle traffic on it */
 	int n_reqs; /* number of requests serviced so far */
 };
 

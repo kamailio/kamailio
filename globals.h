@@ -88,8 +88,10 @@ extern struct socket_info* sendipv6_sctp; /* same as above for ipv6 */
 extern unsigned int maxbuffer;
 extern unsigned int sql_buffer_size;
 extern int children_no;
+extern int socket_workers;
 #ifdef USE_TCP
 extern int tcp_main_pid;
+extern int tcp_cfg_children_no;
 extern int tcp_children_no;
 extern int tcp_disable;
 extern enum poll_types tcp_poll_method;

@@ -622,6 +622,10 @@ static struct socket_info* new_sock2list(char* name, struct name_lst* addr_l,
 		LOG(L_ERR, "ERROR: new_sock2list: new_sock_info failed\n");
 		goto error;
 	}
+	if(socket_workers>0) {
+		si->workers = socket_workers;
+		socket_workers = 0;
+	}
 	sock_listadd(list, si);
 	return si;
 error:
