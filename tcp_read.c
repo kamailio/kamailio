@@ -79,6 +79,7 @@
 #include "timer.h"
 #include "local_timer.h"
 #include "ut.h"
+#include "trim.h"
 #include "pt.h"
 #include "cfg/cfg_struct.h"
 #ifdef CORE_TLS
@@ -170,6 +171,11 @@ int tcp_http11_continue(struct tcp_connection *c)
 
 	msg.s = c->req.start;
 	msg.len = c->req.pos - c->req.start;
+#ifdef READ_MSRP
+	/* skip if MSRP message */
+	if(c->req.flags&F_TCP_REQ_MSRP_FRAME)
+		return 0;
+#endif
 	p = parse_first_line(msg.s, msg.len, &fline);
 	if(p==NULL)
 		return 0;
@@ -366,12 +372,17 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 	int bytes, remaining;
 	char *p;
 	struct tcp_req* r;
-	
+
 #ifdef USE_STUN
 	unsigned int mc;   /* magic cookie */
 	unsigned short body_len;
 #endif
-	
+
+#ifdef READ_MSRP
+	char *mfline;
+	str msessid;
+#endif
+
 	#define crlf_default_skip_case \
 					case '\n': \
 						r->state=H_LF; \
@@ -446,6 +457,19 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 				 * in anything till end of line*/
 				p=q_memchr(p, '\n', r->pos-p);
 				if (p){
+#ifdef READ_MSRP
+					/* catch if it is MSRP or not with first '\n' */
+					if(!((r->flags&F_TCP_REQ_MSRP_NO)
+								|| (r->flags&F_TCP_REQ_MSRP_FRAME))) {
+						if((r->pos - r->start)>5
+									&& strncmp(r->start, "MSRP ", 5)==0)
+						{
+							r->flags |= F_TCP_REQ_MSRP_FRAME;
+						} else {
+							r->flags |= F_TCP_REQ_MSRP_NO;
+						}
+					}
+#endif
 					p++;
 					r->state=H_LF;
 				}else{
@@ -476,6 +500,18 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 							r->error=TCP_REQ_BAD_LEN;
 						}
 						break;
+					case '-':
+						r->state=H_SKIP;
+#ifdef READ_MSRP
+						/* catch end of MSRP frame without body
+						 *     '-------sessid$\r\n'
+						 * follows headers wihtout extra CRLF */
+						if(r->flags&F_TCP_REQ_MSRP_FRAME) {
+							p--;
+							r->state=H_MSRP_BODY_END;
+						}
+#endif
+						break;
 					content_len_beg_case;
 					default: 
 						r->state=H_SKIP;
@@ -500,6 +536,20 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 						}
 					}else{
 						if (cfg_get(tcp, tcp_cfg, accept_no_cl)!=0) {
+#ifdef READ_MSRP
+							/* if MSRP message */
+							if(c->req.flags&F_TCP_REQ_MSRP_FRAME)
+							{
+								r->body=p+1;
+								/* at least 3 bytes: 0\r\n */
+								r->bytes_to_go=3;
+								p++;
+								r->content_len = 0;
+								r->state=H_MSRP_BODY;
+								break;
+							}
+#endif
+
 #ifdef READ_HTTP11
 							if(TCP_REQ_BCHUNKED(r)) {
 								r->body=p+1;
@@ -851,6 +901,82 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 				p++;
 				break;
 #endif
+#ifdef READ_MSRP
+			case H_MSRP_BODY: /* body of msrp frame */
+				/* find lf, we are in this state if we are not interested
+				 * in anything till end of line*/
+				r->flags |= F_TCP_REQ_MSRP_BODY;
+				p = q_memchr(p, '\n', r->pos-p);
+				if (p) {
+					p++;
+					r->state=H_MSRP_BODY_LF;
+				} else {
+					p=r->pos;
+				}
+				break;
+			case H_MSRP_BODY_LF: /* LF in body of msrp frame */
+				switch (*p) {
+					case '-':
+							p--;
+							r->state=H_MSRP_BODY_END;
+						break;
+					default:
+						r->state=H_MSRP_BODY;
+				}
+				p++;
+				break;
+			case H_MSRP_BODY_END: /* end of body for msrp frame */
+				/* find LF and check if it is end-line */
+				p = q_memchr(p, '\n', r->pos-p);
+				if (p) {
+					/* check if it is end line '-------sessid$\r\n' */
+					if(r->pos - r->start < 10) {
+						LM_ERR("weird situation when reading MSRP frame"
+								" - continue reading\n");
+						p++;
+						r->state=H_MSRP_BODY;
+						break;
+					}
+					if(*(p-1)!='\r') {
+						/* not ending in '\r\n' - not end-line */
+						p++;
+						r->state=H_MSRP_BODY;
+						break;
+					}
+					/* locate session id in first line
+					 * -- first line exists, that's why we are here */
+					mfline =  q_memchr(r->start, '\n', r->pos-r->start);
+					msessid.s = q_memchr(r->start + 5 /* 'MSRP ' */, ' ',
+							mfline - r->start);
+					msessid.len = msessid.s - r->start - 5;
+					msessid.s = r->start + 5;
+					trim(&msessid);
+					if(memcmp(msessid.s,
+							p - 1 /*\r*/ - 1 /* '+'|'#'|'$' */ - msessid.len,
+							msessid.len)!=0) {
+						/* no match on session id - not end-line */
+						p++;
+						r->state=H_MSRP_BODY;
+						break;
+					}
+					if(memcmp(p - 1 /*\r*/ - 1 /* '+'|'#'|'$' */ - msessid.len
+								- 7 /* 7 x '-' */ - 1 /* '\n' */, "\n-------",
+								8)!=0) {
+						/* no match on "\n-------" - not end-line */
+						p++;
+						r->state=H_MSRP_BODY;
+						break;
+					}
+					r->state=H_MSRP_FINISH;
+					r->flags|=F_TCP_REQ_COMPLETE;
+					p++;
+					goto skip;
+
+				} else {
+					p=r->pos;
+				}
+				break;
+#endif
 
 			default:
 				LOG(L_CRIT, "BUG: tcp_read_headers: unexpected state %d\n",
@@ -864,6 +990,15 @@ skip:
 }
 
 
+#ifdef READ_MSRP
+int msrp_process_msg(char* tcpbuf, unsigned int len,
+		struct receive_info* rcv_info, struct tcp_connection* con)
+{
+	LM_DBG("MSRP Message: [[>>>\n%.*s<<<]]\n", len, tcpbuf);
+	return 0;
+}
+#endif
+
 /**
  * @brief wrapper around receive_msg() to clone the tcpbuf content
  *
@@ -872,7 +1007,8 @@ skip:
  * the content of the stream. Safer, make a clone of buf content in a local
  * buffer and give that to receive_msg() to link to msg->buf
  */
-int receive_tcp_msg(char* tcpbuf, unsigned int len, struct receive_info* rcv_info)
+int receive_tcp_msg(char* tcpbuf, unsigned int len,
+		struct receive_info* rcv_info, struct tcp_connection* con)
 {
 #ifdef TCP_CLONE_RCVBUF
 #ifdef DYN_BUF
@@ -884,8 +1020,13 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len, struct receive_info* rcv_inf
 	int blen;
 
 	/* cloning is disabled via parameter */
-	if(likely(tcp_clone_rcvbuf==0))
+	if(likely(tcp_clone_rcvbuf==0)) {
+#ifdef READ_MSRP
+		if(unlikely(con->req.flags&F_TCP_REQ_MSRP_FRAME))
+			return msrp_process_msg(tcpbuf, len, rcv_info, con);
+#endif
 		return receive_msg(tcpbuf, len, rcv_info);
+	}
 
 	/* min buffer size is BUF_SIZE */
 	blen = len;
@@ -923,8 +1064,16 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len, struct receive_info* rcv_inf
 
 	memcpy(buf, tcpbuf, len);
 	buf[len] = '\0';
+#ifdef READ_MSRP
+	if(unlikely(con->req.flags&F_TCP_REQ_MSRP_FRAME))
+		return msrp_process_msg(buf, len, rcv_info, con);
+#endif
 	return receive_msg(buf, len, rcv_info);
 #else /* TCP_CLONE_RCVBUF */
+#ifdef READ_MSRP
+	if(unlikely(con->req.flags&F_TCP_REQ_MSRP_FRAME))
+		return msrp_process_msg(tcpbuf, len, rcv_info, con);
+#endif
 	return receive_msg(tcpbuf, len, rcv_info);
 #endif /* TCP_CLONE_RCVBUF */
 }
@@ -1046,17 +1195,25 @@ again:
 									 &con->rcv);
 			}else
 #endif
+#ifdef READ_MSRP
+			// if (unlikely(req->flags&F_TCP_REQ_MSRP_FRAME)){
+			if (unlikely(req->state==H_MSRP_FINISH)){
+				/* msrp frame */
+				ret = receive_tcp_msg(req->start, req->parsed-req->start,
+									&con->rcv, con);
+			}else
+#endif
 #ifdef READ_HTTP11
 			if (unlikely(req->state==H_HTTP11_CHUNK_FINISH)){
 				/* http chunked request */
 				req->body[req->content_len] = 0;
 				ret = receive_tcp_msg(req->start,
 						req->body + req->content_len - req->start,
-						&con->rcv);
+						&con->rcv, con);
 			}else
 #endif
 				ret = receive_tcp_msg(req->start, req->parsed-req->start,
-									&con->rcv);
+									&con->rcv, con);
 				
 			if (unlikely(ret < 0)) {
 				*req->parsed=c;
