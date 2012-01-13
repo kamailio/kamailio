@@ -342,6 +342,14 @@ struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
 									union sockaddr_union* local_addr,
 									ticks_t timeout);
 
+typedef struct tcp_event_info {
+	int type;
+	char *buf;
+	unsigned int len;
+	struct receive_info *rcv;
+	struct tcp_connection *con;
+} tcp_event_info_t;
+
 #endif
 
 

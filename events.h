@@ -30,6 +30,9 @@
 #define SREV_PKG_SET_USED		5
 #define SREV_PKG_SET_REAL_USED	6
 #define SREV_NET_DGRAM_IN		7
+#define SREV_TCP_HTTP_100C		8
+#define SREV_TCP_MSRP_FRAME		9
+
 
 typedef int (*sr_event_cb_f)(void *data);
 
@@ -41,6 +44,8 @@ typedef struct sr_event_cb {
 	sr_event_cb_f pkg_set_used;
 	sr_event_cb_f pkg_set_real_used;
 	sr_event_cb_f net_dgram_in;
+	sr_event_cb_f tcp_http_100c;
+	sr_event_cb_f tcp_msrp_frame;
 } sr_event_cb_t;
 
 void sr_event_cb_init(void);

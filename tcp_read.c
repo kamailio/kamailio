@@ -96,6 +96,7 @@
 #include <fcntl.h> /* must be included after io_wait.h if SIGIO_RT is used */
 #include "tsend.h"
 #include "forward.h"
+#include "events.h"
 
 #ifdef USE_STUN
 #include "ser_stun.h"
@@ -994,8 +995,23 @@ skip:
 int msrp_process_msg(char* tcpbuf, unsigned int len,
 		struct receive_info* rcv_info, struct tcp_connection* con)
 {
+	int ret;
+	tcp_event_info_t tev;
+
+	ret = 0;
 	LM_DBG("MSRP Message: [[>>>\n%.*s<<<]]\n", len, tcpbuf);
-	return 0;
+	if(likely(sr_event_enabled(SREV_TCP_MSRP_FRAME))) {
+		memset(&tev, 0, sizeof(tcp_event_info_t));
+		tev.type = SREV_TCP_MSRP_FRAME;
+		tev.buf = tcpbuf;
+		tev.len = len;
+		tev.rcv = rcv_info;
+		tev.con = con;
+		ret = sr_event_exec(SREV_TCP_MSRP_FRAME, (void*)(&tev));
+	} else {
+		LM_DBG("no callback registering for handling MSRP - dropping!\n");
+	}
+	return ret;
 }
 #endif
 

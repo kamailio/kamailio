@@ -86,6 +86,16 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 					_sr_events_list.net_dgram_in = f;
 				else return -1;
 			break;
+		case SREV_TCP_HTTP_100C:
+				if(_sr_events_list.tcp_http_100c==0)
+					_sr_events_list.tcp_http_100c = f;
+				else return -1;
+			break;
+		case SREV_TCP_MSRP_FRAME:
+				if(_sr_events_list.tcp_msrp_frame==0)
+					_sr_events_list.tcp_msrp_frame = f;
+				else return -1;
+			break;
 		default:
 			return -1;
 	}
@@ -165,6 +175,18 @@ int sr_event_exec(int type, void *data)
 					ret = _sr_events_list.net_dgram_in(data);
 					return ret;
 				} else return 1;
+		case SREV_TCP_HTTP_100C:
+				if(unlikely(_sr_events_list.tcp_http_100c!=0))
+				{
+					ret = _sr_events_list.tcp_http_100c(data);
+					return ret;
+				} else return 1;
+		case SREV_TCP_MSRP_FRAME:
+				if(unlikely(_sr_events_list.tcp_msrp_frame!=0))
+				{
+					ret = _sr_events_list.tcp_msrp_frame(data);
+					return ret;
+				} else return 1;
 		default:
 			return -1;
 	}
@@ -190,6 +212,10 @@ int sr_event_enabled(int type)
 				return (_sr_events_list.pkg_set_real_used!=0)?1:0;
 		case SREV_NET_DGRAM_IN:
 				return (_sr_events_list.net_dgram_in!=0)?1:0;
+		case SREV_TCP_HTTP_100C:
+				return (_sr_events_list.tcp_http_100c!=0)?1:0;
+		case SREV_TCP_MSRP_FRAME:
+				return (_sr_events_list.tcp_msrp_frame!=0)?1:0;
 	}
 	return 0;
 }
