@@ -381,7 +381,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 
 #ifdef READ_MSRP
 	char *mfline;
-	str msessid;
+	str mtransid;
 #endif
 
 	#define crlf_default_skip_case \
@@ -944,23 +944,23 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 						r->state=H_MSRP_BODY;
 						break;
 					}
-					/* locate session id in first line
+					/* locate transaction id in first line
 					 * -- first line exists, that's why we are here */
 					mfline =  q_memchr(r->start, '\n', r->pos-r->start);
-					msessid.s = q_memchr(r->start + 5 /* 'MSRP ' */, ' ',
+					mtransid.s = q_memchr(r->start + 5 /* 'MSRP ' */, ' ',
 							mfline - r->start);
-					msessid.len = msessid.s - r->start - 5;
-					msessid.s = r->start + 5;
-					trim(&msessid);
-					if(memcmp(msessid.s,
-							p - 1 /*\r*/ - 1 /* '+'|'#'|'$' */ - msessid.len,
-							msessid.len)!=0) {
+					mtransid.len = mtransid.s - r->start - 5;
+					mtransid.s = r->start + 5;
+					trim(&mtransid);
+					if(memcmp(mtransid.s,
+							p - 1 /*\r*/ - 1 /* '+'|'#'|'$' */ - mtransid.len,
+							mtransid.len)!=0) {
 						/* no match on session id - not end-line */
 						p++;
 						r->state=H_MSRP_BODY;
 						break;
 					}
-					if(memcmp(p - 1 /*\r*/ - 1 /* '+'|'#'|'$' */ - msessid.len
+					if(memcmp(p - 1 /*\r*/ - 1 /* '+'|'#'|'$' */ - mtransid.len
 								- 7 /* 7 x '-' */ - 1 /* '\n' */, "\n-------",
 								8)!=0) {
 						/* no match on "\n-------" - not end-line */
