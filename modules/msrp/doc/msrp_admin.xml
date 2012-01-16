@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides a MSRP routing engike, a.k.a. MSRP relay.
+		MSRP (Message Session Relay Protocol) is defined by RFC4975,
+		the extensions for a MSRP Relay being covered in RFC4976.
+	</para>
+	<para>
+		A typical use of MSRP is to do Instant Messaging sessions initiated
+		via SIP. Unlike page-mode instant messaging, which is done via SIP
+		request MESSAGE, MSRP uses a different communication channel, which
+		is negotiated via INVITE-200OK-ACK.
+	</para>
+	<para>
+		However, MSRP is still a text based protocol, using several routing
+		mechanisms which are similar with what exists in SIP. Furthermore,
+		MSRP requres TCP (and recommends TLS for confidentiality and security).
+		Considering scalability and perormances of &kamailio; for handling
+		TCP/TLS, this module reuses &kamailio;'s core framework to
+		offer MSRP routing capabilities. Along with embedded Presence and XCAP
+		servers, &kamailio; offers now a complete solution for SIP beyond VoIP.
+	</para>
+	<para>
+		One of the main benefits with the new module, is the ability to reuse
+		all the other extensions that exist in the SIP server, from accounting,
+		authentication, authorization to database connectors, security and
+		DoS attacks protections.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>sipmsg</varname> (int)</title>
+		<para>
+			If 1, the module will build a SIP message from MSRP frame headers,
+			providing it to event_route[msrp:frame-in]. The all the config
+			file functions (apart of SIP request relaying) that can be used
+			in a request route block can be used in msrp event_route.
+		</para>
+		<para>
+		<emphasis>
+			Default value is '1'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sipmsg</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msrp", "sipmsg", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">msrp_relay()</function>
+	    </title>
+	    <para>
+			Relay MSRP frame according to To-Path. It has to be executed
+			for each MSRP request or reply that has to be forwarded. Note
+			that due to nature of MSRP transport layer which is reliable
+			(TCP/TLS), there is no retransmission of MSRP frames.
+		</para>
+
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msrp</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[msrp:frame-in] {
+    msrp_relay();
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">msrp_reply(code, text [, hdrs])</function>
+	    </title>
+	    <para>
+		Send a reply for current MSRP request, adding optional headers.
+		</para>
+		<para>
+		The parameter can be pseudo-variable.
+		</para>
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msrp_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[msrp:frame-in] {
+    msrp_reply("403", "Not allowed");
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">msrp_is_request()</function>
+	    </title>
+	    <para>
+			Return true if the MSRP frame is a request.
+		</para>
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msrp_is_request</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[msrp:frame-in] {
+    if(msrp_is_request())
+    {
+        msrp_relay();
+        exit;
+    }
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+
+	<section>
+	    <title>
+		<function moreinfo="none">msrp_is_reply()</function>
+	    </title>
+	    <para>
+			Return true if the MSRP frame is a reply.
+		</para>
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msrp_is_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[msrp:frame-in] {
+    if(msrp_is_reply())
+    {
+        msrp_relay();
+        exit;
+    }
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">msrp_set_dst(addr, sock)</function>
+	    </title>
+	    <para>
+		Set destination attributes: addr - target address as MSRP URI;
+		sock - local socket to be used (format 'proto:ip:port').
+		</para>
+		<para>
+		The parameter can be pseudo-variable.
+		</para>
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msrp_set_dst</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[msrp:frame-in] {
+    ...
+    msrp_set_dst("msrp://127.0.0.1:8000", "tcp:127.0.0.1:5060");
+    ...
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">msrp_relay_flags(flags)</function>
+	    </title>
+	    <para>
+		Set transport layer sending flags for forwarding current MSRP frame;
+		flags - a bitmask of flags - 1 (don't create a new connection), 2
+		(close connection after send).
+		</para>
+		<para>
+		The parameter can be pseudo-variable.
+		</para>
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msrp_relay_flags</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[msrp:frame-in] {
+    ...
+    msrp_relay_flags("1");
+    ...
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">msrp_reply_flags(flags)</function>
+	    </title>
+	    <para>
+		Set transport layer sending flags for replies to current MSRP frame;
+		flags - a bitmask of flags - 1 (don't create a new connection),
+		2 (close connection after send).
+		</para>
+		<para>
+		The parameter can be pseudo-variable.
+		</para>
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msrp_reply_flags</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[msrp:frame-in] {
+    ...
+    msrp_reply_flags("1");
+    ...
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+	<section>
+		<title>Pseudo Variables</title>
+		<para>
+			The module exports a pseudo-variables class $msrp(key) to access
+			the MSRP frame (e.g., first line attributes, body, all frame
+			content).
+		</para>
+		<para>
+			The module exports a transformations class 'msrpuri' to be able
+			to access attributes of a MSRP URI.
+		</para>
+		<para>
+			These are documented in the appropriate Wiki pages hosted by the
+			project's web site.
+		</para>
+	</section>
+
+	<section>
+		<title>Event Routes</title>
+		<para>
+			For each MSRP frame received from the network, the module executes
+			event_route[msrp:frame-in] block in the config file.
+		</para>
+	</section>
+
+	<section>
+		<title>Usage</title>
+		<para>
+			Example routing block for MSRP frames.
+		</para>
+		<example>
+		<title>Event Route</title>
+		<programlisting format="linespecific">
+...
+<![CDATA[
+#!KAMAILIO
+
+debug=2
+memdbg=5
+memlog=5
+
+children=4
+
+log_stderror=yes
+auto_aliases=no
+
+tcp_accept_no_cl=yes
+tcp_connection_lifetime=1810
+
+listen=127.0.0.1:5060
+
+mpath="modules_k/:modules/"
+
+loadmodule "sl.so"
+loadmodule "kex.so"
+loadmodule "mi_fifo.so"
+loadmodule "ctl.so"
+loadmodule "msrp.so"
+loadmodule "pv.so"
+loadmodule "auth.so"
+loadmodule "cfgutils.so"
+loadmodule "htable.so"
+loadmodule "xlog.so"
+
+# ----- mi_fifo params -----
+modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
+
+modparam("htable", "htable", "c=>size=8;autoexpire=1800;")
+
+request_route {
+	sl_send_reply("403", "No SIP Here");
+	exit;
+}
+
+event_route[msrp:frame-in] {
+	xdbg("============#[[$msrp(method)]]===========\n");
+	xdbg("============*[[$si:$sp]]\n");
+	xdbg("============ crthop:   [$msrp(crthop)]\n");
+	xdbg("============ prevhop:  [$msrp(prevhop)]\n");
+	xdbg("============ nexthop:  [$msrp(nexthop)]\n");
+	xdbg("============ firsthop: [$msrp(firsthop)]\n");
+	xdbg("============ lasthop:  [$msrp(lasthop)]\n");
+	xdbg("============ prevhops: [$msrp(prevhops)]\n");
+	xdbg("============ nexthops: [$msrp(nexthops)]\n");
+	xdbg("============ srcaddr:  [$msrp(srcaddr)]\n");
+	xdbg("============ srcsock:  [$msrp(srcsock)]\n");
+	xdbg("============ sessid:   [$msrp(sessid)]\n");
+
+	msrp_reply_flags("1");
+
+    if(msrp_is_reply())
+    {
+        msrp_relay();
+        exit;
+    }
+
+	# handle AUTH MSRP requests
+	if($msrp(method)=="AUTH")
+	{
+		if($msrp(nexthops)>0)
+		{
+			msrp_relay();
+			exit;
+		}
+		# frame for local server - send Use-Path
+		# -- passwd can be loaded from DB based on $au
+		$var(passwd) = "xyz123";
+		if(!pv_www_authenticate("myrealm", "$var(passwd)", "0"))
+		{
+			if(auth_get_www_authenticate("myrealm", "0",
+						"$var(wauth)"))
+			{
+				msrp_reply("401", "Authorization Required",
+						"$var(wauth)");
+			} else {
+				msrp_reply("500", "Server Error");
+			}
+			exit;
+		}
+		$var(cnt) = $var(cnt) + 1;
+		pv_printf("$var(sessid)", "s.$(pp).$(var(cnt)).$(RANDOM)");
+		$sht(msrp=>$var(sessid)::srcaddr) = $msrp(srcaddr);
+		$sht(msrp=>$var(sessid)::srcsock) = $msrp(srcsock);
+		# - Use-Path: the MSRP address for server + session id
+		$var(UsePath) = "Use-Path: msrp://127.0.0.1:5060/"
+				+ $var(sessid) + ";tcp\r\n";
+		msrp_reply("200", "OK", "$var(UsePath)");
+		exit;
+	}
+
+	if($msrp(method)=="SEND")
+	{
+		if($msrp(nexthops)>1)
+		{
+			msrp_reply("200", "Received");
+			msrp_relay();
+			exit;
+		}
+		$var(sessid) = $msrp(sessid);
+		if($sht(msrp=>$var(sessid)::srcaddr) == $null)
+		{
+			# one more hop, but we don't have address in htable
+			msrp_reply("481", "No Such Session");
+			exit;
+		}
+		msrp_relay_flags("1");
+		msrp_set_dst("$sht(msrp=>$var(sessid)::srcaddr)",
+				"$sht(msrp=>$var(sessid)::srcsock)");
+		msrp_relay();
+		exit;
+	}
+
+	msrp_relay();
+}
+]]>
+...
+</programlisting>
+	    </example>
+	</section>
+
+</chapter>
+
