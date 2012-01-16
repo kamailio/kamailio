@@ -541,3 +541,11 @@ free_fixup_function mod_fix_get_fixup_free(fixup_function f)
 	if (f == fixup_spve_str) return fixup_free_spve_str;
 	return 0;
 }
+
+/**
+ *
+ */
+int fixup_spve_all(void** param, int param_no)
+{
+	return fixup_spve_null(param, 1);
+}
