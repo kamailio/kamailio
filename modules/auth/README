@@ -47,6 +47,7 @@ Daniel-Constantin Mierla
         1.4.4. auth_challenge(realm, flags)
         1.4.5. pv_www_authenticate(realm, passwd, flags)
         1.4.6. pv_proxy_authenticate(realm, passwd, flags)
+        1.4.7. auth_get_www_authenticate(realm, flags, pvdst)
 
 1.1. Overview
 
@@ -679,4 +680,21 @@ $avp(password)="xyz";
 if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
         proxy_challenge("$fd", "1");
 };
+...
+
+1.4.7. auth_get_www_authenticate(realm, flags, pvdst)
+
+   Build WWW-Authentication header and set the resulting value in 'pvdest'
+   parameter.
+
+   Meaning of the realm and flags parameters is the same as for
+   pv_www_authenticate(realm, passwd, flags)
+
+   This function can be used from ANY_ROUTE.
+
+   Example 21. auth_get_www_authenticate
+...
+if (auth_get_www_authenticate("$fd", "0", "$var(wauth)")) {
+        xlog("www authenticate header is [$var(wauth)]\n");
+}
 ...

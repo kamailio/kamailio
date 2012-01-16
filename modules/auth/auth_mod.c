@@ -50,6 +50,9 @@
 #include "../../data_lump_rpl.h"
 #include "../../error.h"
 #include "../../ut.h"
+#include "../../pvapi.h"
+#include "../../lvalue.h"
+#include "../../mod_fix.h"
 #include "../../modules/sl/sl.h"
 #include "auth_mod.h"
 #include "challenge.h"
@@ -90,6 +93,9 @@ static int www_challenge(struct sip_msg *msg, char* realm, char *flags);
 static int w_auth_challenge(struct sip_msg *msg, char* realm, char *flags);
 static int fixup_auth_challenge(void **param, int param_no);
 
+static int w_auth_get_www_authenticate(sip_msg_t* msg, char* realm,
+		char *flags, char *dst);
+static int fixup_auth_get_www_authenticate(void **param, int param_no);
 
 /*
  * Module parameter variables
@@ -152,6 +158,8 @@ static cmd_export_t cmds[] = {
 			fixup_pv_auth, REQUEST_ROUTE},
     {"pv_proxy_authenticate",  (cmd_function)pv_proxy_authenticate,  3,
 			fixup_pv_auth, REQUEST_ROUTE},
+    {"auth_get_www_authenticate",  (cmd_function)w_auth_get_www_authenticate,  3,
+			fixup_auth_get_www_authenticate, REQUEST_ROUTE},
     {"bind_auth_s",           (cmd_function)bind_auth_s, 0, 0, 0        },
     {0, 0, 0, 0, 0}
 };
@@ -642,7 +650,8 @@ static int auth_send_reply(struct sip_msg *msg, int code, char *reason,
 /**
  *
  */
-int auth_challenge(struct sip_msg *msg, str *realm, int flags, int hftype)
+int auth_challenge_helper(struct sip_msg *msg, str *realm, int flags, int hftype,
+		str *res)
 {
     int ret, stale;
     str hf = {0, 0};
@@ -668,6 +677,11 @@ int auth_challenge(struct sip_msg *msg, str *realm, int flags, int hftype)
 	}
 	
 	ret = 1;
+	if(res!=NULL)
+	{
+		*res = hf;
+		return ret;
+	}
 	switch(hftype) {
 		case HDR_AUTHORIZATION_T:
 			if(auth_send_reply(msg, 401, "Unauthorized",
@@ -690,6 +704,14 @@ error:
 			ret = -4;
 	}
 	return ret;
+}
+
+/**
+ *
+ */
+int auth_challenge(struct sip_msg *msg, str *realm, int flags, int hftype)
+{
+	return auth_challenge_helper(msg, realm, flags, hftype, NULL);
 }
 
 /**
@@ -814,6 +836,88 @@ static int fixup_auth_challenge(void **param, int param_no)
 			return fixup_var_str_12(param, 1);
 		case 2:
 			return fixup_var_int_12(param, 1);
+	}
+	return 0;
+}
+
+
+/**
+ *
+ */
+static int w_auth_get_www_authenticate(sip_msg_t* msg, char* realm,
+		char *flags, char *dst)
+{
+	int vflags = 0;
+	str srealm  = {0};
+	str hf = {0};
+	pv_spec_t *pv;
+	pv_value_t val;
+	int ret;
+
+	if(get_str_fparam(&srealm, msg, (fparam_t*)realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		goto error;
+	}
+
+	if(srealm.len==0) {
+		LM_ERR("invalid realm value - empty content\n");
+		goto error;
+	}
+
+	if(get_int_fparam(&vflags, msg, (fparam_t*)flags) < 0) {
+		LM_ERR("invalid flags value\n");
+		goto error;
+	}
+
+	pv = (pv_spec_t *)dst;
+
+	ret = auth_challenge_helper(NULL, &srealm, vflags,
+			HDR_AUTHORIZATION_T, &hf);
+
+	if(ret<0)
+		return ret;
+
+	val.rs.s = pv_get_buffer();
+	val.rs.len = 0;
+	if(hf.s!=NULL)
+	{
+		memcpy(val.rs.s, hf.s, hf.len);
+		val.rs.len = hf.len;
+		val.rs.s[val.rs.len] = '\0';
+		pkg_free(hf.s);
+	}
+	val.flags = PV_VAL_STR;
+	pv->setf(msg, &pv->pvp, (int)EQ_T, &val);
+
+	return ret;
+
+error:
+	return -1;
+}
+
+
+static int fixup_auth_get_www_authenticate(void **param, int param_no)
+{
+	if(strlen((char*)*param)<=0) {
+		LM_ERR("empty parameter %d not allowed\n", param_no);
+		return -1;
+	}
+
+	switch(param_no) {
+		case 1:
+			return fixup_var_str_12(param, 1);
+		case 2:
+			return fixup_var_int_12(param, 1);
+		case 3:
+		if (fixup_pvar_null(param, 1) != 0) {
+		    LM_ERR("failed to fixup result pvar\n");
+		    return -1;
+		}
+		if (((pv_spec_t *)(*param))->setf == NULL) {
+		    LM_ERR("result pvar is not writeble\n");
+		    return -1;
+		}
+		return 0;
 	}
 	return 0;
 }
