@@ -196,6 +196,9 @@ module_group_stable=cpl-c dbtext jabber osp sms pdb
 # not have dependencies
 module_group_experimental=tls oracle iptrtpproxy ndb_redis async
 
+# For cassandra
+module_group_cassandra_driver=db_cassandra
+module_group_cassandra=$(module_group_cassandra_driver) $(module_group_db)
 
 
 ### Kamailio specific groups ###
@@ -300,10 +303,10 @@ else
 	exclude_modules?= 		cpl mangler postgres jabber mysql cpl-c \
 							auth_radius misc_radius avp_radius uri_radius \
 							acc_radius pa rls presence_b2b xcap xmlrpc\
-							osp tls oracle \
+							osp tls oracle cassandra \
 							unixsock dbg print_lib auth_identity ldap \
 							db_berkeley db_mysql db_postgres db_oracle \
-							db_sqlite db_unixodbc memcached mi_xmlrpc \
+							db_sqlite db_unixodbc db_cassandra memcached mi_xmlrpc \
 							perl perlvdb purple \
 							snmpstats xmpp \
 							carrierroute peering \
