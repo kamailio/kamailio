@@ -66,7 +66,7 @@ struct str_hash_table{
 /* returns 0 on success, <0 on failure */
 inline static int str_hash_alloc(struct str_hash_table* ht, int size)
 {
-	ht->table=pkg_malloc(sizeof(struct str_hash_head)*size);
+	ht->table=(struct str_hash_head*)pkg_malloc(sizeof(struct str_hash_head)*size);
 	if (ht->table==0)
 		return -1;
 	ht->size=size;

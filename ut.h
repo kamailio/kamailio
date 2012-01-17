@@ -695,7 +695,7 @@ static inline int str2sint(str* _s, int* _r)
  */
 static inline int shm_str_dup(str* dst, const str* src)
 {
-	dst->s = shm_malloc(src->len);
+	dst->s = (char*)shm_malloc(src->len);
 	if (!dst->s) {
 		SHM_MEM_ERROR;
 		return -1;
@@ -717,7 +717,7 @@ static inline int shm_str_dup(str* dst, const str* src)
  */
 static inline int pkg_str_dup(str* dst, const str* src)
 {
-	dst->s = pkg_malloc(src->len);
+	dst->s = (char*)pkg_malloc(src->len);
 	if (dst->s==NULL)
 	{
 		PKG_MEM_ERROR;
