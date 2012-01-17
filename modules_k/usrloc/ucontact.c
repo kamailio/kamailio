@@ -792,6 +792,8 @@ static inline void update_contact_pos(struct urecord* _r, ucontact_t* _c)
  */
 int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 {
+	int res;
+
 	/* we have to update memory in any case, but database directly
 	 * only in db_mode 1 */
 	if (mem_update_ucontact( _c, _ci) < 0) {
@@ -812,7 +814,12 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 	st_update_ucontact(_c);
 
 	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
-		if (db_update_ucontact(_c) < 0) {
+		if (ul_db_update_as_insert)
+			res = db_insert_ucontact(_c);
+		else
+			res = db_update_ucontact(_c);
+
+		if (res < 0) {
 			LM_ERR("failed to update database\n");
 			return -1;
 		} else {

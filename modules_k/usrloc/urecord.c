@@ -311,6 +311,7 @@ static inline void wb_timer(urecord_t* _r)
 	ucontact_t* ptr, *t;
 	cstate_t old_state;
 	int op;
+	int res;
 
 	ptr = _r->contacts;
 
@@ -354,7 +355,11 @@ static inline void wb_timer(urecord_t* _r)
 				break;
 
 			case 2: /* update */
-				if (db_update_ucontact(ptr) < 0) {
+				if (ul_db_update_as_insert)
+					res = db_insert_ucontact(ptr);
+				else
+					res = db_update_ucontact(ptr);
+				if (res < 0) {
 					LM_ERR("updating contact in db failed\n");
 					ptr->state = old_state;
 				}

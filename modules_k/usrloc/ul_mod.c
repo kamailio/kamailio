@@ -99,6 +99,8 @@ static int ul_preload_param(modparam_t type, void* val);
 
 extern int bind_usrloc(usrloc_api_t* api);
 extern int ul_locks_no;
+int ul_db_update_as_insert = 0;
+
 /*
  * Module parameters and their default values
  */
@@ -149,31 +151,32 @@ static cmd_export_t cmds[] = {
  * Exported parameters 
  */
 static param_export_t params[] = {
-	{"user_column",       STR_PARAM, &user_col.s      },
-	{"domain_column",     STR_PARAM, &domain_col.s    },
-	{"contact_column",    STR_PARAM, &contact_col.s   },
-	{"expires_column",    STR_PARAM, &expires_col.s   },
-	{"q_column",          STR_PARAM, &q_col.s         },
-	{"callid_column",     STR_PARAM, &callid_col.s    },
-	{"cseq_column",       STR_PARAM, &cseq_col.s      },
-	{"flags_column",      STR_PARAM, &flags_col.s     },
-	{"cflags_column",     STR_PARAM, &cflags_col.s    },
-	{"db_url",            STR_PARAM, &db_url.s        },
-	{"timer_interval",    INT_PARAM, &timer_interval  },
-	{"db_mode",           INT_PARAM, &db_mode         },
-	{"use_domain",        INT_PARAM, &use_domain      },
-	{"desc_time_order",   INT_PARAM, &desc_time_order },
-	{"user_agent_column", STR_PARAM, &user_agent_col.s},
-	{"received_column",   STR_PARAM, &received_col.s  },
-	{"path_column",       STR_PARAM, &path_col.s      },
-	{"socket_column",     STR_PARAM, &sock_col.s      },
-	{"methods_column",    STR_PARAM, &methods_col.s   },
-	{"matching_mode",     INT_PARAM, &matching_mode   },
-	{"cseq_delay",        INT_PARAM, &cseq_delay      },
-	{"fetch_rows",        INT_PARAM, &ul_fetch_rows   },
-	{"hash_size",         INT_PARAM, &ul_hash_size    },
-	{"nat_bflag",         INT_PARAM, &nat_bflag       },
-	{"preload",           STR_PARAM|USE_FUNC_PARAM, (void*)ul_preload_param},
+	{"user_column",         STR_PARAM, &user_col.s      },
+	{"domain_column",       STR_PARAM, &domain_col.s    },
+	{"contact_column",      STR_PARAM, &contact_col.s   },
+	{"expires_column",      STR_PARAM, &expires_col.s   },
+	{"q_column",            STR_PARAM, &q_col.s         },
+	{"callid_column",       STR_PARAM, &callid_col.s    },
+	{"cseq_column",         STR_PARAM, &cseq_col.s      },
+	{"flags_column",        STR_PARAM, &flags_col.s     },
+	{"cflags_column",       STR_PARAM, &cflags_col.s    },
+	{"db_url",              STR_PARAM, &db_url.s        },
+	{"timer_interval",      INT_PARAM, &timer_interval  },
+	{"db_mode",             INT_PARAM, &db_mode         },
+	{"use_domain",          INT_PARAM, &use_domain      },
+	{"desc_time_order",     INT_PARAM, &desc_time_order },
+	{"user_agent_column",   STR_PARAM, &user_agent_col.s},
+	{"received_column",     STR_PARAM, &received_col.s  },
+	{"path_column",         STR_PARAM, &path_col.s      },
+	{"socket_column",       STR_PARAM, &sock_col.s      },
+	{"methods_column",      STR_PARAM, &methods_col.s   },
+	{"matching_mode",       INT_PARAM, &matching_mode   },
+	{"cseq_delay",          INT_PARAM, &cseq_delay      },
+	{"fetch_rows",          INT_PARAM, &ul_fetch_rows   },
+	{"hash_size",           INT_PARAM, &ul_hash_size    },
+	{"nat_bflag",           INT_PARAM, &nat_bflag       },
+	{"preload",             STR_PARAM|USE_FUNC_PARAM, (void*)ul_preload_param},
+	{"db_update_as_insert", INT_PARAM, &ul_db_update_as_insert},
 	{0, 0, 0}
 };
 
