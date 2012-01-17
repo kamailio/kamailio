@@ -41,8 +41,8 @@
 /*! \brief circular list */
 #define clist_init(c, next, prev) \
 	do{ \
-		(c)->next=(struct str_hash_entry*)(void*)(c); \
-		(c)->prev=(struct str_hash_entry*)(void*)(c); \
+		(c)->next=(void*)(c); \
+		(c)->prev=(void*)(c); \
 	} while(0)
 
 
@@ -57,7 +57,7 @@
  */
 #define clist_insert_sublist(head, s, e, next, prev) \
 	do{ \
-		(s)->prev=(struct str_hash_entry*)(void*)(head); \
+		(s)->prev=(void*)(head); \
 		(e)->next=(head)->next; \
 		(e)->next->prev=(e); \
 		(head)->next=s;   \
@@ -91,8 +91,8 @@
  *  instead! */
 #define clist_rm_sublist(s, e, next, prev) \
 	do{\
-		(s)->prev->next=(struct str_hash_entry*)(e)->next;  \
-		(e)->next->prev=(struct str_hash_entry*)(s)->prev ; \
+		(s)->prev->next=(e)->next;  \
+		(e)->next->prev=(s)->prev ; \
 	}while(0)
 
 
