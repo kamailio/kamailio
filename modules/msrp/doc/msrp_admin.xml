@@ -16,7 +16,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides a MSRP routing engike, a.k.a. MSRP relay.
+		This module provides a MSRP routing engine, a.k.a. MSRP relay.
 		MSRP (Message Session Relay Protocol) is defined by RFC4975,
 		the extensions for a MSRP Relay being covered in RFC4976.
 	</para>
@@ -40,6 +40,14 @@
 		all the other extensions that exist in the SIP server, from accounting,
 		authentication, authorization to database connectors, security and
 		DoS attacks protections.
+	</para>
+	<para>
+		&kamailio; can handle SIP and MSRP traffic received on the same port,
+		the appropriate configuration file block being executed based on the
+		type of message. Therefore you can use &kamailio; as a stand-alone
+		MSRP relay or have an instance handling both SIP and MSRP. Another
+		option is to configure &kamailio; to listen on multiple ports, some
+		of them being used for SIP and others for MSRP.
 	</para>
 	</section>
 
@@ -321,7 +329,82 @@ event_route[msrp:frame-in] {
 	<section>
 		<title>Usage</title>
 		<para>
-			Example routing block for MSRP frames.
+			When 'sipmsg' parameter is set to 1 (which is default), the module
+			builds internally a SIP request from the MSRP frame and gives it to
+			the config file interpreter, in this way all the functions that are
+			valid for SIP requests can be used safe in
+			event_route[msrp:frame-in].
+		</para>
+		<para>
+			To build the SIP request, msrp module takes the first line and the
+			headers from a MSRP message and appends to a static buffer. Next
+			two examples show a MSRP frame and the resulted SIP request.
+		</para>
+		<programlisting format="linespecific">
+<![CDATA[
+...
+MSRP 6aef SEND
+To-Path: msrps://a.example.org:9000/kjfjan;tcp \
+  msrps://b.example.net:9000/aeiug;tcp \
+  msrps://bob.example.net:8145/foo;tcp
+From-Path: msrps://alice.example.org:7965/bar;tcp
+Success-Report: yes
+Byte-Range: 1-*/*
+Message-ID: 87652
+Content-Type: text/plain
+
+Hi Bob, I'm about to send you a photo.
+-------6aef$
+...
+]]>
+</programlisting>
+
+		<programlisting format="linespecific">
+<![CDATA[
+...
+MSRP sip:a@127.0.0.1 SIP/2.0
+Via: SIP/2.0/UDP 127.0.0.1:9;branch=z9hG4bKa
+From: <b@127.0.0.1>;tag=a
+To: <a@127.0.0.1>
+Call-ID: a
+CSeq: 1 MSRP
+Content-Length: 0
+MSRP-First-Line: MSRP 6aef SEND
+To-Path: msrps://a.example.org:9000/kjfjan;tcp \
+  msrps://b.example.net:9000/aeiug;tcp \
+  msrps://bob.example.net:8145/foo;tcp
+From-Path: msrps://alice.example.org:7965/bar;tcp
+Success-Report: yes
+Byte-Range: 1-*/*
+Message-ID: 87652
+Content-Type: text/plain
+
+...
+]]>
+</programlisting>
+		<para>
+			Note that MSRP does not permit line folding.  A "\" in the examples
+			shows a line continuation due to limitations in line length of this
+			document.  Neither the backslash nor the extra CRLF is included in
+			the actual request or response.
+		</para>
+		<para>
+			As it can be observed, the MSRP frame content starts with the body
+			of header 'MSRP-First-Line:'. Using a static content to get to a
+			valid SIP request is a perfect trade off for performances.
+		</para>
+		<para>
+			Besides the option to access parts of MSRP frame via internally
+			build SIP message, msrp module exports a new pseudo-variable class
+			$msrp(key) which returns attributes from the MSRP frame. There is
+			also a new transformation, {msrpuri.key}, to get access to parts
+			of a MSRP URI. See the appropriate Wiki pages on the project's
+			web site for full details about new pseudo-variable and 
+			transformation classes.
+		</para>
+		<para>
+			Next is an example of configuration file with the routing block
+			for MSRP frames. In this config, the SIP traffic is rejected.
 		</para>
 		<example>
 		<title>Event Route</title>
@@ -365,6 +448,10 @@ modparam("htable", "htable", "c=>size=8;autoexpire=1800;")
 request_route {
 	sl_send_reply("403", "No SIP Here");
 	exit;
+}
+
+reply_route {
+	drop;
 }
 
 event_route[msrp:frame-in] {
