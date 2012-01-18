@@ -40,6 +40,7 @@
 #include "../../timer_proc.h"
 #include "../../script_cb.h"
 #include "../../parser/parse_param.h"
+#include "../../lib/kcore/faked_msg.h"
 
 
 MODULE_VERSION
@@ -93,11 +94,6 @@ struct module_exports exports= {
 };
 
 
-#define STM_SIP_MSG "OPTIONS sip:you@kamailio.org SIP/2.0\r\nVia: SIP/2.0/UDP 127.0.0.1\r\nFrom: <you@kamailio.org>;tag=123\r\nTo: <you@kamailio.org>\r\nCall-ID: 123\r\nCSeq: 1 OPTIONS\r\nContent-Length: 0\r\n\r\n"
-#define STM_SIP_MSG_LEN (sizeof(STM_SIP_MSG)-1)
-static char _stm_sip_buf[STM_SIP_MSG_LEN+1];
-static struct sip_msg _stm_msg;
-static unsigned int _stm_msg_no = 1;
 /**
  * init module function
  */
@@ -107,6 +103,14 @@ static int mod_init(void)
 	if(_stm_list==NULL)
 		return 0;
 
+	/* init faked sip msg */
+	if(faked_msg_init()<0)
+	{
+		LM_ERR("failed to init timer local sip msg\n");
+		return -1;
+	}
+
+	/* register timers */
 	it = _stm_list;
 	while(it)
 	{
@@ -121,24 +125,6 @@ static int mod_init(void)
 			register_dummy_timers(1);
 		}
 		it = it->next;
-	}
-
-	/* init faked sip msg */
-	memcpy(_stm_sip_buf, STM_SIP_MSG, STM_SIP_MSG_LEN);
-	_stm_sip_buf[STM_SIP_MSG_LEN] = '\0';
-	
-	memset(&_stm_msg, 0, sizeof(struct sip_msg));
-
-	_stm_msg.buf=_stm_sip_buf;
-	_stm_msg.len=STM_SIP_MSG_LEN;
-
-	_stm_msg.set_global_address=default_global_address;
-	_stm_msg.set_global_port=default_global_port;
-
-	if (parse_msg(_stm_msg.buf, _stm_msg.len, &_stm_msg)!=0)
-	{
-		LM_ERR("parse_msg failed\n");
-		return -1;
 	}
 
 	return 0;
@@ -175,7 +161,7 @@ void stm_timer_exec(unsigned int ticks, void *param)
 {
 	stm_timer_t *it;
 	stm_route_t *rt;
-
+	sip_msg_t *fmsg;
 
 	if(param==NULL)
 		return;
@@ -185,14 +171,12 @@ void stm_timer_exec(unsigned int ticks, void *param)
 
 	for(rt=it->rt; rt; rt=rt->next)
 	{
-		/* update local parameters */
-		_stm_msg.id=_stm_msg_no++;
-		clear_branches();
-		if (exec_pre_script_cb(&_stm_msg, REQUEST_CB_TYPE)==0 )
+		fmsg = faked_msg_next();
+		if (exec_pre_script_cb(fmsg, REQUEST_CB_TYPE)==0 )
 			continue; /* drop the request */
 		set_route_type(REQUEST_ROUTE);
-		run_top_route(main_rt.rlist[rt->route], &_stm_msg, 0);
-		exec_post_script_cb(&_stm_msg, REQUEST_CB_TYPE);
+		run_top_route(main_rt.rlist[rt->route], fmsg, 0);
+		exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
 	}
 }
 
