@@ -193,9 +193,7 @@ int clean_puadb( int update_period, int min_expires )
 		return(-1);
 	}
 
-	nr_rows = RES_ROW_N(res);
-
-	if (nr_rows == 0)
+	if (RES_ROW_N(res) == 0)
 	{
 		/* no match */ 
 		LM_INFO( "No records matched for clean\n");
@@ -204,6 +202,8 @@ int clean_puadb( int update_period, int min_expires )
 	}
 
 	do {
+		nr_rows = RES_ROW_N(res);
+
 		/* get the results and update matching entries */
 		rows = RES_ROWS(res);
 
