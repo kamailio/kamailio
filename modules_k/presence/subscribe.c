@@ -1842,10 +1842,9 @@ int restore_db_subs(void)
 		goto error;
 	}
 
-	nr_rows = RES_ROW_N(result);
-
 
 	do {
+		nr_rows = RES_ROW_N(result);
 		LM_DBG("loading information from database %i records\n", nr_rows);
 
 		rows = RES_ROWS(result);
