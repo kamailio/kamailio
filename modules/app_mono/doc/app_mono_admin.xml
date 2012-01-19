@@ -17,27 +17,27 @@
     <section>
 	<title>Overview</title>
 	<para>
-		This module allows executing assemblies of managed code, among most
-		popular being C# (.NET).
-		It uses Mono project (http://www.mono-project.com/) to embed the managed
-		code interpreter inside the SIP server, for a fast execution.
+		This module allows the execution of assemblies of managed code, among 
+		the most popular of which is C# (.NET).
+		It uses the Mono project (http://www.mono-project.com/) to embed the managed
+		code interpreter inside the SIP server, providing fast execution.
 	</para>
 	<para>
 		Besides C#, other languages can be used to build managed assemblies,
-		such as: Java, Python, VisualBasic.NET, JavaScript. For more details of
+		such as: Java, Python, VisualBasic.NET, JavaScript. For more details on 
 		what kind of languages can be used to build managed
-		assemblies see: http://www.mono-project.com/Languages .
+		assemblies, see: http://www.mono-project.com/Languages
 	</para>
 	<para>
-		A managed assembly can get access to any of &kamailio; config variables
-		and set them, as well as many other functions implemented inside
-		&kamailio; itself, to make the handling of SIP easier from managed code.
+		A managed assembly can get access to any &kamailio; config variables
+		and set them.  It can also perform many other functions implemented inside
+		&kamailio; itself, allowing easier handling of SIP from managed code.
 	</para>
 	<para>
-		There are two ways to execute managed code assemlies: load the code at
-		startup and only execute at runtime or load and execute at runtime. It
-		can run in one mode only at a time, a matter of 'load' parameter and
-		used function to execute the code.
+		There are two ways to execute managed code assemblies: load the code at
+		startup and only execute at runtime, or load and execute at runtime. Only
+		one mode at a time may be used.  The mode is determined by the 'load' 
+		parameter and the function used to execute the code.
 	</para>
     </section>
     <section>
@@ -75,7 +75,7 @@
 	<section>
 	    <title><varname>load</varname> (string)</title>
 	    <para>
-			Set the path to the Mono assembly to be loaded at startup. Then you
+			Set the path to the Mono assembly to be loaded at startup.  You
 			can use mono_run(param) to execute the assembly at runtime.
 	    </para>
 	    <para>
@@ -103,11 +103,11 @@ modparam("app_mono", "load", "/usr/local/etc/kamailio/mono/myscript.exe")
 	    <para>
 		Execute the managed code assembly stored in 'path'. The path can be
 		a string with pseudo-variables evaluated at runtime. A second parameter
-		can be optionally gived and passed over to the assembly.
+		can optionally be provided; it will be passed to the assembly.
 	    </para>
 		<para>
 		Note that the assembly is loaded every time from the file, so any change
-		to it is immediately visible. This function cannot be used if 'load'
+		to it is immediately live. This function cannot be used if 'load'
 		parameter is set.
 		</para>
 		<example>
@@ -126,12 +126,12 @@ mono_exec("/usr/local/etc/kamailio/mono/myscript.exe");
 	    </title>
 	    <para>
 		Execute the assembly specified by 'load' module parameter. The assembly
-		is loaded at startup, changes to it will be effective after &kamailio;
+		is loaded at startup, so changes to it will be effective only after &kamailio;
 		restart.
 	    </para>
 	    <para>
-			An optional paraeter can be given and it will be passed over to the
-			assembly. It can be a string with pseudo-variables that are
+			An optional parameter can be given and it will be passed over to the
+			assembly. It can be a string with pseudo-variables; these will be
 			evaluated at runtime.
 	    </para>
 		<example>
@@ -151,9 +151,9 @@ if(!mono_run("myparam"))
     <section>
 	<title>Usage</title>
 	<para>
-	First create a library from the 'SR.cs' file provided
+	First, create a library from the 'SR.cs' file provided
 	in the folder 'modules/app_mono/lib/'. The examples uses the folder
-	/usr/local/etc/kamailio/mono/ to store the Mono specific assemblies
+	/usr/local/etc/kamailio/mono/ to store the Mono-specific assemblies
 	to be used by &kamailio;.
 	</para>
 <programlisting format="linespecific">
@@ -164,14 +164,14 @@ gmcs -t:library SR.cs
 ...
 </programlisting>
 	<para>
-	You should see 'SR.dll' file generated.
+	You should see the 'SR.dll' file generated.
 	</para>
     <para>
 	Create your application in C#/.NET and save it
-	in the same folder with SR.dll. You have to use SR package in your
+	in the same folder with SR.dll. You have to use the SR package in your
 	managed source code file -- say you named MySRTest.cs. Also, be
-	aware that the Main() function from the managed assembly is executed,
-	thus be sure you have it defined.
+	aware that the Main() function from the managed assembly is executed;
+	thus, be sure that you have it defined.
     </para>
 <programlisting format="linespecific">
 ...
@@ -196,7 +196,7 @@ namespace MySRTest {
 ...
 </programlisting>
 	<para>
-	You have to compile the  'SR.dll' file generated.
+	You have to compile the 'SR.dll' file generated.
 	</para>
 <programlisting format="linespecific">
 ...
@@ -207,7 +207,7 @@ $ gmcs -r:SR.dll MySRTest.cs
 		You should see the file 'MySRTest.exe' generated in the folder.
     </para>
     <para>
-		In the config file of &kamailio;, load app_mono.so module and use
+		In the &kamailio; config file, load the app_mono.so module and use
 		its functions inside the routing blocks.
     </para>
 <programlisting format="linespecific">
@@ -222,8 +222,8 @@ route {
 ...
 </programlisting>
     <para>
-		The API exported by SR package to Mono applications is documented
-		on &kamailio; wiki site. Also, it is easy to figure out by looking
+		The API exported by the SR package to Mono applications is documented
+		on the &kamailio; wiki site. Also, it is easy to figure out by looking
 		in the source code tree inside the file modules/app_mono/lib/SR.cs.
     </para>
     </section>
