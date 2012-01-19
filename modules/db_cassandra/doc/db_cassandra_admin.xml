@@ -19,7 +19,7 @@
 	<para>
 		Db_cassandra is one of the &siprouter; database modules. It does
 		not export any functions executable from the configuration scripts,
-		but it exports a subset of functions from the database API and thus
+		but it exports a subset of functions from the database API, and thus,
 		other modules can use it as a database driver, instead of, for
 		example, the Mysql module.
 	</para>
@@ -28,17 +28,18 @@
 		this module provides an SQL interface to be used by other modules for
 		storing and retrieving data. Because Cassandra is a NoSQL distributed
 		system, there are limitations on the operations that can be performed.
-		The limitations concern the indexes on which queries are performed as
-		it is only possible to have simple conditions(equal only) and only two
-		indexation levels that will be explain in an example bellow.
+		The limitations concern the indexes on which queries are performed, as
+		it is only possible to have simple conditions (equality comparison only) 
+		and only two indexing levels.  These issues will be explained in an example 
+		below.
 	</para>
 	<para>
 		Cassandra DB is especially suited for storing large data or data that requires
 		distribution, redundancy or replication. One usage example is
 		a distributed location system in a platform that has a cluster of &siprouter;
-		servers, with more proxies and registration servers accesing the same location
-		database. This was actually the main usage we had in mind when implementing
-		this module. Please NOTE that it has only been tested with
+		servers, with more proxies and registration servers accessing the same location
+		database. This was actually the main use case we had in mind when implementing
+		this module. Please NOTE that it has only been tested with the
 		<emphasis>usrloc</emphasis> and <emphasis>auth_db</emphasis> modules.
 	</para>
 	<para>
@@ -46,7 +47,7 @@
 	</para>
 	<para>
 		Because the module has to do the translation from SQL to Cassandra NoSQL
-		queries, the schemes for the tables must be known by the module.
+		queries, the schemas for the tables must be known by the module.
 		You will find the schemas for location, subscriber and version tables in
 		utils/kamctl/dbcassandra directory. You have to provide the path to the 
 		directory containing the table definitions by setting the module parameter
@@ -54,12 +55,12 @@
 		NOTE that there is no need to configure a table metadata in Cassandra cluster.
 	</para>
 	<para>
-		Special attention was given to the performance in Cassandra. Therefore, the
-		implementation uses only the native row indexation in Cassandra and no secondary
-		indexes that are costly. Instead, we simualte a secondary index by using the column
-		names and putting information in them, which is very efficient.
-		Also for deleting expired records, we let Cassandra take care of this with
-		its own mechanism (by setting ttl for columns).
+		Special attention was given to performance in Cassandra. Therefore, the
+		implementation uses only the native row indexing in Cassandra and no secondary
+		indexes, because they are costly. Instead, we simulate a secondary index by 
+		using the column names and putting information in them, which is very efficient.
+		Also, for deleting expired records, we let Cassandra take care of this with
+		its own mechanism (by setting the TTL for columns).
 	</para>
 	</section>
 
@@ -101,10 +102,10 @@
 		<title><varname>schema_path</varname> (string)</title>
 		<para>
 			The directory where the files with the table schemas are located.
-			This directory has to contains the directories corresponding to the
-			databases names(name of the directory = name of the database). And
-			these directories contain the files with the table schema. See the
-			schemas in utils/kamctl/dbcassandra directory.
+			This directory has to contain the subdirectories corresponding to the
+			databases' names (name of the directory = name of the database). 
+			These directories, in turn, contain the files with the table schemas.
+			See the schemas in utils/kamctl/dbcassandra directory.
 		</para>
 		<example>
 		<title>Set <varname>schema_path</varname> parameter</title>
@@ -129,7 +130,7 @@
 	<title>Installation</title>
 		<para>
 		Because it dependes on an external library, the db_cassandra module is not
-		compiled and installed by default. You can use one of these options.
+		compiled and installed by default. You can use one of these options:
 		</para>
 		<itemizedlist>
 			<listitem>
@@ -141,7 +142,7 @@
 			</listitem>
 			<listitem>
 			<para>
-			- from command line use: 'make all include_modules="db_cassandra";
+			- from command line, run: 'make all include_modules="db_cassandra";
 			make install include_modules="db_cassandra"'.
 			</para>
 			</listitem>
@@ -171,10 +172,10 @@
 			and Cassandra will automatically delete the columns when they expire. Because we want the 
 			ttl to have meaning for the entire record, we must ensure that when the ttl is updated, it 
 			is updated for all columns for that record. In other words, to update the expiration time 
-			of a record, an insert operation must be performed from the point of view of db_cassandra 
-			module (insert in Cassandra means replace if exists or insert new record otherwise). So, if 
+			of a record, an insert operation must be performed from the point of view of the db_cassandra 
+			module ("insert" in Cassandra means "replace if exists or insert new record otherwise"). So, if 
 			you define a table with a timestamp column, the update operations on that table that also 
-			update the timestamp must update all columns. So these update operations must in fact be insert
+			update the timestamp must update all columns. So, these update operations must in fact be insert
 			operations.
 			</para>
 			</listitem>
@@ -206,14 +207,14 @@
 
 	<para>
 		Observe first that the <emphasis>row key is the username</emphasis> and the <emphasis>secondary index is the contact</emphasis>.
-		And that we have also defined a timestamp column - <emphasis>expires</emphasis>.
+		We have also defined a timestamp column - <emphasis>expires</emphasis>.
 		In this example, both the row key and the secondary index are defined by only one column,
-		but they can be formed out of more columns, list them separated by space.
+		but they can be formed out of more columns.  You can list them separated by space.
 	</para>
 
 	<para>
-		To understand why the schema looks like this we must first see which
-		are the queries performed on the location table. 
+		To understand why the schema looks like this, we must first see which
+		queries are performed on the location table. 
 		(The 'callid' condition was ignored as it doesn't really have a well defined role in the SIP RFC).
 	</para>
 	<itemizedlist>
@@ -230,7 +231,7 @@
 		</listitem>
 	</itemizedlist>
 	<para>
-		So the relation between these keys is the following:
+		So, the relation between these keys is the following:
 	</para>
 	<itemizedlist>
 		<listitem>
@@ -245,10 +246,11 @@
 		</listitem>
 	</itemizedlist>
 	<para>
-		The timestamp column that leaves the Cassandra cluster deal with deleting expired
-		record can be used only with a modification in usrloc module that replaces the update
-		performed at re-registration with an insert operation (so that all columns are updated).
-		This behavior can be enabled by setting a parameter in usrloc module 
+		The timestamp column that leaves the Cassandra cluster to deal with deleting expired
+		record can be used only with a modification to the usrloc module that replaces the 
+		update performed at re-registration with an insert operation (so that all columns 
+		are updated).
+		This behavior can be enabled by setting a parameter in the usrloc module 
 		<emphasis>db_update_as_insert</emphasis>:
 	</para>
 	<para>
@@ -262,8 +264,8 @@
 
 	<para>
 		The alternative would have been to define an index on the expire column and 
-		run a external job to delete periodically the expired records. But this obviously
-		is more costly.
+		run a external job to periodically delete the expired records. However,
+		obviously, this would be more costly.
 	</para>
 
 	</section>
@@ -271,7 +273,7 @@
 	<section>
 	<title>Limitations</title>
 		<para>
-			The module can be used used only when the queries use only one index which is also the
+			The module can be used only when the queries use only one index, which is also the
 			unique key, or have two indexes that form the unique key like in the usrloc usage.
 		</para>
 	</section>
