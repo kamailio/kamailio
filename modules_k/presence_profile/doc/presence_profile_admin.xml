@@ -17,20 +17,20 @@
 	<section>
 	  <title>Overview</title>
 	    <para> 
-		The module extends presence server implementation with ability of
-		handling ua-profile event. When an user agent subscribes to ua-profile
-		event for its own AoR, it will retrieve profile data document
-		via body of NOTIFY request.
+		The module extends the presence server implementation, providing the ability 
+		to handle the 'ua-profile' event. When a user agent subscribes to ua-profile
+		event for its own AoR, it retrieves the profile data document from the body 
+		of a NOTIFY request.
 	    </para>
 	    <para>
-		The profile data document format is usually specific per user agent, such
-		documents have to be built and added to presentity table by the admin
+		The profile data document format is usually specific to the user agent. Such
+		documents have to be built and added to presentity table by either the admin
 		or a third party application.
 	    </para>
 	    <para>
-		Warning: When you add profile data document (i.e., user agent's
-		provisioning config) to presentity table, then you must make sure that you
-		set the presentity table expires field to a time value in long future.
+		Warning: When you add a profile data document (i.e. the user agent's
+		provisioning config) to the presentity table, you must make sure that you
+		set the presentity table expires field to a time value far in the future.
 	    </para>
 	    <para>
 		  Read more about SIP user agent configuration framework in RFC6080:
