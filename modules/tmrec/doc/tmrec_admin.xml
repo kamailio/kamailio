@@ -16,9 +16,9 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides time recurrence matching functions. Definitions
-		of recurrences are based on Internet Calendaring and Scheduling Core
-		Object Specification (Calendar COS - RFC 2445).
+		This module provides time recurrence matching functions. The format
+		of recurrence definitions is based on Internet Calendaring and 
+		Scheduling Core Object Specification (Calendar COS - RFC 2445).
 	</para>
 	</section>
 
@@ -57,7 +57,7 @@
 	<section>
 		<title><varname>separator</varname> (str)</title>
 		<para>
-			Separator character used to delimit the attributes in time
+			Separator character used to delimit attributes in time
 			reccurence definitions.
 		</para>
 		<para>
@@ -83,16 +83,17 @@ modparam("tmrec", "separator", ";")
 		<function moreinfo="none">tmrec_match(timerec [, timestamp])</function>
 	    </title>
 	    <para>
-			Match a time recurrence rules against the timestamp. If timestamp
-			parameter is missing, the value of current unix timestamp is used.
+			Match a time recurrence rule against the timestamp (UNIX epoch
+			format). If the timestamp parameter is missing, the current UNIX
+			epoch time is used.
 		</para>
 		<para>
 			The parameters can include pseudo-variables.
 		</para>
 		<para>
 			The timerec paramter is a list of attributes defined by RFC2445,
-			delimited by 'separator' (module parameter) character. The format
-			of timerec parameter, using '|' as separator, is (all in one line
+			delimited by the 'separator' (module parameter) character. The format
+			of timerec parameter, using '|' as the separator, is (all in one line
 			without white spaces):
 		</para>
 
@@ -105,8 +106,7 @@ modparam("tmrec", "separator", ";")
 
 		<para>
 		When an attribute is not specified, the corresponding place must be left
-		empty, whenever another attribute that follows in the list has to be
-		specified.
+		empty, provided that one or more additional attributes follow.
 		</para>
 		<para>
 		Description of time recurrence attributes:
@@ -124,7 +124,7 @@ modparam("tmrec", "separator", ";")
 			For a recurring interval, the <quote>duration</quote> parameter MUST
 			be small enough such that subsequent intervals do not overlap. 
 			For non-recurring intervals, durations of any positive length are 
-			permitted, zero-length duration means <quote>forever</quote>. 
+			permitted.  Zero-length duration means <quote>forever</quote>. 
 			Negative-length durations are not allowed.
 			</para>
 		</listitem>
@@ -137,7 +137,7 @@ modparam("tmrec", "separator", ";")
 			interval of a week or more; <quote>monthly</quote> - specify 
 			repeating periods based on an interval of a month or more; 
 			<quote>yearly</quote> - specify repeating periods based
-			on an interval of a year or more. These values are case insensitive.
+			on an interval of a year or more. These values are case-insensitive.
 			</para>
 		</listitem>
 		<listitem>
@@ -145,10 +145,9 @@ modparam("tmrec", "separator", ";")
 			<emphasis>until</emphasis> - defines an iCalendar COS DATE or DATE-TIME
 			value which bounds the recurrence rule in an inclusive manner. If the
 			value specified by <quote>until</quote> is synchronized with the 
-			specified 
-			recurrence, this date or date-time becomes the last instance of the 
-			recurrence. If not present, the recurrence is considered to repeat 
-			forever.
+			specified recurrence, this date or date-time becomes the last instance 
+			of the recurrence. If it is not present, the recurrence is considered 
+			to repeat forever.
 			</para>
 		</listitem>
 		<listitem>
@@ -215,19 +214,18 @@ modparam("tmrec", "separator", ";")
 		
 		<para>
 		A recurrence is specified by including the <quote>frequency</quote> 
-		parameter, which indicates the type of recurrence rule. Parameters 
+		parameter, which indicates the type of the recurrence rule. Parameters 
 		other than <quote>startdate</quote>
 		and <quote>duration</quote> SHOULD NOT be specified unless 
 		<quote>frequency</quote> is set.
 		</para>
 		<para>
-		If byxxx parameter values are found which are beyond the available 
-		scope (ie, bymonthday=<quote>30</quote> in February), they are simply
-		ignored. 
+		If invalid byxxx parameter values are found (ie, bymonthday=<quote>30</quote> in February), 
+		they are simply ignored. 
 		</para>
 		<para>
-		Byxxx parameters modify the recurrence rule matching. Byxxx rule, as
-		attribute for a period of time which is the same or greater than the 
+		Byxxx parameters modify the recurrence rule matching. The Byxxx rule, as
+		an attribute for a period of time which is greater than or equal to the 
 		frequency, generally reduces or limits the number of occurrences for the 
 		recurrence definition. For example, frequency=<quote>daily</quote> 
 		bymonth=<quote>3</quote> reduces the number of
@@ -289,7 +287,7 @@ modparam("tmrec", "separator", ";")
 	    </title>
 	    <para>
 			Return true if the value from parameter is a leap year. If the
-			parameter is missing, then the year from current time is taken.
+			parameter is missing, then the year from the current time is taken.
 		</para>
 		<para>
 		The parameter can be pseudo-variable.
