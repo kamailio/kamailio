@@ -17,7 +17,7 @@
 	<title>Overview</title>
 	<para>
 		This module provides an HTTP transport layer implementation for
-		the RPC management interface in a human easy readable format.
+		the RPC management interface in a human-readable format.
 	<para>
 	</para>
 		The xHTTP_RPC module uses the xHTTP module to handle HTTP requests.
@@ -40,7 +40,7 @@
 		At startup, all RPC commands are sorted and grouped based on
 		their format.  The expected format is [group].[subcommand].
 		The initial xhttp_rpc webpage displays all the retrieved groups.
-		All RPC commands are disponible as submenus of each [group].
+		All RPC commands are available as sub-menus of each [group].
 		If an RPC command is not in the expected format, it will be
 		dropped from the initial xhttp_rpc home page menu.
 	</para>
@@ -106,7 +106,7 @@ modparam("xhttp_rpc", "xhttp_rpc_root", "http_rpc")
 		<para>
 			It specifies the maximum length of the buffer used
 			to write in the RPC reply information in order to
-			build the html response.
+			build the HTML response.
 		</para>
 		<para>
 		<emphasis>
@@ -131,7 +131,7 @@ modparam("xhttp", "xhttp_rpc_buf_size", )
 		<function moreinfo="none">dispatch_xhttp_rpc()</function>
 	    </title>
 	    <para>
-		Handle the HTTP request and generate back a response.
+		Handle the HTTP request and generate a response.
 	    </para>
 		<example>
 		<title><function>dispatch_xhttp_rpc</function> usage</title>
