@@ -62,6 +62,8 @@ int pv_parse_msrp_name(pv_spec_t *sp, str *in)
 		case 5:
 			if(strncmp(in->s, "msgid", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 5;
+			else if(strncmp(in->s, "conid", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 21;
 			else goto error;
 		case 6:
 			if(strncmp(in->s, "method", 6)==0)
@@ -103,7 +105,7 @@ int pv_parse_msrp_name(pv_spec_t *sp, str *in)
 			else goto error;
 		break;
 		default:
-			/* max is 20 */
+			/* max is 21 */
 			goto error;
 	}
 	sp->pvp.pvn.type = PV_NAME_INTSTR;
@@ -286,6 +288,10 @@ int pv_get_msrp(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res)
 		case 20:
 			return pv_get_strval(msg, param, res,
 					&mf->tcpinfo->rcv->bind_address->sock_str);
+		case 21:
+			if(mf->tcpinfo->con==NULL)
+				return pv_get_null(msg, param, res);
+			return pv_get_sintval(msg, param, res, mf->tcpinfo->con->id);
 		default:
 			return pv_get_null(msg, param, res);
 	}
