@@ -104,6 +104,26 @@ modparam("pua_usrloc", "entity_prefix", "pres")
 		</example>
 </section>
 
+	<section>
+		<title><varname>branch_flag</varname> (int)</title>
+		<para>
+		Which branch flag to be used to select the contact addresses for which
+		to generate PUBLISH. Valid values are 0 to 31.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>-1</quote> (disabled).	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>branch_flag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_usrloc", "branch_flag", 9)
+...
+</programlisting>
+		</example>
+	</section>
+
 </section>
 <section>
 	<title>Functions</title>
