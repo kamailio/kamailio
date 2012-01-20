@@ -96,9 +96,9 @@ int pv_parse_msrp_name(pv_spec_t *sp, str *in)
 		case 8: 
 			if(strncmp(in->s, "firsthop", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 16;
-			else if(strncmp(in->s, "prevhops", 7)==0)
+			else if(strncmp(in->s, "prevhops", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 17;
-			else if(strncmp(in->s, "nexthops", 7)==0)
+			else if(strncmp(in->s, "nexthops", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 18;
 			else goto error;
 		break;
