@@ -39,6 +39,7 @@
 #include "../../parser/parse_expires.h"
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
+#include "../../dset.h"
 #include "../usrloc/usrloc.h"
 #include "../usrloc/ul_callback.h"
 #include "../../modules/tm/tm_load.h"
@@ -50,12 +51,16 @@ int pua_set_publish(struct sip_msg* msg , char* s1, char* s2)
 {
 	LM_DBG("set send publish\n");
 	pua_ul_publish= 1;
+	if(pua_ul_bmask!=0)
+		setbflag(0, pua_ul_bflag);
 	return 1;
 }
 
 int pua_unset_publish(struct sip_msg* msg, unsigned int flags, void* param)
 {
 	pua_ul_publish= 0;
+	if(pua_ul_bmask!=0)
+		resetbflag(0, pua_ul_bflag);
 	return 1;
 }
 
@@ -206,11 +211,16 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	content_type.s= "application/pidf+xml";
 	content_type.len= 20;
 
-	if(pua_ul_publish== 0)
+	if(pua_ul_publish==0 && pua_ul_bmask==0)
 	{
 		LM_INFO("should not send ul publish\n");
 		return;
-	}	
+	}
+	if(pua_ul_bmask!=0 && (c->cflags & pua_ul_bmask)==0)
+	{
+		LM_INFO("not marked for publish\n");
+		return;
+	}
 
 	if(type & UL_CONTACT_DELETE) {
 		LM_DBG("\nDELETE type\n");

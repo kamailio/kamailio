@@ -40,4 +40,7 @@ void ul_publish(ucontact_t* c, int type, void* param);
 int pua_unset_publish(struct sip_msg* msg, unsigned int flags, void* param);
 
 extern str pres_prefix;
+extern int pua_ul_bflag;
+extern int pua_ul_bmask;
+
 #endif

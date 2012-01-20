@@ -59,7 +59,11 @@
 MODULE_VERSION
 
 str default_domain= {NULL, 0};
-int pua_ul_publish= 0;
+
+int pua_ul_publish = 0;
+int pua_ul_bflag = -1;
+int pua_ul_bmask = 0;
+
 pua_api_t pua;
 str pres_prefix= {0, 0};
 
@@ -85,6 +89,7 @@ static cmd_export_t cmds[]=
 static param_export_t params[]={
 	{"default_domain",	 STR_PARAM, &default_domain.s	 },
 	{"entity_prefix",	 STR_PARAM, &pres_prefix.s		 },
+	{"branch_flag",	     INT_PARAM, &pua_ul_bflag		 },
 	{0,							 0,			0            }
 };
 
@@ -200,6 +205,8 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(pua_ul_bflag!=-1)
+		pua_ul_bmask = 1 << pua_ul_bflag;
 
 	return 0;
 }
