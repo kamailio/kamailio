@@ -51,7 +51,7 @@
 
 
 static char *id="$Id$";
-static char *version="udp_flood 0.2";
+static char *version="protoflood 0.3";
 static char* help_msg="\
 Usage: udp_flood -f file -d address -p port -c count [-v]\n\
 Options:\n\
@@ -106,11 +106,11 @@ int main (int argc, char** argv)
 	int err;
 	
 	/* init */
-	count=0;
+	count=1;
 	verbose=0;
 	fname=0;
-	dst=0;
-	port=0;
+	dst="127.0.0.1";
+	port=5060;
 	usec=0;
 	throttle=0;
 	random_sleep=0;
