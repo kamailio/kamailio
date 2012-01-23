@@ -84,7 +84,7 @@ Chapter 1. Admin Guide
    Router servers, with more proxies and registration servers accessing
    the same location database. This was actually the main use case we had
    in mind when implementing this module. Please NOTE that it has only
-   been tested with the usrloc and auth_db modules.
+   been tested with the usrloc, auth_db and domain modules.
 
    You can find a configuration file example for this usage in the module
    - kamailio_cassa.cfg.
