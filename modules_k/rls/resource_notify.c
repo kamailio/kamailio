@@ -230,7 +230,7 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 		/*if first or different*/
 		if(prev_did==NULL || strcmp(prev_did, curr_did)!=0)
 		{
-            /* Work out a subscription from the did. */
+			/* Work out a subscription from the did. */
 			get_dialog_from_did(curr_did, &dialog, &hash_code);
 			if(dialog== NULL)
 			{
@@ -296,7 +296,7 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 			else
 			if(auth_state_flag & TERMINATED_STATE)
 			{
-			    len_est += strlen(row_vals[resource_uri_col].val.string_val) + 10; /* reason="[resaon]" */
+				len_est += strlen(row_vals[resource_uri_col].val.string_val) + 10; /* reason="[resaon]" */
 			}
             
 			if (rls_max_notify_body_len > 0 && len_est > rls_max_notify_body_len)
