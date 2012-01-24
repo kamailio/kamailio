@@ -67,8 +67,6 @@ db1_con_t *rls_db = NULL;
 db_func_t rls_dbf;
 db1_con_t *rls_xcap_db = NULL;
 db_func_t rls_xcap_dbf;
-db1_con_t *rls2_db = NULL;
-db_func_t rls2_dbf;
 
 /** modules variables */
 str rls_server_address = {0, 0};
@@ -224,7 +222,7 @@ static param_export_t params[]={
 	{ "rls_event",              STR_PARAM|USE_FUNC_PARAM,(void*)add_rls_event},
 	{ "outbound_proxy",         STR_PARAM,   &rls_outbound_proxy.s           },
 	{ "reload_db_subs",         INT_PARAM,   &rls_reload_db_subs             },
-	{ "max_notify_body_length", INT_PARAM,	 &rls_max_notify_body_len	     },
+	{ "max_notify_body_length", INT_PARAM,	 &rls_max_notify_body_len	 },
 	{ "db_mode",                INT_PARAM,	 &dbmode                         },
 	{ "expires_offset",         INT_PARAM,	 &rls_expires_offset             },
 	{ "fetch_rows",             INT_PARAM,   &rls_fetch_rows                 },
@@ -400,15 +398,6 @@ static int mod_init(void)
 	
 	/* binding to mysql module  */
 
-	/* rls2_db handle is to ensure that there are no unwanted interactions
-	   between the original database reads and the DB_ONLY mode stuff */
-
-	if (db_bind_mod(&db_url, &rls2_dbf))
-	{
-		LM_ERR("Database module not found\n");
-		return -1;
-	}
-
 	if (db_bind_mod(&db_url, &rls_dbf))
 	{
 		LM_ERR("Database module not found\n");
@@ -492,7 +481,6 @@ static int mod_init(void)
 		rls_xcap_dbf.close(rls_xcap_db);
 	rls_xcap_db = NULL;
 
-
 	if(waitn_time<= 0)
 		waitn_time= 5;
 
@@ -511,7 +499,7 @@ static int mod_init(void)
 	XMLNodeGetAttrContentByName= libxml_api.xmlNodeGetAttrContentByName;
 	XMLDocGetNodeByName= libxml_api.xmlDocGetNodeByName;
 	XMLNodeGetNodeByName= libxml_api.xmlNodeGetNodeByName;
-    XMLNodeGetNodeContentByName= libxml_api.xmlNodeGetNodeContentByName;
+	XMLNodeGetNodeContentByName= libxml_api.xmlNodeGetNodeContentByName;
 
 	if(XMLNodeGetAttrContentByName== NULL || XMLDocGetNodeByName== NULL ||
 			XMLNodeGetNodeByName== NULL || XMLNodeGetNodeContentByName== NULL)
@@ -602,47 +590,6 @@ static int child_init(int rank)
 
 	LM_DBG("child [%d]  pid [%d]\n", rank, getpid());
 
-	if (rls2_dbf.init==0)
-	{
-		LM_CRIT("database not bound\n");
-		return -1;
-	}
-	rls2_db = rls2_dbf.init(&db_url);
-	if (!rls2_db)
-	{
-		LM_ERR("child %d: Error while connecting database\n",
-				rank);
-		return -1;
-	}
-	if (rls2_dbf.use_table(rls2_db, &rlsubs_table) < 0)  
-	{
-		LM_ERR("child %d: Error in use_table rlsubs_table\n", rank);
-		return -1;
-	}
-
-	if (rls_xcap_dbf.init==0)
-	{
-		LM_CRIT("database not bound\n");
-		return -1;
-	}
-
-	rls_xcap_db = rls_xcap_dbf.init(&xcap_db_url);
-	if (!rls_xcap_db)
-	{
-		LM_ERR("child %d: Error while connecting database\n", rank);
-		return -1;
-	}
-	else
-	{
-		if (rls_xcap_dbf.use_table(rls_xcap_db, &rls_xcap_table) < 0)  
-		{
-			LM_ERR("child %d: Error in use_table rls_xcap_table\n", rank);
-			return -1;
-		}
-
-		LM_DBG("child %d: Database connection opened successfully\n", rank);
-	}
-
 	if (rls_dbf.init==0)
 	{
 		LM_CRIT("database not bound\n");
@@ -662,9 +609,26 @@ static int child_init(int rank)
 			LM_ERR("child %d: Error in use_table rlsubs_table\n", rank);
 			return -1;
 		}
-		if (rls_dbf.use_table(rls_db, &rlpres_table) < 0)  
+
+		LM_DBG("child %d: Database connection opened successfully\n", rank);
+	}
+
+	if (rls_xcap_dbf.init==0)
+	{
+		LM_CRIT("database not bound\n");
+		return -1;
+	}
+	rls_xcap_db = rls_xcap_dbf.init(&xcap_db_url);
+	if (!rls_xcap_db)
+	{
+		LM_ERR("child %d: Error while connecting database\n", rank);
+		return -1;
+	}
+	else
+	{
+		if (rls_xcap_dbf.use_table(rls_xcap_db, &rls_xcap_table) < 0)  
 		{
-			LM_ERR("child %d: Error in use_table rlpres_table\n", rank);
+			LM_ERR("child %d: Error in use_table rls_xcap_table\n", rank);
 			return -1;
 		}
 
@@ -690,9 +654,8 @@ static void destroy(void)
 	}
 	if(rls_db && rls_dbf.close)
 		rls_dbf.close(rls_db);
-
-	if(rls2_db && rls2_dbf.close)
-		rls2_dbf.close(rls2_db);
+	if(rls_xcap_db && rls_xcap_dbf.close)
+		rls_xcap_dbf.close(rls_xcap_db);
 
 	if (rls_update_subs_lock != NULL)
 	{

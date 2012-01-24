@@ -45,8 +45,8 @@
 	} while(0);
 
 /* database connection */
-extern db1_con_t *rls2_db;
-extern db_func_t rls2_dbf;
+extern db1_con_t *rls_db;
+extern db_func_t rls_dbf;
 
 extern void update_a_sub(subs_t *subs_copy );
 
@@ -123,13 +123,13 @@ int delete_expired_subs_rlsdb( void )
 
 	if (rlsdb_debug) LM_ERR( "delete_expired_subs_rlsdb\n" );
 
-	if(rls2_db == NULL)
+	if(rls_db == NULL)
 	{
 		LM_ERR("null database connection\n");
 		return(-1);
 	}
 
-	if(rls2_dbf.use_table(rls2_db, &rlsubs_table)< 0)
+	if(rls_dbf.use_table(rls_db, &rlsubs_table)< 0)
 	{
 		LM_ERR("use table failed\n");
 		return(-1);
@@ -141,7 +141,7 @@ int delete_expired_subs_rlsdb( void )
 	query_ops[expires_col]= OP_LT;
 	n_query_cols++;
 
-	rval=rls2_dbf.delete(rls2_db, query_cols, query_ops, query_vals, n_query_cols);
+	rval=rls_dbf.delete(rls_db, query_cols, query_ops, query_vals, n_query_cols);
 
 	if (rval < 0)
 	{
@@ -172,13 +172,13 @@ int delete_rlsdb( str *callid, str *to_tag, str *from_tag )
 		to_tag?to_tag->len:0, to_tag?to_tag->s:"",
 		from_tag?from_tag->len:0, from_tag?from_tag->s:"" ); 
 
-	if(rls2_db == NULL)
+	if(rls_db == NULL)
 	{
 		LM_ERR("null database connection\n");
 		return(-1);
 	}
 
-	if(rls2_dbf.use_table(rls2_db, &rlsubs_table)< 0)
+	if(rls_dbf.use_table(rls_db, &rlsubs_table)< 0)
 	{
 		LM_ERR("use table failed\n");
 		return(-1);
@@ -211,7 +211,7 @@ int delete_rlsdb( str *callid, str *to_tag, str *from_tag )
 		n_query_cols++;
 	}
 
-	rval = rls2_dbf.delete(rls2_db, query_cols, 0, query_vals, n_query_cols);
+	rval = rls_dbf.delete(rls_db, query_cols, 0, query_vals, n_query_cols);
 
 	if (rval < 0)
 	{
@@ -247,13 +247,13 @@ int update_rlsdb( subs_t *subs, int type)
 
 	if (subs==NULL) return(-1);
 
-	if(rls2_db == NULL)
+	if(rls_db == NULL)
 	{
 		LM_ERR("null database connection\n");
 		return(-1);
 	}
 
-	if(rls2_dbf.use_table(rls2_db, &rlsubs_table)< 0)
+	if(rls_dbf.use_table(rls_db, &rlsubs_table)< 0)
 	{
 		LM_ERR("use table failed\n");
 		return(-1);
@@ -301,11 +301,11 @@ int update_rlsdb( subs_t *subs, int type)
 		int nr_rows;
 
 	
-		if(rls2_dbf.query(rls2_db, query_cols, 0, query_vals, result_cols, 
+		if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols, 
 				n_query_cols, 1, 0, &result )< 0)
 		{
 			LM_ERR("Can't query db\n");
-			if(result) rls2_dbf.free_result(rls2_db, result);
+			if(result) rls_dbf.free_result(rls_db, result);
 			return(-1);
 		}
 
@@ -317,14 +317,14 @@ int update_rlsdb( subs_t *subs, int type)
 		{
 			/* no match */ 
 			LM_ERR( "update_rlsdb: NO MATCH\n" );
-			rls2_dbf.free_result(rls2_db, result);
+			rls_dbf.free_result(rls_db, result);
 			return(-1);
 		}
 
 		if (nr_rows != 1)
 		{
 			LM_ERR( "update_rlsdb: TOO MANY MATCHES=%d\n", nr_rows);
-			rls2_dbf.free_result(rls2_db, result);
+			rls_dbf.free_result(rls_db, result);
 			return(-1);
 		}
 
@@ -334,7 +334,7 @@ int update_rlsdb( subs_t *subs, int type)
 		values = ROW_VALUES(rows);
 
 		retrieved_local_cseq = VAL_INT(values);
-		rls2_dbf.free_result(rls2_db, result);
+		rls_dbf.free_result(rls_db, result);
 
 		subs->local_cseq = ++retrieved_local_cseq;
 		data_cols[local_cseq_col= n_data_cols]=&str_local_cseq_col;
@@ -379,7 +379,7 @@ int update_rlsdb( subs_t *subs, int type)
 	data_vals[db_flag_col].val.int_val= subs->db_flag;
 	n_data_cols++;*/
 
-	if(rls2_dbf.update(rls2_db, query_cols, 0, query_vals,
+	if(rls_dbf.update(rls_db, query_cols, 0, query_vals,
                     data_cols,data_vals,n_query_cols,n_data_cols) < 0)
 	{
 		LM_ERR("Failed update db\n");
@@ -423,13 +423,13 @@ int update_all_subs_rlsdb( str *from_user, str *from_domain, str *evt )
 		from_domain?from_domain->len:0, from_domain?from_domain->s:"",
 		evt?evt->len:0, evt?evt->s:"" );
 
-	if(rls2_db == NULL)
+	if(rls_db == NULL)
 	{
 		LM_ERR("null database connection\n");
 		return(-1);
 	}
 
-	if(rls2_dbf.use_table(rls2_db, &rlsubs_table)< 0)
+	if(rls_dbf.use_table(rls_db, &rlsubs_table)< 0)
 	{
 		LM_ERR("use table failed\n");
 		return(-1);
@@ -476,11 +476,11 @@ int update_all_subs_rlsdb( str *from_user, str *from_domain, str *evt )
 	result_cols[r_expires_col=n_result_cols++] = &str_expires_col;
 
 
-	if(rls2_dbf.query(rls2_db, query_cols, 0, query_vals, result_cols, 
+	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols, 
 				n_query_cols, n_result_cols, 0, &result )< 0)
 	{
 		LM_ERR("Can't query db\n");
-		if(result) rls2_dbf.free_result(rls2_db, result);
+		if(result) rls_dbf.free_result(rls_db, result);
 		return(-1);
 	}
 
@@ -516,7 +516,7 @@ int update_all_subs_rlsdb( str *from_user, str *from_domain, str *evt )
 		{
 			LM_ERR( "Can't allocate memory\n" );
 			/* tidy up and return >>>>>>>>>>>>>>>>>>>> */
-			rls2_dbf.free_result(rls2_db, result);
+			rls_dbf.free_result(rls_db, result);
 			return(-1);
 		}
 		memset(dest, 0, size);
@@ -564,7 +564,7 @@ int update_all_subs_rlsdb( str *from_user, str *from_domain, str *evt )
 		update_a_sub(dest);
 	}
 
-	rls2_dbf.free_result(rls2_db, result);
+	rls_dbf.free_result(rls_db, result);
 	if (rlsdb_debug) LM_ERR( "Done\n" );
 	return(1);	
 }
@@ -593,13 +593,13 @@ int update_subs_rlsdb( subs_t *subs )
 
 	if (subs==NULL) return(-1);
 
-	if(rls2_db == NULL)
+	if(rls_db == NULL)
 	{
 		LM_ERR("null database connection\n");
 		return(-1);
 	}
 
-	if(rls2_dbf.use_table(rls2_db, &rlsubs_table)< 0)
+	if(rls_dbf.use_table(rls_db, &rlsubs_table)< 0)
 	{
 		LM_ERR("use table failed\n");
 		return(-1);
@@ -629,11 +629,11 @@ int update_subs_rlsdb( subs_t *subs )
 	result_cols[n_result_cols++] = &str_presentity_uri_col;
 	result_cols[n_result_cols++] = &str_record_route_col;
 
-	if(rls2_dbf.query(rls2_db, query_cols, 0, query_vals, result_cols, 
+	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols, 
 				n_query_cols, n_result_cols, 0, &result )< 0)
 	{
 		LM_ERR("Can't query db\n");
-		if(result) rls2_dbf.free_result(rls2_db, result);
+		if(result) rls_dbf.free_result(rls_db, result);
 		return(-1);
 	}
 
@@ -645,14 +645,14 @@ int update_subs_rlsdb( subs_t *subs )
 	{
 		/* no match */ 
 		LM_ERR( "update_subs_rlsdb: NO MATCH\n" );
-		rls2_dbf.free_result(rls2_db, result);
+		rls_dbf.free_result(rls_db, result);
 		return(-1);
 	}
 
 	if (nr_rows != 1)
 	{
 		LM_ERR( "update_subs_rlsdb: TOO MANY MATCHES=%d\n", nr_rows);
-		rls2_dbf.free_result(rls2_db, result);
+		rls_dbf.free_result(rls_db, result);
 		return(-1);
 	}
 
@@ -675,7 +675,7 @@ int update_subs_rlsdb( subs_t *subs )
 	if ( r_remote_cseq >= subs->remote_cseq)
 	{
 		LM_DBG("stored cseq= %d\n", r_remote_cseq);
-		rls2_dbf.free_result(rls2_db, result);
+		rls_dbf.free_result(rls_db, result);
 		return(401); /*stale cseq code */
 	}
 
@@ -689,7 +689,7 @@ int update_subs_rlsdb( subs_t *subs )
 	if(subs->pres_uri.s== NULL)
 	{
 		LM_ERR( "Out of Memory\n" );
-		rls2_dbf.free_result(rls2_db, result);
+		rls_dbf.free_result(rls_db, result);
 		return(-1);
 	}
 
@@ -704,7 +704,7 @@ int update_subs_rlsdb( subs_t *subs )
 		{
 			LM_ERR( "Out of Memory\n" );
  			pkg_free(subs->pres_uri.s);
-			rls2_dbf.free_result(rls2_db, result);
+			rls_dbf.free_result(rls_db, result);
 			return(-1);
 		}
 		memcpy(subs->record_route.s, 
@@ -715,7 +715,7 @@ int update_subs_rlsdb( subs_t *subs )
 	subs->local_cseq= r_local_cseq;
 	subs->version= r_version;
 
-	rls2_dbf.free_result(rls2_db, result);
+	rls_dbf.free_result(rls_db, result);
 
 
 	/*if(s->db_flag & NO_UPDATEDB_FLAG)
@@ -727,7 +727,7 @@ int update_subs_rlsdb( subs_t *subs )
 	data_vals[db_flag_col].val.int_val= s->db_flag;
 	n_data_cols++;*/
 
-	if(rls2_dbf.update(rls2_db, query_cols, 0, query_vals,
+	if(rls_dbf.update(rls_db, query_cols, 0, query_vals,
                     data_cols,data_vals,n_query_cols,n_data_cols) < 0)
 	{
 		LM_ERR("Failed update db\n");
@@ -759,13 +759,13 @@ int insert_rlsdb( subs_t *s )
 
 	if (s==NULL) return(-1);
 
-	if(rls2_db == NULL)
+	if(rls_db == NULL)
 	{
 		LM_ERR("null database connection\n");
 		return(-1);
 	}
 
-	if(rls2_dbf.use_table(rls2_db, &rlsubs_table)< 0)
+	if(rls_dbf.use_table(rls_db, &rlsubs_table)< 0)
 	{
 		LM_ERR("use table failed\n");
 		return(-1);
@@ -903,7 +903,7 @@ int insert_rlsdb( subs_t *s )
 	data_vals[db_flag_col].val.int_val= s->db_flag;
 	n_data_cols++;*/
 
-	if(rls2_dbf.insert(rls2_db, data_cols, data_vals, n_data_cols) < 0)
+	if(rls_dbf.insert(rls_db, data_cols, data_vals, n_data_cols) < 0)
 	{
 		LM_ERR("db insert failed\n");
 		return(-1);
@@ -932,13 +932,13 @@ int matches_in_rlsdb( str callid, str to_tag, str from_tag )
 		to_tag.len, to_tag.s,
 		from_tag.len, from_tag.s );
 
-	if(rls2_db == NULL)
+	if(rls_db == NULL)
 	{
 		LM_ERR("null database connection\n");
 		return(-1);
 	}
 
-	if(rls2_dbf.use_table(rls2_db, &rlsubs_table)< 0)
+	if(rls_dbf.use_table(rls_db, &rlsubs_table)< 0)
 	{
 		LM_ERR("use table failed\n");
 		return(-1);
@@ -964,18 +964,18 @@ int matches_in_rlsdb( str callid, str to_tag, str from_tag )
 	
 	result_cols[0]= &str_callid_col; /* should use id column instead here */
 	
-	if(rls2_dbf.query(rls2_db, query_cols, 0, query_vals, result_cols, 
+	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols, 
 			n_query_cols, 1, 0, &result )< 0)
 	{
 		LM_ERR("Can't query db\n");
-		if(result) rls2_dbf.free_result(rls2_db, result);
+		if(result) rls_dbf.free_result(rls_db, result);
 		return(-1);
 	}
 
 	if(result == NULL) return(-1);
 
 	rval = result->n;
-	rls2_dbf.free_result(rls2_db, result);
+	rls_dbf.free_result(rls_db, result);
 	if (rlsdb_debug) LM_ERR( "Done matches=%d\n", rval );
 	return(rval);
 }
@@ -1012,13 +1012,13 @@ subs_t *get_dialog_rlsdb( str callid, str to_tag, str from_tag )
 		to_tag.len, to_tag.s,
 		from_tag.len, from_tag.s );
 
-	if(rls2_db == NULL)
+	if(rls_db == NULL)
 	{
 		LM_ERR("null database connection\n");
 		return(NULL);
 	}
 
-	if(rls2_dbf.use_table(rls2_db, &rlsubs_table)< 0)
+	if(rls_dbf.use_table(rls_db, &rlsubs_table)< 0)
 	{
 		LM_ERR("use table failed\n");
 		return(NULL);
@@ -1065,11 +1065,11 @@ subs_t *get_dialog_rlsdb( str callid, str to_tag, str from_tag )
 	result_cols[r_expires_col=n_result_cols++] = &str_expires_col;
 
 
-	if(rls2_dbf.query(rls2_db, query_cols, 0, query_vals, result_cols, 
+	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols, 
 				n_query_cols, n_result_cols, 0, &result )< 0)
 	{
 		LM_ERR("Can't query db\n");
-		if(result) rls2_dbf.free_result(rls2_db, result);
+		if(result) rls_dbf.free_result(rls_db, result);
 		return(NULL);
 	}
 
@@ -1081,14 +1081,14 @@ subs_t *get_dialog_rlsdb( str callid, str to_tag, str from_tag )
 	{
 		/* no match */ 
 		LM_INFO( "get_dialog_rlsdb No matching records\n" );
-		rls2_dbf.free_result(rls2_db, result);
+		rls_dbf.free_result(rls_db, result);
 		return(NULL);
 	}
 
 	if (nr_rows != 1)
 	{
 		LM_ERR( "get_dialog_rlsdb multiple matching records\n" );
-		rls2_dbf.free_result(rls2_db, result);
+		rls_dbf.free_result(rls_db, result);
 		return(NULL);
 	}
 
@@ -1120,7 +1120,7 @@ subs_t *get_dialog_rlsdb( str callid, str to_tag, str from_tag )
 		{
 			LM_ERR( "Can't allocate memory\n" );
 			/* tidy up and return >>>>>>>>>>>>>>>>>>>> */
-			rls2_dbf.free_result(rls2_db, result);
+			rls_dbf.free_result(rls_db, result);
 			return(NULL);
 		}
 		memset(dest, 0, size);
@@ -1166,7 +1166,7 @@ subs_t *get_dialog_rlsdb( str callid, str to_tag, str from_tag )
 		/*dest->db_flag= VAL_INT(values+r_db_flag_col);*/
 	}
 
-	rls2_dbf.free_result(rls2_db, result);
+	rls_dbf.free_result(rls_db, result);
 
 	if (rlsdb_debug) LM_ERR( "Done\n" );
 	return(dest);
