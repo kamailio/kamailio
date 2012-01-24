@@ -1008,7 +1008,7 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 						LM_DBG("calling myself for rl_node\n");
 						res = process_list_and_exec(rl_node, username, domain, function, param);
 						xmlFree(uri);
-						xmlFree(rl_doc);
+						xmlFreeDoc(rl_doc);
 					}
 					else
 					{
