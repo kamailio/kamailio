@@ -83,13 +83,17 @@ int pres_watcher_allowed(subs_t* subs)
 
 	node= get_rule_node(subs, xcap_tree);
 	if(node== NULL)
+	{
+		xmlFreeDoc(xcap_tree);
 		return 0;
+	}
 
 	/* process actions */	
 	actions_node = xmlNodeGetChildByName(node, "actions");
 	if(actions_node == NULL)
 	{	
 		LM_DBG("actions_node NULL\n");
+		xmlFreeDoc(xcap_tree);
 		return 0;
 	}
 	LM_DBG("actions_node->name= %s\n",
@@ -99,6 +103,7 @@ int pres_watcher_allowed(subs_t* subs)
 	if(sub_handling_node== NULL)
 	{	
 		LM_DBG("sub_handling_node NULL\n");
+		xmlFreeDoc(xcap_tree);
 		return 0;
 	}
 	sub_handling = (char*)xmlNodeGetContent(sub_handling_node);
@@ -110,6 +115,7 @@ int pres_watcher_allowed(subs_t* subs)
 	if(sub_handling== NULL)
 	{
 		LM_ERR("Couldn't get sub-handling content\n");
+		xmlFreeDoc(xcap_tree);
 		return -1;
 	}
 	if( strncmp((char*)sub_handling, "block",5 )==0)
@@ -130,9 +136,9 @@ int pres_watcher_allowed(subs_t* subs)
 		subs->reason.s= "polite-block";
 		subs->reason.len = 12;
 	}
-	else	
+	else
 	if( strncmp((char*)sub_handling , "allow",5 )==0)
-	{	
+	{
 		subs->status = ACTIVE_STATUS;
 		subs->reason.s = NULL;
 	}
@@ -140,11 +146,12 @@ int pres_watcher_allowed(subs_t* subs)
 	{
 		LM_ERR("unknown subscription handling action\n");
 		xmlFree(sub_handling);
+		xmlFreeDoc(xcap_tree);
 		return -1;
 	}
 
 	xmlFree(sub_handling);
-
+	xmlFreeDoc(xcap_tree);
 	return 0;
 
 }	
