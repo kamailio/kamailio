@@ -87,18 +87,18 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 		unsigned int hash_code)
 {
 	xmlDocPtr rlmi_body= NULL;
-    xmlNodePtr list_node= NULL;
+	xmlNodePtr list_node= NULL;
 	db_key_t query_cols[2], update_cols[2], result_cols[7];
 	db_val_t query_vals[2], update_vals[2];
 	db1_res_t *result= NULL;
 	int n_result_cols= 0;
 	char* boundary_string;
 	str rlsubs_did= {0, 0};
-    str* rlmi_cont= NULL;
-    uri_link_t *uri_list_head = NULL;
-    int len_est;
-    res_param_t param;
-    int resource_added = 0; /* Flag to indicate that we have added at least one resource */
+	str* rlmi_cont= NULL;
+	uri_link_t *uri_list_head = NULL;
+	int len_est;
+	res_param_t param;
+	int resource_added = 0; /* Flag to indicate that we have added at least one resource */
 
 	LM_DBG("start\n");
 	/* query in alfabetical order */
@@ -135,7 +135,7 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 	if(result== NULL)
 		goto error;
 
-    /* Allocate an initial buffer for the multipart body.
+	/* Allocate an initial buffer for the multipart body.
 	 * This buffer will be reallocated if neccessary */
 	multipart_body= (str*)pkg_malloc(sizeof(str));
 	if(multipart_body== NULL)
@@ -143,8 +143,8 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 		ERR_MEM(PKG_MEM_STR);
 	}
 
-    multipart_body_size = BUF_REALLOC_SIZE;
-    multipart_body->s = (char *)pkg_malloc(multipart_body_size);
+	multipart_body_size = BUF_REALLOC_SIZE;
+	multipart_body->s = (char *)pkg_malloc(multipart_body_size);
 
 	if(multipart_body->s== NULL)
 	{
@@ -153,13 +153,13 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
     
 	multipart_body->len= 0;
 
-    /* Create an empty rlmi document */
+	/* Create an empty rlmi document */
 	len_est = create_empty_rlmi_doc(&rlmi_body, &list_node, rl_uri, subs->version, 1);
 	xmlDocSetRootElement(rlmi_body, list_node);
 
-    /* Find all the uri's to which we are subscribed */
+	/* Find all the uri's to which we are subscribed */
 	param.next = &uri_list_head;
-	if(	process_list_and_exec(rl_node, subs->from_user, subs->from_domain, add_resource_to_list,(void*)(&param))< 0)
+	if(process_list_and_exec(rl_node, subs->from_user, subs->from_domain, add_resource_to_list,(void*)(&param))< 0)
 	{
 		LM_ERR("in process_list_and_exec function\n");
 		goto error;
@@ -167,52 +167,54 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 
 	boundary_string= generate_string((int)time(NULL), BOUNDARY_STRING_LEN);
 	
-    while (uri_list_head)
+	while (uri_list_head)
 	{
-        uri_link_t *last = uri_list_head;
-        if (add_resource(uri_list_head->uri, list_node, boundary_string, result, &len_est) >0)
-        {
-            if (resource_added == 0)
-            {
-                /* We have exceeded our length estimate without adding any resource.
-                   We cannot send this resource, move on. */
-                LM_ERR("Failed to add a single resource %d vs %d\n", len_est, rls_max_notify_body_len);
-                uri_list_head = uri_list_head->next;
-                pkg_free(last);
-            }
-            else
-            {
-                LM_DBG("send_full_notify estimate exceeded %d vs %d\n", len_est, rls_max_notify_body_len);
-                /* If add_resource returns > 0 the resource did not fit in our size limit */
-                rlmi_cont= (str*)pkg_malloc(sizeof(str));
-                if(rlmi_cont== NULL)
-                {
-                    ERR_MEM(PKG_MEM_STR);
-                }
-                /* Where we are worried about length we won't use padding */
-                xmlDocDumpFormatMemory(rlmi_body,(xmlChar**)(void*)&rlmi_cont->s,
-                        &rlmi_cont->len, 0);
-                xmlFreeDoc(rlmi_body);
-
-                if(agg_body_sendn_update(rl_uri, boundary_string, rlmi_cont,
-                    multipart_body, subs, hash_code)< 0)
-                {
-                    LM_ERR("in function agg_body_sendn_update\n");
-                    goto error;
-                }
-                
-                /* Create a new rlmi body, but not a full_state one this time */
-                len_est = create_empty_rlmi_doc(&rlmi_body, &list_node, rl_uri, subs->version, 0);
-                xmlDocSetRootElement(rlmi_body, list_node);
-                multipart_body->len = 0;
-                resource_added = 0;
-            }
-        }
-        else
+		uri_link_t *last = uri_list_head;
+		if (add_resource(uri_list_head->uri, list_node, boundary_string, result, &len_est) >0)
 		{
-            resource_added = 1;
-            uri_list_head = uri_list_head->next;
-            pkg_free(last);
+			if (resource_added == 0)
+			{
+				/* We have exceeded our length estimate without adding any resource.
+				   We cannot send this resource, move on. */
+				LM_ERR("Failed to add a single resource %d vs %d\n", len_est, rls_max_notify_body_len);
+				uri_list_head = uri_list_head->next;
+				if (last->uri) pkg_free(last->uri);
+				pkg_free(last); 
+			}
+			else
+			{
+				LM_DBG("send_full_notify estimate exceeded %d vs %d\n", len_est, rls_max_notify_body_len);
+				/* If add_resource returns > 0 the resource did not fit in our size limit */
+				rlmi_cont= (str*)pkg_malloc(sizeof(str));
+				if(rlmi_cont== NULL)
+				{
+					ERR_MEM(PKG_MEM_STR);
+				}
+				/* Where we are worried about length we won't use padding */
+				xmlDocDumpFormatMemory(rlmi_body,(xmlChar**)(void*)&rlmi_cont->s,
+							&rlmi_cont->len, 0);
+				xmlFreeDoc(rlmi_body);
+
+				if(agg_body_sendn_update(rl_uri, boundary_string, rlmi_cont,
+						multipart_body, subs, hash_code)< 0)
+				{
+					LM_ERR("in function agg_body_sendn_update\n");
+					goto error;
+				}
+                
+				/* Create a new rlmi body, but not a full_state one this time */
+				len_est = create_empty_rlmi_doc(&rlmi_body, &list_node, rl_uri, subs->version, 0);
+				xmlDocSetRootElement(rlmi_body, list_node);
+				multipart_body->len = 0;
+				resource_added = 0;
+			}
+		}
+		else
+		{
+			resource_added = 1;
+			uri_list_head = uri_list_head->next;
+			if (last->uri) pkg_free(last->uri);
+			pkg_free(last);
 		}
 	}
     
