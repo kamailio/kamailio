@@ -158,10 +158,10 @@ int send_notify(xmlDocPtr * rlmi_doc, char * buf, int buf_len,
 }
 
 
-void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int auth_state_col, int reason_col,
-                   int pres_state_col, int content_type_col, subs_t* subscription, int external_hash)
+static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int auth_state_col, int reason_col,
+                   int pres_state_col, int content_type_col)
 {
-    int i;
+	int i;
 	char* prev_did= NULL, * curr_did= NULL;
 	db_row_t *row;	
 	db_val_t *row_vals;
@@ -178,11 +178,11 @@ void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int aut
 	int chunk_len=0;
 	str bstr= {0, 0};
 	subs_t* dialog= NULL;
-    int len_est = 0;
-    int resource_added = 0; /* Flag to indicate that we have added at least one resource */
+	int len_est = 0;
+	int resource_added = 0; /* Flag to indicate that we have added at least one resource */
 
 	/* generate the boundary string */
-    boundary_string= generate_string((int)time(NULL), BOUNDARY_STRING_LEN);
+	boundary_string= generate_string((int)time(NULL), BOUNDARY_STRING_LEN);
 	bstr.len= strlen(boundary_string);
 	bstr.s= (char*)pkg_malloc((bstr.len+ 1)* sizeof(char));
 	if(bstr.s== NULL)
@@ -200,14 +200,6 @@ void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int aut
 		ERR_MEM(PKG_MEM_STR);
 	}
 
-    if (subscription == NULL)
-	{
-        dialog = subscription;
-        /* If we have been given a subscription to use
-           We should also have been given a hash value. */
-        hash_code = external_hash;
-	}
-
 	LM_DBG("found %d records with updated state\n", result->n);
 	for(i= 0; i< result->n; i++)
 	{
@@ -215,67 +207,59 @@ void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int aut
 		row_vals = ROW_VALUES(row);
 		
 		curr_did=     (char*)row_vals[did_col].val.string_val;
-        resource_uri= (char*)row_vals[resource_uri_col].val.string_val;
+		resource_uri= (char*)row_vals[resource_uri_col].val.string_val;
 		auth_state_flag=     row_vals[auth_state_col].val.int_val;
 		pres_state.s=   (char*)row_vals[pres_state_col].val.string_val;
 		pres_state.len = strlen(pres_state.s);
 		trim(&pres_state);
 		
-        /* If we have moved onto a new resource list Subscribe dialog indentifier, 
-           Send a NOTIFY for the previous ID and then drop the existing documents. */
+		/* If we have moved onto a new resource list Subscribe dialog indentifier, 
+		   send a NOTIFY for the previous ID and then drop the existing documents. */
 		if(prev_did!= NULL && strcmp(prev_did, curr_did)) 
 		{
-            if (send_notify(&rlmi_doc, buf, buf_len, bstr, dialog, hash_code))
-            {  
-                LM_ERR("in send_notify\n");
-                goto error;
-            }
-            len_est = 0;
-            
-            if (subscription == NULL)
-            {
-                pkg_free(dialog);
-                dialog= NULL;
-            }
-        }
+			if (send_notify(&rlmi_doc, buf, buf_len, bstr, dialog, hash_code))
+			{  
+				LM_ERR("in send_notify\n");
+				goto error;
+			}
+			len_est = 0;
+			pkg_free(dialog);
+			dialog= NULL;
+		}
 
 		/*if first or different*/
 		if(prev_did==NULL || strcmp(prev_did, curr_did)!=0)
-        {
-            if (subscription == NULL)
-            {
-                /* We have not been given a subscription
-                   Work it out from the did. */
-                get_dialog_from_did(curr_did, &dialog, &hash_code);
-                if(dialog== NULL)
-                {
-                    prev_did = NULL;
-                    LM_INFO("Dialog is NULL\n");
-                    continue;
-                }
-            }
+		{
+            /* Work out a subscription from the did. */
+			get_dialog_from_did(curr_did, &dialog, &hash_code);
+			if(dialog== NULL)
+			{
+				prev_did = NULL;
+				LM_INFO("Dialog is NULL\n");
+				continue;
+			}
 		
-            len_est = create_empty_rlmi_doc(&rlmi_doc, &list_node, &dialog->pres_uri, dialog->version, 0);
-            len_est += 2*strlen(boundary_string)+4+102+2+50+strlen(resource_uri)+20;
+			len_est = create_empty_rlmi_doc(&rlmi_doc, &list_node, &dialog->pres_uri, dialog->version, 0);
+			len_est += 2*strlen(boundary_string)+4+102+2+50+strlen(resource_uri)+20;
 			buf_len= 0;
-            resource_added = 0;
+			resource_added = 0;
 
 			/* !!!! for now I will include the auth state without checking if 
 			 * it has changed - > in future chech if it works */		
-        }
+		}
 
 		/* add a node in rlmi_doc and if any presence state registered add 
 		 * it in the buffer */
 		
 		resource_node= xmlNewChild(list_node,NULL,BAD_CAST "resource", NULL);
 		if(resource_node== NULL)
-        {
+		{
 			LM_ERR("when adding resource child\n");
 			goto done;
-        }
+		}
 		xmlNewProp(resource_node, BAD_CAST "uri", BAD_CAST resource_uri);
-        len_est += strlen (resource_uri) + 35; /* <resource uri="[uri]"></resource>/r/n */
-        resource_added = 1;
+		len_est += strlen (resource_uri) + 35; /* <resource uri="[uri]"></resource>/r/n */
+		resource_added = 1;
 
 		/* there might be more records with the same uri- more instances-
 		 * search and add them all */
@@ -289,17 +273,17 @@ void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int aut
 			
 			auth_state= get_auth_string(auth_state_flag);
 			if(auth_state== NULL)
-            {
+			{
 				LM_ERR("bad authorization status flag\n");
-                goto error;
-            }	
+				goto error;
+			}	
 			len_est += strlen(auth_state) + 38; /* <instance id="12345678" state="[auth_state]" />r/n */
 
 			if(auth_state_flag & ACTIVE_STATE)
-            {
+			{
 				cid.s= generate_cid(resource_uri, strlen(resource_uri));
-                cid.len = strlen(cid.s);
-                len_est += cid.len + 8; /* cid="[cid]" */
+				cid.len = strlen(cid.s);
+				len_est += cid.len + 8; /* cid="[cid]" */
 				content_type.s = (char*)row_vals[content_type_col].val.string_val;
 				content_type.len = strlen(content_type.s);
 				chunk_len = 4 + bstr.len
@@ -307,65 +291,61 @@ void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int aut
 							+ 16 + cid.len
 							+ 18 + content_type.len
 							+ 4 + pres_state.len + 8;
-                len_est += chunk_len;
-            }
+				len_est += chunk_len;
+			}
 			else
 			if(auth_state_flag & TERMINATED_STATE)
-            {
+			{
 			    len_est += strlen(row_vals[resource_uri_col].val.string_val) + 10; /* reason="[resaon]" */
-            }
+			}
             
-            if (rls_max_notify_body_len > 0 && len_est > rls_max_notify_body_len)
-            {
-                /* We have a limit on body length set, and we were about to exceed it */
-                if (resource_added == 1)
-                {
-                    /* We added at least one resource. */
-                    LM_ERR("timer_send_notify hit the size limit. len_est = %d\n", len_est);
-                    if (send_notify(&rlmi_doc, buf, buf_len, bstr, dialog, hash_code))
-                    {
-                        LM_ERR("in send_notify\n");
-                        goto error;
-                    }
-                    i --;
-                }
-                else
-                {
-                    LM_ERR("timer_send_notify hit the size limit. NO RESOURCE ADDED len_est = %d\n", len_est);
-                }
-                len_est = 0;
+			if (rls_max_notify_body_len > 0 && len_est > rls_max_notify_body_len)
+			{
+				/* We have a limit on body length set, and we were about to exceed it */
+				if (resource_added == 1)
+				{
+					/* We added at least one resource. */
+					LM_ERR("timer_send_notify hit the size limit. len_est = %d\n", len_est);
+					if (send_notify(&rlmi_doc, buf, buf_len, bstr, dialog, hash_code))
+					{
+						LM_ERR("in send_notify\n");
+						goto error;
+					}
+					i --;
+				}
+				else
+				{
+					LM_ERR("timer_send_notify hit the size limit. NO RESOURCE ADDED len_est = %d\n", len_est);
+				}
+				len_est = 0;
 
-                if (subscription == NULL)
-                {
-                    pkg_free(dialog);
-                    dialog= NULL;
-                }
-                
-                curr_did=NULL;
-                break;
-            }
+				pkg_free(dialog);
+				dialog= NULL;
+				curr_did=NULL;
+				break;
+			}
 
-            /* OK, we are happy this will fit */
-            instance_node= xmlNewChild(resource_node, NULL, BAD_CAST "instance", NULL);
-            if(instance_node== NULL)
-            {
+			/* OK, we are happy this will fit */
+			instance_node= xmlNewChild(resource_node, NULL, BAD_CAST "instance", NULL);
+			if(instance_node== NULL)
+			{
 				LM_ERR("while adding instance child\n");
 				goto error;
-            }	
+			}	
 
-            xmlNewProp(instance_node, BAD_CAST "id", 
+			xmlNewProp(instance_node, BAD_CAST "id", 
 					BAD_CAST generate_string(contor, 8));
-            if(auth_state_flag & ACTIVE_STATE)
-            {
-                xmlNewProp(instance_node, BAD_CAST "state", BAD_CAST auth_state);
-            }
+			if(auth_state_flag & ACTIVE_STATE)
+			{
+				xmlNewProp(instance_node, BAD_CAST "state", BAD_CAST auth_state);
+			}
 			else
 			if(auth_state_flag & TERMINATED_STATE)
-            {
-            	xmlNewProp(instance_node, BAD_CAST "reason",
-					BAD_CAST row_vals[resource_uri_col].val.string_val);
-            }
-            xmlNewProp(instance_node, BAD_CAST "cid", BAD_CAST cid.s);
+			{
+				xmlNewProp(instance_node, BAD_CAST "reason",
+						BAD_CAST row_vals[resource_uri_col].val.string_val);
+			}
+			xmlNewProp(instance_node, BAD_CAST "cid", BAD_CAST cid.s);
 
 			/* add in the multipart buffer */
 			if(cid.s)
@@ -417,20 +397,16 @@ void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, int aut
 
 	if(rlmi_doc)
 	{
-        LM_DBG("timer_send_notify at end len_est = %d resource_added = %d\n", len_est, resource_added);
-        if (resource_added == 1)
-        {
-            send_notify(&rlmi_doc, buf, buf_len, bstr, dialog, hash_code);
-        }
-        if (subscription == NULL)
-        {
-            /* We are using a derived subscription */
-            if(dialog)
-            {
-                pkg_free(dialog);
-            }
-            dialog= NULL;
-        }
+		LM_DBG("timer_send_notify at end len_est = %d resource_added = %d\n", len_est, resource_added);
+		if (resource_added == 1)
+		{
+			send_notify(&rlmi_doc, buf, buf_len, bstr, dialog, hash_code);
+		}
+		if(dialog)
+		{
+			pkg_free(dialog);
+		}
+		dialog= NULL;
 	}
 
 	
@@ -441,12 +417,8 @@ done:
 
 	if(buf)
 		pkg_free(buf);
-    if (subscription == NULL)
-	{
-        /* We are using a derived subscription */
-        if(dialog)
-            pkg_free(dialog);
-    }
+	if(dialog)
+		pkg_free(dialog);
 	return;
 }
 
@@ -882,8 +854,7 @@ void timer_send_notify(unsigned int ticks,void *param)
 	}
 
     send_notifies(result, did_col, resource_uri_col, auth_state_col, reason_col,
-                  pres_state_col, content_type_col,
-                  NULL, 0);  /* Work out the subscription */
+                  pres_state_col, content_type_col);
 error:
 done:
 	if(result)
