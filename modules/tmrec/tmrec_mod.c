@@ -33,6 +33,7 @@
 #include "../../pvar.h"
 #include "../../mod_fix.h"
 #include "../../lib/srutils/tmrec.h"
+#include "period.h"
 
 
 MODULE_VERSION
@@ -45,6 +46,8 @@ static int w_tmrec_match(struct sip_msg* msg, char* rec, char* t);
 static int fixup_tmrec_match(void** param, int param_no);
 static int w_is_leap_year(struct sip_msg* msg, char* t, char* p2);
 static int fixup_is_leap_year(void** param, int param_no);
+static int fixup_time_period_match(void** param, int param_no);
+static int w_time_period_match(struct sip_msg* msg, char* period, char* t);
 
 int tmrec_wday = 0;
 char tmrec_separator = '|';
@@ -58,6 +61,10 @@ static cmd_export_t cmds[]={
 	{"is_leap_year", (cmd_function)w_is_leap_year, 0, fixup_is_leap_year,
 		0, ANY_ROUTE},
 	{"is_leap_year", (cmd_function)w_is_leap_year, 1, fixup_is_leap_year,
+		0, ANY_ROUTE},
+	{"time_period_match", (cmd_function)w_time_period_match, 1, fixup_time_period_match,
+		0, ANY_ROUTE},
+	{"time_period_match", (cmd_function)w_time_period_match, 2, fixup_time_period_match,
 		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -219,4 +226,50 @@ static int fixup_tmrec_match(void** param, int param_no)
 			return -1;
 	}
 	return 0;
+}
+
+static int fixup_time_period_match(void** param, int param_no)
+{
+	if(param_no==1)
+	{
+		if(fixup_spve_null(param, 1)<0)
+			return -1;
+		return 0;
+	} else if(param_no==2) {
+		if(fixup_igp_null(param, 1)<0)
+			return -1;
+	}
+	return 0;
+}
+
+static int w_time_period_match(struct sip_msg* msg, char* period, char* t)
+{
+	str rv;
+	time_t tv;
+	int ti;
+
+	if(msg==NULL)
+		return -2;
+
+	if(fixup_get_svalue(msg, (gparam_t*)period, &rv)!=0)
+	{
+		LM_ERR("invalid period parameter value\n");
+		return -3;
+	}
+
+	if(t!=NULL)
+	{
+		if(fixup_get_ivalue(msg, (gparam_t*)t, &ti)!=0)
+		{
+			LM_ERR("invalid time stamp parameter value\n");
+			return -4;
+		}
+		tv = (time_t)ti;
+	} else {
+		tv = time(NULL);
+	}
+
+	if (in_period(tv, rv.s))
+		return 1;
+	return -1;
 }

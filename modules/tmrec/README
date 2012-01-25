@@ -37,12 +37,14 @@ Alex Balashov
 
               4.1. tmrec_match(timerec [, timestamp])
               4.2. is_leap_year([year])
+              4.3. time_period_match(period [, timestamp])
 
    List of Examples
 
    1.1. Set separator parameter
    1.2. tmrec_match usage
    1.3. is_leap_year usage
+   1.4. time_period_match usage
 
 Chapter 1. Admin Guide
 
@@ -62,12 +64,14 @@ Chapter 1. Admin Guide
 
         4.1. tmrec_match(timerec [, timestamp])
         4.2. is_leap_year([year])
+        4.3. time_period_match(period [, timestamp])
 
 1. Overview
 
    This module provides time recurrence matching functions. The format of
    recurrence definitions is based on Internet Calendaring and Scheduling
-   Core Object Specification (Calendar COS - RFC 2445).
+   Core Object Specification (Calendar COS - RFC 2445). It also provides a
+   port of the Perl Time::Period module for generic time period matching.
 
 2. Dependencies
 
@@ -105,6 +109,7 @@ modparam("tmrec", "separator", ";")
 
    4.1. tmrec_match(timerec [, timestamp])
    4.2. is_leap_year([year])
+   4.3. time_period_match(period [, timestamp])
 
 4.1.  tmrec_match(timerec [, timestamp])
 
@@ -235,4 +240,69 @@ modparam("tmrec", "separator", ";")
    Example 1.3. is_leap_year usage
 ...
 if(is_leap_year("2010"))
+...
+
+4.3.  time_period_match(period [, timestamp])
+
+   Matches the point in time specified by the timestamp parameter, or the
+   current time if the parameter is missing, against the given period
+   specification. Returns 1 if it matches, -1 if it doesn't, and a value
+   <= -2 if there was an error.
+
+   The time period specification follows the Perl Time::Period module. It
+   is a string and consists of zero or more sub-period specifications,
+   separated by commas. The period matches if at least one of the
+   sub-periods matches, or if no sub-periods were given at all (an empty
+   string).
+
+   Each sub-period is a list of one or more scale definitions, optionally
+   separated by space characters. The sub-period matches if all of the
+   given scales within that sub-period match. For each scale given, a
+   single value or a range of values (which is two values separated by a
+   hyphen) can be specified. Multiple values or multiple ranges (or a
+   combination thereof) within a single scale is also possible. If a
+   certain scale is specified more than once, the previous values or
+   ranges for that scale are extended by the newly given ones. If a
+   particular scale is not mentioned at all within a sub-period, then no
+   matching is performed for that scale.
+
+   The following scales are supported and understood. Each scale also has
+   a respective short code, either one can be used. A single scale
+   definition consists of the scale name, followed by an opening brace,
+   followed by the list of values, followed by a closing brace.
+     * year or yr - Either given as a full 4-digit number >= 1970, or as a
+       2-digit number, in which case it will be understood to be within
+       the current century.
+     * month or mo - Month of the year, either a number between 1 and 12,
+       or at least the first 3 letters of a spelled out month name, e.g.
+       “jan”, “janua” or “january” will all work.
+     * week or wk - Week of the month, a number between 1 and 6. The first
+       day of the week is Sunday.
+     * yday or yd - Day of the year, a number between 1 and 366.
+     * mday or md - Day of the month, a number between 1 and 31.
+     * wday or wd - Day of the week, either a number between 1 and 7, or
+       at least the first 2 letters of a spelled out weekday name
+       (analogous to the “month” scale). Sunday is the first day of the
+       week.
+     * hour or hr - A number between 0 and 23. Unlike the Perl
+       Time::Period module, “am” or “pm” specifications are not supported.
+     * minute or min - A number between 0 and 59.
+     * second or sec - A number between 0 and 60 (to allow for leap
+       seconds).
+
+   The parameters can include pseudo-variables. Whitespace (more
+   precisely, the space character only) can occur anywhere, but is
+   optional. Ranges in all scales (with the exception of the “year” scale)
+   are allowed to wrap-around, e.g. a weekday scale of “{fri-tue}” is
+   equivalent to “{fri-sat,sun-tue}”.
+
+   Example 1.4. time_period_match usage
+...
+if(time_period_match("wd{1-5} hr{8-16}, wd{1-5} hr{17} min{0-29}"))
+        xdbg("Monday to Friday, 8:00 to 17:30\n");
+
+if(time_period_match("weekday { sat sun }, weekday {mo-fr} hr {17-8},wd{mo-wed}h
+r{15 16 9}"))
+        xdbg("We're closed - open only Monday to Wednesday 10:00-15:00, Thursday
+ and Friday 9:00-17:00");
 ...
