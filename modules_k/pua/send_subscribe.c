@@ -564,7 +564,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	size= sizeof(ua_pres_t)+ 2*sizeof(str)+( pto->uri.len+
 		pfrom->uri.len+ pto->tag_value.len+ pfrom->tag_value.len
 		+msg->callid->body.len+ record_route.len+ hentity->contact.len+
-		hentity->id.len + contact.len)*sizeof(char);
+		hentity->id.len )*sizeof(char);
 
 	if(hentity->extra_headers)
 		size+= sizeof(str)+ hentity->extra_headers->len*sizeof(char);
@@ -653,10 +653,13 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	}
 
 	/* write the remote contact filed */
-	presentity->remote_contact.s= (char*)presentity+ size;
+	presentity->remote_contact.s= (char*)shm_malloc(contact.len* sizeof(char));
+	if(presentity->remote_contact.s== NULL)
+	{
+		ERR_MEM(SHARE_MEM);
+	}
 	memcpy(presentity->remote_contact.s, contact.s, contact.len);
 	presentity->remote_contact.len= contact.len;
-	size+= presentity->remote_contact.len;
 
 	presentity->event|= hentity->event;
 	presentity->flag= hentity->flag;
@@ -693,7 +696,11 @@ error:
 		if (presentity!=NULL)
 		{
 			delete_temporary_dialog_puadb(presentity);
-			if (need_to_free) shm_free(presentity);
+			if (need_to_free)
+			{
+				if (presentity->remote_contact.s) shm_free(presentity->remote_contact.s);
+				shm_free(presentity);
+			}
 		}
 	}
 	else

@@ -341,7 +341,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	}
 	size= sizeof(ua_pres_t)+ sizeof(str)+ 
 		(hentity->pres_uri->len+ hentity->tuple_id.len + 
-		 hentity->id.len + etag.len)* sizeof(char);
+		 hentity->id.len)* sizeof(char);
 	if(hentity->extra_headers)
 		size+= sizeof(str)+ hentity->extra_headers->len* sizeof(char);
 
@@ -391,10 +391,14 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	presentity->flag|= hentity->flag;
 	presentity->event|= hentity->event;
 
-	presentity->etag.s= (char*)presentity+ size;
+	presentity->etag.s= (char*)shm_malloc(etag.len* sizeof(char));
+	if(presentity->etag.s== NULL)
+	{
+		LM_ERR("No more share memory\n");
+		goto error;
+	}
 	memcpy(presentity->etag.s, etag.s, etag.len);
 	presentity->etag.len= etag.len;
-	size+= presentity->etag.len;
 
 	if (dbmode==PUA_DB_ONLY)
 	{
@@ -417,7 +421,10 @@ done:
 		*ps->param= NULL;
 	}
 	if(dbmode==PUA_DB_ONLY && presentity)
+	{
+		shm_free(presentity->etag.s);
 		shm_free(presentity);
+	}
 
 	free_results_puadb(res);
 	return;
