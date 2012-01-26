@@ -370,18 +370,19 @@ int build_publish(xmlNodePtr pres_node, int expires)
 		if(resource== NULL)
 		{
 			LM_ERR("no more memory\n");
+			xmlFree(uri);
 			return -1;
 		}
 		strcpy(resource, slash+1);
 		slash= '\0';
 	}	
 	pres_uri= euri_xmpp_sip(uri);
+	xmlFree(uri);
 	if(pres_uri== NULL)
 	{
 		LM_ERR("while encoding xmpp-sip uri\n");
-		goto error;	
-	}	
-	xmlFree(uri);
+		goto error;
+	}
 	uri_str.s= pres_uri;
 	uri_str.len= strlen(pres_uri);
 
@@ -460,12 +461,12 @@ int presence_subscribe(xmlNodePtr pres_node, int expires,int  flag)
 		return -1;
 	}
 	to_uri= duri_xmpp_sip(uri);
+	xmlFree(uri);
 	if(to_uri== NULL)
 	{
 		LM_ERR("while decoding xmpp--sip uri\n");
 		goto error;
 	}
-	xmlFree(uri);
 	to_uri_str.s= to_uri;
 	to_uri_str.len= strlen(to_uri);
 
@@ -476,15 +477,15 @@ int presence_subscribe(xmlNodePtr pres_node, int expires,int  flag)
 		goto error;
 	}
 	from_uri= euri_xmpp_sip(uri);
+	xmlFree(uri);
 	if(from_uri== NULL)
 	{
 		LM_ERR("while encoding xmpp-sip uri\n");
-		goto error;	
-	}	
-	xmlFree(uri);
+		goto error;
+	}
 	from_uri_str.s= from_uri;
 	from_uri_str.len= strlen(from_uri);
-	
+
 	memset(&subs, 0, sizeof(subs_info_t));
 
 	subs.pres_uri= &to_uri_str;
