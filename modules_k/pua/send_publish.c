@@ -663,7 +663,7 @@ send_publish:
 	if( body && ret_code)
 	{
 		if(body->s)
-			free(body->s);
+			xmlFree(body->s);
 		pkg_free(body);
 	}	
 	if(etag.s)
@@ -688,7 +688,7 @@ error:
 	if(body&& ret_code)
 	{
 		if(body->s)
-			free(body->s);
+			xmlFree(body->s);
 		pkg_free(body);
 	}	
 	if(str_hdr)
