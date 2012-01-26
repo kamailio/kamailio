@@ -401,46 +401,39 @@ done:
 }
 
 
-int parse_subs_state(str auth_state, str** reason, int* expires)
+int parse_subs_state(str auth_state, str *reason, int *expires)
 {
 	str str_exp;
-	str* res= NULL;
 	char* smc= NULL;
 	int len, flag= -1;
 
-
-	if( strncmp(auth_state.s, "active", 6)== 0)
+	if (strncmp(auth_state.s, "active", 6)== 0)
 		flag= ACTIVE_STATE;
 
-	if( strncmp(auth_state.s, "pending", 7)== 0)
+	if (strncmp(auth_state.s, "pending", 7)== 0)
 		flag= PENDING_STATE; 
 
-	if( strncmp(auth_state.s, "terminated", 10)== 0)
+	if (strncmp(auth_state.s, "terminated", 10)== 0)
 	{
 		smc= strchr(auth_state.s, ';');
-		if(smc== NULL)
+		if (smc== NULL)
 		{
 			LM_ERR("terminated state and no reason found");
 			return -1;
 		}
-		if(strncmp(smc+1, "reason=", 7))
+		if (strncmp(smc+1, "reason=", 7))
 		{
 			LM_ERR("terminated state and no reason found");
 			return -1;
-        }
-		res= (str*)pkg_malloc(sizeof(str));
-		if(res== NULL)
-        {
-			ERR_MEM(PKG_MEM_STR);
-		}
+        	}
 		len=  auth_state.len- 10- 1- 7;
-		res->s= (char*)pkg_malloc(len* sizeof(char));
-		if(res->s== NULL)
+		reason->s = (char*) pkg_malloc(len* sizeof(char));
+		if (reason->s== NULL)
 		{
 			ERR_MEM(PKG_MEM_STR);
 		}
-		memcpy(res->s, smc+ 8, len);
-		res->len= len;
+		memcpy(reason->s, smc+ 8, len);
+		reason->len= len;
 		return TERMINATED_STATE;
 	}
 	
@@ -451,7 +444,7 @@ int parse_subs_state(str auth_state, str** reason, int* expires)
 		{
 			LM_ERR("active or pending state and no expires parameter found");
 			return -1;
-        }	
+		}	
 		if(strncmp(smc+1, "expires=", 8))
 		{
 			LM_ERR("active or pending state and no expires parameter found");
@@ -461,22 +454,16 @@ int parse_subs_state(str auth_state, str** reason, int* expires)
 		str_exp.len= auth_state.s+ auth_state.len- smc- 9;
 
 		if( str2int(&str_exp, (unsigned int*)expires)< 0)
-        {
+		{
 			LM_ERR("while getting int from str\n");
 			return -1;
-        }
+		}
 		return flag;
 	
 	}
-	return -1;
 
 error:
-	if(res)
-	{
-		if(res->s)
-			pkg_free(res->s);
-		pkg_free(res);
-	}
+	if (reason->s) pkg_free(reason->s);
 	return -1;
 }
 
@@ -492,7 +479,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	int n_query_cols= 0;
 	str auth_state= {0, 0};
 	int found= 0;
-	str* reason= NULL;
+	str reason = {0, 0};
 	int auth_flag;
 	struct hdr_field* hdr= NULL;
 	int n, expires= -1;
@@ -534,7 +521,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	}
 	memset(&dialog, 0, sizeof(ua_pres_t));
 	dialog.watcher_uri= &pto->uri;
-    if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
+	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
 	{
 		LM_ERR("to tag value not parsed\n");
 		goto error;
@@ -619,7 +606,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 		 */
 		if(auth_flag==TERMINATED_STATE)
 			goto done;
-        LM_ERR("no presence dialog record for non-TERMINATED state uri pres_uri = %.*s watcher_uri = %.*s\n",
+		LM_ERR("no presence dialog record for non-TERMINATED state uri pres_uri = %.*s watcher_uri = %.*s\n",
                 dialog.pres_uri->len, dialog.pres_uri->s, dialog.watcher_uri->len, dialog.watcher_uri->s);
 		goto error;
 	}
@@ -633,9 +620,9 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 					
 	/*constructing the xml body*/
 	if(get_content_length(msg) == 0 )
-    {	
-        goto done;
-    }	
+	{	
+		goto done;
+	}	
 	else
 	{
 		if(content_type.s== 0)
@@ -680,12 +667,18 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	query_vals[n_query_cols].val.int_val= auth_flag; 
 	n_query_cols++;
 
-	if(reason)
+	query_cols[n_query_cols]= &str_reason_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	if(reason.len > 0)
 	{
-		query_cols[n_query_cols]= &str_reason_col;
-		query_vals[n_query_cols].type = DB1_STR;
-		query_vals[n_query_cols].nul = 0;
-		query_vals[n_query_cols].val.str_val= *reason;
+		query_vals[n_query_cols].val.str_val.s= reason.s;
+		query_vals[n_query_cols].val.str_val.len= reason.len;
+	}	
+	else
+	{
+		query_vals[n_query_cols].val.str_val.s = "";
+		query_vals[n_query_cols].val.str_val.len = 0;
 		n_query_cols++;
 	}
 	query_cols[n_query_cols]= &str_content_type_col;
@@ -761,6 +754,9 @@ done:
 		pkg_free(res_id->s);
 		pkg_free(res_id);
 	}
+
+	if (reason.s) pkg_free(reason.s);
+
 	free_to_params(&TO);
 	return 1;
 
@@ -770,6 +766,9 @@ error:
 		pkg_free(res_id->s);
 		pkg_free(res_id);
 	}
+
+	if (reason.s) pkg_free(reason.s);
+
 	free_to_params(&TO);
 	return -1;
 }
