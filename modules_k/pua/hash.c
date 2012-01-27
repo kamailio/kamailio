@@ -255,7 +255,7 @@ void _insert_htable(ua_pres_t* presentity, unsigned int hash_code)
 
 void insert_htable(ua_pres_t* presentity)
 {
-	int hash_code;
+	unsigned int hash_code;
 
 	hash_code= core_hash(presentity->pres_uri,presentity->watcher_uri, HASH_SIZE);
 	lock_get(&HashT->p_records[hash_code].lock);
