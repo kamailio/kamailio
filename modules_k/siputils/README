@@ -547,7 +547,7 @@ if (is_e164("$avp(i:705)") {
 
    Checks if userpart of URI stored in pseudo variable is E164 number.
 
-   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.19. is_uri_user_e164 usage
 ...
