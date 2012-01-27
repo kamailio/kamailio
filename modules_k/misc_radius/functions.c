@@ -164,7 +164,7 @@ int radius_load_caller_avps(struct sip_msg* _m, char* _caller, char* _s2)
 {
     str user;
     VALUE_PAIR *send, *received;
-    UINT4 service;
+    uint32_t service;
     static char msg[4096];
     int extra_cnt, offset, i, res;
 
@@ -245,7 +245,7 @@ int radius_load_callee_avps(struct sip_msg* _m, char* _callee, char* _s2)
 {
     str user;
     VALUE_PAIR *send, *received;
-    UINT4 service;
+    uint32_t service;
     static char msg[4096];
     int extra_cnt, offset, i, res;
 
@@ -328,7 +328,7 @@ int radius_is_user_in(struct sip_msg* _m, char* _user, char* _group)
 {
     str user, *group;
     VALUE_PAIR *send, *received;
-    UINT4 service;
+    uint32_t service;
     static char msg[4096];
     int extra_cnt, offset, i, res;
 
@@ -423,7 +423,7 @@ int radius_does_uri_user_host_exist(struct sip_msg* _m, str user, str host)
 {
     char* at, *user_host;
     VALUE_PAIR *send, *received;
-    UINT4 service;
+    uint32_t service;
     static char msg[4096];
     int extra_cnt, offset, i, res;
 
@@ -589,7 +589,7 @@ int radius_does_uri_user_exist(struct sip_msg* _m, str user)
 {
     static char msg[4096];
     VALUE_PAIR *send, *received;
-    UINT4 service;
+    uint32_t service;
     int res, extra_cnt, offset, i;
     
     send = received = 0;
