@@ -126,6 +126,7 @@ int is_dialog(ua_pres_t* dialog);
 
 ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code);
 ua_pres_t* get_temporary_dialog(ua_pres_t* dialog, unsigned int hash_code);
+int convert_temporary_dialog(ua_pres_t *dialog);
 
 int get_record_id(ua_pres_t* dialog, str** rec_id);
 typedef int (*get_record_id_t)(ua_pres_t* dialog, str** rec_id);

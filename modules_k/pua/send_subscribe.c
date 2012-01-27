@@ -612,7 +612,11 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	LM_DBG("record for subscribe from %.*s to %.*s inserted in datatbase\n",
 			presentity->watcher_uri->len, presentity->watcher_uri->s,
 			presentity->pres_uri->len, presentity->pres_uri->s);
-	insert_htable(presentity);
+	if (convert_temporary_dialog(presentity) < 0)
+	{
+		LM_ERR("Could not convert temporary dialog into a dialog\n");
+		goto error;
+	}
 
 done:
 	if(hentity->ua_flag == REQ_OTHER)
@@ -620,13 +624,13 @@ done:
 		hentity->flag= flag;
 		run_pua_callbacks( hentity, msg);
 	}
-error:	
-	lock_get(&HashT->p_records[hash_code].lock);
-	presentity = get_temporary_dialog(hentity, hash_code);
-	if (presentity!=NULL)
-		delete_htable(presentity, hash_code);
-	lock_release(&HashT->p_records[hash_code].lock);
+	goto end;
 
+error:	
+	if (presentity->remote_contact.s) shm_free(presentity->remote_contact.s);
+	if (presentity) shm_free(presentity);
+
+end:
 	if(hentity)
 	{	
 		shm_free(hentity);
