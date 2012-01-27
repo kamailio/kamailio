@@ -241,7 +241,6 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	int initial_request = 0;
 	db1_res_t *res=NULL;
  	ua_pres_t dbpres;
-	int need_to_free=0;
 	str pres_uri={0,0}, watcher_uri={0,0}, extra_headers={0,0};
 
 	memset(&dbpres, 0, sizeof(dbpres));
@@ -577,10 +576,6 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			pkg_free(record_route.s);
 		goto done;
 	}
-	else
-	{
-		need_to_free=1;
-	}
 	
 	memset(presentity, 0, size);
 	size= sizeof(ua_pres_t);
@@ -654,7 +649,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 
 	/* write the remote contact filed */
 	presentity->remote_contact.s= (char*)shm_malloc(contact.len* sizeof(char));
-	if(presentity->remote_contact.s== NULL)
+	if(presentity->remote_contact.s==NULL)
 	{
 		ERR_MEM(SHARE_MEM);
 	}
@@ -677,11 +672,19 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 
 	if (dbmode==PUA_DB_ONLY)
 	{
-		insert_puadb(presentity);
+		if (convert_temporary_dialog_puadb(presentity) < 0)
+		{
+			LM_ERR("Could not convert temporary dialog into a dialog\n");
+			goto error;
+		}
 	}
 	else
 	{
-		insert_htable(presentity);
+		if (convert_temporary_dialog(presentity) < 0)
+		{
+			LM_ERR("Could not convert temporary dialog into a dialog\n");
+			goto error;
+		}
 	}
 
 done:
@@ -690,27 +693,13 @@ done:
 		hentity->flag= flag;
 		run_pua_callbacks( hentity, msg);
 	}
+	goto end;
+
 error:	
-	if (dbmode == PUA_DB_ONLY)
-	{
-		if (presentity!=NULL)
-		{
-			delete_temporary_dialog_puadb(presentity);
-			if (need_to_free)
-			{
-				if (presentity->remote_contact.s) shm_free(presentity->remote_contact.s);
-				shm_free(presentity);
-			}
-		}
-	}
-	else
-	{
-		lock_get(&HashT->p_records[hash_code].lock);
-		presentity = get_temporary_dialog(hentity, hash_code);
-		if (presentity!=NULL)
-			delete_htable(presentity, hash_code);
-		lock_release(&HashT->p_records[hash_code].lock);
-	}
+	if (presentity->remote_contact.s) shm_free(presentity->remote_contact.s);
+	if (presentity) shm_free(presentity);
+
+end:
 
 	if(hentity)
 	{	

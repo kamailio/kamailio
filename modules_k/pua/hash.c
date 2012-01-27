@@ -235,10 +235,9 @@ void update_htable(ua_pres_t* p, time_t desired_expires, int expires,
 	}
 }
 /* insert in front; so when searching the most recent result is returned*/
-void insert_htable(ua_pres_t* presentity)
+void _insert_htable(ua_pres_t* presentity, unsigned int hash_code)
 {
 	ua_pres_t* p= NULL;
-	unsigned int hash_code;
 
 	if (dbmode==PUA_DB_ONLY)
 	{
@@ -246,28 +245,24 @@ void insert_htable(ua_pres_t* presentity)
 		return;
 	}
 
-	hash_code= core_hash(presentity->pres_uri,presentity->watcher_uri, 
-			HASH_SIZE);
-	
-	lock_get(&HashT->p_records[hash_code].lock);
-
-/*	
- *	useless since always checking before calling insert
-	if(get_dialog(presentity, hash_code)!= NULL )
-	{
-		LM_DBG("Dialog already found- do not insert\n");
-		return; 
-	}
-*/	
 	p= HashT->p_records[hash_code].entity;
 
 	presentity->db_flag= INSERTDB_FLAG;
 	presentity->next= p->next;
 	
 	p->next= presentity;
+}
+
+void insert_htable(ua_pres_t* presentity)
+{
+	int hash_code;
+
+	hash_code= core_hash(presentity->pres_uri,presentity->watcher_uri, HASH_SIZE);
+	lock_get(&HashT->p_records[hash_code].lock);
+
+	_insert_htable(presentity, hash_code);
 
 	lock_release(&HashT->p_records[hash_code].lock);
-
 }
 
 /* This function used to perform a search to find the hash table
@@ -338,6 +333,27 @@ void destroy_htable(void)
 	shm_free(HashT);
   
   return;
+}
+
+int convert_temporary_dialog(ua_pres_t *dialog)
+{
+	ua_pres_t *temp_dialog;
+	unsigned int hash_code;
+
+	hash_code= core_hash(dialog->pres_uri,dialog->watcher_uri, HASH_SIZE); 
+	lock_get(&HashT->p_records[hash_code].lock);
+
+	temp_dialog = get_temporary_dialog(dialog, hash_code);
+	if (temp_dialog)
+		delete_htable(temp_dialog, hash_code);
+	else
+		return -1;
+
+	_insert_htable(dialog, hash_code);
+
+	lock_release(&HashT->p_records[hash_code].lock);
+
+	return 1;
 }
 
 /* must lock the record line before calling this function*/

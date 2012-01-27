@@ -781,10 +781,11 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 	db_op_t  q_ops[20];
 	int n_query_cols=0, n_res_cols=0;
 	int puri_col,callid_col;
-	int watcher_col, totag_col, fromtag_col;
+	int watcher_col, totag_col, fromtag_col, to_tag_res_col;
 	int pres_id_col;	
 	db_val_t *values;	
-	str *id;	
+	str *id;
+	str to_tag;
 
 	if (pres==NULL)
 	{
@@ -824,6 +825,14 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 	q_ops[callid_col] = OP_EQ;
 	n_query_cols++;
 
+	q_cols[fromtag_col= n_query_cols] = &str_from_tag_col;	
+	q_vals[fromtag_col].type = DB1_STR;
+	q_vals[fromtag_col].nul = 0;
+	q_vals[fromtag_col].val.str_val.s = pres->from_tag.s;
+	q_vals[fromtag_col].val.str_val.len = pres->from_tag.len;
+	q_ops[fromtag_col] = OP_EQ;
+	n_query_cols++;
+
 	q_cols[totag_col= n_query_cols] = &str_to_tag_col;	
 	q_vals[totag_col].type = DB1_STR;
 	q_vals[totag_col].nul = 0;
@@ -832,13 +841,6 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 	q_ops[totag_col] = OP_EQ;
 	n_query_cols++;
 
-	q_cols[fromtag_col= n_query_cols] = &str_from_tag_col;	
-	q_vals[fromtag_col].type = DB1_STR;
-	q_vals[fromtag_col].nul = 0;
-	q_vals[fromtag_col].val.str_val.s = pres->from_tag.s;
-	q_vals[fromtag_col].val.str_val.len = pres->from_tag.len;
-	q_ops[fromtag_col] = OP_EQ;
-	n_query_cols++;
 
 	res_cols[n_res_cols] = &str_id_col;	
 	n_res_cols++;
@@ -863,15 +865,22 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 
 	nr_rows = RES_ROW_N(res);
 
-	if (nr_rows == 0)
+	switch (nr_rows)
 	{
+	case 1:
+		rows = RES_ROWS(res);
+		values = ROW_VALUES(rows);
+		break;
+
+	case 0:
 		/* no match */
 		LM_DBG("No rows found. Looking for temporary dialog\n");
 		pua_dbf.free_result(pua_db, res);
 
-		q_vals[totag_col].val.str_val.s = "";
-		q_vals[totag_col].val.str_val.len = 0;
+		n_query_cols--;
 
+		res_cols[to_tag_res_col= n_res_cols] = &str_to_tag_col;
+		n_res_cols++;
 
 		if(pua_dbf.query(pua_db, q_cols, q_ops, q_vals,
 			res_cols,n_query_cols,n_res_cols,0,&res) < 0)
@@ -882,29 +891,40 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 
 		nr_rows = RES_ROW_N(res);
 
-		if (nr_rows == 0)
+		if (nr_rows == 1)
 		{
-			LM_DBG( "Temporary Dialog Not found\n" );
+			rows = RES_ROWS(res);
+			values = ROW_VALUES(rows);
+
+			to_tag.s = (char *) VAL_STRING(values + 2);
+			to_tag.len = strlen(to_tag.s);
+
+			if (to_tag.len == 0 ||
+				(to_tag.len > 0
+				 && strncmp(to_tag.s, pres->to_tag.s, pres->to_tag.len) == 0))
+			{
+				LM_DBG( "Found a (possibly temporary) Dialog\n" );
+				break;
+			}
+			else
+				LM_WARN("Failed to find temporary dialog for To-tag: %.*s, found To-tag: %.*s\n",
+					pres->to_tag.len, pres->to_tag.s, to_tag.len, to_tag.s);
+		}
+
+		if (nr_rows <= 1)
+		{
+			LM_DBG("Dialog not found\n" );
 			pua_dbf.free_result(pua_db, res);
 			return(0);
 		}
 
-		LM_DBG( "Found a temporary Dialog\n" );
-	}
+		/* Fall-thru */
 
-	if (nr_rows != 1)
-	{
+	default:
 		LM_ERR("Too many rows found (%d)\n", nr_rows);
 		pua_dbf.free_result(pua_db, res);
 		return(-1);
 	}
-
-
-	/* get the results and fill in return data structure */
-	rows = RES_ROWS(res);
-	values = ROW_VALUES(rows);
-
-	/* LM_ERR("db_id= %d\n", VAL_INT(values) ); */
 
 	id= (str*)pkg_malloc(sizeof(str));
 
@@ -936,7 +956,137 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 }
 
 /******************************************************************************/
+int convert_temporary_dialog_puadb(ua_pres_t *pres)
+{
+	db_key_t query_cols[5], data_cols[10];
+	db_val_t query_vals[5], data_vals[10];
+	int n_query_cols = 0, n_data_cols = 0;
 
+	if (pres==NULL)
+	{
+		LM_ERR("called with NULL param\n");
+		return(-1);
+	}
+
+	/* The columns I need to query to find the temporary dialog */
+        query_cols[n_query_cols] = &str_pres_id_col;
+        query_vals[n_query_cols].type = DB1_STR;
+        query_vals[n_query_cols].nul = 0;
+        query_vals[n_query_cols].val.str_val.s = pres->id.s;
+        query_vals[n_query_cols].val.str_val.len = pres->id.len;
+        n_query_cols++;
+
+	query_cols[n_query_cols] = &str_pres_uri_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val.s = pres->pres_uri->s;
+	query_vals[n_query_cols].val.str_val.len = pres->pres_uri->len;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_watcher_uri_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val.s = pres->watcher_uri->s;
+	query_vals[n_query_cols].val.str_val.len = pres->watcher_uri->len;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_call_id_col;	
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = pres->call_id;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_from_tag_col;	
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = pres->from_tag;
+	n_query_cols++;
+
+	/* The columns I need to fill in to convert a temporary dialog to a dialog */
+	data_cols[n_data_cols] = &str_expires_col;
+	data_vals[n_data_cols].type = DB1_INT;
+	data_vals[n_data_cols].nul = 0;
+	data_vals[n_data_cols].val.int_val = pres->expires;
+	n_data_cols++;
+
+	data_cols[n_data_cols] = &str_desired_expires_col;
+	data_vals[n_data_cols].type = DB1_INT;
+	data_vals[n_data_cols].nul = 0;
+	data_vals[n_data_cols].val.int_val = pres->desired_expires;
+	n_data_cols++;
+
+	data_cols[n_data_cols] = &str_flag_col;
+	data_vals[n_data_cols].type = DB1_INT;
+	data_vals[n_data_cols].nul = 0;
+	data_vals[n_data_cols].val.int_val = pres->flag;
+	n_data_cols++;
+
+	data_cols[n_data_cols] = &str_to_tag_col;
+	data_vals[n_data_cols].type = DB1_STR;
+	data_vals[n_data_cols].nul = 0;
+	data_vals[n_data_cols].val.str_val = pres->to_tag;
+	n_data_cols++;
+
+	data_cols[n_data_cols] = &str_cseq_col;
+	data_vals[n_data_cols].type = DB1_INT;
+	data_vals[n_data_cols].nul = 0;
+	data_vals[n_data_cols].val.int_val = pres->cseq;
+	n_data_cols++;
+
+	data_cols[n_data_cols] = &str_record_route_col;
+	data_vals[n_data_cols].type = DB1_STR;
+	data_vals[n_data_cols].nul = 0;
+	data_vals[n_data_cols].val.str_val = pres->record_route;
+	n_data_cols++;
+
+	data_cols[n_data_cols] = &str_contact_col;
+	data_vals[n_data_cols].type = DB1_STR;
+	data_vals[n_data_cols].nul = 0;
+	data_vals[n_data_cols].val.str_val = pres->contact;
+	n_data_cols++;
+
+	data_cols[n_data_cols] = &str_remote_contact_col;
+	data_vals[n_data_cols].type = DB1_STR;
+	data_vals[n_data_cols].nul = 0;
+	data_vals[n_data_cols].val.str_val = pres->remote_contact;
+	n_data_cols++;
+
+	data_cols[n_data_cols] = &str_version_col;
+	data_vals[n_data_cols].type = DB1_INT;
+	data_vals[n_data_cols].nul = 0;
+	data_vals[n_data_cols].val.int_val = pres->version;
+	n_data_cols++;
+
+	data_cols[n_data_cols] = &str_extra_headers_col;
+	data_vals[n_data_cols].type = DB1_STR;
+	data_vals[n_data_cols].nul = 0;
+	if (pres->extra_headers)
+	{
+		data_vals[n_data_cols].val.str_val.s = pres->extra_headers->s;
+		data_vals[n_data_cols].val.str_val.len = pres->extra_headers->len;
+	}
+	else
+	{
+		data_vals[n_data_cols].val.str_val.s = "";
+		data_vals[n_data_cols].val.str_val.len = 0;
+	}
+	n_data_cols++;
+
+	if (pua_dbf.update(pua_db, query_cols, 0, query_vals,
+			data_cols, data_vals, n_query_cols, n_data_cols) < 0)
+	{
+		LM_ERR("Failed update db\n");
+		return -1;
+	}
+
+	shm_free(pres->remote_contact.s);
+	shm_free(pres);
+
+	return 1;
+}
+
+
+/******************************************************************************/
 int delete_temporary_dialog_puadb(ua_pres_t *pres ) 
 
 {
