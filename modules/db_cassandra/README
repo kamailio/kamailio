@@ -94,8 +94,19 @@ Chapter 1. Admin Guide
    You will find the schemas for location, subscriber and version tables
    in utils/kamctl/dbcassandra directory. You have to provide the path to
    the directory containing the table definitions by setting the module
-   parameter schema_path. NOTE that there is no need to configure a table
-   metadata in Cassandra cluster.
+   parameter schema_path.
+
+   There is no need to configure a table metadata in Cassandra cluster.
+   You only need to define a keyspace with the name of the database and
+   for each table a column family inside that keyspace with the name of
+   the table. The comparator and validators should be either UTF8Type or
+   ASCIIType. Example:
+   ...
+   create keyspace openser;
+   use openser;
+   create column family 'location' with comparator='UTF8Type' and
+default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
+   ...
 
    Special attention was given to performance in Cassandra. Therefore, the
    implementation uses only the native row indexing in Cassandra and no
