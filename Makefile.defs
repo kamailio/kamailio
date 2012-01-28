@@ -941,6 +941,16 @@ ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE)
+			#if gcc 4.6
+			# don't add '-mtune=$(CPU)' - gcc failure
+ifeq			($(CC_SHORTVER), 4.6)
+$(call				set_if_empty,CPU,opteron)
+					CFLAGS+=-m64 -minline-all-stringops \
+							-falign-loops \
+							-ftree-vectorize \
+							-fno-strict-overflow
+					LDFLAGS+=-m64
+else
 			#if gcc 4.5
 			# don't add '-mtune=$(CPU)' - gcc failure
 ifeq			($(CC_SHORTVER), 4.5)
@@ -1003,6 +1013,7 @@ endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
 endif			# CC_SHORTVER, 4.2+
 endif			# CC_SHORTVER, 4.5
+endif			# CC_SHORTVER, 4.6
 
 else		# CC_NAME, gcc
 ifeq		($(CC_NAME), icc)
