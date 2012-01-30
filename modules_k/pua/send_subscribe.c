@@ -627,8 +627,11 @@ done:
 	goto end;
 
 error:	
-	if (presentity->remote_contact.s) shm_free(presentity->remote_contact.s);
-	if (presentity) shm_free(presentity);
+        if (presentity)
+	{
+		if (presentity->remote_contact.s) shm_free(presentity->remote_contact.s);
+	 	shm_free(presentity);
+	}
 
 end:
 	if(hentity)
