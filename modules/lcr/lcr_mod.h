@@ -110,8 +110,7 @@ extern gen_lock_t *reload_lock;
 extern struct gw_info **gw_pt;
 extern struct rule_info ***rule_pt;
 
-int  mi_print_gws(struct mi_node* rpl);
-int  mi_print_lcrs(struct mi_node* rpl);
-int  reload_tables();
+extern int reload_tables();
+extern int rpc_defunct_gw(unsigned int, unsigned int, unsigned int);
 
 #endif /* LCR_MOD_H */

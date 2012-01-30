@@ -78,6 +78,7 @@ Juha Heinanen
               5.1. lcr.reload
               5.2. lcr.dump_gws
               5.3. lcr.dump_rules
+              5.4. lcr.defunct_gw
 
         6. Known Limitations
 
@@ -131,6 +132,7 @@ Juha Heinanen
    1.46. lcr.reload RPC example
    1.47. lcr.dump_gws RPC example
    1.48. lcr.dump_rules RPC example
+   1.49. lcr.defunct_gw RPC example
 
 Chapter 1. Admin Guide
 
@@ -197,6 +199,7 @@ Chapter 1. Admin Guide
         5.1. lcr.reload
         5.2. lcr.dump_gws
         5.3. lcr.dump_rules
+        5.4. lcr.defunct_gw
 
    6. Known Limitations
 
@@ -971,6 +974,7 @@ if (to_any_gw("192.55.66.2", 1)) {
    5.1. lcr.reload
    5.2. lcr.dump_gws
    5.3. lcr.dump_rules
+   5.4. lcr.defunct_gw
 
 5.1. lcr.reload
 
@@ -1001,6 +1005,19 @@ if (to_any_gw("192.55.66.2", 1)) {
 
    Example 1.48. lcr.dump_rules RPC example
                 $ sercmd lcr.dump_rules
+
+5.4. lcr.defunct_gw
+
+   Defuncts gateway loaded into memory for a period of time (seconds)
+   without a need to store gateway's defunct value into database and
+   reload the tables.
+
+   Name: lcr.defunct_gw
+
+   Parameters: lcr_id gw_id period
+
+   Example 1.49. lcr.defunct_gw RPC example
+                $ sercmd lcr.defunct_gw 1 4 120
 
 6. Known Limitations
 

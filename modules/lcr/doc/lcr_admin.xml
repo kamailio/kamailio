@@ -1324,6 +1324,25 @@ if (to_any_gw("192.55.66.2", 1)) {
 		</programlisting>
 		</example>
 		</section>
+
+		<section>
+		<title><function>lcr.defunct_gw</function></title>
+		<para>
+			Defuncts gateway loaded into memory for a period of
+			time (seconds) without a need to store gateway's
+			defunct	value into database and reload the tables.
+		</para>
+		<para>
+		Name: <emphasis>lcr.defunct_gw</emphasis>
+		</para>
+		<para>Parameters: <emphasis>lcr_id gw_id period</emphasis></para>
+		<example>
+		<title><function>lcr.defunct_gw</function> RPC example</title>
+		<programlisting  format="linespecific">
+		$ sercmd lcr.defunct_gw 1 4 120
+		</programlisting>
+		</example>
+		</section>
 	</section>
 	<section>
 	<title>Known Limitations</title>

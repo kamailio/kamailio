@@ -2049,6 +2049,38 @@ static int defunct_gw(struct sip_msg* _m, char *_defunct_period, char *_s2)
 
 
 /*
+ * Defunct given gw in given lcr until time period given as argument has passed.
+ */
+int rpc_defunct_gw(unsigned int lcr_id, unsigned int gw_id, unsigned int period)
+{
+    struct gw_info *gws;
+    unsigned int until, i;
+
+    if ((lcr_id < 1) || (lcr_id > lcr_count_param)) {
+	LM_ERR("invalid lcr_id value <%u>\n", lcr_id);
+	return 0;
+    }
+
+    until = time((time_t *)NULL) + period;
+
+    LM_DBG("defuncting gw <lcr_id/gw_id>=<%u/%u> for %u seconds until %d\n",
+	   lcr_id, gw_id, period, until);
+
+    gws = gw_pt[lcr_id];
+    for (i = 1; i <= gws[0].ip_addr.u.addr32[0]; i++) {
+	if (gws[i].gw_id == gw_id) {
+	    gws[i].defunct_until = until;
+	    return 1;
+	}
+    }
+    
+    LM_ERR("gateway with id <%u> not found\n", gw_id);
+
+    return 0;
+}
+
+
+/*
  * When called first time, rewrites scheme, host, port, and
  * transport parts of R-URI based on first gw_uri_avp value, which is then
  * destroyed.  Saves R-URI user to ruri_user_avp for later use.
