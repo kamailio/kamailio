@@ -1189,6 +1189,7 @@ static int sip_capture(struct sip_msg *msg, char *s1, char *s2)
 	else {
 		EMPTY_STR(sco.contact_ip);	
 		sco.contact_port = 0;
+		EMPTY_STR(sco.contact_user);
 	}
 	
 	/* X-OIP */	
