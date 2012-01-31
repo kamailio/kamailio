@@ -2222,7 +2222,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 				} else {
 					v[3].iov_len = 0;
 				}
-				if (to_tag.len > 0) {
+				if (opts.s.s[0] == 'U' && to_tag.len > 0) {
 					iovec_param_count = 18;
 					if (timeout_socket_str.len > 0) {
 						iovec_param_count = 20;
