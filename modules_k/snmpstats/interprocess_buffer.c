@@ -61,15 +61,15 @@
  *
  *    2) maps a given aor to a contact list. 
  */
-hashSlot_t *hashTable;
+hashSlot_t *hashTable = NULL;
 
 /*! All interprocess communication is stored between these two declarations. */
-interprocessBuffer_t *frontRegUserTableBuffer;
-interprocessBuffer_t *endRegUserTableBuffer;
+interprocessBuffer_t *frontRegUserTableBuffer = NULL;
+interprocessBuffer_t *endRegUserTableBuffer = NULL;
 
 /*! This is to protect the potential racecondition in which a command is added to
  * the buffer while it is being consumed */
-gen_lock_t           *interprocessCBLock;
+gen_lock_t           *interprocessCBLock = NULL;
 
 /*!
  * This function takes an element of the interprocess buffer passed to it, and
@@ -103,12 +103,23 @@ int initInterprocessBuffers(void)
 	 * command was received while the interprocess buffer was being consumed.
 	 */
 	interprocessCBLock = lock_alloc();
+	if(interprocessCBLock==NULL)
+	{
+        LM_ERR("cannot allocate the lock\n");
+        shm_free(frontRegUserTableBuffer);
+        frontRegUserTableBuffer = NULL;
+        shm_free(endRegUserTableBuffer);
+        endRegUserTableBuffer = NULL;
+        return -1;
+	}
 	lock_init(interprocessCBLock);
 
 	hashTable = createHashTable(HASH_SIZE);
     if(hashTable == NULL)
     {
         LM_ERR("no more shared memory\n");
+		lock_destroy(interprocessCBLock);
+		lock_dealloc(interprocessCBLock);
         shm_free(frontRegUserTableBuffer);
         frontRegUserTableBuffer = NULL;
         shm_free(endRegUserTableBuffer);
@@ -351,7 +362,9 @@ void freeInterprocessBuffer(void)
 {
     interprocessBuffer_t *currentBuffer, *previousBuffer;
 
-	if (frontRegUserTableBuffer->next == NULL) {
+	if (frontRegUserTableBuffer==NULL
+			|| frontRegUserTableBuffer->next == NULL
+			|| endRegUserTableBuffer==NULL) {
         LM_DBG("Nothing to clean\n");
 		return;
 	}
