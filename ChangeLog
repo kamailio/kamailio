@@ -1,3 +1,553 @@
+===================== 2012-01-31 Version 3.2.2 Released =====================
+
+===================== Changes Since Version 3.2.1 ===========================
+
+commit 7c9fa7ba55abf7d67da4bb1fffb6b0d3e9a2fcae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 31 15:36:07 2012 +0100
+
+    Makefile: version set to 3.2.2
+
+commit 3c6bd5c5d4405fa9e810759e2303515761af1fe3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 31 15:21:46 2012 +0100
+
+    rtpproxy: send timeout socket only for U command
+    
+    - optional parameters are not allowed for other commands
+    - patch by Nick Altmann (nikbyte), FS#196
+    (cherry picked from commit 7426c76dfb6750b344e19a632c16374c162f5090)
+
+commit 8786cb88cdd05b28d48b899b327f5f56b84da8a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 31 15:04:11 2012 +0100
+
+    pkg/kamailio/rpm: version set to 3.2.2 for rpm specs
+
+commit e362cd5aebf88f7de1b2641454b4da95cdf9019f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 31 15:01:49 2012 +0100
+
+    pkg/kamailio/deb: version set to 3.2.2 for deb control files
+
+commit 1d8f4787a4d06fabb93f5c834fedfdf07a63a8f8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 31 12:57:30 2012 +0100
+
+    utils: free xcap_tree for xcap_auth_status()
+    
+    - patch by Laura Testi
+    (cherry picked from commit 7dd4828530a70df212cedd298418c1a9facd0326)
+
+commit 77d3b19501d7d0e885f18900021fd9d797230448
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Thu Jan 26 15:27:21 2012 +0200
+
+    modules/pua Fixed memory leaks in limbxml2
+    (cherry picked from commit 68295d124ee2d36f3e8d31eac5a76c4d7c89f5b8)
+
+commit 74d067429282febe82a8066a2d92e3765cbdd1f4
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Thu Jan 26 15:14:43 2012 +0200
+
+    modules/pua_xmpp Fixed some memory leaks in libxml on error casses
+    (cherry picked from commit 3c3cc57f6d4938270efbb89426d80a994be1aaa7)
+
+commit 66e52b00f40a93b8f79ad7d8330f8aad16ca55d8
+Author: Marius Bucur <marius.bucur@1and1.ro>
+Date:   Mon Jan 30 15:32:49 2012 +0200
+
+    empty contact_user str in case the contact user is missing.
+
+commit 83f20c735122d30173dd3c1bd31061052327bf87
+Author: Marius Bucur <marius.bucur@1and1.ro>
+Date:   Mon Jan 30 15:14:00 2012 +0200
+
+    fixed bug where contact_user field in the sip_capture database was never filled.
+
+commit 28a5c122372d9c15d9db1514d3921a98edf9eee6
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Mon Jan 30 11:28:59 2012 +0000
+
+    modules_k/pua: Fixed occasional seg fault in PUA
+    
+    - This was added by the fix to the race hazards
+      (Commit ID: e627bc31776b521a1078b2a004e8ed179521cae2)
+    - It only happens in certain error situations (which should not occur anyway -
+      these are under investigation now) and was found during an over-weekend
+      soak test.
+    - Found and fixed by Paul Pankhurst @ Crocodile RCS
+    (cherry picked from commit 6d30bd740303677711de437c4a3fec15da7344a8)
+
+commit e0eedbe9d1753aecb58335d20baa8ee8d40d6b0d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 28 11:30:22 2012 +0100
+
+    Makefile: merged options for gcc 4.5 and 4.6 in 4.5+
+    
+    - they were the same (skip mtune parameter for x86_64)
+    (cherry picked from commit 184187a6afe701b793529580fc0f01183eab21f2)
+
+commit 1a155eb6641e640aceb62c293a7cb3bc76724db6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 28 10:24:51 2012 +0100
+
+    Makefile: skip mtune parameter for gcc 4.6 on x86_64
+    
+    - it is redundant and throws error, at least on opensuse 12.1
+    (cherry picked from commit d97bf62975a1f9bbeb497145605879ab1fc4877f)
+
+commit 7839b60069f6653d2e10829536dc25d931d9c7fd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 27 10:54:54 2012 -0500
+
+    acc_radius/misc_radius(k): use uint32_t type instead of UINT4
+    
+    - UINT4 is not defined by freeradiusclient library
+    - libradiusclient-ng typedefs anyhow UINT4 to uint32_t in radiusclient-ng.h
+    (cherry picked from commit 5db228f1a47c8119aeba3731e0129459a6c1e8e4)
+
+commit 99221ad15446a92352a168b96ef013d1db6fb290
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 12 09:18:31 2012 +0100
+
+    ctl: compile time option to use system memory allocator
+    
+    - flag in module Makefile: -DCTL_SYSTEM_MALLOC
+    - turned on for the moment
+    (cherry picked from commit 55a3671f99c31455d2d460ef81a0bc6dabd1c338)
+
+commit 881d3f0eee3228731dc3c272c2915e87391b5371
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 11 18:40:57 2012 +0100
+
+    lib/kcore: set basic receive info for faked message
+    
+    - used UDP/IPv4, port 5060 and 127.0.0.1 for src and dst details
+    (cherry picked from commit 62e5680c9dd4eccb0f177415b7624af832c87693)
+
+commit 6b8cdd3fbe3e4cb930dedd5e52ff447e9ed91164
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 11 12:04:56 2012 +0100
+
+    app_lua: lookup pv in cached table for unset and isnull
+    (cherry picked from commit f101dacbf640f08e2133c197c465ff7d312dda1b)
+
+commit 3890005e4410008537e4d9491daae9f5e9c8d777
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 18 10:19:18 2012 +0100
+
+    rtimer: use faked msg from lib to get a src IP address
+    
+    - reported by Uri Shacked
+    (cherry picked from commit 6c829c1794fb79fbce213238e88346522f584fcf)
+
+commit 022567c0d170ea6d1a7b26a0c28b528fd1ffc82a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Dec 11 00:05:46 2011 +0100
+
+    async: readme file was regenerated
+    (cherry picked from commit dcea57fb83b480a8d55e466a26e677a639bda6bb)
+
+commit 4c0fb6b6db3ed8c709ea4b30a2d6650ec12ad971
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Dec 11 00:04:47 2011 +0100
+
+    async: fixed broken docbook crated in previous commit
+    (cherry picked from commit 5176f66abb7c9f588431ba3a05a9b54d2d8e5093)
+
+commit 17773ed1cbc99f1b61a9920f42e5019336e8b5b3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Dec 11 00:02:14 2011 +0100
+
+    async: cfg functions cannot be used in branch_route
+    
+    - that routing block is processing outgoing brnaches, not requests
+    - reported by Jasmin Schnatterbeck, FS#190
+    (cherry picked from commit 22278ed608d598ac353b32cd44517e961faa41b3)
+
+commit 047f66369f0c3eaa75592942f56565eb0f39f848
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Jan 27 15:34:16 2012 +0000
+
+    modules_k/pua: Fixed race hazard relating to RLS back-end SUBSCRIBEs
+    
+    - This resulted in the "no presence dialog record for non-TERMINATED state..."
+      error message coming out of RLS a lot.
+    - On the sending side you have can have two dialogs (one temporary and one full)
+      stored for a short period of time.  This is because the full dialog is written
+      before the temporary one is deleted.  This can make the lookup when a back-end
+      NOTIFY is received fail because only one record is expected.  This is now
+      fixed - instead of inserting and then deleting we do a swap (while the hash
+      table is locked).
+    - Based on... (cherry picked from commit e627bc31776b521a1078b2a004e8ed179521cae2)
+
+commit 14520f905e4354cc4b159745142fedb25b062ec5
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Thu Jan 26 13:59:06 2012 +0000
+
+    modules_k/rls: Memory leak in parse_subs_state() in resource_notify.c
+    
+    - Also the function didn't appear to be doing quite the right thing.
+    - Found by Paul Pankhurst @ Crocodile RCS and fixed by Peter Dunkley @ Crocodile RCS
+
+commit 5e6bf2c7402e5d07d63d7a2a2d584fbdb7cf241f
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Jan 24 17:59:40 2012 +0000
+
+    modules_k/rls: Removed unnecessary subscription and external_hash arguments from send_notifies()
+    
+    - These were not used, or rather, not used in any sensible way in send_notifies()
+    - Fix by Andrew Miller @ Crocodile RCS
+    - Manually merged as all the whitespace changes caused git cherry-pick to fail
+
+commit a9553f0e0f8c0fac159bc1c4da77501132ebac82
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Jan 24 17:31:27 2012 +0000
+
+    modules_k/rls: Fixed memory leak in send_full_notify()
+    
+    - Package memory is allocated for URIs in add_resource_to_list() but never freed.
+    - It should be freed in send_full_notify() at the same time as the memory allocated
+      for the list itself is freed.
+    - Found and fixed by Paul Pankhurst @ Crocodile RCS
+    (cherry picked from commit 19abd6497cc1431d97383eeea76c34c4a1c5a9da)
+
+commit 6acddd35953c7a75d04d03f7a8c177beb08c2a57
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Jan 24 17:34:52 2012 +0000
+
+    modules_k/rls: Fixed memory leak in process_list_and_exec()
+    
+    - xmlFree was called on rl_doc, but xmlFreeDoc should have been called
+    - Found and fixed by Paul Pankhurst @ Crocodile RCS
+    (cherry picked from commit ca938a37c87782c709b441c682f723d07b05c64c)
+
+commit 44eed062fa8d82ff0975b7d02e2360abd4e85364
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Jan 24 17:18:34 2012 +0000
+
+    modules_k/presence_xml: Fixed memory leak in pres_watcher_allowed()
+    
+    - xmlFreeDoc() never called for xcap_tree
+    - Found and fixed by Paul Pankhurst @ Crocodile RCS
+    (cherry picked from commit fcd33bdfa3e5a08f22f4c77fbbf1db53d0afb4bd)
+
+commit bee0949e6d20d66cae3d3ea9795654a4ee30282c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 5 12:14:52 2012 +0100
+
+    app_lua: don't start if a Lua API registered module is not found
+    (cherry picked from commit 8b56ce5162f480a11d0b59a5de9a7c37e9e84d1b)
+
+commit 17098e42e57ce7b74855eae247ff9596fd34c469
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 3 18:02:39 2012 +0100
+
+    pua: is_dialog() returns 1 if there is a temporary dialog
+    
+    - reported by Laura Testi
+    (cherry picked from commit 5f1e2caac5e6d68629a1a0956861bf7da6e05e31)
+    
+    Conflicts:
+    
+    	modules_k/pua/pua_db.c
+
+commit a84f93d877b06f1f1de25c0482559807aa2991f0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 29 16:22:28 2011 +0100
+
+    pua: check if totag len >0 before comparing it
+    
+    - more on proper free of dlg_t structure
+    - patch by Laura Testi
+    (cherry picked from commit e1128c45dacf5b622c18f1cb8db0c45d8e6c9600)
+    
+    Conflicts:
+    
+    	modules_k/pua/pua.c
+
+commit 85b15c80b847da2257ecf84145b48efb24c73deb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 23 13:16:46 2011 +0100
+
+    pua(k): use dedicated function to free tm dlg
+    (cherry picked from commit 464897bd3d4713e7a30c4e505449942e4251b328)
+
+commit 37f3c85d95546046ae003e3ce3da98968aa87faa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 29 10:10:26 2011 +0100
+
+    mediaproxy: handle DLGCB_CONFIRMED event
+    
+    - ACKs may have SDP
+    - patch by Jasmin Schnatterbeck (FS195)
+    (cherry picked from commit e5ae5137ce6fef73f366b725f16c84dc15721141)
+
+commit 2c22e1d026cdc59356c0d952f797571480e301db
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 29 09:40:07 2011 +0100
+
+    pua_dialogingo: handle DLGCB_CONFIRMED_NA
+    
+    - patch by Tomek Kotecki (FS#187), Jasmin Schnatterbeck (FS#195)
+    (cherry picked from commit 66d204b37b48127ac25632811e189b3af3b4fb14)
+
+commit e4a2a0f90685aae0aebc56a214e15b7d1088d450
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 23 12:48:42 2011 +0100
+
+    pua: fix commit conflick by cherry-pick of 1b3cfa6
+    
+    - free rr in dlg_t structure
+
+commit dd7b6af538840cde7f49a919a0ba27fbaaf664c3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 23 09:34:00 2011 +0100
+
+    tm: rest the pointer of hash table after free to avoid double free on false start
+    (cherry picked from commit 7728464362af67eff4dc105f16a1d42c72407cca)
+
+commit 3b4aa076f4031644ae77778dca18501a5d57773c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 22 14:06:08 2011 +0100
+
+    core: log message about slow timer printed now as warning
+    (cherry picked from commit 566c30dd38f7e29903810472c5e1e9cde41297c7)
+
+commit 4233f6d60600198a3fc0ba60b6d874fe96b03546
+Author: Marius Bucur <marius@marius-bucur.ro>
+Date:   Thu Dec 22 11:47:41 2011 +0200
+
+    Removed the constraint in siptrace to have the tm and sl modules loaded beforehand.
+    
+    The explicitly module specifies these dependencies as being optional.
+    (cherry picked from commit 68d282e2898db7b00de473a943af900f6659ce54)
+
+commit 69c219d958c18017eaa5057fd57e87d0aea3e144
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 20 22:34:26 2011 +0100
+
+    core/tcp: define option TCP_CLONE_RCVBUF to turn off/on tcp rcv buffer cloning
+    
+    - cloning is on by default, to be safe for topoh and msg_apply_changes()
+    (cherry picked from commit a510d17d7005fa47d4f2a672b4ceb94fbda9c9ba)
+
+commit ddcee852b7508efc18e706368870c4de1d00a43b
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Tue Nov 22 12:55:39 2011 +0100
+
+    tcp: fix for ENOTCONN on newer FreeBSDs
+    
+    Newer FreeBSDs return ENOTCONN instead of EAGAIN/EWOULDBLOCK when
+    trying to send on a non-blocking socket which is not yet fully
+    connected (the connect is still pending).
+    
+    Reported-by: Dmitry Petrakoff  dimon dprs-consulting com
+    (cherry picked from commit 3d4a59421a284afbf8bdf8e87357f07d9cd554e0)
+
+commit 74607f34f9c0868291bfa7f446052953e30872f2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Dec 17 21:32:22 2011 +0100
+
+    tls: use pkg-config to get cflags and libs for compilation
+    (cherry picked from commit 62b824b10b6ff9a18e336ff20c55d2d6ea6cba3c)
+
+commit 1fca550052264209737357aae27b51b645c68595
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 16 13:17:22 2011 +0100
+
+    lib/binrpc: fixed compile warnings
+    
+    - reported by Juha Heinanen
+    (cherry picked from commit 304fe28c1f299db8a36fe6953da3c3b9afa24c12)
+
+commit c32b663cd3313e1b2d1b5d07137de057ff91480f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 13 13:00:50 2011 +0100
+
+    tls: do TLS pre-init operations at the time of loading module
+    
+    - makes sure that it sets the memory managing functions and the locks
+      before other modules may start using libssl
+    - reported by Øyvind Kolbu, FS#183
+    (cherry picked from commit 517d38ed02586bc9fc88ea0d3ceb8b81f510ade5)
+
+commit 249436fef0dfac87b5a4480d3fecb3ad36a3052a
+Author: Jason Penton <jason.penton@gmail.com>
+Date:   Wed Dec 7 14:32:45 2011 +0200
+
+    xmlrpc: Removed define for Solaris compilations
+     - This define breaks on Solaris and is not required
+    (cherry picked from commit 3552f22bbe89124eedca268fcd16bc9097fbb0b1)
+
+commit 98da6643704563c48ad1f17436094c04f530d455
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 30 15:19:35 2011 +0100
+
+    parser: remove old URI parser and structure
+    (cherry picked from commit f65d060bb471070dca743905092afb60e5119bb6)
+
+commit e56b64da1f55a9fca1ba02132b1eb0012eb9528c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 30 15:17:46 2011 +0100
+
+    lib/srdb1: helper functions to handle easier fetch capability
+    (cherry picked from commit 09c9abb0f7907132d9afee4580f0475a2e46cadc)
+
+commit 35fa51c833cf2b99defefabe591f0c7864c0bbc3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 29 11:58:45 2011 +0100
+
+    tm: proper increment of lightweight parsing for call-id
+    
+    - a pretty much harmless fix to increment with 3 instead of 7 when
+      parsing Call-ID name in lightweight parser
+    - reported and patch by Walter Doekes, FS#168
+    (cherry picked from commit 21346f47f7712d08369e45e970a6ffec3eab0a3c)
+
+commit 9d3794d7f95055345acf6b5b5c6290baf8e53bb1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 29 11:36:36 2011 +0100
+
+    sanity: allow doing the checks in reply routes
+    
+    - use wrapper function for sending replies, to skip doing it for SIP
+      replies
+    - reported by Bayan Towfiq, FS#177
+    (cherry picked from commit 54c99da0de46c59cd85363dca1eed324dbb6b495)
+
+commit b651fb89bc797e6d473cb83d2d319b495ca2c847
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 29 12:53:57 2011 +0100
+
+    dispatcher: give faked msg to event routes execuition
+    
+    - some funtions may return prematurely if no msg exists
+    - reported by Mino Haluz
+    (cherry picked from commit 412d4d254474be9d99602ca0f1d4c2aba6e7ffde)
+
+commit 9180356a88313a1026238fabb693efed92227600
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 2 13:05:55 2011 +0100
+
+    core/tcp: clone received message over tcp in local buffer
+    
+    - receive_msg() got pointer inside tcp stream as rcv buffer, linking it to
+      msg->buf, but there are places where the content of msg->buf is
+      changed (topoh, msg_apply_changes) which can result in corruption of
+      tcp stream content
+    - added a wrapper function receive_tcp_msg() to clone the content and
+      have same behaviour as for udp or sctp
+    - reported by Hugh Waite, FS#185
+    (cherry picked from commit 6ebd0a6bf1cbacf73f45ff42d368f22304bff11b)
+
+commit fe80dfd78cda377efa39857e23b7b011f84be4e1
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Thu Dec 8 21:30:51 2011 +0000
+
+    modules_k/presence: Authorisation requests not working in DB only mode
+    
+    - The code behind pres_update_watchers() seemed to be missed when the presence
+      DB only work was done.
+    - pres_update_watchers() continued to work when the hash-table was used but not
+      in DB only mode.
+    - Problem and fix identified during testing @ Crocodile RCS
+    - Fix implemented by Paul Pankhurst @ Crocodile RCS
+    (cherry picked from commit 754a5f470ecc45d976beeb33be0dc43b88510b5d)
+
+commit e84539d3b49354e71300be808abf51aaab1785e8
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Thu Dec 8 22:03:35 2011 +0000
+
+    modules_k/pua: Temporary dialogs did not contain all of the required fields.
+    
+    - Temporary dialogs are created when a SUBSCRIBE is sent to handle the timing
+      issue that means that NOTIFYs can be processed before 200 OKs (the real
+      dialog is created on 200 OK).
+    - Not every required field was filled in for the temporary dialogs so dialog
+      searches were failing and duplicate dialogs created.
+    (cherry picked from commit 464d6a353f1de7d7ca38cd856320b973f3341679)
+
+commit 30f6510eb8470e118984397e1944402a2198b05a
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Thu Dec 8 21:40:20 2011 +0000
+
+    modules_k/rls: Memory allocation problem for NOTIFY bodies
+    
+    - A few problems here:
+      - The actual allocated buffer size was not used in the calculations in
+        constr_multipart_body
+      - The buffer pointer was copied to a local variable and not copied back after
+        a realloc in constr_mulitpart_body().  This resulted in a double free when
+        the realloc moved the buffer.
+      - The length of the data in string buffer was never copied back to the str in
+        constr_multipart_body().
+      - In both constr_multipart_body() and resource_notify.c when the buffer does
+        not contain enough space another 2048 bytes is allocated.  This is
+        regardless of how much more space is actually needed.  So if 4096 bytes
+        were needed 2048 bytes would be allocated and then the end of the buffer
+        would be overwritten by 4096 bytes of data.
+      - Problem found and diagnosed during testing at Crocodile RCS
+      - Fix implemented by Hugh Waite @ Crocodile RCS
+    (cherry picked from commit 0f79902f0e44f0cc3c01607a917121fbce8d30a3)
+
+commit 938854019b05f63d91243e0c0ca8bed2c007d635
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Thu Dec 8 21:23:12 2011 +0000
+
+    modules_k/xcap_server: Changed the XCAP server so that existing documents are updated instead of deleted and inserted
+    
+    - Affects XCAP PUT and XCAP partial DELETE
+    - Some RLS clients send multiple HTTP updates in very close succession.  One
+      client has even been observed to upload an identical document several times
+      in a row.
+    - I use rls_update_subs() when any resource-list related document is uploaded.
+      With Kamailio being multi-process and the client re-uploading an indentical
+      document several times with no time between I was frequently hitting the
+      window where rls_update_subs() was called after the DB delete for the second
+      upload but before the insert happened.
+    - Now the DB put operation checks for the presence of a document and does an
+      insert only if the document does not exist.  It does an update if the
+      document does exist.
+    (cherry picked from commit 80b8e30b8a8de950354c1e8b510a03ad9ed98992)
+
+commit eba84d8c55bb6f8bcafe7d70f31ab7decb1425e0
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Thu Dec 8 21:47:54 2011 +0000
+
+    modules_k/rls: removed unnecessary waitn_time <= 0 check
+    
+    - This was checked twice one immediately after the other.  The second check
+      would never fail.
+    (cherry picked from commit 0b6f0aec4b39e777ce11004917d77008cad225da)
+
+commit de9aec3bdb850ab100145b4d03b42f10855c07a9
+Author: pd <peter.dunkley@crocodile-rcs.com>
+Date:   Thu Dec 8 22:01:06 2011 +0000
+
+    modules_k/presence, modules_k/pua, modules_k/rls: Changed rls_update_subs() to not send unnecessary back-end re-SUBSCRIBEs.
+    
+    - The initial implementation sent a re-SUBSCRIBE for each existing back-end
+      dialog and create new back-end dialogs as required (depending on the contents
+      of the updated resource-list) documents.
+    - This was very wasteful, so this version only sends the new SUBSCRIBEs
+    (cherry picked from commit e9e6d51b87cea0d60c47200ab1f99948b1d9bc48)
+    
+    - This required a manual merge on a couple of files to get the cherry-pick to work
+
+commit 31c99120ba9f13630b03ce43d9d76b7c322da0d6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 2 00:37:18 2011 +0100
+
+    dialog(k): give dir parameter to get_dlg()
+    
+    - initialized to DLG_DIR_NONE to fix accessing NULL pointer for
+      searching dialog by msg attributes
+    - patch by Jasmin Schnatterbeck
+    (cherry picked from commit fc0f544b25c157147f8b813be6ba594b20ee6757)
+
+
 ===================== 2011-12-01 Version 3.2.1 Released =====================
 
 ===================== Changes Since Version 3.2.0 ===========================
