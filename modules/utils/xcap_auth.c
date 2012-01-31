@@ -280,13 +280,16 @@ int pres_watcher_allowed(subs_t* subs)
     }
 
     node= get_rule_node(subs, xcap_tree);
-    if (node== NULL)
+    if (node== NULL) {
+	xmlFreeDoc(xcap_tree);
 	return 0;
+	}
 
     /* process actions */	
     actions_node = xmlNodeGetChildByName(node, "actions");
     if (actions_node == NULL) {
 	LM_DBG("actions_node NULL\n");
+	xmlFreeDoc(xcap_tree);
 	return 0;
     }
     LM_DBG("actions_node->name= %s\n", actions_node->name);
@@ -294,6 +297,7 @@ int pres_watcher_allowed(subs_t* subs)
     sub_handling_node = xmlNodeGetChildByName(actions_node, "sub-handling");
     if (sub_handling_node== NULL) {
 	LM_DBG("sub_handling_node NULL\n");
+	xmlFreeDoc(xcap_tree);
 	return 0;
     }
     sub_handling = (char*)xmlNodeGetContent(sub_handling_node);
@@ -302,6 +306,7 @@ int pres_watcher_allowed(subs_t* subs)
 	
     if (sub_handling == NULL) {
 	LM_ERR("Couldn't get sub-handling content\n");
+	xmlFreeDoc(xcap_tree);
 	return -1;
     }
     if (strncmp((char*)sub_handling, "block", 5) == 0) {
@@ -324,10 +329,12 @@ int pres_watcher_allowed(subs_t* subs)
 	    }
 	    else {
 		LM_ERR("unknown subscription handling action\n");
+		xmlFreeDoc(xcap_tree);
 		xmlFree(sub_handling);
 		return -1;
 	    }
 
+	xmlFreeDoc(xcap_tree);
     xmlFree(sub_handling);
 
     return 0;
