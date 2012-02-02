@@ -39,7 +39,7 @@ typedef dmq_peer_t* (*register_dmq_peer_t)(dmq_peer_t*);
 
 dmq_peer_t* add_peer(dmq_peer_list_t* peer_list, dmq_peer_t* peer);
 dmq_peer_t* find_peer(str peer_id);
-
+int empty_peer_callback(struct sip_msg* msg, peer_reponse_t* resp);
 
 #endif
 

@@ -149,6 +149,46 @@ error:
 	return -1;
 }
 
+int cfg_send_dmq_message(struct sip_msg* msg, char* peer, char* to, char* body) {
+	str peer_str;
+	get_str_fparam(&peer_str, msg, (fparam_t*)peer);
+	str to_str;
+	get_str_fparam(&to_str, msg, (fparam_t*)to);
+	str body_str;
+	get_str_fparam(&body_str, msg, (fparam_t*)body);
+	LM_INFO("cfg_send_dmq_message: %.*s - %.*s - %.*s\n",
+		peer_str.len, peer_str.s,
+		to_str.len, to_str.s,
+		body_str.len, body_str.s);
+	
+	dmq_peer_t* destination_peer = find_peer(peer_str);
+	if(!destination_peer) {
+		LM_INFO("cannot find peer %.*s\n", peer_str.len, peer_str.s);
+		dmq_peer_t new_peer;
+		new_peer.callback = empty_peer_callback;
+		new_peer.description.s = "";
+		new_peer.description.len = 0;
+		new_peer.peer_id = peer_str;
+		destination_peer = register_dmq_peer(&new_peer);
+		if(!destination_peer) {
+			LM_ERR("error in register_dmq_peer\n");
+			goto error;
+		}
+	}
+	dmq_node_t* to_dmq_node = find_dmq_node_uri(node_list, &to_str);
+	if(!to_dmq_node) {
+		LM_ERR("cannot find dmq_node: %.*s\n", to_str.len, to_str.s);
+		goto error;
+	}
+	if(send_dmq_message(destination_peer, &body_str, to_dmq_node, &notification_callback, 1) < 0) {
+		LM_ERR("cannot send dmq message\n");
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
+
 /* pings the servers in the nodelist
  * if the server does not reply to the ping, it is removed from the list
  * the ping messages are actualy notification requests

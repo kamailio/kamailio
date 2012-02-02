@@ -21,6 +21,7 @@ typedef struct dmq_cback_param {
 	dmq_node_t* node;
 } dmq_cback_param_t;
 
+int cfg_send_dmq_message(struct sip_msg* msg, char* peer, char* to, char* body);
 dmq_peer_t* register_dmq_peer(dmq_peer_t* peer);
 int send_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cback_t* resp_cback, int max_forwards);
 int bcast_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* except, dmq_resp_cback_t* resp_cback, int max_forwards);
