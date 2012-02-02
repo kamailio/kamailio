@@ -85,7 +85,7 @@ int bcast_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* except, dmq_resp_
 			node = node->next;
 			continue;
 		}
-		if(send_dmq_message(peer, body, node, resp_cback, max_forwards) < 0) {
+		if(dmq_send_message(peer, body, node, resp_cback, max_forwards) < 0) {
 			LM_ERR("error sending dmq message\n");
 			goto error;
 		}
@@ -104,7 +104,7 @@ error:
  * node - we send the message to this node
  * resp_cback - a response callback that gets called when the transaction is complete
  */
-int send_dmq_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cback_t* resp_cback, int max_forwards) {
+int dmq_send_message(dmq_peer_t* peer, str* body, dmq_node_t* node, dmq_resp_cback_t* resp_cback, int max_forwards) {
 	uac_req_t uac_r;
 	str str_hdr = {0, 0};
 	str from, to, req_uri;
@@ -149,14 +149,14 @@ error:
 	return -1;
 }
 
-int cfg_send_dmq_message(struct sip_msg* msg, char* peer, char* to, char* body) {
+int cfg_dmq_send_message(struct sip_msg* msg, char* peer, char* to, char* body) {
 	str peer_str;
 	get_str_fparam(&peer_str, msg, (fparam_t*)peer);
 	str to_str;
 	get_str_fparam(&to_str, msg, (fparam_t*)to);
 	str body_str;
 	get_str_fparam(&body_str, msg, (fparam_t*)body);
-	LM_INFO("cfg_send_dmq_message: %.*s - %.*s - %.*s\n",
+	LM_INFO("cfg_dmq_send_message: %.*s - %.*s - %.*s\n",
 		peer_str.len, peer_str.s,
 		to_str.len, to_str.s,
 		body_str.len, body_str.s);
@@ -180,7 +180,7 @@ int cfg_send_dmq_message(struct sip_msg* msg, char* peer, char* to, char* body) 
 		LM_ERR("cannot find dmq_node: %.*s\n", to_str.len, to_str.s);
 		goto error;
 	}
-	if(send_dmq_message(destination_peer, &body_str, to_dmq_node, &notification_callback, 1) < 0) {
+	if(dmq_send_message(destination_peer, &body_str, to_dmq_node, &notification_callback, 1) < 0) {
 		LM_ERR("cannot send dmq message\n");
 		goto error;
 	}

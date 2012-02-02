@@ -47,7 +47,7 @@ static inline int dmq_load_api(dmq_api_t* api) {
 	return 0;
 }
 
-int handle_dmq_message(struct sip_msg* msg, char* str1 ,char* str2);
+int dmq_handle_message(struct sip_msg* msg, char* str1 ,char* str2);
 
 #endif
 

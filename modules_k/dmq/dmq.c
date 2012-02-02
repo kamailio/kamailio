@@ -97,12 +97,10 @@ static int send_dmq_fixup(void** param, int param_no);
 static int parse_server_address(str* uri, struct sip_uri* parsed_uri);
 
 static cmd_export_t cmds[] = {
-	{"handle_dmq_message",  (cmd_function)handle_dmq_message, 0, handle_dmq_fixup, 0, 
+	{"dmq_handle_message",  (cmd_function)dmq_handle_message, 0, handle_dmq_fixup, 0, 
 		REQUEST_ROUTE},
-	{"send_dmq_message", (cmd_function)cfg_send_dmq_message, 3, send_dmq_fixup, 0,
+	{"dmq_send_message", (cmd_function)cfg_dmq_send_message, 3, send_dmq_fixup, 0,
 		ANY_ROUTE},
-	{"bind_dmq",        (cmd_function)bind_dmq, 0, 0, 0,
-		REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 

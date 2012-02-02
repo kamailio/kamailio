@@ -1,3 +1,3 @@
 
-int handle_dmq_message(struct sip_msg*, char*, char*);
+int dmq_handle_message(struct sip_msg*, char*, char*);
 

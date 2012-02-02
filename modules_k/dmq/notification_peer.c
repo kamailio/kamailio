@@ -201,7 +201,7 @@ error:
 int request_nodelist(dmq_node_t* node, int forward) {
 	str* body = build_notification_body();
 	int ret;
-	ret = send_dmq_message(dmq_notification_peer, body, node, &notification_callback, forward);
+	ret = dmq_send_message(dmq_notification_peer, body, node, &notification_callback, forward);
 	pkg_free(body->s);
 	pkg_free(body);
 	return ret;
