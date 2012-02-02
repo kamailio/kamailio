@@ -766,9 +766,11 @@ int stun_add_address_attr(struct stun_msg* res,
 						int do_xor)
 {
 	struct stun_attr attr;
-	UINT_T	 id[IP_ADDR];
 	int		 ip_struct_len;
+#ifdef USE_IPV6
+	UINT_T	 id[IP_ADDR];
 	int i;
+#endif /* USE_IPV6 */ 
 	
 	ip_struct_len = 0;
 	attr.type = htons(type);
