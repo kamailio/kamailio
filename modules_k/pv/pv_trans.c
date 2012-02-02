@@ -68,7 +68,7 @@ int tr_init_buffers(void)
 {
 	int i;
 
-	_tr_buffer_list = (char**)malloc(TR_BUFFER_SLOTS);
+	_tr_buffer_list = (char**)malloc(TR_BUFFER_SLOTS * sizeof(char*));
 	if(_tr_buffer_list==NULL)
 		return -1;
 	for(i=0; i<TR_BUFFER_SLOTS; i++) {

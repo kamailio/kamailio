@@ -293,7 +293,7 @@ int acc_radius_init(acc_init_info_t *inf)
 	return 0;
 }
 
-static inline UINT4 rad_status( struct sip_msg *req, int code )
+static inline uint32_t rad_status( struct sip_msg *req, int code )
 {
         str tag;
         unsigned int in_dialog_req = 0;
@@ -324,7 +324,7 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 {
 	int attr_cnt;
 	VALUE_PAIR *send;
-	UINT4 av_type;
+	uint32_t av_type;
 	int offset;
 	int i;
 
@@ -340,14 +340,14 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 	av_type = rd_vals[RV_SIP_SESSION].v; /* session*/
 	ADD_RAD_AVPAIR( RA_SERVICE_TYPE, &av_type, -1);
 
-	av_type = (UINT4)inf->env->code; /* status=integer */
+	av_type = (uint32_t)inf->env->code; /* status=integer */
 	ADD_RAD_AVPAIR( RA_SIP_RESPONSE_CODE, &av_type, -1);
 
 	av_type = req->REQ_METHOD; /* method */
 	ADD_RAD_AVPAIR( RA_SIP_METHOD, &av_type, -1);
 
 	/* unix time */
-	av_type = (UINT4)inf->env->ts;
+	av_type = (uint32_t)inf->env->ts;
 	ADD_RAD_AVPAIR( RA_TIME_STAMP, &av_type, -1);
 
 	/* add extra also */

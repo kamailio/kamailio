@@ -133,7 +133,7 @@ static cmd_export_t cmds[]={
 	{"is_e164",            (cmd_function)is_e164,           1, fixup_pvar_null,
 		fixup_free_pvar_null, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
 	{"is_uri_user_e164",   (cmd_function)w_is_uri_user_e164,  1, fixup_pvar_null,
-		fixup_free_pvar_null, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
+		fixup_free_pvar_null, ANY_ROUTE},
 	{"encode_contact",     (cmd_function)encode_contact,    2, 0,
 		0, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"decode_contact",     (cmd_function)decode_contact,    0, 0,

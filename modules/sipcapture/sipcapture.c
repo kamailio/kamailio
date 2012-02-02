@@ -1184,10 +1184,12 @@ static int sip_capture(struct sip_msg *msg, char *s1, char *s2)
 	if(msg->contact && cb) {
 		sco.contact_ip = contact.host;
 		str2int(&contact.port, (unsigned int*)&sco.contact_port);
+		sco.contact_user = contact.user;
 	}
 	else {
 		EMPTY_STR(sco.contact_ip);	
 		sco.contact_port = 0;
+		EMPTY_STR(sco.contact_user);
 	}
 	
 	/* X-OIP */	
