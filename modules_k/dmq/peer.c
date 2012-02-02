@@ -43,3 +43,6 @@ dmq_peer_t* find_peer(str peer_id) {
 	return search_peer_list(peer_list, &foo_peer);
 }
 
+int empty_peer_callback(struct sip_msg* msg, peer_reponse_t* resp) {
+	return 0;
+}
