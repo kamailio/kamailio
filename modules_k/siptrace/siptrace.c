@@ -1648,6 +1648,7 @@ static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int
 	char *p, *host_s;
 	str port_str, host_uri;
 	unsigned len = 0;
+	char tmp_piport[256];
 
 	/*parse protocol */
 	if(strncmp(pipport, "udp:",4) == 0) *proto = IPPROTO_UDP;
@@ -1661,42 +1662,49 @@ static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int
 		LM_ERR("bad protocol %s\n", pipport);
 		return -1;
 	}
+	
+	if((len = strlen(pipport)) > 256) {
+		LM_ERR("too big pipport\n");
+		goto error;
+	}
+
+	/* our tmp string */
+        strncpy(tmp_piport, pipport, len);
+
+	len = 0;
 
 	/*separate proto and host */
-	p = pipport+cutlen;
+	p = tmp_piport+cutlen;
 	if( (*(p)) == '\0') {
 		LM_ERR("malformed ip address\n");
-		return -1;
+		goto error;
 	}
 	host_s=p;
 
 	if( (p = strrchr(p+1, ':')) == 0 ) {
-		LM_ERR("no port specified\n");
-		return -1;
+		LM_DBG("no port specified\n");
+		port_no = 0;
 	}
-	/*the address contains a port number*/
-	*p = '\0';
-	p++;
-	port_str.s = p;
-	port_str.len = strlen(p);
-	LM_DBG("the port string is %s\n", p);
-	if(str2int(&port_str, &port_no) != 0 ) {
-		LM_ERR("there is not a valid number port\n");
-		return -1;
-	}
-	*p = '\0';
-	if (port_no<1024  || port_no>65536)
-	{
-		LM_ERR("invalid port number; must be in [1024,65536]\n");
-		return -1;
-	}
-
+	else {
+        	/*the address contains a port number*/
+        	*p = '\0';
+        	p++;
+        	port_str.s = p;
+        	port_str.len = strlen(p);
+        	LM_DBG("the port string is %s\n", p);
+        	if(str2int(&port_str, &port_no) != 0 ) {
+	        	LM_ERR("there is not a valid number port\n");
+	        	goto error;
+        	}
+        	*p = '\0';
+        }
+        
 	/* now IPv6 address has no brakets. It should be fixed! */
 	if (host_s[0] == '[') {
 		len = strlen(host_s + 1) - 1;
 		if(host_s[len+1] != ']') {
 			LM_ERR("bracket not closed\n");
-			return -1;
+			goto error;
 		}
 		memmove(host_s, host_s + 1, len);
 		host_s[len] = '\0';
@@ -1704,7 +1712,6 @@ static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int
 
 	host_uri.s = host_s;
 	host_uri.len = strlen(host_s);
-
 
 	/* check if it's an ip address */
 	if (((ip=str2ip(&host_uri))!=0)
@@ -1717,5 +1724,6 @@ static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int
 
 	}
 
+error:
 	return -1;
 }
