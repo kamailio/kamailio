@@ -129,6 +129,9 @@ int trace_sl_acks = 1;
 
 int trace_to_database = 1;
 
+int hep_version = 1;
+int hep_capture_id = 1;
+
 int xheaders_write = 0;
 int xheaders_read = 0;
 
@@ -193,6 +196,8 @@ static param_export_t params[] = {
 	{"xheaders_write",     INT_PARAM, &xheaders_write       },
 	{"xheaders_read",      INT_PARAM, &xheaders_read        },
 	{"hep_mode_on",        INT_PARAM, &hep_mode_on          },	 
+	{"hep_version",        INT_PARAM, &hep_version          },
+        {"hep_capture_id",     INT_PARAM, &hep_capture_id       },	        
 	{0, 0, 0}
 };
 
@@ -308,6 +313,13 @@ static int mod_init(void)
 			return -1;
 		}
 	}
+
+        if(hep_version != 1 && hep_version != 2) {
+  
+                  LM_ERR("unsupported version of HEP");
+                  return -1;
+        }                                          
+
 
 	trace_on_flag = (int*)shm_malloc(sizeof(int));
 	if(trace_on_flag==NULL) {
@@ -1458,6 +1470,10 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to)
 	unsigned int len, buflen, proto;
 	struct hep_hdr hdr;
 	struct hep_iphdr hep_ipheader;
+	struct hep_timehdr hep_time;
+	struct timeval tvb;
+	struct timezone tz;
+	                 
 #if USE_IPV6
 	struct hep_ip6hdr hep_ip6header;
 #endif
@@ -1469,6 +1485,9 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to)
 		return 0;
 
 
+        gettimeofday( &tvb, &tz );
+        
+
 	/* message length */
 	len = body->len 
 #if USE_IPV6
@@ -1476,7 +1495,7 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to)
 #else
 		+ sizeof(struct hep_iphdr)          
 #endif
-		+ sizeof(struct hep_hdr);
+		+ sizeof(struct hep_hdr) + sizeof(struct hep_timehdr);;
 
 
 	/* The packet is too big for us */
@@ -1517,7 +1536,7 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to)
 
 	/* Version && proto && length */
 	hdr.hp_l = sizeof(struct hep_hdr);
-	hdr.hp_v = 1;
+	hdr.hp_v = hep_version;
 	hdr.hp_p = proto;
 
 	/* AND the last */
@@ -1579,6 +1598,16 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to)
 		buflen += sizeof(struct hep_ip6hdr);
 	}
 #endif /* USE_IPV6 */
+
+	if(hep_version == 2) {
+
+                hep_time.tv_sec = tvb.tv_sec;
+                hep_time.tv_usec = tvb.tv_usec;
+                hep_time.captid = hep_capture_id;
+
+                memcpy((void*)buffer+buflen, &hep_time, sizeof(struct hep_timehdr));
+                buflen += sizeof(struct hep_timehdr);
+        }
 
 	/* PAYLOAD */
 	memcpy((void*)(buffer + buflen) , (void*)body->s, body->len);
