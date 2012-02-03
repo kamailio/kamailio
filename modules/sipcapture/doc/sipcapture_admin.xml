@@ -105,8 +105,6 @@ modparam("sipcapture", "db_url", "mysql://user:passwd@host/dbname")
 		<title><varname>table_name</varname> (str)</title>
 		<para>
 		Name of the table's name where to store the SIP messages. 
-		If partitioning_mode set to 1, the table_name is a prefix 
-		to separate table. i.e. sip_capture_01_02.
 		</para>
 		<para>
 		<emphasis>
@@ -123,23 +121,6 @@ modparam("sipcapture", "table_name", "homer_capture")
 </programlisting>
 		</example>
 	</section>
-        <section>
-                <title><varname>partitioning_mode</varname> (integer)</title>
-                <para>
-                If set to 0, records will store to separate table, depends on 
-		the day of the week and the hour of the day. Otherwise records 
-		will store into partitioning table. 
-                </para>
-                <para>
-                Default value is 1.
-                </para>
-                <example>
-                <title>partitioning_mode</title>
-                <programlisting format="linespecific">
-modparam("sipcapture", "partitioning_mode", 0)
-</programlisting>
-                </example>
-        </section>
         <section>
                 <title><varname>db_insert_mode</varname> (integer)</title>
                 <para>
@@ -411,13 +392,11 @@ modparam("sipcapture", "capture_node", "homer03")
 		<title>Database setup</title>
 		<para>
 		Before running &kamailio; with sipcapture, you have to setup the database 
-		tables where the module will store the data. For that, if the
-		table were not created by the installation script or you choose
-		to install everything by yourself you can use the sipcapture-create.sql or 
-		the sipcapture-st-create.sql <acronym>SQL</acronym> script in the database 
-		directories in the kamailio/scripts folder as template.
-		You can also find the complete database documentation on the
-		project webpage, &kamailiodbdocslink;.
+		tables where the module will store the data. For that, if the table were not 
+		created by the installation script or you choose to install everything by 
+		yourself you can use the sipcapture_create.sql, <acronym>SQL</acronym> script 
+		in the sql folder of sipcapture module as template. You can also find the 
+		complete database documentation on the project webpage, &kamailiodbdocslink;.
 		</para>
 	</section>
 	<section>
@@ -427,7 +406,7 @@ modparam("sipcapture", "capture_node", "homer03")
 		1. Only one capturing mode on RAW socket is supported: IPIP or monitoring/mirroring port. 
 		   Don't activate both at the same time.
 		2. By default MySQL doesn't support INSERT DELAYED for partitioning table. You can patch MySQL 
-		  (http://bugs.mysql.com/bug.php?id=50393) or use separate tables (pseudo partitioning)
+		  (http://bugs.mysql.com/bug.php?id=50393)
 		3. Mirroring port capturing works only on Linux.
 	
         </para>

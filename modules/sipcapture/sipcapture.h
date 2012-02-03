@@ -44,6 +44,12 @@ struct hep_iphdr{
         struct in_addr hp_dst;      /* source and dest address */
 };
 
+struct hep_timehdr{
+   u_int32_t tv_sec;         /* seconds */
+   u_int32_t tv_usec;        /* useconds */
+   u_int16_t captid;          /* Capture ID node */
+};
+
 #ifdef USE_IPV6
 struct hep_ip6hdr {
         struct in6_addr hp6_src;        /* source address */

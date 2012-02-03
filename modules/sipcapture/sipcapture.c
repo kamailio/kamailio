@@ -116,6 +116,7 @@ struct _sipcapture_object {
 	int family;
 	str rtp_stat;
 	int type;
+        long long tmstamp;
 	str node;	
 	str msg;	
 #ifdef STATISTICS
@@ -199,7 +200,6 @@ int moni_port_start = 0;
 int moni_port_end   = 0;
 int *capture_on_flag = NULL;
 int db_insert_mode = 0;
-int partitioning_mode = 1;
 int promisc_on = 0;
 int bpf_on = 0;
 
@@ -224,6 +224,9 @@ static struct sock_filter BPF_code[] = { { 0x28, 0, 0, 0x0000000c }, { 0x15, 0, 
 
 db1_con_t *db_con = NULL; 		/*!< database connection */
 db_func_t db_funcs;      		/*!< Database functions */
+
+struct hep_timehdr* heptime;
+
 
 /*! \brief
  * Exported functions
@@ -286,7 +289,6 @@ static param_export_t params[] = {
         {"raw_ipip_capture_on",  	INT_PARAM, &ipip_capture_on  },	
         {"raw_moni_capture_on",  	INT_PARAM, &moni_capture_on  },	
         {"db_insert_mode",  		INT_PARAM, &db_insert_mode  },	
-        {"partitioning_mode",  		INT_PARAM, &partitioning_mode  },
 	{"raw_interface",     		STR_PARAM, &raw_interface.s   },
         {"promiscious_on",  		INT_PARAM, &promisc_on   },		
         {"raw_moni_bpf_on",  		INT_PARAM, &bpf_on   },		
@@ -419,8 +421,8 @@ static int mod_init(void) {
 	}
 
 
-	if(partitioning_mode && db_insert_mode) {
-                LM_INFO("INFO: sipcapture: mod_init: you have enabled INSERT DELAYED for partitioning table \
+	if(db_insert_mode) {
+                LM_INFO("INFO: sipcapture: mod_init: you have enabled INSERT DELAYED \
                                 Make sure your DB can support it\n");
         }
 
@@ -434,12 +436,12 @@ static int mod_init(void) {
 	
 	/* register DGRAM event */
 	if(sr_event_register_cb(SREV_NET_DGRAM_IN, hep_msg_received) < 0) {
-		LM_ERR("ERROR:sipcapture:mod_init: failed to register SREV_NET_DGRAM_IN event\n");
+		LM_ERR("failed to register SREV_NET_DGRAM_IN event\n");
 		return -1;		                	
 	}
 
 	if(ipip_capture_on && moni_capture_on) {
-		LM_ERR("ERROR:sipcapture:mod_init: only one RAW mode is supported. Please disable ipip_capture_on or moni_capture_on\n");
+		LM_ERR("only one RAW mode is supported. Please disable ipip_capture_on or moni_capture_on\n");
 		return -1;		                		
 	}
 	
@@ -551,6 +553,13 @@ static int child_init(int rank)
 		LM_ERR("unable to connect to database. Please check configuration.\n");
 		return -1;
 	}
+	
+	heptime = (struct hep_timehdr*)pkg_malloc(sizeof(struct hep_timehdr));
+        if(heptime==NULL) {
+                LM_ERR("no more pkg memory left\n");
+                return -1;
+        }
+
 
 	return 0;
 }
@@ -586,6 +595,8 @@ static void destroy(void)
 	if (capture_on_flag)
 		shm_free(capture_on_flag);
 		
+        if(heptime) pkg_free(heptime);
+
 	if(raw_sock_desc > 0) {
 		 if(promisc_on && raw_interface.len) {
 #ifdef __OS_linux
@@ -618,6 +629,9 @@ int hep_msg_received(void *data)
         struct ip_addr dst_ip, src_ip;
         char *hep_payload, *end, *p, *hep_ip;
         struct hep_iphdr *hepiph = NULL;
+
+	struct hep_timehdr* heptime_tmp = NULL;
+        memset(heptime, 0, sizeof(struct hep_timehdr));
 
 #ifdef USE_IPV6
         struct hep_ip6hdr *hepip6h = NULL;
@@ -660,7 +674,7 @@ int hep_msg_received(void *data)
                 }
 
 	/* Check version */
-        if(heph->hp_v != 1 || hl != heph->hp_l) {
+        if((heph->hp_v != 1 && heph->hp_v != 2) || hl != heph->hp_l) {
         	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: not supported version or bad length: v:[%d] l:[%d] vs [%d]\n",
                                                 heph->hp_v, heph->hp_l, hl);
                 return -1;
@@ -707,6 +721,18 @@ int hep_msg_received(void *data)
         	LOG(L_ERR,"hep_payload is over buf+len\n");
                 return -1;
 	}
+
+	/* timming */
+        if(heph->hp_v == 2) {
+                offset+=sizeof(struct hep_timehdr);
+                heptime_tmp = (struct hep_timehdr*) hep_payload;
+
+                heptime->tv_sec = heptime_tmp->tv_sec;
+                heptime->tv_usec = heptime_tmp->tv_usec;
+                heptime->captid = heptime_tmp->captid;
+        }
+
+
 
 	/* fill ip from the packet to dst_ip && to */
         switch(heph->hp_f){
@@ -759,12 +785,6 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 {
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
-	struct timeval tvb;
-	struct timezone tz;
-	char tmptable[TABLE_LEN];
-        int ret = 0;
-        struct tm *t;
-        str dbtable;
 	               	
 	if(sco==NULL)
 	{
@@ -772,10 +792,6 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 		return -1;
 	}
 	
-	gettimeofday( &tvb, &tz );
-	
-	t = localtime(&tvb.tv_sec);
-
 	db_keys[0] = &id_column;			
         db_vals[0].type = DB1_INT;
         db_vals[0].nul = 0;
@@ -789,7 +805,7 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 	db_keys[2] = &micro_ts_column;			
         db_vals[2].type = DB1_BIGINT;
         db_vals[2].nul = 0;
-        db_vals[2].val.ll_val = (unsigned long long)tvb.tv_sec*1000000+tvb.tv_usec; /* micro ts */
+        db_vals[2].val.ll_val = sco->tmstamp;
 	
 	db_keys[3] = &method_column;
 	db_vals[3].type = DB1_STR;
@@ -961,23 +977,9 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 	db_vals[36].nul = 0;
 	db_vals[36].val.blob_val = sco->msg;	
 		
-	DBG("homer table: [%.*s]\n", table_name.len, table_name.s);		
-	if(!partitioning_mode) {
-                ret = snprintf(tmptable, TABLE_LEN, "%.*s_%02d_%02d",
-                        table_name.len, table_name.s, (t->tm_wday == 0) ? 7 : t->tm_wday , t->tm_hour);
-                if(ret < 0 || ret >=TABLE_LEN) {
-                        LM_ERR("error create table name\n");
-                        goto error;
-                }
-
-                dbtable.s = tmptable;
-                dbtable.len = strlen(tmptable);
-        }
-        else { 
-           dbtable =  table_name;
-        }
-        
-	db_funcs.use_table(db_con, &dbtable);
+	LM_DBG("homer table: [%.*s]\n", table_name.len, table_name.s);		
+                
+	db_funcs.use_table(db_con, &table_name);
 
 	LM_DBG("storing info...\n");
 	
@@ -1010,8 +1012,16 @@ static int sip_capture(struct sip_msg *msg, char *s1, char *s2)
 	contact_body_t*  cb=0;	        	        
 	char buf_ip[IP_ADDR_MAX_STR_SIZE+12];
 	char *port_str = NULL, *tmp = NULL;
+	struct timeval tvb;
+        struct timezone tz;
+        char tmp_node[100];
+        char rtpinfo[256];
+        unsigned int len = 0;
 	                                          
 	LM_DBG("CAPTURE DEBUG...\n");
+
+	gettimeofday( &tvb, &tz );
+	        
 
 	if(msg==NULL) {
 		LM_DBG("nothing to capture\n");
@@ -1051,6 +1061,17 @@ static int sip_capture(struct sip_msg *msg, char *s1, char *s2)
 		EMPTY_STR(sco.ruri);
 		EMPTY_STR(sco.ruri_user);
 	}
+
+	if(heptime && heptime->tv_sec != 0) {
+               sco.tmstamp = (unsigned long long)heptime->tv_sec*1000000+heptime->tv_usec; /* micro ts */
+               snprintf(tmp_node, 100, "%.*s:%i", capture_node.len, capture_node.s, heptime->captid);
+               sco.node.s = tmp_node;
+               sco.node.len = strlen(tmp_node);
+        }
+        else {
+               sco.tmstamp = (unsigned long long)tvb.tv_sec*1000000+tvb.tv_usec; /* micro ts */
+               sco.node = capture_node;
+        }
 	
 	/* Parse FROM */
         if(msg->from) {
@@ -1217,6 +1238,22 @@ static int sip_capture(struct sip_msg *msg, char *s1, char *s2)
 	else if((tmphdr[3] = get_hdr_by_name(msg,"P-RTP-Stat", 10)) != NULL) {
 		sco.rtp_stat =  tmphdr[3]->body;
 	}	                         	
+	/* RTP-RxStat */
+        else if((tmphdr[3] = get_hdr_by_name(msg,"RTP-RxStat", 10)) != NULL) {
+                if(tmphdr[3]->body.len > 250) tmphdr[3]->body.len = 250;
+
+                memcpy(&rtpinfo, tmphdr[3]->body.s, tmphdr[3]->body.len);
+                len = tmphdr[3]->body.len;
+                if((tmphdr[3] = get_hdr_by_name(msg,"RTP-TxStat", 10)) != NULL) {
+                        memcpy(&rtpinfo[len], ", ", 2);
+                        if((len + 2 + tmphdr[3]->body.len) > 256) tmphdr[3]->body.len = 256 - (len+2);
+                        memcpy(&rtpinfo[len+2], tmphdr[3]->body.s, tmphdr[3]->body.len);
+                }
+                sco.rtp_stat.s =  rtpinfo;
+                sco.rtp_stat.len =  strlen(rtpinfo);
+        }
+
+
 	else { EMPTY_STR(sco.rtp_stat); }	
 	
 		
@@ -1228,9 +1265,6 @@ static int sip_capture(struct sip_msg *msg, char *s1, char *s2)
 	
 	/* MESSAGE TYPE */
 	sco.type = msg->first_line.type;
-	
-	/* Our node name */
-	sco.node = capture_node;
 	
 	/* MSG */	
 	sco.msg.s = msg->buf;
