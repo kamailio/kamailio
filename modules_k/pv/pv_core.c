@@ -57,6 +57,7 @@ static str pv_uri_scheme[] = {
 		{ "sips", 4 },
 		{ "tel",  3 },
 		{ "tels", 4 },
+		{ "urn",  3 },
 		{ 0, 0 }
 	};
 
