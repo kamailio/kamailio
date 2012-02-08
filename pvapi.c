@@ -125,7 +125,7 @@ int pv_locate_name(str *in)
 	{
 		/* name with parenthesis: $(...) */
 		pcount = 1;
-		for(i=1; i<in->len; i++)
+		for(i=2; i<in->len; i++)
 		{
 			if(in->s[i]==PV_LNBRACKET)
 				pcount++;
@@ -135,6 +135,7 @@ int pv_locate_name(str *in)
 				return i+1;
 		}
 		/* non-closing name parenthesis */
+		LM_ERR("non-closing name parenthesis [%.*s]\n",in->len,in->s);
 		return -1;
 	}
 
@@ -167,6 +168,7 @@ int pv_locate_name(str *in)
 			return i+1;
 	}
 	/* non-closing inner-name parenthesis */
+	LM_ERR("non-closing inner-name parenthesis [%.*s]\n",in->len,in->s);
 	return -1;
 }
 
