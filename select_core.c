@@ -921,6 +921,7 @@ int select_uri_hostport(str* res, select_t* s, struct sip_msg* msg)
 			break;
 		case SIP_URI_T:
 		case TEL_URI_T:
+		case URN_URI_T:
 			strncpy(p+select_uri_p->host.len, ":5060", 5);
 			break;
 		case ERROR_URI_T:
@@ -949,6 +950,7 @@ int select_uri_proto(str* res, select_t* s, struct sip_msg* msg)
 				break;
 			case SIP_URI_T:
 			case TEL_URI_T:
+			case URN_URI_T:
 				proto_type_to_str(PROTO_UDP, res);
 				break;
 			case ERROR_URI_T:
