@@ -132,6 +132,7 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 #define SIP_SCH		0x3a706973
 #define SIPS_SCH	0x73706973
 #define TEL_SCH		0x3a6c6574
+#define URN_SCH		0x3a6e7275
 	
 #define case_port( ch, var) \
 	case ch: \
@@ -381,7 +382,7 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 	port_no=0;
 	state=URI_INIT;
 	memset(uri, 0, sizeof(struct sip_uri)); /* zero it all, just to be sure*/
-	/*look for sip:, sips: or tel:*/
+	/*look for sip:, sips: ,tel: or urn:*/
 	if (len<5) goto error_too_short;
 	scheme=buf[0]+(buf[1]<<8)+(buf[2]<<16)+(buf[3]<<24);
 	scheme|=0x20202020;
@@ -392,6 +393,8 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 		else goto error_bad_uri;
 	}else if (scheme==TEL_SCH){
 		uri->type=TEL_URI_T;
+	}else if (scheme==URN_SCH){
+		uri->type=URN_URI_T;
 	}else goto error_bad_uri;
 	
 	s=p;
@@ -955,8 +958,13 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			uri->user.len=0;
 			break;
 		case URI_PASSWORD_ALPHA:
+			/* it might be an urn, check scheme and set host */
+			if (scheme==URN_SCH){
+				uri->host.s=s;
+				uri->host.len=p-s;
+				DBG("parsed urn scheme...\n");
 			/* this is the port, it can't be the passwd */
-			goto error_bad_port;
+			}else goto error_bad_port;
 		case URI_HOST_P:
 		case URI_HOST6_END:
 			uri->host.s=s;
@@ -1140,6 +1148,9 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			uri->host.s="";
 			uri->host.len=0;
 			break;
+		/* urn: do nothing */
+		case URN_URI_T:
+			break;
 		case ERROR_URI_T:
 			LOG(L_ERR, "ERROR: parse_uri unexpected error (BUG?)\n"); 
 			goto error_bad_uri;
@@ -1302,6 +1313,7 @@ str	s_sip  = STR_STATIC_INIT("sip");
 str	s_sips = STR_STATIC_INIT("sips");
 str	s_tel  = STR_STATIC_INIT("tel");
 str	s_tels = STR_STATIC_INIT("tels");
+str	s_urn  = STR_STATIC_INIT("urn");
 static str	s_null = STR_STATIC_INIT("");
 
 inline void uri_type_to_str(uri_type type, str *s) {
@@ -1317,6 +1329,9 @@ inline void uri_type_to_str(uri_type type, str *s) {
 		break;
 	case TELS_URI_T:
 		*s = s_tels;
+		break;
+	case URN_URI_T:
+		*s = s_urn;
 		break;
 	default:
 		*s = s_null;

@@ -37,8 +37,7 @@
 #include "../str.h"
 #include "../parser/msg_parser.h"
 
-
-extern str	s_sip, s_sips, s_tel, s_tels;
+extern str	s_sip, s_sips, s_tel, s_tels, s_urn;
 
 /* buf= pointer to begining of uri (sip:x@foo.bar:5060;a=b?h=i)
  * len= len of uri
