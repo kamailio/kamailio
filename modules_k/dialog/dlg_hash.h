@@ -458,6 +458,16 @@ static inline int match_dialog(dlg_cell_t *dlg, str *callid,
 				*dir = DLG_DIR_DOWNSTREAM;
 				return 1;
 			}
+			/* if no ACK yet, might be a lookup of dlg from a TM callback that
+			 * runs on 200ok but with initial INVITE that has no to-tag */
+			if(ttag->len==0 && dlg->state==DLG_STATE_CONFIRMED_NA
+					&& dlg->tag[DLG_CALLER_LEG].len == ftag->len &&
+					   strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)==0 &&
+					   strncmp(dlg->callid.s, callid->s, callid->len)==0) {
+
+				*dir = DLG_DIR_DOWNSTREAM;
+				return 1;
+			}
 		}
 	}
 
