@@ -988,8 +988,12 @@ sercmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
    SIP URI format).
 
    Optionally, these fields can be followed by:
-     * flags: 1 - destination inactive, 2 - destination in probing mode --
-       you can do bitwise OR to set both flags
+     * flags (listed by index - can be bitwise mask of values): 0 (value
+       1) - inactive destination; 1 (value 2) - temporary trying
+       destination (in the way to become inactive if it does not reply to
+       keepalives - there is a module parameter to set the threshold of
+       failures); 2 (value 4) - admin disabled destination; 3 (value 8) -
+       probing destination (sending keep alives);
      * priority: sets the priority in destination list (based on it is
        done the initial ordering inside the set)
      * attributes: extra filed in form of name1=value1;...;nameN=valueN.
