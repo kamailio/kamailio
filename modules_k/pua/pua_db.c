@@ -73,6 +73,7 @@ void free_results_puadb( db1_res_t *res )
 	{
 		pua_dbf.free_result(pua_db, res);
 		if (puadb_debug) LM_ERR( "free_results_puadb\n" );
+		res = NULL;
 	}
 }
 
@@ -542,13 +543,10 @@ ua_pres_t* get_dialog_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **dbre
 {
 	int nr_rows;
 	db_row_t *rows;
-	db_key_t q_cols[20];
+	db_key_t q_cols[3];
 	db1_res_t *res= NULL;
-	db_val_t q_vals[20];
-	db_op_t  q_ops[20];
+	db_val_t q_vals[3];
 	int n_query_cols= 0;
-	int puri_col,callid_col;
-	int watcher_col, totag_col, fromtag_col, flag_col;	
 	db_val_t *values;
 
 	if (pres==NULL)
@@ -562,58 +560,22 @@ ua_pres_t* get_dialog_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **dbre
 	if (result==NULL) { LM_ERR( "result is NULL\n" ); return(NULL); }
 
 	/* cols and values used for search query */
-	q_cols[puri_col= n_query_cols] = &str_pres_uri_col;
-	q_vals[puri_col].type = DB1_STR;
-	q_vals[puri_col].nul = 0;
-	q_vals[puri_col].val.str_val.s = pres->pres_uri->s;
-	q_vals[puri_col].val.str_val.len = pres->pres_uri->len;
-	q_ops[puri_col] = OP_EQ; 
+	q_cols[n_query_cols] = &str_call_id_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->call_id;
 	n_query_cols++;
 
-	q_cols[flag_col= n_query_cols] = &str_flag_col;
-	q_vals[flag_col].type = DB1_INT;
-	q_vals[flag_col].nul = 0;
-	q_vals[flag_col].val.int_val = pres->flag;
-	q_ops[flag_col] = OP_BITWISE_AND;
+	q_cols[n_query_cols] = &str_from_tag_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->from_tag;
 	n_query_cols++;
 
-	if (pres->watcher_uri)
-	{
-		q_cols[watcher_col= n_query_cols] = &str_watcher_uri_col;
-		q_vals[watcher_col].type = DB1_STR;
-		q_vals[watcher_col].nul = 0;
-		q_vals[watcher_col].val.str_val.s = pres->watcher_uri->s;
-		q_vals[watcher_col].val.str_val.len = pres->watcher_uri->len;
-		q_ops[watcher_col] = OP_EQ;
-		n_query_cols++;
-	}
-	else
-	{
-		LM_ERR( "get_dialog_puadb has NULL watcher_uri\n" );
-	}
-
-	q_cols[callid_col= n_query_cols] = &str_call_id_col;	
-	q_vals[callid_col].type = DB1_STR;
-	q_vals[callid_col].nul = 0;
-	q_vals[callid_col].val.str_val.s = pres->call_id.s;
-	q_vals[callid_col].val.str_val.len = pres->call_id.len;
-	q_ops[callid_col] = OP_EQ;
-	n_query_cols++;
-
-	q_cols[totag_col= n_query_cols] = &str_to_tag_col;	
-	q_vals[totag_col].type = DB1_STR;
-	q_vals[totag_col].nul = 0;
-	q_vals[totag_col].val.str_val.s = pres->to_tag.s;
-	q_vals[totag_col].val.str_val.len = pres->to_tag.len;
-	q_ops[totag_col] = OP_EQ;
-	n_query_cols++;
-
-	q_cols[fromtag_col= n_query_cols] = &str_from_tag_col;	
-	q_vals[fromtag_col].type = DB1_STR;
-	q_vals[fromtag_col].nul = 0;
-	q_vals[fromtag_col].val.str_val.s = pres->from_tag.s;
-	q_vals[fromtag_col].val.str_val.len = pres->from_tag.len;
-	q_ops[fromtag_col] = OP_EQ;
+	q_cols[n_query_cols] = &str_to_tag_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->to_tag;
 	n_query_cols++;
 
 	if(pua_db == NULL)
@@ -622,7 +584,7 @@ ua_pres_t* get_dialog_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **dbre
 		return(NULL);
 	}
 
-	if(pua_dbf.query(pua_db, q_cols, q_ops, q_vals,
+	if(pua_dbf.query(pua_db, q_cols, 0, q_vals,
 				0,n_query_cols,0,0,&res) < 0)
 	{
 		LM_ERR("DB query error\n");
@@ -631,30 +593,63 @@ ua_pres_t* get_dialog_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **dbre
 
 	nr_rows = RES_ROW_N(res);
 
-	if (nr_rows == 0)
+	switch (nr_rows)
 	{
-		/* no match */ 
-		LM_DBG("No rows found\n");
+	case 1:
+		rows = RES_ROWS(res);
+		values = ROW_VALUES(rows);
+		extract_row(values, result);
+		break;
+
+	case 0:
+		/* no match */
+		LM_DBG("No rows found.  Looking for temporary dialog\n");
+		pua_dbf.free_result(pua_db, res);
+
+		n_query_cols--;
+
+		if(pua_dbf.query(pua_db, q_cols, 0, q_vals,
+				0,n_query_cols,0,0,&res) < 0)
+		{
+			LM_ERR("DB query error\n");
+			return(NULL);
+		}
+
+		nr_rows = RES_ROW_N(res);
+
+		if (nr_rows == 1)
+		{
+			rows = RES_ROWS(res);
+			values = ROW_VALUES(rows);
+			extract_row(values, result);
+
+			if (result->to_tag.len == 0 ||
+				(result->to_tag.len > 0
+				&& strncmp(result->to_tag.s, pres->to_tag.s, pres->to_tag.len) == 0))
+			{
+				LM_DBG("Found a (possibly temporary) Dialog\n");
+				break;
+			}
+			else
+				LM_WARN("Failed to find temporary dialog for To-tag: %.*s, found To-tag: %.*s\n",
+				pres->to_tag.len, pres->to_tag.s, result->to_tag.len, result->to_tag.s);
+		}
+
+		if (nr_rows <= 1)
+		{
+			LM_DBG("No rows found\n");
+			pua_dbf.free_result(pua_db, res);
+			return(NULL);
+		}
+
+		/* Fall-thru */
+	default:
+		LM_ERR("Too many rows found (%d)\n", nr_rows);
 		pua_dbf.free_result(pua_db, res);
 		return(NULL);
 	}
 
-	if (nr_rows != 1)
-	{
-		LM_ERR("Too many rows found (%d)\n", nr_rows);
-		return(NULL);
-	}
-
-
-	/* get the results and fill in return data structure */
-	rows = RES_ROWS(res);
-	values = ROW_VALUES(rows);
-
-	extract_row( values, result );
-
-	/*pua_dbf.free_result(pua_db, res);*/
 	*dbres = res;
-
 	return(result);
 }
 
@@ -664,13 +659,10 @@ int is_dialog_puadb(ua_pres_t *pres)
 
 {
 	int nr_rows;
-	db_key_t q_cols[20], res_cols[5];
+	db_key_t q_cols[3], res_cols[1];
 	db1_res_t *res= NULL;
-	db_val_t q_vals[20];
-	db_op_t  q_ops[20];
+	db_val_t q_vals[3];
 	int n_query_cols= 0, n_res_cols=0;
-	int puri_col,callid_col;
-	int watcher_col, totag_col, fromtag_col;	
 
 	if (pres==NULL)
 	{
@@ -679,52 +671,22 @@ int is_dialog_puadb(ua_pres_t *pres)
 	}
 
 	/* cols and values used for search query */
-	q_cols[puri_col= n_query_cols] = &str_pres_uri_col;
-	q_vals[puri_col].type = DB1_STR;
-	q_vals[puri_col].nul = 0;
-	q_vals[puri_col].val.str_val.s = pres->pres_uri->s;
-	q_vals[puri_col].val.str_val.len = pres->pres_uri->len;
-	q_ops[puri_col] = OP_EQ; 
+	q_cols[n_query_cols] = &str_call_id_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->call_id;
 	n_query_cols++;
 
-	if (pres->watcher_uri)
-	{	
-		q_cols[watcher_col= n_query_cols] = &str_watcher_uri_col;
-		q_vals[watcher_col].type = DB1_STR;
-		q_vals[watcher_col].nul = 0;
-		q_vals[watcher_col].val.str_val.s = pres->watcher_uri->s;
-		q_vals[watcher_col].val.str_val.len = pres->watcher_uri->len;
-		q_ops[watcher_col] = OP_EQ;
-		n_query_cols++;
-	}
-	else
-	{
-		LM_ERR( "is_dialog_puadb has NULL watcher_uri\n" );
-	}
-
-
-	q_cols[callid_col= n_query_cols] = &str_call_id_col;	
-	q_vals[callid_col].type = DB1_STR;
-	q_vals[callid_col].nul = 0;
-	q_vals[callid_col].val.str_val.s = pres->call_id.s;
-	q_vals[callid_col].val.str_val.len = pres->call_id.len;
-	q_ops[callid_col] = OP_EQ;
+	q_cols[n_query_cols] = &str_to_tag_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->to_tag;
 	n_query_cols++;
 
-	q_cols[totag_col= n_query_cols] = &str_to_tag_col;	
-	q_vals[totag_col].type = DB1_STR;
-	q_vals[totag_col].nul = 0;
-	q_vals[totag_col].val.str_val.s = pres->to_tag.s;
-	q_vals[totag_col].val.str_val.len = pres->to_tag.len;
-	q_ops[totag_col] = OP_EQ;
-	n_query_cols++;
-
-	q_cols[fromtag_col= n_query_cols] = &str_from_tag_col;	
-	q_vals[fromtag_col].type = DB1_STR;
-	q_vals[fromtag_col].nul = 0;
-	q_vals[fromtag_col].val.str_val.s = pres->from_tag.s;
-	q_vals[fromtag_col].val.str_val.len = pres->from_tag.len;
-	q_ops[fromtag_col] = OP_EQ;
+	q_cols[n_query_cols] = &str_from_tag_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->from_tag;
 	n_query_cols++;
 
 	/* return the id column, even though don't actually need */
@@ -738,7 +700,7 @@ int is_dialog_puadb(ua_pres_t *pres)
 	}
 
 
-	if(pua_dbf.query(pua_db, q_cols, q_ops, q_vals,
+	if(pua_dbf.query(pua_db, q_cols, 0, q_vals,
 				res_cols,n_query_cols,n_res_cols,0,&res) < 0)
 	{
 		LM_ERR("DB query error\n");
@@ -775,14 +737,10 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 {
 	int nr_rows;
 	db_row_t *rows;
-	db_key_t q_cols[20], res_cols[5];
+	db_key_t q_cols[3], res_cols[2];
 	db1_res_t *res= NULL;
-	db_val_t q_vals[20];
-	db_op_t  q_ops[20];
+	db_val_t q_vals[3];
 	int n_query_cols=0, n_res_cols=0;
-	int puri_col,callid_col;
-	int watcher_col, totag_col, fromtag_col, to_tag_res_col;
-	int pres_id_col;	
 	db_val_t *values;	
 	str *id;
 	str to_tag;
@@ -794,58 +752,25 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 	}
 
 	/* cols and values used for search query */
-	q_cols[puri_col= n_query_cols] = &str_pres_uri_col;
-	q_vals[puri_col].type = DB1_STR;
-	q_vals[puri_col].nul = 0;
-	q_vals[puri_col].val.str_val.s = pres->pres_uri->s;
-	q_vals[puri_col].val.str_val.len = pres->pres_uri->len;
-	q_ops[puri_col] = OP_EQ; 
+	q_cols[n_query_cols] = &str_call_id_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->call_id;
 	n_query_cols++;
 
-	if (pres->watcher_uri) 
-	{
-		q_cols[watcher_col= n_query_cols] = &str_watcher_uri_col;
-		q_vals[watcher_col].type = DB1_STR;
-		q_vals[watcher_col].nul = 0;
-		q_vals[watcher_col].val.str_val.s = pres->watcher_uri->s;
-		q_vals[watcher_col].val.str_val.len = pres->watcher_uri->len;
-		q_ops[watcher_col] = OP_EQ;
-		n_query_cols++;
-	}
-	else
-	{
-		LM_ERR( "get_record_id_puadb has NULL watcher_uri\n" );
-	}
-
-	q_cols[callid_col= n_query_cols] = &str_call_id_col;	
-	q_vals[callid_col].type = DB1_STR;
-	q_vals[callid_col].nul = 0;
-	q_vals[callid_col].val.str_val.s = pres->call_id.s;
-	q_vals[callid_col].val.str_val.len = pres->call_id.len;
-	q_ops[callid_col] = OP_EQ;
+	q_cols[n_query_cols] = &str_from_tag_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->from_tag;
 	n_query_cols++;
 
-	q_cols[fromtag_col= n_query_cols] = &str_from_tag_col;	
-	q_vals[fromtag_col].type = DB1_STR;
-	q_vals[fromtag_col].nul = 0;
-	q_vals[fromtag_col].val.str_val.s = pres->from_tag.s;
-	q_vals[fromtag_col].val.str_val.len = pres->from_tag.len;
-	q_ops[fromtag_col] = OP_EQ;
+	q_cols[n_query_cols] = &str_to_tag_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->to_tag;
 	n_query_cols++;
 
-	q_cols[totag_col= n_query_cols] = &str_to_tag_col;	
-	q_vals[totag_col].type = DB1_STR;
-	q_vals[totag_col].nul = 0;
-	q_vals[totag_col].val.str_val.s = pres->to_tag.s;
-	q_vals[totag_col].val.str_val.len = pres->to_tag.len;
-	q_ops[totag_col] = OP_EQ;
-	n_query_cols++;
-
-
-	res_cols[n_res_cols] = &str_id_col;	
-	n_res_cols++;
-
-	res_cols[pres_id_col= n_res_cols] = &str_pres_id_col;	
+	res_cols[n_res_cols] = &str_pres_id_col;	
 	n_res_cols++;
 
 	*rec_id = NULL;
@@ -856,7 +781,7 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 		return(-1);
 	}
 
-	if(pua_dbf.query(pua_db, q_cols, q_ops, q_vals,
+	if(pua_dbf.query(pua_db, q_cols, 0, q_vals,
 				res_cols,n_query_cols,n_res_cols,0,&res) < 0)
 	{
 		LM_ERR("DB query error\n");
@@ -879,10 +804,10 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 
 		n_query_cols--;
 
-		res_cols[to_tag_res_col= n_res_cols] = &str_to_tag_col;
+		res_cols[n_res_cols] = &str_to_tag_col;
 		n_res_cols++;
 
-		if(pua_dbf.query(pua_db, q_cols, q_ops, q_vals,
+		if(pua_dbf.query(pua_db, q_cols, 0, q_vals,
 			res_cols,n_query_cols,n_res_cols,0,&res) < 0)
 		{
 			LM_ERR("DB query error\n");
@@ -896,7 +821,7 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 			rows = RES_ROWS(res);
 			values = ROW_VALUES(rows);
 
-			to_tag.s = (char *) VAL_STRING(values + 2);
+			to_tag.s = (char *) VAL_STRING(values + 1);
 			to_tag.len = strlen(to_tag.s);
 
 			if (to_tag.len == 0 ||
@@ -935,7 +860,7 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 		return(-1);
 	}
 
-	id->s= (char*)pkg_malloc( strlen(VAL_STRING(values+1)) * sizeof(char));
+	id->s= (char*)pkg_malloc( strlen(VAL_STRING(values)) * sizeof(char));
 
 	if(id->s== NULL)
 	{
@@ -945,8 +870,8 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 		return(-1);
 	}
 
-	memcpy(id->s, VAL_STRING(values+1), strlen(VAL_STRING(values+1)) );
-	id->len= strlen(VAL_STRING(values+1));
+	memcpy(id->s, VAL_STRING(values), strlen(VAL_STRING(values)) );
+	id->len= strlen(VAL_STRING(values));
 
 	*rec_id= id;
 	pua_dbf.free_result(pua_db, res);
@@ -958,8 +883,8 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 /******************************************************************************/
 int convert_temporary_dialog_puadb(ua_pres_t *pres)
 {
-	db_key_t query_cols[5], data_cols[10];
-	db_val_t query_vals[5], data_vals[10];
+	db_key_t query_cols[4], data_cols[10];
+	db_val_t query_vals[4], data_vals[10];
 	int n_query_cols = 0, n_data_cols = 0;
 
 	if (pres==NULL)
@@ -972,8 +897,7 @@ int convert_temporary_dialog_puadb(ua_pres_t *pres)
         query_cols[n_query_cols] = &str_pres_id_col;
         query_vals[n_query_cols].type = DB1_STR;
         query_vals[n_query_cols].nul = 0;
-        query_vals[n_query_cols].val.str_val.s = pres->id.s;
-        query_vals[n_query_cols].val.str_val.len = pres->id.len;
+        query_vals[n_query_cols].val.str_val = pres->id;
         n_query_cols++;
 
 	query_cols[n_query_cols] = &str_pres_uri_col;
@@ -981,13 +905,6 @@ int convert_temporary_dialog_puadb(ua_pres_t *pres)
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val.s = pres->pres_uri->s;
 	query_vals[n_query_cols].val.str_val.len = pres->pres_uri->len;
-	n_query_cols++;
-
-	query_cols[n_query_cols] = &str_watcher_uri_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = pres->watcher_uri->s;
-	query_vals[n_query_cols].val.str_val.len = pres->watcher_uri->len;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_call_id_col;	
@@ -1083,94 +1000,6 @@ int convert_temporary_dialog_puadb(ua_pres_t *pres)
 	shm_free(pres);
 
 	return 1;
-}
-
-
-/******************************************************************************/
-int delete_temporary_dialog_puadb(ua_pres_t *pres ) 
-
-{
-	db_key_t q_cols[20];
-	db_val_t q_vals[20];
-	db_op_t  q_ops[20];
-	int n_query_cols= 0;
-	int puri_col,callid_col;
-	int watcher_col, totag_col, fromtag_col;
-	int rval;	
-
-	if (pres==NULL)
-	{
-		LM_ERR("called with NULL param\n");
-		return(-1);
-	}
-
-	/* cols and values used for search query */
-	q_cols[puri_col= n_query_cols] = &str_pres_uri_col;
-	q_vals[puri_col].type = DB1_STR;
-	q_vals[puri_col].nul = 0;
-	q_vals[puri_col].val.str_val.s = pres->pres_uri->s;
-	q_vals[puri_col].val.str_val.len = pres->pres_uri->len;
-	q_ops[puri_col] = OP_EQ; 
-	n_query_cols++;
-
-	if (pres->watcher_uri)
-	{	
-		q_cols[watcher_col= n_query_cols] = &str_watcher_uri_col;
-		q_vals[watcher_col].type = DB1_STR;
-		q_vals[watcher_col].nul = 0;
-		q_vals[watcher_col].val.str_val.s = pres->watcher_uri->s;
-		q_vals[watcher_col].val.str_val.len = pres->watcher_uri->len;
-		q_ops[watcher_col] = OP_EQ;
-		n_query_cols++;
-	}
-	else
-	{
-		LM_ERR( "delete_temporary_dialog_puadb has NULL watcher_uri\n" );
-	}
-
-
-	q_cols[callid_col= n_query_cols] = &str_call_id_col;	
-	q_vals[callid_col].type = DB1_STR;
-	q_vals[callid_col].nul = 0;
-	q_vals[callid_col].val.str_val.s = pres->call_id.s;
-	q_vals[callid_col].val.str_val.len = pres->call_id.len;
-	q_ops[callid_col] = OP_EQ;
-	n_query_cols++;
-
-	q_cols[totag_col= n_query_cols] = &str_to_tag_col;	
-	q_vals[totag_col].type = DB1_STR;
-	q_vals[totag_col].nul = 0;
-	q_vals[totag_col].val.str_val.s = "";
-	q_vals[totag_col].val.str_val.len = 0;
-	q_ops[totag_col] = OP_EQ;
-	n_query_cols++;
-
-	q_cols[fromtag_col= n_query_cols] = &str_from_tag_col;	
-	q_vals[fromtag_col].type = DB1_STR;
-	q_vals[fromtag_col].nul = 0;
-	q_vals[fromtag_col].val.str_val.s = pres->from_tag.s;
-	q_vals[fromtag_col].val.str_val.len = pres->from_tag.len;
-	q_ops[fromtag_col] = OP_EQ;
-	n_query_cols++;
-
-	if(pua_db == NULL)
-	{
-		LM_ERR("null database connection\n");
-		return(-1);
-	}
-
-	rval = pua_dbf.delete(pua_db, q_cols, q_ops, q_vals, n_query_cols);
-
-	if ( rval < 0 ) 
-	{
-		LM_DBG("No temporary dialog found and deleted\n");
-	}
-	else
-	{
-		LM_DBG("Temporary dialog found and deleted\n");
-	}
-
-	return(rval);
 }
 
 /******************************************************************************/
@@ -1274,7 +1103,7 @@ int delete_puadb(ua_pres_t *pres )
 
 	if ( rval < 0 ) 
 	{
-		LM_DBG("No dialog found and deleted\n");
+		LM_WARN("No dialog found and deleted\n");
 	}
 	else
 	{
@@ -1289,12 +1118,9 @@ int delete_puadb(ua_pres_t *pres )
 int update_contact_puadb(ua_pres_t *pres, str *contact) 
 
 {
-	db_key_t q_cols[20], db_cols[5];
-	db_val_t q_vals[20], db_vals[5];
-	db_op_t  q_ops[20];
+	db_key_t q_cols[3], db_cols[1];
+	db_val_t q_vals[3], db_vals[1];
 	int n_query_cols= 0, n_update_cols=0;
-	int puri_col,callid_col;
-	int watcher_col, totag_col, fromtag_col;
 
 	if (pres==NULL)
 	{
@@ -1303,53 +1129,23 @@ int update_contact_puadb(ua_pres_t *pres, str *contact)
 	}
 
 	/* cols and values used for search query */
-	q_cols[puri_col= n_query_cols] = &str_pres_uri_col;
-	q_vals[puri_col].type = DB1_STR;
-	q_vals[puri_col].nul = 0;
-	q_vals[puri_col].val.str_val.s = pres->pres_uri->s;
-	q_vals[puri_col].val.str_val.len = pres->pres_uri->len;
-	q_ops[puri_col] = OP_EQ; 
+	q_cols[n_query_cols] = &str_call_id_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->call_id;
 	n_query_cols++;
 
-	if (pres->watcher_uri)
-	{
-		q_cols[watcher_col= n_query_cols] = &str_watcher_uri_col;
-		q_vals[watcher_col].type = DB1_STR;
-		q_vals[watcher_col].nul = 0;
-		q_vals[watcher_col].val.str_val.s = pres->watcher_uri->s;
-		q_vals[watcher_col].val.str_val.len = pres->watcher_uri->len;
-		q_ops[watcher_col] = OP_EQ;
-		n_query_cols++;
-	}
-	else
-	{
-		LM_ERR( "update_contact_puadb has NULL watcher_uri\n" );
-	}
-
-	q_cols[callid_col= n_query_cols] = &str_call_id_col;	
-	q_vals[callid_col].type = DB1_STR;
-	q_vals[callid_col].nul = 0;
-	q_vals[callid_col].val.str_val.s = pres->call_id.s;
-	q_vals[callid_col].val.str_val.len = pres->call_id.len;
-	q_ops[callid_col] = OP_EQ;
+	q_cols[n_query_cols] = &str_to_tag_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->to_tag;
 	n_query_cols++;
 
-	q_cols[totag_col= n_query_cols] = &str_to_tag_col;	
-	q_vals[totag_col].type = DB1_STR;
-	q_vals[totag_col].nul = 0;
-	q_vals[totag_col].val.str_val.s = pres->to_tag.s;
-	q_vals[totag_col].val.str_val.len = pres->to_tag.len;
-	q_ops[totag_col] = OP_EQ;
+	q_cols[n_query_cols] = &str_from_tag_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->from_tag;
 	n_query_cols++;
-
-	q_cols[fromtag_col= n_query_cols] = &str_from_tag_col;	
-	q_vals[fromtag_col].type = DB1_STR;
-	q_vals[fromtag_col].nul = 0;
-	q_vals[fromtag_col].val.str_val.s = pres->from_tag.s;
-	q_vals[fromtag_col].val.str_val.len = pres->from_tag.len;
-	q_ops[fromtag_col] = OP_EQ;
-	n_query_cols++;
-
 
 	/* we overwrite contact even if not changed */
 	db_cols[n_update_cols] = &str_contact_col; /* had remote here, think was a bug */
@@ -1366,7 +1162,7 @@ int update_contact_puadb(ua_pres_t *pres, str *contact)
 		return(-1);
 	}
 
-	if(pua_dbf.update(pua_db, q_cols, q_ops, q_vals,
+	if(pua_dbf.update(pua_db, q_cols, 0, q_vals,
 				db_cols,db_vals,n_query_cols,n_update_cols) < 0)
 	{
 		LM_ERR("DB update failed\n");
@@ -1382,12 +1178,9 @@ int update_contact_puadb(ua_pres_t *pres, str *contact)
 int update_version_puadb(ua_pres_t *pres, int version ) 
 
 {
-	db_key_t q_cols[20], db_cols[5];
-	db_val_t q_vals[20], db_vals[5];
-	db_op_t  q_ops[20];
+	db_key_t q_cols[3], db_cols[1];
+	db_val_t q_vals[3], db_vals[1];
 	int n_query_cols= 0, n_update_cols=0;
-	int puri_col,callid_col;
-	int watcher_col, totag_col, fromtag_col;
 
 	if (pres==NULL)
 	{
@@ -1396,49 +1189,23 @@ int update_version_puadb(ua_pres_t *pres, int version )
 	}
 
 	/* cols and values used for search query */
-	q_cols[puri_col= n_query_cols] = &str_pres_uri_col;
-	q_vals[puri_col].type = DB1_STR;
-	q_vals[puri_col].nul = 0;
-	q_vals[puri_col].val.str_val.s = pres->pres_uri->s;
-	q_vals[puri_col].val.str_val.len = pres->pres_uri->len;
-	q_ops[puri_col] = OP_EQ; 
+	q_cols[n_query_cols] = &str_call_id_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->call_id;
 	n_query_cols++;
 
-	if (pres->watcher_uri)
-	{	
-		q_cols[watcher_col= n_query_cols] = &str_watcher_uri_col;
-		q_vals[watcher_col].type = DB1_STR;
-		q_vals[watcher_col].nul = 0;
-		q_vals[watcher_col].val.str_val.s = pres->watcher_uri->s;
-		q_vals[watcher_col].val.str_val.len = pres->watcher_uri->len;
-		q_ops[watcher_col] = OP_EQ;
-		n_query_cols++;
-	}
-
-	q_cols[callid_col= n_query_cols] = &str_call_id_col;	
-	q_vals[callid_col].type = DB1_STR;
-	q_vals[callid_col].nul = 0;
-	q_vals[callid_col].val.str_val.s = pres->call_id.s;
-	q_vals[callid_col].val.str_val.len = pres->call_id.len;
-	q_ops[callid_col] = OP_EQ;
+	q_cols[n_query_cols] = &str_to_tag_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->to_tag;
 	n_query_cols++;
 
-	q_cols[totag_col= n_query_cols] = &str_to_tag_col;	
-	q_vals[totag_col].type = DB1_STR;
-	q_vals[totag_col].nul = 0;
-	q_vals[totag_col].val.str_val.s = pres->to_tag.s;
-	q_vals[totag_col].val.str_val.len = pres->to_tag.len;
-	q_ops[totag_col] = OP_EQ;
+	q_cols[n_query_cols] = &str_from_tag_col;	
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val = pres->from_tag;
 	n_query_cols++;
-
-	q_cols[fromtag_col= n_query_cols] = &str_from_tag_col;	
-	q_vals[fromtag_col].type = DB1_STR;
-	q_vals[fromtag_col].nul = 0;
-	q_vals[fromtag_col].val.str_val.s = pres->from_tag.s;
-	q_vals[fromtag_col].val.str_val.len = pres->from_tag.len;
-	q_ops[fromtag_col] = OP_EQ;
-	n_query_cols++;
-
 
 	/* we overwrite contact even if not changed */
 	db_cols[n_update_cols] = &str_version_col;
@@ -1454,7 +1221,7 @@ int update_version_puadb(ua_pres_t *pres, int version )
 		return(-1);
 	}
 
-	if(pua_dbf.update(pua_db, q_cols, q_ops, q_vals,
+	if(pua_dbf.update(pua_db, q_cols, 0, q_vals,
 				db_cols,db_vals,n_query_cols,n_update_cols) < 0)
 
 	{

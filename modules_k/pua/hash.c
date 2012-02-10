@@ -367,6 +367,9 @@ ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code)
 		return(NULL);
 	}
 
+	if (dialog->to_tag.len == 0 || dialog->to_tag.s == NULL)
+		return(NULL);
+
 	LM_DBG("core_hash= %u\n", hash_code);
 
 	L= HashT->p_records[hash_code].entity;
@@ -384,11 +387,7 @@ ua_pres_t* get_dialog(ua_pres_t* dialog, unsigned int hash_code)
 			LM_DBG("searched to_tag= %.*s\tfrom_tag= %.*s\n",
 				 p->to_tag.len, p->to_tag.s, p->from_tag.len, p->from_tag.s);
 	    
-			if((p->pres_uri->len== dialog->pres_uri->len) &&
-				(strncmp(p->pres_uri->s, dialog->pres_uri->s,p->pres_uri->len)==0)&&
-				(p->watcher_uri->len== dialog->watcher_uri->len) &&
-				(strncmp(p->watcher_uri->s,dialog->watcher_uri->s,p->watcher_uri->len )==0)&&
-				(strncmp(p->call_id.s, dialog->call_id.s, p->call_id.len)== 0) &&
+			if( (strncmp(p->call_id.s, dialog->call_id.s, p->call_id.len)== 0) &&
 				p->to_tag.len > 0 &&
 				(strncmp(p->to_tag.s, dialog->to_tag.s, p->to_tag.len)== 0) &&
 				(strncmp(p->from_tag.s, dialog->from_tag.s, p->from_tag.len)== 0) )
@@ -418,19 +417,14 @@ ua_pres_t* get_temporary_dialog(ua_pres_t* dialog, unsigned int hash_code)
 			p->watcher_uri->s,p->call_id.len, p->call_id.s,
 			p->from_tag.len, p->from_tag.s);
 
-		if((p->pres_uri->len== dialog->pres_uri->len) &&
-			(strncmp(p->pres_uri->s, dialog->pres_uri->s,p->pres_uri->len)==0)&&
-			(p->watcher_uri->len== dialog->watcher_uri->len) &&
-			(strncmp(p->watcher_uri->s,dialog->watcher_uri->s,p->watcher_uri->len )==0)&&
-			(p->call_id.len == dialog->call_id.len) &&
+		if((p->call_id.len == dialog->call_id.len) &&
 			(strncmp(p->call_id.s, dialog->call_id.s, p->call_id.len)== 0) &&
 			(p->from_tag.len == dialog->from_tag.len) &&
-			(strncmp(p->from_tag.s, dialog->from_tag.s, p->from_tag.len)== 0) &&
-			p->to_tag.len == 0)
-			{
-				LM_DBG("FOUND temporary dialog\n");
-				break;
-			}
+			(strncmp(p->from_tag.s, dialog->from_tag.s, p->from_tag.len)== 0))
+		{
+			LM_DBG("FOUND temporary dialog\n");
+			break;
+		}
 	}
 
 	return p;

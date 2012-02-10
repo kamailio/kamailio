@@ -53,7 +53,6 @@ ua_pres_t* get_dialog_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **res)
 int is_dialog_puadb(ua_pres_t *pres);
 int get_record_id_puadb(ua_pres_t *pres, str **rec_id );
 int convert_temporary_dialog_puadb(ua_pres_t *pres);
-int delete_temporary_dialog_puadb(ua_pres_t *pres );
 int delete_puadb(ua_pres_t *pres );
 int update_version_puadb(ua_pres_t *pres, int version );
 int update_contact_puadb(ua_pres_t *pres, str *contact);
