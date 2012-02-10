@@ -120,13 +120,13 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 	result_cols[auth_state_col= n_result_cols++]= &str_auth_state_col;
 	result_cols[reason_col= n_result_cols++]= &str_reason_col;
 	
-	if (rls_dbf.use_table(rls_db, &rlpres_table) < 0) 
+	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		goto error;
 	}
 
-	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
+	if(rlpres_dbf.query(rlpres_db, query_cols, 0, query_vals, result_cols,
 					1, n_result_cols, &str_resource_uri_col, &result )< 0)
 	{
 		LM_ERR("in sql query\n");
@@ -227,7 +227,7 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 			&rlmi_cont->len, (rls_max_notify_body_len == 0));
 	xmlFreeDoc(rlmi_body);
 
-	rls_dbf.free_result(rls_db, result);
+	rlpres_dbf.free_result(rlpres_db, result);
 	result= NULL;
 
 	if(agg_body_sendn_update(rl_uri, boundary_string, rlmi_cont,
@@ -243,12 +243,12 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 	update_vals[0].nul = 0;
 	update_vals[0].val.int_val= NO_UPDATE_TYPE; 
 	
-	if (rls_dbf.use_table(rls_db, &rlpres_table) < 0) 
+	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		goto error;
 	}
-	if(rls_dbf.update(rls_db, query_cols, 0, query_vals, update_cols,
+	if(rlpres_dbf.update(rlpres_db, query_cols, 0, query_vals, update_cols,
 					update_vals, 1, 1)< 0)
 	{
 		LM_ERR("in sql update\n");
@@ -285,7 +285,7 @@ error:
 	multipart_body_size = 0;
 	
 	if(result)
-		rls_dbf.free_result(rls_db, result);
+		rlpres_dbf.free_result(rlpres_db, result);
 	if(rlsubs_did.s)
 		pkg_free(rlsubs_did.s);
 	return -1;
@@ -1177,10 +1177,10 @@ int parse_xcap_uri(char *uri, str *host, unsigned short *port, str *path)
 int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 		xmlNodePtr *rl_node, xmlDocPtr *xmldoc)
 {
-	db_key_t query_cols[5];
-	db_val_t query_vals[5];
+	db_key_t query_cols[4];
+	db_val_t query_vals[4];
 	int n_query_cols = 0;
-	db_key_t result_cols[3];
+	db_key_t result_cols[1];
 	int n_result_cols = 0;
 	db1_res_t *result = 0;
 	db_row_t *row;

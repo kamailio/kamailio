@@ -65,6 +65,8 @@ MODULE_VERSION
 /** database connection */
 db1_con_t *rls_db = NULL;
 db_func_t rls_dbf;
+db1_con_t *rlpres_db = NULL;
+db_func_t rlpres_dbf;
 db1_con_t *rls_xcap_db = NULL;
 db_func_t rls_xcap_dbf;
 
@@ -78,6 +80,7 @@ str rls_xcap_table = str_init("xcap");
 
 str db_url = str_init(DEFAULT_DB_URL);
 str xcap_db_url = str_init("");
+str rlpres_db_url = str_init("");
 int hash_size = 512;
 shtable_t rls_table;
 int pid;
@@ -85,6 +88,7 @@ contains_event_t pres_contains_event;
 search_event_t pres_search_event;
 get_event_list_t pres_get_ev_list;
 int clean_period = 100;
+int rlpres_clean_period = -1;
 
 /* Lock for rls_update_subs */
 gen_lock_t *rls_update_subs_lock = NULL;
@@ -210,12 +214,14 @@ static cmd_export_t cmds[]=
 static param_export_t params[]={
 	{ "server_address",         STR_PARAM,   &rls_server_address.s           },
 	{ "db_url",                 STR_PARAM,   &db_url.s                       },
+	{ "rlpres_db_url",          STR_PARAM,   &rlpres_db_url.s	         },
 	{ "xcap_db_url",            STR_PARAM,   &xcap_db_url.s                  },
 	{ "rlsubs_table",           STR_PARAM,   &rlsubs_table.s                 },
 	{ "rlpres_table",           STR_PARAM,   &rlpres_table.s                 },
 	{ "xcap_table",             STR_PARAM,   &rls_xcap_table.s               },
 	{ "waitn_time",             INT_PARAM,   &waitn_time                     },
 	{ "clean_period",           INT_PARAM,   &clean_period                   },
+	{ "rlpres_clean_period",    INT_PARAM,   &rlpres_clean_period            },
 	{ "max_expires",            INT_PARAM,   &rls_max_expires                },
 	{ "hash_size",              INT_PARAM,   &hash_size                      },
 	{ "integrated_xcap_server", INT_PARAM,   &rls_integrated_xcap_server     },
@@ -398,6 +404,17 @@ static int mod_init(void)
 	}
 
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(xcap_db_url.s), xcap_db_url.len, xcap_db_url.s);
+
+	rlpres_db_url.len = rlpres_db_url.s ? strlen(rlpres_db_url.s) : 0;
+
+	if(rlpres_db_url.len==0)
+	{
+		rlpres_db_url.s = db_url.s;
+		rlpres_db_url.len = db_url.len;
+	}
+
+	LM_DBG("db_url=%s/%d/%p\n", ZSW(rlpres_db_url.s), rlpres_db_url.len, rlpres_db_url.s);
+
 	
 	/* binding to mysql module  */
 
@@ -407,6 +424,12 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if (db_bind_mod(&rlpres_db_url, &rlpres_dbf))
+	{
+		LM_ERR("Database module not found\n");
+		return -1;
+	}
+	
 	if (db_bind_mod(&xcap_db_url, &rls_xcap_dbf))
 	{
 		LM_ERR("Database module not found\n");
@@ -414,6 +437,12 @@ static int mod_init(void)
 	}
 
 	if (!DB_CAPABILITY(rls_dbf, DB_CAP_ALL)) {
+		LM_ERR("Database module does not implement all functions"
+				" needed by the module\n");
+		return -1;
+	}
+
+	if (!DB_CAPABILITY(rlpres_dbf, DB_CAP_ALL)) {
 		LM_ERR("Database module does not implement all functions"
 				" needed by the module\n");
 		return -1;
@@ -432,6 +461,13 @@ static int mod_init(void)
 		return -1;
 	}
 
+	rlpres_db = rlpres_dbf.init(&rlpres_db_url);
+	if (!rlpres_db)
+	{
+		LM_ERR("while connecting database\n");
+		return -1;
+	}
+
 	rls_xcap_db = rls_xcap_dbf.init(&xcap_db_url);
 	if (!rls_xcap_db)
 	{
@@ -440,8 +476,13 @@ static int mod_init(void)
 	}
 
 	/* verify table version */
-	if((db_check_table_version(&rls_dbf, rls_db, &rlsubs_table, W_TABLE_VERSION) < 0) ||
-		(db_check_table_version(&rls_dbf, rls_db, &rlpres_table, P_TABLE_VERSION) < 0)) {
+	if(db_check_table_version(&rls_dbf, rls_db, &rlsubs_table, W_TABLE_VERSION) < 0) {
+			LM_ERR("error during table version check.\n");
+			return -1;
+	}
+
+	/* verify table version */
+	if(db_check_table_version(&rls_dbf, rls_db, &rlpres_table, P_TABLE_VERSION) < 0) {
 			LM_ERR("error during table version check.\n");
 			return -1;
 	}
@@ -479,6 +520,10 @@ static int mod_init(void)
 	if(rls_db)
 		rls_dbf.close(rls_db);
 	rls_db = NULL;
+
+	if(rlpres_db)
+		rlpres_dbf.close(rlpres_db);
+	rlpres_db = NULL;
 
 	if(rls_xcap_db)
 		rls_xcap_dbf.close(rls_xcap_db);
@@ -561,13 +606,15 @@ static int mod_init(void)
 		}
 	}
 	register_timer(timer_send_notify,0, waitn_time);
-	
-	if (clean_period > 0)
-	{
-		register_timer(rls_presentity_clean, 0, clean_period);
-	
+
+	if (rlpres_clean_period < 0)
+		rlpres_clean_period = clean_period;
+
+	if (clean_period > 0)		
 		register_timer(rlsubs_table_update, 0, clean_period);
-	}
+	
+	if (rlpres_clean_period > 0)
+		register_timer(rls_presentity_clean, 0, rlpres_clean_period);
 
 	if ((rls_update_subs_lock = lock_alloc()) == NULL)
 	{
@@ -616,6 +663,29 @@ static int child_init(int rank)
 		LM_DBG("child %d: Database connection opened successfully\n", rank);
 	}
 
+	if (rlpres_dbf.init==0)
+	{
+		LM_CRIT("database not bound\n");
+		return -1;
+	}
+	rlpres_db = rlpres_dbf.init(&rlpres_db_url);
+	if (!rlpres_db)
+	{
+		LM_ERR("child %d: Error while connecting database\n",
+				rank);
+		return -1;
+	}
+	else
+	{
+		if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0)  
+		{
+			LM_ERR("child %d: Error in use_table rlpres_table\n", rank);
+			return -1;
+		}
+
+		LM_DBG("child %d: Database connection opened successfully\n", rank);
+	}
+
 	if (rls_xcap_dbf.init==0)
 	{
 		LM_CRIT("database not bound\n");
@@ -657,6 +727,8 @@ static void destroy(void)
 	}
 	if(rls_db && rls_dbf.close)
 		rls_dbf.close(rls_db);
+	if(rlpres_db && rlpres_dbf.close)
+		rlpres_dbf.close(rlpres_db);
 	if(rls_xcap_db && rls_xcap_dbf.close)
 		rls_xcap_dbf.close(rls_xcap_db);
 

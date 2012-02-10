@@ -722,7 +722,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	query_vals[n_query_cols].val.int_val= expires+ (int)time(NULL);
 	n_query_cols++;
 
-	if (rls_dbf.use_table(rls_db, &rlpres_table) < 0) 
+	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		goto error;
@@ -730,22 +730,22 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	/* query-> if not present insert // else update */
 	result_cols[0]= &str_updated_col;
 			
-	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
+	if(rlpres_dbf.query(rlpres_db, query_cols, 0, query_vals, result_cols,
 					2, 1, 0, &result)< 0)
 	{
 		LM_ERR("in sql query\n");
 		if(result)
-			rls_dbf.free_result(rls_db, result);
+			rlpres_dbf.free_result(rlpres_db, result);
 		goto error;
 	}
 	if(result== NULL)
 		goto error;
 	n= result->n;
-	rls_dbf.free_result(rls_db, result);
+	rlpres_dbf.free_result(rlpres_db, result);
 		
 	if(n<= 0)
 	{
-		if(rls_dbf.insert(rls_db, query_cols, query_vals, n_query_cols)< 0)
+		if(rlpres_dbf.insert(rlpres_db, query_cols, query_vals, n_query_cols)< 0)
 		{
 			LM_ERR("in sql insert\n");
 			goto error;
@@ -755,7 +755,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	else
 	{
 		LM_DBG("Updated in db table already existing record\n");
-		if(rls_dbf.update(rls_db, query_cols, 0, query_vals, query_cols+2,
+		if(rlpres_dbf.update(rlpres_db, query_cols, 0, query_vals, query_cols+2,
 						query_vals+2, 2, n_query_cols-2)< 0)
 		{
 			LM_ERR("in sql update\n");
@@ -826,13 +826,13 @@ void timer_send_notify(unsigned int ticks,void *param)
 	/* query in alphabetical order after rlsusbs_did 
 	 * (resource list Subscribe dialog indentifier)*/
 	
-	if (rls_dbf.use_table(rls_db, &rlpres_table) < 0) 
+	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		goto done;
 	}
 
-	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
+	if(rlpres_dbf.query(rlpres_db, query_cols, 0, query_vals, result_cols,
 					1, n_result_cols, &str_rlsubs_did_col, &result)< 0)
 	{
 		LM_ERR("in sql query\n");
@@ -842,7 +842,7 @@ void timer_send_notify(unsigned int ticks,void *param)
 		goto done;
 
 	/* update the rlpres table */
-	if(rls_dbf.update(rls_db, query_cols, 0, query_vals, update_cols,
+	if(rlpres_dbf.update(rlpres_db, query_cols, 0, query_vals, update_cols,
 					update_vals, 1, 1)< 0)
 	{
 		LM_ERR("in sql update\n");
@@ -854,7 +854,7 @@ void timer_send_notify(unsigned int ticks,void *param)
 error:
 done:
 	if(result)
-		rls_dbf.free_result(rls_db, result);
+		rlpres_dbf.free_result(rlpres_db, result);
 }
 
 
@@ -872,13 +872,13 @@ void rls_presentity_clean(unsigned int ticks,void *param)
 	query_vals[0].type= DB1_INT;
 	query_vals[0].val.int_val= (int)time(NULL) - 10;
 
-	if (rls_dbf.use_table(rls_db, &rlpres_table) < 0) 
+	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		return ;
 	}
 
-	if(rls_dbf.delete(rls_db, query_cols, query_ops, query_vals, 1)< 0)
+	if(rlpres_dbf.delete(rlpres_db, query_cols, query_ops, query_vals, 1)< 0)
 	{
 		LM_ERR("in sql delete\n");
 		return ;

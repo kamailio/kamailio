@@ -112,6 +112,8 @@ extern db1_con_t *rls_db;
 extern db_func_t rls_dbf;
 extern db1_con_t *rls_xcap_db;
 extern db_func_t rls_xcap_dbf;
+extern db1_con_t *rlpres_db;
+extern db_func_t rlpres_dbf;
 
 extern struct tm_binds tmb;
 extern sl_api_t slb;

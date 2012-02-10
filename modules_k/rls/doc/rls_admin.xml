@@ -120,6 +120,32 @@ modparam("rls", "db_url", "&exampledb;")
 	</section>
 
 	<section>
+		<title><varname>rlpres_db_url</varname>(str)</title>
+		<para>
+		The rlpres (rls_presentity table) database url.
+		This parameter only needs to be specified if the rls_watchers table and 
+		rls_presentity tables are in different databases.
+		rls_presentity is used to cache the bodies of back-end NOTIFY requests
+		until an RLS NOTIFY can be sent.  On a multi-server system having a single
+		cache for all active servers can cause issues if both servers try to send
+		RLS NOTIFY requests at the same time.  This parameter enables each server
+		to have its own (possibly local) rls_presentity table.
+		</para>
+		<para>
+		<emphasis>	Default value is a mirror of the <quote>db_url</quote> setting.	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rlpres_db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "rlpres_db_url", "&exampledb;")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>xcap_db_url</varname>(str)</title>
 		<para>
 		The xcap database url.
@@ -227,6 +253,7 @@ modparam("rls", "rlpres_table", "rls_notify")
 		<title><varname>clean_period</varname> (int)</title>
 		<para>
 		The period at which to check for expired information.
+		0 means do not check.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>100</quote>.
@@ -243,6 +270,30 @@ modparam("rls", "clean_period", 100)
 	</section>
 
 	<section>
+		<title><varname>rlpres_clean_period</varname> (int)</title>
+		<para>
+		The period at which to check for expired rls_presentity information.
+		-1 means do not use (clean_period) is used instead.
+		0 means do not check.
+		This option can be used when you want to check rls_presentity and
+		rls_watchers on different timeouts.  This is useful when they are
+		in different databases.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>-1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rlpres_clean_period</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "rlpres_clean_period", 100)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>waitn_time</varname> (int)</title>
 		<para>
 	 The timer period at which the server should attempt to send
@@ -250,7 +301,7 @@ modparam("rls", "clean_period", 100)
 	 or watcher information.
 		</para>
 		<para>
-		<emphasis>Default value is <quote>50</quote>.
+		<emphasis>Default value is <quote>5</quote>.
 		</emphasis>
 		</para>
 		<example>
