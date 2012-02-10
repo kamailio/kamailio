@@ -103,6 +103,8 @@ extern str rls_outbound_proxy;
 extern int rls_max_notify_body_len;
 extern int rls_expires_offset;
 
+extern int rls_disable_remote_presence;
+
 extern gen_lock_t *rls_update_subs_lock;
 
 /* database connection */

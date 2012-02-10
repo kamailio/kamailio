@@ -483,6 +483,32 @@ modparam("rls", "fetch_rows", 1000)
 </programlisting>
 	    </example>
 	</section>
+	<section>
+	    <title><varname>disable_remote_presence</varname> (integer)</title>
+	    <para>
+		When set to a non-zero value RLS will not perform back-end SUBSCRIBEs
+		to non-local presentities.
+		When people have large contact lists RLS will make lots of back-end
+		subscriptions for each local subscriber.  This can be a lot of traffic,
+		and if the contact lists contain non-local (as in not on this Kamailio
+		server or cluster) contacts this can result in a lot of Internet traffic.
+		Setting this option to a non-zero value prevents RLS from performing
+		back-end SUBSCRIBEs for remote presentities.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>disable_remote_presence</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "disable_remote_presence", 1)
+...
+</programlisting>
+	    </example>
+	</section>
 
 </section>
 

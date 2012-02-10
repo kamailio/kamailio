@@ -844,13 +844,26 @@ error:
 int send_resource_subs(char* uri, void* param)
 {
 	str pres_uri;
+	struct sip_uri parsed_pres_uri;
 
 	pres_uri.s = uri;
 	pres_uri.len = strlen(uri);
+	if (parse_uri(pres_uri.s, pres_uri.len, &parsed_pres_uri) < 0)
+	{
+		LM_ERR("bad uri: %.*s\n", pres_uri.len, pres_uri.s);
+		return -1;
+	}
+
+	if (check_self(&parsed_pres_uri.host, 0, PROTO_NONE) != 1
+		&& rls_disable_remote_presence != 0)
+	{
+		LM_WARN("Unable to subscribe to remote contact %.*s\n",
+				pres_uri.len, pres_uri.s);
+		return 1;
+	}
 
 	((subs_info_t*)param)->pres_uri = &pres_uri;
 	((subs_info_t*)param)->remote_target = &pres_uri;
-
 	return pua_send_subscribe((subs_info_t*)param);
 }
 
