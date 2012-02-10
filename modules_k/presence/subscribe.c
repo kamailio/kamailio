@@ -326,43 +326,11 @@ int insert_subs_db(subs_t* s, int type)
 
 int update_subs_db(subs_t* subs, int type)
 {
-	db_key_t query_cols[22], update_keys[7];
-	db_val_t query_vals[22], update_vals[7];
+	db_key_t query_cols[3], update_keys[4];
+	db_val_t query_vals[3], update_vals[4];
 	int n_update_cols= 0;
 	int n_query_cols = 0;
 
-	query_cols[n_query_cols] = &str_presentity_uri_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = subs->pres_uri;
-	n_query_cols++;
-	
-	query_cols[n_query_cols] = &str_watcher_username_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = subs->from_user;
-	n_query_cols++;
-	
-	query_cols[n_query_cols] = &str_watcher_domain_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = subs->from_domain;
-	n_query_cols++;
-
-	query_cols[n_query_cols] = &str_event_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = subs->event->name;
-	n_query_cols++;
-
-	if(subs->event_id.s)
-	{
-		query_cols[n_query_cols] = &str_event_id_col;
-		query_vals[n_query_cols].type = DB1_STR;
-		query_vals[n_query_cols].nul = 0;
-		query_vals[n_query_cols].val.str_val = subs->event_id;
-		n_query_cols++;
-	}
 	query_cols[n_query_cols] = &str_callid_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
@@ -544,7 +512,11 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 			}
 			else
 			{
-				if(insert_subs_db(subs, REMOTE_TYPE));
+				if(insert_subs_db(subs, REMOTE_TYPE) < 0)
+				{
+					LM_ERR("inserting new record in db\n");
+					goto error;
+				}
 			}
 			/* TODO if req_auth, the subscription was in the watcher table first, we must delete it */
 		}
@@ -762,7 +734,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	{
 		if(get_stored_info(msg, &subs, &reply_code, &reply_str )< 0)
 		{
-			LM_ERR("getting stored info\n");
+			LM_INFO("getting stored info\n");
 			goto error;
 		}
 		reason= subs.reason;
@@ -1082,21 +1054,21 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
 			subs->contact.s, subs->contact.len);	
 
 	if (EVENT_DIALOG_SLA(subs->event->evp))
-    {
-        /* user_contact@from_domain */
-        if(parse_uri(subs->contact.s, subs->contact.len, &uri)< 0)
-        {
-            LM_ERR("failed to parse contact uri\n");
-            goto error;
-        }
-        if(uandd_to_uri(uri.user, subs->from_domain, &subs->pres_uri)< 0)
-        {
-            LM_ERR("failed to construct uri\n");
-            goto error;
-        }
-        LM_DBG("&&&&&&&&&&&&&&& dialog pres_uri= %.*s\n",subs->pres_uri.len, subs->pres_uri.s);
-    }
-
+	{
+		/* user_contact@from_domain */
+		if(parse_uri(subs->contact.s, subs->contact.len, &uri)< 0)
+		{
+			LM_ERR("failed to parse contact uri\n");
+			goto error;
+		}
+		if(uandd_to_uri(uri.user, subs->from_domain, &subs->pres_uri)< 0)
+		{
+			LM_ERR("failed to construct uri\n");
+			goto error;
+		}
+		LM_DBG("&&&&&&&&&&&&&&& dialog pres_uri= %.*s\n",
+				subs->pres_uri.len, subs->pres_uri.s);
+	}
 
 	/*process record route and add it to a string*/
 	if(*to_tag_gen && msg->record_route!=NULL)
@@ -1152,18 +1124,17 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 	unsigned int hash_code;
 
 	/* first try to_user== pres_user and to_domain== pres_domain */
-
-    if(subs->pres_uri.s == NULL)
-    {
-	    uandd_to_uri(subs->to_user, subs->to_domain, &pres_uri);
-	    if(pres_uri.s== NULL)
-	    {
-		    LM_ERR("creating uri from user and domain\n");
-		    return -1;
-	    }
-    }
-    else
-        pres_uri = subs->pres_uri;
+	if(subs->pres_uri.s == NULL)
+	{
+		uandd_to_uri(subs->to_user, subs->to_domain, &pres_uri);
+		if(pres_uri.s== NULL)
+		{
+			LM_ERR("creating uri from user and domain\n");
+			return -1;
+		}
+	}
+	else
+		pres_uri = subs->pres_uri;
 
 	hash_code= core_hash(&pres_uri, &subs->event->name, shtable_size);
 	lock_get(&subs_htable[hash_code].lock);
@@ -1176,14 +1147,13 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 	}
 	lock_release(&subs_htable[hash_code].lock);
 
-    if(subs->pres_uri.s)
-        goto not_found;
+	if(subs->pres_uri.s)
+		goto not_found;
 	
-    pkg_free(pres_uri.s);
+	pkg_free(pres_uri.s);
 	pres_uri.s= NULL;
-	
 
-    LM_DBG("record not found using R-URI search iteratively\n");
+	LM_DBG("record not found using R-URI search iteratively\n");
 	/* take one row at a time */
 	for(i= 0; i< shtable_size; i++)
 	{
@@ -1207,26 +1177,25 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 		lock_release(&subs_htable[i].lock);
 	}
 
+not_found:
 	if(dbmode != DB_MEMORY_ONLY)
 	{
-		return get_database_info(msg, subs, reply_code, reply_str);	
+		return get_database_info(msg, subs, reply_code, reply_str);
 	}
 
-not_found:
-
-	LM_ERR("record not found in hash_table\n");
+	LM_INFO("record not found in hash_table\n");
 	*reply_code= 481;
 	*reply_str= pu_481_rpl;
 
 	return -1;
 
 found_rec:
-	
+
 	LM_DBG("Record found in hash_table\n");
-	
+
 	if(!EVENT_DIALOG_SLA(s->event->evp))
 		subs->pres_uri= pres_uri;
-	
+
 	subs->version = s->version;
 	subs->status= s->status;
 	if(s->reason.s && s->reason.len)
@@ -1282,64 +1251,20 @@ error:
 
 int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* reply_str)
 {	
-	db_key_t query_cols[10];
-	db_val_t query_vals[10];
-	db_key_t result_cols[9];
+	db_key_t query_cols[3];
+	db_val_t query_vals[3];
+	db_key_t result_cols[7];
 	db1_res_t *result= NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 	int n_query_cols = 0;
 	int n_result_cols = 0;
 	int remote_cseq_col= 0, local_cseq_col= 0, status_col, reason_col;
-	int record_route_col, version_col;
-	int pres_uri_col;
+	int record_route_col, version_col, pres_uri_col;
 	unsigned int remote_cseq;
 	str pres_uri, record_route;
 	str reason;
 
-	query_cols[n_query_cols] = &str_to_user_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = subs->to_user;
-	n_query_cols++;
-	
-	query_cols[n_query_cols] = &str_to_domain_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = subs->to_domain;
-	n_query_cols++;
-
-	query_cols[n_query_cols] = &str_watcher_username_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = subs->from_user;
-	n_query_cols++;
-	
-	query_cols[n_query_cols] = &str_watcher_domain_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = subs->from_domain;
-	n_query_cols++;
-
-	query_cols[n_query_cols] = &str_event_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = subs->event->name;
-	n_query_cols++;
-
-	query_cols[n_query_cols] = &str_event_id_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	if( subs->event_id.s != NULL)
-	{
-		query_vals[n_query_cols].val.str_val.s = subs->event_id.s;
-		query_vals[n_query_cols].val.str_val.len = subs->event_id.len;
-	} else {
-		query_vals[n_query_cols].val.str_val.s = "";
-		query_vals[n_query_cols].val.str_val.len = 0;
-	}
-	n_query_cols++;
-	
 	query_cols[n_query_cols] = &str_callid_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
@@ -1385,7 +1310,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 
 	if(result && result->n <=0)
 	{
-		LM_ERR("No matching subscription dialog found in database\n");
+		LM_INFO("No matching subscription dialog found in database\n");
 		
 		pa_dbf.free_result(pa_db, result);
 		*reply_code= 481;
