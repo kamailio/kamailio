@@ -34,7 +34,7 @@
 #include "../../dprint.h"
 #include "../../data_lump_rpl.h"
 #include "../../lib/kcore/cmpapi.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "../../lib/kcore/parse_supported.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_event.h"

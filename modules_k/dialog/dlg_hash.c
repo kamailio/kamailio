@@ -54,7 +54,7 @@
 
 #include "../../dprint.h"
 #include "../../ut.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "../../lib/kmi/mi.h"
 #include "dlg_timer.h"
 #include "dlg_var.h"

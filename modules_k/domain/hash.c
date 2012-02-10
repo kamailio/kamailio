@@ -25,7 +25,7 @@
 
 #include "../../dprint.h"
 #include "../../ut.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "../../mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
 #include "domain_mod.h"

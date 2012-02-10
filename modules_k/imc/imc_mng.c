@@ -34,7 +34,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 
 #include "imc_mng.h"
 /* imc hash table */

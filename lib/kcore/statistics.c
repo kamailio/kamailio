@@ -41,7 +41,6 @@
 #include "../../ut.h"
 #include "../../dprint.h"
 #include "../../socket_info.h"
-#include "km_ut.h"
 #include "statistics.h"
 
 #ifdef STATISTICS

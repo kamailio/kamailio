@@ -21,7 +21,7 @@
 
 #include <sys/time.h>
 #include <time.h>
-#include "../../lib/kcore/hash_func.h"/* for TABLE_ENTRIES define*/
+#include "../../hashes.h"/* for TABLE_ENTRIES define*/
 #include "../../locking.h"/* for TABLE_ENTRIES define*/
 #include "../../modules/tm/h_table.h"/* for struct cell*/
 #define STATS_CELLS 50

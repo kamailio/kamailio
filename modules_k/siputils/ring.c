@@ -43,7 +43,6 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../ut.h"
-#include "../../lib/kcore/km_ut.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../timer.h"

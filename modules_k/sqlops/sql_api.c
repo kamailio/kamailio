@@ -30,7 +30,7 @@
 
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "../../ut.h"
 #include "../../lib/srdb1/db_ut.h"
 #ifdef WITH_XAVP

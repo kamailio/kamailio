@@ -34,7 +34,6 @@
 #include "../../dprint.h"
 #include "../../parser/msg_parser.h"
 #include "../../ut.h"
-#include "errinfo.h"
 #include "../../mem/mem.h"
 
 
@@ -113,8 +112,6 @@ struct sip_uri *parse_ppi_uri(struct sip_msg *msg)
 	{
 		LM_ERR("failed to parse P-P-I URI\n");
 		memset(&tb->parsed_uri, 0, sizeof(struct sip_uri));
-		set_err_info(OSER_EC_PARSER, OSER_EL_MEDIUM, "error parsing P-P-I URI");
-		set_err_reply(400, "bad P-Preferred-Identity uri");
 		return NULL;
 	}
 

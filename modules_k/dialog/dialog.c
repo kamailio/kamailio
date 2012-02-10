@@ -66,7 +66,7 @@
 #include "../../mod_fix.h"
 #include "../../script_cb.h"
 #include "../../lib/kcore/faked_msg.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../mem/mem.h"
 #include "../../lib/kmi/mi.h"

@@ -46,7 +46,7 @@
 #include "../../modules/sl/sl.h"
 #include "../../pt.h"
 #include "../../lib/kmi/mi.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "dmq.h"
 #include "dmq_funcs.h"
 #include "peer.h"

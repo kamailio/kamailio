@@ -36,7 +36,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 
 #include "dbt_util.h"
 #include "dbt_lib.h"

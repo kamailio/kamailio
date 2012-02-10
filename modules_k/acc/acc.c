@@ -51,7 +51,6 @@
 #include "../../mem/mem.h"
 #include "../../usr_avp.h"
 #include "../../lib/srdb1/db.h"
-#include "../../lib/kcore/km_ut.h"
 #include "../../parser/hf.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"

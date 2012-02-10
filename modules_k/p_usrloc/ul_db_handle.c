@@ -23,7 +23,7 @@
 #include "p_usrloc_mod.h"
 #include "ul_db.h"
 #include "ul_db_watch.h"
-#include "../../lib/kcore/km_crc.h"
+#include "../../crc.h"
 
 static ul_db_handle_list_t * db_handles = NULL;
 

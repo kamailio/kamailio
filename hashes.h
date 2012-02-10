@@ -251,5 +251,94 @@ inline static unsigned int get_hash2_case_raw2(const str* key1,
 }
 
 
+/*
+ * generic hashing - from the intial origins of ser
+ */
+#define ch_h_inc h+=v^(v>>3)
+#define ch_icase(_c) (((_c)>='A'&&(_c)<='Z')?((_c)|0x20):(_c))
+
+/*
+ * case sensitive hashing
+ * - s1 - str to hash
+ * - s2 - optional - continue hashing over s2
+ * - size - optional - size of hash table (must be power of 1); if set (!=0),
+ *   instead of hash id, returned value is slot index
+ * return computed hash id or hash table slot index
+ */
+static inline unsigned int core_hash(const str *s1, const str *s2,
+		const unsigned int size)
+{
+	char *p, *end;
+	register unsigned v;
+	register unsigned h;
+
+	h=0;
+
+	end=s1->s+s1->len;
+	for ( p=s1->s ; p<=(end-4) ; p+=4 ){
+		v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
+		ch_h_inc;
+	}
+	v=0;
+	for (; p<end ; p++){ v<<=8; v+=*p;}
+	ch_h_inc;
+
+	if (s2) {
+		end=s2->s+s2->len;
+		for (p=s2->s; p<=(end-4); p+=4){
+			v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
+			ch_h_inc;
+		}
+		v=0;
+		for (; p<end ; p++){ v<<=8; v+=*p;}
+		ch_h_inc;
+	}
+	h=((h)+(h>>11))+((h>>13)+(h>>23));
+	return size?((h)&(size-1)):h;
+}
+
+
+/*
+ * case insensitive hashing
+ * - s1 - str to hash
+ * - s2 - optional - continue hashing over s2
+ * - size - optional - size of hash table (must be power of 1); if set (!=0),
+ *   instead of hash id, returned value is slot index
+ * return computed hash id or hash table slot index
+ */
+static inline unsigned int core_case_hash( str *s1, str *s2,
+		unsigned int size)
+{
+	char *p, *end;
+	register unsigned v;
+	register unsigned h;
+
+	h=0;
+
+	end=s1->s+s1->len;
+	for ( p=s1->s ; p<=(end-4) ; p+=4 ){
+		v=(ch_icase(*p)<<24)+(ch_icase(p[1])<<16)+(ch_icase(p[2])<<8)
+			+ ch_icase(p[3]);
+		ch_h_inc;
+	}
+	v=0;
+	for (; p<end ; p++){ v<<=8; v+=ch_icase(*p);}
+	ch_h_inc;
+
+	if (s2) {
+		end=s2->s+s2->len;
+		for (p=s2->s; p<=(end-4); p+=4){
+			v=(ch_icase(*p)<<24)+(ch_icase(p[1])<<16)+(ch_icase(p[2])<<8)
+				+ ch_icase(p[3]);
+			ch_h_inc;
+		}
+		v=0;
+		for (; p<end ; p++){ v<<=8; v+=ch_icase(*p);}
+		ch_h_inc;
+	}
+	h=((h)+(h>>11))+((h>>13)+(h>>23));
+	return size?((h)&(size-1)):h;
+}
+
 
 #endif

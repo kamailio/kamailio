@@ -39,7 +39,6 @@
 #include "../../trim.h" 
 #include "../../pvapi.h"
 #include "../../dset.h"
-#include "../../lib/kcore/errinfo.h"
 
 #include "../../parser/parse_param.h"
 #include "../../parser/parse_uri.h"

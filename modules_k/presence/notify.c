@@ -43,7 +43,7 @@
 #include "../../str.h"
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_val.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "../../socket_info.h"
 #include "../../modules/tm/tm_load.h"
 #include "../pua/hash.h"

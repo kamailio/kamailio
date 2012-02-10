@@ -35,7 +35,6 @@
 #include "../../dprint.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
-#include "../../lib/kcore/km_ut.h"
 #include "avpops_parse.h"
 
 

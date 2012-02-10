@@ -100,4 +100,18 @@ static inline void trim(str* _s)
 }
 
 
+/*
+ * right and left space trimming
+ *
+ * WARNING: String structure will be modified !
+ *          Make a copy otherwise you might be
+ *          unable to free _s_->s for example !
+ */
+#define trim_spaces_lr(_s_)												\
+	do{																	\
+		for(;(_s_).s[(_s_).len-1]==' ';(_s_).s[--(_s_).len]=0);			\
+		for(;(_s_).s[0]==' ';(_s_).s=(_s_).s+1,(_s_).len--);			\
+																		\
+	} while(0);
+	
 #endif /* TRIM_H */

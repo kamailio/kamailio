@@ -50,7 +50,6 @@
 #include "reg_avps.h"
 #include "reg_avps_db.h"
 
-#define	MIN(x, y)	((x) < (y) ? (x) : (y))
 
 /*
  * Create a new contact structure

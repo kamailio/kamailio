@@ -24,7 +24,6 @@
 
 
 #include "../../qvalue.h"
-#include "../../lib/kcore/errinfo.h"
 #include "../../ut.h" 
 #include "../../route_struct.h"
 #include "../../dset.h"
@@ -322,32 +321,10 @@ int pv_get_ouri_attr(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_xuri_attr(msg, &(msg->parsed_orig_ruri), param, res);
 }
 
-extern err_info_t _oser_err_info;
 int pv_get_errinfo_attr(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
-	if(msg==NULL)
-		return -1;
-
-	if(param->pvn.u.isname.name.n==0) /* class */ {
-		return pv_get_sintval(msg, param, res, _oser_err_info.eclass);
-	} else if(param->pvn.u.isname.name.n==1) /* level */ {
-		return pv_get_sintval(msg, param, res, _oser_err_info.level);
-	} else if(param->pvn.u.isname.name.n==2) /* info */ {
-		if(_oser_err_info.info.s==NULL)
-			pv_get_null(msg, param, res);
-		return pv_get_strval(msg, param, res, &_oser_err_info.info);
-	} else if(param->pvn.u.isname.name.n==3) /* rcode */ {
-		return pv_get_sintval(msg, param, res, _oser_err_info.rcode);
-	} else if(param->pvn.u.isname.name.n==4) /* rreason */ {
-		if(_oser_err_info.rreason.s==NULL)
-			pv_get_null(msg, param, res);
-		return pv_get_strval(msg, param, res, &_oser_err_info.rreason);
-	} else {
-		LM_DBG("invalid attribute!\n");
-		return pv_get_null(msg, param, res);
-	}
-	return 0;
+	return pv_get_null(msg, param, res);
 }
 
 int pv_get_contact(struct sip_msg *msg, pv_param_t *param,

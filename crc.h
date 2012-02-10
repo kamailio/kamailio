@@ -16,5 +16,7 @@ unsigned short crcitt_string_ex( char *s, int len, register unsigned short ccitt
 unsigned short crcitt_string( char *s, int len );
 void crcitt_string_array( char *dst, str src[], int size );
 
+void crc32_uint (str *source_string, unsigned int *hash_ret);
+
 #endif /* _CRC_H_ */
 

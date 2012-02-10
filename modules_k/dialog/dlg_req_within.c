@@ -37,7 +37,6 @@
 #include "../../modules/tm/dlg.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../lib/kmi/tree.h"
-#include "../../lib/kcore/km_ut.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "dlg_timer.h"
 #include "dlg_hash.h"

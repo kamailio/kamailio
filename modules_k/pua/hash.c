@@ -30,7 +30,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
 #include "hash.h" 

@@ -33,7 +33,7 @@
 #include <sys/wait.h>/*waitpid*/
 
 #include "../../ip_addr.h" /*sockaddr_union, ip_addr*/
-#include "../../lib/kcore/hash_func.h" /*T_TABLE_POWER*/
+#include "../../hashes.h" /*T_TABLE_POWER*/
 #include "../../mem/mem.h" /*pkg_malloc*/
 #include "../../mem/shm_mem.h" /*shm_malloc*/
 #include "../../dprint.h" /*LM_**/

@@ -28,7 +28,7 @@
 #include "../../shm_init.h"
 #include "../../dprint.h"
 #include "../../parser/parse_param.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "../../ut.h"
 #include "../../re.h"
 

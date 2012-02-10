@@ -32,7 +32,7 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
 #include "../../lib/kcore/cmpapi.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "../../trim.h"
 #include "../pua/hash.h"
 #include "rls.h"

@@ -49,7 +49,6 @@
 #include "../../data_lump_rpl.h"
 #include "../../lib/kcore/statistics.h"
 #include "../../modules/sl/sl.h"
-#include "../../lib/kcore/km_ut.h"
 #include "../../lib/kmi/mi.h"
 
 #include "pl_ht.h"

@@ -32,7 +32,7 @@
 #include <libxml/parser.h>
 
 #include "../../parser/parse_uri.h"
-#include "../../lib/kcore/km_ut.h"
+#include "../../trim.h"
 #include "../../dprint.h"
 #include "../../str.h"
 #include "../../ut.h"

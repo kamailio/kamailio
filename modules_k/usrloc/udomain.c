@@ -43,7 +43,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../socket_info.h"
 #include "../../ut.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "usrloc.h"
 #include "utime.h"

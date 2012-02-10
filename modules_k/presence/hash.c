@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../../mem/shm_mem.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "../../dprint.h"
 #include "../../str.h"
 #include "../pua/hash.h"

@@ -33,8 +33,8 @@
 
 
 #include "../../mem/shm_mem.h"
-#include "../../lib/kcore/hash_func.h"
-#include "../../lib/kcore/km_ut.h"
+#include "../../hashes.h"
+#include "../../trim.h"
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../route.h"

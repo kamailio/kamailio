@@ -39,7 +39,7 @@
 #include "../../parser/parse_event.h" 
 #include "../../parser/parse_content.h" 
 #include "../../lock_ops.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "../../lib/kcore/cmpapi.h"
 #include "../../lib/srdb1/db.h"
 #include "presence.h"

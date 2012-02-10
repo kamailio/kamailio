@@ -39,7 +39,6 @@
 #include "../../hashes.h"
 #include "../../mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
-#include "../../lib/kcore/km_ut.h"
 
 #include "pl_ht.h"
 

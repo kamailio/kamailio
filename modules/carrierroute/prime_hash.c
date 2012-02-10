@@ -31,7 +31,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_from.h"
-#include "../../lib/kcore/km_crc.h"
+#include "../../crc.h"
 
 #include <ctype.h>
 #include <stdio.h> /* for snprintf */

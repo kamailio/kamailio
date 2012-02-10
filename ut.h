@@ -772,6 +772,69 @@ static inline int str_strcasecmp(const str *str1, const str *str2)
 		return strncasecmp(str1->s, str2->s, str1->len);
 }
 
+#ifndef MIN
+#define	MIN(x, y)	((x) < (y) ? (x) : (y))
+#endif
+#ifndef MAX
+#define	MAX(x, y)	((x) > (y) ? (x) : (y))
+#endif
+
+
+/* INTeger-TO-Buffer-STRing : convers an unsigned long to a string 
+ * IMPORTANT: the provided buffer must be at least INT2STR_MAX_LEN size !! */
+static inline char* int2bstr(unsigned long l, char *s, int* len)
+{
+	int i;
+	i=INT2STR_MAX_LEN-2;
+	s[INT2STR_MAX_LEN-1]=0;
+	/* null terminate */
+	do{
+		s[i]=l%10+'0';
+		i--;
+		l/=10;
+	}while(l && (i>=0));
+	if (l && (i<0)){
+		LM_CRIT("overflow error\n");
+	}
+	if (len) *len=(INT2STR_MAX_LEN-2)-i;
+	return &s[i+1];
+}
+
+
+inline static int hexstr2int(char *c, int len, unsigned int *val)
+{
+	char *pc;
+	int r;
+	char mychar;
+
+	r=0;
+	for (pc=c; pc<c+len; pc++) {
+		r <<= 4 ;
+		mychar=*pc;
+		if ( mychar >='0' && mychar <='9') r+=mychar -'0';
+		else if (mychar >='a' && mychar <='f') r+=mychar -'a'+10;
+		else if (mychar  >='A' && mychar <='F') r+=mychar -'A'+10;
+		else return -1;
+	}
+	*val = r;
+	return 0;
+}
+
+
+
+/*
+ * Convert a str (base 10 or 16) into integer
+ */
+static inline int strno2int( str *val, unsigned int *mask )
+{
+	/* hexa or decimal*/
+	if (val->len>2 && val->s[0]=='0' && val->s[1]=='x') {
+		return hexstr2int( val->s+2, val->len-2, mask);
+	} else {
+		return str2int( val, mask);
+	}
+}
+
 /* converts a username into uid:gid,
  * returns -1 on error & 0 on success */
 int user2uid(int* uid, int* gid, char* user);

@@ -47,7 +47,7 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../resolve.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "../../lib/kmi/mi.h"
 
 #include "../../modules/tm/tm_load.h"
