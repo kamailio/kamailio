@@ -339,6 +339,9 @@ static pv_export_t mod_pvs[] = {
 	{{"si", (sizeof("si")-1)}, /* */
 		PVT_OTHER, pv_get_srcip, 0,
 		0, 0, 0, 0},
+	{ {"sid", (sizeof("sid")-1)}, /* server id */
+		PVT_OTHER, pv_get_server_id, 0,
+		0, 0, 0, 0},
 	{{"sp", (sizeof("sp")-1)}, /* */
 		PVT_OTHER, pv_get_srcport, 0,
 		0, 0, 0, 0},

@@ -1592,6 +1592,14 @@ int pv_get_scriptvar(struct sip_msg *msg,  pv_param_t *param,
 	}
 	return 0;
 }
+
+int pv_get_server_id(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	return pv_get_sintval(msg, param, res, server_id);
+}
+
+
 /********* end PV get functions *********/
 
 /********* start PV set functions *********/

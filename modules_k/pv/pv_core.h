@@ -199,6 +199,8 @@ int pv_get_true(struct sip_msg *msg, pv_param_t *param,
 int pv_get_version(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_server_id(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 /********* end PV get functions *********/
 
 /********* start PV set functions *********/
