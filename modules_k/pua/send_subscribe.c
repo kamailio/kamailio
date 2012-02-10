@@ -225,6 +225,50 @@ static int pua_free_tm_dlg(dlg_t *td)
 	return 0;
 }
 
+static void find_and_delete_dialog(ua_pres_t *dialog, int hash_code)
+{
+	ua_pres_t *presentity;
+ 	ua_pres_t dbpres;
+	str pres_uri={0,0}, watcher_uri={0,0}, extra_headers={0,0};
+	db1_res_t *res=NULL;
+
+	memset(&dbpres, 0, sizeof(dbpres));
+	dbpres.pres_uri = &pres_uri;
+	dbpres.watcher_uri = &watcher_uri;
+	dbpres.extra_headers = &extra_headers;
+
+	if (dbmode==PUA_DB_ONLY)
+	{
+		presentity = get_dialog_puadb(dialog, &dbpres, &res);
+	}
+	else
+	{		
+		lock_get(&HashT->p_records[hash_code].lock);
+ 		presentity= get_dialog(dialog, hash_code);
+		if (presentity == NULL)
+			presentity = get_temporary_dialog(dialog, hash_code);
+	}
+
+	if(presentity== NULL)
+	{
+		LM_ERR("no record found\n");
+		if (dbmode!=PUA_DB_ONLY)
+			lock_release(&HashT->p_records[hash_code].lock);
+		return;
+	}
+
+	if (dbmode==PUA_DB_ONLY)
+	{
+		delete_puadb(presentity);
+		free_results_puadb(res);
+	}
+	else
+	{
+		delete_htable(presentity, hash_code);
+		lock_release(&HashT->p_records[hash_code].lock);
+	}
+}
+
 void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 {
 	struct sip_msg* msg= NULL;
@@ -271,41 +315,44 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 
 	if(msg== FAKED_REPLY)
 	{
-		/* delete record from hash_table and call registered functions */
+		struct hdr_field *callid = NULL, *from = NULL;
+		struct to_body FROM = {0};
 
-		if(hentity->call_id.s== NULL) /* if a new requets failed-> do nothing*/
+		callid = (struct hdr_field *) pkg_malloc(sizeof(struct hdr_field));
+		if (callid == NULL)
 		{
-			LM_DBG("initial Subscribe request failed\n");
-			goto done;
+			LM_ERR("Out of memory\n");
+			goto faked_error;
 		}
+		memset(callid, 0, sizeof(struct hdr_field));
+		get_hdr_field(t->callid.s, t->callid.s + t->callid.len, callid);
+		hentity->call_id = callid->body;
 
-		if (dbmode==PUA_DB_ONLY)
+		from = (struct hdr_field *) pkg_malloc(sizeof(struct hdr_field));
+		if (from == NULL)
 		{
-			presentity = get_dialog_puadb(hentity, &dbpres, &res);
+			LM_ERR("Out of memory\n");
+			goto faked_error;
 		}
-		else
-		{		
-			lock_get(&HashT->p_records[hash_code].lock);
- 			presentity= get_dialog(hentity, hash_code);
+		memset(from, 0, sizeof(struct hdr_field));
+		get_hdr_field(t->from.s, t->from.s + t->from.len, from);
+		parse_to(from->body.s, from->body.s + from->body.len + 1, &FROM);
+		if(FROM.uri.len <= 0) 
+		{
+			LM_ERR("'From' header NOT parsed\n");
+			goto faked_error;
 		}
+	
+		hentity->call_id = callid->body;
+		hentity->from_tag = (&FROM)->tag_value;
+		hentity->to_tag.s = NULL;
+		hentity->to_tag.len = 0;
 
-		if(presentity== NULL)
-		{
-			LM_ERR("no record found\n");
-			if (dbmode!=PUA_DB_ONLY)
-				lock_release(&HashT->p_records[hash_code].lock);
-			goto done;
-		}
-
-		if (dbmode==PUA_DB_ONLY)
-		{
-			delete_puadb(presentity);
-		}
-		else
-		{
-			delete_htable(presentity, hash_code);
-			lock_release(&HashT->p_records[hash_code].lock);
-		}
+		find_and_delete_dialog(hentity, hash_code);
+faked_error:
+		if (callid) pkg_free(callid);
+		free_to_params(&FROM);
+		if (from) pkg_free(from);
 		goto done;
 	}
 	
@@ -320,17 +367,12 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	if(hentity->call_id.s== NULL)
 	{
 		initial_request = 1;
-		if(ps->code>= 300)
-		{
-			LM_DBG("initial Subscribe request failed\n");
-			goto done;
-		}
 
 		if( msg->callid==NULL || msg->callid->body.s==NULL)
 		{
 			LM_ERR("cannot parse callid header\n");
 			goto done;
-		}		
+		}
 		
 		if (!msg->from || !msg->from->body.s)
 		{
@@ -368,7 +410,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 				msg->to->body.len + 1, &TO);
 			if(TO.uri.len <= 0) 
 			{
-				LM_DBG("'To' header NOT parsed\n");
+				LM_ERR("'To' header NOT parsed\n");
 				goto done;
 			}
 			pto = &TO;
@@ -381,6 +423,12 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		hentity->call_id=  msg->callid->body;
 		hentity->to_tag= pto->tag_value;
 		hentity->from_tag= pfrom->tag_value;
+
+		if(ps->code >= 300)
+		{
+			find_and_delete_dialog(hentity, hash_code);
+			goto done;
+		}
 	}
 
 	/* extract the other necesary information for inserting a new record */		
@@ -403,6 +451,8 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	{
 		lock_get(&HashT->p_records[hash_code].lock);
 		presentity= get_dialog(hentity, hash_code);
+		if (presentity == NULL)
+			presentity = get_temporary_dialog(hentity, hash_code);
 	}
 
 	if(ps->code >= 300 )
@@ -424,6 +474,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 				lock_release(&HashT->p_records[hash_code].lock);
 			}
 
+			/* Redirect if the response 3XX */
 			memset(&subs, 0, sizeof(subs_info_t));
 			subs.pres_uri= hentity->pres_uri; 
 			subs.watcher_uri= hentity->watcher_uri;
@@ -439,7 +490,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 				subs.expires= 0;
 			else
 				subs.expires= hentity->desired_expires- (int)time(NULL)+ 3;
-		
+
 			subs.flag= INSERT_TYPE;
 			subs.source_flag= flag;
 			subs.event= hentity->event;
@@ -456,7 +507,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		}
 		else 
 		{
-			LM_DBG("No dialog found\n");			
+			LM_ERR("No dialog found\n");			
 			if (dbmode!=PUA_DB_ONLY)
 				lock_release(&HashT->p_records[hash_code].lock);
 		}
@@ -489,52 +540,62 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	}
 	contact = ((contact_body_t* )msg->contact->parsed)->contacts->uri;
 
-	if(presentity)
-	{		
-		if(lexpire== 0 )
+	if(initial_request == 0)
+	{
+		if(presentity)
 		{
-			LM_DBG("lexpire= 0 Delete from hash table");
+			if(lexpire== 0 )
+			{
+				LM_DBG("lexpire= 0 Delete from hash table");
+				if (dbmode==PUA_DB_ONLY)
+				{
+					delete_puadb(presentity);
+				}
+				else
+				{
+					delete_htable(presentity, hash_code);
+					lock_release(&HashT->p_records[hash_code].lock);
+				}
+				goto done;
+			}
+			LM_DBG("*** Update expires\n");
 			if (dbmode==PUA_DB_ONLY)
 			{
-				delete_puadb(presentity);
+				update_puadb( presentity, hentity->desired_expires, lexpire, NULL, &contact );
 			}
 			else
 			{
-				delete_htable(presentity, hash_code);
+				update_htable(presentity, hentity->desired_expires, lexpire, NULL,
+					hash_code, &contact);
 				lock_release(&HashT->p_records[hash_code].lock);
 			}
 			goto done;
 		}
-		LM_DBG("*** Update expires\n");
-		if (dbmode==PUA_DB_ONLY)
-		{
-			update_puadb( presentity, hentity->desired_expires, lexpire, NULL, &contact );
-		}
-		else
-		{
-			update_htable(presentity, hentity->desired_expires, lexpire, NULL,
-				hash_code, &contact);
-			lock_release(&HashT->p_records[hash_code].lock);
-		}
-		goto done;
-	}
-	if(initial_request == 0)
-	{
+
 		LM_ERR("Not initial request and no record found\n");
 		if (dbmode!=PUA_DB_ONLY)
 			lock_release(&HashT->p_records[hash_code].lock);
 		goto error;
 	}
 
-	if (dbmode!=PUA_DB_ONLY)
-		lock_release(&HashT->p_records[hash_code].lock);
-
 	/* if a new dialog -> insert */
 	if(lexpire== 0)
 	{	
-		LM_DBG("expires= 0: no not insert\n");
+		LM_WARN("expires= 0: no not insert\n");
+		if (dbmode==PUA_DB_ONLY)
+		{
+			delete_puadb(presentity);
+		}
+		else
+		{
+			delete_htable(presentity, hash_code);
+			lock_release(&HashT->p_records[hash_code].lock);
+		}
 		goto done;
 	}
+
+	if (dbmode!=PUA_DB_ONLY)
+		lock_release(&HashT->p_records[hash_code].lock);
 
 	if( msg->cseq==NULL || msg->cseq->body.s==NULL)
 	{
@@ -546,7 +607,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	{
 		LM_ERR("while converting str to int\n");
 		goto done;
-    }	
+	}	
 	
 	/*process record route and add it to a string*/
 	if (msg->record_route!=NULL)
@@ -979,8 +1040,14 @@ int send_subscribe(subs_info_t* subs)
 	{
 		int size;
 insert:
+	
 		if (dbmode!=PUA_DB_ONLY)
-			lock_release(&HashT->p_records[hash_code].lock); 
+			lock_release(&HashT->p_records[hash_code].lock);
+
+		if (subs->expires == 0)
+			/* Don't create a new dialog when expires == 0 */
+			goto done;	
+
 		if(subs->flag & UPDATE_TYPE)
 		{
 			/*
@@ -1148,12 +1215,31 @@ insert:
 		if (subs->internal_update_flag == INTERNAL_UPDATE_TRUE)
 		{
 			LM_INFO("attempting to re-SUBSCRIBE on internal (rls_update_subs()) update - skipping\n");
+			if (dbmode != PUA_DB_ONLY)
+				lock_release(&HashT->p_records[hash_code].lock);
 			goto done;
 		}
 
 		if (presentity->to_tag.len == 0)
 		{
-			LM_WARN("attempting to re-SUBSCRIBE to temporary (non-established) dialog - skipping\n");
+			if (subs->expires > 0)
+			{
+				LM_WARN("attempting to re-SUBSCRIBE to temporary (non-established) dialog - skipping\n");
+				LM_WARN("  is %.*s in %.*s's contact list more than once?\n",
+					presentity->pres_uri->len, presentity->pres_uri->s,
+					presentity->watcher_uri->len, presentity->watcher_uri->s);
+			}
+			else
+			{
+				LM_WARN("attempting to un-SUBSCRIBE to temporary (non-established) dialog - skipping and deleting dialog\n");
+				if (dbmode==PUA_DB_ONLY)
+					delete_puadb(presentity);
+				else
+					delete_htable(presentity, hash_code);
+			}
+
+			if (dbmode != PUA_DB_ONLY)
+				lock_release(&HashT->p_records[hash_code].lock);
 			goto done;
 		}
 
