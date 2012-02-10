@@ -63,7 +63,6 @@
 #include <string.h>
 
 #include "../../sr_module.h"
-#include "../../lib/kcore/local_route.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../modules/tm/tm_load.h"
@@ -362,18 +361,6 @@ static int free_acc_fixup(void** param, int param_no)
 
 /************************** INTERFACE functions ****************************/
 
-static int mod_lrt_init( void )
-{
-
-#ifdef SQL_ACC
-	if(db_url.s && acc_db_init_child(&db_url)<0) {
-		LM_ERR("could not open database connection");
-		return -1;
-	}
-#endif
-
-	return 0;
-}
 
 static int parse_failed_filter(char *s, unsigned short *failed_filter)
 {
@@ -416,12 +403,6 @@ static int parse_failed_filter(char *s, unsigned short *failed_filter)
 
 static int mod_init( void )
 {
-	lrt_info_t li;
-	li.init = mod_lrt_init;
-	li.name = "acc";
-	if(register_lrt_info(&li)!=0)
-		return -1;
-
 #ifdef SQL_ACC
 	if (db_url.s) {
 		db_url.len = strlen(db_url.s);
