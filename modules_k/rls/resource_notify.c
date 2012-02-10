@@ -47,6 +47,10 @@
  * winner: sol3
  * */
 static str su_200_rpl     = str_init("OK");
+static str pu_400_rpl     = str_init("Bad Request");
+static str pu_481_rpl     = str_init("Call/Transaction Does Not Exist");
+static str pu_489_rpl     = str_init("Bad Event");
+static str pu_500_rpl     = str_init("Server Internal Error");
 
 int parse_rlsubs_did(char* str_did, str* callid, str* from_tag, str* to_tag)
 {
@@ -506,24 +510,31 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	struct hdr_field* hdr= NULL;
 	int n, expires= -1;
 	str content_type= {0, 0};
-
+	int reply_code = 500;
+	str reply_str = pu_500_rpl;
 
 	LM_DBG("start\n");
 	/* extract the dialog information and check if an existing dialog*/	
 	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LM_ERR("parsing headers\n");
-		return -1;
+		reply_code = 400;
+		reply_str = pu_400_rpl;
+		goto error;
 	}
 	if((!msg->event ) ||(msg->event->body.len<=0))
 	{
 		LM_ERR("Missing event header field value\n");
-		return -1;
+		reply_code = 400;
+		reply_str = pu_400_rpl;
+		goto error;
 	}
 	if( msg->to==NULL || msg->to->body.s==NULL)
 	{
 		LM_ERR("cannot parse TO header\n");
-		return -1;
+		reply_code = 400;
+		reply_str = pu_400_rpl;
+		goto error;
 	}
 	if(msg->to->parsed != NULL)
 	{
@@ -537,6 +548,8 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 		if(TO.uri.len <= 0) 
 		{
 			LM_ERR(" 'To' header NOT parsed\n");
+			reply_code = 400;
+			reply_str = pu_400_rpl;
 			goto error;
 		}
 		pto = &TO;
@@ -546,12 +559,16 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
 	{
 		LM_ERR("to tag value not parsed\n");
+		reply_code = 400;
+		reply_str = pu_400_rpl;
 		goto error;
 	}
 	dialog.from_tag= pto->tag_value;
 	if( msg->callid==NULL || msg->callid->body.s==NULL)
 	{
 		LM_ERR("cannot parse callid header\n");
+		reply_code = 400;
+		reply_str = pu_400_rpl;
 		goto error;
 	}
 	dialog.call_id = msg->callid->body;
@@ -559,6 +576,8 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	if (!msg->from || !msg->from->body.s)
 	{
 		LM_ERR("cannot find 'from' header!\n");
+		reply_code = 400;
+		reply_str = pu_400_rpl;
 		goto error;
 	}
 	if (msg->from->parsed == NULL)
@@ -568,6 +587,8 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 		if ( parse_from_header( msg )<0 ) 
 		{
 			LM_ERR("cannot parse From header\n");
+			reply_code = 400;
+			reply_str = pu_400_rpl;
 			goto error;
 		}
 	}
@@ -577,6 +598,8 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
 	{
 		LM_ERR("no from tag value present\n");
+		reply_code = 400;
+		reply_str = pu_400_rpl;
 		goto error;
 	}
 	dialog.to_tag= pfrom->tag_value;
@@ -586,6 +609,8 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	if(dialog.event< 0)
 	{
 		LM_ERR("unrecognized event package\n");
+		reply_code = 489;
+		reply_str = pu_489_rpl;
 		goto error;
 	}
 
@@ -628,8 +653,10 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 		 */
 		if(auth_flag==TERMINATED_STATE)
 			goto done;
-		LM_ERR("no presence dialog record for non-TERMINATED state uri pres_uri = %.*s watcher_uri = %.*s\n",
+		LM_INFO("no presence dialog record for non-TERMINATED state uri pres_uri = %.*s watcher_uri = %.*s\n",
                 dialog.pres_uri->len, dialog.pres_uri->s, dialog.watcher_uri->len, dialog.watcher_uri->s);
+		reply_code = 481;
+		reply_str = pu_481_rpl;
 		goto error;
 	}
 		
@@ -784,6 +811,10 @@ done:
 	return 1;
 
 error:
+	if(slb.freply(msg, reply_code, &reply_str) < 0)
+	{
+		LM_ERR("failed sending reply\n");
+	}
 	if(res_id!=NULL)
 	{
 		pkg_free(res_id->s);
