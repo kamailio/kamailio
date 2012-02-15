@@ -1,6 +1,11 @@
 # ChangeLog for net-misc/sip-router
-# Copyright 1999-2011 Gentoo Foundation; Distributed under the GPL v2
+# Copyright 1999-2012 Gentoo Foundation; Distributed under the GPL v2
 # $Header: $
+
+*sip-router-3.2.2 (15 Feb 2012)
+
+  15 Feb 2012; Claudio G. Furrer <elcaio@gmail.com> +sip-router.3.2.2.ebuild:
+  Version bump.
 
 *sip-router-3.2.1 (25 Jan 2012)
 
@@ -13,14 +18,16 @@
   Version bump.
 
   21 Sep 2011; Claudio G. Furrer <elcaio@gmail.com> -sip-router-3.1.2.ebuild,
-  -sip-router-3.1.3.ebuild:
-  Older versions than 3.1.4 are no longer packaged.
+  -sip-router-3.1.3.ebuild, -sip-router-3.1.4.ebuild, -sip-router-3.1.4-r1.ebuild,
+  -files/siprouter.confd, -files/siprouter.init:
+  Older versions than 3.1.4-r2 are no longer packaged.
 
 *sip-router-3.1.4 (13 Sep 2011)
   
-  13 Sep 2011; Claudio G. Furrer <elcaio@gmail.com> sip-router-3.1.4-r2.ebuild:
+  13 Sep 2011; Claudio G. Furrer <elcaio@gmail.com> +sip-router-3.1.4-r2.ebuild,
+  +files/ser.confd, +files/ser.initd:
   Fix installation paths and names based on flavour specified in the USE flag
-  (ser or kamailio). Backported also to 3.1.3 and 3.1.2.
+  (ser or kamailio).
 
   24 Aug 2011; Claudio G. Furrer <elcaio@gmail.com> sip-router-3.1.4-r1.ebuild:
   Added kamailio-specific groups (group_k*) in USE flags.
