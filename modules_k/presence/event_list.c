@@ -19,7 +19,7 @@
  *
  * History:
  * --------
- *  2007-04-04  initial version (anca)
+ *  2007-04-04  initial version (Anca Vamanu)
  */
 
 /*!

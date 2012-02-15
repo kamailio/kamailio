@@ -23,7 +23,7 @@
  *
  * History:
  * --------
- *  2007-08-20  initial version (anca)
+ *  2007-08-20  initial version (Anca Vamanu)
  */
 
 /*! \file

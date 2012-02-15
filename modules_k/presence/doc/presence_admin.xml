@@ -22,20 +22,13 @@
 	module and message-summary from the presence_mwi module.
 	</para>
 	<para>
-	The module uses database storage and memory caching (to improve performance).
-	The SIP SUBSCRIBE dialog information is stored in memory and 
-	is periodically updated in the database, while for PUBLISH only the presence
-	or absence of stored info for a certain resource is maintained in memory
-	to avoid unnecessary, costly database operations. 
-	It is possible to disable in-memory caching by configuring a fallback to database mode 
-	(by setting the module parameter "fallback2db"). In this mode, in case a searched record is not 
-	found in cache, the search is continued	in database. This is useful for
-	an architecture in which processing and memory load might be divided on 
-	several &kamailio; instances, maybe on different servers using the same database.
-        This parameter remains only for legacy purposes. As a new feature for the presence engine, it is possible
-        to have three database modes, which one can configure through the db_mode parameter.
-        Setting db_mode to 0, 1, 2 respective will cause the subscribers to be retrieved from memory only,
-        from memory and to fallback to database mode in case a record is not found in memory, and from database only.
+	The module can use database and memory storage (to improve performance).
+	For subscriptions it supports the 4 storage modes: Memory Only, Write Back,
+	Write Through and DB Only. For publishes, it stores the state documents in
+	database only(because of the large size) and it can store a publish cache in
+	memory to avoid unnecessairy database queries. Read the 
+	<emphasis>subs_db_mode</emphasis> and <emphasis>publ_cache</emphasis> parameter
+	sections to decide which is the best storage configuration for you.
 	</para>
 	<para>The module implements several API functions, that can be used by other
 	modules. In fact, it can be used only as a resource module, or "library".
@@ -98,8 +91,7 @@
 		its exported functions.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>NULL</quote>.	
-		</emphasis>
+		<emphasis>Default value is <quote>NULL</quote>.</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>db_url</varname> parameter</title>
@@ -262,8 +254,8 @@ modparam("presence", "expires_offset", 10)
 modparam("presence", "max_expires", 3600)
 ...
 </programlisting>
-               </example>
-       </section>
+	</example>
+</section>
 
 <section>
 		<title><varname>server_address</varname> (str)</title>
@@ -280,51 +272,108 @@ modparam("presence", "server_address", "sip:10.10.10.10:5060")
 </programlisting>
 		</example>
 	</section>
+
 <section>
-		<title><varname>fallback2db</varname> (int)</title>
+		<title><varname>subs_db_mode</varname> (int)</title>
 		<para>
-		Setting this parameter enables a fallback to db mode of operation.
-		In this mode, in case a searched record is not found in cache, 
-		the search is continued	in database. Useful for an architecture in
-		which processing and memory load might be divided on more servers
-		using the same database. This parameter overwrite the configuration
-		specified from the <quote>db_mode</quote> parameter.
+		The presence module can utilize database for persistent subscription storage.
+		If you use database, your subscriptions will survive machine restarts or
+		SW crashes. The disadvantage is that accessing database can be time consuming.
+		Therefore, presence module implements four database accessing modes:
 		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			0 - This disables database completely. Only memory will be used.
+			Subscriptions will not survive restart. Use this value if you need a
+			really fast presence module and subscription persistence is not necessary or
+			is provided by other means.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			1 - Write-Through scheme. Subscriptions are updated synchronously
+			in database and in memory(used for read operations). Use this
+			scheme if speed is not top priority, but it's important that no
+			subscriptions will be lost during crash or reboot or if you have
+			an external application that reads the state of the subscriptions
+			from database and they need to be updated synchronously.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			2 - Write-Back scheme. This is a combination of previous two
+			schemes. All changes are made to memory and database
+			synchronization is done in the timer. The timer deletes all
+			expired contacts and flushes all modified or new subscriptions to
+			database. Use this scheme if you encounter high-load peaks
+			and want them to process as fast as possible. Latency of this
+			mode is much lower than latency of mode 1, but slightly higher
+			than latency of mode 0. To control the interval at which data is
+			flushed to database, set the <emphasis>db_update_period</emphasis>
+			parameter.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			3 - DB-Only scheme. No memory cache is kept, all operations being
+			directly performed with the database. The timer deletes all expired
+			subscriptions from database. The mode is useful if you configure
+			more servers sharing the same DB without any replication at SIP
+			level. The mode may be slower due the high number of DB operation.
+			</para>
+		</listitem>
+		</itemizedlist>
 		<para>
-		This parameter is obsolet and will be removed in future releases.
+		<emphasis>Default value is 2 (Write-Back scheme).</emphasis>
 		</para>
+
 		<example>
-		<title>Set <varname>fallback2db</varname> parameter</title>
+		<title>Set <varname>subs_db_mode</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("presence", "fallback2db", 1)
+modparam("presence", "subs_db_mode", 1)
 ...
 </programlisting>
 		</example>
 	</section>
-<section>
-		<title><varname>db_mode</varname> (int)</title>
+
+	<section>
+		<title><varname>publ_cache</varname> (int)</title>
 		<para>
-		This parameter sets the mode in which records are retrieved.
-                Setting this parameter to 0 or 1 is equivalent to setting fallback2db to 0 or 1, respectiv.
-                The db_mode parameter can also take a third value, 2, in which records are retrieved from database only.
-                So, the three database modes in which the presence engine can operate are: memory only, fallback to database, and database only.
+		To improve performance, the presence module holds by default a
+		publish cache that says if a certain publication exists in database.
+		This is only a list of URI + event, so it does not use much memory.
+		The cache is used when a Subscription is received to check if there
+		is any published state in database. This way unnecessary queries in
+		presentity table are avoided.
+		</para>
+		<para>
+		Setting this parameter to 0 will disable the usage of the publish
+		cache. This is desirable when you have more servers sharing the same
+		database or there are other external entities inserting data into the
+		presentity table.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1</quote>.
+		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>db_mode</varname> parameter</title>
+		<title>Set <varname>publ_cache</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("presence", "db_mode", 2)
+modparam("presence", "publ_cache", 0)
 ...
-</programlisting>
+	</programlisting>
 		</example>
 	</section>
+
 	<section>
 		<title><varname>subs_htable_size</varname> (int)</title>
 		<para>
 		The size of the in-memory hash table to store subscription dialogs.
-        	This parameter will be used as the power of 2 when computing table size.
-        	</para>
+		This parameter will be used as the power of 2 when computing table size.
+		</para>
 		<para>
 		<emphasis>Default value is <quote>9 (512)</quote>.
 		</emphasis>

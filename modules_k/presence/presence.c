@@ -19,7 +19,7 @@
  *
  * History:
  * --------
- *  2006-08-15  initial version (anca)
+ *  2006-08-15  initial version (Anca Vamanu)
  */
 
 /*!
@@ -134,11 +134,11 @@ int expires_offset = 0;
 int max_expires= 3600;
 int shtable_size= 9;
 shtable_t subs_htable= NULL;
-int dbmode = 0;
-int fallback2db = 0;
+int subs_dbmode = WRITE_BACK;
 int sphere_enable= 0;
 int timeout_rm_subs = 1;
 int send_fast_notify = 1;
+int publ_cache_enabled = 1;
 
 int phtable_size= 9;
 phtable_t* pres_htable=NULL;
@@ -175,11 +175,11 @@ static param_export_t params[]={
 	{ "server_address",         STR_PARAM, &server_address.s},
 	{ "subs_htable_size",       INT_PARAM, &shtable_size},
 	{ "pres_htable_size",       INT_PARAM, &phtable_size},
-	{ "db_mode",                INT_PARAM, &dbmode},
-	{ "fallback2db",            INT_PARAM, &fallback2db},
+	{ "subs_db_mode",           INT_PARAM, &subs_dbmode},
+	{ "publ_cache",             INT_PARAM, &publ_cache_enabled},
 	{ "enable_sphere_check",    INT_PARAM, &sphere_enable},
 	{ "timeout_rm_subs",        INT_PARAM, &timeout_rm_subs},
-	{ "send_fast_notify",	    INT_PARAM, &send_fast_notify},
+	{ "send_fast_notify",       INT_PARAM, &send_fast_notify},
 	{ "fetch_rows",             INT_PARAM, &pres_fetch_rows},
     {0,0,0}
 };
@@ -226,15 +226,15 @@ static int mod_init(void)
 	if(db_url.s== NULL)
 		library_mode= 1;
 
+	EvList= init_evlist();
+	if(!EvList){
+		LM_ERR("unsuccessful initialize event list\n");
+		return -1;
+	}
+
 	if(library_mode== 1)
 	{
 		LM_DBG("Presence module used for API library purpose only\n");
-		EvList= init_evlist();
-		if(!EvList)
-		{
-			LM_ERR("unsuccessful initialize event list\n");
-			return -1;
-		}
 		return 0;
 	}
 
@@ -298,33 +298,29 @@ static int mod_init(void)
 	
 	/*verify table versions */
 	if((db_check_table_version(&pa_dbf, pa_db, &presentity_table, P_TABLE_VERSION) < 0) ||
-		(db_check_table_version(&pa_dbf, pa_db, &active_watchers_table, ACTWATCH_TABLE_VERSION) < 0) ||
 		(db_check_table_version(&pa_dbf, pa_db, &watchers_table, S_TABLE_VERSION) < 0)) {
 			LM_ERR("error during table version check\n");
 			return -1;
 	}
 
-	EvList= init_evlist();
-	if(!EvList)
-	{
-		LM_ERR("initializing event list\n");
+	if(subs_dbmode != NO_DB &&
+		db_check_table_version(&pa_dbf, pa_db, &active_watchers_table, ACTWATCH_TABLE_VERSION) < 0) {
+		LM_ERR("wrong table version for %s\n", active_watchers_table.s);
 		return -1;
 	}
 
-	if(shtable_size< 1)
-		shtable_size= 512;
-	else
-		shtable_size= 1<< shtable_size;
+	if(subs_dbmode != DB_ONLY) {
+		if(shtable_size< 1)
+			shtable_size= 512;
+		else
+			shtable_size= 1<< shtable_size;
 
-	subs_htable= new_shtable(shtable_size);
-	if(subs_htable== NULL)
-	{
-		LM_ERR(" initializing subscribe hash table\n");
-		return -1;
-	}
-
-	if(dbmode != DB_ONLY)
-	{
+		subs_htable= new_shtable(shtable_size);
+		if(subs_htable== NULL)
+		{
+			LM_ERR(" initializing subscribe hash table\n");
+			return -1;
+		}
 		if(restore_db_subs()< 0)
 		{
 			LM_ERR("restoring subscribe info from database\n");
@@ -332,8 +328,7 @@ static int mod_init(void)
 		}
 	}
 
-	if(dbmode != DB_ONLY)
-	{	
+	if(publ_cache_enabled) {
 		if(phtable_size< 1)
 			phtable_size= 256;
 		else
@@ -354,31 +349,18 @@ static int mod_init(void)
 	}
 
 	startup_time = (int) time(NULL);
-	
 	if(clean_period>0)
 	{
 		register_timer(msg_presentity_clean, 0, clean_period);
 		register_timer(msg_watchers_clean, 0, clean_period);
 	}
-	
+
 	if(db_update_period>0)
 		register_timer(timer_db_update, 0, db_update_period);
 
-	if(pa_db)
-		pa_dbf.close(pa_db);
+	pa_dbf.close(pa_db);
 	pa_db = NULL;
-	
-	/* for legacy, we also keep the fallback2db parameter, but make sure for consistency */
-	if(fallback2db)
-	{
-		if (dbmode == DB_ONLY) 
-			LM_ERR( "fallback2db ignored as in DB_ONLY mode\n" );
-		else
-			dbmode = DB_FALLBACK;
-	}
 
-	if (dbmode == DB_ONLY)
-		LM_INFO( "Database mode set to DB_ONLY\n" );
 	return 0;
 }
 
@@ -387,7 +369,7 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
 	pid = my_pid();
@@ -409,7 +391,7 @@ static int child_init(int rank)
 		return -1;
 	}
 	
-	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)  
+	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
 	{
 		LM_ERR( "child %d:unsuccessful use_table presentity_table\n", rank);
 		return -1;
@@ -491,7 +473,7 @@ static void destroy(void)
 
 	if(pa_db && pa_dbf.close)
 		pa_dbf.close(pa_db);
-	
+
 	destroy_evlist();
 }
 
@@ -1045,18 +1027,18 @@ send_notify:
 			goto done;
 		}
 
-        /* delete from database also */
-        if(s->status== TERMINATED_STATUS)
-        {
-            if(pres_db_delete_status(s)<0)
-            {
-                err_ret= -1;
-                LM_ERR("failed to delete terminated dialog from database\n");
-                goto done;
-            }
-        }
+		/* delete from database also */
+		if(s->status== TERMINATED_STATUS)
+		{
+			if(pres_db_delete_status(s)<0)
+			{
+				err_ret= -1;
+				LM_ERR("failed to delete terminated dialog from database\n");
+				goto done;
+			}
+		}
 
-        s= s->next;
+		s= s->next;
 	}
 
 	free_subs_list(subs_array, PKG_MEM_TYPE, 0);
@@ -1316,7 +1298,7 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 
 	LM_DBG("start\n");
 
-	if (dbmode == DB_ONLY) return(update_pw_dialogs_dbonlymode(subs, subs_array));
+	if (subs_dbmode == DB_ONLY) return(update_pw_dialogs_dbonlymode(subs, subs_array));
 
 	lock_get(&subs_htable[hash_code].lock);
 	

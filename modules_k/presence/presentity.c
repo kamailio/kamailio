@@ -19,7 +19,7 @@
  *
  * History:
  * --------
- *  2006-08-15  initial version (anca)
+ *  2006-08-15  initial version (Anca Vamanu)
  */
 
 /*!
@@ -339,7 +339,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	{
 		/* insert new record in hash_table */
 
-		if ( dbmode != DB_ONLY && 
+		if ( publ_cache_enabled &&
 			insert_phtable(&pres_uri, presentity->event->evp->type, sphere)< 0)
 		{
 			LM_ERR("inserting record in hash table\n");
@@ -491,8 +491,7 @@ after_dialog_check:
 						presentity->user.s);
 
 				/* delete from hash table */
-	
-				if(dbmode != DB_ONLY && 
+				if( publ_cache_enabled &&
 					delete_phtable(&pres_uri, presentity->event->evp->type)< 0)
 				{
 					LM_ERR("deleting record from hash table\n");
@@ -588,8 +587,8 @@ after_dialog_check:
 				if(sphere_enable && 
 						presentity->event->evp->type== EVENT_PRESENCE)
 				{
-					if(dbmode != DB_ONLY && 
-						update_phtable(presentity, pres_uri, *body)< 0)
+					if( publ_cache_enabled &&
+							update_phtable(presentity, pres_uri, *body)< 0)
 					{
 						LM_ERR("failed to update sphere for presentity\n");
 						goto error;
@@ -690,7 +689,7 @@ int pres_htable_restore(void)
 	 * in presentity table */
 	db_key_t result_cols[6];
 	db1_res_t *result= NULL;
-	db_row_t *row= NULL ;	
+	db_row_t *row= NULL ;
 	db_val_t *row_vals;
 	int  i;
 	str user, domain, ev_str, uri, body;
@@ -699,12 +698,6 @@ int pres_htable_restore(void)
 	int event;
 	event_t ev;
 	char* sphere= NULL;
-
-	if ( dbmode == DB_ONLY )
-	{
-		LM_ERR( "Can't restore when dbmode is DB_ONLY\n" );
-		return(-1);
-	} 
 
 	result_cols[user_col= n_result_cols++]= &str_username_col;
 	result_cols[domain_col= n_result_cols++]= &str_domain_col;
@@ -718,6 +711,7 @@ int pres_htable_restore(void)
 		LM_ERR("unsuccessful use table sql operation\n");
 		goto error;
 	}
+
 	static str query_str = str_init("username");
 	if (db_fetch_query(&pa_dbf, pres_fetch_rows, pa_db, 0, 0, 0, result_cols,
 				0, n_result_cols, &query_str, &result) < 0)
@@ -875,7 +869,7 @@ char* get_sphere(str* pres_uri)
 	db_val_t query_vals[6];
 	db_key_t result_cols[6];
 	db1_res_t *result = NULL;
-	db_row_t *row= NULL ;	
+	db_row_t *row= NULL;
 	db_val_t *row_vals;
 	int n_result_cols = 0;
 	int n_query_cols = 0;
@@ -886,7 +880,7 @@ char* get_sphere(str* pres_uri)
 	if(!sphere_enable)
 		return NULL;
 
-	if ( dbmode != DB_ONLY )
+	if ( publ_cache_enabled )
 	{
 		/* search in hash table*/
 		hash_code= core_hash(pres_uri, NULL, phtable_size);
@@ -911,12 +905,6 @@ char* get_sphere(str* pres_uri)
 			return sphere;
 		}
 		lock_release(&pres_htable[hash_code].lock);
-	}
-
-	/* if record not found and subscriptions are held also in database, query database*/
-	if(dbmode == DB_MEMORY_ONLY)
-	{
-		return NULL;
 	}
 
 	if(parse_uri(pres_uri->s, pres_uri->len, &uri)< 0)

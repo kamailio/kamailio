@@ -23,7 +23,7 @@
  *
  * History:
  * --------
- *  2007-04-17  initial version (anca)
+ *  2007-04-17  initial version (Anca Vamanu)
  */
 
 /*! \file
@@ -63,7 +63,7 @@ int bind_presence(presence_api_t* api)
 	api->delete_shtable= delete_shtable;
 	api->update_shtable= update_shtable;
 	api->mem_copy_subs= mem_copy_subs;
-	api->update_db_subs= update_db_subs;
+	api->update_db_subs_timer= update_db_subs_timer;
 	api->extract_sdialog_info= extract_sdialog_info;
 	api->get_sphere= get_sphere;
 	api->get_presentity= get_p_notify_body;

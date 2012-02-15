@@ -60,6 +60,7 @@
 #define NO_UPDATEDB_FLAG    1<<0
 #define UPDATEDB_FLAG       1<<1
 #define INSERTDB_FLAG       1<<2
+#define WTHROUGHDB_FLAG     1<<3
 
 #define MAX_FORWARD  70
 

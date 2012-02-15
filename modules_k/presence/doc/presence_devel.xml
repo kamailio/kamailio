@@ -46,7 +46,7 @@ typedef struct presence_api {
 	/* function to duplicate a subs structure*/
 	mem_copy_subs_t  mem_copy_subs;
 	/* function used for update in database*/
-	update_db_subs_t update_db_subs;
+	update_db_subs_t update_db_subs_timer;
 	/* function to extract dialog information from a
 	SUBSCRIBE message */
 	extract_sdialog_info_t extract_sdialog_info;

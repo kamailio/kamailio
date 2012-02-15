@@ -23,7 +23,7 @@
  *
  * History:
  * --------
- *  2007-08-20  initial version (anca)
+ *  2007-08-20  initial version (Anca Vamanu)
  */
 
 /*! \file
@@ -257,31 +257,16 @@ int insert_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs)
 	if(new_rec== NULL)
 	{
 		LM_ERR("copying in share memory a subs_t structure\n");
-		goto error;
+		return -1;
 	}
-
 	new_rec->expires+= (int)time(NULL);
-	if(dbmode == DB_FALLBACK) {
-		if(new_rec->db_flag == 0)
-			new_rec->db_flag = INSERTDB_FLAG;
-	} else {
-		new_rec->db_flag = NO_UPDATEDB_FLAG;
-	}
 
 	lock_get(&htable[hash_code].lock);
-	
 	new_rec->next= htable[hash_code].entries->next;
-	
 	htable[hash_code].entries->next= new_rec;
-	
 	lock_release(&htable[hash_code].lock);
-	
-	return 0;
 
-error:
-	if(new_rec)
-		shm_free(new_rec);
-	return -1;
+	return 0;
 }
 
 int delete_shtable(shtable_t htable,unsigned int hash_code,str to_tag)
@@ -295,11 +280,11 @@ int delete_shtable(shtable_t htable,unsigned int hash_code,str to_tag)
 	s= ps->next;
 		
 	while(s)
-	{	
+	{
 		if(s->to_tag.len== to_tag.len &&
 				strncmp(s->to_tag.s, to_tag.s, to_tag.len)== 0)
 		{
-			found= s->local_cseq;
+			found= s->local_cseq +1;
 			ps->next= s->next;
 			if(s->contact.s!=NULL)
 				shm_free(s->contact.s);

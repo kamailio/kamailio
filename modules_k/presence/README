@@ -16,9 +16,9 @@ Edited by
 
 Juha Heinanen
 
-   Copyright � 2006 Voice Sistem SRL
+   Copyright © 2006 Voice Sistem SRL
 
-   Copyright � 2009 Juha Heinanen
+   Copyright © 2009 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -43,8 +43,8 @@ Juha Heinanen
               3.8. expires_offset (int)
               3.9. max_expires (int)
               3.10. server_address (str)
-              3.11. fallback2db (int)
-              3.12. db_mode (int)
+              3.11. subs_db_mode (int)
+              3.12. publ_cache (int)
               3.13. subs_htable_size (int)
               3.14. pres_htable_size (int)
               3.15. send_fast_notify (int)
@@ -99,8 +99,8 @@ Juha Heinanen
    1.8. Set expires_offset parameter
    1.9. Set max_expires parameter
    1.10. Set server_address parameter
-   1.11. Set fallback2db parameter
-   1.12. Set db_mode parameter
+   1.11. Set subs_db_mode parameter
+   1.12. Set publ_cache parameter
    1.13. Set subs_htable_size parameter
    1.14. Set pres_htable_size parameter
    1.15. Set send_fast_notify parameter
@@ -136,8 +136,8 @@ Chapter 1. Admin Guide
         3.8. expires_offset (int)
         3.9. max_expires (int)
         3.10. server_address (str)
-        3.11. fallback2db (int)
-        3.12. db_mode (int)
+        3.11. subs_db_mode (int)
+        3.12. publ_cache (int)
         3.13. subs_htable_size (int)
         3.14. pres_htable_size (int)
         3.15. send_fast_notify (int)
@@ -170,23 +170,13 @@ Chapter 1. Admin Guide
    from the presence_xml module and message-summary from the presence_mwi
    module.
 
-   The module uses database storage and memory caching (to improve
-   performance). The SIP SUBSCRIBE dialog information is stored in memory
-   and is periodically updated in the database, while for PUBLISH only the
-   presence or absence of stored info for a certain resource is maintained
-   in memory to avoid unnecessary, costly database operations. It is
-   possible to disable in-memory caching by configuring a fallback to
-   database mode (by setting the module parameter "fallback2db"). In this
-   mode, in case a searched record is not found in cache, the search is
-   continued in database. This is useful for an architecture in which
-   processing and memory load might be divided on several Kamailio
-   instances, maybe on different servers using the same database. This
-   parameter remains only for legacy purposes. As a new feature for the
-   presence engine, it is possible to have three database modes, which one
-   can configure through the db_mode parameter. Setting db_mode to 0, 1, 2
-   respective will cause the subscribers to be retrieved from memory only,
-   from memory and to fallback to database mode in case a record is not
-   found in memory, and from database only.
+   The module can use database and memory storage (to improve
+   performance). For subscriptions it supports the 4 storage modes: Memory
+   Only, Write Back, Write Through and DB Only. For publishes, it stores
+   the state documents in database only(because of the large size) and it
+   can store a publish cache in memory to avoid unnecessairy database
+   queries. Read the subs_db_mode and publ_cache parameter sections to
+   decide which is the best storage configuration for you.
 
    The module implements several API functions, that can be used by other
    modules. In fact, it can be used only as a resource module, or
@@ -224,8 +214,8 @@ Chapter 1. Admin Guide
    3.8. expires_offset (int)
    3.9. max_expires (int)
    3.10. server_address (str)
-   3.11. fallback2db (int)
-   3.12. db_mode (int)
+   3.11. subs_db_mode (int)
+   3.12. publ_cache (int)
    3.13. subs_htable_size (int)
    3.14. pres_htable_size (int)
    3.15. send_fast_notify (int)
@@ -240,7 +230,7 @@ Chapter 1. Admin Guide
    If set, the module is a fully operational presence server. Otherwise,
    it is used as a 'library', for its exported functions.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.1. Set db_url parameter
 ...
@@ -252,7 +242,7 @@ modparam("presence", "db_url",
 
    The name of the db table where PUBLISH presence information is stored.
 
-   Default value is "presentity".
+   Default value is “presentity”.
 
    Example 1.2. Set presentity_table parameter
 ...
@@ -264,7 +254,7 @@ modparam("presence", "presentity_table", "presentity")
    The name of the db table where active subscription information is
    stored.
 
-   Default value is "active_watchers".
+   Default value is “active_watchers”.
 
    Example 1.3. Set active_watchers_table parameter
 ...
@@ -275,7 +265,7 @@ modparam("presence", "active_watchers_table", "active_watchers")
 
    The name of the db table where subscription states are stored.
 
-   Default value is "watchers".
+   Default value is “watchers”.
 
    Example 1.4. Set watchers_table parameter
 ...
@@ -287,7 +277,7 @@ modparam("presence", "watchers_table", "watchers")
    The period in seconds between checks if there are expired messages
    stored in database.
 
-   Default value is "100". A zero or negative value disables this
+   Default value is “100”. A zero or negative value disables this
    activity.
 
    Example 1.5. Set clean_period parameter
@@ -300,7 +290,7 @@ modparam("presence", "clean_period", 100)
    The period at which to synchronize cached subscriber info with the
    database.
 
-   Default value is "100". A zero or negative value disables
+   Default value is “100”. A zero or negative value disables
    synchronization.
 
    Example 1.6. Set db_update_period parameter
@@ -313,7 +303,7 @@ modparam("presence", "db_update_period", 100)
    The prefix used when generating to_tag when sending replies for
    SUBSCRIBE requests.
 
-   Default value is "10".
+   Default value is “10”.
 
    Example 1.7. Set to_tag_pref parameter
 ...
@@ -326,7 +316,7 @@ modparam("presence", "to_tag_pref", 'pres')
    when sending a 200OK for a publish. It is used for forcing the client
    to send an update before the old publish expires.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.8. Set expires_offset parameter
 ...
@@ -338,7 +328,7 @@ modparam("presence", "expires_offset", 10)
    The the maximum admissible expires value for PUBLISH/SUBSCRIBE message
    (in seconds).
 
-   Default value is "3600".
+   Default value is “3600”.
 
    Example 1.9. Set max_expires parameter
 ...
@@ -356,34 +346,64 @@ modparam("presence", "max_expires", 3600)
 modparam("presence", "server_address", "sip:10.10.10.10:5060")
 ...
 
-3.11. fallback2db (int)
+3.11. subs_db_mode (int)
 
-   Setting this parameter enables a fallback to db mode of operation. In
-   this mode, in case a searched record is not found in cache, the search
-   is continued in database. Useful for an architecture in which
-   processing and memory load might be divided on more servers using the
-   same database. This parameter overwrite the configuration specified
-   from the "db_mode" parameter.
+   The presence module can utilize database for persistent subscription
+   storage. If you use database, your subscriptions will survive machine
+   restarts or SW crashes. The disadvantage is that accessing database can
+   be time consuming. Therefore, presence module implements four database
+   accessing modes:
+     * 0 - This disables database completely. Only memory will be used.
+       Subscriptions will not survive restart. Use this value if you need
+       a really fast presence module and subscription persistence is not
+       necessary or is provided by other means.
+     * 1 - Write-Through scheme. Subscriptions are updated synchronously
+       in database and in memory(used for read operations). Use this
+       scheme if speed is not top priority, but it's important that no
+       subscriptions will be lost during crash or reboot or if you have an
+       external application that reads the state of the subscriptions from
+       database and they need to be updated synchronously.
+     * 2 - Write-Back scheme. This is a combination of previous two
+       schemes. All changes are made to memory and database
+       synchronization is done in the timer. The timer deletes all expired
+       contacts and flushes all modified or new subscriptions to database.
+       Use this scheme if you encounter high-load peaks and want them to
+       process as fast as possible. Latency of this mode is much lower
+       than latency of mode 1, but slightly higher than latency of mode 0.
+       To control the interval at which data is flushed to database, set
+       the db_update_period parameter.
+     * 3 - DB-Only scheme. No memory cache is kept, all operations being
+       directly performed with the database. The timer deletes all expired
+       subscriptions from database. The mode is useful if you configure
+       more servers sharing the same DB without any replication at SIP
+       level. The mode may be slower due the high number of DB operation.
 
-   This parameter is obsolet and will be removed in future releases.
+   Default value is 2 (Write-Back scheme).
 
-   Example 1.11. Set fallback2db parameter
+   Example 1.11. Set subs_db_mode parameter
 ...
-modparam("presence", "fallback2db", 1)
+modparam("presence", "subs_db_mode", 1)
 ...
 
-3.12. db_mode (int)
+3.12. publ_cache (int)
 
-   This parameter sets the mode in which records are retrieved. Setting
-   this parameter to 0 or 1 is equivalent to setting fallback2db to 0 or
-   1, respectiv. The db_mode parameter can also take a third value, 2, in
-   which records are retrieved from database only. So, the three database
-   modes in which the presence engine can operate are: memory only,
-   fallback to database, and database only.
+   To improve performance, the presence module holds by default a publish
+   cache that says if a certain publication exists in database. This is
+   only a list of URI + event, so it does not use much memory. The cache
+   is used when a Subscription is received to check if there is any
+   published state in database. This way unnecessary queries in presentity
+   table are avoided.
 
-   Example 1.12. Set db_mode parameter
+   Setting this parameter to 0 will disable the usage of the publish
+   cache. This is desirable when you have more servers sharing the same
+   database or there are other external entities inserting data into the
+   presentity table.
+
+   Default value is “1”.
+
+   Example 1.12. Set publ_cache parameter
 ...
-modparam("presence", "db_mode", 2)
+modparam("presence", "publ_cache", 0)
 ...
 
 3.13. subs_htable_size (int)
@@ -392,7 +412,7 @@ modparam("presence", "db_mode", 2)
    This parameter will be used as the power of 2 when computing table
    size.
 
-   Default value is "9 (512)".
+   Default value is “9 (512)”.
 
    Example 1.13. Set subs_htable_size parameter
 ...
@@ -404,7 +424,7 @@ modparam("presence", "subs_htable_size", 11)
    The size of the in-memory hash table to store publish records. This
    parameter will be used as the power of 2 when computing table size.
 
-   Default value is "9 (512)".
+   Default value is “9 (512)”.
 
    Example 1.14. Set pres_htable_size parameter
 ...
@@ -419,7 +439,7 @@ modparam("presence", "pres_htable_size", 11)
    empty NOTIFY to an message-summary event. This parameter is enabled by
    default, thus addering to the standard.
 
-   Default value is "1 ".
+   Default value is “1 ”.
 
    Example 1.15. Set send_fast_notify parameter
 ...
@@ -434,7 +454,7 @@ modparam("presence", "send_fast_notify", 0)
    this check requires extra processing that should be avoided if this
    feature is not supported by the clients.
 
-   Default value is "0 ".
+   Default value is “0 ”.
 
    Example 1.16. Set enable_sphere_check parameter
 ...
@@ -449,7 +469,7 @@ modparam("presence", "enable_sphere_check", 1)
    on. Disabling this will keep subscriptions active on unreliable
    networks.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.17. Set timeout_rm_subs parameter
 ...
@@ -475,7 +495,7 @@ modparam("presence", "fetch_rows", 1000)
    4.4. pres_refresh_watchers(uri, event, type)
    4.5. pres_update_watchers(uri, event)
 
-4.1. handle_publish(char* sender_uri)
+4.1.  handle_publish(char* sender_uri)
 
    Handles PUBLISH requests by storing and updating published information
    in memory cache and database, then calls functions to send NOTIFY
@@ -507,7 +527,7 @@ modparam("presence", "fetch_rows", 1000)
         }
 ...
 
-4.2. handle_subscribe()
+4.2.  handle_subscribe()
 
    The function which handles SUBSCRIBE requests. It stores or updates
    information in memory and database and calls functions to send NOTIFY
@@ -527,7 +547,7 @@ if(method=="SUBSCRIBE")
     handle_subscribe();
 ...
 
-4.3. pres_auth_status(watcher_uri, presentity_uri)
+4.3.  pres_auth_status(watcher_uri, presentity_uri)
 
    The function checks if watcher is authorized to subscribe event
    'presence' of presentity. Both watcher_uri and presentity_uri are
@@ -550,7 +570,7 @@ if (method=="MESSAGE") {
 }
 ...
 
-4.4. pres_refresh_watchers(uri, event, type)
+4.4.  pres_refresh_watchers(uri, event, type)
 
    The function can be used in configuration to triger notifies to
    watchers if a change in watchers authorization or in published state
@@ -574,7 +594,7 @@ if (method=="MESSAGE") {
 pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 ...
 
-4.5. pres_update_watchers(uri, event)
+4.5.  pres_update_watchers(uri, event)
 
    The function can be used in configuration to triger updates to watchers
    status if a change in watchers authorization state occurred (i.e.,
@@ -597,7 +617,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
    5.1. refreshWatchers
    5.2. cleanup
 
-5.1. refreshWatchers
+5.1.  refreshWatchers
 
    Triggers sending Notify messages to watchers if a change in watchers
    authorization or in published state occurred.
@@ -623,7 +643,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
                 1
                 _empty_line_
 
-5.2. cleanup
+5.2.  cleanup
 
    Manually triggers the cleanup functions for watchers and presentity
    tables. Useful if you have set clean_period to zero or less.
@@ -670,7 +690,7 @@ Chapter 2. Developer Guide
    The module provides the following functions that can be used in other
    Kamailio modules.
 
-1. bind_presence(presence_api_t* api)
+1.  bind_presence(presence_api_t* api)
 
    This function binds the presence modules and fills the structure with
    one exported function -> add_event, which when called adds a new event
@@ -696,7 +716,7 @@ typedef struct presence_api {
         /* function to duplicate a subs structure*/
         mem_copy_subs_t  mem_copy_subs;
         /* function used for update in database*/
-        update_db_subs_t update_db_subs;
+        update_db_subs_t update_db_subs_timer;
         /* function to extract dialog information from a
         SUBSCRIBE message */
         extract_sdialog_info_t extract_sdialog_info;
@@ -706,7 +726,7 @@ typedef struct presence_api {
 }presence_api_t;
 ...
 
-2. add_event
+2.  add_event
 
    Field type:
 ...
@@ -769,7 +789,7 @@ makes a
 }pres_ev_t;
 ...
 
-3. get_rules_doc
+3.  get_rules_doc
 
    Filed type:
 ...
@@ -782,7 +802,7 @@ typedef int (get_rules_doc_t)(str* user, str* domain, str** rules_doc);
    auth_rules_doc of the subs_t structure given as a parameter to the
    functions described bellow.
 
-4. get_auth_status
+4.  get_auth_status
 
    This filed is a function to be called for a subscription request to
    return the state for that subscription according to authorization
@@ -797,7 +817,7 @@ typedef int (get_rules_doc_t)(str* user, str* domain, str** rules_doc);
 typedef int (is_allowed_t)(struct subscription* subs);
 ...
 
-5. apply_auth_nbody
+5.  apply_auth_nbody
 
    This parameter should be a function to be called for an event that
    requires authorization, when constructing final body. The authorization
@@ -809,7 +829,7 @@ typedef int (is_allowed_t)(struct subscription* subs);
 typedef int (apply_auth_t)(str* , struct subscription*, str** );
 ...
 
-6. agg_nbody
+6.  agg_nbody
 
    If present, this field marks that the events requires aggregation of
    states. This function receives a body array and should return the final
@@ -823,7 +843,7 @@ typedef str* (agg_nbody_t)(str* pres_user, str* pres_domain,
 str** body_array, int n, int off_index);
 ..
 
-7. free_body
+7.  free_body
 
    This field must be field in if subsequent processing is performed on
    the info from database before being inserted in Notify message body(if
@@ -835,7 +855,7 @@ str** body_array, int n, int off_index);
 typedef void(free_body_t)(char* body);
 ..
 
-8. aux_body_processing
+8.  aux_body_processing
 
    This field must be set if the module needs to manipulate the NOTIFY
    body for each watcher. E.g. if the XML body includes a 'version'
@@ -849,7 +869,7 @@ typedef void(free_body_t)(char* body);
 typedef str* (aux_body_processing_t)(struct subscription *subs, str* body);
 ..
 
-9. aux_free_body
+9.  aux_free_body
 
    This field must be set if the module registers the aux_body_processing
    function and allocates memory for the new modified body. Then, this
@@ -864,7 +884,7 @@ typedef str* (aux_body_processing_t)(struct subscription *subs, str* body);
 typedef void(free_body_t)(char* body);
 ..
 
-10. evs_publ_handl
+10.  evs_publ_handl
 
    This function is called when handling Publish requests. Most contain
    body correctness check.
@@ -873,7 +893,7 @@ typedef void(free_body_t)(char* body);
 typedef int (publ_handling_t)(struct sip_msg*);
 ..
 
-11. evs_subs_handl
+11.  evs_subs_handl
 
    It is not compulsory. Should contain event specific handling for
    Subscription requests.
@@ -883,7 +903,7 @@ typedef int (publ_handling_t)(struct sip_msg*);
 typedef int (subs_handling_t)(struct sip_msg*);
 ..
 
-12. contains_event
+12.  contains_event
 
    Field type:
 ..
@@ -896,7 +916,7 @@ event_t* parsed_event);
    found. If the second argument is an allocated event_t* structure it
    fills it with the result of the parsing.
 
-13. get_event_list
+13.  get_event_list
 
    Field type:
 ...
@@ -906,7 +926,7 @@ typedef int (*get_event_list_t) (str** ev_list);
    This function returns a string representation of the events registered
    in presence module.( used for Allowed-Events header).
 
-14. update_watchers_status
+14.  update_watchers_status
 
    Field type:
 ...
@@ -920,7 +940,7 @@ str* rules_doc);
    (used by presence_xml module when notified through an MI command of a
    change in an xcap document).
 
-15. get_sphere
+15.  get_sphere
 
    Field type:
 ...
@@ -931,7 +951,7 @@ typedef char* (*pres_get_sphere_t)(str* pres_uri);
    information if this has type RPID. If not found returns NULL. (the
    return value is allocated in private memory and should be freed)
 
-16. get_presentity
+16.  get_presentity
 
    Field type:
 ...
@@ -947,7 +967,7 @@ r *contact);
    Once you are finished with the presentity document you must call
    free_presentity to free the allocated memory.
 
-17. free_presentity
+17.  free_presentity
 
    Field type:
 ...

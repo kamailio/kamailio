@@ -23,7 +23,7 @@
  *
  * History:
  * --------
- *  2007-04-17  initial version (anca)
+ *  2007-04-17  initial version (Anca Vamanu)
  */
 /*! \file
  * \brief SIP-Router Presence :: Kamailio generic presence module
@@ -61,7 +61,7 @@ typedef struct presence_api {
 	delete_shtable_t delete_shtable;
 	update_shtable_t update_shtable;
 	mem_copy_subs_t  mem_copy_subs;
-	update_db_subs_t update_db_subs;
+	update_db_subs_t update_db_subs_timer;
 	extract_sdialog_info_t extract_sdialog_info;
 	pres_get_sphere_t get_sphere;
 	pres_get_presentity_t get_presentity;

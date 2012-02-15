@@ -23,7 +23,7 @@
  *
  * History:
  * --------
- *  2006-08-15  initial version (anca)
+ *  2006-08-15  initial version (Anca Vamanu)
  */
 
 /*! \file
@@ -138,7 +138,7 @@ error:
 }
 
 
-int delete_db_subs(str pres_uri, str ev_stored_name, str to_tag)
+int delete_db_subs(str* pres_uri, str* ev_stored_name, str* to_tag)
 {
 	db_key_t query_cols[5];
 	db_val_t query_vals[5];
@@ -147,19 +147,19 @@ int delete_db_subs(str pres_uri, str ev_stored_name, str to_tag)
 	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = pres_uri;
+	query_vals[n_query_cols].val.str_val = *pres_uri;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_event_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = ev_stored_name;
+	query_vals[n_query_cols].val.str_val = *ev_stored_name;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_to_tag_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = to_tag;
+	query_vals[n_query_cols].val.str_val = *to_tag;
 	n_query_cols++;
 	
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0) 
@@ -405,37 +405,40 @@ int update_subs_db(subs_t* subs, int type)
 	return 0;
 }
 
+void delete_subs(str* pres_uri, str* ev_name, str* to_tag)
+{
+	/* delete record from hash table also if not in dbonly mode */
+	if(subs_dbmode != DB_ONLY)
+	{
+		unsigned int hash_code= core_hash(pres_uri, ev_name, shtable_size);
+		if(delete_shtable(subs_htable, hash_code, *to_tag) < 0)
+			LM_ERR("Failed to delete subscription from memory\n");
+	}
+
+	if(subs_dbmode != NO_DB && delete_db_subs(pres_uri, ev_name, to_tag)< 0)
+		LM_ERR("Failed to delete subscription from database\n");
+}
+
+
 int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 		int* sent_reply)
-{	
+{
 	unsigned int hash_code;
-	
-	printf_subs(subs);	
-	
-	*sent_reply= 0;
 
-	hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
+	printf_subs(subs);
+
+	*sent_reply= 0;
 
 	if( to_tag_gen ==0) /*if a SUBSCRIBE within a dialog */
 	{
 		if(subs->expires == 0)
 		{
 			LM_DBG("expires =0 -> deleting record\n");
-		
-			if( delete_db_subs(subs->pres_uri, 
-						subs->event->name, subs->to_tag)< 0)
-			{
-				LM_ERR("deleting subscription record from database\n");
-				goto error;
-			}
-			/* delete record from hash table also if not in dbonly mode */
-			if(dbmode != DB_ONLY)
-			{
-				subs->local_cseq= delete_shtable(subs_htable, hash_code, subs->to_tag);
-			}
-		
+
+			delete_subs(&subs->pres_uri, &subs->event->name, &subs->to_tag);
+
 			if(subs->event->type & PUBL_TYPE)
-			{	
+			{
 				if( send_2XX_reply(msg, 202, subs->expires,
 							&subs->local_contact) <0)
 				{
@@ -453,7 +456,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 					}
 				}
 
-			}	
+			}
 			else /* if unsubscribe for winfo */
 			{
 				if( send_2XX_reply(msg, 200, subs->expires,
@@ -472,21 +475,18 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 			}
 			return 1;
 		}
-		/* if subscribers are held in memory, update them */
-		if(dbmode != DB_ONLY)
+		/* if subscriptions are stored in memory, update them */
+		if(subs_dbmode != DB_ONLY)
 		{
+			hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
 			if(update_shtable(subs_htable, hash_code, subs, REMOTE_TYPE)< 0)
 			{
-				/* if subscribers are also retrieved from database, it is not a fatal error */
-				if(dbmode != DB_MEMORY_ONLY)
-				{
-					LM_ERR("updating subscription record in hash table\n");
-					goto error;
-				}
+				LM_ERR("failed to update subscription in memory\n");
+				goto error;
 			}
 		}
-		/* if subscribers are retrieved from db also, update the subscription in database immediately */
-		if(dbmode != DB_MEMORY_ONLY)
+		/* for modes that update the subscription synchronously in database, write in db */
+		if(subs_dbmode == DB_ONLY ||  subs_dbmode== WRITE_THROUGH)
 		{
 			/* update in database table */
 			if(update_subs_db(subs, REMOTE_TYPE)< 0)
@@ -501,20 +501,23 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 		LM_DBG("subscription not in dialog\n");
 		if(subs->expires!= 0)
 		{
-			if(dbmode != DB_ONLY)
+			if(subs_dbmode != DB_ONLY)
 			{
 				LM_DBG("inserting in shtable\n");
+				subs->db_flag = (subs_dbmode==WRITE_THROUGH)?WTHROUGHDB_FLAG:INSERTDB_FLAG;
+				hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
 				if(insert_shtable(subs_htable,hash_code,subs)< 0)
 				{
-					LM_ERR("inserting new record in subs_htable\n");
+					LM_ERR("failed to insert new record in subs htable\n");
 					goto error;
 				}
 			}
-			else
+
+			if(subs_dbmode == DB_ONLY || subs_dbmode == WRITE_THROUGH)
 			{
 				if(insert_subs_db(subs, REMOTE_TYPE) < 0)
 				{
-					LM_ERR("inserting new record in db\n");
+					LM_ERR("failed to insert new record in database\n");
 					goto error;
 				}
 			}
@@ -594,13 +597,12 @@ error:
 
 void msg_watchers_clean(unsigned int ticks,void *param)
 {
-	db_key_t db_keys[3], result_cols[1];
-	db_val_t db_vals[3];
-	db_op_t  db_ops[3] ;
-	db1_res_t *result= NULL;
+	db_key_t db_keys[2];
+	db_val_t db_vals[2];
+	db_op_t  db_ops[2] ;
 
 	LM_DBG("cleaning pending subscriptions\n");
-	
+
 	db_keys[0] = &str_inserted_time_col;
 	db_ops[0] = OP_LT;
 	db_vals[0].type = DB1_INT;
@@ -612,32 +614,14 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 	db_vals[1].type = DB1_INT;
 	db_vals[1].nul = 0;
 	db_vals[1].val.int_val = PENDING_STATUS;
-	
-	result_cols[0]= &str_id_col;
 
 	if (pa_dbf.use_table(pa_db, &watchers_table) < 0) 
 	{
 		LM_ERR("unsuccessful use table sql operation\n");
 		return ;
 	}
-	
-	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, result_cols, 2, 1, 0, &result )< 0)
-	{
-		LM_ERR("querying database for expired messages\n");
-		if(result)
-			pa_dbf.free_result(pa_db, result);
-		return;
-	}
-	if(result == NULL)
-		return;
-	if(result->n <= 0)
-	{
-		pa_dbf.free_result(pa_db, result);
-		return;
-	}
-	pa_dbf.free_result(pa_db, result);
 
-	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 2) < 0) 
+	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 2) < 0)
 		LM_ERR("cleaning pending subscriptions\n");
 }
 
@@ -703,7 +687,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			break;
 		}
 		ev_param= ev_param->next;
-	}		
+	}
 	
 	if(extract_sdialog_info(&subs, msg, max_expires, &to_tag_gen,
 				server_address)< 0)
@@ -1117,11 +1101,14 @@ error:
 
 int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 		str* reply_str)
-{	
+{
 	str pres_uri= {0, 0}, reason={0, 0};
 	subs_t* s;
 	int i;
 	unsigned int hash_code;
+
+	if(subs_dbmode == DB_ONLY)
+		return get_database_info(msg, subs, reply_code, reply_str);
 
 	/* first try to_user== pres_user and to_domain== pres_domain */
 	if(subs->pres_uri.s == NULL)
@@ -1138,18 +1125,16 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 
 	hash_code= core_hash(&pres_uri, &subs->event->name, shtable_size);
 	lock_get(&subs_htable[hash_code].lock);
-	i= hash_code;
 	s= search_shtable(subs_htable, subs->callid, subs->to_tag,
-			subs->from_tag, hash_code);
+		subs->from_tag, hash_code);
 	if(s)
-	{
 		goto found_rec;
-	}
+
 	lock_release(&subs_htable[hash_code].lock);
 
 	if(subs->pres_uri.s)
 		goto not_found;
-	
+
 	pkg_free(pres_uri.s);
 	pres_uri.s= NULL;
 
@@ -1161,49 +1146,36 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 		s= search_shtable(subs_htable, subs->callid,subs->to_tag,subs->from_tag, i);
 		if (s)
 		{
-			if(!EVENT_DIALOG_SLA(s->event->evp))
+			pres_uri.s= (char*)pkg_malloc(s->pres_uri.len* sizeof(char));
+			if(pres_uri.s== NULL)
 			{
-				pres_uri.s= (char*)pkg_malloc(s->pres_uri.len* sizeof(char));
-				if(pres_uri.s== NULL)
-				{
-					lock_release(&subs_htable[i].lock);
-					ERR_MEM(PKG_MEM_STR);
-				}
-				memcpy(pres_uri.s, s->pres_uri.s, s->pres_uri.len);
-				pres_uri.len= s->pres_uri.len;
+				lock_release(&subs_htable[i].lock);
+				ERR_MEM(PKG_MEM_STR);
 			}
-			goto found_rec;
+			memcpy(pres_uri.s, s->pres_uri.s, s->pres_uri.len);
+			pres_uri.len= s->pres_uri.len;
+
+			hash_code = i;
+			break;
 		}
 		lock_release(&subs_htable[i].lock);
 	}
-
-not_found:
-	if(dbmode != DB_MEMORY_ONLY)
-	{
-		return get_database_info(msg, subs, reply_code, reply_str);
-	}
-
-	LM_INFO("record not found in hash_table\n");
-	*reply_code= 481;
-	*reply_str= pu_481_rpl;
-
-	return -1;
 
 found_rec:
 
 	LM_DBG("Record found in hash_table\n");
 
-	if(!EVENT_DIALOG_SLA(s->event->evp))
+	if(subs->pres_uri.s == NULL)
 		subs->pres_uri= pres_uri;
 
 	subs->version = s->version;
 	subs->status= s->status;
 	if(s->reason.s && s->reason.len)
-	{	
+	{
 		reason.s= (char*)pkg_malloc(s->reason.len* sizeof(char));
 		if(reason.s== NULL)
 		{
-			lock_release(&subs_htable[i].lock);
+			lock_release(&subs_htable[hash_code].lock);
 			ERR_MEM(PKG_MEM_STR);
 		}
 		memcpy(reason.s, s->reason.s, s->reason.len);
@@ -1216,6 +1188,7 @@ found_rec:
 			(s->record_route.len* sizeof(char));
 		if(subs->record_route.s== NULL)
 		{
+			lock_release(&subs_htable[hash_code].lock);
 			ERR_MEM(PKG_MEM_STR);
 		}
 		memcpy(subs->record_route.s, s->record_route.s, s->record_route.len);
@@ -1223,7 +1196,7 @@ found_rec:
 	}
 
 	subs->local_cseq= s->local_cseq;
-	
+
 	if(subs->remote_cseq<= s->remote_cseq)
 	{
 		LM_ERR("wrong sequence number;received: %d - stored: %d\n",
@@ -1232,12 +1205,20 @@ found_rec:
 		*reply_code= 400;
 		*reply_str= pu_400_rpl;
 
-		lock_release(&subs_htable[i].lock);
+		lock_release(&subs_htable[hash_code].lock);
 		goto error;
-	}	
-	lock_release(&subs_htable[i].lock);
+	}
+	lock_release(&subs_htable[hash_code].lock);
 
 	return 0;
+
+not_found:
+
+	LM_INFO("record not found in hash_table\n");
+	*reply_code= 481;
+	*reply_str= pu_481_rpl;
+
+	return -1;
 
 error:
 	if(subs->reason.s)
@@ -1250,7 +1231,7 @@ error:
 }
 
 int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* reply_str)
-{	
+{
 	db_key_t query_cols[3];
 	db_val_t query_vals[3];
 	db_key_t result_cols[7];
@@ -1410,47 +1391,229 @@ int handle_expired_subs(subs_t* s)
 
 }
 
-void timer_db_update(unsigned int ticks,void *param)
-{	
-	int no_lock=0;
-	LM_DBG("db_update timer\n");
-	if(ticks== 0 && param == NULL)
-		no_lock= 1;
-	
+void update_db_subs_timer_dbonly(void)
+{
+	db_op_t qops[1];
+	db_key_t qcols[1];
+	db_val_t qvals[1];
+	db_key_t result_cols[16];
+	int pres_uri_col, to_user_col, to_domain_col, from_user_col, from_domain_col,
+		callid_col, totag_col, fromtag_col, event_col, event_id_col,
+		local_cseq_col, expires_col, rr_col, sockinfo_col,
+		contact_col, lcontact_col;
+	int n_result_cols = 0;
+	db1_res_t *result= NULL;
+	db_row_t *row = NULL;
+	db_val_t *row_vals= NULL;
+	int i;
+	subs_t s, *s_new, *s_array = NULL, *s_del;
+	str ev_name;
+	pres_ev_t* event;
+
+	LM_DBG("update_db_subs_timer_dbonly: start\n");
+
+	qcols[0]= &str_expires_col;
+	qvals[0].type = DB1_INT;
+	qvals[0].nul = 0;
+	qvals[0].val.int_val= (int)time(NULL) - expires_offset;
+	qops[0]= OP_LT;
+
+	/* query the expired subscriptions */
+	result_cols[pres_uri_col=n_result_cols++]   =&str_presentity_uri_col;
+	result_cols[expires_col=n_result_cols++]    =&str_expires_col;
+	result_cols[event_col=n_result_cols++]      =&str_event_col;
+	result_cols[event_id_col=n_result_cols++]   =&str_event_id_col;
+	result_cols[to_user_col=n_result_cols++]    =&str_to_user_col;
+	result_cols[to_domain_col=n_result_cols++]  =&str_to_domain_col;
+	result_cols[from_user_col=n_result_cols++]  =&str_watcher_username_col;
+	result_cols[from_domain_col=n_result_cols++]=&str_watcher_domain_col;
+	result_cols[callid_col=n_result_cols++]     =&str_callid_col;
+	result_cols[totag_col=n_result_cols++]      =&str_to_tag_col;
+	result_cols[fromtag_col=n_result_cols++]    =&str_from_tag_col;
+	result_cols[local_cseq_col= n_result_cols++]=&str_local_cseq_col;
+	result_cols[rr_col= n_result_cols++]        =&str_record_route_col;
+	result_cols[sockinfo_col= n_result_cols++]  =&str_socket_info_col;
+	result_cols[contact_col= n_result_cols++]   =&str_contact_col;
+	result_cols[lcontact_col= n_result_cols++]  =&str_local_contact_col;
+
 	if(pa_dbf.use_table(pa_db, &active_watchers_table)< 0)
 	{
 		LM_ERR("sql use table failed\n");
 		return;
 	}
 
-	update_db_subs(pa_db, pa_dbf, subs_htable, 
-			shtable_size, no_lock, handle_expired_subs);
+	if (pa_dbf.query(pa_db, qcols, qops, qvals, result_cols,
+				1, n_result_cols, 0, &result) < 0) {
+		LM_ERR("failed to query database for expired subscriptions\n");
+		if(result)
+			pa_dbf.free_result(pa_db, result);
+		return;
+	}
 
+	if(result== NULL)
+		return;
+
+	if(result->n <=0 ) {
+		pa_dbf.free_result(pa_db, result);
+		return;
+	}
+	LM_DBG("found %d dialogs\n", result->n);
+	
+	for(i=0; i<result->n; i++)
+	{
+		row = &result->rows[i];
+		row_vals = ROW_VALUES(row);
+
+		memset(&s, 0, sizeof(subs_t));
+
+		s.pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
+		s.pres_uri.len = strlen(s.pres_uri.s);
+
+		s.to_user.s= (char*)row_vals[to_user_col].val.string_val;
+		s.to_user.len= strlen(s.to_user.s);
+
+		s.to_domain.s= (char*)row_vals[to_domain_col].val.string_val;
+		s.to_domain.len= strlen(s.to_domain.s);
+
+		s.from_user.s= (char*)row_vals[from_user_col].val.string_val;
+		s.from_user.len= strlen(s.from_user.s);
+
+		s.from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
+		s.from_domain.len= strlen(s.from_domain.s);
+
+		s.event_id.s=(char*)row_vals[event_id_col].val.string_val;
+		s.event_id.len= (s.event_id.s)?strlen(s.event_id.s):0;
+
+		s.to_tag.s= (char*)row_vals[totag_col].val.string_val;
+		s.to_tag.len= strlen(s.to_tag.s);
+
+		s.from_tag.s= (char*)row_vals[fromtag_col].val.string_val; 
+		s.from_tag.len= strlen(s.from_tag.s);
+
+		s.callid.s= (char*)row_vals[callid_col].val.string_val;
+		s.callid.len= strlen(s.callid.s);
+
+		s.record_route.s=  (char*)row_vals[rr_col].val.string_val;
+		s.record_route.len= (s.record_route.s)?strlen(s.record_route.s):0;
+
+		s.contact.s= (char*)row_vals[contact_col].val.string_val;
+		s.contact.len= strlen(s.contact.s);
+
+		s.sockinfo_str.s = (char*)row_vals[sockinfo_col].val.string_val;
+		s.sockinfo_str.len = s.sockinfo_str.s?strlen(s.sockinfo_str.s):0;
+
+		s.local_contact.s = (char*)row_vals[lcontact_col].val.string_val;
+		s.local_contact.len = s.local_contact.s?strlen(s.local_contact.s):0;
+
+		ev_name.s= (char*)row_vals[event_col].val.string_val;
+		ev_name.len= strlen(ev_name.s);
+
+		event= contains_event(&ev_name, 0);
+		if(event== NULL) {
+			LM_ERR("Wrong event in database %.*s\n", ev_name.len, ev_name.s);
+			continue;
+		}
+		s.event= event;
+
+		s.local_cseq = row_vals[local_cseq_col].val.int_val;
+		s.expires = 0;
+
+		s_new= mem_copy_subs(&s, PKG_MEM_TYPE);
+		if(s_new== NULL)
+		{
+			LM_ERR("while copying subs_t structure\n");
+			continue;
+		}
+		s_new->next= s_array;
+		s_array= s_new;
+		printf_subs(s_new);
+	}
+	pa_dbf.free_result(pa_db, result);
+
+	s_new = s_array;
+	while(s_new) {
+		handle_expired_subs(s_new);
+		s_del = s_new;
+		s_new = s_new->next;
+		pkg_free(s_del);
+	}
+
+	/* delete the expired subscriptions */
+	if(pa_dbf.delete(pa_db, qcols, qops, qvals, 1) < 0)
+	{
+		LM_ERR("deleting expired information from database\n");
+	}
 }
 
-void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
+void update_db_subs_timer_dbnone(int no_lock)
+{
+	int i;
+	int now = (int)time(NULL);
+	subs_t* s= NULL, *prev_s= NULL, *del_s;
+
+	LM_DBG("update_db_subs_timer_dbnone: start\n");
+
+	for(i=0; i<shtable_size; i++) {
+		if(!no_lock)
+			lock_get(&subs_htable[i].lock);
+
+		prev_s= subs_htable[i].entries;
+		s= prev_s->next;
+
+		while(s) {
+			printf_subs(s);
+			if(s->expires < now - expires_offset) {
+				LM_DBG("Found expired record\n");
+				if(!no_lock) {
+					if(handle_expired_subs(s)< 0) {
+						LM_ERR("in function handle_expired_record\n");
+					}
+				}
+				del_s= s;
+				s= s->next;
+				prev_s->next= s;
+
+				if (del_s->contact.s)
+					shm_free(del_s->contact.s);
+				shm_free(del_s);
+				continue;
+			}
+			prev_s= s;
+			s= s->next;
+		}
+		if(!no_lock)
+			lock_release(&subs_htable[i].lock);
+	}
+}
+
+
+
+void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	int htable_size, int no_lock, handle_expired_func_t handle_expired_func)
-{	
+{
 	db_key_t query_cols[22], update_cols[7];
 	db_val_t query_vals[22], update_vals[7];
 	db_op_t update_ops[1];
 	subs_t* del_s;
 	int pres_uri_col, to_user_col, to_domain_col, from_user_col, from_domain_col,
-		callid_col, totag_col, fromtag_col, event_col,status_col, event_id_col, 
-		local_cseq_col, remote_cseq_col, expires_col, record_route_col, 
+		callid_col, totag_col, fromtag_col, event_col,status_col, event_id_col,
+		local_cseq_col, remote_cseq_col, expires_col, record_route_col,
 		contact_col, local_contact_col, version_col,socket_info_col,reason_col;
-	int u_expires_col, u_local_cseq_col, u_remote_cseq_col, u_version_col, 
-		u_reason_col, u_status_col; 
+	int u_expires_col, u_local_cseq_col, u_remote_cseq_col, u_version_col,
+		u_reason_col, u_status_col;
 	int i;
 	subs_t* s= NULL, *prev_s= NULL;
 	int n_query_cols= 0, n_update_cols= 0;
 	int n_query_update;
+	int now = (int)time(NULL);
+
+	LM_DBG("update_db_subs_timer: start\n");
 
 	query_cols[pres_uri_col= n_query_cols] =&str_presentity_uri_col;
 	query_vals[pres_uri_col].type = DB1_STR;
 	query_vals[pres_uri_col].nul = 0;
 	n_query_cols++;
-	
+
 	query_cols[callid_col= n_query_cols] =&str_callid_col;
 	query_vals[callid_col].type = DB1_STR;
 	query_vals[callid_col].nul = 0;
@@ -1477,7 +1640,7 @@ void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	query_vals[to_domain_col].type = DB1_STR;
 	query_vals[to_domain_col].nul = 0;
 	n_query_cols++;
-	
+
 	query_cols[from_user_col= n_query_cols] =&str_watcher_username_col;
 	query_vals[from_user_col].type = DB1_STR;
 	query_vals[from_user_col].nul = 0;
@@ -1491,7 +1654,7 @@ void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	query_cols[event_col= n_query_cols] =&str_event_col;
 	query_vals[event_col].type = DB1_STR;
 	query_vals[event_col].nul = 0;
-	n_query_cols++;	
+	n_query_cols++;
 
 	query_cols[event_id_col= n_query_cols] =&str_event_id_col;
 	query_vals[event_id_col].type = DB1_STR;
@@ -1573,65 +1736,48 @@ void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	update_vals[u_local_cseq_col].type = DB1_INT;
 	update_vals[u_local_cseq_col].nul = 0;
 	n_update_cols++;
-	
+
 	update_cols[u_version_col= n_update_cols]= &str_version_col;
 	update_vals[u_version_col].type = DB1_INT;
 	update_vals[u_version_col].nul = 0;
 	n_update_cols++;
 
-
-	if(db== NULL)
-	{
-		LM_ERR("null database connection\n");
-		return;
-	}
-	
-	/* if in dbonly mode, no update to database is required */
-	if(dbmode == DB_ONLY)
-	{
-		goto delete_expired_subs;
-	}
-	
 	for(i=0; i<htable_size; i++) 
 	{
 		if(!no_lock)
-			lock_get(&hash_table[i].lock);	
+			lock_get(&hash_table[i].lock);
 
 		prev_s= hash_table[i].entries;
 		s= prev_s->next;
-	
+
 		while(s)
 		{
 			printf_subs(s);
-			if(s->expires < (int)time(NULL)- expires_offset)	
+			if(s->expires < now- expires_offset)
 			{
 				LM_DBG("Found expired record\n");
 				if(!no_lock)
 				{
 					if(handle_expired_func(s)< 0)
-					{
 						LM_ERR("in function handle_expired_record\n");
-						if(!no_lock)
-							lock_release(&hash_table[i].lock);	
-						return ;
-					}
 				}
-				del_s= s;	
+				del_s= s;
 				s= s->next;
 				prev_s->next= s;
 				
 				/* need for a struct free/destroy? */
 				if (del_s->contact.s)
 					shm_free(del_s->contact.s);
-
 				shm_free(del_s);
 				continue;
 			}
 			switch(s->db_flag)
 			{
 				case NO_UPDATEDB_FLAG:
-					LM_DBG("NO_UPDATEDB_FLAG\n");
-					break;			  
+				case WTHROUGHDB_FLAG:
+					LM_DBG("%s\n", (s->db_flag==NO_UPDATEDB_FLAG)?
+							"NO_UPDATEDB_FLAG":"WTHROUGHDB_FLAG");
+					break;
 
 				case UPDATEDB_FLAG:
 					LM_DBG("UPDATEDB_FLAG\n");
@@ -1653,7 +1799,7 @@ void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 					{
 						LM_ERR("updating in database\n");
 					} else {
-						s->db_flag= NO_UPDATEDB_FLAG;	
+						s->db_flag= NO_UPDATEDB_FLAG;
 					}
 					break;
 
@@ -1680,31 +1826,61 @@ void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 					query_vals[status_col].val.int_val= s->status;
 					query_vals[reason_col].val.str_val= s->reason;
 					query_vals[socket_info_col].val.str_val= s->sockinfo_str;
-				
+
 					if(dbf.insert(db,query_cols,query_vals,n_query_cols )<0)
 					{
 						LM_ERR("unsuccessful sql insert\n");
 					} else {
-						s->db_flag= NO_UPDATEDB_FLAG;	
+						s->db_flag= NO_UPDATEDB_FLAG;
 					}
-					break;										
+					break;
 			} /* switch */
 			prev_s= s;
 			s= s->next;
 		}
 		if(!no_lock)
-			lock_release(&hash_table[i].lock);	
+			lock_release(&hash_table[i].lock);
 	}
 
-delete_expired_subs:
 	update_vals[0].val.int_val= (int)time(NULL) - expires_offset;
 	update_ops[0]= OP_LT;
 	if(dbf.delete(db, update_cols, update_ops, update_vals, 1) < 0)
 	{
 		LM_ERR("deleting expired information from database\n");
 	}
-
 }
+
+/**
+ * timer_db_update function does the following tasks:
+ *	1. checks for expires subscriptions and does the corresponding processing
+ *		- if db_mode != DB_ONLY : checks by traversing the hash table
+ *		- if db_mode == DB_ONLY : checks by querying database
+ *	2. if db_mode == WRITE_BACK : updates the subscriptions in database
+*/
+void timer_db_update(unsigned int ticks,void *param)
+{
+	int no_lock=0;
+	LM_DBG("db_update timer\n");
+	if(ticks== 0 && param == NULL)
+		no_lock= 1;
+
+
+	switch (subs_dbmode) {
+		case DB_ONLY:	update_db_subs_timer_dbonly();
+						break;
+		case NO_DB:		update_db_subs_timer_dbnone(no_lock);
+						break;
+		default:
+				if(pa_dbf.use_table(pa_db, &active_watchers_table)< 0)
+				{
+					LM_ERR("sql use table failed\n");
+					return;
+				}
+				update_db_subs_timer(pa_db, pa_dbf, subs_htable, shtable_size,
+						no_lock, handle_expired_subs);
+	}
+}
+
 
 int restore_db_subs(void)
 {
@@ -1878,9 +2054,7 @@ int restore_db_subs(void)
 	
 			s.sockinfo_str.s=(char*)row_vals[sockinfo_col].val.string_val;
 			s.sockinfo_str.len= strlen(s.sockinfo_str.s);
-
-			if(dbmode == DB_FALLBACK)
-				s.db_flag = NO_UPDATEDB_FLAG;
+			s.db_flag = (subs_dbmode==WRITE_THROUGH)?WTHROUGHDB_FLAG:NO_UPDATEDB_FLAG;
 			hash_code= core_hash(&s.pres_uri, &s.event->name, shtable_size);
 			if(insert_shtable(subs_htable, hash_code, &s)< 0)
 			{
@@ -1894,13 +2068,14 @@ int restore_db_subs(void)
 
 	pa_dbf.free_result(pa_db, result);
 
-	/* delete all records */
-	if(dbmode != DB_MEMORY_ONLY && pa_dbf.delete(pa_db, 0,0,0,0)< 0)
-	{
-		LM_ERR("deleting all records from database table\n");
-		return -1;
+	/* delete all records  only if in memory mode */
+	if(subs_dbmode == NO_DB) {
+		if(pa_dbf.delete(pa_db, 0,0,0,0)< 0)
+		{
+			LM_ERR("deleting all records from database table\n");
+			return -1;
+		}
 	}
-
 	return 0;
 
 error:

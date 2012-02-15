@@ -21,7 +21,7 @@
  *
  * History:
  * --------
- *  2006-08-15  initial version (anca)
+ *  2006-08-15  initial version (Anca Vamanu)
  */
 
 /*! \file
@@ -90,8 +90,6 @@ void msg_watchers_clean(unsigned int ticks,void *param);
 
 int handle_subscribe(struct sip_msg*, char*, char*);
 
-int delete_db_subs(str pres_uri, str ev_stored_name, str to_tag);
-
 void timer_db_update(unsigned int ticks,void *param);
 
 int update_subs_db(subs_t* subs, int type);
@@ -105,7 +103,7 @@ int restore_db_subs(void);
 
 typedef int (*handle_expired_func_t)(subs_t* );
 
-void update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
+void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	int htable_size, int no_lock, handle_expired_func_t handle_expired_func);
 
 typedef void (*update_db_subs_t)(db1_con_t * ,db_func_t ,shtable_t ,int ,int ,
@@ -115,5 +113,6 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int max_expire,
 		int* to_tag_gen, str scontact);
 typedef int (*extract_sdialog_info_t)(subs_t* subs, struct sip_msg* msg,
 		int max_expire, int* to_tag_gen, str scontact);
+void delete_subs(str* pres_uri, str* ev_name, str* to_tag);
 
 #endif

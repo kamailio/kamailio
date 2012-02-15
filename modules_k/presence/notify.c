@@ -23,7 +23,7 @@
  *
  * History:
  * --------
- *  2006-08-15  initial version (anca)
+ *  2006-08-15  initial version (Anca Vamanu)
  */
 
 /*! \file
@@ -357,6 +357,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 	unsigned int hash_code;
 	subs_t* s= NULL;
 	int state = FULL_STATE_FLAG;
+	unsigned int now = (int)time(NULL);
 
 	hash_code = 0;
 	version_str = int2str(subs->version, &len);
@@ -373,8 +374,8 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 	}
 	memset(watchers, 0, sizeof(watcher_t));
 
-	if(watcher_subs != NULL) 
-	{		
+	if(watcher_subs != NULL)
+	{
 		if(add_watcher_list(watcher_subs, watchers)< 0)
 			goto error;
 		state = PARTIAL_STATE_FLAG;
@@ -382,63 +383,52 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 		goto done;
 	}
 
-	if(dbmode != DB_MEMORY_ONLY)
+	if(subs_dbmode == DB_ONLY)
 	{
 		if(get_wi_subs_db(subs, watchers)< 0)
 		{
 			LM_ERR("getting watchers from database\n");
 			goto error;
 		}
-	}
-
-	hash_code= core_hash(&subs->pres_uri, &subs->event->wipeer->name,
-            shtable_size);
-	lock_get(&subs_htable[hash_code].lock);
-
-	s= subs_htable[hash_code].entries;
-
-    while(s->next)
-	{
-		s= s->next;
-
-		if(s->expires< (int)time(NULL))
-		{	
-			LM_DBG("expired record\n");
-			continue;
-		}
-
-		if(dbmode != DB_MEMORY_ONLY && s->db_flag!= INSERTDB_FLAG)
+	} else {
+		hash_code= core_hash(&subs->pres_uri, &subs->event->wipeer->name,
+				shtable_size);
+		lock_get(&subs_htable[hash_code].lock);
+		s= subs_htable[hash_code].entries;
+		while(s->next)
 		{
-			LM_DBG("record already found in database\n");
-			continue;
-		}
+			s= s->next;
 
-        if(s->event== subs->event->wipeer &&
-			s->pres_uri.len== subs->pres_uri.len &&
-			strncmp(s->pres_uri.s, subs->pres_uri.s,subs->pres_uri.len)== 0)
-		{
-			if(add_watcher_list(s, watchers)< 0)
+			if(s->expires< now)
 			{
-				lock_release(&subs_htable[hash_code].lock);
-				goto error;
+				LM_DBG("expired record\n");
+				continue;
+			}
+
+			if(s->event== subs->event->wipeer &&
+				s->pres_uri.len== subs->pres_uri.len &&
+				strncmp(s->pres_uri.s, subs->pres_uri.s,subs->pres_uri.len)== 0)
+			{
+				if(add_watcher_list(s, watchers)< 0)
+				{
+					lock_release(&subs_htable[hash_code].lock);
+					goto error;
+				}
 			}
 		}
-	}
-	
-	if(add_waiting_watchers(watchers, subs->pres_uri,
-				subs->event->wipeer->name)< 0 )
-	{
-		LM_ERR("failed to add waiting watchers\n");
-		goto error;
+		lock_release(&subs_htable[hash_code].lock);
+
+		if(add_waiting_watchers(watchers, subs->pres_uri,
+					subs->event->wipeer->name)< 0 )
+		{
+			LM_ERR("failed to add waiting watchers\n");
+			goto error;
+		}
 	}
 
 done:
 	notify_body = create_winfo_xml(watchers,version_str,subs->pres_uri,
 			subs->event->wipeer->name, state);
-	
-	if(watcher_subs == NULL) 
-		lock_release(&subs_htable[hash_code].lock);
-
 	if(notify_body== NULL)
 	{
 		LM_ERR("in function create_winfo_xml\n");
@@ -448,12 +438,6 @@ done:
 	return notify_body;
 
 error:
-	if(notify_body)
-	{
-		if(notify_body->s)
-			xmlFree(notify_body->s);
-		pkg_free(notify_body);
-	}
 	free_watcher_list(watchers);
 	return NULL;
 }
@@ -637,31 +621,26 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 		LM_ERR("while parsing uri\n");
 		return NULL;
 	}
-	
+
 	/* if in db_only mode, get the presentity information from database - skip htable search */
-	if(dbmode == DB_ONLY)
+	if( publ_cache_enabled )
 	{
-		goto db_query;
-	}
-	/* search in hash table if any record exists */
-	hash_code= core_hash(&pres_uri, NULL, phtable_size);
-	if(search_phtable(&pres_uri, event->evp->type, hash_code)== NULL)
-	{
-		LM_DBG("No record exists in hash_table\n");
-		if(dbmode != DB_MEMORY_ONLY)
-			goto db_query;
-
-		/* for pidf manipulation */
-		if(event->agg_nbody)
+		/* search in hash table if any record exists */
+		hash_code= core_hash(&pres_uri, NULL, phtable_size);
+		if(search_phtable(&pres_uri, event->evp->type, hash_code)== NULL)
 		{
-			notify_body = event->agg_nbody(&uri.user, &uri.host, NULL, 0, -1);
-			if(notify_body)
-				goto done;
-		}			
-		return NULL;
-	}
+			LM_DBG("No record exists in hash_table\n");
 
-db_query:
+			/* for pidf manipulation */
+			if(event->agg_nbody)
+			{
+				notify_body = event->agg_nbody(&uri.user, &uri.host, NULL, 0, -1);
+				if(notify_body)
+					goto done;
+			}
+			return NULL;
+		}
+	}
 
 	query_cols[n_query_cols] = &str_domain_col;
 	query_vals[n_query_cols].type = DB1_STR;
@@ -1248,24 +1227,20 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 	unsigned int hash_code;
 	subs_t* s= NULL, *s_new;
 	subs_t* s_array= NULL;
-	int n= 0, i= 0;
+	int n= 0;
 	
-	/* if in memory mode, should take the subscriptions from the hashtable only
-	   in dbonly mode should take all dialogs from db
-	   in fallback mode, should take those dialogs with db_flag = INSERTDB_FLAG
+	/* if subs_dbmode!=DB_ONLY, should take the subscriptions from the hashtable only
+	   in DB_ONLY mode should take all dialogs from db
 	*/
 
-	if(dbmode != DB_MEMORY_ONLY)
+	if(subs_dbmode == DB_ONLY)
 	{
-		if(get_subs_db(pres_uri, event, sender, &s_array, &n)< 0)			
+		if(get_subs_db(pres_uri, event, sender, &s_array, &n)< 0)
 		{
 			LM_ERR("getting dialogs from database\n");
 			goto error;
 		}
-	}
-	
-	if(dbmode != DB_ONLY)
-	{
+	}else {
 		hash_code= core_hash(pres_uri, &event->name, shtable_size);
 		
 		lock_get(&subs_htable[hash_code].lock);
@@ -1275,15 +1250,15 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 		while(s->next)
 		{
 			s= s->next;
-		
+
 			printf_subs(s);
-			
+
 			if(s->expires< (int)time(NULL))
 			{
 				LM_DBG("expired subs\n");
 				continue;
 			}
-			
+
 			if((!(s->status== ACTIVE_STATUS &&
 		    s->reason.len== 0 &&
 				s->event== event && s->pres_uri.len== pres_uri->len &&
@@ -1292,28 +1267,6 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 				strncmp(sender->s, s->contact.s, sender->len)== 0))
 				continue;
 
-			if(dbmode == DB_FALLBACK)
-			{
-				if(s->db_flag== NO_UPDATEDB_FLAG)
-				{
-					LM_DBG("s->db_flag==NO_UPDATEDB_FLAG\n");
-					continue;
-				}
-				
-				if(s->db_flag== UPDATEDB_FLAG)
-				{
-					LM_DBG("s->db_flag== UPDATEDB_FLAG\n");
-					if(n>0 && update_in_list(s, s_array, i, n)< 0)
-					{
-						LM_DBG("dialog not found in list fetched from database\n");
-						/* insert record */
-					}
-					else
-						continue;			
-				}
-			}
-			
-			LM_DBG("s->db_flag= INSERTDB_FLAG\n");
 			s_new= mem_copy_subs(s, PKG_MEM_TYPE);
 			if(s_new== NULL)
 			{
@@ -1324,13 +1277,9 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 			s_new->expires-= (int)time(NULL);
 			s_new->next= s_array;
 			s_array= s_new;
-			i++;
 		}
-		
-	lock_release(&subs_htable[hash_code].lock);
+		lock_release(&subs_htable[hash_code].lock);
 	}
-	
-	LM_DBG("found %d dialogs( %d in database and %d in hash_table)\n",n+i,n,i);
 
 	return s_array;
 
@@ -1493,19 +1442,19 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 		}
 		else
 			notify_body= n_body;
-	}	
+	}
 	else
-	{	
+	{
 		if(subs->status== TERMINATED_STATUS || 
 				subs->status== PENDING_STATUS) 
 		{
 			LM_DBG("state terminated or pending- notify body NULL\n");
 			notify_body = NULL;
 		}
-		else  
-		{		
-			if(subs->event->type & WINFO_TYPE)	
-			{	
+		else 
+		{
+			if(subs->event->type & WINFO_TYPE)
+			{
 				notify_body = get_wi_notify_body(subs, watcher_subs);
 				if(notify_body == NULL)
 				{
@@ -1524,7 +1473,6 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 				else		/* apply authorization rules if exists */
 				if(subs->event->req_auth)
 				{
-					 
 					if(subs->auth_rules_doc && subs->event->apply_auth_nbody
 							&& subs->event->apply_auth_nbody(notify_body,
 								subs,&final_body)<0)
@@ -1542,12 +1490,12 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 			}
 		}
 	}
-	
+
 jump_over_body:
 
 	if(subs->expires<= 0)
 	{
-        subs->expires= 0;
+		subs->expires= 0;
 		subs->status= TERMINATED_STATUS;
 		subs->reason.s= "timeout";
 		subs->reason.len= 7;
@@ -1558,7 +1506,7 @@ jump_over_body:
 	{
 		LM_ERR("while building headers\n");
 		goto error;
-	}	
+	}
 	LM_DBG("headers:\n%.*s\n", str_hdr.len, str_hdr.s);
 
 	/* construct the dlg_t structure */
@@ -1566,15 +1514,20 @@ jump_over_body:
 	if(td ==NULL)
 	{
 		LM_ERR("while building dlg_t structure\n");
-		goto error;	
+		goto error;
 	}
 
-	cb_param = shm_dup_cbparam(subs);
-	if(cb_param == NULL)
+	LM_DBG("expires %d status %d\n", subs->expires, subs->status);
+	/* if status is TERMINATED_STATUS, the subscription will be deleted so no need to send a parameter */
+	if(subs->status != TERMINATED_STATUS)
 	{
-		LM_ERR("while duplicating cb_param in share memory\n");
-		goto error;	
-	}	
+		cb_param = shm_dup_cbparam(subs);
+		if(cb_param == NULL)
+		{
+			LM_ERR("while duplicating cb_param in share memory\n");
+			goto error;
+		}
+	}
 
 	set_uac_req(&uac_r, &met, &str_hdr, notify_body, td, TMCB_LOCAL_COMPLETED,
 			p_tm_callback, (void*)cb_param);
@@ -1582,8 +1535,9 @@ jump_over_body:
 	if(result< 0)
 	{
 		LM_ERR("in function tmb.t_request_within\n");
-		free_cbparam(cb_param);
-		goto error;	
+		if(cb_param)
+			free_cbparam(cb_param);
+		goto error;
 	}
 
 	LM_INFO("NOTIFY %.*s via %.*s on behalf of %.*s for event %.*s\n",
@@ -1622,7 +1576,7 @@ error:
 			}
 			pkg_free(notify_body);
 		}
-	}	
+	}
 	return -1;
 }
 
@@ -1636,17 +1590,17 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 		hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
 
 		/* if subscriptions are held also in memory, update the subscription hashtable */
-		if(dbmode != DB_ONLY)
+		if(subs_dbmode != DB_ONLY)
 		{
-			if(update_shtable(subs_htable, hash_code, subs, LOCAL_TYPE) < 0 && dbmode == DB_MEMORY_ONLY)
+			if(update_shtable(subs_htable, hash_code, subs, LOCAL_TYPE) < 0)
 			{
 				/* subscriptions are held only in memory, and hashtable update failed */
 				LM_ERR("updating subscription record in hash table\n");
 				return -1;
 			}
 		}
-		/* if dbonly mode, or if fallback2db mode and the subscription was inserted into the database */
-		if((dbmode == DB_ONLY) || (subs->db_flag != INSERTDB_FLAG && dbmode == DB_FALLBACK))
+		/* if DB_ONLY mode or WRITE_THROUGH update in database */
+		if(subs_dbmode == DB_ONLY || subs_dbmode == WRITE_THROUGH)
 		{
 			LM_DBG("updating subscription to database\n");
 			if(update_subs_db(subs, LOCAL_TYPE)< 0)
@@ -1656,7 +1610,7 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 			}
 		}
 	}
-     
+
 	if(subs->reason.s && subs->status== ACTIVE_STATUS && 
 	subs->reason.len== 12 && strncmp(subs->reason.s, "polite-block", 12)== 0)
 	{
@@ -1673,36 +1627,27 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 
 void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 {
-	if(ps->param==NULL || *ps->param==NULL || 
-			((c_back_param*)(*ps->param))->pres_uri.s == NULL || 
+	c_back_param*  cb;
+
+	if(ps->param==NULL || *ps->param==NULL ||
+			((c_back_param*)(*ps->param))->pres_uri.s == NULL ||
 			((c_back_param*)(*ps->param))->ev_name.s== NULL ||
 			((c_back_param*)(*ps->param))->to_tag.s== NULL)
 	{
-		LM_DBG("message id not received\n");
+		LM_DBG("message id not received, probably a timeout notify\n");
 		if(ps->param != NULL && *ps->param !=NULL)
 			free_cbparam((c_back_param*)(*ps->param));
 		return;
 	}
-	
+
+	cb= (c_back_param*)(*ps->param);
 	LM_DBG("completed with status %d [to_tag:%.*s]\n",
-			ps->code,((c_back_param*)(*ps->param))->to_tag.len,
-			((c_back_param*)(*ps->param))->to_tag.s);
+			ps->code, cb->to_tag.len, cb->to_tag.s);
 
-	if(ps->code >= 300 && (ps->code != 408 || timeout_rm_subs))
-	{
-		unsigned int hash_code;
+	if(ps->code == 481 || (ps->code == 408 && timeout_rm_subs))
+		delete_subs(&cb->pres_uri, &cb->ev_name, &cb->to_tag);
 
-		c_back_param*  cb= (c_back_param*)(*ps->param);
-
-		hash_code= core_hash(&cb->pres_uri, &cb->ev_name, shtable_size);
-		delete_shtable(subs_htable, hash_code, cb->to_tag);
-
-		delete_db_subs(cb->pres_uri, cb->ev_name, cb->to_tag);
-	}	
-
-	if(*ps->param !=NULL  )
-		free_cbparam((c_back_param*)(*ps->param));
-	return ;
+	free_cbparam(cb);
 }
 
 void free_cbparam(c_back_param* cb_param)

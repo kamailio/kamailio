@@ -19,7 +19,7 @@
  *
  * History:
  * --------
- *  2006-08-15  initial version (anca)
+ *  2006-08-15  initial version (Anca Vamanu)
  */
 
 /*!
@@ -68,7 +68,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	db_op_t  db_ops[2] ;
 	db_key_t result_cols[6];
 	db1_res_t *result = NULL;
-	db_row_t *row ;	
+	db_row_t *row ;
 	db_val_t *row_vals ;
 	int i =0, size= 0;
 	struct p_modif* p= NULL;
@@ -81,20 +81,19 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	str* rules_doc= NULL;
 
 
+	LM_DBG("cleaning expired presentity information\n");
 	if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		return ;
 	}
-	
-	LM_DBG("cleaning expired presentity information\n");
 
 	db_keys[0] = &str_expires_col;
 	db_ops[0] = OP_LT;
 	db_vals[0].type = DB1_INT;
 	db_vals[0].nul = 0;
 	db_vals[0].val.int_val = (int)time(NULL);
-		
+
 	result_cols[user_col= n_result_cols++] = &str_username_col;
 	result_cols[domain_col=n_result_cols++] = &str_domain_col;
 	result_cols[etag_col=n_result_cols++] = &str_etag_col;
@@ -104,32 +103,32 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, result_cols,
 						1, n_result_cols, &query_str, &result )< 0)
 	{
-		LM_ERR("querying database for expired messages\n");
+		LM_ERR("failed to query database for expired messages\n");
 		if(result)
 			pa_dbf.free_result(pa_db, result);
-		return;
+		goto delete_pres;
 	}
 	if(result== NULL)
 		return;
 
 	if(result && result->n<= 0)
 	{
-		pa_dbf.free_result(pa_db, result);	
+		pa_dbf.free_result(pa_db, result);
 		return;
 	}
 	LM_DBG("found n= %d expires messages\n ",result->n);
 
 	n= result->n;
-	
+
 	p= (struct p_modif*)pkg_malloc(n* sizeof(struct p_modif));
 	if(p== NULL)
 	{
-		ERR_MEM(PKG_MEM_STR);	
+		ERR_MEM(PKG_MEM_STR);
 	}
 	memset(p, 0, n* sizeof(struct p_modif));
 
 	for(i = 0; i< n; i++)
-	{	
+	{
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);	
 	
@@ -154,8 +153,8 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		}
 		memset(pres, 0, size);
 		size= sizeof(presentity_t);
-		
-		pres->user.s= (char*)pres+ size;	
+
+		pres->user.s= (char*)pres+ size;
 		memcpy(pres->user.s, user.s, user.len);
 		pres->user.len= user.len;
 		size+= user.len;
@@ -176,7 +175,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 			LM_ERR("event not found\n");
 			free_event_params(ev.params.list, PKG_MEM_TYPE);
 			goto error;
-		}	
+		}
 	
 		p[i].p= pres;
 		if(uandd_to_uri(user, domain, &p[i].uri)< 0)
@@ -187,7 +186,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		}
 		
 		/* delete from hash table */
-		if(dbmode != DB_ONLY && delete_phtable(&p[i].uri, ev.type)< 0)
+		if(publ_cache_enabled && delete_phtable(&p[i].uri, ev.type)< 0)
 		{
 			LM_ERR("deleting from pres hash table\n");
 			free_event_params(ev.params.list, PKG_MEM_TYPE);
@@ -224,26 +223,20 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 			pkg_free(rules_doc);
 		}
 		rules_doc= NULL;
+		pkg_free(p[i].p);
+		pkg_free(p[i].uri.s);
 	}
+	pkg_free(p);
 
-	if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
+	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
 	{
 		LM_ERR("in use_table\n");
 		goto error;
 	}
-	
-	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 1) < 0) 
-		LM_ERR("cleaning expired messages\n");
-	
-	for(i= 0; i< n; i++)
-	{
-		if(p[i].p)
-			pkg_free(p[i].p);
-		if(p[i].uri.s)
-			pkg_free(p[i].uri.s);
 
-	}
-	pkg_free(p);
+delete_pres:
+	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 1) < 0) 
+		LM_ERR("failed to delete expired records from DB\n");
 
 	return;
 
@@ -254,7 +247,6 @@ error:
 	{
 		for(i= 0; i< n; i++)
 		{
-			
 			if(p[i].p)
 				pkg_free(p[i].p);
 			if(p[i].uri.s)
@@ -271,7 +263,7 @@ error:
 		pkg_free(rules_doc);
 	}
 
-	return;	
+	return;
 }
 
 /**
