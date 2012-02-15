@@ -174,30 +174,7 @@ static int mod_init(void)
 	LM_DBG("db_url=%s/%d/%p\n",ZSW(db_url.s),db_url.len, db_url.s);
 	xcap_table.len = xcap_table.s ? strlen(xcap_table.s) : 0;
 	
-	/* binding to mysql module  */
-	if (db_bind_mod(&db_url, &pxml_dbf))
-	{
-		LM_ERR("Database module not found\n");
-		return -1;
-	}
-	
-	if (!DB_CAPABILITY(pxml_dbf, DB_CAP_ALL)) {
-		LM_ERR("Database module does not implement all functions"
-				" needed by the module\n");
-		return -1;
-	}
 
-	pxml_db = pxml_dbf.init(&db_url);
-	if (!pxml_db)
-	{
-		LM_ERR("while connecting to database\n");
-		return -1;
-	}
-
-	if(db_check_table_version(&pxml_dbf, pxml_db, &xcap_table, S_TABLE_VERSION) < 0) {
-		LM_ERR("error during table version check.\n");
-		return -1;
-	}
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
 		LM_ERR("cannot bind to SL API\n");
@@ -233,35 +210,62 @@ static int mod_init(void)
 		return -1;		
 	}
 	
-	if(force_active== 0 && !integrated_xcap_server )
+	if(force_active== 0)
 	{
-		xcap_api_t xcap_api;
-		bind_xcap_t bind_xcap;
+		/* binding to mysql module  */
+		if (db_bind_mod(&db_url, &pxml_dbf))
+		{
+			LM_ERR("Database module not found\n");
+			return -1;
+		}
+		
+		if (!DB_CAPABILITY(pxml_dbf, DB_CAP_ALL)) {
+			LM_ERR("Database module does not implement all functions"
+					" needed by the module\n");
+			return -1;
+		}
 
-		/* bind xcap */
-		bind_xcap= (bind_xcap_t)find_export("bind_xcap", 1, 0);
-		if (!bind_xcap)
+		pxml_db = pxml_dbf.init(&db_url);
+		if (!pxml_db)
 		{
-			LM_ERR("Can't bind xcap_client\n");
+			LM_ERR("while connecting to database\n");
 			return -1;
 		}
-	
-		if (bind_xcap(&xcap_api) < 0)
-		{
-			LM_ERR("Can't bind xcap_api\n");
+
+		if(db_check_table_version(&pxml_dbf, pxml_db, &xcap_table, S_TABLE_VERSION) < 0) {
+			LM_ERR("error during table version check.\n");
 			return -1;
 		}
-		xcap_GetNewDoc= xcap_api.getNewDoc;
-		if(xcap_GetNewDoc== NULL)
+		if(!integrated_xcap_server )
 		{
-			LM_ERR("can't import get_elem from xcap_client module\n");
-			return -1;
-		}
-	
-		if(xcap_api.register_xcb(PRES_RULES, xcap_doc_updated)< 0)
-		{
-			LM_ERR("registering xcap callback function\n");
-			return -1;
+			xcap_api_t xcap_api;
+			bind_xcap_t bind_xcap;
+
+			/* bind xcap */
+			bind_xcap= (bind_xcap_t)find_export("bind_xcap", 1, 0);
+			if (!bind_xcap)
+			{
+				LM_ERR("Can't bind xcap_client\n");
+				return -1;
+			}
+		
+			if (bind_xcap(&xcap_api) < 0)
+			{
+				LM_ERR("Can't bind xcap_api\n");
+				return -1;
+			}
+			xcap_GetNewDoc= xcap_api.getNewDoc;
+			if(xcap_GetNewDoc== NULL)
+			{
+				LM_ERR("can't import get_elem from xcap_client module\n");
+				return -1;
+			}
+		
+			if(xcap_api.register_xcb(PRES_RULES, xcap_doc_updated)< 0)
+			{
+				LM_ERR("registering xcap callback function\n");
+				return -1;
+			}
 		}
 	}
 
@@ -279,34 +283,31 @@ static int mod_init(void)
 }
 
 static int mi_child_init(void)
-{	
+{
 	if(passive_mode==1)
 		return 0;
-	
-	if (pxml_dbf.init==0)
+
+	if(force_active== 0)
 	{
-		LM_CRIT("database not bound\n");
-		return -1;
+		if(pxml_db)
+			return 0;
+		pxml_db = pxml_dbf.init(&db_url);
+		if (pxml_db== NULL)
+		{
+			LM_ERR("while connecting database\n");
+			return -1;
+		}
+		if (pxml_dbf.use_table(pxml_db, &xcap_table) < 0)
+		{
+			LM_ERR("in use_table SQL operation\n");
+			return -1;
+		}
 	}
-	if(pxml_db)
-		return 0;
-	pxml_db = pxml_dbf.init(&db_url);
-	if (pxml_db== NULL)
-	{
-		LM_ERR("while connecting database\n");
-		return -1;
-	}
-		
-	if (pxml_dbf.use_table(pxml_db, &xcap_table) < 0)
-	{
-		LM_ERR("in use_table SQL operation\n");
-		return -1;
-	}
-	
+
 	LM_DBG("Database connection opened successfully\n");
 
 	return 0;
-}	
+}
 
 static int child_init(int rank)
 {
@@ -314,36 +315,34 @@ static int child_init(int rank)
 	
 	if(passive_mode==1)
 		return 0;
-	
+
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	if (pxml_dbf.init==0)
+	if(force_active== 0)
 	{
-		LM_CRIT("database not bound\n");
-		return -1;
+		if(pxml_db)
+			return 0;
+		pxml_db = pxml_dbf.init(&db_url);
+		if (pxml_db== NULL)
+		{
+			LM_ERR("while connecting database\n");
+			return -1;
+		}
+		if (pxml_dbf.use_table(pxml_db, &xcap_table) < 0)
+		{
+			LM_ERR("in use_table SQL operation\n");
+			return -1;
+		}
 	}
-	if(pxml_db)
-		return 0;
-	pxml_db = pxml_dbf.init(&db_url);
-	if (pxml_db== NULL)
-	{
-		LM_ERR("child %d: ERROR while connecting database\n",rank);
-		return -1;
-	}
-	if (pxml_dbf.use_table(pxml_db, &xcap_table) < 0)
-	{
-		LM_ERR("child %d: ERROR in use_table\n", rank);
-		return -1;
-	}
-	
+
 	LM_DBG("child %d: Database connection opened successfully\n",rank);
 
 	return 0;
-}	
+}
 
 static void destroy(void)
-{	
+{
 	LM_DBG("start\n");
 	if(pxml_db && pxml_dbf.close)
 		pxml_dbf.close(pxml_db);
