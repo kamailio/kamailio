@@ -115,7 +115,7 @@ extern subs_t* rls_search_shtable(shtable_t htable,str callid,str to_tag,
 extern int rls_delete_shtable(shtable_t htable,unsigned int hash_code,str to_tag);
 extern int rls_update_shtable(shtable_t htable,unsigned int hash_code, 
 		subs_t* subs, int type);
-extern void rls_update_db_subs(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
+extern void rls_update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	int htable_size, int no_lock, handle_expired_func_t handle_expired_func);
 
 new_shtable_t pres_new_shtable;
@@ -125,7 +125,7 @@ update_shtable_t pres_update_shtable;
 delete_shtable_t pres_delete_shtable;
 destroy_shtable_t pres_destroy_shtable;
 mem_copy_subs_t  pres_copy_subs;
-update_db_subs_t pres_update_db_subs;
+update_db_subs_t pres_update_db_subs_timer;
 extract_sdialog_info_t pres_extract_sdialog_info;
 int rls_events= EVENT_PRESENCE;
 int to_presence_code = 1;
@@ -358,23 +358,23 @@ static int mod_init(void)
 
 	if (dbmode == RLS_DB_ONLY)
 	{
-		pres_new_shtable    = rls_new_shtable;
-		pres_destroy_shtable= rls_destroy_shtable;
-		pres_insert_shtable = rls_insert_shtable;
-		pres_delete_shtable = rls_delete_shtable;
-		pres_update_shtable = rls_update_shtable;
-		pres_search_shtable = rls_search_shtable;
-		pres_update_db_subs = rls_update_db_subs;
+		pres_new_shtable          = rls_new_shtable;
+		pres_destroy_shtable      = rls_destroy_shtable;
+		pres_insert_shtable       = rls_insert_shtable;
+		pres_delete_shtable       = rls_delete_shtable;
+		pres_update_shtable       = rls_update_shtable;
+		pres_search_shtable       = rls_search_shtable;
+		pres_update_db_subs_timer = rls_update_db_subs_timer;
 	}
 	else
 	{
-		pres_new_shtable    = pres.new_shtable;
-		pres_destroy_shtable= pres.destroy_shtable;
-		pres_insert_shtable = pres.insert_shtable;
-		pres_delete_shtable = pres.delete_shtable;
-		pres_update_shtable = pres.update_shtable;
-		pres_search_shtable = pres.search_shtable;
-		pres_update_db_subs = pres.update_db_subs;
+		pres_new_shtable          = pres.new_shtable;
+		pres_destroy_shtable      = pres.destroy_shtable;
+		pres_insert_shtable       = pres.insert_shtable;
+		pres_delete_shtable       = pres.delete_shtable;
+		pres_update_shtable       = pres.update_shtable;
+		pres_search_shtable       = pres.search_shtable;
+		pres_update_db_subs_timer = pres.update_db_subs_timer;
 	}
 
 	pres_copy_subs      = pres.mem_copy_subs;
@@ -635,8 +635,8 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
-		return 0; /* do nothing for the main process */
+	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
+		return 0; /* don't call child_init for main process more than once */
 
 	LM_DBG("child [%d]  pid [%d]\n", rank, getpid());
 
@@ -771,7 +771,7 @@ void rlsubs_table_update(unsigned int ticks,void *param)
 		LM_ERR("sql use table failed\n");
 		return;
 	}
-	pres_update_db_subs(rls_db, rls_dbf, rls_table, hash_size, 
+	pres_update_db_subs_timer(rls_db, rls_dbf, rls_table, hash_size, 
 			no_lock, handle_expired_record);
 
 }
