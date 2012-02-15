@@ -520,8 +520,14 @@ int pv_get_dlg(struct sip_msg *msg, pv_param_t *param,
 	if(param==NULL)
 		return -1;
 
-	/* Retrieve the dialog for current message */
-	dlg=dlg_get_msg_dialog( msg);
+	if(_dlg_ctx.iuid.h_id==0)
+	{
+		/* Retrieve the dialog for current message */
+		dlg=dlg_get_msg_dialog(msg);
+	} else {
+		/* Retrieve the dialog for current context */
+		dlg=dlg_get_by_iuid(&_dlg_ctx.iuid);
+	}
 	if(dlg == NULL)
 		return pv_get_null(msg, param, res);
 
