@@ -83,6 +83,7 @@ static int       seq_match_mode;	/*!< dlg_match mode */
 static int       shutdown_done = 0;	/*!< 1 when destroy_dlg_handlers was called */
 extern int       detect_spirals;
 extern int       initial_cbs_inscript;
+extern int       dlg_send_bye;
 int              spiral_detected = -1;
 
 extern struct rr_binds d_rrb;		/*!< binding to record-routing module */
@@ -819,7 +820,7 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
 	dlg_set_toroute(dlg, &s);
 	dlg->sflags |= _dlg_ctx.flags;
 
-	if (_dlg_ctx.to_bye!=0)
+	if (dlg_send_bye!=0 || _dlg_ctx.to_bye!=0)
 		dlg->dflags |= DLG_FLAG_TOBYE;
 
     if (run_initial_cbs)  run_create_callbacks( dlg, req);

@@ -116,6 +116,7 @@ int dlg_enable_stats = 1;
 int active_dlgs_cnt = 0;
 int early_dlgs_cnt = 0;
 int detect_spirals = 1;
+int dlg_send_bye = 0;
 stat_var *active_dlgs = 0;
 stat_var *processed_dlgs = 0;
 stat_var *expired_dlgs = 0;
@@ -243,6 +244,7 @@ static param_export_t mod_params[]={
 	{ "bridge_controller",     STR_PARAM, &dlg_bridge_controller.s  },
 	{ "ruri_pvar",             STR_PARAM, &ruri_pvar_param.s        },
 	{ "initial_cbs_inscript",  INT_PARAM, &initial_cbs_inscript     },
+	{ "send_bye",              INT_PARAM, &dlg_send_bye             },
 	{ 0,0,0 }
 };
 
