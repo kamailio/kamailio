@@ -140,6 +140,11 @@ Alex Balashov
               10.5. $dlg_ctx(...)
               10.6. $dlg_var(key)
 
+        11. Event Routes
+
+              11.1. event_route[dialog:start]
+              11.2. event_route[dialog:end]
+
    2. Developer Guide
 
         1. Available Functions
@@ -322,6 +327,11 @@ Chapter 1. Admin Guide
         10.4. $dlg(...)
         10.5. $dlg_ctx(...)
         10.6. $dlg_var(key)
+
+   11. Event Routes
+
+        11.1. event_route[dialog:start]
+        11.2. event_route[dialog:end]
 
 1. Overview
 
@@ -1656,6 +1666,19 @@ if(!uri == myself) {
    subsequential requests after doing loose_route().
 
    Note: You will receive "NULL", if there is no dialog for this request.
+
+11. Event Routes
+
+   11.1. event_route[dialog:start]
+   11.2. event_route[dialog:end]
+
+11.1. event_route[dialog:start]
+
+   Executed when 200OK for INVITE is processed.
+
+11.2. event_route[dialog:end]
+
+   Executed when BYE is processed or dialog timed out.
 
 Chapter 2. Developer Guide
 
