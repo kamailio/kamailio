@@ -167,4 +167,14 @@ void dlg_tmcb_dummy(tm_cell_t *t, int type, struct tmcb_params *param);
  */
 dlg_cell_t *dlg_get_msg_dialog(sip_msg_t *msg);
 
+/*!
+ * \brief Clone dialog internal unique id to shared memory
+ */
+dlg_iuid_t *dlg_get_iuid_shm_clone(dlg_cell_t *dlg);
+
+/*!
+ * \brief Free dialog internal unique id stored in shared memory
+ */
+void dlg_iuid_sfree(void *iuid);
+
 #endif

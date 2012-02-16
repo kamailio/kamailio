@@ -107,8 +107,6 @@ static unsigned int CURR_DLG_ID  = 0xffffffff;	/*!< current dialog id */
 /*! separator inside the record-route paramter */
 #define DLG_SEPARATOR      '.'
 
-void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate);
-
 int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
 		int mode);
 
@@ -314,7 +312,7 @@ dlg_iuid_t *dlg_get_iuid_shm_clone(dlg_cell_t *dlg)
 /*!
  * \brief Free dialog internal unique id stored in shared memory
  */
-static void dlg_iuid_sfree(void *iuid)
+void dlg_iuid_sfree(void *iuid)
 {
     if(iuid)
 		shm_free(iuid);
@@ -1251,31 +1249,35 @@ void dlg_ontimeout(struct dlg_tl *tl)
 	dlg = ((struct dlg_cell*)((char *)(tl) -
 			(unsigned long)(&((struct dlg_cell*)0)->tl)));
 
-	if(dlg->toroute>0 && dlg->toroute<main_rt.entries
+	if(dlg->state==DLG_STATE_CONFIRMED_NA
+				|| dlg->state==DLG_STATE_CONFIRMED)
+	{
+		if(dlg->toroute>0 && dlg->toroute<main_rt.entries
 			&& main_rt.rlist[dlg->toroute]!=NULL)
-	{
-		fmsg = faked_msg_next();
-		if (exec_pre_script_cb(fmsg, REQUEST_CB_TYPE)>0)
 		{
-			dlg_ref(dlg, 1);
-			dlg_set_ctx_iuid(dlg);
-			LM_DBG("executing route %d on timeout\n", dlg->toroute);
-			set_route_type(REQUEST_ROUTE);
-			run_top_route(main_rt.rlist[dlg->toroute], fmsg, 0);
-			dlg_reset_ctx_iuid();
-			exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
-			dlg_unref(dlg, 1);
+			fmsg = faked_msg_next();
+			if (exec_pre_script_cb(fmsg, REQUEST_CB_TYPE)>0)
+			{
+				dlg_ref(dlg, 1);
+				dlg_set_ctx_iuid(dlg);
+				LM_DBG("executing route %d on timeout\n", dlg->toroute);
+				set_route_type(REQUEST_ROUTE);
+				run_top_route(main_rt.rlist[dlg->toroute], fmsg, 0);
+				dlg_reset_ctx_iuid();
+				exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
+				dlg_unref(dlg, 1);
+			}
 		}
-	}
 
-	if ((dlg->dflags&DLG_FLAG_TOBYE)
-			&& (dlg->state==DLG_STATE_CONFIRMED_NA
-				|| dlg->state==DLG_STATE_CONFIRMED))
-	{
-		dlg_bye_all(dlg, NULL);
-		dlg_unref(dlg, 1);
-		if_update_stat(dlg_enable_stats, expired_dlgs, 1);
-		return;
+		if(dlg->dflags&DLG_FLAG_TOBYE)
+		{
+			dlg_bye_all(dlg, NULL);
+			/* run event route for end of dlg */
+			dlg_run_event_route(dlg, NULL, dlg->state, DLG_STATE_DELETED);
+			dlg_unref(dlg, 1);
+			if_update_stat(dlg_enable_stats, expired_dlgs, 1);
+			return;
+		}
 	}
 
 	next_state_dlg( dlg, DLG_EVENT_REQBYE, &old_state, &new_state, &unref);

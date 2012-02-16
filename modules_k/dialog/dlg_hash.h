@@ -503,6 +503,11 @@ static inline int match_downstream_dialog(dlg_cell_t *dlg, str *callid, str *fta
 	return 1;
 }
 
+/*!
+ *
+ */
+void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate);
+
 
 /*!
  * \brief Output a dialog via the MI interface

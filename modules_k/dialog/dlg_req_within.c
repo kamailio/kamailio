@@ -40,6 +40,7 @@
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "dlg_timer.h"
 #include "dlg_hash.h"
+#include "dlg_handlers.h"
 #include "dlg_req_within.h"
 #include "dlg_db_handler.h"
 
@@ -131,6 +132,7 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 
 	struct dlg_cell* dlg;
 	int event, old_state, new_state, unref, ret;
+	dlg_iuid_t *iuid = NULL;
 
 	if(ps->param == NULL || *ps->param == NULL){
 		LM_ERR("invalid parameter\n");
@@ -144,10 +146,13 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 
 	LM_DBG("receiving a final reply %d\n",ps->code);
 
-	dlg = (struct dlg_cell *)(*(ps->param));
+	iuid = (dlg_iuid_t*)(*ps->param);
+	dlg = dlg_get_by_iuid(iuid);
+	if(dlg==0)
+		return;
+
 	event = DLG_EVENT_REQBYE;
 	next_state_dlg(dlg, event, &old_state, &new_state, &unref);
-
 
 	if(new_state == DLG_STATE_DELETED && old_state != DLG_STATE_DELETED){
 
@@ -192,7 +197,7 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 		/* force delete from mem */
 		dlg_unref(dlg, 1);
 	}
-
+	dlg_iuid_sfree(iuid);
 }
 
 
@@ -240,6 +245,8 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 	dlg_t* dialog_info;
 	str met = {"BYE", 3};
 	int result;
+	dlg_iuid_t *iuid = NULL;
+
 	/* do not send BYE request for non-confirmed dialogs (not supported) */
 	if (cell->state != DLG_STATE_CONFIRMED_NA && cell->state != DLG_STATE_CONFIRMED) {
 		LM_ERR("terminating non-confirmed dialogs not supported\n");
@@ -255,16 +262,21 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 
 	LM_DBG("sending BYE to %s\n", (dir==DLG_CALLER_LEG)?"caller":"callee");
 
-	dlg_ref(cell, 1);
+	iuid = dlg_get_iuid_shm_clone(cell);
+	if(iuid==NULL)
+	{
+		LM_ERR("failed to create dialog unique id clone\n");
+		goto err;
+	}
 
 	memset(&uac_r,'\0', sizeof(uac_req_t));
 	set_uac_req(&uac_r, &met, hdrs, NULL, dialog_info, TMCB_LOCAL_COMPLETED,
-				bye_reply_cb, (void*)cell);
+				bye_reply_cb, (void*)iuid);
 	result = d_tmb.t_request_within(&uac_r);
 
 	if(result < 0){
 		LM_ERR("failed to send the BYE request\n");
-		goto err1;
+		goto err;
 	}
 
 	free_tm_dlg(dialog_info);
@@ -272,8 +284,6 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 	LM_DBG("BYE sent to %s\n", (dir==0)?"caller":"callee");
 	return 0;
 
-err1:
-	dlg_unref(cell, 1);
 err:
 	if(dialog_info)
 		free_tm_dlg(dialog_info);
