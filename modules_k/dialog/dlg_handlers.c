@@ -85,6 +85,7 @@ extern int       detect_spirals;
 extern int       initial_cbs_inscript;
 extern int       dlg_send_bye;
 extern int       dlg_event_rt[DLG_EVENTRT_MAX];
+extern int       dlg_wait_ack;
 int              spiral_detected = -1;
 
 extern struct rr_binds d_rrb;		/*!< binding to record-routing module */
@@ -109,6 +110,7 @@ static unsigned int CURR_DLG_ID  = 0xffffffff;	/*!< current dialog id */
 
 int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
 		int mode);
+int dlg_set_tm_waitack(tm_cell_t *t, dlg_cell_t *dlg);
 
 /*!
  * \brief Initialize the dialog handlers
@@ -314,8 +316,12 @@ dlg_iuid_t *dlg_get_iuid_shm_clone(dlg_cell_t *dlg)
  */
 void dlg_iuid_sfree(void *iuid)
 {
-    if(iuid)
+    if(iuid) {
+		LM_DBG("freeing dlg iuid [%u:%u] (%p)\n",
+				((dlg_iuid_t*)iuid)->h_entry,
+				((dlg_iuid_t*)iuid)->h_id, iuid);
 		shm_free(iuid);
+	}
 }
 
 
@@ -395,6 +401,25 @@ static void dlg_terminated(sip_msg_t *req, dlg_cell_t *dlg, unsigned int dir)
         LM_ERR("cannot register response callback for BYE request\n");
         return;
     }
+}
+
+/*!
+ * \brief Function that is registered as TM callback and called on T destroy
+ *
+ * - happens when wait_ack==1
+ *
+ */
+static void dlg_ontdestroy(struct cell* t, int type, struct tmcb_params *param)
+{
+	dlg_cell_t *dlg = NULL;
+	dlg_iuid_t *iuid = NULL;
+
+	iuid = (dlg_iuid_t*)(*param->param);
+	dlg = dlg_get_by_iuid(iuid);
+	if(dlg==0)
+		return;
+	/* 1 for callback and 1 for dlg lookup */
+	dlg_unref(dlg, 2);
 }
 
 /*!
@@ -512,7 +537,9 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		goto done;
 	}
 
-	if ( old_state!=DLG_STATE_DELETED && new_state==DLG_STATE_DELETED ) {
+	if ( new_state==DLG_STATE_DELETED
+				&& (old_state==DLG_STATE_UNCONFIRMED
+					|| old_state==DLG_STATE_EARLY) ) {
 		LM_DBG("dialog %p failed (negative reply)\n", dlg);
 		/* dialog setup not completed (3456XX) */
 		run_dlg_callbacks( DLGCB_FAILED, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
@@ -524,6 +551,8 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 
 		if_update_stat(dlg_enable_stats, failed_dlgs, 1);
 
+		if(dlg_wait_ack==1)
+			dlg_set_tm_waitack(t, dlg);
 		goto done;
 	}
 
@@ -865,13 +894,13 @@ error:
 int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
 		int smode)
 {
-	dlg_iuid_t *iuid;
+	dlg_iuid_t *iuid = NULL;
 	if(t==NULL)
 		return -1;
 
 	if(smode==0) {
 		iuid = dlg_get_iuid_shm_clone(dlg);
-		if(iuid==NULL) 
+		if(iuid==NULL)
 		{
 			LM_ERR("failed to create dialog unique id clone\n");
 			goto error;
@@ -888,9 +917,43 @@ int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
 
 	return 0;
 error:
+	dlg_iuid_sfree(iuid);
 	return -1;
 }
 
+/*!
+ * \brief add dlg structure to tm callbacks to wait for negative ACK
+ * \param t current transaction
+ * \param dlg current dialog
+ * \return 0 on success, -1 on failure
+ */
+int dlg_set_tm_waitack(tm_cell_t *t, dlg_cell_t *dlg)
+{
+	dlg_iuid_t *iuid = NULL;
+	if(t==NULL)
+		return -1;
+
+	LM_ERR("registering TMCB to wait for negative ACK\n");
+	iuid = dlg_get_iuid_shm_clone(dlg);
+	if(iuid==NULL)
+	{
+		LM_ERR("failed to create dialog unique id clone\n");
+		goto error;
+	}
+	dlg_ref(dlg, 1);
+	if ( d_tmb.register_tmcb( NULL, t,
+			TMCB_DESTROY,
+			dlg_ontdestroy, (void*)iuid, dlg_iuid_sfree)<0 ) {
+		LM_ERR("failed to register TMCB to wait for negative ACK\n");
+		dlg_unref(dlg, 1);
+		goto error;
+	}
+
+	return 0;
+error:
+	dlg_iuid_sfree(iuid);
+	return -1;
+}
 
 /*!
  * \brief Parse the record-route parameter, to get dialog information back

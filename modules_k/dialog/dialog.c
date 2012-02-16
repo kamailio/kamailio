@@ -105,6 +105,7 @@ static char* profiles_nv_s = NULL;
 str dlg_extra_hdrs = {NULL,0};
 static int db_fetch_rows = 200;
 int initial_cbs_inscript = 1;
+int dlg_wait_ack = 1;
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
 
@@ -247,6 +248,7 @@ static param_export_t mod_params[]={
 	{ "ruri_pvar",             STR_PARAM, &ruri_pvar_param.s        },
 	{ "initial_cbs_inscript",  INT_PARAM, &initial_cbs_inscript     },
 	{ "send_bye",              INT_PARAM, &dlg_send_bye             },
+	{ "wait_ack",              INT_PARAM, &dlg_wait_ack             },
 	{ 0,0,0 }
 };
 
