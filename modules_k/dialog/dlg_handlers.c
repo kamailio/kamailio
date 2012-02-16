@@ -1384,6 +1384,7 @@ void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate
 	}
 
 	if(rt==-1 || event_rt.rlist[rt]==NULL)
+		return;
 
 	if(msg==NULL)
 		fmsg = faked_msg_next();
