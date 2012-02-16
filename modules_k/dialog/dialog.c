@@ -414,6 +414,7 @@ static int mod_init(void)
 
 	dlg_event_rt[DLG_EVENTRT_START] = route_lookup(&event_rt, "dialog:start");
 	dlg_event_rt[DLG_EVENTRT_END] = route_lookup(&event_rt, "dialog:end");
+	dlg_event_rt[DLG_EVENTRT_FAILED] = route_lookup(&event_rt, "dialog:failed");
 
 #ifdef STATISTICS
 	/* register statistics */

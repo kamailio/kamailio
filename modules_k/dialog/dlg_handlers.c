@@ -1381,8 +1381,10 @@ void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate
 	if(nstate==DLG_STATE_CONFIRMED_NA) {
 		rt = dlg_event_rt[DLG_EVENTRT_START];
 	} else if(nstate==DLG_STATE_DELETED) {
-		if(ostate==DLG_STATE_CONFIRMED || DLG_STATE_CONFIRMED_NA)
+		if(ostate==DLG_STATE_CONFIRMED || ostate==DLG_STATE_CONFIRMED_NA)
 			rt = dlg_event_rt[DLG_EVENTRT_END];
+		else if(ostate==DLG_STATE_UNCONFIRMED || ostate==DLG_STATE_EARLY)
+			rt = dlg_event_rt[DLG_EVENTRT_FAILED];
 	}
 
 	if(rt==-1 || event_rt.rlist[rt]==NULL)
