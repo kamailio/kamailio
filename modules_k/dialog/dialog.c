@@ -106,6 +106,8 @@ str dlg_extra_hdrs = {NULL,0};
 static int db_fetch_rows = 200;
 int initial_cbs_inscript = 1;
 
+int dlg_event_rt[DLG_EVENTRT_MAX];
+
 str dlg_bridge_controller = {"sip:controller@kamailio.org", 27};
 
 str ruri_pvar_param = {"$ru", 3};
@@ -410,6 +412,8 @@ static int mod_init(void)
 {
 	unsigned int n;
 
+	dlg_event_rt[DLG_EVENTRT_START] = route_lookup(&event_rt, "dialog:start");
+	dlg_event_rt[DLG_EVENTRT_END] = route_lookup(&event_rt, "dialog:end");
 
 #ifdef STATISTICS
 	/* register statistics */

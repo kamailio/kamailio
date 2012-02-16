@@ -84,6 +84,7 @@ static int       shutdown_done = 0;	/*!< 1 when destroy_dlg_handlers was called 
 extern int       detect_spirals;
 extern int       initial_cbs_inscript;
 extern int       dlg_send_bye;
+extern int       dlg_event_rt[DLG_EVENTRT_MAX];
 int              spiral_detected = -1;
 
 extern struct rr_binds d_rrb;		/*!< binding to record-routing module */
@@ -105,6 +106,8 @@ static unsigned int CURR_DLG_ID  = 0xffffffff;	/*!< current dialog id */
 #define RR_DLG_PARAM_SIZE  (2*2*sizeof(int)+3+MAX_DLG_RR_PARAM_NAME)
 /*! separator inside the record-route paramter */
 #define DLG_SEPARATOR      '.'
+
+void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate);
 
 int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
 		int mode);
@@ -441,6 +444,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		event = DLG_EVENT_RPL3xx;
 
 	next_state_dlg( dlg, event, &old_state, &new_state, &unref);
+	dlg_run_event_route(dlg, (rpl==FAKED_REPLY)?NULL:rpl, old_state, new_state);
 
 	if (new_state==DLG_STATE_EARLY) {
 		run_dlg_callbacks(DLGCB_EARLY, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
@@ -1120,6 +1124,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	}
 
 	next_state_dlg( dlg, event, &old_state, &new_state, &unref);
+	dlg_run_event_route(dlg, req, old_state, new_state);
 
 	CURR_DLG_ID = req->id;
 	CURR_DLG_LIFETIME = (unsigned int)(time(0))-dlg->start_ts;
@@ -1274,6 +1279,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 	}
 
 	next_state_dlg( dlg, DLG_EVENT_REQBYE, &old_state, &new_state, &unref);
+	dlg_run_event_route(dlg, NULL, old_state, new_state);
 
 	if (new_state==DLG_STATE_DELETED && old_state!=DLG_STATE_DELETED) {
 		LM_WARN("timeout for dlg with CallID '%.*s' and tags '%.*s' '%.*s'\n",
@@ -1353,4 +1359,46 @@ int pv_get_dlg_status(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
 
 	return 0;
+}
+
+/*!
+ * \brief Execute event routes based on new state
+ *
+ */
+void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate)
+{
+	sip_msg_t *fmsg;
+	int rt;
+
+	if(dlg==NULL)
+		return;
+	if(ostate==nstate)
+		return;
+
+	rt = -1;
+	if(nstate==DLG_STATE_CONFIRMED_NA) {
+		rt = dlg_event_rt[DLG_EVENTRT_START];
+	} else if(nstate==DLG_STATE_DELETED) {
+		if(ostate==DLG_STATE_CONFIRMED || DLG_STATE_CONFIRMED_NA)
+			rt = dlg_event_rt[DLG_EVENTRT_END];
+	}
+
+	if(rt==-1 || event_rt.rlist[rt]==NULL)
+
+	if(msg==NULL)
+		fmsg = faked_msg_next();
+	else
+		fmsg = msg;
+
+	if (exec_pre_script_cb(fmsg, REQUEST_CB_TYPE)>0)
+	{
+		dlg_ref(dlg, 1);
+		dlg_set_ctx_iuid(dlg);
+		LM_DBG("executing event_route %d on state %d\n", rt, nstate);
+		set_route_type(REQUEST_ROUTE);
+		run_top_route(event_rt.rlist[rt], fmsg, 0);
+		dlg_reset_ctx_iuid();
+		exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
+		dlg_unref(dlg, 1);
+	}
 }

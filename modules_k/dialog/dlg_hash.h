@@ -88,6 +88,9 @@
 #define DLG_DIR_DOWNSTREAM     1 /*!< dialog has downstream direction */
 #define DLG_DIR_UPSTREAM       2 /*!< dialog has upstream direction */
 
+#define DLG_EVENTRT_START   0
+#define DLG_EVENTRT_END     1
+#define DLG_EVENTRT_MAX     2
 
 /*! internal unique ide per dialog */
 typedef struct dlg_iuid {
