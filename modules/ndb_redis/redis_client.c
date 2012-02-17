@@ -199,6 +199,61 @@ redisc_server_t *redisc_get_server(str *name)
 /**
  *
  */
+int redisc_reconnect_server(redisc_server_t *rsrv)
+{
+	char *addr;
+	unsigned int port, db;
+	param_t *pit = NULL;
+	struct timeval tv;
+
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+	addr = "127.0.0.1";
+	port = 6379;
+	db = 0;
+	for (pit = rsrv->attrs; pit; pit=pit->next)
+	{
+		if(pit->name.len==4 && strncmp(pit->name.s, "addr", 4)==0) {
+			addr = pit->body.s;
+			addr[pit->body.len] = '\0';
+		} else if(pit->name.len==4 && strncmp(pit->name.s, "port", 4)==0) {
+			if(str2int(&pit->body, &port) < 0)
+				port = 6379;
+		} else if(pit->name.len==2 && strncmp(pit->name.s, "db", 2)==0) {
+			if(str2int(&pit->body, &db) < 0)
+				db = 0;
+		}
+	}
+	if(rsrv->ctxRedis!=NULL) {
+		redisFree(rsrv->ctxRedis);
+		rsrv->ctxRedis = NULL;
+	}
+
+	rsrv->ctxRedis = redisConnectWithTimeout(addr, port, tv);
+	if(!rsrv->ctxRedis)
+		goto err;
+	if (rsrv->ctxRedis->err)
+		goto err2;
+	if (redisCommandNR(rsrv->ctxRedis, "PING"))
+		goto err2;
+	if (redisCommandNR(rsrv->ctxRedis, "SELECT %i", db))
+		goto err2;
+
+	return 0;
+
+err2:
+	LM_ERR("error communicating with redis server [%.*s] (%s:%d/%d): %s\n",
+		rsrv->sname->len, rsrv->sname->s, addr, port, db, rsrv->ctxRedis->errstr);
+	return -1;
+err:
+	LM_ERR("failed to connect to redis server [%.*s] (%s:%d/%d)\n",
+		rsrv->sname->len, rsrv->sname->s, addr, port, db);
+	return -1;
+}
+
+/**
+ *
+ */
 int redisc_exec(str *srv, str *cmd, str *argv1, str *argv2, str *argv3,
 		str *res)
 {
@@ -237,6 +292,14 @@ int redisc_exec(str *srv, str *cmd, str *argv1, str *argv2, str *argv3,
 	c = cmd->s[cmd->len];
 	cmd->s[cmd->len] = '\0';
 	rpl->rplRedis = redisCommand(rsrv->ctxRedis, cmd->s);
+	if(rpl->rplRedis == NULL)
+	{
+		/* null reply, reconnect and try again */
+		if(redisc_reconnect_server(rsrv)==0)
+		{
+			rpl->rplRedis = redisCommand(rsrv->ctxRedis, cmd->s);
+		}
+	}
 	cmd->s[cmd->len] = c;
 	return 0;
 }
