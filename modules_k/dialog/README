@@ -85,6 +85,7 @@ Alex Balashov
               5.42. bridge_controller (string)
               5.43. initial_cbs_inscript (int)
               5.44. send_bye (int)
+              5.45. wait_ack (int)
 
         6. Functions
 
@@ -144,6 +145,7 @@ Alex Balashov
 
               11.1. event_route[dialog:start]
               11.2. event_route[dialog:end]
+              11.3. event_route[dialog:failure]
 
    2. Developer Guide
 
@@ -201,19 +203,20 @@ Alex Balashov
    1.42. Set bridge_controller parameter
    1.43. Set initial_cbs_inscript parameter
    1.44. Set send_bye parameter
-   1.45. set_dlg_profile usage
-   1.46. unset_dlg_profile usage
-   1.47. is_in_profile usage
-   1.48. get_profile_size usage
-   1.49. dlg_isflagset usage
-   1.50. dlg_setflag usage
-   1.51. dlg_resetflag usage
-   1.52. dlg_bye usage
-   1.53. dlg_refer usage
-   1.54. dlg_manage usage
-   1.55. dlg_bridge usage
-   1.56. dlg_get usage
-   1.57. is_known_dlg() usage
+   1.45. Set wait_ack parameter
+   1.46. set_dlg_profile usage
+   1.47. unset_dlg_profile usage
+   1.48. is_in_profile usage
+   1.49. get_profile_size usage
+   1.50. dlg_isflagset usage
+   1.51. dlg_setflag usage
+   1.52. dlg_resetflag usage
+   1.53. dlg_bye usage
+   1.54. dlg_refer usage
+   1.55. dlg_manage usage
+   1.56. dlg_bridge usage
+   1.57. dlg_get usage
+   1.58. is_known_dlg() usage
 
 Chapter 1. Admin Guide
 
@@ -273,6 +276,7 @@ Chapter 1. Admin Guide
         5.42. bridge_controller (string)
         5.43. initial_cbs_inscript (int)
         5.44. send_bye (int)
+        5.45. wait_ack (int)
 
    6. Functions
 
@@ -332,6 +336,7 @@ Chapter 1. Admin Guide
 
         11.1. event_route[dialog:start]
         11.2. event_route[dialog:end]
+        11.3. event_route[dialog:failure]
 
 1. Overview
 
@@ -464,6 +469,7 @@ Chapter 1. Admin Guide
    5.42. bridge_controller (string)
    5.43. initial_cbs_inscript (int)
    5.44. send_bye (int)
+   5.45. wait_ack (int)
 
 5.1. enable_stats (integer)
 
@@ -1028,6 +1034,20 @@ modparam("dialog", "initial_cbs_inscript", 0)
 modparam("dialog", "send_bye", 1)
 ...
 
+5.45. wait_ack (int)
+
+   If set to 1, dialog will be keept a bit longer in memory in order to
+   absorb the ACK negative replies of initial INVITE. If not, the dialog
+   is destroyed when negative reply is sent out (less internal
+   complexity).
+
+   Default value is "1".
+
+   Example 1.45. Set wait_ack parameter
+...
+modparam("dialog", "wait_ack", 0)
+...
+
 6. Functions
 
    6.1. set_dlg_profile(profile,[value])
@@ -1060,7 +1080,7 @@ modparam("dialog", "send_bye", 1)
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.45. set_dlg_profile usage
+   Example 1.46. set_dlg_profile usage
 ...
 set_dlg_profile("inbound_call");
 set_dlg_profile("caller","$fu");
@@ -1079,7 +1099,7 @@ set_dlg_profile("caller","$fu");
    This function can be used from BRANCH_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.46. unset_dlg_profile usage
+   Example 1.47. unset_dlg_profile usage
 ...
 unset_dlg_profile("inbound_call");
 unset_dlg_profile("caller","$fu");
@@ -1102,7 +1122,7 @@ unset_dlg_profile("caller","$fu");
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.47. is_in_profile usage
+   Example 1.48. is_in_profile usage
 ...
 if (is_in_profile("inbound_call")) {
         log("this request belongs to a inbound call\n");
@@ -1131,7 +1151,7 @@ if (is_in_profile("caller","XX")) {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.48. get_profile_size usage
+   Example 1.49. get_profile_size usage
 ...
 if(get_profile_size("inbound_call","$avp(size)"))
     xlog("currently there are $avp(size) inbound calls\n");
@@ -1150,7 +1170,7 @@ if(get_profile_size("caller","$fu","$avp(size)"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.49. dlg_isflagset usage
+   Example 1.50. dlg_isflagset usage
 ...
 if(dlg_isflagset("1"))
 {
@@ -1168,7 +1188,7 @@ if(dlg_isflagset("1"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.50. dlg_setflag usage
+   Example 1.51. dlg_setflag usage
 ...
 dlg_setflag("1");
 ...
@@ -1183,7 +1203,7 @@ dlg_setflag("1");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.51. dlg_resetflag usage
+   Example 1.52. dlg_resetflag usage
 ...
 redlg_setflag("1");
 ...
@@ -1199,7 +1219,7 @@ redlg_setflag("1");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.52. dlg_bye usage
+   Example 1.53. dlg_bye usage
 ...
 dlg_bye("all");
 ...
@@ -1216,7 +1236,7 @@ dlg_bye("all");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.53. dlg_refer usage
+   Example 1.54. dlg_refer usage
 ...
 dlg_refer("caller", "sip:announcement@kamailio.org");
 ...
@@ -1229,7 +1249,7 @@ dlg_refer("caller", "sip:announcement@kamailio.org");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.54. dlg_manage usage
+   Example 1.55. dlg_manage usage
 ...
 modparam("dialog", "default_timeout", 100)
 ...
@@ -1257,7 +1277,7 @@ route {
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.55. dlg_bridge usage
+   Example 1.56. dlg_bridge usage
 ...
 dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    "sip:kamailio.org:5080");
@@ -1276,7 +1296,7 @@ dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.56. dlg_get usage
+   Example 1.57. dlg_get usage
 ...
 if(dlg_get("abcdef", "123", "456"))
 {
@@ -1300,7 +1320,7 @@ if(dlg_get("abcdef", "123", "456"))
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.57. is_known_dlg() usage
+   Example 1.58. is_known_dlg() usage
 ...
 if(!uri == myself) {
         if(is_known_dlg()) {
@@ -1671,6 +1691,7 @@ if(!uri == myself) {
 
    11.1. event_route[dialog:start]
    11.2. event_route[dialog:end]
+   11.3. event_route[dialog:failure]
 
 11.1. event_route[dialog:start]
 
@@ -1679,6 +1700,10 @@ if(!uri == myself) {
 11.2. event_route[dialog:end]
 
    Executed when BYE is processed or dialog timed out.
+
+11.3. event_route[dialog:failure]
+
+   Executed when dialog is not completed (+300 reply to INVITE).
 
 Chapter 2. Developer Guide
 

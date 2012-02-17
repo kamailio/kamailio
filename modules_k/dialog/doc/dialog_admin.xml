@@ -1137,6 +1137,29 @@ modparam("dialog", "send_bye", 1)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>wait_ack</varname> (int)</title>
+		<para>
+			If set to 1, dialog will be keept a bit longer in memory
+			in order to absorb the ACK negative replies of initial
+			INVITE. If not, the dialog is destroyed when negative reply
+			is sent out (less internal complexity).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>wait_ack</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "wait_ack", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
@@ -2161,6 +2184,12 @@ if(!uri == myself) {
 			<title><varname>event_route[dialog:end]</varname></title>
 			<para>
 			Executed when BYE is processed or dialog timed out.
+			</para>
+		</section>
+		<section>
+			<title><varname>event_route[dialog:failure]</varname></title>
+			<para>
+			Executed when dialog is not completed (+300 reply to INVITE).
 			</para>
 		</section>
 	</section>
