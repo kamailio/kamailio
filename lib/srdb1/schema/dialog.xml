@@ -9,7 +9,7 @@
 
 <table id="dialog" xmlns:db="http://docbook.org/ns/docbook">
 	<name>dialog</name>
-	<version>5</version>
+	<version>6</version>
 	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
 	<description>
 		<db:para>Persistent dialog information for the dialog module. More 
@@ -172,17 +172,16 @@
 		<type>unsigned int</type>
 		<size>10</size>
 		<default>0</default>
-		<description>The flags to set for dialog and usable from config file.
+		<description>The flags to set for dialog and accesible from config file.
 		</description>
 	</column>
 
 	<column>
-		<name>toroute</name>
+		<name>iflags</name>
 		<type>unsigned int</type>
 		<size>10</size>
 		<default>0</default>
-		<description>The ID of route to be executed at dialog timeout (ignored from v3.1,
-			using instead toroute_name).
+		<description>The internal flags for dialog.
 		</description>
 	</column>
 
@@ -200,6 +199,14 @@
 		<type>string</type>
 		<size>&uri_len;</size>
 		<description>The URI of initial request in dialog</description>
+	</column>
+
+	<column>
+		<name>xdata</name>
+		<type>string</type>
+		<size>512</size>
+		<null/>
+		<description>Extra data associated to the dialog (e.g., serialized profiles).</description>
 	</column>
 
 	<index>
