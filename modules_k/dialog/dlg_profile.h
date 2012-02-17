@@ -29,6 +29,7 @@
 #define _DIALOG_DLG_PROFILE_H_
 
 #include "../../parser/msg_parser.h"
+#include "../../lib/srutils/srjson.h"
 #include "../../locking.h"
 #include "../../str.h"
 #include "../../modules/tm/h_table.h"
@@ -192,5 +193,24 @@ struct mi_root * mi_profile_list(struct mi_root *cmd_tree, void *param );
  * \brief return true if the messages belongs to a tracked dialog
  */
 int is_known_dlg(sip_msg_t *msg);
+
+/*!
+ * \brief Add dialog to a profile
+ * \param dlg dialog
+ * \param value value
+ * \param profile dialog profile table
+ * \return 0 on success, -1 on failure
+ */
+int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profile);
+
+/*!
+ * \brief Serialize dialog profiles to json
+ */
+int dlg_profiles_to_json(dlg_cell_t *dlg, srjson_doc_t *jdoc);
+
+/*!
+ * \brief Deserialize dialog profiles to json
+ */
+int dlg_json_to_profiles(dlg_cell_t *dlg, srjson_doc_t *jdoc);
 
 #endif

@@ -852,7 +852,7 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
 	dlg->sflags |= _dlg_ctx.flags;
 
 	if (dlg_send_bye!=0 || _dlg_ctx.to_bye!=0)
-		dlg->dflags |= DLG_FLAG_TOBYE;
+		dlg->iflags |= DLG_IFLAG_TIMEOUTBYE;
 
     if (run_initial_cbs)  run_create_callbacks( dlg, req);
 
@@ -1332,7 +1332,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 			}
 		}
 
-		if(dlg->dflags&DLG_FLAG_TOBYE)
+		if(dlg->iflags&DLG_IFLAG_TIMEOUTBYE)
 		{
 			dlg_bye_all(dlg, NULL);
 			/* run event route for end of dlg */

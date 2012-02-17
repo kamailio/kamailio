@@ -50,13 +50,15 @@
 #define FROM_CONTACT_COL		"caller_contact"
 #define FROM_SOCK_COL			"caller_sock"
 #define TO_SOCK_COL				"callee_sock"
+#define IFLAGS_COL				"iflags"
 #define SFLAGS_COL				"sflags"
 #define TOROUTE_NAME_COL		"toroute_name"
 #define REQ_URI_COL				"req_uri"
+#define XDATA_COL				"xdata"
 #define DIALOG_TABLE_NAME		"dialog"
-#define DLG_TABLE_VERSION		5
+#define DLG_TABLE_VERSION		6
 
-#define DIALOG_TABLE_COL_NO 		21
+#define DIALOG_TABLE_COL_NO 		23
 
 #define VARS_HASH_ID_COL 		"hash_id"
 #define VARS_HASH_ENTRY_COL		"hash_entry"
@@ -95,6 +97,7 @@ extern str to_contact_column;
 extern str from_contact_column;
 extern str to_sock_column;
 extern str from_sock_column;
+extern str iflags_column;
 extern str sflags_column;
 extern str toroute_name_column;
 extern str dialog_table_name;

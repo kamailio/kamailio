@@ -66,11 +66,10 @@
 #define DLG_EVENT_REQBYE       7 /*!< BYE request */
 #define DLG_EVENT_REQ          8 /*!< other requests */
 
-/* dialog flags */
+/* dialog internal flags only in memory */
 #define DLG_FLAG_NEW           (1<<0) /*!< new dialog */
 #define DLG_FLAG_CHANGED       (1<<1) /*!< dialog was changed */
 #define DLG_FLAG_HASBYE        (1<<2) /*!< bye was received */
-#define DLG_FLAG_TOBYE         (1<<3) /*!< flag from dialog context */
 #define DLG_FLAG_CALLERBYE     (1<<4) /*!< bye from caller */
 #define DLG_FLAG_CALLEEBYE     (1<<5) /*!< bye from callee */
 #define DLG_FLAG_LOCALDLG      (1<<6) /*!< local dialog, unused */
@@ -80,6 +79,9 @@
 #define DLG_FLAG_DEL           (1<<8) /*!< delete this var */
 
 #define DLG_FLAG_TM            (1<<9) /*!< dialog is set in transaction */
+
+/* internal flags stored in db */
+#define DLG_IFLAG_TIMEOUTBYE        (1<<0) /*!< send bye on time-out */
 
 #define DLG_CALLER_LEG         0 /*!< attribute that belongs to a caller leg */
 #define DLG_CALLEE_LEG         1 /*!< attribute that belongs to a callee leg */
@@ -110,8 +112,9 @@ typedef struct dlg_cell
 	unsigned int         state;		/*!< dialog state */
 	unsigned int         lifetime;		/*!< dialog lifetime */
 	unsigned int         start_ts;		/*!< start time  (absolute UNIX ts)*/
-	unsigned int         dflags;		/*!< internal dialog flags */
-	unsigned int         sflags;		/*!< script dialog flags */
+	unsigned int         dflags;		/*!< internal dialog memory flags */
+	unsigned int         iflags;		/*!< internal dialog persistent flags */
+	unsigned int         sflags;		/*!< script dialog persistent flags */
 	unsigned int         toroute;		/*!< index of route that is executed on timeout */
 	str                  toroute_name;	/*!< name of route that is executed on timeout */
 	unsigned int         from_rr_nb;	/*!< information from record routing */

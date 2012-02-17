@@ -403,6 +403,7 @@ void set_current_dialog(sip_msg_t *msg, dlg_cell_t *dlg)
 	struct dlg_profile_link *linker;
 	struct dlg_profile_link *tlinker;
 
+	LM_DBG("setting current dialog [%u:%u]\n", dlg->h_entry, dlg->h_id);
 	/* if linkers are not from current request, just discard them */
 	if (msg->id!=current_dlg_msg_id || msg->pid!=current_dlg_msg_pid) {
 		current_dlg_msg_id = msg->id;
@@ -468,6 +469,12 @@ int set_dlg_profile(struct sip_msg *msg, str *value, struct dlg_profile_table *p
 		link_dlg_profile( linker, dlg);
 	} else {
 		/* no dialog yet -> set linker as pending */
+		if (msg->id!=current_dlg_msg_id || msg->pid!=current_dlg_msg_pid) {
+			current_dlg_msg_id = msg->id;
+			current_dlg_msg_pid = msg->pid;
+			destroy_linkers(current_pending_linkers);
+		}
+
 		linker->next = current_pending_linkers;
 		current_pending_linkers = linker;
 	}
@@ -479,6 +486,45 @@ error:
 	return -1;
 }
 
+/*!
+ * \brief Add dialog to a profile
+ * \param dlg dialog
+ * \param value value
+ * \param profile dialog profile table
+ * \return 0 on success, -1 on failure
+ */
+int dlg_add_profile(dlg_cell_t *dlg, str *value, struct dlg_profile_table *profile)
+{
+	dlg_profile_link_t *linker;
+
+	if (dlg==NULL)
+		return -1;
+
+	/* build new linker */
+	linker = (struct dlg_profile_link*)shm_malloc(
+		sizeof(struct dlg_profile_link) + (profile->has_value?value->len:0) );
+	if (linker==NULL) {
+		LM_ERR("no more shm memory\n");
+		goto error;
+	}
+	memset(linker, 0, sizeof(struct dlg_profile_link));
+
+	/* set backpointer to profile */
+	linker->profile = profile;
+
+	/* set the value */
+	if (profile->has_value) {
+		linker->hash_linker.value.s = (char*)(linker+1);
+		memcpy( linker->hash_linker.value.s, value->s, value->len);
+		linker->hash_linker.value.len = value->len;
+	}
+
+	/* add linker directly to the dialog and profile */
+	link_dlg_profile( linker, dlg);
+	return 0;
+error:
+	return -1;
+}
 
 /*!
  * \brief Unset a dialog profile
@@ -819,4 +865,160 @@ struct mi_root * mi_profile_list(struct mi_root *cmd_tree, void *param )
 error:
 	free_mi_tree(rpl_tree);
 	return NULL;
+}
+
+
+/**
+ * json serialization of dialog profiles
+ */
+int dlg_profiles_to_json(dlg_cell_t *dlg, srjson_doc_t *jdoc)
+{
+	dlg_profile_link_t *l;
+	srjson_t *sj = NULL;
+	srjson_t *dj = NULL;
+
+	LM_DBG("serializing profiles for dlg[%u:%u]\n",
+				dlg->h_entry, dlg->h_id);
+	if(dlg==NULL || dlg->profile_links==NULL)
+		return -1;
+	LM_DBG("start of serializing profiles for dlg[%u:%u]\n",
+				dlg->h_entry, dlg->h_id);
+
+	for (l = dlg->profile_links ; l ; l=l->next) {
+		if(l->profile->has_value)
+		{
+			if(dj==NULL)
+			{
+				dj = srjson_CreateObject(jdoc);
+				if(dj==NULL)
+				{
+					LM_ERR("cannot create json dynamic profiles obj\n");
+					goto error;
+				}
+			}
+			srjson_AddStrStrToObject(jdoc, dj,
+					l->profile->name.s, l->profile->name.len,
+					l->hash_linker.value.s, l->hash_linker.value.len);
+		} else {
+			if(sj==NULL)
+			{
+				sj = srjson_CreateArray(jdoc);
+				if(sj==NULL)
+				{
+					LM_ERR("cannot create json static profiles obj\n");
+					goto error;
+				}
+			}
+			srjson_AddItemToArray(jdoc, sj,
+					srjson_CreateStr(jdoc, l->profile->name.s, l->profile->name.len));
+		}
+	}
+
+	if(jdoc->root==NULL)
+	{
+		jdoc->root = srjson_CreateObject(jdoc);
+		if(jdoc->root==NULL)
+		{
+			LM_ERR("cannot create json root\n");
+			goto error;
+		}
+	}
+	if(dj!=NULL)
+		srjson_AddItemToObject(jdoc, jdoc->root, "dprofiles", dj);
+	if(sj!=NULL)
+		srjson_AddItemToObject(jdoc, jdoc->root, "sprofiles", sj);
+	if(jdoc->buf.s != NULL)
+	{
+		jdoc->free_fn(jdoc->buf.s);
+		jdoc->buf.s = NULL;
+		jdoc->buf.len = 0;
+	}
+	jdoc->buf.s = srjson_PrintUnformatted(jdoc, jdoc->root);
+	if(jdoc->buf.s!=NULL)
+	{
+		jdoc->buf.len = strlen(jdoc->buf.s);
+		LM_DBG("serialized profiles for dlg[%u:%u] = [[%.*s]]\n",
+				dlg->h_entry, dlg->h_id, jdoc->buf.len, jdoc->buf.s);
+		return 0;
+	}
+	return -1;
+
+error:
+	srjson_Delete(jdoc, dj);
+	srjson_Delete(jdoc, sj);
+	return -1;
+}
+
+
+/**
+ * json de-serialization of dialog profiles
+ */
+int dlg_json_to_profiles(dlg_cell_t *dlg, srjson_doc_t *jdoc)
+{
+	srjson_t *sj = NULL;
+	srjson_t *dj = NULL;
+	srjson_t *it = NULL;
+	dlg_profile_table_t *profile;
+	str name;
+	str val;
+
+	if(dlg==NULL || jdoc==NULL || jdoc->buf.s==NULL)
+		return -1;
+
+	if(jdoc->root == NULL)
+	{
+		jdoc->root = srjson_Parse(jdoc, jdoc->buf.s);
+		if(jdoc->root == NULL)
+		{
+			LM_ERR("invalid json doc [[%s]]\n", jdoc->buf.s);
+			return -1;
+		}
+	}
+	dj = srjson_GetObjectItem(jdoc, jdoc->root, "dprofiles");
+	sj = srjson_GetObjectItem(jdoc, jdoc->root, "sprofiles");
+	if(dj!=NULL)
+	{
+		for(it=dj->child; it; it = it->next)
+		{
+			name.s = it->string;
+			name.len = strlen(name.s);
+			val.s = it->valuestring;
+			val.len = strlen(val.s);
+			profile = search_dlg_profile(&name);
+			if(profile==NULL)
+			{
+				LM_ERR("profile [%.*s] not found\n", name.len, name.s);
+				continue;
+			}
+			if(profile->has_value)
+			{
+				if(dlg_add_profile(dlg, &val, profile) < 0)
+					LM_ERR("dynamic profile cannot be added, ignore!\n");
+				else
+					LM_DBG("dynamic profile added [%s : %s]\n", name.s, val.s);
+			}
+		}
+	}
+	if(sj!=NULL)
+	{
+		for(it=sj->child; it; it = it->next)
+		{
+			name.s = it->valuestring;
+			name.len = strlen(name.s);
+			profile = search_dlg_profile(&name);
+			if(profile==NULL)
+			{
+				LM_ERR("profile [%.*s] not found\n", name.len, name.s);
+				continue;
+			}
+			if(!profile->has_value)
+			{
+				if(dlg_add_profile(dlg, NULL, profile) < 0)
+					LM_ERR("static profile cannot be added, ignore!\n");
+				else
+					LM_DBG("static profile added [%s]\n", name.s);
+			}
+		}
+	}
+	return 0;
 }

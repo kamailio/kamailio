@@ -39,6 +39,7 @@
 #include "../../socket_info.h"
 #include "dlg_hash.h"
 #include "dlg_var.h"
+#include "dlg_profile.h"
 #include "dlg_db_handler.h"
 
 
@@ -61,8 +62,10 @@ str from_contact_column		=	str_init(FROM_CONTACT_COL);
 str to_sock_column			=	str_init(TO_SOCK_COL);
 str from_sock_column		=	str_init(FROM_SOCK_COL);
 str sflags_column			=	str_init(SFLAGS_COL);
+str iflags_column			=	str_init(IFLAGS_COL);
 str toroute_name_column		=	str_init(TOROUTE_NAME_COL);
 str req_uri_column			=	str_init(REQ_URI_COL);
+str xdata_column			=	str_init(XDATA_COL);
 str dialog_table_name		=	str_init(DIALOG_TABLE_NAME);
 int dlg_db_mode				=	DB_MODE_NONE;
 
@@ -78,6 +81,7 @@ static db_func_t dialog_dbf;
 extern int dlg_enable_stats;
 extern int active_dlgs_cnt;
 extern int early_dlgs_cnt;
+
 
 #define SET_STR_VALUE(_val, _str)\
 	do{\
@@ -229,7 +233,8 @@ static int select_entire_dialog_table(db1_res_t ** res, int fetch_num_rows)
 			&from_cseq_column,	&to_cseq_column,	&from_route_column,
 			&to_route_column, 	&from_contact_column, &to_contact_column,
 			&from_sock_column,	&to_sock_column,    &sflags_column,
-			&toroute_name_column,	&req_uri_column };
+			&toroute_name_column,	&req_uri_column, &xdata_column,
+			&iflags_column};
 
 	if(use_dialog_table() != 0){
 		return -1;
@@ -298,9 +303,10 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 	str callid, from_uri, to_uri, from_tag, to_tag, req_uri;
 	str cseq1, cseq2, contact1, contact2, rroute1, rroute2;
 	str toroute_name;
+	str xdata;
 	unsigned int next_id;
+	srjson_doc_t jdoc;
 	
-
 	res = 0;
 	if((nr_rows = select_entire_dialog_table(&res, fetch_num_rows)) < 0)
 		goto end;
@@ -374,11 +380,14 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 				early_dlgs_cnt++;
 			}
 
-			dlg->tl.timeout = (unsigned int)(VAL_INT(values+9)) + get_ticks();
+			dlg->tl.timeout = (unsigned int)(VAL_INT(values+9));
+			LM_DBG("db dialog timeout is %u (%u/%u)\n", dlg->tl.timeout,
+					get_ticks(), (unsigned int)time(0));
 			if (dlg->tl.timeout<=(unsigned int)time(0))
 				dlg->tl.timeout = 0;
 			else
 				dlg->tl.timeout -= (unsigned int)time(0);
+			dlg->lifetime = dlg->tl.timeout;
 
 			GET_STR_VALUE(cseq1, values, 10 , 1, 1);
 			GET_STR_VALUE(cseq2, values, 11 , 1, 1);
@@ -398,10 +407,21 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 
 			dlg->bind_addr[DLG_CALLER_LEG] = create_socket_info(values, 16);
 			dlg->bind_addr[DLG_CALLEE_LEG] = create_socket_info(values, 17);
-			
+
+			dlg->sflags = (unsigned int)VAL_INT(values+18);
+
 			GET_STR_VALUE(toroute_name, values, 19, 0, 0);
 			dlg_set_toroute(dlg, &toroute_name);
 
+			GET_STR_VALUE(xdata, values, 21, 0, 0);
+			if(xdata.s!=NULL)
+			{
+				srjson_InitDoc(&jdoc, NULL);
+				jdoc.buf = xdata;
+				dlg_json_to_profiles(dlg, &jdoc);
+				srjson_DestroyDoc(&jdoc);
+			}
+			dlg->iflags = (unsigned int)VAL_INT(values+22);
 			/*restore the timer values */
 			if (0 != insert_dlg_timer( &(dlg->tl), (int)dlg->tl.timeout )) {
 				LM_CRIT("Unable to insert dlg %p [%u:%u] "
@@ -414,9 +434,9 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 				continue;
 			}
 			dlg_ref(dlg,1);
-			LM_DBG("current dialog timeout is %u\n", dlg->tl.timeout);
+			LM_DBG("current dialog timeout is %u (%u)\n", dlg->tl.timeout,
+					get_ticks());
 
-			dlg->lifetime = 0;
 			dlg->dflags = 0;
 			next_dialog:
 			;
@@ -675,6 +695,7 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 {
 	int i;
 	struct dlg_var *var;
+	srjson_doc_t jdoc;
 
 	db_val_t values[DIALOG_TABLE_COL_NO];
 
@@ -685,7 +706,8 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 			&start_time_column,  &state_column,       &timeout_column,
 			&from_cseq_column,   &to_cseq_column,     &from_route_column,
 			&to_route_column,    &from_contact_column,&to_contact_column,
-			&sflags_column,      &toroute_name_column,     &req_uri_column };
+			&sflags_column,      &toroute_name_column,     &req_uri_column,
+			&xdata_column, &iflags_column };
 
 	if( (cell->dflags & DLG_FLAG_NEW) != 0 
 	|| (cell->dflags & DLG_FLAG_CHANGED_VARS) != 0) {
@@ -701,6 +723,8 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 	if(use_dialog_table()!=0)
 		return -1;
 	
+	srjson_InitDoc(&jdoc, NULL);
+
 	if((cell->dflags & DLG_FLAG_NEW) != 0){
 		/* save all the current dialogs information*/
 		VAL_TYPE(values) = VAL_TYPE(values+1) = VAL_TYPE(values+9) = 
@@ -715,6 +739,8 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 		SET_NULL_FLAG(values, i, DIALOG_TABLE_COL_NO-6, 0);
 		VAL_TYPE(values+18) = DB1_INT;
 		VAL_TYPE(values+19) = DB1_STR;
+		VAL_TYPE(values+21) = DB1_STR;
+		VAL_TYPE(values+22) = DB1_INT;
 
 		VAL_INT(values)			= cell->h_entry;
 		VAL_INT(values+1)		= cell->h_id;
@@ -757,6 +783,18 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 		SET_STR_VALUE(values+20, cell->req_uri);
 		SET_PROPER_NULL_FLAG(cell->req_uri, 	values, 20);
 
+		dlg_profiles_to_json(cell, &jdoc);
+		if(jdoc.buf.s!=NULL)
+		{
+			SET_STR_VALUE(values+21, jdoc.buf);
+			SET_PROPER_NULL_FLAG(jdoc.buf, values, 21);
+		} else {
+			VAL_NULL(values+21) = 1;
+		}
+
+		VAL_NULL(values+22) = 0;
+		VAL_INT(values+22)  = cell->iflags;
+
 		if((dialog_dbf.insert(dialog_db_handle, insert_keys, values, 
 								DIALOG_TABLE_COL_NO)) !=0){
 			LM_ERR("could not add another dialog to db\n");
@@ -795,8 +833,20 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 		return 0;
 	}
 
+	if(jdoc.buf.s!=NULL) {
+		jdoc.free_fn(jdoc.buf.s);
+		jdoc.buf.s = NULL;
+	}
+	srjson_DestroyDoc(&jdoc);
+
 	return 0;
+
 error:
+	if(jdoc.buf.s!=NULL) {
+		jdoc.free_fn(jdoc.buf.s);
+		jdoc.buf.s = NULL;
+	}
+	srjson_DestroyDoc(&jdoc);
 	return -1;
 }
 
@@ -842,4 +892,3 @@ void dialog_update_db(unsigned int ticks, void * param)
 error:
 	dlg_unlock( d_table, &entry);
 }
-
