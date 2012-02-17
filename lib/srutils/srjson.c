@@ -822,12 +822,35 @@ void srjson_AddItemToObject(srjson_doc_t *doc, srjson_t *object, const char *str
 	srjson_AddItemToArray(doc, object, item);
 }
 
+void srjson_AddStrItemToObject(srjson_doc_t *doc, srjson_t *object, const char *string, int len, srjson_t *item) {
+	if (!item)
+		return;
+	if (item->string)
+		doc->free_fn(item->string);
+	item->string = srjson_strndupz(doc, string, len);
+	srjson_AddItemToArray(doc, object, item);
+}
+
 void srjson_AddItemReferenceToArray(srjson_doc_t *doc, srjson_t *array, srjson_t *item) {
 	srjson_AddItemToArray(doc, array, create_reference(doc, item));
 }
 
 void srjson_AddItemReferenceToObject(srjson_doc_t *doc, srjson_t *object, const char *string, srjson_t *item) {
 	srjson_AddItemToObject(doc, object, string, create_reference(doc, item));
+}
+
+srjson_t *srjson_UnlinkItemFromObj(srjson_doc_t *doc, srjson_t *obj, srjson_t *c)
+{
+	if (!c)
+		return 0;
+	if (c->prev)
+		c->prev->next = c->next;
+	if (c->next)
+		c->next->prev = c->prev;
+	if (c == obj->child)
+		obj->child = c->next;
+	c->prev = c->next = 0;
+	return c;
 }
 
 srjson_t *srjson_DetachItemFromArray(srjson_doc_t *doc, srjson_t *array, int which)

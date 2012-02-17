@@ -148,6 +148,7 @@ extern srjson_t *srjson_CreateStringArray(srjson_doc_t *doc, const char **string
 /* Append item to the specified array/object. */
 extern void srjson_AddItemToArray(srjson_doc_t *doc, srjson_t *array, srjson_t *item);
 extern void srjson_AddItemToObject(srjson_doc_t *doc, srjson_t *object, const char *string, srjson_t *item);
+extern void srjson_AddStrItemToObject(srjson_doc_t *doc, srjson_t *object, const char *string, int len, srjson_t *item);
 
 /*
  * Append reference to item to the specified array/object. Use this
@@ -158,6 +159,7 @@ extern void srjson_AddItemReferenceToArray(srjson_doc_t *doc, srjson_t *array, s
 extern void srjson_AddItemReferenceToObject(srjson_doc_t *doc, srjson_t *object, const char *string, srjson_t *item);
 
 /* Remove/Detatch items from Arrays/Objects. */
+extern srjson_t *srjson_UnlinkItemFromObj(srjson_doc_t *doc, srjson_t *obj, srjson_t *item);
 extern srjson_t *srjson_DetachItemFromArray(srjson_doc_t *doc, srjson_t *array, int which);
 extern void srjson_DeleteItemFromArray(srjson_doc_t *doc, srjson_t *array, int which);
 extern srjson_t *srjson_DetachItemFromObject(srjson_doc_t *doc, srjson_t *object, const char *string);
@@ -173,6 +175,7 @@ extern void srjson_ReplaceItemInObject(srjson_doc_t *doc, srjson_t *object, cons
 #define srjson_AddNumberToObject(doc, object,name,n)	srjson_AddItemToObject(doc, object, name, srjson_CreateNumber(doc,n))
 #define srjson_AddStringToObject(doc, object,name,s)	srjson_AddItemToObject(doc, object, name, srjson_CreateString(doc,s))
 #define srjson_AddStrToObject(doc, object,name,s,l)		srjson_AddItemToObject(doc, object, name, srjson_CreateStr(doc,s,l))
+#define srjson_AddStrStrToObject(doc, object,name,ln,s,l)	srjson_AddStrItemToObject(doc, object, name, ln, srjson_CreateStr(doc,s,l))
 
 #ifdef __cplusplus
 }
