@@ -8,7 +8,7 @@ carrierfailureroute:2
 carrierroute:3
 cpl:1
 dbaliases:1
-dialog:5
+dialog:6
 dialog_vars:1
 dialplan:1
 dispatcher:4

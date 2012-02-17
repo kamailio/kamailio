@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('dialog','5');
+INSERT INTO version (table_name, table_version) values ('dialog','6');
 CREATE TABLE dialog (
     id INTEGER PRIMARY KEY NOT NULL,
     hash_entry INTEGER NOT NULL,
@@ -20,9 +20,10 @@ CREATE TABLE dialog (
     start_time INTEGER NOT NULL,
     timeout INTEGER DEFAULT 0 NOT NULL,
     sflags INTEGER DEFAULT 0 NOT NULL,
-    toroute INTEGER DEFAULT 0 NOT NULL,
+    iflags INTEGER DEFAULT 0 NOT NULL,
     toroute_name VARCHAR(32),
-    req_uri VARCHAR(128) NOT NULL
+    req_uri VARCHAR(128) NOT NULL,
+    xdata VARCHAR(512)
 );
 
 CREATE INDEX dialog_hash_idx ON dialog (hash_entry, hash_id);
