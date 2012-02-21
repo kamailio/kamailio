@@ -402,7 +402,26 @@ modparam("uac", "reg_timer_interval", 60)
 			</example>
 		</section>
 
-
+		<section id="reg-db-table-id">
+			<title><varname>reg_db_table</varname> (string)</title>
+			<para>
+			DB table name to fetch user profiles for registration.
+			</para>
+			<para>
+				<emphasis>
+					This parameter is optional, it's default value being
+					<quote>uacreg</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>reg_db_table</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac", "reg_db_table", "uacreg")
+...
+				</programlisting>
+			</example>
+		</section>
 
 		<section id="reg-contact-addr-id">
 			<title><varname>reg_contact_addr</varname> (string)</title>
