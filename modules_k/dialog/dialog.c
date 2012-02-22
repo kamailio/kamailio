@@ -155,6 +155,7 @@ static int w_dlg_manage(struct sip_msg*, char*, char*);
 static int w_dlg_bye(struct sip_msg*, char*, char*);
 static int w_dlg_refer(struct sip_msg*, char*, char*);
 static int w_dlg_bridge(struct sip_msg*, char*, char*, char*);
+static int w_dlg_set_timeout(struct sip_msg*, char*, char*, char*);
 static int fixup_dlg_bye(void** param, int param_no);
 static int fixup_dlg_refer(void** param, int param_no);
 static int fixup_dlg_bridge(void** param, int param_no);
@@ -195,6 +196,10 @@ static cmd_export_t cmds[]={
 	{"dlg_get",(cmd_function)w_dlg_get,                   3,fixup_dlg_bridge,
 			0, ANY_ROUTE },
 	{"is_known_dlg", (cmd_function)w_is_known_dlg,        0, NULL,
+			0, ANY_ROUTE },
+	{"dlg_set_timeout", (cmd_function)w_dlg_set_timeout,  1,fixup_igp_null,
+			0, ANY_ROUTE },
+	{"dlg_set_timeout", (cmd_function)w_dlg_set_timeout,  3,fixup_igp_all,
 			0, ANY_ROUTE },
 	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
 	{0,0,0,0,0,0}
@@ -1068,6 +1073,54 @@ static int w_dlg_bridge(struct sip_msg *msg, char *from, char *to, char *op)
 	return 1;
 }
 
+/**
+ *
+ */
+static int w_dlg_set_timeout(struct sip_msg *msg, char *pto, char *phe, char *phi)
+{
+	int to = 0;
+	unsigned int he = 0;
+	unsigned int hi = 0;
+	dlg_cell_t *dlg = NULL;
+
+	if(fixup_get_ivalue(msg, (gparam_p)pto, &to)!=0)
+	{
+		LM_ERR("no timeout value\n");
+		return -1;
+	}
+	if(phe!=NULL)
+	{
+		if(fixup_get_ivalue(msg, (gparam_p)phe, (int*)&he)!=0)
+		{
+			LM_ERR("no hash entry value value\n");
+			return -1;
+		}
+		if(fixup_get_ivalue(msg, (gparam_p)phi, (int*)&hi)!=0)
+		{
+			LM_ERR("no hash id value value\n");
+			return -1;
+		}
+		dlg = dlg_lookup(he, hi);
+	} else {
+		dlg = dlg_get_msg_dialog(msg);
+	}
+
+	if(dlg==NULL)
+	{
+		LM_DBG("no dialog found\n");
+		return -1;
+	}
+
+	if(update_dlg_timer(&dlg->tl, to)<0) {
+		LM_ERR("failed to update dialog lifetime\n");
+		dlg_release(dlg);
+		return -1;
+	}
+	dlg->lifetime = to;
+	dlg->dflags |= DLG_FLAG_CHANGED;
+	dlg_release(dlg);
+	return 1;
+}
 
 static int fixup_dlg_bye(void** param, int param_no)
 {

@@ -102,6 +102,7 @@ Alex Balashov
               6.11. dlg_bridge(from, to, op)
               6.12. dlg_get(callid, ftag, ttag)
               6.13. is_known_dlg()
+              6.14. dlg_set_timeout(timeout [, h_entry, h_id])
 
         7. Statistics
 
@@ -217,6 +218,7 @@ Alex Balashov
    1.56. dlg_bridge usage
    1.57. dlg_get usage
    1.58. is_known_dlg() usage
+   1.59. dlg_set_timeout usage
 
 Chapter 1. Admin Guide
 
@@ -293,6 +295,7 @@ Chapter 1. Admin Guide
         6.11. dlg_bridge(from, to, op)
         6.12. dlg_get(callid, ftag, ttag)
         6.13. is_known_dlg()
+        6.14. dlg_set_timeout(timeout [, h_entry, h_id])
 
    7. Statistics
 
@@ -1063,6 +1066,7 @@ modparam("dialog", "wait_ack", 0)
    6.11. dlg_bridge(from, to, op)
    6.12. dlg_get(callid, ftag, ttag)
    6.13. is_known_dlg()
+   6.14. dlg_set_timeout(timeout [, h_entry, h_id])
 
 6.1. set_dlg_profile(profile,[value])
 
@@ -1326,6 +1330,29 @@ if(!uri == myself) {
         if(is_known_dlg()) {
                 xlog("Request $rm from $ci is in-dialog\n");
         }
+}
+...
+
+6.14. dlg_set_timeout(timeout [, h_entry, h_id])
+
+   Set the dialog timeout. Dialog timeout will be updated if it was
+   already set. If h_entry and h_id parameters are not provided, the
+   dialog will be searched based on (callid, fromtag, totag) of currently
+   processed SIP message.
+
+   Meaning of the parameters is as follows:
+     * timeout - the interval in seconds after which the dialog will time
+       out.
+     * h_entry - h_entry value of the iternal dialog identifier.
+     * h_id - h_id valye if the internal dialog identifier.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.59. dlg_set_timeout usage
+...
+if(dlg_set_timeout("180", "123", "456"))
+{
+    ...
 }
 ...
 
