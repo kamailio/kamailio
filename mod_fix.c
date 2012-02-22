@@ -549,3 +549,11 @@ int fixup_spve_all(void** param, int param_no)
 {
 	return fixup_spve_null(param, 1);
 }
+
+/**
+ *
+ */
+int fixup_igp_all(void** param, int param_no)
+{
+	return fixup_igp_null(param, 1);
+}
