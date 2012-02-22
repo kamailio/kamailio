@@ -1161,6 +1161,9 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 		lock_release(&subs_htable[i].lock);
 	}
 
+	if(!s)
+		goto not_found;
+
 found_rec:
 
 	LM_DBG("Record found in hash_table\n");
