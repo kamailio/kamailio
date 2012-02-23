@@ -1401,7 +1401,9 @@ match_cleanup:
 			ret=1;
 			while(!(flags & (BREAK_R_F|RETURN_R_F|EXIT_R_F)) &&
 					(rval_expr_eval_int(h, msg, &v, rve) == 0) && v){
-				i++;
+				if (cfg_get(core, core_cfg, max_while_loops) > 0)
+					i++;
+
 				if (unlikely(i > cfg_get(core, core_cfg, max_while_loops))){
 					LOG(L_ERR, "ERROR: runaway while (%d, %d): more then"
 								" %d loops\n", 
