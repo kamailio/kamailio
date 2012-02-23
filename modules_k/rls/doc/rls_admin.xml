@@ -560,6 +560,30 @@ modparam("rls", "disable_remote_presence", 1)
 </programlisting>
 	    </example>
 	</section>
+	<section>
+	    <title><varname>max_backend_subs</varname> (integer)</title>
+	    <para>
+		When set to a non-zero value RLS will limit the number of back-end
+		SUBSCRIBEs for each RLS SUBSCRIBE to this value.
+		Leaving this at the default of zero means no limit.
+		When people have large contact lists RLS will make lots of back-end
+		subscriptions.  This can easily overload a system.  This option allows
+		you to limit the number of back-end SUBSCRIBEs to help prevent overload.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>max_backend_subscribes</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "max_backend_subscribes", 30)
+...
+</programlisting>
+	    </example>
+	</section>
 
 </section>
 

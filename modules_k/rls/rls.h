@@ -104,6 +104,7 @@ extern int rls_max_notify_body_len;
 extern int rls_expires_offset;
 
 extern int rls_disable_remote_presence;
+extern int rls_max_backend_subs;
 
 extern gen_lock_t *rls_update_subs_lock;
 

@@ -185,6 +185,7 @@ str rls_outbound_proxy = {0, 0};
 int rls_fetch_rows = 500;
 
 int rls_disable_remote_presence = 0;
+int rls_max_backend_subs = 0;
 
 /** module functions */
 
@@ -235,6 +236,7 @@ static param_export_t params[]={
 	{ "expires_offset",         INT_PARAM,	 &rls_expires_offset             },
 	{ "fetch_rows",             INT_PARAM,   &rls_fetch_rows                 },
 	{ "disable_remote_presence",INT_PARAM,   &rls_disable_remote_presence    },
+	{ "max_backend_subs",       INT_PARAM,   &rls_max_backend_subs           },
 	{0,                         0,           0                               }
 };
 

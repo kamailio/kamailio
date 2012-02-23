@@ -864,6 +864,11 @@ int send_resource_subs(char* uri, void* param)
 		return 1;
 	}
 
+	/* Silently drop subscribes over the limit - will print a single warning
+ 	   later */
+	if (rls_max_backend_subs > 0 && ++counter > rls_max_backend_subs)
+		return 1;
+
 	((subs_info_t*)param)->pres_uri = &pres_uri;
 	((subs_info_t*)param)->remote_target = &pres_uri;
 	return pua_send_subscribe((subs_info_t*)param);
@@ -917,6 +922,8 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 	s.extra_headers = &extra_headers;
 
 	s.internal_update_flag = subs->internal_update_flag;
+
+	counter = 0;
 	
 	if(process_list_and_exec(xmlnode, subs->from_user, subs->from_domain,
 			send_resource_subs, (void*)(&s))<0)
@@ -924,6 +931,10 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 		LM_ERR("while processing list\n");
 		goto error;
 	}
+
+	if (rls_max_backend_subs > 0 && counter > rls_max_backend_subs)
+		LM_WARN("%.*s has too many contacts.  Max: %d, has: %d\n",
+			wuri.len, wuri.s, rls_max_backend_subs, counter);
 
 	pkg_free(wuri.s);
 	pkg_free(did_str.s);
