@@ -564,6 +564,28 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 		if(name->len==it->name.len
 				&& strncmp(name->s, it->name.s, name->len)==0)
 		{
+			/* found */
+			if(now>0 && it->expire!=0 && it->expire<now) {
+				/* entry has expired */
+				if(ht->flags==PV_VAL_INT) {
+					/* initval is integer, use it to create a fresh entry */
+					it->flags &= ~AVP_VAL_STR;
+					it->value.n = ht->initval.n;
+					/* increment will be done below */
+				} else {
+					/* delete expired entry */
+					if(it->prev==NULL)
+						ht->entries[idx].first = it->next;
+					else
+						it->prev->next = it->next;
+					if(it->next)
+						it->next->prev = it->prev;
+					ht->entries[idx].esize--;
+					lock_release(&ht->entries[idx].lock);
+					ht_cell_free(it);
+					return NULL;
+				}
+			}
 			/* update value */
 			if(it->flags&AVP_VAL_STR)
 			{
@@ -666,6 +688,19 @@ ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 				&& strncmp(name->s, it->name.s, name->len)==0)
 		{
 			/* found */
+			if(ht->htexpire>0 && it->expire!=0 && it->expire<time(NULL)) {
+				/* entry has expired, delete it and return NULL */
+				if(it->prev==NULL)
+					ht->entries[idx].first = it->next;
+				else
+					it->prev->next = it->next;
+				if(it->next)
+					it->next->prev = it->prev;
+				ht->entries[idx].esize--;
+				lock_release(&ht->entries[idx].lock);
+				ht_cell_free(it);
+				return NULL;
+			}
 			if(old!=NULL)
 			{
 				if(old->msize>=it->msize)
