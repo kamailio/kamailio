@@ -1179,7 +1179,51 @@ modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
 </programlisting>
 		</example>
 	</section>
-
+	<section id="cdr_start_id">
+		<title><varname>cdr_start_id</varname> (string)</title>
+		<para>
+		Modifying the start id which is used to store the start time.
+		</para>
+		<para>
+		Default value is 'st'
+		</para>
+		<example>
+		<title>cdr_start_id example</title>
+		<programlisting format="linespecific">
+modparam("acc", "cdr_start_id", "start")
+</programlisting>
+		</example>
+	</section>
+	<section id="cdr_end_id">
+		<title><varname>cdr_end_id</varname> (string)</title>
+		<para>
+		Modifying the end id which is used to store the end time.
+		</para>
+		<para>
+		Default value is 'et'
+		</para>
+		<example>
+		<title>cdr_end_id example</title>
+		<programlisting format="linespecific">
+modparam("acc", "cdr_end_id", "end")
+</programlisting>
+		</example>
+	</section>
+		<section id="cdr_duration_id">
+		<title><varname>cdr_duration_id</varname> (string)</title>
+		<para>
+		Modifying the duration id which is used to store the duration.
+		</para>
+		<para>
+		Default value is 'd'
+		</para>
+		<example>
+		<title>cdr_duration_id example</title>
+		<programlisting format="linespecific">
+modparam("acc", "cdr_duration_id", "start")
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

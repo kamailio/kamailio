@@ -66,6 +66,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../str.h"
 #include "../rr/api.h"
 #include "acc.h"
 #include "acc_api.h"
@@ -132,6 +133,11 @@ int cdr_enable  = 0;
 int cdr_start_on_confirmed = 0;
 static char* cdr_facility_str = 0;
 static char* cdr_log_extra_str = 0;
+
+str cdr_start_str = str_init("st");
+str cdr_end_str = str_init("et");
+str cdr_duration_str = str_init("d");
+
 /*@{*/
 
 /* ----- RADIUS acc variables ----------- */
@@ -243,11 +249,14 @@ static param_export_t params[] = {
 	{"log_level",            INT_PARAM, &log_level            },
 	{"log_facility",         STR_PARAM, &log_facility_str     },
 	{"log_extra",            STR_PARAM, &log_extra_str        },
-    /* cdr specific */
-    {"cdr_enable",           INT_PARAM, &cdr_enable                     },
-    {"cdr_start_on_confirmed", INT_PARAM, &cdr_start_on_confirmed   },
-    {"cdr_facility",         STR_PARAM, &cdr_facility_str                },
-    {"cdr_extra",            STR_PARAM, &cdr_log_extra_str              },
+	/* cdr specific */
+	{"cdr_enable",           INT_PARAM, &cdr_enable                 },
+	{"cdr_start_on_confirmed", INT_PARAM, &cdr_start_on_confirmed   },
+	{"cdr_facility",         STR_PARAM, &cdr_facility_str           },
+	{"cdr_extra",            STR_PARAM, &cdr_log_extra_str          },
+	{"cdr_start_id",	 STR_PARAM, &cdr_start_str.s		},
+	{"cdr_stop_id",		 STR_PARAM, &cdr_end_str.s		},
+	{"cdr_duration_id",	 STR_PARAM, &cdr_duration_str.s		},
 #ifdef RAD_ACC
 	{"radius_config",        STR_PARAM, &radius_config        },
 	{"radius_flag",          INT_PARAM, &radius_flag          },
@@ -504,34 +513,51 @@ static int mod_init( void )
 
 	acc_log_init();
 
-    /* ----------- INIT CDR GENERATION ----------- */
+	/* ----------- INIT CDR GENERATION ----------- */
 
-    if( cdr_enable < 0 || cdr_enable > 1)
-    {
-        LM_ERR("cdr_enable is out of range\n");
-        return -1;
-    }
+	if( cdr_enable < 0 || cdr_enable > 1)
+	{
+		LM_ERR("cdr_enable is out of range\n");
+		return -1;
+	}
 
-    if( cdr_enable)
-    {
-        if( set_cdr_extra( cdr_log_extra_str) != 0)
-        {
-            LM_ERR( "failed to set cdr extra '%s'\n", cdr_log_extra_str);
-            return -1;
-        }
+	if( cdr_enable)
+	{
+		if( !cdr_start_str.s || !cdr_end_str.s || !cdr_duration_str.s) 
+		{
+		      LM_ERR( "necessary cdr_parameters are not set\n");
+		      return -1;
+		}			
+		
+		cdr_start_str.len = strlen(cdr_start_str.s);
+		cdr_end_str.len = strlen(cdr_end_str.s);
+		cdr_duration_str.len = strlen(cdr_duration_str.s);
+		
+		if( !cdr_start_str.len || !cdr_end_str.len || !cdr_duration_str.len) 
+		{
+		      LM_ERR( "necessary cdr_parameters are empty\n");
+		      return -1;
+		}
+		
+		
+		if( set_cdr_extra( cdr_log_extra_str) != 0)
+		{
+			LM_ERR( "failed to set cdr extra '%s'\n", cdr_log_extra_str);
+			return -1;
+		}
 
-        if( cdr_facility_str && set_cdr_facility( cdr_facility_str) != 0)
-        {
-            LM_ERR( "failed to set cdr facility '%s'\n", cdr_facility_str);
-            return -1;
-        }
-
-        if( init_cdr_generation() != 0)
-        {
-            LM_ERR("failed to init cdr generation\n");
-            return -1;
-        }
-    }
+		if( cdr_facility_str && set_cdr_facility( cdr_facility_str) != 0)
+		{
+			LM_ERR( "failed to set cdr facility '%s'\n", cdr_facility_str);
+			return -1;
+		}
+	
+		if( init_cdr_generation() != 0)
+		{
+			LM_ERR("failed to init cdr generation\n");
+			return -1;
+		}
+	}
 
 	/* ------------ SQL INIT SECTION ----------- */
 

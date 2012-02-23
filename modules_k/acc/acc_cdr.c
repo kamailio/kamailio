@@ -36,6 +36,7 @@
  *
  */
 #include "../../modules/tm/tm_load.h"
+#include "../../str.h"
 #include "../dialog/dlg_load.h"
 
 #include "acc_api.h"
@@ -66,9 +67,6 @@ struct dlg_binds dlgb;
 struct acc_extra* cdr_extra = NULL;
 int cdr_facility = LOG_DAEMON;
 
-static const str start_id = { "st", 2};
-static const str end_id = { "et", 2};
-static const str duration_id = { "d", 1};
 static const str zero_duration = { "0", 1};
 static const char time_separator = {'.'};
 static char time_buffer[ TIME_BUFFER_LENGTH];
@@ -81,6 +79,9 @@ static int cdr_int_arr[ MAX_CDR_CORE + MAX_CDR_EXTRA];
 static char cdr_type_array[ MAX_CDR_CORE + MAX_CDR_EXTRA];
 
 extern struct tm_binds tmb;
+extern str cdr_start_str;
+extern str cdr_end_str;
+extern str cdr_duration_str;
 
 /* write all basic information to buffers(e.g. start-time ...) */
 static int cdr_core2strar( struct dlg_cell* dlg,
@@ -98,9 +99,9 @@ static int cdr_core2strar( struct dlg_cell* dlg,
         return 0;
     }
 
-    start = dlgb.get_dlg_var( dlg, (str*)&start_id);
-    end = dlgb.get_dlg_var( dlg, (str*)&end_id);
-    duration = dlgb.get_dlg_var( dlg, (str*)&duration_id);
+    start = dlgb.get_dlg_var( dlg, (str*)&cdr_start_str);
+    end = dlgb.get_dlg_var( dlg, (str*)&cdr_end_str);
+    duration = dlgb.get_dlg_var( dlg, (str*)&cdr_duration_str);
 
     values[0] = ( start != NULL ? *start : empty_string);
     types[0] = ( start != NULL ? TYPE_STR : TYPE_NULL);
@@ -284,11 +285,11 @@ static int set_duration( struct dlg_cell* dialog)
         return -1;
     }
 
-    if ( string2time( dlgb.get_dlg_var( dialog, (str*)&start_id), &start_time) < 0) {
+    if ( string2time( dlgb.get_dlg_var( dialog, (str*)&cdr_start_str), &start_time) < 0) {
         LM_ERR( "failed to extract start time\n");
         return -1;
     }
-    if ( string2time( dlgb.get_dlg_var( dialog, (str*)&end_id), &end_time) < 0) {
+    if ( string2time( dlgb.get_dlg_var( dialog, (str*)&cdr_end_str), &end_time) < 0) {
         LM_ERR( "failed to extract end time\n");
         return -1;
     }
@@ -301,7 +302,7 @@ static int set_duration( struct dlg_cell* dialog)
     }
 
     if( dlgb.set_dlg_var( dialog,
-                          (str*)&duration_id,
+                          (str*)&cdr_duration_str,
                           (str*)&duration_str) != 0)
     {
         LM_ERR( "failed to set duration time");
@@ -335,7 +336,7 @@ static int set_start_time( struct dlg_cell* dialog)
     }
 
     if( dlgb.set_dlg_var( dialog,
-                          (str*)&start_id,
+                          (str*)&cdr_start_str,
                           (str*)&start_time) != 0)
     {
         LM_ERR( "failed to set start time\n");
@@ -343,7 +344,7 @@ static int set_start_time( struct dlg_cell* dialog)
     }
 
     if( dlgb.set_dlg_var( dialog,
-                          (str*)&end_id,
+                          (str*)&cdr_end_str,
                           (str*)&start_time) != 0)
     {
         LM_ERR( "failed to set initiation end time\n");
@@ -351,7 +352,7 @@ static int set_start_time( struct dlg_cell* dialog)
     }
 
     if( dlgb.set_dlg_var( dialog,
-                          (str*)&duration_id,
+                          (str*)&cdr_duration_str,
                           (str*)&zero_duration) != 0)
     {
         LM_ERR( "failed to set initiation duration time\n");
@@ -385,7 +386,7 @@ static int set_end_time( struct dlg_cell* dialog)
     }
 
     if( dlgb.set_dlg_var( dialog,
-                          (str*)&end_id,
+                          (str*)&cdr_end_str,
                           (str*)&end_time) != 0)
     {
         LM_ERR( "failed to set start time");
@@ -595,9 +596,9 @@ int set_cdr_extra( char* cdr_extra_value)
     }
 
     /* fixed core attributes */
-    cdr_attrs[ counter++] = start_id;
-    cdr_attrs[ counter++] = end_id;
-    cdr_attrs[ counter++] = duration_id;
+    cdr_attrs[ counter++] = cdr_start_str;
+    cdr_attrs[ counter++] = cdr_end_str;
+    cdr_attrs[ counter++] = cdr_duration_str;
 
     for(extra=cdr_extra; extra ; extra=extra->next)
     {
