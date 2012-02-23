@@ -578,7 +578,7 @@ static int mod_init(void)
 	
 	if(pua.get_record_id == NULL)
 	{
-		LM_ERR("Could not import send_subscribe\n");
+		LM_ERR("Could not import get_record_id\n");
 		return -1;
 	}
 	pua_get_record_id= pua.get_record_id;

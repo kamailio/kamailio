@@ -857,8 +857,10 @@ int send_resource_subs(char* uri, void* param)
 	if (check_self(&parsed_pres_uri.host, 0, PROTO_NONE) != 1
 		&& rls_disable_remote_presence != 0)
 	{
-		LM_WARN("Unable to subscribe to remote contact %.*s\n",
-				pres_uri.len, pres_uri.s);
+		LM_WARN("Unable to subscribe to remote contact %.*s for watcher %.*s\n",
+				pres_uri.len, pres_uri.s,
+				((subs_info_t*)param)->watcher_uri->len,
+				((subs_info_t*)param)->watcher_uri->s);
 		return 1;
 	}
 
@@ -872,7 +874,6 @@ int send_resource_subs(char* uri, void* param)
  */
 int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 {
-	char* uri= NULL;
 	subs_info_t s;
 	str wuri= {0, 0};
 	str extra_headers;
@@ -932,8 +933,6 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 error:
 	if(wuri.s)
 		pkg_free(wuri.s);
-	if(uri)
-		xmlFree(uri);
 	if(did_str.s)
 		pkg_free(did_str.s);
 	return -1;
@@ -992,7 +991,6 @@ done:
 
 	pkg_free(subs_copy);
 }
-
 
 int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
 {
@@ -1072,7 +1070,7 @@ int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
 		{
 			if (subs->from_user.len == parsed_uri.user.len &&
 				strncmp(subs->from_user.s, parsed_uri.user.s, parsed_uri.user.len) == 0 &&
-			    subs->from_domain.len == parsed_uri.host.len &&
+				subs->from_domain.len == parsed_uri.host.len &&
 				strncmp(subs->from_domain.s, parsed_uri.host.s, parsed_uri.host.len) == 0 &&
 				subs->event->evp->type == e.type)
 			{
