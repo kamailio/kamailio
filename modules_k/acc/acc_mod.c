@@ -255,7 +255,7 @@ static param_export_t params[] = {
 	{"cdr_facility",         STR_PARAM, &cdr_facility_str           },
 	{"cdr_extra",            STR_PARAM, &cdr_log_extra_str          },
 	{"cdr_start_id",	 STR_PARAM, &cdr_start_str.s		},
-	{"cdr_stop_id",		 STR_PARAM, &cdr_end_str.s		},
+	{"cdr_end_id",		 STR_PARAM, &cdr_end_str.s		},
 	{"cdr_duration_id",	 STR_PARAM, &cdr_duration_str.s		},
 #ifdef RAD_ACC
 	{"radius_config",        STR_PARAM, &radius_config        },
