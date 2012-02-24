@@ -44,6 +44,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_cseq.h"
 #include "../../pvar.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/sl/sl.h"
@@ -854,8 +855,12 @@ static int sip_trace(struct sip_msg *msg, char *dir, char *s2)
 	if(msg->first_line.type==SIP_REQUEST) {
 		sto.method = msg->first_line.u.request.method;
 	} else {
-		sto.method.s = "";
-		sto.method.len = 0;
+		if(parse_headers(msg, HDR_CSEQ_F, 0) != 0 || msg->cseq==NULL
+				|| msg->cseq->parsed==NULL) {
+			LM_ERR("cannot parse cseq header\n");
+			return -1;
+		}
+		sto.method = get_cseq(msg)->method;
 	}
 
 	if(msg->first_line.type==SIP_REPLY) {
