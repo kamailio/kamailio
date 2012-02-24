@@ -4,6 +4,6 @@ NAME:=srutils
 MAJOR_VER=1
 MINOR_VER=0
 BUGFIX_VER=0
-LIBS=
+LIBS= -lm
 
 include ../../Makefile.libs
