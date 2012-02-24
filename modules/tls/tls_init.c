@@ -333,10 +333,12 @@ int tls_h_init_si(struct socket_info *si)
  */
 static void init_ssl_methods(void)
 {
+#ifndef OPENSSL_NO_SSL2
 	ssl_methods[TLS_USE_SSLv2_cli - 1] = SSLv2_client_method();
 	ssl_methods[TLS_USE_SSLv2_srv - 1] = SSLv2_server_method();
 	ssl_methods[TLS_USE_SSLv2 - 1] = SSLv2_method();
-	
+#endif
+
 	ssl_methods[TLS_USE_SSLv3_cli - 1] = SSLv3_client_method();
 	ssl_methods[TLS_USE_SSLv3_srv - 1] = SSLv3_server_method();
 	ssl_methods[TLS_USE_SSLv3 - 1] = SSLv3_method();
