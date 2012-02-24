@@ -583,7 +583,7 @@ avp_db_query("delete from subscriber");
 					matching_flags = please refer to avp_db_load() function
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					flag = 'g'|'G'
+					flag = 'g'|'G' = deletes not only the last value but the complete AVP.
 					</emphasis></para></listitem>
 				</itemizedlist>
 				</para>
