@@ -776,6 +776,47 @@ static int lua_sr_sqlops_reset(lua_State *L)
 /**
  *
  */
+static int lua_sr_sqlops_xquery(lua_State *L)
+{
+	str scon;
+	str squery;
+	str sres;
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SQLOPS))
+	{
+		LM_WARN("weird: sqlops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	scon.s = (char*)lua_tostring(L, -3);
+	squery.s = (char*)lua_tostring(L, -2);
+	sres.s = (char*)lua_tostring(L, -1);
+	if(scon.s == NULL || squery.s == NULL || sres.s == NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+	scon.len = strlen(scon.s);
+	squery.len = strlen(squery.s);
+	sres.len = strlen(sres.s);
+
+	ret = _lua_sqlopsb.xquery(env_L->msg, &scon, &squery, &sres);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
 static const luaL_reg _sr_sqlops_Map [] = {
 	{"query",   lua_sr_sqlops_query},
 	{"value",   lua_sr_sqlops_value},
@@ -784,6 +825,7 @@ static const luaL_reg _sr_sqlops_Map [] = {
 	{"nrows",   lua_sr_sqlops_nrows},
 	{"ncols",   lua_sr_sqlops_ncols},
 	{"reset",   lua_sr_sqlops_reset},
+	{"xquery",  lua_sr_sqlops_xquery},
 	{NULL, NULL}
 };
 
