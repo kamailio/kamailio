@@ -408,33 +408,22 @@ error:
 }
 
 #ifdef WITH_XAVP
-int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
-		pv_elem_t *res)
+int sql_exec_xquery(struct sip_msg *msg, sql_con_t *con, str *query,
+		str *xavp)
 {
 	db1_res_t* db_res = NULL;
 	sr_xavp_t *row = NULL;
 	sr_xval_t val;
 	int i, j;
-	str sv, xavp;
+	str sv;
 
-	if(msg==NULL || query==NULL || res==NULL)
+	if(msg==NULL || query==NULL || xavp==NULL)
 	{
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
-	if(pv_printf_s(msg, query, &sv)!=0)
-	{
-		LM_ERR("cannot print the sql query\n");
-		return -1;
-	}
 
-	if(pv_printf_s(msg, res, &xavp)!=0)
-	{
-		LM_ERR("cannot print the result parameter\n");
-		return -1;
-	}
-
-	if(con->dbf.raw_query(con->dbh, &sv, &db_res)!=0)
+	if(con->dbf.raw_query(con->dbh, query, &db_res)!=0)
 	{
 		LM_ERR("cannot do the query\n");
 		return -1;
@@ -529,7 +518,7 @@ int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
 		val.type = SR_XTYPE_XAVP;
 		val.v.xavp = row;
 		LM_DBG("Adding row\n");
-		xavp_add_value(&xavp, &val, NULL);
+		xavp_add_value(xavp, &val, NULL);
 	}
 
 	con->dbf.free_result(con->dbh, db_res);
@@ -540,6 +529,30 @@ error:
 	return -1;
 
 }
+
+int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
+		pv_elem_t *res)
+{
+	str sv, xavp;
+	if(msg==NULL || query==NULL || res==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+	if(pv_printf_s(msg, query, &sv)!=0)
+	{
+		LM_ERR("cannot print the sql query\n");
+		return -1;
+	}
+
+	if(pv_printf_s(msg, res, &xavp)!=0)
+	{
+		LM_ERR("cannot print the result parameter\n");
+		return -1;
+	}
+	return sql_exec_xquery(msg, con, &sv, &xavp);
+}
+
 #endif
 
 
@@ -831,3 +844,25 @@ void sqlops_reset_result(str *sres)
 
 	return;
 }
+
+/**
+ *
+ */
+int sqlops_do_xquery(sip_msg_t *msg, str *scon, str *squery, str *xavp)
+{
+	sql_con_t *con = NULL;
+
+	con = sql_get_connection(scon);
+	if(con==NULL)
+	{
+		LM_ERR("invalid connection [%.*s]\n", scon->len, scon->s);
+		goto error;
+	}
+	if(sql_exec_xquery(msg, con, squery, xavp)<0)
+		goto error;
+
+	return 0;
+error:
+	return -1;
+}
+

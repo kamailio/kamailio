@@ -90,22 +90,17 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[]={
 	{"sql_query",  (cmd_function)sql_query, 3, fixup_sql_query, 0, 
-		REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"sql_query",  (cmd_function)sql_query2, 2, fixup_sql_query, 0, 
-		REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
+		ANY_ROUTE},
 #ifdef WITH_XAVP
 	{"sql_xquery",  (cmd_function)sql_xquery, 3, fixup_sql_xquery, 0, 
-		REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
+		ANY_ROUTE},
 #endif
 	{"sql_pvquery",  (cmd_function)sql_pvquery, 3, fixup_sql_pvquery, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"sql_result_free",  (cmd_function)sql_rfree,  1, fixup_sql_rfree, 0, 
-		REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"bind_sqlops", (cmd_function)bind_sqlops, 0, 0, 0, 0},
 	{0,0,0,0,0,0}
 };
@@ -426,6 +421,7 @@ static int bind_sqlops(sqlops_api_t* api)
 	api->reset   = sqlops_reset_result;
 	api->nrows   = sqlops_num_rows;
 	api->ncols   = sqlops_num_columns;
+	api->xquery  = sqlops_do_xquery;
 
 	return 0;
 }

@@ -74,12 +74,12 @@ int sql_connect(void);
 
 int sql_do_query(sql_con_t *con, str *query, sql_result_t *res);
 #ifdef WITH_XAVP
-int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
+int sql_do_xquery(sip_msg_t *msg, sql_con_t *con, pv_elem_t *query,
 		pv_elem_t *res);
 #endif
-int sql_do_pvquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
+int sql_do_pvquery(sip_msg_t *msg, sql_con_t *con, pv_elem_t *query,
 		pvname_list_t *res);
-int pv_get_sqlrows(struct sip_msg *msg,  pv_param_t *param,
+int pv_get_sqlrows(sip_msg_t *msg,  pv_param_t *param,
 		pv_value_t *res);
 int pv_parse_con_name(pv_spec_p sp, str *in);
 
@@ -109,6 +109,9 @@ int sqlops_num_rows(str *sres);
 typedef void (*sqlops_reset_result_f)(str *sres);
 void sqlops_reset_result(str *sres);
 
+typedef int (*sqlops_do_xquery_f)(sip_msg_t *msg, str *scon, str *squery, str *sxavp);
+int sqlops_do_xquery(sip_msg_t *msg, str *scon, str *squery, str *sxavp);
+
 typedef struct sqlops_api {
 	sqlops_do_query_f query;
 	sqlops_get_value_f value;
@@ -117,6 +120,7 @@ typedef struct sqlops_api {
 	sqlops_reset_result_f reset;
 	sqlops_num_rows_f nrows;
 	sqlops_num_columns_f ncols;
+	sqlops_do_xquery_f xquery;
 } sqlops_api_t;
 
 typedef int (*bind_sqlops_f)(sqlops_api_t* api);
