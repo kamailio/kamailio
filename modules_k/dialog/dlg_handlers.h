@@ -177,4 +177,9 @@ dlg_iuid_t *dlg_get_iuid_shm_clone(dlg_cell_t *dlg);
  */
 void dlg_iuid_sfree(void *iuid);
 
+/*!
+ *
+ */
+int dlg_manage(sip_msg_t *msg);
+
 #endif

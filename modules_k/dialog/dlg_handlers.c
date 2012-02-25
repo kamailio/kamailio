@@ -762,7 +762,7 @@ static void unref_new_dialog(void *iuid)
  * \param run_initial_cbs if set zero, initial callbacks are not executed
  * \return 0 on success, -1 on failure
  */ 
-int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cbs)
+int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 {
 	dlg_cell_t *dlg;
 	str s;
@@ -1469,4 +1469,39 @@ void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate
 		exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
 		dlg_unref(dlg, 1);
 	}
+}
+
+int dlg_manage(sip_msg_t *msg)
+{
+	str tag;
+	int backup_mode;
+	dlg_cell_t *dlg = NULL;
+	tm_cell_t *t = NULL;
+
+	if( (msg->to==NULL && parse_headers(msg, HDR_TO_F,0)<0) || msg->to==NULL )
+	{
+		LM_ERR("bad TO header\n");
+		return -1;
+	}
+	tag = get_to(msg)->tag_value;
+	if(tag.s!=0 && tag.len!=0)
+	{
+		backup_mode = seq_match_mode;
+		seq_match_mode = SEQ_MATCH_NO_ID;
+		dlg_onroute(msg, NULL, NULL);
+		seq_match_mode = backup_mode;
+	} else {
+		t = d_tmb.t_gett();
+		if(t==T_UNDEFINED)
+			t = NULL;
+		if(dlg_new_dialog(msg, t, initial_cbs_inscript)!=0)
+			return -1;
+		dlg = dlg_get_ctx_dialog();
+		if(dlg==NULL)
+			return -1;
+		if(t!=NULL)
+			dlg_set_tm_callbacks(t, msg, dlg, spiral_detected);
+		dlg_release(dlg);
+	}
+	return 1;
 }

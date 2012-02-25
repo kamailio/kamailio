@@ -933,28 +933,12 @@ static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2)
 	return (dctx->flags&(1<<val))?1:-1;
 }
 
+/**
+ *
+ */
 static int w_dlg_manage(struct sip_msg *msg, char *s1, char *s2)
 {
-	str tag;
-	int backup_mode;
-
-	if( (msg->to==NULL && parse_headers(msg, HDR_TO_F,0)<0) || msg->to==NULL )
-	{
-		LM_ERR("bad TO header\n");
-		return -1;
-	}
-	tag = get_to(msg)->tag_value;
-	if(tag.s!=0 && tag.len!=0)
-	{
-		backup_mode = seq_match_mode;
-		seq_match_mode = SEQ_MATCH_NO_ID;
-		dlg_onroute(msg, NULL, NULL);
-		seq_match_mode = backup_mode;
-	} else {
-		if(dlg_new_dialog(msg, 0, initial_cbs_inscript)!=0)
-			return -1;
-	}
-	return 1;
+	return dlg_manage(msg);
 }
 
 static int w_dlg_bye(struct sip_msg *msg, char *side, char *s2)
