@@ -52,6 +52,7 @@
 #include "../../modules_k/msilo/api.h"
 #include "../../modules_k/uac/api.h"
 #include "../../modules/sanity/api.h"
+#include "../../modules_k/cfgutils/api.h"
 
 #include "app_lua_api.h"
 
@@ -76,6 +77,7 @@
 #define SR_LUA_EXP_MOD_MSILO      (1<<18)
 #define SR_LUA_EXP_MOD_UAC        (1<<19)
 #define SR_LUA_EXP_MOD_SANITY     (1<<20)
+#define SR_LUA_EXP_MOD_CFGUTILS   (1<<21)
 
 /**
  *
@@ -187,6 +189,11 @@ static uac_api_t _lua_uacb;
  * sanity
  */
 static sanity_api_t _lua_sanityb;
+
+/**
+ * cfgutils
+ */
+static cfgutils_api_t _lua_cfgutilsb;
 
 
 /**
@@ -2256,6 +2263,68 @@ static const luaL_reg _sr_sanity_Map [] = {
 /**
  *
  */
+static int lua_sr_cfgutils_lock(lua_State *L)
+{
+	int ret;
+	str lkey;
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_CFGUTILS))
+	{
+		LM_WARN("weird: cfgutils function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(lua_gettop(L)!=1)
+	{
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+	lkey.s = (char*)lua_tostring(L, -1);
+	lkey.len = strlen(lkey.s);
+	ret = _lua_cfgutilsb.mlock(&lkey);
+
+	return app_lua_return_int(L, ret);
+}
+
+
+/**
+ *
+ */
+static int lua_sr_cfgutils_unlock(lua_State *L)
+{
+	int ret;
+	str lkey;
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_CFGUTILS))
+	{
+		LM_WARN("weird: cfgutils function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(lua_gettop(L)!=1)
+	{
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+	lkey.s = (char*)lua_tostring(L, -1);
+	lkey.len = strlen(lkey.s);
+	ret = _lua_cfgutilsb.munlock(&lkey);
+
+	return app_lua_return_int(L, ret);
+}
+
+
+/**
+ *
+ */
+static const luaL_reg _sr_cfgutils_Map [] = {
+	{"lock",      lua_sr_cfgutils_lock},
+	{"unlock",    lua_sr_cfgutils_unlock},
+	{NULL, NULL}
+};
+
+
+/**
+ *
+ */
 int lua_sr_exp_init_mod(void)
 {
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SL)
@@ -2474,6 +2543,16 @@ int lua_sr_exp_init_mod(void)
 		}
 		LM_DBG("loaded sanity api\n");
 	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_CFGUTILS)
+	{
+		/* bind the CFGUTILS API */
+		if (cfgutils_load_api(&_lua_cfgutilsb) < 0)
+		{
+			LM_ERR("cannot bind to CFGUTILS API\n");
+			return -1;
+		}
+		LM_DBG("loaded cfgutils api\n");
+	}
 	return 0;
 }
 
@@ -2550,6 +2629,9 @@ int lua_sr_exp_register_mod(char *mname)
 	} else 	if(len==6 && strcmp(mname, "sanity")==0) {
 		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_SANITY;
 		return 0;
+	} else 	if(len==8 && strcmp(mname, "cfgutils")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_CFGUTILS;
+		return 0;
 	}
 
 	return -1;
@@ -2602,5 +2684,7 @@ void lua_sr_exp_openlibs(lua_State *L)
 		luaL_openlib(L, "sr.uac", _sr_uac_Map,                0);
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SANITY)
 		luaL_openlib(L, "sr.sanity", _sr_sanity_Map,          0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_CFGUTILS)
+		luaL_openlib(L, "sr.cfgutils", _sr_cfgutils_Map,      0);
 }
 
