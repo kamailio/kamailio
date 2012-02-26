@@ -195,6 +195,17 @@ static int xlog_1(struct sip_msg* msg, char* frm, char* str2)
 }
 
 /**
+ * print log message to L_ERR level along with cfg line
+ */
+static int xlogl_1(struct sip_msg* msg, char* frm, char* str2)
+{
+	if(!is_printable(L_ERR))
+		return 1;
+
+	return xlog_helper(msg, (xl_msg_t*)frm, L_ERR, 1);
+}
+
+/**
  * print log message to level given in parameter
  */
 static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
@@ -224,27 +235,6 @@ static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
 }
 
 /**
- * print log message to L_DBG level
- */
-static int xdbg(struct sip_msg* msg, char* frm, char* str2)
-{
-	if(!is_printable(L_DBG))
-		return 1;
-	return xlog_helper(msg, (xl_msg_t*)frm, L_DBG, 0);
-}
-
-/**
- * print log message to L_ERR level along with cfg line
- */
-static int xlogl_1(struct sip_msg* msg, char* frm, char* str2)
-{
-	if(!is_printable(L_ERR))
-		return 1;
-
-	return xlog_helper(msg, (xl_msg_t*)frm, L_ERR, 1);
-}
-
-/**
  * print log message to level given in parameter along with cfg line
  */
 static int xlogl_2(struct sip_msg* msg, char* lev, char* frm)
@@ -271,6 +261,16 @@ static int xlogl_2(struct sip_msg* msg, char* lev, char* frm)
 		return 1;
 
 	return xlog_helper(msg, (xl_msg_t*)frm, (int)level, 1);
+}
+
+/**
+ * print log message to L_DBG level
+ */
+static int xdbg(struct sip_msg* msg, char* frm, char* str2)
+{
+	if(!is_printable(L_DBG))
+		return 1;
+	return xlog_helper(msg, (xl_msg_t*)frm, L_DBG, 0);
 }
 
 /**
