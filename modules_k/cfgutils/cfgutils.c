@@ -76,6 +76,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "api.h"
+
 MODULE_VERSION
 
 static int set_prob(struct sip_msg*, char *, char *);
@@ -678,16 +680,10 @@ static int dbg_shm_summary(struct sip_msg* msg, char* foo, char* bar)
 	return 1;
 }
 
-int cfg_lock_helper(struct sip_msg *msg, gparam_p key, int mode)
+int cfg_lock_helper(str *lkey, int mode)
 {
-	str s;
 	unsigned int pos;
-	if(fixup_get_svalue(msg, key, &s)!=0)
-	{
-		LM_ERR("cannot get first parameter\n");
-		return -1;
-	}
-	pos = core_case_hash(&s, 0, _cfg_lock_size);
+	pos = core_case_hash(lkey, 0, _cfg_lock_size);
 	LM_DBG("cfg_lock mode %d on %u\n", mode, pos);
 	if(mode==0)
 		lock_set_get(_cfg_lock_set, pos);
@@ -696,18 +692,29 @@ int cfg_lock_helper(struct sip_msg *msg, gparam_p key, int mode)
 	return 1;
 }
 
+int cfg_lock_wrapper(struct sip_msg *msg, gparam_p key, int mode)
+{
+	str s;
+	if(fixup_get_svalue(msg, key, &s)!=0)
+	{
+		LM_ERR("cannot get first parameter\n");
+		return -1;
+	}
+	return cfg_lock_helper(&s, mode);
+}
+
 static int cfg_lock(struct sip_msg *msg, char *key, char *s2)
 {
 	if(_cfg_lock_set==NULL || key==NULL)
 		return -1;
-	return cfg_lock_helper(msg, (gparam_p)key, 0);
+	return cfg_lock_wrapper(msg, (gparam_p)key, 0);
 }
 
 static int cfg_unlock(struct sip_msg *msg, char *key, char *s2)
 {
 	if(_cfg_lock_set==NULL || key==NULL)
 		return -1;
-	return cfg_lock_helper(msg, (gparam_p)key, 1);
+	return cfg_lock_wrapper(msg, (gparam_p)key, 1);
 }
 
 
@@ -774,4 +781,35 @@ static void mod_destroy(void)
 		lock_set_destroy(_cfg_lock_set);
 		lock_set_dealloc(_cfg_lock_set);
 	}
+}
+
+/**
+ *
+ */
+int cfgutils_lock(str *lkey)
+{
+	return cfg_lock_helper(lkey, 0);
+}
+
+/**
+ *
+ */
+int cfgutils_unlock(str *lkey)
+{
+	return cfg_lock_helper(lkey, 1);
+}
+
+/**
+ * @brief bind functions to CFGUTILS API structure
+ */
+int bind_cfgutils(cfgutils_api_t *api)
+{
+	if (!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+	api->lock   = cfgutils_lock;
+	api->unlock = cfgutils_unlock;
+
+	return 0;
 }
