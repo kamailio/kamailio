@@ -33,8 +33,8 @@ typedef int (*cfgutils_unlock_f)(str *lkey);
  * @brief CFGUTILS API structure
  */
 typedef struct cfgutils_api {
-	cfgutils_lock_f lock;
-	cfgutils_unlock_f unlock;
+	cfgutils_lock_f mlock;
+	cfgutils_unlock_f munlock;
 } cfgutils_api_t;
 
 typedef int (*bind_cfgutils_f)(cfgutils_api_t* api);

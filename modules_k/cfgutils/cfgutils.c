@@ -118,6 +118,7 @@ static int pv_get_random_val(struct sip_msg *msg, pv_param_t *param,
 static int fixup_prob( void** param, int param_no);
 static int fixup_gflags( void** param, int param_no);
 
+int bind_cfgutils(cfgutils_api_t *api);
 
 static int mod_init(void);
 static void mod_destroy(void);
@@ -171,6 +172,8 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"unlock",       (cmd_function)cfg_unlock,  1,   fixup_spve_null, 0,
 		ANY_ROUTE},
+	{"bind_cfgutils", (cmd_function)bind_cfgutils,  0,
+		0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -808,8 +811,8 @@ int bind_cfgutils(cfgutils_api_t *api)
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
-	api->lock   = cfgutils_lock;
-	api->unlock = cfgutils_unlock;
+	api->mlock   = cfgutils_lock;
+	api->munlock = cfgutils_unlock;
 
 	return 0;
 }
