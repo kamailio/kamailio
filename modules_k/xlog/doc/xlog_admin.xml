@@ -194,13 +194,22 @@ modparam("xlog", "log_facility", "LOG_DAEMON")
 	<title>Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">xlog([level,] format)</function>
+		<function moreinfo="none">xlog([[facility,] level,] format)</function>
 		</title>
 		<para>
 		Print a formated message using LOG function.
 		</para>
 		<para>Meaning of the parameters are as follows:</para>
 		<itemizedlist>
+		<listitem>
+			<para><emphasis>facility</emphasis> - The log facility that will be used for this single log message.
+			</para>
+			<para>
+			<para>
+			If this parameter is missing, the implicit facility is either the facility set with
+			the 'log_facility' module parameter or the core's log facility.
+			</para>
+		</listitem>
 		<listitem>
 			<para><emphasis>level</emphasis> - The level that will be used in LOG function. It can be:
 			</para>
@@ -281,6 +290,8 @@ xlog("time [$Tf] method ($rm) r-uri ($ru) 2nd via ($hdr(via[1]))\n");
 $var(loglevel) = 2;
 xlog("$var(loglevel)", "time [$Tf] method ($rm) r-uri ($ru)\n");
 ...
+xlog("LOG_LOCAL3", "L_ERR", "this message will be sent to syslog facility LOG_LOCAL3\n");
+...
 </programlisting>
 		</example>
 	</section>
@@ -314,7 +325,7 @@ xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">xlogl([level],format)</function>
+		<function moreinfo="none">xlogl([[facility,] level,] format)</function>
 		</title>
 		<para>
 		Similar to xlog(), in addition is printing cfg line number
