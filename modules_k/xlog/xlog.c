@@ -39,6 +39,7 @@
 
 #include "../../pvar.h"
 
+#define NOFACILITY -1
 
 MODULE_VERSION
 
@@ -159,7 +160,7 @@ static int mod_init(void)
 }
 
 static inline int xlog_helper(struct sip_msg* msg, xl_msg_t *xm,
-		int level, int line)
+		int level, int line, int facility)
 {
 	str txt;
 
@@ -168,17 +169,22 @@ static inline int xlog_helper(struct sip_msg* msg, xl_msg_t *xm,
 	if(xl_print_log(msg, xm->m, _xlog_buf, &txt.len)<0)
 		return -1;
 	txt.s = _xlog_buf;
+	/* if facility is not explicitely defined use the xlog default facility */
+	if (facility==NOFACILITY) {
+		facility = xlog_facility;
+	} 
+
 	if(line>0)
 		if(long_format==1)
-			LOG_(xlog_facility, level, _xlog_prefix,
+			LOG_(facility, level, _xlog_prefix,
 				"%s:%d:%.*s",
 				(xm->a)?(((xm->a->cfile)?xm->a->cfile:"")):"",
 				(xm->a)?xm->a->cline:0, txt.len, txt.s);
 		else
-			LOG_(xlog_facility, level, _xlog_prefix,
+			LOG_(facility, level, _xlog_prefix,
 				"%d:%.*s", (xm->a)?xm->a->cline:0, txt.len, txt.s);
 	else
-		LOG_(xlog_facility, level, _xlog_prefix,
+		LOG_(facility, level, _xlog_prefix,
 			"%.*s", txt.len, txt.s);
 	return 1;
 }
@@ -186,12 +192,16 @@ static inline int xlog_helper(struct sip_msg* msg, xl_msg_t *xm,
 /**
  * print log message to L_ERR level
  */
-static int xlog_1(struct sip_msg* msg, char* frm, char* str2)
+static int xlog_1_helper(struct sip_msg* msg, char* frm, char* str2, int mode, int facility)
 {
 	if(!is_printable(L_ERR))
 		return 1;
 
-	return xlog_helper(msg, (xl_msg_t*)frm, L_ERR, 0);
+	return xlog_helper(msg, (xl_msg_t*)frm, L_ERR, mode, facility);
+}
+static int xlog_1(struct sip_msg* msg, char* frm, char* str2)
+{
+	return xlog_1_helper(msg, frm, str2, 0, NOFACILITY);
 }
 
 /**
@@ -199,16 +209,10 @@ static int xlog_1(struct sip_msg* msg, char* frm, char* str2)
  */
 static int xlogl_1(struct sip_msg* msg, char* frm, char* str2)
 {
-	if(!is_printable(L_ERR))
-		return 1;
-
-	return xlog_helper(msg, (xl_msg_t*)frm, L_ERR, 1);
+	return xlog_1_helper(msg, frm, str2, 1, NOFACILITY);
 }
 
-/**
- * print log message to level given in parameter
- */
-static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
+static int xlog_2_helper(struct sip_msg* msg, char* lev, char* frm, int mode, int facility)
 {
 	long level;
 	xl_level_p xlp;
@@ -231,7 +235,15 @@ static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
 	if(!is_printable((int)level))
 		return 1;
 
-	return xlog_helper(msg, (xl_msg_t*)frm, (int)level, 0);
+	return xlog_helper(msg, (xl_msg_t*)frm, (int)level, mode, facility);
+}
+
+/**
+ * print log message to level given in parameter
+ */
+static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
+{
+	return xlog_2_helper(msg, lev, frm, 0, NOFACILITY);
 }
 
 /**
@@ -239,28 +251,14 @@ static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
  */
 static int xlogl_2(struct sip_msg* msg, char* lev, char* frm)
 {
-	long level;
-	xl_level_p xlp;
-	pv_value_t value;
+	return xlog_2_helper(msg, lev, frm, 1, NOFACILITY);
+}
 
-	xlp = (xl_level_p)lev;
-	if(xlp->type==1)
-	{
-		if(pv_get_spec_value(msg, &xlp->v.sp, &value)!=0
-			|| value.flags&PV_VAL_NULL || !(value.flags&PV_VAL_INT))
-		{
-			LM_ERR("invalid log level value [%d]\n", value.flags);
-			return -1;
-		}
-		level = (long)value.ri;
-	} else {
-		level = xlp->v.level;
-	}
-
-	if(!is_printable((int)level))
+static int xdbg_helper(struct sip_msg* msg, char* frm, char* str2, int mode, int facility)
+{
+	if(!is_printable(L_DBG))
 		return 1;
-
-	return xlog_helper(msg, (xl_msg_t*)frm, (int)level, 1);
+	return xlog_helper(msg, (xl_msg_t*)frm, L_DBG, mode, facility);
 }
 
 /**
@@ -268,9 +266,7 @@ static int xlogl_2(struct sip_msg* msg, char* lev, char* frm)
  */
 static int xdbg(struct sip_msg* msg, char* frm, char* str2)
 {
-	if(!is_printable(L_DBG))
-		return 1;
-	return xlog_helper(msg, (xl_msg_t*)frm, L_DBG, 0);
+	return xdbg_helper(msg, frm, str2, 0, NOFACILITY);
 }
 
 /**
@@ -278,11 +274,8 @@ static int xdbg(struct sip_msg* msg, char* frm, char* str2)
  */
 static int xdbgl(struct sip_msg* msg, char* frm, char* str2)
 {
-	if(!is_printable(L_DBG))
-		return 1;
-	return xlog_helper(msg, (xl_msg_t*)frm, L_DBG, 1);
+	return xdbg_helper(msg, frm, str2, 1, NOFACILITY);
 }
-
 
 /**
  * module destroy function
