@@ -412,7 +412,6 @@ inline int sv2int_str(SV *val, int_str *is,
 	
 	if (SvIOK(val)) { /* numerical name */
 		is->n = SvIV(val);
-		*flags = 0;
 		return 1;
 	} else if (SvPOK(val)) {
 		s = SvPV(val, len);
