@@ -241,6 +241,13 @@ int check_ruri_scheme(struct sip_msg* _msg) {
 		/* unsupported schemes end up here already */
 		LM_WARN("failed to parse request uri [%.*s]\n",
 				GET_RURI(_msg)->len, GET_RURI(_msg)->s);
+		if (_msg->REQ_METHOD != METHOD_ACK) {
+			if (slb.zreply(_msg, 400, "Bad Request URI") < 0) {
+				LOG(L_WARN, "sanity_check(): check_parse_uris():"
+						" failed to send 400 via sl reply (bad ruri)\n");
+			}
+		}
+		return SANITY_CHECK_FAILED;
 	}
 	if (_msg->parsed_uri.type == ERROR_URI_T) {
 		if (_msg->REQ_METHOD != METHOD_ACK) {
