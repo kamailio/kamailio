@@ -177,8 +177,6 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	LM_INFO("initializing module...\n");
-	
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
@@ -233,9 +231,9 @@ static int mod_init(void)
 		}
 		
 		/* Load the pcres */
-		LM_NOTICE("loading pcres...\n");
+		LM_DBG("loading pcres...\n");
 		if (load_pcres(START)) {
-			LM_CRIT("failed to load pcres\n");
+			LM_ERR("failed to load pcres\n");
 			goto err;
 		}
 	}
@@ -384,9 +382,9 @@ static int load_pcres(int action)
 	}
 	
 	/* Log the group patterns */
-	LM_NOTICE("num groups = %d\n", num_pcres_tmp);
+	LM_INFO("num groups = %d\n", num_pcres_tmp);
 	for (i=0; i < num_pcres_tmp; i++) {
-		LM_NOTICE("<group[%d]>%s</group[%d]> (size = %i)\n", i, patterns[i], i, (int)strlen(patterns[i]));
+		LM_INFO("<group[%d]>%s</group[%d]> (size = %i)\n", i, patterns[i], i, (int)strlen(patterns[i]));
 	}
 	
 	/* Temporal pointer of pcres */
@@ -498,19 +496,23 @@ static void free_shared_memory(void)
 			}
 		}
 		shm_free(pcres);
+		pcres = NULL;
 	}
 	
 	if (num_pcres) {
 		shm_free(num_pcres);
+		num_pcres = NULL;
 	}
 	
 	if (pcres_addr) {
 		shm_free(pcres_addr);
+		pcres_addr = NULL;
 	}
 	
 	if (reload_lock) {
 		lock_destroy(reload_lock);
 		lock_dealloc(reload_lock);
+		reload_lock = NULL;
     }
 }
 
@@ -672,11 +674,11 @@ static struct mi_root* mi_pcres_reload(struct mi_root* cmd, void* param)
 		return init_mi_tree(403, MI_SSTR("Group matching not enabled"));
 	}
 	
-	LM_NOTICE("reloading pcres...\n");
+	LM_INFO("reloading pcres...\n");
 	if (load_pcres(RELOAD)) {
 		LM_ERR("failed to reload pcres\n");
 		return init_mi_tree(500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
 	}
-	LM_NOTICE("reload success\n");
+	LM_INFO("reload success\n");
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
