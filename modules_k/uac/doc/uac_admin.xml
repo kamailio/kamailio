@@ -302,8 +302,13 @@ modparam("uac","credential","username:domain:password")
 		<section id="auth-realm-avp-id">
 			<title><varname>auth_realm_avp</varname> (string)</title>
 			<para>
-			The definition of an AVP that might contain the realm to be used
+			The definition of an PV that might contain the realm to be used
 			to perform authentication.
+			</para>
+			<para>
+			When the PV value is an empty string or NULL when uac_auth() is called,
+			the realm is taken from the reply and only username matching is done.
+			This can be used if the realm upstream will be using is not known in advance.
 			</para>
 			<para><emphasis>
 				If you define it, you also need to define 

@@ -263,15 +263,19 @@ static inline struct uac_credential *get_avp_credential(struct sip_msg *msg,
 	static struct uac_credential crd;
 	pv_value_t pv_val;
 
-	if(pv_get_spec_value( msg, &auth_realm_spec, &pv_val)!=0
-	|| pv_val.flags&PV_VAL_NULL || pv_val.rs.len<=0)
+	if(pv_get_spec_value( msg, &auth_realm_spec, &pv_val)!=0)
 		return 0;
-	
-	crd.realm = pv_val.rs;
-	/* is it the domain we are looking for? */
-	if (realm->len!=crd.realm.len ||
-	strncmp( realm->s, crd.realm.s, realm->len)!=0 )
-		return 0;
+
+	if (pv_val.flags&PV_VAL_NULL || pv_val.rs.len<=0) {
+		/* if realm parameter is empty or NULL, match any realm asked for */
+		crd.realm = *realm;
+	} else {
+		crd.realm = pv_val.rs;
+		/* is it the domain we are looking for? */
+		if (realm->len!=crd.realm.len ||
+		  strncmp( realm->s, crd.realm.s, realm->len)!=0 )
+			return 0;
+	}
 
 	/* get username and password */
 	if(pv_get_spec_value( msg, &auth_username_spec, &pv_val)!=0
