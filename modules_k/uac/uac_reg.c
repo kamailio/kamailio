@@ -554,10 +554,15 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 			LM_ERR("failed to parse auth hdr body\n");
 			goto done;
 		}
-		if(auth.realm.len!=ri->realm.len
-				|| strncmp(auth.realm.s, ri->realm.s, ri->realm.len)!=0)
-		{
-			LM_ERR("realms are different - ignore?!?!\n");
+		if (ri->realm.len>0) {
+			/* only check if realms match if it is non-empty */
+			if(auth.realm.len!=ri->realm.len
+					|| strncmp(auth.realm.s, ri->realm.s, ri->realm.len)!=0)
+			{
+				LM_ERR("realms do not match. requested realm: [%.*s]\n",
+					auth.realm.len, auth.realm.s);
+				goto error;
+			}
 		}
 		cred.realm = auth.realm;
 		cred.user = ri->auth_username; 
@@ -841,7 +846,11 @@ int uac_reg_load_db(void)
 			reg_db_set_attr(l_domain, 2);
 			reg_db_set_attr(r_username, 3);
 			reg_db_set_attr(r_domain, 4);
-			reg_db_set_attr(realm, 5);
+			/* realm may be empty */
+			if(!VAL_NULL(&RES_ROWS(db_res)[i].values[5])) {
+				reg.realm.s = (char*)(RES_ROWS(db_res)[i].values[5].val.string_val);
+				reg.realm.len = strlen(reg.realm.s);
+			}
 			reg_db_set_attr(auth_username, 6);
 			reg_db_set_attr(auth_password, 7);
 			reg_db_set_attr(auth_proxy, 8);
