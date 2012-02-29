@@ -652,35 +652,24 @@ char* get_sdp_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		goto error;
 	}
 
-	/* if header-field well-known, parse it, find its end otherwise ;
-	 * after leaving the hdr->type switch, tmp should be set to the
-	 * next header field
-	 */
-	switch(hdr->type){
-		case HDR_CONTENTTYPE_T:
-		case HDR_CONTENTDISPOSITION_T:
-			/* just skip over it */
-			hdr->body.s=tmp;
-			/* find end of header */
-			/* find lf */
-			do{
-				match=memchr(tmp, '\n', end-tmp);
-				if (match){
-					match++;
-				}else {
-					LM_ERR("bad body for <%s>(%d)\n", hdr->name.s, hdr->type);
-					tmp=end;
-					goto error;
-				}
-				tmp=match;
-			}while( match<end &&( (*match==' ')||(*match=='\t') ) );
-			tmp=match;
-			hdr->body.len=match-hdr->body.s;
-			break;
-		default:
-			LM_CRIT("unknown header type %d\n", hdr->type);
+	/* just skip over it */
+	hdr->body.s=tmp;
+	/* find end of header */
+	/* find lf */
+	do{
+		match=memchr(tmp, '\n', end-tmp);
+		if (match){
+			match++;
+		}else {
+			LM_ERR("bad body for <%s>(%d)\n", hdr->name.s, hdr->type);
+			tmp=end;
 			goto error;
-	}
+		}
+		tmp=match;
+	}while( match<end &&( (*match==' ')||(*match=='\t') ) );
+	tmp=match;
+	hdr->body.len=match-hdr->body.s;
+
 	/* jku: if \r covered by current length, shrink it */
 	trim_r( hdr->body );
 	hdr->len=tmp-hdr->name.s;

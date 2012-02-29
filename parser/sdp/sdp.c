@@ -591,7 +591,7 @@ static int parse_mixed_content(str *mixed_body, str delimiter, sdp_info_t* _sdp)
 	char *d1p, *d2p;
 	char *ret, *end;
 	unsigned int mime;
-	str sdp_body, cnt_disp;
+	str cnt_disp;
 	int session_num;
 	struct hdr_field hf;
 
@@ -659,10 +659,11 @@ static int parse_mixed_content(str *mixed_body, str delimiter, sdp_info_t* _sdp)
 		} /* end of while */
 		/* and now we need to parse the content */
 		if (start_parsing) {
-			sdp_body.s = rest;
-			sdp_body.len = d2p-rest;
-			/* LM_DBG("we need to check session %d: <%.*s>\n", session_num, sdp_body.len, sdp_body.s); */
-			res = parse_sdp_session(&sdp_body, session_num, &cnt_disp, _sdp);
+			while (('\n' == *rest) || ('\r' == *rest) || ('\t' == *rest)|| (' ' == *rest)) rest++; /* Skip any whitespace */
+			_sdp->raw_sdp.s = rest;
+			_sdp->raw_sdp.len = d2p-rest;
+			/* LM_DBG("we need to check session %d: <%.*s>\n", session_num, _sdp.raw_sdp.len, _sdp.raw_sdp.s); */
+			res = parse_sdp_session(&_sdp->raw_sdp, session_num, &cnt_disp, _sdp);
 			if (res != 0) {
 				LM_DBG("free_sdp\n");
 				free_sdp((sdp_info_t**)(void*)&(_sdp));
@@ -721,6 +722,9 @@ int parse_sdp(struct sip_msg* _m)
 				LM_DBG("free_sdp\n");
 				free_sdp((sdp_info_t**)(void*)&_m->body);
 			}
+			/* The whole body is SDP */
+			((sdp_info_t*)_m->body)->raw_sdp.s = body.s;
+			((sdp_info_t*)_m->body)->raw_sdp.len = body.len;
 			return res;
 			break;
 		default:

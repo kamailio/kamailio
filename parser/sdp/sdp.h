@@ -104,6 +104,7 @@ typedef struct sdp_info {
 	str text; /**< link to start of sdp and its length */
 	int sessions_num;	/**< number of SDP sessions */
 	int streams_num;  /**< total number of streams for all SDP sessions */
+	str raw_sdp;	  /* Pointer to the Raw SDP (Might be embedded in multipart body) */
 	struct sdp_session_cell *sessions;
 } sdp_info_t;
 

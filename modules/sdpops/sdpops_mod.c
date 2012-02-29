@@ -48,6 +48,7 @@ static int w_sdp_with_codecs_by_id(sip_msg_t* msg, char* codec, char *bar);
 static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codec, char *bar);
 static int w_sdp_remove_media(sip_msg_t* msg, char* media, char *bar);
 static int w_sdp_print(sip_msg_t* msg, char* level, char *bar);
+static int w_get_sdp(sip_msg_t* msg, char *bar);
 
 static int mod_init(void);
 
@@ -74,6 +75,8 @@ static cmd_export_t cmds[] = {
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_print",                  (cmd_function)w_sdp_print,
 		1, fixup_igp_null,  0, ANY_ROUTE},
+	{"sdp_get",                  (cmd_function)w_get_sdp,
+		1, 0,  0, ANY_ROUTE},
 	{"bind_sdpops",                (cmd_function)bind_sdpops,
 		1, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -925,6 +928,64 @@ static int w_sdp_print(sip_msg_t* msg, char* level, char *bar)
 	sdp = (sdp_info_t*)msg->body;
 
 	print_sdp(sdp, llevel);
+	return 1;
+}
+
+
+/**
+ *
+ */
+static int w_get_sdp(sip_msg_t* msg, char *avp)
+{
+	sdp_info_t *sdp = NULL;
+	int_str avp_val;
+	int_str avp_name;
+	static unsigned short avp_type = 0;
+	str s;
+	pv_spec_t avp_spec;
+	int sdp_missing=1;
+	
+	s.s = avp; s.len = strlen(s.s);
+	if (pv_parse_spec(&s, &avp_spec)==0
+			|| avp_spec.type!=PVT_AVP) {
+		LM_ERR("malformed or non AVP %s AVP definition\n", avp);
+		return -1;
+	}
+
+	if(pv_get_avp_name(0, &avp_spec.pvp, &avp_name, &avp_type)!=0)
+	{
+		LM_ERR("[%s]- invalid AVP definition\n", avp);
+		return -1;
+	}
+
+	sdp_missing = parse_sdp(msg);
+	if(sdp_missing < 0) {
+		LM_ERR("Unable to parse sdp\n");
+		return -1;
+	}
+	sdp = (sdp_info_t*)msg->body;
+	
+	if (sdp_missing) {
+		avp_val.s.s = NULL;
+		avp_val.s.len = 0;
+		LM_DBG("No SDP\n");
+	} else {
+		avp_val.s.s = pkg_malloc(sdp->raw_sdp.len);
+		avp_val.s.len = sdp->raw_sdp.len;
+		if (avp_val.s.s == NULL)
+		{
+		  LM_ERR("Failed to alloc memory for SDP");
+		  return -1;
+		}
+		memcpy(avp_val.s.s, sdp->raw_sdp.s, avp_val.s.len);
+		LM_DBG("Found SDP %.*s\n", sdp->raw_sdp.len, sdp->raw_sdp.s);
+	}
+	if (add_avp(AVP_VAL_STR | avp_type, avp_name, avp_val) != 0)
+	{
+	  LM_ERR("Failed to add SDP avp");
+	  return -1;
+	}
+	
 	return 1;
 }
 
