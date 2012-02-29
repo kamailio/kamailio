@@ -138,6 +138,7 @@ extern extract_sdialog_info_t pres_extract_sdialog_info;
 /* functions imported from pua module*/
 extern send_subscribe_t pua_send_subscribe;
 extern get_record_id_t pua_get_record_id;
+extern get_subs_list_t pua_get_subs_list;
 
 /* functions imported from presence module */
 extern contains_event_t pres_contains_event;

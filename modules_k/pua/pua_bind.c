@@ -40,6 +40,7 @@ int bind_pua(pua_api_t* api)
 	api->is_dialog      =  is_dialog;
 	api->get_record_id  =  get_record_id;
 	api->add_event      =  add_pua_event;
+	api->get_subs_list  =  get_subs_list;
 
 	return 0;
 }

@@ -648,3 +648,51 @@ error:
 	return -1;
 }
 
+list_entry_t *get_subs_list(str *did)
+{
+	int i;
+	str *tmp_str;
+	list_entry_t *list = NULL;
+
+	if (dbmode==PUA_DB_ONLY)
+		return get_subs_list_puadb(did);
+
+	for (i = 0; i < HASH_SIZE; i++)
+	{
+		ua_pres_t *dialog;
+
+		lock_get(&HashT->p_records[i].lock);
+		dialog = HashT->p_records[i].entity;
+		while (dialog != NULL)
+		{
+			if (dialog->id.s != NULL && dialog->id.len > 0 &&
+				strncmp(dialog->id.s, did->s, did->len) == 0 &&
+				dialog->pres_uri != NULL && dialog->pres_uri->s != NULL &&
+				dialog->pres_uri->len > 0)
+			{
+				if ((tmp_str = (str *)pkg_malloc(sizeof(str))) == NULL)
+				{
+					LM_ERR("out of private memory\n");
+					lock_release(&HashT->p_records[i].lock);
+					goto done;
+				}
+				if ((tmp_str->s = (char *)pkg_malloc(sizeof(char) * dialog->pres_uri->len + 1)) == NULL)
+				{
+					pkg_free(tmp_str);
+					LM_ERR("out of private memory\n");
+					lock_release(&HashT->p_records[i].lock);
+					goto done;
+				}
+				memcpy(tmp_str->s, dialog->pres_uri->s, dialog->pres_uri->len);
+				tmp_str->len = dialog->pres_uri->len;
+				tmp_str->s[tmp_str->len] = '\0';
+
+				list = list_insert(tmp_str, list);
+			}
+			dialog = dialog->next;
+		}
+		lock_release(&HashT->p_records[i].lock);
+	}
+done:
+	return list;
+}

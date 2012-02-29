@@ -140,6 +140,7 @@ xcapGetNewDoc_t xcap_GetNewDoc = 0;
 /* functions imported from pua module*/
 send_subscribe_t pua_send_subscribe;
 get_record_id_t pua_get_record_id;
+get_subs_list_t pua_get_subs_list;
 
 /* TM bind */
 struct tm_binds tmb;
@@ -584,6 +585,13 @@ static int mod_init(void)
 		return -1;
 	}
 	pua_get_record_id= pua.get_record_id;
+
+	if(pua.get_subs_list == NULL)
+	{
+		LM_ERR("Could not import get_subs_list\n");
+		return -1;
+	}
+	pua_get_subs_list= pua.get_subs_list;
 
 	if(!rls_integrated_xcap_server)
 	{

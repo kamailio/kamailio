@@ -33,6 +33,7 @@
 #include "../../lock_ops.h"
 #include "../../dprint.h"
 #include "../../parser/msg_parser.h"
+#include "../rls/list.h"
 
 #define PRESENCE_EVENT      1<<0
 #define PWINFO_EVENT        1<<1
@@ -131,6 +132,9 @@ int convert_temporary_dialog(ua_pres_t *dialog);
 
 int get_record_id(ua_pres_t* dialog, str** rec_id);
 typedef int (*get_record_id_t)(ua_pres_t* dialog, str** rec_id);
+
+list_entry_t *get_subs_list(str *did);
+typedef list_entry_t * (*get_subs_list_t)(str *did);
 
 /* for degug */
 void print_ua_pres(ua_pres_t* p);

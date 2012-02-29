@@ -1567,3 +1567,78 @@ int insert_puadb(ua_pres_t* pres)
 
 /******************************************************************************/
 
+list_entry_t *get_subs_list_puadb(str *did)
+{
+	list_entry_t *list = NULL;
+	db_key_t q_cols[1], res_cols[1];
+	db1_res_t *res= NULL;
+	db_val_t q_vals[1];
+	int n_query_cols= 0, n_res_cols = 0;
+
+	/* cols and values used for search query */
+	q_cols[n_query_cols] = &str_pres_id_col;
+	q_vals[n_query_cols].type = DB1_STR;
+	q_vals[n_query_cols].nul = 0;
+	q_vals[n_query_cols].val.str_val.s = did->s;
+	q_vals[n_query_cols].val.str_val.len = did->len;
+	n_query_cols++;
+
+	res_cols[n_res_cols] = &str_pres_uri_col;
+	n_res_cols++;
+
+	if(pua_db == NULL)
+	{
+		LM_ERR("null database connection\n");
+		return list;
+	}
+
+	if(db_fetch_query(&pua_dbf, pua_fetch_rows, pua_db, q_cols, 0,
+				q_vals, res_cols, n_query_cols, n_res_cols, 0, &res) < 0)
+	{
+		LM_ERR("DB query error\n");
+		return list;
+	}
+
+	if (RES_ROW_N(res) == 0)
+	{
+		LM_INFO( "No records found\n");
+		pua_dbf.free_result(pua_db, res);
+		return list;
+	}
+
+	do {
+		int i, nr_rows;
+		db_row_t *rows;
+		nr_rows = RES_ROW_N(res);
+		rows = RES_ROWS(res);
+
+		for (i=0; i < nr_rows; i++)
+		{
+			str strng, *tmp_str;
+			strng.s = (char *) VAL_STRING(ROW_VALUES(rows+i));
+			strng.len = strlen(VAL_STRING(ROW_VALUES(rows+i)));
+
+			if ((tmp_str = (str *)pkg_malloc(sizeof(str))) == NULL)
+			{
+				LM_ERR("out of private memory\n");
+				pua_dbf.free_result(pua_db, res);
+				return list;
+			}
+			if ((tmp_str->s = (char *)pkg_malloc(sizeof(char) * strng.len + 1)) == NULL)
+			{
+				pkg_free(tmp_str);
+				LM_ERR("out of private memory\n");
+				pua_dbf.free_result(pua_db, res);
+				return list;
+			}
+			memcpy(tmp_str->s, strng.s, strng.len);
+			tmp_str->len = strng.len;
+			tmp_str->s[tmp_str->len] = '\0';
+
+			list = list_insert(tmp_str, list);
+		}
+	} while ((db_fetch_next(&pua_dbf, pua_fetch_rows, pua_db, &res)==1)
+			&& (RES_ROWS(res)>0));
+
+	return list;
+}

@@ -37,6 +37,7 @@ typedef struct pua_api {
 	query_dialog_t is_dialog;
 	get_record_id_t get_record_id;
 	add_pua_event_t add_event;
+	get_subs_list_t get_subs_list;
 } pua_api_t;
 
 typedef int (*bind_pua_t)(pua_api_t* api);

@@ -26,6 +26,7 @@
 #define PUA_DB_H
 
 #include "../../lib/srdb1/db.h"
+#include "../rls/list.h"
 
 #define PUA_PRES_URI (1<<0) 
 #define PUA_PRES_ID (1<<1)
@@ -59,6 +60,7 @@ int update_contact_puadb(ua_pres_t *pres, str *contact);
 void update_puadb(ua_pres_t* pres, time_t desired_expires, 
                        int expires, str* etag, str *contact);
 int insert_puadb(ua_pres_t* pres);
+list_entry_t *get_subs_list_puadb(str *did);
 
 
 #endif

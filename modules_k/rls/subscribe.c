@@ -50,6 +50,7 @@
 #include "notify.h"
 #include "rls.h"
 #include "../../mod_fix.h"
+#include "list.h"
 
 int counter= 0;
 
@@ -67,6 +68,9 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr rl_node);
 
 int update_rlsubs( subs_t* subs,unsigned int hash_code);
 int remove_expired_rlsubs( subs_t* subs,unsigned int hash_code);
+
+list_entry_t *rls_contact_list = NULL;
+list_entry_t *rls_subs_list = NULL;
 
 /**
  * return the XML node for rls-services matching uri
@@ -871,6 +875,28 @@ int send_resource_subs(char* uri, void* param)
 
 	((subs_info_t*)param)->pres_uri = &pres_uri;
 	((subs_info_t*)param)->remote_target = &pres_uri;
+
+	if (((subs_info_t*)param)->internal_update_flag == INTERNAL_UPDATE_TRUE)
+	{
+		str *tmp_str;
+
+		if ((tmp_str = (str *)pkg_malloc(sizeof(str))) == NULL)
+		{
+			LM_ERR("out of private memory\n");
+			return -1;
+		}
+		if ((tmp_str->s = (char *)pkg_malloc(sizeof(char) * pres_uri.len)) == NULL)
+		{
+			pkg_free(tmp_str);
+			LM_ERR("out of private memory\n");
+			return -1;
+		}
+		memcpy(tmp_str->s, pres_uri.s, pres_uri.len);
+		tmp_str->len = pres_uri.len;
+
+		rls_contact_list = list_insert(tmp_str, rls_contact_list);
+	}
+
 	return pua_send_subscribe((subs_info_t*)param);
 }
 
@@ -883,6 +909,7 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 	str wuri= {0, 0};
 	str extra_headers;
 	str did_str= {0, 0};
+	str *tmp_str;
 		
 	/* if is initial send an initial Subscribe 
 	 * else search in hash table for a previous subscription */
@@ -923,6 +950,21 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 
 	s.internal_update_flag = subs->internal_update_flag;
 
+	if (subs->internal_update_flag == INTERNAL_UPDATE_TRUE)
+	{
+		if (rls_contact_list != NULL)
+		{
+			LM_WARN("contact list is not empty\n");
+			list_free(&rls_contact_list);
+		}
+
+		if (rls_subs_list != NULL)
+		{
+			LM_WARN("subscriber list is not empty\n");
+			list_free(&rls_subs_list);
+		}
+	}
+
 	counter = 0;
 	
 	if(process_list_and_exec(xmlnode, subs->from_user, subs->from_domain,
@@ -935,6 +977,31 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 	if (rls_max_backend_subs > 0 && counter > rls_max_backend_subs)
 		LM_WARN("%.*s has too many contacts.  Max: %d, has: %d\n",
 			wuri.len, wuri.s, rls_max_backend_subs, counter);
+
+	if (s.internal_update_flag == INTERNAL_UPDATE_TRUE)
+	{
+		counter = 0;
+		s.internal_update_flag = 0;
+
+		rls_subs_list = pua_get_subs_list(&did_str);
+
+		while ((tmp_str = list_pop(&rls_contact_list)) != NULL)
+		{
+			LM_DBG("Finding and removing %.*s from subscription list\n", tmp_str->len, tmp_str->s);
+			rls_subs_list = list_remove(*tmp_str, rls_subs_list);
+			pkg_free(tmp_str->s);
+			pkg_free(tmp_str);
+		}
+
+		while ((tmp_str = list_pop(&rls_subs_list)) != NULL)
+		{
+			LM_DBG("Removing subscription for %.*s\n", tmp_str->len, tmp_str->s);
+			s.expires = 0;
+			send_resource_subs(tmp_str->s, (void*)(&s));
+			pkg_free(tmp_str->s);
+			pkg_free(tmp_str);
+		}
+	}
 
 	pkg_free(wuri.s);
 	pkg_free(did_str.s);
