@@ -1911,23 +1911,23 @@ int in_list_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
 {
     str subject, list;
     int sep;
-    char *at, *past, *s;
+    char *at, *past, *next_sep, *s;
 
     if (fixup_get_svalue(_m, (gparam_p)_subject, &subject) != 0) {
-	LM_ERR("cannot get subject value\n");
-	return -1;
+		LM_ERR("cannot get subject value\n");
+		return -1;
     } else {
-	if (subject.len == 0) {
-	    LM_ERR("subject cannot be empty string\n");
-	    return -1;
-	}
+		if (subject.len == 0) {
+			LM_ERR("subject cannot be empty string\n");
+			return -1;
+		}
     }
 
     if (fixup_get_svalue(_m, (gparam_p)_list, &list) != 0) {
-	LM_ERR("cannot get list value\n");
-	return -1;
+		LM_ERR("cannot get list value\n");
+		return -1;
     } else {
-	if (list.len == 0) return -1;
+		if (list.len == 0) return -1;
     }
 
     sep = _sep[0];
@@ -1935,23 +1935,46 @@ int in_list_f(struct sip_msg* _m, char* _subject, char* _list, char* _sep)
     at = list.s;
     past = list.s + list.len;
 
-    while (at < past) {
-	s = index(at, sep);
-	if (s == NULL) {
-	    if ((subject.len == (past - at)) &&
-		strncmp(at, subject.s, subject.len) == 0) {
-		return 1;
-	    } else {
-		return -1;
-	    }
-	} else {
-	    if ((subject.len == (s - at)) &&
-		strncmp(at, subject.s, subject.len) == 0) {
-		return 1;
-	    } else {
-		at = s + 1;
-	    }
+	/* Eat leading white space */
+	while ((at < past) && 
+		  ((*at == ' ') || (*at == '\t') || (*at == '\r') || (*at == '\n') )) {
+			at++;
 	}
+
+    while (at < past) {
+		next_sep = index(at, sep);
+		s = next_sep;
+		
+		if (s == NULL) {
+			/* Eat trailing white space */
+			while ((at < past) && 
+				  ((*(past-1) == ' ') || (*(past-1) == '\t') || (*(past-1) == '\r') || (*(past-1) == '\n') )) {
+					past--;
+			}
+			if ((subject.len == (past - at)) &&
+				strncmp(at, subject.s, subject.len) == 0) {
+				return 1;
+			} else {
+				return -1;
+			}
+		} else {
+			/* Eat trailing white space */
+			while ((at < s) && 
+				  ((*(s-1) == ' ') || (*(s-1) == '\t') || (*(s-1) == '\r') || (*(s-1) == '\n') )) {
+					s--;
+			}
+			if ((subject.len == (s - at)) &&
+				strncmp(at, subject.s, subject.len) == 0) {
+				return 1;
+			} else {
+				at = next_sep + 1;
+				/* Eat leading white space */
+				while ((at < past) && 
+					  ((*at == ' ') || (*at == '\t') || (*at == '\r') || (*at == '\n') )) {
+						at++;
+				}
+			}
+		}
     }
 
     return -1;
