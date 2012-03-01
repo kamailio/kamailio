@@ -36,6 +36,7 @@
 #include "../../shm_init.h"
 
 #include "mqueue_api.h"
+#include "api.h"
 
 MODULE_VERSION
 
@@ -47,6 +48,7 @@ static int w_mq_add(struct sip_msg* msg, char* mq, char* key, char* val);
 static int w_mq_pv_free(struct sip_msg* msg, char* mq, char* str2);
 int mq_param(modparam_t type, void *val);
 static int fixup_mq_add(void** param, int param_no);
+static int bind_mq(mq_api_t* api);
 
 static pv_export_t mod_pvs[] = {
 	{ {"mqk", sizeof("mqk")-1}, PVT_OTHER, pv_get_mqk, 0,
@@ -63,6 +65,8 @@ static cmd_export_t cmds[]={
 	{"mq_add", (cmd_function)w_mq_add, 3, fixup_mq_add,
 		0, ANY_ROUTE},
 	{"mq_pv_free", (cmd_function)w_mq_pv_free, 1, fixup_str_null,
+		0, ANY_ROUTE},
+	{"bind_mq", (cmd_function)bind_mq, 1, 0,
 		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -208,4 +212,10 @@ static int fixup_mq_add(void** param, int param_no)
     return fixup_str_null(param, 1);
 }
 
-
+static int bind_mq(mq_api_t* api)
+{
+	if (!api)
+		return -1;
+	api->add = mq_item_add;
+	return 0;
+}
