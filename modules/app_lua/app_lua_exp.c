@@ -53,6 +53,8 @@
 #include "../../modules_k/uac/api.h"
 #include "../../modules/sanity/api.h"
 #include "../../modules_k/cfgutils/api.h"
+#include "../../modules_k/tmx/api.h"
+#include "../../modules/mqueue/api.h"
 
 #include "app_lua_api.h"
 
@@ -78,6 +80,8 @@
 #define SR_LUA_EXP_MOD_UAC        (1<<19)
 #define SR_LUA_EXP_MOD_SANITY     (1<<20)
 #define SR_LUA_EXP_MOD_CFGUTILS   (1<<21)
+#define SR_LUA_EXP_MOD_TMX        (1<<22)
+#define SR_LUA_EXP_MOD_MQUEUE     (1<<23)
 
 /**
  *
@@ -195,6 +199,15 @@ static sanity_api_t _lua_sanityb;
  */
 static cfgutils_api_t _lua_cfgutilsb;
 
+/**
+ * tmx
+ */
+static tmx_api_t _lua_tmxb;
+
+/**
+ * mqueue
+ */
+static mq_api_t _lua_mqb;
 
 /**
  *
@@ -2321,6 +2334,76 @@ static const luaL_reg _sr_cfgutils_Map [] = {
 	{NULL, NULL}
 };
 
+/**
+ *
+ */
+static int lua_sr_tmx_t_suspend(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TMX))
+	{
+		LM_WARN("weird: tmx function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_tmxb.t_suspend(env_L->msg, NULL, NULL);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_tmx_Map [] = {
+	{"t_suspend", lua_sr_tmx_t_suspend},
+	{NULL, NULL}
+};
+
+/**
+ *
+ */
+static int lua_sr_mq_add(lua_State *L)
+{
+	int ret;
+	str param[3];
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_MQUEUE))
+	{
+		LM_WARN("weird: mqueue function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(lua_gettop(L)!=3)
+	{
+		LM_WARN("invalid number of parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+	
+	param[0].s = (char *) lua_tostring(L, -3);
+	param[0].len = strlen(param[0].s);
+	param[1].s = (char *) lua_tostring(L, -2);
+	param[1].len = strlen(param[1].s);
+	param[2].s = (char *) lua_tostring(L, -1);
+	param[2].len = strlen(param[2].s);
+	
+	ret = _lua_mqb.add(&param[0], &param[1], &param[2]);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static const luaL_reg _sr_mqueue_Map [] = {
+	{"add", lua_sr_mq_add},
+	{NULL, NULL}
+};
 
 /**
  *
@@ -2553,6 +2636,26 @@ int lua_sr_exp_init_mod(void)
 		}
 		LM_DBG("loaded cfgutils api\n");
 	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TMX)
+	{
+		/* bind the TMX API */
+		if (load_tmx_api(&_lua_tmxb) < 0)
+		{
+			LM_ERR("cannot bind to TMX API\n");
+			return -1;
+		}
+		LM_DBG("loaded tmx api\n");
+	}
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_MQUEUE)
+	{
+		/* bind the MQUEUE API */
+		if (load_mq_api(&_lua_mqb) < 0)
+		{
+			LM_ERR("cannot bind to MQUEUE API\n");
+			return -1;
+		}
+		LM_DBG("loaded mqueue api\n");
+	}
 	return 0;
 }
 
@@ -2632,6 +2735,12 @@ int lua_sr_exp_register_mod(char *mname)
 	} else 	if(len==8 && strcmp(mname, "cfgutils")==0) {
 		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_CFGUTILS;
 		return 0;
+	} else 	if(len==3 && strcmp(mname, "tmx")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_TMX;
+		return 0;
+	} else 	if(len==6 && strcmp(mname, "mqueue")==0) {
+		_sr_lua_exp_reg_mods |= SR_LUA_EXP_MOD_MQUEUE;
+		return 0;
 	}
 
 	return -1;
@@ -2686,5 +2795,9 @@ void lua_sr_exp_openlibs(lua_State *L)
 		luaL_openlib(L, "sr.sanity", _sr_sanity_Map,          0);
 	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_CFGUTILS)
 		luaL_openlib(L, "sr.cfgutils", _sr_cfgutils_Map,      0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TMX)
+		luaL_openlib(L, "sr.tmx", _sr_tmx_Map,                0);
+	if(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_MQUEUE)
+		luaL_openlib(L, "sr.mq", _sr_mqueue_Map,              0);
 }
 
