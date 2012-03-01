@@ -33,6 +33,7 @@
 
 #include "t_var.h"
 #include "t_mi.h"
+#include "api.h"
 
 MODULE_VERSION
 
@@ -62,6 +63,8 @@ static int t_is_branch_route(struct sip_msg* msg, char*, char* );
 static int w_t_suspend(struct sip_msg* msg, char*, char*);
 static int w_t_continue(struct sip_msg* msg, char *idx, char *lbl, char *rtn);
 static int fixup_t_continue(void** param, int param_no);
+
+static int bind_tmx(tmx_api_t* api);
 
 /* statistic variables */
 stat_var *tm_rcv_rpls;
@@ -158,6 +161,8 @@ static cmd_export_t cmds[]={
 			0, ANY_ROUTE  },
 	{"t_continue", (cmd_function)w_t_continue,     3,
 		fixup_t_continue, 0, ANY_ROUTE },
+	{"bind_tmx", (cmd_function)bind_tmx, 1,
+		0, 0, ANY_ROUTE },
 	{0,0,0,0,0,0}
 };
 
@@ -556,6 +561,15 @@ static int fixup_t_continue(void** param, int param_no)
 		return fixup_spve_null(param, 1);
 	}
 
+	return 0;
+}
+
+static int bind_tmx(tmx_api_t* api)
+{
+	if (!api)
+		return -1;
+
+	api->t_suspend = w_t_suspend;
 	return 0;
 }
 
