@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('dialog','6');
+INSERT INTO version (table_name, table_version) values ('dialog','7');
 CREATE TABLE dialog (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     hash_entry INT(10) UNSIGNED NOT NULL,

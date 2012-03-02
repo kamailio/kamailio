@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('dialog','6');
+INSERT INTO version (table_name, table_version) values ('dialog','7');
 CREATE TABLE dialog (
     id NUMBER(10) PRIMARY KEY,
     hash_entry NUMBER(10),
