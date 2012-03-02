@@ -9,7 +9,7 @@
 
 <table id="dialog" xmlns:db="http://docbook.org/ns/docbook">
 	<name>dialog</name>
-	<version>6</version>
+	<version>7</version>
 	<type db="mysql">&MYSQL_TABLE_TYPE;</type>
 	<description>
 		<db:para>Persistent dialog information for the dialog module. More 
@@ -87,14 +87,14 @@
 	<column>
 		<name>caller_cseq</name>
 		<type>string</type>
-		<size>7</size>
+		<size>20</size>
 		<description>Last Cseq number on the caller side.</description>
 	</column>
 
 	<column>
 		<name>callee_cseq</name>
 		<type>string</type>
-		<size>7</size>
+		<size>20</size>
 		<description>Last Cseq number on the caller side.</description>
 	</column>
 
