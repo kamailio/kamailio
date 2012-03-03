@@ -529,7 +529,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		}
 	}
 
-	if(ps->code == 401)
+	if(ps->code == 401 || ps->code == 407)
 	{
 		if(ri->flags & UAC_REG_AUTHSENT)
 		{
@@ -539,7 +539,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 			ri->flags |= UAC_REG_DISABLED;
 			goto done;
 		}
-		hdr = get_autenticate_hdr(ps->rpl, 401);
+		hdr = get_autenticate_hdr(ps->rpl, ps->code);
 		if (hdr==0)
 		{
 			LM_ERR("failed to extract authenticate hdr\n");
@@ -569,7 +569,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		s_ruri.s = b_ruri; s_ruri.len = strlen(s_ruri.s);
 
 		do_uac_auth(&method, &s_ruri, &cred, &auth, response);
-		new_auth_hdr=build_authorization_hdr(401, &s_ruri, &cred,
+		new_auth_hdr=build_authorization_hdr(ps->code, &s_ruri, &cred,
 						&auth, response);
 		if (new_auth_hdr==0)
 		{
