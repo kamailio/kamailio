@@ -111,6 +111,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <errno.h>
@@ -1598,6 +1599,33 @@ assign_stm:
 	}
 	| MCAST_TTL EQUAL error { yyerror("number expected"); }
 	| TOS EQUAL NUMBER { tos=$3; }
+	| TOS EQUAL ID { if (strcasecmp($3,"IPTOS_LOWDELAY")) {
+			tos=IPTOS_LOWDELAY;
+		} else if (strcasecmp($3,"IPTOS_THROUGHPUT")) {
+			tos=IPTOS_THROUGHPUT;
+		} else if (strcasecmp($3,"IPTOS_RELIABILITY")) {
+			tos=IPTOS_RELIABILITY;
+#if defined(IPTOS_MINCOST)
+		} else if (strcasecmp($3,"IPTOS_MINCOST")) {
+			tos=IPTOS_MINCOST;
+#endif
+#if defined(IPTOS_LOWCOST)
+		} else if (strcasecmp($3,"IPTOS_LOWCOST")) {
+			tos=IPTOS_LOWCOST;
+#endif
+		} else {
+			yyerror("invalid tos value - allowed: "
+				"IPTOS_LOWDELAY,IPTOS_THROUGHPUT,"
+				"IPTOS_RELIABILITY"
+#if defined(IPTOS_LOWCOST)
+				",IPTOS_LOWCOST"
+#endif
+#if !defined(IPTOS_MINCOST)
+				",IPTOS_MINCOST"
+#endif
+				"\n");
+		}
+	}
 	| TOS EQUAL error { yyerror("number expected"); }
 	| PMTU_DISCOVERY EQUAL NUMBER { pmtu_discovery=$3; }
 	| PMTU_DISCOVERY error { yyerror("number expected"); }
