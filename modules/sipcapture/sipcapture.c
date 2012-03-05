@@ -1431,6 +1431,9 @@ int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip) {
 	unsigned short dst_port;
 	unsigned short src_port;
 	struct ip_addr dst_ip, src_ip;
+	struct socket_info* si = 0;
+	int tmp_len;
+	
 
 	for(;;){
 
@@ -1480,28 +1483,6 @@ int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip) {
         	        }
 	        }
         									
-		/*FIL IPs*/
-		dst_ip.af=AF_INET;
-	        dst_ip.len=4;
-        	dst_ip.u.addr32[0]=iph->ip_dst.s_addr;
-	        /* fill dst_port */
-        	dst_port=ntohs(udph->uh_dport);
-	        ip_addr2su(&to, &dst_ip, dst_port);
-        	/* fill src_port */
-	        src_port=ntohs(udph->uh_sport);
-                src_ip.af=AF_INET;
- 	        src_ip.len=4;
-                src_ip.u.addr32[0]=iph->ip_src.s_addr;
-                ip_addr2su(&from, &src_ip, src_port);
-	        su_setport(&from, src_port);
-		
-		ri.src_su=from;
-                su2ip_addr(&ri.src_ip, &from);
-                ri.src_port=src_port;
-                su2ip_addr(&ri.dst_ip, &to);
-                ri.dst_port=dst_port;
-                ri.proto=PROTO_UDP;                                
-
 		/* cut off the offset */
 	        len -= offset;
 
@@ -1510,13 +1491,74 @@ int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip) {
                         continue;
                 }
 
+                /* fill dst_port && src_port */
+                dst_port=ntohs(udph->uh_dport);
+                src_port=ntohs(udph->uh_sport);
+                                                        
+
                 DBG("PORT: [%d] and [%d]\n", port1, port2);
                 
-		if((!port1 && !port2) 
-		        || (src_port >= port1 && src_port <= port2) || (dst_port >= port1 && dst_port <= port2) 
-		        || (!port2 && (src_port == port1 || dst_port == port1)))
-		                          receive_msg(buf+offset, len, &ri);
+		if((!port1 && !port2) || (src_port >= port1 && src_port <= port2) 
+		        || (dst_port >= port1 && dst_port <= port2) 
+		        || (!port2 && (src_port == port1 || dst_port == port1))) {
+		        
+        		/*FIL IPs*/
+        		dst_ip.af=AF_INET;
+        	        dst_ip.len=4;
+                	dst_ip.u.addr32[0]=iph->ip_dst.s_addr;
+
+	                /* fill dst_port */
+        	        ip_addr2su(&to, &dst_ip, dst_port);
+
+                	/* fill src_port */
+                        src_ip.af=AF_INET;
+         	        src_ip.len=4;
+                        src_ip.u.addr32[0]=iph->ip_src.s_addr;
+                        ip_addr2su(&from, &src_ip, src_port);
+        	        su_setport(&from, src_port);
+	
+        		ri.src_su=from;
+                        su2ip_addr(&ri.src_ip, &from);
+                        ri.src_port=src_port;
+                        su2ip_addr(&ri.dst_ip, &to);
+                        ri.dst_port=dst_port;
+                        ri.proto=PROTO_UDP;                                
+
+                        /* a little bit memory */                
+                        si=(struct socket_info*) pkg_malloc(sizeof(struct socket_info));
+                        if (si==0) {                                
+                                LOG(L_ERR, "ERROR: new_sock_info: memory allocation error\n");
+                                return 0;
+                        }
+                        
+                        memset(si, 0, sizeof(struct socket_info));                
+                        si->address = ri.dst_ip; 
+                        si->socket=-1;
+
+	                /* set port & proto */
+                	si->port_no = dst_port;
+	                si->proto=PROTO_UDP;
+                	si->flags=0;
+	                si->addr_info_lst=0;
+	                
+        	        si->port_no_str.s = int2str(si->port_no, &tmp_len);
+        	        si->port_no_str.len = tmp_len;
+	        
+        	        si->address_str.s = ip_addr2a(&si->address);;
+                        si->address_str.len = strlen(si->address_str.s);	                        
+	        
+        	        si->name.len = si->address_str.len;
+	                si->name.s = si->address_str.s;
+
+     	                ri.bind_address=si;		        		        
+		        
+     	                /* and now recieve message */
+        		receive_msg(buf+offset, len, &ri);		                          
+	        	if(si) pkg_free(si);                         
+                }                                
 	}
 
 	return 0;
 }
+
+
