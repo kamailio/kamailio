@@ -52,6 +52,9 @@ struct pres_ev;
 
 #define PRES_SUBSCRIBE_RECV		1
 
+#define INTERNAL_UPDATE_FALSE	0
+#define INTERNAL_UPDATE_TRUE	1
+
 struct subscription
 {
 	str pres_uri;
@@ -78,6 +81,7 @@ struct subscription
 	int db_flag;
 	str* auth_rules_doc;
 	int recv_event;
+	int internal_update_flag;
 	struct subscription* next;
 
 };
