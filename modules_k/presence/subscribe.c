@@ -326,8 +326,8 @@ int insert_subs_db(subs_t* s, int type)
 
 int update_subs_db(subs_t* subs, int type)
 {
-	db_key_t query_cols[3], update_keys[4];
-	db_val_t query_vals[3], update_vals[4];
+	db_key_t query_cols[3], update_keys[6];
+	db_val_t query_vals[3], update_vals[6];
 	int n_update_cols= 0;
 	int n_query_cols = 0;
 
@@ -363,18 +363,18 @@ int update_subs_db(subs_t* subs, int type)
 		update_vals[n_update_cols].val.int_val = subs->remote_cseq; 
 		n_update_cols++;
 	}
-	else
-	{	
+	if(type & LOCAL_TYPE)
+	{
 		update_keys[n_update_cols] = &str_local_cseq_col;
 		update_vals[n_update_cols].type = DB1_INT;
 		update_vals[n_update_cols].nul = 0;
-		update_vals[n_update_cols].val.int_val = subs->local_cseq+ 1;
+		update_vals[n_update_cols].val.int_val = subs->local_cseq;
 		n_update_cols++;
 	
 		update_keys[n_update_cols] = &str_version_col;
 		update_vals[n_update_cols].type = DB1_INT;
 		update_vals[n_update_cols].nul = 0;
-		update_vals[n_update_cols].val.int_val = subs->version+ 1;
+		update_vals[n_update_cols].val.int_val = subs->version;
 		n_update_cols++;
 	}
 
@@ -425,6 +425,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 {
 	unsigned int hash_code;
 
+	LM_DBG("update subscription\n");
 	printf_subs(subs);
 
 	*sent_reply= 0;
@@ -489,7 +490,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 		if(subs_dbmode == DB_ONLY ||  subs_dbmode== WRITE_THROUGH)
 		{
 			/* update in database table */
-			if(update_subs_db(subs, REMOTE_TYPE)< 0)
+			if(update_subs_db(subs, REMOTE_TYPE|LOCAL_TYPE)< 0)
 			{
 				LM_ERR("updating subscription in database table\n");
 				goto error;
@@ -506,6 +507,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 				LM_DBG("inserting in shtable\n");
 				subs->db_flag = (subs_dbmode==WRITE_THROUGH)?WTHROUGHDB_FLAG:INSERTDB_FLAG;
 				hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
+				subs->version = 0;
 				if(insert_shtable(subs_htable,hash_code,subs)< 0)
 				{
 					LM_ERR("failed to insert new record in subs htable\n");
@@ -515,6 +517,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 
 			if(subs_dbmode == DB_ONLY || subs_dbmode == WRITE_THROUGH)
 			{
+				subs->version = 1;
 				if(insert_subs_db(subs, REMOTE_TYPE) < 0)
 				{
 					LM_ERR("failed to insert new record in database\n");
@@ -531,7 +534,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 		}
 	}
 
-/* reply_and_notify  */
+	/* reply_and_notify  */
 
 	if(subs->event->type & PUBL_TYPE)
 	{	
@@ -542,17 +545,17 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 			goto error;
 		}
 		*sent_reply= 1;
-		
+
 		if(subs->expires!= 0 && subs->event->wipeer)
-		{	
+		{
 			LM_DBG("send Notify with winfo\n");
 			if(query_db_notify(&subs->pres_uri, subs->event->wipeer, subs)< 0)
 			{
 				LM_ERR("Could not send notify winfo\n");
 				goto error;
-			}	
+			}
 			if(subs->send_on_cback== 0)
-			{	
+			{
 				if(notify(subs, NULL, NULL, 0)< 0)
 				{
 					LM_ERR("Could not send notify\n");
@@ -723,6 +726,8 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		}
 		reason= subs.reason;
 	}
+	/* mark that the received event is a SUBSCRIBE message */
+	subs.recv_event = PRES_SUBSCRIBE_RECV;
 
 	/* call event specific subscription handling */
 	if(event->evs_subs_handl)
@@ -732,7 +737,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 			LM_ERR("in event specific subscription handling\n");
 			goto error;
 		}
-	}	
+	}
 
 
 	/* if dialog initiation Subscribe - get subscription state */
@@ -740,7 +745,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	{
 		if(!event->req_auth) 
 			subs.status = ACTIVE_STATUS;
-		else   
+		else
 		{
 			/* query in watchers_table */
 			if(get_db_subs_auth(&subs, &found)< 0)
@@ -1077,8 +1082,8 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
 	}
 	subs->from_tag = pfrom->tag_value;
 
-	subs->version = 0;
-	
+	subs->version = 1;
+
 	if((!scontact.s) || (scontact.len== 0))
 	{
 		if(ps_fill_local_contact(msg, &subs->local_contact)<0)
@@ -1171,7 +1176,7 @@ found_rec:
 	if(subs->pres_uri.s == NULL)
 		subs->pres_uri= pres_uri;
 
-	subs->version = s->version;
+	subs->version = s->version + 1;
 	subs->status= s->status;
 	if(s->reason.s && s->reason.len)
 	{
@@ -1198,7 +1203,7 @@ found_rec:
 		subs->record_route.len= s->record_route.len;
 	}
 
-	subs->local_cseq= s->local_cseq;
+	subs->local_cseq= s->local_cseq +1;
 
 	if(subs->remote_cseq<= s->remote_cseq)
 	{
@@ -1331,8 +1336,8 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 		subs->reason.len= reason.len;
 	}
 
-	subs->local_cseq= row_vals[local_cseq_col].val.int_val;
-	subs->version= row_vals[version_col].val.int_val;
+	subs->local_cseq= row_vals[local_cseq_col].val.int_val + 1;
+	subs->version= row_vals[version_col].val.int_val + 1;
 
 	if(!EVENT_DIALOG_SLA(subs->event->evp))
 	{
@@ -1518,7 +1523,7 @@ void update_db_subs_timer_dbonly(void)
 		}
 		s.event= event;
 
-		s.local_cseq = row_vals[local_cseq_col].val.int_val;
+		s.local_cseq = row_vals[local_cseq_col].val.int_val +1;
 		s.expires = 0;
 
 		s_new= mem_copy_subs(&s, PKG_MEM_TYPE);

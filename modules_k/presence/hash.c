@@ -346,7 +346,7 @@ int update_shtable(shtable_t htable,unsigned int hash_code,
 	else
 	{
 		subs->local_cseq = ++s->local_cseq;
-		s->version = ++subs->version;
+		subs->version = ++s->version;
 	}
 	
 	if(strncmp(s->contact.s, subs->contact.s, subs->contact.len))

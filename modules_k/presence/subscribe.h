@@ -50,8 +50,7 @@ struct pres_ev;
    and reason is polite-block */
 #define POLITE_BLOCK_STATUS  5
 
-#define INTERNAL_UPDATE_FALSE	0
-#define INTERNAL_UPDATE_TRUE	1
+#define PRES_SUBSCRIBE_RECV		1
 
 struct subscription
 {
@@ -78,7 +77,7 @@ struct subscription
 	int send_on_cback;
 	int db_flag;
 	str* auth_rules_doc;
-	int internal_update_flag;
+	int recv_event;
 	struct subscription* next;
 
 };

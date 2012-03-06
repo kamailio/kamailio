@@ -1150,13 +1150,13 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 		s.local_contact.len = s.local_contact.s?strlen(s.local_contact.s):0;
 		
 		s.event= event;
-		s.local_cseq = row_vals[cseq_col].val.int_val;
+		s.local_cseq = row_vals[cseq_col].val.int_val +1;
 		if(row_vals[expires_col].val.int_val < (int)time(NULL))
 		    s.expires = 0;
 		else
 		    s.expires = row_vals[expires_col].val.int_val -
 			(int)time(NULL);
-		s.version = row_vals[version_col].val.int_val;
+		s.version = row_vals[version_col].val.int_val +1;
 
 		s_new= mem_copy_subs(&s, PKG_MEM_TYPE);
 		if(s_new== NULL)
@@ -1179,46 +1179,6 @@ error:
 	if(result)
 		pa_dbf.free_result(pa_db, result);
 	
-	return -1;
-}
-
-int update_in_list(subs_t* s, subs_t* s_array, int new_rec_no, int n)
-{
-	int i= 0;
-	subs_t* ls;
-
-	ls= s_array;
-	
-	while(i< new_rec_no)
-	{
-		i++;
-		ls= ls->next;
-	}
-
-	for(i = 0; i< n; i++)
-	{
-		if(ls== NULL)
-		{
-			LM_ERR("wrong records count\n");
-			return -1;
-		}
-		printf_subs(ls);
-		
-		if(ls->callid.len== s->callid.len &&
-		strncmp(ls->callid.s, s->callid.s, s->callid.len)== 0 &&
-		ls->to_tag.len== s->to_tag.len &&
-		strncmp(ls->to_tag.s, s->to_tag.s, s->to_tag.len)== 0 &&
-		ls->from_tag.len== s->from_tag.len &&
-		strncmp(ls->from_tag.s, s->from_tag.s, s->from_tag.len)== 0 )
-		{
-			ls->local_cseq= s->local_cseq;
-			ls->expires= s->expires- (int)time(NULL);
-			ls->version= s->version;
-			ls->status= s->status;
-			return 1;
-		}
-		ls= ls->next;
-	}
 	return -1;
 }
 
@@ -1600,7 +1560,8 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 			}
 		}
 		/* if DB_ONLY mode or WRITE_THROUGH update in database */
-		if(subs_dbmode == DB_ONLY || subs_dbmode == WRITE_THROUGH)
+		if(subs->recv_event!=PRES_SUBSCRIBE_RECV &&
+				(subs_dbmode == DB_ONLY || subs_dbmode == WRITE_THROUGH))
 		{
 			LM_DBG("updating subscription to database\n");
 			if(update_subs_db(subs, LOCAL_TYPE)< 0)
