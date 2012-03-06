@@ -494,6 +494,7 @@ KILL_TIMEOUT	"exit_timeout"|"ser_kill_timeout"
 MAX_WLOOPS		"max_while_loops"
 PVBUFSIZE		"pv_buffer_size"
 PVBUFSLOTS		"pv_buffer_slots"
+HTTP_REPLY_HACK		"http_reply_hack"
 
 /* stun config variables */
 STUN_REFRESH_INTERVAL "stun_refresh_interval"
@@ -961,6 +962,8 @@ IMPORTFILE      "import_file"
 									return PVBUFSIZE; }
 <INITIAL>{PVBUFSLOTS}			{	count(); yylval.strval=yytext;
 									return PVBUFSLOTS; }
+<INITIAL>{HTTP_REPLY_HACK}		{	count(); yylval.strval=yytext;
+									return HTTP_REPLY_HACK; }
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
 <INITIAL>{CFG_DESCRIPTION}	{ count(); yylval.strval=yytext; return CFG_DESCRIPTION; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }

@@ -556,6 +556,7 @@ extern char *finame;
 %token MAX_WLOOPS
 %token PVBUFSIZE
 %token PVBUFSLOTS
+%token HTTP_REPLY_HACK
 %token CFG_DESCRIPTION
 %token SERVER_ID
 
@@ -1661,6 +1662,8 @@ assign_stm:
 	| PVBUFSIZE EQUAL error { yyerror("number expected"); }
 	| PVBUFSLOTS EQUAL NUMBER { pv_set_buffer_slots($3); }
 	| PVBUFSLOTS EQUAL error { yyerror("number expected"); }
+	| HTTP_REPLY_HACK EQUAL NUMBER { http_reply_hack=$3; }
+	| HTTP_REPLY_HACK EQUAL error { yyerror("boolean value expected"); }
 	| STUN_REFRESH_INTERVAL EQUAL NUMBER { IF_STUN(stun_refresh_interval=$3); }
 	| STUN_REFRESH_INTERVAL EQUAL error{ yyerror("number expected"); }
 	| STUN_ALLOW_STUN EQUAL NUMBER { IF_STUN(stun_allow_stun=$3); }
