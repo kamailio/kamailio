@@ -86,6 +86,7 @@
 #include "../../receive.h"
 #include "../../route.h"
 #include "../../action.h"
+#include "../../onsend.h"
 #include "t_lookup.h"
 #endif
 
@@ -349,6 +350,8 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				LM_ERR("failed to set dst_uri");
 				free_sip_msg(&lreq);
 			} else {
+				struct onsend_info onsnd_info;
+
 				lreq.force_send_socket = uac_r->dialog->send_sock;
 				lreq.rcv.proto = dst.send_sock->proto;
 				lreq.rcv.src_ip = dst.send_sock->address;
@@ -362,6 +365,12 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 			#endif /* USE_COMP */
 				sflag_bk = getsflags();
 				tm_xdata_swap(new_cell, &backup_xd, 0);
+
+				onsnd_info.to=&dst.to;
+				onsnd_info.send_sock=dst.send_sock;
+				onsnd_info.buf=buf;
+				onsnd_info.len=buf_len;
+				p_onsend=&onsnd_info;
 
 				/* run the route */
 				backup_route_type = get_route_type();
@@ -378,6 +387,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 				set_t(backup_t, backup_branch);
 				global_msg_id=backup_msgid;
 				set_route_type( backup_route_type );
+				p_onsend=0;
 
 				/* restore original environment */
 				tm_xdata_swap(new_cell, &backup_xd, 1);
