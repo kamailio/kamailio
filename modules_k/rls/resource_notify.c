@@ -127,9 +127,9 @@ void get_dialog_from_did(char* did, subs_t **dialog, unsigned int *hash_code)
 		*dialog= pres_copy_subs(s, PKG_MEM_TYPE);
 	}
 
-    if(*dialog== NULL)
+	if(*dialog== NULL)
 	{
-        LM_ERR("while copying subs_t structure\n");
+		LM_ERR("while copying subs_t structure\n");
 	}
 	else
 	{
@@ -138,7 +138,8 @@ void get_dialog_from_did(char* did, subs_t **dialog, unsigned int *hash_code)
 
 	if (dbmode != RLS_DB_ONLY)
 		lock_release(&rls_table[*hash_code].lock);
-	
+
+	(*dialog)->expires -= (int)time(NULL); 
 }
 
 int send_notify(xmlDocPtr * rlmi_doc, char * buf, int buf_len, 
@@ -880,7 +881,7 @@ void timer_send_notify(unsigned int ticks,void *param)
 		goto error;
 	}
 
-    send_notifies(result, did_col, resource_uri_col, auth_state_col, reason_col,
+	send_notifies(result, did_col, resource_uri_col, auth_state_col, reason_col,
                   pres_state_col, content_type_col);
 error:
 done:
