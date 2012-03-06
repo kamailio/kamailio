@@ -152,6 +152,8 @@
 #include "t_fwd.h"
 #include "../../fix_lumps.h"
 #include "../../sr_compat.h"
+#include "../../receive.h"
+#include "../../onsend.h"
 #include "t_stats.h"
 #include "uac.h"
 
@@ -565,6 +567,9 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	unsigned int buf_len;
 	struct cancel_info cancel_data;
 	struct tmcb_params onsend_params;
+	int rt, backup_rt;
+	struct run_act_ctx ctx;
+	struct sip_msg pmsg;
 
 	init_cancel_info(&cancel_data);
 	if (!buf)
@@ -668,6 +673,31 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 				run_trans_callbacks_off_params(TMCB_RESPONSE_SENT, trans,
 				                               &onsend_params);
 			}
+
+			rt = route_lookup(&event_rt, "tm:local-response");
+			if (unlikely(rt >= 0 && event_rt.rlist[rt] != NULL))
+			{
+				if (likely(build_sip_msg_from_buf(&pmsg, buf, len, inc_msg_no()) == 0))
+				{
+					struct onsend_info onsnd_info;
+
+					onsnd_info.to=&(trans->uas.response.dst.to);
+					onsnd_info.send_sock=trans->uas.response.dst.send_sock;
+					onsnd_info.buf=buf;
+					onsnd_info.len=len;
+					p_onsend=&onsnd_info;
+
+					backup_rt = get_route_type();
+					set_route_type(LOCAL_ROUTE);
+					init_run_actions_ctx(&ctx);
+					run_top_route(event_rt.rlist[rt], &pmsg, 0);
+					set_route_type(backup_rt);
+					p_onsend=0;
+
+					free_sip_msg(&pmsg);
+				}
+			}
+
 		}
 		DBG("DEBUG: reply sent out. buf=%p: %.20s..., shmem=%p: %.20s\n",
 			buf, buf, rb->buffer, rb->buffer );
