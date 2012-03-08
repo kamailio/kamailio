@@ -369,7 +369,7 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
 	pid = my_pid();
@@ -462,8 +462,14 @@ static int mi_child_init(void)
  */
 static void destroy(void)
 {
-	if(subs_htable && pa_db)
-		timer_db_update(0, 0);
+	if(subs_htable && subs_dbmode == WRITE_BACK) {
+		/* open database connection */
+		pa_db = pa_dbf.init(&db_url);
+		if (!pa_db) {
+			LM_ERR("mod_destroy: unsuccessful connecting to database\n");
+		} else
+			timer_db_update(0, 0);
+	}
 
 	if(subs_htable)
 		destroy_shtable(subs_htable, shtable_size);
