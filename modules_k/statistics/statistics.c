@@ -56,7 +56,7 @@ struct stat_or_pv {
 
 static cmd_export_t cmds[]={
 	{"update_stat",  (cmd_function)w_update_stat,  2, fixup_stat, 0,
-		REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
+		ANY_ROUTE},
 	{"reset_stat",   (cmd_function)w_reset_stat,    1, fixup_stat, 0,
 		REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|LOCAL_ROUTE},
 	{0,0,0,0,0,0}

@@ -58,6 +58,9 @@
 #include "../../config.h"
 #include "../../tags.h"
 #include "../../parser/parse_to.h"
+#include "../../route.h"
+#include "../../receive.h"
+#include "../../onsend.h"
 #include "sl_stats.h"
 #include "sl_funcs.h"
 #include "sl.h"
@@ -130,6 +133,9 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	int backup_mhomed, ret;
 	str text;
 
+	int rt, backup_rt;
+	struct run_act_ctx ctx;
+	struct sip_msg pmsg;
 
 	if (msg->first_line.u.request.method_value==METHOD_ACK)
 		goto error;
@@ -200,6 +206,89 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	dst.send_flags=msg->rpl_send_flags;
 	ret = msg_send(&dst, buf.s, buf.len);
 	mhomed=backup_mhomed;
+
+	rt = route_lookup(&event_rt, "sl:local-response");
+	if (unlikely(rt >= 0 && event_rt.rlist[rt] != NULL))
+	{
+		if (likely(build_sip_msg_from_buf(&pmsg, buf.s, buf.len,
+				inc_msg_no()) == 0))
+		{
+			char *tmp = NULL;
+			struct onsend_info onsnd_info;
+
+			onsnd_info.to=&dst.to;
+			onsnd_info.send_sock=dst.send_sock;
+			onsnd_info.buf=buf.s;
+			onsnd_info.len=buf.len;
+			p_onsend=&onsnd_info;
+
+			if (unlikely(!IS_SIP(msg)))
+			{
+				/* This is an HTTP reply...  So fudge in a CSeq into the parsed message
+ 				   message structure so that $rm will work in the route */
+				struct hdr_field *hf;
+				struct cseq_body *cseqb;
+				char *tmp2;
+				int len;
+
+				if ((hf = (struct hdr_field *) pkg_malloc(sizeof(struct hdr_field))) == NULL)
+				{
+					LM_ERR("out of package memory\n");
+					goto event_route_error;
+				}
+
+				if ((cseqb = (struct cseq_body *) pkg_malloc(sizeof(struct cseq_body))) == NULL)
+				{
+					LM_ERR("out of package memory\n");
+					pkg_free(hf);
+					goto event_route_error;
+				}
+
+				if ((tmp = (char *) pkg_malloc(sizeof(char) * (msg->first_line.u.request.method.len + 5))) == NULL)
+				{
+					LM_ERR("out of package memory\n");
+					pkg_free(cseqb);
+					pkg_free(hf);
+					goto event_route_error;
+				}
+
+				memset(hf, 0, sizeof(struct hdr_field));
+				memset(cseqb, 0, sizeof(struct cseq_body));
+
+				len = sprintf(tmp, "0 %.*s\r\n", msg->first_line.u.request.method.len, msg->first_line.u.request.method.s);
+				tmp2 = parse_cseq(tmp, &tmp[len], cseqb);
+
+				hf->type = HDR_CSEQ_T;
+				hf->body.s = tmp;
+				hf->body.len = tmp2 - tmp;
+				hf->parsed = cseqb;
+
+				pmsg.parsed_flag|=HDR_CSEQ_F;
+				pmsg.cseq = hf;
+				if (pmsg.last_header==0) {
+					pmsg.headers=hf;
+					pmsg.last_header=hf;
+				} else {
+					pmsg.last_header->next=hf;
+					pmsg.last_header=hf;
+				}
+			}
+
+			backup_rt = get_route_type();
+			set_route_type(LOCAL_ROUTE);
+			init_run_actions_ctx(&ctx);
+			run_top_route(event_rt.rlist[rt], &pmsg, 0);
+			set_route_type(backup_rt);
+			p_onsend=0;
+
+			if (tmp != NULL)
+				pkg_free(tmp);
+
+event_route_error:
+			free_sip_msg(&pmsg);
+		}
+	}
+
 	pkg_free(buf.s);
 
 	if (ret<0) {

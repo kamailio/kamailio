@@ -105,8 +105,7 @@ modparam("statistics", "variable", "active_calls/no_reset")
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, 
-		FAILURE_ROUTE and ONREPLY_ROUTE.
+		This function can be used from ANY_ROUTE. 
 		</para>
 		<example>
 		<title><function>update_stat</function> usage</title>

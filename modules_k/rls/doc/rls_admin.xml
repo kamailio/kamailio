@@ -576,10 +576,10 @@ modparam("rls", "disable_remote_presence", 1)
 		</emphasis>
 	    </para>
 	    <example>
-		<title>Set <varname>max_backend_subscribes</varname> parameter</title>
+		<title>Set <varname>max_backend_subs</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("rls", "max_backend_subscribes", 30)
+modparam("rls", "max_backend_subs", 30)
 ...
 </programlisting>
 	    </example>

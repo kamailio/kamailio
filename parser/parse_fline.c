@@ -48,12 +48,7 @@
 #include "../mem/mem.h"
 #include "../ut.h"
 
-
-#ifdef NO_HTTP_REPLY_HACK
-#undef HTTP_REPLY_HACK
-#else
-/* #define HTTP_REPLY_HACK */ /* allow HTTP replies */
-#endif
+int http_reply_hack = 0;
 
 /* grammar:
 	request  =  method SP uri SP version CRLF
@@ -106,21 +101,20 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 			fl->type=SIP_REPLY;
 			fl->u.reply.version.len=SIP_VERSION_LEN;
 			tmp=buffer+SIP_VERSION_LEN;
-#ifdef HTTP_REPLY_HACK
-	}else if ( 	(*tmp=='H' || *tmp=='h') &&
-		/* 'HTTP/1.' */
-		strncasecmp( tmp+1, HTTP_VERSION+1, HTTP_VERSION_LEN-1)==0 &&
-		/* [0|1] */
-		((*(tmp+HTTP_VERSION_LEN)=='0') || (*(tmp+HTTP_VERSION_LEN)=='1')) &&
-		(*(tmp+HTTP_VERSION_LEN+1)==' ')  ){ 
-		/* ugly hack to be able to route http replies
-		 * Note: - the http reply must have a via
-		 *       - the message is marked as SIP_REPLY (ugly)
-		 */
-			fl->type=SIP_REPLY;
-			fl->u.reply.version.len=HTTP_VERSION_LEN+1 /*include last digit*/;
-			tmp=buffer+HTTP_VERSION_LEN+1 /* last digit */;
-#endif
+	} else if (http_reply_hack != 0 && 
+		 	(*tmp=='H' || *tmp=='h') &&
+			/* 'HTTP/1.' */
+			strncasecmp( tmp+1, HTTP_VERSION+1, HTTP_VERSION_LEN-1)==0 &&
+			/* [0|1] */
+			((*(tmp+HTTP_VERSION_LEN)=='0') || (*(tmp+HTTP_VERSION_LEN)=='1')) &&
+			(*(tmp+HTTP_VERSION_LEN+1)==' ')  ){ 
+			/* ugly hack to be able to route http replies
+			 * Note: - the http reply must have a via
+			 *       - the message is marked as SIP_REPLY (ugly)
+			 */
+				fl->type=SIP_REPLY;
+				fl->u.reply.version.len=HTTP_VERSION_LEN+1 /*include last digit*/;
+				tmp=buffer+HTTP_VERSION_LEN+1 /* last digit */;
 	} else IFISMETHOD( INVITE, 'I' )
 	else IFISMETHOD( CANCEL, 'C')
 	else IFISMETHOD( ACK, 'A' )

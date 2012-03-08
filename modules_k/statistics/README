@@ -109,8 +109,7 @@ modparam("statistics", "variable", "active_calls/no_reset")
        pseudovariable);
      * value - value to update with; it may be also negative.
 
-   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
-   FAILURE_ROUTE and ONREPLY_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.2. update_stat usage
 ...

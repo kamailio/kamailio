@@ -81,7 +81,7 @@ Anca-Maria Vamanu
    1.20. Set max_notify_body_length parameter
    1.21. Set fetch_rows parameter
    1.22. Set disable_remote_presence parameter
-   1.23. Set max_backend_subscribes parameter
+   1.23. Set max_backend_subs parameter
    1.24. rls_handle_subscribe usage
    1.25. rls_handle_notify usage
    1.26. rls_update_subs usage
@@ -503,9 +503,9 @@ modparam("rls", "disable_remote_presence", 1)
 
    Default value is 0
 
-   Example 1.23. Set max_backend_subscribes parameter
+   Example 1.23. Set max_backend_subs parameter
 ...
-modparam("rls", "max_backend_subscribes", 30)
+modparam("rls", "max_backend_subs", 30)
 ...
 
 4. Functions
