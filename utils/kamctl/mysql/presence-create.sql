@@ -12,6 +12,8 @@ CREATE TABLE presentity (
     CONSTRAINT presentity_idx UNIQUE (username, domain, event, etag)
 ) ENGINE=MyISAM;
 
+CREATE INDEX presentity_expires ON presentity (expires);
+
 INSERT INTO version (table_name, table_version) values ('active_watchers','9');
 CREATE TABLE active_watchers (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -35,8 +37,10 @@ CREATE TABLE active_watchers (
     version INT(11) DEFAULT 0 NOT NULL,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
-    CONSTRAINT active_watchers_idx UNIQUE (presentity_uri, callid, to_tag, from_tag)
+    CONSTRAINT active_watchers_idx UNIQUE (callid, to_tag, from_tag)
 ) ENGINE=MyISAM;
+
+CREATE INDEX active_watchers_expires ON active_watchers (expires);
 
 INSERT INTO version (table_name, table_version) values ('watchers','3');
 CREATE TABLE watchers (

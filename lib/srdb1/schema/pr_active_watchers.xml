@@ -128,7 +128,7 @@
         <description>Record route</description>
     </column>
 
-    <column>
+    <column id="expires">
         <name>expires</name>
         <type>int</type>
         <size>&expires_len;</size>
@@ -174,11 +174,15 @@
 
     <index>
         <name>active_watchers_idx</name>
-        <colref linkend="presentity_uri"/>
         <colref linkend="callid"/>
         <colref linkend="to_tag"/>
         <colref linkend="from_tag"/>
         <unique/>
+    </index>
+
+    <index>
+        <name>active_watchers_expires</name>
+        <colref linkend="expires"/>
     </index>
 
 </table>

@@ -62,6 +62,7 @@
         <type>int</type>
         <size>&expires_len;</size>
         <description>Expires</description>
+        <index/>
     </column>
 
     <column>
@@ -75,8 +76,8 @@
         <name>body</name>
         <type>binary</type>
     </column>
-  
-	<column id="sender">
+
+    <column id="sender">
         <name>sender</name>
         <type>string</type>
         <size>&uri_len;</size>
@@ -90,6 +91,11 @@
         <colref linkend="event"/>
         <colref linkend="etag"/>
         <unique/>
+    </index>
+
+    <index>
+        <name>presentity_expires</name>
+        <colref linkend="expires"/>
     </index>
 
 </table>
