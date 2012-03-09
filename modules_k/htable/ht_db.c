@@ -369,10 +369,12 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 					it->name.len, it->name.s, it->value.n);
 			}
 
-			if (it->expire <= now) {
-				LM_DBG("skipping expired entry");
-				it = it->next;
-				continue;
+			if(ht->htexpire > 0) {
+				if (it->expire <= now) {
+					LM_DBG("skipping expired entry");
+					it = it->next;
+					continue;
+				}
 			}
 
 			db_vals[0].type = DB1_STR;
