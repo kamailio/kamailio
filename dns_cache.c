@@ -100,6 +100,8 @@
 #define DNS_HE_MAX_ADDR 10  /* maxium addresses returne in a hostent struct */
 #define MAX_CNAME_CHAIN  10
 #define SPACE_FORMAT "    " /* format of view output */
+#define DNS_SRV_ZERO_W_CHANCE	1000 /* one in a 1000*weight_sum chance for
+										selecting a 0-weight record */
 
 int dns_cache_init=1;	/* if 0, the DNS cache is not initialized at startup */
 static gen_lock_t* dns_hash_lock=0;
@@ -2286,6 +2288,7 @@ inline static struct dns_rr* dns_srv_get_nxt_rr(struct dns_hash_entry* e,
 	unsigned rand_w;
 	int found;
 	int saved_idx;
+	int zero_weight; /* number of records with 0 weight */
 	int i, idx;
 	struct r_sums_entry{
 			unsigned r_sum;
@@ -2307,6 +2310,7 @@ retry:
 	prio=((struct srv_rdata*)start_grp->rdata)->priority;
 	sum=0;
 	saved_idx=-1;
+	zero_weight = 0;
 	found=0;
 	for (idx=0;rr && (prio==((struct srv_rdata*)rr->rdata)->priority) &&
 						(idx < MAX_SRV_GRP_IDX); idx++, rr=rr->next){
@@ -2328,6 +2332,7 @@ retry:
 		if ((saved_idx==-1) || (((struct srv_rdata*)rr->rdata)->weight==0)){
 			saved_idx=idx;
 		}
+		zero_weight += (((struct srv_rdata*)rr->rdata)->weight == 0);
 		sum+=((struct srv_rdata*)rr->rdata)->weight;
 		r_sums[idx].r_sum=sum;
 		r_sums[idx].rr=rr;
@@ -2338,10 +2343,15 @@ retry:
 		n+=idx; /* next group start idx, last rr */
 		srv_reset_tried(tried);
 		goto retry;
-	}else if ((found==1) || ((rand_w=dns_srv_random(sum))==0)){
-		/* 1. if only one found, avoid a useless random() call or
-		 * 2. if rand_w==0, immediately select a 0 weight record if present,
-		 *     or else the first record found
+	}else if ((found==1) || (sum==0) ||
+				(((rand_w=(dns_srv_random(sum-1)+1))==1) && zero_weight &&
+					(dns_srv_random(DNS_SRV_ZERO_W_CHANCE)==0))){
+		/* 1. if only one found, avoid a useless random() call
+		      and select it (saved_idx will point to it).
+		 * 2. if the sum of weights is 0 (all have 0 weight) or
+		 * 3. rand_w==1 and there are records with 0 weight and
+		 *    random(probab. of selecting a 0-weight)
+		 *     immediately select a 0 weight record.
 		 *  (this takes care of the 0-weight at the beginning requirement) */
 		i=saved_idx; /* saved idx contains either first 0 weight or first
 						valid record */
