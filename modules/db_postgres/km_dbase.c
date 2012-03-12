@@ -69,6 +69,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../lib/srdb1/db.h"
@@ -425,11 +426,14 @@ int db_postgres_store_result(const db1_con_t* _con, db1_res_t** _r)
 	LM_DBG("%p PQresultStatus(%s) PQgetResult(%p)\n", _con,
 		PQresStatus(pqresult), CON_RESULT(_con));
 
+	CON_AFFECTED(_con) = 0;
+
 	switch(pqresult) {
 		case PGRES_COMMAND_OK:
 		/* Successful completion of a command returning no data
 		 * (such as INSERT or UPDATE). */
 		rc = 0;
+		CON_AFFECTED(_con) = atoi(PQcmdTuples(CON_RESULT(_con)));
 		break;
 
 		case PGRES_TUPLES_OK:
@@ -444,6 +448,7 @@ int db_postgres_store_result(const db1_con_t* _con, db1_res_t** _r)
 				break;
 			}
 			rc =  0;
+			CON_AFFECTED(_con) = atoi(PQcmdTuples(CON_RESULT(_con)));
 			break;
 		/* query failed */
 		case PGRES_FATAL_ERROR:
@@ -555,6 +560,20 @@ int db_postgres_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _
 		db_free_result(_r);
 
 	return tmp;
+}
+
+/**
+ * Returns the affected rows of the last query.
+ * \param _h database handle
+ * \return returns the affected rows as integer or -1 on error.
+ */
+int db_postgres_affected_rows(const db1_con_t* _h)
+{
+	if (!_h) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+	return CON_AFFECTED(_h);
 }
 
 

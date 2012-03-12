@@ -53,7 +53,7 @@ struct pg_con {
 	PGresult *res;		/*!< this is the current result */
 	char**  row;		/*!< Actual row in the result */
 	time_t timestamp;	/*!< Timestamp of last query */
-
+	int affected_rows;	/*!< Number of rows affected by the last statement */
 };
 
 #define CON_SQLURL(db_con)     (((struct pg_con*)((db_con)->tail))->sqlurl)
@@ -63,6 +63,7 @@ struct pg_con {
 #define CON_ROW(db_con)	       (((struct pg_con*)((db_con)->tail))->row)
 #define CON_TIMESTAMP(db_con)  (((struct pg_con*)((db_con)->tail))->timestamp)
 #define CON_ID(db_con) 	       (((struct pg_con*)((db_con)->tail))->id)
+#define CON_AFFECTED(db_con)   (((struct pg_con*)((db_con)->tail))->affected_rows)
 
 /*
  * Create a new connection structure,

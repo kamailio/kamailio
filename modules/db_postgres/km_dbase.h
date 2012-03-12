@@ -102,6 +102,10 @@ int db_postgres_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _
  */
 int db_postgres_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows);
 
+/*
+ * number of rows affected by the last DB query/statement
+ */
+int db_postgres_affected_rows(const db1_con_t* _h);
 
 /*
  * Store name of table that will be used by
