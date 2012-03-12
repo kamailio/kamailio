@@ -98,4 +98,11 @@
         <colref linkend="expires"/>
     </index>
 
+    <index>
+        <name>account_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="event"/>
+    </index>
+
 </table>

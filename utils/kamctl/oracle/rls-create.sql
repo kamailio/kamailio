@@ -45,7 +45,7 @@ CREATE TABLE rls_watchers (
     version NUMBER(10) DEFAULT 0 NOT NULL,
     socket_info VARCHAR2(64),
     local_contact VARCHAR2(128),
-    CONSTRAINT rls_watchers_rls_watcher_idx  UNIQUE (presentity_uri, callid, to_tag, from_tag)
+    CONSTRAINT rls_watchers_rls_watcher_idx  UNIQUE (callid, to_tag, from_tag)
 );
 
 CREATE OR REPLACE TRIGGER rls_watchers_tr

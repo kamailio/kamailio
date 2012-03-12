@@ -21,6 +21,7 @@ END presentity_tr;
 BEGIN map2users('presentity'); END;
 /
 CREATE INDEX presentity_presentity_expires  ON presentity (expires);
+CREATE INDEX presentity_account_idx  ON presentity (username, domain, event);
 
 INSERT INTO version (table_name, table_version) values ('active_watchers','9');
 CREATE TABLE active_watchers (
@@ -123,7 +124,8 @@ CREATE TABLE pua (
     contact VARCHAR2(128),
     remote_contact VARCHAR2(128),
     version NUMBER(10),
-    extra_headers CLOB
+    extra_headers CLOB,
+    CONSTRAINT pua_pua_idx  UNIQUE (etag, tuple_id, call_id, from_tag)
 );
 
 CREATE OR REPLACE TRIGGER pua_tr
@@ -134,3 +136,7 @@ END pua_tr;
 /
 BEGIN map2users('pua'); END;
 /
+CREATE INDEX pua_presid_idx  ON pua (pres_id);
+CREATE INDEX pua_dialog_idx  ON pua (call_id, from_tag, to_tag);
+CREATE INDEX pua_tmp_dlg_idx  ON pua (pres_id, pres_uri, call_id, from_tag);
+

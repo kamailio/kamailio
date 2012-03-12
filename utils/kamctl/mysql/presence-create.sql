@@ -13,6 +13,7 @@ CREATE TABLE presentity (
 ) ENGINE=MyISAM;
 
 CREATE INDEX presentity_expires ON presentity (expires);
+CREATE INDEX account_idx ON presentity (username, domain, event);
 
 INSERT INTO version (table_name, table_version) values ('active_watchers','9');
 CREATE TABLE active_watchers (
@@ -91,6 +92,11 @@ CREATE TABLE pua (
     contact VARCHAR(128) NOT NULL,
     remote_contact VARCHAR(128) NOT NULL,
     version INT(11) NOT NULL,
-    extra_headers TEXT NOT NULL
+    extra_headers TEXT NOT NULL,
+    CONSTRAINT pua_idx UNIQUE (etag, tuple_id, call_id, from_tag)
 ) ENGINE=MyISAM;
+
+CREATE INDEX presid_idx ON pua (pres_id);
+CREATE INDEX dialog_idx ON pua (call_id, from_tag, to_tag);
+CREATE INDEX tmp_dlg_idx ON pua (pres_id, pres_uri, call_id, from_tag);
 

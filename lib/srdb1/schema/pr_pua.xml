@@ -26,7 +26,7 @@
         <description>Unique ID</description>
     </column>
 
-    <column>
+    <column id="pres_uri">
         <name>pres_uri</name>
         <type>string</type>
         <size>&uri_len;</size>
@@ -34,7 +34,7 @@
         <natural/>
     </column>
 
-    <column>
+    <column id="pres_id">
         <name>pres_id</name>
         <type>string</type>
         <size>255</size>
@@ -70,14 +70,14 @@
         <description>Flags</description>
     </column>
 
-    <column>
+    <column id="etag">
         <name>etag</name>
         <type>string</type>
         <size>&domain_len;</size>
         <description>Etag</description>
     </column>
 
-    <column>
+    <column id="tuple_id">
         <name>tuple_id</name>
         <type>string</type>
         <size>&domain_len;</size>
@@ -92,7 +92,7 @@
         <description>Watcher URI</description>
     </column>
 
-    <column>
+    <column id="call_id">
         <name>call_id</name>
         <type>string</type>
         <size>&callid_len;</size>
@@ -106,7 +106,7 @@
         <description>To tag</description>
     </column>
 
-    <column>
+    <column id="from_tag">
         <name>from_tag</name>
         <type>string</type>
         <size>&domain_len;</size>
@@ -151,4 +151,32 @@
         <description>Extra Headers</description>
     </column>
 
+    <index>
+        <name>pua_idx</name>
+        <colref linkend="etag"/>
+        <colref linkend="tuple_id"/>
+        <colref linkend="call_id"/>
+        <colref linkend="from_tag"/>
+	<unique/>
+    </index>
+
+   <index>
+        <name>presid_idx</name>
+        <colref linkend="pres_id"/>
+    </index>
+
+    <index>
+        <name>dialog_idx</name>
+        <colref linkend="call_id"/>
+        <colref linkend="from_tag"/>
+        <colref linkend="to_tag"/>
+    </index>
+
+    <index>
+        <name>tmp_dlg_idx</name>
+        <colref linkend="pres_id"/>
+        <colref linkend="pres_uri"/>
+        <colref linkend="call_id"/>
+        <colref linkend="from_tag"/>
+    </index>
 </table>
