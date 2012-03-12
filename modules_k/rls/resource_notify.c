@@ -500,16 +500,15 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	str body= {0, 0};
 	ua_pres_t dialog;
 	str* res_id= NULL;
-	db_key_t query_cols[9], result_cols[1];
-	db_val_t query_vals[9];
-	db1_res_t* result= NULL;
+	db_key_t query_cols[8];
+	db_val_t query_vals[8];
 	int n_query_cols= 0;
 	str auth_state= {0, 0};
 	int found= 0;
 	str reason = {0, 0};
 	int auth_flag;
 	struct hdr_field* hdr= NULL;
-	int n, expires= -1;
+	int expires= -1;
 	str content_type= {0, 0};
 	int reply_code = 500;
 	str reply_str = pu_500_rpl;
@@ -755,42 +754,36 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 		LM_ERR("in use_table\n");
 		goto error;
 	}
-	/* query-> if not present insert // else update */
-	result_cols[0]= &str_updated_col;
-			
-	if(rlpres_dbf.query(rlpres_db, query_cols, 0, query_vals, result_cols,
-					2, 1, 0, &result)< 0)
+
+	if (rlpres_dbf.replace != NULL)
 	{
-		LM_ERR("in sql query\n");
-		if(result)
-			rlpres_dbf.free_result(rlpres_db, result);
-		goto error;
-	}
-	if(result== NULL)
-		goto error;
-	n= result->n;
-	rlpres_dbf.free_result(rlpres_db, result);
-		
-	if(n<= 0)
-	{
-		if(rlpres_dbf.insert(rlpres_db, query_cols, query_vals, n_query_cols)< 0)
+		if(rlpres_dbf.replace(rlpres_db, query_cols, query_vals, n_query_cols)< 0)
 		{
-			LM_ERR("in sql insert\n");
+			LM_ERR("in sql replace\n");
 			goto error;
 		}
-		LM_DBG("Inserted in database table new record\n");
+		LM_DBG("Inserted/replace in database table new record\n");
 	}
 	else
 	{
-		LM_DBG("Updated in db table already existing record\n");
 		if(rlpres_dbf.update(rlpres_db, query_cols, 0, query_vals, query_cols+2,
 						query_vals+2, 2, n_query_cols-2)< 0)
 		{
 			LM_ERR("in sql update\n");
 			goto error;
 		}
-	}
 
+		if (rlpres_dbf.affected_rows(rlpres_db) == 0)
+		{
+			if(rlpres_dbf.insert(rlpres_db, query_cols, query_vals, n_query_cols)< 0)
+			{
+				LM_ERR("in sql insert\n");
+				goto error;
+			}
+			LM_DBG("Inserted in database table new record\n");
+		}
+	}
+		
 	LM_DBG("Updated rlpres_table\n");	
 	/* reply 200OK */
 done:
