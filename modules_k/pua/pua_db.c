@@ -883,9 +883,9 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 /******************************************************************************/
 int convert_temporary_dialog_puadb(ua_pres_t *pres)
 {
-	db_key_t query_cols[4], data_cols[10];
-	db_val_t query_vals[4], data_vals[10];
-	int n_query_cols = 0, n_data_cols = 0;
+	db_key_t query_cols[18];
+	db_val_t query_vals[18];
+	int n_query_cols = 0;
 
 	if (pres==NULL)
 	{
@@ -920,81 +920,130 @@ int convert_temporary_dialog_puadb(ua_pres_t *pres)
 	n_query_cols++;
 
 	/* The columns I need to fill in to convert a temporary dialog to a dialog */
-	data_cols[n_data_cols] = &str_expires_col;
-	data_vals[n_data_cols].type = DB1_INT;
-	data_vals[n_data_cols].nul = 0;
-	data_vals[n_data_cols].val.int_val = pres->expires;
-	n_data_cols++;
+	query_cols[n_query_cols] = &str_expires_col;
+	query_vals[n_query_cols].type = DB1_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val = pres->expires;
+	n_query_cols++;
 
-	data_cols[n_data_cols] = &str_desired_expires_col;
-	data_vals[n_data_cols].type = DB1_INT;
-	data_vals[n_data_cols].nul = 0;
-	data_vals[n_data_cols].val.int_val = pres->desired_expires;
-	n_data_cols++;
+	query_cols[n_query_cols] = &str_desired_expires_col;
+	query_vals[n_query_cols].type = DB1_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val = pres->desired_expires;
+	n_query_cols++;
 
-	data_cols[n_data_cols] = &str_flag_col;
-	data_vals[n_data_cols].type = DB1_INT;
-	data_vals[n_data_cols].nul = 0;
-	data_vals[n_data_cols].val.int_val = pres->flag;
-	n_data_cols++;
+	query_cols[n_query_cols] = &str_flag_col;
+	query_vals[n_query_cols].type = DB1_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val = pres->flag;
+	n_query_cols++;
 
-	data_cols[n_data_cols] = &str_to_tag_col;
-	data_vals[n_data_cols].type = DB1_STR;
-	data_vals[n_data_cols].nul = 0;
-	data_vals[n_data_cols].val.str_val = pres->to_tag;
-	n_data_cols++;
+	query_cols[n_query_cols] = &str_to_tag_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = pres->to_tag;
+	n_query_cols++;
 
-	data_cols[n_data_cols] = &str_cseq_col;
-	data_vals[n_data_cols].type = DB1_INT;
-	data_vals[n_data_cols].nul = 0;
-	data_vals[n_data_cols].val.int_val = pres->cseq;
-	n_data_cols++;
+	query_cols[n_query_cols] = &str_cseq_col;
+	query_vals[n_query_cols].type = DB1_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val = pres->cseq;
+	n_query_cols++;
 
-	data_cols[n_data_cols] = &str_record_route_col;
-	data_vals[n_data_cols].type = DB1_STR;
-	data_vals[n_data_cols].nul = 0;
-	data_vals[n_data_cols].val.str_val = pres->record_route;
-	n_data_cols++;
+	query_cols[n_query_cols] = &str_record_route_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = pres->record_route;
+	n_query_cols++;
 
-	data_cols[n_data_cols] = &str_contact_col;
-	data_vals[n_data_cols].type = DB1_STR;
-	data_vals[n_data_cols].nul = 0;
-	data_vals[n_data_cols].val.str_val = pres->contact;
-	n_data_cols++;
+	query_cols[n_query_cols] = &str_contact_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = pres->contact;
+	n_query_cols++;
 
-	data_cols[n_data_cols] = &str_remote_contact_col;
-	data_vals[n_data_cols].type = DB1_STR;
-	data_vals[n_data_cols].nul = 0;
-	data_vals[n_data_cols].val.str_val = pres->remote_contact;
-	n_data_cols++;
+	query_cols[n_query_cols] = &str_remote_contact_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = pres->remote_contact;
+	n_query_cols++;
 
-	data_cols[n_data_cols] = &str_version_col;
-	data_vals[n_data_cols].type = DB1_INT;
-	data_vals[n_data_cols].nul = 0;
-	data_vals[n_data_cols].val.int_val = pres->version;
-	n_data_cols++;
+	query_cols[n_query_cols] = &str_version_col;
+	query_vals[n_query_cols].type = DB1_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val = pres->version;
+	n_query_cols++;
 
-	data_cols[n_data_cols] = &str_extra_headers_col;
-	data_vals[n_data_cols].type = DB1_STR;
-	data_vals[n_data_cols].nul = 0;
+	query_cols[n_query_cols] = &str_extra_headers_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
 	if (pres->extra_headers)
 	{
-		data_vals[n_data_cols].val.str_val.s = pres->extra_headers->s;
-		data_vals[n_data_cols].val.str_val.len = pres->extra_headers->len;
+		query_vals[n_query_cols].val.str_val.s = pres->extra_headers->s;
+		query_vals[n_query_cols].val.str_val.len = pres->extra_headers->len;
 	}
 	else
 	{
-		data_vals[n_data_cols].val.str_val.s = "";
-		data_vals[n_data_cols].val.str_val.len = 0;
+		query_vals[n_query_cols].val.str_val.s = "";
+		query_vals[n_query_cols].val.str_val.len = 0;
 	}
-	n_data_cols++;
+	n_query_cols++;
 
-	if (pua_dbf.update(pua_db, query_cols, 0, query_vals,
-			data_cols, data_vals, n_query_cols, n_data_cols) < 0)
+	query_cols[n_query_cols] = &str_event_col;	
+	query_vals[n_query_cols].type = DB1_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val = pres->event;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_watcher_uri_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0; 
+	query_vals[n_query_cols].val.str_val.s = pres->watcher_uri->s;
+	query_vals[n_query_cols].val.str_val.len = pres->watcher_uri->len;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_etag_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0; 
+	query_vals[n_query_cols].val.str_val.s = 0;
+	query_vals[n_query_cols].val.str_val.len = 0;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_tuple_id_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0; 
+	query_vals[n_query_cols].val.str_val.s = 0;
+	query_vals[n_query_cols].val.str_val.len = 0;
+	n_query_cols++;
+
+	if (pua_dbf.replace != NULL)
 	{
-		LM_ERR("Failed update db\n");
-		return -1;
+		if (pua_dbf.replace(pua_db, query_cols, query_vals, n_query_cols) < 0)
+		{
+			LM_ERR("Failed replace db\n");
+			return -1;
+		}
 	}
+	else
+	{
+		if (pua_dbf.update(pua_db, query_cols, 0, query_vals,
+				query_cols + 4, query_vals + 4, 4, n_query_cols - 4) < 0)
+		{
+			LM_ERR("Failed update db\n");
+			return -1;
+		}
+
+		LM_DBG("affected_rows: %d\n", pua_dbf.affected_rows(pua_db));
+		if (pua_dbf.affected_rows(pua_db) == 0)
+		{
+			if (pua_dbf.insert(pua_db, query_cols, query_vals, n_query_cols) < 0)
+			{
+				LM_ERR("Failed insert db\n");
+				return -1;
+			}
+		}
+	}
+
 
 	shm_free(pres->remote_contact.s);
 	shm_free(pres);

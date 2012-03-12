@@ -1050,18 +1050,9 @@ insert:
 
 		if(subs->flag & UPDATE_TYPE)
 		{
-			/*
-			LM_ERR("request for a subscription"
-					" with update type and no record found\n");
-			ret= -1;
-			goto done;
-			commented this because of the strange type parameter in usrloc callback functions
-			*/
-			
 			LM_DBG("request for a subscription with update type"
 					" and no record found\n");
 			subs->flag= INSERT_TYPE;
-
 		}	
 		hentity= subscribe_cbparam(subs, REQ_OTHER);
 		if(hentity== NULL)
@@ -1168,50 +1159,6 @@ insert:
 	}
 	else
 	{
-        /*
-		if(presentity->desired_expires== 0)
-		{
-            
-			if(subs->expires< 0)
-			{
-			    LM_DBG("Found previous request for unlimited subscribe-"
-						" do not send subscribe\n");
-            
-				if (subs->event & PWINFO_EVENT)
-				{	
-					presentity->watcher_count++;
-				}
-				lock_release(&HashT->p_records[hash_code].lock);
-			    goto done;
-            
-			}
-        
-		
-			if(subs->event & PWINFO_EVENT)
-			{	
-				if(subs->expires== 0)
-				{
-					presentity->watcher_count--;
-					if(	presentity->watcher_count> 0)
-					{
-						lock_release(&HashT->p_records[hash_code].lock);
-						goto done;
-					}
-				}
-				else
-				{
-					presentity->watcher_count++;
-					if(presentity->watcher_count> 1)
-					{
-						lock_release(&HashT->p_records[hash_code].lock);
-						goto done;
-					}
-				}
-			}	
-			
-		}	
-        */
-
 		if (subs->internal_update_flag == INTERNAL_UPDATE_TRUE)
 		{
 			LM_INFO("attempting to re-SUBSCRIBE on internal (rls_update_subs()) update - skipping\n");
@@ -1265,7 +1212,6 @@ insert:
 		if (dbmode!=PUA_DB_ONLY)
 			lock_release(&HashT->p_records[hash_code].lock);
 
-	//	hentity->flag= flag;
 		LM_DBG("event parameter: %d\n", hentity->event);	
 
 		set_uac_req(&uac_r, &met, str_hdr, 0, td, TMCB_LOCAL_COMPLETED,
