@@ -49,7 +49,7 @@
 
 MODULE_VERSION
 
-#define FL_USE_CALL_CONTROL       (1<<30) // use call control for a dialog
+#define FL_USE_CALL_CONTROL       (1<<28) // use call control for a dialog
 
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
 # define INLINE inline

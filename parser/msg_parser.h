@@ -120,6 +120,9 @@ enum request_method {
 #define FL_ADD_LOCAL_RPORT  (1 << 11) /*!< add 'rport' to local via hdr */
 #define FL_SDP_BODY     (1 << 12)  /*!< msg has SDP in body */
 
+/* WARNING: Value (1 << 28) is temporarily reserved for use in kamailio call_control
+ * module (flag  FL_USE_CALL_CONTROL )! */
+
 /* WARNING: Value (1 << 29) is temporarily reserved for use in kamailio acc
  * module (flag FL_REQ_UPSTREAM)! */
 
