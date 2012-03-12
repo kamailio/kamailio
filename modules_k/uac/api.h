@@ -3,7 +3,7 @@
 #include "../../sr_module.h"
 
 
-typedef int (*uac_replace_from_t)(struct sip_msg *, str *, str *);
+typedef int (*uac_replace_from_t)(sip_msg_t *, str *, str *);
 
 typedef struct uac_binds {
 	uac_replace_from_t	replace_from;
