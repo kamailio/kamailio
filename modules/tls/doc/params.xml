@@ -855,6 +855,63 @@ modparam("tls", "tls_force_run", 11)
 	</example>
 	</section>
 
+	<section id="session_cache">
+	<title><varname>session_cache</varname> (boolean)</title>
+	<para>
+		If enabled SIP server will do caching of the TLS sessions data, generation a session_id and sending
+		it back to client.
+	</para>
+	<para>
+		By default TLS session caching is disabled (0).
+	</para>
+	<example>
+		<title>Set <varname>session_cache</varname> parameter</title>
+		<programlisting>
+...
+modparam("tls", "session_cache", 1)
+...
+	</programlisting>
+	</example>
+	</section>
+
+	<section id="session_id">
+	<title><varname>session_id</varname> (str)</title>
+	<para>
+		The value for session ID context, making sense when session caching is enabled.
+	</para>
+	<para>
+		By default TLS session_id is "sip-router-tls-3.1".
+	</para>
+	<example>
+		<title>Set <varname>session_id</varname> parameter</title>
+		<programlisting>
+...
+modparam("tls", "session_id", "my-session-id-context")
+...
+	</programlisting>
+	</example>
+	</section>
+
+	<section id="renegotiation">
+	<title><varname>renegotiation</varname> (boolean)</title>
+	<para>
+		If enabled SIP server will allow renegotiations of TLS connection initiated by the client. This may
+		expose to a security risk if the client is not a trusted peer and keeps renegotiating, consuming CPU
+		and bandwidth resources.
+	</para>
+	<para>
+		By default TLS renegotiation is disabled (0).
+	</para>
+	<example>
+		<title>Set <varname>renegotiation</varname> parameter</title>
+		<programlisting>
+...
+modparam("tls", "renegotiation", 1)
+...
+	</programlisting>
+	</example>
+	</section>
+
 	<section id="config">
 	<title><varname>config</varname> (string)</title>
 	<para>

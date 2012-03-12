@@ -4,7 +4,7 @@ Andrei Pelinescu-Onciul
 
    iptelorg GmbH
 
-   Copyright Â© 2007 iptelorg GmbH
+   Copyright © 2007 iptelorg GmbH
      __________________________________________________________________
 
    1.1. Overview
@@ -43,7 +43,10 @@ Andrei Pelinescu-Onciul
         1.9.24. low_mem_threshold1 (integer)
         1.9.25. low_mem_threshold2 (integer)
         1.9.26. tls_force_run (boolean)
-        1.9.27. config (string)
+        1.9.27. session_cache (boolean)
+        1.9.28. session_id (str)
+        1.9.29. renegotiation (boolean)
+        1.9.30. config (string)
 
    1.10. Functions
 
@@ -883,7 +886,45 @@ modparam("tls", "low_mem_threshold2", -1)
 modparam("tls", "tls_force_run", 11)
 ...
 
-1.9.27. config (string)
+1.9.27. session_cache (boolean)
+
+   If enabled SIP server will do caching of the TLS sessions data,
+   generation a session_id and sending it back to client.
+
+   By default TLS session caching is disabled (0).
+
+   Example 36. Set session_cache parameter
+...
+modparam("tls", "session_cache", 1)
+...
+
+1.9.28. session_id (str)
+
+   The value for session ID context, making sense when session caching is
+   enabled.
+
+   By default TLS session_id is "sip-router-tls-3.1".
+
+   Example 37. Set session_id parameter
+...
+modparam("tls", "session_id", "my-session-id-context")
+...
+
+1.9.29. renegotiation (boolean)
+
+   If enabled SIP server will allow renegotiations of TLS connection
+   initiated by the client. This may expose to a security risk if the
+   client is not a trusted peer and keeps renegotiating, consuming CPU and
+   bandwidth resources.
+
+   By default TLS renegotiation is disabled (0).
+
+   Example 38. Set renegotiation parameter
+...
+modparam("tls", "renegotiation", 1)
+...
+
+1.9.30. config (string)
 
    Sets the name of the TLS specific config file.
 
@@ -922,7 +963,7 @@ modparam("tls", "tls_force_run", 11)
    client when it initiates a new connection by itself (it connects to
    something).
 
-   Example 36. Short config file
+   Example 39. Short config file
 [server:default]
 method = TLSv1
 verify_certificate = yes
@@ -949,7 +990,7 @@ ca_list = local_ca.pem
    For a more complete example check the tls.cfg distributed with the
    SIP-router source (sip_router/modules/tls/tls.cfg).
 
-   Example 37. Set config parameter
+   Example 40. Set config parameter
 ...
 modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
 ...
@@ -957,7 +998,7 @@ modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
    It can be changed also at runtime. The new config will not be loaded
    immediately, but after the first tls.reload RPC call.
 
-   Example 38. Change and reload tls config at runtime
+   Example 41. Change and reload tls config at runtime
  $ sercmd cfg.set_now_string tls config "/usr/local/etc/ser/new_tls.cfg"
  $ sercmd tls.reload
 
@@ -969,7 +1010,7 @@ modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
    , the peer presented an X509 certificate and the certificate chain
    verified ok. It can be used only in a request route.
 
-   Example 39. is_peer_verified usage
+   Example 42. is_peer_verified usage
         if (proto==TLS && !is_peer_verified()){
                 sl_send_reply("400", "No certificate or verification failed");
                 drop;
