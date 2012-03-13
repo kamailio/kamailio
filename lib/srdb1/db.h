@@ -245,10 +245,15 @@ typedef int (*db_update_f) (const db1_con_t* _h, const db_key_t* _k, const db_op
  * \param _k key names
  * \param _v values of the keys
  * \param _n number of key=value pairs
+ * \param _un number of keys to build the unique key, starting from first _k
+ * \param _m mode - first update, then insert, or first insert, then update
+ * \note the last two parameters are used only if the DB server does not
+ * have native replace command (like postgres - the module doing an internal
+ * implementation using synchronized update/affected rows/insert mechanism)
  * \return returns 0 if everything is OK, otherwise returns value < 0
 */
 typedef int (*db_replace_f) (const db1_con_t* handle, const db_key_t* keys,
-				const db_val_t* vals, const int n);
+			const db_val_t* vals, const int n, const int _un, const int _m);
 
 
 /**
