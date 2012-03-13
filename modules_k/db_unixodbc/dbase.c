@@ -476,7 +476,8 @@ int db_unixodbc_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _
 /*
  * Just like insert, but replace the row if it exists
  */
-int db_unixodbc_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
+int db_unixodbc_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n,
+		const int _un, const int _m)
 {
 	return db_do_replace(_h, _k, _v, _n, db_unixodbc_val2str,
 			db_unixodbc_submit_query);
