@@ -757,7 +757,8 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 
 	if (rlpres_dbf.replace != NULL)
 	{
-		if(rlpres_dbf.replace(rlpres_db, query_cols, query_vals, n_query_cols)< 0)
+		if(rlpres_dbf.replace(rlpres_db, query_cols, query_vals, n_query_cols,
+					2, 0)< 0)
 		{
 			LM_ERR("in sql replace\n");
 			goto error;
