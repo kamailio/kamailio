@@ -1018,7 +1018,8 @@ int convert_temporary_dialog_puadb(ua_pres_t *pres)
 
 	if (pua_dbf.replace != NULL)
 	{
-		if (pua_dbf.replace(pua_db, query_cols, query_vals, n_query_cols) < 0)
+		if (pua_dbf.replace(pua_db, query_cols, query_vals, n_query_cols,
+					4, 0) < 0)
 		{
 			LM_ERR("Failed replace db\n");
 			return -1;
