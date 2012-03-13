@@ -457,7 +457,8 @@ int db_mysql_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
  * \param _n number of key=value pairs
  * \return zero on success, negative value on failure
  */
-int db_mysql_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
+int db_mysql_replace(const db1_con_t* _h, const db_key_t* _k,
+		const db_val_t* _v, const int _n, const int _un, const int _m)
 {
 	return db_do_replace(_h, _k, _v, _n, db_mysql_val2str,
 	db_mysql_submit_query);
