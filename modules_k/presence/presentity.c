@@ -284,6 +284,9 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	db_val_t *row_vals = NULL;
 	str old_body, sender;
 	int is_dialog= 0, bla_update_publish= 1;
+	int affected_rows = 0;
+	int ret = -1;
+	int db_record_exists = 0;
 
 	*sent_reply= 0;
 	if(presentity->event->req_auth)
@@ -402,250 +405,305 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	}
 	else
 	{	
+
 		if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
 		{
 			LM_ERR("unsuccessful sql use table\n");
 			goto error;
 		}
 
-		if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
+		if(EVENT_DIALOG_SLA(presentity->event->evp))
+		{
+
+			if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 			 result_cols, n_query_cols, n_result_cols, 0, &result) < 0) 
-		{
-			LM_ERR("unsuccessful sql query\n");
-			goto error;
-		}
-		if(result== NULL)
-			goto error;
-
-		if (result->n > 0)
-		{
-
-			if(EVENT_DIALOG_SLA(presentity->event->evp))
 			{
-				/* analize if previous body has a dialog */
-				row = &result->rows[0];
-				row_vals = ROW_VALUES(row);
-
-				old_body.s = (char*)row_vals[rez_body_col].val.string_val;
-				old_body.len = strlen(old_body.s);
-				if(check_if_dialog(*body, &is_dialog)< 0)
-				{
-					LM_ERR("failed to check if dialog stored\n");
-					goto error;
-				}
-
-				if(is_dialog== 1)  /* if the new body has a dialog - overwrite */
-					goto after_dialog_check;
-
-				if(check_if_dialog(old_body, &is_dialog)< 0)
-				{
-					LM_ERR("failed to check if dialog stored\n");
-					goto error;
-				}
-
-				if(is_dialog==0 ) /* if the old body has no dialog - overwrite */
-					goto after_dialog_check;
-
-				sender.s = (char*)row_vals[rez_sender_col].val.string_val;
-				sender.len= strlen(sender.s);
-
-				LM_DBG("old_sender = %.*s\n", sender.len, sender.s );
-				if(presentity->sender)
-				{
-					if(!(presentity->sender->len == sender.len && 
-					strncmp(presentity->sender->s, sender.s, sender.len)== 0))
-						 bla_update_publish= 0;
-				}
-			}
-after_dialog_check:
-
-			pa_dbf.free_result(pa_db, result);
-			result= NULL;
-			if(presentity->expires == 0) 
-			{
-				if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
-				{
-					LM_ERR("sending 200OK reply\n");
-					goto error;
-				}
-				*sent_reply= 1;
-				if( publ_notify( presentity, pres_uri, body, &presentity->etag, rules_doc)< 0 )
-				{
-					LM_ERR("while sending notify\n");
-					goto error;
-				}
-				
-				if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
-				{
-					LM_ERR("unsuccessful sql use table\n");
-					goto error;
-				}
-
-				LM_DBG("expires =0 -> deleting from database\n");
-				if(pa_dbf.delete(pa_db,query_cols,0,query_vals,n_query_cols)<0)
-				{
-					LM_ERR("unsuccessful sql delete operation");
-					goto error;
-				}
-				LM_DBG("deleted from db %.*s\n",	presentity->user.len,
-						presentity->user.s);
-
-				/* delete from hash table */
-				if( publ_cache_enabled &&
-					delete_phtable(&pres_uri, presentity->event->evp->type)< 0)
-				{
-					LM_ERR("deleting record from hash table\n");
-					goto error;
-				}
-				goto done;
-			}
-
-			n_update_cols= 0;
-			/* if event dialog and is_dialog -> if sender not the same as
-			 * old sender do not overwrite */
-			if( EVENT_DIALOG_SLA(presentity->event->evp) &&  bla_update_publish==0)
-			{
-				LM_DBG("drop Publish for BLA from a different sender that"
-						" wants to overwrite an existing dialog\n");
-				LM_DBG("sender = %.*s\n",  presentity->sender->len, presentity->sender->s );
-				if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
-				{
-					LM_ERR("sending 200OK reply\n");
-					goto error;
-				}
-				*sent_reply= 1;
-				goto done;
-			}
-
-			if(presentity->event->etag_not_new== 0)
-			{	
-				/* generate another etag */
-				unsigned int publ_nr;
-				str str_publ_nr= {0, 0};
-
-				dot= presentity->etag.s+ presentity->etag.len;
-				while(*dot!= '.' && str_publ_nr.len< presentity->etag.len)
-				{
-					str_publ_nr.len++;
-					dot--;
-				}
-				if(str_publ_nr.len== presentity->etag.len)
-				{
-					LM_ERR("wrong etag\n");
-					goto error;
-				}	
-				str_publ_nr.s= dot+1;
-				str_publ_nr.len--;
-	
-				if( str2int(&str_publ_nr, &publ_nr)< 0)
-				{
-					LM_ERR("converting string to int\n");
-					goto error;
-				}
-				etag.s = generate_ETag(publ_nr+1);
-				if(etag.s == NULL)
-				{
-					LM_ERR("while generating etag\n");
-					goto error;
-				}
-				etag.len=(strlen(etag.s));
-				
-				cur_etag= etag;
-
-				update_keys[n_update_cols] = &str_etag_col;
-				update_vals[n_update_cols].type = DB1_STR;
-				update_vals[n_update_cols].nul = 0;
-				update_vals[n_update_cols].val.str_val = etag;
-				n_update_cols++;
-
-			}
-			else
-				cur_etag= presentity->etag;
-			
-			update_keys[n_update_cols] = &str_expires_col;
-			update_vals[n_update_cols].type = DB1_INT;
-			update_vals[n_update_cols].nul = 0;
-			update_vals[n_update_cols].val.int_val= presentity->expires +
-				(int)time(NULL);
-			n_update_cols++;
-
-			update_keys[n_update_cols] = &str_received_time_col;
-			update_vals[n_update_cols].type = DB1_INT;
-			update_vals[n_update_cols].nul = 0;
-			update_vals[n_update_cols].val.int_val= presentity->received_time;
-			n_update_cols++;
-
-			if(body && body->s)
-			{
-				update_keys[n_update_cols] = &str_body_col;
-				update_vals[n_update_cols].type = DB1_BLOB;
-				update_vals[n_update_cols].nul = 0;
-				update_vals[n_update_cols].val.str_val = *body;
-				n_update_cols++;
-
-				/* updated stored sphere */
-				if(sphere_enable && 
-						presentity->event->evp->type== EVENT_PRESENCE)
-				{
-					if( publ_cache_enabled &&
-							update_phtable(presentity, pres_uri, *body)< 0)
-					{
-						LM_ERR("failed to update sphere for presentity\n");
-						goto error;
-					}
-				}
-			}
-			
-			if( presentity->sender)
-			{
-				update_keys[n_update_cols] = &str_sender_col;
-				update_vals[n_update_cols].type = DB1_STR;
-				update_vals[n_update_cols].nul = 0;
-				update_vals[n_update_cols].val.str_val = *presentity->sender;
-				n_update_cols++;
-			}
-
-			if( pa_dbf.update( pa_db,query_cols, query_ops, query_vals,
-					update_keys, update_vals, n_query_cols, n_update_cols )<0) 
-			{
-				LM_ERR("updating published info in database\n");
+				LM_ERR("unsuccessful sql query\n");
 				goto error;
 			}
+			if(result== NULL)
+				goto error;
+
+			if (!(result->n > 0))
+				goto send_412;
 			
-			/* send 200OK */
-			if( publ_send200ok(msg, presentity->expires, cur_etag)< 0)
+			db_record_exists= 1;
+			/* analize if previous body has a dialog */
+			row = &result->rows[0];
+			row_vals = ROW_VALUES(row);
+
+			old_body.s = (char*)row_vals[rez_body_col].val.string_val;
+			old_body.len = strlen(old_body.s);
+			if(check_if_dialog(*body, &is_dialog)< 0)
+			{
+				LM_ERR("failed to check if dialog stored\n");
+				goto error;
+			}
+
+			if(is_dialog== 1)  /* if the new body has a dialog - overwrite */
+				goto after_dialog_check;
+
+			if(check_if_dialog(old_body, &is_dialog)< 0)
+			{
+				LM_ERR("failed to check if dialog stored\n");
+				goto error;
+			}
+
+			if(is_dialog==0 ) /* if the old body has no dialog - overwrite */
+				goto after_dialog_check;
+
+			sender.s = (char*)row_vals[rez_sender_col].val.string_val;
+			sender.len= strlen(sender.s);
+
+			LM_DBG("old_sender = %.*s\n", sender.len, sender.s );
+			if(presentity->sender)
+			{
+				if(!(presentity->sender->len == sender.len && 
+				strncmp(presentity->sender->s, sender.s, sender.len)== 0))
+					 bla_update_publish= 0;
+			}
+after_dialog_check:
+			pa_dbf.free_result(pa_db, result);
+			result = NULL;
+			
+		}
+
+		if(presentity->expires == 0) 
+		{
+
+			if (!pa_dbf.affected_rows && !db_record_exists)
+			{
+				if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
+				 result_cols, n_query_cols, n_result_cols, 0, &result) < 0) 
+				{
+					LM_ERR("unsuccessful sql query\n");
+					goto error;
+				}
+				if(result== NULL)
+					goto error;
+				
+				if (!(result->n > 0))
+					goto send_412;
+
+				db_record_exists = 1;
+
+				pa_dbf.free_result(pa_db, result);
+				result = NULL;
+			}
+
+			LM_DBG("expires =0 -> deleting from database\n");
+			if(pa_dbf.delete(pa_db,query_cols,0,query_vals,n_query_cols)<0)
+			{
+				LM_ERR("unsuccessful sql delete operation");
+				goto error;
+			}
+
+			if (pa_dbf.affected_rows && !db_record_exists)
+			{
+				if ((affected_rows = pa_dbf.affected_rows ( pa_db ))<0)
+				{
+						LM_ERR("unsuccessful sql affected rows operation");
+						goto error;
+				}
+
+				LM_DBG ("affected rows after delete: %d\n", affected_rows );
+			}
+			/*if either affected_rows (if exists) or select query show that there is no line in database*/
+			if ((pa_dbf.affected_rows && !affected_rows) || (!pa_dbf.affected_rows && !db_record_exists))
+				goto send_412;
+
+			LM_DBG("deleted from db %.*s\n",	presentity->user.len,
+			presentity->user.s);
+
+			if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
 			{
 				LM_ERR("sending 200OK reply\n");
 				goto error;
 			}
 			*sent_reply= 1;
-			
-			if(etag.s)
-				pkg_free(etag.s);
-			etag.s= NULL;
-			
-			if(!body)
-				goto done;
-		
-			goto send_notify;
-		}  
-		else  /* if there isn't no registration with those 3 values */
-		{
-			pa_dbf.free_result(pa_db, result);
-			result= NULL;
-			LM_ERR("No E_Tag match\n");
-			if (slb.freply(msg, 412, &pu_412_rpl) < 0)
+			if( publ_notify( presentity, pres_uri, body, &presentity->etag, rules_doc)< 0 )
 			{
-				LM_ERR("sending '412 Conditional request failed' reply\n");
+				LM_ERR("while sending notify\n");
 				goto error;
 			}
+			/* delete from hash table */
+			if( publ_cache_enabled &&
+				delete_phtable(&pres_uri, presentity->event->evp->type)< 0)
+			{
+				LM_ERR("deleting record from hash table\n");
+				goto error;
+			}
+			goto done;
+		
+		}
+
+		n_update_cols= 0;
+		/* if event dialog and is_dialog -> if sender not the same as
+		 * old sender do not overwrite */
+		if( EVENT_DIALOG_SLA(presentity->event->evp) &&  bla_update_publish==0)
+		{
+			LM_DBG("drop Publish for BLA from a different sender that"
+					" wants to overwrite an existing dialog\n");
+			LM_DBG("sender = %.*s\n",  presentity->sender->len, presentity->sender->s );
+				if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
+				{
+					LM_ERR("sending 200OK reply\n");
+					goto error;
+				}
 			*sent_reply= 1;
 			goto done;
 		}
+
+		if(presentity->event->etag_not_new== 0)
+		{	
+			/* generate another etag */
+			unsigned int publ_nr;
+			str str_publ_nr= {0, 0};
+
+			dot= presentity->etag.s+ presentity->etag.len;
+			while(*dot!= '.' && str_publ_nr.len< presentity->etag.len)
+			{
+				str_publ_nr.len++;
+				dot--;
+			}
+			if(str_publ_nr.len== presentity->etag.len)
+			{
+				LM_ERR("wrong etag\n");
+				goto error;
+			}	
+			str_publ_nr.s= dot+1;
+			str_publ_nr.len--;
+
+			if( str2int(&str_publ_nr, &publ_nr)< 0)
+			{
+				LM_ERR("converting string to int\n");
+				goto error;
+			}
+			etag.s = generate_ETag(publ_nr+1);
+			if(etag.s == NULL)
+			{
+				LM_ERR("while generating etag\n");
+				goto error;
+			}
+			etag.len=(strlen(etag.s));
+			
+			cur_etag= etag;
+
+			update_keys[n_update_cols] = &str_etag_col;
+			update_vals[n_update_cols].type = DB1_STR;
+			update_vals[n_update_cols].nul = 0;
+			update_vals[n_update_cols].val.str_val = etag;
+			n_update_cols++;
+
+		}
+		else
+			cur_etag= presentity->etag;
+			
+		update_keys[n_update_cols] = &str_expires_col;
+		update_vals[n_update_cols].type = DB1_INT;
+		update_vals[n_update_cols].nul = 0;
+		update_vals[n_update_cols].val.int_val= presentity->expires +
+			(int)time(NULL);
+		n_update_cols++;
+
+		update_keys[n_update_cols] = &str_received_time_col;
+		update_vals[n_update_cols].type = DB1_INT;
+		update_vals[n_update_cols].nul = 0;
+		update_vals[n_update_cols].val.int_val= presentity->received_time;
+		n_update_cols++;
+
+		if(body && body->s)
+		{
+			update_keys[n_update_cols] = &str_body_col;
+			update_vals[n_update_cols].type = DB1_BLOB;
+			update_vals[n_update_cols].nul = 0;
+			update_vals[n_update_cols].val.str_val = *body;
+			n_update_cols++;
+
+			/* updated stored sphere */
+			if(sphere_enable && 
+					presentity->event->evp->type== EVENT_PRESENCE)
+			{
+				if( publ_cache_enabled &&
+						update_phtable(presentity, pres_uri, *body)< 0)
+				{
+					LM_ERR("failed to update sphere for presentity\n");
+					goto error;
+				}
+			}
+		}
+		
+		
+		if( presentity->sender)
+		{
+			update_keys[n_update_cols] = &str_sender_col;
+			update_vals[n_update_cols].type = DB1_STR;
+			update_vals[n_update_cols].nul = 0;
+			update_vals[n_update_cols].val.str_val = *presentity->sender;
+			n_update_cols++;
+		}
+
+		/* if there is no support for affected_rows and no previous query has been done, do query */
+		if (!pa_dbf.affected_rows && !db_record_exists)
+		{
+			if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
+			 result_cols, n_query_cols, n_result_cols, 0, &result) < 0) 
+			{
+				LM_ERR("unsuccessful sql query\n");
+				goto error;
+			}
+			if(result== NULL)
+				goto error;
+			
+			if (!(result->n > 0))
+				goto send_412;
+
+			db_record_exists = 1;
+			pa_dbf.free_result(pa_db, result);
+			result = NULL;
+		}
+
+		if( pa_dbf.update( pa_db,query_cols, query_ops, query_vals,
+				update_keys, update_vals, n_query_cols, n_update_cols )<0) 
+		{
+			LM_ERR("updating published info in database\n");
+			goto error;
+		}
+
+		if (pa_dbf.affected_rows && !db_record_exists)
+		{
+			if ((affected_rows = pa_dbf.affected_rows ( pa_db ))<0)
+				{
+					LM_ERR("unsuccessful sql affected rows operation");
+					goto error;
+				}
+
+				LM_DBG ("affected rows after update: %d\n", affected_rows );
+		}
+
+
+		/*if either affected_rows (if exists) or select query show that there is no line in database*/
+		if ((pa_dbf.affected_rows && !affected_rows) || (!pa_dbf.affected_rows && !db_record_exists))
+			goto send_412;
+
+		/* send 200OK */
+		if (publ_send200ok(msg, presentity->expires, cur_etag)< 0)
+		{
+			LM_ERR("sending 200OK reply\n");
+			goto error;
+		}
+		*sent_reply= 1;
+
+		if(etag.s)
+			pkg_free(etag.s);
+		etag.s= NULL;
+
+		if(!body)
+			goto done;
 	}
 
 send_notify:
-			
+
 	/* send notify with presence information */
 	if (publ_notify(presentity, pres_uri, body, NULL, rules_doc)<0)
 	{
@@ -665,6 +723,17 @@ done:
 
 	return 0;
 
+send_412:
+
+	LM_ERR("No E_Tag match %*s\n", presentity->etag.len, presentity->etag.s);
+	if (slb.freply(msg, 412, &pu_412_rpl) < 0)
+	{
+		LM_ERR("sending '412 Conditional request failed' reply\n");
+		goto error;
+	}
+	*sent_reply= 1;
+	ret = 0;
+
 error:
 	if(result)
 		pa_dbf.free_result(pa_db, result);
@@ -679,8 +748,7 @@ error:
 	if(pres_uri.s)
 		pkg_free(pres_uri.s);
 
-	return -1;
-
+	return ret;
 }
 
 int pres_htable_restore(void)
