@@ -93,6 +93,7 @@ int db_postgres_bind_api(db_func_t *dbb)
 	dbb->insert           = db_postgres_insert;
 	dbb->delete           = db_postgres_delete; 
 	dbb->update           = db_postgres_update;
+	dbb->replace          = db_postgres_replace;
 	dbb->affected_rows    = db_postgres_affected_rows;
 
 	return 0;

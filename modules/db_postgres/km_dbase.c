@@ -75,11 +75,49 @@
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "../../lib/srdb1/db_query.h"
+#include "../../locking.h"
+#include "../../hashes.h"
 #include "km_dbase.h"
 #include "km_pg_con.h"
 #include "km_val.h"
 #include "km_res.h"
 #include "pg_mod.h"
+
+static gen_lock_set_t *_pg_lock_set = NULL;
+static unsigned int _pg_lock_size = 0;
+
+/*!
+ * \brief init lock set used to implement SQL REPLACE via UPDATE/INSERT
+ * \param sz power of two to compute the lock set size 
+ * \return 0 on success, -1 on error
+ */
+int pg_init_lock_set(int sz)
+{
+	if(sz>0 && sz<=10)
+	{
+		_pg_lock_size = 1<<sz;
+	} else {
+		_pg_lock_size = 1<<4;
+	}
+	_pg_lock_set = lock_set_alloc(_pg_lock_size);
+	if(_pg_lock_set==NULL || lock_set_init(_pg_lock_set)==NULL)
+	{
+		LM_ERR("cannot initiate lock set\n");
+		return -1;
+	}
+	return 0;
+}
+
+void pg_destroy_lock_set(void)
+{
+	if(_pg_lock_set!=NULL)
+	{
+		lock_set_destroy(_pg_lock_set);
+		lock_set_dealloc(_pg_lock_set);
+		_pg_lock_set = NULL;
+		_pg_lock_size = 0;
+	}
+}
 
 static void db_postgres_free_query(const db1_con_t* _con);
 
@@ -587,3 +625,85 @@ int db_postgres_use_table(db1_con_t* _con, const str* _t)
 {
 	return db_use_table(_con, _t);
 }
+
+
+/*!
+ * \brief SQL REPLACE implementation
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _v values of the keys
+ * \param _n number of key=value pairs
+ * \param _un number of keys to build the unique key, starting from first
+ * \param _m mode - first update, then insert, or first insert, then update
+ * \return 0 on success, negative on failure
+ */
+int db_postgres_replace(const db1_con_t* _h, const db_key_t* _k,
+		const db_val_t* _v, const int _n, const int _un, const int _m)
+{
+	unsigned int pos = 0;
+	int i;
+
+	if(_un > _n)
+	{
+		LM_ERR("number of columns for unique key is too high\n");
+		return -1;
+	}
+
+	if(_un > 0)
+	{
+		for(i=0; i<_un; i++)
+		{
+			if(!VAL_NULL(&_v[i]))
+			{
+				switch(VAL_TYPE(&_v[i]))
+				{
+					case DB1_INT:
+						pos += VAL_UINT(&_v[i]);
+						break;
+					case DB1_STR:
+						pos += get_hash1_raw((VAL_STR(&_v[i])).s,
+									(VAL_STR(&_v[i])).len);
+						break;
+					case DB1_STRING:
+						pos += get_hash1_raw(VAL_STRING(&_v[i]),
+									strlen(VAL_STRING(&_v[i])));
+						break;
+					default:
+						break;
+				}
+			}
+		}
+		pos &= (_pg_lock_size-1);
+		lock_set_get(_pg_lock_set, pos);
+		if(db_postgres_update(_h, _k, 0, _v, _k + _un,
+						_v + _un, _un, _n -_un)< 0)
+		{
+			LM_ERR("update failed\n");
+			lock_set_release(_pg_lock_set, pos);
+			return -1;
+		}
+
+		if (db_postgres_affected_rows(_h) <= 0)
+		{
+			if(db_postgres_insert(_h, _k, _v, _n)< 0)
+			{
+				LM_ERR("insert failed\n");
+				lock_set_release(_pg_lock_set, pos);
+				return -1;
+			}
+			LM_DBG("inserted new record in database table\n");
+		} else {
+			LM_DBG("updated record in database table\n");
+		}
+		lock_set_release(_pg_lock_set, pos);
+	} else {
+		if(db_postgres_insert(_h, _k, _v, _n)< 0)
+		{
+			LM_ERR("direct insert failed\n");
+			return -1;
+		}
+		LM_DBG("directly inserted new record in database table\n");
+	}
+	return 0;
+}
+

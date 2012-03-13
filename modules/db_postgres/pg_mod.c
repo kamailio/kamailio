@@ -59,6 +59,8 @@ int pg_connect_timeout = 0;  /* Default is unlimited */
 int pg_retries = 2;  /* How many times should the module try re-execute failed commands.
 					  * 0 disables reconnecting */
 
+int pg_lockset = 4;
+
 /*
  * Postgres module interface
  */
@@ -88,6 +90,7 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"retries",         PARAM_INT, &pg_retries },
+	{"lockset",         PARAM_INT, &pg_lockset },
 	{0, 0, 0}
 };
 
@@ -547,6 +550,8 @@ static int pg_mod_init(void)
 	}
 	return -1;
 #endif /* PG_TEST */
+	if(pg_init_lock_set(pg_lockset)<0)
+		return -1;
 	return km_postgres_mod_init();
 }
 

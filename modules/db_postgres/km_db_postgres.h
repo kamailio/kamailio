@@ -36,4 +36,8 @@ int db_postgres_bind_api(db_func_t *dbb);
 
 int km_postgres_mod_init(void);
 
+int pg_init_lock_set(int sz);
+
+void pg_destroy_lock_set(void);
+
 #endif /* _KM_DB_POSTGRES_H */

@@ -113,5 +113,10 @@ int db_postgres_affected_rows(const db1_con_t* _h);
  */
 int db_postgres_use_table(db1_con_t* _h, const str* _t);
 
+/*
+ * Replace a row in table (via update/insert)
+ */
+int db_postgres_replace(const db1_con_t* _h, const db_key_t* _k,
+		const db_val_t* _v, const int _n, const int _un, const int _m);
 
 #endif /* KM_DBASE_H */
