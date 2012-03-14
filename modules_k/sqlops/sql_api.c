@@ -151,7 +151,7 @@ int sql_connect(void)
 					sc->name.len, sc->name.s);
 			return -1;
 		}
-		if (!DB_CAPABILITY(sc->dbf, DB_CAP_ALL))
+		if (!DB_CAPABILITY(sc->dbf, DB_CAP_RAW_QUERY))
 		{
 			LM_ERR("database module does not have DB_CAP_ALL [%.*s]\n",
 					sc->name.len, sc->name.s);
