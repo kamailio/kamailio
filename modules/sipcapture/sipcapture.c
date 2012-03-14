@@ -1528,6 +1528,12 @@ int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip) {
                 /* fill dst_port && src_port */
                 dst_port=ntohs(udph->uh_dport);
                 src_port=ntohs(udph->uh_sport);
+                                              
+                /* if the message has not alpha */
+                if(!isalnum((buf+offset)[0])) {
+                        DBG("not alpha and not digit... skiping...\n");
+                        continue;
+                }
                                                         
 
                 DBG("PORT: [%d] and [%d]\n", port1, port2);
@@ -1586,6 +1592,7 @@ int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip) {
 
      	                ri.bind_address=si;		        		        
 		        
+
      	                /* and now recieve message */
         		receive_msg(buf+offset, len, &ri);		                          
 	        	if(si) pkg_free(si);                         
