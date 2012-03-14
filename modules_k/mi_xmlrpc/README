@@ -12,7 +12,7 @@ Edited by
 
 Juha Heinanen
 
-   Copyright © 2006 Voice Sistem SRL
+   Copyright � 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -67,6 +67,13 @@ Chapter 1. Admin Guide
 
 1. Overview
 
+   NOTE: this module depends on specific versions of libxmlrpc-c3, which
+   may not be available on your OS. You better use the 'xmlrpc' module
+   located in 'modules/' folder. It can run any MI command by loading
+   'mi_rpc' module and executing RPC command 'mi', with first parameter
+   being the MI command, then followed by other parameters that will be
+   passed to the MI command.
+
    This module implements a xmlrpc server that handles xmlrpc requests and
    generates xmlrpc responses. When a xmlrpc message is received a default
    method is executed.
@@ -108,14 +115,13 @@ Chapter 1. Admin Guide
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * libxml.
-     * libxmlrpc-c3 version 0.9.10.
-     * libxmlrpc-c3-dev version 0.9.10.
+     * libxmlrpc-c3 version 0.9.10 or version 1.06.[10-30].
+     * libxmlrpc-c3-dev version 0.9.10 or version 1.06.[10-30].
 
    If libxmlrpc-c3[-dev] package is not available on your system, you may
    check if packages for your OS are not available on the
-   “xmlrpc-c”project ( http://xmlrpc-c.sourceforge.net/). Otherwise you
-   need to install the library and devel headers from the sources. In both
-   cases, keep in mind to use the 0.9.10 version!!.
+   "xmlrpc-c"project ( http://xmlrpc-c.sourceforge.net/). Otherwise you
+   need to install the library and devel headers from the sources.
 
 4. Parameters
 
@@ -184,8 +190,8 @@ modparam("mi_xmlrpc", "buffer_size", 8192)
 
 6. Example
 
-   This is an example showing the xmlrpc format for the “get_statistics
-   dialog: tm:” MI commad: response.
+   This is an example showing the xmlrpc format for the "get_statistics
+   dialog: tm:" MI commad: response.
 
    Example 1.5. XMLRPC request
 POST /RPC2 HTTP/1.0

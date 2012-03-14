@@ -16,6 +16,13 @@
 	<section>
 	<title>Overview</title>
 	<para>
+		NOTE: this module depends on specific versions of libxmlrpc-c3, which may
+		not be available on your OS. You better use the 'xmlrpc' module located in
+		'modules/' folder. It can run any MI command by loading 'mi_rpc' module and
+		executing RPC command 'mi', with first parameter being the MI command,
+		then followed by other parameters that will be passed to the MI command.
+	</para>
+	<para>
 		This module implements a xmlrpc server that handles xmlrpc requests and
 		generates xmlrpc responses. When a xmlrpc message is received a default 
 		method is executed.
