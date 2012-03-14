@@ -179,6 +179,20 @@ int get_mixed_part_delimiter(str* body, str *mp_delimiter)
 		advance(p,1,str_type,error);
 	mp_delimiter->len = str_type.len - (int)(p-str_type.s);
 	mp_delimiter->s = p;
+	/* check if the boundary value is enclosed in quotes */
+	if(*p=='"' || *p=='\'') {
+		if(mp_delimiter->s[mp_delimiter->len-1]==*p) {
+			mp_delimiter->s = p+1;
+			mp_delimiter->len -= 2;
+			if(mp_delimiter->len<=0) {
+				LM_ERR("invalid boundary field value\n");
+				goto error;
+			}
+		} else {
+			LM_ERR("missing closing quote in boundary field value\n");
+			goto error;
+		}
+	}
 	return 1;
 
 error:  
