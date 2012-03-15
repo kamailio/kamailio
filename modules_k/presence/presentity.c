@@ -471,17 +471,17 @@ after_dialog_check:
 		if(presentity->expires == 0) 
 		{
 
-			if (!pa_dbf.affected_rows && !db_record_exists)
+			if (!db_record_exists)
 			{
 				if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
-				 result_cols, n_query_cols, n_result_cols, 0, &result) < 0) 
+					result_cols, n_query_cols, n_result_cols, 0, &result) < 0) 
 				{
 					LM_ERR("unsuccessful sql query\n");
 					goto error;
 				}
 				if(result== NULL)
 					goto error;
-				
+
 				if (!(result->n > 0))
 					goto send_412;
 
@@ -490,30 +490,6 @@ after_dialog_check:
 				pa_dbf.free_result(pa_db, result);
 				result = NULL;
 			}
-
-			LM_DBG("expires =0 -> deleting from database\n");
-			if(pa_dbf.delete(pa_db,query_cols,0,query_vals,n_query_cols)<0)
-			{
-				LM_ERR("unsuccessful sql delete operation");
-				goto error;
-			}
-
-			if (pa_dbf.affected_rows && !db_record_exists)
-			{
-				if ((affected_rows = pa_dbf.affected_rows ( pa_db ))<0)
-				{
-						LM_ERR("unsuccessful sql affected rows operation");
-						goto error;
-				}
-
-				LM_DBG ("affected rows after delete: %d\n", affected_rows );
-			}
-			/*if either affected_rows (if exists) or select query show that there is no line in database*/
-			if ((pa_dbf.affected_rows && !affected_rows) || (!pa_dbf.affected_rows && !db_record_exists))
-				goto send_412;
-
-			LM_DBG("deleted from db %.*s\n",	presentity->user.len,
-			presentity->user.s);
 
 			if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
 			{
@@ -526,6 +502,16 @@ after_dialog_check:
 				LM_ERR("while sending notify\n");
 				goto error;
 			}
+
+			LM_DBG("expires =0 -> deleting from database\n");
+			if(pa_dbf.delete(pa_db,query_cols,0,query_vals,n_query_cols)<0)
+			{
+				LM_ERR("unsuccessful sql delete operation");
+				goto error;
+			}
+
+			LM_DBG("deleted from db %.*s\n", presentity->user.len, presentity->user.s);
+
 			/* delete from hash table */
 			if( publ_cache_enabled &&
 				delete_phtable(&pres_uri, presentity->event->evp->type)< 0)
@@ -534,7 +520,6 @@ after_dialog_check:
 				goto error;
 			}
 			goto done;
-		
 		}
 
 		n_update_cols= 0;
