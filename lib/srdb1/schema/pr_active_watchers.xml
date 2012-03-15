@@ -185,4 +185,10 @@
         <colref linkend="expires"/>
     </index>
 
+    <index>
+        <name>active_watchers_pres</name>
+        <colref linkend="presentity_uri"/>
+        <description>This index is needed only if you use DB_ONLY mode.</description>
+    </index>
+
 </table>

@@ -58,6 +58,7 @@ END active_watchers_tr;
 BEGIN map2users('active_watchers'); END;
 /
 CREATE INDEX ORA_active_watchers_expires  ON active_watchers (expires);
+CREATE INDEX ORA_active_watchers_pres  ON active_watchers (presentity_uri);
 
 INSERT INTO version (table_name, table_version) values ('watchers','3');
 CREATE TABLE watchers (
