@@ -138,22 +138,16 @@ error:
 }
 
 
-int delete_db_subs(str* pres_uri, str* ev_stored_name, str* to_tag)
+int delete_db_subs(str* to_tag, str* from_tag, str* callid)
 {
-	db_key_t query_cols[5];
-	db_val_t query_vals[5];
+	db_key_t query_cols[3];
+	db_val_t query_vals[3];
 	int n_query_cols= 0;
 
-	query_cols[n_query_cols] = &str_presentity_uri_col;
+	query_cols[n_query_cols] = &str_callid_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = *pres_uri;
-	n_query_cols++;
-
-	query_cols[n_query_cols] = &str_event_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = *ev_stored_name;
+	query_vals[n_query_cols].val.str_val = *callid;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_to_tag_col;
@@ -161,7 +155,13 @@ int delete_db_subs(str* pres_uri, str* ev_stored_name, str* to_tag)
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = *to_tag;
 	n_query_cols++;
-	
+
+	query_cols[n_query_cols] = &str_from_tag_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = *from_tag;
+	n_query_cols++;
+
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0) 
 	{
 		LM_ERR("in use table sql operation\n");
@@ -405,7 +405,8 @@ int update_subs_db(subs_t* subs, int type)
 	return 0;
 }
 
-void delete_subs(str* pres_uri, str* ev_name, str* to_tag)
+void delete_subs(str* pres_uri, str* ev_name, str* to_tag,
+		str* from_tag, str* callid)
 {
 	/* delete record from hash table also if not in dbonly mode */
 	if(subs_dbmode != DB_ONLY)
@@ -415,7 +416,7 @@ void delete_subs(str* pres_uri, str* ev_name, str* to_tag)
 			LM_ERR("Failed to delete subscription from memory\n");
 	}
 
-	if(subs_dbmode != NO_DB && delete_db_subs(pres_uri, ev_name, to_tag)< 0)
+	if(subs_dbmode != NO_DB && delete_db_subs(to_tag, from_tag, callid)< 0)
 		LM_ERR("Failed to delete subscription from database\n");
 }
 
@@ -436,7 +437,8 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 		{
 			LM_DBG("expires =0 -> deleting record\n");
 
-			delete_subs(&subs->pres_uri, &subs->event->name, &subs->to_tag);
+			delete_subs(&subs->pres_uri, &subs->event->name, &subs->to_tag,
+					&subs->from_tag, &subs->callid);
 
 			if(subs->event->type & PUBL_TYPE)
 			{

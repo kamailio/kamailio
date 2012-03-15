@@ -65,7 +65,8 @@ typedef struct wid_cback
 	str pres_uri;
 	str ev_name;
 	str to_tag;   /* to identify the exact record */
-	subs_t* wi_subs;
+	str from_tag;
+	str callid;
 }c_back_param;
 
 extern str str_to_user_col;

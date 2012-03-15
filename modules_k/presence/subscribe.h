@@ -116,6 +116,6 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int max_expire,
 		int* to_tag_gen, str scontact);
 typedef int (*extract_sdialog_info_t)(subs_t* subs, struct sip_msg* msg,
 		int max_expire, int* to_tag_gen, str scontact);
-void delete_subs(str* pres_uri, str* ev_name, str* to_tag);
+void delete_subs(str* pres_uri, str* ev_name, str* to_tag, str* from_tag, str* callid);
 
 #endif

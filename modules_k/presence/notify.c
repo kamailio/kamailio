@@ -1591,9 +1591,9 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 	c_back_param*  cb;
 
 	if(ps->param==NULL || *ps->param==NULL ||
-			((c_back_param*)(*ps->param))->pres_uri.s == NULL ||
-			((c_back_param*)(*ps->param))->ev_name.s== NULL ||
-			((c_back_param*)(*ps->param))->to_tag.s== NULL)
+			((c_back_param*)(*ps->param))->callid.s == NULL ||
+			((c_back_param*)(*ps->param))->to_tag.s== NULL ||
+			((c_back_param*)(*ps->param))->from_tag.s== NULL)
 	{
 		LM_DBG("message id not received, probably a timeout notify\n");
 		if(ps->param != NULL && *ps->param !=NULL)
@@ -1606,7 +1606,8 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 			ps->code, cb->to_tag.len, cb->to_tag.s);
 
 	if(ps->code == 481 || (ps->code == 408 && timeout_rm_subs))
-		delete_subs(&cb->pres_uri, &cb->ev_name, &cb->to_tag);
+		delete_subs(&cb->pres_uri, &cb->ev_name,
+				&cb->to_tag, &cb->from_tag, &cb->callid);
 
 	free_cbparam(cb);
 }
@@ -1622,8 +1623,9 @@ c_back_param* shm_dup_cbparam(subs_t* subs)
 	int size;
 	c_back_param* cb_param = NULL;
 	
-	size = sizeof(c_back_param) + subs->pres_uri.len+
-			subs->event->name.len + subs->to_tag.len;
+	size = sizeof(c_back_param) + subs->pres_uri.len +
+			subs->event->name.len + subs->to_tag.len +
+			subs->from_tag.len + subs->callid.len;
 
 	cb_param= (c_back_param*)shm_malloc(size);
 	LM_DBG("=== %d/%d/%d\n", subs->pres_uri.len,
@@ -1644,6 +1646,14 @@ c_back_param* shm_dup_cbparam(subs_t* subs)
 	cb_param->to_tag.s = (char*)(cb_param->ev_name.s) + cb_param->ev_name.len;
 	memcpy(cb_param->to_tag.s, subs->to_tag.s, subs->to_tag.len);
 	cb_param->to_tag.len = subs->to_tag.len;
+
+	cb_param->from_tag.s = (char*)(cb_param->to_tag.s) + cb_param->to_tag.len;
+	memcpy(cb_param->from_tag.s, subs->from_tag.s, subs->from_tag.len);
+	cb_param->from_tag.len = subs->from_tag.len;
+
+	cb_param->callid.s = (char*)(cb_param->from_tag.s) + cb_param->from_tag.len;
+	memcpy(cb_param->callid.s, subs->callid.s, subs->callid.len);
+	cb_param->callid.len = subs->callid.len;
 
 	return cb_param;
 }
