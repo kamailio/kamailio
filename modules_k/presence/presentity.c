@@ -503,6 +503,12 @@ after_dialog_check:
 				goto error;
 			}
 
+			if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
+			{
+				LM_ERR("unsuccessful use table sql operation\n");
+				goto error;
+			}
+
 			LM_DBG("expires =0 -> deleting from database\n");
 			if(pa_dbf.delete(pa_db,query_cols,0,query_vals,n_query_cols)<0)
 			{
