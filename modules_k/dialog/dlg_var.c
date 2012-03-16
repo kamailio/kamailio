@@ -306,7 +306,7 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		return pv_get_strval(msg, param, res, value);
 
 
-	return 0;
+	return pv_get_null(msg, param, res);
 }
 
 int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val)
