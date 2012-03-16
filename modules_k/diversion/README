@@ -8,7 +8,7 @@ Edited by
 
 Jan Janak
 
-   Copyright © 2004 FhG FOKUS
+   Copyright � 2004 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -27,7 +27,7 @@ Jan Janak
 
         4. Functions
 
-              4.1. add_diversion(reason)
+              4.1. add_diversion(reason [, uri])
 
         5. Diversion Example
 
@@ -54,7 +54,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. add_diversion(reason)
+        4.1. add_diversion(reason [, uri])
 
    5. Diversion Example
 
@@ -95,31 +95,37 @@ Warning
    the parameter to specify additional parameters to be added to the
    header field, see the example.
 
-   Default value is “” (empty string).
+   Default value is "" (empty string).
 
    Example 1.1. suffix usage
 modparam("diversion", "suffix", ";privacy=full")
 
 4. Functions
 
-   4.1. add_diversion(reason)
+   4.1. add_diversion(reason [, uri])
 
-4.1. add_diversion(reason)
+4.1. add_diversion(reason [, uri])
 
    The function adds a new diversion header field before any other
    existing Diversion header field in the message (the newly added
    Diversion header field will become the topmost Diversion header field).
-   The inbound (without any modifications done by the proxy server)
-   Request-URI will be used as the Diversion URI.
+   If 'uri' parameter is missing, the inbound (without any modifications
+   done by the proxy server) Request-URI will be used as the Diversion
+   URI.
 
    Meaning of the parameters is as follows:
      * reason - The reason string to be added as the reason parameter
+     * uri - The URI to be set in Diversion header
 
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+   The parameters can contain pseudo-variables.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE.
 
    Example 1.2. add_diversion usage
 ...
 add_diversion("user-busy");
+add_diversion("user-busy", "$ru");
 ...
 
 5. Diversion Example

@@ -73,13 +73,13 @@ modparam("diversion", "suffix", ";privacy=full")
 	<section>
 	<title>Functions</title>
 	<section>
-		<title><function moreinfo="none">add_diversion(reason)</function></title>
+		<title><function moreinfo="none">add_diversion(reason [, uri])</function></title>
 		<para>
 		The function adds a new diversion header field before any other 
 		existing Diversion header field in the message (the newly added 
 		Diversion header field will become the topmost Diversion header field).
-		The inbound (without any modifications done by the
-		proxy server) Request-URI will be used as the Diversion URI.
+		If 'uri' parameter is missing, the inbound (without any modifications done
+		by the proxy server) Request-URI will be used as the Diversion URI.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -88,15 +88,23 @@ modparam("diversion", "suffix", ";privacy=full")
 			as the reason parameter
 			</para>
 		</listitem>
+		<listitem>
+			<para><emphasis>uri</emphasis> - The URI to be set in Diversion header
+			</para>
+		</listitem>
 	</itemizedlist>
 	<para>
-	This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		The parameters can contain pseudo-variables.
+	</para>
+	<para>
+	This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
 	</para>
 	<example>
 		<title><function moreinfo="none">add_diversion</function> usage</title>
 		<programlisting format="linespecific">
 ...
 add_diversion("user-busy");
+add_diversion("user-busy", "$ru");
 ...
 </programlisting>
 	</example>
