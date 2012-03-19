@@ -59,19 +59,19 @@ CREATE TABLE watchers (
 
 INSERT INTO version (table_name, table_version) values ('xcap','4');
 CREATE TABLE xcap (
-    id INTEGER PRIMARY KEY NOT NULL,
+    id INTEGER NOT NULL,
     username VARCHAR(64) NOT NULL,
     domain VARCHAR(64) NOT NULL,
     doc BYTEA NOT NULL,
     doc_type INTEGER NOT NULL,
     etag VARCHAR(64) NOT NULL,
     source INTEGER NOT NULL,
-    doc_uri VARCHAR(255) NOT NULL,
+    doc_uri VARCHAR(255) PRIMARY KEY NOT NULL,
     port INTEGER NOT NULL,
-    CONSTRAINT xcap_account_doc_type_idx UNIQUE (username, domain, doc_type, doc_uri)
+    CONSTRAINT xcap_account_doc_type_idx UNIQUE (username, domain, doc_type),
+    CONSTRAINT xcap_account_doc_type_uri_idx UNIQUE (username, domain, doc_type, doc_uri),
+    CONSTRAINT xcap_account_doc_uri_idx UNIQUE (username, domain, doc_uri)
 );
-
-CREATE INDEX xcap_source_idx ON xcap (source);
 
 INSERT INTO version (table_name, table_version) values ('pua','7');
 CREATE TABLE pua (
@@ -94,10 +94,14 @@ CREATE TABLE pua (
     remote_contact VARCHAR(128) NOT NULL,
     version INTEGER NOT NULL,
     extra_headers TEXT NOT NULL,
-    CONSTRAINT pua_pua_idx UNIQUE (etag, tuple_id, call_id, from_tag)
+    CONSTRAINT pua_pua_idx UNIQUE (etag, tuple_id, call_id, from_tag),
+    CONSTRAINT pua_expires_idx UNIQUE (expires)
 );
 
-CREATE INDEX pua_presid_idx ON pua (pres_id);
-CREATE INDEX pua_dialog_idx ON pua (call_id, from_tag, to_tag);
-CREATE INDEX pua_tmp_dlg_idx ON pua (pres_id, pres_uri, call_id, from_tag);
+CREATE INDEX pua_dialog1_idx ON pua (call_id, from_tag, to_tag);
+CREATE INDEX pua_dialog2_idx ON pua (pres_id, pres_uri);
+CREATE INDEX pua_tmp_dlg1_idx ON pua (call_id, from_tag);
+CREATE INDEX pua_tmp_dlg2_idx ON pua (pres_id, pres_uri, call_id, from_tag);
+CREATE INDEX pua_tmp_record1_idx ON pua (pres_id);
+CREATE INDEX pua_tmp_record2_idx ON pua (pres_id, etag);
 

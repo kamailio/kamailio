@@ -83,16 +83,18 @@ BEGIN map2users('watchers'); END;
 /
 INSERT INTO version (table_name, table_version) values ('xcap','4');
 CREATE TABLE xcap (
-    id NUMBER(10) PRIMARY KEY,
+    id NUMBER(10),
     username VARCHAR2(64),
     domain VARCHAR2(64),
     doc BLOB,
     doc_type NUMBER(10),
     etag VARCHAR2(64),
     source NUMBER(10),
-    doc_uri VARCHAR2(255),
+    doc_uri VARCHAR2(255) PRIMARY KEY,
     port NUMBER(10),
-    CONSTRAINT xcap_account_doc_type_idx  UNIQUE (username, domain, doc_type, doc_uri)
+    CONSTRAINT xcap_account_doc_type_idx  UNIQUE (username, domain, doc_type),
+    CONSTRAINT xcap_account_doc_type_uri_idx  UNIQUE (username, domain, doc_type, doc_uri),
+    CONSTRAINT xcap_account_doc_uri_idx  UNIQUE (username, domain, doc_uri)
 );
 
 CREATE OR REPLACE TRIGGER xcap_tr
@@ -103,8 +105,6 @@ END xcap_tr;
 /
 BEGIN map2users('xcap'); END;
 /
-CREATE INDEX xcap_source_idx  ON xcap (source);
-
 INSERT INTO version (table_name, table_version) values ('pua','7');
 CREATE TABLE pua (
     id NUMBER(10) PRIMARY KEY,
@@ -126,7 +126,8 @@ CREATE TABLE pua (
     remote_contact VARCHAR2(128),
     version NUMBER(10),
     extra_headers CLOB,
-    CONSTRAINT pua_pua_idx  UNIQUE (etag, tuple_id, call_id, from_tag)
+    CONSTRAINT pua_pua_idx  UNIQUE (etag, tuple_id, call_id, from_tag),
+    CONSTRAINT pua_expires_idx  UNIQUE (expires)
 );
 
 CREATE OR REPLACE TRIGGER pua_tr
@@ -137,7 +138,10 @@ END pua_tr;
 /
 BEGIN map2users('pua'); END;
 /
-CREATE INDEX pua_presid_idx  ON pua (pres_id);
-CREATE INDEX pua_dialog_idx  ON pua (call_id, from_tag, to_tag);
-CREATE INDEX pua_tmp_dlg_idx  ON pua (pres_id, pres_uri, call_id, from_tag);
+CREATE INDEX pua_dialog1_idx  ON pua (call_id, from_tag, to_tag);
+CREATE INDEX pua_dialog2_idx  ON pua (pres_id, pres_uri);
+CREATE INDEX pua_tmp_dlg1_idx  ON pua (call_id, from_tag);
+CREATE INDEX pua_tmp_dlg2_idx  ON pua (pres_id, pres_uri, call_id, from_tag);
+CREATE INDEX pua_tmp_record1_idx  ON pua (pres_id);
+CREATE INDEX pua_tmp_record2_idx  ON pua (pres_id, etag);
 

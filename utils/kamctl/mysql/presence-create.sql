@@ -59,19 +59,19 @@ CREATE TABLE watchers (
 
 INSERT INTO version (table_name, table_version) values ('xcap','4');
 CREATE TABLE xcap (
-    id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INT(10) UNSIGNED AUTO_INCREMENT NOT NULL,
     username VARCHAR(64) NOT NULL,
     domain VARCHAR(64) NOT NULL,
     doc MEDIUMBLOB NOT NULL,
     doc_type INT(11) NOT NULL,
     etag VARCHAR(64) NOT NULL,
     source INT(11) NOT NULL,
-    doc_uri VARCHAR(255) NOT NULL,
+    doc_uri VARCHAR(255) PRIMARY KEY NOT NULL,
     port INT(11) NOT NULL,
-    CONSTRAINT account_doc_type_idx UNIQUE (username, domain, doc_type, doc_uri)
+    CONSTRAINT account_doc_type_idx UNIQUE (username, domain, doc_type),
+    CONSTRAINT account_doc_type_uri_idx UNIQUE (username, domain, doc_type, doc_uri),
+    CONSTRAINT account_doc_uri_idx UNIQUE (username, domain, doc_uri)
 ) ENGINE=MyISAM;
-
-CREATE INDEX source_idx ON xcap (source);
 
 INSERT INTO version (table_name, table_version) values ('pua','7');
 CREATE TABLE pua (
@@ -94,10 +94,14 @@ CREATE TABLE pua (
     remote_contact VARCHAR(128) NOT NULL,
     version INT(11) NOT NULL,
     extra_headers TEXT NOT NULL,
-    CONSTRAINT pua_idx UNIQUE (etag, tuple_id, call_id, from_tag)
+    CONSTRAINT pua_idx UNIQUE (etag, tuple_id, call_id, from_tag),
+    CONSTRAINT expires_idx UNIQUE (expires)
 ) ENGINE=MyISAM;
 
-CREATE INDEX presid_idx ON pua (pres_id);
-CREATE INDEX dialog_idx ON pua (call_id, from_tag, to_tag);
-CREATE INDEX tmp_dlg_idx ON pua (pres_id, pres_uri, call_id, from_tag);
+CREATE INDEX dialog1_idx ON pua (call_id, from_tag, to_tag);
+CREATE INDEX dialog2_idx ON pua (pres_id, pres_uri);
+CREATE INDEX tmp_dlg1_idx ON pua (call_id, from_tag);
+CREATE INDEX tmp_dlg2_idx ON pua (pres_id, pres_uri, call_id, from_tag);
+CREATE INDEX tmp_record1_idx ON pua (pres_id);
+CREATE INDEX tmp_record2_idx ON pua (pres_id, etag);
 
