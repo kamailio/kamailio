@@ -48,7 +48,7 @@
         <description>To domain</description>
     </column>
 
-    <column>
+    <column id="watcher_username">
         <name>watcher_username</name>
         <type>string</type>
         <size>&user_len;</size>
@@ -56,7 +56,7 @@
         <natural/>
     </column>
 
-    <column>
+    <column id="watcher_domain">
         <name>watcher_domain</name>
         <type>string</type>
         <size>&domain_len;</size>
@@ -64,7 +64,7 @@
         <natural/>
     </column>
 
-    <column>
+    <column id="event">
         <name>event</name>
         <type>string</type>
         <size>&user_len;</size>
@@ -129,7 +129,7 @@
         <description>Record route</description>
     </column>
 
-    <column>
+    <column id="expires">
         <name>expires</name>
         <type>int</type>
         <size>&expires_len;</size>
@@ -179,6 +179,24 @@
         <colref linkend="to_tag"/>
         <colref linkend="from_tag"/>
         <unique/>
+    </index>
+
+    <index>
+        <name>rls_watchers_delete</name>
+        <colref linkend="callid"/>
+        <colref linkend="to_tag"/>
+    </index>
+
+    <index>
+        <name>rls_watchers_update</name>
+        <colref linkend="watcher_username"/>
+        <colref linkend="watcher_domain"/>
+        <colref linkend="event"/>
+    </index>
+
+    <index>
+        <name>rls_watchers_expires</name>
+        <colref linkend="expires"/>
     </index>
 
 </table>

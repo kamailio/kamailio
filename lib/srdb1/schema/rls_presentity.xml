@@ -89,8 +89,17 @@
     </index>
 
     <index>
+        <name>rlsubs_idx</name>
+        <colref linkend="rlsubs_did"/>
+    </index>
+
+    <index>
         <name>updated_idx</name>
         <colref linkend="updated"/>
     </index>
 
+    <index>
+        <name>expires_idx</name>
+        <colref linkend="expires"/>
+    </index>
 </table>
