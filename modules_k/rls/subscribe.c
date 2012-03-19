@@ -521,8 +521,18 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 			break;
 		}
 		ev_param= ev_param->next;
-	}		
+	}
 
+	/* extract dialog information from message headers */
+	if(pres_extract_sdialog_info(&subs, msg, rls_max_expires,
+				&to_tag_gen, rls_server_address)<0)
+	{
+		LM_ERR("bad subscribe request\n");
+		goto error;
+	}
+
+	hash_code = core_hash(&subs.callid, &subs.to_tag, hash_size);
+	
 	if(get_to(msg)->tag_value.s==NULL || get_to(msg)->tag_value.len==0)
 	{ /* initial Subscribe */
 		/*verify if Request URI represents a list by asking xcap server*/	
@@ -532,8 +542,8 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 			LM_ERR("while constructing uri from user and domain\n");
 			goto error;
 		}
-		if(rls_get_service_list(&subs.pres_uri, &(GET_FROM_PURI(msg)->user),
-					&(GET_FROM_PURI(msg)->host), &service_node, &doc)<0)
+		if(rls_get_service_list(&subs.pres_uri, &subs.from_user,
+					&subs.from_domain, &service_node, &doc)<0)
 		{
 			LM_ERR("while attepmting to get a resource list\n");
 			goto error;
@@ -545,54 +555,11 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 					subs.pres_uri.len, subs.pres_uri.s);
 			goto forpresence;
 		}
-	} else {
-		/* search if a stored dialog */
-		if ( dbmode == RLS_DB_ONLY )
-		{
-			if (matches_in_rlsdb(msg->callid->body,get_to(msg)->tag_value,
-							 get_from(msg)->tag_value ) <= 0 )
-			{
-				LM_DBG("subscription dialog not found for <%.*s>\n",
-						get_from(msg)->uri.len, get_from(msg)->uri.s);
-				goto forpresence;
-			}
-		}
-		else
-		{
-			hash_code = core_hash(&msg->callid->body,
-					&get_to(msg)->tag_value, hash_size);
-			lock_get(&rls_table[hash_code].lock);
 
-			if(pres_search_shtable(rls_table, msg->callid->body,
-					get_to(msg)->tag_value, get_from(msg)->tag_value,
-					hash_code)==NULL)
-			{
-				lock_release(&rls_table[hash_code].lock);
-				LM_DBG("subscription dialog not found for <%.*s>\n",
-						get_from(msg)->uri.len, get_from(msg)->uri.s);
-				goto forpresence;
-			}
-			lock_release(&rls_table[hash_code].lock);
-		}
-	}
+		/* if correct reply with 200 OK */
+		if(reply_200(msg, &subs.local_contact, subs.expires)<0)
+			goto error;
 
-	/* extract dialog information from message headers */
-	if(pres_extract_sdialog_info(&subs, msg, rls_max_expires,
-				&to_tag_gen, rls_server_address)<0)
-	{
-		LM_ERR("bad subscribe request\n");
-		goto error;
-	}
-
-	/* if correct reply with 200 OK */
-	if(reply_200(msg, &subs.local_contact, subs.expires)<0)
-		goto error;
-
-	if (dbmode != RLS_DB_ONLY)
-		hash_code = core_hash(&subs.callid, &subs.to_tag, hash_size);
-
-	if(get_to(msg)->tag_value.s==NULL || get_to(msg)->tag_value.len==0)
-	{ /* initial subscribe */
 		subs.local_cseq = 0;
 
 		if(subs.expires != 0)
@@ -613,30 +580,77 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 			}
 		}
 	} else {
-		if (dbmode==RLS_DB_ONLY)
+		/* search if a stored dialog */
+		if ( dbmode == RLS_DB_ONLY )
 		{
-			rt=update_subs_rlsdb( &subs );
+			rt = get_dialog_subscribe_rlsdb(&subs);
+
+			if (rt <= 0)
+			{
+				LM_DBG("subscription dialog not found for <%.*s@%.*s>\n",
+						subs.from_user.len, subs.from_user.s,
+						subs.from_domain.len, subs.from_domain.s);
+				goto forpresence;
+			}
+			else if(rt>=400)
+			{
+				reason = (rt==400)?pu_400_rpl:stale_cseq_rpl;
+		
+				if (slb.freply(msg, 400, &reason) < 0)
+				{
+					LM_ERR("while sending reply\n");
+					goto error;
+				}
+				return 0;
+			}
+
+			/* if correct reply with 200 OK */
+			if(reply_200(msg, &subs.local_contact, subs.expires)<0)
+				goto error;
+
+			if (update_dialog_subscribe_rlsdb(&subs) < 0)
+			{
+				LM_ERR("while updating resource list subscription\n");
+				goto error;
+			}
 		}
 		else
 		{
-			rt = update_rlsubs(&subs, hash_code);
-		}
-		if(rt<0)
-		{
-			LM_ERR("while updating resource list subscription\n");
-			goto error;
-		}
-	
-		if(rt>=400)
-		{
-			reason = (rt==400)?pu_400_rpl:stale_cseq_rpl;
-		
-			if (slb.freply(msg, 400, &reason) < 0)
+			lock_get(&rls_table[hash_code].lock);
+			if(pres_search_shtable(rls_table, subs.callid,
+					subs.to_tag, subs.from_tag, hash_code)==NULL)
 			{
-				LM_ERR("while sending reply\n");
+				lock_release(&rls_table[hash_code].lock);
+				LM_DBG("subscription dialog not found for <%.*s@%.*s>\n",
+						subs.from_user.len, subs.from_user.s,
+						subs.from_domain.len, subs.from_domain.s);
+				goto forpresence;
+			}
+			lock_release(&rls_table[hash_code].lock);
+
+			/* if correct reply with 200 OK */
+			if(reply_200(msg, &subs.local_contact, subs.expires)<0)
+				goto error;
+
+			rt = update_rlsubs(&subs, hash_code);
+
+			if(rt<0)
+			{
+				LM_ERR("while updating resource list subscription\n");
 				goto error;
 			}
-			return 0;
+	
+			if(rt>=400)
+			{
+				reason = (rt==400)?pu_400_rpl:stale_cseq_rpl;
+		
+				if (slb.freply(msg, 400, &reason) < 0)
+				{
+					LM_ERR("while sending reply\n");
+					goto error;
+				}
+				return 0;
+			}
 		}	
 
 		if(rls_get_service_list(&subs.pres_uri, &subs.from_user,
@@ -671,7 +685,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 	{
 		if(subs.expires==0)
 		{
-			delete_rlsdb( &subs.callid, &subs.to_tag, &subs.from_tag );
+			delete_rlsdb(&subs.callid, &subs.to_tag, &subs.from_tag);
 		}
 	}
 	else
@@ -1027,8 +1041,7 @@ int fixup_update_subs(void** param, int param_no)
 	return 0;
 }
 
-void update_a_sub(subs_t *subs_copy )
-
+void update_a_sub(subs_t *subs_copy)
 {
 	xmlDocPtr doc = NULL;
 	xmlNodePtr service_node = NULL;

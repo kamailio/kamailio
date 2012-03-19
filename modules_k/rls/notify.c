@@ -88,8 +88,8 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 {
 	xmlDocPtr rlmi_body= NULL;
 	xmlNodePtr list_node= NULL;
-	db_key_t query_cols[2], update_cols[2], result_cols[7];
-	db_val_t query_vals[2], update_vals[2];
+	db_key_t query_cols[1], update_cols[1], result_cols[5];
+	db_val_t query_vals[1], update_vals[1];
 	db1_res_t *result= NULL;
 	int n_result_cols= 0;
 	char* boundary_string;
@@ -349,7 +349,7 @@ int agg_body_sendn_update(str* rl_uri, char* boundary_string, str* rlmi_body,
 
 	if (dbmode==RLS_DB_ONLY)
 	{
-		if ( update_rlsdb(subs, LOCAL_TYPE) <0 )
+		if (update_dialog_notify_rlsdb(subs) < 0)
 		{
 			LM_ERR( "updating DB\n" );
 			goto error;

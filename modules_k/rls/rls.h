@@ -153,15 +153,14 @@ extern xcap_nodeSel_add_terminal_t xcap_AddTerminal;
 extern xcap_nodeSel_free_t xcap_FreeNodeSel;
 
 /* rlsdb functions*/
-int delete_expired_subs_rlsdb( void );
-void dump_dialog( subs_t *s );
-extern int delete_rlsdb( str *callid, str *to_tag, str *from_tag );
-extern int update_rlsdb( subs_t *s, int type );
-extern int update_subs_rlsdb( subs_t *s );
-extern int insert_rlsdb( subs_t *s );
-extern int matches_in_rlsdb( str callid, str to_tag, str from_tag );
-extern int update_all_subs_rlsdb( str *from_user, str *from_domain, str *evt );
-subs_t *get_dialog_rlsdb( str callid, str to_tag, str from_tag );
+int delete_expired_subs_rlsdb(void);
+extern int delete_rlsdb(str *callid, str *to_tag, str *from_tag);
+extern int update_dialog_notify_rlsdb(subs_t *s);
+extern int update_dialog_subscribe_rlsdb(subs_t *s);
+extern int insert_rlsdb(subs_t *s);
+extern int get_dialog_subscribe_rlsdb(subs_t *s);
+subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag);
+extern int update_all_subs_rlsdb(str *from_user, str *from_domain, str *evt);
 
 extern str str_rlsubs_did_col;
 extern str str_resource_uri_col;

@@ -85,22 +85,22 @@ int parse_rlsubs_did(char* str_did, str* callid, str* from_tag, str* to_tag)
 
 void get_dialog_from_did(char* did, subs_t **dialog, unsigned int *hash_code)
 {
-    str callid, to_tag, from_tag;
-    subs_t* s;
-    
-    *dialog= NULL;
+	str callid, to_tag, from_tag;
+	subs_t* s;
 
-    /* search the subscription in rlsubs_table*/		
-    if( parse_rlsubs_did(did, &callid, &from_tag, &to_tag)< 0)
+	*dialog= NULL;
+
+	/* search the subscription in rlsubs_table*/		
+	if( parse_rlsubs_did(did, &callid, &from_tag, &to_tag)< 0)
 	{
-        LM_ERR("bad format for "
-            "resource list Subscribe dialog indentifier(rlsubs did)\n");
-        return;
+		LM_ERR("bad format for resource list Subscribe dialog "
+			"indentifier(rlsubs did)\n");
+		return;
 	}
 
 	if (dbmode == RLS_DB_ONLY)
 	{
-		*dialog = get_dialog_rlsdb(callid,to_tag,from_tag);
+		*dialog = get_dialog_notify_rlsdb(callid,to_tag,from_tag);
 
 		if(*dialog==NULL)
 		{
@@ -130,10 +130,6 @@ void get_dialog_from_did(char* did, subs_t **dialog, unsigned int *hash_code)
 	if(*dialog== NULL)
 	{
 		LM_ERR("while copying subs_t structure\n");
-	}
-	else
-	{
-		dump_dialog( *dialog );
 	}
 
 	if (dbmode != RLS_DB_ONLY)
@@ -825,8 +821,8 @@ error:
 
 void timer_send_notify(unsigned int ticks,void *param)
 {
-	db_key_t query_cols[2], update_cols[1], result_cols[7];
-	db_val_t query_vals[2], update_vals[1];
+	db_key_t query_cols[1], update_cols[1], result_cols[6];
+	db_val_t query_vals[1], update_vals[1];
 	int did_col, resource_uri_col, auth_state_col, reason_col,
 		pres_state_col, content_type_col;
 	int n_result_cols= 0;
@@ -888,9 +884,9 @@ done:
 
 void rls_presentity_clean(unsigned int ticks,void *param)
 {
-	db_key_t query_cols[2];
-	db_op_t query_ops[2];
-	db_val_t query_vals[2];
+	db_key_t query_cols[1];
+	db_op_t query_ops[1];
+	db_val_t query_vals[1];
 
 	query_cols[0]= &str_expires_col;
 	query_ops[0]= OP_LT;
