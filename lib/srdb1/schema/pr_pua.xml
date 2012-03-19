@@ -49,7 +49,7 @@
         <natural/>
     </column>
 
-    <column>
+    <column id="expires">
         <name>expires</name>
         <type>int</type>
         <size>&expires_len;</size>
@@ -99,7 +99,7 @@
         <description>Call ID</description>
     </column>
 
-    <column>
+    <column id="to_tag">
         <name>to_tag</name>
         <type>string</type>
         <size>&domain_len;</size>
@@ -160,23 +160,47 @@
 	<unique/>
     </index>
 
-   <index>
-        <name>presid_idx</name>
-        <colref linkend="pres_id"/>
+    <index>
+        <name>expires_idx</name>
+        <colref linkend="expires"/>
+	<unique/>
     </index>
 
     <index>
-        <name>dialog_idx</name>
+        <name>dialog1_idx</name>
         <colref linkend="call_id"/>
         <colref linkend="from_tag"/>
         <colref linkend="to_tag"/>
     </index>
 
     <index>
-        <name>tmp_dlg_idx</name>
+        <name>dialog2_idx</name>
+        <colref linkend="pres_id"/>
+        <colref linkend="pres_uri"/>
+    </index>
+
+    <index>
+        <name>tmp_dlg1_idx</name>
+        <colref linkend="call_id"/>
+        <colref linkend="from_tag"/>
+    </index>
+
+    <index>
+        <name>tmp_dlg2_idx</name>
         <colref linkend="pres_id"/>
         <colref linkend="pres_uri"/>
         <colref linkend="call_id"/>
         <colref linkend="from_tag"/>
+    </index>
+
+    <index>
+        <name>tmp_record1_idx</name>
+        <colref linkend="pres_id"/>
+    </index>
+
+    <index>
+        <name>tmp_record2_idx</name>
+        <colref linkend="pres_id"/>
+        <colref linkend="etag"/>
     </index>
 </table>
