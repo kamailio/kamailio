@@ -34,16 +34,21 @@
 
 #include "xmpp.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parse_param.h"
 
-/*! \brief decode sip:user*domain1\@domain2 -> user\@domain1 
-	\note In many kinds of gateway scenarios, the % sign is a common character used
-		See the MSN XMPP transports for an example.
+extern param_t *_xmpp_gwmap_list;
+
+/*! \brief decode sip:user*domain1\@domain2 -> user\@domain1
+ *     or based on gwmap sip:user\@sipdomain -> user\@xmppdomain
+ *	\note In many kinds of gateway scenarios, the % sign is a common character used
+ *		See the MSN XMPP transports for an example.
  */
 char *decode_uri_sip_xmpp(char *uri)
 {
-	struct sip_uri puri;
+	sip_uri_t puri;
 	static char buf[512];
 	char *p;
+	param_t *it = NULL;
 
 	if (!uri)
 		return NULL;
@@ -51,21 +56,43 @@ char *decode_uri_sip_xmpp(char *uri)
 		LM_ERR("failed to parse URI\n");
 		return NULL;
 	}
-	strncpy(buf, puri.user.s, sizeof(buf));
-	buf[puri.user.len] = 0;
+	if(_xmpp_gwmap_list==0)
+	{
+		strncpy(buf, puri.user.s, sizeof(buf));
+		buf[puri.user.len] = 0;
 	
-	/* replace domain separator */
-	if ((p = strchr(buf, domain_separator)))
-		*p = '@';
-
+		/* replace domain separator */
+		if ((p = strchr(buf, domain_separator)))
+			*p = '@';
+	} else {
+		for(it=_xmpp_gwmap_list; it; it=it->next)
+		{
+			if(it->name.len==puri.host.len
+					&& strncasecmp(it->name.s, puri.host.s, it->name.len)==0)
+			{
+				break;
+			}
+		}
+		if(it && it->body.len>0)
+		{
+			snprintf(buf, 512, "%.*s@%.*s", puri.user.len, puri.user.s,
+					it->body.len, it->body.s);
+		} else {
+			snprintf(buf, 512, "%.*s@%.*s", puri.user.len, puri.user.s,
+					puri.host.len, puri.host.s);
+		}
+	}
 	return buf;
 }
 
-/*! \brief  encode sip:user\@domain -> user*domain\@xmpp_domain */
+/*! \brief  encode sip:user\@domain -> user*domain\@xmpp_domain
+ *     or based on gwmap sip:user\@sipdomain -> user\@xmppdomain
+ */
 char *encode_uri_sip_xmpp(char *uri)
 {
-	struct sip_uri puri;
+	sip_uri_t puri;
 	static char buf[512];
+	param_t *it = NULL;
 
 	if (!uri)
 		return NULL;
@@ -73,51 +100,157 @@ char *encode_uri_sip_xmpp(char *uri)
 		LM_ERR("failed to parse URI\n");
 		return NULL;
 	}
-	snprintf(buf, sizeof(buf), "%.*s%c%.*s@%s",
-		puri.user.len, puri.user.s,
-		domain_separator,
-		puri.host.len, puri.host.s,
-		xmpp_domain);
+	if(_xmpp_gwmap_list==0)
+	{
+		snprintf(buf, sizeof(buf), "%.*s%c%.*s@%s",
+			puri.user.len, puri.user.s,
+			domain_separator,
+			puri.host.len, puri.host.s,
+			xmpp_domain);
+	} else {
+		for(it=_xmpp_gwmap_list; it; it=it->next)
+		{
+			if(it->name.len==puri.host.len
+					&& strncasecmp(it->name.s, puri.host.s, it->name.len)==0)
+			{
+				break;
+			}
+		}
+		if(it && it->body.len>0)
+		{
+			snprintf(buf, 512, "%.*s@%.*s", puri.user.len, puri.user.s,
+					it->body.len, it->body.s);
+		} else {
+			snprintf(buf, 512, "%.*s@%.*s", puri.user.len, puri.user.s,
+					puri.host.len, puri.host.s);
+		}
+	}
 	return buf;
 }
 
-/*! \brief  decode user*domain1\@domain2 -> sip:user\@domain1 */
+/*! \brief  decode user*domain1\@domain2 -> sip:user\@domain1
+ *     or based on gwmap sip:user\@xmppdomain -> user\@sipdomain
+ */
 char *decode_uri_xmpp_sip(char *jid)
 {
 	static char buf[512];
 	char *p;
+	char tbuf[512];
+	sip_uri_t puri;
+	str sd;
+	param_t *it = NULL;
 
 	if (!jid)
 		return NULL;
-	snprintf(buf, sizeof(buf), "sip:%s", jid);
 
-	/* strip off resource */
-	if ((p = strchr(buf, '/')))
-		*p = 0;
-	/* strip off domain */
-	if ((p = strchr(buf, '@')))
-		*p = 0;
-	/* replace domain separator */
-	if ((p = strchr(buf, domain_separator)))
-		*p = '@';
+	if(_xmpp_gwmap_list==0)
+	{
+		snprintf(buf, sizeof(buf), "sip:%s", jid);
 
+		/* strip off resource */
+		if ((p = strchr(buf, '/')))
+			*p = 0;
+		/* strip off domain */
+		if ((p = strchr(buf, '@')))
+			*p = 0;
+		/* replace domain separator */
+		if ((p = strchr(buf, domain_separator)))
+			*p = '@';
+	} else {
+		snprintf(tbuf, sizeof(tbuf), "sip:%s", jid);
+
+		/* strip off resource */
+		if ((p = strchr(tbuf, '/')))
+			*p = 0;
+		if (parse_uri(tbuf, strlen(tbuf), &puri) < 0) {
+			LM_ERR("failed to parse URI\n");
+			return NULL;
+		}
+		for(it=_xmpp_gwmap_list; it; it=it->next)
+		{
+			if(it->body.len>0)
+			{
+				sd = it->body;
+			} else {
+				sd = it->name;
+			}
+			if(sd.len==puri.host.len
+					&& strncasecmp(sd.s, puri.host.s, sd.len)==0)
+			{
+				break;
+			}
+		}
+		if(it)
+		{
+			snprintf(buf, 512, "sip:%.*s@%.*s", puri.user.len, puri.user.s,
+					it->name.len, it->name.s);
+		} else {
+			snprintf(buf, 512, "sip:%.*s@%.*s", puri.user.len, puri.user.s,
+					puri.host.len, puri.host.s);
+		}
+
+	}
 	return buf;
 }
 
-/*! \brief  encode user\@domain -> sip:user*domain\@gateway_domain */
+/*! \brief  encode user\@domain -> sip:user*domain\@gateway_domain
+ *     or based on gwmap sip:user\@xmppdomain -> user\@sipdomain
+ */
 char *encode_uri_xmpp_sip(char *jid)
 {
 	static char buf[512];
 	char *p;
+	char tbuf[512];
+	sip_uri_t puri;
+	str sd;
+	param_t *it = NULL;
 
 	if (!jid)
 		return NULL;
-	/* TODO: maybe not modify jid? */
-	if ((p = strchr(jid, '/')))
-		*p = 0;
-	if ((p = strchr(jid, '@')))
-		*p = domain_separator;
-	snprintf(buf, sizeof(buf), "sip:%s@%s", jid, gateway_domain);
+
+	if(_xmpp_gwmap_list==0)
+	{
+		/* TODO: maybe not modify jid? */
+		if ((p = strchr(jid, '/')))
+			*p = 0;
+		if ((p = strchr(jid, '@')))
+			*p = domain_separator;
+		snprintf(buf, sizeof(buf), "sip:%s@%s", jid, gateway_domain);
+	} else {
+		snprintf(tbuf, sizeof(tbuf), "sip:%s", jid);
+
+		/* strip off resource */
+		if ((p = strchr(tbuf, '/')))
+			*p = 0;
+		if (parse_uri(tbuf, strlen(tbuf), &puri) < 0) {
+			LM_ERR("failed to parse URI\n");
+			return NULL;
+		}
+		for(it=_xmpp_gwmap_list; it; it=it->next)
+		{
+			if(it->body.len>0)
+			{
+				sd = it->body;
+			} else {
+				sd = it->name;
+			}
+			if(sd.len==puri.host.len
+					&& strncasecmp(sd.s, puri.host.s, sd.len)==0)
+			{
+				break;
+			}
+		}
+		if(it)
+		{
+			snprintf(buf, 512, "sip:%.*s@%.*s", puri.user.len, puri.user.s,
+					it->name.len, it->name.s);
+		} else {
+			snprintf(buf, 512, "sip:%.*s@%.*s", puri.user.len, puri.user.s,
+					puri.host.len, puri.host.s);
+		}
+
+	}
+
 	return buf;
 }
 

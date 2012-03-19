@@ -117,6 +117,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_param.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../cfg/cfg_struct.h"
 
@@ -139,6 +140,8 @@ static int  child_init(int rank);
 static void xmpp_process(int rank);
 static int  cmd_send_message(struct sip_msg* msg, char* _foo, char* _bar);
 
+int xmpp_gwmap_param(modparam_t type, void *val);
+
 static int pipe_fds[2] = {-1,-1};
 
 /*
@@ -153,6 +156,8 @@ char *xmpp_host = "xmpp.example.com";
 int xmpp_port = 0;
 char *xmpp_password = "secret";
 str outbound_proxy= {0, 0};
+
+param_t *_xmpp_gwmap_list = NULL;
 
 #define DEFAULT_COMPONENT_PORT 5347
 #define DEFAULT_SERVER_PORT 5269
@@ -184,6 +189,7 @@ static param_export_t params[] = {
 	{ "xmpp_port",			INT_PARAM, &xmpp_port },
 	{ "xmpp_password",		STR_PARAM, &xmpp_password },
 	{ "outbound_proxy",		STR_PARAM, &outbound_proxy.s},
+	{ "gwmap",              STR_PARAM|USE_FUNC_PARAM, (void*)xmpp_gwmap_param},
 	{0, 0, 0}
 };
 
@@ -484,3 +490,37 @@ int xmpp_send_xnotify(str *from, str *to, str *msg, str *id)
 	return xmpp_send_pipe_cmd(XMPP_PIPE_SEND_PNOTIFY, from, to, msg, id);
 }
 
+/*!
+ *
+ */
+int xmpp_gwmap_param(modparam_t type, void *val)
+{
+	str inv;
+	param_hooks_t phooks;
+	param_t *params = NULL;
+	param_t *it = NULL;
+
+	if(val==NULL)
+		return -1;
+	inv.s = (char*)val;
+	inv.len = strlen(inv.s);
+	if(inv.len<=0)
+		return -1;
+
+	if(inv.s[inv.len-1]==';')
+		inv.len--;
+	if (parse_params(&inv, CLASS_ANY, &phooks, &params)<0)
+	{
+		LM_ERR("failed parsing params value\n");
+		return -1;
+	}
+	if(_xmpp_gwmap_list==NULL)
+	{
+		_xmpp_gwmap_list = params;
+	} else {
+		it = _xmpp_gwmap_list;
+		while(it->next) it = it->next;
+		it->next = params;
+	}
+	return 0;
+}

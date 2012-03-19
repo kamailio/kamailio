@@ -71,7 +71,7 @@
 extern "C" {
 #endif
 
-
+#ifndef __OS_darwin
 #ifndef HAVE_SNPRINTF
 extern int ap_snprintf(char *, size_t, const char *, ...);
 #define snprintf ap_snprintf
@@ -80,6 +80,7 @@ extern int ap_snprintf(char *, size_t, const char *, ...);
 #ifndef HAVE_VSNPRINTF
 extern int ap_vsnprintf(char *, size_t, const char *, va_list ap);
 #define vsnprintf ap_vsnprintf
+#endif
 #endif
 
 /* --------------------------------------------------------- */
