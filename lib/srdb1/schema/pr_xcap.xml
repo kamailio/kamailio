@@ -21,7 +21,6 @@
         <type>unsigned int</type>
         <size>&table_id_len;</size>
         <autoincrement/>
-        <primary/>
         <type db="dbtext">int,auto</type>
         <description>Unique ID</description>
     </column>
@@ -74,6 +73,7 @@
         <type>string</type>
         <size>&xcap_uri_len;</size>
         <description>Document uri</description>
+        <primary/>
     </column>
 
     <column id="port">
@@ -88,13 +88,23 @@
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="doc_type"/>
+        <unique/>
+    </index>
+
+    <index>
+        <name>account_doc_type_uri_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="doc_type"/>
         <colref linkend="doc_uri"/>
         <unique/>
     </index>
 
     <index>
-        <name>source_idx</name>
-        <colref linkend="source"/>
+        <name>account_doc_uri_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="doc_uri"/>
+        <unique/>
     </index>
-
 </table>
