@@ -49,7 +49,6 @@
 #include "event_list.h"
 #include "pua_db.h"
 
-
 str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 		str* extra_headers, int is_body)
 {
@@ -146,6 +145,53 @@ str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 
 }
 
+static void find_and_delete_record(ua_pres_t *dialog, int hash_code)
+{
+	ua_pres_t *presentity;
+
+	if (dbmode == PUA_DB_ONLY)
+	{
+		delete_record_puadb(dialog);
+	}
+	else
+	{
+		lock_get(&HashT->p_records[hash_code].lock);
+		presentity = search_htable(dialog, hash_code);
+		if (presentity == NULL)
+		{
+			LM_DBG("Record found in table and deleted\n");
+			lock_release(&HashT->p_records[hash_code].lock);
+			return;
+		}
+		delete_htable(presentity, hash_code);
+		lock_release(&HashT->p_records[hash_code].lock);
+	}
+}
+
+static int find_and_update_record(ua_pres_t *dialog, int hash_code, int lexpire, str *etag)
+{
+	ua_pres_t *presentity;
+
+	if(dbmode==PUA_DB_ONLY)
+	{
+		return update_record_puadb(dialog, lexpire, etag);
+	}
+	else
+	{
+		lock_get(&HashT->p_records[hash_code].lock);
+		presentity = search_htable(dialog, hash_code);
+		if (presentity == NULL)
+		{
+			LM_DBG("Record found in table and deleted\n");
+			lock_release(&HashT->p_records[hash_code].lock);
+			return 0;
+		}
+		update_htable(presentity, dialog->desired_expires, lexpire, etag, hash_code, NULL);
+		lock_release(&HashT->p_records[hash_code].lock);
+		return 1;
+	}
+}
+
 void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 {
 	struct hdr_field* hdr= NULL;
@@ -188,30 +234,11 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		goto done;
 	}
 
+	hash_code= core_hash(hentity->pres_uri, NULL, HASH_SIZE);
+
 	if( ps->code>= 300 )
 	{
-
-		if(dbmode==PUA_DB_ONLY)
-		{
-			delete_puadb(hentity);
-		}
-		else
-		{
-			hash_code= core_hash(hentity->pres_uri, NULL,HASH_SIZE);
-			lock_get(&HashT->p_records[hash_code].lock);
-			presentity= search_htable( hentity, hash_code);
-			if(presentity)
-			{
-				LM_DBG("Record found in table and deleted\n");
-				delete_htable(presentity, hash_code);
-			}
-			else
-			{
-				LM_DBG("Record not found in table\n");
-			}
-
-			lock_release(&HashT->p_records[hash_code].lock);
-		}
+		find_and_delete_record(hentity, hash_code);
 
 		if(ps->code== 412 && hentity->body && hentity->flag!= MI_PUBLISH
 				&& hentity->flag!= MI_ASYN_PUBLISH)
@@ -287,58 +314,26 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	LM_DBG("completed with status %d [contact:%.*s]\n",
 			ps->code, hentity->pres_uri->len, hentity->pres_uri->s);
 
-	if (dbmode==PUA_DB_ONLY)
+	if (lexpire == 0)
 	{
-		db_presentity = search_puadb(hentity,&dbpres, &res);
-		/* this needs the columns used in update_db only */
+		find_and_delete_record(hentity, hash_code);
+		goto done;
+	}
 
-		if(db_presentity)
-		{
-			LM_DBG("update DB record\n");
-			if(lexpire == 0)
-			{
-				LM_DBG("expires= 0- delete from htable\n"); 
-				delete_puadb(hentity);
-				goto done;
-			}
-			
-			update_puadb( db_presentity, hentity->desired_expires, lexpire, &etag, NULL );
+	if (pua_dbf.affected_rows != NULL || dbmode != PUA_DB_ONLY)
+	{
+		if (find_and_update_record(hentity, hash_code, lexpire, &etag) > 0)
 			goto done;
-		}
-
 	}
 	else
 	{
-		hash_code= core_hash(hentity->pres_uri, NULL, HASH_SIZE);
-		lock_get(&HashT->p_records[hash_code].lock);
-		presentity= search_htable(hentity, hash_code);
-
-		if(presentity)
+		if ((db_presentity = search_record_puadb(hentity->id, &hentity->etag, &dbpres, &res)) != NULL)
 		{
-			LM_DBG("update hash record\n");
-
-			if(lexpire == 0)
-			{
-				LM_DBG("expires= 0- delete from htable\n"); 
-				delete_htable(presentity, hash_code);
-				lock_release(&HashT->p_records[hash_code].lock);
-				goto done;
-			}
-			
-			update_htable(presentity, hentity->desired_expires,
-					lexpire, &etag, hash_code, NULL);
-			lock_release(&HashT->p_records[hash_code].lock);
+			update_record_puadb(hentity, lexpire, &etag);
 			goto done;
 		}
-
-		lock_release(&HashT->p_records[hash_code].lock);
 	}
 
-	if(lexpire== 0)
-	{
-		LM_DBG("expires= 0: no not insert\n");
-		goto done;
-	}
 	size= sizeof(ua_pres_t)+ sizeof(str)+ 
 		(hentity->pres_uri->len+ hentity->tuple_id.len + 
 		 hentity->id.len)* sizeof(char);
@@ -426,7 +421,7 @@ done:
 		shm_free(presentity);
 	}
 
-	free_results_puadb(res);
+	if (res) free_results_puadb(res);
 	return;
 
 error:
@@ -435,10 +430,9 @@ error:
 		shm_free(*ps->param);
 		*ps->param= NULL;
 	}
-	if(presentity)
-		shm_free(presentity);
+	if(presentity) shm_free(presentity);
 
-	free_results_puadb(res);
+	if (res) free_results_puadb(res);
 	return;
 }	
 
@@ -449,7 +443,7 @@ int send_publish( publ_info_t* publ )
 	ua_pres_t* presentity= NULL;
 	str* body= NULL;
 	str* tuple_id= NULL;
-	ua_pres_t* cb_param= NULL, pres;
+	ua_pres_t* cb_param= NULL;
 	unsigned int hash_code=0;
 	str etag= {0, 0};
 	int ver= 0;
@@ -472,29 +466,28 @@ int send_publish( publ_info_t* publ )
 		goto error;
 	}	
 
-	memset(&pres, 0, sizeof(ua_pres_t));
-	pres.pres_uri= publ->pres_uri;
-	pres.flag= publ->source_flag;
-	pres.id= publ->id;
-	pres.event= publ->event;
-	if(publ->etag)
-		pres.etag= *publ->etag;
-
 	if (dbmode==PUA_DB_ONLY)
 	{
-		/* do db specific stuff-pjp */
 		memset(&dbpres, 0, sizeof(dbpres));
 		dbpres.pres_uri = &pres_uri;
 		dbpres.watcher_uri = &watcher_uri;
 		dbpres.extra_headers = &extra_headers;
-		presentity = search_puadb(&pres, &dbpres, &res);
+		presentity = search_record_puadb(publ->id, publ->etag, &dbpres, &res);
 	}
 	else
 	{
-		hash_code= core_hash(publ->pres_uri, NULL, HASH_SIZE);
+		ua_pres_t pres;
 
+		memset(&pres, 0, sizeof(ua_pres_t));
+		pres.pres_uri = publ->pres_uri;
+		pres.flag = publ->source_flag;
+		pres.id = publ->id;
+		pres.event = publ->event;
+		if(publ->etag)
+			pres.etag = *publ->etag;
+
+		hash_code= core_hash(publ->pres_uri, NULL, HASH_SIZE);
 		lock_get(&HashT->p_records[hash_code].lock);
-	
 		presentity= search_htable(&pres, hash_code);
 	}
 
@@ -590,7 +583,7 @@ insert:
 
 		if (dbmode==PUA_DB_ONLY)
 		{ 
-			update_version_puadb(&pres,ver);
+			update_version_puadb(presentity);
 		}
 		else
 		{

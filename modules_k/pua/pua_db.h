@@ -47,20 +47,22 @@
 #define PUA_VERSION (1<<16)
 #define PUA_EXTRA_HEADERS (1<<17)
 
+extern db_func_t pua_dbf;
+
 void free_results_puadb( db1_res_t *res );
-int matches_in_puadb(ua_pres_t *pres);
-ua_pres_t* search_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **res );
 ua_pres_t* get_dialog_puadb(ua_pres_t *pres, ua_pres_t *result, db1_res_t **res);
 int is_dialog_puadb(ua_pres_t *pres);
 int get_record_id_puadb(ua_pres_t *pres, str **rec_id );
 int convert_temporary_dialog_puadb(ua_pres_t *pres);
-int delete_puadb(ua_pres_t *pres );
-int update_version_puadb(ua_pres_t *pres, int version );
+ua_pres_t *search_dialog_puadb(str pres_id, str *pres_uri, ua_pres_t *result, db1_res_t **res);
+int delete_dialog_puadb(ua_pres_t *pres);
+int update_dialog_puadb(ua_pres_t *pres, int expires, str *contact);
+ua_pres_t *search_record_puadb(str pres_id, str *etag, ua_pres_t *result, db1_res_t **res);
+int delete_record_puadb(ua_pres_t *pres);
+int update_record_puadb(ua_pres_t *pres, int expires, str *contact);
+int update_version_puadb(ua_pres_t *pres);
 int update_contact_puadb(ua_pres_t *pres, str *contact);
-void update_puadb(ua_pres_t* pres, time_t desired_expires, 
-                       int expires, str* etag, str *contact);
 int insert_puadb(ua_pres_t* pres);
 list_entry_t *get_subs_list_puadb(str *did);
-
 
 #endif

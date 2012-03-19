@@ -228,43 +228,51 @@ static int pua_free_tm_dlg(dlg_t *td)
 static void find_and_delete_dialog(ua_pres_t *dialog, int hash_code)
 {
 	ua_pres_t *presentity;
- 	ua_pres_t dbpres;
-	str pres_uri={0,0}, watcher_uri={0,0}, extra_headers={0,0};
-	db1_res_t *res=NULL;
 
-	memset(&dbpres, 0, sizeof(dbpres));
-	dbpres.pres_uri = &pres_uri;
-	dbpres.watcher_uri = &watcher_uri;
-	dbpres.extra_headers = &extra_headers;
-
-	if (dbmode==PUA_DB_ONLY)
+	if (dbmode == PUA_DB_ONLY)
 	{
-		presentity = get_dialog_puadb(dialog, &dbpres, &res);
+		delete_dialog_puadb(dialog);
 	}
 	else
-	{		
+	{
 		lock_get(&HashT->p_records[hash_code].lock);
  		presentity= get_dialog(dialog, hash_code);
 		if (presentity == NULL)
+		{
 			presentity = get_temporary_dialog(dialog, hash_code);
-	}
+			if(presentity== NULL)
+			{
+				LM_ERR("no record found\n");
+				lock_release(&HashT->p_records[hash_code].lock);
+				return;
+			}
+		}
 
-	if(presentity== NULL)
-	{
-		LM_ERR("no record found\n");
-		if (dbmode!=PUA_DB_ONLY)
-			lock_release(&HashT->p_records[hash_code].lock);
-		return;
+		delete_htable(presentity, hash_code);
+		lock_release(&HashT->p_records[hash_code].lock);
 	}
+}
 
-	if (dbmode==PUA_DB_ONLY)
+static void find_and_update_dialog(ua_pres_t *dialog, int hash_code, int lexpire, str *contact)
+{
+	ua_pres_t *presentity;
+
+	if (dbmode == PUA_DB_ONLY)
 	{
-		delete_puadb(presentity);
-		free_results_puadb(res);
+		update_dialog_puadb(dialog, lexpire, contact);
 	}
 	else
 	{
-		delete_htable(presentity, hash_code);
+		lock_get(&HashT->p_records[hash_code].lock);
+  		presentity= get_dialog(dialog, hash_code);
+		if (presentity == NULL)
+		{
+			LM_ERR("no record found\n");
+			lock_release(&HashT->p_records[hash_code].lock);
+			return;
+		}
+
+		update_htable(presentity, dialog->desired_expires, lexpire, NULL, hash_code, contact);
 		lock_release(&HashT->p_records[hash_code].lock);
 	}
 }
@@ -283,14 +291,6 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	int rt;
 	str contact;
 	int initial_request = 0;
-	db1_res_t *res=NULL;
- 	ua_pres_t dbpres;
-	str pres_uri={0,0}, watcher_uri={0,0}, extra_headers={0,0};
-
-	memset(&dbpres, 0, sizeof(dbpres));
-	dbpres.pres_uri = &pres_uri;
-	dbpres.watcher_uri = &watcher_uri;
-	dbpres.extra_headers = &extra_headers;
 
 	if( ps->param== NULL || *ps->param== NULL )
 	{
@@ -362,8 +362,18 @@ faked_error:
 		goto done;
 	}
 
-	/*if initial request */
+	if(ps->rpl->expires && msg->expires->body.len > 0)
+	{
+		if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
+		{
+			LM_ERR("cannot parse Expires header\n");
+			goto done;
+		}
+		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
+		LM_DBG("lexpire= %d\n", lexpire);
+	}
 
+	/*if initial request */
 	if(hentity->call_id.s== NULL)
 	{
 		initial_request = 1;
@@ -393,7 +403,20 @@ faked_error:
 		{
 			LM_ERR("no from tag value present\n");
 			goto done;
-		}		
+		}
+
+		hentity->call_id=  msg->callid->body;
+		hentity->from_tag= pfrom->tag_value;
+
+		if(ps->code >= 300 || lexpire == 0)
+		{
+			/* Initial request so dialog is temporary */
+			hentity->to_tag.s = NULL;
+			hentity->to_tag.len = 0;
+			find_and_delete_dialog(hentity, hash_code);
+			goto done;
+		}
+
 		if( msg->to==NULL || msg->to->body.s==NULL)
 		{
 			LM_ERR("cannot parse TO header\n");
@@ -420,182 +443,81 @@ faked_error:
 			LM_ERR("no to tag value present\n");
 			goto done;
 		}
-		hentity->call_id=  msg->callid->body;
 		hentity->to_tag= pto->tag_value;
-		hentity->from_tag= pfrom->tag_value;
-
-		if(ps->code >= 300)
-		{
-			find_and_delete_dialog(hentity, hash_code);
-			goto done;
-		}
-	}
-
-	/* extract the other necesary information for inserting a new record */		
-	if(ps->rpl->expires && msg->expires->body.len > 0)
-	{
-		if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
-		{
-			LM_ERR("cannot parse Expires header\n");
-			goto done;
-		}
-		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
-		LM_DBG("lexpire= %d\n", lexpire);
-	}		
-
-	if (dbmode==PUA_DB_ONLY)
-	{
-		presentity = get_dialog_puadb(hentity, &dbpres, &res);
-	}
-	else
-	{
-		lock_get(&HashT->p_records[hash_code].lock);
-		presentity= get_dialog(hentity, hash_code);
-		if (presentity == NULL)
-			presentity = get_temporary_dialog(hentity, hash_code);
 	}
 
 	if(ps->code >= 300 )
 	{	/* if an error code and a stored dialog delete it and try to send 
 		   a subscription with type= INSERT_TYPE, else return*/	
 		
-		if(presentity)
+		subs_info_t subs;
+
+		find_and_delete_dialog(hentity, hash_code);
+
+		/* Redirect if the response 3XX */
+		memset(&subs, 0, sizeof(subs_info_t));
+		subs.pres_uri= hentity->pres_uri; 
+		subs.watcher_uri= hentity->watcher_uri;
+		subs.contact= &hentity->contact;
+
+		if(hentity->remote_contact.s)
+			subs.remote_target= &hentity->remote_contact;
+
+		if(hentity->desired_expires== 0)
+			subs.expires= -1;
+		else
+		if(hentity->desired_expires< (int)time(NULL))
+			subs.expires= 0;
+		else
+			subs.expires= hentity->desired_expires- (int)time(NULL)+ 3;
+
+		subs.flag= INSERT_TYPE;
+		subs.source_flag= flag;
+		subs.event= hentity->event;
+		subs.id= hentity->id;
+		subs.outbound_proxy= hentity->outbound_proxy;
+		subs.extra_headers= hentity->extra_headers;
+		subs.cb_param= hentity->cb_param;
+	
+		if(send_subscribe(&subs)< 0)
 		{
-			subs_info_t subs;
-			hentity->event= presentity->event;
-
-			if (dbmode==PUA_DB_ONLY)
-			{
-				delete_puadb(presentity);
-			}
-			else
-			{
-				delete_htable(presentity, hash_code);
-				lock_release(&HashT->p_records[hash_code].lock);
-			}
-
-			/* Redirect if the response 3XX */
-			memset(&subs, 0, sizeof(subs_info_t));
-			subs.pres_uri= hentity->pres_uri; 
-			subs.watcher_uri= hentity->watcher_uri;
-			subs.contact= &hentity->contact;
-
-			if(hentity->remote_contact.s)
-				subs.remote_target= &hentity->remote_contact;
-
-			if(hentity->desired_expires== 0)
-				subs.expires= -1;
-			else
-			if(hentity->desired_expires< (int)time(NULL))
-				subs.expires= 0;
-			else
-				subs.expires= hentity->desired_expires- (int)time(NULL)+ 3;
-
-			subs.flag= INSERT_TYPE;
-			subs.source_flag= flag;
-			subs.event= hentity->event;
-			subs.id= hentity->id;
-			subs.outbound_proxy= hentity->outbound_proxy;
-			subs.extra_headers= hentity->extra_headers;
-			subs.cb_param= hentity->cb_param;
-		
-			if(send_subscribe(&subs)< 0)
-			{
-				LM_ERR("when trying to send SUBSCRIBE\n");
-				goto done;
-			}
-		}
-		else 
-		{
-			LM_ERR("No dialog found\n");			
-			if (dbmode!=PUA_DB_ONLY)
-				lock_release(&HashT->p_records[hash_code].lock);
+			LM_ERR("when trying to send SUBSCRIBE\n");
+			goto done;
 		}
 		goto done;
 	}
-	/*if a 2XX reply handle the two cases- an existing dialog and a new one*/
-	
+
+	if(lexpire== 0 )
+	{
+		LM_DBG("lexpire= 0 Delete from hash table");
+		find_and_delete_dialog(hentity, hash_code);
+		goto done;
+	}
+
 	/* extract the contact */
 	if(msg->contact== NULL || msg->contact->body.s== NULL)
 	{
 		LM_ERR("no contact header found");
-		if (dbmode!=PUA_DB_ONLY)
-			lock_release(&HashT->p_records[hash_code].lock);
 		goto error;
 	}
 	if( parse_contact(msg->contact) <0 )
 	{
 		LM_ERR(" cannot parse contact header\n");
-		if (dbmode!=PUA_DB_ONLY)
-			lock_release(&HashT->p_records[hash_code].lock);
 		goto error;
 	}
-
 	if(msg->contact->parsed == NULL)
 	{
 		LM_ERR("cannot parse contact header\n");
-		if (dbmode!=PUA_DB_ONLY)
-			lock_release(&HashT->p_records[hash_code].lock);
 		goto error;
 	}
 	contact = ((contact_body_t* )msg->contact->parsed)->contacts->uri;
 
 	if(initial_request == 0)
 	{
-		if(presentity)
-		{
-			if(lexpire== 0 )
-			{
-				LM_DBG("lexpire= 0 Delete from hash table");
-				if (dbmode==PUA_DB_ONLY)
-				{
-					delete_puadb(presentity);
-				}
-				else
-				{
-					delete_htable(presentity, hash_code);
-					lock_release(&HashT->p_records[hash_code].lock);
-				}
-				goto done;
-			}
-			LM_DBG("*** Update expires\n");
-			if (dbmode==PUA_DB_ONLY)
-			{
-				update_puadb( presentity, hentity->desired_expires, lexpire, NULL, &contact );
-			}
-			else
-			{
-				update_htable(presentity, hentity->desired_expires, lexpire, NULL,
-					hash_code, &contact);
-				lock_release(&HashT->p_records[hash_code].lock);
-			}
-			goto done;
-		}
-
-		LM_ERR("Not initial request and no record found\n");
-		if (dbmode!=PUA_DB_ONLY)
-			lock_release(&HashT->p_records[hash_code].lock);
-		goto error;
-	}
-
-	/* if a new dialog -> insert */
-	if(lexpire== 0)
-	{	
-		LM_WARN("expires= 0: no not insert\n");
-		if (dbmode==PUA_DB_ONLY)
-		{
-			delete_puadb(presentity);
-		}
-		else
-		{
-			delete_htable(presentity, hash_code);
-			lock_release(&HashT->p_records[hash_code].lock);
-		}
+		LM_DBG("*** Update expires\n");
+		find_and_update_dialog(hentity, hash_code, lexpire, &contact);
 		goto done;
 	}
-
-	if (dbmode!=PUA_DB_ONLY)
-		lock_release(&HashT->p_records[hash_code].lock);
 
 	if( msg->cseq==NULL || msg->cseq->body.s==NULL)
 	{
@@ -682,7 +604,6 @@ faked_error:
 		pkg_free(record_route.s);
 	}
 
-	
 	presentity->contact.s= (char*)presentity + size;
 	memcpy(presentity->contact.s, hentity->contact.s, hentity->contact.len);
 	presentity->contact.len= hentity->contact.len;
@@ -696,7 +617,7 @@ faked_error:
 		presentity->id.len= hentity->id.len; 
 		size+= presentity->id.len;
 	}
-	
+
 	if(hentity->extra_headers)
 	{
 		presentity->extra_headers= (str*)((char*)presentity+ size);
@@ -772,7 +693,6 @@ end:
 	}
 
 	free_to_params(&TO);
-	free_results_puadb(res);
 	return;
 }
 
@@ -972,7 +892,7 @@ int send_subscribe(subs_info_t* subs)
 	str* str_hdr= NULL;
 	int ret= 0;
 	unsigned int hash_code=0;
-	ua_pres_t* hentity= NULL, pres;
+	ua_pres_t* hentity= NULL;
 	int expires;
 	int flag;
 	int result;
@@ -1009,21 +929,23 @@ int send_subscribe(subs_info_t* subs)
 
 	/* generation of hash and getting lock moved from here to further down */
 
-	memset(&pres, 0, sizeof(ua_pres_t));
-	pres.pres_uri= subs->pres_uri;
-	pres.watcher_uri= subs->watcher_uri;
-	pres.flag= subs->source_flag;
-	pres.id= subs->id;
-	pres.event= subs->event;
-	if(subs->remote_target)
-		pres.remote_contact= *subs->remote_target;
-
 	if (dbmode==PUA_DB_ONLY)
 	{
-		presentity = search_puadb(&pres, &dbpres, &res);
+		presentity = search_dialog_puadb(subs->id, subs->pres_uri, &dbpres, &res);
 	}
 	else
 	{
+		ua_pres_t pres;
+
+		memset(&pres, 0, sizeof(ua_pres_t));
+		pres.pres_uri = subs->pres_uri;
+		pres.watcher_uri = subs->watcher_uri;
+		pres.flag = subs->source_flag;
+		pres.id = subs->id;
+		pres.event = subs->event;
+		if (subs->remote_target)
+			pres.remote_contact = *subs->remote_target;
+
 		hash_code=core_hash(subs->pres_uri, subs->watcher_uri, HASH_SIZE);
 		lock_get(&HashT->p_records[hash_code].lock);
 		presentity= search_htable(&pres, hash_code);
@@ -1135,8 +1057,8 @@ insert:
 		presentity->id.len = subs->id.len;
 		size += subs->id.len;
 
-		presentity->event = pres.event;
-		presentity->flag = pres.flag;
+		presentity->event = subs->event;
+		presentity->flag = subs->source_flag;
 
 		/* Set the temporary record expiry for 2 * 64T1 seconds from now */
 		presentity->expires= (int)time(NULL) + 64;
@@ -1180,7 +1102,7 @@ insert:
 			{
 				LM_WARN("attempting to un-SUBSCRIBE to temporary (non-established) dialog - skipping and deleting dialog\n");
 				if (dbmode==PUA_DB_ONLY)
-					delete_puadb(presentity);
+					delete_dialog_puadb(presentity);
 				else
 					delete_htable(presentity, hash_code);
 			}
