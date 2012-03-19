@@ -33,6 +33,7 @@ Andreea Spirea
               3.6. xmpp_port (integer)
               3.7. xmpp_password (string)
               3.8. outbound_proxy (string)
+              3.9. gwmap (string)
 
         4. Functions
 
@@ -50,7 +51,8 @@ Andreea Spirea
    1.6. Set xmpp_port parameter
    1.7. Set xmpp_password parameter
    1.8. Set outbound_proxy parameter
-   1.9. xmpp_send_message() usage
+   1.9. Set gwmap parameter
+   1.10. xmpp_send_message() usage
 
 Chapter 1. Admin Guide
 
@@ -72,6 +74,7 @@ Chapter 1. Admin Guide
         3.6. xmpp_port (integer)
         3.7. xmpp_password (string)
         3.8. outbound_proxy (string)
+        3.9. gwmap (string)
 
    4. Functions
 
@@ -118,12 +121,12 @@ Chapter 1. Admin Guide
        gateway domain:
 
          ### ---8<--- cut here ---8<--- ###
-        if (avp_check("$rd", "eq/s:sip-xmpp.kamailio.org")) {
+        if ($rd =="sip-xmpp.kamailio.org") {
                 if (!t_newtran()) {
                         sl_reply_error();
         ...........
 
-     * you can also define a password for the XMPP Component connection to
+     * You can also define a password for the XMPP Component connection to
        the Jabber server, which must be the same as the xmpp_password
        parameter.
 
@@ -147,13 +150,21 @@ Chapter 1. Admin Guide
      * The gateway is hosting the SIP domain sip-xmpp.kamailio.org;
      * The "XMPP server" is running on xmpp-sip.kamailio.org.
 
-   In both cases, the destination address must have the same pattern:
+   Unless 'gwmap' parameter is set, in both modes (server or component),
+   the destination address must have the same pattern:
 
    "sip:username<delim>jabber_server@gateway_domain"
 
    From a jabber client's point of view, the destination will look like:
 
-   "sip_username<delim>openser_domain@xmpp_domain"
+   "sip_username<delim>sip_domain@xmpp_domain"
+
+   'delim' is a character that can be set via 'domain_separator'
+   parameter.
+
+   If 'gwmap' parameter is used, then the addresses are not enconding the
+   domains in the username part. They are going to be straight
+   'username@domain' always.
 
 2. Dependencies
 
@@ -182,6 +193,7 @@ Chapter 1. Admin Guide
    3.6. xmpp_port (integer)
    3.7. xmpp_password (string)
    3.8. outbound_proxy (string)
+   3.9. gwmap (string)
 
 3.1. backend(string)
 
@@ -200,10 +212,10 @@ Chapter 1. Admin Guide
    In the destination address we need an extra character as a domain
    separator, apart from @. The address of the XMPP(jabber) client looks
    like this:
-   "sip:username<domain_separator>jabber_server@gateway_domain". The
+   "sip:username<domain_separator>jabber_server@gateway_sip_domain". The
    address of a SIP client has the following pattern :
-   "sip_username<domain_separator>openser_domain@xmpp_domain"; A common
-   used character in XMPP transports is "%".
+   "sip_username<domain_separator>sip_domain@gateway_xmpp_domain"; A
+   common used character in XMPP transports is "%".
 
    Default value is "*".
 
@@ -214,10 +226,11 @@ Chapter 1. Admin Guide
 
 3.3. gateway_domain (string)
 
-   The domain of the gateway, which must resolve in DNS. It must be the
-   same with the gateway_domain from the destination address of the
-   XMPP(jabber) client, as seen by the SIP client:
-   "sip:username<delim>jjabber_server@gateway_domain".
+   The domain of the SIP-to-XMPP gateway - it has to be in DNS or SIP UA
+   has to use outbound proxy to SIP-to-XMPP gateway IP address. It has to
+   be used as domain in the the destination address of the messages sent
+   by SIP users to XMPP users:
+   "sip:username<delim>jabber_server@gateway_domain".
 
    Default value is "sip-xmpp.example.org".
 
@@ -228,10 +241,10 @@ Chapter 1. Admin Guide
 
 3.4. xmpp_domain (string)
 
-   The XMPP domain of the component or the server, depending on the mode
-   we are in. It can be the same as the gateway_domain. For a server DNS
-   name, you need to add _xmpp-server._tcp SRV records in your DNS zone to
-   enable connections from other XMPP servers.
+   The XMPP domain of the component or the server, depending on the mode.
+   It can be the same as the gateway_domain. For a server DNS name, you
+   have to add _xmpp-server._tcp SRV records in your DNS zone to enable
+   connections from other XMPP servers.
 
    Default value is "sip-xmpp.example.org".
 
@@ -242,9 +255,10 @@ Chapter 1. Admin Guide
 
 3.5. xmpp_host (string)
 
-   The IP address or the name of the local XMPP/Jabber server, if the
-   backend is set to "component". For server mode, this is the IP address
-   the XMPP component binds to.
+   The IP address or the hostname for the local XMPP/Jabber server to
+   connect to when the backend is set to "component". For server mode,
+   this is the IP address the XMPP module binds to listen for connections
+   coming from other XMPP servers.
 
    Default value is "xmpp.example.org".
 
@@ -256,7 +270,7 @@ Chapter 1. Admin Guide
 3.6. xmpp_port (integer)
 
    In component mode, this is the port the XMPP server component interface
-   listens to. In server mode, this is the port the server listens to.
+   listens to. In server mode, this is the port the module listens to.
 
    Default value is "5347", if backend is set to "component" and "5269",
    if backend is set to "server".
@@ -300,6 +314,31 @@ Chapter 1. Admin Guide
  modparam("xmpp", "outbound_proxy", "sip:kamailio.org;transport=tcp")
 ...
 
+3.9. gwmap (string)
+
+   Set the mappings between SIP and XMPP domains. This parameter can be
+   set many times, adding more SIP-XMPP domain mappings. Its value has to
+   be a list of tokens like 'sipdomain=xmppdomain', separated by ';'
+   (e.g., 'sipdomain1=xmppdomain1;sipdomain2=xmppdomain2'.
+
+   When this parameter is set, the URI encoding based on
+   'domain_separator' is no longer enabled. The module will use only
+   addresses in the format 'username@domain'. If the source or destination
+   address does not match a domain in gwmap, then the domain value is
+   preserved when sending to the other protocol.
+
+   Default value is NULL.
+
+   Example 1.9. Set gwmap parameter
+...
+ modparam("xmpp", "gwmap", "sip.kamailio.org=xmpp.kamailio.org;abc.com=xyz.com")
+ modparam("xmpp", "gwmap", "kamailio.net")
+...
+
+   Based on the above parameter values, if there is a SIP message from
+   'sip:alice@sip.kamailio.org' going to 'sip:bob@abc.com', the XMPP
+   message to be sent is from 'alice@xmpp.kamailio.org' to 'bob@xyz.com'.
+
 4. Functions
 
    4.1. xmpp_send_message()
@@ -309,7 +348,7 @@ Chapter 1. Admin Guide
    Converts SIP messages to XMPP(jabber) messages, in order to be relayed
    to a XMPP(jabber) client.
 
-   Example 1.9. xmpp_send_message() usage
+   Example 1.10. xmpp_send_message() usage
 ...
 xmpp_send_message();
 ...

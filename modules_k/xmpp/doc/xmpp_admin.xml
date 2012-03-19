@@ -15,24 +15,54 @@
 	
 	<section>
 	<title>Overview</title>
-	<para>	This module is a gateway between &kamailio; and a XMPP/Jabber server. It enables the exchange of instant messages between
-		SIP clients and XMPP(jabber) clients. </para>
-	<para>	The module can be used in two different modes:</para>
+	<para>
+		This module is a gateway between &kamailio; and a XMPP/Jabber server.
+		It enables the exchange of instant messages between
+		SIP clients and XMPP(jabber) clients.
+	</para>
+	<para>
+		The module can be used in two different modes:
+	</para>
 
 	<itemizedlist>
 		<listitem>
-			<para>	<emphasis role='bold'>XMPP Component Mode</emphasis>. In this mode, &kamailio; connects to an XMPP server using the standardized XMPP component interface, extending your XMPP services. The connection is done over TCP/IP with authorization.</para>
+			<para>
+				<emphasis role='bold'>XMPP Component Mode</emphasis>. In this mode,
+				&kamailio; connects to an XMPP server using the standardized XMPP
+				component interface, extending your XMPP services. The connection
+				is done over TCP/IP with authorization.</para>
 		</listitem>
 		<listitem>
-			<para><emphasis role='bold'>XMPP Server</emphasis>. In this mode, the &kamailio; XMPP module is a stand-alone XMPP server connector, with no requirement for another XMPP server in the system. This server uses XMPP S2S (Server to Server) connections to connect to other XMPP servers or receive connections from other servers. NOTE: this is limited implementation of a XMPP server, it does not support SRV or TLS so far. Also, in this mode it cannot get XMPP clients connected, only XMPP servers (in other words, you cannot use it to replace an XMPP full server implementation). This mode is in beta stage for the moment.</para>
+			<para>
+				<emphasis role='bold'>XMPP Server</emphasis>. In this mode, the
+				&kamailio; XMPP module is a stand-alone XMPP server connector, with
+				no requirement for another XMPP server in the system. This server
+				uses XMPP S2S (Server to Server) connections to connect to other
+				XMPP servers or receive connections from other servers. NOTE: this
+				is limited implementation of a XMPP server, it does not support SRV
+				or TLS so far. Also, in this mode it cannot get XMPP clients
+				connected, only XMPP servers (in other words, you cannot use it to
+				replace an XMPP full server implementation). This mode is in beta
+				stage for the moment.
+			</para>
 		</listitem>
 	</itemizedlist>
-	<para>	In the component mode, you need a local XMPP server (recommended Jabberd2). The XMPP module will connect by using TCP/IP connection to the local jabber server. The documentation and the source for Jabberd server are located at the following link:
-<ulink url="http://jabberd.jabberstudio.org/2/#download">http://jabberd.jabberstudio.org/2/#download</ulink>	</para>
-	<para> After you have a running XMPP server, what you need to do is set the following parameters in the &kamailio; configuration file:</para>
+	<para>
+		In the component mode, you need a local XMPP server (recommended Jabberd2).
+		The XMPP module will connect by using TCP/IP connection to the local jabber
+		server. The documentation and the source for Jabberd server are located at
+		the following link:
+		<ulink url="http://jabberd.jabberstudio.org/2/#download">http://jabberd.jabberstudio.org/2/#download</ulink>
+	</para>
+	<para>
+		After you have a running XMPP server, what you need to do is set the following
+		parameters in the &kamailio; configuration file:
+	</para>
 	<itemizedlist>
 		<listitem>
-			<para>gateway_domain, xmpp_domain (which can be the same as gateway_domain) and xmpp_host, which are explained in the Exported Parameters section;
+			<para>
+				gateway_domain, xmpp_domain (which can be the same as gateway_domain)
+				and xmpp_host, which are explained in the Exported Parameters section;
 			</para>
 		</listitem>
 		<listitem>
@@ -46,16 +76,21 @@
 		</listitem>	
 	</itemizedlist>
 	<programlisting format="linespecific"> <emphasis>	<![CDATA[ ### ---8<--- cut here ---8<--- ###
-	if (avp_check("$rd", "eq/s:sip-xmpp.kamailio.org")) {
+	if ($rd =="sip-xmpp.kamailio.org") {
 		if (!t_newtran()) {
 			sl_reply_error();
 	...........]]>	</emphasis> </programlisting> 	
 	<itemizedlist>
 		<listitem>
-			<para>you can also define a password for the XMPP Component connection to the Jabber server, which must be the same as the xmpp_password parameter.</para>
+			<para>
+				You can also define a password for the XMPP Component connection
+				to the Jabber server, which must be the same as the xmpp_password parameter.
+			</para>
 		</listitem>
 	</itemizedlist>
-	<para>	A use case, for the component-mode, would look like this:</para>
+	<para>
+		A use case, for the component-mode, would look like this:
+	</para>
 	<itemizedlist>
 		<listitem>
 			<para>&kamailio; is hosting the sip-server.kamailio.org SIP domain</para>
@@ -71,9 +106,15 @@
 		</listitem>	
 	</itemizedlist>
 	<para>
-		In the XMPP stand-alone server mode, the XMPP module is a minimal XMPP/Jabber server. In this mode, another Jabber server is not needed. The gateway will connect to other XMPP servers basaed on the JID domain and by using the standardized XMPP S2S protocol.</para>
-	<para>If you want to change to server-mode, you have to change the "backend" parameter, as shown in the Exported Parameters section, from "component" to "server".</para>
-	<para>	A use case, for the server-mode, would look like this: </para>
+		In the XMPP stand-alone server mode, the XMPP module is a minimal XMPP/Jabber server.
+		In this mode, another Jabber server is not needed. The gateway will connect to other
+		XMPP servers basaed on the JID domain and by using the standardized XMPP S2S protocol.
+	</para>
+	<para>
+		If you want to change to server-mode, you have to change the "backend" parameter,
+		as shown in the Exported Parameters section, from "component" to "server".
+	</para>
+	<para>A use case, for the server-mode, would look like this: </para>
 	<itemizedlist>
 		<listitem>
 			<para>&kamailio; is hosting the SIP domain sip-server.kamailio.org </para>
@@ -85,10 +126,26 @@
 			<para>The "XMPP server" is running on xmpp-sip.kamailio.org.</para>
 		</listitem>
 	</itemizedlist>	
-	<para>In both cases, the destination address must have the same pattern:</para>
-	<para>	<quote>sip:username<![CDATA[<]]>delim<![CDATA[>]]>jabber_server@gateway_domain</quote> </para>
-	<para>	From a jabber client's point of view, the destination will look like:</para>
-	<para>	<quote>sip_username<![CDATA[<]]>delim<![CDATA[>]]>openser_domain@xmpp_domain</quote>	</para>
+	<para>
+		Unless 'gwmap' parameter is set, in both modes (server or component), the
+		destination address must have the same pattern:
+	</para>
+	<para>
+		<quote>sip:username<![CDATA[<]]>delim<![CDATA[>]]>jabber_server@gateway_domain</quote>
+	</para>
+	<para>
+		From a jabber client's point of view, the destination will look like:
+	</para>
+	<para>
+		<quote>sip_username<![CDATA[<]]>delim<![CDATA[>]]>sip_domain@xmpp_domain</quote>
+	</para>
+	<para>
+		'delim' is a character that can be set via 'domain_separator' parameter.
+	</para>
+	<para>
+		If 'gwmap' parameter is used, then the addresses are not enconding the domains
+		in the username part. They are going to be straight 'username@domain' always.
+	</para>
 	</section>
 	<section>
 	<title>Dependencies</title>
@@ -148,9 +205,9 @@
 		<para>
 			In the destination address we need an extra character as a domain separator, apart from @.
 			The address of the XMPP(jabber) client looks like this:
-				"sip:username<![CDATA[<]]>domain_separator<![CDATA[>]]>jabber_server@gateway_domain".
+				"sip:username<![CDATA[<]]>domain_separator<![CDATA[>]]>jabber_server@gateway_sip_domain".
 			The address of a SIP client has the following pattern :
-			"sip_username<![CDATA[<]]>domain_separator<![CDATA[>]]>openser_domain@xmpp_domain";
+			"sip_username<![CDATA[<]]>domain_separator<![CDATA[>]]>sip_domain@gateway_xmpp_domain";
 			A common used character in XMPP transports is "%".
 
 		</para>
@@ -171,15 +228,17 @@
 	<section>
 		<title><varname>gateway_domain</varname> (string)</title>
 		<para>
-		 The domain of the gateway, which must resolve in DNS. It must be the same with the gateway_domain from the destination address of the
-		 XMPP(jabber) client, as seen by the SIP client:
-			"sip:username<![CDATA[<]]>delim<![CDATA[>]]>jjabber_server@gateway_domain".
+			The domain of the SIP-to-XMPP gateway - it has to be in DNS or SIP UA has to
+			use outbound proxy to SIP-to-XMPP gateway IP address. It has to be used
+			as domain in the the destination address of the messages sent by SIP users
+			to XMPP users:
+			"sip:username<![CDATA[<]]>delim<![CDATA[>]]>jabber_server@gateway_domain".
 		</para>
 		<para>
 		<emphasis>
 			Default value is "sip-xmpp.example.org".
 		</emphasis>
-		</para>
+	</para>
 		<example>
 		<title>Set <varname>gateway_domain</varname> parameter</title>
 		<programlisting format="linespecific">
@@ -192,9 +251,10 @@
 	<section>
 		<title><varname>xmpp_domain</varname> (string)</title>
 		<para>
-			The XMPP domain of the component or the server, depending on the mode we are in. It can be the same as the gateway_domain.
-			For a server DNS name, you need to add _xmpp-server._tcp SRV records in your DNS zone to enable connections from other
-			XMPP servers.
+			The XMPP domain of the component or the server, depending on the mode.
+			It can be the same as the gateway_domain. For a server DNS name, you have
+			to add _xmpp-server._tcp SRV records in your DNS zone to enable connections
+			from other XMPP servers.
 		</para>
 		<para>
 		<emphasis>
@@ -213,7 +273,10 @@
 	<section>
 		<title><varname>xmpp_host</varname> (string)</title>
 		<para>
-			 The IP address or the name of the local XMPP/Jabber server, if the backend is set to "component". For server mode, this is the IP address the XMPP component binds to.
+			The IP address or the hostname for the local XMPP/Jabber server to
+			connect to when the backend is set to "component". For server mode,
+			this is the IP address the XMPP module binds to listen for
+			connections coming from other XMPP servers.
 		</para>
 		<para>
 		<emphasis>
@@ -232,11 +295,13 @@
 	<section>
 		<title><varname>xmpp_port</varname> (integer)</title>
 		<para>
-			In component mode, this is the port the XMPP server component interface listens to. In server mode, this is the port the server listens to.
+			In component mode, this is the port the XMPP server component interface
+			listens to. In server mode, this is the port the module listens to.
 		</para>
 		<para>
 		<emphasis>
-			Default value is "5347", if backend is set to "component" and "5269", if backend is set to "server".
+			Default value is "5347", if backend is set to "component" and "5269",
+			if backend is set to "server".
 		</emphasis>
 		</para>
 		<example>
@@ -254,9 +319,12 @@
 		<para>	The password of the local XMPP server.</para>
 		<para>
 			<emphasis>
-				This is the password for the component interface on the XMPP server, when connecting as a component. Default password is "secret".
+				This is the password for the component interface on the XMPP server,
+				when connecting as a component. Default password is "secret".
 				When connecting to jabberd2, 
-				you need to make sure this is the password configured in the file "c2s.xml". This is how the default configuration for the jabberd2 looks like:
+				you need to make sure this is the password configured in the file
+				"c2s.xml". This is how the default configuration for the jabberd2
+				looks like:
 			</emphasis>
 			<programlisting format="linespecific">
 		<![CDATA[	<router>
@@ -298,6 +366,42 @@
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>gwmap</varname> (string)</title>
+		<para>
+		Set the mappings between SIP and XMPP domains. This parameter can
+		be set many times, adding more SIP-XMPP domain mappings. Its value
+		has to be a list of tokens like 'sipdomain=xmppdomain', separated
+		by ';' (e.g., 'sipdomain1=xmppdomain1;sipdomain2=xmppdomain2'.
+		</para>
+		<para>
+		When this parameter is set, the URI encoding based on 'domain_separator'
+		is no longer enabled. The module will use only addresses in the format
+		'username@domain'. If the source or destination address does not match
+		a domain in gwmap, then the domain value is preserved when sending to
+		the other protocol.
+		</para>
+		<para>
+		<emphasis>
+		Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>gwmap</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "gwmap", "sip.kamailio.org=xmpp.kamailio.org;abc.com=xyz.com")
+ modparam("xmpp", "gwmap", "kamailio.net")
+...
+</programlisting>
+		</example>
+		<para>
+		Based on the above parameter values, if there is a SIP message from
+		'sip:alice@sip.kamailio.org' going to 'sip:bob@abc.com', the XMPP
+		message to be sent is from 'alice@xmpp.kamailio.org' to
+		'bob@xyz.com'.
+		</para>
+	</section>
 
 
 	</section>
@@ -309,7 +413,8 @@
 		<function moreinfo="none">xmpp_send_message()</function>
 		</title>
 		<para>
-		Converts SIP messages to XMPP(jabber) messages, in order to be relayed to a XMPP(jabber) client.
+			Converts SIP messages to XMPP(jabber) messages, in order to be relayed
+			to a XMPP(jabber) client.
 		</para>
 		
 		<example>
