@@ -10,7 +10,7 @@ Edited by
 
 Andreea Spirea
 
-   Copyright © 2006 Voice Sistem SRL
+   Copyright � 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -91,12 +91,15 @@ Chapter 1. Admin Guide
        your XMPP services. The connection is done over TCP/IP with
        authorization.
      * XMPP Server. In this mode, the Kamailio XMPP module is a
-       stand-alone XMPP server, with no requirement for another XMPP
-       server in the system. This server uses XMPP S2S (Server to Server)
-       connections to connect to other XMPP servers or receive connections
-       from other servers. NOTE: this is limited implementation of a XMPP
-       server, it does not support SRV or TLS so far. This mode is in beta
-       stage for the moment.
+       stand-alone XMPP server connector, with no requirement for another
+       XMPP server in the system. This server uses XMPP S2S (Server to
+       Server) connections to connect to other XMPP servers or receive
+       connections from other servers. NOTE: this is limited
+       implementation of a XMPP server, it does not support SRV or TLS so
+       far. Also, in this mode it cannot get XMPP clients connected, only
+       XMPP servers (in other words, you cannot use it to replace an XMPP
+       full server implementation). This mode is in beta stage for the
+       moment.
 
    In the component mode, you need a local XMPP server (recommended
    Jabberd2). The XMPP module will connect by using TCP/IP connection to
@@ -146,11 +149,11 @@ Chapter 1. Admin Guide
 
    In both cases, the destination address must have the same pattern:
 
-   “sip:username<delim>jabber_server@gateway_domain”
+   "sip:username<delim>jabber_server@gateway_domain"
 
    From a jabber client's point of view, the destination will look like:
 
-   “sip_username<delim>openser_domain@xmpp_domain”
+   "sip_username<delim>openser_domain@xmpp_domain"
 
 2. Dependencies
 
@@ -301,7 +304,7 @@ Chapter 1. Admin Guide
 
    4.1. xmpp_send_message()
 
-4.1.  xmpp_send_message()
+4.1. xmpp_send_message()
 
    Converts SIP messages to XMPP(jabber) messages, in order to be relayed
    to a XMPP(jabber) client.

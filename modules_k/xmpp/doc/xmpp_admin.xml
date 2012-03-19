@@ -24,7 +24,7 @@
 			<para>	<emphasis role='bold'>XMPP Component Mode</emphasis>. In this mode, &kamailio; connects to an XMPP server using the standardized XMPP component interface, extending your XMPP services. The connection is done over TCP/IP with authorization.</para>
 		</listitem>
 		<listitem>
-			<para><emphasis role='bold'>XMPP Server</emphasis>. In this mode, the &kamailio; XMPP module is a stand-alone XMPP server, with no requirement for another XMPP server in the system. This server uses XMPP S2S (Server to Server) connections to connect to other XMPP servers or receive connections from other servers. NOTE: this is limited implementation of a XMPP server, it does not support SRV or TLS so far. This mode is in beta stage for the moment.</para>
+			<para><emphasis role='bold'>XMPP Server</emphasis>. In this mode, the &kamailio; XMPP module is a stand-alone XMPP server connector, with no requirement for another XMPP server in the system. This server uses XMPP S2S (Server to Server) connections to connect to other XMPP servers or receive connections from other servers. NOTE: this is limited implementation of a XMPP server, it does not support SRV or TLS so far. Also, in this mode it cannot get XMPP clients connected, only XMPP servers (in other words, you cannot use it to replace an XMPP full server implementation). This mode is in beta stage for the moment.</para>
 		</listitem>
 	</itemizedlist>
 	<para>	In the component mode, you need a local XMPP server (recommended Jabberd2). The XMPP module will connect by using TCP/IP connection to the local jabber server. The documentation and the source for Jabberd server are located at the following link:
