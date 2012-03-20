@@ -92,7 +92,7 @@ CREATE TABLE xcap (
     source NUMBER(10),
     doc_uri VARCHAR2(255),
     port NUMBER(10),
-    CONSTRAINT xcap_doc_uri_idx  UNIQUE ()
+    CONSTRAINT xcap_doc_uri_idx  UNIQUE (doc_uri)
 );
 
 CREATE OR REPLACE TRIGGER xcap_tr

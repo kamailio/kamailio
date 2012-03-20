@@ -68,7 +68,7 @@ CREATE TABLE xcap (
     source INT(11) NOT NULL,
     doc_uri VARCHAR(255) NOT NULL,
     port INT(11) NOT NULL,
-    CONSTRAINT doc_uri_idx UNIQUE ()
+    CONSTRAINT doc_uri_idx UNIQUE (doc_uri)
 ) ENGINE=MyISAM;
 
 CREATE INDEX account_doc_type_idx ON xcap (username, domain, doc_type);

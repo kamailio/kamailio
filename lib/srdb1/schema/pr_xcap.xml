@@ -85,6 +85,7 @@
 
     <index>
         <name>doc_uri_idx</name>
+	<colref linkend="doc_uri"/>
         <unique/>
     </index>
 
