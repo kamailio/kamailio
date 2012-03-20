@@ -53,22 +53,11 @@ int extract_aor(str* _uri, str* _a)
 	str tmp;
 	struct sip_uri puri;
 	int user_len;
-	int_str avp_val;
-	struct usr_avp *avp;
 	str *uri;
 	str realm_prefix;
 	
 	memset(aor_buf, 0, MAX_AOR_LEN);
-	if (aor_avp_name.n!=0) {
-		avp = search_first_avp( aor_avp_type, aor_avp_name, &avp_val, 0);
-		if (avp && is_avp_str_val(avp)) {
-			uri = &avp_val.s;
-		} else {
-			uri = _uri;
-		}
-	} else {
-		uri=_uri;
-	}
+	uri=_uri;
 
 	if (parse_uri(uri->s, uri->len, &puri) < 0) {
 		rerrno = R_AOR_PARSE;

@@ -45,7 +45,7 @@ int regapi_save(struct sip_msg *msg, char *table, int flags)
 		LM_ERR("usrloc domain [%s] not found\n", table);
 		return -1;
 	}
-	return save(msg, d, flags);
+	return save(msg, d, flags, NULL);
 }
 
 /**
@@ -60,7 +60,7 @@ int regapi_lookup(struct sip_msg *msg, char *table)
 		LM_ERR("usrloc domain [%s] not found\n", table);
 		return -1;
 	}
-	return lookup(msg, d);
+	return lookup(msg, d, NULL);
 }
 
 /**
@@ -75,7 +75,7 @@ int regapi_registered(struct sip_msg *msg, char *table)
 		LM_ERR("usrloc domain [%s] not found\n", table);
 		return -1;
 	}
-	return registered(msg, (char*)d, NULL);
+	return registered(msg, d, NULL);
 }
 
 /**

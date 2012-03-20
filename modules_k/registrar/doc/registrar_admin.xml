@@ -284,26 +284,9 @@ modparam("registrar", "append_branches", 0)
 	<section>
 		<title><varname>aor_avp</varname> (str)</title>
 		<para>
-		If set, the module will try first to get the AOR from this AVP 
-		instead of fetching it form the processed request.
+		This module parameter has been removed. Use the 'uri' parameter from
+		functions (e.g., save, lookup, registered).
 		</para>
-		<para>
-		The AVP must contain a valid SIP URI. If no AVP is found, it will be
-		tried to get the AOR from the message (standard behaviour).
-		</para>
-		<para>
-		<emphasis>
-			Default value is "NULL" (disabled).
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>aor_avp</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("registrar", "aor_avp", "$avp(i:3223)")
-...
-</programlisting>
-		</example>
 	</section>
 
 	<section>
@@ -630,7 +613,7 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 	<title>Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">save(domain)</function>
+		<function moreinfo="none">save(domain, [, flags [, uri]])</function>
 		</title>
 		<para>
 		The function processes a REGISTER message. It can add, remove or 
@@ -647,6 +630,38 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 			<emphasis>domain</emphasis> - Logical domain within registrar. 
 			If database is used then this must be name of the table which 
 			stores the contacts.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>flags</emphasis> (optional) - the value may be a bitwise
+			OR of the following flags:
+			</para>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>0x01</emphasis> - save the contacts only
+					in memory cache without no DB operation;
+					</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>0x02</emphasis> - do not generate a SIP 
+						reply to the current REGISTER request. When used in
+						ONREPLY_ROUTE, this parameter is obsolete.</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>0x04</emphasis> - store and maintain one
+					contact per AoR. If there are other contact addresses for
+					AoR not matching current registration, remove them.
+					This mode ensures one contact per AoR (user).</para>
+				</listitem>
+			</itemizedlist>
+			<para>The flags may be given in decimal or hexa format.</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>uri</emphasis> (optional - flags param has to be set and
+			can be 0 for default behavior) - SIP URI to do be used instead of To
+			header URI. It can be a dynamic string with pseudo-variables.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -678,6 +693,8 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 		<programlisting format="linespecific">
 ...
 save("location");
+save("location", "0x01");
+save("location", "0x00", "sip:test@kamailio.org");
 ...
 </programlisting>
 		</example>
@@ -685,63 +702,7 @@ save("location");
 
 	<section>
 		<title>
-		<function moreinfo="none">save(domain,flags)</function>
-		</title>
-		<para>
-		Same as <function>save()</function> but it accepts a set of flags for
-		controlling its behaviour.
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para>
-			<emphasis>domain</emphasis> - Logical domain within registrar. 
-			If database is used then this must be name of the table which 
-			stores the contacts.
-			</para>
-		</listitem>
-		<listitem>
-			<para>
-			<emphasis>flags</emphasis> - the value may be a bitwise OR of 
-			the following flags:
-			</para>
-			<itemizedlist>
-				<listitem>
-					<para><emphasis>0x01</emphasis> - save the contacts only
-					in memory cache without no DB operation;
-					</para>
-				</listitem>
-				<listitem>
-					<para><emphasis>0x02</emphasis> - do not generate a SIP 
-						reply to the current REGISTER request. When used in
-						ONREPLY_ROUTE, this parameter is obsolete.</para>
-				</listitem>
-				<listitem>
-					<para><emphasis>0x04</emphasis> - store and maintain one
-					contact per AoR. If there are other contact addresses for
-					AoR not matching current registration, remove them.
-					This mode ensures one contact per AoR (user).</para>
-				</listitem>
-			</itemizedlist>
-			<para>The flags may be given in decimal or hexa format.</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
-		</para>
-		<example>
-		<title><function>save</function> usage</title>
-		<programlisting format="linespecific">
-...
-save("location","0x01");
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title>
-		<function moreinfo="none">lookup(domain)</function>
+		<function moreinfo="none">lookup(domain [, uri])</function>
 		</title>
 		<para>
 		The functions extracts username from Request-URI and tries to find 
@@ -762,6 +723,12 @@ save("location","0x01");
 			<para>
 			<emphasis>domain</emphasis> - Name of table that should be used 
 			for the lookup.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>uri</emphasis> (optional) - SIP URI to do be used instead
+			of R-URI. It can be a dynamic string with pseudo-variables.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -807,7 +774,7 @@ switch ($retcode) {
 
 	<section>
 		<title>
-		<function moreinfo="none">registered(domain)</function>
+		<function moreinfo="none">registered(domain [, uri])</function>
 		</title>
 		<para>
 		The function returns true if the AOR in the Request-URI is 
@@ -821,6 +788,12 @@ switch ($retcode) {
 			<para>
 			<emphasis>domain</emphasis> - Name of table that should be 
 			used for the lookup.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>uri</emphasis> (optional) - SIP URI to do be used instead
+			of R-URI. It can be a dynamic string with pseudo-variables.
 			</para>
 		</listitem>
 		</itemizedlist>

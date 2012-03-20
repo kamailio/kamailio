@@ -46,8 +46,8 @@
 /*! \brief
  * Process REGISTER request and save it's contacts
  */
-int save(struct sip_msg* _m, udomain_t* _d, int _cflags);
-int unregister(struct sip_msg* _m, char* _d, char* _uri);
+int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str* _uri);
+int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri);
 
 
 #endif /* SAVE_H */

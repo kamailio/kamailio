@@ -39,7 +39,7 @@
 /*! \brief
  * Lookup a contact in usrloc and rewrite R-URI if found
  */
-int lookup(struct sip_msg* _m, udomain_t* _d);
+int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri);
 
 
 /*! \brief
@@ -47,7 +47,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d);
  * it is similar to lookup but registered neither rewrites
  * the Request-URI nor appends branches
  */
-int registered(struct sip_msg* _m, char* _t, char* _s);
+int registered(struct sip_msg* _m, udomain_t* _d, str* _uri);
 
 
 #endif /* LOOKUP_H */

@@ -73,8 +73,6 @@ extern int received_avp;
 extern int reg_use_domain;
 extern float def_q;
 
-extern unsigned short aor_avp_type;
-extern int_str aor_avp_name;
 extern unsigned short rcv_avp_type;
 extern int_str rcv_avp_name;
 extern unsigned short reg_callid_avp_type;

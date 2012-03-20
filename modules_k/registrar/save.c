@@ -749,7 +749,7 @@ static inline int add_contacts(struct sip_msg* _m, udomain_t* _d,
  * Process REGISTER request and save it's contacts
  */
 #define is_cflag_set(_name) (((unsigned int)_cflags)&(_name))
-int save(struct sip_msg* _m, udomain_t* _d, int _cflags)
+int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 {
 	contact_t* c;
 	int st, mode;
@@ -770,7 +770,7 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags)
 	get_act_time();
 	c = get_first_contact(_m);
 
-	if (extract_aor(&get_to(_m)->uri, &aor) < 0) {
+	if (extract_aor((_uri)?_uri:&get_to(_m)->uri, &aor) < 0) {
 		LM_ERR("failed to extract Address Of Record\n");
 		goto error;
 	}
@@ -807,23 +807,16 @@ error:
 	return 0;
 }
 
-int unregister(struct sip_msg* _m, char* _d, char* _uri)
+int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri)
 {
 	str aor = {0, 0};
-	str uri = {0, 0};
 
-	if(fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0)
-	{
-		LM_ERR("invalid uri parameter\n");
-		return -1;
-	}
-
-	if (extract_aor(&uri, &aor) < 0) {
+	if (extract_aor(_uri, &aor) < 0) {
 		LM_ERR("failed to extract Address Of Record\n");
 		return -1;
 	}
 
-	if (star((udomain_t*)_d, &aor) < 0)
+	if (star(_d, &aor) < 0)
 	{
 		LM_ERR("error unregistering user [%.*s]\n", aor.len, aor.s);
 		return -1;

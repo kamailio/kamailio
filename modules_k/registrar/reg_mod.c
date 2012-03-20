@@ -87,11 +87,15 @@ usrloc_api_t ul;/*!< Structure containing pointers to usrloc functions*/
 static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
-static int w_save(struct sip_msg* _m, char* _d, char* _cflags);
+static int w_save2(struct sip_msg* _m, char* _d, char* _cflags);
+static int w_save3(struct sip_msg* _m, char* _d, char* _cflags, char* _uri);
 static int w_lookup(struct sip_msg* _m, char* _d, char* _p2);
+static int w_registered(struct sip_msg* _m, char* _d, char* _uri);
+static int w_unregister(struct sip_msg* _m, char* _d, char* _uri);
 
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
+static int domain_uri_fixup(void** param, int param_no);
 static int save_fixup(void** param, int param_no);
 static int unreg_fixup(void** param, int param_no);
 static int fetchc_fixup(void** param, int param_no);
@@ -108,11 +112,6 @@ int path_mode = PATH_MODE_STRICT;		/*!< if the Path HF should be inserted in the
 
 int path_use_params = 0;			/*!< if the received- and nat-parameters of last Path uri should be used
  						 * to determine if UAC is nat'ed */
-
-char *aor_avp_param =0;				/*!< if instead of extacting the AOR from the request, it should be 
- 						 * fetched via this AVP ID */
-unsigned short aor_avp_type=0;
-int_str aor_avp_name;
 
 /* Populate this AVP if testing for specific registration instance. */
 char *reg_callid_avp_param = 0;
@@ -154,17 +153,23 @@ static pv_export_t mod_pvs[] = {
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"save",         (cmd_function)w_save,       1,    save_fixup, 0,
+	{"save",         (cmd_function)w_save2,       1,  save_fixup, 0,
 			REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"save",         (cmd_function)w_save,       2,    save_fixup, 0,
+	{"save",         (cmd_function)w_save2,       2,  save_fixup, 0,
 			REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"lookup",       (cmd_function)w_lookup,     1,  domain_fixup, 0,
+	{"save",         (cmd_function)w_save3,       3,  save_fixup, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"lookup",       (cmd_function)w_lookup,      1,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"registered",   (cmd_function)registered,   1,  domain_fixup, 0,
+	{"lookup",       (cmd_function)w_lookup,      2,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"add_sock_hdr", (cmd_function)add_sock_hdr, 1,fixup_str_null, 0,
+	{"registered",   (cmd_function)w_registered,  1,  domain_uri_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"registered",   (cmd_function)w_registered,  2,  domain_uri_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"add_sock_hdr", (cmd_function)add_sock_hdr,  1,  fixup_str_null, 0,
 			REQUEST_ROUTE },
-	{"unregister",   (cmd_function)unregister,   2,   unreg_fixup, 0,
+	{"unregister",   (cmd_function)w_unregister,  2,  unreg_fixup, 0,
 			REQUEST_ROUTE| FAILURE_ROUTE },
 	{"reg_fetch_contacts", (cmd_function)pv_fetch_contacts, 3, 
 			fetchc_fixup, 0,
@@ -193,7 +198,6 @@ static param_export_t params[] = {
 	{"max_expires",        INT_PARAM, &default_registrar_cfg.max_expires			},
 	{"received_param",     STR_PARAM, &rcv_param           					},
 	{"received_avp",       STR_PARAM, &rcv_avp_param       					},
-	{"aor_avp",            STR_PARAM, &aor_avp_param       					},
 	{"reg_callid_avp",     STR_PARAM, &reg_callid_avp_param					},
 	{"max_contacts",       INT_PARAM, &default_registrar_cfg.max_contacts			},
 	{"retry_after",        INT_PARAM, &default_registrar_cfg.retry_after			},
@@ -290,23 +294,6 @@ static int mod_init(void)
 		rcv_avp_name.n = 0;
 		rcv_avp_type = 0;
 	}
-	if (aor_avp_param && *aor_avp_param) {
-		s.s = aor_avp_param; s.len = strlen(s.s);
-		if (pv_parse_spec(&s, &avp_spec)==0
-				|| avp_spec.type!=PVT_AVP) {
-			LM_ERR("malformed or non AVP %s AVP definition\n", aor_avp_param);
-			return -1;
-		}
-
-		if(pv_get_avp_name(0, &avp_spec.pvp, &aor_avp_name, &aor_avp_type)!=0)
-		{
-			LM_ERR("[%s]- invalid AVP definition\n", aor_avp_param);
-			return -1;
-		}
-	} else {
-		aor_avp_name.n = 0;
-		aor_avp_type = 0;
-	}
 
 	if (reg_callid_avp_param && *reg_callid_avp_param) {
 		s.s = reg_callid_avp_param; s.len = strlen(s.s);
@@ -392,17 +379,62 @@ static int child_init(int rank)
 /*! \brief
  * Wrapper to save(location)
  */
-static int w_save(struct sip_msg* _m, char* _d, char* _cflags)
+static int w_save2(struct sip_msg* _m, char* _d, char* _cflags)
 {
-	return save(_m, (udomain_t*)_d, ((int)(unsigned long)_cflags));
+	return save(_m, (udomain_t*)_d, ((int)(unsigned long)_cflags), NULL);
+}
+
+/*! \brief
+ * Wrapper to save(location)
+ */
+static int w_save3(struct sip_msg* _m, char* _d, char* _cflags, char* _uri)
+{
+	str uri;
+	if(fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+
+	return save(_m, (udomain_t*)_d, ((int)(unsigned long)_cflags), &uri);
 }
 
 /*! \brief
  * Wrapper to lookup(location)
  */
-static int w_lookup(struct sip_msg* _m, char* _d, char* _p2)
+static int w_lookup(struct sip_msg* _m, char* _d, char* _uri)
 {
-	return lookup(_m, (udomain_t*)_d);
+	str uri = {0};
+	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0))
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+
+	return lookup(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL);
+}
+
+static int w_registered(struct sip_msg* _m, char* _d, char* _uri)
+{
+	str uri = {0};
+	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0))
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+	return registered(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL);
+}
+
+static int w_unregister(struct sip_msg* _m, char* _d, char* _uri)
+{
+	str uri = {0};
+	if(fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+
+	return unregister(_m, (udomain_t*)_d, &uri);
 }
 
 /*! \brief
@@ -422,6 +454,20 @@ static int domain_fixup(void** param, int param_no)
 	}
 	return 0;
 }
+
+/*! \brief
+ * Convert char* parameter to udomain_t* pointer
+ */
+static int domain_uri_fixup(void** param, int param_no)
+{
+	if (param_no == 1) {
+		return domain_fixup(param, 1);
+	} else if (param_no == 2) {
+		return fixup_spve_null(param, 1);
+	}
+	return 0;
+}
+
 
 /*! \brief
  * Convert char* parameter to udomain_t* pointer
@@ -449,7 +495,7 @@ static int save_fixup(void** param, int param_no)
 
 	if (param_no == 1) {
 		return domain_fixup(param,param_no);
-	} else {
+	} else if (param_no == 2) {
 		s.s = (char*)*param;
 		s.len = strlen(s.s);
 		flags = 0;
@@ -463,8 +509,10 @@ static int save_fixup(void** param, int param_no)
 		}
 		pkg_free(*param);
 		*param = (void*)(unsigned long int)flags;
-		return 0;
+	} else if (param_no == 3) {
+		return fixup_spve_null(param, 1);
 	}
+	return 0;
 }
 
 /*! \brief

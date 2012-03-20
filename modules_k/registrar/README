@@ -57,14 +57,13 @@ Bogdan-Andre Iancu
 
         4. Functions
 
-              4.1. save(domain)
-              4.2. save(domain,flags)
-              4.3. lookup(domain)
-              4.4. registered(domain)
-              4.5. add_sock_hdr(hdr_name)
-              4.6. unregister(domain, uri)
-              4.7. reg_fetch_contacts(domain, uri, profile)
-              4.8. reg_free_contacts(profile)
+              4.1. save(domain, [, flags [, uri]])
+              4.2. lookup(domain [, uri])
+              4.3. registered(domain [, uri])
+              4.4. add_sock_hdr(hdr_name)
+              4.5. unregister(domain, uri)
+              4.6. reg_fetch_contacts(domain, uri, profile)
+              4.7. reg_free_contacts(profile)
 
         5. Statistics
 
@@ -89,28 +88,26 @@ Bogdan-Andre Iancu
    1.5. Set default_q parameter
    1.6. Set realm_prefix parameter
    1.7. Set append_branches parameter
-   1.8. Set aor_avp parameter
-   1.9. Set case_sensitive parameter
-   1.10. Set received_avp parameter
-   1.11. Set received_param parameter
-   1.12. Set max_contacts parameter
-   1.13. Set retry_after parameter
-   1.14. Set sock_flag parameter
-   1.15. Set sock_hdr_namer parameter
-   1.16. Set method_filtering parameter
-   1.17. Set use_path parameter
-   1.18. Set path_mode parameter
-   1.19. Set path_use_received parameter
-   1.20. Set reg_callid_avp parameter
-   1.21. save usage
-   1.22. save usage
-   1.23. lookup usage
+   1.8. Set case_sensitive parameter
+   1.9. Set received_avp parameter
+   1.10. Set received_param parameter
+   1.11. Set max_contacts parameter
+   1.12. Set retry_after parameter
+   1.13. Set sock_flag parameter
+   1.14. Set sock_hdr_namer parameter
+   1.15. Set method_filtering parameter
+   1.16. Set use_path parameter
+   1.17. Set path_mode parameter
+   1.18. Set path_use_received parameter
+   1.19. Set reg_callid_avp parameter
+   1.20. save usage
+   1.21. lookup usage
+   1.22. registered usage
+   1.23. add_sock_hdr usage
    1.24. registered usage
-   1.25. add_sock_hdr usage
+   1.25. registered usage
    1.26. registered usage
-   1.27. registered usage
-   1.28. registered usage
-   1.29. $ulc(name) usage
+   1.27. $ulc(name) usage
 
 Chapter 1. Admin Guide
 
@@ -150,14 +147,13 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. save(domain)
-        4.2. save(domain,flags)
-        4.3. lookup(domain)
-        4.4. registered(domain)
-        4.5. add_sock_hdr(hdr_name)
-        4.6. unregister(domain, uri)
-        4.7. reg_fetch_contacts(domain, uri, profile)
-        4.8. reg_free_contacts(profile)
+        4.1. save(domain, [, flags [, uri]])
+        4.2. lookup(domain [, uri])
+        4.3. registered(domain [, uri])
+        4.4. add_sock_hdr(hdr_name)
+        4.5. unregister(domain, uri)
+        4.6. reg_fetch_contacts(domain, uri, profile)
+        4.7. reg_free_contacts(profile)
 
    5. Statistics
 
@@ -358,18 +354,8 @@ modparam("registrar", "append_branches", 0)
 
 3.8. aor_avp (str)
 
-   If set, the module will try first to get the AOR from this AVP instead
-   of fetching it form the processed request.
-
-   The AVP must contain a valid SIP URI. If no AVP is found, it will be
-   tried to get the AOR from the message (standard behaviour).
-
-   Default value is "NULL" (disabled).
-
-   Example 1.8. Set aor_avp parameter
-...
-modparam("registrar", "aor_avp", "$avp(i:3223)")
-...
+   This module parameter has been removed. Use the 'uri' parameter from
+   functions (e.g., save, lookup, registered).
 
 3.9. case_sensitive (integer)
 
@@ -380,7 +366,7 @@ modparam("registrar", "aor_avp", "$avp(i:3223)")
 
    Default value is 0.
 
-   Example 1.9. Set case_sensitive parameter
+   Example 1.8. Set case_sensitive parameter
 ...
 modparam("registrar", "case_sensitive", 1)
 ...
@@ -400,7 +386,7 @@ Note
 
    Default value is "NULL" (disabled).
 
-   Example 1.10. Set received_avp parameter
+   Example 1.9. Set received_avp parameter
 ...
 modparam("registrar", "received_avp", "$avp(s:rcv)")
 ...
@@ -412,7 +398,7 @@ modparam("registrar", "received_avp", "$avp(s:rcv)")
 
    Default value is "received".
 
-   Example 1.11. Set received_param parameter
+   Example 1.10. Set received_param parameter
 ...
 modparam("registrar", "received_param", "rcv")
 ...
@@ -425,7 +411,7 @@ modparam("registrar", "received_param", "rcv")
 
    Default value is 0.
 
-   Example 1.12. Set max_contacts parameter
+   Example 1.11. Set max_contacts parameter
 ...
 # Allow no more than 10 contacts per AOR
 modparam("registrar", "max_contacts", 10)
@@ -445,7 +431,7 @@ modparam("registrar", "max_contacts", 10)
 
    Default value is 0 (disabled).
 
-   Example 1.13. Set retry_after parameter
+   Example 1.12. Set retry_after parameter
 ...
 modparam("registrar", "retry_after", 30)
 ...
@@ -460,7 +446,7 @@ modparam("registrar", "retry_after", 30)
 
    Default value is -1 (no flag).
 
-   Example 1.14. Set sock_flag parameter
+   Example 1.13. Set sock_flag parameter
 ...
 modparam("registrar", "sock_flag", 18)
 ...
@@ -475,7 +461,7 @@ modparam("registrar", "sock_flag", 18)
 
    Default value is NULL.
 
-   Example 1.15. Set sock_hdr_namer parameter
+   Example 1.14. Set sock_hdr_namer parameter
 ...
 modparam("registrar", "sock_hdr_name", "Sock-Info")
 ...
@@ -487,7 +473,7 @@ modparam("registrar", "sock_hdr_name", "Sock-Info")
 
    Default value is 0 (disabled).
 
-   Example 1.16. Set method_filtering parameter
+   Example 1.15. Set method_filtering parameter
 ...
 modparam("registrar", "method_filtering", 1)
 ...
@@ -499,7 +485,7 @@ modparam("registrar", "method_filtering", 1)
 
    Default value is 0 (disabled).
 
-   Example 1.17. Set use_path parameter
+   Example 1.16. Set use_path parameter
 ...
 modparam("registrar", "use_path", 1)
 ...
@@ -522,7 +508,7 @@ modparam("registrar", "use_path", 1)
 
    Default value is 2.
 
-   Example 1.18. Set path_mode parameter
+   Example 1.17. Set path_mode parameter
 ...
 modparam("registrar", "path_mode", 0)
 ...
@@ -537,7 +523,7 @@ modparam("registrar", "path_mode", 0)
 
    Default value is 0 (disabled).
 
-   Example 1.19. Set path_use_received parameter
+   Example 1.18. Set path_use_received parameter
 ...
 modparam("registrar", "path_use_received", 1)
 ...
@@ -550,23 +536,22 @@ modparam("registrar", "path_use_received", 1)
 
    Default value is NULL (disabled).
 
-   Example 1.20. Set reg_callid_avp parameter
+   Example 1.19. Set reg_callid_avp parameter
 ...
 modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 ...
 
 4. Functions
 
-   4.1. save(domain)
-   4.2. save(domain,flags)
-   4.3. lookup(domain)
-   4.4. registered(domain)
-   4.5. add_sock_hdr(hdr_name)
-   4.6. unregister(domain, uri)
-   4.7. reg_fetch_contacts(domain, uri, profile)
-   4.8. reg_free_contacts(profile)
+   4.1. save(domain, [, flags [, uri]])
+   4.2. lookup(domain [, uri])
+   4.3. registered(domain [, uri])
+   4.4. add_sock_hdr(hdr_name)
+   4.5. unregister(domain, uri)
+   4.6. reg_fetch_contacts(domain, uri, profile)
+   4.7. reg_free_contacts(profile)
 
-4.1. save(domain)
+4.1. save(domain, [, flags [, uri]])
 
    The function processes a REGISTER message. It can add, remove or modify
    usrloc records depending on Contact and Expires HFs in the REGISTER
@@ -578,30 +563,8 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
    Meaning of the parameters is as follows:
      * domain - Logical domain within registrar. If database is used then
        this must be name of the table which stores the contacts.
-
-   Return codes:
-     * -1 - error.
-       1 - contacts inserted.
-       2 - contacts updated.
-       3 - contacts deleted.
-       4 - contacts returned.
-
-   This function can be used from REQUEST_ROUTE and REPLY_ROUTE.
-
-   Example 1.21. save usage
-...
-save("location");
-...
-
-4.2. save(domain,flags)
-
-   Same as save() but it accepts a set of flags for controlling its
-   behaviour.
-
-   Meaning of the parameters is as follows:
-     * domain - Logical domain within registrar. If database is used then
-       this must be name of the table which stores the contacts.
-     * flags - the value may be a bitwise OR of the following flags:
+     * flags (optional) - the value may be a bitwise OR of the following
+       flags:
           + 0x01 - save the contacts only in memory cache without no DB
             operation;
           + 0x02 - do not generate a SIP reply to the current REGISTER
@@ -612,15 +575,27 @@ save("location");
             registration, remove them. This mode ensures one contact per
             AoR (user).
        The flags may be given in decimal or hexa format.
+     * uri (optional - flags param has to be set and can be 0 for default
+       behavior) - SIP URI to do be used instead of To header URI. It can
+       be a dynamic string with pseudo-variables.
 
-   This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
+   Return codes:
+     * -1 - error.
+       1 - contacts inserted.
+       2 - contacts updated.
+       3 - contacts deleted.
+       4 - contacts returned.
 
-   Example 1.22. save usage
+   This function can be used from REQUEST_ROUTE and REPLY_ROUTE.
+
+   Example 1.20. save usage
 ...
-save("location","0x01");
+save("location");
+save("location", "0x01");
+save("location", "0x00", "sip:test@kamailio.org");
 ...
 
-4.3. lookup(domain)
+4.2. lookup(domain [, uri])
 
    The functions extracts username from Request-URI and tries to find all
    contacts for the username in usrloc. If there are no such contacts, -1
@@ -635,6 +610,8 @@ save("location","0x01");
 
    Meaning of the parameters is as follows:
      * domain - Name of table that should be used for the lookup.
+     * uri (optional) - SIP URI to do be used instead of R-URI. It can be
+       a dynamic string with pseudo-variables.
 
    Return codes:
      * 1 - contacts found and returned.
@@ -644,7 +621,7 @@ save("location","0x01");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.23. lookup usage
+   Example 1.21. lookup usage
 ...
 lookup("location");
 switch ($retcode) {
@@ -658,7 +635,7 @@ switch ($retcode) {
 };
 ...
 
-4.4. registered(domain)
+4.3. registered(domain [, uri])
 
    The function returns true if the AOR in the Request-URI is registered,
    false otherwise. The function does not modify the message being
@@ -667,10 +644,12 @@ switch ($retcode) {
 
    Meaning of the parameters is as follows:
      * domain - Name of table that should be used for the lookup.
+     * uri (optional) - SIP URI to do be used instead of R-URI. It can be
+       a dynamic string with pseudo-variables.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.24. registered usage
+   Example 1.22. registered usage
 ...
 if (registered("location")) {
         sl_send_reply("100", "Trying");
@@ -678,7 +657,7 @@ if (registered("location")) {
 };
 ...
 
-4.5. add_sock_hdr(hdr_name)
+4.4. add_sock_hdr(hdr_name)
 
    Adds to the current REGISTER request a new header with "hdr_name" which
    contains the description of the received socket (proto:ip:port)
@@ -690,12 +669,12 @@ if (registered("location")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.25. add_sock_hdr usage
+   Example 1.23. add_sock_hdr usage
 ...
 add_sock_hdr("Sock-Info");
 ...
 
-4.6. unregister(domain, uri)
+4.5. unregister(domain, uri)
 
    The function remove all the contact associated to 'uri'.
 
@@ -708,13 +687,13 @@ add_sock_hdr("Sock-Info");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.26. registered usage
+   Example 1.24. registered usage
 ...
 unregister("location", "$ru");
 unregister("location", "sip:user@kamailio.org");
 ...
 
-4.7. reg_fetch_contacts(domain, uri, profile)
+4.6. reg_fetch_contacts(domain, uri, profile)
 
    The function fetches the contacts for 'uri' from table 'domain' to
    pseudo-variable $ulc(profile).
@@ -730,13 +709,13 @@ unregister("location", "sip:user@kamailio.org");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.27. registered usage
+   Example 1.25. registered usage
 ...
 reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 ...
 
-4.8. reg_free_contacts(profile)
+4.7. reg_free_contacts(profile)
 
    The function frees the contacts from pseudo-variable $ulc(profile).
    Should be called to release the content of a profile. Anyhow, fetching
@@ -749,7 +728,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.28. registered usage
+   Example 1.26. registered usage
 ...
 reg_free_contacts("callee");
 ...
@@ -815,7 +794,7 @@ reg_free_contacts("callee");
    The pseudo-variable accepts positive index value to access a specific
    contact record.
 
-   Example 1.29. $ulc(name) usage
+   Example 1.27. $ulc(name) usage
 ...
 if(reg_fetch_contacts("location", "$fu", "caller"))
 {
