@@ -23,6 +23,7 @@
         <autoincrement/>
         <type db="dbtext">int,auto</type>
         <description>Unique ID</description>
+	<primary/>
     </column>
 
     <column id="username">
@@ -73,7 +74,6 @@
         <type>string</type>
         <size>&xcap_uri_len;</size>
         <description>Document uri</description>
-        <primary/>
     </column>
 
     <column id="port">
@@ -84,11 +84,15 @@
     </column>
 
     <index>
+        <name>doc_uri_idx</name>
+        <unique/>
+    </index>
+
+    <index>
         <name>account_doc_type_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="doc_type"/>
-        <unique/>
     </index>
 
     <index>
@@ -97,7 +101,6 @@
         <colref linkend="domain"/>
         <colref linkend="doc_type"/>
         <colref linkend="doc_uri"/>
-        <unique/>
     </index>
 
     <index>
@@ -105,6 +108,5 @@
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="doc_uri"/>
-        <unique/>
     </index>
 </table>

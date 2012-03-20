@@ -59,19 +59,21 @@ CREATE TABLE watchers (
 
 INSERT INTO version (table_name, table_version) values ('xcap','4');
 CREATE TABLE xcap (
-    id INT(10) UNSIGNED AUTO_INCREMENT NOT NULL,
+    id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     username VARCHAR(64) NOT NULL,
     domain VARCHAR(64) NOT NULL,
     doc MEDIUMBLOB NOT NULL,
     doc_type INT(11) NOT NULL,
     etag VARCHAR(64) NOT NULL,
     source INT(11) NOT NULL,
-    doc_uri VARCHAR(255) PRIMARY KEY NOT NULL,
+    doc_uri VARCHAR(255) NOT NULL,
     port INT(11) NOT NULL,
-    CONSTRAINT account_doc_type_idx UNIQUE (username, domain, doc_type),
-    CONSTRAINT account_doc_type_uri_idx UNIQUE (username, domain, doc_type, doc_uri),
-    CONSTRAINT account_doc_uri_idx UNIQUE (username, domain, doc_uri)
+    CONSTRAINT doc_uri_idx UNIQUE ()
 ) ENGINE=MyISAM;
+
+CREATE INDEX account_doc_type_idx ON xcap (username, domain, doc_type);
+CREATE INDEX account_doc_type_uri_idx ON xcap (username, domain, doc_type, doc_uri);
+CREATE INDEX account_doc_uri_idx ON xcap (username, domain, doc_uri);
 
 INSERT INTO version (table_name, table_version) values ('pua','7');
 CREATE TABLE pua (
