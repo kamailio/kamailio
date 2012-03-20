@@ -197,7 +197,7 @@ static sr_xavp_t *xavp_get_internal(str *name, sr_xavp_t **list, int idx, sr_xav
 
 sr_xavp_t *xavp_get(str *name, sr_xavp_t *start)
 {
-	return xavp_get_internal(name, &start, 0, NULL);
+	return xavp_get_internal(name, (start)?&start:NULL, 0, NULL);
 }
 
 sr_xavp_t *xavp_get_by_index(str *name, int idx, sr_xavp_t **start)
