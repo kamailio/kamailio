@@ -54,6 +54,7 @@ Bogdan-Andre Iancu
               3.18. path_mode (integer)
               3.19. path_use_received (integer)
               3.20. reg_callid_avp (string)
+              3.21. xavp_cfg (string)
 
         4. Functions
 
@@ -100,14 +101,15 @@ Bogdan-Andre Iancu
    1.17. Set path_mode parameter
    1.18. Set path_use_received parameter
    1.19. Set reg_callid_avp parameter
-   1.20. save usage
-   1.21. lookup usage
-   1.22. registered usage
-   1.23. add_sock_hdr usage
-   1.24. registered usage
+   1.20. Set xavp_cfg parameter
+   1.21. save usage
+   1.22. lookup usage
+   1.23. registered usage
+   1.24. add_sock_hdr usage
    1.25. registered usage
    1.26. registered usage
-   1.27. $ulc(name) usage
+   1.27. registered usage
+   1.28. $ulc(name) usage
 
 Chapter 1. Admin Guide
 
@@ -144,6 +146,7 @@ Chapter 1. Admin Guide
         3.18. path_mode (integer)
         3.19. path_use_received (integer)
         3.20. reg_callid_avp (string)
+        3.21. xavp_cfg (string)
 
    4. Functions
 
@@ -240,6 +243,7 @@ Chapter 1. Admin Guide
    3.18. path_mode (integer)
    3.19. path_use_received (integer)
    3.20. reg_callid_avp (string)
+   3.21. xavp_cfg (string)
 
 3.1. default_expires (integer)
 
@@ -541,6 +545,25 @@ modparam("registrar", "path_use_received", 1)
 modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 ...
 
+3.21. xavp_cfg (string)
+
+   Defines the name of XAVP class to store runtime module config values.
+   The values are stored as inner XAVPs, like $xavp(class=>attribute).
+   Valid inner XAVP names:
+     * max_contacts - the number of maximum contacts to be stored for
+       current registration AoR. It overwrites the 'max_contacts' module
+       parameter value.
+
+   For example. if this parameter is set to 'reg', then the number of
+   maximum contacts can be set in $xavp(reg=>max_contacts).
+
+   Default value is NULL (disabled).
+
+   Example 1.20. Set xavp_cfg parameter
+...
+modparam("registrar", "xavp_cfg", "reg")
+...
+
 4. Functions
 
    4.1. save(domain, [, flags [, uri]])
@@ -588,7 +611,7 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 
    This function can be used from REQUEST_ROUTE and REPLY_ROUTE.
 
-   Example 1.20. save usage
+   Example 1.21. save usage
 ...
 save("location");
 save("location", "0x01");
@@ -621,7 +644,7 @@ save("location", "0x00", "sip:test@kamailio.org");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.21. lookup usage
+   Example 1.22. lookup usage
 ...
 lookup("location");
 switch ($retcode) {
@@ -649,7 +672,7 @@ switch ($retcode) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.22. registered usage
+   Example 1.23. registered usage
 ...
 if (registered("location")) {
         sl_send_reply("100", "Trying");
@@ -669,7 +692,7 @@ if (registered("location")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.23. add_sock_hdr usage
+   Example 1.24. add_sock_hdr usage
 ...
 add_sock_hdr("Sock-Info");
 ...
@@ -687,7 +710,7 @@ add_sock_hdr("Sock-Info");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.24. registered usage
+   Example 1.25. registered usage
 ...
 unregister("location", "$ru");
 unregister("location", "sip:user@kamailio.org");
@@ -709,7 +732,7 @@ unregister("location", "sip:user@kamailio.org");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.25. registered usage
+   Example 1.26. registered usage
 ...
 reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
@@ -728,7 +751,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.26. registered usage
+   Example 1.27. registered usage
 ...
 reg_free_contacts("callee");
 ...
@@ -794,7 +817,7 @@ reg_free_contacts("callee");
    The pseudo-variable accepts positive index value to access a specific
    contact record.
 
-   Example 1.27. $ulc(name) usage
+   Example 1.28. $ulc(name) usage
 ...
 if(reg_fetch_contacts("location", "$fu", "caller"))
 {

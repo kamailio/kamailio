@@ -57,6 +57,7 @@
 #include "../../ut.h"
 #include "../../qvalue.h"
 #include "../../dset.h"
+#include "../../xavp.h"
 #include "../../mod_fix.h"
 #include "../../lib/kcore/cmpapi.h"
 #include "../../lib/kcore/statistics.h"
@@ -362,6 +363,40 @@ error:
 }
 
 
+int reg_get_crt_max_contacts(void)
+{
+	int n;
+	sr_xavp_t *ravp=NULL;
+	sr_xavp_t *vavp=NULL;
+	str vname = {"max_contacts", 12};
+
+	n = 0;
+
+	if(reg_xavp_cfg.s!=NULL)
+	{
+		ravp = xavp_get(&reg_xavp_cfg, NULL);
+		if(ravp!=NULL && ravp->val.type==SR_XTYPE_XAVP)
+		{
+			vavp = xavp_get(&vname, ravp->val.v.xavp);
+			if(vavp!=NULL && vavp->val.type==SR_XTYPE_INT)
+			{
+				n = vavp->val.v.i;
+				LM_ERR("using max contacts value from xavp: %d\n", n);
+			} else {
+				ravp = NULL;
+			}
+		} else {
+			ravp = NULL;
+		}
+	}
+
+	if(ravp==NULL)
+	{
+		n = cfg_get(registrar, registrar_cfg, max_contacts);
+	}
+
+	return n;
+}
 
 /*! \brief
  * Message contained some contacts, but record with same address
@@ -377,6 +412,7 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a)
 	contact_t* _c;
 	unsigned int flags;
 	int num, expires;
+	int maxc;
 #ifdef USE_TCP
 	int e_max, tcp_check;
 	struct sip_uri uri;
@@ -393,6 +429,7 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a)
 	}
 #endif
 	_c = get_first_contact(_m);
+	maxc = reg_get_crt_max_contacts();
 	for( num=0,r=0,ci=0 ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &expires);
@@ -400,8 +437,8 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a)
 		if (expires == 0)
 			continue;
 
-		if (cfg_get(registrar, registrar_cfg, max_contacts)
-				&& (num >= cfg_get(registrar, registrar_cfg, max_contacts))) {
+
+		if (maxc > 0 && num >= maxc) {
 			LM_INFO("too many contacts (%d) for AOR <%.*s>\n", 
 					num, _a->len, _a->s);
 			rerrno = R_TOO_MANY;
@@ -480,7 +517,7 @@ error:
 
 
 static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
-														ucontact_info_t *ci)
+										ucontact_info_t *ci, int mc)
 {
 	int num;
 	int e;
@@ -518,7 +555,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 	}
 	
 	LM_DBG("%d contacts after commit\n", num);
-	if (num > cfg_get(registrar, registrar_cfg, max_contacts)) {
+	if (num > mc) {
 		LM_INFO("too many contacts for AOR <%.*s>\n", _r->aor.len, _r->aor.s);
 		rerrno = R_TOO_MANY;
 		return -1;
@@ -552,6 +589,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 #endif
 	int rc;
 	contact_t* _c;
+	int maxc;
 
 	/* mem flag */
 	flags = mem_only;
@@ -563,10 +601,13 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 		goto error;
 	}
 
-	if (!_mode && cfg_get(registrar, registrar_cfg, max_contacts)) {
-		_c = get_first_contact(_m);
-		if(test_max_contacts(_m, _r, _c, ci) != 0)
-			goto error;
+	if (!_mode) {
+		maxc = reg_get_crt_max_contacts();
+		if(maxc>0) {
+			_c = get_first_contact(_m);
+			if(test_max_contacts(_m, _r, _c, ci, maxc) != 0)
+				goto error;
+		}
 	}
 
 #ifdef USE_TCP

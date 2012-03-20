@@ -122,6 +122,8 @@ char* rcv_avp_param = 0;
 unsigned short rcv_avp_type = 0;
 int_str rcv_avp_name;
 
+str reg_xavp_cfg = {0};
+
 int reg_use_domain = 0;
 
 int sock_flag = -1;
@@ -207,6 +209,7 @@ static param_export_t params[] = {
 	{"use_path",           INT_PARAM, &path_enabled        					},
 	{"path_mode",          INT_PARAM, &path_mode           					},
 	{"path_use_received",  INT_PARAM, &path_use_params     					},
+	{"xavp_cfg",           STR_PARAM, &reg_xavp_cfg.s     					},
 	{0, 0, 0}
 };
 
@@ -359,6 +362,9 @@ static int mod_init(void)
 	sock_flag = (sock_flag!=-1)?(1<<sock_flag):0;
 	tcp_persistent_flag = (tcp_persistent_flag!=-1)?(1<<tcp_persistent_flag):0;
 
+	if (reg_xavp_cfg.s) {
+		reg_xavp_cfg.len = strlen(reg_xavp_cfg.s);
+	}
 	return 0;
 }
 
