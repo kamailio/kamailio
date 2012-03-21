@@ -35,8 +35,8 @@ int ul_db_layer_insert(udomain_t * domain, str * user, str * sipdomain,
 int ul_db_layer_update(udomain_t * domain, str * user, str * sipdomain, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	         db_key_t* _uk, db_val_t* _uv, int _n, int _un);
 
-int ul_db_layer_insert_update(udomain_t * domain, str * user, str * sipdomain, 
-						db_key_t* _k,	db_val_t* _v, int _n);
+int ul_db_layer_replace(udomain_t * domain, str * user, str * sipdomain, 
+						db_key_t* _k,	db_val_t* _v, int _n, int _un);
 
 int ul_db_layer_delete(udomain_t * domain, str * user, str * sipdomain, 
 				 db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);

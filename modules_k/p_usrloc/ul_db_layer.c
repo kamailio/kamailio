@@ -101,11 +101,11 @@ int ul_db_layer_update(udomain_t * domain, str * user, str * sipdomain, db_key_t
 	}
 }
 
-int ul_db_layer_insert_update(udomain_t * domain, str * user, str * sipdomain,
-                              db_key_t* _k,	db_val_t* _v, int _n) {
+int ul_db_layer_replace (udomain_t * domain, str * user, str * sipdomain,
+                              db_key_t* _k,	db_val_t* _v, int _n, int _un) {
 	ul_domain_db_t * d;
 	switch(domain->dbt) {
-			case DB_TYPE_CLUSTER: return p_ul_dbf.insert_update(domain->name, user, sipdomain, _k, _v, _n);;
+			case DB_TYPE_CLUSTER: { return p_ul_dbf.replace(domain->name, user, sipdomain, _k, _v, _n, _un);;}
 			case DB_TYPE_SINGLE: if(!domain->dbh){
 				if((d = ul_find_domain(domain->name->s)) == 0){
 					return -1;
@@ -117,7 +117,7 @@ int ul_db_layer_insert_update(udomain_t * domain, str * user, str * sipdomain,
 				if(dbf.use_table(domain->dbh, domain->name) < 0) {
 				return -1;
 			}
-			return dbf.insert_update(domain->dbh, _k, _v, _n);
+			return dbf.replace(domain->dbh, _k, _v, _n, _un, 0);
 			default: return -1;
 	}
 }
@@ -212,7 +212,7 @@ int ul_db_layer_free_result(udomain_t * domain, db1_res_t * res) {
 
 int ul_add_domain_db(str * d, int t, str * url) {
 	ul_domain_db_list_t * new_d = NULL;
-	LM_ERR("%.*s, type: %s\n", d->len, d->s,
+	LM_DBG("%.*s, type: %s\n", d->len, d->s,
 			t==DB_TYPE_SINGLE ? "SINGLE" : "CLUSTER");
 	if((new_d = pkg_malloc(sizeof(ul_domain_db_list_t))) == NULL) {
 		return -1;

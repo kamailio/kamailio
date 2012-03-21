@@ -41,12 +41,6 @@ int bind_ul_db(ul_db_api_t* api)
 		return -1;
 	}
 	
-	api->insert_update = (ul_db_insert_update_t) ul_db_insert_update;
-	if(api->insert_update == 0){
-		LM_ERR("can't bind ul_db_insert_update\n");
-		return -1;
-	}
-	
 	api->replace = (ul_db_replace_t) ul_db_replace;
 	if(api->replace == 0){
 		LM_ERR("can't bind ul_db_replace\n");

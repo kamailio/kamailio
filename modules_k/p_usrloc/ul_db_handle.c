@@ -541,7 +541,7 @@ static int compute_id(str* first, str* second){
 
 		tmp.len = first->len + second->len + 1;
 		if( tmp.len > BUF_MAXSIZE - 1 ){
-			LM_ERR("Very long user or domain");
+			LM_ERR("Very long user or domain\n");
 			return -1;
 		}
 		memcpy(aux, first->s, first->len);
@@ -549,7 +549,7 @@ static int compute_id(str* first, str* second){
 		memcpy(aux + first->len + 1, second->s, second->len);
 		tmp.s = aux;
 
-                crc32_uint(&tmp, &crc32_val);
+		crc32_uint(&tmp, &crc32_val);
 		return crc32_val % max_loc_nr + 1;
 	}else{
 		crc32_uint(first, &crc32_val);

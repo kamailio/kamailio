@@ -36,7 +36,7 @@ typedef int (* ul_db_insert_update_t) (str * table, str * first, str * second,
 				db_key_t* _k, db_val_t* _v, int _n);
 
 typedef int (* ul_db_replace_t) (str * table, str * first, str * second,
-				db_key_t* _k, db_val_t* _v, int _n);
+				db_key_t* _k, db_val_t* _v, int _n, int _un);
 
 typedef int (* ul_db_delete_t) (str * table, str * first, str * second,
 				 db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);

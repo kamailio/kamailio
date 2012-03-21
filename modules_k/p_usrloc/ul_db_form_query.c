@@ -115,15 +115,15 @@ static int db_do_query(ul_db_op_t ul_op, db_func_t * dbf, db1_con_t * dbh, str *
 			}
 			return 0;
 			case UL_DB_REPL:
-			if(dbf->replace(dbh, _k, _v, _n, 0, 0) < 0) {
+			if(dbf->replace(dbh, _k, _v, _n, _un, 0) < 0) {
 				LM_ERR("error in replacing in "
 				    "table %.*s.\n", table->len, table->s);
 				return -1;
 			}
 			return 0;
 			case UL_DB_INS_UPD:
-			if(dbf->insert_update(dbh, _k, _v, _n) < 0) {
-				LM_ERR("error in inserting/updating "
+			if(dbf->insert_update(dbh, _k, _v, _n ) < 0) {
+				LM_ERR("error in inserting/updating in "
 				    "table %.*s.\n", table->len, table->s);
 				return -1;
 			}

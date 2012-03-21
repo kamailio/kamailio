@@ -390,125 +390,146 @@ int db_insert_ucontact(ucontact_t* _c)
 	char* dom;
 	db_key_t keys[15];
 	db_val_t vals[15];
-	
+	int nr_cols  = 0;
+	int nr_cols_key = 0;
+	struct udomain * _d;
+	str user={0, 0};
+	str domain={0, 0};
+
 	if (_c->flags & FL_MEM) {
 		return 0;
 	}
 
-	struct udomain * _d;
 	if(register_udomain(_c->domain->s, &_d) < 0){
 		return -1;
 	}
-	keys[0] = &user_col;
-	keys[1] = &contact_col;
-	keys[2] = &expires_col;
-	keys[3] = &q_col;
-	keys[4] = &callid_col;
-	keys[5] = &cseq_col;
-	keys[6] = &flags_col;
-	keys[7] = &cflags_col;
-	keys[8] = &user_agent_col;
-	keys[9] = &received_col;
-	keys[10] = &path_col;
-	keys[11] = &sock_col;
-	keys[12] = &methods_col;
-	keys[13] = &last_mod_col;
-	keys[14] = &domain_col;
+	LM_INFO("Domain set for contact %.*s\n", _c->domain->len, _c->domain->s);
 
-	vals[0].type = DB1_STR;
-	vals[0].nul = 0;
-	vals[0].val.str_val.s = _c->aor->s;
-	vals[0].val.str_val.len = _c->aor->len;
+	keys[nr_cols] = &user_col;
+	vals[nr_cols].type = DB1_STR;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.str_val = *_c->aor;
+	nr_cols++;
 
-	vals[1].type = DB1_STR;
-	vals[1].nul = 0;
-	vals[1].val.str_val.s = _c->c.s; 
-	vals[1].val.str_val.len = _c->c.len;
+	keys[nr_cols] = &contact_col;
+	vals[nr_cols].type = DB1_STR;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.str_val = _c->c;
+	nr_cols++;
 
-	vals[2].type = DB1_DATETIME;
-	vals[2].nul = 0;
-	vals[2].val.time_val = _c->expires;
-
-	vals[3].type = DB1_DOUBLE;
-	vals[3].nul = 0;
-	vals[3].val.double_val = q2double(_c->q);
-
-	vals[4].type = DB1_STR;
-	vals[4].nul = 0;
-	vals[4].val.str_val.s = _c->callid.s;
-	vals[4].val.str_val.len = _c->callid.len;
-
-	vals[5].type = DB1_INT;
-	vals[5].nul = 0;
-	vals[5].val.int_val = _c->cseq;
-
-	vals[6].type = DB1_INT;
-	vals[6].nul = 0;
-	vals[6].val.bitmap_val = _c->flags;
-
-	vals[7].type = DB1_INT;
-	vals[7].nul = 0;
-	vals[7].val.bitmap_val = _c->cflags;
-
-	vals[8].type = DB1_STR;
-	vals[8].nul = 0;
-	vals[8].val.str_val.s = _c->user_agent.s;
-	vals[8].val.str_val.len = _c->user_agent.len;
-
-	vals[9].type = DB1_STR;
-	if (_c->received.s == 0) {
-		vals[9].nul = 1;
-	} else {
-		vals[9].nul = 0;
-		vals[9].val.str_val.s = _c->received.s;
-		vals[9].val.str_val.len = _c->received.len;
-	}
-	
-	vals[10].type = DB1_STR;
-	if (_c->path.s == 0) {
-		vals[10].nul = 1;
-	} else {
-		vals[10].nul = 0;
-		vals[10].val.str_val.s = _c->path.s;
-		vals[10].val.str_val.len = _c->path.len;
-	}
-
-	vals[11].type = DB1_STR;
-	if (_c->sock) {
-		vals[11].val.str_val = _c->sock->sock_str;
-		vals[11].nul = 0;
-	} else {
-		vals[11].nul = 1;
-	}
-
-	vals[12].type = DB1_BITMAP;
-	if (_c->methods == 0xFFFFFFFF) {
-		vals[12].nul = 1;
-	} else {
-		vals[12].val.bitmap_val = _c->methods;
-		vals[12].nul = 0;
-	}
-
-	vals[13].type = DB1_DATETIME;
-	vals[13].nul = 0;
-	vals[13].val.time_val = _c->last_modified;
-
-	if (use_domain) {
-		vals[14].type = DB1_STR;
-		vals[14].nul = 0;
+	if(use_domain) {
+		keys[nr_cols] = &domain_col;
+		vals[nr_cols].type = DB1_STR;
+		vals[nr_cols].nul = 0;
 
 		dom = memchr(_c->aor->s, '@', _c->aor->len);
 		if (dom==0) {
-			vals[0].val.str_val.len = 0;
-			vals[14].val.str_val = *_c->aor;
+			LM_INFO("*** use domain and AOR does not contain @\n");
+			vals[nr_cols].val.str_val.len = 0;
+			vals[nr_cols].val.str_val.s = 0;
 		} else {
 			vals[0].val.str_val.len = dom - _c->aor->s;
-			vals[14].val.str_val.s = dom + 1;
-			vals[14].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+			vals[nr_cols].val.str_val.s = dom + 1;
+			vals[nr_cols].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 		}
+		domain = vals[nr_cols].val.str_val;
+		LM_DBG("** Username=%.*s  Domain=%.*s\n", vals[0].val.str_val.len, vals[0].val.str_val.s,
+				vals[nr_cols].val.str_val.len, vals[nr_cols].val.str_val.s);
+		nr_cols++;
 	}
+	nr_cols_key  = nr_cols;
+	user = vals[0].val.str_val;
+
+	keys[nr_cols] = &expires_col;
+	vals[nr_cols].type = DB1_DATETIME;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.time_val = _c->expires;
+	nr_cols++;
+
+	keys[nr_cols] = &q_col;
+	vals[nr_cols].type = DB1_DOUBLE;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.double_val = q2double(_c->q);
+	nr_cols++;
+
+	keys[nr_cols] = &callid_col;
+	vals[nr_cols].type = DB1_STR;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.str_val = _c->callid;
+	nr_cols++;
+
+	keys[nr_cols] = &cseq_col;
+	vals[nr_cols].type = DB1_INT;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.int_val = _c->cseq;
+	nr_cols++;
+
+	keys[nr_cols] = &flags_col;
+	vals[nr_cols].type = DB1_INT;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.bitmap_val = _c->flags;
+	nr_cols++;
+
+	keys[nr_cols] = &cflags_col;
+	vals[nr_cols].type = DB1_INT;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.bitmap_val = _c->cflags;
+	nr_cols++;
+
+	keys[nr_cols] = &user_agent_col;
+	vals[nr_cols].type = DB1_STR;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.str_val = _c->user_agent;
+	nr_cols++;
+
+	keys[nr_cols] = &received_col;
+	vals[nr_cols].type = DB1_STR;
+	if (_c->received.s == 0) {
+		vals[nr_cols].nul = 1;
+	} else {
+		vals[nr_cols].nul = 0;
+		vals[nr_cols].val.str_val = _c->received;
+	}
+	nr_cols++;
+
+	keys[nr_cols] = &path_col;
+	vals[nr_cols].type = DB1_STR;
+	if (_c->path.s == 0) {
+		vals[nr_cols].nul = 1;
+	} else {
+		vals[nr_cols].nul = 0;
+		vals[nr_cols].val.str_val = _c->path;
+	}
+	nr_cols++;
+
+	keys[nr_cols] = &sock_col;
+	vals[nr_cols].type = DB1_STR;
+	if (_c->sock) {
+		vals[nr_cols].val.str_val = _c->sock->sock_str;
+		vals[nr_cols].nul = 0;
+	} else {
+		vals[nr_cols].nul = 1;
+	}
+	nr_cols++;
+
+	keys[nr_cols] = &methods_col;
+	vals[nr_cols].type = DB1_BITMAP;
+	if (_c->methods == 0xFFFFFFFF) {
+		vals[nr_cols].nul = 1;
+	} else {
+		vals[nr_cols].val.bitmap_val = _c->methods;
+		vals[nr_cols].nul = 0;
+	}
+	nr_cols++;
+
+	keys[nr_cols] = &last_mod_col;
+	vals[nr_cols].type = DB1_DATETIME;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.time_val = _c->last_modified;
+
+
 	/* to prevent errors from the DB because of duplicated entries */
-	if (ul_db_layer_insert_update(_d, &vals[0].val.str_val, &vals[14].val.str_val, keys, vals, (use_domain) ? (15) : (14)) < 0) {	                
+	if (ul_db_layer_replace(_d, &user, &domain, keys, vals, nr_cols, nr_cols_key) <0) {
 		LM_ERR("inserting contact in db failed\n");
 		return -1;
 	}

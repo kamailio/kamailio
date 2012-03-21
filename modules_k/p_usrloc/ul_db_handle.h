@@ -26,7 +26,7 @@
 #ifndef SP_P_USRLOC_UL_DB_HANDLE_H
 #define SP_P_USRLOC_UL_DB_HANDLE_H
 
-#define DB_NUM 1
+#define DB_NUM 2
 
 #define DB_OFF 0
 #define DB_ON 1

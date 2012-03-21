@@ -302,7 +302,7 @@ int ul_db_insert(str * table, str * first, str * second,
 }
 
 int ul_db_replace(str * table, str * first, str * second,
-                 db_key_t* _k, db_val_t* _v, int _n) {
+                 db_key_t* _k, db_val_t* _v, int _n, int  _un) {
 	ul_db_handle_t * handle;
 	if(!db_write){
 		LM_ERR("not allowed in read only mode, abort.\n");
@@ -312,7 +312,7 @@ int ul_db_replace(str * table, str * first, str * second,
 		LM_ERR("could not retrieve db handle.\n");
 		return -1;
 	}
-	return db_replace(handle, table, _k, _v, _n);
+	return db_replace(handle, table, _k, _v, _n, _un);
 }
 
 int ul_db_update(str * table, str * first, str * second,

@@ -80,11 +80,8 @@ int ul_db_update(str * table, str * first, str * second,
 				db_key_t* _k, db_op_t * _op, db_val_t* _v,
 				db_key_t* _uk, db_val_t* _uv, int _n, int _un);
 
-int ul_db_insert_update(str * table, str * first, str * second,
-					 db_key_t* _k,	db_val_t* _v, int _n);
-
 int ul_db_replace(str * table, str * first, str * second,
-			  db_key_t* _k, db_val_t* _v, int _n);
+			  db_key_t* _k, db_val_t* _v, int _n, int _un);
 
 int ul_db_delete(str * table, str * first, str * second,
 			  db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
