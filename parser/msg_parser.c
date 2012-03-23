@@ -871,3 +871,29 @@ hdr_field_t* next_sibling_hdr_by_name(hdr_field_t *hf)
 	}
 	return NULL;
 }
+
+/**
+ * set msg context id
+ * - return: -1 on error; 0 - on set
+ */
+int msg_ctx_id_set(sip_msg_t *msg, msg_ctx_id_t *mid)
+{
+	if(msg==NULL || mid==NULL)
+		return -1;
+	mid->msgid = msg->id;
+	mid->pid = msg->pid;
+	return 0;
+}
+
+/**
+ * check msg context id
+ * - return: -1 on error; 0 - on no match; 1 - on match
+ */
+int msg_ctx_id_match(sip_msg_t *msg, msg_ctx_id_t *mid)
+{
+	if(msg==NULL || mid==NULL)
+		return -1;
+	if(msg->id != mid->msgid || msg->pid!=mid->pid)
+		return 0;
+	return 1;
+}

@@ -461,5 +461,25 @@ void reset_path_vector(struct sip_msg* msg);
 /** reset a previously forced send socket. */
 #define reset_force_socket(msg) set_force_socket(msg, 0)
 
+/**
+ * struct to identify a msg context
+ * - the pair of pid and message-id
+ */
+typedef struct msg_ctx_id {
+	int pid;
+	int msgid;
+} msg_ctx_id_t;
+
+/**
+ * set msg context id
+ * - return: -1 on error; 0 - on set 
+ */
+int msg_ctx_id_set(sip_msg_t *msg, msg_ctx_id_t *mid);
+
+/**
+ * check msg context id
+ * - return: -1 on error; 0 - on no match; 1 - on match
+ */
+int msg_ctx_id_match(sip_msg_t *msg, msg_ctx_id_t *mid);
 
 #endif
