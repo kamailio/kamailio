@@ -127,6 +127,45 @@ if ( search_body("[Ss][Ii][Pp]") ) { /*....*/ };
 		</example>
 	</section>
 
+		<section>
+		<title>
+		<function moreinfo="none">search_hf(hf, re, flags)</function>
+		</title>
+		<para>
+		Searches for the re in the body of a header field.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>hf</emphasis> - header field name.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>re</emphasis> - regular expression.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>flags</emphasis> - control flags - it
+				has to be one of: a - all headers matching the
+				name; f - only first header matching the name;
+				l - only the last header matching the name.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>search_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+if ( search_hf("From", ":test@", "a") ) { /*....*/ };
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section>
 		<title>
 		<function moreinfo="none">search_append(re, txt)</function>
@@ -529,6 +568,46 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 ...
 if ( subst_body('/^o=(.*) /o=$fU /') ) {};
 
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">subst_hf(hf, subexp, flags)</function>
+		</title>
+		<para>
+		Perl-like substitutions in the body of a header field.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>hf</emphasis> - header field name.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>subexp</emphasis> - substitution expression
+				in the same format as of the 'subst' function parameter.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>flags</emphasis> - control flags - it
+				has to be one of: a - all headers matching the
+				name; f - only first header matching the name;
+				l - only the last header matching the name.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>search_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+if ( subst_hf("From", "/:test@/:best@/", "a") ) { /*....*/ };
 ...
 </programlisting>
 		</example>
