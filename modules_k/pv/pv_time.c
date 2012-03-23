@@ -35,17 +35,15 @@
 
 #include "pv_time.h"
 
-static unsigned int _pv_msg_id = 0;
-static int _pv_msg_pid = 0;
+static msg_ctx_id_t _pv_time_msgid = { 0 };
 static time_t _pv_msg_tm = 0;
 
-static int pv_update_time(struct sip_msg *msg, time_t *t)
+static int pv_update_time(sip_msg_t *msg, time_t *t)
 {
-	if(_pv_msg_id != msg->id || _pv_msg_pid != msg->pid || _pv_msg_tm==0)
+	if(msg_ctx_id_match(msg, &_pv_time_msgid)!=1 || _pv_msg_tm==0)
 	{
 		_pv_msg_tm = time(NULL);
-		_pv_msg_id = msg->id;
-		_pv_msg_pid = msg->pid;
+		msg_ctx_id_set(msg, &_pv_time_msgid);
 		
 		if(t!=NULL)
 			*t=_pv_msg_tm;
@@ -124,7 +122,7 @@ int pv_parse_strftime_name(pv_spec_p sp, str *in)
 }
 
 static struct tm _cfgutils_ts;
-static unsigned int _cfgutils_msg_id = 0;
+static msg_ctx_id_t _cfgutils_msgid = { 0 };
 
 /**
  * return broken-down time attributes
@@ -137,10 +135,10 @@ int pv_get_time(struct sip_msg *msg, pv_param_t *param,
 	if(msg==NULL || param==NULL)
 		return -1;
 
-	if(_cfgutils_msg_id != msg->id)
+	if(msg_ctx_id_match(msg, &_cfgutils_msgid)!=1)
 	{
 		pv_update_time(msg, &t);
-		_cfgutils_msg_id = msg->id;
+		msg_ctx_id_set(msg, &_cfgutils_msgid);
 		if(localtime_r(&t, &_cfgutils_ts) == NULL)
 		{
 			LM_ERR("unable to break time to attributes\n");
@@ -189,10 +187,10 @@ int pv_get_strftime(struct sip_msg *msg, pv_param_t *param,
 	if(msg==NULL || param==NULL)
 		return -1;
 
-	if(_cfgutils_msg_id != msg->id)
+	if(msg_ctx_id_match(msg, &_cfgutils_msgid)!=1)
 	{
 		pv_update_time(msg, &t);
-		_cfgutils_msg_id = msg->id;
+		msg_ctx_id_set(msg, &_cfgutils_msgid);
 		if(localtime_r(&t, &_cfgutils_ts) == NULL)
 		{
 			LM_ERR("unable to break time to attributes\n");
@@ -267,7 +265,7 @@ int pv_get_timeb(struct sip_msg *msg, pv_param_t *param,
 }
 
 static struct timeval _timeval_ts;
-static unsigned int _timeval_msg_id = 0;
+static msg_ctx_id_t _timeval_msgid = { 0 };
 static char _timeval_ts_buf[32];
 
 int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,
@@ -282,14 +280,14 @@ int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,
 	switch(param->pvn.u.isname.name.n)
 	{
 		case 1:
-			if(_timeval_msg_id != msg->id)
+			if(msg_ctx_id_match(msg, &_timeval_msgid)!=1)
 			{
 				if(gettimeofday(&_timeval_ts, NULL)!=0)
 				{
 					LM_ERR("unable to get time val attributes\n");
 					return -1;
 				}
-				_timeval_msg_id = msg->id;
+				msg_ctx_id_set(msg, &_timeval_msgid);
 			}
 			return pv_get_uintval(msg, param, res, (unsigned int)_timeval_ts.tv_usec);
 		case 2:
@@ -319,14 +317,14 @@ int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,
 			s.s = _timeval_ts_buf;
 			return pv_get_strval(msg, param, res, &s);
 		default:
-			if(_timeval_msg_id != msg->id)
+			if(msg_ctx_id_match(msg, &_timeval_msgid)!=1)
 			{
 				if(gettimeofday(&_timeval_ts, NULL)!=0)
 				{
 					LM_ERR("unable to get time val attributes\n");
 					return -1;
 				}
-				_timeval_msg_id = msg->id;
+				msg_ctx_id_set(msg, &_timeval_msgid);
 			}
 			return pv_get_uintval(msg, param, res, (unsigned int)_timeval_ts.tv_sec);
 	}
