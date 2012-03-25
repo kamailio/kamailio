@@ -503,6 +503,10 @@ STUN_ALLOW_FP "stun_allow_fp"
 
 SERVER_ID     "server_id"
 
+LATENCY_LOG				latency_log
+LATENCY_LIMIT_DB		latency_limit_db
+LATENCY_LIMIT_ACTION	latency_limit_action
+
 CFG_DESCRIPTION		"description"|"descr"|"desc"
 
 LOADMODULE	loadmodule
@@ -965,6 +969,9 @@ IMPORTFILE      "import_file"
 <INITIAL>{HTTP_REPLY_HACK}		{	count(); yylval.strval=yytext;
 									return HTTP_REPLY_HACK; }
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
+<INITIAL>{LATENCY_LOG}  { count(); yylval.strval=yytext; return LATENCY_LOG;}
+<INITIAL>{LATENCY_LIMIT_DB}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_DB;}
+<INITIAL>{LATENCY_LIMIT_ACTION}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_ACTION;}
 <INITIAL>{CFG_DESCRIPTION}	{ count(); yylval.strval=yytext; return CFG_DESCRIPTION; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 <INITIAL>{LOADPATH}		{ count(); yylval.strval=yytext; return LOADPATH; }

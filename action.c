@@ -1580,6 +1580,7 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct action* t;
 	int ret;
 	struct sr_module *mod;
+	unsigned int ms;
 
 	ret=E_UNSPEC;
 	h->rec_lev++;
@@ -1609,7 +1610,21 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	}
 
 	for (t=a; t!=0; t=t->next){
+		if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0))
+			ms = TICKS_TO_MS(get_ticks_raw());
 		ret=do_action(h, t, msg);
+		if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
+			ms = TICKS_TO_MS(get_ticks_raw()) - ms;
+			if(ms >= cfg_get(core, core_cfg, latency_limit_action)) {
+				LOG(cfg_get(core, core_cfg, latency_log),
+						"alert - action [%s (%d)]"
+						" cfg [%s:%d] took too long [%u ms]\n",
+						is_mod_func(t) ?
+							((cmd_export_common_t*)(t->val[0].u.data))->name
+							: "corefunc",
+						t->type, (t->cfile)?t->cfile:"", t->cline, ms);
+			}
+		}
 		/* break, return or drop/exit stop execution of the current
 		   block */
 		if (unlikely(h->run_flags & (BREAK_R_F|RETURN_R_F|EXIT_R_F))){

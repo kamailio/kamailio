@@ -121,7 +121,10 @@ struct cfg_group_core default_core_cfg = {
 	L_DBG, /*!< memlog */
 	3, /*!< mem_summary -flags: 0 off, 1 pkg_status, 2 shm_status,
 		4 pkg_sums, 8 shm_sums, 16 short_status */
-	L_ERR /*!< corelog */
+	L_ERR, /*!< corelog */
+	L_ERR, /*!< latency log */
+	0, /*!< latency limit db */
+	0 /*!< latency limit action */
 };
 
 void	*core_cfg = &default_core_cfg;
@@ -311,5 +314,11 @@ cfg_def_t core_cfg_def[] = {
 		" 16 - short status instead of dump" },
 	{"corelog",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"log level for non-critical core error messages"},
+	{"latency_log",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"log level for latency limits alert messages"},
+	{"latency_limit_db",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"limit is ms for alerting on time consuming db commands"},
+	{"latency_limit_action",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"limit is ms for alerting on time consuming config actions"},
 	{0, 0, 0, 0, 0, 0}
 };

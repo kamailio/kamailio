@@ -119,6 +119,9 @@ enum action_type{
 		CFG_SELECT_T,
 		CFG_RESET_T
 };
+
+#define is_mod_func(a) ((a)->type>=MODULE0_T && (a)->type<=MODULEX_RVE_T)
+
 /* parameter types for actions or types for expression right operands
    (WARNING right operands only, not working for left operands) */
 enum _operand_subtype{

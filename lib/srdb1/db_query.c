@@ -38,9 +38,33 @@
 #include "db_ut.h"
 #include "db_query.h"
 #include "../../globals.h"
+#include "../../timer.h"
 
 static str  sql_str;
 static char *sql_buf = NULL;
+
+static inline int db_do_submit_query(const db1_con_t* _h, const str *_query,
+		int (*submit_query)(const db1_con_t*, const str*))
+{
+	int ret;
+	unsigned int ms;
+
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0))
+		ms = TICKS_TO_MS(get_ticks_raw());
+
+	ret = submit_query(_h, _query);
+
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
+		ms = TICKS_TO_MS(get_ticks_raw()) - ms;
+		if(ms >= cfg_get(core, core_cfg, latency_limit_action)) {
+				LOG(cfg_get(core, core_cfg, latency_log),
+					"alert - query execution too long [%u ms] for [%.*s]\n",
+				   ms, _query->len<50?_query->len:50, _query->s);
+		}
+	}
+
+	return ret;
+}
 
 int db_do_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
@@ -99,7 +123,7 @@ int db_do_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	sql_str.s = sql_buf;
 	sql_str.len = off;
 
-	if (submit_query(_h, &sql_str) < 0) {
+	if (db_do_submit_query(_h, &sql_str, submit_query) < 0) {
 		LM_ERR("error while submitting query\n");
 		return -2;
 	}
@@ -128,7 +152,7 @@ int db_do_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r,
 		return -1;
 	}
 
-	if (submit_query(_h, _s) < 0) {
+	if (db_do_submit_query(_h, _s, submit_query) < 0) {
 		LM_ERR("error while submitting query\n");
 		return -2;
 	}
@@ -182,7 +206,7 @@ int db_do_insert_cmd(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v
 	sql_str.s = sql_buf;
 	sql_str.len = off;
 
-	if (submit_query(_h, &sql_str) < 0) {
+	if (db_do_submit_query(_h, &sql_str, submit_query) < 0) {
 	        LM_ERR("error while submitting query\n");
 		return -2;
 	}
@@ -238,7 +262,7 @@ int db_do_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 	sql_str.s = sql_buf;
 	sql_str.len = off;
 
-	if (submit_query(_h, &sql_str) < 0) {
+	if (db_do_submit_query(_h, &sql_str, submit_query) < 0) {
 		LM_ERR("error while submitting query\n");
 		return -2;
 	}
@@ -284,7 +308,7 @@ int db_do_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 	sql_str.s = sql_buf;
 	sql_str.len = off;
 
-	if (submit_query(_h, &sql_str) < 0) {
+	if (db_do_submit_query(_h, &sql_str, submit_query) < 0) {
 		LM_ERR("error while submitting query\n");
 		return -2;
 	}
@@ -330,7 +354,7 @@ int db_do_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	sql_str.s = sql_buf;
 	sql_str.len = off;
 
-	if (submit_query(_h, &sql_str) < 0) {
+	if (db_do_submit_query(_h, &sql_str, submit_query) < 0) {
 	        LM_ERR("error while submitting query\n");
 		return -2;
 	}

@@ -559,6 +559,9 @@ extern char *finame;
 %token HTTP_REPLY_HACK
 %token CFG_DESCRIPTION
 %token SERVER_ID
+%token LATENCY_LOG
+%token LATENCY_LIMIT_DB
+%token LATENCY_LIMIT_ACTION
 
 %token FLAGS_DECL
 %token AVPFLAGS_DECL
@@ -1671,6 +1674,12 @@ assign_stm:
 	| STUN_ALLOW_FP EQUAL NUMBER { IF_STUN(stun_allow_fp=$3) ; }
 	| STUN_ALLOW_FP EQUAL error{ yyerror("number expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
+    | LATENCY_LOG EQUAL NUMBER { default_core_cfg.latency_log=$3; }
+	| LATENCY_LOG EQUAL error  { yyerror("number  expected"); }
+    | LATENCY_LIMIT_DB EQUAL NUMBER { default_core_cfg.latency_limit_db=$3; }
+	| LATENCY_LIMIT_DB EQUAL error  { yyerror("number  expected"); }
+    | LATENCY_LIMIT_ACTION EQUAL NUMBER { default_core_cfg.latency_limit_action=$3; }
+	| LATENCY_LIMIT_ACTION EQUAL error  { yyerror("number  expected"); }
 	| UDP_MTU EQUAL NUMBER { default_core_cfg.udp_mtu=$3; }
 	| UDP_MTU EQUAL error { yyerror("number expected"); }
 	| FORCE_RPORT EQUAL NUMBER 
