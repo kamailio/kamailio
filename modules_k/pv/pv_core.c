@@ -734,6 +734,17 @@ int pv_get_diversion(struct sip_msg *msg, pv_param_t *param,
 	    }
 	}
 
+	if(param->pvn.u.isname.name.n == 4)  { /* counter param */
+	    name.s = "counter";
+	    name.len = 7;
+	    val = get_diversion_param(msg, &name);
+	    if (val) {
+			return pv_get_strval(msg, param, res, val);
+	    } else {
+			return pv_get_null(msg, param, res);
+	    }
+	}
+
 	LM_ERR("unknown diversion specifier\n");
 	return pv_get_null(msg, param, res);
 }
