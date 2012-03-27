@@ -16,9 +16,9 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2010 asipto.com
+   Copyright � 2010 asipto.com
 
-   Copyright © 2006 voice-system.ro
+   Copyright � 2006 voice-system.ro
      __________________________________________________________________
 
    Table of Contents
@@ -48,6 +48,7 @@ Daniel-Constantin Mierla
               3.13. hep_mode_on (integer)
               3.14. hep_version (integer)
               3.15. hep_capture_id (integer)
+              3.16. trace_delayed (integer)
 
         4. Functions
 
@@ -77,7 +78,8 @@ Daniel-Constantin Mierla
    1.13. Set hep_mode_on parameter
    1.14. Set hep_version parameter
    1.15. Set hep_capture_id parameter
-   1.16. sip_trace() usage
+   1.16. Set trace_delayed parameter
+   1.17. sip_trace() usage
 
 Chapter 1. Admin Guide
 
@@ -106,6 +108,7 @@ Chapter 1. Admin Guide
         3.13. hep_mode_on (integer)
         3.14. hep_version (integer)
         3.15. hep_capture_id (integer)
+        3.16. trace_delayed (integer)
 
    4. Functions
 
@@ -174,6 +177,7 @@ Chapter 1. Admin Guide
    3.13. hep_mode_on (integer)
    3.14. hep_version (integer)
    3.15. hep_capture_id (integer)
+   3.16. trace_delayed (integer)
 
 3.1. db_url (str)
 
@@ -380,11 +384,23 @@ modparam("siptrace", "hep_version", 2)
 modparam("siptrace", "hep_capture_id", 234)
 ...
 
+3.16. trace_delayed (integer)
+
+   Use 'INSERT DELAYED' to store to database when it is available, instead
+   of 'INSERT'.
+
+   Default value is 0 (off).
+
+   Example 1.16. Set trace_delayed parameter
+...
+modparam("siptrace", "trace_delayed", 1)
+...
+
 4. Functions
 
    4.1. sip_trace()
 
-4.1.  sip_trace()
+4.1. sip_trace()
 
    Store current processed SIP message in database. It is stored in the
    form prior applying chages made to it.
@@ -392,7 +408,7 @@ modparam("siptrace", "hep_capture_id", 234)
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.16. sip_trace() usage
+   Example 1.17. sip_trace() usage
 ...
 sip_trace();
 ...
@@ -401,7 +417,7 @@ sip_trace();
 
    5.1. sip_trace
 
-5.1.  sip_trace
+5.1. sip_trace
 
    Name: sip_trace
 
@@ -410,7 +426,7 @@ sip_trace();
           + on
           + off
        The parameter is optional - if missing, the command will return the
-       status of the SIP message tracing (as string “on” or “off” )
+       status of the SIP message tracing (as string "on" or "off" )
        without changing anything.
 
    MI FIFO Command Format:

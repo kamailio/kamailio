@@ -129,6 +129,7 @@ int trace_on   = 0;
 int trace_sl_acks = 1;
 
 int trace_to_database = 1;
+int trace_delayed = 0;
 
 int hep_version = 1;
 int hep_capture_id = 1;
@@ -198,7 +199,8 @@ static param_export_t params[] = {
 	{"xheaders_read",      INT_PARAM, &xheaders_read        },
 	{"hep_mode_on",        INT_PARAM, &hep_mode_on          },	 
 	{"hep_version",        INT_PARAM, &hep_version          },
-        {"hep_capture_id",     INT_PARAM, &hep_capture_id       },	        
+	{"hep_capture_id",     INT_PARAM, &hep_capture_id       },	        
+	{"trace_delayed",      INT_PARAM, &trace_delayed        },
 	{0, 0, 0}
 };
 
@@ -790,9 +792,17 @@ static int sip_trace_store_db(struct _siptrace_data *sto)
 		db_vals[9].val.str_val.len = 0;
 
 		LM_DBG("storing info...\n");
-		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0) {
-			LM_ERR("error storing trace\n");
-			goto error;
+		if(trace_delayed!=0 && db_funcs.insert_delayed!=NULL)
+		{
+			if(db_funcs.insert_delayed(db_con, db_keys, db_vals, NR_KEYS)<0) {
+				LM_ERR("error storing trace\n");
+				goto error;
+			}
+		} else {
+			if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0) {
+				LM_ERR("error storing trace\n");
+				goto error;
+			}
 		}
 #ifdef STATISTICS
 		update_stat(sto->stat, 1);
@@ -805,9 +815,17 @@ static int sip_trace_store_db(struct _siptrace_data *sto)
 	db_vals[9].val.str_val = sto->avp_value.s;
 
 	LM_DBG("storing info...\n");
-	if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0) {
-		LM_ERR("error storing trace\n");
-		goto error;
+	if(trace_delayed!=0 && db_funcs.insert_delayed!=NULL)
+	{
+		if(db_funcs.insert_delayed(db_con, db_keys, db_vals, NR_KEYS) < 0) {
+			LM_ERR("error storing trace\n");
+			goto error;
+		}
+	} else {
+		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0) {
+			LM_ERR("error storing trace\n");
+			goto error;
+		}
 	}
 
 	sto->avp = search_next_avp(&sto->state, &sto->avp_value);
@@ -815,9 +833,17 @@ static int sip_trace_store_db(struct _siptrace_data *sto)
 		db_vals[9].val.str_val = sto->avp_value.s;
 
 		LM_DBG("storing info...\n");
-		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0) {
-			LM_ERR("error storing trace\n");
-			goto error;
+		if(trace_delayed!=0 && db_funcs.insert_delayed!=NULL)
+		{
+			if(db_funcs.insert_delayed(db_con, db_keys, db_vals, NR_KEYS) < 0) {
+				LM_ERR("error storing trace\n");
+				goto error;
+			}
+		} else {
+			if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0) {
+				LM_ERR("error storing trace\n");
+				goto error;
+			}
 		}
 		sto->avp = search_next_avp(&sto->state, &sto->avp_value);
 	}

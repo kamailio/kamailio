@@ -431,6 +431,25 @@ modparam("siptrace", "hep_capture_id", 234)
 </programlisting>
                 </example>
         </section>
+        <section>
+                <title><varname>trace_delayed</varname> (integer)</title>
+                <para>
+				Use 'INSERT DELAYED' to store to database when it is available,
+				instead of 'INSERT'.
+                </para>
+                <para>
+                Default value is <emphasis>0 (off)</emphasis>.
+                </para>
+                <example>
+                <title>Set <varname>trace_delayed</varname>
+                parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("siptrace", "trace_delayed", 1)
+...
+</programlisting>
+                </example>
+        </section>
 
 	</section>
 	
