@@ -43,6 +43,7 @@
 
 #include <stdio.h>
 
+#include "../str.h"
 
 /*! \brief
  * Supported types of parameters
