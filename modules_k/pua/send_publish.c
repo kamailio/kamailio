@@ -327,7 +327,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	}
 	else
 	{
-		if ((db_presentity = search_record_puadb(hentity->id, &hentity->etag, &dbpres, &res)) != NULL)
+		if ((db_presentity = get_record_puadb(hentity->id, &hentity->etag, &dbpres, &res)) != NULL)
 		{
 			update_record_puadb(hentity, lexpire, &etag);
 			goto done;
@@ -397,7 +397,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 
 	if (dbmode==PUA_DB_ONLY)
 	{
-		insert_puadb(presentity);
+		insert_record_puadb(presentity);
 	}
 	else
  	{
@@ -472,7 +472,7 @@ int send_publish( publ_info_t* publ )
 		dbpres.pres_uri = &pres_uri;
 		dbpres.watcher_uri = &watcher_uri;
 		dbpres.extra_headers = &extra_headers;
-		presentity = search_record_puadb(publ->id, publ->etag, &dbpres, &res);
+		presentity = get_record_puadb(publ->id, publ->etag, &dbpres, &res);
 	}
 	else
 	{
@@ -591,8 +591,7 @@ insert:
 		}
 	}
 
-    /* handle body */
-
+	/* handle body */
 	if(publ->body && publ->body->s)
 	{
 		ret_code= ev->process_body(publ, &body, ver, &tuple_id );

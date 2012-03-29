@@ -512,13 +512,6 @@ faked_error:
 	}
 	contact = ((contact_body_t* )msg->contact->parsed)->contacts->uri;
 
-	if(initial_request == 0)
-	{
-		LM_DBG("*** Update expires\n");
-		find_and_update_dialog(hentity, hash_code, lexpire, &contact);
-		goto done;
-	}
-
 	if( msg->cseq==NULL || msg->cseq->body.s==NULL)
 	{
 		LM_ERR("cannot parse cseq header\n");
@@ -529,8 +522,15 @@ faked_error:
 	{
 		LM_ERR("while converting str to int\n");
 		goto done;
-	}	
-	
+	}
+
+	if(initial_request == 0)
+	{
+		hentity->cseq = cseq;
+		find_and_update_dialog(hentity, hash_code, lexpire, &contact);
+		goto done;
+	}
+
 	/*process record route and add it to a string*/
 	if (msg->record_route!=NULL)
 	{
@@ -875,8 +875,6 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag)
 	hentity->ua_flag= hentity->ua_flag;
 	hentity->cb_param= subs->cb_param;
 
-    LM_DBG("size= %d\n", size);
-
 	return hentity;
 
 }	
@@ -931,7 +929,7 @@ int send_subscribe(subs_info_t* subs)
 
 	if (dbmode==PUA_DB_ONLY)
 	{
-		presentity = search_dialog_puadb(subs->id, subs->pres_uri, &dbpres, &res);
+		presentity = get_dialog_puadb(subs->id, subs->pres_uri, &dbpres, &res);
 	}
 	else
 	{
@@ -1059,6 +1057,7 @@ insert:
 
 		presentity->event = subs->event;
 		presentity->flag = subs->source_flag;
+		presentity->cseq = uac_r.dialog->loc_seq.value;
 
 		/* Set the temporary record expiry for 2 * 64T1 seconds from now */
 		presentity->expires= (int)time(NULL) + 64;
@@ -1066,7 +1065,7 @@ insert:
 
 		if (dbmode==PUA_DB_ONLY)
 		{
-			insert_puadb(presentity);
+			insert_dialog_puadb(presentity);
 			shm_free(presentity);
 		}
 		else

@@ -685,7 +685,7 @@ int update_pua(ua_pres_t* p)
 	else
 		expires= p->desired_expires- (int)time(NULL);
 
-	if(p->watcher_uri== NULL)
+	if(p->watcher_uri == NULL || p->watcher_uri->len == 0)
 	{
 		str met= {"PUBLISH", 7};
 		ua_pres_t* cb_param;
@@ -710,7 +710,6 @@ int update_pua(ua_pres_t* p)
 
 		set_uac_req(&uac_r, &met, str_hdr, 0, 0, TMCB_LOCAL_COMPLETED,
 				publ_cback_func, (void*)cb_param);
-
 		result= tmb.t_request(&uac_r,
 				p->pres_uri,					/* Request-URI */
 				p->pres_uri,					/* To */
@@ -762,6 +761,7 @@ int update_pua(ua_pres_t* p)
 		{
 			LM_ERR("in t_request function\n"); 
 			shm_free(cb_param);
+			ret_code = -1;
 			goto done;
 		}
 	}
