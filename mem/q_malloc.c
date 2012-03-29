@@ -436,9 +436,10 @@ void qm_free(struct qm_block* qm, void* p)
 #ifdef DBG_QM_MALLOC
 	MDBG("qm_free(%p, %p), called from %s: %s(%d)\n", qm, p, file, func, line);
 	if (p>(void*)qm->last_frag_end || p<(void*)qm->first_frag){
-		LOG(L_CRIT, "BUG: qm_free: bad pointer %p (out of memory block!) - "
-				"aborting\n", p);
-		abort();
+		LOG(L_CRIT, "BUG: qm_free: bad pointer %p (out of memory block!)"
+				" called from %s: %s(%d) - aborting\n", p, file, func, line);
+		if(likely(cfg_get(core, core_cfg, mem_safety)==0))
+			abort();
 	}
 #endif
 	if (p==0) {
@@ -452,10 +453,11 @@ void qm_free(struct qm_block* qm, void* p)
 #ifdef DBG_QM_MALLOC
 	qm_debug_frag(qm, f);
 	if (f->u.is_free){
-		LOG(L_CRIT, "BUG: qm_free: freeing already freed pointer,"
-				" first free: %s: %s(%ld) - aborting\n",
-				f->file, f->func, f->line);
-		abort();
+		LOG(L_CRIT, "BUG: qm_free: freeing already freed pointer (%p),"
+				" called from %s: %s(%d), first free %s: %s(%ld) - aborting\n",
+				p, file, func, line, f->file, f->func, f->line);
+		if(likely(cfg_get(core, core_cfg, mem_safety)==0))
+			abort();
 	}
 	MDBG("qm_free: freeing frag. %p alloc'ed from %s: %s(%ld)\n",
 			f, f->file, f->func, f->line);
@@ -470,7 +472,7 @@ void qm_free(struct qm_block* qm, void* p)
 
 #ifdef QM_JOIN_FREE
 	/* mark this fragment as used (might fall into the middle of joined frags)
-	  to give us an extra change of detecting a double free call (if the joined
+	  to give us an extra chance of detecting a double free call (if the joined
 	  fragment has not yet been reused) */
 	f->u.nxt_free=(void*)0x1L; /* bogus value, just to mark it as free */
 	/* join packets if possible*/
