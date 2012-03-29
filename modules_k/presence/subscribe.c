@@ -315,6 +315,12 @@ int insert_subs_db(subs_t* s, int type)
 	query_vals[reason_col].val.str_val= s->reason;
 	query_vals[socket_info_col].val.str_val= s->sockinfo_str;
 
+	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
+	{
+		LM_ERR("in use table sql operation\n");	
+		return -1;
+	}
+
 	LM_DBG("inserting subscription in active_watchers table\n");
 	if(pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0)
 	{
@@ -2310,10 +2316,28 @@ int insert_db_subs_auth(subs_t* subs)
 		return -1;
 	}
 
-	if(pa_dbf.insert(pa_db, db_keys, db_vals, n_query_cols )< 0)
-	{	
-		LM_ERR("in sql insert\n");
-		return -1;
+	if (pa_dbf.replace != NULL)
+	{
+		if(pa_dbf.replace(pa_db, db_keys, db_vals, n_query_cols,
+					2, 0) < 0)
+		{
+			LM_ERR("in sql replace\n");
+			return -1;
+		}
+	}
+	else
+	{
+		/* If you use insert() instead of replace() be prepared for some
+ 		   DB error messages.  There is a lot of time between the 
+		   query() that indicated there was no matching entry in the DB
+		   and this insert(), so on a multi-user system it is entirely
+		   possible (even likely) that a record will be added after the
+		   query() but before this insert(). */
+		if(pa_dbf.insert(pa_db, db_keys, db_vals, n_query_cols )< 0)
+		{	
+			LM_ERR("in sql insert\n");
+			return -1;
+		}
 	}
 
 	return 0;

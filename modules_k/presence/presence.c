@@ -833,7 +833,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	}ws_t;
 	ws_t* ws_list= NULL;
 
-    LM_DBG("start\n");
+	LM_DBG("start\n");
 
 	if(ev->content_type.s== NULL)
 	{
