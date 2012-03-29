@@ -50,6 +50,7 @@
 	INT2STR_MAX_LEN + 2 + 2)
 
 int socket2str(char* s, int* len, struct socket_info* si);
+int socketinfo2str(char* s, int* len, struct socket_info* si, int mode);
 
 
 /* struct socket_info is defined in ip_addr.h */
@@ -83,6 +84,10 @@ void init_proto_order();
 
 int add_listen_iface(char* name, struct name_lst* nlst,
 						unsigned short port, unsigned short proto,
+						enum si_flags flags);
+int add_listen_advertise_iface(char* name, struct name_lst* nlst,
+						unsigned short port, unsigned short proto,
+						char *useaddr, unsigned short useport,
 						enum si_flags flags);
 int fix_all_socket_lists();
 void print_all_socket_lists();

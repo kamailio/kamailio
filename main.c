@@ -1596,13 +1596,25 @@ int main_loop()
 			nrprocs = (si->workers>0)?si->workers:children_no;
 			for(i=0;i<nrprocs;i++){
 				if(si->address.af==AF_INET6) {
-					snprintf(si_desc, MAX_PT_DESC, "udp receiver child=%d "
-						"sock=[%s]:%s",
-						i, si->name.s, si->port_no_str.s);
+					if(si->useinfo.name.s)
+						snprintf(si_desc, MAX_PT_DESC, "udp receiver child=%d "
+							"sock=[%s]:%s (%s:%s)",
+							i, si->name.s, si->port_no_str.s,
+							si->useinfo.name.s, si->useinfo.port_no_str.s);
+					else
+						snprintf(si_desc, MAX_PT_DESC, "udp receiver child=%d "
+							"sock=[%s]:%s",
+							i, si->name.s, si->port_no_str.s);
 				} else {
-					snprintf(si_desc, MAX_PT_DESC, "udp receiver child=%d "
-						"sock=%s:%s",
-						i, si->name.s, si->port_no_str.s);
+					if(si->useinfo.name.s)
+						snprintf(si_desc, MAX_PT_DESC, "udp receiver child=%d "
+							"sock=%s:%s (%s:%s)",
+							i, si->name.s, si->port_no_str.s,
+							si->useinfo.name.s, si->useinfo.port_no_str.s);
+					else
+						snprintf(si_desc, MAX_PT_DESC, "udp receiver child=%d "
+							"sock=%s:%s",
+							i, si->name.s, si->port_no_str.s);
 				}
 				child_rank++;
 				pid = fork_process(child_rank, si_desc, 1);

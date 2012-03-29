@@ -102,6 +102,15 @@ struct addr_info{
 	struct addr_info* prev;
 };
 
+struct advertise_info {
+	str name; /* name - eg.: foo.bar or 10.0.0.1 */
+	unsigned short port_no;  /* port number */
+	str port_no_str; /* port number converted to string -- optimization*/
+	str address_str;        /*ip address converted to string -- optimization*/
+	struct ip_addr address; /* ip address */
+	str sock_str; /* Socket proto, ip, and port as string */
+};
+
 struct socket_info{
 	int socket;
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
@@ -118,6 +127,7 @@ struct socket_info{
 	struct addr_info* addr_info_lst; /* extra addresses (e.g. SCTP mh) */
 	int workers; /* number of worker processes for this socket */
 	int workers_tcpidx; /* index of workers in tcp children array */
+	struct advertise_info useinfo; /* details to be used in SIP msg */
 };
 
 

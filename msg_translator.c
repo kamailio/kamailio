@@ -579,6 +579,9 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 	struct lump* r;
 	str* send_address_str;
 	str* send_port_str;
+	str* recv_address_str;
+	str* recv_port_str;
+	int  recv_port_no;
 	struct socket_info* send_sock;
 	
 
@@ -623,7 +626,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 		switch((subst_l)->u.subst){ \
 			case SUBST_RCV_IP: \
 				if (msg->rcv.bind_address){ \
-					new_len+=msg->rcv.bind_address->address_str.len; \
+					new_len+=recv_address_str->len; \
 					if (msg->rcv.bind_address->address.af!=AF_INET) \
 						new_len+=2; \
 				}else{ \
@@ -633,7 +636,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				break; \
 			case SUBST_RCV_PORT: \
 				if (msg->rcv.bind_address){ \
-					new_len+=msg->rcv.bind_address->port_no_str.len; \
+					new_len+=recv_port_str->len; \
 				}else{ \
 					/* FIXME */ \
 					LOG(L_CRIT, "FIXME: null bind_address\n"); \
@@ -662,12 +665,12 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				break; \
 			case SUBST_RCV_ALL: \
 				if (msg->rcv.bind_address){ \
-					new_len+=msg->rcv.bind_address->address_str.len; \
+					new_len+=recv_address_str->len; \
 					if (msg->rcv.bind_address->address.af!=AF_INET) \
 						new_len+=2; \
-					if (msg->rcv.bind_address->port_no!=SIP_PORT){ \
+					if (recv_port_no!=SIP_PORT){ \
 						/* add :port_no */ \
-						new_len+=1+msg->rcv.bind_address->port_no_str.len; \
+						new_len+=1+recv_port_str->len; \
 					}\
 						/*add;transport=xxx*/ \
 					switch(msg->rcv.bind_address->proto){ \
@@ -780,15 +783,32 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 	s_offset=0;
 	new_len=0;
 	/* init send_address_str & send_port_str */
-	if (msg->set_global_address.len)
+	if(send_sock && send_sock->useinfo.name.len>0)
+		send_address_str=&(send_sock->useinfo.name);
+	else if (msg->set_global_address.len)
 		send_address_str=&(msg->set_global_address);
 	else
 		send_address_str=&(send_sock->address_str);
-	if (msg->set_global_port.len)
+	if(send_sock && send_sock->useinfo.port_no>0)
+		send_port_str=&(send_sock->useinfo.port_no_str);
+	else if (msg->set_global_port.len)
 		send_port_str=&(msg->set_global_port);
 	else
 		send_port_str=&(send_sock->port_no_str);
-
+	/* init recv_address_str, recv_port_str & recv_port_no */
+	if(msg->rcv.bind_address) {
+		if(msg->rcv.bind_address->useinfo.name.len>0)
+			recv_address_str=&(msg->rcv.bind_address->useinfo.name);
+		else
+			recv_address_str=&(msg->rcv.bind_address->address_str);
+		if(msg->rcv.bind_address->useinfo.port_no>0) {
+			recv_port_str=&(msg->rcv.bind_address->useinfo.port_no_str);
+			recv_port_no = msg->rcv.bind_address->useinfo.port_no;
+		} else {
+			recv_port_str=&(msg->rcv.bind_address->port_no_str);
+			recv_port_no = msg->rcv.bind_address->port_no;
+		}
+	}
 
 	for(t=lumps;t;t=t->next){
 		/* skip if this is an OPT lump and the condition is not satisfied */
@@ -898,6 +918,9 @@ static inline void process_lumps(	struct sip_msg* msg,
 	int s_offset;
 	str* send_address_str;
 	str* send_port_str;
+	str* recv_address_str;
+	str* recv_port_str;
+	int  recv_port_no;
 	struct socket_info* send_sock;
 
 #ifdef USE_COMP
@@ -958,9 +981,9 @@ static inline void process_lumps(	struct sip_msg* msg,
 				if (msg->rcv.bind_address->address.af!=AF_INET){\
 					new_buf[offset]='['; offset++; \
 				}\
-				memcpy(new_buf+offset, msg->rcv.bind_address->address_str.s, \
-						msg->rcv.bind_address->address_str.len); \
-				offset+=msg->rcv.bind_address->address_str.len; \
+				memcpy(new_buf+offset, recv_address_str->s, \
+						recv_address_str->len); \
+				offset+=recv_address_str->len; \
 				if (msg->rcv.bind_address->address.af!=AF_INET){\
 					new_buf[offset]=']'; offset++; \
 				}\
@@ -971,9 +994,9 @@ static inline void process_lumps(	struct sip_msg* msg,
 			break; \
 		case SUBST_RCV_PORT: \
 			if (msg->rcv.bind_address){  \
-				memcpy(new_buf+offset, msg->rcv.bind_address->port_no_str.s, \
-						msg->rcv.bind_address->port_no_str.len); \
-				offset+=msg->rcv.bind_address->port_no_str.len; \
+				memcpy(new_buf+offset, recv_port_str->s, \
+						recv_port_str->len); \
+				offset+=recv_port_str->len; \
 			}else{  \
 				/*FIXME*/ \
 				LOG(L_CRIT, "FIXME: process_lumps: null bind_address\n"); \
@@ -985,19 +1008,19 @@ static inline void process_lumps(	struct sip_msg* msg,
 				if (msg->rcv.bind_address->address.af!=AF_INET){\
 					new_buf[offset]='['; offset++; \
 				}\
-				memcpy(new_buf+offset, msg->rcv.bind_address->address_str.s, \
-						msg->rcv.bind_address->address_str.len); \
-				offset+=msg->rcv.bind_address->address_str.len; \
+				memcpy(new_buf+offset, recv_address_str->s, \
+						recv_address_str->len); \
+				offset+=recv_address_str->len; \
 				if (msg->rcv.bind_address->address.af!=AF_INET){\
 					new_buf[offset]=']'; offset++; \
 				}\
 				/* :port */ \
-				if (msg->rcv.bind_address->port_no!=SIP_PORT){ \
+				if (recv_port_no!=SIP_PORT){ \
 					new_buf[offset]=':'; offset++; \
 					memcpy(new_buf+offset, \
-							msg->rcv.bind_address->port_no_str.s, \
-							msg->rcv.bind_address->port_no_str.len); \
-					offset+=msg->rcv.bind_address->port_no_str.len; \
+							recv_port_str->s, \
+							recv_port_str->len); \
+					offset+=recv_port_str->len; \
 				}\
 				switch(msg->rcv.bind_address->proto){ \
 					case PROTO_NONE: \
@@ -1200,7 +1223,33 @@ static inline void process_lumps(	struct sip_msg* msg,
 		send_port_str=&(msg->set_global_port);
 	else
 		send_port_str=&(send_sock->port_no_str);
-
+	/* init send_address_str & send_port_str */
+	if(send_sock && send_sock->useinfo.name.len>0)
+		send_address_str=&(send_sock->useinfo.name);
+	else if (msg->set_global_address.len)
+		send_address_str=&(msg->set_global_address);
+	else
+		send_address_str=&(send_sock->address_str);
+	if(send_sock && send_sock->useinfo.port_no>0)
+		send_port_str=&(send_sock->useinfo.port_no_str);
+	else if (msg->set_global_port.len)
+		send_port_str=&(msg->set_global_port);
+	else
+		send_port_str=&(send_sock->port_no_str);
+	/* init recv_address_str, recv_port_str & recv_port_no */
+	if(msg->rcv.bind_address) {
+		if(msg->rcv.bind_address->useinfo.name.len>0)
+			recv_address_str=&(msg->rcv.bind_address->useinfo.name);
+		else
+			recv_address_str=&(msg->rcv.bind_address->address_str);
+		if(msg->rcv.bind_address->useinfo.port_no>0) {
+			recv_port_str=&(msg->rcv.bind_address->useinfo.port_no_str);
+			recv_port_no = msg->rcv.bind_address->useinfo.port_no;
+		} else {
+			recv_port_str=&(msg->rcv.bind_address->port_no_str);
+			recv_port_no = msg->rcv.bind_address->port_no;
+		}
+	}
 
 	orig=msg->buf;
 	offset=*new_buf_offs;
@@ -2276,13 +2325,17 @@ char* via_builder( unsigned int *len,
 #endif /* USE_COMP */
 
 	send_sock=send_info->send_sock;
-	/* use pre-set address in via or the outbound socket one */
-	if ( hp && hp->host->len)
+	/* use pre-set address in via, the outbound socket alias or address one */
+	if (hp && hp->host->len)
 		address_str=hp->host;
+	else if(send_sock->useinfo.name.len>0)
+		address_str=&(send_sock->useinfo.name);
 	else
 		address_str=&(send_sock->address_str);
 	if (hp && hp->port->len)
 		port_str=hp->port;
+	else if(send_sock->useinfo.port_no>0)
+		port_str=&(send_sock->useinfo.port_no_str);
 	else
 		port_str=&(send_sock->port_no_str);
 	

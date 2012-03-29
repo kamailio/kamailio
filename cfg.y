@@ -400,6 +400,7 @@ extern char *finame;
 %token LOGFACILITY
 %token LOGNAME
 %token LISTEN
+%token ADVERTISE
 %token ALIAS
 %token SR_AUTO_ALIASES
 %token DNS
@@ -1532,6 +1533,20 @@ assign_stm:
 			if (add_listen_iface(	lst_tmp->addr_lst->name,
 									lst_tmp->addr_lst->next,
 									lst_tmp->port, lst_tmp->proto,
+									lst_tmp->flags)!=0) {
+				LOG(L_CRIT,  "ERROR: cfg. parser: failed to add listen"
+								" address\n");
+				break;
+			}
+		}
+		free_socket_id_lst($3);
+	}
+	| LISTEN EQUAL id_lst ADVERTISE listen_id COLON NUMBER {
+		for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next) {
+			if (add_listen_advertise_iface(	lst_tmp->addr_lst->name,
+									lst_tmp->addr_lst->next,
+									lst_tmp->port, lst_tmp->proto,
+									$5, $7,
 									lst_tmp->flags)!=0) {
 				LOG(L_CRIT,  "ERROR: cfg. parser: failed to add listen"
 								" address\n");

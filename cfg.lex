@@ -344,6 +344,7 @@ LOGSTDERROR	log_stderror
 LOGFACILITY	log_facility
 LOGNAME		log_name
 LISTEN		listen
+ADVERTISE	advertise|ADVERTISE
 ALIAS		alias
 SR_AUTO_ALIASES	auto_aliases
 DNS		 dns
@@ -714,6 +715,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOGFACILITY}	{ yylval.strval=yytext; return LOGFACILITY; }
 <INITIAL>{LOGNAME}	{ yylval.strval=yytext; return LOGNAME; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
+<INITIAL>{ADVERTISE}	{ count(); yylval.strval=yytext; return ADVERTISE; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
 <INITIAL>{SR_AUTO_ALIASES}	{ count(); yylval.strval=yytext;
 									return SR_AUTO_ALIASES; }

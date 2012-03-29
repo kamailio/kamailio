@@ -235,10 +235,13 @@ error:
 static inline struct socket_info* new_sock_info(	char* name,
 								struct name_lst* addr_l,
 								unsigned short port, unsigned short proto,
+								char *usename, unsigned short useport,
 								enum si_flags flags)
 {
 	struct socket_info* si;
 	struct name_lst* n;
+	struct hostent* he;
+	char *p;
 	
 	si=(struct socket_info*) pkg_malloc(sizeof(struct socket_info));
 	if (si==0) goto error;
@@ -259,10 +262,51 @@ static inline struct socket_info* new_sock_info(	char* name,
 			goto error;
 		}
 	}
+	if(usename!=NULL)
+	{
+		si->useinfo.name.len=strlen(usename);
+		si->useinfo.name.s=(char*)pkg_malloc(si->useinfo.name.len+1);
+		if (si->useinfo.name.s==0)
+			goto error;
+		strcpy(si->useinfo.name.s, usename);
+		if(usename[0]=='[' && usename[si->useinfo.name.len-1]==']')
+		{
+			si->useinfo.address_str.len = si->useinfo.name.len - 2;
+			p = si->useinfo.name.s + 1;
+		} else {
+			si->useinfo.address_str.len = si->useinfo.name.len;
+			p = si->useinfo.name.s;
+		}
+		si->useinfo.address_str.s=(char*)pkg_malloc(si->useinfo.address_str.len+1);
+		if(si->useinfo.address_str.s==NULL)
+			goto error;
+		strncpy(si->useinfo.address_str.s, p, si->useinfo.address_str.len);
+		si->useinfo.address_str.s[si->useinfo.address_str.len] = '\0';
+
+		p = int2str(useport, &si->useinfo.port_no_str.len);
+		if(p==NULL)
+			goto error;
+		si->useinfo.port_no_str.s=(char*)pkg_malloc(si->useinfo.port_no_str.len+1);
+		if(si->useinfo.port_no_str.s==NULL)
+			goto error;
+		strcpy(si->useinfo.port_no_str.s, p);
+		si->useinfo.port_no = useport;
+
+		he=resolvehost(si->useinfo.name.s);
+		if (he==0){
+			LM_ERR(" unable to resolve advertised name %s\n", si->useinfo.name.s);
+			goto error;
+		}
+		hostent2ip_addr(&si->useinfo.address, he, 0);
+	}
 	return si;
 error:
 	LOG(L_ERR, "ERROR: new_sock_info: memory allocation error\n");
-	if (si) pkg_free(si);
+	if (si) {
+		if(si->name.s)
+			pkg_free(si->name.s);
+		pkg_free(si);
+	}
 	return 0;
 }
 
@@ -275,8 +319,11 @@ static void free_sock_info(struct socket_info* si)
 		if(si->name.s) pkg_free(si->name.s);
 		if(si->address_str.s) pkg_free(si->address_str.s);
 		if(si->port_no_str.s) pkg_free(si->port_no_str.s);
-		if (si->addr_info_lst) free_addr_info_lst(&si->addr_info_lst);
+		if(si->addr_info_lst) free_addr_info_lst(&si->addr_info_lst);
 		if(si->sock_str.s) pkg_free(si->sock_str.s);
+		if(si->useinfo.name.s) pkg_free(si->useinfo.name.s);
+		if(si->useinfo.port_no_str.s) pkg_free(si->useinfo.port_no_str.s);
+		if(si->useinfo.sock_str.s) pkg_free(si->useinfo.sock_str.s);
 	}
 }
 
@@ -322,19 +369,27 @@ static char* get_valid_proto_name(unsigned short proto)
  */
 int socket2str(char* s, int* len, struct socket_info* si)
 {
+	return socketinfo2str(s, len, si, 0);
+}
+
+int socketinfo2str(char* s, int* len, struct socket_info* si, int mode)
+{
 	str proto;
 	int l;
 	
 	proto.s = get_valid_proto_name(si->proto);
 	proto.len = strlen(proto.s);
 	
-	l = proto.len + si->address_str.len + si->port_no_str.len + 2;
+	if(mode==1)
+		l = proto.len + si->useinfo.name.len + si->useinfo.port_no_str.len + 2;
+	else
+		l = proto.len + si->address_str.len + si->port_no_str.len + 2;
 
 	if(si->address.af==AF_INET6)
 		l += 2;
 	
 	if (*len < l) {
-		ERR("socket2str: Destionation buffer too short\n");
+		LM_ERR("Destionation buffer too short\n");
 		*len = l;
 		return -1;
 	}
@@ -342,17 +397,25 @@ int socket2str(char* s, int* len, struct socket_info* si)
 	memcpy(s, proto.s, proto.len);
 	s += proto.len;
 	*s = ':'; s++;
-	if(si->address.af==AF_INET6) {
-		*s = '['; s++;
+	if(mode==1){
+		memcpy(s, si->useinfo.name.s, si->useinfo.name.len);
+		s += si->useinfo.name.len;
+		*s = ':'; s++;
+		memcpy(s, si->useinfo.port_no_str.s, si->useinfo.port_no_str.len);
+		s += si->useinfo.port_no_str.len;
+	} else {
+		if(si->address.af==AF_INET6) {
+			*s = '['; s++;
+		}
+		memcpy(s, si->address_str.s, si->address_str.len);
+		s += si->address_str.len;
+		if(si->address.af==AF_INET6) {
+			*s = ']'; s++;
+		}
+		*s = ':'; s++;
+		memcpy(s, si->port_no_str.s, si->port_no_str.len);
+		s += si->port_no_str.len;
 	}
-	memcpy(s, si->address_str.s, si->address_str.len);
-	s += si->address_str.len;
-	if(si->address.af==AF_INET6) {
-		*s = ']'; s++;
-	}
-	*s = ':'; s++;
-	memcpy(s, si->port_no_str.s, si->port_no_str.len);
-	s += si->port_no_str.len;
 
 	*len = l;
 	return 0;
@@ -375,12 +438,30 @@ static int fix_sock_str(struct socket_info* si)
 		ERR("fix_sock_str: No memory left\n");
 		return -1;
 	}
-	if (socket2str(si->sock_str.s, &len, si) < 0) {
-		BUG("fix_sock_str: Error in socket2str\n");
+	if (socketinfo2str(si->sock_str.s, &len, si, 0) < 0) {
+		BUG("fix_sock_str: Error in socket to str\n");
 		return -1;
 	}
 	si->sock_str.s[len] = '\0';
 	si->sock_str.len = len;
+	if(si->useinfo.name.s!=NULL)
+	{
+		len = MAX_SOCKET_STR;
+
+		if (si->useinfo.sock_str.s) pkg_free(si->useinfo.sock_str.s);
+
+		si->useinfo.sock_str.s = pkg_malloc(len + 1);
+		if (si->useinfo.sock_str.s == NULL) {
+			ERR("fix_sock_str: No memory left\n");
+			return -1;
+		}
+		if (socketinfo2str(si->useinfo.sock_str.s, &len, si, 1) < 0) {
+			BUG("fix_sock_str: Error in socket to str\n");
+			return -1;
+		}
+		si->useinfo.sock_str.s[len] = '\0';
+		si->useinfo.sock_str.len = len;
+	}
 	return 0;
 }
 
@@ -493,23 +574,38 @@ struct socket_info* grep_sock_info(str* host, unsigned short port,
 		if (list==0) /* disabled or unknown protocol */
 			continue;
 		for (si=*list; si; si=si->next){
-			DBG("grep_sock_info - checking if host==us: %d==%d && "
-					" [%.*s] == [%.*s]\n", 
+			DBG("grep_sock_info - checking if host==us: %d==%d &&"
+					" [%.*s] == [%.*s]\n",
 						hname.len,
 						si->name.len,
 						hname.len, hname.s,
 						si->name.len, si->name.s
 				);
 			if (port) {
-				DBG("grep_sock_info - checking if port %d matches port %d\n", 
-						si->port_no, port);
-				if (si->port_no!=port) {
+				DBG("grep_sock_info - checking if port %d (advertise %d)"
+						" matches port %d\n",
+						si->port_no, si->useinfo.port_no, port);
+				if (si->port_no!=port && si->useinfo.port_no!=port) {
 					continue;
 				}
 			}
 			if (si_hname_cmp(&hname, &si->name, &si->address_str, 
 								&si->address, si->flags)==0)
 				goto found;
+			if(si->useinfo.name.s!=NULL)
+			{
+				DBG("grep_sock_info - checking advertise if host==us:"
+						" %d==%d && [%.*s] == [%.*s]\n",
+						hname.len,
+						si->useinfo.name.len,
+						hname.len, hname.s,
+						si->useinfo.name.len, si->useinfo.name.s
+				);
+				if (si_hname_cmp(&hname, &si->useinfo.name,
+							&si->useinfo.address_str, &si->useinfo.address,
+							si->flags)==0)
+					goto found;
+			}
 			/* try among the extra addresses */
 			for (ai=si->addr_info_lst; ai; ai=ai->next)
 				if (si_hname_cmp(&hname, &ai->name, &ai->address_str, 
@@ -593,7 +689,8 @@ struct socket_info* find_si(struct ip_addr* ip, unsigned short port,
 					continue;
 				}
 			}
-			if (ip_addr_cmp(ip, &si->address))
+			if (ip_addr_cmp(ip, &si->address)
+					|| ip_addr_cmp(ip, &si->useinfo.address))
 				goto found;
 			for (ai=si->addr_info_lst; ai; ai=ai->next)
 				if (ip_addr_cmp(ip, &ai->address))
@@ -612,12 +709,14 @@ found:
  * return  new sock info on success, 0 on error */
 static struct socket_info* new_sock2list(char* name, struct name_lst* addr_l,
 									unsigned short port,
-									unsigned short proto, enum si_flags flags,
+									unsigned short proto,
+									char *usename, unsigned short useport,
+									enum si_flags flags,
 									struct socket_info** list)
 {
 	struct socket_info* si;
 	
-	si=new_sock_info(name, addr_l, port, proto, flags);
+	si=new_sock_info(name, addr_l, port, proto, usename, useport, flags);
 	if (si==0){
 		LOG(L_ERR, "ERROR: new_sock2list: new_sock_info failed\n");
 		goto error;
@@ -639,12 +738,15 @@ error:
 static struct socket_info* new_sock2list_after(char* name,
 									struct name_lst* addr_l,
 									unsigned short port,
-									unsigned short proto, enum si_flags flags,
+									unsigned short proto,
+									char *usename,
+									unsigned short useport,
+									enum si_flags flags,
 									struct socket_info* after)
 {
 	struct socket_info* si;
 	
-	si=new_sock_info(name, addr_l, port, proto, flags);
+	si=new_sock_info(name, addr_l, port, proto, usename, useport, flags);
 	if (si==0){
 		LOG(L_ERR, "ERROR: new_sock2list_after: new_sock_info failed\n");
 		goto error;
@@ -659,8 +761,9 @@ error:
 
 /* adds a sock_info structure to the corresponding proto list
  * return  0 on success, -1 on error */
-int add_listen_iface(char* name, struct name_lst* addr_l,
+int add_listen_advertise_iface(char* name, struct name_lst* addr_l,
 						unsigned short port, unsigned short proto,
+						char *usename, unsigned short useport,
 						enum si_flags flags)
 {
 	struct socket_info** list;
@@ -691,7 +794,7 @@ int add_listen_iface(char* name, struct name_lst* addr_l,
 			c_port=port;
 		}
 		if (c_proto!=PROTO_SCTP){
-			if (new_sock2list(name, 0, c_port, c_proto,
+			if (new_sock2list(name, 0, c_port, c_proto, usename, useport,
 								flags & ~SI_IS_MHOMED, list)==0){
 				LOG(L_ERR, "ERROR: add_listen_iface: new_sock2list failed\n");
 				goto error;
@@ -700,14 +803,16 @@ int add_listen_iface(char* name, struct name_lst* addr_l,
 			 * since only SCTP can bind to multiple addresses */
 			for (a_l=addr_l; a_l; a_l=a_l->next){
 				if (new_sock2list(a_l->name, 0, c_port, 
-									c_proto, flags & ~SI_IS_MHOMED, list)==0){
+									c_proto, usename, useport,
+									flags & ~SI_IS_MHOMED, list)==0){
 					LOG(L_ERR, "ERROR: add_listen_iface: new_sock2list"
 								" failed\n");
 					goto error;
 				}
 			}
 		}else{
-			if (new_sock2list(name, addr_l, c_port, c_proto, flags, list)==0){
+			if (new_sock2list(name, addr_l, c_port, c_proto, usename, useport,
+						flags, list)==0){
 				LOG(L_ERR, "ERROR: add_listen_iface: new_sock2list failed\n");
 				goto error;
 			}
@@ -718,6 +823,14 @@ error:
 	return -1;
 }
 
+/* adds a sock_info structure to the corresponding proto list
+ * return  0 on success, -1 on error */
+int add_listen_iface(char* name, struct name_lst* addr_l,
+						unsigned short port, unsigned short proto,
+						enum si_flags flags)
+{
+	return add_listen_advertise_iface(name, addr_l, port, proto, 0, 0, flags);
+}
 #ifdef __OS_linux
 
 #include "linux/netlink.h"
@@ -1323,8 +1436,8 @@ static int addr_info_to_si_lst(struct addr_info* ai_lst, unsigned short port,
 	struct addr_info* ail;
 	
 	for (ail=ai_lst; ail; ail=ail->next){
-		if(new_sock2list(ail->name.s, 0, port, proto, ail->flags | flags,
-							list)==0)
+		if(new_sock2list(ail->name.s, 0, port, proto, 0, 0,
+					ail->flags | flags, list)==0)
 			return -1;
 	}
 	return 0;
@@ -1346,7 +1459,7 @@ static int addr_info_to_si_lst_after(struct addr_info* ai_lst,
 	
 	for (ail=ai_lst; ail; ail=ail->next){
 		if((new_si=new_sock2list_after(ail->name.s, 0, port, proto,
-								ail->flags | flags, el))==0)
+								0, 0, ail->flags | flags, el))==0)
 			return -1;
 		el=new_si;
 	}
@@ -1386,7 +1499,8 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 							si->proto, &ai_lst)!=-1){
 			if (si->flags & SI_IS_MHOMED){
 				if((new_si=new_sock2list_after(ai_lst->name.s, 0, si->port_no,
-											si->proto,
+											si->proto, si->useinfo.name.s,
+											si->useinfo.port_no,
 											ai_lst->flags|si->flags, si))==0)
 					break;
 				ail=ai_lst;
