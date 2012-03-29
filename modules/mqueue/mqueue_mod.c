@@ -52,15 +52,15 @@ static int bind_mq(mq_api_t* api);
 
 static pv_export_t mod_pvs[] = {
 	{ {"mqk", sizeof("mqk")-1}, PVT_OTHER, pv_get_mqk, 0,
-		pv_parse_mqk_name, 0, 0, 0 },
+		pv_parse_mq_name, 0, 0, 0 },
 	{ {"mqv", sizeof("mqv")-1}, PVT_OTHER, pv_get_mqv, 0,
-		pv_parse_mqv_name, 0, 0, 0 },
+		pv_parse_mq_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 
 static cmd_export_t cmds[]={
-	{"mq_fetch", (cmd_function)w_mq_fetch, 1, fixup_str_null,
+	{"mq_fetch", (cmd_function)w_mq_fetch, 1, fixup_spve_null,
 		0, ANY_ROUTE},
 	{"mq_add", (cmd_function)w_mq_add, 3, fixup_mq_add,
 		0, ANY_ROUTE},
@@ -114,8 +114,14 @@ static void mod_destroy(void)
 static int w_mq_fetch(struct sip_msg* msg, char* mq, char* str2)
 {
 	int ret;
+	str q;
 
-	ret = mq_head_fetch((str*)mq);
+	if(fixup_get_svalue(msg, (gparam_t*)mq, &q)<0)
+	{
+		LM_ERR("cannot get the queue\n");
+		return -1;
+	}
+	ret = mq_head_fetch(&q);
 	if(ret<0)
 		return ret;
 	return 1;
@@ -123,8 +129,15 @@ static int w_mq_fetch(struct sip_msg* msg, char* mq, char* str2)
 
 static int w_mq_add(struct sip_msg* msg, char* mq, char* key, char* val)
 {
+	str q;
 	str qkey;
 	str qval;
+
+	if(fixup_get_svalue(msg, (gparam_t*)mq, &q)<0)
+	{
+		LM_ERR("cannot get the queue\n");
+		return -1;
+	}
 	if(fixup_get_svalue(msg, (gparam_t*)key, &qkey)<0)
 	{
 		LM_ERR("cannot get the key\n");
@@ -135,7 +148,7 @@ static int w_mq_add(struct sip_msg* msg, char* mq, char* key, char* val)
 		LM_ERR("cannot get the val\n");
 		return -1;
 	}
-	if(mq_item_add((str*)mq, &qkey, &qval)<0)
+	if(mq_item_add(&q, &qkey, &qval)<0)
 		return -1;
 	return 1;
 }
@@ -202,14 +215,12 @@ int mq_param(modparam_t type, void *val)
 
 static int fixup_mq_add(void** param, int param_no)
 {
-    if(param_no==2 || param_no==3) {
+    if(param_no==1 || param_no==2 || param_no==3) {
 		return fixup_spve_null(param, 1);
     }
-    if (param_no != 1)	{
-		LM_ERR("invalid parameter number %d\n", param_no);
-		return E_UNSPEC;
-    }
-    return fixup_str_null(param, 1);
+
+    LM_ERR("invalid parameter number %d\n", param_no);
+    return E_UNSPEC;
 }
 
 static int bind_mq(mq_api_t* api)

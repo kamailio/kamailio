@@ -33,6 +33,7 @@
 #include "../../parser/parse_param.h"
 #include "../../ut.h"
 #include "../../shm_init.h"
+#include "../../lib/kcore/faked_msg.h"
 
 #include "mqueue_api.h"
 
@@ -353,19 +354,52 @@ int mq_item_add(str *qname, str *key, str *val)
 /**
  *
  */
-int pv_parse_mqk_name(pv_spec_t *sp, str *in)
+int pv_parse_mq_name(pv_spec_t *sp, str *in)
 {
-	mq_head_t *mh = NULL;
-	mh = mq_head_get(in);
-	if(mh==NULL)
-	{
-		LM_ERR("mqueue not found: %.*s\n", in->len, in->s);
-		return -1;
-	}
 	sp->pvp.pvn.u.isname.name.s = *in;
 	sp->pvp.pvn.type = PV_NAME_INTSTR;
 	sp->pvp.pvn.u.isname.type = 1;
 	return 0;
+}
+
+str *pv_get_mq_name(str *in)
+{
+	str *queue;
+
+	if (in->s[0] != '$')
+		queue = in;
+	else
+	{
+		pv_spec_t *pvs;
+		pv_value_t pvv;
+
+		if (pv_locate_name(in) != in->len)
+		{
+			LM_ERR("invalid pv [%.*s]\n", in->len, in->s);
+			return NULL;
+		}
+		if ((pvs = pv_cache_get(in)) == NULL)
+		{
+			LM_ERR("failed to get pv spec for [%.*s]\n", in->len, in->s);
+			return NULL;
+		}
+
+		memset(&pvv, 0, sizeof(pv_value_t));
+		if (faked_msg_init() < 0)
+		{
+			LM_ERR("faked_msg_init() failed\n");
+			return NULL;
+		}
+		if (pv_get_spec_value(faked_msg_next(), pvs, &pvv) != 0)
+		{
+			LM_ERR("failed to get pv value for [%.*s]\n", in->len, in->s);
+			return NULL;
+		}
+
+		queue = &pvv.rs;
+	}
+
+	return queue;
 }
 
 /**
@@ -375,28 +409,24 @@ int pv_get_mqk(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	mq_pv_t *mp = NULL;
-	mp = mq_pv_get(&param->pvn.u.isname.name.s);
-	if(mp==NULL || mp->item==NULL || mp->item->key.len<=0)
-		return pv_get_null(msg, param, res);
-	return pv_get_strval(msg, param, res, &mp->item->key);
-}
+	str *in = pv_get_mq_name(&param->pvn.u.isname.name.s);
 
-/**
- *
- */
-int pv_parse_mqv_name(pv_spec_t *sp, str *in)
-{
-	mq_head_t *mh = NULL;
-	mh = mq_head_get(in);
-	if(mh==NULL)
+	if (in == NULL)
+	{
+		LM_ERR("failed to get mq name\n");
+		return -1;
+	}
+
+	if (mq_head_get(in) == NULL)
 	{
 		LM_ERR("mqueue not found: %.*s\n", in->len, in->s);
 		return -1;
 	}
-	sp->pvp.pvn.u.isname.name.s = *in;
-	sp->pvp.pvn.type = PV_NAME_INTSTR;
-	sp->pvp.pvn.u.isname.type = 1;
-	return 0;
+
+	mp = mq_pv_get(in);
+	if(mp==NULL || mp->item==NULL || mp->item->key.len<=0)
+		return pv_get_null(msg, param, res);
+	return pv_get_strval(msg, param, res, &mp->item->key);
 }
 
 /**
@@ -406,7 +436,21 @@ int pv_get_mqv(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	mq_pv_t *mp = NULL;
-	mp = mq_pv_get(&param->pvn.u.isname.name.s);
+	str *in = pv_get_mq_name(&param->pvn.u.isname.name.s);
+
+	if (in == NULL)
+	{
+		LM_ERR("failed to get mq name\n");
+		return -1;
+	}
+
+	if (mq_head_get(in) == NULL)
+	{
+		LM_ERR("mqueue not found: %.*s\n", in->len, in->s);
+		return -1;
+	}
+
+	mp = mq_pv_get(in);
 	if(mp==NULL || mp->item==NULL || mp->item->val.len<=0)
 		return pv_get_null(msg, param, res);
 	return pv_get_strval(msg, param, res, &mp->item->val);
