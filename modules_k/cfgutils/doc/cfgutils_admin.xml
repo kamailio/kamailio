@@ -524,6 +524,38 @@ unlock("$rU");
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><function moreinfo="none">core_hash(string1, string2, size)</function></title>
+		<para>
+		Exported function that enables the core_hash() function to be used
+		from the configuration file.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para><quote>string1</quote> first string to
+					hash</para>
+			</listitem>
+			<listitem>
+				<para><quote>string2</quote> (optional) second
+					string to hash (set to "" if not
+					needed)</para>
+			</listitem>
+			<listitem>
+				<para><quote>size</quote> size of the hash space
+					(used as a power of 2)</para>
+			</listitem>
+		</itemizedlist>
+		<para>This function can be used from ANY_ROUTE.</para>
+		<example>
+		<title><function moreinfo="none">core_hash()</function> usage</title>
+		<programlisting format="linespecific">
+...
+core_hash("$ci", "", 4);
+...
+</programlisting>
+		</example>
+	</section>
 </section>
 	<section>
 		<title><acronym>MI</acronym> Commands</title>

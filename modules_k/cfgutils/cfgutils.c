@@ -118,6 +118,9 @@ static int pv_get_random_val(struct sip_msg *msg, pv_param_t *param,
 static int fixup_prob( void** param, int param_no);
 static int fixup_gflags( void** param, int param_no);
 
+static int fixup_core_hash(void **param, int param_no);
+static int w_core_hash(struct sip_msg *msg, char *p1, char *p2, char *p3);
+
 int bind_cfgutils(cfgutils_api_t *api);
 
 static int mod_init(void);
@@ -171,6 +174,8 @@ static cmd_export_t cmds[]={
 	{"lock",         (cmd_function)cfg_lock,    1,   fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"unlock",       (cmd_function)cfg_unlock,  1,   fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"core_hash",    (cmd_function)w_core_hash, 3,   fixup_core_hash, 0,
 		ANY_ROUTE},
 	{"bind_cfgutils", (cmd_function)bind_cfgutils,  0,
 		0, 0, 0},
@@ -800,6 +805,46 @@ int cfgutils_lock(str *lkey)
 int cfgutils_unlock(str *lkey)
 {
 	return cfg_lock_helper(lkey, 1);
+}
+
+static int fixup_core_hash(void **param, int param_no)
+{
+	if (param_no == 1)
+		return fixup_spve_null(param, 1);
+	else if (param_no == 2)
+		return fixup_spve_null(param, 1);
+	else if (param_no == 3)
+		return fixup_igp_null(param, 1);
+	else
+		return 0;
+}
+
+static int w_core_hash(struct sip_msg *msg, char *p1, char *p2, char *p3)
+{
+        str s1, s2;
+        int size;
+
+        if (fixup_get_svalue(msg, (gparam_p) p1, &s1) != 0)
+        {
+                LM_ERR("invalid s1 paramerer\n");
+                return -1;
+        }
+        if (fixup_get_svalue(msg, (gparam_p) p2, &s2) != 0)
+        {
+                LM_ERR("invalid s2 paramerer\n");
+                return -1;
+        }
+        if (fixup_get_ivalue(msg, (gparam_p) p3, &size) != 0)
+        {
+                LM_ERR("invalid size paramerer\n");
+                return -1;
+        }
+
+        if (size <= 0) size = 2;
+        else size = 1 << size;
+
+	/* Return value _MUST_ be > 0 */
+        return core_hash(&s1, s2.len ? &s2 : NULL, size) + 1;
 }
 
 /**
