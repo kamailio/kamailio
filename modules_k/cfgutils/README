@@ -513,6 +513,10 @@ unlock("$rU");
    Exported function that enables the core_hash() function to be used from
    the configuration file.
 
+   This is a quick and simple hash function and it is not
+   cryptographically secure. This function should not be used for any
+   security related purposes.
+
    Parameters:
      * “string1” first string to hash
      * “string2” (optional) second string to hash (set to "" if not

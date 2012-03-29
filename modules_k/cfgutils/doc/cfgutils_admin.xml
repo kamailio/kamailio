@@ -530,6 +530,11 @@ unlock("$rU");
 		Exported function that enables the core_hash() function to be used
 		from the configuration file.
 		</para>
+		<para>
+		This is a quick and simple hash function and it is not
+		cryptographically secure.  This function should not be used for
+		any security related purposes.
+		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
 			<listitem>
