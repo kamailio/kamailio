@@ -205,7 +205,6 @@ modparam("xlog", "log_facility", "LOG_DAEMON")
 			<para><emphasis>facility</emphasis> - The log facility that will be used for this single log message.
 			</para>
 			<para>
-			<para>
 			If this parameter is missing, the implicit facility is either the facility set with
 			the 'log_facility' module parameter or the core's log facility.
 			</para>
