@@ -210,9 +210,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 			branch < t->nr_of_outgoings;
 			branch++
 		) {
-			if ((t->uac[branch].request.buffer != NULL)
-				&& (t->uac[branch].last_received < 200)
-			)
+			if (t->uac[branch].last_received < 200)
 				break;
 		}
 
