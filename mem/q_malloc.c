@@ -428,10 +428,10 @@ void qm_free(struct qm_block* qm, void* p)
 {
 	struct qm_frag* f;
 	unsigned long size;
-#ifdef QM_JOIN_FREE
+#ifdef MEM_JOIN_FREE
 	struct qm_frag* next;
 	struct qm_frag* prev;
-#endif /* QM_JOIN_FREE*/
+#endif /* MEM_JOIN_FREE*/
 
 #ifdef DBG_QM_MALLOC
 	MDBG("qm_free(%p, %p), called from %s: %s(%d)\n", qm, p, file, func, line);
@@ -446,9 +446,6 @@ void qm_free(struct qm_block* qm, void* p)
 		LOG(L_WARN, "WARNING:qm_free: free(0) called\n");
 		return;
 	}
-#ifdef QM_JOIN_FREE
-	next=prev=0;
-#endif /* QM_JOIN_FREE*/
 	f=(struct qm_frag*) ((char*)p-sizeof(struct qm_frag));
 #ifdef DBG_QM_MALLOC
 	qm_debug_frag(qm, f);
@@ -470,43 +467,46 @@ void qm_free(struct qm_block* qm, void* p)
 	sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
 #endif
 
-#ifdef QM_JOIN_FREE
-	/* mark this fragment as used (might fall into the middle of joined frags)
-	  to give us an extra chance of detecting a double free call (if the joined
-	  fragment has not yet been reused) */
-	f->u.nxt_free=(void*)0x1L; /* bogus value, just to mark it as free */
-	/* join packets if possible*/
-	next=FRAG_NEXT(f);
-	if (((char*)next < (char*)qm->last_frag_end) &&( next->u.is_free)){
+#ifdef MEM_JOIN_FREE
+	if(unlikely(cfg_get(core, core_cfg, mem_join)!=0)) {
+		next=prev=0;
+		/* mark this fragment as used (might fall into the middle of joined frags)
+		  to give us an extra chance of detecting a double free call (if the joined
+		  fragment has not yet been reused) */
+		f->u.nxt_free=(void*)0x1L; /* bogus value, just to mark it as free */
+		/* join packets if possible*/
+		next=FRAG_NEXT(f);
+		if (((char*)next < (char*)qm->last_frag_end) &&( next->u.is_free)){
 		/* join */
 #ifdef DBG_QM_MALLOC
-		qm_debug_frag(qm, next);
+			qm_debug_frag(qm, next);
 #endif
-		qm_detach_free(qm, next);
-		size+=next->size+FRAG_OVERHEAD;
-		qm->real_used-=FRAG_OVERHEAD;
-		qm->free_hash[GET_HASH(next->size)].no--; /* FIXME slow */
-	}
+			qm_detach_free(qm, next);
+			size+=next->size+FRAG_OVERHEAD;
+			qm->real_used-=FRAG_OVERHEAD;
+			qm->free_hash[GET_HASH(next->size)].no--; /* FIXME slow */
+		}
 	
-	if (f > qm->first_frag){
-		prev=FRAG_PREV(f);
-		/*	(struct qm_frag*)((char*)f - (struct qm_frag_end*)((char*)f-
+		if (f > qm->first_frag){
+			prev=FRAG_PREV(f);
+			/*	(struct qm_frag*)((char*)f - (struct qm_frag_end*)((char*)f-
 								sizeof(struct qm_frag_end))->size);*/
 #ifdef DBG_QM_MALLOC
-		qm_debug_frag(qm, prev);
+			qm_debug_frag(qm, prev);
 #endif
-		if (prev->u.is_free){
-			/*join*/
-			qm_detach_free(qm, prev);
-			size+=prev->size+FRAG_OVERHEAD;
-			qm->real_used-=FRAG_OVERHEAD;
-			qm->free_hash[GET_HASH(prev->size)].no--; /* FIXME slow */
-			f=prev;
+			if (prev->u.is_free){
+				/*join*/
+				qm_detach_free(qm, prev);
+				size+=prev->size+FRAG_OVERHEAD;
+				qm->real_used-=FRAG_OVERHEAD;
+					qm->free_hash[GET_HASH(prev->size)].no--; /* FIXME slow */
+				f=prev;
+			}
 		}
-	}
-	f->size=size;
-	FRAG_END(f)->size=f->size;
-#endif /* QM_JOIN_FREE*/
+		f->size=size;
+		FRAG_END(f)->size=f->size;
+	} /* if cfg_core->mem_join */
+#endif /* MEM_JOIN_FREE*/
 #ifdef DBG_QM_MALLOC
 	f->file=file;
 	f->func=func;

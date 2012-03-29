@@ -303,10 +303,10 @@
 #define HAVE_RESOLV_RES_STR ""
 #endif
 
-#ifdef QM_JOIN_FREE 
-#define QM_JOIN_FREE_STR ", QM_JOIN_FREE"
+#ifdef MEM_JOIN_FREE
+#define MEM_JOIN_FREE_STR ", MEM_JOIN_FREE"
 #else
-#define QM_JOIN_FREE_STR ""
+#define MEM_JOIN_FREE_STR ""
 #endif
 
 #ifdef SYSLOG_CALLBACK_SUPPORT 

@@ -122,6 +122,7 @@ struct cfg_group_core default_core_cfg = {
 	3, /*!< mem_summary -flags: 0 off, 1 pkg_status, 2 shm_status,
 		4 pkg_sums, 8 shm_sums, 16 short_status */
 	0, /*!< mem_safety - 0 disabled */
+	0, /*!< mem_join - 0 disabled */
 	L_ERR, /*!< corelog */
 	L_ERR, /*!< latency log */
 	0, /*!< latency limit db */
@@ -315,6 +316,8 @@ cfg_def_t core_cfg_def[] = {
 		" 16 - short status instead of dump" },
 	{"mem_safety",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"safety level for memory operations"},
+	{"mem_join",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"join free memory fragments"},
 	{"corelog",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"log level for non-critical core error messages"},
 	{"latency_log",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,

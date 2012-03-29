@@ -560,6 +560,8 @@ data_target = $(prefix)/$(data_dir)
 #		now.
 # -DDBG_MALLOC
 #		issues additional debugging information if lock/unlock is called
+# -DMEM_JOIN_FREE
+#		enable the join of free memory chunks (see also mem_join cfg param)
 # -DFAST_LOCK
 #		uses fast arhitecture specific locking (see the arh. specific section)
 # -DUSE_SYSV_SEM
@@ -704,6 +706,7 @@ C_DEFS= $(extra_defs) \
 
 ifeq ($(MEMDBG), 1)
 	C_DEFS+= -DDBG_QM_MALLOC
+	C_DEFS+= -DMEM_JOIN_FREE
 else
 	C_DEFS+= -DF_MALLOC
 endif
