@@ -909,10 +909,10 @@ onreply_route {
 
 5.3. ds_reload
 
-   It reloads the groups and included destinations. The command is
-   disabled for call load based dispatching (algorithm 10) since removal
-   of destinations may leave the list of active calls with broken
-   references.
+   It reloads the groups and included destinations. For algorithm 10 (call
+   load distribution), old internal list of active calls is destroyed
+   (because it is bould to the previous list of gateways), meaning that
+   the module is starting to count active calls again from 0.
 
    Name: ds_reload
 

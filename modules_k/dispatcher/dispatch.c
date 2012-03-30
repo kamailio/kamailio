@@ -595,9 +595,10 @@ next_line:
 
 	fclose(f);
 	f = NULL;
-	/* Update list */
+	/* Update list - should it be sync'ed? */
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
+	ds_ht_clear_slots(_dsht_load);
 	ds_print_sets();
 	return 0;
 
@@ -774,9 +775,10 @@ int ds_load_db(void)
 		goto err2;
 	}
 
-	/*update data*/
+	/* update data - should it be sync'ed? */
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
+	ds_ht_clear_slots(_dsht_load);
 
 	ds_print_sets();
 
@@ -1327,7 +1329,8 @@ int ds_load_replace(struct sip_msg *msg, str *duid)
 
 	ds_unlock_cell(_dsht_load, &msg->callid->body);
 	ds_del_cell(_dsht_load, &msg->callid->body);
-	idx->dlist[olddst].dload--;
+	if(idx->dlist[olddst].dload>0)
+		idx->dlist[olddst].dload--;
 
 	if(ds_load_add(msg, idx, set, newdst)<0)
 	{
@@ -1384,7 +1387,8 @@ int ds_load_remove(struct sip_msg *msg)
 
 	ds_unlock_cell(_dsht_load, &msg->callid->body);
 	ds_del_cell(_dsht_load, &msg->callid->body);
-	idx->dlist[olddst].dload--;
+	if(idx->dlist[olddst].dload>0)
+		idx->dlist[olddst].dload--;
 
 	return 0;
 }
@@ -1423,7 +1427,8 @@ int ds_load_remove_byid(int set, str *duid)
 		return -1;
 	}
 
-	idx->dlist[olddst].dload--;
+	if(idx->dlist[olddst].dload>0)
+		idx->dlist[olddst].dload--;
 
 	return 0;
 }

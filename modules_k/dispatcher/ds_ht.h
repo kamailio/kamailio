@@ -69,5 +69,6 @@ int ds_unlock_cell(ds_ht_t *dsht, str *cid);
 
 int ds_ht_dbg(ds_ht_t *dsht);
 int ds_cell_free(ds_cell_t *cell);
+int ds_ht_clear_slots(ds_ht_t *dsht);
 
 #endif

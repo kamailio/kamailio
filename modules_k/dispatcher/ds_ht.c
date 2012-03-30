@@ -149,6 +149,32 @@ int ds_ht_destroy(ds_ht_t *dsht)
 	return 0;
 }
 
+int ds_ht_clear_slots(ds_ht_t *dsht)
+{
+	int i;
+	ds_cell_t *it, *it0;
+
+	if(dsht==NULL)
+		return -1;
+
+	for(i=0; i<dsht->htsize; i++)
+	{
+		lock_get(&dsht->entries[i].lock);
+		/* free entries */
+		it = dsht->entries[i].first;
+		while(it)
+		{
+			it0 = it;
+			it = it->next;
+			ds_cell_free(it0);
+		}
+		dsht->entries[i].first = NULL;
+		dsht->entries[i].esize = 0;
+		lock_destroy(&dsht->entries[i].lock);
+	}
+	return 0;
+}
+
 
 int ds_add_cell(ds_ht_t *dsht, str *cid, str *duid, int dset)
 {
