@@ -950,7 +950,7 @@ int update_record_puadb(ua_pres_t *pres, int expires, str *etag)
 	u_cols[n_update_cols] = &str_expires_col;
 	u_vals[n_update_cols].type = DB1_INT;
 	u_vals[n_update_cols].nul = 0;
-	u_vals[n_update_cols].val.int_val = expires;
+	u_vals[n_update_cols].val.int_val = expires + (int) time(NULL);
 	n_update_cols++;
 
 	if (etag)
@@ -1327,7 +1327,7 @@ int update_dialog_puadb(ua_pres_t *pres, int expires, str *contact)
 	u_cols[n_update_cols] = &str_expires_col;
 	u_vals[n_update_cols].type = DB1_INT;
 	u_vals[n_update_cols].nul = 0;
-	u_vals[n_update_cols].val.int_val = expires;
+	u_vals[n_update_cols].val.int_val = expires + (int) time(NULL);
 	n_update_cols++;
 
 	u_cols[n_update_cols] = &str_cseq_col;
