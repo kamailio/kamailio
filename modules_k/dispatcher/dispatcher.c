@@ -928,13 +928,6 @@ static const char* dispatcher_rpc_reload_doc[2] = {
  */
 static void dispatcher_rpc_reload(rpc_t* rpc, void* ctx)
 {
-	if(dstid_avp_name.n!=0) {
-		LM_ERR("No reload support when call load dispatching is enabled."
-				" Do not set dstid_avp param if you do not use alg 10.\n");
-		rpc->fault(ctx, 500, "Command disabled");
-		return ;
-	}
-
 	if(!ds_db_url.s) {
 		if (ds_load_list(dslistfile)!=0) {
 			rpc->fault(ctx, 500, "Reload Failed");
