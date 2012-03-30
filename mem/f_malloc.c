@@ -445,6 +445,49 @@ found:
 }
 
 
+#ifdef MEM_JOIN_FREE
+/**
+ * join fragment f with next one (if it is free)
+ */
+static void fm_join_frag(struct fm_block* qm, struct fm_frag* f)
+{
+	int hash;
+	struct fm_frag **pf;
+	struct fm_frag* n;
+
+	n=FRAG_NEXT(f);
+	/* check if valid and if in free list */
+	if (((char*)n >= (char*)qm->last_frag) || (n->u.nxt_free==NULL))
+		return;
+
+	/* detach n from the free list */
+	hash=GET_HASH(n->size);
+	pf=&(qm->free_hash[hash].first);
+	/* find it */
+	for(;(*pf)&&(*pf!=n); pf=&((*pf)->u.nxt_free)); /*FIXME slow */
+	if (*pf==0){
+		/* not found, bad! */
+		LM_WARN("could not find %p in free list (hash=%ld)\n", n, GET_HASH(n->size));
+		return;
+	}
+	/* detach */
+	*pf=n->u.nxt_free;
+	qm->free_hash[hash].no--;
+#ifdef F_MALLOC_HASH_BITMAP
+	if (qm->free_hash[hash].no==0)
+		fm_bmp_reset(qm, hash);
+#endif /* F_MALLOC_HASH_BITMAP */
+	/* join */
+	f->size+=n->size+FRAG_OVERHEAD;
+#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
+	qm->real_used-=FRAG_OVERHEAD;
+#ifdef MALLOC_STATS
+	sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+#endif /* MALLOC_STATS */
+#endif /* DBG_F_MALLOC || MALLOC_STATS*/
+}
+#endif /*MEM_JOIN_FREE*/
+
 /**
  * \brief Main memory manager free function
  * 
@@ -465,9 +508,11 @@ void fm_free(struct fm_block* qm, void* p)
 #ifdef DBG_F_MALLOC
 	MDBG("fm_free(%p, %p), called from %s: %s(%d)\n", qm, p, file, func, line);
 	if (p>(void*)qm->last_frag || p<(void*)qm->first_frag){
-		LOG(L_CRIT, "BUG: fm_free: bad pointer %p (out of memory block!) - "
-				"aborting\n", p);
-		abort();
+		LOG(L_CRIT, "BUG: fm_free: bad pointer %p (out of memory block!),"
+				" called from %s: %s(%d) - aborting\n", p,
+				file, func, line);
+		if(likely(cfg_get(core, core_cfg, mem_safety)==0))
+			abort();
 	}
 #endif
 	if (p==0) {
@@ -493,6 +538,10 @@ void fm_free(struct fm_block* qm, void* p)
 	f->func=func;
 	f->line=line;
 #endif
+#ifdef MEM_JOIN_FREE
+	if(unlikely(cfg_get(core, core_cfg, mem_join)!=0))
+		fm_join_frag(qm, f);
+#endif /*MEM_JOIN_FREE*/
 	fm_insert_free(qm, f);
 }
 
