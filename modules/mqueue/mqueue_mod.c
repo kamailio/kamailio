@@ -64,7 +64,7 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"mq_add", (cmd_function)w_mq_add, 3, fixup_mq_add,
 		0, ANY_ROUTE},
-	{"mq_pv_free", (cmd_function)w_mq_pv_free, 1, fixup_str_null,
+	{"mq_pv_free", (cmd_function)w_mq_pv_free, 1, fixup_spve_null,
 		0, ANY_ROUTE},
 	{"bind_mq", (cmd_function)bind_mq, 1, 0,
 		0, ANY_ROUTE},
@@ -155,7 +155,14 @@ static int w_mq_add(struct sip_msg* msg, char* mq, char* key, char* val)
 
 static int w_mq_pv_free(struct sip_msg* msg, char* mq, char* str2)
 {
-	mq_pv_free((str*)mq);
+	str q;
+
+	if(fixup_get_svalue(msg, (gparam_t*)mq, &q)<0)
+	{
+		LM_ERR("cannot get the queue\n");
+		return -1;
+	}
+	mq_pv_free(&q);
 	return 1;
 }
 
