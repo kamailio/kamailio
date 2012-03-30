@@ -703,7 +703,9 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	query_cols[n_query_cols]= &str_updated_col;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val= UPDATED_TYPE; 
+	query_vals[n_query_cols].val.int_val=
+		core_hash(res_id, NULL,
+				(waitn_time * rls_notifier_poll_rate) - 1);
 	n_query_cols++;
 		
 	query_cols[n_query_cols]= &str_auth_state_col;
@@ -821,6 +823,7 @@ error:
 
 void timer_send_notify(unsigned int ticks,void *param)
 {
+	static int round = 0;
 	db_key_t query_cols[1], update_cols[1], result_cols[6];
 	db_val_t query_vals[1], update_vals[1];
 	int did_col, resource_uri_col, auth_state_col, reason_col,
@@ -831,7 +834,8 @@ void timer_send_notify(unsigned int ticks,void *param)
 	query_cols[0]= &str_updated_col;
 	query_vals[0].type = DB1_INT;
 	query_vals[0].nul = 0;
-	query_vals[0].val.int_val= UPDATED_TYPE; 
+	query_vals[0].val.int_val= round;
+	if (++round > (waitn_time * rls_notifier_poll_rate) - 1) round = 0;
 
 	result_cols[did_col= n_result_cols++]= &str_rlsubs_did_col;
 	result_cols[resource_uri_col= n_result_cols++]= &str_resource_uri_col;

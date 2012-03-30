@@ -296,9 +296,11 @@ modparam("rls", "rlpres_clean_period", 100)
 	<section>
 		<title><varname>waitn_time</varname> (int)</title>
 		<para>
-	 The timer period at which the server should attempt to send
-	 Notifies with the updated presence state of the subscribed list
-	 or watcher information.
+		The maximum time period that RLS NOTIFY requests will
+		be buffered for.  The server will attempt to send
+		NOTIFY requests with the updated presence state of the
+		subscribed list or watcher information within this
+		many seconds of a change occurring.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>5</quote>.
@@ -309,6 +311,28 @@ modparam("rls", "rlpres_clean_period", 100)
 		<programlisting format="linespecific">
 ...
 modparam("rls", "waitn_time", 10)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>notifier_poll_rate</varname> (int)</title>
+		<para>
+		The number of times per second that the notifier process
+		should check for work.  Approximately
+		1/(waitn_time * notifier_poll_rate) of the pending updates
+		will be sent each time the notifier runs.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>10</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>notifier_poll_rate</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "notifier_poll_rate", 20)
 ...
 </programlisting>
 		</example>

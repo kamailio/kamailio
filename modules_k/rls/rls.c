@@ -41,6 +41,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../ut.h"
+#include "../../timer_proc.h"
 #include "../../hashes.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
@@ -73,7 +74,8 @@ db_func_t rls_xcap_dbf;
 /** modules variables */
 str rls_server_address = {0, 0};
 int rls_expires_offset=0;
-int waitn_time = 10;
+int waitn_time = 5;
+int rls_notifier_poll_rate = 10;
 str rlsubs_table = str_init("rls_watchers");
 str rlpres_table = str_init("rls_presentity");
 str rls_xcap_table = str_init("xcap");
@@ -222,6 +224,7 @@ static param_export_t params[]={
 	{ "rlpres_table",           STR_PARAM,   &rlpres_table.s                 },
 	{ "xcap_table",             STR_PARAM,   &rls_xcap_table.s               },
 	{ "waitn_time",             INT_PARAM,   &waitn_time                     },
+	{ "notifier_poll_rate",     INT_PARAM,   &rls_notifier_poll_rate         },
 	{ "clean_period",           INT_PARAM,   &clean_period                   },
 	{ "rlpres_clean_period",    INT_PARAM,   &rlpres_clean_period            },
 	{ "max_expires",            INT_PARAM,   &rls_max_expires                },
@@ -297,34 +300,34 @@ static int mod_init(void)
 		rls_outbound_proxy.len = strlen(rls_outbound_proxy.s);
 	/* extract port if any */
 	if(xcap_root)
-    {
-        sep= strchr(xcap_root, ':');
-        if(sep)
-        {
-            char* sep2= NULL;
-            sep2= strchr(sep+ 1, ':');
-            if(sep2)
-                sep= sep2;
+	{
+		sep= strchr(xcap_root, ':');
+		if(sep)
+		{
+			char* sep2= NULL;
+			sep2= strchr(sep+ 1, ':');
+			if(sep2)
+				sep= sep2;
 
-            str port_str;
+			str port_str;
 
-            port_str.s= sep+ 1;
-            port_str.len= strlen(xcap_root)- (port_str.s-xcap_root);
+			port_str.s= sep+ 1;
+			port_str.len= strlen(xcap_root)- (port_str.s-xcap_root);
 
-            if(str2int(&port_str, &xcap_port)< 0)
-            {
-                LM_ERR("converting string to int [port]= %.*s\n",port_str.len,
-                        port_str.s);
-                return -1;
-            }
-            if(xcap_port< 0 || xcap_port> 65535)
-            {
-                LM_ERR("wrong xcap server port\n");
-                return -1;
-            }
-            *sep= '\0';
-        }
-    }
+			if(str2int(&port_str, &xcap_port)< 0)
+			{
+				LM_ERR("converting string to int [port]= %.*s\n",
+					port_str.len, port_str.s);
+				return -1;
+			}
+			if(xcap_port< 0 || xcap_port> 65535)
+			{
+				LM_ERR("wrong xcap server port\n");
+				return -1;
+			}
+			*sep= '\0';
+		}
+	}
 
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
@@ -535,6 +538,9 @@ static int mod_init(void)
 	if(waitn_time<= 0)
 		waitn_time= 5;
 
+	if(rls_notifier_poll_rate<= 0)
+		rls_notifier_poll_rate= 10;
+
 	/* bind libxml wrapper functions */
 
 	if((bind_libxml=(bind_libxml_t)find_export("bind_libxml_api", 1, 0))== NULL)
@@ -615,7 +621,8 @@ static int mod_init(void)
 			return -1;
 		}
 	}
-	register_timer(timer_send_notify,0, waitn_time);
+
+	register_basic_timers(1);
 
 	if (rlpres_clean_period < 0)
 		rlpres_clean_period = clean_period;
@@ -628,7 +635,7 @@ static int mod_init(void)
 
 	if ((rls_update_subs_lock = lock_alloc()) == NULL)
 	{
-		LM_ERR("Failed to alloc rls_updae_subs_lock\n");
+		LM_ERR("Failed to alloc rls_update_subs_lock\n");
 		return -1;
 	}
 	if (lock_init(rls_update_subs_lock) == NULL)
@@ -647,6 +654,17 @@ static int child_init(int rank)
 {
 	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
 		return 0; /* don't call child_init for main process more than once */
+
+	if (rank==PROC_MAIN)
+	{
+		if (fork_basic_utimer(PROC_TIMER, "RLS NOTIFIER", 1,
+					timer_send_notify, NULL,
+					1000000/rls_notifier_poll_rate) < 0)
+		{
+			LM_ERR("Failed to start RLS NOTIFIER\n");
+			return -1;
+		}
+	}
 
 	LM_DBG("child [%d]  pid [%d]\n", rank, getpid());
 
