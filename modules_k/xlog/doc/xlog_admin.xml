@@ -194,7 +194,7 @@ modparam("xlog", "log_facility", "LOG_DAEMON")
 	<title>Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">xlog([[facility,] level,] format)</function>
+		<function moreinfo="none">xlog([ [facility,] level,] format)</function>
 		</title>
 		<para>
 		Print a formated message using LOG function.
@@ -324,7 +324,7 @@ xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">xlogl([[facility,] level,] format)</function>
+		<function moreinfo="none">xlogl([ [facility,] level,] format)</function>
 		</title>
 		<para>
 		Similar to xlog(), in addition is printing cfg line number

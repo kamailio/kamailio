@@ -37,9 +37,9 @@ Elena-Ramona Modroiu
 
         5. Functions
 
-              5.1. xlog([[facility,] level,] format)
+              5.1. xlog([ [facility,] level,] format)
               5.2. xdbg(format)
-              5.3. xlogl([[facility,] level,] format)
+              5.3. xlogl([ [facility,] level,] format)
               5.4. xdbgl(format)
 
    List of Examples
@@ -73,9 +73,9 @@ Chapter 1. Admin Guide
 
    5. Functions
 
-        5.1. xlog([[facility,] level,] format)
+        5.1. xlog([ [facility,] level,] format)
         5.2. xdbg(format)
-        5.3. xlogl([[facility,] level,] format)
+        5.3. xlogl([ [facility,] level,] format)
         5.4. xdbgl(format)
 
 1. Overview
@@ -186,12 +186,12 @@ modparam("xlog", "log_facility", "LOG_DAEMON")
 
 5. Functions
 
-   5.1. xlog([[facility,] level,] format)
+   5.1. xlog([ [facility,] level,] format)
    5.2. xdbg(format)
-   5.3. xlogl([[facility,] level,] format)
+   5.3. xlogl([ [facility,] level,] format)
    5.4. xdbgl(format)
 
-5.1. xlog([[facility,] level,] format)
+5.1. xlog([ [facility,] level,] format)
 
    Print a formated message using LOG function.
 
@@ -247,7 +247,7 @@ CAL3\n");
 xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...
 
-5.3. xlogl([[facility,] level,] format)
+5.3. xlogl([ [facility,] level,] format)
 
    Similar to xlog(), in addition is printing cfg line number at the
    beginning of message.
