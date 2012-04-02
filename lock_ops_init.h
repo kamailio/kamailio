@@ -27,7 +27,7 @@
 #ifndef __lock_ops_init_h
 #define __lock_ops_init_h
 
-int init_lock_ops();
-void destroy_lock_ops();
+int init_lock_ops(void);
+void destroy_lock_ops(void);
 
 #endif

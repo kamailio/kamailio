@@ -28,17 +28,17 @@
 #define _daemonize_h
 
 int daemonize(char* name, int daemon_status_fd_input);
-int do_suid();
+int do_suid(void);
 int increase_open_fds(int target);
 int set_core_dump(int enable, long unsigned int size);
-int mem_lock_pages();
+int mem_lock_pages(void);
 int set_rt_prio(int prio, int policy);
 
-void daemon_status_init();
-void daemon_status_on_fork_cleanup();
+void daemon_status_init(void);
+void daemon_status_on_fork_cleanup(void);
 int daemon_status_send(char status);
-void daemon_status_no_wait();
-void daemon_status_on_fork_cleanup();
+void daemon_status_no_wait(void);
+void daemon_status_on_fork_cleanup(void);
 
 #endif /*_daemonize_h */
 

@@ -80,7 +80,7 @@ extern enum sip_protos nxt_proto[PROTO_LAST+1];
 
 extern int socket_types;
 
-void init_proto_order();
+void init_proto_order(void);
 
 int add_listen_iface(char* name, struct name_lst* nlst,
 						unsigned short port, unsigned short proto,
@@ -89,9 +89,9 @@ int add_listen_advertise_iface(char* name, struct name_lst* nlst,
 						unsigned short port, unsigned short proto,
 						char *useaddr, unsigned short useport,
 						enum si_flags flags);
-int fix_all_socket_lists();
-void print_all_socket_lists();
-void print_aliases();
+int fix_all_socket_lists(void);
+void print_all_socket_lists(void);
+void print_aliases(void);
 
 struct socket_info* grep_sock_info(str* host, unsigned short port,
 										unsigned short proto);
@@ -123,7 +123,7 @@ static inline int next_proto(unsigned short proto)
 /* gets first non-null socket_info structure
  * (useful if for. e.g we are not listening on any udp sockets )
  */
-inline static struct socket_info* get_first_socket()
+inline static struct socket_info* get_first_socket(void)
 {
 	if (udp_listen) return udp_listen;
 #ifdef USE_TCP

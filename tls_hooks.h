@@ -79,10 +79,10 @@ struct tls_hooks{
 	int (*init_si)(struct socket_info* si);
 	/* generic init function (called at ser init, after module initialization
 	 *  and process table creation)*/
-	int (*init)();
+	int (*init)(void);
 	/* destroy function, called after the modules are destroyed, and 
 	 * after  destroy_tcp() */
-	void (*destroy)();
+	void (*destroy)(void);
 };
 
 

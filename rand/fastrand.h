@@ -31,7 +31,7 @@
 /* side effect: seeds also random w/ seed */
 void fastrand_seed(unsigned int seed);
 /* generate a 32 bit random number */
-unsigned int fastrand();
+unsigned int fastrand(void);
 /* generate a random number between 0 and max inclusive ( 0 <= r <= max)
  * should not be used for cryptography */
 unsigned int fastrand_max(unsigned int max);

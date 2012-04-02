@@ -104,7 +104,7 @@
 /** @brief my_pid(), process_no are from pt.h but we cannot \#include it here
    because of circular dependencies */
 extern int process_no;
-extern int my_pid();
+extern int my_pid(void);
 
 /** @brief non-zero if logging to stderr instead to the syslog */
 extern int log_stderr;

@@ -110,7 +110,7 @@ void daemon_status_init()
  *
  * @return 0 on success, -1 on error (and sets errno).
  */
-int daemon_status_pre_daemonize()
+int daemon_status_pre_daemonize(void)
 {
 	int ret;
 	

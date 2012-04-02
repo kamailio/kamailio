@@ -58,11 +58,11 @@ struct tcp_child{
 #define TCP_ALIAS_REPLACE   2
 
 
-int init_tcp();
-void destroy_tcp();
+int init_tcp(void);
+void destroy_tcp(void);
 int tcp_init(struct socket_info* sock_info);
-int tcp_init_children();
-void tcp_main_loop();
+int tcp_init_children(void);
+void tcp_main_loop(void);
 void tcp_receive_loop(int unix_sock);
 int tcp_fix_child_sockets(int* fd);
 

@@ -132,20 +132,20 @@ struct timer_ln{ /* timer_link already used in tm */
 
 
 
-void timer_main(); /* timer main loop, never exists */
+void timer_main(void); /* timer main loop, never exists */
 
 
-int init_timer();
-int arm_timer();
-void destroy_timer();
+int init_timer(void);
+int arm_timer(void);
+void destroy_timer(void);
 
 #ifdef USE_SLOW_TIMER
-int arm_slow_timer();
-void slow_timer_main();
+int arm_slow_timer(void);
+void slow_timer_main(void);
 #endif
 
 
-struct timer_ln* timer_alloc();
+struct timer_ln* timer_alloc(void);
 void timer_free(struct timer_ln* t);
 
 #ifdef TIMER_DEBUG
@@ -203,7 +203,7 @@ struct sr_timer{
 /*register a periodic timer;
  * ret: <0 on error*/
 int register_timer(timer_function f, void* param, unsigned int interval);
-ticks_t get_ticks();
-ticks_t get_ticks_raw();
+ticks_t get_ticks(void);
+ticks_t get_ticks_raw(void);
 
 #endif

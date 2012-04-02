@@ -27,8 +27,8 @@
 #ifndef __shm_init_h
 #define __shm_init_h
 
-int shm_initialized();
-int init_shm();
+int shm_initialized(void);
+int init_shm(void);
 
 #endif /*__shm_init_h*/
 

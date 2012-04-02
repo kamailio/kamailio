@@ -48,11 +48,11 @@
 #endif
 
 
-int tls_loaded();
-int tls_has_init_si(); /*returns true if a handle for tls_init is registered*/
+int tls_loaded(void);
+int tls_has_init_si(void); /*returns true if a handle for tls_init is registered*/
 int tls_init(struct socket_info* si);
-int init_tls();
-void destroy_tls();
+int init_tls(void);
+void destroy_tls(void);
 
 #endif /* TLS_HOOKS */
 #endif

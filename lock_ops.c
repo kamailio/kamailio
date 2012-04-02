@@ -48,7 +48,7 @@
 #include "lock_ops.h"
 
 /* returns 0 on success, -1 on error */
-int init_lock_ops()
+int init_lock_ops(void)
 {
 #ifdef USE_FUTEX
 	int os_ver;
@@ -66,6 +66,6 @@ int init_lock_ops()
 
 
 
-void destroy_lock_ops()
+void destroy_lock_ops(void)
 {
 }

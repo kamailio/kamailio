@@ -69,8 +69,8 @@ struct script_cb{
  */
 int register_script_cb( cb_function f, unsigned int flags, void *param );
 
-int init_script_cb();
-void destroy_script_cb();
+int init_script_cb(void);
+void destroy_script_cb(void);
 
 /* Execute pre-script callbacks of a given type.
  * Returns 0 on error, 1 on success

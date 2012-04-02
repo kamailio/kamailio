@@ -92,15 +92,15 @@ extern struct route_list event_rt;
 /* script optimization level */
 extern int scr_opt_lev;
 
-int init_routes();
-void destroy_routes();
+int init_routes(void);
+void destroy_routes(void);
 int route_get(struct route_list* rt, char* name);
 int route_lookup(struct route_list* rt, char* name);
 
 void push(struct action* a, struct action** head);
 int add_actions(struct action* a, struct action** head);
-void print_rls();
-int fix_rls();
+void print_rls(void);
+int fix_rls(void);
 
 int eval_expr(struct run_act_ctx* h, struct expr* e, struct sip_msg* msg);
 

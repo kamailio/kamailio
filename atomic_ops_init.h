@@ -40,8 +40,8 @@
 #define __atomic_ops_init_h
 
 /*! \brief init atomic ops */
-int init_atomic_ops();
+int init_atomic_ops(void);
 /*! \brief destroy atomic ops (e.g. frees the locks, if locks are used) */
-void destroy_atomic_ops();
+void destroy_atomic_ops(void);
 
 #endif

@@ -35,10 +35,10 @@ struct cfg_read_handle {
 };
 
 /* free the list of not yet fixed selects */
-void cfg_free_selects();
+void cfg_free_selects(void);
 
 /* fix-up the select calls */
-int cfg_fixup_selects();
+int cfg_fixup_selects(void);
 
 int select_cfg_var(str *res, select_t *s, struct sip_msg *msg);
 

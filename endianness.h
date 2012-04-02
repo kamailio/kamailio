@@ -72,7 +72,7 @@ extern int _endian_test_int;
 #define is_little_endian()	endian_test()
 
 
-extern int endianness_sanity_check();
+extern int endianness_sanity_check(void);
 
 /* detect compile time endianess */
 #if defined __BYTE_ORDER && defined __LITTLE_ENDIAN && defined __BIG_ENDIAN
