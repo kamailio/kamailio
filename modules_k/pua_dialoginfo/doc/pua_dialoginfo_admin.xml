@@ -339,7 +339,84 @@ modparam("pua_dialoginfo", "caller_confirmed", 1)
 </programlisting>
 		</example>
 		</section>
-
+	
+	<section>
+		<title><varname>send_publish_flag</varname> (int)</title>
+		<para>
+			This message flag indicates whether to send PUBLISH requests or not.
+			If not set, PUBLISH requests are sent out only if their R-URI is local (according to myself).
+		</para>
+		<para>
+			<emphasis>Default value is <quote>-1</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>send_publish_flag</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "send_publish_flag", 8)
+...
+</programlisting>
+		</example>
+		</section>
+	
+		<section>
+		<title><varname>use_pubruri_avps</varname> (int)</title>
+		<para>
+			Get Publish R-Uri from avps (see corresponding avp params), not from reqeust to/from uri. 
+		</para>
+		<para>
+			<emphasis>Default value is <quote>0</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>use_pubruri_avps</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "use_pubruri_avps", 1)
+...
+</programlisting>
+		</example>
+		</section>
+		
+		<section>
+		<title><varname>pubruri_caller_avp</varname> (int)</title>
+		<para>
+			If use_pubruri_avps is enabled, PUBLISH-requests reporting dialog-information about the caller (entity=caller) are sent using the value of the specified avp as R-Uri.  
+			If multiple AVPs with the same name (but different indexes) are present, for each value a corresponding PUBLISH-request is generated.
+			If no AVP with the specified name exists, no caller-related PUBLISH requests are sent.   
+		</para>
+		<para>
+			<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>pubruri_caller_avp</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "pubruri_caller_avp", "$avp(s:puburis_caller)")
+...
+</programlisting>
+		</example>
+		</section>
+		
+		<section>
+		<title><varname>pubruri_callee_avp</varname> (int)</title>
+		<para>
+			If use_pubruri_avps is enabled, PUBLISH-requests reporting dialog-information about the callee (entity=callee) are sent using the value of the specified avp as R-Uri.  
+			If multiple AVPs with the same name (but different indexes) are present, for each value a corresponding PUBLISH-request is generated.
+			If no AVP with the specified name exists, no callee-related PUBLISH requests are sent.   
+		</para>
+		<para>
+			<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>pubruri_callee_avp</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "pubruri_callee_avp", "$avp(s:puburis_callee)")
+...
+</programlisting>
+		</example>
+		</section>
+		
 	</section>
 
 	<section>

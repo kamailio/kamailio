@@ -31,6 +31,7 @@
 #include "../../parser/parse_expires.h"
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
+#include "../../str_list.h"
 #include "../../name_alias.h"
 #include "../../socket_info.h"
 #include "../usrloc/usrloc.h"
@@ -259,26 +260,32 @@ error:
 	return NULL;
 }	
 
-void dialog_publish(char *state, str *entity, str *peer, str *callid, 
+void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
 	unsigned int initiator, unsigned int lifetime, str *localtag, str *remotetag,
-	str *localtarget, str *remotetarget)
+	str *localtarget, str *remotetarget, unsigned short do_pubruri_localcheck)
 {
 	str* body= NULL;
 	str uri= {NULL, 0};
 	publ_info_t* publ= NULL;
 	int size= 0;
 	str content_type;
-    struct sip_uri entity_uri;
+    struct sip_uri ruri_uri;
 
-	/* send PUBLISH only if the receiver (entity, RURI) is local*/
-	if (parse_uri(entity->s, entity->len, &entity_uri) < 0) {
-		LM_ERR("failed to parse the entity URI\n");
+
+    if (parse_uri(ruri->s, ruri->len, &ruri_uri) < 0) {
+		LM_ERR("failed to parse the PUBLISH R-URI\n");
 		return;
 	}
-	if (!check_self(&(entity_uri.host), 0, 0)) {
-		LM_DBG("do not send PUBLISH to external URI %.*s\n",entity->len, entity->s);
-		return;
-	}
+
+    if(do_pubruri_localcheck) {
+
+		/* send PUBLISH only if the receiver PUBLISH R-URI is local*/
+		if (!check_self(&(ruri_uri.host), 0, 0)) {
+			LM_DBG("do not send PUBLISH to external URI %.*s\n",ruri->len, ruri->s);
+			return;
+		}
+
+    }
 
 	content_type.s= "application/dialog-info+xml";
 	content_type.len= 27;
@@ -287,11 +294,11 @@ void dialog_publish(char *state, str *entity, str *peer, str *callid,
 	if(body == NULL || body->s == NULL)
 		goto error;
 	
-	LM_DBG("publish uri= %.*s\n", entity->len, entity->s);
+	LM_DBG("publish uri= %.*s\n", ruri->len, ruri->s);
 	
 	size= sizeof(publ_info_t) 
 			+ sizeof(str) 			/* *pres_uri */
-			+ ( entity->len 		/* pres_uri->s */
+			+ ( ruri->len 		/* pres_uri->s */
 			  + callid->len + 16	/* id.s */
 			  + content_type.len	/* content_type.s */
 			)*sizeof(char); 
@@ -311,9 +318,9 @@ void dialog_publish(char *state, str *entity, str *peer, str *callid,
 	publ->pres_uri= (str*)((char*)publ + size);
 	size+= sizeof(str);
 	publ->pres_uri->s= (char*)publ+ size;
-	memcpy(publ->pres_uri->s, entity->s, entity->len);
-	publ->pres_uri->len= entity->len;
-	size+= entity->len;
+	memcpy(publ->pres_uri->s, ruri->s, ruri->len);
+	publ->pres_uri->len= ruri->len;
+	size+= ruri->len;
 
 	if(body)
 	{
@@ -367,4 +374,18 @@ error:
 		pkg_free(uri.s);
 
 	return;
+}
+
+
+
+void dialog_publish_multi(char *state, struct str_list* ruris, str *entity, str *peer, str *callid,
+	unsigned int initiator, unsigned int lifetime, str *localtag, str *remotetag,
+	str *localtarget, str *remotetarget, unsigned short do_pubruri_localcheck) {
+
+	while(ruris) {
+		LM_INFO("CALLING dialog_publish for URI %.*s\n",ruris->s.len, ruris->s.s);
+		dialog_publish(state,&(ruris->s),entity,peer,callid,initiator,lifetime,localtag,remotetag,localtarget,remotetarget,do_pubruri_localcheck);
+		ruris=ruris->next;
+	}
+
 }
