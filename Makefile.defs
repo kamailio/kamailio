@@ -167,7 +167,7 @@ EXTRAVERSION = -dev7
 # memory debugger switcher
 # 0 - off (release mode)
 # 1 - on (devel mode)
-MEMDBG ?= 1
+MEMDBG ?= 0
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
