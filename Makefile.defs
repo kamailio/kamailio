@@ -709,6 +709,7 @@ ifeq ($(MEMDBG), 1)
 	C_DEFS+= -DMEM_JOIN_FREE
 else
 	C_DEFS+= -DF_MALLOC
+	C_DEFS+= -DMEM_JOIN_FREE
 endif
 ifneq ($(PKG_MEM_SIZE),)
 	C_DEFS+= -DPKG_MEM_SIZE=$(PKG_MEM_SIZE)
