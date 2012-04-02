@@ -440,6 +440,11 @@ void fm_free(struct fm_block* qm, void* p)
 	MDBG("fm_free: freeing block alloc'ed from %s: %s(%ld)\n",
 			f->file, f->func, f->line);
 #endif
+	if(unlikely(f->u.nxt_free!=NULL)) {
+		LM_INFO("freeing a free fragment (%p/%p) - ignore\n",
+				f, p);
+		return;
+	}
 	size=f->size;
 #if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
 	qm->used-=size;
