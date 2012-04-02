@@ -84,6 +84,7 @@ int load_tm( struct tm_binds *tmb)
 	}*/
 
 	/* non-cfg API */
+	tmb->t_replicate = t_replicate_uri;
 	tmb->register_tmcb =register_tmcb;
 	tmb->t_reply = w_t_reply_wrp;
 	tmb->t_reply_with_body = t_reply_with_body;

@@ -59,6 +59,7 @@ struct tm_binds {
 	cmd_function     t_relay_to_udp; /* WARNING: failure_route unsafe */
 	cmd_function     t_relay_to_tcp; /* WARNING: failure_route unsafe */ 
 	cmd_function     t_relay;        /* WARNING: failure_route unsafe */
+	treplicate_uri_f t_replicate;    /* WARNING: failure_route unsafe */
 	tnewtran_f       t_newtran;
 	treply_f         t_reply;
 	treply_wb_f      t_reply_with_body;

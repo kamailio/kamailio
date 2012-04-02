@@ -49,9 +49,11 @@ enum unmatched_cancel_t { UM_CANCEL_STATEFULL=0, UM_CANCEL_STATELESS,
 
 typedef int (*tfwd_f)(struct sip_msg* p_msg , struct proxy_l * proxy );
 typedef int (*taddblind_f)( /*struct cell *t */ );
+typedef int (*treplicate_uri_f)(struct sip_msg* p_msg , str *suri );
 
 void t_on_branch(unsigned int go_to);
 unsigned int get_on_branch();
+int t_replicate_uri(struct sip_msg *p_msg, str *suri);
 int t_replicate(struct sip_msg *p_msg, struct proxy_l * proxy, int proto);
 /*  -- not use outside t_fwd.c for noe
 char *print_uac_request( struct cell *t, struct sip_msg *i_req,

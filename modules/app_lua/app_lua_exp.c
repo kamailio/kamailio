@@ -573,6 +573,39 @@ static int lua_sr_tm_t_release(lua_State *L)
 /**
  *
  */
+static int lua_sr_tm_t_replicate(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+	str suri;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TM))
+	{
+		LM_WARN("weird: tm function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+	suri.s = (char*)lua_tostring(L, -1);
+	if(suri.s == NULL)
+	{
+		LM_WARN("invalid parameters from Lua\n");
+		return app_lua_return_error(L);
+	}
+	suri.len = strlen(suri.s);
+
+	ret = _lua_tmb.t_replicate(env_L->msg, &suri);
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
 static const luaL_reg _sr_tm_Map [] = {
 	{"t_reply",        lua_sr_tm_t_reply},
 	{"t_relay",        lua_sr_tm_t_relay},
@@ -583,6 +616,7 @@ static const luaL_reg _sr_tm_Map [] = {
 	{"t_is_canceled",  lua_sr_tm_t_is_canceled},
 	{"t_newtran",      lua_sr_tm_t_newtran},
 	{"t_release",      lua_sr_tm_t_release},
+	{"t_replicate",    lua_sr_tm_t_replicate},
 	{NULL, NULL}
 };
 

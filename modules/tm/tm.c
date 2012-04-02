@@ -1472,22 +1472,14 @@ inline static int w_t_relay_to_avp( struct sip_msg  *p_msg ,
 	return r;
 }
 
-inline static int w_t_replicate_uri(struct sip_msg  *msg ,
-				char *uri,       /* sip uri as string or variable */
-				char *_foo       /* nothing expected */ )
+int t_replicate_uri(struct sip_msg *msg, str *suri)
 {
 	struct proxy_l *proxy;
 	struct sip_uri turi;
-	str suri;
 	int r = -1;
 
 	memset(&turi, 0, sizeof(struct sip_uri));
-	if(fixup_get_svalue(msg, (gparam_p)uri, &suri)!=0)
-	{
-		LM_ERR("invalid replicate uri parameter");
-		return -1;
-	}
-	if(parse_uri(suri.s, suri.len, &turi)!=0)
+	if(parse_uri(suri->s, suri->len, &turi)!=0)
 	{
 		LM_ERR("bad replicate SIP address!\n");
 		return -1;
@@ -1496,7 +1488,7 @@ inline static int w_t_replicate_uri(struct sip_msg  *msg ,
 	proxy=mk_proxy(&turi.host, turi.port_no, turi.proto);
 	if (proxy==0) {
 		LM_ERR("cannot create proxy from URI <%.*s>\n",
-			suri.len, suri.s );
+			suri->len, suri->s );
 		return -1;
 	}
 
@@ -1504,7 +1496,20 @@ inline static int w_t_replicate_uri(struct sip_msg  *msg ,
 	free_proxy(proxy);
 	pkg_free(proxy);
 	return r;
+}
 
+inline static int w_t_replicate_uri(struct sip_msg  *msg ,
+				char *uri,       /* sip uri as string or variable */
+				char *_foo       /* nothing expected */ )
+{
+	str suri;
+
+	if(fixup_get_svalue(msg, (gparam_p)uri, &suri)!=0)
+	{
+		LM_ERR("invalid replicate uri parameter");
+		return -1;
+	}
+	return t_replicate_uri(msg, &suri);
 }
 
 inline static int w_t_replicate( struct sip_msg  *p_msg ,
