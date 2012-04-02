@@ -525,7 +525,7 @@ int convert_temporary_dialog_puadb(ua_pres_t *pres)
 	query_cols[n_query_cols] = &str_cseq_col;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val = pres->cseq + 1;
+	query_vals[n_query_cols].val.int_val = pres->cseq;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_record_route_col;
@@ -1092,7 +1092,7 @@ int insert_dialog_puadb(ua_pres_t* pres)
 	db_cols[n_cols] = &str_cseq_col;
 	db_vals[n_cols].type = DB1_INT;
 	db_vals[n_cols].nul = 0;
-	db_vals[n_cols].val.int_val = pres->cseq + 1;
+	db_vals[n_cols].val.int_val = pres->cseq;
 	n_cols++;
 
 	db_cols[n_cols] = &str_record_route_col;
@@ -1333,7 +1333,7 @@ int update_dialog_puadb(ua_pres_t *pres, int expires, str *contact)
 	u_cols[n_update_cols] = &str_cseq_col;
 	u_vals[n_update_cols].type = DB1_INT;
 	u_vals[n_update_cols].nul = 0;
-	u_vals[n_update_cols].val.int_val = pres->cseq + 1;
+	u_vals[n_update_cols].val.int_val = pres->cseq;
 	n_update_cols++;
 
 	u_cols[n_update_cols] = &str_remote_contact_col;

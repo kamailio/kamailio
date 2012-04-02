@@ -260,9 +260,6 @@ void insert_htable(ua_pres_t* presentity)
 	hash_code= core_hash(presentity->pres_uri,presentity->watcher_uri, HASH_SIZE);
 	lock_get(&HashT->p_records[hash_code].lock);
 
-	if (presentity->watcher_uri)
-		presentity->cseq++;
-
 	_insert_htable(presentity, hash_code);
 
 	lock_release(&HashT->p_records[hash_code].lock);
