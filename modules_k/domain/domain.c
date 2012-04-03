@@ -310,11 +310,9 @@ int reload_tables ( void )
 
     /* Choose new hash table and free its old contents */
     if (*hash_table == hash_table_1) {
-	LM_INFO("new hash table is 2\n");
 	hash_table_free(hash_table_2);
 	new_hash_table = hash_table_2;
     } else {
-	LM_INFO("new hash table is 1\n");
 	hash_table_free(hash_table_1);
 	new_hash_table = hash_table_1;
     }
@@ -464,7 +462,7 @@ int reload_tables ( void )
 	    }
 	}
 
-	LM_INFO("inserting <did/domain> = <%s/%s> into hash table\n",
+	LM_DBG("inserting <did/domain> = <%s/%s> into hash table\n",
 	       did.s, domain.s);
 
 	if (hash_table_install(new_hash_table, &did, &domain) == -1) {
