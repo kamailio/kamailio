@@ -4,6 +4,7 @@
  * Domain MI functions
  *
  * Copyright (C) 2006 Voice Sistem SRL
+ * Copyright (C) 2012 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -40,14 +41,14 @@
  */
 struct mi_root* mi_domain_reload(struct mi_root *cmd_tree, void *param)
 {
-	if(db_mode==0)
-		return init_mi_tree( 500, "command not activated", 21);
-
-	if (reload_domain_table () == 1) {
-		return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	} else {
-		return init_mi_tree( 500, "Domain table reload failed", 26);
-	}
+    lock_get(reload_lock);
+    if (reload_tables() == 1) {
+	lock_release(reload_lock);
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+    } else {
+	lock_release(reload_lock);
+	return init_mi_tree( 500, "Domain table reload failed", 26);
+    }
 }
 
 
@@ -56,21 +57,16 @@ struct mi_root* mi_domain_reload(struct mi_root *cmd_tree, void *param)
  */
 struct mi_root* mi_domain_dump(struct mi_root *cmd_tree, void *param)
 {
-	struct mi_root* rpl_tree;
+    struct mi_root* rpl_tree;
 
-	if(db_mode==0)
-		return init_mi_tree( 500, "command not activated", 21);
+    rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+    if (rpl_tree == NULL) return 0;
 
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if (rpl_tree==NULL)
-		return 0;
+    if(hash_table_mi_print(*hash_table, &rpl_tree->node) < 0) {
+	LM_ERR("failed to add node\n");
+	free_mi_tree(rpl_tree);
+	return 0;
+    }
 
-	if(hash_table_mi_print(*hash_table, &rpl_tree->node)< 0)
-	{
-		LM_ERR("Error while adding node\n");
-		free_mi_tree(rpl_tree);
-		return 0;
-	}
-
-	return rpl_tree;
+    return rpl_tree;
 }

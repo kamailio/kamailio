@@ -3,7 +3,7 @@
  *
  * Domain module headers
  *
- * Copyright (C) 2002-2003 Juha Heinanen
+ * Copyright (C) 2002-2012 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -48,8 +48,17 @@
  * Type definitions
  */
 struct domain_list {
-	str domain;
-	struct domain_list *next;
+    str domain;
+    str did;
+    struct attr_list *attrs;
+    struct domain_list *next;
+};
+
+struct attr_list {
+    str name;
+    short type;
+    int_str val;
+    struct attr_list *next;
 };
 
 typedef struct param_source {
@@ -62,10 +71,14 @@ typedef struct param_source {
 /*
  * Module parameters variables
  */
-extern int db_mode;             /* Database usage mode: 0 = no cache, 1 = cache */
+extern str db_url;
 extern str domain_table;	/* Domain table name */
+extern str domain_attrs_table;	/* Domain attributes table name */
+extern str did_col;   	        /* Domain id column name */
 extern str domain_col;   	/* Domain column name */
-
+extern str name_col;   	        /* Attribute name column name */
+extern str type_col;   	        /* Attribute type column name */
+extern str value_col;  	        /* Attribute value column name */
 
 /*
  * Other module variables
@@ -73,6 +86,6 @@ extern str domain_col;   	/* Domain column name */
 extern struct domain_list **hash_table_1; /* Hash table for domains */
 extern struct domain_list **hash_table_2; /* Hash table for domains */
 extern struct domain_list ***hash_table;  /* Current hash table */
-
+extern gen_lock_t *reload_lock;
 
 #endif /* DOMAIN_MOD_H */

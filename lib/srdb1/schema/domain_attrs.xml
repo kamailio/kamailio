@@ -8,11 +8,11 @@
 ]>
 
 <table id="domain" xmlns:db="http://docbook.org/ns/docbook">
-    <name>domain</name>
-    <version>2</version>
+    <name>domain_attrs</name>
+    <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>This table is used by the domain module to determine if a host part of a URI is "local" or not. More information about the domain module can be found at: &KAMAILIO_MOD_DOC;domain.html
+        <db:para>This table contains attributes of domain ids. More information about the domain module can be found at: &KAMAILIO_MOD_DOC;domain.html
         </db:para>
     </description>
 
@@ -26,20 +26,37 @@
         <description>unique ID</description>
     </column>
 
-    <column id="dom">
-        <name>domain</name>
-        <type>string</type>
-        <size>&domain_len;</size>
-        <description>Domain name</description>
-        <default/>
-        <natural/>
-    </column>
-
     <column id="did">
         <name>did</name>
         <type>string</type>
         <size>&domain_len;</size>
         <description>Domain id</description>
+        <default/>
+        <natural/>
+    </column>
+
+    <column id="name">
+        <name>name</name>
+        <type>string</type>
+        <size>32</size>
+        <description>Name of attribute</description>
+        <default/>
+        <natural/>
+    </column>
+
+    <column id="type">
+        <name>type</name>
+        <type>unsigned int</type>
+        <description>Type of attribute (0=integer, 2=string)</description>
+        <default/>
+        <natural/>
+    </column>
+
+    <column id="value">
+        <name>value</name>
+        <type>string</type>
+        <size>255</size>
+        <description>Value of attribute</description>
         <default/>
         <natural/>
     </column>
@@ -53,8 +70,10 @@
     </column>
 
     <index>
-        <name>domain_idx</name>
-        <colref linkend="dom"/>
+        <name>domain_attrs_idx</name>
+        <colref linkend="did"/>
+        <colref linkend="name"/>
+        <colref linkend="value"/>
         <unique/>
     </index>
 </table>

@@ -16,26 +16,23 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		Domain module implements checks that based on domain table determine 
-		if a host part of an <acronym>URI</acronym> is <quote>local</quote> or 
-		not.  A <quote>local</quote> domain is one that the proxy is responsible 
-		for.
+		Domain module implements checks that based on domain table
+		determine if a domain is <quote>local</quote>.
+		A <quote>local</quote> domain is one that the proxy is
+		responsible for.  SIP URIs of local users must have hostpart
+		that is equal to one of these domains.
 	</para>
 	<para>
-		Domain module operates in caching or non-caching mode depending on 
-		value of module parameter <parameter moreinfo="none">db_mode</parameter>.
-		In caching mode domain module reads the contents of domain table into 
-		cache memory when the module is loaded.  After that domain table is 
-		re-read only when module is given domain_reload fifo command.  Any
-		changes in domain table must thus be followed by 
-		<quote>domain_reload</quote> command in order to reflect them in 
-		module behavior. In non-caching mode domain module always queries domain
-		table in the database.
+		Domain module reads the contents of domain and domain_attrs
+		tables into cache memory when the module is loaded.
+		Any changes in domain or domain_attrs tables must thus be
+		followed by <quote>domain.reload</quote> rpc command in
+		order to reflect them in module behavior.
 	</para>
 	<para>
-		Caching is implemented using a hash table. The size of the hash table 
-		is given by HASH_SIZE constant defined in domain_mod.h. 
-		Its <quote>factory default</quote> value is 128.
+		Caching is implemented using a hash table. The size of
+		the hash table is given by HASH_SIZE constant defined in
+		domain_mod.h. Its <quote>factory default</quote> value is 128.
 	</para>
 	</section>
 
@@ -71,26 +68,10 @@ modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
 		</example>
 	</section>
 	<section>
-		<title><varname>db_mode</varname> (integer)</title>
-		<para>
-		Database mode: 0 means non-caching, 1 means caching.
-		</para>
-		<para>
-		Default value is 0 (non-caching).
-		</para>
-		<example>
-		<title>db_mode example</title>
-		<programlisting format="linespecific">
-modparam("domain", "db_mode", 1)   # Use caching
-</programlisting>
-		</example>
-	</section>
-	<section>
 		<title><varname>domain_table</varname> (string)</title>
 		<para>
 		Name of table containing names of local domains that the proxy is 
-		responsible for. Local users must have in their sip uri a host part 
-		that is equal to one of these domains.
+		responsible for.
 		</para>
 		<para>
 		Default value is <quote>domain</quote>.
@@ -103,9 +84,40 @@ modparam("domain", "domain_table", "new_name")
 		</example>
 	</section>
 	<section>
+		<title><varname>domain_attrs_table</varname> (string)</title>
+		<para>
+		Name of table containing attributes of local domains.
+		</para>
+		<para>
+		Default value is <quote>domain_attrs</quote>.
+		</para>
+		<example>
+		<title>Setting domain_attrs_table parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "domain_attrs_table", "local_domain_attributes")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>did_col</varname> (string)</title>
+		<para>
+		Name of column containing domain id (did) of domain in domain
+		and domain_attrs tables.
+		</para>
+		<para>
+		Default value is <quote>did</quote>.
+		</para>
+		<example>
+		<title>Setting did_col parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "did_col", "domain_did")
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>domain_col</varname> (string)</title>
 		<para>
-		Name of column containing domains in domain table.
+		Name of column containing domain name in domain table.
 		</para>
 		<para>
 		Default value is <quote>domain</quote>.
@@ -114,6 +126,52 @@ modparam("domain", "domain_table", "new_name")
 		<title>Setting domain_col parameter</title>
 		<programlisting format="linespecific">
 modparam("domain", "domain_col", "domain_name")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>name_col</varname> (string)</title>
+		<para>
+		Name of column containing attribute name in domain_attrs table.
+		</para>
+		<para>
+		Default value is <quote>name</quote>.
+		</para>
+		<example>
+		<title>Setting name_col parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "name_col", "attr_name")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>type_col</varname> (string)</title>
+		<para>
+		Name of column containing attribute type in domain_attrs table.
+		Type value 0 is integer and type value 2 is string.
+		</para>
+		<para>
+		Default value is <quote>type</quote>.
+		</para>
+		<example>
+		<title>Setting name_col parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "type_col", "attr_type")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>value_col</varname> (string)</title>
+		<para>
+		Name of column containing attribute value in domain_attrs table.
+		</para>
+		<para>
+		Default value is <quote>value</quote>.
+		</para>
+		<example>
+		<title>Setting value_col parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "value_col", "attr_value")
 </programlisting>
 		</example>
 	</section>
@@ -146,7 +204,8 @@ modparam("domain", "register_myself", 1)
 		one of the local domains that the proxy is responsible for
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		BRANCH_ROUTE, and LOCAL_ROUTE.
 		</para>
 		<example>
 		<title>is_from_local usage</title>
@@ -172,7 +231,7 @@ if (is_from_local()) {
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		BRANCH_ROUTE.
+		BRANCH_ROUTE, and LOCAL_ROUTE.
 		</para>
 		<example>
 		<title>is_uri_host_local usage</title>
@@ -208,7 +267,7 @@ if (is_uri_host_local()) {
 		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		BRANCH_ROUTE.
+		BRANCH_ROUTE, and LOCAL_ROUTE.
 		</para>
 		<example>
 		<title>is_domain_local usage</title>
@@ -229,6 +288,32 @@ if (is_domain_local("$avp(i:850)")) {
 if (is_domain_local("$avp(s:some_avp)")) {
 	...
 };
+...
+		</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><function moreinfo="none">lookup_domain(domain[, prefix])</function></title>
+		<para>
+		This function checks if domain given in
+		domain argument (pseudo variable) is local and, if so,
+		adds attributes
+		associated with domain's id (did) to AVPs.  If prefix
+		argument (string) is given, names of attributes are prefixes by
+		it.  In addition to attributes given in domain_attrs
+		table, AVP did containing did of domain is added.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		BRANCH_ROUTE, and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title>lookup_domain</title>
+		<programlisting format="linespecific">
+...
+if (lookup_domain("$fd", "from_")) {
+    xlog("L_INFO", "did of domain $fd is $avp(from_did)\n");
+}
 ...
 		</programlisting>
 		</example>
@@ -314,9 +399,10 @@ if (is_domain_local("$avp(s:some_avp)")) {
 	<section>
 	<title>Known Limitations</title>
 	<para>
-		There is an unlikely race condition on domain list update.  If a 
+		There is an unlikely race condition on domain reload.  If a 
 		process uses a table, which is reloaded at the same time twice 
-		through <acronym>FIFO</acronym>, the second reload will delete the 
+		through <acronym>FIFO</acronym> or <acronym>RPC</acronym>,
+		the second reload will delete the  
 		original table still in use by the process.
 	</para>
 	</section>
