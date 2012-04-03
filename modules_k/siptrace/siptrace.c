@@ -1694,13 +1694,13 @@ static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int
 		return -1;
 	}
 	
-	if((len = strlen(pipport)) > 256) {
+	if((len = strlen(pipport)) >= 256) {
 		LM_ERR("too big pipport\n");
 		goto error;
 	}
 
 	/* our tmp string */
-        strncpy(tmp_piport, pipport, len);
+        strncpy(tmp_piport, pipport, len+1);
 
 	len = 0;
 
