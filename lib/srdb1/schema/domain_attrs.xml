@@ -31,8 +31,6 @@
         <type>string</type>
         <size>&domain_len;</size>
         <description>Domain id</description>
-        <default/>
-        <natural/>
     </column>
 
     <column id="name">
@@ -40,16 +38,12 @@
         <type>string</type>
         <size>32</size>
         <description>Name of attribute</description>
-        <default/>
-        <natural/>
     </column>
 
     <column id="type">
         <name>type</name>
         <type>unsigned int</type>
         <description>Type of attribute (0=integer, 2=string)</description>
-        <default/>
-        <natural/>
     </column>
 
     <column id="value">
@@ -57,8 +51,6 @@
         <type>string</type>
         <size>255</size>
         <description>Value of attribute</description>
-        <default/>
-        <natural/>
     </column>
 
     <column>
