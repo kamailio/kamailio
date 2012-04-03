@@ -102,7 +102,9 @@ modparam("domain", "domain_attrs_table", "local_domain_attributes")
 		<title><varname>did_col</varname> (string)</title>
 		<para>
 		Name of column containing domain id (did) of domain in domain
-		and domain_attrs tables.
+		and domain_attrs tables.  In domain table, a did column value
+		may be NULL, which means that it has same value as
+		domain column.
 		</para>
 		<para>
 		Default value is <quote>did</quote>.

@@ -414,8 +414,8 @@ int reload_tables ( void )
     domain_dbf.free_result(db_handle, res);
     res = NULL;
 
-    cols[0] = &did_col;
-    cols[1] = &domain_col;
+    cols[0] = &domain_col;
+    cols[1] = &did_col;
     
     if (domain_dbf.use_table(db_handle, &domain_table) < 0) {
 	LM_ERR("error while trying to use domain table\n");
@@ -437,26 +437,31 @@ int reload_tables ( void )
 
 	if ((VAL_NULL(ROW_VALUES(row)) == 1) ||
 	    (VAL_TYPE(ROW_VALUES(row)) != DB1_STRING)) {
-	    LM_ERR("did at row <%u> is null or not string\n", i);
-	    goto err;
-	}
-	did.s = (char *)VAL_STRING(ROW_VALUES(row));
-	did.len = strlen(did.s);
-	if (did.len == 0) {
-	    LM_ERR("did at row <%u> is empty string\n", i);
-	    goto err;
-	}
-
-	if ((VAL_NULL(ROW_VALUES(row) + 1) == 1) ||
-	    (VAL_TYPE(ROW_VALUES(row) + 1) != DB1_STRING)) {
 	    LM_ERR("domain at row <%u> is null or not string\n", i);
 	    goto err;
 	}
-	domain.s = (char *)VAL_STRING(ROW_VALUES(row) + 1);
+	domain.s = (char *)VAL_STRING(ROW_VALUES(row));
 	domain.len = strlen(domain.s);
 	if (domain.len == 0) {
 	    LM_ERR("domain at row <%u> is empty string\n", i);
 	    goto err;
+	}
+
+	if ((VAL_NULL(ROW_VALUES(row) + 1) != 1) &&
+	    (VAL_TYPE(ROW_VALUES(row) + 1) != DB1_STRING)) {
+	    LM_ERR("did at row <%u> is not null or string\n", i);
+	    goto err;
+	}
+	if (VAL_NULL(ROW_VALUES(row) + 1) == 1) {
+	    did.s = domain.s;
+	    did.len = domain.len;
+	} else {
+	    did.s = (char *)VAL_STRING(ROW_VALUES(row) + 1);
+	    did.len = strlen(did.s);
+	    if (did.len == 0) {
+		LM_ERR("did at row <%u> is empty string\n", i);
+		goto err;
+	    }
 	}
 
 	LM_INFO("inserting <did/domain> = <%s/%s> into hash table\n",

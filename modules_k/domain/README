@@ -174,7 +174,8 @@ modparam("domain", "domain_attrs_table", "local_domain_attributes")
 3.4. did_col (string)
 
    Name of column containing domain id (did) of domain in domain and
-   domain_attrs tables.
+   domain_attrs tables. In domain table, a did column value may be NULL,
+   which means that it has same value as domain column.
 
    Default value is “did”.
 

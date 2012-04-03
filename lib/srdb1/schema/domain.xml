@@ -39,9 +39,9 @@
         <name>did</name>
         <type>string</type>
         <size>&domain_len;</size>
-        <description>Domain id</description>
-        <default/>
-        <natural/>
+        <description>Domain id.  Value of did column may be NULL, which
+	means that it has the same value as domain column.</description>
+        <null/>
     </column>
 
     <column>
