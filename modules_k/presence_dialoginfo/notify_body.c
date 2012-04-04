@@ -316,6 +316,11 @@ str *dlginfo_body_setversion(subs_t *subs, str *body) {
 	}
 	version_start += 9;
 
+	/* safety check for placeholder - if it is body not set by the module,
+	 * don't update the version */
+	if(strncmp(version_start, "00000000000\"", 12)!=0)
+		return NULL;
+
 	version_len = snprintf(version, MAX_INT_LEN + 2,"%d\"", subs->version);
 	if (version_len >= MAX_INT_LEN + 2) {
 		LM_ERR("failed to convert 'version' to string\n");
