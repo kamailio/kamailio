@@ -217,7 +217,7 @@ ht_t* ht_get_table(str *name)
 }
 
 int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode,
-		int itype, int_str *ival)
+		int itype, int_str *ival, int updateexpire)
 {
 	unsigned int htid;
 	ht_t *ht;
@@ -252,6 +252,7 @@ int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode,
 	else ht->htsize = 1<<size;
 	ht->htid = htid;
 	ht->htexpire = autoexp;
+	ht->updateexpire = updateexpire;
 	ht->name = *name;
 	if(dbtable!=NULL && dbtable->len>0)
 		ht->dbtable = *dbtable;
@@ -387,7 +388,9 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 						it->value.s.len = val->s.len;
 						memcpy(it->value.s.s, val->s.s, val->s.len);
 						it->value.s.s[it->value.s.len] = '\0';
-						it->expire = now + ht->htexpire;
+						
+						if(ht->updateexpire)
+							it->expire = now + ht->htexpire;
 					} else {
 						/* new */
 						cell = ht_cell_new(name, type, val, hid);
@@ -411,7 +414,9 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 				} else {
 					it->flags &= ~AVP_VAL_STR;
 					it->value.n = val->n;
-					it->expire = now + ht->htexpire;
+
+					if(ht->updateexpire)
+						it->expire = now + ht->htexpire;
 				}
 				if(mode) lock_release(&ht->entries[idx].lock);
 				return 0;
@@ -438,7 +443,9 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 					ht_cell_free(it);
 				} else {
 					it->value.n = val->n;
-					it->expire = now + ht->htexpire;
+
+					if(ht->updateexpire)
+						it->expire = now + ht->htexpire;
 				}
 				if(mode) lock_release(&ht->entries[idx].lock);
 				return 0;
@@ -717,6 +724,7 @@ int ht_table_spec(char *spec)
 	unsigned int autoexpire = 0;
 	unsigned int size = 4;
 	unsigned int dbmode = 0;
+	unsigned int updateexpire = 1;
 	str in;
 	str tok;
 	param_t *pit=NULL;
@@ -768,11 +776,16 @@ int ht_table_spec(char *spec)
 			itype = PV_VAL_INT;
 			LM_DBG("htable [%.*s] - initval [%d]\n", name.len, name.s,
 					ival.n);
+		} else if(pit->name.len == 12 && strncmp(pit->name.s, "updateexpire", 12) == 0) {
+			if(str2int(&tok, &updateexpire) != 0)
+				goto error;
+
+			LM_DBG("htable [%.*s] - updateexpire [%u]\n", name.len, name.s, updateexpire); 
 		} else { goto error; }
 	}
 
 	return ht_add_table(&name, autoexpire, &dbtable, size, dbmode,
-			itype, &ival);
+			itype, &ival, updateexpire);
 
 error:
 	LM_ERR("invalid htable parameter [%.*s]\n", in.len, in.s);

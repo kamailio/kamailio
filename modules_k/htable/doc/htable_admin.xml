@@ -267,6 +267,11 @@ if(is_present_hf("Authorization"))
 			instead of $null when a requested key is not set.
 		</para>
 		</listitem>
+		<listitem>
+		<para>
+			<emphasis>updateexpire</emphasis> - if set to 1 (default), the time until expiration of an item is reset when that item is updated.  Certain uses of htable may dictate that updates should not reset the expiration timeout, however, in which case this attribute can be set to 0.
+		</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 		<emphasis>
