@@ -1580,7 +1580,7 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 	struct action* t;
 	int ret;
 	struct sr_module *mod;
-	unsigned int ms;
+	unsigned int ms = 0;
 
 	ret=E_UNSPEC;
 	h->rec_lev++;
