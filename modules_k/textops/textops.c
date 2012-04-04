@@ -2158,7 +2158,7 @@ int fixup_free_regexp_none(void** param, int param_no)
 static int search_hf_f(struct sip_msg* msg, char* str_hf, char* re, char *flags)
 {
 	hdr_field_t *hf;
-	hdr_field_t *hfl;
+	hdr_field_t *hfl = NULL;
 	str body;
 	gparam_t *gp;
 	regmatch_t pmatch;
@@ -2239,7 +2239,7 @@ static int subst_hf_f(struct sip_msg *msg, char *str_hf, char *subst, char *flag
 	int nmatches;
 	str body;
 	hdr_field_t *hf;
-	hdr_field_t *hfl;
+	hdr_field_t *hfl = NULL;
 	gparam_t *gp;
 	char c;
 	int ret;

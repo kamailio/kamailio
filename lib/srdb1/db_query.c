@@ -47,7 +47,7 @@ static inline int db_do_submit_query(const db1_con_t* _h, const str *_query,
 		int (*submit_query)(const db1_con_t*, const str*))
 {
 	int ret;
-	unsigned int ms;
+	unsigned int ms = 0;
 
 	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0))
 		ms = TICKS_TO_MS(get_ticks_raw());
