@@ -136,7 +136,7 @@ char* get_static_buffer(int req_size) {
  * Reset offset to unused space
  */
 
-int reset_static_buffer() {
+int reset_static_buffer(void) {
 	int i;
 
 	if (active_buffer == -1) {

@@ -411,7 +411,7 @@ void check_ser_drift();
  *        - it works ok as long as the adjustment interval < MAX_TICKS_T
  * -- andrei
  */
-inline static void adjust_ticks()
+inline static void adjust_ticks(void)
 {
 	struct timeval crt_time;
 	long long diff_time;
@@ -924,7 +924,7 @@ inline static void timer_list_expire(ticks_t t, struct timer_head* h
  * WARNING: it should never be called twice for the same *ticks value
  * (it could cause too fast expires for long timers), *ticks must be also
  *  always increasing */
-static void timer_handler()
+static void timer_handler(void)
 {
 	ticks_t saved_ticks;
 #ifdef USE_SLOW_TIMER

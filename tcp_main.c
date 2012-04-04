@@ -1725,7 +1725,7 @@ error:
 
 #ifdef TCP_FD_CACHE
 
-static void tcp_fd_cache_init()
+static void tcp_fd_cache_init(void)
 {
 	int r;
 	for (r=0; r<TCP_FD_CACHE_SIZE; r++)
@@ -3174,7 +3174,7 @@ static void send_fd_queue_destroy(struct tcp_send_fd_q *q)
 
 
 
-static int init_send_fd_queues()
+static int init_send_fd_queues(void)
 {
 	if (send_fd_queue_init(&send2child_q, SEND_FD_QUEUE_SIZE)!=0)
 		goto error;
@@ -3186,7 +3186,7 @@ error:
 
 
 
-static void destroy_send_fd_queues()
+static void destroy_send_fd_queues(void)
 {
 	send_fd_queue_destroy(&send2child_q);
 }
@@ -4462,7 +4462,7 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 
 
 
-static inline void tcp_timer_run()
+static inline void tcp_timer_run(void)
 {
 	ticks_t ticks;
 	
@@ -4480,7 +4480,7 @@ static inline void tcp_timer_run()
  * cleanup(). However it's also safe to call it from the tcp_main process.
  * => with the ser shutdown exception, it cannot execute in parallel
  * with tcpconn_add() or tcpconn_destroy()*/
-static inline void tcpconn_destroy_all()
+static inline void tcpconn_destroy_all(void)
 {
 	struct tcp_connection *c, *next;
 	unsigned h;

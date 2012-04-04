@@ -80,7 +80,7 @@ unsigned int set_fork_delay(unsigned int v)
 }
 
 /* number of known "common" used fds */
-static int calc_common_open_fds_no()
+static int calc_common_open_fds_no(void)
 {
 	int max_fds_no;
 	
