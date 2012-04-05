@@ -52,6 +52,8 @@ static str pu_481_rpl     = str_init("Call/Transaction Does Not Exist");
 static str pu_489_rpl     = str_init("Bad Event");
 static str pu_500_rpl     = str_init("Server Internal Error");
 
+int subset = 0;
+
 int parse_rlsubs_did(char* str_did, str* callid, str* from_tag, str* to_tag)
 {
 	char* smc= NULL;
@@ -705,7 +707,8 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val=
 		core_hash(res_id, NULL,
-				(waitn_time * rls_notifier_poll_rate) - 1);
+				(waitn_time * rls_notifier_poll_rate
+					* rls_notifier_processes) - 1);
 	n_query_cols++;
 		
 	query_cols[n_query_cols]= &str_auth_state_col;
@@ -820,22 +823,22 @@ error:
 	return -1;
 }
 /* callid, from_tag, to_tag parameters must be allocated */
-
 void timer_send_notify(unsigned int ticks,void *param)
 {
-	static int round = 0;
 	db_key_t query_cols[1], update_cols[1], result_cols[6];
 	db_val_t query_vals[1], update_vals[1];
 	int did_col, resource_uri_col, auth_state_col, reason_col,
 		pres_state_col, content_type_col;
 	int n_result_cols= 0;
 	db1_res_t *result= NULL;
-		
+	int process_num = *((int *) param);
+
 	query_cols[0]= &str_updated_col;
 	query_vals[0].type = DB1_INT;
 	query_vals[0].nul = 0;
-	query_vals[0].val.int_val= round;
-	if (++round > (waitn_time * rls_notifier_poll_rate) - 1) round = 0;
+	query_vals[0].val.int_val= subset + (waitn_time * rls_notifier_poll_rate
+						* process_num);
+	if (++subset > (waitn_time * rls_notifier_poll_rate) - 1) subset = 0;
 
 	result_cols[did_col= n_result_cols++]= &str_rlsubs_did_col;
 	result_cols[resource_uri_col= n_result_cols++]= &str_resource_uri_col;

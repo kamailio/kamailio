@@ -34,19 +34,20 @@ Anca-Maria Vamanu
               3.9. rlpres_clean_period (int)
               3.10. waitn_time (int)
               3.11. notifier_poll_rate (int)
-              3.12. max_expires (int)
-              3.13. expires_offset (int)
-              3.14. hash_size (int)
-              3.15. xcap_root (str)
-              3.16. integrated_xcap_server (int)
-              3.17. to_presence_code (int)
-              3.18. rls_event (str)
-              3.19. outbound_proxy (str)
-              3.20. server_address (str)
-              3.21. max_notify_body_length (int)
-              3.22. fetch_rows (integer)
-              3.23. disable_remote_presence (integer)
-              3.24. max_backend_subs (integer)
+              3.12. notifier_processes (int)
+              3.13. max_expires (int)
+              3.14. expires_offset (int)
+              3.15. hash_size (int)
+              3.16. xcap_root (str)
+              3.17. integrated_xcap_server (int)
+              3.18. to_presence_code (int)
+              3.19. rls_event (str)
+              3.20. outbound_proxy (str)
+              3.21. server_address (str)
+              3.22. max_notify_body_length (int)
+              3.23. fetch_rows (integer)
+              3.24. disable_remote_presence (integer)
+              3.25. max_backend_subs (integer)
 
         4. Functions
 
@@ -71,22 +72,23 @@ Anca-Maria Vamanu
    1.9. Set rlpres_clean_period parameter
    1.10. Set waitn_time parameter
    1.11. Set notifier_poll_rate parameter
-   1.12. Set max_expires parameter
-   1.13. Set expires_offset parameter
-   1.14. Set hash_size parameter
+   1.12. Set notifier_processes parameter
+   1.13. Set max_expires parameter
+   1.14. Set expires_offset parameter
    1.15. Set hash_size parameter
-   1.16. Set integrated_xcap_server parameter
-   1.17. Set to_presence_code parameter
-   1.18. Set rls_event parameter
-   1.19. Set outbound_proxy parameter
-   1.20. Set server_address parameter
-   1.21. Set max_notify_body_length parameter
-   1.22. Set fetch_rows parameter
-   1.23. Set disable_remote_presence parameter
-   1.24. Set max_backend_subs parameter
-   1.25. rls_handle_subscribe usage
-   1.26. rls_handle_notify usage
-   1.27. rls_update_subs usage
+   1.16. Set hash_size parameter
+   1.17. Set integrated_xcap_server parameter
+   1.18. Set to_presence_code parameter
+   1.19. Set rls_event parameter
+   1.20. Set outbound_proxy parameter
+   1.21. Set server_address parameter
+   1.22. Set max_notify_body_length parameter
+   1.23. Set fetch_rows parameter
+   1.24. Set disable_remote_presence parameter
+   1.25. Set max_backend_subs parameter
+   1.26. rls_handle_subscribe usage
+   1.27. rls_handle_notify usage
+   1.28. rls_update_subs usage
 
 Chapter 1. Admin Guide
 
@@ -111,19 +113,20 @@ Chapter 1. Admin Guide
         3.9. rlpres_clean_period (int)
         3.10. waitn_time (int)
         3.11. notifier_poll_rate (int)
-        3.12. max_expires (int)
-        3.13. expires_offset (int)
-        3.14. hash_size (int)
-        3.15. xcap_root (str)
-        3.16. integrated_xcap_server (int)
-        3.17. to_presence_code (int)
-        3.18. rls_event (str)
-        3.19. outbound_proxy (str)
-        3.20. server_address (str)
-        3.21. max_notify_body_length (int)
-        3.22. fetch_rows (integer)
-        3.23. disable_remote_presence (integer)
-        3.24. max_backend_subs (integer)
+        3.12. notifier_processes (int)
+        3.13. max_expires (int)
+        3.14. expires_offset (int)
+        3.15. hash_size (int)
+        3.16. xcap_root (str)
+        3.17. integrated_xcap_server (int)
+        3.18. to_presence_code (int)
+        3.19. rls_event (str)
+        3.20. outbound_proxy (str)
+        3.21. server_address (str)
+        3.22. max_notify_body_length (int)
+        3.23. fetch_rows (integer)
+        3.24. disable_remote_presence (integer)
+        3.25. max_backend_subs (integer)
 
    4. Functions
 
@@ -193,19 +196,20 @@ Chapter 1. Admin Guide
    3.9. rlpres_clean_period (int)
    3.10. waitn_time (int)
    3.11. notifier_poll_rate (int)
-   3.12. max_expires (int)
-   3.13. expires_offset (int)
-   3.14. hash_size (int)
-   3.15. xcap_root (str)
-   3.16. integrated_xcap_server (int)
-   3.17. to_presence_code (int)
-   3.18. rls_event (str)
-   3.19. outbound_proxy (str)
-   3.20. server_address (str)
-   3.21. max_notify_body_length (int)
-   3.22. fetch_rows (integer)
-   3.23. disable_remote_presence (integer)
-   3.24. max_backend_subs (integer)
+   3.12. notifier_processes (int)
+   3.13. max_expires (int)
+   3.14. expires_offset (int)
+   3.15. hash_size (int)
+   3.16. xcap_root (str)
+   3.17. integrated_xcap_server (int)
+   3.18. to_presence_code (int)
+   3.19. rls_event (str)
+   3.20. outbound_proxy (str)
+   3.21. server_address (str)
+   3.22. max_notify_body_length (int)
+   3.23. fetch_rows (integer)
+   3.24. disable_remote_presence (integer)
+   3.25. max_backend_subs (integer)
 
 3.1. db_url(str)
 
@@ -343,9 +347,10 @@ modparam("rls", "waitn_time", 10)
 
 3.11. notifier_poll_rate (int)
 
-   The number of times per second that the notifier process should check
-   for work. Approximately 1/(waitn_time * notifier_poll_rate) of the
-   pending updates will be sent each time the notifier runs.
+   The number of times per second that the notifier processes should check
+   for work. Approximately 1/(waitn_time * notifier_poll_rate *
+   notifier_processes) of the pending updates will be sent each time a
+   notifier process runs.
 
    Default value is “10”.
 
@@ -354,18 +359,29 @@ modparam("rls", "waitn_time", 10)
 modparam("rls", "notifier_poll_rate", 20)
 ...
 
-3.12. max_expires (int)
+3.12. notifier_processes (int)
+
+   The number of notifier processes that should be started.
+
+   Default value is “1”.
+
+   Example 1.12. Set notifier_processes parameter
+...
+modparam("rls", "notifier_processes", 2)
+...
+
+3.13. max_expires (int)
 
    The maximum accepted expires for a subscription to a list.
 
    Default value is “7200”.
 
-   Example 1.12. Set max_expires parameter
+   Example 1.13. Set max_expires parameter
 ...
 modparam("rls", "max_expires", 10800)
 ...
 
-3.13. expires_offset (int)
+3.14. expires_offset (int)
 
    This paramater only has an effect when the db_mode is DB_ONLY (mode 2).
    When expired subscribers are checked for deletion from the database,
@@ -378,12 +394,12 @@ modparam("rls", "max_expires", 10800)
 
    Default value is “0”.
 
-   Example 1.13. Set expires_offset parameter
+   Example 1.14. Set expires_offset parameter
 ...
 modparam("rls", "expires_offset", 0)
 ...
 
-3.14. hash_size (int)
+3.15. hash_size (int)
 
    The dimension of the hash table used to store subscription to a list.
    This parameter will be used as the power of 2 when computing table
@@ -391,35 +407,35 @@ modparam("rls", "expires_offset", 0)
 
    Default value is “9 (512)”.
 
-   Example 1.14. Set hash_size parameter
+   Example 1.15. Set hash_size parameter
 ...
 modparam("rls", "hash_size", 11)
 ...
 
-3.15. xcap_root (str)
+3.16. xcap_root (str)
 
    The address of the xcap server.
 
    Default value is “NULL”.
 
-   Example 1.15. Set hash_size parameter
+   Example 1.16. Set hash_size parameter
 ...
 modparam("rls", "xcap_root", "http://192.168.2.132/xcap-root:800")
 ...
 
-3.16. integrated_xcap_server (int)
+3.17. integrated_xcap_server (int)
 
    This parameter should be set if only integrated xcap servers are used
    to store resource lists.
 
    Default value is “0”.
 
-   Example 1.16. Set integrated_xcap_server parameter
+   Example 1.17. Set integrated_xcap_server parameter
 ...
 modparam("rls", "integrated_xcap_server", 1)
 ...
 
-3.17. to_presence_code (int)
+3.18. to_presence_code (int)
 
    The code to be returned by rls_handle_subscribe function if the
    processed Subscribe is not a resource list Subscribe. This code can be
@@ -429,12 +445,12 @@ modparam("rls", "integrated_xcap_server", 1)
 
    Default value is “0”.
 
-   Example 1.17. Set to_presence_code parameter
+   Example 1.18. Set to_presence_code parameter
 ...
 modparam("rls", "to_presence_code", 10)
 ...
 
-3.18. rls_event (str)
+3.19. rls_event (str)
 
    The default event that RLS handles is presence. If some other events
    should also be handled by RLS they should be added using this
@@ -442,57 +458,57 @@ modparam("rls", "to_presence_code", 10)
 
    Default value is “"presence"”.
 
-   Example 1.18. Set rls_event parameter
+   Example 1.19. Set rls_event parameter
 ...
 modparam("rls", "rls_event", "dialog;sla")
 ...
 
-3.19. outbound_proxy (str)
+3.20. outbound_proxy (str)
 
    The SIP address where to send RLS subscriptions (outbound proxy address
    as SIP URI).
 
    Default value is “NULL”.
 
-   Example 1.19. Set outbound_proxy parameter
+   Example 1.20. Set outbound_proxy parameter
 ...
 modparam("rls", "outbound_proxy", "sip:presence.kamailio.org")
 ...
 
-3.20. server_address (str)
+3.21. server_address (str)
 
    The address of the server that will be used as a contact in sent
    Subscribe requests and 200 OK replies for Subscribe requests for RLS.
    It is a mandatory parameter.
 
-   Example 1.20. Set server_address parameter
+   Example 1.21. Set server_address parameter
 ...
 modparam("rls", "server_address", "sip:rls@ip.address.ofyour.proxy:5060")
 ...
 
-3.21. max_notify_body_length (int)
+3.22. max_notify_body_length (int)
 
    The maximum size that the body of a NOTIFY message may be. If set to 0
    (the default), no size limit is applied. Note that this refers only to
    the body, not the complete NOTIFY message.
 
-   Example 1.21. Set max_notify_body_length parameter
+   Example 1.22. Set max_notify_body_length parameter
 ...
 modparam("rls", "max_notify_body_length", 32000)
 ...
 
-3.22. fetch_rows (integer)
+3.23. fetch_rows (integer)
 
    Number of rows to be loaded in one step from database.
 
    Default value is 500.
 
-   Example 1.22. Set fetch_rows parameter
+   Example 1.23. Set fetch_rows parameter
 ...
 modparam("rls", "fetch_rows", 1000)
 ...
 
-3.23. disable_remote_presence (integer)
+3.24. disable_remote_presence (integer)
 
    When set to a non-zero value RLS will not perform back-end SUBSCRIBEs
    to non-local presentities. When people have large contact lists RLS
@@ -505,12 +521,12 @@ modparam("rls", "fetch_rows", 1000)
 
    Default value is 0
 
-   Example 1.23. Set disable_remote_presence parameter
+   Example 1.24. Set disable_remote_presence parameter
 ...
 modparam("rls", "disable_remote_presence", 1)
 ...
 
-3.24. max_backend_subs (integer)
+3.25. max_backend_subs (integer)
 
    When set to a non-zero value RLS will limit the number of back-end
    SUBSCRIBEs for each RLS SUBSCRIBE to this value. Leaving this at the
@@ -521,7 +537,7 @@ modparam("rls", "disable_remote_presence", 1)
 
    Default value is 0
 
-   Example 1.24. Set max_backend_subs parameter
+   Example 1.25. Set max_backend_subs parameter
 ...
 modparam("rls", "max_backend_subs", 30)
 ...
@@ -541,7 +557,7 @@ modparam("rls", "max_backend_subs", 30)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.25. rls_handle_subscribe usage
+   Example 1.26. rls_handle_subscribe usage
 ...
 For presence and rls on the same machine:
         modparam("rls", "to_presence_code", 10)
@@ -569,7 +585,7 @@ For rls only:
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.26. rls_handle_notify usage
+   Example 1.27. rls_handle_notify usage
 ...
 if(method=="NOTIFY")
     rls_handle_notify();
@@ -588,7 +604,7 @@ if(method=="NOTIFY")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.27. rls_update_subs usage
+   Example 1.28. rls_update_subs usage
 ...
 Within event_route[xhttp:request]:
         case "PUT":

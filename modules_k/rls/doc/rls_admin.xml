@@ -319,10 +319,10 @@ modparam("rls", "waitn_time", 10)
 	<section>
 		<title><varname>notifier_poll_rate</varname> (int)</title>
 		<para>
-		The number of times per second that the notifier process
+		The number of times per second that the notifier processes
 		should check for work.  Approximately
-		1/(waitn_time * notifier_poll_rate) of the pending updates
-		will be sent each time the notifier runs.
+		1/(waitn_time * notifier_poll_rate * notifier_processes) of the
+		pending updates will be sent each time a notifier process runs.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>10</quote>.
@@ -333,6 +333,25 @@ modparam("rls", "waitn_time", 10)
 		<programlisting format="linespecific">
 ...
 modparam("rls", "notifier_poll_rate", 20)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>notifier_processes</varname> (int)</title>
+		<para>
+		The number of notifier processes that should be started.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>notifier_processes</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "notifier_processes", 2)
 ...
 </programlisting>
 		</example>

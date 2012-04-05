@@ -89,6 +89,7 @@ extern unsigned int xcap_port;
 extern str rls_server_address;
 extern int waitn_time;
 extern int rls_notifier_poll_rate;
+extern int rls_notifier_processes;
 extern str rlsubs_table;
 extern str rlpres_table;
 extern str rls_xcap_table;

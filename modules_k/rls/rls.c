@@ -76,9 +76,12 @@ str rls_server_address = {0, 0};
 int rls_expires_offset=0;
 int waitn_time = 5;
 int rls_notifier_poll_rate = 10;
+int rls_notifier_processes = 1;
 str rlsubs_table = str_init("rls_watchers");
 str rlpres_table = str_init("rls_presentity");
 str rls_xcap_table = str_init("xcap");
+
+int *rls_notifier_id = NULL;
 
 str db_url = str_init(DEFAULT_DB_URL);
 str xcap_db_url = str_init("");
@@ -225,6 +228,7 @@ static param_export_t params[]={
 	{ "xcap_table",             STR_PARAM,   &rls_xcap_table.s               },
 	{ "waitn_time",             INT_PARAM,   &waitn_time                     },
 	{ "notifier_poll_rate",     INT_PARAM,   &rls_notifier_poll_rate         },
+	{ "notifier_processes",     INT_PARAM,   &rls_notifier_processes         },
 	{ "clean_period",           INT_PARAM,   &clean_period                   },
 	{ "rlpres_clean_period",    INT_PARAM,   &rlpres_clean_period            },
 	{ "max_expires",            INT_PARAM,   &rls_max_expires                },
@@ -541,6 +545,17 @@ static int mod_init(void)
 	if(rls_notifier_poll_rate<= 0)
 		rls_notifier_poll_rate= 10;
 
+	if(rls_notifier_processes<= 0)
+		rls_notifier_processes= 1;
+
+	if ((rls_notifier_id = shm_malloc(sizeof(int) * rls_notifier_processes)) == NULL)
+	{
+		LM_ERR("allocating shared memory\n");
+		return -1;
+	}
+
+	register_basic_timers(rls_notifier_processes);
+
 	/* bind libxml wrapper functions */
 
 	if((bind_libxml=(bind_libxml_t)find_export("bind_libxml_api", 1, 0))== NULL)
@@ -622,8 +637,6 @@ static int mod_init(void)
 		}
 	}
 
-	register_basic_timers(1);
-
 	if (rlpres_clean_period < 0)
 		rlpres_clean_period = clean_period;
 
@@ -657,12 +670,22 @@ static int child_init(int rank)
 
 	if (rank==PROC_MAIN)
 	{
-		if (fork_basic_utimer(PROC_TIMER, "RLS NOTIFIER", 1,
-					timer_send_notify, NULL,
-					1000000/rls_notifier_poll_rate) < 0)
+		int i;
+
+		for (i = 0; i < rls_notifier_processes; i++)
 		{
-			LM_ERR("Failed to start RLS NOTIFIER\n");
-			return -1;
+			char tmp[16];
+			snprintf(tmp, 16, "RLS NOTIFIER %d", i);
+			rls_notifier_id[i] = i;
+
+			if (fork_basic_utimer(PROC_TIMER, tmp, 1,
+						timer_send_notify,
+						&rls_notifier_id[i],
+						1000000/rls_notifier_poll_rate) < 0)
+			{
+				LM_ERR("Failed to start RLS NOTIFIER %d\n", i);
+				return -1;
+			}
 		}
 	}
 
@@ -765,6 +788,9 @@ static void destroy(void)
 		lock_destroy(rls_update_subs_lock);
 		lock_dealloc(rls_update_subs_lock);
 	}
+
+	if (rls_notifier_id != NULL)
+		shm_free(rls_notifier_id);
 }
 
 int handle_expired_record(subs_t* s)
