@@ -861,8 +861,10 @@ error:
 
 int send_resource_subs(char* uri, void* param)
 {
-	str pres_uri;
+	str pres_uri, *tmp_str;
 	struct sip_uri parsed_pres_uri;
+	int duplicate = 0;
+	subs_info_t *s = (subs_info_t *) param;
 
 	pres_uri.s = uri;
 	pres_uri.len = strlen(uri);
@@ -877,8 +879,8 @@ int send_resource_subs(char* uri, void* param)
 	{
 		LM_WARN("Unable to subscribe to remote contact %.*s for watcher %.*s\n",
 				pres_uri.len, pres_uri.s,
-				((subs_info_t*)param)->watcher_uri->len,
-				((subs_info_t*)param)->watcher_uri->s);
+				s->watcher_uri->len,
+				s->watcher_uri->s);
 		return 1;
 	}
 
@@ -887,31 +889,33 @@ int send_resource_subs(char* uri, void* param)
 	if (rls_max_backend_subs > 0 && ++counter > rls_max_backend_subs)
 		return 1;
 
-	((subs_info_t*)param)->pres_uri = &pres_uri;
-	((subs_info_t*)param)->remote_target = &pres_uri;
+	s->pres_uri = &pres_uri;
+	s->remote_target = &pres_uri;
 
-	if (((subs_info_t*)param)->internal_update_flag == INTERNAL_UPDATE_TRUE)
+	/* Build list of contacts... checking each contact exists only once */
+	if ((tmp_str = (str *)pkg_malloc(sizeof(str))) == NULL)
 	{
-		str *tmp_str;
-
-		if ((tmp_str = (str *)pkg_malloc(sizeof(str))) == NULL)
-		{
-			LM_ERR("out of private memory\n");
-			return -1;
-		}
-		if ((tmp_str->s = (char *)pkg_malloc(sizeof(char) * pres_uri.len)) == NULL)
-		{
-			pkg_free(tmp_str);
-			LM_ERR("out of private memory\n");
-			return -1;
-		}
-		memcpy(tmp_str->s, pres_uri.s, pres_uri.len);
-		tmp_str->len = pres_uri.len;
-
-		rls_contact_list = list_insert(tmp_str, rls_contact_list);
+		LM_ERR("out of private memory\n");
+		return -1;
+	}
+	if ((tmp_str->s = (char *)pkg_malloc(sizeof(char) * pres_uri.len)) == NULL)
+	{
+		pkg_free(tmp_str);
+		LM_ERR("out of private memory\n");
+		return -1;
+	}
+	memcpy(tmp_str->s, pres_uri.s, pres_uri.len);
+	tmp_str->len = pres_uri.len;
+	rls_contact_list = list_insert(tmp_str, rls_contact_list, &duplicate);
+	if (duplicate != 0)
+	{
+		LM_WARN("%.*s has %.*s multiple times in the same resource list\n",
+			s->watcher_uri->len, s->watcher_uri->s,
+			s->pres_uri->len, s->pres_uri->s);
+		return 1;
 	}
 
-	return pua_send_subscribe((subs_info_t*)param);
+	return pua_send_subscribe(s);
 }
 
 /**
@@ -964,14 +968,14 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 
 	s.internal_update_flag = subs->internal_update_flag;
 
+	if (rls_contact_list != NULL)
+	{
+		LM_WARN("contact list is not empty\n");
+		list_free(&rls_contact_list);
+	}
+
 	if (subs->internal_update_flag == INTERNAL_UPDATE_TRUE)
 	{
-		if (rls_contact_list != NULL)
-		{
-			LM_WARN("contact list is not empty\n");
-			list_free(&rls_contact_list);
-		}
-
 		if (rls_subs_list != NULL)
 		{
 			LM_WARN("subscriber list is not empty\n");
@@ -1016,6 +1020,10 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 			pkg_free(tmp_str);
 		}
 	}
+	else
+	{
+		list_free(&rls_contact_list);
+	}
 
 	pkg_free(wuri.s);
 	pkg_free(did_str.s);
@@ -1027,6 +1035,8 @@ error:
 		pkg_free(wuri.s);
 	if(did_str.s)
 		pkg_free(did_str.s);
+	if(rls_contact_list)
+		list_free(&rls_contact_list);
 	return -1;
 
 }

@@ -1560,7 +1560,7 @@ list_entry_t *get_subs_list_puadb(str *did)
 			tmp_str->len = strng.len;
 			tmp_str->s[tmp_str->len] = '\0';
 
-			list = list_insert(tmp_str, list);
+			list = list_insert(tmp_str, list, NULL);
 		}
 	} while ((db_fetch_next(&pua_dbf, pua_fetch_rows, pua_db, &res)==1)
 			&& (RES_ROWS(res)>0));

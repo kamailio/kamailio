@@ -1091,15 +1091,10 @@ insert:
 		if (presentity->to_tag.len == 0)
 		{
 			if (subs->expires > 0)
-			{
-				LM_WARN("attempting to re-SUBSCRIBE to temporary (non-established) dialog - skipping\n");
-				LM_WARN("  is %.*s in %.*s's contact list more than once?\n",
-					presentity->pres_uri->len, presentity->pres_uri->s,
-					presentity->watcher_uri->len, presentity->watcher_uri->s);
-			}
+				LM_WARN("attempting to re-SUBSCRIBE to a temporary (non-established) dialog - skipping\n");
 			else
 			{
-				LM_WARN("attempting to un-SUBSCRIBE to temporary (non-established) dialog - skipping and deleting dialog\n");
+				LM_WARN("attempting to un-SUBSCRIBE from a temporary (non-established) dialog - skipping and deleting dialog\n");
 				if (dbmode==PUA_DB_ONLY)
 					delete_dialog_puadb(presentity);
 				else

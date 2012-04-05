@@ -687,7 +687,7 @@ list_entry_t *get_subs_list(str *did)
 				tmp_str->len = dialog->pres_uri->len;
 				tmp_str->s[tmp_str->len] = '\0';
 
-				list = list_insert(tmp_str, list);
+				list = list_insert(tmp_str, list, NULL);
 			}
 			dialog = dialog->next;
 		}
