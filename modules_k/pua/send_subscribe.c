@@ -410,7 +410,6 @@ faked_error:
 
 		if(ps->code >= 300 || lexpire == 0)
 		{
-			/* Initial request so dialog is temporary */
 			hentity->to_tag.s = NULL;
 			hentity->to_tag.len = 0;
 			find_and_delete_dialog(hentity, hash_code);
@@ -452,6 +451,8 @@ faked_error:
 		
 		subs_info_t subs;
 
+		hentity->to_tag.s = NULL;
+		hentity->to_tag.len = 0;
 		find_and_delete_dialog(hentity, hash_code);
 
 		/* Redirect if the response 3XX */
