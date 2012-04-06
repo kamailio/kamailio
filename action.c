@@ -485,15 +485,45 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			break;
 		case SEND_T:
 		case SEND_TCP_T:
-			if ((a->val[0].type!= PROXY_ST)|(a->val[1].type!=NUMBER_ST)){
-				LOG(L_CRIT, "BUG: do_action: bad send() types %d, %d\n",
-						a->val[0].type, a->val[1].type);
-				ret=E_BUG;
-				goto error;
+			if (a->val[0].type==URIHOST_ST){
+				/*get next hop uri uri*/
+				if (msg->dst_uri.len) {
+					ret = parse_uri(msg->dst_uri.s, msg->dst_uri.len,
+									&next_hop);
+					u = &next_hop;
+				} else {
+					ret = parse_sip_msg_uri(msg);
+					u = &msg->parsed_uri;
+				}
+
+				if (ret<0) {
+					LM_ERR("send() - bad_uri dropping packet\n");
+					ret=E_BUG;
+					goto error;
+				}
+				/* init dst */
+				init_dest_info(&dst);
+				ret = sip_hostport2su(&dst.to, &u->host, u->port_no,
+							&dst.proto);
+				if(ret!=0) {
+					LM_ERR("failed to resolve [%.*s]\n", u->host.len,
+						ZSW(u->host.s));
+					ret=E_BUG;
+					goto error;
+				}
+			} else {
+				if ((a->val[0].type!= PROXY_ST)|(a->val[1].type!=NUMBER_ST)){
+					LOG(L_CRIT, "BUG: do_action: bad send() types %d, %d\n",
+							a->val[0].type, a->val[1].type);
+					ret=E_BUG;
+					goto error;
+				}
+				/* init dst */
+				init_dest_info(&dst);
+				ret=proxy2su(&dst.to,  (struct proxy_l*)a->val[0].u.data);
+				if(ret==0)
+					proxy_mark((struct proxy_l*)a->val[0].u.data, ret);
 			}
-			/* init dst */
-			init_dest_info(&dst);
-			ret=proxy2su(&dst.to,  (struct proxy_l*)a->val[0].u.data);
 			if (ret==0){
 				if (p_onsend){
 					tmp=p_onsend->buf;
@@ -524,7 +554,6 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				ret=E_BUG;
 				goto error;
 			}
-			proxy_mark((struct proxy_l*)a->val[0].u.data, ret);
 			if (ret>=0) ret=1;
 
 			break;
