@@ -47,7 +47,7 @@
 	db1_con_t  *dbh=NULL;\
 	dbcl_cls_t *cls=NULL;\
 	cls = (dbcl_cls_t*)_h->tail;\
-	ret = 0;\
+	ret = -1;\
 	for(i=DBCL_PRIO_SIZE-1; i>0; i--)\
 	{\
 		switch(cls->rlist[i].mode) {\
@@ -55,8 +55,7 @@
 			case 'S':\
 				for(j=0; j<cls->rlist[i].clen; j++)\
 				{\
-					if(cls->rlist[i].clist[j] != NULL && cls->rlist[i].clist[j]->flags!=0\
-						&& cls->rlist[i].clist[j]->dbh != NULL)\
+					if(dbcl_valid_con(cls->rlist[i].clist[j])==0)\
 					{\
 						LM_DBG("serial operation - cluster [%.*s] (%d/%d)\n",\
 								cls->name.len, cls->name.s, i, j);\
@@ -65,6 +64,11 @@
 						if (ret==0) {\
 							cls->usedcon = cls->rlist[i].clist[j];\
 							return 0;\
+						} else {\
+							LM_DBG("serial operation - failre on cluster"\
+									" [%.*s] (%d/%d)\n",\
+									cls->name.len, cls->name.s, i, j);\
+							dbcl_inactive_con(cls->rlist[i].clist[j]);\
 						}\
 					}\
 				}\
@@ -74,8 +78,7 @@
 				for(k=0; k<cls->rlist[i].clen; k++)\
 				{\
 					j = (process_no + k + cls->rlist[i].crt) % cls->rlist[i].clen;\
-					if(cls->rlist[i].clist[j] != NULL && cls->rlist[i].clist[j]->flags!=0\
-						&& cls->rlist[i].clist[j]->dbh != NULL)\
+					if(dbcl_valid_con(cls->rlist[i].clist[j])==0)\
 					{\
 						LM_DBG("round robin operation - cluster [%.*s] (%d/%d)\n",\
 								cls->name.len, cls->name.s, i, j);\
@@ -86,6 +89,11 @@
 							cls->usedcon = cls->rlist[i].clist[j];\
 							cls->rlist[i].crt = (j+1) % cls->rlist[i].clen;\
 							return 0;\
+						} else {\
+							LM_DBG("round robin operation - failre on cluster"\
+									" [%.*s] (%d/%d)\n",\
+									cls->name.len, cls->name.s, i, j);\
+							dbcl_inactive_con(cls->rlist[i].clist[j]);\
 						}\
 					}\
 				}\
@@ -110,7 +118,7 @@
 	db1_con_t  *dbh=NULL;\
 	dbcl_cls_t *cls=NULL;\
 	cls = (dbcl_cls_t*)_h->tail;\
-	ret = 0;\
+	ret = -1;\
 	rok = 0;\
 	rc = 0;\
 	for(i=DBCL_PRIO_SIZE-1; i>0; i--)\
@@ -120,8 +128,7 @@
 			case 'S':\
 				for(j=0; j<cls->wlist[i].clen; j++)\
 				{\
-					if(cls->wlist[i].clist[j] != NULL && cls->wlist[i].clist[j]->flags!=0\
-						&& cls->wlist[i].clist[j]->dbh != NULL)\
+					if(dbcl_valid_con(cls->wlist[i].clist[j])==0)\
 					{\
 						LM_DBG("serial operation - cluster [%.*s] (%d/%d)\n",\
 								cls->name.len, cls->name.s, i, j);\
@@ -130,6 +137,11 @@
 						if (ret==0) {\
 							cls->usedcon = cls->wlist[i].clist[j];\
 							return 0;\
+						} else {\
+							LM_DBG("serial operation - failure on cluster"\
+									" [%.*s] (%d/%d)\n",\
+									cls->name.len, cls->name.s, i, j);\
+							dbcl_inactive_con(cls->wlist[i].clist[j]);\
 						}\
 					}\
 				}\
@@ -139,8 +151,7 @@
 				for(k=0; k<cls->wlist[i].clen; k++)\
 				{\
 					j = (process_no + k + cls->wlist[i].crt) % cls->wlist[i].clen;\
-					if(cls->wlist[i].clist[j] != NULL && cls->wlist[i].clist[j]->flags!=0\
-						&& cls->wlist[i].clist[j]->dbh != NULL)\
+					if(dbcl_valid_con(cls->wlist[i].clist[j])==0)\
 					{\
 						LM_DBG("round robin operation - cluster [%.*s] (%d/%d)\n",\
 								cls->name.len, cls->name.s, i, j);\
@@ -151,6 +162,11 @@
 							cls->usedcon = cls->wlist[i].clist[j];\
 							cls->wlist[i].crt = (j+1) % cls->wlist[i].clen;\
 							return 0;\
+						} else {\
+							LM_DBG("round robin operation - failure on cluster"\
+									" [%.*s] (%d/%d)\n",\
+									cls->name.len, cls->name.s, i, j);\
+							dbcl_inactive_con(cls->wlist[i].clist[j]);\
 						}\
 					}\
 				}\
@@ -159,8 +175,7 @@
 			case 'P':\
 				for(j=0; j<cls->wlist[i].clen; j++)\
 				{\
-					if(cls->wlist[i].clist[j] != NULL && cls->wlist[i].clist[j]->flags!=0\
-						&& cls->wlist[i].clist[j]->dbh != NULL)\
+					if(dbcl_valid_con(cls->wlist[i].clist[j])==0)\
 					{\
 						LM_DBG("parallel operation - cluster [%.*s] (%d/%d)\n",\
 								cls->name.len, cls->name.s, i, j);\
@@ -169,6 +184,11 @@
 						if(rc==0) {\
 							cls->usedcon = cls->wlist[i].clist[j];\
 							rok = 1;\
+						} else {\
+							LM_DBG("parallel operation - failure on cluster"\
+									" [%.*s] (%d/%d)\n",\
+									cls->name.len, cls->name.s, i, j);\
+							dbcl_inactive_con(cls->wlist[i].clist[j]);\
 						}\
 						ret |= rc;\
 					}\

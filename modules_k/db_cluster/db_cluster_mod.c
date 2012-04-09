@@ -36,6 +36,8 @@ int db_cluster_bind_api(db_func_t *dbb);
 int dbcl_con_param(modparam_t type, void *val);
 int dbcl_cls_param(modparam_t type, void *val);
 
+int dbcl_inactive_interval = 300;
+
 /*! \brief
  * DB Cluster module interface
  */
@@ -50,6 +52,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"connection",  STR_PARAM|USE_FUNC_PARAM, (void*)dbcl_con_param},
 	{"cluster",     STR_PARAM|USE_FUNC_PARAM, (void*)dbcl_cls_param},
+	{"inactive_interval",     INT_PARAM,    &dbcl_inactive_interval},
 	{0, 0, 0}
 };
 
