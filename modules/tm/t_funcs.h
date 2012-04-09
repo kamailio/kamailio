@@ -190,7 +190,7 @@ int fr_inv_avp2timer(unsigned int* timer);
 
 
 
-void tm_shutdown();
+void tm_shutdown(void);
 
 
 /* function returns:

@@ -520,15 +520,15 @@ extern struct s_table*  _tm_table; /* private internal stuff, don't touch
 
 void reset_kr(void);
 void set_kr( enum kill_reason kr );
-enum kill_reason get_kr();
+enum kill_reason get_kr(void);
 
 #define get_tm_table() (_tm_table)
 
 typedef struct s_table* (*tm_get_table_f)(void);
 struct s_table* tm_get_table(void);
 
-struct s_table* init_hash_table();
-void   free_hash_table( );
+struct s_table* init_hash_table(void);
+void   free_hash_table(void);
 void   free_cell( struct cell* dead_cell );
 struct cell*  build_cell( struct sip_msg* p_msg );
 

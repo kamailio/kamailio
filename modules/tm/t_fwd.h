@@ -48,11 +48,11 @@ enum unmatched_cancel_t { UM_CANCEL_STATEFULL=0, UM_CANCEL_STATELESS,
 							UM_CANCEL_DROP };
 
 typedef int (*tfwd_f)(struct sip_msg* p_msg , struct proxy_l * proxy );
-typedef int (*taddblind_f)( /*struct cell *t */ );
+typedef int (*taddblind_f)( /*struct cell *t */ void);
 typedef int (*treplicate_uri_f)(struct sip_msg* p_msg , str *suri );
 
 void t_on_branch(unsigned int go_to);
-unsigned int get_on_branch();
+unsigned int get_on_branch(void);
 int t_replicate_uri(struct sip_msg *p_msg, str *suri);
 int t_replicate(struct sip_msg *p_msg, struct proxy_l * proxy, int proto);
 /*  -- not use outside t_fwd.c for noe
@@ -70,7 +70,7 @@ int add_uac_dns_fallback( struct cell *t, struct sip_msg* msg,
 									struct ua_client* old_uac,
 									int lock_replies);
 #endif
-int add_blind_uac( /* struct cell *t */ );
+int add_blind_uac(/* struct cell *t */ void);
 int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 						struct proxy_l * p, int proto);
 int t_forward_cancel(struct sip_msg* p_msg , struct proxy_l * proxy,

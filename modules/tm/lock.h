@@ -62,8 +62,8 @@ typedef struct {
 
 
 
-int lock_initialize();
-void lock_cleanup();
+int lock_initialize(void);
+void lock_cleanup(void);
 
 #ifdef DBG_LOCK
 #define lock(_s) _lock( (_s), __FILE__, __FUNCTION__, __LINE__ )
