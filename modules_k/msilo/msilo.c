@@ -1061,6 +1061,12 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 	    goto error;
 	}
 
+	if (msilo_dbf.use_table(db_con, &ms_db_table) < 0)
+	{
+		LM_ERR("failed to use_table\n");
+		return -1;
+	}
+
 	if (msilo_dbf.query(db_con,db_keys,db_ops,db_vals,db_cols,db_no_keys,
 			    db_no_cols, ob_key, &db_res) < 0) {
 	    LM_ERR("failed to query database\n");
@@ -1211,6 +1217,11 @@ void m_clean_silo(unsigned int ticks, void *param)
 	msg_list_check(ml);
 	mle = p = msg_list_reset(ml);
 	n = 0;
+	if (msilo_dbf.use_table(db_con, &ms_db_table) < 0)
+	{
+		LM_ERR("failed to use_table\n");
+		return;
+	}
 	while(p)
 	{
 		if(p->flag & MS_MSG_DONE)
