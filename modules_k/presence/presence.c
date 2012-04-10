@@ -78,6 +78,7 @@ MODULE_VERSION
 #define S_TABLE_VERSION  3
 #define P_TABLE_VERSION  3
 #define ACTWATCH_TABLE_VERSION 9
+#define XCAP_TABLE_VERSION 4
 
 char *log_buf = NULL;
 static int clean_period=100;
@@ -86,9 +87,12 @@ static int db_update_period=100;
 /* database connection */
 db1_con_t *pa_db = NULL;
 db_func_t pa_dbf;
+db1_con_t *pres_xcap_db = NULL;
+db_func_t pres_xcap_dbf;
 str presentity_table= str_init("presentity");
 str active_watchers_table = str_init("active_watchers");
 str watchers_table= str_init("watchers");
+str pres_xcap_table= str_init("xcap");
 
 int pres_fetch_rows = 500;
 int library_mode= 0;
@@ -124,12 +128,14 @@ static int w_pres_update_watchers(struct sip_msg *msg, char *puri,
 		char *pevent);
 static int fixup_refresh_watchers(void** param, int param_no);
 static int fixup_update_watchers(void** param, int param_no);
+static int fixup_update_presentity(void** param, int param_no);
 
 int counter =0;
 int pid = 0;
 char prefix='a';
 int startup_time=0;
 str db_url = {0, 0};
+str pres_xcap_db_url = {0, 0};
 int expires_offset = 0;
 int max_expires= 3600;
 int shtable_size= 9;
@@ -139,6 +145,7 @@ int sphere_enable= 0;
 int timeout_rm_subs = 1;
 int send_fast_notify = 1;
 int publ_cache_enabled = 1;
+int pres_integrated_xcap_server = 0;
 
 int phtable_size= 9;
 phtable_t* pres_htable=NULL;
@@ -157,6 +164,8 @@ static cmd_export_t cmds[]=
 		fixup_refresh_watchers, 0, ANY_ROUTE},
 	{"pres_update_watchers",  (cmd_function)w_pres_update_watchers,  2,
 		fixup_update_watchers, 0, ANY_ROUTE},
+	{"pres_update_presentity", (cmd_function)pres_update_presentity, 3,
+		fixup_update_presentity, 0, ANY_ROUTE},
 	{"bind_presence",         (cmd_function)bind_presence,           1,
 		0, 0, 0},
 	{ 0, 0, 0, 0, 0, 0}
@@ -164,9 +173,11 @@ static cmd_export_t cmds[]=
 
 static param_export_t params[]={
 	{ "db_url",                 STR_PARAM, &db_url.s},
+	{ "xcap_db_url",            STR_PARAM, &pres_xcap_db_url.s},
 	{ "presentity_table",       STR_PARAM, &presentity_table.s},
 	{ "active_watchers_table",  STR_PARAM, &active_watchers_table.s},
 	{ "watchers_table",         STR_PARAM, &watchers_table.s},
+	{ "xcap_table",             STR_PARAM, &pres_xcap_table.s},
 	{ "clean_period",           INT_PARAM, &clean_period },
 	{ "db_update_period",       INT_PARAM, &db_update_period },
 	{ "to_tag_pref",            STR_PARAM, &to_tag_pref },
@@ -181,6 +192,7 @@ static param_export_t params[]={
 	{ "timeout_rm_subs",        INT_PARAM, &timeout_rm_subs},
 	{ "send_fast_notify",       INT_PARAM, &send_fast_notify},
 	{ "fetch_rows",             INT_PARAM, &pres_fetch_rows},
+	{ "integrated_xcap_server", INT_PARAM, &pres_integrated_xcap_server},
     {0,0,0}
 };
 
@@ -223,8 +235,21 @@ static int mod_init(void)
 	active_watchers_table.len = strlen(active_watchers_table.s);
 	watchers_table.len = strlen(watchers_table.s);
 
+	if(pres_integrated_xcap_server == 1)
+	{
+		pres_xcap_db_url.s = pres_xcap_db_url.s ? pres_xcap_db_url.s : db_url.s;
+		pres_xcap_db_url.len = strlen(pres_xcap_db_url.s);
+		pres_xcap_table.len = strlen(pres_xcap_table.s);
+	}
+
 	if(db_url.s== NULL)
 		library_mode= 1;
+	else if(pres_integrated_xcap_server == 1)
+	{
+		pres_xcap_db_url.s = pres_xcap_db_url.s ? pres_xcap_db_url.s : db_url.s;
+		pres_xcap_db_url.len = strlen(pres_xcap_db_url.s);
+		pres_xcap_table.len = strlen(pres_xcap_table.s);
+	}
 
 	EvList= init_evlist();
 	if(!EvList){
@@ -280,7 +305,6 @@ static int mod_init(void)
 		LM_ERR("Database module not found\n");
 		return -1;
 	}
-	
 
 	if (!DB_CAPABILITY(pa_dbf, DB_CAP_ALL))
 	{
@@ -295,18 +319,50 @@ static int mod_init(void)
 		LM_ERR("Connection to database failed\n");
 		return -1;
 	}
-	
 	/*verify table versions */
 	if((db_check_table_version(&pa_dbf, pa_db, &presentity_table, P_TABLE_VERSION) < 0) ||
 		(db_check_table_version(&pa_dbf, pa_db, &watchers_table, S_TABLE_VERSION) < 0)) {
 			LM_ERR("error during table version check\n");
 			return -1;
 	}
-
 	if(subs_dbmode != NO_DB &&
 		db_check_table_version(&pa_dbf, pa_db, &active_watchers_table, ACTWATCH_TABLE_VERSION) < 0) {
 		LM_ERR("wrong table version for %s\n", active_watchers_table.s);
 		return -1;
+	}
+
+	if (pres_integrated_xcap_server == 1)
+	{
+		if(pres_xcap_db_url.s== NULL)
+		{
+			LM_ERR("xcap database url not set!\n");
+			return -1;
+		}
+
+		if (db_bind_mod(&pres_xcap_db_url, &pres_xcap_dbf))
+		{
+			LM_ERR("Database module not found\n");
+			return -1;
+		}
+
+		if (!DB_CAPABILITY(pres_xcap_dbf, DB_CAP_ALL))
+		{
+			LM_ERR("Database module does not implement all functions"
+					" needed by presence module\n");
+			return -1;
+		}
+
+		pres_xcap_db = pres_xcap_dbf.init(&pres_xcap_db_url);
+		if (!pres_xcap_db)
+		{
+			LM_ERR("Connection to database failed\n");
+			return -1;
+		}
+
+		if(db_check_table_version(&pres_xcap_dbf, pres_xcap_db, &pres_xcap_table, XCAP_TABLE_VERSION) < 0) {
+				LM_ERR("error during table version check\n");
+				return -1;
+		}
 	}
 
 	if(subs_dbmode != DB_ONLY) {
@@ -361,6 +417,12 @@ static int mod_init(void)
 	pa_dbf.close(pa_db);
 	pa_db = NULL;
 
+	if (pres_integrated_xcap_server == 1)
+	{
+		pres_xcap_dbf.close(pres_xcap_db);
+		pres_xcap_db = NULL;
+	}
+
 	return 0;
 }
 
@@ -410,6 +472,29 @@ static int child_init(int rank)
 		return -1;
 	}
 
+	if (pres_integrated_xcap_server == 1)
+	{
+		if (pres_xcap_dbf.init==0)
+		{
+			LM_CRIT("child_init: database not bound\n");
+			return -1;
+		}
+		if (pres_xcap_db)
+			return 0;
+		pres_xcap_db = pres_xcap_dbf.init(&pres_xcap_db_url);
+		if (!pres_xcap_db)
+		{
+			LM_ERR("child %d: unsuccessful connecting to database\n", rank);
+			return -1;
+		}
+	
+		if (pres_xcap_dbf.use_table(pres_xcap_db, &pres_xcap_table) < 0)
+		{
+			LM_ERR( "child %d:unsuccessful use_table xcap_table\n", rank);
+			return -1;
+		}
+	}
+
 	LM_DBG("child %d: Database connection opened successfully\n", rank);
 	
 	return 0;
@@ -452,6 +537,29 @@ static int mi_child_init(void)
 		return -1;
 	}
 
+	if (pres_integrated_xcap_server == 1)
+	{
+		if (pres_xcap_dbf.init==0)
+		{
+			LM_CRIT("database not bound\n");
+			return -1;
+		}
+		if (pres_xcap_db)
+			return 0;
+		pres_xcap_db = pres_xcap_dbf.init(&db_url);
+		if (!pres_xcap_db)
+		{
+			LM_ERR("connecting database\n");
+			return -1;
+		}
+	
+		if (pres_xcap_dbf.use_table(pres_xcap_db, &pres_xcap_table) < 0)
+		{
+			LM_ERR( "unsuccessful use_table xcap_table\n");
+			return -1;
+		}
+	}
+
 	LM_DBG("Database connection opened successfully\n");
 	return 0;
 }
@@ -479,6 +587,9 @@ static void destroy(void)
 
 	if(pa_db && pa_dbf.close)
 		pa_dbf.close(pa_db);
+
+	if(pres_xcap_db && pres_xcap_dbf.close)
+		pres_xcap_dbf.close(pres_xcap_db);
 
 	destroy_evlist();
 }
@@ -1591,5 +1702,16 @@ static int fixup_update_watchers(void** param, int param_no)
 	} else if(param_no==2) {
 		return fixup_spve_null(param, 1);
 	}
+	return 0;
+}
+
+/**
+ * fixup for pres_update_presentity
+ */
+static int fixup_update_presentity(void** param, int param_no)
+{
+	if(param_no==1 || param_no==2 || param_no==3)
+		return fixup_spve_null(param, 1);
+
 	return 0;
 }
