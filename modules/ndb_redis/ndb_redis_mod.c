@@ -3,6 +3,9 @@
  *
  * Copyright (C) 2011 Daniel-Constantin Mierla (asipto.com)
  *
+ * Copyright (C) 2012 Vicente Hernando Ara (System One: www.systemonenoc.com)
+ *     - for: redis array reply support
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -24,6 +27,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
@@ -296,6 +300,79 @@ int redis_srv_param(modparam_t type, void *val)
 /**
  *
  */
+int redis_parse_index(str *in, gparam_t *gp)
+{
+	if(in->s[0]==PV_MARKER)
+	{
+		gp->type = GPARAM_TYPE_PVS;
+		gp->v.pvs = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
+		if (gp->v.pvs == NULL)
+		{
+			LM_ERR("no pkg memory left for pv_spec_t\n");
+			pkg_free(gp);
+			return -1;
+		}
+
+		if(pv_parse_spec(in, gp->v.pvs)==NULL)
+		{
+			LM_ERR("invalid PV identifier\n");
+			pkg_free(gp->v.pvs);
+			pkg_free(gp);
+			return -1;
+		}
+	} else {
+		gp->type = GPARAM_TYPE_INT;
+		if(str2sint(in, &gp->v.i) != 0)
+		{
+			LM_ERR("bad number <%.*s>\n", in->len, in->s);
+			return -1;
+		}
+	}
+	return 0;
+}
+
+
+/**
+ *
+ */
+int redis_parse_token(str *in, gparam_t *gp, int i)
+{
+	str tok;
+
+	while(i<in->len && isspace(in->s[i]))
+		i++;
+
+	if(i>=in->len-2)
+		return -1;
+
+	if(in->s[i++]!='[')
+		return -1;
+
+	while(i<in->len-1 && isspace(in->s[i]))
+		i++;
+	if(i==in->len-1 || in->s[i]==']')
+		return -1;
+	tok.s = &(in->s[i]);
+
+	while(i<in->len && !isspace(in->s[i]) && in->s[i]!=']')
+		i++;
+	if(i==in->len)
+		return -1;
+	tok.len = &(in->s[i]) - tok.s;
+	if(redis_parse_index(&tok, gp)!=0)
+		return -1;
+
+	while(i<in->len && isspace(in->s[i]))
+		i++;
+	if(i==in->len || in->s[i]!=']')
+		return -1;
+
+	return 0;
+}
+
+/**
+ *
+ */
 static int pv_parse_redisc_name(pv_spec_p sp, str *in)
 {
 	redisc_pv_t *rpv=NULL;
@@ -317,46 +394,76 @@ static int pv_parse_redisc_name(pv_spec_p sp, str *in)
 	rpv->rname.s = pvs.s;
 	for(i=0; i<pvs.len-2; i++)
 	{
-		if(pvs.s[i]=='=')
-		{
-			if(pvs.s[i+1]!='>')
-			{
-				LM_ERR("invalid var spec [%.*s]\n",
-						in->len, in->s);
-				pkg_free(rpv);
-				return -1;
-			}
+		if(isspace(pvs.s[i]) || pvs.s[i]=='=') {
 			rpv->rname.len = i;
 			break;
 		}
 	}
+	rpv->rname.len = i;
 
 	if(rpv->rname.len==0)
-	{
-		LM_ERR("invalid var spec [%.*s]\n", in->len, in->s);
-		pkg_free(rpv);
-		return -1;
-	}
+		goto error_var;
+
+	while(i<pvs.len-2 && isspace(pvs.s[i]))
+		i++;
+
+	if(pvs.s[i]!='=')
+		goto error_var;
+
+	if(pvs.s[i+1]!='>')
+		goto error_var;
+
 	i += 2;
+	while(i<pvs.len && isspace(pvs.s[i]))
+		i++;
+
+	if(i>=pvs.len)
+		goto error_key;
+
 	rpv->rkey.s   = pvs.s + i;
 	rpv->rkey.len = pvs.len - i;
 
-	if(rpv->rkey.len==5 && strncmp(rpv->rkey.s, "value", 5)==0) {
+	/* Default pos param initialization. */
+	rpv->pos.type = GPARAM_TYPE_INT;
+	rpv->pos.v.i = -1;
+
+	if(rpv->rkey.len>=5 && strncmp(rpv->rkey.s, "value", 5)==0) {
 		rpv->rkeyid = 1;
-	} else if(rpv->rkey.len==4 && strncmp(rpv->rkey.s, "type", 4)==0) {
+		if(rpv->rkey.len>5)
+		{
+			i+=5;
+			if(redis_parse_token(&pvs, &(rpv->pos), i)!=0)
+				goto error_key;
+		}
+	} else if(rpv->rkey.len>=4 && strncmp(rpv->rkey.s, "type", 4)==0) {
 		rpv->rkeyid = 0;
+		if(rpv->rkey.len>4)
+		{
+			i+=4;
+			if(redis_parse_token(&pvs, &(rpv->pos), i)!=0)
+				goto error_key;
+		}
 	} else if(rpv->rkey.len==4 && strncmp(rpv->rkey.s, "info", 4)==0) {
 		rpv->rkeyid = 2;
+	} else if(rpv->rkey.len==4 && strncmp(rpv->rkey.s, "size", 4)==0) {
+		rpv->rkeyid = 3;
 	} else {
-		LM_ERR("invalid key spec in [%.*s]\n", in->len, in->s);
-		pkg_free(rpv);
-		return -1;
+		goto error_key;
 	}
 
 	sp->pvp.pvn.u.dname = (void*)rpv;
 	sp->pvp.pvn.type = PV_NAME_OTHER;
 	return 0;
 
+error_var:
+	LM_ERR("invalid var spec [%.*s]\n", in->len, in->s);
+	pkg_free(rpv);
+	return -1;
+
+error_key:
+	LM_ERR("invalid key spec in [%.*s]\n", in->len, in->s);
+	pkg_free(rpv);
+	return -1;
 }
 
 /**
@@ -367,6 +474,7 @@ static int pv_get_redisc(struct sip_msg *msg,  pv_param_t *param,
 {
 	redisc_pv_t *rpv;
 	str s;
+	int pos;
 
 	rpv = (redisc_pv_t*)param->pvn.u.dname;
 	if(rpv->reply==NULL)
@@ -379,27 +487,72 @@ static int pv_get_redisc(struct sip_msg *msg,  pv_param_t *param,
 	if(rpv->reply->rplRedis==NULL)
 		return pv_get_null(msg, param, res);
 
+
+	if(fixup_get_ivalue(msg, &rpv->pos, &pos)!=0)
+		return pv_get_null(msg, param, res);
+
 	switch(rpv->rkeyid) {
 		case 1:
+			/* value */
 			switch(rpv->reply->rplRedis->type) {
 				case REDIS_REPLY_STRING:
+					if(pos!=-1)
+						return pv_get_null(msg, param, res);
 					s.len = rpv->reply->rplRedis->len;
 					s.s = rpv->reply->rplRedis->str;
 					return pv_get_strval(msg, param, res, &s);
 				case REDIS_REPLY_INTEGER:
+					if(pos!=-1)
+						return pv_get_null(msg, param, res);
 					return pv_get_sintval(msg, param, res,
-							(int)rpv->reply->rplRedis->integer);
+										  (int)rpv->reply->rplRedis->integer);
+				case REDIS_REPLY_ARRAY:
+					if(pos<0 || pos>=(int)rpv->reply->rplRedis->elements)
+						return pv_get_null(msg, param, res);
+					if(rpv->reply->rplRedis->element[pos]==NULL)
+						return pv_get_null(msg, param, res);
+					switch(rpv->reply->rplRedis->element[pos]->type) {
+						case REDIS_REPLY_STRING:
+						s.len = rpv->reply->rplRedis->element[pos]->len;
+							s.s = rpv->reply->rplRedis->element[pos]->str;
+							return pv_get_strval(msg, param, res, &s);
+						case REDIS_REPLY_INTEGER:
+							return pv_get_sintval(msg, param, res,
+												  (int)rpv->reply->rplRedis->element[pos]->integer);
+						default:
+							return pv_get_null(msg, param, res);
+					}
 				default:
 					return pv_get_null(msg, param, res);
 			}
 		case 2:
+			/* info */
 			if(rpv->reply->rplRedis->str==NULL)
 				return pv_get_null(msg, param, res);
 			s.len = rpv->reply->rplRedis->len;
 			s.s = rpv->reply->rplRedis->str;
 			return pv_get_strval(msg, param, res, &s);
+		case 3:
+			/* size */
+			if(rpv->reply->rplRedis->type == REDIS_REPLY_ARRAY) {
+				return pv_get_uintval(msg, param, res, (unsigned int)rpv->reply->rplRedis->elements);
+			} else {
+				return pv_get_null(msg, param, res);
+			}
+		case 0:
+			/* type */
+			if(pos==-1)
+				return pv_get_sintval(msg, param, res,
+									  rpv->reply->rplRedis->type);
+			if(rpv->reply->rplRedis->type != REDIS_REPLY_ARRAY)
+				return pv_get_null(msg, param, res);
+			if(pos<0 || pos>=(int)rpv->reply->rplRedis->elements)
+				return pv_get_null(msg, param, res);
+			if(rpv->reply->rplRedis->element[pos]==NULL)
+				return pv_get_null(msg, param, res);
+			return pv_get_sintval(msg, param, res, rpv->reply->rplRedis->element[pos]->type);
 		default:
-			return pv_get_sintval(msg, param, res,
-					rpv->reply->rplRedis->type);
+			/* We do nothing. */
+			return pv_get_null(msg, param, res);
 	}
 }

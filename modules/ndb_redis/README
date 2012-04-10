@@ -119,6 +119,14 @@ modparam("ndb_redis", "server", "name=srvX;addr=127.0.0.2;port=6379;db=4")
    returned by REDIS server; info - in case of error from REDIS, it will
    contain an info message.
 
+   If reply type is an array (as in hiredis.h), there are other keys
+   available:
+     * size - returns number of elements in the array.
+     * type[n] - returns the type of the nth element in the array. type -
+       returns array type.
+     * value[n] - returns value of the nth element. value - returns null
+       for an array. You need to get each element by index.
+
    Example 1.2. redis_cmd usage
 ...
 if(redis_cmd("srvN", "INCR cnt", "r")) {
@@ -133,4 +141,10 @@ redis_cmd("srvN", "SET ruri $ru", "r");
 
 # get a value
 redis_cmd("srvN", "GET foo", "r");
+
+# array example
+if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
+    xlog("array size: $redis(r=>size)\n");
+    xlog("first values: $redis(r=>value[0]) , $redis(r=>value[1])\n");
+}
 ...

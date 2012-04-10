@@ -28,6 +28,7 @@
 
 #include "../../str.h"
 #include "../../parser/parse_param.h"
+#include "../../mod_fix.h"
 
 int redisc_init(void);
 int redisc_destroy(void);
@@ -55,6 +56,7 @@ typedef struct redisc_pv {
 	redisc_reply_t *reply;
 	str rkey;
 	int rkeyid;
+	gparam_t pos;  /* Array element position. */
 } redisc_pv_t;
 
 redisc_reply_t *redisc_get_reply(str *name);
