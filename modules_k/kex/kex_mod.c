@@ -137,7 +137,7 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	if(sruid_init(&_kex_sruid, '-', NULL)<0)
+	if(sruid_init(&_kex_sruid, '-', NULL, 0)<0)
 		return -1;
 	if(init_mi_core()<0)
 		return -1;
@@ -158,7 +158,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	LM_DBG("rank is (%d)\n", rank);
-	if(sruid_init(&_kex_sruid, '-', NULL)<0)
+	if(sruid_init(&_kex_sruid, '-', NULL, 0)<0)
 		return -1;
 	if (rank==PROC_INIT)
 		return pkg_proc_stats_init();

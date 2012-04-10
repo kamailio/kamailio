@@ -29,14 +29,17 @@
 
 #define SRUID_SIZE	40
 
+typedef enum {SRUID_INC=0, SRUID_LFSR=1} sruid_mode_t;
+
 typedef struct sruid {
 	char buf[SRUID_SIZE];
 	char *out;
 	str uid;
 	unsigned int counter;
+	sruid_mode_t mode;
 } sruid_t;
 
-int sruid_init(sruid_t *sid, char sep, char *cid);
+int sruid_init(sruid_t *sid, char sep, char *cid, int mode);
 int sruid_next(sruid_t *sid);
 
 #endif

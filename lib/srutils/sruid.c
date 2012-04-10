@@ -34,10 +34,38 @@
 
 #include "sruid.h"
 
+/* starting polynomials */
+#define MASK_32 0xb4bcd35c
+#define MASK_31 0x7a5bc2e3
+
+unsigned int lfsr32, lfsr31;
+
+int shift_lfsr(unsigned int *lfsr, unsigned int mask){
+	int feedback;
+	feedback = *lfsr & 0x1;
+	*lfsr >>=1;
+	if (feedback == 1)
+		*lfsr ^= mask;
+	return *lfsr;
+}
+
+void init_lfsr(void){
+	lfsr32 = (unsigned int)time(NULL);
+	lfsr31 = (unsigned int)getpid();
+}
+
+/* 
+ * returns a 32 bit random integer
+ * 
+ */ 
+int get_random(){
+	return (shift_lfsr(&lfsr32, MASK_32) ^ shift_lfsr(&lfsr31, MASK_31)) & 0xffffffff;
+}
+
 /**
  *
  */
-int sruid_init(sruid_t *sid, char sep, char *cid)
+int sruid_init(sruid_t *sid, char sep, char *cid, int mode)
 {
 	int i;
 
@@ -67,6 +95,7 @@ int sruid_init(sruid_t *sid, char sep, char *cid)
 	}
 	sid->out = sid->buf + i + 5;
 	sid->uid.s = sid->buf;
+	sid->mode = (sruid_mode_t)mode;
 	LM_DBG("root for sruid is [%.*s] (%u / %d)\n", i+5, sid->uid.s,
 			sid->counter, i+5);
 	return 0;
@@ -88,7 +117,10 @@ int sruid_next(sruid_t *sid)
 	if(sid->counter==0)
 		sid->counter=1;
 
-	val = sid->counter;
+	if(sid->mode == SRUID_LFSR)
+		val = get_random();
+	else
+		val = sid->counter;
 	i = 0;
 	while(val!=0)
 	{
