@@ -50,6 +50,7 @@
 	ret = -1;\
 	for(i=DBCL_PRIO_SIZE-1; i>0; i--)\
 	{\
+		if(cls->rlist[i].clen<=0) continue; \
 		switch(cls->rlist[i].mode) {\
 			case 's':\
 			case 'S':\
@@ -123,6 +124,7 @@
 	rc = 0;\
 	for(i=DBCL_PRIO_SIZE-1; i>0; i--)\
 	{\
+		if(cls->wlist[i].clen<=0) continue; \
 		switch(cls->wlist[i].mode) {\
 			case 's':\
 			case 'S':\
