@@ -576,7 +576,7 @@ static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 		/* partial document upload
 		 *   - fetch, update, delete and store
 		 */
-		if(xcaps_get_db_doc(&turi.user, &turi.host, &xuri, &tbuf)<0)
+		if(xcaps_get_db_doc(&turi.user, &turi.host, &xuri, &tbuf) != 0)
 		{
 			LM_ERR("could not fetch xcap document\n");
 			goto error;
@@ -1092,7 +1092,7 @@ static int w_xcaps_del(sip_msg_t* msg, char* puri, char* ppath)
 				&xcaps_str_empty, &xcaps_str_empty);
 	} else {
 		/* delete element */
-		if(xcaps_get_db_doc(&turi.user, &turi.host, &xuri, &tbuf)<0)
+		if(xcaps_get_db_doc(&turi.user, &turi.host, &xuri, &tbuf) != 0)
 		{
 			LM_ERR("could not fetch xcap document\n");
 			goto error;
