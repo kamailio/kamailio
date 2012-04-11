@@ -625,7 +625,7 @@ int hep_msg_received(void *data)
 	unsigned *len;
 	struct receive_info *ri;
 	
-	int offset = 0, hl;
+	int hl;
         struct hep_hdr *heph;
         struct ip_addr dst_ip, src_ip;
         char *hep_payload, *end, *hep_ip;
@@ -727,7 +727,7 @@ int hep_msg_received(void *data)
 
 	/* timming */
         if(heph->hp_v == 2) {
-                offset+=sizeof(struct hep_timehdr);
+                hep_offset+=sizeof(struct hep_timehdr);
                 heptime_tmp = (struct hep_timehdr*) hep_payload;
 
                 heptime->tv_sec = heptime_tmp->tv_sec;
@@ -770,7 +770,7 @@ int hep_msg_received(void *data)
          *  p = buf + offset;
 	 *  memmove(buf, p, BUF_SIZE+1); 
 	*/
-	memset(buf, '\n', offset); /* the parser will ignore the starting \n no need to do expensive memmove */
+	memset(buf, '\n', hep_offset); /* the parser will ignore the starting \n no need to do expensive memmove */
 	
 	return 0;
 }
