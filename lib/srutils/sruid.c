@@ -104,6 +104,41 @@ int sruid_init(sruid_t *sid, char sep, char *cid, int mode)
 /**
  *
  */
+int sruid_reinit(sruid_t *sid, int mode)
+{
+	int i;
+	char sep;
+
+	if(sid==NULL)
+		return -1;
+
+	sep = sid->buf[4];
+	sid->buf[5] = '\0';
+
+	if(server_id!=0)
+		i = snprintf(sid->buf+5, SRUID_SIZE - 5 /*so far*/ - 8 /* extra int */,
+			"%x%c%x%c%x%c", (unsigned int)server_id, sep,
+			(unsigned int)time(NULL), sep, (unsigned int)my_pid(), sep);
+	else
+		i = snprintf(sid->buf+5, SRUID_SIZE - 5 /*so far*/ - 8 /* extra int */,
+			"%x%c%x%c",
+			(unsigned int)time(NULL), sep, (unsigned int)my_pid(), sep);
+	if(i<=0 || i>SRUID_SIZE-13)
+	{
+		LM_ERR("could not re-initialize sruid struct - output len: %d\n", i);
+		return -1;
+	}
+	sid->out = sid->buf + i + 5;
+	sid->uid.s = sid->buf;
+	sid->mode = (sruid_mode_t)mode;
+	LM_DBG("re-init root for sruid is [%.*s] (%u / %d)\n", i+5, sid->uid.s,
+			sid->counter, i+5);
+	return 0;
+}
+
+/**
+ *
+ */
 int sruid_next(sruid_t *sid)
 {
 	unsigned short digit;
@@ -114,8 +149,15 @@ int sruid_next(sruid_t *sid)
 		return -1;
 
 	sid->counter++;
-	if(sid->counter==0)
+	if(sid->counter==0) {
+		if(sid->mode == SRUID_INC)
+		{
+			/* counter overflow - re-init to have new timestamp */
+			if(sruid_reinit(sid, SRUID_INC)<0)
+				return -1;
+		}
 		sid->counter=1;
+	}
 
 	if(sid->mode == SRUID_LFSR)
 		val = get_random();
