@@ -126,7 +126,7 @@ int dbcl_init_con(str *name, str *url)
 
 int dbcl_valid_con(dbcl_con_t *sc)
 {
-	if(sc==NULL || sc->flags!=0 || sc->dbh!=NULL)
+	if(sc==NULL || sc->flags==0 || sc->dbh==NULL)
 		return -1;
 	if(sc->sinfo==NULL)
 		return 0;

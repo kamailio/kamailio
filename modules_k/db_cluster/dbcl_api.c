@@ -105,6 +105,8 @@
 				return -1;\
 		}\
 	}\
+	LM_DBG("no successful read on cluster [%.*s]\n",\
+			cls->name.len, cls->name.s);\
 	return ret;\
 	} while(0)
 
@@ -204,6 +206,8 @@
 				return -1;\
 		}\
 	}\
+	LM_DBG("no successful write on cluster [%.*s]\n",\
+			cls->name.len, cls->name.s);\
 	return ret;\
 	} while(0)
 
