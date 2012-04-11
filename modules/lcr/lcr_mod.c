@@ -1829,6 +1829,10 @@ static int load_gws(struct sip_msg* _m, int argc, action_u_t argv[])
 		    }
 		    /* Do not look further if this matching rule was stopper */
 		    if (rule->stopper == 1) goto done;
+		} else {
+		    LM_DBG("from uri <%.*s> did not match to from regex <%.*s>",
+			   from_uri.len, from_uri.s, rule->from_uri_len,
+			   rule->from_uri);
 		}
 	    }
 	    rule = rule->next;
