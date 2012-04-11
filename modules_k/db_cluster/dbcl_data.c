@@ -132,7 +132,9 @@ int dbcl_valid_con(dbcl_con_t *sc)
 		return 0;
 	if(sc->sinfo->state & DBCL_CON_INACTIVE)
 	{
-		if(sc->sinfo->aticks>0 && sc->sinfo->aticks<get_ticks())
+		if(sc->sinfo->aticks==0)
+			return -1;
+		if(sc->sinfo->aticks>get_ticks())
 			return -1;
 		sc->sinfo->aticks = 0;
 		sc->sinfo->state &= ~DBCL_CON_INACTIVE;
