@@ -572,6 +572,7 @@ void link_dlg(struct dlg_cell *dlg, int n)
 
 	/* keep id 0 for special cases */
 	dlg->h_id = 1 + d_entry->next_id++;
+	if(dlg->h_id == 0) dlg->h_id = 1;
 	LM_DBG("linking dialog [%u:%u]\n", dlg->h_entry, dlg->h_id);
 	if (d_entry->first==0) {
 		d_entry->first = d_entry->last = dlg;
