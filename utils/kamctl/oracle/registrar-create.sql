@@ -1,6 +1,7 @@
-INSERT INTO version (table_name, table_version) values ('aliases','1004');
+INSERT INTO version (table_name, table_version) values ('aliases','5');
 CREATE TABLE aliases (
     id NUMBER(10) PRIMARY KEY,
+    ruid VARCHAR2(64) DEFAULT '',
     username VARCHAR2(64) DEFAULT '',
     domain VARCHAR2(64) DEFAULT NULL,
     contact VARCHAR2(255) DEFAULT '',
@@ -15,7 +16,8 @@ CREATE TABLE aliases (
     cflags NUMBER(10) DEFAULT 0 NOT NULL,
     user_agent VARCHAR2(255) DEFAULT '',
     socket VARCHAR2(64) DEFAULT NULL,
-    methods NUMBER(10) DEFAULT NULL
+    methods NUMBER(10) DEFAULT NULL,
+    instance VARCHAR2(255) DEFAULT ''
 );
 
 CREATE OR REPLACE TRIGGER aliases_tr

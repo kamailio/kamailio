@@ -1,6 +1,7 @@
-INSERT INTO version (table_name, table_version) values ('location','1004');
+INSERT INTO version (table_name, table_version) values ('location','5');
 CREATE TABLE location (
     id INTEGER PRIMARY KEY NOT NULL,
+    ruid VARCHAR(64) DEFAULT '' NOT NULL,
     username VARCHAR(64) DEFAULT '' NOT NULL,
     domain VARCHAR(64) DEFAULT NULL,
     contact VARCHAR(255) DEFAULT '' NOT NULL,
@@ -15,7 +16,8 @@ CREATE TABLE location (
     cflags INTEGER DEFAULT 0 NOT NULL,
     user_agent VARCHAR(255) DEFAULT '' NOT NULL,
     socket VARCHAR(64) DEFAULT NULL,
-    methods INTEGER DEFAULT NULL
+    methods INTEGER DEFAULT NULL,
+    instance VARCHAR(255) DEFAULT '' NOT NULL
 );
 
 CREATE INDEX location_account_contact_idx ON location (username, domain, contact);

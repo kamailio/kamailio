@@ -9,7 +9,7 @@
 
 <table id="location" xmlns:db="http://docbook.org/ns/docbook">
     <name>location</name>
-    <version>1004</version>
+    <version>5</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Persistent user location information for the usrloc module. More information can be found at: &KAMAILIO_MOD_DOC;usrloc.html
@@ -26,7 +26,16 @@
         <description>unique ID</description>
     </column>
 
-    <column id="username">
+    <column id="ruid">
+        <name>ruid</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Record internal unique id</description>
+        <natural/>
+    </column>
+
+	<column id="username">
         <name>&USERCOL;</name>
         <type>string</type>
         <size>&user_len;</size>
@@ -152,6 +161,15 @@
         <default><null/></default>
         <description>Flags that indicate the SIP Methods this contact will accept.</description>
     </column>
+
+	<column id="instance">
+        <name>instance</name>
+        <type>string</type>
+        <size>&hf_len;</size>
+        <default/>
+        <description>The value of SIP instance parameter for GRUU.</description>
+    </column>
+
 
     <index>
         <name>account_contact_idx</name>
