@@ -97,10 +97,17 @@ static inline int parse_supported_body(str *body, unsigned int *sup)
 				if(pos+SUPPORTED_EVENTLIST_LEN<=len
 						&& strncasecmp(p, SUPPORTED_EVENTLIST_STR,
 							SUPPORTED_EVENTLIST_LEN)==0
-						&& IS_DELIM(p+9) ) {
+						&& IS_DELIM(p+SUPPORTED_EVENTLIST_LEN) ) {
 					*sup |= F_SUPPORTED_EVENTLIST;
 					pos += SUPPORTED_EVENTLIST_LEN + 1;
 					p   += SUPPORTED_EVENTLIST_LEN + 1;
+				} else if(pos+SUPPORTED_GRUU_LEN<=len
+						&& strncasecmp(p, SUPPORTED_GRUU_STR,
+							SUPPORTED_GRUU_LEN)==0
+						&& IS_DELIM(p+SUPPORTED_GRUU_LEN)) {
+					*sup |= F_SUPPORTED_GRUU;
+					pos += SUPPORTED_GRUU_LEN + 1;
+					p   += SUPPORTED_GRUU_LEN + 1;
 				} else {
 					/* skip element */
 					for (; pos < len && !IS_DELIM(p); ++pos, ++p);
