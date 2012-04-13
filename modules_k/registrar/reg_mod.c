@@ -117,6 +117,8 @@ int path_use_params = 0;			/*!< if the received- and nat-parameters of last Path
 /* sruid to get internal uid */
 sruid_t _reg_sruid;
 
+int reg_gruu_enabled = 1;
+
 /* Populate this AVP if testing for specific registration instance. */
 char *reg_callid_avp_param = 0;
 unsigned short reg_callid_avp_type = 0;
@@ -214,6 +216,7 @@ static param_export_t params[] = {
 	{"path_mode",          INT_PARAM, &path_mode           					},
 	{"path_use_received",  INT_PARAM, &path_use_params     					},
 	{"xavp_cfg",           STR_PARAM, &reg_xavp_cfg.s     					},
+	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    					},
 	{0, 0, 0}
 };
 

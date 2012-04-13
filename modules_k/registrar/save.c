@@ -357,7 +357,8 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 				ci.received = received;
 			}
 		}
-		if(_c->instance)
+		if(reg_gruu_enabled==1 && _c->instance!=NULL
+				&& _c->instance->body.len>0)
 			ci.instance = _c->instance->body;
 		if(sruid_next(&_reg_sruid)<0)
 			goto error;

@@ -658,6 +658,33 @@ modparam("registrar", "xavp_cfg", "reg")
 		</programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>gruu_enabled</varname> (integer)</title>
+		<para>
+		If set to 1 and GRUU <quote>+sip.instance</quote> parameter to
+		Contact header of REGISTER is present, then the value of the
+		parameter is saved to location and pub-gruu and temp-gruu addresses
+		are generated.
+		</para>
+		<para>
+		Set it to 0 if you want to ignore GRUU extensions in REGISTER.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (enabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>gruu_enabled</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "gruu_enabled", 0)
+...
+		</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	
