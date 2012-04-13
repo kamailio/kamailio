@@ -82,6 +82,8 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 					PLR_L, PLR_R_FIN, PLR_eq,
 					/* r2 */
 					PR2_R, PR2_2_FIN, PR2_eq,
+					/* gr */
+					PGR_G, PGR_R_FIN, PGR_eq,
 #ifdef USE_COMP
 					/* comp */
 					PCOMP_C, PCOMP_O, PCOMP_M, PCOMP_P, PCOMP_eq,
@@ -644,6 +646,11 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 						b=p;
 						state=PR2_R;
 						break;
+					case 'g':
+					case 'G':
+						b=p;
+						state=PGR_G;
+						break;
 #ifdef USE_COMP
 					case 'c':
 					case 'C':
@@ -856,6 +863,42 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 						state=URI_VAL_P;
 				}
 				break;
+			/* gr */
+			param_switch(PGR_G,  'r', 'R', PGR_R_FIN);
+			case PGR_R_FIN:
+				switch(*p){
+					case '@':
+						still_at_user;
+						break;
+					case '=':
+						state=PGR_eq;
+						break;
+					semicolon_case;
+						uri->gr.s=b;
+						uri->gr.len=(p-b);
+						break;
+					question_case;
+						uri->gr.s=b;
+						uri->gr.len=(p-b);
+						break;
+					colon_case;
+						break;
+					default:
+						state=URI_PARAM_P;
+				}
+				break;
+				/* handle gr=something case */
+			case PGR_eq:
+				param=&uri->gr;
+				param_val=&uri->gr_val;
+				switch(*p){
+					param_common_cases;
+					default:
+						v=p;
+						state=URI_VAL_P;
+				}
+				break;
+
 #ifdef USE_COMP
 			param_switch(PCOMP_C,  'o', 'O' , PCOMP_O);
 			param_switch(PCOMP_O,  'm', 'M' , PCOMP_M);
@@ -1007,7 +1050,8 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 		case PM_D:
 		case PM_eq:
 		case PLR_L: /* lr */
-		case PR2_R:  /* r2 */
+		case PR2_R: /* r2 */
+		case PGR_G: /* gr */
 #ifdef USE_COMP
 		case PCOMP_C:
 		case PCOMP_O:
@@ -1032,6 +1076,13 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			uri->params.len=p-s;
 			uri->r2.s=b;
 			uri->r2.len=p-b;
+			break;
+		case PGR_R_FIN:
+		case PGR_eq:
+			uri->params.s=s;
+			uri->params.len=p-s;
+			uri->gr.s=b;
+			uri->gr.len=p-b;
 			break;
 		case URI_VAL_P:
 		/* intermediate value states */

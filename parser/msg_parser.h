@@ -212,6 +212,7 @@ struct sip_uri {
 	str method;
 	str lr;
 	str r2; /*!< ser specific rr parameter */
+	str gr;
 	str transport_val; /*!< transport value */
 	str ttl_val;	 /*!< TTL value */
 	str user_param_val; /*!< User= param value */
@@ -219,6 +220,7 @@ struct sip_uri {
 	str method_val; /*!< Method value */
 	str lr_val; /*!< lr value placeholder for lr=on a.s.o*/
 	str r2_val;
+	str gr_val;
 #ifdef USE_COMP
 	unsigned short comp;
 #endif
