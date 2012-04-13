@@ -87,8 +87,9 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 						return;
 					}
 				} else {
-					if(rpc->struct_add(ah, "S{",
+					if(rpc->struct_add(ah, "Sd{",
 							"AoR", &r->aor,
+							"HashID", r->aorhash,
 							"Contacts", &ih)<0)
 					{
 						unlock_ulslot( dom, i);
@@ -259,6 +260,23 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 							unlock_ulslot( dom, i);
 							rpc->fault(ctx, 500,
 									"Internal error adding methods");
+							return;
+						}
+						if(rpc->struct_add(vh, "S",
+								"Ruid", (c->ruid.len)?&c->ruid: &empty_str)<0)
+						{
+							unlock_ulslot( dom, i);
+							rpc->fault(ctx, 500,
+									"Internal error adding ruid");
+							return;
+						}
+						if(rpc->struct_add(vh, "S",
+								"Instance",
+								(c->instance.len)?&c->instance: &empty_str)<0)
+						{
+							unlock_ulslot( dom, i);
+							rpc->fault(ctx, 500,
+									"Internal error adding instance");
 							return;
 						}
 					}

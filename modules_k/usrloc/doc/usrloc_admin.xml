@@ -409,6 +409,46 @@ modparam("usrloc", "path_column", "path")
 	</section>
 
 	<section>
+		<title><varname>ruid_column</varname> (string)</title>
+		<para>
+		Name of column containing the record unique id.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>ruid</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ruid_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "ruid_column", "myruid")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>instance_column</varname> (string)</title>
+		<para>
+		Name of column containing the SIP instace (GRUU - RFC5627).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>instance</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>instance_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "instance_column", "myinstance")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
 		If the domain part of the user should be also saved and used for

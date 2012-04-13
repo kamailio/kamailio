@@ -169,4 +169,19 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path,
 		int _cseq,
 		struct ucontact** _co);
 
+/*!
+ * \brief Get pointer to ucontact with given contact
+ * \param _r record where to search the contacts
+ * \param _c contact string
+ * \param _callid callid
+ * \param _path path 
+ * \param _cseq CSEQ number
+ * \param _inst SIP instance
+ * \param _co found contact
+ * \return 0 - found, 1 - not found, -1 - invalid found, 
+ * -2 - found, but to be skipped (same cseq)
+ */
+int get_ucontact_by_instance(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
+							str* _inst, struct ucontact** _co);
+
 #endif

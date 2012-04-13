@@ -43,8 +43,9 @@
  */
 
 
-#define UL_TABLE_VERSION 1004
+#define UL_TABLE_VERSION 5
 
+extern str ruid_col;
 extern str user_col;
 extern str domain_col;
 extern str contact_col;
@@ -59,6 +60,7 @@ extern str received_col;
 extern str path_col;
 extern str sock_col;
 extern str methods_col;
+extern str instance_col;
 extern str last_mod_col;
 
 extern str db_url;

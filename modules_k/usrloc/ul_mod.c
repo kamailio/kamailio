@@ -70,6 +70,7 @@
 
 MODULE_VERSION
 
+#define RUID_COL       "ruid"
 #define USER_COL       "username"
 #define DOMAIN_COL     "domain"
 #define CONTACT_COL    "contact"
@@ -84,6 +85,7 @@ MODULE_VERSION
 #define PATH_COL       "path"
 #define SOCK_COL       "socket"
 #define METHODS_COL    "methods"
+#define INSTANCE_COL   "instance"
 #define LAST_MOD_COL   "last_modified"
 
 static int mod_init(void);                          /*!< Module initialization function */
@@ -105,6 +107,7 @@ int ul_db_update_as_insert = 0;
  * Module parameters and their default values
  */
 
+str ruid_col        = str_init(RUID_COL); 		/*!< Name of column containing record unique id */
 str user_col        = str_init(USER_COL); 		/*!< Name of column containing usernames */
 str domain_col      = str_init(DOMAIN_COL); 		/*!< Name of column containing domains */
 str contact_col     = str_init(CONTACT_COL);		/*!< Name of column containing contact addresses */
@@ -119,6 +122,7 @@ str received_col    = str_init(RECEIVED_COL);		/*!< Name of column containing tr
 str path_col        = str_init(PATH_COL);		/*!< Name of column containing the Path header */
 str sock_col        = str_init(SOCK_COL);		/*!< Name of column containing the received socket */
 str methods_col     = str_init(METHODS_COL);		/*!< Name of column containing the supported methods */
+str instance_col    = str_init(INSTANCE_COL);		/*!< Name of column containing the SIP instance value */
 str last_mod_col     = str_init(LAST_MOD_COL);		/*!< Name of column containing the last modified date */
 str db_url          = str_init(DEFAULT_DB_URL);		/*!< Database URL */
 int timer_interval  = 60;				/*!< Timer interval in seconds */
@@ -151,6 +155,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters 
  */
 static param_export_t params[] = {
+	{"ruid_column",         STR_PARAM, &ruid_col.s      },
 	{"user_column",         STR_PARAM, &user_col.s      },
 	{"domain_column",       STR_PARAM, &domain_col.s    },
 	{"contact_column",      STR_PARAM, &contact_col.s   },
@@ -170,6 +175,7 @@ static param_export_t params[] = {
 	{"path_column",         STR_PARAM, &path_col.s      },
 	{"socket_column",       STR_PARAM, &sock_col.s      },
 	{"methods_column",      STR_PARAM, &methods_col.s   },
+	{"instance_column",     STR_PARAM, &instance_col.s  },
 	{"matching_mode",       INT_PARAM, &matching_mode   },
 	{"cseq_delay",          INT_PARAM, &cseq_delay      },
 	{"fetch_rows",          INT_PARAM, &ul_fetch_rows   },
@@ -249,6 +255,7 @@ static int mod_init(void)
 	}
 
 	/* Compute the lengths of string parameters */
+	ruid_col.len = strlen(ruid_col.s);
 	user_col.len = strlen(user_col.s);
 	domain_col.len = strlen(domain_col.s);
 	contact_col.len = strlen(contact_col.s);
@@ -263,6 +270,7 @@ static int mod_init(void)
 	path_col.len = strlen(path_col.s);
 	sock_col.len = strlen(sock_col.s);
 	methods_col.len = strlen(methods_col.s);
+	instance_col.len = strlen(instance_col.s);
 	last_mod_col.len = strlen(last_mod_col.s);
 	db_url.len = strlen(db_url.s);
 

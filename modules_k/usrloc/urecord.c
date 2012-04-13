@@ -77,7 +77,7 @@ int new_urecord(str* _dom, str* _aor, urecord_t** _r)
 	memcpy((*_r)->aor.s, _aor->s, _aor->len);
 	(*_r)->aor.len = _aor->len;
 	(*_r)->domain = _dom;
-	(*_r)->aorhash = core_hash(_aor, 0, 0);
+	(*_r)->aorhash = ul_get_aorhash(_aor);
 	return 0;
 }
 
@@ -637,4 +637,49 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
 	}
 
 	return 1;
+}
+
+/*
+ * Get pointer to ucontact with given contact and/or given sip.instance
+ */
+int get_ucontact_by_instance(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
+							str* _inst, struct ucontact** _co)
+{
+	ucontact_t* ptr;
+	str i1;
+	str i2;
+	
+	if (_inst == NULL || _inst->len <= 0) {
+		return get_ucontact(_r, _c, _callid, _path, _cseq, _co);
+	}
+
+	/* find by instance */
+	ptr = _r->contacts;
+	while(ptr) {
+		if (ptr->instance.len>0)
+		{
+			i1 = *_inst;
+			i2 = ptr->instance;
+			if(i1.s[0]=='<' && i1.s[i1.len-1]=='>') {
+				i1.s++;
+				i1.len-=2;
+			}
+			if(i2.s[0]=='<' && i2.s[i2.len-1]=='>') {
+				i2.s++;
+				i2.len-=2;
+			}
+			if(i1.len==i2.len && memcmp(i1.s, i2.s, i2.len)==0) {
+				*_co = ptr;
+				return 0;
+			}
+		}
+		
+		ptr = ptr->next;
+	}
+	return 1;
+}
+
+unsigned int ul_get_aorhash(str *_aor)
+{
+	return core_hash(_aor, 0, 0);
 }
