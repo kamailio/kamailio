@@ -69,6 +69,23 @@
 		<quote>path_mode</quote>.
 		</para>
 	</section>
+	<section>
+		<title>GRUU Support</title>
+		<para>
+			GRUU (RFC5627) is supported with both public and temporary
+			addresses.
+		</para>
+		<para>
+			The public GRUU is build based on '+sip.instance'
+			parameter as recommended by RFC.
+		</para>
+		<para>
+			The temporary GRUU is built based on internal SRUID (unique
+			id generator) and it is kept the same for the duration of
+			contact validity.
+		</para>
+	</section>
+	
 	</section>
 
 

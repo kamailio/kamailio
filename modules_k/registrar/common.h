@@ -33,12 +33,14 @@
 #define COMMON_H
 
 #include "../../str.h"
+#include "../../parser/parse_uri.h"
 
+#define REG_GRUU_SEP	'-'
 
 /*! \brief
  * Extract Address Of Record
  */
-int extract_aor(str* _uri, str* _a);
+int extract_aor(str* _uri, str* _a, sip_uri_t *_pu);
 
 
 #endif /* COMMON_H */

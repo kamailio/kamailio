@@ -64,6 +64,17 @@
 #define CONTACT_SEP ", "
 #define CONTACT_SEP_LEN (sizeof(CONTACT_SEP) - 1)
 
+#define GR_PARAM ";gr="
+#define GR_PARAM_LEN (sizeof(GR_PARAM) - 1)
+
+#define SIP_INSTANCE_PARAM	";+sip.instance="
+#define SIP_INSTANCE_PARAM_LEN	(sizeof(SIP_INSTANCE_PARAM) - 1)
+
+#define PUB_GRUU_PARAM ";pub-gruu="
+#define PUB_GRUU_PARAM_LEN (sizeof(PUB_GRUU_PARAM) - 1)
+
+#define TMP_GRUU_PARAM ";temp-gruu="
+#define TMP_GRUU_PARAM_LEN (sizeof(TMP_GRUU_PARAM) - 1)
 
 /*! \brief
  * Buffer for Contact header field
@@ -79,7 +90,7 @@ static struct {
  * Calculate the length of buffer needed to
  * print contacts
  */
-static inline unsigned int calc_buf_len(ucontact_t* c)
+static inline unsigned int calc_buf_len(ucontact_t* c, str *host)
 {
 	unsigned int len;
 	int qlen;
@@ -101,6 +112,38 @@ static inline unsigned int calc_buf_len(ucontact_t* c)
 					+ 1 /* dquote */
 					;
 			}
+			if (c->instance.len>0) {
+				/* pub-gruu */
+				len += PUB_GRUU_PARAM_LEN
+					+ 1 /* " */
+					+ 4 /* sip: */
+					+ c->aor->len
+					+ 1 /* @ */
+					+ host->len
+					+ GR_PARAM_LEN
+					+ c->instance.len
+					+ 1 /* " */
+					;
+				/* temp-gruu */
+				len += TMP_GRUU_PARAM_LEN
+					+ 1 /* " */
+					+ 4 /* sip: */
+					+ c->ruid.len
+					+ 1 /* 'sep' */
+					+ 8 /* max hex int */
+					+ 1 /* @ */
+					+ host->len
+					+ GR_PARAM_LEN
+					- 1 /* = */
+					+ 1 /* " */
+					;
+				/* +sip-instance */
+				len += SIP_INSTANCE_PARAM_LEN
+					+ 1 /* " */
+					+ c->instance.len
+					+ 1 /* " */
+					;
+			}
 		}
 		c = c->next;
 	}
@@ -114,12 +157,18 @@ static inline unsigned int calc_buf_len(ucontact_t* c)
  * Allocate a memory buffer and print Contact
  * header fields into it
  */
-int build_contact(ucontact_t* c)
+int build_contact(ucontact_t* c, str *host)
 {
 	char *p, *cp;
+	char *a;
 	int fl, len;
+	str user;
+	str inst;
+	unsigned int ahash;
+	unsigned short digit;
 
-	contact.data_len = calc_buf_len(c);
+
+	contact.data_len = calc_buf_len(c, host);
 	if (!contact.data_len) return 0;
 
 	if (!contact.buf || (contact.buf_len < contact.data_len)) {
@@ -179,6 +228,72 @@ int build_contact(ucontact_t* c)
 				p += c->received.len;
 				*p++ = '\"';
 			}
+			if (c->instance.len>0) {
+				user.s = c->aor->s;
+				a = memchr(c->aor->s, '@', c->aor->len);
+				if(a!=NULL) {
+					user.len = a - user.s;
+				} else {
+					user.len = c->aor->len;
+				}
+				/* pub-gruu */
+				memcpy(p, PUB_GRUU_PARAM, PUB_GRUU_PARAM_LEN);
+				p += PUB_GRUU_PARAM_LEN;
+				*p++ = '\"';
+				memcpy(p, "sip:", 4);
+				p += 4;
+				if(a!=NULL) {
+					memcpy(p, c->aor->s, c->aor->len);
+					p += c->aor->len;
+				} else {
+					memcpy(p, user.s, user.len);
+					p += user.len;
+					*p++ = '@';
+					memcpy(p, host->s, host->len);
+					p += host->len;
+				}
+				memcpy(p, GR_PARAM, GR_PARAM_LEN);
+				p += GR_PARAM_LEN;
+				inst = c->instance;
+				if(inst.s[0]=='<' && inst.s[inst.len-1]=='>') {
+					inst.s++;
+					inst.len -= 2;
+				}
+				memcpy(p, inst.s, inst.len);
+				p += inst.len;
+				*p++ = '\"';
+				/* temp-gruu */
+				memcpy(p, TMP_GRUU_PARAM, TMP_GRUU_PARAM_LEN);
+				p += TMP_GRUU_PARAM_LEN;
+				*p++ = '\"';
+				memcpy(p, "sip:", 4);
+				p += 4;
+				memcpy(p, c->ruid.s, c->ruid.len);
+				p += c->ruid.len;
+				*p++ = '-';
+				ahash = ul.get_aorhash(c->aor);
+				while(ahash!=0)
+				{
+					digit =  ahash & 0x0f;
+					*p++ = (digit >= 10) ? digit + 'a' - 10 : digit + '0';
+					ahash >>= 4;
+				}
+				*p++ = '@';
+				memcpy(p, host->s, host->len);
+				p += host->len;
+				memcpy(p, GR_PARAM, GR_PARAM_LEN);
+				p += GR_PARAM_LEN - 1;
+				*p++ = '\"';
+
+				/* +sip-instance */
+				memcpy(p, SIP_INSTANCE_PARAM, SIP_INSTANCE_PARAM_LEN);
+				p += SIP_INSTANCE_PARAM_LEN;
+				*p++ = '\"';
+				memcpy(p, c->instance.s, c->instance.len);
+				p += c->instance.len;
+				*p++ = '\"';
+			}
+
 		}
 
 		c = c->next;

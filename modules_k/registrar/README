@@ -26,6 +26,7 @@ Bogdan-Andre Iancu
         1. Overview
 
               1.1. PATH support
+              1.2. GRUU Support
 
         2. Dependencies
 
@@ -118,6 +119,7 @@ Chapter 1. Admin Guide
    1. Overview
 
         1.1. PATH support
+        1.2. GRUU Support
 
    2. Dependencies
 
@@ -173,6 +175,7 @@ Chapter 1. Admin Guide
 1. Overview
 
    1.1. PATH support
+   1.2. GRUU Support
 
    The module contains REGISTER processing logic.
 
@@ -203,6 +206,17 @@ Chapter 1. Admin Guide
    The whole process is transparent to the user, so no config changes are
    required beside setting the registrar-parameters "use_path" and
    "path_mode".
+
+1.2. GRUU Support
+
+   GRUU (RFC5627) is supported with both public and temporary addresses.
+
+   The public GRUU is build based on '+sip.instance' parameter as
+   recommended by RFC.
+
+   The temporary GRUU is built based on internal SRUID (unique id
+   generator) and it is kept the same for the duration of contact
+   validity.
 
 2. Dependencies
 

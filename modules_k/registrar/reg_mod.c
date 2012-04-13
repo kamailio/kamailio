@@ -68,6 +68,7 @@
 #include "../../pvar.h"
 #include "../../modules_k/usrloc/usrloc.h"
 #include "../../lib/kcore/statistics.h"
+#include "../../lib/srutils/sruid.h"
 #include "../../modules/sl/sl.h"
 #include "../../mod_fix.h"
 
@@ -112,6 +113,9 @@ int path_mode = PATH_MODE_STRICT;		/*!< if the Path HF should be inserted in the
 
 int path_use_params = 0;			/*!< if the received- and nat-parameters of last Path uri should be used
  						 * to determine if UAC is nat'ed */
+
+/* sruid to get internal uid */
+sruid_t _reg_sruid;
 
 /* Populate this AVP if testing for specific registration instance. */
 char *reg_callid_avp_param = 0;
@@ -257,6 +261,9 @@ static int mod_init(void)
 	qvalue_t dq;
 
 
+	if(sruid_init(&_reg_sruid, '-', "uloc", SRUID_INC)<0)
+		return -1;
+
 #ifdef STATISTICS
 	/* register statistics */
 	if (register_module_stats( exports.name, mod_stats)!=0 ) {
@@ -371,6 +378,8 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
+	if(sruid_init(&_reg_sruid, '-', "uloc", SRUID_INC)<0)
+		return -1;
 	if (rank==1) {
 		/* init stats */
 		//TODO if parameters are modified via cfg framework do i change them?

@@ -428,7 +428,7 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 		return -1;
 	}
 
-	if (extract_aor(&u, &aor) < 0) {
+	if (extract_aor(&u, &aor, NULL) < 0) {
 		LM_ERR("failed to extract Address Of Record\n");
 		return -1;
 	}

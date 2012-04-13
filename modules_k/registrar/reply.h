@@ -44,7 +44,7 @@ int reg_send_reply(struct sip_msg* _m);
 /*! \brief
  * Build Contact HF for reply
  */
-int build_contact(ucontact_t* c);
+int build_contact(ucontact_t* c, str* host);
 
 
 /*! \brief

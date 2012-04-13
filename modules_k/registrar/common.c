@@ -36,7 +36,6 @@
 
 #include <string.h> 
 #include "../../dprint.h"
-#include "../../parser/parse_uri.h"
 #include "rerrno.h"
 #include "reg_mod.h"
 #include "common.h"
@@ -47,11 +46,12 @@
 /*! \brief
  * Extract Address of Record
  */
-int extract_aor(str* _uri, str* _a)
+int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 {
 	static char aor_buf[MAX_AOR_LEN];
 	str tmp;
-	struct sip_uri puri;
+	sip_uri_t turi;
+	sip_uri_t *puri;
 	int user_len;
 	str *uri;
 	str realm_prefix;
@@ -59,24 +59,29 @@ int extract_aor(str* _uri, str* _a)
 	memset(aor_buf, 0, MAX_AOR_LEN);
 	uri=_uri;
 
-	if (parse_uri(uri->s, uri->len, &puri) < 0) {
+	if(_pu!=NULL)
+		puri = _pu;
+	else
+		puri = &turi;
+
+	if (parse_uri(uri->s, uri->len, puri) < 0) {
 		rerrno = R_AOR_PARSE;
 		LM_ERR("failed to parse Address of Record\n");
 		return -1;
 	}
 	
-	if ( (puri.user.len + puri.host.len + 1) > MAX_AOR_LEN
-	|| puri.user.len > USERNAME_MAX_SIZE
-	||  puri.host.len > DOMAIN_MAX_SIZE ) {
+	if ( (puri->user.len + puri->host.len + 1) > MAX_AOR_LEN
+	|| puri->user.len > USERNAME_MAX_SIZE
+	||  puri->host.len > DOMAIN_MAX_SIZE ) {
 		rerrno = R_AOR_LEN;
 		LM_ERR("Address Of Record too long\n");
 		return -2;
 	}
 
 	_a->s = aor_buf;
-	_a->len = puri.user.len;
+	_a->len = puri->user.len;
 
-	if (un_escape(&puri.user, _a) < 0) {
+	if (un_escape(&puri->user, _a) < 0) {
 		rerrno = R_UNESCAPE;
 		LM_ERR("failed to unescape username\n");
 		return -3;
@@ -90,14 +95,14 @@ int extract_aor(str* _uri, str* _a)
 		/* strip prefix (if defined) */
 		realm_prefix.s = cfg_get(registrar, registrar_cfg, realm_pref);
 		realm_prefix.len = strlen(realm_prefix.s);
-		if (realm_prefix.len && realm_prefix.len<puri.host.len &&
-		(memcmp(realm_prefix.s, puri.host.s, realm_prefix.len)==0) ) {
-			memcpy(aor_buf + _a->len, puri.host.s + realm_prefix.len,
-					puri.host.len - realm_prefix.len);
-			_a->len += puri.host.len - realm_prefix.len;
+		if (realm_prefix.len && realm_prefix.len<puri->host.len &&
+		(memcmp(realm_prefix.s, puri->host.s, realm_prefix.len)==0) ) {
+			memcpy(aor_buf + _a->len, puri->host.s + realm_prefix.len,
+					puri->host.len - realm_prefix.len);
+			_a->len += puri->host.len - realm_prefix.len;
 		} else {
-			memcpy(aor_buf + _a->len, puri.host.s, puri.host.len);
-			_a->len += puri.host.len;
+			memcpy(aor_buf + _a->len, puri->host.s, puri->host.len);
+			_a->len += puri->host.len;
 		}
 	}
 
