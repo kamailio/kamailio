@@ -192,7 +192,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri)
 					&& (ret=-2) && allowed_method(_m,ptr)))
 			goto done;
 		LM_DBG("contact for [%.*s] found by temp gruu [%.*s / %u]\n",
-							aor.len, ZSW(aor.s), inst.len, inst.s);
+							aor.len, ZSW(aor.s), inst.len, inst.s, ahash);
 	}
 
 	ret = 1;
