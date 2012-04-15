@@ -412,7 +412,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 			return -1;
 		}
 	} else {
-		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain)?(15):(14), 0,
+		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain)?(17):(16), 0,
 		&res) < 0) {
 			LM_ERR("db_query failed\n");
 			return -1;

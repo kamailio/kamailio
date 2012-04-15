@@ -510,21 +510,23 @@ int db_insert_ucontact(ucontact_t* _c)
 
 	if(_c->ruid.len>0)
 	{
-		keys[nr_cols] = &ruid_col;
 		vals[nr_cols].type = DB1_STR;
 		vals[nr_cols].nul = 0;
 		vals[nr_cols].val.str_val = _c->ruid;
-		nr_cols++;
+	} else {
+		vals[nr_cols].nul = 1;
 	}
+	nr_cols++;
 
 	if(_c->instance.len>0)
 	{
-		keys[nr_cols] = &instance_col;
 		vals[nr_cols].type = DB1_STR;
 		vals[nr_cols].nul = 0;
 		vals[nr_cols].val.str_val = _c->instance;
-		nr_cols++;
+	} else {
+		vals[nr_cols].nul = 1;
 	}
+	nr_cols++;
 
 	if (use_domain) {
 		vals[nr_cols].type = DB1_STR;
@@ -541,7 +543,7 @@ int db_insert_ucontact(ucontact_t* _c)
 		}
 		nr_cols++;
 	}
-	
+
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
 		LM_ERR("sql use_table failed\n");
 		return -1;
@@ -672,15 +674,20 @@ int db_update_ucontact(ucontact_t* _c)
 		vals2[nr_cols2].type = DB1_STR;
 		vals2[nr_cols2].nul = 0;
 		vals2[nr_cols2].val.str_val = _c->ruid;
-		nr_cols2++;
+	} else {
+		vals2[nr_cols2].nul = 1;
 	}
+	nr_cols2++;
+
 	if(_c->instance.len>0)
 	{
 		vals2[nr_cols2].type = DB1_STR;
 		vals2[nr_cols2].nul = 0;
 		vals2[nr_cols2].val.str_val = _c->instance;
-		nr_cols2++;
+	} else {
+		vals2[nr_cols2].nul = 1;
 	}
+	nr_cols2++;
 
 	if (use_domain) {
 		vals1[3].type = DB1_STR;
