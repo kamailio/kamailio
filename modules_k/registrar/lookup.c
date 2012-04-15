@@ -161,15 +161,23 @@ int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri)
 			if(VALID_CONTACT(ptr,act_time)) {
 				if(allowed_method(_m,ptr)) {
 					/* match on instance, if pub-gruu */
-					if(inst.len>0
-							&& reg_cmp_instances(&inst, &ptr->instance)==0)
-					{
-						/* found by instance */
-						LM_DBG("contact for [%.*s] found by pub gruu [%.*s]\n",
-							aor.len, ZSW(aor.s), inst.len, inst.s);
+					if(inst.len>0) {
+						if(reg_cmp_instances(&inst, &ptr->instance)==0)
+						{
+							/* pub-gruu - found by instance */
+							LM_DBG("contact for [%.*s] found by pub gruu [%.*s]\n",
+								aor.len, ZSW(aor.s), inst.len, inst.s);
+							break;
+						}
+					} else {
+						/* no-gruu - found by address */
+						LM_DBG("contact for [%.*s] found by address\n",
+								aor.len, ZSW(aor.s));
 						break;
 					}
 				} else {
+					LM_DBG("contact for [%.*s] cannot handle the SIP method\n",
+							aor.len, ZSW(aor.s));
 					ret = -2;
 				}
 			}
@@ -177,6 +185,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri)
 		}
 		if (ptr==0) {
 			/* nothing found */
+			LM_DBG("'%.*s' has no valid contact in usrloc\n", aor.len, ZSW(aor.s));
 			goto done;
 		}
 	} else {
