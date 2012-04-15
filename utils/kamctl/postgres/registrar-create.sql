@@ -17,7 +17,7 @@ CREATE TABLE aliases (
     user_agent VARCHAR(255) DEFAULT '' NOT NULL,
     socket VARCHAR(64) DEFAULT NULL,
     methods INTEGER DEFAULT NULL,
-    instance VARCHAR(255) DEFAULT '' NOT NULL
+    instance VARCHAR(255) DEFAULT NULL
 );
 
 CREATE INDEX aliases_alias_idx ON aliases (username, domain, contact);

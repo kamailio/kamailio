@@ -166,7 +166,8 @@
         <name>instance</name>
         <type>string</type>
         <size>&hf_len;</size>
-        <default/>
+        <null/>
+        <default><null/></default>
         <description>The value of SIP instance parameter for GRUU.</description>
     </column>
 

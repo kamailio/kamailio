@@ -17,7 +17,7 @@ CREATE TABLE location (
     user_agent VARCHAR2(255) DEFAULT '',
     socket VARCHAR2(64) DEFAULT NULL,
     methods NUMBER(10) DEFAULT NULL,
-    instance VARCHAR2(255) DEFAULT ''
+    instance VARCHAR2(255) DEFAULT NULL
 );
 
 CREATE OR REPLACE TRIGGER location_tr
