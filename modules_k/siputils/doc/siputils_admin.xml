@@ -930,6 +930,35 @@ if (is_reply()) {
 </programlisting>
 		</example>
 	</section>
+	<section id="is-gruu">
+		<title>
+			<function moreinfo="none">is_gruu([uri])</function>
+		</title>
+		<para>
+			The function returns true if the uri is GRUU ('gr' parameter
+			is present): 1 - pub-gruu; 2 - temp-gruu.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>uri</emphasis> - the SIP URI to check for
+				GRUU parameter. It is optional, when missing, the value
+				of R-URI is used.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title>is_gruu() usage</title>
+		<programlisting format="linespecific">
+...
+if(is_gruu()) { ... }
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 </chapter>

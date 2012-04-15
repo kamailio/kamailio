@@ -32,6 +32,7 @@
 
 
 #include "../../mod_fix.h"
+#include "../../parser/parse_uri.h"
 #include "../../lib/kcore/cmpapi.h"
 
 #include "sipops.h"
@@ -84,3 +85,32 @@ int w_cmp_aor(struct sip_msg *msg, char *uri1, char *uri2)
 	return -2;
 }
 
+int w_is_gruu(sip_msg_t *msg, char *uri1, char *p2)
+{
+	str s1;
+	sip_uri_t turi;
+	sip_uri_t *puri;
+
+	if(uri1!=NULL)
+	{
+		if(fixup_get_svalue(msg, (gparam_p)uri1, &s1)!=0)
+		{
+			LM_ERR("cannot get first parameter\n");
+			return -8;
+		}
+		if(parse_uri(s1.s, s1.len, &turi)!=0)
+			return -1;
+		puri = &turi;
+	} else {
+		if(parse_sip_msg_uri(msg))
+			return -1;
+		puri = &msg->parsed_uri;
+	}
+	if(puri->gr.s!=NULL)
+	{
+		if(puri->gr_val.len>0)
+			return 1;
+		return 2;
+	}
+	return -1;
+}

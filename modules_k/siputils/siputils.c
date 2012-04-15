@@ -160,6 +160,10 @@ static cmd_export_t cmds[]={
 			0, ANY_ROUTE},
 	{"is_reply",            (cmd_function)w_is_reply,              0, 0,
 			0, ANY_ROUTE},
+	{"is_gruu",  (cmd_function)w_is_gruu,                    0, 0,
+		0, ANY_ROUTE},
+	{"is_gruu",  (cmd_function)w_is_gruu,                    1, fixup_spve_null,
+		0, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
