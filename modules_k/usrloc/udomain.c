@@ -643,7 +643,6 @@ urecord_t* db_load_urecord_by_ruid(db1_con_t* _c, udomain_t* _d, str *_ruid)
 	str aor;
 	char aorbuf[512];
 	str domain;
-	int i;
 
 	urecord_t* r;
 	ucontact_t* c;
@@ -699,7 +698,7 @@ urecord_t* db_load_urecord_by_ruid(db1_con_t* _c, udomain_t* _d, str *_ruid)
 	/* use first row - shouldn't be more */
 	row = RES_ROWS(res);
 
-	ci = dbrow2info(  ROW_VALUES(RES_ROWS(res) + i), &contact);
+	ci = dbrow2info(  ROW_VALUES(RES_ROWS(res)), &contact);
 	if (ci==0) {
 		LM_ERR("skipping record for %.*s in table %s\n",
 				_ruid->len, _ruid->s, _d->name->s);

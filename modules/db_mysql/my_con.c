@@ -139,7 +139,6 @@ void my_con_disconnect(db_con_t* con)
 int my_con(db_con_t* con)
 {
 	struct my_con* ptr;
-	struct my_uri* uri;
 
 	/* First try to lookup the connection in the connection pool and
 	 * re-use it if a match is found
@@ -167,7 +166,6 @@ int my_con(db_con_t* con)
 	}
 	mysql_init(ptr->con);
 
-	uri = DB_GET_PAYLOAD(con->uri);
 	DBG("mysql: Creating new connection to: %.*s:%.*s\n",
 		con->uri->scheme.len, ZSW(con->uri->scheme.s),
 		con->uri->body.len, ZSW(con->uri->body.s));

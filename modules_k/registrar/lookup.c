@@ -100,6 +100,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri)
 	str inst = {0};
 	unsigned int ahash = 0;
 
+	ret = -1;
 
 	if (_m->new_uri.s) uri = _m->new_uri;
 	else uri = _m->first_line.u.request.uri;
