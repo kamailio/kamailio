@@ -45,6 +45,7 @@
 #define F_SUPPORTED_TIMER		(1 << 2)
 #define F_SUPPORTED_EVENTLIST   (1 << 3)
 #define F_SUPPORTED_GRUU        (1 << 4)
+#define F_SUPPORTED_OUTBOUND    (1 << 5)
 
 #define SUPPORTED_PATH_STR		"path"
 #define SUPPORTED_PATH_LEN		(sizeof(SUPPORTED_PATH_STR)-1)
@@ -64,6 +65,10 @@
 /* RFC 5627 */
 #define SUPPORTED_GRUU_STR		"gruu"
 #define SUPPORTED_GRUU_LEN		(sizeof(SUPPORTED_GRUU_STR)-1)
+
+/* RFC 5626 */
+#define SUPPORTED_OUTBOUND_STR	"outbound"
+#define SUPPORTED_OUTBOUND_LEN	(sizeof(SUPPORTED_OUTBOUND_STR)-1)
 
 #define get_supported(p_msg) \
 	((p_msg)->supported ? ((struct supported_body*)(p_msg)->supported->parsed)->supported_all : 0)

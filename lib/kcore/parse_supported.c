@@ -108,6 +108,13 @@ static inline int parse_supported_body(str *body, unsigned int *sup)
 					*sup |= F_SUPPORTED_GRUU;
 					pos += SUPPORTED_GRUU_LEN + 1;
 					p   += SUPPORTED_GRUU_LEN + 1;
+				} else if(pos+SUPPORTED_OUTBOUND_LEN<=len
+						&& strncasecmp(p, SUPPORTED_OUTBOUND_STR,
+							SUPPORTED_OUTBOUND_LEN)==0
+						&& IS_DELIM(p+SUPPORTED_OUTBOUND_LEN)) {
+					*sup |= F_SUPPORTED_OUTBOUND;
+					pos += SUPPORTED_OUTBOUND_LEN + 1;
+					p   += SUPPORTED_OUTBOUND_LEN + 1;
 				} else {
 					/* skip element */
 					for (; pos < len && !IS_DELIM(p); ++pos, ++p);
