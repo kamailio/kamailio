@@ -89,8 +89,9 @@ static struct {
 /*! \brief
  * Calculate the length of buffer needed to
  * print contacts
+ * - mode specifies if GRUU header params are added
  */
-static inline unsigned int calc_buf_len(ucontact_t* c, str *host)
+static inline unsigned int calc_buf_len(ucontact_t* c, str *host, int mode)
 {
 	unsigned int len;
 	int qlen;
@@ -112,7 +113,7 @@ static inline unsigned int calc_buf_len(ucontact_t* c, str *host)
 					+ 1 /* dquote */
 					;
 			}
-			if (c->instance.len>0) {
+			if (c->instance.len>0 && mode==1) {
 				/* pub-gruu */
 				len += PUB_GRUU_PARAM_LEN
 					+ 1 /* " */
@@ -137,6 +138,8 @@ static inline unsigned int calc_buf_len(ucontact_t* c, str *host)
 					- 1 /* = */
 					+ 1 /* " */
 					;
+			}
+			if (c->instance.len>0) {
 				/* +sip-instance */
 				len += SIP_INSTANCE_PARAM_LEN
 					+ 1 /* " */
@@ -157,7 +160,7 @@ static inline unsigned int calc_buf_len(ucontact_t* c, str *host)
  * Allocate a memory buffer and print Contact
  * header fields into it
  */
-int build_contact(ucontact_t* c, str *host)
+int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 {
 	char *p, *cp;
 	char *a;
@@ -166,9 +169,17 @@ int build_contact(ucontact_t* c, str *host)
 	str inst;
 	unsigned int ahash;
 	unsigned short digit;
+	int mode;
 
 
-	contact.data_len = calc_buf_len(c, host);
+	if(msg!=NULL && parse_supported(msg)==0
+			&& (get_supported(msg) & F_SUPPORTED_GRUU))
+		mode = 1;
+	else
+		mode = 0;
+
+	contact.data_len = calc_buf_len(c, host, mode);
+
 	if (!contact.data_len) return 0;
 
 	if (!contact.buf || (contact.buf_len < contact.data_len)) {
@@ -228,7 +239,7 @@ int build_contact(ucontact_t* c, str *host)
 				p += c->received.len;
 				*p++ = '\"';
 			}
-			if (c->instance.len>0) {
+			if (c->instance.len>0 && mode==1) {
 				user.s = c->aor->s;
 				a = memchr(c->aor->s, '@', c->aor->len);
 				if(a!=NULL) {
@@ -284,7 +295,9 @@ int build_contact(ucontact_t* c, str *host)
 				memcpy(p, GR_PARAM, GR_PARAM_LEN);
 				p += GR_PARAM_LEN - 1;
 				*p++ = '\"';
+			}
 
+			if (c->instance.len>0) {
 				/* +sip-instance */
 				memcpy(p, SIP_INSTANCE_PARAM, SIP_INSTANCE_PARAM_LEN);
 				p += SIP_INSTANCE_PARAM_LEN;

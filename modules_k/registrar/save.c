@@ -85,7 +85,7 @@ extern sruid_t _reg_sruid;
  * we will remove all bindings with the given username 
  * from the usrloc and return 200 OK response
  */
-static inline int star(udomain_t* _d, str* _a, str *_h)
+static inline int star(sip_msg_t *_m, udomain_t* _d, str* _a, str *_h)
 {
 	urecord_t* r;
 	ucontact_t* c;
@@ -115,7 +115,7 @@ static inline int star(udomain_t* _d, str* _a, str *_h)
 		      */
 		rerrno = R_UL_DEL_R;
 		if (!ul.get_urecord(_d, _a, &r)) {
-			build_contact(r->contacts, _h);
+			build_contact(_m, r->contacts, _h);
 			ul.release_urecord(r);
 		}
 		ul.unlock_udomain(_d, _a);
@@ -186,7 +186,7 @@ static struct socket_info *get_sock_hdr(struct sip_msg *msg)
  * containing a list of all existing bindings for the
  * given username (in To HF)
  */
-static inline int no_contacts(udomain_t* _d, str* _a, str* _h)
+static inline int no_contacts(sip_msg_t *_m, udomain_t* _d, str* _a, str* _h)
 {
 	urecord_t* r;
 	int res;
@@ -201,10 +201,10 @@ static inline int no_contacts(udomain_t* _d, str* _a, str* _h)
 	}
 	
 	if (res == 0) {  /* Contacts found */
-		build_contact(r->contacts, _h);
+		build_contact(_m, r->contacts, _h);
 		ul.release_urecord(r);
 	} else {  /* No contacts found */
-		build_contact(NULL, _h);
+		build_contact(_m, NULL, _h);
 	}
 	ul.unlock_udomain(_d, _a);
 	return 0;
@@ -508,10 +508,10 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a)
 
 	if (r) {
 		if (r->contacts)
-			build_contact(r->contacts, &u->host);
+			build_contact(_m, r->contacts, &u->host);
 		ul.release_urecord(r);
 	} else { /* No contacts found */
-		build_contact(NULL, &u->host);
+		build_contact(_m, NULL, &u->host);
 	}
 
 #ifdef USE_TCP
@@ -788,12 +788,12 @@ static inline int add_contacts(struct sip_msg* _m, udomain_t* _d,
 
 	if (res == 0) { /* Contacts found */
 		if ((ret=update_contacts(_m, r, _mode)) < 0) {
-			build_contact(r->contacts, &u->host);
+			build_contact(_m, r->contacts, &u->host);
 			ul.release_urecord(r);
 			ul.unlock_udomain(_d, _a);
 			return -3;
 		}
-		build_contact(r->contacts, &u->host);
+		build_contact(_m, r->contacts, &u->host);
 		ul.release_urecord(r);
 	} else {
 		if (insert_contacts(_m, _d, _a) < 0) {
@@ -846,10 +846,10 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 
 	if (c == 0) {
 		if (st) {
-			if (star((udomain_t*)_d, &aor, &u->host) < 0) goto error;
+			if (star(_m, (udomain_t*)_d, &aor, &u->host) < 0) goto error;
 			else ret=3;
 		} else {
-			if (no_contacts((udomain_t*)_d, &aor, &u->host) < 0) goto error;
+			if (no_contacts(_m, (udomain_t*)_d, &aor, &u->host) < 0) goto error;
 			else ret=4;
 		}
 	} else {
@@ -889,7 +889,7 @@ int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri)
 		return -1;
 	}
 
-	if (star(_d, &aor, &u->host) < 0)
+	if (star(_m, _d, &aor, &u->host) < 0)
 	{
 		LM_ERR("error unregistering user [%.*s]\n", aor.len, aor.s);
 		return -1;
