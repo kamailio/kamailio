@@ -252,7 +252,7 @@ int dbg_cfg_trace(void *data)
 			LOG_(_dbg_cfgtrace_facility, _dbg_cfgtrace_level,
 					_dbg_cfgtrace_prefix,
 					" c=[%s] l=%d a=%d n=%.*s\n",
-					a->cfile, a->cline, a->type, an->len, an->s
+					ZSW(a->cfile), a->cline, a->type, an->len, ZSW(an->s)
 				);
 		}
 	}
@@ -267,7 +267,7 @@ int dbg_cfg_trace(void *data)
 		LOG(_dbg_cfgtrace_level,
 					"breakpoint hit: p=[%u] c=[%s] l=%d a=%d n=%.*s\n",
 					_dbg_pid_list[process_no].pid,
-					a->cfile, a->cline, a->type, an->len, an->s
+					ZSW(a->cfile), a->cline, a->type, an->len, ZSW(an->s)
 				);
 		_dbg_pid_list[process_no].in.cmd = DBG_CMD_NOP;
 		_dbg_pid_list[process_no].state = DBG_STATE_WAIT;
@@ -295,7 +295,7 @@ int dbg_cfg_trace(void *data)
 				olen = snprintf(_dbg_pid_list[process_no].out.buf,
 						DBG_CMD_SIZE,
 						"exec [%s:%d] a=%d n=%.*s",
-						a->cfile, a->cline, a->type, an->len, an->s);
+						ZSW(a->cfile), a->cline, a->type, an->len, ZSW(an->s));
 				if(olen<0)
 				{
 					_dbg_pid_list[process_no].out.cmd = DBG_CMD_ERR;
