@@ -159,6 +159,10 @@ static inline void parse_contact_class(param_hooks_t* _h, param_t* _p)
 		    (!strncasecmp(_p->name.s + 1, "eceived", 7))) {
 			_p->type = P_RECEIVED;
 			_h->contact.received = _p;
+		} else if((_p->name.len == 6) &&
+		    (!strncasecmp(_p->name.s + 1, "eg-id", 5))) {
+			_p->type = P_REG_ID;
+			_h->contact.reg_id = _p;
 		}
 		break;
 	case '+':
