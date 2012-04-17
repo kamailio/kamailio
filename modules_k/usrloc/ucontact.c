@@ -94,6 +94,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	c->flags = _ci->flags;
 	c->cflags = _ci->cflags;
 	c->methods = _ci->methods;
+	c->reg_id = _ci->reg_id;
 	c->last_modified = _ci->last_modified;
 
 	return c;
@@ -183,6 +184,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 		_c->ruid.len, ZSW(_c->ruid.s));
 	fprintf(_f, "instance  : '%.*s'\n",
 		_c->instance.len, ZSW(_c->instance.s));
+	fprintf(_f, "reg-id    : %u\n", _c->reg_id);
 	fprintf(_f, "next      : %p\n", _c->next);
 	fprintf(_f, "prev      : %p\n", _c->prev);
 	fprintf(_f, "~~~/Contact~~~~\n");
@@ -402,8 +404,8 @@ int st_flush_ucontact(ucontact_t* _c)
 int db_insert_ucontact(ucontact_t* _c)
 {
 	char* dom;
-	db_key_t keys[17];
-	db_val_t vals[17];
+	db_key_t keys[18];
+	db_val_t vals[18];
 	int nr_cols;
 	
 	if (_c->flags & FL_MEM) {
@@ -426,7 +428,8 @@ int db_insert_ucontact(ucontact_t* _c)
 	keys[13] = &last_mod_col;
 	keys[14] = &ruid_col;
 	keys[15] = &instance_col;
-	keys[16] = &domain_col;
+	keys[16] = &reg_id_col;
+	keys[17] = &domain_col;
 
 	vals[0].type = DB1_STR;
 	vals[0].nul = 0;
@@ -528,6 +531,11 @@ int db_insert_ucontact(ucontact_t* _c)
 	}
 	nr_cols++;
 
+	vals[nr_cols].type = DB1_INT;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.int_val = (int)_c->reg_id;
+	nr_cols++;
+
 	if (use_domain) {
 		vals[nr_cols].type = DB1_STR;
 		vals[nr_cols].nul = 0;
@@ -569,8 +577,8 @@ int db_update_ucontact(ucontact_t* _c)
 	db_key_t keys1[4];
 	db_val_t vals1[4];
 
-	db_key_t keys2[13];
-	db_val_t vals2[13];
+	db_key_t keys2[14];
+	db_val_t vals2[14];
 	int nr_cols2;
 
 
@@ -595,6 +603,7 @@ int db_update_ucontact(ucontact_t* _c)
 	keys2[10] = &last_mod_col;
 	keys2[11] = &ruid_col;
 	keys2[12] = &instance_col;
+	keys2[13] = &reg_id_col;
 
 	vals1[0].type = DB1_STR;
 	vals1[0].nul = 0;
@@ -687,6 +696,11 @@ int db_update_ucontact(ucontact_t* _c)
 	} else {
 		vals2[nr_cols2].nul = 1;
 	}
+	nr_cols2++;
+
+	vals2[nr_cols2].type = DB1_INT;
+	vals2[nr_cols2].nul = 0;
+	vals2[nr_cols2].val.int_val = (int)_c->reg_id;
 	nr_cols2++;
 
 	if (use_domain) {

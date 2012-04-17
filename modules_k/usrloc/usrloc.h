@@ -85,6 +85,7 @@ typedef struct ucontact {
 	time_t last_modified;   /*!< When the record was last modified */
 	unsigned int methods;   /*!< Supported methods */
 	str instance;           /*!< SIP instance value - gruu */
+	unsigned int reg_id;    /*!< reg-id parameters */
 	struct ucontact* next;  /*!< Next contact in the linked list */
 	struct ucontact* prev;  /*!< Previous contact in the linked list */
 } ucontact_t;
@@ -105,6 +106,7 @@ typedef struct ucontact_info {
 	struct socket_info *sock; /*!< socket informations */
 	unsigned int methods;     /*!< supported methods */
 	str instance;             /*!< SIP instance value - gruu */
+	unsigned int reg_id;      /*!< reg-id parameters */
 	time_t last_modified;     /*!< last modified */
 } ucontact_info_t;
 
@@ -150,9 +152,8 @@ typedef int (*get_ucontact_t)(struct urecord* _r, str* _c, str* _callid,
 		str* _path, int _cseq,
 		struct ucontact** _co);
 
-typedef int (*get_ucontact_by_instance_t)(struct urecord* _r, str* _c, str* _callid,
-		str* _path, int _cseq, str* _inst,
-		struct ucontact** _co);
+typedef int (*get_ucontact_by_instance_t)(struct urecord* _r, str* _c,
+		ucontact_info_t* _ci, ucontact_t** _co);
 
 typedef void (*lock_udomain_t)(struct udomain* _d, str *_aor);
 

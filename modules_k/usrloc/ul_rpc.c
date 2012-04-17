@@ -279,6 +279,15 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 									"Internal error adding instance");
 							return;
 						}
+						if(rpc->struct_add(vh, "d",
+									"Reg-Id", c->reg_id)<0)
+						{
+							unlock_ulslot( dom, i);
+							rpc->fault(ctx, 500,
+									"Internal error adding reg_id");
+							return;
+						}
+
 					}
 				}
 			}

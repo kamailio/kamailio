@@ -86,6 +86,7 @@ MODULE_VERSION
 #define SOCK_COL       "socket"
 #define METHODS_COL    "methods"
 #define INSTANCE_COL   "instance"
+#define REG_ID_COL     "reg_id"
 #define LAST_MOD_COL   "last_modified"
 
 static int mod_init(void);                          /*!< Module initialization function */
@@ -109,22 +110,23 @@ int ul_db_update_as_insert = 0;
 
 str ruid_col        = str_init(RUID_COL); 		/*!< Name of column containing record unique id */
 str user_col        = str_init(USER_COL); 		/*!< Name of column containing usernames */
-str domain_col      = str_init(DOMAIN_COL); 		/*!< Name of column containing domains */
-str contact_col     = str_init(CONTACT_COL);		/*!< Name of column containing contact addresses */
-str expires_col     = str_init(EXPIRES_COL);		/*!< Name of column containing expires values */
+str domain_col      = str_init(DOMAIN_COL); 	/*!< Name of column containing domains */
+str contact_col     = str_init(CONTACT_COL);	/*!< Name of column containing contact addresses */
+str expires_col     = str_init(EXPIRES_COL);	/*!< Name of column containing expires values */
 str q_col           = str_init(Q_COL);			/*!< Name of column containing q values */
 str callid_col      = str_init(CALLID_COL);		/*!< Name of column containing callid string */
 str cseq_col        = str_init(CSEQ_COL);		/*!< Name of column containing cseq values */
 str flags_col       = str_init(FLAGS_COL);		/*!< Name of column containing internal flags */
 str cflags_col      = str_init(CFLAGS_COL);		/*!< Name of column containing contact flags */
-str user_agent_col  = str_init(USER_AGENT_COL);		/*!< Name of column containing user agent string */
-str received_col    = str_init(RECEIVED_COL);		/*!< Name of column containing transport info of REGISTER */
+str user_agent_col  = str_init(USER_AGENT_COL);	/*!< Name of column containing user agent string */
+str received_col    = str_init(RECEIVED_COL);	/*!< Name of column containing transport info of REGISTER */
 str path_col        = str_init(PATH_COL);		/*!< Name of column containing the Path header */
 str sock_col        = str_init(SOCK_COL);		/*!< Name of column containing the received socket */
-str methods_col     = str_init(METHODS_COL);		/*!< Name of column containing the supported methods */
-str instance_col    = str_init(INSTANCE_COL);		/*!< Name of column containing the SIP instance value */
-str last_mod_col     = str_init(LAST_MOD_COL);		/*!< Name of column containing the last modified date */
-str db_url          = str_init(DEFAULT_DB_URL);		/*!< Database URL */
+str methods_col     = str_init(METHODS_COL);	/*!< Name of column containing the supported methods */
+str instance_col    = str_init(INSTANCE_COL);	/*!< Name of column containing the SIP instance value */
+str reg_id_col      = str_init(REG_ID_COL);		/*!< Name of column containing the reg-id value */
+str last_mod_col    = str_init(LAST_MOD_COL);	/*!< Name of column containing the last modified date */
+str db_url          = str_init(DEFAULT_DB_URL);	/*!< Database URL */
 int timer_interval  = 60;				/*!< Timer interval in seconds */
 int db_mode         = 0;				/*!< Database sync scheme: 0-no db, 1-write through, 2-write back, 3-only db */
 int use_domain      = 0;				/*!< Whether usrloc should use domain part of aor */
@@ -176,6 +178,7 @@ static param_export_t params[] = {
 	{"socket_column",       STR_PARAM, &sock_col.s      },
 	{"methods_column",      STR_PARAM, &methods_col.s   },
 	{"instance_column",     STR_PARAM, &instance_col.s  },
+	{"reg_id_column",       STR_PARAM, &reg_id_col.s    },
 	{"matching_mode",       INT_PARAM, &matching_mode   },
 	{"cseq_delay",          INT_PARAM, &cseq_delay      },
 	{"fetch_rows",          INT_PARAM, &ul_fetch_rows   },
@@ -271,6 +274,7 @@ static int mod_init(void)
 	sock_col.len = strlen(sock_col.s);
 	methods_col.len = strlen(methods_col.s);
 	instance_col.len = strlen(instance_col.s);
+	reg_id_col.len = strlen(reg_id_col.s);
 	last_mod_col.len = strlen(last_mod_col.s);
 	db_url.len = strlen(db_url.s);
 

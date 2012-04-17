@@ -640,25 +640,25 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
 }
 
 /*
- * Get pointer to ucontact with given contact and/or given sip.instance
+ * Get pointer to ucontact with given info (by address or sip.instance)
  */
-int get_ucontact_by_instance(urecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
-							str* _inst, struct ucontact** _co)
+int get_ucontact_by_instance(urecord_t* _r, str* _c, ucontact_info_t* _ci,
+		ucontact_t** _co)
 {
 	ucontact_t* ptr;
 	str i1;
 	str i2;
 	
-	if (_inst == NULL || _inst->len <= 0) {
-		return get_ucontact(_r, _c, _callid, _path, _cseq, _co);
+	if (_ci->instance.s == NULL || _ci->instance.len <= 0) {
+		return get_ucontact(_r, _c, _ci->callid, _ci->path, _ci->cseq, _co);
 	}
 
 	/* find by instance */
 	ptr = _r->contacts;
 	while(ptr) {
-		if (ptr->instance.len>0)
+		if (ptr->instance.len>0 && _ci->reg_id==ptr->reg_id)
 		{
-			i1 = *_inst;
+			i1 = _ci->instance;
 			i2 = ptr->instance;
 			if(i1.s[0]=='<' && i1.s[i1.len-1]=='>') {
 				i1.s++;
