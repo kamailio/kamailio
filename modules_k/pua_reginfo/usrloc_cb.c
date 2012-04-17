@@ -141,7 +141,7 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 			/* CallID Attribute */
 			memset(buf, 0, sizeof(buf));
 			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->callid.len, ptr->callid.s);
-			xmlNewProp(contact_node, BAD_CAST "callid", BAD_CAST ptr->callid.s);
+			xmlNewProp(contact_node, BAD_CAST "callid", BAD_CAST buf);
 			/* CSeq Attribute */
 			memset(buf, 0, sizeof(buf));
 			buf_len = snprintf(buf, sizeof(buf), "%d", ptr->cseq);
