@@ -153,7 +153,7 @@ int process_maxfwd_header(struct sip_msg *msg, int limit)
 			return 2;
 		/* error */
 		case -2:
-			break;
+			goto error;
 		/* found */
 		case 0:
 			return -1;
