@@ -171,6 +171,15 @@
         <description>The value of SIP instance parameter for GRUU.</description>
     </column>
 
+    <column>
+        <name>reg_id</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value of reg-id contact parameter</description>
+    </column>
+
+
 	<index>
         <name>alias_idx</name>
         <colref linkend="username"/>

@@ -17,7 +17,8 @@ CREATE TABLE aliases (
     user_agent VARCHAR2(255) DEFAULT '',
     socket VARCHAR2(64) DEFAULT NULL,
     methods NUMBER(10) DEFAULT NULL,
-    instance VARCHAR2(255) DEFAULT NULL
+    instance VARCHAR2(255) DEFAULT NULL,
+    reg_id NUMBER(10) DEFAULT 0 NOT NULL
 );
 
 CREATE OR REPLACE TRIGGER aliases_tr

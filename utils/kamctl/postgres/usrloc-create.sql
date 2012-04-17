@@ -17,7 +17,8 @@ CREATE TABLE location (
     user_agent VARCHAR(255) DEFAULT '' NOT NULL,
     socket VARCHAR(64) DEFAULT NULL,
     methods INTEGER DEFAULT NULL,
-    instance VARCHAR(255) DEFAULT NULL
+    instance VARCHAR(255) DEFAULT NULL,
+    reg_id INTEGER DEFAULT 0 NOT NULL
 );
 
 CREATE INDEX location_account_contact_idx ON location (username, domain, contact);
