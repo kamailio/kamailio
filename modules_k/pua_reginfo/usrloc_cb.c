@@ -60,6 +60,8 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 	ucontact_t * ptr;
 	char buf[512];
 	int buf_len;
+	int reg_active = 0;
+	time_t cur_time = time(0);
 
 	/* create the XML-Body */
 	doc = xmlNewDoc(BAD_CAST "1.0");
@@ -94,18 +96,9 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 	buf_len = snprintf(buf, sizeof(buf), "%p", record);
 	xmlNewProp(registration_node, BAD_CAST "id", BAD_CAST buf);
 
-	/* look first for an un-expired and suported contact */
-	ptr = record->contacts;
-	while ((ptr) && !(VALID_CONTACT(ptr,time(0))))
-		ptr = ptr->next;
-	if (ptr==0)
-		xmlNewProp(registration_node, BAD_CAST "state", BAD_CAST "terminated");
-	else
-		xmlNewProp(registration_node, BAD_CAST "state", BAD_CAST "active");
-
 	ptr = record->contacts;
 	while (ptr) {
-		if (VALID_CONTACT(ptr, time(0))) {
+		if (VALID_CONTACT(ptr, cur_time)) {
 			LM_DBG("Contact %.*s, %p\n", ptr->c.len, ptr->c.s, ptr);
 			/* Contact-Node */
 			contact_node =xmlNewChild(registration_node, NULL, BAD_CAST "contact", NULL) ;
@@ -118,9 +111,10 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 			xmlNewProp(contact_node, BAD_CAST "id", BAD_CAST buf);
 			/* Check, if this is the modified contact: */
 			if (ptr == c) {
-				if ((type & UL_CONTACT_INSERT) || (type & UL_CONTACT_UPDATE))
+				if ((type & UL_CONTACT_INSERT) || (type & UL_CONTACT_UPDATE)) {
+					reg_active = 1;
 					xmlNewProp(contact_node, BAD_CAST "state", BAD_CAST "active");
-				else 
+				} else
 					xmlNewProp(contact_node, BAD_CAST "state", BAD_CAST "terminated");
 				if (type & UL_CONTACT_INSERT) xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "created");
 				else if (type & UL_CONTACT_UPDATE) xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "refreshed");
@@ -128,13 +122,14 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 				else if (type & UL_CONTACT_DELETE) xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "unregistered");
 				else xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "unknown");
 				memset(buf, 0, sizeof(buf));
-				buf_len = snprintf(buf, sizeof(buf), "%i", (int)(ptr->expires-time(0)));
+				buf_len = snprintf(buf, sizeof(buf), "%i", (int)(ptr->expires-cur_time));
 				xmlNewProp(contact_node, BAD_CAST "expires", BAD_CAST buf);
 			} else {
+				reg_active = 1;
 				xmlNewProp(contact_node, BAD_CAST "state", BAD_CAST "active");
 				xmlNewProp(contact_node, BAD_CAST "event", BAD_CAST "registered");
 				memset(buf, 0, sizeof(buf));
-				buf_len = snprintf(buf, sizeof(buf), "%i", (int)(ptr->expires-time(0)));
+				buf_len = snprintf(buf, sizeof(buf), "%i", (int)(ptr->expires-cur_time));
 				xmlNewProp(contact_node, BAD_CAST "expires", BAD_CAST buf);
 			}
 			if (ptr->q != Q_UNSPECIFIED) {
@@ -162,6 +157,13 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 		}
 		ptr = ptr->next;
 	}
+
+	/* add registration state (at least one active contact): */
+	if (reg_active==0)
+		xmlNewProp(registration_node, BAD_CAST "state", BAD_CAST "terminated");
+	else
+		xmlNewProp(registration_node, BAD_CAST "state", BAD_CAST "active");
+
 
 	/* create the body */
 	body = (str*)pkg_malloc(sizeof(str));
