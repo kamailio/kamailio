@@ -357,9 +357,15 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 				ci.received = received;
 			}
 		}
-		if(reg_gruu_enabled==1 && _c->instance!=NULL
-				&& _c->instance->body.len>0)
+		if(_c->instance!=NULL && _c->instance->body.len>0)
 			ci.instance = _c->instance->body;
+		if(_c->reg_id!=NULL && _c->reg_id->body.len>0) {
+			if(str2int(&_c->reg_id->body, &ci.reg_id)<0)
+			{
+				LM_ERR("invalid reg-id value\n");
+				goto error;
+			}
+		}
 		if(sruid_next(&_reg_sruid)<0)
 			goto error;
 		ci.ruid = _reg_sruid.uid;
@@ -473,15 +479,20 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a)
 			goto error;
 		}
 
-		if ( r->contacts==0 ||
-		ul.get_ucontact_by_instance(r, &_c->uri, ci->callid, ci->path, ci->cseq+1,
-					&ci->instance, &c) != 0) {
+		/* hack to work with buggy clients having many contacts with same
+		 * address in one REGISTER - increase CSeq to detect if there was
+		 * one alredy added, then update */
+		ci->cseq++;
+		if ( r->contacts==0
+				|| ul.get_ucontact_by_instance(r, &_c->uri, ci, &c) != 0) {
+			ci->cseq--;
 			if (ul.insert_ucontact( r, &_c->uri, ci, &c) < 0) {
 				rerrno = R_UL_INS_C;
 				LM_ERR("failed to insert contact\n");
 				goto error;
 			}
 		} else {
+			ci->cseq--;
 			if (ul.update_ucontact( r, c, ci) < 0) {
 				rerrno = R_UL_UPD_C;
 				LM_ERR("failed to update contact\n");
@@ -552,8 +563,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &e);
 
-		ret = ul.get_ucontact_by_instance( _r, &_c->uri, ci->callid, ci->path, ci->cseq,
-				&ci->instance, &cont);
+		ret = ul.get_ucontact_by_instance( _r, &_c->uri, ci, &cont);
 		if (ret==-1) {
 			LM_ERR("invalid cseq for aor <%.*s>\n",_r->aor.len,_r->aor.s);
 			rerrno = R_INV_CSEQ;
@@ -642,8 +652,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 		calc_contact_expires(_m, _c->expires, &expires);
 
 		/* search for the contact*/
-		ret = ul.get_ucontact_by_instance( _r, &_c->uri, ci->callid, ci->path,
-				ci->cseq, &ci->instance, &c);
+		ret = ul.get_ucontact_by_instance( _r, &_c->uri, ci, &c);
 		if (ret==-1) {
 			LM_ERR("invalid cseq for aor <%.*s>\n",_r->aor.len,_r->aor.s);
 			rerrno = R_INV_CSEQ;

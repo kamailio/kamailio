@@ -76,6 +76,11 @@
 #define TMP_GRUU_PARAM ";temp-gruu="
 #define TMP_GRUU_PARAM_LEN (sizeof(TMP_GRUU_PARAM) - 1)
 
+#define REG_ID_PARAM ";reg-id="
+#define REG_ID_PARAM_LEN (sizeof(REG_ID_PARAM) - 1)
+
+extern int reg_gruu_enabled;
+
 /*! \brief
  * Buffer for Contact header field
  */
@@ -113,7 +118,7 @@ static inline unsigned int calc_buf_len(ucontact_t* c, str *host, int mode)
 					+ 1 /* dquote */
 					;
 			}
-			if (c->instance.len>0 && mode==1) {
+			if (reg_gruu_enabled==1 && c->instance.len>0 && mode==1) {
 				/* pub-gruu */
 				len += PUB_GRUU_PARAM_LEN
 					+ 1 /* " */
@@ -146,6 +151,10 @@ static inline unsigned int calc_buf_len(ucontact_t* c, str *host, int mode)
 					+ c->instance.len
 					+ 1 /* " */
 					;
+			}
+			if (c->reg_id>0) {
+				/* reg-id */
+				len += REG_ID_PARAM_LEN + INT2STR_MAX_LEN;
 			}
 		}
 		c = c->next;
@@ -239,7 +248,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 				p += c->received.len;
 				*p++ = '\"';
 			}
-			if (c->instance.len>0 && mode==1) {
+			if (reg_gruu_enabled==1 && c->instance.len>0 && mode==1) {
 				user.s = c->aor->s;
 				a = memchr(c->aor->s, '@', c->aor->len);
 				if(a!=NULL) {
@@ -306,7 +315,14 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 				p += c->instance.len;
 				*p++ = '\"';
 			}
-
+			if (c->reg_id>0) {
+				/* reg-id */
+				memcpy(p, REG_ID_PARAM, REG_ID_PARAM_LEN);
+				p += REG_ID_PARAM_LEN;
+				cp = int2str(c->reg_id, &len);
+				memcpy(p, cp, len);
+				p += len;
+			}
 		}
 
 		c = c->next;
