@@ -16,7 +16,7 @@ CREATE INDEX rlsubs_idx ON rls_presentity (rlsubs_did);
 CREATE INDEX updated_idx ON rls_presentity (updated);
 CREATE INDEX expires_idx ON rls_presentity (expires);
 
-INSERT INTO version (table_name, table_version) values ('rls_watchers','1');
+INSERT INTO version (table_name, table_version) values ('rls_watchers','2');
 CREATE TABLE rls_watchers (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     presentity_uri VARCHAR(128) NOT NULL,
@@ -39,10 +39,12 @@ CREATE TABLE rls_watchers (
     version INT(11) DEFAULT 0 NOT NULL,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
+    updated INT(11) NOT NULL,
     CONSTRAINT rls_watcher_idx UNIQUE (callid, to_tag, from_tag)
 ) ENGINE=MyISAM;
 
 CREATE INDEX rls_watchers_delete ON rls_watchers (callid, to_tag);
 CREATE INDEX rls_watchers_update ON rls_watchers (watcher_username, watcher_domain, event);
 CREATE INDEX rls_watchers_expires ON rls_watchers (expires);
+CREATE INDEX updated_idx ON rls_watchers (updated);
 
