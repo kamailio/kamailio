@@ -139,6 +139,8 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	msg->set_global_address=default_global_address;
 	msg->set_global_port=default_global_port;
 	
+	if(likely(sr_msg_time==1)) msg_set_time(msg);
+
 	if (parse_msg(buf,len, msg)!=0){
 		LOG(cfg_get(core, core_cfg, corelog),
 				"ERROR: receive_msg: parse_msg failed\n");

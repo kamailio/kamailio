@@ -418,6 +418,9 @@ int sock_mode= S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP; /* rw-rw---- */
 
 int server_id = 0; /* Configurable unique ID of the server */
 
+/* set timeval for each received sip message */
+int sr_msg_time = 1;
+
 /* more config stuff */
 int disable_core_dump=0; /* by default enabled */
 int open_files_limit=-1; /* don't touch it by default */

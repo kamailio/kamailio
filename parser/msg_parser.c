@@ -55,6 +55,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 #include "../comp_defs.h"
 #include "msg_parser.h"
@@ -891,4 +892,16 @@ int msg_ctx_id_match(sip_msg_t *msg, msg_ctx_id_t *mid)
 	if(msg->id != mid->msgid || msg->pid!=mid->pid)
 		return 0;
 	return 1;
+}
+
+/**
+ * set msg time value
+ */
+int msg_set_time(sip_msg_t *msg)
+{
+	if(unlikely(msg==NULL))
+		return -2;
+	if(msg->tval.tv_sec!=0)
+		return 0;
+	return gettimeofday(&msg->tval, NULL);
 }

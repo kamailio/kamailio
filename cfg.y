@@ -565,6 +565,7 @@ extern char *finame;
 %token LATENCY_LOG
 %token LATENCY_LIMIT_DB
 %token LATENCY_LIMIT_ACTION
+%token MSG_TIME
 
 %token FLAGS_DECL
 %token AVPFLAGS_DECL
@@ -1701,6 +1702,8 @@ assign_stm:
 	| LATENCY_LIMIT_DB EQUAL error  { yyerror("number  expected"); }
     | LATENCY_LIMIT_ACTION EQUAL NUMBER { default_core_cfg.latency_limit_action=$3; }
 	| LATENCY_LIMIT_ACTION EQUAL error  { yyerror("number  expected"); }
+    | MSG_TIME EQUAL NUMBER { sr_msg_time=$3; }
+	| MSG_TIME EQUAL error  { yyerror("number  expected"); }
 	| UDP_MTU EQUAL NUMBER { default_core_cfg.udp_mtu=$3; }
 	| UDP_MTU EQUAL error { yyerror("number expected"); }
 	| FORCE_RPORT EQUAL NUMBER 

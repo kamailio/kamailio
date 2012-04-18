@@ -251,10 +251,14 @@ typedef struct msg_body {
 } msg_body_t;
 
 
+/* pre-declaration, to include sys/time.h in .c */
+struct timeval;
+
 /*! \brief The SIP message */
 typedef struct sip_msg {
 	unsigned int id;               /*!< message id, unique/process*/
 	int pid;                       /*!< process id */
+	struct timeval tval;           /*!< time value associated to message */
 	snd_flags_t fwd_send_flags;    /*!< send flags for forwarding */
 	snd_flags_t rpl_send_flags;    /*!< send flags for replies */
 	struct msg_start first_line;   /*!< Message first line */
@@ -482,5 +486,10 @@ int msg_ctx_id_set(sip_msg_t *msg, msg_ctx_id_t *mid);
  * - return: -1 on error; 0 - on no match; 1 - on match
  */
 int msg_ctx_id_match(sip_msg_t *msg, msg_ctx_id_t *mid);
+
+/**
+ * set msg time value
+ */
+int msg_set_time(sip_msg_t *msg);
 
 #endif
