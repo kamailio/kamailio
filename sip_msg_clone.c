@@ -463,7 +463,6 @@ struct sip_msg*  sip_msg_shm_clone( struct sip_msg *org_msg, int *sip_msg_len,
 		case HDR_SUBJECT_T:
 		case HDR_USERAGENT_T:
 		case HDR_SERVER_T:
-		case HDR_ACCEPTDISPOSITION_T:
 		case HDR_CONTENTDISPOSITION_T:
 		case HDR_DIVERSION_T:
 		case HDR_RPID_T:
@@ -834,11 +833,6 @@ struct sip_msg*  sip_msg_shm_clone( struct sip_msg *org_msg, int *sip_msg_len,
 		case HDR_SERVER_T:
 			if (!HOOK_SET(server)) {
 				new_msg->server = new_hdr;
-			}
-			break;
-		case HDR_ACCEPTDISPOSITION_T:
-			if (!HOOK_SET(accept_disposition)) {
-				new_msg->accept_disposition = new_hdr;
 			}
 			break;
 		case HDR_CONTENTDISPOSITION_T:
