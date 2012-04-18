@@ -713,10 +713,13 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	query_cols[n_query_cols]= &str_updated_col;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val=
-		core_hash(res_id, NULL,
+	if (dbmode == RLS_DB_ONLY)
+		query_vals[n_query_cols].val.int_val=
+			core_hash(res_id, NULL,
 				(waitn_time * rls_notifier_poll_rate
 					* rls_notifier_processes) - 1);
+	else
+		query_vals[n_query_cols].val.int_val = UPDATED_TYPE;
 	n_query_cols++;
 		
 	query_cols[n_query_cols]= &str_auth_state_col;
@@ -830,8 +833,151 @@ error:
 	free_to_params(&TO);
 	return -1;
 }
-/* callid, from_tag, to_tag parameters must be allocated */
-void timer_send_notify(unsigned int ticks,void *param)
+
+#define EXTRACT_STRING(strng, chars)\
+			do {\
+			strng.s = (char *) chars;\
+			strng.len = strlen(strng.s);\
+			} while(0);
+
+static void timer_send_full_state_notifies(int round)
+{
+	db_key_t query_cols[1], result_cols[20], update_cols[1];
+	db_val_t query_vals[1], update_vals[1], *values;
+	db_row_t *rows;
+	db1_res_t *result = NULL;
+	int n_result_cols = 0, i;
+	subs_t sub;
+	str ev_sname;
+	event_t parsed_event;
+	xmlDocPtr doc = NULL;
+	xmlNodePtr service_node = NULL;
+
+	query_cols[0] = &str_updated_col;
+	query_vals[0].type = DB1_INT;
+	query_vals[0].nul = 0;
+	query_vals[0].val.int_val = round;
+
+	result_cols[n_result_cols++] = &str_presentity_uri_col;
+	result_cols[n_result_cols++] = &str_to_user_col;
+	result_cols[n_result_cols++] = &str_to_domain_col;
+	result_cols[n_result_cols++] = &str_watcher_username_col;
+	result_cols[n_result_cols++] = &str_watcher_domain_col;
+	result_cols[n_result_cols++] = &str_callid_col;
+	result_cols[n_result_cols++] = &str_to_tag_col;
+	result_cols[n_result_cols++] = &str_from_tag_col;
+	result_cols[n_result_cols++] = &str_socket_info_col;
+	result_cols[n_result_cols++] = &str_local_contact_col;
+	result_cols[n_result_cols++] = &str_contact_col;
+	result_cols[n_result_cols++] = &str_record_route_col;
+	result_cols[n_result_cols++] = &str_event_id_col;
+	result_cols[n_result_cols++] = &str_reason_col;
+	result_cols[n_result_cols++] = &str_event_col;
+	result_cols[n_result_cols++] = &str_local_cseq_col;
+	result_cols[n_result_cols++] = &str_remote_cseq_col;
+	result_cols[n_result_cols++] = &str_status_col;
+	result_cols[n_result_cols++] = &str_version_col;
+	result_cols[n_result_cols++] = &str_expires_col;
+
+	update_cols[0] = &str_updated_col;
+	update_vals[0].type = DB1_INT;
+	update_vals[0].nul = 0;
+	update_vals[0].val.int_val = NO_UPDATE_TYPE;
+
+	if (rls_dbf.use_table(rls_db, &rlsubs_table) < 0)
+	{
+		LM_ERR("use table failed\n");
+		goto done;
+	}
+
+	/* Step 1: Find rls_watchers that require full-state notification */
+	if (rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
+				1, n_result_cols, 0, &result) < 0)
+	{
+		LM_ERR("in sql query\n");
+		goto done;
+	}
+	if(result== NULL || result->n<= 0)
+		goto done;
+
+	/* Step 2: Reset the update flag so we do not full-state notify
+ 	   these watchers again */
+	if(rls_dbf.update(rls_db, query_cols, 0, query_vals, update_cols,
+					update_vals, 1, 1)< 0)
+	{
+		LM_ERR("in sql update\n");
+		goto done;
+	}
+
+	/* Step 3: Full-state notify each watcher we found */
+	rows = RES_ROWS(result);
+	for (i = 0; i < RES_ROW_N(result); i++)
+	{
+		memset(&sub, 0, sizeof(subs_t));
+		values = ROW_VALUES(&rows[i]);
+		EXTRACT_STRING(sub.pres_uri, VAL_STRING(&values[0]));
+		EXTRACT_STRING(sub.to_user, VAL_STRING(&values[1]));
+		EXTRACT_STRING(sub.to_domain, VAL_STRING(&values[2]));
+		EXTRACT_STRING(sub.from_user, VAL_STRING(&values[3]));
+		EXTRACT_STRING(sub.from_domain, VAL_STRING(&values[4]));
+		EXTRACT_STRING(sub.callid, VAL_STRING(&values[5]));
+		EXTRACT_STRING(sub.to_tag, VAL_STRING(&values[6]));
+		EXTRACT_STRING(sub.from_tag, VAL_STRING(&values[7]));
+		EXTRACT_STRING(sub.sockinfo_str, VAL_STRING(&values[8]));
+		EXTRACT_STRING(sub.local_contact, VAL_STRING(&values[9]));
+		EXTRACT_STRING(sub.contact, VAL_STRING(&values[10]));
+		EXTRACT_STRING(sub.record_route, VAL_STRING(&values[11]));
+		EXTRACT_STRING(sub.event_id, VAL_STRING(&values[12]));
+		EXTRACT_STRING(sub.reason, VAL_STRING(&values[13]));
+		EXTRACT_STRING(ev_sname, VAL_STRING(&values[14]));
+		sub.event = pres_contains_event(&ev_sname, &parsed_event);
+		if (sub.event == NULL)
+		{
+			LM_ERR("event not found and set to NULL\n");
+			goto done;
+		}
+
+		sub.local_cseq = VAL_INT(&values[15]);
+		sub.remote_cseq = VAL_INT(&values[16]);
+		sub.status = VAL_INT(&values[17]);
+		sub.version = VAL_INT(&values[18]);
+		sub.expires = VAL_INT(&values[19]) - (int)time(NULL);
+		if (sub.expires < 0) sub.expires = 0;
+		
+		if (rls_get_service_list(&sub.pres_uri, &sub.from_user,
+			&sub.from_domain, &service_node, &doc) < 0)
+		{
+			LM_ERR("failed getting resource list\n");
+			goto done;
+		}
+		if (doc == NULL)
+		{
+			LM_WARN("no document returned for uri <%.*s>\n",
+				sub.pres_uri.len, sub.pres_uri.s);
+			goto done;
+		}
+
+		if (send_full_notify(&sub, service_node, &sub.pres_uri, 0) < 0)
+		{
+			LM_ERR("failed sending full state notify\n");
+			goto done;
+		}
+
+		if (sub.expires == 0)
+			delete_rlsdb(&sub.callid, &sub.to_tag, &sub.from_tag);
+
+		xmlFreeDoc(doc);
+		doc = NULL;
+	}
+
+done:
+	if (result != NULL)
+		rls_dbf.free_result(rls_db, result);
+	if (doc != NULL)
+		xmlFreeDoc(doc);
+}
+
+static void timer_send_update_notifies(int round)
 {
 	db_key_t query_cols[1], update_cols[1], result_cols[6];
 	db_val_t query_vals[1], update_vals[1];
@@ -839,14 +985,11 @@ void timer_send_notify(unsigned int ticks,void *param)
 		pres_state_col, content_type_col;
 	int n_result_cols= 0;
 	db1_res_t *result= NULL;
-	int process_num = *((int *) param);
 
 	query_cols[0]= &str_updated_col;
 	query_vals[0].type = DB1_INT;
 	query_vals[0].nul = 0;
-	query_vals[0].val.int_val= subset + (waitn_time * rls_notifier_poll_rate
-						* process_num);
-	if (++subset > (waitn_time * rls_notifier_poll_rate) - 1) subset = 0;
+	query_vals[0].val.int_val= round;
 
 	result_cols[did_col= n_result_cols++]= &str_rlsubs_did_col;
 	result_cols[resource_uri_col= n_result_cols++]= &str_resource_uri_col;
@@ -892,6 +1035,22 @@ error:
 done:
 	if(result)
 		rlpres_dbf.free_result(rlpres_db, result);
+
+}
+
+void timer_send_notify(unsigned int ticks,void *param)
+{
+	if (dbmode == RLS_DB_ONLY)
+	{
+		int process_num = *((int *) param);
+		int round = subset + (waitn_time * rls_notifier_poll_rate * process_num);
+		if (++subset > (waitn_time * rls_notifier_poll_rate) - 1) subset = 0;
+
+		timer_send_full_state_notifies(round);
+		timer_send_update_notifies(round);
+	}
+	else
+		timer_send_update_notifies(UPDATED_TYPE);
 }
 
 

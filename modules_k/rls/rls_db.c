@@ -391,8 +391,8 @@ int update_dialog_subscribe_rlsdb(subs_t *subs)
 {
 	db_key_t query_cols[3];
 	db_val_t query_vals[3];
-	db_key_t data_cols[2];
-	db_val_t data_vals[2];
+	db_key_t data_cols[3];
+	db_val_t data_vals[3];
 	int n_query_cols = 0, n_data_cols=0;
 
 	if (subs==NULL) return(-1);
@@ -439,6 +439,12 @@ int update_dialog_subscribe_rlsdb(subs_t *subs)
 	data_vals[n_data_cols].val.int_val= subs->remote_cseq;
 	n_data_cols++;
 
+	data_cols[n_data_cols] = &str_updated_col;
+	data_vals[n_data_cols].type = DB1_INT;
+	data_vals[n_data_cols].nul = 0;
+	data_vals[n_data_cols].val.int_val= subs->updated;
+	n_data_cols++;
+
 	if(rls_dbf.update(rls_db, query_cols, 0, query_vals,
                     data_cols,data_vals,n_query_cols,n_data_cols) < 0)
 	{
@@ -454,8 +460,8 @@ int update_dialog_subscribe_rlsdb(subs_t *subs)
 int insert_rlsdb( subs_t *s )
 
 {
-	db_key_t data_cols[20];
-	db_val_t data_vals[20];
+	db_key_t data_cols[21];
+	db_val_t data_vals[21];
 	int n_data_cols = 0;
 
 	if (s==NULL) return(-1);
@@ -590,6 +596,12 @@ int insert_rlsdb( subs_t *s )
 	data_vals[n_data_cols].type = DB1_INT;
 	data_vals[n_data_cols].nul = 0;
 	data_vals[n_data_cols].val.int_val= s->version;
+	n_data_cols++;
+
+	data_cols[n_data_cols]=&str_updated_col;
+	data_vals[n_data_cols].type = DB1_INT;
+	data_vals[n_data_cols].nul = 0;
+	data_vals[n_data_cols].val.int_val= s->updated;
 	n_data_cols++;
 	
 	if(rls_dbf.insert(rls_db, data_cols, data_vals, n_data_cols) < 0)

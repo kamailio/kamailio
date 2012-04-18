@@ -325,6 +325,10 @@ modparam("rls", "waitn_time", 10)
 		pending updates will be sent each time a notifier process runs.
 		</para>
 		<para>
+		Separate notifier processes are only run when db_mode is 2
+		(DB only mode).
+		</para>
+		<para>
 		<emphasis>Default value is <quote>10</quote>.
 		</emphasis>
 		</para>
@@ -342,6 +346,10 @@ modparam("rls", "notifier_poll_rate", 20)
 		<title><varname>notifier_processes</varname> (int)</title>
 		<para>
 		The number of notifier processes that should be started.
+		</para>
+		<para>
+		Separate notifier processes are only run when db_mode is 2
+		(DB only mode).
 		</para>
 		<para>
 		<emphasis>Default value is <quote>1</quote>.

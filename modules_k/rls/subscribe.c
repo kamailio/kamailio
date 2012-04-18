@@ -426,6 +426,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 	param_t* ev_param = NULL;
 	str reason;
 	int rt;
+	str rlsubs_did = {0, 0};
 
 	memset(&subs, 0, sizeof(subs_t));
 
@@ -532,6 +533,13 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 	}
 
 	hash_code = core_hash(&subs.callid, &subs.to_tag, hash_size);
+	if (CONSTR_RLSUBS_DID(&subs, &rlsubs_did) < 0)
+	{
+		LM_ERR("cannot build rls subs did\n");
+		goto error;
+	}
+	subs.updated = core_hash(&rlsubs_did, NULL,
+		(waitn_time * rls_notifier_poll_rate * rls_notifier_processes) - 1);
 	
 	if(get_to(msg)->tag_value.s==NULL || get_to(msg)->tag_value.len==0)
 	{ /* initial Subscribe */
@@ -652,7 +660,6 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 				return 0;
 			}
 		}	
-
 		if(rls_get_service_list(&subs.pres_uri, &subs.from_user,
 					&subs.from_domain, &service_node, &doc)<0)
 		{
@@ -668,12 +675,16 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 		}
 	}
 
-	/* sending notify with full state */
-	if(send_full_notify(&subs, service_node, &subs.pres_uri, hash_code)<0)
+	if (dbmode != RLS_DB_ONLY)
 	{
-		LM_ERR("failed sending full state notify\n");
-		goto error;
+		/* sending notify with full state */
+		if(send_full_notify(&subs, service_node, &subs.pres_uri, hash_code)<0)
+		{
+			LM_ERR("failed sending full state notify\n");
+			goto error;
+		}
 	}
+
 	/* send subscribe requests for all in the list */
 	if(resource_subscriptions(&subs, service_node)< 0)
 	{
@@ -681,17 +692,8 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 		goto error;
 	}
 
-	if (dbmode==RLS_DB_ONLY)
-	{
-		if(subs.expires==0)
-		{
-			delete_rlsdb(&subs.callid, &subs.to_tag, &subs.from_tag);
-		}
-	}
-	else
-	{
+	if (dbmode !=RLS_DB_ONLY)
 		remove_expired_rlsubs(&subs, hash_code);
-	}
 
 done:
 	if(contact!=NULL)
@@ -707,11 +709,15 @@ done:
 		pkg_free(subs.record_route.s);
 	if(doc!=NULL)
 		xmlFreeDoc(doc);
+	if (rlsubs_did.s != NULL)
+		pkg_free(rlsubs_did.s);
 	return 1;
 
 forpresence:
 	if(subs.pres_uri.s!=NULL)
 		pkg_free(subs.pres_uri.s);
+	if (rlsubs_did.s != NULL)
+		pkg_free(rlsubs_did.s);
 	return to_presence_code;
 
 bad_event:
@@ -739,6 +745,10 @@ error:
 
 	if(doc!=NULL)
 		xmlFreeDoc(doc);
+
+	if (rlsubs_did.s != NULL)
+		pkg_free(rlsubs_did.s);
+
 	return err_ret;
 }
 

@@ -164,6 +164,9 @@ extern int get_dialog_subscribe_rlsdb(subs_t *s);
 subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag);
 extern int update_all_subs_rlsdb(str *from_user, str *from_domain, str *evt);
 
+extern int rls_get_service_list(str *service_uri, str *user, str *domain,
+			xmlNodePtr *service_node, xmlDocPtr *rootdoc);
+
 extern str str_rlsubs_did_col;
 extern str str_resource_uri_col;
 extern str str_updated_col;

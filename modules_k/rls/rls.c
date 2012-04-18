@@ -60,7 +60,7 @@
 MODULE_VERSION
 
 #define P_TABLE_VERSION 1
-#define W_TABLE_VERSION 1
+#define W_TABLE_VERSION 2
 #define X_TABLE_VERSION 4
 
 /** database connection */
@@ -548,14 +548,6 @@ static int mod_init(void)
 	if(rls_notifier_processes<= 0)
 		rls_notifier_processes= 1;
 
-	if ((rls_notifier_id = shm_malloc(sizeof(int) * rls_notifier_processes)) == NULL)
-	{
-		LM_ERR("allocating shared memory\n");
-		return -1;
-	}
-
-	register_basic_timers(rls_notifier_processes);
-
 	/* bind libxml wrapper functions */
 
 	if((bind_libxml=(bind_libxml_t)find_export("bind_libxml_api", 1, 0))== NULL)
@@ -646,6 +638,19 @@ static int mod_init(void)
 	if (rlpres_clean_period > 0)
 		register_timer(rls_presentity_clean, 0, rlpres_clean_period);
 
+	if(dbmode == RLS_DB_ONLY)
+	{
+		if ((rls_notifier_id = shm_malloc(sizeof(int) * rls_notifier_processes)) == NULL)
+		{
+			LM_ERR("allocating shared memory\n");
+			return -1;
+		}
+
+		register_basic_timers(rls_notifier_processes);
+	}
+	else
+		register_timer(timer_send_notify, 0, waitn_time);
+
 	if ((rls_update_subs_lock = lock_alloc()) == NULL)
 	{
 		LM_ERR("Failed to alloc rls_update_subs_lock\n");
@@ -668,7 +673,7 @@ static int child_init(int rank)
 	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
 		return 0; /* don't call child_init for main process more than once */
 
-	if (rank==PROC_MAIN)
+	if (rank==PROC_MAIN && dbmode == RLS_DB_ONLY)
 	{
 		int i;
 
