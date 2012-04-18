@@ -83,6 +83,8 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 int add_resource_to_list(char* uri, void* param);
 int add_resource(char* uri, xmlNodePtr list_node, char * boundary_string, db1_res_t *result, int *len_est);
 
+char *instance_id = "Scf8UhwQ";
+
 int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 		unsigned int hash_code)
 {
@@ -165,7 +167,7 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 		goto error;
 	}
 
-	boundary_string= generate_string((int)time(NULL), BOUNDARY_STRING_LEN);
+	boundary_string= generate_string(BOUNDARY_STRING_LEN);
 	
 	while (uri_list_head)
 	{
@@ -371,12 +373,11 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 	db_val_t *row_vals;
 	int i, cmp_code;
 	char* auth_state= NULL;
-	int contor= 0;
 	int auth_state_flag;
-    int boundary_len = strlen(boundary_string);
-    str cid;
-  	str content_type= {0, 0};
-    str body= {0, 0};
+	int boundary_len = strlen(boundary_string);
+	str cid;
+	str content_type= {0, 0};
+	str body= {0, 0};
 
 	for(i= 0; i< result->n; i++)
 	{
@@ -390,8 +391,6 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 
 		if(cmp_code== 0)
 		{
-			contor++;
-		
 			auth_state_flag= row_vals[auth_state_col].val.int_val;
 			auth_state= get_auth_string(auth_state_flag );
 			if(auth_state== NULL)
@@ -399,17 +398,17 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 				LM_ERR("bad authorization status flag\n");
 				goto error;
 			}
-            *len_est += strlen(auth_state) + 38; /* <instance id="12345678" state="[auth_state]" />r/n */
+			*len_est += strlen(auth_state) + 38; /* <instance id="12345678" state="[auth_state]" />r/n */
 
 			if(auth_state_flag & ACTIVE_STATE)
 			{
 				cid.s= generate_cid(uri, strlen(uri));
 				cid.len= strlen(cid.s);
-                body.s= (char*)row_vals[pres_state_col].val.string_val;
-                body.len= strlen(body.s);
-                trim(&body);
+				body.s= (char*)row_vals[pres_state_col].val.string_val;
+				body.len= strlen(body.s);
+				trim(&body);
 
-                *len_est += cid.len + 8; /* cid="[cid]" */
+				*len_est += cid.len + 8; /* cid="[cid]" */
 				content_type.s = (char*)row_vals[content_type_col].val.string_val;
 				content_type.len = strlen(content_type.s);
 				*len_est += 4 + boundary_len
@@ -418,18 +417,17 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 						 + 18 + content_type.len
 						 + 4 + body.len + 8;
 			}
-			else
-			if(auth_state_flag & TERMINATED_STATE)
-				{
-			    *len_est += strlen(row_vals[resource_uri_col].val.string_val) + 10; /* reason="[resaon]" */
+			else if(auth_state_flag & TERMINATED_STATE)
+			{
+				*len_est += strlen(row_vals[resource_uri_col].val.string_val) + 10; /* reason="[resaon]" */
 			}
-            if (rls_max_notify_body_len > 0 && *len_est > rls_max_notify_body_len)
-            {
-                /* We have a limit on body length set, and we were about to exceed it */
-                return *len_est;
+			if (rls_max_notify_body_len > 0 && *len_est > rls_max_notify_body_len)
+			{
+				/* We have a limit on body length set, and we were about to exceed it */
+				return *len_est;
 			}
             
-            instance_node= xmlNewChild(resource_node, NULL, 
+			instance_node= xmlNewChild(resource_node, NULL, 
 					BAD_CAST "instance", NULL);
 			if(instance_node== NULL)
 			{
@@ -437,15 +435,24 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 				goto error;
 			}
 		
-            /* OK, we are happy this will fit */
+			/* OK, we are happy this will fit */
+			/* Instance ID should be unique for each instance node
+			   within a resource node.  The same instance ID can be
+			   used in different resource nodes.  Instance ID needs
+			   to remain the same for each resource instance in
+			   future updates.  We can just use a common string
+			   here because you will only get multiple instances
+			   for a resource when the back-end SUBSCRIBE is forked
+			   and pua does not support this.  If/when pua supports
+			   forking of the SUBSCRIBEs it sends this will need to
+			   be fixed properly. */
 			xmlNewProp(instance_node, BAD_CAST "id",
-					BAD_CAST generate_string(contor, 8));
+					BAD_CAST instance_id);
 			xmlNewProp(instance_node, BAD_CAST "state", BAD_CAST auth_state);
 
 			if(auth_state_flag & ACTIVE_STATE)
 			{
-                constr_multipart_body (&content_type, &body, &cid, boundary_len, boundary_string);
-
+				constr_multipart_body (&content_type, &body, &cid, boundary_len, boundary_string);
 				xmlNewProp(instance_node, BAD_CAST "cid", BAD_CAST cid.s);
 			}
 			else
@@ -1029,26 +1036,25 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 	return res;
 }
 
-char* generate_string(int seed, int length)
+char* generate_string(int length)
 {
 	static char buf[128];
-    int r,i;
+	int r,i;
 
-    if(length>= 128)
+	if(length>= 128)
 	{
 		LM_ERR("requested length exceeds buffer size\n");
 		return NULL;
 	}
-	srand(seed); 
 		
 	for(i=0; i<length; i++) 
 	{
 		r= rand() % ('z'- 'A') + 'A';
-	    if(r>'Z' && r< 'a')
-			r= '0'+ (r- 'Z');
+		if(r>'Z' && r< 'a')
+		r= '0'+ (r- 'Z');
 
-        sprintf(buf+i, "%c", r);
-    }
+		sprintf(buf+i, "%c", r);
+	}
 	buf[length]= '\0';
 
 	return buf;
