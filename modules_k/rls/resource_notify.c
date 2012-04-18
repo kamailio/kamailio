@@ -283,7 +283,7 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 				if (resource_added == 1)
 				{
 					/* We added at least one resource. */
-					LM_ERR("timer_send_notify hit the size limit. len_est = %d\n", len_est);
+					LM_DBG("timer_send_notify hit the size limit. len_est = %d\n", len_est);
 					if (send_notify(&rlmi_doc, buf, buf_len, bstr, dialog, hash_code))
 					{
 						LM_ERR("in send_notify\n");
@@ -293,7 +293,7 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 				}
 				else
 				{
-					LM_ERR("timer_send_notify hit the size limit. NO RESOURCE ADDED len_est = %d\n", len_est);
+					LM_DBG("timer_send_notify hit the size limit. NO RESOURCE ADDED len_est = %d\n", len_est);
 				}
 				len_est = 0;
 
