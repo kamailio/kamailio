@@ -454,8 +454,8 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 			}
 
 			if (use_domain) {
-				domain = (char*)VAL_STRING(ROW_VALUES(row) + 16);
-				if (VAL_NULL(ROW_VALUES(row)+16) || domain==0 || domain[0]==0){
+				domain = (char*)VAL_STRING(ROW_VALUES(row) + 17);
+				if (VAL_NULL(ROW_VALUES(row)+17) || domain==0 || domain[0]==0){
 					LM_CRIT("empty domain record for user %.*s...skipping\n",
 							user.len, user.s);
 					continue;
@@ -718,7 +718,7 @@ urecord_t* db_load_urecord_by_ruid(db1_con_t* _c, udomain_t* _d, str *_ruid)
 
 	if (use_domain) {
 		domain.s = (char*)VAL_STRING(ROW_VALUES(row) + 17);
-		if (VAL_NULL(ROW_VALUES(row)+16) || domain.s==0 || domain.s[0]==0){
+		if (VAL_NULL(ROW_VALUES(row)+17) || domain.s==0 || domain.s[0]==0){
 			LM_CRIT("empty domain record for user %.*s...skipping\n",
 					aor.len, aor.s);
 			goto done;
