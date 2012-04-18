@@ -714,11 +714,22 @@ error:
 	return NULL;
 
 }
+
 void rls_free_td(dlg_t* td)
 {
-		pkg_free(td->loc_uri.s);
-		pkg_free(td->rem_uri.s);
+	if(td)
+	{
+		if(td->loc_uri.s)
+			pkg_free(td->loc_uri.s);
+	
+		if(td->rem_uri.s)
+			pkg_free(td->rem_uri.s);
+
+		if(td->route_set)
+			pkg_free(td->route_set); 
+
 		pkg_free(td);
+	}	
 }
 
 int rls_send_notify(subs_t* subs, str* body, char* start_cid,
@@ -875,15 +886,7 @@ dlg_t* rls_notify_dlg(subs_t* subs)
 	return td;
 
 error:
-	if(td)
-	{
-		if(td->loc_uri.s)
-			pkg_free(td->loc_uri.s);
-	
-		if(td->rem_uri.s)
-			pkg_free(td->rem_uri.s);
-		pkg_free(td);
-	}	
+	if(td) rls_free_td(td);	
 
 	return NULL;
 
