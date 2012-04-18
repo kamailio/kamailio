@@ -177,7 +177,7 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 	char* buf= NULL, *auth_state= NULL, *boundary_string= NULL;
 	str cid = {0,0};
 	str content_type= {0, 0};
-	int contor= 0, auth_state_flag;
+	int auth_state_flag;
 	int chunk_len=0;
 	str bstr= {0, 0};
 	subs_t* dialog= NULL;
@@ -185,7 +185,7 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 	int resource_added = 0; /* Flag to indicate that we have added at least one resource */
 
 	/* generate the boundary string */
-	boundary_string= generate_string((int)time(NULL), BOUNDARY_STRING_LEN);
+	boundary_string= generate_string(BOUNDARY_STRING_LEN);
 	bstr.len= strlen(boundary_string);
 	bstr.s= (char*)pkg_malloc((bstr.len+ 1)* sizeof(char));
 	if(bstr.s== NULL)
@@ -267,10 +267,8 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 		/* there might be more records with the same uri- more instances-
 		 * search and add them all */
 		
-		contor= 0;
 		while(1)
 		{
-			contor++;
 			cid.s= NULL;
 			cid.len= 0;
 			
@@ -336,8 +334,18 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 				goto error;
 			}	
 
+			/* Instance ID should be unique for each instance node
+ 			   within a resource node.  The same instance ID can be
+			   used in different resource nodes.  Instance ID needs
+			   to remain the same for each resource instance in
+			   future updates.  We can just use a common string
+			   here because you will only get multiple instances
+			   for a resource when the back-end SUBSCRIBE is forked
+			   and pua does not support this.  If/when pua supports
+			   forking of the SUBSCRIBEs it sends this will need to
+			   be fixed properly. */
 			xmlNewProp(instance_node, BAD_CAST "id", 
-					BAD_CAST generate_string(contor, 8));
+					BAD_CAST instance_id);
 			if(auth_state_flag & ACTIVE_STATE)
 			{
 				xmlNewProp(instance_node, BAD_CAST "state", BAD_CAST auth_state);
