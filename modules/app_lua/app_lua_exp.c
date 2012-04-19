@@ -1724,13 +1724,28 @@ static int lua_sr_pres_handle_subscribe(lua_State *L)
 		return app_lua_return_error(L);
 	}
 
-	if(lua_gettop(L)!=0)
+	if(lua_gettop(L)==0)
+		ret = _lua_presenceb.handle_subscribe0(env_L->msg);
+	else if (lua_gettop(L)==1)
+	{
+		str wuri;
+		struct sip_uri parsed_wuri;
+
+		wuri.s = (char *) lua_tostring(L, -1);
+		wuri.len = strlen(wuri.s);
+		if (parse_uri(wuri.s, wuri.len, &parsed_wuri))
+		{
+			LM_ERR("failed to parse watcher URI\n");
+			return app_lua_return_error(L);
+		}
+		ret = _lua_presenceb.handle_subscribe(env_L->msg, parsed_wuri.user, parsed_wuri.host);
+	}
+	else
 	{
 		LM_ERR("incorrect number of arguments\n");
 		return app_lua_return_error(L);
 	}
 
-	ret = _lua_presenceb.handle_subscribe(env_L->msg, NULL, NULL);
 	return app_lua_return_int(L, ret);
 }
 
@@ -2015,13 +2030,28 @@ static int lua_sr_rls_handle_subscribe(lua_State *L)
 		return app_lua_return_error(L);
 	}
 
-	if(lua_gettop(L)!=0)
+	if(lua_gettop(L)==0)
+		ret = _lua_rlsb.rls_handle_subscribe0(env_L->msg);
+	else if (lua_gettop(L)==1)
+	{
+		str wuri;
+		struct sip_uri parsed_wuri;
+
+		wuri.s = (char *) lua_tostring(L, -1);
+		wuri.len = strlen(wuri.s);
+		if (parse_uri(wuri.s, wuri.len, &parsed_wuri))
+		{
+			LM_ERR("failed to parse watcher URI\n");
+			return app_lua_return_error(L);
+		}
+		ret = _lua_rlsb.rls_handle_subscribe(env_L->msg, parsed_wuri.user, parsed_wuri.host);
+	}
+	else
 	{
 		LM_ERR("incorrect number of arguments\n");
 		return app_lua_return_error(L);
 	}
 
-	ret = _lua_rlsb.rls_handle_subscribe(env_L->msg, NULL, NULL);
 	return app_lua_return_int(L, ret);
 }
 
