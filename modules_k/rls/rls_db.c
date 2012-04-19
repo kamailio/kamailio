@@ -273,7 +273,7 @@ int update_dialog_notify_rlsdb(subs_t *subs)
 
 /******************************************************************************/
 
-int update_all_subs_rlsdb(str *from_user, str *from_domain, str *evt)
+int update_all_subs_rlsdb(str *watcher_user, str *watcher_domain, str *evt)
 {
 	db_key_t query_cols[3];
 	db_val_t query_vals[3];
@@ -303,13 +303,13 @@ int update_all_subs_rlsdb(str *from_user, str *from_domain, str *evt)
 	query_cols[n_query_cols] = &str_watcher_username_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val= *from_user;
+	query_vals[n_query_cols].val.str_val= *watcher_user;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_watcher_domain_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val= *from_domain;
+	query_vals[n_query_cols].val.str_val= *watcher_domain;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_event_col;
@@ -372,10 +372,10 @@ int update_all_subs_rlsdb(str *from_user, str *from_domain, str *evt)
 		}
 
 		dest->expires= VAL_INT(values+r_expires_col);
-		dest->from_user.s= from_user->s;
-		dest->from_user.len= from_user->len;
-		dest->from_domain.s= from_domain->s;
-		dest->from_domain.len= from_domain->len;
+		dest->watcher_user.s= watcher_user->s;
+		dest->watcher_user.len= watcher_user->len;
+		dest->watcher_domain.s= watcher_domain->s;
+		dest->watcher_domain.len= watcher_domain->len;
 
 		update_a_sub(dest);
 	}
@@ -460,8 +460,8 @@ int update_dialog_subscribe_rlsdb(subs_t *subs)
 int insert_rlsdb( subs_t *s )
 
 {
-	db_key_t data_cols[21];
-	db_val_t data_vals[21];
+	db_key_t data_cols[23];
+	db_val_t data_vals[23];
 	int n_data_cols = 0;
 
 	if (s==NULL) return(-1);
@@ -513,17 +513,29 @@ int insert_rlsdb( subs_t *s )
 	data_vals[n_data_cols].nul = 0;
 	data_vals[n_data_cols].val.str_val = s->to_domain;
 	n_data_cols++;
-	
-	data_cols[n_data_cols] = &str_watcher_username_col;
+
+	data_cols[n_data_cols] = &str_from_user_col;
 	data_vals[n_data_cols].type = DB1_STR;
 	data_vals[n_data_cols].nul = 0;
 	data_vals[n_data_cols].val.str_val = s->from_user;
 	n_data_cols++;
 
-	data_cols[n_data_cols] = &str_watcher_domain_col;
+	data_cols[n_data_cols] = &str_from_domain_col;
 	data_vals[n_data_cols].type = DB1_STR;
 	data_vals[n_data_cols].nul = 0;
 	data_vals[n_data_cols].val.str_val = s->from_domain;
+	n_data_cols++;
+
+	data_cols[n_data_cols] = &str_watcher_username_col;
+	data_vals[n_data_cols].type = DB1_STR;
+	data_vals[n_data_cols].nul = 0;
+	data_vals[n_data_cols].val.str_val = s->watcher_user;
+	n_data_cols++;
+
+	data_cols[n_data_cols] = &str_watcher_domain_col;
+	data_vals[n_data_cols].type = DB1_STR;
+	data_vals[n_data_cols].nul = 0;
+	data_vals[n_data_cols].val.str_val = s->watcher_domain;
 	n_data_cols++;
 
 	data_cols[n_data_cols] = &str_event_col;
@@ -759,15 +771,15 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 {
  	db_key_t query_cols[3];
 	db_val_t query_vals[3];
-	db_key_t result_cols[20];
+	db_key_t result_cols[22];
 	int n_query_cols = 0, n_result_cols=0;
 	int r_pres_uri_col,r_to_user_col,r_to_domain_col;
 	int r_from_user_col,r_from_domain_col,r_callid_col;
 	int r_to_tag_col,r_from_tag_col,r_socket_info_col;
 	int r_event_id_col,r_local_contact_col,r_contact_col;
-	int r_record_route_col, r_reason_col;
-	int r_event_col, r_local_cseq_col, r_remote_cseq_col;
-	int r_status_col, r_version_col;
+	int r_record_route_col, r_reason_col, r_event_col;
+	int r_local_cseq_col, r_remote_cseq_col, r_status_col;
+	int r_version_col, r_watcher_user_col, r_watcher_domain_col;
 	int r_expires_col;
 	db1_res_t *result= NULL;
  	db_val_t *values;
@@ -810,8 +822,10 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 	result_cols[r_pres_uri_col=n_result_cols++] = &str_presentity_uri_col;
 	result_cols[r_to_user_col=n_result_cols++] = &str_to_user_col;
 	result_cols[r_to_domain_col=n_result_cols++] = &str_to_domain_col;
-	result_cols[r_from_user_col=n_result_cols++] = &str_watcher_username_col;
-	result_cols[r_from_domain_col=n_result_cols++] = &str_watcher_domain_col;
+	result_cols[r_from_user_col=n_result_cols++] = &str_from_user_col;
+	result_cols[r_from_domain_col=n_result_cols++] = &str_from_domain_col;
+	result_cols[r_watcher_user_col=n_result_cols++] = &str_watcher_username_col;
+	result_cols[r_watcher_domain_col=n_result_cols++] = &str_watcher_domain_col;
 	result_cols[r_callid_col=n_result_cols++] = &str_callid_col;
 	result_cols[r_to_tag_col=n_result_cols++] = &str_to_tag_col;
 	result_cols[r_from_tag_col=n_result_cols++] = &str_from_tag_col;
@@ -865,6 +879,8 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 		+ strlen(VAL_STRING(values+r_to_domain_col))
 		+ strlen(VAL_STRING(values+r_from_user_col))
 		+ strlen(VAL_STRING(values+r_from_domain_col))
+		+ strlen(VAL_STRING(values+r_watcher_user_col))
+		+ strlen(VAL_STRING(values+r_watcher_domain_col))
 		+ strlen(VAL_STRING(values+r_to_tag_col))
 		+ strlen(VAL_STRING(values+r_from_tag_col))
 		+ strlen(VAL_STRING(values+r_callid_col))
@@ -891,6 +907,8 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 	CONT_COPYDB(dest, dest->to_domain, VAL_STRING(values+r_to_domain_col))
 	CONT_COPYDB(dest, dest->from_user, VAL_STRING(values+r_from_user_col))
 	CONT_COPYDB(dest, dest->from_domain, VAL_STRING(values+r_from_domain_col))
+	CONT_COPYDB(dest, dest->watcher_user, VAL_STRING(values+r_watcher_user_col))
+	CONT_COPYDB(dest, dest->watcher_domain, VAL_STRING(values+r_watcher_domain_col))
 	CONT_COPYDB(dest, dest->to_tag, VAL_STRING(values+r_to_tag_col))
 	CONT_COPYDB(dest, dest->from_tag, VAL_STRING(values+r_from_tag_col))
 	CONT_COPYDB(dest, dest->callid, VAL_STRING(values+r_callid_col))

@@ -56,6 +56,8 @@
 #include "notify.h"
 #include "resource_notify.h"
 #include "api.h"
+#include "subscribe.h"
+#include "../../mod_fix.h"
 
 MODULE_VERSION
 
@@ -165,6 +167,8 @@ str str_event_col = str_init("event");
 str str_event_id_col = str_init("event_id");
 str str_to_user_col = str_init("to_user");
 str str_to_domain_col = str_init("to_domain");
+str str_from_user_col = str_init("from_user");
+str str_from_domain_col = str_init("from_domain");
 str str_watcher_username_col = str_init("watcher_username");
 str str_watcher_domain_col = str_init("watcher_domain");
 str str_callid_col = str_init("callid");
@@ -197,7 +201,6 @@ int rls_max_backend_subs = 0;
 
 static int mod_init(void);
 static int child_init(int);
-int rls_handle_subscribe(struct sip_msg*, char*, char*);
 static void destroy(void);
 int rlsubs_table_restore();
 void rlsubs_table_update(unsigned int ticks,void *param);
@@ -207,8 +210,10 @@ int fixup_update_subs(void** param, int param_no);
 
 static cmd_export_t cmds[]=
 {
-	{"rls_handle_subscribe",  (cmd_function)rls_handle_subscribe,   0,
+	{"rls_handle_subscribe",  (cmd_function)rls_handle_subscribe0,  0,
 			0, 0, REQUEST_ROUTE},
+	{"rls_handle_subscribe",  (cmd_function)w_rls_handle_subscribe, 1,
+			fixup_spve_null, 0, REQUEST_ROUTE},
 	{"rls_handle_notify",     (cmd_function)rls_handle_notify,      0,
 			0, 0, REQUEST_ROUTE},
 	{"rls_update_subs",       (cmd_function)rls_update_subs,	2,
@@ -837,7 +842,7 @@ void rlsubs_table_update(unsigned int ticks,void *param)
 
 int rls_restore_db_subs(void)
 {
-	db_key_t result_cols[22]; 
+	db_key_t result_cols[24]; 
 	db1_res_t *res= NULL;
 	db_row_t *row = NULL;	
 	db_val_t *row_vals= NULL;
@@ -847,6 +852,7 @@ int rls_restore_db_subs(void)
 	int callid_col,totag_col,fromtag_col,to_domain_col,sockinfo_col,reason_col;
 	int event_col,contact_col,record_route_col, event_id_col, status_col;
 	int remote_cseq_col, local_cseq_col, local_contact_col, version_col;
+	int watcher_user_col, watcher_domain_col;
 	subs_t s;
 	str ev_sname;
 	pres_ev_t* event= NULL;
@@ -860,8 +866,10 @@ int rls_restore_db_subs(void)
 	result_cols[event_id_col=n_result_cols++] = &str_event_id_col;
 	result_cols[to_user_col=n_result_cols++] = &str_to_user_col;
 	result_cols[to_domain_col=n_result_cols++] = &str_to_domain_col;
-	result_cols[from_user_col=n_result_cols++] = &str_watcher_username_col;
-	result_cols[from_domain_col=n_result_cols++] = &str_watcher_domain_col;
+	result_cols[watcher_user_col=n_result_cols++] = &str_watcher_username_col;
+	result_cols[watcher_domain_col=n_result_cols++] = &str_watcher_domain_col;
+	result_cols[from_user_col=n_result_cols++] = &str_from_user_col;
+	result_cols[from_domain_col=n_result_cols++] = &str_from_domain_col;
 	result_cols[callid_col=n_result_cols++] = &str_callid_col;
 	result_cols[totag_col=n_result_cols++] = &str_to_tag_col;
 	result_cols[fromtag_col=n_result_cols++] = &str_from_tag_col;
@@ -936,6 +944,13 @@ int rls_restore_db_subs(void)
 		
 			s.from_domain.s=(char*)row_vals[from_domain_col].val.string_val;
 			s.from_domain.len= strlen(s.from_domain.s);
+
+			s.watcher_user.s=(char*)row_vals[watcher_user_col].val.string_val;
+			s.watcher_user.len= strlen(s.watcher_user.s);
+		
+			s.watcher_domain.s=(char*)row_vals[watcher_domain_col].val.string_val;
+			s.watcher_domain.len= strlen(s.watcher_domain.s);
+
 
 			s.to_tag.s=(char*)row_vals[totag_col].val.string_val;
 			s.to_tag.len= strlen(s.to_tag.s);
@@ -1044,6 +1059,7 @@ int bind_rls(struct rls_binds *pxb)
 		}
 
 		pxb->rls_handle_subscribe = rls_handle_subscribe;
+		pxb->rls_handle_subscribe0 = rls_handle_subscribe0;
 		pxb->rls_handle_notify = rls_handle_notify;
 		return 0;
 }

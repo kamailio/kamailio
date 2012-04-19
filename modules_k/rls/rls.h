@@ -162,7 +162,7 @@ extern int update_dialog_subscribe_rlsdb(subs_t *s);
 extern int insert_rlsdb(subs_t *s);
 extern int get_dialog_subscribe_rlsdb(subs_t *s);
 subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag);
-extern int update_all_subs_rlsdb(str *from_user, str *from_domain, str *evt);
+extern int update_all_subs_rlsdb(str *watcher_user, str *watcher_domain, str *evt);
 
 extern int rls_get_service_list(str *service_uri, str *user, str *domain,
 			xmlNodePtr *service_node, xmlDocPtr *rootdoc);
@@ -180,6 +180,8 @@ extern str str_event_col;
 extern str str_event_id_col;
 extern str str_to_user_col;
 extern str str_to_domain_col;
+extern str str_from_user_col;
+extern str str_from_domain_col;
 extern str str_watcher_username_col;
 extern str str_watcher_domain_col;
 extern str str_callid_col;

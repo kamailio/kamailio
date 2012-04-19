@@ -642,13 +642,19 @@ modparam("rls", "max_backend_subs", 30)
 	<title>Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">rls_handle_subscribe()</function>
+		<function moreinfo="none">rls_handle_subscribe([watcher_uri])</function>
 		</title>
 		<para>
 		This function detects if a Subscribe message should be
 		handled by RLS. If not it replies with the configured 
 		to_presence_code. If it is, it extracts the dialog info and sends
 		aggregate Notify requests with information for the list.	
+		</para>
+		<para>
+		By default this function uses the From: URI from the SUBSCRIBE
+		request as the Watcher URI.  The optional watcher_uri parameter
+		can be used to specify a different Watcher URI, possibly taken
+		from a SIP header like P-Asserted-Identity:.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.

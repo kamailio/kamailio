@@ -51,7 +51,7 @@ Anca-Maria Vamanu
 
         4. Functions
 
-              4.1. rls_handle_subscribe()
+              4.1. rls_handle_subscribe([watcher_uri])
               4.2. rls_handle_notify()
               4.3. rls_update_subs(uri, event)
 
@@ -130,7 +130,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. rls_handle_subscribe()
+        4.1. rls_handle_subscribe([watcher_uri])
         4.2. rls_handle_notify()
         4.3. rls_update_subs(uri, event)
 
@@ -550,16 +550,21 @@ modparam("rls", "max_backend_subs", 30)
 
 4. Functions
 
-   4.1. rls_handle_subscribe()
+   4.1. rls_handle_subscribe([watcher_uri])
    4.2. rls_handle_notify()
    4.3. rls_update_subs(uri, event)
 
-4.1.  rls_handle_subscribe()
+4.1.  rls_handle_subscribe([watcher_uri])
 
    This function detects if a Subscribe message should be handled by RLS.
    If not it replies with the configured to_presence_code. If it is, it
    extracts the dialog info and sends aggregate Notify requests with
    information for the list.
+
+   By default this function uses the From: URI from the SUBSCRIBE request
+   as the Watcher URI. The optional watcher_uri parameter can be used to
+   specify a different Watcher URI, possibly taken from a SIP header like
+   P-Asserted-Identity:.
 
    This function can be used from REQUEST_ROUTE.
 

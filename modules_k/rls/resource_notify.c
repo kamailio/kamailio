@@ -842,7 +842,7 @@ error:
 
 static void timer_send_full_state_notifies(int round)
 {
-	db_key_t query_cols[1], result_cols[20], update_cols[1];
+	db_key_t query_cols[1], result_cols[22], update_cols[1];
 	db_val_t query_vals[1], update_vals[1], *values;
 	db_row_t *rows;
 	db1_res_t *result = NULL;
@@ -861,6 +861,8 @@ static void timer_send_full_state_notifies(int round)
 	result_cols[n_result_cols++] = &str_presentity_uri_col;
 	result_cols[n_result_cols++] = &str_to_user_col;
 	result_cols[n_result_cols++] = &str_to_domain_col;
+	result_cols[n_result_cols++] = &str_from_user_col;
+	result_cols[n_result_cols++] = &str_from_domain_col;
 	result_cols[n_result_cols++] = &str_watcher_username_col;
 	result_cols[n_result_cols++] = &str_watcher_domain_col;
 	result_cols[n_result_cols++] = &str_callid_col;
@@ -920,16 +922,18 @@ static void timer_send_full_state_notifies(int round)
 		EXTRACT_STRING(sub.to_domain, VAL_STRING(&values[2]));
 		EXTRACT_STRING(sub.from_user, VAL_STRING(&values[3]));
 		EXTRACT_STRING(sub.from_domain, VAL_STRING(&values[4]));
-		EXTRACT_STRING(sub.callid, VAL_STRING(&values[5]));
-		EXTRACT_STRING(sub.to_tag, VAL_STRING(&values[6]));
-		EXTRACT_STRING(sub.from_tag, VAL_STRING(&values[7]));
-		EXTRACT_STRING(sub.sockinfo_str, VAL_STRING(&values[8]));
-		EXTRACT_STRING(sub.local_contact, VAL_STRING(&values[9]));
-		EXTRACT_STRING(sub.contact, VAL_STRING(&values[10]));
-		EXTRACT_STRING(sub.record_route, VAL_STRING(&values[11]));
-		EXTRACT_STRING(sub.event_id, VAL_STRING(&values[12]));
-		EXTRACT_STRING(sub.reason, VAL_STRING(&values[13]));
-		EXTRACT_STRING(ev_sname, VAL_STRING(&values[14]));
+		EXTRACT_STRING(sub.watcher_user, VAL_STRING(&values[5]));
+		EXTRACT_STRING(sub.watcher_domain, VAL_STRING(&values[6]));
+		EXTRACT_STRING(sub.callid, VAL_STRING(&values[7]));
+		EXTRACT_STRING(sub.to_tag, VAL_STRING(&values[8]));
+		EXTRACT_STRING(sub.from_tag, VAL_STRING(&values[9]));
+		EXTRACT_STRING(sub.sockinfo_str, VAL_STRING(&values[10]));
+		EXTRACT_STRING(sub.local_contact, VAL_STRING(&values[11]));
+		EXTRACT_STRING(sub.contact, VAL_STRING(&values[12]));
+		EXTRACT_STRING(sub.record_route, VAL_STRING(&values[13]));
+		EXTRACT_STRING(sub.event_id, VAL_STRING(&values[14]));
+		EXTRACT_STRING(sub.reason, VAL_STRING(&values[15]));
+		EXTRACT_STRING(ev_sname, VAL_STRING(&values[16]));
 		sub.event = pres_contains_event(&ev_sname, &parsed_event);
 		if (sub.event == NULL)
 		{
@@ -937,15 +941,15 @@ static void timer_send_full_state_notifies(int round)
 			goto done;
 		}
 
-		sub.local_cseq = VAL_INT(&values[15]);
-		sub.remote_cseq = VAL_INT(&values[16]);
-		sub.status = VAL_INT(&values[17]);
-		sub.version = VAL_INT(&values[18]);
-		sub.expires = VAL_INT(&values[19]) - (int)time(NULL);
+		sub.local_cseq = VAL_INT(&values[17]);
+		sub.remote_cseq = VAL_INT(&values[18]);
+		sub.status = VAL_INT(&values[19]);
+		sub.version = VAL_INT(&values[20]);
+		sub.expires = VAL_INT(&values[21]) - (int)time(NULL);
 		if (sub.expires < 0) sub.expires = 0;
 		
-		if (rls_get_service_list(&sub.pres_uri, &sub.from_user,
-			&sub.from_domain, &service_node, &doc) < 0)
+		if (rls_get_service_list(&sub.pres_uri, &sub.watcher_user,
+			&sub.watcher_domain, &service_node, &doc) < 0)
 		{
 			LM_ERR("failed getting resource list\n");
 			goto done;

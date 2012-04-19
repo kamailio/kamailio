@@ -161,7 +161,7 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 
 	/* Find all the uri's to which we are subscribed */
 	param.next = &uri_list_head;
-	if(process_list_and_exec(rl_node, subs->from_user, subs->from_domain, add_resource_to_list,(void*)(&param))< 0)
+	if(process_list_and_exec(rl_node, subs->watcher_user, subs->watcher_domain, add_resource_to_list,(void*)(&param))< 0)
 	{
 		LM_ERR("in process_list_and_exec function\n");
 		goto error;

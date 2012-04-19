@@ -2,11 +2,13 @@
 #define RLS_API_H
 #include "../../str.h"
 
-typedef int (*rls_handle_subscribe_t)(struct sip_msg*, char*, char*);
+typedef int (*rls_handle_subscribe_t)(struct sip_msg*, str, str);
+typedef int (*rls_handle_subscribe0_t)(struct sip_msg*);
 typedef int (*rls_handle_notify_t)(struct sip_msg*, char*, char*);
 
 typedef struct rls_binds {
 	rls_handle_subscribe_t rls_handle_subscribe;
+	rls_handle_subscribe0_t rls_handle_subscribe0;
 	rls_handle_notify_t rls_handle_notify;
 } rls_api_t;
 

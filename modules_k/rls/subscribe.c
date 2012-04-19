@@ -412,7 +412,47 @@ int reply_489(struct sip_msg * msg)
 /**
  * handle RLS subscription
  */
-int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
+int rls_handle_subscribe0(struct sip_msg* msg)
+{
+	struct to_body *pfrom;
+
+	if (parse_from_uri(msg) < 0)
+	{
+		LM_ERR("failed to find From header\n");
+		if (slb.freply(msg, 400, &pu_400_rpl) < 0)
+		{
+			LM_ERR("while sending 400 reply\n");
+			return -1;
+		}
+		return 0;
+	}
+	pfrom = (struct to_body *) msg->from->parsed;
+	
+	return rls_handle_subscribe(msg, pfrom->parsed_uri.user,
+			pfrom->parsed_uri.host);
+}
+
+int w_rls_handle_subscribe(struct sip_msg* msg, char* watcher_uri)
+{
+	str wuri;
+	struct sip_uri parsed_wuri;
+	
+	if (fixup_get_svalue(msg, (gparam_p)watcher_uri, &wuri) != 0)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+
+	if (parse_uri(wuri.s, wuri.len, &parsed_wuri) < 0)
+	{
+		LM_ERR("failed to parse watcher URI\n");
+		return -1;
+	}
+
+	return rls_handle_subscribe(msg, parsed_wuri.user, parsed_wuri.host);
+}
+
+int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 {
 	subs_t subs;
 	pres_ev_t* event = NULL;
@@ -511,7 +551,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 		goto bad_event;
 	}
 	subs.event= event;
-	
+
 	/* extract the id if any*/
 	ev_param= parsed_event->params.list;
 	while(ev_param)
@@ -526,7 +566,8 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 
 	/* extract dialog information from message headers */
 	if(pres_extract_sdialog_info(&subs, msg, rls_max_expires,
-				&to_tag_gen, rls_server_address)<0)
+				&to_tag_gen, rls_server_address,
+				watcher_user, watcher_domain)<0)
 	{
 		LM_ERR("bad subscribe request\n");
 		goto error;
@@ -550,8 +591,8 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 			LM_ERR("while constructing uri from user and domain\n");
 			goto error;
 		}
-		if(rls_get_service_list(&subs.pres_uri, &subs.from_user,
-					&subs.from_domain, &service_node, &doc)<0)
+		if(rls_get_service_list(&subs.pres_uri, &subs.watcher_user,
+					&subs.watcher_domain, &service_node, &doc)<0)
 		{
 			LM_ERR("while attepmting to get a resource list\n");
 			goto error;
@@ -596,8 +637,8 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 			if (rt <= 0)
 			{
 				LM_DBG("subscription dialog not found for <%.*s@%.*s>\n",
-						subs.from_user.len, subs.from_user.s,
-						subs.from_domain.len, subs.from_domain.s);
+						subs.watcher_user.len, subs.watcher_user.s,
+						subs.watcher_domain.len, subs.watcher_domain.s);
 				goto forpresence;
 			}
 			else if(rt>=400)
@@ -630,8 +671,8 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 			{
 				lock_release(&rls_table[hash_code].lock);
 				LM_DBG("subscription dialog not found for <%.*s@%.*s>\n",
-						subs.from_user.len, subs.from_user.s,
-						subs.from_domain.len, subs.from_domain.s);
+						subs.watcher_user.len, subs.watcher_user.s,
+						subs.watcher_domain.len, subs.watcher_domain.s);
 				goto forpresence;
 			}
 			lock_release(&rls_table[hash_code].lock);
@@ -660,8 +701,8 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 				return 0;
 			}
 		}	
-		if(rls_get_service_list(&subs.pres_uri, &subs.from_user,
-					&subs.from_domain, &service_node, &doc)<0)
+		if(rls_get_service_list(&subs.pres_uri, &subs.watcher_user,
+					&subs.watcher_domain, &service_node, &doc)<0)
 		{
 			LM_ERR("failed getting resource list\n");
 			goto error;
@@ -950,7 +991,7 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 
 	memset(&s, 0, sizeof(subs_info_t));
 
-	if(uandd_to_uri(subs->from_user, subs->from_domain, &wuri)<0)
+	if(uandd_to_uri(subs->watcher_user, subs->watcher_domain, &wuri)<0)
 	{
 		LM_ERR("while constructing uri from user and domain\n");
 		goto error;
@@ -995,7 +1036,7 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 
 	counter = 0;
 	
-	if(process_list_and_exec(xmlnode, subs->from_user, subs->from_domain,
+	if(process_list_and_exec(xmlnode, subs->watcher_user, subs->watcher_domain,
 			send_resource_subs, (void*)(&s))<0)
 	{
 		LM_ERR("while processing list\n");
@@ -1073,8 +1114,8 @@ void update_a_sub(subs_t *subs_copy)
 		goto done;
 	}
 
-	if(rls_get_service_list(&subs_copy->pres_uri, &subs_copy->from_user,
-				&subs_copy->from_domain, &service_node, &doc)<0)
+	if(rls_get_service_list(&subs_copy->pres_uri, &subs_copy->watcher_user,
+				&subs_copy->watcher_domain, &service_node, &doc)<0)
 	{
 		LM_ERR("failed getting resource list for: %.*s\n",
 			subs_copy->pres_uri.len, subs_copy->pres_uri.s);
@@ -1179,10 +1220,10 @@ int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent)
 
 		while (subs != NULL)
 		{
-			if (subs->from_user.len == parsed_uri.user.len &&
-				strncmp(subs->from_user.s, parsed_uri.user.s, parsed_uri.user.len) == 0 &&
-				subs->from_domain.len == parsed_uri.host.len &&
-				strncmp(subs->from_domain.s, parsed_uri.host.s, parsed_uri.host.len) == 0 &&
+			if (subs->watcher_user.len == parsed_uri.user.len &&
+				strncmp(subs->watcher_user.s, parsed_uri.user.s, parsed_uri.user.len) == 0 &&
+				subs->watcher_domain.len == parsed_uri.host.len &&
+				strncmp(subs->watcher_domain.s, parsed_uri.host.s, parsed_uri.host.len) == 0 &&
 				subs->event->evp->type == e.type)
 			{
 				subs_t *subs_copy = NULL;
