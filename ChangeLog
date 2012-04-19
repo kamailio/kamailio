@@ -1,3 +1,342 @@
+===================== 2012-04-19 Version 3.2.3 Released =====================
+
+===================== Changes Since Version 3.2.2 ===========================
+
+commit 6c23e85e017efefa2750ac108fdefe86aafba010
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 19 14:02:43 2012 +0200
+
+    Makefile: version set to 3.2.3
+
+commit d6d9b11c7542e986e63b1ce7088ac298aa72f4a7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 19 13:11:09 2012 +0200
+
+    pkg/debs: version set to 3.2.3 for kamailio deb specs
+
+commit d74ead88bf9b600279e032032f52f580d7bcf42c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 19 13:07:41 2012 +0200
+
+    pkg/rpm: version set to 3.2.3 for kamailio specs
+
+commit 203b10340dcf1ba34a1fe8ad6ae588c1341c0083
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Apr 18 17:15:10 2012 +0100
+
+    modules_k/rls: Fixed memory leak
+    
+    - The pkg memory allocated for route-sets when sendin NOTIFY requests
+      was never freed.
+    - Fixed by Paul Pankhurst @ Crocodile RCS
+    (cherry picked from commit 1b87bac8d5c56909ee4ae10f88dd8c6292b53e8a)
+
+commit 4e0865a9fa502b8e93cbb7b9c3fb07dd3e38bf8a
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Apr 18 17:18:45 2012 +0100
+
+    modules_k/rls: srand() called frequently
+    
+    - srand() was used to ensure that the instance IDs for use in
+      RLS NOTIFY bodies were random, but consistent.
+    - The instance ID needs to be unique within a resource node in the
+      NOTIFY body.  It does not have to be unique locally.  Although
+      it needs to be unique it also needs to be repeatable as the same
+      resource instance needs the same ID in subsequent NOTIFY requests.
+    - You will only get multiple instances for a resource when the
+      back-end SUBSCRIBEs from RLS are forked.  Kamailio does not support
+      this at the moment (the callback function in pua/send_subscribe.c
+      is only called for the first final response) so we will only ever
+      have one instance per resource.
+    - Because there is only one instance per resource the instance ID
+      can just be a fixed string.  This will need to be changed if/when
+      forking of back-end SUBSCRIBEs from PUA is supported.
+    (cherry picked from commit c4a4a94065374fd182fc13374a0c520afa410f45)
+
+commit fd93460c8766f255d118dc3e29a201ff1a0c4056
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Apr 18 17:23:59 2012 +0100
+
+    modules_k/rls: Some diagnostics at the wrong level
+    (cherry picked from commit fb6308b6cfc558190fac67050b65f3a6fcc73cdb)
+
+commit 7c4be465dbb4c1accf04a803f919027a43095646
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 17 23:00:50 2012 +0200
+
+    pua_reginfo: propoer call-id buffer when constructing XML for reginfo
+    
+    - patch by Stefan Sayer, FS#212
+    (cherry picked from commit db07a8e381990d835711e978a5bf711186495cdf)
+
+commit 0f9f9c881cbc2c7834c4c4b101acbeda4f553903
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 17 22:55:35 2012 +0200
+
+    pua_reginfo: fix for state of the registration during unregister
+    
+    - when unregistering a single contact, the state of the registration may
+      be incorrectly reported .
+    - fix of a small inefficiency of repeatedly  calling time(2) in the same function.
+    - patch by Stefan Sayer, FS#213
+    (cherry picked from commit c4be935b40b23b87b321fd604e761332bb07b8f8)
+
+commit f269211221b73cf89b88c6e76e46efddea589283
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 17 22:40:06 2012 +0200
+
+    maxfwd(k): return -2 (false) if MF header cannot be processed
+    
+    - reported by Ladislav Jurak, FS#214
+    (cherry picked from commit a15428e688049e7ef49174a2e24cbf49eb7a7cad)
+
+commit b5b0b15dedf7781fa64dd17dda8f448678918621
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 16 14:03:14 2012 +0200
+
+    debugger: safe wrapper around cfg name
+    
+    - some actions can be executed from inside the code, with no cfg file
+      name attached to it -- that makes debugger crash on solaris while
+      printing executed action details
+    - reported by Nathaniel
+    (cherry picked from commit 40ddcf88df9ef71bba7c182b7a1d76b559645628)
+
+commit 78a67d3f69891b2a97d4db09d555c8896562c539
+Author: Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+Date:   Tue Apr 3 13:10:37 2012 +0200
+
+    modules_k/siptrace: Fixed \0 termination for tmp_pipport.
+    	Thanks Michal Karas for the patch.
+    (cherry picked from commit d5fbc4ead58c7ef47aba91238c74f40f9162f78d)
+
+commit 66241f5e8dc2876441c1e91152adfe3a13bbe373
+Author: Miklos Tirpak <miklos@iptel.org>
+Date:   Thu Mar 29 10:45:02 2012 +0200
+
+    tm: fix the multiple t_suspend+t_continue scenario
+    
+    When t_suspend() was called in the route block executed
+    by t_continue(), the function did not recognize the newly
+    added blind UAC and claimed that there is no new branch added.
+    This resulted in the transaction being killed by t_continue().
+    (cherry picked from commit 9ae149ba25ee6467da1d95dd435995b9a59166a3)
+
+commit 7efc191ae71d67769aa5e2e26f728a0024fcc8a4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 27 13:56:32 2012 +0200
+
+    core: include str.h in parse_param.h to avoid compile errors
+    
+    - it happened when parse_param.h is used first, alone or without any
+      predecessors including str.h
+    (cherry picked from commit 8194dfe8f45f688bb9b5332ecdc66ec1423ca77f)
+
+commit 6251a0a65a0b1a456708a7cde9adcb9894f2bfa2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 14 10:57:47 2012 +0100
+
+    parser/sdp: allow boundary value between quotes
+    
+    - reported by Magnus Nordström, FS#200
+    (cherry picked from commit a66242b4f776b43120014b0c56e21c87d254ddcc)
+
+commit 79b46b92828d1954aad391e24147c521b10f5608
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 14 10:01:00 2012 +0100
+
+    sqlops: check for DB_CAP_RAW_QUERY of DB connection
+    
+    - the module is using raw query capability and DB_CAP_ALL does not
+      include it
+    - reported by Pedro Vico, FS#208
+    (cherry picked from commit edc4d902135d484d02272a64b7f27447fcb6854e)
+
+commit e139846935fa414b7261a3f951b823a539b97c32
+Author: Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+Date:   Wed Mar 14 09:29:24 2012 +0100
+
+    modules/sipcapture: added check for  corrupted and defragmented packets
+    (cherry picked from commit cb8c24f1ef873d16fd5c7edd96e2c0d3847b3dda)
+
+commit 5114ed746f97fa791423edaae22f2edde24ed916
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 12 17:04:17 2012 +0100
+
+    call_control: avoid internal flags conflicts with mediaproxy
+    
+    - use internal flag 28 for marking requests handled by call_control, the
+      old value, 30, being used by mediaproxy module, resulting in engaging
+      media relay
+    - reported and solution by Reda Aouad
+    (cherry picked from commit 55812477d1f4c9ee8726d0ba3cc7b6d3c8835f8a)
+
+commit 8fe854700ce58fa314be3baa721c153ec1935b2a
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Fri Mar 9 19:12:59 2012 +0100
+
+    dns: srv load balancing distribution fix
+    
+    The load distribution when doing SRV based load balancing was not
+    completely fair. The first listed server had always an extra
+     (sum_of_weights-weight)/(sum_of_weights*(sum_of_weights+1) chance
+    of being selected.
+    For example for 2 servers both with weight 50, the first one
+    will have an extra (100-50)/100*101 change of being selected =>
+     extra 0.495% which gives a 50.495% - 49.505% distribution
+    instead of 50% - 50%. For large weight values this doesn't make a big
+    difference (e.g. for 500-500 => 50.049% instead of 50%) but for
+    small values it becomes very noticeable (e.g. for 1-1 =>
+     66% - 33% distribution instead of 50%-50%).
+    
+    The chance of selecting a 0-weight record was also changed. It was
+     1/(sum_of_weights+1) and now is 1/(sum_of_weights*1000).
+    
+    Reported-by: Michal Matyska  michal.matyska iptel org
+    (cherry picked from commit d8fe0def83736c204dd1eace89e8ca1823704fc3)
+
+commit 709c7498dd6a702a128c0c5c5b953e18d917d44b
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Mar 6 18:10:13 2012 +0000
+
+    modules/tm: Filled in the $snd() structure for event_route[tm:local-request]
+    (cherry picked from commit 43e7274cad12535fc20d0e669d87939c1c18f399)
+
+commit 13b5952b656a486f6b9aecbc35510b5b39888083
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 3 12:34:38 2012 +0100
+
+    uac(k): support for 407 challenge to registrations
+    
+    - requested in FS#204, by Oded Resnik
+    (cherry picked from commit 2ac96ebcc173a2f1e601b38afa5c9bba5de8c0b5)
+
+commit 9f5a8ac6faed48cbbd02db8d30b5a8d9d30c173c
+Author: Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+Date:   Mon Mar 5 11:56:50 2012 +0100
+
+    module: modules/sipcapture fixed socket_info structure.
+    
+    Now users can use $Ri, $rp variables in RAW socket mode.
+    (cherry picked from commit f9494494d59d2036f2ed664fbdf4193760662937)
+
+commit 48d0266797d2154c4154ecefd18366662cca6c0c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 29 19:08:31 2012 +0100
+
+    kamailio.cfg: add colon before the port for voicemail server
+    (cherry picked from commit 0e3f1ff9507a578d95d02d615d333ef24fe42d87)
+
+commit ab20bfc85313dc74a965429f257e63021a648f18
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 24 10:24:29 2012 +0100
+
+    tls: check for support of ssl2
+    
+    - latest distros with newer ssl lib are removing the ssl2 support
+    (cherry picked from commit 7c7ed8ad9d62bd501bd2c856a01689a84a0c0711)
+
+commit 1ad616a0dc9b689d412ab9e117949d4ba9f4dadb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 17 15:46:12 2012 +0100
+
+    ndb_redis: try to reconnect if query to redis server fails
+    
+    - credits to Javier Gallart for testing
+    (cherry picked from commit 4a6a2cfd2df535c0f293d0d944685a702b45af0b)
+
+commit 08782d29cc81a60e3c479a08c65b06d4c73fbc97
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 9 15:28:44 2012 +0100
+
+    dialog(k): match on callid and ftag for no ACK'ed dialogs
+    
+    - some of the TM callbacks look for the dialog with initial INVITE that
+      has no to-tag yet, even that the callback is run on 200ok and dialog was
+      updated with this field
+    - reported by Jon Bergli Heier
+    (cherry picked from commit 390383e2d0dff755ff9f0eb6a6b1fe627dc29949)
+
+commit 06d1739e187cbdc4903645b99e2702e864f7cbc6
+Author: Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+Date:   Fri Feb 3 16:12:38 2012 +0100
+
+    modules_k:siptrace  fixed function pipport2su. (error if url doesn't have port)
+    	Thanks David Kovarik for report.
+    (cherry picked from commit 830544e5b349bf808fb0f1ac12cf08610181c64d)
+
+commit b8b6d22d3407d01a41b127672b1533a0b42abe03
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 31 23:08:02 2012 +0100
+
+    snmpstats: safe destroy in case of invalid startup
+    
+    - some pointers were not intialized yet, but due to destroy of no-startup
+      they were accessed
+    - reported by Klaus Feichtinger
+    (cherry picked from commit 06e71ad96e8f13bafac1fa5d968538f98bd08df5)
+
+commit 2357e54ecfba7a86b993e5a0e864fd232e1730ba
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 23 12:14:07 2012 +0100
+
+    rtpproxy: proper iovec size for rtpproxy commands
+    
+    - issue introduced with the last fix for timeout socket parameter
+    - reported by Laurent Schweizer
+    (cherry picked from commit 7c7e9f1051148887b7c5a578a9d09d66bf9586ce)
+
+commit 29fec623839ece4e4521995b5cd9fbf1d1c0ae5c
+Author: Sven Knoblich <sven.knoblich@1und1.de>
+Date:   Fri Mar 16 10:40:56 2012 +0100
+
+    modules_k/dialog: fix dlg_var return-value in case of an empty result.
+    - replace 0 with pv_get_null(...)
+    (cherry picked from commit eec1c60cb518aa2d37216fb00ef4a2910623c53e)
+
+commit 118a79b43e87a44184088a57ddc81c5e6411750e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 4 17:22:30 2012 +0100
+
+    core: added back the option to use name IDs for tos setting
+    
+    - reported by Olle E. Johansson
+    (cherry picked from commit d3eb5d4f21f20a9bc5457642ad5fdcb9e764a02c)
+
+commit 7f2e9173caf0da18bbd2fbad76f855c6bf5703bf
+Author: Iñaki Baz Castillo <ibc@aliax.net>
+Date:   Tue Feb 28 20:26:18 2012 +0100
+
+    [regex_mod] Fix a double freeing in free_shared_memory() function.
+
+commit 3259ef734158d9cd63ce3fa94565f5cd4260e3f6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 27 21:37:24 2012 +0100
+
+    xmlops: fixed internal module name
+    
+    - c&p error propagated when the module was split from presence_xml
+    - reported by Olle E. Johansson
+    (cherry picked from commit 1d51ef127bc546cbe7e950dedc135a529e9ed2aa)
+
+commit 098784ec6e73177507fcc24fbc27674a524acaec
+Author: Sven Knoblich <sven.knoblich@1und1.de>
+Date:   Fri Feb 24 15:47:49 2012 +0100
+
+    module/avpops: Add short description to clarify the purpose of the avp_delete flag.
+    (cherry picked from commit fb0951c332894ac6cd967daa02c4a2b569ada671)
+
+commit 5fc59c44a6dbc97049a985b5b2f7280510b293b0
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Tue Feb 7 19:12:36 2012 -0500
+
+    Proper parsing for PVs
+    Closes FS#202
+     - sr.pv.get fails for retrieving index header variable in Lua
+    (cherry picked from commit 8b9a98e8a8205b2214bf3503afea8aece20e2396)
+
+
+
 ===================== 2012-01-31 Version 3.2.2 Released =====================
 
 ===================== Changes Since Version 3.2.1 ===========================
