@@ -48,6 +48,8 @@
 
 #include "../str.h"
 
+struct sip_msg;
+
 /* via param types
  * WARNING: keep in sync with parse_via.c FIN_HIDDEN... 
  * and with tm/sip_msg.c via_body_cloner
@@ -122,6 +124,12 @@ char* parse_via(char* buffer, char* end, struct via_body *vb);
  * Free allocated memory
  */
 void free_via_list(struct via_body *vb);
+
+
+/*
+ * Get one Via header
+ */
+int parse_via_header( struct sip_msg *msg, int n, struct via_body** q);
 
 
 #endif /* PARSE_VIA_H */
