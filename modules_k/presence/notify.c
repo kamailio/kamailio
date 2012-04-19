@@ -70,6 +70,8 @@ str str_username_col = str_init("username");
 str str_domain_col = str_init("domain");
 str str_body_col = str_init("body");
 str str_to_domain_col = str_init("to_domain");
+str str_from_user_col = str_init("from_user");
+str str_from_domain_col = str_init("from_domain");
 str str_watcher_username_col = str_init("watcher_username");
 str str_watcher_domain_col = str_init("watcher_domain");
 str str_event_id_col = str_init("event_id");
@@ -109,17 +111,20 @@ char* get_status_str(int status_flag)
 void printf_subs(subs_t* subs)
 {	
 	LM_DBG("\n\t[pres_uri]= %.*s\n\t[to_user]= %.*s\t[to_domain]= %.*s"
-		"\n\t[w_user]= %.*s\t[w_domain]= %.*s\n\t[event]= %.*s\n\t[status]= %s"
+		"\n\t[from_user]= %.*s\t[from_domain]= %.*s\n\t[w_user]= %.*s"
+		"\n\t[w_domain]=%.*s\t[event]=%.*s\t[status]= %s"
 		"\n\t[expires]= %u\n\t[callid]= %.*s\t[local_cseq]=%d"
 		"\n\t[to_tag]= %.*s\t[from_tag]= %.*s""\n\t[contact]= %.*s"
 		"\t[record_route]= %.*s\n",subs->pres_uri.len,subs->pres_uri.s,
 		subs->to_user.len,subs->to_user.s,subs->to_domain.len,
 		subs->to_domain.s,subs->from_user.len,subs->from_user.s,
-		subs->from_domain.len,subs->from_domain.s,subs->event->name.len,
-		subs->event->name.s,get_status_str(subs->status),subs->expires,
-		subs->callid.len,subs->callid.s,subs->local_cseq,subs->to_tag.len,
-		subs->to_tag.s,subs->from_tag.len, subs->from_tag.s,subs->contact.len,
-		subs->contact.s,subs->record_route.len,subs->record_route.s);
+		subs->from_domain.len,subs->from_domain.s,subs->watcher_user.len,
+		subs->watcher_user.s,subs->watcher_domain.len,subs->watcher_domain.s,
+		subs->event->name.len,subs->event->name.s,get_status_str(subs->status),
+		subs->expires,subs->callid.len,subs->callid.s,subs->local_cseq,
+		subs->to_tag.len,subs->to_tag.s,subs->from_tag.len, subs->from_tag.s,
+		subs->contact.len,subs->contact.s,subs->record_route.len,
+		subs->record_route.s);
 }
 
 int build_str_hdr(subs_t* subs, int is_body, str* hdr)
@@ -269,7 +274,7 @@ int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 	int n_result_cols = 0;
 	int n_query_cols = 0;
 	int i;
-	int status_col, expires_col, from_user_col, from_domain_col, callid_col;
+	int status_col, expires_col, watcher_user_col, watcher_domain_col, callid_col;
 
 	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_ops[n_query_cols] = OP_EQ;
@@ -287,8 +292,8 @@ int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 
 	result_cols[status_col=n_result_cols++] = &str_status_col;
 	result_cols[expires_col=n_result_cols++] = &str_expires_col;
-	result_cols[from_user_col=n_result_cols++] = &str_watcher_username_col;
-	result_cols[from_domain_col=n_result_cols++] = &str_watcher_domain_col;
+	result_cols[watcher_user_col=n_result_cols++] = &str_watcher_username_col;
+	result_cols[watcher_domain_col=n_result_cols++] = &str_watcher_domain_col;
 	result_cols[callid_col=n_result_cols++] = &str_callid_col;
 
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0) 
@@ -322,11 +327,11 @@ int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);
 		
-		sb.from_user.s= (char*)row_vals[from_user_col].val.string_val;
-		sb.from_user.len= strlen(sb.from_user.s);
+		sb.watcher_user.s= (char*)row_vals[watcher_user_col].val.string_val;
+		sb.watcher_user.len= strlen(sb.watcher_user.s);
 
-		sb.from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
-		sb.from_domain.len= strlen(sb.from_domain.s);
+		sb.watcher_domain.s= (char*)row_vals[watcher_domain_col].val.string_val;
+		sb.watcher_domain.len= strlen(sb.watcher_domain.s);
 
 		sb.callid.s= (char*)row_vals[callid_col].val.string_val;
 		sb.callid.len= strlen(sb.callid.s);
@@ -336,7 +341,6 @@ int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 		
 		if(add_watcher_list(&sb, watchers)<0)
 			goto error;
-
 	}
 	
 	pa_dbf.free_result(pa_db, result);
@@ -468,7 +472,7 @@ int add_watcher_list(subs_t *s, watcher_t *watchers)
 		return -1;
 	}
 	w->status= s->status;
-	if(uandd_to_uri(s->from_user, s->from_domain, &w->uri)<0)
+	if(uandd_to_uri(s->watcher_user, s->watcher_domain, &w->uri)<0)
 	{
 		LM_ERR("failed to create uri\n");
 		goto error;
@@ -1008,6 +1012,7 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	int expires_col= 0,callid_col, cseq_col, i, reason_col;
 	int version_col= 0, record_route_col = 0, contact_col = 0;
 	int sockinfo_col= 0, local_contact_col= 0, event_id_col = 0;
+	int watcher_user_col= 0, watcher_domain_col= 0;
 	subs_t s, *s_new;
 	int inc= 0;
 		
@@ -1055,8 +1060,10 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 
 	result_cols[to_user_col=n_result_cols++]      =   &str_to_user_col;
 	result_cols[to_domain_col=n_result_cols++]    =   &str_to_domain_col;
-	result_cols[from_user_col=n_result_cols++]    =   &str_watcher_username_col;
-	result_cols[from_domain_col=n_result_cols++]  =   &str_watcher_domain_col;
+	result_cols[from_user_col=n_result_cols++]    =   &str_from_user_col;
+	result_cols[from_domain_col=n_result_cols++]  =   &str_from_domain_col;
+	result_cols[watcher_user_col=n_result_cols++] =   &str_watcher_username_col;
+	result_cols[watcher_domain_col=n_result_cols++]=   &str_watcher_domain_col;
 	result_cols[event_id_col=n_result_cols++]     =   &str_event_id_col;
 	result_cols[from_tag_col=n_result_cols++]     =   &str_from_tag_col;
 	result_cols[to_tag_col=n_result_cols++]       =   &str_to_tag_col;
@@ -1124,6 +1131,12 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 		
 		s.from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
 		s.from_domain.len= strlen(s.from_domain.s);
+
+		s.watcher_user.s= (char*)row_vals[watcher_user_col].val.string_val;
+		s.watcher_user.len= strlen(s.watcher_user.s);
+		
+		s.watcher_domain.s= (char*)row_vals[watcher_domain_col].val.string_val;
+		s.watcher_domain.len= strlen(s.watcher_domain.s);
 		
 		s.event_id.s=(char*)row_vals[event_id_col].val.string_val;
 		s.event_id.len= (s.event_id.s)?strlen(s.event_id.s):0;

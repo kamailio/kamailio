@@ -622,12 +622,18 @@ modparam("presence", "integrated_xcap_server", 1)
 
 	<section>
 		<title>
-		<function moreinfo="none">handle_subscribe()</function>
+		<function moreinfo="none">handle_subscribe([watcher_uri])</function>
 		</title>
 		<para>
 		The function which handles SUBSCRIBE requests. It stores or 
 		updates information in memory and database and calls functions to send NOTIFY 
-		messages when a SUBSCRIBE which initiate a dialog is received
+		messages when a SUBSCRIBE which initiate a dialog is received.
+		</para>
+		<para>
+		By default this function uses the From: URI from the SUBSCRIBE
+		request as the Watcher URI.  The optional watcher_uri parameter
+		can be used to specify a different Watcher URI, possibly taken
+		from a SIP header like P-Asserted-Identity:.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.

@@ -134,8 +134,9 @@ subs_t* mem_copy_subs(subs_t* s, int mem_type)
 	size= sizeof(subs_t)+ (s->pres_uri.len+ s->to_user.len
 		+ s->to_domain.len+ s->from_user.len+ s->from_domain.len+ s->callid.len
 		+ s->to_tag.len+ s->from_tag.len+s->sockinfo_str.len+s->event_id.len
-		+ s->local_contact.len+ s->contact.len+ s->record_route.len+
-		+ s->reason.len+ 1)*sizeof(char);
+		+ s->local_contact.len+ s->contact.len+ s->record_route.len
+		+ s->reason.len+ s->watcher_user.len+ s->watcher_domain.len
+		+ 1)*sizeof(char);
 
 	if(mem_type & PKG_MEM_TYPE)
 		dest= (subs_t*)pkg_malloc(size);
@@ -154,6 +155,8 @@ subs_t* mem_copy_subs(subs_t* s, int mem_type)
 	CONT_COPY(dest, dest->to_domain, s->to_domain)
 	CONT_COPY(dest, dest->from_user, s->from_user)
 	CONT_COPY(dest, dest->from_domain, s->from_domain)
+	CONT_COPY(dest, dest->watcher_user, s->watcher_user)
+	CONT_COPY(dest, dest->watcher_domain, s->watcher_domain)
 	CONT_COPY(dest, dest->to_tag, s->to_tag)
 	CONT_COPY(dest, dest->from_tag, s->from_tag)
 	CONT_COPY(dest, dest->callid, s->callid)
@@ -198,7 +201,8 @@ subs_t* mem_copy_subs_noc(subs_t* s)
 		+ s->to_domain.len+ s->from_user.len+ s->from_domain.len+ s->callid.len
 		+ s->to_tag.len+ s->from_tag.len+s->sockinfo_str.len+s->event_id.len
 		+ s->local_contact.len + s->record_route.len+
-		+ s->reason.len+ 1)*sizeof(char);
+		+ s->reason.len+ s->watcher_user.len+ s->watcher_domain.len
+		+ 1)*sizeof(char);
 
 	dest= (subs_t*)shm_malloc(size);
 	if(dest== NULL)
@@ -213,6 +217,8 @@ subs_t* mem_copy_subs_noc(subs_t* s)
 	CONT_COPY(dest, dest->to_domain, s->to_domain)
 	CONT_COPY(dest, dest->from_user, s->from_user)
 	CONT_COPY(dest, dest->from_domain, s->from_domain)
+	CONT_COPY(dest, dest->watcher_user, s->watcher_user)
+	CONT_COPY(dest, dest->watcher_domain, s->watcher_domain)
 	CONT_COPY(dest, dest->to_tag, s->to_tag)
 	CONT_COPY(dest, dest->from_tag, s->from_tag)
 	CONT_COPY(dest, dest->callid, s->callid)

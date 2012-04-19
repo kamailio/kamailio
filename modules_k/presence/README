@@ -58,7 +58,7 @@ Juha Heinanen
         4. Functions
 
               4.1. handle_publish(char* sender_uri)
-              4.2. handle_subscribe()
+              4.2. handle_subscribe([watcher_uri])
               4.3. pres_auth_status(watcher_uri, presentity_uri)
               4.4. pres_refresh_watchers(uri, event, type)
               4.5. pres_update_watchers(uri, event)
@@ -159,7 +159,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. handle_publish(char* sender_uri)
-        4.2. handle_subscribe()
+        4.2. handle_subscribe([watcher_uri])
         4.3. pres_auth_status(watcher_uri, presentity_uri)
         4.4. pres_refresh_watchers(uri, event, type)
         4.5. pres_update_watchers(uri, event)
@@ -547,7 +547,7 @@ modparam("presence", "integrated_xcap_server", 1)
 4. Functions
 
    4.1. handle_publish(char* sender_uri)
-   4.2. handle_subscribe()
+   4.2. handle_subscribe([watcher_uri])
    4.3. pres_auth_status(watcher_uri, presentity_uri)
    4.4. pres_refresh_watchers(uri, event, type)
    4.5. pres_update_watchers(uri, event)
@@ -585,11 +585,16 @@ modparam("presence", "integrated_xcap_server", 1)
         }
 ...
 
-4.2.  handle_subscribe()
+4.2.  handle_subscribe([watcher_uri])
 
    The function which handles SUBSCRIBE requests. It stores or updates
    information in memory and database and calls functions to send NOTIFY
-   messages when a SUBSCRIBE which initiate a dialog is received
+   messages when a SUBSCRIBE which initiate a dialog is received.
+
+   By default this function uses the From: URI from the SUBSCRIBE request
+   as the Watcher URI. The optional watcher_uri parameter can be used to
+   specify a different Watcher URI, possibly taken from a SIP header like
+   P-Asserted-Identity:.
 
    This function can be used from REQUEST_ROUTE.
 

@@ -74,6 +74,8 @@ extern str str_username_col;
 extern str str_domain_col;
 extern str str_body_col;
 extern str str_to_domain_col;
+extern str str_from_user_col;
+extern str str_from_domain_col;
 extern str str_watcher_username_col;
 extern str str_watcher_domain_col;
 extern str str_event_id_col;

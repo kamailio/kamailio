@@ -77,7 +77,7 @@ MODULE_VERSION
 
 #define S_TABLE_VERSION  3
 #define P_TABLE_VERSION  3
-#define ACTWATCH_TABLE_VERSION 9
+#define ACTWATCH_TABLE_VERSION 10
 #define XCAP_TABLE_VERSION 4
 
 char *log_buf = NULL;
@@ -156,7 +156,9 @@ static cmd_export_t cmds[]=
 		fixup_presence,0, REQUEST_ROUTE},
 	{"handle_publish",        (cmd_function)handle_publish,          1,
 		fixup_presence, 0, REQUEST_ROUTE},
-	{"handle_subscribe",      (cmd_function)handle_subscribe,        0,
+	{"handle_subscribe",      (cmd_function)handle_subscribe0,       0,
+		fixup_subscribe,0, REQUEST_ROUTE},
+	{"handle_subscribe",      (cmd_function)w_handle_subscribe,      1,
 		fixup_subscribe,0, REQUEST_ROUTE},
 	{"pres_auth_status",      (cmd_function)w_pres_auth_status,      2,
 		fixup_pvar_pvar, fixup_free_pvar_pvar, REQUEST_ROUTE},
@@ -633,6 +635,9 @@ static int fixup_subscribe(void** param, int param_no)
 				" (db_url not set)\n");
 		return -1;
 	}
+	if (param_no == 1) {
+		return fixup_spve_null(param, 1);
+	}
 	return 0;
 }
 
@@ -832,8 +837,8 @@ int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
 											  reason.len)))
 	{
 		/* update in watchers_table */
-		query_vals[q_wuser_col].val.str_val= subs.from_user; 
-		query_vals[q_wdomain_col].val.str_val= subs.from_domain; 
+		query_vals[q_wuser_col].val.str_val= subs.watcher_user; 
+		query_vals[q_wdomain_col].val.str_val= subs.watcher_domain; 
 
 		/* if status is no longer ACTIVE, switch to terminated */
 		if(subs.status!=status && status==ACTIVE_STATUS)
@@ -863,8 +868,8 @@ int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
 		if(update_pw_dialogs(&subs, subs.db_flag, subs_array)< 0)
 		{
 			LM_ERR( "extracting dialogs from [watcher]=%.*s@%.*s to"
-				" [presentity]=%.*s\n",	subs.from_user.len, subs.from_user.s,
-				subs.from_domain.len, subs.from_domain.s, subs.pres_uri.len,
+				" [presentity]=%.*s\n",	subs.watcher_user.len, subs.watcher_user.s,
+				subs.watcher_domain.len, subs.watcher_domain.s, subs.pres_uri.len,
 				subs.pres_uri.s);
 			return -1;
 		}
@@ -899,13 +904,13 @@ int pres_db_delete_status(subs_t* s)
     query_cols[n_query_cols]= &str_watcher_username_col;
     query_vals[n_query_cols].nul= 0;
     query_vals[n_query_cols].type= DB1_STR;
-    query_vals[n_query_cols].val.str_val= s->from_user;
+    query_vals[n_query_cols].val.str_val= s->watcher_user;
     n_query_cols++;
 
     query_cols[n_query_cols]= &str_watcher_domain_col;
     query_vals[n_query_cols].nul= 0;
     query_vals[n_query_cols].type= DB1_STR;
-    query_vals[n_query_cols].val.str_val= s->from_domain;
+    query_vals[n_query_cols].val.str_val= s->watcher_domain;
     n_query_cols++;
 
     if(pa_dbf.delete(pa_db, query_cols, 0, query_vals, n_query_cols)< 0)
@@ -1072,8 +1077,8 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 
 		for(i=0; i< n; i++)
 		{
-			subs.from_user = ws_list[i].w_user;
-			subs.from_domain = ws_list[i].w_domain;
+			subs.watcher_user = ws_list[i].w_user;
+			subs.watcher_domain = ws_list[i].w_domain;
 			subs.status = ws_list[i].status;
 			memset(&subs.reason, 0, sizeof(str));
 
@@ -1115,8 +1120,8 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		w_domain.s= (char*)row_vals[w_domain_col].val.string_val;
 		w_domain.len= strlen(w_domain.s);
 
-		subs.from_user= w_user;
-		subs.from_domain= w_domain;
+		subs.watcher_user= w_user;
+		subs.watcher_domain= w_domain;
 		subs.status= status;
 		memset(&subs.reason, 0, sizeof(str));
 
@@ -1188,9 +1193,9 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 {
 	db_key_t query_cols[5], db_cols[2];
 	db_val_t query_vals[5], db_vals[2];
-	db_key_t result_cols[22];
+	db_key_t result_cols[24];
 	int n_query_cols=0, n_result_cols=0, n_update_cols=0;
-	int event_col, pres_uri_col, from_user_col, from_domain_col;
+	int event_col, pres_uri_col, watcher_user_col, watcher_domain_col;
 	int r_pres_uri_col,r_to_user_col,r_to_domain_col;
 	int r_from_user_col,r_from_domain_col,r_callid_col;
 	int r_to_tag_col,r_from_tag_col,r_sockinfo_col;
@@ -1198,7 +1203,7 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 	int r_record_route_col, r_reason_col;
 	int r_event_col, r_local_cseq_col, r_remote_cseq_col;
 	int r_status_col, r_version_col;
-	int r_expires_col;
+	int r_expires_col, r_watcher_user_col, r_watcher_domain_col;
 	db1_res_t *result= NULL;
  	db_val_t *row_vals;
 	db_row_t *rows;
@@ -1231,23 +1236,25 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 	query_vals[pres_uri_col].val.str_val= subs->pres_uri;
 	n_query_cols++;
 
-	query_cols[from_user_col=n_query_cols]= &str_watcher_username_col;
-	query_vals[from_user_col].nul= 0;
-	query_vals[from_user_col].type= DB1_STR;
-	query_vals[from_user_col].val.str_val= subs->from_user;
+	query_cols[watcher_user_col=n_query_cols]= &str_watcher_username_col;
+	query_vals[watcher_user_col].nul= 0;
+	query_vals[watcher_user_col].type= DB1_STR;
+	query_vals[watcher_user_col].val.str_val= subs->watcher_user;
 	n_query_cols++;
 
-	query_cols[from_domain_col=n_query_cols]= &str_watcher_domain_col;
-	query_vals[from_domain_col].nul= 0;
-	query_vals[from_domain_col].type= DB1_STR;
-	query_vals[from_domain_col].val.str_val= subs->from_domain;
+	query_cols[watcher_domain_col=n_query_cols]= &str_watcher_domain_col;
+	query_vals[watcher_domain_col].nul= 0;
+	query_vals[watcher_domain_col].type= DB1_STR;
+	query_vals[watcher_domain_col].val.str_val= subs->watcher_domain;
 	n_query_cols++;
 
 
 	result_cols[r_to_user_col=n_result_cols++] = &str_to_user_col;
 	result_cols[r_to_domain_col=n_result_cols++] = &str_to_domain_col;
-	result_cols[r_from_user_col=n_result_cols++] = &str_watcher_username_col;
-	result_cols[r_from_domain_col=n_result_cols++] = &str_watcher_domain_col;
+	result_cols[r_from_user_col=n_result_cols++] = &str_from_user_col;
+	result_cols[r_from_domain_col=n_result_cols++] = &str_from_domain_col;
+	result_cols[r_watcher_user_col=n_result_cols++] = &str_watcher_username_col;
+	result_cols[r_watcher_domain_col=n_result_cols++] = &str_watcher_domain_col;
 	result_cols[r_callid_col=n_result_cols++] = &str_callid_col;
 	result_cols[r_to_tag_col=n_result_cols++] = &str_to_tag_col;
 	result_cols[r_from_tag_col=n_result_cols++] = &str_from_tag_col;
@@ -1309,6 +1316,12 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 		s.from_domain.s= (char*)row_vals[r_from_domain_col].val.string_val;
 		s.from_domain.len= s.from_domain.s?strlen(s.from_domain.s):0;
 		
+		s.watcher_user.s= (char*)row_vals[r_watcher_user_col].val.string_val;
+		s.watcher_user.len= s.watcher_user.s?strlen(s.watcher_user.s):0;
+		
+		s.watcher_domain.s= (char*)row_vals[r_watcher_domain_col].val.string_val;
+		s.watcher_domain.len= s.watcher_domain.s?strlen(s.watcher_domain.s):0;
+
 		s.event_id.s=(char*)row_vals[r_event_id_col].val.string_val;
 		s.event_id.len= (s.event_id.s)?strlen(s.event_id.s):0;
 	
@@ -1426,11 +1439,11 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 		s= ps->next;
 
 		if(s->event== subs->event && s->pres_uri.len== subs->pres_uri.len &&
-			s->from_user.len== subs->from_user.len && 
-			s->from_domain.len==subs->from_domain.len &&
+			s->watcher_user.len== subs->watcher_user.len && 
+			s->watcher_domain.len==subs->watcher_domain.len &&
 			strncmp(s->pres_uri.s, subs->pres_uri.s, subs->pres_uri.len)== 0 &&
-			strncmp(s->from_user.s, subs->from_user.s, s->from_user.len)== 0 &&
-			strncmp(s->from_domain.s,subs->from_domain.s,s->from_domain.len)==0)
+			strncmp(s->watcher_user.s, subs->watcher_user.s, s->watcher_user.len)== 0 &&
+			strncmp(s->watcher_domain.s,subs->watcher_domain.s,s->watcher_domain.len)==0)
 		{
 			i++;
 			s->status= subs->status;
@@ -1551,8 +1564,8 @@ int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri)
 	goto err;
     }
 
-    subs.from_user = uri.user;
-    subs.from_domain = uri.host;
+    subs.watcher_user = uri.user;
+    subs.watcher_domain = uri.host;
     subs.pres_uri = presentity_uri;
     subs.auth_rules_doc = rules_doc;
     if (ev->get_auth_status(&subs) < 0) {
