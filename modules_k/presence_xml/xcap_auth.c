@@ -170,7 +170,7 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 	int valid= 0;
 
 
-	uandd_to_uri(subs->from_user, subs->from_domain, &w_uri);
+	uandd_to_uri(subs->watcher_user, subs->watcher_domain, &w_uri);
 	if(w_uri.s == NULL)
 	{
 		LM_ERR("while creating uri\n");
