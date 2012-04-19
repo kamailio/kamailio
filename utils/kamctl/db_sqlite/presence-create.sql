@@ -15,7 +15,7 @@ CREATE TABLE presentity (
 CREATE INDEX presentity_presentity_expires ON presentity (expires);
 CREATE INDEX presentity_account_idx ON presentity (username, domain, event);
 
-INSERT INTO version (table_name, table_version) values ('active_watchers','9');
+INSERT INTO version (table_name, table_version) values ('active_watchers','10');
 CREATE TABLE active_watchers (
     id INTEGER PRIMARY KEY NOT NULL,
     presentity_uri VARCHAR(128) NOT NULL,
@@ -38,6 +38,8 @@ CREATE TABLE active_watchers (
     version INTEGER DEFAULT 0 NOT NULL,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
+    from_user VARCHAR(64) NOT NULL,
+    from_domain VARCHAR(64) NOT NULL,
     CONSTRAINT active_watchers_active_watchers_idx UNIQUE (callid, to_tag, from_tag)
 );
 

@@ -11,7 +11,7 @@ NIL|0
 acc|
 acc|4
 active_watchers|
-active_watchers|9
+active_watchers|10
 address|
 address|5
 aliases|
@@ -91,7 +91,7 @@ re_grp|1
 rls_presentity|
 rls_presentity|1
 rls_watchers|
-rls_watchers|1
+rls_watchers|2
 silo|
 silo|6
 sip_trace|

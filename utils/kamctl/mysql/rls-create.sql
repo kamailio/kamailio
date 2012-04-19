@@ -39,6 +39,8 @@ CREATE TABLE rls_watchers (
     version INT(11) DEFAULT 0 NOT NULL,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
+    from_user VARCHAR(64) NOT NULL,
+    from_domain VARCHAR(64) NOT NULL,
     updated INT(11) NOT NULL,
     CONSTRAINT rls_watcher_idx UNIQUE (callid, to_tag, from_tag)
 ) ENGINE=MyISAM;

@@ -9,7 +9,7 @@
 
 <table id="active_watchers" xmlns:db="http://docbook.org/ns/docbook">
     <name>active_watchers</name>
-    <version>9</version>
+    <version>10</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Table for the presence module. More information can be found at: &KAMAILIO_MOD_DOC;presence.html
@@ -170,6 +170,20 @@
         <type>string</type>
         <size>&uri_len;</size>
         <description>Local contact</description>
+    </column>
+
+    <column>
+        <name>from_user</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <description>From User</description>
+    </column>
+
+    <column>
+        <name>from_domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>From Domain</description>
     </column>
 
     <index>

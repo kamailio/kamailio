@@ -47,6 +47,8 @@ CREATE TABLE rls_watchers (
     version NUMBER(10) DEFAULT 0 NOT NULL,
     socket_info VARCHAR2(64),
     local_contact VARCHAR2(128),
+    from_user VARCHAR2(64),
+    from_domain VARCHAR2(64),
     updated NUMBER(10),
     CONSTRAINT rls_watchers_rls_watcher_idx  UNIQUE (callid, to_tag, from_tag)
 );

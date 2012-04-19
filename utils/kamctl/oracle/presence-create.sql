@@ -23,7 +23,7 @@ BEGIN map2users('presentity'); END;
 CREATE INDEX presentity_presentity_expires  ON presentity (expires);
 CREATE INDEX presentity_account_idx  ON presentity (username, domain, event);
 
-INSERT INTO version (table_name, table_version) values ('active_watchers','9');
+INSERT INTO version (table_name, table_version) values ('active_watchers','10');
 CREATE TABLE active_watchers (
     id NUMBER(10) PRIMARY KEY,
     presentity_uri VARCHAR2(128),
@@ -46,6 +46,8 @@ CREATE TABLE active_watchers (
     version NUMBER(10) DEFAULT 0 NOT NULL,
     socket_info VARCHAR2(64),
     local_contact VARCHAR2(128),
+    from_user VARCHAR2(64),
+    from_domain VARCHAR2(64),
     CONSTRAINT ORA_active_watchers_idx  UNIQUE (callid, to_tag, from_tag)
 );
 
