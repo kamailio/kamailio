@@ -418,3 +418,27 @@ get_contact_uri(struct sip_msg* _m, struct sip_uri *uri, contact_t** _c)
         }
         return 0;
 }
+
+/*
+ * Extract branch from Via header
+ */
+int
+get_via_branch(struct sip_msg* msg, int vianum, str* _branch)
+{
+	struct via_body *via;
+	struct via_param *p;
+
+	if (parse_via_header(msg, vianum, &via) < 0)
+		return -1;
+
+	for (p = via->param_lst; p; p = p->next)
+	{
+		if (p->name.len == strlen("branch")
+				&& strncasecmp(p->name.s, "branch", strlen("branch")) == 0) {
+			_branch->s = p->value.s;
+			_branch->len = p->value.len;
+			return 0;
+		}
+	}
+	return -1;
+}
