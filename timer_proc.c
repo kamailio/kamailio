@@ -181,5 +181,106 @@ error:
 	return -1;
 }
 
+/**
+ * \brief update internal counters for running new sync sec. timers
+ * @param timers number of basic timer processes
+ * @return 0 on success; -1 on error
+ */
+int register_sync_timers(int timers)
+{
+	if(register_procs(timers)<0)
+		return -1;
+	cfg_register_child(timers);
+	return 0;
+}
+
+/**
+ * \brief Forks a separate simple sleep() -&- sync periodic timer
+ *
+ * Forks a very basic periodic timer process, that just sleep()s for 
+ * the specified interval and then calls the timer function.
+ * The new "sync timer" process execution start immediately, the sleep()
+ * is called first (so the first call to the timer function will happen
+ * \<interval\> seconds after the call to fork_sync_timer)
+ * @param child_id  @see fork_process()
+ * @param desc      @see fork_process()
+ * @param make_sock @see fork_process()
+ * @param f         timer function/callback
+ * @param param     parameter passed to the timer function
+ * @param interval  interval in seconds.
+ * @return pid of the new process on success, -1 on error
+ * (doesn't return anything in the child process)
+ */
+int fork_sync_timer(int child_id, char* desc, int make_sock,
+						timer_function* f, void* param, int interval)
+{
+	int pid;
+	ticks_t ts1 = 0;
+	ticks_t ts2 = 0;
+
+	pid=fork_process(child_id, desc, make_sock);
+	if (pid<0) return -1;
+	if (pid==0){
+		/* child */
+		ts2 = interval;
+		if (cfg_child_init()) return -1;
+		for(;;){
+			if(ts2>0) sleep(ts2);
+			else sleep(1);
+			ts1 = get_ticks();
+			cfg_update();
+			f(get_ticks(), param); /* ticks in s for compatibility with old
+									  timers */
+			ts2 = interval - get_ticks() + ts1;
+		}
+	}
+	/* parent */
+	return pid;
+}
+
+
+/**
+ * \brief Forks a separate simple milisecond-sleep() -&- sync periodic timer
+ *
+ * Forks a very basic periodic timer process, that just ms-sleep()s for 
+ * the specified interval and then calls the timer function.
+ * The new "sync timer" process execution start immediately, the ms-sleep()
+ * is called first (so the first call to the timer function will happen
+ * \<interval\> seconds after the call to fork_basic_utimer)
+ * @param child_id  @see fork_process()
+ * @param desc      @see fork_process()
+ * @param make_sock @see fork_process()
+ * @param f         timer function/callback
+ * @param param     parameter passed to the timer function
+ * @param uinterval  interval in mili-seconds.
+ * @return pid of the new process on success, -1 on error
+ * (doesn't return anything in the child process)
+ */
+int fork_sync_utimer(int child_id, char* desc, int make_sock,
+						utimer_function* f, void* param, int uinterval)
+{
+	int pid;
+	ticks_t ts1 = 0;
+	ticks_t ts2 = 0;
+
+	pid=fork_process(child_id, desc, make_sock);
+	if (pid<0) return -1;
+	if (pid==0){
+		/* child */
+		ts2 = uinterval;
+		if (cfg_child_init()) return -1;
+		for(;;){
+			if(ts2>0) sleep_us(uinterval);
+			else sleep_us(1);
+			ts1 = get_ticks_raw();
+			cfg_update();
+			f(TICKS_TO_MS(ts1), param); /* ticks in mili-seconds */
+			ts2 = uinterval - get_ticks_raw() + ts1;
+		}
+	}
+	/* parent */
+	return pid;
+}
+
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */
