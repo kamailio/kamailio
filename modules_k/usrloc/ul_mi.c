@@ -464,7 +464,7 @@ struct mi_root* mi_usrloc_flush(struct mi_root *cmd, void *param)
 	if (rpl_tree==NULL)
 		return 0;
 
-	synchronize_all_udomains();
+	synchronize_all_udomains(0, 1);
 	return rpl_tree;
 }
 

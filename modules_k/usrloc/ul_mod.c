@@ -57,6 +57,7 @@
 #include "../../dprint.h"
 #include "../../rpc_lookup.h"
 #include "../../timer.h"     /* register_timer */
+#include "../../timer_proc.h" /* register_sync_timer */
 #include "../../globals.h"   /* is_main */
 #include "../../ut.h"        /* str_init */
 #include "dlist.h"           /* register_udomain */
@@ -91,7 +92,8 @@ MODULE_VERSION
 
 static int mod_init(void);                          /*!< Module initialization function */
 static void destroy(void);                          /*!< Module destroy function */
-static void timer(unsigned int ticks, void* param); /*!< Timer handler */
+static void ul_core_timer(unsigned int ticks, void* param);  /*!< Core timer handler */
+static void ul_local_timer(unsigned int ticks, void* param); /*!< Local timer handler */
 static int child_init(int rank);                    /*!< Per-child init function */
 static int mi_child_init(void);
 
@@ -103,6 +105,7 @@ static int ul_preload_param(modparam_t type, void* val);
 extern int bind_usrloc(usrloc_api_t* api);
 extern int ul_locks_no;
 int ul_db_update_as_insert = 0;
+int ul_timer_procs = 0;
 
 /*
  * Module parameters and their default values
@@ -186,6 +189,7 @@ static param_export_t params[] = {
 	{"nat_bflag",           INT_PARAM, &nat_bflag       },
 	{"preload",             STR_PARAM|USE_FUNC_PARAM, (void*)ul_preload_param},
 	{"db_update_as_insert", INT_PARAM, &ul_db_update_as_insert},
+	{"timer_procs",         INT_PARAM, &ul_timer_procs},
 	{0, 0, 0}
 };
 
@@ -301,7 +305,10 @@ static int mod_init(void)
 	}
 
 	/* Register cache timer */
-	register_timer( timer, 0, timer_interval);
+	if(ul_timer_procs<=0)
+		register_timer(ul_core_timer, 0, timer_interval);
+	else
+		register_sync_timers(ul_timer_procs);
 
 	/* init the callbacks list */
 	if ( init_ulcb_list() < 0) {
@@ -350,6 +357,19 @@ static int mod_init(void)
 static int child_init(int _rank)
 {
 	dlist_t* ptr;
+	int i;
+
+	if(_rank==PROC_MAIN && ul_timer_procs>0)
+	{
+		for(i=0; i<ul_timer_procs; i++)
+		{
+			if(fork_sync_timer(PROC_TIMER, "USRLOC Timer", 1 /*socks flag*/,
+					ul_local_timer, (void*)(long)i, timer_interval /*sec*/)<0) {
+				LM_ERR("failed to start timer routine as process\n");
+				return -1; /* error */
+			}
+		}
+	}
 
 	/* connecting to DB ? */
 	switch (db_mode) {
@@ -420,7 +440,7 @@ static void destroy(void)
 	/* we need to sync DB in order to flush the cache */
 	if (ul_dbh) {
 		ul_unlock_locks();
-		if (synchronize_all_udomains() != 0) {
+		if (synchronize_all_udomains(0, 1) != 0) {
 			LM_ERR("flushing cache failed\n");
 		}
 		ul_dbf.close(ul_dbh);
@@ -435,11 +455,21 @@ static void destroy(void)
 
 
 /*! \brief
- * Timer handler
+ * Core timer handler
  */
-static void timer(unsigned int ticks, void* param)
+static void ul_core_timer(unsigned int ticks, void* param)
 {
-	if (synchronize_all_udomains() != 0) {
+	if (synchronize_all_udomains(0, 1) != 0) {
+		LM_ERR("synchronizing cache failed\n");
+	}
+}
+
+/*! \brief
+ * Local timer handler
+ */
+static void ul_local_timer(unsigned int ticks, void* param)
+{
+	if (synchronize_all_udomains((int)(long)param, ul_timer_procs) != 0) {
 		LM_ERR("synchronizing cache failed\n");
 	}
 }

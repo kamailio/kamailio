@@ -775,6 +775,29 @@ modparam("usrloc", "db_update_as_insert", 1)
 		</example>
 	</section>
 
+	<section id="timer_procs">
+		<title><varname>timer_procs</varname> (string)</title>
+		<para>
+			Number of timer processes to be started by module. Timer processes
+			take care of checking expired records and syncronization with
+			database. If set to 0, no dedicated timer is started, the one from
+			core will be used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timer_procs</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "timer_procs", 4)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

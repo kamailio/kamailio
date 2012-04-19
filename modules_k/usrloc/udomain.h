@@ -117,8 +117,10 @@ int db_timer_udomain(udomain_t* _d);
 /*!
  * \brief Run timer handler for given domain
  * \param _d domain
+ * \param istart index of hash table slot to start processing
+ * \param istep step through hash table slots to process
  */
-void mem_timer_udomain(udomain_t* _d);
+void mem_timer_udomain(udomain_t* _d, int istart, int istep);
 
 
 /*!

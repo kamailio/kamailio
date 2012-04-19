@@ -864,12 +864,12 @@ void mem_delete_urecord(udomain_t* _d, struct urecord* _r)
  * \brief Run timer handler for given domain
  * \param _d domain
  */
-void mem_timer_udomain(udomain_t* _d)
+void mem_timer_udomain(udomain_t* _d, int istart, int istep)
 {
 	struct urecord* ptr, *t;
 	int i;
 
-	for(i=0; i<_d->size; i++)
+	for(i=istart; i<_d->size; i+=istep)
 	{
 		lock_ulslot(_d, i);
 
