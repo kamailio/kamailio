@@ -620,7 +620,7 @@ sht_rm_value_re("ha=>.*");
 		_empty_line_
 		</programlisting>
     </section>
-	<section>
+    <section>
 		<title>
 		<function moreinfo="none">sht_dump</function>
 		</title>
@@ -635,10 +635,43 @@ sht_rm_value_re("ha=>.*");
  		<para>
 		MI FIFO Command Format:
 		</para>
-        <programlisting  format="linespecific">
+		<programlisting  format="linespecific">
 		:sht_dump:_reply_fifo_file_
 		_hash_table_name_
 		_empty_line_
+		</programlisting>
+    </section>
+    <section>
+		<title>
+		<function moreinfo="none">sht_delete</function>
+		</title>
+		<para>
+		Delete a key from a hash table via MI.
+		</para>
+		<para>
+		Name: <emphasis>sht_delete</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para><emphasis>_hash_table_name: </emphasis>The table name to delete the key from</para></listitem>
+			<listitem><para><emphasis>_key_name: </emphasis>The key to delete from the htable</para></listitem>
+		</itemizedlist>
+
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:sht_delete:_reply_fifo_file_
+		_hash_table_name_
+		_key_name_
+		_empty_line_
+		</programlisting>
+
+ 		<para>
+		Example (note the quoting when executing it via FIFO):
+		</para>
+		<programlisting  format="linespecific">
+		kamctl fifo sht_delete auth '"user@example.org::last_auth"'
 		</programlisting>
     </section>
     </section>
