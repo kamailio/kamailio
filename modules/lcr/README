@@ -210,7 +210,10 @@ Chapter 1. Admin Guide
    the gateways is tried is based on admin defined "least cost" rules.
 
    The LCR module supports many independent LCR instances (gateways and
-   least cost rules). Each such instance has its own LCR identifier.
+   least cost rules). Each such instance has its own LCR instance
+   identifier. Identifiers of normal LCR instances are positive integers.
+   Gateways may belong to special LCR instance with identifier 0 meaning
+   that such gateways belong to all normal LCR instances.
 
    For the purpose of facilitating least cost routing of requests, each
    gateway of an LCR instance is associated with one or more <prefix, from
@@ -360,7 +363,9 @@ modparam("lcr", "id_column", "row_id")
 3.4. lcr_id_column (string)
 
    Name of the column holding the identifier of an LCR instance. Common to
-   all lcr module tables.
+   all lcr module tables. In lcr_rule and lcr_rule_target tables, value of
+   the column is integer from 1 to lcr_count. In lcr_gw table, value of
+   the column is from 0 to lcr_count.
 
    Default value is “lcr_id”.
 
@@ -777,13 +782,13 @@ modparam("lcr", "fetch_rows", 3000)
 4.1.  load_gws(lcr_id[, uri_user[, caller_uri]])
 
    Loads attributes of matching gateways to gw_uri_avp (see Overview
-   section). Argument lcr_id specifies the used LCR instance. It can be an
-   integer or a pseudo variable containing an integer value. If uri_user
-   is given, it is used, instead of Request-URI user part, to look for
-   matching gateways. Caller's URI may be given by caller_uri argument. If
-   caller_uri argument is omitted, it defaults to empty string. Both
-   uri_user and caller_uri argument may be a string or a pseudo variable
-   containing a sting value.
+   section). Argument lcr_id specifies the used LCR instance. It can be a
+   positive integer or a pseudo variable containing an integer value. If
+   uri_user is given, it is used, instead of Request-URI user part, to
+   look for matching gateways. Caller's URI may be given by caller_uri
+   argument. If caller_uri argument is omitted, it defaults to empty
+   string. Both uri_user and caller_uri argument may be a string or a
+   pseudo variable containing a sting value.
 
    Returns 1 if at least one matching gateway was found, 2 if no matching
    gateways was found, and -1 on error.
@@ -860,7 +865,7 @@ defunct_gw(60);
 4.4.  from_gw(lcr_id[, ip_addr, proto])
 
    Checks if request comes from IP address and transport protocol
-   spesified for a gateway in LCR instance lcr_id. Fails if the LCR
+   specified for a gateway in LCR instance lcr_id. Fails if the LCR
    instance includes one or more gateways without IP address. IP address
    and transport protocol to be checked are either taken from source IP
    address of the request or (if present) from ip_addr and proto
@@ -894,7 +899,7 @@ if (from_gw(1, $avp(s:real_source_addr), 2) {
 4.5.  from_any_gw([ip_addr, proto])
 
    Checks if request comes from IP address and transport protocol
-   spesified for any gateway. Only LCR instances, where all gateways have
+   specified for any gateway. Only LCR instances, where all gateways have
    IP address, are included in the test. IP address and transport protocol
    to be checked are either taken from source IP address and transport
    protocol of the request or (if present) from ip_addr and proto
@@ -922,7 +927,7 @@ $var(lcr_id) = from_any_gw("192.168.1.1", 3);
 4.6.  to_gw(lcr_id[, ip_addr, proto])
 
    Checks if in-dialog request goes to IP address and transport protocol
-   spesified for a gateway in LCR instance lcr_id. Fails if LCR instance
+   specified for a gateway in LCR instance lcr_id. Fails if LCR instance
    includes one or more gateways without IP address. IP address and
    transport protocol to be checked are either taken from Request-URI or
    (if present) from ip_addr and proto arguments. See from_gw() for more
