@@ -124,6 +124,7 @@ int delete_expired_subs_rlsdb( void )
 	int i;
 	subs_t subs;
 	str rlsubs_did = {0, 0};
+	int transaction_started = 0;
 
 	if(rls_db == NULL)
 	{
@@ -147,6 +148,13 @@ int delete_expired_subs_rlsdb( void )
 	result_cols[r_callid_col=n_result_cols++] = &str_callid_col;
 	result_cols[r_to_tag_col=n_result_cols++] = &str_to_tag_col;
 	result_cols[r_from_tag_col=n_result_cols++] = &str_from_tag_col;
+
+	if (db_begin(&rls_dbf, rls_db) < 0)
+	{
+		LM_ERR("in BEGIN\n");
+		goto error;
+	}
+	transaction_started = 1;
 
 	if(rls_dbf.query(rls_db, query_cols, query_ops, query_vals, result_cols, 
 				n_query_cols, n_result_cols, 0, &result )< 0)
@@ -213,12 +221,25 @@ int delete_expired_subs_rlsdb( void )
 		pkg_free(rlsubs_did.s);
 	}
 
+	if (db_commit(&rls_dbf, rls_db) < 0)
+	{
+		LM_ERR("in COMMIT\n");
+		goto error;
+	}
+
 	if(result) rls_dbf.free_result(rls_db, result);
 	return 1;
 
 error:
 	if (result) rls_dbf.free_result(rls_db, result);
 	if (rlsubs_did.s) pkg_free(rlsubs_did.s);
+
+	if (transaction_started)
+	{
+		if (db_commit(&rls_dbf, rls_db) < 0)
+			LM_ERR("in COMMIT\n");
+	}
+
 	return -1;
 }
 

@@ -893,6 +893,12 @@ static void timer_send_full_state_notifies(int round)
 		goto done;
 	}
 
+	if (db_begin(&rls_dbf, rls_db) < 0)
+	{
+		LM_ERR("in BEGIN\n");
+		goto done;
+	}
+
 	/* Step 1: Find rls_watchers that require full-state notification */
 	if (rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
 				1, n_result_cols, 0, &result) < 0)
@@ -909,6 +915,12 @@ static void timer_send_full_state_notifies(int round)
 					update_vals, 1, 1)< 0)
 	{
 		LM_ERR("in sql update\n");
+		goto done;
+	}
+
+	if (db_commit(&rls_dbf, rls_db) < 0)
+	{
+		LM_ERR("in COMMIT\n");
 		goto done;
 	}
 
@@ -1025,6 +1037,12 @@ static void timer_send_update_notifies(int round)
 		goto done;
 	}
 
+	if (db_begin(&rlpres_dbf, rlpres_db) < 0)
+	{
+		LM_ERR("in BEGIN\n");
+		goto error;
+	}
+
 	if(rlpres_dbf.query(rlpres_db, query_cols, 0, query_vals, result_cols,
 					1, n_result_cols, &str_rlsubs_did_col, &result)< 0)
 	{
@@ -1039,6 +1057,12 @@ static void timer_send_update_notifies(int round)
 					update_vals, 1, 1)< 0)
 	{
 		LM_ERR("in sql update\n");
+		goto error;
+	}
+
+	if (db_commit(&rlpres_dbf, rlpres_db) < 0)
+	{
+		LM_ERR("in COMMIT\n");
 		goto error;
 	}
 
