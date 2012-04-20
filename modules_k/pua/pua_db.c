@@ -1407,7 +1407,7 @@ int update_contact_puadb(ua_pres_t *pres, str *contact)
 	n_query_cols++;
 
 	/* we overwrite contact even if not changed */
-	db_cols[n_update_cols] = &str_contact_col; /* had remote here, think was a bug */
+	db_cols[n_update_cols] = &str_remote_contact_col;
 	db_vals[n_update_cols].type = DB1_STR;
 	db_vals[n_update_cols].nul = 0; 
 	db_vals[n_update_cols].val.str_val.s = contact->s;
