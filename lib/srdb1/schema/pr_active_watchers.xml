@@ -186,6 +186,13 @@
         <description>From Domain</description>
     </column>
 
+    <column id="updated">
+        <name>updated</name>
+        <type>int</type>
+        <size>&expires_len;</size>
+        <description>Update flag</description>
+    </column>
+
     <index>
         <name>active_watchers_idx</name>
         <colref linkend="callid"/>
@@ -203,6 +210,11 @@
         <name>active_watchers_pres</name>
         <colref linkend="presentity_uri"/>
         <description>This index is needed only if you use DB_ONLY mode.</description>
+    </index>
+
+    <index>
+        <name>updated_idx</name>
+        <colref linkend="updated"/>
     </index>
 
 </table>
