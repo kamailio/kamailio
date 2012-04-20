@@ -175,6 +175,17 @@ modparam("rls", "xcap_db_url", "&exampledb;")
 		Mode 1 is reserved.
 		</para>
 		<para>
+		The RLS modules uses SQL BEGIN/COMMIT statements around related
+		sets of database queries to make sure they are a single
+		transaction when database only mode is used.  This means you
+		should ensure that automatic retries/reconnects are disabled
+		for your database (for example, by setting the retries
+		parameter for db_mysql or db_postgres to 0).  This is needed
+		because if the connection fails any unCOMMITed queries will
+		be automatically rolled back by the database.  This means that
+		automatic retries could result in data inconsistencies.
+		</para>
+		<para>
 		<emphasis>	Default value is <quote>0</quote> 	
 		</emphasis>
 		</para>

@@ -1037,10 +1037,13 @@ static void timer_send_update_notifies(int round)
 		goto done;
 	}
 
-	if (db_begin(&rlpres_dbf, rlpres_db) < 0)
+	if (dbmode == RLS_DB_ONLY)
 	{
-		LM_ERR("in BEGIN\n");
-		goto error;
+		if (db_begin(&rlpres_dbf, rlpres_db) < 0)
+		{
+			LM_ERR("in BEGIN\n");
+			goto error;
+		}
 	}
 
 	if(rlpres_dbf.query(rlpres_db, query_cols, 0, query_vals, result_cols,
@@ -1060,10 +1063,13 @@ static void timer_send_update_notifies(int round)
 		goto error;
 	}
 
-	if (db_commit(&rlpres_dbf, rlpres_db) < 0)
+	if (dbmode == RLS_DB_ONLY)
 	{
-		LM_ERR("in COMMIT\n");
-		goto error;
+		if (db_commit(&rlpres_dbf, rlpres_db) < 0)
+		{
+			LM_ERR("in COMMIT\n");
+			goto error;
+		}
 	}
 
 	send_notifies(result, did_col, resource_uri_col, auth_state_col, reason_col,
