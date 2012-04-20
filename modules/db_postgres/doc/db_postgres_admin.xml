@@ -76,7 +76,7 @@
 		<title>Set <varname>retries</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("db_mysql", "retries", 3)
+modparam("db_postgres", "retries", 3)
 ...
 </programlisting>
 		</example>
