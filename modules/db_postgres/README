@@ -85,7 +85,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set retries parameter
 ...
-modparam("db_mysql", "retries", 3)
+modparam("db_postgres", "retries", 3)
 ...
 
 4. Functions
