@@ -456,3 +456,72 @@ error:
 	}
 	return -1;
 }
+
+/**
+ * wrapper around db raw_query to perform BEGIN
+ * return: -1 error; 0 OK with no raw_query capability; 1 OK with raw_query capability
+ */
+int db_begin(db_func_t *dbf, db1_con_t* _h)
+{
+	db1_res_t *res = NULL;
+	int ret = 0;
+	str query_str = str_init("BEGIN");
+
+	if (DB_CAPABILITY(*dbf, DB_CAP_RAW_QUERY)) {
+		if (dbf->raw_query(_h, &query_str, &res)) {
+			LM_ERR("unable to run raw query\n");
+			ret = -1;
+			goto done;
+		}
+		ret = 1;
+	}
+done:
+	if (res) dbf->free_result(_h, res);
+	return ret;
+}
+
+/**
+ * wrapper around db raw_query to perform COMMIT
+ * return: -1 error; 0 OK with no raw_query capability; 1 OK with raw_query capability
+ */
+int db_commit(db_func_t *dbf, db1_con_t* _h)
+{
+	db1_res_t *res = NULL;
+	int ret = 0;
+	str query_str = str_init("COMMIT");
+
+	if (DB_CAPABILITY(*dbf, DB_CAP_RAW_QUERY)) {
+		if (dbf->raw_query(_h, &query_str, &res)) {
+			LM_ERR("unable to run raw query\n");
+			ret = -1;
+			goto done;
+		}
+		ret = 1;
+	}
+done:
+	if (res) dbf->free_result(_h, res);
+	return ret;
+}
+
+/**
+ * wrapper around db raw_query to perform ROLLBACK
+ * return: -1 error; 0 OK with no raw_query capability; 1 OK with raw_query capability
+ */
+int db_rollback(db_func_t *dbf, db1_con_t* _h)
+{
+	db1_res_t *res = NULL;
+	int ret = 0;
+	str query_str = str_init("COMMIT");
+
+	if (DB_CAPABILITY(*dbf, DB_CAP_RAW_QUERY)) {
+		if (dbf->raw_query(_h, &query_str, &res)) {
+			LM_ERR("unable to run raw query\n");
+			ret = -1;
+			goto done;
+		}
+		ret = 1;
+	}
+done:
+	if (res) dbf->free_result(_h, res);
+	return ret;
+}

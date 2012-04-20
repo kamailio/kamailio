@@ -473,5 +473,22 @@ int db_fetch_query(db_func_t *dbf, int frows,
 int db_fetch_next(db_func_t *dbf, int frows, db1_con_t* _h,
 		db1_res_t** _r);
 
+/**
+ * \brief wrapper around db raw_query to perform BEGIN
+ * \return -1 error; 0 OK with no raw_query capability; 1 OK with raw_query capability
+ */
+int db_begin(db_func_t *dbf, db1_con_t* _h);
+
+/**
+ * \brief wrapper around db raw_query to perform COMMIT
+ * \return -1 error; 0 OK with no raw_query capability; 1 OK with raw_query capability
+ */     
+int db_commit(db_func_t *dbf, db1_con_t* _h);
+
+/**
+ * \wrapper around db raw_query to perform ROLLBACK
+ * \return -1 error; 0 OK with no raw_query capability; 1 OK with raw_query capability
+ */
+int db_rollback(db_func_t *dbf, db1_con_t* _h);
 
 #endif /* DB1_H */
