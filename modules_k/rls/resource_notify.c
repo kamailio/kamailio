@@ -852,6 +852,7 @@ static void timer_send_full_state_notifies(int round)
 	event_t parsed_event;
 	xmlDocPtr doc = NULL;
 	xmlNodePtr service_node = NULL;
+	int now = (int)time(NULL);
 
 	query_cols[0] = &str_updated_col;
 	query_vals[0].type = DB1_INT;
@@ -945,33 +946,41 @@ static void timer_send_full_state_notifies(int round)
 		sub.remote_cseq = VAL_INT(&values[18]);
 		sub.status = VAL_INT(&values[19]);
 		sub.version = VAL_INT(&values[20]);
-		sub.expires = VAL_INT(&values[21]) - (int)time(NULL);
-		if (sub.expires < 0) sub.expires = 0;
-		
-		if (rls_get_service_list(&sub.pres_uri, &sub.watcher_user,
-			&sub.watcher_domain, &service_node, &doc) < 0)
-		{
-			LM_ERR("failed getting resource list\n");
-			goto done;
-		}
-		if (doc == NULL)
-		{
-			LM_WARN("no document returned for uri <%.*s>\n",
-				sub.pres_uri.len, sub.pres_uri.s);
-			goto done;
-		}
+		if (VAL_INT(&values[21]) > now)
+			sub.expires = VAL_INT(&values[21]) - now;
+		else
+			sub.expires = 0;
 
-		if (send_full_notify(&sub, service_node, &sub.pres_uri, 0) < 0)
-		{
-			LM_ERR("failed sending full state notify\n");
-			goto done;
-		}
+		if (sub.expires < rls_expires_offset) sub.expires = 0;
 
-		if (sub.expires == 0)
+		if (sub.expires != 0)
+		{
+			if (rls_get_service_list(&sub.pres_uri, &sub.watcher_user,
+				&sub.watcher_domain, &service_node, &doc) < 0)
+			{
+				LM_ERR("failed getting resource list\n");
+				goto done;
+			}
+			if (doc == NULL)
+			{
+				LM_WARN("no document returned for uri <%.*s>\n",
+					sub.pres_uri.len, sub.pres_uri.s);
+				goto done;
+			}
+
+			if (send_full_notify(&sub, service_node, &sub.pres_uri, 0) < 0)
+			{
+				LM_ERR("failed sending full state notify\n");
+				goto done;
+			}
+			xmlFreeDoc(doc);
+			doc = NULL;
+		}
+		else
+		{
+			rls_send_notify(&sub, NULL, NULL, NULL);
 			delete_rlsdb(&sub.callid, &sub.to_tag, &sub.from_tag);
-
-		xmlFreeDoc(doc);
-		doc = NULL;
+		}
 	}
 
 done:

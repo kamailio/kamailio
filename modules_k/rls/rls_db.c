@@ -33,6 +33,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
+#include "../../hashes.h"
 
 #include "rls.h"
 
@@ -113,34 +114,112 @@ void rls_update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 int delete_expired_subs_rlsdb( void )
 
 {
-	db_key_t query_cols[1];
-	db_val_t query_vals[1];
+	db_key_t query_cols[3], result_cols[3], update_cols[1];
+	db_val_t query_vals[3], update_vals[1], *values;
 	db_op_t query_ops[1];
+	db_row_t *rows;
+	db1_res_t *result = NULL;
+	int n_query_cols = 0, n_result_cols = 0, n_update_cols = 0;
+	int r_callid_col = 0, r_to_tag_col = 0, r_from_tag_col = 0;
+	int i;
+	subs_t subs;
+	str rlsubs_did = {0, 0};
 
 	if(rls_db == NULL)
 	{
 		LM_ERR("null database connection\n");
-		return(-1);
+		goto error;
 	}
 
 	if(rls_dbf.use_table(rls_db, &rlsubs_table)< 0)
 	{
 		LM_ERR("use table failed\n");
-		return(-1);
+		goto error;
 	}
-	query_cols[0]= &str_expires_col;
-	query_vals[0].type = DB1_INT;
-	query_vals[0].nul = 0;
-	query_vals[0].val.int_val= (int)time(NULL) - rls_expires_offset;
-	query_ops[0]= OP_LT;
 
-	if (rls_dbf.delete(rls_db, query_cols, query_ops, query_vals, 1) < 0)
+	query_cols[n_query_cols]= &str_expires_col;
+	query_vals[n_query_cols].type = DB1_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val= (int)time(NULL) - rls_expires_offset;
+	query_ops[n_query_cols]= OP_LT;
+	n_query_cols++;
+
+	result_cols[r_callid_col=n_result_cols++] = &str_callid_col;
+	result_cols[r_to_tag_col=n_result_cols++] = &str_to_tag_col;
+	result_cols[r_from_tag_col=n_result_cols++] = &str_from_tag_col;
+
+	if(rls_dbf.query(rls_db, query_cols, query_ops, query_vals, result_cols, 
+				n_query_cols, n_result_cols, 0, &result )< 0)
 	{
-		LM_ERR("db delete failed for expired subs\n");
-		return(-1);
+		LM_ERR("Can't query db\n");
+		goto error;
 	}
 
-	return(1);
+	if(result == NULL) goto error;
+
+	for (i = 0; i <RES_ROW_N(result); i++)
+	{
+		rows = RES_ROWS(result);
+		values = ROW_VALUES(rows);
+
+		subs.callid.s = (char *) VAL_STRING(&values[r_callid_col]);
+		subs.callid.len = strlen(subs.callid.s);
+		subs.to_tag.s = (char *) VAL_STRING(&values[r_to_tag_col]);
+		subs.to_tag.len = strlen(subs.to_tag.s);
+		subs.from_tag.s = (char *) VAL_STRING(&values[r_from_tag_col]);
+		subs.from_tag.len = strlen(subs.from_tag.s);
+
+		if (CONSTR_RLSUBS_DID(&subs, &rlsubs_did) < 0)
+		{
+			LM_ERR("cannot build rls subs did\n");
+			goto error;
+		}
+		subs.updated = core_hash(&rlsubs_did, NULL,
+			(waitn_time * rls_notifier_poll_rate * rls_notifier_processes) - 1);
+
+		n_query_cols = 0;
+
+		query_cols[n_query_cols] = &str_callid_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val = subs.callid;
+		n_query_cols++;
+
+		query_cols[n_query_cols] = &str_to_tag_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val = subs.to_tag;
+		n_query_cols++;
+
+		query_cols[n_query_cols] = &str_from_tag_col;
+		query_vals[n_query_cols].type = DB1_STR;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.str_val = subs.from_tag;
+		n_query_cols++;
+
+		update_cols[n_update_cols] = &str_updated_col;
+		update_vals[n_update_cols].type = DB1_INT;
+		update_vals[n_update_cols].nul = 0;
+		update_vals[n_update_cols].val.int_val = subs.updated;
+		n_update_cols++;
+
+		if(rls_dbf.update(rls_db, query_cols, 0, query_vals,
+			update_cols,update_vals,n_query_cols,n_update_cols) < 0)
+		{
+			LM_ERR("db update failed for expired subs\n");
+			goto error;
+		}
+
+		pkg_free(rlsubs_did.s);
+	}
+
+	if(result) rls_dbf.free_result(rls_db, result);
+	return 1;
+
+error:
+	if (result) rls_dbf.free_result(rls_db, result);
+	if (rlsubs_did.s) pkg_free(rlsubs_did.s);
+	return -1;
 }
 
 /******************************************************************************/
