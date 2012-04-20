@@ -163,7 +163,7 @@ const char* db_oracle_error(ora_con_t* con, sword status)
  */
 db1_con_t* db_oracle_init(const str* _url)
 {
-	return db_do_init(_url, (void *)db_oracle_new_connection);
+	return db_do_init(_url, (void *)db_oracle_new_connection, 0);
 }
 
 

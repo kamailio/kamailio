@@ -133,7 +133,7 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
  */
 db1_con_t* db_mysql_init(const str* _url)
 {
-	return db_do_init(_url, (void *)db_mysql_new_connection);
+	return db_do_init(_url, (void *)db_mysql_new_connection, 0);
 }
 
 
