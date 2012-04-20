@@ -130,9 +130,19 @@ static void db_postgres_free_query(const db1_con_t* _con);
  */
 db1_con_t *db_postgres_init(const str* _url)
 {
-	return db_do_init(_url, (void*) db_postgres_new_connection);
+	return db_do_init(_url, (void*) db_postgres_new_connection, 0);
 }
 
+/*!
+ * \brief Initialize database for future queries - no pooling
+ * \param _url URL of the database that should be opened
+ * \return database connection on success, NULL on error
+ * \note this function must be called prior to any database functions
+ */
+db1_con_t *db_postgres_init_nopool(const str* _url)
+{
+	return db_do_init(_url, (void*) db_postgres_new_connection, 1);
+}
 
 /*!
  * \brief Close database when the database is no longer needed

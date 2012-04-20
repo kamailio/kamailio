@@ -47,6 +47,11 @@
 db1_con_t* db_postgres_init(const str* _url);
 
 /*
+ * Initialize database connection - no pooling
+ */
+db1_con_t* db_postgres_init_nopool(const str* _url);
+
+/*
  * Close a database connection
  */
 void db_postgres_close(db1_con_t* _h);
