@@ -128,6 +128,12 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 		goto error;
 	}
 
+	if (db_begin(&rlpres_dbf, rlpres_db) < 0)
+	{
+		LM_ERR("in BEGIN\n");
+		goto error;
+	}
+
 	if(rlpres_dbf.query(rlpres_db, query_cols, 0, query_vals, result_cols,
 					1, n_result_cols, &str_resource_uri_col, &result )< 0)
 	{
@@ -254,6 +260,12 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 					update_vals, 1, 1)< 0)
 	{
 		LM_ERR("in sql update\n");
+		goto error;
+	}
+
+	if (db_commit(&rlpres_dbf, rlpres_db) < 0)
+	{
+		LM_ERR("in COMMIT\n");
 		goto error;
 	}
 
