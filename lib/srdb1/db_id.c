@@ -65,13 +65,12 @@ static int dupl_string(char** dst, const char* begin, const char* end)
  * \param url parsed URL
  * \return 0 if parsing was successful and -1 otherwise
  */
-static int parse_db_url(struct db_id* id, const str* url, int *poolid )
+static int parse_db_url(struct db_id* id, const str* url)
 {
 #define SHORTEST_DB_URL "s://a/b"
 #define SHORTEST_DB_URL_LEN (sizeof(SHORTEST_DB_URL) - 1)
 
 	enum state {
-		ST_NONPOOL,    /* Non pooling flag */
 		ST_SCHEME,     /* Scheme part */
 		ST_SLASH1,     /* First slash */
 		ST_SLASH2,     /* Second slash */
@@ -100,25 +99,11 @@ static int parse_db_url(struct db_id* id, const str* url, int *poolid )
 	
 	/* Initialize all attributes to 0 */
 	memset(id, 0, sizeof(struct db_id));
-	st = ST_NONPOOL;
+	st = ST_SCHEME;
 	begin = url->s;
 
 	for(i = 0; i < len; i++) {
 		switch(st) {
-		case ST_NONPOOL:
-			st = ST_SCHEME;
-			switch(url->s[i]) {
-			case '*':
-				id->poolid = ++(*poolid);
-				begin++;
-				break;
-
-			default:
-				id->poolid = 0;
-				break;
-			}
-			break;
-
 		case ST_SCHEME:
 			switch(url->s[i]) {
 			case ':':
@@ -242,7 +227,7 @@ static int parse_db_url(struct db_id* id, const str* url, int *poolid )
  * \param url database URL
  * \return connection identifier, or zero on error
  */
-struct db_id* new_db_id(const str* url)
+struct db_id* new_db_id(const str* url, int nopool)
 {
 	static int poolid=0;
 	struct db_id* ptr;
@@ -259,10 +244,13 @@ struct db_id* new_db_id(const str* url)
 	}
 	memset(ptr, 0, sizeof(struct db_id));
 
-	if (parse_db_url(ptr, url, &poolid) < 0) {
+	if (parse_db_url(ptr, url) < 0) {
 		LM_ERR("error while parsing database URL: '%.*s' \n", url->len, url->s);
 		goto err;
 	}
+
+	if (nopool) ptr->poolid = ++poolid;
+	else ptr->poolid = 0;
 	ptr->pid = my_pid();
 
 	return ptr;

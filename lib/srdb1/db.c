@@ -182,17 +182,8 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 		return -1;
 	}
 	memcpy(name, "db_", 3);
-
-	if (mod->s[0]=='*' )
-	{
-		memcpy(name+3, (mod->s)+1, (mod->len)-1);
-		name[mod->len-1+3] = 0;
-	}
-	else
-	{
-		memcpy(name+3, mod->s, mod->len);
-		name[mod->len+3] = 0;
-	}
+	memcpy(name+3, mod->s, mod->len);
+	name[mod->len+3] = 0;
 
 	/* for safety we initialize mydbf with 0 (this will cause
 	 *  a segfault immediately if someone tries to call a function
@@ -230,6 +221,7 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 		dbf.use_table = (db_use_table_f)find_mod_export(tmp,
 			"db_use_table", 2, 0);
 		dbf.init = (db_init_f)find_mod_export(tmp, "db_init", 1, 0);
+		dbf.init_nopool = (db_init_nopool_f)find_mod_export(tmp, "db_init_nopool", 1, 0);
 		dbf.close = (db_close_f)find_mod_export(tmp, "db_close", 2, 0);
 		dbf.query = (db_query_f)find_mod_export(tmp, "db_query", 2, 0);
 		dbf.fetch_result = (db_fetch_result_f)find_mod_export(tmp,
@@ -268,7 +260,7 @@ error:
  * Initialize database module
  * \note No function should be called before this
  */
-db1_con_t* db_do_init(const str* url, void* (*new_connection)())
+db1_con_t* db_do_init(const str* url, void* (*new_connection)(), int nopool)
 {
 	struct db_id* id;
 	void* con;
@@ -296,7 +288,7 @@ db1_con_t* db_do_init(const str* url, void* (*new_connection)())
 	}
 	memset(res, 0, con_size);
 
-	id = new_db_id(url);
+	id = new_db_id(url, nopool);
 	if (!id) {
 		LM_ERR("cannot parse URL '%.*s'\n", url->len, url->s);
 		goto err;

@@ -50,7 +50,7 @@ struct db_id {
  * \param url database URL
  * \return new allocated db_id structure, NULL on failure
  */
-struct db_id* new_db_id(const str* url);
+struct db_id* new_db_id(const str* url, int nopool);
 
 
 /**

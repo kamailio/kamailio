@@ -89,6 +89,30 @@ typedef int (*db_use_table_f)(db1_con_t* _h, const str * _t);
 typedef db1_con_t* (*db_init_f) (const str* _sqlurl);
 
 /**
+ * \brief Initialize database connection and obtain a non-pooled connection handle.
+ *
+ * This function initialize the database API and open a new database
+ * connection. This function must be called after bind_dbmod but before any
+ * other database API function is called.
+ * 
+ * The function takes one parameter, the parameter must contain the database
+ * connection URL. The URL is of the form 
+ * mysql://username:password\@host:port/database where:
+ * 
+ * username: Username to use when logging into database (optional).
+ * password: password if it was set (optional)
+ * host:     Hosname or IP address of the host where database server lives (mandatory)
+ * port:     Port number of the server if the port differs from default value (optional)
+ * database: If the database server supports multiple databases, you must specify the
+ * name of the database (optional).
+ * \see bind_dbmod
+ * \param _sqlurl database connection URL
+ * \return returns a pointer to the db1_con_t representing the connection if it was
+ * successful, otherwise 0 is returned
+ */
+typedef db1_con_t* (*db_init_nopool_f) (const str* _sqlurl);
+
+/**
  * \brief Close a database connection and free all memory used.
  *
  * The function closes previously open connection and frees all previously 
@@ -323,6 +347,7 @@ typedef struct db_func {
 	unsigned int      cap;           /* Capability vector of the database transport */
 	db_use_table_f    use_table;     /* Specify table name */
 	db_init_f         init;          /* Initialize database connection */
+	db_init_nopool_f  init_nopool;   /* Initialize database connection - no pooling */
 	db_close_f        close;         /* Close database connection */
 	db_query_f        query;         /* query a table */
 	db_fetch_result_f fetch_result;  /* fetch result */
@@ -371,7 +396,7 @@ int db_bind_mod(const str* mod, db_func_t* dbf);
  * \return returns a pointer to the db1_con_t representing the connection if it was
    successful, otherwise 0 is returned.
  */
-db1_con_t* db_do_init(const str* url, void* (*new_connection)());
+db1_con_t* db_do_init(const str* url, void* (*new_connection)(), int nopool);
 
 
 /**
