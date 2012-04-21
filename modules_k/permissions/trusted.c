@@ -3,7 +3,7 @@
  *
  * allow_trusted related functions
  *
- * Copyright (C) 2003 Juha Heinanen
+ * Copyright (C) 2003-2012 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -288,7 +288,9 @@ void clean_trusted(void)
  */
 static inline int match_proto(const char *proto_string, int proto_int)
 {
-	if (strcasecmp(proto_string, "any") == 0) return 1;
+        if ((proto_int == PROTO_NONE) ||
+	                (strcasecmp(proto_string, "any") == 0))
+	        return 1;
 	
 	if (proto_int == PROTO_UDP) {
 		if (strcasecmp(proto_string, "udp") == 0) {
@@ -471,43 +473,50 @@ int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp)
     int proto_int;
 
     if (_src_ip_sp==NULL
-			|| (fixup_get_svalue(_msg, (gparam_p)_src_ip_sp, &src_ip) != 0)) {
-		LM_ERR("src_ip param does not exist or has no value\n");
-		return -1;
+	|| (fixup_get_svalue(_msg, (gparam_p)_src_ip_sp, &src_ip) != 0)) {
+	LM_ERR("src_ip param does not exist or has no value\n");
+	return -1;
     }
     
     if (_proto_sp==NULL
-			|| (fixup_get_svalue(_msg, (gparam_p)_proto_sp, &proto) != 0)) {
-		LM_ERR("proto param does not exist or has no value\n");
-		return -1;
+	|| (fixup_get_svalue(_msg, (gparam_p)_proto_sp, &proto) != 0)) {
+	LM_ERR("proto param does not exist or has no value\n");
+	return -1;
     }
-	if(proto.len!=3 && proto.len!=4)
-		goto error;
 
-	switch(proto.s[0]) {
-		case 'u': case 'U':
-			if (proto.len==3 && strncasecmp(proto.s, "udp", 3) == 0) {
-				proto_int = PROTO_UDP;
-			} else goto error;
-		break;
-		case 't': case 'T':
-			if (proto.len==3 && strncasecmp(proto.s, "tcp", 3) == 0) {
-				proto_int = PROTO_TCP;
-			} else if (proto.len==3 && strncasecmp(proto.s, "tls", 3) == 0) {
-				proto_int = PROTO_TLS;
-			} else goto error;
-		break;
-		case 's': case 'S':
-			if (proto.len==4 && strncasecmp(proto.s, "sctp", 4) == 0) {
-				proto_int = PROTO_SCTP;
-			} else goto error;
-		break;
-		default:
-			goto error;
+    if(proto.len!=3 && proto.len!=4)
+	goto error;
+
+    switch(proto.s[0]) {
+    case 'a': case 'A':
+	if (proto.len==3 && strncasecmp(proto.s, "any", 3) == 0) {
+	    proto_int = PROTO_NONE;
+	} else goto error;
+	break;
+    case 'u': case 'U':
+	if (proto.len==3 && strncasecmp(proto.s, "udp", 3) == 0) {
+	    proto_int = PROTO_UDP;
+	} else goto error;
+	break;
+    case 't': case 'T':
+	if (proto.len==3 && strncasecmp(proto.s, "tcp", 3) == 0) {
+	    proto_int = PROTO_TCP;
+	} else if (proto.len==3 && strncasecmp(proto.s, "tls", 3) == 0) {
+	    proto_int = PROTO_TLS;
+	} else goto error;
+	break;
+    case 's': case 'S':
+	if (proto.len==4 && strncasecmp(proto.s, "sctp", 4) == 0) {
+	    proto_int = PROTO_SCTP;
+	} else goto error;
+	break;
+    default:
+	goto error;
     }
 
     return allow_trusted(_msg, src_ip.s, proto_int);
 error:
-	LM_ERR("unknown protocol %.*s\n", proto.len, proto.s);
-	return -1;
+    LM_ERR("unknown protocol %.*s\n", proto.len, proto.s);
+    return -1;
 }
+
