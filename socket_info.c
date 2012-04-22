@@ -1171,7 +1171,7 @@ int add_interfaces_via_netlink(char* if_name, int family, unsigned short port,
 			//if(! (ifaces[i].flags & IFF_UP) ) continue;
 
 			for(tmp = ifaces[i].addresses; tmp; tmp = tmp->next){
-				LM_DBG("\t in add_iface_via_netlink Name %s Adress %s\n", ifaces[i].name, tmp->addr);
+				LM_DBG("\t in add_iface_via_netlink Name %s Address %s\n", ifaces[i].name, tmp->addr);
 		                /* match family */
                                 if (family == tmp->family){
 					/* check if loopback */

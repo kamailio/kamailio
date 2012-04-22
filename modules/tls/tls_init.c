@@ -544,8 +544,8 @@ int init_tls_h(void)
 				" zlib compression: %s"
 				"\n %s\n",
 				SSLeay_version(SSLEAY_VERSION), ssl_version,
-				(lib_kerberos==1)?"on":(lib_kerberos==0)?"off":"unkown",
-				(lib_zlib==1)?"on":(lib_zlib==0)?"off":"unkown",
+				(lib_kerberos==1)?"on":(lib_kerberos==0)?"off":"unknown",
+				(lib_zlib==1)?"on":(lib_zlib==0)?"off":"unknown",
 				SSLeay_version(SSLEAY_CFLAGS));
 	if (lib_kerberos!=kerberos_support){
 		if (lib_kerberos!=-1){

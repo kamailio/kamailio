@@ -192,7 +192,7 @@ int dispatcher_main_loop(void)
 	    continue;
 	 }
 	 if(errno==EBADF){
-	    LM_ERR("invalid file descriptor pased to poll (%s)\n",
+	    LM_ERR("invalid file descriptor passed to poll (%s)\n",
 				strerror(errno));
 	    return -1;/*??*/
 	 }

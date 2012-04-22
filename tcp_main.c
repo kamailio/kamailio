@@ -1716,7 +1716,7 @@ error:
 						c->id, port);
 			break;
 		default:
-			LOG(L_ERR, "ERROR: tcpconn_add_alias: unkown error %d\n", ret);
+			LOG(L_ERR, "ERROR: tcpconn_add_alias: unknown error %d\n", ret);
 	}
 	return -1;
 }

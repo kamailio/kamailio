@@ -1707,7 +1707,7 @@ int pv_set_dsturi(struct sip_msg* msg, pv_param_t *param,
 	}
 	if(!(val->flags&PV_VAL_STR))
 	{
-		LM_ERR("error - str value requred to set dst uri\n");
+		LM_ERR("error - str value required to set dst uri\n");
 		goto error;
 	}
 	

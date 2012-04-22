@@ -182,7 +182,7 @@ int db_load_domain_attrs(domain_t* d)
 	load_attrs_cmd->match[0].v.lstr = d->did;
 
 	if (db_exec(&res, load_attrs_cmd) < 0) {
-		ERR("Error while quering database\n");
+		ERR("Error while querying database\n");
 		return -1;
 	}
 

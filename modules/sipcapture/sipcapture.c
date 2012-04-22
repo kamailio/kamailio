@@ -1394,7 +1394,7 @@ int raw_capture_socket(struct ip_addr* ip, str* iface, int port_start, int port_
         }
 #endif
         else {
-                ERR("raw_capture_socket: LSF currently suppoted only on linux\n");
+                ERR("raw_capture_socket: LSF currently supported only on linux\n");
                 goto error;                        
         }
                 
