@@ -36,6 +36,7 @@
 #include "../../ut.h"
 #include "../../dset.h"
 #include "../../str.h"
+#include "../../xavp.h"
 #include "../../config.h"
 #include "../../action.h"
 #include "../../mod_fix.h"
@@ -99,6 +100,10 @@ int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri)
 	int i;
 	str inst = {0};
 	unsigned int ahash = 0;
+	sr_xavp_t *xavp=NULL;
+	sr_xavp_t *list=NULL;
+	str xname = {"ruid", 4};
+	sr_xval_t xval;
 
 	ret = -1;
 
@@ -216,6 +221,23 @@ int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri)
 		/* reset next hop address */
 		reset_dst_uri(_m);
 
+		/* add xavp with details of the record (ruid, ...) */
+		if(reg_xavp_rcd.s!=NULL)
+		{
+			list = xavp_get(&reg_xavp_rcd, NULL);
+			xavp = list;
+			memset(&xval, 0, sizeof(sr_xval_t));
+			xval.type = SR_XTYPE_STR;
+			xval.v.s = ptr->ruid;
+			xavp_add_value(&xname, &xval, &xavp);
+			if(list==NULL)
+			{
+				/* no reg_xavp_rcd xavp in root list - add it */
+				xval.type = SR_XTYPE_XAVP;
+				xval.v.xavp = xavp;
+				xavp_add_value(&reg_xavp_rcd, &xval, NULL);
+			}
+		}
 		/* If a Path is present, use first path-uri in favour of
 		 * received-uri because in that case the last hop towards the uac
 		 * has to handle NAT. - agranig */

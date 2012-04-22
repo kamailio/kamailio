@@ -660,6 +660,40 @@ modparam("registrar", "xavp_cfg", "reg")
 	</section>
 
 	<section>
+		<title><varname>xavp_rcd</varname> (string)</title>
+		<para>
+			Defines the name of XAVP class to store details from the
+			location records. The values are stored as inner XAVPs, like
+			$xavp(class=&gt;attribute). Valid inner XAVP names:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>ruid</emphasis> - the record's internal unique
+				id.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			For example. if this parameter is set to 'ulrcd', then the ruid
+			for contact records are set in $xavp(ulrcd=&gt;ruid).
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xavp_rcd</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "xavp_cfg", "ulrcd")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>gruu_enabled</varname> (integer)</title>
 		<para>
 		If set to 1 and GRUU <quote>+sip.instance</quote> parameter to

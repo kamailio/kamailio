@@ -89,6 +89,7 @@ extern str sock_hdr_name;
 extern int sock_flag;
 
 extern str reg_xavp_cfg;
+extern str reg_xavp_rcd;
 
 extern usrloc_api_t ul;/*!< Structure containing pointers to usrloc functions*/
 

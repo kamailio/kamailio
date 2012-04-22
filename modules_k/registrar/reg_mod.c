@@ -129,6 +129,7 @@ unsigned short rcv_avp_type = 0;
 int_str rcv_avp_name;
 
 str reg_xavp_cfg = {0};
+str reg_xavp_rcd = {0};
 
 int reg_use_domain = 0;
 
@@ -216,6 +217,7 @@ static param_export_t params[] = {
 	{"path_mode",          INT_PARAM, &path_mode           					},
 	{"path_use_received",  INT_PARAM, &path_use_params     					},
 	{"xavp_cfg",           STR_PARAM, &reg_xavp_cfg.s     					},
+	{"xavp_rcd",           STR_PARAM, &reg_xavp_rcd.s     					},
 	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    					},
 	{0, 0, 0}
 };
@@ -374,6 +376,9 @@ static int mod_init(void)
 
 	if (reg_xavp_cfg.s) {
 		reg_xavp_cfg.len = strlen(reg_xavp_cfg.s);
+	}
+	if (reg_xavp_rcd.s) {
+		reg_xavp_rcd.len = strlen(reg_xavp_rcd.s);
 	}
 	return 0;
 }

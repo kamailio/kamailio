@@ -37,6 +37,7 @@
 
 #include <stdio.h>
 #include "../../ut.h"
+#include "../../xavp.h"
 #include "../../parser/msg_parser.h"
 #include "../../lib/kcore/parse_supported.h"
 #include "../../data_lump_rpl.h"
@@ -179,6 +180,11 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 	unsigned int ahash;
 	unsigned short digit;
 	int mode;
+	sr_xavp_t *xavp=NULL;
+	sr_xavp_t *list=NULL;
+	str xname = {"ruid", 4};
+	sr_xval_t xval;
+
 
 
 	if(msg!=NULL && parse_supported(msg)==0
@@ -208,6 +214,13 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 	
 	memcpy(p, CONTACT_BEGIN, CONTACT_BEGIN_LEN);
 	p += CONTACT_BEGIN_LEN;
+
+	/* add xavp with details of the record (ruid, ...) */
+	if(reg_xavp_rcd.s!=NULL)
+	{
+		list = xavp_get(&reg_xavp_rcd, NULL);
+		xavp = list;
+	}
 
 	fl = 0;
 	while(c) {
@@ -323,9 +336,28 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 				memcpy(p, cp, len);
 				p += len;
 			}
+			if(reg_xavp_rcd.s!=NULL)
+			{
+				memset(&xval, 0, sizeof(sr_xval_t));
+				xval.type = SR_XTYPE_STR;
+				xval.v.s = c->ruid;
+				xavp_add_value(&xname, &xval, &xavp);
+			}
 		}
 
 		c = c->next;
+	}
+
+	/* add xavp with details of the record (ruid, ...) */
+	if(reg_xavp_rcd.s!=NULL)
+	{
+		if(list==NULL)
+		{
+			/* no reg_xavp_rcd xavp in root list - add it */
+			xval.type = SR_XTYPE_XAVP;
+			xval.v.xavp = xavp;
+			xavp_add_value(&reg_xavp_rcd, &xval, NULL);
+		}
 	}
 
 	memcpy(p, CRLF, CRLF_LEN);
