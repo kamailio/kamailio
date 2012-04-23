@@ -16,7 +16,7 @@ CREATE INDEX rls_presentity_rlsubs_idx ON rls_presentity (rlsubs_did);
 CREATE INDEX rls_presentity_updated_idx ON rls_presentity (updated);
 CREATE INDEX rls_presentity_expires_idx ON rls_presentity (expires);
 
-INSERT INTO version (table_name, table_version) values ('rls_watchers','2');
+INSERT INTO version (table_name, table_version) values ('rls_watchers','3');
 CREATE TABLE rls_watchers (
     id INTEGER PRIMARY KEY NOT NULL,
     presentity_uri VARCHAR(128) NOT NULL,

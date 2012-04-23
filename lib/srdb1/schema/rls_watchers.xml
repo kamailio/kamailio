@@ -9,7 +9,7 @@
 
 <table id="rls_watchers" xmlns:db="http://docbook.org/ns/docbook">
     <name>rls_watchers</name>
-    <version>2</version>
+    <version>3</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Table for RLS module used for storing resource lists subscribe
