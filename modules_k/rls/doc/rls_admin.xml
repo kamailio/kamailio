@@ -767,6 +767,32 @@ Within event_route[xhttp:request]:
 </section>
 
 <section>
+	<title>MI Commands</title>
+	<section>
+	  <title>
+		<function moreinfo="none">rls_cleanup</function>
+	  </title>
+	  <para>
+		Manually triggers the cleanup functions forthe rls_watchers and
+		rls_presentity tables. Useful if you have set
+		<varname>clean_period</varname> to zero or less.
+	  </para>
+	  <para>
+		Name: <emphasis>rls_cleanup</emphasis>
+	  </para>
+	  <para>Parameters: <emphasis>none</emphasis></para>
+
+	  <para>
+		MI FIFO Command Format:
+	  </para>
+	  <programlisting  format="linespecific">
+		:rls_cleanup:fifo_reply
+		_empty_line_
+	  </programlisting>
+	</section>
+</section>
+
+<section>
 	<title>Installation</title>
 	<para>
 	The module requires 2 tables in &kamailio; database: rls_presentity

@@ -55,7 +55,11 @@ Anca-Maria Vamanu
               4.2. rls_handle_notify()
               4.3. rls_update_subs(uri, event)
 
-        5. Installation
+        5. MI Commands
+
+              5.1. rls_cleanup
+
+        6. Installation
 
    2. Developer Guide
 
@@ -134,7 +138,11 @@ Chapter 1. Admin Guide
         4.2. rls_handle_notify()
         4.3. rls_update_subs(uri, event)
 
-   5. Installation
+   5. MI Commands
+
+        5.1. rls_cleanup
+
+   6. Installation
 
 1. Overview
 
@@ -640,7 +648,25 @@ Within event_route[xhttp:request]:
                 break;
 ...
 
-5. Installation
+5. MI Commands
+
+   5.1. rls_cleanup
+
+5.1.  rls_cleanup
+
+   Manually triggers the cleanup functions forthe rls_watchers and
+   rls_presentity tables. Useful if you have set clean_period to zero or
+   less.
+
+   Name: rls_cleanup
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :rls_cleanup:fifo_reply
+                _empty_line_
+
+6. Installation
 
    The module requires 2 tables in Kamailio database: rls_presentity and
    rls_watchers.The SQL syntax to create them can be found in
