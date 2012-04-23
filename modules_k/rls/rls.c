@@ -43,6 +43,7 @@
 #include "../../ut.h"
 #include "../../timer_proc.h"
 #include "../../hashes.h"
+#include "../../lib/kmi/mi.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../modules/tm/tm_load.h"
@@ -90,7 +91,6 @@ str xcap_db_url = str_init("");
 str rlpres_db_url = str_init("");
 int hash_size = 512;
 shtable_t rls_table;
-int pid;
 contains_event_t pres_contains_event;
 search_event_t pres_search_event;
 get_event_list_t pres_get_ev_list;
@@ -201,12 +201,14 @@ int rls_max_backend_subs = 0;
 
 static int mod_init(void);
 static int child_init(int);
+static int mi_child_init(void);
 static void destroy(void);
 int rlsubs_table_restore();
 void rlsubs_table_update(unsigned int ticks,void *param);
 int add_rls_event(modparam_t type, void* val);
 int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent);
 int fixup_update_subs(void** param, int param_no);
+static struct mi_root* mi_cleanup(struct mi_root* cmd, void* param);
 
 static cmd_export_t cmds[]=
 {
@@ -253,20 +255,25 @@ static param_export_t params[]={
 	{0,                         0,           0                               }
 };
 
+static mi_export_t mi_cmds[] = {
+	{ "cleanup",		mi_cleanup,		0,  0,  mi_child_init},
+	{ 0,			0,			0,  0,  0}
+};
+
 /** module exports */
 struct module_exports exports= {
 	"rls",  					/* module name */
-	DEFAULT_DLFLAGS,			/* dlopen flags */
+	DEFAULT_DLFLAGS,				/* dlopen flags */
 	cmds,						/* exported functions */
 	params,						/* exported parameters */
-	0,							/* exported statistics */
-	0,      					/* exported MI functions */
-	0,							/* exported pseudo-variables */
-	0,							/* extra processes */
+	0,						/* exported statistics */
+	mi_cmds,      					/* exported MI functions */
+	0,						/* exported pseudo-variables */
+	0,						/* extra processes */
 	mod_init,					/* module initialization function */
-	0,							/* response handling function */
-	(destroy_function) destroy, /* destroy function */
-	child_init                  /* per-child init function */
+	0,						/* response handling function */
+	(destroy_function) destroy,			/* destroy function */
+	child_init					/* per-child init function */
 };
 
 /**
@@ -676,7 +683,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
-		return 0; /* don't call child_init for main process more than once */
+		return 0;
 
 	if (rank==PROC_MAIN && dbmode == RLS_DB_ONLY)
 	{
@@ -697,6 +704,8 @@ static int child_init(int rank)
 				return -1;
 			}
 		}
+
+		return 0;
 	}
 
 	LM_DBG("child [%d]  pid [%d]\n", rank, getpid());
@@ -769,8 +778,79 @@ static int child_init(int rank)
 		LM_DBG("child %d: Database connection opened successfully\n", rank);
 	}
 
-	pid= my_pid();
 	return 0;
+}
+
+static int mi_child_init(void)
+{
+	if (rls_dbf.init==0)
+	{
+		LM_CRIT("database not bound\n");
+		return -1;
+	}
+	rls_db = rls_dbf.init(&db_url);
+	if (!rls_db)
+	{
+		LM_ERR("Error while connecting database\n");
+		return -1;
+	}
+	else
+	{
+		if (rls_dbf.use_table(rls_db, &rlsubs_table) < 0)  
+		{
+			LM_ERR("Error in use_table rlsubs_table\n");
+			return -1;
+		}
+
+		LM_DBG("Database connection opened successfully\n");
+	}
+
+	if (rlpres_dbf.init==0)
+	{
+		LM_CRIT("database not bound\n");
+		return -1;
+	}
+	rlpres_db = rlpres_dbf.init(&rlpres_db_url);
+	if (!rlpres_db)
+	{
+		LM_ERR("Error while connecting database\n");
+		return -1;
+	}
+	else
+	{
+		if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0)  
+		{
+			LM_ERR("Error in use_table rlpres_table\n");
+			return -1;
+		}
+
+		LM_DBG("Database connection opened successfully\n");
+	}
+
+	if (rls_xcap_dbf.init==0)
+	{
+		LM_CRIT("database not bound\n");
+		return -1;
+	}
+	rls_xcap_db = rls_xcap_dbf.init(&xcap_db_url);
+	if (!rls_xcap_db)
+	{
+		LM_ERR("Error while connecting database\n");
+		return -1;
+	}
+	else
+	{
+		if (rls_xcap_dbf.use_table(rls_xcap_db, &rls_xcap_table) < 0)  
+		{
+			LM_ERR("Error in use_table rls_xcap_table\n");
+			return -1;
+		}
+
+		LM_DBG("Database connection opened successfully\n");
+	}
+
+	return 0;
+
 }
 
 /*
@@ -1062,4 +1142,14 @@ int bind_rls(struct rls_binds *pxb)
 		pxb->rls_handle_subscribe0 = rls_handle_subscribe0;
 		pxb->rls_handle_notify = rls_handle_notify;
 		return 0;
+}
+
+static struct mi_root* mi_cleanup(struct mi_root* cmd, void *param)
+{
+	LM_DBG("mi_cleanup:start\n");
+
+	(void)rlsubs_table_update(0,0);
+	(void)rls_presentity_clean(0,0);
+
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
