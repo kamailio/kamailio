@@ -73,7 +73,7 @@ static struct sqlite_connection * db_sqlite_new_connection(const struct db_id* i
 
 db1_con_t* db_sqlite_init(const str* _url)
 {
-	return db_do_init(_url, (void *) db_sqlite_new_connection, 0);
+	return db_do_init(_url, (void *) db_sqlite_new_connection);
 }
 
 
