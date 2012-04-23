@@ -26,7 +26,7 @@ htable:2
 imc_members:1
 imc_rooms:1
 lcr_gw:2
-lcr_rule:2
+lcr_rule:1
 lcr_rule_target:1
 location:5
 matrix:1
@@ -41,7 +41,7 @@ purplemap:1
 re_grp:1
 rls_presentity:1
 rls_watchers:3
-silo:6
+silo:7
 sip_trace:3
 speed_dial:2
 subscriber:6

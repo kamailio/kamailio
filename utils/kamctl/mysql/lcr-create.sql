@@ -31,15 +31,15 @@ CREATE TABLE lcr_rule_target (
 
 CREATE INDEX lcr_id_idx ON lcr_rule_target (lcr_id);
 
-INSERT INTO version (table_name, table_version) values ('lcr_rule','2');
+INSERT INTO version (table_name, table_version) values ('lcr_rule','1');
 CREATE TABLE lcr_rule (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     lcr_id SMALLINT UNSIGNED NOT NULL,
     prefix VARCHAR(16) DEFAULT NULL,
-    request_uri VARCHAR(64) DEFAULT NULL,
     from_uri VARCHAR(64) DEFAULT NULL,
+    request_uri VARCHAR(64) DEFAULT NULL,
     stopper INT UNSIGNED DEFAULT 0 NOT NULL,
     enabled INT UNSIGNED DEFAULT 1 NOT NULL,
-    CONSTRAINT lcr_id_prefix_from_uri_idx UNIQUE (lcr_id, prefix, request_uri, from_uri)
+    CONSTRAINT lcr_id_prefix_from_uri_idx UNIQUE (lcr_id, prefix, from_uri)
 ) ENGINE=MyISAM;
 
