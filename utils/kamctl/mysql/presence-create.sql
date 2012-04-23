@@ -15,7 +15,7 @@ CREATE TABLE presentity (
 CREATE INDEX presentity_expires ON presentity (expires);
 CREATE INDEX account_idx ON presentity (username, domain, event);
 
-INSERT INTO version (table_name, table_version) values ('active_watchers','10');
+INSERT INTO version (table_name, table_version) values ('active_watchers','11');
 CREATE TABLE active_watchers (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     presentity_uri VARCHAR(128) NOT NULL,
@@ -41,12 +41,14 @@ CREATE TABLE active_watchers (
     from_user VARCHAR(64) NOT NULL,
     from_domain VARCHAR(64) NOT NULL,
     updated INT(11) NOT NULL,
+    updated_winfo INT(11) NOT NULL,
     CONSTRAINT active_watchers_idx UNIQUE (callid, to_tag, from_tag)
 ) ENGINE=MyISAM;
 
 CREATE INDEX active_watchers_expires ON active_watchers (expires);
 CREATE INDEX active_watchers_pres ON active_watchers (presentity_uri);
 CREATE INDEX updated_idx ON active_watchers (updated);
+CREATE INDEX updated_winfo_idx ON active_watchers (updated_winfo, presentity_uri);
 
 INSERT INTO version (table_name, table_version) values ('watchers','3');
 CREATE TABLE watchers (

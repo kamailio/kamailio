@@ -188,7 +188,7 @@ int insert_subs_db(subs_t* s, int type)
 		callid_col, totag_col, fromtag_col, event_col,status_col, event_id_col, 
 		local_cseq_col, remote_cseq_col, expires_col, record_route_col, 
 		contact_col, local_contact_col, version_col,socket_info_col,reason_col,
-		watcher_user_col, watcher_domain_col;
+		watcher_user_col, watcher_domain_col, updated_col, updated_winfo_col;
 		
 	if(pa_dbf.use_table(pa_db, &active_watchers_table)< 0)
 	{
@@ -305,7 +305,17 @@ int insert_subs_db(subs_t* s, int type)
 	query_vals[version_col].type = DB1_INT;
 	query_vals[version_col].nul = 0;
 	n_query_cols++;
-	
+
+	query_cols[updated_col= n_query_cols]=&str_updated_col;
+	query_vals[updated_col].type = DB1_INT;
+	query_vals[updated_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[updated_winfo_col= n_query_cols]=&str_updated_winfo_col;
+	query_vals[updated_winfo_col].type = DB1_INT;
+	query_vals[updated_winfo_col].nul = 0;
+	n_query_cols++;
+
 	query_vals[pres_uri_col].val.str_val= s->pres_uri;
 	query_vals[callid_col].val.str_val= s->callid;
 	query_vals[totag_col].val.str_val= s->to_tag;
@@ -328,6 +338,8 @@ int insert_subs_db(subs_t* s, int type)
 	query_vals[status_col].val.int_val= s->status;
 	query_vals[reason_col].val.str_val= s->reason;
 	query_vals[socket_info_col].val.str_val= s->sockinfo_str;
+	query_vals[updated_col].val.int_val = -1;
+	query_vals[updated_winfo_col].val.int_val = -1;
 
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
 	{
@@ -1673,15 +1685,15 @@ void update_db_subs_timer_dbnone(int no_lock)
 void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	int htable_size, int no_lock, handle_expired_func_t handle_expired_func)
 {
-	db_key_t query_cols[24], update_cols[7];
-	db_val_t query_vals[24], update_vals[7];
+	db_key_t query_cols[24], update_cols[6];
+	db_val_t query_vals[24], update_vals[6];
 	db_op_t update_ops[1];
 	subs_t* del_s;
 	int pres_uri_col, to_user_col, to_domain_col, from_user_col, from_domain_col,
 		callid_col, totag_col, fromtag_col, event_col,status_col, event_id_col,
 		local_cseq_col, remote_cseq_col, expires_col, record_route_col,
 		contact_col, local_contact_col, version_col,socket_info_col,reason_col,
-		watcher_user_col, watcher_domain_col;
+		watcher_user_col, watcher_domain_col, updated_col, updated_winfo_col;
 	int u_expires_col, u_local_cseq_col, u_remote_cseq_col, u_version_col,
 		u_reason_col, u_status_col;
 	int i;
@@ -1804,6 +1816,16 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	query_vals[version_col].nul = 0;
 	n_query_cols++;
 
+	query_cols[updated_col= n_query_cols]=&str_updated_col;
+	query_vals[updated_col].type = DB1_INT;
+	query_vals[updated_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[updated_winfo_col= n_query_cols]=&str_updated_winfo_col;
+	query_vals[updated_winfo_col].type = DB1_INT;
+	query_vals[updated_winfo_col].nul = 0;
+	n_query_cols++;
+
 	/* cols and values used for update */
 	update_cols[u_expires_col= n_update_cols]= &str_expires_col;
 	update_vals[u_expires_col].type = DB1_INT;
@@ -1921,6 +1943,8 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 					query_vals[status_col].val.int_val= s->status;
 					query_vals[reason_col].val.str_val= s->reason;
 					query_vals[socket_info_col].val.str_val= s->sockinfo_str;
+					query_vals[updated_col].val.int_val = -1;
+					query_vals[updated_winfo_col].val.int_val = -1;
 
 					if(dbf.insert(db,query_cols,query_vals,n_query_cols )<0)
 					{

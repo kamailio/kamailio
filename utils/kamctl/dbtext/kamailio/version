@@ -1,6 +1,6 @@
 table_name(string) table_version(int) 
 acc:4
-active_watchers:10
+active_watchers:11
 address:5
 aliases:5
 carrier_name:1
