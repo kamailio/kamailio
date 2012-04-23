@@ -27,6 +27,7 @@
  * \brief Functions for parsing a database URL and work with db identifier.
  */
 
+#include "db.h"
 #include "db_id.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
@@ -225,9 +226,10 @@ static int parse_db_url(struct db_id* id, const str* url)
 /**
  * Create a new connection identifier
  * \param url database URL
+ * \param pooling whether or not a pooled connection may be used
  * \return connection identifier, or zero on error
  */
-struct db_id* new_db_id(const str* url, int nopool)
+struct db_id* new_db_id(const str* url, db_pooling_t pooling)
 {
 	static int poolid=0;
 	struct db_id* ptr;
@@ -249,7 +251,7 @@ struct db_id* new_db_id(const str* url, int nopool)
 		goto err;
 	}
 
-	if (nopool) ptr->poolid = ++poolid;
+	if (pooling == DB_POOLING_NONE) ptr->poolid = ++poolid;
 	else ptr->poolid = 0;
 	ptr->pid = my_pid();
 

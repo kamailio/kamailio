@@ -31,6 +31,7 @@
 #define _DB1_ID_H
 
 #include "../../str.h"
+#include "db.h"
 
 /** Structure representing a database ID */
 struct db_id {
@@ -48,9 +49,10 @@ struct db_id {
 /**
  * Create a new connection identifier
  * \param url database URL
+ * \param pooling whether or not a pooled connection may be used
  * \return new allocated db_id structure, NULL on failure
  */
-struct db_id* new_db_id(const str* url, int nopool);
+struct db_id* new_db_id(const str* url, db_pooling_t pooling);
 
 
 /**

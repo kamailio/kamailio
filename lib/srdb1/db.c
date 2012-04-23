@@ -221,7 +221,7 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 		dbf.use_table = (db_use_table_f)find_mod_export(tmp,
 			"db_use_table", 2, 0);
 		dbf.init = (db_init_f)find_mod_export(tmp, "db_init", 1, 0);
-		dbf.init_nopool = (db_init_nopool_f)find_mod_export(tmp, "db_init_nopool", 1, 0);
+		dbf.init2 = (db_init2_f)find_mod_export(tmp, "db_init2", 1, 0);
 		dbf.close = (db_close_f)find_mod_export(tmp, "db_close", 2, 0);
 		dbf.query = (db_query_f)find_mod_export(tmp, "db_query", 2, 0);
 		dbf.fetch_result = (db_fetch_result_f)find_mod_export(tmp,
@@ -260,7 +260,17 @@ error:
  * Initialize database module
  * \note No function should be called before this
  */
-db1_con_t* db_do_init(const str* url, void* (*new_connection)(), int nopool)
+db1_con_t* db_do_init(const str* url, void* (*new_connection)())
+{
+	return db_do_init2(url, *new_connection, DB_POOLING_PERMITTED);
+}
+
+
+/*! \brief
+ * Initialize database module
+ * \note No function should be called before this
+ */
+db1_con_t* db_do_init2(const str* url, void* (*new_connection)(), db_pooling_t pooling)
 {
 	struct db_id* id;
 	void* con;
@@ -288,7 +298,7 @@ db1_con_t* db_do_init(const str* url, void* (*new_connection)(), int nopool)
 	}
 	memset(res, 0, con_size);
 
-	id = new_db_id(url, nopool);
+	id = new_db_id(url, pooling);
 	if (!id) {
 		LM_ERR("cannot parse URL '%.*s'\n", url->len, url->s);
 		goto err;
