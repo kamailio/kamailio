@@ -47,15 +47,16 @@ BEGIN map2users('lcr_rule_target'); END;
 /
 CREATE INDEX lcr_rule_target_lcr_id_idx  ON lcr_rule_target (lcr_id);
 
-INSERT INTO version (table_name, table_version) values ('lcr_rule','1');
+INSERT INTO version (table_name, table_version) values ('lcr_rule','2');
 CREATE TABLE lcr_rule (
     id NUMBER(10) PRIMARY KEY,
     lcr_id NUMBER(5),
     prefix VARCHAR2(16) DEFAULT NULL,
+    request_uri VARCHAR2(64) DEFAULT NULL,
     from_uri VARCHAR2(64) DEFAULT NULL,
     stopper NUMBER(10) DEFAULT 0 NOT NULL,
     enabled NUMBER(10) DEFAULT 1 NOT NULL,
-    CONSTRAINT ORA_lcr_id_prefix_from_uri_idx  UNIQUE (lcr_id, prefix, from_uri)
+    CONSTRAINT ORA_lcr_id_prefix_from_uri_idx  UNIQUE (lcr_id, prefix, request_uri, from_uri)
 );
 
 CREATE OR REPLACE TRIGGER lcr_rule_tr

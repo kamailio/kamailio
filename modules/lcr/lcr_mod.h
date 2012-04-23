@@ -62,6 +62,9 @@ struct rule_info {
     char from_uri[MAX_URI_LEN + 1];
     unsigned short from_uri_len;
     pcre *from_uri_re;
+    char request_uri[MAX_URI_LEN + 1];
+    unsigned short request_uri_len;
+    pcre *request_uri_re;
     unsigned short stopper;
     unsigned int enabled;
     struct target *targets;

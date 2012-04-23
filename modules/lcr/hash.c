@@ -38,7 +38,9 @@ int rule_hash_table_insert(struct rule_info **hash_table,
 			   unsigned int lcr_id, unsigned int rule_id,
 			   unsigned short prefix_len, char *prefix,
 			   unsigned short from_uri_len, char *from_uri,
-			   pcre *from_uri_re, unsigned short stopper)
+			   pcre *from_uri_re, unsigned short request_uri_len,
+			   char *request_uri, pcre *request_uri_re,
+			   unsigned short stopper)
 {
     struct rule_info *rule;
     str prefix_str;
@@ -48,6 +50,7 @@ int rule_hash_table_insert(struct rule_info **hash_table,
     if (rule == NULL) {
 	LM_ERR("Cannot allocate memory for rule hash table entry\n");
 	if (from_uri_re) shm_free(from_uri_re);
+	if (request_uri_re) shm_free(request_uri_re);
 	return 0;
     }
     memset(rule, 0, sizeof(struct rule_info));
@@ -63,6 +66,12 @@ int rule_hash_table_insert(struct rule_info **hash_table,
 	(rule->from_uri)[from_uri_len] = '\0';
 	rule->from_uri_re = from_uri_re;
     }
+    rule->request_uri_len = request_uri_len;
+    if (request_uri_len) {
+	memcpy(rule->request_uri, request_uri, request_uri_len);
+	(rule->request_uri)[request_uri_len] = '\0';
+	rule->request_uri_re = request_uri_re;
+    }
     rule->stopper = stopper;
     rule->targets = (struct target *)NULL;
 
@@ -73,9 +82,9 @@ int rule_hash_table_insert(struct rule_info **hash_table,
     rule->next = hash_table[hash_val];
     hash_table[hash_val] = rule;
     
-    LM_DBG("inserted rule <%u>, prefix <%.*s>, from_uri <%.*s>, stopper <%u>, "
+    LM_DBG("inserted rule <%u>, prefix <%.*s>, from_uri <%.*s>, request_uri <%.*s>, stopper <%u>, "
 	   "into index <%u>\n",
-	   rule_id, prefix_len, prefix, from_uri_len, from_uri, stopper,
+	   rule_id, prefix_len, prefix, from_uri_len, from_uri, request_uri_len, request_uri, stopper,
 	   hash_val);
 
     return 1;
@@ -177,6 +186,8 @@ void rule_hash_table_contents_free(struct rule_info **hash_table)
 	    if (r->from_uri_re) {
 		shm_free(r->from_uri_re);
 	    }
+	    if (r->request_uri_re)
+		shm_free(r->request_uri_re);
 	    t = r->targets;
 	    while (t) {
 		next_t = t->next;
