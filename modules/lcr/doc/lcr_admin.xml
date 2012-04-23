@@ -32,10 +32,11 @@
 	<para>
 	For the purpose of facilitating least cost routing of requests,
 	each gateway of an LCR instance is associated with one or more 
-	&lt;prefix, from pattern, priority, weight&gt;
+	&lt;prefix, from uri pattern, request uri pattern, priority, weight&gt;
 	tuples.  A gateway matches a request if user part of the Request-URI
-	matches a "prefix" and the caller's URI matches a "from" pattern in a
-	tuple that is associated with the gateway.
+	matches a "prefix", the caller's URI matches a "From-URI" pattern and
+	the callee's URI matches a "Request-URI" pattern in a tuple that is
+	associated with the gateway.
 	</para>
 	<para>
 	When the function <emphasis>load_gws()</emphasis> is called,
@@ -45,7 +46,7 @@
 	<para>
 	<itemizedlist>
             <listitem>
-                <para>(1) according to longest user part match
+                <para>(1) according to longest Request-URI user part match
                 </para>
             </listitem>
             <listitem>
@@ -64,10 +65,10 @@
 	with shorter prefixes are not considered.
 	</para>
 	<para>
-	Prefix is a string of characters or NULL.  From
-	pattern is a regular expression (see 'man 
+	Prefix is a string of characters or NULL.  From-URI
+	pattern and Request-URI pattern are regular expressions (see 'man 
 	pcresyntax' for syntax), an empty string, or NULL.  An empty or
-	NULL from pattern or prefix matches anything.
+	NULL From-URI pattern, Request-URI pattern or prefix matches anything.
 	Smaller priority value means higher priority (highest priority
 	value being 0 and lowest being 255).
 	</para>
@@ -530,6 +531,27 @@ modparam("lcr", "prefix_column", "number_prefix")
 		<programlisting format="linespecific">
 ...
 modparam("lcr", "from_uri_column", "caller_uri")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>request_uri_column</varname> (string)</title>
+		<para>
+		Name of the column holding the regular expression to match
+		against the complete request URI (including the "sip:" prefix).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>request_uri</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>request_uri_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "request_uri_column", "callee_uri")
 ...
 </programlisting>
 		</example>

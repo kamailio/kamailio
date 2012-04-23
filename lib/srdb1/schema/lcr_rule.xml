@@ -52,6 +52,15 @@
         <description>PCRE regular expression that is matched to caller's URI</description>
     </column>
 
+    <column id="request_uri">
+        <name>request_uri</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <null/>
+        <default><null/></default>
+        <description>PCRE regular expression that is matched to full request URI</description>
+    </column>
+
     <column id="stopper">
         <name>stopper</name>
         <type>unsigned int</type>

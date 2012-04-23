@@ -89,7 +89,7 @@ MODULE_VERSION
 /*
  * versions of database tables required by the module.
  */
-#define LCR_RULE_TABLE_VERSION 1
+#define LCR_RULE_TABLE_VERSION 2
 #define LCR_RULE_TARGET_TABLE_VERSION 1
 #define LCR_GW_TABLE_VERSION 2
 
@@ -103,6 +103,7 @@ MODULE_VERSION
 #define LCR_ID_COL "lcr_id"
 #define PREFIX_COL "prefix"
 #define FROM_URI_COL "from_uri"
+#define REQUEST_URI_COL "request_uri"
 #define STOPPER_COL "stopper"
 #define ENABLED_COL "enabled"
 #define RULE_ID_COL "rule_id"
@@ -164,6 +165,7 @@ static str id_col           = str_init(ID_COL);
 static str lcr_id_col       = str_init(LCR_ID_COL);
 static str prefix_col       = str_init(PREFIX_COL);
 static str from_uri_col     = str_init(FROM_URI_COL);
+static str request_uri_col  = str_init(REQUEST_URI_COL);
 static str stopper_col      = str_init(STOPPER_COL);
 static str enabled_col      = str_init(ENABLED_COL);
 static str rule_id_col      = str_init(RULE_ID_COL);
@@ -293,6 +295,7 @@ static param_export_t params[] = {
     {"id_column",                STR_PARAM, &id_col.s},
     {"prefix_column",            STR_PARAM, &prefix_col.s},
     {"from_uri_column",          STR_PARAM, &from_uri_col.s},
+    {"request_uri_column",       STR_PARAM, &request_uri_col.s},
     {"stopper_column",           STR_PARAM, &stopper_col.s},
     {"enabled_column",           STR_PARAM, &enabled_col.s},
     {"rule_id_column",           STR_PARAM, &rule_id_col.s},
@@ -416,6 +419,7 @@ static int mod_init(void)
     lcr_id_col.len = strlen(lcr_id_col.s);
     prefix_col.len = strlen(prefix_col.s);
     from_uri_col.len = strlen(from_uri_col.s);
+    request_uri_col.len = strlen(request_uri_col.s);
     stopper_col.len = strlen(stopper_col.s);
     enabled_col.len = strlen(enabled_col.s);
     rule_id_col.len = strlen(rule_id_col.s);
@@ -1127,18 +1131,19 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
  */
 int reload_tables()
 {
-    unsigned int i, n, lcr_id, rule_id, gw_id, from_uri_len, stopper,
-	prefix_len, enabled, gw_cnt, null_gw_ip_addr, priority, weight, tmp;
-    char *prefix, *from_uri;
+    unsigned int i, n, lcr_id, rule_id, gw_id, from_uri_len, request_uri_len,
+	stopper, prefix_len, enabled, gw_cnt, null_gw_ip_addr, priority,
+	weight, tmp;
+    char *prefix, *from_uri, *request_uri;
     db1_res_t* res = NULL;
     db_row_t* row;
     db_key_t key_cols[1];
     db_op_t op[1];
     db_val_t vals[1];
     db_key_t gw_cols[13];
-    db_key_t rule_cols[5];
+    db_key_t rule_cols[6];
     db_key_t target_cols[4];
-    pcre *from_uri_re;
+    pcre *from_uri_re, *request_uri_re;
     struct gw_info *gws, *gw_pt_tmp;
     struct rule_info **rules, **rule_pt_tmp;
 
@@ -1152,6 +1157,7 @@ int reload_tables()
     rule_cols[2] = &from_uri_col;
     rule_cols[3] = &stopper_col;
     rule_cols[4] = &enabled_col;
+    rule_cols[5] = &request_uri_col;
 	
     gw_cols[0] = &gw_name_col;
     gw_cols[1] = &ip_addr_col;
@@ -1172,7 +1178,7 @@ int reload_tables()
     target_cols[2] = &priority_col;
     target_cols[3] = &weight_col;
 
-    from_uri_re = 0;
+    request_uri_re = from_uri_re = 0;
 
     if (lcr_db_init(&db_url) < 0) {
 	LM_ERR("unable to open database connection\n");
@@ -1193,7 +1199,7 @@ int reload_tables()
 
 	VAL_INT(vals) = lcr_id;
 	if (DB_CAPABILITY(lcr_dbf, DB_CAP_FETCH)) {
-	    if (lcr_dbf.query(dbh, key_cols, op, vals, rule_cols, 1, 5, 0, 0)
+	    if (lcr_dbf.query(dbh, key_cols, op, vals, rule_cols, 1, 6, 0, 0)
 		< 0) {
 		LM_ERR("db query on lcr_rule table failed\n");
 		goto err;
@@ -1203,7 +1209,7 @@ int reload_tables()
 		goto err;
 	    }
 	} else {
-	    if (lcr_dbf.query(dbh, key_cols, op, vals, rule_cols, 1, 5, 0, &res)
+	    if (lcr_dbf.query(dbh, key_cols, op, vals, rule_cols, 1, 6, 0, &res)
 		< 0) {
 		LM_ERR("db query on lcr_rule table failed\n");
 		goto err;
@@ -1211,13 +1217,13 @@ int reload_tables()
 	}
 
 	n = 0;
-	from_uri_re = 0;
+	request_uri_re = from_uri_re = 0;
     
 	do {
 	    LM_DBG("loading, cycle %d with <%d> rows", n++, RES_ROW_N(res));
 	    for (i = 0; i < RES_ROW_N(res); i++) {
 
-		from_uri_re = 0;
+		request_uri_re = from_uri_re = 0;
 		row = RES_ROWS(res) + i;
 
 		if ((VAL_NULL(ROW_VALUES(row)) == 1) ||
@@ -1299,9 +1305,37 @@ int reload_tables()
 		    from_uri_re = 0;
 		}
 
+		if (VAL_NULL(ROW_VALUES(row) + 5) == 1) {
+		    request_uri_len = 0;
+		    request_uri = 0;
+		} else {
+		    if (VAL_TYPE(ROW_VALUES(row) + 5) != DB1_STRING) {
+			LM_ERR("lcr rule <%u> request_uri is not string\n",
+			       rule_id);
+			goto err;
+		    }
+		    request_uri = (char *)VAL_STRING(ROW_VALUES(row) + 5);
+		    request_uri_len = strlen(request_uri);
+		}
+		if (request_uri_len > MAX_URI_LEN) {
+		    LM_ERR("lcr rule <%u> request_uri is too long\n", rule_id);
+		    goto err;
+		}
+		if (request_uri_len > 0) {
+		    request_uri_re = reg_ex_comp(request_uri);
+		    if (request_uri_re == 0) {
+			LM_ERR("failed to compile lcr rule <%u> request_uri "
+			       "<%s>\n", rule_id, request_uri);
+			goto err;
+		    }
+		} else {
+		    request_uri_re = 0;
+		}
+
 		if (!rule_hash_table_insert(rules, lcr_id, rule_id, prefix_len,
 					    prefix, from_uri_len, from_uri,
-					    from_uri_re, stopper) ||
+					    from_uri_re, request_uri_len,
+					    request_uri, request_uri_re, stopper) ||
 		    !prefix_len_insert(rules, prefix_len)) {
 		    goto err;
 		}
@@ -1757,7 +1791,7 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
  */
 static int load_gws(struct sip_msg* _m, int argc, action_u_t argv[])
 {
-    str ruri_user, from_uri;
+    str ruri_user, from_uri, *request_uri;
     int i, j, lcr_id;
     unsigned int gw_index, now, dex;
     int_str val;
@@ -1803,6 +1837,8 @@ static int load_gws(struct sip_msg* _m, int argc, action_u_t argv[])
     LM_DBG("load_gws(%u, %.*s, %.*s)\n", lcr_id, ruri_user.len, ruri_user.s,
 	   from_uri.len, from_uri.s);
 
+    request_uri = GET_RURI(_m);
+
     /* Use rules and gws with index lcr_id */
     rules = rule_pt[lcr_id];
     gws = gw_pt[lcr_id];
@@ -1831,38 +1867,52 @@ static int load_gws(struct sip_msg* _m, int argc, action_u_t argv[])
 	rule = rule_hash_table_lookup(rules, pl->prefix_len, ruri_user.s);
 	while (rule) {
 	    /* Match prefix */
-	    if ((rule->prefix_len == pl->prefix_len) && 
-		(strncmp(rule->prefix, ruri_user.s, pl->prefix_len) == 0)) {
-		/* Match from uri */
-		if ((rule->from_uri_len == 0) ||
-		    (pcre_exec(rule->from_uri_re, NULL, from_uri.s,
-			       from_uri.len, 0, 0, NULL, 0) >= 0)) {
-		    /* Load gws associated with this rule */
-		    t = rule->targets;
-		    while (t) {
-                        /* If this gw is defunct, skip it */
-		        if (gws[t->gw_index].defunct_until > now) goto skip_gw;
-			matched_gws[gw_index].gw_index = t->gw_index;
-			matched_gws[gw_index].prefix_len = pl->prefix_len;
-			matched_gws[gw_index].priority = t->priority;
-			matched_gws[gw_index].weight = t->weight *
-			    (rand() >> 8);
-			matched_gws[gw_index].duplicate = 0;
-			LM_DBG("added matched_gws[%d]=[%u, %u, %u, %u]\n",
-			       gw_index, t->gw_index, pl->prefix_len,
-			       t->priority, matched_gws[gw_index].weight);
-			gw_index++;
-		    skip_gw:
-			t = t->next;
-		    }
-		    /* Do not look further if this matching rule was stopper */
-		    if (rule->stopper == 1) goto done;
-		} else {
-		    LM_DBG("from uri <%.*s> did not match to from regex <%.*s>",
-			   from_uri.len, from_uri.s, rule->from_uri_len,
-			   rule->from_uri);
-		}
+	    if ((rule->prefix_len != pl->prefix_len) ||
+		(strncmp(rule->prefix, ruri_user.s, pl->prefix_len)))
+		    goto next;
+
+	    /* Match from uri */
+	    if ((rule->from_uri_len != 0) &&
+		(pcre_exec(rule->from_uri_re, NULL, from_uri.s,
+			   from_uri.len, 0, 0, NULL, 0) < 0)) {
+		LM_DBG("from uri <%.*s> did not match to from regex <%.*s>",
+		       from_uri.len, from_uri.s, rule->from_uri_len,
+		       rule->from_uri);
+		goto next;
 	    }
+
+	    /* Match request uri */
+	    if ((rule->request_uri_len != 0) &&
+		(pcre_exec(rule->request_uri_re, NULL, request_uri->s,
+			   request_uri->len, 0, 0, NULL, 0) < 0)) {
+		LM_DBG("request uri <%.*s> did not match to request regex <%.*s>",
+		       request_uri->len, request_uri->s, rule->request_uri_len,
+		       rule->request_uri);
+		goto next;
+	    }
+
+	    /* Load gws associated with this rule */
+	    t = rule->targets;
+	    while (t) {
+		/* If this gw is defunct, skip it */
+		if (gws[t->gw_index].defunct_until > now) goto skip_gw;
+		matched_gws[gw_index].gw_index = t->gw_index;
+		matched_gws[gw_index].prefix_len = pl->prefix_len;
+		matched_gws[gw_index].priority = t->priority;
+		matched_gws[gw_index].weight = t->weight *
+		    (rand() >> 8);
+		matched_gws[gw_index].duplicate = 0;
+		LM_DBG("added matched_gws[%d]=[%u, %u, %u, %u]\n",
+		       gw_index, t->gw_index, pl->prefix_len,
+		       t->priority, matched_gws[gw_index].weight);
+		gw_index++;
+	    skip_gw:
+		t = t->next;
+	    }
+	    /* Do not look further if this matching rule was stopper */
+	    if (rule->stopper == 1) goto done;
+
+next:
 	    rule = rule->next;
 	}
 	pl = pl->next;
