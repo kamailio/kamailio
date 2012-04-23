@@ -66,10 +66,14 @@
 #define MAX_LDG_LOCKS  2048
 #define MIN_LDG_LOCKS  2
 
+extern int dlg_ka_interval;
 
 /*! global dialog table */
 struct dlg_table *d_table = 0;
 
+dlg_ka_t **dlg_ka_list_head = NULL;
+dlg_ka_t **dlg_ka_list_tail = NULL;
+gen_lock_t *dlg_ka_list_lock = NULL;
 
 /*!
  * \brief Reference a dialog without locking
@@ -118,6 +122,98 @@ struct dlg_table *d_table = 0;
 		}\
 	}while(0)
 
+/**
+ * add item to keep-alive list
+ *
+ */
+int dlg_ka_add(dlg_cell_t *dlg)
+{
+	dlg_ka_t *dka;
+
+	if(dlg_ka_interval<=0)
+		return 0;
+	if(!(dlg->iflags & (DLG_IFLAG_KA_SRC | DLG_IFLAG_KA_SRC)))
+		return 0;
+
+	dka = (dlg_ka_t*)shm_malloc(sizeof(dlg_ka_t));
+	if(dka==NULL) {
+		LM_ERR("no more shm mem\n");
+		return -1;
+	}
+	memset(dka, 0, sizeof(dlg_ka_t));
+	dka->katime = get_ticks() + dlg_ka_interval;
+	dka->iuid.h_entry = dlg->h_entry;
+	dka->iuid.h_id = dlg->h_id;
+	dka->iflags = dlg->iflags;
+
+	lock_get(dlg_ka_list_lock);
+	if(*dlg_ka_list_tail!=NULL)
+		(*dlg_ka_list_tail)->next = dka;
+	if(*dlg_ka_list_head==NULL)
+		*dlg_ka_list_tail = dka;
+	*dlg_ka_list_tail = dka;
+	lock_release(dlg_ka_list_lock);
+	return 0;
+}
+
+/**
+ * run keep-alive list
+ *
+ */
+int dlg_ka_run(ticks_t ti)
+{
+	dlg_ka_t *dka;
+	dlg_cell_t *dlg;
+
+	if(dlg_ka_interval<=0)
+		return 0;
+
+	while(1) {
+		/* get head item */
+		lock_get(dlg_ka_list_lock);
+		if(*dlg_ka_list_head==NULL) {
+			lock_release(dlg_ka_list_lock);
+			return 0;
+		}
+		dka = *dlg_ka_list_head;
+		if(dka->katime>ti) {
+			lock_release(dlg_ka_list_lock);
+			return 0;
+		}
+		if(*dlg_ka_list_head == *dlg_ka_list_tail) {
+			*dlg_ka_list_head = NULL;
+			*dlg_ka_list_head = NULL;
+		}
+		*dlg_ka_list_head = dka->next;
+		lock_release(dlg_ka_list_lock);
+
+		/* send keep-alive for dka */
+		dlg = dlg_get_by_iuid(&dka->iuid);
+		if(dlg==NULL) {
+			shm_free(dka);
+			dka = NULL;
+		} else {
+			if(dka->iflags & DLG_IFLAG_KA_SRC)
+				dlg_send_ka(dlg, DLG_CALLER_LEG, 0);
+			if(dka->iflags & DLG_IFLAG_KA_DST)
+				dlg_send_ka(dlg, DLG_CALLEE_LEG, 0);
+			dlg_release(dlg);
+		}
+		/* append to tail */
+		if(dka!=NULL)
+		{
+			lock_get(dlg_ka_list_lock);
+			if(*dlg_ka_list_tail!=NULL)
+				(*dlg_ka_list_tail)->next = dka;
+			if(*dlg_ka_list_head==NULL)
+				*dlg_ka_list_tail = dka;
+			*dlg_ka_list_tail = dka;
+			lock_release(dlg_ka_list_lock);
+		}
+	}
+
+	return 0;
+}
 
 /*!
  * \brief Initialize the global dialog table
@@ -128,6 +224,25 @@ int init_dlg_table(unsigned int size)
 {
 	unsigned int n;
 	unsigned int i;
+
+	dlg_ka_list_head = (dlg_ka_t **)shm_malloc(sizeof(dlg_ka_t *));
+	if(dlg_ka_list_head==NULL) {
+		LM_ERR("no more shm mem (h)\n");
+		goto error0;
+	}
+	dlg_ka_list_tail = (dlg_ka_t **)shm_malloc(sizeof(dlg_ka_t *));
+	if(dlg_ka_list_tail==NULL) {
+		LM_ERR("no more shm mem (t)\n");
+		goto error0;
+	}
+	*dlg_ka_list_head = NULL;
+	*dlg_ka_list_tail = NULL;
+	dlg_ka_list_lock = (gen_lock_t*)shm_malloc(sizeof(gen_lock_t));
+	if(dlg_ka_list_lock==NULL) {
+		LM_ERR("no more shm mem (l)\n");
+		goto error0;
+	}
+	lock_init(dlg_ka_list_lock);
 
 	d_table = (struct dlg_table*)shm_malloc
 		( sizeof(struct dlg_table) + size*sizeof(struct dlg_entry));
@@ -169,7 +284,14 @@ int init_dlg_table(unsigned int size)
 	return 0;
 error1:
 	shm_free( d_table );
+	d_table = NULL;
 error0:
+	if(dlg_ka_list_head!=NULL)
+		shm_free(dlg_ka_list_head);
+	if(dlg_ka_list_tail!=NULL)
+		shm_free(dlg_ka_list_tail);
+	dlg_ka_list_head = NULL;
+	dlg_ka_list_tail = NULL;
 	return -1;
 }
 

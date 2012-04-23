@@ -476,6 +476,9 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		goto done;
 	}
 
+	if (new_state==DLG_STATE_CONFIRMED && old_state!=DLG_STATE_CONFIRMED)
+		dlg_ka_add(dlg);
+
 	if (new_state==DLG_STATE_CONFIRMED_NA &&
 	old_state!=DLG_STATE_CONFIRMED_NA && old_state!=DLG_STATE_CONFIRMED ) {
 		LM_DBG("dialog %p confirmed (ACK pending)\n",dlg);

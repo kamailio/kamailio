@@ -70,6 +70,7 @@
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../mem/mem.h"
 #include "../../lib/kmi/mi.h"
+#include "../../timer_proc.h"
 #include "../../lvalue.h"
 #include "../../parser/parse_to.h"
 #include "../../modules/tm/tm_load.h"
@@ -132,12 +133,18 @@ pv_spec_t timeout_avp;
 
 int dlg_db_mode_param = DB_MODE_NONE;
 
+str dlg_xavp_cfg = {0};
+int dlg_ka_timer = 0;
+int dlg_ka_interval = 0;
+
 /* db stuff */
 static str db_url = str_init(DEFAULT_DB_URL);
 static unsigned int db_update_period = DB_DEFAULT_UPDATE_PERIOD;
 
 static int pv_get_dlg_count( struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
+
+void dlg_ka_timer_exec(unsigned int ticks, void* param);
 
 /* commands wrappers and fixups */
 static int fixup_profile(void** param, int param_no);
@@ -151,6 +158,7 @@ static int w_get_profile_size3(struct sip_msg*, char*, char*, char*);
 static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2);
 static int w_dlg_resetflag(struct sip_msg *msg, char *flag, str *s2);
 static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2);
+static int w_dlg_set_property(struct sip_msg *msg, char *prop, char *s2);
 static int w_dlg_manage(struct sip_msg*, char*, char*);
 static int w_dlg_bye(struct sip_msg*, char*, char*);
 static int w_dlg_refer(struct sip_msg*, char*, char*);
@@ -200,6 +208,8 @@ static cmd_export_t cmds[]={
 	{"dlg_set_timeout", (cmd_function)w_dlg_set_timeout,  1,fixup_igp_null,
 			0, ANY_ROUTE },
 	{"dlg_set_timeout", (cmd_function)w_dlg_set_timeout,  3,fixup_igp_all,
+			0, ANY_ROUTE },
+	{"dlg_set_property", (cmd_function)w_dlg_set_property,1,fixup_spve_null,
 			0, ANY_ROUTE },
 	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
 	{0,0,0,0,0,0}
@@ -254,6 +264,9 @@ static param_export_t mod_params[]={
 	{ "initial_cbs_inscript",  INT_PARAM, &initial_cbs_inscript     },
 	{ "send_bye",              INT_PARAM, &dlg_send_bye             },
 	{ "wait_ack",              INT_PARAM, &dlg_wait_ack             },
+	{ "xavp_cfg",              STR_PARAM, &dlg_xavp_cfg.s           },
+	{ "ka_timer",              INT_PARAM, &dlg_ka_timer             },
+	{ "ka_interval",           INT_PARAM, &dlg_ka_interval          },
 	{ 0,0,0 }
 };
 
@@ -478,6 +491,9 @@ static int mod_init(void)
 	vars_key_column.len = strlen(vars_key_column.s);
 	vars_value_column.len = strlen(vars_value_column.s);
 
+	if(dlg_xavp_cfg.s!=NULL)
+		dlg_xavp_cfg.len = strlen(dlg_xavp_cfg.s);
+
 	/* param checkings */
 	if (dlg_flag==-1) {
 		LM_ERR("no dlg flag set!!\n");
@@ -664,6 +680,8 @@ static int mod_init(void)
 	}
 
 	destroy_dlg_callbacks( DLGCB_LOADED );
+	if(dlg_ka_timer>0 && dlg_ka_interval>0)
+		register_sync_timers(1);
 
 	return 0;
 }
@@ -672,6 +690,15 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	dlg_db_mode = dlg_db_mode_param;
+
+	if(rank==PROC_MAIN && dlg_ka_timer>0 && dlg_ka_interval>0)
+	{
+		if(fork_sync_timer(PROC_TIMER, "Dialog KA Timer", 1 /*socks flag*/,
+				dlg_ka_timer_exec, NULL, dlg_ka_interval /*sec*/)<0) {
+			LM_ERR("failed to start ka timer routine as process\n");
+			return -1; /* error */
+		}
+	}
 
 	if (rank==1) {
 		if_update_stat(dlg_enable_stats, active_dlgs, active_dlgs_cnt);
@@ -1104,6 +1131,53 @@ static int w_dlg_set_timeout(struct sip_msg *msg, char *pto, char *phe, char *ph
 	dlg->dflags |= DLG_FLAG_CHANGED;
 	dlg_release(dlg);
 	return 1;
+}
+
+static int w_dlg_set_property(struct sip_msg *msg, char *prop, char *s2)
+{
+	dlg_ctx_t *dctx;
+	dlg_cell_t *d;
+	str val;
+
+	if(fixup_get_svalue(msg, (gparam_t*)prop, &val)!=0)
+	{
+		LM_ERR("no property value\n");
+		return -1;
+	}
+	if(val.len<=0)
+	{
+		LM_ERR("empty property value\n");
+		return -1;
+	}
+	if ( (dctx=dlg_get_dlg_ctx())==NULL )
+		return -1;
+
+	if(val.len==6 && strncmp(val.s, "ka-src", 6)==0) {
+		dctx->iflags |= DLG_IFLAG_KA_SRC;
+		d = dlg_get_by_iuid(&dctx->iuid);
+		if(d!=NULL) {
+			d->iflags |= DLG_IFLAG_KA_SRC;
+			dlg_release(d);
+		}
+	} else if(val.len==6 && strncmp(val.s, "ka-dst", 6)==0) {
+		dctx->iflags |= DLG_IFLAG_KA_DST;
+		d = dlg_get_by_iuid(&dctx->iuid);
+		if(d!=NULL) {
+			d->iflags |= DLG_IFLAG_KA_DST;
+			dlg_release(d);
+		}
+	} else {
+		LM_ERR("unknown property value [%.*s]\n", val.len, val.s);
+		return -1;
+	}
+
+	return 1;
+}
+
+
+void dlg_ka_timer_exec(unsigned int ticks, void* param)
+{
+	dlg_ka_run(ticks);
 }
 
 static int fixup_dlg_bye(void** param, int param_no)

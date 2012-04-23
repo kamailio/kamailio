@@ -45,6 +45,7 @@
 
 #include "../../locking.h"
 #include "../../lib/kmi/mi.h"
+#include "../../timer.h"
 #include "dlg_timer.h"
 #include "dlg_cb.h"
 
@@ -82,6 +83,8 @@
 
 /* internal flags stored in db */
 #define DLG_IFLAG_TIMEOUTBYE        (1<<0) /*!< send bye on time-out */
+#define DLG_IFLAG_KA_SRC            (1<<1) /*!< send keep alive to src */
+#define DLG_IFLAG_KA_DST            (1<<2) /*!< send keep alive to dst */
 
 #define DLG_CALLER_LEG         0 /*!< attribute that belongs to a caller leg */
 #define DLG_CALLEE_LEG         1 /*!< attribute that belongs to a callee leg */
@@ -153,6 +156,13 @@ typedef struct dlg_table
 	gen_lock_set_t     *locks;	/*!< lock table */
 } dlg_table_t;
 
+
+typedef struct dlg_ka {
+	dlg_iuid_t iuid;
+	ticks_t katime;
+	unsigned iflags;
+	struct dlg_ka *next;
+} dlg_ka_t;
 
 /*! global dialog table */
 extern dlg_table_t *d_table;
@@ -512,6 +522,10 @@ static inline int match_downstream_dialog(dlg_cell_t *dlg, str *callid, str *fta
  */
 void dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate);
 
+
+int dlg_ka_add(dlg_cell_t *dlg);
+
+int dlg_ka_run(ticks_t ti);
 
 /*!
  * \brief Output a dialog via the MI interface

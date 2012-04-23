@@ -127,7 +127,7 @@ error:
 
 
 
-/*callback function to handle responses to the BYE request */
+/* callback function to handle responses to the BYE request */
 void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 
 	struct dlg_cell* dlg;
@@ -200,6 +200,45 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 	dlg_iuid_sfree(iuid);
 }
 
+
+/* callback function to handle responses to the keep-alive request */
+void dlg_ka_cb(struct cell* t, int type, struct tmcb_params* ps){
+
+	dlg_cell_t* dlg;
+	dlg_iuid_t *iuid = NULL;
+
+	if(ps->param == NULL || *ps->param == NULL) {
+		LM_ERR("invalid parameter\n");
+		return;
+	}
+
+	if(ps->code < 200) {
+		LM_DBG("receiving a provisional reply\n");
+		return;
+	}
+
+	LM_DBG("receiving a final reply %d\n",ps->code);
+
+	iuid = (dlg_iuid_t*)(*ps->param);
+	dlg = dlg_get_by_iuid(iuid);
+	if(dlg==0) {
+		dlg_iuid_sfree(iuid);
+		return;
+	}
+
+	if(ps->code==408 || ps->code==481) {
+		if(update_dlg_timer(&dlg->tl, 10)<0) {
+			LM_ERR("failed to update dialog lifetime\n");
+			goto done;
+		}
+		dlg->lifetime = 10;
+		dlg->dflags |= DLG_FLAG_CHANGED;
+	}
+
+done:
+	dlg_unref(dlg, 1);
+	dlg_iuid_sfree(iuid);
+}
 
 
 static inline int build_extra_hdr(struct dlg_cell * cell, str *extra_hdrs,
@@ -287,6 +326,70 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 err:
 	if(dialog_info)
 		free_tm_dlg(dialog_info);
+	return -1;
+}
+
+
+/* send keep-alive
+ * dlg - pointer to a struct dlg_cell
+ * dir - direction: the request will be sent to:
+ * 		DLG_CALLER_LEG (0): caller
+ * 		DLG_CALLEE_LEG (1): callee
+ */
+int dlg_send_ka(dlg_cell_t *dlg, int dir, str *hdrs)
+{
+	uac_req_t uac_r;
+	dlg_t* di;
+	str met = {"OPTIONS", 7};
+	int result;
+	dlg_iuid_t *iuid = NULL;
+
+	/* do not send KA request for non-confirmed dialogs (not supported) */
+	if (dlg->state != DLG_STATE_CONFIRMED) {
+		LM_DBG("skipping non-confirmed dialogs\n");
+		return 0;
+	}
+
+	/* build tm dlg by direction */
+	if ((di = build_dlg_t(dlg, dir)) == 0){
+		LM_ERR("failed to create dlg_t\n");
+		goto err;
+	}
+
+	/* tm increases cseq value, decrease it no to make it invalid
+	 * - dialog is ended on timeout (408) or C/L does not exist (481) */
+	if(di->loc_seq.value>1)
+		di->loc_seq.value -= 2;
+	else
+		di->loc_seq.value -= 1;
+
+	LM_DBG("sending BYE to %s\n", (dir==DLG_CALLER_LEG)?"caller":"callee");
+
+	iuid = dlg_get_iuid_shm_clone(dlg);
+	if(iuid==NULL)
+	{
+		LM_ERR("failed to create dialog unique id clone\n");
+		goto err;
+	}
+
+	memset(&uac_r,'\0', sizeof(uac_req_t));
+	set_uac_req(&uac_r, &met, hdrs, NULL, di, TMCB_LOCAL_COMPLETED,
+				dlg_ka_cb, (void*)iuid);
+	result = d_tmb.t_request_within(&uac_r);
+
+	if(result < 0){
+		LM_ERR("failed to send the BYE request\n");
+		goto err;
+	}
+
+	free_tm_dlg(di);
+
+	LM_DBG("keep-alive sent to %s\n", (dir==0)?"caller":"callee");
+	return 0;
+
+err:
+	if(di)
+		free_tm_dlg(di);
 	return -1;
 }
 
