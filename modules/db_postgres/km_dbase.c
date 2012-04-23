@@ -130,7 +130,7 @@ static void db_postgres_free_query(const db1_con_t* _con);
  */
 db1_con_t *db_postgres_init(const str* _url)
 {
-	return db_do_init(_url, (void*) db_postgres_new_connection, 0);
+	return db_do_init(_url, (void*) db_postgres_new_connection);
 }
 
 /*!
@@ -139,9 +139,9 @@ db1_con_t *db_postgres_init(const str* _url)
  * \return database connection on success, NULL on error
  * \note this function must be called prior to any database functions
  */
-db1_con_t *db_postgres_init_nopool(const str* _url)
+db1_con_t *db_postgres_init2(const str* _url, db_pooling_t pooling)
 {
-	return db_do_init(_url, (void*) db_postgres_new_connection, 1);
+	return db_do_init2(_url, (void*) db_postgres_new_connection, pooling);
 }
 
 /*!

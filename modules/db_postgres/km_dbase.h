@@ -49,7 +49,7 @@ db1_con_t* db_postgres_init(const str* _url);
 /*
  * Initialize database connection - no pooling
  */
-db1_con_t* db_postgres_init_nopool(const str* _url);
+db1_con_t* db_postgres_init2(const str* _url, db_pooling_t pooling);
 
 /*
  * Close a database connection

@@ -85,7 +85,7 @@ int db_postgres_bind_api(db_func_t *dbb)
 
 	dbb->use_table        = db_postgres_use_table;
 	dbb->init             = db_postgres_init;
-	dbb->init_nopool      = db_postgres_init_nopool;
+	dbb->init2            = db_postgres_init2;
 	dbb->close            = db_postgres_close;
 	dbb->query            = db_postgres_query;
 	dbb->fetch_result     = db_postgres_fetch_result;
