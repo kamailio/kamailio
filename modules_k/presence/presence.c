@@ -787,6 +787,7 @@ static struct mi_root* mi_cleanup(struct mi_root* cmd, void* param)
 	
 	(void)msg_watchers_clean(0,0);
 	(void)msg_presentity_clean(0,0);
+	(void)timer_db_update(0,0);
 		
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
