@@ -878,13 +878,14 @@ pres_update_presentity("$xcapuri(u=>xuid)", "$xcapuri(u=>uri_adoc)", "$xcapuri(u
 		<function moreinfo="none">cleanup</function>
 	  </title>
 	  <para>
-		Manually triggers the cleanup functions for watchers and presentity tables. Useful if you
-		have set <varname>clean_period</varname> to zero or less.
+		Manually triggers the cleanup functions for the active_watchers, presentity,
+		and watchers tables. Useful if you have set <varname>clean_period</varname>
+		and/or <varname>db_update_period</varname> to zero or less.
 	  </para>
 	  <para>
 		Name: <emphasis>cleanup</emphasis>
 	  </para>
-	  <para>Parameters:<emphasis>none.</emphasis>emphasis></para>
+	  <para>Parameters: <emphasis>none</emphasis></para>
 
 	  <para>
 		MI FIFO Command Format:
@@ -894,10 +895,7 @@ pres_update_presentity("$xcapuri(u=>xuid)", "$xcapuri(u=>uri_adoc)", "$xcapuri(u
 		_empty_line_
 	  </programlisting>
 	</section>
-
-   	</section>
-
-
+</section>
 
 <section>
 	<title>Installation</title>

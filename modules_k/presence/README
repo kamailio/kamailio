@@ -728,12 +728,13 @@ pres_update_presentity("$xcapuri(u=>xuid)", "$xcapuri(u=>uri_adoc)", "$xcapuri(u
 
 5.2.  cleanup
 
-   Manually triggers the cleanup functions for watchers and presentity
-   tables. Useful if you have set clean_period to zero or less.
+   Manually triggers the cleanup functions for the active_watchers,
+   presentity, and watchers tables. Useful if you have set clean_period
+   and/or db_update_period to zero or less.
 
    Name: cleanup
 
-   Parameters:none.emphasis>
+   Parameters: none
 
    MI FIFO Command Format:
                 :cleanup:fifo_reply
