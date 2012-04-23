@@ -256,24 +256,24 @@ static param_export_t params[]={
 };
 
 static mi_export_t mi_cmds[] = {
-	{ "cleanup",		mi_cleanup,		0,  0,  mi_child_init},
+	{ "rls_cleanup",	mi_cleanup,		0,  0,  mi_child_init},
 	{ 0,			0,			0,  0,  0}
 };
 
 /** module exports */
 struct module_exports exports= {
-	"rls",  					/* module name */
-	DEFAULT_DLFLAGS,				/* dlopen flags */
-	cmds,						/* exported functions */
-	params,						/* exported parameters */
-	0,						/* exported statistics */
-	mi_cmds,      					/* exported MI functions */
-	0,						/* exported pseudo-variables */
-	0,						/* extra processes */
-	mod_init,					/* module initialization function */
-	0,						/* response handling function */
-	(destroy_function) destroy,			/* destroy function */
-	child_init					/* per-child init function */
+	"rls",  			/* module name */
+	DEFAULT_DLFLAGS,		/* dlopen flags */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,				/* exported statistics */
+	mi_cmds,      			/* exported MI functions */
+	0,				/* exported pseudo-variables */
+	0,				/* extra processes */
+	mod_init,			/* module initialization function */
+	0,				/* response handling function */
+	(destroy_function) destroy,	/* destroy function */
+	child_init			/* per-child init function */
 };
 
 /**
@@ -292,6 +292,12 @@ static int mod_init(void)
 	char* sep;
 
 	LM_DBG("start\n");
+
+	if (register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
 
 	if (dbmode <RLS_DB_DEFAULT || dbmode > RLS_DB_ONLY)
 	{
