@@ -128,11 +128,11 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 		goto error;
 	}
 
-	if (dbmode == RLS_DB_ONLY)
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.start_transaction)
 	{
-		if (db_begin(&rlpres_dbf, rlpres_db) < 0)
+		if (rlpres_dbf.start_transaction(rlpres_db) < 0)
 		{
-			LM_ERR("in BEGIN\n");
+			LM_ERR("in start_transaction\n");
 			goto error;
 		}
 	}
@@ -266,11 +266,11 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 		goto error;
 	}
 
-	if (dbmode == RLS_DB_ONLY)
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.end_transaction)
 	{
-		if (db_commit(&rlpres_dbf, rlpres_db) < 0)
+		if (rlpres_dbf.end_transaction(rlpres_db) < 0)
 		{
-			LM_ERR("in COMMIT\n");
+			LM_ERR("in end_transaction\n");
 			goto error;
 		}
 	}
@@ -289,7 +289,6 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 
 	return 0;
 error:
-
 	if(rlmi_cont)
 	{
 		if(rlmi_cont->s)
@@ -308,6 +307,12 @@ error:
 		rlpres_dbf.free_result(rlpres_db, result);
 	if(rlsubs_did.s)
 		pkg_free(rlsubs_did.s);
+
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.abort_transaction)
+	{
+		if (rlpres_dbf.abort_transaction(rlpres_db) < 0)
+			LM_ERR("in abort_transaction");
+	}
 	return -1;
 }
 

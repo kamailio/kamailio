@@ -893,10 +893,13 @@ static void timer_send_full_state_notifies(int round)
 		goto done;
 	}
 
-	if (db_begin(&rls_dbf, rls_db) < 0)
+	if (rls_dbf.start_transaction)
 	{
-		LM_ERR("in BEGIN\n");
-		goto done;
+		if (rls_dbf.start_transaction(rls_db) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto done;
+		}
 	}
 
 	/* Step 1: Find rls_watchers that require full-state notification */
@@ -918,10 +921,13 @@ static void timer_send_full_state_notifies(int round)
 		goto done;
 	}
 
-	if (db_commit(&rls_dbf, rls_db) < 0)
+	if (rls_dbf.end_transaction)
 	{
-		LM_ERR("in COMMIT\n");
-		goto done;
+		if (rls_dbf.end_transaction(rls_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto done;
+		}
 	}
 
 	/* Step 3: Full-state notify each watcher we found */
@@ -1000,6 +1006,11 @@ done:
 		rls_dbf.free_result(rls_db, result);
 	if (doc != NULL)
 		xmlFreeDoc(doc);
+	if (rls_dbf.abort_transaction)
+	{
+		if (rls_dbf.abort_transaction(rls_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
 }
 
 static void timer_send_update_notifies(int round)
@@ -1037,12 +1048,12 @@ static void timer_send_update_notifies(int round)
 		goto done;
 	}
 
-	if (dbmode == RLS_DB_ONLY)
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.start_transaction)
 	{
-		if (db_begin(&rlpres_dbf, rlpres_db) < 0)
+		if (rlpres_dbf.start_transaction(rlpres_db) < 0)
 		{
-			LM_ERR("in BEGIN\n");
-			goto error;
+			LM_ERR("in start_transaction\n");
+			goto done;
 		}
 	}
 
@@ -1060,25 +1071,29 @@ static void timer_send_update_notifies(int round)
 					update_vals, 1, 1)< 0)
 	{
 		LM_ERR("in sql update\n");
-		goto error;
+		goto done;
 	}
 
-	if (dbmode == RLS_DB_ONLY)
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.end_transaction)
 	{
-		if (db_commit(&rlpres_dbf, rlpres_db) < 0)
+		if (rlpres_dbf.end_transaction(rlpres_db) < 0)
 		{
-			LM_ERR("in COMMIT\n");
-			goto error;
+			LM_ERR("in end_transaction\n");
+			goto done;
 		}
 	}
 
 	send_notifies(result, did_col, resource_uri_col, auth_state_col, reason_col,
                   pres_state_col, content_type_col);
-error:
 done:
 	if(result)
 		rlpres_dbf.free_result(rlpres_db, result);
 
+	if (dbmode == RLS_DB_ONLY && rls_dbf.abort_transaction)
+	{
+		if (rlpres_dbf.abort_transaction(rlpres_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
 }
 
 void timer_send_notify(unsigned int ticks,void *param)
