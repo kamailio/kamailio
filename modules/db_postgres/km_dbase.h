@@ -113,6 +113,21 @@ int db_postgres_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrow
 int db_postgres_affected_rows(const db1_con_t* _h);
 
 /*
+ * SQL BEGIN
+ */
+int db_postgres_start_transaction(db1_con_t* _h);
+
+/*
+ * SQL COMMIT
+ */
+int db_postgres_end_transaction(db1_con_t* _h);
+
+/*
+ * SQL ROLLBACK
+ */
+int db_postgres_abort_transaction(db1_con_t* _h);
+
+/*
  * Store name of table that will be used by
  * subsequent database functions
  */

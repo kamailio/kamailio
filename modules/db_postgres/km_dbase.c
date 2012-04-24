@@ -624,6 +624,107 @@ int db_postgres_affected_rows(const db1_con_t* _h)
 	return CON_AFFECTED(_h);
 }
 
+/**
+ * Starts a single transaction that will consist of one or more queries (SQL BEGIN)
+ * \param _h database handle
+ * \return 0 on success, negative on failure
+ */
+int db_postgres_start_transaction(db1_con_t* _h)
+{
+	db1_res_t *res = NULL;
+	str query_str = str_init("BEGIN");
+	
+	if (!_h) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (CON_TRANSACTION(_h) == 1) {
+		LM_ERR("transaction already started\n");
+		return -1;
+	}
+
+	if (db_postgres_raw_query(_h, &query_str, &res) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		return -1;
+	}
+
+	if (res) db_postgres_free_result(_h, res);
+
+	CON_TRANSACTION(_h) = 1;
+	return 0;
+}
+
+/**
+ * Ends a transaction and commits the changes (SQL COMMIT)
+ * \param _h database handle
+ * \return 0 on success, negative on failure
+ */
+int db_postgres_end_transaction(db1_con_t* _h)
+{
+	db1_res_t *res = NULL;
+	str query_str = str_init("COMMIT");
+	
+	if (!_h) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (CON_TRANSACTION(_h) == 0) {
+		LM_ERR("transaction not in progress\n");
+		return -1;
+	}
+
+	if (db_postgres_raw_query(_h, &query_str, &res) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		return -1;
+	}
+
+	if (res) db_postgres_free_result(_h, res);
+
+	/* Only _end_ the transaction after the raw_query.  That way, if the
+ 	   raw_query fails, and the calling module does an abort_transaction()
+	   to clean-up, a ROLLBACK will be sent to the DB. */
+	CON_TRANSACTION(_h) = 0;
+	return 0;
+}
+
+/**
+ * Ends a transaction and rollsback the changes (SQL ROLLBACK)
+ * \param _h database handle
+ * \return 1 if there was something to rollback, 0 if not, negative on failure
+ */
+int db_postgres_abort_transaction(db1_con_t* _h)
+{
+	db1_res_t *res = NULL;
+	str query_str = str_init("ROLLBACK");
+	
+	if (!_h) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (CON_TRANSACTION(_h) == 0) {
+		LM_DBG("nothing to rollback\n");
+		return 0;
+	}
+
+	/* Whether the rollback succeeds or not we need to _end_ the
+ 	   transaction now or all future starts will fail */
+	CON_TRANSACTION(_h) = 0;
+
+	if (db_postgres_raw_query(_h, &query_str, &res) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		return -1;
+	}
+
+	if (res) db_postgres_free_result(_h, res);
+
+	return 1;
+}
 
 /*!
  * Store name of table that will be used by subsequent database functions
