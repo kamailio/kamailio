@@ -341,6 +341,31 @@ typedef int (*db_insert_delayed_f) (const db1_con_t* _h, const db_key_t* _k,
  */
 typedef int (*db_affected_rows_f) (const db1_con_t* _h);
 
+/**
+ * \brief Start a single transaction that will consist of one or more queries. 
+ *
+ * \param _h structure representing database connection
+ * \return 0 if everything is OK, otherwise returns < 0
+ */
+typedef int (*db_start_transaction_f) (db1_con_t* _h);
+
+/**
+ * \brief End a transaction. 
+ *
+ * \param _h structure representing database connection
+ * \return 0 if everything is OK, otherwise returns < 0
+ */
+typedef int (*db_end_transaction_f) (db1_con_t* _h);
+
+/**
+ * \brief Abort a transaction.
+ *
+ * Use this function if you have an error after having started a transaction
+ * and you want to rollback any uncommitted changes before continuing.
+ * \param _h structure representing database connection
+ * \return 1 if there was something to rollbak, 0 if not, negative on failure
+ */
+typedef int (*db_abort_transaction_f) (db1_con_t* _h);
 
 /**
  * \brief Database module callbacks
@@ -368,6 +393,9 @@ typedef struct db_func {
 	db_insert_update_f insert_update; /* Insert into table, update on duplicate key */ 
 	db_insert_delayed_f insert_delayed;           /* Insert delayed into table */
 	db_affected_rows_f affected_rows; /* Numer of affected rows for last query */
+	db_start_transaction_f start_transaction; /* Start a single transaction consisting of multiple queries */
+	db_end_transaction_f end_transaction; /* End a transaction */
+	db_abort_transaction_f abort_transaction; /* Abort a transaction */
 } db_func_t;
 
 
@@ -517,23 +545,5 @@ int db_fetch_query(db_func_t *dbf, int frows,
  */
 int db_fetch_next(db_func_t *dbf, int frows, db1_con_t* _h,
 		db1_res_t** _r);
-
-/**
- * \brief wrapper around db raw_query to perform BEGIN
- * \return -1 error; 0 OK with no raw_query capability; 1 OK with raw_query capability
- */
-int db_begin(db_func_t *dbf, db1_con_t* _h);
-
-/**
- * \brief wrapper around db raw_query to perform COMMIT
- * \return -1 error; 0 OK with no raw_query capability; 1 OK with raw_query capability
- */     
-int db_commit(db_func_t *dbf, db1_con_t* _h);
-
-/**
- * \wrapper around db raw_query to perform ROLLBACK
- * \return -1 error; 0 OK with no raw_query capability; 1 OK with raw_query capability
- */
-int db_rollback(db_func_t *dbf, db1_con_t* _h);
 
 #endif /* DB1_H */

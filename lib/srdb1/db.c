@@ -242,6 +242,12 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 			"db_insert_update", 2, 0);
 		dbf.insert_delayed = (db_insert_delayed_f)find_mod_export(tmp,
 			"db_insert_delayed", 2, 0);
+		dbf.start_transaction = (db_start_transaction_f)find_mod_export(tmp,
+			"db_start_transaction", 1, 0);
+		dbf.end_transaction = (db_end_transaction_f)find_mod_export(tmp,
+			"db_end_transaction", 1, 0);
+		dbf.abort_transaction = (db_abort_transaction_f)find_mod_export(tmp,
+			"db_abort_transaction", 1, 0);
 	}
 	if(db_check_api(&dbf, tmp)!=0)
 		goto error;
