@@ -187,7 +187,7 @@ static str type_column 		= str_init("type");
 static str node_column 		= str_init("node");  
 static str msg_column 		= str_init("msg");   
 static str capture_node 	= str_init("homer01");     	
-
+static str star_contact		= str_init("*");
 
 int raw_sock_desc = -1; /* raw socket used for ip packets */
 unsigned int raw_sock_children = 1;
@@ -1136,12 +1136,23 @@ static int sip_capture(struct sip_msg *msg, char *s1, char *s2)
 
               cb = (contact_body_t*)msg->contact->parsed;
 
-              if(cb && cb->contacts) {
-                  if(parse_uri( cb->contacts->uri.s, cb->contacts->uri.len, &contact)<0){
-                        LOG(L_ERR, "ERROR: do_action: bad contact dropping"" packet\n");
-                        return -1;
-                  }
-              }
+              if(cb) {
+            	    if (cb->contacts) {
+			if(parse_uri( cb->contacts->uri.s, cb->contacts->uri.len, &contact)<0){
+                		LOG(L_ERR, "ERROR: do_action: bad contact dropping"" packet\n");
+                 	    	return -1;
+                  	}
+              	    } else {
+              		if(cb->star){ /* in the case Contact is "*" */
+			    memset(&contact, 0, sizeof(contact));
+			    contact.user.s =  star_contact.s;
+			    contact.user.len = star_contact.len;
+			} else {
+			    LOG(L_NOTICE,"Invalid contact\n");
+			    memset(&contact, 0, sizeof(contact));
+			}
+		    }
+	    }
         }
 
 	/* get header x-cid: */
