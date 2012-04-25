@@ -322,8 +322,8 @@ if (uri=~"sip:+40") /* calls to Romania */ {
         <section>
             <title>Overview</title>
                 <para>
-                It is possible to generate and log Call Data Records (CDRs) directly from &kamailio;
-                in addition to transaction-based logging. Apart from a basic set of CDR fields which
+                In addition to transaction-based logging, it is possible to generate and log Call Data
+                Records (CDRs) directly from &kamailio;. Apart from a basic set of CDR fields which
                 are always included (covering start time, end time, and duration), the approach allows
                 flexible specification of additional fields that should be taken into account using
                 the configuration script. This is very similar to how transaction-based logging may
@@ -347,6 +347,12 @@ if (uri=~"sip:+40") /* calls to Romania */ {
                 well. Except for pseudo-variables valid in the call-final transaction, however,
                 information given will not be stored in the CDR as they cannot be accessed by the
                 end of the call when the CDR is logged.
+                </para>
+
+                <para>
+                Note that CDR generation does not involve any kind of database storage (yet). In order
+                to persist the CDRs into a database you will have to set up an exterior process (i.e.,
+                a script living outside of &kamailio;) and implement the storage task yourself.
                 </para>
         </section>
 		<section id="cdr-extra-id">
