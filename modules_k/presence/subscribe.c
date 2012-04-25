@@ -1078,6 +1078,12 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
 		LM_ERR("cannot parse contact header\n");
 		goto error;
 	}
+	if(b->star || b->contacts==NULL)
+	{
+		LM_ERR("Wrong contact header\n");
+		goto error;
+	}
+
 	subs->contact = b->contacts->uri;
 	
 	LM_DBG("subs->contact= %.*s - len = %d\n",subs->contact.len,
