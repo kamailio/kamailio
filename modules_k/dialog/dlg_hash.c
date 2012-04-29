@@ -150,9 +150,10 @@ int dlg_ka_add(dlg_cell_t *dlg)
 	if(*dlg_ka_list_tail!=NULL)
 		(*dlg_ka_list_tail)->next = dka;
 	if(*dlg_ka_list_head==NULL)
-		*dlg_ka_list_tail = dka;
+		*dlg_ka_list_head = dka;
 	*dlg_ka_list_tail = dka;
 	lock_release(dlg_ka_list_lock);
+	LM_DBG("added dlg[%d,%d] to KA list\n", dlg->h_entry, dlg->h_id);
 	return 0;
 }
 
@@ -176,6 +177,12 @@ int dlg_ka_run(ticks_t ti)
 			return 0;
 		}
 		dka = *dlg_ka_list_head;
+#if 0
+		LM_DBG("dlg ka timer at %lu for"
+				" dlg[%u,%u] on %lu\n", (unsigned long)ti,
+				dka->iuid.h_entry, dka->iuid.h_id,
+				(unsigned long)dka->katime);
+#endif
 		if(dka->katime>ti) {
 			lock_release(dlg_ka_list_lock);
 			return 0;

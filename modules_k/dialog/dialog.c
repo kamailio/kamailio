@@ -694,7 +694,7 @@ static int child_init(int rank)
 	if(rank==PROC_MAIN && dlg_ka_timer>0 && dlg_ka_interval>0)
 	{
 		if(fork_sync_timer(PROC_TIMER, "Dialog KA Timer", 1 /*socks flag*/,
-				dlg_ka_timer_exec, NULL, dlg_ka_interval /*sec*/)<0) {
+				dlg_ka_timer_exec, NULL, dlg_ka_timer /*sec*/)<0) {
 			LM_ERR("failed to start ka timer routine as process\n");
 			return -1; /* error */
 		}
