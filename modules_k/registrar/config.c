@@ -40,7 +40,7 @@ struct cfg_group_registrar	default_registrar_cfg = {
 		0,	/* case_sensitive */
 		Q_UNSPECIFIED,	/* default_q */
 		1,	/* append_branches */
-		""	/* realm_pref */
+		STR_NULL	/* realm_pref */
 	    };
 
 void	*registrar_cfg = &default_registrar_cfg;
@@ -64,7 +64,7 @@ cfg_def_t	registrar_cfg_def[] = {
 		"The parameter represents default q value for new contacts."}, /* Q_UNSPECIFIED is -1 */
 	{"append_branches",	CFG_VAR_INT ,			0, 0, 0, 0,
 		"If set to 1(default), lookup will put all contacts found in msg structure"},
-	{"realm_pref",		CFG_VAR_STRING ,			0, 0, 0, 0,
+	{"realm_pref",		CFG_VAR_STR,			0, 0, 0, 0,
 		"Realm prefix to be removed. Default is \"\""},
 	{0, 0, 0, 0, 0, 0}
 };

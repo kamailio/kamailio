@@ -202,7 +202,7 @@ static param_export_t params[] = {
 	{"append_branches",    INT_PARAM, &default_registrar_cfg.append_branches		},
 	{"case_sensitive",     INT_PARAM, &default_registrar_cfg.case_sensitive			},
 	/*	{"tcp_persistent_flag",INT_PARAM, &tcp_persistent_flag }, */
-	{"realm_prefix",       STR_PARAM, &default_registrar_cfg.realm_pref          		},
+	{"realm_prefix",       PARAM_STR, &default_registrar_cfg.realm_pref          		},
 	{"min_expires",        INT_PARAM, &default_registrar_cfg.min_expires			},
 	{"max_expires",        INT_PARAM, &default_registrar_cfg.max_expires			},
 	{"received_param",     STR_PARAM, &rcv_param           					},

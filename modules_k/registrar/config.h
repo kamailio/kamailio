@@ -36,7 +36,7 @@ struct cfg_group_registrar {
 	unsigned int	case_sensitive;
 	qvalue_t	default_q;
 	unsigned int	append_branches;
-	char* 		realm_pref;
+	str 		realm_pref;
 };
 
 extern struct cfg_group_registrar	default_registrar_cfg;
