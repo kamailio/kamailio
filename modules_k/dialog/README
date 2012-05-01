@@ -86,6 +86,8 @@ Alex Balashov
               5.43. initial_cbs_inscript (int)
               5.44. send_bye (int)
               5.45. wait_ack (int)
+              5.46. ka_timer (int)
+              5.47. ka_interval (int)
 
         6. Functions
 
@@ -103,6 +105,7 @@ Alex Balashov
               6.12. dlg_get(callid, ftag, ttag)
               6.13. is_known_dlg()
               6.14. dlg_set_timeout(timeout [, h_entry, h_id])
+              6.15. dlg_set_property(attr)
 
         7. Statistics
 
@@ -205,20 +208,23 @@ Alex Balashov
    1.43. Set initial_cbs_inscript parameter
    1.44. Set send_bye parameter
    1.45. Set wait_ack parameter
-   1.46. set_dlg_profile usage
-   1.47. unset_dlg_profile usage
-   1.48. is_in_profile usage
-   1.49. get_profile_size usage
-   1.50. dlg_isflagset usage
-   1.51. dlg_setflag usage
-   1.52. dlg_resetflag usage
-   1.53. dlg_bye usage
-   1.54. dlg_refer usage
-   1.55. dlg_manage usage
-   1.56. dlg_bridge usage
-   1.57. dlg_get usage
-   1.58. is_known_dlg() usage
-   1.59. dlg_set_timeout usage
+   1.46. Set ka_timer parameter
+   1.47. Set ka_interval parameter
+   1.48. set_dlg_profile usage
+   1.49. unset_dlg_profile usage
+   1.50. is_in_profile usage
+   1.51. get_profile_size usage
+   1.52. dlg_isflagset usage
+   1.53. dlg_setflag usage
+   1.54. dlg_resetflag usage
+   1.55. dlg_bye usage
+   1.56. dlg_refer usage
+   1.57. dlg_manage usage
+   1.58. dlg_bridge usage
+   1.59. dlg_get usage
+   1.60. is_known_dlg() usage
+   1.61. dlg_set_timeout usage
+   1.62. dlg_set_property usage
 
 Chapter 1. Admin Guide
 
@@ -279,6 +285,8 @@ Chapter 1. Admin Guide
         5.43. initial_cbs_inscript (int)
         5.44. send_bye (int)
         5.45. wait_ack (int)
+        5.46. ka_timer (int)
+        5.47. ka_interval (int)
 
    6. Functions
 
@@ -296,6 +304,7 @@ Chapter 1. Admin Guide
         6.12. dlg_get(callid, ftag, ttag)
         6.13. is_known_dlg()
         6.14. dlg_set_timeout(timeout [, h_entry, h_id])
+        6.15. dlg_set_property(attr)
 
    7. Statistics
 
@@ -473,6 +482,8 @@ Chapter 1. Admin Guide
    5.43. initial_cbs_inscript (int)
    5.44. send_bye (int)
    5.45. wait_ack (int)
+   5.46. ka_timer (int)
+   5.47. ka_interval (int)
 
 5.1. enable_stats (integer)
 
@@ -1051,6 +1062,34 @@ modparam("dialog", "send_bye", 1)
 modparam("dialog", "wait_ack", 0)
 ...
 
+5.46. ka_timer (int)
+
+   Keep-alive timer step - how often to execute the callback to send
+   dialog keep alives (SIP OPTIONS requests within dialog). The value
+   represents the number of seconds.
+
+   Default value is "0" (no keep alive).
+
+   Example 1.46. Set ka_timer parameter
+...
+modparam("dialog", "ka_timer", 10)
+...
+
+5.47. ka_interval (int)
+
+   The interval between keep alives within dialog (SIP OPTIONS requests),
+   sent to caller or callee. The keep alive request will be sent by the
+   first callback fired by KA timer after the ka_interval elapsed from
+   dialog setup or previous keep-alive. The value represents the number of
+   seconds.
+
+   Default value is "0" (no keep alive).
+
+   Example 1.47. Set ka_interval parameter
+...
+modparam("dialog", "ka_interval", 300)
+...
+
 6. Functions
 
    6.1. set_dlg_profile(profile,[value])
@@ -1067,6 +1106,7 @@ modparam("dialog", "wait_ack", 0)
    6.12. dlg_get(callid, ftag, ttag)
    6.13. is_known_dlg()
    6.14. dlg_set_timeout(timeout [, h_entry, h_id])
+   6.15. dlg_set_property(attr)
 
 6.1. set_dlg_profile(profile,[value])
 
@@ -1084,7 +1124,7 @@ modparam("dialog", "wait_ack", 0)
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.46. set_dlg_profile usage
+   Example 1.48. set_dlg_profile usage
 ...
 set_dlg_profile("inbound_call");
 set_dlg_profile("caller","$fu");
@@ -1103,7 +1143,7 @@ set_dlg_profile("caller","$fu");
    This function can be used from BRANCH_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.47. unset_dlg_profile usage
+   Example 1.49. unset_dlg_profile usage
 ...
 unset_dlg_profile("inbound_call");
 unset_dlg_profile("caller","$fu");
@@ -1126,7 +1166,7 @@ unset_dlg_profile("caller","$fu");
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.48. is_in_profile usage
+   Example 1.50. is_in_profile usage
 ...
 if (is_in_profile("inbound_call")) {
         log("this request belongs to a inbound call\n");
@@ -1155,7 +1195,7 @@ if (is_in_profile("caller","XX")) {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.49. get_profile_size usage
+   Example 1.51. get_profile_size usage
 ...
 if(get_profile_size("inbound_call","$avp(size)"))
     xlog("currently there are $avp(size) inbound calls\n");
@@ -1174,7 +1214,7 @@ if(get_profile_size("caller","$fu","$avp(size)"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.50. dlg_isflagset usage
+   Example 1.52. dlg_isflagset usage
 ...
 if(dlg_isflagset("1"))
 {
@@ -1192,7 +1232,7 @@ if(dlg_isflagset("1"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.51. dlg_setflag usage
+   Example 1.53. dlg_setflag usage
 ...
 dlg_setflag("1");
 ...
@@ -1207,7 +1247,7 @@ dlg_setflag("1");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.52. dlg_resetflag usage
+   Example 1.54. dlg_resetflag usage
 ...
 redlg_setflag("1");
 ...
@@ -1223,7 +1263,7 @@ redlg_setflag("1");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.53. dlg_bye usage
+   Example 1.55. dlg_bye usage
 ...
 dlg_bye("all");
 ...
@@ -1240,7 +1280,7 @@ dlg_bye("all");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.54. dlg_refer usage
+   Example 1.56. dlg_refer usage
 ...
 dlg_refer("caller", "sip:announcement@kamailio.org");
 ...
@@ -1253,7 +1293,7 @@ dlg_refer("caller", "sip:announcement@kamailio.org");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.55. dlg_manage usage
+   Example 1.57. dlg_manage usage
 ...
 modparam("dialog", "default_timeout", 100)
 ...
@@ -1281,7 +1321,7 @@ route {
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.56. dlg_bridge usage
+   Example 1.58. dlg_bridge usage
 ...
 dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    "sip:kamailio.org:5080");
@@ -1300,7 +1340,7 @@ dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.57. dlg_get usage
+   Example 1.59. dlg_get usage
 ...
 if(dlg_get("abcdef", "123", "456"))
 {
@@ -1324,7 +1364,7 @@ if(dlg_get("abcdef", "123", "456"))
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.58. is_known_dlg() usage
+   Example 1.60. is_known_dlg() usage
 ...
 if(!uri == myself) {
         if(is_known_dlg()) {
@@ -1348,12 +1388,37 @@ if(!uri == myself) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.59. dlg_set_timeout usage
+   Example 1.61. dlg_set_timeout usage
 ...
 if(dlg_set_timeout("180", "123", "456"))
 {
     ...
 }
+...
+
+6.15. dlg_set_property(attr)
+
+   Set a dialog property - an attribute that enable/disable various
+   behaviours (e.g., sending keep alive requests).
+
+   Meaning of the parameters is as follows:
+     * attr - name of property. It can be: 'ka-src' - send keep alive
+       OPTION requests to caller; 'ka-dst' - send keep alive OPTION
+       requests to callee.
+
+   If keep alive is enabled for a dialog, the module will send SIP OPTIONS
+   requests with CSeq lower or equal than last request within dialog, with
+   the scope of detecting if the destination is still in the call. If the
+   keep alive request results in a local timeout or '481 Call
+   Leg/Transaction Does Not Exist', then the dialog is ended from the
+   server.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.62. dlg_set_property usage
+...
+dlg_set_property("ka-src");
+dlg_set_property("ka-dst");
 ...
 
 7. Statistics

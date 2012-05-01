@@ -1160,6 +1160,52 @@ modparam("dialog", "wait_ack", 0)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>ka_timer</varname> (int)</title>
+		<para>
+			Keep-alive timer step - how often to execute the callback to
+			send dialog keep alives (SIP OPTIONS requests within dialog).
+			The value represents the number of seconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (no keep alive).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ka_timer</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "ka_timer", 10)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>ka_interval</varname> (int)</title>
+		<para>
+			The interval between keep alives within dialog (SIP OPTIONS
+			requests), sent to caller or callee. The keep alive request
+			will be sent by the first callback fired by KA timer after
+			the ka_interval elapsed from dialog setup or previous keep-alive.
+			The value represents the number of seconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (no keep alive).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ka_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "ka_interval", 300)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
@@ -1672,6 +1718,45 @@ if(dlg_set_timeout("180", "123", "456"))
 {
     ...
 }
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">dlg_set_property(attr)</function>
+		</title>
+		<para>
+			Set a dialog property - an attribute that enable/disable
+			various behaviours (e.g., sending keep alive requests).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>attr</emphasis> - name of property. It can be:
+				'ka-src' - send keep alive OPTION requests to caller;
+				'ka-dst' - send keep alive OPTION requests to callee.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			If keep alive is enabled for a dialog, the module will send
+			SIP OPTIONS requests with CSeq lower or equal than last request
+			within dialog, with the scope of detecting if the destination is
+			still in the call. If the keep alive request results in a local
+			timeout or '481 Call Leg/Transaction Does Not Exist', then the
+			dialog is ended from the server.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_set_property</function> usage</title>
+		<programlisting format="linespecific">
+...
+dlg_set_property("ka-src");
+dlg_set_property("ka-dst");
 ...
 </programlisting>
 		</example>
