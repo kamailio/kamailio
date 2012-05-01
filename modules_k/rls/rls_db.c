@@ -119,7 +119,7 @@ int delete_expired_subs_rlsdb( void )
 	db_op_t query_ops[1];
 	db_row_t *rows;
 	db1_res_t *result = NULL;
-	int n_query_cols = 0, n_result_cols = 0, n_update_cols = 0;
+	int n_query_cols = 0, n_result_cols = 0;
 	int r_callid_col = 0, r_to_tag_col = 0, r_from_tag_col = 0;
 	int i;
 	subs_t subs;
@@ -206,14 +206,13 @@ int delete_expired_subs_rlsdb( void )
 		query_vals[n_query_cols].val.str_val = subs.from_tag;
 		n_query_cols++;
 
-		update_cols[n_update_cols] = &str_updated_col;
-		update_vals[n_update_cols].type = DB1_INT;
-		update_vals[n_update_cols].nul = 0;
-		update_vals[n_update_cols].val.int_val = subs.updated;
-		n_update_cols++;
+		update_cols[0] = &str_updated_col;
+		update_vals[0].type = DB1_INT;
+		update_vals[0].nul = 0;
+		update_vals[0].val.int_val = subs.updated;
 
 		if(rls_dbf.update(rls_db, query_cols, 0, query_vals,
-			update_cols,update_vals,n_query_cols,n_update_cols) < 0)
+			update_cols,update_vals,n_query_cols, 1) < 0)
 		{
 			LM_ERR("db update failed for expired subs\n");
 			goto error;
