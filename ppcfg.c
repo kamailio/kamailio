@@ -76,7 +76,7 @@ int pp_subst_add(char *data)
 	}
 	pp_subst_rules_tail = pr;
 
-	LM_ERR("### added subst expression: %s\n", data);
+	LM_INFO("### added subst expression: %s\n", data);
 
 	return 0;
 }
