@@ -1472,6 +1472,7 @@ int handle_expired_subs(subs_t* s)
 	s->reason.s= "timeout";
 	s->reason.len= 7;
 	s->expires= 0;
+	s->local_cseq++;
 
 	if(send_notify_request(s, NULL, NULL, 1)< 0)
 	{
@@ -2270,6 +2271,7 @@ int refresh_watcher(str* pres_uri, str* watcher_uri, str* event,
 				return -1;
 			}
 			lock_release(&subs_htable[hash_code].lock);
+			s_copy->local_cseq++;
 			if(notify(s_copy, NULL, NULL, 0)< 0)
 			{
 				LM_ERR("in notify function\n");

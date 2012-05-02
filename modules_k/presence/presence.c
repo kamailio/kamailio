@@ -1143,7 +1143,6 @@ send_notify:
 
 	while(s)
 	{
-
 		if(notify(s, NULL, NULL, 0)< 0)
 		{
 			LM_ERR( "sending Notify request\n");
@@ -1376,7 +1375,7 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 			pa_dbf.free_result(pa_db, result);
 			return(-1);
 		}
-
+		cs->local_cseq++;
 		cs->next= (*subs_array);
 		(*subs_array)= cs;
 
@@ -1458,6 +1457,7 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 				lock_release(&subs_htable[hash_code].lock);
 				return -1;
 			}
+			cs->local_cseq++;
 			cs->expires-= (int)time(NULL);
 			cs->next= (*subs_array);
 			(*subs_array)= cs;

@@ -134,18 +134,17 @@ int build_str_hdr(subs_t* subs, int is_body, str* hdr)
 	pres_ev_t* event= subs->event;
 	str expires = {0, 0};
 	str status = {0, 0};
-	str tmp = {0, 0};
+	char* p;
 	str trans = {";transport=", 11};
 
-	if(hdr == NULL)
-	{
+	if(hdr == NULL) {
 		LM_ERR("bad parameter\n");
 		return -1;
 	}
 	expires.s = int2str(subs->expires, &expires.len);
+	
 	status.s= get_status_str(subs->status);
-	if(status.s == NULL)
-	{
+	if(status.s == NULL) {
 		LM_ERR("bad status %d\n", subs->status);
 		return -1;
 	}
@@ -161,104 +160,71 @@ int build_str_hdr(subs_t* subs, int is_body, str* hdr)
 		(14 /*Content-Type: */+subs->event->content_type.len + CRLF_LEN):0) + 1;
 
 	hdr->s = (char*)pkg_malloc(hdr->len);
-	if(hdr->s == NULL)
-	{
-		LM_ERR("no more pkg\n");
+	if(hdr->s == NULL) {
+		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
 
-	strncpy(hdr->s, "Max-Forwards: ", 14);
-	tmp.s = int2str((unsigned long)MAX_FORWARD, &tmp.len);
-	strncpy(hdr->s+14, tmp.s, tmp.len);
-	tmp.s = hdr->s + tmp.len + 14;
-	strncpy(tmp.s, CRLF, CRLF_LEN);
-	tmp.s += CRLF_LEN;
+	p = hdr->s;
+	p += sprintf(p, "Max-Forwards: %d\r\n", MAX_FORWARD);
 
-	strncpy(tmp.s  ,"Event: ", 7);
-	tmp.s += 7;
-	strncpy(tmp.s, event->name.s, event->name.len);
-	tmp.s += event->name.len;
-	if(subs->event_id.len && subs->event_id.s) 
-	{
- 		strncpy(tmp.s, ";id=", 4);
- 		tmp.s += 4;
- 		strncpy(tmp.s, subs->event_id.s, subs->event_id.len);
- 		tmp.s += subs->event_id.len;
- 	}
-	strncpy(tmp.s, CRLF, CRLF_LEN);
-	tmp.s += CRLF_LEN;
+	p += sprintf(p  ,"Event: %.*s", event->name.len, event->name.s);
+	if(subs->event_id.len && subs->event_id.s) {
+		p += sprintf(p, ";id=%.*s", subs->event_id.len, subs->event_id.s);
+	}
+	memcpy(p, CRLF, CRLF_LEN);
+	p += CRLF_LEN;
 
-	strncpy(tmp.s, "Contact: <", 10);
-	tmp.s += 10;
-	strncpy(tmp.s, subs->local_contact.s, subs->local_contact.len);
-	tmp.s +=  subs->local_contact.len;
+	p += sprintf(p, "Contact: <%.*s", subs->local_contact.len, subs->local_contact.s);
 	if(subs->sockinfo_str.s!=NULL
-			&& str_search(&subs->local_contact, &trans)==0)
-	{
+			&& str_search(&subs->local_contact, &trans)==0) {
 		/* fix me */
 		switch(subs->sockinfo_str.s[0]) {
 			case 's':
 			case 'S':
-				strncpy(tmp.s, ";transport=sctp", 15);
-				tmp.s += 15;
+				memcpy(p, ";transport=sctp", 15);
+				p += 15;
 			break;
 			case 't':
 			case 'T':
 				switch(subs->sockinfo_str.s[1]) {
 					case 'c':
 					case 'C':
-						strncpy(tmp.s, ";transport=tcp", 14);
-						tmp.s += 14;
+						memcpy(p, ";transport=tcp", 14);
+						p += 14;
 					break;
 					case 'l':
 					case 'L':
-						strncpy(tmp.s, ";transport=tls", 14);
-						tmp.s += 14;
+						memcpy(p, ";transport=tls", 14);
+						p += 14;
 					break;
 				}
 			break;
 		}
 	}
-	*tmp.s =  '>';
-	tmp.s++;
-	strncpy(tmp.s, CRLF, CRLF_LEN);
-	tmp.s += CRLF_LEN;
-	
-	strncpy(tmp.s, "Subscription-State: ", 20);
-	tmp.s += 20;
-	strncpy(tmp.s, status.s, status.len);
-	tmp.s += status.len;
-	
-	if(subs->status == TERMINATED_STATUS)
-	{
+	*p =  '>';
+	p++;
+	memcpy(p, CRLF, CRLF_LEN);
+	p += CRLF_LEN;
+
+	p += sprintf(p, "Subscription-State: %.*s", status.len, status.s);
+
+	if(subs->status == TERMINATED_STATUS) {
 		LM_DBG("state = terminated\n");
-		
-		strncpy(tmp.s, ";reason=", 8);
-		tmp.s += 8;
-		strncpy(tmp.s, subs->reason.s, subs->reason.len);
-		tmp.s += subs->reason.len;
-	} else {	
-		strncpy(tmp.s, ";expires=", 9);
-		tmp.s += 9;
-		LM_DBG("expires = %d\n", subs->expires);
-		strncpy(tmp.s, expires.s, expires.len);
-		tmp.s += expires.len;
+		p += sprintf(p, ";reason=%.*s", subs->reason.len, subs->reason.s);
+	} else {
+		p += sprintf(p, ";expires=%.*s", expires.len, expires.s);
 	}
-	strncpy(tmp.s, CRLF, CRLF_LEN);
-	tmp.s += CRLF_LEN;
-	
-	if(is_body)
-	{	
-		strncpy(tmp.s,"Content-Type: ", 14);
-		tmp.s += 14;
-		strncpy(tmp.s, event->content_type.s, event->content_type.len);
-		tmp.s += event->content_type.len;
-		strncpy(tmp.s, CRLF, CRLF_LEN);
-		tmp.s += CRLF_LEN;
+	memcpy(p, CRLF, CRLF_LEN);
+	p += CRLF_LEN;
+
+	if(is_body) {
+		p += sprintf(p,"Content-Type: %.*s\r\n", event->content_type.len,
+				event->content_type.s);
 	}
 	
-	*tmp.s = '\0';
-	hdr->len = tmp.s - hdr->s;
+	*p = '\0';
+	hdr->len = p - hdr->s;
 
 	return 0;
 }
