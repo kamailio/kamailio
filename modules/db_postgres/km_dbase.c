@@ -543,15 +543,19 @@ int db_postgres_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* 
 {
 	db1_res_t* _r = NULL;
 
-	int tmp = db_do_insert(_h, _k, _v, _n, db_postgres_val2str, db_postgres_submit_query);
+	int ret = db_do_insert(_h, _k, _v, _n, db_postgres_val2str, db_postgres_submit_query);
 	// finish the async query, otherwise the next query will not complete
-	if (db_postgres_store_result(_h, &_r) != 0)
+	int tmp = db_postgres_store_result(_h, &_r);
+
+	if (tmp < 0) {
 		LM_WARN("unexpected result returned");
+		ret = tmp;
+	}
 	
 	if (_r)
 		db_free_result(_r);
 
-	return tmp;
+	return ret;
 }
 
 
@@ -568,16 +572,19 @@ int db_postgres_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _
 		const db_val_t* _v, const int _n)
 {
 	db1_res_t* _r = NULL;
-	int tmp = db_do_delete(_h, _k, _o, _v, _n, db_postgres_val2str,
+	int ret = db_do_delete(_h, _k, _o, _v, _n, db_postgres_val2str,
 		db_postgres_submit_query);
+	int tmp = db_postgres_store_result(_h, &_r);
 
-	if (db_postgres_store_result(_h, &_r) != 0)
+	if (tmp < 0) {
 		LM_WARN("unexpected result returned");
-	
+		ret = tmp;
+	}
+
 	if (_r)
 		db_free_result(_r);
 
-	return tmp;
+	return ret;
 }
 
 
@@ -598,16 +605,19 @@ int db_postgres_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _
 		const int _un)
 {
 	db1_res_t* _r = NULL;
-	int tmp = db_do_update(_h, _k, _o, _v, _uk, _uv, _n, _un, db_postgres_val2str,
+	int ret = db_do_update(_h, _k, _o, _v, _uk, _uv, _n, _un, db_postgres_val2str,
 		db_postgres_submit_query);
+	int tmp = db_postgres_store_result(_h, &_r);
 
-	if (db_postgres_store_result(_h, &_r) != 0)
+	if (tmp < 0) {
 		LM_WARN("unexpected result returned");
+		ret = tmp;
+	}
 	
 	if (_r)
 		db_free_result(_r);
 
-	return tmp;
+	return ret;
 }
 
 /**
