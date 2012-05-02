@@ -163,7 +163,7 @@ void db_postgres_close(db1_con_t* _h)
  */
 static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 {
-	int i;
+	int i, retries;
 	ExecStatusType pqresult;
 
 	if(! _con || !_s || !_s->s)
@@ -194,7 +194,12 @@ static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 			return -1;
 	}
 
-	for(i = 0; i <= pg_retries; i++) {
+	if (CON_TRANSACTION(_con) == 1)
+		retries = 0;
+	else
+		retries = pg_retries;
+
+	for(i = 0; i <= retries; i++) {
 		/* free any previous query that is laying about */
 		db_postgres_free_query(_con);
 		/* exec the query */
