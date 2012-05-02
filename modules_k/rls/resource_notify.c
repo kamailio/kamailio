@@ -1063,10 +1063,9 @@ static void timer_send_update_notifies(int round)
 		LM_ERR("in sql query\n");
 		goto done;
 	}
-	if(result== NULL || result->n<= 0)
+	if(result == NULL || result->n <= 0)
 		goto done;
 
-	/* update the rlpres table */
 	if(rlpres_dbf.update(rlpres_db, query_cols, 0, query_vals, update_cols,
 					update_vals, 1, 1)< 0)
 	{

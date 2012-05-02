@@ -121,6 +121,11 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 	result_cols[pres_state_col= n_result_cols++]= &str_presence_state_col;
 	result_cols[auth_state_col= n_result_cols++]= &str_auth_state_col;
 	result_cols[reason_col= n_result_cols++]= &str_reason_col;
+
+	update_cols[0]= &str_updated_col;
+	update_vals[0].type = DB1_INT;
+	update_vals[0].nul = 0;
+	update_vals[0].val.int_val= NO_UPDATE_TYPE; 
 	
 	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0) 
 	{
@@ -143,8 +148,30 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 		LM_ERR("in sql query\n");
 		goto error;
 	}
-	if(result== NULL)
+	if(result == NULL)
+	{
+		LM_ERR("bad result\n");
 		goto error;
+	}
+
+	if (result->n > 0)
+	{
+		if(rlpres_dbf.update(rlpres_db, query_cols, 0, query_vals,
+				     update_cols, update_vals, 1, 1) < 0)
+		{
+			LM_ERR("in sql update\n");
+			goto error;
+		}
+	}
+
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.end_transaction)
+	{
+		if (rlpres_dbf.end_transaction(rlpres_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto error;
+		}
+	}
 
 	/* Allocate an initial buffer for the multipart body.
 	 * This buffer will be reallocated if neccessary */
@@ -238,41 +265,11 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 			&rlmi_cont->len, (rls_max_notify_body_len == 0));
 	xmlFreeDoc(rlmi_body);
 
-	rlpres_dbf.free_result(rlpres_db, result);
-	result= NULL;
-
 	if(agg_body_sendn_update(rl_uri, boundary_string, rlmi_cont,
 		multipart_body, subs, hash_code)< 0)
 	{
 		LM_ERR("in function agg_body_sendn_update\n");
 		goto error;
-	}
-
-	/* update updated col in rlpres_table*/
-	update_cols[0]= &str_updated_col;
-	update_vals[0].type = DB1_INT;
-	update_vals[0].nul = 0;
-	update_vals[0].val.int_val= NO_UPDATE_TYPE; 
-	
-	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0) 
-	{
-		LM_ERR("in use_table\n");
-		goto error;
-	}
-	if(rlpres_dbf.update(rlpres_db, query_cols, 0, query_vals, update_cols,
-					update_vals, 1, 1)< 0)
-	{
-		LM_ERR("in sql update\n");
-		goto error;
-	}
-
-	if (dbmode == RLS_DB_ONLY && rlpres_dbf.end_transaction)
-	{
-		if (rlpres_dbf.end_transaction(rlpres_db) < 0)
-		{
-			LM_ERR("in end_transaction\n");
-			goto error;
-		}
 	}
 
 	xmlFree(rlmi_cont->s);
@@ -286,7 +283,8 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 	}
 	multipart_body_size = 0;
 	pkg_free(rlsubs_did.s);
-
+	rlpres_dbf.free_result(rlpres_db, result);
+	
 	return 0;
 error:
 	if(rlmi_cont)
