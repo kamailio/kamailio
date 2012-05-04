@@ -1323,6 +1323,12 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 		return -1;
 	}
 
+	if(result == NULL)
+	{
+		LM_ERR("bad result\n");
+		return -1;
+	}
+
 	if(result->n<=0)
 	{
 		LM_DBG("No rl document found\n");
