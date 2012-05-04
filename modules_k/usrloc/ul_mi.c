@@ -35,6 +35,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "../../lib/kmi/mi.h"
+#include "../../lib/srutils/sruid.h"
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../qvalue.h"
@@ -49,11 +50,13 @@
 /*! CSEQ nr used */
 #define MI_UL_CSEQ 1
 /*! call-id used for ul_add and ul_rm_contact */
-static str mi_ul_cid = str_init("dfjrewr12386fd6-343@openser.mi");
+static str mi_ul_cid = str_init("dfjrewr12386fd6-343@kamailio.mi");
 /*! user agent used for ul_add */
 static str mi_ul_ua  = str_init("SIP Router MI Server");
 /*! path used for ul_add and ul_rm_contact */
 static str mi_ul_path = str_init("dummypath");
+
+extern sruid_t _ul_sruid;
 
 /************************ helper functions ****************************/
 
@@ -540,6 +543,10 @@ struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param)
 	if (str2int( &node->value, (unsigned int*)&ci.methods) < 0)
 		goto bad_syntax;
 
+	if(sruid_next(&_ul_sruid)<0)
+		goto error;
+	ci.ruid = _ul_sruid.uid;
+
 	lock_udomain( dom, aor);
 
 	n = get_urecord( dom, aor, &r);
@@ -580,6 +587,7 @@ release_error:
 	release_urecord(r);
 lock_error:
 	unlock_udomain( dom, aor);
+error:
 	return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
 }
 
