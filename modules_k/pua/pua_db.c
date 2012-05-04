@@ -179,6 +179,12 @@ int clean_puadb( int update_period, int min_expires )
 		return(-1);
 	}
 
+	if (res == NULL)
+	{
+		LM_ERR("bad result\n");
+		return(-1);
+	}
+
 	if (RES_ROW_N(res) == 0)
 	{
 		/* no match */ 
@@ -285,6 +291,12 @@ int is_dialog_puadb(ua_pres_t *pres)
 		return(-1);
 	}
 
+	if (res == NULL)
+	{
+		LM_ERR("bad result\n");
+		return(-1);
+	}
+
 	nr_rows = RES_ROW_N(res);
 	pua_dbf.free_result(pua_db, res);
 
@@ -366,6 +378,12 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 		return(-1);
 	}
 
+	if (res == NULL)
+	{
+		LM_ERR("bad result\n");
+		return(-1);
+	}
+
 	nr_rows = RES_ROW_N(res);
 
 	switch (nr_rows)
@@ -389,6 +407,12 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 			res_cols,n_query_cols,n_res_cols,0,&res) < 0)
 		{
 			LM_ERR("DB query error\n");
+			return(-1);
+		}
+
+		if (res == NULL)
+		{
+			LM_ERR("bad result\n");
 			return(-1);
 		}
 
@@ -827,6 +851,12 @@ ua_pres_t *get_record_puadb(str pres_id, str *etag, ua_pres_t *result, db1_res_t
 		return(NULL);
 	}
 
+	if (res == NULL)
+	{
+		LM_ERR("bad result\n");
+		return(NULL);
+	}
+
 	nr_rows = RES_ROW_N(res);
 
 	if (nr_rows == 0)
@@ -1194,6 +1224,12 @@ ua_pres_t *get_dialog_puadb(str pres_id, str *pres_uri, ua_pres_t *result, db1_r
 		return(NULL);
 	}
 
+	if (res == NULL)
+	{
+		LM_ERR("bad result\n");
+		return(NULL);
+	}
+
 	nr_rows = RES_ROW_N(res);
 
 	if (nr_rows == 0)
@@ -1524,6 +1560,12 @@ list_entry_t *get_subs_list_puadb(str *did)
 		return list;
 	}
 
+	if (res == NULL)
+	{
+		LM_ERR("bad result\n");
+		return list;
+	}
+
 	if (RES_ROW_N(res) == 0)
 	{
 		LM_INFO( "No records found\n");
@@ -1565,5 +1607,7 @@ list_entry_t *get_subs_list_puadb(str *did)
 	} while ((db_fetch_next(&pua_dbf, pua_fetch_rows, pua_db, &res)==1)
 			&& (RES_ROWS(res)>0));
 
+	pua_dbf.free_result(pua_db, res);
+	
 	return list;
 }
