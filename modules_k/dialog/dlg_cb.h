@@ -76,7 +76,7 @@ typedef str* (*get_dlg_variable_f)( struct dlg_cell* dlg,
 #define DLGCB_RPC_CONTEXT     (1<<12)
 #define DLGCB_DESTROY         (1<<13)
 #define DLGCB_SPIRALED        (1<<14)
-#define DLGCB_TERMINATED_CONFIRMED (1<<14)
+#define DLGCB_TERMINATED_CONFIRMED (1<<15)
 
 struct dlg_callback {
 	int types;
