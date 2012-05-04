@@ -2225,9 +2225,10 @@ int refresh_watcher(str* pres_uri, str* watcher_uri, str* event,
 {
 	unsigned int hash_code;
 	subs_t* s, *s_copy;
-	pres_ev_t* ev;		
+	pres_ev_t* ev;
 	struct sip_uri uri;
 	str user, domain;
+	subs_t *s_array = NULL;
 	/* refresh status in subs_htable and send notify */
 
 	ev=	contains_event(event, NULL);
@@ -2262,28 +2263,43 @@ int refresh_watcher(str* pres_uri, str* watcher_uri, str* event,
 			s->status= status;
 			if(reason)
 				s->reason= *reason;
-			
+
 			s_copy= mem_copy_subs(s, PKG_MEM_TYPE);
 			if(s_copy== NULL)
 			{
 				LM_ERR("copying subs_t\n");
 				lock_release(&subs_htable[hash_code].lock);
-				return -1;
+				goto error;
 			}
-			lock_release(&subs_htable[hash_code].lock);
+
 			s_copy->local_cseq++;
-			if(notify(s_copy, NULL, NULL, 0)< 0)
-			{
-				LM_ERR("in notify function\n");
-				pkg_free(s_copy);
-				return -1;
-			}
-			pkg_free(s_copy);
-			lock_get(&subs_htable[hash_code].lock);
+			s_copy->next= s_array;
+			s_array= s_copy;
 		}
 		s= s->next;
 	}
+	lock_release(&subs_htable[hash_code].lock);
+
+	s = s_array;
+	while (s) {
+		if(notify(s, NULL, NULL, 0)< 0) {
+			LM_ERR("Failed to send Notify\n");
+		}
+		s_copy = s;
+		s = s->next;
+		pkg_free(s_copy);
+	}
+
 	return 0;
+
+error:
+	s = s_array;
+	while (s) {
+		s_copy = s;
+		s = s->next;
+		pkg_free(s_copy);
+	}
+	return -1;
 }
 
 int get_db_subs_auth(subs_t* subs, int* found)
