@@ -20,6 +20,7 @@
 #ifndef _PURPLE_H
 #define _PURPLE_H
 
+#include <glib.h>
 #include <libpurple/status.h>
 
 enum purple_cmd_type {
