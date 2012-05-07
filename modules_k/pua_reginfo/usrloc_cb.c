@@ -233,7 +233,10 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 			LM_ERR("Error allocating memory for URI!\n");
 			goto error;
 		}
-		uri.len = snprintf(uri.s, uri.len, "sip:%.*s@%.*s", record->aor.len, record->aor.s, default_domain.len, default_domain.s);
+		if (record->aor.len > 0)
+			uri.len = snprintf(uri.s, uri.len, "sip:%.*s@%.*s", record->aor.len, record->aor.s, default_domain.len, default_domain.s);
+		else
+			uri.len = snprintf(uri.s, uri.len, "sip:%.*s", default_domain.len, default_domain.s);
 	} else {
 		uri.len = record->aor.len + 6;
 		uri.s = (char*)pkg_malloc(sizeof(char) * uri.len);
