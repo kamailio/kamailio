@@ -346,13 +346,13 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	klcr ksqlite kredis kjson kmono kberkeley" include_modules="xmlrpc\
 	xmlops"
 
-mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
-install -m755 pkg/kamailio/fedora/kamailio.init \
-		$RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/kamailio
+mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
+install -m644 pkg/kamailio/fedora/kamailio.service \
+		$RPM_BUILD_ROOT/%{_unitdir}/kamailio.service
 
-mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/default
-install -m755 pkg/kamailio/fedora/kamailio.default \
-		$RPM_BUILD_ROOT/%{_sysconfdir}/default/kamailio
+mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
+install -m644 pkg/kamailio/fedora/kamailio.sysconfig \
+		$RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/kamailio
 
 
 
@@ -369,14 +369,14 @@ rm -rf "$RPM_BUILD_ROOT"
 
 
 %post
-/sbin/chkconfig --add kamailio
+/bin/systemctl --system daemon-reload
 
 
 
 %preun
 if [ $1 = 0 ]; then
-	/sbin/service kamailio stop > /dev/null 2>&1
-	/sbin/chkconfig --del kamailio
+	/bin/systemctl stop kamailio.service
+	/bin/systemctl disable kamailio.service 2> /dev/null
 fi
 
 
@@ -479,8 +479,8 @@ fi
 
 %dir %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/*
-%config %{_sysconfdir}/rc.d/init.d/*
-%config %{_sysconfdir}/default/*
+%config %{_unitdir}/*
+%config %{_sysconfdir}/sysconfig/*
 
 %dir %{_libdir}/kamailio
 %{_libdir}/kamailio/libbinrpc.so
@@ -859,6 +859,8 @@ fi
 
 
 %changelog
+* Mon May 7 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Changed to use systemd instead of SysV init.
 * Sun May 6 2012 Peter Dunkley <peter@dunkley.me.uk>
   - First version created for Kamailio 3.3.0. Based on spec-file for CentOS
     created by Ovidiu Sas.

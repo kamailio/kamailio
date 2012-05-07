@@ -1,0 +1,17 @@
+#
+# Kamailio startup options
+#
+
+# PID file for Kamailio
+PID_FILE=/var/run/kamailio.pid
+
+# Options to pass when starting Kamailio
+# Note: variable interpolation is not supported by systemd so $OPTIONS cannot
+#       be constructed from multiple variables.
+# -P - The PID file (this must match the value in
+#      /lib/systemd/system/kamailio.service)
+# -m - Kamailio shared (global) memory (default 32 MB)
+# -M - Kamailio package (per-process private) memory (default 4 MB)
+# -u - User to run Kamailio as
+# -g - Group to run Kamailio as
+OPTIONS="-P /var/run/kamailio.pid -m 32 -M 4 -u kamailio -g kamailio"
