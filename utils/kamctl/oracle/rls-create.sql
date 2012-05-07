@@ -24,7 +24,7 @@ CREATE INDEX rls_presentity_rlsubs_idx  ON rls_presentity (rlsubs_did);
 CREATE INDEX rls_presentity_updated_idx  ON rls_presentity (updated);
 CREATE INDEX rls_presentity_expires_idx  ON rls_presentity (expires);
 
-INSERT INTO version (table_name, table_version) values ('rls_watchers','1');
+INSERT INTO version (table_name, table_version) values ('rls_watchers','3');
 CREATE TABLE rls_watchers (
     id NUMBER(10) PRIMARY KEY,
     presentity_uri VARCHAR2(128),
@@ -47,6 +47,9 @@ CREATE TABLE rls_watchers (
     version NUMBER(10) DEFAULT 0 NOT NULL,
     socket_info VARCHAR2(64),
     local_contact VARCHAR2(128),
+    from_user VARCHAR2(64),
+    from_domain VARCHAR2(64),
+    updated NUMBER(10),
     CONSTRAINT rls_watchers_rls_watcher_idx  UNIQUE (callid, to_tag, from_tag)
 );
 
@@ -61,4 +64,5 @@ BEGIN map2users('rls_watchers'); END;
 CREATE INDEX ORA_rls_watchers_delete  ON rls_watchers (callid, to_tag);
 CREATE INDEX ORA_rls_watchers_update  ON rls_watchers (watcher_username, watcher_domain, event);
 CREATE INDEX ORA_rls_watchers_expires  ON rls_watchers (expires);
+CREATE INDEX rls_watchers_updated_idx  ON rls_watchers (updated);
 

@@ -1,7 +1,7 @@
 /*
  * Hash functions for cached trusted and address tables
  *
- * Copyright (C) 2003-2006 Juha Heinanen
+ * Copyright (C) 2003-2012 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -228,37 +228,38 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 	uri_string[uri.len] = (char)0;
 
 	for (np = table[perm_hash(src_ip)]; np != NULL; np = np->next) {
-		if ((np->src_ip.len == src_ip.len) && 
-				(strncmp(np->src_ip.s, src_ip.s, src_ip.len) == 0) &&
-				((np->proto == PROTO_NONE) || (np->proto == proto))) {
-			if (np->pattern) {
-				if (regcomp(&preg, np->pattern, REG_NOSUB)) {
-					LM_ERR("invalid regular expression\n");
-					continue;
-				}
-				if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
-					regfree(&preg);
-					continue;
-				}
-				regfree(&preg);
-			}
-			/* Found a match */
-			if (tag_avp.n && np->tag.s) {
-				val.s = np->tag;
-				if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, val) != 0) {
-					LM_ERR("setting of tag_avp failed\n");
-					return -1;
-				}
-			}
-			if (!peer_tag_mode)
-				return 1;
-			count++;
+	    if ((np->src_ip.len == src_ip.len) && 
+		(strncmp(np->src_ip.s, src_ip.s, src_ip.len) == 0) &&
+		((np->proto == PROTO_NONE) || (proto == PROTO_NONE) ||
+		 (np->proto == proto))) {
+		if (np->pattern) {
+		    if (regcomp(&preg, np->pattern, REG_NOSUB)) {
+			LM_ERR("invalid regular expression\n");
+			continue;
+		    }
+		    if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
+			regfree(&preg);
+			continue;
+		    }
+		    regfree(&preg);
 		}
+		/* Found a match */
+		if (tag_avp.n && np->tag.s) {
+		    val.s = np->tag;
+		    if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, val) != 0) {
+			LM_ERR("setting of tag_avp failed\n");
+			return -1;
+		    }
+		}
+		if (!peer_tag_mode)
+		    return 1;
+		count++;
+	    }
 	}
 	if (!count)
-		return -1;
+	    return -1;
 	else 
-		return count;
+	    return count;
 }
 
 

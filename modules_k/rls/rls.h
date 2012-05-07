@@ -89,13 +89,13 @@ extern unsigned int xcap_port;
 extern str rls_server_address;
 extern int waitn_time;
 extern int rls_notifier_poll_rate;
+extern int rls_notifier_processes;
 extern str rlsubs_table;
 extern str rlpres_table;
 extern str rls_xcap_table;
 extern str db_url;
 extern int hash_size;
 extern shtable_t rls_table;
-extern int pid;
 extern int rls_max_expires;
 extern int rls_integrated_xcap_server;
 extern int rls_events;
@@ -161,7 +161,10 @@ extern int update_dialog_subscribe_rlsdb(subs_t *s);
 extern int insert_rlsdb(subs_t *s);
 extern int get_dialog_subscribe_rlsdb(subs_t *s);
 subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag);
-extern int update_all_subs_rlsdb(str *from_user, str *from_domain, str *evt);
+extern int update_all_subs_rlsdb(str *watcher_user, str *watcher_domain, str *evt);
+
+extern int rls_get_service_list(str *service_uri, str *user, str *domain,
+			xmlNodePtr *service_node, xmlDocPtr *rootdoc);
 
 extern str str_rlsubs_did_col;
 extern str str_resource_uri_col;
@@ -176,6 +179,8 @@ extern str str_event_col;
 extern str str_event_id_col;
 extern str str_to_user_col;
 extern str str_to_domain_col;
+extern str str_from_user_col;
+extern str str_from_domain_col;
 extern str str_watcher_username_col;
 extern str str_watcher_domain_col;
 extern str str_callid_col;

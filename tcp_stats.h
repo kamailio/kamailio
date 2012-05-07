@@ -63,8 +63,8 @@ struct tcp_counters_h {
 
 extern struct tcp_counters_h tcp_cnts_h;
 
-int tcp_stats_init();
-void tcp_stats_destroy();
+int tcp_stats_init(void);
+void tcp_stats_destroy(void);
 
 #define INIT_TCP_STATS() tcp_stats_init()
 

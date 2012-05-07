@@ -814,6 +814,8 @@ int pv_parse_xcap_uri_name(pv_spec_p sp, str *in)
 		pxs->ktype = 9;
 	} else if(pxs->key.len==6 && strncmp(pxs->key.s, "domain", 6)==0) {
 		pxs->ktype = 10;
+	} else if(pxs->key.len== 8 && strncmp(pxs->key.s, "uri_adoc", 8)==0) {
+		pxs->ktype = 11;
 	} else {
 		LM_ERR("unknown key type [%.*s]\n", in->len, in->s);
 		goto error;
@@ -917,6 +919,11 @@ int pv_get_xcap_uri(struct sip_msg *msg,  pv_param_t *param,
 			/* get domain */
 			if(pxs->xus->xuri.domain.len>0)
 				return pv_get_strval(msg, param, res, &pxs->xus->xuri.domain);
+		case 11:
+			/* get xuri->adoc */
+			if(pxs->xus->xuri.adoc.len>0)
+				return pv_get_strval(msg, param, res, &pxs->xus->xuri.adoc);
+		break;
 		break;
 		default:
 			return pv_get_null(msg, param, res);

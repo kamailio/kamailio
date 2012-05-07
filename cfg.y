@@ -565,6 +565,7 @@ extern char *finame;
 %token LATENCY_LOG
 %token LATENCY_LIMIT_DB
 %token LATENCY_LIMIT_ACTION
+%token MSG_TIME
 
 %token FLAGS_DECL
 %token AVPFLAGS_DECL
@@ -1701,6 +1702,8 @@ assign_stm:
 	| LATENCY_LIMIT_DB EQUAL error  { yyerror("number  expected"); }
     | LATENCY_LIMIT_ACTION EQUAL NUMBER { default_core_cfg.latency_limit_action=$3; }
 	| LATENCY_LIMIT_ACTION EQUAL error  { yyerror("number  expected"); }
+    | MSG_TIME EQUAL NUMBER { sr_msg_time=$3; }
+	| MSG_TIME EQUAL error  { yyerror("number  expected"); }
 	| UDP_MTU EQUAL NUMBER { default_core_cfg.udp_mtu=$3; }
 	| UDP_MTU EQUAL error { yyerror("number expected"); }
 	| FORCE_RPORT EQUAL NUMBER 
@@ -3154,6 +3157,7 @@ cmd:
 	| FORWARD_SCTP error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| FORWARD_SCTP LPAREN error RPAREN { $$=0; 
 									yyerror("bad forward_tls argument"); }
+	| SEND LPAREN RPAREN { $$=mk_action(SEND_T, 2, URIHOST_ST, 0, URIPORT_ST, 0); set_cfg_pos($$); }
 	| SEND LPAREN host RPAREN	{ $$=mk_action(SEND_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
 	| SEND LPAREN STRING RPAREN { $$=mk_action(SEND_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
 	| SEND LPAREN ip RPAREN		{ $$=mk_action(SEND_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); set_cfg_pos($$); }
@@ -3162,6 +3166,7 @@ cmd:
 	| SEND LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(SEND_T, 2, IP_ST, (void*)$3, NUMBER_ST, (void*)$5); set_cfg_pos($$); }
 	| SEND error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SEND LPAREN error RPAREN { $$=0; yyerror("bad send argument"); }
+	| SEND_TCP LPAREN RPAREN { $$=mk_action(SEND_TCP_T, 2, URIHOST_ST, 0, URIPORT_ST, 0); set_cfg_pos($$); }
 	| SEND_TCP LPAREN host RPAREN	{ $$=mk_action(SEND_TCP_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
 	| SEND_TCP LPAREN STRING RPAREN { $$=mk_action(SEND_TCP_T, 2, STRING_ST, $3, NUMBER_ST, 0); set_cfg_pos($$); }
 	| SEND_TCP LPAREN ip RPAREN	{ $$=mk_action(SEND_TCP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); set_cfg_pos($$); }

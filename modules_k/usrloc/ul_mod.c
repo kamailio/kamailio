@@ -57,8 +57,10 @@
 #include "../../dprint.h"
 #include "../../rpc_lookup.h"
 #include "../../timer.h"     /* register_timer */
+#include "../../timer_proc.h" /* register_sync_timer */
 #include "../../globals.h"   /* is_main */
 #include "../../ut.h"        /* str_init */
+#include "../../lib/srutils/sruid.h"
 #include "dlist.h"           /* register_udomain */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
@@ -70,6 +72,7 @@
 
 MODULE_VERSION
 
+#define RUID_COL       "ruid"
 #define USER_COL       "username"
 #define DOMAIN_COL     "domain"
 #define CONTACT_COL    "contact"
@@ -84,11 +87,14 @@ MODULE_VERSION
 #define PATH_COL       "path"
 #define SOCK_COL       "socket"
 #define METHODS_COL    "methods"
+#define INSTANCE_COL   "instance"
+#define REG_ID_COL     "reg_id"
 #define LAST_MOD_COL   "last_modified"
 
 static int mod_init(void);                          /*!< Module initialization function */
 static void destroy(void);                          /*!< Module destroy function */
-static void timer(unsigned int ticks, void* param); /*!< Timer handler */
+static void ul_core_timer(unsigned int ticks, void* param);  /*!< Core timer handler */
+static void ul_local_timer(unsigned int ticks, void* param); /*!< Local timer handler */
 static int child_init(int rank);                    /*!< Per-child init function */
 static int mi_child_init(void);
 
@@ -100,27 +106,34 @@ static int ul_preload_param(modparam_t type, void* val);
 extern int bind_usrloc(usrloc_api_t* api);
 extern int ul_locks_no;
 int ul_db_update_as_insert = 0;
+int ul_timer_procs = 0;
+
+/* sruid to get internal uid for mi/rpc commands */
+sruid_t _ul_sruid;
 
 /*
  * Module parameters and their default values
  */
 
+str ruid_col        = str_init(RUID_COL); 		/*!< Name of column containing record unique id */
 str user_col        = str_init(USER_COL); 		/*!< Name of column containing usernames */
-str domain_col      = str_init(DOMAIN_COL); 		/*!< Name of column containing domains */
-str contact_col     = str_init(CONTACT_COL);		/*!< Name of column containing contact addresses */
-str expires_col     = str_init(EXPIRES_COL);		/*!< Name of column containing expires values */
+str domain_col      = str_init(DOMAIN_COL); 	/*!< Name of column containing domains */
+str contact_col     = str_init(CONTACT_COL);	/*!< Name of column containing contact addresses */
+str expires_col     = str_init(EXPIRES_COL);	/*!< Name of column containing expires values */
 str q_col           = str_init(Q_COL);			/*!< Name of column containing q values */
 str callid_col      = str_init(CALLID_COL);		/*!< Name of column containing callid string */
 str cseq_col        = str_init(CSEQ_COL);		/*!< Name of column containing cseq values */
 str flags_col       = str_init(FLAGS_COL);		/*!< Name of column containing internal flags */
 str cflags_col      = str_init(CFLAGS_COL);		/*!< Name of column containing contact flags */
-str user_agent_col  = str_init(USER_AGENT_COL);		/*!< Name of column containing user agent string */
-str received_col    = str_init(RECEIVED_COL);		/*!< Name of column containing transport info of REGISTER */
+str user_agent_col  = str_init(USER_AGENT_COL);	/*!< Name of column containing user agent string */
+str received_col    = str_init(RECEIVED_COL);	/*!< Name of column containing transport info of REGISTER */
 str path_col        = str_init(PATH_COL);		/*!< Name of column containing the Path header */
 str sock_col        = str_init(SOCK_COL);		/*!< Name of column containing the received socket */
-str methods_col     = str_init(METHODS_COL);		/*!< Name of column containing the supported methods */
-str last_mod_col     = str_init(LAST_MOD_COL);		/*!< Name of column containing the last modified date */
-str db_url          = str_init(DEFAULT_DB_URL);		/*!< Database URL */
+str methods_col     = str_init(METHODS_COL);	/*!< Name of column containing the supported methods */
+str instance_col    = str_init(INSTANCE_COL);	/*!< Name of column containing the SIP instance value */
+str reg_id_col      = str_init(REG_ID_COL);		/*!< Name of column containing the reg-id value */
+str last_mod_col    = str_init(LAST_MOD_COL);	/*!< Name of column containing the last modified date */
+str db_url          = str_init(DEFAULT_DB_URL);	/*!< Database URL */
 int timer_interval  = 60;				/*!< Timer interval in seconds */
 int db_mode         = 0;				/*!< Database sync scheme: 0-no db, 1-write through, 2-write back, 3-only db */
 int use_domain      = 0;				/*!< Whether usrloc should use domain part of aor */
@@ -151,6 +164,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters 
  */
 static param_export_t params[] = {
+	{"ruid_column",         STR_PARAM, &ruid_col.s      },
 	{"user_column",         STR_PARAM, &user_col.s      },
 	{"domain_column",       STR_PARAM, &domain_col.s    },
 	{"contact_column",      STR_PARAM, &contact_col.s   },
@@ -170,6 +184,8 @@ static param_export_t params[] = {
 	{"path_column",         STR_PARAM, &path_col.s      },
 	{"socket_column",       STR_PARAM, &sock_col.s      },
 	{"methods_column",      STR_PARAM, &methods_col.s   },
+	{"instance_column",     STR_PARAM, &instance_col.s  },
+	{"reg_id_column",       STR_PARAM, &reg_id_col.s    },
 	{"matching_mode",       INT_PARAM, &matching_mode   },
 	{"cseq_delay",          INT_PARAM, &cseq_delay      },
 	{"fetch_rows",          INT_PARAM, &ul_fetch_rows   },
@@ -177,6 +193,7 @@ static param_export_t params[] = {
 	{"nat_bflag",           INT_PARAM, &nat_bflag       },
 	{"preload",             STR_PARAM|USE_FUNC_PARAM, (void*)ul_preload_param},
 	{"db_update_as_insert", INT_PARAM, &ul_db_update_as_insert},
+	{"timer_procs",         INT_PARAM, &ul_timer_procs},
 	{0, 0, 0}
 };
 
@@ -228,6 +245,9 @@ static int mod_init(void)
 	int i;
 	udomain_t* d;
 
+	if(sruid_init(&_ul_sruid, '-', "ulcx", SRUID_INC)<0)
+		return -1;
+
 #ifdef STATISTICS
 	/* register statistics */
 	if (register_module_stats( exports.name, mod_stats)!=0 ) {
@@ -249,6 +269,7 @@ static int mod_init(void)
 	}
 
 	/* Compute the lengths of string parameters */
+	ruid_col.len = strlen(ruid_col.s);
 	user_col.len = strlen(user_col.s);
 	domain_col.len = strlen(domain_col.s);
 	contact_col.len = strlen(contact_col.s);
@@ -263,6 +284,8 @@ static int mod_init(void)
 	path_col.len = strlen(path_col.s);
 	sock_col.len = strlen(sock_col.s);
 	methods_col.len = strlen(methods_col.s);
+	instance_col.len = strlen(instance_col.s);
+	reg_id_col.len = strlen(reg_id_col.s);
 	last_mod_col.len = strlen(last_mod_col.s);
 	db_url.len = strlen(db_url.s);
 
@@ -289,7 +312,10 @@ static int mod_init(void)
 	}
 
 	/* Register cache timer */
-	register_timer( timer, 0, timer_interval);
+	if(ul_timer_procs<=0)
+		register_timer(ul_core_timer, 0, timer_interval);
+	else
+		register_sync_timers(ul_timer_procs);
 
 	/* init the callbacks list */
 	if ( init_ulcb_list() < 0) {
@@ -338,6 +364,19 @@ static int mod_init(void)
 static int child_init(int _rank)
 {
 	dlist_t* ptr;
+	int i;
+
+	if(_rank==PROC_MAIN && ul_timer_procs>0)
+	{
+		for(i=0; i<ul_timer_procs; i++)
+		{
+			if(fork_sync_timer(PROC_TIMER, "USRLOC Timer", 1 /*socks flag*/,
+					ul_local_timer, (void*)(long)i, timer_interval /*sec*/)<0) {
+				LM_ERR("failed to start timer routine as process\n");
+				return -1; /* error */
+			}
+		}
+	}
 
 	/* connecting to DB ? */
 	switch (db_mode) {
@@ -408,7 +447,7 @@ static void destroy(void)
 	/* we need to sync DB in order to flush the cache */
 	if (ul_dbh) {
 		ul_unlock_locks();
-		if (synchronize_all_udomains() != 0) {
+		if (synchronize_all_udomains(0, 1) != 0) {
 			LM_ERR("flushing cache failed\n");
 		}
 		ul_dbf.close(ul_dbh);
@@ -423,11 +462,21 @@ static void destroy(void)
 
 
 /*! \brief
- * Timer handler
+ * Core timer handler
  */
-static void timer(unsigned int ticks, void* param)
+static void ul_core_timer(unsigned int ticks, void* param)
 {
-	if (synchronize_all_udomains() != 0) {
+	if (synchronize_all_udomains(0, 1) != 0) {
+		LM_ERR("synchronizing cache failed\n");
+	}
+}
+
+/*! \brief
+ * Local timer handler
+ */
+static void ul_local_timer(unsigned int ticks, void* param)
+{
+	if (synchronize_all_udomains((int)(long)param, ul_timer_procs) != 0) {
 		LM_ERR("synchronizing cache failed\n");
 	}
 }

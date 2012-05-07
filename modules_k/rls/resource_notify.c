@@ -52,6 +52,8 @@ static str pu_481_rpl     = str_init("Call/Transaction Does Not Exist");
 static str pu_489_rpl     = str_init("Bad Event");
 static str pu_500_rpl     = str_init("Server Internal Error");
 
+int subset = 0;
+
 int parse_rlsubs_did(char* str_did, str* callid, str* from_tag, str* to_tag)
 {
 	char* smc= NULL;
@@ -175,7 +177,7 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 	char* buf= NULL, *auth_state= NULL, *boundary_string= NULL;
 	str cid = {0,0};
 	str content_type= {0, 0};
-	int contor= 0, auth_state_flag;
+	int auth_state_flag;
 	int chunk_len=0;
 	str bstr= {0, 0};
 	subs_t* dialog= NULL;
@@ -183,7 +185,7 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 	int resource_added = 0; /* Flag to indicate that we have added at least one resource */
 
 	/* generate the boundary string */
-	boundary_string= generate_string((int)time(NULL), BOUNDARY_STRING_LEN);
+	boundary_string= generate_string(BOUNDARY_STRING_LEN);
 	bstr.len= strlen(boundary_string);
 	bstr.s= (char*)pkg_malloc((bstr.len+ 1)* sizeof(char));
 	if(bstr.s== NULL)
@@ -265,10 +267,8 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 		/* there might be more records with the same uri- more instances-
 		 * search and add them all */
 		
-		contor= 0;
 		while(1)
 		{
-			contor++;
 			cid.s= NULL;
 			cid.len= 0;
 			
@@ -306,7 +306,7 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 				if (resource_added == 1)
 				{
 					/* We added at least one resource. */
-					LM_ERR("timer_send_notify hit the size limit. len_est = %d\n", len_est);
+					LM_DBG("timer_send_notify hit the size limit. len_est = %d\n", len_est);
 					if (send_notify(&rlmi_doc, buf, buf_len, bstr, dialog, hash_code))
 					{
 						LM_ERR("in send_notify\n");
@@ -316,7 +316,7 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 				}
 				else
 				{
-					LM_ERR("timer_send_notify hit the size limit. NO RESOURCE ADDED len_est = %d\n", len_est);
+					LM_DBG("timer_send_notify hit the size limit. NO RESOURCE ADDED len_est = %d\n", len_est);
 				}
 				len_est = 0;
 
@@ -334,8 +334,18 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 				goto error;
 			}	
 
+			/* Instance ID should be unique for each instance node
+ 			   within a resource node.  The same instance ID can be
+			   used in different resource nodes.  Instance ID needs
+			   to remain the same for each resource instance in
+			   future updates.  We can just use a common string
+			   here because you will only get multiple instances
+			   for a resource when the back-end SUBSCRIBE is forked
+			   and pua does not support this.  If/when pua supports
+			   forking of the SUBSCRIBEs it sends this will need to
+			   be fixed properly. */
 			xmlNewProp(instance_node, BAD_CAST "id", 
-					BAD_CAST generate_string(contor, 8));
+					BAD_CAST instance_id);
 			if(auth_state_flag & ACTIVE_STATE)
 			{
 				xmlNewProp(instance_node, BAD_CAST "state", BAD_CAST auth_state);
@@ -703,9 +713,13 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	query_cols[n_query_cols]= &str_updated_col;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val=
-		core_hash(res_id, NULL,
-				(waitn_time * rls_notifier_poll_rate) - 1);
+	if (dbmode == RLS_DB_ONLY)
+		query_vals[n_query_cols].val.int_val=
+			core_hash(res_id, NULL,
+				(waitn_time * rls_notifier_poll_rate
+					* rls_notifier_processes) - 1);
+	else
+		query_vals[n_query_cols].val.int_val = UPDATED_TYPE;
 	n_query_cols++;
 		
 	query_cols[n_query_cols]= &str_auth_state_col;
@@ -819,23 +833,199 @@ error:
 	free_to_params(&TO);
 	return -1;
 }
-/* callid, from_tag, to_tag parameters must be allocated */
 
-void timer_send_notify(unsigned int ticks,void *param)
+#define EXTRACT_STRING(strng, chars)\
+			do {\
+			strng.s = (char *) chars;\
+			strng.len = strlen(strng.s);\
+			} while(0);
+
+static void timer_send_full_state_notifies(int round)
 {
-	static int round = 0;
+	db_key_t query_cols[1], result_cols[22], update_cols[1];
+	db_val_t query_vals[1], update_vals[1], *values;
+	db_row_t *rows;
+	db1_res_t *result = NULL;
+	int n_result_cols = 0, i;
+	subs_t sub;
+	str ev_sname;
+	event_t parsed_event;
+	xmlDocPtr doc = NULL;
+	xmlNodePtr service_node = NULL;
+	int now = (int)time(NULL);
+
+	query_cols[0] = &str_updated_col;
+	query_vals[0].type = DB1_INT;
+	query_vals[0].nul = 0;
+	query_vals[0].val.int_val = round;
+
+	result_cols[n_result_cols++] = &str_presentity_uri_col;
+	result_cols[n_result_cols++] = &str_to_user_col;
+	result_cols[n_result_cols++] = &str_to_domain_col;
+	result_cols[n_result_cols++] = &str_from_user_col;
+	result_cols[n_result_cols++] = &str_from_domain_col;
+	result_cols[n_result_cols++] = &str_watcher_username_col;
+	result_cols[n_result_cols++] = &str_watcher_domain_col;
+	result_cols[n_result_cols++] = &str_callid_col;
+	result_cols[n_result_cols++] = &str_to_tag_col;
+	result_cols[n_result_cols++] = &str_from_tag_col;
+	result_cols[n_result_cols++] = &str_socket_info_col;
+	result_cols[n_result_cols++] = &str_local_contact_col;
+	result_cols[n_result_cols++] = &str_contact_col;
+	result_cols[n_result_cols++] = &str_record_route_col;
+	result_cols[n_result_cols++] = &str_event_id_col;
+	result_cols[n_result_cols++] = &str_reason_col;
+	result_cols[n_result_cols++] = &str_event_col;
+	result_cols[n_result_cols++] = &str_local_cseq_col;
+	result_cols[n_result_cols++] = &str_remote_cseq_col;
+	result_cols[n_result_cols++] = &str_status_col;
+	result_cols[n_result_cols++] = &str_version_col;
+	result_cols[n_result_cols++] = &str_expires_col;
+
+	update_cols[0] = &str_updated_col;
+	update_vals[0].type = DB1_INT;
+	update_vals[0].nul = 0;
+	update_vals[0].val.int_val = NO_UPDATE_TYPE;
+
+	if (rls_dbf.use_table(rls_db, &rlsubs_table) < 0)
+	{
+		LM_ERR("use table failed\n");
+		goto done;
+	}
+
+	if (rls_dbf.start_transaction)
+	{
+		if (rls_dbf.start_transaction(rls_db) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto done;
+		}
+	}
+
+	/* Step 1: Find rls_watchers that require full-state notification */
+	if (rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
+				1, n_result_cols, 0, &result) < 0)
+	{
+		LM_ERR("in sql query\n");
+		goto done;
+	}
+	if(result== NULL || result->n<= 0)
+		goto done;
+
+	/* Step 2: Reset the update flag so we do not full-state notify
+ 	   these watchers again */
+	if(rls_dbf.update(rls_db, query_cols, 0, query_vals, update_cols,
+					update_vals, 1, 1)< 0)
+	{
+		LM_ERR("in sql update\n");
+		goto done;
+	}
+
+	if (rls_dbf.end_transaction)
+	{
+		if (rls_dbf.end_transaction(rls_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto done;
+		}
+	}
+
+	/* Step 3: Full-state notify each watcher we found */
+	rows = RES_ROWS(result);
+	for (i = 0; i < RES_ROW_N(result); i++)
+	{
+		memset(&sub, 0, sizeof(subs_t));
+		values = ROW_VALUES(&rows[i]);
+		EXTRACT_STRING(sub.pres_uri, VAL_STRING(&values[0]));
+		EXTRACT_STRING(sub.to_user, VAL_STRING(&values[1]));
+		EXTRACT_STRING(sub.to_domain, VAL_STRING(&values[2]));
+		EXTRACT_STRING(sub.from_user, VAL_STRING(&values[3]));
+		EXTRACT_STRING(sub.from_domain, VAL_STRING(&values[4]));
+		EXTRACT_STRING(sub.watcher_user, VAL_STRING(&values[5]));
+		EXTRACT_STRING(sub.watcher_domain, VAL_STRING(&values[6]));
+		EXTRACT_STRING(sub.callid, VAL_STRING(&values[7]));
+		EXTRACT_STRING(sub.to_tag, VAL_STRING(&values[8]));
+		EXTRACT_STRING(sub.from_tag, VAL_STRING(&values[9]));
+		EXTRACT_STRING(sub.sockinfo_str, VAL_STRING(&values[10]));
+		EXTRACT_STRING(sub.local_contact, VAL_STRING(&values[11]));
+		EXTRACT_STRING(sub.contact, VAL_STRING(&values[12]));
+		EXTRACT_STRING(sub.record_route, VAL_STRING(&values[13]));
+		EXTRACT_STRING(sub.event_id, VAL_STRING(&values[14]));
+		EXTRACT_STRING(sub.reason, VAL_STRING(&values[15]));
+		EXTRACT_STRING(ev_sname, VAL_STRING(&values[16]));
+		sub.event = pres_contains_event(&ev_sname, &parsed_event);
+		if (sub.event == NULL)
+		{
+			LM_ERR("event not found and set to NULL\n");
+			goto done;
+		}
+
+		sub.local_cseq = VAL_INT(&values[17]);
+		sub.remote_cseq = VAL_INT(&values[18]);
+		sub.status = VAL_INT(&values[19]);
+		sub.version = VAL_INT(&values[20]);
+		if (VAL_INT(&values[21]) > now)
+			sub.expires = VAL_INT(&values[21]) - now;
+		else
+			sub.expires = 0;
+
+		if (sub.expires < rls_expires_offset) sub.expires = 0;
+
+		if (sub.expires != 0)
+		{
+			if (rls_get_service_list(&sub.pres_uri, &sub.watcher_user,
+				&sub.watcher_domain, &service_node, &doc) < 0)
+			{
+				LM_ERR("failed getting resource list\n");
+				goto done;
+			}
+			if (doc == NULL)
+			{
+				LM_WARN("no document returned for uri <%.*s>\n",
+					sub.pres_uri.len, sub.pres_uri.s);
+				goto done;
+			}
+
+			if (send_full_notify(&sub, service_node, &sub.pres_uri, 0) < 0)
+			{
+				LM_ERR("failed sending full state notify\n");
+				goto done;
+			}
+			xmlFreeDoc(doc);
+			doc = NULL;
+		}
+		else
+		{
+			rls_send_notify(&sub, NULL, NULL, NULL);
+			delete_rlsdb(&sub.callid, &sub.to_tag, &sub.from_tag);
+		}
+	}
+
+done:
+	if (result != NULL)
+		rls_dbf.free_result(rls_db, result);
+	if (doc != NULL)
+		xmlFreeDoc(doc);
+	if (rls_dbf.abort_transaction)
+	{
+		if (rls_dbf.abort_transaction(rls_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+}
+
+static void timer_send_update_notifies(int round)
+{
 	db_key_t query_cols[1], update_cols[1], result_cols[6];
 	db_val_t query_vals[1], update_vals[1];
 	int did_col, resource_uri_col, auth_state_col, reason_col,
 		pres_state_col, content_type_col;
 	int n_result_cols= 0;
 	db1_res_t *result= NULL;
-		
+
 	query_cols[0]= &str_updated_col;
 	query_vals[0].type = DB1_INT;
 	query_vals[0].nul = 0;
 	query_vals[0].val.int_val= round;
-	if (++round > (waitn_time * rls_notifier_poll_rate) - 1) round = 0;
 
 	result_cols[did_col= n_result_cols++]= &str_rlsubs_did_col;
 	result_cols[resource_uri_col= n_result_cols++]= &str_resource_uri_col;
@@ -858,29 +1048,66 @@ void timer_send_notify(unsigned int ticks,void *param)
 		goto done;
 	}
 
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.start_transaction)
+	{
+		if (rlpres_dbf.start_transaction(rlpres_db) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto done;
+		}
+	}
+
 	if(rlpres_dbf.query(rlpres_db, query_cols, 0, query_vals, result_cols,
 					1, n_result_cols, &str_rlsubs_did_col, &result)< 0)
 	{
 		LM_ERR("in sql query\n");
 		goto done;
 	}
-	if(result== NULL || result->n<= 0)
+	if(result == NULL || result->n <= 0)
 		goto done;
 
-	/* update the rlpres table */
 	if(rlpres_dbf.update(rlpres_db, query_cols, 0, query_vals, update_cols,
 					update_vals, 1, 1)< 0)
 	{
 		LM_ERR("in sql update\n");
-		goto error;
+		goto done;
+	}
+
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.end_transaction)
+	{
+		if (rlpres_dbf.end_transaction(rlpres_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto done;
+		}
 	}
 
 	send_notifies(result, did_col, resource_uri_col, auth_state_col, reason_col,
                   pres_state_col, content_type_col);
-error:
 done:
 	if(result)
 		rlpres_dbf.free_result(rlpres_db, result);
+
+	if (dbmode == RLS_DB_ONLY && rls_dbf.abort_transaction)
+	{
+		if (rlpres_dbf.abort_transaction(rlpres_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+}
+
+void timer_send_notify(unsigned int ticks,void *param)
+{
+	if (dbmode == RLS_DB_ONLY)
+	{
+		int process_num = *((int *) param);
+		int round = subset + (waitn_time * rls_notifier_poll_rate * process_num);
+		if (++subset > (waitn_time * rls_notifier_poll_rate) - 1) subset = 0;
+
+		timer_send_full_state_notifies(round);
+		timer_send_update_notifies(round);
+	}
+	else
+		timer_send_update_notifies(UPDATED_TYPE);
 }
 
 

@@ -44,6 +44,7 @@
 #include "utils_func.h"
 #include "notify.h"
 #include "../pua/hash.h"
+#include "../../mod_fix.h"
 
 int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret,
 		str* reply_str);
@@ -180,13 +181,14 @@ int delete_db_subs(str* to_tag, str* from_tag, str* callid)
 
 int insert_subs_db(subs_t* s, int type)
 {
-	db_key_t query_cols[22];
-	db_val_t query_vals[22];
+	db_key_t query_cols[24];
+	db_val_t query_vals[24];
 	int n_query_cols = 0;
 	int pres_uri_col, to_user_col, to_domain_col, from_user_col, from_domain_col,
 		callid_col, totag_col, fromtag_col, event_col,status_col, event_id_col, 
 		local_cseq_col, remote_cseq_col, expires_col, record_route_col, 
-		contact_col, local_contact_col, version_col,socket_info_col,reason_col;
+		contact_col, local_contact_col, version_col,socket_info_col,reason_col,
+		watcher_user_col, watcher_domain_col, updated_col, updated_winfo_col;
 		
 	if(pa_dbf.use_table(pa_db, &active_watchers_table)< 0)
 	{
@@ -224,14 +226,24 @@ int insert_subs_db(subs_t* s, int type)
 	query_vals[to_domain_col].nul = 0;
 	n_query_cols++;
 	
-	query_cols[from_user_col= n_query_cols] =&str_watcher_username_col;
+	query_cols[from_user_col= n_query_cols] =&str_from_user_col;
 	query_vals[from_user_col].type = DB1_STR;
 	query_vals[from_user_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[from_domain_col= n_query_cols] =&str_watcher_domain_col;
+	query_cols[from_domain_col= n_query_cols] =&str_from_domain_col;
 	query_vals[from_domain_col].type = DB1_STR;
 	query_vals[from_domain_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[watcher_user_col= n_query_cols] =&str_watcher_username_col;
+	query_vals[watcher_user_col].type = DB1_STR;
+	query_vals[watcher_user_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[watcher_domain_col= n_query_cols] =&str_watcher_domain_col;
+	query_vals[watcher_domain_col].type = DB1_STR;
+	query_vals[watcher_domain_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[event_col= n_query_cols] =&str_event_col;
@@ -293,7 +305,17 @@ int insert_subs_db(subs_t* s, int type)
 	query_vals[version_col].type = DB1_INT;
 	query_vals[version_col].nul = 0;
 	n_query_cols++;
-	
+
+	query_cols[updated_col= n_query_cols]=&str_updated_col;
+	query_vals[updated_col].type = DB1_INT;
+	query_vals[updated_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[updated_winfo_col= n_query_cols]=&str_updated_winfo_col;
+	query_vals[updated_winfo_col].type = DB1_INT;
+	query_vals[updated_winfo_col].nul = 0;
+	n_query_cols++;
+
 	query_vals[pres_uri_col].val.str_val= s->pres_uri;
 	query_vals[callid_col].val.str_val= s->callid;
 	query_vals[totag_col].val.str_val= s->to_tag;
@@ -302,6 +324,8 @@ int insert_subs_db(subs_t* s, int type)
 	query_vals[to_domain_col].val.str_val = s->to_domain;
 	query_vals[from_user_col].val.str_val = s->from_user;
 	query_vals[from_domain_col].val.str_val = s->from_domain;
+	query_vals[watcher_user_col].val.str_val = s->watcher_user;
+	query_vals[watcher_domain_col].val.str_val = s->watcher_domain;
 	query_vals[event_col].val.str_val = s->event->name;
 	query_vals[event_id_col].val.str_val = s->event_id;
 	query_vals[local_cseq_col].val.int_val= s->local_cseq;
@@ -314,6 +338,8 @@ int insert_subs_db(subs_t* s, int type)
 	query_vals[status_col].val.int_val= s->status;
 	query_vals[reason_col].val.str_val= s->reason;
 	query_vals[socket_info_col].val.str_val= s->sockinfo_str;
+	query_vals[updated_col].val.int_val = -1;
+	query_vals[updated_winfo_col].val.int_val = -1;
 
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
 	{
@@ -636,7 +662,47 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 		LM_ERR("cleaning pending subscriptions\n");
 }
 
-int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
+int handle_subscribe0(struct sip_msg* msg)
+{
+	struct to_body *pfrom;
+
+	if (parse_from_uri(msg) < 0)
+	{
+		LM_ERR("failed to find From header\n");
+		if (slb.freply(msg, 400, &pu_400_rpl) < 0)
+		{
+			LM_ERR("while sending 400 reply\n");
+			return -1;
+		}
+		return 0;
+	}
+	pfrom = (struct to_body *) msg->from->parsed;
+
+	return handle_subscribe(msg, pfrom->parsed_uri.user,
+				pfrom->parsed_uri.host);
+}
+
+int w_handle_subscribe(struct sip_msg* msg, char* watcher_uri)
+{
+	str wuri;
+	struct sip_uri parsed_wuri;
+
+	if (fixup_get_svalue(msg, (gparam_p)watcher_uri, &wuri) != 0)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+
+	if (parse_uri(wuri.s, wuri.len, &parsed_wuri) < 0)
+	{
+		LM_ERR("failed to parse watcher URI\n");
+		return -1;
+	}
+
+	return handle_subscribe(msg, parsed_wuri.user, parsed_wuri.host);
+}
+
+int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 {
 	int  to_tag_gen = 0;
 	subs_t subs;
@@ -701,7 +767,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}
 	
 	if(extract_sdialog_info(&subs, msg, max_expires, &to_tag_gen,
-				server_address)< 0)
+				server_address, watcher_user, watcher_domain)< 0)
 	{
 		LM_ERR("failed to extract dialog information\n");
 		goto error;
@@ -885,7 +951,8 @@ error:
 
 
 int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
-		int* to_tag_gen, str scontact)
+		int* to_tag_gen, str scontact, str watcher_user,
+		str watcher_domain)
 {
 	str rec_route= {0, 0};
 	int rt  = 0;
@@ -991,6 +1058,9 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
 		subs->from_domain = uri.host;
 	}
 
+	subs->watcher_user = watcher_user;
+	subs->watcher_domain = watcher_domain;
+
 	/* get to_tag if the message does not have a to_tag*/
 	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
 	{  
@@ -1045,6 +1115,12 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp,
 		LM_ERR("cannot parse contact header\n");
 		goto error;
 	}
+	if(b->star || b->contacts==NULL)
+	{
+		LM_ERR("Wrong contact header\n");
+		goto error;
+	}
+
 	subs->contact = b->contacts->uri;
 	
 	LM_DBG("subs->contact= %.*s - len = %d\n",subs->contact.len,
@@ -1396,6 +1472,7 @@ int handle_expired_subs(subs_t* s)
 	s->reason.s= "timeout";
 	s->reason.len= 7;
 	s->expires= 0;
+	s->local_cseq++;
 
 	if(send_notify_request(s, NULL, NULL, 1)< 0)
 	{
@@ -1412,11 +1489,11 @@ void update_db_subs_timer_dbonly(void)
 	db_op_t qops[1];
 	db_key_t qcols[1];
 	db_val_t qvals[1];
-	db_key_t result_cols[16];
+	db_key_t result_cols[18];
 	int pres_uri_col, to_user_col, to_domain_col, from_user_col, from_domain_col,
 		callid_col, totag_col, fromtag_col, event_col, event_id_col,
 		local_cseq_col, expires_col, rr_col, sockinfo_col,
-		contact_col, lcontact_col;
+		contact_col, lcontact_col, watcher_user_col, watcher_domain_col;
 	int n_result_cols = 0;
 	db1_res_t *result= NULL;
 	db_row_t *row = NULL;
@@ -1441,8 +1518,10 @@ void update_db_subs_timer_dbonly(void)
 	result_cols[event_id_col=n_result_cols++]   =&str_event_id_col;
 	result_cols[to_user_col=n_result_cols++]    =&str_to_user_col;
 	result_cols[to_domain_col=n_result_cols++]  =&str_to_domain_col;
-	result_cols[from_user_col=n_result_cols++]  =&str_watcher_username_col;
-	result_cols[from_domain_col=n_result_cols++]=&str_watcher_domain_col;
+	result_cols[from_user_col=n_result_cols++]  =&str_from_user_col;
+	result_cols[from_domain_col=n_result_cols++]=&str_from_domain_col;
+	result_cols[watcher_user_col=n_result_cols++]  =&str_watcher_username_col;
+	result_cols[watcher_domain_col=n_result_cols++]=&str_watcher_domain_col;
 	result_cols[callid_col=n_result_cols++]     =&str_callid_col;
 	result_cols[totag_col=n_result_cols++]      =&str_to_tag_col;
 	result_cols[fromtag_col=n_result_cols++]    =&str_from_tag_col;
@@ -1496,6 +1575,12 @@ void update_db_subs_timer_dbonly(void)
 
 		s.from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
 		s.from_domain.len= strlen(s.from_domain.s);
+
+		s.watcher_user.s= (char*)row_vals[watcher_user_col].val.string_val;
+		s.watcher_user.len= strlen(s.watcher_user.s);
+
+		s.watcher_domain.s= (char*)row_vals[watcher_domain_col].val.string_val;
+		s.watcher_domain.len= strlen(s.watcher_domain.s);
 
 		s.event_id.s=(char*)row_vals[event_id_col].val.string_val;
 		s.event_id.len= (s.event_id.s)?strlen(s.event_id.s):0;
@@ -1607,14 +1692,15 @@ void update_db_subs_timer_dbnone(int no_lock)
 void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	int htable_size, int no_lock, handle_expired_func_t handle_expired_func)
 {
-	db_key_t query_cols[22], update_cols[7];
-	db_val_t query_vals[22], update_vals[7];
+	db_key_t query_cols[24], update_cols[6];
+	db_val_t query_vals[24], update_vals[6];
 	db_op_t update_ops[1];
 	subs_t* del_s;
 	int pres_uri_col, to_user_col, to_domain_col, from_user_col, from_domain_col,
 		callid_col, totag_col, fromtag_col, event_col,status_col, event_id_col,
 		local_cseq_col, remote_cseq_col, expires_col, record_route_col,
-		contact_col, local_contact_col, version_col,socket_info_col,reason_col;
+		contact_col, local_contact_col, version_col,socket_info_col,reason_col,
+		watcher_user_col, watcher_domain_col, updated_col, updated_winfo_col;
 	int u_expires_col, u_local_cseq_col, u_remote_cseq_col, u_version_col,
 		u_reason_col, u_status_col;
 	int i;
@@ -1657,14 +1743,24 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	query_vals[to_domain_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[from_user_col= n_query_cols] =&str_watcher_username_col;
+	query_cols[from_user_col= n_query_cols] =&str_from_user_col;
 	query_vals[from_user_col].type = DB1_STR;
 	query_vals[from_user_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[from_domain_col= n_query_cols] =&str_watcher_domain_col;
+	query_cols[from_domain_col= n_query_cols] =&str_from_domain_col;
 	query_vals[from_domain_col].type = DB1_STR;
 	query_vals[from_domain_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[watcher_user_col= n_query_cols] =&str_watcher_username_col;
+	query_vals[watcher_user_col].type = DB1_STR;
+	query_vals[watcher_user_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[watcher_domain_col= n_query_cols] =&str_watcher_domain_col;
+	query_vals[watcher_domain_col].type = DB1_STR;
+	query_vals[watcher_domain_col].nul = 0;
 	n_query_cols++;
 
 	query_cols[event_col= n_query_cols] =&str_event_col;
@@ -1725,6 +1821,16 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	query_cols[version_col= n_query_cols]=&str_version_col;
 	query_vals[version_col].type = DB1_INT;
 	query_vals[version_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[updated_col= n_query_cols]=&str_updated_col;
+	query_vals[updated_col].type = DB1_INT;
+	query_vals[updated_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[updated_winfo_col= n_query_cols]=&str_updated_winfo_col;
+	query_vals[updated_winfo_col].type = DB1_INT;
+	query_vals[updated_winfo_col].nul = 0;
 	n_query_cols++;
 
 	/* cols and values used for update */
@@ -1830,6 +1936,8 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 					query_vals[to_domain_col].val.str_val = s->to_domain;
 					query_vals[from_user_col].val.str_val = s->from_user;
 					query_vals[from_domain_col].val.str_val = s->from_domain;
+					query_vals[watcher_user_col].val.str_val = s->watcher_user;
+					query_vals[watcher_domain_col].val.str_val = s->watcher_domain;
 					query_vals[event_col].val.str_val = s->event->name;
 					query_vals[event_id_col].val.str_val = s->event_id;
 					query_vals[local_cseq_col].val.int_val= s->local_cseq;
@@ -1842,6 +1950,8 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 					query_vals[status_col].val.int_val= s->status;
 					query_vals[reason_col].val.str_val= s->reason;
 					query_vals[socket_info_col].val.str_val= s->sockinfo_str;
+					query_vals[updated_col].val.int_val = -1;
+					query_vals[updated_winfo_col].val.int_val = -1;
 
 					if(dbf.insert(db,query_cols,query_vals,n_query_cols )<0)
 					{
@@ -1910,6 +2020,7 @@ int restore_db_subs(void)
 	int callid_col,totag_col,fromtag_col,to_domain_col,sockinfo_col,reason_col;
 	int event_col,contact_col,record_route_col, event_id_col, status_col;
 	int remote_cseq_col, local_cseq_col, local_contact_col, version_col;
+	int watcher_user_col, watcher_domain_col;
 	subs_t s;
 	str ev_sname;
 	pres_ev_t* event= NULL;
@@ -1919,16 +2030,18 @@ int restore_db_subs(void)
 	int nr_rows;
 
 	result_cols[pres_uri_col=n_result_cols++]	=&str_presentity_uri_col;
-	result_cols[expires_col=n_result_cols++]=&str_expires_col;
-	result_cols[event_col=n_result_cols++]	=&str_event_col;
-	result_cols[event_id_col=n_result_cols++]=&str_event_id_col;
+	result_cols[expires_col=n_result_cols++]	=&str_expires_col;
+	result_cols[event_col=n_result_cols++]		=&str_event_col;
+	result_cols[event_id_col=n_result_cols++]	=&str_event_id_col;
 	result_cols[to_user_col=n_result_cols++]	=&str_to_user_col;
 	result_cols[to_domain_col=n_result_cols++]	=&str_to_domain_col;
-	result_cols[from_user_col=n_result_cols++]	=&str_watcher_username_col;
-	result_cols[from_domain_col=n_result_cols++]=&str_watcher_domain_col;
-	result_cols[callid_col=n_result_cols++] =&str_callid_col;
-	result_cols[totag_col=n_result_cols++]	=&str_to_tag_col;
-	result_cols[fromtag_col=n_result_cols++]=&str_from_tag_col;
+	result_cols[from_user_col=n_result_cols++]	=&str_from_user_col;
+	result_cols[from_domain_col=n_result_cols++]	=&str_from_domain_col;
+	result_cols[watcher_user_col=n_result_cols++]	=&str_watcher_username_col;
+	result_cols[watcher_domain_col=n_result_cols++]	=&str_watcher_domain_col;
+	result_cols[callid_col=n_result_cols++]		=&str_callid_col;
+	result_cols[totag_col=n_result_cols++]		=&str_to_tag_col;
+	result_cols[fromtag_col=n_result_cols++]	=&str_from_tag_col;
 	result_cols[local_cseq_col= n_result_cols++]	=&str_local_cseq_col;
 	result_cols[remote_cseq_col= n_result_cols++]	=&str_remote_cseq_col;
 	result_cols[record_route_col= n_result_cols++]	=&str_record_route_col;
@@ -1992,6 +2105,12 @@ int restore_db_subs(void)
 			
 			s.from_domain.s=(char*)row_vals[from_domain_col].val.string_val;
 			s.from_domain.len= strlen(s.from_domain.s);
+
+			s.watcher_user.s=(char*)row_vals[watcher_user_col].val.string_val;
+			s.watcher_user.len= strlen(s.watcher_user.s);
+			
+			s.watcher_domain.s=(char*)row_vals[watcher_domain_col].val.string_val;
+			s.watcher_domain.len= strlen(s.watcher_domain.s);
 			
 			s.to_tag.s=(char*)row_vals[totag_col].val.string_val;
 			s.to_tag.len= strlen(s.to_tag.s);
@@ -2101,71 +2220,6 @@ error:
 
 }
 
-int refresh_watcher(str* pres_uri, str* watcher_uri, str* event, 
-		int status, str* reason)
-{
-	unsigned int hash_code;
-	subs_t* s, *s_copy;
-	pres_ev_t* ev;		
-	struct sip_uri uri;
-	str user, domain;
-	/* refresh status in subs_htable and send notify */
-
-	ev=	contains_event(event, NULL);
-	if(ev== NULL)
-	{
-		LM_ERR("while searching event in list\n");
-		return -1;
-	}
-
-	if(parse_uri(watcher_uri->s, watcher_uri->len, &uri)< 0)
-	{
-		LM_ERR("parsing uri\n");
-		return -1;
-	}
-	user= uri.user;
-	domain= uri.host;
-
-	hash_code= core_hash(pres_uri, event, shtable_size);
-
-	lock_get(&subs_htable[hash_code].lock);
-
-	s= subs_htable[hash_code].entries->next;
-
-	while(s)
-	{
-		if(s->event== ev && s->pres_uri.len== pres_uri->len &&
-			strncmp(s->pres_uri.s, pres_uri->s, pres_uri->len)== 0 &&
-			s->from_user.len==user.len && strncmp(s->from_user.s,user.s, user.len)==0 &&
-			s->from_domain.len== domain.len && 
-			strncmp(s->from_domain.s, domain.s, domain.len)== 0)
-		{
-			s->status= status;
-			if(reason)
-				s->reason= *reason;
-			
-			s_copy= mem_copy_subs(s, PKG_MEM_TYPE);
-			if(s_copy== NULL)
-			{
-				LM_ERR("copying subs_t\n");
-				lock_release(&subs_htable[hash_code].lock);
-				return -1;
-			}
-			lock_release(&subs_htable[hash_code].lock);
-			if(notify(s_copy, NULL, NULL, 0)< 0)
-			{
-				LM_ERR("in notify function\n");
-				pkg_free(s_copy);
-				return -1;
-			}
-			pkg_free(s_copy);
-			lock_get(&subs_htable[hash_code].lock);
-		}
-		s= s->next;
-	}
-	return 0;
-}
-
 int get_db_subs_auth(subs_t* subs, int* found)
 {
 	db_key_t db_keys[5];
@@ -2185,13 +2239,13 @@ int get_db_subs_auth(subs_t* subs, int* found)
 	db_keys[n_query_cols] =&str_watcher_username_col;
 	db_vals[n_query_cols].type = DB1_STR;
 	db_vals[n_query_cols].nul = 0;
-	db_vals[n_query_cols].val.str_val = subs->from_user;
+	db_vals[n_query_cols].val.str_val = subs->watcher_user;
 	n_query_cols++;
 
 	db_keys[n_query_cols] =&str_watcher_domain_col;
 	db_vals[n_query_cols].type = DB1_STR;
 	db_vals[n_query_cols].nul = 0;
-	db_vals[n_query_cols].val.str_val = subs->from_domain;
+	db_vals[n_query_cols].val.str_val = subs->watcher_domain;
 	n_query_cols++;
 	
 	db_keys[n_query_cols] =&str_event_col;
@@ -2271,13 +2325,13 @@ int insert_db_subs_auth(subs_t* subs)
 	db_keys[n_query_cols] =&str_watcher_username_col;
 	db_vals[n_query_cols].type = DB1_STR;
 	db_vals[n_query_cols].nul = 0;
-	db_vals[n_query_cols].val.str_val = subs->from_user;
+	db_vals[n_query_cols].val.str_val = subs->watcher_user;
 	n_query_cols++;
 
 	db_keys[n_query_cols] =&str_watcher_domain_col;
 	db_vals[n_query_cols].type = DB1_STR;
 	db_vals[n_query_cols].nul = 0;
-	db_vals[n_query_cols].val.str_val = subs->from_domain;
+	db_vals[n_query_cols].val.str_val = subs->watcher_domain;
 	n_query_cols++;
 	
 	db_keys[n_query_cols] =&str_event_col;

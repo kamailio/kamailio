@@ -33,6 +33,7 @@
 #include "../../dset.h"
 #include "../../mod_fix.h"
 #include "../../parser/parse_uri.h"
+#include "../../lib/srutils/sruid.h"
 
 #include "flags.h"
 #include "km_core.h"
@@ -54,6 +55,18 @@ int w_resetdebug(struct sip_msg *msg, char *uri, str *s2);
 static int mod_init(void);
 static int child_init(int rank);
 static void destroy(void);
+
+
+static sruid_t _kex_sruid;
+
+static int pv_get_sruid_val(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
+static pv_export_t mod_pvs[] = {
+	{ {"sruid", sizeof("sruid")-1}, PVT_OTHER, pv_get_sruid_val, 0,
+		0, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
 
 static cmd_export_t cmds[]={
 	{"setsflag", (cmd_function)w_setsflag,          1,fixup_igp_null,
@@ -111,7 +124,7 @@ struct module_exports exports= {
 	params,
 	0,          /* exported statistics */
 	0,          /* exported MI functions */
-	0,          /* exported pseudo-variables */
+	mod_pvs,    /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* module initialization function */
 	0,
@@ -124,6 +137,8 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	if(sruid_init(&_kex_sruid, '-', NULL, 0)<0)
+		return -1;
 	if(init_mi_core()<0)
 		return -1;
 #ifdef STATISTICS
@@ -143,6 +158,8 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	LM_DBG("rank is (%d)\n", rank);
+	if(sruid_init(&_kex_sruid, '-', NULL, 0)<0)
+		return -1;
 	if (rank==PROC_INIT)
 		return pkg_proc_stats_init();
 	return pkg_proc_stats_myinit(rank);
@@ -207,3 +224,15 @@ int w_resetdebug(struct sip_msg *msg, char *uri, str *s2)
 	reset_local_debug_level();
 	return 1;
 }
+
+
+static int pv_get_sruid_val(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(res==NULL)
+		return -1;
+	if(sruid_next(&_kex_sruid)<0)
+		return pv_get_null(msg, param, res);
+	return pv_get_strval(msg, param, res, &_kex_sruid.uid);
+}
+

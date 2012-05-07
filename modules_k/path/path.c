@@ -210,7 +210,7 @@ void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
 	param_t *params;
 			
 	if (parse_params(r_param, CLASS_CONTACT, &hooks, &params) != 0) {
-		LM_ERR("failed to parse route parametes\n");
+		LM_ERR("failed to parse route parameters\n");
 		return;
 	}
 

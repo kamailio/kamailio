@@ -53,6 +53,7 @@ CREATE TABLE lcr_rule (
     lcr_id NUMBER(5),
     prefix VARCHAR2(16) DEFAULT NULL,
     from_uri VARCHAR2(64) DEFAULT NULL,
+    request_uri VARCHAR2(64) DEFAULT NULL,
     stopper NUMBER(10) DEFAULT 0 NOT NULL,
     enabled NUMBER(10) DEFAULT 1 NOT NULL,
     CONSTRAINT ORA_lcr_id_prefix_from_uri_idx  UNIQUE (lcr_id, prefix, from_uri)

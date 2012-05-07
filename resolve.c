@@ -128,7 +128,7 @@ int register_resolv_reinit_cb(on_resolv_reinit cb)
 /* counter init function
   must be called before fork
 */
-static int stat_init()
+static int stat_init(void)
 {
 	if (counter_register_array("dns", dns_cnt_defs) < 0)
 		goto error;
@@ -151,7 +151,7 @@ error:
  * will be used. See also resolv.conf(5).
  * returns: 0 on success, -1 on error
  */
-static int _resolv_init()
+static int _resolv_init(void)
 {
 	res_init();
 #ifdef HAVE_RESOLV_RES
@@ -173,7 +173,7 @@ static int _resolv_init()
 }
 
 /* wrapper function to initialize the resolver at startup */
-int resolv_init()
+int resolv_init(void)
 {
 	int res = -1;
 	_resolv_init();

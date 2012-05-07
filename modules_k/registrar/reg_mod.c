@@ -68,6 +68,7 @@
 #include "../../pvar.h"
 #include "../../modules_k/usrloc/usrloc.h"
 #include "../../lib/kcore/statistics.h"
+#include "../../lib/srutils/sruid.h"
 #include "../../modules/sl/sl.h"
 #include "../../mod_fix.h"
 
@@ -113,6 +114,11 @@ int path_mode = PATH_MODE_STRICT;		/*!< if the Path HF should be inserted in the
 int path_use_params = 0;			/*!< if the received- and nat-parameters of last Path uri should be used
  						 * to determine if UAC is nat'ed */
 
+/* sruid to get internal uid */
+sruid_t _reg_sruid;
+
+int reg_gruu_enabled = 1;
+
 /* Populate this AVP if testing for specific registration instance. */
 char *reg_callid_avp_param = 0;
 unsigned short reg_callid_avp_type = 0;
@@ -123,6 +129,7 @@ unsigned short rcv_avp_type = 0;
 int_str rcv_avp_name;
 
 str reg_xavp_cfg = {0};
+str reg_xavp_rcd = {0};
 
 int reg_use_domain = 0;
 
@@ -195,7 +202,7 @@ static param_export_t params[] = {
 	{"append_branches",    INT_PARAM, &default_registrar_cfg.append_branches		},
 	{"case_sensitive",     INT_PARAM, &default_registrar_cfg.case_sensitive			},
 	/*	{"tcp_persistent_flag",INT_PARAM, &tcp_persistent_flag }, */
-	{"realm_prefix",       STR_PARAM, &default_registrar_cfg.realm_pref          		},
+	{"realm_prefix",       PARAM_STR, &default_registrar_cfg.realm_pref          		},
 	{"min_expires",        INT_PARAM, &default_registrar_cfg.min_expires			},
 	{"max_expires",        INT_PARAM, &default_registrar_cfg.max_expires			},
 	{"received_param",     STR_PARAM, &rcv_param           					},
@@ -210,6 +217,8 @@ static param_export_t params[] = {
 	{"path_mode",          INT_PARAM, &path_mode           					},
 	{"path_use_received",  INT_PARAM, &path_use_params     					},
 	{"xavp_cfg",           STR_PARAM, &reg_xavp_cfg.s     					},
+	{"xavp_rcd",           STR_PARAM, &reg_xavp_rcd.s     					},
+	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    					},
 	{0, 0, 0}
 };
 
@@ -256,6 +265,9 @@ static int mod_init(void)
 	bind_usrloc_t bind_usrloc;
 	qvalue_t dq;
 
+
+	if(sruid_init(&_reg_sruid, '-', "uloc", SRUID_INC)<0)
+		return -1;
 
 #ifdef STATISTICS
 	/* register statistics */
@@ -365,12 +377,17 @@ static int mod_init(void)
 	if (reg_xavp_cfg.s) {
 		reg_xavp_cfg.len = strlen(reg_xavp_cfg.s);
 	}
+	if (reg_xavp_rcd.s) {
+		reg_xavp_rcd.len = strlen(reg_xavp_rcd.s);
+	}
 	return 0;
 }
 
 
 static int child_init(int rank)
 {
+	if(sruid_init(&_reg_sruid, '-', "uloc", SRUID_INC)<0)
+		return -1;
 	if (rank==1) {
 		/* init stats */
 		//TODO if parameters are modified via cfg framework do i change them?

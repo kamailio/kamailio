@@ -37,6 +37,7 @@
 
 #include <stdio.h>
 #include "../../ut.h"
+#include "../../xavp.h"
 #include "../../parser/msg_parser.h"
 #include "../../lib/kcore/parse_supported.h"
 #include "../../data_lump_rpl.h"
@@ -64,6 +65,22 @@
 #define CONTACT_SEP ", "
 #define CONTACT_SEP_LEN (sizeof(CONTACT_SEP) - 1)
 
+#define GR_PARAM ";gr="
+#define GR_PARAM_LEN (sizeof(GR_PARAM) - 1)
+
+#define SIP_INSTANCE_PARAM	";+sip.instance="
+#define SIP_INSTANCE_PARAM_LEN	(sizeof(SIP_INSTANCE_PARAM) - 1)
+
+#define PUB_GRUU_PARAM ";pub-gruu="
+#define PUB_GRUU_PARAM_LEN (sizeof(PUB_GRUU_PARAM) - 1)
+
+#define TMP_GRUU_PARAM ";temp-gruu="
+#define TMP_GRUU_PARAM_LEN (sizeof(TMP_GRUU_PARAM) - 1)
+
+#define REG_ID_PARAM ";reg-id="
+#define REG_ID_PARAM_LEN (sizeof(REG_ID_PARAM) - 1)
+
+extern int reg_gruu_enabled;
 
 /*! \brief
  * Buffer for Contact header field
@@ -78,8 +95,9 @@ static struct {
 /*! \brief
  * Calculate the length of buffer needed to
  * print contacts
+ * - mode specifies if GRUU header params are added
  */
-static inline unsigned int calc_buf_len(ucontact_t* c)
+static inline unsigned int calc_buf_len(ucontact_t* c, str *host, int mode)
 {
 	unsigned int len;
 	int qlen;
@@ -101,6 +119,44 @@ static inline unsigned int calc_buf_len(ucontact_t* c)
 					+ 1 /* dquote */
 					;
 			}
+			if (reg_gruu_enabled==1 && c->instance.len>0 && mode==1) {
+				/* pub-gruu */
+				len += PUB_GRUU_PARAM_LEN
+					+ 1 /* " */
+					+ 4 /* sip: */
+					+ c->aor->len
+					+ 1 /* @ */
+					+ host->len
+					+ GR_PARAM_LEN
+					+ c->instance.len
+					+ 1 /* " */
+					;
+				/* temp-gruu */
+				len += TMP_GRUU_PARAM_LEN
+					+ 1 /* " */
+					+ 4 /* sip: */
+					+ c->ruid.len
+					+ 1 /* 'sep' */
+					+ 8 /* max hex int */
+					+ 1 /* @ */
+					+ host->len
+					+ GR_PARAM_LEN
+					- 1 /* = */
+					+ 1 /* " */
+					;
+			}
+			if (c->instance.len>0) {
+				/* +sip-instance */
+				len += SIP_INSTANCE_PARAM_LEN
+					+ 1 /* " */
+					+ c->instance.len
+					+ 1 /* " */
+					;
+			}
+			if (c->reg_id>0) {
+				/* reg-id */
+				len += REG_ID_PARAM_LEN + INT2STR_MAX_LEN;
+			}
 		}
 		c = c->next;
 	}
@@ -114,12 +170,31 @@ static inline unsigned int calc_buf_len(ucontact_t* c)
  * Allocate a memory buffer and print Contact
  * header fields into it
  */
-int build_contact(ucontact_t* c)
+int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 {
 	char *p, *cp;
+	char *a;
 	int fl, len;
+	str user;
+	str inst;
+	unsigned int ahash;
+	unsigned short digit;
+	int mode;
+	sr_xavp_t *xavp=NULL;
+	sr_xavp_t *list=NULL;
+	str xname = {"ruid", 4};
+	sr_xval_t xval;
 
-	contact.data_len = calc_buf_len(c);
+
+
+	if(msg!=NULL && parse_supported(msg)==0
+			&& (get_supported(msg) & F_SUPPORTED_GRUU))
+		mode = 1;
+	else
+		mode = 0;
+
+	contact.data_len = calc_buf_len(c, host, mode);
+
 	if (!contact.data_len) return 0;
 
 	if (!contact.buf || (contact.buf_len < contact.data_len)) {
@@ -139,6 +214,13 @@ int build_contact(ucontact_t* c)
 	
 	memcpy(p, CONTACT_BEGIN, CONTACT_BEGIN_LEN);
 	p += CONTACT_BEGIN_LEN;
+
+	/* add xavp with details of the record (ruid, ...) */
+	if(reg_xavp_rcd.s!=NULL)
+	{
+		list = xavp_get(&reg_xavp_rcd, NULL);
+		xavp = list;
+	}
 
 	fl = 0;
 	while(c) {
@@ -179,9 +261,103 @@ int build_contact(ucontact_t* c)
 				p += c->received.len;
 				*p++ = '\"';
 			}
+			if (reg_gruu_enabled==1 && c->instance.len>0 && mode==1) {
+				user.s = c->aor->s;
+				a = memchr(c->aor->s, '@', c->aor->len);
+				if(a!=NULL) {
+					user.len = a - user.s;
+				} else {
+					user.len = c->aor->len;
+				}
+				/* pub-gruu */
+				memcpy(p, PUB_GRUU_PARAM, PUB_GRUU_PARAM_LEN);
+				p += PUB_GRUU_PARAM_LEN;
+				*p++ = '\"';
+				memcpy(p, "sip:", 4);
+				p += 4;
+				if(a!=NULL) {
+					memcpy(p, c->aor->s, c->aor->len);
+					p += c->aor->len;
+				} else {
+					memcpy(p, user.s, user.len);
+					p += user.len;
+					*p++ = '@';
+					memcpy(p, host->s, host->len);
+					p += host->len;
+				}
+				memcpy(p, GR_PARAM, GR_PARAM_LEN);
+				p += GR_PARAM_LEN;
+				inst = c->instance;
+				if(inst.s[0]=='<' && inst.s[inst.len-1]=='>') {
+					inst.s++;
+					inst.len -= 2;
+				}
+				memcpy(p, inst.s, inst.len);
+				p += inst.len;
+				*p++ = '\"';
+				/* temp-gruu */
+				memcpy(p, TMP_GRUU_PARAM, TMP_GRUU_PARAM_LEN);
+				p += TMP_GRUU_PARAM_LEN;
+				*p++ = '\"';
+				memcpy(p, "sip:", 4);
+				p += 4;
+				memcpy(p, c->ruid.s, c->ruid.len);
+				p += c->ruid.len;
+				*p++ = '-';
+				ahash = ul.get_aorhash(c->aor);
+				while(ahash!=0)
+				{
+					digit =  ahash & 0x0f;
+					*p++ = (digit >= 10) ? digit + 'a' - 10 : digit + '0';
+					ahash >>= 4;
+				}
+				*p++ = '@';
+				memcpy(p, host->s, host->len);
+				p += host->len;
+				memcpy(p, GR_PARAM, GR_PARAM_LEN);
+				p += GR_PARAM_LEN - 1;
+				*p++ = '\"';
+			}
+
+			if (c->instance.len>0) {
+				/* +sip-instance */
+				memcpy(p, SIP_INSTANCE_PARAM, SIP_INSTANCE_PARAM_LEN);
+				p += SIP_INSTANCE_PARAM_LEN;
+				*p++ = '\"';
+				memcpy(p, c->instance.s, c->instance.len);
+				p += c->instance.len;
+				*p++ = '\"';
+			}
+			if (c->reg_id>0) {
+				/* reg-id */
+				memcpy(p, REG_ID_PARAM, REG_ID_PARAM_LEN);
+				p += REG_ID_PARAM_LEN;
+				cp = int2str(c->reg_id, &len);
+				memcpy(p, cp, len);
+				p += len;
+			}
+			if(reg_xavp_rcd.s!=NULL)
+			{
+				memset(&xval, 0, sizeof(sr_xval_t));
+				xval.type = SR_XTYPE_STR;
+				xval.v.s = c->ruid;
+				xavp_add_value(&xname, &xval, &xavp);
+			}
 		}
 
 		c = c->next;
+	}
+
+	/* add xavp with details of the record (ruid, ...) */
+	if(reg_xavp_rcd.s!=NULL)
+	{
+		if(list==NULL)
+		{
+			/* no reg_xavp_rcd xavp in root list - add it */
+			xval.type = SR_XTYPE_XAVP;
+			xval.v.xavp = xavp;
+			xavp_add_value(&reg_xavp_rcd, &xval, NULL);
+		}
 	}
 
 	memcpy(p, CRLF, CRLF_LEN);

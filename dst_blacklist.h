@@ -83,12 +83,12 @@ struct blacklist_hook{
 int register_blacklist_hook(struct blacklist_hook *h, int type);
 #endif /* DST_BLACKLIST_HOOKS */
 
-int init_dst_blacklist();
+int init_dst_blacklist(void);
 #ifdef USE_DST_BLACKLIST_STATS
 int init_dst_blacklist_stats(int iproc_num);
 #define DST_BLACKLIST_ALL_STATS "bkl_all_stats"
 #endif
-void destroy_dst_blacklist();
+void destroy_dst_blacklist(void);
 
 
 /** force add to the blacklist.

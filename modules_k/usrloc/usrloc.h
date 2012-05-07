@@ -68,6 +68,7 @@ struct socket_info;
 /*! \brief Main structure for handling of registered Contact data */
 typedef struct ucontact {
 	str* domain;            /*!< Pointer to domain name (NULL terminated) */
+	str ruid;               /*!< Pointer to record internal unique id */
 	str* aor;               /*!< Pointer to the AOR string in record structure*/
 	str c;                  /*!< Contact address */
 	str received;           /*!< IP+port+protocol we received the REGISTER from */
@@ -83,6 +84,8 @@ typedef struct ucontact {
 	struct socket_info *sock; /*!< received socket */
 	time_t last_modified;   /*!< When the record was last modified */
 	unsigned int methods;   /*!< Supported methods */
+	str instance;           /*!< SIP instance value - gruu */
+	unsigned int reg_id;    /*!< reg-id parameters */
 	struct ucontact* next;  /*!< Next contact in the linked list */
 	struct ucontact* prev;  /*!< Previous contact in the linked list */
 } ucontact_t;
@@ -90,6 +93,7 @@ typedef struct ucontact {
 
 /*! \brief Informations related to a contact */
 typedef struct ucontact_info {
+	str ruid;                 /*!< Pointer to record internal unique id */
 	str received;             /*!< Received interface */
 	str* path;                /*!< Path informations */
 	time_t expires;           /*!< Contact expires */
@@ -101,6 +105,8 @@ typedef struct ucontact_info {
 	str *user_agent;          /*!< user agent header */
 	struct socket_info *sock; /*!< socket informations */
 	unsigned int methods;     /*!< supported methods */
+	str instance;             /*!< SIP instance value - gruu */
+	unsigned int reg_id;      /*!< reg-id parameters */
 	time_t last_modified;     /*!< last modified */
 } ucontact_info_t;
 
@@ -126,7 +132,10 @@ typedef struct urecord {
 
 typedef int (*insert_urecord_t)(struct udomain* _d, str* _aor, struct urecord** _r);
 
-typedef int  (*get_urecord_t)(struct udomain* _d, str* _aor, struct urecord** _r);
+typedef int (*get_urecord_t)(struct udomain* _d, str* _aor, struct urecord** _r);
+
+typedef int (*get_urecord_by_ruid_t)(udomain_t* _d, unsigned int _aorhash,
+		str *_ruid, struct urecord** _r, struct ucontact** _c);
 
 typedef int  (*delete_urecord_t)(struct udomain* _d, str* _aor, struct urecord* _r);
 
@@ -143,6 +152,9 @@ typedef int (*get_ucontact_t)(struct urecord* _r, str* _c, str* _callid,
 		str* _path, int _cseq,
 		struct ucontact** _co);
 
+typedef int (*get_ucontact_by_instance_t)(struct urecord* _r, str* _c,
+		ucontact_info_t* _ci, ucontact_t** _co);
+
 typedef void (*lock_udomain_t)(struct udomain* _d, str *_aor);
 
 typedef void (*unlock_udomain_t)(struct udomain* _d, str *_aor);
@@ -153,6 +165,9 @@ typedef int  (*get_all_ucontacts_t) (void* buf, int len, unsigned int flags,
 		unsigned int part_idx, unsigned int part_max);
 
 typedef int (*get_udomain_t)(const char* _n, udomain_t** _d);
+
+typedef unsigned int (*ul_get_aorhash_t)(str *_aor);
+unsigned int ul_get_aorhash(str *_aor);
 
 /*! usrloc API export structure */
 typedef struct usrloc_api {
@@ -175,9 +190,13 @@ typedef struct usrloc_api {
 	delete_ucontact_t    delete_ucontact;
 	get_ucontact_t       get_ucontact;
 
+	get_urecord_by_ruid_t       get_urecord_by_ruid;
+	get_ucontact_by_instance_t  get_ucontact_by_instance;
+
 	update_ucontact_t    update_ucontact;
 
 	register_ulcb_t      register_ulcb;
+	ul_get_aorhash_t     get_aorhash;
 } usrloc_api_t;
 
 

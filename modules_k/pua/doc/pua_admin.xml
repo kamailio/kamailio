@@ -375,6 +375,30 @@ if(method=="NOTIFY")
 	</section>
 </section>
 
+<section>
+	<title>MI Commands</title>
+	<section>
+	  <title>
+		<function moreinfo="none">pua_cleanup</function>
+	  </title>
+	  <para>
+		Manually triggers the cleanup functions for the pua table.
+		Useful if you have set <varname>update_period</varname> to zero or less.
+	  </para>
+	  <para>
+		Name: <emphasis>pua_cleanup</emphasis>
+	  </para>
+	  <para>Parameters: <emphasis>none</emphasis></para>
+
+	  <para>
+		MI FIFO Command Format:
+	  </para>
+	  <programlisting  format="linespecific">
+		:pua_cleanup:fifo_reply
+		_empty_line_
+	  </programlisting>
+	</section>
+</section>
 
 <section>
 	<title>Installation</title>

@@ -32,6 +32,7 @@
 typedef struct _dlg_ctx {
 	int on;
 	unsigned int flags;
+	unsigned int iflags;
 	int to_route;
 	char to_route_name[DLG_TOROUTE_SIZE];
 	int to_bye;

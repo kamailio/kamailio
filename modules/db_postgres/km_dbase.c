@@ -133,6 +133,16 @@ db1_con_t *db_postgres_init(const str* _url)
 	return db_do_init(_url, (void*) db_postgres_new_connection);
 }
 
+/*!
+ * \brief Initialize database for future queries - no pooling
+ * \param _url URL of the database that should be opened
+ * \return database connection on success, NULL on error
+ * \note this function must be called prior to any database functions
+ */
+db1_con_t *db_postgres_init2(const str* _url, db_pooling_t pooling)
+{
+	return db_do_init2(_url, (void*) db_postgres_new_connection, pooling);
+}
 
 /*!
  * \brief Close database when the database is no longer needed
@@ -153,7 +163,7 @@ void db_postgres_close(db1_con_t* _h)
  */
 static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 {
-	int i;
+	int i, retries;
 	ExecStatusType pqresult;
 
 	if(! _con || !_s || !_s->s)
@@ -184,7 +194,12 @@ static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 			return -1;
 	}
 
-	for(i = 0; i <= pg_retries; i++) {
+	if (CON_TRANSACTION(_con) == 1)
+		retries = 0;
+	else
+		retries = pg_retries;
+
+	for(i = 0; i <= retries; i++) {
 		/* free any previous query that is laying about */
 		db_postgres_free_query(_con);
 		/* exec the query */
@@ -533,15 +548,19 @@ int db_postgres_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* 
 {
 	db1_res_t* _r = NULL;
 
-	int tmp = db_do_insert(_h, _k, _v, _n, db_postgres_val2str, db_postgres_submit_query);
+	int ret = db_do_insert(_h, _k, _v, _n, db_postgres_val2str, db_postgres_submit_query);
 	// finish the async query, otherwise the next query will not complete
-	if (db_postgres_store_result(_h, &_r) != 0)
+	int tmp = db_postgres_store_result(_h, &_r);
+
+	if (tmp < 0) {
 		LM_WARN("unexpected result returned");
+		ret = tmp;
+	}
 	
 	if (_r)
 		db_free_result(_r);
 
-	return tmp;
+	return ret;
 }
 
 
@@ -558,16 +577,19 @@ int db_postgres_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _
 		const db_val_t* _v, const int _n)
 {
 	db1_res_t* _r = NULL;
-	int tmp = db_do_delete(_h, _k, _o, _v, _n, db_postgres_val2str,
+	int ret = db_do_delete(_h, _k, _o, _v, _n, db_postgres_val2str,
 		db_postgres_submit_query);
+	int tmp = db_postgres_store_result(_h, &_r);
 
-	if (db_postgres_store_result(_h, &_r) != 0)
+	if (tmp < 0) {
 		LM_WARN("unexpected result returned");
-	
+		ret = tmp;
+	}
+
 	if (_r)
 		db_free_result(_r);
 
-	return tmp;
+	return ret;
 }
 
 
@@ -588,16 +610,19 @@ int db_postgres_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _
 		const int _un)
 {
 	db1_res_t* _r = NULL;
-	int tmp = db_do_update(_h, _k, _o, _v, _uk, _uv, _n, _un, db_postgres_val2str,
+	int ret = db_do_update(_h, _k, _o, _v, _uk, _uv, _n, _un, db_postgres_val2str,
 		db_postgres_submit_query);
+	int tmp = db_postgres_store_result(_h, &_r);
 
-	if (db_postgres_store_result(_h, &_r) != 0)
+	if (tmp < 0) {
 		LM_WARN("unexpected result returned");
+		ret = tmp;
+	}
 	
 	if (_r)
 		db_free_result(_r);
 
-	return tmp;
+	return ret;
 }
 
 /**
@@ -614,6 +639,107 @@ int db_postgres_affected_rows(const db1_con_t* _h)
 	return CON_AFFECTED(_h);
 }
 
+/**
+ * Starts a single transaction that will consist of one or more queries (SQL BEGIN)
+ * \param _h database handle
+ * \return 0 on success, negative on failure
+ */
+int db_postgres_start_transaction(db1_con_t* _h)
+{
+	db1_res_t *res = NULL;
+	str query_str = str_init("BEGIN");
+	
+	if (!_h) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (CON_TRANSACTION(_h) == 1) {
+		LM_ERR("transaction already started\n");
+		return -1;
+	}
+
+	if (db_postgres_raw_query(_h, &query_str, &res) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		return -1;
+	}
+
+	if (res) db_postgres_free_result(_h, res);
+
+	CON_TRANSACTION(_h) = 1;
+	return 0;
+}
+
+/**
+ * Ends a transaction and commits the changes (SQL COMMIT)
+ * \param _h database handle
+ * \return 0 on success, negative on failure
+ */
+int db_postgres_end_transaction(db1_con_t* _h)
+{
+	db1_res_t *res = NULL;
+	str query_str = str_init("COMMIT");
+	
+	if (!_h) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (CON_TRANSACTION(_h) == 0) {
+		LM_ERR("transaction not in progress\n");
+		return -1;
+	}
+
+	if (db_postgres_raw_query(_h, &query_str, &res) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		return -1;
+	}
+
+	if (res) db_postgres_free_result(_h, res);
+
+	/* Only _end_ the transaction after the raw_query.  That way, if the
+ 	   raw_query fails, and the calling module does an abort_transaction()
+	   to clean-up, a ROLLBACK will be sent to the DB. */
+	CON_TRANSACTION(_h) = 0;
+	return 0;
+}
+
+/**
+ * Ends a transaction and rollsback the changes (SQL ROLLBACK)
+ * \param _h database handle
+ * \return 1 if there was something to rollback, 0 if not, negative on failure
+ */
+int db_postgres_abort_transaction(db1_con_t* _h)
+{
+	db1_res_t *res = NULL;
+	str query_str = str_init("ROLLBACK");
+	
+	if (!_h) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (CON_TRANSACTION(_h) == 0) {
+		LM_DBG("nothing to rollback\n");
+		return 0;
+	}
+
+	/* Whether the rollback succeeds or not we need to _end_ the
+ 	   transaction now or all future starts will fail */
+	CON_TRANSACTION(_h) = 0;
+
+	if (db_postgres_raw_query(_h, &query_str, &res) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		return -1;
+	}
+
+	if (res) db_postgres_free_result(_h, res);
+
+	return 1;
+}
 
 /*!
  * Store name of table that will be used by subsequent database functions

@@ -11,6 +11,12 @@ Elena-Ramona Modroiu
 
    <ramona@rosdev.ro>
 
+Edited by
+
+Alex Balashov
+
+   <abalashov@evaristesys.com>
+
    Copyright © 2008-2011 http://www.asipto.com
      __________________________________________________________________
 
@@ -278,6 +284,10 @@ if(is_present_hf("Authorization"))
        table).
      * initval - the integer value to be returned instead of $null when a
        requested key is not set.
+     * updateexpire - if set to 1 (default), the time until expiration of
+       an item is reset when that item is updated. Certain uses of htable
+       may dictate that updates should not reset the expiration timeout,
+       however, in which case this attribute can be set to 0.
 
    Default value is NULL.
 

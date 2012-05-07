@@ -83,6 +83,8 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 int add_resource_to_list(char* uri, void* param);
 int add_resource(char* uri, xmlNodePtr list_node, char * boundary_string, db1_res_t *result, int *len_est);
 
+char *instance_id = "Scf8UhwQ";
+
 int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 		unsigned int hash_code)
 {
@@ -119,11 +121,25 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 	result_cols[pres_state_col= n_result_cols++]= &str_presence_state_col;
 	result_cols[auth_state_col= n_result_cols++]= &str_auth_state_col;
 	result_cols[reason_col= n_result_cols++]= &str_reason_col;
+
+	update_cols[0]= &str_updated_col;
+	update_vals[0].type = DB1_INT;
+	update_vals[0].nul = 0;
+	update_vals[0].val.int_val= NO_UPDATE_TYPE; 
 	
 	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		goto error;
+	}
+
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.start_transaction)
+	{
+		if (rlpres_dbf.start_transaction(rlpres_db) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto error;
+		}
 	}
 
 	if(rlpres_dbf.query(rlpres_db, query_cols, 0, query_vals, result_cols,
@@ -132,8 +148,30 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 		LM_ERR("in sql query\n");
 		goto error;
 	}
-	if(result== NULL)
+	if(result == NULL)
+	{
+		LM_ERR("bad result\n");
 		goto error;
+	}
+
+	if (result->n > 0)
+	{
+		if(rlpres_dbf.update(rlpres_db, query_cols, 0, query_vals,
+				     update_cols, update_vals, 1, 1) < 0)
+		{
+			LM_ERR("in sql update\n");
+			goto error;
+		}
+	}
+
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.end_transaction)
+	{
+		if (rlpres_dbf.end_transaction(rlpres_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto error;
+		}
+	}
 
 	/* Allocate an initial buffer for the multipart body.
 	 * This buffer will be reallocated if neccessary */
@@ -159,13 +197,13 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 
 	/* Find all the uri's to which we are subscribed */
 	param.next = &uri_list_head;
-	if(process_list_and_exec(rl_node, subs->from_user, subs->from_domain, add_resource_to_list,(void*)(&param))< 0)
+	if(process_list_and_exec(rl_node, subs->watcher_user, subs->watcher_domain, add_resource_to_list,(void*)(&param))< 0)
 	{
 		LM_ERR("in process_list_and_exec function\n");
 		goto error;
 	}
 
-	boundary_string= generate_string((int)time(NULL), BOUNDARY_STRING_LEN);
+	boundary_string= generate_string(BOUNDARY_STRING_LEN);
 	
 	while (uri_list_head)
 	{
@@ -227,31 +265,10 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 			&rlmi_cont->len, (rls_max_notify_body_len == 0));
 	xmlFreeDoc(rlmi_body);
 
-	rlpres_dbf.free_result(rlpres_db, result);
-	result= NULL;
-
 	if(agg_body_sendn_update(rl_uri, boundary_string, rlmi_cont,
 		multipart_body, subs, hash_code)< 0)
 	{
 		LM_ERR("in function agg_body_sendn_update\n");
-		goto error;
-	}
-
-	/* update updated col in rlpres_table*/
-	update_cols[0]= &str_updated_col;
-	update_vals[0].type = DB1_INT;
-	update_vals[0].nul = 0;
-	update_vals[0].val.int_val= NO_UPDATE_TYPE; 
-	
-	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0) 
-	{
-		LM_ERR("in use_table\n");
-		goto error;
-	}
-	if(rlpres_dbf.update(rlpres_db, query_cols, 0, query_vals, update_cols,
-					update_vals, 1, 1)< 0)
-	{
-		LM_ERR("in sql update\n");
 		goto error;
 	}
 
@@ -266,10 +283,10 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 	}
 	multipart_body_size = 0;
 	pkg_free(rlsubs_did.s);
-
+	rlpres_dbf.free_result(rlpres_db, result);
+	
 	return 0;
 error:
-
 	if(rlmi_cont)
 	{
 		if(rlmi_cont->s)
@@ -288,6 +305,12 @@ error:
 		rlpres_dbf.free_result(rlpres_db, result);
 	if(rlsubs_did.s)
 		pkg_free(rlsubs_did.s);
+
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.abort_transaction)
+	{
+		if (rlpres_dbf.abort_transaction(rlpres_db) < 0)
+			LM_ERR("in abort_transaction");
+	}
 	return -1;
 }
 
@@ -383,12 +406,11 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 	db_val_t *row_vals;
 	int i, cmp_code;
 	char* auth_state= NULL;
-	int contor= 0;
 	int auth_state_flag;
-    int boundary_len = strlen(boundary_string);
-    str cid;
-  	str content_type= {0, 0};
-    str body= {0, 0};
+	int boundary_len = strlen(boundary_string);
+	str cid;
+	str content_type= {0, 0};
+	str body= {0, 0};
 
 	for(i= 0; i< result->n; i++)
 	{
@@ -402,8 +424,6 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 
 		if(cmp_code== 0)
 		{
-			contor++;
-		
 			auth_state_flag= row_vals[auth_state_col].val.int_val;
 			auth_state= get_auth_string(auth_state_flag );
 			if(auth_state== NULL)
@@ -411,17 +431,17 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 				LM_ERR("bad authorization status flag\n");
 				goto error;
 			}
-            *len_est += strlen(auth_state) + 38; /* <instance id="12345678" state="[auth_state]" />r/n */
+			*len_est += strlen(auth_state) + 38; /* <instance id="12345678" state="[auth_state]" />r/n */
 
 			if(auth_state_flag & ACTIVE_STATE)
 			{
 				cid.s= generate_cid(uri, strlen(uri));
 				cid.len= strlen(cid.s);
-                body.s= (char*)row_vals[pres_state_col].val.string_val;
-                body.len= strlen(body.s);
-                trim(&body);
+				body.s= (char*)row_vals[pres_state_col].val.string_val;
+				body.len= strlen(body.s);
+				trim(&body);
 
-                *len_est += cid.len + 8; /* cid="[cid]" */
+				*len_est += cid.len + 8; /* cid="[cid]" */
 				content_type.s = (char*)row_vals[content_type_col].val.string_val;
 				content_type.len = strlen(content_type.s);
 				*len_est += 4 + boundary_len
@@ -430,18 +450,17 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 						 + 18 + content_type.len
 						 + 4 + body.len + 8;
 			}
-			else
-			if(auth_state_flag & TERMINATED_STATE)
-				{
-			    *len_est += strlen(row_vals[resource_uri_col].val.string_val) + 10; /* reason="[resaon]" */
+			else if(auth_state_flag & TERMINATED_STATE)
+			{
+				*len_est += strlen(row_vals[resource_uri_col].val.string_val) + 10; /* reason="[resaon]" */
 			}
-            if (rls_max_notify_body_len > 0 && *len_est > rls_max_notify_body_len)
-            {
-                /* We have a limit on body length set, and we were about to exceed it */
-                return *len_est;
+			if (rls_max_notify_body_len > 0 && *len_est > rls_max_notify_body_len)
+			{
+				/* We have a limit on body length set, and we were about to exceed it */
+				return *len_est;
 			}
             
-            instance_node= xmlNewChild(resource_node, NULL, 
+			instance_node= xmlNewChild(resource_node, NULL, 
 					BAD_CAST "instance", NULL);
 			if(instance_node== NULL)
 			{
@@ -449,15 +468,24 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 				goto error;
 			}
 		
-            /* OK, we are happy this will fit */
+			/* OK, we are happy this will fit */
+			/* Instance ID should be unique for each instance node
+			   within a resource node.  The same instance ID can be
+			   used in different resource nodes.  Instance ID needs
+			   to remain the same for each resource instance in
+			   future updates.  We can just use a common string
+			   here because you will only get multiple instances
+			   for a resource when the back-end SUBSCRIBE is forked
+			   and pua does not support this.  If/when pua supports
+			   forking of the SUBSCRIBEs it sends this will need to
+			   be fixed properly. */
 			xmlNewProp(instance_node, BAD_CAST "id",
-					BAD_CAST generate_string(contor, 8));
+					BAD_CAST instance_id);
 			xmlNewProp(instance_node, BAD_CAST "state", BAD_CAST auth_state);
 
 			if(auth_state_flag & ACTIVE_STATE)
 			{
-                constr_multipart_body (&content_type, &body, &cid, boundary_len, boundary_string);
-
+				constr_multipart_body (&content_type, &body, &cid, boundary_len, boundary_string);
 				xmlNewProp(instance_node, BAD_CAST "cid", BAD_CAST cid.s);
 			}
 			else
@@ -719,11 +747,22 @@ error:
 	return NULL;
 
 }
+
 void rls_free_td(dlg_t* td)
 {
-		pkg_free(td->loc_uri.s);
-		pkg_free(td->rem_uri.s);
+	if(td)
+	{
+		if(td->loc_uri.s)
+			pkg_free(td->loc_uri.s);
+	
+		if(td->rem_uri.s)
+			pkg_free(td->rem_uri.s);
+
+		if(td->route_set)
+			pkg_free(td->route_set); 
+
 		pkg_free(td);
+	}	
 }
 
 int rls_send_notify(subs_t* subs, str* body, char* start_cid,
@@ -880,15 +919,7 @@ dlg_t* rls_notify_dlg(subs_t* subs)
 	return td;
 
 error:
-	if(td)
-	{
-		if(td->loc_uri.s)
-			pkg_free(td->loc_uri.s);
-	
-		if(td->rem_uri.s)
-			pkg_free(td->rem_uri.s);
-		pkg_free(td);
-	}	
+	if(td) rls_free_td(td);	
 
 	return NULL;
 
@@ -1056,26 +1087,25 @@ int process_list_and_exec(xmlNodePtr list_node, str username, str domain,
 	return res;
 }
 
-char* generate_string(int seed, int length)
+char* generate_string(int length)
 {
 	static char buf[128];
-    int r,i;
+	int r,i;
 
-    if(length>= 128)
+	if(length>= 128)
 	{
 		LM_ERR("requested length exceeds buffer size\n");
 		return NULL;
 	}
-	srand(seed); 
 		
 	for(i=0; i<length; i++) 
 	{
 		r= rand() % ('z'- 'A') + 'A';
-	    if(r>'Z' && r< 'a')
-			r= '0'+ (r- 'Z');
+		if(r>'Z' && r< 'a')
+		r= '0'+ (r- 'Z');
 
-        sprintf(buf+i, "%c", r);
-    }
+		sprintf(buf+i, "%c", r);
+	}
 	buf[length]= '\0';
 
 	return buf;
@@ -1290,6 +1320,12 @@ int rls_get_resource_list(str *rl_uri, str *username, str *domain,
 				root.len, root.s);
 		if(result)
 			rls_xcap_dbf.free_result(rls_xcap_db, result);
+		return -1;
+	}
+
+	if(result == NULL)
+	{
+		LM_ERR("bad result\n");
 		return -1;
 	}
 

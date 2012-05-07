@@ -349,7 +349,7 @@ static int upload_cmd(db_cmd_t* cmd)
 	/* FIXME: The function should take the connection as one of parameters */
 	pcon = DB_GET_PAYLOAD(cmd->ctx->con[db_payload_idx]);
 
-	DBG("postgres: Uploading comand '%s': '%s'\n", pcmd->name, 
+	DBG("postgres: Uploading command '%s': '%s'\n", pcmd->name,
 		pcmd->sql_cmd.s);
 
 	res = PQprepare(pcon->con, pcmd->name, pcmd->sql_cmd.s, 0, NULL);

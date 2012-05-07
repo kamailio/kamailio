@@ -262,6 +262,8 @@ struct dest_info *msrp_uri_to_dstinfo(struct dns_srv_handle* dns_h,
 	union sockaddr_union to;
 	int err;
 
+	init_dest_info(dst);
+
 	if (msrp_parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
 		LM_ERR("bad msrp uri: %.*s\n", uri->len, uri->s );
 		return 0;
@@ -273,7 +275,6 @@ struct dest_info *msrp_uri_to_dstinfo(struct dns_srv_handle* dns_h,
 		dst->proto = PROTO_TCP;
 	}
 	
-	init_dest_info(dst);
 	dst->send_flags=sflags;
 	host=&parsed_uri.host;
 	port = parsed_uri.port_no;

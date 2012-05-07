@@ -1509,7 +1509,7 @@ error:
 
 
 
-inline static void tcp_reader_timer_run()
+inline static void tcp_reader_timer_run(void)
 {
 	ticks_t ticks;
 	

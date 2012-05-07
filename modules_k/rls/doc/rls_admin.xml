@@ -171,8 +171,8 @@ modparam("rls", "xcap_db_url", "&exampledb;")
 		<para>
 		The module supports 2 modes of operation, high speed memory
 		based storage (mode 0), and database only (mode 2) where all 
-		data is stored in a database, allowing scalability at the expense of speed.
-		Mode 1 is reserved.
+		data is stored in a database, allowing scalability at the
+		expense of speed. Mode 1 is reserved.
 		</para>
 		<para>
 		<emphasis>	Default value is <quote>0</quote> 	
@@ -319,10 +319,14 @@ modparam("rls", "waitn_time", 10)
 	<section>
 		<title><varname>notifier_poll_rate</varname> (int)</title>
 		<para>
-		The number of times per second that the notifier process
+		The number of times per second that the notifier processes
 		should check for work.  Approximately
-		1/(waitn_time * notifier_poll_rate) of the pending updates
-		will be sent each time the notifier runs.
+		1/(waitn_time * notifier_poll_rate * notifier_processes) of the
+		pending updates will be sent each time a notifier process runs.
+		</para>
+		<para>
+		Separate notifier processes are only run when db_mode is 2
+		(DB only mode).
 		</para>
 		<para>
 		<emphasis>Default value is <quote>10</quote>.
@@ -333,6 +337,29 @@ modparam("rls", "waitn_time", 10)
 		<programlisting format="linespecific">
 ...
 modparam("rls", "notifier_poll_rate", 20)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>notifier_processes</varname> (int)</title>
+		<para>
+		The number of notifier processes that should be started.
+		</para>
+		<para>
+		Separate notifier processes are only run when db_mode is 2
+		(DB only mode).
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>notifier_processes</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "notifier_processes", 2)
 ...
 </programlisting>
 		</example>
@@ -615,13 +642,19 @@ modparam("rls", "max_backend_subs", 30)
 	<title>Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">rls_handle_subscribe()</function>
+		<function moreinfo="none">rls_handle_subscribe([watcher_uri])</function>
 		</title>
 		<para>
 		This function detects if a Subscribe message should be
 		handled by RLS. If not it replies with the configured 
 		to_presence_code. If it is, it extracts the dialog info and sends
 		aggregate Notify requests with information for the list.	
+		</para>
+		<para>
+		By default this function uses the From: URI from the SUBSCRIBE
+		request as the Watcher URI.  The optional watcher_uri parameter
+		can be used to specify a different Watcher URI, possibly taken
+		from a SIP header like P-Asserted-Identity:.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -719,6 +752,32 @@ Within event_route[xhttp:request]:
 ...
 </programlisting>
 		</example>
+	</section>
+</section>
+
+<section>
+	<title>MI Commands</title>
+	<section>
+	  <title>
+		<function moreinfo="none">rls_cleanup</function>
+	  </title>
+	  <para>
+		Manually triggers the cleanup functions forthe rls_watchers and
+		rls_presentity tables. Useful if you have set
+		<varname>clean_period</varname> to zero or less.
+	  </para>
+	  <para>
+		Name: <emphasis>rls_cleanup</emphasis>
+	  </para>
+	  <para>Parameters: <emphasis>none</emphasis></para>
+
+	  <para>
+		MI FIFO Command Format:
+	  </para>
+	  <programlisting  format="linespecific">
+		:rls_cleanup:fifo_reply
+		_empty_line_
+	  </programlisting>
 	</section>
 </section>
 

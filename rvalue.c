@@ -335,7 +335,7 @@ char* rval_type_name(enum rval_type type)
 		case RV_SEL:
 			return "select";
 	}
-	return "error_unkown_type";
+	return "error_unknown_type";
 }
 
 

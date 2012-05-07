@@ -26,6 +26,7 @@ Bogdan-Andre Iancu
         1. Overview
 
               1.1. PATH support
+              1.2. GRUU Support
 
         2. Dependencies
 
@@ -55,6 +56,8 @@ Bogdan-Andre Iancu
               3.19. path_use_received (integer)
               3.20. reg_callid_avp (string)
               3.21. xavp_cfg (string)
+              3.22. xavp_rcd (string)
+              3.23. gruu_enabled (integer)
 
         4. Functions
 
@@ -102,14 +105,16 @@ Bogdan-Andre Iancu
    1.18. Set path_use_received parameter
    1.19. Set reg_callid_avp parameter
    1.20. Set xavp_cfg parameter
-   1.21. save usage
-   1.22. lookup usage
-   1.23. registered usage
-   1.24. add_sock_hdr usage
+   1.21. Set xavp_rcd parameter
+   1.22. Set gruu_enabled parameter
+   1.23. save usage
+   1.24. lookup usage
    1.25. registered usage
-   1.26. registered usage
+   1.26. add_sock_hdr usage
    1.27. registered usage
-   1.28. $ulc(name) usage
+   1.28. registered usage
+   1.29. registered usage
+   1.30. $ulc(name) usage
 
 Chapter 1. Admin Guide
 
@@ -118,6 +123,7 @@ Chapter 1. Admin Guide
    1. Overview
 
         1.1. PATH support
+        1.2. GRUU Support
 
    2. Dependencies
 
@@ -147,6 +153,8 @@ Chapter 1. Admin Guide
         3.19. path_use_received (integer)
         3.20. reg_callid_avp (string)
         3.21. xavp_cfg (string)
+        3.22. xavp_rcd (string)
+        3.23. gruu_enabled (integer)
 
    4. Functions
 
@@ -173,6 +181,7 @@ Chapter 1. Admin Guide
 1. Overview
 
    1.1. PATH support
+   1.2. GRUU Support
 
    The module contains REGISTER processing logic.
 
@@ -203,6 +212,17 @@ Chapter 1. Admin Guide
    The whole process is transparent to the user, so no config changes are
    required beside setting the registrar-parameters "use_path" and
    "path_mode".
+
+1.2. GRUU Support
+
+   GRUU (RFC5627) is supported with both public and temporary addresses.
+
+   The public GRUU is build based on '+sip.instance' parameter as
+   recommended by RFC.
+
+   The temporary GRUU is built based on internal SRUID (unique id
+   generator) and it is kept the same for the duration of contact
+   validity.
 
 2. Dependencies
 
@@ -244,6 +264,8 @@ Chapter 1. Admin Guide
    3.19. path_use_received (integer)
    3.20. reg_callid_avp (string)
    3.21. xavp_cfg (string)
+   3.22. xavp_rcd (string)
+   3.23. gruu_enabled (integer)
 
 3.1. default_expires (integer)
 
@@ -564,6 +586,38 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 modparam("registrar", "xavp_cfg", "reg")
 ...
 
+3.22. xavp_rcd (string)
+
+   Defines the name of XAVP class to store details from the location
+   records. The values are stored as inner XAVPs, like
+   $xavp(class=>attribute). Valid inner XAVP names:
+     * ruid - the record's internal unique id.
+
+   For example. if this parameter is set to 'ulrcd', then the ruid for
+   contact records are set in $xavp(ulrcd=>ruid).
+
+   Default value is NULL (disabled).
+
+   Example 1.21. Set xavp_rcd parameter
+...
+modparam("registrar", "xavp_cfg", "ulrcd")
+...
+
+3.23. gruu_enabled (integer)
+
+   If set to 1 and GRUU "+sip.instance" parameter to Contact header of
+   REGISTER is present, then the value of the parameter is saved to
+   location and pub-gruu and temp-gruu addresses are generated.
+
+   Set it to 0 if you want to ignore GRUU extensions in REGISTER.
+
+   Default value is 1 (enabled).
+
+   Example 1.22. Set gruu_enabled parameter
+...
+modparam("registrar", "gruu_enabled", 0)
+...
+
 4. Functions
 
    4.1. save(domain, [, flags [, uri]])
@@ -611,7 +665,7 @@ modparam("registrar", "xavp_cfg", "reg")
 
    This function can be used from REQUEST_ROUTE and REPLY_ROUTE.
 
-   Example 1.21. save usage
+   Example 1.23. save usage
 ...
 save("location");
 save("location", "0x01");
@@ -644,7 +698,7 @@ save("location", "0x00", "sip:test@kamailio.org");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.22. lookup usage
+   Example 1.24. lookup usage
 ...
 lookup("location");
 switch ($retcode) {
@@ -672,7 +726,7 @@ switch ($retcode) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.23. registered usage
+   Example 1.25. registered usage
 ...
 if (registered("location")) {
         sl_send_reply("100", "Trying");
@@ -692,7 +746,7 @@ if (registered("location")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.24. add_sock_hdr usage
+   Example 1.26. add_sock_hdr usage
 ...
 add_sock_hdr("Sock-Info");
 ...
@@ -710,7 +764,7 @@ add_sock_hdr("Sock-Info");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.25. registered usage
+   Example 1.27. registered usage
 ...
 unregister("location", "$ru");
 unregister("location", "sip:user@kamailio.org");
@@ -732,7 +786,7 @@ unregister("location", "sip:user@kamailio.org");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.26. registered usage
+   Example 1.28. registered usage
 ...
 reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
@@ -751,7 +805,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.27. registered usage
+   Example 1.29. registered usage
 ...
 reg_free_contacts("callee");
 ...
@@ -817,7 +871,7 @@ reg_free_contacts("callee");
    The pseudo-variable accepts positive index value to access a specific
    contact record.
 
-   Example 1.28. $ulc(name) usage
+   Example 1.30. $ulc(name) usage
 ...
 if(reg_fetch_contacts("location", "$fu", "caller"))
 {

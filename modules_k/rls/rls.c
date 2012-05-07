@@ -43,6 +43,7 @@
 #include "../../ut.h"
 #include "../../timer_proc.h"
 #include "../../hashes.h"
+#include "../../lib/kmi/mi.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../modules/tm/tm_load.h"
@@ -56,11 +57,13 @@
 #include "notify.h"
 #include "resource_notify.h"
 #include "api.h"
+#include "subscribe.h"
+#include "../../mod_fix.h"
 
 MODULE_VERSION
 
 #define P_TABLE_VERSION 1
-#define W_TABLE_VERSION 1
+#define W_TABLE_VERSION 3
 #define X_TABLE_VERSION 4
 
 /** database connection */
@@ -76,16 +79,18 @@ str rls_server_address = {0, 0};
 int rls_expires_offset=0;
 int waitn_time = 5;
 int rls_notifier_poll_rate = 10;
+int rls_notifier_processes = 1;
 str rlsubs_table = str_init("rls_watchers");
 str rlpres_table = str_init("rls_presentity");
 str rls_xcap_table = str_init("xcap");
+
+int *rls_notifier_id = NULL;
 
 str db_url = str_init(DEFAULT_DB_URL);
 str xcap_db_url = str_init("");
 str rlpres_db_url = str_init("");
 int hash_size = 512;
 shtable_t rls_table;
-int pid;
 contains_event_t pres_contains_event;
 search_event_t pres_search_event;
 get_event_list_t pres_get_ev_list;
@@ -162,6 +167,8 @@ str str_event_col = str_init("event");
 str str_event_id_col = str_init("event_id");
 str str_to_user_col = str_init("to_user");
 str str_to_domain_col = str_init("to_domain");
+str str_from_user_col = str_init("from_user");
+str str_from_domain_col = str_init("from_domain");
 str str_watcher_username_col = str_init("watcher_username");
 str str_watcher_domain_col = str_init("watcher_domain");
 str str_callid_col = str_init("callid");
@@ -194,18 +201,21 @@ int rls_max_backend_subs = 0;
 
 static int mod_init(void);
 static int child_init(int);
-int rls_handle_subscribe(struct sip_msg*, char*, char*);
+static int mi_child_init(void);
 static void destroy(void);
 int rlsubs_table_restore();
 void rlsubs_table_update(unsigned int ticks,void *param);
 int add_rls_event(modparam_t type, void* val);
 int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent);
 int fixup_update_subs(void** param, int param_no);
+static struct mi_root* mi_cleanup(struct mi_root* cmd, void* param);
 
 static cmd_export_t cmds[]=
 {
-	{"rls_handle_subscribe",  (cmd_function)rls_handle_subscribe,   0,
+	{"rls_handle_subscribe",  (cmd_function)rls_handle_subscribe0,  0,
 			0, 0, REQUEST_ROUTE},
+	{"rls_handle_subscribe",  (cmd_function)w_rls_handle_subscribe, 1,
+			fixup_spve_null, 0, REQUEST_ROUTE},
 	{"rls_handle_notify",     (cmd_function)rls_handle_notify,      0,
 			0, 0, REQUEST_ROUTE},
 	{"rls_update_subs",       (cmd_function)rls_update_subs,	2,
@@ -225,6 +235,7 @@ static param_export_t params[]={
 	{ "xcap_table",             STR_PARAM,   &rls_xcap_table.s               },
 	{ "waitn_time",             INT_PARAM,   &waitn_time                     },
 	{ "notifier_poll_rate",     INT_PARAM,   &rls_notifier_poll_rate         },
+	{ "notifier_processes",     INT_PARAM,   &rls_notifier_processes         },
 	{ "clean_period",           INT_PARAM,   &clean_period                   },
 	{ "rlpres_clean_period",    INT_PARAM,   &rlpres_clean_period            },
 	{ "max_expires",            INT_PARAM,   &rls_max_expires                },
@@ -244,20 +255,25 @@ static param_export_t params[]={
 	{0,                         0,           0                               }
 };
 
+static mi_export_t mi_cmds[] = {
+	{ "rls_cleanup",	mi_cleanup,		0,  0,  mi_child_init},
+	{ 0,			0,			0,  0,  0}
+};
+
 /** module exports */
 struct module_exports exports= {
-	"rls",  					/* module name */
-	DEFAULT_DLFLAGS,			/* dlopen flags */
-	cmds,						/* exported functions */
-	params,						/* exported parameters */
-	0,							/* exported statistics */
-	0,      					/* exported MI functions */
-	0,							/* exported pseudo-variables */
-	0,							/* extra processes */
-	mod_init,					/* module initialization function */
-	0,							/* response handling function */
-	(destroy_function) destroy, /* destroy function */
-	child_init                  /* per-child init function */
+	"rls",  			/* module name */
+	DEFAULT_DLFLAGS,		/* dlopen flags */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,				/* exported statistics */
+	mi_cmds,      			/* exported MI functions */
+	0,				/* exported pseudo-variables */
+	0,				/* extra processes */
+	mod_init,			/* module initialization function */
+	0,				/* response handling function */
+	(destroy_function) destroy,	/* destroy function */
+	child_init			/* per-child init function */
 };
 
 /**
@@ -276,6 +292,12 @@ static int mod_init(void)
 	char* sep;
 
 	LM_DBG("start\n");
+
+	if (register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
 
 	if (dbmode <RLS_DB_DEFAULT || dbmode > RLS_DB_ONLY)
 	{
@@ -488,7 +510,7 @@ static int mod_init(void)
 	}
 
 	/* verify table version */
-	if(db_check_table_version(&rls_dbf, rls_db, &rlpres_table, P_TABLE_VERSION) < 0) {
+	if(db_check_table_version(&rlpres_dbf, rls_db, &rlpres_table, P_TABLE_VERSION) < 0) {
 			LM_ERR("error during table version check.\n");
 			return -1;
 	}
@@ -540,6 +562,9 @@ static int mod_init(void)
 
 	if(rls_notifier_poll_rate<= 0)
 		rls_notifier_poll_rate= 10;
+
+	if(rls_notifier_processes<= 0)
+		rls_notifier_processes= 1;
 
 	/* bind libxml wrapper functions */
 
@@ -622,8 +647,6 @@ static int mod_init(void)
 		}
 	}
 
-	register_basic_timers(1);
-
 	if (rlpres_clean_period < 0)
 		rlpres_clean_period = clean_period;
 
@@ -632,6 +655,19 @@ static int mod_init(void)
 	
 	if (rlpres_clean_period > 0)
 		register_timer(rls_presentity_clean, 0, rlpres_clean_period);
+
+	if(dbmode == RLS_DB_ONLY)
+	{
+		if ((rls_notifier_id = shm_malloc(sizeof(int) * rls_notifier_processes)) == NULL)
+		{
+			LM_ERR("allocating shared memory\n");
+			return -1;
+		}
+
+		register_basic_timers(rls_notifier_processes);
+	}
+	else
+		register_timer(timer_send_notify, 0, waitn_time);
 
 	if ((rls_update_subs_lock = lock_alloc()) == NULL)
 	{
@@ -653,17 +689,29 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
-		return 0; /* don't call child_init for main process more than once */
+		return 0;
 
-	if (rank==PROC_MAIN)
+	if (rank==PROC_MAIN && dbmode == RLS_DB_ONLY)
 	{
-		if (fork_basic_utimer(PROC_TIMER, "RLS NOTIFIER", 1,
-					timer_send_notify, NULL,
-					1000000/rls_notifier_poll_rate) < 0)
+		int i;
+
+		for (i = 0; i < rls_notifier_processes; i++)
 		{
-			LM_ERR("Failed to start RLS NOTIFIER\n");
-			return -1;
+			char tmp[16];
+			snprintf(tmp, 16, "RLS NOTIFIER %d", i);
+			rls_notifier_id[i] = i;
+
+			if (fork_basic_utimer(PROC_TIMER, tmp, 1,
+						timer_send_notify,
+						&rls_notifier_id[i],
+						1000000/rls_notifier_poll_rate) < 0)
+			{
+				LM_ERR("Failed to start RLS NOTIFIER %d\n", i);
+				return -1;
+			}
 		}
+
+		return 0;
 	}
 
 	LM_DBG("child [%d]  pid [%d]\n", rank, getpid());
@@ -736,8 +784,79 @@ static int child_init(int rank)
 		LM_DBG("child %d: Database connection opened successfully\n", rank);
 	}
 
-	pid= my_pid();
 	return 0;
+}
+
+static int mi_child_init(void)
+{
+	if (rls_dbf.init==0)
+	{
+		LM_CRIT("database not bound\n");
+		return -1;
+	}
+	rls_db = rls_dbf.init(&db_url);
+	if (!rls_db)
+	{
+		LM_ERR("Error while connecting database\n");
+		return -1;
+	}
+	else
+	{
+		if (rls_dbf.use_table(rls_db, &rlsubs_table) < 0)  
+		{
+			LM_ERR("Error in use_table rlsubs_table\n");
+			return -1;
+		}
+
+		LM_DBG("Database connection opened successfully\n");
+	}
+
+	if (rlpres_dbf.init==0)
+	{
+		LM_CRIT("database not bound\n");
+		return -1;
+	}
+	rlpres_db = rlpres_dbf.init(&rlpres_db_url);
+	if (!rlpres_db)
+	{
+		LM_ERR("Error while connecting database\n");
+		return -1;
+	}
+	else
+	{
+		if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0)  
+		{
+			LM_ERR("Error in use_table rlpres_table\n");
+			return -1;
+		}
+
+		LM_DBG("Database connection opened successfully\n");
+	}
+
+	if (rls_xcap_dbf.init==0)
+	{
+		LM_CRIT("database not bound\n");
+		return -1;
+	}
+	rls_xcap_db = rls_xcap_dbf.init(&xcap_db_url);
+	if (!rls_xcap_db)
+	{
+		LM_ERR("Error while connecting database\n");
+		return -1;
+	}
+	else
+	{
+		if (rls_xcap_dbf.use_table(rls_xcap_db, &rls_xcap_table) < 0)  
+		{
+			LM_ERR("Error in use_table rls_xcap_table\n");
+			return -1;
+		}
+
+		LM_DBG("Database connection opened successfully\n");
+	}
+
+	return 0;
+
 }
 
 /*
@@ -765,6 +884,9 @@ static void destroy(void)
 		lock_destroy(rls_update_subs_lock);
 		lock_dealloc(rls_update_subs_lock);
 	}
+
+	if (rls_notifier_id != NULL)
+		shm_free(rls_notifier_id);
 }
 
 int handle_expired_record(subs_t* s)
@@ -806,7 +928,7 @@ void rlsubs_table_update(unsigned int ticks,void *param)
 
 int rls_restore_db_subs(void)
 {
-	db_key_t result_cols[22]; 
+	db_key_t result_cols[24]; 
 	db1_res_t *res= NULL;
 	db_row_t *row = NULL;	
 	db_val_t *row_vals= NULL;
@@ -816,6 +938,7 @@ int rls_restore_db_subs(void)
 	int callid_col,totag_col,fromtag_col,to_domain_col,sockinfo_col,reason_col;
 	int event_col,contact_col,record_route_col, event_id_col, status_col;
 	int remote_cseq_col, local_cseq_col, local_contact_col, version_col;
+	int watcher_user_col, watcher_domain_col;
 	subs_t s;
 	str ev_sname;
 	pres_ev_t* event= NULL;
@@ -829,8 +952,10 @@ int rls_restore_db_subs(void)
 	result_cols[event_id_col=n_result_cols++] = &str_event_id_col;
 	result_cols[to_user_col=n_result_cols++] = &str_to_user_col;
 	result_cols[to_domain_col=n_result_cols++] = &str_to_domain_col;
-	result_cols[from_user_col=n_result_cols++] = &str_watcher_username_col;
-	result_cols[from_domain_col=n_result_cols++] = &str_watcher_domain_col;
+	result_cols[watcher_user_col=n_result_cols++] = &str_watcher_username_col;
+	result_cols[watcher_domain_col=n_result_cols++] = &str_watcher_domain_col;
+	result_cols[from_user_col=n_result_cols++] = &str_from_user_col;
+	result_cols[from_domain_col=n_result_cols++] = &str_from_domain_col;
 	result_cols[callid_col=n_result_cols++] = &str_callid_col;
 	result_cols[totag_col=n_result_cols++] = &str_to_tag_col;
 	result_cols[fromtag_col=n_result_cols++] = &str_from_tag_col;
@@ -905,6 +1030,13 @@ int rls_restore_db_subs(void)
 		
 			s.from_domain.s=(char*)row_vals[from_domain_col].val.string_val;
 			s.from_domain.len= strlen(s.from_domain.s);
+
+			s.watcher_user.s=(char*)row_vals[watcher_user_col].val.string_val;
+			s.watcher_user.len= strlen(s.watcher_user.s);
+		
+			s.watcher_domain.s=(char*)row_vals[watcher_domain_col].val.string_val;
+			s.watcher_domain.len= strlen(s.watcher_domain.s);
+
 
 			s.to_tag.s=(char*)row_vals[totag_col].val.string_val;
 			s.to_tag.len= strlen(s.to_tag.s);
@@ -1013,6 +1145,17 @@ int bind_rls(struct rls_binds *pxb)
 		}
 
 		pxb->rls_handle_subscribe = rls_handle_subscribe;
+		pxb->rls_handle_subscribe0 = rls_handle_subscribe0;
 		pxb->rls_handle_notify = rls_handle_notify;
 		return 0;
+}
+
+static struct mi_root* mi_cleanup(struct mi_root* cmd, void *param)
+{
+	LM_DBG("mi_cleanup:start\n");
+
+	(void)rlsubs_table_update(0,0);
+	(void)rls_presentity_clean(0,0);
+
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }

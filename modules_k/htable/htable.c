@@ -66,6 +66,7 @@ int ht_param(modparam_t type, void* val);
 
 static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param);
 static struct mi_root* ht_mi_dump(struct mi_root* cmd_tree, void* param);
+static struct mi_root* ht_mi_delete(struct mi_root* cmd_tree, void* param);
 
 static pv_export_t mod_pvs[] = {
 	{ {"sht", sizeof("sht")-1}, PVT_OTHER, pv_get_ht_cell, pv_set_ht_cell,
@@ -87,6 +88,7 @@ static pv_export_t mod_pvs[] = {
 static mi_export_t mi_cmds[] = {
 	{ "sht_reload",     ht_mi_reload,  0,  0,  0},
 	{ "sht_dump",       ht_mi_dump,    0,  0,  0},
+	{ "sht_delete",     ht_mi_delete,  0,  0,  0},
 	{ 0, 0, 0, 0, 0}
 };
 
@@ -414,6 +416,39 @@ static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
 
+static struct mi_root* ht_mi_delete(struct mi_root* cmd_tree, void* param) {
+	struct mi_node *node;
+	str *htname, *key;
+	ht_t *ht;
+
+	node = cmd_tree->node.kids;
+	if (!node)
+		goto param_err;
+
+	htname = &node->value;
+	if (!htname->len)
+		goto param_err;
+
+	node = node->next;
+	if (!node)
+		goto param_err;
+
+	key = &node->value;
+	if (!key->len)
+		goto param_err;
+
+	ht = ht_get_table(htname);
+	if (!ht)
+		return init_mi_tree(404, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+
+	ht_del_cell(ht, key);
+
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+
+param_err:
+	return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+}
+
 static struct mi_root* ht_mi_dump(struct mi_root* cmd_tree, void* param)
 {
 	struct mi_node* node;
@@ -487,6 +522,27 @@ static const char* htable_dump_doc[2] = {
 	"Dump the contents of hash table.",
 	0
 };
+static const char* htable_delete_doc[2] = {
+	"Delete one key from a hash table.",
+	0
+};
+
+static void htable_rpc_delete(rpc_t* rpc, void* c) {
+	str htname, keyname;
+	ht_t *ht;
+
+	if (rpc->scan(c, "SS", &htname, &keyname) < 2) {
+		rpc->fault(c, 500, "Not enough parameters (htable name & key name");
+		return;
+	}
+	ht = ht_get_table(&htname);
+	if (!ht) {
+		rpc->fault(c, 500, "No such htable");
+		return;
+	}
+
+	ht_del_cell(ht, &keyname);
+}
 
 static void  htable_rpc_dump(rpc_t* rpc, void* c)
 {
@@ -519,7 +575,7 @@ static void  htable_rpc_dump(rpc_t* rpc, void* c)
 			if (rpc->add(c, "{", &th) < 0)
 			{
 				rpc->fault(c, 500, "Internal error creating rpc");
-				return;
+				goto error;
 			}
 			if(rpc->struct_add(th, "dd{",
 							"entry", i,
@@ -527,7 +583,7 @@ static void  htable_rpc_dump(rpc_t* rpc, void* c)
 							"slot",  &ih)<0)
 			{
 				rpc->fault(c, 500, "Internal error creating rpc");
-				return;
+				goto error;
 			}
 			while(it)
 			{
@@ -535,7 +591,7 @@ static void  htable_rpc_dump(rpc_t* rpc, void* c)
 							"item", &vh)<0)
 				{
 					rpc->fault(c, 500, "Internal error creating rpc");
-					return;
+					goto error;
 				}
 				if(it->flags&AVP_VAL_STR) {
 					if(rpc->struct_add(vh, "SS",
@@ -543,7 +599,7 @@ static void  htable_rpc_dump(rpc_t* rpc, void* c)
 							"value", &it->value.s)<0)
 					{
 						rpc->fault(c, 500, "Internal error adding item");
-						return;
+						goto error;
 					}
 				} else {
 					if(rpc->struct_add(vh, "Sd",
@@ -551,7 +607,7 @@ static void  htable_rpc_dump(rpc_t* rpc, void* c)
 							"value", (int)it->value.n))
 					{
 						rpc->fault(c, 500, "Internal error adding item");
-						return;
+						goto error;
 					}
 				}
 				it = it->next;
@@ -559,10 +615,16 @@ static void  htable_rpc_dump(rpc_t* rpc, void* c)
 		}
 		lock_release(&ht->entries[i].lock);
 	}
+
+	return;
+
+error:
+	lock_release(&ht->entries[i].lock);
 }
 
 rpc_export_t htable_rpc[] = {
 	{"htable.dump", htable_rpc_dump, htable_dump_doc, 0},
+	{"htable.delete", htable_rpc_delete, htable_delete_doc, 0},
 	{0, 0, 0, 0}
 };
 

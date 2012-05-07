@@ -9,7 +9,7 @@
 
 <table id="domain" xmlns:db="http://docbook.org/ns/docbook">
     <name>domain</name>
-    <version>1</version>
+    <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used by the domain module to determine if a host part of a URI is "local" or not. More information about the domain module can be found at: &KAMAILIO_MOD_DOC;domain.html
@@ -31,8 +31,16 @@
         <type>string</type>
         <size>&domain_len;</size>
         <description>Domain name</description>
-        <default/>
-        <natural/>
+    </column>
+
+    <column id="did">
+        <name>did</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Domain id.  Value of did column may be NULL, which
+	means that it has the same value as domain column.</description>
+        <default><null/></default>
+        <null/>
     </column>
 
     <column>

@@ -522,7 +522,7 @@ inline static void sleep_us( unsigned int nusecs )
 
 
 /* portable determination of max_path */
-inline static int pathmax()
+inline static int pathmax(void)
 {
 #ifdef PATH_MAX
 	static int pathmax=PATH_MAX;

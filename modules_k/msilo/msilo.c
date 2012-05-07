@@ -112,7 +112,7 @@ static str sc_stored_hdrs = str_init("extra_hdrs"); /* 10 */
 
 MODULE_VERSION
 
-#define S_TABLE_VERSION 6
+#define S_TABLE_VERSION 7
 
 /** database connection */
 static db1_con_t *db_con = NULL;
@@ -1061,6 +1061,12 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 	    goto error;
 	}
 
+	if (msilo_dbf.use_table(db_con, &ms_db_table) < 0)
+	{
+		LM_ERR("failed to use_table\n");
+		return -1;
+	}
+
 	if (msilo_dbf.query(db_con,db_keys,db_ops,db_vals,db_cols,db_no_keys,
 			    db_no_cols, ob_key, &db_res) < 0) {
 	    LM_ERR("failed to query database\n");
@@ -1106,17 +1112,22 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 		}
 
 		tmp_extra_hdrs.len = extra_hdrs_str.len+str_vals[4].len;
-		if ((tmp_extra_hdrs.s = pkg_malloc(tmp_extra_hdrs.len)) == NULL)
+		if(tmp_extra_hdrs.len>0)
 		{
-			LM_ERR("Out of pkg memory");
-			if (msilo_dbf.free_result(db_con, db_res) < 0)
-				LM_ERR("failed to free the query result\n");
-			msg_list_set_flag(ml, mid, MS_MSG_ERRO);
-			goto error;
+			if ((tmp_extra_hdrs.s = pkg_malloc(tmp_extra_hdrs.len)) == NULL)
+			{
+				LM_ERR("Out of pkg memory");
+				if (msilo_dbf.free_result(db_con, db_res) < 0)
+					LM_ERR("failed to free the query result\n");
+				msg_list_set_flag(ml, mid, MS_MSG_ERRO);
+				goto error;
+			}
+			memcpy(tmp_extra_hdrs.s, extra_hdrs_str.s, extra_hdrs_str.len);
+			memcpy(tmp_extra_hdrs.s+extra_hdrs_str.len, str_vals[4].s, str_vals[4].len);
+		} else {
+			tmp_extra_hdrs.len = 0;
+			tmp_extra_hdrs.s = "";
 		}
-		memcpy(tmp_extra_hdrs.s, extra_hdrs_str.s, extra_hdrs_str.len);
-		memcpy(tmp_extra_hdrs.s+extra_hdrs_str.len, str_vals[4].s, str_vals[4].len);
-		
 		hdr_str.len = 1024;
 		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
 				   str_vals[0]/*from*/, rtime /*Date*/,
@@ -1211,6 +1222,11 @@ void m_clean_silo(unsigned int ticks, void *param)
 	msg_list_check(ml);
 	mle = p = msg_list_reset(ml);
 	n = 0;
+	if (msilo_dbf.use_table(db_con, &ms_db_table) < 0)
+	{
+		LM_ERR("failed to use_table\n");
+		return;
+	}
 	while(p)
 	{
 		if(p->flag & MS_MSG_DONE)

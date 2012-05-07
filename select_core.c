@@ -332,60 +332,6 @@ int select_contact_params(str* res, select_t* s, struct sip_msg* msg)
 	return 1;
 }
 
-int parse_via_header( struct sip_msg *msg, int n, struct via_body** q)
-{
-	struct hdr_field *p;
-	struct via_body *pp = NULL;
-	int i;
-	
-	switch (n) {
-	case 1:
-	case 2:
-		if (!msg->h_via1 && (parse_headers(msg,HDR_VIA_F,0)==-1 || !msg->h_via1)) {
-                        DBG("bad msg or missing VIA1 header \n");
-                        return -1;
-                }
-		pp = msg->h_via1->parsed;
-		if (n==1) break;
-		pp = pp->next;
-		if (pp) break;
-		
-                if (!msg->h_via2 && (parse_headers(msg,HDR_VIA2_F,0)==-1 || !msg->h_via2)) {
-                        DBG("bad msg or missing VIA2 header \n");
-                        return -1;
-                }
-                pp = msg->h_via2->parsed;
-                break;
-	default:	
-	        if (!msg->eoh && (parse_headers(msg,HDR_EOH_F,0)==-1 || !msg->eoh)) {
-        	        ERR("bad msg while parsing to EOH \n");
-	                return -1;
-		}
-		p = msg->h_via1;
-		i = n;
-		while (i && p) {
-		        if (p->type == HDR_VIA_T) {
-		        	i--;
-		        	pp = p->parsed;
-		        	while (i && (pp->next)) {
-		        		i--;
-		        		pp = pp->next;
-		        	}
-		        }
-			p = p->next;
-		}
-		if (i > 0) {
-			DBG("missing VIA[%d] header\n", n);
-			return -1;
-		}
-	}
-	if (pp) {
-		*q = pp;
-		return 0;
-	} else
-		return -1;
-}
-
 int select_via(str* res, select_t* s, struct sip_msg* msg)
 {
 	struct via_body *p = NULL;

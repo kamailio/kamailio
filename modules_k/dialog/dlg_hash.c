@@ -66,10 +66,14 @@
 #define MAX_LDG_LOCKS  2048
 #define MIN_LDG_LOCKS  2
 
+extern int dlg_ka_interval;
 
 /*! global dialog table */
 struct dlg_table *d_table = 0;
 
+dlg_ka_t **dlg_ka_list_head = NULL;
+dlg_ka_t **dlg_ka_list_tail = NULL;
+gen_lock_t *dlg_ka_list_lock = NULL;
 
 /*!
  * \brief Reference a dialog without locking
@@ -118,6 +122,105 @@ struct dlg_table *d_table = 0;
 		}\
 	}while(0)
 
+/**
+ * add item to keep-alive list
+ *
+ */
+int dlg_ka_add(dlg_cell_t *dlg)
+{
+	dlg_ka_t *dka;
+
+	if(dlg_ka_interval<=0)
+		return 0;
+	if(!(dlg->iflags & (DLG_IFLAG_KA_SRC | DLG_IFLAG_KA_SRC)))
+		return 0;
+
+	dka = (dlg_ka_t*)shm_malloc(sizeof(dlg_ka_t));
+	if(dka==NULL) {
+		LM_ERR("no more shm mem\n");
+		return -1;
+	}
+	memset(dka, 0, sizeof(dlg_ka_t));
+	dka->katime = get_ticks() + dlg_ka_interval;
+	dka->iuid.h_entry = dlg->h_entry;
+	dka->iuid.h_id = dlg->h_id;
+	dka->iflags = dlg->iflags;
+
+	lock_get(dlg_ka_list_lock);
+	if(*dlg_ka_list_tail!=NULL)
+		(*dlg_ka_list_tail)->next = dka;
+	if(*dlg_ka_list_head==NULL)
+		*dlg_ka_list_head = dka;
+	*dlg_ka_list_tail = dka;
+	lock_release(dlg_ka_list_lock);
+	LM_DBG("added dlg[%d,%d] to KA list\n", dlg->h_entry, dlg->h_id);
+	return 0;
+}
+
+/**
+ * run keep-alive list
+ *
+ */
+int dlg_ka_run(ticks_t ti)
+{
+	dlg_ka_t *dka;
+	dlg_cell_t *dlg;
+
+	if(dlg_ka_interval<=0)
+		return 0;
+
+	while(1) {
+		/* get head item */
+		lock_get(dlg_ka_list_lock);
+		if(*dlg_ka_list_head==NULL) {
+			lock_release(dlg_ka_list_lock);
+			return 0;
+		}
+		dka = *dlg_ka_list_head;
+#if 0
+		LM_DBG("dlg ka timer at %lu for"
+				" dlg[%u,%u] on %lu\n", (unsigned long)ti,
+				dka->iuid.h_entry, dka->iuid.h_id,
+				(unsigned long)dka->katime);
+#endif
+		if(dka->katime>ti) {
+			lock_release(dlg_ka_list_lock);
+			return 0;
+		}
+		if(*dlg_ka_list_head == *dlg_ka_list_tail) {
+			*dlg_ka_list_head = NULL;
+			*dlg_ka_list_head = NULL;
+		}
+		*dlg_ka_list_head = dka->next;
+		lock_release(dlg_ka_list_lock);
+
+		/* send keep-alive for dka */
+		dlg = dlg_get_by_iuid(&dka->iuid);
+		if(dlg==NULL) {
+			shm_free(dka);
+			dka = NULL;
+		} else {
+			if(dka->iflags & DLG_IFLAG_KA_SRC)
+				dlg_send_ka(dlg, DLG_CALLER_LEG, 0);
+			if(dka->iflags & DLG_IFLAG_KA_DST)
+				dlg_send_ka(dlg, DLG_CALLEE_LEG, 0);
+			dlg_release(dlg);
+		}
+		/* append to tail */
+		if(dka!=NULL)
+		{
+			lock_get(dlg_ka_list_lock);
+			if(*dlg_ka_list_tail!=NULL)
+				(*dlg_ka_list_tail)->next = dka;
+			if(*dlg_ka_list_head==NULL)
+				*dlg_ka_list_tail = dka;
+			*dlg_ka_list_tail = dka;
+			lock_release(dlg_ka_list_lock);
+		}
+	}
+
+	return 0;
+}
 
 /*!
  * \brief Initialize the global dialog table
@@ -128,6 +231,25 @@ int init_dlg_table(unsigned int size)
 {
 	unsigned int n;
 	unsigned int i;
+
+	dlg_ka_list_head = (dlg_ka_t **)shm_malloc(sizeof(dlg_ka_t *));
+	if(dlg_ka_list_head==NULL) {
+		LM_ERR("no more shm mem (h)\n");
+		goto error0;
+	}
+	dlg_ka_list_tail = (dlg_ka_t **)shm_malloc(sizeof(dlg_ka_t *));
+	if(dlg_ka_list_tail==NULL) {
+		LM_ERR("no more shm mem (t)\n");
+		goto error0;
+	}
+	*dlg_ka_list_head = NULL;
+	*dlg_ka_list_tail = NULL;
+	dlg_ka_list_lock = (gen_lock_t*)shm_malloc(sizeof(gen_lock_t));
+	if(dlg_ka_list_lock==NULL) {
+		LM_ERR("no more shm mem (l)\n");
+		goto error0;
+	}
+	lock_init(dlg_ka_list_lock);
 
 	d_table = (struct dlg_table*)shm_malloc
 		( sizeof(struct dlg_table) + size*sizeof(struct dlg_entry));
@@ -169,7 +291,14 @@ int init_dlg_table(unsigned int size)
 	return 0;
 error1:
 	shm_free( d_table );
+	d_table = NULL;
 error0:
+	if(dlg_ka_list_head!=NULL)
+		shm_free(dlg_ka_list_head);
+	if(dlg_ka_list_tail!=NULL)
+		shm_free(dlg_ka_list_tail);
+	dlg_ka_list_head = NULL;
+	dlg_ka_list_tail = NULL;
 	return -1;
 }
 
@@ -545,11 +674,12 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
 {
 	struct dlg_cell *dlg;
+	unsigned int he;
 
-	if ((dlg = internal_get_dlg(core_hash(callid, 0,
-			d_table->size), callid, ftag, ttag, dir)) == 0 &&
-			(dlg = internal_get_dlg(core_hash(callid, ttag->len
-			?ttag:0, d_table->size), callid, ftag, ttag, dir)) == 0) {
+	he = core_hash(callid, 0, d_table->size);
+	dlg = internal_get_dlg(he, callid, ftag, ttag, dir);
+
+	if (dlg == 0) {
 		LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
 		return 0;
 	}
@@ -572,6 +702,7 @@ void link_dlg(struct dlg_cell *dlg, int n)
 
 	/* keep id 0 for special cases */
 	dlg->h_id = 1 + d_entry->next_id++;
+	if(dlg->h_id == 0) dlg->h_id = 1;
 	LM_DBG("linking dialog [%u:%u]\n", dlg->h_entry, dlg->h_id);
 	if (d_entry->first==0) {
 		d_entry->first = d_entry->last = dlg;

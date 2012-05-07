@@ -188,7 +188,7 @@ static str type_column 		= str_init("type");
 static str node_column 		= str_init("node");  
 static str msg_column 		= str_init("msg");   
 static str capture_node 	= str_init("homer01");     	
-
+static str star_contact		= str_init("*");
 
 int raw_sock_desc = -1; /* raw socket used for ip packets */
 unsigned int raw_sock_children = 1;
@@ -202,6 +202,7 @@ int *capture_on_flag = NULL;
 int db_insert_mode = 0;
 int promisc_on = 0;
 int bpf_on = 0;
+int hep_offset = 0; //this stores the hep header added offset 
 
 str raw_socket_listen = { 0, 0 };
 str raw_interface = { 0, 0 };
@@ -624,10 +625,10 @@ int hep_msg_received(void *data)
 	unsigned *len;
 	struct receive_info *ri;
 	
-	int offset = 0, hl;
+	int hl;
         struct hep_hdr *heph;
         struct ip_addr dst_ip, src_ip;
-        char *hep_payload, *end, *p, *hep_ip;
+        char *hep_payload, *end, *hep_ip;
         struct hep_iphdr *hepiph = NULL;
 
 	struct hep_timehdr* heptime_tmp = NULL;
@@ -641,7 +642,9 @@ int hep_msg_received(void *data)
 		LOG(L_ERR, "ERROR: sipcapture:hep_msg_received HEP is not enabled\n");
                 return -1;	
 	}	
-
+	
+	hep_offset = 0; 
+	
 	srevp = (void**)data;
 	        
 	buf = (char *)srevp[0];
@@ -649,10 +652,10 @@ int hep_msg_received(void *data)
 	ri = (struct receive_info *)srevp[2];
 
 
-	hl = offset = sizeof(struct hep_hdr);
+	hl = hep_offset = sizeof(struct hep_hdr);
         end = buf + *len;
-        if (unlikely(*len<offset)) {
-        	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received len less than offset [%i] vs [%i]\n", *len, offset);
+        if (unlikely(*len<hep_offset)) {
+        	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received len less than offset [%i] vs [%i]\n", *len, hep_offset);
                 return -1;
         }
 
@@ -701,13 +704,13 @@ int hep_msg_received(void *data)
 
 	switch(heph->hp_f){
 		case AF_INET:
-                	offset+=sizeof(struct hep_iphdr);
+                	hep_offset+=sizeof(struct hep_iphdr);
                         hepiph = (struct hep_iphdr*) hep_ip;
                         break;
 #ifdef USE_IPV6
 
 		case AF_INET6:
-                	offset+=sizeof(struct hep_ip6hdr);
+                	hep_offset+=sizeof(struct hep_ip6hdr);
                         hepip6h = (struct hep_ip6hdr*) hep_ip;
                         break;
 #endif /* USE_IPV6 */
@@ -715,7 +718,7 @@ int hep_msg_received(void *data)
 	  }
 
 	/* VOIP payload */
-        hep_payload = buf + offset;
+        hep_payload = buf + hep_offset;
 
         if (unlikely(hep_payload>end)){
         	LOG(L_ERR,"hep_payload is over buf+len\n");
@@ -724,7 +727,7 @@ int hep_msg_received(void *data)
 
 	/* timming */
         if(heph->hp_v == 2) {
-                offset+=sizeof(struct hep_timehdr);
+                hep_offset+=sizeof(struct hep_timehdr);
                 heptime_tmp = (struct hep_timehdr*) hep_payload;
 
                 heptime->tv_sec = heptime_tmp->tv_sec;
@@ -762,9 +765,12 @@ int hep_msg_received(void *data)
         ri->dst_port = ntohs(heph->hp_dport);
 
 	/* cut off the offset */
-        *len -= offset;
-        p = buf + offset;
-        memmove(buf, p, BUF_SIZE+1);
+	/* 
+	 *  *len -= offset;
+         *  p = buf + offset;
+	 *  memmove(buf, p, BUF_SIZE+1); 
+	*/
+	memset(buf, '\n', hep_offset); /* the parser will ignore the starting \n no need to do expensive memmove */
 	
 	return 0;
 }
@@ -785,7 +791,9 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 {
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
-	               	
+
+	str tmp;
+
 	if(sco==NULL)
 	{
 		LM_DBG("invalid parameter\n");
@@ -800,9 +808,9 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 	db_keys[1] = &date_column;
 	db_vals[1].type = DB1_DATETIME;
 	db_vals[1].nul = 0;
-	db_vals[1].val.time_val = time(NULL);	
+	db_vals[1].val.time_val = time(NULL);
 	
-	db_keys[2] = &micro_ts_column;			
+	db_keys[2] = &micro_ts_column;
         db_vals[2].type = DB1_BIGINT;
         db_vals[2].nul = 0;
         db_vals[2].val.ll_val = sco->tmstamp;
@@ -810,32 +818,32 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 	db_keys[3] = &method_column;
 	db_vals[3].type = DB1_STR;
 	db_vals[3].nul = 0;
-	db_vals[3].val.str_val = sco->method;	
+	db_vals[3].val.str_val = sco->method;
 	
 	db_keys[4] = &reply_reason_column;
 	db_vals[4].type = DB1_STR;
 	db_vals[4].nul = 0;
-	db_vals[4].val.str_val = sco->reply_reason;		
+	db_vals[4].val.str_val = sco->reply_reason;
 	
 	db_keys[5] = &ruri_column;
 	db_vals[5].type = DB1_STR;
 	db_vals[5].nul = 0;
-	db_vals[5].val.str_val = sco->ruri;		
+	db_vals[5].val.str_val = sco->ruri;
 	
 	db_keys[6] = &ruri_user_column;
 	db_vals[6].type = DB1_STR;
 	db_vals[6].nul = 0;
-	db_vals[6].val.str_val = sco->ruri_user;		
+	db_vals[6].val.str_val = sco->ruri_user;
 	
 	db_keys[7] = &from_user_column;
 	db_vals[7].type = DB1_STR;
 	db_vals[7].nul = 0;
-	db_vals[7].val.str_val = sco->from_user;		
+	db_vals[7].val.str_val = sco->from_user;
 	
 	db_keys[8] = &from_tag_column;
 	db_vals[8].type = DB1_STR;
 	db_vals[8].nul = 0;
-	db_vals[8].val.str_val = sco->from_tag;		
+	db_vals[8].val.str_val = sco->from_tag;
 
 	db_keys[9] = &to_user_column;
 	db_vals[9].type = DB1_STR;
@@ -912,7 +920,7 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 	db_vals[23].nul = 0;
 	db_vals[23].val.str_val = sco->source_ip;
 	
-	db_keys[24] = &source_port_column;			
+	db_keys[24] = &source_port_column;
         db_vals[24].type = DB1_INT;
         db_vals[24].nul = 0;
         db_vals[24].val.int_val = sco->source_port;
@@ -922,7 +930,7 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 	db_vals[25].nul = 0;
 	db_vals[25].val.str_val = sco->destination_ip;
 	
-	db_keys[26] = &dest_port_column;			
+	db_keys[26] = &dest_port_column;
         db_vals[26].type = DB1_INT;
         db_vals[26].nul = 0;
         db_vals[26].val.int_val = sco->destination_port;        
@@ -932,7 +940,7 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 	db_vals[27].nul = 0;
 	db_vals[27].val.str_val = sco->contact_ip;
 	
-	db_keys[28] = &contact_port_column;			
+	db_keys[28] = &contact_port_column;
         db_vals[28].type = DB1_INT;
         db_vals[28].nul = 0;
         db_vals[28].val.int_val = sco->contact_port;
@@ -975,8 +983,19 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 	db_keys[36] = &msg_column;
 	db_vals[36].type = DB1_BLOB;
 	db_vals[36].nul = 0;
-	db_vals[36].val.blob_val = sco->msg;	
-		
+	
+	if(hep_offset>0){
+		/* if message was captured via hep skip trailing empty spaces(newlines) from the start of the buffer */
+		tmp.s = sco->msg.s + hep_offset;
+		tmp.len = sco->msg.len - hep_offset;
+		hep_offset = 0;
+	} else {
+		tmp.s = sco->msg.s;
+		tmp.len = sco->msg.len;
+	}
+
+	db_vals[36].val.blob_val = tmp;
+
 	LM_DBG("homer table: [%.*s]\n", table_name.len, table_name.s);		
                 
 	db_funcs.use_table(db_con, &table_name);
@@ -1157,12 +1176,23 @@ static int sip_capture(struct sip_msg *msg, char *s1, char *s2)
 
               cb = (contact_body_t*)msg->contact->parsed;
 
-              if(cb && cb->contacts) {
-                  if(parse_uri( cb->contacts->uri.s, cb->contacts->uri.len, &contact)<0){
-                        LOG(L_ERR, "ERROR: do_action: bad contact dropping"" packet\n");
-                        return -1;
-                  }
-              }
+              if(cb) {
+            	    if (cb->contacts) {
+			if(parse_uri( cb->contacts->uri.s, cb->contacts->uri.len, &contact)<0){
+                		LOG(L_ERR, "ERROR: do_action: bad contact dropping"" packet\n");
+                 	    	return -1;
+                  	}
+              	    } else {
+              		if(cb->star){ /* in the case Contact is "*" */
+			    memset(&contact, 0, sizeof(contact));
+			    contact.user.s =  star_contact.s;
+			    contact.user.len = star_contact.len;
+			} else {
+			    LOG(L_NOTICE,"Invalid contact\n");
+			    memset(&contact, 0, sizeof(contact));
+			}
+		    }
+	    }
         }
 
 	/* get header x-cid: */
@@ -1375,7 +1405,7 @@ int raw_capture_socket(struct ip_addr* ip, str* iface, int port_start, int port_
         }
 #endif
         else {
-                ERR("raw_capture_socket: LSF currently suppoted only on linux\n");
+                ERR("raw_capture_socket: LSF currently supported only on linux\n");
                 goto error;                        
         }
                 

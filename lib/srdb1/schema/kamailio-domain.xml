@@ -9,4 +9,5 @@
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
     <name>Domain</name>
     <xi:include href="domain.xml"/>
+    <xi:include href="domain_attrs.xml"/>
 </database>

@@ -860,7 +860,7 @@ inline static int q_base64_dec(unsigned char* src, int slen,
 }
 
 /*! \brief inits internal lookup tables */
-int init_basex();
+int init_basex(void);
 
 
 #endif /* _basex_h */

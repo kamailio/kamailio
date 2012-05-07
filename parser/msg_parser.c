@@ -55,6 +55,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 #include "../comp_defs.h"
 #include "msg_parser.h"
@@ -239,7 +240,6 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		case HDR_USERAGENT_T:
 		case HDR_SERVER_T:
 		case HDR_CONTENTDISPOSITION_T:
-		case HDR_ACCEPTDISPOSITION_T:
 		case HDR_DIVERSION_T:
 		case HDR_RPID_T:
 		case HDR_SIPIFMATCH_T:
@@ -480,10 +480,6 @@ int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 			case HDR_CONTENTDISPOSITION_T:
 				if (msg->content_disposition==0) msg->content_disposition = hf;
 				msg->parsed_flag|=HDR_CONTENTDISPOSITION_F;
-				break;
-			case HDR_ACCEPTDISPOSITION_T:
-				if (msg->accept_disposition==0) msg->accept_disposition = hf;
-				msg->parsed_flag|=HDR_ACCEPTDISPOSITION_F;
 				break;
 			case HDR_DIVERSION_T:
 				if (msg->diversion==0) msg->diversion = hf;
@@ -896,4 +892,16 @@ int msg_ctx_id_match(sip_msg_t *msg, msg_ctx_id_t *mid)
 	if(msg->id != mid->msgid || msg->pid!=mid->pid)
 		return 0;
 	return 1;
+}
+
+/**
+ * set msg time value
+ */
+int msg_set_time(sip_msg_t *msg)
+{
+	if(unlikely(msg==NULL))
+		return -2;
+	if(msg->tval.tv_sec!=0)
+		return 0;
+	return gettimeofday(&msg->tval, NULL);
 }

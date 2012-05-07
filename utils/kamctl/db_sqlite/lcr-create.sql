@@ -37,6 +37,7 @@ CREATE TABLE lcr_rule (
     lcr_id SMALLINT NOT NULL,
     prefix VARCHAR(16) DEFAULT NULL,
     from_uri VARCHAR(64) DEFAULT NULL,
+    request_uri VARCHAR(64) DEFAULT NULL,
     stopper INTEGER DEFAULT 0 NOT NULL,
     enabled INTEGER DEFAULT 1 NOT NULL,
     CONSTRAINT lcr_rule_lcr_id_prefix_from_uri_idx UNIQUE (lcr_id, prefix, from_uri)

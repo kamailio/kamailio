@@ -11,10 +11,13 @@ typedef struct list_entry
 	struct list_entry *next;
 } list_entry_t;
 
-static inline list_entry_t *list_insert(str *strng, list_entry_t *list)
+static inline list_entry_t *list_insert(str *strng, list_entry_t *list, int *duplicate)
 {
 	int cmp;
 	list_entry_t *p, *q;
+
+	if (duplicate != NULL)
+		*duplicate = 0;
 
 	if (strng == NULL || strng->s == NULL || strng->len == 0)
 	{
@@ -36,7 +39,11 @@ static inline list_entry_t *list_insert(str *strng, list_entry_t *list)
 	cmp = strncmp(list->strng->s, strng->s, strng->len);
 
 	if (cmp == 0)
+	{
+		if (duplicate != NULL)
+			*duplicate = 1;
 		return list;
+	}
 	if (cmp > 0)
 	{
 		p->next = list;
@@ -49,7 +56,11 @@ static inline list_entry_t *list_insert(str *strng, list_entry_t *list)
 			q = q->next;
 
 		if (cmp == 0)
+		{
+			if (duplicate != NULL)
+				*duplicate = 1;
 			return list;
+		}
 
 		p->next = q->next;
 		q->next = p;

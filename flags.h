@@ -68,6 +68,6 @@ int flag_in_range( flag_t flag );
 int register_flag(char* name, int pos);
 int get_flag_no(char* name, int len);
 int check_flag(int pos);
-void init_named_flags();
+void init_named_flags(void);
 
 #endif

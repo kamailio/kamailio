@@ -11,11 +11,11 @@ NIL|0
 acc|
 acc|4
 active_watchers|
-active_watchers|9
+active_watchers|11
 address|
 address|5
 aliases|
-aliases|1004
+aliases|5
 carrier_name|
 carrier_name|1
 carrierfailureroute|
@@ -35,7 +35,9 @@ dialplan|1
 dispatcher|
 dispatcher|4
 domain|
-domain|1
+domain|2
+domain_attrs|
+domain_attrs|1
 domain_name|
 domain_name|1
 domainpolicy|
@@ -65,7 +67,7 @@ lcr_rule|1
 lcr_rule_target|
 lcr_rule_target|1
 location|
-location|1004
+location|5
 matrix|
 matrix|1
 missed_calls|
@@ -89,9 +91,9 @@ re_grp|1
 rls_presentity|
 rls_presentity|1
 rls_watchers|
-rls_watchers|1
+rls_watchers|3
 silo|
-silo|6
+silo|7
 sip_trace|
 sip_trace|3
 speed_dial|

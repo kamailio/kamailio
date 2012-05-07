@@ -427,9 +427,9 @@ void set_early_tmcb_list(struct sip_msg *msg,
 	( local_req_in_tmcb_hl->first!=0 )
 
 
-int init_tmcb_lists();
+int init_tmcb_lists(void);
 
-void destroy_tmcb_lists();
+void destroy_tmcb_lists(void);
 
 
 /* register a callback for several types of events */

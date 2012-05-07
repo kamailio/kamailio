@@ -64,7 +64,7 @@
 	<section>
 	<title>Parameters</title>
 	<section>
-		<title><varname>connection</varname> (int)</title>
+		<title><varname>connection</varname> (str)</title>
 		<para>
 			Specify the connection to a real database system. The format is
 			'conid=>DBURL' - providing a connection id and the database
@@ -88,7 +88,7 @@ modparam("db_cluster", "connection",
 		</example>
 	</section>
 	<section>
-		<title><varname>cluster</varname> (int)</title>
+		<title><varname>cluster</varname> (str)</title>
 		<para>
 			Specify the cluster definition. The format is
 			'clsid=>conid1=def1;conid2=def2' - providing a cluster id and the list of
@@ -117,6 +117,26 @@ modparam("db_cluster", "connection",
 		<programlisting format="linespecific">
 ...
 modparam("db_cluster", "cluster", "cls1=>con1=9s8p;con2=9s8p")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>inactive_interval</varname> (int)</title>
+		<para>
+			How long (seconds) a connection is considered inactive after a DB
+			operations failed on it.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 300 (5 min).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>inactive_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_cluster", "inactive_interval", 180)
 ...
 </programlisting>
 		</example>

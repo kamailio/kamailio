@@ -519,7 +519,7 @@ int cds2sms(struct incame_sms *sms, struct modem *mdm, char *s, int s_len)
 	ptr = s;
 	for ( n=0 ; n<2 && (ptr=strstr(ptr,"\r\n")) ; n++,ptr+=2 );
 	if (n<2) {
-		LM_ERR("failed to find pdu begining in CDS!\n");
+		LM_ERR("failed to find pdu beginning in CDS!\n");
 		goto error;
 	}
 	data = ptr;

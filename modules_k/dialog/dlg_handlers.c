@@ -850,6 +850,7 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 	s.len = strlen(s.s);
 	dlg_set_toroute(dlg, &s);
 	dlg->sflags |= _dlg_ctx.flags;
+	dlg->iflags |= _dlg_ctx.iflags;
 
 	if (dlg_send_bye!=0 || _dlg_ctx.to_bye!=0)
 		dlg->iflags |= DLG_IFLAG_TIMEOUTBYE;
@@ -1205,6 +1206,9 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			}
 		}
 	}
+
+	if (new_state==DLG_STATE_CONFIRMED && old_state!=DLG_STATE_CONFIRMED)
+		dlg_ka_add(dlg);
 
 	/* run actions for the transition */
 	if (event==DLG_EVENT_REQBYE && new_state==DLG_STATE_DELETED &&

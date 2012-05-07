@@ -2,7 +2,7 @@
  *
  * Header file for domain table relates functions
  *
- * Copyright (C) 2002-2003 Juha Heinanen
+ * Copyright (C) 2002-2012 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -52,6 +52,9 @@ int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2);
  */
 int w_is_domain_local(struct sip_msg* _msg, char* _s1, char* _s2);
 
+int w_lookup_domain(struct sip_msg* _msg, char* _s1, char* _s2);
+int w_lookup_domain_no_prefix(struct sip_msg* _msg, char* _s1, char* _s2);
+
 int is_domain_local(str* domain);
 
 int domain_check_self(str* host, unsigned short port, unsigned short proto);
@@ -61,6 +64,6 @@ int domain_db_init(const str* db_url);
 void domain_db_close(void);
 int domain_db_ver(str* name, int version);
 
-int reload_domain_table(void);
+int reload_tables(void);
 
 #endif /* DOMAIN_H */

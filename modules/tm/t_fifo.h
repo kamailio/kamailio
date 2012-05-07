@@ -42,7 +42,7 @@ int fixup_t_write( void** param, int param_no);
 
 int parse_tw_append( modparam_t type, void* val);
 
-int init_twrite_lines();
+int init_twrite_lines(void);
 
 int init_twrite_sock(void);
 

@@ -69,7 +69,7 @@ static void get_time_vars(int time_vars[SCALE_MAX], time_t t) {
 	time_vars[SCALE_MONTH]  = tm.tm_mon + 1;
 	time_vars[SCALE_WEEK]   = (tm.tm_mday - 1 + (tm.tm_wday - tm.tm_mday + 1) % 7) / 7 + 1;
 	time_vars[SCALE_MDAY]   = tm.tm_mday;
-	time_vars[SCALE_WDAY]   = tm.tm_wday;
+	time_vars[SCALE_WDAY]   = tm.tm_wday + 1;
 	time_vars[SCALE_YDAY]   = tm.tm_yday + 1;
 	time_vars[SCALE_HOUR]   = tm.tm_hour;
 	time_vars[SCALE_MINUTE] = tm.tm_min;

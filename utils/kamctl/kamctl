@@ -2405,7 +2405,7 @@ case $1 in
 		trusted "$@"
 		;;
 
-	fifo|unixsock|ser_mi|sercmd_mi|sercmdmi)
+	fifo|mi|unixsock|ser_mi|sercmd_mi|sercmdmi)
 		require_ctlengine
 		shift
 		$CTLCMD "$@"
@@ -2467,6 +2467,16 @@ case $1 in
 	ps)
 		require_ctlengine
 		$CTLCMD ps
+		;;
+
+	uptime)
+		require_ctlengine
+		$CTLCMD uptime
+		;;
+
+	stats)
+		require_ctlengine
+		$CTLCMD get_statistics all
 		;;
 
 	restart)

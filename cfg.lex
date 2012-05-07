@@ -510,6 +510,8 @@ LATENCY_LOG				latency_log
 LATENCY_LIMIT_DB		latency_limit_db
 LATENCY_LIMIT_ACTION	latency_limit_action
 
+MSG_TIME	msg_time
+
 CFG_DESCRIPTION		"description"|"descr"|"desc"
 
 LOADMODULE	loadmodule
@@ -976,6 +978,7 @@ IMPORTFILE      "import_file"
 									return HTTP_REPLY_HACK; }
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
 <INITIAL>{LATENCY_LOG}  { count(); yylval.strval=yytext; return LATENCY_LOG;}
+<INITIAL>{MSG_TIME}  { count(); yylval.strval=yytext; return MSG_TIME;}
 <INITIAL>{LATENCY_LIMIT_DB}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_DB;}
 <INITIAL>{LATENCY_LIMIT_ACTION}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_ACTION;}
 <INITIAL>{CFG_DESCRIPTION}	{ count(); yylval.strval=yytext; return CFG_DESCRIPTION; }

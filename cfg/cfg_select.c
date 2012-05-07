@@ -346,7 +346,7 @@ unsigned int read_cfg_var(struct cfg_read_handle *read_handle, void **val)
 int read_cfg_var_int(struct cfg_read_handle *read_handle, int *val)
 {
 	unsigned int	type;
-	void		*v1, *v2;
+	void		*v1=NULL, *v2=NULL;
 
 	if ((type = read_cfg_var(read_handle, &v1)) == 0)
 		return -1;
@@ -364,7 +364,7 @@ int read_cfg_var_int(struct cfg_read_handle *read_handle, int *val)
 int read_cfg_var_str(struct cfg_read_handle *read_handle, str *val)
 {
 	unsigned int	type;
-	void		*v1, *v2;
+	void		*v1=NULL, *v2=NULL;
 
 	if ((type = read_cfg_var(read_handle, &v1)) == 0)
 		return -1;

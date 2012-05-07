@@ -195,12 +195,12 @@ void fix_dns_flags(str *gname, str *name);
 int use_dns_failover_fixup(void *handle, str *gname, str *name, void **val);
 int use_dns_cache_fixup(void *handle, str *gname, str *name, void **val);
 int dns_cache_max_mem_fixup(void *handle, str *gname, str *name, void **val);
-int init_dns_cache();
+int init_dns_cache(void);
 #ifdef USE_DNS_CACHE_STATS
 int init_dns_cache_stats(int iproc_num);
 #define DNS_CACHE_ALL_STATS "dc_all_stats"
 #endif
-void destroy_dns_cache();
+void destroy_dns_cache(void);
 
 
 void dns_hash_put(struct dns_hash_entry* e);

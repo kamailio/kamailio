@@ -70,6 +70,8 @@ str str_username_col = str_init("username");
 str str_domain_col = str_init("domain");
 str str_body_col = str_init("body");
 str str_to_domain_col = str_init("to_domain");
+str str_from_user_col = str_init("from_user");
+str str_from_domain_col = str_init("from_domain");
 str str_watcher_username_col = str_init("watcher_username");
 str str_watcher_domain_col = str_init("watcher_domain");
 str str_event_id_col = str_init("event_id");
@@ -93,6 +95,8 @@ str str_inserted_time_col = str_init("inserted_time");
 str str_received_time_col = str_init("received_time");
 str str_id_col = str_init("id");
 str str_sender_col = str_init("sender");
+str str_updated_col = str_init("updated");
+str str_updated_winfo_col = str_init("updated_winfo");
 
 char* get_status_str(int status_flag)
 {
@@ -109,17 +113,20 @@ char* get_status_str(int status_flag)
 void printf_subs(subs_t* subs)
 {	
 	LM_DBG("\n\t[pres_uri]= %.*s\n\t[to_user]= %.*s\t[to_domain]= %.*s"
-		"\n\t[w_user]= %.*s\t[w_domain]= %.*s\n\t[event]= %.*s\n\t[status]= %s"
+		"\n\t[from_user]= %.*s\t[from_domain]= %.*s\n\t[w_user]= %.*s"
+		"\n\t[w_domain]=%.*s\t[event]=%.*s\t[status]= %s"
 		"\n\t[expires]= %u\n\t[callid]= %.*s\t[local_cseq]=%d"
 		"\n\t[to_tag]= %.*s\t[from_tag]= %.*s""\n\t[contact]= %.*s"
 		"\t[record_route]= %.*s\n",subs->pres_uri.len,subs->pres_uri.s,
 		subs->to_user.len,subs->to_user.s,subs->to_domain.len,
 		subs->to_domain.s,subs->from_user.len,subs->from_user.s,
-		subs->from_domain.len,subs->from_domain.s,subs->event->name.len,
-		subs->event->name.s,get_status_str(subs->status),subs->expires,
-		subs->callid.len,subs->callid.s,subs->local_cseq,subs->to_tag.len,
-		subs->to_tag.s,subs->from_tag.len, subs->from_tag.s,subs->contact.len,
-		subs->contact.s,subs->record_route.len,subs->record_route.s);
+		subs->from_domain.len,subs->from_domain.s,subs->watcher_user.len,
+		subs->watcher_user.s,subs->watcher_domain.len,subs->watcher_domain.s,
+		subs->event->name.len,subs->event->name.s,get_status_str(subs->status),
+		subs->expires,subs->callid.len,subs->callid.s,subs->local_cseq,
+		subs->to_tag.len,subs->to_tag.s,subs->from_tag.len, subs->from_tag.s,
+		subs->contact.len,subs->contact.s,subs->record_route.len,
+		subs->record_route.s);
 }
 
 int build_str_hdr(subs_t* subs, int is_body, str* hdr)
@@ -127,18 +134,17 @@ int build_str_hdr(subs_t* subs, int is_body, str* hdr)
 	pres_ev_t* event= subs->event;
 	str expires = {0, 0};
 	str status = {0, 0};
-	str tmp = {0, 0};
+	char* p;
 	str trans = {";transport=", 11};
 
-	if(hdr == NULL)
-	{
+	if(hdr == NULL) {
 		LM_ERR("bad parameter\n");
 		return -1;
 	}
 	expires.s = int2str(subs->expires, &expires.len);
+	
 	status.s= get_status_str(subs->status);
-	if(status.s == NULL)
-	{
+	if(status.s == NULL) {
 		LM_ERR("bad status %d\n", subs->status);
 		return -1;
 	}
@@ -154,104 +160,71 @@ int build_str_hdr(subs_t* subs, int is_body, str* hdr)
 		(14 /*Content-Type: */+subs->event->content_type.len + CRLF_LEN):0) + 1;
 
 	hdr->s = (char*)pkg_malloc(hdr->len);
-	if(hdr->s == NULL)
-	{
-		LM_ERR("no more pkg\n");
+	if(hdr->s == NULL) {
+		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
 
-	strncpy(hdr->s, "Max-Forwards: ", 14);
-	tmp.s = int2str((unsigned long)MAX_FORWARD, &tmp.len);
-	strncpy(hdr->s+14, tmp.s, tmp.len);
-	tmp.s = hdr->s + tmp.len + 14;
-	strncpy(tmp.s, CRLF, CRLF_LEN);
-	tmp.s += CRLF_LEN;
+	p = hdr->s;
+	p += sprintf(p, "Max-Forwards: %d\r\n", MAX_FORWARD);
 
-	strncpy(tmp.s  ,"Event: ", 7);
-	tmp.s += 7;
-	strncpy(tmp.s, event->name.s, event->name.len);
-	tmp.s += event->name.len;
-	if(subs->event_id.len && subs->event_id.s) 
-	{
- 		strncpy(tmp.s, ";id=", 4);
- 		tmp.s += 4;
- 		strncpy(tmp.s, subs->event_id.s, subs->event_id.len);
- 		tmp.s += subs->event_id.len;
- 	}
-	strncpy(tmp.s, CRLF, CRLF_LEN);
-	tmp.s += CRLF_LEN;
+	p += sprintf(p  ,"Event: %.*s", event->name.len, event->name.s);
+	if(subs->event_id.len && subs->event_id.s) {
+		p += sprintf(p, ";id=%.*s", subs->event_id.len, subs->event_id.s);
+	}
+	memcpy(p, CRLF, CRLF_LEN);
+	p += CRLF_LEN;
 
-	strncpy(tmp.s, "Contact: <", 10);
-	tmp.s += 10;
-	strncpy(tmp.s, subs->local_contact.s, subs->local_contact.len);
-	tmp.s +=  subs->local_contact.len;
+	p += sprintf(p, "Contact: <%.*s", subs->local_contact.len, subs->local_contact.s);
 	if(subs->sockinfo_str.s!=NULL
-			&& str_search(&subs->local_contact, &trans)==0)
-	{
+			&& str_search(&subs->local_contact, &trans)==0) {
 		/* fix me */
 		switch(subs->sockinfo_str.s[0]) {
 			case 's':
 			case 'S':
-				strncpy(tmp.s, ";transport=sctp", 15);
-				tmp.s += 15;
+				memcpy(p, ";transport=sctp", 15);
+				p += 15;
 			break;
 			case 't':
 			case 'T':
 				switch(subs->sockinfo_str.s[1]) {
 					case 'c':
 					case 'C':
-						strncpy(tmp.s, ";transport=tcp", 14);
-						tmp.s += 14;
+						memcpy(p, ";transport=tcp", 14);
+						p += 14;
 					break;
 					case 'l':
 					case 'L':
-						strncpy(tmp.s, ";transport=tls", 14);
-						tmp.s += 14;
+						memcpy(p, ";transport=tls", 14);
+						p += 14;
 					break;
 				}
 			break;
 		}
 	}
-	*tmp.s =  '>';
-	tmp.s++;
-	strncpy(tmp.s, CRLF, CRLF_LEN);
-	tmp.s += CRLF_LEN;
-	
-	strncpy(tmp.s, "Subscription-State: ", 20);
-	tmp.s += 20;
-	strncpy(tmp.s, status.s, status.len);
-	tmp.s += status.len;
-	
-	if(subs->status == TERMINATED_STATUS)
-	{
+	*p =  '>';
+	p++;
+	memcpy(p, CRLF, CRLF_LEN);
+	p += CRLF_LEN;
+
+	p += sprintf(p, "Subscription-State: %.*s", status.len, status.s);
+
+	if(subs->status == TERMINATED_STATUS) {
 		LM_DBG("state = terminated\n");
-		
-		strncpy(tmp.s, ";reason=", 8);
-		tmp.s += 8;
-		strncpy(tmp.s, subs->reason.s, subs->reason.len);
-		tmp.s += subs->reason.len;
-	} else {	
-		strncpy(tmp.s, ";expires=", 9);
-		tmp.s += 9;
-		LM_DBG("expires = %d\n", subs->expires);
-		strncpy(tmp.s, expires.s, expires.len);
-		tmp.s += expires.len;
+		p += sprintf(p, ";reason=%.*s", subs->reason.len, subs->reason.s);
+	} else {
+		p += sprintf(p, ";expires=%.*s", expires.len, expires.s);
 	}
-	strncpy(tmp.s, CRLF, CRLF_LEN);
-	tmp.s += CRLF_LEN;
-	
-	if(is_body)
-	{	
-		strncpy(tmp.s,"Content-Type: ", 14);
-		tmp.s += 14;
-		strncpy(tmp.s, event->content_type.s, event->content_type.len);
-		tmp.s += event->content_type.len;
-		strncpy(tmp.s, CRLF, CRLF_LEN);
-		tmp.s += CRLF_LEN;
+	memcpy(p, CRLF, CRLF_LEN);
+	p += CRLF_LEN;
+
+	if(is_body) {
+		p += sprintf(p,"Content-Type: %.*s\r\n", event->content_type.len,
+				event->content_type.s);
 	}
 	
-	*tmp.s = '\0';
-	hdr->len = tmp.s - hdr->s;
+	*p = '\0';
+	hdr->len = p - hdr->s;
 
 	return 0;
 }
@@ -269,7 +242,7 @@ int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 	int n_result_cols = 0;
 	int n_query_cols = 0;
 	int i;
-	int status_col, expires_col, from_user_col, from_domain_col, callid_col;
+	int status_col, expires_col, watcher_user_col, watcher_domain_col, callid_col;
 
 	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_ops[n_query_cols] = OP_EQ;
@@ -287,8 +260,8 @@ int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 
 	result_cols[status_col=n_result_cols++] = &str_status_col;
 	result_cols[expires_col=n_result_cols++] = &str_expires_col;
-	result_cols[from_user_col=n_result_cols++] = &str_watcher_username_col;
-	result_cols[from_domain_col=n_result_cols++] = &str_watcher_domain_col;
+	result_cols[watcher_user_col=n_result_cols++] = &str_watcher_username_col;
+	result_cols[watcher_domain_col=n_result_cols++] = &str_watcher_domain_col;
 	result_cols[callid_col=n_result_cols++] = &str_callid_col;
 
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0) 
@@ -322,11 +295,11 @@ int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);
 		
-		sb.from_user.s= (char*)row_vals[from_user_col].val.string_val;
-		sb.from_user.len= strlen(sb.from_user.s);
+		sb.watcher_user.s= (char*)row_vals[watcher_user_col].val.string_val;
+		sb.watcher_user.len= strlen(sb.watcher_user.s);
 
-		sb.from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
-		sb.from_domain.len= strlen(sb.from_domain.s);
+		sb.watcher_domain.s= (char*)row_vals[watcher_domain_col].val.string_val;
+		sb.watcher_domain.len= strlen(sb.watcher_domain.s);
 
 		sb.callid.s= (char*)row_vals[callid_col].val.string_val;
 		sb.callid.len= strlen(sb.callid.s);
@@ -336,7 +309,6 @@ int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 		
 		if(add_watcher_list(&sb, watchers)<0)
 			goto error;
-
 	}
 	
 	pa_dbf.free_result(pa_db, result);
@@ -468,7 +440,7 @@ int add_watcher_list(subs_t *s, watcher_t *watchers)
 		return -1;
 	}
 	w->status= s->status;
-	if(uandd_to_uri(s->from_user, s->from_domain, &w->uri)<0)
+	if(uandd_to_uri(s->watcher_user, s->watcher_domain, &w->uri)<0)
 	{
 		LM_ERR("failed to create uri\n");
 		goto error;
@@ -1008,6 +980,7 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	int expires_col= 0,callid_col, cseq_col, i, reason_col;
 	int version_col= 0, record_route_col = 0, contact_col = 0;
 	int sockinfo_col= 0, local_contact_col= 0, event_id_col = 0;
+	int watcher_user_col= 0, watcher_domain_col= 0;
 	subs_t s, *s_new;
 	int inc= 0;
 		
@@ -1055,8 +1028,10 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 
 	result_cols[to_user_col=n_result_cols++]      =   &str_to_user_col;
 	result_cols[to_domain_col=n_result_cols++]    =   &str_to_domain_col;
-	result_cols[from_user_col=n_result_cols++]    =   &str_watcher_username_col;
-	result_cols[from_domain_col=n_result_cols++]  =   &str_watcher_domain_col;
+	result_cols[from_user_col=n_result_cols++]    =   &str_from_user_col;
+	result_cols[from_domain_col=n_result_cols++]  =   &str_from_domain_col;
+	result_cols[watcher_user_col=n_result_cols++] =   &str_watcher_username_col;
+	result_cols[watcher_domain_col=n_result_cols++]=   &str_watcher_domain_col;
 	result_cols[event_id_col=n_result_cols++]     =   &str_event_id_col;
 	result_cols[from_tag_col=n_result_cols++]     =   &str_from_tag_col;
 	result_cols[to_tag_col=n_result_cols++]       =   &str_to_tag_col;
@@ -1124,6 +1099,12 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 		
 		s.from_domain.s= (char*)row_vals[from_domain_col].val.string_val;
 		s.from_domain.len= strlen(s.from_domain.s);
+
+		s.watcher_user.s= (char*)row_vals[watcher_user_col].val.string_val;
+		s.watcher_user.len= strlen(s.watcher_user.s);
+		
+		s.watcher_domain.s= (char*)row_vals[watcher_domain_col].val.string_val;
+		s.watcher_domain.len= strlen(s.watcher_domain.s);
 		
 		s.event_id.s=(char*)row_vals[event_id_col].val.string_val;
 		s.event_id.len= (s.event_id.s)?strlen(s.event_id.s):0;

@@ -72,19 +72,19 @@ union t_stats{
 extern union t_stats *tm_stats;
 
 #ifdef TM_MORE_STATS 
-inline void static t_stats_created()
+inline void static t_stats_created(void)
 {
 	/* keep it in process's piece of shmem */
 	tm_stats[process_no].s.t_created++;
 }
 
-inline void static t_stats_freed()
+inline void static t_stats_freed(void)
 {
 	/* keep it in process's piece of shmem */
 	tm_stats[process_no].s.t_freed++;
 }
 
-inline void static t_stats_delayed_free()
+inline void static t_stats_delayed_free(void)
 {
 	/* keep it in process's piece of shmem */
 	tm_stats[process_no].s.delayed_free++;
@@ -104,7 +104,7 @@ inline void static t_stats_new(int local)
 	if(local) tm_stats[process_no].s.client_transactions++;
 }
 
-inline void static t_stats_wait()
+inline void static t_stats_wait(void)
 {
 	/* keep it in process's piece of shmem */
 	tm_stats[process_no].s.waiting++;
@@ -130,7 +130,7 @@ inline static void update_reply_stats( int code ) {
 }
 
 
-inline void static t_stats_replied_locally()
+inline void static t_stats_replied_locally(void)
 {
 	tm_stats[process_no].s.replied_locally++;
 }
@@ -139,7 +139,7 @@ inline void static t_stats_replied_locally()
 
 int init_tm_stats(void);
 int init_tm_stats_child(void);
-void free_tm_stats();
+void free_tm_stats(void);
 
 void tm_rpc_stats(rpc_t* rpc, void* c);
 

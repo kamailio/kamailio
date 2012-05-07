@@ -31,7 +31,7 @@
 #define _T_SELECT_H
 
 
-int tm_init_selects();
+int tm_init_selects(void);
 
 
 #endif

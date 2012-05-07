@@ -260,9 +260,6 @@ void insert_htable(ua_pres_t* presentity)
 	hash_code= core_hash(presentity->pres_uri,presentity->watcher_uri, HASH_SIZE);
 	lock_get(&HashT->p_records[hash_code].lock);
 
-	if (presentity->watcher_uri)
-		presentity->cseq++;
-
 	_insert_htable(presentity, hash_code);
 
 	lock_release(&HashT->p_records[hash_code].lock);
@@ -690,7 +687,7 @@ list_entry_t *get_subs_list(str *did)
 				tmp_str->len = dialog->pres_uri->len;
 				tmp_str->s[tmp_str->len] = '\0';
 
-				list = list_insert(tmp_str, list);
+				list = list_insert(tmp_str, list, NULL);
 			}
 			dialog = dialog->next;
 		}

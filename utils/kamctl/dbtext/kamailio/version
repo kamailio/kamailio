@@ -1,8 +1,8 @@
 table_name(string) table_version(int) 
 acc:4
-active_watchers:9
+active_watchers:11
 address:5
-aliases:1004
+aliases:5
 carrier_name:1
 carrierfailureroute:2
 carrierroute:3
@@ -12,7 +12,8 @@ dialog:7
 dialog_vars:1
 dialplan:1
 dispatcher:4
-domain:1
+domain:2
+domain_attrs:1
 domain_name:1
 domainpolicy:2
 dr_gateways:3
@@ -27,7 +28,7 @@ imc_rooms:1
 lcr_gw:2
 lcr_rule:1
 lcr_rule_target:1
-location:1004
+location:5
 matrix:1
 missed_calls:3
 mtree:1
@@ -39,8 +40,8 @@ pua:7
 purplemap:1
 re_grp:1
 rls_presentity:1
-rls_watchers:1
-silo:6
+rls_watchers:3
+silo:7
 sip_trace:3
 speed_dial:2
 subscriber:6

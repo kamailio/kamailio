@@ -579,9 +579,9 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 	struct lump* r;
 	str* send_address_str;
 	str* send_port_str;
-	str* recv_address_str;
-	str* recv_port_str;
-	int  recv_port_no;
+	str* recv_address_str = NULL;
+	str* recv_port_str = NULL;
+	int  recv_port_no = 0;
 	struct socket_info* send_sock;
 	
 
@@ -918,9 +918,9 @@ static inline void process_lumps(	struct sip_msg* msg,
 	int s_offset;
 	str* send_address_str;
 	str* send_port_str;
-	str* recv_address_str;
-	str* recv_port_str;
-	int  recv_port_no;
+	str* recv_address_str = NULL;
+	str* recv_port_str = NULL;
+	int  recv_port_no = 0;
 	struct socket_info* send_sock;
 
 #ifdef USE_COMP

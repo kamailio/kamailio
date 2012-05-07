@@ -319,7 +319,7 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 		len += SIP_URI.len;
 	}
 	if ( len > MAX_URI_SIZE ) {
-		LM_ERR("Calculated uri size too large: %d\n", len);
+		LM_ERR("Calculated uri size too large: %lu\n", (unsigned long)len);
 		return -1;
 	}
 

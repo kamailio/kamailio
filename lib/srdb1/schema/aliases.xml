@@ -9,7 +9,7 @@
 
 <table id="aliases" xmlns:db="http://docbook.org/ns/docbook">
     <name>aliases</name>
-    <version>1004</version>
+    <version>5</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table for the registrar module is similar to the "location" table, (the aliases index makes lookup of missed calls much faster). Thus, the function lookup("alias") can be used to map aliases to AORs. More information is available at: &KAMAILIO_MOD_DOC;registrar.html. Most people uses the dbaliases table with the alias_db module now.
@@ -24,6 +24,15 @@
         <primary/>
         <type db="dbtext">int,auto</type>
         <description>unique ID</description>
+    </column>
+
+    <column id="ruid">
+        <name>ruid</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Record internal unique id</description>
+        <natural/>
     </column>
 
     <column id="username">
@@ -153,7 +162,25 @@
         <description>Flags that indicate the SIP Methods this contact will accept.</description>
     </column>
 
-    <index>
+	<column id="instance">
+        <name>instance</name>
+        <type>string</type>
+        <size>&hf_len;</size>
+        <null/>
+        <default><null/></default>
+        <description>The value of SIP instance parameter for GRUU.</description>
+    </column>
+
+    <column>
+        <name>reg_id</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value of reg-id contact parameter</description>
+    </column>
+
+
+	<index>
         <name>alias_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>

@@ -160,7 +160,7 @@ static void dump_rules(rpc_t* rpc, void* c)
     struct rule_info **rules, *rule;
     struct target *t;
     void* st;
-    str prefix, from_uri;
+    str prefix, from_uri, request_uri;
 
     for (j = 1; j <= lcr_count_param; j++) {
 	    
@@ -174,11 +174,14 @@ static void dump_rules(rpc_t* rpc, void* c)
 		prefix.len=rule->prefix_len;
 		from_uri.s=rule->from_uri;
 		from_uri.len=rule->from_uri_len;
-		rpc->struct_add(st, "ddSSd",
+		request_uri.s=rule->request_uri;
+		request_uri.len=rule->request_uri_len;
+		rpc->struct_add(st, "ddSSSd",
 				"lcr_id", j,
 				"rule_id", rule->rule_id,
 				"prefix", &prefix,
 				"from_uri", &from_uri,
+				"request_uri", &request_uri,
 				"stopper", rule->stopper
 				);
 		t = rule->targets;

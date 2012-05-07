@@ -263,7 +263,7 @@ Options:\n\
 
 
 /* print compile-time constants */
-void print_ct_constants()
+void print_ct_constants(void)
 {
 #ifdef ADAPTIVE_WAIT
 	printf("ADAPTIVE_WAIT_LOOPS=%d, ", ADAPTIVE_WAIT_LOOPS);
@@ -283,7 +283,7 @@ void print_ct_constants()
 }
 
 /* print compile-time constants */
-void print_internals()
+void print_internals(void)
 {
 	printf("Print out of %s internals\n", NAME);
 	printf("  Version: %s\n", full_version);
@@ -312,7 +312,7 @@ void print_internals()
 
 /* debugging function */
 /*
-void receive_stdin_loop()
+void receive_stdin_loop(void)
 {
 	#define BSIZE 1024
 	char buf[BSIZE+1];
@@ -417,6 +417,9 @@ int sock_gid= -1;
 int sock_mode= S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP; /* rw-rw---- */
 
 int server_id = 0; /* Configurable unique ID of the server */
+
+/* set timeval for each received sip message */
+int sr_msg_time = 1;
 
 /* more config stuff */
 int disable_core_dump=0; /* by default enabled */
@@ -541,7 +544,7 @@ static int cfg_ok=0;
 
 
 extern FILE* yyin;
-extern int yyparse();
+extern int yyparse(void);
 
 
 int is_main=1; /* flag = is this the  "main" process? */
@@ -713,7 +716,7 @@ static void shutdown_children(int sig, int show_status)
 
 
 
-void handle_sigs()
+void handle_sigs(void)
 {
 	pid_t	chld;
 	int	chld_status;
@@ -893,7 +896,7 @@ void sig_usr(int signo)
 
 
 /* install the signal handlers, returns 0 on success, -1 on error */
-int install_sigs()
+int install_sigs(void)
 {
 	/* added by jku: add exit handler */
 	if (set_sig_h(SIGINT, sig_usr) == SIG_ERR ) {
@@ -1259,7 +1262,7 @@ int fix_cfg_file(void)
 
 
 /* main loop */
-int main_loop()
+int main_loop(void)
 {
 	int  i;
 	pid_t pid;

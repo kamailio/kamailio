@@ -190,7 +190,6 @@ void clean_hdr_field(struct hdr_field* hf)
 		case HDR_SUBJECT_T:
 		case HDR_USERAGENT_T:
 		case HDR_SERVER_T:
-		case HDR_ACCEPTDISPOSITION_T:
 		case HDR_MIN_SE_T:
 		case HDR_ACCEPTCONTACT_T:
 		case HDR_ALLOWEVENTS_T:

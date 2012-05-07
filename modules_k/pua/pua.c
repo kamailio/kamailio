@@ -42,6 +42,7 @@
 #include "../../mem/mem.h"
 #include "../../pt.h"
 #include "../../lib/srdb1/db.h"
+#include "../../lib/kmi/mi.h"
 #include "../../modules/tm/tm_load.h"
 #include "pua.h"
 #include "send_publish.h"
@@ -102,7 +103,9 @@ static str str_version_col = str_init("version");
 
 static int mod_init(void);
 static int child_init(int);
+static int mi_child_init(void);
 static void destroy(void);
+static struct mi_root* mi_cleanup(struct mi_root* cmd, void* param);
 
 static ua_pres_t* build_uppubl_cbparam(ua_pres_t* p);
 
@@ -112,42 +115,47 @@ static void hashT_clean(unsigned int ticks,void *param);
 
 static cmd_export_t cmds[]=
 {
-	{"bind_libxml_api",			(cmd_function)bind_libxml_api,	1, 0, 0, 0},
-	{"bind_pua",				(cmd_function)bind_pua,			1, 0, 0, 0},
-	{"pua_update_contact",		(cmd_function)update_contact,	0, 0, 0, REQUEST_ROUTE},
-	{0,							0,								0, 0, 0, 0} 
+	{"bind_libxml_api",          (cmd_function)bind_libxml_api, 1, 0, 0, 0},
+	{"bind_pua",                 (cmd_function)bind_pua, 1, 0, 0, 0},
+	{"pua_update_contact",       (cmd_function)update_contact, 0, 0, 0, REQUEST_ROUTE},
+	{0,                          0,	0, 0, 0, 0} 
 };
 
 static param_export_t params[]={
-	{"hash_size" ,		 INT_PARAM, &HASH_SIZE			 },
-	{"db_url" ,			 STR_PARAM, &db_url.s			 },
-	{"db_table" ,		 STR_PARAM, &db_table.s			 },
-	{"min_expires",		 INT_PARAM, &min_expires		 },
-	{"default_expires",  INT_PARAM, &default_expires     },
-	{"update_period",	 INT_PARAM, &update_period       },
-	{"outbound_proxy",	 STR_PARAM, &outbound_proxy.s    },
-	{"dlginfo_increase_version",	 INT_PARAM, &dlginfo_increase_version},
-	{"reginfo_increase_version",	 INT_PARAM, &reginfo_increase_version},
-	{"check_remote_contact",         INT_PARAM, &check_remote_contact    },
-	{"db_mode",                      INT_PARAM, &dbmode                  },
-	{"fetch_rows",                   INT_PARAM, &pua_fetch_rows          },
-	{0,							 0,			0            }
+	{"hash_size",                INT_PARAM, &HASH_SIZE},
+	{"db_url",                   STR_PARAM, &db_url.s},
+	{"db_table",                 STR_PARAM, &db_table.s},
+	{"min_expires",	             INT_PARAM, &min_expires},
+	{"default_expires",          INT_PARAM, &default_expires},
+	{"update_period",            INT_PARAM, &update_period},
+	{"outbound_proxy",           STR_PARAM, &outbound_proxy.s},
+	{"dlginfo_increase_version", INT_PARAM, &dlginfo_increase_version},
+	{"reginfo_increase_version", INT_PARAM, &reginfo_increase_version},
+	{"check_remote_contact",     INT_PARAM, &check_remote_contact},
+	{"db_mode",                  INT_PARAM, &dbmode},
+	{"fetch_rows",               INT_PARAM, &pua_fetch_rows},
+	{0,                          0,         0}
+};
+
+static mi_export_t mi_cmds[] = {
+	{ "pua_cleanup",	mi_cleanup,		0,  0,  mi_child_init},
+	{ 0,			0,			0,  0,  0}
 };
 
 /** module exports */
 struct module_exports exports= {
-	"pua",						/* module name */
-	DEFAULT_DLFLAGS,			/* dlopen flags */
-	cmds,						/* exported functions */
-	params,						/* exported parameters */
-	0,							/* exported statistics */
-	0,							/* exported MI functions */
-	0,							/* exported pseudo-variables */
-	0,							/* extra processes */
-	mod_init,					/* module initialization function */
-	0,							/* response handling function */
-	destroy,					/* destroy function */
-	child_init					/* per-child init function */
+	"pua",				/* module name */
+	DEFAULT_DLFLAGS,		/* dlopen flags */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,				/* exported statistics */
+	mi_cmds,			/* exported MI functions */
+	0,				/* exported pseudo-variables */
+	0,				/* extra processes */
+	mod_init,			/* module initialization function */
+	0,				/* response handling function */
+	destroy,			/* destroy function */
+	child_init			/* per-child init function */
 };
 
 /**
@@ -156,6 +164,12 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	LM_DBG("...\n");
+
+	if (register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
 
 	if(min_expires< 0)
 		min_expires= 0;
@@ -298,7 +312,32 @@ static int child_init(int rank)
 	LM_DBG("child %d: Database connection opened successfully\n", rank);
 
 	return 0;
-}	
+}
+
+static int mi_child_init(void)
+{
+	if (pua_dbf.init==0)
+	{
+		LM_CRIT("database not bound\n");
+		return -1;
+	}
+	pua_db = pua_dbf.init(&db_url);
+	if (!pua_db)
+	{
+		LM_ERR("connecting to database failed\n");
+		return -1;
+	}
+
+	if (pua_dbf.use_table(pua_db, &db_table) < 0)
+	{
+		LM_ERR("Error in use_table pua\n");
+		return -1;
+	}
+
+	LM_DBG("Database connection opened successfully\n");
+
+	return 0;
+}
 
 static void destroy(void)
 {
@@ -1172,3 +1211,11 @@ static ua_pres_t* build_uppubl_cbparam(ua_pres_t* p)
 	return cb_param;
 }
 
+static struct mi_root* mi_cleanup(struct mi_root* cmd, void *param)
+{
+	LM_DBG("mi_cleanup:start\n");
+
+	(void)hashT_clean(0,0);
+
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+}

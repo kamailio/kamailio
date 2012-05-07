@@ -133,6 +133,8 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		/* The transaction has already been canceled,
 		 * needless to continue */
 		UNREF(t); /* t_unref would kill the transaction */
+		/* reset T as we have no working T anymore */
+		set_t(T_UNDEFINED, T_BR_UNDEFINED);
 		return 1;
 	}
 

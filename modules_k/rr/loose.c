@@ -118,26 +118,29 @@ static inline int find_first_route(struct sip_msg* _m)
  * \param _port port
  * \return 0 if the URI is not myself, 1 otherwise
  */
-#ifdef ENABLE_USER_CHECK
-static inline int is_myself(str *_user, str* _host, unsigned short _port)
-#else
-static inline int is_myself(str* _host, unsigned short _port)
-#endif
+static inline int is_myself(sip_uri_t *_puri)
 {
 	int ret;
 	
-	ret = check_self(_host, _port ? _port : SIP_PORT, 0);/* match all protos*/
+	ret = check_self(&_puri->host,
+			_puri->port_no?_puri->port_no:SIP_PORT, 0);/* match all protos*/
 	if (ret < 0) return 0;
 
 #ifdef ENABLE_USER_CHECK
-	if(i_user.len && i_user.len==_user->len
-			&& !strncmp(i_user.s, _user->s, _user->len))
+	if(ret==1 && i_user.len && i_user.len==_puri->user.len
+			&& strncmp(i_user.s, _puri->user.s, _puri->user.len)==0)
 	{
-		LM_DBG("this URI isn't mine\n");
-		return -1;
+		LM_DBG("ignore user matched - URI is not to the server itself\n");
+		return 0;
 	}
 #endif
 	
+	if(ret==1) {
+		/* match on host:port, but if gruu, then fail */
+		if(_puri->gr.s!=NULL)
+			return 0;
+	}
+
 	return ret;
 }
 
@@ -507,13 +510,7 @@ static inline int after_strict(struct sip_msg* _m)
 		return RR_ERROR;
 	}
 
-	if ( enable_double_rr && is_2rr(&puri.params) &&
-#ifdef ENABLE_USER_CHECK
-	is_myself(&puri.user, &puri.host, puri.port_no)
-#else
-	is_myself(&puri.host, puri.port_no)
-#endif
-	) {
+	if ( enable_double_rr && is_2rr(&puri.params) && is_myself(&puri)) {
 		/* double route may occure due different IP and port, so force as
 		 * send interface the one advertise in second Route */
 		si = grep_sock_info( &puri.host, puri.port_no, puri.proto);
@@ -677,9 +674,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	rr_t* rt;
 	int res;
 	int status;
-#ifdef ENABLE_USER_CHECK
 	int ret;
-#endif
 	str uri;
 	struct socket_info *si;
 
@@ -698,12 +693,8 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	}
 
 	/* IF the URI was added by me, remove it */
-#ifdef ENABLE_USER_CHECK
-	ret=is_myself(&puri.user, &puri.host, puri.port_no);
+	ret=is_myself(&puri);
 	if (ret>0)
-#else
-	if (is_myself(&puri.host, puri.port_no))
-#endif
 	{
 		LM_DBG("Topmost route URI: '%.*s' is me\n",
 			uri.len, ZSW(uri.s));
@@ -850,12 +841,7 @@ int loose_route(struct sip_msg* _m)
 	} else if (ret == 1) {
 		return after_loose(_m, 1);
 	} else {
-#ifdef ENABLE_USER_CHECK
-		if (is_myself(&_m->parsed_uri.user, &_m->parsed_uri.host,
-		_m->parsed_uri.port_no)) {
-#else
-		if (is_myself(&_m->parsed_uri.host, _m->parsed_uri.port_no)) {
-#endif
+		if (is_myself(&_m->parsed_uri)) {
 			return after_strict(_m);
 		} else {
 			return after_loose(_m, 0);

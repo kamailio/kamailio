@@ -56,36 +56,6 @@
 	}
 
 
-#define on_CASE                                            \
-        if (LOWER_BYTE(*p) == 'o') {                       \
-                p++;                                       \
-                if (LOWER_BYTE(*p) == 'n') {               \
-                        hdr->type = HDR_ACCEPTDISPOSITION_T; \
-                        p++;                               \
-                        goto dc_end;                       \
-                }                                          \
-        }
-
-
-#define siti_CASE                  \
-        switch(LOWER_DWORD(val)) { \
-        case _siti_:               \
-                p += 4;            \
-                val = READ(p);     \
-                on_CASE;           \
-                goto other;        \
-        }
-
-
-#define ispo_CASE                  \
-        switch(LOWER_DWORD(val)) { \
-        case _ispo_:               \
-                p += 4;            \
-                val = READ(p);     \
-                siti_CASE;         \
-                goto other;        \
-        }
-
 #define accept_contact_ct_CASE                             \
         if (LOWER_BYTE(*p) == 'c') {                       \
                 p++;                                       \
@@ -114,11 +84,6 @@
 		angu_CASE;         \
 		goto other;        \
                                    \
-        case _pt_d_:               \
-                p += 4;            \
-                val = READ(p);     \
-                ispo_CASE;         \
-                goto other;        \
         case _pt_c_:               \
                 p += 4;            \
                 val = READ(p);     \

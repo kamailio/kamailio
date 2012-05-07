@@ -128,6 +128,7 @@ extern int sock_mode;
 extern char* chroot_dir;
 extern char* working_dir;
 extern int sr_auto_aliases;
+extern int sr_msg_time;
 
 #ifdef USE_MCAST
 extern int mcast_loopback;

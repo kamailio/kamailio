@@ -67,9 +67,9 @@ extern struct cfg_group_sctp sctp_default_cfg;
 /* sctp config handle */
 extern void* sctp_cfg;
 
-void init_sctp_options();
-void sctp_options_check();
-int sctp_register_cfg();
+void init_sctp_options(void);
+void sctp_options_check(void);
+int sctp_register_cfg(void);
 void sctp_options_get(struct cfg_group_sctp *s);
 int sctp_get_os_defaults(struct cfg_group_sctp *s);
 int sctp_get_cfg_from_sock(int s, struct cfg_group_sctp* cfg);

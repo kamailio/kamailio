@@ -54,7 +54,7 @@ extern unsigned int     global_msg_id;
 
 
 
-void init_t();
+void init_t(void);
 int init_rb( struct retr_buf *rb, struct sip_msg *msg );
 
 typedef struct cell* (*tlookup_original_f)( struct sip_msg* p_msg );
@@ -85,8 +85,8 @@ int t_check(struct sip_msg* , int *branch );
 int t_check_msg(struct sip_msg* , int *branch );
 
 typedef struct cell * (*tgett_f)(void);
-struct cell *get_t();
-int get_t_branch();
+struct cell *get_t(void);
+int get_t_branch(void);
 
 /* use carefully or better not at all -- current transaction is 
  * primarily set by lookup functions */
@@ -111,14 +111,14 @@ int t_lookup_ident(struct cell** trans, unsigned int hash_index, unsigned int la
 int t_lookup_callid(struct cell** trans, str callid, str cseq);
 
 int t_set_fr(struct sip_msg* msg, unsigned int fr_inv_to, unsigned int fr_to );
-int t_reset_fr();
+int t_reset_fr(void);
 #ifdef TM_DIFF_RT_TIMEOUT
 int t_set_retr(struct sip_msg* msg, unsigned int t1_to, unsigned int t2_to);
-int t_reset_retr();
+int t_reset_retr(void);
 #endif
 int t_set_max_lifetime(struct sip_msg* msg, unsigned int eol_inv,
 											unsigned int eol_noninv);
-int t_reset_max_lifetime();
+int t_reset_max_lifetime(void);
 
 #ifdef WITH_AS_SUPPORT
 /**

@@ -9,7 +9,7 @@
 
 <table id="lcr_rule" xmlns:db="http://docbook.org/ns/docbook">
     <name>lcr_rule</name>
-    <version>1</version>
+    <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used by the lcr (Least Cost Routing)
@@ -50,6 +50,15 @@
         <null/>
         <default><null/></default>
         <description>PCRE regular expression that is matched to caller's URI</description>
+    </column>
+
+    <column id="request_uri">
+        <name>request_uri</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <null/>
+        <default><null/></default>
+        <description>PCRE regular expression that is matched to full request URI</description>
     </column>
 
     <column id="stopper">

@@ -165,9 +165,9 @@ typedef int (*run_failure_handlers_f)(struct cell*, struct sip_msg*, int, int);
 /* Retransmits the last sent inbound reply.
  * Returns  -1 - error
  *           1 - OK
- */
-int t_retransmit_reply( /* struct sip_msg * */  );
-
+ 
+ *int t_retransmit_reply(struct sip_msg *);
+*/
 
 /* send a UAS reply
  * Warning: 'buf' and 'len' should already have been build.
@@ -208,13 +208,13 @@ void on_negative_reply( struct cell* t, struct sip_msg* msg,
    replies arrive 
 */
 void t_on_negative( unsigned int go_to );
-unsigned int get_on_negative();
+unsigned int get_on_negative(void);
 void t_on_reply( unsigned int go_to );
-unsigned int get_on_reply();
+unsigned int get_on_reply(void);
 
 int t_retransmit_reply( struct cell *t );
 
-void tm_init_tags();
+void tm_init_tags(void);
 
 /* selects the branch for fwd-ing the reply */
 int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code);

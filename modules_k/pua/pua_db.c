@@ -179,6 +179,12 @@ int clean_puadb( int update_period, int min_expires )
 		return(-1);
 	}
 
+	if (res == NULL)
+	{
+		LM_ERR("bad result\n");
+		return(-1);
+	}
+
 	if (RES_ROW_N(res) == 0)
 	{
 		/* no match */ 
@@ -285,6 +291,12 @@ int is_dialog_puadb(ua_pres_t *pres)
 		return(-1);
 	}
 
+	if (res == NULL)
+	{
+		LM_ERR("bad result\n");
+		return(-1);
+	}
+
 	nr_rows = RES_ROW_N(res);
 	pua_dbf.free_result(pua_db, res);
 
@@ -366,6 +378,12 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 		return(-1);
 	}
 
+	if (res == NULL)
+	{
+		LM_ERR("bad result\n");
+		return(-1);
+	}
+
 	nr_rows = RES_ROW_N(res);
 
 	switch (nr_rows)
@@ -389,6 +407,12 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 			res_cols,n_query_cols,n_res_cols,0,&res) < 0)
 		{
 			LM_ERR("DB query error\n");
+			return(-1);
+		}
+
+		if (res == NULL)
+		{
+			LM_ERR("bad result\n");
 			return(-1);
 		}
 
@@ -525,7 +549,7 @@ int convert_temporary_dialog_puadb(ua_pres_t *pres)
 	query_cols[n_query_cols] = &str_cseq_col;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val = pres->cseq + 1;
+	query_vals[n_query_cols].val.int_val = pres->cseq;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_record_route_col;
@@ -827,6 +851,12 @@ ua_pres_t *get_record_puadb(str pres_id, str *etag, ua_pres_t *result, db1_res_t
 		return(NULL);
 	}
 
+	if (res == NULL)
+	{
+		LM_ERR("bad result\n");
+		return(NULL);
+	}
+
 	nr_rows = RES_ROW_N(res);
 
 	if (nr_rows == 0)
@@ -1092,7 +1122,7 @@ int insert_dialog_puadb(ua_pres_t* pres)
 	db_cols[n_cols] = &str_cseq_col;
 	db_vals[n_cols].type = DB1_INT;
 	db_vals[n_cols].nul = 0;
-	db_vals[n_cols].val.int_val = pres->cseq + 1;
+	db_vals[n_cols].val.int_val = pres->cseq;
 	n_cols++;
 
 	db_cols[n_cols] = &str_record_route_col;
@@ -1191,6 +1221,12 @@ ua_pres_t *get_dialog_puadb(str pres_id, str *pres_uri, ua_pres_t *result, db1_r
 				NULL,n_query_cols,0,0,&res) < 0)
 	{
 		LM_ERR("DB query error\n");
+		return(NULL);
+	}
+
+	if (res == NULL)
+	{
+		LM_ERR("bad result\n");
 		return(NULL);
 	}
 
@@ -1333,7 +1369,7 @@ int update_dialog_puadb(ua_pres_t *pres, int expires, str *contact)
 	u_cols[n_update_cols] = &str_cseq_col;
 	u_vals[n_update_cols].type = DB1_INT;
 	u_vals[n_update_cols].nul = 0;
-	u_vals[n_update_cols].val.int_val = pres->cseq + 1;
+	u_vals[n_update_cols].val.int_val = pres->cseq;
 	n_update_cols++;
 
 	u_cols[n_update_cols] = &str_remote_contact_col;
@@ -1407,7 +1443,7 @@ int update_contact_puadb(ua_pres_t *pres, str *contact)
 	n_query_cols++;
 
 	/* we overwrite contact even if not changed */
-	db_cols[n_update_cols] = &str_contact_col; /* had remote here, think was a bug */
+	db_cols[n_update_cols] = &str_remote_contact_col;
 	db_vals[n_update_cols].type = DB1_STR;
 	db_vals[n_update_cols].nul = 0; 
 	db_vals[n_update_cols].val.str_val.s = contact->s;
@@ -1524,6 +1560,12 @@ list_entry_t *get_subs_list_puadb(str *did)
 		return list;
 	}
 
+	if (res == NULL)
+	{
+		LM_ERR("bad result\n");
+		return list;
+	}
+
 	if (RES_ROW_N(res) == 0)
 	{
 		LM_INFO( "No records found\n");
@@ -1560,10 +1602,12 @@ list_entry_t *get_subs_list_puadb(str *did)
 			tmp_str->len = strng.len;
 			tmp_str->s[tmp_str->len] = '\0';
 
-			list = list_insert(tmp_str, list);
+			list = list_insert(tmp_str, list, NULL);
 		}
 	} while ((db_fetch_next(&pua_dbf, pua_fetch_rows, pua_db, &res)==1)
 			&& (RES_ROWS(res)>0));
 
+	pua_dbf.free_result(pua_db, res);
+	
 	return list;
 }

@@ -1,6 +1,7 @@
-INSERT INTO version (table_name, table_version) values ('aliases','1004');
+INSERT INTO version (table_name, table_version) values ('aliases','5');
 CREATE TABLE aliases (
     id SERIAL PRIMARY KEY NOT NULL,
+    ruid VARCHAR(64) DEFAULT '' NOT NULL,
     username VARCHAR(64) DEFAULT '' NOT NULL,
     domain VARCHAR(64) DEFAULT NULL,
     contact VARCHAR(255) DEFAULT '' NOT NULL,
@@ -15,7 +16,9 @@ CREATE TABLE aliases (
     cflags INTEGER DEFAULT 0 NOT NULL,
     user_agent VARCHAR(255) DEFAULT '' NOT NULL,
     socket VARCHAR(64) DEFAULT NULL,
-    methods INTEGER DEFAULT NULL
+    methods INTEGER DEFAULT NULL,
+    instance VARCHAR(255) DEFAULT NULL,
+    reg_id INTEGER DEFAULT 0 NOT NULL
 );
 
 CREATE INDEX aliases_alias_idx ON aliases (username, domain, contact);

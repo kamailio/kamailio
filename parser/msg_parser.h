@@ -212,6 +212,7 @@ struct sip_uri {
 	str method;
 	str lr;
 	str r2; /*!< ser specific rr parameter */
+	str gr;
 	str transport_val; /*!< transport value */
 	str ttl_val;	 /*!< TTL value */
 	str user_param_val; /*!< User= param value */
@@ -219,6 +220,7 @@ struct sip_uri {
 	str method_val; /*!< Method value */
 	str lr_val; /*!< lr value placeholder for lr=on a.s.o*/
 	str r2_val;
+	str gr_val;
 #ifdef USE_COMP
 	unsigned short comp;
 #endif
@@ -249,10 +251,14 @@ typedef struct msg_body {
 } msg_body_t;
 
 
+/* pre-declaration, to include sys/time.h in .c */
+struct timeval;
+
 /*! \brief The SIP message */
 typedef struct sip_msg {
 	unsigned int id;               /*!< message id, unique/process*/
 	int pid;                       /*!< process id */
+	struct timeval tval;           /*!< time value associated to message */
 	snd_flags_t fwd_send_flags;    /*!< send flags for forwarding */
 	snd_flags_t rpl_send_flags;    /*!< send flags for replies */
 	struct msg_start first_line;   /*!< Message first line */
@@ -296,7 +302,6 @@ typedef struct sip_msg {
 	struct hdr_field* user_agent;
 	struct hdr_field* server;
 	struct hdr_field* content_disposition;
-	struct hdr_field* accept_disposition;
 	struct hdr_field* diversion;
 	struct hdr_field* rpid;
 	struct hdr_field* refer_to;
@@ -481,5 +486,10 @@ int msg_ctx_id_set(sip_msg_t *msg, msg_ctx_id_t *mid);
  * - return: -1 on error; 0 - on no match; 1 - on match
  */
 int msg_ctx_id_match(sip_msg_t *msg, msg_ctx_id_t *mid);
+
+/**
+ * set msg time value
+ */
+int msg_set_time(sip_msg_t *msg);
 
 #endif

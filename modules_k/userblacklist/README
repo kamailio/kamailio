@@ -220,7 +220,7 @@ table)
 ...
 $avp(i:80) = $rU;
 # rewrite the R-URI
-if (!check_user_blacklist("$avp(i:80)", "$avp(i:82)"))
+if (!check_user_blacklist("$avp(i:80)", "$avp(i:82)")) {
         sl_send_reply("403", "Forbidden");
         exit;
 }
@@ -241,7 +241,7 @@ table)
 ...
 $avp(i:80) = $rU;
 # rewrite the R-URI
-if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)"))
+if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)")) {
         # process request
         exit;
 }
@@ -256,7 +256,7 @@ if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)"))
 
    Example 1.5. check_blacklist usage
 ...
-if (!check_blacklist("global_blacklist")))
+if (!check_blacklist("globalblacklist")) {
         sl_send_reply("403", "Forbidden");
         exit;
 }

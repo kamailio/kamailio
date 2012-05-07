@@ -54,6 +54,7 @@ struct pg_con {
 	char**  row;		/*!< Actual row in the result */
 	time_t timestamp;	/*!< Timestamp of last query */
 	int affected_rows;	/*!< Number of rows affected by the last statement */
+	int transaction;	/*!< indicates whether a multi-query transaction is currently open */
 };
 
 #define CON_SQLURL(db_con)     (((struct pg_con*)((db_con)->tail))->sqlurl)
@@ -64,6 +65,7 @@ struct pg_con {
 #define CON_TIMESTAMP(db_con)  (((struct pg_con*)((db_con)->tail))->timestamp)
 #define CON_ID(db_con) 	       (((struct pg_con*)((db_con)->tail))->id)
 #define CON_AFFECTED(db_con)   (((struct pg_con*)((db_con)->tail))->affected_rows)
+#define CON_TRANSACTION(db_con) (((struct pg_con*)((db_con)->tail))->transaction)
 
 /*
  * Create a new connection structure,

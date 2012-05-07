@@ -9,7 +9,7 @@
 
 <table id="rls_watchers" xmlns:db="http://docbook.org/ns/docbook">
     <name>rls_watchers</name>
-    <version>1</version>
+    <version>3</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Table for RLS module used for storing resource lists subscribe
@@ -173,6 +173,27 @@
         <description>Local contact</description>
     </column>
 
+    <column>
+        <name>from_user</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <description>From user</description>
+    </column>
+
+    <column>
+        <name>from_domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>From domain</description>
+    </column>
+
+    <column id="updated">
+        <name>updated</name>
+        <type>int</type>
+        <size>&expires_len;</size>
+        <description>Update flag</description>
+    </column>
+
     <index>
         <name>rls_watcher_idx</name>
         <colref linkend="callid"/>
@@ -199,4 +220,8 @@
         <colref linkend="expires"/>
     </index>
 
+    <index>
+        <name>updated_idx</name>
+        <colref linkend="updated"/>
+    </index>
 </table>

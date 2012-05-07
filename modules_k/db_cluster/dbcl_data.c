@@ -32,6 +32,7 @@
 #include "../../dprint.h"
 #include "../../hashes.h"
 #include "../../trim.h"
+#include "../../timer.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 
@@ -120,6 +121,35 @@ int dbcl_init_con(str *name, str *url)
 	sc->next = _dbcl_con_root;
 	_dbcl_con_root = sc;
 
+	return 0;
+}
+
+int dbcl_valid_con(dbcl_con_t *sc)
+{
+	if(sc==NULL || sc->flags==0 || sc->dbh==NULL)
+		return -1;
+	if(sc->sinfo==NULL)
+		return 0;
+	if(sc->sinfo->state & DBCL_CON_INACTIVE)
+	{
+		if(sc->sinfo->aticks==0)
+			return -1;
+		if(sc->sinfo->aticks>get_ticks())
+			return -1;
+		sc->sinfo->aticks = 0;
+		sc->sinfo->state &= ~DBCL_CON_INACTIVE;
+	}
+	return 0;
+}
+
+extern int dbcl_inactive_interval;
+
+int dbcl_inactive_con(dbcl_con_t *sc)
+{
+	if(sc==NULL || sc->sinfo==NULL)
+		return -1;
+	sc->sinfo->aticks = get_ticks() + dbcl_inactive_interval;
+	sc->sinfo->state |= DBCL_CON_INACTIVE;
 	return 0;
 }
 

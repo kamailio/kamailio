@@ -59,8 +59,8 @@ struct nonsip_hook{
 };
 
 
-int init_nonsip_hooks();
-void destroy_nonsip_hooks();
+int init_nonsip_hooks(void);
+void destroy_nonsip_hooks(void);
 int register_nonsip_msg_hook(struct nonsip_hook *h);
 int nonsip_msg_run_hooks(struct sip_msg* msg);
 

@@ -299,6 +299,25 @@ rtpproxy_offer();
 			</para>
 			<itemizedlist>
 				<listitem><para>
+				<emphasis>1</emphasis> - append first Via branch to Call-ID when sending
+				command to rtpproxy. This can be used to create one media session per branch
+				on the rtpproxy. When sending a subsequent <quote>delete</quote> command to
+				the rtpproxy, you can then stop just the session for a specific branch when
+				passing the flag '1' or '2' in the <quote>unforce_rtpproxy</quote>, or stop
+				all sessions for a call when not passing one of those two flags there. This is
+				especially useful if you have serially forked call scenarios where rtpproxy
+				gets an <quote>update</quote> command for a new branch, and then a 
+				<quote>delete</quote> command for the previous branch, which would otherwise
+				delete the full call, breaking the subsequent <quote>lookup</quote> for the
+				new branch. <emphasis>This flag is only supported by the ngcp-mediaproxy-ng 
+				rtpproxy at the moment!</emphasis>
+				</para></listitem>
+				<listitem><para>
+				<emphasis>2</emphasis> - append second Via branch to Call-ID when sending
+				command to rtpproxy. See flag '1' for its meaning.
+				</para></listitem>
+				<listitem><para>
+
 				<emphasis>a</emphasis> - flags that UA from which message is
 				received doesn't support symmetric RTP. (automatically sets the 'r' flag)
 				</para></listitem>
@@ -433,7 +452,7 @@ onreply_route[2]
         </section>
 	<section>
 		<title>
-		<function moreinfo="none">rtpproxy_destroy()</function>
+		<function moreinfo="none">rtpproxy_destroy([flags])</function>
 		</title>
 		<para>
 		Tears down the RTPProxy session for the current call.
@@ -441,6 +460,34 @@ onreply_route[2]
 		<para>
 		This function can be used from ANY_ROUTE.
 		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>flags</emphasis> - flags to turn on some features.
+			</para>
+			<itemizedlist>
+				<listitem><para>
+				<emphasis>1</emphasis> - append first Via branch to Call-ID when sending
+				command to rtpproxy. This can be used to create one media session per branch
+				on the rtpproxy. When sending a subsequent <quote>delete</quote> command to
+				the rtpproxy, you can then stop just the session for a specific branch when
+				passing the flag '1' or '2' in the <quote>unforce_rtpproxy</quote>, or stop
+				all sessions for a call when not passing one of those two flags there. This is
+				especially useful if you have serially forked call scenarios where rtpproxy
+				gets an <quote>update</quote> command for a new branch, and then a 
+				<quote>delete</quote> command for the previous branch, which would otherwise
+				delete the full call, breaking the subsequent <quote>lookup</quote> for the
+				new branch. <emphasis>This flag is only supported by the ngcp-mediaproxy-ng 
+				rtpproxy at the moment!</emphasis>
+				</para></listitem>
+				<listitem><para>
+				<emphasis>2</emphasis> - append second Via branch to Call-ID when sending
+				command to rtpproxy. See flag '1' for its meaning.
+				</para></listitem>
+			</itemizedlist>
+		</listitem>
+		</itemizedlist>
 		<example>
 		<title><function>rtpproxy_destroy</function> usage</title>
 		<programlisting format="linespecific">

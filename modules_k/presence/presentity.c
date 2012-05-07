@@ -98,6 +98,9 @@ int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
 	int buf_len= 128, size;
 	str hdr_append= {0, 0}, hdr_append2= {0, 0} ;
 
+	if (msg == NULL)
+		return 0;
+
 	LM_DBG("send 200OK reply\n");	
 	LM_DBG("etag= %s - len= %d\n", etag.s, etag.len);
 	
@@ -288,7 +291,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	int ret = -1;
 	int db_record_exists = 0;
 
-	*sent_reply= 0;
+	if (sent_reply) *sent_reply= 0;
 	if(presentity->event->req_auth)
 	{
 		/* get rules_document */
@@ -350,13 +353,6 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		}
 		
 		/* insert new record into database */	
-		query_cols[n_query_cols] = &str_expires_col;
-		query_vals[n_query_cols].type = DB1_INT;
-		query_vals[n_query_cols].nul = 0;
-		query_vals[n_query_cols].val.int_val = presentity->expires+
-				(int)time(NULL);
-		n_query_cols++;
-	
 		query_cols[n_query_cols] = &str_sender_col;
 		query_vals[n_query_cols].type = DB1_STR;
 		query_vals[n_query_cols].nul = 0;
@@ -382,25 +378,63 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		query_vals[n_query_cols].val.int_val = presentity->received_time;
 		n_query_cols++;
 		
-		if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
+		if (presentity->expires != -1)
 		{
-			LM_ERR("unsuccessful use_table\n");
-			goto error;
+			/* A real PUBLISH */
+			query_cols[n_query_cols] = &str_expires_col;
+			query_vals[n_query_cols].type = DB1_INT;
+			query_vals[n_query_cols].nul = 0;
+			query_vals[n_query_cols].val.int_val = presentity->expires+
+								(int)time(NULL);
+			n_query_cols++;
+	
+			if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
+			{
+				LM_ERR("unsuccessful use_table\n");
+				goto error;
+			}
+
+			LM_DBG("inserting %d cols into table\n",n_query_cols);
+				
+			if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0) 
+			{
+				LM_ERR("inserting new record in database\n");
+				goto error;
+			}
+		}
+		else
+		{
+			/* A hard-state PUBLISH */
+			query_cols[n_query_cols] = &str_expires_col;
+			query_vals[n_query_cols].type = DB1_INT;
+			query_vals[n_query_cols].nul = 0;
+			query_vals[n_query_cols].val.int_val = -1;
+			n_query_cols++;
+	
+			if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
+			{
+				LM_ERR("unsuccessful use_table\n");
+				goto error;
+			}
+
+			if (pa_dbf.replace == NULL)
+			{
+				LM_ERR("replace is required for pidf-manipulation support\n");
+				goto error;
+			}
+			if (pa_dbf.replace(pa_db, query_cols, query_vals, n_query_cols, 4, 0) < 0) 
+			{
+				LM_ERR("replacing record in database\n");
+				goto error;
+			}
 		}
 
-		LM_DBG("inserting %d cols into table\n",n_query_cols);
-				
-		if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0) 
-		{
-			LM_ERR("inserting new record in database\n");
-			goto error;
-		}
 		if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
 		{
 			LM_ERR("sending 200OK\n");
 			goto error;
 		}
-		*sent_reply= 1;
+		if (sent_reply) *sent_reply= 1;
 		goto send_notify;
 	}
 	else
@@ -468,7 +502,7 @@ after_dialog_check:
 			
 		}
 
-		if(presentity->expires == 0) 
+		if(presentity->expires <= 0) 
 		{
 
 			if (!db_record_exists)
@@ -496,7 +530,7 @@ after_dialog_check:
 				LM_ERR("sending 200OK reply\n");
 				goto error;
 			}
-			*sent_reply= 1;
+			if (sent_reply) *sent_reply= 1;
 			if( publ_notify( presentity, pres_uri, body, &presentity->etag, rules_doc)< 0 )
 			{
 				LM_ERR("while sending notify\n");
@@ -541,7 +575,7 @@ after_dialog_check:
 					LM_ERR("sending 200OK reply\n");
 					goto error;
 				}
-			*sent_reply= 1;
+			if (sent_reply) *sent_reply= 1;
 			goto done;
 		}
 
@@ -683,7 +717,7 @@ after_dialog_check:
 			LM_ERR("sending 200OK reply\n");
 			goto error;
 		}
-		*sent_reply= 1;
+		if (sent_reply) *sent_reply= 1;
 
 		if(etag.s)
 			pkg_free(etag.s);
@@ -717,12 +751,15 @@ done:
 send_412:
 
 	LM_ERR("No E_Tag match %*s\n", presentity->etag.len, presentity->etag.s);
-	if (slb.freply(msg, 412, &pu_412_rpl) < 0)
+	if (msg != NULL)
 	{
-		LM_ERR("sending '412 Conditional request failed' reply\n");
-		goto error;
+		if (slb.freply(msg, 412, &pu_412_rpl) < 0)
+		{
+			LM_ERR("sending '412 Conditional request failed' reply\n");
+			goto error;
+		}
 	}
-	*sent_reply= 1;
+	if (sent_reply) *sent_reply= 1;
 	ret = 0;
 
 error:

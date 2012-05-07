@@ -152,9 +152,9 @@ extern struct cfg_group_tcp tcp_default_cfg;
 extern void* tcp_cfg;
 
 
-void init_tcp_options();
-void tcp_options_check();
-int tcp_register_cfg();
+void init_tcp_options(void);
+void tcp_options_check(void);
+int tcp_register_cfg(void);
 void tcp_options_get(struct cfg_group_tcp* t);
 
 #ifdef USE_TCP

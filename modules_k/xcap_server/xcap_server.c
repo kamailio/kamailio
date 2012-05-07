@@ -460,23 +460,24 @@ error:
 	return -1;
 }
 
-static str xcaps_str_empty      = {"", 0};
-static str xcaps_str_ok         = {"OK", 2};
-static str xcaps_str_srverr     = {"Server error", 12};
-static str xcaps_str_notfound   = {"Not found", 9};
-static str xcaps_str_precon		= {"Precondition Failed", 19};
-static str xcaps_str_notmod		= {"Not Modified", 12};
-static str xcaps_str_appxml     = {"application/xml", 15};
-static str xcaps_str_apprlxml   = {"application/resource-lists+xml", 30};
-static str xcaps_str_apprsxml   = {"application/rls-services+xml", 28};
+static str xcaps_str_empty	= {"", 0};
+static str xcaps_str_ok		= {"OK", 2};
+static str xcaps_str_srverr	= {"Server error", 12};
+static str xcaps_str_notfound	= {"Not found", 9};
+static str xcaps_str_precon	= {"Precondition Failed", 19};
+static str xcaps_str_notmod	= {"Not Modified", 12};
+static str xcaps_str_appxml	= {"application/xml", 15};
+static str xcaps_str_apprlxml	= {"application/resource-lists+xml", 30};
+static str xcaps_str_apprsxml	= {"application/rls-services+xml", 28};
 #if 0
-static str xcaps_str_nocontent  = {"No content", 10};
-static str xcaps_str_appxcxml   = {"application/xcap-caps+xml", 25};
+static str xcaps_str_nocontent	= {"No content", 10};
+static str xcaps_str_appxcxml	= {"application/xcap-caps+xml", 25};
 static str xcaps_str_appsexml	= {"application/vnd.oma.search+xml", 30};
 #endif
-static str xcaps_str_appapxml   = {"application/auth-policy+xml", 27};
+static str xcaps_str_appapxml	= {"application/auth-policy+xml", 27};
 static str xcaps_str_appupxml	= {"application/vnd.oma.user-profile+xml", 36}; 
 static str xcaps_str_apppcxml	= {"application/vnd.oma.pres-content+xml", 36};
+static str xcaps_str_apppdxml	= {"application/pidf+xml", 20};
 
 
 /**
@@ -575,7 +576,7 @@ static int w_xcaps_put(sip_msg_t* msg, char* puri, char* ppath,
 		/* partial document upload
 		 *   - fetch, update, delete and store
 		 */
-		if(xcaps_get_db_doc(&turi.user, &turi.host, &xuri, &tbuf)<0)
+		if(xcaps_get_db_doc(&turi.user, &turi.host, &xuri, &tbuf) != 0)
 		{
 			LM_ERR("could not fetch xcap document\n");
 			goto error;
@@ -946,6 +947,8 @@ static int w_xcaps_get(sip_msg_t* msg, char* puri, char* ppath)
 			ctype = &xcaps_str_appupxml;
 		else if(xuri.type==PRES_CONTENT)
 			ctype = &xcaps_str_apppcxml;
+		else if(xuri.type==PIDF_MANIPULATION)
+			ctype = &xcaps_str_apppdxml;
 		xcaps_send_reply(msg, 200, &xcaps_str_ok, &etag,
 				ctype, &body);
 	} else {
@@ -1089,7 +1092,7 @@ static int w_xcaps_del(sip_msg_t* msg, char* puri, char* ppath)
 				&xcaps_str_empty, &xcaps_str_empty);
 	} else {
 		/* delete element */
-		if(xcaps_get_db_doc(&turi.user, &turi.host, &xuri, &tbuf)<0)
+		if(xcaps_get_db_doc(&turi.user, &turi.host, &xuri, &tbuf) != 0)
 		{
 			LM_ERR("could not fetch xcap document\n");
 			goto error;

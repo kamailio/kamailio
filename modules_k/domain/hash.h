@@ -3,7 +3,7 @@
  *
  * Header file for hash table functions
  *
- * Copyright (C) 2002-2003 Juha Heinanen
+ * Copyright (C) 2002-2012 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -30,8 +30,10 @@
 #include "domain_mod.h"
 #include "../../lib/kmi/mi.h"
 
-int hash_table_install (struct domain_list **hash_table, char *domain);
-int hash_table_lookup (str *domain);
+int hash_table_install (struct domain_list **hash_table, str *did, str *domain);
+int hash_table_attr_install (struct domain_list **hash_table, str* did,
+			     str *name, short type, int_str *val);
+int hash_table_lookup (str *domain, str *did, struct attr_list **attrs);
 int hash_table_mi_print(struct domain_list **hash_table, struct mi_node* rpl);
 void hash_table_free (struct domain_list **hash_table);
 

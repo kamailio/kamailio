@@ -457,7 +457,7 @@ skip_ipv4:
 }
 
 
-int resolv_init();
+int resolv_init(void);
 
 /* callback/fixup functions executed by the configuration framework */
 void resolv_reinit(str *gname, str *name);

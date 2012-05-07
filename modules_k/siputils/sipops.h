@@ -38,5 +38,6 @@
 
 int w_cmp_uri(struct sip_msg *msg, char *uri1, char *uri2);
 int w_cmp_aor(struct sip_msg *msg, char *uri1, char *uri2);
+int w_is_gruu(sip_msg_t *msg, char *uri1, char *p2);
 
 #endif

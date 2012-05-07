@@ -77,6 +77,12 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	if (_ci->path && _ci->path->len) {
 		if (shm_str_dup( &c->path, _ci->path) < 0) goto error;
 	}
+	if (_ci->ruid.s && _ci->ruid.len) {
+		if (shm_str_dup( &c->ruid, &_ci->ruid) < 0) goto error;
+	}
+	if (_ci->instance.s && _ci->instance.len) {
+		if (shm_str_dup( &c->instance, &_ci->instance) < 0) goto error;
+	}
 
 	c->domain = _dom;
 	c->aor = _aor;
@@ -88,6 +94,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	c->flags = _ci->flags;
 	c->cflags = _ci->cflags;
 	c->methods = _ci->methods;
+	c->reg_id = _ci->reg_id;
 	c->last_modified = _ci->last_modified;
 
 	return c;
@@ -98,6 +105,8 @@ error:
 	if (c->user_agent.s) shm_free(c->user_agent.s);
 	if (c->callid.s) shm_free(c->callid.s);
 	if (c->c.s) shm_free(c->c.s);
+	if (c->ruid.s) shm_free(c->ruid.s);
+	if (c->instance.s) shm_free(c->instance.s);
 	shm_free(c);
 	return 0;
 }
@@ -116,6 +125,8 @@ void free_ucontact(ucontact_t* _c)
 	if (_c->user_agent.s) shm_free(_c->user_agent.s);
 	if (_c->callid.s) shm_free(_c->callid.s);
 	if (_c->c.s) shm_free(_c->c.s);
+	if (_c->ruid.s) shm_free(_c->ruid.s);
+	if (_c->instance.s) shm_free(_c->instance.s);
 	shm_free( _c );
 }
 
@@ -169,6 +180,11 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 		fprintf(_f, "Sock      : none (null)\n");
 	}
 	fprintf(_f, "Methods   : %u\n", _c->methods);
+	fprintf(_f, "ruid      : '%.*s'\n",
+		_c->ruid.len, ZSW(_c->ruid.s));
+	fprintf(_f, "instance  : '%.*s'\n",
+		_c->instance.len, ZSW(_c->instance.s));
+	fprintf(_f, "reg-id    : %u\n", _c->reg_id);
 	fprintf(_f, "next      : %p\n", _c->next);
 	fprintf(_f, "prev      : %p\n", _c->prev);
 	fprintf(_f, "~~~/Contact~~~~\n");
@@ -388,8 +404,9 @@ int st_flush_ucontact(ucontact_t* _c)
 int db_insert_ucontact(ucontact_t* _c)
 {
 	char* dom;
-	db_key_t keys[15];
-	db_val_t vals[15];
+	db_key_t keys[18];
+	db_val_t vals[18];
+	int nr_cols;
 	
 	if (_c->flags & FL_MEM) {
 		return 0;
@@ -409,7 +426,10 @@ int db_insert_ucontact(ucontact_t* _c)
 	keys[11] = &sock_col;
 	keys[12] = &methods_col;
 	keys[13] = &last_mod_col;
-	keys[14] = &domain_col;
+	keys[14] = &ruid_col;
+	keys[15] = &instance_col;
+	keys[16] = &reg_id_col;
+	keys[17] = &domain_col;
 
 	vals[0].type = DB1_STR;
 	vals[0].nul = 0;
@@ -489,27 +509,55 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[13].nul = 0;
 	vals[13].val.time_val = _c->last_modified;
 
+	nr_cols = 14;
+
+	if(_c->ruid.len>0)
+	{
+		vals[nr_cols].type = DB1_STR;
+		vals[nr_cols].nul = 0;
+		vals[nr_cols].val.str_val = _c->ruid;
+	} else {
+		vals[nr_cols].nul = 1;
+	}
+	nr_cols++;
+
+	if(_c->instance.len>0)
+	{
+		vals[nr_cols].type = DB1_STR;
+		vals[nr_cols].nul = 0;
+		vals[nr_cols].val.str_val = _c->instance;
+	} else {
+		vals[nr_cols].nul = 1;
+	}
+	nr_cols++;
+
+	vals[nr_cols].type = DB1_INT;
+	vals[nr_cols].nul = 0;
+	vals[nr_cols].val.int_val = (int)_c->reg_id;
+	nr_cols++;
+
 	if (use_domain) {
-		vals[14].type = DB1_STR;
-		vals[14].nul = 0;
+		vals[nr_cols].type = DB1_STR;
+		vals[nr_cols].nul = 0;
 
 		dom = memchr(_c->aor->s, '@', _c->aor->len);
 		if (dom==0) {
 			vals[0].val.str_val.len = 0;
-			vals[14].val.str_val = *_c->aor;
+			vals[nr_cols].val.str_val = *_c->aor;
 		} else {
 			vals[0].val.str_val.len = dom - _c->aor->s;
-			vals[14].val.str_val.s = dom + 1;
-			vals[14].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+			vals[nr_cols].val.str_val.s = dom + 1;
+			vals[nr_cols].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 		}
+		nr_cols++;
 	}
-	
+
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
 		LM_ERR("sql use_table failed\n");
 		return -1;
 	}
 
-	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? (15) : (14)) < 0) {
+	if (ul_dbf.insert(ul_dbh, keys, vals, nr_cols) < 0) {
 		LM_ERR("inserting contact in db failed\n");
 		return -1;
 	}
@@ -529,8 +577,10 @@ int db_update_ucontact(ucontact_t* _c)
 	db_key_t keys1[4];
 	db_val_t vals1[4];
 
-	db_key_t keys2[11];
-	db_val_t vals2[11];
+	db_key_t keys2[14];
+	db_val_t vals2[14];
+	int nr_cols2;
+
 
 	if (_c->flags & FL_MEM) {
 		return 0;
@@ -551,6 +601,9 @@ int db_update_ucontact(ucontact_t* _c)
 	keys2[8] = &sock_col;
 	keys2[9] = &methods_col;
 	keys2[10] = &last_mod_col;
+	keys2[11] = &ruid_col;
+	keys2[12] = &instance_col;
+	keys2[13] = &reg_id_col;
 
 	vals1[0].type = DB1_STR;
 	vals1[0].nul = 0;
@@ -624,6 +677,32 @@ int db_update_ucontact(ucontact_t* _c)
 	vals2[10].nul = 0;
 	vals2[10].val.time_val = _c->last_modified;
 
+	nr_cols2 = 11;
+	if(_c->ruid.len>0)
+	{
+		vals2[nr_cols2].type = DB1_STR;
+		vals2[nr_cols2].nul = 0;
+		vals2[nr_cols2].val.str_val = _c->ruid;
+	} else {
+		vals2[nr_cols2].nul = 1;
+	}
+	nr_cols2++;
+
+	if(_c->instance.len>0)
+	{
+		vals2[nr_cols2].type = DB1_STR;
+		vals2[nr_cols2].nul = 0;
+		vals2[nr_cols2].val.str_val = _c->instance;
+	} else {
+		vals2[nr_cols2].nul = 1;
+	}
+	nr_cols2++;
+
+	vals2[nr_cols2].type = DB1_INT;
+	vals2[nr_cols2].nul = 0;
+	vals2[nr_cols2].val.int_val = (int)_c->reg_id;
+	nr_cols2++;
+
 	if (use_domain) {
 		vals1[3].type = DB1_STR;
 		vals1[3].nul = 0;
@@ -644,7 +723,7 @@ int db_update_ucontact(ucontact_t* _c)
 	}
 
 	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2, 
-	(use_domain) ? (4) : (3), 11) < 0) {
+	(use_domain) ? (4) : (3), nr_cols2) < 0) {
 		LM_ERR("updating database failed\n");
 		return -1;
 	}

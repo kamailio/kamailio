@@ -163,7 +163,7 @@ void hashtest_cycle( int hits[TABLE_ENTRIES+5], char *ip )
 				}
 }
 
-void hashtest()
+void hashtest(void)
 {
 	int hits[TABLE_ENTRIES+5];
 	int i;

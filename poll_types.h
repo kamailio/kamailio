@@ -50,7 +50,7 @@ extern char* poll_method_str[POLL_END];
 extern char* poll_support; 
 
 
-enum poll_types choose_poll_method();
+enum poll_types choose_poll_method(void);
 
 /* returns 0 on success, and an error message on error */
 char* check_poll_method(enum poll_types poll_method);

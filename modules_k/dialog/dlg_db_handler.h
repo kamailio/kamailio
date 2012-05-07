@@ -56,7 +56,7 @@
 #define REQ_URI_COL				"req_uri"
 #define XDATA_COL				"xdata"
 #define DIALOG_TABLE_NAME		"dialog"
-#define DLG_TABLE_VERSION		6
+#define DLG_TABLE_VERSION		7
 
 #define DIALOG_TABLE_COL_NO 		23
 

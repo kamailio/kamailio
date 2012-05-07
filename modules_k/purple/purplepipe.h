@@ -21,6 +21,7 @@
 #define _PURPLEPIPE_H
 
 #include <stdlib.h>
+#include <glib.h>
 #include <libpurple/savedstatuses.h>
 #include <libpurple/status.h>
 

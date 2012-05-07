@@ -85,7 +85,7 @@ int ul_db_tran_commit(ul_db_handle_t * handle, int working[]) {
 	for(i=0; i<DB_NUM; i++) {
 		if((handle->db[i].status == DB_ON) && (working[i])) {
 			if(submit_tran_commit(&handle->db[i].dbf, handle->db[i].dbh) < 0) {
-				LM_ERR("error while commiting "
+				LM_ERR("error while committing "
 				    "transaction on id %i, db %i.\n", handle->id, handle->db[i].no);
 				if(db_handle_error(handle, handle->db[i].no) < 0) {
 					LM_ERR("error during handling error "

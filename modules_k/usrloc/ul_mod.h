@@ -43,8 +43,9 @@
  */
 
 
-#define UL_TABLE_VERSION 1004
+#define UL_TABLE_VERSION 5
 
+extern str ruid_col;
 extern str user_col;
 extern str domain_col;
 extern str contact_col;
@@ -59,6 +60,8 @@ extern str received_col;
 extern str path_col;
 extern str sock_col;
 extern str methods_col;
+extern str instance_col;
+extern str reg_id_col;
 extern str last_mod_col;
 
 extern str db_url;
@@ -78,9 +81,9 @@ extern db_func_t ul_dbf;
 /*
  * Matching algorithms
  */
-#define CONTACT_ONLY            (0)
-#define CONTACT_CALLID          (1)
-#define CONTACT_PATH		(2)
+#define CONTACT_ONLY        (0)
+#define CONTACT_CALLID      (1)
+#define CONTACT_PATH        (2)
 
 extern int matching_mode;
 

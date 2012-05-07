@@ -24,6 +24,13 @@
 	<size>&uri_len;</size>
   </column>
 
+  <column id="lcr.request_uri">
+	<name>request_uri</name>
+	<type>string</type>
+	<default>%</default>
+	<size>&uri_len;</size>
+  </column>
+
   <column id="lcr.grp_id">
 	<name>grp_id</name>
 	<type>int</type>

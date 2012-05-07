@@ -52,7 +52,7 @@ static int rpc_sarray_max_size; /* number of entries alloc'ed */
 /** init the rpc hash table.
   * @return 0 on success, -1 on error
   */
-int init_rpcs()
+int init_rpcs(void)
 {
 	if (str_hash_alloc(&rpc_hash_table, RPC_HASH_SIZE)<0)
 		return -1;
@@ -65,7 +65,7 @@ int init_rpcs()
 
 
 
-void destroy_rpcs()
+void destroy_rpcs(void)
 {
 	int r;
 	struct str_hash_entry* e;

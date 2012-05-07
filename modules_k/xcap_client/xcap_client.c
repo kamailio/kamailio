@@ -51,7 +51,7 @@
 
 MODULE_VERSION
 
-#define XCAP_TABLE_VERSION   3
+#define XCAP_TABLE_VERSION   4
 
 static int mod_init(void);
 static int child_init(int rank);

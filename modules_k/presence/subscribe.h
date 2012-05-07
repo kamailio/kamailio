@@ -62,6 +62,8 @@ struct subscription
 	str to_domain;
 	str from_user;
 	str from_domain;
+	str watcher_user;
+	str watcher_domain;
 	struct pres_ev* event;
 	str event_id;
 	str to_tag;
@@ -82,6 +84,7 @@ struct subscription
 	str* auth_rules_doc;
 	int recv_event;
 	int internal_update_flag;
+	int updated;
 	struct subscription* next;
 
 };
@@ -91,16 +94,13 @@ void msg_active_watchers_clean(unsigned int ticks,void *param);
 
 void msg_watchers_clean(unsigned int ticks,void *param);
 
-int handle_subscribe(struct sip_msg*, char*, char*);
+int handle_subscribe0(struct sip_msg*);
+int w_handle_subscribe(struct sip_msg*, char *watcher_uri);
+int handle_subscribe(struct sip_msg*, str watcher_user, str watcher_domain);
 
 void timer_db_update(unsigned int ticks,void *param);
 
 int update_subs_db(subs_t* subs, int type);
-
-int refresh_watcher(str* pres_uri, str* watcher_uri, str* event, 
-	int status, str* reason);
-
-typedef int (*refresh_watcher_t)(str*, str* , str* ,int , str* );
 
 int restore_db_subs(void);
 
@@ -113,9 +113,10 @@ typedef void (*update_db_subs_t)(db1_con_t * ,db_func_t ,shtable_t ,int ,int ,
 		handle_expired_func_t);
 
 int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int max_expire,
-		int* to_tag_gen, str scontact);
+		int* to_tag_gen, str scontact, str watcher_user, str watcher_domain);
 typedef int (*extract_sdialog_info_t)(subs_t* subs, struct sip_msg* msg,
-		int max_expire, int* to_tag_gen, str scontact);
+		int max_expire, int* to_tag_gen, str scontact, str watcher_user,
+		str watcher_domain);
 void delete_subs(str* pres_uri, str* ev_name, str* to_tag, str* from_tag, str* callid);
 
 #endif

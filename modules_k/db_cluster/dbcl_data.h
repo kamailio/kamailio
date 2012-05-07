@@ -40,10 +40,12 @@
 #define DBCL_PRIO_SIZE	10
 #define DBCL_CLIST_SIZE	5
 
+#define DBCL_CON_INACTIVE	1
+
 typedef struct dbcl_shared
 {
 	int state;
-	int count;
+	unsigned int aticks;
 } dbcl_shared_t;
 
 typedef struct dbcl_con
@@ -83,6 +85,9 @@ int dbcl_init_dbf(dbcl_cls_t *cls);
 int dbcl_init_connections(dbcl_cls_t *cls);
 int dbcl_close_connections(dbcl_cls_t *cls);
 dbcl_cls_t *dbcl_get_cluster(str *name);
+
+int dbcl_valid_con(dbcl_con_t *sc);
+int dbcl_inactive_con(dbcl_con_t *sc);
 
 int dbcl_parse_con_param(char *val);
 int dbcl_parse_cls_param(char *val);
