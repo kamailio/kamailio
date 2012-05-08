@@ -2,9 +2,6 @@
 # Kamailio startup options
 #
 
-# PID file for Kamailio
-PID_FILE=/var/run/kamailio.pid
-
 # Options to pass when starting Kamailio
 # Note: variable interpolation is not supported by systemd so $OPTIONS cannot
 #       be constructed from multiple variables.
