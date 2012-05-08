@@ -52,6 +52,9 @@
 /** subscriptions are stored only in database */
 #define DB_ONLY          3
 
+#define NO_UPDATE_TYPE	-1
+#define UPDATED_TYPE	1
+
 /** TM bind */
 extern struct tm_binds tmb;
 
@@ -83,6 +86,10 @@ extern int timeout_rm_subs;
 extern int send_fast_notify;
 extern int shtable_size;
 extern shtable_t subs_htable;
+
+extern int pres_waitn_time;
+extern int pres_notifier_poll_rate;
+extern int pres_notifier_processes;
 
 extern int phtable_size;
 extern phtable_t* pres_htable;

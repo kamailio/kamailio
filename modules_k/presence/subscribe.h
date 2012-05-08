@@ -85,6 +85,7 @@ struct subscription
 	int recv_event;
 	int internal_update_flag;
 	int updated;
+	int updated_winfo;
 	struct subscription* next;
 
 };

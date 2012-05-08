@@ -239,7 +239,90 @@ modparam("presence", "db_update_period", 100)
 		</example>
 	</section>
 
-<section>
+	<section>
+		<title><varname>waitn_time</varname> (int)</title>
+		<para>
+		The maximum time period that NOTIFY requests will
+		be buffered for.  The server will attempt to send
+		NOTIFY requests within many seconds of a change occurring.
+		</para>
+		<para>
+		Note: this parameter is only used when notifier_processes is
+		greater than 0. When notifier_processes is less than or equal
+		to 0 NOTIFY requests are sent immediately.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>5</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>waitn_time</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "waitn_time", 10)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>notifier_poll_rate</varname> (int)</title>
+		<para>
+		The number of times per second that the notifier processes
+		should check for work.  Approximately
+		1/(waitn_time * notifier_poll_rate * notifier_processes) of the
+		pending updates will be sent each time a notifier process runs.
+		</para>
+		<para>
+		Separate notifier processes are only run when subs_db_mode is 3
+		(DB only mode).
+		</para>
+		<para>
+		<emphasis>Default value is <quote>10</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>notifier_poll_rate</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "notifier_poll_rate", 20)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>notifier_processes</varname> (int)</title>
+		<para>
+		The number of notifier processes that should be started.
+		</para>
+		<para>
+		Separate notifier processes are only run when subs_db_mode is
+		3 (DB only mode).
+		</para>
+		<para>
+		Note: setting this parameter to 0 when subs_db_mode is 3
+		keeps the old behaviour (sending NOTIFY requests immediately).
+		This (old) behaviour is disabled by default in DB only mode
+		because under load, when lots of NOTIFY requests can be sent
+		on a dialog at the same time, there are race conditions which
+		result in CSeq re-use.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>notifier_processes</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "notifier_processes", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>to_tag_pref</varname> (str)</title>
 		<para>
 		The prefix used when generating to_tag when sending replies for
