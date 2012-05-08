@@ -847,6 +847,11 @@ static void timer_send_full_state_notifies(int round)
 	db_row_t *rows;
 	db1_res_t *result = NULL;
 	int n_result_cols = 0, i;
+	int pres_uri_col, tuser_col, tdomain_col, fuser_col, fdomain_col;
+	int wuser_col, wdomain_col, callid_col, to_tag_col, from_tag_col;
+	int sockinfo_col, lcontact_col, contact_col, rroute_col, event_id_col;
+	int reason_col, event_col, lcseq_col, rcseq_col, status_col;
+	int version_col, expires_col;
 	subs_t sub;
 	str ev_sname;
 	event_t parsed_event;
@@ -859,28 +864,28 @@ static void timer_send_full_state_notifies(int round)
 	query_vals[0].nul = 0;
 	query_vals[0].val.int_val = round;
 
-	result_cols[n_result_cols++] = &str_presentity_uri_col;
-	result_cols[n_result_cols++] = &str_to_user_col;
-	result_cols[n_result_cols++] = &str_to_domain_col;
-	result_cols[n_result_cols++] = &str_from_user_col;
-	result_cols[n_result_cols++] = &str_from_domain_col;
-	result_cols[n_result_cols++] = &str_watcher_username_col;
-	result_cols[n_result_cols++] = &str_watcher_domain_col;
-	result_cols[n_result_cols++] = &str_callid_col;
-	result_cols[n_result_cols++] = &str_to_tag_col;
-	result_cols[n_result_cols++] = &str_from_tag_col;
-	result_cols[n_result_cols++] = &str_socket_info_col;
-	result_cols[n_result_cols++] = &str_local_contact_col;
-	result_cols[n_result_cols++] = &str_contact_col;
-	result_cols[n_result_cols++] = &str_record_route_col;
-	result_cols[n_result_cols++] = &str_event_id_col;
-	result_cols[n_result_cols++] = &str_reason_col;
-	result_cols[n_result_cols++] = &str_event_col;
-	result_cols[n_result_cols++] = &str_local_cseq_col;
-	result_cols[n_result_cols++] = &str_remote_cseq_col;
-	result_cols[n_result_cols++] = &str_status_col;
-	result_cols[n_result_cols++] = &str_version_col;
-	result_cols[n_result_cols++] = &str_expires_col;
+	result_cols[pres_uri_col = n_result_cols++] = &str_presentity_uri_col;
+	result_cols[tuser_col = n_result_cols++] = &str_to_user_col;
+	result_cols[tdomain_col = n_result_cols++] = &str_to_domain_col;
+	result_cols[fuser_col = n_result_cols++] = &str_from_user_col;
+	result_cols[fdomain_col = n_result_cols++] = &str_from_domain_col;
+	result_cols[wuser_col = n_result_cols++] = &str_watcher_username_col;
+	result_cols[wdomain_col = n_result_cols++] = &str_watcher_domain_col;
+	result_cols[callid_col = n_result_cols++] = &str_callid_col;
+	result_cols[to_tag_col = n_result_cols++] = &str_to_tag_col;
+	result_cols[from_tag_col = n_result_cols++] = &str_from_tag_col;
+	result_cols[sockinfo_col = n_result_cols++] = &str_socket_info_col;
+	result_cols[lcontact_col = n_result_cols++] = &str_local_contact_col;
+	result_cols[contact_col = n_result_cols++] = &str_contact_col;
+	result_cols[rroute_col = n_result_cols++] = &str_record_route_col;
+	result_cols[event_id_col = n_result_cols++] = &str_event_id_col;
+	result_cols[reason_col = n_result_cols++] = &str_reason_col;
+	result_cols[event_col = n_result_cols++] = &str_event_col;
+	result_cols[lcseq_col = n_result_cols++] = &str_local_cseq_col;
+	result_cols[rcseq_col = n_result_cols++] = &str_remote_cseq_col;
+	result_cols[status_col = n_result_cols++] = &str_status_col;
+	result_cols[version_col = n_result_cols++] = &str_version_col;
+	result_cols[expires_col = n_result_cols++] = &str_expires_col;
 
 	update_cols[0] = &str_updated_col;
 	update_vals[0].type = DB1_INT;
@@ -936,23 +941,23 @@ static void timer_send_full_state_notifies(int round)
 	{
 		memset(&sub, 0, sizeof(subs_t));
 		values = ROW_VALUES(&rows[i]);
-		EXTRACT_STRING(sub.pres_uri, VAL_STRING(&values[0]));
-		EXTRACT_STRING(sub.to_user, VAL_STRING(&values[1]));
-		EXTRACT_STRING(sub.to_domain, VAL_STRING(&values[2]));
-		EXTRACT_STRING(sub.from_user, VAL_STRING(&values[3]));
-		EXTRACT_STRING(sub.from_domain, VAL_STRING(&values[4]));
-		EXTRACT_STRING(sub.watcher_user, VAL_STRING(&values[5]));
-		EXTRACT_STRING(sub.watcher_domain, VAL_STRING(&values[6]));
-		EXTRACT_STRING(sub.callid, VAL_STRING(&values[7]));
-		EXTRACT_STRING(sub.to_tag, VAL_STRING(&values[8]));
-		EXTRACT_STRING(sub.from_tag, VAL_STRING(&values[9]));
-		EXTRACT_STRING(sub.sockinfo_str, VAL_STRING(&values[10]));
-		EXTRACT_STRING(sub.local_contact, VAL_STRING(&values[11]));
-		EXTRACT_STRING(sub.contact, VAL_STRING(&values[12]));
-		EXTRACT_STRING(sub.record_route, VAL_STRING(&values[13]));
-		EXTRACT_STRING(sub.event_id, VAL_STRING(&values[14]));
-		EXTRACT_STRING(sub.reason, VAL_STRING(&values[15]));
-		EXTRACT_STRING(ev_sname, VAL_STRING(&values[16]));
+		EXTRACT_STRING(sub.pres_uri, VAL_STRING(&values[pres_uri_col]));
+		EXTRACT_STRING(sub.to_user, VAL_STRING(&values[tuser_col]));
+		EXTRACT_STRING(sub.to_domain, VAL_STRING(&values[tdomain_col]));
+		EXTRACT_STRING(sub.from_user, VAL_STRING(&values[fuser_col]));
+		EXTRACT_STRING(sub.from_domain, VAL_STRING(&values[fdomain_col]));
+		EXTRACT_STRING(sub.watcher_user, VAL_STRING(&values[wuser_col]));
+		EXTRACT_STRING(sub.watcher_domain, VAL_STRING(&values[wdomain_col]));
+		EXTRACT_STRING(sub.callid, VAL_STRING(&values[callid_col]));
+		EXTRACT_STRING(sub.to_tag, VAL_STRING(&values[to_tag_col]));
+		EXTRACT_STRING(sub.from_tag, VAL_STRING(&values[from_tag_col]));
+		EXTRACT_STRING(sub.sockinfo_str, VAL_STRING(&values[sockinfo_col]));
+		EXTRACT_STRING(sub.local_contact, VAL_STRING(&values[lcontact_col]));
+		EXTRACT_STRING(sub.contact, VAL_STRING(&values[contact_col]));
+		EXTRACT_STRING(sub.record_route, VAL_STRING(&values[rroute_col]));
+		EXTRACT_STRING(sub.event_id, VAL_STRING(&values[event_id_col]));
+		EXTRACT_STRING(sub.reason, VAL_STRING(&values[reason_col]));
+		EXTRACT_STRING(ev_sname, VAL_STRING(&values[event_col]));
 		sub.event = pres_contains_event(&ev_sname, &parsed_event);
 		if (sub.event == NULL)
 		{
@@ -960,12 +965,12 @@ static void timer_send_full_state_notifies(int round)
 			goto done;
 		}
 
-		sub.local_cseq = VAL_INT(&values[17]);
-		sub.remote_cseq = VAL_INT(&values[18]);
-		sub.status = VAL_INT(&values[19]);
-		sub.version = VAL_INT(&values[20]);
-		if (VAL_INT(&values[21]) > now)
-			sub.expires = VAL_INT(&values[21]) - now;
+		sub.local_cseq = VAL_INT(&values[lcseq_col]);
+		sub.remote_cseq = VAL_INT(&values[rcseq_col]);
+		sub.status = VAL_INT(&values[status_col]);
+		sub.version = VAL_INT(&values[version_col]);
+		if (VAL_INT(&values[expires_col]) > now)
+			sub.expires = VAL_INT(&values[expires_col]) - now;
 		else
 			sub.expires = 0;
 
