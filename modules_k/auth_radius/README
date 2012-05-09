@@ -227,7 +227,7 @@ modparam("auth_radius", "use_ruri_flag", 22)
      * -6 (nonce reused) - nonce is used more than once;
      * -5 (no credentials) - credentials were not found in request;
      * -4 (stale nonce) - stale nonce;
-     * -3 (authorization failed) - RADIUS responded with Access Reject
+     * -2 (authorization failed) - RADIUS responded with Access Reject
        which may be, for example, due to user not found or wrong password;
      * -1 (error) - some error occured during authorization (see syslog);
 
