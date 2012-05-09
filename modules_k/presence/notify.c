@@ -1345,12 +1345,16 @@ int publ_notify_notifier(str pres_uri, pres_ev_t *event)
 		goto error;
 	}
 
-	if(result == NULL) goto error;
+	if(result == NULL)
+	{
+		LM_ERR("bad result\n");
+		goto error;
+	}
 
+	rows = RES_ROWS(result);
 	for (i = 0; i <RES_ROW_N(result); i++)
 	{
-		rows = RES_ROWS(result);
-		values = ROW_VALUES(rows);
+		values = ROW_VALUES(&rows[i]);
 
 		subs.callid.s = (char *) VAL_STRING(&values[r_callid_col]);
 		subs.callid.len = strlen(subs.callid.s);
@@ -2043,7 +2047,10 @@ static int unset_watchers_updated_winfo(str *pres_uri)
 	}
 
 	if (result == NULL)
-		ncols = 0;
+	{
+		LM_ERR("bad result\n");
+		goto error;
+	}
 	else
 		ncols = result->n;
 
@@ -2113,7 +2120,10 @@ static int winfo_dialog_pending(str *pres_uri)
 	}
 
 	if (result == NULL)
-		ret = 0;
+	{
+		LM_ERR("bad result\n");
+		goto error;
+	}
 	else
 		ret = result->n;
 
@@ -2169,7 +2179,10 @@ static int watchers_awaiting_update(str *pres_uri, pres_ev_t *event)
 	}
 
 	if (result == NULL)
-		ret = 0;
+	{
+		LM_ERR("bad result\n");
+		goto error;
+	}
 	else
 		ret = result->n;
 
@@ -2219,8 +2232,11 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 		goto error;
 	}
 
-	if (result == NULL )
+	if (result == NULL)
+	{
+		LM_ERR("bad result\n");
 		goto error;
+	}
 
 	if (result->n <= 0)
 	{
@@ -2393,8 +2409,11 @@ static watcher_t *build_watchers_list(subs_t *sub)
 		goto error;
 	}
 
-	if (result == NULL )
+	if (result == NULL)
+	{
+		LM_ERR("bad result\n");
 		goto error;
+	}
 
 	if (result->n <= 0)
 		goto done;
@@ -2450,6 +2469,19 @@ static int notifier_notify(subs_t *sub, int *updated)
 		}
 		else
 		{
+			if (sub->event->type & PUBL_TYPE)
+			{
+				int tmp = watchers_awaiting_update(&sub->pres_uri,
+									sub->event);
+				if (tmp < 0)
+				{
+					LM_ERR("checking watchers\n");
+					goto error;
+				}
+				else if (tmp == 0)
+					attempt_delete_presentities = 1;
+			}
+
 			if (sub->updated_winfo == UPDATED_TYPE
 				&& winfo_dialog_pending(&sub->pres_uri) > 0)
 			{
@@ -2509,7 +2541,7 @@ static int notifier_notify(subs_t *sub, int *updated)
 		else if (sub->event->type & PUBL_TYPE)
 		{
 			int tmp = watchers_awaiting_update(&sub->pres_uri,
-						sub->event);
+								sub->event);
 			if (tmp < 0)
 			{
 				LM_ERR("checking watchers\n");
@@ -2531,6 +2563,7 @@ static int notifier_notify(subs_t *sub, int *updated)
 		goto error;
 	}
 
+done:
 	if (attempt_delete_presentities)
 	{
 		if (delete_offline_presentities(&sub->pres_uri, sub->event) < 0)
@@ -2542,7 +2575,6 @@ static int notifier_notify(subs_t *sub, int *updated)
 
 	ret = 1;
 
-done:
 error:
 	free_notify_body(nbody, sub->event);
 	free_watcher_list(watchers);

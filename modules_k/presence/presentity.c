@@ -542,6 +542,7 @@ after_dialog_check:
 					LM_ERR("updating watcher records\n");
 					goto error;
 				}
+
 				if (num_watchers > 0)
 				{
 					if (mark_presentity_for_delete(presentity) < 0)
@@ -562,17 +563,9 @@ after_dialog_check:
 
 			if (pres_notifier_processes == 0 || num_watchers == 0)
 			{
-				if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
+				if (delete_presentity(presentity) < 0)
 				{
-					LM_ERR("unsuccessful use table sql operation\n");
-					goto error;
-				}
-
-				LM_DBG("expires =0 -> deleting from database\n");
-
-				if(pa_dbf.delete(pa_db,query_cols,0,query_vals,n_query_cols)<0)
-				{
-					LM_ERR("unsuccessful sql delete operation");
+					LM_ERR("Deleting presentity\n");
 					goto error;
 				}
 
@@ -757,7 +750,7 @@ after_dialog_check:
 send_notify:
 
 	/* send notify with presence information */
-	if (pres_notifier_processes == 0 || num_watchers == 0)
+	if (pres_notifier_processes > 0)
 	{
 		if (publ_notify_notifier(pres_uri, presentity->event) < 0)
 		{
@@ -1133,6 +1126,19 @@ int mark_presentity_for_delete(presentity_t *pres)
 	int ret = -1;
 	str *cur_body, *new_body = NULL;
 
+	if (pres->event->agg_nbody == NULL)
+	{
+		/* Nothing clever to do here... just delete */
+		if (delete_presentity(pres) < 0)
+		{
+			LM_ERR("deleting presentity\n");
+			goto error;
+		}
+
+		ret = 0;
+		goto done;
+	}
+
 	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
 	{
 		LM_ERR("unsuccessful use table sql operation\n");
@@ -1162,19 +1168,6 @@ int mark_presentity_for_delete(presentity_t *pres)
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = pres->etag;
 	n_query_cols++;
-
-	if (pres->event->agg_nbody == NULL)
-	{
-		/* Nothing clever to do here... just delete */
-		if(pa_dbf.delete(pa_db, query_cols, 0, query_vals, n_query_cols) < 0)
-		{
-			LM_ERR("unsuccessful sql delete operation");
-			goto error;
-		}
-
-		ret = 0;
-		goto done;
-	}
 
 	result_cols[0] = &str_body_col;
 
@@ -1240,6 +1233,55 @@ error:
 	free_notify_body(new_body, pres->event);
 	if (cur_body) pkg_free(cur_body);
 	if (result) pa_dbf.free_result(pa_db, result);
+	return ret;
+}
+
+int delete_presentity(presentity_t *pres)
+{
+	db_key_t query_cols[4];
+	db_val_t query_vals[4];
+	int n_query_cols = 0;
+	int ret = -1;
+
+	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
+	{
+		LM_ERR("unsuccessful use table sql operation\n");
+		goto error;
+	}
+
+	query_cols[n_query_cols] = &str_username_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = pres->user;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_domain_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = pres->domain;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_event_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = pres->event->name;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_etag_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = pres->etag;
+	n_query_cols++;
+
+	if(pa_dbf.delete(pa_db, query_cols, 0, query_vals, n_query_cols) < 0)
+	{
+		LM_ERR("unsuccessful sql delete operation");
+		goto error;
+	}
+
+	ret = 0;
+
+error:
 	return ret;
 }
 

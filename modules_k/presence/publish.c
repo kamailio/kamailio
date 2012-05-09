@@ -76,6 +76,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	db1_res_t *result = NULL;
 	db_row_t *row ;
 	db_val_t *row_vals ;
+	int n_db_cols = 0;
 	int i =0, size= 0;
 	struct p_modif* p= NULL;
 	presentity_t* pres= NULL;
@@ -94,17 +95,19 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		return ;
 	}
 
-	db_keys[0] = &str_expires_col;
-	db_ops[0] = OP_LT;
-	db_vals[0].type = DB1_INT;
-	db_vals[0].nul = 0;
-	db_vals[0].val.int_val = (int)time(NULL);
+	db_keys[n_db_cols] = &str_expires_col;
+	db_ops[n_db_cols] = OP_LT;
+	db_vals[n_db_cols].type = DB1_INT;
+	db_vals[n_db_cols].nul = 0;
+	db_vals[n_db_cols].val.int_val = (int)time(NULL);
+	n_db_cols++;
 
-	db_keys[1] = &str_expires_col;
-	db_ops[1] = OP_GT;
-	db_vals[1].type = DB1_INT;
-	db_vals[1].nul = 0;
-	db_vals[1].val.int_val = 0;
+	db_keys[n_db_cols] = &str_expires_col;
+	db_ops[n_db_cols] = OP_GT;
+	db_vals[n_db_cols].type = DB1_INT;
+	db_vals[n_db_cols].nul = 0;
+	db_vals[n_db_cols].val.int_val = 0;
+	n_db_cols++;
 
 	result_cols[user_col= n_result_cols++] = &str_username_col;
 	result_cols[domain_col=n_result_cols++] = &str_domain_col;
@@ -113,7 +116,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 
 	static str query_str = str_init("username");
 	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, result_cols,
-						2, n_result_cols, &query_str, &result )< 0)
+			n_db_cols, n_result_cols, &query_str, &result )< 0)
 	{
 		LM_ERR("failed to query database for expired messages\n");
 		if(result)
@@ -223,11 +226,20 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 				LM_ERR("Updating watcher records\n");
 				goto error;
 			}
+
 			if (num_watchers > 0)
 			{
 				if (mark_presentity_for_delete(p[i].p) < 0)
 				{
-					LM_ERR("Marking presentities\n");
+					LM_ERR("Marking presentity\n");
+					goto error;
+				}
+			}
+			else
+			{
+				if (delete_presentity(p[i].p) < 0)
+				{
+					LM_ERR("Deleting presentity\n");
 					goto error;
 				}
 			}
@@ -269,10 +281,10 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		goto error;
 	}
 
-delete_pres:
-	if (pres_notifier_processes <= 0 || num_watchers == 0)
+	if (pres_notifier_processes == 0)
 	{
-		if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 2) < 0) 
+delete_pres:
+		if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, n_db_cols) < 0) 
 			LM_ERR("failed to delete expired records from DB\n");
 	}
 

@@ -72,6 +72,7 @@ char* get_sphere(str* pres_uri);
 typedef char* (*pres_get_sphere_t)(str* pres_uri);
 
 int mark_presentity_for_delete(presentity_t *pres);
+int delete_presentity(presentity_t *pres);
 int delete_offline_presentities(str *pres_uri, pres_ev_t *event);
 
 #endif
