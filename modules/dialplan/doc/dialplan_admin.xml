@@ -358,13 +358,16 @@ modparam("dialplan", "fetch_rows", 4000)
 	
 	<section>
 	<title>
-		<function moreinfo="none">dp_translate(id, src[/dest])</function>
+		<function moreinfo="none">dp_translate(id, [src[/dest]])</function>
 	</title>
 	<para>
 	Will try to translate src into dest according to 
-	the translation rules with dialplan ID equal to id.  If dest is
+	the translation rules with dialplan ID equal to id.  If src/dest is
+	missing the default parameter <quote>ruri.user/ruri.user</quote> will
+	be used, thus translating the request uri user part.  If only dest is
 	missing, only matching and storing of matching rule's
-	attributes is done.
+	attributes is done.	
+
 	</para>
 	<para>
 	  Returns 1, if translation succeeded, -1 in case of some error
@@ -399,9 +402,6 @@ modparam("dialplan", "fetch_rows", 4000)
 	<listitem>
 		<para>
  		<emphasis>src/dest</emphasis> - input and output of the function.
-		If this parameter is missing the default parameter 
-		<quote>ruri.user/ruri.user</quote> will be used, thus
-		translating the request uri user part. 
  		</para>
 		<para>Input parameter src can be any pseudo variable.
 		Output parameter dest can be:
