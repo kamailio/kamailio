@@ -226,7 +226,7 @@ modparam("auth_radius", "use_ruri_flag", 22)
 			<emphasis>-4 (stale nonce)</emphasis> - stale nonce;
 			</para></listitem>
 			<listitem><para>
-			<emphasis>-3 (authorization failed)</emphasis> - RADIUS responded with Access Reject which may be, for example, due to user not found or wrong password;
+			<emphasis>-2 (authorization failed)</emphasis> - RADIUS responded with Access Reject which may be, for example, due to user not found or wrong password;
 			</para></listitem>
 			<listitem><para>
 			<emphasis>-1 (error)</emphasis> - some error occured during authorization (see syslog);
