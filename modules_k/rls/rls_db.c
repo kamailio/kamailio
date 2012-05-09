@@ -148,15 +148,6 @@ int delete_expired_subs_rlsdb( void )
 	result_cols[r_to_tag_col=n_result_cols++] = &str_to_tag_col;
 	result_cols[r_from_tag_col=n_result_cols++] = &str_from_tag_col;
 
-	if (rls_dbf.start_transaction)
-	{
-		if (rls_dbf.start_transaction(rls_db) < 0)
-		{
-			LM_ERR("in start_transaction\n");
-			goto error;
-		}
-	}
-
 	if(rls_dbf.query(rls_db, query_cols, query_ops, query_vals, result_cols, 
 				n_query_cols, n_result_cols, 0, &result )< 0)
 	{
@@ -221,28 +212,12 @@ int delete_expired_subs_rlsdb( void )
 		pkg_free(rlsubs_did.s);
 	}
 
-	if (rls_dbf.end_transaction)
-	{
-		if (rls_dbf.end_transaction(rls_db) < 0)
-		{
-			LM_ERR("in end_transaction\n");
-			goto error;
-		}
-	}
-
-	if(result) rls_dbf.free_result(rls_db, result);
+	rls_dbf.free_result(rls_db, result);
 	return 1;
 
 error:
 	if (result) rls_dbf.free_result(rls_db, result);
 	if (rlsubs_did.s) pkg_free(rlsubs_did.s);
-
-	if (rls_dbf.abort_transaction)
-	{
-		if (rls_dbf.abort_transaction(rls_db) < 0)
-			LM_ERR("in abort_transaction\n");
-	}
-
 	return -1;
 }
 
@@ -739,6 +714,7 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 	db_key_t result_cols[5];
 	db_row_t *rows;
 	int n_query_cols = 0, n_result_cols = 0;
+	int pres_uri_col, rcseq_col, lcseq_col, version_col, rroute_col;
 	int nr_rows;
 	int r_remote_cseq, r_local_cseq, r_version;
 	char *r_pres_uri, *r_record_route;
@@ -779,11 +755,11 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 	query_vals[n_query_cols].val.str_val= subs->from_tag;
 	n_query_cols++;
 	
-	result_cols[n_result_cols++] = &str_presentity_uri_col;
-	result_cols[n_result_cols++] = &str_remote_cseq_col;
-	result_cols[n_result_cols++] = &str_local_cseq_col;
-	result_cols[n_result_cols++] = &str_version_col;
-	result_cols[n_result_cols++] = &str_record_route_col;
+	result_cols[pres_uri_col = n_result_cols++] = &str_presentity_uri_col;
+	result_cols[rcseq_col = n_result_cols++] = &str_remote_cseq_col;
+	result_cols[lcseq_col = n_result_cols++] = &str_local_cseq_col;
+	result_cols[version_col = n_result_cols++] = &str_version_col;
+	result_cols[rroute_col = n_result_cols++] = &str_record_route_col;
 
 	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols, 
 			n_query_cols, n_result_cols, 0, &result )< 0)
@@ -816,11 +792,11 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 	rows = RES_ROWS(result);
 	values = ROW_VALUES(rows);
 
-	r_pres_uri = (char *)VAL_STRING(values+0);
-	r_remote_cseq = VAL_INT(values+1);
-	r_local_cseq = VAL_INT(values+2);
-	r_version = VAL_INT(values+3);
-	r_record_route = (char *)VAL_STRING(values+4);
+	r_pres_uri = (char *)VAL_STRING(&values[pres_uri_col]);
+	r_remote_cseq = VAL_INT(&values[rcseq_col]);
+	r_local_cseq = VAL_INT(&values[lcseq_col]);
+	r_version = VAL_INT(&values[version_col]);
+	r_record_route = (char *)VAL_STRING(&values[rroute_col]);
 
 	if(strlen(r_pres_uri) > 0)
 	{

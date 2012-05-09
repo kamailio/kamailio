@@ -85,6 +85,7 @@ struct subscription
 	int recv_event;
 	int internal_update_flag;
 	int updated;
+	int updated_winfo;
 	struct subscription* next;
 
 };
@@ -101,11 +102,6 @@ int handle_subscribe(struct sip_msg*, str watcher_user, str watcher_domain);
 void timer_db_update(unsigned int ticks,void *param);
 
 int update_subs_db(subs_t* subs, int type);
-
-int refresh_watcher(str* pres_uri, str* watcher_uri, str* event, 
-	int status, str* reason);
-
-typedef int (*refresh_watcher_t)(str*, str* , str* ,int , str* );
 
 int restore_db_subs(void);
 

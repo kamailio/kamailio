@@ -33,10 +33,11 @@ fi
 #
 usage_fifo() {
 	echo
-	mecho " -- command 'fifo'"
+	mecho " -- command 'mi' - send raw MI commands"
 	echo
 cat <<EOF
- fifo ............................... send raw FIFO command
+ mi ................................. send raw MI command
+ fifo ............................... send raw FIFO (MI) command
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_fifo"

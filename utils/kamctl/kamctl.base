@@ -180,11 +180,6 @@ fi
 DO_DOMAIN_COLUMN=domain
 DO_LAST_MODIFIED_COLUMN=last_modified
 
-# trusted table
-if [ -z "$TRUSTED_TABLE" ] ; then
-	TRUSTED_TABLE=trusted
-fi
-
 # lcr tables
 if [ -z "$LCR_TABLE" ] ; then
 	LCR_TABLE=lcr
@@ -278,6 +273,11 @@ TRUSTED_SRC_IP_COLUMN=src_ip
 TRUSTED_PROTO_COLUMN=proto
 TRUSTED_FROM_PATTERN_COLUMN=from_pattern
 TRUSTED_TAG_COLUMN=tag
+
+# address table
+if [ -z "$ADDRESS_TABLE" ] ; then
+	ADDRESS_TABLE=address
+fi
 
 # dispatcher tables  
 if [ -z "$DISPATCHER_TABLE" ] ; then
@@ -416,7 +416,23 @@ cat <<EOF
  trusted add <src_ip> <proto> <from_pattern> <tag>
              ....................... add a new entry
 	     ....................... (from_pattern and tag are optional arguments)
- trusted rm <src_ip> ............... remove all entres for the given src_ip
+ trusted rm <src_ip> ............... remove all entries for the given src_ip
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_trusted"
+
+usage_address() {
+	echo
+	mecho " -- command 'add|dump|reload|rm|show' - manage address"
+	echo
+cat <<EOF
+ address show ...................... show db content
+ address dump ...................... show cache content
+ address reload .................... reload db table into cache
+ address add <grp> <ipaddr> <mask> <port> <tag>
+             ....................... add a new entry
+	     ....................... (mask, port and tag are optional arguments)
+ address rm <grp> <ipaddr> ......... remove entries for given grp and ipaddr
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_trusted"

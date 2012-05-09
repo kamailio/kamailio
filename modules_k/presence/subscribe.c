@@ -338,8 +338,8 @@ int insert_subs_db(subs_t* s, int type)
 	query_vals[status_col].val.int_val= s->status;
 	query_vals[reason_col].val.str_val= s->reason;
 	query_vals[socket_info_col].val.str_val= s->sockinfo_str;
-	query_vals[updated_col].val.int_val = -1;
-	query_vals[updated_winfo_col].val.int_val = -1;
+	query_vals[updated_col].val.int_val = s->updated;
+	query_vals[updated_winfo_col].val.int_val = s->updated_winfo;
 
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
 	{
@@ -358,8 +358,8 @@ int insert_subs_db(subs_t* s, int type)
 
 int update_subs_db(subs_t* subs, int type)
 {
-	db_key_t query_cols[3], update_keys[6];
-	db_val_t query_vals[3], update_vals[6];
+	db_key_t query_cols[3], update_keys[8];
+	db_val_t query_vals[3], update_vals[8];
 	int n_update_cols= 0;
 	int n_query_cols = 0;
 
@@ -394,6 +394,18 @@ int update_subs_db(subs_t* subs, int type)
 		update_vals[n_update_cols].nul = 0;
 		update_vals[n_update_cols].val.int_val = subs->remote_cseq; 
 		n_update_cols++;
+
+		update_keys[n_update_cols] = &str_updated_col;
+		update_vals[n_update_cols].type = DB1_INT;
+		update_vals[n_update_cols].nul = 0;
+		update_vals[n_update_cols].val.int_val = subs->updated;
+		n_update_cols++;
+
+		update_keys[n_update_cols] = &str_updated_winfo_col;
+		update_vals[n_update_cols].type = DB1_INT;
+		update_vals[n_update_cols].nul = 0;
+		update_vals[n_update_cols].val.int_val = subs->updated_winfo;
+		n_update_cols++;
 	}
 	if(type & LOCAL_TYPE)
 	{
@@ -421,7 +433,7 @@ int update_subs_db(subs_t* subs, int type)
 	update_vals[n_update_cols].nul = 0;
 	update_vals[n_update_cols].val.str_val = subs->reason;
 	n_update_cols++;
-	
+
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
 	{
 		LM_ERR("in use table sql operation\n");	
@@ -452,6 +464,62 @@ void delete_subs(str* pres_uri, str* ev_name, str* to_tag,
 		LM_ERR("Failed to delete subscription from database\n");
 }
 
+int update_subscription_notifier(struct sip_msg* msg, subs_t* subs,
+		int to_tag_gen, int* sent_reply)
+{
+	*sent_reply= 0;
+
+	/* Set the notifier/update fields for the subscription */
+	subs->updated = core_hash(&subs->callid, &subs->from_tag,
+				(pres_waitn_time * pres_notifier_poll_rate
+					* pres_notifier_processes) - 1);
+	if (subs->event->type & WINFO_TYPE)
+		subs->updated_winfo = UPDATED_TYPE;
+	else if (subs->event->wipeer)
+	{
+		if (set_wipeer_subs_updated(&subs->pres_uri,
+						subs->event->wipeer,
+						subs->expires == 0) < 0)
+		{
+			LM_ERR("failed to update database record(s)\n");
+			goto error;
+		}
+		subs->updated_winfo = UPDATED_TYPE;
+	}
+
+	printf_subs(subs);
+
+	if (to_tag_gen == 0)
+	{
+		if (update_subs_db(subs, REMOTE_TYPE) < 0)
+		{
+			LM_ERR("updating subscription in database table\n");
+			goto error;
+		}
+	}
+	else
+	{
+		subs->version = 1;
+		if (insert_subs_db(subs, REMOTE_TYPE) < 0)
+		{
+			LM_ERR("failed to insert new record in database\n");
+			goto error;
+		}
+	}
+
+	if(send_2XX_reply(msg, subs->event->type & PUBL_TYPE ? 202 : 200,
+				subs->expires, &subs->local_contact) < 0)
+	{
+		LM_ERR("sending 202 OK\n");
+		goto error;
+	}
+	*sent_reply= 1;
+
+	return 1;
+
+error:
+	return -1;
+}
 
 int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 		int* sent_reply)
@@ -817,6 +885,9 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 	/* if dialog initiation Subscribe - get subscription state */
 	if(to_tag_gen)
 	{
+		subs.updated = NO_UPDATE_TYPE;
+		subs.updated_winfo = NO_UPDATE_TYPE;
+
 		if(!event->req_auth) 
 			subs.status = ACTIVE_STATUS;
 		else
@@ -880,7 +951,16 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 	LM_DBG("subscription status= %s - %s\n", get_status_str(subs.status), 
             found==0?"inserted":"found in watcher table");
 	
-	if(update_subscription(msg, &subs, to_tag_gen, &sent_reply) <0)
+	if (pres_notifier_processes > 0)
+	{
+		if (update_subscription_notifier(msg, &subs, to_tag_gen,
+							&sent_reply) < 0)
+		{
+			LM_ERR("in update_subscription_notifier\n");
+			goto error;
+		}
+	}
+	else if (update_subscription(msg, &subs, to_tag_gen, &sent_reply) <0)
 	{	
 		LM_ERR("in update_subscription\n");
 		goto error;
@@ -1326,7 +1406,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 {
 	db_key_t query_cols[3];
 	db_val_t query_vals[3];
-	db_key_t result_cols[7];
+	db_key_t result_cols[9];
 	db1_res_t *result= NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
@@ -1334,6 +1414,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	int n_result_cols = 0;
 	int remote_cseq_col= 0, local_cseq_col= 0, status_col, reason_col;
 	int record_route_col, version_col, pres_uri_col;
+	int updated_col, updated_winfo_col;
 	unsigned int remote_cseq;
 	str pres_uri, record_route;
 	str reason;
@@ -1363,6 +1444,8 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	result_cols[reason_col=n_result_cols++] = &str_reason_col;
 	result_cols[record_route_col=n_result_cols++] = &str_record_route_col;
 	result_cols[version_col=n_result_cols++] = &str_version_col;
+	result_cols[updated_col=n_result_cols++] = &str_updated_col;
+	result_cols[updated_winfo_col=n_result_cols++] = &str_updated_winfo_col;
 	
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0) 
 	{
@@ -1451,6 +1534,9 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 		subs->record_route.len= record_route.len;
 	}
 
+	subs->updated= row_vals[updated_col].val.int_val;
+	subs->updated_winfo= row_vals[updated_winfo_col].val.int_val;
+
 	pa_dbf.free_result(pa_db, result);
 	result= NULL;
 
@@ -1482,6 +1568,74 @@ int handle_expired_subs(subs_t* s)
 	
 	return 0;
 
+}
+
+void update_db_subs_timer_notifier(void)
+{
+	db_key_t query_cols[1], result_cols[3];
+	db_val_t query_vals[1], *values;
+	db_op_t query_ops[1];
+	db_row_t *rows;
+	db1_res_t *result = NULL;
+	int n_query_cols = 0, n_result_cols = 0;
+	int r_callid_col = 0, r_to_tag_col = 0, r_from_tag_col = 0;
+	int i;
+	subs_t subs;
+
+	if(pa_db == NULL)
+	{
+		LM_ERR("null database connection\n");
+		goto error;
+	}
+
+	if(pa_dbf.use_table(pa_db, &active_watchers_table)< 0)
+	{
+		LM_ERR("use table failed\n");
+		goto error;
+	}
+
+	query_cols[n_query_cols]= &str_expires_col;
+	query_vals[n_query_cols].type = DB1_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val= (int)time(NULL) - expires_offset;
+	query_ops[n_query_cols]= OP_LT;
+	n_query_cols++;
+
+	result_cols[r_callid_col=n_result_cols++] = &str_callid_col;
+	result_cols[r_to_tag_col=n_result_cols++] = &str_to_tag_col;
+	result_cols[r_from_tag_col=n_result_cols++] = &str_from_tag_col;
+
+	if(db_fetch_query(&pa_dbf, pres_fetch_rows, pa_db, query_cols,
+			  query_ops, query_vals, result_cols,
+			  n_query_cols, n_result_cols, 0, &result )< 0)
+	{
+		LM_ERR("Can't query db\n");
+		goto error;
+	}
+
+	if(result == NULL) goto error;
+
+	do {
+		rows = RES_ROWS(result);
+	
+		for (i = 0; i <RES_ROW_N(result); i++)
+		{
+			values = ROW_VALUES(rows);
+
+			subs.callid.s = (char *) VAL_STRING(&values[r_callid_col]);
+			subs.callid.len = strlen(subs.callid.s);
+			subs.to_tag.s = (char *) VAL_STRING(&values[r_to_tag_col]);
+			subs.to_tag.len = strlen(subs.to_tag.s);
+			subs.from_tag.s = (char *) VAL_STRING(&values[r_from_tag_col]);
+			subs.from_tag.len = strlen(subs.from_tag.s);
+
+			set_updated(&subs);
+		}
+	} while (db_fetch_next(&pa_dbf, pres_fetch_rows, pa_db, &result) == 1
+			&& RES_ROW_N(result) > 0);
+
+error:
+	if (result) pa_dbf.free_result(pa_db, result);
 }
 
 void update_db_subs_timer_dbonly(void)
@@ -1992,17 +2146,22 @@ void timer_db_update(unsigned int ticks,void *param)
 
 
 	switch (subs_dbmode) {
-		case DB_ONLY:	update_db_subs_timer_dbonly();
-						break;
-		case NO_DB:		update_db_subs_timer_dbnone(no_lock);
-						break;
-		default:
-				if(pa_dbf.use_table(pa_db, &active_watchers_table)< 0)
-				{
-					LM_ERR("sql use table failed\n");
-					return;
-				}
-				update_db_subs_timer(pa_db, pa_dbf, subs_htable, shtable_size,
+	case DB_ONLY:
+		if (pres_notifier_processes > 0)
+			update_db_subs_timer_notifier();
+		else
+			update_db_subs_timer_dbonly();
+	break;
+	case NO_DB:
+		update_db_subs_timer_dbnone(no_lock);
+	break;
+	default:
+		if(pa_dbf.use_table(pa_db, &active_watchers_table)< 0)
+		{
+			LM_ERR("sql use table failed\n");
+			return;
+		}
+		update_db_subs_timer(pa_db, pa_dbf, subs_htable, shtable_size,
 						no_lock, handle_expired_subs);
 	}
 }
@@ -2072,6 +2231,11 @@ int restore_db_subs(void)
 		goto error;
 	}
 
+	if (result == NULL)
+	{
+		LM_ERR("bad result\n");
+		goto error;
+	}
 
 	do {
 		nr_rows = RES_ROW_N(result);
@@ -2218,72 +2382,6 @@ error:
 		pa_dbf.free_result(pa_db, result);
 	return -1;
 
-}
-
-int refresh_watcher(str* pres_uri, str* watcher_uri, str* event, 
-		int status, str* reason)
-{
-	unsigned int hash_code;
-	subs_t* s, *s_copy;
-	pres_ev_t* ev;		
-	struct sip_uri uri;
-	str user, domain;
-	/* refresh status in subs_htable and send notify */
-
-	ev=	contains_event(event, NULL);
-	if(ev== NULL)
-	{
-		LM_ERR("while searching event in list\n");
-		return -1;
-	}
-
-	if(parse_uri(watcher_uri->s, watcher_uri->len, &uri)< 0)
-	{
-		LM_ERR("parsing uri\n");
-		return -1;
-	}
-	user= uri.user;
-	domain= uri.host;
-
-	hash_code= core_hash(pres_uri, event, shtable_size);
-
-	lock_get(&subs_htable[hash_code].lock);
-
-	s= subs_htable[hash_code].entries->next;
-
-	while(s)
-	{
-		if(s->event== ev && s->pres_uri.len== pres_uri->len &&
-			strncmp(s->pres_uri.s, pres_uri->s, pres_uri->len)== 0 &&
-			s->watcher_user.len==user.len && strncmp(s->watcher_user.s,user.s, user.len)==0 &&
-			s->watcher_domain.len== domain.len && 
-			strncmp(s->watcher_domain.s, domain.s, domain.len)== 0)
-		{
-			s->status= status;
-			if(reason)
-				s->reason= *reason;
-			
-			s_copy= mem_copy_subs(s, PKG_MEM_TYPE);
-			if(s_copy== NULL)
-			{
-				LM_ERR("copying subs_t\n");
-				lock_release(&subs_htable[hash_code].lock);
-				return -1;
-			}
-			lock_release(&subs_htable[hash_code].lock);
-			s_copy->local_cseq++;
-			if(notify(s_copy, NULL, NULL, 0)< 0)
-			{
-				LM_ERR("in notify function\n");
-				pkg_free(s_copy);
-				return -1;
-			}
-			pkg_free(s_copy);
-			lock_get(&subs_htable[hash_code].lock);
-		}
-		s= s->next;
-	}
-	return 0;
 }
 
 int get_db_subs_auth(subs_t* subs, int* found)

@@ -41,7 +41,7 @@
 /** operator greater than equal */
 #define OP_GEQ ">="
 /** operator negation */
-#define OP_NEQ "!="
+#define OP_NEQ "<>"
 /** bitwise AND */
 #define OP_BITWISE_AND "&"
 

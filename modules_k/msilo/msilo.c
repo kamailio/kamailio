@@ -1112,17 +1112,22 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 		}
 
 		tmp_extra_hdrs.len = extra_hdrs_str.len+str_vals[4].len;
-		if ((tmp_extra_hdrs.s = pkg_malloc(tmp_extra_hdrs.len)) == NULL)
+		if(tmp_extra_hdrs.len>0)
 		{
-			LM_ERR("Out of pkg memory");
-			if (msilo_dbf.free_result(db_con, db_res) < 0)
-				LM_ERR("failed to free the query result\n");
-			msg_list_set_flag(ml, mid, MS_MSG_ERRO);
-			goto error;
+			if ((tmp_extra_hdrs.s = pkg_malloc(tmp_extra_hdrs.len)) == NULL)
+			{
+				LM_ERR("Out of pkg memory");
+				if (msilo_dbf.free_result(db_con, db_res) < 0)
+					LM_ERR("failed to free the query result\n");
+				msg_list_set_flag(ml, mid, MS_MSG_ERRO);
+				goto error;
+			}
+			memcpy(tmp_extra_hdrs.s, extra_hdrs_str.s, extra_hdrs_str.len);
+			memcpy(tmp_extra_hdrs.s+extra_hdrs_str.len, str_vals[4].s, str_vals[4].len);
+		} else {
+			tmp_extra_hdrs.len = 0;
+			tmp_extra_hdrs.s = "";
 		}
-		memcpy(tmp_extra_hdrs.s, extra_hdrs_str.s, extra_hdrs_str.len);
-		memcpy(tmp_extra_hdrs.s+extra_hdrs_str.len, str_vals[4].s, str_vals[4].len);
-		
 		hdr_str.len = 1024;
 		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
 				   str_vals[0]/*from*/, rtime /*Date*/,

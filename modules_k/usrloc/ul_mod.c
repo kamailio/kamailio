@@ -60,6 +60,7 @@
 #include "../../timer_proc.h" /* register_sync_timer */
 #include "../../globals.h"   /* is_main */
 #include "../../ut.h"        /* str_init */
+#include "../../lib/srutils/sruid.h"
 #include "dlist.h"           /* register_udomain */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
@@ -106,6 +107,9 @@ extern int bind_usrloc(usrloc_api_t* api);
 extern int ul_locks_no;
 int ul_db_update_as_insert = 0;
 int ul_timer_procs = 0;
+
+/* sruid to get internal uid for mi/rpc commands */
+sruid_t _ul_sruid;
 
 /*
  * Module parameters and their default values
@@ -240,6 +244,9 @@ static int mod_init(void)
 {
 	int i;
 	udomain_t* d;
+
+	if(sruid_init(&_ul_sruid, '-', "ulcx", SRUID_INC)<0)
+		return -1;
 
 #ifdef STATISTICS
 	/* register statistics */

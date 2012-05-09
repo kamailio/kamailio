@@ -5,6 +5,10 @@
 #
 #===================================================================
 
+[ "${IMPCTLBASE}" = "yes" ] && return
+
+export IMPCTLBASE="yes"
+
 ##### ----------------------------------------------- #####
 ### common variables and functions for CTL engines
 #
@@ -71,4 +75,26 @@ cat <<EOF
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_usrloc"
+
+usage_ctlcommon() {
+	echo
+	mecho " -- command 'ps' - print details about running processes"
+	echo
+cat <<EOF
+ ps ................................. details about running processes
+EOF
+	echo
+	mecho " -- command 'uptime' - print uptime details"
+	echo
+cat <<EOF
+ uptime ............................. print start time end elapsed seconds
+EOF
+	echo
+	mecho " -- command 'stats' - print internal statistics"
+	echo
+cat <<EOF
+ stats .............................. dump all internall statistics
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_ctlcommon"
 

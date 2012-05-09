@@ -177,6 +177,12 @@ int rls_get_service_list(str *service_uri, str *user, str *domain,
 		return -1;
 	}
 
+	if (result == NULL)
+	{
+		LM_ERR("bad result\n");
+		return -1;
+	}
+
 	if(result->n<=0)
 	{
 		LM_DBG("No rl document found\n");

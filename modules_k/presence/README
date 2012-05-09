@@ -41,19 +41,22 @@ Juha Heinanen
               3.6. xcap_table(str)
               3.7. clean_period (int)
               3.8. db_update_period (int)
-              3.9. to_tag_pref (str)
-              3.10. expires_offset (int)
-              3.11. max_expires (int)
-              3.12. server_address (str)
-              3.13. subs_db_mode (int)
-              3.14. publ_cache (int)
-              3.15. subs_htable_size (int)
-              3.16. pres_htable_size (int)
-              3.17. send_fast_notify (int)
-              3.18. enable_sphere_check (int)
-              3.19. timeout_rm_subs (int)
-              3.20. fetch_rows (integer)
-              3.21. integrated_xcap_server (integer)
+              3.9. waitn_time (int)
+              3.10. notifier_poll_rate (int)
+              3.11. notifier_processes (int)
+              3.12. to_tag_pref (str)
+              3.13. expires_offset (int)
+              3.14. max_expires (int)
+              3.15. server_address (str)
+              3.16. subs_db_mode (int)
+              3.17. publ_cache (int)
+              3.18. subs_htable_size (int)
+              3.19. pres_htable_size (int)
+              3.20. send_fast_notify (int)
+              3.21. enable_sphere_check (int)
+              3.22. timeout_rm_subs (int)
+              3.23. fetch_rows (integer)
+              3.24. integrated_xcap_server (integer)
 
         4. Functions
 
@@ -101,25 +104,28 @@ Juha Heinanen
    1.6. Set xcap_table parameter
    1.7. Set clean_period parameter
    1.8. Set db_update_period parameter
-   1.9. Set to_tag_pref parameter
-   1.10. Set expires_offset parameter
-   1.11. Set max_expires parameter
-   1.12. Set server_address parameter
-   1.13. Set subs_db_mode parameter
-   1.14. Set publ_cache parameter
-   1.15. Set subs_htable_size parameter
-   1.16. Set pres_htable_size parameter
-   1.17. Set send_fast_notify parameter
-   1.18. Set enable_sphere_check parameter
-   1.19. Set timeout_rm_subs parameter
-   1.20. Set fetch_rows parameter
-   1.21. Set integrated_xcap_server parameter
-   1.22. handle_publish usage
-   1.23. handle_subscribe usage
-   1.24. pres_auth_status usage
-   1.25. pres_refresh_watchers usage
-   1.26. pres_update_watchers usage
-   1.27. pres_update_presentity usage
+   1.9. Set waitn_time parameter
+   1.10. Set notifier_poll_rate parameter
+   1.11. Set notifier_processes parameter
+   1.12. Set to_tag_pref parameter
+   1.13. Set expires_offset parameter
+   1.14. Set max_expires parameter
+   1.15. Set server_address parameter
+   1.16. Set subs_db_mode parameter
+   1.17. Set publ_cache parameter
+   1.18. Set subs_htable_size parameter
+   1.19. Set pres_htable_size parameter
+   1.20. Set send_fast_notify parameter
+   1.21. Set enable_sphere_check parameter
+   1.22. Set timeout_rm_subs parameter
+   1.23. Set fetch_rows parameter
+   1.24. Set integrated_xcap_server parameter
+   1.25. handle_publish usage
+   1.26. handle_subscribe usage
+   1.27. pres_auth_status usage
+   1.28. pres_refresh_watchers usage
+   1.29. pres_update_watchers usage
+   1.30. pres_update_presentity usage
    2.1. presence_api_t structure
 
 Chapter 1. Admin Guide
@@ -142,19 +148,22 @@ Chapter 1. Admin Guide
         3.6. xcap_table(str)
         3.7. clean_period (int)
         3.8. db_update_period (int)
-        3.9. to_tag_pref (str)
-        3.10. expires_offset (int)
-        3.11. max_expires (int)
-        3.12. server_address (str)
-        3.13. subs_db_mode (int)
-        3.14. publ_cache (int)
-        3.15. subs_htable_size (int)
-        3.16. pres_htable_size (int)
-        3.17. send_fast_notify (int)
-        3.18. enable_sphere_check (int)
-        3.19. timeout_rm_subs (int)
-        3.20. fetch_rows (integer)
-        3.21. integrated_xcap_server (integer)
+        3.9. waitn_time (int)
+        3.10. notifier_poll_rate (int)
+        3.11. notifier_processes (int)
+        3.12. to_tag_pref (str)
+        3.13. expires_offset (int)
+        3.14. max_expires (int)
+        3.15. server_address (str)
+        3.16. subs_db_mode (int)
+        3.17. publ_cache (int)
+        3.18. subs_htable_size (int)
+        3.19. pres_htable_size (int)
+        3.20. send_fast_notify (int)
+        3.21. enable_sphere_check (int)
+        3.22. timeout_rm_subs (int)
+        3.23. fetch_rows (integer)
+        3.24. integrated_xcap_server (integer)
 
    4. Functions
 
@@ -224,19 +233,22 @@ Chapter 1. Admin Guide
    3.6. xcap_table(str)
    3.7. clean_period (int)
    3.8. db_update_period (int)
-   3.9. to_tag_pref (str)
-   3.10. expires_offset (int)
-   3.11. max_expires (int)
-   3.12. server_address (str)
-   3.13. subs_db_mode (int)
-   3.14. publ_cache (int)
-   3.15. subs_htable_size (int)
-   3.16. pres_htable_size (int)
-   3.17. send_fast_notify (int)
-   3.18. enable_sphere_check (int)
-   3.19. timeout_rm_subs (int)
-   3.20. fetch_rows (integer)
-   3.21. integrated_xcap_server (integer)
+   3.9. waitn_time (int)
+   3.10. notifier_poll_rate (int)
+   3.11. notifier_processes (int)
+   3.12. to_tag_pref (str)
+   3.13. expires_offset (int)
+   3.14. max_expires (int)
+   3.15. server_address (str)
+   3.16. subs_db_mode (int)
+   3.17. publ_cache (int)
+   3.18. subs_htable_size (int)
+   3.19. pres_htable_size (int)
+   3.20. send_fast_notify (int)
+   3.21. enable_sphere_check (int)
+   3.22. timeout_rm_subs (int)
+   3.23. fetch_rows (integer)
+   3.24. integrated_xcap_server (integer)
 
 3.1. db_url(str)
 
@@ -341,19 +353,73 @@ modparam("presence", "clean_period", 100)
 modparam("presence", "db_update_period", 100)
 ...
 
-3.9. to_tag_pref (str)
+3.9. waitn_time (int)
+
+   The maximum time period that NOTIFY requests will be buffered for. The
+   server will attempt to send NOTIFY requests within many seconds of a
+   change occurring.
+
+   Note: this parameter is only used when notifier_processes is greater
+   than 0. When notifier_processes is less than or equal to 0 NOTIFY
+   requests are sent immediately.
+
+   Default value is “5”.
+
+   Example 1.9. Set waitn_time parameter
+...
+modparam("presence", "waitn_time", 10)
+...
+
+3.10. notifier_poll_rate (int)
+
+   The number of times per second that the notifier processes should check
+   for work. Approximately 1/(waitn_time * notifier_poll_rate *
+   notifier_processes) of the pending updates will be sent each time a
+   notifier process runs.
+
+   Separate notifier processes are only run when subs_db_mode is 3 (DB
+   only mode).
+
+   Default value is “10”.
+
+   Example 1.10. Set notifier_poll_rate parameter
+...
+modparam("presence", "notifier_poll_rate", 20)
+...
+
+3.11. notifier_processes (int)
+
+   The number of notifier processes that should be started.
+
+   Separate notifier processes are only run when subs_db_mode is 3 (DB
+   only mode).
+
+   Note: setting this parameter to 0 when subs_db_mode is 3 keeps the old
+   behaviour (sending NOTIFY requests immediately). This (old) behaviour
+   is disabled by default in DB only mode because under load, when lots of
+   NOTIFY requests can be sent on a dialog at the same time, there are
+   race conditions which result in CSeq re-use.
+
+   Default value is “1”.
+
+   Example 1.11. Set notifier_processes parameter
+...
+modparam("presence", "notifier_processes", 2)
+...
+
+3.12. to_tag_pref (str)
 
    The prefix used when generating to_tag when sending replies for
    SUBSCRIBE requests.
 
    Default value is “10”.
 
-   Example 1.9. Set to_tag_pref parameter
+   Example 1.12. Set to_tag_pref parameter
 ...
 modparam("presence", "to_tag_pref", 'pres')
 ...
 
-3.10. expires_offset (int)
+3.13. expires_offset (int)
 
    The value in seconds that should be subtracted from the expires value
    when sending a 200OK for a publish. It is used for forcing the client
@@ -361,35 +427,35 @@ modparam("presence", "to_tag_pref", 'pres')
 
    Default value is “0”.
 
-   Example 1.10. Set expires_offset parameter
+   Example 1.13. Set expires_offset parameter
 ...
 modparam("presence", "expires_offset", 10)
 ...
 
-3.11. max_expires (int)
+3.14. max_expires (int)
 
    The the maximum admissible expires value for PUBLISH/SUBSCRIBE message
    (in seconds).
 
    Default value is “3600”.
 
-   Example 1.11. Set max_expires parameter
+   Example 1.14. Set max_expires parameter
 ...
 modparam("presence", "max_expires", 3600)
 ...
 
-3.12. server_address (str)
+3.15. server_address (str)
 
    The presence server address which will become the value of Contact
    header filed for 200 OK replies to SUBSCRIBE and PUBLISH and in NOTIFY
    messages.
 
-   Example 1.12. Set server_address parameter
+   Example 1.15. Set server_address parameter
 ...
 modparam("presence", "server_address", "sip:10.10.10.10:5060")
 ...
 
-3.13. subs_db_mode (int)
+3.16. subs_db_mode (int)
 
    The presence module can utilize database for persistent subscription
    storage. If you use database, your subscriptions will survive machine
@@ -423,12 +489,12 @@ modparam("presence", "server_address", "sip:10.10.10.10:5060")
 
    Default value is 2 (Write-Back scheme).
 
-   Example 1.13. Set subs_db_mode parameter
+   Example 1.16. Set subs_db_mode parameter
 ...
 modparam("presence", "subs_db_mode", 1)
 ...
 
-3.14. publ_cache (int)
+3.17. publ_cache (int)
 
    To improve performance, the presence module holds by default a publish
    cache that says if a certain publication exists in database. This is
@@ -444,12 +510,12 @@ modparam("presence", "subs_db_mode", 1)
 
    Default value is “1”.
 
-   Example 1.14. Set publ_cache parameter
+   Example 1.17. Set publ_cache parameter
 ...
 modparam("presence", "publ_cache", 0)
 ...
 
-3.15. subs_htable_size (int)
+3.18. subs_htable_size (int)
 
    The size of the in-memory hash table to store subscription dialogs.
    This parameter will be used as the power of 2 when computing table
@@ -457,24 +523,24 @@ modparam("presence", "publ_cache", 0)
 
    Default value is “9 (512)”.
 
-   Example 1.15. Set subs_htable_size parameter
+   Example 1.18. Set subs_htable_size parameter
 ...
 modparam("presence", "subs_htable_size", 11)
 ...
 
-3.16. pres_htable_size (int)
+3.19. pres_htable_size (int)
 
    The size of the in-memory hash table to store publish records. This
    parameter will be used as the power of 2 when computing table size.
 
    Default value is “9 (512)”.
 
-   Example 1.16. Set pres_htable_size parameter
+   Example 1.19. Set pres_htable_size parameter
 ...
 modparam("presence", "pres_htable_size", 11)
 ...
 
-3.17. send_fast_notify (int)
+3.20. send_fast_notify (int)
 
    This parameter enables or disables the sending of an initial empty
    NOTIFY after a SUBSCRIBE/reSUBSCRIBE. This caused problems for MWI
@@ -484,12 +550,12 @@ modparam("presence", "pres_htable_size", 11)
 
    Default value is “1 ”.
 
-   Example 1.17. Set send_fast_notify parameter
+   Example 1.20. Set send_fast_notify parameter
 ...
 modparam("presence", "send_fast_notify", 0)
 ...
 
-3.18. enable_sphere_check (int)
+3.21. enable_sphere_check (int)
 
    This parameter is a flag that should be set if permission rules include
    sphere checking. The sphere information is expected to be present in
@@ -499,12 +565,12 @@ modparam("presence", "send_fast_notify", 0)
 
    Default value is “0 ”.
 
-   Example 1.18. Set enable_sphere_check parameter
+   Example 1.21. Set enable_sphere_check parameter
 ...
 modparam("presence", "enable_sphere_check", 1)
 ...
 
-3.19. timeout_rm_subs (int)
+3.22. timeout_rm_subs (int)
 
    This parameter is a flag that should be set if subscriptions should be
    removed from the active_watchers when a NOTIFY times out. RFC3265
@@ -514,23 +580,23 @@ modparam("presence", "enable_sphere_check", 1)
 
    Default value is “1”.
 
-   Example 1.19. Set timeout_rm_subs parameter
+   Example 1.22. Set timeout_rm_subs parameter
 ...
 modparam("presence", "timeout_rm_subs", 0)
 ...
 
-3.20. fetch_rows (integer)
+3.23. fetch_rows (integer)
 
    Number of rows to be loaded in one step from database.
 
    Default value is 500.
 
-   Example 1.20. Set fetch_rows parameter
+   Example 1.23. Set fetch_rows parameter
 ...
 modparam("presence", "fetch_rows", 1000)
 ...
 
-3.21. integrated_xcap_server (integer)
+3.24. integrated_xcap_server (integer)
 
    Enable the integrated XCAP server connection. This is only required if
    you want to use the pres_update_presentity() function. Setting to 0
@@ -539,7 +605,7 @@ modparam("presence", "fetch_rows", 1000)
 
    Default value is 0.
 
-   Example 1.21. Set integrated_xcap_server parameter
+   Example 1.24. Set integrated_xcap_server parameter
 ...
 modparam("presence", "integrated_xcap_server", 1)
 ...
@@ -573,7 +639,7 @@ modparam("presence", "integrated_xcap_server", 1)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.22. handle_publish usage
+   Example 1.25. handle_publish usage
 ...
         if(is_method("PUBLISH"))
         {
@@ -604,7 +670,7 @@ modparam("presence", "integrated_xcap_server", 1)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.23. handle_subscribe usage
+   Example 1.26. handle_subscribe usage
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
@@ -621,7 +687,7 @@ if(method=="SUBSCRIBE")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.24. pres_auth_status usage
+   Example 1.27. pres_auth_status usage
 ...
 if (method=="MESSAGE") {
     pres_auth_status("$fu", $ru");
@@ -652,7 +718,7 @@ if (method=="MESSAGE") {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.25. pres_refresh_watchers usage
+   Example 1.28. pres_refresh_watchers usage
 ...
 pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 ...
@@ -670,7 +736,7 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.26. pres_update_watchers usage
+   Example 1.29. pres_update_watchers usage
 ...
 pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
@@ -689,7 +755,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.27. pres_update_presentity usage
+   Example 1.30. pres_update_presentity usage
 ...
 pres_update_presentity("$xcapuri(u=>xuid)", "$xcapuri(u=>uri_adoc)", "$xcapuri(u
 =>file)");

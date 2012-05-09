@@ -110,6 +110,9 @@ int query_db_notify(str* pres_uri,pres_ev_t* event, subs_t* watcher_subs );
 
 int publ_notify(presentity_t* p, str pres_uri, str* body, str* offline_etag,
 		str* rules_doc);
+int publ_notify_notifier(str pres_uri, pres_ev_t *event);
+int set_updated(subs_t *sub);
+int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full);
 
 int notify(subs_t* subs, subs_t* watcher_subs, str* n_body,int force_null_body);
 
@@ -120,4 +123,5 @@ char* get_status_str(int flag);
 
 str *get_p_notify_body(str pres_uri, pres_ev_t *event, str *etag, str *contact);
 void free_notify_body(str *body, pres_ev_t *ev);
+void pres_timer_send_notify(unsigned int ticks, void *param);
 #endif

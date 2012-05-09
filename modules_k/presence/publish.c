@@ -85,7 +85,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	str user, domain, etag, event;
 	int n_result_cols= 0;
 	str* rules_doc= NULL;
-
+	int num_watchers = 0;
 
 	LM_DBG("cleaning expired presentity information\n");
 	if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
@@ -214,25 +214,48 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	{
 		LM_DBG("found expired publish for [user]=%.*s  [domanin]=%.*s\n",
 			p[i].p->user.len,p[i].p->user.s, p[i].p->domain.len, p[i].p->domain.s);
-		
-		rules_doc= NULL;
-		
-		if(p[i].p->event->get_rules_doc && 
-		p[i].p->event->get_rules_doc(&p[i].p->user, &p[i].p->domain, &rules_doc)< 0)
+
+		if (pres_notifier_processes > 0)
 		{
-			LM_ERR("getting rules doc\n");
-			goto error;
+			if ((num_watchers = publ_notify_notifier(p[i].uri,
+							p[i].p->event)) < 0)
+			{
+				LM_ERR("Updating watcher records\n");
+				goto error;
+			}
+			if (num_watchers > 0)
+			{
+				if (mark_presentity_for_delete(p[i].p) < 0)
+				{
+					LM_ERR("Marking presentities\n");
+					goto error;
+				}
+			}
 		}
-		if(publ_notify( p[i].p, p[i].uri, NULL, &p[i].p->etag, rules_doc)< 0)
+		else
 		{
-			LM_ERR("sending Notify request\n");
-			goto error;
-		}
-		if(rules_doc)
-		{
-			if(rules_doc->s)
-				pkg_free(rules_doc->s);
-			pkg_free(rules_doc);
+			rules_doc= NULL;
+		
+			if(p[i].p->event->get_rules_doc && 
+				p[i].p->event->get_rules_doc(&p[i].p->user,
+								&p[i].p->domain,
+								&rules_doc)< 0)
+			{
+				LM_ERR("getting rules doc\n");
+				goto error;
+			}
+			if(publ_notify(p[i].p, p[i].uri, NULL, &p[i].p->etag,
+					rules_doc)< 0)
+			{
+				LM_ERR("sending Notify request\n");
+				goto error;
+			}
+			if(rules_doc)
+			{
+				if(rules_doc->s)
+					pkg_free(rules_doc->s);
+				pkg_free(rules_doc);
+			}
 		}
 		rules_doc= NULL;
 		pkg_free(p[i].p);
@@ -247,8 +270,11 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	}
 
 delete_pres:
-	if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 2) < 0) 
-		LM_ERR("failed to delete expired records from DB\n");
+	if (pres_notifier_processes <= 0 || num_watchers == 0)
+	{
+		if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, 2) < 0) 
+			LM_ERR("failed to delete expired records from DB\n");
+	}
 
 	return;
 
@@ -576,6 +602,12 @@ static int fetch_presentity(str furi, str *presentity)
 				n_query_cols, n_result_cols, 0, &result) < 0)
 	{
 		LM_ERR("calling query()\n");
+		return -1;
+	}
+
+	if (result == NULL)
+	{
+		LM_ERR("bad result\n");
 		return -1;
 	}
 

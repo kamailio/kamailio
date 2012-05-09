@@ -100,7 +100,7 @@
         <name>extra_hdrs</name>
         <type>text</type>
         <default/>
-        <description>iExtra headers that must be restored</description>
+        <description>Extra headers that must be restored</description>
     </column>
 
     <column id="callid">

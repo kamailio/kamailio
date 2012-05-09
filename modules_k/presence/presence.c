@@ -72,6 +72,7 @@
 #include "bind_presence.h"
 #include "notify.h"
 #include "../../mod_fix.h"
+#include "../../timer_proc.h"
 
 MODULE_VERSION
 
@@ -145,7 +146,12 @@ int sphere_enable= 0;
 int timeout_rm_subs = 1;
 int send_fast_notify = 1;
 int publ_cache_enabled = 1;
+int pres_waitn_time = 5;
+int pres_notifier_poll_rate = 10;
+int pres_notifier_processes = 1;
 int pres_integrated_xcap_server = 0;
+
+int *pres_notifier_id = NULL;
 
 int phtable_size= 9;
 phtable_t* pres_htable=NULL;
@@ -182,6 +188,9 @@ static param_export_t params[]={
 	{ "xcap_table",             STR_PARAM, &pres_xcap_table.s},
 	{ "clean_period",           INT_PARAM, &clean_period },
 	{ "db_update_period",       INT_PARAM, &db_update_period },
+	{ "waitn_time",             INT_PARAM, &pres_waitn_time },
+	{ "notifier_poll_rate",     INT_PARAM, &pres_notifier_poll_rate },
+	{ "notifier_processes",     INT_PARAM, &pres_notifier_processes },
 	{ "to_tag_pref",            STR_PARAM, &to_tag_pref },
 	{ "expires_offset",         INT_PARAM, &expires_offset },
 	{ "max_expires",            INT_PARAM, &max_expires },
@@ -416,6 +425,26 @@ static int mod_init(void)
 	if(db_update_period>0)
 		register_timer(timer_db_update, 0, db_update_period);
 
+	if (pres_waitn_time <= 0)
+		pres_waitn_time = 5;
+
+	if (pres_notifier_poll_rate <= 0)
+		pres_notifier_poll_rate = 10;
+
+	if (pres_notifier_processes < 0 || subs_dbmode != DB_ONLY)
+		pres_notifier_processes = 0;
+
+	if (pres_notifier_processes > 0)
+	{
+		if ((pres_notifier_id = shm_malloc(sizeof(int) * pres_notifier_processes)) == NULL)
+		{
+			LM_ERR("allocating shared memory\n");
+			return -1;
+		}
+
+		register_basic_timers(pres_notifier_processes);
+	}
+
 	pa_dbf.close(pa_db);
 	pa_db = NULL;
 
@@ -433,8 +462,31 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
-		return 0; /* do nothing for the main process */
+	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
+		return 0;
+
+	if (rank == PROC_MAIN)
+	{
+		int i;
+
+		for (i = 0; i < pres_notifier_processes; i++)
+		{
+			char tmp[21];
+			snprintf(tmp, 21, "PRESENCE NOTIFIER %d", i);
+			pres_notifier_id[i] = i;
+
+			if (fork_basic_utimer(PROC_TIMER, tmp, 1,
+						pres_timer_send_notify,
+						&pres_notifier_id[i],
+						1000000/pres_notifier_poll_rate) < 0)
+			{
+				LM_ERR("Failed to start PRESENCE NOTIFIER %d\n", i);
+				return -1;
+			}
+		}
+
+		return 0;
+	}
 
 	pid = my_pid();
 	
@@ -592,6 +644,9 @@ static void destroy(void)
 
 	if(pres_xcap_db && pres_xcap_dbf.close)
 		pres_xcap_dbf.close(pres_xcap_db);
+
+	if (pres_notifier_id != NULL)
+		shm_free(pres_notifier_id);
 
 	destroy_evlist();
 }
@@ -1005,14 +1060,14 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		goto done;
 	}
 
-    LM_DBG("found %d record-uri in watchers_table\n", result->n);
+	LM_DBG("found %d record-uri in watchers_table\n", result->n);
 	hash_code= core_hash(&pres_uri, &ev->name, shtable_size);
 	subs.db_flag= hash_code;
 
-    /*must do a copy as sphere_check requires database queries */
+	/*must do a copy as sphere_check requires database queries */
 	if(sphere_enable)
 	{
-        n= result->n;
+        	n= result->n;
 		ws_list= (ws_t*)pkg_malloc(n * sizeof(ws_t));
 		if(ws_list== NULL)
 		{
@@ -1132,35 +1187,38 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			LM_ERR("failed to update watcher status\n");
 			goto done;
 		}
-    }
+	}
 
 	pa_dbf.free_result(pa_db, result);
 	result= NULL;
 
 send_notify:
 
-	s= subs_array;
-
-	while(s)
+	if (pres_notifier_processes == 0)
 	{
-		if(notify(s, NULL, NULL, 0)< 0)
-		{
-			LM_ERR( "sending Notify request\n");
-			goto done;
-		}
+		s= subs_array;
 
-		/* delete from database also */
-		if(s->status== TERMINATED_STATUS)
+		while(s)
 		{
-			if(pres_db_delete_status(s)<0)
+			if(notify(s, NULL, NULL, 0)< 0)
 			{
-				err_ret= -1;
-				LM_ERR("failed to delete terminated dialog from database\n");
+				LM_ERR( "sending Notify request\n");
 				goto done;
 			}
-		}
 
-		s= s->next;
+			/* delete from database also */
+			if(s->status== TERMINATED_STATUS)
+			{
+				if(pres_db_delete_status(s)<0)
+				{
+					LM_ERR("failed to delete terminated "
+						"dialog from database\n");
+					goto done;
+				}
+			}
+
+			s= s->next;
+		}
 	}
 
 	free_subs_list(subs_array, PKG_MEM_TYPE, 0);
@@ -1191,8 +1249,8 @@ done:
 
 static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 {
-	db_key_t query_cols[5], db_cols[2];
-	db_val_t query_vals[5], db_vals[2];
+	db_key_t query_cols[5], db_cols[3];
+	db_val_t query_vals[5], db_vals[3];
 	db_key_t result_cols[24];
 	int n_query_cols=0, n_result_cols=0, n_update_cols=0;
 	int event_col, pres_uri_col, watcher_user_col, watcher_domain_col;
@@ -1384,7 +1442,7 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 
 	pa_dbf.free_result(pa_db, result);
 
-	if (subs->status == TERMINATED_STATUS)
+	if (pres_notifier_processes == 0 && subs->status == TERMINATED_STATUS)
 	{
 		/* delete the records */
 		if(pa_dbf.delete(pa_db, query_cols, 0, query_vals, n_query_cols)< 0)
@@ -1408,6 +1466,16 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 	db_vals[n_update_cols].nul = 0; 
 	db_vals[n_update_cols].val.str_val= subs->reason;
 	n_update_cols++;
+
+	db_cols[n_update_cols] = &str_updated_col; 
+	db_vals[n_update_cols].type = DB1_INT;
+	db_vals[n_update_cols].nul = 0; 
+	db_vals[n_update_cols].val.int_val = 
+		core_hash(&subs->callid, &subs->from_tag,
+			  (pres_waitn_time * pres_notifier_poll_rate
+					* pres_notifier_processes) - 1);
+	n_update_cols++;
+
 
 	if(pa_dbf.update(pa_db, query_cols, 0, query_vals,
 				db_cols,db_vals,n_query_cols,n_update_cols) < 0)
