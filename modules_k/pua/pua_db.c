@@ -37,10 +37,6 @@
 #include "pua.h"
 #include "pua_db.h"
 
-/* database connection */
-extern db1_con_t *pua_db;
-extern int pua_fetch_rows;
-
 /* database colums */
 static str str_id_col = str_init( "id" );
 static str str_pres_uri_col = str_init("pres_uri");

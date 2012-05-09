@@ -297,6 +297,16 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		LM_ERR("null callback parameter\n");
 		return;
 	}
+
+	if (dbmode == PUA_DB_ONLY && pua_dbf.start_transaction)
+	{
+		if (pua_dbf.start_transaction(pua_db) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto error;
+		}
+	}
+
 	LM_DBG("completed with status %d\n",ps->code) ;
 	hentity= (ua_pres_t*)(*ps->param);
 	hash_code= core_hash(hentity->pres_uri,hentity->watcher_uri,
@@ -676,6 +686,16 @@ done:
 		hentity->flag= flag;
 		run_pua_callbacks( hentity, msg);
 	}
+
+	if (dbmode == PUA_DB_ONLY && pua_dbf.end_transaction)
+	{
+		if (pua_dbf.end_transaction(pua_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto error;
+		}
+	}
+
 	goto end;
 
 error:	
@@ -683,6 +703,12 @@ error:
 	{
 		if (presentity->remote_contact.s) shm_free(presentity->remote_contact.s);
 	 	shm_free(presentity);
+	}
+
+	if (dbmode == PUA_DB_ONLY && pua_dbf.abort_transaction)
+	{
+		if (pua_dbf.abort_transaction(pua_db) < 0)
+			LM_ERR("in abort_transaction\n");
 	}
 
 end:
@@ -889,7 +915,7 @@ int send_subscribe(subs_info_t* subs)
 	ua_pres_t* presentity= NULL;
 	str met= {"SUBSCRIBE", 9};
 	str* str_hdr= NULL;
-	int ret= 0;
+	int ret= -1;
 	unsigned int hash_code=0;
 	ua_pres_t* hentity= NULL;
 	int expires;
@@ -924,6 +950,15 @@ int send_subscribe(subs_info_t* subs)
 	{
 		LM_ERR("while building extra headers\n");
 		return -1;
+	}
+
+	if (dbmode == PUA_DB_ONLY && pua_dbf.start_transaction)
+	{
+		if (pua_dbf.start_transaction(pua_db) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto error;
+		}
 	}
 
 	/* generation of hash and getting lock moved from here to further down */
@@ -980,8 +1015,7 @@ insert:
 		{
 			LM_ERR("while building callback"
 					" param\n");
-			ret= -1;
-			goto done;
+			goto error;
 		}
 		hentity->flag= flag;
 
@@ -1005,7 +1039,11 @@ insert:
 				uac_r.dialog = 0;
 			}
 			shm_free(hentity);
-			goto  done;
+
+			/* Although this is an error must not return -1 as the
+			   calling function must continue processing. */
+			ret = 0;
+			goto error;
 		}
 
 		/* Now create a temporary hash table entry.
@@ -1022,7 +1060,7 @@ insert:
 		if(presentity== NULL)
 		{
 			LM_ERR("no more share memory\n");
-			goto done;
+			goto error;
 		}
 		memset(presentity, 0, size);
 		size= sizeof(ua_pres_t);
@@ -1111,10 +1149,9 @@ insert:
 		if(td== NULL)
 		{
 			LM_ERR("while building tm dlg_t structure");
-			ret= -1;
 			if (dbmode!=PUA_DB_ONLY)
 				lock_release(&HashT->p_records[hash_code].lock);
-			goto done;
+			goto error;
 		}
 				
 		hentity= subs_cbparam_indlg(presentity, expires, REQ_OTHER);
@@ -1123,8 +1160,7 @@ insert:
 			LM_ERR("while building callback param\n");
 			if (dbmode!=PUA_DB_ONLY)
 				lock_release(&HashT->p_records[hash_code].lock);
-			ret= -1;
-			goto done;
+			goto error;
 		}
 		if (dbmode!=PUA_DB_ONLY)
 			lock_release(&HashT->p_records[hash_code].lock);
@@ -1139,14 +1175,33 @@ insert:
 			shm_free(hentity);
 			hentity= NULL;
 			LM_ERR("while sending request with t_request\n");
-			goto done;
+			goto error;
 		}
 	}
 
 
 done:
+	if (dbmode == PUA_DB_ONLY && pua_dbf.end_transaction)
+	{
+		if (pua_dbf.end_transaction(pua_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto error;
+		}
+	}
+
+	ret = 0;
+
+error:
 	pua_free_tm_dlg(td);
 	pkg_free(str_hdr);
 	free_results_puadb(res);
+
+	if (dbmode == PUA_DB_ONLY && pua_dbf.abort_transaction)
+	{
+		if (pua_dbf.abort_transaction(pua_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+
 	return ret;
 }

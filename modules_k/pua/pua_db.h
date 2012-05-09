@@ -47,8 +47,6 @@
 #define PUA_VERSION (1<<16)
 #define PUA_EXTRA_HEADERS (1<<17)
 
-extern db_func_t pua_dbf;
-
 void free_results_puadb( db1_res_t *res );
 int is_dialog_puadb(ua_pres_t *pres);
 int get_record_id_puadb(ua_pres_t *pres, str **rec_id );

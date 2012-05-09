@@ -213,6 +213,15 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	dbpres.watcher_uri = &watcher_uri;
 	dbpres.extra_headers = &extra_headers;
 
+	if (dbmode == PUA_DB_ONLY && pua_dbf.start_transaction)
+	{
+		if (pua_dbf.start_transaction(pua_db) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto error;
+		}
+	}
+
 	if(ps->param== NULL|| *ps->param== NULL)
 	{
 		LM_ERR("NULL callback parameter\n");
@@ -422,6 +431,16 @@ done:
 	}
 
 	if (res) free_results_puadb(res);
+
+	if (dbmode == PUA_DB_ONLY && pua_dbf.end_transaction)
+	{
+		if (pua_dbf.end_transaction(pua_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto error;
+		}
+	}
+
 	return;
 
 error:
@@ -433,6 +452,13 @@ error:
 	if(presentity) shm_free(presentity);
 
 	if (res) free_results_puadb(res);
+
+	if (dbmode == PUA_DB_ONLY && pua_dbf.abort_transaction)
+	{
+		if (pua_dbf.abort_transaction(pua_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+
 	return;
 }	
 
@@ -454,11 +480,20 @@ int send_publish( publ_info_t* publ )
 	db1_res_t *res=NULL;
 	ua_pres_t dbpres; 
 	str pres_uri={0,0}, watcher_uri={0,0}, extra_headers={0,0};
+	int ret = -1;
 
 	LM_DBG("pres_uri=%.*s\n", publ->pres_uri->len, publ->pres_uri->s );
 	
-	/* get event from list */
+	if (dbmode == PUA_DB_ONLY && pua_dbf.start_transaction)
+	{
+		if (pua_dbf.start_transaction(pua_db) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto error;
+		}
+	}
 
+	/* get event from list */
 	ev= get_event(publ->event);
 	if(ev== NULL)
 	{
@@ -495,8 +530,8 @@ int send_publish( publ_info_t* publ )
 	{
 		if (dbmode!=PUA_DB_ONLY) 
 			lock_release(&HashT->p_records[hash_code].lock);
-		free_results_puadb(res);
-		return 418;
+		ret = 418;
+		goto error;
 	}
 
 	if(publ->flag & INSERT_TYPE)
@@ -521,14 +556,14 @@ insert:
 		{
 			LM_DBG("request for a publish with expires 0 and"
 					" no record found\n");
-			free_results_puadb(res);
-			return 0;
+			goto done;
+			
 		}
 		if(publ->body== NULL)
 		{
 			LM_ERR("New PUBLISH and no body found- invalid request\n");
-			free_results_puadb(res);
-			return ERR_PUBLISH_NO_BODY;
+			ret = ERR_PUBLISH_NO_BODY;
+			goto error;
 		}
 	}
 	else
@@ -541,8 +576,7 @@ insert:
 			LM_ERR("while allocating memory\n");
 			if (dbmode!=PUA_DB_ONLY) 
 				lock_release(&HashT->p_records[hash_code].lock);
-			free_results_puadb(res);
-			return -1;
+			goto error;
 		}
 		memcpy(etag.s, presentity->etag.s, presentity->etag.len);
 		etag.len= presentity->etag.len;
@@ -650,25 +684,17 @@ send_publish:
 		goto error;
 	}
 
-	pkg_free(str_hdr);
+done:
+	ret = 0;
 
-	if( body && ret_code)
+	if (dbmode == PUA_DB_ONLY && pua_dbf.end_transaction)
 	{
-		if(body->s)
-			xmlFree(body->s);
-		pkg_free(body);
-	}	
-	if(etag.s)
-		pkg_free(etag.s);
-	if(tuple_id)
-	{
-		if(tuple_id->s)
-			pkg_free(tuple_id->s);
-		pkg_free(tuple_id);
+		if (pua_dbf.end_transaction(pua_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto error;
+		}
 	}
-
-	free_results_puadb(res);
-	return 0;
 
 error:
 	if(etag.s)
@@ -692,7 +718,14 @@ error:
 		pkg_free(tuple_id);
 	}
 	free_results_puadb(res);
-	return -1;
+
+	if (dbmode == PUA_DB_ONLY && pua_dbf.abort_transaction)
+	{
+		if (pua_dbf.abort_transaction(pua_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+
+	return ret;
 }
 
 ua_pres_t* publish_cbparam(publ_info_t* publ,str* body,str* tuple_id,

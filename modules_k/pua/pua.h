@@ -26,6 +26,7 @@
 #define PUBLISH_H
 
 #include "../../str.h"
+#include "../../lib/srdb1/db.h"
 #include "hash.h"
 
 #define INSERT_TYPE      1<<1
@@ -53,5 +54,10 @@ int reginfo_increase_version;
 
 extern int update_pua(ua_pres_t* p);
 extern int clean_puadb( int update_period, int min_expires );
+
+extern db_func_t pua_dbf;
+extern db1_con_t *pua_db;
+extern int pua_fetch_rows;
+
 
 #endif
