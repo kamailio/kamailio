@@ -44,6 +44,7 @@
 #include "../../parser/parser_f.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
+#include "../../parser/parse_uri.h"
 #include "../../usr_avp.h"
 #include "../../mod_fix.h"
 #include "../../mem/mem.h"
@@ -319,7 +320,9 @@ int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags)
 	int iflags;
 	int ret;
 	hdr_field_t *hdr;
-	sip_uri_t *uri;
+	sip_uri_t *uri = NULL;
+	sip_uri_t *turi = NULL;
+	sip_uri_t *furi = NULL;
 
 	if ((_m->REQ_METHOD == METHOD_ACK) || (_m->REQ_METHOD == METHOD_CANCEL)) {
 		return AUTH_OK;
@@ -367,17 +370,43 @@ int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags)
 	if(ret==AUTH_OK && (iflags&AUTH_CHECK_ID_F)) {
 		hdr = (_m->proxy_auth==0)?_m->authorization:_m->proxy_auth;
 		srealm = ((auth_body_t*)(hdr->parsed))->digest.username.user;
-		if(_m->REQ_METHOD==METHOD_REGISTER) {
-			if((uri=parse_to_uri(_m))==NULL)
+			
+		if((furi=parse_from_uri(_m))==NULL)
+			return AUTH_ERROR;
+		
+		if(_m->REQ_METHOD==METHOD_REGISTER || _m->REQ_METHOD==METHOD_PUBLISH) {
+			if((turi=parse_to_uri(_m))==NULL)
 				return AUTH_ERROR;
+			uri = turi;
 		} else {
-			if((uri=parse_from_uri(_m))==NULL)
-				return AUTH_ERROR;
+			uri = furi;
 		}
-		if(srealm.len==uri->user.len
-					&& strncmp(srealm.s, uri->user.s, srealm.len)==0)
-			return ret;
-		return AUTH_USER_MISMATCH;
+		if(srealm.len!=uri->user.len
+					|| strncmp(srealm.s, uri->user.s, srealm.len)!=0)
+			return AUTH_USER_MISMATCH;
+
+		if(_m->REQ_METHOD==METHOD_REGISTER || _m->REQ_METHOD==METHOD_PUBLISH) {
+			/* check from==to */
+			if(furi->user.len!=turi->user.len
+					|| strncmp(furi->user.s, turi->user.s, furi->user.len)!=0)
+				return AUTH_USER_MISMATCH;
+			if(use_domain!=0 && (furi->host.len!=turi->host.len
+					|| strncmp(furi->host.s, turi->host.s, furi->host.len)!=0))
+				return AUTH_USER_MISMATCH;
+			/* check r-uri==from for publish */
+			if(_m->REQ_METHOD==METHOD_PUBLISH) {
+				if(parse_sip_msg_uri(_m)<0)
+					return AUTH_ERROR;
+				uri = &_m->parsed_uri;
+				if(furi->user.len!=uri->user.len
+						|| strncmp(furi->user.s, uri->user.s, furi->user.len)!=0)
+					return AUTH_USER_MISMATCH;
+				if(use_domain!=0 && (furi->host.len!=uri->host.len
+						|| strncmp(furi->host.s, uri->host.s, furi->host.len)!=0))
+					return AUTH_USER_MISMATCH;
+				}
+		}
+		return AUTH_OK;
 	}
 
 	return ret;
