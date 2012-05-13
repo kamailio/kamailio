@@ -944,7 +944,7 @@ void rls_notify_callback( struct cell *t, int type, struct tmcb_params *ps)
 		db_val_t db_vals[2];
 		unsigned int hash_code;
 		subs_t subs;
-		
+
 		memset(&subs, 0, sizeof(subs_t));
 
 		subs.to_tag= ((dialog_id_t*)(*ps->param))->to_tag;
@@ -953,9 +953,15 @@ void rls_notify_callback( struct cell *t, int type, struct tmcb_params *ps)
 
 		if (dbmode != RLS_DB_ONLY)
 		{
+			/* delete from cache table */
+			hash_code= core_hash(&subs.callid, &subs.to_tag , hash_size);
+
+			if(pres_delete_shtable(rls_table,hash_code, subs.to_tag)< 0)
+			{
+				LM_ERR("record not found in hash table\n");
+			}
+	
 			/* delete from database table */
-
-
 			if (rls_dbf.use_table(rls_db, &rlsubs_table) < 0) 
 			{
 				LM_ERR("in use_table\n");
@@ -976,22 +982,11 @@ void rls_notify_callback( struct cell *t, int type, struct tmcb_params *ps)
 			if (rls_dbf.delete(rls_db, db_keys, 0, db_vals, 2) < 0) 
 				LM_ERR("cleaning expired messages\n");	
 		}
-
-		/* delete from cache table */
-		if (dbmode == RLS_DB_ONLY)
+		else
 		{
 			if (delete_rlsdb(&subs.callid, &subs.to_tag, NULL) < 0 )
 			{
 				LM_ERR( "unable to delete record from DB\n" );
-			}
-		}
-		else
-		{
-			hash_code= core_hash(&subs.callid, &subs.to_tag , hash_size);
-
-			if(pres_delete_shtable(rls_table,hash_code, subs.to_tag)< 0)
-			{
-				LM_ERR("record not found in hash table\n");
 			}
 		}
 	}	

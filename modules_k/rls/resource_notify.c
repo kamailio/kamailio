@@ -898,7 +898,7 @@ static void timer_send_full_state_notifies(int round)
 		goto done;
 	}
 
-	if (rls_dbf.start_transaction)
+	if (dbmode == RLS_DB_ONLY && rls_dbf.start_transaction)
 	{
 		if (rls_dbf.start_transaction(rls_db) < 0)
 		{
@@ -926,7 +926,7 @@ static void timer_send_full_state_notifies(int round)
 		goto done;
 	}
 
-	if (rls_dbf.end_transaction)
+	if (dbmode == RLS_DB_ONLY && rls_dbf.end_transaction)
 	{
 		if (rls_dbf.end_transaction(rls_db) < 0)
 		{
@@ -1011,7 +1011,7 @@ done:
 		rls_dbf.free_result(rls_db, result);
 	if (doc != NULL)
 		xmlFreeDoc(doc);
-	if (rls_dbf.abort_transaction)
+	if (dbmode == RLS_DB_ONLY && rls_dbf.abort_transaction)
 	{
 		if (rls_dbf.abort_transaction(rls_db) < 0)
 			LM_ERR("in abort_transaction\n");

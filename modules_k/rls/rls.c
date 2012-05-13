@@ -721,7 +721,11 @@ static int child_init(int rank)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
-	rls_db = rls_dbf.init(&db_url);
+	/* In DB only mode do not pool the connections where possible. */
+	if (dbmode == RLS_DB_ONLY && rls_dbf.init2)
+		rls_db = rls_dbf.init2(&db_url, DB_POOLING_NONE);
+	else
+		rls_db = rls_dbf.init(&db_url);
 	if (!rls_db)
 	{
 		LM_ERR("child %d: Error while connecting database\n",
@@ -744,7 +748,11 @@ static int child_init(int rank)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
-	rlpres_db = rlpres_dbf.init(&rlpres_db_url);
+	/* In DB only mode do not pool the connections where possible. */
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.init2)
+		rlpres_db = rlpres_dbf.init2(&db_url, DB_POOLING_NONE);
+	else
+		rlpres_db = rlpres_dbf.init(&db_url);
 	if (!rlpres_db)
 	{
 		LM_ERR("child %d: Error while connecting database\n",
@@ -794,7 +802,11 @@ static int mi_child_init(void)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
-	rls_db = rls_dbf.init(&db_url);
+	/* In DB only mode do not pool the connections where possible. */
+	if (dbmode == RLS_DB_ONLY && rls_dbf.init2)
+		rls_db = rls_dbf.init2(&db_url, DB_POOLING_NONE);
+	else
+		rls_db = rls_dbf.init(&db_url);
 	if (!rls_db)
 	{
 		LM_ERR("Error while connecting database\n");
@@ -816,7 +828,11 @@ static int mi_child_init(void)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
-	rlpres_db = rlpres_dbf.init(&rlpres_db_url);
+	/* In DB only mode do not pool the connections where possible. */
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.init2)
+		rlpres_db = rlpres_dbf.init2(&db_url, DB_POOLING_NONE);
+	else
+		rlpres_db = rlpres_dbf.init(&db_url);
 	if (!rlpres_db)
 	{
 		LM_ERR("Error while connecting database\n");
