@@ -296,7 +296,11 @@ static int child_init(int rank)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
-	pua_db = pua_dbf.init(&db_url);
+	/* In DB only mode do not pool the connections where possible. */
+	if (dbmode == PUA_DB_ONLY && pua_dbf.init2)
+		pua_db = pua_dbf.init2(&db_url, DB_POOLING_NONE);
+	else
+		pua_db = pua_dbf.init(&db_url);
 	if (!pua_db)
 	{
 		LM_ERR("Child %d: connecting to database failed\n", rank);
@@ -321,7 +325,11 @@ static int mi_child_init(void)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
-	pua_db = pua_dbf.init(&db_url);
+	/* In DB only mode do not pool the connections where possible. */
+	if (dbmode == PUA_DB_ONLY && pua_dbf.init2)
+		pua_db = pua_dbf.init2(&db_url, DB_POOLING_NONE);
+	else
+		pua_db = pua_dbf.init(&db_url);
 	if (!pua_db)
 	{
 		LM_ERR("connecting to database failed\n");
