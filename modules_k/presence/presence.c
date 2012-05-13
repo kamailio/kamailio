@@ -498,9 +498,12 @@ static int child_init(int rank)
 		LM_CRIT("child_init: database not bound\n");
 		return -1;
 	}
-	if (pa_db)
-		return 0;
-	pa_db = pa_dbf.init(&db_url);
+	/* Do not pool the connections where possible when running notifier
+       processes. */
+	if (pres_notifier_processes > 0 && pa_dbf.init2)
+		pa_db = pa_dbf.init2(&db_url, DB_POOLING_NONE);
+	else
+		pa_db = pa_dbf.init(&db_url);
 	if (!pa_db)
 	{
 		LM_ERR("child %d: unsuccessful connecting to database\n", rank);
@@ -564,9 +567,12 @@ static int mi_child_init(void)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
-	if (pa_db)
-		return 0;
-	pa_db = pa_dbf.init(&db_url);
+	/* Do not pool the connections where possible when running notifier
+       processes. */
+	if (pres_notifier_processes > 0 && pa_dbf.init2)
+		pa_db = pa_dbf.init2(&db_url, DB_POOLING_NONE);
+	else
+		pa_db = pa_dbf.init(&db_url);
 	if (!pa_db)
 	{
 		LM_ERR("connecting database\n");
