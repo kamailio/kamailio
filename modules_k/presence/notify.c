@@ -2000,7 +2000,7 @@ static int unset_watchers_updated_winfo(str *pres_uri)
 	db_op_t query_ops[2];
 	db1_res_t *result = NULL;
 	int n_query_cols = 0;
-	int ncols, ret = -1;
+	int ret = -1;
 	str winfo = str_init("presence.winfo");
 
 	/* If this is the only presence.winfo dialog awaiting
@@ -2051,10 +2051,8 @@ static int unset_watchers_updated_winfo(str *pres_uri)
 		LM_ERR("bad result\n");
 		goto error;
 	}
-	else
-		ncols = result->n;
 
-	if (ncols <= 1)
+	if (RES_ROW_N(result) <= 0)
 	{
 		query_ops[0] = OP_EQ;
 		query_ops[1] = OP_NEQ;
@@ -2067,7 +2065,10 @@ static int unset_watchers_updated_winfo(str *pres_uri)
 			goto error;
 		}
 
-		ret = 1;
+		if (pa_dbf.affected_rows)
+			ret = pa_dbf.affected_rows(pa_db);
+		else
+			ret = 0;
 	}
 	else
 		ret = 0;
@@ -2077,62 +2078,7 @@ error:
 	return ret;
 }
 
-static int winfo_dialog_pending(str *pres_uri)
-{
-	db_key_t query_cols[3], result_cols[1];
-	db_val_t query_vals[3];
-	db1_res_t *result = NULL;
-	int n_query_cols = 0, ret = -1;
-	str winfo = str_init("presence.winfo");
-
-	query_cols[n_query_cols] = &str_presentity_uri_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val.s = pres_uri->s;
-	query_vals[n_query_cols].val.str_val.len = pres_uri->len;
-	n_query_cols++;
-
-	query_cols[n_query_cols] = &str_event_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = winfo;
-	n_query_cols++;
-
-	query_cols[n_query_cols] = &str_updated_col;
-	query_vals[n_query_cols].type = DB1_INT;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val = UPDATED_TYPE;
-	n_query_cols++;
-
-	result_cols[0] = &str_id_col;
-
-	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
-	{
-		LM_ERR("use table failed\n");
-		goto error;
-	}
-
-	if (pa_dbf.query(pa_db, query_cols, 0, query_vals,
-			 result_cols, n_query_cols, 1, 0, &result) < 0)
-	{
-		LM_ERR("in sql query\n");
-		goto error;
-	}
-
-	if (result == NULL)
-	{
-		LM_ERR("bad result\n");
-		goto error;
-	}
-	else
-		ret = result->n;
-
-error:
-	if (result) pa_dbf.free_result(pa_db, result);
-	return ret;
-}
-
-static int watchers_awaiting_update(str *pres_uri, pres_ev_t *event)
+static int dialogs_awaiting_update(str *pres_uri, str event)
 {
 	db_key_t query_cols[3], result_cols[1];
 	db_val_t query_vals[3];
@@ -2152,7 +2098,7 @@ static int watchers_awaiting_update(str *pres_uri, pres_ev_t *event)
 	query_cols[n_query_cols] = &str_event_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = event->name;
+	query_vals[n_query_cols].val.str_val = event;
 	query_ops[n_query_cols] = OP_EQ;
 	n_query_cols++;
 
@@ -2184,7 +2130,7 @@ static int watchers_awaiting_update(str *pres_uri, pres_ev_t *event)
 		goto error;
 	}
 	else
-		ret = result->n;
+		ret = RES_ROW_N(result);
 
 error:
 	if (result) pa_dbf.free_result(pa_db, result);
@@ -2199,7 +2145,7 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 	db1_res_t *result = NULL;
 	int n_query_cols = 0, n_result_cols = 0, n_update_cols = 0;
 	int callid_col, from_tag_col, to_tag_col;
-	int i, ret = -1;
+	int i, ret = -1, count;
 	str callid, from_tag, to_tag;
 
 	query_cols[n_query_cols] = &str_presentity_uri_col;
@@ -2238,13 +2184,14 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 		goto error;
 	}
 
-	if (result->n <= 0)
+	if (RES_ROW_N(result) <= 0)
 	{
 		ret = 0;
 		goto done;
 	}
 
 	rows = RES_ROWS(result);
+	count = RES_ROW_N(result);
 	for (i = 0; i < RES_ROW_N(result); i++)
 	{
 		values = ROW_VALUES(&rows[i]);
@@ -2297,9 +2244,12 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 			LM_ERR("in sql query\n");
 			goto error;
 		}
+
+		if (pa_dbf.affected_rows)
+			if (pa_dbf.affected_rows(pa_db) == 0) count--;
 	}
 
-	ret = 1;
+	ret = count; 
 
 done:
 error:
@@ -2351,7 +2301,10 @@ int set_updated(subs_t *sub)
 		return -1;
 	}
 
-	return 0;
+	if (pa_dbf.affected_rows)
+		return pa_dbf.affected_rows(pa_db);
+	else
+		return 0;
 }
 
 static watcher_t *build_watchers_list(subs_t *sub)
@@ -2415,7 +2368,7 @@ static watcher_t *build_watchers_list(subs_t *sub)
 		goto error;
 	}
 
-	if (result->n <= 0)
+	if (RES_ROW_N(result) <= 0)
 		goto done;
 
 	rows = RES_ROWS(result);
@@ -2445,6 +2398,43 @@ error:
 	return NULL;
 }
 
+static int cleanup_missing_dialog(subs_t *sub)
+{
+	int ret = -1, num_other_watchers = 0;
+
+	if (sub->event->type & WINFO_TYPE)
+	{
+		if (unset_watchers_updated_winfo(&sub->pres_uri) < 0)
+		{
+			LM_ERR("resetting updated_winfo flags\n");
+			goto error;
+		}
+	}
+	else if (sub->event->type & PUBL_TYPE)
+	{
+		if ((num_other_watchers = dialogs_awaiting_update(
+					&sub->pres_uri, sub->event->name)) < 0)
+		{
+			LM_ERR("checking watchers\n");
+			goto error;
+		}
+		else if (num_other_watchers == 0)
+		{
+			if (delete_offline_presentities(&sub->pres_uri,
+							sub->event) < 0)
+			{
+				LM_ERR("deleting presentity\n");
+				goto error;
+			}
+		}
+	}
+
+	ret = 0;
+
+error:
+	return ret;
+}
+
 static int notifier_notify(subs_t *sub, int *updated)
 {
 	str *nbody = NULL;
@@ -2453,50 +2443,71 @@ static int notifier_notify(subs_t *sub, int *updated)
 
 	*updated = 0;
 
-	if (sub->expires == 0) /* Terminating dialog NOTIFY */
+	/* Terminating dialog NOTIFY */
+	if (sub->expires == 0 || sub->status == TERMINATED_STATUS)
 	{
 		sub->status = TERMINATED_STATUS;
 
 		if (sub->event->type & WINFO_TYPE)
 		{
-			sub->updated = NO_UPDATE_TYPE;
-
 			if (unset_watchers_updated_winfo(&sub->pres_uri) < 0)
 			{
-				LM_ERR("resetting updated_winfo flags\n");
-				goto error;
+				/* Make sure this gets tried again next time */
+				LM_WARN("resetting updated_winfo flags\n");
+				*updated = 1;
+				ret = 0;
+				goto done;
 			}
 		}
 		else
 		{
+			str winfo = str_init("presence.winfo");
+			int num_other_watchers, num_winfos;
+
 			if (sub->event->type & PUBL_TYPE)
 			{
-				int tmp = watchers_awaiting_update(&sub->pres_uri,
-									sub->event);
-				if (tmp < 0)
+				if ((num_other_watchers = dialogs_awaiting_update(
+						&sub->pres_uri, sub->event->name)) < 0)
 				{
 					LM_ERR("checking watchers\n");
 					goto error;
 				}
-				else if (tmp == 0)
+				else if (num_other_watchers == 0)
 					attempt_delete_presentities = 1;
 			}
 
-			if (sub->updated_winfo == UPDATED_TYPE
-				&& winfo_dialog_pending(&sub->pres_uri) > 0)
+			if (sub->event->wipeer)
 			{
+				if ((num_winfos = dialogs_awaiting_update(
+							&sub->pres_uri,
+							winfo)) < 0)
+				{
+					LM_ERR("checking winfos\n");
+					goto error;
+				}
+
+				if (sub->updated_winfo == UPDATED_TYPE && num_winfos > 0)
+				{
 					*updated = 1;
 					ret = 0;
 					goto done;
+				}
 			}
 		}
 	}
 	else /* Non-terminating dialog */
 	{
-		sub->updated = NO_UPDATE_TYPE;
-
 		if (sub->event->type & WINFO_TYPE) /* presence.winfo dialog */
 		{
+			if (unset_watchers_updated_winfo(&sub->pres_uri) < 0)
+			{
+				/* Make sure this gets tried again next time */
+				LM_WARN("resetting updated_winfo flags\n");
+				*updated = 1;
+				ret = 0;
+				goto done;
+			}
+
 			if (sub->updated_winfo == NO_UPDATE_TYPE)
 			{
 				/* Partial notify if
@@ -2527,27 +2538,21 @@ static int notifier_notify(subs_t *sub, int *updated)
 					goto error;
 				}
 
-				if (unset_watchers_updated_winfo(
-							&sub->pres_uri) < 0)
-				{
-					LM_ERR("resetting updated_winfo "
-					       "flags\n");
-					goto error;
-				}
 			}
 			else	/* Full presence.winfo NOTIFY */
 				sub->updated_winfo = NO_UPDATE_TYPE;
 		}
 		else if (sub->event->type & PUBL_TYPE)
 		{
-			int tmp = watchers_awaiting_update(&sub->pres_uri,
-								sub->event);
-			if (tmp < 0)
+			int num_other_watchers;
+
+			if ((num_other_watchers = dialogs_awaiting_update(
+					&sub->pres_uri, sub->event->name)) < 0)
 			{
 				LM_ERR("checking watchers\n");
 				goto error;
 			}
-			else if (tmp == 0)
+			else if (num_other_watchers == 0)
 				attempt_delete_presentities = 1;
 		}
 		else if (!send_fast_notify)
@@ -2563,6 +2568,8 @@ static int notifier_notify(subs_t *sub, int *updated)
 		goto error;
 	}
 
+	ret = 1;
+
 done:
 	if (attempt_delete_presentities)
 	{
@@ -2573,8 +2580,6 @@ done:
 		}
 	}
 
-	ret = 1;
-
 error:
 	free_notify_body(nbody, sub->event);
 	free_watcher_list(watchers);
@@ -2584,7 +2589,7 @@ error:
 
 int process_dialogs(int round, int presence_winfo)
 {
-	db_key_t query_cols[3], result_cols[20], update_cols[4];
+	db_key_t query_cols[3], result_cols[18], update_cols[4];
 	db_val_t query_vals[3], update_vals[4], *values, *dvalues;
 	db_op_t query_ops[2];
 	db_row_t *rows, *drows;
@@ -2596,6 +2601,7 @@ int process_dialogs(int round, int presence_winfo)
 	int rroute_col, event_id_col, reason_col, event_col, lcseq_col;
 	int rcseq_col, status_col, version_col, updated_winfo_col, expires_col;
 	int i, notify_sent = 0, cached_updated_winfo, ret = -1;
+	int end_transaction = 0;
 	subs_t sub;
 	str ev_sname, winfo = str_init("presence.winfo");
 	event_t parsed_event;
@@ -2619,9 +2625,11 @@ int process_dialogs(int round, int presence_winfo)
 	query_ops[n_query_cols] = presence_winfo ? OP_EQ : OP_NEQ;
 	n_query_cols++;
 
+	result_cols[pres_uri_col = n_result_cols++] = &str_presentity_uri_col;
 	result_cols[callid_col = n_result_cols++] = &str_callid_col;
 	result_cols[to_tag_col = n_result_cols++] = &str_to_tag_col;
 	result_cols[from_tag_col = n_result_cols++] = &str_from_tag_col;
+	result_cols[event_col = n_result_cols++] = &str_event_col;
 	
 	update_cols[n_update_cols] = &str_updated_col;
 	update_vals[n_update_cols].type = DB1_INT;
@@ -2687,9 +2695,17 @@ int process_dialogs(int round, int presence_winfo)
 		memset(&sub, 0, sizeof(subs_t));
 		values = ROW_VALUES(&rows[i]);
 
+		EXTRACT_STRING(sub.pres_uri, VAL_STRING(&values[pres_uri_col]));
 		EXTRACT_STRING(sub.callid, VAL_STRING(&values[callid_col]));
 		EXTRACT_STRING(sub.to_tag, VAL_STRING(&values[to_tag_col]));
 		EXTRACT_STRING(sub.from_tag, VAL_STRING(&values[from_tag_col]));
+		EXTRACT_STRING(ev_sname, VAL_STRING(&values[event_col]));
+		sub.event = contains_event(&ev_sname, &parsed_event);
+		if (sub.event == NULL)
+		{
+			LM_ERR("event not found and set to NULL\n");
+			goto delete_dialog;
+		}
 
 		query_cols[n_query_cols] = &str_callid_col;
 		query_vals[n_query_cols].type = DB1_STR;
@@ -2709,7 +2725,6 @@ int process_dialogs(int round, int presence_winfo)
 		query_vals[n_query_cols].val.str_val = sub.from_tag;
 		n_query_cols++;
 
-		result_cols[pres_uri_col = n_result_cols++] = &str_presentity_uri_col;
 		result_cols[tuser_col = n_result_cols++] = &str_to_user_col;
 		result_cols[tdomain_col = n_result_cols++] = &str_to_domain_col;
 		result_cols[fuser_col = n_result_cols++] = &str_from_user_col;
@@ -2722,7 +2737,6 @@ int process_dialogs(int round, int presence_winfo)
 		result_cols[rroute_col = n_result_cols++] = &str_record_route_col;
 		result_cols[event_id_col = n_result_cols++] = &str_event_id_col;
 		result_cols[reason_col = n_result_cols++] = &str_reason_col;
-		result_cols[event_col = n_result_cols++] = &str_event_col;
 		result_cols[lcseq_col = n_result_cols++] = &str_local_cseq_col;
 		result_cols[rcseq_col = n_result_cols++] = &str_remote_cseq_col;
 		result_cols[status_col = n_result_cols++] = &str_status_col;
@@ -2738,6 +2752,7 @@ int process_dialogs(int round, int presence_winfo)
 				goto error;
 			}
 		}
+		end_transaction = 1;
 
 		if (pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols,
 				 n_query_cols, n_result_cols, 0, &dialog) < 0)
@@ -2745,11 +2760,21 @@ int process_dialogs(int round, int presence_winfo)
 			LM_ERR("in sql query\n");
 			goto error;
 		}
-		if (dialog == NULL || dialog->n <= 0)
+
+		if (dialog == NULL)
 		{
-			LM_ERR("no records found\n");
+			LM_ERR("bad result\n");
 			goto error;
 		}
+
+		if (dialog->n <= 0)
+		{
+			LM_WARN("record not found\n");
+			if (cleanup_missing_dialog(&sub) < 0)
+				LM_ERR("cleaning up after missing record\n");
+			goto next_dialog;
+		}
+
 		if (dialog->n > 1)
 		{
 			LM_ERR("multiple records found\n");
@@ -2759,7 +2784,6 @@ int process_dialogs(int round, int presence_winfo)
 		drows = RES_ROWS(dialog);
 		dvalues = ROW_VALUES(drows);
 
-		EXTRACT_STRING(sub.pres_uri, VAL_STRING(&dvalues[pres_uri_col]));
 		EXTRACT_STRING(sub.to_user, VAL_STRING(&dvalues[tuser_col]));
 		EXTRACT_STRING(sub.to_domain, VAL_STRING(&dvalues[tdomain_col]));
 		EXTRACT_STRING(sub.from_user, VAL_STRING(&dvalues[fuser_col]));
@@ -2772,13 +2796,6 @@ int process_dialogs(int round, int presence_winfo)
 		EXTRACT_STRING(sub.record_route, VAL_STRING(&dvalues[rroute_col]));
 		EXTRACT_STRING(sub.event_id, VAL_STRING(&dvalues[event_id_col]));
 		EXTRACT_STRING(sub.reason, VAL_STRING(&dvalues[reason_col]));
-		EXTRACT_STRING(ev_sname, VAL_STRING(&dvalues[event_col]));
-		sub.event = contains_event(&ev_sname, &parsed_event);
-		if (sub.event == NULL)
-		{
-			LM_ERR("event not found and set to NULL\n");
-			goto delete_dialog;
-		}
 
 		sub.local_cseq = VAL_INT(&dvalues[lcseq_col]) + 1;
 		sub.remote_cseq = VAL_INT(&dvalues[rcseq_col]);
@@ -2800,7 +2817,21 @@ int process_dialogs(int round, int presence_winfo)
 		{
 			LM_ERR("sending NOTIFY request\n");
 
-			/* On send error remove the dialog and continue */
+			if (pa_dbf.abort_transaction)
+			{
+				if (pa_dbf.abort_transaction(pa_db) < 0)
+				{
+					LM_ERR("in abort_transaction\n");
+					goto error;
+				}
+			}
+			end_transaction = 0;
+
+			if (cleanup_missing_dialog(&sub) < 0)
+				LM_ERR("cleaning up after error sending NOTIFY"
+					"request\n");
+	
+			/* remove the dialog and continue */
 			goto delete_dialog;
 		}
 
@@ -2810,17 +2841,7 @@ int process_dialogs(int round, int presence_winfo)
 			goto error;
 		}
 
-		if ((sub.expires == 0 || sub.status == TERMINATED_STATUS)
-		    && notify_sent)
-		{
-			if (pa_dbf.delete(pa_db, query_cols, 0, query_vals,
-						n_query_cols) < 0)
-			{	
-				LM_ERR("in sql delete");
-				goto error;
-			}
-		}
-		else
+		if (sub.expires > 0 && sub.status != TERMINATED_STATUS)
 		{
 			if (sub.updated_winfo != cached_updated_winfo)
 			{
@@ -2870,26 +2891,27 @@ int process_dialogs(int round, int presence_winfo)
 					goto error;
 				}
 			}
+
 		}
-
-		goto next_dialog;
-
-delete_dialog:
-		if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
+		else if (notify_sent)
 		{
-			LM_ERR("use table failed\n");
-			goto error;
-		}
+delete_dialog:
+			if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
+			{
+				LM_ERR("use table failed\n");
+				goto error;
+			}
 
-		if (pa_dbf.delete(pa_db, query_cols, 0, query_vals,
-					n_query_cols) < 0)
-		{	
-			LM_ERR("in sql delete");
-			goto error;
+			if (pa_dbf.delete(pa_db, query_cols, 0, query_vals,
+						n_query_cols) < 0)
+			{	
+				LM_ERR("in sql delete");
+				goto error;
+			}
 		}
 
 next_dialog:
-		if (pa_dbf.end_transaction)
+		if (pa_dbf.end_transaction && end_transaction)
 		{
 			if (pa_dbf.end_transaction(pa_db) < 0)
 			{

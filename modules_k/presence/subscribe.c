@@ -467,6 +467,8 @@ void delete_subs(str* pres_uri, str* ev_name, str* to_tag,
 int update_subscription_notifier(struct sip_msg* msg, subs_t* subs,
 		int to_tag_gen, int* sent_reply)
 {
+	int num_peers = 0;
+
 	*sent_reply= 0;
 
 	/* Set the notifier/update fields for the subscription */
@@ -477,14 +479,22 @@ int update_subscription_notifier(struct sip_msg* msg, subs_t* subs,
 		subs->updated_winfo = UPDATED_TYPE;
 	else if (subs->event->wipeer)
 	{
-		if (set_wipeer_subs_updated(&subs->pres_uri,
+		if ((num_peers = set_wipeer_subs_updated(&subs->pres_uri,
 						subs->event->wipeer,
-						subs->expires == 0) < 0)
+						subs->expires == 0)) < 0)
 		{
 			LM_ERR("failed to update database record(s)\n");
 			goto error;
 		}
-		subs->updated_winfo = UPDATED_TYPE;
+
+		if (num_peers > 0)
+			subs->updated_winfo = UPDATED_TYPE;
+	}
+	if (subs->expires == 0)
+	{
+		subs->status = TERMINATED_STATUS;
+		subs->reason.s = "timeout";
+		subs->reason.len = 7;
 	}
 
 	printf_subs(subs);
@@ -510,7 +520,8 @@ int update_subscription_notifier(struct sip_msg* msg, subs_t* subs,
 	if(send_2XX_reply(msg, subs->event->type & PUBL_TYPE ? 202 : 200,
 				subs->expires, &subs->local_contact) < 0)
 	{
-		LM_ERR("sending 202 OK\n");
+		LM_ERR("sending %d response\n",
+			subs->event->type & PUBL_TYPE ? 202 : 200);
 		goto error;
 	}
 	*sent_reply= 1;
@@ -1613,7 +1624,11 @@ void update_db_subs_timer_notifier(void)
 		goto error;
 	}
 
-	if(result == NULL) goto error;
+	if(result == NULL)
+	{
+		LM_ERR("bad result\n");
+		goto error;
+	}
 
 	do {
 		rows = RES_ROWS(result);

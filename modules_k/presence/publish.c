@@ -246,8 +246,6 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		}
 		else
 		{
-			rules_doc= NULL;
-		
 			if(p[i].p->event->get_rules_doc && 
 				p[i].p->event->get_rules_doc(&p[i].p->user,
 								&p[i].p->domain,
@@ -267,13 +265,17 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 				if(rules_doc->s)
 					pkg_free(rules_doc->s);
 				pkg_free(rules_doc);
+				rules_doc= NULL;
+	
 			}
 		}
-		rules_doc= NULL;
 		pkg_free(p[i].p);
+		p[i].p = NULL;
 		pkg_free(p[i].uri.s);
+		p[i].uri.s = NULL;
 	}
 	pkg_free(p);
+	p = NULL;
 
 	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
 	{

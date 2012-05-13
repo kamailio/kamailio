@@ -1118,13 +1118,13 @@ error:
 
 int mark_presentity_for_delete(presentity_t *pres)
 {
-	db_key_t query_cols[4], result_cols[1], update_cols[2];
-	db_val_t query_vals[4], update_vals[2], *value;
+	db_key_t query_cols[4], result_cols[1], update_cols[3];
+	db_val_t query_vals[4], update_vals[3], *value;
 	db_row_t *row;
 	db1_res_t *result = NULL;
 	int n_query_cols = 0, n_update_cols = 0;
 	int ret = -1;
-	str *cur_body, *new_body = NULL;
+	str *cur_body = NULL, *new_body = NULL;
 
 	if (pres->event->agg_nbody == NULL)
 	{
@@ -1134,8 +1134,6 @@ int mark_presentity_for_delete(presentity_t *pres)
 			LM_ERR("deleting presentity\n");
 			goto error;
 		}
-
-		ret = 0;
 		goto done;
 	}
 
@@ -1184,10 +1182,28 @@ int mark_presentity_for_delete(presentity_t *pres)
 		goto error;
 	}
 
-	if (RES_ROW_N(result) != 1)
+	if (RES_ROW_N(result) <= 0)
 	{
+		/* Can happen when the timer and notifier processes clash */
+		LM_INFO("Found 0 presentities - expected 1\n");
+		goto done;
+	}
+
+	if (RES_ROW_N(result) > 1)
+	{
+		/* More that one is prevented by DB constraint  - but handle
+ 		   it anyway */
 		LM_ERR("Found %d presentities - expected 1\n", RES_ROW_N(result));
-		goto error;
+
+		if (delete_presentity(pres) < 0)
+		{
+			LM_ERR("deleting presentity\n");
+			goto error;
+		}
+
+		/* Want the calling function to continue properly so do not
+		   return an error */
+		goto done;
 	}
 
 	row = RES_ROWS(result);
@@ -1213,6 +1229,12 @@ int mark_presentity_for_delete(presentity_t *pres)
 	update_vals[n_update_cols].val.str_val = str_offline_etag_val;
 	n_update_cols++;
 
+	update_cols[n_update_cols] = &str_expires_col;
+	update_vals[n_update_cols].type = DB1_INT;
+	update_vals[n_update_cols].nul = 0;
+	update_vals[n_update_cols].val.int_val = (int)time(NULL);
+	n_update_cols++;
+
 	update_cols[n_update_cols] = &str_body_col;
 	update_vals[n_update_cols].type = DB1_STR;
 	update_vals[n_update_cols].nul = 0;
@@ -1220,15 +1242,19 @@ int mark_presentity_for_delete(presentity_t *pres)
 	update_vals[n_update_cols].val.str_val.len = new_body->len;
 	n_update_cols++;
 
-	if(pa_dbf.update(pa_db, query_cols, 0, query_vals, update_cols,
+	if (pa_dbf.update(pa_db, query_cols, 0, query_vals, update_cols,
 			 update_vals, n_query_cols, n_update_cols) < 0)
 	{
 		LM_ERR("unsuccessful sql update operation");
 		goto error;
 	}
 
-	ret = 1;
+	if (pa_dbf.affected_rows)
+		ret = pa_dbf.affected_rows(pa_db);
+	else
 done:
+		ret = 0;
+
 error:
 	free_notify_body(new_body, pres->event);
 	if (cur_body) pkg_free(cur_body);
@@ -1241,7 +1267,6 @@ int delete_presentity(presentity_t *pres)
 	db_key_t query_cols[4];
 	db_val_t query_vals[4];
 	int n_query_cols = 0;
-	int ret = -1;
 
 	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
 	{
@@ -1279,10 +1304,13 @@ int delete_presentity(presentity_t *pres)
 		goto error;
 	}
 
-	ret = 0;
+	if (pa_dbf.affected_rows)
+		return pa_dbf.affected_rows(pa_db);
+	else
+		return 0;
 
 error:
-	return ret;
+	return -1;
 }
 
 int delete_offline_presentities(str *pres_uri, pres_ev_t *event)
@@ -1334,7 +1362,10 @@ int delete_offline_presentities(str *pres_uri, pres_ev_t *event)
 		goto error;
 	}
 
-	return 0;
+	if (pa_dbf.affected_rows)
+		return pa_dbf.affected_rows(pa_db);
+	else
+		return 0;
 
 error:
 	return -1;
