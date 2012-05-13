@@ -291,6 +291,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	int rt;
 	str contact;
 	int initial_request = 0;
+	int end_transaction = 1;
 
 	if( ps->param== NULL || *ps->param== NULL )
 	{
@@ -369,7 +370,7 @@ faked_error:
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LM_ERR("when parsing headers\n");
-		goto done;
+		goto error;
 	}
 
 	if(ps->rpl->expires && msg->expires->body.len > 0)
@@ -377,7 +378,7 @@ faked_error:
 		if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
 		{
 			LM_ERR("cannot parse Expires header\n");
-			goto done;
+			goto error;
 		}
 		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
 		LM_DBG("lexpire= %d\n", lexpire);
@@ -391,20 +392,20 @@ faked_error:
 		if( msg->callid==NULL || msg->callid->body.s==NULL)
 		{
 			LM_ERR("cannot parse callid header\n");
-			goto done;
+			goto error;
 		}
 		
 		if (!msg->from || !msg->from->body.s)
 		{
 			LM_ERR("cannot find 'from' header!\n");
-			goto done;
+			goto error;
 		}
 		if (msg->from->parsed == NULL)
 		{
 			if ( parse_from_header( msg )<0 ) 
 			{
 				LM_ERR("cannot parse From header\n");
-				goto done;
+				goto error;
 			}
 		}
 		pfrom = (struct to_body*)msg->from->parsed;
@@ -412,7 +413,7 @@ faked_error:
 		if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
 		{
 			LM_ERR("no from tag value present\n");
-			goto done;
+			goto error;
 		}
 
 		hentity->call_id=  msg->callid->body;
@@ -429,7 +430,7 @@ faked_error:
 		if( msg->to==NULL || msg->to->body.s==NULL)
 		{
 			LM_ERR("cannot parse TO header\n");
-			goto done;
+			goto error;
 		}			
 		if(msg->to->parsed != NULL)
 		{
@@ -443,14 +444,14 @@ faked_error:
 			if(TO.uri.len <= 0) 
 			{
 				LM_ERR("'To' header NOT parsed\n");
-				goto done;
+				goto error;
 			}
 			pto = &TO;
 		}			
 		if( pto->tag_value.s ==NULL || pto->tag_value.len == 0)
 		{
 			LM_ERR("no to tag value present\n");
-			goto done;
+			goto error;
 		}
 		hentity->to_tag= pto->tag_value;
 	}
@@ -464,6 +465,17 @@ faked_error:
 		hentity->to_tag.s = NULL;
 		hentity->to_tag.len = 0;
 		find_and_delete_dialog(hentity, hash_code);
+
+		if (dbmode == PUA_DB_ONLY && pua_dbf.end_transaction)
+		{
+			if (pua_dbf.end_transaction(pua_db) < 0)
+			{
+				LM_ERR("in end_transaction\n");
+				goto error;
+			}
+		}
+
+		end_transaction = 0;
 
 		/* Redirect if the response 3XX */
 		memset(&subs, 0, sizeof(subs_info_t));
@@ -493,7 +505,7 @@ faked_error:
 		if(send_subscribe(&subs)< 0)
 		{
 			LM_ERR("when trying to send SUBSCRIBE\n");
-			goto done;
+			goto error;
 		}
 		goto done;
 	}
@@ -526,13 +538,13 @@ faked_error:
 	if( msg->cseq==NULL || msg->cseq->body.s==NULL)
 	{
 		LM_ERR("cannot parse cseq header\n");
-		goto done;
+		goto error;
 	}
 
 	if( str2int( &(get_cseq(msg)->number), &cseq)< 0)
 	{
 		LM_ERR("while converting str to int\n");
-		goto done;
+		goto error;
 	}
 
 	if(initial_request == 0)
@@ -566,9 +578,7 @@ faked_error:
 	if(presentity== NULL)
 	{
 		LM_ERR("no more share memory\n");
-		if(record_route.s)
-			pkg_free(record_route.s);
-		goto done;
+		goto error;
 	}
 	
 	memset(presentity, 0, size);
@@ -687,7 +697,7 @@ done:
 		run_pua_callbacks( hentity, msg);
 	}
 
-	if (dbmode == PUA_DB_ONLY && pua_dbf.end_transaction)
+	if (dbmode == PUA_DB_ONLY && pua_dbf.end_transaction && end_transaction)
 	{
 		if (pua_dbf.end_transaction(pua_db) < 0)
 		{
@@ -704,6 +714,9 @@ error:
 		if (presentity->remote_contact.s) shm_free(presentity->remote_contact.s);
 	 	shm_free(presentity);
 	}
+
+	if(record_route.s)
+		pkg_free(record_route.s);
 
 	if (dbmode == PUA_DB_ONLY && pua_dbf.abort_transaction)
 	{
