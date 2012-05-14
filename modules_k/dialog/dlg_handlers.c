@@ -934,7 +934,7 @@ int dlg_set_tm_waitack(tm_cell_t *t, dlg_cell_t *dlg)
 	if(t==NULL)
 		return -1;
 
-	LM_ERR("registering TMCB to wait for negative ACK\n");
+	LM_DBG("registering TMCB to wait for negative ACK\n");
 	iuid = dlg_get_iuid_shm_clone(dlg);
 	if(iuid==NULL)
 	{
