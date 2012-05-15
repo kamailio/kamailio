@@ -139,6 +139,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"db_url",         STR_PARAM, &db_url.s      },
 	{"domain_table",   STR_PARAM, &domain_table.s},
+	{"domain_attrs_table",   STR_PARAM, &domain_attrs_table.s},
 	{"did_col",        STR_PARAM, &did_col.s  },
 	{"domain_col",     STR_PARAM, &domain_col.s  },
 	{"name_col",       STR_PARAM, &name_col.s  },
@@ -200,6 +201,7 @@ static int mod_init(void)
 
     db_url.len = strlen(db_url.s);
     domain_table.len = strlen(domain_table.s);
+    domain_attrs_table.len = strlen(domain_attrs_table.s);
     did_col.len = strlen(did_col.s);
     domain_col.len = strlen(domain_col.s);
     name_col.len = strlen(name_col.s);
@@ -222,8 +224,7 @@ static int mod_init(void)
 	domain_db_close();
 	goto error;
     }
-    if (domain_db_ver(&domain_attrs_table,
-		      DOMAIN_ATTRS_TABLE_VERSION) < 0) {
+    if (domain_db_ver(&domain_attrs_table, DOMAIN_ATTRS_TABLE_VERSION) < 0) {
 	LM_ERR("error during check of domain_attrs table version\n");
 	domain_db_close();
 	goto error;
