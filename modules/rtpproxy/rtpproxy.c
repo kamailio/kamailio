@@ -2490,7 +2490,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 				node = select_rtpp_node(callid, 1);
 				if (!node) {
 					LM_ERR("no available proxies\n");
-					FORCE_RTP_PROXY_RET (-1);
+					FORCE_RTP_PROXY_RET (-3);
 				}
 				if (rep_opts.oidx > 0) {
 					if (node->rn_rep_supported == 0) {
