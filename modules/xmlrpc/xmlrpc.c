@@ -22,7 +22,6 @@
  * with this program; if not, write to the Free Software Foundation, Inc., 59
  * Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-
 /*This define breaks on Solaris OS */
 #ifndef __OS_solaris
 	#define _XOPEN_SOURCE 4           /* strptime */
@@ -263,7 +262,6 @@ static str member_suffix  = STR_STATIC_INIT("</member>");
 static str name_prefix    = STR_STATIC_INIT("<name>");
 static str name_suffix    = STR_STATIC_INIT("</name>");
 
-
 /** Garbage collection data structure.
  *
  * This is the data structure used by the garbage collector in this module.
@@ -359,6 +357,8 @@ struct rpc_struct {
 	xmlDocPtr doc;                  /**< XML-RPC document */
 	int offset;                     /**< Offset in the reply where the
 									   structure should be printed */
+	struct rpc_struct* nnext;	/**< nested structure support - a recursive list of nested structrures */
+	struct rpc_struct* parent;	/**< access to parent structure - used for flattening structure before reply */
 	struct rpc_struct* next;
 };
 
@@ -558,7 +558,6 @@ static int add_xmlrpc_reply(struct xmlrpc_reply* reply, str* text)
 	return 0;
 }
 
-
 /** Adds arbitrary text to the XML-RPC reply being constructed, the text will
  * be inserted at a specified offset within the XML-RPC reply.
  *
@@ -600,7 +599,7 @@ static int add_xmlrpc_reply_offset(struct xmlrpc_reply* reply, unsigned int offs
 }
 
 
-/** Returns the current lenght of the XML-RPC reply body.
+/** Returns the current length of the XML-RPC reply body.
  *
  * @param reply The XML-RPC reply being constructed
  * @return Number of bytes of the XML-RPC reply body.
@@ -809,6 +808,20 @@ static int send_reply(sip_msg_t* msg, str* body)
 	return 0;
 }
 
+static int flatten_nests(struct rpc_struct* st, struct xmlrpc_reply* reply) {
+	if (!st)
+		return 1;
+
+	if (!st->nnext) {
+		if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
+		if (add_xmlrpc_reply_offset(&st->parent->struct_out, st->offset, &st->struct_out.body) < 0) return -1;
+	} else {
+		flatten_nests(st->nnext, reply);
+		if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
+		if (add_xmlrpc_reply_offset(&st->parent->struct_out, st->offset, &st->struct_out.body) < 0) return -1;
+	}
+	return 1;
+}
 
 static int print_structures(struct xmlrpc_reply* reply, 
 							struct rpc_struct* st)
@@ -816,8 +829,8 @@ static int print_structures(struct xmlrpc_reply* reply,
 	while(st) {
 		     /* Close the structure first */
 		if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
-		if (add_xmlrpc_reply_offset(reply, st->offset, 
-									&st->struct_out.body) < 0) return -1;
+		if (flatten_nests(st->nnext, &st->struct_out) < 0) return -1;
+		if (add_xmlrpc_reply_offset(reply, st->offset, &st->struct_out.body) < 0) return -1;
 		st = st->next;
 	}
 	return 0;
@@ -1032,7 +1045,7 @@ static int print_value(struct xmlrpc_reply* res,
 
 	default:
 		set_fault(err_reply, 500, "Bug In SER (Invalid formatting character)");
-		ERR("Invalid formatting character\n");
+		ERR("Invalid formatting character [%c]\n", fmt);
 		goto err;
 	}
 
@@ -1677,6 +1690,8 @@ static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 	va_list ap;
 	str member_name;
 	struct xmlrpc_reply* reply;
+	void* void_ptr;
+	struct rpc_struct* p, *tmp;
 
 	reply = &s->struct_out;
 
@@ -1690,7 +1705,23 @@ static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 		if (add_xmlrpc_reply_esc(reply, &member_name) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &name_suffix) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
-		if (print_value(reply, reply, *fmt, &ap) < 0) goto err;
+		if (*fmt == '{') {
+			void_ptr = va_arg(ap, void**);
+			p = new_rpcstruct(0, 0, s->reply);
+			if (!p)
+				goto err;
+			*(struct rpc_struct**) void_ptr = p;
+			p->offset = get_reply_len(reply);
+			p->parent = s;
+			if (!s->nnext) {
+				s->nnext = p;
+			} else {
+				for (tmp = s; tmp->nnext; tmp=tmp->nnext);
+				tmp->nnext = p;
+			}
+		} else {
+			if (print_value(reply, reply, *fmt, &ap) < 0) goto err;
+		}
 		if (add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &member_suffix) < 0) goto err;
 		fmt++;
