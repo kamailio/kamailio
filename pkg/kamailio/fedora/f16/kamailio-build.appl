@@ -11,34 +11,34 @@ hardware:
       size: 4
 packages:
   - @core
-  - bison
-  - db4-devel
-  - expat-devel
-  - flex
-  - GeoIP-devel
-  - gcc
-  - glib-devel
-  - hiredis-devel
-  - json-c-devel
-  - libconfuse-devel
-  - libcurl-devel
-  - libevent-devel
-  - libpurple-devel
-  - libxml2-devel
-  - lm_sensors-devel
-  - lua-devel
-  - make
-  - mod_perl-devel
-  - mono-devel
-  - mysql-devel
-  - net-snmp-devel
-  - openldap-devel
-  - openssl-devel
-  - pcre-devel
-  - postgresql-devel
-  - python-devel
-  - radiusclient-ng-devel
+  - bison			# kamailio
+  - db4-devel			# kamailio-bdb
+  - expat-devel			# kamailio-xmpp
+  - flex			# kamailio
+  - GeoIP-devel			# kamailio-GeoIP
+  - gcc				# kamailio
+  - glib-devel			# kamailio-purple
+  - hiredis-devel		# kamailio-redis
+  - json-c-devel		# kamailio-json
+  - libconfuse-devel		# kamailio-carrierroute
+  - libcurl-devel		# kamailio-utils, kamailio-presence
+  - libevent-devel		# kamailio-json
+  - libpurple-devel		# kamailio-purple
+  - libxml2-devel		# kamailio-utils, kamailio-cpl, kamailio-presence, kamailio-purple, kamailio-xmlrpc, kamailio-xmlops
+  - lm_sensors-devel		# kamailio-snmpstats
+  - lua-devel			# kamailio-lua
+  - make			# kamailio
+  - mod_perl-devel		# kamailio-perl
+  - mono-devel			# kamailio-mono
+  - mysql-devel			# kamailio-mysql
+  - net-snmp-devel		# kamailio-snmpstats
+  - openldap-devel		# kamailio-ldap
+  - openssl-devel		# kamailio-tls
+  - pcre-devel			# kamailio-regex, kamailio-dialplan, kamailio-lcr
+  - postgresql-devel		# kamailio-postgresql
+  - python-devel		# kamailio-python
+  - radiusclient-ng-devel	# kamailio-radius
   - rpm-build
-  - sqlite-devel
-  - unixODBC-devel
-  - zlib-devel
+  - sqlite-devel		# kamailio-sqlite
+  - unixODBC-devel		# kamailio-unixODBC
+  - zlib-devel			# kamailio-mysql
