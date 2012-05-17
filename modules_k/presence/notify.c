@@ -2435,11 +2435,11 @@ error:
 	return ret;
 }
 
-static int notifier_notify(subs_t *sub, int *updated)
+static int notifier_notify(subs_t *sub, int *updated, int *end_transaction)
 {
 	str *nbody = NULL;
 	watcher_t *watchers = NULL;
-	int ret = -1, attempt_delete_presentities = 0;
+	int ret = 0, attempt_delete_presentities = 0;
 
 	*updated = 0;
 
@@ -2452,10 +2452,20 @@ static int notifier_notify(subs_t *sub, int *updated)
 		{
 			if (unset_watchers_updated_winfo(&sub->pres_uri) < 0)
 			{
-				/* Make sure this gets tried again next time */
 				LM_WARN("resetting updated_winfo flags\n");
+
+				if (pa_dbf.abort_transaction)
+				{
+					if (pa_dbf.abort_transaction(pa_db) < 0)
+					{
+						LM_ERR("in abort_transaction\n");
+						goto error;
+					}
+				}
+				*end_transaction = 0;
+
+				/* Make sure this gets tried again next time */
 				*updated = 1;
-				ret = 0;
 				goto done;
 			}
 		}
@@ -2489,7 +2499,6 @@ static int notifier_notify(subs_t *sub, int *updated)
 				if (sub->updated_winfo == UPDATED_TYPE && num_winfos > 0)
 				{
 					*updated = 1;
-					ret = 0;
 					goto done;
 				}
 			}
@@ -2501,10 +2510,20 @@ static int notifier_notify(subs_t *sub, int *updated)
 		{
 			if (unset_watchers_updated_winfo(&sub->pres_uri) < 0)
 			{
-				/* Make sure this gets tried again next time */
 				LM_WARN("resetting updated_winfo flags\n");
+
+				if (pa_dbf.abort_transaction)
+				{
+					if (pa_dbf.abort_transaction(pa_db) < 0)
+					{
+						LM_ERR("in abort_transaction\n");
+						goto error;
+					}
+				}
+				*end_transaction = 0;
+
+				/* Make sure this gets tried again next time */
 				*updated = 1;
-				ret = 0;
 				goto done;
 			}
 
@@ -2556,10 +2575,7 @@ static int notifier_notify(subs_t *sub, int *updated)
 				attempt_delete_presentities = 1;
 		}
 		else if (!send_fast_notify)
-		{
-			ret = 0;
 			goto done;
-		}
 	}
 
 	if (notify(sub, NULL, nbody, 0) < 0)
@@ -2580,11 +2596,23 @@ done:
 		}
 	}
 
-error:
 	free_notify_body(nbody, sub->event);
 	free_watcher_list(watchers);
 
 	return ret;
+
+error:
+	free_notify_body(nbody, sub->event);
+	free_watcher_list(watchers);
+
+	if (pa_dbf.abort_transaction)
+	{
+		if (pa_dbf.abort_transaction(pa_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+	*end_transaction = 0;
+
+	return -1;
 }
 
 int process_dialogs(int round, int presence_winfo)
@@ -2604,7 +2632,6 @@ int process_dialogs(int round, int presence_winfo)
 	int end_transaction = 0;
 	subs_t sub;
 	str ev_sname, winfo = str_init("presence.winfo");
-	event_t parsed_event;
 	int now = (int)time(NULL);
 	int updated = 0;
 
@@ -2700,7 +2727,7 @@ int process_dialogs(int round, int presence_winfo)
 		EXTRACT_STRING(sub.to_tag, VAL_STRING(&values[to_tag_col]));
 		EXTRACT_STRING(sub.from_tag, VAL_STRING(&values[from_tag_col]));
 		EXTRACT_STRING(ev_sname, VAL_STRING(&values[event_col]));
-		sub.event = contains_event(&ev_sname, &parsed_event);
+		sub.event = contains_event(&ev_sname, NULL);
 		if (sub.event == NULL)
 		{
 			LM_ERR("event not found and set to NULL\n");
@@ -2813,19 +2840,9 @@ int process_dialogs(int round, int presence_winfo)
 
 		sub.updated = round;
 
-		if ((notify_sent = notifier_notify(&sub, &updated)) < 0)
+		if ((notify_sent = notifier_notify(&sub, &updated, &end_transaction)) < 0)
 		{
 			LM_ERR("sending NOTIFY request\n");
-
-			if (pa_dbf.abort_transaction)
-			{
-				if (pa_dbf.abort_transaction(pa_db) < 0)
-				{
-					LM_ERR("in abort_transaction\n");
-					goto error;
-				}
-			}
-			end_transaction = 0;
 
 			if (cleanup_missing_dialog(&sub) < 0)
 				LM_ERR("cleaning up after error sending NOTIFY"
@@ -2841,7 +2858,7 @@ int process_dialogs(int round, int presence_winfo)
 			goto error;
 		}
 
-		if (sub.expires > 0 && sub.status != TERMINATED_STATUS)
+		if ((sub.expires > 0 && sub.status != TERMINATED_STATUS) || updated)
 		{
 			if (sub.updated_winfo != cached_updated_winfo)
 			{
