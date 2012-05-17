@@ -347,11 +347,11 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	xmlops"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
-install -m644 pkg/kamailio/fedora/kamailio.service \
+install -m644 pkg/kamailio/fedora/f16/kamailio.service \
 		$RPM_BUILD_ROOT/%{_unitdir}/kamailio.service
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
-install -m644 pkg/kamailio/fedora/kamailio.sysconfig \
+install -m644 pkg/kamailio/fedora/f16/kamailio.sysconfig \
 		$RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/kamailio
 
 
