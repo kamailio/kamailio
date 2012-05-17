@@ -1,0 +1,44 @@
+name: "f16-kamailio-build-#BASE_ARCH#"
+summary: Fedora 16 for Building Kamailio RPMs
+os:
+  name: fedora
+  version: 16
+  password: kamailio
+hardware:
+  memory: 1024
+  partitions:
+    "/":
+      size: 4
+packages:
+  - @core
+  - bison
+  - db4-devel
+  - expat-devel
+  - flex
+  - GeoIP-devel
+  - gcc
+  - glib-devel
+  - hiredis-devel
+  - json-c-devel
+  - libconfuse-devel
+  - libcurl-devel
+  - libevent-devel
+  - libpurple-devel
+  - libxml2-devel
+  - lm_sensors-devel
+  - lua-devel
+  - make
+  - mod_perl-devel
+  - mono-devel
+  - mysql-devel
+  - net-snmp-devel
+  - openldap-devel
+  - openssl-devel
+  - pcre-devel
+  - postgresql-devel
+  - python-devel
+  - radiusclient-ng-devel
+  - rpm-build
+  - sqlite-devel
+  - unixODBC-devel
+  - zlib-devel
