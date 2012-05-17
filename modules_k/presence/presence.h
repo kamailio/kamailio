@@ -87,6 +87,8 @@ extern int send_fast_notify;
 extern int shtable_size;
 extern shtable_t subs_htable;
 
+extern int pres_fetch_rows;
+
 extern int pres_waitn_time;
 extern int pres_notifier_poll_rate;
 extern int pres_notifier_processes;

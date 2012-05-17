@@ -1273,7 +1273,6 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 	db_row_t *rows;
 	int nr_rows, loop;
 	subs_t s, *cs;
-	event_t parsed_event;
 	str ev_sname;
 
 	if(pa_db == NULL)
@@ -1413,7 +1412,7 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 		ev_sname.s= (char*)row_vals[r_event_col].val.string_val;
 		ev_sname.len= ev_sname.s?strlen(ev_sname.s):0;
 		
-		s.event = contains_event(&ev_sname, &parsed_event); /*2nd param can be NULL?? */
+		s.event = contains_event(&ev_sname, NULL);
 
 		if(s.event == NULL)
 		{

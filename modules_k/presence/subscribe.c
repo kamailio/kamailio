@@ -59,8 +59,6 @@ static str pu_400_rpl  = str_init("Bad request");
 static str pu_500_rpl  = str_init("Server Internal Error");
 static str pu_489_rpl  = str_init("Bad Event");
 
-extern int pres_fetch_rows;
-
 int send_2XX_reply(struct sip_msg * msg, int reply_code, int lexpire,
 		str* local_contact)
 {
@@ -1635,7 +1633,7 @@ void update_db_subs_timer_notifier(void)
 	
 		for (i = 0; i <RES_ROW_N(result); i++)
 		{
-			values = ROW_VALUES(rows);
+			values = ROW_VALUES(&rows[i]);
 
 			subs.callid.s = (char *) VAL_STRING(&values[r_callid_col]);
 			subs.callid.len = strlen(subs.callid.s);

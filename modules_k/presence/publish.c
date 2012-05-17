@@ -69,24 +69,16 @@ struct p_modif
 
 void msg_presentity_clean(unsigned int ticks,void *param)
 {
-	db_key_t db_keys[2];
-	db_val_t db_vals[2];
+	db_key_t db_keys[2], result_cols[4];
+	db_val_t db_vals[2], *values;
 	db_op_t  db_ops[2] ;
-	db_key_t result_cols[4];
 	db1_res_t *result = NULL;
-	db_row_t *row ;
-	db_val_t *row_vals ;
-	int n_db_cols = 0;
-	int i =0, size= 0;
-	struct p_modif* p= NULL;
-	presentity_t* pres= NULL;
-	int n= 0;
+	db_row_t *rows;
+	int n_db_cols = 0, n_result_cols = 0;
 	int event_col, etag_col, user_col, domain_col;
-	event_t ev;
-	str user, domain, etag, event;
-	int n_result_cols= 0;
-	str* rules_doc= NULL;
-	int num_watchers = 0;
+	int i = 0, num_watchers = 0;
+	presentity_t pres;
+	str uri = {0, 0}, event, *rules_doc = NULL;
 
 	LM_DBG("cleaning expired presentity information\n");
 	if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
@@ -115,167 +107,118 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	result_cols[event_col=n_result_cols++] = &str_event_col;
 
 	static str query_str = str_init("username");
-	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, result_cols,
-			n_db_cols, n_result_cols, &query_str, &result )< 0)
+	if (db_fetch_query(&pa_dbf, pres_fetch_rows, pa_db, db_keys, db_ops,
+				db_vals, result_cols, n_db_cols, n_result_cols,
+				&query_str, &result) < 0)
 	{
 		LM_ERR("failed to query database for expired messages\n");
-		if(result)
-			pa_dbf.free_result(pa_db, result);
 		goto delete_pres;
 	}
-	if(result== NULL)
-		return;
 
-	if(result && result->n<= 0)
+	if(result == NULL)
 	{
-		pa_dbf.free_result(pa_db, result);
+		LM_ERR("bad result\n");
 		return;
 	}
+
 	LM_DBG("found n= %d expires messages\n ",result->n);
 
-	n= result->n;
+	do {
+		rows = RES_ROWS(result);
 
-	p= (struct p_modif*)pkg_malloc(n* sizeof(struct p_modif));
-	if(p== NULL)
-	{
-		ERR_MEM(PKG_MEM_STR);
-	}
-	memset(p, 0, n* sizeof(struct p_modif));
-
-	for(i = 0; i< n; i++)
-	{
-		row = &result->rows[i];
-		row_vals = ROW_VALUES(row);	
-	
-		user.s= (char*)row_vals[user_col].val.string_val;
-		user.len= strlen(user.s);
-		
-		domain.s= (char*)row_vals[domain_col].val.string_val;
-		domain.len= strlen(domain.s);
-
-		etag.s= (char*)row_vals[etag_col].val.string_val;
-		etag.len= strlen(etag.s);
-
-		event.s= (char*)row_vals[event_col].val.string_val;
-		event.len= strlen(event.s);
-		
-		size= sizeof(presentity_t)+ (user.len+ domain.len+ etag.len)*
-			sizeof(char); 
-		pres= (presentity_t*)pkg_malloc(size);
-		if(pres== NULL)
+		for(i = 0; i < RES_ROW_N(result); i++)
 		{
-			ERR_MEM(PKG_MEM_STR);
-		}
-		memset(pres, 0, size);
-		size= sizeof(presentity_t);
+			values = ROW_VALUES(&rows[i]);
+			memset(&pres, 0, sizeof(presentity_t));
 
-		pres->user.s= (char*)pres+ size;
-		memcpy(pres->user.s, user.s, user.len);
-		pres->user.len= user.len;
-		size+= user.len;
-
-		pres->domain.s= (char*)pres+ size;
-		memcpy(pres->domain.s, domain.s, domain.len);
-		pres->domain.len= domain.len;
-		size+= domain.len;
-
-		pres->etag.s= (char*)pres+ size;
-		memcpy(pres->etag.s, etag.s, etag.len);
-		pres->etag.len= etag.len;
-		size+= etag.len;
-			
-		pres->event= contains_event(&event, &ev);
-		if(pres->event== NULL)
-		{
-			LM_ERR("event not found\n");
-			free_event_params(ev.params.list, PKG_MEM_TYPE);
-			goto error;
-		}
-	
-		p[i].p= pres;
-		if(uandd_to_uri(user, domain, &p[i].uri)< 0)
-		{
-			LM_ERR("constructing uri\n");
-			free_event_params(ev.params.list, PKG_MEM_TYPE);
-			goto error;
-		}
-		
-		/* delete from hash table */
-		if(publ_cache_enabled && delete_phtable(&p[i].uri, ev.type)< 0)
-		{
-			LM_ERR("deleting from pres hash table\n");
-			free_event_params(ev.params.list, PKG_MEM_TYPE);
-			goto error;
-		}
-		free_event_params(ev.params.list, PKG_MEM_TYPE);
-
-	}
-	pa_dbf.free_result(pa_db, result);
-	result= NULL;
-	
-	for(i= 0; i<n ; i++)
-	{
-		LM_DBG("found expired publish for [user]=%.*s  [domanin]=%.*s\n",
-			p[i].p->user.len,p[i].p->user.s, p[i].p->domain.len, p[i].p->domain.s);
-
-		if (pres_notifier_processes > 0)
-		{
-			if ((num_watchers = publ_notify_notifier(p[i].uri,
-							p[i].p->event)) < 0)
+			pres.user.s = (char *) VAL_STRING(&values[user_col]);
+			pres.user.len = strlen(pres.user.s);
+			pres.domain.s = (char *) VAL_STRING(&values[domain_col]);
+			pres.domain.len = strlen(pres.domain.s);
+			pres.etag.s = (char *) VAL_STRING(&values[etag_col]);
+			pres.etag.len = strlen(pres.etag.s);
+			event.s = (char *) VAL_STRING(&values[event_col]);
+			event.len = strlen(event.s);
+			pres.event= contains_event(&event, NULL);
+			if(pres.event== NULL)
 			{
-				LM_ERR("Updating watcher records\n");
+				LM_ERR("event not found\n");
 				goto error;
 			}
 
-			if (num_watchers > 0)
+			if(uandd_to_uri(pres.user, pres.domain, &uri)< 0)
 			{
-				if (mark_presentity_for_delete(p[i].p) < 0)
+				LM_ERR("constructing uri\n");
+				goto error;
+			}
+		
+			/* delete from hash table */
+			if(publ_cache_enabled && delete_phtable(&uri, pres.event->type)< 0)
+			{
+				LM_ERR("deleting from pres hash table\n");
+				goto error;
+			}
+
+			LM_DBG("found expired publish for [user]=%.*s  [domanin]=%.*s\n",
+				pres.user.len,pres.user.s, pres.domain.len, pres.domain.s);
+
+			if (pres_notifier_processes > 0)
+			{
+				if ((num_watchers = publ_notify_notifier(uri, pres.event)) < 0)
 				{
-					LM_ERR("Marking presentity\n");
+					LM_ERR("Updating watcher records\n");
 					goto error;
+				}
+
+				if (num_watchers > 0)
+				{
+					if (mark_presentity_for_delete(&pres) < 0)
+					{
+						LM_ERR("Marking presentity\n");
+						goto error;
+					}
+				}
+				else
+				{
+					if (delete_presentity(&pres) < 0)
+					{
+						LM_ERR("Deleting presentity\n");
+						goto error;
+					}
 				}
 			}
 			else
 			{
-				if (delete_presentity(p[i].p) < 0)
+				if(pres.event->get_rules_doc && 
+					pres.event->get_rules_doc(&pres.user,
+									&pres.domain,
+									&rules_doc)< 0)
 				{
-					LM_ERR("Deleting presentity\n");
+					LM_ERR("getting rules doc\n");
 					goto error;
 				}
+				if(publ_notify(&pres, uri, NULL, &pres.etag, rules_doc)< 0)
+				{
+					LM_ERR("sending Notify request\n");
+					goto error;
+				}
+				if(rules_doc)
+				{
+					if(rules_doc->s)
+						pkg_free(rules_doc->s);
+					pkg_free(rules_doc);
+					rules_doc= NULL;
+				}
 			}
+
+			pkg_free(uri.s);
+			uri.s = NULL;
 		}
-		else
-		{
-			if(p[i].p->event->get_rules_doc && 
-				p[i].p->event->get_rules_doc(&p[i].p->user,
-								&p[i].p->domain,
-								&rules_doc)< 0)
-			{
-				LM_ERR("getting rules doc\n");
-				goto error;
-			}
-			if(publ_notify(p[i].p, p[i].uri, NULL, &p[i].p->etag,
-					rules_doc)< 0)
-			{
-				LM_ERR("sending Notify request\n");
-				goto error;
-			}
-			if(rules_doc)
-			{
-				if(rules_doc->s)
-					pkg_free(rules_doc->s);
-				pkg_free(rules_doc);
-				rules_doc= NULL;
-	
-			}
-		}
-		pkg_free(p[i].p);
-		p[i].p = NULL;
-		pkg_free(p[i].uri.s);
-		p[i].uri.s = NULL;
-	}
-	pkg_free(p);
-	p = NULL;
+	} while (db_fetch_next(&pa_dbf, pres_fetch_rows, pa_db, &result) == 1
+			&& RES_ROW_N(result) > 0);
+
+	pa_dbf.free_result(pa_db, result);
+	result = NULL;
 
 	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
 	{
@@ -295,19 +238,7 @@ delete_pres:
 error:
 	if(result)
 		pa_dbf.free_result(pa_db, result);
-	if(p)
-	{
-		for(i= 0; i< n; i++)
-		{
-			if(p[i].p)
-				pkg_free(p[i].p);
-			if(p[i].uri.s)
-				pkg_free(p[i].uri.s);
-			else
-				break;
-		}
-		pkg_free(p);
-	}
+	if(uri.s) pkg_free(uri.s);
 	if(rules_doc)
 	{
 		if(rules_doc->s)

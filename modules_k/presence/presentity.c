@@ -56,8 +56,6 @@ static str pu_412_rpl  = str_init("Conditional request failed");
 
 static str str_offline_etag_val = str_init("*#-OFFLINE-#*");
 
-extern int pres_fetch_rows;
-
 #define ETAG_LEN  128
 
 char* generate_ETag(int publ_count)
