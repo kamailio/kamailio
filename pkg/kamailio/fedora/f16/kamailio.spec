@@ -859,6 +859,8 @@ fi
 
 
 %changelog
+* Thu May 17 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to pre2.
 * Mon May 7 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Changed to use systemd instead of SysV init.
 * Sun May 6 2012 Peter Dunkley <peter@dunkley.me.uk>
