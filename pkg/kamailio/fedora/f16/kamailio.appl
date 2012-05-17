@@ -1,0 +1,37 @@
+name: "f16-kamailio-#BASE_ARCH#"
+summary: Fedora 16 for Installing Kamailio RPMs
+os:
+  name: fedora
+  version: 16
+  password: kamailio
+hardware:
+  memory: 1024
+  partitions:
+    "/":
+      size: 2
+packages:
+  - @core
+  - db4
+  - expat
+  - GeoIP
+  - glib
+  - hiredis
+  - json-c
+  - libconfuse
+  - libcurl
+  - libevent
+  - libpurple
+  - libxml2
+  - mod_perl
+  - mono-core
+  - mysql-libs
+  - net-snmp-agent-libs
+  - openldap
+  - openssl
+  - pcre
+  - postgresql-libs
+  - python
+  - radiusclient-ng
+  - sqlite
+  - unixODBC
+  - zlib
