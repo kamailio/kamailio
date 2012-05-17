@@ -29,6 +29,8 @@ packages:
   - openldap
   - openssl
   - pcre
+  - perl-Authen-SASL
+  - perl-LDAP
   - postgresql-libs
   - python
   - radiusclient-ng
