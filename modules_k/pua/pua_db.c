@@ -922,20 +922,7 @@ int delete_record_puadb(ua_pres_t *pres)
 		return -1;
 	}
 
-	if (pua_dbf.affected_rows == NULL)
-		return 1;
-
-	switch(pua_dbf.affected_rows(pua_db))
-	{
-	case 0:
-		LM_ERR("no rows deleted\n");
-		return -1;
-	case 1:
-		return 1;
-	default:
-		LM_ERR("too many rows deleted\n");
-		return -1;
-	}
+	return 1;
 }
 
 /******************************************************************************/
@@ -1002,22 +989,7 @@ int update_record_puadb(ua_pres_t *pres, int expires, str *etag)
 		return -1;
 	}
 
-	if (pua_dbf.affected_rows == NULL)
-	{
-		return 0;
-	}
-
-	switch(pua_dbf.affected_rows(pua_db))
-	{
-	case 0:
-		LM_INFO("no rows updated\n");
-		return -1;
-	case 1:
-		return 1;
-	default:
-		LM_ERR("too many rows updated\n");
-		return -1;
-	}
+	return 1;
 }
 
 /******************************************************************************/
@@ -1302,20 +1274,7 @@ int delete_dialog_puadb(ua_pres_t *pres)
 		return -1;
 	}
 
-	if (pua_dbf.affected_rows == NULL)
-		return 1;
-
-	switch(pua_dbf.affected_rows(pua_db))
-	{
-	case 0:
-		LM_ERR("no rows deleted\n");
-		return -1;
-	case 1:
-		return 1;
-	default:
-		LM_ERR("too many rows deleted\n");
-		return -1;
-	}
+	return 1;
 }
 
 /******************************************************************************/
@@ -1388,20 +1347,7 @@ int update_dialog_puadb(ua_pres_t *pres, int expires, str *contact)
 		return -1;
 	}
 
-	if (pua_dbf.affected_rows == NULL)
-		return 1;
-
-	switch(pua_dbf.affected_rows(pua_db))
-	{
-	case 0:
-		LM_ERR("no rows updated\n");
-		return -1;
-	case 1:
-		return 1;
-	default:
-		LM_ERR("too many rows updated\n");
-		return -1;
-	}
+	return 1;
 }
 
 /******************************************************************************/
