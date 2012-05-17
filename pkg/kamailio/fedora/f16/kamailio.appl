@@ -1,4 +1,4 @@
-name: "f16-kamailio-#BASE_ARCH#"
+name: "kamailio-#OS_NAME#-#OS_VERSION#-#BASE_ARCH#"
 summary: Fedora 16 for Installing Kamailio RPMs
 os:
   name: fedora
