@@ -1,7 +1,7 @@
 /*
  * Header file for hash table functions
  *
- * Copyright (C) 2008-2009 Juha Heinanen
+ * Copyright (C) 2008-2012 Juha Heinanen
  *
  * This file is part of SIP Router, a free SIP server.
  *
@@ -45,10 +45,11 @@ int rule_hash_table_insert(struct rule_info **hash_table,
     struct rule_info *rule;
     str prefix_str;
     unsigned int hash_val;
+    struct rule_id_info *rid;
 
     rule = (struct rule_info *)shm_malloc(sizeof(struct rule_info));
     if (rule == NULL) {
-	LM_ERR("Cannot allocate memory for rule hash table entry\n");
+	LM_ERR("no shm memory for rule hash table entry\n");
 	if (from_uri_re) shm_free(from_uri_re);
 	if (request_uri_re) shm_free(request_uri_re);
 	return 0;
@@ -82,10 +83,25 @@ int rule_hash_table_insert(struct rule_info **hash_table,
     rule->next = hash_table[hash_val];
     hash_table[hash_val] = rule;
     
-    LM_DBG("inserted rule <%u>, prefix <%.*s>, from_uri <%.*s>, request_uri <%.*s>, stopper <%u>, "
-	   "into index <%u>\n",
-	   rule_id, prefix_len, prefix, from_uri_len, from_uri, request_uri_len, request_uri, stopper,
-	   hash_val);
+    LM_DBG("inserted rule_id <%u>, prefix <%.*s>, from_uri <%.*s>, "
+	   "request_uri <%.*s>, stopper <%u>, into index <%u>\n",
+	   rule_id, prefix_len, prefix, from_uri_len, from_uri,
+	   request_uri_len, request_uri, stopper, hash_val);
+
+    /* Add rule_id info to rule_id hash table */
+    rid = (struct rule_id_info *)pkg_malloc(sizeof(struct rule_id_info));
+    if (rid == NULL) {
+	LM_ERR("no pkg memory for rule_id hash table entry\n");
+	return 0;
+    }
+    memset(rid, 0, sizeof(struct rule_id_info));
+    rid->rule_id = rule_id;
+    rid->rule_addr = rule;
+    hash_val = rule_id % lcr_rule_hash_size_param;
+    rid->next = rule_id_hash_table[hash_val];
+    rule_id_hash_table[hash_val] = rid;
+    LM_DBG("inserted rule_id <%u> addr <%p> into rule_id hash table "
+	   "index <%u>\n", rule_id, rule, hash_val);
 
     return 1;
 }
@@ -115,10 +131,9 @@ int rule_hash_table_insert_target(struct rule_info **hash_table,
 				   unsigned int rule_id, unsigned int gw_id,
 				   unsigned int priority, unsigned int weight)
 {
-    unsigned int i;
     unsigned short gw_index;
-    struct rule_info *r;
     struct target *target;
+    struct rule_id_info *rid;
 
     target = (struct target *)shm_malloc(sizeof(struct target));
     if (target == NULL) {
@@ -135,17 +150,17 @@ int rule_hash_table_insert_target(struct rule_info **hash_table,
     target->gw_index = gw_index;
     target->priority = priority;
     target->weight = weight;
-	
-    for (i = 0; i < lcr_rule_hash_size_param; i++) {
-	r = hash_table[i];
-	while (r) {
-	    if (r->rule_id == rule_id) {
-		target->next = r->targets;
-		r->targets = target;
-		return 1;
-	    }
-	    r = r->next;
+
+    rid = rule_id_hash_table[rule_id % lcr_rule_hash_size_param];
+    while (rid) {
+	if (rid->rule_id == rule_id) {
+	    target->next = rid->rule_addr->targets;
+	    rid->rule_addr->targets = target;
+	    LM_DBG("found rule with id <%u> and addr <%p>\n",
+		    rule_id, rid->rule_addr);
+	    return 1;
 	}
+	rid = rid->next;
     }
 
     LM_DBG("could not find (disabled) rule with id <%u>\n", rule_id);
@@ -199,5 +214,25 @@ void rule_hash_table_contents_free(struct rule_info **hash_table)
 	    r = next_r;
 	}
 	hash_table[i] = NULL;
+    }
+}
+
+/* Free contents of rule_id hash table */
+void rule_id_hash_table_contents_free()
+{
+    int i;
+    struct rule_id_info *r, *next_r;
+	
+    if (rule_id_hash_table == 0)
+	return;
+
+    for (i = 0; i <= lcr_rule_hash_size_param; i++) {
+	r = rule_id_hash_table[i];
+	while (r) {
+	    next_r = r->next;
+	    pkg_free(r);
+	    r = next_r;
+	}
+	rule_id_hash_table[i] = NULL;
     }
 }

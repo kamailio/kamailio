@@ -3,7 +3,7 @@
  *
  * Various lcr related constant, types, and external variables
  *
- * Copyright (C) 2005-2010 Juha Heinanen
+ * Copyright (C) 2005-2012 Juha Heinanen
  *
  * This file is part of SIP Router, a free SIP server.
  *
@@ -71,6 +71,12 @@ struct rule_info {
     struct rule_info *next;
 };
 
+struct rule_id_info {
+    unsigned int rule_id;
+    struct rule_info *rule_addr;
+    struct rule_id_info *next;
+};
+
 struct target {
     unsigned short gw_index;
     unsigned short priority;
@@ -112,6 +118,7 @@ extern gen_lock_t *reload_lock;
 
 extern struct gw_info **gw_pt;
 extern struct rule_info ***rule_pt;
+extern struct rule_id_info **rule_id_hash_table;
 
 extern int reload_tables();
 extern int rpc_defunct_gw(unsigned int, unsigned int, unsigned int);

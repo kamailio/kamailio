@@ -1,7 +1,7 @@
 /*
  * Least Cost Routing module
  *
- * Copyright (C) 2005-2010 Juha Heinanen
+ * Copyright (C) 2005-2012 Juha Heinanen
  * Copyright (C) 2006 Voice Sistem SRL
  *
  * This file is part of SIP Router, a free SIP server.
@@ -233,6 +233,9 @@ struct rule_info ***rule_pt = (struct rule_info ***)NULL;
 
 /* Pointer to gw table pointer table */
 struct gw_info **gw_pt = (struct gw_info **)NULL;
+
+/* Pointer to rule_id info hash table */
+struct rule_id_info **rule_id_hash_table = (struct rule_id_info **)NULL;
 
 /*
  * Functions that are defined later
@@ -1185,13 +1188,23 @@ int reload_tables()
 	return -1;
     }
 
+    rule_id_hash_table = pkg_malloc(sizeof(struct rule_id_info *) *
+				    lcr_rule_hash_size_param);
+    if (!rule_id_hash_table) {
+	LM_ERR("no pkg memory for rule_id hash table\n");
+	goto err;
+    }
+    memset(rule_id_hash_table, 0, sizeof(struct rule_id_info *) *
+	   lcr_rule_hash_size_param);
+
     for (lcr_id = 1; lcr_id <= lcr_count_param; lcr_id++) {
 
 	/* Reload rules */
 
 	rules = rule_pt[0];
 	rule_hash_table_contents_free(rules);
-
+	rule_id_hash_table_contents_free();
+	
 	if (lcr_dbf.use_table(dbh, &lcr_rule_table) < 0) {
 	    LM_ERR("error while trying to use lcr_rule table\n");
 	    goto err;
@@ -1507,11 +1520,15 @@ int reload_tables()
     }
 
     lcr_db_close();
+    rule_id_hash_table_contents_free();
+    if (rule_id_hash_table) pkg_free(rule_id_hash_table);
     return 1;
 
  err:
     lcr_dbf.free_result(dbh, res);
     lcr_db_close();
+    rule_id_hash_table_contents_free();
+    if (rule_id_hash_table) pkg_free(rule_id_hash_table);
     return -1;
 }
 

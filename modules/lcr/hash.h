@@ -1,7 +1,7 @@
 /*
  * Header file for hash table functions
  *
- * Copyright (C) 2008-2010 Juha Heinanen
+ * Copyright (C) 2008-2012 Juha Heinanen
  *
  * This file is part of SIP Router, a free SIP server.
  *
@@ -50,5 +50,7 @@ struct rule_info *rule_hash_table_lookup(struct rule_info **hash_table,
 					 char *prefix);
 
 void rule_hash_table_contents_free(struct rule_info **hash_table);
+
+void rule_id_hash_table_contents_free();
 
 #endif
