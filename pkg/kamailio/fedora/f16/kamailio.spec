@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     3.3.0
-%define rel     pre2
+%define rel     pre2.fc16
 %define _sharedir %{_prefix}/share
 
 
@@ -30,7 +30,7 @@ Conflicts:     kamailio-regex < %ver, kamailio-dialplan < %ver
 Conflicts:     kamailio-lcr < %ver, kamailio-xmlops < %ver
 Conflicts:     kamailio-redis < %ver, kamailio-json < %ver
 Conflicts:     kamailio-mono < %ver
-BuildRequires: make flex bison
+BuildRequires: bison flex gcc make
 
 %description
 Kamailio (former OpenSER) is an Open Source SIP Server released under GPL, able
@@ -859,6 +859,10 @@ fi
 
 
 %changelog
+* Fri May 18 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Added missing BuildRequires (gcc).
+  - Added .fc16 to rel.  This makes it easy to tell which distribution the RPMs
+    are built for.
 * Thu May 17 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Updated rel to pre2.
 * Mon May 7 2012 Peter Dunkley <peter@dunkley.me.uk>
