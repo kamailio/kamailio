@@ -1,5 +1,5 @@
 name: "kamailio-#OS_NAME#-#OS_VERSION#-#BASE_ARCH#"
-summary: Fedora 16 for Installing Kamailio RPMs
+summary: "#OS_NAME# #OS_VERSION# for installing Kamailio #BASE_ARCH# RPMs"
 os:
   name: fedora
   version: 16
