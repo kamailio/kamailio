@@ -1,0 +1,33 @@
+name: "kamailio-#OS_NAME#-#OS_VERSION#-#BASE_ARCH#"
+summary: "#OS_NAME# #OS_VERSION# for installing Kamailio #BASE_ARCH# RPMs"
+os:
+  name: centos
+  version: 6
+  password: kamailio
+hardware:
+  memory: 1024
+  partitions:
+    "/":
+      size: 2
+packages:
+  - @core
+  - db4				# kamailio-bdb
+  - expat			# kamailio-xmpp
+  - glib2			# kamailio-purple
+  - libcurl			# kamailio-utils, kamailio-presence
+  - libevent			# kamailio-json
+  - libpurple			# kamailio-purple
+  - libxml2			# kamailio-utils, kamailio-cpl, kamailio-presence, kamailio-purple, kamailio-xmlrpc, kamailio-xmlops
+  - mod_perl			# kamailio-perl
+  - mysql-libs			# kamailio-mysql
+  - net-snmp-libs		# kamailio-snmpstats
+  - openldap			# kamailio-ldap
+  - openssl			# kamailio-tls
+  - pcre			# kamailio-regex, kamailio-dialplan, kamailio-lcr
+  - perl-Authen-SASL		# kamailio-perl
+  - perl-LDAP			# kamailio-perl
+  - postgresql-libs		# kamailio-postgresql
+  - python			# kamailio-python
+  - sqlite			# kamailio-sqlite
+  - unixODBC			# kamailio-unixODBC
+  - zlib			# kamailio-mysql

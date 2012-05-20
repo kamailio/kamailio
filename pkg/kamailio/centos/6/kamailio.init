@@ -1,0 +1,83 @@
+#!/bin/bash
+#
+# Startup script for Kamailio
+#
+# chkconfig: 345 85 15
+# description: Kamailio (OpenSER) - the Open Source SIP Server
+#
+# processname: kamailio
+# pidfile: /var/run/kamailio.pid
+# config: /etc/kamailio/kamailio.cfg
+#
+### BEGIN INIT INFO
+# Provides: kamailio
+# Required-Start: $local_fs $network
+# Short-Description: Kamailio (OpenSER) - the Open Source SIP Server
+# Description: Kamailio (former OpenSER) is an Open Source SIP Server released
+# 	under GPL, able to handle thousands of call setups per second.
+### END INIT INFO
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+kam=/usr/sbin/kamailio
+prog=kamailio
+RETVAL=0
+
+[ -f /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
+
+start() {
+	echo -n $"Starting $prog: "
+	# there is something at end of this output which is needed to
+	# report proper [ OK ] status in CentOS scripts
+	daemon $kam $OPTIONS 2>/dev/null | tail -1
+	RETVAL=$?
+	echo
+	[ $RETVAL = 0 ] && touch /var/lock/subsys/$prog
+}
+
+stop() {
+	echo -n $"Stopping $prog: "
+	killproc $kam
+	RETVAL=$?
+	echo
+	[ $RETVAL = 0 ] && rm -f /var/lock/subsys/$prog /var/run/$prog.pid
+}
+
+MEMORY=$((`echo $MEMORY | sed -e 's/[^0-9]//g'`))
+PKG_MEMORY=$((`echo $PKG_MEMORY | sed -e 's/[^0-9]//g'`))
+[ -z "$USER" ]  && USER=kamailio
+[ -z "$GROUP" ] && GROUP=kamailio
+[ $MEMORY -le 0 ] && MEMORY=32
+[ $PKG_MEMORY -le 0 ] && PKG_MEMORY=4
+
+OPTIONS="-P /var/run/$prog.pid -m $MEMORY -M $PKG_MEMORY -u $USER -g $GROUP"
+
+# See how we were called.
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	status)
+		status $kam
+		RETVAL=$?
+		;;
+	restart)
+		stop
+		start
+		;;
+	condrestart)
+		if [ -f /var/run/$prog.pid ] ; then
+			stop
+			start
+		fi
+		;;
+	*)
+		echo $"Usage: $prog {start|stop|reload|restart|condrestart|status|help}"
+		exit 1
+esac
+
+exit $RETVAL

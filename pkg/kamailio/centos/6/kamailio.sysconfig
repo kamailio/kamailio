@@ -1,0 +1,15 @@
+#
+# Kamailio startup options
+#
+
+# User to run as
+USER=kamailio
+
+# Group to run as
+GROUP=kamailio
+
+# Amount of shared memory to allocate for Kamailio (in Mb)
+MEMORY=32
+
+# Amount of per-process (package) memory to allocate for Kamailio (in Mb)
+PKG_MEMORY=4
