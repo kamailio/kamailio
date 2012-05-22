@@ -47,7 +47,7 @@ BEGIN map2users('lcr_rule_target'); END;
 /
 CREATE INDEX lcr_rule_target_lcr_id_idx  ON lcr_rule_target (lcr_id);
 
-INSERT INTO version (table_name, table_version) values ('lcr_rule','1');
+INSERT INTO version (table_name, table_version) values ('lcr_rule','2');
 CREATE TABLE lcr_rule (
     id NUMBER(10) PRIMARY KEY,
     lcr_id NUMBER(5),

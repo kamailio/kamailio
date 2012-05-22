@@ -31,7 +31,7 @@ CREATE TABLE lcr_rule_target (
 
 CREATE INDEX lcr_rule_target_lcr_id_idx ON lcr_rule_target (lcr_id);
 
-INSERT INTO version (table_name, table_version) values ('lcr_rule','1');
+INSERT INTO version (table_name, table_version) values ('lcr_rule','2');
 CREATE TABLE lcr_rule (
     id SERIAL PRIMARY KEY NOT NULL,
     lcr_id SMALLINT NOT NULL,
