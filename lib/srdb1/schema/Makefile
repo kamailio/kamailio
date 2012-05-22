@@ -111,7 +111,7 @@ dbtext:
 	done
 	TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 	# small hack to create the version table entries, this is here easier as with XSL
-	for FILE in  $(wildcard $(SCHEME)/dbtext/kamailio/*) ; do \
+	for FILE in $(sort $(wildcard $(SCHEME)/dbtext/kamailio/*)) ; do \
 		if [ -f "$$FILE" ]; then \
 			if [  "$$FILE" != "$(SCHEME)/dbtext/kamailio/version" ]; then \
 				tail -n 1 "$$FILE" >> "$(SCHEME)/dbtext/kamailio/version" ; \
@@ -136,7 +136,7 @@ db_berkeley:
 	done
 	TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 	# small hack to create the version table entries, this is here easier as with XSL
-	for FILE in  $(wildcard $(SCHEME)/db_berkeley/kamailio/*) ; do \
+	for FILE in $(sort $(wildcard $(SCHEME)/db_berkeley/kamailio/*)) ; do \
 		if [ -f "$$FILE" ]; then \
 			if [  "$$FILE" != "$(SCHEME)/db_berkeley/kamailio/version" ]; then \
 				tail -n 2 "$$FILE" >> "$(SCHEME)/db_berkeley/kamailio/version" ; \
