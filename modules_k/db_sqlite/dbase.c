@@ -237,31 +237,54 @@ static int db_sqlite_submit_query(const db1_con_t* _h, const str* _s)
 	return 0;
 }
 
+#define H3(a,b,c)	((a<<16) + (b<<8) + c)
+#define H4(a,b,c,d)	((a<<24) + (b<<16) + (c<<8) + d)
+
 static int decltype_to_dbtype(const char *decltype)
 {
 	/* SQlite3 has dynamic typing. It does not store the actual
 	 * exact type, instead it uses 'affinity' depending on the
-	 * value. We have to go through the declaration types to see
-	 * what to return. */
-	if (strstr(decltype, "INT") != NULL ||
-	    strncasecmp(decltype, "SERIAL", 6) == 0)
-		return DB1_INT;
-	if (strstr(decltype, "CHAR") != NULL)
-		return DB1_STRING;
-	if (strstr(decltype, "TEXT") != NULL)
-		return DB1_STR;
-	if (strstr(decltype, "REAL") != NULL ||
-	    strstr(decltype, "FLOA") != NULL ||
-	    strstr(decltype, "DOUB") != NULL)
-		return DB1_DOUBLE;
-	if (strstr(decltype, "BLOB") != NULL)
-		return DB1_BLOB;
-	if (strncasecmp(decltype, "TIME", 4) == 0 ||
-	    strncasecmp(decltype, "DATE", 4) == 0)
-		return DB1_DATETIME;
+	 * value. We have to go through the declaration type to see
+	 * what to return.
+	 * The loose string matching (4 letter substring match) is what
+	 * SQlite does internally, but our return values differ as we want
+	 * the more exact srdb type instead of the affinity. */
+
+	uint32_t h = 0;
+
+	for (; *decltype; decltype++) {
+		h <<= 8;
+		h += toupper(*decltype);
+
+		switch (h & 0x00ffffff) {
+		case H3('I','N','T'):
+			return DB1_INT;
+		}
+
+		switch (h) {
+		case H4('S','E','R','I'): /* SERIAL */
+			return DB1_INT;
+		case H4('B','I','G','I'): /* BIGINT */
+			return DB1_BIGINT;
+		case H4('C','H','A','R'):
+		case H4('C','L','O','B'):
+			return DB1_STRING;
+		case H4('T','E','X','T'):
+			return DB1_STR;
+		case H4('R','E','A','L'):
+		case H4('F','L','O','A'): /* FLOAT */
+		case H4('D','O','U','B'): /* DOUBLE */
+			return DB1_DOUBLE;
+		case H4('B','L','O','B'):
+			return DB1_BLOB;
+		case H4('T','I','M','E'):
+		case H4('D','A','T','E'):
+			return DB1_DATETIME;
+		}
+	}
 
 	LM_ERR("sqlite decltype '%s' not recognized, defaulting to int",
-	       decltype);
+		decltype);
 	return DB1_INT;
 }
 
