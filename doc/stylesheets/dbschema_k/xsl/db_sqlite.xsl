@@ -87,7 +87,7 @@
 	    </xsl:when>
 	    <xsl:when test="$type='binary' or
 						$type='largebinary'">
-		<xsl:text>BYTEA</xsl:text>
+		<xsl:text>BLOB</xsl:text>
 		<xsl:call-template name="column.size"/>
 		<xsl:call-template name="column.trailing"/>
 	    </xsl:when>

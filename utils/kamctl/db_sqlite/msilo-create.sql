@@ -9,7 +9,7 @@ CREATE TABLE silo (
     exp_time INTEGER DEFAULT 0 NOT NULL,
     snd_time INTEGER DEFAULT 0 NOT NULL,
     ctype VARCHAR(32) DEFAULT 'text/plain' NOT NULL,
-    body BYTEA DEFAULT '' NOT NULL,
+    body BLOB DEFAULT '' NOT NULL,
     extra_hdrs TEXT DEFAULT '' NOT NULL,
     callid VARCHAR(128) DEFAULT '' NOT NULL,
     status INTEGER DEFAULT 0 NOT NULL

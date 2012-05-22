@@ -7,7 +7,7 @@ CREATE TABLE presentity (
     etag VARCHAR(64) NOT NULL,
     expires INTEGER NOT NULL,
     received_time INTEGER NOT NULL,
-    body BYTEA NOT NULL,
+    body BLOB NOT NULL,
     sender VARCHAR(128) NOT NULL,
     CONSTRAINT presentity_presentity_idx UNIQUE (username, domain, event, etag)
 );
@@ -68,7 +68,7 @@ CREATE TABLE xcap (
     id INTEGER PRIMARY KEY NOT NULL,
     username VARCHAR(64) NOT NULL,
     domain VARCHAR(64) NOT NULL,
-    doc BYTEA NOT NULL,
+    doc BLOB NOT NULL,
     doc_type INTEGER NOT NULL,
     etag VARCHAR(64) NOT NULL,
     source INTEGER NOT NULL,
