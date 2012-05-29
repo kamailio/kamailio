@@ -28,7 +28,8 @@ Alex Balashov
         3. Dependencies
 
               3.1. Kamailio Modules
-              3.2. External Libraries or Applications
+              3.2. Kamailio Core Settings
+              3.3. External Libraries or Applications
 
         4. Parameters
 
@@ -54,7 +55,8 @@ Chapter 1. Admin Guide
    3. Dependencies
 
         3.1. Kamailio Modules
-        3.2. External Libraries or Applications
+        3.2. Kamailio Core Settings
+        3.3. External Libraries or Applications
 
    4. Parameters
 
@@ -109,14 +111,23 @@ Chapter 1. Admin Guide
 3. Dependencies
 
    3.1. Kamailio Modules
-   3.2. External Libraries or Applications
+   3.2. Kamailio Core Settings
+   3.3. External Libraries or Applications
 
 3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * sl - stateless reply.
 
-3.2. External Libraries or Applications
+3.2. Kamailio Core Settings
+
+   SIP requires a Content-Length header for TCP transport. But most HTTP
+   clients do not set the content length for normal GET requests.
+   Therefore, the core must be configured to allow incoming requests
+   without content length header:
+     * tcp_accept_no_cl=yes
+
+3.3. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
