@@ -95,7 +95,7 @@ int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 		/* strip prefix (if defined) */
  		realm_prefix.s = cfg_get(registrar, registrar_cfg, realm_pref).s;
  		realm_prefix.len = cfg_get(registrar, registrar_cfg, realm_pref).len;
-		if (realm_prefix.len && realm_prefix.len<puri->host.len &&
+		if (realm_prefix.len>0 && realm_prefix.len<puri->host.len &&
 		(memcmp(realm_prefix.s, puri->host.s, realm_prefix.len)==0) ) {
 			memcpy(aor_buf + _a->len, puri->host.s + realm_prefix.len,
 					puri->host.len - realm_prefix.len);
