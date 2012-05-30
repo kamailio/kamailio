@@ -226,7 +226,7 @@ void rule_id_hash_table_contents_free()
     if (rule_id_hash_table == 0)
 	return;
 
-    for (i = 0; i <= lcr_rule_hash_size_param; i++) {
+    for (i = 0; i < lcr_rule_hash_size_param; i++) {
 	r = rule_id_hash_table[i];
 	while (r) {
 	    next_r = r->next;
