@@ -31,7 +31,7 @@ str default_domain;
 str outbound_proxy;
 str server_address;
 
-usrloc_api_t ul; /*!< Structure containing pointers to usrloc functions*/
-pua_api_t pua; /*!< Structure containing pointers to PUA functions*/
+extern usrloc_api_t ul; /*!< Structure containing pointers to usrloc functions*/
+extern pua_api_t pua; /*!< Structure containing pointers to PUA functions*/
 
 #endif

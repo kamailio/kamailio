@@ -33,6 +33,9 @@
 
 MODULE_VERSION
 
+usrloc_api_t ul; /*!< Structure containing pointers to usrloc functions*/
+pua_api_t pua; /*!< Structure containing pointers to PUA functions*/
+
 /* Default domain to be added, if none provided. */
 str default_domain = {NULL, 0};
 str outbound_proxy = {NULL, 0};

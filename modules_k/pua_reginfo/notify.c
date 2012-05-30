@@ -1,7 +1,7 @@
 /*
  * pua_reginfo module - Presence-User-Agent Handling of reg events
  *
- * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
+ * Copyright (C) 2011-2012 Carsten Bock, carsten@ng-voice.com
  * http://www.ng-voice.com
  *
  * This file is part of Kamailio, a free SIP server.
@@ -104,8 +104,8 @@ int process_contact(udomain_t * domain, urecord_t ** ul_record, str aor, str cal
 
 	/* Now we start looking for the contact: */
 	if (((*ul_record)->contacts == 0)
-		|| (ul.get_ucontact(*ul_record, &aor, &callid, &no_str, cseq+1, &ul_contact) != 0)) {
-		if (ul.insert_ucontact(*ul_record, &aor, &ci, &ul_contact) < 0) {
+		|| (ul.get_ucontact(*ul_record, &contact_uri, &callid, &no_str, cseq+1, &ul_contact) != 0)) {
+		if (ul.insert_ucontact(*ul_record, &contact_uri, &ci, &ul_contact) < 0) {
 			LM_ERR("failed to insert new contact\n");
 			return RESULT_ERROR;
 		}
@@ -200,6 +200,9 @@ int process_body(str notify_body, udomain_t * domain) {
 	str aor = {0, 0};
 	str callid = {0, 0};
 	str contact_uri = {0, 0};
+	str received = {0,0};
+	str path = {0,0};
+	str user_agent = {0, 0};
 	int state, event, expires, result, final_result = RESULT_ERROR;
 	char * expires_char,  * cseq_char;
 	int cseq = 0;
@@ -247,13 +250,13 @@ int process_body(str notify_body, udomain_t * domain) {
 		}
 
 		/* Now let's lock that domain for this AOR: */		
-		ul.lock_udomain(domain, &parsed_aor.user);
+		ul.lock_udomain(domain, &aor);
 		/* and retrieve the user-record for this user: */
-		result = ul.get_urecord(domain, &parsed_aor.user, &ul_record);
+		result = ul.get_urecord(domain, &aor, &ul_record);
 		if (result < 0) {
-			ul.unlock_udomain(domain, &parsed_aor.user);
-			LM_ERR("failed to query usrloc (User %.*s)\n",
-				parsed_aor.user.len, parsed_aor.user.s);
+			ul.unlock_udomain(domain, &aor);
+			LM_ERR("failed to query usrloc (AOR %.*s)\n",
+				aor.len, aor.s);
 			goto next_registration;
 		}
 		/* If no contacts found, then set the ul_record to NULL */
@@ -271,7 +274,7 @@ int process_body(str notify_body, udomain_t * domain) {
 					}
 					ul_contact = ul_contact->next;
 				}
-				if (ul.delete_urecord(domain, &parsed_aor.user, ul_record) < 0) {
+				if (ul.delete_urecord(domain, &aor, ul_record) < 0) {
 					LM_ERR("failed to remove record from usrloc\n");
 				}
 				/* If already a registration with contacts was found, then keep that result.
@@ -291,6 +294,23 @@ int process_body(str notify_body, udomain_t * domain) {
 					goto next_contact;
 				}
 				callid.len = strlen(callid.s);
+				received.s = xmlGetAttrContentByName(contacts, "received");
+				if (received.s == NULL) {
+                                        LM_DBG("No received for this contact!\n");
+                                }
+				received.len - strlen(received.s);
+
+				path.s = xmlGetAttrContentByName(contacts, "path");	
+				if (received.s == NULL) {
+                                        LM_DBG("No path for this contact!\n");
+                                }
+				path.len = strlen(path.s);
+
+				user_agent.s = xmlGetAttrContentByName(contacts, "user_agent");
+				if (received.s == NULL) {
+                                        LM_DBG("No user_agent for this contact!\n");
+                                }
+				user_agent.len = strlen(user_agent.s);
 
 				event = reginfo_parse_event(xmlGetAttrContentByName(contacts, "event"));
 				if (event == EVENT_UNKNOWN) {
@@ -349,7 +369,7 @@ next_contact:
 next_registration:
 		// if (ul_record) ul.release_urecord(ul_record);		
 		/* Unlock the domain for this AOR: */
-		ul.unlock_udomain(domain, &parsed_aor.user);
+		ul.unlock_udomain(domain, &aor);
 
 		registrations = registrations->next;
 	}

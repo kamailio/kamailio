@@ -142,10 +142,32 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 			memset(buf, 0, sizeof(buf));
 			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->callid.len, ptr->callid.s);
 			xmlNewProp(contact_node, BAD_CAST "callid", BAD_CAST buf);
+
 			/* CSeq Attribute */
 			memset(buf, 0, sizeof(buf));
 			buf_len = snprintf(buf, sizeof(buf), "%d", ptr->cseq);
 			xmlNewProp(contact_node, BAD_CAST "cseq", BAD_CAST buf);
+
+			/* received Attribute */
+			memset(buf, 0, sizeof(buf));
+	                buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->received.len, ptr->received.s);
+         	       	xmlNewProp(contact_node, BAD_CAST "received", BAD_CAST buf);
+			
+			/* path Attribute */
+			memset(buf, 0, sizeof(buf));
+			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->path.len, ptr->path.s);
+			xmlNewProp(contact_node, BAD_CAST "path", BAD_CAST buf);
+
+			/* user_agent Attribute */
+			memset(buf, 0, sizeof(buf));
+			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->user_agent.len, ptr->user_agent.s);
+			xmlNewProp(contact_node, BAD_CAST "user_agent", BAD_CAST buf);
+			
+			/* CSeq Attribute */
+			memset(buf, 0, sizeof(buf));
+			buf_len = snprintf(buf, sizeof(buf), "%d", ptr->cseq);
+			xmlNewProp(contact_node, BAD_CAST "cseq", BAD_CAST buf);
+
 			/* URI-Node */
 			memset(buf, 0, sizeof(buf));
 			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->c.len, ptr->c.s);
@@ -198,6 +220,8 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 	urecord_t * record;
 	int res;
 	str uri = {NULL, 0};
+	str user = {NULL, 0};
+
 	char* at = NULL;
 	char id_buf[512];
 	int id_buf_len;
@@ -215,11 +239,19 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 		LM_ERR("Unknown Type %i\n", type);
 		return;
 	}
+	/* make a local copy of the AOR */
+	user.len = c->aor->len;
+	user.s = c->aor->s;
 
 	/* Get the UDomain for this account */
-	ul.get_udomain(c->domain->s, &domain);
+	res = ul.get_udomain(c->domain->s, &domain);
+	if(res < 0) {
+		LM_ERR("no domain found\n");
+		return;
+	}
+
 	/* Get the URecord for this AOR */
-	res = ul.get_urecord(domain, c->aor, &record);
+	res = ul.get_urecord(domain, &user, &record);
 	if (res > 0) {
 		LM_ERR("' %.*s (%.*s)' Not found in usrloc\n", c->aor->len, c->aor->s, c->domain->len, c->domain->s);
 		return;
