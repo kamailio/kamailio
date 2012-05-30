@@ -2,7 +2,7 @@ Source: kamailio
 Section: net
 Priority: optional
 Maintainer: Jon Bonilla <manwe@aholab.ehu.es>
-Build-Depends: debhelper (>= 5), dpatch, libmysqlclient-dev, libexpat1-dev, libxml2-dev, libpq-dev, libradiusclient-ng-dev, flex, bison, zlib1g-dev, unixodbc-dev, libxmlrpc-c3-dev, libperl-dev, libsnmp-dev, dpkg-dev (>= 1.13.19), libdb-dev (>= 4.6.19), xsltproc, libconfuse-dev, libldap2-dev, libssl-dev, libcurl3-openssl-dev, python, libpcre3-dev, docbook-xml, libpurple-dev, libmemcache-dev, libreadline-dev, liblua5.1-0-dev, python-dev, libsasl2-dev, libgeoip-dev (>= 1.4.5), libhiredis-dev (>= 0.10.0), libsqlite3-dev, libjson0-dev, libevent-dev, libncurses5-dev
+Build-Depends: debhelper (>= 5), dpatch, libmysqlclient-dev, libexpat1-dev, libxml2-dev, libpq-dev, libradiusclient-ng-dev, flex, bison, zlib1g-dev, unixodbc-dev, libxmlrpc-c3-dev, libperl-dev, libsnmp-dev, dpkg-dev (>= 1.13.19), libdb-dev (>= 4.6.19), xsltproc, libconfuse-dev, libldap2-dev, libssl-dev, libcurl3-openssl-dev, python, libpcre3-dev, docbook-xml, libpurple-dev, libmemcache-dev, libreadline-dev, liblua5.1-0-dev, python-dev, libsasl2-dev, libgeoip-dev (>= 1.4.5), libhiredis-dev (>= 0.10.0), libsqlite3-dev, libjson0-dev, libevent-dev, libncurses5-dev, mono-devel
 Standards-Version: 3.8.0
 Homepage: http://www.kamailio.org/
 
@@ -10,7 +10,7 @@ Package: kamailio
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
 Conflicts: kamailio-regex-modules, kamailio-dbg
-Suggests: kamailio-mysql-modules, kamailio-postgres-modules, kamailio-unixodbc-modules, kamailio-tls-modules, kamailio-cpl-modules, kamailio-radius-modules, kamailio-presence-modules, kamailio-xml-modules, kamailio-perl-modules, kamailio-snmpstats-modules, kamailio-xmpp-modules, kamailio-carrierroute-modules, kamailio-berkeley-modules, kamailio-ldap-modules, kamailio-lua-modules, kamailio-python-modules
+Suggests: kamailio-mysql-modules, kamailio-postgres-modules, kamailio-unixodbc-modules, kamailio-tls-modules, kamailio-cpl-modules, kamailio-radius-modules, kamailio-presence-modules, kamailio-xml-modules, kamailio-perl-modules, kamailio-snmpstats-modules, kamailio-xmpp-modules, kamailio-carrierroute-modules, kamailio-berkeley-modules, kamailio-ldap-modules, kamailio-lua-modules, kamailio-python-modules, kamailio-mono-modules
 Description: very fast and configurable SIP proxy
  Kamailio is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, Kamailio can handle thousands calls
@@ -245,6 +245,17 @@ Description: contains the app_lua module
  .
  This package provides the app_lua module, an extension allowing to
  execute embedded Lua applications within configuration file.
+
+Package: kamailio-mono-modules
+Architecture: any
+Depends: ${shlibs:Depends}, kamailio (= ${Source-Version})
+Description: contains the app_mono module
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the app_mono module, an extension allowing to
+ execute embedded Mono applications within configuration file.
 
 Package: kamailio-python-modules
 Architecture: any
