@@ -2,7 +2,7 @@ Source: kamailio
 Section: net
 Priority: optional
 Maintainer: Jon Bonilla <manwe@aholab.ehu.es>
-Build-Depends: debhelper (>= 5), dpatch, libmysqlclient-dev, libexpat1-dev, libxml2-dev, libpq-dev, libradiusclient-ng-dev, flex, bison, zlib1g-dev, unixodbc-dev, libxmlrpc-c3-dev, libperl-dev, libsnmp-dev, dpkg-dev (>= 1.13.19), libdb-dev (>= 4.6.19), xsltproc, libconfuse-dev, libldap2-dev, libssl-dev, libcurl3-openssl-dev, python, libpcre3-dev, docbook-xml, libmemcache-dev, libreadline-dev, python-dev, libsasl2-dev, libgeoip-dev (>= 1.4.5), libsqlite3-dev, libjson0-dev, libevent-dev, libncurses5-dev, libhiredis-dev (>= 0.10.0), mono-devel
+Build-Depends: debhelper (>= 5), dpatch, libmysqlclient-dev, libexpat1-dev, libxml2-dev, libpq-dev, libradiusclient-ng-dev, flex, bison, zlib1g-dev, unixodbc-dev, libxmlrpc-c3-dev, libperl-dev, libsnmp-dev, dpkg-dev (>= 1.13.19), libdb-dev (>= 4.6.19), xsltproc, libconfuse-dev, libldap2-dev, libssl-dev, libcurl3-openssl-dev, python, libpcre3-dev, docbook-xml, libmemcache-dev, libreadline-dev, python-dev, libsasl2-dev, libgeoip-dev (>= 1.4.5), libsqlite3-dev, libjson0-dev, libevent-dev, libncurses5-dev, libhiredis-dev (>= 0.10.0), libmono-2.0-dev
 Standards-Version: 3.8.0
 Homepage: http://www.kamailio.org/
 
