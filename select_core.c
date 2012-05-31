@@ -390,8 +390,9 @@ int select_via(str* res, select_t* s, struct sip_msg* msg)
 {
 	struct via_body *p = NULL;
 	
-	if (((s->n == 1) || (s->params[1].type == SEL_PARAM_STR)) && (parse_via_header(msg, 1, &p)<0)) return -1;
-	else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
+	if ((s->n == 1) || (s->params[1].type == SEL_PARAM_STR)) {
+		if (parse_via_header(msg, 1, &p)<0) return -1;
+	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
 	if (!p) return -1;
 	res->s=p->name.s;
 	res->len=p->bsize;
@@ -404,8 +405,9 @@ int select_via_name(str* res, select_t* s, struct sip_msg* msg)
 	struct via_body *p = NULL;
 	
 	// it's not neccessary to test if (s->n > 1)
-	if ((s->params[1].type == SEL_PARAM_STR) && (parse_via_header(msg, 1, &p)<0)) return -1;
-	else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
+	if (s->params[1].type == SEL_PARAM_STR) {
+		if(parse_via_header(msg, 1, &p)<0) return -1;
+	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
 	if (!p) return -1;
 	RETURN0_res(p->name);
 }
@@ -415,8 +417,9 @@ int select_via_version(str* res, select_t* s, struct sip_msg* msg)
 	struct via_body *p = NULL;
 	
 	// it's not neccessary to test if (s->n > 1)
-	if ((s->params[1].type == SEL_PARAM_STR) && (parse_via_header(msg, 1, &p)<0)) return -1;
-	else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
+	if (s->params[1].type == SEL_PARAM_STR) {
+		if (parse_via_header(msg, 1, &p)<0) return -1;
+	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
 	if (!p) return -1;
 	RETURN0_res(p->version);
 }
@@ -426,8 +429,9 @@ int select_via_transport(str* res, select_t* s, struct sip_msg* msg)
 	struct via_body *p = NULL;
 	
 	// it's not neccessary to test if (s->n > 1)
-	if ((s->params[1].type == SEL_PARAM_STR) && (parse_via_header(msg, 1, &p)<0)) return -1;
-	else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
+	if (s->params[1].type == SEL_PARAM_STR) {
+		if(parse_via_header(msg, 1, &p)<0) return -1;
+	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
 	if (!p) return -1;
 	RETURN0_res(p->transport);
 }
@@ -437,8 +441,9 @@ int select_via_host(str* res, select_t* s, struct sip_msg* msg)
 	struct via_body *p = NULL;
 	
 	// it's not neccessary to test if (s->n > 1)
-	if ((s->params[1].type == SEL_PARAM_STR) && (parse_via_header(msg, 1, &p)<0)) return -1;
-	else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
+	if (s->params[1].type == SEL_PARAM_STR) {
+		if (parse_via_header(msg, 1, &p)<0) return -1;
+	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
 	if (!p) return -1;
 	RETURN0_res(p->host);
 }
@@ -448,8 +453,9 @@ int select_via_port(str* res, select_t* s, struct sip_msg* msg)
 	struct via_body *p = NULL;
 	
 	// it's not neccessary to test if (s->n > 1)
-	if ((s->params[1].type == SEL_PARAM_STR) && (parse_via_header(msg, 1, &p)<0)) return -1;
-	else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
+	if (s->params[1].type == SEL_PARAM_STR) {
+		if (parse_via_header(msg, 1, &p)<0) return -1;
+	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
 	if (!p) return -1;
 	RETURN0_res(p->port_str);
 }
@@ -459,8 +465,9 @@ int select_via_comment(str* res, select_t* s, struct sip_msg* msg)
 	struct via_body *p = NULL;
 	
 	// it's not neccessary to test if (s->n > 1)
-	if ((s->params[1].type == SEL_PARAM_STR) && (parse_via_header(msg, 1, &p)<0)) return -1;
-	else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
+	if (s->params[1].type == SEL_PARAM_STR) {
+		if(parse_via_header(msg, 1, &p)<0) return -1;
+	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
 	if (!p) return -1;
 	RETURN0_res(p->comment);
 }
@@ -471,8 +478,9 @@ int select_via_params(str* res, select_t* s, struct sip_msg* msg)
 	struct via_param *q;
 
 	// it's not neccessary to test if (s->n > 1)
-	if ((s->params[1].type == SEL_PARAM_STR) && (parse_via_header(msg, 1, &p)<0)) return -1;
-	else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
+	if (s->params[1].type == SEL_PARAM_STR) {
+		if (parse_via_header(msg, 1, &p)<0) return -1;
+	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
 	if (!p) return -1;
 	
 	for (q = p->param_lst;q;q=q->next) {
@@ -494,8 +502,9 @@ int select_via_params_spec(str* res, select_t* s, struct sip_msg* msg)
 	}
 	
 	// it's not neccessary to test if (s->n > 1)
-	if ((s->params[1].type == SEL_PARAM_STR) && (parse_via_header(msg, 1, &p)<0)) return -1;
-	else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
+	if (s->params[1].type != SEL_PARAM_INT) {
+		if(parse_via_header(msg, 1, &p)<0) return -1;
+	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
 	if (!p) return -1;
 	
 	switch (s->params[s->n-1].v.i) {

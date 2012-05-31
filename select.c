@@ -223,6 +223,7 @@ int parse_select (char** p, select_t** s)
 		ERR("parse_select: no free memory\n");
 		return -1;
 	}
+	memset(sel, 0, sizeof(select_t));
 	if (w_parse_select(p, sel)<0) {
 		pkg_free(sel);
 		return -2;
