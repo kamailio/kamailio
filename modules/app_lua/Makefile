@@ -1,6 +1,4 @@
-# $Id: Makefile 2 2005-06-13 16:47:24Z bogdan_iancu $
-#
-# print example module makefile
+# $Id$
 #
 # 
 # WARNING: do not run this directly, it should be run by the master Makefile
@@ -47,10 +45,10 @@ else
 	LIBS = $(shell lua-config --libs)
 endif
 
+LIBS+=-lm
 DEFS+=-DOPENSER_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kcore/kcore
-LIBS+=-lm
 
 include ../../Makefile.modules
