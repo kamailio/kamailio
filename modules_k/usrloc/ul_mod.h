@@ -73,6 +73,7 @@ extern int cseq_delay;
 extern int ul_fetch_rows;
 extern int ul_hash_size;
 extern int ul_db_update_as_insert;
+extern int ul_db_check_update;
 
 extern db1_con_t* ul_dbh;   /* Database connection handle */
 extern db_func_t ul_dbf;

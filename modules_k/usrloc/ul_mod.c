@@ -107,6 +107,7 @@ extern int bind_usrloc(usrloc_api_t* api);
 extern int ul_locks_no;
 int ul_db_update_as_insert = 0;
 int ul_timer_procs = 0;
+int ul_db_check_update = 0;
 
 /* sruid to get internal uid for mi/rpc commands */
 sruid_t _ul_sruid;
@@ -194,6 +195,7 @@ static param_export_t params[] = {
 	{"preload",             STR_PARAM|USE_FUNC_PARAM, (void*)ul_preload_param},
 	{"db_update_as_insert", INT_PARAM, &ul_db_update_as_insert},
 	{"timer_procs",         INT_PARAM, &ul_timer_procs},
+	{"db_check_update",     INT_PARAM, &ul_db_check_update},
 	{0, 0, 0}
 };
 

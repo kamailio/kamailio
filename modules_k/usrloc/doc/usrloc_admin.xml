@@ -775,6 +775,30 @@ modparam("usrloc", "db_update_as_insert", 1)
 		</example>
 	</section>
 
+	<section id="db_check_update">
+		<title><varname>db_check_update</varname> (string)</title>
+		<para>
+			Set this parameter to 1 if you want to do DB INSERT if the number
+			of affected rows by contact DB UPDATE operation is 0. The
+			database module driver has to implement affected_rows() DB API
+			function, otherwise this parameter is ignored - e.g., MySQL and
+			Postgres DB connectors offer affected_rows().
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (no DB INSERT).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_check_update</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "db_check_update", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="timer_procs">
 		<title><varname>timer_procs</varname> (string)</title>
 		<para>

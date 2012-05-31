@@ -728,6 +728,15 @@ int db_update_ucontact(ucontact_t* _c)
 		return -1;
 	}
 
+	if (ul_db_check_update==1 && ul_dbf.affected_rows) {
+		/* supposed to be an UPDATE, but if affected rows is 0, then try
+		 * to do an INSERT */
+		if(ul_dbf.affected_rows(ul_dbh)==0) {
+			LM_DBG("affected rows by UPDATE was 0, doing an INSERT\n");
+			return db_insert_ucontact(_c);
+		}
+	}
+
 	return 0;
 }
 
