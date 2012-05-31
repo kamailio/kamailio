@@ -67,7 +67,7 @@ extern struct ulcb_head_list*  ulcb_list;
 
 
 #define exists_ulcb_type(_types_) \
-	( (ulcb_list->reg_types)|(_types_) )
+	( (ulcb_list->reg_types)&(_types_) )
 
 
 int init_ulcb_list(void);
