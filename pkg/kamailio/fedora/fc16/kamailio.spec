@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     3.3.0
-%define rel     pre2.fc16
+%define rel     pre3%{dist}
 %define _sharedir %{_prefix}/share
 
 
@@ -19,17 +19,18 @@ BuildRoot:     %{_tmppath}/%{name}-%{ver}-buildroot
 Conflicts:     kamailio-mysql < %ver, kamailio-postgresql < %ver
 Conflicts:     kamailio-unixODBC < %ver, kamailio-bdb < %ver
 Conflicts:     kamailio-sqlite < %ver, kamailio-utils < %ver
-Conflicts:     kamailio-cpl < %ver, kamailio-radius < %ver
-Conflicts:     kamailio-snmpstats < %ver, kamailio-presence < %ver
-Conflicts:     kamailio-xmpp < %ver, kamailio-tls < %ver
-Conflicts:     kamailio-carrierroute < %ver, kamailio-purple < %ver
-Conflicts:     kamailio-ldap < %ver, kamailio-xmlrpc < %ver
-Conflicts:     kamailio-perl < %ver, kamailio-lua < %ver
-Conflicts:     kamailio-python < %ver, kamailio-GeoIP < %ver
-Conflicts:     kamailio-regex < %ver, kamailio-dialplan < %ver
-Conflicts:     kamailio-lcr < %ver, kamailio-xmlops < %ver
-Conflicts:     kamailio-redis < %ver, kamailio-json < %ver
-Conflicts:     kamailio-mono < %ver
+Conflicts:     kamailio-cpl < %ver, kamailio-snmpstats < %ver
+Conflicts:     kamailio-presence < %ver, kamailio-xmpp < %ver
+Conflicts:     kamailio-tls < %ver, kamailio-purple < %ver, kamailio-ldap < %ver
+Conflicts:     kamailio-xmlrpc < %ver, kamailio-perl < %ver, kamailio-lua < %ver
+Conflicts:     kamailio-python < %ver, kamailio-regex < %ver
+Conflicts:     kamailio-dialplan < %ver, kamailio-lcr < %ver
+Conflicts:     kamailio-xmlops < %ver
+%if 0%{?fedora}
+Conflicts:     kamailio-radius < %ver, kamailio-carrierroute < %ver
+Conflicts:     kamailio-redis < %ver, kamailio-json < %ver 
+Conflicts:     kamailio-mono < %ver, kamailio-GeoIP < %ver
+%endif
 BuildRequires: bison flex gcc make
 
 %description
@@ -115,20 +116,10 @@ BuildRequires: libxml2-devel
 CPL (Call Processing Language) interpreter for Kamailio.
 
 
-%package radius
-Summary:       Radius AAA API for Kamailio.
-Group:         System Environment/Daemons
-Requires:      radiusclient-ng, kamailio = %ver
-BuildRequires: radiusclient-ng-devel
-
-%description radius
-Radius AAA API for Kamailio.
-
-
 %package snmpstats
 Summary:       SNMP management interface (scalar statistics) for Kamailio.
 Group:         System Environment/Daemons
-Requires:      net-snmp-agent-libs, kamailio = %ver
+Requires:      net-snmp-libs, kamailio = %ver
 BuildRequires: lm_sensors-devel, net-snmp-devel
 
 %description snmpstats
@@ -163,26 +154,6 @@ BuildRequires: openssl-devel
 
 %description tls
 TLS transport for Kamailio.
-
-
-%package carrierroute
-Summary:       Routing, balancing, and blacklisting for Kamailio.
-Group:         System Environment/Daemons
-Requires:      libconfuse, kamailio = %ver
-BuildRequires: libconfuse-devel
-
-%description carrierroute
-Routing, balancing, and blacklisting for Kamailio.
-
-
-%package  purple
-Summary:  Multi-protocol IM and presence gateway module.
-Group:    System Environment/Daemons
-Requires: glib, libpurple, libxml2, kamailio = %ver, kamailio-presence = %ver
-BuildRequires: glib-devel, libpurple-devel, libxml2-devel
-
-%description purple
-Multi-protocol IM and presence gateway module.
 
 
 %package ldap
@@ -235,16 +206,6 @@ BuildRequires: python-devel
 Python extensions for Kamailio.
 
 
-%package GeoIP
-Summary:       Max Mind GeoIP real-time query support for Kamailio.
-Group:         System Environment/Daemons
-Requires:      GeoIP, kamailio = %ver
-BuildRequires: GeoIP-devel
-
-%description GeoIP
-Max Mind GeoIP real-time query support for Kamailio.
-
-
 %package regex
 Summary:       PCRE mtaching operations for Kamailio.
 Group:         System Environment/Daemons
@@ -285,6 +246,41 @@ BuildRequires: libxml2-devel
 XML operation functions for Kamailio.
 
 
+%package  purple
+Summary:  Multi-protocol IM and presence gateway module.
+Group:    System Environment/Daemons
+%if 0%{?fedora}
+Requires: glib, libpurple, libxml2, kamailio = %ver, kamailio-presence = %ver
+BuildRequires: glib-devel, libpurple-devel, libxml2-devel
+%else
+Requires: glib2, libpurple, libxml2, kamailio = %ver, kamailio-presence = %ver
+BuildRequires: glib2-devel, libpurple-devel, libxml2-devel
+%endif
+
+%description purple
+Multi-protocol IM and presence gateway module.
+
+%if 0%{?fedora}
+%package radius
+Summary:       Radius AAA API for Kamailio.
+Group:         System Environment/Daemons
+Requires:      radiusclient-ng, kamailio = %ver
+BuildRequires: radiusclient-ng-devel
+
+%description radius
+Radius AAA API for Kamailio.
+
+
+%package carrierroute
+Summary:       Routing, balancing, and blacklisting for Kamailio.
+Group:         System Environment/Daemons
+Requires:      libconfuse, kamailio = %ver
+BuildRequires: libconfuse-devel
+
+%description carrierroute
+Routing, balancing, and blacklisting for Kamailio.
+
+
 %package redis
 Summary:       REDIS NoSQL database connector for Kamailio.
 Group:         System Environment/Daemons
@@ -315,6 +311,17 @@ BuildRequires: mono-devel
 Mono extensions for Kamailio.
 
 
+%package GeoIP
+Summary:       Max Mind GeoIP real-time query support for Kamailio.
+Group:         System Environment/Daemons
+Requires:      GeoIP, kamailio = %ver
+BuildRequires: GeoIP-devel
+
+%description GeoIP
+Max Mind GeoIP real-time query support for Kamailio.
+%endif
+
+
 
 %prep
 %setup -n %{name}-%{ver}
@@ -326,12 +333,21 @@ make FLAVOUR=kamailio cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT\
 	basedir=$RPM_BUILD_ROOT cfg_target=/%{_sysconfdir}/kamailio/\
 	modules_dirs="modules modules_k"
 make
+%if 0%{?fedora}
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
 	klcr ksqlite kredis kjson kmono kberkeley" include_modules="xmlrpc\
 	xmlops"
+%else
+make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
+	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
+	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
+	kcpl ksnmpstats kpresence kregex kdialplan\
+	klcr ksqlite kberkeley" include_modules="xmlrpc\
+	xmlops"
+%endif
 
 
 
@@ -339,6 +355,7 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
 
 make install
+%if 0%{?fedora}
 make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
@@ -347,12 +364,28 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	xmlops"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
-install -m644 pkg/kamailio/fedora/fc16/kamailio.service \
+install -m644 pkg/kamailio/fedora/fc%{?fedora}/kamailio.service \
 		$RPM_BUILD_ROOT/%{_unitdir}/kamailio.service
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
-install -m644 pkg/kamailio/fedora/fc16/kamailio.sysconfig \
+install -m644 pkg/kamailio/fedora/fc%{?fedora}/kamailio.sysconfig \
 		$RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/kamailio
+%else
+make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
+	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
+	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
+	kcpl ksnmpstats kpresence kregex kdialplan\
+	klcr ksqlite kberkeley" include_modules="xmlrpc\
+	xmlops"
+
+mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
+install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
+		$RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/kamailio
+
+mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
+install -m644 pkg/kamailio/centos/%{?centos}/kamailio.sysconfig \
+		$RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/kamailio
+%endif
 
 
 
@@ -369,14 +402,23 @@ rm -rf "$RPM_BUILD_ROOT"
 
 
 %post
+%if 0%{?fedora}
 /bin/systemctl --system daemon-reload
+%else
+/sbin/chkconfig --add kamailio
+%endif
 
 
 
 %preun
 if [ $1 = 0 ]; then
+%if 0%{?fedora}
 	/bin/systemctl stop kamailio.service
 	/bin/systemctl disable kamailio.service 2> /dev/null
+%else
+	/sbin/service kamailio stop > /dev/null 2>&1
+	/sbin/chkconfig --del kamailio
+%endif
 fi
 
 
@@ -479,7 +521,11 @@ fi
 
 %dir %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/*
+%if 0%{?fedora}
 %config %{_unitdir}/*
+%else
+%config %{_sysconfdir}/rc.d/init.d/*
+%endif
 %config %{_sysconfdir}/sysconfig/*
 
 %dir %{_libdir}/kamailio
@@ -673,18 +719,6 @@ fi
 %{_libdir}/kamailio/modules_k/cpl-c.so
 
 
-%files radius
-%defattr(-,root,root)
-%{_docdir}/kamailio/modules_k/README.acc_radius
-%{_docdir}/kamailio/modules_k/README.auth_radius
-%{_docdir}/kamailio/modules_k/README.misc_radius
-%{_docdir}/kamailio/modules/README.peering
-%{_libdir}/kamailio/modules_k/acc_radius.so
-%{_libdir}/kamailio/modules_k/auth_radius.so
-%{_libdir}/kamailio/modules_k/misc_radius.so
-%{_libdir}/kamailio/modules/peering.so
-
-
 %files snmpstats
 %defattr(-,root,root)
 %{_docdir}/kamailio/modules_k/README.snmpstats
@@ -739,12 +773,6 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.tls
 %{_libdir}/kamailio/modules/tls.so
-
-
-%files carrierroute
-%defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules/README.carrierroute
-%{_libdir}/kamailio/modules/carrierroute.so
 
 
 %files purple
@@ -807,12 +835,6 @@ fi
 %{_libdir}/kamailio/modules/app_python.so
 
 
-%files GeoIP
-%defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules/README.geoip
-%{_libdir}/kamailio/modules/geoip.so
-
-
 %files regex
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules_k/README.regex
@@ -837,6 +859,25 @@ fi
 %{_libdir}/kamailio/modules/xmlops.so
 
 
+%if 0%{?fedora}
+%files radius
+%defattr(-,root,root)
+%{_docdir}/kamailio/modules_k/README.acc_radius
+%{_docdir}/kamailio/modules_k/README.auth_radius
+%{_docdir}/kamailio/modules_k/README.misc_radius
+%{_docdir}/kamailio/modules/README.peering
+%{_libdir}/kamailio/modules_k/acc_radius.so
+%{_libdir}/kamailio/modules_k/auth_radius.so
+%{_libdir}/kamailio/modules_k/misc_radius.so
+%{_libdir}/kamailio/modules/peering.so
+
+
+%files carrierroute
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.carrierroute
+%{_libdir}/kamailio/modules/carrierroute.so
+
+
 %files redis
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.ndb_redis
@@ -857,8 +898,52 @@ fi
 %{_libdir}/kamailio/modules/app_mono.so
 
 
+%files GeoIP
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.geoip
+%{_libdir}/kamailio/modules/geoip.so
+%endif
+
+
 
 %changelog
+* Thu May 31 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to pre3
+  - Combined Fedora/CentOS .spec in preparation for Fedora 17
+* Sun May 20 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - First version created for Kamailio 3.3.0. Based on spec-file for Fedora
+    created by myself (in turn based on an older spec-file for CentOS created
+    by Ovidiu Sas).
+  - Tested with CentOS 6.2 x86_64.
+  - Builds all Kamailio 3.3.0 modules (modules/modules_k) except:
+    - modules/app_mono: Requires mono which is not in the CentOS 6 repo
+    - modules/auth_identity: Conflicts with TLS unless statically linked (which
+      requires changes to Makefile and is impractical for generic RPM building)
+    - modules/db_cassandra: Requires Cassandra and Thrift which are not in the
+      CentOS 6 repo
+    - modules/geoip: Requires GeoIP which is not in the CentOS 6 repo
+    - modules/iptrtpproxy: Needs local copy of iptables source to build
+      (impractical for generic RPM building)
+    - modules/json: Requires json-c whish is not in the CentOS 6 repo
+    - modules/jsonrpc-c: Requires json-c whish is not in the CentOS 6 repo
+    - modules/ndb_redis: Requires hiredis which is not in the CentOS 6 repo
+    - modules/peering: Requires radiusclient-ng which is not in the CentOS 6
+      repo
+    - modules_k/acc_radius: Requires radiusclient-ng which is not in the CentOS
+      6 repo
+    - modules_k/auth_radius: Required radiusclient-ng which is not in the
+      CentOS 6 repo
+    - modules_k/carrierroute: Requires libconfuse which is not in the CentOS 6
+      repo
+    - modules_k/db_oracle: Requires Oracle which is not in the CentOS 6 repo
+      (and is closed-source)
+    - modules_k/memcached: Module compilation appears to require an older
+      version of libmemcached-devel than the one in the CentOS 6 repo
+    - modules_k/mi_xmlrpc: Requires libxmlrpc-c3 which is not in the CentOS 6
+      repo
+    - modules_k/misc_radius: Requires radiusclient-ng which is not in the
+      CentOS 6 repo
+    - modules_k/osp: Requires OSP Toolkit which is not in the CentOS 6 repo
 * Fri May 18 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added missing BuildRequires (gcc).
   - Added .fc16 to rel.  This makes it easy to tell which distribution the RPMs
