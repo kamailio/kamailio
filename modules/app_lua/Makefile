@@ -20,13 +20,17 @@ ifeq ($(BUILDER),)
 			LIBS= -llua5.1
 		endif
 	else
-		LUANAME=lua
-		LUALIBS = $(shell pkg-config --silence-errors --libs ${LUANAME})
+		LUAVER=XX
+		LUALIBS = $(shell pkg-config --silence-errors --libs lua)
 		ifeq ($(LUALIBS),)
-			LUANAME=lua5.1
-			LUALIBS = $(shell pkg-config --silence-errors --libs ${LUANAME})
+			LUALIBS = $(shell pkg-config --silence-errors --libs lua5.1)
+			ifneq ($(LUALIBS),)
+				LUAVER=51
+			endif
+		else
+			LUAVER=5X
 		endif
-		ifeq ($(LUALIBS),)
+		ifeq ($(LUAVER),XX)
 			LUA51 = $(shell ls /usr/lib/liblua* | grep liblua5.1)
 			ifeq ($(LUA51),)
 				DEFS+=-I/usr/include/lua
@@ -36,8 +40,13 @@ ifeq ($(BUILDER),)
 				LIBS= -llua5.1
 			endif
 		else
-			DEFS+= $(shell pkg-config --cflags ${LUANAME})
-			LIBS = $(shell pkg-config --libs ${LUANAME})
+			ifeq ($(LUAVER),51)
+				DEFS+= $(shell pkg-config --cflags lua5.1)
+				LIBS = $(shell pkg-config --libs lua5.1)
+			else
+				DEFS+= $(shell pkg-config --cflags lua)
+				LIBS = $(shell pkg-config --libs lua)
+			endif
 		endif
 	endif
 else
