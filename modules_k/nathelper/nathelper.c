@@ -730,6 +730,8 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 	struct lump *anchor;
 	struct sip_uri uri;
 	str hostport;
+	str params1 = {0};
+	str params2 = {0};
 
 	if (get_contact_uri(msg, &uri, &c) == -1)
 		return -1;
@@ -758,8 +760,25 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 	temp[0] = hostport.s[0];
 	temp[1] = c->uri.s[c->uri.len];
 	c->uri.s[c->uri.len] = hostport.s[0] = '\0';
-	len1 = snprintf(buf, len, "%s%s:%d%s", c->uri.s, cp, msg->rcv.src_port,
-	    hostport.s + hostport.len);
+	if(uri.maddr.len<=0) {
+		len1 = snprintf(buf, len, "%s%s:%d%s", c->uri.s, cp, msg->rcv.src_port,
+		    hostport.s + hostport.len);
+	} else {
+		/* skip maddr parameter - makes no sense anymore */
+		LM_DBG("removing maddr parameter from contact uri: [%.*s]\n",
+				uri.maddr.len, uri.maddr.s);
+		params1.s = hostport.s + hostport.len;
+		params1.len = uri.maddr.s - params1.s;
+		while(params1.len>0
+				&& (params1.s[params1.len-1]==' '
+					|| params1.s[params1.len-1]=='\t'
+					|| params1.s[params1.len-1]==';'))
+			params1.len--;
+		params2.s = uri.maddr.s + uri.maddr.len;
+		params2.len = c->uri.s + c->uri.len - params2.s;
+		len1 = snprintf(buf, len, "%s%s:%d%.*s%.*s", c->uri.s, cp, msg->rcv.src_port,
+		    params1.len, params1.s, params2.len, params2.s);
+	}
 	if (len1 < len)
 		len = len1;
 	hostport.s[0] = temp[0];
