@@ -364,11 +364,11 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	xmlops"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
-install -m644 pkg/kamailio/fedora/fc%{?fedora}/kamailio.service \
+install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.service \
 		$RPM_BUILD_ROOT/%{_unitdir}/kamailio.service
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
-install -m644 pkg/kamailio/fedora/fc%{?fedora}/kamailio.sysconfig \
+install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.sysconfig \
 		$RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/kamailio
 %else
 make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
@@ -907,6 +907,9 @@ fi
 
 
 %changelog
+* Fri Jun 1 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Tweak to the pkg/kamailio/fedora directory structure
+  - Tested with Fedora 17
 * Thu May 31 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Updated rel to pre3
   - Combined Fedora/CentOS .spec in preparation for Fedora 17
