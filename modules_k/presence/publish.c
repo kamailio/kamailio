@@ -33,7 +33,6 @@
 
 #include "../../ut.h"
 #include "../../str.h"
-#include "../../mod_fix.h"
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_uri.h" 
 #include "../../parser/parse_expires.h" 
@@ -48,7 +47,6 @@
 #include "utils_func.h"
 #include "publish.h"
 #include "presentity.h"
-#include "../xcap_client/xcap_callbacks.h"
 
 extern gen_lock_set_t* set;
 
@@ -56,10 +54,6 @@ static str pu_400a_rpl = str_init("Bad request");
 static str pu_400b_rpl = str_init("Invalid request");
 static str pu_500_rpl  = str_init("Server Internal Error");
 static str pu_489_rpl  = str_init("Bad Event");
-
-static str str_doc_uri_col = str_init("doc_uri");
-static str str_doc_type_col = str_init("doc_type");
-static str str_doc_col = str_init("doc");
 
 struct p_modif
 {
@@ -514,152 +508,48 @@ error:
 
 }
 
-static int fetch_presentity(str furi, str *presentity)
+int update_hard_presentity(str *pres_uri, pres_ev_t *event, str *file_uri, str *filename)
 {
-	db_key_t query_cols[2], result_cols[1];
-	db_val_t query_vals[2], *row_vals;
-	db1_res_t *result;
-	db_row_t *row;
-	int n_query_cols = 0, n_result_cols = 0;;
-	char *tmp;
-
-	query_cols[n_query_cols] = &str_doc_uri_col;
-	query_vals[n_query_cols].type = DB1_STR;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.str_val = furi;
-	n_query_cols++;
-
-	query_cols[n_query_cols] = &str_doc_type_col;
-	query_vals[n_query_cols].type = DB1_INT;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val = PIDF_MANIPULATION;
-	n_query_cols++;
-
-	result_cols[n_result_cols++] = &str_doc_col;
-
-	if (pres_xcap_dbf.use_table(pres_xcap_db, &pres_xcap_table) < 0)
-	{
-		LM_ERR("calling use_table()\n");
-		return -1;
-	}
-
-	if (pres_xcap_dbf.query(pres_xcap_db, query_cols, 0, query_vals, result_cols,
-				n_query_cols, n_result_cols, 0, &result) < 0)
-	{
-		LM_ERR("calling query()\n");
-		return -1;
-	}
-
-	if (result == NULL)
-	{
-		LM_ERR("bad result\n");
-		return -1;
-	}
-
-	if (result->n <=0)
-	{
-		pres_xcap_dbf.free_result(pres_xcap_db, result);
-		return 0;
-	}
-
-	if (result->n > 1)
-	{
-		pres_xcap_dbf.free_result(pres_xcap_db, result);
-		return -1;
-	}
-
-	row = &result->rows[0];
-	row_vals = ROW_VALUES(row);
-
-	tmp = (char *)row_vals[0].val.string_val;
-	if (tmp == NULL)
-	{
-		LM_ERR("xcap document is empty\n");
-		pres_xcap_dbf.free_result(pres_xcap_db, result);
-		return -1;
-	}
-	presentity->len = strlen(tmp);
-
-	presentity->s = pkg_malloc(presentity->len * sizeof(char));
-	if (presentity->s == NULL)
-	{
-		LM_ERR("allocating memory\n");
-		pres_xcap_dbf.free_result(pres_xcap_db, result);
-		return -1;
-	}
-	memcpy(presentity->s, tmp, presentity->len);
-
-	pres_xcap_dbf.free_result(pres_xcap_db, result);
-	return 1;
-}
-
-int pres_update_presentity(struct sip_msg *msg, char *puri, char *furi, char *fname)
-{
-	int pres_result, ret = -1, new_t;
+	int ret = -1, new_t, pidf_result;
+	str *pidf_doc;
 	char *sphere = NULL;
-	str pres_uri, file_uri, filename, presentity, ev;
-	pres_ev_t *event;
 	presentity_t *pres = NULL;
 	struct sip_uri parsed_uri;
 
-	if(fixup_get_svalue(msg, (gparam_p)puri, &pres_uri)!=0)
-	{
-		LM_ERR("invalid uri parameter");
-		return -1;
-	}
-	if(fixup_get_svalue(msg, (gparam_p)furi, &file_uri)!=0)
-	{
-		LM_ERR("invalid file_uri parameter");
-		return -1;
-	}
-	if(fixup_get_svalue(msg, (gparam_p)fname, &filename)!=0)
-	{
-		LM_ERR("invalid filename parameter");
-		return -1;
-	}
-
 	LM_INFO("Hard-state file %.*s (uri %.*s) updated for %.*s\n",
-		filename.len, filename.s,
-		file_uri.len, file_uri.s,
-		pres_uri.len, pres_uri.s);
+		filename->len, filename->s,
+		file_uri->len, file_uri->s,
+		pres_uri->len, pres_uri->s);
 
-	if (pres_integrated_xcap_server != 1)
+	if (!event->get_pidf_doc)
 	{
-		LM_ERR("integrated XCAP server not configured\n");
+		LM_WARN("pidf-manipulation not supported for %.*s\n", event->name.len, event->name.s);
 		return -1;
 	}
 
-	ev.s = "presence";
-	ev.len = 8;
-	event = contains_event(&ev, NULL);
-	if (event == NULL)
-	{
-		LM_ERR("presence event not supported\n");
-		return -1;
-	}
-
-	if (parse_uri(pres_uri.s, pres_uri.len, &parsed_uri) < 0)
+	if (parse_uri(pres_uri->s, pres_uri->len, &parsed_uri) < 0)
 	{
 		LM_ERR("bad presentity URI\n");
 		return -1;
 	}
 
-	pres_result = fetch_presentity(file_uri, &presentity);
-	if (pres_result < 0)
+	pidf_result = event->get_pidf_doc(&parsed_uri.user, &parsed_uri.host, file_uri, &pidf_doc);
+
+	if (pidf_result < 0)
 	{
-		LM_ERR("retrieving presentity\n");
+		LM_ERR("retrieving pidf-manipulation document\n");
 		return -1;
 	}
-	else if (pres_result > 0)
+	else if (pidf_result > 0)
 	{
 		/* Insert/replace presentity... */
 		LM_DBG("INSERT/REPLACE\n");
 		xmlDocPtr doc;
 
 		if (sphere_enable)
-			sphere = extract_sphere(presentity);
+			sphere = extract_sphere(*pidf_doc);
 
-		doc = xmlParseMemory(presentity.s, presentity.len);
+		doc = xmlParseMemory(pidf_doc->s, pidf_doc->len);
 		if (doc == NULL)
 		{
 			LM_ERR("bad body format\n");
@@ -681,14 +571,14 @@ int pres_update_presentity(struct sip_msg *msg, char *puri, char *furi, char *fn
 		new_t = 0;
 	}
 
-	pres = new_presentity(&parsed_uri.host, &parsed_uri.user, -1, event, &filename, NULL);
+	pres = new_presentity(&parsed_uri.host, &parsed_uri.user, -1, event, filename, NULL);
 	if (pres == NULL)
 	{
 		LM_ERR("creating presentity structure\n");
 		goto done;
 	}
 
-	if (update_presentity(NULL, pres, &presentity, new_t, NULL, sphere) < 0)
+	if (update_presentity(NULL, pres, pidf_doc, new_t, NULL, sphere) < 0)
 	{
 		LM_ERR("updating presentity\n");
 		goto done;
@@ -699,7 +589,12 @@ int pres_update_presentity(struct sip_msg *msg, char *puri, char *furi, char *fn
 done:
 	if (pres) pkg_free(pres);
 	if (sphere) pkg_free(sphere);
-	if (presentity.s) pkg_free(presentity.s);
+	if(pidf_doc)
+	{
+		if(pidf_doc->s)
+			pkg_free(pidf_doc->s);
+		pkg_free(pidf_doc);
+	}
 
 	return ret;
 }

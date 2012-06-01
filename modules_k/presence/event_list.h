@@ -67,6 +67,7 @@ typedef str* (aux_body_processing_t)(struct subscription *subs, str* body);
  *	*/
 typedef int (is_allowed_t)(struct subscription* subs);
 typedef int (get_rules_doc_t)(str* user, str* domain, str** rules_doc);
+typedef int (get_pidf_doc_t)(str* user, str* domain, str* file_uri, str** rules_doc);
 /* return code rules for is_allowed_t
  *	< 0  if error occured
  *	=0	 if no change in status(if no xcap document exists)
@@ -96,6 +97,7 @@ struct pres_ev
 	 */
 	int req_auth;
 	get_rules_doc_t* get_rules_doc;
+	get_pidf_doc_t* get_pidf_doc;
 	apply_auth_t*  apply_auth_nbody;
 	is_allowed_t*  get_auth_status;
 	

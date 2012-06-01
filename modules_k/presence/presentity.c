@@ -297,7 +297,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	{
 		/* get rules_document */
 		if(presentity->event->get_rules_doc(&presentity->user,
-					&presentity->domain, &rules_doc))
+					&presentity->domain, &rules_doc) < 0)
 		{
 			LM_ERR("getting rules doc\n");
 			goto error;

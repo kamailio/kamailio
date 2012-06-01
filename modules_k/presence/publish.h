@@ -48,5 +48,6 @@
 void msg_presentity_clean(unsigned int ticks,void *param);
 
 int handle_publish(struct sip_msg* msg, char* str1 ,char* str2);
-int pres_update_presentity(struct sip_msg *msg, char *puri, char *furi, char *fname);
+int update_hard_presentity(str *pres_uri, pres_ev_t *event, str *file_uri, str *filename);
+
 #endif

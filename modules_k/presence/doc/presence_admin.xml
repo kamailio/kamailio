@@ -104,31 +104,6 @@ modparam("presence", "db_url",
 		</example>
 	</section>
 	<section>
-		<title><varname>xcap_db_url</varname>(str)</title>
-		<para>
-		The XCAP database url.
-		</para>
-		<para>This option is only required if integrated_xcap_server is
-		enabled AND the xcap table is on a difference server from the
-		other presence tables.  If this option is not set db_url is
-		used for the integrated_xcap_server when required.
-		</para>
-		<para>
-		<emphasis>Default value is <quote>NULL</quote>.</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>xcap_db_url</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("presence", "xcap_db_url", 
-	"&defaultdb;")
-...
-</programlisting>
-		</example>
-	</section>
-
-
-	<section>
 		<title><varname>presentity_table</varname>(str)</title>
 		<para>
 		The name of the db table where PUBLISH presence information is stored.
@@ -182,25 +157,6 @@ modparam("presence", "watchers_table", "watchers")
 </programlisting>
 		</example>
 	</section>
-	<section>
-		<title><varname>xcap_table</varname>(str)</title>
-		<para>
-		The name of the db table where XML documents are stored.
-		</para>
-		<para>
-		<emphasis>	Default value is <quote>xcap</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>xcap_table</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("presence", "xcap_table", "xcap")
-...
-</programlisting>
-		</example>
-	</section>
-
 	<section>
 		<title><varname>clean_period</varname> (int)</title>
 		<para>
@@ -619,28 +575,6 @@ modparam("presence", "fetch_rows", 1000)
 </programlisting>
 	    </example>
 	</section>
-	<section>
-	    <title><varname>integrated_xcap_server</varname> (integer)</title>
-	    <para>
-		Enable the integrated XCAP server connection.  This is only
-		required if you want to use the pres_update_presentity()
-		function.  Setting to 0 means no integrated XCAP server,
-		setting to 1 means enable integrated XCAP server.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is 0.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>integrated_xcap_server</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("presence", "integrated_xcap_server", 1)
-...
-</programlisting>
-	    </example>
-	</section>
 
 </section>
 
@@ -789,7 +723,7 @@ if (method=="MESSAGE") {
 
 	<section>
 		<title>
-		<function moreinfo="none">pres_refresh_watchers(uri, event, type)</function>
+		<function moreinfo="none">pres_refresh_watchers(uri, event, type[, file_uri, filename])</function>
 		</title>
 		<para>
 			The function can be used in configuration to triger notifies to watchers
@@ -806,23 +740,34 @@ if (method=="MESSAGE") {
 				<para>event - the event package.</para>
 			</listitem>
 			<listitem>
-				<para>type - it distinguishes between the two different types of events
+				<para>type - it distinguishes between the three different types of events
 						that can trigger the refresh, depending on its value:
 						<itemizedlist>
 							<listitem>
 								<para>0 - a change in watchers authentication.</para>
 							</listitem>
 							<listitem>
-								<para>
-									1 - a statical update in published state (either through direct
-									update in db table or by modifying the pidf manipulation document,
-									if pidf_manipulation parameter is set).
+								<para>1 - a statical update in published state through direct
+								update in db table.
+								</para>
+							</listitem>
+							<listitem>
+								<para>2 - a statical update in published state by modifying
+								the pidf manipulation document.
 								</para>
 							</listitem>
 						</itemizedlist>
 				</para>
 			</listitem>
-        </itemizedlist>
+			<listitem>
+				<para>file_uri - the uri of the pidf-manipulation file on
+				the XCAP server (only used for type 2).</para>
+			</listitem>
+			<listitem>
+				<para>filename - the name of the pidf-manipulation file on
+				the XCAP server (only used for type 2).</para>
+			</listitem>
+        	</itemizedlist>
 		<para>
 		This function can be used from ANY_ROUTE.
 		</para>
@@ -867,40 +812,6 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 </programlisting>
 		</example>
 	</section>
-	<section>
-		<title>
-		<function moreinfo="none">pres_update_presentity(uri, file_uri, filename)</function>
-		</title>
-		<para>
-			The function can be used in configuration to triger updates to presentities
-			based on the content of pidf-manipulation documents stored in the xcap db
-			table.  This enables "hard-state" presence to be set.
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem>
-				<para>uri - the uri of the presentity</para>
-			</listitem>
-			<listitem>
-				<para>file_uri - the uri of the document on the XCAP server</para>
-			</listitem>
-			<listitem>
-				<para>filename - the filename part of the uri of the document
-					this is used as the presentity ETag</para>
-			</listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from ANY_ROUTE.
-		</para>
-		<example>
-		<title><function>pres_update_presentity</function> usage</title>
-		<programlisting format="linespecific">
-...
-pres_update_presentity("$xcapuri(u=>xuid)", "$xcapuri(u=>uri_adoc)", "$xcapuri(u=>file)");
-...
-</programlisting>
-		</example>
-	</section>
 </section>
 
 <section>
@@ -919,31 +830,41 @@ pres_update_presentity("$xcapuri(u=>xuid)", "$xcapuri(u=>uri_adoc)", "$xcapuri(u
 		<para>Parameters:</para>
 		<itemizedlist>
 			<listitem>
-				<para>presentity_uri : the uri of the user who made the change
+				<para>uri - the uri of the user who made the change
 				and whose watchers should be informed</para>
 			</listitem>
 			<listitem>
-				<para>event : the event package</para>
+				<para>event - the event package.</para>
 			</listitem>
 			<listitem>
-				<para>refresh type : it distinguishes between the two different types of events
-						that can trigger a refresh: 
+				<para>type - it distinguishes between the three different types of events
+						that can trigger the refresh, depending on its value:
 						<itemizedlist>
 							<listitem>
-								<para> a change in watchers authentication: refresh type= 0 ; </para>
+								<para>0 - a change in watchers authentication.</para>
 							</listitem>
 							<listitem>
-								<para>
-									a statical update in published state (either through direct 
-									update in db table or by modifying the pidf manipulation document,
-									if pidf_manipulation parameter is set): refresh type!= 0.
+								<para>1 - a statical update in published state through direct
+								update in db table.
+								</para>
+							</listitem>
+							<listitem>
+								<para>2 - a statical update in published state by modifying
+								the pidf manipulation document.
 								</para>
 							</listitem>
 						</itemizedlist>
 				</para>
 			</listitem>
-        </itemizedlist>
-
+			<listitem>
+				<para>file_uri - the uri of the pidf-manipulation file on
+				the XCAP server (only used for type 2).</para>
+			</listitem>
+			<listitem>
+				<para>filename - the name of the pidf-manipulation file on
+				the XCAP server (only used for type 2).</para>
+			</listitem>
+        	</itemizedlist>
         <para>
 		MI FIFO Command Format:
 		</para>

@@ -63,8 +63,6 @@ extern sl_api_t slb;
 /* DB module bind */
 extern db_func_t pa_dbf;
 extern db1_con_t* pa_db;
-extern db_func_t pres_xcap_dbf;
-extern db1_con_t* pres_xcap_db;
 
 /* PRESENCE database */
 extern str db_url;
@@ -95,9 +93,6 @@ extern int pres_notifier_processes;
 
 extern int phtable_size;
 extern phtable_t* pres_htable;
-
-extern int pres_integrated_xcap_server;
-extern str pres_xcap_table;
 
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc);
 int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri);

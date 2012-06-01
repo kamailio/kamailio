@@ -239,6 +239,7 @@ int add_event(pres_ev_t* event)
 	ev->apply_auth_nbody= event->apply_auth_nbody;
 	ev->get_auth_status= event->get_auth_status;
 	ev->get_rules_doc= event->get_rules_doc;
+	ev->get_pidf_doc= event->get_pidf_doc;
 	ev->evs_publ_handl= event->evs_publ_handl;
 	ev->evs_subs_handl= event->evs_subs_handl;
 	ev->etag_not_new= event->etag_not_new;
@@ -356,7 +357,7 @@ pres_ev_t* search_event(event_t* event)
 				strncasecmp(pres_ev->evp->name.s,event->name.s,
 					pres_ev->evp->name.len)== 0))
 		{
-			if((event->params.list== NULL && pres_ev->evp->params.list== NULL) || event->type==EVENT_UA_PROFILE)
+			if(event->params.list== NULL && pres_ev->evp->params.list== NULL)
 			{
 				return pres_ev;
 			}

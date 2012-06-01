@@ -1386,40 +1386,45 @@ int query_db_notify(str* pres_uri, pres_ev_t* event, subs_t* watcher_subs )
 		ret_code= 1;
 		goto done;
 	}
-	
-	if(event->type & PUBL_TYPE)
-	{
-		notify_body = get_p_notify_body(*pres_uri, event, NULL, NULL);
-		if(notify_body == NULL)
-		{
-			LM_DBG("Could not get the notify_body\n");
-			/* goto error; */
-		}
-	}	
 
 	s= subs_array;
-	
-	while(s)
+
+	if (pres_notifier_processes > 0)
 	{
-
-		if (event->aux_body_processing) {
-			aux_body = event->aux_body_processing(s, notify_body);
-		}
-
-		if(notify(s, watcher_subs, aux_body?aux_body:notify_body, 0)< 0 )
+		while(s)
 		{
-			LM_ERR("Could not send notify for [event]=%.*s\n",
-					event->name.len, event->name.s);
-			goto done;
+			set_updated(s);
+			s= s->next;
+		}
+	}
+	else
+	{
+		if(event->type & PUBL_TYPE)
+			notify_body = get_p_notify_body(*pres_uri, event, NULL, NULL);
+
+		while(s)
+		{
+	
+			if (event->aux_body_processing) {
+				aux_body = event->aux_body_processing(s, notify_body);
+			}
+	
+			if(notify(s, watcher_subs, aux_body?aux_body:notify_body, 0)< 0 )
+			{
+				LM_ERR("Could not send notify for [event]=%.*s\n",
+						event->name.len, event->name.s);
+				goto done;
+			}
+	
+			if(aux_body!=NULL) {
+				if(aux_body->s)	{
+					event->aux_free_body(aux_body->s);
+				}
+				pkg_free(aux_body);
+			}
+			s= s->next;
 		}
 
-		if(aux_body!=NULL) {
-			if(aux_body->s)	{
-				event->aux_free_body(aux_body->s);
-			}
-			pkg_free(aux_body);
-		}
-		s= s->next;
 	}
 
 	ret_code= 1;
