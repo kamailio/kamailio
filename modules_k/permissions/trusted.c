@@ -344,14 +344,16 @@ static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 	int_str tag_avp, avp_val;
 	int count = 0;
 
-	if (parse_from_header(msg) < 0) return -1;
-	uri = get_from(msg)->uri;
-	if (uri.len > MAX_URI_SIZE) {
-		LM_ERR("message has From URI too large\n");
-		return -1;
+	if (IS_SIP(msg)) {
+		if (parse_from_header(msg) < 0) return -1;
+		uri = get_from(msg)->uri;
+		if (uri.len > MAX_URI_SIZE) {
+			LM_ERR("message has From URI too large\n");
+			return -1;
+		}
+		memcpy(uri_string, uri.s, uri.len);
+		uri_string[uri.len] = (char)0;
 	}
-	memcpy(uri_string, uri.s, uri.len);
-	uri_string[uri.len] = (char)0;
 	get_tag_avp(&tag_avp, &tag_avp_type);
 
 	row = RES_ROWS(_r);
@@ -366,7 +368,7 @@ static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 		    (VAL_NULL(val + 2) ||
 		      ((VAL_TYPE(val + 2) == DB1_STRING) && !VAL_NULL(val + 2))))
 		{
-			if (!VAL_NULL(val + 1)) {
+			if (!VAL_NULL(val + 1) && IS_SIP(msg)) {
 				if (regcomp(&preg, (char *)VAL_STRING(val + 1), REG_NOSUB)) {
 					LM_ERR("invalid regular expression\n");
 					continue;

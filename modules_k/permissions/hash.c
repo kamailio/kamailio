@@ -218,21 +218,24 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 	src_ip.s = src_ip_c_str;
 	src_ip.len = strlen(src_ip.s);
 
-	if (parse_from_header(msg) < 0) return -1;
-	uri = get_from(msg)->uri;
-	if (uri.len > MAX_URI_SIZE) {
-		LM_ERR("from URI too large\n");
-		return -1;
+	if (IS_SIP(msg))
+	{
+		if (parse_from_header(msg) < 0) return -1;
+		uri = get_from(msg)->uri;
+		if (uri.len > MAX_URI_SIZE) {
+			LM_ERR("from URI too large\n");
+			return -1;
+		}
+		memcpy(uri_string, uri.s, uri.len);
+		uri_string[uri.len] = (char)0;
 	}
-	memcpy(uri_string, uri.s, uri.len);
-	uri_string[uri.len] = (char)0;
 
 	for (np = table[perm_hash(src_ip)]; np != NULL; np = np->next) {
 	    if ((np->src_ip.len == src_ip.len) && 
 		(strncmp(np->src_ip.s, src_ip.s, src_ip.len) == 0) &&
 		((np->proto == PROTO_NONE) || (proto == PROTO_NONE) ||
 		 (np->proto == proto))) {
-		if (np->pattern) {
+		if (np->pattern && IS_SIP(msg)) {
 		    if (regcomp(&preg, np->pattern, REG_NOSUB)) {
 			LM_ERR("invalid regular expression\n");
 			continue;
