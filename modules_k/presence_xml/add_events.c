@@ -69,6 +69,7 @@ int xml_add_events(void)
 		event.free_body= free_xml_body;
 		event.default_expires= 3600;
 		event.get_rules_doc= pres_get_rules_doc;
+		event.get_pidf_doc= pres_get_pidf_doc;
 		if(pres_add_event(&event)< 0)
 		{
 			LM_ERR("while adding event presence\n");

@@ -88,7 +88,6 @@ pres_get_sphere_t pres_get_sphere;
 str xcap_table= str_init("xcap");
 str db_url = str_init(DEFAULT_DB_URL);
 int force_active= 0;
-int pidf_manipulation= 0;
 int integrated_xcap_server= 0;
 xcap_serv_t* xs_list= NULL;
 int disable_presence = 0;
@@ -121,7 +120,6 @@ static param_export_t params[]={
 	{ "db_url",		STR_PARAM, &db_url.s},
 	{ "xcap_table",		STR_PARAM, &xcap_table.s},
 	{ "force_active",	INT_PARAM, &force_active },
-	{ "pidf_manipulation",  INT_PARAM, &pidf_manipulation},
 	{ "integrated_xcap_server", INT_PARAM, &integrated_xcap_server},
 	{ "xcap_server",     	STR_PARAM|USE_FUNC_PARAM,(void*)pxml_add_xcap_server},
 	{ "disable_presence",	INT_PARAM, &disable_presence },

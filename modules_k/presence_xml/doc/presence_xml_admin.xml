@@ -220,30 +220,6 @@ modparam("presence_xml", "force_active", 1)
 		</example>
 	</section>
 	<section>
-		<title><varname>pidf_manipulation</varname> (int)</title>
-		<para>
-		Setting this parameter to 1 enables the features described in RFC 4827.
-		It gives the possibility to have a permanent state notified to the users
-		even in the case in which the phone is not online. The presence document
-		is taken from the XCAP server and aggregated together with the other
-		presence information, if any exist, for each Notify that is sent to the
-		watchers. It is also possible to have information notified even if not 
-		issuing any Publish (useful for services such as email, SMS, MMS).
-		</para>
-		<para>
-		<emphasis>Default value is <quote>0</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>pidf_manipulation</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("presence_xml", "pidf_manipulation", 1)
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
 		<title><varname>integrated_xcap_server</varname> (int)</title>
 		<para>
 		This parameter is a flag for the type of XCAP servers

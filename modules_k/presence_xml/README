@@ -8,7 +8,7 @@ Edited by
 
 Anca-Maria Vamanu
 
-   Copyright � 2007 Voice Sistem SRL
+   Copyright © 2007 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -29,10 +29,9 @@ Anca-Maria Vamanu
               3.4. disable_winfo(int)
               3.5. disable_bla(int)
               3.6. force_active (int)
-              3.7. pidf_manipulation (int)
-              3.8. integrated_xcap_server (int)
-              3.9. xcap_server (str)
-              3.10. passive_mode(int)
+              3.7. integrated_xcap_server (int)
+              3.8. xcap_server (str)
+              3.9. passive_mode(int)
 
         4. Functions
 
@@ -52,12 +51,11 @@ Anca-Maria Vamanu
    1.4. Set disable_winfo parameter
    1.5. Set disable_bla parameter
    1.6. Set force_active parameter
-   1.7. Set pidf_manipulation parameter
-   1.8. Set integrated_xcap_server parameter
-   1.9. Set xcap_server parameter
-   1.10. Set passive_mode parameter
-   1.11. pres_check_basic usage
-   1.12. pres_check_activities usage
+   1.7. Set integrated_xcap_server parameter
+   1.8. Set xcap_server parameter
+   1.9. Set passive_mode parameter
+   1.10. pres_check_basic usage
+   1.11. pres_check_activities usage
 
 Chapter 1. Admin Guide
 
@@ -77,10 +75,9 @@ Chapter 1. Admin Guide
         3.4. disable_winfo(int)
         3.5. disable_bla(int)
         3.6. force_active (int)
-        3.7. pidf_manipulation (int)
-        3.8. integrated_xcap_server (int)
-        3.9. xcap_server (str)
-        3.10. passive_mode(int)
+        3.7. integrated_xcap_server (int)
+        3.8. xcap_server (str)
+        3.9. passive_mode(int)
 
    4. Functions
 
@@ -135,16 +132,15 @@ Chapter 1. Admin Guide
    3.4. disable_winfo(int)
    3.5. disable_bla(int)
    3.6. force_active (int)
-   3.7. pidf_manipulation (int)
-   3.8. integrated_xcap_server (int)
-   3.9. xcap_server (str)
-   3.10. passive_mode(int)
+   3.7. integrated_xcap_server (int)
+   3.8. xcap_server (str)
+   3.9. passive_mode(int)
 
 3.1. db_url(str)
 
    The database URL.
 
-   Default value is "mysql://openser:openserrw@localhost/openser".
+   Default value is “mysql://openser:openserrw@localhost/openser”.
 
    Example 1.1. Set db_url parameter
 ...
@@ -155,7 +151,7 @@ modparam("presence_xml", "db_url", "dbdriver://username:password@dbhost/dbname")
 
    The name of the database table where XCAP documents are stored.
 
-   Default value is "xcap".
+   Default value is “xcap”.
 
    Example 1.2. Set xcap_table parameter
 ...
@@ -166,7 +162,7 @@ modparam("presence_xml", "xcap_table", "xcaps")
 
    Set this parameter to disable the handling of the "presence" event.
 
-   Default value: "0".
+   Default value: “0”.
 
    Example 1.3. Set disable_presence parameter
 ...
@@ -178,7 +174,7 @@ modparam("presence_xml", "disable_presence", 1)
    Set this parameter to disable the handling of the "presence.winfo"
    event.
 
-   Default value: "0".
+   Default value: “0”.
 
    Example 1.4. Set disable_winfo parameter
 ...
@@ -189,7 +185,7 @@ modparam("presence_xml", "disable_winfo", 1)
 
    Set this parameter to disable the handling of the "dialog;sla" event.
 
-   Default value: "1" (0 - enabled, 1 - disabled).
+   Default value: “1” (0 - enabled, 1 - disabled).
 
    Example 1.5. Set disable_bla parameter
 ...
@@ -209,32 +205,14 @@ modparam("presence_xml", "disable_bla", 1)
    Note: When switching from one value to another, the watchers table must
    be emptied.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.6. Set force_active parameter
 ...
 modparam("presence_xml", "force_active", 1)
 ...
 
-3.7. pidf_manipulation (int)
-
-   Setting this parameter to 1 enables the features described in RFC 4827.
-   It gives the possibility to have a permanent state notified to the
-   users even in the case in which the phone is not online. The presence
-   document is taken from the XCAP server and aggregated together with the
-   other presence information, if any exist, for each Notify that is sent
-   to the watchers. It is also possible to have information notified even
-   if not issuing any Publish (useful for services such as email, SMS,
-   MMS).
-
-   Default value is "0".
-
-   Example 1.7. Set pidf_manipulation parameter
-...
-modparam("presence_xml", "pidf_manipulation", 1)
-...
-
-3.8. integrated_xcap_server (int)
+3.7. integrated_xcap_server (int)
 
    This parameter is a flag for the type of XCAP servers used. If the XCAP
    server is integrated with Kamailio presence_xml module and access the
@@ -249,35 +227,35 @@ modparam("presence_xml", "pidf_manipulation", 1)
    Otherwise, it uses xcap_client module to fetch documents from the XCAP
    servers with HTTP requests. This mode is currently not supported.
 
-   Default value is "0".
+   Default value is “0”.
 
-   Example 1.8. Set integrated_xcap_server parameter
+   Example 1.7. Set integrated_xcap_server parameter
 ...
 modparam("presence_xml", "integrated_xcap_server", 1)
 ...
 
-3.9. xcap_server (str)
+3.8. xcap_server (str)
 
    The address of the xcap servers used for storage. This parameter is
    compulsory if the integrated_xcap_server parameter is not set. It can
    be set more that once, to construct an address list of trusted XCAP
    servers.
 
-   Example 1.9. Set xcap_server parameter
+   Example 1.8. Set xcap_server parameter
 ...
 modparam("presence_xml", "xcap_server", "xcap_server.example.org")
 modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
 ...
 
-3.10. passive_mode(int)
+3.9. passive_mode(int)
 
    If set to 1, module acts in passive mode - no bind to presence module,
    no connection to database. Useful when needing only to use $xml(...)
    pseudoc-variable.
 
-   Default value: "0" (0 - active mode, 1 - passive mode).
+   Default value: “0” (0 - active mode, 1 - passive mode).
 
-   Example 1.10. Set passive_mode parameter
+   Example 1.9. Set passive_mode parameter
 ...
 modparam("presence_xml", "passive_mode", 1)
 ...
@@ -287,7 +265,7 @@ modparam("presence_xml", "passive_mode", 1)
    4.1. pres_check_basic(presentity_uri, status)
    4.2. pres_check_activities(presentity_uri, activity)
 
-4.1. pres_check_basic(presentity_uri, status)
+4.1.  pres_check_basic(presentity_uri, status)
 
    Checks the /presence/tuple/status/basic nodes in the presentity for
    presentity_uri against the value in status.
@@ -298,7 +276,7 @@ modparam("presence_xml", "passive_mode", 1)
      * 1 - if a match is found.
      * -1 - if a match is not found.
 
-   Example 1.11. pres_check_basic usage
+   Example 1.10. pres_check_basic usage
 ...
     if (pres_check_basic("$ru", "open")) {
         ...
@@ -310,7 +288,7 @@ modparam("presence_xml", "passive_mode", 1)
     }
 ...
 
-4.2. pres_check_activities(presentity_uri, activity)
+4.2.  pres_check_activities(presentity_uri, activity)
 
    Checks whether a /presence/person/activities/activity node exists in
    the presentity for presentity_uri.
@@ -322,7 +300,7 @@ modparam("presence_xml", "passive_mode", 1)
      * -1 - if a match is not found.
      * -2 - if /presence/person or /presence/person/activity do not exist.
 
-   Example 1.12. pres_check_activities usage
+   Example 1.11. pres_check_activities usage
 ...
     if (pres_check_basic("$ru", "open")) {
         pres_check_activities("$ru", "unknown");
@@ -337,7 +315,7 @@ modparam("presence_xml", "passive_mode", 1)
 
 5. Installation
 
-   The module requires one table in Kamailio database: "xcap". The SQL
+   The module requires one table in Kamailio database: “xcap”. The SQL
    syntax to create it can be found in presence-create.sql script in the
    database directories in the kamailio/scripts folder. You can also find
    the complete database documentation on the project webpage,

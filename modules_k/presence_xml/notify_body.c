@@ -62,7 +62,7 @@ str* pres_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n, i
 	str* n_body= NULL;
 	str* body= NULL;
 
-	if(body_array== NULL && !pidf_manipulation)
+	if(body_array== NULL)
 		return NULL;
 
 	if(off_index>= 0)
@@ -458,8 +458,6 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	xmlNodePtr add_node = NULL ;
 	str *body= NULL;
 	char* id= NULL, *tuple_id = NULL;
-	xmlDocPtr pidf_manip_doc= NULL;
-	str* pidf_doc= NULL;
 
 	xml_array = (xmlDocPtr*)pkg_malloc( (n+2)*sizeof(xmlDocPtr));
 	if(xml_array== NULL)
@@ -470,38 +468,6 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	}
 	memset(xml_array, 0, (n+2)*sizeof(xmlDocPtr)) ;
 
-	/* if pidf_manipulation usage is configured */
-	if(pidf_manipulation)
-	{
-		if( get_rules_doc(pres_user, pres_domain, PIDF_MANIPULATION, &pidf_doc)< 0)
-		{
-			LM_ERR("while getting xcap tree for doc_type PIDF_MANIPULATION\n");
-			goto error;
-		}	
-		if(pidf_doc== NULL)
-		{
-			LM_DBG("No PIDF_MANIPULATION doc for [user]= %.*s [domain]= %.*s\n"
-			,pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
-		}
-		else
-		{
-			pidf_manip_doc= xmlParseMemory(pidf_doc->s, pidf_doc->len);
-			pkg_free(pidf_doc->s);
-			pkg_free(pidf_doc);
-
-			if(pidf_manip_doc== NULL)
-			{
-				LM_ERR("parsing xml memory\n");
-				goto error;
-			}		
-			else
-			{	
-				xml_array[0]= pidf_manip_doc;
-				j++;
-			}
-		}
-	}
-	
 	for(i=0; i<n; i++)
 	{
 		if(body_array[i] == NULL )
