@@ -1126,13 +1126,10 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						goto endofvalue;
 #endif
 					case L_VALUE:
-						if (param->type==FIN_RPORT){
-							param->value.len=0;
-							param->value.s=0; /* null value */
-							state=F_PARAM;
-							goto endofvalue;
-						};
-						/* no break */
+						param->value.len=0;
+						param->value.s=0; /* null value */
+						state=F_PARAM;
+						goto endofvalue;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
 								" in state %d\n", *tmp, state);
