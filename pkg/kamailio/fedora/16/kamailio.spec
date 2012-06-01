@@ -423,6 +423,13 @@ fi
 
 
 
+%postun
+%if 0%{?fedora}
+/bin/systemctl --system daemon-reload
+%endif
+
+
+
 %files
 %defattr(-,root,root)
 %dir %{_docdir}/kamailio
@@ -907,6 +914,8 @@ fi
 
 
 %changelog
+* Sat Jun 2 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Added %postun section to reload systemd on Fedora after uninstall
 * Fri Jun 1 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Tweak to the pkg/kamailio/fedora directory structure
   - Tested with Fedora 17
