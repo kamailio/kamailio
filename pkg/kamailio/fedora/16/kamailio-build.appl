@@ -11,7 +11,6 @@ hardware:
       size: 4
 packages:
   - @core
-  - redhat-rpm-config		# kamailio-debuginfo
   - bison			# kamailio
   - db4-devel			# kamailio-bdb
   - expat-devel			# kamailio-xmpp
@@ -39,6 +38,7 @@ packages:
   - postgresql-devel		# kamailio-postgresql
   - python-devel		# kamailio-python
   - radiusclient-ng-devel	# kamailio-radius
+  - redhat-rpm-config		# kamailio-debuginfo
   - rpm-build
   - sqlite-devel		# kamailio-sqlite
   - unixODBC-devel		# kamailio-unixODBC
