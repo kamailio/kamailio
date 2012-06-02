@@ -31,7 +31,7 @@ Conflicts:     kamailio-radius < %ver, kamailio-carrierroute < %ver
 Conflicts:     kamailio-redis < %ver, kamailio-json < %ver 
 Conflicts:     kamailio-mono < %ver, kamailio-GeoIP < %ver
 %endif
-BuildRequires: bison flex gcc make
+BuildRequires: bison flex gcc make redhat-rpm-config
 
 %description
 Kamailio (former OpenSER) is an Open Source SIP Server released under GPL, able
@@ -654,6 +654,8 @@ fi
 %{_sbindir}/kamdbctl
 %{_sbindir}/sercmd
 %{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.py
+%{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyc
+%{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyo
 %{_libdir}/kamailio/kamctl/kamctl.base
 %{_libdir}/kamailio/kamctl/kamctl.ctlbase
 %{_libdir}/kamailio/kamctl/kamctl.dbtext
@@ -916,6 +918,7 @@ fi
 %changelog
 * Sat Jun 2 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added %postun section to reload systemd on Fedora after uninstall
+  - Added build requirement for redhat-rpm-config so debuginfo RPMs get built
 * Fri Jun 1 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Tweak to the pkg/kamailio/fedora directory structure
   - Tested with Fedora 17
