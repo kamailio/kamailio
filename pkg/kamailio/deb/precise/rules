@@ -20,7 +20,7 @@
 export DEB_BUILD_OPTIONS:="$(DEB_BUILD_OPTIONS) nostrip"
 
 # modules not in the "main" kamailio package
-EXCLUDED_MODULES= mi_xmlrpc 
+EXCLUDED_MODULES= mi_xmlrpc purple 
 
 # extra modules to skip, because they are not compilable now
 # - regardless if they go to the main kamailio package or to some module package,
@@ -41,7 +41,7 @@ MODULES_SP=
 # Note: the order is important (should be in dependency order, the one
 # on which other depend first)
 PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
-			   ldap xml perl utils purple memcached tls \
+			   ldap xml perl utils memcached tls \
 			   snmpstats carrierroute xmpp cpl lua python geoip\
 			   redis sqlite json
 
