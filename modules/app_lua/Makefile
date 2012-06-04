@@ -14,10 +14,10 @@ ifeq ($(BUILDER),)
 		LUA51 = $(shell ls /usr/lib/liblua* | grep liblua5.1)
 		ifeq ($(LUA51),)
 			DEFS+=-I/usr/include/lua
-			LIBS= -llua
+			LIBS= -llua -lm
 		else
 			DEFS+=-I/usr/include/lua5.1
-			LIBS= -llua5.1
+			LIBS= -llua5.1 -lm
 		endif
 	else
 		LUAVER=XX
@@ -34,10 +34,10 @@ ifeq ($(BUILDER),)
 			LUA51 = $(shell ls /usr/lib/liblua* | grep liblua5.1)
 			ifeq ($(LUA51),)
 				DEFS+=-I/usr/include/lua
-				LIBS= -llua
+				LIBS= -llua -lm
 			else
 				DEFS+=-I/usr/include/lua5.1
-				LIBS= -llua5.1
+				LIBS= -llua5.1 -lm
 			endif
 		else
 			ifeq ($(LUAVER),51)
@@ -54,7 +54,6 @@ else
 	LIBS = $(shell lua-config --libs)
 endif
 
-LIBS+=-lm
 DEFS+=-DOPENSER_MOD_INTERFACE
 
 SERLIBPATH=../../lib
