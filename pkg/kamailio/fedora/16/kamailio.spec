@@ -119,8 +119,12 @@ CPL (Call Processing Language) interpreter for Kamailio.
 %package snmpstats
 Summary:       SNMP management interface (scalar statistics) for Kamailio.
 Group:         System Environment/Daemons
+%if 0%{?fedora}
+Requires:      net-snmp-agent-libs, kamailio = %ver
+%else
 Requires:      net-snmp-libs, kamailio = %ver
-BuildRequires: lm_sensors-devel, net-snmp-devel
+%endif
+BuildRequires: net-snmp-devel
 
 %description snmpstats
 SNMP management interface (scalar statistics) for Kamailio.
@@ -438,6 +442,8 @@ fi
 %doc %{_docdir}/kamailio/INSTALL
 %doc %{_docdir}/kamailio/README
 %doc %{_docdir}/kamailio/README-MODULES
+
+%dir %{_docdir}/kamailio/modules
 %doc %{_docdir}/kamailio/modules/README.async
 %doc %{_docdir}/kamailio/modules/README.auth
 %doc %{_docdir}/kamailio/modules/README.avpops
@@ -473,6 +479,8 @@ fi
 %doc %{_docdir}/kamailio/modules/README.topoh
 %doc %{_docdir}/kamailio/modules/README.xhttp
 %doc %{_docdir}/kamailio/modules/README.xhttp_rpc
+
+%dir %{_docdir}/kamailio/modules_k
 %doc %{_docdir}/kamailio/modules_k/README.acc
 %doc %{_docdir}/kamailio/modules_k/README.alias_db
 %doc %{_docdir}/kamailio/modules_k/README.auth_db
@@ -653,9 +661,8 @@ fi
 %{_sbindir}/kamctl
 %{_sbindir}/kamdbctl
 %{_sbindir}/sercmd
-%{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.py
-%{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyc
-%{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyo
+
+%dir %{_libdir}/kamailio/kamctl
 %{_libdir}/kamailio/kamctl/kamctl.base
 %{_libdir}/kamailio/kamctl/kamctl.ctlbase
 %{_libdir}/kamailio/kamctl/kamctl.dbtext
@@ -667,9 +674,17 @@ fi
 %{_libdir}/kamailio/kamctl/kamdbctl.base
 %{_libdir}/kamailio/kamctl/kamdbctl.dbtext
 
+%dir %{_libdir}/kamailio/kamctl/dbtextdb
+%{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.py
+%{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyc
+%{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyo
+
 %{_mandir}/man5/*
 %{_mandir}/man8/*
 
+%dir %{_sharedir}/kamailio
+%dir %{_sharedir}/kamailio/dbtext
+%dir %{_sharedir}/kamailio/dbtext/kamailio
 %{_sharedir}/kamailio/dbtext/kamailio/*
 
 
@@ -679,6 +694,7 @@ fi
 %{_libdir}/kamailio/modules/db_mysql.so
 %{_libdir}/kamailio/kamctl/kamctl.mysql
 %{_libdir}/kamailio/kamctl/kamdbctl.mysql
+%dir %{_sharedir}/kamailio/mysql
 %{_sharedir}/kamailio/mysql/*
 
 
@@ -688,6 +704,7 @@ fi
 %{_libdir}/kamailio/modules/db_postgres.so
 %{_libdir}/kamailio/kamctl/kamctl.pgsql
 %{_libdir}/kamailio/kamctl/kamdbctl.pgsql
+%dir %{_sharedir}/kamailio/postgres
 %{_sharedir}/kamailio/postgres/*
 
 
@@ -704,6 +721,7 @@ fi
 %{_libdir}/kamailio/modules/db_berkeley.so
 %{_libdir}/kamailio/kamctl/kamctl.db_berkeley
 %{_libdir}/kamailio/kamctl/kamdbctl.db_berkeley
+%dir %{_sharedir}/kamailio/db_berkeley
 %{_sharedir}/kamailio/db_berkeley/*
 
 
@@ -713,6 +731,7 @@ fi
 %{_libdir}/kamailio/modules_k/db_sqlite.so
 %{_libdir}/kamailio/kamctl/kamctl.sqlite
 %{_libdir}/kamailio/kamctl/kamdbctl.sqlite
+%dir %{_sharedir}/kamailio/db_sqlite
 %{_sharedir}/kamailio/db_sqlite/*
 
 
@@ -810,26 +829,32 @@ fi
 %doc %{_docdir}/kamailio/modules_k/README.perlvdb
 %{_libdir}/kamailio/modules_k/perl.so
 %{_libdir}/kamailio/modules_k/perlvdb.so
+%dir %{_libdir}/kamailio/perl
 %{_libdir}/kamailio/perl/OpenSER.pm
+%dir %{_libdir}/kamailio/perl/OpenSER
 %{_libdir}/kamailio/perl/OpenSER/Constants.pm
+%{_libdir}/kamailio/perl/OpenSER/Message.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB.pm
+%dir %{_libdir}/kamailio/perl/OpenSER/LDAPUtils
 %{_libdir}/kamailio/perl/OpenSER/LDAPUtils/LDAPConf.pm
 %{_libdir}/kamailio/perl/OpenSER/LDAPUtils/LDAPConnection.pm
-%{_libdir}/kamailio/perl/OpenSER/Message.pm
+%dir %{_libdir}/kamailio/perl/OpenSER/Utils
 %{_libdir}/kamailio/perl/OpenSER/Utils/Debug.pm
 %{_libdir}/kamailio/perl/OpenSER/Utils/PhoneNumbers.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/AccountingSIPtrace.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Alias.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Auth.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Describe.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Speeddial.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/TableVersions.pm
+%dir %{_libdir}/kamailio/perl/OpenSER/VDB
 %{_libdir}/kamailio/perl/OpenSER/VDB/Column.pm
 %{_libdir}/kamailio/perl/OpenSER/VDB/Pair.pm
 %{_libdir}/kamailio/perl/OpenSER/VDB/ReqCond.pm
 %{_libdir}/kamailio/perl/OpenSER/VDB/Result.pm
 %{_libdir}/kamailio/perl/OpenSER/VDB/VTab.pm
 %{_libdir}/kamailio/perl/OpenSER/VDB/Value.pm
+%dir %{_libdir}/kamailio/perl/OpenSER/VDB/Adapter
+%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/AccountingSIPtrace.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Alias.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Auth.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Describe.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Speeddial.pm
+%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/TableVersions.pm
 
 
 %files lua
@@ -916,6 +941,9 @@ fi
 
 
 %changelog
+* Mon Jun 4 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Added a number of %dir lines to make sure the RPMs are properly cleaned up
+    on uninstall
 * Sat Jun 2 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added %postun section to reload systemd on Fedora after uninstall
   - Added build requirement for redhat-rpm-config so debuginfo RPMs get built
