@@ -249,7 +249,7 @@ install-modules: $(bin_prefix)/$(bin_dir)
 		if [ "$(SQLITEON)" = "yes" ]; then \
 			mkdir -p $(modules_prefix)/$(lib_dir)/kamctl ; \
 			sed -e "s#/usr/local/sbin#$(bin_target)#g" \
-				< kamctl.pgsql > /tmp/kamctl.sqlite ; \
+				< kamctl.sqlite > /tmp/kamctl.sqlite ; \
 			$(INSTALL_CFG) /tmp/kamctl.sqlite \
 				$(modules_prefix)/$(lib_dir)/kamctl/kamctl.sqlite ; \
 			rm -fr /tmp/kamctl.sqlite ; \
