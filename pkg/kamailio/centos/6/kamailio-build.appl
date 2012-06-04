@@ -21,7 +21,6 @@ packages:
   - libevent-devel		# kamailio-json
   - libpurple-devel		# kamailio-purple
   - libxml2-devel		# kamailio-utils, kamailio-cpl, kamailio-presence, kamailio-purple, kamailio-xmlrpc, kamailio-xmlops
-  - lm_sensors-devel		# kamailio-snmpstats
   - lua-devel			# kamailio-lua
   - make			# kamailio
   - mod_perl-devel		# kamailio-perl

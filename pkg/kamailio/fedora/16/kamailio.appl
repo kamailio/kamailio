@@ -25,7 +25,7 @@ packages:
   - mod_perl			# kamailio-perl
   - mono-core			# kamailio-mono
   - mysql-libs			# kamailio-mysql
-  - net-snmp-libs		# kamailio-snmpstats
+  - net-snmp-agent-libs		# kamailio-snmpstats
   - openldap			# kamailio-ldap
   - openssl			# kamailio-tls
   - pcre			# kamailio-regex, kamailio-dialplan, kamailio-lcr
