@@ -1171,9 +1171,10 @@ int ds_hash_pvar(struct sip_msg *msg, unsigned int *hash)
 		LM_ERR("String is empty!\n");
 		return -1;
 	}
-	LM_DBG("Hashing %.*s!\n", hash_str.len, hash_str.s);
 
 	*hash = ds_get_hash(&hash_str, NULL);
+	LM_DBG("Hashing of '%.*s' resulted in %u !\n", hash_str.len, hash_str.s,
+			*hash);
 
 	return 0;
 }
