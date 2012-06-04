@@ -31,6 +31,7 @@
 #include "config.h"
 
 struct cfg_group_registrar	default_registrar_cfg = {
+		STR_NULL,	/* realm_pref */
 		3600, 	/* default_expires */
 		0,	/* default_expires_range */
 		60,	/* min_expires */
@@ -39,13 +40,14 @@ struct cfg_group_registrar	default_registrar_cfg = {
 		0,	/* retry_after */
 		0,	/* case_sensitive */
 		Q_UNSPECIFIED,	/* default_q */
-		1,	/* append_branches */
-		STR_NULL	/* realm_pref */
+		1	/* append_branches */
 	    };
 
 void	*registrar_cfg = &default_registrar_cfg;
 
 cfg_def_t	registrar_cfg_def[] = {
+	{"realm_pref",		CFG_VAR_STR,			0, 0, 0, 0,
+		"Realm prefix to be removed. Default is \"\""},
 	{"default_expires",	CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 0, 0, default_expires_stats_update,
 		"Contains number of second to expire if no expire hf or contact expire present" },
 	{"default_expires_range",	CFG_VAR_INT | CFG_CB_ONLY_ONCE,	0, 100, 0, default_expires_range_update,
@@ -64,7 +66,5 @@ cfg_def_t	registrar_cfg_def[] = {
 		"The parameter represents default q value for new contacts."}, /* Q_UNSPECIFIED is -1 */
 	{"append_branches",	CFG_VAR_INT ,			0, 0, 0, 0,
 		"If set to 1(default), lookup will put all contacts found in msg structure"},
-	{"realm_pref",		CFG_VAR_STR,			0, 0, 0, 0,
-		"Realm prefix to be removed. Default is \"\""},
 	{0, 0, 0, 0, 0, 0}
 };

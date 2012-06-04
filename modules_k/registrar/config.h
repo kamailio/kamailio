@@ -27,6 +27,7 @@
 #include "../../str.h"
 
 struct cfg_group_registrar {
+	str 		realm_pref;
 	unsigned int	default_expires;
 	unsigned int	default_expires_range;
 	unsigned int	min_expires;
@@ -36,7 +37,6 @@ struct cfg_group_registrar {
 	unsigned int	case_sensitive;
 	qvalue_t	default_q;
 	unsigned int	append_branches;
-	str 		realm_pref;
 };
 
 extern struct cfg_group_registrar	default_registrar_cfg;
