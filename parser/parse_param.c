@@ -266,6 +266,7 @@ static inline void parse_uri_class(param_hooks_t* _h, param_t* _p)
 static inline int parse_quoted_param(str* _s, str* _r)
 {
 	char* end_quote;
+	char quote;
 
 	     /* The string must have at least
 	      * surrounding quotes
@@ -274,13 +275,18 @@ static inline int parse_quoted_param(str* _s, str* _r)
 		return -1;
 	}
 
+	     /* Store the kind of quoting (single or double)
+	      * which we're handling with
+	      */
+	quote = (_s->s)[0];
+
 	     /* Skip opening quote */
 	_s->s++;
 	_s->len--;
 
 
 	     /* Find closing quote */
-	end_quote = q_memchr(_s->s, '\"', _s->len);
+	end_quote = q_memchr(_s->s, quote, _s->len);
 
 	     /* Not found, return error */
 	if (!end_quote) {
@@ -415,7 +421,7 @@ static inline void parse_param_name(str* _s, pclass_t _c, param_hooks_t* _h, par
  */
 static inline int parse_param_body(str* _s, param_t* _c)
 {
-	if (_s->s[0] == '\"') {
+	if (_s->s[0] == '\"' || _s->s[0] == '\'') {
 		if (parse_quoted_param(_s, &(_c->body)) < 0) {
 			LOG(L_ERR, "parse_param_body(): Error while parsing quoted string\n");
 			return -2;
