@@ -102,7 +102,7 @@ int w_is_gruu(sip_msg_t *msg, char *uri1, char *p2)
 			return -1;
 		puri = &turi;
 	} else {
-		if(parse_sip_msg_uri(msg))
+		if(parse_sip_msg_uri(msg)<0)
 			return -1;
 		puri = &msg->parsed_uri;
 	}
