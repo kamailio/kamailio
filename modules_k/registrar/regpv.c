@@ -466,6 +466,7 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 		if(c0==NULL)
 		{
 			LM_ERR("no more pkg\n");
+			ul.release_urecord(r);
 			ul.unlock_udomain((udomain_t*)table, &aor);
 			goto error;
 		}
@@ -517,6 +518,7 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 		ptr0 = c0;
 		ptr = ptr->next;
 	}
+	ul.release_urecord(r);
 	ul.unlock_udomain((udomain_t*)table, &aor);
 	rpp->nrc = n;
 	LM_DBG("fetched <%d> contacts for <%.*s> in [%.*s]\n",
