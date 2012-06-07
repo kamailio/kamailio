@@ -41,7 +41,7 @@ ifeq ($(BUILDER),)
 			endif
 		else
 			ifeq ($(LUAVER),51)
-				DEFS+= $(shell pkg-config --cflags lua5.1)
+				DEFS+= $(shell pkg-config --cflags lua5.1 | sed -e "s/\\\\/'/" -e "s/\\\\\"/\"'/")
 				LIBS = $(shell pkg-config --libs lua5.1)
 			else
 				DEFS+= $(shell pkg-config --cflags lua)
