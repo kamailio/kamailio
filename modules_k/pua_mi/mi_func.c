@@ -381,7 +381,7 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 		return 0;
 
 	pres_uri= node->value;
-	if(pres_uri.s == NULL || pres_uri.s== 0)
+	if(pres_uri.s == NULL || pres_uri.len== 0)
 	{
 		return init_mi_tree(400, "Bad uri", 7);
 	}
@@ -396,7 +396,7 @@ struct mi_root* mi_pua_subscribe(struct mi_root* cmd, void* param)
 		return 0;
 
 	watcher_uri= node->value;
-	if(watcher_uri.s == NULL || watcher_uri.s== 0)
+	if(watcher_uri.s == NULL || watcher_uri.len== 0)
 	{
 		return init_mi_tree(400, "Bad uri", 7);
 	}
