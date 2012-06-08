@@ -1467,7 +1467,6 @@ static int get_string(char** val, struct xmlrpc_reply* reply,
 static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 {
 	int read;
-	int fmt_len;
 	int* int_ptr;
 	char** char_ptr;
 	str* str_ptr;
@@ -1484,7 +1483,6 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 	/* clear the previously saved error code */
 	clear_xmlrpc_reply(reply);
 
-	fmt_len = strlen(fmt);
 	va_start(ap, fmt);
 	modifiers=0;
 	read = 0;
