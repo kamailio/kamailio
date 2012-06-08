@@ -942,17 +942,22 @@ static int w_get_sdp(sip_msg_t* msg, char *avp)
 	int_str avp_name;
 	static unsigned short avp_type = 0;
 	str s;
-	pv_spec_t avp_spec;
+	pv_spec_t *avp_spec = NULL;
 	int sdp_missing=1;
 	
 	s.s = avp; s.len = strlen(s.s);
-	if (pv_parse_spec(&s, &avp_spec)==0
-			|| avp_spec.type!=PVT_AVP) {
+	if (pv_locate_name(&s) != s.len)
+	{
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+	if (((avp_spec = pv_cache_get(&s)) == NULL)
+			|| avp_spec->type!=PVT_AVP) {
 		LM_ERR("malformed or non AVP %s AVP definition\n", avp);
 		return -1;
 	}
 
-	if(pv_get_avp_name(0, &avp_spec.pvp, &avp_name, &avp_type)!=0)
+	if(pv_get_avp_name(0, &avp_spec->pvp, &avp_name, &avp_type)!=0)
 	{
 		LM_ERR("[%s]- invalid AVP definition\n", avp);
 		return -1;
@@ -966,9 +971,8 @@ static int w_get_sdp(sip_msg_t* msg, char *avp)
 	sdp = (sdp_info_t*)msg->body;
 	
 	if (sdp_missing) {
-		avp_val.s.s = NULL;
-		avp_val.s.len = 0;
 		LM_DBG("No SDP\n");
+		return -2;
 	} else {
 		avp_val.s.s = pkg_malloc(sdp->raw_sdp.len);
 		avp_val.s.len = sdp->raw_sdp.len;
