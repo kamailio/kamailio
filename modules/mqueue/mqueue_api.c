@@ -362,7 +362,7 @@ int pv_parse_mq_name(pv_spec_t *sp, str *in)
 	return 0;
 }
 
-str *pv_get_mq_name(str *in)
+str *pv_get_mq_name(sip_msg_t *msg, str *in)
 {
 	str *queue;
 
@@ -385,12 +385,12 @@ str *pv_get_mq_name(str *in)
 		}
 
 		memset(&pvv, 0, sizeof(pv_value_t));
-		if (faked_msg_init() < 0)
+		if (msg==NULL && faked_msg_init() < 0)
 		{
 			LM_ERR("faked_msg_init() failed\n");
 			return NULL;
 		}
-		if (pv_get_spec_value(faked_msg_next(), pvs, &pvv) != 0)
+		if (pv_get_spec_value((msg)?msg:faked_msg_next(), pvs, &pvv) != 0)
 		{
 			LM_ERR("failed to get pv value for [%.*s]\n", in->len, in->s);
 			return NULL;
@@ -409,7 +409,7 @@ int pv_get_mqk(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	mq_pv_t *mp = NULL;
-	str *in = pv_get_mq_name(&param->pvn.u.isname.name.s);
+	str *in = pv_get_mq_name(msg, &param->pvn.u.isname.name.s);
 
 	if (in == NULL)
 	{
@@ -436,7 +436,7 @@ int pv_get_mqv(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	mq_pv_t *mp = NULL;
-	str *in = pv_get_mq_name(&param->pvn.u.isname.name.s);
+	str *in = pv_get_mq_name(msg, &param->pvn.u.isname.name.s);
 
 	if (in == NULL)
 	{
