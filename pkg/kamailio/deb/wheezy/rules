@@ -41,7 +41,7 @@ MODULES_SP=
 # Note: the order is important (should be in dependency order, the one
 # on which other depend first)
 PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
-			   ldap xml perl utils memcached tls \
+			   ldap xml perl utils lua memcached tls \
 			   snmpstats carrierroute xmpp cpl redis python geoip\
 			   sqlite json mono
 
