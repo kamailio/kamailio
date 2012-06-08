@@ -195,16 +195,20 @@ static int check_via_address(struct ip_addr* ip, str *name,
 	struct hostent* he;
 	int i;
 	char* s;
+	#ifdef USE_IPV6
 	int len;
+	#endif
 
 	/* maybe we are lucky and name it's an ip */
 	s=ip_addr2a(ip);
 	if (s){
 		DBG("check_via_address(%s, %.*s, %d)\n",
 			s, name->len, name->s, resolver);
-		len=strlen(s);
 
 	#ifdef USE_IPV6
+
+		len=strlen(s);
+
 		/* check if name->s is an ipv6 address or an ipv6 address ref. */
 		if ((ip->af==AF_INET6) &&
 				(	((len==name->len)&&(strncasecmp(name->s, s, name->len)==0))
