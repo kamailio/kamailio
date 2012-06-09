@@ -81,9 +81,8 @@ inline static int sbufq_add(struct sbuffer_queue* q, const void* data,
 	unsigned int last_free;
 	unsigned int b_size;
 	unsigned int crt_size;
-	ticks_t t;
 	
-	t=get_ticks_raw();
+	get_ticks_raw();
 	
 	if (likely(q->last==0)) {
 		b_size=MAX_unsigned(min_buf_size, size);
