@@ -35,6 +35,7 @@ Daniel-Constantin Mierla
               4.7. sdp_with_codecs_by_id(list)
               4.8. sdp_with_codecs_by_name(list)
               4.9. sdp_print(level)
+              4.10. sdp_get(avpvar)
 
    List of Examples
 
@@ -47,6 +48,7 @@ Daniel-Constantin Mierla
    1.7. sdp_with_codecs_by_id usage
    1.8. sdp_with_codecs_by_name usage
    1.9. sdp_print usage
+   1.10. sdp_get usage
 
 Chapter 1. Admin Guide
 
@@ -70,6 +72,7 @@ Chapter 1. Admin Guide
         4.7. sdp_with_codecs_by_id(list)
         4.8. sdp_with_codecs_by_name(list)
         4.9. sdp_print(level)
+        4.10. sdp_get(avpvar)
 
 1. Overview
 
@@ -112,6 +115,7 @@ Chapter 1. Admin Guide
    4.7. sdp_with_codecs_by_id(list)
    4.8. sdp_with_codecs_by_name(list)
    4.9. sdp_print(level)
+   4.10. sdp_get(avpvar)
 
 4.1. sdp_remove_codecs_by_id(list)
 
@@ -262,4 +266,16 @@ if(sdp_with_codecs_by_id("PCMU,PCMA,GSM")) { ... }
 ...
 # print the SDP
 sdp_print("1");
+...
+
+4.10. sdp_get(avpvar)
+
+   Store the SDP part of message body in an AVP. Return 1 if SDP is found,
+   -1 on error and -2 if there is no SDP part in the message body.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.10. sdp_get usage
+...
+sdp_get("$avp(sdp)");
 ...
