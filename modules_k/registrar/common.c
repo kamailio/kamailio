@@ -54,7 +54,7 @@ int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 	sip_uri_t *puri;
 	int user_len;
 	str *uri;
-	str realm_prefix;
+	str realm_prefix = {0};
 	
 	memset(aor_buf, 0, MAX_AOR_LEN);
 	uri=_uri;
@@ -93,10 +93,12 @@ int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 		if (user_len)
 			aor_buf[_a->len++] = '@';
 		/* strip prefix (if defined) */
- 		realm_prefix.s = cfg_get(registrar, registrar_cfg, realm_pref).s;
  		realm_prefix.len = cfg_get(registrar, registrar_cfg, realm_pref).len;
-		LM_DBG("realm prefix is [%.*s]\n", realm_prefix.len,
-				(realm_prefix.len>0)?realm_prefix.s:"");
+		if(realm_prefix.len>0) {
+			realm_prefix.s = cfg_get(registrar, registrar_cfg, realm_pref).s;
+			LM_DBG("realm prefix is [%.*s]\n", realm_prefix.len,
+					(realm_prefix.len>0)?realm_prefix.s:"");
+		}
 		if (realm_prefix.len>0
 				&& realm_prefix.len<puri->host.len
 				&& (memcmp(realm_prefix.s, puri->host.s, realm_prefix.len)==0))
