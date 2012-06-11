@@ -160,9 +160,9 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 
 #version number
 VERSION = 3
-PATCHLEVEL = 3
+PATCHLEVEL = 4
 SUBLEVEL =  0
-EXTRAVERSION = -pre3
+EXTRAVERSION = -dev0
 
 # memory debugger switcher
 # 0 - off (release mode)
