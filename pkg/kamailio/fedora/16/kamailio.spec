@@ -1,6 +1,6 @@
 %define name    kamailio
-%define ver     3.3.0
-%define rel     pre3%{dist}
+%define ver     3.4.0
+%define rel     dev0%{dist}
 %define _sharedir %{_prefix}/share
 
 
@@ -941,6 +941,8 @@ fi
 
 
 %changelog
+* Mon Jun 11 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated ver to 3.4.0 and rel to dev0
 * Mon Jun 4 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added a number of %dir lines to make sure the RPMs are properly cleaned up
     on uninstall
