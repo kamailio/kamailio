@@ -34,6 +34,9 @@
 typedef int (*regapi_save_f)(struct sip_msg *msg, char *table, int flags);
 int regapi_save(struct sip_msg *msg, char *table, int flags);
 
+typedef int (*regapi_save_uri_f)(struct sip_msg *msg, char *table, int flags, str *uri);
+int regapi_save_uri(struct sip_msg *msg, char *table, int flags, str *uri);
+
 typedef int (*regapi_lookup_f)(struct sip_msg *msg, char *table);
 int regapi_lookup(struct sip_msg *msg, char *table);
 
@@ -41,9 +44,10 @@ int regapi_lookup(struct sip_msg *msg, char *table);
  * @brief REGISTRAR API structure
  */
 typedef struct registrar_api {
-	regapi_save_f    save;
-	regapi_lookup_f  lookup;
-	regapi_lookup_f  registered;
+	regapi_save_f       save;
+	regapi_save_uri_f   save_uri;
+	regapi_lookup_f     lookup;
+	regapi_lookup_f     registered;
 } registrar_api_t;
 
 typedef int (*bind_registrar_f)(registrar_api_t* api);

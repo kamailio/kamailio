@@ -51,6 +51,21 @@ int regapi_save(struct sip_msg *msg, char *table, int flags)
 /**
  *
  */
+int regapi_save_uri(struct sip_msg *msg, char *table, int flags, str *uri)
+{
+	udomain_t* d;
+
+	if(ul.get_udomain(table, &d)<0)
+	{
+		LM_ERR("usrloc domain [%s] not found\n", table);
+		return -1;
+	}
+	return save(msg, d, flags, uri);
+}
+
+/**
+ *
+ */
 int regapi_lookup(struct sip_msg *msg, char *table)
 {
 	udomain_t* d;
@@ -87,8 +102,10 @@ int bind_registrar(registrar_api_t* api)
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
-	api->save   = regapi_save;
-	api->lookup = regapi_lookup;
+	api->save       = regapi_save;
+	api->save_uri   = regapi_save_uri;
+	api->lookup     = regapi_lookup;
+	api->registered = regapi_registered;
 	api->registered = regapi_registered;
 
 	return 0;
