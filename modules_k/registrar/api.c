@@ -106,7 +106,6 @@ int bind_registrar(registrar_api_t* api)
 	api->save_uri   = regapi_save_uri;
 	api->lookup     = regapi_lookup;
 	api->registered = regapi_registered;
-	api->registered = regapi_registered;
 
 	return 0;
 }
