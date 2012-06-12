@@ -1262,6 +1262,7 @@ static int lua_sr_registrar_save(lua_State *L)
 	int ret;
 	int flags;
 	char *table;
+	str uri ={NULL, 0};
 	sr_lua_env_t *env_L;
 
 	flags = 0;
@@ -1283,6 +1284,11 @@ static int lua_sr_registrar_save(lua_State *L)
 	} else if(lua_gettop(L)==2) {
 		table  = (char*)lua_tostring(L, -2);
 		flags = lua_tointeger(L, -1);
+	} else if(lua_gettop(L)==3) {
+		table  = (char*)lua_tostring(L, -3);
+		flags = lua_tointeger(L, -2);
+		uri.s = (char*)lua_tostring(L, -1);
+		uri.len = strlen(uri.s);
 	} else {
 		LM_WARN("invalid number of parameters from Lua\n");
 		return app_lua_return_error(L);
@@ -1292,7 +1298,11 @@ static int lua_sr_registrar_save(lua_State *L)
 		LM_WARN("invalid parameters from Lua\n");
 		return app_lua_return_error(L);
 	}
-	ret = _lua_registrarb.save(env_L->msg, table, flags);
+	if (lua_gettop(L)==3) {
+		ret = _lua_registrarb.save_uri(env_L->msg, table, flags, &uri);
+	} else {
+		ret = _lua_registrarb.save(env_L->msg, table, flags);
+	}
 
 	return app_lua_return_int(L, ret);
 }
