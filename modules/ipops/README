@@ -35,6 +35,7 @@ Iñaki Baz Castillo
               4.7. compare_ips (ip1, ip2)
               4.8. compare_pure_ips (ip1, ip2)
               4.9. is_ip_rfc1918 (ip)
+              4.10. is_in_subnet (ip, subnet)
 
    List of Examples
 
@@ -47,6 +48,7 @@ Iñaki Baz Castillo
    1.7. compare_ips usage
    1.8. compare_pure_ips usage
    1.9. is_ip_rfc1918 usage
+   1.10. is_in_subnet usage
 
 Chapter 1. Admin Guide
 
@@ -70,6 +72,7 @@ Chapter 1. Admin Guide
         4.7. compare_ips (ip1, ip2)
         4.8. compare_pure_ips (ip1, ip2)
         4.9. is_ip_rfc1918 (ip)
+        4.10. is_in_subnet (ip, subnet)
 
 1. Overview
 
@@ -117,6 +120,7 @@ Chapter 1. Admin Guide
    4.7. compare_ips (ip1, ip2)
    4.8. compare_pure_ips (ip1, ip2)
    4.9. is_ip_rfc1918 (ip)
+   4.10. is_in_subnet (ip, subnet)
 
 4.1.  is_ip (ip)
 
@@ -297,5 +301,25 @@ if (compare_pure_ips($si, "1080::8:800:200C:417A")) {
 ...
 if (is_ip_rfc1918("10.0.123.123")) {
   xlog("L_INFO", "it's a private IPv4\n");
+}
+...
+
+4.10.  is_in_subnet (ip, subnet)
+
+   Returns TRUE if the first argument is an IP address within the (CIDR
+   notation) subnet in the second argument. FALSE otherwise.
+
+   Parameters:
+     * ip - string or pseudo-variable containing the ip to evaluate.
+     * subnet - string or pseudo-variable containing the (CIDR notation)
+       subnet to evaluate.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.10.  is_in_subnet usage
+...
+if (is_in_subnet("10.0.123.123", "10.0.123.1/24")) {
+  xlog("L_INFO", "it's in the subnet\n");
 }
 ...

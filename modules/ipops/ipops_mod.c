@@ -46,6 +46,7 @@
 #include "../../str.h"
 #include "../../mod_fix.h"
 #include "../../pvar.h"
+#include "api.h"
 #include "ip_parser.h"
 #include "rfc1918_parser.h"
 
@@ -65,7 +66,8 @@ MODULE_VERSION
 /*
  * Module internal functions
  */
-static int _compare_ips(char*, size_t, enum enum_ip_type, char*, size_t, enum enum_ip_type);
+int _compare_ips(char*, size_t, enum enum_ip_type, char*, size_t, enum enum_ip_type);
+int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *ip2, size_t len2, enum enum_ip_type ip2_type, int netmask);
 
 
 /*
@@ -80,6 +82,7 @@ static int w_ip_type(struct sip_msg*, char*);
 static int w_compare_ips(struct sip_msg*, char*, char*);
 static int w_compare_pure_ips(struct sip_msg*, char*, char*);
 static int w_is_ip_rfc1918(struct sip_msg*, char*);
+static int w_ip_is_in_subnet(struct sip_msg*, char*, char*);
 
 
 /*
@@ -105,6 +108,9 @@ static cmd_export_t cmds[] =
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
   { "is_ip_rfc1918", (cmd_function)w_is_ip_rfc1918, 1, fixup_spve_null, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
+  { "is_in_subnet", (cmd_function)w_ip_is_in_subnet, 2, fixup_spve_null, 0,
+  REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
+  { "bind_ipops", (cmd_function)bind_ipops, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0 }
 };
 
@@ -133,7 +139,7 @@ struct module_exports exports = {
  */
 
 /*! \brief Return 1 if both pure IP's are equal, 0 otherwise. */
-static int _compare_ips(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *ip2, size_t len2, enum enum_ip_type ip2_type)
+int _compare_ips(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *ip2, size_t len2, enum enum_ip_type ip2_type)
 {
   struct in_addr in_addr1, in_addr2;
   struct in6_addr in6_addr1, in6_addr2;
@@ -162,6 +168,61 @@ static int _compare_ips(char *ip1, size_t len1, enum enum_ip_type ip1_type, char
     case(ip_type_ipv6):
       if (inet_pton(AF_INET6, _ip1, &in6_addr1) != 1)  return 0;
       if (inet_pton(AF_INET6, _ip2, &in6_addr2) != 1)  return 0;
+      if (memcmp(in6_addr1.s6_addr, in6_addr2.s6_addr, sizeof(in6_addr1.s6_addr)) == 0)
+        return 1;
+      else
+        return 0;
+      break;
+    default:
+      return 0;
+      break;
+  }
+}
+
+/*! \brief Return 1 if IP1 is in the subnet given by IP2 and the netmask, 0 otherwise. */
+int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *ip2, size_t len2, enum enum_ip_type ip2_type, int netmask)
+{
+  struct in_addr in_addr1, in_addr2;
+  struct in6_addr in6_addr1, in6_addr2;
+  char _ip1[INET6_ADDRSTRLEN], _ip2[INET6_ADDRSTRLEN];
+  uint32_t ipv4_mask;
+  uint8_t ipv6_mask[16];
+  int i;
+  
+  // Not same IP type, return false.
+  if (ip1_type != ip2_type)
+    return 0;
+
+  memcpy(_ip1, ip1, len1);
+  _ip1[len1] = '\0';
+  memcpy(_ip2, ip2, len2);
+  _ip2[len2] = '\0';
+
+  switch(ip1_type) {
+    // Comparing IPv4 with IPv4.
+    case(ip_type_ipv4):
+      if (inet_pton(AF_INET, _ip1, &in_addr1) == 0)  return 0;
+      if (inet_pton(AF_INET, _ip2, &in_addr2) == 0)  return 0;
+      if (netmask <0 || netmask > 32)  return 0;
+      if (netmask == 32) ipv4_mask = 0xFFFFFFFF;
+      else ipv4_mask = htonl(~(0xFFFFFFFF >> netmask));
+      if ((in_addr1.s_addr & ipv4_mask) == in_addr2.s_addr)
+        return 1;
+      else
+        return 0;
+      break;
+    // Comparing IPv6 with IPv6.
+    case(ip_type_ipv6):
+      if (inet_pton(AF_INET6, _ip1, &in6_addr1) != 1)  return 0;
+      if (inet_pton(AF_INET6, _ip2, &in6_addr2) != 1)  return 0;
+      if (netmask <0 || netmask > 128)  return 0;
+      for (i=0; i<16; i++)
+      {
+        if (netmask > ((i+1)*8)) ipv6_mask[i] = 0xFF;
+        else if (netmask > (i*8))  ipv6_mask[i] = ~(0xFF >> (netmask-(i*8)));
+	else ipv6_mask[i] = 0x00;
+      }
+      for (i=0; i<16; i++)  in6_addr1.s6_addr[i] &= ipv6_mask[i];
       if (memcmp(in6_addr1.s6_addr, in6_addr2.s6_addr, sizeof(in6_addr1.s6_addr)) == 0)
         return 1;
       else
@@ -437,6 +498,80 @@ static int w_compare_pure_ips(struct sip_msg* _msg, char* _s1, char* _s2)
     return 1;
   else
     return -1;
+}
+
+
+/*! \brief Return true if the first IP (string or pv) is within the subnet defined by the second IP in CIDR notation. IPv6 references not allowed. */
+static int w_ip_is_in_subnet(struct sip_msg* _msg, char* _s1, char* _s2)
+{
+  str string1, string2;
+  enum enum_ip_type ip1_type, ip2_type;
+  char *cidr_pos = NULL;
+  int netmask = 0;
+  
+  if (_s1 == NULL || _s2 == NULL ) {
+    LM_ERR("bad parameters\n");
+    return -2;
+  }
+  
+  if (fixup_get_svalue(_msg, (gparam_p)_s1, &string1))
+  {
+    LM_ERR("cannot print the format for first string\n");
+    return -3;
+  }
+  
+  if (fixup_get_svalue(_msg, (gparam_p)_s2, &string2))
+  {
+    LM_ERR("cannot print the format for second string\n");
+    return -3;
+  }
+
+  switch(ip1_type = ip_parser_execute(string1.s, string1.len)) {
+    case(ip_type_error):
+      return -1;
+      break;
+    case(ip_type_ipv6_reference):
+      return -1;
+      break;
+    default:
+      break;
+  }
+  cidr_pos = string2.s + string2.len - 1;
+  while (cidr_pos > string2.s)
+  {
+    if (*cidr_pos == '/')
+    {
+      string2.len = (cidr_pos - string2.s);
+      netmask = atoi(cidr_pos+1);
+      break;
+    }
+    cidr_pos--;
+  }
+  switch(ip2_type = ip_parser_execute(string2.s, string2.len)) {
+    case(ip_type_error):
+      return -1;
+      break;
+    case(ip_type_ipv6_reference):
+      return -1;
+      break;
+    default:
+      break;
+  }
+
+  if (netmask == 0)
+  {
+    if (_compare_ips(string1.s, string1.len, ip1_type, string2.s, string2.len, ip2_type))
+      return 1;
+    else
+      return -1;
+  }
+  else
+  {
+    if (_ip_is_in_subnet(string1.s, string1.len, ip1_type, string2.s, string2.len, ip2_type, netmask))
+      return 1;
+    else
+      return -1;
+  }
 }
 
 

@@ -478,6 +478,49 @@ if (is_ip_rfc1918("10.0.123.123")) {
 
     </section>
  
+    <section>
+      <title>
+        <function moreinfo="none">is_in_subnet (ip, subnet)</function>
+      </title>
+
+      <para>
+        Returns TRUE if the first argument is an IP address within the (CIDR notation)
+        subnet in the second argument. FALSE otherwise.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - string or pseudo-variable containing the ip to evaluate.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>subnet</emphasis> - string or pseudo-variable containing the (CIDR notation) subnet to evaluate.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>is_in_subnet</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+if (is_in_subnet("10.0.123.123", "10.0.123.1/24")) {
+  xlog("L_INFO", "it's in the subnet\n");
+}
+...
+        </programlisting>
+      </example>
+
+    </section>
 
   </section>
  
