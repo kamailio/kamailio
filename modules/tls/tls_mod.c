@@ -440,7 +440,7 @@ static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)
 	 */
 	x509_cert = SSL_get_peer_certificate(ssl);
 	if ( x509_cert == NULL ) {
-		LM_WARN("tlsops:is_peer_verified: WARNING: peer did not presented "
+		LM_INFO("tlsops:is_peer_verified: WARNING: peer did not present "
 			"a certificate. Thus it could not be verified... return -1\n");
 		tcpconn_put(c);
 		return -1;
@@ -450,7 +450,7 @@ static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)
 
 	tcpconn_put(c);
 
-	LM_DBG("tlsops:is_peer_verified: peer is successfuly verified"
+	LM_DBG("tlsops:is_peer_verified: peer is successfully verified"
 		"...done\n");
 	return 1;
 }
