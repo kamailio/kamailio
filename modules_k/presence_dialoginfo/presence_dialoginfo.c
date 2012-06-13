@@ -99,7 +99,7 @@ static int mod_init(void)
 	}
 
 	pres_add_event = pres.add_event;
-	if (add_event == NULL) {
+	if (pres_add_event == NULL) {
 		LM_ERR("could not import add_event\n");
 		return -1;
 	}
