@@ -315,7 +315,10 @@ static int mod_init(void)
 
 	/* Register cache timer */
 	if(ul_timer_procs<=0)
-		register_timer(ul_core_timer, 0, timer_interval);
+	{
+		if (timer_interval > 0)
+			register_timer(ul_core_timer, 0, timer_interval);
+	}
 	else
 		register_sync_timers(ul_timer_procs);
 
