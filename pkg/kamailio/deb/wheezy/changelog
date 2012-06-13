@@ -1,3 +1,9 @@
+kamailio (3.4.0~dev0) unstable; urgency=low
+
+  * update version to 3.4.0~dev0
+
+ -- Jon Bonilla <manwe@aholab.ehu.es>  Wed, 15 Jun 2012 03:15:00 +0100
+
 kamailio (3.2.0) unstable; urgency=low
 
   * update to 3.2.0 from upstream
