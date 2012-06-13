@@ -460,7 +460,8 @@ free_rt_data(
 			shm_free(rt_data->noprefix.rg);
 			rt_data->noprefix.rg = 0;
 		}
-		/* del top level */
+		/* del top level or reset to 0 it's content */
 		if (all) shm_free(rt_data);
+		else memset(rt_data, 0, sizeof(rt_data_t));
 	}
 }
