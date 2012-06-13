@@ -1003,14 +1003,16 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 		sl = aorhash&(_d->size-1);
 		r = _d->table[sl].first;
 
-		for(i = 0; i < _d->table[sl].n; i++) {
-			if((r->aorhash==aorhash) && (r->aor.len==_aor->len)
-						&& !memcmp(r->aor.s,_aor->s,_aor->len)){
-				*_r = r;
-				return 0;
-			}
+		if(r!=NULL) {
+			for(i = 0; i < _d->table[sl].n; i++) {
+				if((r->aorhash==aorhash) && (r->aor.len==_aor->len)
+							&& !memcmp(r->aor.s,_aor->s,_aor->len)){
+					*_r = r;
+					return 0;
+				}
 
-			r = r->next;
+				r = r->next;
+			}
 		}
 	} else {
 		/* search in DB */
