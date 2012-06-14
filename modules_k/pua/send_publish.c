@@ -695,15 +695,24 @@ done:
 			goto error;
 		}
 	}
+	goto finish;
 
 error:
-	if(etag.s)
-		pkg_free(etag.s);
-
+	ret = -1;
 	if(cb_param)
 		shm_free(cb_param);
 
-	if(body&& ret_code)
+	if (dbmode == PUA_DB_ONLY && pua_dbf.abort_transaction)
+	{
+		if (pua_dbf.abort_transaction(pua_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+
+finish:
+	if(etag.s)
+		pkg_free(etag.s);
+
+	if(body && ret_code)
 	{
 		if(body->s)
 			xmlFree(body->s);
@@ -718,12 +727,6 @@ error:
 		pkg_free(tuple_id);
 	}
 	free_results_puadb(res);
-
-	if (dbmode == PUA_DB_ONLY && pua_dbf.abort_transaction)
-	{
-		if (pua_dbf.abort_transaction(pua_db) < 0)
-			LM_ERR("in abort_transaction\n");
-	}
 
 	return ret;
 }
