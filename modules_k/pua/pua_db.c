@@ -989,6 +989,9 @@ int update_record_puadb(ua_pres_t *pres, int expires, str *etag)
 		return -1;
 	}
 
+	if (pua_dbf.affected_rows != NULL)
+		return pua_dbf.affected_rows(pua_db);
+
 	return 1;
 }
 
