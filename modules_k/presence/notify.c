@@ -2513,25 +2513,6 @@ static int notifier_notify(subs_t *sub, int *updated, int *end_transaction)
 	{
 		if (sub->event->type & WINFO_TYPE) /* presence.winfo dialog */
 		{
-			if (unset_watchers_updated_winfo(&sub->pres_uri) < 0)
-			{
-				LM_WARN("resetting updated_winfo flags\n");
-
-				if (pa_dbf.abort_transaction)
-				{
-					if (pa_dbf.abort_transaction(pa_db) < 0)
-					{
-						LM_ERR("in abort_transaction\n");
-						goto error;
-					}
-				}
-				*end_transaction = 0;
-
-				/* Make sure this gets tried again next time */
-				*updated = 1;
-				goto done;
-			}
-
 			if (sub->updated_winfo == NO_UPDATE_TYPE)
 			{
 				/* Partial notify if
@@ -2565,6 +2546,26 @@ static int notifier_notify(subs_t *sub, int *updated, int *end_transaction)
 			}
 			else	/* Full presence.winfo NOTIFY */
 				sub->updated_winfo = NO_UPDATE_TYPE;
+
+			if (unset_watchers_updated_winfo(&sub->pres_uri) < 0)
+			{
+				LM_WARN("resetting updated_winfo flags\n");
+
+				if (pa_dbf.abort_transaction)
+				{
+					if (pa_dbf.abort_transaction(pa_db) < 0)
+					{
+						LM_ERR("in abort_transaction\n");
+						goto error;
+					}
+				}
+				*end_transaction = 0;
+
+				/* Make sure this gets tried again next time */
+				*updated = 1;
+				goto done;
+			}
+
 		}
 		else if (sub->event->type & PUBL_TYPE)
 		{
