@@ -949,6 +949,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		}
 	}
 
+	memset(&subs, 0, sizeof(subs_t));
 	subs.pres_uri= pres_uri;
 	subs.event= ev;
 	subs.auth_rules_doc= rules_doc;
@@ -1406,11 +1407,18 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 
 	db_cols[n_update_cols] = &str_updated_col; 
 	db_vals[n_update_cols].type = DB1_INT;
-	db_vals[n_update_cols].nul = 0; 
-	db_vals[n_update_cols].val.int_val = 
-		core_hash(&subs->callid, &subs->from_tag,
+	db_vals[n_update_cols].nul = 0;
+	if (subs->callid.len == 0 || subs->from_tag.len == 0)
+	{
+		db_vals[n_update_cols].val.int_val = (int) ((rand() / (RAND_MAX + 1.0)) *
 			  (pres_waitn_time * pres_notifier_poll_rate
+					* pres_notifier_processes));
+	} else {
+		db_vals[n_update_cols].val.int_val = 
+			core_hash(&subs->callid, &subs->from_tag,
+				  (pres_waitn_time * pres_notifier_poll_rate
 					* pres_notifier_processes) - 1);
+	}
 	n_update_cols++;
 
 
