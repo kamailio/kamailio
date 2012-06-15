@@ -467,6 +467,13 @@ int set_dlg_profile(struct sip_msg *msg, str *value, struct dlg_profile_table *p
 		/* add linker directly to the dialog and profile */
 		link_dlg_profile( linker, dlg);
 	} else {
+		/* if existing linkers are not from current request, just discard them */
+		if (msg->id!=current_dlg_msg_id || msg->pid!=current_dlg_msg_pid) {
+			current_dlg_msg_id = msg->id;
+			current_dlg_msg_pid = msg->pid;
+			destroy_linkers(current_pending_linkers);
+			current_pending_linkers = NULL;
+		}
 		/* no dialog yet -> set linker as pending */
 		linker->next = current_pending_linkers;
 		current_pending_linkers = linker;
