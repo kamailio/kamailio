@@ -34,16 +34,29 @@
 
 #define WS_VERSION		(13)
 
-#define SEC_WEBSOCKET_KEY	(1<<0)
-#define SEC_WEBSOCKET_PROTOCOL	(1<<1)
-#define SEC_WEBSOCKET_VERSION	(1<<2)
-
-#define REQUIRED_HEADERS	(SEC_WEBSOCKET_KEY | SEC_WEBSOCKET_PROTOCOL\
-					| SEC_WEBSOCKET_VERSION)
-
 static str str_sip = str_init("sip");
+static str str_websocket = str_init("websocket");
 static str str_ws_guid = str_init("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
 
+/* HTTP headers */
+static str str_connection = str_init("Connection");
+static str str_upgrade = str_init("Upgrade");
+static str str_sec_websocket_accept = str_init("Sec-WebSocket-Accept");
+static str str_sec_websocket_key = str_init("Sec-WebSocket-Key");
+static str str_sec_websocket_protocol = str_init("Sec-WebSocket-Protocol");
+static str str_sec_websocket_version = str_init("Sec-WebSocket-Init");
+#define CONNECTION		(1<<0)
+#define UPGRADE			(1<<1)
+#define SEC_WEBSOCKET_ACCEPT	(1<<2)
+#define SEC_WEBSOCKET_KEY	(1<<3)
+#define SEC_WEBSOCKET_PROTOCOL	(1<<4)
+#define SEC_WEBSOCKET_VERSION	(1<<5)
+
+#define REQUIRED_HEADERS	(CONNECTION | UPGRADE | SEC_WEBSOCKET_KEY\
+					| SEC_WEBSOCKET_PROTOCOL\
+					| SEC_WEBSOCKET_VERSION)
+
+/* HTTP response text */
 static str str_switching_protocols = str_init("Switching Protocols");
 static str str_bad_request = str_init("Bad Request");
 static str str_upgrade_required = str_init("Upgrade Required");
@@ -85,9 +98,26 @@ int ws_handle_handshake(struct sip_msg *msg)
 
 	while (hdr != NULL)
 	{
-		/* Decode and validate Sec-WebSocket-Key */
+		/* Decode and validate Connection */
 		if (cmp_hdrname_strzn(&hdr->name,
-				"Sec-WebSocket-Key", 17) == 0) 
+				str_connection.s,
+				str_connection.len) == 0)
+		{
+			/* TODO: validate Connection body */
+			hdr_flags |= CONNECTION;
+		}
+		/* Decode and validate Upgrade */
+		else if (cmp_hdrname_strzn(&hdr->name,
+				str_upgrade.s,
+				str_upgrade.len) == 0)
+		{
+			/* TODO: validate Upgrade body */
+			hdr_flags |= UPGRADE;
+		}
+		/* Decode and validate Sec-WebSocket-Key */
+		else if (cmp_hdrname_strzn(&hdr->name,
+				str_sec_websocket_key.s, 
+				str_sec_websocket_key.len) == 0) 
 		{
 			if (hdr_flags & SEC_WEBSOCKET_KEY)
 			{
@@ -102,14 +132,17 @@ int ws_handle_handshake(struct sip_msg *msg)
 		}
 		/* Decode and validate Sec-WebSocket-Protocol */
 		else if (cmp_hdrname_strzn(&hdr->name,
-				"Sec-WebSocket-Protocol", 22) == 0)
+				str_sec_websocket_protocol.s,
+				str_sec_websocket_protocol.len) == 0)
 		{
+			/* TODO: better validation of sip... */
 			if (str_search(&hdr->body, &str_sip) != NULL)
 				hdr_flags |= SEC_WEBSOCKET_PROTOCOL;
 		}
 		/* Decode and validate Sec-WebSocket-Version */
 		else if (cmp_hdrname_strzn(&hdr->name,
-				"Sec-WebSocket-Version", 21) == 0)
+				str_sec_websocket_version.s,
+				str_sec_websocket_version.len) == 0)
 		{
 			if (hdr_flags & SEC_WEBSOCKET_VERSION)
 			{
@@ -127,7 +160,9 @@ int ws_handle_handshake(struct sip_msg *msg)
 					hdr->body.len, hdr->body.s);
 				headers.s = headers_buf;
 				headers.len = snprintf(headers.s, HDR_BUF_LEN,
-					"Sec-WebSocket-Version: %u\r\n",
+					"%.*s: %d\r\n",
+					str_sec_websocket_version.len,
+					str_sec_websocket_version.s,
 					WS_VERSION);
 				ws_send_reply(msg, 426, &str_upgrade_required,
 						&headers);
@@ -143,7 +178,13 @@ int ws_handle_handshake(struct sip_msg *msg)
 	/* Final check that all required headers/values were found */
 	if (hdr_flags != REQUIRED_HEADERS)
 	{
-		LM_WARN("all required headers not present\n");
+		LM_WARN("required headers not present\n");
+		headers.s = headers_buf;
+		headers.len = snprintf(headers.s, HDR_BUF_LEN,
+					"%.*s: %.*s\r\n"
+					"%.*s: %d\r\n",
+					str_sec_websocket_protocol.len, str_sec_websocket_protocol.s, str_sip.len, str_sip.s,
+					str_sec_websocket_version.len, str_sec_websocket_version.s, WS_VERSION);
 		ws_send_reply(msg, 400, &str_bad_request, NULL);
 		return 0;
 	}
@@ -169,12 +210,14 @@ int ws_handle_handshake(struct sip_msg *msg)
 	/* Build headers for reply */
 	headers.s = headers_buf;
 	headers.len = snprintf(headers.s, HDR_BUF_LEN,
-			"Sec-WebSocket-Key: %.*s\r\n"
-			"Sec-WebSocket-Protocol: %.*s\r\n"
-			"Sec-WebSocket-Version: %u\r\n",
-			reply_key.len, reply_key.s,
-			str_sip.len, str_sip.s,
-			WS_VERSION);
+			"%.*s: %.*s\r\n"
+			"%.*s: %.*s\r\n"
+			"%.*s: %.*s\r\n"
+			"%.*s: %.*s\r\n",
+			str_upgrade.len, str_upgrade.s, str_websocket.len, str_websocket.s,
+			str_connection.len, str_connection.s, str_upgrade.len, str_upgrade.s,
+			str_sec_websocket_accept.len, str_sec_websocket_accept.s, reply_key.len, reply_key.s,
+			str_sec_websocket_protocol.len, str_sec_websocket_protocol.s, str_sip.len, str_sip.s);
 
 	/* TODO: make sure Kamailio core sends future requests on this
 		 connection directly to this module */
