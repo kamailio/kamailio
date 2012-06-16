@@ -1540,10 +1540,11 @@ struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
 	if (likely(c)){ 
 			atomic_inc(&c->refcnt);
 			/* update the timeout only if the connection is not handled
-			 * by a tcp reader (the tcp reader process uses c->timeout for 
-			 * its own internal timeout and c->timeout will be overwritten
-			 * anyway on return to tcp_main) */
-			if (likely(c->reader_pid==0))
+			 * by a tcp reader _and_the timeout is non-zero  (the tcp
+			 * reader process uses c->timeout for its own internal
+			 * timeout and c->timeout will be overwritten * anyway on
+			 * return to tcp_main) */
+			if (likely(c->reader_pid==0 && timeout != 0))
 				c->timeout=get_ticks_raw()+timeout;
 	}
 	TCPCONN_UNLOCK;
