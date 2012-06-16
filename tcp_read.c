@@ -110,11 +110,6 @@ int is_msg_complete(struct tcp_req* r);
 #define HTTP11CONTINUE_LEN	(sizeof(HTTP11CONTINUE)-1)
 #endif
 
-#ifdef READ_WS
-static int ws_process_msg(char* tcpbuf, unsigned int len,
-		struct receive_info* rcv_info, struct tcp_connection* con);
-#endif
-
 #define TCPCONN_TIMEOUT_MIN_RUN  1 /* run the timers each new tick */
 
 /* types used in io_wait* */
@@ -444,10 +439,6 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 		if (bytes<=0) return bytes;
 	}
 	p=r->parsed;
-#ifdef READ_WS
-	if (c->flags & F_CONN_WS)
-		return ws_process_msg(p, bytes, &c->rcv, c);
-#endif
 
 	while(p<r->pos && r->error==TCP_REQ_OK){
 		switch((unsigned char)r->state){
@@ -1025,6 +1016,110 @@ int msrp_process_msg(char* tcpbuf, unsigned int len,
 #endif
 
 #ifdef READ_WS
+static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
+{
+	int bytes, pos, mask_present;
+	unsigned long len;
+	char *p;
+	struct tcp_req *r;
+
+	r=&c->req;
+	if (unlikely(r->parsed < r->pos))
+		bytes = 0;
+	else
+	{
+#ifdef USE_TLS
+		if (unlikely(c->type == PROTO_TLS))
+			bytes = tls_read(c, read_flags);
+		else
+#endif
+			bytes = tcp_read(c, read_flags);
+
+		if (bytes <= 0)
+			return 0;
+	}
+
+	p = r->parsed;
+	pos = 0;
+
+	/*
+	 0                   1                   2                   3
+	 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	+-+-+-+-+-------+-+-------------+-------------------------------+
+	|F|R|R|R| opcode|M| Payload len |    Extended payload length    |
+	|I|S|S|S|  (4)  |A|     (7)     |             (16/64)           |
+	|N|V|V|V|       |S|             |   (if payload len==126/127)   |
+	| |1|2|3|       |K|             |                               |
+	+-+-+-+-+-------+-+-------------+ - - - - - - - - - - - - - - - +
+	|     Extended payload length continued, if payload len == 127  |
+	+ - - - - - - - - - - - - - - - +-------------------------------+
+	|                               |Masking-key, if MASK set to 1  |
+	+-------------------------------+-------------------------------+
+	| Masking-key (continued)       |          Payload Data         |
+	+-------------------------------- - - - - - - - - - - - - - - - +
+	:                     Payload Data continued ...                :
+	+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
+	|                     Payload Data continued ...                |
+	+---------------------------------------------------------------+
+
+	Do minimal parse required to make sure the full message has been
+	received (websocket module will do full parse and validation).
+	*/
+
+	/* Process first two bytes */
+	if (bytes < pos + 2)
+		goto skip;
+	pos++;
+	mask_present = p[pos] & 0x80;
+	len = (p[pos++] & 0xff) & ~0x80;
+
+	/* Work out real length */
+	if (len == 126)
+	{
+		if (bytes < pos + 2)
+			goto skip;
+
+		len = 0;
+		len |= (p[pos++] & 0xff) <<  8;
+		len |= (p[pos++] & 0xff) <<  0;
+	}
+	else if (len == 127)
+	{
+		if (bytes < pos + 8)
+			goto skip;
+
+		/* Only decoding the last four bytes of the length...
+		   This limits the size of WebSocket messages that can be
+		   handled to 2^32 - which should be plenty for SIP! */
+		len = 0;
+		pos += 4;
+		len |= (p[pos++] & 0xff) << 24;
+		len |= (p[pos++] & 0xff) << 16;
+		len |= (p[pos++] & 0xff) <<  8;
+		len |= (p[pos++] & 0xff) <<  0;
+	}
+
+	/* Skip mask */
+	if (mask_present)
+	{
+		if (bytes < pos + 4)
+			goto skip;
+		pos += 4;
+	}
+
+	/* Now check the whole message has been received */
+	if (bytes < pos + len)
+		goto skip;
+
+	pos += len;
+	r->bytes_to_go = bytes - pos;
+	r->flags |= F_TCP_REQ_COMPLETE;
+	r->parsed = &p[pos];
+
+skip:
+	return bytes;
+}
+
 static int ws_process_msg(char* tcpbuf, unsigned int len,
 		struct receive_info* rcv_info, struct tcp_connection* con)
 {
@@ -1145,7 +1240,12 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 
 again:
 		if (likely(req->error==TCP_REQ_OK)){
-			bytes=tcp_read_headers(con, read_flags);
+#ifdef READ_WS
+			if (unlikely(con->flags&F_CONN_WS))
+				bytes=tcp_read_ws(con, read_flags);
+			else
+#endif
+				bytes=tcp_read_headers(con, read_flags);
 #ifdef EXTRA_DEBUG
 						/* if timeout state=0; goto end__req; */
 			DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n",
@@ -1173,7 +1273,6 @@ again:
 				resp=CONN_EOF;
 				goto end_req;
 			}
-		
 		}
 		if (unlikely(req->error!=TCP_REQ_OK)){
 			LOG(L_ERR,"ERROR: tcp_read_req: bad request, state=%d, error=%d "
@@ -1259,6 +1358,12 @@ again:
 				ret = receive_tcp_msg(req->start,
 						req->body + req->content_len - req->start,
 						&con->rcv, con);
+			}else
+#endif
+#ifdef READ_WS
+			if (unlikely(con->flags&F_CONN_WS)){
+				ret = ws_process_msg(req->start, req->parsed-req->start,
+									&con->rcv, con);
 			}else
 #endif
 				ret = receive_tcp_msg(req->start, req->parsed-req->start,
