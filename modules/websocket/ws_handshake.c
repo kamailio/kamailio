@@ -122,27 +122,24 @@ int ws_handle_handshake(struct sip_msg *msg)
 	str key = {0, 0}, headers = {0, 0}, reply_key = {0, 0};
 	unsigned char sha1[20];
 	unsigned int hdr_flags = 0;
-	int lifetime = 0, version;
+	int version;
 	struct hdr_field *hdr = msg->headers;
+	struct tcp_connection *con;
 
 	if (*ws_enabled == 0)
 	{
 		LM_INFO("disabled: bouncing handshake\n");
-		ws_send_reply(msg, 503, &str_status_internal_server_error,
+		ws_send_reply(msg, 503, &str_status_service_unavailable,
 				NULL);
 		return 0;
 	}
 
-	/* Check the protocol the request arrived over */
-	switch (msg->rcv.proto)
+	/* Retrieve TCP/TLS connection */
+	if ((con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0)) == NULL)
 	{
-	case PROTO_TCP:
-	case PROTO_TLS:
-		lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
-		break;
-	default:
-		LM_WARN("websocket handshake on unsupported protocol\n");
-		ws_send_reply(msg, 500, &str_status_service_unavailable, NULL);
+		LM_ERR("retrieving connection\n");
+		ws_send_reply(msg, 500, &str_status_internal_server_error,
+				NULL);
 		return 0;
 	}
 
@@ -313,8 +310,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 
 	/* Make sure Kamailio core sends future requests on this connection
 	   directly to this module */
-	tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, lifetime)->flags
-		|= F_CONN_WS;
+	con->flags |= F_CONN_WS;
 
 	return 0;
 }
