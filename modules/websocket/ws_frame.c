@@ -26,13 +26,204 @@
 #include "ws_frame.h"
 #include "ws_mod.h"
 
-#define FRAME_BUF_SIZE 1024
-static char frame_buf[FRAME_BUF_SIZE];
+/*   0                   1                   2                   3
+      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+     +-+-+-+-+-------+-+-------------+-------------------------------+
+     |F|R|R|R| opcode|M| Payload len |    Extended payload length    |
+     |I|S|S|S|  (4)  |A|     (7)     |             (16/64)           |
+     |N|V|V|V|       |S|             |   (if payload len==126/127)   |
+     | |1|2|3|       |K|             |                               |
+     +-+-+-+-+-------+-+-------------+ - - - - - - - - - - - - - - - +
+     |     Extended payload length continued, if payload len == 127  |
+     + - - - - - - - - - - - - - - - +-------------------------------+
+     |                               |Masking-key, if MASK set to 1  |
+     +-------------------------------+-------------------------------+
+     | Masking-key (continued)       |          Payload Data         |
+     +-------------------------------- - - - - - - - - - - - - - - - +
+     :                     Payload Data continued ...                :
+     + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
+     |                     Payload Data continued ...                |
+     +---------------------------------------------------------------+ */
+
+typedef struct {
+	unsigned int fin;
+	unsigned int rsv1;
+	unsigned int rsv2;
+	unsigned int rsv3;
+	unsigned int opcode;
+	unsigned int mask;
+	unsigned int payload_len;
+	unsigned char masking_key[4];
+	char *payload_data;
+	tcp_event_info_t *tcpinfo;
+} ws_frame_t;
+
+#define BYTE0_MASK_FIN		(0x80)
+#define BYTE0_MASK_RSV1		(0x40)
+#define BYTE0_MASK_RSV2		(0x20)
+#define BYTE0_MASK_RSV3 	(0x10)
+#define BYTE0_MASK_OPCODE	(0x0F)
+#define BYTE1_MASK_MASK		(0x80)
+#define BYTE1_MASK_PAYLOAD_LEN	(0x7F)
+
+#define OPCODE_CONTINUATION	(0x0)
+#define OPCODE_TEXT_FRAME	(0x1)
+#define OPCODE_BINARY_FRAME	(0x2)
+/* 0x3 - 0x7 are reserved for further non-control frames */
+#define OPCODE_CLOSE		(0x8)
+#define OPCODE_PING		(0x9)
+#define OPCODE_PONG		(0xa)
+/* 0xb - 0xf are reserved for further control frames */
+
+
+static int decode_and_validate_ws_frame(ws_frame_t *frame)
+{
+	unsigned int i, len=frame->tcpinfo->len;
+	int mask_start, j;
+	char *buf = frame->tcpinfo->buf;
+
+	/* Decode and validate first 9 bits */
+	if (len < 2)
+	{
+		LM_WARN("message is too short\n");
+		return -1;
+	}
+	frame->fin = (buf[0] & 0xff) & BYTE0_MASK_FIN;
+	frame->rsv1 = (buf[0] & 0xff) & BYTE0_MASK_RSV1;
+	frame->rsv2 = (buf[0] & 0xff) & BYTE0_MASK_RSV2;
+	frame->rsv3 = (buf[0] & 0xff) & BYTE0_MASK_RSV3;
+	frame->opcode = (buf[0] & 0xff) & BYTE0_MASK_OPCODE;
+	frame->mask = (buf[1] & 0xff) & BYTE1_MASK_MASK;
+	
+	if (!frame->fin)
+	{
+		LM_WARN("WebSocket fragmentation not supported in the sip "
+			"sub-protocol\n");
+		return -1;
+	}
+
+	if (frame->rsv1 || frame->rsv2 || frame->rsv3)
+	{
+		LM_WARN("WebSocket reserved fields with non-zero values\n");
+		return -1;
+	}
+
+	switch(frame->opcode)
+	{
+	case OPCODE_TEXT_FRAME:
+	case OPCODE_BINARY_FRAME:
+		LM_INFO("supported non-control frame: 0x%x\n",
+			(unsigned char) frame->opcode);
+		break;
+
+	case OPCODE_CLOSE:
+	case OPCODE_PING:
+	case OPCODE_PONG:
+		LM_INFO("supported control frame: 0x%x\n",
+			(unsigned char) frame->opcode);
+		break;
+
+	default:
+		LM_WARN("unsupported opcode: 0x%x\n",
+			(unsigned char) frame->opcode);
+		return -1;
+	}
+
+	if (!frame->mask)
+	{
+		LM_WARN("this is a server - all received messages must be "
+			"masked\n");
+		return -1;
+	}
+
+	/* Decode and validate length */
+	frame->payload_len = (buf[1] & 0xff) & BYTE1_MASK_PAYLOAD_LEN;
+	if (frame->payload_len == 126)
+	{
+		if (len < 4)
+		{
+			LM_WARN("message is too short\n");
+			return -1;
+		}
+		mask_start = 4;
+
+		frame->payload_len = 	  ((buf[2] & 0xff) <<  8)
+					| ((buf[3] & 0xff) <<  0);
+	}
+	else if (frame->payload_len == 127)
+	{
+		if (len < 10)
+		{
+			LM_WARN("message is too short\n");
+			return -1;
+		}
+		mask_start = 10;
+
+		/* Only decoding the last four bytes of the length...
+		   This limits the size of WebSocket messages that can be
+		   handled to 2^32 = which should be plenty for SIP! */
+	 	frame->payload_len =	  ((buf[6] & 0xff) << 24)
+					| ((buf[7] & 0xff) << 16)
+					| ((buf[8] & 0xff) <<  8)
+					| ((buf[9] & 0xff) <<  0);
+	}
+	else
+		mask_start = 2;
+
+	/* Decode mask */
+	frame->masking_key[0] = (buf[mask_start + 0] & 0xff);
+	frame->masking_key[1] = (buf[mask_start + 1] & 0xff);
+	frame->masking_key[2] = (buf[mask_start + 2] & 0xff);
+	frame->masking_key[3] = (buf[mask_start + 3] & 0xff);
+
+	/* Decode and unmask payload */
+	if (len < frame->payload_len + mask_start)
+	{
+		LM_WARN("message not complete payload_len = %u but only "
+			"received %u\n", frame->payload_len, len);
+		return -1;
+	}
+	frame->payload_data = &buf[mask_start + 4];
+	for (i = 0; i < frame->payload_len; i++)
+	{
+		j = i % 4;
+		frame->payload_data[i]
+			= frame->payload_data[i] ^ frame->masking_key[j];
+	}
+
+	LM_INFO("Rx (decoded): %.*s\n",
+		(int) frame->payload_len, frame->payload_data);
+
+	return frame->opcode;
+}
+
+static int handle_sip_message(ws_frame_t *msg)
+{
+	LM_INFO("Received SIP message\n");
+	return 0;
+}
+
+static int handle_close(ws_frame_t *msg)
+{
+	LM_INFO("Received Close\n");
+	return 0;
+}
+
+static int handle_ping(ws_frame_t *msg)
+{
+	LM_INFO("Received Ping\n");
+	return 0;
+}
+
+static int handle_pong(ws_frame_t *msg)
+{
+	LM_INFO("Received Pong\n");
+	return 0;
+}
 
 int ws_frame_received(void *data)
 {
-	int printed;
-	str output;
+	ws_frame_t ws_frame;
 	tcp_event_info_t *tev = (tcp_event_info_t *) data;
 
 	if (tev == NULL || tev->buf == NULL || tev->len <= 0)
@@ -41,14 +232,46 @@ int ws_frame_received(void *data)
 		return -1;
 	}
 
-	output.len = 0;
-	output.s = frame_buf;
+	ws_frame.tcpinfo = tev;
+	switch(decode_and_validate_ws_frame(&ws_frame))
+	{
+	case OPCODE_TEXT_FRAME:
+	case OPCODE_BINARY_FRAME:
+		if (handle_sip_message(&ws_frame) < 0)
+		{
+			LM_ERR("handling SIP message\n");
+			return -1;
+		}
+		break;
 
-	for (printed = 0; printed < tev->len && output.len < FRAME_BUF_SIZE - 3;
-			printed++)
-		output.len += sprintf(output.s + output.len, "%02x ",
-				(unsigned char) tev->buf[printed]);
-	LM_INFO("Rx: %.*s\n", output.len, output.s);
+	case OPCODE_CLOSE:
+		if (handle_close(&ws_frame) < 0)
+		{
+			LM_ERR("handling Close\n");
+			return -1;
+		}
+		break;
+
+	case OPCODE_PING:
+		if (handle_ping(&ws_frame) < 0)
+		{
+			LM_ERR("handling Ping\n");
+			return -1;
+		}
+		break;
+
+	case OPCODE_PONG:
+		if (handle_pong(&ws_frame) < 0)
+		{
+			LM_ERR("handling Pong\n");
+			return -1;
+		}
+		break;
+		
+	default:
+		LM_WARN("received bad frame\n");
+		return -1;
+	}
 
 	return 0;
 }
