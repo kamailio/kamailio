@@ -1019,7 +1019,7 @@ int msrp_process_msg(char* tcpbuf, unsigned int len,
 static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 {
 	int bytes, pos, mask_present;
-	unsigned long len;
+	unsigned int len;
 	char *p;
 	struct tcp_req *r;
 
@@ -1079,9 +1079,9 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 		if (bytes < pos + 2)
 			goto skip;
 
-		len = 0;
-		len |= (p[pos++] & 0xff) <<  8;
-		len |= (p[pos++] & 0xff) <<  0;
+		len =	  ((p[pos + 0] & 0xff) <<  8)
+			| ((p[pos + 1] & 0xff) <<  0);
+		pos += 2;
 	}
 	else if (len == 127)
 	{
@@ -1091,12 +1091,11 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 		/* Only decoding the last four bytes of the length...
 		   This limits the size of WebSocket messages that can be
 		   handled to 2^32 - which should be plenty for SIP! */
-		len = 0;
-		pos += 4;
-		len |= (p[pos++] & 0xff) << 24;
-		len |= (p[pos++] & 0xff) << 16;
-		len |= (p[pos++] & 0xff) <<  8;
-		len |= (p[pos++] & 0xff) <<  0;
+		len =	  ((p[pos + 4] & 0xff) << 24)
+			| ((p[pos + 5] & 0xff) << 16)
+			| ((p[pos + 6] & 0xff) <<  8)
+			| ((p[pos + 7] & 0xff) <<  0);
+		pos += 8;
 	}
 
 	/* Skip mask */
