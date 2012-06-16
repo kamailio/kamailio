@@ -22,6 +22,7 @@
  */
 
 #include "../../dprint.h"
+#include "../../events.h"
 #include "../../locking.h"
 #include "../../sr_module.h"
 #include "../../lib/kcore/kstats_wrapper.h"
@@ -114,6 +115,12 @@ static int mod_init(void)
 	if (sl_load_api(&ws_slb) != 0)
 	{
 		LM_ERR("binding to SL\n");
+		return -1;
+	}
+
+	if (sr_event_register_cb(SREV_TCP_WS_FRAME, ws_frame_received) != 0)
+	{
+		LM_ERR("registering WebSocket call-back\n");
 		return -1;
 	}
 

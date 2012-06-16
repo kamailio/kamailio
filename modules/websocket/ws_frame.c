@@ -21,9 +21,37 @@
  *
  */
 
+#include "../../tcp_conn.h"
 #include "../../lib/kmi/tree.h"
 #include "ws_frame.h"
 #include "ws_mod.h"
+
+#define FRAME_BUF_SIZE 1024
+static char frame_buf[FRAME_BUF_SIZE];
+
+int ws_frame_received(void *data)
+{
+	int printed;
+	str output;
+	tcp_event_info_t *tev = (tcp_event_info_t *) data;
+
+	if (tev == NULL || tev->buf == NULL || tev->len <= 0)
+	{
+		LM_WARN("received bad frame\n");
+		return -1;
+	}
+
+	output.len = 0;
+	output.s = frame_buf;
+
+	for (printed = 0; printed < tev->len && output.len < FRAME_BUF_SIZE - 3;
+			printed++)
+		output.len += sprintf(output.s + output.len, "%02x ",
+				(unsigned char) tev->buf[printed]);
+	LM_INFO("Rx: %.*s\n", output.len, output.s);
+
+	return 0;
+}
 
 struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
 {

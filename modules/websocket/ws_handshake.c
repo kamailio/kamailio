@@ -27,11 +27,13 @@
 #include "../../data_lump_rpl.h"
 #include "../../dprint.h"
 #include "../../locking.h"
+#include "../../tcp_conn.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kcore/cmpapi.h"
 #include "../../lib/kmi/tree.h"
 #include "../../parser/msg_parser.h"
 #include "../sl/sl.h"
+#include "../tls/tls_cfg.h"
 #include "ws_handshake.h"
 #include "ws_mod.h"
 
@@ -120,16 +122,31 @@ int ws_handle_handshake(struct sip_msg *msg)
 	str key = {0, 0}, headers = {0, 0}, reply_key = {0, 0};
 	unsigned char sha1[20];
 	unsigned int hdr_flags = 0;
-	int version;
+	int lifetime = 0, version;
 	struct hdr_field *hdr = msg->headers;
 
 	if (*ws_enabled == 0)
 	{
 		LM_INFO("disabled: bouncing handshake\n");
-		ws_send_reply(msg, 503, &str_status_service_unavailable, NULL);
+		ws_send_reply(msg, 503, &str_status_internal_server_error,
+				NULL);
 		return 0;
 	}
 
+	/* Check the protocol the request arrived over */
+	switch (msg->rcv.proto)
+	{
+	case PROTO_TCP:
+	case PROTO_TLS:
+		lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
+		break;
+	default:
+		LM_WARN("websocket handshake on unsupported protocol\n");
+		ws_send_reply(msg, 500, &str_status_service_unavailable, NULL);
+		return 0;
+	}
+
+	/* Process HTTP headers */
 	while (hdr != NULL)
 	{
 		/* Decode and validate Connection */
@@ -289,11 +306,15 @@ int ws_handle_handshake(struct sip_msg *msg)
 			str_hdr_sec_websocket_protocol.s, str_sip.len,
 			str_sip.s);
 
-	/* TODO: make sure Kamailio core sends future requests on this
-		 connection directly to this module */
-
 	/* Send reply */
-	ws_send_reply(msg, 101, &str_status_switching_protocols, &headers);
+	if (ws_send_reply(msg, 101,
+				&str_status_switching_protocols, &headers) < 0)
+		return 0;
+
+	/* Make sure Kamailio core sends future requests on this connection
+	   directly to this module */
+	tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, lifetime)->flags
+		|= F_CONN_WS;
 
 	return 0;
 }
