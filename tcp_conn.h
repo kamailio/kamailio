@@ -75,6 +75,7 @@
 #define F_CONN_WANTS_RD  4096  /* conn. should be watched for READ */
 #define F_CONN_WANTS_WR  8192  /* conn. should be watched for WRITE */
 #define F_CONN_PASSIVE  16384 /* conn. created via accept() and not connect()*/
+#define F_CONN_WS	32768 /* conn. is a websocket */
 
 #ifndef NO_READ_HTTP11
 #define READ_HTTP11
@@ -82,6 +83,10 @@
 
 #ifndef NO_READ_MSRP
 #define READ_MSRP
+#endif
+
+#ifndef NO_READ_WS
+#define READ_WS
 #endif
 
 enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,

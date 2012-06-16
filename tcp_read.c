@@ -110,6 +110,11 @@ int is_msg_complete(struct tcp_req* r);
 #define HTTP11CONTINUE_LEN	(sizeof(HTTP11CONTINUE)-1)
 #endif
 
+#ifdef READ_WS
+static int ws_process_msg(char* tcpbuf, unsigned int len,
+		struct receive_info* rcv_info, struct tcp_connection* con);
+#endif
+
 #define TCPCONN_TIMEOUT_MIN_RUN  1 /* run the timers each new tick */
 
 /* types used in io_wait* */
@@ -439,7 +444,11 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 		if (bytes<=0) return bytes;
 	}
 	p=r->parsed;
-	
+#ifdef READ_WS
+	if (c->flags & F_CONN_WS)
+		return ws_process_msg(p, bytes, &c->rcv, c);
+#endif
+
 	while(p<r->pos && r->error==TCP_REQ_OK){
 		switch((unsigned char)r->state){
 			case H_BODY: /* read the body*/
@@ -1010,6 +1019,30 @@ int msrp_process_msg(char* tcpbuf, unsigned int len,
 		ret = sr_event_exec(SREV_TCP_MSRP_FRAME, (void*)(&tev));
 	} else {
 		LM_DBG("no callback registering for handling MSRP - dropping!\n");
+	}
+	return ret;
+}
+#endif
+
+#ifdef READ_WS
+static int ws_process_msg(char* tcpbuf, unsigned int len,
+		struct receive_info* rcv_info, struct tcp_connection* con)
+{
+	int ret;
+	tcp_event_info_t tev;
+
+	ret = 0;
+	LM_DBG("WebSocket Message: [[>>>\n%.*s<<<]]\n", len, tcpbuf);
+	if(likely(sr_event_enabled(SREV_TCP_WS_FRAME))) {
+		memset(&tev, 0, sizeof(tcp_event_info_t));
+		tev.type = SREV_TCP_WS_FRAME;
+		tev.buf = tcpbuf;
+		tev.len = len;
+		tev.rcv = rcv_info;
+		tev.con = con;
+		ret = sr_event_exec(SREV_TCP_WS_FRAME, (void*)(&tev));
+	} else {
+		LM_DBG("no callback registering for handling WebSockets - dropping!\n");
 	}
 	return ret;
 }
