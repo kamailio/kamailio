@@ -24,12 +24,24 @@
 #ifndef _WS_MOD_H
 #define _WS_MOD_H
 
+#include "../../locking.h"
+#include "../../kstats_types.h"
 #include "../sl/sl.h"
 
 extern sl_api_t ws_slb;
-extern int ws_ping_interval;	/* time (in seconds) after which a Ping will be
-				   sent on an idle connection */
-extern int ws_ping_timeout;	/* time (in seconds) to wait for a Pong in
-				   response to a Ping before closing a
-				   connection */
+extern int *ws_enabled;
+extern gen_lock_t *ws_stats_lock;
+
+extern int ws_ping_interval;	/* time (in seconds) between sending Pings */
+
+extern stat_var *ws_current_connections;
+extern stat_var *ws_failed_connections;
+extern stat_var *ws_failed_handshakes;
+extern stat_var *ws_local_closed_connections;
+extern stat_var *ws_max_concurrent_connections;
+extern stat_var *ws_received_frames;
+extern stat_var *ws_remote_closed_connections;
+extern stat_var *ws_successful_handshakes;
+extern stat_var *ws_transmitted_frames;
+
 #endif /* _WS_MOD_H */

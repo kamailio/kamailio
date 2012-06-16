@@ -26,7 +26,10 @@
 #include "../../basex.h"
 #include "../../data_lump_rpl.h"
 #include "../../dprint.h"
+#include "../../locking.h"
+#include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kcore/cmpapi.h"
+#include "../../lib/kmi/tree.h"
 #include "../../parser/msg_parser.h"
 #include "../sl/sl.h"
 #include "ws_handshake.h"
@@ -35,16 +38,17 @@
 #define WS_VERSION		(13)
 
 static str str_sip = str_init("sip");
+static str str_upgrade = str_init("upgrade");
 static str str_websocket = str_init("websocket");
 static str str_ws_guid = str_init("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
 
 /* HTTP headers */
-static str str_connection = str_init("Connection");
-static str str_upgrade = str_init("Upgrade");
-static str str_sec_websocket_accept = str_init("Sec-WebSocket-Accept");
-static str str_sec_websocket_key = str_init("Sec-WebSocket-Key");
-static str str_sec_websocket_protocol = str_init("Sec-WebSocket-Protocol");
-static str str_sec_websocket_version = str_init("Sec-WebSocket-Init");
+static str str_hdr_connection = str_init("Connection");
+static str str_hdr_upgrade = str_init("Upgrade");
+static str str_hdr_sec_websocket_accept = str_init("Sec-WebSocket-Accept");
+static str str_hdr_sec_websocket_key = str_init("Sec-WebSocket-Key");
+static str str_hdr_sec_websocket_protocol = str_init("Sec-WebSocket-Protocol");
+static str str_hdr_sec_websocket_version = str_init("Sec-WebSocket-Version");
 #define CONNECTION		(1<<0)
 #define UPGRADE			(1<<1)
 #define SEC_WEBSOCKET_ACCEPT	(1<<2)
@@ -56,11 +60,12 @@ static str str_sec_websocket_version = str_init("Sec-WebSocket-Init");
 					| SEC_WEBSOCKET_PROTOCOL\
 					| SEC_WEBSOCKET_VERSION)
 
-/* HTTP response text */
-static str str_switching_protocols = str_init("Switching Protocols");
-static str str_bad_request = str_init("Bad Request");
-static str str_upgrade_required = str_init("Upgrade Required");
-static str str_internal_server_error = str_init("Internal Server Error");
+/* HTTP status text */
+static str str_status_switching_protocols = str_init("Switching Protocols");
+static str str_status_bad_request = str_init("Bad Request");
+static str str_status_upgrade_required = str_init("Upgrade Required");
+static str str_status_internal_server_error = str_init("Internal Server Error");
+static str str_status_service_unavailable = str_init("Service Unavailable");
 
 #define HDR_BUF_LEN		(256)
 static char headers_buf[HDR_BUF_LEN];
@@ -70,11 +75,14 @@ static char key_buf[KEY_BUF_LEN];
 
 static int ws_send_reply(sip_msg_t *msg, int code, str *reason, str *hdrs)
 {
+	int cur_cons, max_cons;
+
 	if (hdrs && hdrs->len > 0)
 	{
 		if (add_lump_rpl(msg, hdrs->s, hdrs->len, LUMP_RPL_HDR) == 0)
 		{
 			LM_ERR("inserting extra-headers lump\n");
+			update_stat(ws_failed_handshakes, 1);
 			return -1;
 		}
 	}
@@ -82,8 +90,27 @@ static int ws_send_reply(sip_msg_t *msg, int code, str *reason, str *hdrs)
 	if (ws_slb.freply(msg, code, reason) < 0)
 	{
 		LM_ERR("sending reply\n");
+		update_stat(ws_failed_handshakes, 1);
 		return -1;
 	}
+
+	if (code == 101)
+	{
+		update_stat(ws_successful_handshakes, 1);
+
+		lock_get(ws_stats_lock);
+		update_stat(ws_current_connections, 1);
+
+		cur_cons = get_stat_val(ws_current_connections);
+		max_cons = get_stat_val(ws_max_concurrent_connections);
+
+		if (max_cons < cur_cons)
+			update_stat(ws_max_concurrent_connections,
+						cur_cons - max_cons);
+		lock_release(ws_stats_lock);
+	}
+	else
+		update_stat(ws_failed_handshakes, 1);
 
 	return 0;
 }
@@ -96,59 +123,88 @@ int ws_handle_handshake(struct sip_msg *msg)
 	int version;
 	struct hdr_field *hdr = msg->headers;
 
+	if (*ws_enabled == 0)
+	{
+		LM_INFO("disabled: bouncing handshake\n");
+		ws_send_reply(msg, 503, &str_status_service_unavailable, NULL);
+		return 0;
+	}
+
 	while (hdr != NULL)
 	{
 		/* Decode and validate Connection */
 		if (cmp_hdrname_strzn(&hdr->name,
-				str_connection.s,
-				str_connection.len) == 0)
+				str_hdr_connection.s,
+				str_hdr_connection.len) == 0)
 		{
-			/* TODO: validate Connection body */
-			hdr_flags |= CONNECTION;
+			strlower(&hdr->body);
+			if (str_search(&hdr->body, &str_upgrade) != NULL)
+			{
+				LM_INFO("found %.*s: %.*s\n",
+					hdr->name.len, hdr->name.s,
+					hdr->body.len, hdr->body.s);
+				hdr_flags |= CONNECTION;
+			}
 		}
 		/* Decode and validate Upgrade */
 		else if (cmp_hdrname_strzn(&hdr->name,
-				str_upgrade.s,
-				str_upgrade.len) == 0)
+				str_hdr_upgrade.s,
+				str_hdr_upgrade.len) == 0)
 		{
-			/* TODO: validate Upgrade body */
-			hdr_flags |= UPGRADE;
+			strlower(&hdr->body);
+			if (str_search(&hdr->body, &str_websocket) != NULL)
+			{
+				LM_INFO("found %.*s: %.*s\n",
+					hdr->name.len, hdr->name.s,
+					hdr->body.len, hdr->body.s);
+				hdr_flags |= UPGRADE;
+			}
 		}
 		/* Decode and validate Sec-WebSocket-Key */
 		else if (cmp_hdrname_strzn(&hdr->name,
-				str_sec_websocket_key.s, 
-				str_sec_websocket_key.len) == 0) 
+				str_hdr_sec_websocket_key.s, 
+				str_hdr_sec_websocket_key.len) == 0) 
 		{
 			if (hdr_flags & SEC_WEBSOCKET_KEY)
 			{
 				LM_WARN("%.*s found multiple times\n",
 					hdr->name.len, hdr->name.s);
-				ws_send_reply(msg, 400, &str_bad_request, NULL);
+				ws_send_reply(msg, 400,
+						&str_status_bad_request, NULL);
 				return 0;
 			}
 
+			LM_INFO("found %.*s: %.*s\n",
+				hdr->name.len, hdr->name.s,
+				hdr->body.len, hdr->body.s);
 			key = hdr->body;
 			hdr_flags |= SEC_WEBSOCKET_KEY;
 		}
 		/* Decode and validate Sec-WebSocket-Protocol */
 		else if (cmp_hdrname_strzn(&hdr->name,
-				str_sec_websocket_protocol.s,
-				str_sec_websocket_protocol.len) == 0)
+				str_hdr_sec_websocket_protocol.s,
+				str_hdr_sec_websocket_protocol.len) == 0)
 		{
-			/* TODO: better validation of sip... */
+			strlower(&hdr->body);
 			if (str_search(&hdr->body, &str_sip) != NULL)
+			{
+				LM_INFO("found %.*s: %.*s\n",
+					hdr->name.len, hdr->name.s,
+					hdr->body.len, hdr->body.s);
 				hdr_flags |= SEC_WEBSOCKET_PROTOCOL;
+			}
 		}
 		/* Decode and validate Sec-WebSocket-Version */
 		else if (cmp_hdrname_strzn(&hdr->name,
-				str_sec_websocket_version.s,
-				str_sec_websocket_version.len) == 0)
+				str_hdr_sec_websocket_version.s,
+				str_hdr_sec_websocket_version.len) == 0)
 		{
 			if (hdr_flags & SEC_WEBSOCKET_VERSION)
 			{
 				LM_WARN("%.*s found multiple times\n",
 					hdr->name.len, hdr->name.s);
-				ws_send_reply(msg, 400, &str_bad_request, NULL);
+				ws_send_reply(msg, 400,
+						&str_status_bad_request, NULL);
 				return 0;
 			}
 
@@ -161,14 +217,18 @@ int ws_handle_handshake(struct sip_msg *msg)
 				headers.s = headers_buf;
 				headers.len = snprintf(headers.s, HDR_BUF_LEN,
 					"%.*s: %d\r\n",
-					str_sec_websocket_version.len,
-					str_sec_websocket_version.s,
+					str_hdr_sec_websocket_version.len,
+					str_hdr_sec_websocket_version.s,
 					WS_VERSION);
-				ws_send_reply(msg, 426, &str_upgrade_required,
+				ws_send_reply(msg, 426,
+						&str_status_upgrade_required,
 						&headers);
 				return 0;
 			}
 
+			LM_INFO("found %.*s: %.*s\n",
+				hdr->name.len, hdr->name.s,
+				hdr->body.len, hdr->body.s);
 			hdr_flags |= SEC_WEBSOCKET_VERSION;
 		}
 
@@ -183,9 +243,13 @@ int ws_handle_handshake(struct sip_msg *msg)
 		headers.len = snprintf(headers.s, HDR_BUF_LEN,
 					"%.*s: %.*s\r\n"
 					"%.*s: %d\r\n",
-					str_sec_websocket_protocol.len, str_sec_websocket_protocol.s, str_sip.len, str_sip.s,
-					str_sec_websocket_version.len, str_sec_websocket_version.s, WS_VERSION);
-		ws_send_reply(msg, 400, &str_bad_request, NULL);
+					str_hdr_sec_websocket_protocol.len,
+					str_hdr_sec_websocket_protocol.s,
+					str_sip.len, str_sip.s,
+					str_hdr_sec_websocket_version.len,
+					str_hdr_sec_websocket_version.s,
+					WS_VERSION);
+		ws_send_reply(msg, 400, &str_status_bad_request, NULL);
 		return 0;
 	}
 
@@ -195,7 +259,8 @@ int ws_handle_handshake(struct sip_msg *msg)
 	if (reply_key.s == NULL)
 	{
 		LM_ERR("allocating pkg memory\n");
-		ws_send_reply(msg, 500, &str_internal_server_error, NULL);
+		ws_send_reply(msg, 500, &str_status_internal_server_error,
+				NULL);
 		return 0;
 	}
 	memcpy(reply_key.s, key.s, key.len);
@@ -214,16 +279,35 @@ int ws_handle_handshake(struct sip_msg *msg)
 			"%.*s: %.*s\r\n"
 			"%.*s: %.*s\r\n"
 			"%.*s: %.*s\r\n",
-			str_upgrade.len, str_upgrade.s, str_websocket.len, str_websocket.s,
-			str_connection.len, str_connection.s, str_upgrade.len, str_upgrade.s,
-			str_sec_websocket_accept.len, str_sec_websocket_accept.s, reply_key.len, reply_key.s,
-			str_sec_websocket_protocol.len, str_sec_websocket_protocol.s, str_sip.len, str_sip.s);
+			str_hdr_upgrade.len, str_hdr_upgrade.s,
+			str_websocket.len, str_websocket.s,
+			str_hdr_connection.len, str_hdr_connection.s,
+			str_upgrade.len, str_upgrade.s,
+			str_hdr_sec_websocket_accept.len,
+			str_hdr_sec_websocket_accept.s, reply_key.len,
+			reply_key.s, str_hdr_sec_websocket_protocol.len,
+			str_hdr_sec_websocket_protocol.s, str_sip.len,
+			str_sip.s);
 
 	/* TODO: make sure Kamailio core sends future requests on this
 		 connection directly to this module */
 
 	/* Send reply */
-	ws_send_reply(msg, 101, &str_switching_protocols, &headers);
+	ws_send_reply(msg, 101, &str_status_switching_protocols, &headers);
 
 	return 0;
+}
+
+struct mi_root *ws_mi_disable(struct mi_root *cmd, void *param)
+{
+	*ws_enabled = 0;
+	LM_WARN("disabling websockets - new connections will be dropped\n");
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+}
+
+struct mi_root *ws_mi_enable(struct mi_root *cmd, void *param)
+{
+	*ws_enabled = 1;
+	LM_WARN("enabling websockets\n");
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }

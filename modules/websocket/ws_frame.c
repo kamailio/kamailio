@@ -21,14 +21,18 @@
  *
  */
 
-#ifndef _WS_HANDSHAKE_H
-#define _WS_HANDSHAKE_H
+#include "../../lib/kmi/tree.h"
+#include "ws_frame.h"
+#include "ws_mod.h"
 
-#include "../../sr_module.h"
-#include "../../parser/msg_parser.h"
+struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
+{
+	/* TODO close specified or all connections */
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+}
 
-int ws_handle_handshake(struct sip_msg *msg);
-struct mi_root *ws_mi_disable(struct mi_root *cmd, void *param);
-struct mi_root *ws_mi_enable(struct mi_root *cmd, void *param);
-
-#endif /* _WS_HANDSHAKE_H */
+struct mi_root *ws_mi_ping(struct mi_root *cmd, void *param)
+{
+	/* TODO ping specified connection */
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+}

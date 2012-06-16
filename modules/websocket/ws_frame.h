@@ -21,14 +21,13 @@
  *
  */
 
-#ifndef _WS_HANDSHAKE_H
-#define _WS_HANDSHAKE_H
+#ifndef _WS_FRAME_H
+#define _WS_FRAME_H
 
 #include "../../sr_module.h"
-#include "../../parser/msg_parser.h"
+#include "../../lib/kmi/tree.h"
 
-int ws_handle_handshake(struct sip_msg *msg);
-struct mi_root *ws_mi_disable(struct mi_root *cmd, void *param);
-struct mi_root *ws_mi_enable(struct mi_root *cmd, void *param);
+struct mi_root *ws_mi_close(struct mi_root *cmd, void *param);
+struct mi_root *ws_mi_ping(struct mi_root *cmd, void *param);
 
-#endif /* _WS_HANDSHAKE_H */
+#endif /* _WS_FRAME_H */
