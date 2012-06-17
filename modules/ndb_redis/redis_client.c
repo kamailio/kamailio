@@ -107,8 +107,26 @@ err:
  */
 int redisc_destroy(void)
 {
+	redisc_reply_t *rpl, *next_rpl;
+
 	redisc_server_t *rsrv=NULL;
 	redisc_server_t *rsrv1=NULL;
+
+	rpl = _redisc_rpl_list;
+	while(rpl != NULL)
+	{
+		next_rpl = rpl->next;
+		if(rpl->rplRedis)
+			freeReplyObject(rpl->rplRedis);
+
+		if(rpl->rname.s != NULL)
+			pkg_free(rpl->rname.s);
+
+		pkg_free(rpl);
+		rpl = next_rpl;
+	}
+	_redisc_rpl_list = NULL;
+
 	if(_redisc_srv_list==NULL)
 		return -1;
 	rsrv=_redisc_srv_list;
@@ -121,6 +139,8 @@ int redisc_destroy(void)
 		free_params(rsrv1->attrs);
 		pkg_free(rsrv1);
 	}
+	_redisc_srv_list = NULL;
+
 	return 0;
 }
 
