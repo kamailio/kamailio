@@ -23,8 +23,10 @@
 
 #include "../../dprint.h"
 #include "../../events.h"
+#include "../../ip_addr.h"
 #include "../../locking.h"
 #include "../../sr_module.h"
+#include "../../tcp_conn.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/mi.h"
 #include "../../lib/kmi/tree.h"
@@ -34,6 +36,9 @@
 #include "ws_mod.h"
 
 MODULE_VERSION
+
+extern gen_lock_t *tcpconn_lock;
+extern struct tcp_connection **tcpconn_id_hash;
 
 static int mod_init(void);
 static void destroy(void);
@@ -172,6 +177,47 @@ static void destroy(void)
 
 static struct mi_root *mi_dump(struct mi_root *cmd, void *param)
 {
-	/* TODO: output all open websocket connections */
+	int h, connections = 0;
+	char *src_proto, *dst_proto;
+	char src_ip[IP6_MAX_STR_SIZE + 1], dst_ip[IP6_MAX_STR_SIZE + 1];
+	struct tcp_connection *c;
+
+	TCPCONN_LOCK;
+	for (h = 0; h < TCP_ID_HASH_SIZE; h++)
+	{
+		c = tcpconn_id_hash[h];
+		while(c)
+		{
+			if (c->flags & F_CONN_WS)
+			{
+				src_proto = (c->rcv.proto== PROTO_TCP)
+						? "tcp" : "tls";
+				memset(src_ip, 0, IP6_MAX_STR_SIZE + 1);
+				ip_addr2sbuf(&c->rcv.src_ip, src_ip,
+						IP6_MAX_STR_SIZE);
+
+				dst_proto = (c->rcv.proto == PROTO_TCP)
+						? "tcp" : "tls";
+				memset(dst_ip, 0, IP6_MAX_STR_SIZE + 1);
+				ip_addr2sbuf(&c->rcv.dst_ip, src_ip,
+						IP6_MAX_STR_SIZE);
+
+				LM_ERR("id - %d, "
+					"src - %s:%s:%hu, "
+					"dst - %s:%s:%hu\n",
+					c->id,
+					src_proto, src_ip, c->rcv.src_port,
+					dst_proto, dst_ip, c->rcv.dst_port);
+
+				connections++;
+			}
+
+			c = c->id_next;
+		}
+	}
+	TCPCONN_UNLOCK;
+
+	LM_ERR("%d WebSocket connections found\n", connections);
+
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }

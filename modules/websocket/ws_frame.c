@@ -21,7 +21,9 @@
  *
  */
 
+#include <limits.h>
 #include "../../tcp_conn.h"
+#include "../../tcp_server.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/tree.h"
 #include "ws_frame.h"
@@ -82,6 +84,8 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame)
 	unsigned int i, len=frame->tcpinfo->len;
 	int mask_start, j;
 	char *buf = frame->tcpinfo->buf;
+
+	LM_INFO("decoding WebSocket frame\n");
 
 	/* Decode and validate first 9 bits */
 	if (len < 2)
@@ -200,11 +204,104 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame)
 
 static int encode_and_send_ws_frame(ws_frame_t *frame)
 {
-	/* TODO: convert ws_frame_t into a binary WebSocket frame and send over
-	   TCP/TLS */
+	int pos = 0, extended_length;
+	unsigned int frame_length;
+	char *send_buf;
+	struct dest_info dst;
 
+	LM_INFO("encoding WebSocket frame\n");
+
+	/* Validate the first byte */
+	if (!frame->fin)
+	{
+		LM_ERR("WebSocket fragmentation not supported in the sip "
+			"sub-protocol\n");
+		return -1;
+	}
+
+	if (frame->rsv1 || frame->rsv2 || frame->rsv3)
+	{
+		LM_ERR("WebSocket reserved fields with non-zero values\n");
+		return -1;
+	}
+
+	switch(frame->opcode)
+	{
+	case OPCODE_TEXT_FRAME:
+	case OPCODE_BINARY_FRAME:
+		LM_INFO("supported non-control frame: 0x%x\n",
+			(unsigned char) frame->opcode);
+		break;
+	case OPCODE_CLOSE:
+	case OPCODE_PING:
+	case OPCODE_PONG:
+		LM_INFO("supported control frame: 0x%x\n",
+			(unsigned char) frame->opcode);
+		break;
+	default:
+		LM_ERR("unsupported opcode: 0x%x\n",
+			(unsigned char) frame->opcode);
+		return -1;
+	}
+
+	/* validate the second byte */
+	if (frame->mask)
+	{
+		LM_ERR("this is a server - all messages sent will be "
+			"unmasked\n");
+		return -1;
+	}
+
+	if (frame->payload_len < 126) extended_length = 0;
+	else if (frame->payload_len <= USHRT_MAX ) extended_length = 2;
+	else if (frame->payload_len <= UINT_MAX) extended_length = 4;
+	else
+	{
+		LM_ERR("Kamailio only supports WebSocket frames with payload "
+			"<= %u\n", UINT_MAX);
+		return -1;
+	}
+
+	/* Allocate send buffer and build frame */
+	frame_length = frame->payload_len + extended_length + 2;
+	if ((send_buf = pkg_malloc(sizeof(unsigned char) * frame_length))
+			== NULL)
+	{
+		LM_ERR("allocating send buffer from pkg memory\n");
+		return -1;
+	}
+	memset(send_buf, 0, frame_length);
+	send_buf[pos++] = 0x80 | (frame->opcode & 0xff);
+	if (extended_length == 0)
+		send_buf[pos++] = (frame->payload_len & 0xff);
+	else if (extended_length == 2)
+	{
+		send_buf[pos++] = 126;
+		send_buf[pos++] = (frame->payload_len & 0xff00) >> 8;
+		send_buf[pos++] = (frame->payload_len & 0x00ff) >> 0;
+	}
+	else
+	{
+		send_buf[pos++] = 127;
+		send_buf[pos++] = (frame->payload_len & 0xff000000) >> 24;
+		send_buf[pos++] = (frame->payload_len & 0x00ff0000) >> 16;
+		send_buf[pos++] = (frame->payload_len & 0x0000ff00) >> 8;
+		send_buf[pos++] = (frame->payload_len & 0x000000ff) >> 0;
+	}
+	memcpy(&send_buf[pos], frame->payload_data, frame->payload_len);
+
+	init_dst_from_rcv(&dst, &frame->tcpinfo->con->rcv);
+	if (tcp_send(&dst, NULL, send_buf, frame_length) < 0)
+	{
+		LM_ERR("sending WebSocket frame\n");
+		pkg_free(send_buf);
+		update_stat(ws_failed_connections, 1);
+		return -1;
+	}
+	
 	update_stat(ws_transmitted_frames, 1);
 
+	pkg_free(send_buf);
 	return 0;
 }
 
@@ -245,18 +342,12 @@ static int handle_close(ws_frame_t *frame)
 
 static int handle_ping(ws_frame_t *frame)
 {
-	ws_frame_t ws_frame;
-
 	LM_INFO("Received Ping\n");
 
-	memset(&ws_frame, 0, sizeof(ws_frame_t));
-	ws_frame.fin = 1;
-	ws_frame.opcode = OPCODE_PONG;
-	ws_frame.payload_len = frame->payload_len;
-	ws_frame.payload_data =  frame->payload_data;
-	ws_frame.tcpinfo = frame->tcpinfo;
+	frame->opcode = OPCODE_PONG;
+	frame->mask = 0;
 
-	encode_and_send_ws_frame(&ws_frame);
+	encode_and_send_ws_frame(frame);
 
 	return 0;
 }
@@ -329,7 +420,69 @@ int ws_frame_received(void *data)
 
 struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
 {
-	/* TODO Close specified or all connections */
+	unsigned int id;
+	struct mi_node *node = NULL;
+	ws_frame_t frame;
+	tcp_event_info_t tcpinfo;
+	short int code = 1000;
+	str reason = str_init("Normal Closure");
+	char *data;
+
+	node = cmd->node.kids;
+	if (node == NULL)
+		return 0;
+	if (node->value.s == NULL || node->value.len == 0)
+	{
+		LM_ERR("empty connection ID parameter\n");
+		return init_mi_tree(400, "Empty connection ID parameter", 29);
+	}
+	if (str2int(&node->value, &id) < 0)
+	{
+		LM_ERR("converting string to int\n");
+		return 0;
+	}
+	if (node->next != NULL)
+	{
+		LM_ERR("too many parameters\n");
+		return init_mi_tree(400, "Too many parameters", 19);
+	}
+
+	if ((tcpinfo.con = tcpconn_get(id, 0, 0, 0, 0)) == NULL)
+	{
+		LM_ERR("bad connection ID parameter\n");
+		return init_mi_tree(400, "Bad connection ID parameter", 27);
+	}
+
+	if ((data = pkg_malloc(sizeof(char) * (reason.len + 2))) == NULL)
+	{
+		LM_ERR("allocating pkg memory\n");
+		return 0;
+	}
+
+	data[0] = (code & 0xff00) >> 8;
+	data[1] = (code & 0x00ff) >> 0;
+	memcpy(&data[2], reason.s, reason.len);
+
+	memset(&frame, 0, sizeof(frame));
+	frame.fin = 1;
+	frame.opcode = OPCODE_CLOSE;
+	frame.payload_len = reason.len + 2;
+	frame.payload_data = data;
+	frame.tcpinfo = &tcpinfo;
+
+	if (encode_and_send_ws_frame(&frame) < 0)
+	{
+		LM_ERR("sending WebSocket close\n");
+		pkg_free(data);
+		return init_mi_tree(500,"Sending WebSocket close", 23);
+	}
+
+	/* TODO: cleanly close TCP/TLS connection */
+
+	update_stat(ws_local_closed_connections, 1);
+	update_stat(ws_current_connections, -1);
+
+	pkg_free(data);
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
