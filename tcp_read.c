@@ -1018,14 +1018,18 @@ int msrp_process_msg(char* tcpbuf, unsigned int len,
 #ifdef READ_WS
 static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 {
-	int bytes, pos, mask_present;
+	int bytes, size, pos, mask_present;
 	unsigned int len;
 	char *p;
 	struct tcp_req *r;
 
 	r=&c->req;
 	if (unlikely(r->parsed < r->pos))
+	{
+		LM_ERR("next frame...\n");
 		bytes = 0;
+		size = r->pos - r->parsed;
+	}
 	else
 	{
 #ifdef USE_TLS
@@ -1035,10 +1039,10 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 #endif
 			bytes = tcp_read(c, read_flags);
 
-		LM_INFO("read %d bytes\n", bytes);
-
 		if (bytes <= 0)
 			return 0;
+
+		size = bytes;
 	}
 
 	p = r->parsed;
@@ -1069,7 +1073,7 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 	*/
 
 	/* Process first two bytes */
-	if (bytes < pos + 2)
+	if (size < pos + 2)
 		goto skip;
 	pos++;
 	mask_present = p[pos] & 0x80;
@@ -1078,7 +1082,7 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 	/* Work out real length */
 	if (len == 126)
 	{
-		if (bytes < pos + 2)
+		if (size < pos + 2)
 			goto skip;
 
 		len =	  ((p[pos + 0] & 0xff) <<  8)
@@ -1087,7 +1091,7 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 	}
 	else if (len == 127)
 	{
-		if (bytes < pos + 8)
+		if (size < pos + 8)
 			goto skip;
 
 		/* Only decoding the last four bytes of the length...
@@ -1103,17 +1107,16 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 	/* Skip mask */
 	if (mask_present)
 	{
-		if (bytes < pos + 4)
+		if (size < pos + 4)
 			goto skip;
 		pos += 4;
 	}
 
 	/* Now check the whole message has been received */
-	if (bytes < pos + len)
+	if (size < pos + len)
 		goto skip;
 
 	pos += len;
-	r->bytes_to_go = bytes - pos;
 	r->flags |= F_TCP_REQ_COMPLETE;
 	r->parsed = &p[pos];
 
