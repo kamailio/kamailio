@@ -22,6 +22,7 @@
  */
 
 #include "../../tcp_conn.h"
+#include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/tree.h"
 #include "ws_frame.h"
 #include "ws_mod.h"
@@ -177,10 +178,10 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame)
 	frame->masking_key[3] = (buf[mask_start + 3] & 0xff);
 
 	/* Decode and unmask payload */
-	if (len < frame->payload_len + mask_start)
+	if (len != frame->payload_len + mask_start + 4)
 	{
-		LM_WARN("message not complete payload_len = %u but only "
-			"received %u\n", frame->payload_len, len);
+		LM_WARN("message not complete frame size %u but received %u\n",
+			frame->payload_len + mask_start + 4, len);
 		return -1;
 	}
 	frame->payload_data = &buf[mask_start + 4];
@@ -197,27 +198,75 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame)
 	return frame->opcode;
 }
 
-static int handle_sip_message(ws_frame_t *msg)
+static int encode_and_send_ws_frame(ws_frame_t *frame)
+{
+	/* TODO: convert ws_frame_t into a binary WebSocket frame and send over
+	   TCP/TLS */
+
+	update_stat(ws_transmitted_frames, 1);
+
+	return 0;
+}
+
+static int handle_sip_message(ws_frame_t *frame)
 {
 	LM_INFO("Received SIP message\n");
+
+	/* TODO: drop SIP message into route {} for processing */
+
 	return 0;
 }
 
-static int handle_close(ws_frame_t *msg)
+static int handle_close(ws_frame_t *frame)
 {
+	unsigned short code = 0;
+	str reason = {0, 0};
+
+	update_stat(ws_remote_closed_connections, 1);
+	update_stat(ws_current_connections, -1);
 	LM_INFO("Received Close\n");
+
+	if (frame->payload_len >= 2)
+		code =    ((frame->payload_data[0] & 0xff) << 8)
+			| ((frame->payload_data[1] & 0xff) << 0);
+
+	if (frame->payload_len > 2)
+	{
+		reason.s = &frame->payload_data[2];
+		reason.len = frame->payload_len - 2;
+	}
+
+	LM_INFO("Close: %hu %.*s\n", code, reason.len, reason.s); 
+
+	/* TODO: cleanly close TCP/TLS connection */
+
 	return 0;
 }
 
-static int handle_ping(ws_frame_t *msg)
+static int handle_ping(ws_frame_t *frame)
 {
+	ws_frame_t ws_frame;
+
 	LM_INFO("Received Ping\n");
+
+	memset(&ws_frame, 0, sizeof(ws_frame_t));
+	ws_frame.fin = 1;
+	ws_frame.opcode = OPCODE_PONG;
+	ws_frame.payload_len = frame->payload_len;
+	ws_frame.payload_data =  frame->payload_data;
+	ws_frame.tcpinfo = frame->tcpinfo;
+
+	encode_and_send_ws_frame(&ws_frame);
+
 	return 0;
 }
 
-static int handle_pong(ws_frame_t *msg)
+static int handle_pong(ws_frame_t *frame)
 {
 	LM_INFO("Received Pong\n");
+
+	LM_INFO("Pong: %.*s\n", frame->payload_len, frame->payload_data);
+
 	return 0;
 }
 
@@ -225,6 +274,8 @@ int ws_frame_received(void *data)
 {
 	ws_frame_t ws_frame;
 	tcp_event_info_t *tev = (tcp_event_info_t *) data;
+
+	update_stat(ws_received_frames, 1);
 
 	if (tev == NULL || tev->buf == NULL || tev->len <= 0)
 	{
@@ -278,12 +329,18 @@ int ws_frame_received(void *data)
 
 struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
 {
-	/* TODO close specified or all connections */
+	/* TODO Close specified or all connections */
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
 struct mi_root *ws_mi_ping(struct mi_root *cmd, void *param)
 {
-	/* TODO ping specified connection */
+	/* TODO Ping specified connection */
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+}
+
+struct mi_root *ws_mi_pong(struct mi_root *cmd, void *param)
+{
+	/* TODO Pong specified connection */
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }

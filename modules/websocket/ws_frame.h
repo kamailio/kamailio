@@ -30,5 +30,6 @@
 int ws_frame_received(void *data);
 struct mi_root *ws_mi_close(struct mi_root *cmd, void *param);
 struct mi_root *ws_mi_ping(struct mi_root *cmd, void *param);
+struct mi_root *ws_mi_pong(struct mi_root *cmd, void *param);
 
 #endif /* _WS_FRAME_H */

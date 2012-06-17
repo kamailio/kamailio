@@ -58,40 +58,41 @@ static struct mi_root *mi_dump(struct mi_root *cmd, void *param);
 
 static cmd_export_t cmds[]= 
 {
-    {"ws_handle_handshake", (cmd_function)ws_handle_handshake, 0,
-	0, 0,
-	ANY_ROUTE},
-    {0, 0, 0, 0, 0, 0}
+    { "ws_handle_handshake", (cmd_function)ws_handle_handshake,
+	0, 0, 0,
+	ANY_ROUTE },
+    { 0, 0, 0, 0, 0, 0 }
 };
 
 static param_export_t params[]=
 {
-	{"ping_interval",	INT_PARAM, &ws_ping_interval},
-	{0, 0}
+	{ "ping_interval",	INT_PARAM, &ws_ping_interval },
+	{ 0, 0 }
 };
 
 static stat_export_t stats[] =
 {
-	{"ws_current_connections",       0, &ws_current_connections },
-	{"ws_failed_connections",        0, &ws_failed_connections },
-	{"ws_failed_handshakes",         0, &ws_failed_handshakes },
-	{"ws_local_closed_connections",  0, &ws_local_closed_connections },
-	{"ws_max_concurrent_connections",0, &ws_max_concurrent_connections },
-	{"ws_received_frames",           0, &ws_received_frames },
-	{"ws_remote_closed_connections", 0, &ws_remote_closed_connections },
-	{"ws_successful_handshakes",     0, &ws_successful_handshakes },
-	{"ws_transmitted_frames",        0, &ws_transmitted_frames },
-	{0, 0, 0}
+	{ "ws_current_connections",       0, &ws_current_connections },
+	{ "ws_failed_connections",        0, &ws_failed_connections },
+	{ "ws_failed_handshakes",         0, &ws_failed_handshakes },
+	{ "ws_local_closed_connections",  0, &ws_local_closed_connections },
+	{ "ws_max_concurrent_connections",0, &ws_max_concurrent_connections },
+	{ "ws_received_frames",           0, &ws_received_frames },
+	{ "ws_remote_closed_connections", 0, &ws_remote_closed_connections },
+	{ "ws_successful_handshakes",     0, &ws_successful_handshakes },
+	{ "ws_transmitted_frames",        0, &ws_transmitted_frames },
+	{ 0, 0, 0 }
 };
 
 static mi_export_t mi_cmds[] =
 {
-	{ "ws_close",   ws_mi_close,   0, 0, 0},
-	{ "ws_disable", ws_mi_disable, 0, 0, 0},
-	{ "ws_dump",	mi_dump,       0, 0, 0},
-	{ "ws_enable",	ws_mi_enable,  0, 0, 0},
-	{ "ws_ping",    ws_mi_ping,    0, 0, 0},
-	{ 0, 0, 0, 0, 0}
+	{ "ws_close",   ws_mi_close,   0, 0, 0 },
+	{ "ws_disable", ws_mi_disable, 0, 0, 0 },
+	{ "ws_dump",	mi_dump,       0, 0, 0 },
+	{ "ws_enable",	ws_mi_enable,  0, 0, 0 },
+	{ "ws_ping",    ws_mi_ping,    0, 0, 0 },
+	{ "ws_pong",	ws_mi_pong,    0, 0, 0 },
+	{ 0, 0, 0, 0, 0 }
 };
 
 struct module_exports exports= 
