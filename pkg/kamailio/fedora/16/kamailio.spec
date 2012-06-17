@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     3.3.0
-%define rel     rc0%{dist}
+%define rel     0%{dist}
 %define _sharedir %{_prefix}/share
 
 
@@ -941,6 +941,8 @@ fi
 
 
 %changelog
+* Mon Jun 17 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to 0 in preparation for 3.3.0 release
 * Mon Jun 11 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Updated rel to rc0
 * Mon Jun 4 2012 Peter Dunkley <peter@dunkley.me.uk>
