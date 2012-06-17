@@ -1035,6 +1035,8 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 #endif
 			bytes = tcp_read(c, read_flags);
 
+		LM_INFO("read %d bytes\n", bytes);
+
 		if (bytes <= 0)
 			return 0;
 	}
@@ -1168,6 +1170,11 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 		if(unlikely(con->req.flags&F_TCP_REQ_MSRP_FRAME))
 			return msrp_process_msg(tcpbuf, len, rcv_info, con);
 #endif
+#ifdef READ_WS
+		if(unlikely(con->flags & F_CONN_WS))
+			return ws_process_msg(tcpbuf, len, rcv_info, con);
+#endif
+
 		return receive_msg(tcpbuf, len, rcv_info);
 	}
 
@@ -1211,11 +1218,19 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 	if(unlikely(con->req.flags&F_TCP_REQ_MSRP_FRAME))
 		return msrp_process_msg(buf, len, rcv_info, con);
 #endif
+#ifdef READ_WS
+	if(unlikely(con->flags & F_CONN_WS))
+		return ws_process_msg(buf, len, rcv_info, con);
+#endif
 	return receive_msg(buf, len, rcv_info);
 #else /* TCP_CLONE_RCVBUF */
 #ifdef READ_MSRP
 	if(unlikely(con->req.flags&F_TCP_REQ_MSRP_FRAME))
 		return msrp_process_msg(tcpbuf, len, rcv_info, con);
+#endif
+#ifdef READ_WS
+	if(unlikely(con->flags & F_CONN_WS))
+		return ws_process_msg(tcpbuf, len, rcv_info, con);
 #endif
 	return receive_msg(tcpbuf, len, rcv_info);
 #endif /* TCP_CLONE_RCVBUF */
@@ -1361,7 +1376,7 @@ again:
 #endif
 #ifdef READ_WS
 			if (unlikely(con->flags&F_CONN_WS)){
-				ret = ws_process_msg(req->start, req->parsed-req->start,
+				ret = receive_tcp_msg(req->start, req->parsed-req->start,
 									&con->rcv, con);
 			}else
 #endif
