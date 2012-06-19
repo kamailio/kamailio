@@ -23,10 +23,19 @@
 		<surname>Mierla</surname>
 		<email>miconda@gmail.com</email>
 	    </editor>
+	    <author>
+		<firstname>Vicente</firstname>
+		<surname>Hernando</surname>
+		<email>vhernando@systemonenoc.com</email>
+	    </author>
 	</authorgroup>
 	<copyright>
 	    <year>2011</year>
 	    <holder>asipto.com</holder>
+	</copyright>
+	<copyright>
+	    <year>2012</year>
+	    <holder>www.systemonenoc.com</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>

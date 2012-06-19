@@ -364,3 +364,47 @@ redisc_reply_t *redisc_get_reply(str *name)
 	_redisc_rpl_list = rpl;
 	return rpl;
 }
+
+
+/**
+ *
+ */
+int redisc_free_reply(str *name)
+{
+	redisc_reply_t *rpl, *prev_rpl, *next_rpl;
+	unsigned int hid;
+
+	hid = get_hash1_raw(name->s, name->len);
+
+	prev_rpl = NULL;
+	rpl = _redisc_rpl_list;
+	while(rpl) {
+
+		if(rpl->hname==hid && rpl->rname.len==name->len
+		   && strncmp(rpl->rname.s, name->s, name->len)==0) {
+			next_rpl = rpl->next;
+			if(rpl->rplRedis)
+				freeReplyObject(rpl->rplRedis);
+
+			if(rpl->rname.s != NULL)
+				pkg_free(rpl->rname.s);
+
+			pkg_free(rpl);
+
+			if(prev_rpl==NULL) {
+				/* We delete first element in the list. */
+				_redisc_rpl_list = next_rpl;
+			} else {
+				prev_rpl->next = next_rpl;
+			}
+
+			return 0;
+		}
+
+		prev_rpl = rpl;
+		rpl = rpl->next;
+	}
+
+	/* reply entry not found. */
+	return -1;
+}
