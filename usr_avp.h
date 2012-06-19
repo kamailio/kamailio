@@ -115,13 +115,13 @@ typedef struct avp_ident {
 /*
  * AVP search state
  */
-struct search_state {
+typedef struct search_state {
 	avp_flags_t flags;  /* Type of search and additional flags */
 	avp_id_t id;
 	avp_name_t name;
 	avp_t* avp;            /* Current AVP */
 //	regex_t* search_re;    /* Compiled regular expression */
-};
+} avp_search_state_t;
 
 /* avp aliases structs*/
 typedef struct avp_spec {
