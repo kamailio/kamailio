@@ -60,4 +60,5 @@ typedef struct redisc_pv {
 } redisc_pv_t;
 
 redisc_reply_t *redisc_get_reply(str *name);
+int redisc_free_reply(str *name);
 #endif
