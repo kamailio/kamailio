@@ -1587,6 +1587,34 @@ int pv_get_server_id(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_sintval(msg, param, res, server_id);
 }
 
+int pv_get_cnt(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	int_str avp_name;
+	unsigned short avp_type = 0;
+	avp_search_state_t state;
+	pv_spec_t *pv=NULL;
+	unsigned int n = 0;
+	avp_t *avp;
+
+	pv = (pv_spec_t*)param->pvn.u.dname;
+	if(pv==NULL)
+		return pv_get_null(msg, param, res);
+
+	if(pv_get_avp_name(0, &pv->pvp, &avp_name, &avp_type)!=0)
+	{
+		LM_ERR("invalid AVP definition\n");
+		return pv_get_null(msg, param, res);
+	}
+	avp=search_first_avp(avp_type, avp_name, NULL, &state);
+	while(avp) {
+		n++;
+		avp=search_next_avp(&state, NULL); 
+	}
+
+	return pv_get_uintval(msg, param, res, n);
+}
+
 
 /********* end PV get functions *********/
 
@@ -2398,3 +2426,35 @@ error:
 	return -1;
 }
 
+int pv_parse_cnt_name(pv_spec_p sp, str *in)
+{
+	pv_spec_t *pv=NULL;
+
+	if(in->s==NULL || in->len<=0)
+		return -1;
+
+	pv = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
+	if(pv==NULL)
+		return -1;
+
+	memset(pv, 0, sizeof(pv_spec_t));
+
+	if(pv_parse_spec(in, pv)==NULL)
+		goto error;
+
+	if(pv->type!=PVT_AVP)
+	{
+		LM_ERR("expected avp name instead of [%.*s]\n", in->len, in->s);
+		goto error;
+	}
+
+	sp->pvp.pvn.u.dname = (void*)pv;
+	sp->pvp.pvn.type = PV_NAME_PVAR;
+	return 0;
+
+error:
+	LM_ERR("invalid pv name [%.*s]\n", in->len, in->s);
+	if(pv!=NULL)
+		pkg_free(pv);
+	return -1;
+}
