@@ -1741,38 +1741,36 @@ mod_init(void)
 
     // bind to the dialog API
     if (load_dlg_api(&dlg_api)==0) {
-        have_dlg_api = True;
-
         // load dlg_flag and default_timeout parameters from the dialog module
         param = find_param_export(find_module_by_name("dialog"),
 				"dlg_flag", INT_PARAM, &type);
-        if (!param) {
-            LM_ERR("cannot find dlg_flag parameter in the dialog module\n");
-            return -1;
-        }
-        dialog_flag = *param;
+        if (param) {
+		have_dlg_api = True;
 
-        param = find_param_export(find_module_by_name("dialog"),
-				"default_timeout", INT_PARAM, &type);
-        if (!param) {
-            LM_ERR("cannot find default_timeout parameter in the dialog module\n");
-            return -1;
-        }
-        dialog_default_timeout = *param;
+		dialog_flag = *param;
 
-        // register dialog creation callback
-        if (dlg_api.register_dlgcb(NULL, DLGCB_CREATED, __dialog_created, NULL, NULL) != 0) {
-            LM_ERR("cannot register callback for dialog creation\n");
-            return -1;
-        }
+		param = find_param_export(find_module_by_name("dialog"),
+					"default_timeout", INT_PARAM, &type);
+		if (!param) {
+		    LM_ERR("cannot find default_timeout parameter in the dialog module\n");
+		    return -1;
+		}
+		dialog_default_timeout = *param;
 
-        // register a pre-script callback to automatically enable dialog tracing
-        if (register_script_cb(preprocess_request, PRE_SCRIPT_CB|REQUEST_CB, 0)!=0) {
-            LM_ERR("could not register request preprocessing callback\n");
-            return -1;
-        }
+		// register dialog creation callback
+		if (dlg_api.register_dlgcb(NULL, DLGCB_CREATED, __dialog_created, NULL, NULL) != 0) {
+		    LM_ERR("cannot register callback for dialog creation\n");
+		    return -1;
+		}
 
-    } else {
+		// register a pre-script callback to automatically enable dialog tracing
+		if (register_script_cb(preprocess_request, PRE_SCRIPT_CB|REQUEST_CB, 0)!=0) {
+		    LM_ERR("could not register request preprocessing callback\n");
+		    return -1;
+		}
+	}
+    }
+    if (!have_dlg_api) {
         LM_NOTICE("keeping alive dialogs is disabled because the dialog module is not loaded\n");
     }
 
