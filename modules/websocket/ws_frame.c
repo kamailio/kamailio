@@ -202,7 +202,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame)
 	return frame->opcode;
 }
 
-static int encode_and_send_ws_frame(ws_frame_t *frame)
+static int encode_and_send_ws_frame(ws_frame_t *frame, int conn_close)
 {
 	int pos = 0, extended_length;
 	unsigned int frame_length;
@@ -291,6 +291,8 @@ static int encode_and_send_ws_frame(ws_frame_t *frame)
 	memcpy(&send_buf[pos], frame->payload_data, frame->payload_len);
 
 	init_dst_from_rcv(&dst, &frame->tcpinfo->con->rcv);
+	if (conn_close) dst.send_flags.f |= SND_F_CON_CLOSE;
+
 	if (tcp_send(&dst, NULL, send_buf, frame_length) < 0)
 	{
 		LM_ERR("sending WebSocket frame\n");
@@ -335,7 +337,9 @@ static int handle_close(ws_frame_t *frame)
 
 	LM_INFO("Close: %hu %.*s\n", code, reason.len, reason.s); 
 
-	/* TODO: cleanly close TCP/TLS connection */
+	/* Close socket */
+	frame->tcpinfo->con->state = S_CONN_BAD;
+	frame->tcpinfo->con->timeout = get_ticks_raw();
 
 	return 0;
 }
@@ -347,7 +351,7 @@ static int handle_ping(ws_frame_t *frame)
 	frame->opcode = OPCODE_PONG;
 	frame->mask = 0;
 
-	encode_and_send_ws_frame(frame);
+	encode_and_send_ws_frame(frame, 0);
 
 	return 0;
 }
@@ -470,14 +474,12 @@ struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
 	frame.payload_data = data;
 	frame.tcpinfo = &tcpinfo;
 
-	if (encode_and_send_ws_frame(&frame) < 0)
+	if (encode_and_send_ws_frame(&frame, 1) < 0)
 	{
 		LM_ERR("sending WebSocket close\n");
 		pkg_free(data);
 		return init_mi_tree(500,"Sending WebSocket close", 23);
 	}
-
-	/* TODO: cleanly close TCP/TLS connection */
 
 	update_stat(ws_local_closed_connections, 1);
 	update_stat(ws_current_connections, -1);

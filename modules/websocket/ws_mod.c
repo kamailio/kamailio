@@ -91,12 +91,12 @@ static stat_export_t stats[] =
 
 static mi_export_t mi_cmds[] =
 {
-	{ "ws_close",   ws_mi_close,   0, 0, 0 },
-	{ "ws_disable", ws_mi_disable, 0, 0, 0 },
-	{ "ws_dump",	mi_dump,       0, 0, 0 },
-	{ "ws_enable",	ws_mi_enable,  0, 0, 0 },
-	{ "ws_ping",    ws_mi_ping,    0, 0, 0 },
-	{ "ws_pong",	ws_mi_pong,    0, 0, 0 },
+	{ "ws.close",   ws_mi_close,   0, 0, 0 },
+	{ "ws.disable", ws_mi_disable, 0, 0, 0 },
+	{ "ws.dump",	mi_dump,       0, 0, 0 },
+	{ "ws.enable",	ws_mi_enable,  0, 0, 0 },
+	{ "ws.ping",    ws_mi_ping,    0, 0, 0 },
+	{ "ws.pong",	ws_mi_pong,    0, 0, 0 },
 	{ 0, 0, 0, 0, 0 }
 };
 
@@ -181,6 +181,10 @@ static struct mi_root *mi_dump(struct mi_root *cmd, void *param)
 	char *src_proto, *dst_proto;
 	char src_ip[IP6_MAX_STR_SIZE + 1], dst_ip[IP6_MAX_STR_SIZE + 1];
 	struct tcp_connection *c;
+	struct mi_root *rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+
+	if (!rpl_tree)
+		return 0;
 
 	TCPCONN_LOCK;
 	for (h = 0; h < TCP_ID_HASH_SIZE; h++)
@@ -202,12 +206,18 @@ static struct mi_root *mi_dump(struct mi_root *cmd, void *param)
 				ip_addr2sbuf(&c->rcv.dst_ip, src_ip,
 						IP6_MAX_STR_SIZE);
 
-				LM_ERR("id - %d, "
-					"src - %s:%s:%hu, "
-					"dst - %s:%s:%hu\n",
-					c->id,
-					src_proto, src_ip, c->rcv.src_port,
-					dst_proto, dst_ip, c->rcv.dst_port);
+				if (addf_mi_node_child(&rpl_tree->node, 0, 0, 0,
+						"id - %d, "
+						"src - %s:%s:%hu, "
+						"dst - %s:%s:%hu",
+						c->id,
+						src_proto,
+						strlen(src_ip) ? src_ip : "*",
+						c->rcv.src_port,
+						dst_proto,
+						strlen(dst_ip) ? dst_ip : "*",
+						c->rcv.dst_port) == 0)
+					return 0;
 
 				connections++;
 			}
@@ -217,7 +227,10 @@ static struct mi_root *mi_dump(struct mi_root *cmd, void *param)
 	}
 	TCPCONN_UNLOCK;
 
-	LM_ERR("%d WebSocket connections found\n", connections);
+	if (addf_mi_node_child(&rpl_tree->node, 0, 0, 0,
+				"%d WebSocket connection%s found",
+				connections, connections == 1 ? "" : "s") == 0)
+		return 0;
 
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+	return rpl_tree;
 }
