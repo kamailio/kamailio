@@ -27,6 +27,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../dprint.h"
 #include "../../locking.h"
+#include "../../str.h"
 #include "../../tcp_conn.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kcore/cmpapi.h"
@@ -40,6 +41,9 @@
 #include "ws_mod.h"
 
 #define WS_VERSION		(13)
+
+stat_var *ws_failed_handshakes;
+stat_var *ws_successful_handshakes;
 
 static str str_sip = str_init("sip");
 static str str_upgrade = str_init("upgrade");
@@ -79,8 +83,6 @@ static char key_buf[KEY_BUF_LEN];
 
 static int ws_send_reply(sip_msg_t *msg, int code, str *reason, str *hdrs)
 {
-	int cur_cons, max_cons;
-
 	if (hdrs && hdrs->len > 0)
 	{
 		if (add_lump_rpl(msg, hdrs->s, hdrs->len, LUMP_RPL_HDR) == 0)
@@ -98,23 +100,9 @@ static int ws_send_reply(sip_msg_t *msg, int code, str *reason, str *hdrs)
 		return -1;
 	}
 
-	if (code == 101)
-	{
-		update_stat(ws_successful_handshakes, 1);
-
-		lock_get(ws_stats_lock);
-		update_stat(ws_current_connections, 1);
-
-		cur_cons = get_stat_val(ws_current_connections);
-		max_cons = get_stat_val(ws_max_concurrent_connections);
-
-		if (max_cons < cur_cons)
-			update_stat(ws_max_concurrent_connections,
-						cur_cons - max_cons);
-		lock_release(ws_stats_lock);
-	}
-	else
-		update_stat(ws_failed_handshakes, 1);
+	update_stat(
+		code == 101 ? ws_successful_handshakes : ws_failed_handshakes,
+		1);
 
 	return 0;
 }

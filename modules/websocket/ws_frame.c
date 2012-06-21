@@ -22,6 +22,7 @@
  */
 
 #include <limits.h>
+#include "../../str.h"
 #include "../../tcp_conn.h"
 #include "../../tcp_server.h"
 #include "../../lib/kcore/kstats_wrapper.h"
@@ -60,8 +61,14 @@ typedef struct {
 	unsigned int payload_len;
 	unsigned char masking_key[4];
 	char *payload_data;
-	tcp_event_info_t *tcpinfo;
+	ws_connection_t *wsc;
 } ws_frame_t;
+
+typedef enum
+{
+	CONN_CLOSE_DO = 0,
+	CONN_CLOSE_DONT
+} conn_close_t;
 
 #define BYTE0_MASK_FIN		(0x80)
 #define BYTE0_MASK_RSV1		(0x40)
@@ -80,19 +87,52 @@ typedef struct {
 #define OPCODE_PONG		(0xa)
 /* 0xb - 0xf are reserved for further control frames */
 
+static int close_connection(ws_connection_t *wsc, ws_close_type_t type,
+				short int status, str reason);
 
-static int decode_and_validate_ws_frame(ws_frame_t *frame)
+stat_var *ws_failed_connections;
+stat_var *ws_local_closed_connections;
+stat_var *ws_received_frames;
+stat_var *ws_remote_closed_connections;
+stat_var *ws_transmitted_frames;
+
+/* WebSocket status text */
+static str str_status_normal_closure = str_init("Normal closure");
+static str str_status_protocol_error = str_init("Protocol error");
+static str str_status_unsupported_opcode = str_init("Unsupported opcode");
+static str str_status_message_too_big = str_init("Message too big");
+
+/* MI command status text */
+static str str_status_empty_param = str_init("Empty connection ID parameter");
+static str str_status_too_many_params = str_init("Too many parameters");
+static str str_status_bad_param = str_init("Bad connection ID parameter");
+static str str_status_error_closing = str_init("Error closing connection");
+static str str_status_error_sending = str_init("Error sending frame");
+
+static int decode_and_validate_ws_frame(ws_frame_t *frame,
+					tcp_event_info_t *tcpinfo)
 {
-	unsigned int i, len=frame->tcpinfo->len;
+	unsigned int i, len = tcpinfo->len;
 	int mask_start, j;
-	char *buf = frame->tcpinfo->buf;
+	char *buf = tcpinfo->buf;
 
 	LM_INFO("decoding WebSocket frame\n");
+
+	if ((frame->wsc = wsconn_find(tcpinfo->con)) == NULL)
+	{
+		LM_WARN("WebSocket connection not found\n");
+		return -1;
+	}
+
+	wsconn_update(frame->wsc);
 
 	/* Decode and validate first 9 bits */
 	if (len < 2)
 	{
 		LM_WARN("message is too short\n");
+		if (close_connection(frame->wsc, LOCAL_CLOSE, 1002,
+					str_status_protocol_error) < 0)
+			LM_ERR("closing connection\n");
 		return -1;
 	}
 	frame->fin = (buf[0] & 0xff) & BYTE0_MASK_FIN;
@@ -106,12 +146,18 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame)
 	{
 		LM_WARN("WebSocket fragmentation not supported in the sip "
 			"sub-protocol\n");
+		if (close_connection(frame->wsc, LOCAL_CLOSE, 1002,
+					str_status_protocol_error) < 0)
+			LM_ERR("closing connection\n");
 		return -1;
 	}
 
 	if (frame->rsv1 || frame->rsv2 || frame->rsv3)
 	{
 		LM_WARN("WebSocket reserved fields with non-zero values\n");
+		if (close_connection(frame->wsc, LOCAL_CLOSE, 1002,
+					str_status_protocol_error) < 0)
+			LM_ERR("closing connection\n");
 		return -1;
 	}
 
@@ -133,6 +179,9 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame)
 	default:
 		LM_WARN("unsupported opcode: 0x%x\n",
 			(unsigned char) frame->opcode);
+		if (close_connection(frame->wsc, LOCAL_CLOSE, 1008,
+					str_status_unsupported_opcode) < 0)
+			LM_ERR("closing connection\n");
 		return -1;
 	}
 
@@ -140,6 +189,9 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame)
 	{
 		LM_WARN("this is a server - all received messages must be "
 			"masked\n");
+		if (close_connection(frame->wsc, LOCAL_CLOSE, 1002,
+					str_status_protocol_error) < 0)
+			LM_ERR("closing connection\n");
 		return -1;
 	}
 
@@ -150,6 +202,9 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame)
 		if (len < 4)
 		{
 			LM_WARN("message is too short\n");
+			if (close_connection(frame->wsc, LOCAL_CLOSE, 1002,
+						str_status_protocol_error) < 0)
+				LM_ERR("closing connection\n");
 			return -1;
 		}
 		mask_start = 4;
@@ -162,9 +217,22 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame)
 		if (len < 10)
 		{
 			LM_WARN("message is too short\n");
+			if (close_connection(frame->wsc, LOCAL_CLOSE, 1002,
+						str_status_protocol_error) < 0)
+				LM_ERR("closing connection\n");
 			return -1;
 		}
 		mask_start = 10;
+
+		if ((buf[2] & 0xff) != 0 || (buf[3] & 0xff) != 0
+			|| (buf[4] & 0xff) != 0 || (buf[5] & 0xff) != 0)
+		{
+			LM_WARN("message is too long\n");
+			if (close_connection(frame->wsc, LOCAL_CLOSE, 1009,
+						str_status_message_too_big) < 0)
+				LM_ERR("closing connection\n");
+			return -1;
+		}
 
 		/* Only decoding the last four bytes of the length...
 		   This limits the size of WebSocket messages that can be
@@ -188,6 +256,9 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame)
 	{
 		LM_WARN("message not complete frame size %u but received %u\n",
 			frame->payload_len + mask_start + 4, len);
+		if (close_connection(frame->wsc, LOCAL_CLOSE, 1002,
+					str_status_protocol_error) < 0)
+			LM_ERR("closing connection\n");
 		return -1;
 	}
 	frame->payload_data = &buf[mask_start + 4];
@@ -204,7 +275,7 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame)
 	return frame->opcode;
 }
 
-static int encode_and_send_ws_frame(ws_frame_t *frame, int conn_close)
+static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 {
 	int pos = 0, extended_length;
 	unsigned int frame_length;
@@ -212,6 +283,15 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, int conn_close)
 	struct dest_info dst;
 
 	LM_INFO("encoding WebSocket frame\n");
+
+	if (frame->wsc->state != WS_S_OPEN)
+	{
+		LM_ERR("sending on closing connection\n");
+		wsconn_close_now(frame->wsc);
+		return -1;
+	}
+
+	wsconn_update(frame->wsc);
 
 	/* Validate the first byte */
 	if (!frame->fin)
@@ -292,20 +372,81 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, int conn_close)
 	}
 	memcpy(&send_buf[pos], frame->payload_data, frame->payload_len);
 
-	init_dst_from_rcv(&dst, &frame->tcpinfo->con->rcv);
-	if (conn_close) dst.send_flags.f |= SND_F_CON_CLOSE;
+	init_dst_from_rcv(&dst, &frame->wsc->con->rcv);
+	if (conn_close == CONN_CLOSE_DO)
+	{
+		dst.send_flags.f |= SND_F_CON_CLOSE;
+		if (wsconn_rm(frame->wsc) < 0)
+		{
+			LM_ERR("removing WebSocket connection\n");
+			return -1;
+		}
+	}
 
 	if (tcp_send(&dst, NULL, send_buf, frame_length) < 0)
 	{
 		LM_ERR("sending WebSocket frame\n");
 		pkg_free(send_buf);
 		update_stat(ws_failed_connections, 1);
+		if (wsconn_rm(frame->wsc) < 0)
+			LM_ERR("removing WebSocket connection\n");
 		return -1;
 	}
-	
+
 	update_stat(ws_transmitted_frames, 1);
 
 	pkg_free(send_buf);
+	return 0;
+}
+
+static int close_connection(ws_connection_t *wsc, ws_close_type_t type,
+				short int status, str reason)
+{
+	char *data;
+	ws_frame_t frame;
+
+	data = pkg_malloc(sizeof(char) * (reason.len + 2));
+	if (data == NULL)
+	{
+		LM_ERR("allocating pkg memory\n");
+		return -1;
+	}
+
+	if (wsc->state == WS_S_OPEN)
+	{
+		data[0] = (status & 0xff00) >> 8;
+		data[1] = (status & 0x00ff) >> 0;
+		memcpy(&data[2], reason.s, reason.len);
+
+		memset(&frame, 0, sizeof(frame));
+		frame.fin = 1;
+		frame.opcode = OPCODE_CLOSE;
+		frame.payload_len = reason.len + 2;
+		frame.payload_data = data;
+		frame.wsc = wsc;
+
+		if (encode_and_send_ws_frame(&frame,
+			type ==
+			REMOTE_CLOSE ? CONN_CLOSE_DO : CONN_CLOSE_DONT) < 0)
+		{	
+			LM_ERR("sending WebSocket close\n");
+			pkg_free(data);
+			return -1;
+		}
+
+		pkg_free(data);
+
+		if (type == LOCAL_CLOSE)
+		{
+			frame.wsc->state = WS_S_CLOSING;
+			update_stat(ws_local_closed_connections, 1);
+		}
+		else
+			update_stat(ws_remote_closed_connections, 1);
+	}
+	else /* if (frame->wsc->state == WS_S_CLOSING) */
+		wsconn_close_now(wsc);
+
 	return 0;
 }
 
@@ -323,10 +464,6 @@ static int handle_close(ws_frame_t *frame)
 	unsigned short code = 0;
 	str reason = {0, 0};
 
-	update_stat(ws_remote_closed_connections, 1);
-	update_stat(ws_current_connections, -1);
-	LM_INFO("Received Close\n");
-
 	if (frame->payload_len >= 2)
 		code =    ((frame->payload_data[0] & 0xff) << 8)
 			| ((frame->payload_data[1] & 0xff) << 0);
@@ -337,31 +474,33 @@ static int handle_close(ws_frame_t *frame)
 		reason.len = frame->payload_len - 2;
 	}
 
-	LM_INFO("Close: %hu %.*s\n", code, reason.len, reason.s); 
+	LM_INFO("Received Close: %hu %.*s\n", code, reason.len, reason.s);
 
-	/* Close socket */
-	frame->tcpinfo->con->state = S_CONN_BAD;
-	frame->tcpinfo->con->timeout = get_ticks_raw();
-
+	if (close_connection(frame->wsc,
+		frame->wsc->state == WS_S_OPEN ? REMOTE_CLOSE : LOCAL_CLOSE,
+		1000, str_status_normal_closure) < 0)
+	{
+		LM_ERR("closing connection\n");
+		return -1;
+	}
+	
 	return 0;
 }
 
 static int handle_ping(ws_frame_t *frame)
 {
-	LM_INFO("Received Ping\n");
+	LM_INFO("Received Ping: %.*s\n",
+		frame->payload_len, frame->payload_data);
 
 	frame->opcode = OPCODE_PONG;
 	frame->mask = 0;
-
-	encode_and_send_ws_frame(frame, 0);
+	encode_and_send_ws_frame(frame, CONN_CLOSE_DONT);
 
 	return 0;
 }
 
 static int handle_pong(ws_frame_t *frame)
 {
-	LM_INFO("Received Pong\n");
-
 	LM_INFO("Pong: %.*s\n", frame->payload_len, frame->payload_data);
 
 	return 0;
@@ -370,18 +509,17 @@ static int handle_pong(ws_frame_t *frame)
 int ws_frame_received(void *data)
 {
 	ws_frame_t ws_frame;
-	tcp_event_info_t *tev = (tcp_event_info_t *) data;
+	tcp_event_info_t *tcpinfo = (tcp_event_info_t *) data;
 
 	update_stat(ws_received_frames, 1);
 
-	if (tev == NULL || tev->buf == NULL || tev->len <= 0)
+	if (tcpinfo == NULL || tcpinfo->buf == NULL || tcpinfo->len <= 0)
 	{
 		LM_WARN("received bad frame\n");
 		return -1;
 	}
 
-	ws_frame.tcpinfo = tev;
-	switch(decode_and_validate_ws_frame(&ws_frame))
+	switch(decode_and_validate_ws_frame(&ws_frame, tcpinfo))
 	{
 	case OPCODE_TEXT_FRAME:
 	case OPCODE_BINARY_FRAME:
@@ -428,11 +566,7 @@ struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
 {
 	unsigned int id;
 	struct mi_node *node = NULL;
-	ws_frame_t frame;
-	tcp_event_info_t tcpinfo;
-	short int code = 1000;
-	str reason = str_init("Normal Closure");
-	char *data;
+	ws_connection_t *wsc;
 
 	node = cmd->node.kids;
 	if (node == NULL)
@@ -440,7 +574,8 @@ struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
 	if (node->value.s == NULL || node->value.len == 0)
 	{
 		LM_ERR("empty connection ID parameter\n");
-		return init_mi_tree(400, "Empty connection ID parameter", 29);
+		return init_mi_tree(400, str_status_empty_param.s,
+					str_status_empty_param.len);
 	}
 	if (str2int(&node->value, &id) < 0)
 	{
@@ -450,54 +585,98 @@ struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
 	if (node->next != NULL)
 	{
 		LM_ERR("too many parameters\n");
-		return init_mi_tree(400, "Too many parameters", 19);
+		return init_mi_tree(400, str_status_too_many_params.s,
+					str_status_too_many_params.len);
 	}
 
-	if ((tcpinfo.con = tcpconn_get(id, 0, 0, 0, 0)) == NULL)
+	if ((wsc = wsconn_find(tcpconn_get(id, 0, 0, 0, 0))) == NULL)
 	{
 		LM_ERR("bad connection ID parameter\n");
-		return init_mi_tree(400, "Bad connection ID parameter", 27);
+		return init_mi_tree(400, str_status_bad_param.s,
+					str_status_bad_param.len);
 	}
 
-	if ((data = pkg_malloc(sizeof(char) * (reason.len + 2))) == NULL)
+	if (close_connection(wsc, LOCAL_CLOSE, 1000,
+				str_status_normal_closure) < 0)
 	{
-		LM_ERR("allocating pkg memory\n");
-		return 0;
+		LM_ERR("closing connection\n");
+		return init_mi_tree(500, str_status_error_closing.s,
+					str_status_error_closing.len);
 	}
 
-	data[0] = (code & 0xff00) >> 8;
-	data[1] = (code & 0x00ff) >> 0;
-	memcpy(&data[2], reason.s, reason.len);
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+}
+
+static int ping_pong(ws_connection_t *wsc, int opcode)
+{
+	ws_frame_t frame;
 
 	memset(&frame, 0, sizeof(frame));
 	frame.fin = 1;
-	frame.opcode = OPCODE_CLOSE;
-	frame.payload_len = reason.len + 2;
-	frame.payload_data = data;
-	frame.tcpinfo = &tcpinfo;
+	frame.opcode = opcode;
+	frame.payload_len = server_hdr.len;
+	frame.payload_data = server_hdr.s;
+	frame.wsc = wsc;
 
-	if (encode_and_send_ws_frame(&frame, 1) < 0)
-	{
-		LM_ERR("sending WebSocket close\n");
-		pkg_free(data);
-		return init_mi_tree(500,"Sending WebSocket close", 23);
+	if (encode_and_send_ws_frame(&frame, CONN_CLOSE_DONT) < 0)
+	{	
+		LM_ERR("closing connection\n");
+		return -1;
 	}
 
-	update_stat(ws_local_closed_connections, 1);
-	update_stat(ws_current_connections, -1);
+	return 0;
+}
 
-	pkg_free(data);
+static struct mi_root *mi_ping_pong(struct mi_root *cmd, void *param,
+					int opcode)
+{
+	unsigned int id;
+	struct mi_node *node = NULL;
+	ws_connection_t *wsc;
+
+	node = cmd->node.kids;
+	if (node == NULL)
+		return 0;
+	if (node->value.s == NULL || node->value.len == 0)
+	{
+		LM_ERR("empty connection ID parameter\n");
+		return init_mi_tree(400, str_status_empty_param.s,
+					str_status_empty_param.len);
+	}
+	if (str2int(&node->value, &id) < 0)
+	{
+		LM_ERR("converting string to int\n");
+		return 0;
+	}
+	if (node->next != NULL)
+	{
+		LM_ERR("too many parameters\n");
+		return init_mi_tree(400, str_status_too_many_params.s,
+					str_status_too_many_params.len);
+	}
+
+	if ((wsc = wsconn_find(tcpconn_get(id, 0, 0, 0, 0))) == NULL)
+	{
+		LM_ERR("bad connection ID parameter\n");
+		return init_mi_tree(400, str_status_bad_param.s,
+					str_status_bad_param.len);
+	}
+
+	if (ping_pong(wsc, opcode) < 0)
+	{
+		return init_mi_tree(500, str_status_error_sending.s,
+					str_status_error_sending.len);
+	}
+
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
 struct mi_root *ws_mi_ping(struct mi_root *cmd, void *param)
 {
-	/* TODO Ping specified connection */
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+	return mi_ping_pong(cmd, param, OPCODE_PING);
 }
 
 struct mi_root *ws_mi_pong(struct mi_root *cmd, void *param)
 {
-	/* TODO Pong specified connection */
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+	return mi_ping_pong(cmd, param, OPCODE_PONG);
 }

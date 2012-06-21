@@ -34,14 +34,4 @@ extern gen_lock_t *ws_stats_lock;
 
 extern int ws_ping_interval;	/* time (in seconds) between sending Pings */
 
-extern stat_var *ws_current_connections;
-extern stat_var *ws_failed_connections;
-extern stat_var *ws_failed_handshakes;
-extern stat_var *ws_local_closed_connections;
-extern stat_var *ws_max_concurrent_connections;
-extern stat_var *ws_received_frames;
-extern stat_var *ws_remote_closed_connections;
-extern stat_var *ws_successful_handshakes;
-extern stat_var *ws_transmitted_frames;
-
 #endif /* _WS_MOD_H */

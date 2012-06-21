@@ -25,7 +25,21 @@
 #define _WS_FRAME_H
 
 #include "../../sr_module.h"
+#include "../../str.h"
 #include "../../lib/kmi/tree.h"
+#include "ws_conn.h"
+
+typedef enum
+{
+	LOCAL_CLOSE = 0,
+	REMOTE_CLOSE
+} ws_close_type_t;
+
+extern stat_var *ws_failed_connections;
+extern stat_var *ws_local_closed_connections;
+extern stat_var *ws_received_frames;
+extern stat_var *ws_remote_closed_connections;
+extern stat_var *ws_transmitted_frames;
 
 int ws_frame_received(void *data);
 struct mi_root *ws_mi_close(struct mi_root *cmd, void *param);

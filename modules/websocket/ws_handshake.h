@@ -27,6 +27,9 @@
 #include "../../sr_module.h"
 #include "../../parser/msg_parser.h"
 
+stat_var *ws_failed_handshakes;
+stat_var *ws_successful_handshakes;
+
 int ws_handle_handshake(struct sip_msg *msg);
 struct mi_root *ws_mi_disable(struct mi_root *cmd, void *param);
 struct mi_root *ws_mi_enable(struct mi_root *cmd, void *param);
