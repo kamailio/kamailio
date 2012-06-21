@@ -26,6 +26,8 @@
 #include "../../tcp_server.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/tree.h"
+#include "../../mem/mem.h"
+#include "ws_conn.h"
 #include "ws_frame.h"
 #include "ws_mod.h"
 

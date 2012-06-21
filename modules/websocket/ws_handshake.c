@@ -31,9 +31,11 @@
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kcore/cmpapi.h"
 #include "../../lib/kmi/tree.h"
+#include "../../mem/mem.h"
 #include "../../parser/msg_parser.h"
 #include "../sl/sl.h"
 #include "../tls/tls_cfg.h"
+#include "ws_conn.h"
 #include "ws_handshake.h"
 #include "ws_mod.h"
 
@@ -308,9 +310,8 @@ int ws_handle_handshake(struct sip_msg *msg)
 				&str_status_switching_protocols, &headers) < 0)
 		return 0;
 
-	/* Make sure Kamailio core sends future requests on this connection
-	   directly to this module */
-	con->flags |= F_CONN_WS;
+	/* Add the connection to the WebSocket connection table */
+	wsconn_add(con);
 
 	return 0;
 }

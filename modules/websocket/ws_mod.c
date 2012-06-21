@@ -30,7 +30,9 @@
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/mi.h"
 #include "../../lib/kmi/tree.h"
+#include "../../mem/mem.h"
 #include "../../parser/msg_parser.h"
+#include "ws_conn.h"
 #include "ws_handshake.h"
 #include "ws_frame.h"
 #include "ws_mod.h"
@@ -121,111 +123,133 @@ static int mod_init(void)
 	if (sl_load_api(&ws_slb) != 0)
 	{
 		LM_ERR("binding to SL\n");
-		return -1;
+		goto error;
 	}
 
 	if (sr_event_register_cb(SREV_TCP_WS_FRAME, ws_frame_received) != 0)
 	{
 		LM_ERR("registering WebSocket call-back\n");
-		return -1;
+		goto error;
 	}
 
 	if (register_module_stats(exports.name, stats) != 0)
 	{
 		LM_ERR("registering core statistics\n");
-		return -1;
+		goto error;
 	}
 
 	if (register_mi_mod(exports.name, mi_cmds) != 0)
 	{
 		LM_ERR("registering MI commands\n");
-		return -1;
+		goto error;
+	}
+
+	if (wsconn_init() < 0)
+	{
+		LM_ERR("initialising WebSocket connections table\n");
+		goto error;
 	}
 
 	if ((ws_enabled = (int *) shm_malloc(sizeof(int))) == NULL)
 	{
 		LM_ERR("allocating shared memory\n");
-		return -1;
+		goto error;
 	}
 	*ws_enabled = 1;
+
+	if (wsconn_init() < 0)
+	{
+		LM_ERR("initialising WebSocket connections table\n");
+		goto error;
+	}
 
 	if ((ws_stats_lock = lock_alloc()) == NULL)
 	{
 		LM_ERR("allocating lock\n");
-		return -1;
+		goto error;
 	}
 	if (lock_init(ws_stats_lock) == NULL)
 	{
 		LM_ERR("initialising lock\n");
-		lock_dealloc(ws_stats_lock);
-		return -1;
+		goto error;
 	}
 
-	/* TODO: register module with core to receive WS/WSS messages */
-
 	return 0;
+
+error:
+	wsconn_destroy();
+
+	if (ws_stats_lock)
+		lock_dealloc(ws_stats_lock);
+
+	shm_free(ws_enabled);
+
+	return -1;
 }
 
 static void destroy(void)
 {
+	wsconn_destroy();
 	shm_free(ws_enabled);
 	lock_destroy(ws_stats_lock);
 	lock_dealloc(ws_stats_lock);
-
-	/* TODO: close all connections */
 }
 
 static struct mi_root *mi_dump(struct mi_root *cmd, void *param)
 {
-	int h, connections = 0;
+	int h, connections = 0, interval;
 	char *src_proto, *dst_proto;
 	char src_ip[IP6_MAX_STR_SIZE + 1], dst_ip[IP6_MAX_STR_SIZE + 1];
-	struct tcp_connection *c;
+	ws_connection_t *wsc;
 	struct mi_root *rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 
 	if (!rpl_tree)
 		return 0;
 
-	TCPCONN_LOCK;
+	WSCONN_LOCK;
 	for (h = 0; h < TCP_ID_HASH_SIZE; h++)
 	{
-		c = tcpconn_id_hash[h];
-		while(c)
+		wsc = wsconn_hash[h];
+		while(wsc)
 		{
-			if (c->flags & F_CONN_WS)
+			if (wsc->con)
 			{
-				src_proto = (c->rcv.proto== PROTO_TCP)
+				src_proto = (wsc->con->rcv.proto== PROTO_TCP)
 						? "tcp" : "tls";
 				memset(src_ip, 0, IP6_MAX_STR_SIZE + 1);
-				ip_addr2sbuf(&c->rcv.src_ip, src_ip,
+				ip_addr2sbuf(&wsc->con->rcv.src_ip, src_ip,
 						IP6_MAX_STR_SIZE);
 
-				dst_proto = (c->rcv.proto == PROTO_TCP)
+				dst_proto = (wsc->con->rcv.proto == PROTO_TCP)
 						? "tcp" : "tls";
 				memset(dst_ip, 0, IP6_MAX_STR_SIZE + 1);
-				ip_addr2sbuf(&c->rcv.dst_ip, src_ip,
+				ip_addr2sbuf(&wsc->con->rcv.dst_ip, src_ip,
 						IP6_MAX_STR_SIZE);
 
+				interval = (int)time(NULL) - wsc->last_used;
+
 				if (addf_mi_node_child(&rpl_tree->node, 0, 0, 0,
-						"id - %d, "
-						"src - %s:%s:%hu, "
-						"dst - %s:%s:%hu",
-						c->id,
+						"%d: %s:%s:%hu -> %s:%s:%hu "
+						"(state: %s, "
+						"last used %ds ago)",
+						wsc->con->id,
 						src_proto,
 						strlen(src_ip) ? src_ip : "*",
-						c->rcv.src_port,
+						wsc->con->rcv.src_port,
 						dst_proto,
 						strlen(dst_ip) ? dst_ip : "*",
-						c->rcv.dst_port) == 0)
+						wsc->con->rcv.dst_port,
+						wsconn_state_str[wsc->state],
+						interval) == 0)
 					return 0;
 
 				connections++;
 			}
 
-			c = c->id_next;
+			wsc = wsc->next;
 		}
 	}
-	TCPCONN_UNLOCK;
+	WSCONN_UNLOCK;
 
 	if (addf_mi_node_child(&rpl_tree->node, 0, 0, 0,
 				"%d WebSocket connection%s found",
