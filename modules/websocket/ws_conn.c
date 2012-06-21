@@ -31,10 +31,10 @@ gen_lock_t *wsconn_lock = NULL;
 
 char *wsconn_state_str[] =
 {
-	"CONNECTING",
-	"OPEN",
-	"CLOSING",
-	"CLOSED"
+	"CONNECTING",	/* WS_S_CONNECTING */
+	"OPEN",		/* WS_S_OPEN */
+	"CLOSING",	/* WS_S_CLOSING */
+	"CLOSED"	/* WS_S_CLOSED */
 };
 
 static inline void _wsconn_rm(ws_connection_t *wsc);

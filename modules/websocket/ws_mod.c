@@ -39,6 +39,9 @@
 
 MODULE_VERSION
 
+/* Maximum number of connections to display when using the ws.dump MI command */
+#define MAX_WS_CONNS_DUMP	50
+
 extern gen_lock_t *tcpconn_lock;
 extern struct tcp_connection **tcpconn_id_hash;
 
@@ -197,7 +200,7 @@ static void destroy(void)
 
 static struct mi_root *mi_dump(struct mi_root *cmd, void *param)
 {
-	int h, connections = 0, interval;
+	int h, connections = 0, truncated = 0, interval;
 	char *src_proto, *dst_proto;
 	char src_ip[IP6_MAX_STR_SIZE + 1], dst_ip[IP6_MAX_STR_SIZE + 1];
 	ws_connection_t *wsc;
@@ -243,7 +246,11 @@ static struct mi_root *mi_dump(struct mi_root *cmd, void *param)
 						interval) == 0)
 					return 0;
 
-				connections++;
+				if (++connections == MAX_WS_CONNS_DUMP)
+				{
+					truncated = 1;
+					break;
+				}
 			}
 
 			wsc = wsc->next;
@@ -252,8 +259,9 @@ static struct mi_root *mi_dump(struct mi_root *cmd, void *param)
 	WSCONN_UNLOCK;
 
 	if (addf_mi_node_child(&rpl_tree->node, 0, 0, 0,
-				"%d WebSocket connection%s found",
-				connections, connections == 1 ? "" : "s") == 0)
+				"%d WebSocket connection%s found%s",
+				connections, connections == 1 ? "" : "s",
+				truncated == 1 ? "(truncated)" : "") == 0)
 		return 0;
 
 	return rpl_tree;
