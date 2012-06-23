@@ -24,7 +24,7 @@
 #ifndef _WS_CONN_H
 #define _WS_CONN_H
 
-#include "../../locking.h"
+#include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/tree.h"
 
 typedef enum
@@ -38,7 +38,11 @@ typedef enum
 typedef struct ws_connection
 {
 	ws_conn_state_t state;
+	int awaiting_pong;
+
 	int last_used;
+	struct ws_connection *used_prev;
+	struct ws_connection *used_next;
 
 	int id;			/* id and id_hash are identical to the values */
 	unsigned id_hash;	/* for the corresponding TCP/TLS connection */
@@ -46,8 +50,13 @@ typedef struct ws_connection
 	struct ws_connection *id_next;
 } ws_connection_t;
 
-#define wsconn_listadd	tcpconn_listadd
-#define wsconn_listrm	tcpconn_listrm
+typedef struct
+{
+	ws_connection_t *head;
+	ws_connection_t *tail;
+} ws_connection_used_list_t;
+
+extern ws_connection_used_list_t *wsconn_used_list;
 
 extern char *wsconn_state_str[];
 

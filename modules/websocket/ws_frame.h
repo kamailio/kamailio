@@ -24,6 +24,7 @@
 #ifndef _WS_FRAME_H
 #define _WS_FRAME_H
 
+#include "../../config.h"
 #include "../../sr_module.h"
 #include "../../str.h"
 #include "../../lib/kmi/tree.h"
@@ -35,6 +36,22 @@ typedef enum
 	REMOTE_CLOSE
 } ws_close_type_t;
 
+#define DEFAULT_KEEPALIVE_TIMEOUT		180 /* seconds */
+extern int ws_keepalive_timeout;
+
+enum
+{
+	KEEPALIVE_MECHANISM_NONE = 0,
+	KEEPALIVE_MECHANISM_PING = 1,
+	KEEPALIVE_MECHANISM_PONG = 2
+};
+#define DEFAULT_KEEPALIVE_MECHANISM		KEEPALIVE_MECHANISM_PING
+extern int ws_keepalive_mechanism;
+
+extern str ws_ping_application_data;
+#define DEFAULT_PING_APPLICATION_DATA		SERVER_HDR
+#define DEFAULT_PING_APPLICATION_DATA_LEN	SERVER_HDR_LEN
+
 extern stat_var *ws_failed_connections;
 extern stat_var *ws_local_closed_connections;
 extern stat_var *ws_received_frames;
@@ -45,5 +62,6 @@ int ws_frame_received(void *data);
 struct mi_root *ws_mi_close(struct mi_root *cmd, void *param);
 struct mi_root *ws_mi_ping(struct mi_root *cmd, void *param);
 struct mi_root *ws_mi_pong(struct mi_root *cmd, void *param);
+void ws_keepalive(unsigned int ticks, void *param);
 
 #endif /* _WS_FRAME_H */

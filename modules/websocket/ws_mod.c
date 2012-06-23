@@ -27,6 +27,7 @@
 #include "../../locking.h"
 #include "../../sr_module.h"
 #include "../../tcp_conn.h"
+#include "../../timer_proc.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/mi.h"
 #include "../../mem/mem.h"
@@ -39,27 +40,42 @@
 MODULE_VERSION
 
 /* Maximum number of connections to display when using the ws.dump MI command */
-#define MAX_WS_CONNS_DUMP	50
+#define MAX_WS_CONNS_DUMP		50
 
 static int mod_init(void);
+static int child_init(int rank);
 static void destroy(void);
 
 sl_api_t ws_slb;
 int *ws_enabled;
 
-int ws_ping_interval = 180;	/* time (in seconds) between sending Pings */
+#define DEFAULT_KEEPALIVE_INTERVAL	1
+static int ws_keepalive_interval = DEFAULT_KEEPALIVE_INTERVAL;
+
+#define DEFAULT_KEEPALIVE_PROCESSES	1
+static int ws_keepalive_processes = DEFAULT_KEEPALIVE_PROCESSES;
 
 static cmd_export_t cmds[]= 
 {
-    { "ws_handle_handshake", (cmd_function)ws_handle_handshake,
-	0, 0, 0,
-	ANY_ROUTE },
-    { 0, 0, 0, 0, 0, 0 }
+	/* ws_handshake.c */
+	{ "ws_handle_handshake", (cmd_function) ws_handle_handshake,
+	  0, 0, 0,
+	  ANY_ROUTE },
+
+	{ 0, 0, 0, 0, 0, 0 }
 };
 
 static param_export_t params[]=
 {
-	{ "ping_interval",	INT_PARAM, &ws_ping_interval },
+	/* ws_frame.c */
+	{ "keepalive_mechanism",	INT_PARAM, &ws_keepalive_mechanism },
+	{ "keepalive_timeout",		INT_PARAM, &ws_keepalive_timeout },
+	{ "ping_application_data",	STR_PARAM, &ws_ping_application_data.s},
+
+	/* ws_mod.c */
+	{ "keepalive_interval",		INT_PARAM, &ws_keepalive_interval },
+	{ "keepalive_processes",	INT_PARAM, &ws_keepalive_processes },
+
 	{ 0, 0, 0 }
 };
 
@@ -69,27 +85,34 @@ static stat_export_t stats[] =
 	{ "ws_current_connections",       0, &ws_current_connections },
 	{ "ws_max_concurrent_connections",0, &ws_max_concurrent_connections },
 
-	/* ws_handshake.c */
-	{ "ws_failed_handshakes",         0, &ws_failed_handshakes },
-	{ "ws_successful_handshakes",     0, &ws_successful_handshakes },
-
 	/* ws_frame.c */
 	{ "ws_failed_connections",        0, &ws_failed_connections },
 	{ "ws_local_closed_connections",  0, &ws_local_closed_connections },
 	{ "ws_received_frames",           0, &ws_received_frames },
 	{ "ws_remote_closed_connections", 0, &ws_remote_closed_connections },
 	{ "ws_transmitted_frames",        0, &ws_transmitted_frames },
+
+	/* ws_handshake.c */
+	{ "ws_failed_handshakes",         0, &ws_failed_handshakes },
+	{ "ws_successful_handshakes",     0, &ws_successful_handshakes },
+
 	{ 0, 0, 0 }
 };
 
 static mi_export_t mi_cmds[] =
 {
-	{ "ws.close",   ws_mi_close,   0, 0, 0 },
-	{ "ws.disable", ws_mi_disable, 0, 0, 0 },
+	/* ws_conn.c */
 	{ "ws.dump",	ws_mi_dump,    0, 0, 0 },
-	{ "ws.enable",	ws_mi_enable,  0, 0, 0 },
+
+	/* ws_frame.c */
+	{ "ws.close",   ws_mi_close,   0, 0, 0 },
 	{ "ws.ping",    ws_mi_ping,    0, 0, 0 },
 	{ "ws.pong",	ws_mi_pong,    0, 0, 0 },
+
+	/* ws_handshake.c */
+	{ "ws.disable", ws_mi_disable, 0, 0, 0 },
+	{ "ws.enable",	ws_mi_enable,  0, 0, 0 },
+
 	{ 0, 0, 0, 0, 0 }
 };
 
@@ -106,7 +129,7 @@ struct module_exports exports=
 	mod_init,		/* module initialization function */
 	0,			/* response function */
 	destroy,		/* destroy function */
-	0			/* per-child initialization function */
+	child_init		/* per-child initialization function */
 };
 
 static int mod_init(void)
@@ -148,6 +171,43 @@ static int mod_init(void)
 	}
 	*ws_enabled = 1;
 
+	
+	if (ws_ping_application_data.s != 0)
+		ws_ping_application_data.len =
+					strlen(ws_ping_application_data.s);
+	if (ws_ping_application_data.len < 1
+		|| ws_ping_application_data.len > 125)
+	{
+		ws_ping_application_data.s = DEFAULT_PING_APPLICATION_DATA + 8;
+		ws_ping_application_data.len =
+					DEFAULT_PING_APPLICATION_DATA_LEN - 8;
+	}
+
+	if (ws_keepalive_mechanism != KEEPALIVE_MECHANISM_NONE)
+	{
+		if (ws_keepalive_timeout < 1 || ws_keepalive_timeout > 3600)
+			ws_keepalive_timeout = DEFAULT_KEEPALIVE_TIMEOUT;
+
+		switch(ws_keepalive_mechanism)
+		{
+		case KEEPALIVE_MECHANISM_PING:
+		case KEEPALIVE_MECHANISM_PONG:
+			break;
+		default:
+			ws_keepalive_mechanism = DEFAULT_KEEPALIVE_MECHANISM;
+			break;
+		}
+
+		if (ws_keepalive_interval < 1 || ws_keepalive_interval > 60)
+			ws_keepalive_interval = DEFAULT_KEEPALIVE_INTERVAL;
+
+		if (ws_keepalive_processes < 1 || ws_keepalive_processes > 16)
+			ws_keepalive_processes = DEFAULT_KEEPALIVE_PROCESSES;
+
+		/* Add extra process/timer for the keepalive process */
+		register_sync_timers(ws_keepalive_processes);
+	}
+
 	return 0;
 
 error:
@@ -155,6 +215,32 @@ error:
 	shm_free(ws_enabled);
 
 	return -1;
+}
+
+static int child_init(int rank)
+{
+	int i;
+
+	if (rank == PROC_INIT || rank == PROC_TCP_MAIN)
+		return 0;
+
+	if (rank == PROC_MAIN
+		&& ws_keepalive_mechanism != KEEPALIVE_MECHANISM_NONE)
+	{
+		for (i = 0; i < ws_keepalive_processes; i++)
+		{
+			if (fork_sync_timer(PROC_TIMER, "WEBSOCKET KEEPALIVE",
+						1, ws_keepalive, NULL,
+						ws_keepalive_interval) < 0)
+			{
+				LM_ERR("starting keepalive process\n");
+				return -1;
+			}
+		}
+
+	}
+
+	return 0;
 }
 
 static void destroy(void)

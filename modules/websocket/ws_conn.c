@@ -33,9 +33,17 @@
 /* Maximum number of connections to display when using the ws.dump MI command */
 #define MAX_WS_CONNS_DUMP	50
 
-struct ws_connection **wsconn_hash = NULL;
+ws_connection_t **wsconn_id_hash = NULL;
+#define wsconn_listadd	tcpconn_listadd
+#define wsconn_listrm	tcpconn_listrm
+
 gen_lock_t *wsconn_lock = NULL;
+#define WSCONN_LOCK	lock_get(wsconn_lock)
+#define WSCONN_UNLOCK	lock_release(wsconn_lock)
+
 gen_lock_t *wsstat_lock = NULL;
+
+ws_connection_used_list_t *wsconn_used_list = NULL;
 
 stat_var *ws_current_connections;
 stat_var *ws_max_concurrent_connections;
@@ -48,7 +56,10 @@ char *wsconn_state_str[] =
 	"CLOSED"	/* WS_S_CLOSED */
 };
 
-static inline void _wsconn_rm(ws_connection_t *wsc);
+/* MI command status text */
+static str str_status_empty_param = str_init("Empty display order parameter");
+static str str_status_bad_param = str_init("Bad display order parameter");
+static str str_status_too_many_params = str_init("Too many parameters");
 
 int wsconn_init(void)
 {
@@ -76,16 +87,25 @@ int wsconn_init(void)
 		goto error;
 	}
 
-	wsconn_hash =
+	wsconn_id_hash =
 		(ws_connection_t **) shm_malloc(TCP_ID_HASH_SIZE *
 						sizeof(ws_connection_t));
-	if (wsconn_hash == NULL)
+	if (wsconn_id_hash == NULL)
 	{
 		LM_ERR("allocating WebSocket hash-table\n");
 		goto error;
 	}
-	memset((void *) wsconn_hash, 0,
+	memset((void *) wsconn_id_hash, 0,
 		TCP_ID_HASH_SIZE * sizeof(ws_connection_t *));
+
+	wsconn_used_list = (ws_connection_used_list_t *) shm_malloc(
+					sizeof(ws_connection_used_list_t));
+	if (wsconn_used_list == NULL)
+	{
+		LM_ERR("allocating WebSocket used list\n");
+		goto error;
+	}
+	memset((void *) wsconn_used_list, 0, sizeof(ws_connection_used_list_t));
 
 	return 0;
 
@@ -94,20 +114,39 @@ error:
 	if (wsstat_lock) lock_dealloc((void *) wsstat_lock);
 	wsconn_lock = wsstat_lock = NULL;
 
+	if (wsconn_id_hash) shm_free(wsconn_id_hash);
+	if (wsconn_used_list) shm_free(wsconn_used_list);
+	wsconn_id_hash = NULL;
+	wsconn_used_list = NULL;
+
 	return -1;
+}
+
+static inline void _wsconn_rm(ws_connection_t *wsc)
+{
+	wsconn_listrm(wsconn_id_hash[wsc->id_hash], wsc, id_next, id_prev);
+	shm_free(wsc);
+	wsc = NULL;
+	update_stat(ws_current_connections, -1);
 }
 
 void wsconn_destroy(void)
 {
 	int h;
 
-	if (wsconn_hash)
+	if (wsconn_used_list)
 	{
-		lock_release(wsconn_lock);
-		lock_get(wsconn_lock);
+		shm_free(wsconn_used_list);
+		wsconn_used_list = NULL;
+	}
+
+	if (wsconn_id_hash)
+	{
+		WSCONN_UNLOCK;
+		WSCONN_LOCK;
 		for (h = 0; h < TCP_ID_HASH_SIZE; h++)
 		{
-			ws_connection_t *wsc = wsconn_hash[h];
+			ws_connection_t *wsc = wsconn_id_hash[h];
 			while (wsc)
 			{
 				ws_connection_t *next = wsc->id_next;
@@ -115,10 +154,10 @@ void wsconn_destroy(void)
 				wsc = next;
 			}
 		}
-		lock_release(wsconn_lock);
+		WSCONN_UNLOCK;
 
-		shm_free(wsconn_hash);
-		wsconn_hash = NULL;
+		shm_free(wsconn_id_hash);
+		wsconn_id_hash = NULL;
 	}
 
 	if (wsconn_lock)
@@ -150,16 +189,25 @@ int wsconn_add(int id)
 		return -1;
 	}
 	memset(wsc, 0, sizeof(ws_connection_t));
-
 	wsc->id = id;
 	wsc->id_hash = id_hash;
-	wsc->last_used = (int)time(NULL);
 	wsc->state = WS_S_OPEN;
 
+	WSCONN_LOCK;
 	/* Add to WebSocket connection table */
-	lock_get(wsconn_lock);
-	wsconn_listadd(wsconn_hash[wsc->id_hash], wsc, id_next, id_prev);
-	lock_release(wsconn_lock);
+	wsconn_listadd(wsconn_id_hash[wsc->id_hash], wsc, id_next, id_prev);
+
+	/* Add to the end of the WebSocket used list */
+	wsc->last_used = (int)time(NULL);
+	if (wsconn_used_list->head == NULL)
+		wsconn_used_list->head = wsconn_used_list->tail = wsc;
+	else
+	{
+		wsc->used_prev = wsconn_used_list->tail;
+		wsconn_used_list->tail->used_next = wsc;
+		wsconn_used_list->tail = wsc;
+	}
+	WSCONN_UNLOCK;
 
 	/* Update connection statistics */
 	lock_get(wsstat_lock);
@@ -173,14 +221,6 @@ int wsconn_add(int id)
 	return 0;
 }
 
-static inline void _wsconn_rm(ws_connection_t *wsc)
-{
-	wsconn_listrm(wsconn_hash[wsc->id_hash], wsc, id_next, id_prev);
-	shm_free(wsc);
-	wsc = NULL;
-	update_stat(ws_current_connections, -1);
-}
-
 int wsconn_rm(ws_connection_t *wsc)
 {
 	if (!wsc)
@@ -189,9 +229,19 @@ int wsconn_rm(ws_connection_t *wsc)
 		return -1;
 	}
 
-	lock_get(wsconn_lock);
+	WSCONN_LOCK;
 	_wsconn_rm(wsc);
-	lock_release(wsconn_lock);
+
+	/* Remove from the WebSocket used list */
+	if (wsconn_used_list->head == wsc)
+		wsconn_used_list->head = wsc->used_next;
+	if (wsconn_used_list->tail == wsc)
+		wsconn_used_list->tail = wsc->used_prev;
+	if (wsc->used_prev)
+		wsc->used_prev->used_next = wsc->used_next;
+	if (wsc->used_next)
+		wsc->used_next->used_prev = wsc->used_prev;
+	WSCONN_UNLOCK;
 
 	return 0;
 }
@@ -200,11 +250,28 @@ int wsconn_update(ws_connection_t *wsc)
 {
 	if (!wsc)
 	{
-		LM_ERR("wsconn_rm: null pointer\n");
+		LM_ERR("wsconn_update: null pointer\n");
 		return -1;
 	}
 
+	WSCONN_LOCK;
 	wsc->last_used = (int) time(NULL);
+	if (wsconn_used_list->tail == wsc)
+		/* Already at the end of the list */
+		goto end;
+	if (wsconn_used_list->head == wsc)
+		wsconn_used_list->head = wsc->used_next;
+	if (wsc->used_prev)
+		wsc->used_prev->used_next = wsc->used_next;
+	if (wsc->used_next)
+		wsc->used_next->used_prev = wsc->used_prev;
+	wsc->used_prev = wsconn_used_list->tail;
+	wsc->used_next = NULL;
+	wsconn_used_list->tail->used_next = wsc;
+	wsconn_used_list->tail = wsc;
+
+end:
+	WSCONN_UNLOCK;
 	return 0;
 }
 
@@ -231,69 +298,108 @@ ws_connection_t *wsconn_get(int id)
 	int id_hash = tcp_id_hash(id);
 	ws_connection_t *wsc;
 
-	lock_get(wsconn_lock);
-	for (wsc = wsconn_hash[id_hash]; wsc; wsc = wsc->id_next)
+	WSCONN_LOCK;
+	for (wsc = wsconn_id_hash[id_hash]; wsc; wsc = wsc->id_next)
 	{
 		if (wsc->id == id)
 		{
-			lock_release(wsconn_lock);
+			WSCONN_UNLOCK;
 			return wsc;
 		}
 	}
+	WSCONN_UNLOCK;
 
-	lock_release(wsconn_lock);
 	return NULL;
+}
+
+static int add_node(struct mi_root *tree, ws_connection_t *wsc)
+{
+	int interval;
+	char *src_proto, *dst_proto, *pong;
+	char src_ip[IP6_MAX_STR_SIZE + 1], dst_ip[IP6_MAX_STR_SIZE + 1];
+	struct tcp_connection *con = tcpconn_get(wsc->id, 0, 0, 0, 0);
+
+	if (con)
+	{
+		src_proto = (con->rcv.proto== PROTO_TCP) ? "ws" : "wss";
+		memset(src_ip, 0, IP6_MAX_STR_SIZE + 1);
+		ip_addr2sbuf(&con->rcv.src_ip, src_ip, IP6_MAX_STR_SIZE);
+
+		dst_proto = (con->rcv.proto == PROTO_TCP) ? "ws" : "wss";
+		memset(dst_ip, 0, IP6_MAX_STR_SIZE + 1);
+		ip_addr2sbuf(&con->rcv.dst_ip, src_ip, IP6_MAX_STR_SIZE);
+
+		pong = wsc->awaiting_pong ? "awaiting Pong, " : "";
+
+		interval = (int)time(NULL) - wsc->last_used;
+
+		if (addf_mi_node_child(&tree->node, 0, 0, 0,
+					"%d: %s:%s:%hu -> %s:%s:%hu (state: %s"
+					", %slast used %ds ago)",
+					wsc->id,
+					src_proto,
+					strlen(src_ip) ? src_ip : "*",
+					con->rcv.src_port,
+					dst_proto,
+					strlen(dst_ip) ? dst_ip : "*",
+					con->rcv.dst_port,
+					wsconn_state_str[wsc->state],
+					pong,
+					interval) == 0)
+			return -1;
+	}
+
+	return 0;
 }
 
 struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 {
-	int h, connections = 0, truncated = 0, interval;
-	char *src_proto, *dst_proto;
-	char src_ip[IP6_MAX_STR_SIZE + 1], dst_ip[IP6_MAX_STR_SIZE + 1];
+	int h, connections = 0, truncated = 0, order = 0;
 	ws_connection_t *wsc;
+	struct mi_node *node = NULL;
 	struct mi_root *rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-
+	
 	if (!rpl_tree)
 		return 0;
 
-	lock_get(wsconn_lock);
-	for (h = 0; h < TCP_ID_HASH_SIZE; h++)
+	node = cmd->node.kids;
+	if (node != NULL)
 	{
-		wsc = wsconn_hash[h];
-		while(wsc)
+		if (node->value.s == NULL || node->value.len == 0)
 		{
-			struct tcp_connection *con =
-					tcpconn_get(wsc->id, 0, 0, 0, 0);
+			LM_ERR("empty display order parameter\n");
+			return init_mi_tree(400, str_status_empty_param.s,
+						str_status_empty_param.len);
+		}
+		strlower(&node->value);
+		if (strncmp(node->value.s, "id", 2) == 0)
+			order = 0;
+		else if (strncmp(node->value.s, "used", 4) == 0)
+			order = 1;
+		else
+		{
+			LM_ERR("bad display order parameter\n");
+			return init_mi_tree(400, str_status_bad_param.s,
+						str_status_bad_param.len);
+		}
 
-			if (con)
+		if (node->next != NULL)
+		{
+			LM_ERR("too many parameters\n");
+			return init_mi_tree(400, str_status_too_many_params.s,
+						str_status_too_many_params.len);
+		}
+	}
+
+	WSCONN_LOCK;
+	if (order == 0)
+	{
+		for (h = 0; h < TCP_ID_HASH_SIZE; h++)
+		{
+			wsc = wsconn_id_hash[h];
+			while(wsc)
 			{
-				src_proto = (con->rcv.proto== PROTO_TCP)
-						? "ws" : "wss";
-				memset(src_ip, 0, IP6_MAX_STR_SIZE + 1);
-				ip_addr2sbuf(&con->rcv.src_ip, src_ip,
-						IP6_MAX_STR_SIZE);
-
-				dst_proto = (con->rcv.proto == PROTO_TCP)
-						? "ws" : "wss";
-				memset(dst_ip, 0, IP6_MAX_STR_SIZE + 1);
-				ip_addr2sbuf(&con->rcv.dst_ip, src_ip,
-						IP6_MAX_STR_SIZE);
-
-				interval = (int)time(NULL) - wsc->last_used;
-
-				if (addf_mi_node_child(&rpl_tree->node, 0, 0, 0,
-						"%d: %s:%s:%hu -> %s:%s:%hu "
-						"(state: %s, "
-						"last used %ds ago)",
-						wsc->id,
-						src_proto,
-						strlen(src_ip) ? src_ip : "*",
-						con->rcv.src_port,
-						dst_proto,
-						strlen(dst_ip) ? dst_ip : "*",
-						con->rcv.dst_port,
-						wsconn_state_str[wsc->state],
-						interval) == 0)
+				if (add_node(rpl_tree, wsc) < 0)
 					return 0;
 
 				if (++connections == MAX_WS_CONNS_DUMP)
@@ -301,12 +407,32 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 					truncated = 1;
 					break;
 				}
+
+				wsc = wsc->id_next;
 			}
 
-			wsc = wsc->id_next;
+			if (truncated == 1)
+				break;
 		}
 	}
-	lock_release(wsconn_lock);
+	else
+	{
+		wsc = wsconn_used_list->head;
+		while (wsc)
+		{
+			if (add_node(rpl_tree, wsc) < 0)
+				return 0;
+
+			if (++connections == MAX_WS_CONNS_DUMP)
+			{
+				truncated = 1;
+				break;
+			}
+
+			wsc = wsc->used_next;
+		}
+	}
+	WSCONN_UNLOCK;
 
 	if (addf_mi_node_child(&rpl_tree->node, 0, 0, 0,
 				"%d WebSocket connection%s found%s",

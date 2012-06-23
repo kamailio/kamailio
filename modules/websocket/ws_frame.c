@@ -87,6 +87,11 @@ typedef enum
 #define OPCODE_PONG		(0xa)
 /* 0xb - 0xf are reserved for further control frames */
 
+/* Time (in seconds) after which to send a keepalive on an idle connection */
+int ws_keepalive_timeout = DEFAULT_KEEPALIVE_TIMEOUT;
+int ws_keepalive_mechanism = DEFAULT_KEEPALIVE_MECHANISM;
+str ws_ping_application_data = {0, 0};
+
 stat_var *ws_failed_connections;
 stat_var *ws_local_closed_connections;
 stat_var *ws_received_frames;
@@ -506,6 +511,10 @@ static int handle_pong(ws_frame_t *frame)
 {
 	LM_INFO("Pong: %.*s\n", frame->payload_len, frame->payload_data);
 
+	if (strncmp(frame->payload_data, ws_ping_application_data.s,
+			ws_ping_application_data.len) == 0)
+		frame->wsc->awaiting_pong = 0;
+
 	return 0;
 }
 
@@ -572,8 +581,8 @@ static int ping_pong(ws_connection_t *wsc, int opcode)
 	memset(&frame, 0, sizeof(frame));
 	frame.fin = 1;
 	frame.opcode = opcode;
-	frame.payload_len = server_hdr.len;
-	frame.payload_data = server_hdr.s;
+	frame.payload_len = ws_ping_application_data.len;
+	frame.payload_data = ws_ping_application_data.s;
 	frame.wsc = wsc;
 
 	if (encode_and_send_ws_frame(&frame, CONN_CLOSE_DONT) < 0)
@@ -581,6 +590,9 @@ static int ping_pong(ws_connection_t *wsc, int opcode)
 		LM_ERR("closing connection\n");
 		return -1;
 	}
+
+	if (opcode == OPCODE_PING)
+		wsc->awaiting_pong = 1;
 
 	return 0;
 }
@@ -682,4 +694,26 @@ struct mi_root *ws_mi_ping(struct mi_root *cmd, void *param)
 struct mi_root *ws_mi_pong(struct mi_root *cmd, void *param)
 {
 	return mi_ping_pong(cmd, param, OPCODE_PONG);
+}
+
+void ws_keepalive(unsigned int ticks, void *param)
+{
+	int check_time = (int) time(NULL) - ws_keepalive_timeout;
+	ws_connection_t *wsc = wsconn_used_list->head;
+
+	while (wsc && wsc->last_used < check_time)
+	{
+		if (wsc->state == WS_S_CLOSING
+			|| wsc->awaiting_pong)
+		{
+			LM_WARN("forcibly closing connection\n");
+			wsconn_close_now(wsc);
+		}
+		else
+			ping_pong(wsconn_used_list->head,
+			  ws_keepalive_mechanism == KEEPALIVE_MECHANISM_PING
+					? OPCODE_PING : OPCODE_PONG);
+		wsc = wsconn_used_list->head;
+	}
+	
 }
