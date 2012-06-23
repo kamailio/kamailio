@@ -17,6 +17,7 @@ else
 	DEFS+= $(shell pkg-config --cflags libssl)
 	LIBS=  $(shell pkg-config --libs libssl)
 endif
+LIBS+= -lunistring
 
 DEFS+=-DOPENSER_MOD_INTERFACE
 

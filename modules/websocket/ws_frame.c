@@ -22,6 +22,7 @@
  */
 
 #include <limits.h>
+#include <unistr.h>
 #include "../../receive.h"
 #include "../../stats.h"
 #include "../../str.h"
@@ -592,9 +593,10 @@ int ws_frame_transmit(void *data)
 
 	memset(&frame, 0, sizeof(frame));
 	frame.fin = 1;
-	/* Can't be sure whether this message is UTF-8 or not so always send
-	   as binary */
-	frame.opcode = OPCODE_BINARY_FRAME;
+	/* Can't be sure whether this message is UTF-8 or not so check to see
+	   if it "might" be UTF-8 and send as binary if it definitely isn't */
+	frame.opcode = (u8_check((uint8_t *) wsev->buf, wsev->len) == NULL) ?
+				OPCODE_TEXT_FRAME: OPCODE_BINARY_FRAME;
 	frame.payload_len = wsev->len;
 	frame.payload_data = wsev->buf;
 	frame.wsc = wsconn_get(wsev->id);
@@ -602,11 +604,9 @@ int ws_frame_transmit(void *data)
 	if (encode_and_send_ws_frame(&frame, CONN_CLOSE_DONT) < 0)
 	{	
 		LM_ERR("sending SIP message\n");
-		if (wsev->buf) pkg_free(wsev->buf);
 		return -1;
 	}
 
-	if (wsev->buf) pkg_free(wsev->buf);
 	return 0;
 }
 
