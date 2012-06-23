@@ -22,6 +22,7 @@
  */
 
 #include <limits.h>
+#include "../../receive.h"
 #include "../../str.h"
 #include "../../tcp_conn.h"
 #include "../../tcp_server.h"
@@ -119,12 +120,11 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 	struct tcp_connection *con;
 	struct dest_info dst;
 
-	LM_INFO("encoding WebSocket frame\n");
+	LM_DBG("encoding WebSocket frame\n");
 
 	if (frame->wsc->state != WS_S_OPEN)
 	{
-		LM_ERR("sending on closing connection\n");
-		wsconn_close_now(frame->wsc);
+		LM_WARN("sending on closing connection\n");
 		return -1;
 	}
 
@@ -148,13 +148,13 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 	{
 	case OPCODE_TEXT_FRAME:
 	case OPCODE_BINARY_FRAME:
-		LM_INFO("supported non-control frame: 0x%x\n",
+		LM_DBG("supported non-control frame: 0x%x\n",
 			(unsigned char) frame->opcode);
 		break;
 	case OPCODE_CLOSE:
 	case OPCODE_PING:
 	case OPCODE_PONG:
-		LM_INFO("supported control frame: 0x%x\n",
+		LM_DBG("supported control frame: 0x%x\n",
 			(unsigned char) frame->opcode);
 		break;
 	default:
@@ -211,7 +211,9 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 
 	if ((con = tcpconn_get(frame->wsc->id, 0, 0, 0, 0)) == NULL)
 	{
-		LM_ERR("getting TCP/TLS connection\n");
+		LM_WARN("TCP/TLS connection get failed\n");
+		if (wsconn_rm(frame->wsc) < 0)
+			LM_ERR("removing WebSocket connection\n");
 		return -1;
 	}
 	init_dst_from_rcv(&dst, &con->rcv);
@@ -299,11 +301,11 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 	int mask_start, j;
 	char *buf = tcpinfo->buf;
 
-	LM_INFO("decoding WebSocket frame\n");
+	LM_DBG("decoding WebSocket frame\n");
 
 	if ((frame->wsc = wsconn_get(tcpinfo->con->id)) == NULL)
 	{
-		LM_WARN("WebSocket connection not found\n");
+		LM_ERR("WebSocket connection not found\n");
 		return -1;
 	}
 
@@ -348,14 +350,14 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 	{
 	case OPCODE_TEXT_FRAME:
 	case OPCODE_BINARY_FRAME:
-		LM_INFO("supported non-control frame: 0x%x\n",
+		LM_DBG("supported non-control frame: 0x%x\n",
 			(unsigned char) frame->opcode);
 		break;
 
 	case OPCODE_CLOSE:
 	case OPCODE_PING:
 	case OPCODE_PONG:
-		LM_INFO("supported control frame: 0x%x\n",
+		LM_DBG("supported control frame: 0x%x\n",
 			(unsigned char) frame->opcode);
 		break;
 
@@ -452,19 +454,10 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 			= frame->payload_data[i] ^ frame->masking_key[j];
 	}
 
-	LM_INFO("Rx (decoded): %.*s\n",
+	LM_DBG("Rx (decoded): %.*s\n",
 		(int) frame->payload_len, frame->payload_data);
 
 	return frame->opcode;
-}
-
-static int handle_sip_message(ws_frame_t *frame)
-{
-	LM_INFO("Received SIP message\n");
-
-	/* TODO: drop SIP message into route {} for processing */
-
-	return 0;
 }
 
 static int handle_close(ws_frame_t *frame)
@@ -482,7 +475,7 @@ static int handle_close(ws_frame_t *frame)
 		reason.len = frame->payload_len - 2;
 	}
 
-	LM_INFO("Received Close: %hu %.*s\n", code, reason.len, reason.s);
+	LM_DBG("Rx Close: %hu %.*s\n", code, reason.len, reason.s);
 
 	if (close_connection(frame->wsc,
 		frame->wsc->state == WS_S_OPEN ? REMOTE_CLOSE : LOCAL_CLOSE,
@@ -497,8 +490,7 @@ static int handle_close(ws_frame_t *frame)
 
 static int handle_ping(ws_frame_t *frame)
 {
-	LM_INFO("Received Ping: %.*s\n",
-		frame->payload_len, frame->payload_data);
+	LM_DBG("Rx Ping: %.*s\n", frame->payload_len, frame->payload_data);
 
 	frame->opcode = OPCODE_PONG;
 	frame->mask = 0;
@@ -509,7 +501,7 @@ static int handle_ping(ws_frame_t *frame)
 
 static int handle_pong(ws_frame_t *frame)
 {
-	LM_INFO("Pong: %.*s\n", frame->payload_len, frame->payload_data);
+	LM_DBG("Rx Pong: %.*s\n", frame->payload_len, frame->payload_data);
 
 	if (strncmp(frame->payload_data, ws_ping_application_data.s,
 			ws_ping_application_data.len) == 0)
@@ -535,37 +527,18 @@ int ws_frame_received(void *data)
 	{
 	case OPCODE_TEXT_FRAME:
 	case OPCODE_BINARY_FRAME:
-		if (handle_sip_message(&ws_frame) < 0)
-		{
-			LM_ERR("handling SIP message\n");
-			return -1;
-		}
-		break;
+		return receive_msg(ws_frame.payload_data, ws_frame.payload_len,
+				tcpinfo->rcv);
 
 	case OPCODE_CLOSE:
-		if (handle_close(&ws_frame) < 0)
-		{
-			LM_ERR("handling Close\n");
-			return -1;
-		}
-		break;
+		return handle_close(&ws_frame);
 
 	case OPCODE_PING:
-		if (handle_ping(&ws_frame) < 0)
-		{
-			LM_ERR("handling Ping\n");
-			return -1;
-		}
-		break;
+		return handle_ping(&ws_frame);
 
 	case OPCODE_PONG:
-		if (handle_pong(&ws_frame) < 0)
-		{
-			LM_ERR("handling Pong\n");
-			return -1;
-		}
-		break;
-		
+		return handle_pong(&ws_frame);
+
 	default:
 		LM_WARN("received bad frame\n");
 		return -1;
@@ -587,7 +560,7 @@ static int ping_pong(ws_connection_t *wsc, int opcode)
 
 	if (encode_and_send_ws_frame(&frame, CONN_CLOSE_DONT) < 0)
 	{	
-		LM_ERR("closing connection\n");
+		LM_ERR("sending keepalive\n");
 		return -1;
 	}
 
@@ -608,7 +581,7 @@ struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
 		return 0;
 	if (node->value.s == NULL || node->value.len == 0)
 	{
-		LM_ERR("empty connection ID parameter\n");
+		LM_WARN("empty connection ID parameter\n");
 		return init_mi_tree(400, str_status_empty_param.s,
 					str_status_empty_param.len);
 	}
@@ -619,14 +592,14 @@ struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
 	}
 	if (node->next != NULL)
 	{
-		LM_ERR("too many parameters\n");
+		LM_WARN("too many parameters\n");
 		return init_mi_tree(400, str_status_too_many_params.s,
 					str_status_too_many_params.len);
 	}
 
 	if ((wsc = wsconn_get(id)) == NULL)
 	{
-		LM_ERR("bad connection ID parameter\n");
+		LM_WARN("bad connection ID parameter\n");
 		return init_mi_tree(400, str_status_bad_param.s,
 					str_status_bad_param.len);
 	}
@@ -634,7 +607,7 @@ struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
 	if (close_connection(wsc, LOCAL_CLOSE, 1000,
 				str_status_normal_closure) < 0)
 	{
-		LM_ERR("closing connection\n");
+		LM_WARN("closing connection\n");
 		return init_mi_tree(500, str_status_error_closing.s,
 					str_status_error_closing.len);
 	}
@@ -654,7 +627,7 @@ static struct mi_root *mi_ping_pong(struct mi_root *cmd, void *param,
 		return 0;
 	if (node->value.s == NULL || node->value.len == 0)
 	{
-		LM_ERR("empty connection ID parameter\n");
+		LM_WARN("empty connection ID parameter\n");
 		return init_mi_tree(400, str_status_empty_param.s,
 					str_status_empty_param.len);
 	}
@@ -665,20 +638,21 @@ static struct mi_root *mi_ping_pong(struct mi_root *cmd, void *param,
 	}
 	if (node->next != NULL)
 	{
-		LM_ERR("too many parameters\n");
+		LM_WARN("too many parameters\n");
 		return init_mi_tree(400, str_status_too_many_params.s,
 					str_status_too_many_params.len);
 	}
 
 	if ((wsc = wsconn_get(id)) == NULL)
 	{
-		LM_ERR("bad connection ID parameter\n");
+		LM_WARN("bad connection ID parameter\n");
 		return init_mi_tree(400, str_status_bad_param.s,
 					str_status_bad_param.len);
 	}
 
 	if (ping_pong(wsc, opcode) < 0)
 	{
+		LM_WARN("sending %s\n", OPCODE_PING ? "Ping" : "Pong");
 		return init_mi_tree(500, str_status_error_sending.s,
 					str_status_error_sending.len);
 	}

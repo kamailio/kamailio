@@ -230,8 +230,6 @@ int wsconn_rm(ws_connection_t *wsc)
 	}
 
 	WSCONN_LOCK;
-	_wsconn_rm(wsc);
-
 	/* Remove from the WebSocket used list */
 	if (wsconn_used_list->head == wsc)
 		wsconn_used_list->head = wsc->used_next;
@@ -241,6 +239,8 @@ int wsconn_rm(ws_connection_t *wsc)
 		wsc->used_prev->used_next = wsc->used_next;
 	if (wsc->used_next)
 		wsc->used_next->used_prev = wsc->used_prev;
+
+	_wsconn_rm(wsc);
 	WSCONN_UNLOCK;
 
 	return 0;
@@ -347,14 +347,16 @@ static int add_node(struct mi_root *tree, ws_connection_t *wsc)
 					pong,
 					interval) == 0)
 			return -1;
-	}
 
-	return 0;
+		return 1;
+	}
+	else
+		return 0;
 }
 
 struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 {
-	int h, connections = 0, truncated = 0, order = 0;
+	int h, connections = 0, truncated = 0, order = 0, found = 0;
 	ws_connection_t *wsc;
 	struct mi_node *node = NULL;
 	struct mi_root *rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
@@ -399,10 +401,12 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 			wsc = wsconn_id_hash[h];
 			while(wsc)
 			{
-				if (add_node(rpl_tree, wsc) < 0)
+				if ((found = add_node(rpl_tree, wsc)) < 0)
 					return 0;
 
-				if (++connections == MAX_WS_CONNS_DUMP)
+
+				connections += found;
+				if (connections >= MAX_WS_CONNS_DUMP)
 				{
 					truncated = 1;
 					break;
@@ -420,10 +424,11 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 		wsc = wsconn_used_list->head;
 		while (wsc)
 		{
-			if (add_node(rpl_tree, wsc) < 0)
+			if ((found = add_node(rpl_tree, wsc)) < 0)
 				return 0;
 
-			if (++connections == MAX_WS_CONNS_DUMP)
+			connections += found;
+			if (connections >= MAX_WS_CONNS_DUMP)
 			{
 				truncated = 1;
 				break;

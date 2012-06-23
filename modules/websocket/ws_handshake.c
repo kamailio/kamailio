@@ -144,7 +144,8 @@ int ws_handle_handshake(struct sip_msg *msg)
 			strlower(&hdr->body);
 			if (str_search(&hdr->body, &str_upgrade) != NULL)
 			{
-				LM_INFO("found %.*s: %.*s\n",
+				LM_DBG("found %.*s: %.*s\n",
+
 					hdr->name.len, hdr->name.s,
 					hdr->body.len, hdr->body.s);
 				hdr_flags |= CONNECTION;
@@ -158,7 +159,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 			strlower(&hdr->body);
 			if (str_search(&hdr->body, &str_websocket) != NULL)
 			{
-				LM_INFO("found %.*s: %.*s\n",
+				LM_DBG("found %.*s: %.*s\n",
 					hdr->name.len, hdr->name.s,
 					hdr->body.len, hdr->body.s);
 				hdr_flags |= UPGRADE;
@@ -178,7 +179,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 				return 0;
 			}
 
-			LM_INFO("found %.*s: %.*s\n",
+			LM_DBG("found %.*s: %.*s\n",
 				hdr->name.len, hdr->name.s,
 				hdr->body.len, hdr->body.s);
 			key = hdr->body;
@@ -192,7 +193,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 			strlower(&hdr->body);
 			if (str_search(&hdr->body, &str_sip) != NULL)
 			{
-				LM_INFO("found %.*s: %.*s\n",
+				LM_DBG("found %.*s: %.*s\n",
 					hdr->name.len, hdr->name.s,
 					hdr->body.len, hdr->body.s);
 				hdr_flags |= SEC_WEBSOCKET_PROTOCOL;
@@ -230,7 +231,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 				return 0;
 			}
 
-			LM_INFO("found %.*s: %.*s\n",
+			LM_DBG("found %.*s: %.*s\n",
 				hdr->name.len, hdr->name.s,
 				hdr->body.len, hdr->body.s);
 			hdr_flags |= SEC_WEBSOCKET_VERSION;
