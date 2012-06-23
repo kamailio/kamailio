@@ -97,6 +97,7 @@ enum {
 	TCP_TLS1, TCP2, FIN_TCP,
 	          TLS2, FIN_TLS,
 	SCTP1, SCTP2, SCTP3, FIN_SCTP,
+	WS_WSS1, WS_WSS2, FIN_WSS,
 	OTHER_PROTO,
 	L_PROTO, F_PROTO
 };
@@ -1370,6 +1371,18 @@ parse_again:
 						vb->proto=PROTO_SCTP;
 						state=F_HOST; /* start looking for host*/
 						goto main_via;
+					case WS_WSS2:
+						/* finished proto parsing */
+						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_TCP;
+						state=F_HOST; /* start looking for host*/
+						goto main_via;
+					case FIN_WSS:
+						/* finished proto parsing */
+						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_TLS;
+						state=F_HOST; /* start looking for host*/
+						goto main_via;
 					case OTHER_PROTO:
 						/* finished proto parsing */
 						vb->transport.len=tmp-vb->transport.s;
@@ -1384,6 +1397,7 @@ parse_again:
 					case SCTP1:
 					case SCTP2:
 					case SCTP3:
+					case WS_WSS1:
 						/* finished proto parsing */
 						vb->transport.len=tmp-vb->transport.s;
 						vb->proto=PROTO_OTHER;
@@ -1443,6 +1457,20 @@ parse_again:
 						state=F_LF;
 						saved_state=F_HOST; /* start looking for host*/
 						goto main_via;
+					case WS_WSS2:
+						/* finished proto parsing */
+						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_TCP;
+						state=F_LF;
+						saved_state=F_HOST; /* start looking for host*/
+						goto main_via;
+					case FIN_WSS:
+						/* finished proto parsing */
+						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_TLS;
+						state=F_LF;
+						saved_state=F_HOST; /* start looking for host*/
+						goto main_via;
 					case OTHER_PROTO:
 						/* finished proto parsing */
 						vb->transport.len=tmp-vb->transport.s;
@@ -1458,6 +1486,7 @@ parse_again:
 					case SCTP1:
 					case SCTP2:
 					case SCTP3:
+					case WS_WSS1:
 						/* finished proto parsing */
 						vb->transport.len=tmp-vb->transport.s;
 						vb->proto=PROTO_OTHER;
@@ -1521,6 +1550,18 @@ parse_again:
 						state=F_CR;
 						saved_state=F_HOST;
 						goto main_via;
+					case WS_WSS2:
+						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_TCP;
+						state=F_CR;
+						saved_state=F_HOST;
+						goto main_via;
+					case FIN_WSS:
+						vb->transport.len=tmp-vb->transport.s;
+						vb->proto=PROTO_TLS;
+						state=F_CR;
+						saved_state=F_HOST;
+						goto main_via;
 					case OTHER_PROTO:
 						vb->transport.len=tmp-vb->transport.s;
 						vb->proto=PROTO_OTHER;
@@ -1535,6 +1576,7 @@ parse_again:
 					case SCTP1:
 					case SCTP2:
 					case SCTP3:
+					case WS_WSS1:
 						/* finished proto parsing */
 						vb->transport.len=tmp-vb->transport.s;
 						vb->proto=PROTO_OTHER;
@@ -1596,6 +1638,12 @@ parse_again:
 					case TLS2:
 						state=FIN_TLS;
 						break;
+					case WS_WSS1:
+						state=WS_WSS2;
+						break;
+					case WS_WSS2:
+						state=FIN_WSS;
+						break;
 					case F_PROTO:
 						state=SCTP1;
 						vb->transport.s=tmp;
@@ -1612,6 +1660,7 @@ parse_again:
 					case SCTP1:
 					case SCTP2:
 					case SCTP3:
+					case FIN_WSS:
 					case FIN_SCTP:
 						state=OTHER_PROTO;
 						break;
@@ -1641,6 +1690,9 @@ parse_again:
 					case SCTP2:
 					case SCTP3:
 					case FIN_SCTP:
+					case WS_WSS1:
+					case WS_WSS2:
+					case FIN_WSS:
 						state=OTHER_PROTO;
 						break;
 					default:
@@ -1676,6 +1728,9 @@ parse_again:
 					case SCTP1:
 					case SCTP2:
 					case FIN_SCTP:
+					case WS_WSS1:
+					case WS_WSS2:
+					case FIN_WSS:
 						state=OTHER_PROTO;
 						break;
 					default:
@@ -1705,6 +1760,9 @@ parse_again:
 					case SCTP2:
 					case SCTP3:
 					case FIN_SCTP:
+					case WS_WSS1:
+					case WS_WSS2:
+					case FIN_WSS:
 						state=OTHER_PROTO;
 						break;
 					default:
@@ -1732,6 +1790,9 @@ parse_again:
 					case SCTP2:
 					case SCTP3:
 					case FIN_SCTP:
+					case WS_WSS1:
+					case WS_WSS2:
+					case FIN_WSS:
 						state=OTHER_PROTO;
 						break;
 					default:
@@ -1763,6 +1824,9 @@ parse_again:
 					case SCTP1:
 					case SCTP3:
 					case FIN_SCTP:
+					case WS_WSS1:
+					case WS_WSS2:
+					case FIN_WSS:
 						state=OTHER_PROTO;
 						break;
 					default:
@@ -1792,6 +1856,9 @@ parse_again:
 					case SCTP2:
 					case SCTP3:
 					case FIN_SCTP:
+					case WS_WSS1:
+					case WS_WSS2:
+					case FIN_WSS:
 						state=OTHER_PROTO;
 						break;
 					default:
@@ -1819,6 +1886,41 @@ parse_again:
 					case SCTP2:
 					case SCTP3:
 					case FIN_SCTP:
+					case WS_WSS1:
+					case WS_WSS2:
+					case FIN_WSS:
+						state=OTHER_PROTO;
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+			case 'W':
+			case 'w':
+				switch(state){
+					case F_PROTO:
+						state=WS_WSS1;
+						vb->transport.s=tmp;
+						break;
+					case OTHER_PROTO:
+						break;
+					case UDP1:
+					case UDP2:
+					case FIN_UDP:
+					case TCP_TLS1:
+					case TCP2:
+					case FIN_TCP:
+					case TLS2:
+					case FIN_TLS:
+					case SCTP1:
+					case SCTP2:
+					case SCTP3:
+					case FIN_SCTP:
+					case WS_WSS1:
+					case WS_WSS2:
+					case FIN_WSS:
 						state=OTHER_PROTO;
 						break;
 					default:
@@ -1848,6 +1950,9 @@ parse_again:
 					case SCTP2:
 					case SCTP3:
 					case FIN_SCTP:
+					case WS_WSS1:
+					case WS_WSS2:
+					case FIN_WSS:
 						state=OTHER_PROTO;
 						break;
 					default:
@@ -1875,6 +1980,9 @@ parse_again:
 					case SCTP2:
 					case SCTP3:
 					case FIN_SCTP:
+					case WS_WSS1:
+					case WS_WSS2:
+					case FIN_WSS:
 						state=OTHER_PROTO;
 						break;
 					default:
@@ -1902,6 +2010,9 @@ parse_again:
 					case SCTP2:
 					case SCTP3:
 					case FIN_SCTP:
+					case WS_WSS1:
+					case WS_WSS2:
+					case FIN_WSS:
 						state=OTHER_PROTO;
 						break;
 					default:
@@ -1930,6 +2041,9 @@ parse_again:
 					case SCTP2:
 					case SCTP3:
 					case FIN_SCTP:
+					case WS_WSS1:
+					case WS_WSS2:
+					case FIN_WSS:
 						state=OTHER_PROTO;
 						break;
 					default:
