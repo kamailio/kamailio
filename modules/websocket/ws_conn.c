@@ -369,25 +369,27 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 	{
 		if (node->value.s == NULL || node->value.len == 0)
 		{
-			LM_ERR("empty display order parameter\n");
+			LM_WARN("empty display order parameter\n");
 			return init_mi_tree(400, str_status_empty_param.s,
 						str_status_empty_param.len);
 		}
 		strlower(&node->value);
-		if (strncmp(node->value.s, "id", 2) == 0)
+		if (strncmp(node->value.s, "id_hash", 7) == 0)
 			order = 0;
-		else if (strncmp(node->value.s, "used", 4) == 0)
+		else if (strncmp(node->value.s, "used_desc", 9) == 0)
 			order = 1;
+		else if (strncmp(node->value.s, "used_asc", 8) == 0)
+			order = 2;
 		else
 		{
-			LM_ERR("bad display order parameter\n");
+			LM_WARN("bad display order parameter\n");
 			return init_mi_tree(400, str_status_bad_param.s,
 						str_status_bad_param.len);
 		}
 
 		if (node->next != NULL)
 		{
-			LM_ERR("too many parameters\n");
+			LM_WARN("too many parameters\n");
 			return init_mi_tree(400, str_status_too_many_params.s,
 						str_status_too_many_params.len);
 		}
@@ -419,7 +421,7 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 				break;
 		}
 	}
-	else
+	else if (order == 1)
 	{
 		wsc = wsconn_used_list->head;
 		while (wsc)
@@ -435,6 +437,24 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 			}
 
 			wsc = wsc->used_next;
+		}
+	}
+	else
+	{
+		wsc = wsconn_used_list->tail;
+		while (wsc)
+		{
+			if ((found = add_node(rpl_tree, wsc)) < 0)
+				return 0;
+
+			connections += found;
+			if (connections >= MAX_WS_CONNS_DUMP)
+			{
+				truncated = 1;
+				break;
+			}
+
+			wsc = wsc->used_prev;
 		}
 	}
 	WSCONN_UNLOCK;
