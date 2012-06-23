@@ -5,7 +5,7 @@
 <title>WebSocket Test</title>
 
 <script language="javascript" type="text/javascript">
-var wsUri = "ws://192.168.111.12/";
+var wsUri = "wss://192.168.111.2/";
 var output;
 
 function init()
@@ -26,10 +26,7 @@ function testWebSocket()
 function onOpen(evt)
 {
 	writeToScreen("CONNECTED");
-	doSend("WebSocket rocks");
-	doSend("WebSocket rolls");
-	doSend("012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789");
-	websocket.close();
+	doSend("OPTIONS sip:alice@example.com SIP/2.0\r\nVia: SIP/2.0/WSS abcd1234.invalid;branch=z9hG4bkabcd1234\r\nMax-Forwards: 70\r\nTo: <sip:alice@example.com>\r\nFrom: <sip:bob@example.com>;tag=abcd1234\r\nCall-ID: abcd1234\r\nCSeq: 1 OPTIONS\r\nContact: <sip:bob@abcd1234;transport=ws>\r\n\r\n");
 }
 
 function onClose(evt)
