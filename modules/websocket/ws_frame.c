@@ -23,6 +23,7 @@
 
 #include <limits.h>
 #include "../../receive.h"
+#include "../../stats.h"
 #include "../../str.h"
 #include "../../tcp_conn.h"
 #include "../../tcp_server.h"
@@ -119,6 +120,8 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 	char *send_buf;
 	struct tcp_connection *con;
 	struct dest_info dst;
+	union sockaddr_union *from = NULL;
+	union sockaddr_union local_addr;
 
 	LM_DBG("encoding WebSocket frame\n");
 
@@ -227,8 +230,38 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		}
 	}
 
-	if (tcp_send(&dst, NULL, send_buf, frame_length) < 0)
+	if (dst.proto == PROTO_TCP)
 	{
+		if (unlikely(tcp_disable))
+		{
+			STATS_TX_DROPS;
+			LM_WARN("TCP disabled\n");
+			return -1;
+		}		
+	}
+#ifdef USE_TLS
+	else if (dst.proto == PROTO_TLS)
+	{
+		if (unlikely(tls_disable))
+		{
+			STATS_TX_DROPS;
+			LM_WARN("TLS disabled\n");
+			return -1;
+		}		
+	}
+#endif /* USE_TLS */
+
+	if (unlikely((dst.send_flags.f & SND_F_FORCE_SOCKET)
+		&& dst.send_sock))
+	{
+		local_addr = dst.send_sock->su;
+		su_setport(&local_addr, 0);
+		from = &local_addr;
+	}
+
+	if (tcp_send(&dst, from, send_buf, frame_length) < 0)
+	{
+		STATS_TX_DROPS;
 		LM_ERR("sending WebSocket frame\n");
 		pkg_free(send_buf);
 		update_stat(ws_failed_connections, 1);
@@ -494,7 +527,12 @@ static int handle_ping(ws_frame_t *frame)
 
 	frame->opcode = OPCODE_PONG;
 	frame->mask = 0;
-	encode_and_send_ws_frame(frame, CONN_CLOSE_DONT);
+
+	if (encode_and_send_ws_frame(frame, CONN_CLOSE_DONT) < 0)
+	{
+		LM_ERR("sending Pong\n");
+		return -1;
+	}
 
 	return 0;
 }
@@ -510,7 +548,7 @@ static int handle_pong(ws_frame_t *frame)
 	return 0;
 }
 
-int ws_frame_received(void *data)
+int ws_frame_receive(void *data)
 {
 	ws_frame_t ws_frame;
 	tcp_event_info_t *tcpinfo = (tcp_event_info_t *) data;
@@ -544,6 +582,31 @@ int ws_frame_received(void *data)
 		return -1;
 	}
 
+	return 0;
+}
+
+int ws_frame_transmit(void *data)
+{
+	ws_event_info_t *wsev = (ws_event_info_t *) data;
+	ws_frame_t frame;
+
+	memset(&frame, 0, sizeof(frame));
+	frame.fin = 1;
+	/* Can't be sure whether this message is UTF-8 or not so always send
+	   as binary */
+	frame.opcode = OPCODE_BINARY_FRAME;
+	frame.payload_len = wsev->len;
+	frame.payload_data = wsev->buf;
+	frame.wsc = wsconn_get(wsev->id);
+
+	if (encode_and_send_ws_frame(&frame, CONN_CLOSE_DONT) < 0)
+	{	
+		LM_ERR("sending SIP message\n");
+		if (wsev->buf) pkg_free(wsev->buf);
+		return -1;
+	}
+
+	if (wsev->buf) pkg_free(wsev->buf);
 	return 0;
 }
 

@@ -140,9 +140,15 @@ static int mod_init(void)
 		goto error;
 	}
 
-	if (sr_event_register_cb(SREV_TCP_WS_FRAME, ws_frame_received) != 0)
+	if (sr_event_register_cb(SREV_TCP_WS_FRAME_IN, ws_frame_receive) != 0)
 	{
-		LM_ERR("registering WebSocket call-back\n");
+		LM_ERR("registering WebSocket receive call-back\n");
+		goto error;
+	}
+
+	if (sr_event_register_cb(SREV_TCP_WS_FRAME_OUT, ws_frame_transmit) != 0)
+	{
+		LM_ERR("registering WebSocket transmit call-back\n");
 		goto error;
 	}
 

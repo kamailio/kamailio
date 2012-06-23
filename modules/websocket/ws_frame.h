@@ -58,7 +58,8 @@ extern stat_var *ws_received_frames;
 extern stat_var *ws_remote_closed_connections;
 extern stat_var *ws_transmitted_frames;
 
-int ws_frame_received(void *data);
+int ws_frame_receive(void *data);
+int ws_frame_transmit(void *data);
 struct mi_root *ws_mi_close(struct mi_root *cmd, void *param);
 struct mi_root *ws_mi_ping(struct mi_root *cmd, void *param);
 struct mi_root *ws_mi_pong(struct mi_root *cmd, void *param);
