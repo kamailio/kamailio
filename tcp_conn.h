@@ -355,6 +355,13 @@ typedef struct tcp_event_info {
 	struct tcp_connection *con;
 } tcp_event_info_t;
 
+typedef struct ws_event_info {
+	int type;
+	char *buf;
+	unsigned int len;
+	int id;
+} ws_event_info_t;
+
 #endif
 
 

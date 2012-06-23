@@ -1132,14 +1132,14 @@ static int ws_process_msg(char* tcpbuf, unsigned int len,
 
 	ret = 0;
 	LM_DBG("WebSocket Message: [[>>>\n%.*s<<<]]\n", len, tcpbuf);
-	if(likely(sr_event_enabled(SREV_TCP_WS_FRAME))) {
+	if(likely(sr_event_enabled(SREV_TCP_WS_FRAME_IN))) {
 		memset(&tev, 0, sizeof(tcp_event_info_t));
-		tev.type = SREV_TCP_WS_FRAME;
+		tev.type = SREV_TCP_WS_FRAME_IN;
 		tev.buf = tcpbuf;
 		tev.len = len;
 		tev.rcv = rcv_info;
 		tev.con = con;
-		ret = sr_event_exec(SREV_TCP_WS_FRAME, (void*)(&tev));
+		ret = sr_event_exec(SREV_TCP_WS_FRAME_IN, (void*)(&tev));
 	} else {
 		LM_DBG("no callback registering for handling WebSockets - dropping!\n");
 	}

@@ -96,9 +96,14 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 					_sr_events_list.tcp_msrp_frame = f;
 				else return -1;
 			break;
-		case SREV_TCP_WS_FRAME:
-				if(_sr_events_list.tcp_ws_frame==0)
-					_sr_events_list.tcp_ws_frame = f;
+		case SREV_TCP_WS_FRAME_IN:
+				if(_sr_events_list.tcp_ws_frame_in==0)
+					_sr_events_list.tcp_ws_frame_in = f;
+				else return -1;
+			break;
+		case SREV_TCP_WS_FRAME_OUT:
+				if(_sr_events_list.tcp_ws_frame_out==0)
+					_sr_events_list.tcp_ws_frame_out = f;
 				else return -1;
 			break;
 		default:
@@ -192,10 +197,16 @@ int sr_event_exec(int type, void *data)
 					ret = _sr_events_list.tcp_msrp_frame(data);
 					return ret;
 				} else return 1;
-		case SREV_TCP_WS_FRAME:
-				if(unlikely(_sr_events_list.tcp_ws_frame!=0))
+		case SREV_TCP_WS_FRAME_IN:
+				if(unlikely(_sr_events_list.tcp_ws_frame_in!=0))
 				{
-					ret = _sr_events_list.tcp_ws_frame(data);
+					ret = _sr_events_list.tcp_ws_frame_in(data);
+					return ret;
+				} else return 1;
+		case SREV_TCP_WS_FRAME_OUT:
+				if(unlikely(_sr_events_list.tcp_ws_frame_out!=0))
+				{
+					ret = _sr_events_list.tcp_ws_frame_out(data);
 					return ret;
 				} else return 1;
 		default:
@@ -227,8 +238,10 @@ int sr_event_enabled(int type)
 				return (_sr_events_list.tcp_http_100c!=0)?1:0;
 		case SREV_TCP_MSRP_FRAME:
 				return (_sr_events_list.tcp_msrp_frame!=0)?1:0;
-		case SREV_TCP_WS_FRAME:
-				return (_sr_events_list.tcp_ws_frame!=0)?1:0;
+		case SREV_TCP_WS_FRAME_IN:
+				return (_sr_events_list.tcp_ws_frame_in!=0)?1:0;
+		case SREV_TCP_WS_FRAME_OUT:
+				return (_sr_events_list.tcp_ws_frame_out!=0)?1:0;
 	}
 	return 0;
 }

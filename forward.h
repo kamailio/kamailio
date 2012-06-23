@@ -54,6 +54,7 @@
 #include "udp_server.h"
 #ifdef USE_TCP
 #include "tcp_server.h"
+#include "tcp_conn.h"
 #endif
 #ifdef USE_SCTP
 #include "sctp_server.h"
@@ -128,12 +129,34 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 #ifdef USE_TCP 
 	union sockaddr_union* from;
 	union sockaddr_union local_addr;
+	struct tcp_connection *con = NULL;
+	struct ws_event_info wsev;
 #endif
 	
 	outb.s = buf;
 	outb.len = len;
 	sr_event_exec(SREV_NET_DATA_OUT, (void*)&outb);
-	
+
+#ifdef USE_TCP
+	if (unlikely(sr_event_enabled(SREV_TCP_WS_FRAME_OUT))) {
+		if (dst->proto == PROTO_TCP)
+			con = tcpconn_get(dst->id, 0, 0, 0, 0);
+#ifdef USE_TLS
+		else if (dst->proto == PROTO_TLS)
+			con = tcpconn_get(dst->id, 0, 0, 0, 0);
+#endif
+		if (con->flags & F_CONN_WS)
+		{
+			memset(&wsev, 0, sizeof(ws_event_info_t));
+			wsev.type = SREV_TCP_WS_FRAME_OUT;
+			wsev.buf = outb.s;
+			wsev.len = outb.len;
+			wsev.id = dst->id;
+			return sr_event_exec(SREV_TCP_WS_FRAME_OUT, (void *) &wsev);
+		}
+	}
+#endif
+
 	if (likely(dst->proto==PROTO_UDP)){
 		if (unlikely((dst->send_sock==0) || 
 					(dst->send_sock->flags & SI_IS_MCAST))){
