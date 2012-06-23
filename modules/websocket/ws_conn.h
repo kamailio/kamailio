@@ -25,7 +25,6 @@
 #define _WS_CONN_H
 
 #include "../../locking.h"
-#include "../../tcp_conn.h"
 #include "../../lib/kmi/tree.h"
 
 typedef enum
@@ -38,16 +37,17 @@ typedef enum
 
 typedef struct ws_connection
 {
-	struct tcp_connection *con;
-
 	ws_conn_state_t state;
-	int id;
-	unsigned id_hash;
 	int last_used;
 
-	struct ws_connection *prev;
-	struct ws_connection *next;
+	int id;			/* id and id_hash are identical to the values */
+	unsigned id_hash;	/* for the corresponding TCP/TLS connection */
+	struct ws_connection *id_prev;
+	struct ws_connection *id_next;
 } ws_connection_t;
+
+#define wsconn_listadd	tcpconn_listadd
+#define wsconn_listrm	tcpconn_listrm
 
 extern char *wsconn_state_str[];
 
@@ -56,11 +56,11 @@ extern stat_var *ws_max_concurrent_connections;
 
 int wsconn_init(void);
 void wsconn_destroy(void);
-int wsconn_add(struct tcp_connection *con);
+int wsconn_add(int id);
 int wsconn_rm(ws_connection_t *wsc);
 int wsconn_update(ws_connection_t *wsc);
 void wsconn_close_now(ws_connection_t *wsc);
-ws_connection_t *wsconn_find(struct tcp_connection *con);
+ws_connection_t *wsconn_get(int id);
 struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param);
 
 #endif /* _WS_CONN_H */

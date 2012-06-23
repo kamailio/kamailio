@@ -299,7 +299,11 @@ int ws_handle_handshake(struct sip_msg *msg)
 		return 0;
 
 	/* Add the connection to the WebSocket connection table */
-	wsconn_add(con);
+	wsconn_add(con->id);
+
+	/* Make sure Kamailio core sends future messages on this connection
+	   directly to this module */
+	con->flags |= F_CONN_WS;
 
 	return 0;
 }

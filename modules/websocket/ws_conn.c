@@ -110,7 +110,7 @@ void wsconn_destroy(void)
 			ws_connection_t *wsc = wsconn_hash[h];
 			while (wsc)
 			{
-				ws_connection_t *next = wsc->next;
+				ws_connection_t *next = wsc->id_next;
 				_wsconn_rm(wsc);
 				wsc = next;
 			}
@@ -136,17 +136,13 @@ void wsconn_destroy(void)
 	}
 }
 
-int wsconn_add(struct tcp_connection *con)
+int wsconn_add(int id)
 {
 	int cur_cons, max_cons;
+	int id_hash = tcp_id_hash(id);
 	ws_connection_t *wsc;
 
-	if (!con)
-	{
-		LM_ERR("wsconn_add: null pointer\n");
-		return -1;
-	}
-
+	/* Allocate and fill in new WebSocket connection */
 	wsc = shm_malloc(sizeof(ws_connection_t));
 	if (wsc == NULL)
 	{
@@ -155,20 +151,14 @@ int wsconn_add(struct tcp_connection *con)
 	}
 	memset(wsc, 0, sizeof(ws_connection_t));
 
-	wsc->con = con;
-	wsc->id_hash = con->id_hash;
+	wsc->id = id;
+	wsc->id_hash = id_hash;
 	wsc->last_used = (int)time(NULL);
 	wsc->state = WS_S_OPEN;
 
-	/* Make sure Kamailio core sends future messages on this connection
-	   directly to this module */
-	con->flags |= F_CONN_WS;
-
+	/* Add to WebSocket connection table */
 	lock_get(wsconn_lock);
-	wsc->next = wsconn_hash[wsc->id_hash];
-	wsc->prev = NULL;
-	if (wsconn_hash[wsc->id_hash]) wsconn_hash[wsc->id_hash]->prev = wsc;
-	wsconn_hash[wsc->id_hash] = wsc;
+	wsconn_listadd(wsconn_hash[wsc->id_hash], wsc, id_next, id_prev);
 	lock_release(wsconn_lock);
 
 	/* Update connection statistics */
@@ -185,10 +175,7 @@ int wsconn_add(struct tcp_connection *con)
 
 static inline void _wsconn_rm(ws_connection_t *wsc)
 {
-	if (wsconn_hash[wsc->id_hash] == wsc)
-		wsconn_hash[wsc->id_hash] = wsc->next;
-	if (wsc->next) wsc->next->prev = wsc->prev;
-	if (wsc->prev) wsc->prev->next = wsc->next;
+	wsconn_listrm(wsconn_hash[wsc->id_hash], wsc, id_next, id_prev);
 	shm_free(wsc);
 	wsc = NULL;
 	update_stat(ws_current_connections, -1);
@@ -223,27 +210,31 @@ int wsconn_update(ws_connection_t *wsc)
 
 void wsconn_close_now(ws_connection_t *wsc)
 {
-	wsc->con->send_flags.f |= SND_F_CON_CLOSE;
-	wsc->con->state = S_CONN_BAD;
-	wsc->con->timeout = get_ticks_raw();
+	struct tcp_connection *con = tcpconn_get(wsc->id, 0, 0, 0, 0);
+
+	if (con == NULL)
+	{
+		LM_ERR("getting TCP/TLS connection\n");
+		return;
+	}
+
+	con->send_flags.f |= SND_F_CON_CLOSE;
+	con->state = S_CONN_BAD;
+	con->timeout = get_ticks_raw();
+
 	if (wsconn_rm(wsc) < 0)
 		LM_ERR("removing WebSocket connection\n");
 }
 
-ws_connection_t *wsconn_find(struct tcp_connection *con)
+ws_connection_t *wsconn_get(int id)
 {
+	int id_hash = tcp_id_hash(id);
 	ws_connection_t *wsc;
 
-	if (!con)
-	{
-		LM_ERR("wsconn_find: null pointer\n");
-		return NULL;
-	}
-
 	lock_get(wsconn_lock);
-	for (wsc = wsconn_hash[con->id_hash]; wsc; wsc = wsc->next)
+	for (wsc = wsconn_hash[id_hash]; wsc; wsc = wsc->id_next)
 	{
-		if (wsc->con->id == con->id)
+		if (wsc->id == id)
 		{
 			lock_release(wsconn_lock);
 			return wsc;
@@ -271,18 +262,21 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 		wsc = wsconn_hash[h];
 		while(wsc)
 		{
-			if (wsc->con)
+			struct tcp_connection *con =
+					tcpconn_get(wsc->id, 0, 0, 0, 0);
+
+			if (con)
 			{
-				src_proto = (wsc->con->rcv.proto== PROTO_TCP)
-						? "tcp" : "tls";
+				src_proto = (con->rcv.proto== PROTO_TCP)
+						? "ws" : "wss";
 				memset(src_ip, 0, IP6_MAX_STR_SIZE + 1);
-				ip_addr2sbuf(&wsc->con->rcv.src_ip, src_ip,
+				ip_addr2sbuf(&con->rcv.src_ip, src_ip,
 						IP6_MAX_STR_SIZE);
 
-				dst_proto = (wsc->con->rcv.proto == PROTO_TCP)
-						? "tcp" : "tls";
+				dst_proto = (con->rcv.proto == PROTO_TCP)
+						? "ws" : "wss";
 				memset(dst_ip, 0, IP6_MAX_STR_SIZE + 1);
-				ip_addr2sbuf(&wsc->con->rcv.dst_ip, src_ip,
+				ip_addr2sbuf(&con->rcv.dst_ip, src_ip,
 						IP6_MAX_STR_SIZE);
 
 				interval = (int)time(NULL) - wsc->last_used;
@@ -291,13 +285,13 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 						"%d: %s:%s:%hu -> %s:%s:%hu "
 						"(state: %s, "
 						"last used %ds ago)",
-						wsc->con->id,
+						wsc->id,
 						src_proto,
 						strlen(src_ip) ? src_ip : "*",
-						wsc->con->rcv.src_port,
+						con->rcv.src_port,
 						dst_proto,
 						strlen(dst_ip) ? dst_ip : "*",
-						wsc->con->rcv.dst_port,
+						con->rcv.dst_port,
 						wsconn_state_str[wsc->state],
 						interval) == 0)
 					return 0;
@@ -309,7 +303,7 @@ struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param)
 				}
 			}
 
-			wsc = wsc->next;
+			wsc = wsc->id_next;
 		}
 	}
 	lock_release(wsconn_lock);
