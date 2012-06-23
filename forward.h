@@ -145,7 +145,7 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 		else if (dst->proto == PROTO_TLS)
 			con = tcpconn_get(dst->id, 0, 0, 0, 0);
 #endif
-		if (con->flags & F_CONN_WS)
+		if (con && con->flags & F_CONN_WS)
 		{
 			memset(&wsev, 0, sizeof(ws_event_info_t));
 			wsev.type = SREV_TCP_WS_FRAME_OUT;
