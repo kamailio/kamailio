@@ -845,8 +845,8 @@ struct mi_root * mi_profile_list(struct mi_root *cmd_tree, void *param )
 					ph=ph->next;
 				}while( ph!=profile->entries[i].first );
 			}
-			lock_release( &profile->lock );
 		}
+		lock_release( &profile->lock );
 	} else {
 		/* check for value also */
 		lock_get( &profile->lock );
@@ -864,8 +864,8 @@ struct mi_root * mi_profile_list(struct mi_root *cmd_tree, void *param )
 					ph=ph->next;
 				}while( ph!=profile->entries[i].first );
 			}
-			lock_release( &profile->lock );
 		}
+		lock_release( &profile->lock );
 	}
 
 	return rpl_tree;
