@@ -2322,9 +2322,9 @@ static void ds_options_callback( struct cell *t, int type,
 	sip_msg_t *fmsg;
 	int state;
 
-	/* The Param does contain the group, in which the failed host
+	/* The param contains the group, in which the failed host
 	 * can be found.*/
-	if (!*ps->param)
+	if (ps->param==NULL)
 	{
 		LM_DBG("No parameter provided, OPTIONS-Request was finished"
 				" with code %d\n", ps->code);
