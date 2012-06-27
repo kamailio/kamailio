@@ -828,17 +828,9 @@ int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
 		query_vals[q_wuser_col].val.str_val= subs.watcher_user; 
 		query_vals[q_wdomain_col].val.str_val= subs.watcher_domain; 
 
-		/* if status is no longer ACTIVE, switch to terminated */
-		if(subs.status!=status && status==ACTIVE_STATUS)
-		{
-			subs.status = TERMINATED_STATUS;
-			subs.reason.s = get_status_str(TERMINATED_STATUS);
-			subs.reason.len = strlen(subs.reason.s);
-		}
-
 		update_vals[u_status_col].val.int_val= subs.status;
 		update_vals[u_reason_col].val.str_val= subs.reason;
-		
+
 		if (pa_dbf.use_table(pa_db, &watchers_table) < 0) 
 		{
 			LM_ERR( "in use_table\n");

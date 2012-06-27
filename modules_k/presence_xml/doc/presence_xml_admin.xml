@@ -288,7 +288,36 @@ modparam("presence_xml", "passive_mode", 1)
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>xcapauth_userdel_reason</varname>(str)</title>
+		<para>
+		This parameter represents the reason that will be included in the
+		Subscription-State header of the Notify when a rule is no longer found
+		in the XCAP pres-auth document for a user that was previously allowed.
+		The Subscription state in this case switches to "terminated". Because
+		it is not clear which reason is most appropriate in this case from
+		the ones defined by the RFC 3265, this parameter offers the possibility
+		for the admin to decide which one he wishes to use.
+		</para>
+		<para>
+			<emphasis>Default value: <quote>probation</quote> </emphasis> . Since 
+			probation also accepts a retry-after parameter to specify after at
+			least how may seconds the client should reattempt to resubscribe,
+			you can include this in the parameter also.
+		</para>
+		<example>
+		<title>Set <varname>xcapauth_userdel_reason</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence_xml", "xcapauth_userdel_reason", "probation;retry-after=30")
+modparam("presence_xml", "xcapauth_userdel_reason", "rejected")
+...
+</programlisting>
+		</example>
+	</section>
 </section>
+
 
 <section>
 	<title>Functions</title>
