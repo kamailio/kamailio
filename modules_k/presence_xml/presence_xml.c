@@ -94,6 +94,7 @@ int disable_presence = 0;
 int disable_winfo    = 0;
 int disable_bla      = 1;
 int passive_mode     = 0;
+str xcapauth_userdel_reason = str_init("probation");
 
 /** SL API structure */
 sl_api_t slb;
@@ -126,6 +127,7 @@ static param_export_t params[]={
 	{ "disable_winfo",		INT_PARAM, &disable_winfo },
 	{ "disable_bla",		INT_PARAM, &disable_bla },
 	{ "passive_mode",		INT_PARAM, &passive_mode },
+	{ "xcapauth_userdel_reason", STR_PARAM, &xcapauth_userdel_reason.s},
 	{ 0, 0, 0}
 };
 
@@ -167,6 +169,8 @@ static int mod_init(void)
 		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
+
+	xcapauth_userdel_reason.len = strlen(xcapauth_userdel_reason.s);
 
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n",ZSW(db_url.s),db_url.len, db_url.s);
