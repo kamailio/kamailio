@@ -391,6 +391,7 @@ extern char *finame;
 %token TCP
 %token TLS
 %token SCTP
+%token WS
 
 /* config vars. */
 %token DEBUG_V
@@ -2203,16 +2204,20 @@ exp_elem:
 	| eint_op error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
 	| PROTO equalop proto %prec EQUAL_T
 		{ $$=mk_elem($2, PROTO_O, 0, NUMBER_ST, (void*)$3 ); }
+	| PROTO equalop WS %prec EQUAL_T
+		{ $$=mk_elem($2, PROTO_O, 0, WEBSOCKET_ST, (void *)PROTO_WS ); }
 	| PROTO equalop rval_expr %prec EQUAL_T
 		{ $$=mk_elem($2, PROTO_O, 0, RVE_ST, $3 ); }
 	| PROTO equalop error
-		{ $$=0; yyerror("protocol expected (udp, tcp, tls or sctp)"); }
+		{ $$=0; yyerror("protocol expected (udp, tcp, tls, sctp, or ws)"); }
 	| SNDPROTO equalop proto %prec EQUAL_T
 		{ $$=mk_elem($2, SNDPROTO_O, 0, NUMBER_ST, (void*)$3 ); }
+	| SNDPROTO equalop WS %prec EQUAL_T
+		{ $$=mk_elem($2, SNDPROTO_O, 0, WEBSOCKET_ST, (void *)PROTO_WS ); }
 	| SNDPROTO equalop rval_expr %prec EQUAL_T
 		{ $$=mk_elem($2, SNDPROTO_O, 0, RVE_ST, $3 ); }
 	| SNDPROTO equalop error
-		{ $$=0; yyerror("protocol expected (udp, tcp, tls or sctp)"); }
+		{ $$=0; yyerror("protocol expected (udp, tcp, tls, sctp, ws)"); }
 	| eip_op strop ipnet %prec EQUAL_T { $$=mk_elem($2, $1, 0, NET_ST, $3); }
 	| eip_op strop rval_expr %prec EQUAL_T {
 			s_tmp.s=0;

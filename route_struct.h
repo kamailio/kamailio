@@ -136,7 +136,8 @@ enum _operand_subtype{
 		STRING_RVE_ST /* RVE converted to a string (fparam hack) */,
 		RVE_FREE_FIXUP_ST /* (str)RVE fixed up by a reversable fixup */,
 		FPARAM_DYN_ST /* temporary only (fparam hack) */,
-		CFG_GROUP_ST
+		CFG_GROUP_ST,
+		WEBSOCKET_ST
 };
 
 typedef enum _expr_l_type expr_l_type;

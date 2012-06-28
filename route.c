@@ -1231,6 +1231,7 @@ inline static int comp_num(int op, long left, int rtype, union exp_op* r,
 	pv_value_t pval;
 	avp_t* avp;
 	int right;
+	struct tcp_connection *con;
 
 	if (unlikely(op==NO_OP)) return !(!left);
 	switch(rtype){
@@ -1260,6 +1261,14 @@ inline static int comp_num(int op, long left, int rtype, union exp_op* r,
 				return (op == DIFF_OP); /* not found or invalid type */
 			}
 			break;
+		case WEBSOCKET_ST:
+			if ((con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0)) != NULL) {
+				if (con->flags & F_CONN_WS)
+					left = PROTO_WS;
+			}
+			right = r->numval;
+			break;
+
 		default:
 			LOG(L_CRIT, "BUG: comp_num: Invalid right operand (%d)\n", rtype);
 			return E_BUG;
