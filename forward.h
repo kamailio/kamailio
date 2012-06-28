@@ -127,7 +127,9 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 	struct dest_info new_dst;
 	str outb;
 #ifdef USE_TCP 
-	union sockaddr_union* from;
+	int port;
+	struct ip_addr ip;
+	union sockaddr_union* from = NULL;
 	union sockaddr_union local_addr;
 	struct tcp_connection *con = NULL;
 	struct ws_event_info wsev;
@@ -138,21 +140,40 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 	sr_event_exec(SREV_NET_DATA_OUT, (void*)&outb);
 
 #ifdef USE_TCP
-	if (unlikely(sr_event_enabled(SREV_TCP_WS_FRAME_OUT))) {
-		if (dst->proto == PROTO_TCP)
-			con = tcpconn_get(dst->id, 0, 0, 0, 0);
+	if (dst->proto == PROTO_TCP
 #ifdef USE_TLS
-		else if (dst->proto == PROTO_TLS)
-			con = tcpconn_get(dst->id, 0, 0, 0, 0);
+		|| dst->proto == PROTO_TLS
 #endif
-		if (con && con->flags & F_CONN_WS)
-		{
-			memset(&wsev, 0, sizeof(ws_event_info_t));
-			wsev.type = SREV_TCP_WS_FRAME_OUT;
-			wsev.buf = outb.s;
-			wsev.len = outb.len;
-			wsev.id = dst->id;
-			return sr_event_exec(SREV_TCP_WS_FRAME_OUT, (void *) &wsev);
+	) {
+		if (unlikely(dst->send_flags.f & SND_F_FORCE_SOCKET
+				&& dst->send_sock)) {
+			local_addr = dst->send_sock->su;
+			su_setport(&local_addr, 0); /* any local port will do */
+			from = &local_addr;
+		}
+
+		if (unlikely(sr_event_enabled(SREV_TCP_WS_FRAME_OUT))) {
+			port = su_getport(&dst->to);
+			if (likely(port)) {
+				su2ip_addr(&ip, &dst->to);
+				con = tcpconn_get(dst->id, &ip, port, from, 0);
+			}
+			else if (likely(dst->id))
+				con = tcpconn_get(dst->id, 0, 0, 0, 0);
+			else {
+				LM_CRIT("BUG: msg_send called with null_id & to\n");
+				return -1;
+			}
+
+			if (con && con->flags & F_CONN_WS)
+			{
+				memset(&wsev, 0, sizeof(ws_event_info_t));
+				wsev.type = SREV_TCP_WS_FRAME_OUT;
+				wsev.buf = outb.s;
+				wsev.len = outb.len;
+				wsev.id = con->id;
+				return sr_event_exec(SREV_TCP_WS_FRAME_OUT, (void *) &wsev);
+			}
 		}
 	}
 #endif
@@ -182,13 +203,6 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 					" support is disabled\n");
 			goto error;
 		}else{
-			from=0;
-			if (unlikely((dst->send_flags.f & SND_F_FORCE_SOCKET) &&
-						dst->send_sock)) {
-				local_addr=dst->send_sock->su;
-				su_setport(&local_addr, 0); /* any local port will do */
-				from=&local_addr;
-			}
 			if (unlikely(tcp_send(dst, from, outb.s, outb.len)<0)){
 				STATS_TX_DROPS;
 				LOG(L_ERR, "msg_send: ERROR: tcp_send failed\n");
@@ -204,13 +218,6 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 					" support is disabled\n");
 			goto error;
 		}else{
-			from=0;
-			if (unlikely((dst->send_flags.f & SND_F_FORCE_SOCKET) &&
-						dst->send_sock)) {
-				local_addr=dst->send_sock->su;
-				su_setport(&local_addr, 0); /* any local port will do */
-				from=&local_addr;
-			}
 			if (unlikely(tcp_send(dst, from, outb.s, outb.len)<0)){
 				STATS_TX_DROPS;
 				LOG(L_ERR, "msg_send: ERROR: tcp_send failed\n");
