@@ -193,7 +193,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		LM_ERR("allocating send buffer from pkg memory\n");
 		return -1;
 	}
-	memset(send_buf, 0, frame_length);
+	memset(send_buf, 0, sizeof(unsigned char) * frame_length);
 	send_buf[pos++] = 0x80 | (frame->opcode & 0xff);
 	if (extended_length == 0)
 		send_buf[pos++] = (frame->payload_len & 0xff);
@@ -596,7 +596,7 @@ int ws_frame_transmit(void *data)
 	/* Can't be sure whether this message is UTF-8 or not so check to see
 	   if it "might" be UTF-8 and send as binary if it definitely isn't */
 	frame.opcode = (u8_check((uint8_t *) wsev->buf, wsev->len) == NULL) ?
-				OPCODE_TEXT_FRAME: OPCODE_BINARY_FRAME;
+				OPCODE_TEXT_FRAME : OPCODE_BINARY_FRAME;
 	frame.payload_len = wsev->len;
 	frame.payload_data = wsev->buf;
 	frame.wsc = wsconn_get(wsev->id);
