@@ -65,6 +65,8 @@ int bind_usrloc(usrloc_api_t* api)
 		return -1;
 	}
 
+	memset(api, 0, sizeof(usrloc_api_t));
+
 	api->register_udomain   = register_udomain;
 	api->get_all_ucontacts  = get_all_ucontacts;
 	api->insert_urecord     = insert_urecord;
@@ -78,6 +80,11 @@ int bind_usrloc(usrloc_api_t* api)
 	api->get_ucontact       = get_ucontact;
 	api->update_ucontact    = update_ucontact;
 	api->register_ulcb      = register_ulcb;
+
+	api->get_udomain              = 0;
+	api->get_urecord_by_ruid      = 0;
+	api->get_ucontact_by_instance = 0;
+	api->get_aorhash              = 0;
 
 	api->use_domain = use_domain;
 	api->db_mode    = db_mode;
