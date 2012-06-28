@@ -1024,26 +1024,20 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 	struct tcp_req *r;
 
 	r=&c->req;
-	if (unlikely(r->parsed < r->pos))
-	{
-		LM_ERR("next frame...\n");
-		bytes = 0;
-		size = r->pos - r->parsed;
-	}
-	else
-	{
 #ifdef USE_TLS
-		if (unlikely(c->type == PROTO_TLS))
-			bytes = tls_read(c, read_flags);
-		else
+	if (unlikely(c->type == PROTO_TLS))
+		bytes = tls_read(c, read_flags);
+	else
 #endif
-			bytes = tcp_read(c, read_flags);
+		bytes = tcp_read(c, read_flags);
 
-		if (bytes <= 0)
+	if (bytes <= 0)
+	{
+		if (likely(r->parsed >= r->pos))
 			return 0;
-
-		size = bytes;
 	}
+
+	size = r->pos - r->parsed;
 
 	p = r->parsed;
 	pos = 0;
