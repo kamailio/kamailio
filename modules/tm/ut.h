@@ -83,6 +83,7 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 				case PROTO_UDP:/* transport specified explicitly */
 #ifdef USE_TCP
 				case PROTO_TCP:
+				case PROTO_WS:
 #endif
 #ifdef USE_TLS
 				case PROTO_TLS:
@@ -99,6 +100,7 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 		case PROTO_UDP: /* some protocol has been forced -- take it */
 #ifdef USE_TCP
 		case PROTO_TCP:
+		case PROTO_WS:
 #endif
 #ifdef USE_TLS
 		case PROTO_TLS:
