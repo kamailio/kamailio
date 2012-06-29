@@ -157,7 +157,7 @@ int load_xtm(tm_xapi_t *xapi)
 
 	memset(xapi, 0, sizeof(tm_xapi_t));
 
-	xapi->t_on_failure    = t_on_negative;
+	xapi->t_on_failure    = t_on_failure;
 	xapi->t_on_branch     = t_on_branch;
 	xapi->t_on_reply      = t_on_reply;
 	xapi->t_check_trans   = t_check_trans;

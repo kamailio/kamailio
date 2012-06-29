@@ -106,6 +106,7 @@ Juha Heinanen
         1.5.43. t_replicate(params)
         1.5.44. t_relay_to(proxy, flags)
         1.5.45. t_set_no_e2e_cancel_reason(0|1)
+        1.5.46. t_is_set(target)
 
    1.6. TM Module API
 
@@ -2145,6 +2146,25 @@ route {
 opying
 ...
 }
+
+1.5.46. t_is_set(target)
+
+   Return true if the attribute specified by 'target' is set for
+   transaction.
+
+   The target parameter can be:
+     * branch_route - the function returns true if a branch route is set
+       to be executed.
+     * failure_route - the function returns true if a failure route is set
+       to be executed.
+     * onreply_route - the function returns true if an onreply route is
+       set to be executed.
+
+   Example 79. t_replicate usage
+...
+if(!t_is_set("failure_route"))
+    LM_DBG("no failure route will be executed for current transaction\n");
+...
 
 1.6. TM Module API
 

@@ -138,7 +138,7 @@ void t_on_branch( unsigned int go_to )
 	if (!t || t==T_UNDEFINED ) {
 		goto_on_branch=go_to;
 	} else {
-		get_t()->on_branch = go_to;
+		t->on_branch = go_to;
 	}
 }
 

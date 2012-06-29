@@ -432,7 +432,7 @@ typedef struct cell
 	short relayed_reply_branch;
 
 	/* the route to take if no final positive reply arrived */
-	unsigned short on_negative;
+	unsigned short on_failure;
 	/* the onreply_route to be processed if registered to do so */
 	unsigned short on_reply;
 	 /* The route to take for each downstream branch separately */
