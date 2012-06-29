@@ -172,9 +172,9 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		/* check for the alias stuff */
 #ifdef USE_TCP
 		if (msg->via1->alias && cfg_get(tcp, tcp_cfg, accept_aliases) && 
-				(((rcv_info->proto==PROTO_TCP) && !tcp_disable)
+				(((rcv_info->proto==PROTO_TCP || rcv_info->proto==PROTO_WS) && !tcp_disable)
 #ifdef USE_TLS
-					|| ((rcv_info->proto==PROTO_TLS) && !tls_disable)
+					|| ((rcv_info->proto==PROTO_TLS || rcv_info->proto==PROTO_WSS) && !tls_disable)
 #endif
 				)
 			){
@@ -185,7 +185,12 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 			}
 		}
 #endif
-			
+
+		/* Force connection reuse for responses if the message arrived on a
+		   WebSocket */
+		if (rcv_info->proto==PROTO_WS || rcv_info->proto==PROTO_WSS)
+			msg->rpl_send_flags.f |= SND_F_FORCE_CON_REUSE;
+
 	/*	skip: */
 		DBG("preparing to run routing scripts...\n");
 #ifdef  STATS
