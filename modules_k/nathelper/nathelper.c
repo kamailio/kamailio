@@ -888,7 +888,7 @@ add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
     append_str(at, port, len);
     /* proto */
     append_chr(at, '~');
-    if ((msg->rcv.proto < PROTO_UDP) || (msg->rcv.proto > PROTO_SCTP)) {
+    if ((msg->rcv.proto < PROTO_UDP) || (msg->rcv.proto > PROTO_WSS)) {
 	LM_ERR("invalid transport protocol\n");
 	goto err;
     }
@@ -1841,6 +1841,12 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 	case PROTO_SCTP:
 		proto.s = "SCTP";
 		proto.len = 4;
+		break;
+
+	case PROTO_WS:
+	case PROTO_WSS:
+		proto.s = "WS";
+		proto.len = 2;
 		break;
 
 	default:
