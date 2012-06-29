@@ -260,6 +260,11 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		from = &local_addr;
 	}
 
+	/* Regardless of what has been set before _always_ use existing
+	   connections for WebSockets.  This is required because a WebSocket
+	   server (which Kamailio is) CANNOT create connections. */
+	dst.send_flags.f |= SND_F_FORCE_CON_REUSE;
+
 	if (tcp_send(&dst, from, send_buf, frame_length) < 0)
 	{
 		STATS_TX_DROPS;
