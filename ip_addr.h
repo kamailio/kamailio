@@ -52,7 +52,7 @@
 
 #include "dprint.h"
 
-enum sip_protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_TLS, PROTO_SCTP, PROTO_OTHER, PROTO_WS /* Deliberately after PROTO_(OTHER|LAST) */ };
+enum sip_protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_TLS, PROTO_SCTP, PROTO_WS, PROTO_WSS, PROTO_OTHER };
 #define PROTO_LAST PROTO_OTHER
 
 #ifdef USE_COMP

@@ -2394,6 +2394,8 @@ char* via_builder( unsigned int *len,
 		memcpy(line_buf+MY_VIA_LEN-4, "TLS ", 4);
 	}else if (send_info->proto==PROTO_SCTP){
 		memcpy(line_buf+MY_VIA_LEN-4, "SCTP ", 5);
+	}else if (send_info->proto==PROTO_WS){
+		memcpy(line_buf+MY_VIA_LEN-4, "WS ", 2);
 	}else{
 		LOG(L_CRIT, "BUG: via_builder: unknown proto %d\n", send_info->proto);
 		return 0;

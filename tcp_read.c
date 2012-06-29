@@ -1025,7 +1025,7 @@ static int tcp_read_ws(struct tcp_connection *c, int* read_flags)
 
 	r=&c->req;
 #ifdef USE_TLS
-	if (unlikely(c->type == PROTO_TLS))
+	if (unlikely(c->type == PROTO_WSS))
 		bytes = tls_read(c, read_flags);
 	else
 #endif
@@ -1168,7 +1168,7 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 			return msrp_process_msg(tcpbuf, len, rcv_info, con);
 #endif
 #ifdef READ_WS
-		if(unlikely(con->flags & F_CONN_WS))
+		if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
 			return ws_process_msg(tcpbuf, len, rcv_info, con);
 #endif
 
@@ -1216,7 +1216,7 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 		return msrp_process_msg(buf, len, rcv_info, con);
 #endif
 #ifdef READ_WS
-	if(unlikely(con->flags & F_CONN_WS))
+	if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
 		return ws_process_msg(buf, len, rcv_info, con);
 #endif
 	return receive_msg(buf, len, rcv_info);
@@ -1226,7 +1226,7 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 		return msrp_process_msg(tcpbuf, len, rcv_info, con);
 #endif
 #ifdef READ_WS
-	if(unlikely(con->flags & F_CONN_WS))
+	if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
 		return ws_process_msg(tcpbuf, len, rcv_info, con);
 #endif
 	return receive_msg(tcpbuf, len, rcv_info);
@@ -1252,7 +1252,7 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 again:
 		if (likely(req->error==TCP_REQ_OK)){
 #ifdef READ_WS
-			if (unlikely(con->flags&F_CONN_WS))
+			if (unlikely(con->type == PROTO_WS || con->type == PROTO_WSS))
 				bytes=tcp_read_ws(con, read_flags);
 			else
 #endif
@@ -1372,7 +1372,7 @@ again:
 			}else
 #endif
 #ifdef READ_WS
-			if (unlikely(con->flags&F_CONN_WS)){
+			if (unlikely(con->type == PROTO_WS || con->type == PROTO_WSS)){
 				ret = receive_tcp_msg(req->start, req->parsed-req->start,
 									&con->rcv, con);
 			}else

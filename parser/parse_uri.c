@@ -106,7 +106,9 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 					/* tls */
 					      VTLS_L, VTLS_S_FIN,
 					/* sctp */
-					VS_S, VS_C, VS_T, VS_P_FIN
+					VS_S, VS_C, VS_T, VS_P_FIN,
+					/* ws */
+					VW_W, VW_S_FIN
 	};
 	register enum states state;
 	char* s;
@@ -701,6 +703,11 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 						v=p;
 						state=VS_S;
 						break;
+					case 'w':
+					case 'W':
+						v=p;
+						state=VW_W;
+						break;
 					default:
 						v=p;
 						state=URI_VAL_P;
@@ -728,6 +735,9 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			value_switch(VS_C, 't', 'T', VS_T);
 			value_switch(VS_T, 'p', 'P', VS_P_FIN);
 			transport_fin(VS_P_FIN, PROTO_SCTP);
+			/* ws */
+			value_switch(VW_W, 's', 'S', VW_S_FIN);
+			transport_fin(VW_S_FIN, PROTO_WS);
 			
 			/* ttl */
 			param_switch(PTTL_T2,  'l', 'L', PTTL_L);
@@ -1094,6 +1104,7 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 		case VS_S:
 		case VS_C:
 		case VS_T:
+		case VW_W:
 			uri->params.s=s;
 			uri->params.len=p-s;
 			param_set(b, v);
@@ -1138,6 +1149,12 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			uri->params.len=p-s;
 			param_set(b, v);
 			uri->proto=PROTO_SCTP;
+			break;
+		case VW_S_FIN:
+			uri->params.s=s;
+			uri->params.len=p-s;
+			param_set(b, v);
+			uri->proto=PROTO_WS;
 			break;
 #ifdef USE_COMP
 		case VCOMP_SIGC_P_FIN:
@@ -1393,6 +1410,7 @@ static str	s_udp  = STR_STATIC_INIT("udp");
 static str	s_tcp  = STR_STATIC_INIT("tcp");
 static str	s_tls  = STR_STATIC_INIT("tls");
 static str	s_sctp = STR_STATIC_INIT("sctp");
+static str	s_ws   = STR_STATIC_INIT("ws");
 
 inline void proto_type_to_str(unsigned short type, str *s) {
 	switch (type) {
@@ -1407,6 +1425,9 @@ inline void proto_type_to_str(unsigned short type, str *s) {
 		break;
 	case PROTO_SCTP:
 		*s = s_sctp;
+		break;
+	case PROTO_WS:
+		*s = s_ws;
 		break;
 	default:
 		*s = s_null;

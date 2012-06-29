@@ -1374,13 +1374,13 @@ parse_again:
 					case WS_WSS2:
 						/* finished proto parsing */
 						vb->transport.len=tmp-vb->transport.s;
-						vb->proto=PROTO_TCP;
+						vb->proto=PROTO_WS;
 						state=F_HOST; /* start looking for host*/
 						goto main_via;
 					case FIN_WSS:
 						/* finished proto parsing */
 						vb->transport.len=tmp-vb->transport.s;
-						vb->proto=PROTO_TLS;
+						vb->proto=PROTO_WSS;
 						state=F_HOST; /* start looking for host*/
 						goto main_via;
 					case OTHER_PROTO:
@@ -1460,14 +1460,14 @@ parse_again:
 					case WS_WSS2:
 						/* finished proto parsing */
 						vb->transport.len=tmp-vb->transport.s;
-						vb->proto=PROTO_TCP;
+						vb->proto=PROTO_WS;
 						state=F_LF;
 						saved_state=F_HOST; /* start looking for host*/
 						goto main_via;
 					case FIN_WSS:
 						/* finished proto parsing */
 						vb->transport.len=tmp-vb->transport.s;
-						vb->proto=PROTO_TLS;
+						vb->proto=PROTO_WSS;
 						state=F_LF;
 						saved_state=F_HOST; /* start looking for host*/
 						goto main_via;
@@ -1552,13 +1552,13 @@ parse_again:
 						goto main_via;
 					case WS_WSS2:
 						vb->transport.len=tmp-vb->transport.s;
-						vb->proto=PROTO_TCP;
+						vb->proto=PROTO_WS;
 						state=F_CR;
 						saved_state=F_HOST;
 						goto main_via;
 					case FIN_WSS:
 						vb->transport.len=tmp-vb->transport.s;
-						vb->proto=PROTO_TLS;
+						vb->proto=PROTO_WSS;
 						state=F_CR;
 						saved_state=F_HOST;
 						goto main_via;

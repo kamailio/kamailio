@@ -319,6 +319,7 @@ not_forced:
 	 * eg: ipv4 -> ipv6 or ipv6 -> ipv4) */
 	switch(proto){
 #ifdef USE_TCP
+		case PROTO_WS:
 		case PROTO_TCP:
 		/* on tcp just use the "main address", we don't really now the
 		 * sending address (we can find it out, but we'll need also to see

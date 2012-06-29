@@ -476,6 +476,7 @@ struct socket_info** get_sock_info_list(unsigned short proto)
 			return &udp_listen;
 			break;
 		case PROTO_TCP:
+		case PROTO_WS:
 #ifdef USE_TCP
 			return &tcp_listen;
 #endif

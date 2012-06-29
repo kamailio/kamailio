@@ -392,6 +392,7 @@ extern char *finame;
 %token TLS
 %token SCTP
 %token WS
+%token WSS
 
 /* config vars. */
 %token DEBUG_V
@@ -657,7 +658,7 @@ extern char *finame;
 %type <sockid>  id_lst
 %type <sockid>  phostport
 %type <sockid>  listen_phostport
-%type <intval> proto port
+%type <intval> proto eqproto port
 %type <intval> equalop strop cmpop rve_cmpop rve_equalop
 %type <intval> uri_type
 %type <attr> attr_id
@@ -770,6 +771,15 @@ proto:
 	| TCP	{ $$=PROTO_TCP; }
 	| TLS	{ $$=PROTO_TLS; }
 	| SCTP	{ $$=PROTO_SCTP; }
+	| STAR	{ $$=0; }
+	;
+eqproto:
+	UDP	{ $$=PROTO_UDP; }
+	| TCP	{ $$=PROTO_TCP; }
+	| TLS	{ $$=PROTO_TLS; }
+	| SCTP	{ $$=PROTO_SCTP; }
+	| WS	{ $$=PROTO_WS; }
+	| WSS	{ $$=PROTO_WSS; }
 	| STAR	{ $$=0; }
 	;
 port:
@@ -2202,22 +2212,18 @@ exp_elem:
 	| eint_op cmpop error   { $$=0; yyerror("number expected"); }
 	| eint_op equalop error { $$=0; yyerror("number expected"); }
 	| eint_op error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
-	| PROTO equalop proto %prec EQUAL_T
+	| PROTO equalop eqproto %prec EQUAL_T
 		{ $$=mk_elem($2, PROTO_O, 0, NUMBER_ST, (void*)$3 ); }
-	| PROTO equalop WS %prec EQUAL_T
-		{ $$=mk_elem($2, PROTO_O, 0, WEBSOCKET_ST, (void *)PROTO_WS ); }
 	| PROTO equalop rval_expr %prec EQUAL_T
 		{ $$=mk_elem($2, PROTO_O, 0, RVE_ST, $3 ); }
 	| PROTO equalop error
-		{ $$=0; yyerror("protocol expected (udp, tcp, tls, sctp, or ws)"); }
-	| SNDPROTO equalop proto %prec EQUAL_T
+		{ $$=0; yyerror("protocol expected (udp, tcp, tls, sctp, ws, or wss)"); }
+	| SNDPROTO equalop eqproto %prec EQUAL_T
 		{ $$=mk_elem($2, SNDPROTO_O, 0, NUMBER_ST, (void*)$3 ); }
-	| SNDPROTO equalop WS %prec EQUAL_T
-		{ $$=mk_elem($2, SNDPROTO_O, 0, WEBSOCKET_ST, (void *)PROTO_WS ); }
 	| SNDPROTO equalop rval_expr %prec EQUAL_T
 		{ $$=mk_elem($2, SNDPROTO_O, 0, RVE_ST, $3 ); }
 	| SNDPROTO equalop error
-		{ $$=0; yyerror("protocol expected (udp, tcp, tls, sctp, ws)"); }
+		{ $$=0; yyerror("protocol expected (udp, tcp, tls, sctp, ws, or wss)"); }
 	| eip_op strop ipnet %prec EQUAL_T { $$=mk_elem($2, $1, 0, NET_ST, $3); }
 	| eip_op strop rval_expr %prec EQUAL_T {
 			s_tmp.s=0;

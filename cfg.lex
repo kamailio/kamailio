@@ -526,6 +526,7 @@ TCP			"tcp"|"TCP"
 TLS			"tls"|"TLS"
 SCTP		"sctp"|"SCTP"
 WS		"ws"|"WS"
+WSS		"wss"|"WSS"
 INET		"inet"|"INET"
 INET6		"inet6"|"INET6"
 SSLv23			"sslv23"|"SSLv23"|"SSLV23"
@@ -1165,6 +1166,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{TLS}			{ count(); return TLS; }
 <INITIAL>{SCTP}			{ count(); return SCTP; }
 <INITIAL>{WS}			{ count(); return WS; }
+<INITIAL>{WSS}			{ count(); return WSS; }
 <INITIAL>{INET}			{ count(); yylval.intval=AF_INET;
 							yy_number_str=yytext; return NUMBER; }
 <INITIAL>{INET6}		{ count();
