@@ -241,6 +241,7 @@ MODULE_VERSION
 #define	NAT_UAC_TEST_S_1918	0x08
 #define	NAT_UAC_TEST_RPORT	0x10
 #define	NAT_UAC_TEST_O_1918	0x20
+#define NAT_UAC_TEST_WS		0x40
 
 
 #define DEFAULT_RTPP_SET_ID		0
@@ -1277,6 +1278,13 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 	 * test for occurrences of RFC1918 addresses in source address
 	 */
 	if ((tests & NAT_UAC_TEST_O_1918) && is1918addr_ip(&msg->rcv.src_ip))
+		return 1;
+
+	/*
+ 	 * tests prototype to check whether the message arrived on a WebSocket
+ 	 */
+	if ((tests & NAT_UAC_TEST_WS)
+		&& (msg->rcv.proto == PROTO_WS || msg->rcv.proto == PROTO_WSS))
 		return 1;
 
 	/* no test succeeded */

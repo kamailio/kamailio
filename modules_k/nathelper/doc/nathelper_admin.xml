@@ -540,6 +540,10 @@ fix_nated_register();
 			<emphasis>32</emphasis> -  test if the source IP address of
 			signaling is a RFC1918 address
 			</para></listitem>
+			<listitem><para>
+			<emphasis>64</emphasis> -  test if the source connection of
+			signaling is a WebSocket
+			</para></listitem>
 			</itemizedlist>
 		<para>
 		All flags can be bitwise combined, the test returns true if any of 
