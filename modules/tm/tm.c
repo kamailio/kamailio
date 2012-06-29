@@ -1039,7 +1039,12 @@ inline static int str2proto(char *s, int len) {
 		return PROTO_TLS;	
 	else if (len == 4 && !strncasecmp(s, "sctp", 4))
 		return PROTO_SCTP;
-	else
+	else if (len == 2 && !strncasecmp(s, "ws", 2))
+		return PROTO_WS;
+	else if (len == 3 && !strncasecmp(s, "wss", 3)) {
+		LM_WARN("\"wss\" used somewhere...\n");
+		return PROTO_WS;
+	} else
 		return PROTO_NONE;
 }
 

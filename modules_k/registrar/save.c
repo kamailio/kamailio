@@ -440,7 +440,7 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a)
 	flags = mem_only;
 #ifdef USE_TCP
 	if ( (_m->flags&tcp_persistent_flag) &&
-	(_m->rcv.proto==PROTO_TCP||_m->rcv.proto==PROTO_TLS)) {
+	(_m->rcv.proto==PROTO_TCP||_m->rcv.proto==PROTO_TLS||_m->rcv.proto==PROTO_WS||_m->rcv.proto==PROTO_WSS)) {
 		e_max = 0;
 		tcp_check = 1;
 	} else {
@@ -505,7 +505,7 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a)
 			if (parse_uri( _c->uri.s, _c->uri.len, &uri)<0) {
 				LM_ERR("failed to parse contact <%.*s>\n", 
 						_c->uri.len, _c->uri.s);
-			} else if (uri.proto==PROTO_TCP || uri.proto==PROTO_TLS) {
+			} else if (uri.proto==PROTO_TCP || uri.proto==PROTO_TLS || uri.proto==PROTO_WS || uri.proto==PROTO_WSS) {
 				if (e_max) {
 					LM_WARN("multiple TCP contacts on single REGISTER\n");
 					if (expires>e_max) e_max = expires;
@@ -637,7 +637,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 
 #ifdef USE_TCP
 	if ( (_m->flags&tcp_persistent_flag) &&
-	(_m->rcv.proto==PROTO_TCP||_m->rcv.proto==PROTO_TLS)) {
+	(_m->rcv.proto==PROTO_TCP||_m->rcv.proto==PROTO_TLS||_m->rcv.proto==PROTO_WS||_m->rcv.proto==PROTO_WSS)) {
 		e_max = -1;
 		tcp_check = 1;
 	} else {
@@ -742,7 +742,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 			if (parse_uri( _c->uri.s, _c->uri.len, &uri)<0) {
 				LM_ERR("failed to parse contact <%.*s>\n", 
 						_c->uri.len, _c->uri.s);
-			} else if (uri.proto==PROTO_TCP || uri.proto==PROTO_TLS) {
+			} else if (uri.proto==PROTO_TCP || uri.proto==PROTO_TLS || uri.proto==PROTO_WS || uri.proto==PROTO_WSS) {
 				if (e_max>0) {
 					LM_WARN("multiple TCP contacts on single REGISTER\n");
 				}

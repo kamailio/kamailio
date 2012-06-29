@@ -103,6 +103,12 @@ int send_2XX_reply(struct sip_msg * msg, int reply_code, int lexpire,
 				strncpy(tmp.s, ";transport=sctp", 15);
 				tmp.s += 15;
 			break;
+			case PROTO_WS:
+			case PROTO_WSS:
+				strncpy(tmp.s, ";transport=ws", 13);
+				tmp.s += 13;
+				hdr_append.len -= 2;
+			break;
 			default:
 				hdr_append.len -= 15;
 		}

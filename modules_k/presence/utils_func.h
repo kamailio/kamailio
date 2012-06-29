@@ -117,6 +117,11 @@ static inline int ps_fill_local_contact(struct sip_msg* msg, str *contact)
 		proto= "sctp";
 		plen = 4;
 	}
+	else	
+	if(msg->rcv.proto== PROTO_WS || msg->rcv.proto== PROTO_WSS) {
+		proto= "ws";
+		plen = 2;
+	}
 	else
 	{
 		LM_ERR("unsupported proto\n");

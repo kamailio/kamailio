@@ -141,6 +141,10 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 		np->proto = PROTO_TLS;
 	} else if (strcasecmp(proto, "sctp") == 0) {
 		np->proto = PROTO_SCTP;
+	} else if (strcasecmp(proto, "ws") == 0) {
+		np->proto = PROTO_WS;
+	} else if (strcasecmp(proto, "wss") == 0) {
+		np->proto = PROTO_WSS;
 	} else if (strcasecmp(proto, "none") == 0) {
 		shm_free(np);
 		return 1;

@@ -482,6 +482,7 @@ struct socket_info** get_sock_info_list(unsigned short proto)
 #endif
 			break;
 		case PROTO_TLS:
+		case PROTO_WSS:
 #ifdef USE_TLS
 			return &tls_listen;
 #endif
@@ -2052,6 +2053,9 @@ void init_proto_order()
 			if (nxt_proto[r]==PROTO_SCTP)
 				nxt_proto[r]=nxt_proto[PROTO_SCTP];
 		}
+
+	/* Deliberately skipping PROTO_WS and PROTO_WSS here as these
+	   are just upgraded TCP and TLS connections */
 }
 
 

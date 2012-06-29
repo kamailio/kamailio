@@ -406,6 +406,32 @@ int check_via_protocol(struct sip_msg* _msg) {
 				return SANITY_CHECK_FAILED;
 			}
 			break;
+		case PROTO_WS:
+			if (memcmp(_msg->via1->transport.s, "WS", 2) != 0) {
+				if (_msg->REQ_METHOD != METHOD_ACK) {
+					if (sanity_reply(_msg, 400,
+							"Transport Missmatch in Topmost Via") < 0) {
+						LOG(L_WARN, "sanity_check(): check_via_protocol():"
+								" failed to send 505 via sl reply\n");
+					}
+				}
+				DBG("check_via_protocol failed\n");
+				return SANITY_CHECK_FAILED;
+			}
+			break;
+		case PROTO_WSS:
+			if (memcmp(_msg->via1->transport.s, "WSS", 3) != 0) {
+				if (_msg->REQ_METHOD != METHOD_ACK) {
+					if (sanity_reply(_msg, 400,
+							"Transport Missmatch in Topmost Via") < 0) {
+						LOG(L_WARN, "sanity_check(): check_via_protocol():"
+								" failed to send 505 via sl reply\n");
+					}
+				}
+				DBG("check_via_protocol failed\n");
+				return SANITY_CHECK_FAILED;
+			}
+			break;
 		default:
 			LOG(L_WARN, "sanity_check(): check_via_protocol():"
 					" unknown protocol in received structure\n");

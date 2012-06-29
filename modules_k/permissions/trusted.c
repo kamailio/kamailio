@@ -324,6 +324,22 @@ static inline int match_proto(const char *proto_string, int proto_int)
 		}
 	}
 
+	if (proto_int == PROTO_WS) {
+		if (strcasecmp(proto_string, "ws") == 0) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+	
+	if (proto_int == PROTO_WSS) {
+		if (strcasecmp(proto_string, "wss") == 0) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+
 	LM_ERR("unknown request protocol\n");
 
 	return 0;
@@ -512,6 +528,13 @@ int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp)
 	    proto_int = PROTO_SCTP;
 	} else goto error;
 	break;
+    case 'w': case 'W':
+	if (proto.len==2 && strncasecmp(proto.s, "ws", 2) == 0) {
+	    proto_int = PROTO_WS;
+	} else if (proto.len==3 && strncasecmp(proto.s, "wss", 3) == 0) {
+	    proto_int = PROTO_WSS;
+	} else goto error;
+        break;
     default:
 	goto error;
     }

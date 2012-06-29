@@ -286,7 +286,9 @@ struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
 		   except tcp_main(), see close_extra_socks() */
 		if (likely((force_send_socket->socket!=-1 ||
 						force_send_socket->proto==PROTO_TCP ||
-						force_send_socket->proto==PROTO_TLS) &&
+						force_send_socket->proto==PROTO_TLS ||
+						force_send_socket->proto==PROTO_WS  ||
+						force_send_socket->proto==PROTO_WSS) &&
 					!(force_send_socket->flags & SI_IS_MCAST)))
 				return force_send_socket;
 		else{
@@ -338,6 +340,7 @@ not_forced:
 			break;
 #endif
 #ifdef USE_TLS
+		case PROTO_WSS:
 		case PROTO_TLS:
 			switch(to->s.sa_family){
 				/* FIXME */
@@ -815,8 +818,10 @@ int forward_reply(struct sip_msg* msg)
 	if (
 #ifdef USE_TCP
 			dst.proto==PROTO_TCP
+			|| dst.proto==PROTO_WS
 #ifdef USE_TLS
 			|| dst.proto==PROTO_TLS
+			|| dst.proto==PROTO_WSS
 #endif
 #ifdef USE_SCTP
 			||

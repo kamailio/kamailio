@@ -868,6 +868,12 @@ int pv_get_proto(struct sip_msg *msg, pv_param_t *param,
 			s.s = "sctp";
 			s.len = 4;
 		break;
+		case PROTO_WS:
+			s.s = "ws";
+			s.len = 2;
+		case PROTO_WSS:
+			s.s = "wss";
+			s.len = 3;
 		default:
 			s.s = "NONE";
 			s.len = 4;

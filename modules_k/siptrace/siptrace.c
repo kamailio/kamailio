@@ -478,6 +478,10 @@ static inline int siptrace_copy_proto(int proto, char *buf)
 		strcpy(buf, "tls:");
 	} else if(proto==PROTO_SCTP) {
 		strcpy(buf, "sctp:");
+	} else if(proto==PROTO_WS) {
+		strcpy(buf, "ws:");
+	} else if(proto==PROTO_WSS) {
+		strcpy(buf, "wss:");
 	} else {
 		strcpy(buf, "udp:");
 	}

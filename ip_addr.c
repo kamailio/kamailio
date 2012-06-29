@@ -350,6 +350,10 @@ char* get_proto_name(unsigned int proto)
 			return "tls";
 		case PROTO_SCTP:
 			return "sctp";
+		case PROTO_WS:
+			return "ws";
+		case PROTO_WSS:
+			return "wss";
 		default:
 			return "unknown";
 	}
