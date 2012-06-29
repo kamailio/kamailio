@@ -115,6 +115,14 @@ int ws_handle_handshake(struct sip_msg *msg)
 	int version;
 	struct hdr_field *hdr = msg->headers;
 	struct tcp_connection *con;
+	ws_connection_t *wsc;
+
+	/* Make sure that the connection is closed after the response _and_
+	   the existing connection (from the request) is reused for the
+	   response.  The close flag will be unset later if the handshake is
+	   successful. */
+	msg->rpl_send_flags.f |= SND_F_CON_CLOSE;
+	msg->rpl_send_flags.f |= SND_F_FORCE_CON_REUSE;
 
 	if (*ws_enabled == 0)
 	{
@@ -283,7 +291,18 @@ int ws_handle_handshake(struct sip_msg *msg)
 	reply_key.len = base64_enc(sha1, 20,
 				(unsigned char *) reply_key.s, KEY_BUF_LEN);
 
-	/* Build headers for reply */
+	/* Add the connection to the WebSocket connection table */
+	wsconn_add(msg->rcv.proto_reserved1);
+
+	/* Make sure Kamailio core sends future messages on this connection
+	   directly to this module */
+	if (con->type == PROTO_TLS)
+		con->type = con->rcv.proto = PROTO_WSS;
+	else
+		con->type = con->rcv.proto = PROTO_WS;
+
+	/* Now Kamailio is ready to receive WebSocket frames build and send a
+	   101 reply */
 	headers.s = headers_buf;
 	headers.len = snprintf(headers.s, HDR_BUF_LEN,
 			"%.*s: %.*s\r\n"
@@ -299,21 +318,11 @@ int ws_handle_handshake(struct sip_msg *msg)
 			reply_key.s, str_hdr_sec_websocket_protocol.len,
 			str_hdr_sec_websocket_protocol.s, str_sip.len,
 			str_sip.s);
-
-	/* Send reply */
+	msg->rpl_send_flags.f &= ~SND_F_CON_CLOSE;
 	if (ws_send_reply(msg, 101,
 				&str_status_switching_protocols, &headers) < 0)
-		return 0;
-
-	/* Add the connection to the WebSocket connection table */
-	wsconn_add(con->id);
-
-	/* Make sure Kamailio core sends future messages on this connection
-	   directly to this module */
-	if (con->type == PROTO_TLS)
-		con->type = con->rcv.proto = PROTO_WSS;
-	else
-		con->type = con->rcv.proto = PROTO_WS;
+		if ((wsc = wsconn_get(msg->rcv.proto_reserved1)) != NULL)
+			wsconn_rm(wsc);
 
 	return 0;
 }
