@@ -133,6 +133,12 @@ int ws_handle_handshake(struct sip_msg *msg)
 		return 0;
 	}
 
+	if (con->type != PROTO_TCP && con->type != PROTO_TLS)
+	{
+		LM_ERR("unsupported transport: %d", con->type);
+		return 0;
+	}
+
 	/* Process HTTP headers */
 	while (hdr != NULL)
 	{
@@ -304,7 +310,10 @@ int ws_handle_handshake(struct sip_msg *msg)
 
 	/* Make sure Kamailio core sends future messages on this connection
 	   directly to this module */
-	con->flags |= F_CONN_WS;
+	if (con->type == PROTO_TLS)
+		con->type = con->rcv.proto = PROTO_WSS;
+	else
+		con->type = con->rcv.proto = PROTO_WS;
 
 	return 0;
 }
