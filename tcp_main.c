@@ -1427,7 +1427,7 @@ static inline void _tcpconn_free(struct tcp_connection* c)
 #endif
 	lock_destroy(&c->write_lock);
 #ifdef USE_TLS
-	if (unlikely(c->type==PROTO_TLS)) tls_tcpconn_clean(c);
+	if (unlikely(c->type==PROTO_TLS || c->type==PROTO_WSS)) tls_tcpconn_clean(c);
 #endif
 	shm_free(c);
 }
@@ -1456,7 +1456,7 @@ void tcpconn_rm(struct tcp_connection* c)
 	TCPCONN_UNLOCK;
 	lock_destroy(&c->write_lock);
 #ifdef USE_TLS
-	if ((c->type==PROTO_TLS)&&(c->extra_data)) tls_tcpconn_clean(c);
+	if ((c->type==PROTO_TLS || c->type==PROTO_WSS)&&(c->extra_data)) tls_tcpconn_clean(c);
 #endif
 	shm_free(c);
 }
@@ -2270,7 +2270,7 @@ static int tcpconn_send_put(struct tcp_connection* c, const char* buf,
 				{
 					do_close_fd=0;
 #ifdef USE_TLS
-					if (unlikely(c->type==PROTO_TLS)) {
+					if (unlikely(c->type==PROTO_TLS || c->type==PROTO_WSS)) {
 						t_buf = buf;
 						t_len = len;
 						do {
@@ -2372,7 +2372,7 @@ static int tcpconn_send_put(struct tcp_connection* c, const char* buf,
 		}
 	
 #ifdef USE_TLS
-		if (unlikely(c->type==PROTO_TLS)) {
+		if (unlikely(c->type==PROTO_TLS || c->type==PROTO_WSS)) {
 			/* for TLS the TLS processing and the send must happen
 			   atomically w/ respect to other sends on the same connection
 			   (otherwise reordering might occur which would break TLS) =>
@@ -2958,7 +2958,7 @@ inline static void tcpconn_close_main_fd(struct tcp_connection* tcpconn)
 	
 	fd=tcpconn->s;
 #ifdef USE_TLS
-	if (tcpconn->type==PROTO_TLS)
+	if (tcpconn->type==PROTO_TLS || tcpconn->type==PROTO_WSS)
 		tls_close(tcpconn, fd);
 #endif
 #ifdef TCP_FD_CACHE
@@ -3025,7 +3025,7 @@ inline static void tcpconn_destroy(struct tcp_connection* tcpconn)
 			tcpconn_close_main_fd(tcpconn);
 			tcpconn->flags|=F_CONN_FD_CLOSED;
 			(*tcp_connections_no)--;
-			if (unlikely(tcpconn->type==PROTO_TLS))
+			if (unlikely(tcpconn->type==PROTO_TLS || tcpconn->type==PROTO_WSS))
 				(*tls_connections_no)--;
 		}
 		_tcpconn_free(tcpconn); /* destroys also the wbuf_q if still present*/
@@ -3073,7 +3073,7 @@ inline static int tcpconn_put_destroy(struct tcp_connection* tcpconn)
 		tcpconn_close_main_fd(tcpconn);
 		tcpconn->flags|=F_CONN_FD_CLOSED;
 		(*tcp_connections_no)--;
-		if (unlikely(tcpconn->type==PROTO_TLS))
+		if (unlikely(tcpconn->type==PROTO_TLS || tcpconn->type==PROTO_WSS))
 				(*tls_connections_no)--;
 	}
 	/* all the flags / ops on the tcpconn must be done prior to decrementing
@@ -4509,7 +4509,7 @@ static inline void tcpconn_destroy_all(void)
 					fd=-1;
 				}
 #ifdef USE_TLS
-				if (fd>0 && c->type==PROTO_TLS)
+				if (fd>0 && (c->type==PROTO_TLS || c->type==PROTO_WSS))
 					tls_close(c, fd);
 #endif
 				_tcpconn_rm(c);
@@ -4522,7 +4522,7 @@ static inline void tcpconn_destroy_all(void)
 					tcp_safe_close(fd);
 				}
 				(*tcp_connections_no)--;
-				if (unlikely(c->type==PROTO_TLS))
+				if (unlikely(c->type==PROTO_TLS || c->type==PROTO_WSS))
 					(*tls_connections_no)--;
 			c=next;
 		}

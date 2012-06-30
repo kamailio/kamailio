@@ -136,6 +136,8 @@ int get_socket_list_from_proto(int **ipList, int protocol) {
 		return 0;
 	}
 #endif
+	if (protocol == PROTO_WS || protocol == PROTO_WSS)
+		return 0;
 
 	/* Retrieve the list of sockets with respect to the given protocol. */
 	list=get_sock_info_list(protocol);
@@ -409,6 +411,8 @@ int get_total_bytes_waiting(void)
 	numUDPSockets  = get_socket_list_from_proto(&UDPList,  PROTO_UDP);
 	numTCPSockets  = get_socket_list_from_proto(&TCPList,  PROTO_TCP);
 	numTLSSockets  = get_socket_list_from_proto(&TLSList,  PROTO_TLS);
+	/* Deliberately not looking at PROTO_WS or PROTO_WSS here as they are
+	   just upgraded TCP/TLS connections */
 
 	/* Find out the number of bytes waiting on our interface list over all
 	 * UDP and TCP transports. */

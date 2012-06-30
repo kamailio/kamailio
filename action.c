@@ -446,8 +446,10 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 									u->proto);
 							ret=E_BAD_PROTO;
 							goto error_fwd_uri;
-						}
-						dst.proto=PROTO_TLS;
+						} else if (u->proto!=PROTO_WSS)
+							dst.proto=PROTO_TLS;
+						else
+							dst.proto=PROTO_WSS;
 					}
 #endif
 				}

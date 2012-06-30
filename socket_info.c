@@ -140,6 +140,8 @@ inline static void addr_info_list_ins_lst(struct addr_info* lst,
 /* protocol order, filled by init_proto_order() */
 enum sip_protos nxt_proto[PROTO_LAST+1]=
 { PROTO_UDP, PROTO_TCP, PROTO_TLS, PROTO_SCTP, 0 };
+/* Deliberately left PROTO_WS and PROTO_WSS out of this as they are just
+   upgraded TCP and TLS connections */
 
 
 

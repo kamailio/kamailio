@@ -976,6 +976,8 @@ static int parse_proto(unsigned char* s, long len, int* proto)
 	}
 #endif /* USE_SCTP */
 	else
+	/* Deliberately leaving out PROTO_WS and PROTO_WSS as these are just
+	   upgraded TCP/TLS connections. */
 		return -1;
 	return 0;
 }

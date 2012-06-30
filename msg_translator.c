@@ -657,7 +657,11 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 								break; \
 						case PROTO_SCTP: \
 								new_len+=4; \
-								break; \
+							break; \
+						case PROTO_WS: \
+						case PROTO_WSS: \
+							new_len+=2; \
+							break; \
 						default: \
 						LOG(L_CRIT, "BUG: lumps_len: unknown proto %d\n", \
 								msg->rcv.bind_address->proto); \
@@ -687,6 +691,10 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 								break; \
 						case PROTO_SCTP: \
 								new_len+=TRANSPORT_PARAM_LEN+4; \
+								break; \
+						case PROTO_WS: \
+						case PROTO_WSS: \
+								new_len+=TRANSPORT_PARAM_LEN+2; \
 								break; \
 						default: \
 						LOG(L_CRIT, "BUG: lumps_len: unknown proto %d\n", \
@@ -729,6 +737,10 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 						case PROTO_SCTP: \
 								new_len+=4; \
 								break; \
+						case PROTO_WS: \
+						case PROTO_WSS: \
+								new_len+=2; \
+								break; \
 						default: \
 						LOG(L_CRIT, "BUG: lumps_len: unknown proto %d\n", \
 								send_sock->proto); \
@@ -760,6 +772,10 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 								break; \
 						case PROTO_SCTP: \
 								new_len+=TRANSPORT_PARAM_LEN+4; \
+								break; \
+						case PROTO_WS: \
+						case PROTO_WSS: \
+								new_len+=TRANSPORT_PARAM_LEN+2; \
 								break; \
 						default: \
 						LOG(L_CRIT, "BUG: lumps_len: unknown proto %d\n", \
@@ -1051,6 +1067,14 @@ static inline void process_lumps(	struct sip_msg* msg,
 						memcpy(new_buf+offset, "sctp", 4); \
 						offset+=4; \
 						break; \
+					case PROTO_WS: \
+					case PROTO_WSS: \
+						memcpy(new_buf+offset, TRANSPORT_PARAM, \
+								TRANSPORT_PARAM_LEN); \
+						offset+=TRANSPORT_PARAM_LEN; \
+						memcpy(new_buf+offset, "ws", 2); \
+						offset+=2; \
+						break; \
 					default: \
 						LOG(L_CRIT, "BUG: process_lumps: unknown proto %d\n", \
 								msg->rcv.bind_address->proto); \
@@ -1138,6 +1162,14 @@ static inline void process_lumps(	struct sip_msg* msg,
 						memcpy(new_buf+offset, "sctp", 4); \
 						offset+=4; \
 						break; \
+					case PROTO_WS: \
+					case PROTO_WSS: \
+						memcpy(new_buf+offset, TRANSPORT_PARAM, \
+								TRANSPORT_PARAM_LEN); \
+						offset+=TRANSPORT_PARAM_LEN; \
+						memcpy(new_buf+offset, "ws", 2); \
+						offset+=2; \
+						break; \
 					default: \
 						LOG(L_CRIT, "BUG: process_lumps: unknown proto %d\n", \
 								send_sock->proto); \
@@ -1168,6 +1200,11 @@ static inline void process_lumps(	struct sip_msg* msg,
 						memcpy(new_buf+offset, "sctp", 4); \
 						offset+=4; \
 						break; \
+					case PROTO_WS: \
+					case PROTO_WSS: \
+						memcpy(new_buf+offset, "ws", 2); \
+						offset+=2; \
+						break; \
 					default: \
 						LOG(L_CRIT, "BUG: process_lumps: unknown proto %d\n", \
 								msg->rcv.bind_address->proto); \
@@ -1196,6 +1233,11 @@ static inline void process_lumps(	struct sip_msg* msg,
 						break; \
 					case PROTO_SCTP: \
 						memcpy(new_buf+offset, "sctp", 4); \
+						offset+=4; \
+						break; \
+					case PROTO_WS: \
+					case PROTO_WSS: \
+						memcpy(new_buf+offset, "ws", 2); \
 						offset+=4; \
 						break; \
 					default: \
