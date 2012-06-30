@@ -164,6 +164,12 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 			return -1;
 		}
 
+		if (con == NULL)
+		{
+			LM_WARN("TCP/TLS connection for WebSocket could not be found\n");
+			return -1;
+		}
+
 		memset(&wsev, 0, sizeof(ws_event_info_t));
 		wsev.type = SREV_TCP_WS_FRAME_OUT;
 		wsev.buf = outb.s;
