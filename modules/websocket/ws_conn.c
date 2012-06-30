@@ -321,11 +321,11 @@ static int add_node(struct mi_root *tree, ws_connection_t *wsc)
 
 	if (con)
 	{
-		src_proto = (con->rcv.proto== PROTO_TCP) ? "ws" : "wss";
+		src_proto = (con->rcv.proto== PROTO_WS) ? "ws" : "wss";
 		memset(src_ip, 0, IP6_MAX_STR_SIZE + 1);
 		ip_addr2sbuf(&con->rcv.src_ip, src_ip, IP6_MAX_STR_SIZE);
 
-		dst_proto = (con->rcv.proto == PROTO_TCP) ? "ws" : "wss";
+		dst_proto = (con->rcv.proto == PROTO_WS) ? "ws" : "wss";
 		memset(dst_ip, 0, IP6_MAX_STR_SIZE + 1);
 		ip_addr2sbuf(&con->rcv.dst_ip, src_ip, IP6_MAX_STR_SIZE);
 
