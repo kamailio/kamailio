@@ -67,7 +67,7 @@
  * 2003-03-30  set_kr for requests only (jiri)
  * 2003-04-04  bug_fix: RESPONSE_IN callback not called for local
  *             UAC transactions (jiri)
- * 2003-04-07  new transactions inherit on_negative and on_relpy from script
+ * 2003-04-07  new transactions inherit on_failure and on_relpy from script
  *             variables on instantiation (jiri)
  * 2003-04-30  t_newtran clean up (jiri)
  * 2003-08-21  request lookups fixed to skip UAC transactions, 
@@ -1269,7 +1269,7 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 		if (likely(lifetime==0))
 			lifetime=cfg_get(tm, tm_cfg, tm_max_noninv_lifetime);
 	}
-	new_cell->on_negative=get_on_negative();
+	new_cell->on_failure=get_on_failure();
 	new_cell->on_reply=get_on_reply();
 	new_cell->end_of_life=get_ticks_raw()+lifetime;;
 	new_cell->fr_timeout=(ticks_t)get_msgid_val(user_fr_timeout,

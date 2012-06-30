@@ -201,6 +201,10 @@ int pv_get_version(struct sip_msg *msg, pv_param_t *param,
 
 int pv_get_server_id(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
+
+int pv_get_cnt(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 /********* end PV get functions *********/
 
 /********* start PV set functions *********/
@@ -269,6 +273,8 @@ int pv_set_from_display(struct sip_msg* msg, pv_param_t *param,
 int pv_parse_scriptvar_name(pv_spec_p sp, str *in);
 
 int pv_parse_hdr_name(pv_spec_p sp, str *in);
+
+int pv_parse_cnt_name(pv_spec_p sp, str *in);
 
 #endif
 

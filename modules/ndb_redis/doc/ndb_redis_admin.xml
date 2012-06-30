@@ -64,10 +64,12 @@
 		<para>
 			Specify the details to connect to REDIS server. It takes a list of
 			attribute=value separated by semicolon, the attributes can be
-			name, addr, port and db. Name is a generic identifier to be used with
-			module functions. addr and port are the IP address and the port to
-			connect to REDIS server. db is the DB number to use (defaults to 0 if
-			not specified).
+			name, unix, addr, port and db. Name is a generic identifier to be used
+			with module functions. unix is the path to the unix domain socket provided
+			by redis server. addr and port are the IP address and the port to
+			connect to REDIS server. unix and (addr, port) are mutually exclusive.
+			If both appear in same server settings unix domain socket is configured.
+			db is the DB number to use (defaults to 0 if not specified).
 		</para>
 		<para>
 			You can set this parameter many times, in case you want to connect to
@@ -85,6 +87,9 @@
 ...
 modparam("ndb_redis", "server", "name=srvN;addr=127.0.0.1;port=6379;db=1")
 modparam("ndb_redis", "server", "name=srvX;addr=127.0.0.2;port=6379;db=4")
+
+# Unix domain socket
+modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
 ...
 </programlisting>
 		</example>
@@ -157,6 +162,33 @@ if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
 ...
 </programlisting>
 	    </example>
+	</section>
+	<section>
+	<title>
+		<function moreinfo="none">redis_free(replyid)</function>
+	</title>
+	<para>
+		Free a previous reply from memory.
+		After this function call, accessing to a freed replyid returns null value.
+	</para>
+	<para>
+		It is not necessary to free a reply to use it again in a new redis_cmd
+		function. When ndb_redis module closes, all pending replies are freed
+		automatically, so you only need to use this function if you perform a
+		lot of redis command requests with different replyid.
+	</para>
+	<example>
+		<title><function>redis_free</function> usage</title>
+		<programlisting format="linespecific">
+...
+After a redis command call:
+	redis_cmd("srvN", "INCR cnt", "r");
+
+when reply not used anymore:
+	redis_free("r");
+...
+		</programlisting>
+	</example>
 	</section>
 	</section>
 </chapter>

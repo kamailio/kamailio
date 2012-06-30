@@ -10,7 +10,7 @@ Package: kamailio
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
 Conflicts: kamailio-regex-modules, kamailio-dbg
-Suggests: kamailio-mysql-modules, kamailio-postgres-modules, kamailio-unixodbc-modules, kamailio-tls-modules, kamailio-cpl-modules, kamailio-radius-modules, kamailio-presence-modules, kamailio-xml-modules, kamailio-perl-modules, kamailio-snmpstats-modules, kamailio-xmpp-modules, kamailio-carrierroute-modules, kamailio-berkeley-modules, kamailio-ldap-modules, kamailio-lua-modules, kamailio-python-modules
+Suggests: kamailio-mysql-modules, kamailio-postgres-modules, kamailio-unixodbc-modules, kamailio-tls-modules, kamailio-cpl-modules, kamailio-radius-modules, kamailio-presence-modules, kamailio-xml-modules, kamailio-perl-modules, kamailio-snmpstats-modules, kamailio-xmpp-modules, kamailio-carrierroute-modules, kamailio-berkeley-modules, kamailio-ldap-modules, kamailio-lua-modules, kamailio-python-modules, kamailio-dbg
 Description: very fast and configurable SIP proxy
  Kamailio is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, Kamailio can handle thousands calls
@@ -28,6 +28,15 @@ Description: very fast and configurable SIP proxy
  This package contains the main Kamailio binary along with the principal modules
  and support binaries.
 
+Package: kamailio-dbg
+Architecture: any
+Depends: ${shlibs:Depends}, kamailio (= ${binary:Version})
+Description: Debugging symbols for Kamailio SIP proxy
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides gdb debugging symbols  for Kamailio
 
 Package: kamailio-mysql-modules
 Architecture: any

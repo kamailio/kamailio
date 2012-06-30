@@ -52,6 +52,8 @@ static int w_redis_cmd6(struct sip_msg* msg, char* ssrv, char* scmd,
 		char *sargv1, char *sargv2, char *sargv3, char* sres);
 static int fixup_redis_cmd6(void** param, int param_no);
 
+static int w_redis_free_reply(struct sip_msg* msg, char* res);
+
 static int  mod_init(void);
 static void mod_destroy(void);
 static int  child_init(int rank);
@@ -75,6 +77,8 @@ static cmd_export_t cmds[]={
 	{"redis_cmd", (cmd_function)w_redis_cmd5, 5, fixup_redis_cmd6,
 		0, ANY_ROUTE},
 	{"redis_cmd", (cmd_function)w_redis_cmd6, 6, fixup_redis_cmd6,
+		0, ANY_ROUTE},
+	{"redis_free", (cmd_function)w_redis_free_reply, 1, fixup_spve_null,
 		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -291,11 +295,29 @@ static int fixup_redis_cmd6(void** param, int param_no)
 /**
  *
  */
+static int w_redis_free_reply(struct sip_msg* msg, char* res)
+{
+	str name;
+
+	if(fixup_get_svalue(msg, (gparam_t*)res, &name)!=0)
+	{
+		LM_ERR("no redis reply name\n");
+		return -1;
+	}
+
+	if(redisc_free_reply(&name)<0)
+		return -1;
+
+	return 1;
+}
+
+/**
+ *
+ */
 int redis_srv_param(modparam_t type, void *val)
 {
 	return redisc_add_server((char*)val);
 }
-
 
 /**
  *

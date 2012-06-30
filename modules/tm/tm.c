@@ -195,6 +195,7 @@ static int fixup_on_branch(void** param, int param_no);
 static int fixup_t_reply(void** param, int param_no);
 static int fixup_on_sl_reply(modparam_t type, void* val);
 static int fixup_t_relay_to(void** param, int param_no);
+static int fixup_t_is_set(void** param, int param_no);
 
 /* init functions */
 static int mod_init(void);
@@ -270,7 +271,7 @@ inline static int w_t_forward_nonack_sctp(struct sip_msg*, char* str,char*);
 #endif
 inline static int w_t_forward_nonack_to(struct sip_msg* msg, char* str,char*);
 inline static int w_t_relay_cancel(struct sip_msg *p_msg, char *_foo, char *_bar);
-inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char *foo);
+inline static int w_t_on_failure(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_branch(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
 inline static int t_check_status(struct sip_msg* msg, char *match, char *foo);
@@ -298,6 +299,7 @@ static int t_grep_status(struct sip_msg* msg, char*, char*);
 static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_check_trans(struct sip_msg* msg, char* foo, char* bar);
+static int w_t_is_set(struct sip_msg* msg, char* target, char* bar);
 
 
 /* by default the fr timers avps are not set, so that the avps won't be
@@ -401,7 +403,7 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE},
 	{"t_relay_cancel",     w_t_relay_cancel,        0, 0,
 			REQUEST_ROUTE},
-	{"t_on_failure",       w_t_on_negative,         1, fixup_on_failure,
+	{"t_on_failure",       w_t_on_failure,         1, fixup_on_failure,
 			REQUEST_ROUTE | FAILURE_ROUTE | TM_ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"t_on_reply",         w_t_on_reply,            1, fixup_on_reply,
 			REQUEST_ROUTE | FAILURE_ROUTE | TM_ONREPLY_ROUTE | BRANCH_ROUTE },
@@ -462,6 +464,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE},
 	{"t_check_trans",	  w_t_check_trans,			0, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE },
+	{"t_is_set",	      w_t_is_set,				1, fixup_t_is_set,
+			ANY_ROUTE },
 
 	{"t_load_contacts", t_load_contacts,            0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE},
@@ -717,9 +721,9 @@ static int script_init( struct sip_msg *foo, unsigned int flags, void *bar)
 	 * not be used again */
 
 	/* make sure the new message will not inherit previous
-		message's t_on_negative value
+		message's t_on_failure value
 	*/
-	t_on_negative( 0 );
+	t_on_failure( 0 );
 	t_on_reply(0);
 	t_on_branch(0);
 	/* reset the kr status */
@@ -1341,9 +1345,9 @@ inline static int w_t_newtran( struct sip_msg* p_msg, char* foo, char* bar )
 }
 
 
-inline static int w_t_on_negative( struct sip_msg* msg, char *go_to, char *foo)
+inline static int w_t_on_failure( struct sip_msg* msg, char *go_to, char *foo)
 {
-	t_on_negative( (unsigned int )(long) go_to );
+	t_on_failure( (unsigned int )(long) go_to );
 	return 1;
 }
 
@@ -1361,6 +1365,55 @@ inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo )
 }
 
 
+static int w_t_is_set(struct sip_msg* msg, char *target, char *foo )
+{
+	int r;
+	tm_cell_t *t = NULL;
+	
+	r = 0;
+	t = get_t();
+	if (t==T_UNDEFINED) t = NULL;
+
+	switch(target[0]) {
+		case 'b':
+			if(t==NULL)
+				r = get_on_branch();
+			else
+				r = t->on_branch;
+			break;
+		case 'f':
+			if(t==NULL)
+				r = get_on_failure();
+			else
+				r = t->on_failure;
+			break;
+		case 'o':
+			if(t==NULL)
+				r = get_on_reply();
+			else
+				r = t->on_reply;
+			break;
+	}
+	if(r) return 1;
+	return -1;
+}
+
+static int fixup_t_is_set(void** param, int param_no)
+{
+	int len;
+	if (param_no==1) {
+		len = strlen((char*)*param);
+		if((len==13 && strncmp((char*)*param, "failure_route", 13)==0)
+				|| (len==13 && strncmp((char*)*param, "onreply_route", 13)==0)
+				|| (len==12 && strncmp((char*)*param, "branch_route", 12)==0)) {
+			return 0;
+		}
+
+		LM_ERR("invalid parameter value: %s\n", (char*)*param);
+		return 1;
+	}
+	return 0;
+}
 
 inline static int _w_t_relay_to(struct sip_msg  *p_msg ,
 									struct proxy_l *proxy, int force_proto)

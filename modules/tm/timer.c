@@ -471,7 +471,7 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 		&& t->nr_of_outgoings==1
 		/* on_negativ reply handler not installed -- serial forking 
 		 * could occur otherwise */
-		&& t->on_negative==0
+		&& t->on_failure==0
 		/* the same for FAILURE callbacks */
 		&& !has_tran_tmcbs( t, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE) 
 		/* something received -- we will not be silent on error */

@@ -1535,5 +1535,40 @@ route {
 	</example>
 	</section>
 
+	<section id="t_is_set">
+	<title>
+	    <function>t_is_set(target)</function>
+	</title>
+	<para>
+		Return true if the attribute specified by 'target' is set for transaction.
+	</para>
+	<para>The target parameter can be:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>branch_route</emphasis> - the function returns true if a
+			branch route is set to be executed.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>failure_route</emphasis> - the function returns true if a
+			failure route is set to be executed.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>onreply_route</emphasis> - the function returns true if an
+			onreply route is set to be executed.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>t_replicate</function> usage</title>
+	    <programlisting>
+...
+if(!t_is_set("failure_route"))
+    LM_DBG("no failure route will be executed for current transaction\n");
+...
+	    </programlisting>
+	</example>
+    </section>
 
 </section>

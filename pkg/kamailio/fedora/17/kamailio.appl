@@ -2,7 +2,7 @@ name: "kamailio-#OS_NAME#-#OS_VERSION#-#BASE_ARCH#"
 summary: "#OS_NAME# #OS_VERSION# for installing Kamailio #BASE_ARCH# RPMs"
 os:
   name: fedora
-  version: 16
+  version: 17
   password: kamailio
 hardware:
   memory: 1024
