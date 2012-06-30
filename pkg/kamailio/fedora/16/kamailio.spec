@@ -1,7 +1,6 @@
 %define name    kamailio
 %define ver     3.4.0
-%define rel     dev0%{dist}
-%define _sharedir %{_prefix}/share
+%define rel     dev1%{dist}
 
 
 
@@ -682,10 +681,10 @@ fi
 %{_mandir}/man5/*
 %{_mandir}/man8/*
 
-%dir %{_sharedir}/kamailio
-%dir %{_sharedir}/kamailio/dbtext
-%dir %{_sharedir}/kamailio/dbtext/kamailio
-%{_sharedir}/kamailio/dbtext/kamailio/*
+%dir %{_datadir}/kamailio
+%dir %{_datadir}/kamailio/dbtext
+%dir %{_datadir}/kamailio/dbtext/kamailio
+%{_datadir}/kamailio/dbtext/kamailio/*
 
 
 %files mysql
@@ -694,8 +693,8 @@ fi
 %{_libdir}/kamailio/modules/db_mysql.so
 %{_libdir}/kamailio/kamctl/kamctl.mysql
 %{_libdir}/kamailio/kamctl/kamdbctl.mysql
-%dir %{_sharedir}/kamailio/mysql
-%{_sharedir}/kamailio/mysql/*
+%dir %{_datadir}/kamailio/mysql
+%{_datadir}/kamailio/mysql/*
 
 
 %files postgresql
@@ -704,8 +703,8 @@ fi
 %{_libdir}/kamailio/modules/db_postgres.so
 %{_libdir}/kamailio/kamctl/kamctl.pgsql
 %{_libdir}/kamailio/kamctl/kamdbctl.pgsql
-%dir %{_sharedir}/kamailio/postgres
-%{_sharedir}/kamailio/postgres/*
+%dir %{_datadir}/kamailio/postgres
+%{_datadir}/kamailio/postgres/*
 
 
 %files unixODBC
@@ -721,8 +720,8 @@ fi
 %{_libdir}/kamailio/modules/db_berkeley.so
 %{_libdir}/kamailio/kamctl/kamctl.db_berkeley
 %{_libdir}/kamailio/kamctl/kamdbctl.db_berkeley
-%dir %{_sharedir}/kamailio/db_berkeley
-%{_sharedir}/kamailio/db_berkeley/*
+%dir %{_datadir}/kamailio/db_berkeley
+%{_datadir}/kamailio/db_berkeley/*
 
 
 %files sqlite
@@ -731,8 +730,8 @@ fi
 %{_libdir}/kamailio/modules_k/db_sqlite.so
 %{_libdir}/kamailio/kamctl/kamctl.sqlite
 %{_libdir}/kamailio/kamctl/kamdbctl.sqlite
-%dir %{_sharedir}/kamailio/db_sqlite
-%{_sharedir}/kamailio/db_sqlite/*
+%dir %{_datadir}/kamailio/db_sqlite
+%{_datadir}/kamailio/db_sqlite/*
 
 
 %files utils
@@ -941,6 +940,9 @@ fi
 
 
 %changelog
+* Sat Jun 30 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to dev1
+  - Removed %_sharedir and replaced with standard macro %_datadir
 * Mon Jun 11 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Updated ver to 3.4.0 and rel to dev0
 * Mon Jun 4 2012 Peter Dunkley <peter@dunkley.me.uk>
