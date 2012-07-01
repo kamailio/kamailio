@@ -648,7 +648,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				break; \
 			case SUBST_RCV_PROTO: \
 				if (msg->rcv.bind_address){ \
-					switch(msg->rcv.bind_address->proto){ \
+					switch(msg->rcv.proto){ \
 						case PROTO_NONE: \
 						case PROTO_UDP: \
 						case PROTO_TCP: \
@@ -681,7 +681,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 						new_len+=1+recv_port_str->len; \
 					}\
 						/*add;transport=xxx*/ \
-					switch(msg->rcv.bind_address->proto){ \
+					switch(msg->rcv.proto){ \
 						case PROTO_NONE: \
 						case PROTO_UDP: \
 								break; /* udp is the default */ \
@@ -727,7 +727,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				break; \
 			case SUBST_SND_PROTO: \
 				if (send_sock){ \
-					switch(send_sock->proto){ \
+					switch(send_info->proto){ \
 						case PROTO_NONE: \
 						case PROTO_UDP: \
 						case PROTO_TCP: \
@@ -762,7 +762,7 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 						new_len+=1+send_port_str->len; \
 					}\
 					/*add;transport=xxx*/ \
-					switch(send_sock->proto){ \
+					switch(send_info->proto){ \
 						case PROTO_NONE: \
 						case PROTO_UDP: \
 								break; /* udp is the default */ \
@@ -1042,7 +1042,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 							recv_port_str->len); \
 					offset+=recv_port_str->len; \
 				}\
-				switch(msg->rcv.bind_address->proto){ \
+				switch(msg->rcv.proto){ \
 					case PROTO_NONE: \
 					case PROTO_UDP: \
 						break; /* nothing to do, udp is default*/ \
@@ -1137,7 +1137,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 							send_port_str->len); \
 					offset+=send_port_str->len; \
 				}\
-				switch(send_sock->proto){ \
+				switch(send_info->proto){ \
 					case PROTO_NONE: \
 					case PROTO_UDP: \
 						break; /* nothing to do, udp is default*/ \
@@ -1182,7 +1182,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 			break; \
 		case SUBST_RCV_PROTO: \
 			if (msg->rcv.bind_address){ \
-				switch(msg->rcv.bind_address->proto){ \
+				switch(msg->rcv.proto){ \
 					case PROTO_NONE: \
 					case PROTO_UDP: \
 						memcpy(new_buf+offset, "udp", 3); \
@@ -1217,7 +1217,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 			break; \
 		case  SUBST_SND_PROTO: \
 			if (send_sock){ \
-				switch(send_sock->proto){ \
+				switch(send_info->proto){ \
 					case PROTO_NONE: \
 					case PROTO_UDP: \
 						memcpy(new_buf+offset, "udp", 3); \
@@ -2437,7 +2437,9 @@ char* via_builder( unsigned int *len,
 	}else if (send_info->proto==PROTO_SCTP){
 		memcpy(line_buf+MY_VIA_LEN-4, "SCTP ", 5);
 	}else if (send_info->proto==PROTO_WS){
-		memcpy(line_buf+MY_VIA_LEN-4, "WS ", 2);
+		memcpy(line_buf+MY_VIA_LEN-4, "WS ", 3);
+	}else if (send_info->proto==PROTO_WSS){
+		memcpy(line_buf+MY_VIA_LEN-4, "WSS ", 4);
 	}else{
 		LOG(L_CRIT, "BUG: via_builder: unknown proto %d\n", send_info->proto);
 		return 0;
