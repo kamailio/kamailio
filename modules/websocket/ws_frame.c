@@ -556,7 +556,7 @@ static int handle_pong(ws_frame_t *frame)
 
 int ws_frame_receive(void *data)
 {
-	ws_frame_t ws_frame;
+	ws_frame_t frame;
 	tcp_event_info_t *tcpinfo = (tcp_event_info_t *) data;
 
 	update_stat(ws_received_frames, 1);
@@ -567,21 +567,23 @@ int ws_frame_receive(void *data)
 		return -1;
 	}
 
-	switch(decode_and_validate_ws_frame(&ws_frame, tcpinfo))
+	switch(decode_and_validate_ws_frame(&frame, tcpinfo))
 	{
 	case OPCODE_TEXT_FRAME:
 	case OPCODE_BINARY_FRAME:
-		return receive_msg(ws_frame.payload_data, ws_frame.payload_len,
+		LM_DBG("Rx SIP message:\n%.*s\n", frame.payload_len,
+				frame.payload_data);
+		return receive_msg(frame.payload_data, frame.payload_len,
 				tcpinfo->rcv);
 
 	case OPCODE_CLOSE:
-		return handle_close(&ws_frame);
+		return handle_close(&frame);
 
 	case OPCODE_PING:
-		return handle_ping(&ws_frame);
+		return handle_ping(&frame);
 
 	case OPCODE_PONG:
-		return handle_pong(&ws_frame);
+		return handle_pong(&frame);
 
 	default:
 		LM_WARN("received bad frame\n");
@@ -605,6 +607,9 @@ int ws_frame_transmit(void *data)
 	frame.payload_len = wsev->len;
 	frame.payload_data = wsev->buf;
 	frame.wsc = wsconn_get(wsev->id);
+
+	LM_DBG("Tx SIP message:\n%.*s\n", frame.payload_len,
+			frame.payload_data);
 
 	if (encode_and_send_ws_frame(&frame, CONN_CLOSE_DONT) < 0)
 	{	
