@@ -194,7 +194,7 @@ module_group_stable=cpl-c dbtext jabber osp sms pdb
 # Modules in this group are either not complete, untested, or without enough
 # reports of usage to allow the module into the stable group. They may or may
 # not have dependencies
-module_group_experimental=tls oracle iptrtpproxy ndb_redis async
+module_group_experimental=tls oracle iptrtpproxy ndb_redis async websocket
 
 # For cassandra
 module_group_cassandra_driver=db_cassandra
@@ -264,6 +264,9 @@ module_group_kmemcached=memcached
 # K tls module
 module_group_ktls=tls
 
+# K websocket module
+module_group_kwebsocket=websocket
+
 # K presence modules
 module_group_kpresence=presence presence_dialoginfo presence_mwi presence_xml presence_profile\
 						pua pua_bla pua_dialoginfo pua_mi pua_usrloc pua_xmpp \
@@ -303,7 +306,7 @@ else
 	exclude_modules?= 		cpl mangler postgres jabber mysql cpl-c \
 							auth_radius misc_radius avp_radius uri_radius \
 							acc_radius pa rls presence_b2b xcap xmlrpc\
-							osp tls oracle cassandra \
+							osp tls oracle cassandra websocket \
 							unixsock dbg print_lib auth_identity ldap \
 							db_berkeley db_mysql db_postgres db_oracle \
 							db_sqlite db_unixodbc db_cassandra memcached mi_xmlrpc \
