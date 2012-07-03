@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>This module implements a WebSocket (RFC 6455) server and provides
+	connection establishment (handshaking), management (including
+	connection keep-alive), and framing for the SIP WebSocket sub-protocol
+	(ietf-draft-sipcore-sip-websocket).</para>
+	<para>The module supports WebSockets (ws) and secure WebSockets (wss)
+	</para>
+	</section>
+
+	<section>
+	<title>How it works</title>
+	<section>
+	<title>Initiating a connection</title>
+	<para>A WebSocket connection is initiated with an HTTP GET.  The
+	<emphasis>xhttp</emphasis> module is used to handle this GET and
+	call the <xref linkend="ws_handle_handshake"/> exported function.
+	</para>
+	<para><emphasis>event_route[xhttp:request]</emphasis> should perform
+	some validation of the HTTP headers before calling
+	<xref linkend="ws_handle_handshake"/>.  The event_route can also be
+	used to make sure the HTTP GET has the correct URI, perform HTTP
+	authentication on the WebSocket connection, and check the
+	<emphasis>Origin</emphasis> header (RFC 6454) to ensure a
+	browser-based SIP UA has been downloaded from the correct location.
+	</para>
+	<example>
+	<title>event_route[xhttp:request]</title>
+	<programlisting><![CDATA[
+...
+loadmodule "sl.so"
+loadmodule "xhttp.so"
+loadmodule "websocket.so"
+...
+event_route[xhttp:request] {
+        set_reply_close();
+        set_reply_no_connect();
+
+        if ($Rp != 80 && $Rp != 443) {
+                xlog("L_WARN", "HTTP request received on $Rp\n");
+                xhttp_reply("403", "Forbidden", "", "");
+                exit;
+        }
+
+        xlog("L_DBG", "HTTP Request Received\n");
+
+        if ($hdr(Upgrade)=~"websocket"
+                        && $hdr(Connection)=~"Upgrade"
+                        && $rm=~"GET") {
+                xlog("L_DBG", "WebSocket\n");
+                xlog("L_DBG", " Host: $hdr(Host)\n");
+                xlog("L_DBG", " Origin: $hdr(Origin)\n");
+
+                if ($hdr(Host) == $null || !is_myself($hdr(Host))) {
+                        xlog("L_WARN", "Bad host $hdr(Host)\n");
+                        xhttp_reply("403", "Forbidden", "", "");
+                        exit;
+                }
+
+                # Optional... validate Origin
+                # Optional... perform HTTP authentication
+
+                # ws_handle_handshake() exits (no further configuration file
+                # processing of the request) when complete.
+                ws_handle_handshake();
+        }
+
+        xhttp_reply("404", "Not found", "", "");
+}
+...
+]]></programlisting>
+	</example>
+	</section>
+
+	<section>
+	<title>SIP message routing</title>
+	<para> SIP over WebSockets uses invalid URIs in routing headers
+	(Contact:, Record-Route:, and Via:) because a JavaScript stack running
+	in a browser has no way to determine the local address from which the
+	WebSocket connection is made.  This means that the routing headers
+	cannot be used for request or response routing in the normal manner.
+	</para>
+	<para>ietf-draft-sipcore-sip-websocket states that SIP WebSocket
+	Clients and the SIP registrar should implement Outbound (RFC 5626) and
+	Path (RFC 3327) to enable requests and responses to be correctly
+	routed.  However, &kamailio; does not currently support Outbound and
+	it may not be possible to guarantee all SIP WebSocket clients will
+	support Outbound and Path.</para>
+	<para>The <emphasis>nathelper</emphasis> module functions
+	(<emphasis>nat_uac_test()</emphasis>, 
+	<emphasis>fix_nated_register()</emphasis>,
+	<emphasis>add_contact_alias()</emphasis>, and
+	<emphasis>handle_ruri_alias()</emphasis>) and the Kamailio core
+	<emphasis>force_rport()</emphasis> can be used to ensure correct
+	routing of SIP WebSocket requests without using Outbound and Path.
+	</para>
+	<example>
+	<title>WebSocket SIP Routing</title>
+	<programlisting><![CDATA[
+...
+loadmodule "sl.so"
+loadmodule "tm.so"
+...
+loadmodule "websocket.so"
+...
+request_route {
+
+        # per request initial checks
+        route(REQINIT);
+
+        if (nat_uac_test(64)) {
+                # Do NAT traversal stuff for requests from a WebSocket
+                # connection - even if it is not behind a NAT!
+                # This won't be needed in the future if Kamailio and the
+                # WebSocket client support Outbound and Path.
+                force_rport();
+                if (is_method("REGISTER"))
+                        fix_nated_register();
+                else {
+                        if (!add_contact_alias()) {
+                                xlog("L_ERR", "Error aliasing contact <$ct>\n");
+                                sl_send_reply("400", "Bad Request");
+                                exit;
+                        }
+                }
+        }
+
+        if (!is_method("REGISTER"))
+                t_on_reply("WS_REPLY");
+...
+# Handle requests within SIP dialogs
+route[WITHINDLG] {
+        if (has_totag()) {
+                # sequential request withing a dialog should
+                # take the path determined by record-routing
+                if (loose_route()) {
+                        if ($du == "") {
+                                if (!handle_ruri_alias()) {
+                                        xlog("L_ERR", "Bad alias <$ru>\n");
+                                        sl_send_reply("400", "Bad Request");
+                                        exit;
+                                }
+                        }
+                        route(RELAY);
+                } else {
+                        if ( is_method("ACK") ) {
+...
+onreply_route[WS_REPLY] {
+        if (nat_uac_test(64)) {
+                # Do NAT traversal stuff for replies to a WebSocket connection
+		# - even if it is not behind a NAT!
+                # This won't be needed in the future if Kamailio and the
+		# WebSocket client support Outbound and Path.
+                add_contact_alias();
+        }
+}
+...
+]]></programlisting>
+	</example>
+
+	</section>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following module must be loaded before this module:
+		<itemizedlist>
+		<listitem>
+		<para><emphasis>sl</emphasis>.</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		The following modules are required to make proper use of this
+		module:
+		<itemizedlist>
+		<listitem>
+		<para><emphasis>nathelper</emphasis>.</para>
+		</listitem>
+		<listitem>
+		<para><emphasis>tm</emphasis>.</para>
+		</listitem>
+		<listitem>
+		<para><emphasis>xhttp</emphasis>.</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		The following module is required to use the secure WebSocket
+		(wss) scheme:
+		<itemizedlist>
+		<listitem>
+		<para><emphasis>tls</emphasis>.</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+	</section>
+
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries must be installed before running
+		&kamailio; with this module loaded:
+		<itemizedlist>
+		<listitem>
+		<para><emphasis>OpenSSL</emphasis>.</para>
+		</listitem>
+		<listitem>
+		<para><emphasis>GNU libunistring</emphasis>.</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>keepalive_mechanism</varname> (integer)</title>
+		<para>The keep-alive mechanism to use for WebSocket connections.
+		</para>
+		<note><para>If <emphasis>nathelper</emphasis> is only being used
+		for WebSocket connections then <emphasis>nathelper NAT
+		pinging</emphasis> is not required.  If
+		<emphasis>nathelper</emphasis> is used for WebSocket connections
+		and TCP/TLS aliasing/NAT-traversal then WebSocket keep-alives
+		are not required.</para></note>
+		<para>
+		<itemizedlist>
+		<listitem><para> 0 - no WebSocket keep-alives</para></listitem>
+		<listitem><para> 1 - Ping WebSocket
+		keep-alives</para></listitem>
+		<listitem><para> 2 - Pong WebSocket
+		keep-alives</para></listitem>
+		</itemizedlist>
+		</para>
+		<para><emphasis>Default value is 1.</emphasis></para>
+		<example>
+		<title>Set <varname>keepalive_mechanism</varname>
+		parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("websocket", "keepalive_mechanism", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>keepalive_timeout</varname> (integer)</title>
+		<para>The time (in seconds) after which to send a keep-alive on
+		idle WebSocket connections.</para>
+		<para><emphasis>Default value is 180.</emphasis></para>
+		<example>
+		<title>Set <varname>keepalive_timeout</varname>
+		parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("websocket", "keepalive_timeout", 30)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>keepalive_processes</varname> (integer)</title>
+		<para>The number of processes to start to perform WebSocket
+		connection keep-alives.</para>
+		<para><emphasis>Default value is 1.</emphasis></para>
+		<example>
+		<title>Set <varname>keepalive_processes</varname>
+		parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("websocket", "keepalive_processes", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>keepalive_interval</varname> (integer)</title>
+		<para>The number of seconds between each keep-alice process run
+		</para>
+		<para><emphasis>Default value is 1.</emphasis></para>
+		<example>
+		<title>Set <varname>keepalive_interval</varname>
+		parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("websocket", "keepalive_interval", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>ping_application_data</varname> (string)</title>
+		<para>The application data to use in keep-alive Ping and Pong
+		frames.</para>
+		<para><emphasis>Default value is &kamailio; Server: header
+		content</emphasis></para>
+		<example>
+		<title>Set <varname>ping_application_data</varname>
+		parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("websocket", "ping_application_data", "WebSockets rock")
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="ws_handle_handshake">
+		<title>
+		<function moreinfo="none">ws_handle_handshake()</function>
+		</title>
+		<para>This function checks an HTTP GET request for the required
+		headers and values, and (if successful) upgrades the connection
+		from HTTP to WebSocket.</para>
+		<para>This function can be used from ANY_ROUTE (but will only
+		work in <emphasis>event_route[xhttp:request]</emphasis>).</para>
+		<note><para>This function always returns 0, stopping all further
+		processing of the request.</para></note>
+		<example>
+		<title><function>ws_handle_handshake</function> usage</title>
+		<programlisting format="linespecific">
+...
+ws_handle_handshake();
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>MI Commands</title>
+	<section>
+		<title><function moreinfo="none">ws.dump</function></title>
+		<para>Provides the details of the first 50 WebSocket
+		connections.</para>
+		<para>Name: <emphasis>ws.dump</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>order (optional) -
+				<quote>id_hash</quote>,
+				<quote>used_desc</quote>, or
+				<quote>used_asc</quote>.</para>
+			</listitem>
+		</itemizedlist>
+		<note><para>If no parameter is provided id_hash order is
+		used.</para></note>
+		<para>MI FIFO Command Format:</para>
+		<programlisting  format="linespecific">
+			:ws.dump:fifo_reply
+			used_asc
+			_empty_line_
+</programlisting>
+	</section>
+
+	<section>
+		<title><function moreinfo="none">ws.close</function></title>
+		<para>Starts the close handshake for the specified
+		WebSocket connection.</para>
+		<para>Name: <emphasis>ws.close</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>id - WebSocket connection ID.</para>
+			</listitem>
+		</itemizedlist>
+		<para>MI FIFO Command Format:</para>
+		<programlisting  format="linespecific">
+			:ws.close:fifo_reply
+			1
+			_empty_line_
+</programlisting>
+	</section>
+
+	<section>
+		<title><function moreinfo="none">ws.ping</function></title>
+		<para>Sends a Ping frame on the specified WebSocket
+		connection.</para>
+		<para>Name: <emphasis>ws.ping</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>id - WebSocket connection ID.</para>
+			</listitem>
+		</itemizedlist>
+		<para>MI FIFO Command Format:</para>
+		<programlisting  format="linespecific">
+			:ws.ping:fifo_reply
+			1
+			_empty_line_
+</programlisting>
+	</section>
+
+	<section>
+		<title><function moreinfo="none">ws.pong</function></title>
+		<para>Sends a Pong frame on the specified WebSocket
+		connection.</para>
+		<para>Name: <emphasis>ws.pong</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>id - WebSocket connection ID.</para>
+			</listitem>
+		</itemizedlist>
+		<para>MI FIFO Command Format:</para>
+		<programlisting  format="linespecific">
+			:ws.pong:fifo_reply
+			1
+			_empty_line_
+</programlisting>
+	</section>
+
+	<section>
+		<title><function moreinfo="none">ws.disable</function></title>
+		<para>Disables WebSockets preventing new connections from
+		being established.</para>
+		<para>Name: <emphasis>ws.disable</emphasis></para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>MI FIFO Command Format:</para>
+		<programlisting  format="linespecific">
+			:ws.disable:fifo_reply
+			_empty_line_
+</programlisting>
+	</section>
+
+	<section>
+		<title><function moreinfo="none">ws.enable</function></title>
+		<para>Enables WebSockets allowing new connections to be
+		established.</para>
+		<note><para>WebSockets are enabled at start-up.</para></note>
+		<para>Name: <emphasis>ws.enable</emphasis></para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>MI FIFO Command Format:</para>
+		<programlisting  format="linespecific">
+			:ws.enable:fifo_reply
+			_empty_line_
+</programlisting>
+	</section>
+
+
+	</section>
+</chapter>
+

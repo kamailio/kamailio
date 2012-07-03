@@ -1,0 +1,462 @@
+WebSocket Module
+
+Peter Dunkley
+
+   Crocodile RCS Ltd
+
+   Copyright © 2012 Crocodile RCS Ltd
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. How it works
+
+              2.1. Initiating a connection
+              2.2. SIP message routing
+
+        3. Dependencies
+
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
+
+        4. Parameters
+
+              4.1. keepalive_mechanism (integer)
+              4.2. keepalive_timeout (integer)
+              4.3. keepalive_processes (integer)
+              4.4. keepalive_interval (integer)
+              4.5. ping_application_data (string)
+
+        5. Functions
+
+              5.1. ws_handle_handshake()
+
+        6. MI Commands
+
+              6.1. ws.dump
+              6.2. ws.close
+              6.3. ws.ping
+              6.4. ws.pong
+              6.5. ws.disable
+              6.6. ws.enable
+
+   List of Examples
+
+   1.1. event_route[xhttp:request]
+   1.2. WebSocket SIP Routing
+   1.3. Set keepalive_mechanism parameter
+   1.4. Set keepalive_timeout parameter
+   1.5. Set keepalive_processes parameter
+   1.6. Set keepalive_interval parameter
+   1.7. Set ping_application_data parameter
+   1.8. ws_handle_handshake usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. How it works
+
+        2.1. Initiating a connection
+        2.2. SIP message routing
+
+   3. Dependencies
+
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
+
+   4. Parameters
+
+        4.1. keepalive_mechanism (integer)
+        4.2. keepalive_timeout (integer)
+        4.3. keepalive_processes (integer)
+        4.4. keepalive_interval (integer)
+        4.5. ping_application_data (string)
+
+   5. Functions
+
+        5.1. ws_handle_handshake()
+
+   6. MI Commands
+
+        6.1. ws.dump
+        6.2. ws.close
+        6.3. ws.ping
+        6.4. ws.pong
+        6.5. ws.disable
+        6.6. ws.enable
+
+1. Overview
+
+   This module implements a WebSocket (RFC 6455) server and provides
+   connection establishment (handshaking), management (including
+   connection keep-alive), and framing for the SIP WebSocket sub-protocol
+   (ietf-draft-sipcore-sip-websocket).
+
+   The module supports WebSockets (ws) and secure WebSockets (wss)
+
+2. How it works
+
+   2.1. Initiating a connection
+   2.2. SIP message routing
+
+2.1. Initiating a connection
+
+   A WebSocket connection is initiated with an HTTP GET. The xhttp module
+   is used to handle this GET and call the Section 5.1, “
+   ws_handle_handshake() ” exported function.
+
+   event_route[xhttp:request] should perform some validation of the HTTP
+   headers before calling Section 5.1, “ ws_handle_handshake() ”. The
+   event_route can also be used to make sure the HTTP GET has the correct
+   URI, perform HTTP authentication on the WebSocket connection, and check
+   the Origin header (RFC 6454) to ensure a browser-based SIP UA has been
+   downloaded from the correct location.
+
+   Example 1.1. event_route[xhttp:request]
+...
+loadmodule "sl.so"
+loadmodule "xhttp.so"
+loadmodule "websocket.so"
+...
+event_route[xhttp:request] {
+        set_reply_close();
+        set_reply_no_connect();
+
+        if ($Rp != 80 && $Rp != 443) {
+                xlog("L_WARN", "HTTP request received on $Rp\n");
+                xhttp_reply("403", "Forbidden", "", "");
+                exit;
+        }
+
+        xlog("L_DBG", "HTTP Request Received\n");
+
+        if ($hdr(Upgrade)=~"websocket"
+                        && $hdr(Connection)=~"Upgrade"
+                        && $rm=~"GET") {
+                xlog("L_DBG", "WebSocket\n");
+                xlog("L_DBG", " Host: $hdr(Host)\n");
+                xlog("L_DBG", " Origin: $hdr(Origin)\n");
+
+                if ($hdr(Host) == $null || !is_myself($hdr(Host))) {
+                        xlog("L_WARN", "Bad host $hdr(Host)\n");
+                        xhttp_reply("403", "Forbidden", "", "");
+                        exit;
+                }
+
+                # Optional... validate Origin
+                # Optional... perform HTTP authentication
+
+                # ws_handle_handshake() exits (no further configuration file
+                # processing of the request) when complete.
+                ws_handle_handshake();
+        }
+
+        xhttp_reply("404", "Not found", "", "");
+}
+...
+
+2.2. SIP message routing
+
+   SIP over WebSockets uses invalid URIs in routing headers (Contact:,
+   Record-Route:, and Via:) because a JavaScript stack running in a
+   browser has no way to determine the local address from which the
+   WebSocket connection is made. This means that the routing headers
+   cannot be used for request or response routing in the normal manner.
+
+   ietf-draft-sipcore-sip-websocket states that SIP WebSocket Clients and
+   the SIP registrar should implement Outbound (RFC 5626) and Path (RFC
+   3327) to enable requests and responses to be correctly routed. However,
+   Kamailio does not currently support Outbound and it may not be possible
+   to guarantee all SIP WebSocket clients will support Outbound and Path.
+
+   The nathelper module functions (nat_uac_test(), fix_nated_register(),
+   add_contact_alias(), and handle_ruri_alias()) and the Kamailio core
+   force_rport() can be used to ensure correct routing of SIP WebSocket
+   requests without using Outbound and Path.
+
+   Example 1.2. WebSocket SIP Routing
+...
+loadmodule "sl.so"
+loadmodule "tm.so"
+...
+loadmodule "websocket.so"
+...
+request_route {
+
+        # per request initial checks
+        route(REQINIT);
+
+        if (nat_uac_test(64)) {
+                # Do NAT traversal stuff for requests from a WebSocket
+                # connection - even if it is not behind a NAT!
+                # This won't be needed in the future if Kamailio and the
+                # WebSocket client support Outbound and Path.
+                force_rport();
+                if (is_method("REGISTER"))
+                        fix_nated_register();
+                else {
+                        if (!add_contact_alias()) {
+                                xlog("L_ERR", "Error aliasing contact <$ct>\n");
+                                sl_send_reply("400", "Bad Request");
+                                exit;
+                        }
+                }
+        }
+
+        if (!is_method("REGISTER"))
+                t_on_reply("WS_REPLY");
+...
+# Handle requests within SIP dialogs
+route[WITHINDLG] {
+        if (has_totag()) {
+                # sequential request withing a dialog should
+                # take the path determined by record-routing
+                if (loose_route()) {
+                        if ($du == "") {
+                                if (!handle_ruri_alias()) {
+                                        xlog("L_ERR", "Bad alias <$ru>\n");
+                                        sl_send_reply("400", "Bad Request");
+                                        exit;
+                                }
+                        }
+                        route(RELAY);
+                } else {
+                        if ( is_method("ACK") ) {
+...
+onreply_route[WS_REPLY] {
+        if (nat_uac_test(64)) {
+                # Do NAT traversal stuff for replies to a WebSocket connection
+                # - even if it is not behind a NAT!
+                # This won't be needed in the future if Kamailio and the
+                # WebSocket client support Outbound and Path.
+                add_contact_alias();
+        }
+}
+...
+
+3. Dependencies
+
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
+
+   The following module must be loaded before this module:
+     * sl.
+
+   The following modules are required to make proper use of this module:
+     * nathelper.
+     * tm.
+     * xhttp.
+
+   The following module is required to use the secure WebSocket (wss)
+   scheme:
+     * tls.
+
+3.2. External Libraries or Applications
+
+   The following libraries must be installed before running Kamailio with
+   this module loaded:
+     * OpenSSL.
+     * GNU libunistring.
+
+4. Parameters
+
+   4.1. keepalive_mechanism (integer)
+   4.2. keepalive_timeout (integer)
+   4.3. keepalive_processes (integer)
+   4.4. keepalive_interval (integer)
+   4.5. ping_application_data (string)
+
+4.1. keepalive_mechanism (integer)
+
+   The keep-alive mechanism to use for WebSocket connections.
+
+Note
+
+   If nathelper is only being used for WebSocket connections then
+   nathelper NAT pinging is not required. If nathelper is used for
+   WebSocket connections and TCP/TLS aliasing/NAT-traversal then WebSocket
+   keep-alives are not required.
+
+     * 0 - no WebSocket keep-alives
+     * 1 - Ping WebSocket keep-alives
+     * 2 - Pong WebSocket keep-alives
+
+   Default value is 1.
+
+   Example 1.3. Set keepalive_mechanism parameter
+...
+modparam("websocket", "keepalive_mechanism", 0)
+...
+
+4.2. keepalive_timeout (integer)
+
+   The time (in seconds) after which to send a keep-alive on idle
+   WebSocket connections.
+
+   Default value is 180.
+
+   Example 1.4. Set keepalive_timeout parameter
+...
+modparam("websocket", "keepalive_timeout", 30)
+...
+
+4.3. keepalive_processes (integer)
+
+   The number of processes to start to perform WebSocket connection
+   keep-alives.
+
+   Default value is 1.
+
+   Example 1.5. Set keepalive_processes parameter
+...
+modparam("websocket", "keepalive_processes", 2)
+...
+
+4.4. keepalive_interval (integer)
+
+   The number of seconds between each keep-alice process run
+
+   Default value is 1.
+
+   Example 1.6. Set keepalive_interval parameter
+...
+modparam("websocket", "keepalive_interval", 2)
+...
+
+4.5. ping_application_data (string)
+
+   The application data to use in keep-alive Ping and Pong frames.
+
+   Default value is Kamailio Server: header content
+
+   Example 1.7. Set ping_application_data parameter
+...
+modparam("websocket", "ping_application_data", "WebSockets rock")
+...
+
+5. Functions
+
+   5.1. ws_handle_handshake()
+
+5.1.  ws_handle_handshake()
+
+   This function checks an HTTP GET request for the required headers and
+   values, and (if successful) upgrades the connection from HTTP to
+   WebSocket.
+
+   This function can be used from ANY_ROUTE (but will only work in
+   event_route[xhttp:request]).
+
+Note
+
+   This function always returns 0, stopping all further processing of the
+   request.
+
+   Example 1.8. ws_handle_handshake usage
+...
+ws_handle_handshake();
+...
+
+6. MI Commands
+
+   6.1. ws.dump
+   6.2. ws.close
+   6.3. ws.ping
+   6.4. ws.pong
+   6.5. ws.disable
+   6.6. ws.enable
+
+6.1. ws.dump
+
+   Provides the details of the first 50 WebSocket connections.
+
+   Name: ws.dump
+
+   Parameters:
+     * order (optional) - “id_hash”, “used_desc”, or “used_asc”.
+
+Note
+
+   If no parameter is provided id_hash order is used.
+
+   MI FIFO Command Format:
+                        :ws.dump:fifo_reply
+                        used_asc
+                        _empty_line_
+
+6.2. ws.close
+
+   Starts the close handshake for the specified WebSocket connection.
+
+   Name: ws.close
+
+   Parameters:
+     * id - WebSocket connection ID.
+
+   MI FIFO Command Format:
+                        :ws.close:fifo_reply
+                        1
+                        _empty_line_
+
+6.3. ws.ping
+
+   Sends a Ping frame on the specified WebSocket connection.
+
+   Name: ws.ping
+
+   Parameters:
+     * id - WebSocket connection ID.
+
+   MI FIFO Command Format:
+                        :ws.ping:fifo_reply
+                        1
+                        _empty_line_
+
+6.4. ws.pong
+
+   Sends a Pong frame on the specified WebSocket connection.
+
+   Name: ws.pong
+
+   Parameters:
+     * id - WebSocket connection ID.
+
+   MI FIFO Command Format:
+                        :ws.pong:fifo_reply
+                        1
+                        _empty_line_
+
+6.5. ws.disable
+
+   Disables WebSockets preventing new connections from being established.
+
+   Name: ws.disable
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                        :ws.disable:fifo_reply
+                        _empty_line_
+
+6.6. ws.enable
+
+   Enables WebSockets allowing new connections to be established.
+
+Note
+
+   WebSockets are enabled at start-up.
+
+   Name: ws.enable
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                        :ws.enable:fifo_reply
+                        _empty_line_

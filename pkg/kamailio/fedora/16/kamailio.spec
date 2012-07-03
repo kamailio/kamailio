@@ -904,7 +904,7 @@ fi
 
 %files websocket
 %defattr(-,root,root)
-#%doc %{_docdir}/kamailio/modules/README.websocket
+%doc %{_docdir}/kamailio/modules/README.websocket
 %{_libdir}/kamailio/modules/websocket.so
 
 
@@ -956,6 +956,8 @@ fi
 
 
 %changelog
+* Tue Jul 3 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updates to websocket module
 * Sat Jun 30 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Updated rel to dev1
   - Removed %_sharedir and replaced with standard macro %_datadir
