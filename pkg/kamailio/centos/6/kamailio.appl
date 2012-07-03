@@ -17,12 +17,13 @@ packages:
   - libcurl			# kamailio-utils, kamailio-presence
   - libevent			# kamailio-json
   - libpurple			# kamailio-purple
+  - libunistring		# kamailio-websocket
   - libxml2			# kamailio-utils, kamailio-cpl, kamailio-presence, kamailio-purple, kamailio-xmlrpc, kamailio-xmlops
   - mod_perl			# kamailio-perl
   - mysql-libs			# kamailio-mysql
   - net-snmp-libs		# kamailio-snmpstats
   - openldap			# kamailio-ldap
-  - openssl			# kamailio-tls
+  - openssl			# kamailio-tls, kamailio-websocket
   - pcre			# kamailio-regex, kamailio-dialplan, kamailio-lcr
   - perl-Authen-SASL		# kamailio-perl
   - perl-LDAP			# kamailio-perl

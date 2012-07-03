@@ -8,18 +8,20 @@ hardware:
   memory: 1024
   partitions:
     "/":
-      size: 4
+      size: 6
 packages:
   - @core
   - bison			# kamailio
   - db4-devel			# kamailio-bdb
   - expat-devel			# kamailio-xmpp
   - flex			# kamailio
-  - gcc				# kamailio
+  - gcc
+  - git
   - glib2-devel			# kamailio-purple
   - libcurl-devel		# kamailio-utils, kamailio-presence
   - libevent-devel		# kamailio-json
   - libpurple-devel		# kamailio-purple
+  - libunistring-devel		# kamailio-websocket
   - libxml2-devel		# kamailio-utils, kamailio-cpl, kamailio-presence, kamailio-purple, kamailio-xmlrpc, kamailio-xmlops
   - lua-devel			# kamailio-lua
   - make			# kamailio
@@ -27,7 +29,7 @@ packages:
   - mysql-devel			# kamailio-mysql
   - net-snmp-devel		# kamailio-snmpstats
   - openldap-devel		# kamailio-ldap
-  - openssl-devel		# kamailio-tls
+  - openssl-devel		# kamailio-tls, kamailio-websocket
   - pcre-devel			# kamailio-regex, kamailio-dialplan, kamailio-lcr
   - postgresql-devel		# kamailio-postgresql
   - python-devel		# kamailio-python
