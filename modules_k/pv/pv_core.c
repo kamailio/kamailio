@@ -871,9 +871,11 @@ int pv_get_proto(struct sip_msg *msg, pv_param_t *param,
 		case PROTO_WS:
 			s.s = "ws";
 			s.len = 2;
+		break;
 		case PROTO_WSS:
 			s.s = "wss";
 			s.len = 3;
+		break;
 		default:
 			s.s = "NONE";
 			s.len = 4;
