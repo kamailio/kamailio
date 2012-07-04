@@ -231,7 +231,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		}
 	}
 
-	if (dst.proto == PROTO_TCP)
+	if (dst.proto == PROTO_WS)
 	{
 		if (unlikely(tcp_disable))
 		{
@@ -241,7 +241,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		}		
 	}
 #ifdef USE_TLS
-	else if (dst.proto == PROTO_TLS)
+	else if (dst.proto == PROTO_WSS)
 	{
 		if (unlikely(tls_disable))
 		{
