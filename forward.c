@@ -253,8 +253,10 @@ struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
 	if (likely(mismatch)) *mismatch=0;
 	/* check if send interface is not forced */
 	if (unlikely(force_send_socket)){
-		if (unlikely(force_send_socket->proto!=proto)){
-			orig=force_send_socket;
+		orig=force_send_socket;
+		/* Special case here as there is no ;transport=wss - so wss connections will
+		   appear as ws ones and be sorted out in the WebSocket module */
+		if (unlikely(orig->proto!=proto && !(orig->proto==PROTO_TLS && proto==PROTO_WS))){
 			force_send_socket=find_si(&(force_send_socket->address),
 											force_send_socket->port_no,
 											proto);

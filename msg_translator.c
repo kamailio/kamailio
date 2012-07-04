@@ -648,19 +648,25 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				break; \
 			case SUBST_RCV_PROTO: \
 				if (msg->rcv.bind_address){ \
-					switch(msg->rcv.proto){ \
+					switch(msg->rcv.bind_address->proto){ \
 						case PROTO_NONE: \
 						case PROTO_UDP: \
+							new_len+=3; \
+							break; \
 						case PROTO_TCP: \
 						case PROTO_TLS: \
-								new_len+=3; \
-								break; \
-						case PROTO_SCTP: \
-								new_len+=4; \
+							switch(msg->rcv.proto){ \
+								case PROTO_WS: \
+								case PROTO_WSS: \
+									new_len+=2; \
+									break; \
+								default: \
+									new_len+=3; \
+									break; \
+							} \
 							break; \
-						case PROTO_WS: \
-						case PROTO_WSS: \
-							new_len+=2; \
+						case PROTO_SCTP: \
+							new_len+=4; \
 							break; \
 						default: \
 						LOG(L_CRIT, "BUG: lumps_len: unknown proto %d\n", \
@@ -681,21 +687,25 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 						new_len+=1+recv_port_str->len; \
 					}\
 						/*add;transport=xxx*/ \
-					switch(msg->rcv.proto){ \
+					switch(msg->rcv.bind_address->proto){ \
 						case PROTO_NONE: \
 						case PROTO_UDP: \
-								break; /* udp is the default */ \
+							break; /* udp is the default */ \
 						case PROTO_TCP: \
 						case PROTO_TLS: \
-								new_len+=TRANSPORT_PARAM_LEN+3; \
-								break; \
+							switch(msg->rcv.proto){ \
+								case PROTO_WS: \
+								case PROTO_WSS: \
+									new_len+=TRANSPORT_PARAM_LEN+2; \
+									break; \
+								default: \
+									new_len+=TRANSPORT_PARAM_LEN+3; \
+									break; \
+							} \
+							break; \
 						case PROTO_SCTP: \
-								new_len+=TRANSPORT_PARAM_LEN+4; \
-								break; \
-						case PROTO_WS: \
-						case PROTO_WSS: \
-								new_len+=TRANSPORT_PARAM_LEN+2; \
-								break; \
+							new_len+=TRANSPORT_PARAM_LEN+4; \
+							break; \
 						default: \
 						LOG(L_CRIT, "BUG: lumps_len: unknown proto %d\n", \
 								msg->rcv.bind_address->proto); \
@@ -727,20 +737,26 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 				break; \
 			case SUBST_SND_PROTO: \
 				if (send_sock){ \
-					switch(send_info->proto){ \
+					switch(send_sock->proto){ \
 						case PROTO_NONE: \
 						case PROTO_UDP: \
+							new_len+=3; \
+							break; \
 						case PROTO_TCP: \
 						case PROTO_TLS: \
-								new_len+=3; \
-								break; \
+							switch(send_info->proto){ \
+								case PROTO_WS: \
+								case PROTO_WSS: \
+									new_len+=2; \
+									break; \
+								default: \
+									new_len+=3; \
+									break; \
+							} \
+							break; \
 						case PROTO_SCTP: \
-								new_len+=4; \
-								break; \
-						case PROTO_WS: \
-						case PROTO_WSS: \
-								new_len+=2; \
-								break; \
+							new_len+=4; \
+							break; \
 						default: \
 						LOG(L_CRIT, "BUG: lumps_len: unknown proto %d\n", \
 								send_sock->proto); \
@@ -762,21 +778,25 @@ static inline int lumps_len(struct sip_msg* msg, struct lump* lumps,
 						new_len+=1+send_port_str->len; \
 					}\
 					/*add;transport=xxx*/ \
-					switch(send_info->proto){ \
+					switch(send_sock->proto){ \
 						case PROTO_NONE: \
 						case PROTO_UDP: \
-								break; /* udp is the default */ \
+							break; /* udp is the default */ \
 						case PROTO_TCP: \
 						case PROTO_TLS: \
-								new_len+=TRANSPORT_PARAM_LEN+3; \
-								break; \
+							switch(send_info->proto){ \
+								case PROTO_WS: \
+								case PROTO_WSS: \
+									new_len+=TRANSPORT_PARAM_LEN+2; \
+									break; \
+								default: \
+									new_len+=TRANSPORT_PARAM_LEN+3; \
+									break; \
+							} \
+							break; \
 						case PROTO_SCTP: \
-								new_len+=TRANSPORT_PARAM_LEN+4; \
-								break; \
-						case PROTO_WS: \
-						case PROTO_WSS: \
-								new_len+=TRANSPORT_PARAM_LEN+2; \
-								break; \
+							new_len+=TRANSPORT_PARAM_LEN+4; \
+							break; \
 						default: \
 						LOG(L_CRIT, "BUG: lumps_len: unknown proto %d\n", \
 								send_sock->proto); \
@@ -1042,7 +1062,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 							recv_port_str->len); \
 					offset+=recv_port_str->len; \
 				}\
-				switch(msg->rcv.proto){ \
+				switch(msg->rcv.bind_address->proto){ \
 					case PROTO_NONE: \
 					case PROTO_UDP: \
 						break; /* nothing to do, udp is default*/ \
@@ -1050,15 +1070,25 @@ static inline void process_lumps(	struct sip_msg* msg,
 						memcpy(new_buf+offset, TRANSPORT_PARAM, \
 								TRANSPORT_PARAM_LEN); \
 						offset+=TRANSPORT_PARAM_LEN; \
-						memcpy(new_buf+offset, "tcp", 3); \
-						offset+=3; \
+						if (msg->rcv.proto == PROTO_WS) { \
+							memcpy(new_buf+offset, "ws", 2); \
+							offset+=2; \
+						} else { \
+							memcpy(new_buf+offset, "tcp", 3); \
+							offset+=3; \
+						} \
 						break; \
 					case PROTO_TLS: \
 						memcpy(new_buf+offset, TRANSPORT_PARAM, \
 								TRANSPORT_PARAM_LEN); \
 						offset+=TRANSPORT_PARAM_LEN; \
-						memcpy(new_buf+offset, "tls", 3); \
-						offset+=3; \
+						if (msg->rcv.proto == PROTO_WS || msg->rcv.proto == PROTO_WSS) { \
+							memcpy(new_buf+offset, "ws", 2); \
+							offset+=2; \
+						} else { \
+							memcpy(new_buf+offset, "tls", 3); \
+							offset+=3; \
+						} \
 						break; \
 					case PROTO_SCTP: \
 						memcpy(new_buf+offset, TRANSPORT_PARAM, \
@@ -1066,14 +1096,6 @@ static inline void process_lumps(	struct sip_msg* msg,
 						offset+=TRANSPORT_PARAM_LEN; \
 						memcpy(new_buf+offset, "sctp", 4); \
 						offset+=4; \
-						break; \
-					case PROTO_WS: \
-					case PROTO_WSS: \
-						memcpy(new_buf+offset, TRANSPORT_PARAM, \
-								TRANSPORT_PARAM_LEN); \
-						offset+=TRANSPORT_PARAM_LEN; \
-						memcpy(new_buf+offset, "ws", 2); \
-						offset+=2; \
 						break; \
 					default: \
 						LOG(L_CRIT, "BUG: process_lumps: unknown proto %d\n", \
@@ -1137,7 +1159,7 @@ static inline void process_lumps(	struct sip_msg* msg,
 							send_port_str->len); \
 					offset+=send_port_str->len; \
 				}\
-				switch(send_info->proto){ \
+				switch(send_sock->proto){ \
 					case PROTO_NONE: \
 					case PROTO_UDP: \
 						break; /* nothing to do, udp is default*/ \
@@ -1145,15 +1167,25 @@ static inline void process_lumps(	struct sip_msg* msg,
 						memcpy(new_buf+offset, TRANSPORT_PARAM, \
 								TRANSPORT_PARAM_LEN); \
 						offset+=TRANSPORT_PARAM_LEN; \
-						memcpy(new_buf+offset, "tcp", 3); \
-						offset+=3; \
+						if (send_info->proto == PROTO_WS) { \
+							memcpy(new_buf+offset, "ws", 2); \
+							offset+=2; \
+						} else { \
+							memcpy(new_buf+offset, "tcp", 3); \
+							offset+=3; \
+						} \
 						break; \
 					case PROTO_TLS: \
 						memcpy(new_buf+offset, TRANSPORT_PARAM, \
 								TRANSPORT_PARAM_LEN); \
 						offset+=TRANSPORT_PARAM_LEN; \
-						memcpy(new_buf+offset, "tls", 3); \
-						offset+=3; \
+						if (send_info->proto == PROTO_WS || send_info->proto == PROTO_WSS) { \
+							memcpy(new_buf+offset, "ws", 2); \
+							offset+=2; \
+						} else { \
+							memcpy(new_buf+offset, "tls", 3); \
+							offset+=3; \
+						} \
 						break; \
 					case PROTO_SCTP: \
 						memcpy(new_buf+offset, TRANSPORT_PARAM, \
@@ -1161,14 +1193,6 @@ static inline void process_lumps(	struct sip_msg* msg,
 						offset+=TRANSPORT_PARAM_LEN; \
 						memcpy(new_buf+offset, "sctp", 4); \
 						offset+=4; \
-						break; \
-					case PROTO_WS: \
-					case PROTO_WSS: \
-						memcpy(new_buf+offset, TRANSPORT_PARAM, \
-								TRANSPORT_PARAM_LEN); \
-						offset+=TRANSPORT_PARAM_LEN; \
-						memcpy(new_buf+offset, "ws", 2); \
-						offset+=2; \
 						break; \
 					default: \
 						LOG(L_CRIT, "BUG: process_lumps: unknown proto %d\n", \
@@ -1182,28 +1206,33 @@ static inline void process_lumps(	struct sip_msg* msg,
 			break; \
 		case SUBST_RCV_PROTO: \
 			if (msg->rcv.bind_address){ \
-				switch(msg->rcv.proto){ \
+				switch(msg->rcv.bind_address->proto){ \
 					case PROTO_NONE: \
 					case PROTO_UDP: \
 						memcpy(new_buf+offset, "udp", 3); \
 						offset+=3; \
 						break; \
 					case PROTO_TCP: \
-						memcpy(new_buf+offset, "tcp", 3); \
-						offset+=3; \
+						if (msg->rcv.proto == PROTO_WS) { \
+							memcpy(new_buf+offset, "ws", 2); \
+							offset+=2; \
+						} else { \
+							memcpy(new_buf+offset, "tcp", 3); \
+							offset+=3; \
+						} \
 						break; \
 					case PROTO_TLS: \
-						memcpy(new_buf+offset, "tls", 3); \
-						offset+=3; \
+						if (msg->rcv.proto == PROTO_WS || msg->rcv.proto == PROTO_WSS) { \
+							memcpy(new_buf+offset, "ws", 2); \
+							offset+=2; \
+						} else { \
+							memcpy(new_buf+offset, "tls", 3); \
+							offset+=3; \
+						} \
 						break; \
 					case PROTO_SCTP: \
 						memcpy(new_buf+offset, "sctp", 4); \
 						offset+=4; \
-						break; \
-					case PROTO_WS: \
-					case PROTO_WSS: \
-						memcpy(new_buf+offset, "ws", 2); \
-						offset+=2; \
 						break; \
 					default: \
 						LOG(L_CRIT, "BUG: process_lumps: unknown proto %d\n", \
@@ -1217,27 +1246,32 @@ static inline void process_lumps(	struct sip_msg* msg,
 			break; \
 		case  SUBST_SND_PROTO: \
 			if (send_sock){ \
-				switch(send_info->proto){ \
+				switch(send_sock->proto){ \
 					case PROTO_NONE: \
 					case PROTO_UDP: \
 						memcpy(new_buf+offset, "udp", 3); \
 						offset+=3; \
 						break; \
 					case PROTO_TCP: \
-						memcpy(new_buf+offset, "tcp", 3); \
-						offset+=3; \
+						if (send_info->proto == PROTO_WS) { \
+							memcpy(new_buf+offset, "ws", 2); \
+							offset+=2; \
+						} else { \
+							memcpy(new_buf+offset, "tcp", 3); \
+							offset+=3; \
+						} \
 						break; \
 					case PROTO_TLS: \
-						memcpy(new_buf+offset, "tls", 3); \
-						offset+=3; \
+						if (send_info->proto == PROTO_WS || send_info->proto == PROTO_WSS) { \
+							memcpy(new_buf+offset, "ws", 2); \
+							offset+=2; \
+						} else { \
+							memcpy(new_buf+offset, "tls", 3); \
+							offset+=3; \
+						} \
 						break; \
 					case PROTO_SCTP: \
 						memcpy(new_buf+offset, "sctp", 4); \
-						offset+=4; \
-						break; \
-					case PROTO_WS: \
-					case PROTO_WSS: \
-						memcpy(new_buf+offset, "ws", 2); \
 						offset+=4; \
 						break; \
 					default: \
@@ -2369,6 +2403,11 @@ char* via_builder( unsigned int *len,
 #ifdef USE_COMP
 	char* comp_name;
 #endif /* USE_COMP */
+	int port;
+	struct ip_addr ip;
+	union sockaddr_union *from = NULL;
+	union sockaddr_union local_addr;
+	struct tcp_connection *con = NULL;
 
 	send_sock=send_info->send_sock;
 	/* use pre-set address in via, the outbound socket alias or address one */
@@ -2437,7 +2476,38 @@ char* via_builder( unsigned int *len,
 	}else if (send_info->proto==PROTO_SCTP){
 		memcpy(line_buf+MY_VIA_LEN-4, "SCTP ", 5);
 	}else if (send_info->proto==PROTO_WS){
-		memcpy(line_buf+MY_VIA_LEN-4, "WS ", 3);
+                if (unlikely(send_info->send_flags.f & SND_F_FORCE_SOCKET
+                                && send_info->send_sock)) {
+                        local_addr = send_info->send_sock->su;
+                        su_setport(&local_addr, 0); /* any local port will do */
+                        from = &local_addr;
+                }
+
+                port = su_getport(&send_info->to);
+                if (likely(port)) {
+                        su2ip_addr(&ip, &send_info->to);
+                        con = tcpconn_get(send_info->id, &ip, port, from, 0);
+                }
+                else if (likely(send_info->id))
+                        con = tcpconn_get(send_info->id, 0, 0, 0, 0);
+                else {
+                        LM_CRIT("BUG: via_builder called with null_id & to\n");
+                        return 0;
+                }
+
+                if (con == NULL) {
+                        LM_WARN("TCP/TLS connection for WebSocket could not be found\n");
+                        return 0;
+                }
+
+		if (con->rcv.proto==PROTO_WS) {
+			memcpy(line_buf+MY_VIA_LEN-4, "WS ", 3);
+		} else if (con->rcv.proto==PROTO_WSS) {
+			memcpy(line_buf+MY_VIA_LEN-4, "WSS ", 4);
+		} else {
+			LOG(L_CRIT, "BUG: via_builder: unknown proto %d\n", con->rcv.proto);
+			return 0;
+		}
 	}else if (send_info->proto==PROTO_WSS){
 		memcpy(line_buf+MY_VIA_LEN-4, "WSS ", 4);
 	}else{

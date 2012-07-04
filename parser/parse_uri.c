@@ -1427,6 +1427,7 @@ inline void proto_type_to_str(unsigned short type, str *s) {
 		*s = s_sctp;
 		break;
 	case PROTO_WS:
+	case PROTO_WSS:
 		*s = s_ws;
 		break;
 	default:

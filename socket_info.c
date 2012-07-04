@@ -570,7 +570,9 @@ struct socket_info* grep_sock_info(str* host, unsigned short port,
 		hname.len-=2;
 	}
 #endif
+
 	c_proto=(proto!=PROTO_NONE)?proto:PROTO_UDP;
+retry:
 	do{
 		/* get the proper sock_list */
 		list=get_sock_info_list(c_proto);
@@ -616,7 +618,15 @@ struct socket_info* grep_sock_info(str* host, unsigned short port,
 									&ai->address, ai->flags)==0)
 					goto found;
 		}
+
 	}while( (proto==0) && (c_proto=next_proto(c_proto)) );
+
+#ifdef USE_TLS
+	if (unlikely(c_proto == PROTO_WS)) {
+		c_proto = PROTO_WSS;
+		goto retry;
+	}
+#endif
 /* not_found: */
 	return 0;
 found:
