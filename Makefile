@@ -308,7 +308,7 @@ else
 							db_berkeley db_mysql db_postgres db_oracle \
 							db_sqlite db_unixodbc db_cassandra memcached mi_xmlrpc \
 							perl perlvdb purple \
-							snmpstats xmpp \
+							snmpstats xmpp cdp \
 							carrierroute peering \
 							dialplan lcr utils presence presence_mwi \
 							presence_dialoginfo presence_xml pua pua_bla \
