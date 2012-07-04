@@ -268,8 +268,8 @@ Chapter 1. Admin Guide
    scheme, IP address, port, and transport protocol.
 
    Valid URI scheme values are NULL = sip, 1 = sip and 2 = sips. Currently
-   valid transport protocol values are NULL = none, 1 = udp, 2 = tcp, 3 =
-   tls, and 4 = sctp.
+   valid transport protocol values are NULL and 0 = none, 1 = udp, 2 =
+   tcp, 3 = tls, and 4 = sctp.
 
    As a side effect of gateway selection, selected gateway's tag and flags
    (that may contain information about the gateway and its capabilities)

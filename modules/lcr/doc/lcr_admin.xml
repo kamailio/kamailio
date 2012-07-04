@@ -103,7 +103,7 @@
 	</para>
         <para>
         Valid URI scheme values are NULL = sip, 1 = sip and 2
-	= sips.  Currently valid transport protocol values are NULL =
+	= sips.  Currently valid transport protocol values are NULL and 0 =
 	none, 1 = udp, 2 = tcp, 3 = tls, and 4 = sctp.
 	</para>
 	<para>
