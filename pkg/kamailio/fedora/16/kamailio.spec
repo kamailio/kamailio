@@ -385,7 +385,7 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
-	klcr ksqlite kredis kjson kmono kberkeley kwebsocket" \
+	klcr ksqlite kredis kjson kmono kberkeley kwebsocket"\
 	include_modules="xmlrpc xmlops cdp cdp_avp"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
@@ -400,7 +400,7 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kpresence kregex kdialplan\
-	klcr ksqlite kberkeley kwebsocket" \
+	klcr ksqlite kberkeley kwebsocket"\
 	include_modules="xmlrpc xmlops cdp cdp_avp"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
