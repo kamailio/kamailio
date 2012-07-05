@@ -24,7 +24,8 @@ Conflicts:     kamailio-tls < %ver, kamailio-purple < %ver, kamailio-ldap < %ver
 Conflicts:     kamailio-xmlrpc < %ver, kamailio-perl < %ver, kamailio-lua < %ver
 Conflicts:     kamailio-python < %ver, kamailio-regex < %ver
 Conflicts:     kamailio-dialplan < %ver, kamailio-lcr < %ver
-Conflicts:     kamailio-xmlops < %ver, kamailio-websocket < %ver
+Conflicts:     kamailio-xmlops < %ver, kamailio-cdp < %ver
+Conflicts:     kamailio-websocket < %ver
 %if 0%{?fedora}
 Conflicts:     kamailio-radius < %ver, kamailio-carrierroute < %ver
 Conflicts:     kamailio-redis < %ver, kamailio-json < %ver 
@@ -273,6 +274,17 @@ BuildRequires: glib2-devel, libpurple-devel, libxml2-devel
 %description purple
 Multi-protocol IM and presence gateway module.
 
+
+%package  cdp
+Summary:  C Diameter Peer module and extensions module for Kamailio.
+Group:    System Environment/Daemons
+Requires: libxml2, kamailio = %ver
+BuildRequires: libxml2-devel
+
+%description cdp
+C Diameter Peer module and extensions module for Kamailio.
+
+
 %if 0%{?fedora}
 %package radius
 Summary:       Radius AAA API for Kamailio.
@@ -352,14 +364,14 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
 	klcr ksqlite kredis kjson kmono kberkeley kwebsocket" \
-	include_modules="xmlrpc xmlops"\
+	include_modules="xmlrpc xmlops cdp cdp_avp"\
 %else
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kpresence kregex kdialplan\
 	klcr ksqlite kberkeley kwebsocket" \
-	include_modules="xmlrpc xmlops"
+	include_modules="xmlrpc xmlops cdp cdp_avp"
 %endif
 
 
@@ -374,7 +386,7 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
 	klcr ksqlite kredis kjson kmono kberkeley kwebsocket" \
-	include_modules="xmlrpc xmlops"
+	include_modules="xmlrpc xmlops cdp cdp_avp"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.service \
@@ -389,7 +401,7 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kpresence kregex kdialplan\
 	klcr ksqlite kberkeley kwebsocket" \
-	include_modules="xmlrpc xmlops"
+	include_modules="xmlrpc xmlops cdp cdp_avp"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -902,6 +914,14 @@ fi
 %{_libdir}/kamailio/modules/xmlops.so
 
 
+%files cdp
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.cdp
+%{_libdir}/kamailio/modules/cdp.so
+%doc %{_docdir}/kamailio/modules/README.cdp_avp
+%{_libdir}/kamailio/modules/cdp_avp.so
+
+
 %files websocket
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.websocket
@@ -956,6 +976,8 @@ fi
 
 
 %changelog
+* Thu Jul 5 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Added kamailio-cdp RPM for cdp and cdp_avp modules
 * Tue Jul 3 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Updates to websocket module
 * Sat Jun 30 2012 Peter Dunkley <peter@dunkley.me.uk>

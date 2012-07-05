@@ -306,18 +306,18 @@ else
 	exclude_modules?= 		cpl mangler postgres jabber mysql cpl-c \
 							auth_radius misc_radius avp_radius uri_radius \
 							acc_radius pa rls presence_b2b xcap xmlrpc\
-							osp tls oracle cassandra websocket \
+							osp tls oracle \
 							unixsock dbg print_lib auth_identity ldap \
 							db_berkeley db_mysql db_postgres db_oracle \
 							db_sqlite db_unixodbc db_cassandra memcached mi_xmlrpc \
 							perl perlvdb purple \
-							snmpstats xmpp \
+							snmpstats xmpp cdp \
 							carrierroute peering \
 							dialplan lcr utils presence presence_mwi \
 							presence_dialoginfo presence_xml pua pua_bla \
 							pua_dialoginfo pua_usrloc pua_xmpp \
 							regex xcap_client xcap_server presence_conference \
-							presence_reginfo pua_reginfo
+							presence_reginfo pua_reginfo websocket
 	#excluded because they depend on external *.h files
 	exclude_modules+= h350
 	# excluded because they do not compile (remove them only after they are
