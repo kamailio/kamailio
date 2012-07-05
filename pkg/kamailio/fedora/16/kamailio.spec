@@ -360,7 +360,7 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kpresence kregex kdialplan\
 	klcr ksqlite kberkeley" include_modules="xmlrpc\
-	xmlopsi cdp cdp_avp"
+	xmlops cdp cdp_avp"
 %endif
 
 
