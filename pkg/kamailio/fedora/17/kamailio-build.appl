@@ -8,7 +8,7 @@ hardware:
   memory: 1024
   partitions:
     "/":
-      size: 4
+      size: 6
 packages:
   - @core
   - bison			# kamailio
@@ -16,7 +16,8 @@ packages:
   - expat-devel			# kamailio-xmpp
   - flex			# kamailio
   - GeoIP-devel			# kamailio-GeoIP
-  - gcc				# kamailio
+  - gcc
+  - git
   - glib-devel			# kamailio-purple
   - hiredis-devel		# kamailio-redis
   - json-c-devel		# kamailio-json

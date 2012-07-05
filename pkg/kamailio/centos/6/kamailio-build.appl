@@ -8,14 +8,15 @@ hardware:
   memory: 1024
   partitions:
     "/":
-      size: 4
+      size: 6
 packages:
   - @core
   - bison			# kamailio
   - db4-devel			# kamailio-bdb
   - expat-devel			# kamailio-xmpp
   - flex			# kamailio
-  - gcc				# kamailio
+  - gcc
+  - git
   - glib2-devel			# kamailio-purple
   - libcurl-devel		# kamailio-utils, kamailio-presence
   - libevent-devel		# kamailio-json
