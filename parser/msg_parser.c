@@ -316,7 +316,7 @@ error:
    give you the first occurrence of a header you are interested in,
    look at check_transaction_quadruple
 */
-int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
+int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int next)
 {
 	struct hdr_field* hf;
 	char* tmp;
@@ -595,7 +595,7 @@ error:
 
 
 /* returns 0 if ok, -1 for errors */
-int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
+int parse_msg(char* const buf, const unsigned int len, struct sip_msg* const msg)
 {
 
 	char *tmp;
@@ -719,7 +719,7 @@ void free_reply_lump( struct lump_rpl *lump)
 
 
 /*only the content*/
-void free_sip_msg(struct sip_msg* msg)
+void free_sip_msg(struct sip_msg* const msg)
 {
 	if (msg->new_uri.s) { pkg_free(msg->new_uri.s); msg->new_uri.len=0; }
 	if (msg->dst_uri.s) { pkg_free(msg->dst_uri.s); msg->dst_uri.len=0; }
@@ -739,7 +739,7 @@ void free_sip_msg(struct sip_msg* msg)
 /*
  * Make a private copy of the string and assign it to dst_uri
  */
-int set_dst_uri(struct sip_msg* msg, str* uri)
+int set_dst_uri(struct sip_msg* const msg, const str* const uri)
 {
 	char* ptr;
 
@@ -769,7 +769,7 @@ int set_dst_uri(struct sip_msg* msg, str* uri)
 }
 
 
-void reset_dst_uri(struct sip_msg* msg)
+void reset_dst_uri(struct sip_msg* const msg)
 {
 	if(msg->dst_uri.s != 0) {
 		pkg_free(msg->dst_uri.s);
@@ -869,7 +869,7 @@ hdr_field_t* next_sibling_hdr_by_name(hdr_field_t *hf)
  * set msg context id
  * - return: -1 on error; 0 - on set
  */
-int msg_ctx_id_set(sip_msg_t *msg, msg_ctx_id_t *mid)
+int msg_ctx_id_set(const sip_msg_t* const msg, msg_ctx_id_t* const mid)
 {
 	if(msg==NULL || mid==NULL)
 		return -1;
@@ -882,7 +882,7 @@ int msg_ctx_id_set(sip_msg_t *msg, msg_ctx_id_t *mid)
  * check msg context id
  * - return: -1 on error; 0 - on no match; 1 - on match
  */
-int msg_ctx_id_match(sip_msg_t *msg, msg_ctx_id_t *mid)
+int msg_ctx_id_match(const sip_msg_t* const msg, const msg_ctx_id_t* const mid)
 {
 	if(msg==NULL || mid==NULL)
 		return -1;
@@ -894,7 +894,7 @@ int msg_ctx_id_match(sip_msg_t *msg, msg_ctx_id_t *mid)
 /**
  * set msg time value
  */
-int msg_set_time(sip_msg_t *msg)
+int msg_set_time(sip_msg_t* const msg)
 {
 	if(unlikely(msg==NULL))
 		return -2;
