@@ -37,6 +37,6 @@
 /** Fast 32-bit header field name parser.
  * @file
  */
-char* parse_hname2(char* begin, char* end, struct hdr_field* hdr);
+char* parse_hname2(char* const begin, const char* const end, struct hdr_field* const hdr);
 
 #endif /* PARSE_HNAME2_H */

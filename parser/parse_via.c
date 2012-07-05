@@ -141,11 +141,11 @@ enum {
  * WARNING: param->start must be filled before, it's used in param->size 
  * computation.
  */
-static /*inline*/ char* parse_via_param(char* p, char* end,
-										unsigned char* pstate, 
-				    					unsigned char* psaved_state,
-										struct via_param* param,
-										struct via_body* vb)
+static /*inline*/ char* parse_via_param(char* const p, const char* const end,
+									unsigned char* const pstate, 
+				    					unsigned char* const psaved_state,
+									struct via_param* const param,
+									const struct via_body* vb)
 {
 	char* tmp;
 	register unsigned char state;
@@ -1317,7 +1317,7 @@ normal_exit:
  * returns: pointer after the parsed parts and sets vb->error
  * WARNING: don't forget to cleanup on error with free_via_list(vb)!
  */
-char* parse_via(char* buffer, char* end, struct via_body *vbody)
+char* parse_via(char* buffer, const char* const end, struct via_body* const vbody)
 {
 	char* tmp;
 	char* param_start;

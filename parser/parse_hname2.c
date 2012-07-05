@@ -192,7 +192,7 @@ int hdr_update_type(struct hdr_field* hdr)
 }
 #endif
 
-char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
+char* parse_hname2(char* const begin, const char* const end, struct hdr_field* const hdr)
 {
 	register char* p;
 	register unsigned int val;

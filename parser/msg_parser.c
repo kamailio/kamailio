@@ -88,7 +88,7 @@ unsigned int global_req_flags = 0;
 
 /* returns pointer to next header line, and fill hdr_f ;
  * if at end of header returns pointer to the last crlf  (always buf)*/
-char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
+char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hdr)
 {
 
 	char* tmp;

@@ -386,7 +386,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg);
 
 int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next);
 
-char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr);
+char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hdr);
 
 void free_sip_msg(struct sip_msg* msg);
 

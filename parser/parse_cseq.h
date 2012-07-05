@@ -54,13 +54,13 @@ struct cseq_body{
 /*! \brief
  * Parse CSeq header field
  */
-char* parse_cseq(char *buf, char* end, struct cseq_body* cb);
+char* parse_cseq(char* const buf, const char* const end, struct cseq_body* const cb);
 
 
 /*! \brief
  * Free all associated memory
  */
-void free_cseq(struct cseq_body* cb);
+void free_cseq(struct cseq_body* const cb);
 
 
 #endif

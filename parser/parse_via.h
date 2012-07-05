@@ -117,7 +117,7 @@ struct via_body {
 /*
  * Main Via header field parser
  */
-char* parse_via(char* buffer, char* end, struct via_body *vb);
+char* parse_via(char* buffer, const char* const end, struct via_body* const vbody);
 
 
 /*
