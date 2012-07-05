@@ -21,7 +21,7 @@ packages:
   - libcurl			# kamailio-utils, kamailio-presence
   - libevent			# kamailio-json
   - libpurple			# kamailio-purple
-  - libxml2			# kamailio-utils, kamailio-cpl, kamailio-presence, kamailio-purple, kamailio-xmlrpc, kamailio-xmlops
+  - libxml2			# kamailio-cdp, kamailio-cpl, kamailio-presence, kamailio-purple, kamailio-utils, kamailio-xmlops, kamailio-xmlrpc
   - mod_perl			# kamailio-perl
   - mono-core			# kamailio-mono
   - mysql-libs			# kamailio-mysql
