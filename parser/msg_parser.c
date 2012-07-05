@@ -808,7 +808,7 @@ int set_path_vector(struct sip_msg* msg, str* path)
 }
 
 
-void reset_path_vector(struct sip_msg* msg)
+void reset_path_vector(struct sip_msg* const msg)
 {
 	if(msg->path_vec.s != 0) {
 		pkg_free(msg->path_vec.s);
@@ -818,7 +818,7 @@ void reset_path_vector(struct sip_msg* msg)
 }
 
 
-hdr_field_t* get_hdr(sip_msg_t *msg, enum _hdr_types_t ht)
+hdr_field_t* get_hdr(const sip_msg_t* const msg, const enum _hdr_types_t ht)
 {
 	hdr_field_t *hdr;
 
@@ -830,7 +830,7 @@ hdr_field_t* get_hdr(sip_msg_t *msg, enum _hdr_types_t ht)
 }
 
 
-hdr_field_t* next_sibling_hdr(hdr_field_t *hf)
+hdr_field_t* next_sibling_hdr(const hdr_field_t* const hf)
 {
 	hdr_field_t *hdr;
 
@@ -840,7 +840,7 @@ hdr_field_t* next_sibling_hdr(hdr_field_t *hf)
 	return NULL;
 }
 
-hdr_field_t* get_hdr_by_name(sip_msg_t *msg, char *name, int name_len)
+hdr_field_t* get_hdr_by_name(const sip_msg_t* const msg, const char* const name, const int name_len)
 {
 	hdr_field_t *hdr;
 
@@ -852,8 +852,8 @@ hdr_field_t* get_hdr_by_name(sip_msg_t *msg, char *name, int name_len)
 	return NULL;
 }
 
-
-hdr_field_t* next_sibling_hdr_by_name(hdr_field_t *hf)
+/** not used yet */
+hdr_field_t* next_sibling_hdr_by_name(const hdr_field_t* const hf)
 {
 	hdr_field_t *hdr;
 

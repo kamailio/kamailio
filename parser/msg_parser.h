@@ -439,14 +439,15 @@ int set_dst_uri(struct sip_msg* const msg, const str* const uri);
 /*! \brief If the dst_uri is set to an URI then reset it */
 void reset_dst_uri(struct sip_msg* const msg);
 
-hdr_field_t* get_hdr(sip_msg_t *msg, enum _hdr_types_t ht);
-hdr_field_t* next_sibling_hdr(hdr_field_t *hf);
-hdr_field_t* get_hdr_by_name(sip_msg_t *msg, char *name, int name_len);
-hdr_field_t* next_sibling_hdr_by_name(hdr_field_t *hf);
+hdr_field_t* get_hdr(const sip_msg_t* const msg, const enum _hdr_types_t ht);
+hdr_field_t* next_sibling_hdr(const hdr_field_t* const hf);
+/** not used yet */
+hdr_field_t* get_hdr_by_name(const sip_msg_t* const msg, const char* const name, const int name_len);
+hdr_field_t* next_sibling_hdr_by_name(const hdr_field_t* const hf);
 
 int set_path_vector(struct sip_msg* msg, str* path);
 
-void reset_path_vector(struct sip_msg* msg);
+void reset_path_vector(struct sip_msg* const msg);
 
 
 /** force a specific send socket for forwarding a request.
