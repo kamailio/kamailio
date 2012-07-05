@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -70,9 +68,9 @@ enum {
 
 
 
-static /*inline*/ char* parse_to_param(char *buffer, char *end,
-					struct to_body *to_b,
-					int *returned_status)
+static char* parse_to_param(char* const buffer, const char* const end,
+					struct to_body* const to_b,
+					int* const returned_status)
 {
 	struct to_param *param;
 	struct to_param *newparam;
@@ -524,8 +522,7 @@ error:
 
 
 
-
-char* parse_to(char* buffer, char *end, struct to_body *to_b)
+char* parse_to(char* const buffer, const char* const end, struct to_body* const to_b)
 {
 	int status;
 	int saved_status;
@@ -822,7 +819,7 @@ error:
 }
 
 
-void free_to_params(struct to_body* tb)
+void free_to_params(struct to_body* const tb)
 {
 	struct to_param *tp=tb->param_lst;
 	struct to_param *foo;
@@ -834,14 +831,14 @@ void free_to_params(struct to_body* tb)
 }
 
 
-void free_to(struct to_body* tb)
+void free_to(struct to_body* const tb)
 {
 	free_to_params(tb);
 	pkg_free(tb);
 }
 
 
-int parse_to_header(struct sip_msg *msg)
+int parse_to_header(struct sip_msg* const msg)
 {
 	if ( !msg->to && ( parse_headers(msg,HDR_TO_F,0)==-1 || !msg->to)) {
 		ERR("bad msg or missing TO header\n");
@@ -856,7 +853,7 @@ int parse_to_header(struct sip_msg *msg)
 		return -1;
 }
 
-sip_uri_t *parse_to_uri(sip_msg_t *msg)
+sip_uri_t *parse_to_uri(sip_msg_t* const msg)
 {
 	to_body_t *tb = NULL;
 	

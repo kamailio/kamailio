@@ -1,6 +1,4 @@
 /*
- * $Id: sdp.c 5542 2009-01-29 18:57:09Z osas $
- *
  * SDP parser interface
  *
  * Copyright (C) 2008-2009 SOMA Networks, INC.

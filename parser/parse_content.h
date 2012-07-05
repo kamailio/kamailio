@@ -1,7 +1,4 @@
 /*
- * $Id$
- *
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -105,9 +102,9 @@ struct mime_type {
  *            0        : hdr not found
  *           -1        : error (parse error )
  */
-int parse_content_type_hdr( struct sip_msg *msg);
+int parse_content_type_hdr(struct sip_msg* const msg);
 
-int parse_accept_body(struct hdr_field *hdr);
+int parse_accept_body(struct hdr_field* const hdr);
 
 /*! \brief
  * parse the body of the Accept header. It's values are also converted
@@ -116,7 +113,7 @@ int parse_accept_body(struct hdr_field *hdr);
  *            0 : hdr not found
  *           -1 : error (parse error)
  */
-int parse_accept_hdr( struct sip_msg *msg );
+int parse_accept_hdr(struct sip_msg* const msg);
 
 
 /*! \brief
@@ -124,11 +121,11 @@ int parse_accept_hdr( struct sip_msg *msg );
  *  type specified by this header (see th above defines).
  *  Returns the first chr after the end of the header.
  */
-char* parse_content_length( char* buffer, char* end, int* len);
+char* parse_content_length(char* const buffer, const char* const end, int* const length);
 
 /*! \brief
  * Sets the mime type from the body of a Content-Type header
  */
-char* decode_mime_type(char *start, char *end, unsigned int *mime_type);
+char* decode_mime_type(char* const start, const char* const end, unsigned int* const mime_type);
 
 #endif

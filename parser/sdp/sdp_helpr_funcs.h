@@ -1,6 +1,4 @@
 /*
- * $Id: sdp_helpr_funcs.h 4807 2008-09-02 15:00:48Z osas $
- *
  * SDP parser helpers
  *
  * Copyright (C) 2008-2009 SOMA Networks, INC.

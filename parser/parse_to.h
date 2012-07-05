@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -65,14 +63,14 @@ typedef struct to_body{
 /*! \brief
  * To header field parser
  */
-char* parse_to(char* buffer, char *end, struct to_body *to_b);
+char* parse_to(char* const buffer, const char* const end, struct to_body* const to_b);
 
-void free_to_params(struct to_body* tb);
+void free_to_params(struct to_body* const tb);
 
-void free_to(struct to_body* tb);
+void free_to(struct to_body* const tb);
 
-int parse_to_header(struct sip_msg *msg);
+int parse_to_header(struct sip_msg* const msg);
 
-sip_uri_t *parse_to_uri(struct sip_msg* msg);
+sip_uri_t *parse_to_uri(struct sip_msg* const msg);
 
 #endif

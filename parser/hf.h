@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -258,7 +256,7 @@ static inline int hdr_allocs_parse(struct hdr_field* hdr)
 /** frees a hdr_field structure.
  * WARNING: it frees only parsed (and not name.s, body.s)
  */
-void clean_hdr_field(struct hdr_field* hf);
+void clean_hdr_field(struct hdr_field* const hf);
 
 
 /** frees a hdr_field list.
@@ -267,7 +265,7 @@ void clean_hdr_field(struct hdr_field* hf);
 void free_hdr_field_lst(struct hdr_field* hf);
 
 /* print content of hdr_field */
-void dump_hdr_field( struct hdr_field* hf );
+void dump_hdr_field( struct hdr_field const* const hf);
 
 /**
  * free hdr parsed structure using inner free function

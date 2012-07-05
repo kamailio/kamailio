@@ -363,14 +363,14 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
-	klcr ksqlite kredis kjson kmono kberkeley kwebsocket" \
-	include_modules="xmlrpc xmlops cdp cdp_avp"\
+	klcr ksqlite kredis kjson kmono kberkeley kwebsocket"\
+	include_modules="xmlrpc xmlops cdp cdp_avp"
 %else
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kpresence kregex kdialplan\
-	klcr ksqlite kberkeley kwebsocket" \
+	klcr ksqlite kberkeley kwebsocket"\
 	include_modules="xmlrpc xmlops cdp cdp_avp"
 %endif
 
