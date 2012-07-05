@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2007 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.

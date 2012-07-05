@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Expires header field body parser
  *
  * Copyright (C) 2001-2003 FhG Fokus

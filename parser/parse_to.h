@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
  * This file is part of ser, a free SIP server.

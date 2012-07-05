@@ -1,6 +1,4 @@
 /* 
- * $Id$ 
- *
  * Date Header Field Name Parsing Macros
  *
  * Copyright (c) 2007 iptelorg GmbH

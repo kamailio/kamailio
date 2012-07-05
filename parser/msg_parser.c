@@ -1,8 +1,5 @@
 /*
- * $Id$
- *
  * sip msg. header proxy parser
- *
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
