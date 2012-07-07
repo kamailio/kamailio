@@ -168,14 +168,13 @@ if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
 		<function moreinfo="none">redis_free(replyid)</function>
 	</title>
 	<para>
-		Free a previous reply from memory.
+		Frees data in a previous reply from memory.
 		After this function call, accessing to a freed replyid returns null value.
 	</para>
 	<para>
 		It is not necessary to free a reply to use it again in a new redis_cmd
 		function. When ndb_redis module closes, all pending replies are freed
-		automatically, so you only need to use this function if you perform a
-		lot of redis command requests with different replyid.
+		automatically.
 	</para>
 	<example>
 		<title><function>redis_free</function> usage</title>
@@ -184,7 +183,7 @@ if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
 After a redis command call:
 	redis_cmd("srvN", "INCR cnt", "r");
 
-when reply not used anymore:
+free reply data:
 	redis_free("r");
 ...
 		</programlisting>
