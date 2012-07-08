@@ -11,6 +11,7 @@ hardware:
       size: 2
 packages:
   - @core
+  - @Base
   - db4				# kamailio-bdb
   - expat			# kamailio-xmpp
   - GeoIP			# kamailio-GeoIP

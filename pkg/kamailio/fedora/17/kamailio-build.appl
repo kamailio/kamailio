@@ -11,6 +11,7 @@ hardware:
       size: 6
 packages:
   - @core
+  - @Base
   - bison			# kamailio
   - db4-devel			# kamailio-bdb
   - expat-devel			# kamailio-xmpp
