@@ -35,7 +35,7 @@ Vicente Hernando
 
         4. Functions
 
-              4.1. redis_cmd(srvname, command, replyid)
+              4.1. redis_cmd(srvname, command, ..., replyid)
               4.2. redis_free(replyid)
 
    List of Examples
@@ -60,7 +60,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. redis_cmd(srvname, command, replyid)
+        4.1. redis_cmd(srvname, command, ..., replyid)
         4.2. redis_free(replyid)
 
 1. Overview
@@ -121,14 +121,18 @@ modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
 
 4. Functions
 
-   4.1. redis_cmd(srvname, command, replyid)
+   4.1. redis_cmd(srvname, command, ..., replyid)
    4.2. redis_free(replyid)
 
-4.1.  redis_cmd(srvname, command, replyid)
+4.1.  redis_cmd(srvname, command, ..., replyid)
 
    Send a command to REDIS server identified by srvname. The reply will be
-   stored in a local continer identified by replyid. All the parameters
+   stored in a local container identified by replyid. All the parameters
    can be strings with pseudo-variables that are evaluated at runtime.
+
+   Minimum required arguments are srvname, command and replyid. Command
+   argument can be separated into several ones using %s token. (See
+   examples) Total number of arguments cannot exceed six.
 
    The reply can be accessed via pseudo-variable $redis(key). The key can
    be: type - type of the reply (as in hiredis.h); value - the value
@@ -157,6 +161,16 @@ redis_cmd("srvN", "SET ruri $ru", "r");
 
 # get a value
 redis_cmd("srvN", "GET foo", "r");
+
+# same command separated into two arguments:
+redis_cmd("srvN", "GET %s", "foo", "r");
+
+# if we have a key with spaces within it:
+redis_cmd("srvN", "GET %s", "foo bar", "r");
+
+# several values substitution:
+redis_cmd("srvN", "HMGET %s %s %s", "key1", "field1", "field2", "r");
+
 
 # array example
 if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
