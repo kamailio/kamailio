@@ -159,6 +159,7 @@ static param_export_t params[] = {
 	{"reg_db_table",      STR_PARAM,                &reg_db_table.s        },
 	{"reg_contact_addr",  STR_PARAM,                &reg_contact_addr.s    },
 	{"reg_timer_interval", INT_PARAM,		&reg_timer_interval	},
+	{"reg_retry_interval",INT_PARAM,                &reg_retry_interval    },
 	{0, 0, 0}
 };
 

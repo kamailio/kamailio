@@ -407,6 +407,25 @@ modparam("uac", "reg_timer_interval", 60)
 			</example>
 		</section>
 
+		<section id="reg-retry-interval-id">
+			<title><varname>reg_retry_interval</varname> (int)</title>
+			<para>
+			Failed registration attempts will be retried after this interval
+			(in seconds). The interval is not exact, retries may be
+			attempted as much as reg_timer_interval secs earlier.
+			If set to 0, failed registrations will be disabled permanently.
+			</para>
+			<para>The default value is 0 sec (disabled)</para>
+			<example>
+				<title>Set <varname>reg_retry_interval</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac", "reg_retry_interval", 300)
+...
+				</programlisting>
+			</example>
+		</section>
+
 		<section id="reg-db-table-id">
 			<title><varname>reg_db_table</varname> (string)</title>
 			<para>

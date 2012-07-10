@@ -93,6 +93,7 @@ static reg_ht_t *_reg_htable = NULL;
 
 int reg_use_domain = 0;
 int reg_timer_interval = 90;
+int reg_retry_interval = 0;
 int reg_htable_size = 4;
 int reg_fetch_rows = 1000;
 str reg_contact_addr = {0, 0};
@@ -477,17 +478,17 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		if (parse_headers(ps->rpl, HDR_EOH_F, 0) == -1)
 		{
 			LM_ERR("failed to parse headers\n");
-			goto done;
+			goto error;
 		}
 		if (ps->rpl->contact==NULL)
 		{
 			LM_ERR("no Contact found\n");
-			goto done;
+			goto error;
 		}
 		if (parse_contact(ps->rpl->contact) < 0)
 		{
 			LM_ERR("failed to parse Contact HF\n");
-			goto done;
+			goto error;
 		}
 		if (((contact_body_t*)ps->rpl->contact->parsed)->star)
 		{
@@ -502,7 +503,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 			if(parse_uri(c->uri.s, c->uri.len, &puri)!=0)
 			{
 				LM_ERR("failed to parse c-uri\n");
-				goto done;
+				goto error;
 			}
 			if(suuid.len==puri.user.len
 					&& (strncmp(puri.user.s, suuid.s, suuid.len)==0))
@@ -517,7 +518,6 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 					str2int(&c->expires->body, (unsigned int*)(&expires));
 				}
 				ri->timer_expires = ri->timer_expires + expires;
-				ri->flags &= ~(UAC_REG_ONGOING|UAC_REG_AUTHSENT);
 				ri->flags |= UAC_REG_ONLINE;
 				goto done;
 			}
@@ -535,15 +535,13 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		{
 			LM_ERR("authentication failed for <%.*s>\n",
 					ri->l_uuid.len, ri->l_uuid.s);
-			ri->flags &= ~UAC_REG_ONGOING;
-			ri->flags |= UAC_REG_DISABLED;
-			goto done;
+			goto error;
 		}
 		hdr = get_autenticate_hdr(ps->rpl, ps->code);
 		if (hdr==0)
 		{
 			LM_ERR("failed to extract authenticate hdr\n");
-			goto done;
+			goto error;
 		}
 
 		LM_DBG("auth header body [%.*s]\n",
@@ -552,7 +550,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		if (parse_authenticate_body(&hdr->body, &auth)<0)
 		{
 			LM_ERR("failed to parse auth hdr body\n");
-			goto done;
+			goto error;
 		}
 		if (ri->realm.len>0) {
 			/* only check if realms match if it is non-empty */
@@ -579,7 +577,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		if (new_auth_hdr==0)
 		{
 			LM_ERR("failed to build authorization hdr\n");
-			goto done;
+			goto error;
 		}
 		
 #ifdef UAC_OLD_AUTH
@@ -603,7 +601,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		if(uac_reg_tmdlg(&tmdlg, ps->rpl)<0)
 		{
 			LM_ERR("failed to build tm dialog\n");
-			goto done;
+			goto error;
 		}
 		tmdlg.rem_target = s_ruri;
 		if(ri->auth_proxy.len)
@@ -625,15 +623,30 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 			);
 #endif
 		ret = uac_tmb.t_request_within(&uac_r);
-		ri->flags |= UAC_REG_AUTHSENT;
 
-		if(ret<0)
-			goto done;
+		if(ret<0) {
+			LM_ERR("failed to send request with authentication for [%.*s]",
+			       ri->l_uuid.len, ri->l_uuid.s);
+			goto error;
+		}
+
+		ri->flags |= UAC_REG_AUTHSENT;
 		return;
+	} else
+	{
+		LM_ERR("got sip response %d while registering [%.*s]\n",
+		       ps->code, ri->l_uuid.len, ri->l_uuid.s);
+		goto error;
 	}
 
+error:
+	if(reg_retry_interval)
+		ri->timer_expires = time(NULL) + reg_retry_interval;
+	else
+		ri->flags |= UAC_REG_DISABLED;
 done:
-	if(ri) ri->flags &= ~UAC_REG_ONGOING;
+	if(ri)
+		ri->flags &= ~UAC_REG_ONGOING|UAC_REG_AUTHSENT;
 	shm_free(uuid);
 }
 
@@ -656,10 +669,10 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 		return 1;
 	if(reg->flags&UAC_REG_ONGOING)
 		return 2;
-	if(reg->timer_expires > tn + reg_timer_interval + 3)
-		return 3;
 	if(reg->flags&UAC_REG_DISABLED)
 		return 4;
+	if(reg->timer_expires > tn + reg_timer_interval + 3)
+		return 3;
 	reg->timer_expires = tn;
 	reg->flags |= UAC_REG_ONGOING;
 	reg->flags &= ~UAC_REG_ONLINE;
@@ -706,7 +719,13 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 
 	if(ret<0)
 	{
+		LM_ERR("failed to send request for [%.*s]", reg->l_uuid.len, reg->l_uuid.s);
 		shm_free(uuid);
+		if (reg_retry_interval)
+			reg->timer_expires = (tn ? tn : time(NULL)) + reg_retry_interval;
+		else
+			reg->flags |= UAC_REG_DISABLED;
+		reg->flags &= ~UAC_REG_ONGOING;
 		return -1;
 	}
 	return 0;

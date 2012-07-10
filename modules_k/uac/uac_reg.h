@@ -26,6 +26,7 @@
 #include "../../pvar.h"
 
 extern int reg_timer_interval;
+extern int reg_retry_interval;
 extern int reg_htable_size;
 extern int reg_fetch_rows;
 extern str reg_contact_addr;
