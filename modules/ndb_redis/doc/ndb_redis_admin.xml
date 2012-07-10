@@ -100,13 +100,18 @@ modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
 	<title>Functions</title>
 	<section>
 	    <title>
-		<function moreinfo="none">redis_cmd(srvname, command, replyid)</function>
+		<function moreinfo="none">redis_cmd(srvname, command, ..., replyid)</function>
 	    </title>
 	    <para>
 			Send a command to REDIS server identified by srvname. The reply will
-			be stored in a local continer identified by replyid. All the
+			be stored in a local container identified by replyid. All the
 			parameters can be strings with pseudo-variables that are evaluated
 			at runtime.
+		</para>
+		<para>
+			Minimum required arguments are srvname, command and replyid. Command argument
+			can be separated into several ones using %s token. (See examples)
+			Total number of arguments cannot exceed six.
 		</para>
 		<para>
 			The reply can be accessed via pseudo-variable $redis(key). The key
@@ -153,6 +158,16 @@ redis_cmd("srvN", "SET ruri $ru", "r");
 
 # get a value
 redis_cmd("srvN", "GET foo", "r");
+
+# same command separated into two arguments:
+redis_cmd("srvN", "GET %s", "foo", "r");
+
+# if we have a key with spaces within it:
+redis_cmd("srvN", "GET %s", "foo bar", "r");
+
+# several values substitution:
+redis_cmd("srvN", "HMGET %s %s %s", "key1", "field1", "field2", "r");
+
 
 # array example
 if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
