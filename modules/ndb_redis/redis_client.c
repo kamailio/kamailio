@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <stdarg.h>
 
 #include "../../mem/mem.h"
 #include "../../dprint.h"
@@ -310,23 +311,25 @@ err:
 /**
  *
  */
-int redisc_exec(str *srv, str *cmd, str *argv1, str *argv2, str *argv3,
-		str *res)
+int redisc_exec(str *srv, str *res, str *cmd, ...)
 {
 	redisc_server_t *rsrv=NULL;
 	redisc_reply_t *rpl;
 	char c;
+	va_list ap;
+
+	va_start(ap, cmd);
 
 	rsrv = redisc_get_server(srv);
 	if(srv==NULL || cmd==NULL || res==NULL)
 	{
 		LM_ERR("invalid parameters");
-		return -1;
+		goto error_exec;
 	}
 	if(rsrv==NULL)
 	{
 		LM_ERR("no redis server found: %.*s\n", srv->len, srv->s);
-		return -1;
+		goto error_exec;
 	}
 	if(rsrv->ctxRedis==NULL)
 	{
@@ -337,7 +340,7 @@ int redisc_exec(str *srv, str *cmd, str *argv1, str *argv2, str *argv3,
 	if(rpl==NULL)
 	{
 		LM_ERR("no redis reply id found: %.*s\n", res->len, res->s);
-		return -1;
+		goto error_exec;
 	}
 	if(rpl->rplRedis!=NULL)
 	{
@@ -347,19 +350,24 @@ int redisc_exec(str *srv, str *cmd, str *argv1, str *argv2, str *argv3,
 	}
 	c = cmd->s[cmd->len];
 	cmd->s[cmd->len] = '\0';
-	rpl->rplRedis = redisCommand(rsrv->ctxRedis, cmd->s);
+	rpl->rplRedis = redisvCommand(rsrv->ctxRedis, cmd->s, ap );
 	if(rpl->rplRedis == NULL)
 	{
 		/* null reply, reconnect and try again */
 		if(redisc_reconnect_server(rsrv)==0)
 		{
-			rpl->rplRedis = redisCommand(rsrv->ctxRedis, cmd->s);
+			rpl->rplRedis = redisvCommand(rsrv->ctxRedis, cmd->s, ap);
 		}
 	}
 	cmd->s[cmd->len] = c;
+	va_end(ap);
 	return 0;
-}
 
+error_exec:
+	va_end(ap);
+	return -1;
+
+}
 
 /**
  *

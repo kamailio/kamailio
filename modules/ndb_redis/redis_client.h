@@ -33,8 +33,7 @@
 int redisc_init(void);
 int redisc_destroy(void);
 int redisc_add_server(char *spec);
-int redisc_exec(str *srv, str *cmd, str *argv1, str *argv2, str *argv3,
-		str *res);
+int redisc_exec(str *srv, str *res, str *cmd, ...);
 
 typedef struct redisc_server {
 	str *sname;
