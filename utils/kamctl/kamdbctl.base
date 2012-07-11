@@ -32,7 +32,7 @@ INSTALL_PRESENCE_TABLES=${INSTALL_PRESENCE_TABLES:-ask}
 
 # Used by dbtext and db_berkeley to define tables to be created, used by
 # postgres to do the grants
-STANDARD_TABLES=${STANDARD_TABLES:-version acc dbaliases domain grp
+STANDARD_TABLES=${STANDARD_TABLES:-version acc dbaliases domain domain_attrs grp
 		uri speed_dial lcr_gw lcr_rule lcr_rule_target pdt subscriber
 		location re_grp trusted address missed_calls usr_preferences
 		aliases silo dialog dialog_vars dispatcher dialplan}
