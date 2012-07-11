@@ -435,14 +435,11 @@ static int fixup_replace_disp_uri(void** param, int param_no)
 			s.len += 2;
 		}
 	}
-	if(s.len!=0)
+	if(pv_parse_format(&s ,&model)<0)
 	{
-		if(pv_parse_format(&s ,&model)<0)
-		{
-			LM_ERR("wrong format [%s] for param no %d!\n", s.s, param_no);
-			pkg_free(s.s);
-			return E_UNSPEC;
-		}
+		LM_ERR("wrong format [%s] for param no %d!\n", s.s, param_no);
+		pkg_free(s.s);
+		return E_UNSPEC;
 	}
 	*param = (void*)model;
 
