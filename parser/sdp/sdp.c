@@ -721,6 +721,7 @@ int parse_sdp(struct sip_msg* _m)
 			if (res != 0) {
 				LM_DBG("free_sdp\n");
 				free_sdp((sdp_info_t**)(void*)&_m->body);
+                                return res;
 			}
 			/* The whole body is SDP */
 			((sdp_info_t*)_m->body)->raw_sdp.s = body.s;
