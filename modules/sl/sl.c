@@ -209,7 +209,7 @@ static int w_sl_send_reply(struct sip_msg* msg, char* p1, char* p2)
     }
     
     if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
-		reason = default_reason;;
+		reason = default_reason;
     }
 
 	if(reason.s[reason.len-1]=='\0') {
@@ -219,7 +219,7 @@ static int w_sl_send_reply(struct sip_msg* msg, char* p1, char* p2)
 		if (r == NULL) r = default_reason.s;
 	}
 	ret = sl_send_reply(msg, code, r);
-    if (r!=reason.s) pkg_free(r);
+    if ((r!=reason.s) && (r!=default_reason.s)) pkg_free(r);
     return ret;
 }
 
