@@ -2012,10 +2012,13 @@ void print_all_socket_lists()
 						si->name.s);
 				if (!si->flags & SI_IS_IP)
 					printf(" [%s]", si->address_str.s);
-				printf( ":%s%s%s\n",
+				printf( ":%s%s%s",
 						si->port_no_str.s, 
 						si->flags & SI_IS_MCAST ? " mcast" : "",
 						si->flags & SI_IS_MHOMED? " mhomed" : "");
+				if (si->useinfo.name.s)
+					printf(" advertise %s", si->useinfo.name.s);
+				printf("\n");
 			}
 		}
 	}while((proto=next_proto(proto)));
