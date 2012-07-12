@@ -1742,6 +1742,7 @@ ifeq ($(OS), linux)
 		sctp_dev_locations := /usr/include/netinet/sctp.h \
 								$(LOCALBASE)/include/netinet/sctp.h
 		sctp_lib_locations := /usr/lib/libsctp.so \
+								/usr/lib64/libsctp.so \
 								$(LOCALBASE)/usr/local/lib/libsctp.so
 		sctp_dev_path := $(wildcard $(sctp_dev_locations))
 		sctp_lib_path := $(wildcard $(sctp_lib_locations))
