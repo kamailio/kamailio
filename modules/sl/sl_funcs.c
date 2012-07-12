@@ -183,7 +183,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	}
 	if (!buf.s)
 	{
-		DBG("DEBUG: sl_send_reply: response building failed\n");
+		DBG("DEBUG: sl_reply_helper: response building failed\n");
 		goto error;
 	}
 	
