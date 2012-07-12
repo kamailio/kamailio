@@ -2777,6 +2777,14 @@ int process_dialogs(int round, int presence_winfo)
 		result_cols[updated_winfo_col = n_result_cols++] = &str_updated_winfo_col;
 		result_cols[expires_col = n_result_cols++] = &str_expires_col;
 
+		/* Need to redo this here as we might have switched to the
+		   presentity table during a previous iteration. */
+		if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
+		{
+			LM_ERR("use table failed\n");
+			goto error;
+		}
+
 		if (pa_dbf.start_transaction)
 		{
 			if (pa_dbf.start_transaction(pa_db) < 0)
