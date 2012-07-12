@@ -16,7 +16,7 @@ Edited by
 
 Bogdan-Andre Iancu
 
-   Copyright � 2003 FhG FOKUS
+   Copyright © 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -111,9 +111,9 @@ Bogdan-Andre Iancu
    1.24. lookup usage
    1.25. registered usage
    1.26. add_sock_hdr usage
-   1.27. registered usage
-   1.28. registered usage
-   1.29. registered usage
+   1.27. unregister usage
+   1.28. reg_fetch_contacts usage
+   1.29. reg_free_contacts usage
    1.30. $ulc(name) usage
 
 Chapter 1. Admin Guide
@@ -197,8 +197,8 @@ Chapter 1. Admin Guide
      * off - stores the value of the Path headers into usrloc without
        passing it back to the UAC in the reply.
      * lazy - stores the Path header and passes it back to the UAC if
-       Path-support is indicated by the "path" param in the Supported HF.
-     * strict - rejects the registration with "420 Bad Extension" if
+       Path-support is indicated by the “path” param in the Supported HF.
+     * strict - rejects the registration with “420 Bad Extension” if
        there's a Path header but no support for it is indicated by the
        UAC. Otherwise it's stored and passed back to the UAC.
 
@@ -210,8 +210,8 @@ Chapter 1. Admin Guide
    client's NAT).
 
    The whole process is transparent to the user, so no config changes are
-   required beside setting the registrar-parameters "use_path" and
-   "path_mode".
+   required beside setting the registrar-parameters “use_path” and
+   “path_mode”.
 
 1.2. GRUU Support
 
@@ -273,7 +273,7 @@ Chapter 1. Admin Guide
    contact parameters, this value will be used for newly created usrloc
    records. The parameter contains number of second to expire (for example
    use 3600 for one hour). If it is set to a lower value than the
-   "min_expires" parameter then it will be ignored. This parameter can be
+   “min_expires” parameter then it will be ignored. This parameter can be
    modified via ser config framework. A random value in a specific
    interval can be selected by using the default_expires_range parameter
 
@@ -287,9 +287,9 @@ modparam("registrar", "default_expires", 1800)
 3.2. default_expires_range (integer)
 
    This parameter specifies that the expiry used for newly created usrloc
-   records are not fixed(when "default_expires" applies), but a random
-   value in the interval "[default_expires-default_expires_range%,
-   default_expires+default_expires_range%]". The value is between 0 and
+   records are not fixed(when “default_expires” applies), but a random
+   value in the interval “[default_expires-default_expires_range%,
+   default_expires+default_expires_range%]”. The value is between 0 and
    100 and represent the maximim percentage from default_expires that will
    be substracted or added when computing the value. Default in 0, meaning
    default_expires is left unmodified. This parameter can be modified via
@@ -507,7 +507,7 @@ modparam("registrar", "method_filtering", 1)
 3.17. use_path (integer)
 
    If set to 1, the Path header is handled according to the parameter This
-   parameter can be modified via ser config framework. "path_mode".
+   parameter can be modified via ser config framework. “path_mode”.
 
    Default value is 0 (disabled).
 
@@ -524,12 +524,12 @@ modparam("registrar", "use_path", 1)
        the reply.
      * 1 - The Path header is saved into usrloc, but is only included in
        the reply if path support is indicated in the registration request
-       by the "path" option of the "Supported" header.
+       by the “path” option of the “Supported” header.
      * 2 - The path header is only saved into usrloc, if path support is
-       indicated in the registration request by the "path" option of the
-       "Supported" header. If no path support is indicated, the request is
-       rejected with "420 - Bad Extension" and the header "Unsupported:
-       path" is included in the reply along with the received "Path"
+       indicated in the registration request by the “path” option of the
+       “Supported” header. If no path support is indicated, the request is
+       rejected with “420 - Bad Extension” and the header “Unsupported:
+       path” is included in the reply along with the received “Path”
        header. This mode is the one recommended by RFC-3327.
 
    Default value is 2.
@@ -541,10 +541,10 @@ modparam("registrar", "path_mode", 0)
 
 3.19. path_use_received (integer)
 
-   If set to 1, the "received" parameter of the first Path URI of a
+   If set to 1, the “received” parameter of the first Path URI of a
    registration is set as received-uri and the NAT branch flag is set for
    this contact. This is useful if the registrar is placed behind a SIP
-   loadbalancer, which passes the nat'ed UAC address as "received"
+   loadbalancer, which passes the nat'ed UAC address as “received”
    parameter in it's Path uri.
 
    Default value is 0 (disabled).
@@ -605,7 +605,7 @@ modparam("registrar", "xavp_cfg", "ulrcd")
 
 3.23. gruu_enabled (integer)
 
-   If set to 1 and GRUU "+sip.instance" parameter to Contact header of
+   If set to 1 and GRUU “+sip.instance” parameter to Contact header of
    REGISTER is present, then the value of the parameter is saved to
    location and pub-gruu and temp-gruu addresses are generated.
 
@@ -628,7 +628,7 @@ modparam("registrar", "gruu_enabled", 0)
    4.6. reg_fetch_contacts(domain, uri, profile)
    4.7. reg_free_contacts(profile)
 
-4.1. save(domain, [, flags [, uri]])
+4.1.  save(domain, [, flags [, uri]])
 
    The function processes a REGISTER message. It can add, remove or modify
    usrloc records depending on Contact and Expires HFs in the REGISTER
@@ -672,7 +672,7 @@ save("location", "0x01");
 save("location", "0x00", "sip:test@kamailio.org");
 ...
 
-4.2. lookup(domain [, uri])
+4.2.  lookup(domain [, uri])
 
    The functions extracts username from Request-URI and tries to find all
    contacts for the username in usrloc. If there are no such contacts, -1
@@ -712,7 +712,7 @@ switch ($retcode) {
 };
 ...
 
-4.3. registered(domain [, uri])
+4.3.  registered(domain [, uri])
 
    The function returns true if the AOR in the Request-URI is registered,
    false otherwise. The function does not modify the message being
@@ -734,9 +734,9 @@ if (registered("location")) {
 };
 ...
 
-4.4. add_sock_hdr(hdr_name)
+4.4.  add_sock_hdr(hdr_name)
 
-   Adds to the current REGISTER request a new header with "hdr_name" which
+   Adds to the current REGISTER request a new header with “hdr_name” which
    contains the description of the received socket (proto:ip:port)
 
    This make sens only in multiple replicated servers scenarios.
@@ -751,7 +751,7 @@ if (registered("location")) {
 add_sock_hdr("Sock-Info");
 ...
 
-4.5. unregister(domain, uri)
+4.5.  unregister(domain, uri)
 
    The function remove all the contact associated to 'uri'.
 
@@ -764,13 +764,13 @@ add_sock_hdr("Sock-Info");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.27. registered usage
+   Example 1.27. unregister usage
 ...
 unregister("location", "$ru");
 unregister("location", "sip:user@kamailio.org");
 ...
 
-4.6. reg_fetch_contacts(domain, uri, profile)
+4.6.  reg_fetch_contacts(domain, uri, profile)
 
    The function fetches the contacts for 'uri' from table 'domain' to
    pseudo-variable $ulc(profile).
@@ -786,13 +786,13 @@ unregister("location", "sip:user@kamailio.org");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.28. registered usage
+   Example 1.28. reg_fetch_contacts usage
 ...
 reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 ...
 
-4.7. reg_free_contacts(profile)
+4.7.  reg_free_contacts(profile)
 
    The function frees the contacts from pseudo-variable $ulc(profile).
    Should be called to release the content of a profile. Anyhow, fetching
@@ -805,7 +805,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.29. registered usage
+   Example 1.29. reg_free_contacts usage
 ...
 reg_free_contacts("callee");
 ...
@@ -845,12 +845,12 @@ reg_free_contacts("callee");
 6.1. $ulc(profile=>attr)
 
    Access the attributes of contact addresses stored in 'profile'. It must
-   be used after a call of "reg_fetch_contacts()".
+   be used after a call of “reg_fetch_contacts()”.
 
-   The "profile" has to be one of the values used with
-   "reg_fetch_contacts()".
+   The “profile” has to be one of the values used with
+   “reg_fetch_contacts()”.
 
-   The "attr" can be:
+   The “attr” can be:
      * aor - address of record
      * domain - use location domain name
      * aorhash - hash id for the record
@@ -903,9 +903,9 @@ if(reg_fetch_contacts("location", "$fu", "caller"))
 
 Chapter 2. Frequently Asked Questions
 
-   2.1. What happend with the old "nat_flag" module parameter?
-   2.2. What happend with the old "use_domain" module parameter?
-   2.3. What happend with the old "save_noreply" and "save_memory"
+   2.1. What happend with the old “nat_flag” module parameter?
+   2.2. What happend with the old “use_domain” module parameter?
+   2.3. What happend with the old “save_noreply” and “save_memory”
           functions?
 
    2.4. Where can I find more about Kamailio?
@@ -915,23 +915,23 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-   What happend with the old "nat_flag" module parameter?
+   What happend with the old “nat_flag” module parameter?
 
    In was removed, as the module internally loads this value from the
-   "USRLOC" module (see the "nat_bflag" USRLOC parameter).
+   “USRLOC” module (see the “nat_bflag” USRLOC parameter).
 
    2.2.
 
-   What happend with the old "use_domain" module parameter?
+   What happend with the old “use_domain” module parameter?
 
    In was removed, as the module internally loads this option from the
-   "USRLOC" module. This was done in order to simplify the configuration.
+   “USRLOC” module. This was done in order to simplify the configuration.
 
    2.3.
 
-   What happend with the old "save_noreply" and "save_memory" functions?
+   What happend with the old “save_noreply” and “save_memory” functions?
 
-   There functions were merged into the new "save(domain,flags)"
+   There functions were merged into the new “save(domain,flags)”
    functions. If a reply should be sent or if the DB should be updated
    also is controlled via the flags.
 

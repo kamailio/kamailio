@@ -985,7 +985,7 @@ add_sock_hdr("Sock-Info");
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>registered</function> usage</title>
+		<title><function>unregister</function> usage</title>
 		<programlisting format="linespecific">
 ...
 unregister("location", "$ru");
@@ -1028,7 +1028,7 @@ unregister("location", "sip:user@kamailio.org");
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>registered</function> usage</title>
+		<title><function>reg_fetch_contacts</function> usage</title>
 		<programlisting format="linespecific">
 ...
 reg_fetch_contacts("location", "$ru", "callee");
@@ -1060,7 +1060,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>registered</function> usage</title>
+		<title><function>reg_free_contacts</function> usage</title>
 		<programlisting format="linespecific">
 ...
 reg_free_contacts("callee");
