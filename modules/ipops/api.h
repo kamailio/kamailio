@@ -36,12 +36,15 @@ int ipopsapi_compare_ips(const str *const ip1, const str *const ip2);
 typedef int (*ip_is_in_subnet_f)(const str *const, const str *const);
 int ipopsapi_ip_is_in_subnet(const str *const ip1, const str *const ip2);
 
+typedef int (*is_ip_f)(const str * const ip);
+int ipopsapi_is_ip(const str * const ip);
 /**
  * @brief IPOPS API structure
  */
 typedef struct ipops_api {
 	compare_ips_f       compare_ips;
 	ip_is_in_subnet_f   ip_is_in_subnet;
+	is_ip_f   is_ip;
 } ipops_api_t;
 
 typedef int (*bind_ipops_f)(ipops_api_t* api);
