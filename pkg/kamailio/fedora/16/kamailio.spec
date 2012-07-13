@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     3.4.0
-%define rel     dev1%{dist}
+%define rel     dev2%{dist}
 
 
 
@@ -976,6 +976,8 @@ fi
 
 
 %changelog
+* Fri Jul 13 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to dev2
 * Thu Jul 5 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added kamailio-cdp RPM for cdp and cdp_avp modules
 * Tue Jul 3 2012 Peter Dunkley <peter@dunkley.me.uk>
