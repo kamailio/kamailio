@@ -13,7 +13,7 @@
     <title>Overview</title>
 
     <para>CDP AVP is a helper module for various applications ontop of CDP (C
-    Diameter Peer). CDP AVP modules adds support for the following
+    Diameter Peer). CDP AVP module adds support for the following
     applications:</para>
 
     <itemizedlist>
