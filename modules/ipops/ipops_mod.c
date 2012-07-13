@@ -108,7 +108,7 @@ static cmd_export_t cmds[] =
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
   { "is_ip_rfc1918", (cmd_function)w_is_ip_rfc1918, 1, fixup_spve_null, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-  { "is_in_subnet", (cmd_function)w_ip_is_in_subnet, 2, fixup_spve_null, 0,
+  { "is_in_subnet", (cmd_function)w_ip_is_in_subnet, 2, fixup_spve_spve, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
   { "bind_ipops", (cmd_function)bind_ipops, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0 }

@@ -120,6 +120,17 @@ int ipopsapi_ip_is_in_subnet(const str *const ip1, const str *const ip2)
 /**
  *
  */
+int ipopsapi_is_ip(const str * const ip)
+{
+  if (ip_parser_execute(ip->s, ip->len) != ip_type_error)
+    return 1;
+  else
+    return -1;
+}
+
+/**
+ *
+ */
 int bind_ipops(ipops_api_t* api)
 {
 	if (!api) {
@@ -128,6 +139,7 @@ int bind_ipops(ipops_api_t* api)
 	}
 	api->compare_ips     = ipopsapi_compare_ips;
 	api->ip_is_in_subnet = ipopsapi_ip_is_in_subnet;
+	api->is_ip           = ipopsapi_is_ip;
 
 	return 0;
 }
