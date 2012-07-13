@@ -50,12 +50,7 @@
 #include "db_cap.h"
 #include "db_con.h"
 #include "db_row.h"
-
-
-typedef enum {
-	DB_POOLING_PERMITTED,
-	DB_POOLING_NONE	
-} db_pooling_t;
+#include "db_pooling.h"
 
 /**
  * \brief Specify table name that will be used for subsequent operations.

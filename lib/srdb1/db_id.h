@@ -31,7 +31,7 @@
 #define _DB1_ID_H
 
 #include "../../str.h"
-#include "db.h"
+#include "db_pooling.h"
 
 /** Structure representing a database ID */
 struct db_id {
