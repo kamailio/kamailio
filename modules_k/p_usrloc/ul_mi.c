@@ -119,6 +119,14 @@ static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r, time_t t
 	if (short_dump)
 		return 0;
 
+#if 0
+	/* aor hash */
+	p = int2str((unsigned long)r->aorhash, &len);
+	node = add_mi_node_child( anode, MI_DUP_VALUE, "HashID", 6, p, len);
+	if (node==0)
+		return -1;
+#endif
+
 	for( c=r->contacts ; c ; c=c->next) {
 		/* contact */
 		cnode = add_mi_node_child( anode, MI_DUP_VALUE, "Contact", 7,
@@ -218,6 +226,28 @@ static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r, time_t t
 		/* methods */
 		p = int2str((unsigned long)c->methods, &len);
 		node = add_mi_node_child( cnode, MI_DUP_VALUE, "Methods", 7, p, len);
+		if (node==0)
+			return -1;
+
+		/* ruid */
+		if (c->ruid.len) {
+			node = add_mi_node_child( cnode, MI_DUP_VALUE, "Ruid", 4,
+				c->ruid.s, c->ruid.len);
+			if (node==0)
+				return -1;
+		}
+
+		/* instance */
+		if (c->instance.len) {
+			node = add_mi_node_child( cnode, MI_DUP_VALUE, "Instance", 8,
+				c->instance.s, c->instance.len);
+			if (node==0)
+				return -1;
+		}
+
+		/* reg-id */
+		p = int2str((unsigned long)c->reg_id, &len);
+		node = add_mi_node_child( cnode, MI_DUP_VALUE, "Reg-Id", 6, p, len);
 		if (node==0)
 			return -1;
 

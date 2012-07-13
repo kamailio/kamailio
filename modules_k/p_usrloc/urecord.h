@@ -162,6 +162,16 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path,
  */
 void release_urecord(urecord_t* _r);
 
-
+/*!
+ * \brief Get pointer to ucontact with given contact
+ * \param _r record where to search the contacts
+ * \param _c contact string
+ * \param _ci contact info (callid, cseq, instance, ...)
+ * \param _co found contact
+ * \return 0 - found, 1 - not found, -1 - invalid found, 
+ * -2 - found, but to be skipped (same cseq)
+ */
+int get_ucontact_by_instance(urecord_t* _r, str* _c, ucontact_info_t* _ci,
+		ucontact_t** _co);
 
 #endif

@@ -74,6 +74,7 @@
 
 MODULE_VERSION
 
+#define RUID_COL       "ruid"
 #define USER_COL       "username"
 #define DOMAIN_COL     "domain"
 #define CONTACT_COL    "contact"
@@ -88,6 +89,8 @@ MODULE_VERSION
 #define PATH_COL       "path"
 #define SOCK_COL       "socket"
 #define METHODS_COL    "methods"
+#define INSTANCE_COL   "instance"
+#define REG_ID_COL     "reg_id"
 #define LAST_MOD_COL   "last_modified"
 
 static int mod_init(void);                          /*!< Module initialization function */
@@ -135,6 +138,7 @@ extern int ul_locks_no;
  * @param alg_location defines the algorithm for the location matching - based on crc32 for  now
  */
 
+str ruid_col        = str_init(RUID_COL); 		/*!< Name of column containing record unique id */
 str user_col        = str_init(USER_COL); 		/*!< Name of column containing usernames */
 str domain_col      = str_init(DOMAIN_COL); 		/*!< Name of column containing domains */
 str contact_col     = str_init(CONTACT_COL);		/*!< Name of column containing contact addresses */
@@ -149,6 +153,8 @@ str received_col    = str_init(RECEIVED_COL);		/*!< Name of column containing tr
 str path_col        = str_init(PATH_COL);		/*!< Name of column containing the Path header */
 str sock_col        = str_init(SOCK_COL);		/*!< Name of column containing the received socket */
 str methods_col     = str_init(METHODS_COL);		/*!< Name of column containing the supported methods */
+str instance_col    = str_init(INSTANCE_COL);	/*!< Name of column containing the SIP instance value */
+str reg_id_col      = str_init(REG_ID_COL);		/*!< Name of column containing the reg-id value */
 str last_mod_col     = str_init(LAST_MOD_COL);		/*!< Name of column containing the last modified date */
 int db_mode         = 3;				/*!< Database sync scheme:  1-write through, 2-write back, 3-only db */
 int use_domain      = 0;				/*!< Whether usrloc should use domain part of aor */
@@ -207,6 +213,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters 
  */
 static param_export_t params[] = {
+	{"ruid_column",         STR_PARAM, &ruid_col.s      },
 	{"user_column",       STR_PARAM, &user_col.s      },
 	{"domain_column",     STR_PARAM, &domain_col.s    },
 	{"contact_column",    STR_PARAM, &contact_col.s   },
@@ -232,6 +239,8 @@ static param_export_t params[] = {
 	{"default_db_url",    STR_PARAM, &default_db_url.s    },
 	{"default_db_type",   STR_PARAM, &default_db_type.s   },
 	{"domain_db",         STR_PARAM, &domain_db.s         },
+	{"instance_column",      STR_PARAM, &instance_col.s  	 },
+	{"reg_id_column",      	 STR_PARAM, &reg_id_col.s        },
 	{"write_db_url",         STR_PARAM, &write_db_url.s      },
 	{"read_db_url",          STR_PARAM, &read_db_url.s       },
 	{"reg_db_table",         STR_PARAM, &reg_table.s         },
@@ -319,6 +328,7 @@ static int mod_init(void)
 
 
 	/* Compute the lengths of string parameters */
+	ruid_col.len = strlen(ruid_col.s);
 	user_col.len = strlen(user_col.s);
 	domain_col.len = strlen(domain_col.s);
 	contact_col.len = strlen(contact_col.s);
@@ -333,6 +343,8 @@ static int mod_init(void)
 	path_col.len = strlen(path_col.s);
 	sock_col.len = strlen(sock_col.s);
 	methods_col.len = strlen(methods_col.s);
+	instance_col.len = strlen(instance_col.s);
+	reg_id_col.len = strlen(reg_id_col.s);
 	last_mod_col.len = strlen(last_mod_col.s);
 	
 	write_db_url.len = strlen (write_db_url.s);

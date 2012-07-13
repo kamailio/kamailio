@@ -178,6 +178,7 @@ static inline void get_static_urecord(udomain_t* _d, str* _aor,
 
 	memset( &r, 0, sizeof(struct urecord) );
 	r.aor = *_aor;
+	r.aorhash = ul_get_aorhash(_aor);
 	r.domain = _d->name;
 	*_r = &r;
 }
@@ -334,6 +335,23 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 		ci.last_modified = VAL_TIME(vals+12);
 	}
 
+	/* record internal uid */
+	if (!VAL_NULL(vals+13)) {
+		ci.ruid.s = (char*)VAL_STRING(vals+13);
+		ci.ruid.len = strlen(ci.ruid.s);
+	}
+
+	/* sip instance */
+	if (!VAL_NULL(vals+14)) {
+		ci.instance.s = (char*)VAL_STRING(vals+14);
+		ci.instance.len = strlen(ci.instance.s);
+	}
+
+	/* reg-id */
+	if (!VAL_NULL(vals+15)) {
+		ci.reg_id = VAL_UINT(vals+15);
+	}
+
 	return &ci;
 }
 
@@ -349,7 +367,7 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 urecord_t* db_load_urecord(udomain_t* _d, str *_aor)
 {
 	ucontact_info_t *ci;
-	db_key_t columns[13];
+	db_key_t columns[16];
 	db_key_t keys[2];
 	db_key_t order;
 	db_val_t vals[2];
@@ -395,13 +413,16 @@ urecord_t* db_load_urecord(udomain_t* _d, str *_aor)
 	columns[10] = &sock_col;
 	columns[11] = &methods_col;
 	columns[12] = &last_mod_col;
+	columns[13] = &ruid_col;
+	columns[14] = &instance_col;
+	columns[15] = &reg_id_col;
 
 	if (desc_time_order)
 		order = &last_mod_col;
 	else
 		order = &q_col;
 
-	if (ul_db_layer_query(_d,  &vals[0].val.str_val,  &vals[1].val.str_val, keys, 0, vals, columns, (use_domain)?2:1, 13, order,
+	if (ul_db_layer_query(_d,  &vals[0].val.str_val,  &vals[1].val.str_val, keys, 0, vals, columns, (use_domain)?2:1, 16, order,
 				&res) < 0) {
 		LM_ERR("db_query failed\n");
 		return 0;
@@ -440,6 +461,125 @@ urecord_t* db_load_urecord(udomain_t* _d, str *_aor)
 	}
 
 	ul_db_layer_free_result(_d, res);
+	return r;
+}
+
+/*!
+ * \brief Loads from DB all contacts for a RUID
+ * \param _c database connection
+ * \param _d domain
+ * \param _aor address of record
+ * \return pointer to the record on success, 0 on errors or if nothing is found
+ */
+urecord_t* db_load_urecord_by_ruid(udomain_t* _d, str *_ruid)
+{
+	ucontact_info_t *ci;
+	db_key_t columns[18];
+	db_key_t keys[1];
+	db_key_t order;
+	db_val_t vals[1];
+	db1_res_t* res = NULL;
+	db_row_t *row;
+	str contact;
+	str aor;
+	char aorbuf[512];
+	str domain;
+
+	urecord_t* r;
+	ucontact_t* c;
+
+	keys[0] = &ruid_col;
+	vals[0].type = DB1_STR;
+	vals[0].nul = 0;
+	vals[0].val.str_val = *_ruid;
+
+	columns[0] = &contact_col;
+	columns[1] = &expires_col;
+	columns[2] = &q_col;
+	columns[3] = &callid_col;
+	columns[4] = &cseq_col;
+	columns[5] = &flags_col;
+	columns[6] = &cflags_col;
+	columns[7] = &user_agent_col;
+	columns[8] = &received_col;
+	columns[9] = &path_col;
+	columns[10] = &sock_col;
+	columns[11] = &methods_col;
+	columns[12] = &last_mod_col;
+	columns[13] = &ruid_col;
+	columns[14] = &instance_col;
+	columns[15] = &user_col;
+	columns[16] = &reg_id_col;
+	columns[17] = &domain_col;
+
+	if (desc_time_order)
+		order = &last_mod_col;
+	else
+		order = &q_col;
+
+	if (ul_db_layer_query(_d,  &vals[0].val.str_val,  &vals[1].val.str_val, keys, 0, vals, columns, 1, 18, order,
+				&res) < 0) {
+		LM_ERR("db_query failed\n");
+		return 0;
+	}
+
+	if (RES_ROW_N(res) == 0) {
+		LM_DBG("aor %.*s not found in table %.*s\n",_ruid->len, _ruid->s,
+				_d->name->len, _d->name->s);
+		ul_db_layer_free_result(_d, res);
+		return 0;
+	}
+
+	r = 0;
+
+	/* use first row - shouldn't be more */
+	row = RES_ROWS(res);
+
+	ci = dbrow2info(ROW_VALUES(RES_ROWS(res)), &contact);
+	if (ci==0) {
+		LM_ERR("skipping record for %.*s in table %s\n",
+				_ruid->len, _ruid->s, _d->name->s);
+		goto done;
+	}
+
+	aor.s = (char*)VAL_STRING(ROW_VALUES(row) + 15);
+	aor.len = strlen(aor.s);
+
+	if (use_domain) {
+		domain.s = (char*)VAL_STRING(ROW_VALUES(row) + 17);
+		if (VAL_NULL(ROW_VALUES(row)+17) || domain.s==0 || domain.s[0]==0){
+			LM_CRIT("empty domain record for user %.*s...skipping\n",
+					aor.len, aor.s);
+			goto done;
+		}
+		domain.len = strlen(domain.s);
+		if(aor.len + domain.len + 2 >= 512) {
+			LM_ERR("AoR is too big\n");
+			goto done;
+		}
+		memcpy(aorbuf, aor.s, aor.len);
+		aorbuf[aor.len] = '@';
+		memcpy(aorbuf + aor.len + 1, domain.s, domain.len);
+		aor.len += 1 + domain.len;
+		aor.s = aorbuf;
+		aor.s[aor.len] = '\0';
+	}
+	get_static_urecord( _d, &aor, &r);
+
+	if ( (c=mem_insert_ucontact(r, &contact, ci)) == 0) {
+		LM_ERR("mem_insert failed\n");
+		free_urecord(r);
+		ul_db_layer_free_result(_d, res);
+		return 0;
+	}
+
+	/* We have to do this, because insert_ucontact sets state to CS_NEW
+	 * and we have the contact in the database already */
+	c->state = CS_SYNC;
+
+done:
+	ul_db_layer_free_result(_d, res);
+	;
 	return r;
 }
 
@@ -551,8 +691,7 @@ void lock_udomain(udomain_t* _d, str* _aor)
 	unsigned int sl;
 	if (db_mode!=DB_ONLY)
 	{
-		sl = core_hash(_aor, 0, _d->size);
-
+		sl = ul_get_aorhash(_aor) & (_d->size - 1);
 #ifdef GEN_LOCK_T_PREFERED
 		lock_get(_d->table[sl].lock);
 #else
@@ -572,7 +711,7 @@ void unlock_udomain(udomain_t* _d, str* _aor)
 	unsigned int sl;
 	if (db_mode!=DB_ONLY)
 	{
-		sl = core_hash(_aor, 0, _d->size);
+		sl = ul_get_aorhash(_aor) & (_d->size - 1);
 #ifdef GEN_LOCK_T_PREFERED
 		lock_release(_d->table[sl].lock);
 #else
@@ -648,11 +787,11 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 	urecord_t* r;
 	if (db_mode!=DB_ONLY) {
 		/* search in cache */
-		aorhash = core_hash(_aor, 0, 0);
+		aorhash = ul_get_aorhash(_aor);
 		sl = aorhash&(_d->size-1);
 		r = _d->table[sl].first;
 
-		for(i = 0; i < _d->table[sl].n; i++) {
+		for(i = 0; r!=NULL && i < _d->table[sl].n; i++) {
 			if((r->aorhash==aorhash) && (r->aor.len==_aor->len)
 						&& !memcmp(r->aor.s,_aor->s,_aor->len)){
 				*_r = r;
@@ -671,6 +810,65 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 	}
 
 	return 1;   /* Nothing found */
+}
+
+/*!
+ * \brief Obtain a urecord pointer if the urecord exists in domain (lock slot)
+ * \param _d domain to search the record
+ * \param _aorhash hash id for address of record
+ * \param _ruid record internal unique id
+ * \param _r store pointer to location record
+ * \param _c store pointer to contact structure
+ * \return 0 if a record was found, 1 if nothing could be found
+ */
+int get_urecord_by_ruid(udomain_t* _d, unsigned int _aorhash,
+		str *_ruid, struct urecord** _r, struct ucontact** _c)
+{
+	unsigned int sl, i;
+	urecord_t* r;
+	ucontact_t* c;
+
+	sl = _aorhash&(_d->size-1);
+	lock_ulslot(_d, sl);
+
+	if (db_mode!=DB_ONLY) {
+		/* search in cache */
+		r = _d->table[sl].first;
+
+		for(i = 0; i < _d->table[sl].n; i++) {
+			if(r->aorhash==_aorhash) {
+				c = r->contacts;
+				while(c) {
+					if(c->ruid.len==_ruid->len
+							&& !memcmp(c->ruid.s, _ruid->s, _ruid->len)) {
+						*_r = r;
+						*_c = c;
+						return 0;
+					}
+				}
+			}
+			r = r->next;
+		}
+	} else {
+		/* search in DB */
+		r = db_load_urecord_by_ruid(_d, _ruid);
+		if (r) {
+			if(r->aorhash==_aorhash) {
+				c = r->contacts;
+				while(c) {
+					if(c->ruid.len==_ruid->len
+							&& !memcmp(c->ruid.s, _ruid->s, _ruid->len)) {
+						*_r = r;
+						*_c = c;
+						return 0;
+					}
+				}
+			}
+		}
+	}
+
+	unlock_ulslot(_d, (_aorhash & (_d->size - 1)));
+	return -1;   /* Nothing found */
 }
 
 
