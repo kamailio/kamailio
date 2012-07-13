@@ -717,9 +717,9 @@ int parse_sdp(struct sip_msg* _m)
 			}
 			res = parse_sdp_session(&body, 0, NULL, (sdp_info_t*)_m->body);
 			if (res != 0) {
-				LM_DBG("free_sdp\n");
+				LM_DBG("failed to parse sdp session - freeing sdp\n");
 				free_sdp((sdp_info_t**)(void*)&_m->body);
-                                return res;
+				return res;
 			}
 			/* The whole body is SDP */
 			((sdp_info_t*)_m->body)->raw_sdp.s = body.s;
