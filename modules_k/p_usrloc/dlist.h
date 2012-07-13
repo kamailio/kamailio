@@ -36,10 +36,9 @@
 #define DLIST_H
 
 #include <stdio.h>
-#include "udomain.h"
 #include "../../str.h"
 #include "../usrloc/usrloc.h"
-
+#include "udomain.h"
 
 /*!
  * List of all domains registered with usrloc

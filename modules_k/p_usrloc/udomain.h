@@ -176,6 +176,18 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
 
 
 /*!
+ * \brief Obtain a urecord pointer if the urecord exists in domain (lock slot)
+ * \param _d domain to search the record
+ * \param _aorhash hash id for address of record
+ * \param _ruid record internal unique id
+ * \param _r store pointer to location record
+ * \param _c store pointer to contact structure
+ * \return 0 if a record was found, 1 if nothing could be found
+ */
+int get_urecord_by_ruid(udomain_t* _d, unsigned int _aorhash,
+		str *_ruid, struct urecord** _r, struct ucontact** _c);
+
+/*!
  * \brief Delete a urecord from domain
  * \param _d domain where the record should be deleted
  * \param _aor address of record

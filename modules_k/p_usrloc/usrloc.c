@@ -34,12 +34,12 @@
  */
 
 #include "../usrloc/usrloc.h"
-#include "../../sr_module.h"
-#include "p_usrloc_mod.h"
-#include "ucontact.h"
-#include "udomain.h"
 #include "dlist.h"
 #include "urecord.h"
+#include "ucontact.h"
+#include "udomain.h"
+#include "../../sr_module.h"
+#include "p_usrloc_mod.h"
 
 /*! nat branch flag */
 extern unsigned int nat_bflag;
@@ -58,14 +58,11 @@ int bind_usrloc(usrloc_api_t* api)
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-
 	if (init_flag==0) {
 		LM_ERR("configuration error - trying to bind to usrloc module"
 				" before being initialized\n");
 		return -1;
 	}
-
-	memset(api, 0, sizeof(usrloc_api_t));
 
 	api->register_udomain   = register_udomain;
 	api->get_all_ucontacts  = get_all_ucontacts;
@@ -80,11 +77,10 @@ int bind_usrloc(usrloc_api_t* api)
 	api->get_ucontact       = get_ucontact;
 	api->update_ucontact    = update_ucontact;
 	api->register_ulcb      = register_ulcb;
+	api->get_aorhash        = ul_get_aorhash;
 
-	api->get_udomain              = 0;
-	api->get_urecord_by_ruid      = 0;
-	api->get_ucontact_by_instance = 0;
-	api->get_aorhash              = 0;
+	api->get_urecord_by_ruid      = get_urecord_by_ruid;
+	api->get_ucontact_by_instance = get_ucontact_by_instance;
 
 	api->use_domain = use_domain;
 	api->db_mode    = db_mode;
