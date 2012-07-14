@@ -1,4 +1,351 @@
-===================== 2011-09-14 Version 3.1.5 Released =====================
+===================== 2012-07-14 Version 3.1.6 Released =====================
+
+===================== Changes Since Version 3.1.5 ===========================
+
+commit 47706da383054552da5687047afb586fe322ef23
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 14 08:51:14 2012 +0200
+
+    Makefile.defs: version set to 3.1.6
+
+commit 81e0992c45d599d7eacb6c5ab7c066e6a509ca15
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 14 08:50:12 2012 +0200
+
+    pkg/deb: version st to 3.1.6
+
+commit 7ed9ccf8344506ccd25788236e192c01ebd2a912
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 14 08:49:50 2012 +0200
+
+    pkg/rpm: version set to 3.1.6
+
+commit 895bb02ffb9f07b3e24a1edb59358f6412122d6f
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Wed Jun 6 15:49:57 2012 +0300
+
+    modules_k/registrar Fixed memory leak in reg_fetch_contacts()
+    (cherry picked from commit ac28b3b8dd34cfac290f1941a575841261c9ed97)
+
+commit 1303e86cc6000ca490c6363f9d01bea231e133a9
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Wed Apr 25 14:55:54 2012 +0300
+
+    modules_k/presence Safety check for malformed Subscribe
+    
+    	Subscribe with header 'Contact: *' caused crash in presence.
+    (cherry picked from commit 41453eab823500cfc57abd404ecffeb3ed7f01bc)
+
+commit 8876b77bd3a577138818f0c5780ef1c873f188a5
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Mon Apr 23 18:21:46 2012 +0200
+
+    userblacklist(k): fix some doc errors, pointed out from Daniel Vukicevic, daniel at vukicevic dot com
+    (cherry picked from commit 7fc5aa2c050379063212c4bb5f06697e8a97c665)
+
+commit 7965ba755fa38b45a6a682b0afae4248cc7276a5
+Author: Sven Knoblich <sven.knoblich@1und1.de>
+Date:   Fri Feb 24 15:47:49 2012 +0100
+
+    module/avpops: Add short description to clarify the purpose of the avp_delete flag.
+    (cherry picked from commit fb0951c332894ac6cd967daa02c4a2b569ada671)
+
+commit 8371befc51d8a0db7e57e686a77d9e700f609239
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 17 18:27:42 2011 +0200
+
+    dialplan: fix usage of avps in replacement expression
+    
+    - clone the replacement expression to shared memory before parsing it in
+      order to have variables names available at runtime
+    - most of variables should be safe to use now in replacement
+      expressions, including avps with string name. This fixes FS#153
+      reported by Andrew Pogrebennyk
+    - variables with dynamic name have no easy way to clone at this moment,
+      thus avoid using them directly. Use instead avps or script vars
+      ($var(...)), copying the value from initial variable to it. Variables
+      pointing to sip message attributes are safe to use.
+
+commit 5aab052eb3af4edea6a5a583001d7ab25d80fc5f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Apr 17 13:48:14 2011 +0200
+
+    dialplan: cfg functions can be used in ANY_ROUTE
+    (cherry picked from commit 63d4ae1463eb36a13adda76de8ee963588cddbdc)
+
+commit 4669e348b2ab8fc251afed538971efb55cdc77fd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Oct 16 11:33:16 2011 +0200
+
+    snmpstats: control exporting registrar records
+    
+    - exporting of large location database may result in out of shared
+      memory, as well as when the records are not pulled - might be the case
+      of out of memory messages reported by Klaus Darilion
+    - new parameter export_registrar was added to enable/disable location
+      records export (off by default)
+    - fixed missing exporting the counter with all processed dialogs
+      (discussion from March 2011 with Stefan Tiedje)
+
+commit 92833c4f641710a604b519722d6f37035845a3d5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 24 17:22:26 2011 +0100
+
+    parser: don't free on error To param linked in to_body struct
+    
+    - if a To header parameter was already linked in to_body struct, don't
+      free if there is a parsing error for it later, it will be freed by
+      free_to_params()
+    - reported by Bayan Towfiq in FS#180
+    (cherry picked from commit 6299704ebb280214f35fc86968d86be972219e51)
+    (cherry picked from commit a56b17e065d175f213688cacd3db3aa88fe48e2a)
+
+commit 2ce5ff9c1718cc14e34cc6e19a85a30edf3d3e49
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 24 15:30:15 2011 +0100
+
+    textops(k): free only pkg body lumps for set_body()
+    
+    - if set_body() is used in failure_route, it should not destroy
+      completely the lumps cloned in tm, just ignore them and free the ones
+      added in failure_route before execution of itself
+    - reported by Brandon Armstead, FS#181
+    (cherry picked from commit c22a3ec7366ad1a3cc0b5e8229fbabe2c179cca1)
+    (cherry picked from commit ec8535487fd06e5de7b5efa218f764a6e850b42b)
+
+commit 4ade7f79a50d017a9ef3562691b2a7d5a936b20d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 24 15:28:04 2011 +0100
+
+    tm: backup/restore lump lists for faked requests
+    
+    - some cfg functions that can be used in failure_route can destroy the
+      head of lump lists, thus better backup before and restore after failure_route
+      execution
+    (cherry picked from commit b6d90904de590a3f6a95bca8f89cf2521d630902)
+    (cherry picked from commit 6fd2307f66d7207721e6a346d6287a3b9c043107)
+
+commit da2f009cc0c90a529039a8ce5453bf2e6dd9d761
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 24 15:26:47 2011 +0100
+
+    core: better check for cloned lumps in shared memory
+    
+    - bitwise test for LUMPFLAG_SHMEM
+    (cherry picked from commit 8652f5f5fb2b10210c65b04772064c452608c728)
+    (cherry picked from commit 50d96b4fa2b8a8b5998c45dc01f08617606aca8d)
+
+commit 12bf863b63b6ad66f958c350393bc90b9e63c586
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 24 12:56:28 2011 +0100
+
+    core: save and restore branch_iterator in print_dset
+    
+    - safe usage in branch_route where branch_interator is used to add the
+      new brnaches, but some variables can change it if used in config
+      branch_route
+    - closes FS#182, reported by Pawel Sternal
+    (cherry picked from commit c5f101dfac9a50f428e3452893c402d8b1e0400b)
+    (cherry picked from commit d44956c4f3d5fb98bc2af42d8718a420d624d259)
+
+commit cfb85a6064592f491edf17bf6500618f279aaa05
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 22 11:30:56 2011 +0100
+
+    dialog(k): destroy dlg structure first time ref counter gets to 0
+    
+    - reported by Bayan Towfix, FS#173
+    (cherry picked from commit 5949e296b7bafab42a4ac3261f453f286d98e41c)
+    (cherry picked from commit ae248a3744ab06a61c962415a8ac55a9c53fba82)
+
+commit e996c929c4bbb65d42264711e156b8f16f7ee05f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 22 11:30:02 2011 +0100
+
+    pv: use msg pid to check the integrity of cached time
+    
+    - safer when dealing with async or failure processing
+    (cherry picked from commit cc33486a8c17ae2cb4cbb5fce42f7a73646cd3c1)
+    (cherry picked from commit 24f138c9c39ac6475347ed76e311e1759d4d8531)
+
+commit 261b22186f4f23a93a8fa6997d9c97bf121e2d96
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 18 00:10:26 2011 +0100
+
+    libkcore: set pid attribute for fake msg
+    (cherry picked from commit 950b1e52ed8a94462be17e206d6970fd13a41661)
+    (cherry picked from commit addbd17723585197ea41c58904be1c4b6be2fe7d)
+
+commit 0e3d771e8085f61289367eddcd5e2defaf5e6a16
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 18 00:08:44 2011 +0100
+
+    core: store pid per sip message
+    
+    - when a sip message is received, store pid in sip_msg_t structure
+    - help identifying same sip msg across many processes
+    (cherry picked from commit 76f7847fe6245e06aa88d104b60245c7c03b04f0)
+    (cherry picked from commit 4eadcbaa1db1157ad7b967b7177200a937696891)
+
+commit 2bf200fc6bb04499ce096dd1549674de3c1f8ee0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 18 09:22:26 2011 +0100
+
+    diversion: user anchor_lump2 to insert diversion header
+    
+    - remove the caching of anchor, is not save across many processes, when
+      handling diversion in request_route and failure_route
+    (cherry picked from commit 55615d11ece77074ad779d1ad09361b1fd2b2bad)
+    (cherry picked from commit 5d46e1bb59fb39bd539ace1840d502b14225c924)
+
+commit 0880578372053b2196d7d4ef21f3ef924b5bd2c7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 17 23:14:32 2011 +0100
+
+    tm: free path if set first time in a branch route
+    (cherry picked from commit 7b612d999e061d05b60054e7749052d0abdf514c)
+    (cherry picked from commit 609b0aa86624416828c0c117e0cfdbeb7643bcb8)
+
+commit 57127690357878a7d66642362506f0aaa865f9b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 16 07:50:42 2011 +0100
+
+    core: at shutdown, first call the destroy module functions then free module exports structure
+    
+    - some modules may need access to other modules at shut down
+    - reported by Juha Heinanen
+    (cherry picked from commit 2396dde7230e04f853e6936cfff9059661c55635)
+    (cherry picked from commit d3408c64b6c07806a51e1e72589f8e124c8c651c)
+
+commit 2bb8bbfa4054523a6cdf55ac59ceb2b1a515c74f
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Sat Oct 22 10:55:08 2011 +0200
+
+    dialog(k): Set dialog parameters (timeout, etc.) before create callback
+    is executed to provide these parameters to registered functions.
+    (cherry picked from commit 987c8a5fbfa0f23e1211e4253e7113f4ea79b22b)
+
+commit 057ec0189977206d8099e6e6f601e74edc7fb5e4
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Wed Nov 2 13:44:17 2011 +0100
+
+    pkg/deb remove modules from wheezy build
+    
+    purple: does not support newer lib versions
+    mi_xmlrcp: does not support newer lib versions
+    app_lua: lib not detected. Detection was fixed in branch 3.2 but not backported.
+
+commit 8e37bb95c5fb27325a4ee4e9415198b745c1bb87
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Wed Nov 2 12:25:57 2011 +0100
+
+    pkg/deb Add wheezy support to branch 3.1
+
+commit d703e3e045d87104c3b9090f4df695869ecbdd41
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Wed Nov 2 12:20:54 2011 +0100
+
+    pkg/deb Add libncurses to build-dep
+
+commit ff5694ff911aa71e76f80b0d0b9dc94b04eb5132
+Author: Michal Karas <largon@largon.net>
+Date:   Mon Oct 17 11:18:51 2011 +0200
+
+    app_python: fixing clone string for dirname and basename
+    
+    - variable tname replaced by dname_src and bname_src, because both
+      dirname() and basename() requires it's argument not to change: "These
+      functions may return pointers to statically allocated memory which may
+      be overwritten by subsequent calls. Alternatively, they may return a
+      pointer to some part of path, so that the string referred to by path
+      should not be modified or freed until the pointer returned by the
+      function is no longer required."
+    - related to FS#137
+    
+    Signed-off-by: Daniel-Constantin Mierla <miconda@gmail.com>
+    (cherry picked from commit d05616d81960e6b1647981d8d8b5e0dbe04a3dcb)
+
+commit d2aa35ea1ee08cb89d56a7e426bca1d0eb72863a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 28 21:24:23 2011 +0200
+
+    dialog(k): remove invalid html tags from docbook xml
+
+commit 76fff5a2b2c24e5a7aac08375acf32346fa8f80a
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Mon Oct 17 11:46:45 2011 +0200
+
+    dialog(k): Note dependency between dlg_manage() and transactions
+    in docs.
+    (cherry picked from commit 807f07499b4875cf77463c3bdb6a47e099f18f58)
+
+commit 48a6472a86109c7f1335d1e430f2cfc5f3c722ae
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Thu Oct 13 02:23:29 2011 +0200
+
+    dialog(k): Fix typos.
+    (cherry picked from commit e32982644f0da3b9f8240237fdf33dfcabd80af0)
+
+commit 917c5653c33f3033f561691ca065e40003e3679a
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Mon Oct 10 14:55:40 2011 +0200
+
+    acc(k): Remove double #define.
+    
+    Remove definition of ACC_CORE_LEN in acc.h, it's part of acc_api.h
+    nowadays.
+    (cherry picked from commit 49f44b0f415011d0d3b62fca179021fdf18b5fad)
+
+commit 2321064b0b0774c245e7bbd2691530a87985d870
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 6 01:02:11 2011 +0200
+
+    textopsx: copy msg->hash_index in msg_apply_changes()
+    
+    - patch by Hugh Waite
+    (cherry picked from commit c0eb441000e08e1efce8730ddae51efdddc9814a)
+
+commit 1425fb2408b13d82528868dc1ad6e97639f7439f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 3 17:33:21 2011 +0200
+
+    db_text(k): init new db text table structure to 0
+    
+    - can cause a crash when reloading, reported by Bruno Bresciani
+    (cherry picked from commit c54b89a3a840e032a2a8abc5842b3ea78fa537ba)
+
+commit 77101ce36e90c6ec37128c007fc92444812b5301
+Author: Timo Reimann <timo.reimann@1und1.de>
+Date:   Wed Sep 28 20:04:36 2011 +0200
+
+    dialog(k): Do not consider late requests for dialogs in "deleted"
+    state as bogus messages.
+    (cherry picked from commit 908f674978349fbabb2d79d6e45381a77a716ffc)
+
+commit 97b0120f9e5b5ca96c8ebb746ed46fc6325aca7d
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Tue Sep 27 10:02:50 2011 +0200
+
+    pike(k): add parameter unit, reported from dirtytoni at gmx dot de
+    (cherry picked from commit 98b3adf26f69e5dbbddc36f502b5f2ef1f3a729c)
+
+commit 475414283b2aa960c451429d99722f44386d6c47
+Author: Henning Westerholt <henning.westerholt@1und1.de>
+Date:   Mon Sep 19 13:47:22 2011 +0200
+
+    pkg: name fixes and cleanups, Patch from Claudio Furrer, elcaio at gmail dot com
+    (cherry picked from commit 713c1c52e36b9ee16eb13a79e3ee611e869080bb)
+
+commit ec672ad06125b86af81ba4b056e5853cf1086ece
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 14 20:59:54 2011 +0200
+
+    tm: proper data type for xavp in tm_xdata_t struct
+    
+    - reported by Juha Heinanen
+    - no real effect on branch 3.1 as xavps not enabled, but anyhow safer
+    (cherry picked from commit 260d43bb8bda0e9f0445d7d942dc10e976ff4621)
+
 
 ===================== Changes Since Version 3.1.4 ===========================
 
