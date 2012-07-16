@@ -1,0 +1,17 @@
+Hook all transactions?
+	register callbacks for TMCB_REQUEST_IN_N & TMCB_RESPONSE_IN_N
+	if Call-Info header not found, pass
+	might be able to dispense with sca_handle_subscribe().
+
+	performance penalty: cost of check for Call-Info on each transaction.
+OR
+
+check for Call-Info header in script, call "sca_call_info_update"
+	must be done in onreply route, too
+	more prone to bugs because of missed cases
+	easy to misconfigure, potentially leading to low adoption
+
+To consider:
+    * What to do when a subscriber reSUBSCRIBES and the dialog is different
+      from the current saved subscription? Avoiding shm_realloc seems like a
+      good idea, so perhaps just delete the current one and save the new.
