@@ -94,7 +94,7 @@ sca_call_info_header_append_appearances( sca_mod *scam, sca_subscription *sub,
     str			state_str;
     int			slot_idx;
     int			len = -1;
-    int			usedlen;
+    int			usedlen = -1;
 
     slot_idx = sca_hash_table_index_for_key( scam->appearances,
 					     &sub->target_aor );
@@ -146,12 +146,15 @@ sca_call_info_header_append_appearances( sca_mod *scam, sca_subscription *sub,
 	}
 
 	maxlen -= len;
+	hdrbuf += len;
+
+	usedlen += len;
     }
 
 done:
     sca_hash_table_unlock_index( scam->appearances, slot_idx );
 
-    return( len );
+    return( usedlen );
 }
 
     static int
