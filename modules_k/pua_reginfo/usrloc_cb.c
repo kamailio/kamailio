@@ -162,11 +162,6 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 			memset(buf, 0, sizeof(buf));
 			buf_len = snprintf(buf, sizeof(buf), "%.*s", ptr->user_agent.len, ptr->user_agent.s);
 			xmlNewProp(contact_node, BAD_CAST "user_agent", BAD_CAST buf);
-			
-			/* CSeq Attribute */
-			memset(buf, 0, sizeof(buf));
-			buf_len = snprintf(buf, sizeof(buf), "%d", ptr->cseq);
-			xmlNewProp(contact_node, BAD_CAST "cseq", BAD_CAST buf);
 
 			/* URI-Node */
 			memset(buf, 0, sizeof(buf));
