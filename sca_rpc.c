@@ -415,6 +415,7 @@ sca_rpc_release_appearance( rpc_t *rpc, void *ctx )
 		STR_FMT( &aor ), app_idx );
 	goto done;
     }
+    sca_appearance_free( app );
 
 done:
     if ( ht && idx >= 0 ) {
