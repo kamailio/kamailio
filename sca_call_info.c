@@ -10,6 +10,7 @@
 #include "sca_subscribe.h"
 
 const str	SCA_CALL_INFO_HEADER_STR = STR_STATIC_INIT( "Call-Info: " );
+const str	SCA_CALL_INFO_HEADER_NAME = STR_STATIC_INIT( "Call-Info" );
 
     static int
 sca_call_info_domain_from_uri( str *uri, str *domain )
@@ -288,17 +289,168 @@ error:
     return( -1 );
 }
 
-    int
-sca_call_info_header_parse( str *hdr, sca_call_info *call_info )
+    hdr_field_t *
+sca_call_info_header_find( hdr_field_t *msg_hdrs )
 {
+    hdr_field_t		*hdr = NULL;
+
+    for ( hdr = msg_hdrs; hdr != NULL; hdr = hdr->next ) {
+	if ( hdr->type == HDR_OTHER_T &&
+		hdr->name.len == SCA_CALL_INFO_HEADER_NAME.len ) {
+	    if ( memcmp( hdr->name.s, SCA_CALL_INFO_HEADER_NAME.s,
+			 SCA_CALL_INFO_HEADER_NAME.len ) == 0) {
+		break;
+	    }
+	}
+    }
+
+    return( hdr );
+}
+
+    int
+sca_call_info_body_parse( str *hdr_body, sca_call_info *call_info )
+{
+    str		s = STR_NULL;
     char	*p;
+    char	*semi;
+    int		len;
 
     assert( call_info != NULL );
 
-    if ( SCA_STR_EMPTY( hdr )) {
-	LM_ERR( "Call-Info header is empty" );
+    if ( SCA_STR_EMPTY( hdr_body )) {
+	LM_ERR( "Call-Info header body is empty" );
 	return( -1 );
     }
 
+    call_info->sca_uri.s = NULL;
+    call_info->sca_uri.len = 0;
+    call_info->index = -1;
+    call_info->state = SCA_APPEARANCE_STATE_UNKNOWN;
+    call_info->uri.s = NULL;
+    call_info->uri.len = 0;
+
+    p = hdr_body->s;
+    if ( memcmp( p, "<sip:", strlen( "<sip:" )) != 0 ) {
+	LM_ERR( "Bad Call-Info header body: must begin with \"<sip:\"" );
+	return( -1 );
+    }
+    /* +5 == strlen( "<sip:" ) */
+    semi = memchr( p + 5, ';', hdr_body->len );
+    if ( semi == NULL ) {
+	LM_ERR( "Bad Call-Info header body: missing ';' between uri and "
+		"%.*s", STR_FMT( &SCA_APPEARANCE_INDEX_STR ));
+	return( -1 );
+    }
+    if ( *(semi - 1) != '>' ) {
+	LM_ERR( "Bad Call-Info header body: SCA URI missing '>' terminator" );
+	return( -1 );
+    }
+
+    call_info->sca_uri.s = p;
+    call_info->sca_uri.len = semi - p;
+
+LM_INFO( "ADMORTEN: Call-Info SCA URI: %.*s", STR_FMT( &call_info->sca_uri ));
+    
+    p = semi;
+    p++;
+    if ( memcmp( p, SCA_APPEARANCE_INDEX_STR.s,
+			    SCA_APPEARANCE_INDEX_STR.len ) != 0 ) {
+	LM_ERR( "Bad Call-Info header body: does not begin with %.*s",
+		STR_FMT( &SCA_APPEARANCE_INDEX_STR ));
+	return( -1 );
+    }
+
+    p += SCA_APPEARANCE_INDEX_STR.len;
+    if ( *p != '=' ) {
+	LM_ERR( "Bad Call-Info header body: missing '=' after %.*s",
+		STR_FMT( &SCA_APPEARANCE_INDEX_STR ));
+	return( -1 );
+    }
+
+    p++;
+    len = ( hdr_body->s + hdr_body->len ) - p;
+    semi = memchr( p, ';', len );
+    if ( semi != NULL ) {
+	len = semi - p;
+    }
+    s.s = p;
+    s.len = len;
+
+    if ( str2int( &s, (unsigned int *)&call_info->index ) != 0 ) {
+	LM_ERR( "Bad Call-Info header: failed to convert %.*s %.*s to an "
+		"integer", STR_FMT( &SCA_APPEARANCE_INDEX_STR ), STR_FMT( &s ));
+	return( -1 );
+    }
+
+    if ( semi == NULL ) {
+	/* Call-Info header only contained an appearance-index */
+	goto done;
+    }
+
+    /* advance appearance-index value + semi-colon */
+    p += ( len + 1 );
+    if ( memcmp( p, SCA_APPEARANCE_STATE_STR.s,
+		    SCA_APPEARANCE_STATE_STR.len ) != 0 ) {
+	LM_ERR( "Bad Call-Info header: missing %.*s",
+		STR_FMT( &SCA_APPEARANCE_STATE_STR ));
+	return( -1 );
+    }
+
+    p += SCA_APPEARANCE_STATE_STR.len;
+    if ( *p != '=' ) {
+	LM_ERR( "Bad Call-Info header body: missing '=' after %.*s",
+		STR_FMT( &SCA_APPEARANCE_STATE_STR ));
+	return( -1 );
+	
+    }
+
+    p++;
+    len = ( hdr_body->s + hdr_body->len ) - p;
+    semi = memchr( p, ';', len );
+    if ( semi != NULL ) {
+	len = semi - p;
+    }
+    s.s = p;
+    s.len = len;
+
+    call_info->state = sca_appearance_state_from_str( &s );
+    if ( call_info->state == SCA_APPEARANCE_STATE_UNKNOWN ) {
+	LM_ERR( "Bad Call-Info header: unrecognized state \"%.*s\"",
+		STR_FMT( &s ));
+	return( -1 );
+    }
+
+    if ( semi == NULL ) {
+	/* Call-Info header only had appearance-index & appearance-state */
+	goto done;
+    }
+
+    /* advance length of state + semi-colon */
+    p += ( len + 1 );
+    if ( memcmp( p, SCA_APPEARANCE_URI_STR.s,
+		 SCA_APPEARANCE_URI_STR.len ) != 0 ) {
+	LM_ERR( "Bad Call-Info header: missing %.*s",
+		STR_FMT( &SCA_APPEARANCE_URI_STR ));
+	return( -1 );
+    }
+
+    p += SCA_APPEARANCE_URI_STR.len;
+    if ( *p != '=' ) {
+	LM_ERR( "Bad Call-Info header: missing '=' after %.*s",
+		STR_FMT( &SCA_APPEARANCE_URI_STR ));
+	return( -1 );
+    }
+
+    p++;
+    call_info->uri.s = p;
+    call_info->uri.len = ( hdr_body->s + hdr_body->len ) - p;
+
+    if ( SCA_STR_EMPTY( &call_info->uri )) {
+	LM_ERR( "Bad Call-Info header: empty %.*s",
+		STR_FMT( &SCA_APPEARANCE_URI_STR ));
+	return( -1 );
+    }
+
+done:
     return( 0 );
 }
