@@ -64,12 +64,12 @@ int	sca_appearance_state_from_str( str * );
 
 int	sca_appearance_seize_next_available_index( sca_mod *, str *, str * );
 int	sca_appearance_update_index( sca_mod *, str *, int, int, str * );
-void	sca_appearance_release_index( sca_mod *, str *, int );
+int	sca_appearance_release_index( sca_mod *, str *, int );
 
 void	sca_appearance_list_insert_appearance( sca_appearance_list *,
 						sca_appearance * );
 sca_appearance	*sca_appearance_list_unlink_index( sca_appearance_list *, int );
 
 sca_appearance	*sca_appearance_create( int, str * );
-void		sca_appearance_destroy( sca_appearance * );
+void		sca_appearance_free( sca_appearance * );
 #endif /* SCA_APPEARANCE_H */

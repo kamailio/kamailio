@@ -110,8 +110,6 @@ error:
     return( NULL );
 }
 
-    
-
     void
 sca_appearance_free( sca_appearance *appearance )
 {
@@ -408,18 +406,47 @@ done:
     return( rc );
 }
 
-    void
+    int
 sca_appearance_release_index( sca_mod *scam, str *aor, int idx )
 {
     sca_hash_slot	*slot;
+    sca_hash_entry	*ent;
+    sca_appearance_list *app_list = NULL;
     sca_appearance	*app;
     int			slot_idx;
+    int			rc = SCA_APPEARANCE_ERR_UNKNOWN;
 
     slot_idx = sca_hash_table_index_for_key( scam->appearances, aor );
     slot = sca_hash_table_slot_for_index( scam->appearances, slot_idx );
 
     sca_hash_table_lock_index( scam->appearances, slot_idx );
 
+    app_list = NULL;
+    for ( ent = slot->entries; ent != NULL; ent = ent->next ) {
+	if ( ent->compare( aor, ent->value ) == 0 ) {
+	    app_list = (sca_appearance_list *)ent->value;
+	    break;
+	}
+    }
+    if ( app_list == NULL ) {
+	LM_ERR( "No appearances for %.*s", STR_FMT( aor ));
+	rc = SCA_APPEARANCE_ERR_NOT_IN_USE;
+	goto done;
+    }
+
+    app = sca_appearance_list_unlink_index( app_list, idx );
+    if ( app == NULL ) {
+	LM_ERR( "Failed to unlink %.*s appearance-index %d: invalid index",
+		STR_FMT( aor ), idx );
+	rc = SCA_APPEARANCE_ERR_INVALID_INDEX;
+	goto done;
+    }
+    sca_appearance_free( app );
+
+    rc = SCA_APPEARANCE_OK;
     
+done:
     sca_hash_table_unlock_index( scam->appearances, slot_idx );
+
+    return( rc );
 }
