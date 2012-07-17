@@ -11,6 +11,7 @@
 #include "../../dprint.h"
 #include "../../lib/kcore/hash_func.h"
 #include "../../locking.h"
+#include "../../parser/hf.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_expires.h"
