@@ -117,13 +117,12 @@ sca_subscription_create( str *aor, int event, str *subscriber,
 
     len += sizeof( sca_subscription );
     len += sizeof( char ) * ( aor->len + subscriber->len );
-    len += sizeof( char ) * ( call_id->len + from_tag->len + to_tag->len );
 
     sub = (sca_subscription *)shm_malloc( len );
     if ( sub == NULL ) {
 	LM_ERR( "Failed to create %s subscription for %.*s: out of memory",
 		sca_event_name_from_type( event ), STR_FMT( subscriber ));
-	return( NULL );
+	goto error;
     }
     memset( sub, 0, len );
 
@@ -147,8 +146,21 @@ sca_subscription_create( str *aor, int event, str *subscriber,
      * dialog.id holds call-id + from-tag + to-tag; dialog.call_id,
      * dialog.from_tag, and dialog.to_tag point to offsets within
      * dialog.id.
+     *
+     * we shm_malloc this separately in case we need to update in-memory
+     * dialog saved for this subscriber. this is likely to happen if the
+     * subscriber goes off-line for some reason.
      */
-    sub->dialog.id.s = (char *)sub + len;
+    len = sizeof( char ) * ( call_id->len + from_tag->len + to_tag->len );
+    sub->dialog.id.s = (char *)shm_malloc( len );
+    if ( sub->dialog.id.s == NULL ) {
+	LM_ERR( "Failed to shm_malloc space for %.*s %s subscription dialog: "
+		"out of memory", STR_FMT( &sub->subscriber ),
+		sca_event_name_from_type( sub->event ));
+	goto error;
+    }
+    sub->dialog.id.len = len;
+
     SCA_STR_COPY( &sub->dialog.id, call_id );
     SCA_STR_APPEND( &sub->dialog.id, from_tag );
     SCA_STR_APPEND( &sub->dialog.id, to_tag );
@@ -163,6 +175,16 @@ sca_subscription_create( str *aor, int event, str *subscriber,
     sub->dialog.to_tag.len = to_tag->len;
 
     return( sub );
+
+error:
+    if ( sub != NULL ) {
+	if ( sub->dialog.id.s != NULL ) {
+	    shm_free( sub->dialog.id.s );
+	}
+	shm_free( sub );
+    }
+
+    return( NULL );
 }
 
     int
@@ -183,9 +205,17 @@ sca_subscription_free( void *value )
 {
     sca_subscription		*sub = (sca_subscription *)value;
 
+    if ( sub == NULL ) {
+	return;
+    }
+
     LM_DBG( "Freeing %s subscription from %.*s",
 	    sca_event_name_from_type( sub->event ),
 	    STR_FMT( &sub->subscriber ));
+
+    if ( !SCA_STR_EMPTY( &sub->dialog.id )) {
+	shm_free( sub->dialog.id.s );
+    }
 
     shm_free( sub );
 }
@@ -229,7 +259,7 @@ sca_subscription_save( sca_mod *scam, sca_subscription *sub, int save_idx )
 				    sca_subscription_free );
     } else {
 	rc = sca_hash_table_kv_insert( scam->subscriptions,
-				    &sub->dialog.id, new_sub,
+				    &sub->subscriber, new_sub,
 				    sca_subscription_subscriber_cmp,
 				    sca_subscription_print,
 				    sca_subscription_free );
@@ -248,6 +278,8 @@ sca_subscription_update( sca_mod *scam, sca_subscription *saved_sub,
 			 sca_subscription *update_sub, int sub_idx )
 {
     int			rc = -1;
+    int			len;
+    char		*dlg_id_tmp;
 
     if ( sub_idx < 0 || sub_idx > scam->subscriptions->size ) {
 	LM_ERR( "Invalid hash table index %d", sub_idx );
@@ -278,6 +310,56 @@ sca_subscription_update( sca_mod *scam, sca_subscription *saved_sub,
 		STR_FMT( &update_sub->target_aor ),
 		STR_FMT( &saved_sub->target_aor ));
 	goto done;
+    }
+
+    if ( !STR_EQ( saved_sub->dialog.call_id, update_sub->dialog.call_id ) ||
+	    !STR_EQ( saved_sub->dialog.from_tag,
+			update_sub->dialog.from_tag ) ||
+	    !STR_EQ( saved_sub->dialog.to_tag, update_sub->dialog.to_tag )) {
+	/*
+	 * mismatched dialog. we assume a subscriber can hold only one
+	 * subscription per event at any given time, so we replace the old
+	 * one with the new.
+	 *
+	 * XXX may want to hook this so a line-seize subscription replacing
+	 * another one clears the active state for the line.
+	 */
+	assert( !SCA_STR_EMPTY( &saved_sub->dialog.id ));
+
+	/* this is allocated separately from the rest of the subscription */
+	
+	len = sizeof( char * ) * ( update_sub->dialog.call_id.len +
+				    update_sub->dialog.from_tag.len +
+				    update_sub->dialog.to_tag.len );
+
+	dlg_id_tmp = (char *)shm_malloc( len );
+	if ( dlg_id_tmp == NULL ) {
+	    LM_ERR( "Failed to replace %.*s %s subscription dialog: "
+		    "shm_malloc failed", STR_FMT( &update_sub->subscriber ),
+		    sca_event_name_from_type( update_sub->event ));
+	    /* XXX should remove subscription entirely here? */
+	} else {
+	    shm_free( saved_sub->dialog.id.s );
+	    saved_sub->dialog.id.s = dlg_id_tmp;
+	    saved_sub->dialog.id.len = len;
+
+	    SCA_STR_COPY( &saved_sub->dialog.id, &update_sub->dialog.call_id );
+	    SCA_STR_APPEND( &saved_sub->dialog.id,
+			    &update_sub->dialog.from_tag );
+	    SCA_STR_APPEND( &saved_sub->dialog.id, &update_sub->dialog.to_tag );
+
+	    saved_sub->dialog.call_id.s = saved_sub->dialog.id.s;
+	    saved_sub->dialog.call_id.len = update_sub->dialog.call_id.len;
+
+	    saved_sub->dialog.from_tag.s = saved_sub->dialog.id.s +
+					   update_sub->dialog.call_id.len;
+	    saved_sub->dialog.from_tag.len = update_sub->dialog.from_tag.len;
+
+	    saved_sub->dialog.to_tag.s = saved_sub->dialog.id.s +
+					 update_sub->dialog.call_id.len +
+					 update_sub->dialog.from_tag.len;
+	    saved_sub->dialog.to_tag.len = update_sub->dialog.to_tag.len;
+	}
     }
 
     saved_sub->state = update_sub->state;
@@ -357,7 +439,7 @@ sca_subscription_from_request( sca_mod *scam, sip_msg_t *msg, int event_type,
 	break;
 
     case SCA_EVENT_TYPE_LINE_SEIZE:
-	max_expires = scam->cfg->call_info_max_expires;
+	max_expires = scam->cfg->line_seize_max_expires;
 	break;
     }
 
@@ -547,9 +629,7 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 	    goto error;
 	}
 
-	if ( req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE &&
-			req_sub.expires == 0 ) {
-	    /* release the seized appearance */
+	if ( req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE ) {
 	    call_info_hdr = sca_call_info_header_find( msg->headers );
 	    if ( call_info_hdr ) {
 		if ( sca_call_info_body_parse( &call_info_hdr->body,
@@ -558,11 +638,30 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 				    "Invalid Call-Info header", msg );
 		    goto error;
 		}
+		app_idx = call_info.index;
+	    }
 
+	    if ( req_sub.expires == 0 ) {
+		/* release the seized appearance */
+		if ( call_info_hdr == NULL ) {
+		    SCA_REPLY_ERROR( sca, 400, "Bad Request - "
+				    "missing Call-Info header", msg );
+		    goto error;
+		}
+	
 		if ( sca_appearance_release_index( sca, &req_sub.target_aor,
 			call_info.index ) != SCA_APPEARANCE_OK ) {
 		    SCA_REPLY_ERROR( sca, 500, "Internal Server Error - "
 				    "release seized line", msg );
+		    goto error;
+		}
+	    } else if ( SCA_STR_EMPTY( to_tag )) {
+		/* don't seize new index if this is a line-seize reSUBSCRIBE */
+		app_idx = sca_appearance_seize_next_available_index( sca,
+				&req_sub.target_aor, &req_sub.subscriber );
+		if ( app_idx < 0 ) {
+		    SCA_REPLY_ERROR( sca, 500, "Internal Server Error - "
+					"seize appearance index", msg );
 		    goto error;
 		}
 	    }
