@@ -105,20 +105,6 @@ modparam("pua_bla", "default_domain", "kamailio.org")
 		</example>
 	</section>
 	<section>
-		<title><varname>default_domain</varname>(str)</title>
-		<para>
-		The domain to be used to publish information about a user.
-		</para>
-		<example>
-		<title>Set <varname>default_domain</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("pua_reginfo", "default_domain", "kamailio.org")
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
 		<title><varname>publish_reginfo</varname>(int)</title>
 		<para>
 		Whether or not to generate PUBLISH requests.
