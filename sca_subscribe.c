@@ -485,6 +485,8 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 {
     sca_subscription	req_sub;
     sca_subscription	*sub = NULL;
+    sca_call_info	call_info;
+    hdr_field_t		*call_info_hdr;
     str			sub_key = STR_NULL;
     str			*to_tag = NULL;
     char		*status_text;
@@ -538,11 +540,7 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 					&req_sub.subscriber ); 
 
     if ( sub != NULL ) {
-	/*
-	 * this will set the subscription state to terminated if expires == 0.
-	 * we then let our registered purge_expired timer clear terminated
-	 * subscriptions.
-	 */
+	/* this will remove the subscription if expires == 0 */
 	if ( sca_subscription_update( sca, sub, &req_sub, idx ) < 0 ) {
 	    SCA_REPLY_ERROR( sca, 500,
 		    "Internal Server Error - update subscription", msg );
@@ -552,6 +550,22 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 	if ( req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE &&
 			req_sub.expires == 0 ) {
 	    /* release the seized appearance */
+	    call_info_hdr = sca_call_info_header_find( msg->headers );
+	    if ( call_info_hdr ) {
+		if ( sca_call_info_body_parse( &call_info_hdr->body,
+			&call_info ) < 0 ) {
+		    SCA_REPLY_ERROR( sca, 400, "Bad Request - "
+				    "Invalid Call-Info header", msg );
+		    goto error;
+		}
+
+		if ( sca_appearance_release_index( sca, &req_sub.target_aor,
+			call_info.index ) != SCA_APPEARANCE_OK ) {
+		    SCA_REPLY_ERROR( sca, 500, "Internal Server Error - "
+				    "release seized line", msg );
+		    goto error;
+		}
+	    }
 	}
     } else {
 	/* in-dialog request, but we didn't find it. */
