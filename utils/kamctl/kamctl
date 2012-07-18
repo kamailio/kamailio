@@ -2548,7 +2548,11 @@ case $1 in
 
 	stats)
 		require_ctlengine
-		$CTLCMD get_statistics all
+		if [ "$#" -eq 1 ] ; then
+			$CTLCMD get_statistics all
+		else
+			$CTLCMD get_statistics "${2}:"
+		fi
 		;;
 
 	restart)

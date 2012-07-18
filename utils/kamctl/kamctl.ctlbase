@@ -93,7 +93,7 @@ EOF
 	mecho " -- command 'stats' - print internal statistics"
 	echo
 cat <<EOF
- stats .............................. dump all internall statistics
+ stats [group]....................... dump all or a group of internall statistics
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_ctlcommon"
