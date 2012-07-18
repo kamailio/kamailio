@@ -130,6 +130,10 @@ void tls_destroy_locks()
 }
 
 
+unsigned long sr_ssl_id_f()
+{
+	return my_pid();
+}
 
 /* returns -1 on error, 0 on success */
 int tls_init_locks()
@@ -163,10 +167,13 @@ int tls_init_locks()
 	CRYPTO_set_dynlock_lock_callback(dyn_lock_f);
 	CRYPTO_set_dynlock_destroy_callback(dyn_destroy_f);
 	
-	/* thread id callback: not needed because ser doesn't use thread and
-	 * openssl already uses getpid() (by default)
-	 * CRYPTO_set_id_callback(id_f);
+	/* starting with v1.0.0 openssl does not use anymore getpid(), but address
+	 * of errno which can point to same virtual address in a multi-process
+	 * application
+	 * - for refrence http://www.openssl.org/docs/crypto/threads.html
 	 */
+	CRYPTO_set_id_callback(sr_ssl_id_f);
+
 	/* atomic add -- since for now we don't have atomic_add
 	 *  (only atomic_inc), fallback to the default use-locks mode
 	 * CRYPTO_set_add_lock_callback(atomic_add_f);
