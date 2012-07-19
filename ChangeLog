@@ -1,3 +1,234 @@
+===================== 2012-07-19 Version 3.2.4 Released =====================
+
+===================== Changes Since Version 3.2.3 ===========================
+
+
+commit f62b84d38bc3906e9a0fb1ad1758c8fc865e6856
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 19 15:14:05 2012 +0200
+
+    Makefile.defs: version set to 3.2.4
+
+commit 3a40a629e069128e26bb8f34635a3ea6cebd5ab8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 19 15:08:11 2012 +0200
+
+    pkg/kamailio: set version 3.2.4 for rpm specs
+
+commit 827a01362a5ef7e42fb6746675768941a3c8b6ec
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 19 15:06:56 2012 +0200
+
+    pkg/kamailio: set version 3.2.4 for deb specs
+
+commit 0d3f45636a075301b0809566f00a523ddf68cf52
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 18 19:00:38 2012 +0200
+
+    tls: set function to return the id
+    
+    - starting with v1.0.0 openssl does not use anymore getpid(), but address
+      of errno which can point to same virtual address in a multi-process
+      application
+    - for refrence http://www.openssl.org/docs/crypto/threads.html
+    - credits to Jijo on sr-dev mailing list
+    (cherry picked from commit 0615826fe602c5183fbc7be7c51de5eb5eb7223c)
+
+commit 6e0030828faccceaaa1238e2f4c83d97287a4492
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 25 10:36:31 2012 +0200
+
+    dispatcher(k): allow set id 0 for OPTIONS callback
+    
+    - set id is provided in param pointer address, 0 being equivalent to
+      NULL
+    - reported by Avi Brender
+    (cherry picked from commit 2664cb9aa8ffd5d26ef6a0841318ccbcdefbf69b)
+
+commit 0e9f7bf5e7085121df75f3e07cd6aaff49280964
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 1 09:06:33 2012 +0200
+
+    core: Via parser allows generic parameters without value separated by white spaces and semicolon
+    
+    - reported by Iñaki Baz Castillo, closes FS#127
+    (cherry picked from commit 362b6f134c5ab408d6bb492e2492bcfc5bab4996)
+
+commit 1bcfd20e73aa90b53639aa5f2e5485f1303c6f34
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 31 14:44:19 2012 +0200
+
+    core/select: fixed @via... without header index
+    
+    - reported by Iñaki Baz Castillo, fixes FS#138
+    (cherry picked from commit 511841b7bcdc7f5cc72775942ecf6b11525aad82)
+
+commit b7787ed1ae6fdee66ec24285de3c841349406a97
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 20 15:35:49 2012 +0200
+
+    tm: reset T if t_continue() resumes a canceled transaction
+    
+    - when the suspended transaction was already canceled, and t_continue
+      was executed before transaction was destroyed, global variable T was
+      left set, causing an extra unref by post script callback
+    (cherry picked from commit 00193f5e1f0e9e12b55c50d33eaf6f3d32e8bb92)
+
+commit 2a00c6d6439d9528c0445a8b1596a0c932623970
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 25 18:36:18 2012 +0200
+
+    dialog(k): proper unlock of profile for mi list command
+    
+    - the profile was unlocked in a wrong place, before finishing listing
+      the its content and could cause a race in accessing it
+    - reported by Ricardo Martinez
+    (cherry picked from commit 3a2e929c63c656fe2db78e746546af05c66740ea)
+
+commit 72899d84896a32d6a1598e3a4b2db61da4283327
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 15 17:17:07 2012 +0200
+
+    dialog(k): proper local linking of profile before dlg is created
+    
+    - reported by Nick R.
+    (cherry picked from commit 80c4f4b1d9ff31e79c999b82db35c3b9abc56e22)
+
+commit 231017d40132dd2d2e21d715d12101ed67b51d45
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 13 11:51:57 2012 +0200
+
+    drouting: reset the content of routing tree if root pointer is not freed
+    
+    - reported by Yufei Tao
+    (cherry picked from commit c737ff95bb2e742981d81088169baa60d4605b85)
+
+commit cc952f8469dea60b9e7f0e70063046f086a2866f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 13 16:33:17 2012 +0200
+
+    usrloc(k): safety check for first record in udomain slot
+    
+    - reported by David Kovarik, FS#234
+    (cherry picked from commit 31f404a98b09b5a6270e860574b16c9f9112c305)
+
+commit c2702ae573385493e4ddae50568a5842af9dcfcf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 1 11:34:20 2012 +0200
+
+    nathelper(k): remove maddr param in fix_nated_contact()
+    
+    - if maddr exists, it makes no sense anymore if the contact uri is
+      changed by the proxy
+    - reported by Morten Isaksen
+    (cherry picked from commit c3caaa4c12f76c77381c6a0afc8688bc38b16999)
+
+commit 85b304f2bba2b0bb239ad52a071e32deba9b07c1
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Jun 12 02:01:10 2012 +0100
+
+    modules/tls: Fixed log level and diagnostic typo
+    
+    - Fix by Hugh Waite @ Crocodile RCS Ltd
+    (cherry picked from commit 3d3b1daf319fe87b880671cd5de9a2a6ace6c64b)
+
+commit b9726b9fb4538c74ce898c28fdee962f2cf22853
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Wed Jun 6 15:49:57 2012 +0300
+
+    modules_k/registrar Fixed memory leak in reg_fetch_contacts()
+    (cherry picked from commit ac28b3b8dd34cfac290f1941a575841261c9ed97)
+
+commit 9b865030e61596b6f6b4dda2aaee0a1199f9fcec
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Sun Jun 3 20:03:13 2012 +0200
+
+    pkg/deb Remove purple from Ubuntu 12.04 build
+
+commit ef680fefff53e692aafbbfb4adfd366b3b0d2f5a
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Sat Jun 2 22:20:34 2012 +0200
+
+    pkg/deb Add ubuntu 12.04 debian folder
+
+commit 8446a650df06e68c4f7ca4bb6bb2b668ba3c4a30
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Wed May 30 01:44:50 2012 +0200
+
+    pkd/deb Remove lua and Add redis to wheezy build
+    (cherry picked from commit f5a60cb91ecb701681b7ef0a29d5f1b0bb503908)
+
+commit 850afebb30470a075423d0e721b678d82261d1be
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 17 08:19:10 2012 +0200
+
+    rtpproxy: handle UPDATE in rtpproxy_manage()
+    
+    - UPDATE can carry SDB body
+    - reported by Spencer Thomason
+    (cherry picked from commit 24ff0d9aa060d183fbe40b1fcb5910d60940585b)
+
+commit c554684986be936ae1d76513fdc7202b0c117db9
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed May 9 07:42:14 2012 +0300
+
+    modules_k/auth_radius:  fixed typo in README
+    
+    - Fixed authorization return code for authorization failed.  It should
+      be 2 instead of 3.  Reported by Ricardo Martinez.
+    (cherry picked from commit 7665aefc966409588cca8e2a70d8a03e4d7a6fa1)
+
+commit d22d83bfca84f4e50169859eafb23f6b89a91350
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Fri May 4 11:45:05 2012 +0300
+
+    modules_k/dialog Fixed 2 macros for dialog state with same value
+
+commit 176f35cc78167267524724b432abad74c7218a35
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Wed Apr 25 15:06:52 2012 +0300
+
+    modules_k/presence Safety check for malformed Subscribe
+    
+    	Subscribe with header 'Contact: *' caused crash in presence.
+
+commit 11ca33836fdd33d7c3d36c4f1acc6c6782edfb5d
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Wed Apr 25 14:54:31 2012 +0300
+
+    modules/sipcapture: Fixed crash in case contact was "*"
+
+commit 349969b5a91744eebd7c269cb747d2332245df6e
+Author: Henning Westerholt <hw@kamailio.org>
+Date:   Mon Apr 23 18:21:46 2012 +0200
+
+    userblacklist(k): fix some doc errors, pointed out from Daniel Vukicevic, daniel at vukicevic dot com
+    (cherry picked from commit 7fc5aa2c050379063212c4bb5f06697e8a97c665)
+
+commit 91b6dd8d1fbf649e6fe3075f59ae92892fb6cb1f
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Apr 20 14:15:36 2012 +0100
+
+    modules/db_postgres: Fixed copy-and-paste error in module documentation
+    (cherry picked from commit c5a51e4236498cfe3ca31c8aae96d3b422a9da23)
+
+commit da0eff88c7467365e9f7300960baee5aac36f27a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 20 09:42:39 2012 +0200
+
+    presence_xml: updates to docs to refer to embedded xcap server
+    (cherry picked from commit 171f560f768b43e140c24b6cc4823a92f13b2f05)
+
+commit 5fefe8457bd9e7b5a35aa0fc3816290ca0964576
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 20 09:28:44 2012 +0200
+
+    xcap_client: set table version to 4
+    
+    - reported by Gnaneshwar Gatla
+    (cherry picked from commit ab36b2b10e2f99ab584ec916bccc2a40c4fa394f)
+
+
 ===================== 2012-04-19 Version 3.2.3 Released =====================
 
 ===================== Changes Since Version 3.2.2 ===========================
