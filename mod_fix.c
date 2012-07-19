@@ -557,3 +557,27 @@ int fixup_igp_all(void** param, int param_no)
 {
 	return fixup_igp_null(param, 1);
 }
+
+/**
+ *
+ */
+int fixup_spve_igp(void** param, int param_no)
+{
+	if(param_no==1)
+		return fixup_spve_null(param, 1);
+	if(param_no==2)
+		return fixup_igp_null(param, 1);
+	return E_UNSPEC;
+}
+
+/**
+ *
+ */
+int fixup_free_spve_igp(void** param, int param_no)
+{
+	if(param_no==1)
+		return fixup_free_spve_null(param, 1);
+	if(param_no==2)
+		return fixup_free_igp_null(param, 1);
+	return E_UNSPEC;
+}
