@@ -42,6 +42,9 @@
 #include "../../modules/tm/h_table.h"
 #include "../../modules/tm/tm_load.h"
 #include "../rr/api.h"
+#include "../dialog/dlg_load.h"
+#include "../dialog/dlg_hash.h"
+
 
 #include "replace.h"
 
@@ -59,6 +62,9 @@ extern int_str restore_from_avp_name;
 extern unsigned short restore_to_avp_type;
 extern int_str restore_to_avp_name;
 
+extern struct dlg_binds dlg_api;
+static str from_dlgvar[] = {str_init("_uac_fu"), str_init("_uac_funew")};
+static str to_dlgvar[] = {str_init("_uac_to"), str_init("_uac_tonew") };
 
 static char enc_table64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		"abcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -66,6 +72,9 @@ static char enc_table64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 static int dec_table64[256];
 
 static void restore_uris_reply(struct cell* t, int type, struct tmcb_params *p);
+
+static void replace_callback(struct dlg_cell *dlg, int type,
+		struct dlg_cb_params *_params);
 
 #define text3B64_len(_l)   ( ( ((_l)+2)/3 ) << 2 )
 
@@ -235,9 +244,18 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 	char *p;
 	str param;
 	str buf;
-	int uac_flag;
+	unsigned int uac_flag;
 	int i;
 	int_str avp_value;
+	struct dlg_cell* dlg = 0;
+	str * dlgvar_names;
+
+	uac_flag = (hdr==msg->from)?FL_USE_UAC_FROM:FL_USE_UAC_TO;
+	if(msg->msg_flags & uac_flag)
+	{
+		LM_ERR("Called uac_replace multiple times on the message\n");
+		return -1;
+	}
 
 	/* consistency check! in AUTO mode, do NOT allow URI changing
 	 * in sequential request */
@@ -347,84 +365,133 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 	if (restore_mode==UAC_NO_RESTORE)
 		return 0;
 
-	/* build RR parameter */
-	buf.s = buf_s;
-	if ( body->uri.len>uri->len ) {
-		if (body->uri.len>MAX_URI_SIZE) {
-			 LM_ERR("old %.*s uri too long\n",hdr->name.len,hdr->name.s);
-			goto error;
-		}
-		memcpy( buf.s, body->uri.s, body->uri.len);
-		for( i=0 ; i<uri->len ; i++ )
-			buf.s[i] ^=uri->s[i];
-		buf.len = body->uri.len;
-	} else {
-		if (uri->len>MAX_URI_SIZE) {
-			LM_ERR("new %.*s uri too long\n",hdr->name.len,hdr->name.s);
-			goto error;
-		}
-		memcpy( buf.s, uri->s, uri->len);
-		for( i=0 ; i<body->uri.len ; i++ )
-			buf.s[i] ^=body->uri.s[i];
-		buf.len = uri->len;
+	/* trying to get dialog */
+	if (dlg_api.get_dlg) {
+		dlg = dlg_api.get_dlg(msg);
 	}
 
-	/* encrypt parameter ;) */
-	if (uac_passwd.len)
-		for( i=0 ; i<buf.len ; i++)
-			buf.s[i] ^= uac_passwd.s[i%uac_passwd.len];
+	if (dlg) {
+		dlgvar_names = (uac_flag==FL_USE_UAC_FROM)?from_dlgvar:to_dlgvar;
+		if(dlg_api.get_dlg_var(dlg, &dlgvar_names[0])) {
 
-	/* encode the param */
-	if (encode_uri( &buf , &replace)<0 )
-	{
-		LM_ERR("failed to encode uris\n");
-		goto error;
-	}
-	LM_DBG("encode is=<%.*s> len=%d\n",replace.len,replace.s,replace.len);
+			LM_INFO("Already called uac_replace for this dialog\n");
+			/* delete the from_new dlg var */
 
-	/* add RR parameter */
-	param.len = 1+rr_param->len+1+replace.len;
-	param.s = (char*)pkg_malloc(param.len);
-	if (param.s==0)
-	{
-		LM_ERR("no more pkg mem\n");
-		goto error;
-	}
-	p = param.s;
-	*(p++) = ';';
-	memcpy( p, rr_param->s, rr_param->len);
-	p += rr_param->len;
-	*(p++) = '=';
-	memcpy( p, replace.s, replace.len);
-	p += replace.len;
-
-	if (uac_rrb.add_rr_param( msg, &param)!=0)
-	{
-		LM_ERR("add_RR_param failed\n");
-		goto error1;
-	}
-
-
-	uac_flag = (hdr==msg->from)?FL_USE_UAC_FROM:FL_USE_UAC_TO;
-
-	if ((msg->msg_flags&uac_flag)==0) {
-			/* first time here ? */
-			if ((msg->msg_flags&(FL_USE_UAC_FROM|FL_USE_UAC_TO))==0){
-					/* add TM callback to restore the FROM/TO hdr in reply */
-					if (uac_tmb.register_tmcb( msg, 0, TMCB_RESPONSE_IN,
-					restore_uris_reply,0,0)!=1) {
-							LM_ERR("failed to install TM callback\n");
-							goto error1;
-					}
+			if (dlg_api.set_dlg_var(dlg, &dlgvar_names[1], 0) < 0) {
+				LM_ERR("cannot store new uri value\n");
+				dlg_api.release_dlg(dlg);
+				goto error;
 			}
-			/* set TO/ FROM specific flags */
-			msg->msg_flags |= uac_flag;
-			if ( (Trans=uac_tmb.t_gett())!=NULL && Trans!=T_UNDEFINED &&
-			Trans->uas.request)
-					Trans->uas.request->msg_flags |= uac_flag;
+			LM_INFO("Deleted <%.*s> var in dialog\n",
+					dlgvar_names[1].len, dlgvar_names[1].s);
+		}
+		else {
+			/* the first time uac_replace is called for this dialog */
+
+			if (dlg_api.set_dlg_var(dlg, &dlgvar_names[0], &body->uri) < 0) {
+				LM_ERR("cannot store value\n");
+				dlg_api.release_dlg(dlg);
+				goto error;
+			}
+			LM_DBG("Stored <%.*s> var in dialog with value %.*s\n",
+					dlgvar_names[0].len, dlgvar_names[0].s, body->uri.len, body->uri.s);
+
+			if (dlg_api.register_dlgcb(dlg, DLGCB_REQ_WITHIN|DLGCB_CONFIRMED|DLGCB_TERMINATED,
+					(void*)(unsigned long)replace_callback, (void*)(unsigned long)uac_flag, 0) != 0) {
+				LM_ERR("cannot register callback\n");
+				dlg_api.release_dlg(dlg);
+				goto error;
+			}
+		}
+		if (dlg_api.set_dlg_var(dlg, &dlgvar_names[1], uri) < 0) {
+			LM_ERR("cannot store new uri value\n");
+			dlg_api.release_dlg(dlg);
+			goto error;
+		}
+		LM_DBG("Stored <%.*s> var in dialog with value %.*s\n",
+				dlgvar_names[1].len, dlgvar_names[1].s, uri->len, uri->s);
+		dlg_api.release_dlg(dlg);
+	} else {
+		if (!uac_rrb.append_fromtag) {
+			LM_ERR("'append_fromtag' RR param is not enabled!"
+			" - required by AUTO restore mode\n");
+			goto error;
+		}
+
+		/* build RR parameter */
+		buf.s = buf_s;
+		if ( body->uri.len>uri->len ) {
+			if (body->uri.len>MAX_URI_SIZE) {
+				 LM_ERR("old %.*s uri too long\n",hdr->name.len,hdr->name.s);
+				goto error;
+			}
+			memcpy( buf.s, body->uri.s, body->uri.len);
+			for( i=0 ; i<uri->len ; i++ )
+				buf.s[i] ^=uri->s[i];
+			buf.len = body->uri.len;
+		} else {
+			if (uri->len>MAX_URI_SIZE) {
+				LM_ERR("new %.*s uri too long\n",hdr->name.len,hdr->name.s);
+				goto error;
+			}
+			memcpy( buf.s, uri->s, uri->len);
+			for( i=0 ; i<body->uri.len ; i++ )
+				buf.s[i] ^=body->uri.s[i];
+			buf.len = uri->len;
+		}
+
+		/* encrypt parameter ;) */
+		if (uac_passwd.len)
+			for( i=0 ; i<buf.len ; i++)
+				buf.s[i] ^= uac_passwd.s[i%uac_passwd.len];
+
+		/* encode the param */
+		if (encode_uri( &buf , &replace)<0 )
+		{
+			LM_ERR("failed to encode uris\n");
+			goto error;
+		}
+		LM_DBG("encode is=<%.*s> len=%d\n",replace.len,replace.s,replace.len);
+
+		/* add RR parameter */
+		param.len = 1+rr_param->len+1+replace.len;
+		param.s = (char*)pkg_malloc(param.len);
+		if (param.s==0)
+		{
+			LM_ERR("no more pkg mem\n");
+			goto error;
+		}
+		p = param.s;
+		*(p++) = ';';
+		memcpy( p, rr_param->s, rr_param->len);
+		p += rr_param->len;
+		*(p++) = '=';
+		memcpy( p, replace.s, replace.len);
+		p += replace.len;
+
+		if (uac_rrb.add_rr_param( msg, &param)!=0)
+		{
+			LM_ERR("add_RR_param failed\n");
+			goto error1;
+		}
+		pkg_free(param.s);
 	}
 
-	pkg_free(param.s);
+	if ((msg->msg_flags&(FL_USE_UAC_FROM|FL_USE_UAC_TO))==0) {
+		/* add TM callback to restore the FROM/TO hdr in reply */
+		if (uac_tmb.register_tmcb( msg, 0, TMCB_RESPONSE_IN,
+			restore_uris_reply,0,0)!=1) {
+			LM_ERR("failed to install TM callback\n");
+			goto error;
+		}
+	}
+	msg->msg_flags |= uac_flag;
+
+	if ( (Trans=uac_tmb.t_gett())!=NULL && Trans!=T_UNDEFINED &&
+		Trans->uas.request) {
+		Trans->uas.request->msg_flags |= uac_flag;
+	}
+
 	return 0;
 error1:
 	pkg_free(param.s);
@@ -705,3 +772,98 @@ void restore_uris_reply(struct cell* t, int type, struct tmcb_params *p)
 	}
 }
 
+/************************** DIALOG CB function ******************************/
+
+static void replace_callback(struct dlg_cell *dlg, int type,
+		struct dlg_cb_params *_params)
+{
+	struct lump* l;
+	struct sip_msg *msg;
+	str old_uri;
+	str* new_uri;
+	char *p;
+	unsigned int uac_flag;
+	int dlgvar_index = 0;
+	str* dlgvar_names;
+
+	if (!dlg || !_params || _params->direction == DLG_DIR_NONE || !_params->req)
+		return;
+
+	uac_flag = (unsigned int)(unsigned long)*(_params->param);
+
+	msg = _params->req;
+	if(msg->msg_flags & uac_flag)
+		return;
+
+	dlgvar_names = (uac_flag==FL_USE_UAC_FROM)?from_dlgvar:to_dlgvar;
+
+	/* check the request direction */
+	if ( ((uac_flag == FL_USE_UAC_TO) && _params->direction == DLG_DIR_DOWNSTREAM) ||
+		((uac_flag != FL_USE_UAC_TO) && _params->direction == DLG_DIR_UPSTREAM) ) {
+		/* replace the TO URI */
+		if ( msg->to==0 && (parse_headers(msg,HDR_TO_F,0)!=0 || msg->to==0) ) {
+			LM_ERR("failed to parse TO hdr\n");
+			return;
+		}
+		old_uri = ((struct to_body*)msg->to->parsed)->uri;
+	} else {
+		/* replace the FROM URI */
+		if ( parse_from_header(msg)<0 ) {
+			LM_ERR("failed to find/parse FROM hdr\n");
+			return;
+		}
+		old_uri = ((struct to_body*)msg->from->parsed)->uri;
+	}
+
+	if (_params->direction == DLG_DIR_DOWNSTREAM) {
+		dlgvar_index = 1;
+		LM_DBG("DOWNSTREAM direction detected - replacing uri"
+				" with the new uri\n");
+	} else {
+		LM_DBG("UPSTREAM direction detected - replacing uri"
+				" with the original uri\n");
+	}
+
+	if ((new_uri = dlg_api.get_dlg_var(dlg, &dlgvar_names[dlgvar_index])) == 0) {
+		LM_DBG("<%.*s> param not found\n", dlgvar_names[dlgvar_index].len,
+				dlgvar_names[dlgvar_index].s);
+		return;
+	}
+
+	LM_DBG("Replace [%.*s] eith [%.*s]\n", old_uri.len, old_uri.s,
+			new_uri->len, new_uri->s);
+
+	/* duplicate the decoded value */
+	p = pkg_malloc( new_uri->len);
+	if (!p) {
+		LM_ERR("no more pkg mem\n");
+		return;
+	}
+	memcpy( p, new_uri->s, new_uri->len);
+
+	/* build del/add lumps */
+	l = del_lump( msg, old_uri.s-msg->buf, old_uri.len, 0);
+	if (l==0) {
+		LM_ERR("del lump failed\n");
+		goto free;
+	}
+
+	if (insert_new_lump_after( l, p, new_uri->len, 0)==0) {
+		LM_ERR("insert new lump failed\n");
+		goto free;
+	}
+
+	/* register tm callback to change replies but only if not registered earlier */
+	if (!(msg->msg_flags & (FL_USE_UAC_FROM|FL_USE_UAC_TO)) &&
+			uac_tmb.register_tmcb( msg, 0, TMCB_RESPONSE_IN,
+			restore_uris_reply, 0, 0) != 1 ) {
+		LM_ERR("failed to install TM callback\n");
+		return;
+	}
+	msg->msg_flags |= uac_flag;
+
+	return;
+
+free:
+	pkg_free(p);
+}

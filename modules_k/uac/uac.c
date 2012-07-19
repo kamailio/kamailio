@@ -51,6 +51,7 @@
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
 #include "../../cfg/cfg_struct.h"
+#include "../dialog/dlg_load.h"
 
 #include "../rr/api.h"
 
@@ -86,6 +87,7 @@ struct rr_binds uac_rrb;
 pv_spec_t auth_username_spec;
 pv_spec_t auth_realm_spec;
 pv_spec_t auth_password_spec;
+struct dlg_binds dlg_api;
 
 static int w_replace_from(struct sip_msg* msg, char* p1, char* p2);
 static int w_restore_from(struct sip_msg* msg);
@@ -286,12 +288,17 @@ static int mod_init(void)
 
 		if (restore_mode==UAC_AUTO_RESTORE) {
 			/* we need the append_fromtag on in RR */
-			if (!uac_rrb.append_fromtag) {
-				LM_ERR("'append_fromtag' RR param is not enabled"
-					" - required by AUTO restore mode!"
-					" Or you should set from_restore_mode param to 'none'\n");
-				goto error;
+
+			memset(&dlg_api, 0, sizeof(struct dlg_binds));
+			if (load_dlg_api(&dlg_api)!=0) {
+				if (!uac_rrb.append_fromtag) {
+					LM_ERR("'append_fromtag' RR param is not enabled!"
+						" - required by AUTO restore mode\n");
+					goto error;
+				}
+				LM_DBG("failed to find dialog API - is dialog module loaded?\n");
 			}
+
 			/* get all requests doing loose route */
 			if (uac_rrb.register_rrcb( rr_checker, 0)!=0) {
 				LM_ERR("failed to install RR callback\n");

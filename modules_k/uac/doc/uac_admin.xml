@@ -67,6 +67,14 @@
 				restore mode for FROM URI is set to <quote>auto</quote>.
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis>Dialog Module</emphasis>, but only if
+				restore mode for FROM URI is set to <quote>auto</quote> and
+				you want uac_replace_from or uac_replace_to to store the values
+				of the URIs as dialog variables.
+			</para>
+			</listitem>
 			</itemizedlist>
 			</para>
 		</section>
@@ -198,7 +206,12 @@ modparam("uac","restore_passwd","my_secret_passwd")
 			If defined and restore_mode is manual or auto, the avp is used to save
 			the original from uri in order to be able to restore it in replies.
 			That makes sense, if the original-uri can not be extracted from the original
-			request, e.g. if msg_apply_changes() was used after calling uac_replace_from()  
+			request, e.g. if msg_apply_changes() was used after calling uac_replace_from()
+			or uac_replace_to().
+			</para>
+			<para>
+				If you create a dialog ( with dlg_manage() ) before calling uac_replace_from(),
+			this avp will not be needed. The values of the uris will be stored as dialog variables.
 			</para>
 			<para><emphasis>
 					Default value of this parameter is empty.
@@ -208,7 +221,7 @@ modparam("uac","restore_passwd","my_secret_passwd")
 				<title>Set <varname>restore_from_avp</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("uac","restore_from_avp","$avp(s:original_uri_from)")
+modparam("uac","restore_from_avp","$avp(original_uri_from)")
 ...
 				</programlisting>
 			</example>
@@ -221,6 +234,10 @@ modparam("uac","restore_from_avp","$avp(s:original_uri_from)")
 			That makes sense, if the original-uri can not be extracted from the original
 			request, e.g. if msg_apply_changes() was used after calling uac_replace_to()  
 			</para>
+			<para>
+				If you create a dialog ( with dlg_manage() ) before calling or uac_replace_to(),
+				this avp will not be needed. The values of the uris will be stored as dialog variables.
+			</para>
 			<para><emphasis>
 					Default value of this parameter is empty.
 				</emphasis>
@@ -229,7 +246,7 @@ modparam("uac","restore_from_avp","$avp(s:original_uri_from)")
 				<title>Set <varname>restore_to_avp</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("uac","restore_to_avp","$avp(s:original_uri_to)")
+modparam("uac","restore_to_avp","$avp(original_uri_to)")
 ...
 				</programlisting>
 			</example>
@@ -394,6 +411,27 @@ modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
 			<para>
 			This function can be used from REQUEST_ROUTE and from BRANCH_ROUTE.
 			</para>
+			<para>
+			If you set restore_mode to AUTO, the URI will be modified automatically in
+			all subsequent requests and replies in that dialog.
+			</para>
+			<para>
+				There are two ways in which the AUTO mode can be achieved.
+			</para>
+			<para>
+				One uses the rr module and appends to the Record-Route header a parameter
+				containing some strings from which the original and new URI can be computed.
+				The problem with this mode is that it relies on the fact the parties will
+				send the Route exactly as it was received. In case there is a change, the
+				resulting URIs will not be correct.
+			</para>
+			<para>
+				The other one uses the dialog module to store the original and new URI.
+				If you already use dialog module in your configuration, this is the advisable mode.
+				All you need to do to use this is to call dlg_manage() before calling uac_replace_from().
+				It works by storing the URIs as dialog variables and registering callbacks in dialog 
+				module for in dialog requests.
+			</para>
 			<example>
 				<title><function>uac_replace_from</function> usage</title>
 				<programlisting format="linespecific">
@@ -474,7 +512,7 @@ uac_restore_from();
 				<programlisting format="linespecific">
 ...
 # replace both display and uri
-uac_replace_to("$avp(s:display)","$avp(s:uri)");
+uac_replace_to("$avp(display)","$avp(uri)");
 # replace only display and do not touch uri
 uac_replace_to("batman","");
 # remove display and replace uri
@@ -499,6 +537,28 @@ uac_replace_to("","");
 			<para>
 			This function can be used from REQUEST_ROUTE and from BRANCH_ROUTE.
 			</para>
+			<para>
+			If you set restore_mode to AUTO, the URI will be modified automatically in
+			all subsequent requests and replies in that dialog.
+			</para>
+			<para>
+				There are two ways in which the AUTO mode can be achieved.
+			</para>
+			<para>
+				One uses the rr module and appends to the Record-Route header a parameter
+				containing some strings from which the original and new URI can be computed.
+				The problem with this mode is that it relies on the fact the parties will
+				send the Route exactly as it was received. In case there is a change, the
+				resulting URIs will not be correct.
+			</para>
+			<para>
+				The other one uses the dialog module to store the original and new URI.
+				If you already use dialog module in your configuration, this is the advisable mode.
+				All you need to do to use this is to call dlg_manage() before calling uac_replace_to().
+				It works by storing the URIs as dialog variables and registering callbacks in dialog 
+				module for in dialog requests.
+			</para>
+
 			<example>
 				<title><function>uac_replace_to</function> usage</title>
 				<programlisting format="linespecific">

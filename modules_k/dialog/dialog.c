@@ -400,6 +400,8 @@ int load_dlg( struct dlg_binds *dlgb )
 	dlgb->terminate_dlg = dlg_bye_all;
 	dlgb->set_dlg_var = set_dlg_variable;
 	dlgb->get_dlg_var = get_dlg_variable;
+	dlgb->get_dlg = dlg_get_msg_dialog;
+	dlgb->release_dlg = dlg_release;
 	return 1;
 }
 
