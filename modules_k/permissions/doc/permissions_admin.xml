@@ -1026,6 +1026,32 @@ if ($var(group) != -1) {
 	</section>
 	<section>
 		<title>
+		<function moreinfo="none">allow_address_group(addr, port)</function>
+		</title>
+		<para>
+		Checks if address/port is found in cached address or
+		subnet table in any group. If yes, returns that group.
+		If not returns -1.  Port value 0 in cached address and
+		group table matches any port. The parameters can be pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>allow_source_address_group()</function> usage</title>
+		<programlisting format="linespecific">
+...
+
+$var(group) = allow_address_group("1.2.3.4", "5060");
+if ($var(group) != -1) {
+   # do something with $var(group)
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
 		<function moreinfo="none">allow_trusted([src_ip_pvar, proto_pvar])</function>
 		</title>
 		<para>

@@ -440,3 +440,49 @@ int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2)
 	return group;
 
 }
+
+/*
+ * Checks if address/port is found in cached address or
+ * subnet table in any group. If yes, returns that group. If not returns -1.
+ * Port value 0 in cached address and group table matches any port.
+ */
+int allow_address_group(struct sip_msg* _msg, char* _addr, char* _port)
+{
+	int group;
+
+	unsigned int port;
+	str ips;
+	ip_addr_t *ipa;
+
+	if (_addr==NULL
+			|| (fixup_get_svalue(_msg, (gparam_p)_addr, &ips) < 0)) {
+		LM_ERR("cannot get value of address pvar\n");
+		return -1;
+	}
+	if ( (ipa=strtoipX(&ips)) == NULL ) {
+		LM_ERR("failed to convert IP address string to in_addr\n");
+		return -1;
+	}
+
+	if (_port==NULL
+			|| (fixup_get_ivalue(_msg, (gparam_p)_port, (int*)&port) < 0)) {
+		LM_ERR("cannot get value of port pvar\n");
+		return -1;
+	}
+
+	LM_DBG("looking for <%.*s, %u> in address table\n",
+			ips.len, ips.s, port);
+	group = find_group_in_addr_hash_table(*addr_hash_table,
+			ipa, port);
+	LM_DBG("Found address in group <%d>\n", group);
+
+	if (group != -1) return group;
+
+	LM_DBG("looking for <%.*s, %u> in subnet table\n",
+			ips.len, ips.s, port);
+	group = find_group_in_subnet_table(*subnet_table,
+			&_msg->rcv.src_ip,
+			_msg->rcv.src_port);
+	LM_DBG("Found a match of subnet in group <%d>\n", group);
+	return group;
+}

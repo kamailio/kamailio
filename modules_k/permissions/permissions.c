@@ -144,6 +144,8 @@ static cmd_export_t cmds[] = {
 		ANY_ROUTE},
 	{"allow_source_address_group", (cmd_function)allow_source_address_group, 0, 0, 0,
 		ANY_ROUTE},
+	{"allow_address_group",  (cmd_function)allow_address_group,  2, fixup_spve_igp,
+		fixup_free_spve_igp, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
