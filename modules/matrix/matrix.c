@@ -584,6 +584,12 @@ static int mod_init(void)
 {
 	matrix_db_vars();
 
+	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
 	if (init_shmlock() != 0) return -1;
 	if (matrix_db_init() != 0) return -1;
 	if (matrix_db_open() != 0) return -1;
