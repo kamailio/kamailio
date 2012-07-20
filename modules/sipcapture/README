@@ -29,17 +29,19 @@ Alexandr Dubovikov
 
               3.1. db_url (str)
               3.2. table_name (str)
-              3.3. db_insert_mode (integer)
-              3.4. capture_on (integer)
-              3.5. hep_capture_on (integer)
-              3.6. raw_ipip_capture_on (integer)
-              3.7. raw_moni_capture_on (integer)
-              3.8. raw_socket_listen (string)
-              3.9. raw_interface (string)
-              3.10. raw_sock_children (integer)
-              3.11. promiscuous_on (integer)
-              3.12. raw_moni_bpf_on (integer)
-              3.13. capture_node (str)
+              3.3. mt_mode (str)
+              3.4. hash_source (str)
+              3.5. db_insert_mode (integer)
+              3.6. capture_on (integer)
+              3.7. hep_capture_on (integer)
+              3.8. raw_ipip_capture_on (integer)
+              3.9. raw_moni_capture_on (integer)
+              3.10. raw_socket_listen (string)
+              3.11. raw_interface (string)
+              3.12. raw_sock_children (integer)
+              3.13. promiscuous_on (integer)
+              3.14. raw_moni_bpf_on (integer)
+              3.15. capture_node (str)
 
         4. MI Commands
 
@@ -52,17 +54,19 @@ Alexandr Dubovikov
 
    1.1. Set db_url parameter
    1.2. Set sip_capture parameter
-   1.3. db_insert_mode example
-   1.4. Set capture_on parameter
-   1.5. Set hep_capture_on parameter
-   1.6. Set raw_ipip_capture_on parameter
-   1.7. Set raw_moni_capture_on parameter
-   1.8. Set raw_socket_listen parameter
-   1.9. Set raw_socket_listen parameter
+   1.3. Set mt_mode parameter
+   1.4. Set mt_mode parameter
+   1.5. db_insert_mode example
+   1.6. Set capture_on parameter
+   1.7. Set hep_capture_on parameter
+   1.8. Set raw_ipip_capture_on parameter
+   1.9. Set raw_moni_capture_on parameter
    1.10. Set raw_socket_listen parameter
-   1.11. Set hep_capture_on parameter
-   1.12. Set raw_moni_bpf_on parameter
-   1.13. Set capture_node parameter
+   1.11. Set raw_socket_listen parameter
+   1.12. Set raw_socket_listen parameter
+   1.13. Set hep_capture_on parameter
+   1.14. Set raw_moni_bpf_on parameter
+   1.15. Set capture_node parameter
 
 Chapter 1. Admin Guide
 
@@ -78,17 +82,19 @@ Chapter 1. Admin Guide
 
         3.1. db_url (str)
         3.2. table_name (str)
-        3.3. db_insert_mode (integer)
-        3.4. capture_on (integer)
-        3.5. hep_capture_on (integer)
-        3.6. raw_ipip_capture_on (integer)
-        3.7. raw_moni_capture_on (integer)
-        3.8. raw_socket_listen (string)
-        3.9. raw_interface (string)
-        3.10. raw_sock_children (integer)
-        3.11. promiscuous_on (integer)
-        3.12. raw_moni_bpf_on (integer)
-        3.13. capture_node (str)
+        3.3. mt_mode (str)
+        3.4. hash_source (str)
+        3.5. db_insert_mode (integer)
+        3.6. capture_on (integer)
+        3.7. hep_capture_on (integer)
+        3.8. raw_ipip_capture_on (integer)
+        3.9. raw_moni_capture_on (integer)
+        3.10. raw_socket_listen (string)
+        3.11. raw_interface (string)
+        3.12. raw_sock_children (integer)
+        3.13. promiscuous_on (integer)
+        3.14. raw_moni_bpf_on (integer)
+        3.15. capture_node (str)
 
    4. MI Commands
 
@@ -133,17 +139,19 @@ Chapter 1. Admin Guide
 
    3.1. db_url (str)
    3.2. table_name (str)
-   3.3. db_insert_mode (integer)
-   3.4. capture_on (integer)
-   3.5. hep_capture_on (integer)
-   3.6. raw_ipip_capture_on (integer)
-   3.7. raw_moni_capture_on (integer)
-   3.8. raw_socket_listen (string)
-   3.9. raw_interface (string)
-   3.10. raw_sock_children (integer)
-   3.11. promiscuous_on (integer)
-   3.12. raw_moni_bpf_on (integer)
-   3.13. capture_node (str)
+   3.3. mt_mode (str)
+   3.4. hash_source (str)
+   3.5. db_insert_mode (integer)
+   3.6. capture_on (integer)
+   3.7. hep_capture_on (integer)
+   3.8. raw_ipip_capture_on (integer)
+   3.9. raw_moni_capture_on (integer)
+   3.10. raw_socket_listen (string)
+   3.11. raw_interface (string)
+   3.12. raw_sock_children (integer)
+   3.13. promiscuous_on (integer)
+   3.14. raw_moni_bpf_on (integer)
+   3.15. capture_node (str)
 
 3.1. db_url (str)
 
@@ -158,7 +166,8 @@ modparam("sipcapture", "db_url", "mysql://user:passwd@host/dbname")
 
 3.2. table_name (str)
 
-   Name of the table's name where to store the SIP messages.
+   Name of the table's name where to store the SIP messages. Can contain
+   multiple tables, separated by "|".
 
    Default value is "sip_capture".
 
@@ -166,8 +175,37 @@ modparam("sipcapture", "db_url", "mysql://user:passwd@host/dbname")
 ...
 modparam("sipcapture", "table_name", "homer_capture")
 ...
+modparam("sipcapture", "table_name", "homer_capture1|homer_capture2");
+...
 
-3.3. db_insert_mode (integer)
+3.3. mt_mode (str)
+
+   Name of the mode used for storing data in multiple tables. Modes can be
+   "rand" (random), "round_robin" (use a round_robin algorithm) or "hash"
+   (use hashing to determine the table to store). These modes are only
+   triggered if there is more than one table specified in table_name
+   parameter, separated by "|".
+
+   Default value is "rand".
+
+   Example 1.3. Set mt_mode parameter
+...
+modparam("sipcapture", "mt_mode", "hash")
+...
+
+3.4. hash_source (str)
+
+   The field of the SIP message used for hashing, when mt_mode is set to
+   "hash". The value can be "call_id", "to_user" or "from_user".
+
+   Default value is "call_id".
+
+   Example 1.4. Set mt_mode parameter
+...
+modparam("sipcapture", "hash_source", "to_user")
+...
+
+3.5. db_insert_mode (integer)
 
    If set to 1, use INSERT DELAYED to store sip message into capture table
    when the DB driver has support for it. If no INSERT DELAYED support is
@@ -175,43 +213,43 @@ modparam("sipcapture", "table_name", "homer_capture")
 
    Default value is 0 (no INSERT DELAYED).
 
-   Example 1.3. db_insert_mode example
+   Example 1.5. db_insert_mode example
 modparam("sipcapture", "db_insert_mode", 1)
 
-3.4. capture_on (integer)
+3.6. capture_on (integer)
 
    Parameter to enable/disable capture globaly (on(1)/off(0))
 
    Default value is "0".
 
-   Example 1.4. Set capture_on parameter
+   Example 1.6. Set capture_on parameter
 ...
 modparam("sipcapture", "capture_on", 1)
 ...
 
-3.5. hep_capture_on (integer)
+3.7. hep_capture_on (integer)
 
    Parameter to enable/disable capture of HEP (on(1)/off(0))
 
    Default value is "0".
 
-   Example 1.5. Set hep_capture_on parameter
+   Example 1.7. Set hep_capture_on parameter
 ...
 modparam("sipcapture", "hep_capture_on", 1)
 ...
 
-3.6. raw_ipip_capture_on (integer)
+3.8. raw_ipip_capture_on (integer)
 
    Parameter to enable/disable IPIP capturing (on(1)/off(0))
 
    Default value is "0".
 
-   Example 1.6. Set raw_ipip_capture_on parameter
+   Example 1.8. Set raw_ipip_capture_on parameter
 ...
 modparam("sipcapture", "raw_ipip_capture_on", 1)
 ...
 
-3.7. raw_moni_capture_on (integer)
+3.9. raw_moni_capture_on (integer)
 
    Parameter to enable/disable monitoring/mirroring port capturing
    (on(1)/off(0)) Only one mode on raw socket can be enabled! Monitoring
@@ -219,12 +257,12 @@ modparam("sipcapture", "raw_ipip_capture_on", 1)
 
    Default value is "0".
 
-   Example 1.7. Set raw_moni_capture_on parameter
+   Example 1.9. Set raw_moni_capture_on parameter
 ...
 modparam("sipcapture", "raw_moni_capture_on", 1)
 ...
 
-3.8. raw_socket_listen (string)
+3.10. raw_socket_listen (string)
 
    Parameter indicate an listen IP address of RAW socket for IPIP
    capturing. You can also define a port/portrange for IPIP/Mirroring
@@ -242,49 +280,49 @@ modparam("sipcapture", "raw_moni_capture_on", 1)
 
    Default value is "".
 
-   Example 1.8. Set raw_socket_listen parameter
+   Example 1.10. Set raw_socket_listen parameter
 ...
 modparam("sipcapture", "raw_socket_listen", "10.0.0.1:5060-5090")
 ...
 modparam("sipcapture", "raw_socket_listen", "10.0.0.1:5060")
 ...
 
-3.9. raw_interface (string)
+3.11. raw_interface (string)
 
    Name of the interface to bind on the raw socket.
 
    Default value is "".
 
-   Example 1.9. Set raw_socket_listen parameter
+   Example 1.11. Set raw_socket_listen parameter
 ...
 modparam("sipcapture", "raw_interface", "eth0")
 ...
 
-3.10. raw_sock_children (integer)
+3.12. raw_sock_children (integer)
 
    Parameter define how much children must be created to listen the raw
    socket.
 
    Default value is "1".
 
-   Example 1.10. Set raw_socket_listen parameter
+   Example 1.12. Set raw_socket_listen parameter
 ...
 modparam("sipcapture", "raw_sock_children", 6)
 ...
 
-3.11. promiscuous_on (integer)
+3.13. promiscuous_on (integer)
 
    Parameter to enable/disable promiscuous mode on the raw socket. Linux
    only.
 
    Default value is "0".
 
-   Example 1.11. Set hep_capture_on parameter
+   Example 1.13. Set hep_capture_on parameter
 ...
 modparam("sipcapture", "promiscuous_on", 1)
 ...
 
-3.12. raw_moni_bpf_on (integer)
+3.14. raw_moni_bpf_on (integer)
 
    Activate Linux Socket Filter (LSF based on BPF) on the mirroring
    interface. The structure is defined in linux/filter.h. The default LSF
@@ -293,18 +331,18 @@ modparam("sipcapture", "promiscuous_on", 1)
 
    Default value is "0".
 
-   Example 1.12. Set raw_moni_bpf_on parameter
+   Example 1.14. Set raw_moni_bpf_on parameter
 ...
 modparam("sipcapture", "raw_moni_bpf_on", 1)
 ...
 
-3.13. capture_node (str)
+3.15. capture_node (str)
 
    Name of the capture node.
 
    Default value is "homer01".
 
-   Example 1.13. Set capture_node parameter
+   Example 1.15. Set capture_node parameter
 ...
 modparam("sipcapture", "capture_node", "homer03")
 ...

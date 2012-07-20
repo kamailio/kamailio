@@ -104,7 +104,7 @@ modparam("sipcapture", "db_url", "mysql://user:passwd@host/dbname")
 	<section>
 		<title><varname>table_name</varname> (str)</title>
 		<para>
-		Name of the table's name where to store the SIP messages. 
+		Name of the table's name where to store the SIP messages. Can contain multiple tables, separated by "|".
 		</para>
 		<para>
 		<emphasis>
@@ -117,7 +117,46 @@ modparam("sipcapture", "db_url", "mysql://user:passwd@host/dbname")
 ...
 modparam("sipcapture", "table_name", "homer_capture")
 ...
-
+modparam("sipcapture", "table_name", "homer_capture1|homer_capture2");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>mt_mode</varname> (str)</title>
+		<para>
+		Name of the mode used for storing data in multiple tables. Modes can be "rand" (random), "round_robin" (use a round_robin algorithm) or "hash" (use hashing to determine the table to store). These modes are only triggered if there is more than one table specified in table_name parameter, separated by "|". 
+		</para>
+		<para>
+		<emphasis>
+			Default value is "rand".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mt_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipcapture", "mt_mode", "hash")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>hash_source</varname> (str)</title>
+		<para>
+		The field of the SIP message used for hashing, when mt_mode is set to "hash". The value can be "call_id", "to_user" or "from_user".
+		</para>
+		<para>
+		<emphasis>
+			Default value is "call_id".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mt_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipcapture", "hash_source", "to_user")
+...
 </programlisting>
 		</example>
 	</section>

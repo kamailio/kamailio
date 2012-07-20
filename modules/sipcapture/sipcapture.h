@@ -29,6 +29,47 @@ typedef uint16_t u_int16_t;
 #define IPPROTO_IPIP IPPROTO_ENCAP /* Solaris IPIP protocol has name ENCAP */
 #endif
 
+struct _sipcapture_object {
+	str method;
+	str reply_reason;
+	str ruri;
+	str ruri_user;
+	str from_user;
+	str from_tag;
+	str to_user;
+	str to_tag;
+	str pid_user;
+	str contact_user;
+	str auth_user;
+	str callid;
+	str callid_aleg;
+	str via_1;
+	str via_1_branch;
+	str cseq;
+	str diversion;
+	str reason;
+	str content_type;
+	str authorization;
+	str user_agent;
+	str source_ip;
+	int source_port;
+	str destination_ip;
+	int destination_port;
+	str contact_ip;
+	int contact_port;
+	str originator_ip;
+	int originator_port;
+	int proto;
+	int family;
+	str rtp_stat;
+	int type;
+        long long tmstamp;
+	str node;	
+	str msg;	
+#ifdef STATISTICS
+	stat_var *stat;
+#endif
+};
 
 struct hep_hdr{
     u_int8_t hp_v;            /* version */

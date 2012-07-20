@@ -74,6 +74,7 @@
 #include "../../resolve.h"
 #include "../../receive.h"
 #include "sipcapture.h"
+#include "hash_mode.h"
 
 #ifdef STATISTICS
 #include "../../lib/kcore/statistics.h"
@@ -82,47 +83,6 @@
 
 MODULE_VERSION
 
-struct _sipcapture_object {
-	str method;
-	str reply_reason;
-	str ruri;
-	str ruri_user;
-	str from_user;
-	str from_tag;
-	str to_user;
-	str to_tag;
-	str pid_user;
-	str contact_user;
-	str auth_user;
-	str callid;
-	str callid_aleg;
-	str via_1;
-	str via_1_branch;
-	str cseq;
-	str diversion;
-	str reason;
-	str content_type;
-	str authorization;
-	str user_agent;
-	str source_ip;
-	int source_port;
-	str destination_ip;
-	int destination_port;
-	str contact_ip;
-	int contact_port;
-	str originator_ip;
-	int originator_port;
-	int proto;
-	int family;
-	str rtp_stat;
-	int type;
-        long long tmstamp;
-	str node;	
-	str msg;	
-#ifdef STATISTICS
-	stat_var *stat;
-#endif
-};
 
 #define ETHHDR 14 /* sizeof of ethhdr structure */
 
@@ -149,6 +109,8 @@ static struct mi_root* sip_capture_mi(struct mi_root* cmd, void* param );
 
 static str db_url		= str_init(DEFAULT_RODB_URL);
 static str table_name		= str_init("sip_capture");
+static str hash_source		= str_init("call_id");
+static str mt_mode			= str_init("rand");
 static str id_column		= str_init("id");
 static str date_column		= str_init("date");
 static str micro_ts_column 	= str_init("micro_ts");
@@ -226,6 +188,22 @@ static struct sock_filter BPF_code[] = { { 0x28, 0, 0, 0x0000000c }, { 0x15, 0, 
 db1_con_t *db_con = NULL; 		/*!< database connection */
 db_func_t db_funcs;      		/*!< Database functions */
 
+str* table_names = NULL;
+unsigned int no_tables = 0;
+
+/*multiple table mode*/
+enum e_mt_mode{
+	mode_random = 1,
+	mode_hash,
+	mode_round_robin,
+	mode_error
+};
+
+enum e_mt_mode mtmode = mode_random ;
+enum hash_source source = hs_error;
+
+unsigned int rr_idx = 0;
+
 struct hep_timehdr* heptime;
 
 
@@ -244,6 +222,8 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"db_url",			STR_PARAM, &db_url.s            },
 	{"table_name",       		STR_PARAM, &table_name.s	},
+	{"hash_source",				STR_PARAM, &hash_source.s	},
+	{"mt_mode",					STR_PARAM, &mt_mode.s	},
 	{"id_column",        		STR_PARAM, &id_column.s         },
 	{"date_column",        		STR_PARAM, &date_column.s       },	
 	{"micro_ts_column",     	STR_PARAM, &micro_ts_column.s	},
@@ -337,6 +317,70 @@ struct module_exports exports = {
 };
 
 
+static int mt_init(void) {
+
+	char *p = NULL;
+	int i = 0;
+
+	/*parse and save table names*/
+	no_tables = 1;
+	p = table_name.s;
+
+	while (*p)
+	{
+		if (*p== '|')
+		{
+			no_tables++;
+		}
+		p++;
+	}
+
+	table_names = (str*)pkg_malloc(sizeof(str) * no_tables);
+	if(table_names == NULL) {
+		LM_ERR("no more pkg memory left\n");
+		return -1;
+	}
+	p = strtok (table_name.s,"| \t");
+	while (p != NULL)
+	{
+		LM_INFO ("INFO: table name:%s\n",p);
+		table_names[i].s =  p;
+		table_names[i].len = strlen (p);
+		i++;
+		p = strtok (NULL, "| \t");
+	}
+
+	if (strcmp (mt_mode.s, "rand") ==0)
+	{
+		mtmode = mode_random;
+	}
+	else if (strcmp (mt_mode.s, "round_robin") ==0)
+	{
+		mtmode = mode_round_robin;
+	}
+	else if (strcmp (mt_mode.s, "hash") == 0)
+	{
+		mtmode = mode_hash;
+	}
+	else {
+		LM_ERR("ERROR: sipcapture: mod_init: multiple tables mode unrecognized\n");
+		return -1;
+		
+	}
+
+
+	if ( mtmode == mode_hash && (source = get_hash_source (hash_source.s) ) == hs_error)
+	{
+		LM_ERR("ERROR: sipcapture: mod_init: hash source unrecognized\n");
+		return -1;
+	}
+
+	srand(time(NULL));
+
+	return 0;
+
+}
+
 /*! \brief Initialize sipcapture module */
 static int mod_init(void) {
 
@@ -359,6 +403,8 @@ static int mod_init(void) {
 
 	db_url.len = strlen(db_url.s);
 	table_name.len = strlen(table_name.s);
+	hash_source.len = strlen (hash_source.s);
+	mt_mode.len = strlen(mt_mode.s);
 	date_column.len = strlen(date_column.s);
 	id_column.len = strlen(id_column.s);
 	micro_ts_column.len = strlen(micro_ts_column.s);
@@ -418,6 +464,11 @@ static int mod_init(void) {
 	/*Check the table name*/
 	if(!table_name.len) {	
 		LM_ERR("ERROR: sipcapture: mod_init: table_name is not defined or empty\n");
+		return -1;
+	}
+
+	if (mt_init () <0)
+	{
 		return -1;
 	}
 
@@ -561,6 +612,10 @@ static int child_init(int rank)
                 return -1;
         }
 
+    if (mtmode ==mode_round_robin && rank > 0)
+    {
+		rr_idx = rank % no_tables;
+    }
 
 	return 0;
 }
@@ -610,6 +665,9 @@ static void destroy(void)
 #endif                        
                 }                		
 		close(raw_sock_desc);
+	}
+	if (table_names){
+		pkg_free(table_names);
 	}
 }
 
@@ -793,6 +851,7 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 	db_val_t db_vals[NR_KEYS];
 
 	str tmp;
+	int ii = 0;
 
 	if(sco==NULL)
 	{
@@ -996,9 +1055,25 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 
 	db_vals[36].val.blob_val = tmp;
 
-	LM_DBG("homer table: [%.*s]\n", table_name.len, table_name.s);		
-                
-	db_funcs.use_table(db_con, &table_name);
+	if (no_tables > 0 ){
+		if ( mtmode == mode_hash ){
+			ii = hash_func ( sco, source , no_tables);
+			LM_DBG ("hash idx is:%d\n", ii);
+		}
+		else if (mtmode == mode_random )
+		{
+			ii = rand() % no_tables;
+			LM_DBG("rand idx is:%d\n", ii);
+		}
+		else if (mtmode == mode_round_robin)
+		{
+			ii = rr_idx;
+			rr_idx = (rr_idx +1) % no_tables;
+			LM_DBG("round robin idx is:%d\n", ii);
+		}
+	}
+	LM_DBG("insert into homer table: [%.*s]\n", table_names[ii].len, table_names[ii].s);
+	db_funcs.use_table(db_con, &table_names[ii]);
 
 	LM_DBG("storing info...\n");
 	
