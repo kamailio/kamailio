@@ -41,5 +41,7 @@ int mq_head_fetch(str *name);
 void mq_pv_free(str *name);
 int mq_item_add(str *qname, str *key, str *val);
 
+int _mq_get_csize(str *);
+
 #endif
 

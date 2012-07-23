@@ -456,3 +456,19 @@ int pv_get_mqv(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &mp->item->val);
 }
 
+/* Return head->csize for a given queue */
+
+int _mq_get_csize(str *name) 
+{
+	mq_head_t *mh = mq_head_get(name);
+	int mqueue_size = 0;
+
+	if(mh == NULL)
+		return -1;
+
+	lock_get(&mh->lock);
+	mqueue_size = mh->csize;
+	lock_release(&mh->lock);
+
+	return mqueue_size;
+}
