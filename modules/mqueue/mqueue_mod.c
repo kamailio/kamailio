@@ -45,6 +45,7 @@ static int  mod_init(void);
 static void mod_destroy(void);
 
 static int w_mq_fetch(struct sip_msg* msg, char* mq, char* str2);
+static int w_mq_size(struct sip_msg *msg, char *mq, char *str2);
 static int w_mq_add(struct sip_msg* msg, char* mq, char* key, char* val);
 static int w_mq_pv_free(struct sip_msg* msg, char* mq, char* str2);
 int mq_param(modparam_t type, void *val);
@@ -72,6 +73,8 @@ static cmd_export_t cmds[]={
 	{"mq_add", (cmd_function)w_mq_add, 3, fixup_mq_add,
 		0, ANY_ROUTE},
 	{"mq_pv_free", (cmd_function)w_mq_pv_free, 1, fixup_spve_null,
+		0, ANY_ROUTE},
+	{"mq_size", (cmd_function) w_mq_size, 1, fixup_spve_null,
 		0, ANY_ROUTE},
 	{"bind_mq", (cmd_function)bind_mq, 1, 0,
 		0, ANY_ROUTE},
@@ -138,6 +141,24 @@ static int w_mq_fetch(struct sip_msg* msg, char* mq, char* str2)
 	if(ret<0)
 		return ret;
 	return 1;
+}
+
+static int w_mq_size(struct sip_msg *msg, char *mq, char *str2) 
+{
+	int ret;
+	str q;
+
+	if(fixup_get_svalue(msg, (gparam_t *) mq, &q) < 0) {
+		LM_ERR("cannot get queue parameter\n");
+		return -1;
+	}
+
+	ret = _mq_get_csize(&q);
+
+	if(ret < 0)
+		LM_ERR("mqueue not found\n");
+
+	return ret;
 }
 
 static int w_mq_add(struct sip_msg* msg, char* mq, char* key, char* val)

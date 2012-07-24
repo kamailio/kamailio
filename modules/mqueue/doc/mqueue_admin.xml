@@ -155,6 +155,24 @@ mq_pv_free("myq");
 </programlisting>
 	    </example>
 	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">mq_size(queue)</function>
+	    </title>
+	    <para>
+		Returns the current number of elements in the mqueue.
+	    </para>
+		<example>
+		<title><function>mq_size</function> usage</title>
+		<programlisting format="linespecific">
+...
+$var(q_size) = mq_size("queue");
+xlog("L_INFO", "Size of queue is: $var(q_size)\n");
+...
+</programlisting>
+	    </example>
+	</section>
 	
     </section>
 	

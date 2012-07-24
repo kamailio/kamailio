@@ -23,6 +23,12 @@
 		<surname>Modroiu</surname>
 		    <email>ramona@asipto.com</email>
 	    </editor>
+	    <editor>
+		<firstname>Alex</firstname>
+		<surname>Balashov</surname>
+		<email>abalashov@evaristesys.com</email>
+		<affiliation><orgname>Evariste Systems</orgname></affiliation>
+	    </editor>
 	</authorgroup>
 	<copyright>
 	    <year>2010</year>
