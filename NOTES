@@ -11,7 +11,46 @@ check for Call-Info header in script, call "sca_call_info_update"
 	more prone to bugs because of missed cases
 	easy to misconfigure, potentially leading to low adoption
 
+
 To consider:
     * What to do when a subscriber reSUBSCRIBES and the dialog is different
       from the current saved subscription? Avoiding shm_realloc seems like a
       good idea, so perhaps just delete the current one and save the new.
+
+      Update: separate shm_alloc for dialog.id in sca_subscription_create,
+	      then shm_free & shm_alloc if differing dialog found.
+
+
+How to remove Call-Info header before relaying?
+    Use del_lump from ../../data_lump.h	
+    Cf. textops module's remove_hf_f()
+
+How to detect hold/pickup in SDP?
+    Use parse_sdp/free_sdp from ../../parser/sdp/sdp.h.
+    
+	sdp_stream_cell_t	*sdp_stream;
+	
+	/* puts sdp_info_t pointer in msg->body */
+	rc = parse_sdp( msg );
+	if ( rc < 0 ) {
+	    error;
+	}
+	/* msg->body must now be free_sdp'd */
+
+	/* for now we'll just assume a single stream per call */
+	sdp_stream = get_sdp_stream( msg, 0, 0 );
+
+	if ( sdp->is_on_hold ) {
+	    ....
+	}
+	
+		
+
+Call-Info meaning in context
+    If present, refers to appearance associated with the Contact URI.
+
+    e.g., a Call-Info header present in an INVITE indicates the caller
+    has appearance-index N and is using the line to place a call.
+
+    e.g., a Call-Info header present in a response indicates the callee
+    has appearance-index N
