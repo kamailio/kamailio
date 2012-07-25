@@ -26,6 +26,7 @@ sca_notify_reply_cb( struct cell *t, int cb_type, struct tmcb_params *cbp )
 	return;
     }
     if ( notify_reply == FAKED_REPLY ) {
+	/* XXX should hook this and remove subscriber */
 	LM_ERR( "NOTIFY resulted in FAKED_REPLY from proxy" );
 	return;
     }
@@ -159,7 +160,7 @@ sca_notify_subscriber( sca_mod *scam, sca_subscription *sub, int app_idx )
     }
     headers.len += len;
     
-    if ( app_idx == SCA_CALL_INFO_APPEARANCE_INDEX_ALL ) {
+    if ( app_idx == SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) {
 	/* add Call-Info header with appearance state */
 	if (( len = sca_call_info_build_header( scam, sub,
 			hdrbuf + headers.len,
@@ -205,7 +206,7 @@ sca_notify_subscriber( sca_mod *scam, sca_subscription *sub, int app_idx )
     headers.len += len;
 
     set_uac_req( &request, (str *)&SCA_METHOD_NOTIFY, &headers, NULL, dlg,
-			TMCB_LOCAL_COMPLETED, sca_notify_reply_cb, NULL );
+			TMCB_LOCAL_COMPLETED, sca_notify_reply_cb, scam );
     rc = scam->tm_api->t_request_within( &request );
     if ( rc < 0 ) {
 	LM_ERR( "Failed to send in-dialog %s NOTIFY to %.*s",
@@ -271,7 +272,7 @@ sca_notify_call_info_subscribers( sca_mod *scam, str *subscription_aor )
 	 * buffer instead.
 	 */
 	if ( sca_notify_subscriber( scam, sub,
-		SCA_CALL_INFO_APPEARANCE_INDEX_ALL ) < 0 ) {
+		SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) < 0 ) {
 	    goto done;
 	}
     }
