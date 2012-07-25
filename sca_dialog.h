@@ -12,4 +12,11 @@ struct _sca_dialog {
 };
 typedef struct _sca_dialog		sca_dialog;
 
+#define SCA_DIALOG_EMPTY(d) \
+	((d) == NULL || (SCA_STR_EMPTY( &(d)->call_id ) && \
+			    SCA_STR_EMPTY( &(d)->from_tag ) && \
+			    SCA_STR_EMPTY( &(d)->to_tag )))
+
+int	sca_dialog_build_from_tags( sca_dialog *, int, str *, str *, str * );
+
 #endif /* SCA_DIALOG_H */
