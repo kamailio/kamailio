@@ -7,6 +7,7 @@
 
 /* general headers for module API, debugging, parsing, str handling */
 #include "../../sr_module.h"
+#include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../dprint.h"
 #include "../../lib/kcore/hash_func.h"
