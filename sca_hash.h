@@ -45,6 +45,8 @@ int	sca_hash_table_create( sca_hash_table **, unsigned int );
 void	sca_hash_table_print( sca_hash_table * );
 void	sca_hash_table_free( sca_hash_table * );
 
+void	sca_hash_entry_free( sca_hash_entry * );
+
 /* key-value operations */
 int	sca_hash_table_slot_kv_insert_unsafe( sca_hash_slot *, void *,
 				int (*)(str *, void *),
@@ -62,8 +64,12 @@ void	*sca_hash_table_slot_kv_find_unsafe( sca_hash_slot *, str * );
 void	*sca_hash_table_slot_kv_find( sca_hash_slot *, str * );
 void	*sca_hash_table_index_kv_find( sca_hash_table *, int, str * );
 void	*sca_hash_table_kv_find( sca_hash_table *, str * );
-void	sca_hash_table_slot_unlink_entry_unsafe( sca_hash_slot *,
-						 sca_hash_entry * );
+
+sca_hash_entry	*sca_hash_table_slot_kv_find_entry_unsafe( sca_hash_slot *,
+							    str * );
+sca_hash_entry *sca_hash_table_slot_unlink_entry_unsafe( sca_hash_slot *,
+						 	sca_hash_entry * );
+
 int	sca_hash_table_slot_kv_delete( sca_hash_slot *, str * );
 int	sca_hash_table_index_kv_delete( sca_hash_table *, int, str * );
 int	sca_hash_table_kv_delete( sca_hash_table *, str * );

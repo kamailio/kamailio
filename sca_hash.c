@@ -183,26 +183,65 @@ sca_hash_table_kv_find( sca_hash_table *ht, str *key )
     return( sca_hash_table_index_kv_find( ht, slot_idx, key ));
 }
 
+    sca_hash_entry *
+sca_hash_table_slot_kv_find_entry_unsafe( sca_hash_slot *slot, str *key )
+{
+    sca_hash_entry	*e = NULL;
+
+    assert( slot != NULL && !SCA_STR_EMPTY( key ));
+
+    e = slot->entries;
+    if ( e ) {
+	if ( e->compare( key, e->value ) != 0 && e->next ) {
+	    for ( ; e != NULL; e = e->next ) {
+		if ( e->compare( key, e->value ) == 0 ) {
+		    break;
+		}
+	    }
+	}
+    }
+
+    return( e );
+}
+
+    sca_hash_entry *
+sca_hash_table_slot_kv_find_entry( sca_hash_slot *slot, str *key )
+{
+    sca_hash_entry	*e;
+
+    lock_get( &slot->lock );
+    e = sca_hash_table_slot_kv_find_entry( slot, key );
+    lock_release( &slot->lock );
+
+    return( e );		
+}
+
     void
+sca_hash_entry_free( sca_hash_entry *e )
+{
+    if ( e ) {
+	e->free_entry( e->value );
+	shm_free( e );
+    }
+}
+
+    sca_hash_entry *
 sca_hash_table_slot_unlink_entry_unsafe( sca_hash_slot *slot,
 	sca_hash_entry *e )
 {
-    if ( e == NULL ) {
-	return;
+    if ( e ) {
+	if ( e->prev ) {
+	    e->prev->next = e->next;
+	}
+	if ( e == *slot->last_entry ) {
+	    slot->last_entry = &e->prev;
+	}
+	if ( e == slot->entries ) {
+	    slot->entries = e->next;
+	}
     }
 
-    if ( e->prev ) {
-	e->prev->next = e->next;
-    }
-    if ( e == *slot->last_entry ) {
-	slot->last_entry = &e->prev;
-    }
-    if ( e == slot->entries ) {
-	slot->entries = e->next;
-    }
-
-    e->free_entry( e->value );
-    shm_free( e );
+    return( e );
 }
 
     int
@@ -215,7 +254,11 @@ sca_hash_table_slot_kv_delete_unsafe( sca_hash_slot *slot, str *key )
 	return( -1 );
     }
 
-    sca_hash_table_slot_unlink_entry_unsafe( slot, e );
+    e = sca_hash_table_slot_unlink_entry_unsafe( slot, e );
+    if ( e ) { 
+	e->free_entry( e->value );
+	shm_free( e );
+    }
 
     return( 0 );
 }
