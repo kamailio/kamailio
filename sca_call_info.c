@@ -4,10 +4,12 @@
 
 #include "sca.h"
 #include "sca_appearance.h"
+#include "sca_call_info.h"
 #include "sca_dialog.h"
 #include "sca_event.h"
-#include "sca_call_info.h"
+#include "sca_notify.h"
 #include "sca_subscribe.h"
+#include "sca_util.h"
 
 const str	SCA_CALL_INFO_HEADER_STR = STR_STATIC_INIT( "Call-Info: " );
 const str	SCA_CALL_INFO_HEADER_NAME = STR_STATIC_INIT( "Call-Info" );
@@ -456,4 +458,236 @@ LM_INFO( "ADMORTEN: Call-Info SCA URI: %.*s", STR_FMT( &call_info->sca_uri ));
 
 done:
     return( 0 );
+}
+
+/*
+ * return codes:
+ *	-1: error, failed to remove call-info header.
+ *	 0: no call-info headers found.
+ *     >=1: removed 1 or more call-info headers.
+ */
+    static int
+sca_call_info_header_remove( sip_msg_t *msg )
+{
+    hdr_field_t		*hdr;
+    struct lump		*ci_hdr_lump;
+    int			rc = 0;
+
+    /* all headers must be parsed before using del_lump */
+    if ( parse_headers( msg, HDR_EOH_F, 0 ) < 0 ) {
+	LM_ERR( "Failed to parse_headers" );
+	return( -1 );
+    }
+
+#ifdef notdef
+    for ( hdr = sca_call_info_header_find( msg->headers ); hdr != NULL;
+		hdr = sca_call_info_header_find( hdr->next )) {
+#endif /* notdef */
+    for ( hdr = msg->headers; hdr; hdr = hdr->next ) {
+	if ( hdr->name.len != SCA_CALL_INFO_HEADER_NAME.len ) {
+	    continue;
+	}
+	if ( memcmp( hdr->name.s, SCA_CALL_INFO_HEADER_NAME.s,
+				hdr->name.len ) != 0 ) {
+	    continue;
+	}
+
+LM_ERR( "msg->buf: %p, Found %.*s (%p) header with body \"%.*s\"",
+	msg->buf, STR_FMT( &hdr->name ), hdr->name.s, STR_FMT( &hdr->body ));
+
+	/* del_lump takes packet, offset, lump length, & hdr type */
+	ci_hdr_lump = del_lump( msg, hdr->name.s - msg->buf,
+				hdr->len, HDR_OTHER_T );
+	if ( ci_hdr_lump == NULL ) {
+	    LM_ERR( "Failed to del_lump Call-Info header" );
+	    rc = -1;
+	    break;
+	}
+
+	rc++;
+    }
+
+    return( rc );
+}
+
+    static int
+sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
+	str *contact_uri, struct to_body *from, struct to_body *to )
+{
+    sca_appearance	*app;
+    sca_dialog		dialog;
+    char		dlg_buf[ 1024 ];
+    str			state_str = STR_NULL;
+    int			state = call_info->state;
+    int			slot_idx;
+    int			rc = -1;
+
+    /* FIRST PASS: just handle 18x response for caller */
+
+    if ( msg->first_line.type == SIP_REQUEST ) {
+	/* XXX check for to-tag, check SDP for hold/pickup, etc. */
+	/* this is likely to be the most complicated one */
+	/* if picking up held, this is where we need to inject Replaces hdr */
+
+	sca_appearance_state_to_str( state, &state_str );
+	LM_INFO( "ADMORTEN: updating %.*s appearance-index %d to %.*s",
+		    STR_FMT( &from->uri ), call_info->index,
+		    STR_FMT( &state_str ));
+
+	
+	dialog.id.s = dlg_buf;
+	if ( sca_dialog_build_from_tags( &dialog, sizeof( dlg_buf ),
+		&msg->callid->body, &from->tag_value, &to->tag_value ) < 0 ) {
+	    LM_ERR( "Failed to build dialog from tags" );
+	    return( -1 );
+	}
+
+	if ( sca_appearance_update_index( sca, &from->uri, call_info->index,
+		    state, NULL, &dialog ) != SCA_APPEARANCE_OK ) {
+	    LM_ERR( "Failed to update %.*s appearance-index %d to %.*s",
+		    STR_FMT( &from->uri ), call_info->index,
+		    STR_FMT( &state_str ));
+	}
+
+
+	rc = 1;
+    } else {
+	switch ( msg->REPLY_STATUS ) {
+	case 180:
+	    state = SCA_APPEARANCE_STATE_ALERTING;
+	    break;
+
+	case 183:
+	    state = SCA_APPEARANCE_STATE_PROGRESSING;
+	    break;
+
+	case 200:
+	    /* XXX update status, set appearance dialog, parse sdp, etc */
+	    state = SCA_APPEARANCE_STATE_ACTIVE;
+
+	    /* if a Call-Info header is present, app-index goes to Contact */
+	    break;
+
+	default:
+	    /* XXX error, drop line-seize subscription, release appearance */
+	    break;
+	}
+
+
+	rc = 1;
+    }
+
+    return( rc );
+}
+
+    static int
+sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
+	str *contact_uri, struct to_body *from, struct to_body *to )
+{
+    int		rc = 1;
+
+    if ( msg->first_line.type == SIP_REQUEST ) {
+	if ( call_info != NULL ) {
+	    if ( sca_appearance_release_index( sca, &from->uri,
+						call_info->index ) < 0 ) {
+		LM_ERR( "Failed to release appearance-index %d "
+			"for %.*s on BYE", call_info->index,
+			STR_FMT( &from->uri ));
+		rc = -1;
+	    }
+
+	    if ( sca_notify_call_info_subscribers( sca, &from->uri ) < 0 ) {
+		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on BYE",
+			STR_FMT( &from->uri ));
+		rc = -1;
+	    }
+	}
+    }
+
+    return( rc );
+}
+
+struct sca_call_info_dispatch {
+    int			method;
+    int			(*handler)( sip_msg_t *, sca_call_info *, str *,
+				    struct to_body *, struct to_body * );
+};
+struct sca_call_info_dispatch	call_info_dispatch[] = {
+    { METHOD_INVITE,	sca_call_info_invite_handler },
+    { METHOD_BYE,	sca_call_info_bye_handler },
+#ifdef notdef
+    { METHOD_CANCEL,	sca_call_info_cancel_handler },
+    { METHOD_PRACK,	sca_call_info_prack_handler },
+    { METHOD_REFER,	sca_call_info_refer_handler },
+#endif /* notdef */
+};
+
+    int
+sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
+{
+    sca_call_info	call_info;
+    hdr_field_t		*call_info_hdr;
+    struct to_body	*from;
+    struct to_body	*to;
+    str			contact_uri = STR_NULL;
+    int			n_dispatch;
+    int			i;
+    int			rc = -1;
+
+    if ( parse_headers( msg, HDR_EOH_F, 0 ) < 0 ) {
+	LM_ERR( "header parsing failed: bad request" );
+	return( -1 );
+    }
+
+    memset( &call_info, 0, sizeof( sca_call_info ));
+    call_info_hdr = sca_call_info_header_find( msg->headers );
+    if ( !SCA_HEADER_EMPTY( call_info_hdr )) {
+	/* this needs to accomodate comma-separated appearance info */
+	if ( sca_call_info_body_parse( &call_info_hdr->body, &call_info ) < 0) {
+	    LM_ERR( "Bad Call-Info header body: %.*s",
+		    STR_FMT( &call_info_hdr->body ));
+	    return( -1 );
+	}
+    }
+
+    if ( sca_get_msg_from_header( msg, &from ) < 0 ) {
+	LM_ERR( "Bad From header" );
+	return( -1 );
+    }
+    if ( sca_get_msg_to_header( msg, &to ) < 0 ) {
+	LM_ERR( "Bad To header" );
+	return( -1 );
+    }
+    if ( sca_get_msg_contact_uri( msg, &contact_uri ) < 0 ) {
+	LM_ERR( "Bad Contact" );
+	return( -1 );
+    }
+
+    n_dispatch = sizeof( call_info_dispatch ) / sizeof( call_info_dispatch[0] );
+    for ( i = 0; i < n_dispatch; i++ ) {
+	if ( msg->REQ_METHOD == call_info_dispatch[ i ].method ) {
+	    break;
+	}
+    }
+    if ( i >= n_dispatch ) {
+	LM_ERR( "BUG: Module does not support Call-Info headers "
+		"in %.*s requests", STR_FMT( &REQ_LINE(msg).method ));
+	return( -1 );
+    }
+
+#ifdef notdef
+    if ( sca_call_info_header_remove( msg ) < 0 ) {
+	LM_ERR( "Failed to remove Call-Info header" );
+	return( -1 );
+    }
+#endif /* notdef */
+
+    rc = call_info_dispatch[ i ].handler( msg, &call_info,
+					  &contact_uri, from, to );
+    if ( rc < 0 ) {
+	LM_ERR( "Failed to update Call-Info state for %.*s",
+		STR_FMT( &contact_uri ));
+    }
+
+    return( rc );
 }

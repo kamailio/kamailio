@@ -5,7 +5,7 @@
 #include "sca_subscribe.h"
 
 /* pass to sca_notify_subscriber to include all appearances in Call-Info hdr */
-#define SCA_CALL_INFO_APPEARANCE_INDEX_ALL	0
+#define SCA_CALL_INFO_APPEARANCE_INDEX_ANY	0
 
 struct _sca_call_info {
     str		sca_uri;
@@ -16,6 +16,8 @@ struct _sca_call_info {
 typedef struct _sca_call_info		sca_call_info;
 
 extern const str	SCA_CALL_INFO_HEADER_STR;
+
+int sca_call_info_update( sip_msg_t *, char *, char * );
 
 int sca_call_info_build_header( sca_mod *, sca_subscription *, char *, int );
 int sca_call_info_append_header_for_appearance_index( sca_subscription *, int,
