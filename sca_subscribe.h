@@ -22,7 +22,7 @@ struct _sca_subscription {
     int		event;		/* "call-info", "line-seize" */
     time_t	expires;	/* expiration date of subscription */
     int		state;		/* active, pending, terminated */
-    str		extra_headers;
+    int		index;		/* seized appearance-index, line-seize only */
 
     sca_dialog	dialog;		/* call-id, to- and from-tags, cseq */
 };
@@ -35,7 +35,11 @@ extern const str 	SCA_METHOD_SUBSCRIBE;
 		(sub1)->state <= SCA_SUBSCRIPTION_STATE_TERMINATED_TIMEOUT )
 
 int	sca_handle_subscribe( sip_msg_t *, char *, char * );
+int	sca_unsubscribe_line_seize( sip_msg_t *, char *, char * );
+
 void	sca_subscription_purge_expired( unsigned int, void * );
 void	sca_subscription_state_to_str( int, str * );
+
+int	sca_subscription_terminate( sca_mod *, str *, int, str *, int );
 
 #endif /* SCA_SUBSCRIBE_H */

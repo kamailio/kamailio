@@ -10,6 +10,7 @@
 #include "sca_notify.h"
 #include "sca_reply.h"
 #include "sca_subscribe.h"
+#include "sca_util.h"
 
 #include "../../modules/tm/tm_load.h"
 
@@ -78,14 +79,32 @@ sca_subscription_purge_expired( unsigned int ticks, void *param )
 		sub->expires = 0;
 		sub->dialog.notify_cseq += 1;
 
-		if ( sca_notify_subscriber( scam, sub,
-				SCA_CALL_INFO_APPEARANCE_INDEX_ALL ) < 0 ) {
+		if ( sca_notify_subscriber( scam, sub, sub->index ) < 0 ) {
 		    LM_ERR( "Failed to send subscription expired "
 			    "NOTIFY %s subscriber %.*s",
 			    sca_event_name_from_type( sub->event ),
 			    STR_FMT( &sub->subscriber ));
 
 		    /* remove from subscribers list anyway */
+		}
+		if ( sub->event == SCA_EVENT_TYPE_LINE_SEIZE ) {
+		    if ( sca_appearance_release_index( sca, &sub->target_aor,
+						       sub->index ) < 0 ) {
+			LM_ERR( "Failed to release seized %.*s "
+				"appearance-index %d",
+				STR_FMT( &sub->target_aor ), sub->index );
+		    }
+
+		    if ( sca_notify_call_info_subscribers( sca,
+					&sub->target_aor ) < 0 ) {
+			LM_ERR( "SCA %s NOTIFY to all %.*s subscribers failed",
+				sca_event_name_from_type( sub->event ),
+				STR_FMT( &sub->target_aor ));
+			/*
+			 * fall through anyway. the state should propagate
+			 * to subscribers when they renew call-info.
+		         */	
+		    }
 		}
 	    }
 
@@ -128,6 +147,7 @@ sca_subscription_create( str *aor, int event, str *subscriber,
 
     sub->event = event;
     sub->state = SCA_SUBSCRIPTION_STATE_ACTIVE;
+    sub->index = SCA_CALL_INFO_APPEARANCE_INDEX_ANY;
     sub->expires = time( NULL ) + expire_delta;
     sub->dialog.subscribe_cseq = cseq;
     sub->dialog.notify_cseq = 0;
@@ -225,10 +245,11 @@ sca_subscription_print( void *value )
 {
     sca_subscription		*sub = (sca_subscription *)value;
 
-    LM_INFO( "%.*s %s %.*s, dialog %.*s;%.*s;%.*s",
+    LM_INFO( "%.*s %s %.*s, expires: %ld, index: %d, dialog %.*s;%.*s;%.*s",
 		STR_FMT( &sub->target_aor ),
 		sca_event_name_from_type( sub->event ),
 		STR_FMT( &sub->subscriber ),
+		sub->expires, sub->index,
 		STR_FMT( &sub->dialog.call_id ),
 		STR_FMT( &sub->dialog.from_tag ),
 		STR_FMT( &sub->dialog.to_tag ));
@@ -249,6 +270,9 @@ sca_subscription_save( sca_mod *scam, sca_subscription *sub, int save_idx )
 				       &sub->dialog.to_tag );
     if ( new_sub == NULL ) {
 	return( NULL );
+    }
+    if ( sub->index != SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) {
+	new_sub->index = sub->index;
     }
 
     if ( save_idx >= 0 ) {
@@ -367,6 +391,10 @@ sca_subscription_update( sca_mod *scam, sca_subscription *saved_sub,
     saved_sub->dialog.notify_cseq += 1;
     saved_sub->expires = time( NULL ) + update_sub->expires;
 
+    if ( update_sub->index != SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) {
+	saved_sub->index = update_sub->index;
+    }
+
     rc = 1;
 
 done:
@@ -414,8 +442,7 @@ sca_subscription_from_request( sca_mod *scam, sip_msg_t *msg, int event_type,
 	sca_subscription *req_sub )
 {
     struct to_body		tmp_to, *to, *from;
-    contact_body_t		*contact_body;
-    str				*contact_uri;
+    str				contact_uri;
     str				to_tag = STR_NULL;
     unsigned int		expires = 0, max_expires;
     unsigned int		cseq;
@@ -467,34 +494,10 @@ sca_subscription_from_request( sca_mod *scam, sip_msg_t *msg, int event_type,
 	goto error;
     }
 
-    /* XXX move Contact parsing to static inline function? */
-    if ( SCA_HEADER_EMPTY( msg->contact )) {
-	LM_ERR( "Empty Contact header" );
+    if ( sca_get_msg_contact_uri( msg, &contact_uri ) < 0 ) {
+	/* above logs error */
 	goto error;
     }
-    if ( parse_contact( msg->contact ) < 0 ) {
-	LM_ERR( "Failed to parse Contact header: %.*s",
-		msg->contact->body.len, msg->contact->body.s );
-	goto error;
-    }
-    if (( contact_body = (contact_body_t *)msg->contact->parsed ) == NULL ) {
-	LM_ERR( "Invalid Contact header: %.*s",
-		msg->contact->body.len, msg->contact->body.s );
-	goto error;
-    }
-    if ( contact_body->star ) {
-	LM_ERR( "Invalid Contact header: contact header must be an AoR" );
-	goto error;
-    }
-    if ( contact_body->contacts == NULL ) {
-	LM_ERR( "Invalid Contact header: parser found no contacts" );
-	goto error;
-    }
-    if ( contact_body->contacts->next != NULL ) {
-	LM_ERR( "Invalid Contact header: contact may only contain one AoR" );
-	goto error;
-    }
-    contact_uri = &contact_body->contacts->uri;
 
     if ( SCA_HEADER_EMPTY( msg->from )) {
 	LM_ERR( "Empty From header" );
@@ -536,7 +539,7 @@ sca_subscription_from_request( sca_mod *scam, sip_msg_t *msg, int event_type,
 	}
     }
 
-    req_sub->subscriber = contact_body->contacts->uri;
+    req_sub->subscriber = contact_uri;
     req_sub->target_aor = REQ_LINE( msg ).uri;
     req_sub->event = event_type;
     req_sub->expires = expires;
@@ -574,7 +577,7 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
     char		*status_text;
     int			event_type;
     int			status;
-    int			idx, app_idx = SCA_CALL_INFO_APPEARANCE_INDEX_ALL;
+    int			idx, app_idx = SCA_CALL_INFO_APPEARANCE_INDEX_ANY;
 
     if ( parse_headers( msg, HDR_EOH_F, 0 ) < 0 ) {
 	LM_ERR( "header parsing failed: bad request" );
@@ -683,6 +686,7 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 					"seize appearance index", msg );
 		    goto error;
 		}
+		req_sub.index = app_idx;
 	    }
 
 	    sub = sca_subscription_save( sca, &req_sub, idx );
@@ -737,4 +741,128 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 
 error:
     return( -1 );
+}
+
+    int
+sca_unsubscribe_line_seize( sip_msg_t *msg, char *p1, char *p2 )
+{
+    sca_call_info	call_info;
+    hdr_field_t		*call_info_hdr;
+    struct to_body	*from;
+    str			contact_uri = STR_NULL;
+
+    if ( parse_headers( msg, HDR_EOH_F, 0 ) < 0 ) {
+	LM_ERR( "header parsing failed: bad request" );
+	SCA_REPLY_ERROR( sca, 400, "Bad Request", msg );
+	return( -1 );
+    }
+
+    call_info_hdr = sca_call_info_header_find( msg->headers );
+    if ( call_info_hdr == NULL ) {
+	LM_ERR( "Missing required Call-Info header" );
+	return( -1 );
+    }
+
+    if ( sca_call_info_body_parse( &call_info_hdr->body,
+	    &call_info ) < 0 ) {
+	LM_ERR( "Bad Call-Info header body: %.*s",
+		STR_FMT( &call_info_hdr->body ));
+	return( -1 );
+    }
+
+    if ( SCA_HEADER_EMPTY( msg->from )) {
+	LM_ERR( "Empty From header" );
+	return( -1 );
+    }
+    if ( parse_from_header( msg ) < 0 ) {
+	LM_ERR( "Bad From header" );
+	return( -1 );
+    }
+    from = get_from( msg );
+    if ( SCA_STR_EMPTY( &from->tag_value )) {
+	LM_ERR( "No from-tag in From header" );
+	return( -1 );
+    }
+
+    if ( sca_get_msg_contact_uri( msg, &contact_uri ) < 0 ) {
+	LM_ERR( "Bad Contact" );
+	return( -1 );
+    }
+
+    return( sca_subscription_terminate( sca, &from->uri,
+		SCA_EVENT_TYPE_LINE_SEIZE, &contact_uri,
+		SCA_SUBSCRIPTION_STATE_TERMINATED_NORESOURCE ));
+}
+
+    int
+sca_subscription_terminate( sca_mod *scam, str *aor, int event,
+	str *subscriber, int termination_state )
+{
+    sca_hash_slot	*slot;
+    sca_hash_entry	*ent;
+    sca_subscription	*sub;
+    str			sub_key = STR_NULL;
+    char		*event_name;
+    int			slot_idx;
+    int			len;
+
+    event_name = sca_event_name_from_type( event );
+    len = aor->len + strlen( event_name );
+    sub_key.s = (char *)pkg_malloc( len );
+    if ( sub_key.s == NULL ) {
+	LM_ERR( "Failed to pkg_malloc key to look up %s "
+		"subscription for %.*s", event_name, STR_FMT( aor ));
+	return( -1 );
+    }
+    SCA_STR_COPY( &sub_key, aor );
+    SCA_STR_APPEND_CSTR( &sub_key, event_name );
+
+    slot_idx = sca_hash_table_index_for_key( scam->subscriptions, &sub_key );
+    pkg_free( sub_key.s );
+    sub_key.len = 0;
+
+    slot = sca_hash_table_slot_for_index( sca->subscriptions, slot_idx );
+    sca_hash_table_lock_index( scam->subscriptions, slot_idx );
+
+    ent = sca_hash_table_slot_kv_find_entry_unsafe( slot, subscriber );
+    if ( ent != NULL ) {
+	ent = sca_hash_table_slot_unlink_entry_unsafe( slot, ent );
+    }
+
+    sca_hash_table_unlock_index( sca->subscriptions, slot_idx );
+
+    if ( ent == NULL ) {
+	LM_ERR( "No %s subscription for %.*s", event_name,
+		STR_FMT( subscriber ));
+	return( -1 );
+    }
+
+    sub = (sca_subscription *)ent->value;
+    sub->expires = 0;
+    sub->state = termination_state;
+
+    sca_subscription_print( sub );
+
+    if ( sca_notify_subscriber( sca, sub, sub->index ) < 0 ) {
+	LM_ERR( "SCA %s NOTIFY to %.*s failed",
+		event_name, STR_FMT( &sub->subscriber ));
+
+	/* fall through, we might be able to notify the others */
+    }
+
+    if ( event == SCA_EVENT_TYPE_LINE_SEIZE ) {
+#ifdef notdef
+	if ( sca_notify_call_info_subscribers( sca, &sub->target_aor) < 0 ) {
+	    LM_ERR( "SCA %s NOTIFY to all %.*s subscribers failed",
+		    event_name, STR_FMT( &sub->target_aor ));
+	    /* fall through, not much we can do about it */
+	}
+#endif /* notdef */
+    }
+
+    if ( ent ) {
+	sca_hash_entry_free( ent );
+    }
+
+    return( 1 );
 }
