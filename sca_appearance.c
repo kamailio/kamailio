@@ -342,7 +342,7 @@ done:
 
     int
 sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
-	int state, str *uri /* XXX will need to update dialog too */ )
+	int state, str *uri, sca_dialog *dialog )
 {
     sca_hash_slot	*slot;
     sca_appearance_list	*app_list;
@@ -379,7 +379,10 @@ sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
 	goto done;
     }
 
-    app->state = state;
+    if ( state != SCA_APPEARANCE_STATE_UNKNOWN ) {
+	app->state = state;
+    }
+
     if ( !SCA_STR_EMPTY( uri )) {
 	if ( !SCA_STR_EMPTY( &app->uri )) {
 	    /* the uri str's s member is shm_malloc'd separately */
@@ -396,6 +399,33 @@ sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
 	}
 
 	SCA_STR_COPY( &app->uri, uri );
+    }
+
+    if ( !SCA_DIALOG_EMPTY( dialog )) {
+	if ( !SCA_STR_EQ( &dialog->id, &app->dialog.id )) {
+	    if ( app->dialog.id.s != NULL ) {
+		shm_free( app->dialog.id.s );
+	    }
+
+	    app->dialog.id.s = (char *)shm_malloc( dialog->id.len );
+	    SCA_STR_COPY( &app->dialog.id, &dialog->id );
+
+	    app->dialog.call_id.s = app->dialog.id.s;
+	    app->dialog.call_id.len = dialog->call_id.len;
+
+	    app->dialog.from_tag.s = app->dialog.id.s + dialog->call_id.len;
+	    app->dialog.from_tag.len = dialog->from_tag.len;
+
+	    if ( !SCA_STR_EMPTY( &dialog->to_tag )) {
+		app->dialog.to_tag.s = app->dialog.id.s +
+					dialog->call_id.len +
+					dialog->from_tag.len;
+		app->dialog.to_tag.len = dialog->to_tag.len;
+	    } else {
+		app->dialog.to_tag.s = NULL;
+		app->dialog.to_tag.len = 0;
+	    }
+	}
     }
 
     rc = SCA_APPEARANCE_OK;
@@ -449,4 +479,74 @@ done:
     sca_hash_table_unlock_index( scam->appearances, slot_idx );
 
     return( rc );
+}
+
+    sca_appearance *
+sca_appearance_for_index_unsafe( sca_mod *scam, str *aor, int app_idx,
+	int slot_idx )
+{
+    sca_appearance_list	*app_list;
+    sca_appearance	*app = NULL;
+    sca_hash_slot	*slot;
+    sca_hash_entry	*ent;
+
+    slot = sca_hash_table_slot_for_index( scam->appearances, slot_idx );
+
+    app_list = NULL;
+    for ( ent = slot->entries; ent != NULL; ent = ent->next ) {
+	if ( ent->compare( aor, ent->value ) == 0 ) {
+	    app_list = (sca_appearance_list *)ent->value;
+	    break;
+	}
+    }
+    if ( app_list == NULL ) {
+	LM_ERR( "No appearances for %.*s", STR_FMT( aor ));
+	return( NULL );
+    }
+
+    for ( app = app_list->appearances; app != NULL; app = app->next ) {
+	if ( app->index == app_idx ) {
+	    break;
+	}
+    }
+    
+    return( app );
+}
+
+    sca_appearance *
+sca_appearance_for_dialog_unsafe( sca_mod *scam, str *aor, sca_dialog *dialog,
+	int slot_idx )
+{
+    sca_appearance_list	*app_list;
+    sca_appearance	*app = NULL;
+    sca_hash_slot	*slot;
+    sca_hash_entry	*ent;
+
+    slot = sca_hash_table_slot_for_index( scam->appearances, slot_idx );
+
+    app_list = NULL;
+    for ( ent = slot->entries; ent != NULL; ent = ent->next ) {
+	if ( ent->compare( aor, ent->value ) == 0 ) {
+	    app_list = (sca_appearance_list *)ent->value;
+	    break;
+	}
+    }
+    if ( app_list == NULL ) {
+	LM_ERR( "No appearances for %.*s", STR_FMT( aor ));
+	return( NULL );
+    }
+
+    for ( app = app_list->appearances; app != NULL; app = app->next ) {
+	if ( SCA_STR_EQ( &app->dialog.call_id, &dialog->call_id ) &&
+		SCA_STR_EQ( &app->dialog.from_tag, &dialog->from_tag )) {
+	    if ( !SCA_STR_EMPTY( &app->dialog.to_tag ) &&
+		    !SCA_STR_EMPTY( &dialog->to_tag ) &&
+		    !SCA_STR_EQ( &app->dialog.to_tag, &dialog->to_tag )) {
+		continue;
+	    }
+	    break;
+	}
+    }
+    
+    return( app );
 }

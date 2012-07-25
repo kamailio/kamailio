@@ -63,8 +63,12 @@ void	sca_appearance_state_to_str( int, str * );
 int	sca_appearance_state_from_str( str * );
 
 int	sca_appearance_seize_next_available_index( sca_mod *, str *, str * );
-int	sca_appearance_update_index( sca_mod *, str *, int, int, str * );
+int	sca_appearance_update_index( sca_mod *, str *, int, int, str *,
+					sca_dialog * );
 int	sca_appearance_release_index( sca_mod *, str *, int );
+sca_appearance	*sca_appearance_for_index_unsafe( sca_mod *, str *, int, int );
+sca_appearance *sca_appearance_for_dialog_unsafe( sca_mod *, str *,
+						    sca_dialog *, int );
 
 void	sca_appearance_list_insert_appearance( sca_appearance_list *,
 						sca_appearance * );
