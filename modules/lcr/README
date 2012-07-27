@@ -638,7 +638,7 @@ modparam("lcr","weight_column", "target_weight")
 
 3.27. lcr_count (integer)
 
-   Number of LCR instances.
+   Maximun value of lcr_id.
 
    Default value is 1.
 
