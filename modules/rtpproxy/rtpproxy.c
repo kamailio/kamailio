@@ -337,6 +337,11 @@ static unsigned int rtpp_no = 0;
 static int *rtpp_socks = 0;
 
 
+typedef struct rtpp_set_link {
+	struct rtpp_set *rset;
+	pv_spec_t *rpv;
+} rtpp_set_link_t;
+
 /* tm */
 static struct tm_binds tmb;
 
@@ -669,21 +674,45 @@ static int fixup_set_id(void ** param, int param_no)
 {
 	int int_val, err;
 	struct rtpp_set* rtpp_list;
+	rtpp_set_link_t *rtpl = NULL;
+	str s;
 
-	int_val = str2s(*param, strlen(*param), &err);
-	if (err == 0) {
-		pkg_free(*param);
-		if((rtpp_list = select_rtpp_set(int_val)) ==0){
-			LM_ERR("rtpp_proxy set %i not configured\n", int_val);
+	rtpl = (rtpp_set_link_t*)pkg_malloc(sizeof(rtpp_set_link_t));
+	if(rtpl==NULL) {
+		LM_ERR("no more pkg memory\n");
+		return -1;
+	}
+	memset(rtpl, 0, sizeof(rtpp_set_link_t));
+	s.s = (char*)*param;
+	s.len = strlen(s.s);
+
+	if(s.s[0] == PV_MARKER) {
+		int_val = pv_locate_name(&s);
+		if(int_val<0 || int_val!=s.len) {
+			LM_ERR("invalid parameter %s\n", s.s);
+			return -1;
+		}
+		rtpl->rpv = pv_cache_get(&s);
+		if(rtpl->rpv == NULL) {
+			LM_ERR("invalid pv parameter %s\n", s.s);
+			return -1;
+		}
+	} else {
+		int_val = str2s(*param, strlen(*param), &err);
+		if (err == 0) {
+			pkg_free(*param);
+			if((rtpp_list = select_rtpp_set(int_val)) ==0){
+				LM_ERR("rtpp_proxy set %i not configured\n", int_val);
+				return E_CFG;
+			}
+			rtpl->rset = rtpp_list;
+		} else {
+			LM_ERR("bad number <%s>\n",	(char *)(*param));
 			return E_CFG;
 		}
-		*param = (void *)rtpp_list;
-	
-		return 0;
-	} else {
-		LM_ERR("bad number <%s>\n",	(char *)(*param));
-		return E_CFG;
 	}
+	*param = (void*)rtpl;
+	return 0;
 }
 
 static struct mi_root* mi_enable_rtp_proxy(struct mi_root* cmd_tree, 
@@ -1713,8 +1742,33 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 static int
 set_rtp_proxy_set_f(struct sip_msg * msg, char * str1, char * str2)
 {
-	current_msg_id = msg->id;
-	selected_rtpp_set = (struct rtpp_set *)str1;
+	rtpp_set_link_t *rtpl;
+	pv_value_t val;
+
+	rtpl = (rtpp_set_link_t*)str1;
+
+	current_msg_id = 0;
+	selected_rtpp_set = 0;
+
+	if(rtpl->rset != NULL) {
+		current_msg_id = msg->id;
+		selected_rtpp_set = rtpl->rset;
+	} else {
+		if(pv_get_spec_value(msg, rtpl->rpv, &val)<0) {
+			LM_ERR("cannot evaluate pv param\n");
+			return -1;
+		}
+		if(!(val.flags & PV_VAL_INT)) {
+			LM_ERR("pv param must hold an integer value\n");
+			return -1;
+		}
+		selected_rtpp_set = select_rtpp_set(val.ri);
+		if(selected_rtpp_set==NULL) {
+			LM_ERR("could not locate rtpproxy set %d\n", val.ri);
+			return -1;
+		}
+		current_msg_id = msg->id;
+	}
 	return 1;
 }
 

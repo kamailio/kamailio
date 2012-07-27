@@ -260,12 +260,13 @@ modparam("nathelper", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
 	<title>Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">set_rtp_proxy_set()</function>
+		<function moreinfo="none">set_rtp_proxy_set(setid)</function>
 		</title>
 		<para>
 		Sets the Id of the rtpproxy set to be used for the next
-		unforce_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer()
-		command.
+		unforce_rtp_proxy(), rtpproxy_offer(), rtpproxy_answer()
+		or rtpproxy_manage() command. The parameter can be an integer or
+		a config variable holding an integer.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
