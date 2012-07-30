@@ -302,6 +302,10 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	}
 
 	if(_c!=0) {
+		/* hook uri address - should be more than 'sip:' chars */
+		if(_c->uri.s!=NULL && _c->uri.len>4)
+			ci.c = &_c->uri;
+
 		/* Calculate q value of the contact */
 		if (calc_contact_q(_c->q, &ci.q) < 0) {
 			rerrno = R_INV_Q;
@@ -651,6 +655,12 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &expires);
 
+		/* pack the contact info */
+		if ( (ci=pack_ci( 0, _c, expires, 0))==0 ) {
+			LM_ERR("failed to pack contact specific info\n");
+			goto error;
+		}
+
 		/* search for the contact*/
 		ret = ul.get_ucontact_by_instance( _r, &_c->uri, ci, &c);
 		if (ret==-1) {
@@ -667,12 +677,6 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 			/* Contact not found -> expired? */
 			if (expires==0)
 				continue;
-
-			/* pack the contact_info */
-			if ( (ci=pack_ci( 0, _c, expires, 0))==0 ) {
-				LM_ERR("failed to extract contact info\n");
-				goto error;
-			}
 
 			if (ul.insert_ucontact( _r, &_c->uri, ci, &c) < 0) {
 				rerrno = R_UL_INS_C;
@@ -710,12 +714,6 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 				rc = 3;
 			} else {
 				/* do update */
-				/* pack the contact specific info */
-				if ( (ci=pack_ci( 0, _c, expires, 0))==0 ) {
-					LM_ERR("failed to pack contact specific info\n");
-					goto error;
-				}
-
 				if(_mode)
 				{
 					ptr=_r->contacts;
