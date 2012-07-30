@@ -94,6 +94,7 @@ typedef struct ucontact {
 /*! \brief Informations related to a contact */
 typedef struct ucontact_info {
 	str ruid;                 /*!< Pointer to record internal unique id */
+	str *c;                   /*!< Contact address */
 	str received;             /*!< Received interface */
 	str* path;                /*!< Path informations */
 	time_t expires;           /*!< Contact expires */
