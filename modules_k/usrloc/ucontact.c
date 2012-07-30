@@ -218,9 +218,14 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 
 	char* ptr;
 
-	/* No need to update Callid as it is constant 
-	 * per ucontact (set at insert time)  -bogdan */
-
+	if(_ci->instance.s!=NULL && _ci->instance.len>0)
+	{
+		/* when we have instance set, update contact address and call-id */
+		if(_ci->c!=NULL && _ci->c->s!=NULL && _ci->c->len>0)
+			update_str( &_c->c, _ci->c);
+		if(_ci->callid!=NULL && _ci->callid->s!=NULL && _ci->callid->len>0)
+			update_str( &_c->callid, _ci->callid);
+	}
 	update_str( &_c->user_agent, _ci->user_agent);
 
 	if (_ci->received.s && _ci->received.len) {
