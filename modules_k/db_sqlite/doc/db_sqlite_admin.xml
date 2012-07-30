@@ -74,5 +74,45 @@
 		NONE
 		</para>
 	</section>
+
+	<section>
+	<title>Usage</title>
+		<para>
+			To use the module, first you have to load it in the &kamailio;
+			configuration file.
+		</para>
+		<example>
+		<title><function>loading the module</function> usage</title>
+		<programlisting format="linespecific">
+...
+loadmodule "db_sqlite.so"
+...
+</programlisting>
+		</example>
+		<para>
+			Then set the db_url (or similar) parameter of modules that have to
+			use the SQLite database to driver part 'sqlite://', followed by the
+			path to database file. For example:
+		</para>
+		<example>
+		<title><function>db_url module parameter</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("auth_db", "db_url", "sqlite:///etc/kamailio/kamailio.db")
+...
+</programlisting>
+		</example>
+		<para>
+			In the default config file, defined token DBURL can be updated like:
+		</para>
+		<example>
+		<title><function>DBURL define</function> usage</title>
+		<programlisting format="linespecific">
+...
+#!define DBURL "sqlite:///etc/kamailio/kamailio.db"
+...
+</programlisting>
+		</example>
+	</section>
 </chapter>
 
