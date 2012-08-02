@@ -9,6 +9,9 @@ int	sca_get_msg_contact_uri( sip_msg_t *, str * );
 /* convenient extraction of cseq number from Cseq header */
 int	sca_get_msg_cseq_number( sip_msg_t * );
 
+/* convenient extraction of cseq method from Cseq header */
+int	sca_get_msg_cseq_method( sip_msg_t * );
+
 /* convenient From header parsing and extraction */
 int	sca_get_msg_from_header( sip_msg_t *, struct to_body ** );
 

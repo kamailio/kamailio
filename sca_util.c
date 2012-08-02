@@ -63,6 +63,23 @@ sca_get_msg_cseq_number( sip_msg_t *msg )
     return( cseq );
 }
 
+/* assumes cseq header in msg is already parsed */
+    int
+sca_get_msg_cseq_method( sip_msg_t *msg )
+{
+    int		method;
+
+    assert( msg != NULL );
+
+    if ( SCA_HEADER_EMPTY( msg->cseq )) {
+	LM_ERR( "Empty Cseq header" );
+	return( -1 );
+    }
+
+    return( get_cseq( msg )->method_id );
+}
+
+
     int
 sca_get_msg_from_header( sip_msg_t *msg, struct to_body **from )
 {
