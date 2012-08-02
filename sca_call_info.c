@@ -622,7 +622,7 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
 	}
 
 	if ( sca_appearance_update_unsafe( app, state, &to->uri,
-		&dialog ) < 0 ) {
+		&dialog, NULL, NULL ) < 0 ) {
 	    sca_appearance_state_to_str( state, &state_str );
 	    LM_ERR( "sca_call_info_invite_handler: failed to update appearance "
 		    "%.*s appearance-index %d with dialog id %.*s to "
