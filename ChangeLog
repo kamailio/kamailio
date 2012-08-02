@@ -1,3 +1,244 @@
+===================== 2012-08-02 Version 3.3.1 Released =====================
+
+===================== Changes Since Version 3.3.0 ===========================
+
+commit eca8ae21eb2d2c71d4752362fd88ca078941532b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 2 15:30:06 2012 +0200
+
+    Makefile.defs: version set to 3.3.1
+
+commit da7552bf8983343072415ccafac19f59d1affa34
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 2 15:23:47 2012 +0200
+
+    pkg/deb: version set to 3.3.1 for deb specs
+
+commit be9d77be00e1978be97c85e199efd712fabbabf4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 2 15:19:28 2012 +0200
+
+    pkg/rpm: version set to 3.3.1 for rpm specs
+
+commit b5f95a603228fce13b2f168dfbf0120ed2e7befd
+Author: Pawel Kuzak <pawel.kuzak@1und1.de>
+Date:   Fri Jul 13 16:06:48 2012 +0300
+
+    Ported gruu and outbound changes to p_usrloc module
+    (cherry picked from commit 1f6bfa0b3ba15201c2ca3e2387a9f9e81e989643)
+
+commit 153baccb8bbbcf08b6485f1cfc75a2b809bdafca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 30 12:57:09 2012 +0200
+
+    register(k): pack contact info based on header for searching existing ul records
+    
+    - not using the contact header resulted in omitting instance and reg-id
+      parameters, not following gruu/ob extensions, ending in duplicate
+      records for same +sip.instance
+    - reported by JosÃ© Luis MillÃ¡n
+    (cherry picked from commit efa3099252ca5d200bef6ce71df33f33b55f9941)
+
+commit b5b534ec77634041d0ed11280241a947b61aff0c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 30 12:55:36 2012 +0200
+
+    usrloc(k): on ul update, re-clone uri and callid if instance is set
+    
+    - changes can happen when gruu/ob is enabled as the UA can get different
+      address for same instance
+    (cherry picked from commit a7cad776a514b0ec73a5c40b7971af8e0f0da92b)
+
+commit 5f8405f577d66069fde48202862f06cac432139b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 18 19:00:38 2012 +0200
+
+    tls: set function to return the id
+    
+    - starting with v1.0.0 openssl does not use anymore getpid(), but address
+      of errno which can point to same virtual address in a multi-process
+      application
+    - for refrence http://www.openssl.org/docs/crypto/threads.html
+    - credits to Jijo on sr-dev mailing list
+    (cherry picked from commit 0615826fe602c5183fbc7be7c51de5eb5eb7223c)
+
+commit cd50811c1964e4e2227e45ffcb4e5e1f0db04745
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 18 18:51:54 2012 +0200
+
+    kamdbctl: mtree tables were not in the list for db creation
+    (cherry picked from commit e35e16efbbc6c746a7a4dfeddfc241c2c78d30bc)
+
+commit 87618b2f1c5d6e3724c3935709b81b151c4645b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 18 08:27:52 2012 +0200
+
+    kamailio.cfg: removed sample db_mode parameter for domain module
+    
+    - no longer exists since 3.3 domain update
+    (cherry picked from commit bb4925540d241eb91cc8b68712bec20f1970b086)
+
+commit fe8265334cef872d8f3fabe407d3f3d744a45960
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 28 16:24:47 2012 +0200
+
+    p_usrloc: added missing usrloc API members
+    
+    - they are set to NULL to get a clean crash, they have to be implemented
+    - the missing API members are the functions introduced in 3.3 for
+      handling SIP GRUU and Outbound extensions
+    - a proper fix to follow
+    - reported by Dan Bogos
+    (cherry picked from commit f030b2f274b69526f256e66098de72a074000ed1)
+
+commit 81149e30785aa1cc6f04e130afafb643d9163cce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 25 10:36:31 2012 +0200
+
+    dispatcher(k): allow set id 0 for OPTIONS callback
+    
+    - set id is provided in param pointer address, 0 being equivalent to
+      NULL
+    - reported by Avi Brender
+    (cherry picked from commit 2664cb9aa8ffd5d26ef6a0841318ccbcdefbf69b)
+
+commit 85bda41ac007464efe940713426b54c38e5d4303
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Fri Jul 27 13:08:21 2012 +0300
+
+    modules/lcr:  improved documentation of lcr_count module param
+    (cherry picked from commit 9a1450d99accef8e473cf2324412fdfc09a7cd11)
+
+commit 28be16549831df46dd1b8312da223b02359d8a9c
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Thu Jul 26 09:41:26 2012 -0400
+
+    modules/lcr: Fix printing of IPv4 addresses in lcr.dump_gws
+    
+    IPv4 addresses were printed incorrectly. Also add special handling for
+    null gw addresses and print them as 0.0.0.0 for backwards compatibility.
+
+commit 3a8288482aa38afd8048193ef45b8ad979cacfab
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Fri Jul 20 16:59:52 2012 +0300
+
+    modules/matrix Fixed MI command not exported
+    
+    Added missing register_mi_mod() call in mod_init.
+    (cherry picked from commit b26f862322ad311e3c42d899f72eaa1fb665b755)
+
+commit 32e67eb8ebe8e1ef1190b03151962412ad41dbd3
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Tue Jul 17 10:15:46 2012 -0400
+
+    Remove duplicate entry of "default_domain" in docs.
+    Remove double occurance of the CSeq Attribute in the XML.
+    (closes FS#246 - pua_reginfo adds duplicate cseq field in XML body on the Bugtracker)
+    
+    Thanks to Andrew Pogrebennyk (apogrebennyk@sipwise.com) for pointing this out.
+
+commit 4aad5415215e4157f7bbe7c1b57178920aaaf3cc
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Sun Jul 15 14:15:17 2012 +0100
+
+    pkg/kamailio/(centos|fedora): Updated/fixed CentOS/Fedora build appliances and .spec
+    
+    - Had fixed some small issues in master, and now merged them back.
+
+commit 6f47d8ac983cbbd616c7b5b941a8ec671f6e15e6
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Thu Jul 12 21:46:58 2012 +0100
+
+    modules_k/registrar: Fixed some errors in module documentation
+    
+    - Fix by Hugh Waite @ Crocodile RCS
+    (cherry picked from commit 6d040935f31be0098a09f4621874268164f3926a)
+
+commit a897251aaa545c8726587412009f4906ff21e2aa
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Thu Jul 12 21:48:08 2012 +0100
+
+    modules/sl: Fixed segmentation fault and corrected log messages
+    
+    - Fixes by Hugh Waite @ Crocodile RCS
+    (cherry picked from commit e78ff34f1ecfe9a60a52996126032ea04fb490ab)
+
+commit 7e412d720b1747fadac3e94c22d270877087b8a0
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Thu Jul 12 21:44:45 2012 +0100
+
+    core: update printing of socket lists to show the advertised address if set for the socket
+    
+    - useful for diagnosing what is going on with advertised address
+    - Enhancement added by Hugh Waite @ Crocodile RCS
+    (cherry picked from commit 274969bcca2301c96dbbcc17c5b1d411073c8277)
+
+commit ac24a183397924a7dab209c6f205b955936d4379
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Thu Jul 12 21:20:49 2012 +0100
+
+    modules_k/presence: Added missing use_table() call
+    (cherry picked from commit 0de5e17770cd5dcfcdd64174eb24f0bcaccef021)
+
+commit 4570fc02082f69dd036ab7a3deea57ee8cffa411
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Thu Jul 12 16:26:38 2012 +0100
+
+    Makefile: SCTP library check doesn't look in /usr/lib64
+    
+    - This means you can't build Kamailio for a 64-bit OS like CentOS or
+      Fedora.
+    (cherry picked from commit f2f8ff72137a39702d284dfe6deb9ef4442e4e78)
+
+commit 671b52a37e3811bf89c74d83e6438739a67f50a7
+Author: Klaus Darilion <klaus.mailinglists@pernau.at>
+Date:   Wed Jul 11 12:30:51 2012 +0000
+
+    kamdbctl: add domain_attrs table to standard tables
+    (cherry picked from commit 699526ddb3b02cb5766bc7ad6f1c7a1861006d4c)
+
+commit 66240e60d99b6bf9fc8f06c05cb7f4ecf6d8d1ad
+Author: Andreas Granig <agranig@sipwise.com>
+Date:   Wed Jul 11 12:52:38 2012 +0200
+
+    modules_k/uac: fix handling of empty display-part.
+    
+    This re-enables the feature to strip the display name by setting
+    an empty string, like uac_replace_from("", "$var(from)");
+
+commit 948df15d215e7d12ad404dec7dfdbb41d58bea3e
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed Jul 4 17:15:43 2012 +0300
+
+    modules/lcr: Fixed to/from_gw tests when proto parameter is 0 (ANY)
+    
+    - Also, updated README regarding handling of NULL value in lcr_gw
+      transport column.
+    (cherry picked from commit 1382c30da7ffd8831479affafde4d8e038a41240)
+
+commit 3abf967f61a1bd95c28d4e8a929a8bd5df00671d
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Wed Jun 27 18:34:55 2012 +0300
+
+    modules_k/presence_xml Xcap auth reason when user deleted from list
+    
+    The reason in Subscription-Status header in Notify when a user is
+    deleted from the contact list can be decided by the admin by setting
+    presence_xml module parameter xcapauth_usedel_reason. Default value is
+    "probation".
+
+commit 33a2157ec034c106e5a4bd42aa874e57550a13fe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 25 18:36:18 2012 +0200
+
+    dialog(k): proper unlock of profile for mi list command
+    
+    - the profile was unlocked in a wrong place, before finishing listing
+      the its content and could cause a race in accessing it
+    - reported by Ricardo Martinez
+    (cherry picked from commit 3a2e929c63c656fe2db78e746546af05c66740ea)
+
+
 ===================== 2012-06-18 Version 3.3.0 Released =====================
 
 ===================== Changes Since Version 3.2.0 ===========================
