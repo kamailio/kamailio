@@ -341,6 +341,68 @@ done:
 }
 
     int
+sca_appearance_update_unsafe( sca_appearance *app, int state, str *uri,
+	sca_dialog *dialog, str *owner, str *callee )
+{
+    int			rc = SCA_APPEARANCE_OK;
+
+    if ( state != SCA_APPEARANCE_STATE_UNKNOWN ) {
+	app->state = state;
+    }
+
+    if ( !SCA_STR_EMPTY( uri )) {
+	if ( !SCA_STR_EMPTY( &app->uri )) {
+	    /* the uri str's s member is shm_malloc'd separately */
+	    shm_free( app->uri.s );
+	    memset( &app->uri, 0, sizeof( str ));
+	}
+	app->uri.s = (char *)shm_malloc( uri->len );
+	if ( app->uri.s == NULL ) {
+	    LM_ERR( "Failed to update %.*s index %d uri to %.*s: "
+		    "shm_malloc %d bytes returned NULL",
+		    STR_FMT( &app->owner ), app->index,
+		    STR_FMT( uri ), uri->len );
+	    rc = SCA_APPEARANCE_ERR_MALLOC;
+	    goto done;
+	}
+
+	SCA_STR_COPY( &app->uri, uri );
+    }
+
+    if ( !SCA_DIALOG_EMPTY( dialog )) {
+	if ( !SCA_STR_EQ( &dialog->id, &app->dialog.id )) {
+	    if ( app->dialog.id.s != NULL ) {
+		shm_free( app->dialog.id.s );
+	    }
+
+	    app->dialog.id.s = (char *)shm_malloc( dialog->id.len );
+	    SCA_STR_COPY( &app->dialog.id, &dialog->id );
+
+	    app->dialog.call_id.s = app->dialog.id.s;
+	    app->dialog.call_id.len = dialog->call_id.len;
+
+	    app->dialog.from_tag.s = app->dialog.id.s + dialog->call_id.len;
+	    app->dialog.from_tag.len = dialog->from_tag.len;
+
+	    if ( !SCA_STR_EMPTY( &dialog->to_tag )) {
+		app->dialog.to_tag.s = app->dialog.id.s +
+					dialog->call_id.len +
+					dialog->from_tag.len;
+		app->dialog.to_tag.len = dialog->to_tag.len;
+	    } else {
+		app->dialog.to_tag.s = NULL;
+		app->dialog.to_tag.len = 0;
+	    }
+	}
+    }
+
+    /* XXX update owner, callee as necessary */
+
+done:
+    return( rc );
+}
+
+    int
 sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
 	int state, str *uri, sca_dialog *dialog )
 {
@@ -539,11 +601,13 @@ sca_appearance_for_dialog_unsafe( sca_mod *scam, str *aor, sca_dialog *dialog,
     for ( app = app_list->appearances; app != NULL; app = app->next ) {
 	if ( SCA_STR_EQ( &app->dialog.call_id, &dialog->call_id ) &&
 		SCA_STR_EQ( &app->dialog.from_tag, &dialog->from_tag )) {
+#ifdef notdef
 	    if ( !SCA_STR_EMPTY( &app->dialog.to_tag ) &&
 		    !SCA_STR_EMPTY( &dialog->to_tag ) &&
 		    !SCA_STR_EQ( &app->dialog.to_tag, &dialog->to_tag )) {
 		continue;
 	    }
+#endif /* notdef */
 	    break;
 	}
     }
