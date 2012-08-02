@@ -302,8 +302,8 @@ sca_call_info_header_find( hdr_field_t *msg_hdrs )
     for ( hdr = msg_hdrs; hdr != NULL; hdr = hdr->next ) {
 	if ( hdr->type == HDR_OTHER_T &&
 		hdr->name.len == SCA_CALL_INFO_HEADER_NAME.len ) {
-	    if ( memcmp( hdr->name.s, SCA_CALL_INFO_HEADER_NAME.s,
-			 SCA_CALL_INFO_HEADER_NAME.len ) == 0) {
+	    if ( strncasecmp( hdr->name.s, SCA_CALL_INFO_HEADER_NAME.s,
+			     SCA_CALL_INFO_HEADER_NAME.len ) == 0) {
 		break;
 	    }
 	}
