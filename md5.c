@@ -17,9 +17,6 @@
  * will fill a supplied 16-byte array with the digest.
  */
 
-#include <config.h>
-#include <compat.h>
-
 #include <sys/types.h>
 #include <string.h>
 
@@ -66,7 +63,7 @@ MD5Init(MD5_CTX *ctx)
  * of bytes.
  */
 void
-MD5Update(MD5_CTX *ctx, const unsigned char *input, size_t len)
+U_MD5Update(MD5_CTX *ctx, const unsigned char *input, size_t len)
 {
 	size_t have, need;
 
@@ -117,15 +114,15 @@ MD5Pad(MD5_CTX *ctx)
 	    ((ctx->count >> 3) & (MD5_BLOCK_LENGTH - 1));
 	if (padlen < 1 + 8)
 		padlen += MD5_BLOCK_LENGTH;
-	MD5Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
-	MD5Update(ctx, count, 8);
+	U_MD5Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
+	U_MD5Update(ctx, count, 8);
 }
 
 /*
  * Final wrapup--call MD5Pad, fill in digest and zero out ctx.
  */
 void
-MD5Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
+U_MD5Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
 {
 	int i;
 
