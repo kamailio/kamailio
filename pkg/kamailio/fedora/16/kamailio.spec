@@ -1,5 +1,5 @@
 %define name    kamailio
-%define ver     3.3.0
+%define ver     3.3.1
 %define rel     0%{dist}
 
 
@@ -940,6 +940,8 @@ fi
 
 
 %changelog
+* Fri Aug 3 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated ver to 3.3.1
 * Sat Jun 30 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Removed %_sharedir and replaced with standard macro %_datadir
 * Mon Jun 17 2012 Peter Dunkley <peter@dunkley.me.uk>
