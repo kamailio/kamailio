@@ -1532,27 +1532,32 @@ inline static int w_t_relay_to_avp( struct sip_msg  *p_msg ,
 
 int t_replicate_uri(struct sip_msg *msg, str *suri)
 {
-	struct proxy_l *proxy;
+	struct proxy_l *proxy = NULL;
 	struct sip_uri turi;
 	int r = -1;
 
-	memset(&turi, 0, sizeof(struct sip_uri));
-	if(parse_uri(suri->s, suri->len, &turi)!=0)
+	if (suri != NULL && suri->s != NULL)
 	{
-		LM_ERR("bad replicate SIP address!\n");
-		return -1;
-	}
+		memset(&turi, 0, sizeof(struct sip_uri));
+		if(parse_uri(suri->s, suri->len, &turi)!=0)
+		{
+			LM_ERR("bad replicate SIP address!\n");
+			return -1;
+		}
 
-	proxy=mk_proxy(&turi.host, turi.port_no, turi.proto);
-	if (proxy==0) {
-		LM_ERR("cannot create proxy from URI <%.*s>\n",
-			suri->len, suri->s );
-		return -1;
-	}
+		proxy=mk_proxy(&turi.host, turi.port_no, turi.proto);
+		if (proxy==0) {
+			LM_ERR("cannot create proxy from URI <%.*s>\n",
+				suri->len, suri->s );
+			return -1;
+		}
 
-	r = t_replicate(msg, proxy, proxy->proto);
-	free_proxy(proxy);
-	pkg_free(proxy);
+		r = t_replicate(msg, proxy, proxy->proto);
+		free_proxy(proxy);
+		pkg_free(proxy);
+	} else {
+		r = t_replicate(msg, NULL, 0);
+	}
 	return r;
 }
 
