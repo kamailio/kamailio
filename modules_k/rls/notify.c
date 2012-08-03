@@ -101,6 +101,7 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 	int len_est;
 	res_param_t param;
 	int resource_added = 0; /* Flag to indicate that we have added at least one resource */
+	multipart_body = NULL;
 
 	LM_DBG("start\n");
 	/* query in alfabetical order */
