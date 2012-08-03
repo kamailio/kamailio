@@ -49,6 +49,9 @@
 #define RR_DRIVEN 1		/*!< The next hop is determined from the route set */
 #define NOT_RR_DRIVEN -1	/*!< The next hop is not determined from the route set */
 
+#define RR_ROUTE_PREFIX ROUTE_PREFIX "<"
+#define RR_ROUTE_PREFIX_LEN (sizeof(RR_ROUTE_PREFIX)-1)
+
 #define ROUTE_SUFFIX ">\r\n"  /*!< SIP header suffix */
 #define ROUTE_SUFFIX_LEN (sizeof(ROUTE_SUFFIX)-1)
 
@@ -304,7 +307,8 @@ static inline int save_ruri(struct sip_msg* _m)
 	}
 
 	/* Create buffer for new lump */
-	len = ROUTE_PREFIX_LEN + _m->first_line.u.request.uri.len + ROUTE_SUFFIX_LEN;
+	len = RR_ROUTE_PREFIX_LEN + _m->first_line.u.request.uri.len
+			+ ROUTE_SUFFIX_LEN;
 	s = (char*)pkg_malloc(len);
 	if (!s) {
 		LM_ERR("No memory pkg left\n");
@@ -312,9 +316,11 @@ static inline int save_ruri(struct sip_msg* _m)
 	}
 
 	/* Create new header field */
-	memcpy(s, ROUTE_PREFIX, ROUTE_PREFIX_LEN);
-	memcpy(s + ROUTE_PREFIX_LEN, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len);
-	memcpy(s + ROUTE_PREFIX_LEN + _m->first_line.u.request.uri.len, ROUTE_SUFFIX, ROUTE_SUFFIX_LEN);
+	memcpy(s, RR_ROUTE_PREFIX, RR_ROUTE_PREFIX_LEN);
+	memcpy(s + RR_ROUTE_PREFIX_LEN, _m->first_line.u.request.uri.s,
+			_m->first_line.u.request.uri.len);
+	memcpy(s + ROUTE_PREFIX_LEN + _m->first_line.u.request.uri.len,
+			ROUTE_SUFFIX, ROUTE_SUFFIX_LEN);
 
 	LM_DBG("New header: '%.*s'\n", len, ZSW(s));
 
