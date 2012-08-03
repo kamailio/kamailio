@@ -678,6 +678,11 @@ int init_ds_db(void)
 	}
 
 	ret = ds_load_db();
+	if (ret == -2)
+	{
+		LM_WARN("failure while loading one or more dispatcher entries\n");
+		ret = 0;
+	}
 
 	ds_disconnect_db();
 
@@ -691,6 +696,7 @@ int ds_load_db(void)
 	int flags;
 	int priority;
 	int nrcols;
+	int dest_errs = 0;
 	str uri;
 	str attrs = {0, 0};
 	db1_res_t * res;
@@ -764,16 +770,19 @@ int ds_load_db(void)
 		}
 		if(add_dest2list(id, uri, flags, priority, &attrs,
 					*next_idx, &setn) != 0)
+		{
+			dest_errs++;
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
 					uri.len, uri.s, id);
+		}
 	}
-	ds_dbf.free_result(ds_db_handle, res);
-
 	if(reindex_dests(*next_idx, setn)!=0)
 	{
 		LM_ERR("error on reindex\n");
 		goto err2;
 	}
+
+	ds_dbf.free_result(ds_db_handle, res);
 
 	/* update data - should it be sync'ed? */
 	_ds_list_nr = setn;
@@ -782,6 +791,8 @@ int ds_load_db(void)
 
 	ds_print_sets();
 
+	if (dest_errs > 0)
+		return -2;
 	return 0;
 
 err2:
