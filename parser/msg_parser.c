@@ -96,6 +96,11 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 	int integer, err;
 	unsigned uval;
 
+	if(!buf) {
+		DBG("null buffer pointer\n");
+		goto error;
+	}
+
 	if ((*buf)=='\n' || (*buf)=='\r'){
 		/* double crlf or lflf or crcr */
 		DBG("found end of header\n");
