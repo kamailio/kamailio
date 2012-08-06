@@ -195,6 +195,8 @@ sca_appearance_list_insert_appearance( sca_appearance_list *app_list,
     assert( app_list != NULL );
     assert( app != NULL );
 
+    app->appearance_list = app_list;
+
     for ( cur = &app_list->appearances; *cur != NULL; cur = &(*cur)->next ) {
 	if ( app->index < (*cur)->index ) {
 	    break;
@@ -233,6 +235,7 @@ sca_appearance_list_unlink_index( sca_appearance_list *app_list, int idx )
     } else {
 	(*prev)->next = (*cur)->next;
     }
+    app->appearance_list = NULL;
 
     return( app );
 }
@@ -612,5 +615,59 @@ sca_appearance_for_dialog_unsafe( sca_mod *scam, str *aor, sca_dialog *dialog,
 	}
     }
     
+    return( app );
+} 
+
+    sca_appearance *
+sca_appearance_for_tags_unsafe( sca_mod *scam, str *aor,
+	str *call_id, str *from_tag, str *to_tag, int slot_idx )
+{
+    sca_dialog		dialog;
+    char		dlg_buf[ 1024 ];
+
+    dialog.id.s = dlg_buf;
+    if ( sca_dialog_build_from_tags( &dialog, sizeof( dlg_buf ),
+		call_id, from_tag, to_tag ) < 0 ) {
+	LM_ERR( "sca_appearance_for_tags_unsafe: failed to build dialog "
+		"from tags" );
+	return( NULL );
+    }
+
+    return( sca_appearance_for_dialog_unsafe( scam, aor, &dialog, slot_idx ));
+}
+
+    sca_appearance  *
+sca_appearance_unlink_by_tags( sca_mod *scam, str *aor,
+	str *call_id, str *from_tag, str *to_tag )
+{
+    sca_appearance	*app = NULL, *unl_app;
+    int			slot_idx = -1;
+
+    slot_idx = sca_hash_table_index_for_key( scam->appearances, aor );
+    sca_hash_table_lock_index( scam->appearances, slot_idx );
+
+    app = sca_appearance_for_tags_unsafe( scam, aor, call_id, from_tag,
+					to_tag, slot_idx );
+    if ( app == NULL ) {
+	LM_ERR( "sca_appearance_unlink_by_tags: no appearances found for %.*s "
+		"with dialog %.*s;%.*s;%.*s", STR_FMT( aor ),
+		 STR_FMT( call_id ), STR_FMT( from_tag ),  STR_FMT( to_tag ));
+	goto done;
+    }
+
+    unl_app = sca_appearance_list_unlink_index( app->appearance_list,
+						app->index );
+    if ( unl_app == NULL || unl_app != app ) {
+	LM_ERR( "sca_appearance_unlink_by_tags: failed to unlink %.*s "
+		"appearance-index %d", STR_FMT( aor ), app->index );
+	app = NULL;
+	goto done;
+    }
+
+done:
+    if ( slot_idx >= 0 ) {
+	sca_hash_table_unlock_index( scam->appearances, slot_idx );
+    }
+
     return( app );
 }

@@ -37,6 +37,7 @@ extern const str SCA_APPEARANCE_STATE_STR_HELD;
 extern const str SCA_APPEARANCE_STATE_STR_HELD_PRIVATE;
 
 
+struct _sca_appearance_list;
 struct _sca_appearance {
     int				index;
     int				state;
@@ -46,6 +47,7 @@ struct _sca_appearance {
     sca_dialog			dialog;
     str				callee;
 
+    struct _sca_appearance_list	*appearance_list;
     struct _sca_appearance	*next;
 };
 typedef struct _sca_appearance		sca_appearance;
@@ -69,12 +71,16 @@ int	sca_appearance_update_index( sca_mod *, str *, int, int, str *,
 					sca_dialog * );
 int	sca_appearance_release_index( sca_mod *, str *, int );
 sca_appearance	*sca_appearance_for_index_unsafe( sca_mod *, str *, int, int );
-sca_appearance *sca_appearance_for_dialog_unsafe( sca_mod *, str *,
+sca_appearance	*sca_appearance_for_dialog_unsafe( sca_mod *, str *,
 						    sca_dialog *, int );
+sca_appearance	*sca_appearance_for_tags_unsafe( sca_mod *, str *,
+						str *, str *, str *, int );
 
 void	sca_appearance_list_insert_appearance( sca_appearance_list *,
 						sca_appearance * );
 sca_appearance	*sca_appearance_list_unlink_index( sca_appearance_list *, int );
+sca_appearance	*sca_appearance_unlink_by_tags( sca_mod *, str *,
+						str *, str *, str * );
 
 sca_appearance	*sca_appearance_create( int, str * );
 void		sca_appearance_free( sca_appearance * );
