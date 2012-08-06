@@ -2241,7 +2241,7 @@ int main(int argc, char** argv)
 	}
 	sock_id=parse_listen_id(sock_name, strlen(sock_name), sock_type);
 	if (sock_id==0){
-		fprintf(stderr, "ERROR: error parsing ser adress %s\n", sock_name);
+		fprintf(stderr, "ERROR: error parsing ser address %s\n", sock_name);
 		goto error;
 	}
 	
