@@ -539,9 +539,12 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
 	}
 
 	sca_appearance_state_to_str( state, &state_str );
-	LM_INFO( "ADMORTEN: updating %.*s appearance-index %d to %.*s",
+	LM_INFO( "ADMORTEN: updating %.*s appearance-index %d to %.*s, "
+		 "dialog: callid: %.*s, from-tag: %.*s",
 		    STR_FMT( &from->uri ), call_info->index,
-		    STR_FMT( &state_str ));
+		    STR_FMT( &state_str ),
+		    STR_FMT( &msg->callid->body ),
+		    STR_FMT( &from->tag_value ));
 
 	
 	dialog.id.s = dlg_buf;
@@ -647,7 +650,8 @@ done:
 sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 	str *contact_uri, struct to_body *from, struct to_body *to )
 {
-    int		rc = 1;
+    sca_appearance	*app;
+    int			rc = -1;
 
     if ( msg->first_line.type == SIP_REQUEST ) {
 	if ( call_info != NULL ) {
@@ -656,12 +660,74 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 		LM_ERR( "Failed to release appearance-index %d "
 			"for %.*s on BYE", call_info->index,
 			STR_FMT( &from->uri ));
-		rc = -1;
+		goto done;
 	    }
 
 	    if ( sca_notify_call_info_subscribers( sca, &from->uri ) < 0 ) {
 		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on BYE",
 			STR_FMT( &from->uri ));
+		goto done;
+	    }
+	} else {
+	    /* BYE from non-SCA line, see if the dialog is with an SCA line */
+	    app = sca_appearance_unlink_by_tags( sca, &to->uri,
+			&msg->callid->body, &to->tag_value, NULL );
+	    if ( app == NULL ) {
+		LM_ERR( "sca_call_info_bye_handler: failed to look up "
+			"dialog for BYE %.*s from %.*s",
+			STR_FMT( &to->uri ), STR_FMT( &from->uri ));
+		goto done;
+	    }
+	    sca_appearance_free( app );
+
+	    if ( sca_notify_call_info_subscribers( sca, &to->uri ) < 0 ) {
+		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on BYE",
+			STR_FMT( &to->uri ));
+		goto done;
+	    }
+	}
+    }
+
+    rc = 1;
+
+done:
+    return( rc );
+}
+
+    static int
+sca_call_info_cancel_handler( sip_msg_t *msg, sca_call_info *call_info,
+	str *contact_uri, struct to_body *from, struct to_body *to )
+{
+    sca_appearance	*app;
+    int			rc = 1;
+
+    /*
+     * Polycom SCA CANCELs as of sip.ld 3.3.4 don't include Call-Info headers;
+     * find appearance by dialog if Call-Info not present.
+     */
+    if ( msg->first_line.type == SIP_REQUEST ) {
+	/* XXX also handle CANCEL w/ Call-Info header? */
+
+	app = sca_appearance_unlink_by_tags( sca, &from->uri,
+			&msg->callid->body, &from->tag_value, NULL );
+	if ( app ) {
+	    sca_appearance_free( app );
+
+	    if ( sca_notify_call_info_subscribers( sca, &from->uri ) < 0 ) {
+		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on CANCEL",
+			STR_FMT( &from->uri ));
+		rc = -1;
+	    }
+	}
+
+	app = sca_appearance_unlink_by_tags( sca, &to->uri,
+			&msg->callid->body, &to->tag_value, NULL );
+	if ( app ) {
+	    sca_appearance_free( app );
+
+	    if ( sca_notify_call_info_subscribers( sca, &to->uri ) < 0 ) {
+		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on CANCEL",
+			STR_FMT( &to->uri ));
 		rc = -1;
 	    }
 	}
@@ -678,8 +744,8 @@ struct sca_call_info_dispatch {
 struct sca_call_info_dispatch	call_info_dispatch[] = {
     { METHOD_INVITE,	sca_call_info_invite_handler },
     { METHOD_BYE,	sca_call_info_bye_handler },
-#ifdef notdef
     { METHOD_CANCEL,	sca_call_info_cancel_handler },
+#ifdef notdef
     { METHOD_PRACK,	sca_call_info_prack_handler },
     { METHOD_REFER,	sca_call_info_refer_handler },
 #endif /* notdef */
@@ -688,13 +754,14 @@ struct sca_call_info_dispatch	call_info_dispatch[] = {
     int
 sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
 {
-    sca_call_info	call_info;
+    sca_call_info	call_info, *call_info_p = NULL;
     hdr_field_t		*call_info_hdr;
     struct to_body	*from;
     struct to_body	*to;
     str			contact_uri = STR_NULL;
     int			n_dispatch;
     int			i;
+    int			method;
     int			rc = -1;
 
     if ( parse_headers( msg, HDR_EOH_F, 0 ) < 0 ) {
@@ -711,6 +778,8 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
 		    STR_FMT( &call_info_hdr->body ));
 	    return( -1 );
 	}
+
+	call_info_p = &call_info;
     }
 
     if ( sca_get_msg_from_header( msg, &from ) < 0 ) {
@@ -727,9 +796,24 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
     }
 
     n_dispatch = sizeof( call_info_dispatch ) / sizeof( call_info_dispatch[0] );
-    for ( i = 0; i < n_dispatch; i++ ) {
-	if ( msg->REQ_METHOD == call_info_dispatch[ i ].method ) {
-	    break;
+    if ( msg->first_line.type == SIP_REQUEST ) {
+	for ( i = 0; i < n_dispatch; i++ ) {
+	    if ( msg->REQ_METHOD == call_info_dispatch[ i ].method ) {
+		break;
+	    }
+	}
+    } else {
+	method = sca_get_msg_cseq_method( msg );
+LM_INFO( "ADMORTEN DEBUG: sca_call_info_update handling "
+		"%d response to %.*s request", msg->REPLY_STATUS,
+		STR_FMT( &(get_cseq(msg))->method ));
+	
+	for ( i = 0; i < n_dispatch; i++ ) {
+	    if ( method == call_info_dispatch[ i ].method ) {
+LM_INFO( "ADMORTEN DEBUG: sca_call_info_update comparing: %d == %d?",
+		method, call_info_dispatch[ i ].method );
+		break;
+	    }
 	}
     }
     if ( i >= n_dispatch ) {
@@ -745,7 +829,7 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
     }
 #endif /* notdef */
 
-    rc = call_info_dispatch[ i ].handler( msg, &call_info,
+    rc = call_info_dispatch[ i ].handler( msg, call_info_p,
 					  &contact_uri, from, to );
     if ( rc < 0 ) {
 	LM_ERR( "Failed to update Call-Info state for %.*s",
