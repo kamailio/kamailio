@@ -292,7 +292,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 				(unsigned char *) reply_key.s, KEY_BUF_LEN);
 
 	/* Add the connection to the WebSocket connection table */
-	wsconn_add(msg->rcv.proto_reserved1);
+	wsconn_add(msg->rcv);
 
 	/* Make sure Kamailio core sends future messages on this connection
 	   directly to this module */
@@ -321,10 +321,14 @@ int ws_handle_handshake(struct sip_msg *msg)
 	msg->rpl_send_flags.f &= ~SND_F_CON_CLOSE;
 	if (ws_send_reply(msg, 101,
 				&str_status_switching_protocols, &headers) < 0)
+	{
 		if ((wsc = wsconn_get(msg->rcv.proto_reserved1)) != NULL)
-			wsconn_rm(wsc);
+			wsconn_rm(wsc, WSCONN_EVENTROUTE_NO);
 
-	return 0;
+		return 0;
+	}
+
+	return 1;
 }
 
 struct mi_root *ws_mi_disable(struct mi_root *cmd, void *param)

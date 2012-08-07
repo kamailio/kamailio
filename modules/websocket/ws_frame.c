@@ -216,7 +216,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 	if ((con = tcpconn_get(frame->wsc->id, 0, 0, 0, 0)) == NULL)
 	{
 		LM_WARN("TCP/TLS connection get failed\n");
-		if (wsconn_rm(frame->wsc) < 0)
+		if (wsconn_rm(frame->wsc, WSCONN_EVENTROUTE_YES) < 0)
 			LM_ERR("removing WebSocket connection\n");
 		return -1;
 	}
@@ -224,7 +224,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 	if (conn_close == CONN_CLOSE_DO)
 	{
 		dst.send_flags.f |= SND_F_CON_CLOSE;
-		if (wsconn_rm(frame->wsc) < 0)
+		if (wsconn_rm(frame->wsc, WSCONN_EVENTROUTE_YES) < 0)
 		{
 			LM_ERR("removing WebSocket connection\n");
 			return -1;
@@ -271,7 +271,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		LM_ERR("sending WebSocket frame\n");
 		pkg_free(send_buf);
 		update_stat(ws_failed_connections, 1);
-		if (wsconn_rm(frame->wsc) < 0)
+		if (wsconn_rm(frame->wsc, WSCONN_EVENTROUTE_YES) < 0)
 			LM_ERR("removing WebSocket connection\n");
 		return -1;
 	}

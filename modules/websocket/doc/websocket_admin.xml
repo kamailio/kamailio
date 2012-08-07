@@ -77,7 +77,12 @@ event_route[xhttp:request] {
 
                 # ws_handle_handshake() exits (no further configuration file
                 # processing of the request) when complete.
-                ws_handle_handshake();
+                if (ws_handle_handshake())
+		{
+			# Optional... cache some information about the
+			# successful connection
+			exit;
+		}
         }
 
         xhttp_reply("404", "Not found", "", "");
@@ -343,8 +348,8 @@ modparam("websocket", "ping_application_data", "WebSockets rock")
 		from HTTP to WebSocket.</para>
 		<para>This function can be used from ANY_ROUTE (but will only
 		work in <emphasis>event_route[xhttp:request]</emphasis>).</para>
-		<note><para>This function always returns 0, stopping all further
-		processing of the request.</para></note>
+		<note><para>This function returns 0, stopping all further
+		processing of the request, when there is a problem.</para></note>
 		<example>
 		<title><function>ws_handle_handshake</function> usage</title>
 		<programlisting format="linespecific">
@@ -466,7 +471,29 @@ ws_handle_handshake();
 </programlisting>
 	</section>
 
-
 	</section>
+
+	<section>
+	<title>Event routes</title>
+	<section>
+		<title>
+		<function moreinfo="none">websocket:closed</function>
+		</title>
+		<para>
+			When defined, the module calls
+			event_route[websocket:closed] when a connection
+			closes.  The connection may be identified using the
+			the $si and $sp pseudo-variables.
+		</para>
+		<programlisting format="linespecific">
+...
+event_route[websocket:closed] {
+	xlog("L_INFO", "WebSocket connection from $si:$sp has closed\n");
+}
+...
+		</programlisting>
+	</section>
+
+	</section>	
 </chapter>
 

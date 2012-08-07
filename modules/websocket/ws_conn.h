@@ -48,6 +48,8 @@ typedef struct ws_connection
 	unsigned id_hash;	/* for the corresponding TCP/TLS connection */
 	struct ws_connection *id_prev;
 	struct ws_connection *id_next;
+
+	struct receive_info rcv;
 } ws_connection_t;
 
 typedef struct
@@ -55,6 +57,12 @@ typedef struct
 	ws_connection_t *head;
 	ws_connection_t *tail;
 } ws_connection_used_list_t;
+
+typedef enum
+{
+	WSCONN_EVENTROUTE_NO = 0,
+	WSCONN_EVENTROUTE_YES
+} ws_conn_eventroute_t;
 
 extern ws_connection_used_list_t *wsconn_used_list;
 
@@ -65,8 +73,8 @@ extern stat_var *ws_max_concurrent_connections;
 
 int wsconn_init(void);
 void wsconn_destroy(void);
-int wsconn_add(int id);
-int wsconn_rm(ws_connection_t *wsc);
+int wsconn_add(struct receive_info rcv);
+int wsconn_rm(ws_connection_t *wsc, ws_conn_eventroute_t run_event_route);
 int wsconn_update(ws_connection_t *wsc);
 void wsconn_close_now(ws_connection_t *wsc);
 ws_connection_t *wsconn_get(int id);

@@ -43,6 +43,10 @@ Peter Dunkley
               6.5. ws.disable
               6.6. ws.enable
 
+        7. Event routes
+
+              7.1. websocket:closed
+
    List of Examples
 
    1.1. event_route[xhttp:request]
@@ -89,6 +93,10 @@ Chapter 1. Admin Guide
         6.4. ws.pong
         6.5. ws.disable
         6.6. ws.enable
+
+   7. Event routes
+
+        7.1. websocket:closed
 
 1. Overview
 
@@ -153,7 +161,12 @@ event_route[xhttp:request] {
 
                 # ws_handle_handshake() exits (no further configuration file
                 # processing of the request) when complete.
-                ws_handle_handshake();
+                if (ws_handle_handshake())
+                {
+                        # Optional... cache some information about the
+                        # successful connection
+                        exit;
+                }
         }
 
         xhttp_reply("404", "Not found", "", "");
@@ -356,8 +369,8 @@ modparam("websocket", "ping_application_data", "WebSockets rock")
 
 Note
 
-   This function always returns 0, stopping all further processing of the
-   request.
+   This function returns 0, stopping all further processing of the
+   request, when there is a problem.
 
    Example 1.8. ws_handle_handshake usage
 ...
@@ -460,3 +473,18 @@ Note
    MI FIFO Command Format:
                         :ws.enable:fifo_reply
                         _empty_line_
+
+7. Event routes
+
+   7.1. websocket:closed
+
+7.1.  websocket:closed
+
+   When defined, the module calls event_route[websocket:closed] when a
+   connection closes. The connection may be identified using the the $si
+   and $sp pseudo-variables.
+...
+event_route[websocket:closed] {
+        xlog("L_INFO", "WebSocket connection from $si:$sp has closed\n");
+}
+...

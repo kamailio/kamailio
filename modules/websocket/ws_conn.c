@@ -24,6 +24,7 @@
 #include "../../locking.h"
 #include "../../str.h"
 #include "../../tcp_conn.h"
+#include "../../lib/kcore/faked_msg.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/tree.h"
 #include "../../mem/mem.h"
@@ -175,9 +176,10 @@ void wsconn_destroy(void)
 	}
 }
 
-int wsconn_add(int id)
+int wsconn_add(struct receive_info rcv)
 {
 	int cur_cons, max_cons;
+	int id = rcv.proto_reserved1;
 	int id_hash = tcp_id_hash(id);
 	ws_connection_t *wsc;
 
@@ -192,6 +194,7 @@ int wsconn_add(int id)
 	wsc->id = id;
 	wsc->id_hash = id_hash;
 	wsc->state = WS_S_OPEN;
+	wsc->rcv = rcv;
 
 	WSCONN_LOCK;
 	/* Add to WebSocket connection table */
@@ -221,13 +224,46 @@ int wsconn_add(int id)
 	return 0;
 }
 
-int wsconn_rm(ws_connection_t *wsc)
+static void wsconn_run_route(ws_connection_t *wsc)
+{
+	int rt, backup_rt;
+	struct run_act_ctx ctx;
+	sip_msg_t *fmsg;
+
+	LM_DBG("wsconn_run_route event_route[websocket:closed]\n");
+
+	rt = route_get(&event_rt, "websocket:closed");
+	if (rt < 0 || event_rt.rlist[rt] == NULL)
+	{
+		LM_DBG("route does not exist");
+		return;
+	}
+
+	if (faked_msg_init() < 0)
+	{
+		LM_ERR("faked_msg_init() failed\n");
+		return;
+	}
+	fmsg = faked_msg_next();
+	fmsg->rcv = wsc->rcv;
+
+	backup_rt = get_route_type();
+	set_route_type(REQUEST_ROUTE);
+	init_run_actions_ctx(&ctx);
+	run_top_route(event_rt.rlist[rt], fmsg, 0);
+	set_route_type(backup_rt);
+}
+
+int wsconn_rm(ws_connection_t *wsc, ws_conn_eventroute_t run_event_route)
 {
 	if (!wsc)
 	{
 		LM_ERR("wsconn_rm: null pointer\n");
 		return -1;
 	}
+
+	if (run_event_route == WSCONN_EVENTROUTE_YES)
+		wsconn_run_route(wsc);
 
 	WSCONN_LOCK;
 	/* Remove from the WebSocket used list */
@@ -289,7 +325,7 @@ void wsconn_close_now(ws_connection_t *wsc)
 	con->state = S_CONN_BAD;
 	con->timeout = get_ticks_raw();
 
-	if (wsconn_rm(wsc) < 0)
+	if (wsconn_rm(wsc, WSCONN_EVENTROUTE_YES) < 0)
 		LM_ERR("removing WebSocket connection\n");
 }
 
