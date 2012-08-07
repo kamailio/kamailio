@@ -18,4 +18,7 @@ int	sca_get_msg_from_header( sip_msg_t *, struct to_body ** );
 /* convenient To header parsing and extraction */
 int	sca_get_msg_to_header( sip_msg_t *, struct to_body ** );
 
+/* convenient call hold detection */
+int	sca_call_is_held( sip_msg_t * );
+
 #endif /* SCA_UTIL_H */

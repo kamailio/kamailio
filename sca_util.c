@@ -4,6 +4,8 @@
 
 #include "sca_util.h"
 
+#include "../../parser/sdp/sdp.h"
+
     int
 sca_get_msg_contact_uri( sip_msg_t *msg, str *contact_uri )
 {
@@ -67,8 +69,6 @@ sca_get_msg_cseq_number( sip_msg_t *msg )
     int
 sca_get_msg_cseq_method( sip_msg_t *msg )
 {
-    int		method;
-
     assert( msg != NULL );
 
     if ( SCA_HEADER_EMPTY( msg->cseq )) {
@@ -135,4 +135,43 @@ sca_get_msg_to_header( sip_msg_t *msg, struct to_body **to )
     *to = t;
 
     return( 0 );
+}
+
+/* XXX this considers any held stream to mean the call is on hold. correct? */
+    int
+sca_call_is_held( sip_msg_t *msg )
+{
+    sdp_session_cell_t	*session;
+    sdp_stream_cell_t	*stream;
+    int			n_sess;
+    int			n_str;
+    int			is_held = 0;
+    int			rc;
+
+    rc = parse_sdp( msg );
+    if ( rc < 0 ) {
+	LM_ERR( "sca_call_is_held: parse_sdp body failed" );
+	return( 0 );
+    } else if ( rc > 0 ) {
+	LM_DBG( "sca_call_is_held: parse_sdp returned %d, no SDP body", rc );
+	return( 0 );
+    }
+
+    /* Cf. modules_k/textops's exported is_audio_on_hold */
+    for ( n_sess = 0, session = get_sdp_session( msg, n_sess );
+	    session != NULL;
+	    n_sess++, session = get_sdp_session( msg, n_sess )) {
+
+	for ( n_str = 0, stream = get_sdp_stream( msg, n_sess, n_str );
+		stream != NULL;
+		n_str++, stream = get_sdp_stream( msg, n_sess, n_str )) {
+	    if ( stream->is_on_hold ) {
+		is_held = 1;
+		goto done;
+	    }
+	}
+    }
+
+done:
+    return( is_held );
 }
