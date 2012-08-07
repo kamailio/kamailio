@@ -406,6 +406,45 @@ done:
 }
 
     int
+sca_appearance_state_for_index( sca_mod *scam, str *aor, int idx )
+{
+    sca_hash_slot	*slot;
+    sca_appearance_list	*app_list;
+    sca_appearance	*app;
+    int			slot_idx;
+    int			state = SCA_APPEARANCE_STATE_UNKNOWN;
+
+    slot_idx = sca_hash_table_index_for_key( scam->appearances, aor );
+    slot = sca_hash_table_slot_for_index( scam->appearances, slot_idx );
+    
+    sca_hash_table_lock_index( scam->appearances, slot_idx );
+
+    app_list = sca_hash_table_slot_kv_find_unsafe( slot, aor );
+    if ( app_list == NULL ) {
+	LM_WARN( "%.*s has no in-use appearances", STR_FMT( aor ));
+	goto done;
+    }
+
+    for ( app = app_list->appearances; app != NULL; app = app->next ) {
+	if ( app->index == idx ) {
+	    break;
+	}
+    }
+    if ( app == NULL ) {
+	LM_WARN( "%.*s appearance-index %d is not in use",
+		STR_FMT( aor ), idx );
+	goto done;
+    }
+
+    state = app->state;
+
+done:
+    sca_hash_table_unlock_index( scam->appearances, slot_idx );
+
+    return( state );
+}
+
+    int
 sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
 	int state, str *uri, sca_dialog *dialog )
 {
