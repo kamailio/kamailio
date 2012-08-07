@@ -55,6 +55,7 @@ sca_subscription_purge_expired( unsigned int ticks, void *param )
     sca_hash_entry	*ent, *ent_tmp;
     sca_subscription	*sub;
     time_t		now = time( NULL );
+    int			state;
     int			i;
 
     assert( scam != NULL );
@@ -88,22 +89,28 @@ sca_subscription_purge_expired( unsigned int ticks, void *param )
 		    /* remove from subscribers list anyway */
 		}
 		if ( sub->event == SCA_EVENT_TYPE_LINE_SEIZE ) {
-		    if ( sca_appearance_release_index( sca, &sub->target_aor,
-						       sub->index ) < 0 ) {
-			LM_ERR( "Failed to release seized %.*s "
-				"appearance-index %d",
-				STR_FMT( &sub->target_aor ), sub->index );
-		    }
+		    /* only notify if the line is just seized */
+		    state = sca_appearance_state_for_index( sca,
+				    &sub->target_aor, sub->index );
+		    if ( state == SCA_APPEARANCE_STATE_SEIZED ) {
+			if ( sca_appearance_release_index( sca,
+				    &sub->target_aor, sub->index ) < 0 ) {
+			    LM_ERR( "Failed to release seized %.*s "
+				    "appearance-index %d",
+				    STR_FMT( &sub->target_aor ), sub->index );
+			}
 
-		    if ( sca_notify_call_info_subscribers( sca,
-					&sub->target_aor ) < 0 ) {
-			LM_ERR( "SCA %s NOTIFY to all %.*s subscribers failed",
-				sca_event_name_from_type( sub->event ),
-				STR_FMT( &sub->target_aor ));
-			/*
-			 * fall through anyway. the state should propagate
-			 * to subscribers when they renew call-info.
-		         */	
+			if ( sca_notify_call_info_subscribers( sca,
+					    &sub->target_aor ) < 0 ) {
+			    LM_ERR( "SCA %s NOTIFY to all %.*s "
+				    "subscribers failed",
+				    sca_event_name_from_type( sub->event ),
+				    STR_FMT( &sub->target_aor ));
+			    /*
+			     * fall through anyway. the state should propagate
+			     * to subscribers when they renew call-info.
+			     */	
+			}
 		    }
 		}
 	    }
