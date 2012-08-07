@@ -538,6 +538,13 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
 	    goto done;
 	}
 
+	if ( sca_call_is_held( msg )) {
+	    state = SCA_APPEARANCE_STATE_HELD;
+	} else if ( !SCA_STR_EMPTY( &to->tag_value )) {
+	    state = SCA_APPEARANCE_STATE_ACTIVE;
+	}
+	/* otherwise, this is an initial INVITE */
+
 	sca_appearance_state_to_str( state, &state_str );
 	LM_INFO( "ADMORTEN: updating %.*s appearance-index %d to %.*s, "
 		 "dialog: callid: %.*s, from-tag: %.*s",
@@ -546,7 +553,6 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
 		    STR_FMT( &msg->callid->body ),
 		    STR_FMT( &from->tag_value ));
 
-	
 	dialog.id.s = dlg_buf;
 	if ( sca_dialog_build_from_tags( &dialog, sizeof( dlg_buf ),
 		&msg->callid->body, &from->tag_value, &to->tag_value ) < 0 ) {
@@ -559,6 +565,12 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
 	    LM_ERR( "Failed to update %.*s appearance-index %d to %.*s",
 		    STR_FMT( &from->uri ), call_info->index,
 		    STR_FMT( &state_str ));
+	}
+
+	if ( sca_notify_call_info_subscribers( sca, &from->uri ) < 0 ) {
+	    LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on INVITE",
+		    STR_FMT( &from->uri ));
+	    goto done;
 	}
 
 	rc = 1;
@@ -603,6 +615,7 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
 	    goto done;
 	}
 
+LM_INFO( "ADMORTEN DEBUG: reply status code: %d", msg->REPLY_STATUS );
 	switch ( msg->REPLY_STATUS ) {
 	case 180:
 	    state = SCA_APPEARANCE_STATE_ALERTING;
@@ -613,8 +626,9 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
 	    break;
 
 	case 200:
-	    /* XXX update status, set appearance dialog, parse sdp, etc */
-	    state = SCA_APPEARANCE_STATE_ACTIVE;
+	    if ( app->state != SCA_APPEARANCE_STATE_HELD ) {
+		state = SCA_APPEARANCE_STATE_ACTIVE;
+	    }
 
 	    /* if a Call-Info header is present, app-index goes to Contact */
 	    break;
@@ -683,6 +697,22 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 	    if ( sca_notify_call_info_subscribers( sca, &to->uri ) < 0 ) {
 		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on BYE",
 			STR_FMT( &to->uri ));
+		goto done;
+	    }
+	}
+    } else {
+	if ( call_info != NULL ) {
+	    if ( sca_appearance_release_index( sca, &to->uri,
+						call_info->index ) < 0 ) {
+		LM_ERR( "Failed to release appearance-index %d "
+			"for To-URI %.*s on BYE reply", call_info->index,
+			STR_FMT( &to->uri ));
+		goto done;
+	    }
+
+	    if ( sca_notify_call_info_subscribers( sca, &to->uri ) < 0 ) {
+		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers "
+			"on BYE reply", STR_FMT( &to->uri ));
 		goto done;
 	    }
 	}
