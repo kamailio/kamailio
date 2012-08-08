@@ -101,11 +101,15 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	db1_res_t* res = NULL;
 	db_row_t *row;
 	dlist_t *dom;
-	char *p, *p1;
 	char now_s[25];
 	int now_len;
-	int port, proto, p_len, p1_len;
+	int port, proto;
+	char *p;
+	str addr;
+	str path;
+	str ruid;
 	str host;
+	unsigned int aorhash;
 	int i;
 	void *cp;
 	int shortage, needed;
@@ -113,7 +117,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	cp = buf;
 	shortage = 0;
 	/* Reserve space for terminating 0000 */
-	len -= sizeof(p_len);
+	len -= sizeof(addr.len);
 
 	/* get the current time in DB format */
 	now_len = 25;
@@ -121,22 +125,23 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 		LM_ERR("failed to print now time\n");
 		return -1;
 	}
+	aorhash = 0;
 
 	for (dom = root; dom!=NULL ; dom=dom->next) {
 		/* build query */
 		i = snprintf( query_buf, sizeof(query_buf), "select %.*s, %.*s, %.*s,"
+			" %.*s, %.*s, %.*s from %s where %.*s > %.*s and"
 #ifdef ORACLE_USRLOC
-			" %.*s, %.*s from %s where %.*s > %.*s and "
-			"bitand(%.*s, %d) = %d and mod(id, %u) = %u",
+			" bitand(%.*s, %d) = %d and mod(id, %u) = %u",
 #else
-			" %.*s, %.*s from %s where %.*s > %.*s and %.*s & %d = %d and "
-			"id %% %u = %u",
+			" %.*s & %d = %d and id %% %u = %u",
 #endif
 			received_col.len, received_col.s,
 			contact_col.len, contact_col.s,
 			sock_col.len, sock_col.s,
 			cflags_col.len, cflags_col.s,
 			path_col.len, path_col.s,
+			ruid_col.len, ruid_col.s,
 			dom->d->name->s,
 			expires_col.len, expires_col.s,
 			now_len, now_s,
@@ -161,38 +166,50 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			row = RES_ROWS(res) + i;
 
 			/* received */
-			p = (char*)VAL_STRING(ROW_VALUES(row));
-			if ( VAL_NULL(ROW_VALUES(row)) || p==0 || p[0]==0 ) {
+			addr.s = (char*)VAL_STRING(ROW_VALUES(row));
+			if ( VAL_NULL(ROW_VALUES(row)) || addr.s==0 || addr.s[0]==0 ) {
 				/* contact */
-				p = (char*)VAL_STRING(ROW_VALUES(row)+1);
-				if (VAL_NULL(ROW_VALUES(row)+1) || p==0 || p[0]==0) {
+				addr.s = (char*)VAL_STRING(ROW_VALUES(row)+1);
+				if (VAL_NULL(ROW_VALUES(row)+1) || addr.s==0 || addr.s[0]==0) {
 					LM_ERR("empty contact -> skipping\n");
 					continue;
 				}
 			}
-			p_len = strlen(p);
+			addr.len = strlen(addr.s);
 
 			/* path */
-			p1 = (char*)VAL_STRING(ROW_VALUES(row)+4);
-			if (VAL_NULL(ROW_VALUES(row)+4) || p1==0 || p1[0]==0){
-				p1 = NULL;
-				p1_len = 0;
+			path.s = (char*)VAL_STRING(ROW_VALUES(row)+4);
+			if (VAL_NULL(ROW_VALUES(row)+4) || path.s==0 || path.s[0]==0){
+				path.s = NULL;
+				path.len = 0;
 			} else {
-				p1_len = strlen(p1);
+				path.len = strlen(path.s);
 			}
 
-			needed = (int)(sizeof(p_len)+p_len+sizeof(sock)+sizeof(dbflags)+
-				sizeof(p1_len)+p1_len);
+			/* ruid */
+			ruid.s = (char*)VAL_STRING(ROW_VALUES(row)+5);
+			if (VAL_NULL(ROW_VALUES(row)+5) || ruid.s==0 || ruid.s[0]==0){
+				ruid.s = NULL;
+				ruid.len = 0;
+			} else {
+				ruid.len = strlen(ruid.s);
+			}
+
+			needed = (int)(sizeof(addr.len) + addr.len
+					+ sizeof(sock) + sizeof(dbflags)
+					+ sizeof(path.len) + path.len
+					+ sizeof(ruid.len) + ruid.len
+					+ sizeof(aorhash));
 			if (len < needed) {
 				shortage += needed ;
 				continue;
 			}
 
 			/* write received/contact */
-			memcpy(cp, &p_len, sizeof(p_len));
-			cp = (char*)cp + sizeof(p_len);
-			memcpy(cp, p, p_len);
-			cp = (char*)cp + p_len;
+			memcpy(cp, &addr.len, sizeof(addr.len));
+			cp = (char*)cp + sizeof(addr.len);
+			memcpy(cp, addr.s, addr.len);
+			cp = (char*)cp + addr.len;
 
 			/* sock */
 			p  = (char*)VAL_STRING(ROW_VALUES(row) + 2);
@@ -221,13 +238,26 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			cp = (char*)cp + sizeof(dbflags);
 
 			/* write path */
-			memcpy(cp, &p1_len, sizeof(p1_len));
-			cp = (char*)cp + sizeof(p1_len);
+			memcpy(cp, &path.len, sizeof(path.len));
+			cp = (char*)cp + sizeof(path.len);
 			/* copy path only if exist */
-			if(p1_len){
-				memcpy(cp, p1, p1_len);
-				cp = (char*)cp + p1_len;
+			if(path.len){
+				memcpy(cp, path.s, path.len);
+				cp = (char*)cp + path.len;
 			}
+
+			/* write ruid */
+			memcpy(cp, &ruid.len, sizeof(ruid.len));
+			cp = (char*)cp + sizeof(ruid.len);
+			/* copy ruid only if exist */
+			if(ruid.len){
+				memcpy(cp, ruid.s, ruid.len);
+				cp = (char*)cp + ruid.len;
+			}
+			/* aorhash not used for db-only records, but it is added
+			 * (as 0) to match the struct used for mem records */
+			memcpy(cp, &aorhash, sizeof(aorhash));
+			cp = (char*)cp + sizeof(aorhash);
 
 			len -= needed;
 		} /* row cycle */
@@ -237,7 +267,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 
 	/* len < 0 is possible, if size of the buffer < sizeof(c->c.len) */
 	if (len >= 0)
-		memset(cp, 0, sizeof(p_len));
+		memset(cp, 0, sizeof(addr.len));
 
 	/* Shouldn't happen */
 	if (shortage > 0 && len > shortage) {
@@ -300,9 +330,11 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 						continue;
 					if (c->received.s) {
 						needed = (int)(sizeof(c->received.len)
-								+ c->received.len + sizeof(c->sock)
-								+ sizeof(c->cflags) + sizeof(c->path.len)
-								+ c->path.len);
+								+ c->received.len
+								+ sizeof(c->sock) + sizeof(c->cflags)
+								+ sizeof(c->path.len) + c->path.len
+								+ sizeof(c->ruid.len) + c->ruid.len
+								+ sizeof(r->aorhash));
 						if (len >= needed) {
 							memcpy(cp,&c->received.len,sizeof(c->received.len));
 							cp = (char*)cp + sizeof(c->received.len);
@@ -316,14 +348,22 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 							cp = (char*)cp + sizeof(c->path.len);
 							memcpy(cp, c->path.s, c->path.len);
 							cp = (char*)cp + c->path.len;
+							memcpy(cp, &c->ruid.len, sizeof(c->ruid.len));
+							cp = (char*)cp + sizeof(c->ruid.len);
+							memcpy(cp, c->ruid.s, c->ruid.len);
+							cp = (char*)cp + c->ruid.len;
+							memcpy(cp, &r->aorhash, sizeof(r->aorhash));
+							cp = (char*)cp + sizeof(r->aorhash);
 							len -= needed;
 						} else {
 							shortage += needed;
 						}
 					} else {
-						needed = (int)(sizeof(c->c.len) + c->c.len +
-							sizeof(c->sock) + sizeof(c->cflags) +
-							sizeof(c->path.len) + c->path.len);
+						needed = (int)(sizeof(c->c.len) + c->c.len
+							+ sizeof(c->sock) + sizeof(c->cflags)
+							+ sizeof(c->path.len) + c->path.len
+							+ sizeof(c->ruid.len) + c->ruid.len
+							+ sizeof(r->aorhash));
 						if (len >= needed) {
 							memcpy(cp, &c->c.len, sizeof(c->c.len));
 							cp = (char*)cp + sizeof(c->c.len);
@@ -337,6 +377,12 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 							cp = (char*)cp + sizeof(c->path.len);
 							memcpy(cp, c->path.s, c->path.len);
 							cp = (char*)cp + c->path.len;
+							memcpy(cp, &c->ruid.len, sizeof(c->ruid.len));
+							cp = (char*)cp + sizeof(c->ruid.len);
+							memcpy(cp, c->ruid.s, c->ruid.len);
+							cp = (char*)cp + c->ruid.len;
+							memcpy(cp, &r->aorhash, sizeof(r->aorhash));
+							cp = (char*)cp + sizeof(r->aorhash);
 							len -= needed;
 						} else {
 							shortage += needed;
