@@ -140,6 +140,10 @@ static int prepend_path(struct sip_msg* _m, str *user, int recv)
 			case PROTO_SCTP:
 				rcv_addr.len = snprintf(rcv_addr.s, 6 + IP_ADDR_MAX_STR_SIZE + 21, "'sip:%s:%u;transport=sctp'", src_ip, _m->rcv.src_port);
 				break;
+			case PROTO_WS:
+			case PROTO_WSS:
+				rcv_addr.len = snprintf(rcv_addr.s, 6 + IP_ADDR_MAX_STR_SIZE + 19, "'sip:%s:%u;transport=ws'", src_ip, _m->rcv.src_port);
+				break;
 	    }
 
 		l = insert_new_lump_before(l, rcv_addr.s, rcv_addr.len, 0);
