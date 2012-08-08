@@ -1170,6 +1170,11 @@ int print_local_uri(as_p as,char processor_id,char *where,int len)
 	 proto.s=TRANSPORT_PARAM "SCTP";
 	 proto.len=TRANSPORT_PARAM_LEN + 4;
 	 break;
+      case PROTO_WS:
+      case PROTO_WSS:
+	 proto.s=TRANSPORT_PARAM "WS";
+	 proto.len=TRANSPORT_PARAM_LEN + 2;
+	 break;
    }
    switch(si->address.af){
       case AF_INET:
