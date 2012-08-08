@@ -760,7 +760,7 @@ void rls_free_td(dlg_t* td)
 			pkg_free(td->rem_uri.s);
 
 		if(td->route_set)
-			pkg_free(td->route_set); 
+			free_rr(&td->route_set); 
 
 		pkg_free(td);
 	}	
