@@ -88,6 +88,9 @@
 #define TC_TRANSPORT_PROTOCOL_TCP   (128 >> 2)
 #define TC_TRANSPORT_PROTOCOL_SCTP  (128 >> 3)
 #define TC_TRANSPORT_PROTOCOL_TLS   (128 >> 4)
+#define TC_TRANSPORT_PROTOCOL_WS    (128 >> 5)
+#define TC_TRANSPORT_PROTOCOL_WSS   (128 >> 6)
+
 /*
  * Textual Conventions for BITS types - ends
  *************************************************************/
