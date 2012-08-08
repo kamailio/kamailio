@@ -2017,6 +2017,10 @@ pv_get_source_uri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
     case PROTO_SCTP:
         strcat(uri, ";transport=sctp");
         break;
+    case PROTO_WS:
+    case PROTO_WSS:
+        strcat(uri, ";transport=ws");
+        break;
     }
 
     res->rs.s = uri;
