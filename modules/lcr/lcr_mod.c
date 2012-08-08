@@ -1738,6 +1738,10 @@ inline int decode_avp_value(char *value, unsigned int *gw_index, str *scheme,
 	transport->s = ";transport=sctp";
 	transport->len = 15;
 	break;
+    case PROTO_WS:
+    case PROTO_WSS:
+        LM_ERR("unsupported transport '%d'\n", u);
+	return 0;
     default:
 	LM_ERR("unknown transport '%d'\n", u);
 	return 0;
