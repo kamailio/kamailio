@@ -117,7 +117,7 @@ error:
 
 /* build the buffer of a SIP ping request */
 static inline char* build_sipping(str *curi, struct socket_info* s, str *path,
-																int *len_p)
+								str *ruid, unsigned int aorhash, int *len_p)
 {
 #define s_len(_s) (sizeof(_s)-1)
 	static char buf[MAX_SIPPING_SIZE];
@@ -126,15 +126,16 @@ static inline char* build_sipping(str *curi, struct socket_info* s, str *path,
 
 	if ( sipping_method.len + 1 + curi->len + s_len(" SIP/2.0"CRLF) +
 		s_len("Via: SIP/2.0/UDP ") + s->address_str.len +
-		1 + s->port_no_str.len + s_len(";branch=0") +
+				1 + s->port_no_str.len + s_len(";branch=0") +
 		(path->len ? (s_len(CRLF"Route: ") + path->len) : 0) +
-		s_len(CRLF"From: ") +  sipping_from.len + s_len(";tag=") + 8 +
+		s_len(CRLF"From: ") +  sipping_from.len + s_len(";tag=") +
+				sipping_from.len + 1 + 8 + 1 + 8 +
 		s_len(CRLF"To: ") + curi->len +
 		s_len(CRLF"Call-ID: ") + sipping_callid.len + 1 + 8 + 1 + 8 + 1 +
-		s->address_str.len +
+				s->address_str.len +
 		s_len(CRLF"CSeq: 1 ") + sipping_method.len +
 		s_len(CRLF"Content-Length: 0" CRLF CRLF)
-		> MAX_SIPPING_SIZE )
+			> MAX_SIPPING_SIZE )
 	{
 		LM_ERR("len exceeds %d\n",MAX_SIPPING_SIZE);
 		return 0;
@@ -157,6 +158,11 @@ static inline char* build_sipping(str *curi, struct socket_info* s, str *path,
 	}
 	append_str( p, sipping_from.s, sipping_from.len);
 	append_fix( p, ";tag=");
+	append_str( p, ruid->s, ruid->len);
+	*(p++) = '-';
+	len = 8;
+	int2reverse_hex( &p, &len, aorhash );
+	*(p++) = '-';
 	len = 8;
 	int2reverse_hex( &p, &len, sipping_fromtag++ );
 	append_fix( p, CRLF"To: ");

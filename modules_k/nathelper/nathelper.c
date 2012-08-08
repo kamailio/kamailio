@@ -1676,6 +1676,8 @@ nh_timer(unsigned int ticks, void *timer_idx)
 	str c;
 	str opt;
 	str path;
+	str ruid;
+	unsigned int aorhash;
 	struct sip_uri curi;
 	struct hostent* he;
 	struct socket_info* send_sock;
@@ -1736,6 +1738,11 @@ nh_timer(unsigned int ticks, void *timer_idx)
 		memcpy( &(path.len), cp, sizeof(path.len));
 		path.s = path.len ? ((char*)cp + sizeof(path.len)) : NULL ;
 		cp =  (char*)cp + sizeof(path.len) + path.len;
+		memcpy( &(ruid.len), cp, sizeof(ruid.len));
+		ruid.s = ruid.len ? ((char*)cp + sizeof(ruid.len)) : NULL ;
+		cp =  (char*)cp + sizeof(ruid.len) + ruid.len;
+		memcpy( &aorhash, cp, sizeof(aorhash));
+		cp = (char*)cp + sizeof(aorhash);
 
 		/* determin the destination */
 		if ( path.len && (flags&sipping_flag)!=0 ) {
@@ -1782,7 +1789,8 @@ nh_timer(unsigned int ticks, void *timer_idx)
 		dst.send_sock=send_sock;
 
 		if ( (flags&sipping_flag)!=0 &&
-		(opt.s=build_sipping( &c, send_sock, &path, &opt.len))!=0 ) {
+		(opt.s=build_sipping( &c, send_sock, &path, &ruid, aorhash,
+							  &opt.len))!=0 ) {
 			if (udp_send(&dst, opt.s, opt.len)<0){
 				LM_ERR("sip udp_send failed\n");
 			}
