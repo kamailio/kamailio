@@ -322,7 +322,7 @@ static inline int save_ruri(struct sip_msg* _m)
 	memcpy(s, RR_ROUTE_PREFIX, RR_ROUTE_PREFIX_LEN);
 	memcpy(s + RR_ROUTE_PREFIX_LEN, _m->first_line.u.request.uri.s,
 			_m->first_line.u.request.uri.len);
-	memcpy(s + ROUTE_PREFIX_LEN + _m->first_line.u.request.uri.len,
+	memcpy(s + RR_ROUTE_PREFIX_LEN + _m->first_line.u.request.uri.len,
 			ROUTE_SUFFIX, ROUTE_SUFFIX_LEN);
 
 	LM_DBG("New header: '%.*s'\n", len, ZSW(s));
