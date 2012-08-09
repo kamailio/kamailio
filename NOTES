@@ -54,3 +54,17 @@ Call-Info meaning in context
 
     e.g., a Call-Info header present in a response indicates the callee
     has appearance-index N
+
+
+
+INVITE response handler doesn't handle non 18x/200 replies. Leaves stuck state.
+
+
+A reINVITE from another line in the SCA group has the following characteristics:
+    * RURI is the SCA line's AoR, not the callee.
+    * From and To URIs are also SCA line's AoR.
+	    * SCA provides very limited way to pass callee info: only
+	      in NOTIFY's appearance-uri, which is for display purposes.
+    * From-tag and Call-ID are new. There is no to-tag.
+    * A Call-Info header is present with the appearance-index the line is
+      attempting to retrieve from hold.
