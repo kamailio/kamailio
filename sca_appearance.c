@@ -146,13 +146,11 @@ sca_appearance_list_next_available_index_unsafe( sca_appearance_list *app_list )
 
     for ( app_cur = app_list->appearances; app_cur != NULL;
 			app_cur = app_cur->next, idx++ ) {
-LM_INFO( "ADMORTEN: idx: %d, app_cur->index: %d", idx, app_cur->index );
 	if ( idx < app_cur->index ) {
-LM_INFO( "ADMORTEN: app_cur->index - idx == %d", app_cur->index - idx );
 	    break;
 	}
     }
-LM_INFO( "ADMORTEN: returning %d", idx );
+
     return( idx );
 }
 
@@ -403,6 +401,27 @@ sca_appearance_update_unsafe( sca_appearance *app, int state, str *uri,
 
 done:
     return( rc );
+}
+
+    int
+sca_uri_is_shared_appearance( sca_mod *scam, str *aor )
+{
+    sca_hash_slot	*slot;
+    sca_appearance_list	*app_list;
+    int			slot_idx;
+
+    slot_idx = sca_hash_table_index_for_key( scam->appearances, aor );
+    slot = sca_hash_table_slot_for_index( scam->appearances, slot_idx );
+
+    sca_hash_table_lock_index( scam->appearances, slot_idx );
+    app_list = sca_hash_table_slot_kv_find_unsafe( slot, aor );
+    sca_hash_table_unlock_index( scam->appearances, slot_idx );
+
+    if ( app_list == NULL ) {
+	return( 0 );
+    }
+
+    return( 1 );
 }
 
     int

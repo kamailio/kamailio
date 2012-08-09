@@ -85,4 +85,6 @@ sca_appearance	*sca_appearance_unlink_by_tags( sca_mod *, str *,
 
 sca_appearance	*sca_appearance_create( int, str * );
 void		sca_appearance_free( sca_appearance * );
+
+int		sca_uri_is_shared_appearance( sca_mod *, str * );
 #endif /* SCA_APPEARANCE_H */
