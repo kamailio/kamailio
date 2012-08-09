@@ -110,6 +110,11 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	void *cp;
 	int shortage, needed;
 
+	if(ul_dbf.raw_query==NULL) {
+		LM_WARN("DB raw query support is required, but not implemented\n");
+		return -1;
+	}
+
 	cp = buf;
 	shortage = 0;
 	/* Reserve space for terminating 0000 */
