@@ -751,57 +751,6 @@ error:
 }
 
     int
-sca_unsubscribe_line_seize( sip_msg_t *msg, char *p1, char *p2 )
-{
-    sca_call_info	call_info;
-    hdr_field_t		*call_info_hdr;
-    struct to_body	*from;
-    str			contact_uri = STR_NULL;
-
-    if ( parse_headers( msg, HDR_EOH_F, 0 ) < 0 ) {
-	LM_ERR( "header parsing failed: bad request" );
-	SCA_REPLY_ERROR( sca, 400, "Bad Request", msg );
-	return( -1 );
-    }
-
-    call_info_hdr = sca_call_info_header_find( msg->headers );
-    if ( call_info_hdr == NULL ) {
-	LM_ERR( "Missing required Call-Info header" );
-	return( -1 );
-    }
-
-    if ( sca_call_info_body_parse( &call_info_hdr->body,
-	    &call_info ) < 0 ) {
-	LM_ERR( "Bad Call-Info header body: %.*s",
-		STR_FMT( &call_info_hdr->body ));
-	return( -1 );
-    }
-
-    if ( SCA_HEADER_EMPTY( msg->from )) {
-	LM_ERR( "Empty From header" );
-	return( -1 );
-    }
-    if ( parse_from_header( msg ) < 0 ) {
-	LM_ERR( "Bad From header" );
-	return( -1 );
-    }
-    from = get_from( msg );
-    if ( SCA_STR_EMPTY( &from->tag_value )) {
-	LM_ERR( "No from-tag in From header" );
-	return( -1 );
-    }
-
-    if ( sca_get_msg_contact_uri( msg, &contact_uri ) < 0 ) {
-	LM_ERR( "Bad Contact" );
-	return( -1 );
-    }
-
-    return( sca_subscription_terminate( sca, &from->uri,
-		SCA_EVENT_TYPE_LINE_SEIZE, &contact_uri,
-		SCA_SUBSCRIPTION_STATE_TERMINATED_NORESOURCE ));
-}
-
-    int
 sca_subscription_terminate( sca_mod *scam, str *aor, int event,
 	str *subscriber, int termination_state )
 {

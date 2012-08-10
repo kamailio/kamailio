@@ -35,7 +35,6 @@ extern const str 	SCA_METHOD_SUBSCRIBE;
 		(sub1)->state <= SCA_SUBSCRIPTION_STATE_TERMINATED_TIMEOUT )
 
 int	sca_handle_subscribe( sip_msg_t *, char *, char * );
-int	sca_unsubscribe_line_seize( sip_msg_t *, char *, char * );
 
 void	sca_subscription_purge_expired( unsigned int, void * );
 void	sca_subscription_state_to_str( int, str * );
