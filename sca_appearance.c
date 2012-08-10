@@ -289,20 +289,16 @@ sca_appearance_list_free( void *value )
     shm_free( app_list );
 }
 
-    int
-sca_appearance_seize_next_available_index( sca_mod *scam, str *aor,
-	str *owner_uri )
+    sca_appearance *
+sca_appearance_seize_next_available_unsafe( sca_mod *scam, str *aor,
+	str *owner_uri, int slot_idx )
 {
     sca_appearance_list	*app_list;
-    sca_appearance	*app;
+    sca_appearance	*app = NULL;
     sca_hash_slot	*slot;
-    int			slot_idx;
     int			idx = -1;
 
-    slot_idx = sca_hash_table_index_for_key( scam->appearances, aor );
     slot = sca_hash_table_slot_for_index( scam->appearances, slot_idx );
-
-    sca_hash_table_lock_index( scam->appearances, slot_idx );
 
     app_list = sca_hash_table_slot_kv_find_unsafe( slot, aor );
     if ( app_list == NULL ) {
@@ -336,6 +332,26 @@ sca_appearance_seize_next_available_index( sca_mod *scam, str *aor,
     sca_appearance_list_insert_appearance( app_list, app );
 
 done:
+    return( app );
+}
+
+    int
+sca_appearance_seize_next_available_index( sca_mod *scam, str *aor,
+	str *owner_uri )
+{
+    sca_appearance	*app;
+    int			slot_idx;
+    int			idx = -1;
+
+    slot_idx = sca_hash_table_index_for_key( scam->appearances, aor );
+    sca_hash_table_lock_index( scam->appearances, slot_idx );
+
+    app = sca_appearance_seize_next_available_unsafe( scam, aor,
+					owner_uri, slot_idx );
+    if ( app != NULL ) {
+	idx = app->index;
+    }
+
     sca_hash_table_unlock_index( scam->appearances, slot_idx );
 
     return( idx );
