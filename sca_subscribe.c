@@ -839,13 +839,14 @@ sca_subscription_terminate( sca_mod *scam, str *aor, int event,
     sca_hash_table_unlock_index( sca->subscriptions, slot_idx );
 
     if ( ent == NULL ) {
-	LM_ERR( "No %s subscription for %.*s", event_name,
+	LM_DBG( "No %s subscription for %.*s", event_name,
 		STR_FMT( subscriber ));
-	return( -1 );
+	return( 1 );
     }
 
     sub = (sca_subscription *)ent->value;
     sub->expires = 0;
+    sub->dialog.notify_cseq += 1;
     sub->state = termination_state;
 
     sca_subscription_print( sub );
