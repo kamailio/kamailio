@@ -15,9 +15,13 @@ sca_get_msg_contact_uri( sip_msg_t *msg, str *contact_uri )
     assert( contact_uri != NULL );
 
     if ( SCA_HEADER_EMPTY( msg->contact )) {
-	LM_ERR( "Empty Contact header" );
-	return( -1 );
+	LM_DBG( "Empty Contact header" );
+	contact_uri->s = NULL;
+	contact_uri->len = 0;
+
+	return( 0 );
     }
+
     if ( parse_contact( msg->contact ) < 0 ) {
 	LM_ERR( "Failed to parse Contact header: %.*s",
 		STR_FMT( &msg->contact->body ));
@@ -43,7 +47,7 @@ sca_get_msg_contact_uri( sip_msg_t *msg, str *contact_uri )
     contact_uri->s = contact_body->contacts->uri.s;
     contact_uri->len = contact_body->contacts->uri.len;
 
-    return( 0 );
+    return( 1 );
 }
 
     int
@@ -133,6 +137,30 @@ sca_get_msg_to_header( sip_msg_t *msg, struct to_body **to )
     }
 
     *to = t;
+
+    return( 0 );
+}
+
+    int
+sca_uri_extract_aor( str *uri, str *aor )
+{
+    char		*semi;
+
+    assert( aor != NULL );
+
+    if ( uri == NULL ) {
+	aor->s = NULL;
+	aor->len = 0;
+	return( -1 );
+    }
+
+    aor->s = uri->s;
+    semi = memchr( uri->s, ';', uri->len );
+    if ( semi != NULL ) {
+	aor->len = semi - uri->s;
+    } else {
+	aor->len = uri->len;
+    }
 
     return( 0 );
 }
