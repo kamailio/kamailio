@@ -260,7 +260,7 @@ static int load_pcres(int action)
 	char line[FILE_MAX_LINE];
 	char **patterns = NULL;
 	pcre *pcre_tmp = NULL;
-	int pcre_size;
+	size_t pcre_size;
 	int pcre_rc;
 	const char *pcre_error;
 	int pcre_erroffset;
