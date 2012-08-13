@@ -752,7 +752,7 @@ error:
 
     int
 sca_subscription_terminate( sca_mod *scam, str *aor, int event,
-	str *subscriber, int termination_state )
+	str *subscriber, int termination_state, int opts )
 {
     sca_hash_slot	*slot;
     sca_hash_entry	*ent;
@@ -761,6 +761,11 @@ sca_subscription_terminate( sca_mod *scam, str *aor, int event,
     char		*event_name;
     int			slot_idx;
     int			len;
+
+    if ( !(opts & SCA_SUBSCRIPTION_TERMINATE_OPT_UNSUBSCRIBE)) {
+	LM_ERR( "sca_subscription_terminate: invalid opts 0x%x", opts );
+	return( -1 );
+    }
 
     event_name = sca_event_name_from_type( event );
     len = aor->len + strlen( event_name );
@@ -807,14 +812,16 @@ sca_subscription_terminate( sca_mod *scam, str *aor, int event,
 	/* fall through, we might be able to notify the others */
     }
 
-    if ( event == SCA_EVENT_TYPE_LINE_SEIZE ) {
-#ifdef notdef
-	if ( sca_notify_call_info_subscribers( sca, &sub->target_aor) < 0 ) {
-	    LM_ERR( "SCA %s NOTIFY to all %.*s subscribers failed",
-		    event_name, STR_FMT( &sub->target_aor ));
-	    /* fall through, not much we can do about it */
+    if (( opts & SCA_SUBSCRIPTION_TERMINATE_OPT_RELEASE_APPEARANCE ) &&
+		sub->index != SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) {
+	if ( sca_appearance_release_index( sca, &sub->target_aor,
+		sub->index ) == SCA_APPEARANCE_OK ) {
+	    if ( sca_notify_call_info_subscribers( sca, &sub->target_aor) < 0) {
+		LM_ERR( "SCA %s NOTIFY to all %.*s subscribers failed",
+			event_name, STR_FMT( &sub->target_aor ));
+		/* fall through, not much we can do about it */
+	    }
 	}
-#endif /* notdef */
     }
 
     if ( ent ) {

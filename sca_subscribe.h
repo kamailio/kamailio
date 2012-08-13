@@ -28,6 +28,14 @@ struct _sca_subscription {
 };
 typedef struct _sca_subscription	sca_subscription;
 
+enum {
+    SCA_SUBSCRIPTION_TERMINATE_OPT_UNSUBSCRIBE = (1 << 0),
+    SCA_SUBSCRIPTION_TERMINATE_OPT_RELEASE_APPEARANCE = (1 << 1),
+};
+#define SCA_SUBSCRIPTION_TERMINATE_OPT_DEFAULT \
+	(SCA_SUBSCRIPTION_TERMINATE_OPT_UNSUBSCRIBE | \
+	 SCA_SUBSCRIPTION_TERMINATE_OPT_RELEASE_APPEARANCE)
+
 extern const str 	SCA_METHOD_SUBSCRIBE;
 
 #define SCA_SUBSCRIPTION_IS_TERMINATED( sub1 ) \
@@ -39,6 +47,6 @@ int	sca_handle_subscribe( sip_msg_t *, char *, char * );
 void	sca_subscription_purge_expired( unsigned int, void * );
 void	sca_subscription_state_to_str( int, str * );
 
-int	sca_subscription_terminate( sca_mod *, str *, int, str *, int );
+int	sca_subscription_terminate( sca_mod *, str *, int, str *, int, int );
 
 #endif /* SCA_SUBSCRIBE_H */
