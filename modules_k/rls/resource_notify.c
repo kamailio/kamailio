@@ -767,6 +767,15 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 		goto error;
 	}
 
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.start_transaction)
+	{
+		if (rlpres_dbf.start_transaction(rlpres_db) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto error;
+		}
+	}
+
 	if (rlpres_dbf.replace != NULL)
 	{
 		if(rlpres_dbf.replace(rlpres_db, query_cols, query_vals, n_query_cols,
@@ -796,7 +805,16 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 			LM_DBG("Inserted in database table new record\n");
 		}
 	}
-		
+
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.end_transaction)
+	{
+		if (rlpres_dbf.end_transaction(rlpres_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto error;
+		}
+	}
+
 	LM_DBG("Updated rlpres_table\n");	
 	/* reply 200OK */
 done:
@@ -831,6 +849,13 @@ error:
 	if (reason.s) pkg_free(reason.s);
 
 	free_to_params(&TO);
+
+	if (dbmode == RLS_DB_ONLY && rlpres_dbf.abort_transaction)
+	{
+		if (rlpres_dbf.abort_transaction(rlpres_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+
 	return -1;
 }
 
