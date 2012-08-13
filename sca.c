@@ -151,6 +151,31 @@ sca_bind_usrloc( usrloc_api_t *ul_api, sca_mod **scam )
 } 
 
     static int
+sca_bind_sl( sca_mod *scam, sl_api_t *sl_api )
+{
+    sl_cbelem_t		sl_cbe;
+
+    assert( scam != NULL );
+    assert( sl_api != NULL );
+
+    if ( sl_load_api( sl_api ) != 0 ) {
+	LM_ERR( "Failed to initialize required sl API" );
+	return( -1 );
+    }
+    scam->sl_api = sl_api;
+
+    sl_cbe.type = SLCB_REPLY_READY;
+    sl_cbe.cbf = (sl_cbf_f)sca_call_info_sl_reply_cb;
+
+    if ( scam->sl_api->register_cb( &sl_cbe ) < 0 ) {
+	LM_ERR( "Failed to register sl reply callback" );
+	return( -1 );
+    }
+
+    return( 0 );
+}
+
+    static int
 sca_set_config( sca_mod *scam )
 {
     scam->cfg = (sca_config *)shm_malloc( sizeof( sca_config ));
@@ -212,11 +237,10 @@ sca_mod_init( void )
     }
     sca->tm_api = &tmb;
 
-    if ( sl_load_api( &slb ) != 0 ) {
+    if ( sca_bind_sl( sca, &slb ) != 0 ) {
 	LM_ERR( "Failed to initialize required sl API" );
 	return( -1 );
     }
-    sca->sl_api = &slb;
     
     if ( sca_set_config( sca ) != 0 ) {
 	LM_ERR( "Failed to set configuration" );
