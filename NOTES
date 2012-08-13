@@ -2,9 +2,9 @@ Hook all transactions?
 	register callbacks for TMCB_REQUEST_IN_N & TMCB_RESPONSE_IN_N
 	if Call-Info header not found, pass
 	might be able to dispense with sca_handle_subscribe().
-
 	performance penalty: cost of check for Call-Info on each transaction.
-OR
+
+    OR
 
 check for Call-Info header in script, call "sca_call_info_update"
 	must be done in onreply route, too
@@ -68,3 +68,13 @@ A reINVITE from another line in the SCA group has the following characteristics:
     * From-tag and Call-ID are new. There is no to-tag.
     * A Call-Info header is present with the appearance-index the line is
       attempting to retrieve from hold.
+
+
+Revisiting possibility of using TMCB_ tm module hooks.
+    TMCB_E2EACK_IN is called when an ACK matching a 200OK-answered INVITE
+    is received. Could use this to send out call-info NOTIFYs when an SCA
+    line answers a call. Bug right now is that the NOTIFYs are sent out
+    before the proxy has CANCELed the INVITEs to the other members of the
+    group. Seems the handsets are dumping the line state when they get the
+    CANCELs, so the appearance goes away. On next reSUBSCRIBE/NOTIFY, the
+    handsets get the correct state again.
