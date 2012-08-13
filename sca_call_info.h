@@ -18,6 +18,7 @@ typedef struct _sca_call_info		sca_call_info;
 extern const str	SCA_CALL_INFO_HEADER_STR;
 
 int sca_call_info_update( sip_msg_t *, char *, char * );
+void sca_call_info_sl_reply_cb( void * );
 
 int sca_call_info_build_header( sca_mod *, sca_subscription *, char *, int );
 int sca_call_info_append_header_for_appearance_index( sca_subscription *, int,

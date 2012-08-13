@@ -354,8 +354,6 @@ sca_call_info_body_parse( str *hdr_body, sca_call_info *call_info )
     call_info->sca_uri.s = p;
     call_info->sca_uri.len = semi - p;
 
-LM_INFO( "ADMORTEN: Call-Info SCA URI: %.*s", STR_FMT( &call_info->sca_uri ));
-    
     p = semi;
     p++;
     if ( memcmp( p, SCA_APPEARANCE_INDEX_STR.s,
@@ -510,6 +508,395 @@ LM_ERR( "msg->buf: %p, Found %.*s (%p) header with body \"%.*s\"",
     return( rc );
 }
 
+    static int
+sca_call_info_uri_update( str *uri, sca_call_info *call_info, str *contact_uri,
+	str *call_id, str *from_tag, str *to_tag )
+{
+    sca_appearance	*app;
+    sca_dialog		dialog;
+    str			aor = STR_NULL;
+    str			state_str;
+    char		dlg_buf[ 1024 ];
+    int			state = SCA_APPEARANCE_STATE_UNKNOWN;
+    int			slot_idx = -1;
+    int			idx;
+    int			rc = -1;
+    int			notify = 0;
+
+    assert( uri != NULL );
+    assert( call_info != NULL );
+
+    if ( sca_uri_extract_aor( uri, &aor ) < 0 ) {
+	LM_ERR( "sca_call_info_uri_update: sca_uri_extract_aor from "
+		"%.*s failed", STR_FMT( uri ));
+	return( -1 );
+    }
+
+LM_INFO( "ADMORTEN DEBUG: sca_call_info_uri_update %.*s", STR_FMT( &aor ));
+    if ( !sca_uri_is_shared_appearance( sca, &aor )) {
+LM_INFO( "ADMORTEN DEBUG: sca_call_info_uri_update: non-SCA %.*s", STR_FMT( &aor ));
+	return( 0 );
+    }
+
+    dialog.id.s = dlg_buf;
+    if ( sca_dialog_build_from_tags( &dialog, sizeof( dlg_buf ), call_id,
+				from_tag, NULL ) < 0 ) {
+	LM_ERR( "sca_call_info_uri_update: Failed to build dialog from tags" );
+	return( -1 );
+    }
+
+    slot_idx = sca_hash_table_index_for_key( sca->appearances, &aor );
+    sca_hash_table_lock_index( sca->appearances, slot_idx );
+
+    app = sca_appearance_for_index_unsafe( sca, &aor, call_info->index,
+						slot_idx );
+    if ( app != NULL ) {
+LM_INFO( "ADMORTEN DEBUG: found appearance for %.*s", STR_FMT( &aor ));
+	/* XXX to->uri here should be an escaped to->body */
+	if ( sca_appearance_update_unsafe( app, call_info->state, NULL,
+		&dialog, NULL, NULL ) < 0 ) {
+	    sca_appearance_state_to_str( call_info->state, &state_str );
+	    LM_ERR( "sca_call_info_uri_update: failed to update appearance "
+		    "%.*s appearance-index %d with dialog id %.*s to "
+		    "state %.*s", STR_FMT( &app->owner ), app->index,
+		    STR_FMT( &app->dialog.id ), STR_FMT( &state_str ));
+	    goto done;
+	}
+
+	rc = 1;
+    } else {
+LM_INFO( "ADMORTEN DEBUG: no appearance for %.*s, seizing next", STR_FMT( &aor ));
+	app = sca_appearance_seize_next_available_unsafe( sca, &aor,
+				contact_uri, slot_idx );
+	if ( app == NULL ) {
+	    LM_ERR( "sca_call_info_uri_update: failed to seize index %d "
+		    "for %.*s", call_info->index, STR_FMT( contact_uri ));
+	    goto done;
+	}
+
+	if ( sca_appearance_update_unsafe( app, call_info->state, NULL,
+		&dialog, NULL, NULL ) < 0 ) {
+	    sca_appearance_state_to_str( call_info->state, &state_str );
+	    LM_ERR( "sca_call_info_uri_update: failed to update appearance "
+		    "%.*s appearance-index %d with dialog id %.*s to "
+		    "state %.*s", STR_FMT( &app->owner ), app->index,
+		    STR_FMT( &app->dialog.id ), STR_FMT( &state_str ));
+	    goto done;
+	}
+
+	notify = 1;
+	rc = 1;
+    }
+
+done:
+    if ( slot_idx >= 0 ) {
+	sca_hash_table_unlock_index( sca->appearances, slot_idx );
+    }
+
+    if ( notify ) {
+	if ( sca_notify_call_info_subscribers( sca, &aor ) < 0 ) {
+	    LM_ERR( "Failed to call-info NOTIFY %.*s subscribers",
+		    STR_FMT( &aor ));
+	    goto done;
+	}
+    }
+
+    return( rc );
+}
+
+    static int
+sca_call_info_invite_request_handler( sip_msg_t *msg, sca_call_info *call_info,
+	str *contact_uri, struct to_body *from, struct to_body *to )
+{
+    sca_appearance	*app;
+    sca_dialog		dialog;
+    char		dlg_buf[ 1024 ];
+    str			state_str = STR_NULL;
+    str			from_aor = STR_NULL;
+    int			state = SCA_APPEARANCE_STATE_UNKNOWN;
+    int			slot_idx = -1;
+    int			rc = -1;
+
+    /* XXX check for to-tag, check SDP for hold/pickup, etc. */
+    /* this is likely to be the most complicated one */
+    /* if picking up held, this is where we need to inject Replaces hdr */
+
+    if ( call_info == NULL ) {
+	/* XXX just for now. will also need to check for reINVITE, etc. */
+	LM_INFO( "ADMORTEN: no Call-Info header in INVITE %.*s",
+		     STR_FMT( &to->uri ));
+	rc = 1;
+	goto done;
+    }
+
+    if ( sca_call_is_held( msg )) {
+	state = SCA_APPEARANCE_STATE_HELD;
+    } else if ( !SCA_STR_EMPTY( &to->tag_value )) {
+	state = SCA_APPEARANCE_STATE_ACTIVE;
+    }
+    /* otherwise, this is an initial INVITE */
+
+    sca_appearance_state_to_str( state, &state_str );
+    LM_INFO( "ADMORTEN: updating %.*s appearance-index %d to %.*s, "
+	     "dialog: callid: %.*s, from-tag: %.*s",
+		STR_FMT( &from->uri ), call_info->index,
+		STR_FMT( &state_str ),
+		STR_FMT( &msg->callid->body ),
+		STR_FMT( &from->tag_value ));
+
+    if ( sca_uri_extract_aor( &from->uri, &from_aor ) < 0 ) {
+	LM_ERR( "sca_call_info_invite_request_handler: failed to extract "
+		"From AoR from %.*s", STR_FMT( &from->uri ));
+	return( -1 );
+    }
+
+    dialog.id.s = dlg_buf;
+    if ( sca_dialog_build_from_tags( &dialog, sizeof( dlg_buf ),
+	    &msg->callid->body, &from->tag_value, &to->tag_value ) < 0 ) {
+	LM_ERR( "Failed to build dialog from tags" );
+	return( -1 );
+    }
+
+    if ( sca_appearance_update_index( sca, &from_aor, call_info->index,
+		state, NULL, &dialog ) != SCA_APPEARANCE_OK ) {
+	LM_ERR( "Failed to update %.*s appearance-index %d to %.*s",
+		STR_FMT( &from_aor ), call_info->index,
+		STR_FMT( &state_str ));
+    }
+
+    if ( sca_notify_call_info_subscribers( sca, &from_aor ) < 0 ) {
+	LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on INVITE",
+		STR_FMT( &from_aor ));
+	goto done;
+    }
+
+    rc = 1;
+
+done:
+    return( rc );
+}
+
+    static int
+sca_call_info_invite_reply_18x_handler( sip_msg_t *msg,
+	sca_call_info *call_info, str *contact_uri,
+	struct to_body *from, struct to_body *to )
+{
+    sca_appearance	*app = NULL;
+    str			aor = STR_NULL;
+    int			state = SCA_APPEARANCE_STATE_UNKNOWN;
+    int			slot_idx = -1;
+    int			rc = -1;
+
+    switch ( msg->REPLY_STATUS ) {
+    case 180:
+	state = SCA_APPEARANCE_STATE_ALERTING;
+	break;
+
+    case 183:
+	state = SCA_APPEARANCE_STATE_PROGRESSING;
+	break;
+
+    default:
+	goto done;
+    }
+
+    if ( sca_uri_extract_aor( &from->uri, &aor ) < 0 ) {
+	LM_ERR( "sca_call_info_invite_reply_18x_handler: "
+		"sca_uri_extract_aor from %.*s", STR_FMT( &from->uri ));
+	goto done;
+    }
+
+    slot_idx = sca_hash_table_index_for_key( sca->appearances, &aor );
+    sca_hash_table_lock_index( sca->appearances, slot_idx );
+
+    app = sca_appearance_for_tags_unsafe( sca, &aor, &msg->callid->body,
+			  &from->tag_value, &to->tag_value, slot_idx );
+    if ( app == NULL ) {
+	goto done;
+    }
+
+    app->state = state;
+    rc = 1;
+
+done:
+    if ( slot_idx >= 0 ) {
+	sca_hash_table_unlock_index( sca->appearances, slot_idx );
+    }
+
+    if ( rc > 0 && app != NULL ) {
+	if ( sca_subscription_terminate( sca, &aor,
+		SCA_EVENT_TYPE_LINE_SEIZE, &app->owner,
+		SCA_SUBSCRIPTION_STATE_TERMINATED_NORESOURCE,
+		SCA_SUBSCRIPTION_TERMINATE_OPT_UNSUBSCRIBE ) < 0 ) {
+	    LM_ERR( "sca_call_info_invite_reply_18x_handler: "
+		    "failed to terminate line-seize subscription for %.*s",
+		    STR_FMT( &app->owner ));
+	    rc = -1;
+	}
+    }
+
+    return( rc );
+}
+
+    static int
+sca_call_info_invite_reply_200_handler( sip_msg_t *msg,
+	sca_call_info *call_info, str *contact_uri,
+	struct to_body *from, struct to_body *to )
+{
+    sca_appearance	*app;
+    sca_dialog		dialog;
+    char		dlg_buf[ 1024 ];
+    str			state_str = STR_NULL;
+    str			from_aor = STR_NULL;
+    str			to_aor = STR_NULL;
+    str			*caller = NULL;
+    int			state = SCA_APPEARANCE_STATE_UNKNOWN;
+    int			slot_idx = -1;
+    int			rc = -1;
+
+    if ( sca_uri_extract_aor( &from->uri, &from_aor ) < 0 ) {
+	LM_ERR( "sca_call_info_invite_reply_200_handler: failed to "
+		"extract From AoR from %.*s", STR_FMT( &from->uri ));
+	return( -1 );
+    }
+    if ( sca_uri_extract_aor( &to->uri, &to_aor ) < 0 ) {
+	LM_ERR( "sca_call_info_invite_reply_200_handler: failed to "
+		"extract To AoR from %.*s", STR_FMT( &to->uri ));
+	return( -1 );
+    }
+
+    if ( call_info != NULL ) {
+LM_INFO( "ADMORTEN DEBUG: INVITE 200 handler with Call-Info from %.*s",
+	STR_FMT( &to->uri ));
+
+	call_info->state = SCA_APPEARANCE_STATE_ACTIVE;
+	rc = sca_call_info_uri_update( &to_aor, call_info, contact_uri,
+			&msg->callid->body, &from->tag_value, &to->tag_value );
+    }
+
+    if ( !sca_uri_is_shared_appearance( sca, &from_aor )) {
+	goto done;
+    }
+
+    dialog.id.s = dlg_buf;
+    if ( sca_dialog_build_from_tags( &dialog, sizeof( dlg_buf ),
+	    &msg->callid->body, &from->tag_value, NULL ) < 0 ) {
+	LM_ERR( "sca_call_info_invite_handler: failed to build sca_dialog "
+		"from tags" );
+	rc = -1;
+	goto done;
+    }
+
+    /*
+     * XXX in a reply with no Call-Info header, we look for a matching
+     * dialog for the From URI. if we don't find one, this isn't an SCA
+     * call, and we're done processing.
+     *
+     * if there *is* a Call-Info header, we update the appearance state of
+     * the index in the header for the To URI (appearance owned by the URI
+     * in the Contact header). we still then need to check to see if the
+     * From URI is an SCA line, and update state if it is.
+     */
+
+    slot_idx = sca_hash_table_index_for_key( sca->appearances, &from_aor );
+    sca_hash_table_lock_index( sca->appearances, slot_idx );
+
+    app = sca_appearance_for_dialog_unsafe( sca, &from_aor,
+					    &dialog, slot_idx );
+    if ( app == NULL ) {
+	/* no SCA line is involved with this call */
+	LM_INFO( "ADMORTEN DEBUG: %.*s is not an SCA line",
+		    STR_FMT( &from->uri ));
+	rc = 1;
+	goto done;
+    }
+
+    if ( app->state != SCA_APPEARANCE_STATE_HELD ) {
+	state = SCA_APPEARANCE_STATE_ACTIVE;
+    }
+
+    /* if a Call-Info header is present, app-index goes to Contact */
+
+    /* XXX to->uri here should be an escaped to->body */
+    if ( sca_appearance_update_unsafe( app, state, &to->uri,
+	    &dialog, NULL, NULL ) < 0 ) {
+	sca_appearance_state_to_str( state, &state_str );
+	LM_ERR( "sca_call_info_invite_handler: failed to update appearance "
+		"%.*s appearance-index %d with dialog id %.*s to "
+		"state %.*s", STR_FMT( &app->owner ), app->index,
+		STR_FMT( &app->dialog.id ), STR_FMT( &state_str ));
+	rc = -1;
+	goto done;
+    }
+
+    rc = 1;
+
+done:
+    if ( slot_idx >= 0 ) {
+	sca_hash_table_unlock_index( sca->appearances, slot_idx );
+    }
+
+    return( rc );
+}
+
+    static int
+sca_call_info_invite_reply_3xx_handler( sip_msg_t *msg,
+	sca_call_info *call_info, str *contact_uri,
+	struct to_body *from, struct to_body *to )
+{
+    return( 1 );
+}
+
+    static int
+sca_call_info_invite_reply_error_handler( sip_msg_t *msg,
+	sca_call_info *call_info, str *contact_uri,
+	struct to_body *from, struct to_body *to )
+{
+    /*
+     * XXX will need special handling here. must distinguish among the
+     * following:
+     * 		failed initial INVITE
+     *		failed reINVITE from caller retrieving from hold
+     *		failed INVITE retrieving remote UA from SCA hold
+     *
+     * for a start, we just deal with the first case.
+     */
+
+    sca_appearance	*app;
+    str			aor;
+
+    if ( msg->REPLY_STATUS == 487 ) {
+	/* reply status for a CANCEL'd INVITE */
+	return( 1 );
+    }
+
+    if ( sca_uri_extract_aor( &from->uri, &aor ) < 0 ) {
+	LM_ERR( "sca_call_info_invite_reply_error_handler: failed to extract "
+		"AoR from %.*s", STR_FMT( &from->uri ));
+	return( -1 );
+    }
+    if ( sca_uri_is_shared_appearance( sca, &aor )) {
+	app = sca_appearance_unlink_by_tags( sca, &aor,
+		    &msg->callid->body, &from->tag_value, NULL );
+	if ( app == NULL ) {
+	    LM_ERR( "sca_call_info_invite_reply_error_handler: failed to "
+		    "look up dialog for failed INVITE %.*s from %.*s",
+		    STR_FMT( &to->uri ), STR_FMT( &aor ));
+	    return( -1 );
+	}
+	sca_appearance_free( app );
+
+	if ( sca_notify_call_info_subscribers( sca, &aor ) < 0 ) {
+	    LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on "
+		    "failed INVITE", STR_FMT( &aor ));
+	    return( -1 );
+	}
+    }
+
+    return( 1 );
+}
+
+
 /* XXX may want to further split between requests & responses */
     static int
 sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
@@ -523,58 +910,41 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
     int			slot_idx = -1;
     int			rc = -1;
 
-    /* FIRST PASS: just handle 18x response for caller */
+    if ( SCA_STR_EMPTY( contact_uri )) {
+	LM_ERR( "sca_call_info_invite_handler: Contact header is empty. "
+		"(From: %.*s To: %.*s)", STR_FMT( &from->uri ),
+		 STR_FMT( &to->uri ));
+	return( -1 );
+    }
 
     if ( msg->first_line.type == SIP_REQUEST ) {
-	/* XXX check for to-tag, check SDP for hold/pickup, etc. */
-	/* this is likely to be the most complicated one */
-	/* if picking up held, this is where we need to inject Replaces hdr */
-
-	if ( call_info == NULL ) {
-	    /* XXX just for now. will also need to check for reINVITE, etc. */
-	    LM_INFO( "ADMORTEN: no Call-Info header in INVITE %.*s",
-			 STR_FMT( &to->uri ));
-	    rc = 1;
-	    goto done;
-	}
-
-	if ( sca_call_is_held( msg )) {
-	    state = SCA_APPEARANCE_STATE_HELD;
-	} else if ( !SCA_STR_EMPTY( &to->tag_value )) {
-	    state = SCA_APPEARANCE_STATE_ACTIVE;
-	}
-	/* otherwise, this is an initial INVITE */
-
-	sca_appearance_state_to_str( state, &state_str );
-	LM_INFO( "ADMORTEN: updating %.*s appearance-index %d to %.*s, "
-		 "dialog: callid: %.*s, from-tag: %.*s",
-		    STR_FMT( &from->uri ), call_info->index,
-		    STR_FMT( &state_str ),
-		    STR_FMT( &msg->callid->body ),
-		    STR_FMT( &from->tag_value ));
-
-	dialog.id.s = dlg_buf;
-	if ( sca_dialog_build_from_tags( &dialog, sizeof( dlg_buf ),
-		&msg->callid->body, &from->tag_value, &to->tag_value ) < 0 ) {
-	    LM_ERR( "Failed to build dialog from tags" );
-	    return( -1 );
-	}
-
-	if ( sca_appearance_update_index( sca, &from->uri, call_info->index,
-		    state, NULL, &dialog ) != SCA_APPEARANCE_OK ) {
-	    LM_ERR( "Failed to update %.*s appearance-index %d to %.*s",
-		    STR_FMT( &from->uri ), call_info->index,
-		    STR_FMT( &state_str ));
-	}
-
-	if ( sca_notify_call_info_subscribers( sca, &from->uri ) < 0 ) {
-	    LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on INVITE",
-		    STR_FMT( &from->uri ));
-	    goto done;
-	}
-
-	rc = 1;
+	rc = sca_call_info_invite_request_handler( msg, call_info, contact_uri,
+						    from, to );
     } else {
+	/* XXX replace with dispatch table. */
+	switch ( msg->REPLY_STATUS ) {
+	case 100:
+	    rc = 1;
+	    break;
+
+	case 180:
+	case 183:
+	    rc = sca_call_info_invite_reply_18x_handler( msg, call_info,
+						contact_uri, from, to );
+	    break;
+
+	case 200:
+	    rc = sca_call_info_invite_reply_200_handler( msg, call_info,
+						contact_uri, from, to );
+	    break;
+
+	default:
+	    rc = sca_call_info_invite_reply_error_handler( msg, call_info,
+						contact_uri, from, to );
+	    break;
+	}
+
+#ifdef notdef
 	dialog.id.s = dlg_buf;
 	if ( sca_dialog_build_from_tags( &dialog, sizeof( dlg_buf ),
 		&msg->callid->body, &from->tag_value, NULL ) < 0 ) {
@@ -615,29 +985,12 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
 	    goto done;
 	}
 
-LM_INFO( "ADMORTEN DEBUG: reply status code: %d", msg->REPLY_STATUS );
-	switch ( msg->REPLY_STATUS ) {
-	case 180:
-	    state = SCA_APPEARANCE_STATE_ALERTING;
-	    break;
-
-	case 183:
-	    state = SCA_APPEARANCE_STATE_PROGRESSING;
-	    break;
-
-	case 200:
-	    if ( app->state != SCA_APPEARANCE_STATE_HELD ) {
-		state = SCA_APPEARANCE_STATE_ACTIVE;
-	    }
-
-	    /* if a Call-Info header is present, app-index goes to Contact */
-	    break;
-
-	default:
-	    /* XXX error, drop line-seize subscription, release appearance */
-	    break;
+	if ( app->state != SCA_APPEARANCE_STATE_HELD ) {
+	    state = SCA_APPEARANCE_STATE_ACTIVE;
 	}
 
+	/* XXX UPDATE FROM-URI APPEARANCE STATE */
+	/* if a Call-Info header is present, app-index goes to Contact */
 	if ( sca_appearance_update_unsafe( app, state, &to->uri,
 		&dialog, NULL, NULL ) < 0 ) {
 	    sca_appearance_state_to_str( state, &state_str );
@@ -650,6 +1003,7 @@ LM_INFO( "ADMORTEN DEBUG: reply status code: %d", msg->REPLY_STATUS );
 	}
 
 	rc = 1;
+#endif /* notdef */
     }
 
 done:
@@ -665,36 +1019,49 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 	str *contact_uri, struct to_body *from, struct to_body *to )
 {
     sca_appearance	*app;
+    str			from_aor = STR_NULL;
+    str			to_aor = STR_NULL;
     int			rc = -1;
+
+    if ( sca_uri_extract_aor( &from->uri, &from_aor ) < 0 ) {
+	LM_ERR( "sca_call_info_bye_handler: failed to extract From AoR "
+		"from %.*s", STR_FMT( &from->uri ));
+	goto done;
+    }
+    if ( sca_uri_extract_aor( &to->uri, &to_aor ) < 0 ) {
+	LM_ERR( "sca_call_info_bye_handler: failed to extract To AoR "
+		"from %.*s", STR_FMT( &to->uri ));
+	goto done;
+    }
 
     if ( msg->first_line.type == SIP_REQUEST ) {
 	if ( call_info != NULL ) {
-	    if ( sca_appearance_release_index( sca, &from->uri,
+	    if ( sca_appearance_release_index( sca, &from_aor,
 						call_info->index ) < 0 ) {
 		LM_ERR( "Failed to release appearance-index %d "
 			"for %.*s on BYE", call_info->index,
-			STR_FMT( &from->uri ));
+			STR_FMT( &from_aor ));
 		goto done;
 	    }
 
-	    if ( sca_notify_call_info_subscribers( sca, &from->uri ) < 0 ) {
+	    if ( sca_notify_call_info_subscribers( sca, &from_aor ) < 0 ) {
 		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on BYE",
-			STR_FMT( &from->uri ));
+			STR_FMT( &from_aor ));
 		goto done;
 	    }
 	} else {
 	    /* BYE from non-SCA line, see if the dialog is with an SCA line */
-	    app = sca_appearance_unlink_by_tags( sca, &to->uri,
+	    app = sca_appearance_unlink_by_tags( sca, &to_aor,
 			&msg->callid->body, &to->tag_value, NULL );
 	    if ( app == NULL ) {
 		LM_ERR( "sca_call_info_bye_handler: failed to look up "
 			"dialog for BYE %.*s from %.*s",
-			STR_FMT( &to->uri ), STR_FMT( &from->uri ));
+			STR_FMT( &to_aor ), STR_FMT( &from_aor ));
 		goto done;
 	    }
 	    sca_appearance_free( app );
 
-	    if ( sca_notify_call_info_subscribers( sca, &to->uri ) < 0 ) {
+	    if ( sca_notify_call_info_subscribers( sca, &to_aor ) < 0 ) {
 		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on BYE",
 			STR_FMT( &to->uri ));
 		goto done;
@@ -702,17 +1069,17 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 	}
     } else {
 	if ( call_info != NULL ) {
-	    if ( sca_appearance_release_index( sca, &to->uri,
+	    if ( sca_appearance_release_index( sca, &to_aor,
 						call_info->index ) < 0 ) {
 		LM_ERR( "Failed to release appearance-index %d "
 			"for To-URI %.*s on BYE reply", call_info->index,
-			STR_FMT( &to->uri ));
+			STR_FMT( &to_aor ));
 		goto done;
 	    }
 
-	    if ( sca_notify_call_info_subscribers( sca, &to->uri ) < 0 ) {
+	    if ( sca_notify_call_info_subscribers( sca, &to_aor ) < 0 ) {
 		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers "
-			"on BYE reply", STR_FMT( &to->uri ));
+			"on BYE reply", STR_FMT( &to_aor ));
 		goto done;
 	    }
 	}
@@ -765,7 +1132,6 @@ sca_call_info_cancel_handler( sip_msg_t *msg, sca_call_info *call_info,
 
     return( rc );
 }
-
 struct sca_call_info_dispatch {
     int			method;
     int			(*handler)( sip_msg_t *, sca_call_info *, str *,
@@ -776,10 +1142,92 @@ struct sca_call_info_dispatch	call_info_dispatch[] = {
     { METHOD_BYE,	sca_call_info_bye_handler },
     { METHOD_CANCEL,	sca_call_info_cancel_handler },
 #ifdef notdef
+    { METHOD_ACK,	sca_call_info_ack_handler },
     { METHOD_PRACK,	sca_call_info_prack_handler },
     { METHOD_REFER,	sca_call_info_refer_handler },
 #endif /* notdef */
 };
+
+    void
+sca_call_info_sl_reply_cb( void *cb_arg )
+{
+    sl_cbp_t		*slcbp = (sl_cbp_t *)cb_arg;
+    sip_msg_t		*msg;
+    struct to_body	*from;
+    struct to_body	*to;
+    sca_appearance	*app;
+    str			aor = STR_NULL;
+    str			contact_uri = STR_NULL;
+
+    LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_sl_reply_cb" );
+
+    if ( slcbp == NULL ) {
+	LM_INFO( "ADMORTEN DEBUG: sca_call_info_sl_reply_cb: slcbp is NULL" );
+	return;
+    }
+
+    LM_INFO( "ADMORTEN DEBUG: sca_call_info_sl_reply_cb: ready reply "
+	    "%d %.*s", slcbp->code, STR_FMT( slcbp->reason ));
+
+
+    if ( slcbp->type != SLCB_REPLY_READY ) {
+	return;
+    }
+
+    /* for now, it appears we only need this during INVITEs... */
+    if ( slcbp->req->REQ_METHOD != METHOD_INVITE ) {
+	return;
+    }
+
+    /* ...and even then only on error */
+    if ( slcbp->code < 400 || slcbp->code == 401 || slcbp->code == 407 ) {
+	/* LM_DBG( "sca_call_info_sl_reply_cb: ignoring stateless reply with "
+		"status %d %.*s", slcbp->code, STR_FMT( slcbp->reason )); */
+	return;
+    }
+
+    msg = slcbp->req;
+    if ( sca_get_msg_from_header( msg, &from ) < 0 ) {
+	LM_ERR( "sca_call_info_sl_reply_cb: failed to get From header from "
+		"request before stateless reply with %d %.*s",
+		slcbp->code, STR_FMT( slcbp->reason ));
+	return;
+    }
+    if ( sca_uri_extract_aor( &from->uri, &aor ) < 0 ) {
+	LM_ERR( "sca_call_info_sl_reply_cb: failed to extract AoR "
+		"from URI %.*s", STR_FMT( &from->uri ));
+	return;
+    }
+
+    if ( !sca_uri_is_shared_appearance( sca, &aor )) {
+	/* LM_DBG( "sca_call_info_sl_reply_cb: ignoring non-shared appearance "
+		"%.*s", STR_FMT( &aor )); */
+	return;
+    }
+
+    if ( sca_get_msg_contact_uri( msg, &contact_uri ) < 0 ) {
+	LM_ERR( "sca_call_info_sl_reply_cb: failed to get Contact from "
+		"request before stateless reply with %d %.*s",
+		slcbp->code, STR_FMT( slcbp->reason ));
+	return;
+    }
+
+    if ( sca_get_msg_to_header( msg, &to ) < 0 ) {
+	LM_ERR( "sca_call_info_sl_reply_cb: failed to get To header from "
+		"request before stateless reply with %d %.*s",
+		slcbp->code, STR_FMT( slcbp->reason ));
+	return;
+    }
+
+    if ( sca_subscription_terminate( sca, &aor,
+		SCA_EVENT_TYPE_LINE_SEIZE, &contact_uri,
+		SCA_SUBSCRIPTION_STATE_TERMINATED_NORESOURCE,
+		SCA_SUBSCRIPTION_TERMINATE_OPT_DEFAULT ) < 0 ) {
+	LM_ERR( "sca_call_info_sl_reply_cb: failed to terminate "
+		"line-seize subscription for %.*s", STR_FMT( &contact_uri ));
+	return;
+    }
+}
 
     int
 sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
@@ -820,7 +1268,8 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
 	LM_ERR( "Bad To header" );
 	return( -1 );
     }
-    if ( sca_get_msg_contact_uri( msg, &contact_uri ) < 0 ) {
+    rc = sca_get_msg_contact_uri( msg, &contact_uri );
+    if ( rc < 0 ) {
 	LM_ERR( "Bad Contact" );
 	return( -1 );
     }
