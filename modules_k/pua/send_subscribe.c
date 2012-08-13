@@ -623,6 +623,7 @@ faked_error:
 		presentity->record_route.len= record_route.len;
 		size+= record_route.len;
 		pkg_free(record_route.s);
+		record_route.s = NULL;
 	}
 
 	presentity->contact.s= (char*)presentity + size;
