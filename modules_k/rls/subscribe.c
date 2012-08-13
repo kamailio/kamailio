@@ -463,6 +463,7 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 	subs_t subs;
 	pres_ev_t* event = NULL;
 	int err_ret = -1;
+	int ret = to_presence_code;
 	str* contact = NULL;
 	xmlDocPtr doc = NULL;
 	xmlNodePtr service_node = NULL;
@@ -743,6 +744,8 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 		remove_expired_rlsubs(&subs, hash_code);
 
 done:
+	ret = 1;
+forpresence:
 	if(contact!=NULL)
 	{	
 		if(contact->s!=NULL)
@@ -758,14 +761,7 @@ done:
 		xmlFreeDoc(doc);
 	if (rlsubs_did.s != NULL)
 		pkg_free(rlsubs_did.s);
-	return 1;
-
-forpresence:
-	if(subs.pres_uri.s!=NULL)
-		pkg_free(subs.pres_uri.s);
-	if (rlsubs_did.s != NULL)
-		pkg_free(rlsubs_did.s);
-	return to_presence_code;
+	return ret;
 
 bad_event:
 	err_ret = 0;
