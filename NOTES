@@ -78,3 +78,7 @@ Revisiting possibility of using TMCB_ tm module hooks.
     group. Seems the handsets are dumping the line state when they get the
     CANCELs, so the appearance goes away. On next reSUBSCRIBE/NOTIFY, the
     handsets get the correct state again.
+
+    Using TCMB_REQ_IN is a viable option. It would allow for eliminating
+    the use of exported functions to the script. Second rev? Probably
+    more efficient than using exported functions.
