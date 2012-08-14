@@ -29,7 +29,7 @@ packages:
   - mysql-libs			# kamailio-mysql
   - net-snmp-libs		# kamailio-snmpstats
   - openldap			# kamailio-ldap
-  - openssl			# kamailio-tls, kamailio-websocket
+  - openssl			# kamailio-outbound, kamailio-tls, kamailio-websocket
   - pcre			# kamailio-regex, kamailio-dialplan, kamailio-lcr
   - perl-Authen-SASL		# kamailio-perl
   - perl-LDAP			# kamailio-perl

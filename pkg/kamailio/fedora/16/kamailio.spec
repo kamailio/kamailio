@@ -25,7 +25,7 @@ Conflicts:     kamailio-xmlrpc < %ver, kamailio-perl < %ver, kamailio-lua < %ver
 Conflicts:     kamailio-python < %ver, kamailio-regex < %ver
 Conflicts:     kamailio-dialplan < %ver, kamailio-lcr < %ver
 Conflicts:     kamailio-xmlops < %ver, kamailio-cdp < %ver
-Conflicts:     kamailio-websocket < %ver
+Conflicts:     kamailio-websocket < %ver, kamailio-outbound < %ver
 %if 0%{?fedora}
 Conflicts:     kamailio-radius < %ver, kamailio-carrierroute < %ver
 Conflicts:     kamailio-redis < %ver, kamailio-json < %ver 
@@ -260,6 +260,17 @@ BuildRequires: openssl-devel, libunistring-devel
 WebSocket transport for Kamailio.
 
 
+%package outbound
+Summary:       Outbound (RFC 5626) support for Kamailio.
+Group:         System Environment/Daemons
+Requires:      openssl, kamailio = %ver
+BuildRequires: openssl-devel
+
+%description outbound
+RFC 5626, "Managing Client-Initiated Connections in the Session Initiation
+Protocol (SIP)" support for Kamailio.
+
+
 %package  purple
 Summary:  Multi-protocol IM and presence gateway module.
 Group:    System Environment/Daemons
@@ -363,14 +374,14 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
-	klcr ksqlite kredis kjson kmono kberkeley kwebsocket"\
+	klcr ksqlite kredis kjson kmono kberkeley kwebsocket koutbound"\
 	include_modules="xmlrpc xmlops cdp cdp_avp"
 %else
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kpresence kregex kdialplan\
-	klcr ksqlite kberkeley kwebsocket"\
+	klcr ksqlite kberkeley kwebsocket koutbound"\
 	include_modules="xmlrpc xmlops cdp cdp_avp"
 %endif
 
@@ -385,7 +396,7 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
-	klcr ksqlite kredis kjson kmono kberkeley kwebsocket"\
+	klcr ksqlite kredis kjson kmono kberkeley kwebsocket koutbound"\
 	include_modules="xmlrpc xmlops cdp cdp_avp"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
@@ -400,7 +411,7 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kpresence kregex kdialplan\
-	klcr ksqlite kberkeley kwebsocket"\
+	klcr ksqlite kberkeley kwebsocket koutbound"\
 	include_modules="xmlrpc xmlops cdp cdp_avp"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
@@ -928,6 +939,12 @@ fi
 %{_libdir}/kamailio/modules/websocket.so
 
 
+%files outbound
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.outbound
+%{_libdir}/kamailio/modules/outbound.so
+
+
 %if 0%{?fedora}
 %files radius
 %defattr(-,root,root)
@@ -976,6 +993,8 @@ fi
 
 
 %changelog
+* Mon Aug 13 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Added Outbound module
 * Fri Jul 13 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Updated rel to dev2
 * Thu Jul 5 2012 Peter Dunkley <peter@dunkley.me.uk>

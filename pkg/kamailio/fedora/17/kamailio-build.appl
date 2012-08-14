@@ -35,7 +35,7 @@ packages:
   - mysql-devel			# kamailio-mysql
   - net-snmp-devel		# kamailio-snmpstats
   - openldap-devel		# kamailio-ldap
-  - openssl-devel		# kamailio-tls, kamailio-websocket
+  - openssl-devel		# kamailio-outbound, kamailio-tls, kamailio-websocket
   - pcre-devel			# kamailio-regex, kamailio-dialplan, kamailio-lcr
   - postgresql-devel		# kamailio-postgresql
   - python-devel		# kamailio-python
