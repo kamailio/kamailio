@@ -584,7 +584,6 @@ LM_INFO( "ADMORTEN DEBUG: no appearance for %.*s, seizing next", STR_FMT( &aor )
 	    goto done;
 	}
 
-	notify = 1;
 	rc = 1;
     }
 
@@ -620,6 +619,13 @@ sca_call_info_invite_request_handler( sip_msg_t *msg, sca_call_info *call_info,
     /* XXX check for to-tag, check SDP for hold/pickup, etc. */
     /* this is likely to be the most complicated one */
     /* if picking up held, this is where we need to inject Replaces hdr */
+
+    if ( sca->tm_api->register_tmcb( msg, NULL, TMCB_E2EACK_IN,
+				    sca_call_info_ack_cb, NULL, NULL ) < 0 ) {
+	LM_ERR( "sca_call_info_invite_request_handler: failed to register "
+		"callback for INVITE %.*s ACK", STR_FMT( &from_aor ));
+	goto done;
+    }
 
     if ( call_info == NULL ) {
 	/* XXX just for now. will also need to check for reINVITE, etc. */
@@ -771,7 +777,7 @@ LM_INFO( "ADMORTEN DEBUG: INVITE 200 handler with Call-Info from %.*s",
 
 	call_info->state = SCA_APPEARANCE_STATE_ACTIVE;
 	rc = sca_call_info_uri_update( &to_aor, call_info, contact_uri,
-			&msg->callid->body, &from->tag_value, &to->tag_value );
+			&msg->callid->body, &to->tag_value, &from->tag_value );
     }
 
     if ( !sca_uri_is_shared_appearance( sca, &from_aor )) {
@@ -896,6 +902,42 @@ sca_call_info_invite_reply_error_handler( sip_msg_t *msg,
     return( 1 );
 }
 
+    void
+sca_call_info_ack_cb( struct cell *t, int type, struct tmcb_params *params )
+{
+    struct to_body	*to;
+    str			to_aor = STR_NULL;
+
+LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_ack_cb" );
+
+    if ( !(type & TMCB_E2EACK_IN)) {
+	return;
+    }
+
+    if ( sca_get_msg_to_header( params->req, &to ) < 0 ) {
+	LM_ERR( "sca_call_info_ack_cb: failed to get To-header" );
+	return;
+    }
+    if ( sca_uri_extract_aor( &to->uri, &to_aor ) < 0 ) {
+	LM_ERR( "sca_call_info_ack_cb: failed to extract To AoR from %.*s",
+		STR_FMT( &to->uri ));
+	return;
+    }
+
+    if ( !sca_uri_is_shared_appearance( sca, &to_aor )) {
+	LM_DBG( "sca_call_info_ack_cb: %.*s is not a shared appearance",
+		STR_FMT( &to_aor ));
+	return;
+    }
+
+    if ( sca_notify_call_info_subscribers( sca, &to_aor ) < 0 ) {
+	LM_ERR( "sca_call_info_ack_cb: failed to call-info "
+		"NOTIFY %.*s subscribers", STR_FMT( &to_aor ));
+	return;
+    }
+
+    LM_INFO( "ADMORTEN DEBUG: call-info NOTIFY to %.*s", STR_FMT( &to_aor ));
+}
 
 /* XXX may want to further split between requests & responses */
     static int
@@ -1142,7 +1184,6 @@ struct sca_call_info_dispatch	call_info_dispatch[] = {
     { METHOD_BYE,	sca_call_info_bye_handler },
     { METHOD_CANCEL,	sca_call_info_cancel_handler },
 #ifdef notdef
-    { METHOD_ACK,	sca_call_info_ack_handler },
     { METHOD_PRACK,	sca_call_info_prack_handler },
     { METHOD_REFER,	sca_call_info_refer_handler },
 #endif /* notdef */
