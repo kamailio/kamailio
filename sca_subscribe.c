@@ -282,6 +282,12 @@ sca_subscription_save( sca_mod *scam, sca_subscription *sub, int save_idx )
 	new_sub->index = sub->index;
     }
 
+    if ( sca_appearance_register( scam, &sub->target_aor ) < 0 ) {
+	LM_ERR( "sca_subscription_save: sca_appearance_register failed, "
+		"still saving subscription from %.*s",
+		STR_FMT( &sub->subscriber ));
+    }
+
     if ( save_idx >= 0 ) {
 	rc = sca_hash_table_index_kv_insert( scam->subscriptions,
 				    save_idx, new_sub,
