@@ -657,7 +657,8 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 					LM_ERR("while sending reply\n");
 					goto error;
 				}
-				return 0;
+				ret = 0;
+				goto stop;
 			}
 
 			/* if correct reply with 200 OK */
@@ -705,7 +706,8 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 					LM_ERR("while sending reply\n");
 					goto error;
 				}
-				return 0;
+				ret = 0;
+				goto stop;
 			}
 		}	
 		if(rls_get_service_list(&subs.pres_uri, &subs.watcher_user,
@@ -745,6 +747,7 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 
 done:
 	ret = 1;
+stop:
 forpresence:
 	if(contact!=NULL)
 	{	
