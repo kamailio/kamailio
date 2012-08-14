@@ -289,6 +289,35 @@ sca_appearance_list_free( void *value )
     shm_free( app_list );
 }
 
+    int
+sca_appearance_register( sca_mod *scam, str *aor )
+{
+    sca_appearance_list	*app_list;
+    int			rc = -1;
+
+    assert( scam != NULL );
+    assert( aor != NULL );
+
+    app_list = sca_appearance_list_create( scam, aor );
+    if ( app_list == NULL ) {
+	goto done;
+    }
+
+    if ( sca_hash_table_kv_insert( scam->appearances, aor, app_list,
+		    sca_appearance_list_aor_cmp,
+		    sca_appearance_list_print,
+		    sca_appearance_list_free ) < 0 ) {
+	LM_ERR( "sca_appearance_register: failed to insert appearance list "
+		"for %.*s", STR_FMT( aor ));
+	goto done;
+    }
+
+    rc = 1;
+
+done:
+    return( rc );
+}
+
     sca_appearance *
 sca_appearance_seize_next_available_unsafe( sca_mod *scam, str *aor,
 	str *owner_uri, int slot_idx )

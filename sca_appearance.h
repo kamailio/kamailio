@@ -79,6 +79,7 @@ sca_appearance	*sca_appearance_for_dialog_unsafe( sca_mod *, str *,
 sca_appearance	*sca_appearance_for_tags_unsafe( sca_mod *, str *,
 						str *, str *, str *, int );
 
+int	sca_appearance_register( sca_mod *, str * );
 void	sca_appearance_list_insert_appearance( sca_appearance_list *,
 						sca_appearance * );
 sca_appearance	*sca_appearance_list_unlink_index( sca_appearance_list *, int );
