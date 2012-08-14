@@ -1,0 +1,67 @@
+Outbound Module
+
+Peter Dunkley
+
+   Crocodile RCS Ltd
+
+   Copyright © 2012 Crocodile RCS Ltd
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+        4. Functions
+        5. MI Commands
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+   4. Functions
+   5. MI Commands
+
+1. Overview
+
+   ...
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   ...
+
+2.2. External Libraries or Applications
+
+   The following libraries must be installed before running Kamailio with
+   this module loaded:
+     * OpenSSL.
+
+3. Parameters
+
+   ...
+
+4. Functions
+
+   ...
+
+5. MI Commands
+
+   ...
