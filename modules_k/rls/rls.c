@@ -510,7 +510,7 @@ static int mod_init(void)
 	}
 
 	/* verify table version */
-	if(db_check_table_version(&rlpres_dbf, rls_db, &rlpres_table, P_TABLE_VERSION) < 0) {
+	if(db_check_table_version(&rlpres_dbf, rlpres_db, &rlpres_table, P_TABLE_VERSION) < 0) {
 			LM_ERR("error during table version check.\n");
 			return -1;
 	}
