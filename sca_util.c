@@ -7,6 +7,18 @@
 #include "../../parser/sdp/sdp.h"
 
     int
+sca_get_msg_method( sip_msg_t *msg )
+{
+    assert( msg != NULL );
+
+    if ( msg->first_line.type == SIP_REQUEST ) {
+	return( msg->REQ_METHOD );
+    }
+
+    return( sca_get_msg_cseq_method( msg ));
+}
+
+    int
 sca_get_msg_contact_uri( sip_msg_t *msg, str *contact_uri )
 {
     contact_body_t	*contact_body;

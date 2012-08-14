@@ -1315,25 +1315,12 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
 	return( -1 );
     }
 
+    method = sca_get_msg_method( msg );
+
     n_dispatch = sizeof( call_info_dispatch ) / sizeof( call_info_dispatch[0] );
-    if ( msg->first_line.type == SIP_REQUEST ) {
-	for ( i = 0; i < n_dispatch; i++ ) {
-	    if ( msg->REQ_METHOD == call_info_dispatch[ i ].method ) {
-		break;
-	    }
-	}
-    } else {
-	method = sca_get_msg_cseq_method( msg );
-LM_INFO( "ADMORTEN DEBUG: sca_call_info_update handling "
-		"%d response to %.*s request", msg->REPLY_STATUS,
-		STR_FMT( &(get_cseq(msg))->method ));
-	
-	for ( i = 0; i < n_dispatch; i++ ) {
-	    if ( method == call_info_dispatch[ i ].method ) {
-LM_INFO( "ADMORTEN DEBUG: sca_call_info_update comparing: %d == %d?",
-		method, call_info_dispatch[ i ].method );
-		break;
-	    }
+    for ( i = 0; i < n_dispatch; i++ ) {
+	if ( method == call_info_dispatch[ i ].method ) {
+	    break;
 	}
     }
     if ( i >= n_dispatch ) {

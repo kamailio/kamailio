@@ -3,6 +3,9 @@
 
 #include "sca_common.h"
 
+/* get method, regardless of whether message is a request or response */
+int	sca_get_msg_method( sip_msg_t * );
+
 /* populate a str pointer with contact uri from a SIP request or response */
 int	sca_get_msg_contact_uri( sip_msg_t *, str * );
 
