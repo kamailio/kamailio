@@ -811,7 +811,8 @@ failure_route[tryagain] {
 
    Parameter groupid is optional, when it is missing, then the matching
    will be done against all addresses in all groups. Upon a match, the
-   'grp_avp' will be set to groupid of matching address.
+   variable specified by 'setid_pvar' parameter will be set to groupid of
+   matching address.
 
    This function can be used from ANY_ROUTE.
 
