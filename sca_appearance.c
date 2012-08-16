@@ -422,6 +422,12 @@ sca_appearance_update_unsafe( sca_appearance *app, int state, str *uri,
 	    }
 
 	    app->dialog.id.s = (char *)shm_malloc( dialog->id.len );
+	    if ( app->dialog.id.s == NULL ) {
+		LM_ERR( "sca_appearance_update_unsafe: shm_malloc dialog id "
+			"failed: out of shared memory" );
+		/* XXX this seems bad enough to abort... */
+		return( -1 );
+	    }
 	    SCA_STR_COPY( &app->dialog.id, &dialog->id );
 
 	    app->dialog.call_id.s = app->dialog.id.s;
@@ -442,7 +448,38 @@ sca_appearance_update_unsafe( sca_appearance *app, int state, str *uri,
 	}
     }
 
-    /* XXX update owner, callee as necessary */
+    /* note these two blocks could be condensed and inlined */
+    if ( !SCA_STR_EMPTY( owner )) {
+	if ( !SCA_STR_EQ( &app->owner, owner )) {
+	    if ( app->owner.s != NULL ) {
+		shm_free( app->owner.s );
+	    }
+
+	    app->owner.s = (char *)shm_malloc( owner->len );
+	    if ( app->owner.s == NULL ) {
+		LM_ERR( "sca_appearance_update_unsafe: shm_malloc "
+			"appearance owner URI failed: out of shared memory" );
+		return( -1 );
+	    }
+	    SCA_STR_COPY( &app->owner, owner );
+	}
+    }
+
+    if ( !SCA_STR_EMPTY( callee )) {
+	if ( !SCA_STR_EQ( &app->callee, callee )) {
+	    if ( app->callee.s != NULL ) {
+		shm_free( app->callee.s );
+	    }
+
+	    app->callee.s = (char *)shm_malloc( callee->len );
+	    if ( app->callee.s == NULL ) {
+		LM_ERR( "sca_appearance_update_unsafe: shm_malloc "
+			"appearance callee URI failed: out of shared memory" );
+		return( -1 );
+	    }
+	    SCA_STR_COPY( &app->callee, callee );
+	}
+    }
 
 done:
     return( rc );
@@ -485,7 +522,7 @@ sca_appearance_state_for_index( sca_mod *scam, str *aor, int idx )
 
     app_list = sca_hash_table_slot_kv_find_unsafe( slot, aor );
     if ( app_list == NULL ) {
-	LM_WARN( "%.*s has no in-use appearances", STR_FMT( aor ));
+	LM_DBG( "%.*s has no in-use appearances", STR_FMT( aor ));
 	goto done;
     }
 
