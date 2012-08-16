@@ -216,6 +216,8 @@ int pv_get_sintval(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res, int sival);
 int pv_get_strval(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res, str *sval);
+int pv_get_strzval(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res, char *sval);
 int pv_get_strintval(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res, str *sval, int ival);
 int pv_get_intstrval(struct sip_msg *msg, pv_param_t *param,
