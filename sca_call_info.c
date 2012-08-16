@@ -72,6 +72,8 @@ sca_call_info_header_length_for_appearance( sca_appearance *appearance,
     len += state_str.len;
 
     if ( !SCA_STR_EMPTY( &appearance->uri )) {
+	/* +1 for ';', +1 for the '=' between param name and value */
+	len += SCA_APPEARANCE_URI_STR.len + 1 + 1;
 	len += appearance->uri.len;
     }
 
@@ -141,6 +143,21 @@ sca_call_info_header_append_appearances( sca_mod *scam, sca_subscription *sub,
 	len += snprintf( hdrbuf + len, maxlen - len,
 		  ">;appearance-index=%d;appearance-state=%s",
 		  app->index, state_str.s );
+
+	if ( !SCA_STR_EMPTY( &app->uri )) {
+	    hdrbuf[ len ] = ';';
+	    len += 1;
+
+	    memcpy( hdrbuf + len, SCA_APPEARANCE_URI_STR.s,
+				  SCA_APPEARANCE_URI_STR.len );
+	    len += SCA_APPEARANCE_URI_STR.len;
+
+	    hdrbuf[ len ] = '=';
+	    len += 1;
+
+	    memcpy( hdrbuf + len, app->uri.s, app->uri.len );
+	    len += app->uri.len;
+	}
 
 	if ( app->next ) {
 	    memcpy( hdrbuf + len, ",", 1 );
@@ -638,13 +655,16 @@ done:
 }
 
     static int
-sca_call_info_uri_update( str *uri, sca_call_info *call_info, str *contact_uri,
-	str *call_id, str *from_tag, str *to_tag )
+sca_call_info_uri_update( str *uri, sca_call_info *call_info,
+	struct to_body *from, struct to_body *to, str *contact_uri,
+	str *call_id )
 {
     sca_appearance	*app;
     sca_dialog		dialog;
     str			aor = STR_NULL;
     str			state_str;
+    str			*from_tag = &from->tag_value;
+    str			*to_tag = &to->tag_value;
     char		dlg_buf[ 1024 ];
     int			slot_idx = -1;
     int			rc = -1;
@@ -658,7 +678,6 @@ sca_call_info_uri_update( str *uri, sca_call_info *call_info, str *contact_uri,
 		"%.*s failed", STR_FMT( uri ));
 	return( -1 );
     }
-
 
     if ( !sca_uri_is_shared_appearance( sca, &aor )) {
 	return( 0 );
@@ -678,11 +697,10 @@ sca_call_info_uri_update( str *uri, sca_call_info *call_info, str *contact_uri,
 						slot_idx );
     if ( app != NULL ) {
 LM_INFO( "ADMORTEN DEBUG: found appearance for %.*s", STR_FMT( &aor ));
-	/* XXX to->uri here should be an escaped to->body */
-
-	/* XXX set the callee uri in the ACK from the caller */
-	if ( sca_appearance_update_unsafe( app, call_info->state, NULL,
-		&dialog, contact_uri, NULL ) < 0 ) {
+	/* XXX must escape to->body before adding it to the appearance */
+	/* XXX to->uri here should be the escaped to->body */
+	if ( sca_appearance_update_unsafe( app, call_info->state,
+		&to->uri, &dialog, contact_uri, NULL ) < 0 ) {
 	    sca_appearance_state_to_str( call_info->state, &state_str );
 	    LM_ERR( "sca_call_info_uri_update: failed to update appearance "
 		    "%.*s appearance-index %d with dialog id %.*s to "
@@ -971,8 +989,8 @@ sca_call_info_invite_reply_200_handler( sip_msg_t *msg,
 
     if ( call_info != NULL ) {
 	call_info->state = SCA_APPEARANCE_STATE_ACTIVE;
-	rc = sca_call_info_uri_update( &to_aor, call_info, contact_uri,
-			&msg->callid->body, &to->tag_value, &from->tag_value );
+	rc = sca_call_info_uri_update( &to_aor, call_info, from, to,
+			&msg->callid->body, contact_uri );
     }
 
     if ( !sca_uri_is_shared_appearance( sca, &from_aor )) {
