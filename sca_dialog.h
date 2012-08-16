@@ -18,5 +18,6 @@ typedef struct _sca_dialog		sca_dialog;
 			    SCA_STR_EMPTY( &(d)->to_tag )))
 
 int	sca_dialog_build_from_tags( sca_dialog *, int, str *, str *, str * );
+int	sca_dialog_create_replaces_header( sca_dialog *, str * );
 
 #endif /* SCA_DIALOG_H */
