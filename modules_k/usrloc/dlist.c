@@ -307,6 +307,12 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 	int i = 0;
 	cp = buf;
 	shortage = 0;
+	time_t tnow = 0;
+
+
+	if(ul_keepalive_timeout>0)
+		tnow = time(NULL);
+
 	/* Reserve space for terminating 0000 */
 	len -= sizeof(c->c.len);
 
@@ -333,6 +339,22 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 					 */
 					if ((c->cflags & flags) != flags)
 						continue;
+
+					if(ul_keepalive_timeout>0 && c->last_keepalive>0)
+					{
+						if((c->cflags & nat_bflag) != 0 && c->sock!=NULL
+								&& c->sock->proto==PROTO_UDP)
+						{
+							if(c->last_keepalive+ul_keepalive_timeout < tnow)
+							{
+								/* set contact as expired in 10s */
+								if(c->expires > tnow + 10)
+									c->expires = tnow + 10;
+								continue;
+							}
+						}
+					}
+
 					if (c->received.s) {
 						needed = (int)(sizeof(c->received.len)
 								+ c->received.len
@@ -456,6 +478,55 @@ int get_all_ucontacts(void *buf, int len, unsigned int flags,
 }
 
 
+
+/**
+ *
+ */
+int ul_refresh_keepalive(unsigned int _aorhash, str *_ruid)
+{
+	dlist_t *p;
+	urecord_t *r;
+	ucontact_t *c;
+	int i;
+
+	/* todo: get location domain via param */
+
+	for (p = root; p != NULL; p = p->next)
+	{
+		i = _aorhash&(p->d->size-1);
+		lock_ulslot(p->d, i);
+		if(p->d->table[i].n<=0)
+		{
+			unlock_ulslot(p->d, i);
+			continue;
+		}
+		for (r = p->d->table[i].first; r != NULL; r = r->next)
+		{
+			if(r->aorhash==_aorhash)
+			{
+				for (c = r->contacts; c != NULL; c = c->next)
+				{
+					if (c->c.len <= 0 || c->ruid.len<=0)
+						continue;
+					if(c->ruid.len==_ruid->len
+							&& !memcmp(c->ruid.s, _ruid->s, _ruid->len))
+					{
+						/* found */
+						c->last_keepalive = time(NULL);
+						LM_DBG("updated keepalive for [%.*s:%u] to %u\n",
+								_ruid->len, _ruid->s, _aorhash,
+								(unsigned int)c->last_keepalive);
+						unlock_ulslot(p->d, i);
+						return 0;
+					}
+				}
+			}
+		}
+		unlock_ulslot(p->d, i);
+	}
+
+	return 0;
+}
 
 /*!
  * \brief Create a new domain structure

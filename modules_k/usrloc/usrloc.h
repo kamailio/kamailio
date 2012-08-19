@@ -83,6 +83,7 @@ typedef struct ucontact {
 	str user_agent;         /*!< User-Agent header field */
 	struct socket_info *sock; /*!< received socket */
 	time_t last_modified;   /*!< When the record was last modified */
+	time_t last_keepalive;  /*!< last keepalive timestamp */
 	unsigned int methods;   /*!< Supported methods */
 	str instance;           /*!< SIP instance value - gruu */
 	unsigned int reg_id;    /*!< reg-id parameters */
@@ -170,6 +171,12 @@ typedef int (*get_udomain_t)(const char* _n, udomain_t** _d);
 typedef unsigned int (*ul_get_aorhash_t)(str *_aor);
 unsigned int ul_get_aorhash(str *_aor);
 
+typedef int (*ul_set_keepalive_timeout_t)(int _to);
+int ul_set_keepalive_timeout(int _to);
+
+typedef int (*ul_refresh_keepalive_t)(unsigned int _aorhash, str *_ruid);
+int ul_refresh_keepalive(unsigned int _aorhash, str *_ruid);
+
 /*! usrloc API export structure */
 typedef struct usrloc_api {
 	int           use_domain; /*! use_domain module parameter */
@@ -198,6 +205,9 @@ typedef struct usrloc_api {
 
 	register_ulcb_t      register_ulcb;
 	ul_get_aorhash_t     get_aorhash;
+
+	ul_set_keepalive_timeout_t set_keepalive_timeout;
+	ul_refresh_keepalive_t     refresh_keepalive;
 } usrloc_api_t;
 
 

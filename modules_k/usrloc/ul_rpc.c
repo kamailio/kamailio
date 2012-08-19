@@ -287,6 +287,22 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 									"Internal error adding reg_id");
 							return;
 						}
+						if(rpc->struct_add(vh, "d",
+									"Last-Keepalive", (int)c->last_keepalive)<0)
+						{
+							unlock_ulslot( dom, i);
+							rpc->fault(ctx, 500,
+									"Internal error adding reg_id");
+							return;
+						}
+						if(rpc->struct_add(vh, "d",
+									"Last-Modified", (int)c->last_modified)<0)
+						{
+							unlock_ulslot( dom, i);
+							rpc->fault(ctx, 500,
+									"Internal error adding reg_id");
+							return;
+						}
 
 					}
 				}
