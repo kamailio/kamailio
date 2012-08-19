@@ -22,6 +22,7 @@
  */
 
 #include "../../dprint.h"
+#include "../../dset.h"
 #include "../../ip_addr.h"
 #include "../../mod_fix.h"
 #include "../../sr_module.h"
@@ -36,7 +37,7 @@ MODULE_VERSION
 
 static int mod_init(void);
 
-static int ob_force_bflag = -1;
+static unsigned int ob_force_bflag = (unsigned int) -1;
 static str ob_key = {0, 0};
 
 static cmd_export_t cmds[]= 
@@ -75,8 +76,13 @@ struct module_exports exports=
 
 static int mod_init(void)
 {
-	if (ob_force_bflag == -1)
-		LM_INFO("force_outbound_bflag not set\n");
+	if (ob_force_bflag == (unsigned int) -1)
+		ob_force_bflag = 0;
+	else if (ob_force_bflag >= 8 * sizeof (ob_force_bflag)) {
+		LM_ERR("force_outbound_bflag (%d) too big!\n", ob_force_bflag);
+		return -1;
+	} else
+		ob_force_bflag = 1 << ob_force_bflag;
 
 	if (ob_key.s == 0)
 	{
@@ -102,6 +108,18 @@ int decode_flow_token(struct receive_info *rcv, str flow_token)
 
 int use_outbound(struct sip_msg *msg)
 {
+	/* If Outbound is forced return success without any further checks */
+	if (isbflagset(0, ob_force_bflag) > 0)
+		return 1;
+
+	/* Use Outbound when:
+	    # It's an initial request (out-of-dialog INVITE, REGISTER,
+	      SUBSCRIBE, or REFER), with
+	    # A single Via:, and
+	    # Top Route: points to us and has ;ob parameter _OR_ Contact: has
+	      ;ob parameter _OR_ it's a REGISTER with ;+sip.instance
+	*/
+
 	return 0;
 }
 
@@ -109,7 +127,8 @@ int bind_ob(struct ob_binds *pxb)
 {
 	if (pxb == NULL)
 	{
-		LM_WARN("bind_outbound: Cannot load outbound API into NULL pointer\n");
+		LM_WARN("bind_outbound: Cannot load outbound API into NULL "
+			"pointer\n");
 		return -1;
 	}
 
