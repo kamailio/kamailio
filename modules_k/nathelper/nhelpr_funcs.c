@@ -27,11 +27,11 @@
  *               reliable (UDP packages may contain garbage at the end)(bogdan)
  */
 
+#include "nhelpr_funcs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "nhelpr_funcs.h"
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../ut.h"
@@ -43,8 +43,6 @@
 #include "../../parser/msg_parser.h"
 #include "../../trim.h"
 #include "../../parser/parse_from.h"
-#include "../../parser/contact/parse_contact.h"
-#include "../../parser/parse_uri.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parser_f.h"
 #include "../../parser/sdp/sdp_helpr_funcs.h"
@@ -312,34 +310,4 @@ ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
         }
 
         return NULL;
-}
-
-/*
- * Some helper functions taken verbatim from tm module.
- */
-
-/*
- * Extract URI from the Contact header field
- */
-int
-get_contact_uri(struct sip_msg* _m, struct sip_uri *uri, contact_t** _c)
-{
-
-        if ((parse_headers(_m, HDR_CONTACT_F, 0) == -1) || !_m->contact)
-                return -1;
-        if (!_m->contact->parsed && parse_contact(_m->contact) < 0) {
-                LM_ERR("failed to parse Contact body\n");
-                return -1;
-        }
-        *_c = ((contact_body_t*)_m->contact->parsed)->contacts;
-        if (*_c == NULL)
-                /* no contacts found */
-                return -1;
-
-        if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
-                LM_ERR("failed to parse Contact URI [%.*s]\n",
-                        (*_c)->uri.len, ((*_c)->uri.s)?(*_c)->uri.s:"");
-                return -1;
-        }
-        return 0;
 }

@@ -26,11 +26,40 @@
 
 #include "../../str.h"
 #include "../../parser/msg_parser.h"
+#include "../../parser/parse_uri.h"
 #include "../../parser/contact/contact.h"
+#include "../../parser/contact/parse_contact.h"
 
 int extract_body(struct sip_msg * , str *);
 int check_content_type(struct sip_msg * );
 void *ser_memmem(const void *, const void *, size_t, size_t);
-int get_contact_uri(struct sip_msg *, struct sip_uri *, contact_t **);
 
+/*
+ * Some helper functions taken verbatim from tm module.
+ */
+
+/*
+ * Extract URI from the Contact header field
+ */
+static inline
+int get_contact_uri(struct sip_msg *_m, struct sip_uri *uri, contact_t **_c)
+{
+        if ((parse_headers(_m, HDR_CONTACT_F, 0) == -1) || !_m->contact)
+                return -1;
+        if (!_m->contact->parsed && parse_contact(_m->contact) < 0) {
+                LM_ERR("failed to parse Contact body\n");
+                return -1;
+        }
+        *_c = ((contact_body_t*)_m->contact->parsed)->contacts;
+        if (*_c == NULL)
+                /* no contacts found */
+                return -1;
+
+        if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
+                LM_ERR("failed to parse Contact URI [%.*s]\n",
+                        (*_c)->uri.len, ((*_c)->uri.s)?(*_c)->uri.s:"");
+                return -1;
+        }
+        return 0;
+}
 #endif
