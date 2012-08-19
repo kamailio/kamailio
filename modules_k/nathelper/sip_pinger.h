@@ -129,7 +129,7 @@ static inline char* build_sipping(str *curi, struct socket_info* s, str *path,
 				1 + s->port_no_str.len + s_len(";branch=0") +
 		(path->len ? (s_len(CRLF"Route: ") + path->len) : 0) +
 		s_len(CRLF"From: ") +  sipping_from.len + s_len(";tag=") +
-				sipping_from.len + 1 + 8 + 1 + 8 +
+				ruid->len + 1 + 8 + 1 + 8 +
 		s_len(CRLF"To: ") + curi->len +
 		s_len(CRLF"Call-ID: ") + sipping_callid.len + 1 + 8 + 1 + 8 + 1 +
 				s->address_str.len +
