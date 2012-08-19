@@ -78,8 +78,7 @@ static str str_status_service_unavailable = str_init("Service Unavailable");
 #define HDR_BUF_LEN		(256)
 static char headers_buf[HDR_BUF_LEN];
 
-#define KEY_BUF_LEN		(28)
-static char key_buf[KEY_BUF_LEN];
+static char key_buf[base64_enc_len(SHA_DIGEST_LENGTH)];
 
 static int ws_send_reply(sip_msg_t *msg, int code, str *reason, str *hdrs)
 {
@@ -110,7 +109,7 @@ static int ws_send_reply(sip_msg_t *msg, int code, str *reason, str *hdrs)
 int ws_handle_handshake(struct sip_msg *msg)
 {
 	str key = {0, 0}, headers = {0, 0}, reply_key = {0, 0};
-	unsigned char sha1[20];
+	unsigned char sha1[SHA_DIGEST_LENGTH];
 	unsigned int hdr_flags = 0;
 	int version;
 	struct hdr_field *hdr = msg->headers;
@@ -288,8 +287,9 @@ int ws_handle_handshake(struct sip_msg *msg)
 	SHA1((const unsigned char *) reply_key.s, reply_key.len, sha1);
 	pkg_free(reply_key.s);
 	reply_key.s = key_buf;
-	reply_key.len = base64_enc(sha1, 20,
-				(unsigned char *) reply_key.s, KEY_BUF_LEN);
+	reply_key.len = base64_enc(sha1, SHA_DIGEST_LENGTH,
+				(unsigned char *) reply_key.s,
+				base64_enc_len(SHA_DIGEST_LENGTH));
 
 	/* Add the connection to the WebSocket connection table */
 	wsconn_add(msg->rcv);

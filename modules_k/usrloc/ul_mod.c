@@ -108,6 +108,7 @@ extern int ul_locks_no;
 int ul_db_update_as_insert = 0;
 int ul_timer_procs = 0;
 int ul_db_check_update = 0;
+int ul_keepalive_timeout = 0;
 
 /* sruid to get internal uid for mi/rpc commands */
 sruid_t _ul_sruid;

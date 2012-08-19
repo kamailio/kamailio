@@ -51,7 +51,7 @@ Carsten Bock
               3.14. dstid_avp (str)
               3.15. attrs_avp (str)
               3.16. hash_pvar (str)
-              3.17. setid_pvar (str)
+              3.17. setid_pvname (str)
               3.18. ds_ping_method (string)
               3.19. ds_ping_from (string)
               3.20. ds_ping_interval (int)
@@ -118,7 +118,7 @@ Carsten Bock
    1.15. Set the "attrs_avp" parameter
    1.16. Use $avp(i:273) for hashing:
    1.17. Use combination of PVs for hashing:
-   1.18. Set the "setid_pvar" parameter
+   1.18. Set the "setid_pvname" parameter
    1.19. Set the "ds_ping_method" parameter
    1.20. Set the "ds_ping_from" parameter
    1.21. Set the "ds_ping_interval" parameter
@@ -165,7 +165,7 @@ Chapter 1. Admin Guide
         3.14. dstid_avp (str)
         3.15. attrs_avp (str)
         3.16. hash_pvar (str)
-        3.17. setid_pvar (str)
+        3.17. setid_pvname (str)
         3.18. ds_ping_method (string)
         3.19. ds_ping_from (string)
         3.20. ds_ping_interval (int)
@@ -263,7 +263,7 @@ Chapter 1. Admin Guide
    3.14. dstid_avp (str)
    3.15. attrs_avp (str)
    3.16. hash_pvar (str)
-   3.17. setid_pvar (str)
+   3.17. setid_pvname (str)
    3.18. ds_ping_method (string)
    3.19. ds_ping_from (string)
    3.20. ds_ping_interval (int)
@@ -509,16 +509,16 @@ Note
  modparam("dispatcher", "hash_pvar", "hash the $fU@$ci")
  ...
 
-3.17. setid_pvar (str)
+3.17. setid_pvname (str)
 
    The name of the PV where to store the set ID (group ID) when calling
    ds_is_from_list() with no parameter.
 
    Default value is "null" - don't set PV.
 
-   Example 1.18. Set the "setid_pvar" parameter
+   Example 1.18. Set the "setid_pvname" parameter
  ...
- modparam("dispatcher", "setid_pvar", "$var(setid)")
+ modparam("dispatcher", "setid_pvname", "$var(setid)")
  ...
 
 3.18. ds_ping_method (string)
@@ -811,7 +811,8 @@ failure_route[tryagain] {
 
    Parameter groupid is optional, when it is missing, then the matching
    will be done against all addresses in all groups. Upon a match, the
-   'grp_avp' will be set to groupid of matching address.
+   variable specified by 'setid_pvname' parameter will be set to groupid
+   of matching address.
 
    This function can be used from ANY_ROUTE.
 

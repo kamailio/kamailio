@@ -853,7 +853,8 @@ modparam("acc", "db_missed_flag", 3)
 	<section>
 		<title><varname>db_table_acc</varname> (string)</title>
 		<para>
-		Table name of accounting successfull calls -- database specific.
+		Table name of accounting successfull calls -- database specific. It
+		can contain config variables that will be evaluated at runtime.
 		</para>
 		<para>
 		Default value is <quote>acc</quote>
@@ -862,13 +863,15 @@ modparam("acc", "db_missed_flag", 3)
 		<title>db_table_acc example</title>
 		<programlisting format="linespecific">
 modparam("acc", "db_table_acc", "myacc_table")
+modparam("acc", "db_table_acc", "acc_$time(year)_$time(mon)")
 </programlisting>
 		</example>
 	</section>
 	<section>
 		<title><varname>db_table_missed_calls</varname> (string)</title>
 		<para>
-		Table name for accounting missed calls -- database specific.
+		Table name for accounting missed calls -- database specific. It
+		can contain config variables that will be evaluated at runtime.
 		</para>
 		<para>
 		Default value is <quote>missed_calls</quote>
@@ -1283,7 +1286,8 @@ acc_log_request("Some comment");
 			<para><emphasis>comment</emphasis> - Comment to be appended.</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>table</emphasis> - Database table to be used.</para>
+			<para><emphasis>table</emphasis> - Database table to be used. It
+			can contain config variables that are evaluated at runtime.</para>
 		</listitem>
 		</itemizedlist>
 		<para>
@@ -1293,7 +1297,8 @@ acc_log_request("Some comment");
 		<title>acc_db_request usage</title>
 		<programlisting format="linespecific">
 ...
-acc_log_request("Some comment", "Some table");
+acc_log_request("Some comment", "SomeTable");
+acc_log_request("Some comment", "acc_$time(year)_$time(mon)");
 ...
 </programlisting>
 		</example>

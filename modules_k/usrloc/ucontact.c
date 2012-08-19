@@ -96,6 +96,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	c->methods = _ci->methods;
 	c->reg_id = _ci->reg_id;
 	c->last_modified = _ci->last_modified;
+	c->last_keepalive = _ci->last_modified;
 
 	return c;
 error:
@@ -250,6 +251,7 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 	_c->cseq = _ci->cseq;
 	_c->methods = _ci->methods;
 	_c->last_modified = _ci->last_modified;
+	_c->last_keepalive = _ci->last_modified;
 	_c->flags = _ci->flags;
 	_c->cflags = _ci->cflags;
 

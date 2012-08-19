@@ -457,6 +457,21 @@ int pv_get_strval(struct sip_msg *msg, pv_param_t *param,
 }
 
 /**
+ * convert strz to pv_value_t
+ */
+int pv_get_strzval(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res, char *sval)
+{
+	if(res==NULL)
+		return -1;
+
+	res->rs.s = sval;
+	res->rs.len = strlen(sval);
+	res->flags = PV_VAL_STR;
+	return 0;
+}
+
+/**
  * convert str-int to pv_value_t (type is str)
  */
 int pv_get_strintval(struct sip_msg *msg, pv_param_t *param,

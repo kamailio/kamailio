@@ -33,4 +33,7 @@
 int pv_parse_stat_name(pv_spec_p sp, str *in);
 int pv_get_stat(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
+int pv_parse_sr_version_name(pv_spec_p sp, str *in);
+int pv_get_sr_version(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+
 #endif

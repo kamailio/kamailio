@@ -799,7 +799,7 @@ int forward_reply(struct sip_msg* msg)
 		|| (msg->via2==0) || (msg->via2->error!=PARSE_OK))
 	{
 		/* no second via => error */
-		LOG(L_DBG, "broken reply to forward - no 2nd via\n");
+		LOG(L_DBG, "reply cannot be forwarded - no 2nd via\n");
 		goto error;
 	}
 

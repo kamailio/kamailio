@@ -74,6 +74,13 @@ extern int ul_fetch_rows;
 extern int ul_hash_size;
 extern int ul_db_update_as_insert;
 extern int ul_db_check_update;
+extern int ul_keepalive_timeout;
+
+/*! nat branch flag */
+extern unsigned int nat_bflag;
+/*! flag to protect against wrong initialization */
+extern unsigned int init_flag;
+
 
 extern db1_con_t* ul_dbh;   /* Database connection handle */
 extern db_func_t ul_dbf;

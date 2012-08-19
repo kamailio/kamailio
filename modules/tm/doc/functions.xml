@@ -249,29 +249,6 @@ branch_route[1] {
 	</example>
 	</section>
 
-    <section id="append_branch">
-	<title>
-	    <function>append_branch()</function>
-	</title>
-	<para>
-	    Similarly to <function>t_fork_to</function>, it extends destination
-	    set by a new entry. The difference is that current URI is taken
-	    as new entry.
-	</para>
-	<example>
-	    <title><function>append_branch</function> usage</title>
-	    <programlisting>
-...
-set_user("john"); 
-t_fork(); 
-set_user("alice");
-t_fork(); 
-t_relay();
-...
-	    </programlisting>
-	</example>
-    </section>
-
     <section id="t_newtran">
 	<title>
 	    <function>t_newtran()</function>

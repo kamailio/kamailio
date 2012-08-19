@@ -41,11 +41,6 @@
 #include "../../sr_module.h"
 #include "ul_mod.h"
 
-/*! nat branch flag */
-extern unsigned int nat_bflag;
-/*! flag to protect against wrong initialization */
-extern unsigned int init_flag;
-
 
 /*!
  * \brief usrloc module API export bind function
@@ -83,9 +78,24 @@ int bind_usrloc(usrloc_api_t* api)
 	api->get_urecord_by_ruid      = get_urecord_by_ruid;
 	api->get_ucontact_by_instance = get_ucontact_by_instance;
 
+	api->set_keepalive_timeout    = ul_set_keepalive_timeout;
+	api->refresh_keepalive        = ul_refresh_keepalive;
+
 	api->use_domain = use_domain;
 	api->db_mode    = db_mode;
 	api->nat_flag   = nat_bflag;
 
 	return 0;
+}
+
+/**
+ *
+ */
+int ul_set_keepalive_timeout(int _to)
+{
+	int oto;
+
+	oto = ul_keepalive_timeout;
+	ul_keepalive_timeout = _to;
+	return oto;
 }

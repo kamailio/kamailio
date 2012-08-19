@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     3.4.0
-%define rel     dev2%{dist}
+%define rel     dev3%{dist}
 
 
 
@@ -993,6 +993,8 @@ fi
 
 
 %changelog
+* Sun Aug 19 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to dev3
 * Mon Aug 13 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added Outbound module
 * Fri Jul 13 2012 Peter Dunkley <peter@dunkley.me.uk>

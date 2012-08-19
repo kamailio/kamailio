@@ -758,7 +758,8 @@ static pcre *reg_ex_comp(const char *pattern)
 {
     pcre *re, *result;
     const char *error;
-    int rc, size, err_offset;
+    int rc, err_offset;
+    size_t size;
 
     re = pcre_compile(pattern, 0, &error, &err_offset, NULL);
     if (re == NULL) {

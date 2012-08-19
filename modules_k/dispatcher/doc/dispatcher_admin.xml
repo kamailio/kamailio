@@ -455,7 +455,7 @@ modparam("dispatcher", "force_dst", 1)
  		</example>
  	</section>
  	<section>
- 		<title><varname>setid_pvar</varname> (str)</title>
+ 		<title><varname>setid_pvname</varname> (str)</title>
  		<para>
 		The name of the PV where to store the set ID (group ID) when calling
 		ds_is_from_list() with no parameter.
@@ -466,10 +466,10 @@ modparam("dispatcher", "force_dst", 1)
  		</emphasis>
  		</para>
  		<example>
- 		<title>Set the <quote>setid_pvar</quote> parameter</title>
+ 		<title>Set the <quote>setid_pvname</quote> parameter</title>
  <programlisting format="linespecific">
  ...
- modparam("dispatcher", "setid_pvar", "$var(setid)")
+ modparam("dispatcher", "setid_pvname", "$var(setid)")
  ...
  </programlisting>
  		</example>
@@ -965,7 +965,8 @@ failure_route[tryagain] {
 		<para>
 		Parameter groupid is optional, when it is missing, then the matching
 		will be done against all addresses in all groups. Upon a match, the
-		'grp_avp' will be set to groupid of matching address.
+		variable specified by 'setid_pvname' parameter will be set to groupid
+		of matching address.
  		</para>
 		<para>
 			This function can be used from ANY_ROUTE.

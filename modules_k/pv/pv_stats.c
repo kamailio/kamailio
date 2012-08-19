@@ -26,8 +26,12 @@
  */
 
 #include "../../lib/kcore/statistics.h"
+#include "../../ver.h"
 #include "pv_stats.h"
 
+/**
+ *
+ */
 int pv_parse_stat_name(pv_spec_p sp, str *in)
 {
 	if (in == NULL || in->s == NULL || sp == NULL)
@@ -39,6 +43,9 @@ int pv_parse_stat_name(pv_spec_p sp, str *in)
 }
 
 
+/**
+ *
+ */
 int pv_get_stat(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	stat_var *stat;
@@ -51,5 +58,59 @@ int pv_get_stat(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	}
 	return pv_get_uintval(msg, param, res,
 			(unsigned int)get_stat_val(stat));
+}
+
+/**
+ *
+ */
+int pv_parse_sr_version_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 3:
+			if(strncmp(in->s, "num", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		break;
+		case 4:
+			if(strncmp(in->s, "full", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "hash", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV version name %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+int pv_get_sr_version(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(param==NULL)
+		return -1;
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1:
+			return pv_get_strzval(msg, param, res, (char*)full_version);
+		case 2:
+			return pv_get_strzval(msg, param, res, (char*)ver_id);
+		default:
+			return pv_get_strzval(msg, param, res, (char*)ver_version);
+	}
 }
 

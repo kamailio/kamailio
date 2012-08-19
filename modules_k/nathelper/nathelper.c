@@ -203,6 +203,7 @@
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parser_f.h"
+#include "../../parser/parse_methods.h"
 #include "../../parser/sdp/sdp.h"
 #include "../../resolve.h"
 #include "../../timer.h"
@@ -295,6 +296,7 @@ static int fix_nated_register_f(struct sip_msg *, char *, char *);
 static int fixup_fix_nated_register(void** param, int param_no);
 static int fixup_fix_sdp(void** param, int param_no);
 static int add_rcv_param_f(struct sip_msg *, char *, char *);
+static int nh_sip_reply_received(sip_msg_t *msg);
 
 static void nh_timer(unsigned int, void *);
 static int mod_init(void);
@@ -333,6 +335,8 @@ static char *natping_socket = 0;
 static int raw_sock = -1;
 static unsigned int raw_ip = 0;
 static unsigned short raw_port = 0;
+static int nh_keepalive_timeout = 0;
+static request_method_t sipping_method_id = 0;
 
 
 /*0-> disabled, 1 ->enabled*/
@@ -391,6 +395,8 @@ static param_export_t params[] = {
 	{"sipping_bflag",         INT_PARAM, &sipping_flag          },
 	{"natping_processes",     INT_PARAM, &natping_processes     },
 	{"natping_socket",        STR_PARAM, &natping_socket        },
+	{"keepalive_timeout",     INT_PARAM, &nh_keepalive_timeout  },
+
 	{0, 0, 0}
 };
 
@@ -410,7 +416,7 @@ struct module_exports exports = {
 	mod_pvs,     /* exported pseudo-variables */
 	0,           /* extra processes */
 	mod_init,
-	0,           /* reply processing */
+	nh_sip_reply_received, /* reply processing */
 	mod_destroy, /* destroy function */
 	child_init
 };
@@ -634,7 +640,16 @@ mod_init(void)
 				LM_ERR("SIP ping enabled, but SIP ping method is empty!\n");
 				return -1;
 			}
+			if(nh_keepalive_timeout>0 && ul.set_keepalive_timeout!=NULL) {
+				ul.set_keepalive_timeout(nh_keepalive_timeout);
+			}
+
 			sipping_method.len = strlen(sipping_method.s);
+			if(parse_method_name(&sipping_method, &sipping_method_id) < 0) {
+				LM_ERR("invalid SIP ping method [%.*s]!\n", sipping_method.len,
+						sipping_method.s);
+				return -1;
+			}
 			sipping_from.len = strlen(sipping_from.s);
 			exports.response_f = sipping_rpl_filter;
 			init_sip_ping();
@@ -1797,5 +1812,111 @@ fix_nated_register_f(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 	}
 
+	return 1;
+}
+
+/**
+ * handle SIP replies
+ */
+static int nh_sip_reply_received(sip_msg_t *msg)
+{
+	to_body_t *fb;
+	str ruid;
+	str ah;
+	unsigned int aorhash;
+	char *p;
+
+	if(nh_keepalive_timeout<=0)
+		return 1;
+	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1)
+			|| (msg->cseq==NULL)))
+	{
+		LM_ERR("no CSEQ header\n");
+		goto done;
+	}
+	if(sipping_method_id!=METHOD_UNDEF && sipping_method_id!=METHOD_OTHER)
+	{
+		if(get_cseq(msg)->method_id!=sipping_method_id)
+			goto done;
+	} else {
+		if(sipping_method_id==METHOD_OTHER)
+		{
+			if(get_cseq(msg)->method.len!=sipping_method.len)
+				goto done;
+			if(strncmp(get_cseq(msg)->method.s, sipping_method.s,
+						sipping_method.len)!=0)
+				goto done;
+		} else {
+			goto done;
+		}
+	}
+	/* there must be no second via */
+	if ( ! (parse_headers(msg, HDR_VIA2_F, 0)==-1
+			|| (msg->via2==0) || (msg->via2->error!=PARSE_OK)) )
+		goto done;
+
+	/* from uri check */
+	if((parse_from_header(msg))<0)
+	{
+		LM_ERR("cannot parse From header\n");
+		goto done;
+	}
+
+	fb = get_from(msg);
+	if(fb->uri.len!=sipping_from.len
+			|| strncmp(fb->uri.s, sipping_from.s, sipping_from.len)!=0)
+		goto done;
+
+	/* from-tag is: ruid-aorhash-counter */
+	if(fb->tag_value.len<=0)
+		goto done;
+
+	LM_DBG("checking nathelper keepalive reply [%.*s]\n", fb->tag_value.len,
+				fb->tag_value.s);
+
+	/* skip counter */
+	p = q_memrchr(fb->tag_value.s, '-', fb->tag_value.len);
+	if(p==NULL) {
+		LM_DBG("from tag format mismatch [%.*s]\n", fb->tag_value.len,
+				fb->tag_value.s);
+		goto done;
+	}
+	/* aor hash */
+	ah.len = p - fb->tag_value.s;
+	aorhash = 0;
+	p = q_memrchr(fb->tag_value.s, '-', ah.len);
+	if(p==NULL) {
+		LM_DBG("from tag format mismatch [%.*s]!\n", fb->tag_value.len,
+				fb->tag_value.s);
+		goto done;
+	}
+	ah.s = p + 1;
+	ah.len = fb->tag_value.s + ah.len - ah.s;
+
+	LM_DBG("aor hash string is [%.*s] (%d)\n", ah.len, ah.s, ah.len);
+
+	if(ah.len<=0 || reverse_hex2int(ah.s, ah.len, &aorhash)<0)
+	{
+		LM_DBG("cannot get aor hash in [%.*s]\n", fb->tag_value.len,
+				fb->tag_value.s);
+		goto done;
+	}
+	LM_DBG("aor hash is [%u] string [%.*s]\n", aorhash, ah.len, ah.s);
+
+	ruid.s = fb->tag_value.s;
+	ruid.len = ah.s - ruid.s - 1;
+
+	if(ruid.len<=0)
+	{
+		LM_DBG("cannot get ruid in [%.*s]\n", fb->tag_value.len,
+				fb->tag_value.s);
+		goto done;
+	}
+
+	LM_DBG("reply for keepalive of [%.*s:%u]\n", ruid.len, ruid.s, aorhash);
+
+	ul.refresh_keepalive(aorhash, &ruid);
+done:
+	/* let the core handle further the reply */
 	return 1;
 }

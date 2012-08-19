@@ -259,6 +259,21 @@ static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r, time_t t
 		node = add_mi_node_child( cnode, MI_DUP_VALUE, "Reg-Id", 6, p, len);
 		if (node==0)
 			return -1;
+
+		/* last keepalive */
+		p = int2str((unsigned long)c->last_keepalive, &len);
+		node = add_mi_node_child( cnode, MI_DUP_VALUE, "Last-Keepalive",
+					14, p, len);
+		if (node==0)
+			return -1;
+
+		/* last modified */
+		p = int2str((unsigned long)c->last_modified, &len);
+		node = add_mi_node_child( cnode, MI_DUP_VALUE, "Last-Modified",
+					13, p, len);
+		if (node==0)
+			return -1;
+
 	} /* for */
 
 	return 0;
