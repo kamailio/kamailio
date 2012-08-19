@@ -432,7 +432,7 @@ static inline char* ushort2str(unsigned short u)
 
 
 
-/* faster memchr version */
+/* fast memchr version */
 static inline char* q_memchr(char* p, int c, unsigned int size)
 {
 	char* end;
@@ -443,7 +443,20 @@ static inline char* q_memchr(char* p, int c, unsigned int size)
 	}
 	return 0;
 }
-	
+
+
+/* fast reverse char search */
+
+static inline char* q_memrchr(char* p, int c, unsigned int size)
+{
+	char* end;
+
+	end=p+size-1;
+	for(;end>=p;end--) {
+		if (*end==(unsigned char)c) return end;
+	}
+	return 0;
+}
 
 /* returns -1 on error, 1! on success (consistent with int2reverse_hex) */
 inline static int reverse_hex2int( char *c, int len, unsigned int* res)
