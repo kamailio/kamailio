@@ -22,23 +22,28 @@
  */
 
 #include "../../dprint.h"
+#include "../../ip_addr.h"
+#include "../../mod_fix.h"
 #include "../../sr_module.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/mi.h"
+
+#include "../nathelper/nat_uac_test.h"
 
 #include "api.h"
 
 MODULE_VERSION
 
 static int mod_init(void);
-static int child_init(int rank);
-static void destroy(void);
 
 static int ob_force_bflag = -1;
 static str ob_key = {0, 0};
 
 static cmd_export_t cmds[]= 
 {
+	{ "nat_uac_test", (cmd_function) nat_uac_test_f,
+	  1, fixup_uint_null, 0,
+	  REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
 	{ "bind_ob", (cmd_function) bind_ob,
 	  1, 0, 0,
 	  0 },
@@ -52,51 +57,26 @@ static param_export_t params[]=
 	{ 0, 0, 0 }
 };
 
-static stat_export_t stats[] =
-{
-	{ 0, 0, 0 }
-};
-
-static mi_export_t mi_cmds[] =
-{
-	{ 0, 0, 0, 0, 0 }
-};
-
 struct module_exports exports= 
 {
 	"outbound",
 	DEFAULT_DLFLAGS,	/* dlopen flags */
 	cmds,			/* Exported functions */
 	params,			/* Exported parameters */
-	stats,			/* exported statistics */
-	mi_cmds,		/* exported MI functions */
+	0,			/* exported statistics */
+	0,			/* exported MI functions */
 	0,			/* exported pseudo-variables */
 	0,			/* extra processes */
 	mod_init,		/* module initialization function */
 	0,			/* response function */
-	destroy,		/* destroy function */
-	child_init		/* per-child initialization function */
+	0,			/* destroy function */
+	0			/* per-child initialization function */
 };
 
 static int mod_init(void)
 {
-	if (register_module_stats(exports.name, stats) != 0)
-	{
-		LM_ERR("registering core statistics\n");
-		return -1;
-	}
-
-	if (register_mi_mod(exports.name, mi_cmds) != 0)
-	{
-		LM_ERR("registering MI commands\n");
-		return -1;
-	}
-
 	if (ob_force_bflag == -1)
-	{
-		LM_ERR("force_outbound_bflag not set\n");
-		return -1;
-	}
+		LM_INFO("force_outbound_bflag not set\n");
 
 	if (ob_key.s == 0)
 	{
@@ -109,28 +89,18 @@ static int mod_init(void)
 	return 0;
 }
 
-static int child_init(int rank)
+int encode_flow_token(str *flow_token, struct receive_info rcv)
 {
-	/* TODO */
+	
 	return 0;
 }
 
-static void destroy(void)
-{
-	/* TODO */
-}
-
-int ob_fn1(int p1, int p2, int p3)
+int decode_flow_token(struct receive_info *rcv, str flow_token)
 {
 	return 0;
 }
 
-int ob_fn2(int p1, int p2, int p3)
-{
-	return 0;
-}
-
-int ob_fn3(int p1, int p2, int p3)
+int use_outbound(struct sip_msg *msg)
 {
 	return 0;
 }
@@ -143,9 +113,9 @@ int bind_ob(struct ob_binds *pxb)
 		return -1;
 	}
 
-	pxb->ob_fn1 = ob_fn1;
-	pxb->ob_fn2 = ob_fn2;
-	pxb->ob_fn3 = ob_fn3;
+	pxb->encode_flow_token = encode_flow_token;
+	pxb->decode_flow_token = decode_flow_token;
+	pxb->use_outbound = use_outbound;
 
 	return 0;
 }

@@ -24,14 +24,14 @@
 #ifndef OB_API_H
 #define OB_API_H
 
-typedef int (*ob_fn1_t)(int, int, int);
-typedef int (*ob_fn2_t)(int, int, int);
-typedef int (*ob_fn3_t)(int, int, int);
+typedef int (*encode_flow_token_t)(str *, struct receive_info);
+typedef int (*decode_flow_token_t)(struct receive_info *, str);
+typedef int (*use_outbound_t)(struct sip_msg *);
 
 typedef struct ob_binds {
-	ob_fn1_t ob_fn1;
-	ob_fn2_t ob_fn2;
-	ob_fn3_t ob_fn3;
+	encode_flow_token_t encode_flow_token;
+	decode_flow_token_t decode_flow_token;
+	use_outbound_t use_outbound;
 } ob_api_t;
 
 typedef int (*bind_ob_f)(ob_api_t*);
