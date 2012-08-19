@@ -82,7 +82,7 @@
 #define SIP_MSG_START(m)	((m)->first_line.u.request.method.s)
 
 /*! \brief number methods as power of two to allow bitmap matching */
-enum request_method {
+typedef enum request_method {
 	METHOD_UNDEF=0,           /*!< 0 - --- */
 	METHOD_INVITE=1,          /*!< 1 - 2^0 */
 	METHOD_CANCEL=2,          /*!< 2 - 2^1 */
@@ -99,7 +99,7 @@ enum request_method {
 	METHOD_REFER=4096,        /*!< 4096 - 2^12 */
 	METHOD_PUBLISH=8192,      /*!< 8192 - 2^13 */
 	METHOD_OTHER=16384        /*!< 16384 - 2^14 */
-};
+} request_method_t;
 
 #define FL_FORCE_RPORT  (1 << 0)  /*!< force rport */
 #define FL_FORCE_ACTIVE (1 << 1)  /*!< force active SDP */
