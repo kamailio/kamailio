@@ -333,6 +333,35 @@ modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>keepalive_timeout</varname> (int)</title>
+		<para>
+		The parameter sets the interval in secods after which a natted
+		contact is removed from location table if it does not reply to SIP
+		keepalives (usually OPTIONS ping requests).
+		</para>
+		<para>
+		The features is available only for UDP contacts that are stored in memory
+		(not working for db only mode for usrloc module).
+		</para>
+		<para>
+		Keepalives are sent stateless, not using TM module. The value of this
+		parameter has to be few times higher than natping_interval.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (feature disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>keepalive_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "keepalive_timeout", 120)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 
