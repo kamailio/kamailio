@@ -17,6 +17,11 @@ enum {
 }; 
 
 enum {
+    SCA_APPEARANCE_FLAG_DEFAULT = 0,
+    SCA_APPEARANCE_FLAG_OWNER_PENDING = (1 << 0),
+};
+
+enum {
     SCA_APPEARANCE_OK = 0,
     SCA_APPEARANCE_ERR_NOT_IN_USE = 0x1001,
     SCA_APPEARANCE_ERR_INVALID_INDEX = 0x1002,
@@ -43,8 +48,12 @@ struct _sca_appearance {
     int				state;
     str				uri;
 
+    int				flags;
+
     str				owner;
     sca_dialog			dialog;
+    str				prev_owner;
+    sca_dialog			prev_dialog;
     str				callee;
 
     struct _sca_appearance_list	*appearance_list;
@@ -67,6 +76,9 @@ int	sca_appearance_state_from_str( str * );
 int	sca_appearance_seize_next_available_index( sca_mod *, str *, str * );
 sca_appearance 	*sca_appearance_seize_next_available_unsafe( sca_mod *, str *,
 							     str *, int );
+int	sca_appearance_update_owner_unsafe( sca_appearance *, str * );
+int	sca_appearance_update_dialog_unsafe( sca_appearance *, str *,
+						str *, str * );
 int	sca_appearance_update_unsafe( sca_appearance *, int, str *,
 					sca_dialog *, str *, str * );
 int	sca_appearance_update_index( sca_mod *, str *, int, int, str *,

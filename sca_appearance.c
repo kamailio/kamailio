@@ -387,6 +387,110 @@ sca_appearance_seize_next_available_index( sca_mod *scam, str *aor,
 }
 
     int
+sca_appearance_update_owner_unsafe( sca_appearance *app, str *owner )
+{
+    assert( app != NULL );
+    assert( owner != NULL );
+
+    if ( !SCA_STR_EMPTY( &app->owner )) {
+	if ( app->prev_owner.s != NULL ) {
+	    shm_free( app->prev_owner.s );
+	}
+	app->prev_owner.s = app->owner.s;
+	app->prev_owner.len = app->owner.len;
+    }
+
+    app->owner.s = (char *)shm_malloc( owner->len );
+    if ( app->owner.s == NULL ) {
+	LM_ERR( "sca_appearance_update_owner_unsafe: shm_malloc for new "
+		"owner %.*s failed: out of memory", STR_FMT( owner ));
+	goto error;
+    }
+    SCA_STR_COPY( &app->owner, owner );
+
+    return( 1 );
+
+error:
+    /* restore owner */
+    app->owner.s = app->prev_owner.s;
+    app->owner.len = app->prev_owner.len;
+    memset( &app->prev_owner, 0, sizeof( str ));
+
+    return( -1 );
+}
+
+    int
+sca_appearance_update_dialog_unsafe( sca_appearance *app, str *call_id,
+	str *from_tag, str *to_tag )
+{
+    int		len;
+
+    assert( app != NULL );
+    assert( call_id != NULL );
+    assert( from_tag != NULL );
+
+    if ( !SCA_STR_EMPTY( &app->dialog.id )) {
+	if ( app->prev_dialog.id.s != NULL ) {
+	    shm_free( app->prev_dialog.id.s );
+	}
+	app->prev_dialog.id.s = app->dialog.id.s;
+	app->prev_dialog.id.len = app->dialog.id.len;
+
+	app->prev_dialog.call_id.s = app->dialog.call_id.s;
+	app->prev_dialog.call_id.len = app->dialog.call_id.len;
+
+	app->prev_dialog.from_tag.s = app->dialog.from_tag.s;
+	app->prev_dialog.from_tag.len = app->dialog.from_tag.len;
+
+	app->prev_dialog.to_tag.s = app->dialog.to_tag.s;
+	app->prev_dialog.to_tag.len = app->dialog.to_tag.len;
+    }
+
+    len = call_id->len + from_tag->len;
+    if ( !SCA_STR_EMPTY( to_tag )) {
+	len += to_tag->len;
+    }
+
+    app->dialog.id.s = (char *)shm_malloc( len );
+    if ( app->dialog.id.s == NULL ) {
+	LM_ERR( "sca_appearance_update_dialog_unsafe: shm_malloc new dialog "
+		"failed: out of memory" );
+	goto error;
+    }
+    SCA_STR_COPY( &app->dialog.id, call_id );
+    SCA_STR_APPEND( &app->dialog.id, from_tag );
+
+    app->dialog.call_id.s = app->dialog.id.s;
+    app->dialog.call_id.len = call_id->len;
+
+    app->dialog.from_tag.s = app->dialog.id.s + call_id->len;
+    app->dialog.from_tag.len = from_tag->len;
+
+    app->dialog.to_tag.s = app->dialog.id.s + call_id->len + from_tag->len;
+    app->dialog.to_tag.len = to_tag->len;
+
+    return( 1 );
+
+error:
+    /* restore dialog */
+    app->prev_dialog.id.s = app->dialog.id.s;
+    app->prev_dialog.id.len = app->dialog.id.len;
+
+    app->prev_dialog.call_id.s = app->dialog.call_id.s;
+    app->prev_dialog.call_id.len = app->dialog.call_id.len;
+
+    app->prev_dialog.from_tag.s = app->dialog.from_tag.s;
+    app->prev_dialog.from_tag.len = app->dialog.from_tag.len;
+
+    app->prev_dialog.to_tag.s = app->dialog.to_tag.s;
+    app->prev_dialog.to_tag.len = app->dialog.to_tag.len;
+
+    memset( &app->prev_dialog, 0, sizeof( sca_dialog ));
+
+    return( -1 );
+}
+
+    int
 sca_appearance_update_unsafe( sca_appearance *app, int state, str *uri,
 	sca_dialog *dialog, str *owner, str *callee )
 {
@@ -584,7 +688,7 @@ sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
 	goto done;
     }
 
-    if ( state != SCA_APPEARANCE_STATE_UNKNOWN ) {
+    if ( state != SCA_APPEARANCE_STATE_UNKNOWN && app->state != state ) {
 	app->state = state;
     }
 
