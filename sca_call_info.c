@@ -639,54 +639,18 @@ LM_INFO( "ADMORTEN DEBUG: dropping branch %d", idx );
      * if the reINVITE to seize the held line fails for some reason,
      * we restore the original owner and dialog.
      */
-    if ( app->prev_owner.s != NULL ) {
-	shm_free( app->prev_owner.s );
-    }
-    app->prev_owner.s = app->owner.s;
-    app->prev_owner.len = app->owner.len;
 
-    app->owner.s = (char *)shm_malloc( contact_uri->len );
-    if ( app->owner.s == NULL ) {
-	LM_ERR( "sca_call_info_seize_held_call: shm_malloc pending owner "
-		"%.*s failed: out of memory", STR_FMT( contact_uri ));
+    if ( sca_appearance_update_owner_unsafe( app, contact_uri ) < 0 ) {
+	LM_ERR( "sca_call_info_seize_held_call: failed to update owner" );
 	pkg_free( replaces_hdr.s );
 	goto done;
     }
-    SCA_STR_COPY( &app->owner, contact_uri );
 
-    if ( app->prev_dialog.id.s != NULL ) {
-	shm_free( app->prev_dialog.id.s );
-    }
-    app->prev_dialog.id.s = app->dialog.id.s;
-    app->prev_dialog.id.len = app->dialog.id.len;
-
-    app->dialog.id.s = (char *)shm_malloc( msg->callid->body.len +
-					       from->tag_value.len );
-    if ( app->dialog.id.s == NULL ) {
-	LM_ERR( "sca_call_info_seize_held_call: shm_malloc pending dialog "
-		"call-id %.*s, from-tag %.*s failed: out of memory",
-		STR_FMT( &msg->callid->body ), STR_FMT( &from->tag_value ));
-	shm_free( app->owner.s );
-
-	app->owner.s = app->prev_owner.s;
-	app->owner.len = app->prev_owner.len;
-
-	app->dialog.id.s = app->prev_dialog.id.s;
-	app->dialog.id.len = app->prev_dialog.id.len;
-
+    if ( sca_appearance_update_dialog_unsafe( app, &msg->callid->body,
+				    &from->tag_value, &to->tag_value ) < 0 ) {
+	LM_ERR( "sca_call_info_seize_held_call: failed to update dialog" );
 	goto done;
     }
-    SCA_STR_COPY( &app->dialog.id, &msg->callid->body );
-    SCA_STR_APPEND( &app->dialog.id, &from->tag_value );
-
-    app->dialog.call_id.s = app->dialog.id.s;
-    app->dialog.call_id.len = from->tag_value.len;
-
-    app->dialog.from_tag.s = app->dialog.id.s + from->tag_value.len;
-    app->dialog.from_tag.len = from->tag_value.len;
-
-    app->dialog.to_tag.s = NULL;
-    app->dialog.to_tag.len = 0;
 
     app->flags |= SCA_APPEARANCE_FLAG_OWNER_PENDING;
     app->state = SCA_APPEARANCE_STATE_ACTIVE;
