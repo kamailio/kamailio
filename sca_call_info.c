@@ -555,7 +555,6 @@ sca_call_info_seize_held_call( sip_msg_t *msg, sca_call_info *call_info,
 LM_INFO( "ADMORTEN DEBUG: seizing %.*s appearance-index %d, callee %.*s",
 	STR_FMT( &aor ), app->index, STR_FMT( &app->callee ));
 
-#ifdef notdef
     /* rewrite the RURI to use the callee in this SCA dialog */
     if ( msg->new_uri.s ) {
 	/*
@@ -571,7 +570,6 @@ LM_INFO( "ADMORTEN DEBUG: seizing %.*s appearance-index %d, callee %.*s",
 	msg->new_uri.s = NULL;
 	msg->new_uri.len = 0;
     }
-#endif /* notdef */
 
     /* msg->new_uri.s is free'd when transaction is torn down */
     msg->new_uri.s = (char *)pkg_malloc( app->callee.len );
@@ -609,15 +607,6 @@ LM_INFO( "ADMORTEN DEBUG: dropping branch %d", idx );
 	goto done;
     }
 
-LM_INFO( "ADMORTEN DEBUG: new RURI: %.*s, Replaces header: %.*s",
-	STR_FMT( &msg->new_uri ), STR_FMT( &replaces_hdr ));
-
-    if ( parse_uri( msg->new_uri.s, msg->new_uri.len, &tmp ) < 0 ) {
-	LM_ERR( "Bad URI \"%.*s\"", STR_FMT( &msg->new_uri ));
-	goto done;
-    }
-LM_INFO( "ADMORTEN DEBUG: parsed new RURI: %.*s", STR_FMT( &msg->new_uri ));
-
     /* all headers must be parsed before using lump functions */
     if ( parse_headers( msg, HDR_EOH_F, 0 ) < 0 ) {
 	LM_ERR( "Failed to parse_headers" );
@@ -638,11 +627,69 @@ LM_INFO( "ADMORTEN DEBUG: parsed new RURI: %.*s", STR_FMT( &msg->new_uri ));
 	goto done;
     }
 
-    if ( parse_uri( msg->new_uri.s, msg->new_uri.len, &tmp ) < 0 ) {
-	LM_ERR( "Bad URI \"%.*s\"", STR_FMT( &msg->new_uri ));
+    /*
+     * RFC 3891 (Replaces header) suggests, but does not require, that the
+     * UAS establish the dialog with the UAC replacing the existing dialog
+     * before sending the BYE to the original UAC. Polycom handsets appear
+     * to send the BYE to the original UAC first, so we save the pending
+     * owner here. if the 200 OK arrives first, we update the owner and
+     * dialog there. otherwise, we catch this in the 200 OK to the BYE
+     * sent by the line being replaced.
+     *
+     * if the reINVITE to seize the held line fails for some reason,
+     * we restore the original owner and dialog.
+     */
+    if ( app->prev_owner.s != NULL ) {
+	shm_free( app->prev_owner.s );
+    }
+    app->prev_owner.s = app->owner.s;
+    app->prev_owner.len = app->owner.len;
+
+    app->owner.s = (char *)shm_malloc( contact_uri->len );
+    if ( app->owner.s == NULL ) {
+	LM_ERR( "sca_call_info_seize_held_call: shm_malloc pending owner "
+		"%.*s failed: out of memory", STR_FMT( contact_uri ));
+	pkg_free( replaces_hdr.s );
 	goto done;
     }
-LM_INFO( "ADMORTEN DEBUG: REDUX: parsed new RURI: %.*s", STR_FMT( &msg->new_uri ));
+    SCA_STR_COPY( &app->owner, contact_uri );
+
+    if ( app->prev_dialog.id.s != NULL ) {
+	shm_free( app->prev_dialog.id.s );
+    }
+    app->prev_dialog.id.s = app->dialog.id.s;
+    app->prev_dialog.id.len = app->dialog.id.len;
+
+    app->dialog.id.s = (char *)shm_malloc( msg->callid->body.len +
+					       from->tag_value.len );
+    if ( app->dialog.id.s == NULL ) {
+	LM_ERR( "sca_call_info_seize_held_call: shm_malloc pending dialog "
+		"call-id %.*s, from-tag %.*s failed: out of memory",
+		STR_FMT( &msg->callid->body ), STR_FMT( &from->tag_value ));
+	shm_free( app->owner.s );
+
+	app->owner.s = app->prev_owner.s;
+	app->owner.len = app->prev_owner.len;
+
+	app->dialog.id.s = app->prev_dialog.id.s;
+	app->dialog.id.len = app->prev_dialog.id.len;
+
+	goto done;
+    }
+    SCA_STR_COPY( &app->dialog.id, &msg->callid->body );
+    SCA_STR_APPEND( &app->dialog.id, &from->tag_value );
+
+    app->dialog.call_id.s = app->dialog.id.s;
+    app->dialog.call_id.len = from->tag_value.len;
+
+    app->dialog.from_tag.s = app->dialog.id.s + from->tag_value.len;
+    app->dialog.from_tag.len = from->tag_value.len;
+
+    app->dialog.to_tag.s = NULL;
+    app->dialog.to_tag.len = 0;
+
+    app->flags |= SCA_APPEARANCE_FLAG_OWNER_PENDING;
+    app->state = SCA_APPEARANCE_STATE_ACTIVE;
 
     rc = 1;
 
@@ -842,20 +889,14 @@ sca_call_info_invite_request_handler( sip_msg_t *msg, sca_call_info *call_info,
     }
 
     if ( sca_call_is_held( msg )) {
-LM_INFO( "ADMORTEN DEBUG: call is held" );
 	state = SCA_APPEARANCE_STATE_HELD;
     } else if ( !SCA_STR_EMPTY( &to->tag_value )) {
-LM_INFO( "ADMORTEN DEBUG: to-tag is not empty" );
 	/* this is a reINVITE from an SCA line that put the call on hold */
 	state = SCA_APPEARANCE_STATE_ACTIVE;
     } else if ( sca_call_info_is_line_seize_reinvite( msg, call_info,
 							from, to )) {
-LM_INFO( "ADMORTEN DEBUG: is line seize reinvite from %.*s",
-		STR_FMT( contact_uri ));
 	rc = sca_call_info_seize_held_call( msg, call_info, contact_uri,
 						from, to );
-    } else {
-LM_INFO( "ADMORTEN DEBUG: WTF" );
     }
     /* otherwise, this is an initial INVITE */
 
@@ -1023,6 +1064,8 @@ sca_call_info_invite_reply_200_handler( sip_msg_t *msg,
 
     if ( app->state != SCA_APPEARANCE_STATE_HELD ) {
 	state = SCA_APPEARANCE_STATE_ACTIVE;
+    }
+    if (( app->flags & SCA_APPEARANCE_FLAG_OWNER_PENDING )) {
     }
 
     /* if a Call-Info header is present, app-index goes to Contact */
@@ -1201,9 +1244,10 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
 sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 	str *contact_uri, struct to_body *from, struct to_body *to )
 {
-    sca_appearance	*app;
+    sca_appearance	*app, *unl_app;
     str			from_aor = STR_NULL;
     str			to_aor = STR_NULL;
+    int			slot_idx = -1;
     int			rc = -1;
 
     if ( sca_uri_extract_aor( &from->uri, &from_aor ) < 0 ) {
@@ -1233,37 +1277,98 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 		goto done;
 	    }
 	} else {
-	    /* BYE from non-SCA line, see if the dialog is with an SCA line */
-	    app = sca_appearance_unlink_by_tags( sca, &to_aor,
-			&msg->callid->body, &to->tag_value, NULL );
+	    /*
+	     * XXX this means an extra core_hash call and lock for the index.
+	     * maybe an sca_uri_lock_if_shared fn? keep lock if uri is SCA,
+	     * returns hash table slot index, -1 if not SCA.
+	     */
+	    if ( !sca_uri_is_shared_appearance( sca, &to_aor )) {
+		LM_DBG( "BYE from non-SCA %.*s to non-SCA %.*s",
+			STR_FMT( &from_aor ), STR_FMT( &to_aor ));
+		rc = 1;
+		goto done;
+	    }
+
+	    slot_idx = sca_hash_table_index_for_key( sca->appearances, &to_aor);
+	    sca_hash_table_lock_index( sca->appearances, slot_idx );
+
+#ifdef notdef
+	    app = sca_appearance_for_tags_unsafe( sca, &to_aor,
+			&msg->callid->body, &from->tag_value,
+			&to->tag_value, slot_idx );
+#endif /* notdef */
+	    app = sca_appearance_for_tags_unsafe( sca, &to_aor,
+			&msg->callid->body, &to->tag_value,
+			NULL, slot_idx );
 	    if ( app == NULL ) {
 		LM_ERR( "sca_call_info_bye_handler: failed to look up "
 			"dialog for BYE %.*s from %.*s",
 			STR_FMT( &to_aor ), STR_FMT( &from_aor ));
 		goto done;
 	    }
-	    sca_appearance_free( app );
 
-	    if ( sca_notify_call_info_subscribers( sca, &to_aor ) < 0 ) {
-		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on BYE",
-			STR_FMT( &to->uri ));
-		goto done;
+	    if (( app->flags & SCA_APPEARANCE_FLAG_OWNER_PENDING )) {
+LM_INFO( "ADMORTEN DEBUG: %.*s appearance-index %d has owner change pending",
+	 STR_FMT( &app->owner ), app->index );
+		/* ... */
+	    } else {
+		unl_app = sca_appearance_list_unlink_index(
+					app->appearance_list, app->index );
+		if ( unl_app == NULL || unl_app != app ) {
+		    LM_ERR( "sca_call_info_bye_handler: failed to unlink "
+			    "%.*s appearance-index %d, owner %.*s",
+			    STR_FMT( &app->owner ), app->index,
+			    STR_FMT( &app->owner ));
+		    goto done;
+		}
+		sca_appearance_free( app );
+
+		if ( sca_notify_call_info_subscribers( sca, &to_aor ) < 0 ) {
+		    LM_ERR( "Failed to call-info NOTIFY %.*s subscribers "
+			    "on BYE", STR_FMT( &to->uri ));
+		    goto done;
+		}
 	    }
 	}
     } else {
 	if ( call_info != NULL ) {
-	    if ( sca_appearance_release_index( sca, &to_aor,
-						call_info->index ) < 0 ) {
-		LM_ERR( "Failed to release appearance-index %d "
-			"for To-URI %.*s on BYE reply", call_info->index,
-			STR_FMT( &to_aor ));
+	    slot_idx = sca_hash_table_index_for_key( sca->appearances, &to_aor);
+	    sca_hash_table_lock_index( sca->appearances, slot_idx );
+
+	    app = sca_appearance_for_index_unsafe( sca, &to_aor,
+			call_info->index, slot_idx );
+	    if ( app == NULL ) {
+		LM_ERR( "sca_call_info_bye_handler: failed to look up "
+			"dialog for BYE %.*s from %.*s",
+			STR_FMT( &to_aor ), STR_FMT( &from_aor ));
 		goto done;
 	    }
 
-	    if ( sca_notify_call_info_subscribers( sca, &to_aor ) < 0 ) {
-		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers "
-			"on BYE reply", STR_FMT( &to_aor ));
-		goto done;
+	    if (( app->flags & SCA_APPEARANCE_FLAG_OWNER_PENDING )) {
+LM_INFO( "ADMORTEN DEBUG: %.*s appearance-index %d has owner change pending",
+	 STR_FMT( &app->owner ), app->index );
+		if ( SCA_STR_EQ( &app->dialog.call_id, &msg->callid->body ) &&
+			SCA_STR_EQ( &app->dialog.from_tag, &from->tag_value ) &&
+			SCA_STR_EQ( &app->dialog.to_tag, &to->tag_value )) {
+		    LM_INFO( "ADMORTEN DEBUG: match" );
+		}
+	    } else {
+		unl_app = sca_appearance_list_unlink_index(
+					app->appearance_list, app->index );
+		if ( unl_app == NULL || unl_app != app ) {
+		    LM_ERR( "sca_call_info_bye_handler: failed to unlink "
+			    "%.*s appearance-index %d, owner %.*s",
+			    STR_FMT( &app->owner ), app->index,
+			    STR_FMT( &app->owner ));
+		    goto done;
+		}
+		sca_appearance_free( app );
+
+		if ( sca_notify_call_info_subscribers( sca, &to_aor ) < 0 ) {
+		    LM_ERR( "Failed to call-info NOTIFY %.*s subscribers "
+			    "on BYE", STR_FMT( &to->uri ));
+		    goto done;
+		}
 	    }
 	}
     }
@@ -1271,6 +1376,10 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
     rc = 1;
 
 done:
+    if ( slot_idx >= 0 ) {
+	sca_hash_table_unlock_index( sca->appearances, slot_idx );
+    }
+
     return( rc );
 }
 
