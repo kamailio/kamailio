@@ -798,6 +798,13 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 	r_version = VAL_INT(&values[version_col]);
 	r_record_route = (char *)VAL_STRING(&values[rroute_col]);
 
+	if ( r_remote_cseq >= subs->remote_cseq)
+	{
+		LM_DBG("stored cseq= %d\n", r_remote_cseq);
+		rls_dbf.free_result(rls_db, result);
+		return(401); /*stale cseq code */
+	}
+
 	if(strlen(r_pres_uri) > 0)
 	{
 		subs->pres_uri.s =
@@ -805,20 +812,12 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 		if(subs->pres_uri.s==NULL)
 		{
 			LM_ERR( "Out of Memory\n" );
- 			pkg_free(subs->pres_uri.s);
 			rls_dbf.free_result(rls_db, result);
 			return(-1);
 		}
 		memcpy(subs->pres_uri.s, 
 			r_pres_uri, strlen(r_pres_uri));
 		subs->pres_uri.len= strlen(r_pres_uri);
-	}
-
-	if ( r_remote_cseq >= subs->remote_cseq)
-	{
-		LM_DBG("stored cseq= %d\n", r_remote_cseq);
-		rls_dbf.free_result(rls_db, result);
-		return(401); /*stale cseq code */
 	}
 
 	if(strlen(r_record_route) > 0)
@@ -828,7 +827,6 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 		if(subs->record_route.s==NULL)
 		{
 			LM_ERR( "Out of Memory\n" );
- 			pkg_free(subs->record_route.s);
 			rls_dbf.free_result(rls_db, result);
 			return(-1);
 		}
