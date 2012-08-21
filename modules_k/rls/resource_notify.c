@@ -203,6 +203,15 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 		ERR_MEM(PKG_MEM_STR);
 	}
 
+	if (dbmode == RLS_DB_ONLY && rls_dbf.start_transaction)
+	{
+		if (rls_dbf.start_transaction(rls_db, DB_LOCKING_WRITE) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto error;
+		}
+	}
+
 	LM_DBG("found %d records with updated state\n", result->n);
 	for(i= 0; i< result->n; i++)
 	{
@@ -420,9 +429,17 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 		dialog= NULL;
 	}
 
-	
-error:
 done:
+	if (dbmode == RLS_DB_ONLY && rls_dbf.end_transaction)
+	{
+		if (rls_dbf.end_transaction(rls_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto error;
+		}
+	}
+
+error:
 	if(bstr.s)
 		pkg_free(bstr.s);
 
@@ -430,6 +447,13 @@ done:
 		pkg_free(buf);
 	if(dialog)
 		pkg_free(dialog);
+
+	if (dbmode == RLS_DB_ONLY && rls_dbf.abort_transaction)
+	{
+		if (rls_dbf.abort_transaction(rls_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+
 	return;
 }
 
@@ -769,7 +793,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 
 	if (dbmode == RLS_DB_ONLY && rlpres_dbf.start_transaction)
 	{
-		if (rlpres_dbf.start_transaction(rlpres_db) < 0)
+		if (rlpres_dbf.start_transaction(rlpres_db, DB_LOCKING_WRITE) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
@@ -883,6 +907,7 @@ static void timer_send_full_state_notifies(int round)
 	xmlDocPtr doc = NULL;
 	xmlNodePtr service_node = NULL;
 	int now = (int)time(NULL);
+	db_query_f query_fn = rls_dbf.query_lock ? rls_dbf.query_lock : rls_dbf.query;
 
 	query_cols[0] = &str_updated_col;
 	query_vals[0].type = DB1_INT;
@@ -925,7 +950,7 @@ static void timer_send_full_state_notifies(int round)
 
 	if (dbmode == RLS_DB_ONLY && rls_dbf.start_transaction)
 	{
-		if (rls_dbf.start_transaction(rls_db) < 0)
+		if (rls_dbf.start_transaction(rls_db, DB_LOCKING_WRITE) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto done;
@@ -933,7 +958,7 @@ static void timer_send_full_state_notifies(int round)
 	}
 
 	/* Step 1: Find rls_watchers that require full-state notification */
-	if (rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
+	if (query_fn(rls_db, query_cols, 0, query_vals, result_cols,
 				1, n_result_cols, 0, &result) < 0)
 	{
 		LM_ERR("in sql query\n");
@@ -1051,6 +1076,7 @@ static void timer_send_update_notifies(int round)
 		pres_state_col, content_type_col;
 	int n_result_cols= 0;
 	db1_res_t *result= NULL;
+	db_query_f query_fn = rlpres_dbf.query_lock ? rlpres_dbf.query_lock : rlpres_dbf.query;
 
 	query_cols[0]= &str_updated_col;
 	query_vals[0].type = DB1_INT;
@@ -1080,14 +1106,14 @@ static void timer_send_update_notifies(int round)
 
 	if (dbmode == RLS_DB_ONLY && rlpres_dbf.start_transaction)
 	{
-		if (rlpres_dbf.start_transaction(rlpres_db) < 0)
+		if (rlpres_dbf.start_transaction(rlpres_db, DB_LOCKING_WRITE) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto done;
 		}
 	}
 
-	if(rlpres_dbf.query(rlpres_db, query_cols, 0, query_vals, result_cols,
+	if(query_fn(rlpres_db, query_cols, 0, query_vals, result_cols,
 					1, n_result_cols, &str_rlsubs_did_col, &result)< 0)
 	{
 		LM_ERR("in sql query\n");

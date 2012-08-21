@@ -639,6 +639,15 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 		/* search if a stored dialog */
 		if ( dbmode == RLS_DB_ONLY )
 		{
+			if (rls_dbf.start_transaction)
+			{
+				if (rls_dbf.start_transaction(rls_db, DB_LOCKING_WRITE) < 0)
+				{
+					LM_ERR("in start_transaction\n");
+					goto error;
+				}
+			}
+
 			rt = get_dialog_subscribe_rlsdb(&subs);
 
 			if (rt <= 0)
@@ -646,6 +655,16 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 				LM_DBG("subscription dialog not found for <%.*s@%.*s>\n",
 						subs.watcher_user.len, subs.watcher_user.s,
 						subs.watcher_domain.len, subs.watcher_domain.s);
+
+				if (rls_dbf.end_transaction)
+				{
+					if (rls_dbf.end_transaction(rls_db) < 0)
+					{
+						LM_ERR("in end_transaction\n");
+						goto error;
+					}
+				}
+
 				goto forpresence;
 			}
 			else if(rt>=400)
@@ -657,6 +676,16 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 					LM_ERR("while sending reply\n");
 					goto error;
 				}
+
+				if (rls_dbf.end_transaction)
+				{
+					if (rls_dbf.end_transaction(rls_db) < 0)
+					{
+						LM_ERR("in end_transaction\n");
+						goto error;
+					}
+				}
+
 				ret = 0;
 				goto stop;
 			}
@@ -669,6 +698,15 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 			{
 				LM_ERR("while updating resource list subscription\n");
 				goto error;
+			}
+
+			if (rls_dbf.end_transaction)
+			{
+				if (rls_dbf.end_transaction(rls_db) < 0)
+				{
+					LM_ERR("in end_transaction\n");
+					goto error;
+				}
 			}
 		}
 		else
@@ -795,6 +833,12 @@ error:
 	if (rlsubs_did.s != NULL)
 		pkg_free(rlsubs_did.s);
 
+	if (rls_dbf.abort_transaction)
+	{
+		if (rls_dbf.abort_transaction(rls_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+	
 	return err_ret;
 }
 

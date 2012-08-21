@@ -101,10 +101,10 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 	int len_est;
 	res_param_t param;
 	int resource_added = 0; /* Flag to indicate that we have added at least one resource */
-	multipart_body = NULL;
+	multipart_body=NULL;
+	db_query_f query_fn = rlpres_dbf.query_lock ? rlpres_dbf.query_lock : rlpres_dbf.query;
 
 	LM_DBG("start\n");
-	/* query in alfabetical order */
 	
 	if(CONSTR_RLSUBS_DID(subs, &rlsubs_did)<0)
 	{
@@ -136,15 +136,15 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, str* rl_uri,
 
 	if (dbmode == RLS_DB_ONLY && rlpres_dbf.start_transaction)
 	{
-		if (rlpres_dbf.start_transaction(rlpres_db) < 0)
+		if (rlpres_dbf.start_transaction(rlpres_db, DB_LOCKING_WRITE) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
 		}
 	}
 
-	if(rlpres_dbf.query(rlpres_db, query_cols, 0, query_vals, result_cols,
-					1, n_result_cols, &str_resource_uri_col, &result )< 0)
+	if(query_fn(rlpres_db, query_cols, 0, query_vals, result_cols,
+					1, n_result_cols, NULL, &result )< 0)
 	{
 		LM_ERR("in sql query\n");
 		goto error;
