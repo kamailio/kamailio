@@ -72,6 +72,33 @@ int db_do_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	const db_val_t*, char*, int*), int (*submit_query)(const db1_con_t* _h,
 	const str* _c), int (*store_result)(const db1_con_t* _h, db1_res_t** _r));
 
+/**
+ * \brief Helper function for db queries with update lock
+ *
+ * This method evaluates the actual arguments for the database query and
+ * setups the string that is used for the query in the db module.
+ * Then its submit the query and stores the result if necessary. It uses for
+ * its work the implementation in the concrete database module.
+ *
+ * \param _h structure representing database connection
+ * \param _k key names, if not present the whole table will be returned
+ * \param _op operators
+ * \param _v values of the keys that must match
+ * \param _c column names that should be returned
+ * \param _n number of key/value pairs that are compared, if zero then no comparison is done
+ * \param _nc number of colums that should be returned
+ * \param _o order by the specificied column, optional
+ * \param _r the result that is returned, set to NULL if you want to use fetch_result later
+ * \param (*val2str) function pointer to the db specific val conversion function
+ * \param (*submit_query) function pointer to the db specific query submit function
+ * \param (*store_result) function pointer to the db specific store result function
+ * \return zero on success, negative on errors
+ */
+int db_do_query_lock(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+	const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+	const db_key_t _o, db1_res_t** _r, int (*val2str) (const db1_con_t*,
+	const db_val_t*, char*, int*), int (*submit_query)(const db1_con_t* _h,
+	const str* _c), int (*store_result)(const db1_con_t* _h, db1_res_t** _r));
 
 /**
  * \brief Helper function for raw db queries
