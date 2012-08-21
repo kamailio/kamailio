@@ -817,6 +817,7 @@ ua_pres_t *get_record_puadb(str pres_id, str *etag, ua_pres_t *result, db1_res_t
 	db_row_t *rows;
 	db1_res_t *res;
 	int n_query_cols = 0, nr_rows;
+	db_query_f query_fn = pua_dbf.query_lock ? pua_dbf.query_lock : pua_dbf.query;
 
 	q_cols[n_query_cols] = &str_pres_id_col;	
 	q_vals[n_query_cols].type = DB1_STR;
@@ -840,7 +841,7 @@ ua_pres_t *get_record_puadb(str pres_id, str *etag, ua_pres_t *result, db1_res_t
 		return(NULL);
 	}
 
-	if(pua_dbf.query(pua_db, q_cols, 0, q_vals,
+	if(query_fn(pua_db, q_cols, 0, q_vals,
 				NULL,n_query_cols,0,0,&res) < 0)
 	{
 		LM_ERR("DB query error\n");
@@ -1162,6 +1163,7 @@ ua_pres_t *get_dialog_puadb(str pres_id, str *pres_uri, ua_pres_t *result, db1_r
 	db_row_t *rows;
 	db1_res_t *res;
 	int n_query_cols = 0, nr_rows;
+	db_query_f query_fn = pua_dbf.query_lock ? pua_dbf.query_lock : pua_dbf.query;
 
 	if (pres_uri == NULL)
 	{
@@ -1188,7 +1190,7 @@ ua_pres_t *get_dialog_puadb(str pres_id, str *pres_uri, ua_pres_t *result, db1_r
 		return(NULL);
 	}
 
-	if(pua_dbf.query(pua_db, q_cols, 0, q_vals,
+	if(query_fn(pua_db, q_cols, 0, q_vals,
 				NULL,n_query_cols,0,0,&res) < 0)
 	{
 		LM_ERR("DB query error\n");

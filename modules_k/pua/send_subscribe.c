@@ -301,7 +301,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 
 	if (dbmode == PUA_DB_ONLY && pua_dbf.start_transaction)
 	{
-		if (pua_dbf.start_transaction(pua_db) < 0)
+		if (pua_dbf.start_transaction(pua_db, DB_LOCKING_WRITE) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
@@ -676,6 +676,24 @@ faked_error:
 
 	if (dbmode==PUA_DB_ONLY)
 	{
+		if (pua_dbf.end_transaction)
+		{
+			if (pua_dbf.end_transaction(pua_db) < 0)
+			{
+				LM_ERR("in end_transaction\n");
+				goto error;
+			}
+		}
+
+		if (pua_dbf.start_transaction)
+		{
+			if (pua_dbf.start_transaction(pua_db, DB_LOCKING_WRITE) < 0)
+			{
+				LM_ERR("in start_transaction\n");
+				goto error;
+			}
+		}
+
 		if (convert_temporary_dialog_puadb(presentity) < 0)
 		{
 			LM_ERR("Could not convert temporary dialog into a dialog\n");
@@ -968,7 +986,7 @@ int send_subscribe(subs_info_t* subs)
 
 	if (dbmode == PUA_DB_ONLY && pua_dbf.start_transaction)
 	{
-		if (pua_dbf.start_transaction(pua_db) < 0)
+		if (pua_dbf.start_transaction(pua_db, DB_LOCKING_WRITE) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
