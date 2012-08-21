@@ -1327,6 +1327,9 @@ LM_INFO( "ADMORTEN DEBUG: %.*s appearance-index %d has owner change pending",
 		    goto done;
 		}
 		sca_appearance_free( app );
+		
+		sca_hash_table_unlock_index( sca->appearances, slot_idx );
+		slot_idx = -1;
 
 		if ( sca_notify_call_info_subscribers( sca, &to_aor ) < 0 ) {
 		    LM_ERR( "Failed to call-info NOTIFY %.*s subscribers "
