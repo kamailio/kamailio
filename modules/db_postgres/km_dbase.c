@@ -163,6 +163,7 @@ void db_postgres_close(db1_con_t* _h)
  */
 static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 {
+	char *s=NULL;
 	int i, retries;
 	ExecStatusType pqresult;
 
@@ -199,17 +200,29 @@ static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 	else
 		retries = pg_retries;
 
+	s = pkg_malloc((_s->len+1)*sizeof(char));
+	if (s==NULL)
+	{
+		LM_ERR("%p db_postgres_submit_query Out of Memory: Query: %.*s\n", _con, _s->len, _s->s);
+		return -1;
+	}
+
+	memcpy( s, _s->s, _s->len );
+	s[_s->len] = '\0';
+
 	for(i = 0; i <= retries; i++) {
 		/* free any previous query that is laying about */
 		db_postgres_free_query(_con);
 		/* exec the query */
-		if (PQsendQuery(CON_CONNECTION(_con), _s->s)) {
+
+		if (PQsendQuery(CON_CONNECTION(_con), s)) {
 			pqresult = PQresultStatus(CON_RESULT(_con));
 			if((pqresult!=PGRES_FATAL_ERROR)
 					|| (PQstatus(CON_CONNECTION(_con))==CONNECTION_OK))
 			{
 				LM_DBG("sending query ok: %p (%d) - [%.*s]\n",
 						_con, pqresult, _s->len, _s->s);
+				pkg_free(s);
 				return 0;
 			}
 			LM_WARN("postgres result check failed with code %d (%s)\n",
@@ -226,6 +239,7 @@ static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 	}
 	LM_ERR("%p PQsendQuery Error: %s Query: %.*s\n", _con,
 	PQerrorMessage(CON_CONNECTION(_con)), _s->len, _s->s);
+	pkg_free(s);
 	return -1;
 }
 
