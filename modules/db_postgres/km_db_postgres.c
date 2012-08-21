@@ -99,6 +99,7 @@ int db_postgres_bind_api(db_func_t *dbb)
 	dbb->start_transaction= db_postgres_start_transaction;
 	dbb->end_transaction  = db_postgres_end_transaction;
 	dbb->abort_transaction= db_postgres_abort_transaction;
+	dbb->query_lock       = db_postgres_query_lock;
 
 	return 0;
 }
