@@ -423,10 +423,35 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 				LM_ERR("replace is required for pidf-manipulation support\n");
 				goto error;
 			}
+
+			if (pa_dbf.start_transaction)
+			{
+				if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+				{
+					LM_ERR("in start_transaction\n");
+					goto error;
+				}
+			}
+
+
 			if (pa_dbf.replace(pa_db, query_cols, query_vals, n_query_cols, 4, 0) < 0) 
 			{
 				LM_ERR("replacing record in database\n");
+				if (pa_dbf.abort_transaction)
+				{
+					if (pa_dbf.abort_transaction(pa_db) < 0)
+						LM_ERR("in abort_transaction\n");
+				}
 				goto error;
+			}
+
+			if (pa_dbf.end_transaction)
+			{
+				if (pa_dbf.end_transaction(pa_db) < 0)
+				{
+					LM_ERR("in end_transaction\n");
+					goto error;
+				}
 			}
 		}
 
@@ -1123,6 +1148,7 @@ int mark_presentity_for_delete(presentity_t *pres)
 	int n_query_cols = 0, n_update_cols = 0;
 	int ret = -1;
 	str *cur_body = NULL, *new_body = NULL;
+	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
 	if (pres->event->agg_nbody == NULL)
 	{
@@ -1167,7 +1193,16 @@ int mark_presentity_for_delete(presentity_t *pres)
 
 	result_cols[0] = &str_body_col;
 
-	if (pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols,
+	if (pa_dbf.start_transaction)
+	{
+		if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto error;
+		}
+	}
+
+	if (query_fn(pa_db, query_cols, 0, query_vals, result_cols,
 				n_query_cols, 1, 0, &result) < 0)
 	{
 		LM_ERR("query failed\n");
@@ -1247,6 +1282,15 @@ int mark_presentity_for_delete(presentity_t *pres)
 		goto error;
 	}
 
+	if (pa_dbf.end_transaction)
+	{
+		if (pa_dbf.end_transaction(pa_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto error;
+		}
+	}
+
 	if (pa_dbf.affected_rows)
 		ret = pa_dbf.affected_rows(pa_db);
 	else
@@ -1257,6 +1301,13 @@ error:
 	free_notify_body(new_body, pres->event);
 	if (cur_body) pkg_free(cur_body);
 	if (result) pa_dbf.free_result(pa_db, result);
+
+	if (pa_dbf.abort_transaction)
+	{
+		if (pa_dbf.abort_transaction(pa_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+
 	return ret;
 }
 

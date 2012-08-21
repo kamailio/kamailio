@@ -1309,6 +1309,7 @@ int publ_notify_notifier(str pres_uri, pres_ev_t *event)
 	int i;
 	int ret = -1;
 	subs_t subs;
+	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
 	if(pa_db == NULL)
 	{
@@ -1338,7 +1339,16 @@ int publ_notify_notifier(str pres_uri, pres_ev_t *event)
 	result_cols[r_to_tag_col=n_result_cols++] = &str_to_tag_col;
 	result_cols[r_from_tag_col=n_result_cols++] = &str_from_tag_col;
 
-	if(pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols, 
+	if (pa_dbf.start_transaction)
+	{
+		if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto error;
+		}
+	}
+
+	if(query_fn(pa_db, query_cols, 0, query_vals, result_cols, 
 				n_query_cols, n_result_cols, 0, &result )< 0)
 	{
 		LM_ERR("Can't query db\n");
@@ -1366,10 +1376,26 @@ int publ_notify_notifier(str pres_uri, pres_ev_t *event)
 		set_updated(&subs);
 	}
 
+	if (pa_dbf.end_transaction)
+	{
+		if (pa_dbf.end_transaction(pa_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto error;
+		}
+	}
+
 	ret = RES_ROW_N(result);
 
 error:
 	if (result) pa_dbf.free_result(pa_db, result);
+
+	if (pa_dbf.abort_transaction)
+	{
+		if (pa_dbf.abort_transaction(pa_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+
 	return ret;
 }
 
@@ -2007,6 +2033,7 @@ static int unset_watchers_updated_winfo(str *pres_uri)
 	int n_query_cols = 0;
 	int ret = -1;
 	str winfo = str_init("presence.winfo");
+	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
 	/* If this is the only presence.winfo dialog awaiting
 	   update for this presentity reset all of the watchers
@@ -2044,7 +2071,7 @@ static int unset_watchers_updated_winfo(str *pres_uri)
 		goto error;
 	}
 
-	if (pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols,
+	if (query_fn(pa_db, query_cols, 0, query_vals, result_cols,
 					n_query_cols, 1, 0, &result) < 0)
 	{
 		LM_ERR("in sql query\n");
@@ -2091,6 +2118,7 @@ static int dialogs_awaiting_update(str *pres_uri, str event)
 	db1_res_t *result = NULL;
 	int n_query_cols = 0;
 	int ret = -1;
+	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
 	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_vals[n_query_cols].type = DB1_STR;
@@ -2122,7 +2150,7 @@ static int dialogs_awaiting_update(str *pres_uri, str event)
 		goto error;
 	}
 
-	if (pa_dbf.query(pa_db, query_cols, query_ops, query_vals,
+	if (query_fn(pa_db, query_cols, query_ops, query_vals,
 				result_cols, n_query_cols, 1, 0, &result) < 0)
 	{
 		LM_ERR("in sql query\n");
@@ -2152,6 +2180,7 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 	int callid_col, from_tag_col, to_tag_col;
 	int i, ret = -1, count;
 	str callid, from_tag, to_tag;
+	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
 	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_vals[n_query_cols].type = DB1_STR;
@@ -2176,7 +2205,7 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 		goto error;
 	}
 
-	if (pa_dbf.query (pa_db, query_cols, 0, query_vals, result_cols,
+	if (query_fn(pa_db, query_cols, 0, query_vals, result_cols,
 				n_query_cols, n_result_cols, 0,  &result) < 0) 
 	{
 		LM_ERR("in sql query\n");
@@ -2259,6 +2288,7 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 done:
 error:
 	if (result) pa_dbf.free_result(pa_db, result);
+
 	return ret;
 }
 
@@ -2640,6 +2670,7 @@ int process_dialogs(int round, int presence_winfo)
 	str ev_sname, winfo = str_init("presence.winfo");
 	int now = (int)time(NULL);
 	int updated = 0;
+	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
 	if (++subset > (pres_waitn_time * pres_notifier_poll_rate) -1)
 		subset = 0;
@@ -2678,7 +2709,7 @@ int process_dialogs(int round, int presence_winfo)
 
 	if (pa_dbf.start_transaction)
 	{
-		if (pa_dbf.start_transaction(pa_db) < 0)
+		if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
@@ -2686,7 +2717,7 @@ int process_dialogs(int round, int presence_winfo)
 	}
 
 	/* Step 1: Find active_watchers that require notification */
-	if (pa_dbf.query(pa_db, query_cols, query_ops, query_vals, result_cols,
+	if (query_fn(pa_db, query_cols, query_ops, query_vals, result_cols,
 			 n_query_cols, n_result_cols, 0, &dialog_list) < 0)
 	{
 		LM_ERR("in sql query\n");
@@ -2787,7 +2818,7 @@ int process_dialogs(int round, int presence_winfo)
 
 		if (pa_dbf.start_transaction)
 		{
-			if (pa_dbf.start_transaction(pa_db) < 0)
+			if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
 			{
 				LM_ERR("in start_transaction\n");
 				goto error;
@@ -2795,7 +2826,7 @@ int process_dialogs(int round, int presence_winfo)
 		}
 		end_transaction = 1;
 
-		if (pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols,
+		if (query_fn(pa_db, query_cols, 0, query_vals, result_cols,
 				 n_query_cols, n_result_cols, 0, &dialog) < 0)
 		{
 			LM_ERR("in sql query\n");
