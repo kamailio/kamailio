@@ -24,6 +24,9 @@ int	sca_get_msg_to_header( sip_msg_t *, struct to_body ** );
 /* convenient AoR extraction from sip: URIs */
 int	sca_uri_extract_aor( str *, str * );
 
+/* convenient AoR creation from a Contact URI and another AoR */
+int	sca_uri_build_aor( str *, int, str *, str * );
+
 /* convenient call hold detection */
 int	sca_call_is_held( sip_msg_t * );
 

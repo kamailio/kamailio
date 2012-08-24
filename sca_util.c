@@ -177,6 +177,53 @@ sca_uri_extract_aor( str *uri, str *aor )
     return( 0 );
 }
 
+    int
+sca_uri_build_aor( str *aor, int maxlen, str *contact_uri, str *domain_uri )
+{
+    char	*p;
+    char	*dp;
+    int		len;
+
+    assert( aor != NULL );
+    assert( contact_uri != NULL );
+    assert( domain_uri != NULL );
+
+    if ( contact_uri->len + domain_uri->len >= maxlen ) {
+	return( -1 );
+    }
+
+    p = memchr( contact_uri->s, '@', contact_uri->len );
+    if ( p == NULL ) {
+	/* no username, by definition can't be an SCA line */
+	aor->s = NULL;
+	aor->len = 0;
+
+	return( 0 );
+    }
+    dp = memchr( domain_uri->s, '@', domain_uri->len );
+    if ( dp == NULL ) {
+	/* may be nameless URI */
+	dp = memchr( domain_uri->s, ':', domain_uri->len );
+	if ( dp == NULL ) {
+	    /* bad domain URI */
+	    return( -1 );
+	}
+    }
+    dp++;
+
+    len = p - contact_uri->s;
+    memcpy( aor->s, contact_uri->s, len );
+    aor->s[ len ] = '@';
+    len += 1;
+    aor->len = len;
+
+    len = domain_uri->len - ( dp - domain_uri->s );
+    memcpy( aor->s + aor->len, dp, len );
+    aor->len += len;
+
+    return( aor->len );
+}
+
 /* XXX this considers any held stream to mean the call is on hold. correct? */
     int
 sca_call_is_held( sip_msg_t *msg )
