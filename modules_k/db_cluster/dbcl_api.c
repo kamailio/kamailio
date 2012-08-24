@@ -136,7 +136,7 @@
 					{\
 						LM_DBG("serial operation - cluster [%.*s] (%d/%d)\n",\
 								cls->name.len, cls->name.s, i, j);\
-						dbh = cls->rlist[i].clist[j]->dbh;\
+						dbh = cls->wlist[i].clist[j]->dbh;\
 						ret = cls->wlist[i].clist[j]->dbf.command;\
 						if (ret==0) {\
 							cls->usedcon = cls->wlist[i].clist[j];\
@@ -159,7 +159,7 @@
 					{\
 						LM_DBG("round robin operation - cluster [%.*s] (%d/%d)\n",\
 								cls->name.len, cls->name.s, i, j);\
-						dbh = cls->rlist[i].clist[j]->dbh;\
+						dbh = cls->wlist[i].clist[j]->dbh;\
 						ret = cls->wlist[i].clist[j]->dbf.command;\
 						if (ret==0)\
 						{\
@@ -183,7 +183,7 @@
 					{\
 						LM_DBG("parallel operation - cluster [%.*s] (%d/%d)\n",\
 								cls->name.len, cls->name.s, i, j);\
-						dbh = cls->rlist[i].clist[j]->dbh;\
+						dbh = cls->wlist[i].clist[j]->dbh;\
 						rc = cls->wlist[i].clist[j]->dbf.command;\
 						if(rc==0) {\
 							cls->usedcon = cls->wlist[i].clist[j];\
