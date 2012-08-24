@@ -82,3 +82,11 @@ Revisiting possibility of using TMCB_ tm module hooks.
     Using TCMB_REQ_IN is a viable option. It would allow for eliminating
     the use of exported functions to the script. Second rev? Probably
     more efficient than using exported functions.
+
+
+Dependency on To-URI is problematic for hold/pickup
+    An SCA pickup of a held call on another handset means RURI, From-URI
+    and To-URI are identical. The module currently expects those to
+    be unique. It will be possible to reconcile these, but it suggests
+    that using the sip_uri_t struct and the parse_uri functions may be
+    helpful.
