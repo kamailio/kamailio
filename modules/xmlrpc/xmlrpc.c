@@ -1140,7 +1140,7 @@ enum xmlrpc_val_type{
  */
 static enum xmlrpc_val_type xml_get_type(xmlNodePtr value)
 {
-	if (!xmlStrcmp(value->name, BAD_CAST "string")){
+	if (!xmlStrcmp(value->name, BAD_CAST "string") || !xmlStrcmp(value->name, BAD_CAST "text")){
 		return XML_T_STR;
 	} else if ( !xmlStrcmp(value->name, BAD_CAST "i4") ||
 				!xmlStrcmp(value->name, BAD_CAST "int")) {
