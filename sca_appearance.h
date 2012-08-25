@@ -19,6 +19,7 @@ enum {
 enum {
     SCA_APPEARANCE_FLAG_DEFAULT = 0,
     SCA_APPEARANCE_FLAG_OWNER_PENDING = (1 << 0),
+    SCA_APPEARANCE_FLAG_CALLEE_PENDING = (1 << 1),
 };
 
 enum {
@@ -51,10 +52,12 @@ struct _sca_appearance {
     int				flags;
 
     str				owner;
-    sca_dialog			dialog;
-    str				prev_owner;
-    sca_dialog			prev_dialog;
     str				callee;
+    sca_dialog			dialog;
+
+    str				prev_owner;
+    str				prev_callee;
+    sca_dialog			prev_dialog;
 
     struct _sca_appearance_list	*appearance_list;
     struct _sca_appearance	*next;
@@ -77,6 +80,7 @@ int	sca_appearance_seize_next_available_index( sca_mod *, str *, str * );
 sca_appearance 	*sca_appearance_seize_next_available_unsafe( sca_mod *, str *,
 							     str *, int );
 int	sca_appearance_update_owner_unsafe( sca_appearance *, str * );
+int	sca_appearance_update_callee_unsafe( sca_appearance *, str * );
 int	sca_appearance_update_dialog_unsafe( sca_appearance *, str *,
 						str *, str * );
 int	sca_appearance_update_unsafe( sca_appearance *, int, str *,
@@ -102,4 +106,6 @@ sca_appearance	*sca_appearance_create( int, str * );
 void		sca_appearance_free( sca_appearance * );
 
 int		sca_uri_is_shared_appearance( sca_mod *, str * );
+int		sca_uri_lock_shared_appearance( sca_mod *, str * );
+int		sca_uri_lock_if_shared_appearance( sca_mod *, str *, int * );
 #endif /* SCA_APPEARANCE_H */

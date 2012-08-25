@@ -420,6 +420,38 @@ error:
 }
 
     int
+sca_appearance_update_callee_unsafe( sca_appearance *app, str *callee )
+{
+    assert( app != NULL );
+    assert( callee != NULL );
+
+    if ( !SCA_STR_EMPTY( &app->callee )) {
+	if ( app->prev_callee.s != NULL ) {
+	    shm_free( app->prev_callee.s );
+	}
+	app->prev_callee.s = app->callee.s;
+	app->prev_callee.len = app->callee.len;
+    }
+
+    app->callee.s = (char *)shm_malloc( callee->len );
+    if ( app->callee.s == NULL ) {
+	LM_ERR( "sca_appearance_update_owner_unsafe: shm_malloc for new "
+		"callee %.*s failed: out of memory", STR_FMT( callee ));
+	goto error;
+    }
+    SCA_STR_COPY( &app->callee, callee );
+
+    return( 1 );
+
+error:
+    /* restore callee */
+    app->callee.s = app->prev_callee.s;
+    app->callee.len = app->prev_callee.len;
+    memset( &app->prev_callee, 0, sizeof( str ));
+
+    return( -1 );
+}
+    int
 sca_appearance_update_dialog_unsafe( sca_appearance *app, str *call_id,
 	str *from_tag, str *to_tag )
 {
@@ -604,6 +636,51 @@ sca_uri_is_shared_appearance( sca_mod *scam, str *aor )
     sca_hash_table_unlock_index( scam->appearances, slot_idx );
 
     if ( app_list == NULL ) {
+	return( 0 );
+    }
+
+    return( 1 );
+}
+
+    int
+sca_uri_lock_shared_appearance( sca_mod *scam, str *aor )
+{
+    sca_hash_slot	*slot;
+    sca_appearance_list	*app_list;
+    int			slot_idx;
+
+    slot_idx = sca_hash_table_index_for_key( scam->appearances, aor );
+    slot = sca_hash_table_slot_for_index( scam->appearances, slot_idx );
+
+    sca_hash_table_lock_index( scam->appearances, slot_idx );
+    app_list = sca_hash_table_slot_kv_find_unsafe( slot, aor );
+
+    if ( app_list == NULL ) {
+	sca_hash_table_unlock_index( scam->appearances, slot_idx );
+	slot_idx = -1;
+    }
+
+    return( slot_idx );
+}
+
+    int
+sca_uri_lock_if_shared_appearance( sca_mod *scam, str *aor, int *slot_idx )
+{
+    sca_hash_slot	*slot;
+    sca_appearance_list	*app_list;
+
+    assert( slot_idx != NULL );
+
+    *slot_idx = sca_hash_table_index_for_key( scam->appearances, aor );
+    slot = sca_hash_table_slot_for_index( scam->appearances, *slot_idx );
+
+    sca_hash_table_lock_index( scam->appearances, *slot_idx );
+    app_list = sca_hash_table_slot_kv_find_unsafe( slot, aor );
+
+    if ( app_list == NULL ) {
+	sca_hash_table_unlock_index( scam->appearances, *slot_idx );
+	*slot_idx = -1;
+
 	return( 0 );
     }
 
