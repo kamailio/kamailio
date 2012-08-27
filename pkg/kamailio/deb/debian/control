@@ -39,7 +39,7 @@ Build-Depends: bison,
                unixodbc-dev,
                xsltproc,
                zlib1g-dev
-Standards-Version: 3.8.0
+Standards-Version: 3.9.3
 Homepage: http://www.kamailio.org/
 
 Package: kamailio
