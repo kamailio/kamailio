@@ -334,7 +334,7 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	if(rsrv->ctxRedis==NULL)
 	{
 		LM_ERR("no redis context for server: %.*s\n", srv->len, srv->s);
-		return -1;
+		goto error_exec;
 	}
 	rpl = redisc_get_reply(res);
 	if(rpl==NULL)
