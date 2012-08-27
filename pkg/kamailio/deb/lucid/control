@@ -43,8 +43,7 @@ Architecture: any
 Depends: adduser,
          ${misc:Depends},
          ${shlibs:Depends}
-Conflicts: kamailio-dbg,
-           kamailio-regex-modules
+Conflicts: kamailio-regex-modules
 Suggests: kamailio-berkeley-modules,
           kamailio-carrierroute-modules,
           kamailio-cpl-modules,
