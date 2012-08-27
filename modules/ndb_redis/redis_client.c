@@ -326,6 +326,11 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 		LM_ERR("invalid parameters");
 		goto error_exec;
 	}
+	if(srv->len==0 || res->len==0 || cmd->len==0)
+	{
+		LM_ERR("invalid parameters");
+		goto error_exec;
+	}
 	if(rsrv==NULL)
 	{
 		LM_ERR("no redis server found: %.*s\n", srv->len, srv->s);
@@ -354,6 +359,10 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	if(rpl->rplRedis == NULL)
 	{
 		/* null reply, reconnect and try again */
+		if(rsrv->ctxRedis->err)
+		{
+			LM_ERR("Redis error: %s\n", rsrv->ctxRedis->errstr);
+		}
 		if(redisc_reconnect_server(rsrv)==0)
 		{
 			rpl->rplRedis = redisvCommand(rsrv->ctxRedis, cmd->s, ap);
