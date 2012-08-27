@@ -9,7 +9,7 @@ Homepage: http://www.kamailio.org/
 Package: kamailio
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
-Conflicts: kamailio-regex-modules, kamailio-dbg
+Conflicts: kamailio-regex-modules
 Suggests: kamailio-mysql-modules, kamailio-postgres-modules, kamailio-unixodbc-modules, kamailio-tls-modules, kamailio-cpl-modules, kamailio-radius-modules, kamailio-presence-modules, kamailio-xml-modules, kamailio-perl-modules, kamailio-snmpstats-modules, kamailio-xmpp-modules, kamailio-carrierroute-modules, kamailio-berkeley-modules, kamailio-ldap-modules, kamailio-lua-modules, kamailio-python-modules, kamailio-dbg
 Description: very fast and configurable SIP proxy
  Kamailio is a very fast and flexible SIP (RFC3261)
