@@ -1393,7 +1393,7 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	str body;
 	str ip;
 	int level, rest_len;
-	char *buf, *m_start, *m_end, *rest_s;
+	char *buf, *m_start, *m_end;
 	struct lump* anchor;
 
 	level = (int)(long)str1;
@@ -1412,13 +1412,11 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 		if (level & ADD_ADIRECTION) {
 		    m_start = ser_memmem(body.s, "\r\nm=", body.len, 4);
 		    while (m_start != NULL) {
-			m_start = m_start + 2;
+			m_start += 4;
 			rest_len = body.len - (m_start - body.s);
-			m_end = ser_memmem(m_start, "\r\n", rest_len, 2);
-			if (m_end == NULL) {
-			    LM_ERR("m line is not crlf terminated\n");
-			    return -1;
-			}
+			m_start = m_end = ser_memmem(m_start, "\r\nm=", rest_len, 4);
+			if (!m_end)
+				m_end = body.s + body.len; /* just before the final \r\n */
 		        anchor = anchor_lump(msg, m_end - msg->buf, 0, 0);
 		        if (anchor == NULL) {
 			    LM_ERR("anchor_lump failed\n");
@@ -1436,9 +1434,6 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 			    pkg_free(buf);
 			    return -1;
 			}
-			rest_s = m_end + 2;
-			rest_len = body.len - (rest_s - body.s);
-			m_start = ser_memmem(rest_s, "\r\nm=", rest_len, 4);
 		    }
 		}
 
