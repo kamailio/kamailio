@@ -379,6 +379,61 @@ error_exec:
 }
 
 /**
+ * Executes a redis command.
+ * Command is coded using a vector of strings, and a vector of lenghts.
+ *
+ * @param rsrv Pointer to a redis_server_t structure.
+ * @param argc number of elements in the command vector.
+ * @param argv vector of zero terminated strings forming the command.
+ * @param argvlen vector of command string lenghts or NULL.
+ * @return redisReply structure or NULL if there was an error.
+ */
+void * redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv, const size_t *argvlen)
+{
+	redisReply *res=NULL;
+
+	if(rsrv==NULL || rsrv->ctxRedis==NULL)
+	{
+		LM_ERR("no redis context found for server %.*s\n",
+			   rsrv->sname->len, rsrv->sname->s);
+		return NULL;
+	}
+	if(argc<=0)
+	{
+		LM_ERR("invalid parameters\n");
+		return NULL;
+	}
+	if(argv==NULL || *argv==NULL)
+	{
+		LM_ERR("invalid parameters\n");
+		return NULL;
+	}
+	res = redisCommandArgv(rsrv->ctxRedis, argc, argv, argvlen);
+	if(res)
+	{
+		return res;
+	}
+
+	/* null reply, reconnect and try again */
+	if(rsrv->ctxRedis->err)
+	{
+		LM_ERR("Redis error: %s\n", rsrv->ctxRedis->errstr);
+	}
+	if(redisc_reconnect_server(rsrv)==0)
+	{
+		res = redisCommandArgv(rsrv->ctxRedis, argc, argv, argvlen);
+	}
+	else
+	{
+		LM_ERR("Unable to reconnect to server: %.*s\n",
+			   rsrv->sname->len, rsrv->sname->s);
+		return NULL;
+	}
+
+	return res;
+}
+
+/**
  *
  */
 redisc_reply_t *redisc_get_reply(str *name)
