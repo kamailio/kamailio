@@ -1,3 +1,3 @@
-callid(string) cflags(int) contact(string) cseq(int) expires(timestamp) flags(int) last_modified(int) methods(int) path(string) q(double) received(string) socket(string) user_agent(string) username(string)
+callid(string) cflags(int) contact(string) cseq(int) expires(timestamp) flags(int) last_modified(int) methods(int) path(string) q(double) received(string) socket(string) user_agent(string) username(string) ruid(string) instance(string) reg_id(int)
 username
 contact
