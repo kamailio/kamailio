@@ -482,6 +482,11 @@ int redisc_free_reply(str *name)
 	redisc_reply_t *rpl, *next_rpl;
 	unsigned int hid;
 
+	if(name==NULL || name->len==0) {
+		LM_ERR("invalid parameters");
+		return -1;
+	}
+
 	hid = get_hash1_raw(name->s, name->len);
 
 	rpl = _redisc_rpl_list;
