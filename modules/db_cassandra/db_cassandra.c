@@ -136,7 +136,7 @@ int db_cassa_bind_api(db_func_t *dbb)
 	dbb->query            = db_cassa_query;
 	dbb->free_result      = db_cassa_free_result;
 	dbb->insert           = db_cassa_insert;
-	dbb->replace          = db_cassa_insert;
+	dbb->replace          = db_cassa_replace;
 	dbb->insert_update    = db_cassa_insert;
 	dbb->delete           = db_cassa_delete;
 	dbb->update           = db_cassa_update;
