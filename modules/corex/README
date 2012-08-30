@@ -1,0 +1,130 @@
+COREX Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2012 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Functions
+
+              3.1. append_branch([ uri, [ q ] ])
+
+        4. RPC Commands
+
+              4.1. corex.list_sockets
+              4.2. corex.list_aliases
+
+   List of Examples
+
+   1.1. append_branch usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Functions
+
+        3.1. append_branch([ uri, [ q ] ])
+
+   4. RPC Commands
+
+        4.1. corex.list_sockets
+        4.2. corex.list_aliases
+
+1. Overview
+
+   This module provides reimplementation of very old functions that were
+   in core and supported only static string or integer parameters. The new
+   versions bring support for dynamic parameters (allowing variables
+   inside the parameters).
+
+   There are also brand new features, related to core internals, but
+   controlled from configuration file or via control interfaces.
+
+   Contributions to this module must be done under BSD license, to follow
+   the requirements of the core contributions.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+3. Functions
+
+   3.1. append_branch([ uri, [ q ] ])
+
+3.1. append_branch([ uri, [ q ] ])
+
+   Append a new branch to the destination set, useful to build the
+   addresses for parallel forking or redirect replies.
+
+   Both parameters are optional, If no uri parameter is provided, then the
+   address from request URI (r-uri) is taken to build the new branch.
+
+   Meaning of the parameters is as follows:
+     * uri - SIP address of the branch to be used as R-URI in the outgoing
+       request.
+     * q - the Q value to set the priority of the branch based on Contact
+       address specifications
+
+   This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
+
+   Example 1.1. append_branch usage
+...
+    append_branch();
+    append_branch("$avp(uri)", "0.5");
+...
+
+4. RPC Commands
+
+   4.1. corex.list_sockets
+   4.2. corex.list_aliases
+
+4.1. corex.list_sockets
+
+   Print the list of sockets the application is listening on.
+
+   Example:
+                sercmd corex.list_sockets
+
+4.2. corex.list_aliases
+
+   Print the list of hostname aliases used to match myself condition.
+
+   Example:
+                sercmd corex.list_aliases
