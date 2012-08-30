@@ -236,7 +236,6 @@ PREFIX			"prefix"
 STRIP			"strip"
 STRIP_TAIL		"strip_tail"
 SET_USERPHONE		"userphone"
-APPEND_BRANCH	"append_branch"
 REMOVE_BRANCH	"remove_branch"
 CLEAR_BRANCHES	"clear_branches"
 IF				"if"
@@ -641,8 +640,6 @@ IMPORTFILE      "import_file"
 <INITIAL>{PREFIX}	{ count(); yylval.strval=yytext; return PREFIX; }
 <INITIAL>{STRIP}	{ count(); yylval.strval=yytext; return STRIP; }
 <INITIAL>{STRIP_TAIL}	{ count(); yylval.strval=yytext; return STRIP_TAIL; }
-<INITIAL>{APPEND_BRANCH}	{ count(); yylval.strval=yytext;
-								return APPEND_BRANCH; }
 <INITIAL>{REMOVE_BRANCH}	{ count(); yylval.strval=yytext;
 								return REMOVE_BRANCH; }
 <INITIAL>{CLEAR_BRANCHES}	{ count(); yylval.strval=yytext;

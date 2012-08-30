@@ -3289,29 +3289,6 @@ cmd:
 	| STRIP LPAREN error RPAREN { $$=0; yyerror("bad argument, number expected"); }
 	| SET_USERPHONE LPAREN RPAREN { $$=mk_action(SET_USERPHONE_T, 0); set_cfg_pos($$); }
 	| SET_USERPHONE error { $$=0; yyerror("missing '(' or ')' ?"); }
-	| APPEND_BRANCH LPAREN STRING COMMA STRING RPAREN {
-		qvalue_t q;
-		if (str2q(&q, $5, strlen($5)) < 0) {
-			yyerror("bad argument, q value expected");
-		}
-		$$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, $3, NUMBER_ST, (void *)(long)q);
-		set_cfg_pos($$);
-	}
-	| APPEND_BRANCH LPAREN STRING RPAREN {
-		$$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, $3,
-							NUMBER_ST, (void *)Q_UNSPECIFIED);
-		set_cfg_pos($$);
-	}
-	| APPEND_BRANCH LPAREN RPAREN {
-		$$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, 0,
-							NUMBER_ST, (void *)Q_UNSPECIFIED);
-		set_cfg_pos($$);
-	}
-	| APPEND_BRANCH {
-		$$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, 0,
-							NUMBER_ST, (void *)Q_UNSPECIFIED);
-		set_cfg_pos($$);
-	}
 	| REMOVE_BRANCH LPAREN intno RPAREN {
 			$$=mk_action(REMOVE_BRANCH_T, 1, NUMBER_ST, (void*)$3);
 			set_cfg_pos($$);
