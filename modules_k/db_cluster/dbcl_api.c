@@ -309,7 +309,8 @@ int db_cluster_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows
 	dbcl_cls_t *cls=NULL;
 	LM_DBG("executing db cluster fetch-result command\n");
 	cls = (dbcl_cls_t*)_h->tail;
-	if(cls->usedcon==NULL || cls->usedcon->dbh==NULL)
+	if(cls->usedcon==NULL || cls->usedcon->dbh==NULL
+			|| cls->usedcon->dbf.fetch_result==NULL)
 		return -1;
 	return cls->usedcon->dbf.fetch_result(cls->usedcon->dbh, _r, nrows);
 }
@@ -376,7 +377,8 @@ int db_cluster_last_inserted_id(const db1_con_t* _h)
 	dbcl_cls_t *cls=NULL;
 	LM_DBG("executing db cluster last inserted id command\n");
 	cls = (dbcl_cls_t*)_h->tail;
-	if(cls->usedcon==NULL || cls->usedcon->dbh==NULL)
+	if(cls->usedcon==NULL || cls->usedcon->dbh==NULL
+			|| cls->usedcon->dbf.last_inserted_id==NULL)
 		return -1;
 	return cls->usedcon->dbf.last_inserted_id(cls->usedcon->dbh);
 }
@@ -390,7 +392,8 @@ int db_cluster_affected_rows(const db1_con_t* _h)
 	dbcl_cls_t *cls=NULL;
 	LM_DBG("executing db cluster affected-rows command\n");
 	cls = (dbcl_cls_t*)_h->tail;
-	if(cls->usedcon==NULL || cls->usedcon->dbh==NULL)
+	if(cls->usedcon==NULL || cls->usedcon->dbh==NULL
+			|| cls->usedcon->dbf.affected_rows==NULL)
 		return -1;
 	return cls->usedcon->dbf.affected_rows(cls->usedcon->dbh);
 }
