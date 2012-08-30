@@ -32,40 +32,6 @@
 #include "../../mod_fix.h"
 #include "km_core.h"
 
-int w_km_append_branch(struct sip_msg *msg, char *uri, str *sq)
-{
-	str suri;
-	int ret;
-	int q = Q_UNSPECIFIED;
-	flag_t branch_flags = 0;
-
-	getbflagsval(0, &branch_flags);
-	if (uri==NULL) {
-		ret = km_append_branch(msg, 0, &msg->dst_uri, &msg->path_vec,
-			q, branch_flags, msg->force_send_socket);
-		/* reset all branch info */
-		reset_force_socket(msg);
-		setbflagsval(0, 0);
-		if(msg->dst_uri.s!=0)
-			pkg_free(msg->dst_uri.s);
-		msg->dst_uri.s = 0;
-		msg->dst_uri.len = 0;
-		if(msg->path_vec.s!=0)
-			pkg_free(msg->path_vec.s);
-		msg->path_vec.s = 0;
-		msg->path_vec.len = 0;
-	} else {
-		if(fixup_get_svalue(msg, (gparam_p)uri, &suri)!=0)
-		{
-			LM_ERR("cannot get the URI parameter\n");
-			return -1;
-		}
-		ret = km_append_branch(msg, &suri, &msg->dst_uri, 
-			&msg->path_vec, q, branch_flags,
-			msg->force_send_socket);
-	}
-	return ret;
-}
 
 int w_setdsturi(struct sip_msg *msg, char *uri, str *s2)
 {

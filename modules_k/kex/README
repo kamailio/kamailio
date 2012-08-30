@@ -11,7 +11,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright Â© 2009 Daniel-Constantin Mierla
+   Copyright © 2009 Daniel-Constantin Mierla
      __________________________________________________________________
 
    Table of Contents
@@ -62,14 +62,13 @@ Daniel-Constantin Mierla
    1.4. setbflag usage
    1.5. setbflag usage
    1.6. resetsflag usage
-   1.7. km_append_branch usage
-   1.8. >setdsturi usage
-   1.9. >resetdsturi usage
-   1.10. >isdsturiset usage
-   1.11. >pv_printf usage
-   1.12. >is_myself usage
-   1.13. setdebug usage
-   1.14. >resetdebug usage
+   1.7. setdsturi usage
+   1.8. resetdsturi usage
+   1.9. isdsturiset usage
+   1.10. pv_printf usage
+   1.11. is_myself usage
+   1.12. setdebug usage
+   1.13. resetdebug usage
 
 Chapter 1. Admin Guide
 
@@ -263,21 +262,8 @@ resetbflag("1");
 
 3.7. km_append_branch([uri])
 
-   Append a new branch to SIP request.
-
-   Meaning of the parameters is as follows:
-     * uri - SIP URI of the new destination. If omitted then the R-URI is
-       used. It can be static string or a string with pseudo-variables
-       that will be evaluated at runtime.
-
-   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
-
-   Example 1.7. km_append_branch usage
-...
-km_append_branch();
-...
-km_append_branch("sip:alice@sip-router.org");
-...
+   It was replaced by append_branch() from corex module, starting with
+   version 3.4.0.
 
 3.8. setdsturi(uri)
 
@@ -291,7 +277,7 @@ km_append_branch("sip:alice@sip-router.org");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.8. >setdsturi usage
+   Example 1.7. setdsturi usage
 ...
 setdsturi("sip:10.0.0.10");
 ...
@@ -302,7 +288,7 @@ setdsturi("sip:10.0.0.10");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. >resetdsturi usage
+   Example 1.8. resetdsturi usage
 ...
 resetdsturi();
 ...
@@ -313,7 +299,7 @@ resetdsturi();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.10. >isdsturiset usage
+   Example 1.9. isdsturiset usage
 ...
 if(isdsturiset())
 {
@@ -334,7 +320,7 @@ if(isdsturiset())
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.11. >pv_printf usage
+   Example 1.10. pv_printf usage
 ...
 pv_printf("$ru", "sip:$rU@$fd");
 pv_printf("$avp(x)", "From: $fU - To: $tU");
@@ -352,7 +338,7 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.12. >is_myself usage
+   Example 1.11. is_myself usage
 ...
 if(is_myself("$fu")) {
     ...
@@ -369,7 +355,7 @@ if(is_myself("$fu")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.13. setdebug usage
+   Example 1.12. setdebug usage
 ...
 setdebug("1");
 ...
@@ -384,7 +370,7 @@ setdebug("$var(level)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.14. >resetdebug usage
+   Example 1.13. resetdebug usage
 ...
 resetdebug();
 ...
@@ -398,7 +384,7 @@ resetdebug();
    4.5. version
    4.6. which
 
-4.1.  arg
+4.1. arg
 
    Print command line arguments.
 
@@ -410,7 +396,7 @@ resetdebug();
                 :arg:_reply_fifo_file_
                 _empty_line_
 
-4.2.  kill
+4.2. kill
 
    Kill the application.
 
@@ -422,7 +408,7 @@ resetdebug();
                 :kill:_reply_fifo_file_
                 _empty_line_
 
-4.3.  pwd
+4.3. pwd
 
    Print working directory.
 
@@ -434,7 +420,7 @@ resetdebug();
                 :pwd:_reply_fifo_file_
                 _empty_line_
 
-4.4.  uptime
+4.4. uptime
 
    Print uptime.
 
@@ -446,7 +432,7 @@ resetdebug();
                 :uptime:_reply_fifo_file_
                 _empty_line_
 
-4.5.  version
+4.5. version
 
    Print version information.
 
@@ -458,7 +444,7 @@ resetdebug();
                 :version:_reply_fifo_file_
                 _empty_line_
 
-4.6.  which
+4.6. which
 
    Print list of available MI commands.
 
@@ -474,7 +460,7 @@ resetdebug();
 
    5.1. pkg.stats
 
-5.1.  pkg.stats
+5.1. pkg.stats
 
    Print private memory (pkg) usage statistics per process. It can take
    optinally a filter to print statistics only for a specific process or
