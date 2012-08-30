@@ -645,6 +645,7 @@ int db_cassa_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 		if (! RES_NAMES(db_res)[col]) {
 			LM_ERR("no private memory left\n");
 			dbcassa_lock_release(tbc);
+			RES_COL_N(db_res) = col;
 			db_free_columns(db_res);
 			goto error;
 		}
@@ -656,6 +657,7 @@ int db_cassa_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 		if(!colp) {
 			LM_ERR("No column with name [%.*s] found\n", _c[col]->len, _c[col]->s);
 			dbcassa_lock_release(tbc);
+			RES_COL_N(db_res) = col;
 			db_free_columns(db_res);
 			goto error;
 		}
