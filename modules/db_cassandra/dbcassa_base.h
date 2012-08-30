@@ -72,6 +72,12 @@ int db_cassa_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 
 
 /*
+ * Replace a row into table - same as insert for cassandra
+ */
+int db_cassa_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+		int _n, const int _un, const int _m);
+
+/*
  * Delete a row from table
  */
 int db_cassa_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,

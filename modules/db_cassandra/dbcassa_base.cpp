@@ -535,7 +535,7 @@ ColumnVecPtr cassa_translate_query(const db1_con_t* _h, const db_key_t* _k,
 						while(1) {
 							CON_CASSA(_h)->con->get_range_slices(key_slice_vect, cparent, sp, keyRange, oac::ConsistencyLevel::ONE);
 							/* construct cassa_result */
-							LM_DBG("Retuned %d key slices\n", key_slice_vect.size());
+							LM_DBG("Retuned %d key slices\n", (int)key_slice_vect.size());
 							for(unsigned int i = 0; i< key_slice_vect.size(); i++) {
 								if(key_slice_vect[i].columns.size()==0) {
 									continue;
@@ -881,6 +881,12 @@ int db_cassa_modify(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	return -1;
 }
 
+int db_cassa_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+		int _n, const int _un, const int _m)
+{
+	LM_DBG("db_cassa_replace:\n");
+	return db_cassa_modify(_h, _k, _v, _k, _v, _n, _n);
+}
 
 int db_cassa_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 		int _n)
