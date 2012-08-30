@@ -214,7 +214,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 
 <programlisting format="linespecific">
    ...
-   callid(string) cflags(int) contact(string) cseq(int) <emphasis>expires(timestamp)</emphasis> flags(int) last_modified(int) methods(int) path(string) q(double) received(string) socket(string) user_agent(string) username(string)
+   callid(string) cflags(int) contact(string) cseq(int) <emphasis>expires(timestamp)</emphasis> flags(int) last_modified(int) methods(int) path(string) q(double) received(string) socket(string) user_agent(string) username(string) ruid(string) instance(string) reg_id(int)
    <emphasis>username</emphasis>
    <emphasis>contact</emphasis>
    ...

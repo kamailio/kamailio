@@ -194,7 +194,8 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
    ...
    callid(string) cflags(int) contact(string) cseq(int) expires(timestamp) flags
 (int) last_modified(int) methods(int) path(string) q(double) received(string) so
-cket(string) user_agent(string) username(string)
+cket(string) user_agent(string) username(string) ruid(string) instance(string) r
+eg_id(int)
    username
    contact
    ...
