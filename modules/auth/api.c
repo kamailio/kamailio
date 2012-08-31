@@ -145,7 +145,7 @@ static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
 			*auth_res = NONCE_REUSED;
 			return 0;
 		} else {
-			DBG("auth:pre_auth: Invalid nonce value received\n");
+			DBG("auth:pre_auth: Invalid nonce value received (ret %d)\n", ret);
 			*auth_res = NOT_AUTHENTICATED;
 			return 0;
 		}
