@@ -401,6 +401,7 @@ extern char *finame;
 %token LOGSTDERROR
 %token LOGFACILITY
 %token LOGNAME
+%token LOGCOLOR
 %token LISTEN
 %token ADVERTISE
 %token ALIAS
@@ -863,6 +864,8 @@ assign_stm:
 	| LOGFACILITY EQUAL error { yyerror("ID expected"); }
 	| LOGNAME EQUAL STRING { log_name=$3; }
 	| LOGNAME EQUAL error { yyerror("string value expected"); }
+	| LOGCOLOR EQUAL NUMBER { log_color=$3; }
+	| LOGCOLOR EQUAL error { yyerror("boolean value expected"); }
 	| DNS EQUAL NUMBER   { received_dns|= ($3)?DO_DNS:0; }
 	| DNS EQUAL error { yyerror("boolean value expected"); }
 	| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }
