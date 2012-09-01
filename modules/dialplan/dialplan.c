@@ -277,13 +277,14 @@ static int dp_update(struct sip_msg * msg, pv_spec_t * src, pv_spec_t * dest,
 	int no_change;
 	pv_value_t val;
 
+	memset(&val, 0, sizeof(pv_value_t));
+	val.flags = PV_VAL_STR;
+
 	no_change = (dest->type == PVT_NONE) || (!repl->s) || (!repl->len);
 
 	if (no_change)
 		goto set_attr_pvar;
 
-	memset(&val, 0, sizeof(pv_value_t));
-	val.flags = PV_VAL_STR;
 	val.rs = *repl;
 
 	if(dest->setf(msg, &dest->pvp, (int)EQ_T, &val)<0)
