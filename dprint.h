@@ -81,6 +81,7 @@
 /*
  * Log levels
  */
+#define L_MIN		-5
 #define L_ALERT		-5
 #define L_BUG		-4
 #define L_CRIT2		-3  /* like L_CRIT, but adds prefix */
@@ -90,6 +91,7 @@
 #define L_NOTICE 	1
 #define L_INFO   	2
 #define L_DBG    	3
+#define L_MAX    	3
 
 /** @brief This is the facility value used to indicate that the caller of the macro
  * did not override the facility. Value 0 (the defaul) is LOG_KERN on Linux
@@ -108,6 +110,8 @@ extern int my_pid(void);
 
 /** @brief non-zero if logging to stderr instead to the syslog */
 extern int log_stderr;
+
+extern int log_color;
 
 /** @brief maps log levels to their string name and corresponding syslog level */
 
@@ -133,6 +137,9 @@ extern volatile int dprint_crit;
 int str2facility(char *s);
 int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 
+void dprint_color(int level);
+void dprint_color_reset(void);
+void dprint_init_colors(void);
 
 /** @brief
  * General logging macros
@@ -175,10 +182,12 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 					DPRINT_CRIT_ENTER; \
 					if (likely(((level) >= L_ALERT) && ((level) <= L_DBG))){ \
 						if (unlikely(log_stderr)) { \
+							if (unlikely(log_color)) dprint_color(level); \
 							fprintf(stderr, "%2d(%d) %s: %s" fmt, \
 									process_no, my_pid(), \
 									LOG_LEVEL2NAME(level), (prefix), \
 									__VA_ARGS__); \
+							if (unlikely(log_color)) dprint_color_reset(); \
 						} else { \
 							syslog(LOG2SYSLOG_LEVEL(level) | \
 								   (((facility) != DEFAULT_FACILITY) ? \
@@ -189,9 +198,11 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 						} \
 					} else { \
 						if (log_stderr) { \
+							if (unlikely(log_color)) dprint_color(level); \
 							fprintf(stderr, "%2d(%d) %s" fmt, \
 									process_no, my_pid(), \
 									(prefix),  __VA_ARGS__); \
+							if (unlikely(log_color)) dprint_color_reset(); \
 						} else { \
 							if ((level)<L_ALERT) \
 								syslog(LOG2SYSLOG_LEVEL(L_ALERT) | \
@@ -237,10 +248,12 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 					DPRINT_CRIT_ENTER; \
 					if (likely(((level) >= L_ALERT) && ((level) <= L_DBG))){ \
 						if (unlikely(log_stderr)) { \
+							if (unlikely(log_color)) dprint_color(level); \
 							fprintf(stderr, "%2d(%d) %s: %s" fmt, \
 									process_no, my_pid(), \
 									LOG_LEVEL2NAME(level), \
 									(prefix) , ## args);\
+							if (unlikely(log_color)) dprint_color_reset(); \
 						} else { \
 							syslog(LOG2SYSLOG_LEVEL(level) |\
 								   (((facility) != DEFAULT_FACILITY) ? \
@@ -251,9 +264,11 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 						} \
 					} else { \
 						if (log_stderr) { \
+							if (unlikely(log_color)) dprint_color(level); \
 							fprintf(stderr, "%2d(%d) %s" fmt, \
 										process_no, my_pid(), \
 										(prefix) , ## args); \
+							if (unlikely(log_color)) dprint_color_reset(); \
 						} else { \
 							if ((level)<L_ALERT) \
 								syslog(LOG2SYSLOG_LEVEL(L_ALERT) | \
