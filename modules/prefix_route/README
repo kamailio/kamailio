@@ -4,9 +4,9 @@ Alfred E. Heggestad
 
    Telio Telecom
 
-   Copyright Â© 2007 Alfred E. Heggestad
+   Copyright © 2007 Alfred E. Heggestad
 
-   Copyright Â© 2008 Telio Telecom AS
+   Copyright © 2008 Telio Telecom AS
      __________________________________________________________________
 
    1.1. Overview
@@ -14,10 +14,11 @@ Alfred E. Heggestad
 
         1.2.1. db_url (string)
         1.2.2. db_table (string)
+        1.2.3. exit (int)
 
    1.3. Functions
 
-        1.3.1. prefix_route()
+        1.3.1. prefix_route([user])
 
    1.4. RPC Commands
 
@@ -63,19 +64,39 @@ modparam("prefix_route", "db_url", "mysql://ser:pass@db_host/ser")
 modparam("prefix_route", "db_table", "new_prefix_route")
 ...
 
+1.2.3. exit (int)
+
+   If set, exit the execution of the configuration file when a route block
+   is executed upon matching a prefix. Otherwise return 1 (true).
+
+   Default value is 1 (on).
+
+   Example 3. Setting exit parameter
+...
+modparam("prefix_route", "exit", 0)
+...
+
 1.3. Functions
 
-1.3.1. prefix_route()
+1.3.1. prefix_route([user])
 
    This function tries to find a route from the user part of the request
-   URI. If a route is found, it will be used for further processing.
-   Otherwise the function will return false.
+   URI (if no parameter is provided), or from the value of the parameter.
+   The parameter can contain config variables.
 
-   Example 3. prefix_route() usage
+   If a route is found, it will be used for further processing. Otherwise
+   the function will return false.
+
+   Example 4. prefix_route() usage
 ...
   if (!prefix_route()) {
       xlog("L_ERR", "prefix_route(): no matching routes\n");
   }
+...
+  if (!prefix_route("$fU")) {
+      xlog("L_ERR", "prefix_route(): no matching routes\n");
+  }
+
 ...
 
 1.4. RPC Commands
@@ -96,7 +117,7 @@ modparam("prefix_route", "db_table", "new_prefix_route")
      * route - varchar(64) - Route name
      * comment - varchar(64) - Free-form comment
 
-   Example 4. Sample data
+   Example 5. Sample data
 ...
    +--------+-------+---------------+
    | prefix | route | comment       |
