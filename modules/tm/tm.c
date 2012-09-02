@@ -308,6 +308,8 @@ static char *fr_timer_param = 0 /*FR_TIMER_AVP*/;
 static char *fr_inv_timer_param = 0 /*FR_INV_TIMER_AVP*/;
 static char *contacts_avp_param = 0;
 
+int tm_remap_503_500 = 1;
+
 static rpc_export_t tm_rpc[];
 
 static int fixup_t_check_status(void** param, int param_no);
@@ -522,6 +524,7 @@ static param_export_t params[]={
 	{"local_ack_mode",      PARAM_INT, &default_tm_cfg.local_ack_mode        },
 	{"failure_reply_mode",  PARAM_INT, &failure_reply_mode                   },
 	{"faked_reply_prio",    PARAM_INT, &faked_reply_prio                     },
+	{"remap_503_500",       PARAM_INT, &tm_remap_503_500                     },
 #ifdef CANCEL_REASON_SUPPORT
 	{"local_cancel_reason", PARAM_INT, &default_tm_cfg.local_cancel_reason   },
 	{"e2e_cancel_reason",   PARAM_INT, &default_tm_cfg.e2e_cancel_reason     },
