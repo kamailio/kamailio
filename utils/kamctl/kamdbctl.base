@@ -44,7 +44,8 @@ PRESENCE_TABLES=${PRESENCE_TABLES:-presentity active_watchers watchers xcap
 
 # SQL definitions
 # If you change this definitions here, then you must change them
-# in db/schema/entities.xml too.
+# in ../../lib/srdb1/schema/entities.xml too. They are used in this
+# script and needed to be the same as in the database definitions.
 # FIXME
 
 FOREVER=${FOREVER:-2020-05-28 21:32:15}
