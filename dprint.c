@@ -343,3 +343,11 @@ void dprint_color_reset(void)
 	dprint_term_color('x', 'x', &obuf);
 	fprintf(stderr, "%.*s", obuf.len, obuf.s);
 }
+
+void dprint_color_update(int level, char f, char b)
+{
+	if(level<L_MIN || level>L_MAX)
+		return;
+	if(f && f!='0') _log_level_colors[level - L_MIN].f = f;
+	if(b && b!='0') _log_level_colors[level - L_MIN].b = b;
+}

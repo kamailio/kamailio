@@ -139,6 +139,7 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 
 void dprint_color(int level);
 void dprint_color_reset(void);
+void dprint_color_update(int level, char f, char b);
 void dprint_init_colors(void);
 
 /** @brief
