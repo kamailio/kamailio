@@ -34,6 +34,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
+#include "../../parser/parse_param.h"
 
 #include "xl_lib.h"
 
@@ -74,6 +75,8 @@ static int xlogl3_fixup(void** param, int param_no);
 static int xdbgl_fixup(void** param, int param_no);
 
 static void destroy(void);
+
+static int xlog_log_colors_param(modparam_t type, void *val);
 
 int pv_parse_color_name(pv_spec_p sp, str *in);
 static int pv_get_color(struct sip_msg *msg, pv_param_t *param, 
@@ -120,6 +123,7 @@ static param_export_t params[]={
 	{"long_format",  INT_PARAM, &long_format},
 	{"prefix",       STR_PARAM, &_xlog_prefix},
 	{"log_facility", STR_PARAM, &xlog_facility_name},
+	{"log_colors",   STR_PARAM|USE_FUNC_PARAM, (void*)xlog_log_colors_param},
 	{0,0,0}
 };
 
@@ -713,3 +717,82 @@ error:
 	return -1;
 }
 
+/**
+ *
+ */
+static int xlog_log_colors_param(modparam_t type, void *val)
+{
+	param_t* params_list = NULL;
+	param_hooks_t phooks;
+	param_t *pit=NULL;
+	str s;
+	int level;
+
+	if(val==NULL)
+		goto error;
+
+	s.s = (char*)val;
+	s.len = strlen(s.s);
+
+	if(s.len<=0)
+		goto error;
+
+	if(s.s[s.len-1]==';')
+		s.len--;
+	if (parse_params(&s, CLASS_ANY, &phooks, &params_list)<0)
+		goto error;
+
+	for (pit = params_list; pit; pit=pit->next)
+	{
+		if (pit->name.len==7
+				&& strncasecmp(pit->name.s, "l_alert", 7)==0) {
+			level = L_ALERT;
+		} else if (pit->name.len==5
+				&& strncasecmp(pit->name.s, "l_bug", 5)==0) {
+			level = L_BUG;
+		} else if (pit->name.len==7
+				&& strncasecmp(pit->name.s, "l_crit2", 7)==0) {
+			level = L_CRIT2;
+		} else if (pit->name.len==6
+				&& strncasecmp(pit->name.s, "l_crit", 6)==0) {
+			level = L_CRIT;
+		} else if (pit->name.len==5
+				&& strncasecmp(pit->name.s, "l_err", 5)==0) {
+			level = L_ERR;
+		} else if (pit->name.len==6
+				&& strncasecmp(pit->name.s, "l_warn", 6)==0) {
+			level = L_WARN;
+		} else if (pit->name.len==8
+				&& strncasecmp(pit->name.s, "l_notice", 8)==0) {
+			level = L_NOTICE;
+		} else if (pit->name.len==6
+				&& strncasecmp(pit->name.s, "l_info", 6)==0) {
+			level = L_INFO;
+		} else if (pit->name.len==5
+				&& strncasecmp(pit->name.s, "l_dbg", 5)==0) {
+			level = L_DBG;
+		} else {
+			LM_ERR("invalid level name %.*s\n",
+					pit->name.len, pit->name.s);
+			goto error;
+		}
+			
+		if(pit->body.len!=2) {
+			LM_ERR("invalid color spec for level %.*s (%.*s)\n",
+					pit->name.len, pit->name.s,
+					pit->body.len, pit->body.s);
+			goto error;
+		}
+		dprint_color_update(level, pit->body.s[0], pit->body.s[1]);
+	}
+
+	if(params_list!=NULL)
+		free_params(params_list);
+	return 0;
+
+error:
+	if(params_list!=NULL)
+		free_params(params_list);
+	return -1;
+
+}

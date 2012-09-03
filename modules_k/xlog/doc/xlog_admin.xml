@@ -188,6 +188,29 @@ modparam("xlog", "log_facility", "LOG_DAEMON")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>log_colors</varname> (string)</title>
+		<para>
+		Update terminal colors used by core for log levels (when log_stderr=1
+		and log_color=1). The value has to be 'logname=colors', where colors
+		is two characters specifying foreground and background in the same
+		format as $C(xy) variable.
+		</para>
+		<para>
+		The parameter can be set many times, its value can also be a
+		';'-separated list of color specs.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>log_colors example</title>
+		<programlisting format="linespecific">
+modparam("xlog", "log_colors", "L_ERR=cr")
+modparam("xlog", "log_colors", "L_ERR=cr;L_WARN=px")
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 	<section>
