@@ -6,6 +6,7 @@
 #include "sca_call_info.h"
 #include "sca_event.h"
 #include "sca_notify.h"
+#include "sca_util.h"
 
 #include "../../modules/tm/tm_load.h"
 
@@ -16,6 +17,8 @@ const str		SCA_METHOD_NOTIFY = STR_STATIC_INIT( "NOTIFY" );
 sca_notify_reply_cb( struct cell *t, int cb_type, struct tmcb_params *cbp )
 {
     struct sip_msg	*notify_reply = NULL;
+    str			to_aor = STR_NULL;
+    str			*contact_uri;
 
     if ( cbp == NULL ) {
 	LM_ERR( "Empty parameters passed to NOTIFY callback!" );
@@ -25,13 +28,50 @@ sca_notify_reply_cb( struct cell *t, int cb_type, struct tmcb_params *cbp )
 	LM_ERR( "Empty reply passed to NOTIFY callback!" );
 	return;
     }
-    if ( notify_reply == FAKED_REPLY ) {
-	/* XXX should hook this and remove subscriber */
-	LM_ERR( "NOTIFY resulted in FAKED_REPLY from proxy" );
+
+    contact_uri = &t->uac[ 0 ].uri;
+    if ( notify_reply != FAKED_REPLY && REPLY_CLASS( notify_reply ) == 2 ) {
+	LM_DBG( "NOTIFY %.*s returned %d", STR_FMT( contact_uri ),
+					notify_reply->REPLY_STATUS );
 	return;
     }
 
-    LM_INFO( "NOTIFY returned status %d", notify_reply->REPLY_STATUS );
+    /*
+     * after this, we've either gotten an error from the client, or a faked
+     * reply from the proxy. remove the subscription in either case. it's
+     * possible the client will return 481 (no such transaction), but that's
+     * still grounds for us to remove the subscription, since the dialog
+     * we have associated with the subscription is no longer valid.
+     */
+    if ( notify_reply == FAKED_REPLY ) {
+	/* XXX should hook this and remove subscriber */
+	LM_ERR( "NOTIFY %.*s resulted in FAKED_REPLY from proxy: "
+		"failed to deliver NOTIFY to client", STR_FMT( contact_uri ));
+    } else {
+	LM_ERR( "NOTIFY %.*s returned %d %.*s removing call-info "
+		"subscription for %.*s", STR_FMT( contact_uri ),
+		notify_reply->REPLY_STATUS,
+		STR_FMT( &notify_reply->first_line.u.reply.reason ),
+		STR_FMT( contact_uri ));
+    }
+
+    if ( sca_uri_extract_aor( &t->to, &to_aor ) < 0 ) {
+	LM_ERR( "Failed to extract AoR from %.*s", STR_FMT( &t->to ));
+	return;
+    }
+    /* t->to is the entire To header: "To: sip:....", so move to_aor.s ahead */
+    if ( memcmp( to_aor.s, "To: ", strlen( "To: " )) == 0 ) {
+	to_aor.s += strlen( "To: " );
+	to_aor.len -= strlen( "To: " );
+    }
+
+    LM_INFO( "ADMORTEN DEBUG: delete call-info+%.*s subscription for %.*s",
+	    STR_FMT( &to_aor ), STR_FMT( contact_uri ));
+    if ( sca_subscription_delete_subscriber_for_event( sca, contact_uri,
+		&SCA_EVENT_NAME_CALL_INFO, &to_aor ) < 0 ) {
+	LM_ERR( "Failed to delete %.*s %.*s subscription",
+		STR_FMT( contact_uri ), STR_FMT( &SCA_EVENT_NAME_CALL_INFO ));
+    }
 }
 
     static dlg_t *

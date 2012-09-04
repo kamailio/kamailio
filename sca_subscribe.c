@@ -121,12 +121,12 @@ sca_subscription_purge_expired( unsigned int ticks, void *param )
 	     * send notifies to others in group if necessary.
 	     */
 
-	    LM_INFO( "ADMORTEN: Deleting expired %s subscription from %.*s",
+	    LM_INFO( "%s subscription from %.*s expired, deleting",
 			sca_event_name_from_type( sub->event ),
 			STR_FMT( &sub->subscriber ));
 
-	    /* unlink from hash table entries list */
 	    sca_hash_table_slot_unlink_entry_unsafe( &ht->slots[ i ], ent );
+	    sca_hash_entry_free( ent );
 	}
 
 	sca_hash_table_unlock_index( ht, i );
@@ -448,6 +448,49 @@ sca_subscription_copy_subscription_key( sca_subscription *sub, str *key_out )
     SCA_STR_APPEND_CSTR( key_out, event_name );
 
     return( key_out->len );
+}
+
+    int
+sca_subscription_delete_subscriber_for_event( sca_mod *scam, str *subscriber,
+	str *event, str *aor )
+{
+    sca_hash_slot	*slot;
+    sca_hash_entry	*ent;
+    str			subkey = STR_NULL;
+    char		skbuf[ 1024 ];
+    int			slot_idx;
+    int			len;
+
+    len = aor->len;
+    len += event->len;
+
+    if ( len >= sizeof( skbuf )) {
+	LM_ERR( "Subscription key %.*s%.*s: too long",
+		STR_FMT( aor ), STR_FMT( event ));
+	return( -1 );
+    }
+
+    subkey.s = skbuf;
+    SCA_STR_COPY( &subkey, aor );
+    SCA_STR_APPEND( &subkey, event );
+
+    slot_idx = sca_hash_table_index_for_key( scam->subscriptions, &subkey );
+
+    slot = sca_hash_table_slot_for_index( sca->subscriptions, slot_idx );
+    sca_hash_table_lock_index( scam->subscriptions, slot_idx );
+
+    ent = sca_hash_table_slot_kv_find_entry_unsafe( slot, subscriber );
+    if ( ent != NULL ) {
+        ent = sca_hash_table_slot_unlink_entry_unsafe( slot, ent );
+    }
+
+    sca_hash_table_unlock_index( sca->subscriptions, slot_idx );
+
+    if ( ent != NULL ) {
+	sca_hash_entry_free( ent );
+    }
+
+    return( 1 );
 }
 
     int
