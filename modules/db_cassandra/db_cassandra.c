@@ -140,6 +140,7 @@ int db_cassa_bind_api(db_func_t *dbb)
 	dbb->insert_update    = db_cassa_insert;
 	dbb->delete           = db_cassa_delete;
 	dbb->update           = db_cassa_update;
+	dbb->raw_query        = db_cassa_raw_query;
 
 	return 0;
 }
