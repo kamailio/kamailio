@@ -2316,7 +2316,7 @@ dlg_set_property("ka-dst");
 			</para>
 		</section>
 		<section>
-			<title><varname>event_route[dialog:failure]</varname></title>
+			<title><varname>event_route[dialog:failed]</varname></title>
 			<para>
 			Executed when dialog is not completed (+300 reply to INVITE).
 			</para>
