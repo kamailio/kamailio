@@ -163,7 +163,6 @@
     <index>
         <name>expires_idx</name>
         <colref linkend="expires"/>
-	<unique/>
     </index>
 
     <index>
