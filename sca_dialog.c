@@ -46,9 +46,9 @@ sca_dialog_build_from_tags( sca_dialog *dialog, int maxlen, str *call_id,
 #define SCA_REPLACES_HDR_PREFIX		"Replaces: "
 #define SCA_REPLACES_HDR_PREFIX_LEN	strlen( SCA_REPLACES_HDR_PREFIX )
 #define SCA_REPLACES_TO_TAG		"to-tag="
-#define SCA_REPLACES_TO_TAG_LEN		strlen( "to-tag=" )
+#define SCA_REPLACES_TO_TAG_LEN		strlen( SCA_REPLACES_TO_TAG )
 #define SCA_REPLACES_FROM_TAG		"from-tag="
-#define SCA_REPLACES_FROM_TAG_LEN	strlen( "from-tag=" )
+#define SCA_REPLACES_FROM_TAG_LEN	strlen( SCA_REPLACES_FROM_TAG )
     int
 sca_dialog_create_replaces_header( sca_dialog *dlg, str *replaces_hdr )
 {
