@@ -49,6 +49,9 @@ Daniel-Constantin Mierla
               4.4. uptime
               4.5. version
               4.6. which
+              4.7. get_statistics
+              4.8. reset_statistics
+              4.9. clear_statistics
 
         5. RPC Commands
 
@@ -105,6 +108,9 @@ Chapter 1. Admin Guide
         4.4. uptime
         4.5. version
         4.6. which
+        4.7. get_statistics
+        4.8. reset_statistics
+        4.9. clear_statistics
 
    5. RPC Commands
 
@@ -383,6 +389,9 @@ resetdebug();
    4.4. uptime
    4.5. version
    4.6. which
+   4.7. get_statistics
+   4.8. reset_statistics
+   4.9. clear_statistics
 
 4.1. arg
 
@@ -454,6 +463,48 @@ resetdebug();
 
    MI FIFO Command Format:
                 :which:_reply_fifo_file_
+                _empty_line_
+
+4.7. get_statistics
+
+   Print the list of available internal statistics.
+
+   Name: get_statistics
+
+   Parameters: statsid - which statistics to be printed. If set to 'all'
+   then all statistics are printed; if set to 'statsgroup:' then all
+   statistics in the group are printed; if set to 'statsname' then the
+   statistics identified by the name is printed.
+
+   MI FIFO Command Format:
+                :get_statistics:_reply_fifo_file_
+                _statsid_
+                _empty_line_
+
+4.8. reset_statistics
+
+   Reset internal statistics.
+
+   Name: reset_statistics
+
+   Parameters: statsid - which statistics to be reset, give as name.
+
+   MI FIFO Command Format:
+                :reset_statistics:_reply_fifo_file_
+                _statsid_
+                _empty_line_
+
+4.9. clear_statistics
+
+   Return statistics and reset their value in one command.
+
+   Name: get_statistics
+
+   Parameters: statsid - same as for get_statistics.
+
+   MI FIFO Command Format:
+                :clear_statistics:_reply_fifo_file_
+                _statsid_
                 _empty_line_
 
 5. RPC Commands
