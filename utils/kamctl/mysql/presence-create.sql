@@ -46,7 +46,7 @@ CREATE TABLE active_watchers (
 ) ENGINE=MyISAM;
 
 CREATE INDEX active_watchers_expires ON active_watchers (expires);
-CREATE INDEX active_watchers_pres ON active_watchers (presentity_uri);
+CREATE INDEX active_watchers_pres ON active_watchers (presentity_uri, event);
 CREATE INDEX updated_idx ON active_watchers (updated);
 CREATE INDEX updated_winfo_idx ON active_watchers (updated_winfo, presentity_uri);
 
@@ -106,10 +106,7 @@ CREATE TABLE pua (
 ) ENGINE=MyISAM;
 
 CREATE INDEX expires_idx ON pua (expires);
-CREATE INDEX dialog1_idx ON pua (call_id, from_tag, to_tag);
-CREATE INDEX dialog2_idx ON pua (pres_id, pres_uri);
-CREATE INDEX tmp_dlg1_idx ON pua (call_id, from_tag);
-CREATE INDEX tmp_dlg2_idx ON pua (pres_id, pres_uri, call_id, from_tag);
-CREATE INDEX tmp_record1_idx ON pua (pres_id);
-CREATE INDEX tmp_record2_idx ON pua (pres_id, etag);
+CREATE INDEX dialog1_idx ON pua (pres_id, pres_uri);
+CREATE INDEX dialog2_idx ON pua (call_id, from_tag);
+CREATE INDEX record_idx ON pua (pres_id);
 

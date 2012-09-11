@@ -167,39 +167,18 @@
 
     <index>
         <name>dialog1_idx</name>
-        <colref linkend="call_id"/>
-        <colref linkend="from_tag"/>
-        <colref linkend="to_tag"/>
+        <colref linkend="pres_id"/>
+        <colref linkend="pres_uri"/>
     </index>
 
-    <index>
+   <index>
         <name>dialog2_idx</name>
-        <colref linkend="pres_id"/>
-        <colref linkend="pres_uri"/>
-    </index>
-
-    <index>
-        <name>tmp_dlg1_idx</name>
         <colref linkend="call_id"/>
         <colref linkend="from_tag"/>
     </index>
 
     <index>
-        <name>tmp_dlg2_idx</name>
+        <name>record_idx</name>
         <colref linkend="pres_id"/>
-        <colref linkend="pres_uri"/>
-        <colref linkend="call_id"/>
-        <colref linkend="from_tag"/>
-    </index>
-
-    <index>
-        <name>tmp_record1_idx</name>
-        <colref linkend="pres_id"/>
-    </index>
-
-    <index>
-        <name>tmp_record2_idx</name>
-        <colref linkend="pres_id"/>
-        <colref linkend="etag"/>
     </index>
 </table>

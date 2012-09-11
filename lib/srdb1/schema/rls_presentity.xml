@@ -96,6 +96,7 @@
     <index>
         <name>updated_idx</name>
         <colref linkend="updated"/>
+        <description>If possible use a partial index WHERE (updated &lt;&gt;(-1))</description>
     </index>
 
     <index>

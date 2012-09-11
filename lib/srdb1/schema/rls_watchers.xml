@@ -203,12 +203,6 @@
     </index>
 
     <index>
-        <name>rls_watchers_delete</name>
-        <colref linkend="callid"/>
-        <colref linkend="to_tag"/>
-    </index>
-
-    <index>
         <name>rls_watchers_update</name>
         <colref linkend="watcher_username"/>
         <colref linkend="watcher_domain"/>
@@ -223,5 +217,6 @@
     <index>
         <name>updated_idx</name>
         <colref linkend="updated"/>
+        <description>This index is needed only if you use DB_ONLY mode. If possible use a partial index WHERE (updated &lt;&gt;(-1))</description>
     </index>
 </table>
