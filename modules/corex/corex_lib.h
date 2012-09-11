@@ -26,4 +26,8 @@
 
 int corex_append_branch(sip_msg_t *msg, gparam_t *pu, gparam_t *pq);
 
+int corex_add_alias_subdomains(char* aliasval);
+
+int corex_register_check_self(void);
+
 #endif
