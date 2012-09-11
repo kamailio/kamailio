@@ -184,8 +184,8 @@ int delete_expired_subs_rlsdb( void )
 			LM_ERR("cannot build rls subs did\n");
 			goto error;
 		}
-		subs.updated = core_hash(&rlsubs_did, NULL,
-			(waitn_time * rls_notifier_poll_rate * rls_notifier_processes) - 1);
+		subs.updated = core_hash(&rlsubs_did, NULL, 0) %
+			(waitn_time * rls_notifier_poll_rate * rls_notifier_processes);
 
 		n_query_cols = 0;
 
