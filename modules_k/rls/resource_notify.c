@@ -127,6 +127,12 @@ void get_dialog_from_did(char* did, subs_t **dialog, unsigned int *hash_code)
 
 		/* save dialog info */
 		*dialog= pres_copy_subs(s, PKG_MEM_TYPE);
+		if(*dialog== NULL)
+		{
+			LM_ERR("while copying subs_t structure\n");
+			lock_release(&rls_table[*hash_code].lock);
+			return;
+		}
 	}
 
 	if(*dialog== NULL)
