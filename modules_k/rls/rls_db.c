@@ -121,7 +121,7 @@ int delete_expired_subs_rlsdb( void )
 	db1_res_t *result = NULL;
 	int n_query_cols = 0, n_result_cols = 0;
 	int r_callid_col = 0, r_to_tag_col = 0, r_from_tag_col = 0;
-	int i;
+	int i, nr_rows;
 	subs_t subs;
 	str rlsubs_did = {0, 0};
 	db_query_f query_fn = rls_dbf.query_lock ? rls_dbf.query_lock : rls_dbf.query;
@@ -167,10 +167,13 @@ int delete_expired_subs_rlsdb( void )
 
 	if(result == NULL) goto error;
 
-	for (i = 0; i <RES_ROW_N(result); i++)
+	rows = RES_ROWS(result);
+	nr_rows = RES_ROW_N(result);
+
+	for (i = 0; i < nr_rows; i++)
 	{
-		rows = RES_ROWS(result);
-		values = ROW_VALUES(rows);
+		memset(&subs, 0, sizeof(subs_t));
+		values = ROW_VALUES(&rows[i]);
 
 		subs.callid.s = (char *) VAL_STRING(&values[r_callid_col]);
 		subs.callid.len = strlen(subs.callid.s);
@@ -442,11 +445,11 @@ int update_all_subs_rlsdb(str *watcher_user, str *watcher_domain, str *evt)
 
 	nr_rows = RES_ROW_N(result);
 
+	rows = RES_ROWS(result);
 	/* get the results and fill in return data structure */
 	for (loop=0; loop <nr_rows; loop++)
 	{
-		rows = RES_ROWS(result);
-		values = ROW_VALUES(rows);
+		values = ROW_VALUES(&rows[loop]);
 
 		size= sizeof(subs_t) +
 			( strlen(VAL_STRING(values+r_pres_uri_col))

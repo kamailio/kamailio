@@ -327,7 +327,7 @@ int reply_200(struct sip_msg* msg, str* contact, int expires)
 		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
-	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", expires);	
+	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", expires);
 	if(hdr_append.len< 0)
 	{
 		LM_ERR("unsuccessful sprintf\n");
