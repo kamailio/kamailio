@@ -2223,9 +2223,9 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 		update_cols[n_update_cols] = &str_updated_col;
 		update_vals[n_update_cols].type = DB1_INT;
 		update_vals[n_update_cols].nul = 0;
-		update_vals[n_update_cols].val.int_val = core_hash(&callid,
-			&from_tag, (pres_waitn_time * pres_notifier_poll_rate
-					* pres_notifier_processes) - 1);
+		update_vals[n_update_cols].val.int_val =
+			core_hash(&callid, &from_tag, 0) % (pres_waitn_time *
+ 			 pres_notifier_poll_rate * pres_notifier_processes);
 		n_update_cols++;
 
 		if (full)
@@ -2283,9 +2283,10 @@ int set_updated(subs_t *sub)
 	update_cols[0] = &str_updated_col;
 	update_vals[0].type = DB1_INT;
 	update_vals[0].nul = 0;
-	update_vals[0].val.int_val = core_hash(&sub->callid, &sub->from_tag,
-				(pres_waitn_time * pres_notifier_poll_rate
-						* pres_notifier_processes) - 1);
+	update_vals[0].val.int_val =
+		core_hash(&sub->callid, &sub->from_tag, 0) %
+			(pres_waitn_time * pres_notifier_poll_rate
+						* pres_notifier_processes);
 
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
 	{
