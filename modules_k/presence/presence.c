@@ -1407,9 +1407,9 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 					* pres_notifier_processes));
 	} else {
 		db_vals[n_update_cols].val.int_val = 
-			core_hash(&subs->callid, &subs->from_tag,
+			core_hash(&subs->callid, &subs->from_tag, 0) %
 				  (pres_waitn_time * pres_notifier_poll_rate
-					* pres_notifier_processes) - 1);
+					* pres_notifier_processes);
 	}
 	n_update_cols++;
 

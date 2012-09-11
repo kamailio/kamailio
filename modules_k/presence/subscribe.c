@@ -476,9 +476,9 @@ int update_subscription_notifier(struct sip_msg* msg, subs_t* subs,
 	*sent_reply= 0;
 
 	/* Set the notifier/update fields for the subscription */
-	subs->updated = core_hash(&subs->callid, &subs->from_tag,
+	subs->updated = core_hash(&subs->callid, &subs->from_tag, 0) %
 				(pres_waitn_time * pres_notifier_poll_rate
-					* pres_notifier_processes) - 1);
+					* pres_notifier_processes);
 	if (subs->event->type & WINFO_TYPE)
 		subs->updated_winfo = UPDATED_TYPE;
 	else if (subs->event->wipeer)
