@@ -614,6 +614,8 @@ int convert_temporary_dialog_puadb(ua_pres_t *pres)
 	query_vals[n_query_cols].val.str_val.len = 0;
 	n_query_cols++;
 
+
+
 	if (pua_dbf.replace != NULL)
 	{
 		if (pua_dbf.replace(pua_db, query_cols, query_vals, n_query_cols,
@@ -1212,11 +1214,14 @@ ua_pres_t *get_dialog_puadb(str pres_id, str *pres_uri, ua_pres_t *result, db1_r
 		pua_dbf.free_result(pua_db, res);
 		return(NULL);
 	}
-
-	if (nr_rows != 1)
+	else if (nr_rows > 1)
 	{
-		LM_ERR("Too many rows found (%d)\n", nr_rows);
+		LM_ERR("Too many rows found (%d)... deleting\n", nr_rows);
 		pua_dbf.free_result(pua_db, res);
+
+		if (pua_dbf.delete(pua_db, q_cols, 0, q_vals, n_query_cols) < 0) 
+			LM_ERR("deleting record(s)\n");
+
 		return(NULL);
 	}
 
