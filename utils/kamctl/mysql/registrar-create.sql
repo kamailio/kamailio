@@ -18,7 +18,8 @@ CREATE TABLE aliases (
     socket VARCHAR(64) DEFAULT NULL,
     methods INT(11) DEFAULT NULL,
     instance VARCHAR(255) DEFAULT NULL,
-    reg_id INT(11) DEFAULT 0 NOT NULL
+    reg_id INT(11) DEFAULT 0 NOT NULL,
+    CONSTRAINT ruid_idx UNIQUE (ruid)
 ) ENGINE=MyISAM;
 
 CREATE INDEX alias_idx ON aliases (username, domain, contact);

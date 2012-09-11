@@ -18,7 +18,8 @@ CREATE TABLE aliases (
     socket VARCHAR(64) DEFAULT NULL,
     methods INTEGER DEFAULT NULL,
     instance VARCHAR(255) DEFAULT NULL,
-    reg_id INTEGER DEFAULT 0 NOT NULL
+    reg_id INTEGER DEFAULT 0 NOT NULL,
+    CONSTRAINT aliases_ruid_idx UNIQUE (ruid)
 );
 
 CREATE INDEX aliases_alias_idx ON aliases (username, domain, contact);

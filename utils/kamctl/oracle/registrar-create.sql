@@ -18,7 +18,8 @@ CREATE TABLE aliases (
     socket VARCHAR2(64) DEFAULT NULL,
     methods NUMBER(10) DEFAULT NULL,
     instance VARCHAR2(255) DEFAULT NULL,
-    reg_id NUMBER(10) DEFAULT 0 NOT NULL
+    reg_id NUMBER(10) DEFAULT 0 NOT NULL,
+    CONSTRAINT aliases_ruid_idx  UNIQUE (ruid)
 );
 
 CREATE OR REPLACE TRIGGER aliases_tr

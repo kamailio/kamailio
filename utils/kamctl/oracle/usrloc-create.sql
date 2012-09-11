@@ -6,7 +6,7 @@ CREATE TABLE location (
     domain VARCHAR2(64) DEFAULT NULL,
     contact VARCHAR2(255) DEFAULT '',
     received VARCHAR2(128) DEFAULT NULL,
-    path VARCHAR2(128) DEFAULT NULL,
+    path VARCHAR2(512) DEFAULT NULL,
     expires DATE DEFAULT to_date('2030-05-28 21:32:15','yyyy-mm-dd hh24:mi:ss'),
     q NUMBER(10,2) DEFAULT 1.0 NOT NULL,
     callid VARCHAR2(255) DEFAULT 'Default-Call-ID',
@@ -18,7 +18,8 @@ CREATE TABLE location (
     socket VARCHAR2(64) DEFAULT NULL,
     methods NUMBER(10) DEFAULT NULL,
     instance VARCHAR2(255) DEFAULT NULL,
-    reg_id NUMBER(10) DEFAULT 0 NOT NULL
+    reg_id NUMBER(10) DEFAULT 0 NOT NULL,
+    CONSTRAINT location_ruid_idx  UNIQUE (ruid)
 );
 
 CREATE OR REPLACE TRIGGER location_tr
