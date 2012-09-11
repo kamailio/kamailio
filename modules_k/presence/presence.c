@@ -1277,11 +1277,11 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 		return 0;
 	}
 
+	rows = RES_ROWS(result);
 	/* get the results and fill in return data structure */
 	for (loop=0; loop <nr_rows; loop++)
 	{
-		rows = RES_ROWS(result);
-		row_vals = ROW_VALUES(rows);	
+		row_vals = ROW_VALUES(&rows[loop]);
 
 		memset(&s, 0, sizeof(subs_t));
 		s.status= subs->status;

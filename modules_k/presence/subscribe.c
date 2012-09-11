@@ -1688,6 +1688,7 @@ void update_db_subs_timer_notifier(void)
 		for (i = 0; i <RES_ROW_N(result); i++)
 		{
 			values = ROW_VALUES(&rows[i]);
+			memset(&subs, 0, sizeof(subs_t));
 
 			subs.callid.s = (char *) VAL_STRING(&values[r_callid_col]);
 			subs.callid.len = strlen(subs.callid.s);
