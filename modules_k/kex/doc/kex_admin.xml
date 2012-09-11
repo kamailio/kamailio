@@ -572,6 +572,73 @@ resetdebug();
 		_empty_line_
 		</programlisting>
     </section>
+	<section>
+		<title>
+		<function moreinfo="none">get_statistics</function>
+		</title>
+		<para>
+		Print the list of available internal statistics.
+		</para>
+		<para>
+		Name: <emphasis>get_statistics</emphasis>
+		</para>
+		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
+			be printed. If set to 'all' then all statistics are printed; if
+			set to 'statsgroup:' then all statistics in the group are printed;
+			if set to 'statsname' then the statistics identified by the name
+			is printed.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:get_statistics:_reply_fifo_file_
+		_statsid_
+		_empty_line_
+		</programlisting>
+    </section>
+	<section>
+		<title>
+		<function moreinfo="none">reset_statistics</function>
+		</title>
+		<para>
+		Reset internal statistics.
+		</para>
+		<para>
+		Name: <emphasis>reset_statistics</emphasis>
+		</para>
+		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
+			be reset, give as name.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:reset_statistics:_reply_fifo_file_
+		_statsid_
+		_empty_line_
+		</programlisting>
+    </section>
+	<section>
+		<title>
+		<function moreinfo="none">clear_statistics</function>
+		</title>
+		<para>
+			Return statistics and reset their value in one command.
+		</para>
+		<para>
+		Name: <emphasis>get_statistics</emphasis>
+		</para>
+		<para>Parameters: <emphasis>statsid</emphasis> - same as for
+			get_statistics.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:clear_statistics:_reply_fifo_file_
+		_statsid_
+		_empty_line_
+		</programlisting>
+    </section>
+
 	</section>
 
 	<section>
