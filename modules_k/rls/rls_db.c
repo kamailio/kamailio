@@ -116,7 +116,7 @@ int delete_expired_subs_rlsdb( void )
 {
 	db_key_t query_cols[3], result_cols[3], update_cols[1];
 	db_val_t query_vals[3], update_vals[1], *values;
-	db_op_t query_ops[1];
+	db_op_t query_ops[2];
 	db_row_t *rows;
 	db1_res_t *result = NULL;
 	int n_query_cols = 0, n_result_cols = 0;
@@ -143,6 +143,13 @@ int delete_expired_subs_rlsdb( void )
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= (int)time(NULL) - rls_expires_offset;
 	query_ops[n_query_cols]= OP_LT;
+	n_query_cols++;
+
+	query_cols[n_query_cols]= &str_updated_col;
+	query_vals[n_query_cols].type = DB1_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val= NO_UPDATE_TYPE;
+	query_ops[n_query_cols]= OP_EQ;
 	n_query_cols++;
 
 	result_cols[r_callid_col=n_result_cols++] = &str_callid_col;
