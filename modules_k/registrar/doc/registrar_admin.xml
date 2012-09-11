@@ -818,7 +818,7 @@ save("location", "0x00", "sip:test@kamailio.org");
 		<function moreinfo="none">lookup(domain [, uri])</function>
 		</title>
 		<para>
-		The functions extracts username from Request-URI and tries to find 
+		The function extracts username from Request-URI and tries to find 
 		all contacts for the username in usrloc. If there are no such 
 		contacts, -1 will be returned.  If there are such contacts, 
 		Request-URI will be overwritten with the contact that has
@@ -880,6 +880,38 @@ switch ($retcode) {
         sl_send_reply("405", "Not Found");
         exit;
 };
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">lookup_branches(domain)</function>
+		</title>
+		<para>
+		The function performs lookup(domain) on r-uri and additional
+		branches (only branches that have no other attributes set than uri).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>domain</emphasis> - Name of table that should be used 
+			for the lookup.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>Return codes are propagated from lookup(domain).</para>
+
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>lookup_branches</function> usage</title>
+		<programlisting format="linespecific">
+...
+lookup_branches("location");
 ...
 </programlisting>
 		</example>
