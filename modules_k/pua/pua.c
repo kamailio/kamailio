@@ -268,8 +268,13 @@ static int mod_init(void)
 
 	startup_time = (int) time(NULL);
 
-	if (update_period > 0) /* probably should check > 5 here!! -croc */
+	if (update_period > 5)
 		register_timer(hashT_clean, 0, update_period- 5);
+	else if (update_period != 0)
+	{
+		LM_ERR("update_period must be 0 or > 5\n");
+		return -1;
+	}
 
 	if (dbmode != PUA_DB_ONLY) 
 	{        
