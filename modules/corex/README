@@ -23,18 +23,23 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Functions
+        3. Parameters
 
-              3.1. append_branch([ uri, [ q ] ])
+              3.1. alias_subdomains (string)
 
-        4. RPC Commands
+        4. Functions
 
-              4.1. corex.list_sockets
-              4.2. corex.list_aliases
+              4.1. append_branch([ uri, [ q ] ])
+
+        5. RPC Commands
+
+              5.1. corex.list_sockets
+              5.2. corex.list_aliases
 
    List of Examples
 
-   1.1. append_branch usage
+   1.1. Set alias_subdomains parameter
+   1.2. append_branch usage
 
 Chapter 1. Admin Guide
 
@@ -46,14 +51,18 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Functions
+   3. Parameters
 
-        3.1. append_branch([ uri, [ q ] ])
+        3.1. alias_subdomains (string)
 
-   4. RPC Commands
+   4. Functions
 
-        4.1. corex.list_sockets
-        4.2. corex.list_aliases
+        4.1. append_branch([ uri, [ q ] ])
+
+   5. RPC Commands
+
+        5.1. corex.list_sockets
+        5.2. corex.list_aliases
 
 1. Overview
 
@@ -84,11 +93,30 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None
 
-3. Functions
+3. Parameters
 
-   3.1. append_branch([ uri, [ q ] ])
+   3.1. alias_subdomains (string)
 
-3.1. append_branch([ uri, [ q ] ])
+3.1. alias_subdomains (string)
+
+   Register a domain and all its sub-domains to match the myself
+   condition. It can be set many times. Its full format is:
+   'proto:domain:port', allowing to set restrictions on protocol and port
+   as well. Protocol and port are optional.
+
+   Default value is "NULL".
+
+   Example 1.1. Set alias_subdomains parameter
+...
+modparam("corex", "alias_subdomain", "kamailio.org")
+modparam("corex", "alias_subdomain", "udp:sip-router.org:5060")
+...
+
+4. Functions
+
+   4.1. append_branch([ uri, [ q ] ])
+
+4.1. append_branch([ uri, [ q ] ])
 
    Append a new branch to the destination set, useful to build the
    addresses for parallel forking or redirect replies.
@@ -104,25 +132,25 @@ Chapter 1. Admin Guide
 
    This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
 
-   Example 1.1. append_branch usage
+   Example 1.2. append_branch usage
 ...
     append_branch();
     append_branch("$avp(uri)", "0.5");
 ...
 
-4. RPC Commands
+5. RPC Commands
 
-   4.1. corex.list_sockets
-   4.2. corex.list_aliases
+   5.1. corex.list_sockets
+   5.2. corex.list_aliases
 
-4.1. corex.list_sockets
+5.1. corex.list_sockets
 
    Print the list of sockets the application is listening on.
 
    Example:
                 sercmd corex.list_sockets
 
-4.2. corex.list_aliases
+5.2. corex.list_aliases
 
    Print the list of hostname aliases used to match myself condition.
 
