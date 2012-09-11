@@ -69,9 +69,6 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr rl_node);
 int update_rlsubs( subs_t* subs,unsigned int hash_code);
 int remove_expired_rlsubs( subs_t* subs,unsigned int hash_code);
 
-list_entry_t *rls_contact_list = NULL;
-list_entry_t *rls_subs_list = NULL;
-
 /**
  * return the XML node for rls-services matching uri
  */
@@ -964,7 +961,9 @@ int send_resource_subs(char* uri, void* param)
 	str pres_uri, *tmp_str;
 	struct sip_uri parsed_pres_uri;
 	int duplicate = 0;
-	subs_info_t *s = (subs_info_t *) param;
+	
+	subs_info_t *s = (subs_info_t *) ((void**)param)[0];
+	list_entry_t **rls_contact_list = (list_entry_t **) ((void**)param)[1];
 
 	pres_uri.s = uri;
 	pres_uri.len = strlen(uri);
@@ -1006,7 +1005,7 @@ int send_resource_subs(char* uri, void* param)
 	}
 	memcpy(tmp_str->s, pres_uri.s, pres_uri.len);
 	tmp_str->len = pres_uri.len;
-	rls_contact_list = list_insert(tmp_str, rls_contact_list, &duplicate);
+	*rls_contact_list = list_insert(tmp_str, *rls_contact_list, &duplicate);
 	if (duplicate != 0)
 	{
 		LM_WARN("%.*s has %.*s multiple times in the same resource list\n",
@@ -1028,6 +1027,9 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 	str extra_headers;
 	str did_str= {0, 0};
 	str *tmp_str;
+	list_entry_t *rls_contact_list = NULL;
+	list_entry_t *rls_subs_list = NULL;
+	void* params[2] = {&s, &rls_contact_list};
 		
 	/* if is initial send an initial Subscribe 
 	 * else search in hash table for a previous subscription */
@@ -1068,25 +1070,10 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 
 	s.internal_update_flag = subs->internal_update_flag;
 
-	if (rls_contact_list != NULL)
-	{
-		LM_WARN("contact list is not empty\n");
-		list_free(&rls_contact_list);
-	}
-
-	if (subs->internal_update_flag == INTERNAL_UPDATE_TRUE)
-	{
-		if (rls_subs_list != NULL)
-		{
-			LM_WARN("subscriber list is not empty\n");
-			list_free(&rls_subs_list);
-		}
-	}
-
 	counter = 0;
 	
 	if(process_list_and_exec(xmlnode, subs->watcher_user, subs->watcher_domain,
-			send_resource_subs, (void*)(&s))<0)
+			send_resource_subs, params)<0)
 	{
 		LM_ERR("while processing list\n");
 		goto error;
