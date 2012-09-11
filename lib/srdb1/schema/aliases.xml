@@ -186,5 +186,10 @@
         <colref linkend="domain"/>
         <colref linkend="contact"/>
     </index>
+    <index>
+        <name>ruid_idx</name>
+        <colref linkend="ruid"/>
+        <unique/>
+    </index>
 
 </table>
