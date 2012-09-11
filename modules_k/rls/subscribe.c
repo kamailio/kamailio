@@ -1111,13 +1111,16 @@ void update_a_sub(subs_t *subs_copy)
 {
 	xmlDocPtr doc = NULL;
 	xmlNodePtr service_node = NULL;
+	int now = (int)time(NULL);
 
-	if ((subs_copy->expires -= (int)time(NULL)) <= 0)
+	if (subs_copy->expires < now)
 	{
+		subs_copy->expires = 0;
 		LM_WARN("found expired subscription for: %.*s\n",
 			subs_copy->pres_uri.len, subs_copy->pres_uri.s);
 		goto done;
 	}
+	subs_copy->expires -= now;
 
 	if(rls_get_service_list(&subs_copy->pres_uri, &subs_copy->watcher_user,
 				&subs_copy->watcher_domain, &service_node, &doc)<0)
