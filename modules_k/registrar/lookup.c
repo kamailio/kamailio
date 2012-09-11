@@ -353,6 +353,9 @@ int lookup_branches(sip_msg_t *msg, udomain_t *d)
 	if(nr_branches_start==0)
 		return ret;
 
+	if(ret>0)
+		found = 1;
+
 	/* backup r-uri branch */
 	ruri_b_uri = msg->new_uri;
 	ruri_b_dst_uri = msg->dst_uri;
