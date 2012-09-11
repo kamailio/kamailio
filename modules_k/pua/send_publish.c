@@ -422,7 +422,9 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	}
 	else
  	{
-		insert_htable(presentity);
+		lock_get(&HashT->p_records[hash_code].lock);
+		insert_htable(presentity, hash_code);
+		lock_release(&HashT->p_records[hash_code].lock);
 	}
 	LM_DBG("***Inserted in hash table\n");
 

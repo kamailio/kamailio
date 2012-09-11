@@ -1011,9 +1011,6 @@ int send_subscribe(subs_info_t* subs)
 		int size;
 insert:
 	
-		if (dbmode!=PUA_DB_ONLY)
-			lock_release(&HashT->p_records[hash_code].lock);
-
 		if (subs->expires == 0)
 			/* Don't create a new dialog when expires == 0 */
 			goto done;	
@@ -1123,7 +1120,8 @@ insert:
 		}
 		else
 		{
-			insert_htable(presentity);
+			insert_htable(presentity, hash_code);
+			lock_release(&HashT->p_records[hash_code].lock);
 		}
 
 		uac_r.dialog->rem_target.s = 0;
