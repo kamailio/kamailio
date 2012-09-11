@@ -235,7 +235,7 @@ void update_htable(ua_pres_t* p, time_t desired_expires, int expires,
 	}
 }
 /* insert in front; so when searching the most recent result is returned*/
-void _insert_htable(ua_pres_t* presentity, unsigned int hash_code)
+void insert_htable(ua_pres_t* presentity, unsigned int hash_code)
 {
 	ua_pres_t* p= NULL;
 
@@ -251,18 +251,6 @@ void _insert_htable(ua_pres_t* presentity, unsigned int hash_code)
 	presentity->next= p->next;
 	
 	p->next= presentity;
-}
-
-void insert_htable(ua_pres_t* presentity)
-{
-	unsigned int hash_code;
-
-	hash_code= core_hash(presentity->pres_uri,presentity->watcher_uri, HASH_SIZE);
-	lock_get(&HashT->p_records[hash_code].lock);
-
-	_insert_htable(presentity, hash_code);
-
-	lock_release(&HashT->p_records[hash_code].lock);
 }
 
 /* This function used to perform a search to find the hash table
@@ -349,7 +337,7 @@ int convert_temporary_dialog(ua_pres_t *dialog)
 	else
 		return -1;
 
-	_insert_htable(dialog, hash_code);
+	insert_htable(dialog, hash_code);
 
 	lock_release(&HashT->p_records[hash_code].lock);
 

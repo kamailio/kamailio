@@ -391,6 +391,7 @@ static int db_restore(void)
 	int watcher_col,callid_col,totag_col,fromtag_col,cseq_col,remote_contact_col;
 	int event_col,contact_col,tuple_col,record_route_col, extra_headers_col;
 	int version_col;
+	unsigned int hash_code;
 
 	if (dbmode==PUA_DB_ONLY)
 	{
@@ -643,7 +644,11 @@ static int db_restore(void)
 			}
 
 			print_ua_pres(p);
-			insert_htable(p);
+
+			hash_code= core_hash(p->pres_uri, p->watcher_uri, HASH_SIZE);
+			lock_get(&HashT->p_records[hash_code].lock);
+			insert_htable(p, hash_code);
+			lock_release(&HashT->p_records[hash_code].lock);
 		}
 
 	} while((db_fetch_next(&pua_dbf, pua_fetch_rows, pua_db, &res)==1)
