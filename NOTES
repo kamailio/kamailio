@@ -57,9 +57,6 @@ Call-Info meaning in context
 
 
 
-INVITE response handler doesn't handle non 18x/200 replies. Leaves stuck state.
-
-
 A reINVITE from another line in the SCA group has the following characteristics:
     * RURI is the SCA line's AoR, not the callee.
     * From and To URIs are also SCA line's AoR.
@@ -82,6 +79,52 @@ Revisiting possibility of using TMCB_ tm module hooks.
     Using TCMB_REQ_IN is a viable option. It would allow for eliminating
     the use of exported functions to the script. Second rev? Probably
     more efficient than using exported functions.
+
+    Hooking TMCB_E2EACK_IN does solve the above problem. Current problem
+    is getting current URIs on both call legs, since callee in hold/pickup
+    scenario (SCA line A1 holds call to B, SCA line A2 picks up) thinks
+    To & From URI are both the SCA line's AoR. Tried sending UPDATEs from
+    the TMCB_E2EACK_IN callback, but because we're sending them before the
+    proxy relays the ACK to the callee, the callee appears to revert to
+    using the URIs in the ACK for all future packets. The callER handles
+    the UPDATE correctly, and uses the correct URIs.
+
+    Possible workarounds for the above, in order of increasing quality:
+    	* Append UPDATE info to shared linked list, register short timer,
+	  send all pending UPDATEs when timer alarms, clear queue.
+
+	    Pros: easy to write, discrete from other code
+	    Cons: This is effectively a sleep(1) workaround. Clumsy, prone
+		    to error: still might cause UPDATE packet to be sent prior
+		    to ACK delivery to callee, if UPDATE is appended to queue
+		    just as timer fires.	
+
+	* Register a TMCB_DESTROY callback in the TMCB_E2EACK_IN callback
+	  to send the UPDATEs when the ACK transaction is destroyed.
+	    
+	    Pros: fits current model fairly well, can glean all required
+		  information from struct cell in callback.
+	    Cons: also similar to a sleep(1) workaround, though less prone
+		  to races. still attached to a timer (tm destroy tick),
+		  meaning users may still trigger problem with rapid hold/
+		  pickups.
+
+	* Register a pv in the module, set it to a known value in the
+	  TMCB_E2EACK_IN callback, have the script check the value of the
+	  pv, and invoke an exported sca_update function if the pv is set
+	  the the known value.
+
+	    Pros: fits sip-router script-based logic model well, does not
+		  rely on a timer (eliminates races).
+	    Cons: pv has a lot of overhead for what amounts to a flag.
+
+	* Register a flag, set it in TMCB_E2EACK_IN callback if UPDATEs
+	  need to go to call legs, invoke sca_update from script as above.
+
+	    Pros: it's just a flag.
+	    Cons: setup may be complicated, given sip-router's script flag
+		  handling. see fix_flags in flags.c, e.g. registrar's
+		  fix_nated_contact()
 
 
 Dependency on To-URI is problematic for hold/pickup
