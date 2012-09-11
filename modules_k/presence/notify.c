@@ -2836,7 +2836,7 @@ int process_dialogs(int round, int presence_winfo)
 
 		if (dialog->n <= 0)
 		{
-			LM_WARN("record not found\n");
+			LM_INFO("record not found - this may be observed in multi-server systems\n");
 			if (cleanup_missing_dialog(&sub) < 0)
 				LM_ERR("cleaning up after missing record\n");
 			goto next_dialog;
