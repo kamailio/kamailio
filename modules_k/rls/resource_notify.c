@@ -720,9 +720,9 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	query_vals[n_query_cols].nul = 0;
 	if (dbmode == RLS_DB_ONLY)
 		query_vals[n_query_cols].val.int_val=
-			core_hash(res_id, NULL,
+			core_hash(res_id, NULL, 0) %
 				(waitn_time * rls_notifier_poll_rate
-					* rls_notifier_processes) - 1);
+					* rls_notifier_processes);
 	else
 		query_vals[n_query_cols].val.int_val = UPDATED_TYPE;
 	n_query_cols++;

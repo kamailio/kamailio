@@ -586,8 +586,8 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 		LM_ERR("cannot build rls subs did\n");
 		goto error;
 	}
-	subs.updated = core_hash(&rlsubs_did, NULL,
-		(waitn_time * rls_notifier_poll_rate * rls_notifier_processes) - 1);
+	subs.updated = core_hash(&rlsubs_did, NULL, 0) %
+		(waitn_time * rls_notifier_poll_rate * rls_notifier_processes);
 	
 	if(get_to(msg)->tag_value.s==NULL || get_to(msg)->tag_value.len==0)
 	{ /* initial Subscribe */
