@@ -22,7 +22,7 @@ sca_mod			*sca;
 /* EXTERNAL API */
 usrloc_api_t		ul;	/* usrloc callbacks */
 struct tm_binds		tmb;	/* tm functions for sending messages */
-sl_api_t		slb;
+sl_api_t		slb;	/* sl callback, function for getting to-tag */
 
 /* PROTOTYPES */
 static int		sca_mod_init( void );
@@ -223,12 +223,10 @@ sca_mod_init( void )
 	return( -1 );
     }
 
-#ifdef notdef
     if ( sca_bind_usrloc( &ul, &sca ) != 0 ) {
 	LM_ERR( "Failed to initialize required usrloc API" );
 	return( -1 );
     }
-#endif /* notdef */
 
     if ( load_tm_api( &tmb ) != 0 ) {
 	LM_ERR( "Failed to initialize required tm API" );
