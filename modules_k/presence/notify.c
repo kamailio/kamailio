@@ -246,7 +246,7 @@ int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 	int n_result_cols = 0;
 	int n_query_cols = 0;
 	int i;
-	int status_col, expires_col, watcher_user_col, watcher_domain_col, callid_col;
+	int status_col, watcher_user_col, watcher_domain_col, callid_col;
 
 	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_ops[n_query_cols] = OP_EQ;
@@ -266,11 +266,10 @@ int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 	query_ops[n_query_cols] = OP_GT;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val = (int)time(NULL) - expires_offset;
+	query_vals[n_query_cols].val.int_val = (int)time(NULL) + expires_offset;
 	n_query_cols++;
 
 	result_cols[status_col=n_result_cols++] = &str_status_col;
-	result_cols[expires_col=n_result_cols++] = &str_expires_col;
 	result_cols[watcher_user_col=n_result_cols++] = &str_watcher_username_col;
 	result_cols[watcher_domain_col=n_result_cols++] = &str_watcher_domain_col;
 	result_cols[callid_col=n_result_cols++] = &str_callid_col;
@@ -581,11 +580,11 @@ error:
 str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 		str* contact)
 {
-	db_key_t query_cols[6];
-	db_val_t query_vals[6];
-	db_key_t result_cols[6];
+	db_key_t query_cols[3];
+	db_val_t query_vals[3];
+	db_key_t result_cols[3];
 	db1_res_t *result = NULL;
-	int body_col, expires_col, etag_col= 0, sender_col;
+	int body_col, etag_col= 0, sender_col;
 	str** body_array= NULL;
 	str* notify_body= NULL;	
 	db_row_t *row= NULL ;	
@@ -646,7 +645,6 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 	n_query_cols++;
 
 	result_cols[body_col=n_result_cols++] = &str_body_col;
-	result_cols[expires_col=n_result_cols++] = &str_expires_col;
 	result_cols[etag_col=n_result_cols++] = &str_etag_col;
 	result_cols[sender_col=n_result_cols++] = &str_sender_col;
 	
@@ -1087,9 +1085,6 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);	
 		
-		//	if(row_vals[expires_col].val.int_val< (int)time(NULL))
-		//		continue;
-
 		if(row_vals[reason_col].val.string_val) {
 		    if(strlen(row_vals[reason_col].val.string_val) != 0)
 			continue;
@@ -1145,11 +1140,10 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 		
 		s.event= event;
 		s.local_cseq = row_vals[cseq_col].val.int_val +1;
-		if(row_vals[expires_col].val.int_val < (int)time(NULL))
+		if(row_vals[expires_col].val.int_val < (int)time(NULL) + expires_offset)
 		    s.expires = 0;
 		else
-		    s.expires = row_vals[expires_col].val.int_val -
-			(int)time(NULL);
+		    s.expires = row_vals[expires_col].val.int_val - (int)time(NULL);
 		s.version = row_vals[version_col].val.int_val +1;
 
 		s_new= mem_copy_subs(&s, PKG_MEM_TYPE);
@@ -2845,12 +2839,10 @@ int process_dialogs(int round, int presence_winfo)
 		cached_updated_winfo = sub.updated_winfo
 					= VAL_INT(&dvalues[updated_winfo_col]);
 		
-		if (VAL_INT(&dvalues[expires_col]) > now)
+		if (VAL_INT(&dvalues[expires_col]) > now + expires_offset)
 			sub.expires = VAL_INT(&dvalues[expires_col]) - now;
 		else
 			sub.expires = 0;
-
-		if (sub.expires < expires_offset) sub.expires = 0;
 
 		sub.updated = round;
 

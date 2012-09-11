@@ -1348,10 +1348,10 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 
 		s.expires = row_vals[r_expires_col].val.int_val;
 
-		if( s.expires < (int)time(NULL) )
-		    s.expires = 0;
-		else
+		if( s.expires > (int)time(NULL) + expires_offset)
 		    s.expires -= (int)time(NULL);
+		else
+		    s.expires = 0;
 
 		s.version = row_vals[r_version_col].val.int_val;
 
