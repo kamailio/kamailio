@@ -73,8 +73,8 @@ sca_call_info_header_length_for_appearance( sca_appearance *appearance,
     len += state_str.len;
 
     if ( !SCA_STR_EMPTY( &appearance->uri )) {
-	/* +1 for ';', +1 for the '=' between param name and value */
-	len += SCA_APPEARANCE_URI_STR.len + 1 + 1;
+	/* +1 for ';', +1 for '=' between param name and value, +2 for quotes */
+	len += SCA_APPEARANCE_URI_STR.len + 1 + 1 + 2;
 	len += appearance->uri.len;
     }
 
@@ -156,8 +156,14 @@ sca_call_info_header_append_appearances( sca_mod *scam, sca_subscription *sub,
 	    hdrbuf[ len ] = '=';
 	    len += 1;
 
+	    hdrbuf[ len ] = '"';
+	    len += 1;
+
 	    memcpy( hdrbuf + len, app->uri.s, app->uri.len );
 	    len += app->uri.len;
+
+	    hdrbuf[ len ] = '"';
+	    len += 1;
 	}
 
 	if ( app->next ) {
@@ -731,7 +737,6 @@ sca_call_info_uri_update( str *uri, sca_call_info *call_info,
     char		dlg_buf[ 1024 ];
     int			slot_idx = -1;
     int			rc = -1;
-    int			notify = 0;
 
     assert( uri != NULL );
     assert( call_info != NULL );
@@ -840,14 +845,6 @@ done:
 	sca_hash_table_unlock_index( sca->appearances, slot_idx );
     }
 
-    if ( notify ) {
-	if ( sca_notify_call_info_subscribers( sca, &aor ) < 0 ) {
-	    LM_ERR( "Failed to call-info NOTIFY %.*s subscribers",
-		    STR_FMT( &aor ));
-	    goto done;
-	}
-    }
-
     return( rc );
 }
 
@@ -920,21 +917,35 @@ sca_call_info_invite_request_handler( sip_msg_t *msg, sca_call_info *call_info,
     char		dlg_buf[ 1024 ];
     str			state_str = STR_NULL;
     str			from_aor = STR_NULL;
+    str			to_aor = STR_NULL;
     int			state = SCA_APPEARANCE_STATE_UNKNOWN;
+    int			is_shared = 0;
     int			rc = -1;
-
-    /* XXX check for to-tag, check SDP for hold/pickup, etc. */
-    /* this is likely to be the most complicated one */
-    /* if picking up held, this is where we need to inject Replaces hdr */
 
     if ( sca_uri_extract_aor( &from->uri, &from_aor ) < 0 ) {
 	LM_ERR( "sca_call_info_invite_request_handler: failed to extract "
 		"From AoR from %.*s", STR_FMT( &from->uri ));
 	return( -1 );
     }
-    if ( !sca_uri_is_shared_appearance( sca, &from_aor )) {
-	LM_DBG( "sca_call_info_invite_request_handler: From AoR %.*s is not "
-		"a shared appearance", STR_FMT( &from_aor ));
+    if ( sca_uri_extract_aor( &to->uri, &to_aor ) < 0 ) {
+	LM_ERR( "sca_call_info_invite_request_handler: failed to extract "
+		"To AoR from %.*s", STR_FMT( &to->uri ));
+	return( -1 );
+    }
+
+    /*
+     * if either end of the call is SCA, we want to register the ACK callback
+     * so we can send NOTIFYs to subscribers after the call's established.
+     */
+    if ( sca_uri_is_shared_appearance( sca, &from_aor )) {
+	is_shared = 1;
+    } else if ( sca_uri_is_shared_appearance( sca, &to_aor )) {
+	is_shared = 1;
+    }
+    if ( !is_shared ) {
+	LM_DBG( "sca_call_info_invite_request_handler: neither From AoR %.*s "
+		"nor To AoR %.*s are shared appearances", STR_FMT( &from_aor ),
+		STR_FMT( &to_aor ));
 	return( 1 );
     }
 
@@ -946,9 +957,7 @@ sca_call_info_invite_request_handler( sip_msg_t *msg, sca_call_info *call_info,
     }
 
     if ( call_info == NULL ) {
-	/* XXX just for now. will also need to check for reINVITE, etc. */
-	LM_INFO( "ADMORTEN: no Call-Info header in INVITE %.*s",
-		     STR_FMT( &to->uri ));
+	/* caller isn't SCA, no more to do. update callee in reply handler. */
 	rc = 1;
 	goto done;
     }
@@ -1029,8 +1038,11 @@ sca_call_info_invite_reply_18x_handler( sip_msg_t *msg,
 	goto done;
     }
 
-    slot_idx = sca_hash_table_index_for_key( sca->appearances, &aor );
-    sca_hash_table_lock_index( sca->appearances, slot_idx );
+    if ( !sca_uri_lock_if_shared_appearance( sca, &aor, &slot_idx )) {
+	LM_DBG( "sca_call_info_invite_reply_18x_handler: From-AoR %.*s is "
+		"not a shared appearance", STR_FMT( &aor ));
+	return( 1 );
+    }
 
     app = sca_appearance_for_tags_unsafe( sca, &aor, &msg->callid->body,
 			  &from->tag_value, &to->tag_value, slot_idx );
@@ -1251,11 +1263,10 @@ LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_ack_from_handler" );
 	LM_ERR( "sca_call_info_ack_cb: failed to get From-header" );
 	return;
     }
-    if ( sca_get_msg_from_header( msg, &to ) < 0 ) {
+    if ( sca_get_msg_to_header( msg, &to ) < 0 ) {
 	LM_ERR( "sca_call_info_ack_cb: failed to get To-header" );
 	return;
     }
-
 
     if ( sca_uri_lock_if_shared_appearance( sca, from_aor, &slot_idx )) {
 	app = sca_appearance_for_tags_unsafe( sca, from_aor,
@@ -1325,6 +1336,7 @@ LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_ack_cb" );
 	return;
     }
 
+#ifdef notdef
     //if ( sca->tm_api->register_tmcb( NULL, t, TMCB_DESTROY,
     if ( sca->tm_api->register_tmcb( NULL, t, TMCB_REQUEST_SENT,
 			    sca_call_info_ack_sent_cb, NULL, NULL ) < 0 ) {
@@ -1332,6 +1344,7 @@ LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_ack_cb" );
                 "callback after ACK" );
         return;
     }
+#endif /* notdef */
 
     if ( sca_get_msg_from_header( params->req, &from ) < 0 ) {
 	LM_ERR( "sca_call_info_ack_cb: failed to get From-header" );
