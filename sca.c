@@ -126,22 +126,22 @@ sca_bind_usrloc( usrloc_api_t *ul_api, sca_mod **scam )
      *		4. contact deletion (REGISTER with Expires: 0)
      */
     if ( ul_api->register_ulcb( UL_CONTACT_INSERT,
-			sca_contact_change_cb, *scam ) < 0 ) {
+			sca_contact_change_cb, NULL ) < 0 ) {
 	LM_ERR( "Failed to register for usrloc contact insert callback" );
 	return( -1 );
     }
     if ( ul_api->register_ulcb( UL_CONTACT_EXPIRE,
-			sca_contact_change_cb, *scam ) < 0 ) {
+			sca_contact_change_cb, NULL ) < 0 ) {
 	LM_ERR( "Failed to register for usrloc contact expire callback" );
 	return( -1 );
     }
     if ( ul_api->register_ulcb( UL_CONTACT_UPDATE,
-			sca_contact_change_cb, *scam ) < 0 ) {
+			sca_contact_change_cb, NULL ) < 0 ) {
 	LM_ERR( "Failed to register for usrloc contact update callback" );
 	return( -1 );
     }
     if ( ul_api->register_ulcb( UL_CONTACT_DELETE,
-			sca_contact_change_cb, *scam ) < 0 ) {
+			sca_contact_change_cb, NULL ) < 0 ) {
 	LM_ERR( "Failed to register for usrloc contact update callback" );
 	return( -1 );
     }
