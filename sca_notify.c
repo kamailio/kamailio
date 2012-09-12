@@ -44,7 +44,6 @@ sca_notify_reply_cb( struct cell *t, int cb_type, struct tmcb_params *cbp )
      * we have associated with the subscription is no longer valid.
      */
     if ( notify_reply == FAKED_REPLY ) {
-	/* XXX should hook this and remove subscriber */
 	LM_ERR( "NOTIFY %.*s resulted in FAKED_REPLY from proxy: "
 		"failed to deliver NOTIFY to client", STR_FMT( contact_uri ));
     } else {
