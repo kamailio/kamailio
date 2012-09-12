@@ -11,6 +11,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../dprint.h"
 #include "../../dset.h"
+#include "../../flags.h"
 #include "../../lib/kcore/hash_func.h"
 #include "../../locking.h"
 #include "../../parser/hf.h"

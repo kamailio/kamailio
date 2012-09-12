@@ -1229,27 +1229,6 @@ sca_call_info_invite_reply_error_handler( sip_msg_t *msg,
 }
 
     void
-sca_call_info_ack_sent_cb( struct cell *t, int type,
-	struct tmcb_params *params )
-{
-    sip_msg_t		*msg;
-    struct to_body	*from;
-    struct to_body	*to;
-
-    assert( t != NULL );
-
-    msg = params->req;
-    
-    LM_INFO( "ADMORTEN DEBUG: sca_call_info_ack_sent_cb: "
-		"sent ACK to %.*s", STR_FMT( &t->uac[ 0 ].uri ));
-#ifdef notdef
-    LM_INFO( "ADMORTEN DEBUG: sca_call_info_ack_sent_cb: "
-		"sent %.*s %.*s", STR_FMT( &REQ_LINE( msg ).method ),
-		STR_FMT( GET_RURI( msg )));
-#endif /* notdef */
-}
-
-    void
 sca_call_info_ack_from_handler( sip_msg_t *msg, str *from_aor, str *to_aor )
 {
     sca_appearance	*app;
@@ -1281,35 +1260,8 @@ LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_ack_from_handler" );
 	if (( app->flags & SCA_APPEARANCE_FLAG_OWNER_PENDING )) {
 	    app->flags &= ~SCA_APPEARANCE_FLAG_OWNER_PENDING;
 
-#ifdef notdef
-	    /* UPDATE both endpoints to use the correct URI */
-	    //if ( sca_update_endpoint( sca, &app->owner, from_aor, to_aor,
-	    if ( sca_update_endpoint( sca, &app->owner, to_aor, from_aor,
-		    //&app->callee, &app->dialog.call_id, &app->dialog.from_tag,
-		    &app->callee, &app->dialog.call_id, &app->dialog.to_tag,
-		    &app->dialog.from_tag ) < 0 ) {
-		LM_ERR( "sca_call_info_ack_from_handler: failed to UPDATE "
-			"%.*s, Contact: %.*s, %.*s;to-tag=%.*s;from-tag=%.*s",
-			STR_FMT( &app->callee ), STR_FMT( &app->owner ),
-			STR_FMT( &app->dialog.call_id ),
-			STR_FMT( &app->dialog.from_tag ),
-			STR_FMT( &app->dialog.to_tag ));
-		goto done;
-	    }
-
-	    /* UPDATE both endpoints to use the correct URI */
-	    if ( sca_update_endpoint( sca, &app->callee, from_aor, to_aor,
-		    &app->owner, &app->dialog.call_id, &app->dialog.from_tag,
-		    &app->dialog.to_tag ) < 0 ) {
-		LM_ERR( "sca_call_info_ack_from_handler: failed to UPDATE "
-			"%.*s, Contact: %.*s, %.*s;to-tag=%.*s;from-tag=%.*s",
-			STR_FMT( &app->callee ), STR_FMT( &app->owner ),
-			STR_FMT( &app->dialog.call_id ),
-			STR_FMT( &app->dialog.from_tag ),
-			STR_FMT( &app->dialog.to_tag ));
-		goto done;
-	    }
-#endif /* notdef */
+	    /* set the update flag so the script will invoke update */
+	    setflag( msg, (flag_t)sca->cfg->update_flag );
 	}
     }
 
@@ -1335,16 +1287,6 @@ LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_ack_cb" );
     if ( !(type & TMCB_E2EACK_IN)) {
 	return;
     }
-
-#ifdef notdef
-    //if ( sca->tm_api->register_tmcb( NULL, t, TMCB_DESTROY,
-    if ( sca->tm_api->register_tmcb( NULL, t, TMCB_REQUEST_SENT,
-			    sca_call_info_ack_sent_cb, NULL, NULL ) < 0 ) {
-        LM_ERR( "sca_call_info_ack_sent_cb: failed to register "
-                "callback after ACK" );
-        return;
-    }
-#endif /* notdef */
 
     if ( sca_get_msg_from_header( params->req, &from ) < 0 ) {
 	LM_ERR( "sca_call_info_ack_cb: failed to get From-header" );
@@ -1620,35 +1562,55 @@ sca_call_info_cancel_handler( sip_msg_t *msg, sca_call_info *call_info,
 	str *contact_uri, struct to_body *from, struct to_body *to )
 {
     sca_appearance	*app;
+    str			from_aor = STR_NULL;
+    str			to_aor = STR_NULL;
     int			rc = 1;
+
+    if ( msg->first_line.type != SIP_REQUEST ) {
+	return( 1 );
+    }
 
     /*
      * Polycom SCA CANCELs as of sip.ld 3.3.4 don't include Call-Info headers;
      * find appearance by dialog if Call-Info not present.
      */
-    if ( msg->first_line.type == SIP_REQUEST ) {
-	/* XXX also handle CANCEL w/ Call-Info header? */
+    /* XXX also handle CANCEL w/ Call-Info header? Some UAs might send it */
 
-	app = sca_appearance_unlink_by_tags( sca, &from->uri,
+    if ( sca_uri_extract_aor( &from->uri, &from_aor ) < 0 ) {
+	LM_ERR( "sca_call_info_cancel_handler: failed to extract From AoR "
+		"from %.*s", STR_FMT( &from->uri ));
+	return( -1 );
+    }
+    if ( sca_uri_extract_aor( &to->uri, &to_aor ) < 0 ) {
+	LM_ERR( "sca_call_info_cancel_handler: failed to extract To AoR "
+		"from %.*s", STR_FMT( &to->uri ));
+	return( -1 );
+    }
+
+    if ( sca_uri_is_shared_appearance( sca, &from_aor )) {
+	app = sca_appearance_unlink_by_tags( sca, &from_aor,
 			&msg->callid->body, &from->tag_value, NULL );
 	if ( app ) {
 	    sca_appearance_free( app );
 
-	    if ( sca_notify_call_info_subscribers( sca, &from->uri ) < 0 ) {
+	    if ( sca_notify_call_info_subscribers( sca, &from_aor ) < 0 ) {
 		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on CANCEL",
-			STR_FMT( &from->uri ));
+			STR_FMT( &from_aor ));
 		rc = -1;
 	    }
 	}
+    }
 
-	app = sca_appearance_unlink_by_tags( sca, &to->uri,
+    if ( !SCA_STR_EMPTY( &to->tag_value ) &&
+		sca_uri_is_shared_appearance( sca, &to_aor )) {
+	app = sca_appearance_unlink_by_tags( sca, &to_aor,
 			&msg->callid->body, &to->tag_value, NULL );
 	if ( app ) {
 	    sca_appearance_free( app );
 
-	    if ( sca_notify_call_info_subscribers( sca, &to->uri ) < 0 ) {
+	    if ( sca_notify_call_info_subscribers( sca, &to_aor ) < 0 ) {
 		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on CANCEL",
-			STR_FMT( &to->uri ));
+			STR_FMT( &to_aor ));
 		rc = -1;
 	    }
 	}

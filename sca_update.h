@@ -5,4 +5,6 @@
 int		sca_update_endpoint( sca_mod *, str *, str *, str *, str *,
 					str *, str *, str * );
 
+int		sca_update_endpoints( sip_msg_t *, char *, char * );
+
 #endif /* SCA_UPDATE_H */

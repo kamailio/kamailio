@@ -3,7 +3,9 @@
 #include <assert.h>
 
 #include "sca.h"
+#include "sca_appearance.h"
 #include "sca_update.h"
+#include "sca_util.h"
 
 
 const str		SCA_METHOD_UPDATE = STR_STATIC_INIT( "UPDATE" );
@@ -125,6 +127,82 @@ sca_update_endpoint( sca_mod *scam, str *request_uri, str *from_uri,
 done:
     if ( dlg != NULL ) {
 	pkg_free( dlg );
+    }
+
+    return( rc );
+}
+
+    int
+sca_update_endpoints( sip_msg_t *msg, char *p1, char *p2 )
+{
+    sca_appearance	*app = NULL;
+    struct to_body	*from;
+    struct to_body	*to;
+    str			from_aor = STR_NULL;
+    str			to_aor = STR_NULL;
+    int			slot_idx = -1;
+    int			rc = -1;
+
+    if ( sca_get_msg_from_header( msg, &from ) < 0 ) {
+	LM_ERR( "sca_update_endpoints: failed to get From header" );
+	goto done;
+    }
+    if ( sca_get_msg_to_header( msg, &to ) < 0 ) {
+	LM_ERR( "sca_update_endpoints: failed to get To header" );
+	goto done;
+    }
+
+    if ( sca_uri_extract_aor( &from->uri, &from_aor ) < 0 ) {
+	LM_ERR( "sca_update_endpoints: failed to get From AoR from %.*s",
+		STR_FMT( &from->uri ));
+	goto done;
+    }
+    if ( sca_uri_extract_aor( &to->uri, &to_aor ) < 0 ) {
+	LM_ERR( "sca_update_endpoints: failed to get To AoR from %.*s",
+		STR_FMT( &to->uri ));
+	goto done;
+    }
+
+    if ( sca_uri_lock_if_shared_appearance( sca, &from_aor, &slot_idx )) {
+	app = sca_appearance_for_tags_unsafe( sca, &from_aor,
+		    &msg->callid->body, &from->tag_value, NULL, slot_idx );
+	if ( app == NULL ) {
+	    LM_ERR( "sca_update_endpoints: No appearance for %.*s matching "
+		    "call-id <%.*s> and from-tag <%.*s>", STR_FMT( &from_aor ),
+		    STR_FMT( &msg->callid->body ), STR_FMT( &from->tag_value ));
+	    goto done;
+	}
+
+	/* UPDATE both endpoints to use correct URIs */
+	if ( sca_update_endpoint( sca, &app->owner, &to_aor, &from_aor,
+		&app->callee, &app->dialog.call_id, &app->dialog.to_tag,
+		&app->dialog.from_tag ) < 0 ) {
+	    LM_ERR( "sca_call_info_ack_from_handler: failed to UPDATE "
+                    "%.*s, Contact: %.*s, %.*s;to-tag=%.*s;from-tag=%.*s",
+                    STR_FMT( &app->callee ), STR_FMT( &app->owner ),
+                    STR_FMT( &app->dialog.call_id ),
+                    STR_FMT( &app->dialog.from_tag ),
+                    STR_FMT( &app->dialog.to_tag ));
+            goto done;
+	}
+	if ( sca_update_endpoint( sca, &app->callee, &from_aor, &to_aor,
+                &app->owner, &app->dialog.call_id, &app->dialog.from_tag,
+                &app->dialog.to_tag ) < 0 ) {
+            LM_ERR( "sca_call_info_ack_from_handler: failed to UPDATE "
+                    "%.*s, Contact: %.*s, %.*s;to-tag=%.*s;from-tag=%.*s",
+                    STR_FMT( &app->callee ), STR_FMT( &app->owner ),
+                    STR_FMT( &app->dialog.call_id ),
+                    STR_FMT( &app->dialog.from_tag ),
+                    STR_FMT( &app->dialog.to_tag ));
+            goto done;
+        }
+    }
+
+    rc = 1;
+
+done:
+    if ( slot_idx >= 0 ) {
+	sca_hash_table_unlock_index( sca->appearances, slot_idx );
     }
 
     return( rc );
