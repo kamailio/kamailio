@@ -150,7 +150,7 @@ do { \
 
 
 
-inline struct via_body* via_body_cloner( char* new_buf,
+static inline struct via_body* via_body_cloner( char* new_buf,
 					char *org_buf, struct via_body *param_org_via, char **p)
 {
 	struct via_body *new_via;
