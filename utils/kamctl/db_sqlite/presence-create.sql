@@ -102,10 +102,10 @@ CREATE TABLE pua (
     remote_contact VARCHAR(128) NOT NULL,
     version INTEGER NOT NULL,
     extra_headers TEXT NOT NULL,
-    CONSTRAINT pua_pua_idx UNIQUE (etag, tuple_id, call_id, from_tag),
-    CONSTRAINT pua_expires_idx UNIQUE (expires)
+    CONSTRAINT pua_pua_idx UNIQUE (etag, tuple_id, call_id, from_tag)
 );
 
+CREATE INDEX pua_expires_idx ON pua (expires);
 CREATE INDEX pua_dialog1_idx ON pua (call_id, from_tag, to_tag);
 CREATE INDEX pua_dialog2_idx ON pua (pres_id, pres_uri);
 CREATE INDEX pua_tmp_dlg1_idx ON pua (call_id, from_tag);

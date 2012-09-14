@@ -134,8 +134,7 @@ CREATE TABLE pua (
     remote_contact VARCHAR2(128),
     version NUMBER(10),
     extra_headers CLOB,
-    CONSTRAINT pua_pua_idx  UNIQUE (etag, tuple_id, call_id, from_tag),
-    CONSTRAINT pua_expires_idx  UNIQUE (expires)
+    CONSTRAINT pua_pua_idx  UNIQUE (etag, tuple_id, call_id, from_tag)
 );
 
 CREATE OR REPLACE TRIGGER pua_tr
@@ -146,6 +145,7 @@ END pua_tr;
 /
 BEGIN map2users('pua'); END;
 /
+CREATE INDEX pua_expires_idx  ON pua (expires);
 CREATE INDEX pua_dialog1_idx  ON pua (call_id, from_tag, to_tag);
 CREATE INDEX pua_dialog2_idx  ON pua (pres_id, pres_uri);
 CREATE INDEX pua_tmp_dlg1_idx  ON pua (call_id, from_tag);
