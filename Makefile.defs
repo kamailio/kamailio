@@ -321,6 +321,14 @@ ifneq (, $(findstring Intel(R) C++ Compiler, $(CC_LONGVER)))
 	MKDEP=$(CC) -MM 
 endif
 
+ifneq (, $(findstring clang, $(CC_LONGVER)))
+	#clang should be gcc compatible
+	CC_NAME=clang
+	CC_FULLVER:=$(shell echo "$(CC_LONGVER)" | head -n 1 |  sed -e 's/.*version \([0-9]\.[0-9]\).*/\1/g' )
+	CC_SHORTVER:=$(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
+	CC_VER=$(CC) $(CC_FULLVER)
+	MKDEP=$(CC) -MM 
+endif
 
 ifeq (,$(CC_NAME))
 #not found
@@ -866,7 +874,7 @@ ifeq ($(mode), release)
 	#if i386
 ifeq	($(ARCH), i386)
 		# if gcc 
-ifeq		($(CC_NAME), gcc)
+ifeq		($(CC_NAME), gcc) 
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE)
@@ -923,6 +931,15 @@ endif			# CC_SHORTVER, 4.x
 endif			# CC_SHORTVER, 4.5+ or 4.2+
 
 else		# CC_NAME, gcc
+ifeq		($(CC_NAME), clang)
+$(call                          set_if_empty,CPU,athlon64)
+					C_DEFS+=-DCC_GCC_LIKE_ASM
+                                        CFLAGS+=-m32
+                                                         \
+                                                         \
+                                                        -mtune=$(CPU)
+                                        LDFLAGS+=-m32
+else			# CC_NAME, clang
 ifeq		($(CC_NAME), icc)
 			C_DEFS+=-DCC_GCC_LIKE_ASM
 			CFLAGS=-g -O3  -ipo -ipo_obj -unroll  $(PROFILE) \
@@ -935,6 +952,7 @@ else
 				#other compilers
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, icc
+endif		#CC_NAME, clang
 endif		#CC_NAME, gcc
 endif	#ARCH, i386
 
@@ -1009,6 +1027,13 @@ endif			# CC_SHORTVER, 4.2+
 endif			# CC_SHORTVER, 4.5+
 
 else		# CC_NAME, gcc
+ifeq            ($(CC_NAME), clang)
+$(call                          set_if_empty,CPU,opteron)
+					C_DEFS+=-DCC_GCC_LIKE_ASM
+                                        CFLAGS+=-m64 \
+                                                        
+                                        LDFLAGS+=-m64
+else      	# CC_NAME, clang
 ifeq		($(CC_NAME), icc)
 			C_DEFS+=-DCC_GCC_LIKE_ASM
 			CFLAGS=-g -O3  -ipo -ipo_obj -unroll  $(PROFILE) \
@@ -1021,6 +1046,7 @@ else
 				#other compilers
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, icc
+endif		#CC_NAME, clang
 endif		#CC_NAME, gcc
 endif	#ARCH, x86_64
 
@@ -1597,6 +1623,14 @@ endif
 	# the executable file, because it's always loaded at a fixed address
 	# -andrei
 
+ifeq ($(CC_NAME), clang)
+	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE)
+        MOD_LDFLAGS:=-shared $(LDFLAGS)
+        LIB_LDFLAGS:=-shared $(LDFLAGS)
+        LIB_SONAME=-Wl,-soname,
+        LD_RPATH=-Wl,-rpath,
+endif
+
 LDFLAGS+= $(LD_EXTRA_OPTS)
 MOD_LDFLAGS+= $(LD_EXTRA_OPTS)
 LIB_LDFLAGS+= $(LD_EXTRA_OPTS)
@@ -1674,6 +1708,11 @@ ifeq	($(CC_NAME), suncc)
 MOD_CFLAGS=-xcode=pic32  $(CFLAGS)
 LIB_CFLAGS=-xcode=pic32  $(CFLAGS)
 endif
+ifeq    ($(CC_NAME), clang)
+MOD_CFLAGS=-fPIC -DPIC $(CFLAGS)
+LIB_CFLAGS=-fPIC -DPIC $(CFLAGS)
+endif
+
 UTILS_CFLAGS=$(CFLAGS)
 # LDFLAGS uses for compiling the utils
 UTILS_LDFLAGS=$(LDFLAGS)
