@@ -1058,15 +1058,13 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 		{
 			LM_DBG("Removing subscription for %.*s\n", tmp_str->len, tmp_str->s);
 			s.expires = 0;
-			send_resource_subs(tmp_str->s, (void*)(&s));
+			send_resource_subs(tmp_str->s, params);
 			pkg_free(tmp_str->s);
 			pkg_free(tmp_str);
 		}
 	}
-	else
-	{
+	if (rls_contact_list != NULL)
 		list_free(&rls_contact_list);
-	}
 
 	pkg_free(wuri.s);
 	pkg_free(did_str.s);
