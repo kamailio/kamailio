@@ -23,4 +23,5 @@ CREATE TABLE location (
 );
 
 CREATE INDEX location_account_contact_idx ON location (username, domain, contact);
+CREATE INDEX location_expires_idx ON location (expires);
 

@@ -80,7 +80,7 @@
         <description>Path Header(s) per RFC 3327</description>
     </column>
 
-    <column>
+    <column id="expires">
         <name>expires</name>
         <type>datetime</type>
         <default>&DEFAULT_ALIASES_EXPIRES;</default>
@@ -190,6 +190,10 @@
         <name>ruid_idx</name>
         <colref linkend="ruid"/>
         <unique/>
+    </index>
+    <index>
+        <name>expires_idx</name>
+        <colref linkend="expires"/>
     </index>
 
 

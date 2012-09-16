@@ -31,4 +31,5 @@ END location_tr;
 BEGIN map2users('location'); END;
 /
 CREATE INDEX location_account_contact_idx  ON location (username, domain, contact);
+CREATE INDEX location_expires_idx  ON location (expires);
 
