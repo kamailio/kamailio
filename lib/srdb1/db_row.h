@@ -62,7 +62,7 @@ typedef struct db_row {
  * \param _r row that should be released
  * \return zero on success, negative on error
  */
-inline int db_free_row(db_row_t* _r);
+extern inline int db_free_row(db_row_t* _r);
 
 
 /**
@@ -71,6 +71,6 @@ inline int db_free_row(db_row_t* _r);
  * \param _row filled row
  * \return zero on success, negative on errors
  */
-inline int db_allocate_row(const db1_res_t* _res, db_row_t* _row);
+extern inline int db_allocate_row(const db1_res_t* _res, db_row_t* _row);
 
 #endif /* DB1_ROW_H */
