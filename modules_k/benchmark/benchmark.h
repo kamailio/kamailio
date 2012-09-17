@@ -88,8 +88,8 @@ inline unsigned long long bm_diff_time(bm_timeval_t *t1, bm_timeval_t *t2)
 {
 	unsigned long long tdiff;
 
-	tdiff = t1->tv_sec - t1->tv_sec;
-	
+	tdiff = t2->tv_sec - t1->tv_sec;
+
 #ifdef BM_CLOCK_REALTIME
 	tdiff = tdiff*1000000000 + t2->tv_nsec - t1->tv_nsec;
 #else
