@@ -429,10 +429,8 @@ static inline struct hostent* _resolvehost(char* name)
 	}
 #endif
 #endif
-	if (socket_types & SOCKET_T_IPV4) {
-		/* ipv4 */
-		he=gethostbyname(name);
-	}
+	/* ipv4 */
+	he=gethostbyname(name);
 #ifdef USE_IPV6
 	if(he==0 && cfg_get(core, core_cfg, dns_try_ipv6)){
 #ifndef DNS_IP_HACK
