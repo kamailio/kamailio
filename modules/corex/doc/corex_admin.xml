@@ -61,6 +61,34 @@
 		</para>
 	</section>
 	</section>
+
+    <section>
+	<title>Parameters</title>
+	<section>
+	    <title><varname>alias_subdomains</varname> (string)</title>
+	    <para>
+		Register a domain and all its sub-domains to match the myself
+		condition. It can be set many times. Its full format is:
+		'proto:domain:port', allowing to set restrictions on protocol
+		and port as well. Protocol and port are optional.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>alias_subdomains</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("corex", "alias_subdomain", "kamailio.org")
+modparam("corex", "alias_subdomain", "udp:sip-router.org:5060")
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+
 	<section>
 	<title>Functions</title>
 	<section>

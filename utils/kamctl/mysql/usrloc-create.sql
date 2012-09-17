@@ -23,4 +23,5 @@ CREATE TABLE location (
 ) ENGINE=MyISAM;
 
 CREATE INDEX account_contact_idx ON location (username, domain, contact);
+CREATE INDEX expires_idx ON location (expires);
 

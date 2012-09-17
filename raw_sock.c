@@ -391,7 +391,7 @@ error:
  *                 in _host_ order.
  * @return the partial checksum in host order
  */
-inline unsigned short udpv4_vhdr_sum(	struct udphdr* uh,
+static inline unsigned short udpv4_vhdr_sum(	struct udphdr* uh,
 										struct in_addr* src,
 										struct in_addr* dst,
 										unsigned short length)

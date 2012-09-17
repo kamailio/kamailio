@@ -37,17 +37,17 @@
 #include "../../mem/mem.h"
 
 
-inline int/*bool*/  is_space( char c ) { return (c == ' ' || c == '\t'); }
-inline int/*bool*/  is_num( char c ) { return (c >= '0' && c <= '9'); }
+static inline int/*bool*/  is_space( char c ) { return (c == ' ' || c == '\t'); }
+static inline int/*bool*/  is_num( char c ) { return (c >= '0' && c <= '9'); }
 
-inline unsigned  lower_byte( char b ) { return b | 0x20; }
-inline unsigned  lower_4bytes( unsigned d ) { return d | 0x20202020; }
-inline unsigned  lower_3bytes( unsigned d ) { return d |   0x202020; }
-inline unsigned  read_4bytes( char *val ) {
+static inline unsigned  lower_byte( char b ) { return b | 0x20; }
+static inline unsigned  lower_4bytes( unsigned d ) { return d | 0x20202020; }
+static inline unsigned  lower_3bytes( unsigned d ) { return d |   0x202020; }
+static inline unsigned  read_4bytes( char *val ) {
 	return (*(val + 0) + (*(val + 1) << 8)
 		+ (*(val + 2) << 16) + (*(val + 3) << 24));
 }
-inline unsigned  read_3bytes( char *val ) {
+static inline unsigned  read_3bytes( char *val ) {
 	return (*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16));
 }
 

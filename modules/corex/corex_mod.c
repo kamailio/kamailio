@@ -35,6 +35,8 @@ MODULE_VERSION
 
 static int w_append_branch(sip_msg_t *msg, char *su, char *sq);
 
+int corex_alias_subdomains_param(modparam_t type, void *val);
+
 static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
@@ -52,6 +54,8 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
+	{"alias_subdomains",  STR_PARAM|USE_FUNC_PARAM,
+								(void*)corex_alias_subdomains_param},
 	{0, 0, 0}
 };
 
@@ -83,6 +87,12 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(corex_register_check_self()<0)
+	{
+		LM_ERR("failed to register check self callback\n");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -111,5 +121,17 @@ static int w_append_branch(sip_msg_t *msg, char *su, char *sq)
 	if(corex_append_branch(msg, (gparam_t*)su, (gparam_t*)sq) < 0)
 		return -1;
 	return 1;
+}
+
+
+int corex_alias_subdomains_param(modparam_t type, void *val)
+{
+	if(val==NULL)
+		goto error;
+
+	return corex_add_alias_subdomains((char*)val);
+error:
+	return -1;
+
 }
 

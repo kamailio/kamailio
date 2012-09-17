@@ -884,8 +884,8 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 
 subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag) 
 {
- 	db_key_t query_cols[3];
-	db_val_t query_vals[3];
+ 	db_key_t query_cols[4];
+	db_val_t query_vals[4];
 	db_key_t result_cols[22];
 	int n_query_cols = 0, n_result_cols=0;
 	int r_pres_uri_col,r_to_user_col,r_to_domain_col;
@@ -933,6 +933,12 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= from_tag;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_updated_col;
+	query_vals[n_query_cols].type = DB1_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val= NO_UPDATE_TYPE;
 	n_query_cols++;
 	
 	result_cols[r_pres_uri_col=n_result_cols++] = &str_presentity_uri_col;

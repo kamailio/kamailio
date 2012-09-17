@@ -853,7 +853,9 @@ assign_stm:
 	| FORK  EQUAL error  { yyerror("boolean value expected"); }
 	| FORK_DELAY  EQUAL NUMBER { set_fork_delay($3); }
 	| FORK_DELAY  EQUAL error  { yyerror("number expected"); }
-	| LOGSTDERROR EQUAL NUMBER { if (!config_check) log_stderr=$3; }
+	| LOGSTDERROR EQUAL NUMBER { if (!config_check)  /* if set from cmd line, don't overwrite from yyparse()*/ 
+					if(log_stderr == 0) log_stderr=$3; 
+				   }
 	| LOGSTDERROR EQUAL error { yyerror("boolean value expected"); }
 	| LOGFACILITY EQUAL ID {
 		if ( (i_tmp=str2facility($3))==-1)
