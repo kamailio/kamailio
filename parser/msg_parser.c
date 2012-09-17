@@ -91,7 +91,7 @@ unsigned int global_req_flags = 0;
 char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 {
 
-	char* tmp;
+	char *tmp = 0;
 	char *match;
 	struct via_body *vb;
 	struct cseq_body* cseq_b;
