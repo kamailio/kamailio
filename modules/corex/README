@@ -108,8 +108,8 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set alias_subdomains parameter
 ...
-modparam("corex", "alias_subdomain", "kamailio.org")
-modparam("corex", "alias_subdomain", "udp:sip-router.org:5060")
+modparam("corex", "alias_subdomains", "kamailio.org")
+modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 ...
 
 4. Functions
