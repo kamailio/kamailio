@@ -27,6 +27,8 @@ int	sca_uri_extract_aor( str *, str * );
 /* convenient AoR creation from a Contact URI and another AoR */
 int	sca_uri_build_aor( str *, int, str *, str * );
 
+int	sca_aor_create_from_info( str *, uri_type, str *, str *, str * );
+
 /* convenient call hold detection */
 int	sca_call_is_held( sip_msg_t * );
 

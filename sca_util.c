@@ -118,6 +118,12 @@ sca_get_msg_from_header( sip_msg_t *msg, struct to_body **from )
 	return( -1 );
     }
 
+    /* ensure the URI is parsed for future use */
+    if ( parse_uri( f->uri.s, f->uri.len, GET_FROM_PURI( msg )) < 0 ) {
+	LM_ERR( "Failed to parse From URI %.*s", STR_FMT( &f->uri ));
+	return( -1 );
+    }
+
     *from = f;
 
     return( 0 );
@@ -146,6 +152,12 @@ sca_get_msg_to_header( sip_msg_t *msg, struct to_body **to )
 	    return( -1 );
 	}
 	t = &parsed_to;
+    }
+
+    /* ensure the URI is parsed for future use */
+    if ( parse_uri( t->uri.s, t->uri.len, GET_TO_PURI( msg )) < 0 ) {
+	LM_ERR( "Failed to parse To URI %.*s", STR_FMT( &t->uri ));
+	return( -1 );
     }
 
     *to = t;
@@ -220,6 +232,59 @@ sca_uri_build_aor( str *aor, int maxlen, str *contact_uri, str *domain_uri )
     len = domain_uri->len - ( dp - domain_uri->s );
     memcpy( aor->s + aor->len, dp, len );
     aor->len += len;
+
+    return( aor->len );
+}
+
+    int
+sca_aor_create_from_info( str *aor, uri_type type, str *user, str *domain,
+	str *port )
+{
+    str		scheme = STR_NULL;
+    int		len = 0;
+
+    assert( aor != NULL );
+
+    uri_type_to_str( type, &scheme );
+
+    /* +1 for ':', +1 for '@' */
+    len = scheme.len + 1 + user->len + 1 + domain->len;
+    if ( !SCA_STR_EMPTY( port )) {
+	/* +1 for ':' */
+	len += 1 + port->len;
+    }
+
+    aor->s = (char *)pkg_malloc( len );
+    if ( aor->s == NULL ) {
+	LM_ERR( "sca_aor_create_from_info: pkg_malloc %d bytes failed", len );
+	return( -1 );
+    }
+
+    len = 0;
+    SCA_STR_COPY( aor, &scheme );
+    len += scheme.len;
+
+    *(aor->s + len) = ':';
+    aor->len++;
+    len++;
+
+    SCA_STR_APPEND( aor, user );
+    len += user->len;
+
+    *(aor->s + len) = '@';
+    aor->len++;
+    len++;
+
+    SCA_STR_APPEND( aor, domain );
+    len += domain->len;
+
+    if ( !SCA_STR_EMPTY( port )) {
+	*(aor->s + len) = ':';
+	len += 1;
+
+	SCA_STR_APPEND( aor, port );
+	len += port->len;
+    }
 
     return( aor->len );
 }
