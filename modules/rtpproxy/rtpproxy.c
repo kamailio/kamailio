@@ -2260,7 +2260,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 			/* XXX must compare address families in all addresses */
 			if (pf == AF_INET6) {
 				if (autobridge_ipv4v6 != 0) {
-					if ((append_opts(&opts, 'E') == -1) && (append_opts(&opts, 'I') == -1))  {
+					if ((append_opts(&opts, 'E') == -1) || (append_opts(&opts, 'I') == -1))  {
 						LM_ERR("out of pkg memory\n");
 						FORCE_RTP_PROXY_RET (-1);
 					}
@@ -2274,10 +2274,13 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 				v[1].iov_len = opts.oidx;
 			} else {
 				if (autobridge_ipv4v6 != 0) {
-					if ((append_opts(&opts, 'I') == -1) && (append_opts(&opts, 'E') == -1))  {
+					if ((append_opts(&opts, 'I') == -1) || (append_opts(&opts, 'E') == -1))  {
 						LM_ERR("out of pkg memory\n");
 						FORCE_RTP_PROXY_RET (-1);
 					}
+					/* We need to update the pointers and the length here, it has changed. */
+					v[1].iov_base = opts.s.s;
+					v[1].iov_len = opts.oidx;
 				}
 			}
 
