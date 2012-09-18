@@ -71,7 +71,6 @@ int			hash_table_size = -1;
 int			call_info_max_expires = 3600;
 int			line_seize_max_expires = 15;
 int			purge_expired_interval = 120;
-int			update_flag = 0;
 
 static param_export_t	params[] = {
     { "domain",			STR_PARAM,	&domain.s },
@@ -80,7 +79,6 @@ static param_export_t	params[] = {
     { "call_info_max_expires",	INT_PARAM,	&call_info_max_expires },
     { "line_seize_max_expires", INT_PARAM,	&line_seize_max_expires },
     { "purge_expired_interval",	INT_PARAM,	&purge_expired_interval },
-    { "update_flag",		INT_PARAM,	&update_flag },
     { NULL,			0,		NULL },
 };
 
@@ -198,12 +196,6 @@ sca_set_config( sca_mod *scam )
 	outbound_proxy.len = strlen( outbound_proxy.s );
 	scam->cfg->outbound_proxy = &outbound_proxy;
     }
-
-    if ( update_flag == 0 ) {
-	LM_ERR( "SCA update_flag modparam is required in configuration script");
-	return( -1 );
-    }
-    scam->cfg->update_flag = update_flag;
 
     if ( hash_table_size > 0 ) {
 	scam->cfg->hash_table_size = 1 << hash_table_size;

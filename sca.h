@@ -12,7 +12,6 @@ struct _sca_config {
     int		call_info_max_expires;
     int		line_seize_max_expires;
     int		purge_expired_interval;
-    int		update_flag;
 };
 typedef struct _sca_config	sca_config;
 

@@ -1161,8 +1161,10 @@ LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_ack_from_handler" );
 	if (( app->flags & SCA_APPEARANCE_FLAG_OWNER_PENDING )) {
 	    app->flags &= ~SCA_APPEARANCE_FLAG_OWNER_PENDING;
 
+#ifdef notdef
 	    /* set the update flag so the script will invoke update */
 	    setflag( msg, (flag_t)sca->cfg->update_flag );
+#endif /* notdef */
 	}
     }
 
