@@ -13,6 +13,7 @@
 . /etc/rc.d/init.d/functions
 
 KAM=/usr/sbin/kamailio
+KAMCFG=/etc/kamailio/kamailio.cfg
 PROG=kamailio
 PID_FILE=/var/run/kamailio.pid
 LOCK_FILE=/var/lock/subsys/kamailio
@@ -25,7 +26,7 @@ RUN_KAMAILIO=no
 # otherwise the boot process will just stop
 check_fork ()
 {
-    if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" /etc/kamailio/kamailio.cfg; then
+    if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" $KAMCFG; then
         echo "Not starting $DESC: fork=no specified in config file; run /etc/init.d/kamailio debug instead"
         exit 1
     fi
@@ -76,10 +77,12 @@ if [ "$RUN_KAMAILIO" != "yes" ]; then
 fi
 
 
-MEMORY=$((`echo $MEMORY | sed -e 's/[^0-9]//g'`))
+SHM_MEMORY=$((`echo $SHM_MEMORY | sed -e 's/[^0-9]//g'`))
+PKG_MEMORY=$((`echo $PKG_MEMORY | sed -e 's/[^0-9]//g'`))
 [ -z "$USER" ]  && USER=kamailio
 [ -z "$GROUP" ] && GROUP=kamailio
-[ $MEMORY -le 0 ] && MEMORY=32
+[ $SHM_MEMORY -le 0 ] && SHM_MEMORY=32
+[ $PKG_MEMORY -le 0 ] && PKG_MEMORY=32
 
 if test "$DUMP_CORE" = "yes" ; then
     # set proper ulimit
@@ -92,7 +95,7 @@ if test "$DUMP_CORE" = "yes" ; then
     # echo "$COREDIR/core.%e.sig%s.%p" > /proc/sys/kernel/core_pattern
 fi
 
-OPTIONS="-P $PID_FILE -m $MEMORY -u $USER -g $GROUP"
+OPTIONS="-P $PID_FILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP $EXTRA_OPTIONS"
 
 
 # See how we were called.
