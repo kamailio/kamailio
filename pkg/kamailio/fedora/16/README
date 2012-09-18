@@ -47,7 +47,7 @@ changes to the commands in this example.
    # cd appliance
    # [sudo] boxgrinder-build \
        [path to]/pkg/kamailio/fedora/17/kamailio-build.appl -d libvirt \
-       --delivery_config connection_uri:qemu:///system,\
+       --delivery-config connection_uri:qemu:///system,\
        image_delivery_uri:/var/lib/libvirt/images,overwrite:true,\
        domain_type:kvm
 2) Start the appliance and log in:
