@@ -82,7 +82,7 @@ PKG_MEMORY=$((`echo $PKG_MEMORY | sed -e 's/[^0-9]//g'`))
 [ -z "$USER" ]  && USER=kamailio
 [ -z "$GROUP" ] && GROUP=kamailio
 [ $SHM_MEMORY -le 0 ] && SHM_MEMORY=32
-[ $PKG_MEMORY -le 0 ] && PKG_MEMORY=32
+[ $PKG_MEMORY -le 0 ] && PKG_MEMORY=4
 
 if test "$DUMP_CORE" = "yes" ; then
     # set proper ulimit
