@@ -81,8 +81,8 @@
 		<title>Set <varname>alias_subdomains</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("corex", "alias_subdomain", "kamailio.org")
-modparam("corex", "alias_subdomain", "udp:sip-router.org:5060")
+modparam("corex", "alias_subdomains", "kamailio.org")
+modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 ...
 </programlisting>
 	    </example>
