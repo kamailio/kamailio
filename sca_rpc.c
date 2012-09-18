@@ -357,7 +357,7 @@ sca_rpc_update_appearance( rpc_t *rpc, void *ctx )
     }
 
     rc = sca_appearance_update_index( sca, &aor, app_idx,
-				      app_state, app_uri_p, NULL );
+				      app_state, NULL, app_uri_p, NULL );
     if ( rc != SCA_APPEARANCE_OK ) {
 	rpc->fault( ctx, 500, "Failed to update %.*s appearance-index %d",
 		    STR_FMT( &aor ), app_idx );

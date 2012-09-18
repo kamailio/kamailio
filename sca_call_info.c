@@ -760,7 +760,7 @@ LM_INFO( "ADMORTEN DEBUG: sca_call_info_uri update for %.*s: "
 LM_INFO( "ADMORTEN DEBUG: found appearance for %.*s", STR_FMT( aor ));
 LM_INFO( "ADMORTEN DEBUG: setting owner to %.*s", STR_FMT( contact_uri ));
 	if ( sca_appearance_update_unsafe( app, call_info->state,
-		NULL, &dialog, contact_uri, NULL ) < 0 ) {
+		NULL, NULL, &dialog, contact_uri, NULL ) < 0 ) {
 	    sca_appearance_state_to_str( call_info->state, &state_str );
 	    LM_ERR( "sca_call_info_uri_update: failed to update appearance "
 		    "%.*s appearance-index %d with dialog id %.*s to "
@@ -784,8 +784,9 @@ LM_INFO( "ADMORTEN DEBUG: seized %d for %.*s: From: <%.*s> To: <%.*s> "
 	 STR_FMT( &app->owner ), STR_FMT( &from->uri ), STR_FMT( &to->uri ),
 	 STR_FMT( call_id ), STR_FMT( &app->dialog.id ));
 
-	if ( sca_appearance_update_unsafe( app, call_info->state, &from->uri,
-		&dialog, contact_uri, &from->uri ) < 0 ) {
+	if ( sca_appearance_update_unsafe( app, call_info->state,
+		&from->display, &from->uri, &dialog, contact_uri,
+		&from->uri ) < 0 ) {
 	    sca_appearance_state_to_str( call_info->state, &state_str );
 	    LM_ERR( "sca_call_info_uri_update: failed to update appearance "
 		    "%.*s appearance-index %d with dialog id %.*s to "
@@ -909,7 +910,7 @@ sca_call_info_invite_request_handler( sip_msg_t *msg, sca_call_info *call_info,
     }
 
     if ( sca_appearance_update_index( sca, from_aor, call_info->index,
-		state, NULL, &dialog ) != SCA_APPEARANCE_OK ) {
+		state, NULL, NULL, &dialog ) != SCA_APPEARANCE_OK ) {
 	LM_ERR( "Failed to update %.*s appearance-index %d to %.*s",
 		STR_FMT( from_aor ), call_info->index,
 		STR_FMT( &state_str ));
@@ -1056,8 +1057,7 @@ LM_INFO( "## ADMORTEN DEBUG: looking for %.*s appearance with dialog "
 	goto done;
     }
 
-    /* XXX to->uri here should be an escaped to->body */
-    if ( sca_appearance_update_unsafe( app, state, &to->uri,
+    if ( sca_appearance_update_unsafe( app, state, &to->display, &to->uri,
 	    &dialog, NULL, contact_uri ) < 0 ) {
 	sca_appearance_state_to_str( state, &state_str );
 	LM_ERR( "sca_call_info_invite_handler: failed to update appearance "

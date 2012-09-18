@@ -523,8 +523,8 @@ error:
 }
 
     int
-sca_appearance_update_unsafe( sca_appearance *app, int state, str *uri,
-	sca_dialog *dialog, str *owner, str *callee )
+sca_appearance_update_unsafe( sca_appearance *app, int state, str *display,
+	str *uri, sca_dialog *dialog, str *owner, str *callee )
 {
     int			rc = SCA_APPEARANCE_OK;
 
@@ -728,7 +728,7 @@ done:
 
     int
 sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
-	int state, str *uri, sca_dialog *dialog )
+	int state, str *display, str *uri, sca_dialog *dialog )
 {
     sca_hash_slot	*slot;
     sca_appearance_list	*app_list;

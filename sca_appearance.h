@@ -83,10 +83,10 @@ int	sca_appearance_update_owner_unsafe( sca_appearance *, str * );
 int	sca_appearance_update_callee_unsafe( sca_appearance *, str * );
 int	sca_appearance_update_dialog_unsafe( sca_appearance *, str *,
 						str *, str * );
-int	sca_appearance_update_unsafe( sca_appearance *, int, str *,
+int	sca_appearance_update_unsafe( sca_appearance *, int, str *, str *,
 					sca_dialog *, str *, str * );
 int	sca_appearance_update_index( sca_mod *, str *, int, int, str *,
-					sca_dialog * );
+					str *, sca_dialog * );
 int	sca_appearance_release_index( sca_mod *, str *, int );
 int	sca_appearance_state_for_index( sca_mod *, str *, int );
 sca_appearance	*sca_appearance_for_index_unsafe( sca_mod *, str *, int, int );
