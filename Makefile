@@ -1204,3 +1204,9 @@ dbschema:
 .PHONY: printcdefs
 printcdefs:
 	@echo -n $(C_DEFS)
+
+.PHONY: printvar
+printvar:
+	@echo "Content of <$(v)> is:"
+	@echo -n $($(v))
+	@echo
