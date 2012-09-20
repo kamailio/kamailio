@@ -4,7 +4,6 @@
 struct _sca_hash_slot;
 struct _sca_hash_entry {
     void			*value;
-    gen_lock_t			lock;
     int				(*compare)( str *, void * );
     void			(*description)( void * );
     void			(*free_entry)( void * );
