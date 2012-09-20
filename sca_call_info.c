@@ -1655,6 +1655,23 @@ sca_call_info_sl_reply_cb( void *cb_arg )
     }
 }
 
+    static inline int
+sca_call_info_prack_handler( sip_msg_t *msg, sca_call_info *call_info,
+	struct to_body *from, struct to_body *to, str *from_aor,
+	str *to_aor, str *contact_uri )
+{
+    return( 1 );
+}
+
+    static inline int
+sca_call_info_refer_handler( sip_msg_t *msg, sca_call_info *call_info,
+	struct to_body *from, struct to_body *to, str *from_aor,
+	str *to_aor, str *contact_uri )
+{
+    return( 1 );
+}
+
+
 struct sca_call_info_dispatch {
     int			method;
     int			(*handler)( sip_msg_t *, sca_call_info *,
@@ -1662,13 +1679,11 @@ struct sca_call_info_dispatch {
 				    str *, str *, str * );
 };
 struct sca_call_info_dispatch	call_info_dispatch[] = {
-    { METHOD_INVITE,	sca_call_info_invite_handler },
     { METHOD_BYE,	sca_call_info_bye_handler },
     { METHOD_CANCEL,	sca_call_info_cancel_handler },
-#ifdef notdef
+    { METHOD_INVITE,	sca_call_info_invite_handler },
     { METHOD_PRACK,	sca_call_info_prack_handler },
     { METHOD_REFER,	sca_call_info_refer_handler },
-#endif /* notdef */
 };
 
 #define SCA_CALL_INFO_UPDATE_FLAG_DEFAULT	0
