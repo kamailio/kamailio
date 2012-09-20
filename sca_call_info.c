@@ -779,6 +779,7 @@ LM_INFO( "ADMORTEN DEBUG: no appearance for %.*s, seizing next", STR_FMT( aor ))
 		    "for %.*s", call_info->index, STR_FMT( contact_uri ));
 	    goto done;
 	}
+
 LM_INFO( "ADMORTEN DEBUG: seized %d for %.*s: From: <%.*s> To: <%.*s> "
 	 "Call-ID: <%.*s> Dialog: <%.*s>" , app->index,
 	 STR_FMT( &app->owner ), STR_FMT( &from->uri ), STR_FMT( &to->uri ),
@@ -862,7 +863,6 @@ sca_call_info_invite_request_handler( sip_msg_t *msg, sca_call_info *call_info,
     char		dlg_buf[ 1024 ];
     str			state_str = STR_NULL;
     int			state = SCA_APPEARANCE_STATE_UNKNOWN;
-    int			is_shared = 0;
     int			rc = -1;
 
     /*
@@ -971,6 +971,7 @@ done:
 	sca_hash_table_unlock_index( sca->appearances, slot_idx );
     }
 
+    /* XXX this reference to app seems a poor choice. */
     if ( rc > 0 && app != NULL ) {
 	if ( sca_subscription_terminate( sca, from_aor,
 		SCA_EVENT_TYPE_LINE_SEIZE, &app->owner,
@@ -981,6 +982,94 @@ done:
 		    STR_FMT( &app->owner ));
 	    rc = -1;
 	}
+
+	if ( sca_notify_call_info_subscribers( sca, from_aor ) < 0 ) {
+	    LM_ERR( "sca_call_info_invite_reply_18x_handler: "
+		    "failed to NOTIFY %.*s call-info subscribers",
+		    STR_FMT( from_aor ));
+	    rc = -1;
+	}
+    }
+
+    return( rc );
+}
+
+    static int
+sca_call_info_insert_asserted_identity( sip_msg_t *msg, str *contact_uri,
+	struct to_body *tf )
+{
+    struct lump		*anchor;
+    sip_uri_t		c_uri;
+    str			aor = STR_NULL;
+    str			hdr = STR_NULL;
+    int			len;
+    int			rc = -1;
+
+    anchor = anchor_lump( msg, msg->eoh - msg->buf, 0, HDR_OTHER_T );
+    if ( anchor == NULL ) {
+	LM_ERR( "Failed to anchor lump" );
+	goto done;
+    }
+    
+    if ( parse_uri( contact_uri->s, contact_uri->len, &c_uri ) < 0 ) {
+	LM_ERR( "insert_asserted_identity: parse_uri %.*s failed",
+		STR_FMT( contact_uri ));
+	return( -1 );
+    }
+    if ( sca_aor_create_from_info( &aor, c_uri.type, &c_uri.user,
+		&GET_TO_PURI( msg )->host, &GET_TO_PURI( msg )->port ) < 0 ) {
+	LM_ERR( "insert_asserted_identity: sca_aor_create_from_info failed" );
+	return( -1 );
+    }
+
+#define SCA_P_ASSERTED_IDENTITY_HDR_PREFIX	"P-Asserted-Identity: "
+#define SCA_P_ASSERTED_IDENTITY_HDR_PREFIX_LEN	strlen("P-Asserted-Identity: ")
+
+    len = SCA_P_ASSERTED_IDENTITY_HDR_PREFIX_LEN;
+    len += tf->display.len;
+    /* +1 for space, +1 for <, + 1 for > */
+    len += 1 + 1 + aor.len + 1 + CRLF_LEN;
+
+    hdr.s = (char *)pkg_malloc( len );
+    if ( hdr.s == NULL ) {
+	LM_ERR( "insert_asserted_identity: pkg_malloc %d bytes failed", len );
+	goto done;
+    }
+
+    memcpy( hdr.s, SCA_P_ASSERTED_IDENTITY_HDR_PREFIX,
+		    SCA_P_ASSERTED_IDENTITY_HDR_PREFIX_LEN );
+    hdr.len = SCA_P_ASSERTED_IDENTITY_HDR_PREFIX_LEN;
+
+    SCA_STR_APPEND( &hdr, &tf->display );
+
+    *(hdr.s + hdr.len) = ' ';
+    hdr.len++;
+
+    *(hdr.s + hdr.len) = '<';
+    hdr.len++;
+
+    SCA_STR_APPEND( &hdr, &aor );
+
+    *(hdr.s + hdr.len) = '>';
+    hdr.len++;
+
+    memcpy( hdr.s + hdr.len, CRLF, CRLF_LEN );
+    hdr.len += CRLF_LEN;
+
+    /* append the PAI header before the sdp body */
+    if ( insert_new_lump_before( anchor, hdr.s, hdr.len, HDR_PAI_T ) == NULL ) {
+	LM_ERR( "Failed to add PAI header %.*s", STR_FMT( &hdr ));
+	goto done;
+    }
+
+    rc = 1;
+
+done:
+    if ( aor.s != NULL ) {
+	pkg_free( aor.s );
+    }
+    if ( rc < 0 && hdr.s != NULL ) {
+	pkg_free( hdr.s );
     }
 
     return( rc );
@@ -993,7 +1082,9 @@ sca_call_info_invite_reply_200_handler( sip_msg_t *msg,
 {
     sca_appearance	*app;
     sca_dialog		dialog;
+    sip_uri_t		c_uri;
     char		dlg_buf[ 1024 ];
+    str			app_uri_aor = STR_NULL;
     str			state_str = STR_NULL;
     int			state = SCA_APPEARANCE_STATE_UNKNOWN;
     int			slot_idx = -1;
@@ -1007,6 +1098,8 @@ sca_call_info_invite_reply_200_handler( sip_msg_t *msg,
 			contact_uri, &msg->callid->body );
 LM_INFO( "## ADMORTEN DEBUG: uri update of %.*s returned %d",
 		STR_FMT( to_aor ), rc );
+
+	rc = sca_call_info_insert_asserted_identity( msg, contact_uri, to );
     }
 
     if ( !sca_uri_is_shared_appearance( sca, from_aor )) {
@@ -1057,7 +1150,20 @@ LM_INFO( "## ADMORTEN DEBUG: looking for %.*s appearance with dialog "
 	goto done;
     }
 
-    if ( sca_appearance_update_unsafe( app, state, &to->display, &to->uri,
+    if ( parse_uri( contact_uri->s, contact_uri->len, &c_uri ) < 0 ) {
+	LM_ERR( "sca_call_info_invite_200_reply_handler: "
+		"parse_uri <%.*s> failed", STR_FMT( contact_uri ));
+	goto done;
+    }
+    if ( sca_aor_create_from_info( &app_uri_aor, c_uri.type, &c_uri.user,
+		&GET_TO_PURI( msg )->host, &GET_TO_PURI( msg )->port ) < 0 ) {
+	LM_ERR( "sca_call_info_invite_200_reply_handler: "
+		"sca_aor_create_from_info %.*s and %.*s failed",
+		STR_FMT( contact_uri ), STR_FMT( &to->uri ));
+	goto done;
+    }
+
+    if ( sca_appearance_update_unsafe( app, state, &to->display, &app_uri_aor,
 	    &dialog, NULL, contact_uri ) < 0 ) {
 	sca_appearance_state_to_str( state, &state_str );
 	LM_ERR( "sca_call_info_invite_handler: failed to update appearance "
@@ -1073,6 +1179,9 @@ LM_INFO( "## ADMORTEN DEBUG: looking for %.*s appearance with dialog "
 done:
     if ( slot_idx >= 0 ) {
 	sca_hash_table_unlock_index( sca->appearances, slot_idx );
+    }
+    if ( app_uri_aor.s != NULL ) {
+	pkg_free( app_uri_aor.s );
     }
 
     return( rc );
@@ -1178,12 +1287,10 @@ done:
     void
 sca_call_info_ack_cb( struct cell *t, int type, struct tmcb_params *params )
 {
-    sca_appearance	*app;
     struct to_body	*from;
     struct to_body	*to;
     str			from_aor = STR_NULL;
     str			to_aor = STR_NULL;
-    str		aor;
     int			slot_idx;
 
 LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_ack_cb" );
