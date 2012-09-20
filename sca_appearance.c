@@ -1,8 +1,11 @@
 #include "sca_common.h"
 
+#include "../../lib/kcore/strcommon.h"
+
 #include "sca.h"
 #include "sca_appearance.h"
 #include "sca_hash.h"
+#include "sca_util.h"
 
 const str SCA_APPEARANCE_INDEX_STR = STR_STATIC_INIT( "appearance-index" );
 const str SCA_APPEARANCE_STATE_STR = STR_STATIC_INIT( "appearance-state" );
@@ -527,6 +530,7 @@ sca_appearance_update_unsafe( sca_appearance *app, int state, str *display,
 	str *uri, sca_dialog *dialog, str *owner, str *callee )
 {
     int			rc = SCA_APPEARANCE_OK;
+    int			len;
 
     if ( state != SCA_APPEARANCE_STATE_UNKNOWN ) {
 	app->state = state;
@@ -538,17 +542,43 @@ sca_appearance_update_unsafe( sca_appearance *app, int state, str *display,
 	    shm_free( app->uri.s );
 	    memset( &app->uri, 0, sizeof( str ));
 	}
-	app->uri.s = (char *)shm_malloc( uri->len );
+
+	/* +2 for left & right carets surrounding URI */
+	len = uri->len + 2;
+	if ( !SCA_STR_EMPTY( display )) {
+	    /* cheaper to scan string than shm_malloc 2x display? */
+	    len += sca_uri_display_escapes_count( display );
+LM_INFO( "@@ ADMORTEN DEBUG: need %d escapes in <%.*s>",
+			(len - (uri->len + 2)), STR_FMT( display ));
+	    /* +1 for space between display & uri */
+	    len += display->len + 1;
+	}
+	app->uri.s = (char *)shm_malloc( len );
 	if ( app->uri.s == NULL ) {
-	    LM_ERR( "Failed to update %.*s index %d uri to %.*s: "
-		    "shm_malloc %d bytes returned NULL",
-		    STR_FMT( &app->owner ), app->index,
-		    STR_FMT( uri ), uri->len );
+	    LM_ERR( "shm_malloc %d bytes returned NULL", uri->len );
 	    rc = SCA_APPEARANCE_ERR_MALLOC;
 	    goto done;
 	}
 
-	SCA_STR_COPY( &app->uri, uri );
+	if ( !SCA_STR_EMPTY( display )) {
+	    /* copy escaped display information... */
+	    app->uri.len = escape_common( app->uri.s, display->s,
+					  display->len );
+LM_INFO( "@@ ADMORTEN DEBUG: escaped display: <%.*s>", STR_FMT( &app->uri ));
+
+	    /* ... and add a space between it and the uri */
+	    *(app->uri.s + app->uri.len) = ' ';
+	    app->uri.len++;
+	}
+
+	*(app->uri.s + app->uri.len) = '<';
+	app->uri.len++;
+
+	SCA_STR_APPEND( &app->uri, uri );
+
+	*(app->uri.s + app->uri.len) = '>';
+	app->uri.len++;
+LM_INFO( "@@ ADMORTEN DEBUG: full appearance-uri: [%.*s]", STR_FMT( &app->uri ));
     }
 
     if ( !SCA_DIALOG_EMPTY( dialog )) {
@@ -734,6 +764,7 @@ sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
     sca_appearance_list	*app_list;
     sca_appearance	*app;
     str			state_str = STR_NULL;
+    int			len;
     int			slot_idx;
     int			rc = SCA_APPEARANCE_ERR_UNKNOWN;
 
@@ -775,7 +806,18 @@ sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
 	    shm_free( app->uri.s );
 	    memset( &app->uri, 0, sizeof( str ));
 	}
-	app->uri.s = (char *)shm_malloc( uri->len );
+
+	/* +2 for left & right carets surrounding URI */
+	len = uri->len + 2;
+	if ( !SCA_STR_EMPTY( display )) {
+	    /* cheaper to scan string than shm_malloc 2x display? */
+	    len += sca_uri_display_escapes_count( display );
+LM_INFO( "@@ ADMORTEN DEBUG: need %d escapes in <%.*s>",
+			(len - (uri->len + 2)), STR_FMT( display ));
+	    /* +1 for space between display & uri */
+	    len += display->len + 1;
+	}
+	app->uri.s = (char *)shm_malloc( len );
 	if ( app->uri.s == NULL ) {
 	    LM_ERR( "Failed to update %.*s index %d uri to %.*s: "
 		    "shm_malloc %d bytes returned NULL",
@@ -784,7 +826,26 @@ sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
 	    goto done;
 	}
 
-	SCA_STR_COPY( &app->uri, uri );
+	if ( !SCA_STR_EMPTY( display )) {
+	    /* copy escaped display information... */
+	    app->uri.len = escape_common( app->uri.s, display->s,
+					  display->len );
+
+LM_INFO( "@@ ADMORTEN DEBUG: escaped display: <%.*s>", STR_FMT( &app->uri ));
+
+	    /* ... and add a space between it and the uri */
+	    *(app->uri.s + app->uri.len) = ' ';
+	    app->uri.len++;
+	}
+
+	*(app->uri.s + app->uri.len) = '<';
+	app->uri.len++;
+
+	SCA_STR_APPEND( &app->uri, uri );
+
+	*(app->uri.s + app->uri.len) = '>';
+	app->uri.len++;
+LM_INFO( "@@ ADMORTEN DEBUG: full appearance-uri: [%.*s]", STR_FMT( &app->uri ));
     }
 
     if ( !SCA_DIALOG_EMPTY( dialog )) {
