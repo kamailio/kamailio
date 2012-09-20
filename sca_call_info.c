@@ -9,7 +9,6 @@
 #include "sca_event.h"
 #include "sca_notify.h"
 #include "sca_subscribe.h"
-#include "sca_update.h"
 #include "sca_util.h"
 
 const str	SCA_CALL_INFO_HEADER_STR = STR_STATIC_INIT( "Call-Info: " );

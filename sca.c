@@ -10,7 +10,6 @@
 #include "sca_call_info.h"
 #include "sca_rpc.h"
 #include "sca_subscribe.h"
-#include "sca_update.h"
 #include "sca_usrloc_cb.h"
 
 
@@ -35,7 +34,6 @@ static cmd_export_t	cmds[] = {
     { "sca_handle_subscribe", sca_handle_subscribe, 0, NULL, REQUEST_ROUTE },
     { "sca_call_info_update", sca_call_info_update, 0, NULL,
 	REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
-    { "sca_update_endpoints", sca_update_endpoints, 0, NULL, REQUEST_ROUTE },
     { NULL, NULL, -1, 0, 0 },
 };
 
