@@ -165,6 +165,33 @@ sca_get_msg_to_header( sip_msg_t *msg, struct to_body **to )
     return( 0 );
 }
 
+/* count characters requiring escape as defined by escape_common */
+    int
+sca_uri_display_escapes_count( str *display )
+{
+    int			c = 0;
+    int			i;
+
+    if ( SCA_STR_EMPTY( display )) {
+	return( 0 );
+    }
+
+    for ( i = 0; i < display->len; i++ ) {
+	switch ( display->s[ i ] ) {
+	case '\'':
+	case '"':
+	case '\\':
+	case '\0':
+	    c++;
+	    
+	default:
+	    break;
+	}
+    }
+
+    return( c );
+}
+
     int
 sca_uri_extract_aor( str *uri, str *aor )
 {

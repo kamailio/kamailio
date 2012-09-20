@@ -21,6 +21,9 @@ int	sca_get_msg_from_header( sip_msg_t *, struct to_body ** );
 /* convenient To header parsing and extraction */
 int	sca_get_msg_to_header( sip_msg_t *, struct to_body ** );
 
+/* count number of characters requiring escape as defined by escape_common */
+int	sca_uri_display_escapes_count( str * );
+
 /* convenient AoR extraction from sip: URIs */
 int	sca_uri_extract_aor( str *, str * );
 
