@@ -165,6 +165,15 @@ sca_hash_table_slot_kv_find( sca_hash_slot *slot, str *key )
 }
 
     void *
+sca_hash_table_index_kv_find_unsafe(sca_hash_table *ht, int slot_idx, str *key)
+{
+    assert( ht != NULL && !SCA_STR_EMPTY( key ));
+    assert( slot_idx >= 0 && slot_idx < ht->size );
+
+    return( sca_hash_table_slot_kv_find_unsafe( &ht->slots[ slot_idx ], key ));
+}
+
+    void *
 sca_hash_table_index_kv_find( sca_hash_table *ht, int slot_idx, str *key )
 {
     assert( ht != NULL && !SCA_STR_EMPTY( key ));

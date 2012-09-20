@@ -62,6 +62,7 @@ int	sca_hash_table_kv_insert( sca_hash_table *, str *, void *,
 				void (*)(void *), void (*)(void *));
 void	*sca_hash_table_slot_kv_find_unsafe( sca_hash_slot *, str * );
 void	*sca_hash_table_slot_kv_find( sca_hash_slot *, str * );
+void	*sca_hash_table_index_kv_find_unsafe( sca_hash_table *, int, str * );
 void	*sca_hash_table_index_kv_find( sca_hash_table *, int, str * );
 void	*sca_hash_table_kv_find( sca_hash_table *, str * );
 
