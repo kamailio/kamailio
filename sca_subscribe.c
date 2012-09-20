@@ -262,11 +262,14 @@ sca_subscription_print( void *value )
 		STR_FMT( &sub->dialog.to_tag ));
 }
 
-    static sca_subscription *
-sca_subscription_save( sca_mod *scam, sca_subscription *sub, int save_idx )
+    int
+sca_subscription_save_unsafe( sca_mod *scam, sca_subscription *sub,
+	int save_idx )
 {
     sca_subscription		*new_sub = NULL;
     int				rc = -1;
+
+    assert( save_idx >= 0 );
 
     new_sub = sca_subscription_create( &sub->target_aor, sub->event,
 			    	       &sub->subscriber,
@@ -276,7 +279,7 @@ sca_subscription_save( sca_mod *scam, sca_subscription *sub, int save_idx )
 				       &sub->dialog.from_tag,
 				       &sub->dialog.to_tag );
     if ( new_sub == NULL ) {
-	return( NULL );
+	return( -1 );
     }
     if ( sub->index != SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) {
 	new_sub->index = sub->index;
@@ -288,30 +291,22 @@ sca_subscription_save( sca_mod *scam, sca_subscription *sub, int save_idx )
 		STR_FMT( &sub->subscriber ));
     }
 
-    if ( save_idx >= 0 ) {
-	rc = sca_hash_table_index_kv_insert( scam->subscriptions,
-				    save_idx, new_sub,
-				    sca_subscription_subscriber_cmp,
-				    sca_subscription_print,
-				    sca_subscription_free );
-    } else {
-	rc = sca_hash_table_kv_insert( scam->subscriptions,
-				    &sub->subscriber, new_sub,
-				    sca_subscription_subscriber_cmp,
-				    sca_subscription_print,
-				    sca_subscription_free );
-    }
-
+    rc = sca_hash_table_slot_kv_insert_unsafe(
+				&scam->subscriptions->slots[ save_idx ],
+				new_sub,
+				sca_subscription_subscriber_cmp,
+				sca_subscription_print,
+				sca_subscription_free );
     if ( rc < 0 ) {
 	shm_free( new_sub );
 	new_sub = NULL;
     }
 
-    return( new_sub );
+    return( rc );
 }
 
     static int
-sca_subscription_update( sca_mod *scam, sca_subscription *saved_sub,
+sca_subscription_update_unsafe( sca_mod *scam, sca_subscription *saved_sub,
 			 sca_subscription *update_sub, int sub_idx )
 {
     int			rc = -1;
@@ -322,9 +317,6 @@ sca_subscription_update( sca_mod *scam, sca_subscription *saved_sub,
 	LM_ERR( "Invalid hash table index %d", sub_idx );
 	goto done;
     }
-
-    /* BEGIN LOCK */
-    sca_hash_table_lock_index( scam->subscriptions, sub_idx );
 
     /* sanity checks first */
     if ( saved_sub->event != update_sub->event ) {
@@ -411,9 +403,6 @@ sca_subscription_update( sca_mod *scam, sca_subscription *saved_sub,
     rc = 1;
 
 done:
-    sca_hash_table_unlock_index( scam->subscriptions, sub_idx );
-    /* END LOCK */
-
     return( rc );
 }
 
@@ -633,7 +622,9 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
     char		*status_text;
     int			event_type;
     int			status;
-    int			idx, app_idx = SCA_CALL_INFO_APPEARANCE_INDEX_ANY;
+    int			app_idx = SCA_CALL_INFO_APPEARANCE_INDEX_ANY;
+    int			idx = -1;
+    int			rc = -1;
 
     if ( parse_headers( msg, HDR_EOH_F, 0 ) < 0 ) {
 	LM_ERR( "header parsing failed: bad request" );
@@ -677,15 +668,17 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
     /* ensure we only calculate the hash table index once */
     idx = sca_hash_table_index_for_key( sca->subscriptions,
 					&sub_key );
-    sub = sca_hash_table_index_kv_find( sca->subscriptions, idx,
+    sca_hash_table_lock_index( sca->subscriptions, idx );
+
+    sub = sca_hash_table_index_kv_find_unsafe( sca->subscriptions, idx,
 					&req_sub.subscriber ); 
 
     if ( sub != NULL ) {
 	/* this will remove the subscription if expires == 0 */
-	if ( sca_subscription_update( sca, sub, &req_sub, idx ) < 0 ) {
+	if ( sca_subscription_update_unsafe( sca, sub, &req_sub, idx ) < 0 ) {
 	    SCA_REPLY_ERROR( sca, 500,
 		    "Internal Server Error - update subscription", msg );
-	    goto error;
+	    goto done;
 	}
 
 	if ( req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE ) {
@@ -695,7 +688,7 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 			&call_info ) < 0 ) {
 		    SCA_REPLY_ERROR( sca, 400, "Bad Request - "
 				    "Invalid Call-Info header", msg );
-		    goto error;
+		    goto done;
 		}
 		app_idx = call_info.index;
 	    }
@@ -705,14 +698,14 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 		if ( call_info_hdr == NULL ) {
 		    SCA_REPLY_ERROR( sca, 400, "Bad Request - "
 				    "missing Call-Info header", msg );
-		    goto error;
+		    goto done;
 		}
 	
 		if ( sca_appearance_release_index( sca, &req_sub.target_aor,
 			call_info.index ) != SCA_APPEARANCE_OK ) {
 		    SCA_REPLY_ERROR( sca, 500, "Internal Server Error - "
 				    "release seized line", msg );
-		    goto error;
+		    goto done;
 		}
 	    } else if ( SCA_STR_EMPTY( to_tag )) {
 		/* don't seize new index if this is a line-seize reSUBSCRIBE */
@@ -721,7 +714,7 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 		if ( app_idx < 0 ) {
 		    SCA_REPLY_ERROR( sca, 500, "Internal Server Error - "
 					"seize appearance index", msg );
-		    goto error;
+		    goto done;
 		}
 	    }
 	}
@@ -730,7 +723,7 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 	if ( !SCA_STR_EMPTY( to_tag )) {
 	    SCA_REPLY_ERROR( sca, 481,
 		    "Call Leg/Transaction Does Not Exist", msg );
-	    goto error;
+	    goto done;
 	}
 
 	if ( req_sub.expires > 0 ) {
@@ -740,16 +733,15 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 		if ( app_idx < 0 ) {
 		    SCA_REPLY_ERROR( sca, 500, "Internal Server Error - "
 					"seize appearance index", msg );
-		    goto error;
+		    goto done;
 		}
 		req_sub.index = app_idx;
 	    }
 
-	    sub = sca_subscription_save( sca, &req_sub, idx );
-	    if ( sub == NULL ) {
+	    if ( sca_subscription_save_unsafe( sca, &req_sub, idx ) < 0 ) {
 		SCA_REPLY_ERROR( sca, 500,
 			"Internal Server Error - save subscription", msg );
-		goto error;
+		goto done;
 	    }
 	} else {
 	    /*
@@ -769,11 +761,11 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
     if ( sca_reply( sca, status, status_text, event_type,
 		    req_sub.expires, msg ) < 0 ) {
 	SCA_REPLY_ERROR( sca, 500, "Internal server error", msg );
-	goto error;
+	goto done;
     }
 
     /* XXX this should be locked; could use a filled-in req_sub */
-    if ( sca_notify_subscriber( sca, sub, app_idx ) < 0 ) {
+    if ( sca_notify_subscriber( sca, &req_sub, app_idx ) < 0 ) {
 	LM_ERR( "SCA %s SUBSCRIBE+NOTIFY for %.*s failed",
 		sca_event_name_from_type( sub->event ),
 		STR_FMT( &sub->subscriber ));
@@ -781,7 +773,7 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 	 * XXX - what does subscriber do in this case? drop subscription?
 	 * sub is already saved/updated in hash table. let it rot?
 	 */
-	goto error;
+	goto done;
     }
 
     if ( req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE ) {
@@ -789,14 +781,18 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 	    LM_ERR( "SCA %s NOTIFY to all %.*s subscribers failed",
 		    sca_event_name_from_type( req_sub.event ),
 		    STR_FMT( &req_sub.target_aor ));
-	    goto error;
+	    goto done;
 	}
     }
 
-    return( 1 );
+    rc = 1;
 
-error:
-    return( -1 );
+done:
+    if ( idx >= 0 ) {
+	sca_hash_table_unlock_index( sca->subscriptions, idx );
+    }
+
+    return( rc );
 }
 
     int
