@@ -1717,6 +1717,8 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
 	LM_ERR( "Bad To header" );
 	return( -1 );
     }
+
+    memset( &c_uri, 0, sizeof( sip_uri_t ));
     rc = sca_get_msg_contact_uri( msg, &contact_uri );
     if ( rc > 0 ) {
 	/* Contact header in packet */
