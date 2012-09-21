@@ -784,7 +784,7 @@ LM_INFO( "ADMORTEN DEBUG: seized %d for %.*s: From: <%.*s> To: <%.*s> "
 	 STR_FMT( &app->owner ), STR_FMT( &from->uri ), STR_FMT( &to->uri ),
 	 STR_FMT( call_id ), STR_FMT( &app->dialog.id ));
 
-	if ( sca_appearance_update_unsafe( app, call_info->state,
+	if ( sca_appearance_update_unsafe( app, SCA_APPEARANCE_STATE_ACTIVE,
 		&from->display, &from->uri, &dialog, contact_uri,
 		&from->uri ) < 0 ) {
 	    sca_appearance_state_to_str( call_info->state, &state_str );
@@ -1105,7 +1105,6 @@ sca_call_info_invite_reply_200_handler( sip_msg_t *msg,
     if ( call_info != NULL ) {
 	/* this implies To-AoR is SCA */
 
-	call_info->state = SCA_APPEARANCE_STATE_ACTIVE;
 	rc = sca_call_info_uri_update( to_aor, call_info, from, to,
 			contact_uri, &msg->callid->body );
 LM_INFO( "## ADMORTEN DEBUG: uri update of %.*s returned %d",
