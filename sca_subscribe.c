@@ -267,6 +267,7 @@ sca_subscription_save_unsafe( sca_mod *scam, sca_subscription *sub,
 	int save_idx )
 {
     sca_subscription		*new_sub = NULL;
+    sca_hash_slot		*slot;
     int				rc = -1;
 
     assert( save_idx >= 0 );
@@ -291,9 +292,8 @@ sca_subscription_save_unsafe( sca_mod *scam, sca_subscription *sub,
 		STR_FMT( &sub->subscriber ));
     }
 
-    rc = sca_hash_table_slot_kv_insert_unsafe(
-				&scam->subscriptions->slots[ save_idx ],
-				new_sub,
+    slot = sca_hash_table_slot_for_index( scam->subscriptions, save_idx );
+    rc = sca_hash_table_slot_kv_insert_unsafe( slot, new_sub,
 				sca_subscription_subscriber_cmp,
 				sca_subscription_print,
 				sca_subscription_free );
@@ -399,6 +399,9 @@ sca_subscription_update_unsafe( sca_mod *scam, sca_subscription *saved_sub,
     if ( update_sub->index != SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) {
 	saved_sub->index = update_sub->index;
     }
+
+    /* set notify_cseq in update_sub, since we use it to send the NOTIFY */
+    update_sub->dialog.notify_cseq = saved_sub->dialog.notify_cseq;
 
     rc = 1;
 
@@ -601,6 +604,8 @@ sca_subscription_from_request( sca_mod *scam, sip_msg_t *msg, int event_type,
     req_sub->dialog.call_id = msg->callid->body;
     req_sub->dialog.from_tag = from->tag_value;
     req_sub->dialog.to_tag = to_tag;
+    req_sub->dialog.subscribe_cseq = 0;
+    req_sub->dialog.notify_cseq = 0;
 
     //free_to_params( &tmp_to );
     return( 1 );
