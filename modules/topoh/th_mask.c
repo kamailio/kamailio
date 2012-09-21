@@ -76,8 +76,8 @@ void th_mask_init(void)
 	_th_key.len = strlen(_th_key.s);
 	memcpy(_th_EB64, TH_EB64I, sizeof(TH_EB64I));
 	th_shuffle(_th_EB64, 64);
-	LM_ERR("+++ %s\n", TH_EB64I);
-	LM_ERR("+++ %s\n", _th_EB64);
+	LM_DBG("original table: %s\n", TH_EB64I);
+	LM_DBG("updated table: %s\n", _th_EB64);
 	for(i=0; i<256; i++)
 		_th_DB64[i] = -1;
 	for(i=0; i<64; i++)
