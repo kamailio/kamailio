@@ -927,12 +927,13 @@ done:
     return( rc );
 }
 
-    static int
+    int
 sca_call_info_invite_reply_18x_handler( sip_msg_t *msg,
 	sca_call_info *call_info, struct to_body *from, struct to_body *to,
 	str *from_aor, str *to_aor, str *contact_uri )
 {
     sca_appearance	*app = NULL;
+    str			owner = STR_NULL;
     int			state = SCA_APPEARANCE_STATE_UNKNOWN;
     int			slot_idx = -1;
     int			rc = -1;
@@ -962,6 +963,16 @@ sca_call_info_invite_reply_18x_handler( sip_msg_t *msg,
 	goto done;
     }
 
+    /* clone appearance owner for subscription termination below */
+    owner.s = (char *)pkg_malloc( app->owner.len );
+    if ( owner.s == NULL ) {
+	LM_ERR( "sca_call_info_invite_18x_reply_handler: failed to "
+		"pkg_malloc %d bytes to clone <%.*s>",
+		app->owner.len, STR_FMT( &app->owner ));
+	goto done;
+    }
+    SCA_STR_COPY( &owner, &app->owner );
+
     app->state = state;
     rc = 1;
 
@@ -970,15 +981,14 @@ done:
 	sca_hash_table_unlock_index( sca->appearances, slot_idx );
     }
 
-    /* XXX this reference to app seems a poor choice. */
-    if ( rc > 0 && app != NULL ) {
+    if ( rc > 0 && owner.s != NULL ) {
 	if ( sca_subscription_terminate( sca, from_aor,
-		SCA_EVENT_TYPE_LINE_SEIZE, &app->owner,
+		SCA_EVENT_TYPE_LINE_SEIZE, &owner,
 		SCA_SUBSCRIPTION_STATE_TERMINATED_NORESOURCE,
 		SCA_SUBSCRIPTION_TERMINATE_OPT_UNSUBSCRIBE ) < 0 ) {
 	    LM_ERR( "sca_call_info_invite_reply_18x_handler: "
 		    "failed to terminate line-seize subscription for %.*s",
-		    STR_FMT( &app->owner ));
+		    STR_FMT( &owner ));
 	    rc = -1;
 	}
 
@@ -988,6 +998,9 @@ done:
 		    STR_FMT( from_aor ));
 	    rc = -1;
 	}
+    }
+    if ( owner.s != NULL ) {
+	pkg_free( owner.s );
     }
 
     return( rc );
