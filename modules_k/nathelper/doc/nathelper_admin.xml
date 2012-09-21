@@ -598,12 +598,12 @@ fix_nated_register();
 
 	<section>
 		<title>
-		<function moreinfo="none">add_contact_alias()</function>
+		<function moreinfo="none">add_contact_alias([ip_addr, port, proto])</function>
 		</title>
 		<para>
-		Adds ;alias=ip:port parameter to contact URI containing
-		received ip:port if contact uri ip:port does not match
-		received ip:port.
+		Adds ;alias=ip~port~transport parameter to contact URI
+		containing either received ip, port, and transport protocol
+		or those given as parameters.
 		</para>
 		<para>
 		This function can be used from
@@ -614,7 +614,7 @@ fix_nated_register();
 		<programlisting format="linespecific">
 ...
     if (!is_present_hf("Record-Route")) {
-        if (!add_contact_alias()) {
+        if (!add_contact_alias("$var(src_ip)", "$Rp", "tcp")) {
             xlog("L_ERR", "Error in aliasing contact $ct\n");
             send_reply("400", "Bad request");
             exit;
