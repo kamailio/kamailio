@@ -248,6 +248,8 @@ sca_hash_table_slot_unlink_entry_unsafe( sca_hash_slot *slot,
 	if ( e == slot->entries ) {
 	    slot->entries = e->next;
 	}
+
+	e->next = NULL;
     }
 
     return( e );
