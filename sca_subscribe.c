@@ -590,6 +590,7 @@ sca_subscription_from_request( sca_mod *scam, sip_msg_t *msg, int event_type,
     req_sub->subscriber = contact_uri;
     req_sub->target_aor = REQ_LINE( msg ).uri;
     req_sub->event = event_type;
+    req_sub->index = SCA_CALL_INFO_APPEARANCE_INDEX_ANY;
     req_sub->expires = expires;
     if ( req_sub->expires > 0 ) {
 	req_sub->state = SCA_SUBSCRIPTION_STATE_ACTIVE;
