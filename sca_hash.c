@@ -200,13 +200,9 @@ sca_hash_table_slot_kv_find_entry_unsafe( sca_hash_slot *slot, str *key )
     assert( slot != NULL && !SCA_STR_EMPTY( key ));
 
     e = slot->entries;
-    if ( e ) {
-	if ( e->compare( key, e->value ) != 0 && e->next ) {
-	    for ( ; e != NULL; e = e->next ) {
-		if ( e->compare( key, e->value ) == 0 ) {
-		    break;
-		}
-	    }
+    for ( e = slot->entries; e != NULL; e = e->next ) {
+	if ( e->compare( key, e->value ) == 0 ) {
+	    break;
 	}
     }
 
@@ -241,14 +237,21 @@ sca_hash_table_slot_unlink_entry_unsafe( sca_hash_slot *slot,
     if ( e ) {
 	if ( e->prev ) {
 	    e->prev->next = e->next;
-	}
-	if ( e == *slot->last_entry ) {
-	    slot->last_entry = &e->prev;
+	    if ( e->next ) {
+		e->next->prev = e->prev;
+	    }
+	    if ( e == *slot->last_entry ) {
+		slot->last_entry = &e->prev;
+	    }
 	}
 	if ( e == slot->entries ) {
 	    slot->entries = e->next;
+	    if ( e == *slot->last_entry ) {
+		slot->last_entry = &slot->entries;
+	    }
 	}
 
+	e->prev = NULL;
 	e->next = NULL;
     }
 
