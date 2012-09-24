@@ -548,8 +548,6 @@ sca_appearance_update_unsafe( sca_appearance *app, int state, str *display,
 	if ( !SCA_STR_EMPTY( display )) {
 	    /* cheaper to scan string than shm_malloc 2x display? */
 	    len += sca_uri_display_escapes_count( display );
-LM_INFO( "@@ ADMORTEN DEBUG: need %d escapes in <%.*s>",
-			(len - (uri->len + 2)), STR_FMT( display ));
 	    /* +1 for space between display & uri */
 	    len += display->len + 1;
 	}
@@ -564,7 +562,6 @@ LM_INFO( "@@ ADMORTEN DEBUG: need %d escapes in <%.*s>",
 	    /* copy escaped display information... */
 	    app->uri.len = escape_common( app->uri.s, display->s,
 					  display->len );
-LM_INFO( "@@ ADMORTEN DEBUG: escaped display: <%.*s>", STR_FMT( &app->uri ));
 
 	    /* ... and add a space between it and the uri */
 	    *(app->uri.s + app->uri.len) = ' ';
@@ -812,8 +809,6 @@ sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
 	if ( !SCA_STR_EMPTY( display )) {
 	    /* cheaper to scan string than shm_malloc 2x display? */
 	    len += sca_uri_display_escapes_count( display );
-LM_INFO( "@@ ADMORTEN DEBUG: need %d escapes in <%.*s>",
-			(len - (uri->len + 2)), STR_FMT( display ));
 	    /* +1 for space between display & uri */
 	    len += display->len + 1;
 	}
@@ -830,8 +825,6 @@ LM_INFO( "@@ ADMORTEN DEBUG: need %d escapes in <%.*s>",
 	    /* copy escaped display information... */
 	    app->uri.len = escape_common( app->uri.s, display->s,
 					  display->len );
-
-LM_INFO( "@@ ADMORTEN DEBUG: escaped display: <%.*s>", STR_FMT( &app->uri ));
 
 	    /* ... and add a space between it and the uri */
 	    *(app->uri.s + app->uri.len) = ' ';
