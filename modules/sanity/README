@@ -4,7 +4,7 @@ Nils Ohlmeier
 
    iptelorg GmbH
 
-   Copyright Â© 2006 iptelorg GmbH
+   Copyright © 2006 iptelorg GmbH
      __________________________________________________________________
 
    1.1. Overview
@@ -84,7 +84,7 @@ Nils Ohlmeier
 
    Example 1. Set default_checks parameter
 ...
-modparam("sanity", "default_checks", "1")
+modparam("sanity", "default_checks", 1)
 ...
 
 1.3.2. uri_checks (integer)
@@ -128,7 +128,7 @@ modparam("sanity", "autodrop", 1)
 
 1.4. Functions
 
-1.4.1.  sanity_check([msg_checks [, uri_checks]])
+1.4.1. sanity_check([msg_checks [, uri_checks]])
 
    This function makes a row of sanity checks over the given SIP request.
    The behavior of the function is also controled by 'autodrop' parameter.

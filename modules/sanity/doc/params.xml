@@ -33,7 +33,7 @@
 	    <title>Set <varname>default_checks</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("sanity", "default_checks", "1")
+modparam("sanity", "default_checks", 1)
 ...
 	    </programlisting>
 	</example>
