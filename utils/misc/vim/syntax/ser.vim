@@ -34,7 +34,7 @@ syn keyword	serTodo	TODO FIXME XXX contained
 syn match	serOperator		'!\|&&\|||\|=[~=]\?\|>\|<\|+\|-\|/\|\*\||\|&\|^\|\~\|defined\|eq\|ieq\|ne\|ine\|mod' display contained
 
 syn region	serCppComment		start='/\*' end='\*/' contains=serTodo
-syn match	serHashDefine	'#!define\s\|#!ifdef\s\|#!ifndef\s\|#!endif\|#!else\|#!subst\|!!define\s\|!!ifdef\s\|!!ifndef\s\|!!endif\|!!else\|!!subst\|#!KAMAILIO\|#!OPENSER\|#!SER\|#!MAXCOMPAT\|#!ALL'
+syn match	serHashDefine	'#!define\s\|#!ifdef\s\|#!ifndef\s\|#!endif\|#!else\|#!substdef\|#!subst\|!!define\s\|!!ifdef\s\|!!ifndef\s\|!!endif\|!!else\|!!substdef\|!!subst\|#!KAMAILIO\|#!OPENSER\|#!SER\|#!MAXCOMPAT\|#!ALL'
 " syn match	serHashDefine	'^\s*#!.+$'
 syn match	serHashComment	'#[^!].*$\|#$' contains=serTodo
 
@@ -43,7 +43,7 @@ syn match	serNumber			'[0-9]\+' contained
 syn region	serString			matchgroup=Normal start='"' skip='\\"' end='"' contained contains=serVariable,serStringEscape
 syn match	serVariable		"$[a-zA-Z_][a-zA-Z0-9_]*\(([^)]\+)\)\?" contained
 syn match	serIdentifier		'[a-zA-Z_][a-zA-Z0-9_]*' contained
-syn keyword	serStatement	route if else switch case default break exit return drop while include_file contained
+syn keyword	serStatement	route if else switch case default break exit return drop while include_file import_file contained
 syn keyword	serSpecial			yes no on off true false enabled disabled contained
 
 syn keyword	serCoreKeyword	af dst_ip dst_port from_uri method msg:len proto status snd_af snd_ip snd_port snd_proto src_ip src_port to_af to_ip to_port to_proto to_uri uri uri:host uri:port contained
