@@ -2523,3 +2523,70 @@ error:
 		pkg_free(pv);
 	return -1;
 }
+
+
+/**
+ *
+ */
+int pv_parse_K_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 3:
+			if(strncmp(in->s, "UDP", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "TCP", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else if(strncmp(in->s, "TLS", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else goto error;
+		break;
+		case 4:
+			if(strncmp(in->s, "IPv4", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "IPv6", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "SCTP", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 5;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV af key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+int pv_get_K(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(param==NULL)
+		return -1;
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1:
+			return pv_get_uintval(msg, param, res, AF_INET6);
+		case 2:
+			return pv_get_uintval(msg, param, res, PROTO_UDP);
+		case 3:
+			return pv_get_uintval(msg, param, res, PROTO_TCP);
+		case 4:
+			return pv_get_uintval(msg, param, res, PROTO_TLS);
+		case 5:
+			return pv_get_uintval(msg, param, res, PROTO_SCTP);
+		default:
+			return pv_get_uintval(msg, param, res, AF_INET);
+	}
+}

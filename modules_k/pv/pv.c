@@ -411,6 +411,8 @@ static pv_export_t mod_pvs[] = {
 		0, pv_parse_nh_name, 0, 0, 0},
 	{ {"version", (sizeof("version")-1)}, PVT_OTHER, pv_get_sr_version,
 		0, pv_parse_sr_version_name, 0, 0, 0},
+	{ {"K", (sizeof("K")-1)}, PVT_OTHER, pv_get_K, 0,
+		pv_parse_K_name, 0, 0, 0 },
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };

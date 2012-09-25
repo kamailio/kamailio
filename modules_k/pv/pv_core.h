@@ -280,5 +280,11 @@ int pv_parse_af_name(pv_spec_p sp, str *in);
 
 int pv_get_af(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
+
+int pv_parse_K_name(pv_spec_p sp, str *in);
+
+int pv_get_K(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
+
 #endif
 
