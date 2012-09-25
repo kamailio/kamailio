@@ -450,29 +450,6 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">set_rtp_proxy_set()</function>
-		</title>
-		<para>
-		Sets the Id of the rtpproxy set to be used for the next 
-		[un]force_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer()
-		command.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
-		BRANCH_ROUTE.
-		</para>
-		<example>
-		<title><function>fix_nated_contact</function> usage</title>
-		<programlisting format="linespecific">
-...
-set_rtp_proxy_set("2");
-force_rtp_proxy();
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title>
 		<function moreinfo="none">add_rcv_param([flag])</function>,
 		</title>
 		<para>
