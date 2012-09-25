@@ -60,6 +60,11 @@ static str pv_uri_scheme[] = {
 		{ 0, 0 }
 	};
 
+static str pv_af_list[] = {
+		{ "IPv4",  4 },
+		{ "IPv6",  4 },
+		{ 0, 0 }
+	};
 int _pv_pid = 0;
 
 #define PV_FIELD_DELIM ", "
@@ -640,6 +645,58 @@ int pv_get_rcvport(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_intstrval(msg, param, res,
 			(int)msg->rcv.bind_address->port_no,
 			&msg->rcv.bind_address->port_no_str);
+}
+
+/**
+ *
+ */
+int pv_parse_af_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 2:
+			if(strncmp(in->s, "id", 2)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		break;
+		case 4:
+			if(strncmp(in->s, "name", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV af key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+int pv_get_af(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(msg==NULL || param==NULL)
+		return -1;
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1:
+			if(msg->rcv.bind_address->address.af==AF_INET6)
+				return pv_get_strval(msg, param, res, &pv_af_list[1]);
+			return pv_get_strval(msg, param, res, &pv_af_list[0]);
+		default:
+			return pv_get_uintval(msg, param, res, msg->rcv.bind_address->address.af);
+	}
 }
 
 int pv_get_force_sock(struct sip_msg *msg, pv_param_t *param,
