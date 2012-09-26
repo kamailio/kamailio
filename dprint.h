@@ -141,6 +141,7 @@ void dprint_color(int level);
 void dprint_color_reset(void);
 void dprint_color_update(int level, char f, char b);
 void dprint_init_colors(void);
+void dprint_term_color(char f, char b, str *obuf);
 
 /** @brief
  * General logging macros
