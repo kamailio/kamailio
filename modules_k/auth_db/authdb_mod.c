@@ -352,11 +352,8 @@ int parse_aaa_pvs(char *definition, pv_elem_t **pv_def, int *cnt)
 
 		/* create a pv spec */
 		LM_DBG("column: %.*s  pv: %.*s\n", pve->text.len, pve->text.s, pv.len, pv.s);
-		if (pv_parse_spec(&pv, &pve->spec) == 0) {
-			LM_ERR("malformed PV definition: %.*s\n", pv.len, pv.s);
-			goto parse_error;;
-		}
-		if(pve->spec.setf == NULL) {
+		pve->spec = pv_spec_lookup(&pv, NULL);
+		if(pve->spec==NULL || pve->spec->setf == NULL) {
 			LM_ERR("PV is not writeable: %.*s\n", pv.len, pv.s);
 			goto parse_error;
 		}
