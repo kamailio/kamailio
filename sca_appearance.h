@@ -68,8 +68,6 @@ struct _sca_appearance_list {
     str			aor;
     int			appearance_count;
     sca_appearance	*appearances;
-    int			max_index;
-    int			next_index;
 };
 typedef struct _sca_appearance_list	sca_appearance_list;
 
