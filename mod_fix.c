@@ -484,7 +484,8 @@ int fixup_free_igp_pvar_pvar(void** param, int param_no)
 				return E_UNSPEC; \
 			} else{ \
 				fp=(fparam_t*)*param; \
-				if ((ret==0) && (fp->v.pve->spec.getf==0)){ \
+				if ((ret==0) && (fp->v.pve->spec==0 \
+							|| fp->v.pve->spec->getf==0)){ \
 					fparam_free_restore(param); \
 					return fix_param_types(FPARAM_STR, param); \
 				} else if (ret==1) \

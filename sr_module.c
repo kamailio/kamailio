@@ -1410,7 +1410,7 @@ int fixup_var_pve_12(void** param, int param_no)
 			   If the resulting PVE is static (normal string), discard
 			   it and use the normal string fixup (faster at runtime) */
 			fp = (fparam_t*)*param;
-			if (fp->v.pve->spec.getf == 0)
+			if (fp->v.pve->spec == 0 || fp->v.pve->spec->getf == 0)
 				fparam_free_restore(param); /* fallback to STR below */
 			else
 				return ret; /* dynamic PVE => return */
@@ -1452,7 +1452,7 @@ int fixup_var_pve_str_12(void** param, int param_no)
 			   If the resulting PVE is static (normal string), discard
 			   it and use the normal string fixup (faster at runtime) */
 			fp = (fparam_t*)*param;
-			if (fp->v.pve->spec.getf == 0)
+			if (fp->v.pve->spec == 0 || fp->v.pve->spec->getf == 0)
 				fparam_free_restore(param); /* fallback to STR below */
 			else
 				return ret; /* dynamic PVE => return */
