@@ -190,9 +190,9 @@ static int check_user_blacklist_fixup(void** param, int param_no)
 			return E_UNSPEC;
 		}
 
-		if(!model->spec.getf) {
+		if(model->spec==NULL || model->spec->getf==NULL) {
 			if(param_no == 1) {
-				if(str2int(&s, (unsigned int*)&model->spec.pvp.pvn.u.isname.name.n) != 0) {
+				if(str2int(&s, (unsigned int*)&model->spec->pvp.pvn.u.isname.name.n) != 0) {
 					LM_ERR("wrong value [%.*s] for parameter %d\n", s.len, s.s, param_no);
 					return E_UNSPEC;
 				}
@@ -227,21 +227,21 @@ static int check_user_list(struct sip_msg *msg, char* str1, char* str2, char* st
 	char req_number[MAXNUMBERLEN+1];
 
 	/* user */
-	if(((pv_elem_p)str1)->spec.getf) {
+	if(((pv_elem_p)str1)->spec!=NULL && ((pv_elem_p)str1)->spec->getf!=NULL) {
 		if(pv_printf_s(msg, (pv_elem_p)str1, &user) != 0) {
 			LM_ERR("cannot print user pseudo-variable\n");
 			return -1;
 		}
 	}
 	/* domain */
-	if(((pv_elem_p)str2)->spec.getf) {
+	if(((pv_elem_p)str2)->spec!=NULL && ((pv_elem_p)str2)->spec->getf) {
 		if(pv_printf_s(msg, (pv_elem_p)str2, &domain) != 0) {
 			LM_ERR("cannot print domain pseudo-variable\n");
 			return -1;
 		}
 	}
 	/* source number */
-	if(str3 != NULL && ((pv_elem_p)str3)->spec.getf) {
+	if(str3 != NULL && ((pv_elem_p)str3)->spec!=NULL && ((pv_elem_p)str3)->spec->getf!=NULL) {
 		if(pv_printf_s(msg, (pv_elem_p)str3, &number) != 0) {
 			LM_ERR("cannot print number pseudo-variable\n");
 			return -1;
