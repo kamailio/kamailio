@@ -51,7 +51,12 @@ event_route[xhttp:request] {
         set_reply_close();
         set_reply_no_connect();
 
-        if ($Rp != 80 && $Rp != 443) {
+        if ($Rp != 80
+#!ifdef WITH_TLS
+            && $Rp != 443
+#!endif
+        ) {
+
                 xlog("L_WARN", "HTTP request received on $Rp\n");
                 xhttp_reply("403", "Forbidden", "", "");
                 exit;
@@ -62,17 +67,25 @@ event_route[xhttp:request] {
         if ($hdr(Upgrade)=~"websocket"
                         && $hdr(Connection)=~"Upgrade"
                         && $rm=~"GET") {
-                xlog("L_DBG", "WebSocket\n");
-                xlog("L_DBG", " Host: $hdr(Host)\n");
-                xlog("L_DBG", " Origin: $hdr(Origin)\n");
 
-                if ($hdr(Host) == $null || !is_myself($hdr(Host))) {
+                # Validate Host - make sure the client is using the correct
+                # alias for WebSockets
+                if ($hdr(Host) == $null || !is_myself("sip:" + $hdr(Host))) {
                         xlog("L_WARN", "Bad host $hdr(Host)\n");
                         xhttp_reply("403", "Forbidden", "", "");
                         exit;
                 }
 
-                # Optional... validate Origin
+                # Optional... validate Origin - make sure the client is from an
+                # authorised website.  For example,
+                #
+                # if ($hdr(Origin) != "http://communicator.MY_DOMAIN"
+                #     && $hdr(Origin) != "https://communicator.MY_DOMAIN") {
+                #       xlog("L_WARN", "Unauthorised client $hdr(Origin)\n");
+                #       xhttp_reply("403", "Forbidden", "", "");
+                #       exit;
+                # }
+
                 # Optional... perform HTTP authentication
 
                 # ws_handle_handshake() exits (no further configuration file
