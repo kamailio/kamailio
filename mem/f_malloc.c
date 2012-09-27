@@ -507,18 +507,21 @@ void fm_free(struct fm_block* qm, void* p)
 
 #ifdef DBG_F_MALLOC
 	MDBG("fm_free(%p, %p), called from %s: %s(%d)\n", qm, p, file, func, line);
+#endif
+	if (p==0) {
+		LOG(L_WARN, "WARNING:fm_free: free(0) called\n");
+		return;
+	}
+#ifdef DBG_F_MALLOC
 	if (p>(void*)qm->last_frag || p<(void*)qm->first_frag){
 		LOG(L_CRIT, "BUG: fm_free: bad pointer %p (out of memory block!),"
 				" called from %s: %s(%d) - aborting\n", p,
 				file, func, line);
 		if(likely(cfg_get(core, core_cfg, mem_safety)==0))
 			abort();
+		else return;
 	}
 #endif
-	if (p==0) {
-		LOG(L_WARN, "WARNING:fm_free: free(0) called\n");
-		return;
-	}
 	f=(struct fm_frag*) ((char*)p-sizeof(struct fm_frag));
 #ifdef DBG_F_MALLOC
 	MDBG("fm_free: freeing block alloc'ed from %s: %s(%ld)\n",
