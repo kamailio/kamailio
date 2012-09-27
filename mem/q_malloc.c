@@ -435,18 +435,25 @@ void qm_free(struct qm_block* qm, void* p)
 
 #ifdef DBG_QM_MALLOC
 	MDBG("qm_free(%p, %p), called from %s: %s(%d)\n", qm, p, file, func, line);
+#endif
+
+	if (p==0) {
+		LOG(L_WARN, "WARNING:qm_free: free(0) called\n");
+		return;
+	}
+
+#ifdef DBG_QM_MALLOC
 	if (p>(void*)qm->last_frag_end || p<(void*)qm->first_frag){
 		LOG(L_CRIT, "BUG: qm_free: bad pointer %p (out of memory block!)"
 				" called from %s: %s(%d) - aborting\n", p, file, func, line);
 		if(likely(cfg_get(core, core_cfg, mem_safety)==0))
 			abort();
+		else return;
 	}
 #endif
-	if (p==0) {
-		LOG(L_WARN, "WARNING:qm_free: free(0) called\n");
-		return;
-	}
+
 	f=(struct qm_frag*) ((char*)p-sizeof(struct qm_frag));
+
 #ifdef DBG_QM_MALLOC
 	qm_debug_frag(qm, f);
 	if (f->u.is_free){
@@ -455,6 +462,7 @@ void qm_free(struct qm_block* qm, void* p)
 				p, file, func, line, f->file, f->func, f->line);
 		if(likely(cfg_get(core, core_cfg, mem_safety)==0))
 			abort();
+		else return;
 	}
 	MDBG("qm_free: freeing frag. %p alloc'ed from %s: %s(%ld)\n",
 			f, f->file, f->func, f->line);
