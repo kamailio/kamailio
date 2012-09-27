@@ -63,7 +63,7 @@ extern int bind_pua(pua_api_t* api);
 int min_expires= 0;
 int default_expires=3600;
 static str db_url = str_init(DEFAULT_DB_URL);
-static str db_table= str_init("pua");
+str db_table= str_init("pua");
 int update_period= 100;
 str outbound_proxy = {0, 0};
 int check_remote_contact = 1;
