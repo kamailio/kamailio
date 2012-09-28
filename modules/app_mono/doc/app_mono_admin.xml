@@ -111,7 +111,7 @@ modparam("app_mono", "load", "/usr/local/etc/kamailio/mono/myscript.exe")
 		parameter is set.
 		</para>
 		<example>
-		<title><function>lua_dofile</function> usage</title>
+		<title><function>mono_exec</function> usage</title>
 		<programlisting format="linespecific">
 ...
 mono_exec("/usr/local/etc/kamailio/mono/myscript.exe");
@@ -135,7 +135,7 @@ mono_exec("/usr/local/etc/kamailio/mono/myscript.exe");
 			evaluated at runtime.
 	    </para>
 		<example>
-		<title><function>lua_run</function> usage</title>
+		<title><function>mono_run</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if(!mono_run("myparam"))
