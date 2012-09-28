@@ -648,7 +648,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		if (msg_send(send_info, buf, len)<0){
 			ret=ser_error=E_SEND;
 #ifdef USE_DST_BLACKLIST
-			dst_blacklist_add(BLST_ERR_SEND, send_info, msg);
+			(void)dst_blacklist_add(BLST_ERR_SEND, send_info, msg);
 #endif
 #ifdef USE_DNS_FAILOVER
 			continue; /* try another ip */

@@ -246,7 +246,7 @@ int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 	int n_result_cols = 0;
 	int n_query_cols = 0;
 	int i;
-	int status_col, expires_col, watcher_user_col, watcher_domain_col, callid_col;
+	int status_col, watcher_user_col, watcher_domain_col, callid_col;
 
 	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_ops[n_query_cols] = OP_EQ;
@@ -266,11 +266,10 @@ int get_wi_subs_db(subs_t* subs, watcher_t* watchers)
 	query_ops[n_query_cols] = OP_GT;
 	query_vals[n_query_cols].type = DB1_INT;
 	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val = (int)time(NULL) - expires_offset;
+	query_vals[n_query_cols].val.int_val = (int)time(NULL) + expires_offset;
 	n_query_cols++;
 
 	result_cols[status_col=n_result_cols++] = &str_status_col;
-	result_cols[expires_col=n_result_cols++] = &str_expires_col;
 	result_cols[watcher_user_col=n_result_cols++] = &str_watcher_username_col;
 	result_cols[watcher_domain_col=n_result_cols++] = &str_watcher_domain_col;
 	result_cols[callid_col=n_result_cols++] = &str_callid_col;
@@ -581,11 +580,11 @@ error:
 str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 		str* contact)
 {
-	db_key_t query_cols[6];
-	db_val_t query_vals[6];
-	db_key_t result_cols[6];
+	db_key_t query_cols[3];
+	db_val_t query_vals[3];
+	db_key_t result_cols[3];
 	db1_res_t *result = NULL;
-	int body_col, expires_col, etag_col= 0, sender_col;
+	int body_col, etag_col= 0, sender_col;
 	str** body_array= NULL;
 	str* notify_body= NULL;	
 	db_row_t *row= NULL ;	
@@ -646,7 +645,6 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 	n_query_cols++;
 
 	result_cols[body_col=n_result_cols++] = &str_body_col;
-	result_cols[expires_col=n_result_cols++] = &str_expires_col;
 	result_cols[etag_col=n_result_cols++] = &str_etag_col;
 	result_cols[sender_col=n_result_cols++] = &str_sender_col;
 	
@@ -1087,9 +1085,6 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);	
 		
-		//	if(row_vals[expires_col].val.int_val< (int)time(NULL))
-		//		continue;
-
 		if(row_vals[reason_col].val.string_val) {
 		    if(strlen(row_vals[reason_col].val.string_val) != 0)
 			continue;
@@ -1145,11 +1140,10 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 		
 		s.event= event;
 		s.local_cseq = row_vals[cseq_col].val.int_val +1;
-		if(row_vals[expires_col].val.int_val < (int)time(NULL))
+		if(row_vals[expires_col].val.int_val < (int)time(NULL) + expires_offset)
 		    s.expires = 0;
 		else
-		    s.expires = row_vals[expires_col].val.int_val -
-			(int)time(NULL);
+		    s.expires = row_vals[expires_col].val.int_val - (int)time(NULL);
 		s.version = row_vals[version_col].val.int_val +1;
 
 		s_new= mem_copy_subs(&s, PKG_MEM_TYPE);
@@ -1309,6 +1303,7 @@ int publ_notify_notifier(str pres_uri, pres_ev_t *event)
 	int i;
 	int ret = -1;
 	subs_t subs;
+	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
 	if(pa_db == NULL)
 	{
@@ -1338,7 +1333,16 @@ int publ_notify_notifier(str pres_uri, pres_ev_t *event)
 	result_cols[r_to_tag_col=n_result_cols++] = &str_to_tag_col;
 	result_cols[r_from_tag_col=n_result_cols++] = &str_from_tag_col;
 
-	if(pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols, 
+	if (pa_dbf.start_transaction)
+	{
+		if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto error;
+		}
+	}
+
+	if(query_fn(pa_db, query_cols, 0, query_vals, result_cols, 
 				n_query_cols, n_result_cols, 0, &result )< 0)
 	{
 		LM_ERR("Can't query db\n");
@@ -1366,10 +1370,26 @@ int publ_notify_notifier(str pres_uri, pres_ev_t *event)
 		set_updated(&subs);
 	}
 
+	if (pa_dbf.end_transaction)
+	{
+		if (pa_dbf.end_transaction(pa_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto error;
+		}
+	}
+
 	ret = RES_ROW_N(result);
 
 error:
 	if (result) pa_dbf.free_result(pa_db, result);
+
+	if (pa_dbf.abort_transaction)
+	{
+		if (pa_dbf.abort_transaction(pa_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+
 	return ret;
 }
 
@@ -2007,6 +2027,7 @@ static int unset_watchers_updated_winfo(str *pres_uri)
 	int n_query_cols = 0;
 	int ret = -1;
 	str winfo = str_init("presence.winfo");
+	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
 	/* If this is the only presence.winfo dialog awaiting
 	   update for this presentity reset all of the watchers
@@ -2044,7 +2065,7 @@ static int unset_watchers_updated_winfo(str *pres_uri)
 		goto error;
 	}
 
-	if (pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols,
+	if (query_fn(pa_db, query_cols, 0, query_vals, result_cols,
 					n_query_cols, 1, 0, &result) < 0)
 	{
 		LM_ERR("in sql query\n");
@@ -2091,6 +2112,7 @@ static int dialogs_awaiting_update(str *pres_uri, str event)
 	db1_res_t *result = NULL;
 	int n_query_cols = 0;
 	int ret = -1;
+	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
 	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_vals[n_query_cols].type = DB1_STR;
@@ -2122,7 +2144,7 @@ static int dialogs_awaiting_update(str *pres_uri, str event)
 		goto error;
 	}
 
-	if (pa_dbf.query(pa_db, query_cols, query_ops, query_vals,
+	if (query_fn(pa_db, query_cols, query_ops, query_vals,
 				result_cols, n_query_cols, 1, 0, &result) < 0)
 	{
 		LM_ERR("in sql query\n");
@@ -2152,6 +2174,7 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 	int callid_col, from_tag_col, to_tag_col;
 	int i, ret = -1, count;
 	str callid, from_tag, to_tag;
+	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
 	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_vals[n_query_cols].type = DB1_STR;
@@ -2176,7 +2199,7 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 		goto error;
 	}
 
-	if (pa_dbf.query (pa_db, query_cols, 0, query_vals, result_cols,
+	if (query_fn(pa_db, query_cols, 0, query_vals, result_cols,
 				n_query_cols, n_result_cols, 0,  &result) < 0) 
 	{
 		LM_ERR("in sql query\n");
@@ -2229,9 +2252,9 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 		update_cols[n_update_cols] = &str_updated_col;
 		update_vals[n_update_cols].type = DB1_INT;
 		update_vals[n_update_cols].nul = 0;
-		update_vals[n_update_cols].val.int_val = core_hash(&callid,
-			&from_tag, (pres_waitn_time * pres_notifier_poll_rate
-					* pres_notifier_processes) - 1);
+		update_vals[n_update_cols].val.int_val =
+			core_hash(&callid, &from_tag, 0) % (pres_waitn_time *
+ 			 pres_notifier_poll_rate * pres_notifier_processes);
 		n_update_cols++;
 
 		if (full)
@@ -2259,6 +2282,7 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 done:
 error:
 	if (result) pa_dbf.free_result(pa_db, result);
+
 	return ret;
 }
 
@@ -2289,9 +2313,10 @@ int set_updated(subs_t *sub)
 	update_cols[0] = &str_updated_col;
 	update_vals[0].type = DB1_INT;
 	update_vals[0].nul = 0;
-	update_vals[0].val.int_val = core_hash(&sub->callid, &sub->from_tag,
-				(pres_waitn_time * pres_notifier_poll_rate
-						* pres_notifier_processes) - 1);
+	update_vals[0].val.int_val =
+		core_hash(&sub->callid, &sub->from_tag, 0) %
+			(pres_waitn_time * pres_notifier_poll_rate
+						* pres_notifier_processes);
 
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
 	{
@@ -2640,6 +2665,7 @@ int process_dialogs(int round, int presence_winfo)
 	str ev_sname, winfo = str_init("presence.winfo");
 	int now = (int)time(NULL);
 	int updated = 0;
+	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
 	if (++subset > (pres_waitn_time * pres_notifier_poll_rate) -1)
 		subset = 0;
@@ -2678,7 +2704,7 @@ int process_dialogs(int round, int presence_winfo)
 
 	if (pa_dbf.start_transaction)
 	{
-		if (pa_dbf.start_transaction(pa_db) < 0)
+		if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
@@ -2686,7 +2712,7 @@ int process_dialogs(int round, int presence_winfo)
 	}
 
 	/* Step 1: Find active_watchers that require notification */
-	if (pa_dbf.query(pa_db, query_cols, query_ops, query_vals, result_cols,
+	if (query_fn(pa_db, query_cols, query_ops, query_vals, result_cols,
 			 n_query_cols, n_result_cols, 0, &dialog_list) < 0)
 	{
 		LM_ERR("in sql query\n");
@@ -2787,7 +2813,7 @@ int process_dialogs(int round, int presence_winfo)
 
 		if (pa_dbf.start_transaction)
 		{
-			if (pa_dbf.start_transaction(pa_db) < 0)
+			if (pa_dbf.start_transaction(pa_db, DB_LOCKING_WRITE) < 0)
 			{
 				LM_ERR("in start_transaction\n");
 				goto error;
@@ -2795,7 +2821,7 @@ int process_dialogs(int round, int presence_winfo)
 		}
 		end_transaction = 1;
 
-		if (pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols,
+		if (query_fn(pa_db, query_cols, 0, query_vals, result_cols,
 				 n_query_cols, n_result_cols, 0, &dialog) < 0)
 		{
 			LM_ERR("in sql query\n");
@@ -2810,7 +2836,7 @@ int process_dialogs(int round, int presence_winfo)
 
 		if (dialog->n <= 0)
 		{
-			LM_WARN("record not found\n");
+			LM_INFO("record not found - this may be observed in multi-server systems\n");
 			if (cleanup_missing_dialog(&sub) < 0)
 				LM_ERR("cleaning up after missing record\n");
 			goto next_dialog;
@@ -2845,12 +2871,10 @@ int process_dialogs(int round, int presence_winfo)
 		cached_updated_winfo = sub.updated_winfo
 					= VAL_INT(&dvalues[updated_winfo_col]);
 		
-		if (VAL_INT(&dvalues[expires_col]) > now)
+		if (VAL_INT(&dvalues[expires_col]) > now + expires_offset)
 			sub.expires = VAL_INT(&dvalues[expires_col]) - now;
 		else
 			sub.expires = 0;
-
-		if (sub.expires < expires_offset) sub.expires = 0;
 
 		sub.updated = round;
 

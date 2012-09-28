@@ -149,7 +149,7 @@ Alex Balashov
 
               11.1. event_route[dialog:start]
               11.2. event_route[dialog:end]
-              11.3. event_route[dialog:failure]
+              11.3. event_route[dialog:failed]
 
    2. Developer Guide
 
@@ -348,7 +348,7 @@ Chapter 1. Admin Guide
 
         11.1. event_route[dialog:start]
         11.2. event_route[dialog:end]
-        11.3. event_route[dialog:failure]
+        11.3. event_route[dialog:failed]
 
 1. Overview
 
@@ -1783,7 +1783,7 @@ dlg_set_property("ka-dst");
 
    11.1. event_route[dialog:start]
    11.2. event_route[dialog:end]
-   11.3. event_route[dialog:failure]
+   11.3. event_route[dialog:failed]
 
 11.1. event_route[dialog:start]
 
@@ -1793,7 +1793,7 @@ dlg_set_property("ka-dst");
 
    Executed when BYE is processed or dialog timed out.
 
-11.3. event_route[dialog:failure]
+11.3. event_route[dialog:failed]
 
    Executed when dialog is not completed (+300 reply to INVITE).
 

@@ -38,7 +38,7 @@ Build-Depends: bison,
                unixodbc-dev,
                xsltproc,
                zlib1g-dev
-Standards-Version: 3.8.0
+Standards-Version: 3.9.3
 Homepage: http://www.kamailio.org/
 
 Package: kamailio
@@ -46,8 +46,7 @@ Architecture: any
 Depends: adduser,
          ${misc:Depends},
          ${shlibs:Depends}
-Conflicts: kamailio-dbg,
-           kamailio-regex-modules
+Conflicts: kamailio-regex-modules
 Suggests: kamailio-berkeley-modules,
           kamailio-carrierroute-modules,
           kamailio-cpl-modules,

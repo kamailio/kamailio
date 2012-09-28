@@ -709,7 +709,7 @@ inline static int _wbufq_add(struct  tcp_connection* c, const char* data,
 		if (q->first && TICKS_LT(q->wr_timeout, t)){
 			if (unlikely(c->state==S_CONN_CONNECT)){
 #ifdef USE_DST_BLACKLIST
-				dst_blacklist_su( BLST_ERR_CONNECT, c->rcv.proto,
+				(void)dst_blacklist_su( BLST_ERR_CONNECT, c->rcv.proto,
 										&c->rcv.src_su, &c->send_flags, 0);
 #endif /* USE_DST_BLACKLIST */
 				TCP_EV_CONNECT_TIMEOUT(0, TCP_LADDR(c), TCP_LPORT(c),
@@ -717,7 +717,7 @@ inline static int _wbufq_add(struct  tcp_connection* c, const char* data,
 				TCP_STATS_CONNECT_FAILED();
 			}else{
 #ifdef USE_DST_BLACKLIST
-				dst_blacklist_su( BLST_ERR_SEND, c->rcv.proto,
+				(void)dst_blacklist_su( BLST_ERR_SEND, c->rcv.proto,
 									&c->rcv.src_su, &c->send_flags, 0);
 #endif /* USE_DST_BLACKLIST */
 				TCP_EV_SEND_TIMEOUT(0, &c->rcv);
@@ -3433,7 +3433,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 					/* timeout */
 					if (unlikely(tcpconn->state==S_CONN_CONNECT)){
 #ifdef USE_DST_BLACKLIST
-						dst_blacklist_su( BLST_ERR_CONNECT,
+						(void)dst_blacklist_su( BLST_ERR_CONNECT,
 											tcpconn->rcv.proto,
 											&tcpconn->rcv.src_su,
 											&tcpconn->send_flags, 0);
@@ -3444,7 +3444,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 						TCP_STATS_CONNECT_FAILED();
 					}else{
 #ifdef USE_DST_BLACKLIST
-						dst_blacklist_su( BLST_ERR_SEND,
+						(void)dst_blacklist_su( BLST_ERR_SEND,
 											tcpconn->rcv.proto,
 											&tcpconn->rcv.src_su,
 											&tcpconn->send_flags, 0);
@@ -4222,7 +4222,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 			if (unlikely(ev & POLLERR)){
 				if (unlikely(tcpconn->state==S_CONN_CONNECT)){
 #ifdef USE_DST_BLACKLIST
-					dst_blacklist_su(BLST_ERR_CONNECT, tcpconn->rcv.proto,
+					(void)dst_blacklist_su(BLST_ERR_CONNECT, tcpconn->rcv.proto,
 										&tcpconn->rcv.src_su,
 										&tcpconn->send_flags, 0);
 #endif /* USE_DST_BLACKLIST */
@@ -4232,7 +4232,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 					TCP_STATS_CONNECT_FAILED();
 				}else{
 #ifdef USE_DST_BLACKLIST
-					dst_blacklist_su(BLST_ERR_SEND, tcpconn->rcv.proto,
+					(void)dst_blacklist_su(BLST_ERR_SEND, tcpconn->rcv.proto,
 										&tcpconn->rcv.src_su,
 										&tcpconn->send_flags, 0);
 #endif /* USE_DST_BLACKLIST */
@@ -4409,7 +4409,7 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 	if (tcp_async && _wbufq_non_empty(c) && TICKS_GE(t, c->wbuf_q.wr_timeout)){
 		if (unlikely(c->state==S_CONN_CONNECT)){
 #ifdef USE_DST_BLACKLIST
-			dst_blacklist_su(BLST_ERR_CONNECT, c->rcv.proto, &c->rcv.src_su,
+			(void)dst_blacklist_su(BLST_ERR_CONNECT, c->rcv.proto, &c->rcv.src_su,
 								&c->send_flags, 0);
 #endif /* USE_DST_BLACKLIST */
 			TCP_EV_CONNECT_TIMEOUT(0, TCP_LADDR(c), TCP_LPORT(c), TCP_PSU(c),
@@ -4417,7 +4417,7 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 			TCP_STATS_CONNECT_FAILED();
 		}else{
 #ifdef USE_DST_BLACKLIST
-			dst_blacklist_su(BLST_ERR_SEND, c->rcv.proto, &c->rcv.src_su,
+			(void)dst_blacklist_su(BLST_ERR_SEND, c->rcv.proto, &c->rcv.src_su,
 								&c->send_flags, 0);
 #endif /* USE_DST_BLACKLIST */
 			TCP_EV_SEND_TIMEOUT(0, &c->rcv);

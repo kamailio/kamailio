@@ -1,5 +1,5 @@
-name: "kamailio-#OS_NAME#-#OS_VERSION#-#BASE_ARCH#"
-summary: "#OS_NAME# #OS_VERSION# for installing Kamailio #BASE_ARCH# RPMs"
+name: "kamailio-fc17-#BASE_ARCH#"
+summary: "Fedora 17 image for installing Kamailio #BASE_ARCH# RPMs"
 os:
   name: fedora
   version: 17

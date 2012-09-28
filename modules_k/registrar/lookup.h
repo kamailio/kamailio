@@ -41,6 +41,11 @@
  */
 int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri);
 
+/*! \brief
+ * Lookup r-uri and additional branches in usrloc
+ */
+int lookup_branches(sip_msg_t *msg, udomain_t *d);
+
 
 /*! \brief
  * Return true if the AOR in the Request-URI is registered,

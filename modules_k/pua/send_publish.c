@@ -207,6 +207,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	db1_res_t *res=NULL;
 	ua_pres_t dbpres;
 	str pres_uri={0,0}, watcher_uri={0,0}, extra_headers={0,0};
+	int end_transaction = 1;
 
 	memset(&dbpres, 0, sizeof(dbpres));
 	dbpres.pres_uri = &pres_uri;
@@ -215,7 +216,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 
 	if (dbmode == PUA_DB_ONLY && pua_dbf.start_transaction)
 	{
-		if (pua_dbf.start_transaction(pua_db) < 0)
+		if (pua_dbf.start_transaction(pua_db, DB_LOCKING_WRITE) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
@@ -274,6 +275,17 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 			publ.id= hentity->id;
 			publ.extra_headers= hentity->extra_headers;
 			publ.cb_param= hentity->cb_param;
+
+			if (dbmode == PUA_DB_ONLY && pua_dbf.end_transaction)
+			{
+				if (pua_dbf.end_transaction(pua_db) < 0)
+				{
+					LM_ERR("in end_transaction\n");
+					goto error;
+				}
+			}
+
+			end_transaction = 0;
 
 			if(send_publish(&publ)< 0)
 			{
@@ -410,7 +422,9 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	}
 	else
  	{
-		insert_htable(presentity);
+		lock_get(&HashT->p_records[hash_code].lock);
+		insert_htable(presentity, hash_code);
+		lock_release(&HashT->p_records[hash_code].lock);
 	}
 	LM_DBG("***Inserted in hash table\n");
 
@@ -432,7 +446,7 @@ done:
 
 	if (res) free_results_puadb(res);
 
-	if (dbmode == PUA_DB_ONLY && pua_dbf.end_transaction)
+	if (dbmode == PUA_DB_ONLY && pua_dbf.end_transaction && end_transaction)
 	{
 		if (pua_dbf.end_transaction(pua_db) < 0)
 		{
@@ -486,7 +500,7 @@ int send_publish( publ_info_t* publ )
 	
 	if (dbmode == PUA_DB_ONLY && pua_dbf.start_transaction)
 	{
-		if (pua_dbf.start_transaction(pua_db) < 0)
+		if (pua_dbf.start_transaction(pua_db, DB_LOCKING_WRITE) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;

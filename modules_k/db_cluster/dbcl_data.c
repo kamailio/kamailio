@@ -262,6 +262,8 @@ int dbcl_cls_set_connections(dbcl_cls_t *cls, str *cons)
 				cls->rlist[i].mode = s.s[1] | 32;
 			cls->rlist[i].prio = i;
 			cls->rlist[i].clist[cls->rlist[i].clen] = sc;
+			LM_DBG("added con-id [%.*s] to rlist[%d] at [%d]\n",
+					pit->name.len, pit->name.s, i, cls->rlist[i].clen);
 			cls->rlist[i].clen++;
 		} else {
 			LM_WARN("too many read connections in cluster - con-id [%.*s]\n",
@@ -289,6 +291,8 @@ int dbcl_cls_set_connections(dbcl_cls_t *cls, str *cons)
 				cls->wlist[i].mode = s.s[3] | 32;
 			cls->wlist[i].prio = i;
 			cls->wlist[i].clist[cls->wlist[i].clen] = sc;
+			LM_DBG("added con-id [%.*s] to wlist[%d] at [%d]\n",
+					pit->name.len, pit->name.s, i, cls->wlist[i].clen);
 			cls->wlist[i].clen++;
 		} else {
 			LM_WARN("too many write connections in cluster - con-id [%.*s]\n",

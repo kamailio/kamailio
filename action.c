@@ -140,7 +140,7 @@ struct onsend_info* p_onsend=0; /* onsend route send info */
 				if ((dst)[i+2].type == RVE_FREE_FIXUP_ST) {\
 					/* call free_fixup (which should restore the original
 					   string) */ \
-					call_fixup((cmd)->free_fixup, &(dst)[i+2].u.data, i+1); \
+					(void)call_fixup((cmd)->free_fixup, &(dst)[i+2].u.data, i+1); \
 				} else if ((dst)[i+2].type == FPARAM_DYN_ST) {\
 					/* completely frees fparam and restore original string */\
 					fparam_free_restore(&(dst)[i+2].u.data); \

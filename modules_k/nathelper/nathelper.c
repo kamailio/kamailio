@@ -284,7 +284,8 @@ MODULE_VERSION
 
 #define	CPORT		"22222"
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
-static int add_contact_alias_f(struct sip_msg *, char *, char *);
+static int add_contact_alias_0_f(struct sip_msg *, char *, char *);
+static int add_contact_alias_3_f(struct sip_msg *, char *, char *, char *);
 static int handle_ruri_alias_f(struct sip_msg *, char *, char *);
 static int pv_get_rr_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int pv_get_rr_top_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
@@ -295,6 +296,7 @@ static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int fix_nated_register_f(struct sip_msg *, char *, char *);
 static int fixup_fix_nated_register(void** param, int param_no);
 static int fixup_fix_sdp(void** param, int param_no);
+static int fixup_add_contact_alias(void** param, int param_no);
 static int add_rcv_param_f(struct sip_msg *, char *, char *);
 static int nh_sip_reply_received(sip_msg_t *msg);
 
@@ -346,8 +348,11 @@ static cmd_export_t cmds[] = {
 	{"fix_nated_contact",  (cmd_function)fix_nated_contact_f,    0,
 		0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
-	{"add_contact_alias",  (cmd_function)add_contact_alias_f,    0,
+	{"add_contact_alias",  (cmd_function)add_contact_alias_0_f,  0,
 		0, 0,
+		REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"add_contact_alias",  (cmd_function)add_contact_alias_3_f,  3,
+		fixup_add_contact_alias, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"handle_ruri_alias",  (cmd_function)handle_ruri_alias_f,    0,
 		0, 0,
@@ -457,6 +462,13 @@ static int fixup_fix_nated_register(void** param, int param_no)
 	return 0;
 }
 
+static int fixup_add_contact_alias(void** param, int param_no)
+{
+    if ((param_no >= 1) && (param_no <= 3)) return fixup_spve_null(param, 1);
+ 
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
+}
 
 static struct mi_root* mi_enable_natping(struct mi_root* cmd_tree, 
 											void* param )
@@ -786,11 +798,12 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 #define SALIAS_LEN (sizeof(SALIAS) - 1)
 
 /*
- * Adds ;alias=ip:port param to contact uri containing received ip:port
- * if contact uri ip:port does not match received ip:port.
+ * Adds ;alias=ip~port~proto param to contact uri containing received ip,
+ * port, and transport proto if contact uri ip and port do not match
+ * received ip and port.
  */
 static int
-add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
+add_contact_alias_0_f(struct sip_msg* msg, char* str1, char* str2)
 {
     int len, param_len, ip_len;
     contact_t *c;
@@ -829,7 +842,7 @@ add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
 	
     /* Check if function has been called already */
     if ((c->uri.s < msg->buf) || (c->uri.s > (msg->buf + msg->len))) {
-	LM_ERR("you can't call alias_contact twice, check your config!\n");
+	LM_ERR("you can't call add_contact_alias twice, check your config!\n");
 	return -1;
     }
 
@@ -913,6 +926,161 @@ add_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
     return -1;
 }
 
+
+static int proto_type_to_int(char *proto) {
+    if (strcasecmp(proto, "udp") == 0)
+	return PROTO_UDP;
+    if (strcasecmp(proto, "tcp") == 0)
+	return PROTO_TCP;
+    if (strcasecmp(proto, "tls") == 0)
+	return PROTO_TLS;
+    if (strcasecmp(proto, "sctp") == 0)
+	return PROTO_SCTP;
+    if (strcasecmp(proto, "ws") == 0)
+	return PROTO_WS;
+    if (strcasecmp(proto, "wss") == 0)
+	return PROTO_WSS;
+    return PROTO_OTHER;
+}
+
+
+/*
+ * Adds ;alias=ip~port~proto param to contact uri containing ip, port,
+ * and encoded proto given as parameters.
+ */
+static int
+add_contact_alias_3_f(struct sip_msg* msg, char* _ip, char* _port, char* _proto)
+{
+    int param_len, proto;
+    unsigned int tmp;
+    contact_t *c;
+    struct lump *anchor;
+    struct sip_uri uri;
+    char *bracket, *lt, *param, *at, *start;
+    str ip_str, port_str, proto_str;
+
+    /* Do nothing if Contact header does not exist */
+    if (!msg->contact) {
+	if (parse_headers(msg, HDR_CONTACT_F, 0) == -1)  {
+	    LM_ERR("while parsing headers\n");
+	    return -1;
+	}
+	if (!msg->contact) {
+	    LM_DBG("no contact header\n");
+	    return 2;
+	}
+    }
+    if (get_contact_uri(msg, &uri, &c) == -1) {
+	LM_ERR("failed to get contact uri\n");
+	return -1;
+    }
+
+    /* Get and check param values */
+    if (fixup_get_svalue(msg, (gparam_p)_ip, &ip_str) != 0) {
+	LM_ERR("cannot get ip param value\n");
+	return -1;
+    }
+    if ((str2ip(&ip_str) == NULL)
+#ifdef USE_IPV6
+	&& (str2ip6(&ip_str) == NULL)
+#endif
+	) {
+	LM_ERR("ip param value %s is not valid IP address\n", ip_str.s);
+	return -1;
+    }
+    if (fixup_get_svalue(msg, (gparam_p)_port, &port_str) != 0) {
+	LM_ERR("cannot get port param value\n");
+	return -1;
+    }
+    if ((str2int(&port_str, &tmp) == -1) || (tmp == 0) || (tmp > 65535)) {
+	LM_ERR("port param value is not valid port\n");
+	return -1;
+    }
+    if (fixup_get_svalue(msg, (gparam_p)_proto, &proto_str) != 0) {
+	LM_ERR("cannot get proto param value\n");
+	return -1;
+    }
+    proto = proto_type_to_int(proto_str.s);
+    if (proto == PROTO_OTHER) {
+	LM_ERR("proto param value %s is not a known protocol\n", proto_str.s);
+	return -1;
+    }
+
+    /* Check if function has been called already */
+    if ((c->uri.s < msg->buf) || (c->uri.s > (msg->buf + msg->len))) {
+	LM_ERR("you can't call alias_contact twice, check your config!\n");
+	return -1;
+    }
+
+    /* Check if Contact URI needs to be enclosed in <>s */
+    lt = param = NULL;
+    bracket = memchr(msg->contact->body.s, '<', msg->contact->body.len);
+    if (bracket == NULL) {
+	/* add opening < */
+	lt = (char*)pkg_malloc(1);
+	if (!lt) {
+	    LM_ERR("no pkg memory left for lt sign\n");
+	    goto err;
+	}
+	*lt = '<';
+	anchor = anchor_lump(msg, msg->contact->body.s - msg->buf, 0, 0);
+	if (anchor == NULL) {
+	    LM_ERR("anchor_lump for beginning of contact body failed\n");
+	    goto err;
+	}
+	if (insert_new_lump_before(anchor, lt, 1, 0) == 0) {
+	    LM_ERR("insert_new_lump_before for \"<\" failed\n");
+	    goto err;
+	}
+    }
+
+    /* Create  ;alias param */
+    param_len = SALIAS_LEN + IP6_MAX_STR_SIZE + 1 /* ~ */ + 5 /* port */ +
+	1 /* ~ */ + 1 /* proto */ + 1 /* closing > */;
+    param = (char*)pkg_malloc(param_len);
+    if (!param) {
+	LM_ERR("no pkg memory left for alias param\n");
+	goto err;
+    }
+    at = param;
+    /* ip address */
+    append_str(at, SALIAS, SALIAS_LEN);
+    append_str(at, ip_str.s, ip_str.len);
+    /* port */
+    append_chr(at, '~');
+    append_str(at, port_str.s, port_str.len);
+    /* proto */
+    append_chr(at, '~');
+    append_chr(at, proto + '0');
+    /* closing > */
+    if (bracket == NULL) {
+	append_chr(at, '>');
+    }
+    param_len = at - param;
+
+    /* Add  ;alias param */
+    LM_DBG("adding param <%.*s>\n", param_len, param);
+    if (uri.port.len > 0) {
+	start = uri.port.s + uri.port.len;
+    } else {
+	start = uri.host.s + uri.host.len;
+    }
+    anchor = anchor_lump(msg, start - msg->buf, 0, 0);
+    if (anchor == NULL) {
+	LM_ERR("anchor_lump for ;alias param failed\n");
+	goto err;
+    }
+    if (insert_new_lump_after(anchor, param, param_len, 0) == 0) {
+	LM_ERR("insert_new_lump_after for ;alias param failed\n");
+	goto err;
+    }
+    return 1;
+
+ err:
+    if (lt) pkg_free(lt);
+    if (param) pkg_free(param);
+    return -1;
+}
 
 #define ALIAS        "alias="
 #define ALIAS_LEN (sizeof(ALIAS) - 1)
@@ -1192,7 +1360,7 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	str body;
 	str ip;
 	int level, rest_len;
-	char *buf, *m_start, *m_end, *rest_s;
+	char *buf, *m_start, *m_end;
 	struct lump* anchor;
 
 	level = (int)(long)str1;
@@ -1211,13 +1379,11 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 		if (level & ADD_ADIRECTION) {
 		    m_start = ser_memmem(body.s, "\r\nm=", body.len, 4);
 		    while (m_start != NULL) {
-			m_start = m_start + 2;
+			m_start += 4;
 			rest_len = body.len - (m_start - body.s);
-			m_end = ser_memmem(m_start, "\r\n", rest_len, 2);
-			if (m_end == NULL) {
-			    LM_ERR("m line is not crlf terminated\n");
-			    return -1;
-			}
+			m_start = m_end = ser_memmem(m_start, "\r\nm=", rest_len, 4);
+			if (!m_end)
+				m_end = body.s + body.len; /* just before the final \r\n */
 		        anchor = anchor_lump(msg, m_end - msg->buf, 0, 0);
 		        if (anchor == NULL) {
 			    LM_ERR("anchor_lump failed\n");
@@ -1235,9 +1401,6 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 			    pkg_free(buf);
 			    return -1;
 			}
-			rest_s = m_end + 2;
-			rest_len = body.len - (rest_s - body.s);
-			m_start = ser_memmem(rest_s, "\r\nm=", rest_len, 4);
 		    }
 		}
 

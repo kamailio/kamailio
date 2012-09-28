@@ -309,6 +309,141 @@ done:
 }
 
 
+int reset_ruri_branch(sip_msg_t *msg)
+{
+	if(msg==NULL)
+		return -1;
+
+	reset_dst_uri(msg);
+	reset_path_vector(msg);
+	set_ruri_q(Q_UNSPECIFIED);
+	reset_force_socket(msg);
+	setbflagsval(0, 0);
+	return 0;
+}
+
+/*! \brief
+ * Lookup contacts in the database for all branches, including R-URI
+ * \return: -1 : not found
+ *          -2 : found but method not allowed (for r-uri)
+ *          -3 : error
+ */
+int lookup_branches(sip_msg_t *msg, udomain_t *d)
+{
+	unsigned int nr_branches_start;
+	unsigned int i;
+	int ret;
+	int found;
+	str new_uri;
+	str ruri_b_uri = {0};
+	str ruri_b_dst_uri = {0};
+	str ruri_b_path = {0};
+	int ruri_b_q = Q_UNSPECIFIED;
+	struct socket_info *ruri_b_socket = 0;
+	flag_t ruri_b_flags = 0;
+	branch_t *crt = NULL;
+
+	ret = 1;
+	found  = 0;
+	nr_branches_start = nr_branches;
+	/* first lookup the r-uri */
+	ret = lookup(msg, d, NULL);
+
+	/* if no other branches -- all done */
+	if(nr_branches_start==0)
+		return ret;
+
+	if(ret>0)
+		found = 1;
+
+	/* backup r-uri branch */
+	ruri_b_uri = msg->new_uri;
+	ruri_b_dst_uri = msg->dst_uri;
+	ruri_b_path = msg->path_vec;
+	ruri_b_q = get_ruri_q();
+	ruri_b_socket = msg->force_send_socket;
+	getbflagsval(0, &ruri_b_flags);
+	reset_ruri_branch(msg);
+
+	for(i=0; i<nr_branches; i++) {
+		crt = get_sip_branch(i);
+		/* it has to be a clean branch to do lookup for it */
+		if(crt->len <= 0 || crt->dst_uri_len > 0
+				|| crt->path_len > 0 || crt->force_send_socket!=NULL
+				|| crt->flags !=0)
+			continue;
+		/* set the new uri from branch and lookup */
+		new_uri.s = crt->uri;
+		new_uri.len = crt->len;
+		if (rewrite_uri(msg, &new_uri) < 0) {
+			LM_ERR("unable to rewrite Request-URI for branch %u\n", i);
+			ret = -3;
+			goto done;
+		}
+		ret = lookup(msg, d, NULL);
+		if(ret>0) {
+			/* move r-uri branch attributes to crt branch */
+			found = 1;
+
+			if (unlikely(msg->new_uri.len > MAX_URI_SIZE - 1)) {
+				LM_ERR("too long uri: %.*s\n", msg->new_uri.len,
+						msg->new_uri.s);
+				ret = -3;
+				goto done;
+			}
+
+			/* copy the dst_uri */
+			if (msg->dst_uri.len>0 && msg->dst_uri.s!=NULL) {
+				if (unlikely(msg->dst_uri.len > MAX_URI_SIZE - 1)) {
+					LM_ERR("too long dst_uri: %.*s\n", msg->dst_uri.len,
+							msg->dst_uri.s);
+					ret = -3;
+					goto done;
+				}
+
+				memcpy(crt->dst_uri, msg->dst_uri.s, msg->dst_uri.len);
+				crt->dst_uri[msg->dst_uri.len] = 0;
+				crt->dst_uri_len = msg->dst_uri.len;
+			}
+
+			/* copy the path string */
+			if (unlikely(msg->path_vec.len>0 && msg->path_vec.s!=NULL)) {
+				if (unlikely(msg->path_vec.len > MAX_PATH_SIZE - 1)) {
+					LM_ERR("too long path: %.*s\n", msg->path_vec.len,
+							msg->path_vec.s);
+					ret = -3;
+					goto done;
+				}
+				memcpy(crt->path, msg->path_vec.s, msg->path_vec.len);
+				crt->path[msg->path_vec.len] = 0;
+				crt->path_len = msg->path_vec.len;
+			}
+
+			/* copy the ruri */
+			memcpy(crt->uri, msg->new_uri.s, msg->new_uri.len);
+			crt->uri[msg->new_uri.len] = 0;
+			crt->len = msg->new_uri.len;
+			crt->q = get_ruri_q();
+
+			crt->force_send_socket = msg->force_send_socket;
+			getbflagsval(0, &crt->flags);
+		}
+		reset_ruri_branch(msg);
+	}
+
+done:
+	reset_ruri_branch(msg);
+	msg->new_uri = ruri_b_uri;
+	msg->parsed_uri_ok = 0;
+	msg->dst_uri = ruri_b_dst_uri;
+	msg->path_vec = ruri_b_path;
+	set_ruri_q(ruri_b_q);
+	set_force_socket(msg, ruri_b_socket);
+	setbflagsval(0, ruri_b_flags);
+
+	return (found)?1:ret;
+}
+
 /*! \brief the is_registered() function
  * Return true if the AOR in the Request-URI is registered,
  * it is similar to lookup but registered neither rewrites

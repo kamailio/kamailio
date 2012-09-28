@@ -150,7 +150,7 @@ typedef union param_hooks {
  * 	0: success, but expect a next paramter
  * 	1: success and exepect no more parameters
  */
-inline int parse_param(str *_s, pclass_t _c, param_hooks_t *_h, param_t *t);
+extern inline int parse_param(str *_s, pclass_t _c, param_hooks_t *_h, param_t *t);
 
 
 /*! \brief

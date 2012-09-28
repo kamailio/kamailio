@@ -1,0 +1,213 @@
+/**
+ * $Id$
+ *
+ * Copyright (C) 2011 Daniel-Constantin Mierla (asipto.com)
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ */
+
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "../../dprint.h"
+#include "../../dset.h"
+#include "../../forward.h"
+
+#include "corex_lib.h"
+
+/**
+ * append new branches with generic parameters
+ */
+int corex_append_branch(sip_msg_t *msg, gparam_t *pu, gparam_t *pq)
+{
+	str uri = {0};
+	str qv = {0};
+	int ret = 0;
+
+	qvalue_t q = Q_UNSPECIFIED;
+	flag_t branch_flags = 0;
+
+	if (pu!=NULL)
+	{
+		if(fixup_get_svalue(msg, pu, &uri)!=0)
+		{
+			LM_ERR("cannot get the URI parameter\n");
+			return -1;
+		}
+	}
+
+	if (pq!=NULL)
+	{
+		if(fixup_get_svalue(msg, pq, &qv)!=0)
+		{
+			LM_ERR("cannot get the Q parameter\n");
+			return -1;
+		}
+		if(qv.len>0 && str2q(&q, qv.s, qv.len)<0)
+		{
+			LM_ERR("cannot parse the Q parameter\n");
+			return -1;
+		}
+	}
+
+
+	getbflagsval(0, &branch_flags);
+	ret = append_branch(msg, (uri.len>0)?&uri:0, &msg->dst_uri,
+			&msg->path_vec, q, branch_flags,
+			msg->force_send_socket);
+
+
+	if(uri.len<=0)
+	{
+		/* reset all branch attributes if r-uri was shifted to branch */
+		reset_force_socket(msg);
+		setbflagsval(0, 0);
+		if(msg->dst_uri.s!=0)
+			pkg_free(msg->dst_uri.s);
+		msg->dst_uri.s = 0;
+		msg->dst_uri.len = 0;
+		if(msg->path_vec.s!=0)
+			pkg_free(msg->path_vec.s);
+		msg->path_vec.s = 0;
+		msg->path_vec.len = 0;
+	}
+
+	return ret;
+}
+
+typedef struct corex_alias {
+	str alias;
+	unsigned short port;
+	unsigned short proto;
+	int flags;
+	struct corex_alias* next;
+} corex_alias_t;
+
+static corex_alias_t *_corex_alias_list = NULL;
+
+int corex_add_alias_subdomains(char* aliasval)
+{
+	char *p = NULL;
+	corex_alias_t ta;
+	corex_alias_t *na;
+
+	memset(&ta, 0, sizeof(corex_alias_t));
+
+	p = strchr(aliasval, ':');
+	if(p==NULL) {
+		/* only hostname */
+		ta.alias.s = aliasval;
+		ta.alias.len = strlen(aliasval);
+		goto done;
+	}
+	if((p-aliasval)==3 || (p-aliasval)==4) {
+		/* check if it is protocol */
+		if((p-aliasval)==3 && strncasecmp(aliasval, "udp", 3)==0) {
+			ta.proto = PROTO_UDP;
+		} else if((p-aliasval)==3 && strncasecmp(aliasval, "tcp", 3)==0) {
+			ta.proto = PROTO_TCP;
+		} else if((p-aliasval)==3 && strncasecmp(aliasval, "tls", 3)==0) {
+			ta.proto = PROTO_TLS;
+		} else if((p-aliasval)==4 && strncasecmp(aliasval, "sctp", 4)==0) {
+			ta.proto = PROTO_SCTP;
+		} else {
+			/* use hostname */
+			ta.alias.s = aliasval;
+			ta.alias.len = p - aliasval;
+		}
+	}
+	if(ta.alias.len==0) {
+		p++;
+		if(p>=aliasval+strlen(aliasval))
+			goto error;
+		ta.alias.s = p;
+		p = strchr(ta.alias.s, ':');
+		if(p==NULL) {
+			ta.alias.len = strlen(ta.alias.s);
+			goto done;
+		}
+	}
+	/* port */
+	p++;
+	if(p>=aliasval+strlen(aliasval))
+		goto error;
+	ta.port = str2s(p, strlen(p), NULL);
+
+done:
+	if(ta.alias.len==0)
+		goto error;
+
+	na = (corex_alias_t*)pkg_malloc(sizeof(corex_alias_t));
+	if(na==NULL) {
+		LM_ERR("no memory for adding alias subdomains: %s\n", aliasval);
+		return -1;
+	}
+	memcpy(na, &ta, sizeof(corex_alias_t));
+	na->next = _corex_alias_list;
+	_corex_alias_list = na;
+
+	return 0;
+
+error:
+	LM_ERR("error adding alias subdomains: %s\n", aliasval);
+	return -1;
+}
+
+
+int corex_check_self(str* host, unsigned short port, unsigned short proto)
+{
+	corex_alias_t *ta;
+
+	for(ta=_corex_alias_list; ta; ta=ta->next) {
+		if(host->len<ta->alias.len)
+			continue;
+		if(ta->port!=0 && port!=0 && ta->port!=port)
+			continue;
+		if(ta->proto!=0 && proto!=0 && ta->proto!=proto)
+			continue;
+		if(host->len==ta->alias.len
+				&& strncasecmp(host->s, ta->alias.s, host->len)==0) {
+			/* match domain */
+			LM_DBG("check self domain match: %d:%.*s:%d\n", (int)ta->port,
+					ta->alias.len, ta->alias.s, (int)ta->proto);
+			return 1;
+		}
+		if(strncasecmp(ta->alias.s, host->s + host->len - ta->alias.len,
+					ta->alias.len)==0) {
+			if(host->s[host->len - ta->alias.len - 1]=='.') {
+				/* match sub-domain */
+				LM_DBG("check self sub-domain match: %d:%.*s:%d\n", (int)ta->port,
+					ta->alias.len, ta->alias.s, (int)ta->proto);
+				return 1;
+			}
+		}
+	}
+
+	return 0; /* no match */
+}
+
+int corex_register_check_self(void)
+{
+	if(_corex_alias_list==NULL)
+		return 0;
+	if (register_check_self_func(corex_check_self) <0 ) {
+	    LM_ERR("failed to register check self function\n");
+	    return -1;
+	}
+	return 0;
+}

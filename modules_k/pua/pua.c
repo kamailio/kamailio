@@ -63,7 +63,7 @@ extern int bind_pua(pua_api_t* api);
 int min_expires= 0;
 int default_expires=3600;
 static str db_url = str_init(DEFAULT_DB_URL);
-static str db_table= str_init("pua");
+str db_table= str_init("pua");
 int update_period= 100;
 str outbound_proxy = {0, 0};
 int check_remote_contact = 1;
@@ -268,8 +268,13 @@ static int mod_init(void)
 
 	startup_time = (int) time(NULL);
 
-	if (update_period > 0) /* probably should check > 5 here!! -croc */
+	if (update_period > 5)
 		register_timer(hashT_clean, 0, update_period- 5);
+	else if (update_period != 0)
+	{
+		LM_ERR("update_period must be 0 or > 5\n");
+		return -1;
+	}
 
 	if (dbmode != PUA_DB_ONLY) 
 	{        
@@ -386,6 +391,7 @@ static int db_restore(void)
 	int watcher_col,callid_col,totag_col,fromtag_col,cseq_col,remote_contact_col;
 	int event_col,contact_col,tuple_col,record_route_col, extra_headers_col;
 	int version_col;
+	unsigned int hash_code;
 
 	if (dbmode==PUA_DB_ONLY)
 	{
@@ -638,7 +644,11 @@ static int db_restore(void)
 			}
 
 			print_ua_pres(p);
-			insert_htable(p);
+
+			hash_code= core_hash(p->pres_uri, p->watcher_uri, HASH_SIZE);
+			lock_get(&HashT->p_records[hash_code].lock);
+			insert_htable(p, hash_code);
+			lock_release(&HashT->p_records[hash_code].lock);
 		}
 
 	} while((db_fetch_next(&pua_dbf, pua_fetch_rows, pua_db, &res)==1)

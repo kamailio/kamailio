@@ -127,17 +127,22 @@ void get_dialog_from_did(char* did, subs_t **dialog, unsigned int *hash_code)
 
 		/* save dialog info */
 		*dialog= pres_copy_subs(s, PKG_MEM_TYPE);
+		if(*dialog== NULL)
+		{
+			LM_ERR("while copying subs_t structure\n");
+			lock_release(&rls_table[*hash_code].lock);
+			return;
+		}
 	}
 
-	if(*dialog== NULL)
-	{
-		LM_ERR("while copying subs_t structure\n");
-	}
+	if ((*dialog)->expires < (int)time(NULL))
+		(*dialog)->expires = 0;
+	else
+		(*dialog)->expires -= (int)time(NULL);
 
 	if (dbmode != RLS_DB_ONLY)
 		lock_release(&rls_table[*hash_code].lock);
 
-	(*dialog)->expires -= (int)time(NULL); 
 }
 
 int send_notify(xmlDocPtr * rlmi_doc, char * buf, int buf_len, 
@@ -201,6 +206,15 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 	if(buf== NULL)
 	{
 		ERR_MEM(PKG_MEM_STR);
+	}
+
+	if (dbmode == RLS_DB_ONLY && rls_dbf.start_transaction)
+	{
+		if (rls_dbf.start_transaction(rls_db, DB_LOCKING_WRITE) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto error;
+		}
 	}
 
 	LM_DBG("found %d records with updated state\n", result->n);
@@ -420,9 +434,17 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 		dialog= NULL;
 	}
 
-	
-error:
 done:
+	if (dbmode == RLS_DB_ONLY && rls_dbf.end_transaction)
+	{
+		if (rls_dbf.end_transaction(rls_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto error;
+		}
+	}
+
+error:
 	if(bstr.s)
 		pkg_free(bstr.s);
 
@@ -430,6 +452,13 @@ done:
 		pkg_free(buf);
 	if(dialog)
 		pkg_free(dialog);
+
+	if (dbmode == RLS_DB_ONLY && rls_dbf.abort_transaction)
+	{
+		if (rls_dbf.abort_transaction(rls_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+
 	return;
 }
 
@@ -715,9 +744,9 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	query_vals[n_query_cols].nul = 0;
 	if (dbmode == RLS_DB_ONLY)
 		query_vals[n_query_cols].val.int_val=
-			core_hash(res_id, NULL,
+			core_hash(res_id, NULL, 0) %
 				(waitn_time * rls_notifier_poll_rate
-					* rls_notifier_processes) - 1);
+					* rls_notifier_processes);
 	else
 		query_vals[n_query_cols].val.int_val = UPDATED_TYPE;
 	n_query_cols++;
@@ -769,7 +798,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 
 	if (dbmode == RLS_DB_ONLY && rlpres_dbf.start_transaction)
 	{
-		if (rlpres_dbf.start_transaction(rlpres_db) < 0)
+		if (rlpres_dbf.start_transaction(rlpres_db, DB_LOCKING_WRITE) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto error;
@@ -883,6 +912,7 @@ static void timer_send_full_state_notifies(int round)
 	xmlDocPtr doc = NULL;
 	xmlNodePtr service_node = NULL;
 	int now = (int)time(NULL);
+	db_query_f query_fn = rls_dbf.query_lock ? rls_dbf.query_lock : rls_dbf.query;
 
 	query_cols[0] = &str_updated_col;
 	query_vals[0].type = DB1_INT;
@@ -925,7 +955,7 @@ static void timer_send_full_state_notifies(int round)
 
 	if (dbmode == RLS_DB_ONLY && rls_dbf.start_transaction)
 	{
-		if (rls_dbf.start_transaction(rls_db) < 0)
+		if (rls_dbf.start_transaction(rls_db, DB_LOCKING_WRITE) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto done;
@@ -933,7 +963,7 @@ static void timer_send_full_state_notifies(int round)
 	}
 
 	/* Step 1: Find rls_watchers that require full-state notification */
-	if (rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
+	if (query_fn(rls_db, query_cols, 0, query_vals, result_cols,
 				1, n_result_cols, 0, &result) < 0)
 	{
 		LM_ERR("in sql query\n");
@@ -994,15 +1024,10 @@ static void timer_send_full_state_notifies(int round)
 		sub.remote_cseq = VAL_INT(&values[rcseq_col]);
 		sub.status = VAL_INT(&values[status_col]);
 		sub.version = VAL_INT(&values[version_col]);
-		if (VAL_INT(&values[expires_col]) > now)
-			sub.expires = VAL_INT(&values[expires_col]) - now;
-		else
-			sub.expires = 0;
-
-		if (sub.expires < rls_expires_offset) sub.expires = 0;
-
-		if (sub.expires != 0)
+		if (VAL_INT(&values[expires_col]) > now + rls_expires_offset)
 		{
+			sub.expires = VAL_INT(&values[expires_col]) - now;
+
 			if (rls_get_service_list(&sub.pres_uri, &sub.watcher_user,
 				&sub.watcher_domain, &service_node, &doc) < 0)
 			{
@@ -1026,6 +1051,7 @@ static void timer_send_full_state_notifies(int round)
 		}
 		else
 		{
+			sub.expires = 0;
 			rls_send_notify(&sub, NULL, NULL, NULL);
 			delete_rlsdb(&sub.callid, &sub.to_tag, &sub.from_tag);
 		}
@@ -1051,6 +1077,7 @@ static void timer_send_update_notifies(int round)
 		pres_state_col, content_type_col;
 	int n_result_cols= 0;
 	db1_res_t *result= NULL;
+	db_query_f query_fn = rlpres_dbf.query_lock ? rlpres_dbf.query_lock : rlpres_dbf.query;
 
 	query_cols[0]= &str_updated_col;
 	query_vals[0].type = DB1_INT;
@@ -1080,14 +1107,14 @@ static void timer_send_update_notifies(int round)
 
 	if (dbmode == RLS_DB_ONLY && rlpres_dbf.start_transaction)
 	{
-		if (rlpres_dbf.start_transaction(rlpres_db) < 0)
+		if (rlpres_dbf.start_transaction(rlpres_db, DB_LOCKING_WRITE) < 0)
 		{
 			LM_ERR("in start_transaction\n");
 			goto done;
 		}
 	}
 
-	if(rlpres_dbf.query(rlpres_db, query_cols, 0, query_vals, result_cols,
+	if(query_fn(rlpres_db, query_cols, 0, query_vals, result_cols,
 					1, n_result_cols, &str_rlsubs_did_col, &result)< 0)
 	{
 		LM_ERR("in sql query\n");
@@ -1153,7 +1180,7 @@ void rls_presentity_clean(unsigned int ticks,void *param)
 	query_ops[0]= OP_LT;
 	query_vals[0].nul= 0;
 	query_vals[0].type= DB1_INT;
-	query_vals[0].val.int_val= (int)time(NULL) - 10;
+	query_vals[0].val.int_val= (int)time(NULL) - rls_expires_offset;
 
 	if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0) 
 	{

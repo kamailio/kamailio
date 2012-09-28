@@ -66,11 +66,11 @@ static inline int db_do_submit_query(const db1_con_t* _h, const str *_query,
 	return ret;
 }
 
-int db_do_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+static int db_do_query_internal(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
 	const db_key_t _o, db1_res_t** _r, int (*val2str) (const db1_con_t*,
 	const db_val_t*, char*, int* _len), int (*submit_query)(const db1_con_t*,
-	const str*), int (*store_result)(const db1_con_t* _h, db1_res_t** _r))
+	const str*), int (*store_result)(const db1_con_t* _h, db1_res_t** _r), int _l)
 {
 	int off, ret;
 
@@ -111,6 +111,11 @@ int db_do_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 		if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
 		off += ret;
 	}
+	if (_l) {
+		ret = snprintf(sql_buf + off, sql_buffer_size - off, " for update");
+		if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
+		off += ret;
+	}
 	/*
 	 * Null-terminate the string for the postgres driver. Its query function
 	 * don't support a length parameter, so they need this for the correct
@@ -140,6 +145,26 @@ int db_do_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 error:
 	LM_ERR("error while preparing query\n");
 	return -1;
+}
+
+int db_do_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+	const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+	const db_key_t _o, db1_res_t** _r, int (*val2str) (const db1_con_t*,
+	const db_val_t*, char*, int* _len), int (*submit_query)(const db1_con_t*,
+	const str*), int (*store_result)(const db1_con_t* _h, db1_res_t** _r))
+{
+	return db_do_query_internal(_h, _k, _op, _v, _c, _n, _nc, _o, _r, val2str,
+					submit_query, store_result, 0);
+}
+
+int db_do_query_lock(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+	const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+	const db_key_t _o, db1_res_t** _r, int (*val2str) (const db1_con_t*,
+	const db_val_t*, char*, int* _len), int (*submit_query)(const db1_con_t*,
+	const str*), int (*store_result)(const db1_con_t* _h, db1_res_t** _r))
+{
+	return db_do_query_internal(_h, _k, _op, _v, _c, _n, _nc, _o, _r, val2str,
+					submit_query, store_result, 1);
 }
 
 
@@ -382,23 +407,24 @@ int db_query_init(void)
     return 0;
 }
 
-/**
- * wrapper around db query to handle fetch capability
- * return: -1 error; 0 ok with no fetch capability; 1 ok with fetch capability
- */
-int db_fetch_query(db_func_t *dbf, int frows,
+static int db_fetch_query_internal(db_func_t *dbf, int frows,
 		db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
-		const db_key_t _o, db1_res_t** _r)
+		const db_key_t _o, db1_res_t** _r, db_query_f _query)
 {
 
 	int ret;
+
+	if (!_query) {
+		LM_ERR("bad query function pointer\n");
+		goto error;
+	}
 
 	ret = 0;
 	*_r = NULL;
 
 	if (DB_CAPABILITY(*dbf, DB_CAP_FETCH)) {
-		if(dbf->query(_h, _k, _op, _v, _c, _n, _nc, _o, 0) < 0)
+		if(_query(_h, _k, _op, _v, _c, _n, _nc, _o, 0) < 0)
 		{
 			LM_ERR("unable to query db for fetch\n");
 			goto error;
@@ -410,7 +436,7 @@ int db_fetch_query(db_func_t *dbf, int frows,
 		}
 		ret = 1;
 	} else {
-		if(dbf->query(_h, _k, _op, _v, _c, _n, _nc, _o, _r) < 0)
+		if(_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r) < 0)
 		{
 			LM_ERR("unable to do full db querry\n");
 			goto error;
@@ -426,6 +452,38 @@ error:
 		*_r = NULL;
 	}
 	return -1;
+}
+
+/**
+ * wrapper around db query to handle fetch capability
+ * return: -1 error; 0 ok with no fetch capability; 1 ok with fetch capability
+ */
+int db_fetch_query(db_func_t *dbf, int frows,
+		db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+		const db_key_t _o, db1_res_t** _r)
+{
+	return db_fetch_query_internal(dbf, frows, _h, _k, _op, _v, _c, _n,
+					_nc, _o, _r, dbf->query);
+}
+
+/**
+ * wrapper around db query_lock to handle fetch capability
+ * return: -1 error; 0 ok with no fetch capability; 1 ok with fetch capability
+ */
+int db_fetch_query_lock(db_func_t *dbf, int frows,
+		db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+		const db_key_t _o, db1_res_t** _r)
+{
+	if (!dbf->query_lock)
+	{
+		LM_ERR("query_lock not supported by this database module\n");
+		return -1;
+	}
+
+	return db_fetch_query_internal(dbf, frows, _h, _k, _op, _v, _c, _n,
+					_nc, _o, _r, dbf->query_lock);
 }
 
 /**

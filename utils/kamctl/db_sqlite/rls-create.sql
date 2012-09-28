@@ -45,7 +45,6 @@ CREATE TABLE rls_watchers (
     CONSTRAINT rls_watchers_rls_watcher_idx UNIQUE (callid, to_tag, from_tag)
 );
 
-CREATE INDEX rls_watchers_rls_watchers_delete ON rls_watchers (callid, to_tag);
 CREATE INDEX rls_watchers_rls_watchers_update ON rls_watchers (watcher_username, watcher_domain, event);
 CREATE INDEX rls_watchers_rls_watchers_expires ON rls_watchers (expires);
 CREATE INDEX rls_watchers_updated_idx ON rls_watchers (updated);

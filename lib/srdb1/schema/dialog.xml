@@ -101,7 +101,7 @@
 	<column>
 		<name>caller_route_set</name>
 		<type>string</type>
-		<size>512</size>
+		<size>&long_hf_len;</size>
 		<null/>
 		<description>Route set on the caller side.</description>
 	</column>
@@ -109,7 +109,7 @@
 	<column>
 		<name>callee_route_set</name>
 		<type>string</type>
-		<size>512</size>
+		<size>&long_hf_len;</size>
 		<null/>
 		<description>Route set on on the caller side.</description>
 	</column>
@@ -204,7 +204,7 @@
 	<column>
 		<name>xdata</name>
 		<type>string</type>
-		<size>512</size>
+		<size>&long_hf_len;</size>
 		<null/>
 		<description>Extra data associated to the dialog (e.g., serialized profiles).</description>
 	</column>

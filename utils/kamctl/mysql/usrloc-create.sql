@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('location','5');
+INSERT INTO version (table_name, table_version) values ('location','6');
 CREATE TABLE location (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     ruid VARCHAR(64) DEFAULT '' NOT NULL,
@@ -6,8 +6,8 @@ CREATE TABLE location (
     domain VARCHAR(64) DEFAULT NULL,
     contact VARCHAR(255) DEFAULT '' NOT NULL,
     received VARCHAR(128) DEFAULT NULL,
-    path VARCHAR(128) DEFAULT NULL,
-    expires DATETIME DEFAULT '2020-05-28 21:32:15' NOT NULL,
+    path VARCHAR(512) DEFAULT NULL,
+    expires DATETIME DEFAULT '2030-05-28 21:32:15' NOT NULL,
     q FLOAT(10,2) DEFAULT 1.0 NOT NULL,
     callid VARCHAR(255) DEFAULT 'Default-Call-ID' NOT NULL,
     cseq INT(11) DEFAULT 1 NOT NULL,
@@ -18,8 +18,10 @@ CREATE TABLE location (
     socket VARCHAR(64) DEFAULT NULL,
     methods INT(11) DEFAULT NULL,
     instance VARCHAR(255) DEFAULT NULL,
-    reg_id INT(11) DEFAULT 0 NOT NULL
+    reg_id INT(11) DEFAULT 0 NOT NULL,
+    CONSTRAINT ruid_idx UNIQUE (ruid)
 ) ENGINE=MyISAM;
 
 CREATE INDEX account_contact_idx ON location (username, domain, contact);
+CREATE INDEX expires_idx ON location (expires);
 

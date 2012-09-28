@@ -52,7 +52,7 @@
 # in db/schema/entities.xml too.
 # FIXME
 
-# FOREVER="2020-05-28 21:32:15"
+# FOREVER="2030-05-28 21:32:15"
 # DEFAULT_ALIASES_EXPIRES=$FOREVER
 # DEFAULT_Q="1.0"
 # DEFAULT_CALLID="Default-Call-ID"

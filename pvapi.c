@@ -356,6 +356,40 @@ pv_spec_t* pv_cache_get(str *name)
 /**
  *
  */
+pv_spec_t* pv_spec_lookup(str *name, int *len)
+{
+	pv_spec_t *pvs;
+	str tname;
+
+	if(len!=NULL)
+		*len = 0;
+	if(name->s==NULL || name->len==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return NULL;
+	}
+
+	tname.s = name->s;
+	tname.len = pv_locate_name(name);
+
+	if(tname.len < 0)
+		return NULL;
+
+	if(len!=NULL)
+		*len = tname.len;
+
+	pvs = pv_cache_lookup(&tname);
+
+	if(pvs!=NULL)
+		return pvs;
+
+	LM_DBG("PV <%.*s> is not in cache\n", tname.len, tname.s);
+	return pv_cache_add(&tname);
+}
+
+/**
+ *
+ */
 int register_pvars_mod(char *mod_name, pv_export_t *items)
 {
 	int ret;
@@ -943,6 +977,7 @@ int pv_parse_format(str *in, pv_elem_p *el)
 	int n = 0;
 	pv_elem_p e, e0;
 	str s;
+	int len;
 
 	if(in==NULL || in->s==NULL || el==NULL)
 		return -1;
@@ -985,7 +1020,10 @@ int pv_parse_format(str *in, pv_elem_p *el)
 			break;
 		s.s = p;
 		s.len = in->s+in->len-p;
-		p0 = pv_parse_spec(&s, &e->spec);
+		e->spec = pv_spec_lookup(&s, &len);
+		if(e->spec==NULL)
+			goto error;
+		p0 = p + len;
 		
 		if(p0==NULL)
 			goto error;
@@ -1250,8 +1288,8 @@ int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len)
 			}
 		}
 		/* put the value of the specifier */
-		if(it->spec.type!=PVT_NONE
-				&& pv_get_spec_value(msg, &(it->spec), &tok)==0)
+		if(it->spec!=NULL && it->spec->type!=PVT_NONE
+				&& pv_get_spec_value(msg, it->spec, &tok)==0)
 		{
 			if(tok.flags&PV_VAL_NULL)
 				tok.rs = pv_str_null;

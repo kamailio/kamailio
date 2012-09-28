@@ -75,6 +75,15 @@ int db_postgres_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o
 		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
 		const db_key_t _o, db1_res_t** _r);
 
+
+/*
+ * Do a query and lock rows for update
+ */
+int db_postgres_query_lock(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+		const db_key_t _o, db1_res_t** _r);
+
+
 /*
  * Raw SQL query
  */
@@ -115,7 +124,7 @@ int db_postgres_affected_rows(const db1_con_t* _h);
 /*
  * SQL BEGIN
  */
-int db_postgres_start_transaction(db1_con_t* _h);
+int db_postgres_start_transaction(db1_con_t* _h, db_locking_t _l);
 
 /*
  * SQL COMMIT

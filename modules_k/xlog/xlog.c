@@ -34,6 +34,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
+#include "../../parser/parse_param.h"
 
 #include "xl_lib.h"
 
@@ -74,6 +75,8 @@ static int xlogl3_fixup(void** param, int param_no);
 static int xdbgl_fixup(void** param, int param_no);
 
 static void destroy(void);
+
+static int xlog_log_colors_param(modparam_t type, void *val);
 
 int pv_parse_color_name(pv_spec_p sp, str *in);
 static int pv_get_color(struct sip_msg *msg, pv_param_t *param, 
@@ -120,6 +123,7 @@ static param_export_t params[]={
 	{"long_format",  INT_PARAM, &long_format},
 	{"prefix",       STR_PARAM, &_xlog_prefix},
 	{"log_facility", STR_PARAM, &xlog_facility_name},
+	{"log_colors",   STR_PARAM|USE_FUNC_PARAM, (void*)xlog_log_colors_param},
 	{0,0,0}
 };
 
@@ -583,133 +587,98 @@ error:
 	return -1;
 }
 
-#define COL_BUF 10
-
-#define append_sstring(p, end, s) \
-        do{\
-                if ((p)+(sizeof(s)-1)<=(end)){\
-                        memcpy((p), s, sizeof(s)-1); \
-                        (p)+=sizeof(s)-1; \
-                }else{ \
-                        /* overflow */ \
-                        LM_ERR("append_sstring overflow\n"); \
-                        goto error;\
-                } \
-        } while(0) 
-
-
 static int pv_get_color(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
-	static char color[COL_BUF];
-	char* p;
-	char* end;
-	str s;
+	str s = {"", 0};
 
 	if(log_stderr==0 && force_color==0)
 	{
-		s.s = "";
-		s.len = 0;
+		LM_DBG("ignoring colors\n");
 		return pv_get_strval(msg, param, res, &s);
 	}
 
-	p = color;
-	end = p + COL_BUF;
-        
-	/* excape sequenz */
-	append_sstring(p, end, "\033[");
-        
-	if(param->pvn.u.isname.name.s.s[0]!='_')
-	{
-		if (islower((int)param->pvn.u.isname.name.s.s[0]))
-		{
-			/* normal font */
-			append_sstring(p, end, "0;");
-		} else {
-			/* bold font */
-			append_sstring(p, end, "1;");
-			param->pvn.u.isname.name.s.s[0] += 32;
-		}
-	}
-         
-	/* foreground */
-	switch(param->pvn.u.isname.name.s.s[0])
-	{
-		case 'x':
-			append_sstring(p, end, "39;");
-		break;
-		case 's':
-			append_sstring(p, end, "30;");
-		break;
-		case 'r':
-			append_sstring(p, end, "31;");
-		break;
-		case 'g':
-			append_sstring(p, end, "32;");
-		break;
-		case 'y':
-			append_sstring(p, end, "33;");
-		break;
-		case 'b':
-			append_sstring(p, end, "34;");
-		break;
-		case 'p':
-			append_sstring(p, end, "35;");
-		break;
-		case 'c':
-			append_sstring(p, end, "36;");
-		break;
-		case 'w':
-			append_sstring(p, end, "37;");
-		break;
-		default:
-			LM_ERR("invalid foreground\n");
-			return pv_get_null(msg, param, res);
-	}
-         
-	/* background */
-	switch(param->pvn.u.isname.name.s.s[1])
-	{
-		case 'x':
-			append_sstring(p, end, "49");
-		break;
-		case 's':
-			append_sstring(p, end, "40");
-		break;
-		case 'r':
-			append_sstring(p, end, "41");
-		break;
-		case 'g':
-			append_sstring(p, end, "42");
-		break;
-		case 'y':
-			append_sstring(p, end, "43");
-		break;
-		case 'b':
-			append_sstring(p, end, "44");
-		break;
-		case 'p':
-			append_sstring(p, end, "45");
-		break;
-		case 'c':
-			append_sstring(p, end, "46");
-		break;
-		case 'w':
-			append_sstring(p, end, "47");
-		break;
-		default:
-			LM_ERR("invalid background\n");
-			return pv_get_null(msg, param, res);
-	}
-
-	/* end */
-	append_sstring(p, end, "m");
-
-	s.s = color;
-	s.len = p-color;
+	dprint_term_color(param->pvn.u.isname.name.s.s[0],
+			param->pvn.u.isname.name.s.s[1], &s);
 	return pv_get_strval(msg, param, res, &s);
-
-error:
-	return -1;
 }
 
+/**
+ *
+ */
+static int xlog_log_colors_param(modparam_t type, void *val)
+{
+	param_t* params_list = NULL;
+	param_hooks_t phooks;
+	param_t *pit=NULL;
+	str s;
+	int level;
+
+	if(val==NULL)
+		goto error;
+
+	s.s = (char*)val;
+	s.len = strlen(s.s);
+
+	if(s.len<=0)
+		goto error;
+
+	if(s.s[s.len-1]==';')
+		s.len--;
+	if (parse_params(&s, CLASS_ANY, &phooks, &params_list)<0)
+		goto error;
+
+	for (pit = params_list; pit; pit=pit->next)
+	{
+		if (pit->name.len==7
+				&& strncasecmp(pit->name.s, "l_alert", 7)==0) {
+			level = L_ALERT;
+		} else if (pit->name.len==5
+				&& strncasecmp(pit->name.s, "l_bug", 5)==0) {
+			level = L_BUG;
+		} else if (pit->name.len==7
+				&& strncasecmp(pit->name.s, "l_crit2", 7)==0) {
+			level = L_CRIT2;
+		} else if (pit->name.len==6
+				&& strncasecmp(pit->name.s, "l_crit", 6)==0) {
+			level = L_CRIT;
+		} else if (pit->name.len==5
+				&& strncasecmp(pit->name.s, "l_err", 5)==0) {
+			level = L_ERR;
+		} else if (pit->name.len==6
+				&& strncasecmp(pit->name.s, "l_warn", 6)==0) {
+			level = L_WARN;
+		} else if (pit->name.len==8
+				&& strncasecmp(pit->name.s, "l_notice", 8)==0) {
+			level = L_NOTICE;
+		} else if (pit->name.len==6
+				&& strncasecmp(pit->name.s, "l_info", 6)==0) {
+			level = L_INFO;
+		} else if (pit->name.len==5
+				&& strncasecmp(pit->name.s, "l_dbg", 5)==0) {
+			level = L_DBG;
+		} else {
+			LM_ERR("invalid level name %.*s\n",
+					pit->name.len, pit->name.s);
+			goto error;
+		}
+			
+		if(pit->body.len!=2) {
+			LM_ERR("invalid color spec for level %.*s (%.*s)\n",
+					pit->name.len, pit->name.s,
+					pit->body.len, pit->body.s);
+			goto error;
+		}
+		dprint_color_update(level, pit->body.s[0], pit->body.s[1]);
+	}
+
+	if(params_list!=NULL)
+		free_params(params_list);
+	return 0;
+
+error:
+	if(params_list!=NULL)
+		free_params(params_list);
+	return -1;
+
+}

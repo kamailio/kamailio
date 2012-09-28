@@ -107,11 +107,13 @@ struct iovec_array{
 	struct iovec* v;
 	int idx;
 	int len;
+	void *ctx;
 };
 
 /* send */
 static void rpc_fault(struct binrpc_ctx* ctx, int code, char* fmt, ...);
 static int rpc_send(struct binrpc_ctx* ctx);
+static int rpc_send_v(struct iovec_array *a);
 static int rpc_add(struct binrpc_ctx* ctx, char* fmt, ...);
 static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...);
 static int rpc_printf(struct binrpc_ctx* ctx, char* fmt, ...);
@@ -254,15 +256,17 @@ error:
 inline static int append_iovec(struct iovec_array* a, unsigned char* buf,
 								int len)
 {
-	
-	if (a->idx >= a->len)
-		goto error;
+	int ret;
+
+	if (a->idx >= a->len) {
+		ret = rpc_send_v(a);
+		if (ret < 0)
+			return ret;
+	}
 	a->v[a->idx].iov_base=buf;
 	a->v[a->idx].iov_len=len;
 	a->idx++;
 	return 0;
-error:
-	return -1; /* overflow */
 }
 
 
@@ -384,7 +388,7 @@ end:
 
 
 
-inline void destroy_binrpc_ctx(struct binrpc_ctx* ctx)
+static inline void destroy_binrpc_ctx(struct binrpc_ctx* ctx)
 {
 	free_structs(&ctx->out.structs);
 	if (ctx->out.pkt.body){
@@ -537,6 +541,22 @@ static void rpc_fault_reset(struct binrpc_ctx* ctx)
 	}
 }
 
+/* wrapper around sock_send_v for staggered buffer writing */
+static int rpc_send_v(struct iovec_array *a)
+{
+	int ret;
+
+	if (a->idx <= 0)
+		return 0;
+
+	ret = sock_send_v(a->ctx, a->v, a->idx);
+	if (ret < 0)
+		return ret;
+
+	a->idx = 0;
+	return 0;
+}
+
 /* build the reply from the current body */
 static int rpc_send(struct binrpc_ctx* ctx)
 {
@@ -551,6 +571,7 @@ static int rpc_send(struct binrpc_ctx* ctx)
 	a.v=v;
 	a.idx=1;
 	a.len=MAX_MSG_CHUNKS;
+	a.ctx = ctx->send_h;
 	
 	if (ctx->replied){
 		LOG(L_ERR, "ERROR: binrpc: rpc_send: rpc method %s tried to reply"
@@ -573,7 +594,7 @@ static int rpc_send(struct binrpc_ctx* ctx)
 		LOG(L_ERR, "ERROR: binrprc: rpc_send: too many message chunks\n");
 		goto error;
 	}
-	if ((err=sock_send_v(ctx->send_h, v, a.idx))<0){
+	if ((err = rpc_send_v(&a)) < 0){
 		if (err==-2){
 			LOG(L_ERR, "ERROR: binrpc: rpc_send: send failed: "
 					"datagram too big\n");

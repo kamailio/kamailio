@@ -4,6 +4,10 @@ Anca Vamanu
 
    <anca.vamanu@1and1.ro>
 
+Boudewyn Ligthart
+
+   <bligthart@btlnet.co.uk>
+
 Edited by
 
 Anca Vamanu
@@ -110,6 +114,20 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
    let Cassandra take care of this with its own mechanism (by setting the
    TTL for columns).
 
+   The module supports raw queries. However these queries must follow the
+   CQL (Cassandra Query Language) syntax. The queries can be issued in the
+   script by means of the AVPOPS module. Keep in mind that when passing
+   back the results from the database only the first row is used to set
+   the AVP variables. (default AVPOPS behaviour) The script lines below
+   can be used as an example for issuing the query towards an cassandra
+   instance.(This example will work once the column family `location` is
+   configured correctly in the cassandra keyspace)
+   ...
+   $var(dballowed)="select * from location where key = 'userx' limit 1;";
+   avp_db_query("$var(dballowed)");
+   xlog("L_INFO","Got result here: [$avp(i:1)] [$avp(i:2)] [$avp(i:3)].\n");
+   ...
+
 2. Dependencies
 
    2.1. SIP Router Modules
@@ -194,7 +212,8 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
    ...
    callid(string) cflags(int) contact(string) cseq(int) expires(timestamp) flags
 (int) last_modified(int) methods(int) path(string) q(double) received(string) so
-cket(string) user_agent(string) username(string)
+cket(string) user_agent(string) username(string) ruid(string) instance(string) r
+eg_id(int)
    username
    contact
    ...

@@ -223,12 +223,12 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			} else {
 				if (parse_phostport( p, &host.s, &host.len,
 				&port, &proto)!=0) {
-					LM_ERR("bad socket <%s>...ignoring\n", p);
+					LM_ERR("bad socket <%s>...set to 0\n", p);
 					sock = 0;
 				} else {
 					sock = grep_sock_info( &host, (unsigned short)port, proto);
 					if (sock==0) {
-						LM_WARN("non-local socket <%s>...ignoring\n", p);
+						LM_DBG("non-local socket <%s>...set to 0\n", p);
 					}
 				}
 			}

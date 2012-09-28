@@ -69,9 +69,6 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr rl_node);
 int update_rlsubs( subs_t* subs,unsigned int hash_code);
 int remove_expired_rlsubs( subs_t* subs,unsigned int hash_code);
 
-list_entry_t *rls_contact_list = NULL;
-list_entry_t *rls_subs_list = NULL;
-
 /**
  * return the XML node for rls-services matching uri
  */
@@ -327,7 +324,7 @@ int reply_200(struct sip_msg* msg, str* contact, int expires)
 		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
-	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", expires);	
+	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", expires);
 	if(hdr_append.len< 0)
 	{
 		LM_ERR("unsuccessful sprintf\n");
@@ -586,8 +583,8 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 		LM_ERR("cannot build rls subs did\n");
 		goto error;
 	}
-	subs.updated = core_hash(&rlsubs_did, NULL,
-		(waitn_time * rls_notifier_poll_rate * rls_notifier_processes) - 1);
+	subs.updated = core_hash(&rlsubs_did, NULL, 0) %
+		(waitn_time * rls_notifier_poll_rate * rls_notifier_processes);
 	
 	if(get_to(msg)->tag_value.s==NULL || get_to(msg)->tag_value.len==0)
 	{ /* initial Subscribe */
@@ -639,6 +636,15 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 		/* search if a stored dialog */
 		if ( dbmode == RLS_DB_ONLY )
 		{
+			if (rls_dbf.start_transaction)
+			{
+				if (rls_dbf.start_transaction(rls_db, DB_LOCKING_WRITE) < 0)
+				{
+					LM_ERR("in start_transaction\n");
+					goto error;
+				}
+			}
+
 			rt = get_dialog_subscribe_rlsdb(&subs);
 
 			if (rt <= 0)
@@ -646,6 +652,16 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 				LM_DBG("subscription dialog not found for <%.*s@%.*s>\n",
 						subs.watcher_user.len, subs.watcher_user.s,
 						subs.watcher_domain.len, subs.watcher_domain.s);
+
+				if (rls_dbf.end_transaction)
+				{
+					if (rls_dbf.end_transaction(rls_db) < 0)
+					{
+						LM_ERR("in end_transaction\n");
+						goto error;
+					}
+				}
+
 				goto forpresence;
 			}
 			else if(rt>=400)
@@ -657,6 +673,16 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 					LM_ERR("while sending reply\n");
 					goto error;
 				}
+
+				if (rls_dbf.end_transaction)
+				{
+					if (rls_dbf.end_transaction(rls_db) < 0)
+					{
+						LM_ERR("in end_transaction\n");
+						goto error;
+					}
+				}
+
 				ret = 0;
 				goto stop;
 			}
@@ -669,6 +695,15 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 			{
 				LM_ERR("while updating resource list subscription\n");
 				goto error;
+			}
+
+			if (rls_dbf.end_transaction)
+			{
+				if (rls_dbf.end_transaction(rls_db) < 0)
+				{
+					LM_ERR("in end_transaction\n");
+					goto error;
+				}
 			}
 		}
 		else
@@ -795,6 +830,12 @@ error:
 	if (rlsubs_did.s != NULL)
 		pkg_free(rlsubs_did.s);
 
+	if (rls_dbf.abort_transaction)
+	{
+		if (rls_dbf.abort_transaction(rls_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+	
 	return err_ret;
 }
 
@@ -920,7 +961,9 @@ int send_resource_subs(char* uri, void* param)
 	str pres_uri, *tmp_str;
 	struct sip_uri parsed_pres_uri;
 	int duplicate = 0;
-	subs_info_t *s = (subs_info_t *) param;
+	
+	subs_info_t *s = (subs_info_t *) ((void**)param)[0];
+	list_entry_t **rls_contact_list = (list_entry_t **) ((void**)param)[1];
 
 	pres_uri.s = uri;
 	pres_uri.len = strlen(uri);
@@ -962,7 +1005,7 @@ int send_resource_subs(char* uri, void* param)
 	}
 	memcpy(tmp_str->s, pres_uri.s, pres_uri.len);
 	tmp_str->len = pres_uri.len;
-	rls_contact_list = list_insert(tmp_str, rls_contact_list, &duplicate);
+	*rls_contact_list = list_insert(tmp_str, *rls_contact_list, &duplicate);
 	if (duplicate != 0)
 	{
 		LM_WARN("%.*s has %.*s multiple times in the same resource list\n",
@@ -984,6 +1027,9 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 	str extra_headers;
 	str did_str= {0, 0};
 	str *tmp_str;
+	list_entry_t *rls_contact_list = NULL;
+	list_entry_t *rls_subs_list = NULL;
+	void* params[2] = {&s, &rls_contact_list};
 		
 	/* if is initial send an initial Subscribe 
 	 * else search in hash table for a previous subscription */
@@ -1024,25 +1070,10 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 
 	s.internal_update_flag = subs->internal_update_flag;
 
-	if (rls_contact_list != NULL)
-	{
-		LM_WARN("contact list is not empty\n");
-		list_free(&rls_contact_list);
-	}
-
-	if (subs->internal_update_flag == INTERNAL_UPDATE_TRUE)
-	{
-		if (rls_subs_list != NULL)
-		{
-			LM_WARN("subscriber list is not empty\n");
-			list_free(&rls_subs_list);
-		}
-	}
-
 	counter = 0;
 	
 	if(process_list_and_exec(xmlnode, subs->watcher_user, subs->watcher_domain,
-			send_resource_subs, (void*)(&s))<0)
+			send_resource_subs, params)<0)
 	{
 		LM_ERR("while processing list\n");
 		goto error;
@@ -1071,15 +1102,13 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr xmlnode)
 		{
 			LM_DBG("Removing subscription for %.*s\n", tmp_str->len, tmp_str->s);
 			s.expires = 0;
-			send_resource_subs(tmp_str->s, (void*)(&s));
+			send_resource_subs(tmp_str->s, params);
 			pkg_free(tmp_str->s);
 			pkg_free(tmp_str);
 		}
 	}
-	else
-	{
+	if (rls_contact_list != NULL)
 		list_free(&rls_contact_list);
-	}
 
 	pkg_free(wuri.s);
 	pkg_free(did_str.s);
@@ -1111,13 +1140,16 @@ void update_a_sub(subs_t *subs_copy)
 {
 	xmlDocPtr doc = NULL;
 	xmlNodePtr service_node = NULL;
+	int now = (int)time(NULL);
 
-	if ((subs_copy->expires -= (int)time(NULL)) <= 0)
+	if (subs_copy->expires < now)
 	{
+		subs_copy->expires = 0;
 		LM_WARN("found expired subscription for: %.*s\n",
 			subs_copy->pres_uri.len, subs_copy->pres_uri.s);
 		goto done;
 	}
+	subs_copy->expires -= now;
 
 	if(rls_get_service_list(&subs_copy->pres_uri, &subs_copy->watcher_user,
 				&subs_copy->watcher_domain, &service_node, &doc)<0)

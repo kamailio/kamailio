@@ -258,6 +258,16 @@ int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,
 		case 17: /* count */
 			return pv_get_sintval(msg, param, res, rpp->nrc);
 		break;
+		case 18: /* ruid */
+			return  pv_get_strval(msg, param, res, &c->ruid);
+		break;
+		case 19: /* reg-id */
+			return pv_get_uintval(msg, param, res, c->reg_id);
+		break;
+		case 20: /* instance */
+			if(c->instance.len>0)
+				return  pv_get_strval(msg, param, res, &c->instance);
+		break;
 	}
 
 	return pv_get_null(msg, param, res);
@@ -341,6 +351,8 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 				rp->attr = 4;
 			else if(strncmp(pa.s, "cseq", 4)==0)
 				rp->attr = 9;
+			else if(strncmp(pa.s, "ruid", 4)==0)
+				rp->attr = 18;
 			else goto error;
 		break;
 		case 5: 
@@ -348,6 +360,8 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 				rp->attr = 10;
 			else if(strncmp(pa.s, "count", 5)==0)
 				rp->attr = 17;
+			else if(strncmp(pa.s, "regid", 5)==0)
+				rp->attr = 19;
 			else goto error;
 		break;
 		case 6: 
@@ -375,6 +389,8 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 				rp->attr = 5;
 			else if(strncmp(pa.s, "modified", 8)==0)
 				rp->attr = 15;
+			else if(strncmp(pa.s, "instance", 8)==0)
+				rp->attr = 20;
 			else goto error;
 		break;
 		case 10: 
@@ -461,7 +477,8 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 	while(ptr)
 	{
 		olen = (ptr->c.len + ptr->received.len + ptr->path.len
-			+ ptr->callid.len + ptr->user_agent.len)*sizeof(char) + ilen;
+			+ ptr->callid.len + ptr->user_agent.len + ptr->ruid.len
+			+ ptr->instance.len)*sizeof(char) + ilen;
 		c0 = (ucontact_t*)pkg_malloc(olen);
 		if(c0==NULL)
 		{
@@ -505,6 +522,20 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 			memcpy(c0->user_agent.s, ptr->user_agent.s, ptr->user_agent.len);
 			c0->user_agent.len = ptr->user_agent.len;
 			p += c0->user_agent.len;
+		}
+		if(ptr->ruid.s!=NULL)
+		{
+			c0->ruid.s = p;
+			memcpy(c0->ruid.s, ptr->ruid.s, ptr->ruid.len);
+			c0->ruid.len = ptr->ruid.len;
+			p += c0->ruid.len;
+		}
+		if(ptr->instance.s!=NULL)
+		{
+			c0->instance.s = p;
+			memcpy(c0->instance.s, ptr->instance.s, ptr->instance.len);
+			c0->instance.len = ptr->instance.len;
+			p += c0->instance.len;
 		}
 
 		if(ptr0==NULL)

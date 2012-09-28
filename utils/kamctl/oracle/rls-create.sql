@@ -61,7 +61,6 @@ END rls_watchers_tr;
 /
 BEGIN map2users('rls_watchers'); END;
 /
-CREATE INDEX ORA_rls_watchers_delete  ON rls_watchers (callid, to_tag);
 CREATE INDEX ORA_rls_watchers_update  ON rls_watchers (watcher_username, watcher_domain, event);
 CREATE INDEX ORA_rls_watchers_expires  ON rls_watchers (expires);
 CREATE INDEX rls_watchers_updated_idx  ON rls_watchers (updated);

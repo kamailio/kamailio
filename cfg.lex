@@ -236,7 +236,6 @@ PREFIX			"prefix"
 STRIP			"strip"
 STRIP_TAIL		"strip_tail"
 SET_USERPHONE		"userphone"
-APPEND_BRANCH	"append_branch"
 REMOVE_BRANCH	"remove_branch"
 CLEAR_BRANCHES	"clear_branches"
 IF				"if"
@@ -343,6 +342,7 @@ FORK_DELAY	fork_delay
 LOGSTDERROR	log_stderror
 LOGFACILITY	log_facility
 LOGNAME		log_name
+LOGCOLOR	log_color
 LISTEN		listen
 ADVERTISE	advertise|ADVERTISE
 ALIAS		alias
@@ -641,8 +641,6 @@ IMPORTFILE      "import_file"
 <INITIAL>{PREFIX}	{ count(); yylval.strval=yytext; return PREFIX; }
 <INITIAL>{STRIP}	{ count(); yylval.strval=yytext; return STRIP; }
 <INITIAL>{STRIP_TAIL}	{ count(); yylval.strval=yytext; return STRIP_TAIL; }
-<INITIAL>{APPEND_BRANCH}	{ count(); yylval.strval=yytext;
-								return APPEND_BRANCH; }
 <INITIAL>{REMOVE_BRANCH}	{ count(); yylval.strval=yytext;
 								return REMOVE_BRANCH; }
 <INITIAL>{CLEAR_BRANCHES}	{ count(); yylval.strval=yytext;
@@ -720,6 +718,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOGSTDERROR}	{ yylval.strval=yytext; return LOGSTDERROR; }
 <INITIAL>{LOGFACILITY}	{ yylval.strval=yytext; return LOGFACILITY; }
 <INITIAL>{LOGNAME}	{ yylval.strval=yytext; return LOGNAME; }
+<INITIAL>{LOGCOLOR}	{ yylval.strval=yytext; return LOGCOLOR; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{ADVERTISE}	{ count(); yylval.strval=yytext; return ADVERTISE; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }

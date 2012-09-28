@@ -140,7 +140,7 @@ static int generate_avps(struct sip_msg* msg, db1_res_t* db_res)
 	int i;
 
 	for (cred=credentials, i=1; cred; cred=cred->next, i++) {
-		if (db_val2pv_spec(msg, &RES_ROWS(db_res)[0].values[i], &cred->spec) != 0) {
+		if (db_val2pv_spec(msg, &RES_ROWS(db_res)[0].values[i], cred->spec) != 0) {
 			LM_ERR("Failed to convert value for column %.*s\n",
 					RES_NAMES(db_res)[i]->len, RES_NAMES(db_res)[i]->s);
 			return -1;

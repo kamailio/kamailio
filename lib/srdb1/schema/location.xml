@@ -9,7 +9,7 @@
 
 <table id="location" xmlns:db="http://docbook.org/ns/docbook">
     <name>location</name>
-    <version>5</version>
+    <version>6</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Persistent user location information for the usrloc module. More information can be found at: &KAMAILIO_MOD_DOC;usrloc.html
@@ -74,13 +74,13 @@
     <column>
         <name>path</name>
         <type>string</type>
-        <size>&uri_len;</size>
+        <size>&long_hf_len;</size>
         <null/>
         <default><null/></default>
         <description>Path Header(s) per RFC 3327</description>
     </column>
 
-    <column>
+    <column id="expires">
         <name>expires</name>
         <type>datetime</type>
         <default>&DEFAULT_ALIASES_EXPIRES;</default>
@@ -186,5 +186,15 @@
         <colref linkend="domain"/>
         <colref linkend="contact"/>
     </index>
+    <index>
+        <name>ruid_idx</name>
+        <colref linkend="ruid"/>
+        <unique/>
+    </index>
+    <index>
+        <name>expires_idx</name>
+        <colref linkend="expires"/>
+    </index>
+
 
 </table>

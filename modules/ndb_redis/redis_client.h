@@ -58,6 +58,13 @@ typedef struct redisc_pv {
 	gparam_t pos;  /* Array element position. */
 } redisc_pv_t;
 
+/* Server related functions */
+redisc_server_t* redisc_get_server(str *name);
+int redisc_reconnect_server(redisc_server_t *rsrv);
+
+/* Command related functions */
+int redisc_exec(str *srv, str *res, str *cmd, ...);
+void* redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv, const size_t *argvlen);
 redisc_reply_t *redisc_get_reply(str *name);
 int redisc_free_reply(str *name);
 #endif

@@ -1277,11 +1277,11 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 		return 0;
 	}
 
+	rows = RES_ROWS(result);
 	/* get the results and fill in return data structure */
 	for (loop=0; loop <nr_rows; loop++)
 	{
-		rows = RES_ROWS(result);
-		row_vals = ROW_VALUES(rows);	
+		row_vals = ROW_VALUES(&rows[loop]);
 
 		memset(&s, 0, sizeof(subs_t));
 		s.status= subs->status;
@@ -1348,10 +1348,10 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 
 		s.expires = row_vals[r_expires_col].val.int_val;
 
-		if( s.expires < (int)time(NULL) )
-		    s.expires = 0;
-		else
+		if( s.expires > (int)time(NULL) + expires_offset)
 		    s.expires -= (int)time(NULL);
+		else
+		    s.expires = 0;
 
 		s.version = row_vals[r_version_col].val.int_val;
 
@@ -1407,9 +1407,9 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 					* pres_notifier_processes));
 	} else {
 		db_vals[n_update_cols].val.int_val = 
-			core_hash(&subs->callid, &subs->from_tag,
+			core_hash(&subs->callid, &subs->from_tag, 0) %
 				  (pres_waitn_time * pres_notifier_poll_rate
-					* pres_notifier_processes) - 1);
+					* pres_notifier_processes);
 	}
 	n_update_cols++;
 

@@ -1270,4 +1270,26 @@ modparam("tm", "e2e_cancel_reason", 0)
 		</example>
 	</section>
 
+	<section id="remap_503_500">
+		<title><varname>remap_503_500</varname> (boolean)</title>
+		<para>
+			Enables/disables conversion of 503 response code to 500. By default
+			it is enabled, based on the SIP RFC requirement. This is global
+			setting for all received replies handled by TM. To do it per
+			transaction basis, let this option disabled, set a failure route
+			and then do t_reply("500", "...") inside it.
+		</para>
+		<para>
+			Default value is 1 (enabled).
+		</para>
+		<example>
+			<title>Set <varname>remap_503_500</varname> parameter</title>
+			<programlisting>
+...
+modparam("tm", "remap_503_500", 0)
+...
+			</programlisting>
+		</example>
+	</section>
+
 </section>

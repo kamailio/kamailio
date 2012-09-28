@@ -250,32 +250,9 @@ resetbflag("1");
 		<section>
 		<title><function moreinfo="none">km_append_branch([uri])</function></title>
 		<para>
-			Append a new branch to SIP request.
+			It was replaced by append_branch() from corex module, starting with
+			version 3.4.0.
 		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para>
-				<emphasis>uri</emphasis> - SIP URI of the new destination. If
-				omitted then the R-URI is used. It can be static string or
-				a string with pseudo-variables that will be evaluated at
-				runtime.
-			</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
-		</para>
-		<example>
-		<title><function>km_append_branch</function> usage</title>
-		<programlisting format="linespecific">
-...
-km_append_branch();
-...
-km_append_branch("sip:alice@sip-router.org");
-...
-</programlisting>
-		</example>
 		</section>
 		<section>
 		<title><function moreinfo="none">setdsturi(uri)</function></title>
@@ -297,7 +274,7 @@ km_append_branch("sip:alice@sip-router.org");
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>>setdsturi</function> usage</title>
+		<title><function>setdsturi</function> usage</title>
 		<programlisting format="linespecific">
 ...
 setdsturi("sip:10.0.0.10");
@@ -314,7 +291,7 @@ setdsturi("sip:10.0.0.10");
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>>resetdsturi</function> usage</title>
+		<title><function>resetdsturi</function> usage</title>
 		<programlisting format="linespecific">
 ...
 resetdsturi();
@@ -332,7 +309,7 @@ resetdsturi();
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>>isdsturiset</function> usage</title>
+		<title><function>isdsturiset</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if(isdsturiset())
@@ -368,7 +345,7 @@ if(isdsturiset())
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>>pv_printf</function> usage</title>
+		<title><function>pv_printf</function> usage</title>
 		<programlisting format="linespecific">
 ...
 pv_printf("$ru", "sip:$rU@$fd");
@@ -397,7 +374,7 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>>is_myself</function> usage</title>
+		<title><function>is_myself</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if(is_myself("$fu")) {
@@ -446,7 +423,7 @@ setdebug("$var(level)");
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>>resetdebug</function> usage</title>
+		<title><function>resetdebug</function> usage</title>
 		<programlisting format="linespecific">
 ...
 resetdebug();
@@ -572,6 +549,73 @@ resetdebug();
 		_empty_line_
 		</programlisting>
     </section>
+	<section>
+		<title>
+		<function moreinfo="none">get_statistics</function>
+		</title>
+		<para>
+		Print the list of available internal statistics.
+		</para>
+		<para>
+		Name: <emphasis>get_statistics</emphasis>
+		</para>
+		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
+			be printed. If set to 'all' then all statistics are printed; if
+			set to 'statsgroup:' then all statistics in the group are printed;
+			if set to 'statsname' then the statistics identified by the name
+			is printed.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:get_statistics:_reply_fifo_file_
+		_statsid_
+		_empty_line_
+		</programlisting>
+    </section>
+	<section>
+		<title>
+		<function moreinfo="none">reset_statistics</function>
+		</title>
+		<para>
+		Reset internal statistics.
+		</para>
+		<para>
+		Name: <emphasis>reset_statistics</emphasis>
+		</para>
+		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
+			be reset, give as name.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:reset_statistics:_reply_fifo_file_
+		_statsid_
+		_empty_line_
+		</programlisting>
+    </section>
+	<section>
+		<title>
+		<function moreinfo="none">clear_statistics</function>
+		</title>
+		<para>
+			Return statistics and reset their value in one command.
+		</para>
+		<para>
+		Name: <emphasis>get_statistics</emphasis>
+		</para>
+		<para>Parameters: <emphasis>statsid</emphasis> - same as for
+			get_statistics.</para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:clear_statistics:_reply_fifo_file_
+		_statsid_
+		_empty_line_
+		</programlisting>
+    </section>
+
 	</section>
 
 	<section>

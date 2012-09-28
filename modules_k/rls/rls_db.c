@@ -116,14 +116,15 @@ int delete_expired_subs_rlsdb( void )
 {
 	db_key_t query_cols[3], result_cols[3], update_cols[1];
 	db_val_t query_vals[3], update_vals[1], *values;
-	db_op_t query_ops[1];
+	db_op_t query_ops[2];
 	db_row_t *rows;
 	db1_res_t *result = NULL;
 	int n_query_cols = 0, n_result_cols = 0;
 	int r_callid_col = 0, r_to_tag_col = 0, r_from_tag_col = 0;
-	int i;
+	int i, nr_rows;
 	subs_t subs;
 	str rlsubs_did = {0, 0};
+	db_query_f query_fn = rls_dbf.query_lock ? rls_dbf.query_lock : rls_dbf.query;
 
 	if(rls_db == NULL)
 	{
@@ -144,11 +145,27 @@ int delete_expired_subs_rlsdb( void )
 	query_ops[n_query_cols]= OP_LT;
 	n_query_cols++;
 
+	query_cols[n_query_cols]= &str_updated_col;
+	query_vals[n_query_cols].type = DB1_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val= NO_UPDATE_TYPE;
+	query_ops[n_query_cols]= OP_EQ;
+	n_query_cols++;
+
 	result_cols[r_callid_col=n_result_cols++] = &str_callid_col;
 	result_cols[r_to_tag_col=n_result_cols++] = &str_to_tag_col;
 	result_cols[r_from_tag_col=n_result_cols++] = &str_from_tag_col;
 
-	if(rls_dbf.query(rls_db, query_cols, query_ops, query_vals, result_cols, 
+	if (rls_dbf.start_transaction)
+	{
+		if (rls_dbf.start_transaction(rls_db, DB_LOCKING_WRITE) < 0)
+		{
+			LM_ERR("in start_transaction\n");
+			goto error;
+		}
+	}
+
+	if(query_fn(rls_db, query_cols, query_ops, query_vals, result_cols, 
 				n_query_cols, n_result_cols, 0, &result )< 0)
 	{
 		LM_ERR("Can't query db\n");
@@ -157,10 +174,13 @@ int delete_expired_subs_rlsdb( void )
 
 	if(result == NULL) goto error;
 
-	for (i = 0; i <RES_ROW_N(result); i++)
+	rows = RES_ROWS(result);
+	nr_rows = RES_ROW_N(result);
+
+	for (i = 0; i < nr_rows; i++)
 	{
-		rows = RES_ROWS(result);
-		values = ROW_VALUES(rows);
+		memset(&subs, 0, sizeof(subs_t));
+		values = ROW_VALUES(&rows[i]);
 
 		subs.callid.s = (char *) VAL_STRING(&values[r_callid_col]);
 		subs.callid.len = strlen(subs.callid.s);
@@ -174,8 +194,8 @@ int delete_expired_subs_rlsdb( void )
 			LM_ERR("cannot build rls subs did\n");
 			goto error;
 		}
-		subs.updated = core_hash(&rlsubs_did, NULL,
-			(waitn_time * rls_notifier_poll_rate * rls_notifier_processes) - 1);
+		subs.updated = core_hash(&rlsubs_did, NULL, 0) %
+			(waitn_time * rls_notifier_poll_rate * rls_notifier_processes);
 
 		n_query_cols = 0;
 
@@ -213,11 +233,28 @@ int delete_expired_subs_rlsdb( void )
 	}
 
 	rls_dbf.free_result(rls_db, result);
+
+	if (rls_dbf.end_transaction)
+	{
+		if (rls_dbf.end_transaction(rls_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto error;
+		}
+	}
+
 	return 1;
 
 error:
 	if (result) rls_dbf.free_result(rls_db, result);
 	if (rlsubs_did.s) pkg_free(rlsubs_did.s);
+
+	if (rls_dbf.abort_transaction)
+	{
+		if (rls_dbf.abort_transaction(rls_db) < 0)
+			LM_ERR("in abort_transaction\n");
+	}
+
 	return -1;
 }
 
@@ -415,11 +452,11 @@ int update_all_subs_rlsdb(str *watcher_user, str *watcher_domain, str *evt)
 
 	nr_rows = RES_ROW_N(result);
 
+	rows = RES_ROWS(result);
 	/* get the results and fill in return data structure */
 	for (loop=0; loop <nr_rows; loop++)
 	{
-		rows = RES_ROWS(result);
-		values = ROW_VALUES(rows);
+		values = ROW_VALUES(&rows[loop]);
 
 		size= sizeof(subs_t) +
 			( strlen(VAL_STRING(values+r_pres_uri_col))
@@ -718,7 +755,8 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 	int nr_rows;
 	int r_remote_cseq, r_local_cseq, r_version;
 	char *r_pres_uri, *r_record_route;
-
+	db_query_f query_fn = rls_dbf.query_lock ? rls_dbf.query_lock : rls_dbf.query;
+	
 	if(rls_db == NULL)
 	{
 		LM_ERR("null database connection\n");
@@ -761,7 +799,7 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 	result_cols[version_col = n_result_cols++] = &str_version_col;
 	result_cols[rroute_col = n_result_cols++] = &str_record_route_col;
 
-	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols, 
+	if(query_fn(rls_db, query_cols, 0, query_vals, result_cols, 
 			n_query_cols, n_result_cols, 0, &result )< 0)
 	{
 		LM_ERR("Can't query db\n");
@@ -798,6 +836,13 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 	r_version = VAL_INT(&values[version_col]);
 	r_record_route = (char *)VAL_STRING(&values[rroute_col]);
 
+	if ( r_remote_cseq >= subs->remote_cseq)
+	{
+		LM_DBG("stored cseq= %d\n", r_remote_cseq);
+		rls_dbf.free_result(rls_db, result);
+		return(401); /*stale cseq code */
+	}
+
 	if(strlen(r_pres_uri) > 0)
 	{
 		subs->pres_uri.s =
@@ -805,20 +850,12 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 		if(subs->pres_uri.s==NULL)
 		{
 			LM_ERR( "Out of Memory\n" );
- 			pkg_free(subs->pres_uri.s);
 			rls_dbf.free_result(rls_db, result);
 			return(-1);
 		}
 		memcpy(subs->pres_uri.s, 
 			r_pres_uri, strlen(r_pres_uri));
 		subs->pres_uri.len= strlen(r_pres_uri);
-	}
-
-	if ( r_remote_cseq >= subs->remote_cseq)
-	{
-		LM_DBG("stored cseq= %d\n", r_remote_cseq);
-		rls_dbf.free_result(rls_db, result);
-		return(401); /*stale cseq code */
 	}
 
 	if(strlen(r_record_route) > 0)
@@ -828,7 +865,6 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 		if(subs->record_route.s==NULL)
 		{
 			LM_ERR( "Out of Memory\n" );
- 			pkg_free(subs->record_route.s);
 			rls_dbf.free_result(rls_db, result);
 			return(-1);
 		}
@@ -848,8 +884,8 @@ int get_dialog_subscribe_rlsdb(subs_t *subs)
 
 subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag) 
 {
- 	db_key_t query_cols[3];
-	db_val_t query_vals[3];
+ 	db_key_t query_cols[4];
+	db_val_t query_vals[4];
 	db_key_t result_cols[22];
 	int n_query_cols = 0, n_result_cols=0;
 	int r_pres_uri_col,r_to_user_col,r_to_domain_col;
@@ -867,6 +903,7 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 	subs_t *dest;
 	event_t parsed_event;
 	str ev_sname;
+	db_query_f query_fn = rls_dbf.query_lock ? rls_dbf.query_lock : rls_dbf.query;
 
 	if(rls_db == NULL)
 	{
@@ -897,6 +934,12 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= from_tag;
 	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_updated_col;
+	query_vals[n_query_cols].type = DB1_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val= NO_UPDATE_TYPE;
+	n_query_cols++;
 	
 	result_cols[r_pres_uri_col=n_result_cols++] = &str_presentity_uri_col;
 	result_cols[r_to_user_col=n_result_cols++] = &str_to_user_col;
@@ -921,7 +964,7 @@ subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag)
 	result_cols[r_version_col=n_result_cols++] = &str_version_col;
 	result_cols[r_expires_col=n_result_cols++] = &str_expires_col;
 
-	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols, 
+	if(query_fn(rls_db, query_cols, 0, query_vals, result_cols, 
 				n_query_cols, n_result_cols, 0, &result )< 0)
 	{
 		LM_ERR("Can't query db\n");

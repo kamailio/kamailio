@@ -59,5 +59,6 @@ extern db_func_t pua_dbf;
 extern db1_con_t *pua_db;
 extern int pua_fetch_rows;
 
+extern str db_table;
 
 #endif

@@ -177,6 +177,9 @@ static int goto_on_reply=0;
 /* where to go on receipt of reply without transaction context */
 int goto_on_sl_reply=0;
 
+/* remap 503 response code to 500 */
+extern int tm_remap_503_500;
+
 /* how to deal with winning branch reply selection in failure_route
  * can be overwritten per transaction with t_drop_replies(...)
  * Values:
@@ -1759,7 +1762,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			}
 		} else {
 			relayed_code=relayed_msg->REPLY_STATUS;
-			if (relayed_code==503){
+			if (relayed_code==503 && tm_remap_503_500){
 				/* replace a final 503 with a 500:
 				 * generate a "FAKE" reply and a new to_tag (for easier
 				 *  debugging)*/

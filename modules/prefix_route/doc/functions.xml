@@ -6,9 +6,13 @@
     <title>Functions</title>
 
 	<section id="prefixroute.prefix_route">
-		<title><function>prefix_route()</function></title>
+		<title><function>prefix_route([user])</function></title>
 		<para>
-		This function tries to find a route from the user part of the request URI.
+		This function tries to find a route from the user part of the request URI
+		(if no parameter is provided), or from the value of the parameter. The
+		parameter can contain config variables.
+		</para>
+		<para>
 		If a route is found, it will be used for further processing. Otherwise the
 		function will return false.
 		</para>
@@ -19,6 +23,11 @@
   if (!prefix_route()) {
       xlog("L_ERR", "prefix_route(): no matching routes\n");
   }
+...
+  if (!prefix_route("$fU")) {
+      xlog("L_ERR", "prefix_route(): no matching routes\n");
+  }
+
 ...
 			</programlisting>
 		</example>

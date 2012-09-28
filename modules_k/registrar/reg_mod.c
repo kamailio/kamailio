@@ -91,6 +91,7 @@ static void mod_destroy(void);
 static int w_save2(struct sip_msg* _m, char* _d, char* _cflags);
 static int w_save3(struct sip_msg* _m, char* _d, char* _cflags, char* _uri);
 static int w_lookup(struct sip_msg* _m, char* _d, char* _p2);
+static int w_lookup_branches(struct sip_msg* _m, char* _d, char* _p2);
 static int w_registered(struct sip_msg* _m, char* _d, char* _uri);
 static int w_unregister(struct sip_msg* _m, char* _d, char* _uri);
 
@@ -186,6 +187,8 @@ static cmd_export_t cmds[] = {
 	{"reg_free_contacts", (cmd_function)pv_free_contacts,   1,
 			fixup_str_null, 0,
 			REQUEST_ROUTE| FAILURE_ROUTE },
+	{"lookup_branches",  (cmd_function)w_lookup_branches, 1,  domain_uri_fixup, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"bind_registrar",  (cmd_function)bind_registrar,  0,
 		0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -436,6 +439,15 @@ static int w_lookup(struct sip_msg* _m, char* _d, char* _uri)
 
 	return lookup(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL);
 }
+
+/*! \brief
+ * Wrapper to lookup_branches(location)
+ */
+static int w_lookup_branches(sip_msg_t* _m, char* _d, char* _p2)
+{
+	return lookup_branches(_m, (udomain_t*)_d);
+}
+
 
 static int w_registered(struct sip_msg* _m, char* _d, char* _uri)
 {

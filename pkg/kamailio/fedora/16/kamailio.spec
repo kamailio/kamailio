@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     3.4.0
-%define rel     dev3%{dist}
+%define rel     dev4%{dist}
 
 
 
@@ -375,14 +375,14 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
 	klcr ksqlite kredis kjson kmono kberkeley kwebsocket koutbound"\
-	include_modules="xmlrpc xmlops cdp cdp_avp"
+	include_modules="xmlrpc xmlops cdp cdp_avp corex"
 %else
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kpresence kregex kdialplan\
 	klcr ksqlite kberkeley kwebsocket koutbound"\
-	include_modules="xmlrpc xmlops cdp cdp_avp"
+	include_modules="xmlrpc xmlops cdp cdp_avp corex"
 %endif
 
 
@@ -482,6 +482,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.blst
 %doc %{_docdir}/kamailio/modules/README.cfg_db
 %doc %{_docdir}/kamailio/modules/README.cfg_rpc
+%doc %{_docdir}/kamailio/modules/README.corex
 %doc %{_docdir}/kamailio/modules/README.counters
 %doc %{_docdir}/kamailio/modules/README.ctl
 %doc %{_docdir}/kamailio/modules/README.db_flatstore
@@ -605,6 +606,7 @@ fi
 %{_libdir}/kamailio/modules/blst.so
 %{_libdir}/kamailio/modules/cfg_db.so
 %{_libdir}/kamailio/modules/cfg_rpc.so
+%{_libdir}/kamailio/modules/corex.so
 %{_libdir}/kamailio/modules/counters.so
 %{_libdir}/kamailio/modules/ctl.so
 %{_libdir}/kamailio/modules/db_flatstore.so
@@ -993,6 +995,9 @@ fi
 
 
 %changelog
+* Sun Sep 17 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Added corex module to RPM builds
+  - Updated rel to dev4
 * Sun Aug 19 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Updated rel to dev3
 * Mon Aug 13 2012 Peter Dunkley <peter@dunkley.me.uk>

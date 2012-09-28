@@ -105,6 +105,8 @@ struct socket_info** get_sock_info_list(unsigned short proto);
 int parse_phostport(char* s, char** host, int* hlen,
 								 int* port, int* proto);
 
+char* get_valid_proto_name(unsigned short proto);
+
 /* helper function:
  * returns next protocol, if the last one is reached return 0
  * useful for cycling on the supported protocols

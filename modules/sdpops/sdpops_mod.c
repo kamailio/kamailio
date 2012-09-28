@@ -974,14 +974,8 @@ static int w_get_sdp(sip_msg_t* msg, char *avp)
 		LM_DBG("No SDP\n");
 		return -2;
 	} else {
-		avp_val.s.s = pkg_malloc(sdp->raw_sdp.len);
+		avp_val.s.s = sdp->raw_sdp.s;
 		avp_val.s.len = sdp->raw_sdp.len;
-		if (avp_val.s.s == NULL)
-		{
-		  LM_ERR("Failed to alloc memory for SDP");
-		  return -1;
-		}
-		memcpy(avp_val.s.s, sdp->raw_sdp.s, avp_val.s.len);
 		LM_DBG("Found SDP %.*s\n", sdp->raw_sdp.len, sdp->raw_sdp.s);
 	}
 	if (add_avp(AVP_VAL_STR | avp_type, avp_name, avp_val) != 0)

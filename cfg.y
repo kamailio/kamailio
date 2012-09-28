@@ -401,6 +401,7 @@ extern char *finame;
 %token LOGSTDERROR
 %token LOGFACILITY
 %token LOGNAME
+%token LOGCOLOR
 %token LISTEN
 %token ADVERTISE
 %token ALIAS
@@ -852,7 +853,9 @@ assign_stm:
 	| FORK  EQUAL error  { yyerror("boolean value expected"); }
 	| FORK_DELAY  EQUAL NUMBER { set_fork_delay($3); }
 	| FORK_DELAY  EQUAL error  { yyerror("number expected"); }
-	| LOGSTDERROR EQUAL NUMBER { if (!config_check) log_stderr=$3; }
+	| LOGSTDERROR EQUAL NUMBER { if (!config_check)  /* if set from cmd line, don't overwrite from yyparse()*/ 
+					if(log_stderr == 0) log_stderr=$3; 
+				   }
 	| LOGSTDERROR EQUAL error { yyerror("boolean value expected"); }
 	| LOGFACILITY EQUAL ID {
 		if ( (i_tmp=str2facility($3))==-1)
@@ -863,6 +866,8 @@ assign_stm:
 	| LOGFACILITY EQUAL error { yyerror("ID expected"); }
 	| LOGNAME EQUAL STRING { log_name=$3; }
 	| LOGNAME EQUAL error { yyerror("string value expected"); }
+	| LOGCOLOR EQUAL NUMBER { log_color=$3; }
+	| LOGCOLOR EQUAL error { yyerror("boolean value expected"); }
 	| DNS EQUAL NUMBER   { received_dns|= ($3)?DO_DNS:0; }
 	| DNS EQUAL error { yyerror("boolean value expected"); }
 	| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }
@@ -3289,29 +3294,6 @@ cmd:
 	| STRIP LPAREN error RPAREN { $$=0; yyerror("bad argument, number expected"); }
 	| SET_USERPHONE LPAREN RPAREN { $$=mk_action(SET_USERPHONE_T, 0); set_cfg_pos($$); }
 	| SET_USERPHONE error { $$=0; yyerror("missing '(' or ')' ?"); }
-	| APPEND_BRANCH LPAREN STRING COMMA STRING RPAREN {
-		qvalue_t q;
-		if (str2q(&q, $5, strlen($5)) < 0) {
-			yyerror("bad argument, q value expected");
-		}
-		$$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, $3, NUMBER_ST, (void *)(long)q);
-		set_cfg_pos($$);
-	}
-	| APPEND_BRANCH LPAREN STRING RPAREN {
-		$$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, $3,
-							NUMBER_ST, (void *)Q_UNSPECIFIED);
-		set_cfg_pos($$);
-	}
-	| APPEND_BRANCH LPAREN RPAREN {
-		$$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, 0,
-							NUMBER_ST, (void *)Q_UNSPECIFIED);
-		set_cfg_pos($$);
-	}
-	| APPEND_BRANCH {
-		$$=mk_action(APPEND_BRANCH_T, 2, STRING_ST, 0,
-							NUMBER_ST, (void *)Q_UNSPECIFIED);
-		set_cfg_pos($$);
-	}
 	| REMOVE_BRANCH LPAREN intno RPAREN {
 			$$=mk_action(REMOVE_BRANCH_T, 1, NUMBER_ST, (void*)$3);
 			set_cfg_pos($$);

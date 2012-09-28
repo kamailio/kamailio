@@ -331,7 +331,7 @@ static void free_sock_info(struct socket_info* si)
 
 
 
-static char* get_valid_proto_name(unsigned short proto)
+char* get_valid_proto_name(unsigned short proto)
 {
 	switch(proto){
 		case PROTO_NONE:

@@ -25,7 +25,6 @@
 
 #include "../../sr_module.h"
 
-int w_km_append_branch(struct sip_msg *msg, char *uri, str *s2);
 int w_setdsturi(struct sip_msg *msg, char *uri, str *s2);
 int w_resetdsturi(struct sip_msg *msg, char *uri, str *s2);
 int w_isdsturiset(struct sip_msg *msg, char *uri, str *s2);

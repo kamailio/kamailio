@@ -6,7 +6,13 @@ func! s:cfgType()
       if getline(n) =~ '^\s*#!\(KAMAILIO\|OPENSER\|SER\|ALL\|MAXCOMPAT\)' 
          set filetype=ser 
          return 
-	 elseif getline(n) =~ '^\s*modparam\s*(\s*"[^"]\+"' 
+      elseif getline(n) =~ '^\s*#!\(define\|ifdef\|endif\|subst\|substdef\)' 
+         set filetype=ser 
+         return 
+      elseif getline(n) =~ '^\s*!!\(define\|ifdef\|endif\|subst\|substdef\)' 
+         set filetype=ser 
+         return 
+      elseif getline(n) =~ '^\s*modparam\s*(\s*"[^"]\+"' 
          set filetype=ser 
          return 
       elseif getline(n) =~ '^\s*route\s*{\s*' 

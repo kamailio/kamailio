@@ -492,27 +492,32 @@ qvalue_t get_ruri_q(void)
  */
 int rewrite_uri(struct sip_msg* _m, str* _s)
 {
-        char* buf;
+	char *buf = NULL;
 
-        buf = (char*)pkg_malloc(_s->len + 1);
-        if (!buf) {
-                LOG(L_ERR, "ERROR: rewrite_uri: No memory left\n");
-                return -1;
-        }
+	if(_m->new_uri.s==NULL || _m->new_uri.len<_s->len) {
+		buf = (char*)pkg_malloc(_s->len + 1);
+		if (!buf) {
+			LM_ERR("No memory left to rewrite r-uri\n");
+			return -1;
+		}
+	}
+	if(buf!=NULL) {
+		if(_m->new_uri.s)
+			pkg_free(_m->new_uri.s);
+	} else {
+		buf = _m->new_uri.s;
+	}
 
-        memcpy(buf, _s->s, _s->len);
-        buf[_s->len] = '\0';
+	memcpy(buf, _s->s, _s->len);
+	buf[_s->len] = '\0';
 
-        _m->parsed_uri_ok = 0;
-        if (_m->new_uri.s) {
-                pkg_free(_m->new_uri.s);
-        }
+	_m->parsed_uri_ok = 0;
 
-        _m->new_uri.s = buf;
-        _m->new_uri.len = _s->len;
-        /* mark ruri as new and available for forking */
-        ruri_mark_new();
+	_m->new_uri.s = buf;
+	_m->new_uri.len = _s->len;
+	/* mark ruri as new and available for forking */
+	ruri_mark_new();
 
-        return 1;
+	return 1;
 }
 

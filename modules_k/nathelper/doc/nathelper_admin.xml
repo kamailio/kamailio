@@ -333,6 +333,35 @@ modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>keepalive_timeout</varname> (int)</title>
+		<para>
+		The parameter sets the interval in secods after which a natted
+		contact is removed from location table if it does not reply to SIP
+		keepalives (usually OPTIONS ping requests).
+		</para>
+		<para>
+		The features is available only for UDP contacts that are stored in memory
+		(not working for db only mode for usrloc module).
+		</para>
+		<para>
+		Keepalives are sent stateless, not using TM module. The value of this
+		parameter has to be few times higher than natping_interval.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (feature disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>keepalive_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "keepalive_timeout", 120)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 
@@ -415,29 +444,6 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 		<programlisting format="linespecific">
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title>
-		<function moreinfo="none">set_rtp_proxy_set()</function>
-		</title>
-		<para>
-		Sets the Id of the rtpproxy set to be used for the next 
-		[un]force_rtp_proxy(), rtpproxy_offer() or rtpproxy_answer()
-		command.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
-		BRANCH_ROUTE.
-		</para>
-		<example>
-		<title><function>fix_nated_contact</function> usage</title>
-		<programlisting format="linespecific">
-...
-set_rtp_proxy_set("2");
-force_rtp_proxy();
 ...
 </programlisting>
 		</example>
@@ -569,12 +575,12 @@ fix_nated_register();
 
 	<section>
 		<title>
-		<function moreinfo="none">add_contact_alias()</function>
+		<function moreinfo="none">add_contact_alias([ip_addr, port, proto])</function>
 		</title>
 		<para>
-		Adds ;alias=ip:port parameter to contact URI containing
-		received ip:port if contact uri ip:port does not match
-		received ip:port.
+		Adds ;alias=ip~port~transport parameter to contact URI
+		containing either received ip, port, and transport protocol
+		or those given as parameters.
 		</para>
 		<para>
 		This function can be used from
@@ -585,7 +591,7 @@ fix_nated_register();
 		<programlisting format="linespecific">
 ...
     if (!is_present_hf("Record-Route")) {
-        if (!add_contact_alias()) {
+        if (!add_contact_alias("$var(src_ip)", "$Rp", "tcp")) {
             xlog("L_ERR", "Error in aliasing contact $ct\n");
             send_reply("400", "Bad request");
             exit;

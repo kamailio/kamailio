@@ -140,3 +140,214 @@ void reset_local_debug_level(void)
 {
 	_local_debug_level = UNSET_LOCAL_DEBUG_LEVEL;
 }
+
+typedef struct log_level_color {
+	char f;
+	char b;
+} log_level_color_t;
+
+log_level_color_t _log_level_colors[L_MAX - L_MIN + 1];
+
+void dprint_init_colors(void)
+{
+	int i;
+
+	i = 0;
+
+	memset(_log_level_colors, 0,
+			(L_MAX - L_MIN + 1)*sizeof(log_level_color_t));
+
+	/* L_ALERT */
+	_log_level_colors[i].f = 'R'; /* default */
+	_log_level_colors[i].b = 'x'; /* default */
+	i++;
+
+	/* L_BUG */
+	_log_level_colors[i].f = 'P'; /* default */
+	_log_level_colors[i].b = 'x'; /* default */
+	i++;
+
+	/* L_CRIT2 */
+	_log_level_colors[i].f = 'y'; /* default */
+	_log_level_colors[i].b = 'x'; /* default */
+	i++;
+
+	/* L_CRIT */
+	_log_level_colors[i].f = 'b'; /* default */
+	_log_level_colors[i].b = 'x'; /* default */
+	i++;
+
+	/* L_ERR */
+	_log_level_colors[i].f = 'r'; /* default */
+	_log_level_colors[i].b = 'x'; /* default */
+	i++;
+
+	/* L_WARN */
+	_log_level_colors[i].f = 'p'; /* default */
+	_log_level_colors[i].b = 'x'; /* default */
+	i++;
+
+	/* L_NOTICE */
+	_log_level_colors[i].f = 'g'; /* default */
+	_log_level_colors[i].b = 'x'; /* default */
+	i++;
+
+	/* L_INFO */
+	_log_level_colors[i].f = 'c'; /* default */
+	_log_level_colors[i].b = 'x'; /* default */
+	i++;
+
+	/* L_DBG */
+	_log_level_colors[i].f = 'x'; /* default */
+	_log_level_colors[i].b = 'x'; /* default */
+	i++;
+}
+
+#define TERM_COLOR_SIZE 16
+
+#define dprint_termc_add(p, end, s) \
+        do{ \
+                if ((p)+(sizeof(s)-1)<=(end)){ \
+                        memcpy((p), s, sizeof(s)-1); \
+                        (p)+=sizeof(s)-1; \
+                }else{ \
+                        /* overflow */ \
+                        LM_ERR("dprint_termc_add overflow\n"); \
+                        goto error; \
+                } \
+        } while(0)
+
+
+void dprint_term_color(char f, char b, str *obuf)
+{
+	static char term_color[TERM_COLOR_SIZE];
+	char* p;
+	char* end;
+
+	p = term_color;
+	end = p + TERM_COLOR_SIZE;
+
+	/* excape sequence */
+	dprint_termc_add(p, end, "\033[");
+
+	if(f!='_')
+	{
+		if (islower((int)f))
+		{
+			/* normal font */
+			dprint_termc_add(p, end, "0;");
+		} else {
+			/* bold font */
+			dprint_termc_add(p, end, "1;");
+			f += 32;
+		}
+	}
+
+	/* foreground */
+	switch(f)
+	{
+		case 'x':
+			dprint_termc_add(p, end, "39;");
+		break;
+		case 's':
+			dprint_termc_add(p, end, "30;");
+		break;
+		case 'r':
+			dprint_termc_add(p, end, "31;");
+		break;
+		case 'g':
+			dprint_termc_add(p, end, "32;");
+		break;
+		case 'y':
+			dprint_termc_add(p, end, "33;");
+		break;
+		case 'b':
+			dprint_termc_add(p, end, "34;");
+		break;
+		case 'p':
+			dprint_termc_add(p, end, "35;");
+		break;
+		case 'c':
+			dprint_termc_add(p, end, "36;");
+		break;
+		case 'w':
+			dprint_termc_add(p, end, "37;");
+		break;
+		default:
+			dprint_termc_add(p, end, "39;");
+	}
+
+	/* background */
+	switch(b)
+	{
+		case 'x':
+			dprint_termc_add(p, end, "49");
+		break;
+		case 's':
+			dprint_termc_add(p, end, "40");
+		break;
+		case 'r':
+			dprint_termc_add(p, end, "41");
+		break;
+		case 'g':
+			dprint_termc_add(p, end, "42");
+		break;
+		case 'y':
+			dprint_termc_add(p, end, "43");
+		break;
+		case 'b':
+			dprint_termc_add(p, end, "44");
+		break;
+		case 'p':
+			dprint_termc_add(p, end, "45");
+		break;
+		case 'c':
+			dprint_termc_add(p, end, "46");
+		break;
+		case 'w':
+			dprint_termc_add(p, end, "47");
+		break;
+		default:
+			dprint_termc_add(p, end, "49");
+	}
+
+	/* end */
+	dprint_termc_add(p, end, "m");
+
+	obuf->s = term_color;
+	obuf->len = p - term_color;
+	return;
+
+error:
+	obuf->s = term_color;
+	term_color[0] = '\0';
+	obuf->len = 0;
+}
+
+void dprint_color(int level)
+{
+	str obuf;
+
+	if(level<L_MIN || level>L_MAX)
+		return;
+	dprint_term_color(_log_level_colors[level - L_MIN].f,
+			_log_level_colors[level - L_MIN].b,
+			&obuf);
+	fprintf(stderr, "%.*s", obuf.len, obuf.s);
+}
+
+void dprint_color_reset(void)
+{
+	str obuf;
+
+	dprint_term_color('x', 'x', &obuf);
+	fprintf(stderr, "%.*s", obuf.len, obuf.s);
+}
+
+void dprint_color_update(int level, char f, char b)
+{
+	if(level<L_MIN || level>L_MAX)
+		return;
+	if(f && f!='0') _log_level_colors[level - L_MIN].f = f;
+	if(b && b!='0') _log_level_colors[level - L_MIN].b = b;
+}

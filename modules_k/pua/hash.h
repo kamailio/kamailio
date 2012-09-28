@@ -116,7 +116,8 @@ htable_t* new_htable(void);
 
 ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code);
 
-void insert_htable(ua_pres_t* presentity );
+void insert_htable(ua_pres_t* presentity, unsigned int hash_code);
+
 
 void update_htable(ua_pres_t* presentity,time_t desired_expires,
 		int expires, str* etag, unsigned int hash_code, str* contact);

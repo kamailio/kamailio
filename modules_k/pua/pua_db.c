@@ -168,6 +168,11 @@ int clean_puadb( int update_period, int min_expires )
 	q_vals[0].val.int_val = now+update_period;
 	q_ops[0] = OP_LT; 	
 
+	if (pua_dbf.use_table(pua_db, &db_table) < 0) {
+	    LM_ERR("error in use_table pua\n");
+	    return(-1);
+	}
+
 	if(db_fetch_query(&pua_dbf, pua_fetch_rows, pua_db, q_cols, q_ops,
 				q_vals, NULL, 1, 0, 0, &res) < 0)
 	{
@@ -279,6 +284,11 @@ int is_dialog_puadb(ua_pres_t *pres)
 		return(-1);
 	}
 
+	if (pua_dbf.use_table(pua_db, &db_table) < 0)
+	{
+		LM_ERR("error in use_table pua\n");
+		return(-1);
+	}
 
 	if(pua_dbf.query(pua_db, q_cols, 0, q_vals,
 				res_cols,n_query_cols,n_res_cols,0,&res) < 0)
@@ -364,6 +374,12 @@ int get_record_id_puadb(ua_pres_t *pres, str **rec_id )
 	if(pua_db == NULL)
 	{
 		LM_ERR("null database connection\n");
+		return(-1);
+	}
+
+	if (pua_dbf.use_table(pua_db, &db_table) < 0)
+	{
+		LM_ERR("error in use_table pua\n");
 		return(-1);
 	}
 
@@ -614,6 +630,12 @@ int convert_temporary_dialog_puadb(ua_pres_t *pres)
 	query_vals[n_query_cols].val.str_val.len = 0;
 	n_query_cols++;
 
+	if (pua_dbf.use_table(pua_db, &db_table) < 0)
+	{
+		LM_ERR("error in use_table pua\n");
+		return(-1);
+	}
+
 	if (pua_dbf.replace != NULL)
 	{
 		if (pua_dbf.replace(pua_db, query_cols, query_vals, n_query_cols,
@@ -817,6 +839,7 @@ ua_pres_t *get_record_puadb(str pres_id, str *etag, ua_pres_t *result, db1_res_t
 	db_row_t *rows;
 	db1_res_t *res;
 	int n_query_cols = 0, nr_rows;
+	db_query_f query_fn = pua_dbf.query_lock ? pua_dbf.query_lock : pua_dbf.query;
 
 	q_cols[n_query_cols] = &str_pres_id_col;	
 	q_vals[n_query_cols].type = DB1_STR;
@@ -840,7 +863,13 @@ ua_pres_t *get_record_puadb(str pres_id, str *etag, ua_pres_t *result, db1_res_t
 		return(NULL);
 	}
 
-	if(pua_dbf.query(pua_db, q_cols, 0, q_vals,
+	if (pua_dbf.use_table(pua_db, &db_table) < 0)
+	{
+		LM_ERR("error in use_table pua\n");
+		return(NULL);
+	}
+
+	if(query_fn(pua_db, q_cols, 0, q_vals,
 				NULL,n_query_cols,0,0,&res) < 0)
 	{
 		LM_ERR("DB query error\n");
@@ -916,6 +945,12 @@ int delete_record_puadb(ua_pres_t *pres)
 		return(-1);
 	}
 
+	if (pua_dbf.use_table(pua_db, &db_table) < 0)
+	{
+		LM_ERR("error in use_table pua\n");
+		return(-1);
+	}
+
 	if (pua_dbf.delete(pua_db, q_cols, 0, q_vals, n_query_cols) < 0) 
 	{
 		LM_ERR("deleting record\n");
@@ -979,6 +1014,12 @@ int update_record_puadb(ua_pres_t *pres, int expires, str *etag)
 	if(pua_db == NULL)
 	{
 		LM_ERR("null database connection\n");
+		return(-1);
+	}
+
+	if (pua_dbf.use_table(pua_db, &db_table) < 0)
+	{
+		LM_ERR("error in use_table pua\n");
 		return(-1);
 	}
 
@@ -1162,6 +1203,7 @@ ua_pres_t *get_dialog_puadb(str pres_id, str *pres_uri, ua_pres_t *result, db1_r
 	db_row_t *rows;
 	db1_res_t *res;
 	int n_query_cols = 0, nr_rows;
+	db_query_f query_fn = pua_dbf.query_lock ? pua_dbf.query_lock : pua_dbf.query;
 
 	if (pres_uri == NULL)
 	{
@@ -1188,7 +1230,13 @@ ua_pres_t *get_dialog_puadb(str pres_id, str *pres_uri, ua_pres_t *result, db1_r
 		return(NULL);
 	}
 
-	if(pua_dbf.query(pua_db, q_cols, 0, q_vals,
+	if (pua_dbf.use_table(pua_db, &db_table) < 0)
+	{
+		LM_ERR("error in use_table pua\n");
+		return(NULL);
+	}
+
+	if(query_fn(pua_db, q_cols, 0, q_vals,
 				NULL,n_query_cols,0,0,&res) < 0)
 	{
 		LM_ERR("DB query error\n");
@@ -1210,11 +1258,14 @@ ua_pres_t *get_dialog_puadb(str pres_id, str *pres_uri, ua_pres_t *result, db1_r
 		pua_dbf.free_result(pua_db, res);
 		return(NULL);
 	}
-
-	if (nr_rows != 1)
+	else if (nr_rows > 1)
 	{
-		LM_ERR("Too many rows found (%d)\n", nr_rows);
+		LM_ERR("Too many rows found (%d)... deleting\n", nr_rows);
 		pua_dbf.free_result(pua_db, res);
+
+		if (pua_dbf.delete(pua_db, q_cols, 0, q_vals, n_query_cols) < 0) 
+			LM_ERR("deleting record(s)\n");
+
 		return(NULL);
 	}
 
@@ -1268,6 +1319,12 @@ int delete_dialog_puadb(ua_pres_t *pres)
 	if(pua_db == NULL)
 	{
 		LM_ERR("null database connection\n");
+		return(-1);
+	}
+
+	if (pua_dbf.use_table(pua_db, &db_table) < 0)
+	{
+		LM_ERR("error in use_table pua\n");
 		return(-1);
 	}
 
@@ -1343,6 +1400,12 @@ int update_dialog_puadb(ua_pres_t *pres, int expires, str *contact)
 		return(-1);
 	}
 
+	if (pua_dbf.use_table(pua_db, &db_table) < 0)
+	{
+		LM_ERR("error in use_table pua\n");
+		return(-1);
+	}
+
 	if (pua_dbf.update(pua_db, q_cols, 0, q_vals, u_cols, u_vals,
 			n_query_cols, n_update_cols) < 0)
 	{
@@ -1399,6 +1462,12 @@ int update_contact_puadb(ua_pres_t *pres, str *contact)
 	if(pua_db == NULL)
 	{
 		LM_ERR("null database connection\n");
+		return(-1);
+	}
+
+	if (pua_dbf.use_table(pua_db, &db_table) < 0)
+	{
+		LM_ERR("error in use_table pua\n");
 		return(-1);
 	}
 
@@ -1460,6 +1529,12 @@ int update_version_puadb(ua_pres_t *pres)
 		return(-1);
 	}
 
+	if (pua_dbf.use_table(pua_db, &db_table) < 0)
+	{
+		LM_ERR("error in use_table pua\n");
+		return(-1);
+	}
+
 	if(pua_dbf.update(pua_db, q_cols, 0, q_vals,
 				db_cols,db_vals,n_query_cols,n_update_cols) < 0)
 
@@ -1496,6 +1571,12 @@ list_entry_t *get_subs_list_puadb(str *did)
 	{
 		LM_ERR("null database connection\n");
 		return list;
+	}
+
+	if (pua_dbf.use_table(pua_db, &db_table) < 0)
+	{
+		LM_ERR("error in use_table pua\n");
+		return(list);
 	}
 
 	if(db_fetch_query(&pua_dbf, pua_fetch_rows, pua_db, q_cols, 0,

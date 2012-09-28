@@ -326,6 +326,11 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 		LM_ERR("invalid parameters");
 		goto error_exec;
 	}
+	if(srv->len==0 || res->len==0 || cmd->len==0)
+	{
+		LM_ERR("invalid parameters");
+		goto error_exec;
+	}
 	if(rsrv==NULL)
 	{
 		LM_ERR("no redis server found: %.*s\n", srv->len, srv->s);
@@ -334,7 +339,7 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	if(rsrv->ctxRedis==NULL)
 	{
 		LM_ERR("no redis context for server: %.*s\n", srv->len, srv->s);
-		return -1;
+		goto error_exec;
 	}
 	rpl = redisc_get_reply(res);
 	if(rpl==NULL)
@@ -354,6 +359,10 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	if(rpl->rplRedis == NULL)
 	{
 		/* null reply, reconnect and try again */
+		if(rsrv->ctxRedis->err)
+		{
+			LM_ERR("Redis error: %s\n", rsrv->ctxRedis->errstr);
+		}
 		if(redisc_reconnect_server(rsrv)==0)
 		{
 			rpl->rplRedis = redisvCommand(rsrv->ctxRedis, cmd->s, ap);
@@ -367,6 +376,61 @@ error_exec:
 	va_end(ap);
 	return -1;
 
+}
+
+/**
+ * Executes a redis command.
+ * Command is coded using a vector of strings, and a vector of lenghts.
+ *
+ * @param rsrv Pointer to a redis_server_t structure.
+ * @param argc number of elements in the command vector.
+ * @param argv vector of zero terminated strings forming the command.
+ * @param argvlen vector of command string lenghts or NULL.
+ * @return redisReply structure or NULL if there was an error.
+ */
+void * redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv, const size_t *argvlen)
+{
+	redisReply *res=NULL;
+
+	if(rsrv==NULL || rsrv->ctxRedis==NULL)
+	{
+		LM_ERR("no redis context found for server %.*s\n",
+			   rsrv->sname->len, rsrv->sname->s);
+		return NULL;
+	}
+	if(argc<=0)
+	{
+		LM_ERR("invalid parameters\n");
+		return NULL;
+	}
+	if(argv==NULL || *argv==NULL)
+	{
+		LM_ERR("invalid parameters\n");
+		return NULL;
+	}
+	res = redisCommandArgv(rsrv->ctxRedis, argc, argv, argvlen);
+	if(res)
+	{
+		return res;
+	}
+
+	/* null reply, reconnect and try again */
+	if(rsrv->ctxRedis->err)
+	{
+		LM_ERR("Redis error: %s\n", rsrv->ctxRedis->errstr);
+	}
+	if(redisc_reconnect_server(rsrv)==0)
+	{
+		res = redisCommandArgv(rsrv->ctxRedis, argc, argv, argvlen);
+	}
+	else
+	{
+		LM_ERR("Unable to reconnect to server: %.*s\n",
+			   rsrv->sname->len, rsrv->sname->s);
+		return NULL;
+	}
+
+	return res;
 }
 
 /**
@@ -417,6 +481,11 @@ int redisc_free_reply(str *name)
 {
 	redisc_reply_t *rpl, *next_rpl;
 	unsigned int hid;
+
+	if(name==NULL || name->len==0) {
+		LM_ERR("invalid parameters");
+		return -1;
+	}
 
 	hid = get_hash1_raw(name->s, name->len);
 

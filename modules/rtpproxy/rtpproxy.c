@@ -1993,6 +1993,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 		{NULL, 0},	/* Timeout-Socket */
 	};
 	int iovec_param_count;
+	int autobridge_ipv4v6;
 
 	char *c1p, *c2p, *bodylimit, *o1p;
 	char itoabuf_buf[20];
@@ -2012,7 +2013,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 		LM_ERR("out of pkg memory\n");
 		FORCE_RTP_PROXY_RET (-1);
 	}
-	flookup = force = real = orgip = commip = via = 0;
+	flookup = force = real = orgip = commip = via = autobridge_ipv4v6 = 0;
 	for (cp = str1; cp != NULL && *cp != '\0'; cp++) {
 		switch (*cp) {
 		case '1':
@@ -2074,6 +2075,11 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 		case 'o':
 		case 'O':
 			orgip = 1;
+			break;
+
+		case 'x':
+		case 'X':
+			autobridge_ipv4v6 = 1;
 			break;
 
 		case 'w':
@@ -2253,11 +2259,31 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 			}
 			/* XXX must compare address families in all addresses */
 			if (pf == AF_INET6) {
+				if (autobridge_ipv4v6 != 0) {
+					if ((append_opts(&opts, 'E') == -1) || (append_opts(&opts, 'I') == -1))  {
+						LM_ERR("out of pkg memory\n");
+						FORCE_RTP_PROXY_RET (-1);
+					}
+				}
 				if (append_opts(&opts, '6') == -1) {
 					LM_ERR("out of pkg memory\n");
 					FORCE_RTP_PROXY_RET (-1);
 				}
+				/* We need to update the pointers and the length here, it has changed. */
+				v[1].iov_base = opts.s.s;
+				v[1].iov_len = opts.oidx;
+			} else {
+				if (autobridge_ipv4v6 != 0) {
+					if ((append_opts(&opts, 'I') == -1) || (append_opts(&opts, 'E') == -1))  {
+						LM_ERR("out of pkg memory\n");
+						FORCE_RTP_PROXY_RET (-1);
+					}
+					/* We need to update the pointers and the length here, it has changed. */
+					v[1].iov_base = opts.s.s;
+					v[1].iov_len = opts.oidx;
+				}
 			}
+
 			STR2IOVEC(newip, v[9]);
 			STR2IOVEC(oldport, v[11]);
 #ifdef EXTRA_DEBUG
