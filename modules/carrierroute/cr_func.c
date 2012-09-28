@@ -85,16 +85,16 @@ static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, struct name_map_t
 		break;
 	case GPARAM_TYPE_PVE:
 		/* does this PV hold an AVP? */
-		if (gp->v.pve->spec.type==PVT_AVP) {
-			avp = search_first_avp(gp->v.pve->spec.pvp.pvn.u.isname.type,
-						gp->v.pve->spec.pvp.pvn.u.isname.name, &avp_val, 0);
+		if (gp->v.pve->spec->type==PVT_AVP) {
+			avp = search_first_avp(gp->v.pve->spec->pvp.pvn.u.isname.type,
+						gp->v.pve->spec->pvp.pvn.u.isname.name, &avp_val, 0);
 			if (!avp) {
-				if(gp->v.pve->spec.pvp.pvn.u.isname.type & AVP_NAME_STR)
-					LM_ERR("cannot find AVP '%.*s'\n", gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
-						gp->v.pve->spec.pvp.pvn.u.isname.name.s.s);
-				else if(gp->v.pve->spec.pvp.pvn.u.isname.type & AVP_NAME_RE)
+				if(gp->v.pve->spec->pvp.pvn.u.isname.type & AVP_NAME_STR)
+					LM_ERR("cannot find AVP '%.*s'\n", gp->v.pve->spec->pvp.pvn.u.isname.name.s.len,
+						gp->v.pve->spec->pvp.pvn.u.isname.name.s.s);
+				else if(gp->v.pve->spec->pvp.pvn.u.isname.type & AVP_NAME_RE)
 					LM_ERR("cannot find AVP regex\n");
-				else 	LM_ERR("cannot find AVP '%d'\n", gp->v.pve->spec.pvp.pvn.u.isname.name.n);
+				else 	LM_ERR("cannot find AVP '%d'\n", gp->v.pve->spec->pvp.pvn.u.isname.name.n);
 				return -1;
 			}
 			if ((avp->flags&AVP_VAL_STR)==0) {
@@ -102,12 +102,12 @@ static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, struct name_map_t
 			} else {
 				id = map_name2id(map, size, &avp_val.s);
 				if (id < 0) {
-					if(gp->v.pve->spec.pvp.pvn.u.isname.type & AVP_NAME_STR)
-						LM_ERR("cannot map carrier with id %.*s from  AVP '%.*s'\n", avp_val.s.len, avp_val.s.s, gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
-							gp->v.pve->spec.pvp.pvn.u.isname.name.s.s);
-					else if(gp->v.pve->spec.pvp.pvn.u.isname.type & AVP_NAME_RE)
+					if(gp->v.pve->spec->pvp.pvn.u.isname.type & AVP_NAME_STR)
+						LM_ERR("cannot map carrier with id %.*s from  AVP '%.*s'\n", avp_val.s.len, avp_val.s.s, gp->v.pve->spec->pvp.pvn.u.isname.name.s.len,
+							gp->v.pve->spec->pvp.pvn.u.isname.name.s.s);
+					else if(gp->v.pve->spec->pvp.pvn.u.isname.type & AVP_NAME_RE)
 						LM_ERR("cannot map carrier with id %.*s from  AVP regex\n", avp_val.s.len, avp_val.s.s);
-					else 	LM_ERR("cannot map carrier with id %.*s from  AVP '%d'\n", avp_val.s.len, avp_val.s.s, gp->v.pve->spec.pvp.pvn.u.isname.name.n);
+					else 	LM_ERR("cannot map carrier with id %.*s from  AVP '%d'\n", avp_val.s.len, avp_val.s.s, gp->v.pve->spec->pvp.pvn.u.isname.name.n);
 					return -1;
 				}
 				return id;
@@ -187,8 +187,8 @@ static int set_next_domain_on_rule(struct failure_route_rule *frr_head,
 				((rr->host.len == 0) || (str_strcmp(host, &rr->host)==0)) &&
 				(reply_code_matcher(&(rr->reply_code), reply_code)==0)) {
 			avp_val.n = rr->next_domain;
-			if (add_avp(dstavp->v.pve->spec.pvp.pvn.u.isname.type,
-					dstavp->v.pve->spec.pvp.pvn.u.isname.name, avp_val)<0) {
+			if (add_avp(dstavp->v.pve->spec->pvp.pvn.u.isname.type,
+					dstavp->v.pve->spec->pvp.pvn.u.isname.name, avp_val)<0) {
 				LM_ERR("set AVP failed\n");
 				return -1;
 			}
@@ -354,8 +354,8 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 
 	if (descavp) {
 		avp_val.s = rs->comment;
-		if (add_avp(AVP_VAL_STR | descavp->v.pve->spec.pvp.pvn.u.isname.type,
-					descavp->v.pve->spec.pvp.pvn.u.isname.name, avp_val)<0) {
+		if (add_avp(AVP_VAL_STR | descavp->v.pve->spec->pvp.pvn.u.isname.type,
+					descavp->v.pve->spec->pvp.pvn.u.isname.name, avp_val)<0) {
 			LM_ERR("set AVP failed\n");
 			return -1;
 		}
@@ -639,8 +639,8 @@ int cr_load_user_carrier(struct sip_msg * _msg, gparam_t *_user, gparam_t *_doma
 		return -1;
 	} else {
 		/* set avp */
-		if (add_avp(_dstavp->v.pve->spec.pvp.pvn.u.isname.type,
-					_dstavp->v.pve->spec.pvp.pvn.u.isname.name, avp_val)<0) {
+		if (add_avp(_dstavp->v.pve->spec->pvp.pvn.u.isname.type,
+					_dstavp->v.pve->spec->pvp.pvn.u.isname.name, avp_val)<0) {
 			LM_ERR("add AVP failed\n");
 			return -1;
 		}
