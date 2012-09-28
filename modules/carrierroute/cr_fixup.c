@@ -186,9 +186,9 @@ static int avp_name_fixup(void ** param) {
 		LM_ERR("could not fixup parameter");
 		return -1;
 	}
-	if (((gparam_p)(*param))->v.pve->spec.type == PVT_AVP &&
-			((gparam_p)(*param))->v.pve->spec.pvp.pvn.u.isname.name.s.len == 0 &&
-			((gparam_p)(*param))->v.pve->spec.pvp.pvn.u.isname.name.s.s == 0) {
+	if (((gparam_p)(*param))->v.pve->spec->type == PVT_AVP &&
+			((gparam_p)(*param))->v.pve->spec->pvp.pvn.u.isname.name.s.len == 0 &&
+			((gparam_p)(*param))->v.pve->spec->pvp.pvn.u.isname.name.s.s == 0) {
 		LM_ERR("malformed or non AVP type definition\n");
 		return -1;
 	}

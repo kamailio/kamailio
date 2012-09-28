@@ -71,7 +71,7 @@ int ldap_search_impl(
 		LM_ERR("empty ldap_url\n");
 		return -2;
 	}
-	if ( _ldap_url->spec.getf!=NULL) {
+	if ( _ldap_url->spec!=NULL && _ldap_url->spec->getf!=NULL) {
 		if (pv_printf_s( _msg, _ldap_url, &ldap_url)!=0 || ldap_url.len<=0) {
 			LM_ERR("pv_printf_s failed\n");
 			return -2;
