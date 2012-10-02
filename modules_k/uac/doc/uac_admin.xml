@@ -181,6 +181,27 @@ modparam("uac","restore_mode","auto")
 			</example>
 		</section>
 		<section>
+			<title><varname>restore_mode</varname> (int)</title>
+			<para>
+			If set to 1, the module uses dialog variables to store initial and
+			new values for From/To headers. Dialog module has to be loaded and
+			all calls that involve chages to From/To headers must be tracked.
+			</para>
+			<para>
+				<emphasis>
+					Default value of this parameter is 0.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>restore_dlg</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac", "restore_dlg", 1)
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
 			<title><varname>restore_passwd</varname> (string)</title>
 			<para>
 			String password to be used to encrypt the RR storing parameters. If
