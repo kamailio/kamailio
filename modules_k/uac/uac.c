@@ -74,6 +74,7 @@ unsigned short restore_from_avp_type;
 int_str restore_from_avp_name;
 unsigned short restore_to_avp_type;
 int_str restore_to_avp_name;
+static int uac_restore_dlg = 0;
 
 /* global param variables */
 str rr_from_param = str_init("vsf");
@@ -146,6 +147,7 @@ static param_export_t params[] = {
 	{"rr_from_store_param", STR_PARAM,				&rr_from_param.s       },
 	{"rr_to_store_param",   STR_PARAM,				&rr_to_param.s       },
 	{"restore_mode",        STR_PARAM,				&restore_mode_str      },
+	{"restore_dlg",         INT_PARAM,				&uac_restore_dlg       },
 	{"restore_passwd",      STR_PARAM,				&uac_passwd.s          },
 	{"restore_from_avp",	STR_PARAM,				&restore_from_avp.s },
 	{"restore_to_avp",		STR_PARAM,				&restore_to_avp.s },
@@ -290,13 +292,14 @@ static int mod_init(void)
 			/* we need the append_fromtag on in RR */
 
 			memset(&dlg_api, 0, sizeof(struct dlg_binds));
-			if (load_dlg_api(&dlg_api)!=0) {
+			if (uac_restore_dlg==0 || load_dlg_api(&dlg_api)!=0) {
 				if (!uac_rrb.append_fromtag) {
 					LM_ERR("'append_fromtag' RR param is not enabled!"
 						" - required by AUTO restore mode\n");
 					goto error;
 				}
-				LM_DBG("failed to find dialog API - is dialog module loaded?\n");
+				if (uac_restore_dlg!=0)
+					LM_DBG("failed to find dialog API - is dialog module loaded?\n");
 			}
 
 			/* get all requests doing loose route */
