@@ -438,7 +438,11 @@ void qm_free(struct qm_block* qm, void* p)
 #endif
 
 	if (p==0) {
+#ifdef DBG_QM_MALLOC
+		LOG(L_WARN, "WARNING:qm_free: free(0) called from %s: %s(%d)\n", file, func, line);
+#else
 		LOG(L_WARN, "WARNING:qm_free: free(0) called\n");
+#endif
 		return;
 	}
 
