@@ -1716,6 +1716,20 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
     int			method;
     int			rc = -1;
 
+    method = sca_get_msg_method( msg );
+
+    n_dispatch = sizeof( call_info_dispatch ) / sizeof( call_info_dispatch[0] );
+    for ( i = 0; i < n_dispatch; i++ ) {
+	if ( method == call_info_dispatch[ i ].method ) {
+	    break;
+	}
+    }
+    if ( i >= n_dispatch ) {
+	LM_DBG( "BUG: sca module does not support Call-Info headers "
+		"in %.*s requests", STR_FMT( &get_cseq( msg )->method ));
+	return( 1 );
+    }
+
     if ( parse_headers( msg, HDR_EOH_F, 0 ) < 0 ) {
 	LM_ERR( "header parsing failed: bad request" );
 	return( -1 );
@@ -1754,20 +1768,6 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
 	}
     } else if ( rc < 0 ) {
 	LM_ERR( "Bad Contact" );
-	return( -1 );
-    }
-
-    method = sca_get_msg_method( msg );
-
-    n_dispatch = sizeof( call_info_dispatch ) / sizeof( call_info_dispatch[0] );
-    for ( i = 0; i < n_dispatch; i++ ) {
-	if ( method == call_info_dispatch[ i ].method ) {
-	    break;
-	}
-    }
-    if ( i >= n_dispatch ) {
-	LM_ERR( "BUG: Module does not support Call-Info headers "
-		"in %.*s requests", STR_FMT( &get_cseq( msg )->method ));
 	return( -1 );
     }
 
