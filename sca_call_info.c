@@ -1107,8 +1107,6 @@ sca_call_info_invite_reply_200_handler( sip_msg_t *msg,
 
 	rc = sca_call_info_uri_update( to_aor, call_info, from, to,
 			contact_uri, &msg->callid->body );
-LM_INFO( "## ADMORTEN DEBUG: uri update of %.*s returned %d",
-		STR_FMT( to_aor ), rc );
 
 	rc = sca_call_info_insert_asserted_identity( msg, contact_uri, to );
     }
@@ -1784,20 +1782,15 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
 		STR_FMT( &from->uri ));
 	goto done;
     }
-LM_INFO( "## ADMORTEN DEBUG: extracted From AoR: %.*s", STR_FMT( &from_aor ));
     if ( sca_uri_extract_aor( &to->uri, &to_aor ) < 0 ) {
 	LM_ERR( "sca_uri_extract_aor failed to extract AoR from To URI %.*s",
 		STR_FMT( &to->uri ));
 	goto done;
     }
-LM_INFO( "## ADMORTEN DEBUG: extracted From AoR: %.*s", STR_FMT( &from_aor ));
 
     if ( !SCA_STR_EMPTY( &c_uri.user )) {
 	if ( msg->first_line.type == SIP_REQUEST ) {
 	    if ( !SCA_STR_EQ( &c_uri.user, &GET_FROM_PURI( msg )->user )) {
-LM_INFO( "## ADMORTEN DEBUG: %.*s and %.*s do not match",
-			STR_FMT( &c_uri.user ),
-			STR_FMT( &GET_FROM_PURI( msg )->user ));
 		if ( sca_aor_create_from_info( &from_aor, c_uri.type,
 			&c_uri.user, &GET_FROM_PURI( msg )->host,
 			&GET_FROM_PURI( msg )->port ) < 0 ) {
@@ -1811,9 +1804,6 @@ LM_INFO( "## ADMORTEN DEBUG: %.*s and %.*s do not match",
 	    }
 	} else {
 	    if ( !SCA_STR_EQ( &c_uri.user, &GET_TO_PURI( msg )->user )) {
-LM_INFO( "## ADMORTEN DEBUG: %.*s and %.*s do not match",
-			STR_FMT( &c_uri.user ),
-			STR_FMT( &GET_FROM_PURI( msg )->user ));
 		if ( sca_aor_create_from_info( &to_aor, c_uri.type,
 			&c_uri.user, &GET_TO_PURI( msg )->host,
 			&GET_TO_PURI( msg )->port ) < 0 ) {
