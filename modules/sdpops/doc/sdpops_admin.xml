@@ -120,6 +120,32 @@ sdp_remove_codecs_by_name("PCMU,PCMA,GSM");
 	    </example>
 	</section>
 	<section>
+	<title>
+		<function moreinfo="none">sdp_remove_line_by_prefix(string)</function>
+	</title>
+	<para>
+			Remove all SDP attribute lines beginning with 'string'.
+	</para>
+	<para>
+			This function can be used from ANY_ROUTE.
+	</para>
+	<example>
+	<title><function>sdp_remove_line_by_prefix</function> usage</title>
+	<programlisting format="linespecific">
+...
+if ($si == "1080::8:800:200C:417A"
+        and ( has_body("application/sdp") or has_body("multipart/mixed")))
+{
+    xlog("L_INFO", "Cleaning ugly SDP from $si\n");
+    sdp_remove_codecs_by_name("X-NSE");
+    sdp_remove_line_by_prefix("a=X-");
+}
+
+...
+</programlisting>
+	</example>
+        </section>
+	<section>
 	    <title>
 		<function moreinfo="none">sdp_keep_codecs_by_id(list [, mtype])</function>
 	    </title>
