@@ -937,6 +937,7 @@ sca_call_info_invite_reply_18x_handler( sip_msg_t *msg,
     int			state = SCA_APPEARANCE_STATE_UNKNOWN;
     int			slot_idx = -1;
     int			rc = -1;
+    int			notify = 0;
 
     switch ( msg->REPLY_STATUS ) {
     case 180:
@@ -973,6 +974,7 @@ sca_call_info_invite_reply_18x_handler( sip_msg_t *msg,
     }
     SCA_STR_COPY( &owner, &app->owner );
 
+    notify = ( app->state != state );
     app->state = state;
     rc = 1;
 
@@ -981,7 +983,7 @@ done:
 	sca_hash_table_unlock_index( sca->appearances, slot_idx );
     }
 
-    if ( rc > 0 && owner.s != NULL ) {
+    if ( rc > 0 && notify && owner.s != NULL ) {
 	if ( sca_subscription_terminate( sca, from_aor,
 		SCA_EVENT_TYPE_LINE_SEIZE, &owner,
 		SCA_SUBSCRIPTION_STATE_TERMINATED_NORESOURCE,
