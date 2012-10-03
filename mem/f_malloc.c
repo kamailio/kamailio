@@ -509,7 +509,7 @@ void fm_free(struct fm_block* qm, void* p)
 	MDBG("fm_free(%p, %p), called from %s: %s(%d)\n", qm, p, file, func, line);
 #endif
 	if (p==0) {
-		LOG(L_WARN, "WARNING:fm_free: free(0) called\n");
+		MDBG(L_WARN, "WARNING:fm_free: free(0) called\n");
 		return;
 	}
 #ifdef DBG_F_MALLOC
