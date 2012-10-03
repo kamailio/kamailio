@@ -311,8 +311,6 @@ int www_authenticate(struct sip_msg* _m, char* _realm, char* _table)
 /*
  * Authenticate using WWW/Proxy-Authorize header field
  */
-#define AUTH_CHECK_ID_F 1<<0
-
 int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags)
 {
 	str srealm;
