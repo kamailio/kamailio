@@ -326,6 +326,43 @@ if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
 		</example>
 	</section>
 
+	<section id="pv_auth_check">
+		<title>
+			<function moreinfo="none">pv_auth_check(realm, passwd, flags, checks)</function>
+		</title>
+		<para>
+		The function combines the functionalities of
+		<function moreinfo="none">pv_www_authenticate</function> and
+		<function moreinfo="none">pv_proxy_authenticate</function>, first being
+		exectuted if the SIP request is a REGISTER, the second for the rest.
+		</para>
+		<para>
+		Meaning of the first three parameters is the same as for
+		pv_www_authenticate(realm, passwd, flags).
+		</para>
+		<para>
+		Parameter <emphasis>checks</emphasis> can be used to control the
+		behaviour of the function. If it is 1, then the function will
+		check to see if the authentication username matches either To or
+		From header username, a matter of whether it is for a REGISTER
+		request or not.	The parameter may be a pseudo variable.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title>pv_proxy_authenticate usage</title>
+		<programlisting format="linespecific">
+...
+$avp(password)="xyz";
+if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
+	proxy_challenge("$fd", "1");
+};
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="auth_get_www_authenticate">
 		<title>
 			<function moreinfo="none">auth_get_www_authenticate(realm, flags, pvdst)</function>

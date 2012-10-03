@@ -636,6 +636,7 @@ modparam("auth", "force_stateless_reply", 1)
 	    </programlisting>
 	</example>
 	</section>
+
 	<section id="realm_prefix">
 		<title><varname>realm_prefix</varname> (string)</title>
 		<para>
@@ -657,4 +658,21 @@ modparam("auth", "realm_prefix", "sip.")
 </programlisting>
 		</example>
 	</section>
+
+	<section id="auth.use_domain">
+	<title><varname>use_domain</varname> (boolean)</title>
+	<para>
+		If set to 1, <function>pv_auth_check()</function> uses
+		domain parts of the URIs to check user identity.
+	</para>
+	<example>
+	    <title>force_stateless_reply example</title>
+	    <programlisting>
+...
+modparam("auth", "use_domain", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
 </section>
