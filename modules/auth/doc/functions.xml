@@ -24,9 +24,27 @@
 	    <title>consume_credentials example</title>
 	    <programlisting>
 ...
-if (www_authenticate("realm", "subscriber)) {
+if (www_authenticate("realm", "subscriber")) {
     consume_credentials();
 };
+...
+	    </programlisting>
+	</example>
+    </section>
+    <section id="has_credentials">
+	<title><function>has_credentials(realm)</function></title>
+	<para>
+		This function returns true of the request has Autorization or
+		Proxy-Authorization header with provided realm. The parameter
+		can be string with pseudo-variables.
+	</para>
+	<example>
+	    <title>consume_credentials example</title>
+	    <programlisting>
+...
+if (has_credentials("myrealm")) {
+    ...
+}
 ...
 	    </programlisting>
 	</example>

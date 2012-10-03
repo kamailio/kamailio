@@ -42,12 +42,13 @@ Daniel-Constantin Mierla
    1.4. Functions
 
         1.4.1. consume_credentials()
-        1.4.2. www_challenge(realm, flags)
-        1.4.3. proxy_challenge(realm, flags)
-        1.4.4. auth_challenge(realm, flags)
-        1.4.5. pv_www_authenticate(realm, passwd, flags)
-        1.4.6. pv_proxy_authenticate(realm, passwd, flags)
-        1.4.7. auth_get_www_authenticate(realm, flags, pvdst)
+        1.4.2. has_credentials(realm)
+        1.4.3. www_challenge(realm, flags)
+        1.4.4. proxy_challenge(realm, flags)
+        1.4.5. auth_challenge(realm, flags)
+        1.4.6. pv_www_authenticate(realm, passwd, flags)
+        1.4.7. pv_proxy_authenticate(realm, passwd, flags)
+        1.4.8. auth_get_www_authenticate(realm, flags, pvdst)
 
 1.1. Overview
 
@@ -526,12 +527,25 @@ modparam("auth", "realm_prefix", "sip.")
 
    Example 15. consume_credentials example
 ...
-if (www_authenticate("realm", "subscriber)) {
+if (www_authenticate("realm", "subscriber")) {
     consume_credentials();
 };
 ...
 
-1.4.2. www_challenge(realm, flags)
+1.4.2. has_credentials(realm)
+
+   This function returns true of the request has Autorization or
+   Proxy-Authorization header with provided realm. The parameter can be
+   string with pseudo-variables.
+
+   Example 16. consume_credentials example
+...
+if (has_credentials("myrealm")) {
+    ...
+}
+...
+
+1.4.3. www_challenge(realm, flags)
 
    The function challenges a user agent. It will generate a WWW-Authorize
    header field containing a digest challenge, it will put the header
@@ -560,14 +574,14 @@ if (www_authenticate("realm", "subscriber)) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 16. www_challenge usage
+   Example 17. www_challenge usage
 ...
 if (!www_authenticate("$td", "subscriber")) {
         www_challenge("$td", "1");
 }
 ...
 
-1.4.3. proxy_challenge(realm, flags)
+1.4.4. proxy_challenge(realm, flags)
 
    The function challenges a user agent. It will generate a
    Proxy-Authorize header field containing a digest challenge, it will put
@@ -582,14 +596,14 @@ if (!www_authenticate("$td", "subscriber")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 17. proxy_challenge usage
+   Example 18. proxy_challenge usage
 ...
 if (!proxy_authenticate("$fd", "subscriber")) {
         proxy_challenge("$fd", "1");
 };
 ...
 
-1.4.4. auth_challenge(realm, flags)
+1.4.5. auth_challenge(realm, flags)
 
    The function challenges a user agent for authentication. It combines
    the functions www_challenge() and proxy_challenge(), by calling
@@ -601,14 +615,14 @@ if (!proxy_authenticate("$fd", "subscriber")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 18. proxy_challenge usage
+   Example 19. proxy_challenge usage
 ...
 if (!auth_check("$fd", "subscriber", "1")) {
         auth_challenge("$fd", "1");
 };
 ...
 
-1.4.5. pv_www_authenticate(realm, passwd, flags)
+1.4.6. pv_www_authenticate(realm, passwd, flags)
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will succeed
@@ -652,14 +666,14 @@ if (!auth_check("$fd", "subscriber", "1")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 19. pv_www_authenticate usage
+   Example 20. pv_www_authenticate usage
 ...
 if (!pv_www_authenticate("$td", "123abc", "0")) {
         www_challenge("$td", "1");
 };
 ...
 
-1.4.6. pv_proxy_authenticate(realm, passwd, flags)
+1.4.7. pv_proxy_authenticate(realm, passwd, flags)
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will succeed
@@ -674,7 +688,7 @@ if (!pv_www_authenticate("$td", "123abc", "0")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 20. pv_proxy_authenticate usage
+   Example 21. pv_proxy_authenticate usage
 ...
 $avp(password)="xyz";
 if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
@@ -682,7 +696,7 @@ if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
 };
 ...
 
-1.4.7. auth_get_www_authenticate(realm, flags, pvdst)
+1.4.8. auth_get_www_authenticate(realm, flags, pvdst)
 
    Build WWW-Authentication header and set the resulting value in 'pvdest'
    parameter.
@@ -692,7 +706,7 @@ if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 21. auth_get_www_authenticate
+   Example 22. auth_get_www_authenticate
 ...
 if (auth_get_www_authenticate("$fd", "0", "$var(wauth)")) {
         xlog("www authenticate header is [$var(wauth)]\n");

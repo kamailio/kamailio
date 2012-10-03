@@ -81,6 +81,10 @@ static int mod_init(void);
  * Remove used credentials from a SIP message header
  */
 int w_consume_credentials(struct sip_msg* msg, char* s1, char* s2);
+/*
+ * Check for credentials with given realm
+ */
+int w_has_credentials(struct sip_msg* msg, char* s1, char* s2);
 
 static int pv_proxy_authenticate(struct sip_msg* msg, char* realm,
 		char *passwd, char *flags);
@@ -160,6 +164,8 @@ static cmd_export_t cmds[] = {
 			fixup_pv_auth, REQUEST_ROUTE},
     {"auth_get_www_authenticate",  (cmd_function)w_auth_get_www_authenticate,  3,
 			fixup_auth_get_www_authenticate, REQUEST_ROUTE},
+    {"has_credentials",        w_has_credentials,                    1,
+			fixup_spve_null, REQUEST_ROUTE},
     {"bind_auth_s",           (cmd_function)bind_auth_s, 0, 0, 0        },
     {0, 0, 0, 0, 0}
 };
@@ -406,6 +412,35 @@ int consume_credentials(struct sip_msg* msg)
 int w_consume_credentials(struct sip_msg* msg, char* s1, char* s2)
 {
 	return consume_credentials(msg);
+}
+
+/**
+ *
+ */
+int w_has_credentials(sip_msg_t *msg, char* realm, char* s2)
+{
+    str srealm  = {0, 0};
+	hdr_field_t *hdr = NULL;
+	int ret;
+
+	if (fixup_get_svalue(msg, (gparam_t*)realm, &srealm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		return -1;
+	}
+
+	ret = find_credentials(msg, &srealm, HDR_PROXYAUTH_T, &hdr);
+	if(ret==0) {
+		LM_DBG("found www credentials with realm [%.*s]\n", srealm.len, srealm.s);
+		return 1;
+	}
+	ret = find_credentials(msg, &srealm, HDR_AUTHORIZATION_T, &hdr);
+	if(ret==0) {
+		LM_DBG("found proxy credentials with realm [%.*s]\n", srealm.len, srealm.s);
+		return 1;
+	}
+
+	LM_DBG("no credentials with realm [%.*s]\n", srealm.len, srealm.s);
+	return -1;
 }
 
 /**
