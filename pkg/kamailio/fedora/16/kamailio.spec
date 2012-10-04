@@ -943,8 +943,8 @@ fi
 
 %files outbound
 %defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules/README.outbound
-%{_libdir}/kamailio/modules/outbound.so
+%doc %{_docdir}/kamailio/modules_k/README.outbound
+%{_libdir}/kamailio/modules_k/outbound.so
 
 
 %if 0%{?fedora}
