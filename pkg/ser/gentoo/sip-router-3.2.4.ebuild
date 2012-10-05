@@ -48,7 +48,7 @@ xcap_client xcap_server xhttp xlog xmlops xmlrpc xmpp"
 RDEPEND="
 	>=sys-libs/ncurses-5.7
 	>=sys-libs/readline-6.1_p2
-	group_experimental? ( dev-libs/openssl dev-db/redis )
+	group_experimental? ( dev-libs/openssl dev-db/redis dev-db/oracle-instantclient-basic )
 	group_mysql? ( >=dev-db/mysql-5.1.50 sys-libs/zlib )
 	group_radius? ( >=net-dialup/radiusclient-ng-0.5.0 )
 	group_presence? ( dev-libs/libxml2 net-misc/curl )
@@ -64,7 +64,7 @@ RDEPEND="
 	group_kldap? ( net-nds/openldap )
 	group_kjson? ( dev-libs/json-c dev-libs/libevent )
 	acc_radius? ( net-dialup/radiusclient-ng )
-	app_lua? ( dev-lang/lua )
+	app_lua? ( >=dev-lang/lua-5.1 )
 	app_python? ( dev-lang/python )
 	auth_identity? ( dev-libs/openssl net-misc/curl )
 	carrierroute? ( dev-libs/confuse )
