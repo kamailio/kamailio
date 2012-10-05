@@ -1772,6 +1772,8 @@ sca_call_info_update( sip_msg_t *msg, char *p1, char *p2 )
 	LM_ERR( "Bad Contact" );
 	return( -1 );
     }
+    /* reset rc to -1 so we don't end up returning 0 to the script */
+    rc = -1;
 
     if ( sca_call_info_header_remove( msg ) < 0 ) {
 	LM_ERR( "Failed to remove Call-Info header" );
