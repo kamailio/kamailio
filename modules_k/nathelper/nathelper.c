@@ -1375,12 +1375,15 @@ sdp_1918(struct sip_msg* msg)
 {
 	str *ip;
 	int pf;
+	int ret;
 	int sdp_session_num, sdp_stream_num;
 	sdp_session_cell_t* sdp_session;
 	sdp_stream_cell_t* sdp_stream;
 
-	if(0 != parse_sdp(msg)) {
-		LM_ERR("Unable to parse sdp\n");
+	ret = parse_sdp(msg);
+	if(ret != 0) {
+		if(ret < 0)
+			LM_ERR("Unable to parse sdp\n");
 		return 0;
 	}
 
