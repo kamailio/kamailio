@@ -120,7 +120,7 @@ sca_hash_table_kv_insert( sca_hash_table *ht, str *key, void *value,
 
     assert( ht != NULL && !SCA_STR_EMPTY( key ) && value != NULL );
 
-    hash_idx = core_hash( key, NULL, ht->size );
+    hash_idx = sca_hash_table_index_for_key( ht, key );
     rc = sca_hash_table_index_kv_insert( ht, hash_idx, value, e_compare,
 					 e_description, e_free );
 
@@ -187,7 +187,7 @@ sca_hash_table_kv_find( sca_hash_table *ht, str *key )
 {
     int		slot_idx;
 
-    slot_idx = core_hash( key, NULL, ht->size );
+    slot_idx = sca_hash_table_index_for_key( ht, key );
 
     return( sca_hash_table_index_kv_find( ht, slot_idx, key ));
 }
@@ -235,16 +235,15 @@ sca_hash_table_slot_unlink_entry_unsafe( sca_hash_slot *slot,
 	sca_hash_entry *e )
 {
     if ( e ) {
+	if ( e->next ) {
+	    e->next->prev = e->prev;
+	}
 	if ( e->prev ) {
 	    e->prev->next = e->next;
-	    if ( e->next ) {
-		e->next->prev = e->prev;
-	    }
 	    if ( e == *slot->last_entry ) {
 		slot->last_entry = &e->prev;
 	    }
-	}
-	if ( e == slot->entries ) {
+	} else if ( e == slot->entries ) {
 	    slot->entries = e->next;
 	    if ( e == *slot->last_entry ) {
 		slot->last_entry = &slot->entries;
@@ -300,7 +299,7 @@ sca_hash_table_kv_delete( sca_hash_table *ht, str *key )
 {
     int		slot_idx;
 
-    slot_idx = core_hash( key, NULL, ht->size );
+    slot_idx = sca_hash_table_index_for_key( ht, key );
 
     return( sca_hash_table_index_kv_delete( ht, slot_idx, key ));
 }

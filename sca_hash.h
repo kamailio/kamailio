@@ -27,7 +27,7 @@ struct _sca_hash_table {
 typedef struct _sca_hash_table	sca_hash_table;
 
 #define sca_hash_table_index_for_key( ht1, str1 ) \
-	core_hash((str1), NULL, (ht1)->size)
+	(get_hash1_raw((str1)->s, (str1)->len) & ((ht1)->size - 1 ))
 
 #define sca_hash_table_slot_for_index( ht1, idx1 ) \
 	&(ht1)->slots[ (idx1) ]
