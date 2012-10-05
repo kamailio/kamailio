@@ -1,4 +1,4 @@
-# Copyright 1999-2011 Gentoo Foundation
+# Copyright 1999-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
@@ -14,39 +14,44 @@ SLOT="0"
 LICENSE="GPL-2"
 KEYWORDS="~amd64 ~x86"
 
-#Documentation can be found here: http://www.kamailio.org/docs/modules/3.1.x/
-IUSE="flavour_kamailio flavour_ser debug ipv6 sctp
+#Documentation can be found here: http://www.kamailio.org/docs/modules/3.3.x/
+IUSE="flavour_kamailio flavour_ser
+debug ipv6 sctp
 group_standard group_standard_dep group_mysql group_radius group_postgres group_presence group_stable group_experimental
-group_kstandard group_kmysql group_kradius group_kpostgres group_kpresence group_kxml group_kperl group_kldap
-acc acc_radius alias_db app_lua app_python auth auth_identity auth_db auth_diameter auth_radius avpops
+group_kstandard group_kmysql group_kradius group_kpostgres group_kpresence
+group_kxml group_kperl group_kldap group_kjson
+acc acc_radius alias_db app_lua app_python app_mono async auth auth_identity auth_db auth_diameter auth_radius avpops
 benchmark blst
 call_control carrierroute cfg_db cfg_rpc cfgutils counters cpl-c ctl
 db_berkeley db_flatstore db_mysql db_oracle db_postgres db_text db_unixodbc
-debugger dialog dialplan dispatcher diversion domain domainpolicy drouting
-enum exec
-geoip group
-h350 htable imc iptrtpproxy jabber kex
+db_sqlite ndb_redis db_cassandra db_cluster
+debugger dialog dialplan dispatcher diversion domain domainpolicy drouting dmq
+enum exec geoip group
+h350 htable imc ipops iptrtpproxy jabber json jsonrpc-c kex
 lcr ldap
-matrix maxfwd mediaproxy memcached misc_radius mi_datagram mi_fifo mi_rpc mi_xmlrpc mqueue msilo mtree
+matrix maxfwd msrp mediaproxy memcached misc_radius mi_datagram mi_fifo mi_rpc mi_xmlrpc mqueue msilo mtree
 nathelper nat_traversal
 osp
+p_usrloc
 path pdb pdt peering perl perlvdb permissions pike pipelimit prefix_route
-presence presence_conference presence_dialoginfo presence_mwi presence_xml
-pua pua_bla pua_dialoginfo pua_mi pua_usrloc pua_xmpp purple pv
+presence presence_conference presence_dialoginfo presence_mwi presence_profile presence_reginfo presence_xml
+pua pua_bla pua_dialoginfo pua_mi pua_reginfo pua_usrloc pua_xmpp purple pv
 qos
 ratelimit regex registrar rls rtimer rr rtpproxy
-sanity seas siptrace siputils sl sms snmpstats speeddial sqlops statistics sst
-textops textopsx tls tm tmx topoh
+sanity sdpops seas sipcapture siptrace siputils sl sms snmpstats speeddial sqlops statistics sst
+textops textopsx tls tm tmx tmrec topoh
 uac uac_redirect uri_db userblacklist usrloc utils
-xcap_client xcap_server xhttp xlog xmlops xmlrpc xmpp"
+xcap_client xcap_server xhttp xhttp_rpc xlog xmlops xmlrpc xmpp"
 
-#osp? ( net-libs/osptoolkit )
+# FIXME: no ebuilds for them
+#db_cassandra? ( thrift dev-db/cassandra )
 #pdb? ( pdb-server )
 #seas? ( www.wesip.eu )
 
 RDEPEND="
 	>=sys-libs/ncurses-5.7
 	>=sys-libs/readline-6.1_p2
+	group_experimental? ( dev-libs/openssl dev-db/redis dev-db/oracle-instantclient-basic )
 	group_mysql? ( >=dev-db/mysql-5.1.50 sys-libs/zlib )
 	group_radius? ( >=net-dialup/radiusclient-ng-0.5.0 )
 	group_presence? ( dev-libs/libxml2 net-misc/curl )
@@ -60,9 +65,11 @@ RDEPEND="
 	group_kxml? ( dev-libs/libxml2 dev-libs/xmlrpc-c )
 	group_kperl? ( dev-lang/perl dev-perl/perl-ldap )
 	group_kldap? ( net-nds/openldap )
+	group_kjson? ( dev-libs/json-c dev-libs/libevent )
 	acc_radius? ( net-dialup/radiusclient-ng )
-	app_lua? ( dev-lang/lua )
+	app_lua? ( >=dev-lang/lua-5.1 )
 	app_python? ( dev-lang/python )
+	app_mono? ( dev-lang/mono )
 	auth_identity? ( dev-libs/openssl net-misc/curl )
 	carrierroute? ( dev-libs/confuse )
 	cpl-c? ( dev-libs/libxml2 )
@@ -70,7 +77,9 @@ RDEPEND="
 	db_mysql? ( >=dev-db/mysql-5.1.50 )
 	db_oracle? ( dev-db/oracle-instantclient-basic )
 	db_postgres? ( dev-db/postgresql-base )
-        db_unixodbc? ( dev-db/unixODBC )
+	db_sqlite? ( >=dev-db/sqlite-3 )
+	db_unixodbc? ( dev-db/unixODBC )
+	ndb_redis? ( dev-db/redis )
 	dialplan? ( dev-libs/libpcre )
 	geoip? ( dev-libs/geoip )
 	h350? ( net-nds/openldap )
@@ -79,6 +88,7 @@ RDEPEND="
 	ldap? ( net-nds/openldap )
 	memcached? ( dev-libs/libmemcache net-misc/memcached )
 	mi_xmlrpc? ( dev-libs/libxml2 dev-libs/xmlrpc-c )
+	osp? ( net-libs/osptoolkit )
 	peering? ( net-dialup/radiusclient-ng )
 	perl? ( dev-lang/perl dev-perl/perl-ldap )
 	presence? ( dev-libs/libxml2 )
@@ -126,6 +136,7 @@ src_compile() {
 		use group_kxml && group_inc="${group_inc} kxml"
 		use group_kperl && group_inc="${group_inc} kperl"
 		use group_kldap && group_inc="${group_inc} kldap"
+		use group_kjson && group_inc="${group_inc} kjson"
 	fi
 	# you can USE flavour=kamailio but also group_standard. It will be converted to group_kstandard
 	# same as mysql/kmysql, postgres/kpostgres, radius/kradius, presence/kpresence
@@ -203,6 +214,8 @@ src_install() {
 		modules_dir="/usr/$(get_libdir)/${flavour}/" \
 		man_dir="/usr/share/man/" \
 		doc_dir="/usr/share/doc/${flavour}/" \
+		share_dir="/usr/share/${flavour}/" \
+		data_dir="/usr/share/${flavour}/" \
 		install || die "emake install failed"
 
 	sed -e "s/sip-router/${flavour}/g" \
@@ -224,14 +237,6 @@ pkg_preinst() {
 	chown -R root:"${flavour}"  "${D}/etc/${flavour}"
 	chmod -R u=rwX,g=rX,o= "${D}/etc/${flavour}"
 
-	has_version <="${CATEGORY}/ser-0.9.8"
-	previous_installed_version=$?
-	if [[ $previous_installed_version = 1 ]] ; then
-		elog "You have a previous version of SER on ${ROOT}etc/ser"
-		elog "Consider or verify to remove it (emerge -C ser)."
-		elog
-		elog "Sip-Router may not could be installed/merged. See your elog."
-	fi
 }
 
 pkg_postinst() {
