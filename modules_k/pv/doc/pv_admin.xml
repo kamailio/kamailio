@@ -206,7 +206,7 @@ pv_unset("$avp("s:x")");
 			<para>
 			Function checks if pvar argument contains integer value
 			and returns 1 if it does and -1 otherwise.
-	    	        </para>
+			</para>
 			<para>
 			Function can be used from all kinds of routes.
 			</para>
@@ -216,6 +216,51 @@ pv_unset("$avp("s:x")");
 ...
 if (is_int("$var(foo)")) {
     xlog("L_INFO", "variable foo contains integer value\n");
+}
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">typeof(pvar, vtype)</function>
+			</title>
+			<para>
+			Returns true if the type of pseudo-variable matches the second
+			parameter. The second parameter can be: 'int' - type is integer;
+			'str' - type is string; 'null' - type is null.
+			</para>
+			<para>
+			Function can be used from ANYROUTE.
+			</para>
+			<example>
+				<title><function>typeof()</function> usage</title>
+				<programlisting format="linespecific">
+...
+if (trypeof("$var(foo)", "str")) {
+    xdbg("variable foo is a string\n");
+}
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">not_empty(pvar)</function>
+			</title>
+			<para>
+			Returns true if the pseudo-variables has the type string and
+			is not empty value.
+			</para>
+			<para>
+			Function can be used from all kinds of routes.
+			</para>
+			<example>
+				<title><function>not_empty()</function> usage</title>
+				<programlisting format="linespecific">
+...
+if (not_empty("$var(foo)")) {
+    append_hf("X-Foo: $var(foo)\r\n");
 }
 ...
 				</programlisting>
