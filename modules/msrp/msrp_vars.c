@@ -260,7 +260,7 @@ int pv_get_msrp(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res)
 			sar = (str_array_t*)hdr->parsed.data;
 			return pv_get_uintval(msg, param, res, sar->size);
 		case 18:
-			if(msrp_parse_hdr_from_path(mf)<0)
+			if(msrp_parse_hdr_to_path(mf)<0)
 				return pv_get_null(msg, param, res);
 			hdr = msrp_get_hdr_by_id(mf, MSRP_HDR_TO_PATH);
 			if(hdr==NULL)
