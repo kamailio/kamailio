@@ -1339,6 +1339,12 @@ static int check_preconditions(sip_msg_t *msg, str etag_hdr)
 
 static int check_match_header(str body, str *etag)
 {
+	if (etag == NULL)
+		return -1;
+
+	if (etag->s || etag->len == 0)
+		return -1;
+
 	do
 	{
 		char *start_pos, *end_pos, *old_body_pos;
