@@ -2533,19 +2533,20 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
     str from_tag = {0, 0};
     str to_tag = {0, 0};
     struct rtpp_node *node;
-    struct iovec v[1 + 4 + 3 + 1] = {{NULL, 0}, {"Q", 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}, {";1 ", 3}, {";1", }, {NULL, 0}};
+    struct iovec v[1 + 4 + 3 + 1] = {{NULL, 0}, {"Q", 1}, {" ", 1}, {NULL, 0},
+		{" ", 1}, {NULL, 0}, {";1 ", 3}, {";1", }, {NULL, 0}};
 
     if (get_callid(msg, &callid) == -1 || callid.len == 0) {
         LM_ERR("can't get Call-Id field\n");
-        return -1;
+		return pv_get_null(msg, param, res);
     }
     if (get_to_tag(msg, &to_tag) == -1) {
         LM_ERR("can't get To tag\n");
-        return -1;
+		return pv_get_null(msg, param, res);
     }
     if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
         LM_ERR("can't get From tag\n");
-        return -1;
+		return pv_get_null(msg, param, res);
     }
     if(msg->id != current_msg_id){
         selected_rtpp_set = default_rtpp_set;
@@ -2572,6 +2573,8 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
             nitems = 6;
     }
     ret_val.s = send_rtpp_command(node, v, nitems);
+	if(ret_val.s==NULL)
+		return pv_get_null(msg, param, res);
     ret_val.len = strlen(ret_val.s);
     return pv_get_strval(msg, param, res, &ret_val);
 }
