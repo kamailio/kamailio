@@ -550,6 +550,7 @@ int parse_params(str* _s, pclass_t _c, param_hooks_t* _h, param_t** _p)
  error:
 	if (t) pkg_free(t);
 	free_params(*_p);
+	*_p = 0;
 	return -2;
 
  ok:
