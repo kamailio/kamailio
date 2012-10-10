@@ -108,8 +108,8 @@ int msrp_relay(msrp_frame_t *mf)
 	memcpy(p, tpath->body.s, l + 1 - tpath->body.s);
 	p += l + 1 - tpath->body.s;
 
-	memcpy(p, fpath->name.s + 2, mf->buf.s + mf->buf.len - fpath->name.s - 2);
-	p += mf->buf.s + mf->buf.len - fpath->name.s - 2;
+	memcpy(p, fpath->name.s + 11, mf->buf.s + mf->buf.len - fpath->name.s - 11);
+	p += mf->buf.s + mf->buf.len - fpath->name.s - 11;
 
 
 	env = msrp_get_env();
