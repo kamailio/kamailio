@@ -1751,7 +1751,7 @@ ifeq ($(OS), linux)
 			LIBS+=-lpthread
 		endif
 	endif
-	ifeq (,$(findstring -DUSE_DNSSEC, $(C_DEFS)))
+	ifneq (,$(findstring -DUSE_DNSSEC, $(C_DEFS)))
 		LIBS+=-lval-threads -lcrypto -lsres -lpthread
 $(info "using libval for DNSSEC validation")
 	endif
