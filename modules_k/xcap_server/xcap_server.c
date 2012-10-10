@@ -1342,7 +1342,7 @@ static int check_match_header(str body, str *etag)
 	if (etag == NULL)
 		return -1;
 
-	if (etag->s || etag->len == 0)
+	if (etag->s == NULL || etag->len == 0)
 		return -1;
 
 	do
