@@ -1339,11 +1339,14 @@ int tcpconn_finish_connect( struct tcp_connection* c,
 			/* remove all the aliases except the first one and re-add them
 			 * (there shouldn't be more then the 3 default aliases at this 
 			 * stage) */
-			for (r=1; r<c->aliases; r++){
-				a=&c->con_aliases[r];
-				tcpconn_listrm(tcpconn_aliases_hash[a->hash], a, next, prev);
+			if (c->aliases > 1) {
+				for (r=1; r<c->aliases; r++){
+					a=&c->con_aliases[r];
+					tcpconn_listrm(tcpconn_aliases_hash[a->hash],
+									a, next, prev);
+				}
+				c->aliases=1;
 			}
-			c->aliases=1;
 			/* add the local_ip:0 and local_ip:local_port aliases */
 			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
 												0, new_conn_alias_flags);
