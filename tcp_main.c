@@ -808,7 +808,7 @@ inline static int _wbufq_insert(struct  tcp_connection* c, const char* data,
 	}
 	if ((q->first==q->last) && ((q->last->b_size-q->last_used)>=size)){
 		/* one block with enough space in it for size bytes */
-		memmove(q->first->buf+size, q->first->buf, size);
+		memmove(q->first->buf+size, q->first->buf, q->last_used);
 		memcpy(q->first->buf, data, size);
 		q->last_used+=size;
 	}else{

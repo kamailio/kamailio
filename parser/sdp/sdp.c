@@ -451,6 +451,8 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 		/* c2p will point to per-media "c=" */
 		c2p = find_sdp_line(m1p, m2p, 'c');
 
+		sdp_ip.s = NULL;
+		sdp_ip.len = 0;
 		if (c2p) {
 			/* Extract stream address */
 			tmpstr1.s = c2p;
