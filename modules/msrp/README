@@ -397,7 +397,7 @@ loadmodule "xlog.so"
 # ----- mi_fifo params -----
 modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
 
-modparam("htable", "htable", "c=>size=8;autoexpire=1800;")
+modparam("htable", "htable", "msrp=>size=8;autoexpire=1800;")
 
 request_route {
         sl_send_reply("403", "No SIP Here");
