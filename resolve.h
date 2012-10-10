@@ -58,6 +58,10 @@
 #include "dns_wrappers.h"
 #endif
 
+#ifdef USE_DNSSEC
+#include "validator/validator.h"
+#endif
+
 /* define RESOLVE_DBG for debugging info (very noisy) */
 #define RESOLVE_DBG
 /* define NAPTR_DBG for naptr related debugging info (very noisy) */
@@ -400,6 +404,9 @@ static inline struct hostent* _resolvehost(char* name)
 #endif
 #endif
 #ifdef DNS_IP_HACK
+#ifdef USE_DNSSEC
+	val_status_t val_status;
+#endif
 	struct ip_addr* ip;
 	str s;
 
@@ -430,7 +437,15 @@ static inline struct hostent* _resolvehost(char* name)
 #endif
 #endif
 	/* ipv4 */
+#ifndef USE_DNSSEC
 	he=gethostbyname(name);
+#else
+	he=val_gethostbyname( (val_context_t *) 0, name, &val_status);
+	if(!val_istrusted(val_status)){
+		LOG(L_INFO, "INFO: got not trusted record when resolving %s\n",name);
+	}
+#endif
+
 #ifdef USE_IPV6
 	if(he==0 && cfg_get(core, core_cfg, dns_try_ipv6)){
 #ifndef DNS_IP_HACK
@@ -438,7 +453,14 @@ skip_ipv4:
 #endif
 		/*try ipv6*/
 	#ifdef HAVE_GETHOSTBYNAME2
+		#ifndef USE_DNSSEC
 		he=gethostbyname2(name, AF_INET6);
+		#else
+		he=val_gethostbyname2((val_context_t*)0, name, AF_INET6, &val_status);
+		if(!val_istrusted(val_status)){
+			LOG(L_INFO, "INFO: got not trusted record when resolving %s\n",name);
+		}
+		#endif //!USE_DNSSEC
 	#elif defined HAVE_GETIPNODEBYNAME
 		/* on solaris 8 getipnodebyname has a memory leak,
 		 * after some time calls to it will fail with err=3
