@@ -317,7 +317,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 			/* run branch_route actions if provided */
 			backup_route_type = get_route_type();
 			set_route_type(BRANCH_ROUTE);
-			tm_ctx_set_branch_index(branch+1);
+			tm_ctx_set_branch_index(branch);
 			/* no need to backup/set avp lists: the on_branch route is run
 			   only in the main route context (e.g. t_relay() in the main
 			   route) or in the failure route context (e.g. append_branch &
