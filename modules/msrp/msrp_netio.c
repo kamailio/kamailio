@@ -66,6 +66,7 @@ int msrp_send_buffer(str *buf, str *addr, int flags)
 int msrp_relay(msrp_frame_t *mf)
 {
 	struct dest_info *dst;
+	struct tcp_connection *con = NULL;
 	char reqbuf[MSRP_MAX_FRAME_SIZE];
 	msrp_hdr_t *tpath;
 	msrp_hdr_t *fpath;
@@ -73,6 +74,7 @@ int msrp_relay(msrp_frame_t *mf)
 	str_array_t *sar;
 	char *p;
 	char *l;
+	int port;
 
 	if(mf->buf.len>=MSRP_MAX_FRAME_SIZE-1)
 		return -1;
@@ -136,7 +138,39 @@ int msrp_relay(msrp_frame_t *mf)
 	}
 	dst = &env->dstinfo;
 done:
-	if (tcp_send(dst, 0, reqbuf, p - reqbuf) < 0) {
+	port = su_getport(&dst->to);
+	if (likely(port))
+	{
+		ticks_t con_lifetime;
+		struct ip_addr ip;
+
+		con_lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
+		su2ip_addr(&ip, &dst->to);
+		con = tcpconn_get(dst->id, &ip, port, NULL, con_lifetime);
+	}
+	else if (likely(dst->id))
+	{
+		con = tcpconn_get(dst->id, 0, 0, 0, 0);
+	}
+
+	if (con == NULL)
+	{
+		LM_WARN("TCP/TLS connection not found\n");
+		return -1;
+	}
+	
+	if (unlikely((con->rcv.proto == PROTO_WS || con->rcv.proto == PROTO_WSS)
+			&& sr_event_enabled(SREV_TCP_WS_FRAME_OUT))) {
+		ws_event_info_t wsev;
+
+		memset(&wsev, 0, sizeof(ws_event_info_t));
+		wsev.type = SREV_TCP_WS_FRAME_OUT;
+		wsev.buf = reqbuf;
+		wsev.len = p - reqbuf;
+		wsev.id = con->id;
+		return sr_event_exec(SREV_TCP_WS_FRAME_OUT, (void *) &wsev);
+	}
+	else if (tcp_send(dst, 0, reqbuf, p - reqbuf) < 0) {
 		LM_ERR("forwarding frame failed\n");
 		return -1;
 	}
@@ -239,6 +273,29 @@ int msrp_reply(msrp_frame_t *mf, str *code, str *text, str *xhdrs)
 	*(p-3) = '$';
 
 	env = msrp_get_env();
+
+	if (unlikely((env->srcinfo.proto == PROTO_WS
+			|| env->srcinfo.proto == PROTO_WSS)
+			&& sr_event_enabled(SREV_TCP_WS_FRAME_OUT))) {
+		struct tcp_connection *con = tcpconn_get(env->srcinfo.id, 0, 0,
+								0, 0);
+		ws_event_info_t wsev;
+
+		if (con == NULL)
+		{
+			LM_WARN("TCP/TLS connection for WebSocket could not be"
+				"found\n");
+			return -1;
+		}
+
+		memset(&wsev, 0, sizeof(ws_event_info_t));
+		wsev.type = SREV_TCP_WS_FRAME_OUT;
+		wsev.buf = rplbuf;
+		wsev.len = p - rplbuf;
+		wsev.id = con->id;
+		return sr_event_exec(SREV_TCP_WS_FRAME_OUT, (void *) &wsev);
+	}
+	else 
 	if (tcp_send(&env->srcinfo, 0, rplbuf, p - rplbuf) < 0) {
 		LM_ERR("sending reply failed\n");
 		return -1;

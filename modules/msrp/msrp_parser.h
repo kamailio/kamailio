@@ -58,6 +58,7 @@ typedef struct msrp_fline {
 #define MSRP_SCHEME_MSRPS	2
 
 #define MSRP_PROTO_TCP	1
+#define MSRP_PROTO_WS	2
 
 typedef struct msrp_uri {
 	str buf;
