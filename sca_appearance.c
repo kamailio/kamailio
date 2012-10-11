@@ -301,6 +301,12 @@ sca_appearance_register( sca_mod *scam, str *aor )
     assert( scam != NULL );
     assert( aor != NULL );
 
+    if ( sca_uri_is_shared_appearance( scam, aor )) {
+	/* we've already registered */
+	rc = 0;
+	goto done;
+    }
+
     app_list = sca_appearance_list_create( scam, aor );
     if ( app_list == NULL ) {
 	goto done;
