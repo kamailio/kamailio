@@ -211,32 +211,27 @@ sca_appearance_list_insert_appearance( sca_appearance_list *app_list,
     sca_appearance *
 sca_appearance_list_unlink_index( sca_appearance_list *app_list, int idx )
 {
-    sca_appearance	*app;
+    sca_appearance	*app = NULL;
     sca_appearance	**cur;
-    sca_appearance	**prev = NULL;
 
     assert( app_list != NULL );
     assert( idx > 0 );
 
-    for ( cur = &app_list->appearances; *cur != NULL;
-			prev = cur, cur = &(*cur)->next ) {
-	if ( idx == (*cur)->index ) {
+    for ( cur = &app_list->appearances; *cur != NULL; cur = &(*cur)->next ) {
+	if ((*cur)->index == idx ) {
+	    app = *cur;
+	    app->appearance_list = NULL;
+
+	    *cur = (*cur)->next;
+
 	    break;
 	}
     }
-    if ( *cur == NULL ) {
+
+    if ( app == NULL ) {
 	LM_ERR( "Tried to remove inactive %.*s appearance at index %d",
 		STR_FMT( &app_list->aor ), idx );
-	return( NULL );
     }
-    app = *cur;
-
-    if ( prev == NULL ) {
-	app_list->appearances = (*cur)->next;
-    } else {
-	(*prev)->next = (*cur)->next;
-    }
-    app->appearance_list = NULL;
 
     return( app );
 }
