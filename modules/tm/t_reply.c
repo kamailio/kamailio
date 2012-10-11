@@ -986,19 +986,20 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	struct sip_msg *shmem_msg = t->uas.request;
 	int on_failure;
 
+	on_failure = t->uac[picked_branch].on_failure;
+
 	/* failure_route for a local UAC? */
 	if (!shmem_msg) {
 		LOG(L_WARN,"Warning: run_failure_handlers: no UAC support (%d, %d) \n",
-			t->on_failure, t->tmcb_hl.reg_types);
+			on_failure, t->tmcb_hl.reg_types);
 		return 0;
 	}
 
 	/* don't start faking anything if we don't have to */
-	if (unlikely(!t->on_failure && !has_tran_tmcbs( t, TMCB_ON_FAILURE))) {
+	if (unlikely(!on_failure && !has_tran_tmcbs( t, TMCB_ON_FAILURE))) {
 		LOG(L_WARN,
-			"Warning: run_failure_handlers: no negative handler (%d, %d)\n",
-			t->on_failure,
-			t->tmcb_hl.reg_types);
+			"Warning: run_failure_handlers: no failure handler (%d, %d)\n",
+			on_failure, t->tmcb_hl.reg_types);
 		return 1;
 	}
 
@@ -1013,11 +1014,10 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	if (unlikely(has_tran_tmcbs( t, TMCB_ON_FAILURE)) ) {
 		run_trans_callbacks( TMCB_ON_FAILURE, t, &faked_req, rpl, code);
 	}
-	if (t->on_failure) {
+	if (on_failure) {
 		/* avoid recursion -- if failure_route forwards, and does not
 		 * set next failure route, failure_route will not be reentered
 		 * on failure */
-		on_failure = t->on_failure;
 		t->on_failure=0;
 		if (exec_pre_script_cb(&faked_req, FAILURE_CB_TYPE)>0) {
 			/* run a failure_route action if some was marked */
@@ -1290,7 +1290,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		replies_dropped = 0;
 		/* run ON_FAILURE handlers ( route and callbacks) */
 		if (unlikely(has_tran_tmcbs( Trans, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE)
-						|| Trans->on_failure )) {
+						|| Trans->uac[picked_branch].on_failure )) {
 			extra_flags=
 				((Trans->uac[picked_branch].request.flags & F_RB_TIMEOUT)?
 							FL_TIMEOUT:0) | 
@@ -2099,7 +2099,7 @@ int reply_received( struct sip_msg  *p_msg )
 			goto done;
 	}
 	
-	onreply_route=t->on_reply;
+	onreply_route=uac->on_reply;
 	if ( msg_status >= 200 ){
 #ifdef TM_ONREPLY_FINAL_DROP_OK
 #warning Experimental tm onreply_route final reply DROP support active

@@ -416,7 +416,11 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	} /* else next_hop==0 =>
 		no dst_uri / empty dst_uri and initial next_hop==0 =>
 		dst is pre-filled with a valid dst => use the pre-filled dst */
-	
+
+	/* Set on_reply and on_negative handlers for this branch to the handlers in the transaction */
+	t->uac[branch].on_reply = t->on_reply;
+	t->uac[branch].on_failure = t->on_failure;
+
 	/* check if send_sock is ok */
 	if (t->uac[branch].request.dst.send_sock==0) {
 		LOG(L_ERR, "ERROR: can't fwd to af %d, proto %d "

@@ -247,6 +247,10 @@ typedef struct ua_client
 	 */
 	struct retr_buf *local_ack;
 #endif
+	/* the route to take if no final positive reply arrived */
+	unsigned short on_failure;
+	/* the onreply_route to be processed if registered to do so */
+	unsigned short on_reply;
 }ua_client_type;
 
 
