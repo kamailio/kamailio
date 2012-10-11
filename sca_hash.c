@@ -228,12 +228,6 @@ sca_hash_table_slot_unlink_entry_unsafe( sca_hash_slot *slot,
 	}
     }
 
-    for ( cur_e = &slot->entries; *cur_e != NULL; cur_e = &(*cur_e)->next ) {
-	if ( *cur_e == e ) {
-LM_INFO( "@@@@@@@@ ADMORTEN DEBUG: unlink didn't unlink!" );
-	}
-    }
-
     return( e );
 }
 
