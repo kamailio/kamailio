@@ -53,6 +53,7 @@ sca_notify_reply_cb( struct cell *t, int cb_type, struct tmcb_params *cbp )
 		STR_FMT( &notify_reply->first_line.u.reply.reason ),
 		STR_FMT( contact_uri ));
     }
+    return;
 
     if ( sca_uri_extract_aor( &t->to, &to_aor ) < 0 ) {
 	LM_ERR( "Failed to extract AoR from %.*s", STR_FMT( &t->to ));
@@ -167,18 +168,81 @@ sca_notify_append_contact_header( sca_subscription *sub,
     return( len );
 }
 
-#define SCA_HEADERS_MAX_LEN	4096
-    int
-sca_notify_subscriber( sca_mod *scam, sca_subscription *sub, int app_idx )
+    static int
+sca_notify_build_headers_from_info( str *hdrs, int max_hdrs_len, sca_mod *scam,
+	sca_subscription *sub, int app_idx )
+{
+    int		len = 0;
+
+    assert( hdrs != NULL );
+
+    len = sca_notify_append_contact_header( sub, hdrs->s, max_hdrs_len );
+    if ( len < 0 ) {
+	LM_ERR( "Failed to add Contact header to %s NOTIFY for %.*s",
+		sca_event_name_from_type( sub->event ),
+		STR_FMT( &sub->subscriber ));
+	goto error;
+    }
+    hdrs->len = len;
+    
+    if ( app_idx == SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) {
+	/* add Call-Info header with appearance state */
+	if (( len = sca_call_info_build_header( scam, sub,
+			hdrs->s + hdrs->len,
+			max_hdrs_len - hdrs->len )) < 0 ) {
+	    LM_ERR( "Failed to build Call-Info Headers for %s NOTIFY to %.*s",
+		    sca_event_name_from_type( sub->event ),
+		    STR_FMT( &sub->subscriber ));
+	    goto error;
+	}
+    } else {
+	/* just add Call-Info header with single appearance index */
+	len = sca_call_info_append_header_for_appearance_index( sub, app_idx,
+			hdrs->s + hdrs->len, max_hdrs_len - hdrs->len );
+	if ( len < 0 ) {
+	    goto error;
+	}
+    }
+	
+    hdrs->len += len;
+
+    LM_INFO( "ADMORTEN: Call-Info Header for %s NOTIFY to %.*s: \"%.*s\"",
+	    sca_event_name_from_type( sub->event ), STR_FMT( &sub->subscriber ),
+	    STR_FMT( hdrs ));
+
+    len = sca_event_append_header_for_type( sub->event,
+		hdrs->s + hdrs->len, max_hdrs_len - hdrs->len );
+    if ( len < 0 ) {
+	LM_ERR( "Failed to add Event header to %s NOTIFY for %.*s",
+		sca_event_name_from_type( sub->event ),
+		STR_FMT( &sub->subscriber ));
+	goto error;
+    }
+    hdrs->len += len;
+
+    len = sca_notify_append_subscription_state_header( sub,
+		hdrs->s + hdrs->len, max_hdrs_len - hdrs->len );
+    if ( len < 0 ) {
+	LM_ERR( "Failed to add Subscription-State header to %s NOTIFY for "
+		"%.*s", sca_event_name_from_type( sub->event ),
+		STR_FMT( &sub->subscriber ));
+	goto error;
+    }
+    hdrs->len += len;
+
+    return( hdrs->len );
+
+error:
+    return( -1 );
+}
+	
+    static int
+sca_notify_subscriber_internal( sca_mod *scam, sca_subscription *sub,
+	str *headers )
 {
     uac_req_t		request;
     dlg_t		*dlg = NULL;
-    str			headers = STR_NULL;
-    char		hdrbuf[ SCA_HEADERS_MAX_LEN ];
-    int			len;
     int			rc = -1;
-
-    headers.s = hdrbuf;
 
     dlg = sca_notify_dlg_for_subscription( sub );
     if ( dlg == NULL ) {
@@ -188,63 +252,7 @@ sca_notify_subscriber( sca_mod *scam, sca_subscription *sub, int app_idx )
 	goto done;
     }
 
-    /* XXX move header construction to separate routine */
-    len = sca_notify_append_contact_header( sub, hdrbuf + headers.len,
-		sizeof( hdrbuf ) - headers.len );
-    if ( len < 0 ) {
-	LM_ERR( "Failed to add Contact header to %s NOTIFY for %.*s",
-		sca_event_name_from_type( sub->event ),
-		STR_FMT( &sub->subscriber ));
-	goto done;
-    }
-    headers.len += len;
-    
-    if ( app_idx == SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) {
-	/* add Call-Info header with appearance state */
-	if (( len = sca_call_info_build_header( scam, sub,
-			hdrbuf + headers.len,
-			sizeof( hdrbuf ) - headers.len )) < 0 ) {
-	    LM_ERR( "Failed to build Call-Info Headers for %s NOTIFY to %.*s",
-		    sca_event_name_from_type( sub->event ),
-		    STR_FMT( &sub->subscriber ));
-	    goto done;
-	}
-    } else {
-	/* just add Call-Info header with single appearance index */
-	len = sca_call_info_append_header_for_appearance_index( sub, app_idx,
-			hdrbuf + headers.len, sizeof( hdrbuf ) - headers.len );
-	if ( len < 0 ) {
-	    goto done;
-	}
-    }
-	
-    headers.len += len;
-
-    LM_INFO( "ADMORTEN: Call-Info Header for %s NOTIFY to %.*s: \"%.*s\"",
-	    sca_event_name_from_type( sub->event ), STR_FMT( &sub->subscriber ),
-	    STR_FMT( &headers ));
-
-    len = sca_event_append_header_for_type( sub->event,
-		hdrbuf + headers.len, sizeof( hdrbuf ) - headers.len );
-    if ( len < 0 ) {
-	LM_ERR( "Failed to add Event header to %s NOTIFY for %.*s",
-		sca_event_name_from_type( sub->event ),
-		STR_FMT( &sub->subscriber ));
-	goto done;
-    }
-    headers.len += len;
-
-    len = sca_notify_append_subscription_state_header( sub,
-		hdrbuf + headers.len, sizeof( hdrbuf ) - headers.len );
-    if ( len < 0 ) {
-	LM_ERR( "Failed to add Subscription-State header to %s NOTIFY for "
-		"%.*s", sca_event_name_from_type( sub->event ),
-		STR_FMT( &sub->subscriber ));
-	goto done;
-    }
-    headers.len += len;
-
-    set_uac_req( &request, (str *)&SCA_METHOD_NOTIFY, &headers, NULL, dlg,
+    set_uac_req( &request, (str *)&SCA_METHOD_NOTIFY, headers, NULL, dlg,
 			TMCB_LOCAL_COMPLETED, sca_notify_reply_cb, scam );
     rc = scam->tm_api->t_request_within( &request );
     if ( rc < 0 ) {
@@ -262,6 +270,24 @@ done:
     return( rc );
 }
 
+#define SCA_HEADERS_MAX_LEN	4096
+    int
+sca_notify_subscriber( sca_mod *scam, sca_subscription *sub, int app_idx )
+{
+    str			headers = STR_NULL;
+    char		hdrbuf[ SCA_HEADERS_MAX_LEN ];
+
+    headers.s = hdrbuf;
+
+    if ( sca_notify_build_headers_from_info( &headers, sizeof( hdrbuf ),
+		scam, sub, app_idx ) < 0 ) {
+	LM_ERR( "Failed to build NOTIFY headers" );
+	return( -1 );
+    }
+
+    return( sca_notify_subscriber_internal( scam, sub, &headers ));
+}
+
 /* send a call-info NOTIFY to all subscribers to a given SCA AoR. */
     int
 sca_notify_call_info_subscribers( sca_mod *scam, str *subscription_aor )
@@ -269,7 +295,9 @@ sca_notify_call_info_subscribers( sca_mod *scam, str *subscription_aor )
     sca_hash_slot		*slot;
     sca_hash_entry		*e;
     sca_subscription		*sub;
+    str				headers = STR_NULL;
     str				hash_key = STR_NULL;
+    char			hdrbuf[ SCA_HEADERS_MAX_LEN ];
     char			keybuf[ 512 ];
     char			*event_name;
     int				slot_idx;
@@ -303,15 +331,21 @@ sca_notify_call_info_subscribers( sca_mod *scam, str *subscription_aor )
 	    continue;
 	}
 
+	if ( headers.len == 0 ) {
+	    headers.s = hdrbuf;
+
+	    if ( sca_notify_build_headers_from_info( &headers, sizeof( hdrbuf ),
+			scam, sub, SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) < 0 ) {
+		LM_ERR( "Failed to build NOTIFY headers" );
+		goto done;
+	    }
+	}
+
+
 	/* XXX would like this to be wrapped in one location */
 	sub->dialog.notify_cseq += 1;
 
-	/*
-	 * XXX this rebuilds the same headers repeatedly. use a static
-	 * buffer instead.
-	 */
-	if ( sca_notify_subscriber( scam, sub,
-		SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) < 0 ) {
+	if ( sca_notify_subscriber_internal( scam, sub, &headers ) < 0 ) {
 	    goto done;
 	}
     }
