@@ -23,10 +23,12 @@
 
 #include <limits.h>
 #include <unistr.h>
+#include "../../events.h"
 #include "../../receive.h"
 #include "../../stats.h"
 #include "../../str.h"
 #include "../../tcp_conn.h"
+#include "../../tcp_read.h"
 #include "../../tcp_server.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/tree.h"
@@ -34,6 +36,7 @@
 #include "ws_conn.h"
 #include "ws_frame.h"
 #include "ws_mod.h"
+#include "ws_handshake.h"
 
 /*    0                   1                   2                   3
       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -571,10 +574,36 @@ int ws_frame_receive(void *data)
 	{
 	case OPCODE_TEXT_FRAME:
 	case OPCODE_BINARY_FRAME:
-		LM_DBG("Rx SIP message:\n%.*s\n", frame.payload_len,
+		if (likely(frame.wsc->sub_protocol == SUB_PROTOCOL_SIP))
+		{
+			LM_DBG("Rx SIP message:\n%.*s\n", frame.payload_len,
 				frame.payload_data);
-		return receive_msg(frame.payload_data, frame.payload_len,
-				tcpinfo->rcv);
+			return receive_msg(frame.payload_data,
+						frame.payload_len,
+						tcpinfo->rcv);
+		}
+		else if (frame.wsc->sub_protocol == SUB_PROTOCOL_MSRP)
+		{
+			LM_DBG("Rx MSRP frame:\n%.*s\n", frame.payload_len,
+				frame.payload_data);
+			if (likely(sr_event_enabled(SREV_TCP_MSRP_FRAME)))
+			{
+				tcp_event_info_t tev;
+				memset(&tev, 0, sizeof(tcp_event_info_t));
+				tev.type = SREV_TCP_MSRP_FRAME;
+				tev.buf = frame.payload_data;
+				tev.len = frame.payload_len;
+				tev.rcv = tcpinfo->rcv;
+				tev.con = tcpinfo->con;
+				return sr_event_exec(SREV_TCP_MSRP_FRAME,
+							(void *) &tev);
+			}
+			else
+			{
+				LM_ERR("no callback registerd for MSRP\n");
+				return -1;
+			}
+		}
 
 	case OPCODE_CLOSE:
 		return handle_close(&frame);
@@ -608,12 +637,12 @@ int ws_frame_transmit(void *data)
 	frame.payload_data = wsev->buf;
 	frame.wsc = wsconn_get(wsev->id);
 
-	LM_DBG("Tx SIP message:\n%.*s\n", frame.payload_len,
+	LM_DBG("Tx message:\n%.*s\n", frame.payload_len,
 			frame.payload_data);
 
 	if (encode_and_send_ws_frame(&frame, CONN_CLOSE_DONT) < 0)
 	{	
-		LM_ERR("sending SIP message\n");
+		LM_ERR("sending message\n");
 		return -1;
 	}
 

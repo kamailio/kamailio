@@ -17,8 +17,9 @@
 	<title>Overview</title>
 	<para>This module implements a WebSocket (RFC 6455) server and provides
 	connection establishment (handshaking), management (including
-	connection keep-alive), and framing for the SIP WebSocket sub-protocol
-	(ietf-draft-sipcore-sip-websocket).</para>
+	connection keep-alive), and framing for the SIP and MSRP WebSocket
+	sub-protocols (draft-ietf-sipcore-sip-websocket and
+	draft-pd-msrp-websocket).</para>
 	<para>The module supports WebSockets (ws) and secure WebSockets (wss)
 	</para>
 	</section>
@@ -37,14 +38,15 @@
 	used to make sure the HTTP GET has the correct URI, perform HTTP
 	authentication on the WebSocket connection, and check the
 	<emphasis>Origin</emphasis> header (RFC 6454) to ensure a
-	browser-based SIP UA has been downloaded from the correct location.
-	</para>
+	browser-based SIP UA or MSRP client has been downloaded from the
+	correct location.</para>
 	<example>
 	<title>event_route[xhttp:request]</title>
 	<programlisting><![CDATA[
 ...
 loadmodule "sl.so"
 loadmodule "xhttp.so"
+loadmodule "msrp.so"  # Only required if using MSRP over WebSockets
 loadmodule "websocket.so"
 ...
 event_route[xhttp:request] {
@@ -107,13 +109,13 @@ event_route[xhttp:request] {
 
 	<section>
 	<title>SIP message routing</title>
-	<para> SIP over WebSockets uses invalid URIs in routing headers
+	<para>SIP over WebSockets uses invalid URIs in routing headers
 	(Contact:, Record-Route:, and Via:) because a JavaScript stack running
 	in a browser has no way to determine the local address from which the
 	WebSocket connection is made.  This means that the routing headers
 	cannot be used for request or response routing in the normal manner.
 	</para>
-	<para>ietf-draft-sipcore-sip-websocket states that SIP WebSocket
+	<para>draft-ietf-sipcore-sip-websocket states that SIP WebSocket
 	Clients and the SIP registrar should implement Outbound (RFC 5626) and
 	Path (RFC 3327) to enable requests and responses to be correctly
 	routed.  However, &kamailio; does not currently support Outbound and
@@ -192,6 +194,18 @@ onreply_route[WS_REPLY] {
 	</example>
 
 	</section>
+
+	<section>
+	<title>MSRP message routing</title>
+	<para>MSRP over WebSocket clients create invalid local URIs for use in
+	Path headers (From-Path: and To-Path:) because a JavaScript stack
+	running in a browser has no way to determine the local address from
+	which the WebSocket connection is made.  This is OK because MSRP over
+	WebSocket clients MUST use an MSRP relay and it is the MSRP relay's
+	responsibility to select the correct connection to the client based on
+	the MSRP URIs that it has created (and maintains a mapping for).</para>
+	</section>
+
 	</section>
 
 	<section>
@@ -227,6 +241,15 @@ onreply_route[WS_REPLY] {
 		<itemizedlist>
 		<listitem>
 		<para><emphasis>tls</emphasis>.</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		The following module is required to support MSRP over
+		WebSockets:
+		<itemizedlist>
+		<listitem>
+		<para><emphasis>msrp</emphasis>.</para>
 		</listitem>
 		</itemizedlist>
 		</para>
@@ -343,6 +366,32 @@ modparam("websocket", "keepalive_interval", 2)
 		<programlisting format="linespecific">
 ...
 modparam("websocket", "ping_application_data", "WebSockets rock")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>sub_protocols</varname> (integer)</title>
+		<para>A bitmap that allows you to control the sub-protocols
+		supported by the WebSocket server.</para>
+		<itemizedlist>
+		<listitem><para>
+		<emphasis>1</emphasis> - sip (draft-ietf-sipcore-sip-websocket)
+		</para></listitem>
+		<listitem><para>
+		<emphasis>2</emphasis> - msrp (draft-pd-msrp-websocket) -
+		msrp.so must be loaded before websocket.so
+		</para></listitem>
+		</itemizedlist>
+		<para><emphasis>Default value is 1 when msrp.so is not loaded
+		 3 when msrp.so is loaded.</emphasis></para>
+		<example>
+		<title>Set <varname>sub_protocols</varname>
+		parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("websocket", "sub_protocols", 2)
 ...
 </programlisting>
 		</example>

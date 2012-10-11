@@ -176,7 +176,7 @@ void wsconn_destroy(void)
 	}
 }
 
-int wsconn_add(struct receive_info rcv)
+int wsconn_add(struct receive_info rcv, unsigned int sub_protocol)
 {
 	int cur_cons, max_cons;
 	int id = rcv.proto_reserved1;
@@ -195,6 +195,7 @@ int wsconn_add(struct receive_info rcv)
 	wsc->id_hash = id_hash;
 	wsc->state = WS_S_OPEN;
 	wsc->rcv = rcv;
+	wsc->sub_protocol = sub_protocol;
 
 	WSCONN_LOCK;
 	/* Add to WebSocket connection table */

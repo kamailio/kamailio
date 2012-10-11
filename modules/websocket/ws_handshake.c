@@ -42,10 +42,13 @@
 
 #define WS_VERSION		(13)
 
+int ws_sub_protocols = DEFAULT_SUB_PROTOCOLS;
+
 stat_var *ws_failed_handshakes;
 stat_var *ws_successful_handshakes;
 
 static str str_sip = str_init("sip");
+static str str_msrp = str_init("msrp");
 static str str_upgrade = str_init("upgrade");
 static str str_websocket = str_init("websocket");
 static str str_ws_guid = str_init("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
@@ -110,7 +113,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 {
 	str key = {0, 0}, headers = {0, 0}, reply_key = {0, 0};
 	unsigned char sha1[SHA_DIGEST_LENGTH];
-	unsigned int hdr_flags = 0;
+	unsigned int hdr_flags = 0, sub_protocol = 0;
 	int version;
 	struct hdr_field *hdr = msg->headers;
 	struct tcp_connection *con;
@@ -188,7 +191,8 @@ int ws_handle_handshake(struct sip_msg *msg)
 				LM_WARN("%.*s found multiple times\n",
 					hdr->name.len, hdr->name.s);
 				ws_send_reply(msg, 400,
-						&str_status_bad_request, NULL);
+						&str_status_bad_request,
+						NULL);
 				return 0;
 			}
 
@@ -210,6 +214,15 @@ int ws_handle_handshake(struct sip_msg *msg)
 					hdr->name.len, hdr->name.s,
 					hdr->body.len, hdr->body.s);
 				hdr_flags |= SEC_WEBSOCKET_PROTOCOL;
+				sub_protocol |= SUB_PROTOCOL_SIP;
+			}
+			if (str_search(&hdr->body, &str_msrp) != NULL)
+			{
+				LM_DBG("found %.*s: %.*s\n",
+					hdr->name.len, hdr->name.s,
+					hdr->body.len, hdr->body.s);
+				hdr_flags |= SEC_WEBSOCKET_PROTOCOL;
+				sub_protocol |= SUB_PROTOCOL_MSRP;
 			}
 		}
 		/* Decode and validate Sec-WebSocket-Version */
@@ -222,7 +235,8 @@ int ws_handle_handshake(struct sip_msg *msg)
 				LM_WARN("%.*s found multiple times\n",
 					hdr->name.len, hdr->name.s);
 				ws_send_reply(msg, 400,
-						&str_status_bad_request, NULL);
+						&str_status_bad_request,
+						NULL);
 				return 0;
 			}
 
@@ -254,20 +268,37 @@ int ws_handle_handshake(struct sip_msg *msg)
 	}
 
 	/* Final check that all required headers/values were found */
-	if (hdr_flags != REQUIRED_HEADERS)
+	sub_protocol &= ws_sub_protocols;
+	if (hdr_flags != REQUIRED_HEADERS || sub_protocol == 0)
 	{
+
 		LM_WARN("required headers not present\n");
 		headers.s = headers_buf;
-		headers.len = snprintf(headers.s, HDR_BUF_LEN,
-					"%.*s: %.*s\r\n"
-					"%.*s: %d\r\n",
+		headers.len = 0;
+
+		if (ws_sub_protocols & SUB_PROTOCOL_SIP)
+			headers.len += snprintf(headers.s + headers.len,
+						HDR_BUF_LEN - headers.len,
+						"%.*s: %.*s\r\n",
 					str_hdr_sec_websocket_protocol.len,
 					str_hdr_sec_websocket_protocol.s,
-					str_sip.len, str_sip.s,
+					str_sip.len, str_sip.s);
+
+		if (ws_sub_protocols & SUB_PROTOCOL_MSRP)
+			headers.len += snprintf(headers.s + headers.len,
+						HDR_BUF_LEN - headers.len,
+						"%.*s: %.*s\r\n",
+					str_hdr_sec_websocket_protocol.len,
+					str_hdr_sec_websocket_protocol.s,
+					str_msrp.len, str_msrp.s);
+
+		headers.len += snprintf(headers.s + headers.len,
+					HDR_BUF_LEN - headers.len,
+					"%.*s: %d\r\n",
 					str_hdr_sec_websocket_version.len,
 					str_hdr_sec_websocket_version.s,
 					WS_VERSION);
-		ws_send_reply(msg, 400, &str_status_bad_request, NULL);
+		ws_send_reply(msg, 400, &str_status_bad_request, &headers);
 		return 0;
 	}
 
@@ -292,7 +323,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 				base64_enc_len(SHA_DIGEST_LENGTH));
 
 	/* Add the connection to the WebSocket connection table */
-	wsconn_add(msg->rcv);
+	wsconn_add(msg->rcv, sub_protocol);
 
 	/* Make sure Kamailio core sends future messages on this connection
 	   directly to this module */
@@ -304,23 +335,38 @@ int ws_handle_handshake(struct sip_msg *msg)
 	/* Now Kamailio is ready to receive WebSocket frames build and send a
 	   101 reply */
 	headers.s = headers_buf;
-	headers.len = snprintf(headers.s, HDR_BUF_LEN,
-			"%.*s: %.*s\r\n"
-			"%.*s: %.*s\r\n"
-			"%.*s: %.*s\r\n"
-			"%.*s: %.*s\r\n",
-			str_hdr_upgrade.len, str_hdr_upgrade.s,
-			str_websocket.len, str_websocket.s,
-			str_hdr_connection.len, str_hdr_connection.s,
-			str_upgrade.len, str_upgrade.s,
-			str_hdr_sec_websocket_accept.len,
-			str_hdr_sec_websocket_accept.s, reply_key.len,
-			reply_key.s, str_hdr_sec_websocket_protocol.len,
-			str_hdr_sec_websocket_protocol.s, str_sip.len,
-			str_sip.s);
+	headers.len = 0;
+
+	if (sub_protocol & SUB_PROTOCOL_SIP)
+		headers.len += snprintf(headers.s + headers.len,
+					HDR_BUF_LEN - headers.len,
+					"%.*s: %.*s\r\n",
+					str_hdr_sec_websocket_protocol.len,
+					str_hdr_sec_websocket_protocol.s,
+					str_sip.len, str_sip.s);
+	else if (sub_protocol & SUB_PROTOCOL_MSRP)
+		headers.len += snprintf(headers.s + headers.len,
+					HDR_BUF_LEN - headers.len,
+					"%.*s: %.*s\r\n",
+					str_hdr_sec_websocket_protocol.len,
+					str_hdr_sec_websocket_protocol.s,
+					str_msrp.len, str_msrp.s);
+
+	headers.len += snprintf(headers.s + headers.len,
+				HDR_BUF_LEN - headers.len,
+				"%.*s: %.*s\r\n"
+				"%.*s: %.*s\r\n"
+				"%.*s: %.*s\r\n",
+				str_hdr_upgrade.len, str_hdr_upgrade.s,
+				str_websocket.len, str_websocket.s,
+				str_hdr_connection.len, str_hdr_connection.s,
+				str_upgrade.len, str_upgrade.s,
+				str_hdr_sec_websocket_accept.len,
+				str_hdr_sec_websocket_accept.s, reply_key.len,
+				reply_key.s);
 	msg->rpl_send_flags.f &= ~SND_F_CON_CLOSE;
-	if (ws_send_reply(msg, 101,
-				&str_status_switching_protocols, &headers) < 0)
+	if (ws_send_reply(msg, 101, &str_status_switching_protocols,
+				&headers) < 0)
 	{
 		if ((wsc = wsconn_get(msg->rcv.proto_reserved1)) != NULL)
 			wsconn_rm(wsc, WSCONN_EVENTROUTE_NO);
