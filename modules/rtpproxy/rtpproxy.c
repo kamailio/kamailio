@@ -322,6 +322,7 @@ static int rtpproxy_tout = 1;
 static pid_t mypid;
 static unsigned int myseqn = 0;
 static str nortpproxy_str = str_init("a=nortpproxy:yes");
+static str extra_id_pv_param = {NULL, 0};
 
 static char ** rtpp_strings=0;
 static int rtpp_sets=0; /*used in rtpproxy_set_store()*/
@@ -352,6 +353,7 @@ static struct tm_binds tmb;
 unsigned int *natping_state=0;
 
 static str timeout_socket_str = {0, 0};
+static pv_elem_t *extra_id_pv = NULL;
 
 static cmd_export_t cmds[] = {
 	{"set_rtp_proxy_set",  (cmd_function)set_rtp_proxy_set_f,    1,
@@ -430,6 +432,7 @@ static param_export_t params[] = {
 	{"timeout_socket",    	  STR_PARAM, &timeout_socket_str.s  },
 	{"ice_candidate_priority_avp", STR_PARAM,
 	 &ice_candidate_priority_avp_param},
+	{"extra_id_pv",           STR_PARAM, &extra_id_pv_param.s },
 	{0, 0, 0}
 };
 
@@ -929,6 +932,16 @@ mod_init(void)
 		return -1;
 	    }
 	    ice_candidate_priority_avp_type = avp_flags;
+	}
+
+	if (extra_id_pv_param.s && *extra_id_pv_param.s) {
+		extra_id_pv_param.len = strlen(extra_id_pv_param.s);
+		if(pv_parse_format(&extra_id_pv_param, &extra_id_pv) < 0) {
+			LM_ERR("malformed PV string: %s\n", extra_id_pv_param.s);
+			return -1;
+		}
+	} else {
+		extra_id_pv = NULL;
 	}
 
 	if (rtpp_strings)
@@ -1773,6 +1786,22 @@ found:
 	return node;
 }
 
+
+static int
+get_extra_id(struct sip_msg* msg, str *id_str) {
+	if(msg==NULL || extra_id_pv==NULL || id_str==NULL) {
+		LM_ERR("bad parameters\n");
+		return 0;
+	}
+	if (pv_printf_s(msg, extra_id_pv, id_str)<0) {
+		LM_ERR("cannot print the additional id\n");
+		return 0;
+	}
+
+	return 1;
+}
+
+
 static int
 unforce_rtp_proxy_f(struct sip_msg* msg, char* flags, char* str2)
 {
@@ -1780,10 +1809,12 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* flags, char* str2)
 	char *cp;
 	int via = 0;
 	int to = 1;
+	int extra = 0;
+	str extra_id;
 	int ret;
 	struct rtpp_node *node;
 	struct iovec v[1 + 4 + 3 + 2] = {{NULL, 0}, {"D", 1}, {" ", 1}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
-						    /* 1 */   /* 2 */   /* 3 */    /* 4 */    /* 5 */    /* 6 */   /* 7 */    /* 8 */   /* 9 */
+	                                            /* 1 */   /* 2 */   /* 3 */    /* 4 */    /* 5 */    /* 6 */   /* 7 */    /* 8 */   /* 9 */
 
 	for (cp = flags; cp && *cp; cp++) {
 		switch (*cp) {
@@ -1806,6 +1837,9 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* flags, char* str2)
 		        case 'T':
 			    to = 0;
 			    break;
+			case 'b':
+				extra = 1;
+				break;
 			case 'a':
 			case 'A':
 			case 'i':
@@ -1863,6 +1897,12 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* flags, char* str2)
 		v[4].iov_base = ";";
 		v[4].iov_len = 1;
 		STR2IOVEC(viabranch, v[5]);
+	} else
+	/* Append extra id to call-id */
+	if (extra && extra_id_pv && get_extra_id(msg, &extra_id)) {
+		v[4].iov_base = ";";
+		v[4].iov_len = 1;
+		STR2IOVEC(extra_id, v[5]);
 	}
 	STR2IOVEC(callid, v[3]);
 	STR2IOVEC(from_tag, v[7]);
@@ -2140,6 +2180,8 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 	};
 	int iovec_param_count;
 	int autobridge_ipv4v6;
+	int extra;
+	str extra_id;
 
 	char *c1p, *c2p, *bodylimit, *o1p;
 	char itoabuf_buf[20];
@@ -2161,7 +2203,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 		LM_ERR("out of pkg memory\n");
 		FORCE_RTP_PROXY_RET (-1);
 	}
-	flookup = force = real = orgip = commip = via = autobridge_ipv4v6 = 0;
+	flookup = force = real = orgip = commip = via = autobridge_ipv4v6 = extra = 0;
 	for (cp = str1; cp != NULL && *cp != '\0'; cp++) {
 		switch (*cp) {
 		case '1':
@@ -2186,6 +2228,10 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 				FORCE_RTP_PROXY_RET (-1);
 			}
 			real = 1;
+			break;
+
+		case 'b':
+			extra = 1;
 			break;
 
 		case 'i':
@@ -2308,6 +2354,12 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 		v[6].iov_base = ";";
 		v[6].iov_len = 1;
 		STR2IOVEC(viabranch, v[7]);
+	} else
+	/* Append extra id to call-id */
+	if (extra && extra_id_pv && get_extra_id(msg, &extra_id)) {
+		v[6].iov_base = ";";
+		v[6].iov_len = 1;
+		STR2IOVEC(extra_id, v[7]);
 	}
 	if (flookup != 0) {
 		if (to_tag.len == 0) {

@@ -263,6 +263,24 @@ modparam("rtpproxy", "ice_candidate_priority_avp", "$avp(ice_priority)")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>extra_id_pv</varname> (string)</title>
+		<para>
+			The parameter sets the PV defination to use when the <quote>b</quote>
+			parameter is used on unforce_rtp_proxy(), rtpproxy_offer(),
+			rtpproxy_answer() or rtpproxy_manage() command.
+		</para><para>
+			Default is empty, the <quote>b</quote> parameter may not be used then.
+		</para>
+		<example>
+		<title>Set <varname>extra_id_pv</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpproxy", "extra_id_pv", "$avp(extra_id)")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -333,6 +351,21 @@ rtpproxy_offer();
 				<listitem><para>
 				<emphasis>a</emphasis> - flags that UA from which message is
 				received doesn't support symmetric RTP. (automatically sets the 'r' flag)
+				</para></listitem>
+				<listitem><para>
+				<emphasis>b</emphasis> - append branch specific variable to Call-ID when sending
+				command to rtpproxy. This creates one rtpproxy session per unique variable.
+
+				Works similar to the 1, 2 and 3 parameter, but is usefull when forking to multiple
+				destinations on different address families or network segments, requiring different
+				rtpproxy parameters.
+
+				The variable value is taken from the <quote>extra_id_pv</quote>.
+
+				When used, it must be used in every call to rtpproxy_manage(), rtpproxy_offer(),
+				rtpproxy_answer() and rtpproxy_destroy() with the same contents of the PV.
+				The b parameter may not be used in conjunction with the 1, 2 or 3 parameter
+				to use the Via branch in the Call-ID.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>l</emphasis> - force <quote>lookup</quote>, that is,
@@ -512,6 +545,10 @@ onreply_route[2]
 				command to rtpproxy. See flag '1' for its meaning.
 				</para></listitem>
 				<listitem><para>
+				<emphasis>b</emphasis> - append branch specific variable to Call-ID when sending
+				command to rtpproxy. See rtpproxy_offer() for details.
+				<listitem><para>
+				</para></listitem>
 				<emphasis>t</emphasis> - do not include To tag to <quote>delete</quote> command to rtpproxy thus causing full call to be deleted. Useful for deleting unused rtpproxy call when 200 OK is received on a branch, where rtpproxy is not needed.
 				</para></listitem>
 			</itemizedlist>
