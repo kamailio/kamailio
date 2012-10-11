@@ -44,14 +44,11 @@ sca_hash_table_slot_kv_insert_unsafe( sca_hash_slot *slot, void *value,
 	void (*e_free)( void * ))
 {
     sca_hash_entry	*new_entry;
+    sca_hash_entry	**cur_entry;
 
     assert( slot != NULL );
     assert( value != NULL );
     assert( e_free != NULL );
-
-    if ( slot->entries == NULL ) {
-	slot->last_entry = &slot->entries;
-    }
 
     new_entry = (sca_hash_entry *)shm_malloc( sizeof( sca_hash_entry ));
     if ( new_entry == NULL ) {
@@ -62,17 +59,11 @@ sca_hash_table_slot_kv_insert_unsafe( sca_hash_slot *slot, void *value,
     new_entry->compare = e_compare;
     new_entry->description = e_description;
     new_entry->free_entry = e_free;
-    new_entry->next = NULL;
-
     new_entry->slot = slot;
-    new_entry->prev = *slot->last_entry;
 
-    if ( *slot->last_entry == NULL ) {
-	*slot->last_entry = new_entry;
-    } else {
-	(*slot->last_entry)->next = new_entry;
-	slot->last_entry = &(*slot->last_entry)->next;
-    }
+    cur_entry = &slot->entries;
+    new_entry->next = *cur_entry;
+    *cur_entry = new_entry;
 
     return( 0 );
 }
@@ -135,17 +126,9 @@ sca_hash_table_slot_kv_find_unsafe( sca_hash_slot *slot, str *key )
 
     assert( slot != NULL && !SCA_STR_EMPTY( key ));
 
-    e = slot->entries;
-    if ( e ) {
+    for ( e = slot->entries; e != NULL; e = e->next ) {
 	if ( e->compare( key, e->value ) == 0 ) {
 	    value = e->value;
-	} else if ( e->next ) {
-	    for ( ; e != NULL; e = e->next ) {
-		if ( e->compare( key, e->value ) == 0 ) {
-		    value = e->value;
-		    break;
-		}
-	    }
 	}
     }
 
@@ -199,7 +182,6 @@ sca_hash_table_slot_kv_find_entry_unsafe( sca_hash_slot *slot, str *key )
 
     assert( slot != NULL && !SCA_STR_EMPTY( key ));
 
-    e = slot->entries;
     for ( e = slot->entries; e != NULL; e = e->next ) {
 	if ( e->compare( key, e->value ) == 0 ) {
 	    break;
@@ -224,34 +206,32 @@ sca_hash_table_slot_kv_find_entry( sca_hash_slot *slot, str *key )
     void
 sca_hash_entry_free( sca_hash_entry *e )
 {
-    if ( e ) {
-	e->free_entry( e->value );
-	shm_free( e );
-    }
+    assert( e != NULL );
+
+    e->free_entry( e->value );
+    shm_free( e );
 }
 
     sca_hash_entry *
 sca_hash_table_slot_unlink_entry_unsafe( sca_hash_slot *slot,
 	sca_hash_entry *e )
 {
-    if ( e ) {
-	if ( e->next ) {
-	    e->next->prev = e->prev;
-	}
-	if ( e->prev ) {
-	    e->prev->next = e->next;
-	    if ( e == *slot->last_entry ) {
-		slot->last_entry = &e->prev;
-	    }
-	} else if ( e == slot->entries ) {
-	    slot->entries = e->next;
-	    if ( e == *slot->last_entry ) {
-		slot->last_entry = &slot->entries;
-	    }
-	}
+    sca_hash_entry	**cur_e;
 
-	e->prev = NULL;
-	e->next = NULL;
+    assert( slot != NULL );
+    assert( e != NULL );
+
+    for ( cur_e = &slot->entries; *cur_e != NULL; cur_e = &(*cur_e)->next ) {
+	if ( *cur_e == e ) {
+	    *cur_e = e->next;
+	    break;
+	}
+    }
+
+    for ( cur_e = &slot->entries; *cur_e != NULL; cur_e = &(*cur_e)->next ) {
+	if ( *cur_e == e ) {
+LM_INFO( "@@@@@@@@ ADMORTEN DEBUG: unlink didn't unlink!" );
+	}
     }
 
     return( e );

@@ -8,7 +8,6 @@ struct _sca_hash_entry {
     void			(*description)( void * );
     void			(*free_entry)( void * );
     struct _sca_hash_slot	*slot;
-    struct _sca_hash_entry	*prev;
     struct _sca_hash_entry	*next;
 };
 typedef struct _sca_hash_entry	sca_hash_entry;
@@ -16,7 +15,6 @@ typedef struct _sca_hash_entry	sca_hash_entry;
 struct _sca_hash_slot {
     gen_lock_t			lock;
     sca_hash_entry		*entries;
-    sca_hash_entry		**last_entry;
 };
 typedef struct _sca_hash_slot	sca_hash_slot;
 
