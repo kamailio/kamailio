@@ -59,7 +59,7 @@
 #endif
 
 #ifdef USE_DNSSEC
-#include "validator/validator.h"
+#include <validator/validator.h>
 #endif
 
 /* define RESOLVE_DBG for debugging info (very noisy) */
