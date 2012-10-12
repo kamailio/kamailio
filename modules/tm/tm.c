@@ -863,6 +863,10 @@ static int mod_init(void)
 #endif /* WITH_EVENT_LOCAL_REQUEST */
 	if (goto_on_sl_reply && onreply_rt.rlist[goto_on_sl_reply]==0)
 		WARN("empty/non existing on_sl_reply route\n");
+
+#ifdef WITH_TM_CTX
+	tm_ctx_init();
+#endif
 	tm_init = 1;
 	return 0;
 }

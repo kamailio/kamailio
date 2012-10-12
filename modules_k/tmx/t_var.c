@@ -377,7 +377,7 @@ int pv_get_tm_branch_idx(struct sip_msg *msg, pv_param_t *param,
 	if(tcx != NULL)
 		idx = tcx->branch_index;
 	
-	ch = int2str(idx, &l);
+	ch = sint2str(idx, &l);
 
 	res->rs.s = ch;
 	res->rs.len = l;

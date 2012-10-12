@@ -351,14 +351,14 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 				/* if DROP was called in cfg, don't forward, jump to end */
 				if (unlikely(ctx.run_flags&DROP_R_F))
 				{
-					tm_ctx_set_branch_index(0);
+					tm_ctx_set_branch_index(T_BR_UNDEFINED);
 					set_route_type(backup_route_type);
 					/* triggered by drop in CFG */
 					ret=E_CFG;
 					goto error03;
 				}
 			}
-			tm_ctx_set_branch_index(0);
+			tm_ctx_set_branch_index(T_BR_UNDEFINED);
 			set_route_type(backup_route_type);
 		}
 

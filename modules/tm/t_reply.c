@@ -2403,7 +2403,7 @@ int reply_received( struct sip_msg  *p_msg )
 	} /* provisional replies */
 
 done:
-	tm_ctx_set_branch_index(0);
+	tm_ctx_set_branch_index(T_BR_UNDEFINED);
 	/* we are done with the transaction, so unref it - the reference
 	 * was incremented by t_check() function -bogdan*/
 	t_unref(p_msg);

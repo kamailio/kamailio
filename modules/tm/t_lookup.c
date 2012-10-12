@@ -1954,6 +1954,7 @@ tm_ctx_t* tm_ctx_get(void)
 void tm_ctx_init(void)
 {
 	memset(&_tm_ctx, 0, sizeof(tm_ctx_t));
+	_tm_ctx.branch_index = T_BR_UNDEFINED;
 }
 
 void tm_ctx_set_branch_index(int v)
