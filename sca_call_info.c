@@ -1453,7 +1453,7 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 	    }
 
 	    app = sca_appearance_for_tags_unsafe( sca, to_aor,
-			&msg->callid->body, &from->tag_value,
+			&msg->callid->body, &to->tag_value,
 			NULL, slot_idx );
 	    if ( app == NULL ) {
 		LM_ERR( "sca_call_info_bye_handler: failed to look up "
