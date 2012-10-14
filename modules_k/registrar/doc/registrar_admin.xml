@@ -171,7 +171,7 @@ modparam("registrar", "default_expires", 1800)
 		<title>Set <varname>default_expires_range</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("registrar", "default_expires", 30) # +- 30% from default_expires
+modparam("registrar", "default_expires_range", 30) # +- 30% from default_expires
 ...
 </programlisting>
 		</example>

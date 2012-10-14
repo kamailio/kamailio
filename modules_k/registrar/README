@@ -302,7 +302,7 @@ modparam("registrar", "default_expires", 1800)
 
    Example 1.2. Set default_expires_range parameter
 ...
-modparam("registrar", "default_expires", 30) # +- 30% from default_expires
+modparam("registrar", "default_expires_range", 30) # +- 30% from default_expires
 ...
 
 3.3. min_expires (integer)
@@ -991,5 +991,5 @@ Chapter 2. Frequently Asked Questions
 
    What happened to the desc_time_order parameter?
 
-   It was removed, as its functionality was mmigrate into usrloc module,
+   It was removed, as its functionality was migrated into usrloc module,
    were there is a parameter with the same name.
