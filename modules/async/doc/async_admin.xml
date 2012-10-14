@@ -16,17 +16,17 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides asynchornous operations for handling SIP requests
-		in configuration file.
+		This module provides asynchronous operations for handling SIP requests
+		in the configuration file.
 	</para>
 	<para>
-		It uses t_suspend() and t_continue() from TM module.
+		Async uses t_suspend() and t_continue() from the TM and TMX modules.
 	</para>
 	<para>
-		Note that after invoking the an asyncronous operation, the processing
-		will continue later, in another application process. Therefore, do not
-		rely on variables stored in private memory, used shared memory if you
-		want to get values after the processing is resumend (e.g., $avp(...),
+		Note that after invoking the an asynchronous operation, the processing
+		will continue later in another application process. Therefore variables 
+		stored in private memory should not be used, try to use shared memory if you
+		want to get values after the processing is resumed (e.g., $avp(...),
 		$xavp(...), $shv(...), htable $sht(...)).
 	</para>
 	</section>
@@ -41,6 +41,9 @@
 			<listitem>
 			<para>
 				<emphasis>tm</emphasis> - transaction management.
+			</para>
+			<para>
+				<emphasis>tmx</emphasis> - transaction management extensions.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -66,7 +69,7 @@
 	<section>
 		<title><varname>workers</varname> (int)</title>
 		<para>
-			Number of worker processes to be started to handle the asynchornous
+			Number of worker processes to be started to handle the asynchronous
 			tasks.
 		</para>
 		<para>
@@ -92,23 +95,23 @@ modparam("async", "workers", 2)
 		<function moreinfo="none">async_route(routename, seconds)</function>
 	    </title>
 	    <para>
-		Simulate a sleep of 'seconds' and then continue the processing of SIP
+		Simulate a sleep of 'seconds' and then continue the processing of the SIP
 		request with the route[routename]. In case of internal errors, the
 		function returns false, otherwise the function exits the execution of
-		config at that moment (return 0 behaviour).
+		the script at that moment (return 0 behaviour).
 		</para>
 		<para>
 		The routename parameter can be a static string or a dynamic string
 		value with config variables.
 		</para>
 		<para>
-		The sleep parameter represent the number of seconds to suppend the
-		processing of SIP request. Maximum value is 100. The parameter can be
-		a static integer or a varaible holding an integer.
+		The sleep parameter represent the number of seconds to suspend the
+		processing of a SIP request. Maximum value is 100. The parameter can be
+		a static integer or a variable holding an integer.
 		</para>
 		<para>
 		Since the SIP request handling is resumed in another process,
-		practically the config file execution state is lost. Therefore beware
+		the config file execution state is practically lost. Therefore beware
 		that the execution of config after resume will end once the
 		route[routename] is finished.
 		</para>
@@ -137,19 +140,12 @@ route[RESUME] {
 	    <para>
 		Simulate a sleep of 'seconds' and then continue the processing of SIP
 		request with the next action. In case of internal errors, the function
-		returns false, otherwise the function exits the execution of config
-		at that moment (return 0 behaviour).
+		returns false.
 		</para>
 		<para>
-		The sleep parameter represent the number of seconds to suppend the
+		The sleep parameter represent the number of seconds to suspend the
 		processing of SIP request. Maximum value is 100. The parameter can be
-		a static integer or a varaible holding an integer.
-		</para>
-		<para>
-		Since the SIP request handling is resumed in another process,
-		practically the config file execution state is lost. Therefore beware
-		that the execution of config after resume will end once the route block
-		where async_sleep() is called is finished.
+		a static integer or a variable holding an integer.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
