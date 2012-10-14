@@ -34,7 +34,7 @@ Ramona-Elena Modroiu
               3.1. rr_from_store_param (string)
               3.2. rr_to_store_param (string)
               3.3. restore_mode (string)
-              3.4. restore_mode (int)
+              3.4. restore_dlg (int)
               3.5. restore_passwd (string)
               3.6. restore_from_avp (string)
               3.7. restore_to_avp (string)
@@ -105,7 +105,7 @@ Chapter 1. Admin Guide
         3.1. rr_from_store_param (string)
         3.2. rr_to_store_param (string)
         3.3. restore_mode (string)
-        3.4. restore_mode (int)
+        3.4. restore_dlg (int)
         3.5. restore_passwd (string)
         3.6. restore_from_avp (string)
         3.7. restore_to_avp (string)
@@ -135,8 +135,10 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   UAC (User Agent Client) module provides some basic UAC functionalities
-   like FROM header manipulation (anonymization) or client authentication.
+   The UAC (User Agent Client) module provides some basic UAC
+   functionalities like sending SIP requests, registering with a remote
+   service and FROM header manipulation (anonymization) or client
+   authentication.
 
    From version 1.5.0 it has function to send SIP message from
    configuration file. See variable $uac_req(name) and the function
@@ -177,7 +179,7 @@ Chapter 1. Admin Guide
    3.1. rr_from_store_param (string)
    3.2. rr_to_store_param (string)
    3.3. restore_mode (string)
-   3.4. restore_mode (int)
+   3.4. restore_dlg (int)
    3.5. restore_passwd (string)
    3.6. restore_from_avp (string)
    3.7. restore_to_avp (string)
@@ -231,7 +233,7 @@ modparam("uac","rr_to_store_param","my_param")
 modparam("uac","restore_mode","auto")
 ...
 
-3.4. restore_mode (int)
+3.4. restore_dlg (int)
 
    If set to 1, the module uses dialog variables to store initial and new
    values for From/To headers. Dialog module has to be loaded and all

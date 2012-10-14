@@ -17,9 +17,9 @@
 	<section>
 		<title>Overview</title>
 		<para>
-		UAC (User Agent Client) module provides some basic UAC
-		functionalities like FROM header manipulation (anonymization)
-		or client authentication.
+		The <acronym>UAC</acronym> (User Agent Client) module provides some basic UAC
+		functionalities like sending SIP requests, registering with a remote service
+		and FROM header manipulation (anonymization) or client authentication.
 		</para>
 		<para>
 		From version 1.5.0 it has function to send SIP message from
@@ -181,7 +181,7 @@ modparam("uac","restore_mode","auto")
 			</example>
 		</section>
 		<section>
-			<title><varname>restore_mode</varname> (int)</title>
+			<title><varname>restore_dlg</varname> (int)</title>
 			<para>
 			If set to 1, the module uses dialog variables to store initial and
 			new values for From/To headers. Dialog module has to be loaded and
