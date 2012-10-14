@@ -678,7 +678,7 @@ modparam("dialog", "caller_route_column", "column_name")
 		<title>Set <varname>to_route_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "to_route_column", "column_name")
+modparam("dialog", "callee_route_column", "column_name")
 ...
 </programlisting>
 		</example>

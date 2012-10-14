@@ -791,7 +791,7 @@ modparam("dialog", "caller_route_column", "column_name")
 
    Example 1.23. Set to_route_column parameter
 ...
-modparam("dialog", "to_route_column", "column_name")
+modparam("dialog", "callee_route_column", "column_name")
 ...
 
 5.24. caller_contact_column (string)
