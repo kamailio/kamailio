@@ -189,11 +189,11 @@ Chapter 1. Admin Guide
    parallel on the phone. So its necessary to drop the 183 in this cases
    and send a 180 instead.
 
-   This module provides a function to answer OPTIONS requests which are
-   directed to the server itself. This means an OPTIONS request which has
-   the address of the server in the request URI, and no username in the
-   URI. The request will be answered with a 200 OK which the capabilities
-   of the server.
+   This module also provides a function to answer OPTIONS requests which
+   are directed to the server itself. This means an OPTIONS request which
+   has the address of the server in the request URI, and no username in
+   the URI. The request will be answered with a 200 OK with the
+   capabilities of the server.
 
    To answer OPTIONS request directed to your server is the easiest way
    for is-alive-tests on the SIP (application) layer from remote (similar
@@ -292,8 +292,8 @@ modparam("siputils", "contact_flds_separator", "-")
 
    This parameter is the content of the Accept-Language header field. You
    can set any language code which you prefer for error descriptions from
-   other devices, but presumably there are not much devices around which
-   support other languages then the default English.
+   other devices, but presumably there are not many devices around which
+   support other languages than the default English.
 
    Default value is "en".
 
@@ -304,9 +304,10 @@ modparam("siputils", "options_accept_language", "de")
 
 3.6. options_support (string)
 
-   This parameter is the content of the Support header field. Please do
-   not change the default value, because Kamailio currently does not
-   support any of the SIP extensions registered at the IANA.
+   This parameter is the content of the Support header field, indicating
+   SIP extensions. Please do not change the default value, because
+   Kamailio currently does not support any of the SIP extensions
+   registered at the IANA.
 
    Default value is "".
 
@@ -574,8 +575,8 @@ if (is_uri_user_e164("$avp(i:705)") {
    contact_flds_separator module parameter.
 
    Note: This function discards all of the URI parameters. Thus, none of
-   the paramters (except the transport parameter which is encoded into the
-   userpart) can be restored.
+   the parameters (except the transport parameter which is encoded into
+   the userpart) can be restored.
 
    The function returns negative on error, 1 on success.
 
