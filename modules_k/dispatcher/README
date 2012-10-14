@@ -220,12 +220,12 @@ Chapter 1. Admin Guide
    message attributes.
 
    The module can be used as a stateless load balancer, it does not depend
-   on any call state tracing module. It requires TM module if you enable
-   auto-discovery of active/inactive gateways.
+   on any call state tracing module. It requires the TM module if you
+   enable auto-discovery of active/inactive gateways.
 
    It is very lightweight, therefore suitable for handling heavy SIP
-   traffic. Its small footprint and ability to load balancing rules from a
-   text plain file makes it suitable for embedded systems.
+   traffic. The module has a small footprint and ability to load balancing
+   rules from a text plain file makes it suitable for embedded systems.
 
 2. Dependencies
 
@@ -325,7 +325,7 @@ modparam("dispatcher", "setid_col", "groupid")
 
 3.5. destination_col (string)
 
-   The column's name in the database storing the destination's sip uri.
+   The column's name in the database storing the destination sip URI.
 
    Default value is "destination".
 
@@ -336,8 +336,8 @@ modparam("dispatcher", "destination_col", "uri")
 
 3.6. flags_col (string)
 
-   The column's name in the database storing the flags for destination
-   uri.
+   The column's name in the database storing the flags for the destination
+   URI.
 
    Default value is "flags".
 
@@ -349,7 +349,7 @@ modparam("dispatcher", "flags_col", "dstflags")
 3.7. priority_col (string)
 
    The column's name in the database storing the priority for destination
-   uri.
+   URI.
 
    Default value is "priority".
 
@@ -375,15 +375,15 @@ modparam("dispatcher", "force_dst", 1)
 
    Various flags that affect dispatcher's behaviour. The flags are defined
    as a bitmask on an integer value. If flag 1 is set only the username
-   part of the uri will be used when computing an uri based hash. If no
-   flags are set the username, hostname and port will be used The port is
-   used only if different from 5060 (normal sip uri) or 5061 (in the sips
+   part of the URI will be used when computing an URI based hash. If no
+   flags are set the username, hostname and port will be used. The port is
+   used only if different from 5060 (normal sip URI) or 5061 (in the sips:
    case).
 
-   If flag 2 is set, then the failover support is enabled. The functions
+   If flag 2 is set, then failover support is enabled. The functions
    exported by the module will store the rest of addresses from the
-   destination set in AVP, and use these AVPs to contact next address when
-   the current-tried fails.
+   destination set in the AVP, and use these AVPs to contact next address
+   if the current-tried destination fails.
 
    Default value is "0".
 
@@ -395,9 +395,9 @@ modparam("dispatcher", "force_dst", 1)
 3.10. use_default (int)
 
    If the parameter is set to 1, the last address in destination set is
-   used as last option to send the message. For example, it is good when
-   wanting to send the call to an anouncement server saying: "the gateways
-   are full, try later".
+   used as a final option to send the request to. For example, it is
+   useful when wanting to send the call to an anouncement server saying:
+   "the gateways are full, try later".
 
    Default value is "0".
 
@@ -445,7 +445,7 @@ Note
 3.13. cnt_avp (str)
 
    The name of the avp storing the number of destination addresses kept in
-   dst_avp avps.
+   dst_avp AVPs.
 
 Note
 
@@ -523,7 +523,7 @@ Note
 
 3.18. ds_ping_method (string)
 
-   With this Method you can define, with which method you want to probe
+   With this method you can define, with which method you want to probe
    the gateways. Pinging gateways feature depends on ds_ping_interval
    parameter.
 
@@ -694,9 +694,9 @@ Note
      * alg - the algorithm used to select the destination address. The
        parameter can be an integer or a variable holding an interger.
           + "0" - hash over callid
-          + "1" - hash over from uri.
-          + "2" - hash over to uri.
-          + "3" - hash over request-uri.
+          + "1" - hash over from URI.
+          + "2" - hash over to URI.
+          + "3" - hash over request-URI.
           + "4" - round-robin (next destination).
           + "5" - hash over authorization-username (Proxy-Authorization or
             "normal" authorization). If no username is found, round robin
@@ -763,7 +763,7 @@ ds_select_dst("1", "$var(a)");
 4.4. ds_next_domain()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
-   and sets the domain part of the request uri.
+   and sets the domain part of the request URI.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
@@ -954,7 +954,7 @@ sercmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
 
 6.2. dispatcher.list
 
-   It lists the groups and included destinations.
+   Lists the groups and included destinations.
 
    Name: dispatcher.list
 
@@ -965,10 +965,9 @@ sercmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
 
 6.3. dispatcher.reload
 
-   It reloads the groups and included destinations. The command is
-   disabled for call load based dispatching (algorithm 10) since removal
-   of destinations may leave the list of active calls with broken
-   references.
+   Reloads the groups and included destinations. The command is disabled
+   for call load based dispatching (algorithm 10) since removal of
+   destinations may leave the list of active calls with broken references.
 
    Name: dispatcher.reload
 
@@ -1037,7 +1036,7 @@ r,opt)
 
 7.2. Kamailio config file
 
-   Next picture displays a sample usage of dispatcher.
+   Next picture shows a sample usage of the dispatcher module.
 
    Example 1.35. Kamailio config script - sample dispatcher usage
 ...
@@ -1398,7 +1397,7 @@ Chapter 2. Frequently Asked Questions
 
    E-mails regarding any stable version should be sent to
    <sr-users@lists.sip-router.org> and e-mail regarding development
-   versions or CVS snapshots should be send to
+   versions or GIT snapshots should be send to
    <sr-dev@lists.sip-router.org>.
 
    If you want to keep the mail private, send it to

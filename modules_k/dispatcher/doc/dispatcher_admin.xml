@@ -24,12 +24,12 @@
 	</para>
 	<para>
 		The module can be used as a stateless load balancer, it does not
-		depend on any call state tracing module. It requires TM module if
+		depend on any call state tracing module. It requires the TM module if
 		you enable auto-discovery of active/inactive gateways.
 	</para>
 	<para>
 		It is very lightweight, therefore suitable for handling heavy SIP
-		traffic. Its small footprint and ability to load balancing rules
+		traffic. The module has a small footprint and ability to load balancing rules
 		from a text plain file makes it suitable for embedded systems.
 	</para>
 	</section>
@@ -160,8 +160,8 @@ modparam("dispatcher", "setid_col", "groupid")
 	<section>
 		<title><varname>destination_col</varname> (string)</title>
 		<para>
-			The column's name in the database storing the destination's
-			sip uri.
+			The column's name in the database storing the destination
+			sip URI.
 		</para>
 		<para>
 		<emphasis>
@@ -182,7 +182,7 @@ modparam("dispatcher", "destination_col", "uri")
 		<title><varname>flags_col</varname> (string)</title>
 		<para>
 			The column's name in the database storing the flags for
-			destination uri.
+			the destination URI.
 		</para>
 		<para>
 		<emphasis>
@@ -203,7 +203,7 @@ modparam("dispatcher", "flags_col", "dstflags")
 		<title><varname>priority_col</varname> (string)</title>
 		<para>
 			The column's name in the database storing the priority for
-			destination uri.
+			destination URI.
 		</para>
 		<para>
 		<emphasis>
@@ -247,16 +247,16 @@ modparam("dispatcher", "force_dst", 1)
  		Various flags that affect dispatcher's behaviour. The flags are defined
 		as a bitmask on an integer value.
  		If flag 1 is set only the username
- 		part of the uri will be used when computing an uri based hash.
- 		If no flags are set the username, hostname and port will be used
- 		The port is used only if different from 5060 (normal sip uri) or 5061
- 		(in the sips case).
+ 		part of the URI will be used when computing an URI based hash.
+ 		If no flags are set the username, hostname and port will be used.
+ 		The port is used only if different from 5060 (normal sip URI) or 5061
+ 		(in the sips: case).
  		</para>
  		<para>
-		If flag 2 is set, then the failover support is enabled. The functions
+		If flag 2 is set, then failover support is enabled. The functions
 		exported by the module will store the rest of addresses from the
-		destination set in AVP, and use these AVPs to contact next address when
-		the current-tried fails.
+		destination set in the AVP, and use these AVPs to contact next address if
+		the current-tried destination fails.
  		</para>
  		<para>
  		<emphasis>
@@ -276,7 +276,7 @@ modparam("dispatcher", "force_dst", 1)
  		<title><varname>use_default</varname> (int)</title>
  		<para>
  		If the parameter is set to 1, the last address in destination set
-		is used as last option to send the message. For example, it is good
+		is used as a final option to send the request to. For example, it is useful
 		when wanting to send the call to an anouncement server saying:
 		"the gateways are full, try later".
  		</para>
@@ -353,7 +353,7 @@ modparam("dispatcher", "force_dst", 1)
  		<title><varname>cnt_avp</varname> (str)</title>
  		<para>
  		The name of the avp storing the number of destination addresses kept in
-		dst_avp avps.
+		dst_avp AVPs.
  		</para>
 		<note>
  		<para>
@@ -478,7 +478,7 @@ modparam("dispatcher", "force_dst", 1)
  	<section>
  		<title><varname>ds_ping_method</varname> (string)</title>
  		<para>
-		With this Method you can define, with which method you want to probe the gateways.
+		With this method you can define, with which method you want to probe the gateways.
 		Pinging gateways feature depends on ds_ping_interval parameter.
  		</para>
  		<para>
@@ -747,17 +747,17 @@ modparam("dispatcher", "force_dst", 1)
 			</listitem>
 			<listitem>
 				<para>
-				<quote>1</quote> - hash over from uri.
+				<quote>1</quote> - hash over from URI.
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				<quote>2</quote> - hash over to uri.
+				<quote>2</quote> - hash over to URI.
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				<quote>3</quote> - hash over request-uri.
+				<quote>3</quote> - hash over request-URI.
 				</para>
 			</listitem>
 			<listitem>
@@ -887,7 +887,7 @@ ds_select_dst("1", "$var(a)");
  		</title>
  		<para>
  		Takes the next destination address from the AVPs with id 'dst_avp_id'
-		and sets the domain part of the request uri.
+		and sets the domain part of the request URI.
  		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -1178,7 +1178,7 @@ sercmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
 		<function moreinfo="none">dispatcher.list</function>
 		</title>
 		<para>
-		It lists the groups and included destinations.
+		Lists the groups and included destinations.
 		</para>
 		<para>
 		Name: <emphasis>dispatcher.list</emphasis>
@@ -1196,7 +1196,7 @@ sercmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
 		<function moreinfo="none">dispatcher.reload</function>
 		</title>
 		<para>
-		It reloads the groups and included destinations. The command is
+		Reloads the groups and included destinations. The command is
 		disabled for call load based dispatching (algorithm 10) since
 		removal of destinations may leave the list of active
 		calls with broken references.
@@ -1281,7 +1281,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 		<section>
 		<title>&kamailio; config file</title>
 		<para>
-		Next picture displays a sample usage of dispatcher.
+		Next picture shows a sample usage of the dispatcher module.
 		</para>
 		<example>
 		<title>&kamailio; config script - sample dispatcher usage</title>
