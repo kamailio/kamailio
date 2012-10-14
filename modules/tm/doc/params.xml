@@ -158,7 +158,7 @@ modparam("tm", "max_inv_lifetime", 150000)
 	    <title>Set <varname>max_noninv_lifetime</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("tm", "max_inv_lifetime", 30000)
+modparam("tm", "max_noninv_lifetime", 30000)
 ...
 	    </programlisting>
 	</example>

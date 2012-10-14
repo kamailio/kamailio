@@ -463,7 +463,7 @@ modparam("tm", "max_inv_lifetime", 150000)
 
    Example 4. Set max_noninv_lifetime parameter
 ...
-modparam("tm", "max_inv_lifetime", 30000)
+modparam("tm", "max_noninv_lifetime", 30000)
 ...
 
 1.4.5. wt_timer (integer)
@@ -2066,7 +2066,7 @@ route {
    There are several function prototypes:
      * t_replicate(uri),
      * t_replicate(host, port),
-     * t_replicat_udp(host, port)
+     * t_replicate_udp(host, port)
      * t_replicate_tcp(host, port)
      * t_replicate_tls(host, port)
      * t_replicate_sctp(host, port)

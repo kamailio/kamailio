@@ -1352,7 +1352,7 @@ route {
 	    <function>t_replicate(host, port)</function>,
 		</para></listitem>
 		<listitem><para>
-	    <function>t_replicat_udp(host, port)</function>
+	    <function>t_replicate_udp(host, port)</function>
 		</para></listitem>
 		<listitem><para>
 	    <function>t_replicate_tcp(host, port)</function>
