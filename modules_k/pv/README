@@ -231,7 +231,7 @@ if (is_int("$var(foo)")) {
 
    Example 1.7. typeof() usage
 ...
-if (trypeof("$var(foo)", "str")) {
+if (typeof("$var(foo)", "str")) {
     xdbg("variable foo is a string\n");
 }
 ...
