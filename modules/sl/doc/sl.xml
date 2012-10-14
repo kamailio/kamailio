@@ -33,7 +33,7 @@
     <section id="sl.overview">
 	<title>Overview</title>
 	<para>
-	    The <acronym>SL</acronym> module allows ser to act as a stateless
+	    The <acronym>SL</acronym> module allows the SIP server to act as a stateless
 	    UA server and generate replies to SIP requests without keeping
 	    state. That is beneficial in many scenarios, in which you wish not
 	    to burden server's memory and scale well.
@@ -47,18 +47,18 @@
 	</para>
 	<para>
 	    To speed up the filtering process, the module uses a timeout
-	    mechanism. When a reply is sent, a timer us set. As time as the
-	    timer is valid, The incoming ACK requests will be checked using TO
-	    tag value Once the timer expires, all the ACK are let through - a
-	    long time passed till it sent a reply, so it does not expect any
-	    ACK that have to be blocked.
+	    mechanism. When a reply is sent, a timer us set. As long as the
+	    timer is valid, the incoming ACK requests will be checked using TO
+	    tag value. Once the timer expires, all the ACK messages are let 
+	    through - a long time passed till it sent a reply, so it does not 
+	    expect any ACK that have to be blocked.
 	</para>
 	<para>
 	    The ACK filtering may fail in some rare cases. If you think these
-	    matter to you, better use stateful processing (tm module) for
-	    INVITE processing. Particularly, the problem happens when a UA
+	    matter to you, better use stateful processing (<acronym>TM</acronym> 
+	    module) for INVITE processing. Particularly, the problem happens when a UA
 	    sends an INVITE which already has a to-tag in it (e.g., a
-	    re-INVITE) and SER want to reply to it. Than, it will keep the
+	    re-INVITE) and the server want to reply to it. Then, it will keep the
 	    current to-tag, which will be mirrored in ACK. SER will not see
 	    its signature and forward the ACK downstream. Caused harm is not
 	    bad--just a useless ACK is forwarded.

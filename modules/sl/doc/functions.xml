@@ -44,8 +44,8 @@ sl_send_reply("404", "Not found");
 		<para>
 		For the current request, a reply is sent back having the given code 
 		and text reason. The reply is sent stateful or stateless, depending of 
-		the TM module: if the transaction for current request is
-		created, then the reply is sent stateful, otherwise stateless.
+		the <acronym>TM</acronym> module: if a transaction exists for the current
+		request, then the reply is sent statefully, otherwise stateless.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
