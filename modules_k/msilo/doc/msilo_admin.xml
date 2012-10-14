@@ -41,12 +41,12 @@
 		be sent to contact address provided in REGISTER request.
 	</para>
 	<para>
-		It may happen the &sip; user to be registered but his &sip; User Agent 
-		to have no support for MESSAGE request. In this case it should be used 
-		the <quote>failure_route</quote> to store the undelivered requests.
+		It may happen that the &sip; user to be registered use a  &sip; User Agent 
+		that has no support for MESSAGE requests. In this case the <quote>failure_route</quote>
+		should be used to re-store the undelivered requests.
 	</para>
 	<para>
-		Another functionality provided by the modules is to send messages at
+		Another functionality provided by the module is to send messages at
 		a certain time -- the reminder functionality. Using config logic, a
 		received message can be stored and delivered at a time specified while
 		storing with the 'snd_time_avp'.
@@ -69,7 +69,7 @@
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>TM</emphasis>--transaction module--is used to 
+				<emphasis>TM</emphasis>--transaction module-- used to 
 				send &sip; requests.
 			</para>
 			</listitem>
@@ -192,7 +192,7 @@ modparam("msilo", "contact_hdr", "Contact: &lt;sip:null@example.com&gt;\r\n")
 		<title>Set the <quote>extra_hdrs</quote> parameter</title>
 <programlisting format="linespecific">
 ...
-modparam("msilo", "contact_hdr", "X-Extra: $tu\r\nY-Extra: foo\r\n")
+modparam("msilo", "extra_hdrs", "X-Extra: $tu\r\nY-Extra: foo\r\n")
 ...
 </programlisting>
 		</example>
