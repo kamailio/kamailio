@@ -18,14 +18,14 @@
 	<para>
 	This module implements generic string translations based on matching and
 	replacement rules. It can be used to manipulate Request URI or a PV and to 
-	translated to a new format/value.
+	translate to a new format/value.
 	</para>
 	</section>
 
 	<section>
 	<title>How it works</title>
 	<para>
-	At startup, the module will load a set of transformation rules from a 
+	At startup the module will load a set of transformation rules from a 
 	database. Every database row will be stored in memory as a translation 
 	rule. Each rule will describe how the matching should be made, how the 
 	input value should be modified and which attributes should be set for 
@@ -42,19 +42,19 @@
 	the output value.
 	</para>
 	<para>
-	<emphasis> The first matching rule will be processed.</emphasis>
+	<emphasis> Only the first matching rule will be processed.</emphasis>
 	</para>
 	</section>
 
 	<section>
 	<title>Usage cases</title>
 	<para>
-	The module can be used to implement dialplans - do to auto completion of 
-	the dial numbers (like national to international), to convert generic 
+	The module can be used to implement dialplans - to do auto completion of 
+	the dialed numbers (like national to international), to convert generic 
 	numbers to specific numbers (like for emergency numbers).
 	</para>
 	<para>
-	The module can also be used for detecting range or sets of numbers mapped 
+	The module can also be used for detecting a range or sets of numbers mapped 
 	on a service/case - attribute string can be used here to store extra 
 	information about the service/case.
 	</para>
@@ -113,7 +113,7 @@
 		<para>
 		<emphasis>
 			Default value is 
-				<quote>mysql://openser:openserrw@localhost/openser</quote>.
+				<quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
 		<example>

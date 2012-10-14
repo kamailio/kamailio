@@ -12,9 +12,9 @@ Edited by
 
 Juha Heinanen
 
-   Copyright © 2007-2008 Voice Sistem SRL
+   Copyright � 2007-2008 Voice Sistem SRL
 
-   Copyright © 2008-2010 Juha Heinanen
+   Copyright � 2008-2010 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -127,11 +127,11 @@ Chapter 1. Admin Guide
 
    This module implements generic string translations based on matching
    and replacement rules. It can be used to manipulate Request URI or a PV
-   and to translated to a new format/value.
+   and to translate to a new format/value.
 
 2. How it works
 
-   At startup, the module will load a set of transformation rules from a
+   At startup the module will load a set of transformation rules from a
    database. Every database row will be stored in memory as a translation
    rule. Each rule will describe how the matching should be made, how the
    input value should be modified and which attributes should be set for
@@ -146,15 +146,15 @@ Chapter 1. Admin Guide
    to the rule, this will be returned to the script along with the output
    value.
 
-   The first matching rule will be processed.
+   Only the first matching rule will be processed.
 
 3. Usage cases
 
-   The module can be used to implement dialplans - do to auto completion
-   of the dial numbers (like national to international), to convert
+   The module can be used to implement dialplans - to do auto completion
+   of the dialed numbers (like national to international), to convert
    generic numbers to specific numbers (like for emergency numbers).
 
-   The module can also be used for detecting range or sets of numbers
+   The module can also be used for detecting a range or sets of numbers
    mapped on a service/case - attribute string can be used here to store
    extra information about the service/case.
 
@@ -200,7 +200,7 @@ Chapter 1. Admin Guide
 
    The translation rules will be loaded using this database URL.
 
-   Default value is “mysql://openser:openserrw@localhost/openser”.
+   Default value is "mysql://openser:openserrw@localhost/openser".
 
    Example 1.1. Set db_url parameter
 ...
@@ -211,7 +211,7 @@ modparam("dialplan", "db_url", "mysql://user:passwb@localhost/db")
 
    The table's name from which to load the translation rules.
 
-   Default value is “dialplan”.
+   Default value is "dialplan".
 
    Example 1.2. Set table_name parameter
 ...
@@ -222,7 +222,7 @@ modparam("dialplan", "table_name", "my_table")
 
    The column name used to store the dialplan ID group.
 
-   Default value is “dpid”.
+   Default value is "dpid".
 
    Example 1.3. Set dpid_col parameter
 ...
@@ -234,7 +234,7 @@ modparam("dialplan", "dpid_col", "column_name")
    The column name used to store the priority of the corresponding rule
    from the database row.
 
-   Default value is “pr”.
+   Default value is "pr".
 
    Example 1.4. Set pr_col parameter
 ...
@@ -245,7 +245,7 @@ modparam("dialplan", "pr_col", "column_name")
 
    The column name used to store the type of matching of the rule.
 
-   Default value is “match_op”.
+   Default value is "match_op".
 
    Example 1.5. Set match_op_col parameter
 ...
@@ -256,7 +256,7 @@ modparam("dialplan", "match_op_col", "column_name")
 
    The column name to store the rule match expression.
 
-   Default value is “match_exp”.
+   Default value is "match_exp".
 
    Example 1.6. Set match_exp_col parameter
 ...
@@ -268,7 +268,7 @@ modparam("dialplan", "match_exp_col", "column_name")
    The column name to store the length of a string matching the match
    expression.
 
-   Default value is “match_len”.
+   Default value is "match_len".
 
    Example 1.7. Set pr_col parameter
 ...
@@ -279,7 +279,7 @@ modparam("dialplan", "match_len_col", "column_name")
 
    The column name to store the rule's substitution expression.
 
-   Default value is “subst_exp”.
+   Default value is "subst_exp".
 
    Example 1.8. Set pr_col parameter
 ...
@@ -290,7 +290,7 @@ modparam("dialplan", "subst_exp_col", "column_name")
 
    The column name to store the rule's replacement expression.
 
-   Default value is “repl_exp”.
+   Default value is "repl_exp".
 
    Example 1.9. Set repl_exp_col parameter
 ...
@@ -302,7 +302,7 @@ modparam("dialplan", "repl_exp_col", "column_name")
    The column name to store the rule's attributes to be set to the
    message.
 
-   Default value is “attrs”.
+   Default value is "attrs".
 
    Example 1.10. Set attrs_col parameter
 ...
@@ -315,7 +315,7 @@ modparam("dialplan", "attrs_col", "column_name")
    (dp_translate() succeeds). This parameter can be an AVP or a SCRIPT
    VAR.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.11. Set attrs_pvar parameter
 ...
@@ -326,7 +326,7 @@ modparam("dialplan", "attrs_pvar", "$avp(s:dest)")
 
    The number of rows to be fetched at once from database
 
-   Default value is “1000”.
+   Default value is "1000".
 
    Example 1.12. Set fetch_rows parameter
 ...
@@ -337,11 +337,11 @@ modparam("dialplan", "fetch_rows", 4000)
 
    6.1. dp_translate(id, [src[/dest]])
 
-6.1.  dp_translate(id, [src[/dest]])
+6.1. dp_translate(id, [src[/dest]])
 
    Will try to translate src into dest according to the translation rules
    with dialplan ID equal to id. If src/dest is missing the default
-   parameter “ruri.user/ruri.user” will be used, thus translating the
+   parameter "ruri.user/ruri.user" will be used, thus translating the
    request uri user part. If only dest is missing, only matching and
    storing of matching rule's attributes is done.
 
