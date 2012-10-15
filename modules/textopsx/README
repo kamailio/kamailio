@@ -23,17 +23,17 @@ Daniel-Constantin Mierla
 
 1.1. Overview
 
-   This is a module implementing funtions for text operations over SIP
-   messages in configuration files. It comes to add new features similar
-   to textops module (textops eXtentions).
+   This module implements functions for SIP message text operations in
+   routing block configurations. It adds new features similar to the
+   textops module (textops eXtentions).
 
 1.2. Functions
 
 1.2.1. msg_apply_changes()
 
    Use this function to apply changes performed on SIP request content. Be
-   careful when using this function; due to special handling of changes
-   done to SIP message buffer so far, using this function might change the
+   careful when using this function; due to special handling of changes to
+   the SIP message buffer so far, using this function might change the
    behaviour of your config. Do test your config properly!
 
    This function can be used from REQUEST_ROUTE.
@@ -54,7 +54,7 @@ if(msg_apply_changes())
 1.2.2. change_reply_status(code, reason)
 
    Intercept a SIP reply (in an onreply_route) and change its status code
-   and reason phrase prior to propogating it.
+   and reason phrase prior to forwarding it.
 
    Meaning of the parameters is as follows:
      * code - Status code.
@@ -74,7 +74,7 @@ onreply_route {
 
 1.2.3. remove_body()
 
-   Use this function to remove body of SIP requests or replies.
+   Use this function to remove the body of SIP requests or replies.
 
    This function can be used from ANY_ROUTE.
 
@@ -99,11 +99,11 @@ keep_hf("User-Agent");
 
 1.2.5. fnmatch(value, expr [, flags])
 
-   Match the value against the expr using the shell-style pattern for file
+   Match the value against the expr using shell-style pattern for file
    name matching (see man page for C function fnmatch()). It is known to
-   be faster and uses less-memory than regexp.
+   be faster and use less-memory than regular expressions.
 
-   Parameters flags is optional and can be 'i' to do case insensitive
+   Parameter 'flags' is optional and can be 'i' to do case insensitive
    matching.
 
    This function can be used from ANY_ROUTE.
