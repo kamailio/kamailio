@@ -23,7 +23,7 @@
 		Async uses t_suspend() and t_continue() from the TM and TMX modules.
 	</para>
 	<para>
-		Note that after invoking the an asynchronous operation, the processing
+		Note that after invoking the asynchronous operation, the processing
 		will continue later in another application process. Therefore variables 
 		stored in private memory should not be used, try to use shared memory if you
 		want to get values after the processing is resumed (e.g., $avp(...),
