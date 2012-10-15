@@ -1604,6 +1604,9 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to)
 	}
 
 	hdr.hp_l +=len;
+	if (hep_version == 2){
+		len += sizeof(struct hep_timehdr);
+	}
 	len += sizeof(struct hep_hdr) + body->len;
 	buffer = (void *)pkg_malloc(len+1);
 	if (buffer==0){
