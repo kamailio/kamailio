@@ -51,7 +51,7 @@ The two major SIP server flavours are:
   - Kamailio (former OpenSER)
 
 Starting with version 3.0.0, the two SIP server flavours are built from
-same source code three.
+same source code tree.
 
 SER flavor is the one built by default - historically speaking, it is the
 first open source SIP server started in 2001. Kamailio forked from SER in
