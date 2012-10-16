@@ -1277,15 +1277,6 @@ LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_ack_from_handler" );
 		    STR_FMT( &msg->callid->body ), STR_FMT( &from->tag_value ));
 	    goto done;
 	}
-
-	if (( app->flags & SCA_APPEARANCE_FLAG_OWNER_PENDING )) {
-	    app->flags &= ~SCA_APPEARANCE_FLAG_OWNER_PENDING;
-
-#ifdef notdef
-	    /* set the update flag so the script will invoke update */
-	    setflag( msg, (flag_t)sca->cfg->update_flag );
-#endif /* notdef */
-	}
     }
 
 done:
@@ -1420,9 +1411,7 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 		goto done;
 	    }
 
-	    if (( app->flags & SCA_APPEARANCE_FLAG_CALLEE_PENDING )) {
-		app->flags &= ~SCA_APPEARANCE_FLAG_CALLEE_PENDING;
-	    } else {
+	    if ( SCA_STR_EQ( &app->dialog.call_id, &msg->callid->body )) {
 		/* XXX yes, duplicated below, too */
 		unl_app = sca_appearance_list_unlink_index(
 					app->appearance_list, app->index );
@@ -1462,11 +1451,7 @@ sca_call_info_bye_handler( sip_msg_t *msg, sca_call_info *call_info,
 		goto done;
 	    }
 
-	    if (( app->flags & SCA_APPEARANCE_FLAG_OWNER_PENDING )) {
-LM_INFO( "ADMORTEN DEBUG: %.*s appearance-index %d has owner change pending",
-	 STR_FMT( &app->owner ), app->index );
-		/* ... */
-	    } else {
+	    if ( SCA_STR_EQ( &app->dialog.call_id, &msg->callid->body )) {
 		unl_app = sca_appearance_list_unlink_index(
 					app->appearance_list, app->index );
 		if ( unl_app == NULL || unl_app != app ) {
@@ -1502,15 +1487,7 @@ LM_INFO( "ADMORTEN DEBUG: %.*s appearance-index %d has owner change pending",
 		goto done;
 	    }
 
-	    if (( app->flags & SCA_APPEARANCE_FLAG_OWNER_PENDING )) {
-LM_INFO( "ADMORTEN DEBUG: %.*s appearance-index %d has owner change pending",
-	 STR_FMT( &app->owner ), app->index );
-		if ( SCA_STR_EQ( &app->dialog.call_id, &msg->callid->body ) &&
-			SCA_STR_EQ( &app->dialog.from_tag, &from->tag_value ) &&
-			SCA_STR_EQ( &app->dialog.to_tag, &to->tag_value )) {
-		    LM_INFO( "ADMORTEN DEBUG: match" );
-		}
-	    } else {
+	    if ( SCA_STR_EQ( &app->dialog.call_id, &msg->callid->body )) {
 		unl_app = sca_appearance_list_unlink_index(
 					app->appearance_list, app->index );
 		if ( unl_app == NULL || unl_app != app ) {
