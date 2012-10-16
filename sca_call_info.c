@@ -1359,6 +1359,7 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
 	/* XXX replace with dispatch table. */
 	switch ( msg->REPLY_STATUS ) {
 	case 100:
+	case 302:
 	    rc = 1;
 	    break;
 
