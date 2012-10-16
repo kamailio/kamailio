@@ -12,7 +12,7 @@
 #include "../../dprint.h"
 #include "../../dset.h"
 #include "../../flags.h"
-#include "../../lib/kcore/hash_func.h"
+#include "../../hashes.h"
 #include "../../locking.h"
 #include "../../parser/hf.h"
 #include "../../parser/msg_parser.h"
