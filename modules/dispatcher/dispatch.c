@@ -262,6 +262,13 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 		goto err;
 	}
 
+	/* skip IPv6 references if IPv6 lookups are disabled */
+	if (default_core_cfg.dns_try_ipv6 == 0 &&
+	        puri.host.s[0] == '[' && puri.host.s[puri.host.len-1] == ']') {
+		LM_DBG("skipping IPv6 record %.*s\n", puri.host.len, puri.host.s);
+		return 0;
+	}
+
 	/* get dest set */
 	sp = ds_lists[list_idx];
 	while(sp)
