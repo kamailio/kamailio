@@ -58,6 +58,7 @@ Jan Janak
               4.3. proxy_authenticate(realm, table)
               4.4. proxy_authorize(realm, table)
               4.5. auth_check(realm, table, flags)
+              4.6. is_subscriber(uri, dbtable, flags)
 
    List of Examples
 
@@ -73,6 +74,7 @@ Jan Janak
    1.10. www_authorize usage
    1.11. proxy_authorize usage
    1.12. auth_check usage
+   1.13. is_subscriber usage
 
 Chapter 1. Admin Guide
 
@@ -103,6 +105,7 @@ Chapter 1. Admin Guide
         4.3. proxy_authenticate(realm, table)
         4.4. proxy_authorize(realm, table)
         4.5. auth_check(realm, table, flags)
+        4.6. is_subscriber(uri, dbtable, flags)
 
 1. Overview
 
@@ -301,6 +304,7 @@ modparam("auth_db", "version_table", 0)
    4.3. proxy_authenticate(realm, table)
    4.4. proxy_authorize(realm, table)
    4.5. auth_check(realm, table, flags)
+   4.6. is_subscriber(uri, dbtable, flags)
 
 4.1. www_authenticate(realm, table)
 
@@ -418,5 +422,36 @@ if (!proxy_authorize("$fd", "subscriber)) {
 if (!auth_check("$fd", "subscriber", "1")) {
     auth_challenge("$fd", "1");
     exit;
+}
+...
+
+4.6. is_subscriber(uri, dbtable, flags)
+
+   The function checks if there is a subscriber corresponding to the AoR
+   in uri parameter. It uses same database connection as for
+   authentication functions.
+
+   In addition, if the subscriber record is found, then the
+   load_credentials attributes are loaded. An use case can be loading the
+   credential attributes for callee.
+
+   Meaning of the parameters is as follows:
+     * uri - a valid SIP URI value to identify the subscriber. The string
+       may contain pseudo variables.
+     * dbtable - Table to be used to lookup username and domain from URI
+       (usually subscriber table). The string may contain pseudo
+       variables.
+     * flags - set of flags to control the behaviour of the function. If
+       it is 1, then the function will use the domain part of the URI to
+       perform the database table search.
+       The parameter may be a pseudo variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. is_subscriber usage
+...
+if (!is_subscriber("$ru", "subscriber", "1")) {
+    # callee is not a local subscriber
+    ...
 }
 ...
