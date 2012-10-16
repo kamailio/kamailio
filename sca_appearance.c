@@ -839,7 +839,6 @@ sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
 
 	*(app->uri.s + app->uri.len) = '>';
 	app->uri.len++;
-LM_INFO( "@@ ADMORTEN DEBUG: full appearance-uri: [%.*s]", STR_FMT( &app->uri ));
     }
 
     if ( !SCA_DIALOG_EMPTY( dialog )) {
