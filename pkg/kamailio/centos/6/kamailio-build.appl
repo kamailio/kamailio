@@ -1,5 +1,5 @@
-name: "kamailio-build-#OS_NAME#-#OS_VERSION#-#BASE_ARCH#"
-summary: "#OS_NAME# #OS_VERSION# for building Kamailio #BASE_ARCH# RPMs"
+name: "kamailio-build-c6-#BASE_ARCH#"
+summary: "CentOS 6 image for building Kamailio #BASE_ARCH# RPMs"
 os:
   name: centos
   version: 6
