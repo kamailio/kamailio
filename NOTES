@@ -136,3 +136,9 @@ Dependency on To-URI is problematic for hold/pickup
     be unique. It will be possible to reconcile these, but it suggests
     that using the sip_uri_t struct and the parse_uri functions may be
     helpful.
+
+No handler for t_reply (locally sent transaction-stateful replies).
+    Probably need to register callback for TMCB_LOCAL_RESPONSE_IN.
+
+Deletion of call-info subscription when line-seize NOTIFY fails seems
+wrongheaded.
