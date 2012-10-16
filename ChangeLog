@@ -1,3 +1,861 @@
+===================== 2012-10-16 Version 3.3.2 Released =====================
+
+===================== Changes Since Version 3.3.1 ===========================
+
+commit f707dcf308ea5166a7a8f6454103871b2f328311
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 16 16:22:39 2012 +0200
+
+    Makefile.defs: version set to 3.3.2
+
+commit a956fe20290a8da8049df0f11f18f8207f83e58e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 16 16:19:23 2012 +0200
+
+    pkg/rpm: version set to 3.3.2 for rpm specs
+
+commit 48eb53ee1eae2cc5c2dad61350941e45f500f219
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 16 16:17:38 2012 +0200
+
+    pkg/deb: version set to 3.3.2 for deb specs
+
+commit 47b544d4e0fe40c683566d9ffce54cc761a1eee1
+Author: Dragos Dinu <dragos.dinu@1and1.ro>
+Date:   Mon Oct 15 18:29:48 2012 +0300
+
+    modules_k/siptrace Fixed crash when using HEP v2
+    (cherry picked from commit 5d9d4d017d79d4e9269bbeb019460b3c8d8695d0)
+
+commit 35c1a5fb75c52f1adcdf4c3938530751b63a2007
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Mon Oct 15 14:35:10 2012 +0200
+
+    INSTALL - Fixing spelling error
+
+commit d75cb5fab10efdedbe9ec3aeaaafc84c1c6b051e
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Wed Oct 10 10:02:00 2012 +0200
+
+    tcp: fix connection alias replacing
+    
+    When the TCP_ALIAS_REPLACE is set and an alias has to be added to
+    a connection that had 0 aliases (it can happen due to
+    TCP_ALIAS_REPLACE flag), the connection aliases count was wrongly
+    forced to 1.
+    For more details see:
+    http://lists.sip-router.org/pipermail/sr-users/2012-October/074932.html
+    
+    Patch-by Jijo
+    (cherry picked from commit e71435b0276c89ef756fecf1bbd5e339b80e804c)
+
+commit 5f505e26b92380b08ec2bb2865f2c1b212d2b054
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 9 16:30:24 2012 +0200
+
+    core: reset params pointers if there is a failure in parse_params()
+    
+    - patch by Jijo
+    (cherry picked from commit b12c2df6ccb903e2ca22d34bb968f3ebc2712b89)
+
+commit 14f091d03fc3d58cd5753719eb909d2e84aac6bf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 9 12:29:09 2012 +0200
+
+    tm: set log level to debug for negative return code of run_top_route()
+    
+    - it returns the code of last execution action, negative return is not
+      necessary an error
+    (cherry picked from commit 038780fdf40c8d5d3694538f199411810fad7a0e)
+
+commit 94affa45a18c4c6b34341808011952b5e71d9438
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 9 11:39:16 2012 +0200
+
+    rtpproxy: safety check for rtp stats pv
+    
+    - if the rtpproxy is not responding, there is no returned value and
+      could cause crash when doing strlen(NULL)
+    - return $null in case of various errors, being safer to check returned
+      PV value in the script against $null, rather than having undefined
+      value
+    - reported by J. Gallart
+    (cherry picked from commit 753f511f281b0f4406908086547225c5c0bc0d23)
+
+commit 57005251e00d3b2e44fdba2dd1018c2b9780461d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 9 09:13:15 2012 +0200
+
+    msrp: fixed copy&paste issue for getting To-Path size
+    
+    - the parsing of From-Path was used instead
+    - reported by Peter Dunkley
+    (cherry picked from commit 146873cf2b101d6363bb20c235b7dcdb8bb54134)
+
+commit c6f98a04cde334f5f73bd2ee69c2d696c6a09df9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 3 14:20:27 2012 +0200
+
+    mem: fixed MDBG() parameters
+    
+    - log level is not necessary for this macro
+    (cherry picked from commit 0193d296e39a9fc095e90682f5335a2907403474)
+
+commit 0d5c3543eea3e48ce4f7fb92e99d3262fddef180
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Wed Oct 3 09:27:38 2012 +0300
+
+    mem/f_malloc.c: downgraded print free(0) warning from LOG to MDBG.
+    (cherry picked from commit 7b6234a3e8d0427c767942327aff57ade676eb5e)
+
+commit 35fa70d06b08d2e11fcd4b208d741310f6b60c89
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 2 21:24:09 2012 +0200
+
+    mem: enhanced the warning message for free(0) of QM in debug mode
+    (cherry picked from commit 41fa8653157a989ed1a77f72b25a20fd984b999d)
+
+commit 074faa8da935de1977b504e7d052fdfe0030fc0f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 28 14:38:42 2012 +0200
+
+    app_mono: fixed c&p typo names in examples
+    (cherry picked from commit f71d76c0f39f2c6b0e070e1246f371f17b45b2dd)
+
+commit 444cb9836725441dc7245310d52898c0965deeba
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 27 14:57:51 2012 +0200
+
+    core/mem: moved safety check for null before range check in *free()
+    
+    - affects only when memory debug is enabled at compilation
+    - apparently libssl has some free(0) which makes it not possible to work
+      with memory debugging (reported on irc channel)
+    (cherry picked from commit 927a8a1aa705438d210fc244066a8c5a5b84a746)
+
+commit b36939476280d38464a4c0ff234a4d26fdd0306c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 26 00:18:49 2012 +0200
+
+    registrar(k): some contact attributes were not in $ulc(...)
+    
+    - ruid, reg-id and instance were not returned by $ulc(...)
+    (cherry picked from commit 20c436df0c81b38777052b4ba6fb425577f5c707)
+
+commit bae37685f2d145f86f1387eb4777ad38e86d188d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 25 13:52:05 2012 +0200
+
+    utils/misc: few updates to vim syntax highlighting
+    (cherry picked from commit 7943249ea75d8103d1364bcb4b6a63a2e685e88a)
+
+commit f2ba2bfe5721060221e71294728a0921d65db53e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 25 11:31:17 2012 +0200
+
+    sanity: fix to parameter type in example
+    (cherry picked from commit 779addb9df44434448f78ab17d2daa756d31d3c0)
+
+commit 33e935c378a0ce3c09df22611ffbf0460e154471
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 21 09:44:21 2012 +0200
+
+    topoh: use L_DBG instead of L_ERR for some debugging messages
+    
+    - reported by Miguel Baptista
+    (cherry picked from commit e8501b8eb592fa799af1fd1cfba8fa628cbfa800)
+
+commit 929cd2e0dbd542d0eff63ad7179e438cd53bc45c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 18 09:27:38 2012 +0200
+
+    pkg/kamailio/rpm: fixed copy&paste error for PKG_MEMORY size
+    (cherry picked from commit 9430ee8d313ece9c97384868ee7623c0979028f5)
+
+commit 5c313f701968b328adc6b7d76a14b78446dc2986
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 18 09:18:52 2012 +0200
+
+    pkg/kamailio/rpm: added option to set pkg memory size for init.d script
+    
+    - split of MEMORY parameter to SHM_MEMORY and PKG_MEMORY
+    - EXTRA_OPTIONS variable to add other command line parameters
+    (cherry picked from commit 9430290ad91ca775bb18f54e70308917ce1e790a)
+
+commit f5df3a25096d01ac36eec77e61af958e9d33b3d2
+Author: Marius Zbihlei <marius.zbihlei@1and1.ro>
+Date:   Mon Sep 17 17:34:57 2012 +0300
+
+    core:parser fix possible bug in msg_parser
+    
+    If buffer was NULL, tmp was returned uninitialized, thus possible to cause problems
+    (cherry picked from commit cccdaead04411175c46dd660c91c037c45f80c33)
+
+commit dc4b47f8ef20e3ee6e3d16809ca76261bc96966d
+Author: Jason Penton <jason.penton@smilecoms.com>
+Date:   Mon Sep 17 10:55:48 2012 +0200
+
+    benchmark: fixed bug/typo in calculating time diff ;)
+    (cherry picked from commit d9b009ef3c430f6ea064b4a72d5b94ce842ede1d)
+
+commit 37e67bec10e872fec3cc0dc4ef73b7f100d9f77a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 11 08:52:53 2012 +0200
+
+    kex: documented mi statistics commands
+    
+    - reported by David at lublink
+    (cherry picked from commit 6b7a27e81cc838de6af9a1c55edb937d1094ce98)
+
+commit e7572ade2f0d17239999ccb60b744cfd241afe9b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 31 10:29:45 2012 +0200
+
+    auth: print return code in log when nonce is invalid
+    
+    - it will give a clue about why nonce is considered invalid
+    (cherry picked from commit 494b383edde7a2d193c220f3117506e4cc95932f)
+
+commit 756b1cdab5cac039fd958c2f3909a313a1baf3ab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 30 10:15:26 2012 +0200
+
+    db_cluster: safety check for existence of several DB API members
+    (cherry picked from commit 21583d47751fc7f684dac41a3bfbfc3b2c0bf3a3)
+
+commit e4bfc9c353fd46a6b5ab726b48eaa18b35b284f8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 27 10:37:50 2012 +0200
+
+    db_cluster: more verbosity when building cluster structures
+    (cherry picked from commit b53ca97379e1b4aeae80b794f23e25e9150a0e58)
+
+commit e6a8291381ccf9773198a6c338449571ba122417
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 24 09:14:28 2012 +0200
+
+    db_cluster: use connection from write structure for db updates
+    
+    - could be related to an issue reported by Ãyvind Kolbu
+    (cherry picked from commit 4d15ba97bab58108cfedc45158d90583f67cdadf)
+
+commit b5719b81e8f79c40963d3bb9d7954732273d4a18
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Aug 19 21:29:06 2012 +0200
+
+    core: rephrased debug message about no 2nd via in reply
+    (cherry picked from commit 8bc7114c6a915985ca2f4e9ab50ea608437c7256)
+
+commit 26ecb4932f1a265b87e6fa077c61b4feb6123262
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 15 13:01:43 2012 +0200
+
+    dispatcher(k): corrected setid_pvname parameter name
+    
+    - readme listed it as setid_pvar, the source code expected setid_pvname
+    - reported by Dan B.
+    (cherry picked from commit e1149b05868b918d0bc52b2d46bb02f7799358db)
+
+commit 90a50be6fe74e521bffcde6f8ec73467cb31d163
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 15 12:48:32 2012 +0200
+
+    dispatcher(k): corrected the variable which is set by ds_is_from_list()
+    
+    - setid_pvar is used instead of grp_avp
+    - reported by Dan B.
+    (cherry picked from commit be05dfc0f4af62f9c368960fe75a810548be8b87)
+
+commit 6c7ecd4ffaaffd78458dc1b277dd85b5debb587b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 14 22:18:50 2012 +0200
+
+    acc(k): added notes about dynamic table name for db acc to docs
+    (cherry picked from commit 91d6d3c8a1484b23ff74f0cfd6356447985455a5)
+
+commit 7287933b07dcaf6d3bfae8d482ef0c681b8ed697
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 12 14:52:07 2010 +0200
+
+    acc(k): table name for db acc can be dynamic
+    
+    - you can include variables in table name and will be evaluated at
+      runtime:
+        modparam("acc", "db_table_acc", "acc_$time(year)_$time(mon)")
+      will write now to table acc_2010_10
+    - same can be done for missed_calls table name
+    - second parameter of acc_db_request() supports as well config variables
+    (cherry picked from commit e8f6a95d43b6a4340cf7e97213af5c71fa2a69e9)
+    (cherry picked from commit 95ee0a3ee75556a25f3a9286837a57decf6c3c91)
+
+commit 940047788e683f88d1f72cce257e3bcb68bff782
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 14 11:19:08 2012 +0200
+
+    pkg/kamailio/rpm: execute 'success' for start operation
+    
+    - reported by Andre
+    (cherry picked from commit f9c5c389b2412d23f1fdd35c6e97dfe7dbe44811)
+
+commit d94df595f837bb3682162a900b3e29203e8656c5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 9 16:14:43 2012 +0200
+
+    usrloc(k): safety check for raw_query
+    
+    - db get all contacts functions requires raw_query, but not all db
+      modules implement it
+    (cherry picked from commit f61295a91bb92645ea46dea5f6101232afeb720d)
+
+commit 2f6b9bc710acff53dea899236a81a6f9d33ec4ff
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Oct 10 10:49:16 2012 +0100
+
+    modules_k/xcap_server: Fixed small mistake in last xcap_server fix
+    (cherry picked from commit 10dafd75873f9f58037680e4d72cafc4c877583f)
+
+commit c210532ce7a2c26f8c09257d1d46ee2a641bdfb6
+Merge: 587d29a befbee0
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Oct 10 10:50:32 2012 +0100
+
+    Merge branch '3.3' of ssh://git.sip-router.org/sip-router into 3.3
+    
+    * '3.3' of ssh://git.sip-router.org/sip-router:
+      core: Fix parser sdp bug. Reset connection IP for each stream.
+      tcp: fix _wbufq_insert bug
+      nathelper(k): nicer handling of no sdp in sdp_1918(...)
+
+commit 587d29a574d1898b761a590ee59bc8c06b403cd9
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Oct 9 21:07:10 2012 +0100
+
+    modules_k/xcap_server: Fixed segmentation fault
+    
+    - Occurs when attempting to do an etag compare when there is no document/etag
+      in the database.
+    (cherry picked from commit d29cfab1584b8bc2672b4242a2626d9dc90c77a2)
+
+commit befbee07c453dfb3364e33b6587efa8d57bf2ea5
+Author: Vicente Hernando <vhernando@systemonenoc.com>
+Date:   Fri Sep 7 07:01:11 2012 -0400
+
+    core: Fix parser sdp bug. Reset connection IP for each stream.
+    
+    If connection IP is not reset, then when a stream has no IP connection,
+    it uses former stream one instead of session default one.
+    (cherry picked from commit 971386c346d72a016d00c8808059bd4f0a050059)
+
+commit 8732b63bf5371914ba0267a22f45aacefe062ad4
+Author: Andrei Pelinescu-Onciul <andrei@iptel.org>
+Date:   Mon Oct 1 11:55:16 2012 +0200
+
+    tcp: fix _wbufq_insert bug
+    
+    When _wbufq_insert was called on a connection that had already
+    some data added to the write buffer (another process was faster
+    and added some data before the process that created the connection
+    had a chance to do it), a wrong size was used in a memmove.
+    This could lead either to corrupted messages or even crashes (if
+     the messages were big enough to cause a buffer overflow).
+    
+    Many thanks to Jijo for debugging it.
+    
+    Reported-by: Jijo
+    (cherry picked from commit 745e30c92336bfc3f8682b2c23e02862db688d9e)
+
+commit 7881d44ce92c953e77305545b8773d3e056ea80e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 5 14:34:13 2012 +0200
+
+    nathelper(k): nicer handling of no sdp in sdp_1918(...)
+    
+    - don't print error message if there is no sdp body
+    (cherry picked from commit 019bcdc56533e7ccd0e1cc7d45b1d2d8ebc868ae)
+
+commit 3d195f2675569954a1f74128508db07cbc604ed9
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Thu Sep 20 12:08:03 2012 -0400
+
+    modules/ctl: remove limitation on number of message chunks
+    
+    binrpc uses an iovec to send out replies, which is limited in size and so
+    severely limits the number of elements that can be returned. This patch adds
+    a callback function to send out and empty the iovec array every time it gets
+    full while it's being populated.
+
+commit e9ccba247a1262c7b183fb66933d5ee06b765968
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Sun Sep 16 23:46:07 2012 +0100
+
+    modules_k/rls: Fixed race-condition on multi-server systems that can cause different NOTIFYs with the same CSeq
+    
+    - Found by Hugh Waite @ Crocodile RCS and fixed by Peter Dunkley @ Crocodile RCS
+    (cherry picked from commit 67df57c984e040a948d01d2c6bf1a9461d271f8e)
+
+commit d81bb6501c6b4de517a44af8fe9005dd128d0066
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Sun Sep 16 23:47:20 2012 +0100
+
+    modules_k/rls: Fixed segmentation fault in RLS when a resource-list is updated
+    
+    - Found and fixed by Hugh Waite @ Crocodile RCS
+    (cherry picked from commit bde7e9465db9e7c9ecb485c57edabbd032f3b770)
+
+commit edad1981336f706c0ee7f1b724439adba72a9c71
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sun Sep 16 17:20:38 2012 +0300
+
+    modules_k/usrloc: modified syslog messages on bad and non-local sockets
+    - Changed syslog message on non-local socket from warning to debug,
+      because non-local socket is ok when nathelper obtains the contacts and
+      overrides the socket.
+    - Corrected syslog messages on bad and non-local sockets.
+    (cherry picked from commit 424d2cabbe2e20c7ed134f6c9bd463811f2de63f)
+
+commit 7b40fba5cfc04781c60a849bcb0e240c4e34413a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 14 13:02:01 2012 +0200
+
+    kamctl: regeneration of sql creation scripts for pua table updates
+
+commit 91e8cb4bf7456eeebefa96269887f6aae46626d3
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Sep 11 13:23:23 2012 +0100
+
+    modules_k/pua: Adjusted locking for dialog insertion.  Candidate fix for "temporary dialog" error reported by Juha
+    (cherry picked from commit b0d642016cca83c519ea9aa0e04aa9bf353e07e4)
+
+commit 28aec07bcf81ab83d9b7af03de792cb66cf0ca3f
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Sep 11 13:10:08 2012 +0100
+
+    modules_k/rls: Fixed segmentation fault when uploading new contact lists for a logged in subscriber
+    
+    - Found and fixed by Hugh Waite @ Crocodile RCS Ltd
+    (cherry picked from commit 6924912be955b9f7ba47fd57b22ffe0c01eb68b2)
+
+commit 3f540459b566641200e129c0c03ab26e6944fbdf
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Sep 11 13:09:22 2012 +0100
+
+    modules_k/rls: Improved check for expired subscriptions in DB only mode
+    (cherry picked from commit af8230b1ac6a88dfb10d567e784a3c39a8f1b863)
+
+commit 0c5d596371712e98b2b59fe6b3b0911f2252fcd0
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Sep 11 13:08:38 2012 +0100
+
+    modules_k/rls: Fixed issues with for() loops in DB only mode
+    
+    - Found and fixed by Hugh Waite @ Crocodile RCS Ltd
+    (cherry picked from commit 7b64e538b350ebd520b80f668045b9f3c7d68fb9)
+
+commit 1fe1770aa372b6d22554428fb7172215e502b20c
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Sep 11 13:06:54 2012 +0100
+
+    modules_k/rls: core_hash() not used correctly to distribute notifier traffic
+    
+    - Found and fixed by Hugh Waite @ Crocodile RCS Ltd
+    (cherry picked from commit 5235a1d6218e0bb16f6c9998789864635f54d03e)
+
+commit 0d1af7d98cd4053b839556cfa07c9f71874fd02e
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Sep 11 12:59:08 2012 +0100
+
+    modules_k/pua_db: If PUA finds more than one matching dialog (when there should only be one) delete them all
+    
+    - A timing difference on multiple-servers can sometimes cause this,
+      and (if it happens, it doesn't when the clocks are synced) you can
+      end up with the same error coming out lots because the DB is not
+      cleaned up.
+    (cherry picked from commit 20475258957cbf3183e5e771e9fd41dc69336096)
+
+commit 831b80f9aecabfdfa37bcb806bc1192e46681869
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Sep 11 13:03:32 2012 +0100
+
+    modules_k/rls: Added missing lock_release()
+    
+    - Found and fixed by Hugh Waite @ Crocodile RCS Ltd
+    (cherry picked from commit 725020f91493d33c5fa86828a421ed465731658e)
+
+commit 64f64efb49782bb74080193863ac2d4775816add
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Sep 11 12:58:13 2012 +0100
+
+    modules_k/pua: Fixed incorrect check/use of update_period modparam
+    (cherry picked from commit ef7d43fc614276b75c560660c7e4368fd18d574d)
+
+commit 2778f4126fdd48f4573f008726b3a3868c3d69c1
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Sep 11 13:05:15 2012 +0100
+
+    modules_k/rls: Fixed issues to do with expiry and rls_expires_offset
+    
+    - These cause particular problems on multi-server systems.
+    - Found and fixed by Hugh Waite @ Crocodile RCS Ltd
+    (cherry picked from commit 6eccc8b61e848977012d6efa1fb5aae61f8d441e)
+
+commit c2616fb78a9828203fbc9e885d96f07364df5000
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Sep 11 12:55:49 2012 +0100
+
+    modules_k/presence: Fixed some problems with for() loops in DB only mode
+    
+    - Found and fixed by Hugh Waite @ Crocodile RCS Ltd
+    (cherry picked from commit cd6415240ff243842b4e11b095103f00fd64d0d9)
+
+commit 42a123c416d5906bfefd7eaae8ef81cacda80a41
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Sep 11 12:56:52 2012 +0100
+
+    modules_k/presence: Improved check for expired dialogs in DB only mode with notifier tasks
+    (cherry picked from commit d9087dbbf411f71486a4ce765aa5d6dfeb531f9c)
+
+commit 262982b13c887c15e4c5a4d667530aad3fb8801c
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Sep 11 12:53:58 2012 +0100
+
+    modules_k/presence: core_hash not used correctly to distribute notifier traffic
+    
+    - Found and fixed by Hugh Waite @ Crocodile RCS Ltd
+    (cherry picked from commit 4b9aa7f144b8cf3e6da775563528913ed79e0553)
+
+commit b4c70bca1cb3f0dc722bd89933fa566e790837a1
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Sep 11 12:51:33 2012 +0100
+
+    modules_k/presence: Fixed inconsistencies in use of expires_offset for removing subcriptions
+    
+    - These caused particular problems on mulit-server, DB only, systems
+    - Found and fixed by Hugh Waite @ Crocodile RCS Ltd.
+    (cherry picked from commit a29a2a81bc541af020955dbda0d352445fef5788)
+
+commit ed672fdde6d6adbe7066162a6b1cbae8cc3948a8
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Sep 11 12:54:51 2012 +0100
+
+    modules_k/presence: Fixed level of a diagnostic message
+    (cherry picked from commit 3635a0d920f0d03e85b8b97a44d878f0f8d13931)
+
+commit 82ca28c8a523c015b69a3c56d02983356faefc54
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Fri Sep 7 19:16:37 2012 +0300
+
+    db schema: removed unique requirement from pua expires_idx
+    
+    - TODO: change also other than mysql table structures
+    (cherry picked from commit bedb7fdc6d02e92fbf52ad4acb6dfcbb49f0bc49)
+
+commit 4f34d95ebc689702376bfdeb63be65d1e774455a
+Author: Vicente Hernando <vhernando@systemonenoc.com>
+Date:   Wed Sep 5 06:44:39 2012 -0400
+
+    sdpops: Fix memory leakage in w_get_sdp function.
+    (cherry picked from commit d1d2494c966d65828d1920296056da840a11efd9)
+
+commit e663ddd6e3ff55cd43f1a21561f7c60a94420d36
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 5 08:58:18 2012 +0200
+
+    dialog(k): fixed the name of event route
+    
+    - it is 'dialog:failed' instead of 'dialog:failure'
+    - reported by Uri Shacked
+    (cherry picked from commit 163f860ef7c0ed9a720207499d054e7f68b139df)
+
+commit 5771e1ed6c7b92ebab9e2da0251315498a5190e1
+Author: Michal Karas <largon@largon.net>
+Date:   Thu Jul 12 17:38:15 2012 +0200
+
+    parser/sdp: prevent manipulation with freed structure
+    
+    - FS#244
+
+commit f5997ba82e066d667d8fdf48a0eb8f284abe70be
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Mon Sep 3 21:31:58 2012 +0200
+
+    b/f: In case of IPv6 Option in the RTP-Command, the pointers and the length need to be updated.
+
+commit d7452228134c42522ef84c1dbdcdc2cfd0bbf331
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 2 10:16:31 2012 +0200
+
+    core: added md5 wrapper functions to build with Colin Plumb's md5 code
+    
+    Author: Tzafrir Cohen <tzafrir@debian.org>
+    (cherry picked from commit bcff862df5b937e3a6ff87e4415e0039fd989908)
+
+commit fbd4acae2d732908a9624c727b8b0306e1c166cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 2 10:13:00 2012 +0200
+
+    core: Use Colin Plumb's MD5 implementation
+    
+    Origin: http://anonscm.debian.org/gitweb/?p=dpkg/dpkg.git;a=summary
+    Author: Tzafrir Cohen <tzafrir@debian.org>
+    
+    Borrowed the md5 code from dpkg instead of the existing md5.[ch]
+    
+    This makes the code compatible with Debian packing rules and
+    restrictions regarding license for distribution
+    (cherry picked from commit e6d912ad036aa92604ba3f2bf65cc4c4ba3e4d2f)
+
+commit 20dacf5225e63fc8ff573272f41572f452272c7d
+Author: IÃ±aki Baz Castillo <ibc@aliax.net>
+Date:   Thu Aug 16 16:17:51 2012 +0200
+
+    Process CANCEL before in-dialog requests. This prevents issues with some devices sending buggy CANCEL with To-tag when cancelling an initial INVITE.
+    (cherry picked from commit 8a7a06f4d9c78f6da0558806d988c817fd6d0018)
+
+commit cd1e3909f03f837a583b9ea30ffd6089b8ba8db2
+Author: IÃ±aki Baz Castillo <ibc@aliax.net>
+Date:   Thu Aug 16 16:13:50 2012 +0200
+
+    Add Record-Route for in-dialog NOTIFY as per RFC 6665.
+    (cherry picked from commit d661028060369e702f5882b6492040bd71fb900a)
+
+commit 80e5d5689963ab01a9ab3b3ba7d39f08df59b213
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 29 16:06:42 2012 +0200
+
+    kamailio.cfg: use add_contact_alias()/handle_uri_alias() for NATed calls
+    (cherry picked from commit 9d720b83c9dd27e927627132ec052b15efeba518)
+
+commit 5c217004880461e5d121a4b9640539e6bb5bc8bb
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Sep 1 13:32:18 2012 +0300
+
+    modules/dialplan: always set type of attrs pvar value
+    
+    - Type of attrs pvar value was not set when dp_translate didn't result
+      in any change.
+    (cherry picked from commit 28a7300cd83e135b1c0d5488cb289fc7415fbd8c)
+
+commit 2665ef8706201ba0e98344fd0e9b455a275a8c53
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Thu Aug 30 17:39:47 2012 +0300
+
+    modules/db_cassandra Updated in doc location table schema
+    (cherry picked from commit 82bb7a8b67e488e7089d194fa5f96e9ae61dfb03)
+
+commit 26d2413bba1c7b9fbc5bfa84acc3499bf08c5cd6
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Thu Aug 30 17:21:29 2012 +0300
+
+    modules/db_cassandra: Fixed segmentation fault in case of bad table schema
+    
+    Reported by Boudewyn Ligthart.
+    (cherry picked from commit 0f8f21e390e8442cf1f527d3654dedc5a40bfcea)
+
+commit 8ad086aa81bc6ca4fb762264ffcc5e53be819ec2
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Fri Jul 13 16:50:07 2012 +0300
+
+    lib/srdb1 : put pooling constans into separate header file to reduce
+    include dependancy
+    (cherry picked from commit f3ff581dbd0a53c4c5eafdf829bef0c25e8e8f28)
+
+commit bb0b3b1e3218a2ad919b590ed6961f021fc72857
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Thu Aug 30 12:24:24 2012 +0300
+
+    modules/db_cassandra: Updated replace function to the new signature
+    (cherry picked from commit 512013f324dd6faa37e26302a267afb07252812a)
+
+commit c79aef1753fb02a35f299fd0fb861d82c34226e7
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Wed Aug 29 15:47:10 2012 -0400
+
+    modules_k/nathelper: fix a= lines inserted out of order
+    
+    RFC 4566 dictates a particular order of fields in the SDP body, in particular
+    media-specific a= lines must be last fields within an m= block. Inserting
+    them right after the m= lines violates this order if other fields (such as
+    c=) are present, causing parse errors in some clients. So instead, insert
+    them at the end of each m= block.
+
+commit 12c25ac2a5dbc77b4f025f81a18eb4b07cfccee7
+Author: Anca Vamanu <anca.vamanu@1and1.ro>
+Date:   Wed Aug 29 19:33:51 2012 +0300
+
+    kamctl/dbcassandra: Updated schema for cassandra location table
+    (cherry picked from commit ae7047e05a7ff05a1707446286e2837fa49671dc)
+
+commit db68eb7863263785f1fbf13be092f05f484c9171
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Mon Aug 27 12:26:59 2012 +0200
+
+    pkg/deb: Wrap and sort
+    
+    Use wrap-and-sort command
+    
+    Credits to Michael Prokop <mprokop@sipwise.com>
+
+commit 8604b9b40464793153f871e3334da7c81589de44
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Mon Aug 27 11:38:47 2012 +0200
+
+    pkg/deb Don't conflict with -dbg any more
+
+commit aae4e4537eefa525d03874aaf165048a09d1febf
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Aug 21 15:21:54 2012 +0100
+
+    modules_k/rls: Some incorrect pkg_free() calls in DB only code
+    
+    - Found and fixed by Hugh Waite @ Crocodile RCS
+    (cherry picked from commit 9b77e69de0953f9f6f48d4c1cf06f7e593469912)
+
+commit 9de930d083af681fc85fc4cee90dfadbbaadb89c
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Aug 21 15:21:03 2012 +0100
+
+    modules_k/pua: transaction not ended before calling send_publish() from TM call-back
+    
+    - Found by Hugh Waite @ Crocodile RCS and fixed by Peter Dunkley
+      @ Crocodile RCS
+    (cherry picked from commit b9e77beaee850303ffa736cb4043d21a1806fa4f)
+
+commit fb51d3815292c27245b26d1f4a4f6c9b190f9200
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Aug 21 15:19:51 2012 +0100
+
+    modules/db_postgres: libpq requires null terminated string, but Kamailio internal str type is not (necessarily) null-terminated
+    
+    - Found and fixed by Paul Pankhurst @ Crocodile RCS
+    (cherry picked from commit f20713462410211370e762abb463f0ceafd36d8d)
+
+commit 92254d15ebf880fee454e73a8b1d3b2fa9966180
+Author: Jon Bonilla <manwe@aholab.ehu.es>
+Date:   Thu Aug 16 09:24:47 2012 +0200
+
+    pkg/deb Build kamailio-dbg package
+    (cherry picked from commit 79e99ae5cbe7016f22454faf4f9e9f5a463a4f7d)
+
+commit 985f9382703a0f5a493f8a4594220304276c2bd4
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Aug 14 15:53:07 2012 +0100
+
+    modules_k/rls: Fixed incorrect table version check
+    
+    - Found by Hugh Waite @ Crocodile RCS
+    (cherry picked from commit e22e5f83115d9f1e33c27ae437d93d7701330a8c)
+
+commit d94040eca0a9900fcf0b9f1140e3afeb38c9fcba
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Aug 14 15:52:37 2012 +0100
+
+    modules_k/rls: Fixed memory leak in rls under some error conditions
+    
+    - Found and fixed by Hugh Waite @ Crocodile RCS
+    (cherry picked from commit de8b241ea39284cce4c7e1850fcf3cef4c4c4a0a)
+
+commit ff72de945a70b9eedb6eca08677b93e618faeb94
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Mon Aug 13 13:10:37 2012 -0400
+
+    modules/lcr, modules_k/regex: Fix stack overflow from pcre_fullinfo(PCRE_INFO_SIZE)
+    
+    Fix instances where pcre_fullinfo(PCRE_INFO_SIZE) was given only an "int"
+    argument, which results in stack overflow on some 64-bit platforms where
+    an "int" is only 32 bits long. It expects a "size_t" argument, which is
+    64 bits long.
+
+commit dd26ed0cc3233fcf64635a8d2ee27361352b711a
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Mon Aug 13 15:48:18 2012 +0100
+
+    modules_k/pua: Fixed double-free in pua
+    (cherry picked from commit 5387288eac896a0710fb1c55cc4837e973e04946)
+
+commit 03f8f4d9c4304ac0a8f629e1c94230ab70b58917
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Mon Aug 13 15:50:05 2012 +0100
+
+    modules_k/rls: Added DB transaction code around rls_presentity insert/replace
+    (cherry picked from commit 65dcb2d0e72757d51b0ee51c457c5440278444bc)
+
+commit 52f1ea5eb0067e94207dcfaa461260d96b2635bc
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Mon Aug 13 15:49:09 2012 +0100
+
+    modules_k/rls: Fixed memory leak in rls
+    
+    - Issue fixed by Paul Pankhurst and Peter Dunkley @ Crocodile RCS
+    (cherry picked from commit c9628aa038ad7099a72af67f9284e5d0a9b78173)
+
+commit 8db3e9c29b2cf1ff5c6f93411d3e9a90f7eb82ef
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 9 08:50:20 2012 +0200
+
+    rr(k): fixed offset in building new route header
+    
+    - related to the previous fix done to strict routing intermediary hop
+    (cherry picked from commit e154b2fb9f02d56d9c6a4b2d285791151ae0c8a3)
+
+commit 25c6efc8d245c339c77748f93c222188769a7be8
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Aug 8 12:05:44 2012 +0100
+
+    modules_k/rls: Fixed memory leak in RLS
+    
+    - Leak only happens when there is more than one Record-Route: header
+    - Fixed by Hugh Waite @ Crocodile RCS
+    (cherry picked from commit c1240aa21a534f1c1a5bdaaebd9c29fe4984a4bb)
+
+commit 56312a26e3e35692e7c1485015fb11d16de6f5ed
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Sun Aug 5 16:43:42 2012 +0100
+
+    pkg/kamailio/fedora/17: Fixed appliance problem
+
+commit 7795ef185365eab558ed2c98e8d995f47fa823bb
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Aug 3 14:38:49 2012 +0100
+
+    modules_k/dispatcher: Dispatcher reload MI command not returning errors correctly
+    
+    - Fix by Hugh Waite @ Crocodile RCS
+    (cherry picked from commit 5c83492470e8d1a706933915fcfbf6cfe2e0fd55)
+
+commit a87a6a94e26176511cf2cc7e5260d5c1f0861add
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Aug 3 14:39:49 2012 +0100
+
+    modules_k/rls: Fixed segmentation fault in RLS
+    
+    - Fix by Paul Pankhurst @ Crocodile RCS
+    (cherry picked from commit 49f25c402871a619404b61e29ff496c71daad8be)
+
+commit 1bd1c77b7c35cbdf88a09020954f4b780e08697d
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Aug 3 11:34:31 2012 +0100
+
+    pkg/kamailio/fedora/16: Updated version in .spec file
+
+commit d7de94a452185fca7ae4ea1cb5bb9bd775b73d5e
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Fri Aug 3 11:32:28 2012 +0100
+
+    pkg/kamailio/fedora/17: Fixed typo in appliance files
+    (cherry picked from commit 79a614ced2283264e3746cfcfd32fe4245f6496b)
+
+commit a0ffdb7eb2b1478a98422123c78e15ce2b21449f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 3 09:20:03 2012 +0200
+
+    rr(k): add missing '<' in Route header for strict routing
+    
+    - if next hop is strict router after loose routing, moving the r-uri to
+      last Route header was missing '<' in front of the address
+    - reported by Varsha Venkatraramani
+    (cherry picked from commit 090be2532da73f51043f9ba5f4b221fe338d60fa)
+
+
 ===================== 2012-08-02 Version 3.3.1 Released =====================
 
 ===================== Changes Since Version 3.3.0 ===========================
