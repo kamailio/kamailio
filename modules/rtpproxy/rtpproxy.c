@@ -1667,7 +1667,7 @@ found:
 }
 
 static int
-unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
+unforce_rtp_proxy_f(struct sip_msg* msg, char* flags, char* str2)
 {
 	str callid, from_tag, to_tag, viabranch;
 	char *cp;
@@ -1677,7 +1677,7 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 	struct iovec v[1 + 4 + 3 + 2] = {{NULL, 0}, {"D", 1}, {" ", 1}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
 						    /* 1 */   /* 2 */   /* 3 */    /* 4 */    /* 5 */    /* 6 */   /* 7 */    /* 8 */   /* 9 */
 
-	for (cp = str1; cp && *cp; cp++) {
+	for (cp = flags; cp && *cp; cp++) {
 		switch (*cp) {
 			case '1':
 				via = 1;
@@ -1685,6 +1685,38 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 
 			case '2':
 				via = 2;
+				break;
+
+			case '3':
+				if(msg && msg->first_line.type == SIP_REPLY)
+					via = 2;
+				else
+					via = 1;
+				break;
+
+			case 'a':
+			case 'A':
+			case 'i':
+			case 'I':
+			case 'e':
+			case 'E':
+			case 'l':
+			case 'L':
+			case 'f':
+			case 'F':
+			case 'r':
+			case 'R':
+			case 'c':
+			case 'C':
+			case 'o':
+			case 'O':
+			case 'x':
+			case 'X':
+			case 'w':
+			case 'W':
+			case 'z':
+			case 'Z':
+				/* ignore them - they can be sent by rtpproxy_manage() */
 				break;
 
 			default:
@@ -1794,7 +1826,7 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 		return -1;
 
 	if(method==METHOD_CANCEL || method==METHOD_BYE)
-		return unforce_rtp_proxy_f(msg, 0, 0);
+		return unforce_rtp_proxy_f(msg, flags, 0);
 
 	if(ip==NULL)
 	{
@@ -1820,13 +1852,13 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 					&& tmb.t_gett()!=T_UNDEFINED)
 				tmb.t_gett()->uas.request->msg_flags |= FL_SDP_BODY;
 			if(route_type==FAILURE_ROUTE)
-				return unforce_rtp_proxy_f(msg, 0, 0);
+				return unforce_rtp_proxy_f(msg, flags, 0);
 			return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 1,
 					(ip!=NULL)?1:0);
 		}
 	} else if(msg->first_line.type == SIP_REPLY) {
 		if(msg->first_line.u.reply.statuscode>=300)
-			return unforce_rtp_proxy_f(msg, 0, 0);
+			return unforce_rtp_proxy_f(msg, flags, 0);
 		if(nosdp==0) {
 			if(method==METHOD_UPDATE)
 				return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 0,
@@ -2022,6 +2054,13 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 
 		case '2':
 			via = 2;
+			break;
+
+		case '3':
+			if(msg && msg->first_line.type == SIP_REPLY)
+				via = 2;
+			else
+				via = 1;
 			break;
 
 		case 'a':
