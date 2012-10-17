@@ -24,6 +24,12 @@ Edited by
 
 Sas Ovidiu
 
+Edited by
+
+Carsten Bock
+
+   ng-voice GmbH
+
    Copyright © 2003-2008 Sippy Software, Inc.
 
    Copyright © 2005 Voice Sistem SRL
@@ -360,6 +366,8 @@ rtpproxy_offer();
             the ngcp-mediaproxy-ng rtpproxy at the moment!
           + 2 - append second Via branch to Call-ID when sending command
             to rtpproxy. See flag '1' for its meaning.
+          + 3 - behave like flag 1 is set for a request and like flag 2 is
+            set for a reply.
           + a - flags that UA from which message is received doesn't
             support symmetric RTP. (automatically sets the 'r' flag)
           + l - force "lookup", that is, only rewrite SDP when
@@ -380,6 +388,12 @@ rtpproxy_offer();
             Note: As rtpproxy is in bridge mode per default asymmetric,
             you have to specify the 'w' flag for clients behind NAT! See
             also above notes!
+          + x - this flag will do automatic bridging between IPv4 on the
+            "internal network" and IPv6 on the "external network". The
+            distinction is done by the given IP in the SDP, e.g. a IPv4
+            Address will always call "ie" to the RTPProxy (IPv4(i) to
+            IPv6(e)) and an IPv6Address will always call "ei" to the
+            RTPProxy (IPv6(e) to IPv4(i)).
           + f - instructs rtpproxy to ignore marks inserted by another
             rtpproxy in transit to indicate that the session is already
             goes through another proxy. Allows creating chain of proxies.
