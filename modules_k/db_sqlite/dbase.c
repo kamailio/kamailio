@@ -543,7 +543,12 @@ int db_sqlite_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 
 int db_sqlite_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 {
-	return db_do_raw_query(_h, _s, _r,
+	int rc;
+
+	rc = db_do_raw_query(_h, _s, _r,
 			       db_sqlite_submit_query,
 			       db_sqlite_store_result);
+	db_sqlite_cleanup_query(_h);
+
+	return rc;
 }
