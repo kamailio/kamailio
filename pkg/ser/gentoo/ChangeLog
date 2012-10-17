@@ -2,6 +2,11 @@
 # Copyright 1999-2012 Gentoo Foundation; Distributed under the GPL v2
 # $Header: $
 
+*sip-router-3.3.2 (17 Oct 2012)
+
+  17 Oct 2012; Claudio G. Furrer <elcaio@gmail.com> +sip-router.3.3.2.ebuild:
+  Version bump (series 3.3.x).
+
 *sip-router-3.3.1 (5 Oct 2012)
 
   5 Oct 2012; Claudio G. Furrer <elcaio@gmail.com> +sip-router.3.3.1.ebuild:
