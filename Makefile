@@ -1210,3 +1210,48 @@ printvar:
 	@echo "Content of <$(v)> is:"
 	@echo -n $($(v))
 	@echo
+
+.PHONY: uninstall
+uninstall:
+	@echo "-Installation details:"
+	@echo " *PREFIX Path is: ${PREFIX}"
+	@echo " *BINDIR Path is: ${bin_prefix}/${bin_dir}"
+	@echo " *CFGDIR Path is: ${cfg_prefix}/${cfg_dir}"
+	@echo " *DOCDIR Path is: ${doc_prefix}/${doc_dir}"
+	@echo " *LIBDIR Path is: ${lib_prefix}/${lib_dir}"
+	@echo " *MANDIR Path is: ${man_prefix}/${man_dir}"
+	@echo " *SHRDIR Path is: ${share_prefix}/${share_dir}"
+	@if [ "${PREFIX}" != "/usr/local" ] ; then \
+		echo "-Custom PREFIX Path" ; \
+		if [ "${PREFIX}" = "/" -o "${PREFIX}" = "/usr" ] ; then \
+			echo "-Custom installation in a system folder" ; \
+			echo "-This is advanced installation" ; \
+			echo "-You seem to be in control of what files were deployed" ; \
+			echo "-Folders listed above should give hints about what to delete" ; \
+		else \
+			echo "-Uninstall should be just removal of the folder: ${PREFIX}" ; \
+			echo "-WARNING: before deleting, be sure ${PREFIX} is not a system directory" ; \
+		fi ; \
+	else \
+		echo "-Run following commands to uninstall:" ; \
+		echo ; \
+		echo "rm ${bin_prefix}/${bin_dir}${MAIN_NAME}" ; \
+		if [ "${FLAVOUR}" = "kamailio" ] ; then \
+			echo "rm ${bin_prefix}/${bin_dir}kamctl" ; \
+			echo "rm ${bin_prefix}/${bin_dir}kamdbctl" ; \
+		fi ; \
+		echo "rm ${bin_prefix}/${bin_dir}sercmd" ; \
+		echo "rm ${man_prefix}/${man_dir}man5/$(MAIN_NAME).cfg.5" ; \
+		echo "rm ${man_prefix}/${man_dir}man8/$(MAIN_NAME).8" ; \
+		if [ "${FLAVOUR}" = "kamailio" ] ; then \
+			echo "rm ${man_prefix}/${man_dir}kamctl.8" ; \
+			echo "rm ${man_prefix}/${man_dir}kamdbctl.8" ; \
+		fi ; \
+		echo "rm -rf ${cfg_prefix}/${cfg_dir}" ; \
+		echo "rm -rf ${doc_prefix}/${doc_dir}" ; \
+		echo "rm -rf ${lib_prefix}/${lib_dir}" ; \
+		echo "rm -rf ${share_prefix}/${share_dir}" ; \
+		echo ; \
+		echo "-WARNING: before running the commands, be sure they don't delete any system directory or file" ; \
+	fi ;
+	@echo
