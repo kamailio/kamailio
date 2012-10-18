@@ -1186,11 +1186,12 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	}
 
 	next_state_dlg( dlg, event, &old_state, &new_state, &unref);
-	dlg_run_event_route(dlg, req, old_state, new_state);
 
 	CURR_DLG_ID = req->id;
 	CURR_DLG_LIFETIME = (unsigned int)(time(0))-dlg->start_ts;
 	CURR_DLG_STATUS = new_state;
+
+	dlg_run_event_route(dlg, req, old_state, new_state);
 
 	/* delay deletion of dialog until transaction has died off in order
 	 * to absorb in-air messages */
