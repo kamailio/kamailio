@@ -6,7 +6,7 @@ include ../../Makefile.defs
 auto_gen=
 NAME=memcached.so
 
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 DEFS +=-I$(LOCALBASE)/include -I$(SYSBASE)/include
 LIBS+=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -lmemcache

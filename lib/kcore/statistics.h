@@ -61,7 +61,7 @@ stat_var *get_stat_var_from_num_code(unsigned int numerical_code, int in_codes);
 
 
 /*!
- * This function will retrieve a list of all ip addresses and ports that OpenSER
+ * This function will retrieve a list of all ip addresses and ports that Kamailio
  * is listening on, with respect to the transport protocol specified with
  * 'protocol'. 
  *
@@ -96,7 +96,7 @@ int get_socket_list_from_proto(int **ipList, int protocol);
 
 /*!
  * Returns the sum of the number of bytes waiting to be consumed on all network
- * interfaces and transports that OpenSER is listening on. 
+ * interfaces and transports that Kamailio is listening on. 
  *
  * Note: This currently only works on systems supporting the /proc/net/[tcp|udp]
  *       interface.  On other systems, zero will always be returned.  Details of

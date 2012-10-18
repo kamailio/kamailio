@@ -16,7 +16,7 @@ Alex Balashov
 
    <abalashov@evaristesys.com>
 
-   Copyright Â© 2012 asipto.com
+   Copyright © 2012 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -162,7 +162,7 @@ modparam("msrp", "sipmsg", 1)
    4.6. msrp_relay_flags(flags)
    4.7. msrp_reply_flags(flags)
 
-4.1.  msrp_relay()
+4.1. msrp_relay()
 
    Relay MSRP frame according to the To-Path. This function has to be
    executed for each MSRP request or reply that has to be forwarded. Note
@@ -178,7 +178,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.2.  msrp_reply(code, text [, hdrs])
+4.2. msrp_reply(code, text [, hdrs])
 
    Send a reply for the current MSRP request, adding optional headers.
 
@@ -193,7 +193,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.3.  msrp_is_request()
+4.3. msrp_is_request()
 
    Return true if the MSRP frame is a request.
 
@@ -210,7 +210,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.4.  msrp_is_reply()
+4.4. msrp_is_reply()
 
    Return true if the MSRP frame is a reply.
 
@@ -227,7 +227,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.5.  msrp_set_dst(addr, sock)
+4.5. msrp_set_dst(addr, sock)
 
    Set destination attributes: addr - target address as MSRP URI; sock -
    local socket to be used (format 'proto:ip:port').
@@ -245,7 +245,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.6.  msrp_relay_flags(flags)
+4.6. msrp_relay_flags(flags)
 
    Set transport layer sending flags for forwarding current MSRP frame;
    flags - a bitmask of flags - 1 (don't create a new connection), 2
@@ -264,7 +264,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.7.  msrp_reply_flags(flags)
+4.7. msrp_reply_flags(flags)
 
    Set transport layer sending flags for replies to the current MSRP
    frame; flags - a bitmask of flags - 1 (don't create a new connection),

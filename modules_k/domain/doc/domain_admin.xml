@@ -58,7 +58,7 @@
 		</para>
 		<para>
 		Default value is 
-			<quote>mysql://openserro:openserro@localhost/openser</quote>
+			<quote>&defaultrodb;</quote>
 		</para>
 		<example>
 		<title>Setting db_url parameter</title>

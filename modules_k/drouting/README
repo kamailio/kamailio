@@ -31,7 +31,7 @@ Anca-Maria Vamanu
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url(str)
               3.2. drd_table(str)
@@ -48,7 +48,7 @@ Anca-Maria Vamanu
               3.13. fetch_rows (int)
               3.14. force_dns (int)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. do_routing("[groupID]")
               4.2. use_next_gw()/next_routing()
@@ -56,7 +56,7 @@ Anca-Maria Vamanu
               4.4. is_from_gw([type])
               4.5. is_from_gw( type, [flag])
 
-        5. Exported MI Functions
+        5. MI Commands
 
               5.1. dr_reload
 
@@ -116,7 +116,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url(str)
         3.2. drd_table(str)
@@ -133,7 +133,7 @@ Chapter 1. Admin Guide
         3.13. fetch_rows (int)
         3.14. force_dns (int)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. do_routing("[groupID]")
         4.2. use_next_gw()/next_routing()
@@ -141,7 +141,7 @@ Chapter 1. Admin Guide
         4.4. is_from_gw([type])
         4.5. is_from_gw( type, [flag])
 
-   5. Exported MI Functions
+   5. MI Commands
 
         5.1. dr_reload
 
@@ -476,7 +476,7 @@ Chapter 1. Admin Guide
 
      * none.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url(str)
    3.2. drd_table(str)
@@ -675,7 +675,7 @@ modparam("drouting", "fetch_rows", 1500)
 modparam("drouting", "force_dns", 0)
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. do_routing("[groupID]")
    4.2. use_next_gw()/next_routing()
@@ -784,7 +784,7 @@ if (is_from_gw("3","1") {
 }
 ...
 
-5. Exported MI Functions
+5. MI Commands
 
    5.1. dr_reload
 

@@ -11,7 +11,7 @@ include ../../Makefile.radius
 auto_gen=
 NAME=auth_radius.so
 
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kcore/kcore

@@ -23,7 +23,7 @@
 #include "../../error.h"
 
 
-/** OPENSER ERRORS ARE NEGATIVE, SEAS ERROR CODES ARE POSITIVE */
+/** Kamailio ERRORS ARE NEGATIVE, SEAS ERROR CODES ARE POSITIVE */
 
 #define SE_CANCEL_MSG "500 SEAS cancel error"
 #define SE_CANCEL_MSG_LEN (sizeof(SE_CANCEL_MSG)-1)

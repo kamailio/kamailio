@@ -834,7 +834,7 @@
 		<programlisting format="linespecific">
 ...
 modparam("drouting", "db_url", 
-	"mysql://openser:openserrw@localhost/openser")
+	"&defaultdb;")
 ...
 </programlisting>
 		</example>

@@ -179,7 +179,7 @@ struct module_exports exports = {
 
 /*
  * mod_init
- * Called by openser at init time
+ * Called by Kamailio at init time
  */
 static int mod_init(void) {
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
@@ -200,7 +200,7 @@ static int mod_init(void) {
 
 /*
  * destroy
- * called by openser at exit time
+ * called by Kamailio at exit time
  */
 static void destroy(void)
 {

@@ -1,7 +1,7 @@
 /*
- * openser osp module. 
+ * Kamailio osp module. 
  *
- * This module enables openser to communicate with an Open Settlement 
+ * This module enables Kamailio to communicate with an Open Settlement 
  * Protocol (OSP) server.  The Open Settlement Protocol is an ETSI 
  * defined standard for Inter-Domain VoIP pricing, authorization
  * and usage exchange.  The technical specifications for OSP 

@@ -9,6 +9,6 @@ auto_gen=
 NAME=ipops.so
 
 LIBS=
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 SERLIBPATH=../../lib
 include ../../Makefile.modules

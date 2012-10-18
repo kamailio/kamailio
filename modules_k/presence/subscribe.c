@@ -5,7 +5,7 @@
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
  *
- * This file is part of openser, a free SIP serves.
+ * This file is part of Kamailio, a free SIP serves.
  *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

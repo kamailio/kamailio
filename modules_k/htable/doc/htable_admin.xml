@@ -304,7 +304,7 @@ modparam("htable", "htable", "c=&gt;size=4;autoexpire=7200;initval=1;")
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("htable", "db_url", "mysql://openser:openserrw@localhost/openser")
+modparam("htable", "db_url", "&defaultdb;")
 ...
 </programlisting>
 		</example>

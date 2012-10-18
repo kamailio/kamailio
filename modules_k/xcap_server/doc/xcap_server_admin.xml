@@ -121,7 +121,7 @@
 		<para>
 		<emphasis>
 			Default value is 
-			<quote>mysql://openser:openserrw@localhost/openser</quote>.
+			<quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -339,7 +339,7 @@ loadmodule "xcap_server.so"
 
 # ----- xcap_server params -----
 modparam("xcap_server", "db_url",
-	"mysql://openser:openserrw@localhost/openser")
+	"&defaultdb;")
 
 ...
 

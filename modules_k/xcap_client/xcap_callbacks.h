@@ -1,7 +1,7 @@
 /*
  * $Id: xcap_callback.h,v 1.2 2007/02/20 13:40:09 anca_vamanu Exp $
  *
- * xcap_client module - openser xcap client module
+ * xcap_client module - Kamailio xcap client module
  *
  * Copyright (C) 2007 Voice Sistem S.R.L.
  *

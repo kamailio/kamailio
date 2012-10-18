@@ -11,7 +11,7 @@ DEFS +=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
 
 LIBS= -L$(LOCALBASE)/lib -lxml2
 
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kmi/kmi

@@ -22,7 +22,7 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * cfgutils module: random probability functions for openser;
+ * cfgutils module: random probability functions for Kamailio;
  * it provide functions to make a decision in the script
  * of the server based on a probability function.
  * The benefit of this module is the value of the probability function

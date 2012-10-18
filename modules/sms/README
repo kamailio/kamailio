@@ -4,7 +4,7 @@ Bogdan Iancu
 
    FhG FOKUS
 
-   Copyright © 2003 FhG FOKUS
+   Copyright � 2003 FhG FOKUS
      __________________________________________________________________
 
    1.1. Overview
@@ -179,7 +179,7 @@ modparam("sms", "links", "NOKIA[D1;d2]")
 
    The default network to use. If no one specified, the first defined
    network is used. This parameter is useful only if the "sms_send_msg"
-   exported function is used (see Section 1.4, “Functions”).
+   exported function is used (see Section 1.4, "Functions").
 
    Example 4. Set default_net parameter
 ...
@@ -245,7 +245,7 @@ modparam("sms", "sms_report_type", 1)
 
 1.4. Functions
 
-1.4.1.  sms_send_msg_to_net(network_name)
+1.4.1. sms_send_msg_to_net(network_name)
 
    Put the SIP msg in the specified network queue. The function return
    error if the number encapsulated into SIP message is malformed, if the
@@ -273,7 +273,7 @@ if (sms_send_msg_to_net("D1"))
 };
 ...
 
-1.4.2.  sms_send_msg()
+1.4.2. sms_send_msg()
 
    The same as the previous one, but use the default network queue.
 

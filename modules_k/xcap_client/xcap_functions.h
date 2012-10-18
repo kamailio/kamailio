@@ -1,7 +1,7 @@
 /*
  * $Id: xcap_functions.h 2230 2007-06-06 07:13:20Z anca_vamanu $
  *
- * xcap_client module - XCAP client for openser
+ * xcap_client module - XCAP client for Kamailio
  *
  * Copyright (C) 2007 Voice Sistem S.R.L.
  *

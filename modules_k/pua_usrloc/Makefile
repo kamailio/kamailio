@@ -10,6 +10,6 @@ DEFS+=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
       -I$(LOCALBASE)/include
 LIBS+=-L$(LOCALBASE)/lib -lxml2
 
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 include ../../Makefile.modules

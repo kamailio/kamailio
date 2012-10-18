@@ -102,7 +102,7 @@ str_map_t algo_names[] = {
 
 /* at jiri@iptel.org's suggestion:
  *
- * set this to 'cpu' to have openser look at /proc/stat every time_interval
+ * set this to 'cpu' to have Kamailio look at /proc/stat every time_interval
  * or set it to 'external' and you can push data in from an external source
  * via the fifo interface
  */

@@ -82,7 +82,7 @@ stat_var *get_stat_var_from_num_code(unsigned int numerical_code, int out_codes)
 #define MAX_PROC_BUFFER 256
 
 /*!
- * This function will retrieve a list of all ip addresses and ports that OpenSER
+ * This function will retrieve a list of all ip addresses and ports that Kamailio
  * is listening on, with respect to the transport protocol specified with
  * 'protocol'. 
  *
@@ -357,7 +357,7 @@ static int get_used_waiting_queue(
 	fp = fopen(fileToOpen, "r");
 
 	if (fp == NULL) {
-		LM_ERR("Could not open %s. openserMsgQueu eDepth and its related"
+		LM_ERR("Could not open %s. kamailioMsgQueueDepth and its related"
 				" alarms will not be available.\n", fileToOpen);
 		return 0;
 	}
@@ -373,7 +373,7 @@ static int get_used_waiting_queue(
 			/* Only add rx_queue if the line just parsed corresponds 
 			 * to an interface we are listening on.  We do this
 			 * check because it is possible that this system has
-			 * other network interfaces that OpenSER has been told
+			 * other network interfaces that Kamailio has been told
 			 * to ignore. */
 			if (match_ip_and_port(ipAddress, interfaceList, listSize)) {
 				waitingQueueSize += rx_queue;
@@ -388,7 +388,7 @@ static int get_used_waiting_queue(
 
 /*!
  * Returns the sum of the number of bytes waiting to be consumed on all network
- * interfaces and transports that OpenSER is listening on. 
+ * interfaces and transports that Kamailio is listening on. 
  *
  * Note: This currently only works on systems supporting the /proc/net/[tcp|udp]
  *       interface.  On other systems, zero will always be returned.  To change

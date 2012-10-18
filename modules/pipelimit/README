@@ -23,7 +23,7 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. db_url (string)
               3.2. plp_table_name (string)
@@ -34,12 +34,12 @@ Daniel-Constantin Mierla
               3.7. reply_code (integer)
               3.8. reply_reason (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. pl_check(name)
               4.2. pl_drop([ [min ], max ])
 
-        5. Exported MI Functions
+        5. MI Commands
 
               5.1. pl_stats
               5.2. pl_set_pipe
@@ -73,7 +73,7 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. db_url (string)
         3.2. plp_table_name (string)
@@ -84,12 +84,12 @@ Chapter 1. Admin Guide
         3.7. reply_code (integer)
         3.8. reply_reason (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. pl_check(name)
         4.2. pl_drop([ [min ], max ])
 
-   5. Exported MI Functions
+   5. MI Commands
 
         5.1. pl_stats
         5.2. pl_set_pipe
@@ -130,7 +130,7 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. db_url (string)
    3.2. plp_table_name (string)
@@ -244,7 +244,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
    Example 1.10.  Set reply_reason parameter at runtime
 sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
 
-4. Exported Functions
+4. Functions
 
    4.1. pl_check(name)
    4.2. pl_drop([ [min ], max ])
@@ -304,7 +304,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
         }
 ...
 
-5. Exported MI Functions
+5. MI Commands
 
    5.1. pl_stats
    5.2. pl_set_pipe

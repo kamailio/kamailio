@@ -318,7 +318,10 @@ rtpproxy_offer();
 				command to rtpproxy. See flag '1' for its meaning.
 				</para></listitem>
 				<listitem><para>
-
+				<emphasis>3</emphasis> - behave like flag 1 is set for a request and
+				like flag 2 is set for a reply.
+				</para></listitem>
+				<listitem><para>
 				<emphasis>a</emphasis> - flags that UA from which message is
 				received doesn't support symmetric RTP. (automatically sets the 'r' flag)
 				</para></listitem>

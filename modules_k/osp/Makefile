@@ -9,6 +9,6 @@ NAME=osp.so
 DEFS+=-D_POSIX_THREADS -I$(LOCALBASE)/include
 LIBS=-L$(LOCALBASE)/lib -losptk -lssl -lcrypto -lpthread -lm
 
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 include ../../Makefile.modules

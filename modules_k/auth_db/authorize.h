@@ -52,6 +52,11 @@ int www_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
 int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags);
 
 /*
+ * Fetch credentials for a specific user
+ */
+int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table);
+
+/*
  * Bind to AUTH_DB API
  */
 int bind_auth_db(auth_db_api_t* api);
