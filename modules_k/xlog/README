@@ -11,9 +11,9 @@ Elena-Ramona Modroiu
 
    <ramona@rosdev.ro>
 
-   Copyright © 2003 FhG FOKUS
+   Copyright � 2003 FhG FOKUS
 
-   Copyright © 2008-2010 Elena-Ramona Modroiu
+   Copyright � 2008-2010 Elena-Ramona Modroiu
      __________________________________________________________________
 
    Table of Contents
@@ -86,7 +86,7 @@ Chapter 1. Admin Guide
    This module provides the possibility to print user formatted log or
    debug messages from Kamailio scripts, similar to the printf function. A
    C-style printf specifier is replaced with a part of the SIP request or
-   other variables from system. Section 2, “Implemented Specifiers” shows
+   other variables from system. Section 2, "Implemented Specifiers" shows
    what can be printed out.
 
 2. Implemented Specifiers
@@ -211,7 +211,7 @@ modparam("xlog", "log_colors", "L_ERR=cr;L_WARN=px")
    5.3. xlogl([ [facility,] level,] format)
    5.4. xdbgl(format)
 
-5.1.  xlog([ [facility,] level,] format)
+5.1. xlog([ [facility,] level,] format)
 
    Print a formated message using LOG function.
 
@@ -234,7 +234,7 @@ modparam("xlog", "log_colors", "L_ERR=cr;L_WARN=px")
             See above options for valid log levels.
        If it is not a pseudo-variable, then what really matters is the
        third letter of the value. If the log level is higher than the
-       “debug” global parameter, the message is not printed to syslog.
+       "debug" global parameter, the message is not printed to syslog.
        If this parameter is missing, the implicit log level is 'L_ERR'.
      * format - The formatted string to be printed.
 
@@ -253,7 +253,7 @@ xlog("LOG_LOCAL3", "L_ERR", "this message will be sent to syslog facility LOG_LO
 CAL3\n");
 ...
 
-5.2.  xdbg(format)
+5.2. xdbg(format)
 
    Print a formatted message using DBG function.
 
@@ -267,12 +267,12 @@ CAL3\n");
 xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...
 
-5.3.  xlogl([ [facility,] level,] format)
+5.3. xlogl([ [facility,] level,] format)
 
    Similar to xlog(), in addition is printing cfg line number at the
    beginning of message.
 
-5.4.  xdbgl(format)
+5.4. xdbgl(format)
 
    Similar to xdbg(), in addition is printing cfg line number at the
    beginning of message.

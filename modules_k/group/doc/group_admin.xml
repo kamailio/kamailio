@@ -87,7 +87,7 @@
 		<para>
 		<emphasis>
 			Default value is 
-			<quote>mysql://openserro:openserro@localhost/openser</quote>.
+			<quote>&defaultrodb;</quote>.
 		</emphasis>
 		</para>
 		<example>

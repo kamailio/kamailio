@@ -4,7 +4,7 @@ Andrei Pelinescu-Onciul
 
    iptelorg GmbH
 
-   Copyright Â© 2010 iptelorg GmbH
+   Copyright © 2010 iptelorg GmbH
      __________________________________________________________________
 
    1.1. Overview
@@ -53,10 +53,10 @@ Warning
 
    It can be changed also at runtime, via the rpc interface.
 
-   Example 1.  Set check_content in the config file
+   Example 1. Set check_content in the config file
 modparam("malloc_test", "check_content", 1)
 
-   Example 2.  Set check_content at runtime via sercmd
+   Example 2. Set check_content at runtime via sercmd
 $ sercmd cfg.set_now_int malloc_test check_content 1
 
 1.3. Functions
@@ -143,7 +143,7 @@ mem_free();
    Example 8. mt.mem_rnd_alloc usage
  $ sercmd mt.mem_rnd_alloc 1 64 10240 k
 
-1.4.5.  mt.mem_test_start min max total min_int max_int total_time [unit]
+1.4.5. mt.mem_test_start min max total min_int max_int total_time [unit]
 
    Starts a malloc test that will take total_time to execute. Memory
    allocations will be performed at intervals randomly chosen between

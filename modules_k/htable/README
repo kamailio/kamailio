@@ -17,7 +17,7 @@ Alex Balashov
 
    <abalashov@evaristesys.com>
 
-   Copyright © 2008-2011 http://www.asipto.com
+   Copyright � 2008-2011 http://www.asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -57,6 +57,7 @@ Alex Balashov
 
               6.1. sht_reload
               6.2. sht_dump
+              6.3. sht_delete
 
         7. Event routes
 
@@ -119,6 +120,7 @@ Chapter 1. Admin Guide
 
         6.1. sht_reload
         6.2. sht_dump
+        6.3. sht_delete
 
    7. Event routes
 
@@ -142,7 +144,7 @@ Chapter 1. Admin Guide
    You can read more about hash tables at:
    http://en.wikipedia.org/wiki/Hash_table.
 
-   The “name” can be a static string or can include pseudo- variables that
+   The "name" can be a static string or can include pseudo- variables that
    will be replaced at runtime.
 
    Example 1.1. Accessing $sht(htname=>key)
@@ -165,7 +167,7 @@ $sht(a=>$ci::srcip) = $si;
    the failed authentications per user and one for storing the time of
    last authentication attempt. To ensure unique name per user, the hash
    table uses a combination of authentication username and text
-   “::auth_count” and “::last_auth”.
+   "::auth_count" and "::last_auth".
 
    Example 1.2. Dictionary attack limitation
 ...
@@ -429,7 +431,7 @@ modparam("htable", "db_expires", 1)
    4.2. sht_rm_name_re(htable=>regexp)
    4.3. sht_rm_value_re(htable=>regexp)
 
-4.1.  sht_print()
+4.1. sht_print()
 
    Dump content of hash table to L_ERR log level. Intended for debug
    purposes.
@@ -442,7 +444,7 @@ modparam("htable", "db_expires", 1)
 sht_print();
 ...
 
-4.2.  sht_rm_name_re(htable=>regexp)
+4.2. sht_rm_name_re(htable=>regexp)
 
    Delete all entries in the htable that match the name against regular
    expression.
@@ -455,7 +457,7 @@ sht_print();
 sht_rm_name_re("ha=>.*");
 ...
 
-4.3.  sht_rm_value_re(htable=>regexp)
+4.3. sht_rm_value_re(htable=>regexp)
 
    Delete all entries in the htable that match the value against regular
    expression.
@@ -484,8 +486,9 @@ sht_rm_value_re("ha=>.*");
 
    6.1. sht_reload
    6.2. sht_dump
+   6.3. sht_delete
 
-6.1.  sht_reload
+6.1. sht_reload
 
    Reload a hash table from database.
 
@@ -498,7 +501,7 @@ sht_rm_value_re("ha=>.*");
                 _hash_table_name_
                 _empty_line_
 
-6.2.  sht_dump
+6.2. sht_dump
 
    Dump content of a hash table via MI.
 
@@ -511,11 +514,30 @@ sht_rm_value_re("ha=>.*");
                 _hash_table_name_
                 _empty_line_
 
+6.3. sht_delete
+
+   Delete a key from a hash table via MI.
+
+   Name: sht_delete
+
+   Parameters:
+     * _hash_table_name: The table name to delete the key from
+     * _key_name: The key to delete from the htable
+
+   MI FIFO Command Format:
+                :sht_delete:_reply_fifo_file_
+                _hash_table_name_
+                _key_name_
+                _empty_line_
+
+   Example (note the quoting when executing it via FIFO):
+                kamctl fifo sht_delete auth '"user@example.org::last_auth"'
+
 7. Event routes
 
    7.1. htable:mod-init
 
-7.1.  htable:mod-init
+7.1. htable:mod-init
 
    When defined, the module calls event_route[htable:mod-init] after all
    modules have been initialised. A typical use case is to initialise

@@ -10,9 +10,9 @@ Alexandr Dubovikov
 
    <alexandr.dubovikov@gmail.com>
 
-   Copyright © 2011 QSC AG
+   Copyright � 2011 QSC AG
 
-   Copyright © 2011 http://www.qsc.de
+   Copyright � 2011 http://www.qsc.de
      __________________________________________________________________
 
    Table of Contents
@@ -351,7 +351,7 @@ modparam("sipcapture", "capture_node", "homer03")
 
    4.1. sip_capture
 
-4.1.  sip_capture
+4.1. sip_capture
 
    Name: sip_capture
 
@@ -361,7 +361,7 @@ modparam("sipcapture", "capture_node", "homer03")
           + on
           + off
        The parameter is optional - if missing, the command will return the
-       status of the SIP message capturing (as string “on” or “off” )
+       status of the SIP message capturing (as string "on" or "off" )
        without changing anything.
 
    MI FIFO Command Format:

@@ -14,7 +14,7 @@ ALL CHANGES DONE HERE WILL BE LOST IF THE FILE IS REGENERATED
     <title><varname>db_url</varname> (String)</title>
     <para>URL to the database containing the data.</para>
     <para>
-      <emphasis>Default value is <quote>mysql://openserro:openserro@localhost/openser</quote>.</emphasis>
+      <emphasis>Default value is <quote>&defaultrodb;</quote>.</emphasis>
     </para>
     <example>
       <title>Set <varname>db_url</varname> parameter</title>

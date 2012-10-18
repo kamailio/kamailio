@@ -4,7 +4,7 @@ Andrei Pelinescu-Onciul
 
    iptelorg GmbH
 
-   Copyright Â© 2010 iptelorg GmbH
+   Copyright © 2010 iptelorg GmbH
      __________________________________________________________________
 
    1.1. Overview
@@ -46,7 +46,7 @@ Andrei Pelinescu-Onciul
    is "custom script counter". The format of the declaration is:
    [group.]name[( |:)description].
 
-   Example 1.  Create a new script_counter
+   Example 1. Create a new script_counter
 modparam("counters", "script_counter", "foo")  # script.foo
 modparam("counters", "script_counter", "test.bar")  # test.bar
 modparam("counters", "script_counter", "baz example counter")  # script.baz
@@ -59,12 +59,12 @@ modparam("counters", "script_counter", "test.x:another example") # test.x
 
    Default: "script".
 
-   Example 2.  Set script_cnt_grp_name in the config file
+   Example 2. Set script_cnt_grp_name in the config file
 modparam("counters", "script_cnt_grp_name", "my_counters")
 
 1.3. Functions
 
-1.3.1.  cnt_inc([group.]name)
+1.3.1. cnt_inc([group.]name)
 
    Increments the counter group.name. The counter must be defined using
    the script_counter module parameter. If the group name is missing, the
@@ -82,7 +82,7 @@ route {
 ...
 }
 
-1.3.2.  cnt_add([group.]name, number)
+1.3.2. cnt_add([group.]name, number)
 
    Adds number the counter group.name. The counter must be defined using
    the script_counter module parameter. If the group name is missing, the
@@ -97,7 +97,7 @@ route {
 ...
 }
 
-1.3.3.  cnt_reset([group.]name)
+1.3.3. cnt_reset([group.]name)
 
    Resets the counter group.name. The counter must be defined using the
    script_counter module parameter. If the group name is missing, the
