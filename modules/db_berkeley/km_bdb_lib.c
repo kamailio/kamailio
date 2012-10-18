@@ -308,7 +308,7 @@ int km_bdblib_create_dbenv(DB_ENV **_dbenv, char* _home)
 	char *progname;
 	int rc, flags;
 	
-	progname = "openser";
+	progname = "kamailio";
 	
 	/* Create an environment and initialize it for additional error * reporting. */ 
 	if ((rc = db_env_create(&env, 0)) != 0) 
@@ -556,14 +556,14 @@ void km_bdblib_log(int op, table_p _tp, char* _msg, int len)
  * Instead it is done on first-use (lazy-initialized) to only create handles to 
  * files (db) that we require.
  * 
- * There is one db file per openser table (eg. acc), and they should exist
+ * There is one db file per kamailio table (eg. acc), and they should exist
  * in your DB_PATH (refer to kamctlrc) directory.
  *
  * This function does _not_ create the underlying binary db tables.
  * Creating the tables MUST be manually performed before 
- * openser startup by 'kamdbctl create'
+ * kamailio startup by 'kamdbctl create'
  *
- * Function returns NULL on error, which will cause openser to exit.
+ * Function returns NULL on error, which will cause kamailio to exit.
  *
  */
 table_p km_bdblib_create_table(database_p _db, str *_s)

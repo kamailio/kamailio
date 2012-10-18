@@ -48,7 +48,7 @@
 /*! CSEQ nr used */
 #define MI_UL_CSEQ 1
 /*! call-id used for ul_add and ul_rm_contact */
-static str mi_ul_cid = str_init("dfjrewr12386fd6-343@openser.mi");
+static str mi_ul_cid = str_init("dfjrewr12386fd6-343@Kamailio.mi");
 /*! user agent used for ul_add */
 static str mi_ul_ua  = str_init("Kamailio MI Server");
 
