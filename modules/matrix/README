@@ -44,6 +44,14 @@ Henning Westerholt
 
               6.1. Database setup
 
+   2. Module parameter for database access.
+
+        1. db_url (String)
+        2. matrix_table (String)
+        3. matrix_first_col (string)
+        4. matrix_second_col (string)
+        5. matrix_res_col (string)
+
    List of Examples
 
    1.1. Set db_url parameter
@@ -54,6 +62,11 @@ Henning Westerholt
    1.6. matrix usage
    1.7. reload_matrix usage
    1.8. Example database content - matrix table
+   2.1. Set db_url parameter
+   2.2. Set matrix_table parameter
+   2.3. Set matrix_first_col parameter
+   2.4. Set matrix_second_col parameter
+   2.5. Set matrix_res_col parameter
 
 Chapter 1. Admin Guide
 
@@ -237,4 +250,61 @@ kamctl fifo reload_matrix
 +---------+--------------+---------+
 ...
 
-   <xi:include></xi:include>
+Chapter 2. Module parameter for database access.
+
+   Table of Contents
+
+   1. db_url (String)
+   2. matrix_table (String)
+   3. matrix_first_col (string)
+   4. matrix_second_col (string)
+   5. matrix_res_col (string)
+
+1. db_url (String)
+
+   URL to the database containing the data.
+
+   Default value is "mysql://openserro:openserro@localhost/openser".
+
+   Example 2.1. Set db_url parameter
+...
+modparam("matrix", "db_url", "dbdriver://username:password@dbhost/dbname")
+...
+
+2. matrix_table (String)
+
+   Name of the matrix table for the matrix module.
+
+   Default value is "matrix".
+
+   Example 2.2. Set matrix_table parameter
+...
+modparam("matrix", "matrix_table", "matrix")
+...
+
+3. matrix_first_col (string)
+
+   The row index in the matrix
+
+   Example 2.3. Set matrix_first_col parameter
+...
+modparam("matrix", "matrix_first_col", "first")
+...
+
+4. matrix_second_col (string)
+
+   The column index in the matrix
+
+   Example 2.4. Set matrix_second_col parameter
+...
+modparam("matrix", "matrix_second_col", "second")
+...
+
+5. matrix_res_col (string)
+
+   The resource contained in the matrix
+
+   Example 2.5. Set matrix_res_col parameter
+...
+modparam("matrix", "matrix_res_col", "res")
+...

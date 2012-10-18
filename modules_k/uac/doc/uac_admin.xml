@@ -368,7 +368,7 @@ modparam("uac","auth_password_avp","$avp(i:12)")
 				<programlisting format="linespecific">
 ...
 modparam("uac", "reg_db_url",
-    "mysql://openser:openserrw@localhost/openser")
+    "&defaultdb;")
 ...
 				</programlisting>
 			</example>

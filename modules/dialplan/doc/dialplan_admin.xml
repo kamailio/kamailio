@@ -113,7 +113,7 @@
 		<para>
 		<emphasis>
 			Default value is 
-				<quote>mysql://openser:openserrw@localhost/openser</quote>.
+				<quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
 		<example>
