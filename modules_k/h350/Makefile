@@ -12,6 +12,6 @@ NAME=h350.so
 LIBS=
 DEFS+=-I$(LOCALBASE)/include
 
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 include ../../Makefile.modules

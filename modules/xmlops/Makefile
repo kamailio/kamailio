@@ -24,6 +24,6 @@ else
 
 endif
 
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 include ../../Makefile.modules

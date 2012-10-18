@@ -10,7 +10,7 @@ auto_gen=
 NAME=auth_db.so
 LIBS=
 
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kcore/kcore $(SERLIBPATH)/srdb1/srdb1

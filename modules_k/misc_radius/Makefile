@@ -8,6 +8,6 @@ include ../../Makefile.radius
 auto_gen=
 NAME=misc_radius.so
 
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 include ../../Makefile.modules

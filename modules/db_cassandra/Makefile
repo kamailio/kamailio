@@ -14,7 +14,7 @@ NAME=db_cassandra.so
 
 THRIFT_DIR = /usr/local/include/thrift
 LIB_DIR = /usr/local/lib
-DEFS += -I${THRIFT_DIR} -DOPENSER_MOD_INTERFACE
+DEFS += -I${THRIFT_DIR} -DKAMAILIO_MOD_INTERFACE
 LIBS += -L${LIB_DIR} dbcassa_base.o cassandra_constants.o cassandra_types.o Cassandra.o -lthrift
 
 CXXFLAGS=$(CFLAGS:-Wno-deprecated option=)

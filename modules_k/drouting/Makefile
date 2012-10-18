@@ -6,7 +6,7 @@ include ../../Makefile.defs
 auto_gen=
 NAME=drouting.so
 LIBS= 
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1

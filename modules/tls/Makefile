@@ -35,7 +35,7 @@ endif
 # dcm: tls.cfg installed via local 'install-cfg' to update paths
 #MOD_INSTALL_CFGS=tls.cfg
 
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 include ../../Makefile.modules
 
