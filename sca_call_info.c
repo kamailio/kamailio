@@ -853,6 +853,83 @@ LM_INFO( "ADMORTEN DEBUG: %.*s != %.*s != %.*s",
     return( 1 );
 }
 
+/*
+ * to be invoked only by proxy-generated replies with error status codes
+ */
+    static void
+sca_call_info_local_error_reply_handler( sip_msg_t *msg, int status )
+{
+    sca_appearance	*app;
+    struct to_body	*from;
+    struct to_body	*to;
+    str			aor = STR_NULL;
+    str			contact_uri = STR_NULL;
+
+    if ( sca_get_msg_from_header( msg, &from ) < 0 ) {
+	LM_ERR( "sca_call_info_sl_reply_cb: failed to get From header from "
+		"request before stateless reply with %d", status );
+	return;
+    }
+    if ( sca_uri_extract_aor( &from->uri, &aor ) < 0 ) {
+	LM_ERR( "sca_call_info_sl_reply_cb: failed to extract AoR "
+		"from URI %.*s", STR_FMT( &from->uri ));
+	return;
+    }
+
+    if ( !sca_uri_is_shared_appearance( sca, &aor )) {
+	/* LM_DBG( "sca_call_info_sl_reply_cb: ignoring non-shared appearance "
+		"%.*s", STR_FMT( &aor )); */
+	return;
+    }
+
+    if ( sca_get_msg_contact_uri( msg, &contact_uri ) < 0 ) {
+	LM_ERR( "sca_call_info_sl_reply_cb: failed to get Contact from "
+		"request before stateless reply with %d", status );
+	return;
+    }
+
+    if ( sca_get_msg_to_header( msg, &to ) < 0 ) {
+	LM_ERR( "sca_call_info_sl_reply_cb: failed to get To header from "
+		"request before stateless reply with %d", status );
+	return;
+    }
+
+    if ( sca_subscription_terminate( sca, &aor,
+		SCA_EVENT_TYPE_LINE_SEIZE, &contact_uri,
+		SCA_SUBSCRIPTION_STATE_TERMINATED_NORESOURCE,
+		SCA_SUBSCRIPTION_TERMINATE_OPT_DEFAULT ) < 0 ) {
+	LM_ERR( "sca_call_info_sl_reply_cb: failed to terminate "
+		"line-seize subscription for %.*s", STR_FMT( &contact_uri ));
+    } else if ( sca_notify_call_info_subscribers( sca, &aor ) < 0 ) {
+	LM_ERR( "Failed to call-info NOTIFY %.*s subscribers",
+		STR_FMT( &aor ));
+    }
+}
+
+    void
+sca_call_info_response_ready_cb( struct cell *t, int type,
+	struct tmcb_params *params )
+{
+    struct to_body	*from;
+    struct to_body	*to;
+    str			from_aor = STR_NULL;
+    str			to_aor = STR_NULL;
+    int			slot_idx;
+
+LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_response_out_cb" );
+
+    if ( !(type & TMCB_RESPONSE_READY)) {
+	return;
+    }
+
+    if ( params->code < 400 ) {
+	/* non-error final response: 1xx, 2xx, 3xx */
+	return;
+    }
+
+    sca_call_info_local_error_reply_handler( params->req, params->code );
+}
+
     int
 sca_call_info_invite_request_handler( sip_msg_t *msg, sca_call_info *call_info,
 	struct to_body *from, struct to_body *to, str *from_aor, str *to_aor,
@@ -880,6 +957,19 @@ sca_call_info_invite_request_handler( sip_msg_t *msg, sca_call_info *call_info,
 	rc = 1;
 	goto done;
     }
+
+    /*
+     * register callback to handle error responses sent from script using
+     * t_reply. TMCB_RESPONSE_READY will only be called from t_reply(),
+     * so relayed responses from upstream UASs will not triggers this.
+     */
+    if ( sca->tm_api->register_tmcb( msg, NULL, TMCB_RESPONSE_READY,
+			sca_call_info_response_ready_cb, NULL, NULL ) < 0 ) {
+	LM_ERR( "sca_call_info_invite_request_handler: failed to register "
+		"callback for INVITE %.*s ACK", STR_FMT( from_aor ));
+	goto done;
+    }
+    
 
     if ( sca_call_is_held( msg )) {
 	state = SCA_APPEARANCE_STATE_HELD;
