@@ -442,7 +442,12 @@ loadmodule "xlog.so"
 # ----- mi_fifo params -----
 modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
 
-modparam("htable", "htable", "msrp=>size=8;autoexpire=1800;")
+modparam("auth", "nonce_count", 1)
+modparam("auth", "qop", "auth")
+
+#!substdef "!MSRP_MIN_EXPIRES!1800!g"
+#!substdef "!MSRP_MAX_EXPIRES!3600!g"
+modparam("htable", "htable", "msrp=>size=8;autoexpire=MSRP_MAX_EXPIRES;")
 
 request_route {
 	sl_send_reply("403", "No SIP Here");
@@ -469,11 +474,11 @@ event_route[msrp:frame-in] {
 
 	msrp_reply_flags("1");
 
-    if(msrp_is_reply())
-    {
-        msrp_relay();
-        exit;
-    }
+	if(msrp_is_reply())
+	{
+		msrp_relay();
+		exit;
+	}
 
 	# handle AUTH MSRP requests
 	if($msrp(method)=="AUTH")
@@ -483,12 +488,13 @@ event_route[msrp:frame-in] {
 			msrp_relay();
 			exit;
 		}
+
 		# frame for local server - send Use-Path
 		# -- passwd can be loaded from DB based on $au
 		$var(passwd) = "xyz123";
 		if(!pv_www_authenticate("myrealm", "$var(passwd)", "0"))
 		{
-			if(auth_get_www_authenticate("myrealm", "0",
+			if(auth_get_www_authenticate("myrealm", "1",
 						"$var(wauth)"))
 			{
 				msrp_reply("401", "Authorization Required",
@@ -498,14 +504,32 @@ event_route[msrp:frame-in] {
 			}
 			exit;
 		}
+
+		if ($hdr(Expires) != $null) {
+			$var(expires) = (int) $hdr(Expires);
+			if ($var(expires) < MSRP_MIN_EXPIRES) {
+				msrp_reply("423", "Interval Out-of-Bounds",
+					"Min-Expires: MSRP_MIN_EXPIRES\r\n");
+				exit;
+			} else {
+				msrp_reply("423", "Interval Out-of-Bounds",
+					"Max-Expires: MSRP_MAX_EXPIRES\r\n");
+				exit;
+			}
+
+		} else
+			$var(expires) = MSRP_MAX_EXPIRES;
+		
 		$var(cnt) = $var(cnt) + 1;
 		pv_printf("$var(sessid)", "s.$(pp).$(var(cnt)).$(RANDOM)");
 		$sht(msrp=>$var(sessid)::srcaddr) = $msrp(srcaddr);
 		$sht(msrp=>$var(sessid)::srcsock) = $msrp(srcsock);
+		$shtex(msrp=>$var(sessid)) = $var(expires) + 5;
 		# - Use-Path: the MSRP address for server + session id
-		$var(UsePath) = "Use-Path: msrp://127.0.0.1:5060/"
-				+ $var(sessid) + ";tcp\r\n";
-		msrp_reply("200", "OK", "$var(UsePath)");
+		$var(headers) = "Use-Path: msrp://127.0.0.1:5060/"
+				+ $var(sessid) + ";tcp\r\n"
+				+ "Expires: " + $var(expires) + "\r\n";
+		msrp_reply("200", "OK", "$var(headers)");
 		exit;
 	}
 
