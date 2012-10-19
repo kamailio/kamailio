@@ -859,7 +859,6 @@ LM_INFO( "ADMORTEN DEBUG: %.*s != %.*s != %.*s",
     static void
 sca_call_info_local_error_reply_handler( sip_msg_t *msg, int status )
 {
-    sca_appearance	*app;
     struct to_body	*from;
     struct to_body	*to;
     str			aor = STR_NULL;
@@ -910,14 +909,6 @@ sca_call_info_local_error_reply_handler( sip_msg_t *msg, int status )
 sca_call_info_response_ready_cb( struct cell *t, int type,
 	struct tmcb_params *params )
 {
-    struct to_body	*from;
-    struct to_body	*to;
-    str			from_aor = STR_NULL;
-    str			to_aor = STR_NULL;
-    int			slot_idx;
-
-LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_response_out_cb" );
-
     if ( !(type & TMCB_RESPONSE_READY)) {
 	return;
     }
@@ -1383,9 +1374,6 @@ sca_call_info_ack_cb( struct cell *t, int type, struct tmcb_params *params )
     struct to_body	*to;
     str			from_aor = STR_NULL;
     str			to_aor = STR_NULL;
-    int			slot_idx;
-
-LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_ack_cb" );
 
     if ( !(type & TMCB_E2EACK_IN)) {
 	return;
@@ -1400,7 +1388,7 @@ LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_ack_cb" );
 		STR_FMT( &from->uri ));
 	return;
     }
-LM_INFO( "ADMORTEN DEBUG: sca_call_info_ack_cb: from_aor: %.*s", STR_FMT( &from_aor));
+
     if ( sca_get_msg_to_header( params->req, &to ) < 0 ) {
 	LM_ERR( "sca_call_info_ack_cb: failed to get To-header" );
 	return;
