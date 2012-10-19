@@ -533,7 +533,7 @@ fi
 %doc %{_docdir}/kamailio/modules_k/README.usrloc
 %doc %{_docdir}/kamailio/modules_k/README.xlog
 
-%dir %{_sysconfdir}/kamailio
+%dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/*
 %if 0%{?fedora}
 %config %{_unitdir}/*
@@ -940,6 +940,8 @@ fi
 
 
 %changelog
+* Fri Oct 20 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Set ownership of /etc/kamailio to kamailio.kamailio
 * Tue Oct 16 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Updated ver to 3.3.2
 * Fri Aug 3 2012 Peter Dunkley <peter@dunkley.me.uk>
