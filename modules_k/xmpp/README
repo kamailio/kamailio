@@ -391,7 +391,7 @@ alias=sip-xmpp.kamailio.org
 
 # ------------------ module loading ----------------------------------
 
-mpath="/usr/local/openser-1.1.0-xmpp/lib/kamailio/modules/"
+mpath="/usr/local/lib/kamailio/modules/"
 loadmodule "sl.so"
 loadmodule "tm.so"
 loadmodule "rr.so"
@@ -415,7 +415,7 @@ modparam("xmpp", "backend", "server")
 
 # -- mi_fifo params --
 
-modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo_xmpp")
+modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo_xmpp")
 
 # -- usrloc params --
 
