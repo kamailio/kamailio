@@ -342,15 +342,16 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
 	klcr ksqlite kredis kjson kmono kberkeley" include_modules="xmlrpc\
-	xmlops"
+	xmlops malloc_test auth_diameter"
 %else
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kpresence kregex kdialplan\
 	klcr ksqlite kberkeley" include_modules="xmlrpc\
-	xmlops"
+	xmlops malloc_test auth_diameter"
 %endif
+make utils
 
 
 
@@ -364,7 +365,7 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
 	klcr ksqlite kredis kjson kmono kberkeley" include_modules="xmlrpc\
-	xmlops"
+	xmlops malloc_test auth_diameter"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.service \
@@ -379,7 +380,7 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kpresence kregex kdialplan\
 	klcr ksqlite kberkeley" include_modules="xmlrpc\
-	xmlops"
+	xmlops malloc_test auth_diameter"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -679,6 +680,9 @@ fi
 %{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyo
 
 %{_mandir}/man5/*
+%if 0%{?fedora}
+%{_mandir}/man7/auth.7.gz
+%endif
 %{_mandir}/man8/*
 
 %dir %{_datadir}/kamailio
@@ -942,6 +946,10 @@ fi
 %changelog
 * Fri Oct 20 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Set ownership of /etc/kamailio to kamailio.kamailio
+  - Added installation of auth.7.gz for Fedora now that manpages are built for
+    Fedora
+  - Added "make utils" to the build section (when it's not there utils get
+    built during the install - which isn't right)
 * Tue Oct 16 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Updated ver to 3.3.2
 * Fri Aug 3 2012 Peter Dunkley <peter@dunkley.me.uk>
