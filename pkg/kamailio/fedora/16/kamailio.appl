@@ -23,12 +23,13 @@ packages:
   - libpurple			# kamailio-purple
   - libunistring		# kamailio-websocket
   - libxml2			# kamailio-cdp, kamailio-cpl, kamailio-presence, kamailio-purple, kamailio-utils, kamailio-xmlops, kamailio-xmlrpc
+  - lksctp-tools		# kamailio
   - mod_perl			# kamailio-perl
   - mono-core			# kamailio-mono
   - mysql-libs			# kamailio-mysql
   - net-snmp-libs		# kamailio-snmpstats
   - openldap			# kamailio-ldap
-  - openssl			# kamailio-tls, kamailio-websocket
+  - openssl			# kamailio, kamailio-websocket
   - pcre			# kamailio-regex, kamailio-dialplan, kamailio-lcr
   - perl-Authen-SASL		# kamailio-perl
   - perl-LDAP			# kamailio-perl

@@ -23,13 +23,14 @@ packages:
   - libpurple-devel		# kamailio-purple
   - libunistring-devel		# kamailio-websocket
   - libxml2-devel		# kamailio-cdp, kamailio-cpl, kamailio-presence, kamailio-purple, kamailio-utils, kamailio-xmlops, kamailio-xmlrpc
+  - lksctp-tools-devel		# kamailio
   - lua-devel			# kamailio-lua
   - make			# kamailio
   - mod_perl-devel		# kamailio-perl
   - mysql-devel			# kamailio-mysql
   - net-snmp-devel		# kamailio-snmpstats
   - openldap-devel		# kamailio-ldap
-  - openssl-devel		# kamailio-tls, kamailio-websocket
+  - openssl-devel		# kamailio, kamailio-websocket
   - pcre-devel			# kamailio-regex, kamailio-dialplan, kamailio-lcr
   - postgresql-devel		# kamailio-postgresql
   - python-devel		# kamailio-python
