@@ -356,14 +356,16 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
 	klcr ksqlite kredis kjson kmono kberkeley kwebsocket"\
-	include_modules="xmlrpc xmlops cdp cdp_avp corex"
+	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
+	auth_diameter"
 %else
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kpresence kregex kdialplan\
 	klcr ksqlite kberkeley kwebsocket"\
-	include_modules="xmlrpc xmlops cdp cdp_avp corex"
+	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
+	auth_diameter"
 %endif
 make utils
 
@@ -379,7 +381,8 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
 	klcr ksqlite kredis kjson kmono kberkeley kwebsocket"\
-	include_modules="xmlrpc xmlops cdp cdp_avp"
+	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
+	auth_diameter"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.service \
@@ -394,7 +397,8 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kpresence kregex kdialplan\
 	klcr ksqlite kberkeley kwebsocket"\
-	include_modules="xmlrpc xmlops cdp cdp_avp"
+	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
+	auth_diameter"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
