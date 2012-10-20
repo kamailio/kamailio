@@ -31,8 +31,9 @@ Conflicts:     kamailio-radius < %ver, kamailio-carrierroute < %ver
 Conflicts:     kamailio-redis < %ver, kamailio-json < %ver 
 Conflicts:     kamailio-mono < %ver, kamailio-GeoIP < %ver
 %endif
-Requires:      openssl
+Requires:      openssl lksctp-tools
 BuildRequires: bison flex gcc make redhat-rpm-config openssl-devel
+BuildRequires: lksctp-tools-devel
 
 %description
 Kamailio (former OpenSER) is an Open Source SIP Server released under GPL, able
