@@ -295,7 +295,7 @@ endif
 ifneq (,$(wildcard $(MOD_NAME).xml))
 
 $(MOD_NAME).7: $(MOD_NAME).xml
-	docbook2x-man -s ../../doc/stylesheets/serdoc2man.xsl $<
+	$(DOCBOOK) -s ../../doc/stylesheets/serdoc2man.xsl $<
 
 man: $(MOD_NAME).7
 
