@@ -164,8 +164,8 @@ modparam("mtree", "db_url", "dbdriver://username:password@dbhost/dbname")
 
 3.2. db_table (string)
 
-   Name of DB table where data for trees is store. It is ignored if a
-   'mtree' parameter is defined.
+   Name of database table where data for trees is stored. It is ignored if
+   a 'mtree' parameter is defined.
 
    Default value is "mtrees".
 
@@ -242,7 +242,7 @@ modparam("mtree", "char_list", "0123456789*+")
 
 3.9. pv_value (string)
 
-   The PV spec where to store the matched value. It can be any writtable
+   The PV spec where to store the matched value. It can be any writable
    PV.
 
    Default value is "$avp(s:tvalue)".
@@ -305,12 +305,12 @@ modparam("mtree", "mt_allow_duplicates", 1)
 4.1. mt_match(mtree, pv, mode)
 
    Match 'pv' value against 'mtree'. If 'mtree' type is 0 or 2 and value
-   of 'mode' is NOT 2, sets a value of longest matching prefix to pseudo
-   variable specified by pv_value parameter. If 'mtree' type is 0 or 2 and
-   value of 'mode' is 2, sets values of all matching prefixes to avp
-   specified by pv_values parameter so that a value of longest matching
-   prefix is in avp index 0. Parameter 'mode' can be an integer constant
-   or a pseudo variable with integer value.
+   of 'mode' is NOT 2, sets a value of the longest matching prefix to
+   pseudo variable specified by pv_value parameter. If 'mtree' type is 0
+   or 2 and value of 'mode' is 2, sets values of all matching prefixes to
+   avp specified by pv_values parameter so that a value of longest
+   matching prefix is in avp index 0. Parameter 'mode' can be an integer
+   constant or a pseudo variable with integer value.
 
    Example 1.14. mt_match usage
 ...
