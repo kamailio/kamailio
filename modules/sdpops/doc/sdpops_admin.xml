@@ -16,15 +16,14 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides function for checking and managing the SDP
+		This module provides functions for checking and managing the SDP
 		payloads of SIP messages.
 	</para>
 	<para>
-		Examples of what this module offers: remove codecs from SDP,
+		Examples of functions this module offers: remove codecs from SDP,
 		check the media stream types, return attributes of SDP document.
-		For the full least of the features provided by this module and
-		the implementation state, read further to the list of exported
-		functions.
+		For the full list of the features provided by this module and
+		the implementation state, read the list of exported functions.
 	</para>
 	</section>
 
@@ -78,7 +77,7 @@
 			parameter can be a static string or a variable holding the
 			list of numeric codec IDs.
 	    </para>
-		<para>
+	    <para>
 			This function can be used from ANY_ROUTE.
 	    </para>
 		<example>
