@@ -63,8 +63,8 @@ Alexandr Dubovikov
    1.9. Set raw_moni_capture_on parameter
    1.10. Set raw_socket_listen parameter
    1.11. Set raw_socket_listen parameter
-   1.12. Set raw_socket_listen parameter
-   1.13. Set hep_capture_on parameter
+   1.12. Set raw_sock_children parameter
+   1.13. Set promiscous_on parameter
    1.14. Set raw_moni_bpf_on parameter
    1.15. Set capture_node parameter
 
@@ -105,13 +105,13 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   Offer a possibility to store incoming/outgoing SIP messages in
+   The sipcapture module stores incoming/outgoing SIP messages in
    database.
 
-   Kamailio can capture SIP messages in three mode
+   Kamailio can capture SIP messages in three modes
      * IPIP encapsulation. (ETHHDR+IPHDR+IPHDR+UDPHDR).
      * Monitoring/mirroring port.
-     * Homer encapsulation protocl mode (HEP v1).
+     * Homer encapsulation protocol mode (HEP v1).
 
    The capturing can be turned on/off using fifo commad.
 
@@ -166,7 +166,7 @@ modparam("sipcapture", "db_url", "mysql://user:passwd@host/dbname")
 
 3.2. table_name (str)
 
-   Name of the table's name where to store the SIP messages. Can contain
+   Name of the table's name used to store the SIP messages. Can contain
    multiple tables, separated by "|".
 
    Default value is "sip_capture".
@@ -300,12 +300,12 @@ modparam("sipcapture", "raw_interface", "eth0")
 
 3.12. raw_sock_children (integer)
 
-   Parameter define how much children must be created to listen the raw
-   socket.
+   Parameter define how many children that must be created to listen the
+   raw socket.
 
    Default value is "1".
 
-   Example 1.12. Set raw_socket_listen parameter
+   Example 1.12. Set raw_sock_children parameter
 ...
 modparam("sipcapture", "raw_sock_children", 6)
 ...
@@ -317,7 +317,7 @@ modparam("sipcapture", "raw_sock_children", 6)
 
    Default value is "0".
 
-   Example 1.13. Set hep_capture_on parameter
+   Example 1.13. Set promiscous_on parameter
 ...
 modparam("sipcapture", "promiscuous_on", 1)
 ...
