@@ -112,11 +112,11 @@
 	<section>
 	<title>Dynamic Rate Limiting Algorithms</title>
 	<para>
-		When running openser on different machines, one has to adjust the drop
+		When running &kamailio; on different machines, one has to adjust the drop
 		rates for the static algorithms to maintain a sub 100% load average or
 		packets start getting dropped in the network stack.  While this is not
 		in itself difficult, it isn't neither accurate nor trivial: another
-		server taking a notable fraction of the cpu time will require re-tuning
+		server taking a notable fraction of the CPU time will require re-tuning
 		the parameters.
 	</para>
 	<para>
@@ -136,7 +136,7 @@
 		in PID terms).
 		</para>
 		<para>
-		As reading the cpu load average is relatively expensive (opening /proc/stat,
+		As reading the CPU load average is relatively expensive (opening /proc/stat,
 		parsing it, etc), this only happens once every timer_interval seconds and
 		consequently the FEEDBACK value is only at these intervals recomputed. This
 		in turn makes it difficult for the drop rate to adjust quickly.  Worst case
@@ -379,7 +379,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		<function moreinfo="none">rl.stats</function>
 		</title>
 		<para>
-		Lists the parameters and variabiles in the ratelimit module.
+		Lists the parameters and variables in the ratelimit module.
 		</para>
 		<para>
 		Name: <emphasis>rl.stats</emphasis>
@@ -542,7 +542,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		<function moreinfo="none">rl.push_load</function>
 		</title>
 		<para>
-		Force the value of the load parameter.  This methos is usefull
+		Force the value of the load parameter.  This method is useful
 		for testing the Feedback algorithm.
 		</para>
 		<para>

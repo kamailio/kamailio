@@ -207,11 +207,11 @@ Chapter 1. Admin Guide
 
    4.1. Feedback Algorithm (FEEDBACK)
 
-   When running openser on different machines, one has to adjust the drop
+   When running Kamailio on different machines, one has to adjust the drop
    rates for the static algorithms to maintain a sub 100% load average or
    packets start getting dropped in the network stack. While this is not
    in itself difficult, it isn't neither accurate nor trivial: another
-   server taking a notable fraction of the cpu time will require re-tuning
+   server taking a notable fraction of the CPU time will require re-tuning
    the parameters.
 
    While tuning the drop rates from the outside based on a certain factor
@@ -226,7 +226,7 @@ Chapter 1. Admin Guide
    adjusted dynamically based on the load factor so that the load factor
    always drifts towards the specified limit (or setpoint, in PID terms).
 
-   As reading the cpu load average is relatively expensive (opening
+   As reading the CPU load average is relatively expensive (opening
    /proc/stat, parsing it, etc), this only happens once every
    timer_interval seconds and consequently the FEEDBACK value is only at
    these intervals recomputed. This in turn makes it difficult for the
@@ -421,7 +421,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 
 8.1. rl.stats
 
-   Lists the parameters and variabiles in the ratelimit module.
+   Lists the parameters and variables in the ratelimit module.
 
    Name: rl.stats
 
@@ -507,7 +507,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 
 8.8. rl.push_load
 
-   Force the value of the load parameter. This methos is usefull for
+   Force the value of the load parameter. This method is useful for
    testing the Feedback algorithm.
 
    Name: rl.push_load
