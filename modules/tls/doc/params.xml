@@ -64,7 +64,7 @@ modparam("tls", "tls_method", "TLSv1")
 		working directory (<emphasis>at runtime</emphasis>). If it starts
 		with a '/' it will be an absolute path and if it starts with anything
 		else the path will be relative to the main config file directory
-		(e.g.: for ser -f /etc/ser/ser.cfg it will be relative to /etc/ser/).
+		(e.g.: for ser -f /etc/kamailio/kamailio.cfg it will be relative to /etc/ser/).
 	</para>
 	<para>
 		<emphasis>Warning:</emphasis> try not to use certificate with keys
@@ -78,7 +78,7 @@ modparam("tls", "tls_method", "TLSv1")
 	    <title>Set <varname>certificate</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("tls", "certificate", "/usr/local/etc/ser/my_certificate.pem")
+modparam("tls", "certificate", "/usr/local/etc/kamailio/my_certificate.pem")
 ...
 	    </programlisting>
 	</example>
@@ -94,7 +94,7 @@ modparam("tls", "certificate", "/usr/local/etc/ser/my_certificate.pem")
 		working directory (<emphasis>at runtime</emphasis>). If it starts
 		with a '/' it will be an absolute path and if it starts with anything
 		else the path will be relative to the main config file directory
-		(e.g.: for ser -f /etc/ser/ser.cfg it will be relative to /etc/ser/).
+		(e.g.: for kamailio -f /etc/ser/ser.cfg it will be relative to /etc/ser/).
 	</para>
 	<para>
 		Note: the private key can be contained in the same file as the
@@ -126,7 +126,7 @@ modparam("tls", "private", "/usr/local/etc/ser/my_pkey.pem")
 		working directory (<emphasis>at runtime</emphasis>). If it starts
 		with a '/' it will be an absolute path and if it starts with anything
 		else the path will be relative to the main config file directory
-		(e.g.: for ser -f /etc/ser/ser.cfg it will be relative to /etc/ser/).
+		(e.g.: for kamailio -f /etc/ser/ser.cfg it will be relative to /etc/ser/).
 	</para>
 	<para>
 		By default the CA file is not set.
@@ -168,7 +168,7 @@ modparam("tls", "ca_list", "/usr/local/etc/ser/ca_list.pem")
 		working directory (<emphasis>at runtime</emphasis>). If it starts
 		with a '/' it will be an absolute path and if it starts with anything
 		else the path will be relative to the main config file directory
-		(e.g.: for ser -f /etc/ser/ser.cfg it will be relative to /etc/ser/).
+		(e.g.: for kamailio -f /etc/ser/ser.cfg it will be relative to /etc/ser/).
 	</para>
 	<note><para>
 		If set, <varname>require_certificate</varname> should also be set
@@ -178,7 +178,7 @@ modparam("tls", "ca_list", "/usr/local/etc/ser/ca_list.pem")
 		By default the crl file is not set.
 	</para>
 	<para>
-		To update the crl in a running ser, make sure you configure tls
+		To update the crl in a running &kamailio;, make sure you configure tls
 		via a separate tls config file
 		(the <varname>config</varname> modparam) and issue a tls.reload
 		RPC call, e.g.:
@@ -308,7 +308,7 @@ modparam("tls", "cipher_list", "HIGH")
 	<title><varname>send_timeout</varname> (int)</title>
 	<para>
 		This parameter is <emphasis>obsolete</emphasis> and cannot be used
-		in newer TLS versions (&gt; sip-router 3.0). In these versions the
+		in newer TLS versions (&gt; &kamailio; 3.0). In these versions the
 		send_timeout is replaced by <varname>tcp_send_timeout</varname>
 		(common with all the tcp connections).
 	</para>
@@ -318,7 +318,7 @@ modparam("tls", "cipher_list", "HIGH")
 	<title><varname>handshake_timeout</varname> (int)</title>
 	<para>
 		This parameter is <emphasis>obsolete</emphasis> and cannot be used
-		in newer TLS versions (&gt; sip-router 3.0). In these versions the
+		in newer TLS versions (&gt; &kamailio; 3.0). In these versions the
 		handshake_timeout is replaced by <varname>tcp_connect_timeout</varname>
 		(common with all the tcp connections).
 	</para>
@@ -461,7 +461,7 @@ modparam("tls", "ssl_freelist_max_len", 0)
 	</para>
 	<para>
 		Lower values would lead to less memory usage, but values lower then
-		the typical ser/sip-router write size would incur a slight performance
+		the typical ser/&kamailio; write size would incur a slight performance
 		penalty. Good values are bigger then the  size of the biggest
 		SIP packet one normally expects to forward. For example in most
 		setups 2048 would be a good value.
