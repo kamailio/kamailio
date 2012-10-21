@@ -20,7 +20,7 @@ Conflicts:     kamailio-unixODBC < %ver, kamailio-bdb < %ver
 Conflicts:     kamailio-sqlite < %ver, kamailio-utils < %ver
 Conflicts:     kamailio-cpl < %ver, kamailio-snmpstats < %ver
 Conflicts:     kamailio-presence < %ver, kamailio-xmpp < %ver
-Conflicts:     kamailio-tls < %ver, kamailio-purple < %ver, kamailio-ldap < %ver
+Conflicts:     kamailio-purple < %ver, kamailio-ldap < %ver
 Conflicts:     kamailio-xmlrpc < %ver, kamailio-perl < %ver, kamailio-lua < %ver
 Conflicts:     kamailio-python < %ver, kamailio-regex < %ver
 Conflicts:     kamailio-dialplan < %ver, kamailio-lcr < %ver
@@ -31,7 +31,9 @@ Conflicts:     kamailio-radius < %ver, kamailio-carrierroute < %ver
 Conflicts:     kamailio-redis < %ver, kamailio-json < %ver 
 Conflicts:     kamailio-mono < %ver, kamailio-GeoIP < %ver
 %endif
-BuildRequires: bison flex gcc make redhat-rpm-config
+Requires:      openssl lksctp-tools
+BuildRequires: bison flex gcc make redhat-rpm-config openssl-devel
+BuildRequires: lksctp-tools-devel
 
 %description
 Kamailio (former OpenSER) is an Open Source SIP Server released under GPL, able
@@ -150,16 +152,6 @@ BuildRequires: expat-devel
 SIP/XMPP IM gateway for Kamailio.
 
 
-%package tls
-Summary:       TLS transport for Kamailio.
-Group:         System Environment/Daemons
-Requires:      openssl, kamailio = %ver
-BuildRequires: openssl-devel
-
-%description tls
-TLS transport for Kamailio.
-
-
 %package ldap
 Summary:       LDAP search interface for Kamailio.
 Group:         System Environment/Daemons
@@ -253,8 +245,8 @@ XML operation functions for Kamailio.
 %package websocket
 Summary:       WebSocket transport for Kamailio.
 Group:         System Environment/Daemons
-Requires:      openssl, libunistring, kamailio = %ver
-BuildRequires: openssl-devel, libunistring-devel
+Requires:      libunistring, kamailio = %ver
+BuildRequires: libunistring-devel
 
 %description websocket
 WebSocket transport for Kamailio.
@@ -356,7 +348,7 @@ Max Mind GeoIP real-time query support for Kamailio.
 %build
 make FLAVOUR=kamailio cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT\
 	basedir=$RPM_BUILD_ROOT cfg_target=/%{_sysconfdir}/kamailio/\
-	modules_dirs="modules modules_k"
+	modules_dirs="modules modules_k" SCTP=1 STUN=1
 make
 %if 0%{?fedora}
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
@@ -364,15 +356,18 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
 	klcr ksqlite kredis kjson kmono kberkeley kwebsocket"\
-	include_modules="xmlrpc xmlops cdp cdp_avp corex"
+	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
+	auth_diameter"
 %else
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kpresence kregex kdialplan\
 	klcr ksqlite kberkeley kwebsocket"\
-	include_modules="xmlrpc xmlops cdp cdp_avp corex"
+	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
+	auth_diameter"
 %endif
+make utils
 
 
 
@@ -386,7 +381,8 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
 	klcr ksqlite kredis kjson kmono kberkeley kwebsocket"\
-	include_modules="xmlrpc xmlops cdp cdp_avp"
+	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
+	auth_diameter"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.service \
@@ -401,7 +397,8 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
 	kcpl ksnmpstats kpresence kregex kdialplan\
 	klcr ksqlite kberkeley kwebsocket"\
-	include_modules="xmlrpc xmlops cdp cdp_avp"
+	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
+	auth_diameter"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -496,6 +493,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.sl
 %doc %{_docdir}/kamailio/modules/README.sms
 %doc %{_docdir}/kamailio/modules/README.textopsx
+%doc %{_docdir}/kamailio/modules/README.tls
 %doc %{_docdir}/kamailio/modules/README.tm
 %doc %{_docdir}/kamailio/modules/README.tmrec
 %doc %{_docdir}/kamailio/modules/README.topoh
@@ -556,7 +554,7 @@ fi
 %doc %{_docdir}/kamailio/modules_k/README.usrloc
 %doc %{_docdir}/kamailio/modules_k/README.xlog
 
-%dir %{_sysconfdir}/kamailio
+%dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/*
 %if 0%{?fedora}
 %config %{_unitdir}/*
@@ -621,6 +619,7 @@ fi
 %{_libdir}/kamailio/modules/sms.so
 %{_libdir}/kamailio/modules/tm.so
 %{_libdir}/kamailio/modules/tmrec.so
+%{_libdir}/kamailio/modules/tls.so
 %{_libdir}/kamailio/modules/textopsx.so
 %{_libdir}/kamailio/modules/topoh.so
 %{_libdir}/kamailio/modules/xhttp.so
@@ -703,6 +702,9 @@ fi
 %{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyo
 
 %{_mandir}/man5/*
+%if 0%{?fedora}
+%{_mandir}/man7/auth.7.gz
+%endif
 %{_mandir}/man8/*
 
 %dir %{_datadir}/kamailio
@@ -818,12 +820,6 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules_k/README.xmpp
 %{_libdir}/kamailio/modules_k/xmpp.so
-
-
-%files tls
-%defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules/README.tls
-%{_libdir}/kamailio/modules/tls.so
 
 
 %files purple
@@ -978,6 +974,15 @@ fi
 
 
 %changelog
+* Fri Oct 20 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Set ownership of /etc/kamailio to kamailio.kamailio
+  - Added installation of auth.7.gz for Fedora now that manpages are built for
+    Fedora
+  - Added "make utils" to the build section (when it's not there utils get
+    built during the install - which isn't right)
+  - SCTP and STUN now included in this build
+  - Removed kamailio-tls package - tls module now in main kamailio RPM as that
+    has openssl as a dependency for STUN
 * Sun Sep 17 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added corex module to RPM builds
   - Updated rel to dev4

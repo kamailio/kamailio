@@ -123,7 +123,7 @@ endif
 ifneq (,$(wildcard $(UTIL_NAME).xml))
 
 $(UTIL_NAME).7: $(UTIL_NAME).xml
-	docbook2x-man -s ../../doc/stylesheets/serdoc2man.xsl $<
+	$(DOCBOOK) -s ../../doc/stylesheets/serdoc2man.xsl $<
 
 man: $(UTIL_NAME).7
 

@@ -16,7 +16,7 @@ Alex Balashov
 
    <abalashov@evaristesys.com>
 
-   Copyright © 2012 asipto.com
+   Copyright Â© 2012 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -162,7 +162,7 @@ modparam("msrp", "sipmsg", 1)
    4.6. msrp_relay_flags(flags)
    4.7. msrp_reply_flags(flags)
 
-4.1. msrp_relay()
+4.1.  msrp_relay()
 
    Relay MSRP frame according to the To-Path. This function has to be
    executed for each MSRP request or reply that has to be forwarded. Note
@@ -178,7 +178,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.2. msrp_reply(code, text [, hdrs])
+4.2.  msrp_reply(code, text [, hdrs])
 
    Send a reply for the current MSRP request, adding optional headers.
 
@@ -193,7 +193,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.3. msrp_is_request()
+4.3.  msrp_is_request()
 
    Return true if the MSRP frame is a request.
 
@@ -210,7 +210,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.4. msrp_is_reply()
+4.4.  msrp_is_reply()
 
    Return true if the MSRP frame is a reply.
 
@@ -227,7 +227,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.5. msrp_set_dst(addr, sock)
+4.5.  msrp_set_dst(addr, sock)
 
    Set destination attributes: addr - target address as MSRP URI; sock -
    local socket to be used (format 'proto:ip:port').
@@ -245,7 +245,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.6. msrp_relay_flags(flags)
+4.6.  msrp_relay_flags(flags)
 
    Set transport layer sending flags for forwarding current MSRP frame;
    flags - a bitmask of flags - 1 (don't create a new connection), 2
@@ -264,7 +264,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.7. msrp_reply_flags(flags)
+4.7.  msrp_reply_flags(flags)
 
    Set transport layer sending flags for replies to the current MSRP
    frame; flags - a bitmask of flags - 1 (don't create a new connection),
@@ -397,7 +397,12 @@ loadmodule "xlog.so"
 # ----- mi_fifo params -----
 modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
 
-modparam("htable", "htable", "msrp=>size=8;autoexpire=1800;")
+modparam("auth", "nonce_count", 1)
+modparam("auth", "qop", "auth")
+
+#!substdef "!MSRP_MIN_EXPIRES!1800!g"
+#!substdef "!MSRP_MAX_EXPIRES!3600!g"
+modparam("htable", "htable", "msrp=>size=8;autoexpire=MSRP_MAX_EXPIRES;")
 
 request_route {
         sl_send_reply("403", "No SIP Here");
@@ -424,11 +429,11 @@ event_route[msrp:frame-in] {
 
         msrp_reply_flags("1");
 
-    if(msrp_is_reply())
-    {
-        msrp_relay();
-        exit;
-    }
+        if(msrp_is_reply())
+        {
+                msrp_relay();
+                exit;
+        }
 
         # handle AUTH MSRP requests
         if($msrp(method)=="AUTH")
@@ -438,12 +443,13 @@ event_route[msrp:frame-in] {
                         msrp_relay();
                         exit;
                 }
+
                 # frame for local server - send Use-Path
                 # -- passwd can be loaded from DB based on $au
                 $var(passwd) = "xyz123";
                 if(!pv_www_authenticate("myrealm", "$var(passwd)", "0"))
                 {
-                        if(auth_get_www_authenticate("myrealm", "0",
+                        if(auth_get_www_authenticate("myrealm", "1",
                                                 "$var(wauth)"))
                         {
                                 msrp_reply("401", "Authorization Required",
@@ -453,14 +459,32 @@ event_route[msrp:frame-in] {
                         }
                         exit;
                 }
+
+                if ($hdr(Expires) != $null) {
+                        $var(expires) = (int) $hdr(Expires);
+                        if ($var(expires) < MSRP_MIN_EXPIRES) {
+                                msrp_reply("423", "Interval Out-of-Bounds",
+                                        "Min-Expires: MSRP_MIN_EXPIRES\r\n");
+                                exit;
+                        } else {
+                                msrp_reply("423", "Interval Out-of-Bounds",
+                                        "Max-Expires: MSRP_MAX_EXPIRES\r\n");
+                                exit;
+                        }
+
+                } else
+                        $var(expires) = MSRP_MAX_EXPIRES;
+
                 $var(cnt) = $var(cnt) + 1;
                 pv_printf("$var(sessid)", "s.$(pp).$(var(cnt)).$(RANDOM)");
                 $sht(msrp=>$var(sessid)::srcaddr) = $msrp(srcaddr);
                 $sht(msrp=>$var(sessid)::srcsock) = $msrp(srcsock);
+                $shtex(msrp=>$var(sessid)) = $var(expires) + 5;
                 # - Use-Path: the MSRP address for server + session id
-                $var(UsePath) = "Use-Path: msrp://127.0.0.1:5060/"
-                                + $var(sessid) + ";tcp\r\n";
-                msrp_reply("200", "OK", "$var(UsePath)");
+                $var(headers) = "Use-Path: msrp://127.0.0.1:5060/"
+                                + $var(sessid) + ";tcp\r\n"
+                                + "Expires: " + $var(expires) + "\r\n";
+                msrp_reply("200", "OK", "$var(headers)");
                 exit;
         }
 
