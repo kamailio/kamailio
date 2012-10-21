@@ -240,8 +240,8 @@ typedef int (*add_pua_event_t)(int ev_flag, char* name,
 		<para>
 			This function allows registering new events to the pua module.
 			Now there are 4 events supported by the pua module: presence, 
-			presence;winfo, message-summary, dialog;sla. These events are registered
-			from within the pua module.
+			presence;winfo, message-summary, dialog;sla, application/reginfo+xml. 
+			These events are registered from within the pua module.
         </para>
 		<para>
 			Filed type for process_body: 

@@ -17,21 +17,23 @@
 	<title>Overview</title>
 	<para>
 		This module offer the functionality of a presence user agent client,
-		sending Subscribe and Publish messages. It's a core part of &kamailio;'s 
+		sending SUBSCRIBE and PUBLISH SIP  messages. It's a core part of &kamailio;'s 
 		SIP presence package, implementing SIMPLE and various shared line appearance
 		implementations.
 	</para>
 	<para>
-		 It can be used with the following modules: pua_mi and pua_usrloc,
-		 pua_bla and pua_xmpp.
-		 The <emphasis>pua_mi</emphasis> offer the possibility to publish any kind of information
+		 It can be used with the following modules: pua_mi, pua_usrloc,
+		 pua_bla, pua_dialoginfo, pua_reginfo and pua_xmpp.
+		 The <emphasis>pua_mi</emphasis> module offer the possibility to publish any kind of information
 		 or subscribing to a resource through the manager interface.
 		 The <emphasis>pua_usrloc</emphasis> module calls a function exported by pua modules to publish
 		 elementary presence information, such as basic status "open" or "closed",
 		 for clients that do not implement client-to-server presence.
-		 Through <emphasis>pua_bla</emphasis> , BRIDGED LINE APPEARANCE features are added to openser.
+		 Through <emphasis>pua_bla</emphasis> , BRIDGED LINE APPEARANCE features are added to &kamailio;
 		 The <emphasis>pua_xmpp</emphasis> module represents a gateway between SIP and XMPP, so that 
 		 jabber and SIP clients can exchange presence information. 
+		 The <emphasis>pua_reginfo</emphasis> modules presents registration information from the usrloc module
+		 using the reginfo event package.
 	</para>
 	<para>
 		The module supports 2 modes of operation. In the first a cache is used to store
@@ -81,8 +83,8 @@
 	<section>
 		<title><varname>hash_size</varname> (int)</title>
 		<para>
-		The size of the hash table used for storing Subscribe and 
-		Publish information. 
+		The size of the hash table used for storing SUBSCRIBE and 
+		PUBLISH information. 
         	This parameter will be used as the power of 2 when computing table size.
         	</para>
 		<para>
@@ -213,7 +215,7 @@ modparam("pua", "outbound_proxy", "sip:outbound.example.com")
 	<section>
 		<title><varname>dlginfo_increase_version</varname> (int)</title>
 		<para>
-		When sending PUBLISHs for Event: dialog, the body contains an
+		When sending PUBLISH messages for Event: dialog, the body contains an
 		XML document according to RFC 4235. This XML document contains a 
 		version attribute to easily detect changes in the dialog state.
 		By setting this parameter, the pua module parses the XML document and
@@ -239,7 +241,7 @@ modparam("pua", "dlginfo_increase_version", 1)
 	<section>
 		<title><varname>reginfo_increase_version</varname> (int)</title>
 		<para>
-		When sending PUBLISHs for Event: reg, the body contains an
+		When sending PUBLISH messages for Event: reg, the body contains an
 		XML document according to RFC 4235(?). This XML document contains a 
 		version attribute to easily detect changes in the registration state.
 		By setting this parameter, the pua module parses the XML document and
