@@ -1678,6 +1678,7 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* flags, char* str2)
 	str callid, from_tag, to_tag, viabranch;
 	char *cp;
 	int via = 0;
+	int to = 1;
 	int ret;
 	struct rtpp_node *node;
 	struct iovec v[1 + 4 + 3 + 2] = {{NULL, 0}, {"D", 1}, {" ", 1}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
@@ -1700,6 +1701,10 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* flags, char* str2)
 					via = 1;
 				break;
 
+ 		        case 't':
+		        case 'T':
+			    to = 0;
+			    break;
 			case 'a':
 			case 'A':
 			case 'i':
@@ -1736,7 +1741,8 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* flags, char* str2)
 		return -1;
 	}
 	to_tag.s = 0;
-	if (get_to_tag(msg, &to_tag) == -1) {
+	to_tag.len = 0;
+	if ((to == 1) && get_to_tag(msg, &to_tag) == -1) {
 		LM_ERR("can't get To tag\n");
 		return -1;
 	}
@@ -2149,6 +2155,11 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 				}
 			}
 			break;
+
+		case 't':
+		case 'T':
+		        /* Only used in rtpproxy_destroy */
+		        break;
 
 		default:
 			LM_ERR("unknown option `%c'\n", *cp);

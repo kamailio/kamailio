@@ -34,7 +34,7 @@ Carsten Bock
 
    Copyright © 2005 Voice Sistem SRL
 
-   Copyright © 2009 TuTPro Inc.
+   Copyright © 2009-2012 TuTPro Inc.
 
    Copyright © 2010 VoIPEmbedded Inc.
      __________________________________________________________________
@@ -491,6 +491,10 @@ onreply_route[2]
             the ngcp-mediaproxy-ng rtpproxy at the moment!
           + 2 - append second Via branch to Call-ID when sending command
             to rtpproxy. See flag '1' for its meaning.
+          + t - do not include To tag to “delete” command to rtpproxy thus
+            causing full call to be deleted. Useful for deleting unused
+            rtpproxy call when 200 OK is received on a branch, where
+            rtpproxy is not needed.
 
    Example 1.11. rtpproxy_destroy usage
 ...
