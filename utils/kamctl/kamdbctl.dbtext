@@ -22,10 +22,10 @@ if [ -z "$DB_PATH" ] ; then
 	DB_PATH="/usr/local/etc/kamailio/dbtext"
 fi
 
-openser_drop()  # pars: <database name>
+kamailio_drop()  # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	merr "openser_drop function takes one param"
+	merr "kamailio_drop function takes one param"
 	exit 1
 fi
 
@@ -35,10 +35,10 @@ minfo "DBTEXT ... erasing all files at: $DB_PATH"
 rm -rf $DB_PATH
 }
 
-openser_create () # pars: <database name>
+kamailio_create () # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	merr "openser_create function takes one param (DB_PATH)"
+	merr "kamailio_create function takes one param (DB_PATH)"
 	exit 1
 fi
 

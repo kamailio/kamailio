@@ -135,7 +135,7 @@
 ## in the subscriber table - default '1'
 # STORE_PLAINTEXT_PW=0
 
-## OPENSER START Options
+## Kamailio START Options
 ## PID file path - default is: /var/run/kamailio.pid
 # PID_FILE=/var/run/kamailio.pid
 
