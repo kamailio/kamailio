@@ -60,21 +60,21 @@ else
 	exit -1
 fi
 
-# locate sercmd
+# locate kamcmd
 if [ -z "$SERCMD" ] ; then
 	# try same dir as kamctl
-	SERCMD="$MYDIR/sercmd"
+	SERCMD="$MYDIR/kamcmd"
 	if [ ! -f "$SERCMD" -o ! -x "$SERCMD" ] ; then
 		# try standard location installed from sources
-		SERCMD="/usr/local/sbin/sercmd"
+		SERCMD="/usr/local/sbin/kamcmd"
 		if [ ! -f "$SERCMD" -o ! -x "$SERCMD" ] ; then
 			# try source tree location
-			SERCMD="$MYDIR/../sercmd/sercmd"
+			SERCMD="$MYDIR/../sercmd/kamcmd"
 			if [ ! -f "$SERCMD" -o ! -x "$SERCMD" ] ; then
 				# try locate it with which
-				SERCMD=`which sercmd`
+				SERCMD=`which kamcmd`
 				if [ ! -f "$SERCMD" -o ! -x "$SERCMD" ] ; then
-					mdbg "sercmd tool not found"
+					mdbg "kamcmd tool not found"
 				fi
 			fi
 		fi
@@ -143,9 +143,9 @@ fi
 ### CTLENGINE
 #
 
-require_sercmd() {
+require_kamcmd() {
 	if [ -z "$SERCMD" ] ; then
-		merr "sercmd tool is missing"
+		merr "kamcmd tool is missing"
 		exit -1
 	fi
 }
@@ -168,7 +168,7 @@ case $CTLENGINE in
 		fi
 		;;
 	SER_MI|ser_mi|SERCMD_MI|sercmd_mi|SERCMDMI|sercmdmi)
-		require_sercmd
+		require_kamcmd
 		if [ -f "$MYLIBDIR/kamctl.ser_mi" ]; then
 			. "$MYLIBDIR/kamctl.ser_mi"
 			CTLENGINELOADED=1
@@ -177,7 +177,7 @@ case $CTLENGINE in
 esac
 
 #### ------------------------------------------------- #####
-### Load sercmd interface
+### Load kamcmd interface
 #
 if [ -f "$MYLIBDIR/kamctl.ser" ]; then
 	. "$MYLIBDIR/kamctl.ser"
@@ -2489,7 +2489,7 @@ case $1 in
 		;;
 
 	ser|sercmd)
-		require_sercmd
+		require_kamcmd
 		shift
 		$SERCTLCMD "$@"
 		;;
