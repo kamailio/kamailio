@@ -128,10 +128,10 @@ fi
 
 
 # dump all rows
-openser_dump()  # pars: <database name>
+kamailio_dump()  # pars: <database name>
 {
 	if [ $# -ne 2 ] ; then
-		merr "openser_dump function takes two param"
+		merr "kamailio_dump function takes two param"
 		exit 1
 	fi
 	if [ "$USED_DBENGINE" == "oracle" ]; then
@@ -149,10 +149,10 @@ openser_dump()  # pars: <database name>
 }
 
 
-openser_restore() #pars: <database name> <filename>
+kamailio_restore() #pars: <database name> <filename>
 {
 	if [ $# -ne 2 ] ; then
-		merr "openser_restore function takes two params"
+		merr "kamailio_restore function takes two params"
 		exit 1
 	fi
 	if [ "$USED_DBENGINE" == "oracle" ]; then
@@ -181,7 +181,7 @@ case $1 in
 		# create new database
 		minfo "Creating new Database $3...."
 		NO_USER_INIT="yes"
-		openser_create $3
+		kamailio_create $3
 		if [ "$?" -ne 0 ] ; then
 			echo "migrate: creating new database failed"
 			exit 1
@@ -208,20 +208,20 @@ case $1 in
 			exit $?
 		fi
 		tmp_file=`mktemp /tmp/kamdbctl.XXXXXXXXXX` || exit 1
-		openser_dump $DBNAME $tmp_file
+		kamailio_dump $DBNAME $tmp_file
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
 			rm $tmp_file
 			exit $ret
 		fi
 		NO_USER_INIT="yes"
-		openser_create $1
+		kamailio_create $1
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
 			rm $tmp_file
 			exit $ret
 		fi
-		openser_restore $1 $tmp_file
+		kamailio_restore $1 $tmp_file
 		ret=$?
 		rm -f $tmp_file
 		exit $ret
@@ -237,7 +237,7 @@ case $1 in
 			usage
 			exit 1
 		fi
-		openser_dump $DBNAME $1
+		kamailio_dump $DBNAME $1
 		exit $?
 		;;
 	restore)
@@ -251,7 +251,7 @@ case $1 in
 			usage
 			exit 1
 		fi
-		openser_restore $DBNAME $1
+		kamailio_restore $DBNAME $1
 		exit $?
 		;;
 	create)
@@ -261,7 +261,7 @@ case $1 in
 			DBNAME="$1"
 		fi
 
-		openser_create $DBNAME
+		kamailio_create $DBNAME
 		exit $?
 		;;
 	presence)
@@ -273,14 +273,14 @@ case $1 in
 		exit $?
 		;;
 	drop)
-		# delete openser database
+		# delete kamailio database
 		# create new database structures
 		shift
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
 		fi
 
-		openser_drop $DBNAME
+		kamailio_drop $DBNAME
 		exit $?
 		;;
 	reinit)
@@ -290,17 +290,17 @@ case $1 in
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
 		fi
-		openser_drop $DBNAME
+		kamailio_drop $DBNAME
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
 			exit $ret
 		fi
-		openser_create $DBNAME
+		kamailio_create $DBNAME
 		exit $?
 		;;
 	bdb|db_berkeley)
 		shift
-		openser_berkeley "$@"
+		kamailio_berkeley "$@"
 		exit $?
 		;;
 	version)

@@ -51,7 +51,7 @@ fifo_cmd()
 		merr "fifo_cmd must take at least command name as parameter"
 		exit 1
 	fi
-	name=openser_receiver_$$
+	name=kamailio_receiver_$$
 	path=$CHROOT_DIR/tmp/$name
 	if [ ! -w $OSER_FIFO ]; then
 		merr "Error opening Kamailio's FIFO $OSER_FIFO"
@@ -99,8 +99,8 @@ fifo_cmd()
 
 CTLCMD=fifo_cmd
 
-fifo_openser_monitor() {
-	name=openser_receiver_$$
+fifo_kamailio_monitor() {
+	name=kamailio_receiver_$$
 	path=$CHROOT_DIR/tmp/$name
 	if [ ! -w $OSER_FIFO ]; then
 		merr "Error opening Kamailio's FIFO $OSER_FIFO"
@@ -188,5 +188,5 @@ EOF
 	exit 0
 }
 
-OPENSER_MONITOR=fifo_openser_monitor
+KAMAILIO_MONITOR=fifo_kamailio_monitor
 

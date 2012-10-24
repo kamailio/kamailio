@@ -84,7 +84,7 @@ modules:
 
 .PHONY: install
 .PHONY: install-libs
-install: $(NAME) $(util_dst) install-libs
+install: $(NAME) $(util_dst) install-libs install-util-man
 	$(INSTALL_TOUCH) $(util_dst)/$(NAME)
 	$(INSTALL_BIN)  $(NAME)  $(util_dst)
 
@@ -130,6 +130,21 @@ man: $(UTIL_NAME).7
 else
 
 man:
+
+endif
+
+.PHONY: install-util-man
+#src-name man page install rules
+ifneq (,$(wildcard $(UTIL_SRC_NAME).8))
+install-util-man: $(man_prefix)/$(man_dir)/man8
+		sed -e "s#$(UTIL_SRC_NAME)#$(UTIL_NAME)#g" \
+			-e "s#$(SRC_NAME)#$(MAIN_NAME)#g" \
+			< $(UTIL_SRC_NAME).8 > $(man_prefix)/$(man_dir)/man8/$(UTIL_NAME).8
+		chmod 644  $(man_prefix)/$(man_dir)/man8/$(UTIL_NAME).8
+
+else
+
+install-util-man:
 
 endif
 

@@ -4,8 +4,13 @@ include $(COREPATH)/Makefile.defs
 include $(COREPATH)/Makefile.targets
 
 auto_gen=
-NAME=sercmd
 RELEASE=0.2
+UTIL_SRC_NAME=sercmd
+ifeq ($(FLAVOUR),kamailio)
+	NAME=kamcmd
+else
+	NAME=sercmd
+endif
 
 readline_locations= /usr/include/readline/readline.h \
 					$(LOCALBASE)/include/readline/readline.h

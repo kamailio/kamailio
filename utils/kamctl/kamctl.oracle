@@ -43,11 +43,11 @@ if [ -z "$SQLPLUS" ] ; then
 	export SQLPLUS
 fi
 
-if [ -z "$OPENSER_ORASEL" ] ; then
+if [ -z "$KAMAILIO_ORASEL" ] ; then
 	locate_tool kamailio_orasel
 	if [ -n "$TOOLPATH" ] ; then
-		OPENSER_ORASEL="$TOOLPATH"
-		export OPENSER_ORASEL
+		KAMAILIO_ORASEL="$TOOLPATH"
+		export KAMAILIO_ORASEL
 	fi
 fi
 
@@ -76,7 +76,7 @@ oracle_query() {
 oracle_ro_query() {
 	# if password not yet queried, query it now
 	prompt_oracle_pw ro
-	if [ -z "$OPENSER_ORASEL" ]; then
+	if [ -z "$KAMAILIO_ORASEL" ]; then
 		mdbg "oracle_ro_query: $SQLPLUS $2 -S -L -R 3 $DBROUSER@$DBNAME '$1'"
 		RC=`echo "$SESSOPT $1" | $SQLPLUS $2 -S -L -R 3 ${DBROUSER}/${DBROPW}@${DBNAME}`
 		RE=$?
@@ -91,8 +91,8 @@ oracle_ro_query() {
 		fi
 		return $RE
 	else
-		mdbg "oracle_ro_query: $OPENSER_ORASEL $DBROUSER@$DBNAME $2 -N -e '$1'"
-		$OPENSER_ORASEL ${DBROUSER}/${DBROPW}@${DBNAME} $2 -Ne "$1"
+		mdbg "oracle_ro_query: $KAMAILIO_ORASEL $DBROUSER@$DBNAME $2 -N -e '$1'"
+		$KAMAILIO_ORASEL ${DBROUSER}/${DBROPW}@${DBNAME} $2 -Ne "$1"
 		return $?
 	fi
 }
@@ -100,6 +100,6 @@ oracle_ro_query() {
 DBCMD=oracle_query
 DBROCMD=oracle_ro_query
 DBRAWPARAMS=""
-if [ -n "$OPENSER_ORASEL" ]; then
+if [ -n "$KAMAILIO_ORASEL" ]; then
 DBRAWPARAMS="-B"
 fi

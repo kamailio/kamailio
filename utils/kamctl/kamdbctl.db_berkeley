@@ -118,7 +118,7 @@ EOF
 #
 # 
 #
-openser_berkeley()  # parms: <op> <arg1> <arg2>
+kamailio_berkeley()  # parms: <op> <arg1> <arg2>
 {
 	case $1 in
 		list|ls)
@@ -127,43 +127,43 @@ openser_berkeley()  # parms: <op> <arg1> <arg2>
 			;;
 		cat)
 			shift
-			openser_cat $1 $DB_PATH
+			kamailio_cat $1 $DB_PATH
 			exit $?
 			;;
 
 		swap)
 			shift
-			openser_swap $1 $DB_PATH
+			kamailio_swap $1 $DB_PATH
 			exit $?
 			;;
 
 		append)
 			shift
-			openser_append  $1 $2 $DB_PATH
+			kamailio_append  $1 $2 $DB_PATH
 			exit $?
 			;;
 
 		newappend)
 			shift
-			openser_newappend  $1 $2 $DB_PATH
+			kamailio_newappend  $1 $2 $DB_PATH
 			exit $?
 			;;
 
 		export)
 			shift
-			openser_export  $1 $DB_PATH
+			kamailio_export  $1 $DB_PATH
 			exit $?
 			;;
 
 		migrate)
 			shift
-			openser_migrate $1 $DB_PATH
+			kamailio_migrate $1 $DB_PATH
 			exit $?
 			;;
 
 		import)
 			shift
-			openser_import  $1 $DB_PATH
+			kamailio_import  $1 $DB_PATH
 			exit $?
 			;;
 
@@ -182,10 +182,10 @@ esac
 #
 # Export is used as part of a DB migration process to another 
 # major version of berkeley db.
-openser_export()  # parms: <DUMP_DIR> [DB_PATH]
+kamailio_export()  # parms: <DUMP_DIR> [DB_PATH]
 {
 	if [ $# -lt 2  ]; then
-		echo  "openser_dump parms: <DUMP_DIR> [DB_PATH]"
+		echo  "kamailio_dump parms: <DUMP_DIR> [DB_PATH]"
 		exit 1
 	fi
 	
@@ -290,12 +290,12 @@ openser_export()  # parms: <DUMP_DIR> [DB_PATH]
 ##
 # MIGRATE (schema)
 # Examine each plain-txt file in DUMP_DIR
-#  (Assumes that openser_export was already invoked)
+#  (Assumes that kamailio_export was already invoked)
 #
 # Migrate converts data from schema-old to schema-new in place.
 #
 # After this step is complete the IMPORT should be executed.
-openser_migrate()  # parms: <DUMP_DIR> [DB_PATH]
+kamailio_migrate()  # parms: <DUMP_DIR> [DB_PATH]
 {
 	merr "db_berkeley migrate not implemented"
 	exit 1
@@ -308,10 +308,10 @@ openser_migrate()  # parms: <DUMP_DIR> [DB_PATH]
 #
 # import is used as part of DB migrate to another major version of berkeley db.
 # this will over-write anything in DB_PATH
-openser_import()  # parms: <DUMP_DIR> [DB_PATH]
+kamailio_import()  # parms: <DUMP_DIR> [DB_PATH]
 {
 	if [ $# -lt 2  ]; then
-		echo  "openser_dump parms: <DUMP_DIR> [DB_PATH]"
+		echo  "kamailio_dump parms: <DUMP_DIR> [DB_PATH]"
 		exit 1
 	fi
 	
@@ -393,10 +393,10 @@ openser_import()  # parms: <DUMP_DIR> [DB_PATH]
 }
 
 
-openser_swap()  # parms: <db> [DB_PATH]
+kamailio_swap()  # parms: <db> [DB_PATH]
 {
 	if [ $# -lt 2  ]; then
-		echo  "openser_swap parms: <db> [DB_PATH]"
+		echo  "kamailio_swap parms: <db> [DB_PATH]"
 		exit 1
 	fi
 	
@@ -412,10 +412,10 @@ openser_swap()  # parms: <db> [DB_PATH]
 # 1. copy DB_PATH/db to DB_PATH/db.new
 # 2. appends contents of newdata to DB_PATH/db.new
 #
-openser_append()  # parms: <db> <newdata> [DB_PATH]
+kamailio_append()  # parms: <db> <newdata> [DB_PATH]
 {
 	if [ $# -lt 3  ]; then
-		echo  "openser_append parms: <db> <newdata> [DB_PATH]"
+		echo  "kamailio_append parms: <db> <newdata> [DB_PATH]"
 		exit 1
 	fi
 	
@@ -441,10 +441,10 @@ openser_append()  # parms: <db> <newdata> [DB_PATH]
 # 3. move /tmp/sc-<processID>/db over to DB_PATH/db.new
 # 4. delete temp DBENV dir /tmp/sc-<processID>
 #
-openser_newappend()  # parms: <db> <newdata> [DB_PATH]
+kamailio_newappend()  # parms: <db> <newdata> [DB_PATH]
 {
 	if [ $# -lt 3  ]; then
-		echo  "openser_append parms: <db> <newdata> [DB_PATH]"
+		echo  "kamailio_append parms: <db> <newdata> [DB_PATH]"
 		exit 1
 	fi
 	
@@ -454,7 +454,7 @@ openser_newappend()  # parms: <db> <newdata> [DB_PATH]
 		rm $DBNEW
 	fi
 	TMPENV=/tmp/sc-$$
-	openser_create $TMPENV
+	kamailio_create $TMPENV
 	cd $OLDPWD
 	$LOAD_CMD -T -t hash -f $2 -h $TMPENV $1
 	mv $TMPENV/$1 $DBNEW
@@ -463,20 +463,20 @@ openser_newappend()  # parms: <db> <newdata> [DB_PATH]
 
 
 # cat all rows to STDOUT
-openser_cat()  # pars: <database name> <DB_PATH>
+kamailio_cat()  # pars: <database name> <DB_PATH>
 {
 	if [ $# -ne 2 ] ; then
-		echo  "openser_cat params <db> [DB_PATH]"
+		echo  "kamailio_cat params <db> [DB_PATH]"
 		exit 1
 	fi
 	
 	$DUMP_CMD -p -h $2 $1
 }
 
-openser_drop()  # pars:  <DB_PATH>
+kamailio_drop()  # pars:  <DB_PATH>
 {
 	if [ $# -ne 1 ] ; then
-		echo "openser_drop function takes one param"
+		echo "kamailio_drop function takes one param"
 		exit 1
 	fi
 	
@@ -519,10 +519,10 @@ openser_drop()  # pars:  <DB_PATH>
 }
 
 
-openser_create() # pars: <DB_PATH>
+kamailio_create() # pars: <DB_PATH>
 {
 	if [ $# -ne 1 ] ; then
-		echo "openser_create param [DB_PATH]"
+		echo "kamailio_create param [DB_PATH]"
 		exit 1
 	fi
 	
@@ -551,7 +551,7 @@ openser_create() # pars: <DB_PATH>
 		extra_create $1
 	fi
 
-} # openser_create
+} # kamailio_create
 
 
 presence_create() # pars: <DB_PATH>

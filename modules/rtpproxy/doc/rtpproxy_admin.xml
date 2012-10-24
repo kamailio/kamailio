@@ -492,6 +492,9 @@ onreply_route[2]
 				<emphasis>2</emphasis> - append second Via branch to Call-ID when sending
 				command to rtpproxy. See flag '1' for its meaning.
 				</para></listitem>
+				<listitem><para>
+				<emphasis>t</emphasis> - do not include To tag to <quote>delete</quote> command to rtpproxy thus causing full call to be deleted. Useful for deleting unused rtpproxy call when 200 OK is received on a branch, where rtpproxy is not needed.
+				</para></listitem>
 			</itemizedlist>
 		</listitem>
 		</itemizedlist>

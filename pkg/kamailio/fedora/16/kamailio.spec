@@ -682,7 +682,7 @@ fi
 %{_sbindir}/kamailio
 %{_sbindir}/kamctl
 %{_sbindir}/kamdbctl
-%{_sbindir}/sercmd
+%{_sbindir}/kamcmd
 
 %dir %{_libdir}/kamailio/kamctl
 %{_libdir}/kamailio/kamctl/kamctl.base
