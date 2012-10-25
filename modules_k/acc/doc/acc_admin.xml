@@ -1297,8 +1297,8 @@ acc_log_request("Some comment");
 		<title>acc_db_request usage</title>
 		<programlisting format="linespecific">
 ...
-acc_log_request("Some comment", "SomeTable");
-acc_log_request("Some comment", "acc_$time(year)_$time(mon)");
+acc_db_request("Some comment", "SomeTable");
+acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
 ...
 </programlisting>
 		</example>
