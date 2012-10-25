@@ -133,14 +133,17 @@ man:
 
 endif
 
+$(man_prefix)/$(man_dir)/man8:
+	mkdir -p $(man_prefix)/$(man_dir)/man8
+
 .PHONY: install-util-man
 #src-name man page install rules
 ifneq (,$(wildcard $(UTIL_SRC_NAME).8))
 install-util-man: $(man_prefix)/$(man_dir)/man8
-		sed -e "s#$(UTIL_SRC_NAME)#$(UTIL_NAME)#g" \
+	sed -e "s#$(UTIL_SRC_NAME)#$(UTIL_NAME)#g" \
 			-e "s#$(SRC_NAME)#$(MAIN_NAME)#g" \
 			< $(UTIL_SRC_NAME).8 > $(man_prefix)/$(man_dir)/man8/$(UTIL_NAME).8
-		chmod 644  $(man_prefix)/$(man_dir)/man8/$(UTIL_NAME).8
+	chmod 644  $(man_prefix)/$(man_dir)/man8/$(UTIL_NAME).8
 
 else
 
