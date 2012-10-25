@@ -113,7 +113,8 @@ int msrp_relay(msrp_frame_t *mf)
 	memcpy(p, fpath->name.s + 11, mf->buf.s + mf->buf.len - fpath->name.s - 11);
 	p += mf->buf.s + mf->buf.len - fpath->name.s - 11;
 
-
+	sar = (str_array_t*)tpath->parsed.data;
+	
 	env = msrp_get_env();
 	if(env->envflags&MSRP_ENV_DSTINFO)
 	{
@@ -125,7 +126,6 @@ int msrp_relay(msrp_frame_t *mf)
 		LM_ERR("error parsing To-Path header\n");
 		return -1;
 	}
-	sar = (str_array_t*)tpath->parsed.data;
 	if(sar==NULL || sar->size<2)
 	{
 		LM_DBG("To-Path has no next hop URI -- nowehere to forward\n");
@@ -138,41 +138,51 @@ int msrp_relay(msrp_frame_t *mf)
 	}
 	dst = &env->dstinfo;
 done:
-	port = su_getport(&dst->to);
-	if (likely(port))
+	if (sar->size == 2)
 	{
-		ticks_t con_lifetime;
-		struct ip_addr ip;
+		/* If the next hop is a client a connection must already
+		   exist... */
+		port = su_getport(&dst->to);
+		if (likely(port))
+		{
+			ticks_t con_lifetime;
+			struct ip_addr ip;
 
-		con_lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
-		su2ip_addr(&ip, &dst->to);
-		con = tcpconn_get(dst->id, &ip, port, NULL, con_lifetime);
-	}
-	else if (likely(dst->id))
-	{
-		con = tcpconn_get(dst->id, 0, 0, 0, 0);
-	}
+			con_lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
+			su2ip_addr(&ip, &dst->to);
+			con = tcpconn_get(dst->id, &ip, port, NULL, con_lifetime);
+		}
+		else if (likely(dst->id))
+		{
+			con = tcpconn_get(dst->id, 0, 0, 0, 0);
+		}
 
-	if (con == NULL)
-	{
-		LM_WARN("TCP/TLS connection not found\n");
-		return -1;
-	}
+		if (con == NULL)
+		{
+			LM_WARN("TCP/TLS connection not found\n");
+			return -1;
+		}
 	
-	if (unlikely((con->rcv.proto == PROTO_WS || con->rcv.proto == PROTO_WSS)
-			&& sr_event_enabled(SREV_TCP_WS_FRAME_OUT))) {
-		ws_event_info_t wsev;
+		if (unlikely((con->rcv.proto == PROTO_WS || con->rcv.proto == PROTO_WSS)
+				&& sr_event_enabled(SREV_TCP_WS_FRAME_OUT))) {
+			ws_event_info_t wsev;
 
-		memset(&wsev, 0, sizeof(ws_event_info_t));
-		wsev.type = SREV_TCP_WS_FRAME_OUT;
-		wsev.buf = reqbuf;
-		wsev.len = p - reqbuf;
-		wsev.id = con->id;
-		return sr_event_exec(SREV_TCP_WS_FRAME_OUT, (void *) &wsev);
+			memset(&wsev, 0, sizeof(ws_event_info_t));
+			wsev.type = SREV_TCP_WS_FRAME_OUT;
+			wsev.buf = reqbuf;
+			wsev.len = p - reqbuf;
+			wsev.id = con->id;
+			return sr_event_exec(SREV_TCP_WS_FRAME_OUT, (void *) &wsev);
+		}
+		else if (tcp_send(dst, 0, reqbuf, p - reqbuf) < 0) {
+			LM_ERR("forwarding frame failed\n");
+			return -1;
+		}
 	}
+	/* If the next hop is a relay just throw it out there... */
 	else if (tcp_send(dst, 0, reqbuf, p - reqbuf) < 0) {
-		LM_ERR("forwarding frame failed\n");
-		return -1;
+			LM_ERR("forwarding frame failed\n");
+			return -1;
 	}
 
 	return 0;
