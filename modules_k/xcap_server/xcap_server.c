@@ -915,6 +915,12 @@ static int xcaps_get_directory(struct sip_msg *msg, str *user, str *domain, str 
 	if (db_res == NULL)
 		goto error;
 
+	if (parse_headers(msg, HDR_EOH_F, 0) < 0)
+	{
+		LM_ERR("error parsing headers\n");
+		goto error;
+	}
+
 	while (hdr != NULL)
 	{
 		if (cmp_hdrname_strzn(&hdr->name, "Host", 4) == 0)
@@ -1489,6 +1495,12 @@ static int check_preconditions(sip_msg_t *msg, str etag_hdr)
 	int ifmatch_found=0;
 	int matched_matched=0;
 	int matched_nonematched=0;
+
+	if (parse_headers(msg, HDR_EOH_F, 0) < 0)
+	{
+		LM_ERR("error parsing headers\n");
+		return 1;
+	}
 
 	if (etag_hdr.len > 0)
 	{
