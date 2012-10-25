@@ -310,9 +310,11 @@ event_route[xhttp:request] {
             $var(uri) = "sip:"+ $xcapuri(u=>xuid) + "@" + $Ri;
 
         # handle XCAP capability request
-        if($rm=="GET" && $xcapuri(u=>auid)=="xcap-caps")
+        if($xcapuri(u=>auid)=="xcap-caps")
         {
-            $var(xbody) =
+            if ($rm == "GET")
+            {
+                $var(xbody) =
 "<?xml version='1.0' encoding='UTF-8'?>
 <xcap-caps xmlns='urn:ietf:params:xml:ns:xcap-caps'>
   <auids>
@@ -322,6 +324,10 @@ event_route[xhttp:request] {
     <auid>resource-lists</auid>
     <auid>pres-rules</auid>
     <auid>org.openmobilealliance.pres-rules</auid>
+    <auid>org.openmobilealliance.user-profile</auid>
+    <auid>org.openmobilealliance.pres-content</auid>
+    <auid>org.openmobilealliance.search</auid>
+    <auid>org.openmobilealliance.xcap-directory</auid>
   </auids>
   <extensions>
   </extensions>
@@ -331,10 +337,20 @@ event_route[xhttp:request] {
     <namespace>urn:ietf:params:xml:ns:xcap-caps</namespace>
     <namespace>urn:ietf:params:xml:ns:resource-lists</namespace>
     <namespace>urn:ietf:params:xml:ns:pres-rules</namespace>
+    <namespace>urn:oma:xml:xdm:user-profile</namespace>
+    <namespace>urn:oma:xml:prs:pres-content</namespace>
+    <namespace>urn:oma:xml:xdm:search</namespace>
+    <namespace>urn:oma:xml:xdm:xcap-directory</namespace>
   </namespaces>
 </xcap-caps>";
-            xhttp_reply("200", "ok", "application/xcap-caps+xml",
-                    "$var(xbody)");
+                xhttp_reply("200", "ok", "application/xcap-caps+xml",
+                            "$var(xbody)");
+            }
+            else
+            {
+                append_to_reply("Allow: GET\r\n");
+                xhttp_reply("405", "Method Not Allowed", "", "");
+            }
             exit;
         }
         # be sure auth user access only its documents
@@ -353,6 +369,16 @@ event_route[xhttp:request] {
                     pres_update_watchers("$var(uri)", "presence");
                     pres_refresh_watchers("$var(uri)", "presence", 1);
                 }
+                else if($xcapuri(u=>auid)=~"rls-services" || $xcapuri(u=>auid)=~
+"resource-lists")
+                {
+                    rls_update_subs("$var(uri)", "presence");
+                }
+                else if($xcapuri(u=>auid)=~"pidf-manipulation")
+                {
+                    pres_refresh_watchers("$var(uri)", "presence", 2, "$xcapuri(
+u=>uri_adoc)", "$xcapuri(u=>file)");
+                }
                 exit;
             break;
             case "GET":
@@ -365,6 +391,35 @@ event_route[xhttp:request] {
                 {
                     pres_update_watchers("$var(uri)", "presence");
                     pres_refresh_watchers("$var(uri)", "presence", 1);
+                }
+                else if($xcapuri(u=>auid)=~"rls-services" || $xcapuri(u=>auid)=~
+"resource-lists")
+                {
+                    rls_update_subs("$var(uri)", "presence");
+                }
+                else if($xcapuri(u=>auid)=~"pidf-manipulation")
+                {
+                    pres_refresh_watchers("$var(uri)", "presence", 2, "$xcapuri(
+u=>uri_adoc)", "$xcapuri(u=>file)");
+                }
+                exit;
+            break;
+            case "POST":
+                if($xcapuri(u=>auid)=~"search")
+                {
+                    xhttp_reply("501", "Not Implemented", "", "");
+                }
+                else
+                {
+                    if($xcapuri(u=>auid)=~"xcap-directory")
+                    {
+                        append_to_reply("Allow: GET\r\n");
+                    }
+                    else
+                    {
+                        append_to_reply("Allow: DELETE, GET, PUT\r\n");
+                    }
+                    xhttp_reply("405", "Method Not Allowed", "", "");
                 }
                 exit;
             break;
