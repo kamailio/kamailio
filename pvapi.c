@@ -272,17 +272,17 @@ pv_spec_t* pv_cache_add(str *name)
 		LM_ERR("no more memory\n");
 		return NULL;
 	}
-	memset(pvn, 0, sizeof(pv_item_t) + name->len + 1);
-	p = pv_parse_spec(name, &pvn->spec);
+	memset(pvn, 0, sizeof(pv_cache_t) + name->len + 1);
+	pvn->pvname.len = name->len;
+	pvn->pvname.s = (char*)pvn + sizeof(pv_cache_t);
+	memcpy(pvn->pvname.s, name->s, name->len);
+	p = pv_parse_spec(&pvn->pvname, &pvn->spec);
 
 	if(p==NULL)
 	{
 		pkg_free(pvn);
 		return NULL;
 	}
-	pvn->pvname.len = name->len;
-	pvn->pvname.s = (char*)pvn + sizeof(pv_cache_t);
-	memcpy(pvn->pvname.s, name->s, name->len);
 	pvn->pvid = pvid;
 	pvn->next = _pv_cache[pvid%PV_CACHE_SIZE];
 	_pv_cache[pvid%PV_CACHE_SIZE] = pvn;
