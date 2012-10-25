@@ -44,7 +44,7 @@ int proxy_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
  * Authorize using WWW-Authorization header field
  */
 int www_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
-
+int www_authenticate2(struct sip_msg* _msg, char* _realm, char* _table, char *_method);
 
 /*
  * Authenticate using WWW/Proxy-Authorize header field

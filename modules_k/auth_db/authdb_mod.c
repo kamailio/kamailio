@@ -119,6 +119,8 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE},
 	{"www_authenticate",   (cmd_function)www_authenticate,   2, auth_fixup, 0,
 		REQUEST_ROUTE},
+	{"www_authenticate",   (cmd_function)www_authenticate2,  3, auth_fixup, 0,
+REQUEST_ROUTE},
 	{"proxy_authorize",    (cmd_function)proxy_authenticate, 2, auth_fixup, 0,
 		REQUEST_ROUTE},
 	{"proxy_authenticate", (cmd_function)proxy_authenticate, 2, auth_fixup, 0,
@@ -308,7 +310,7 @@ static int auth_fixup(void** param, int param_no)
 		return -1;
 	}
 
-	if (param_no == 1) {
+	if (param_no == 1 || param_no == 3) {
 		return fixup_var_str_12(param, 1);
 	} else if (param_no == 2) {
 		name.s = (char*)*param;

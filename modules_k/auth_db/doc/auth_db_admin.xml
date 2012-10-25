@@ -305,7 +305,7 @@ modparam("auth_db", "version_table", 0)
 	<title>Functions</title>
 	<section>
 		<title>
-			<function moreinfo="none">www_authenticate(realm, table)</function>
+			<function moreinfo="none">www_authenticate(realm, table [, method])</function>
 		</title>
 		<para>
 			Name alias: www_authorize(realm, table)
@@ -358,6 +358,11 @@ modparam("auth_db", "version_table", 0)
 			<para><emphasis>table</emphasis> - Table to be used to lookup 
 			usernames and passwords (usually subscribers table).
 			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>method</emphasis> - the method to be used for
+			authentication. This parameter is optional and if not set
+			is the first "word" on the request-line.</para>
 		</listitem>
 		</itemizedlist>
 		<para>
