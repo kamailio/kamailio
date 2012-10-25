@@ -149,6 +149,14 @@ int ws_handle_handshake(struct sip_msg *msg)
 		return 0;
 	}
 
+	if (parse_headers(msg, HDR_EOH_F, 0) < 0)
+	{
+		LM_ERR("error parsing headers\n");
+		ws_send_reply(msg, 500, &str_status_internal_server_error,
+				NULL);
+		return 0;
+	}
+
 	/* Process HTTP headers */
 	while (hdr != NULL)
 	{
