@@ -694,7 +694,7 @@ struct rdata* get_record(char* name, int type, int flags)
 	int size;
 	int skip;
 	int qno, answers_no;
-	int r;
+	int i, r;
 	static union dns_query buff;
 	unsigned char* p;
 	unsigned char* end;
@@ -712,17 +712,29 @@ struct rdata* get_record(char* name, int type, int flags)
 	int search_list_used;
 	int name_len;
 	struct rdata* fullname_rd;
+	char c;
 	
 #ifdef USE_DNSSEC
 	val_status_t val_status;
 #endif
+
+	name_len=strlen(name);
+
+	for (i = 0; i < name_len; i++) {
+	    c = name[i];
+	    if (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) ||
+		((c >= '0') && (c <= '9')) || (name[i] == '.') ||
+		(name[i] == '-') || (name[i] == '_'))
+		continue;
+	    LM_INFO("invalid domain name '%s'\n", name);
+	    return 0;
+	}
 
 	if (cfg_get(core, core_cfg, dns_search_list)==0) {
 		search_list_used=0;
 		name_len=0;
 	} else {
 		search_list_used=1;
-		name_len=strlen(name);
 	}
 	fullname_rd=0;
 
