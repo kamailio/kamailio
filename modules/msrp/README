@@ -432,11 +432,8 @@ event_route[msrp:frame-in] {
         if(msrp_is_reply())
         {
                 msrp_relay();
-                exit;
         }
-
-        # handle AUTH MSRP requests
-        if($msrp(method)=="AUTH")
+        else if($msrp(method)=="AUTH")
         {
                 if($msrp(nexthops)>0)
                 {
@@ -447,12 +444,13 @@ event_route[msrp:frame-in] {
                 # frame for local server - send Use-Path
                 # -- passwd can be loaded from DB based on $au
                 $var(passwd) = "xyz123";
-                if(!pv_www_authenticate("myrealm", "$var(passwd)", "0"))
+                if(!pv_www_authenticate("myrealm", "$var(passwd)", "0",
+                                        "$msrp(method)"))
                 {
                         if(auth_get_www_authenticate("myrealm", "1",
-                                                "$var(wauth)"))
+                                                        "$var(wauth)"))
                         {
-                                msrp_reply("401", "Authorization Required",
+                                msrp_reply("401", "Unauthorized",
                                                 "$var(wauth)");
                         } else {
                                 msrp_reply("500", "Server Error");
@@ -485,14 +483,15 @@ event_route[msrp:frame-in] {
                                 + $var(sessid) + ";tcp\r\n"
                                 + "Expires: " + $var(expires) + "\r\n";
                 msrp_reply("200", "OK", "$var(headers)");
-                exit;
         }
-
-        if($msrp(method)=="SEND")
+        else if($msrp(method)=="SEND" || $msrp(method)=="REPORT")
         {
                 if($msrp(nexthops)>1)
                 {
-                        msrp_reply("200", "Received");
+                        if ($msrp(method)!="REPORT")
+                        {
+                                msrp_reply("200", "OK");
+                        }
                         msrp_relay();
                         exit;
                 }
@@ -500,17 +499,22 @@ event_route[msrp:frame-in] {
                 if($sht(msrp=>$var(sessid)::srcaddr) == $null)
                 {
                         # one more hop, but we don't have address in htable
-                        msrp_reply("481", "No Such Session");
+                        msrp_reply("481", "Session-does-not-exist");
                         exit;
+                }
+                else if($msrp(method)!="REPORT")
+                {
+                        msrp_reply("200", "OK");
                 }
                 msrp_relay_flags("1");
                 msrp_set_dst("$sht(msrp=>$var(sessid)::srcaddr)",
                                 "$sht(msrp=>$var(sessid)::srcsock)");
                 msrp_relay();
-                exit;
         }
-
-        msrp_relay();
+        else
+        {
+                msrp_reply("501", "Request-method-not-understood");
+        }
 }
 
 ...
