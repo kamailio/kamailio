@@ -113,8 +113,6 @@ int msrp_relay(msrp_frame_t *mf)
 	memcpy(p, fpath->name.s + 11, mf->buf.s + mf->buf.len - fpath->name.s - 11);
 	p += mf->buf.s + mf->buf.len - fpath->name.s - 11;
 
-	sar = (str_array_t*)tpath->parsed.data;
-	
 	env = msrp_get_env();
 	if(env->envflags&MSRP_ENV_DSTINFO)
 	{
@@ -126,6 +124,7 @@ int msrp_relay(msrp_frame_t *mf)
 		LM_ERR("error parsing To-Path header\n");
 		return -1;
 	}
+	sar = (str_array_t*)tpath->parsed.data;
 	if(sar==NULL || sar->size<2)
 	{
 		LM_DBG("To-Path has no next hop URI -- nowehere to forward\n");
@@ -138,10 +137,8 @@ int msrp_relay(msrp_frame_t *mf)
 	}
 	dst = &env->dstinfo;
 done:
-	if (sar->size == 2)
+	if (dst->send_flags.f & SND_F_FORCE_CON_REUSE)
 	{
-		/* If the next hop is a client a connection must already
-		   exist... */
 		port = su_getport(&dst->to);
 		if (likely(port))
 		{
@@ -179,7 +176,6 @@ done:
 			return -1;
 		}
 	}
-	/* If the next hop is a relay just throw it out there... */
 	else if (tcp_send(dst, 0, reqbuf, p - reqbuf) < 0) {
 			LM_ERR("forwarding frame failed\n");
 			return -1;
