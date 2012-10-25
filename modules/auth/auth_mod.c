@@ -93,6 +93,8 @@ static int pv_proxy_authenticate(struct sip_msg* msg, char* realm,
 		char *passwd, char *flags);
 static int pv_www_authenticate(struct sip_msg* msg, char* realm,
 		char *passwd, char *flags);
+static int pv_www_authenticate2(struct sip_msg* msg, char* realm,
+		char *passwd, char *flags, char *method);
 static int fixup_pv_auth(void **param, int param_no);
 static int pv_auth_check(sip_msg_t *msg, char *realm,
 		char *passwd, char *flags, char *checks);
@@ -165,6 +167,8 @@ static cmd_export_t cmds[] = {
     {"pv_www_authorize",       (cmd_function)pv_www_authenticate,    3,
 			fixup_pv_auth, REQUEST_ROUTE},
     {"pv_www_authenticate",    (cmd_function)pv_www_authenticate,    3,
+			fixup_pv_auth, REQUEST_ROUTE},
+    {"pv_www_authenticate",    (cmd_function)pv_www_authenticate2,   4,
 			fixup_pv_auth, REQUEST_ROUTE},
     {"pv_proxy_authorize",     (cmd_function)pv_proxy_authenticate,  3,
 			fixup_pv_auth, REQUEST_ROUTE},
@@ -458,7 +462,7 @@ int w_has_credentials(sip_msg_t *msg, char* realm, char* s2)
  * @brief do WWW-Digest authentication with password taken from cfg var
  */
 int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
-		int flags, int hftype)
+		int flags, int hftype, str *method)
 {
 	struct hdr_field* h;
 	auth_body_t* cred;
@@ -522,8 +526,7 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
 	}
 
 	/* Recalculate response, it must be same to authorize successfully */
-	ret = auth_check_response(&(cred->digest),
-				&msg->first_line.u.request.method, ha1);
+	ret = auth_check_response(&(cred->digest), method, ha1);
 	if(ret==AUTHENTICATED) {
 		ret = AUTH_OK;
 		switch(post_auth(msg, h)) {
@@ -602,7 +605,8 @@ static int pv_proxy_authenticate(struct sip_msg *msg, char* realm,
 		LM_ERR("invalid flags value\n");
 		goto error;
 	}
-	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_PROXYAUTH_T);
+	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_PROXYAUTH_T,
+				&msg->first_line.u.request.method);
 
 error:
 	return AUTH_ERROR;
@@ -642,7 +646,58 @@ static int pv_www_authenticate(struct sip_msg *msg, char* realm,
 		LM_ERR("invalid flags value\n");
 		goto error;
 	}
-	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T);
+	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T,
+				&msg->first_line.u.request.method);
+
+error:
+	return AUTH_ERROR;
+}
+
+static int pv_www_authenticate2(struct sip_msg *msg, char* realm,
+		char *passwd, char *flags, char *method)
+{
+    int vflags = 0;
+    str srealm  = {0, 0};
+    str spasswd = {0, 0};
+    str smethod = {0, 0};
+
+	if (get_str_fparam(&srealm, msg, (fparam_t*)realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		goto error;
+	}
+
+	if(srealm.len==0) {
+		LM_ERR("invalid realm value - empty content\n");
+		goto error;
+	}
+
+	if (get_str_fparam(&spasswd, msg, (fparam_t*)passwd) < 0) {
+		LM_ERR("failed to get passwd value\n");
+		goto error;
+	}
+
+	if(spasswd.len==0) {
+		LM_ERR("invalid password value - empty content\n");
+		goto error;
+	}
+
+	if (get_int_fparam(&vflags, msg, (fparam_t*)flags) < 0) {
+		LM_ERR("invalid flags value\n");
+		goto error;
+	}
+
+	if (get_str_fparam(&smethod, msg, (fparam_t*)method) < 0) {
+		LM_ERR("failed to get method value\n");
+		goto error;
+	}
+
+	if(smethod.len==0) {
+		LM_ERR("invalid method value - empty content\n");
+		goto error;
+	}
+
+	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T,
+				&smethod);
 
 error:
 	return AUTH_ERROR;
@@ -711,9 +766,11 @@ static int pv_auth_check(sip_msg_t *msg, char *realm,
 			vflags, vchecks);
 
 	if(msg->REQ_METHOD==METHOD_REGISTER)
-		ret = pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T);
+		ret = pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T,
+					&msg->first_line.u.request.method);
 	else
-		ret = pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_PROXYAUTH_T);
+		ret = pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_PROXYAUTH_T,
+					&msg->first_line.u.request.method);
 
 	if(ret==AUTH_OK && (vflags&AUTH_CHECK_ID_F)) {
 		hdr = (msg->proxy_auth==0)?msg->authorization:msg->proxy_auth;

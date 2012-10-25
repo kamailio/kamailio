@@ -181,7 +181,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
 
 	<section id="pv_www_authenticate">
 		<title>
-		<function moreinfo="none">pv_www_authenticate(realm, passwd, flags)</function>
+		<function moreinfo="none">pv_www_authenticate(realm, passwd, flags [, method])</function>
 		</title>
 		<para>
 		The function verifies credentials according to
@@ -269,6 +269,11 @@ if (!auth_check("$fd", "subscriber", "1")) {
 			</listitem>
 
 			</itemizedlist>
+		</listitem>
+		<listitem>
+			<para><emphasis>method</emphasis> - the method to be used for
+			authentication. This parameter is optional and if not set
+			is the first "word" on the request-line.</para>
 		</listitem>
 		</itemizedlist>
 		<para>
