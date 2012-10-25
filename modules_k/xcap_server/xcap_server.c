@@ -917,10 +917,8 @@ static int xcaps_get_directory(struct sip_msg *msg, str *user, str *domain, str 
 
 	while (hdr != NULL)
 	{
-		LM_ERR("Found header: %.*s\n", hdr->name.len, hdr->name.s);
 		if (cmp_hdrname_strzn(&hdr->name, "Host", 4) == 0)
 		{
-			LM_ERR("Found %.*s\n", hdr->body.len, hdr->body.s);
 			server_name = hdr->body;
 			break;
 		}
