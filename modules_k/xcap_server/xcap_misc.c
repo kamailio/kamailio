@@ -40,6 +40,59 @@ extern str xcaps_root;
 
 static param_t *_xcaps_xpath_ns_root = NULL;
 
+typedef struct xcaps_auid_list {
+	str auid;  /* auid value */
+	char term; /* ending char (next one after auid) */
+	int type;  /* internaly type id for auid */
+} xcaps_auid_list_t;
+
+/* list of supported auid */
+static xcaps_auid_list_t _xcaps_auid_list[] = {
+	{ { "pres-rules", 10 },
+			'/', PRES_RULES },
+	{ { "org.openmobilealliance.pres-rules", 33 },
+			'/', PRES_RULES },
+	{ { "rls-services", 12 },
+			'/', RLS_SERVICE },
+	{ { "pidf-manipulation", 17 },
+			'/', PIDF_MANIPULATION },
+	{ { "resource-lists", 14 },
+			'/', RESOURCE_LIST },
+	{ { "xcap-caps", 9 },
+			'/', XCAP_CAPS },
+	{ { "org.openmobilealliance.user-profile", 35},
+			'/', USER_PROFILE },
+	{ { "org.openmobilealliance.pres-content", 15},
+			'/', PRES_CONTENT },
+	{ { "org.openmobilealliance.search", 29},
+			'?', SEARCH },
+
+	{ { 0, 0 }, 0, 0 }
+};
+
+static int xcaps_find_auid(str *s, xcap_uri_t *xuri)
+{
+	int i;
+	for(i=0; _xcaps_auid_list[i].auid.s!=NULL; i++)
+	{
+		if(s->len > _xcaps_auid_list[i].auid.len
+			&& s->s[_xcaps_auid_list[i].auid.len] == _xcaps_auid_list[i].term
+			&& strncmp(s->s, _xcaps_auid_list[i].auid.s,
+							_xcaps_auid_list[i].auid.len) == 0)
+		{
+			LM_DBG("matched %.*s\n", _xcaps_auid_list[i].auid.len,
+					_xcaps_auid_list[i].auid.s);
+			xuri->type = _xcaps_auid_list[i].type;
+			xuri->auid.s = s->s;
+			xuri->auid.len = _xcaps_auid_list[i].auid.len;
+			return 0;
+		}
+	}
+	LM_ERR("unsupported auid in [%.*s]\n", xuri->uri.len,
+				xuri->uri.s);
+	return -1;
+}
+
 /**
  * parse xcap uri
  */
@@ -127,45 +180,11 @@ int xcap_parse_uri(str *huri, str *xroot, xcap_uri_t *xuri)
 	}
 
 	/* auid */
-	xuri->auid.s = s.s;
-	if(s.len>11 && strncmp(s.s, "pres-rules/", 11)==0)
-	{
-		LM_DBG("matched pres-rules\n");
-		xuri->type = PRES_RULES;
-		xuri->auid.len = 10;
-	} else if(s.len>34 && strncmp(s.s, "org.openmobilealliance.pres-rules/", 34)==0) {
-		LM_DBG("matched oma pres-rules\n");
-		xuri->type = PRES_RULES;
-		xuri->auid.len = 33;
-	} else if(s.len>13 && strncmp(s.s, "rls-services/", 13)==0) {
-		LM_DBG("matched rls-services\n");
-		xuri->type = RLS_SERVICE;
-		xuri->auid.len = 12;
-	} else if(s.len>18 && strncmp(s.s, "pidf-manipulation/", 18)==0) {
-		LM_DBG("matched pidf-manipulation\n");
-		xuri->type = PIDF_MANIPULATION;
-		xuri->auid.len = 17;
-	} else if(s.len>15 && strncmp(s.s, "resource-lists/", 15)==0) {
-		LM_DBG("matched resource-lists\n");
-		xuri->type = RESOURCE_LIST;
-		xuri->auid.len = 14;
-	} else if(s.len>10 && strncmp(s.s, "xcap-caps/", 10)==0) {
-		LM_DBG("matched xcap-caps\n");
-		xuri->type = XCAP_CAPS;
-		xuri->auid.len = 9;
-	} else if(s.len> 36 && strncmp(s.s, "org.openmobilealliance.user-profile/", 36)==0) {
-		LM_DBG("matched oma user-profile\n");
-		xuri->type = USER_PROFILE;
-		xuri->auid.len = 35;
-	} else if(s.len> 36 && strncmp(s.s, "org.openmobilealliance.pres-content/", 36)==0) {
-		LM_DBG("matched oma pres-content\n");
-		xuri->type = PRES_CONTENT;
-		xuri->auid.len = 35;
-	} else if(s.len> 30 && strncmp(s.s, "org.openmobilealliance.search?", 30)==0) {
-		LM_DBG("matched oma search\n");
-		xuri->type = SEARCH;
-		xuri->auid.len = 29;
+	if(xcaps_find_auid(&s, xuri)<0)
+		return -1;
 
+	/* handling special auids */
+	if(xuri->type == SEARCH) {
 		s.s   += xuri->auid.len + 1;
 		s.len -= xuri->auid.len + 1;
 
@@ -197,10 +216,6 @@ int xcap_parse_uri(str *huri, str *xroot, xcap_uri_t *xuri)
 		}
 
 		return 0;
-	} else {
-		LM_ERR("unsupported auid in [%.*s]\n", xuri->uri.len,
-				xuri->uri.s);
-		return -1;
 	}
 
 	s.s   += xuri->auid.len + 1;
