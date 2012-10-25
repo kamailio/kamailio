@@ -40,24 +40,18 @@ extern str xcaps_root;
 
 static param_t *_xcaps_xpath_ns_root = NULL;
 
-typedef struct xcaps_auid_list {
-	str auid;  /* auid value */
-	char term; /* ending char (next one after auid) */
-	int type;  /* internaly type id for auid */
-} xcaps_auid_list_t;
-
-/* list of supported auid */
-static xcaps_auid_list_t _xcaps_auid_list[] = {
+/* list of supported auid  - ordered ascending by type */
+xcaps_auid_list_t xcaps_auid_list[] = {
 	{ { "pres-rules", 10 },
 			'/', PRES_RULES },
 	{ { "org.openmobilealliance.pres-rules", 33 },
 			'/', PRES_RULES },
+	{ { "resource-lists", 14 },
+			'/', RESOURCE_LIST },
 	{ { "rls-services", 12 },
 			'/', RLS_SERVICE },
 	{ { "pidf-manipulation", 17 },
 			'/', PIDF_MANIPULATION },
-	{ { "resource-lists", 14 },
-			'/', RESOURCE_LIST },
 	{ { "xcap-caps", 9 },
 			'/', XCAP_CAPS },
 	{ { "org.openmobilealliance.user-profile", 35},
@@ -66,6 +60,8 @@ static xcaps_auid_list_t _xcaps_auid_list[] = {
 			'/', PRES_CONTENT },
 	{ { "org.openmobilealliance.search", 29},
 			'?', SEARCH },
+	{ { "org.openmobilealliance.xcap-directory", 37},
+			'/', DIRECTORY },
 
 	{ { 0, 0 }, 0, 0 }
 };
@@ -73,18 +69,18 @@ static xcaps_auid_list_t _xcaps_auid_list[] = {
 static int xcaps_find_auid(str *s, xcap_uri_t *xuri)
 {
 	int i;
-	for(i=0; _xcaps_auid_list[i].auid.s!=NULL; i++)
+	for(i=0; xcaps_auid_list[i].auid.s!=NULL; i++)
 	{
-		if(s->len > _xcaps_auid_list[i].auid.len
-			&& s->s[_xcaps_auid_list[i].auid.len] == _xcaps_auid_list[i].term
-			&& strncmp(s->s, _xcaps_auid_list[i].auid.s,
-							_xcaps_auid_list[i].auid.len) == 0)
+		if(s->len > xcaps_auid_list[i].auid.len
+			&& s->s[xcaps_auid_list[i].auid.len] == xcaps_auid_list[i].term
+			&& strncmp(s->s, xcaps_auid_list[i].auid.s,
+							xcaps_auid_list[i].auid.len) == 0)
 		{
-			LM_DBG("matched %.*s\n", _xcaps_auid_list[i].auid.len,
-					_xcaps_auid_list[i].auid.s);
-			xuri->type = _xcaps_auid_list[i].type;
+			LM_DBG("matched %.*s\n", xcaps_auid_list[i].auid.len,
+					xcaps_auid_list[i].auid.s);
+			xuri->type = xcaps_auid_list[i].type;
 			xuri->auid.s = s->s;
-			xuri->auid.len = _xcaps_auid_list[i].auid.len;
+			xuri->auid.len = xcaps_auid_list[i].auid.len;
 			return 0;
 		}
 	}

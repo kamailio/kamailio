@@ -50,6 +50,14 @@ typedef struct xcap_uri {
 	str domain;
 } xcap_uri_t;
 
+typedef struct xcaps_auid_list {
+	str auid;  /* auid value */
+	char term; /* ending char (next one after auid) */
+	int type;  /* internaly type id for auid */
+} xcaps_auid_list_t;
+
+extern xcaps_auid_list_t xcaps_auid_list[];
+
 int xcap_parse_uri(str *huri, str *xroot, xcap_uri_t *xuri);
 int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf);
 int xcaps_xpath_get(str *inbuf, str *xpaths, str *outbuf);
