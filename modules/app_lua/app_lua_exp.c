@@ -1080,7 +1080,7 @@ static int lua_sr_auth_pv_authenticate(lua_State *L, int hftype)
 	realm.len = strlen(realm.s);
 	passwd.len = strlen(passwd.s);
 	ret = _lua_authb.pv_authenticate(env_L->msg, &realm, &passwd, flags,
-			hftype);
+			hftype, &env_L->msg->first_line.u.request.method);
 
 	return app_lua_return_int(L, ret);
 }
@@ -1176,7 +1176,7 @@ static int lua_sr_auth_db_authenticate(lua_State *L, hdr_types_t hftype)
 	realm.len = strlen(realm.s);
 	table.len = strlen(table.s);
 	ret = _lua_auth_dbb.digest_authenticate(env_L->msg, &realm, &table,
-			hftype);
+			hftype, &env_L->msg->first_line.u.request.method);
 
 	return app_lua_return_int(L, ret);
 }
