@@ -39,6 +39,7 @@
 #define USER_PROFILE       1<<6
 #define PRES_CONTENT       1<<7
 #define SEARCH             1<<8
+#define DIRECTORY          1<<9
 
 /* callback function prototype */
 typedef int (xcap_cb)(int doc_type, str xid, char* doc);
