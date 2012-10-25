@@ -369,15 +369,16 @@ event_route[xhttp:request] {
                     pres_update_watchers("$var(uri)", "presence");
                     pres_refresh_watchers("$var(uri)", "presence", 1);
                 }
-                else if($xcapuri(u=>auid)=~"rls-services" || $xcapuri(u=>auid)=~
-"resource-lists")
+                else if($xcapuri(u=>auid)=~"rls-services"
+                        || $xcapuri(u=>auid)=~"resource-lists")
                 {
                     rls_update_subs("$var(uri)", "presence");
                 }
                 else if($xcapuri(u=>auid)=~"pidf-manipulation")
                 {
-                    pres_refresh_watchers("$var(uri)", "presence", 2, "$xcapuri(
-u=>uri_adoc)", "$xcapuri(u=>file)");
+                    pres_refresh_watchers("$var(uri)", "presence", 2,
+                                            "$xcapuri(u=>uri_adoc)",
+                                            "$xcapuri(u=>file)");
                 }
                 exit;
             break;
@@ -392,15 +393,16 @@ u=>uri_adoc)", "$xcapuri(u=>file)");
                     pres_update_watchers("$var(uri)", "presence");
                     pres_refresh_watchers("$var(uri)", "presence", 1);
                 }
-                else if($xcapuri(u=>auid)=~"rls-services" || $xcapuri(u=>auid)=~
-"resource-lists")
+                else if($xcapuri(u=>auid)=~"rls-services"
+                        || $xcapuri(u=>auid)=~"resource-lists")
                 {
                     rls_update_subs("$var(uri)", "presence");
                 }
                 else if($xcapuri(u=>auid)=~"pidf-manipulation")
                 {
-                    pres_refresh_watchers("$var(uri)", "presence", 2, "$xcapuri(
-u=>uri_adoc)", "$xcapuri(u=>file)");
+                    pres_refresh_watchers("$var(uri)", "presence", 2,
+                                            "$xcapuri(u=>uri_adoc)",
+                                            "$xcapuri(u=>file)");
                 }
                 exit;
             break;
