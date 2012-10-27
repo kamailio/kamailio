@@ -192,9 +192,9 @@
 
 #if defined KAMAILIO_MOD_INTERFACE || defined OPENSER_MOD_INTERFACE || \
 		defined MOD_INTERFACE_V1
-	#define DEFAULT_DB_URL "mysql://openser:openserrw@localhost/openser"
+	#define DEFAULT_DB_URL "mysql://kamailio:kamailiorw@localhost/kamailio"
 	#define DEFAULT_DB_URL_LEN (sizeof(DEFAULT_DB_URL) - 1)
-	#define DEFAULT_RODB_URL "mysql://openserro:openserro@localhost/openser"
+	#define DEFAULT_RODB_URL "mysql://kamailio:kamailiorw@localhost/okamailio"
 	#define DEFAULT_RODB_URL_LEN (sizeof(DEFAULT_RODB_URL) - 1)
 #else
 	#define DEFAULT_DB_URL "mysql://ser:heslo@localhost/ser"

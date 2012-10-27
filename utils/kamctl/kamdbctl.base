@@ -3,22 +3,22 @@ PATH=$PATH:/usr/local/sbin
 # config vars
 
 # name of the database to be used by Kamailio
-DBNAME=${DBNAME:-openser}
+DBNAME=${DBNAME:-kamailio}
 
 # address of database server
 DBHOST=${DBHOST:-localhost}
 
 # user with full privileges over DBNAME database
-DBRWUSER=${DBRWUSER:-openser}
+DBRWUSER=${DBRWUSER:-kamailio}
 
 # password user with full privileges over DBNAME database
-DBRWPW=${DBRWPW:-openserrw}
+DBRWPW=${DBRWPW:-kamailiorw}
 
 # read-only user
-DBROUSER=${DBROUSER:-openserro}
+DBROUSER=${DBROUSER:-kamailioro}
 
 # password for read-only user
-DBROPW=${DBROPW:-openserro}
+DBROPW=${DBROPW:-kamailioro}
 
 # user name column
 USERCOL=${USERCOL:-username}

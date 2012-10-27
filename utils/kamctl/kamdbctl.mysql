@@ -137,7 +137,7 @@ db_charset_test
 
 minfo "creating database $1 ..."
 
-# Users: openser is the regular user, openserro only for reading
+# Users: kamailio is the regular user, kamailioro only for reading
 sql_query "" "create database $1 character set $CHARSET;
 	GRANT ALL PRIVILEGES ON $1.* TO '$DBRWUSER' IDENTIFIED  BY '$DBRWPW';
 	GRANT ALL PRIVILEGES ON $1.* TO '${DBRWUSER}'@'$DBHOST' IDENTIFIED BY '$DBRWPW';

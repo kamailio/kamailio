@@ -9,21 +9,21 @@
 ### common variables and functions for SQL engines
 
 if [ -z "$DBNAME" ] ; then
-	DBNAME=openser
+	DBNAME=kamailio
 fi
 if [ -z "$DBHOST" ] ; then
 	DBHOST=localhost
 fi
 if [ -z "$DBRWUSER" ] ; then
-	DBRWUSER=openser
+	DBRWUSER=kamailio
 fi
 
 # the read-only user for whom password may be stored here
 if [ -z "$DBROUSER" ] ; then
-	DBROUSER=openserro
+	DBROUSER=kamailioro
 fi
 if [ -z "$DBROPW" ] ; then
-	DBROPW=openserro
+	DBROPW=kamailioro
 fi
 
 # full privileges SQL user

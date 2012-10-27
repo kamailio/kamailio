@@ -20,7 +20,7 @@ fi;
 
 # path to the dbtext database
 if [ -z "$DBTEXT_PATH" ] ; then
-	DBTEXT_PATH="/usr/local/share/kamailio/dbtext/openser"
+	DBTEXT_PATH="/usr/local/share/kamailio/dbtext/kamailio"
 fi
 
 export DBTEXT_PATH
