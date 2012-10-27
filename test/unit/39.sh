@@ -37,7 +37,7 @@ NR=25
 cp $CFG $CFG.bak
 
 echo "loadmodule \"$SR_DIR/modules_k/db_unixodbc/db_unixodbc.so\"" >> $CFG
-echo "modparam(\"usrloc\", \"db_url\", \"unixodbc://openser:openserrw@localhost/openser\")" >> $CFG
+echo "modparam(\"usrloc\", \"db_url\", \"unixodbc://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
 echo "modparam(\"usrloc\", \"fetch_rows\", 13)" >> $CFG
 
 # isql unfortunally only allow one statement per line

@@ -16,12 +16,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-MYSQL="mysql openser --show-warnings --batch --user=openser --password=openserrw -e"
+MYSQL="mysql kamailio --show-warnings --batch --user=kamailio --password=kamailiorw -e"
 
-export PGPASSWORD="openserrw"
-PSQL="psql -A -t -n -q -h localhost -U openser openser -c"
+export PGPASSWORD="kamailiorw"
+PSQL="psql -A -t -n -q -h localhost -U kamailio kamailio -c"
 
-ISQL="isql -b -v -d0x0 openser openser openserrw"
+ISQL="isql -b -v -d0x0 kamailio kamailio kamailiorw"
 
 function check_mysql() {
 	$MYSQL "select * from location;" > /dev/null

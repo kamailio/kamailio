@@ -34,7 +34,7 @@ cp $CFG $CFG.bak
 # setup config
 echo "loadmodule \"../../modules/db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
-echo "modparam(\"carrierroute\", \"db_url\", \"postgres://openserro:openserro@localhost/openser\")" >> $CFG
+echo "modparam(\"carrierroute\", \"db_url\", \"postgres://kamailioro:kamailioro@localhost/kamailio\")" >> $CFG
 
 # setup database
 $PSQL "insert into carrier_name (id, carrier) values ('1', 'carrier1');
