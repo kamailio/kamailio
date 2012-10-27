@@ -63,8 +63,8 @@
 <!ENTITY serusersmail "<email>sr-users@lists.sip-router.org</email>">
 <!ENTITY serdevmail "<email>sr-dev@lists.sip-router.org</email>">
 
-<!ENTITY defaultdb "mysql://openser:openserrw@localhost/openser">
-<!ENTITY defaultrodb "mysql://openserro:openserro@localhost/openser">
+<!ENTITY defaultdb "mysql://kamailio:kamailiorw@localhost/kamailio">
+<!ENTITY defaultrodb "mysql://kamailioro:kamailioro@localhost/kamailio">
 <!ENTITY exampledb "dbdriver://username:password@dbhost/dbname">
 <!ENTITY exampleotherdb "postgres://proxy:frog23@db.sip-router.org/sipdb">
 
