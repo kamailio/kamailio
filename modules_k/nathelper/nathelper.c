@@ -855,7 +855,8 @@ add_contact_alias_0_f(struct sip_msg* msg, char* str1, char* str2)
     }
 
     /* Compare source ip and port against contact uri */
-    if ((ip = str2ip(&(uri.host))) == NULL) {
+    if (((ip = str2ip(&(uri.host))) == NULL) &&
+	((ip = str2ip6(&(uri.host))) == NULL)) {
 	LM_DBG("contact uri host is not an ip address\n");
     } else {
 	if (ip_addr_cmp(ip, &(msg->rcv.src_ip)) &&
@@ -895,8 +896,8 @@ add_contact_alias_0_f(struct sip_msg* msg, char* str1, char* str2)
     }
 
     /* Create  ;alias param */
-    param_len = SALIAS_LEN + IP6_MAX_STR_SIZE + 1 /* ~ */ + 5 /* port */ +
-	1 /* ~ */ + 1 /* proto */ + 1 /* closing > */;
+    param_len = SALIAS_LEN + 1 /* [ */ + IP6_MAX_STR_SIZE + 1 /* ] */ +
+	1 /* ~ */ + 5 /* port */ + 1 /* ~ */ + 1 /* proto */ + 1 /* > */;
     param = (char*)pkg_malloc(param_len);
     if (!param) {
 	LM_ERR("no pkg memory left for alias param\n");
@@ -905,12 +906,16 @@ add_contact_alias_0_f(struct sip_msg* msg, char* str1, char* str2)
     at = param;
     /* ip address */
     append_str(at, SALIAS, SALIAS_LEN);
+    if (msg->rcv.src_ip.af == AF_INET6)
+	append_chr(at, '[');
     ip_len = ip_addr2sbuf(&(msg->rcv.src_ip), at, param_len - SALIAS_LEN);
     if (ip_len <= 0) {
 	LM_ERR("failed to copy source ip\n");
 	goto err;
     }
     at = at + ip_len;
+    if (msg->rcv.src_ip.af == AF_INET6)
+	append_chr(at, ']');
     /* port */
     append_chr(at, '~');
     port = int2str(msg->rcv.src_port, &len);
