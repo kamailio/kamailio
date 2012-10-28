@@ -170,7 +170,7 @@
 		<para>
 		The module can be used to determine if an address (IP
 		address and port) matches any of the IP subnets
-		stored in cached openser database table.
+		stored in cached &kamailio; database table.
 		Port 0 in cached database table matches any port.  IP
 		address and port to be matched can be either taken from
 		the request (allow_source_address) or given as pvar
