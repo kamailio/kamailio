@@ -13,7 +13,7 @@ acc|4
 active_watchers|
 active_watchers|11
 address|
-address|5
+address|6
 aliases|
 aliases|6
 carrier_name|
@@ -61,7 +61,7 @@ imc_members|1
 imc_rooms|
 imc_rooms|1
 lcr_gw|
-lcr_gw|2
+lcr_gw|3
 lcr_rule|
 lcr_rule|2
 lcr_rule_target|

@@ -9,7 +9,7 @@
 
 <table id="address" xmlns:db="http://docbook.org/ns/docbook">
     <name>address</name>
-    <version>5</version>
+    <version>6</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used by the permissions module. More information is available at: &KAMAILIO_MOD_DOC;permissions.html
@@ -38,7 +38,7 @@
     <column>
         <name>ip_addr</name>
         <type>string</type>
-        <size>48</size>
+        <size>&ip_add_len;</size>
         <description>IP address</description>
     </column>
 
