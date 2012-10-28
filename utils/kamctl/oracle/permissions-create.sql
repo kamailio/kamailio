@@ -17,11 +17,11 @@ BEGIN map2users('trusted'); END;
 /
 CREATE INDEX trusted_peer_idx  ON trusted (src_ip);
 
-INSERT INTO version (table_name, table_version) values ('address','5');
+INSERT INTO version (table_name, table_version) values ('address','6');
 CREATE TABLE address (
     id NUMBER(10) PRIMARY KEY,
     grp NUMBER(10) DEFAULT 1 NOT NULL,
-    ip_addr VARCHAR2(48),
+    ip_addr VARCHAR2(50),
     mask NUMBER(10) DEFAULT 32 NOT NULL,
     port NUMBER(5) DEFAULT 0 NOT NULL,
     tag VARCHAR2(64)

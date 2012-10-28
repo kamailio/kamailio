@@ -9,11 +9,11 @@ CREATE TABLE trusted (
 
 CREATE INDEX trusted_peer_idx ON trusted (src_ip);
 
-INSERT INTO version (table_name, table_version) values ('address','5');
+INSERT INTO version (table_name, table_version) values ('address','6');
 CREATE TABLE address (
     id SERIAL PRIMARY KEY NOT NULL,
     grp INTEGER DEFAULT 1 NOT NULL,
-    ip_addr VARCHAR(48) NOT NULL,
+    ip_addr VARCHAR(50) NOT NULL,
     mask INTEGER DEFAULT 32 NOT NULL,
     port SMALLINT DEFAULT 0 NOT NULL,
     tag VARCHAR(64)

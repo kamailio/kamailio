@@ -1,9 +1,9 @@
-INSERT INTO version (table_name, table_version) values ('lcr_gw','2');
+INSERT INTO version (table_name, table_version) values ('lcr_gw','3');
 CREATE TABLE lcr_gw (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     lcr_id SMALLINT UNSIGNED NOT NULL,
     gw_name VARCHAR(128),
-    ip_addr VARCHAR(47),
+    ip_addr VARCHAR(50),
     hostname VARCHAR(64),
     port SMALLINT UNSIGNED,
     params VARCHAR(64),

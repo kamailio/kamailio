@@ -1,7 +1,7 @@
 table_name(string) table_version(int) 
 acc:4
 active_watchers:11
-address:5
+address:6
 aliases:6
 carrier_name:1
 carrierfailureroute:2
@@ -25,7 +25,7 @@ grp:2
 htable:2
 imc_members:1
 imc_rooms:1
-lcr_gw:2
+lcr_gw:3
 lcr_rule:2
 lcr_rule_target:1
 location:6

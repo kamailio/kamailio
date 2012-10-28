@@ -1,9 +1,9 @@
-INSERT INTO version (table_name, table_version) values ('lcr_gw','2');
+INSERT INTO version (table_name, table_version) values ('lcr_gw','3');
 CREATE TABLE lcr_gw (
     id SERIAL PRIMARY KEY NOT NULL,
     lcr_id SMALLINT NOT NULL,
     gw_name VARCHAR(128),
-    ip_addr VARCHAR(47),
+    ip_addr VARCHAR(50),
     hostname VARCHAR(64),
     port SMALLINT,
     params VARCHAR(64),
