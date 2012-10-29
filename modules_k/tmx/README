@@ -315,6 +315,7 @@ tcontinue('123', '456', 'MYROUTE');
      * $T_branch_idx
      * $T_reply_code
      * $T_reply_reason
+     * $T_reply_last
      * $T_req(pv)
      * $T_rpl(pv)
 

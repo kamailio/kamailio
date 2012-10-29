@@ -527,6 +527,49 @@ int pv_get_tm_reply_reason(struct sip_msg *msg, pv_param_t *param,
 	return 0;
 }
 
+int pv_get_tm_reply_last_received(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	struct cell *t;
+	tm_ctx_t *tcx = 0;
+	int code;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	/* Only for TM reply route */
+	if (get_route_type() != TM_ONREPLY_ROUTE) {
+		LM_ERR("unsupported route_type %d\n", get_route_type());
+		return -1;
+	}
+
+	/* first get the transaction */
+	if (_tmx_tmb.t_check( msg , 0 )==-1) return -1;
+	if ( (t=_tmx_tmb.t_gett())==0) {
+		/* no T */
+		LM_ERR("could not get transaction\n");
+		return -1;
+	}
+
+	/* get the current branch index */
+	tcx = _tmx_tmb.tm_ctx_get();
+	if(tcx == NULL) {
+		LM_ERR("could not get tm context\n");
+		return -1;
+	}
+
+	/* get the last received reply code */
+	code = t->uac[tcx->branch_index].last_received;
+
+	LM_DBG("reply code is <%d>\n",code);
+
+	res->rs.s = int2str( code, &res->rs.len);
+
+	res->ri = code;
+	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
+	return 0;
+}
+
 int pv_parse_t_name(pv_spec_p sp, str *in)
 {
 	if(sp==NULL || in==NULL || in->len<=0)

@@ -347,6 +347,9 @@ tcontinue('123', '456', 'MYROUTE');
 				<emphasis>$T_reply_reason</emphasis>
 			</para></listitem>
 			<listitem><para>
+				<emphasis>$T_reply_last</emphasis>
+			</para></listitem>
+			<listitem><para>
 				<emphasis>$T_req(pv)</emphasis>
 			</para></listitem>
 			<listitem><para>

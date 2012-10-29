@@ -42,6 +42,8 @@ int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 int pv_get_tm_reply_reason(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
+int pv_get_tm_reply_last_received(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
 int pv_get_t(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
