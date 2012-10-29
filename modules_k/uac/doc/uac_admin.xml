@@ -18,8 +18,8 @@
 		<title>Overview</title>
 		<para>
 		The <acronym>UAC</acronym> (User Agent Client) module provides some basic UAC
-		functionalities like sending SIP requests, registering with a remote service
-		and FROM header manipulation (anonymization) or client authentication.
+		functionalities like sending SIP requests, registering with a remote service,
+		FROM header manipulation (anonymization) and client authentication.
 		</para>
 		<para>
 		From version 1.5.0 it has function to send SIP message from
@@ -27,7 +27,7 @@
 		uac_req_send().
 		</para>
 		<para>
-		Version 3.1.0 adds user registration functionality. See
+		Version 3.1.0 adds database-driven SIP registration functionality. See
 		uac_reg_lookup() function and dedicated section for remote
 		registration configuration.
 		</para>
@@ -37,12 +37,12 @@
 		<itemizedlist>
 			<listitem>
 			<para>
-				authentication does not support qop auth-int, just qop auth;
+				Authentication does not support qop auth-int, just qop auth;
 			</para>
 			</listitem>
 			<listitem>
 			<para>
-				CSeq not increased during authentication - the response 
+				CSeq is not increased during authentication - the response 
 				may be rejected.
 			</para>
 			</listitem>
@@ -100,7 +100,7 @@
 			<title><varname>rr_from_store_param</varname> (string)</title>
 			<para>
 			Name of Record-Route header parameter that will be used to store 
-			(encoded) the original FROM URI.
+			an encoded version of the original FROM URI.
 			</para>
 			<para>
 				<emphasis>
@@ -141,7 +141,7 @@ modparam("uac","rr_to_store_param","my_param")
 		<section>
 			<title><varname>restore_mode</varname> (string)</title>
 			<para>
-			There are 3 mode of restoring the original FROM URI and the original TO URI:
+			There are 3 modes of restoring the original FROM URI and the original TO URI:
 			<itemizedlist>
 			<listitem>
 				<para>
@@ -184,8 +184,8 @@ modparam("uac","restore_mode","auto")
 			<title><varname>restore_dlg</varname> (int)</title>
 			<para>
 			If set to 1, the module uses dialog variables to store initial and
-			new values for From/To headers. Dialog module has to be loaded and
-			all calls that involve chages to From/To headers must be tracked.
+			new values for From/To headers. The Dialog module has to be loaded and
+			all calls that involve changes to From/To headers must be tracked.
 			</para>
 			<para>
 				<emphasis>
@@ -251,8 +251,8 @@ modparam("uac","restore_from_avp","$avp(original_uri_from)")
 			<title><varname>restore_to_avp</varname> (string)</title>
 			<para>
 			If defined and restore_mode is manual or auto, the avp is used to save
-			the original to uri in order to be able to restore it in replies.
-			That makes sense, if the original-uri can not be extracted from the original
+			the original To URI in order to be able to restore it in replies.
+			That makes sense if the original-uri can not be extracted from the original
 			request, e.g. if msg_apply_changes() was used after calling uac_replace_to()  
 			</para>
 			<para>
@@ -361,7 +361,7 @@ modparam("uac","auth_password_avp","$avp(i:12)")
 		<section id="reg-db-url-id">
 			<title><varname>reg_db_url</varname> (string)</title>
 			<para>
-			DB URL to fetch user profiles for registration.
+			DB URL to fetch account profiles for registration.
 			</para>
 			<example>
 				<title>Set <varname>reg_db_url</varname> parameter</title>
@@ -402,6 +402,7 @@ modparam("uac", "reg_timer_interval", 60)
 			<para>
 			Address to be used to build contact address. Must be at least
 			host part, can have port and parameters. Must not include 'sip:'.
+			The username part of the Contact: URI will be the L_UUID field in the database.
 			</para>
 			<example>
 				<title>Set <varname>reg_contact_addr</varname> parameter</title>

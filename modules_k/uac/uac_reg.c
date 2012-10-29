@@ -557,7 +557,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		if(auth.realm.len!=ri->realm.len
 				|| strncmp(auth.realm.s, ri->realm.s, ri->realm.len)!=0)
 		{
-			LM_ERR("realms are different - ignire?!?!\n");
+			LM_ERR("realms are different - ignore?!?!\n");
 		}
 		cred.realm = auth.realm;
 		cred.user = ri->auth_username; 
