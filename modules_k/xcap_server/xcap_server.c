@@ -45,6 +45,7 @@
 #include "../../modules_k/xcap_client/xcap_callbacks.h"
 #include "../../modules/sl/sl.h"
 #include "../../lib/kcore/cmpapi.h"
+#include "../../ip_addr.h"
 
 #include "xcap_misc.h"
 
@@ -83,6 +84,8 @@ static str xcaps_db_url = str_init(DEFAULT_DB_URL);
 static int xcaps_init_time = 0;
 static int xcaps_etag_counter = 1;
 str xcaps_root = str_init("/xcap-root/");
+static int xcaps_directory_scheme = -1;
+static str xcaps_directory_hostname = {0, 0};
 
 static str xcaps_buf = {0, 8192};
 #define XCAPS_HDR_SIZE	128
@@ -113,11 +116,13 @@ static pv_export_t mod_pvs[] = {
 };
 
 static param_export_t params[] = {
-	{ "db_url",		STR_PARAM, &xcaps_db_url.s    },
-	{ "xcap_table",	STR_PARAM, &xcaps_db_table.s  },
-	{ "xcap_root",	STR_PARAM, &xcaps_root.s  },
-	{ "buf_size",	INT_PARAM, &xcaps_buf.len  },
-	{ "xml_ns",     STR_PARAM|USE_FUNC_PARAM, (void*)xcaps_xpath_ns_param },
+	{ "db_url",             STR_PARAM, &xcaps_db_url.s    },
+	{ "xcap_table",         STR_PARAM, &xcaps_db_table.s  },
+	{ "xcap_root",          STR_PARAM, &xcaps_root.s  },
+	{ "buf_size",           INT_PARAM, &xcaps_buf.len  },
+	{ "xml_ns",             STR_PARAM|USE_FUNC_PARAM, (void*)xcaps_xpath_ns_param },
+	{ "directory_scheme",   INT_PARAM, &xcaps_directory_scheme },
+	{ "directory_hostname", STR_PARAM, &xcaps_directory_hostname.s },
 	{ 0, 0, 0 }
 };
 
@@ -157,6 +162,15 @@ static int mod_init(void)
 	xcaps_db_url.len   = (xcaps_db_url.s) ? strlen(xcaps_db_url.s) : 0;
 	xcaps_db_table.len = (xcaps_db_table.s) ? strlen(xcaps_db_table.s) : 0;
 	xcaps_root.len     = (xcaps_root.s) ? strlen(xcaps_root.s) : 0;
+	xcaps_directory_hostname.len
+			   = xcaps_directory_hostname.s
+				? strlen(xcaps_directory_hostname.s) : 0;
+
+	if (xcaps_directory_scheme < -1 || xcaps_directory_scheme > 1)
+	{
+		LM_ERR("invalid xcaps_directory_scheme\n");
+		return -1;
+	}
 	
 	if(xcaps_buf.len<=0)
 	{
@@ -915,28 +929,13 @@ static int xcaps_get_directory(struct sip_msg *msg, str *user, str *domain, str 
 	if (db_res == NULL)
 		goto error;
 
-	if (parse_headers(msg, HDR_EOH_F, 0) < 0)
-	{
-		LM_ERR("error parsing headers\n");
-		goto error;
-	}
-
-	while (hdr != NULL)
-	{
-		if (cmp_hdrname_strzn(&hdr->name, "Host", 4) == 0)
-		{
-			server_name = hdr->body;
-			break;
-		}
-		hdr = hdr->next;
-	}
-
 	directory->s = xcaps_buf.s;
 	directory->len = 0;
 
-	directory->len += snprintf(directory->s + directory->len, xcaps_buf.len - directory->len,
-		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n"
-		"<xcap-directory xmlns=\"urn:oma:xml:xdm:xcap-directory\">\r\n");
+	directory->len += snprintf(directory->s + directory->len,
+					xcaps_buf.len - directory->len,
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n"
+			"<xcap-directory xmlns=\"urn:oma:xml:xdm:xcap-directory\">\r\n");
 
 	rows = RES_ROWS(db_res);
 	for (i = 0; i < RES_ROW_N(db_res); i++)
@@ -947,8 +946,9 @@ static int xcaps_get_directory(struct sip_msg *msg, str *user, str *domain, str 
 		{
 			if (cur_type != 0)
 			{
-				directory->len += snprintf(directory->s + directory->len, xcaps_buf.len - directory->len,
-		"</folder>\r\n");
+				directory->len += snprintf(directory->s + directory->len,
+								xcaps_buf.len - directory->len,
+			"</folder>\r\n");
 			}
 			cur_type = VAL_INT(&values[doc_type_col]);
 
@@ -969,15 +969,75 @@ static int xcaps_get_directory(struct sip_msg *msg, str *user, str *domain, str 
 				goto error;
 			}
 
-			directory->len += snprintf(directory->s + directory->len, xcaps_buf.len - directory->len,
-		"<folder auid=\"%.*s\">\r\n",
-						auid_string.len, auid_string.s);
+			directory->len += snprintf(directory->s + directory->len,
+							xcaps_buf.len - directory->len,
+			"<folder auid=\"%.*s\">\r\n",
+							auid_string.len, auid_string.s);
 		}
 
-		directory->len += snprintf(directory->s + directory->len, xcaps_buf.len - directory->len,
-		"<entry uri=\"%s%.*s%s\" etag=\"%s\"/>\r\n",
-					server_name.len ? (msg->rcv.proto == PROTO_TLS ? "https://" : "http://") : "",
-					server_name.len, server_name.len ? server_name.s : "",
+		switch(xcaps_directory_scheme)
+		{
+		case -1:
+			directory->len += snprintf(directory->s + directory->len,
+							xcaps_buf.len - directory->len,
+			"<entry uri=\"%s://", msg->rcv.proto == PROTO_TLS ? "https" : "http");
+			break;
+		case 0:
+			directory->len += snprintf(directory->s + directory->len,
+							xcaps_buf.len - directory->len,
+			"<entry uri=\"http://");
+			break;
+		case 1:
+			directory->len += snprintf(directory->s + directory->len,
+							xcaps_buf.len - directory->len,
+			"<entry uri=\"https://");
+			break;
+		}
+
+		if (xcaps_directory_hostname.len > 0)
+		{
+			directory->len += snprintf(directory->s + directory->len,
+						xcaps_buf.len - directory->len,
+			"%.*s", xcaps_directory_hostname.len, xcaps_directory_hostname.s);
+		}
+		else
+		{
+			if (parse_headers(msg, HDR_EOH_F, 0) < 0)
+			{
+				LM_ERR("error parsing headers\n");
+				goto error;
+			}
+
+			while (hdr != NULL)
+			{
+				if (cmp_hdrname_strzn(&hdr->name, "Host", 4) == 0)
+				{
+					server_name = hdr->body;
+					break;
+				}
+				hdr = hdr->next;
+			}
+
+			if (server_name.len > 0)
+			{
+				directory->len += snprintf(directory->s + directory->len,
+							xcaps_buf.len - directory->len,
+			"%.*s", server_name.len, server_name.s);
+			}
+			else
+			{
+				server_name.s = pkg_malloc(IP6_MAX_STR_SIZE + 6);
+				server_name.len = ip_addr2sbuf(&msg->rcv.dst_ip, server_name.s, IP6_MAX_STR_SIZE);
+				directory->len += snprintf(directory->s + directory->len,
+							xcaps_buf.len - directory->len,
+			"%.*s:%d", server_name.len, server_name.s, msg->rcv.dst_port);
+				pkg_free(server_name.s);
+			}
+		}
+
+		directory->len += snprintf(directory->s + directory->len,
+						xcaps_buf.len - directory->len,
+		"%s\" etag=\"%s\"/>\r\n",
 					VAL_STRING(&values[doc_uri_col]),
 					VAL_STRING(&values[etag_col]));
 	}

@@ -203,13 +203,83 @@ modparam("xcap_server", "buf_size", 2048)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>url_match</varname> parameter</title>
+		<title>Set <varname>xml_ns</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("xcap_server", "xml_ns",
     "rl=urn:ietf:params:xml:ns:resource-lists")
 modparam("xcap_server", "xml_ns",
     "my=urn:my:prefix")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>directory_scheme (int)</varname></title>
+		<para>
+			Allows the scheme used in
+			org.openmobilealliance.xcap-directory listings to be
+			set to a specific value.
+		</para>
+		<para>
+			The URLs in an org.oma.xcap-directory listing must be
+			be paths a client can use to download the listed XCAP
+			documents. In some cases (for example, when the XCAP
+			server is accessed using HTTP from an HTTP proxy the
+			client connectes to using HTTPS) the XCAP server may
+			not be able to automatically determine the correct
+			scheme to use based on the HTTP connection.
+		</para>
+		<itemizedlist>
+		<listitem><para>
+		<emphasis>-1 (default)</emphasis> - determine scheme
+		automatically.  HTTP for TCP connections and HTTPS for TLS
+		connections.
+		</para></listitem>
+		<listitem><para>
+		<emphasis>0</emphasis> - use the HTTP scheme.
+		</para></listitem>
+		<listitem><para>
+		<emphasis>1</emphasis> - use the HTTPS scheme. 
+		</para></listitem>
+		</itemizedlist>
+		<example>
+		<title>Set <varname>directory_scheme</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xcap_server", "directory_scheme", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>directory_hostname (str)</varname></title>
+		<para>
+			Allows the hostname (and port) used in
+			org.openmobilealliance.xcap-directory listings to be
+			set to a specific value.
+		</para>
+		<para>
+			The URLs in an org.oma.xcap-directory listing must be
+			be paths a client can use to download the listed XCAP
+			documents. In some cases (for example, when the XCAP
+			server is accessed through a proxy that re-writes
+			headers, or a client is non-conformant and does not
+			include a Host: header) the XCAP server may not be able
+			to automatically determine the correct hostname to use.
+		</para>
+		<para>
+			When this parameter is not set the XCAP server will
+			attempt to use the contents of the (mandatory) Host:
+			header. If the Host: header is not present the XCAP
+			server will use the IP address and port the XCAP
+			request was received on.
+		</para>
+		<example>
+		<title>Set <varname>directory_hostname</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xcap_server", "directory_hostname", "xcap.example.com")
 ...
 </programlisting>
 		</example>
@@ -480,8 +550,7 @@ event_route[xhttp:request] {
     }
 
     # other http requests
-    xhttp_reply("200", "OK", "text/html",
-            "&lt;html&gt;&lt;body>OK: $si:$sp&lt;/body&gt;&lt;/html&gt;");
+    xhttp_reply("404", "Not Found", "", "");
     exit;
 }
 ...
