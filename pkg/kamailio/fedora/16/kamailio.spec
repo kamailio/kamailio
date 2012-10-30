@@ -25,7 +25,7 @@ Conflicts:     kamailio-xmlrpc < %ver, kamailio-perl < %ver, kamailio-lua < %ver
 Conflicts:     kamailio-python < %ver, kamailio-regex < %ver
 Conflicts:     kamailio-dialplan < %ver, kamailio-lcr < %ver
 Conflicts:     kamailio-xmlops < %ver, kamailio-cdp < %ver
-Conflicts:     kamailio-websocket < %ver
+Conflicts:     kamailio-websocket < %ver, kamailio-xhttp-pi < %ver
 %if 0%{?fedora}
 Conflicts:     kamailio-radius < %ver, kamailio-carrierroute < %ver
 Conflicts:     kamailio-redis < %ver, kamailio-json < %ver 
@@ -252,6 +252,16 @@ BuildRequires: libunistring-devel
 WebSocket transport for Kamailio.
 
 
+%package xhttp-pi
+Summary:       Web-provisioning interface for Kamailio.
+Group:         System Environment/Daemons
+Requires:      libxml2, kamailio = %ver
+BuildRequires: libxml2-devel
+
+%description xhttp-pi
+Web-provisioning interface for Kamailio.
+
+
 %package  purple
 Summary:  Multi-protocol IM and presence gateway module.
 Group:    System Environment/Daemons
@@ -357,7 +367,7 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
 	klcr ksqlite kredis kjson kmono kberkeley kwebsocket"\
 	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
-	auth_diameter"
+	auth_diameter xhttp_pi"
 %else
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
@@ -365,7 +375,7 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kcpl ksnmpstats kpresence kregex kdialplan\
 	klcr ksqlite kberkeley kwebsocket"\
 	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
-	auth_diameter"
+	auth_diameter xhttp_pi"
 %endif
 make utils
 
@@ -382,7 +392,7 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
 	klcr ksqlite kredis kjson kmono kberkeley kwebsocket"\
 	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
-	auth_diameter"
+	auth_diameter xhttp_pi"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.service \
@@ -398,7 +408,7 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kcpl ksnmpstats kpresence kregex kdialplan\
 	klcr ksqlite kberkeley kwebsocket"\
 	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
-	auth_diameter"
+	auth_diameter xhttp_pi"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -926,6 +936,12 @@ fi
 %{_libdir}/kamailio/modules/websocket.so
 
 
+%files xhttp-pi
+%defattr(-,root,root)
+#%doc %{_docdir}/kamailio/modules/README.xhttp_pi
+%{_libdir}/kamailio/modules/xhttp_pi.so
+
+
 %if 0%{?fedora}
 %files radius
 %defattr(-,root,root)
@@ -974,6 +990,8 @@ fi
 
 
 %changelog
+* Tue Oct 30 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Added xhttp_pi module to RPM builds
 * Fri Oct 20 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Set ownership of /etc/kamailio to kamailio.kamailio
   - Added installation of auth.7.gz for Fedora now that manpages are built for
