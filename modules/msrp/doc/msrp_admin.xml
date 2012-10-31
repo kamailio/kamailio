@@ -29,7 +29,7 @@
 	<para>
 		However, MSRP is still a text-based protocol.  It uses several routing
 		mechanisms similar to what exists in SIP. Furthermore,
-		MSRP requres TCP, and recommends TLS for confidentiality and security.
+		MSRP requires TCP, and recommends TLS for confidentiality and security.
 		In light of the scalability and performance of &kamailio; in handling
 		TCP/TLS, this module reuses &kamailio;'s core framework to
 		offer MSRP routing capabilities. Along with embedded Presence and XCAP

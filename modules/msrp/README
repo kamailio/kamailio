@@ -99,7 +99,7 @@ Chapter 1. Admin Guide
    negotiated via INVITE-200 OK-ACK.
 
    However, MSRP is still a text-based protocol. It uses several routing
-   mechanisms similar to what exists in SIP. Furthermore, MSRP requres
+   mechanisms similar to what exists in SIP. Furthermore, MSRP requires
    TCP, and recommends TLS for confidentiality and security. In light of
    the scalability and performance of Kamailio in handling TCP/TLS, this
    module reuses Kamailio's core framework to offer MSRP routing
