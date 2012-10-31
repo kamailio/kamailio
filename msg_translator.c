@@ -1722,8 +1722,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	if (unlikely(via_anchor==0)) goto error00;
 	line_buf = create_via_hf( &via_len, msg, send_info, &branch);
 	if (unlikely(!line_buf)){
-		LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: "
-					"memory allocation failure\n");
+		LM_WARN("creating Via header\n");
 		goto error00;
 	}
 after_local_via:
@@ -2496,7 +2495,8 @@ char* via_builder( unsigned int *len,
                 }
 
                 if (con == NULL) {
-                        LM_WARN("TCP/TLS connection for WebSocket could not be found\n");
+                        LM_WARN("TCP/TLS connection (id: %d) for WebSocket could not be found\n"
+				send_info->id);
                         return 0;
                 }
 
