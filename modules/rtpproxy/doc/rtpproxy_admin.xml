@@ -343,13 +343,6 @@ rtpproxy_offer();
 				the 'w' flag for clients behind NAT! See also above notes!
 				</para></listitem>
 				<listitem><para>
-				<emphasis>x</emphasis> - this flag will do automatic bridging between IPv4 on the
-				"internal network" and IPv6 on the "external network". The distinction is done by
-				the given IP in the SDP, e.g. a IPv4 Address will always call "ie" to the RTPProxy
-				(IPv4(i) to IPv6(e)) and an IPv6Address will always call "ei" to the RTPProxy (IPv6(e)
-				to IPv4(i)).
-				</para></listitem>
-				<listitem><para>
 				<emphasis>f</emphasis> - instructs rtpproxy to ignore marks
 				inserted by another rtpproxy in transit to indicate that the
 				session is already goes through another proxy. Allows creating
