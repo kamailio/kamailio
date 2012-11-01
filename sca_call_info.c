@@ -771,8 +771,8 @@ LM_INFO( "ADMORTEN DEBUG: setting owner to %.*s", STR_FMT( contact_uri ));
 	rc = 1;
     } else {
 LM_INFO( "ADMORTEN DEBUG: no appearance for %.*s, seizing next", STR_FMT( aor ));
-	app = sca_appearance_seize_next_available_unsafe( sca, aor,
-				contact_uri, slot_idx );
+	app = sca_appearance_seize_index_unsafe( sca, aor, contact_uri,
+						call_info->index, slot_idx );
 	if ( app == NULL ) {
 	    LM_ERR( "sca_call_info_uri_update: failed to seize index %d "
 		    "for %.*s", call_info->index, STR_FMT( contact_uri ));

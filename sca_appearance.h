@@ -74,6 +74,8 @@ typedef struct _sca_appearance_list	sca_appearance_list;
 void	sca_appearance_state_to_str( int, str * );
 int	sca_appearance_state_from_str( str * );
 
+sca_appearance 	*sca_appearance_seize_index_unsafe( sca_mod *, str *, str *,
+								int, int );
 int	sca_appearance_seize_next_available_index( sca_mod *, str *, str * );
 sca_appearance 	*sca_appearance_seize_next_available_unsafe( sca_mod *, str *,
 							     str *, int );

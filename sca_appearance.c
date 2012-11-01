@@ -323,6 +323,50 @@ done:
 }
 
     sca_appearance *
+sca_appearance_seize_index_unsafe( sca_mod *scam, str *aor, str *owner_uri,
+	int app_idx, int slot_idx )
+{
+    sca_appearance_list	*app_list;
+    sca_appearance	*app = NULL;
+    sca_hash_slot	*slot;
+
+    slot = sca_hash_table_slot_for_index( scam->appearances, slot_idx );
+
+    app_list = sca_hash_table_slot_kv_find_unsafe( slot, aor );
+    if ( app_list == NULL ) {
+	LM_ERR( "sca_appearance_seize_index_unsafe: no appearance list for "
+		"%.*s", STR_FMT( aor ));
+	goto done;
+    }
+
+    for ( app = app_list->appearances; app != NULL; app = app->next ) {
+	if ( app->index >= app_idx ) {
+	    break;
+	}
+    }
+    if ( app != NULL && app->index == app_idx ) {
+	LM_ERR( "sca_appearance_seize_index_unsafe: tried to seize in-use "
+		"%.*s appearance-index %d for %.*s", STR_FMT( aor ),
+		app_idx, STR_FMT( owner_uri ));
+	app = NULL;
+	goto done;
+    }
+
+    app = sca_appearance_create( app_idx, owner_uri );
+    if ( app == NULL ) {
+        LM_ERR( "Failed to create new appearance for %.*s at index %d",
+                STR_FMT( owner_uri ), app_idx );
+        goto done;
+    }
+    app->state = SCA_APPEARANCE_STATE_SEIZED;
+
+    sca_appearance_list_insert_appearance( app_list, app );
+
+done:
+    return( app );
+}
+
+    sca_appearance *
 sca_appearance_seize_next_available_unsafe( sca_mod *scam, str *aor,
 	str *owner_uri, int slot_idx )
 {
