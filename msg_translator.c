@@ -2495,7 +2495,7 @@ char* via_builder( unsigned int *len,
                 }
 
                 if (con == NULL) {
-                        LM_WARN("TCP/TLS connection (id: %d) for WebSocket could not be found\n"
+                        LM_WARN("TCP/TLS connection (id: %d) for WebSocket could not be found\n",
 				send_info->id);
                         return 0;
                 }
