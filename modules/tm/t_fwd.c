@@ -1019,6 +1019,9 @@ int add_uac_dns_fallback(struct cell *t, struct sip_msg* msg,
 			/* copy the dns handle into the new uac */
 			dns_srv_handle_cpy(&t->uac[t->nr_of_outgoings].dns_h,
 								&old_uac->dns_h);
+			/* copy the onreply and onfailure routes */
+			t->uac[t->nr_of_outgoings].on_failure = old_uac->on_failure;
+			t->uac[t->nr_of_outgoings].on_reply = old_uac->on_reply;
 
 			if (cfg_get(tm, tm_cfg, reparse_on_dns_failover)){
 				/* Reuse the old buffer and only replace the via header.
