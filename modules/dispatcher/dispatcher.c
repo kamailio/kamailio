@@ -596,7 +596,8 @@ static void destroy(void)
 	ds_hash_load_destroy();
 	if(ds_ping_reply_codes)
 		shm_free(ds_ping_reply_codes);
-
+	if(ds_ping_reply_codes_cnt)
+		shm_free(ds_ping_reply_codes_cnt);
 }
 
 #define GET_VALUE(param_name,param,i_value,s_value,value_flags) do{ \
