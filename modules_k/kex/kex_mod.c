@@ -167,6 +167,7 @@ static int child_init(int rank)
  */
 static void destroy(void)
 {
+	pkg_proc_stats_destroy();
 	return;
 }
 
