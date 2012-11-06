@@ -428,7 +428,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	/* ... and build it now */
 	shbuf=build_req_buf_from_sip_req( i_req, &len, dst, BUILD_IN_SHM);
 	if (!shbuf) {
-		LM_ERR("building request\n"); 
+		LM_ERR("could not build request\n"); 
 		ret=E_OUT_OF_MEM;
 		goto error01;
 	}

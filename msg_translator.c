@@ -1722,7 +1722,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	if (unlikely(via_anchor==0)) goto error00;
 	line_buf = create_via_hf( &via_len, msg, send_info, &branch);
 	if (unlikely(!line_buf)){
-		LM_WARN("creating Via header\n");
+		LM_ERR("could not create Via header\n");
 		goto error00;
 	}
 after_local_via:
