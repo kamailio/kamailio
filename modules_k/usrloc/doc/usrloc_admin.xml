@@ -16,40 +16,40 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		User location module. The module keeps a user location table and 
-		provides access to the table to other modules. The module exports no 
-		functions that could be used directly from scripts.
+		The User location module module keeps a user location table and 
+		provides access to the table for  other modules. The module exports no 
+		functions that can  be used directly from routing scripts.
 	</para>
 		<section id="contact-matching-algs">
 		<title>Contact matching</title>
 		<para>
-		How the contacts are matched (dor same AOR - Address of Record) is an 
+		How the contacts are matched (for the same AOR - Address of Record) is an 
 		important aspect of the usrloc module, especially in the context of NAT
 		traversal - this raises more problems since contacts from different 
-		phones of the same user may overlap (if behind NATs with same
+		phones of the same user may overlap (if both are behind NATs with the same
 		configuration) or the re-register contact of the same phone may be
 		seen as a new one (due different binding via NAT).
 		</para>
 		<para>
 		The SIP RFC 3261 publishes a matching algorithm based only on the 
-		contact string with callid and cseq number extra checking (if callid
-		is the same, it must have a higher cseq number, otherwise it is invalid).
+		contact string with Call-id and Cseq extra checking (if the Call-ID
+		is the same, it must have a higher Cseq number, otherwise it is invalid).
 		But as argumented above, this is not enough in NAT traversal context, 
 		so the &kamailio; implementation of contact matching offers more algorithms:
 		</para>
 		<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>contact based only</emphasis> - it is strict RFC 3261
-				compliancy - the contact is matched as string and extra checked
-				via callid and cseq (if callid is the same, it must have a
+				<emphasis>Contact based only</emphasis> - it is strict RFC 3261
+				compliancy - the Contact URI is matched as string and extra checked
+				via Call-ID and cseq (if Call-ID is the same, it must have a
 				higher cseq number, otherwise it is invalid).
 			</para>
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>contact and callid based</emphasis> - it is an extension
-				of the first case - the contact and callid must be matched as
+				<emphasis>Contact and Call-id based</emphasis> - it is an extension
+				of the first case - the contact and Call-ID must be matched as
 				string; the cseq must be higher than the previous one - so be
 				careful how you deal with REGISTER retransmissions in this
 				case.
@@ -66,8 +66,8 @@
 			</listitem>
 		</itemizedlist>
 		<para>
-		How to control/select the contact maching algorithm, please see the
-		module parameter matching_mode at <xref linkend="matching-mode"/>.
+		To find out how to control/select the contact maching algorithm, please see the
+		module parameter matching_mode - <xref linkend="matching-mode"/>.
 		</para>
 		</section>
 	</section>
@@ -129,7 +129,7 @@ modparam("usrloc", "nat_bflag", 3)
 	<section>
 		<title><varname>user_column</varname> (string)</title>
 		<para>
-		Name of column containing usernames.
+		Name of database column containing usernames.
 		</para>
 		<para>
 		<emphasis>
@@ -149,7 +149,7 @@ modparam("usrloc", "user_column", "username")
 	<section>
 		<title><varname>domain_column</varname> (string)</title>
 		<para>
-		Name of column containing domains.
+		Name of database column containing domains.
 		</para>
 		<para>
 		<emphasis>
@@ -169,7 +169,7 @@ modparam("usrloc", "domain_column", "domain")
 	<section>
 		<title><varname>contact_column</varname> (string)</title>
 		<para>
-		Name of column containing contacts.
+		Name of database column containing contacts.
 		</para>
 		<para>
 		<emphasis>
@@ -189,7 +189,7 @@ modparam("usrloc", "contact_column", "contact")
 	<section>
 		<title><varname>expires_column</varname> (string)</title>
 		<para>
-		Name of column containing expires value.
+		Name of database column containing expires value.
 		</para>
 		<para>
 		<emphasis>
@@ -209,7 +209,7 @@ modparam("usrloc", "expires_column", "expires")
 	<section>
 		<title><varname>q_column</varname> (string)</title>
 		<para>
-		Name of column containing q values.
+		Name of database column containing q values.
 		</para>
 		<para>
 		<emphasis>
@@ -229,7 +229,7 @@ modparam("usrloc", "q_column", "q")
 	<section>
 		<title><varname>callid_column</varname> (string)</title>
 		<para>
-		Name of column containing callid values.
+		Name of database column containing Call-ID values.
 		</para>
 		<para>
 		<emphasis>
@@ -249,7 +249,7 @@ modparam("usrloc", "callid_column", "callid")
 	<section>
 		<title><varname>cseq_column</varname> (string)</title>
 		<para>
-		Name of column containing cseq numbers.
+		Name of database column containing Cseq.
 		</para>
 		<para>
 		<emphasis>
@@ -269,7 +269,7 @@ modparam("usrloc", "cseq_column", "cseq")
 	<section>
 		<title><varname>methods_column</varname> (string)</title>
 		<para>
-		Name of column containing supported methods.
+		Name of database column containing supported methods.
 		</para>
 		<para>
 		<emphasis>
@@ -289,7 +289,7 @@ modparam("usrloc", "methods_column", "methods")
 	<section>
 		<title><varname>flags_column</varname> (string)</title>
 		<para>
-		Name of column to save the internal flags of the record.
+		Name of database column to save the internal flags of the record.
 		</para>
 		<para>
 		<emphasis>
@@ -309,7 +309,7 @@ modparam("usrloc", "flags_column", "flags")
 	<section>
 		<title><varname>cflags_column</varname> (string)</title>
 		<para>
-		Name of column to save the branch/contact flags of the record.
+		Name of database column to save the branch/contact flags of the record.
 		</para>
 		<para>
 		<emphasis>
@@ -329,7 +329,7 @@ modparam("usrloc", "cflags_column", "cflags")
 	<section>
 		<title><varname>user_agent_column</varname> (string)</title>
 		<para>
-		Name of column containing user-agent values.
+		Name of database column containing user-agent values.
 		</para>
 		<para>
 		<emphasis>
@@ -349,7 +349,7 @@ modparam("usrloc", "user_agent_column", "user_agent")
 	<section>
 		<title><varname>received_column</varname> (string)</title>
 		<para>
-		Name of column containing the source IP, port, and protocol from the REGISTER
+		Name of database column containing the source IP, port, and protocol from the REGISTER
 		message.
 		</para>
 		<para>
@@ -370,7 +370,7 @@ modparam("usrloc", "received_column", "received")
 	<section>
 		<title><varname>socket_column</varname> (string)</title>
 		<para>
-		Name of column containing the received socket information (IP:port)
+		Name of database column containing the received socket information (IP:port)
 		for the REGISTER message.
 		</para>
 		<para>
@@ -391,7 +391,7 @@ modparam("usrloc", "socket_column", "socket")
 	<section>
 		<title><varname>path_column</varname> (string)</title>
 		<para>
-		Name of column containing the Path header.
+		Name of database column containing the Path header.
 		</para>
 		<para>
 		<emphasis>
@@ -411,7 +411,7 @@ modparam("usrloc", "path_column", "path")
 	<section>
 		<title><varname>ruid_column</varname> (string)</title>
 		<para>
-		Name of column containing the record unique id.
+		Name of database column containing the Kamailio record unique id.
 		</para>
 		<para>
 		<emphasis>
@@ -431,7 +431,8 @@ modparam("usrloc", "ruid_column", "myruid")
 	<section>
 		<title><varname>instance_column</varname> (string)</title>
 		<para>
-		Name of column containing the SIP instace (GRUU - RFC5627).
+		Name of database column containing the SIP instance ID (GRUU - RFC5627).
+		This is a unique device identifier - UUID.
 		</para>
 		<para>
 		<emphasis>
@@ -495,7 +496,7 @@ modparam("usrloc", "desc_time_order", 1)
 	<section>
 		<title><varname>timer_interval</varname> (integer)</title>
 		<para>
-		Number of seconds between two timer runs. The module uses timer to 
+		Number of seconds between two timer runs. The module uses a timer to 
 		delete expired contacts, synchronize with database and other tasks, 
 		that need to be run periodically.
 		</para>
@@ -537,11 +538,11 @@ modparam("usrloc", "db_url", "&exampledb;")
 	<section>
 		<title><varname>db_mode</varname> (integer)</title>
 		<para>
-		The usrloc module can utilize database for persistent contact storage.
-		If you use database, your contacts will survive machine restarts or 
-		SW crashes. The disadvantage is that accessing database can be very 
-		time consuming. Therefore, usrloc module implements four database 
-		accessing modes:
+		The usrloc module can utilize a database for persistent contact storage.
+		If a database is used, the location database (contacts)  will survive 
+		machine restarts or software crashes. The disadvantage is that accessing 
+		a database can be very time consuming. Therefore, usrloc module implements
+		four database accessing modes:
 		</para>
 		<itemizedlist>
 		<listitem>
