@@ -487,7 +487,7 @@ int msrp_parse_uri(char *start, int len, msrp_uri_t *uri)
 	if(uri->host.len<=0)
 	{
 		LM_ERR("bad host part in [%.*s] at [%ld]\n",
-				len, start, s - start);
+				len, start, (long)(s - start));
 		goto error;
 	}
 	if(uri->port.len <= 0)
@@ -498,7 +498,7 @@ int msrp_parse_uri(char *start, int len, msrp_uri_t *uri)
 		if(uri->port_no<1 || uri->port_no > ((1<<16)-1))
 		{
 			LM_ERR("bad port part in [%.*s] at [%ld]\n",
-					len, start, s - start);
+					len, start, (long)(s - start));
 			goto error;
 		}
 	}
