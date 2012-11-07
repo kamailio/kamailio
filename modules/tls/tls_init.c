@@ -295,7 +295,15 @@ static void* ser_realloc(void *ptr, size_t size)
 
 static void ser_free(void *ptr)
 {
-	shm_free(ptr);
+	/* The memory functions provided to openssl needs to behave like standard
+	 * memory functions, i.e. free(). Therefore, ser_free must accept NULL
+	 * pointers, see: http://openssl.6102.n7.nabble.com/Custom-free-routine-is-invoked-with-NULL-argument-in-openssl-1-0-1-td25937.html
+	 * As shm_free() aborts on null pointers, we have to check for null pointer
+	 * here in the wrapper function.
+	 */
+	if (ptr) {
+		shm_free(ptr);
+	}
 }
 
 
