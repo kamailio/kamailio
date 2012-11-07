@@ -1337,6 +1337,7 @@ sca_call_info_ack_from_handler( sip_msg_t *msg, str *from_aor, str *to_aor )
     struct to_body	*from;
     struct to_body	*to;
     int			slot_idx = -1;
+    int			state = SCA_APPEARANCE_STATE_IDLE;
 
 LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_ack_from_handler" );
 
@@ -1358,11 +1359,37 @@ LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_ack_from_handler" );
 		    STR_FMT( &msg->callid->body ), STR_FMT( &from->tag_value ));
 	    goto done;
 	}
+	
+	/*
+	 * Polycom's music-on-hold implementation uses an INVITE with
+	 * an empty body to get the remote party's SDP info, then INVITEs
+	 * a pre-defined URI on a media server, using the remote party's
+	 * SDP as the INVITE body. the media server streams hold music to
+	 * the remote party.
+	 *
+	 * because the INVITE that triggers the hold  in this case doesn't
+	 * have an SDP body, our check for call hold in the INVITE returns
+	 * false. instead, the ACK from the party placing the call on hold
+	 * includes the sendonly SDP. detect that here, and send NOTIFYs
+	 * as necessary.
+	 */
+	if ( sca_call_is_held( msg )) {
+	    app->state = state = SCA_APPEARANCE_STATE_HELD;
+
+	    /* can't send NOTIFYs until we unlock the slot below */
+	}
     }
 
 done:
     if ( slot_idx >= 0 ) {
 	sca_hash_table_unlock_index( sca->appearances, slot_idx );
+
+	if ( state != SCA_APPEARANCE_STATE_IDLE ) {
+	    if ( sca_notify_call_info_subscribers( sca, from_aor ) < 0 ) {
+		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on INVITE",
+			STR_FMT( from_aor ));
+	    }
+	}
     }
 }
 
