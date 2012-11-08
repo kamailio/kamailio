@@ -2320,6 +2320,8 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 						LM_ERR("out of pkg memory\n");
 						FORCE_RTP_PROXY_RET (-1);
 					}
+					/* Only execute once */
+					autobridge_ipv4v6 = 0;
 				}
 				if (append_opts(&opts, '6') == -1) {
 					LM_ERR("out of pkg memory\n");
@@ -2337,6 +2339,8 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 					/* We need to update the pointers and the length here, it has changed. */
 					v[1].iov_base = opts.s.s;
 					v[1].iov_len = opts.oidx;
+					/* Only execute once */
+					autobridge_ipv4v6 = 0;
 				}
 			}
 
