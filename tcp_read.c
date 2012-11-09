@@ -934,14 +934,16 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 					if(r->pos - r->start < 10) {
 						LM_ERR("weird situation when reading MSRP frame"
 								" - continue reading\n");
+						/* *p=='\n' */
+						r->state=H_MSRP_BODY_LF;
 						p++;
-						r->state=H_MSRP_BODY;
 						break;
 					}
 					if(*(p-1)!='\r') {
 						/* not ending in '\r\n' - not end-line */
+						/* *p=='\n' */
+						r->state=H_MSRP_BODY_LF;
 						p++;
-						r->state=H_MSRP_BODY;
 						break;
 					}
 					/* locate transaction id in first line
@@ -956,16 +958,18 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 							p - 1 /*\r*/ - 1 /* '+'|'#'|'$' */ - mtransid.len,
 							mtransid.len)!=0) {
 						/* no match on session id - not end-line */
+						/* *p=='\n' */
+						r->state=H_MSRP_BODY_LF;
 						p++;
-						r->state=H_MSRP_BODY;
 						break;
 					}
 					if(memcmp(p - 1 /*\r*/ - 1 /* '+'|'#'|'$' */ - mtransid.len
 								- 7 /* 7 x '-' */ - 1 /* '\n' */, "\n-------",
 								8)!=0) {
 						/* no match on "\n-------" - not end-line */
+						/* *p=='\n' */
+						r->state=H_MSRP_BODY_LF;
 						p++;
-						r->state=H_MSRP_BODY;
 						break;
 					}
 					r->state=H_MSRP_FINISH;
