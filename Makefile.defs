@@ -1186,7 +1186,7 @@ ifeq	($(ARCH), arm)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-O9 -funroll-loops -fsigned-char $(PROFILE)
+				CFLAGS=-marm -march=armv5t -O9 -funroll-loops -fsigned-char $(PROFILE)
 			#if gcc 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+,$(CC_SHORTVER))))
 					CFLAGS+= -ftree-vectorize -fno-strict-overflow
