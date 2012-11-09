@@ -5,8 +5,10 @@
 
 #include "../usrloc/usrloc.h"
 #include "../../timer.h"
+#include "../../timer_proc.h"
 
 #include "sca.h"
+#include "sca_db.h"
 #include "sca_call_info.h"
 #include "sca_rpc.h"
 #include "sca_subscribe.h"
@@ -20,12 +22,14 @@ sca_mod			*sca;
 
 
 /* EXTERNAL API */
+db_func_t		dbf;	/* db api */
 usrloc_api_t		ul;	/* usrloc callbacks */
 struct tm_binds		tmb;	/* tm functions for sending messages */
 sl_api_t		slb;	/* sl callback, function for getting to-tag */
 
 /* PROTOTYPES */
 static int		sca_mod_init( void );
+static int		sca_child_init( int );
 static int		sca_bind_usrloc( usrloc_api_t *, sca_mod ** );
 static int		sca_set_config( sca_mod * );
 
@@ -65,6 +69,10 @@ static rpc_export_t	sca_rpc[] = {
 /* EXPORTED PARAMETERS */
 str			domain = STR_NULL;
 str			outbound_proxy = STR_NULL;
+str			db_url = STR_STATIC_INIT( DEFAULT_DB_URL );
+str			db_subs_table = STR_STATIC_INIT( "sca_subscriptions" );
+str			db_state_table = STR_STATIC_INIT( "sca_state" );
+int			db_update_interval = 300;
 int			hash_table_size = -1;
 int			call_info_max_expires = 3600;
 int			line_seize_max_expires = 15;
@@ -73,6 +81,10 @@ int			purge_expired_interval = 120;
 static param_export_t	params[] = {
     { "domain",			STR_PARAM,	&domain.s },
     { "outbound_proxy",		STR_PARAM,	&outbound_proxy.s },
+    { "db_url",			STR_PARAM,	&db_url.s },
+    { "subs_table",		STR_PARAM,	&db_subs_table.s },
+    { "state_table",		STR_PARAM,	&db_state_table.s },
+    { "db_update_interval",	INT_PARAM,	&db_update_interval },
     { "hash_table_size",	INT_PARAM,	&hash_table_size },
     { "call_info_max_expires",	INT_PARAM,	&call_info_max_expires },
     { "line_seize_max_expires", INT_PARAM,	&line_seize_max_expires },
@@ -90,7 +102,7 @@ struct module_exports	exports = {
     NULL,		/* response handling function */
     NULL,		/* destructor function */
     NULL,		/* oncancel function */
-    NULL,		/* per-child initialization function */
+    sca_child_init,	/* per-child initialization function */
 };
 
 /*
@@ -175,6 +187,40 @@ sca_bind_sl( sca_mod *scam, sl_api_t *sl_api )
 }
 
     static int
+sca_bind_srdb1( sca_mod *scam, db_func_t *db_api )
+{
+    db1_con_t	*db_con;
+
+    if ( db_bind_mod( scam->cfg->db_url, db_api ) != 0 ) {
+	LM_ERR( "Failed to initialize required DB API" );
+	return( -1 );
+    }
+    scam->db_api = db_api;
+
+    if ( !DB_CAPABILITY( (*db_api), DB_CAP_ALL )) {
+	LM_ERR( "Selected database %.*s lacks required capabilities",
+		STR_FMT( scam->cfg->db_url ));
+	return( -1 );
+    }
+
+    /* ensure database exists and table schemas are correct */
+    db_con = db_api->init( scam->cfg->db_url );
+    if ( db_con == NULL ) {
+	LM_ERR( "sca_bind_srdb1: failed to connect to DB %.*s",
+		STR_FMT( scam->cfg->db_url ));
+	return( -1 );
+    }
+
+    /* XXX table versions check */
+
+    /* DB and tables are OK, close DB handle. reopen in each child. */
+    db_api->close( db_con );
+    db_con = NULL;
+
+    return( 0 );
+}
+
+    static int
 sca_set_config( sca_mod *scam )
 {
     scam->cfg = (sca_config *)shm_malloc( sizeof( sca_config ));
@@ -195,15 +241,66 @@ sca_set_config( sca_mod *scam )
 	scam->cfg->outbound_proxy = &outbound_proxy;
     }
 
+    if ( db_url.s == NULL ) {
+	LM_ERR( "sca_set_config: db_url must be set!" );
+	return( -1 );
+    }
+    db_url.len = strlen( db_url.s );
+    scam->cfg->db_url = &db_url;
+
+    if ( db_subs_table.s == NULL ) {
+	LM_ERR( "sca_set_config: subs_table must be set!" );
+	return( -1 );
+    }
+    db_subs_table.len = strlen( db_subs_table.s );
+    scam->cfg->subs_table = &db_subs_table;
+
+    if ( db_state_table.s == NULL ) {
+	LM_ERR( "sca_set_config: state_table must be set!" );
+	return( -1 );
+    }
+    db_state_table.len = strlen( db_state_table.s );
+    scam->cfg->state_table = &db_state_table;
+
     if ( hash_table_size > 0 ) {
 	scam->cfg->hash_table_size = 1 << hash_table_size;
     } else {
 	scam->cfg->hash_table_size = 512;
     }
 
+    scam->cfg->db_update_interval = db_update_interval;
     scam->cfg->call_info_max_expires = call_info_max_expires;
     scam->cfg->line_seize_max_expires = line_seize_max_expires;
     scam->cfg->purge_expired_interval = purge_expired_interval;
+
+    return( 0 );
+}
+
+    static int
+sca_child_init( int rank )
+{
+    if ( rank == PROC_INIT || rank == PROC_TCP_MAIN ) {
+	return( 0 );
+    }
+
+    if ( rank == PROC_MAIN ) {
+	if ( fork_dummy_timer( PROC_TIMER, "SCA DB SYNC PROCESS",
+			    0, /* we don't need sockets, just writing to DB */
+			    sca_subscription_db_update, /* timer callback */
+			    NULL, /* parameter passed to callback */
+			    sca->cfg->db_update_interval ) < 0 ) {
+	    LM_ERR( "sca_child_init: failed to register subscription DB "
+		    "sync timer process" );
+	    return( -1 );
+	}
+
+	return( 0 );
+    }
+
+    if ( sca->db_api == NULL || sca->db_api->init == NULL ) {
+	LM_CRIT( "sca_child_init: DB API not loaded!" );
+	return( -1 );
+    }
 
     return( 0 );
 }
@@ -218,8 +315,18 @@ sca_mod_init( void )
     }
     memset( sca, 0, sizeof( sca_mod ));
 
+    if ( sca_set_config( sca ) != 0 ) {
+	LM_ERR( "Failed to set configuration" );
+	goto error;
+    }
+
     if ( rpc_register_array( sca_rpc ) != 0 ) {
 	LM_ERR( "Failed to register RPC commands" );
+	return( -1 );
+    }
+
+    if ( sca_bind_srdb1( sca, &dbf ) != 0 ) {
+	LM_ERR( "Failed to initialize required DB API" );
 	return( -1 );
     }
 
@@ -239,10 +346,6 @@ sca_mod_init( void )
 	return( -1 );
     }
     
-    if ( sca_set_config( sca ) != 0 ) {
-	LM_ERR( "Failed to set configuration" );
-	goto error;
-    }
     if ( sca_hash_table_create( &sca->subscriptions,
 			sca->cfg->hash_table_size ) != 0 ) {
 	LM_ERR( "Failed to create subscriptions hash table" );
@@ -257,6 +360,14 @@ sca_mod_init( void )
     /* start timer to clear expired subscriptions */
     register_timer( sca_subscription_purge_expired, sca,
 		    sca->cfg->purge_expired_interval );
+
+    /*
+     * register separate timer process to write subscriptions to DB.
+     * move to 3.3+ timer API (register_basic_timer) at some point.
+     *
+     * timer process forks in sca_child_init, above.
+     */
+    register_dummy_timers( 1 );
 
     LM_INFO( "initialized" );
 

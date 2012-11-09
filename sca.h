@@ -1,5 +1,6 @@
 #include "sca_common.h"
 
+#include "sca_db.h"
 #include "sca_hash.h"
 
 #ifndef SCA_H
@@ -8,6 +9,10 @@
 struct _sca_config {
     str		*domain;
     str		*outbound_proxy;
+    str		*db_url;
+    str		*subs_table;
+    str		*state_table;
+    int		db_update_interval;
     int		hash_table_size;
     int		call_info_max_expires;
     int		line_seize_max_expires;
@@ -20,6 +25,9 @@ struct _sca_mod {
     sca_hash_table	*subscriptions;
     sca_hash_table	*appearances;
 
+    sca_db		*db;
+
+    db_func_t		*db_api;
     struct tm_binds	*tm_api;
     sl_api_t		*sl_api;
 };
