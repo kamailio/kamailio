@@ -499,7 +499,10 @@ event_route[msrp:frame-in] {
                 if($sht(msrp=>$var(sessid)::srcaddr) == $null)
                 {
                         # one more hop, but we don't have address in htable
-                        msrp_reply("481", "Session-does-not-exist");
+                        if ($msrp(method)!="REPORT")
+                        {
+                                msrp_reply("481", "Session-does-not-exist");
+                        }
                         exit;
                 }
                 else if($msrp(method)!="REPORT")
