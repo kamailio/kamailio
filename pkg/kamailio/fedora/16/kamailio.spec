@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     3.4.0
-%define rel     dev4%{dist}
+%define rel     dev5%{dist}
 
 
 
@@ -990,6 +990,8 @@ fi
 
 
 %changelog
+* Fri Nov 9 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to dev5
 * Tue Oct 30 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added xhttp_pi module to RPM builds
 * Fri Oct 20 2012 Peter Dunkley <peter@dunkley.me.uk>
