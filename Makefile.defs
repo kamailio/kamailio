@@ -162,7 +162,7 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 VERSION = 3
 PATCHLEVEL = 4
 SUBLEVEL =  0
-EXTRAVERSION = -dev4
+EXTRAVERSION = -dev5
 
 # memory debugger switcher
 # 0 - off (release mode)
