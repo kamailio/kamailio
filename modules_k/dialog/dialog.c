@@ -1585,7 +1585,7 @@ static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
 	dlg_cell_t * dlg = NULL;
 	str rpc_extra_hdrs = {NULL,0};
 
-	if (rpc->scan(c, "ddS", &h_entry, &h_id, &rpc_extra_hdrs) < 2) return;
+	if (rpc->scan(c, "dd*S", &h_entry, &h_id, &rpc_extra_hdrs) < 2) return;
 
 	dlg = dlg_lookup(h_entry, h_id);
 	if(dlg){
@@ -1622,7 +1622,7 @@ static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
 	str to = {NULL,0};
 	str op = {NULL,0};
 
-	if (rpc->scan(c, "SSS", &from, &to, &op) < 2) return;
+	if (rpc->scan(c, "SS*S", &from, &to, &op) < 2) return;
 
 	dlg_bridge(&from, &to, &op);
 }
