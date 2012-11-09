@@ -56,7 +56,7 @@ xcaps_auid_list_t xcaps_auid_list[] = {
 			'/', XCAP_CAPS },
 	{ { "org.openmobilealliance.user-profile", 35},
 			'/', USER_PROFILE },
-	{ { "org.openmobilealliance.pres-content", 15},
+	{ { "org.openmobilealliance.pres-content", 35},
 			'/', PRES_CONTENT },
 	{ { "org.openmobilealliance.search", 29},
 			'?', SEARCH },
