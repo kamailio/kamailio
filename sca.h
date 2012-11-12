@@ -25,8 +25,6 @@ struct _sca_mod {
     sca_hash_table	*subscriptions;
     sca_hash_table	*appearances;
 
-    sca_db		*db;
-
     db_func_t		*db_api;
     struct tm_binds	*tm_api;
     sl_api_t		*sl_api;
