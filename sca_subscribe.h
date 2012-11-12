@@ -44,6 +44,9 @@ extern const str 	SCA_METHOD_SUBSCRIBE;
 
 int	sca_handle_subscribe( sip_msg_t *, char *, char * );
 
+int	sca_subscription_from_db_result( db1_res_t *, sca_subscription * );
+int	sca_subscriptions_restore_from_db( sca_mod * );
+void	sca_subscription_db_update( unsigned, void * );
 void	sca_subscription_purge_expired( unsigned int, void * );
 void	sca_subscription_state_to_str( int, str * );
 

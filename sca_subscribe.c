@@ -17,6 +17,10 @@
 extern int	errno;
 
 
+static int sca_subscription_copy_subscription_key( sca_subscription *, str * );
+int	   sca_subscription_save_unsafe( sca_mod *, sca_subscription *, int );
+void	   sca_subscription_print( void * );
+
 const str SCA_METHOD_SUBSCRIBE = STR_STATIC_INIT( "SUBSCRIBE" );
 
 struct sca_sub_state_table {
@@ -131,6 +135,150 @@ sca_subscription_purge_expired( unsigned int ticks, void *param )
 
 	sca_hash_table_unlock_index( ht, i );
     }
+}
+
+    int
+sca_subscription_from_db_row_values( db_val_t *values, sca_subscription *sub )
+{
+    assert( values != NULL );
+    assert( sub != NULL );
+
+    /* XXX condense to loop with preprocessor macros when there's time */
+    sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_SUBSCRIBER_COL,
+						values, &sub->subscriber );
+    sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_AOR_COL,
+						values, &sub->target_aor );
+    sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_EVENT_COL, values,
+						&sub->event );
+    sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_EXPIRES_COL, values,
+						&sub->expires );
+    sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_STATE_COL, values,
+						&sub->state );
+    sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_APP_IDX_COL, values,
+						&sub->index );
+    sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_CALL_ID_COL, values,
+						&sub->dialog.call_id );
+    sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_FROM_TAG_COL, values,
+						&sub->dialog.from_tag );
+    sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_TO_TAG_COL, values,
+						&sub->dialog.to_tag );
+    sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_NOTIFY_CSEQ_COL,
+					    values, &sub->dialog.notify_cseq );
+    sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_SUBSCRIBE_CSEQ_COL,
+					values, &sub->dialog.subscribe_cseq );
+
+    return( 0 );
+}
+
+    int
+sca_subscriptions_restore_from_db( sca_mod *scam )
+{
+    db1_con_t		*db_con;
+    db_key_t		result_columns[ SCA_DB_SUBSCRIPTIONS_NUM_COLUMNS ];
+    db1_res_t		*result = NULL;
+    db_row_t		*rows = NULL;
+    db_val_t		*row_values = NULL;
+    sca_subscription	sub;
+    str			sub_key = STR_NULL;
+    str			**column_names;
+    int			num_rows;
+    int			i;
+    int			idx;
+    int			rc = -1;
+    time_t		now = time( NULL );
+
+    db_con = scam->db_api->init( scam->cfg->db_url );
+    if ( db_con == NULL ) {
+	LM_ERR( "sca_subscriptions_restore_from_db: failed to connect "
+		"to DB %.*s", STR_FMT( scam->cfg->db_url ));
+	return( -1 );
+    }
+
+    scam->db_api->use_table( db_con, scam->cfg->subs_table );
+
+    column_names = sca_db_subscriptions_columns();
+    if ( column_names == NULL ) {
+	LM_ERR( "sca_subscriptions_restore_from_db: failed to get "
+		"column names for SCA subscriptions table" );
+	goto done;
+    }
+
+    for ( i = 0; i < SCA_DB_SUBSCRIPTIONS_NUM_COLUMNS; i++ ) {
+	result_columns[ i ] = column_names[ i ];
+    }
+
+    if ( scam->db_api->query( db_con, NULL, NULL, NULL, result_columns,
+				0, SCA_DB_SUBSCRIPTIONS_NUM_COLUMNS,
+				0, &result ) < 0 ) {
+	LM_ERR( "sca_subscriptions_restore_from_db: query failed" );
+	goto done;
+    }
+
+    rows = RES_ROWS( result );
+    num_rows = RES_ROW_N( result );
+
+    for ( i = 0; i < num_rows; i++ ) {
+	memset( &sub, 0, sizeof( sca_subscription ));
+
+	row_values = ROW_VALUES( rows + i );
+
+	sub.expires = row_values[ SCA_DB_SUBS_EXPIRES_COL ].val.time_val;
+	if ( sub.expires < now ) {
+	    continue;
+	}
+
+	if ( sca_subscription_from_db_row_values( row_values, &sub ) < 0 ) {
+	    LM_ERR( "sca_subscriptions_restore_from_db: skipping bad result "
+		    "at index %d", i );
+	    continue;
+	}
+
+	if ( sca_subscription_copy_subscription_key( &sub, &sub_key ) < 0 ) {
+	    LM_ERR( "sca_subscriptions_restore_from_db: failed to copy "
+		    "subscription key %.*s%s", STR_FMT( &sub.subscriber ),
+		    sca_event_name_from_type( sub.event ));
+	    continue;
+	}
+
+	idx = sca_hash_table_index_for_key( sca->subscriptions, &sub_key );
+	pkg_free( sub_key.s );
+
+	sca_hash_table_lock_index( sca->subscriptions, idx );
+
+	if ( sca_subscription_save_unsafe( scam, &sub, idx ) < 0 ) {
+	    LM_ERR( "sca_subscriptions_restore_from_db: failed to restore "
+		    "%s subscription from %.*s to the hash table",
+		    sca_event_name_from_type( sub.event ),
+		    STR_FMT( &sub.subscriber ));
+
+	    /* fall through to unlock index */
+	}
+
+	sca_hash_table_unlock_index( sca->subscriptions, idx );
+    }
+
+    scam->db_api->free_result( db_con, result );
+
+    /* clear all records from table, let timer process repopulate it */
+    if ( scam->db_api->delete( db_con, NULL, NULL, NULL, 0 ) < 0 ) {
+	LM_ERR( "sca_subscriptions_restore_from_db: failed to delete "
+		"records from table after restoring" );
+	goto done;
+    }
+
+    rc = 0;
+
+done:
+    scam->db_api->close( db_con );
+    db_con = NULL;
+
+    return( rc );
+}
+
+    void
+sca_subscription_db_update( unsigned int ticks, void *param )
+{
+LM_INFO( "ADMORTEN DEBUG: sca_subscription_db_update tick" );
 }
 
     sca_subscription *
@@ -252,14 +400,18 @@ sca_subscription_print( void *value )
 {
     sca_subscription		*sub = (sca_subscription *)value;
 
-    LM_INFO( "%.*s %s %.*s, expires: %ld, index: %d, dialog %.*s;%.*s;%.*s",
+    LM_INFO( "%.*s %s (%d) %.*s, expires: %ld, index: %d, "
+	     "dialog %.*s;%.*s;%.*s, notify_cseq: %d, subscribe_cseq: %d",
 		STR_FMT( &sub->target_aor ),
 		sca_event_name_from_type( sub->event ),
+		sub->event,
 		STR_FMT( &sub->subscriber ),
 		sub->expires, sub->index,
 		STR_FMT( &sub->dialog.call_id ),
 		STR_FMT( &sub->dialog.from_tag ),
-		STR_FMT( &sub->dialog.to_tag ));
+		STR_FMT( &sub->dialog.to_tag ),
+		sub->dialog.notify_cseq,
+		sub->dialog.subscribe_cseq );
 }
 
     int
@@ -284,6 +436,11 @@ sca_subscription_save_unsafe( sca_mod *scam, sca_subscription *sub,
     }
     if ( sub->index != SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) {
 	new_sub->index = sub->index;
+    }
+
+    /* true when restoring subscription from DB */
+    if ( sub->expires != 0 ) {
+	new_sub->expires = sub->expires;
     }
 
     if ( sca_appearance_register( scam, &sub->target_aor ) < 0 ) {

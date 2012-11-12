@@ -357,6 +357,8 @@ sca_mod_init( void )
 	goto error;
     }
 
+    sca_subscriptions_restore_from_db( sca );
+
     /* start timer to clear expired subscriptions */
     register_timer( sca_subscription_purge_expired, sca,
 		    sca->cfg->purge_expired_interval );
