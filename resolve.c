@@ -1448,8 +1448,142 @@ end:
 	return 0;
 }
 
+/* Resolves SRV if no naptr found. 
+ * It reuse dns_pref values and according that resolves supported protocols. 
+ * If dns_pref are equal then it use udp,tcp,tls,sctp order.
+ * returns: hostent struct & *port filled with the port from the SRV record;
+ *  0 on error
+ */
 
+struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port, char* proto)
+{
+	struct dns_srv_proto_t {
+		char proto;
+		int proto_pref;
+	} srv_proto_list[PROTO_LAST], tmp_srv_element;
+	struct hostent* he;
+	str srv_name;
+	static char tmp_srv[MAX_DNS_NAME]; /* tmp. buff. for SRV lookups */
+	int len;
+	unsigned char i,j,max,default_order=0,list_len=0;
+	/* init variables */
+	he=0;
+	len=0;
 
+	if ((name->len+SRV_MAX_PREFIX_LEN+1)>MAX_DNS_NAME){
+		LOG(L_WARN, "WARNING: no_naptr_srv_sip_resolvehost: domain name too long"
+						" (%d), unable to perform SRV lookup\n", name->len);
+	} else {
+		/* if proto available, then add only the forced protocol to the list */
+		if (proto && *proto==0){
+			srv_proto_list[0].proto=*proto;
+			list_len=1;
+		} else {
+	
+			/*get protocols and preference scores, and add availble protocol(s) and score(s) to the list*/
+			for (i=PROTO_UDP; i<PROTO_LAST;i++) {
+				tmp_srv_element.proto_pref = proto_pref_score(i);
+				/* if -1 so disabled continue with next protocol*/
+				if (naptr_proto_supported(i) == 0 ) {
+					continue;
+				} else {
+					srv_proto_list[i-1].proto_pref=tmp_srv_element.proto_pref;
+					srv_proto_list[i-1].proto=i;
+					list_len++;
+				}
+			};
+
+			/* if all protocol prefence scores equal, then set the perference to default values: udp,tcp,tls,sctp */
+			for (i=1; i<list_len;i++) {
+				if(srv_proto_list[0].proto_pref!=srv_proto_list[i].proto_pref){
+					default_order=0;
+				}
+			}
+			if (default_order){
+				for (i=0; i<list_len;i++) {
+					switch ( srv_proto_list[i].proto) {
+						case PROTO_UDP:
+							srv_proto_list[i].proto_pref=4;
+							break;
+						case PROTO_TCP:
+							srv_proto_list[i].proto_pref=3;
+							break;
+						case PROTO_TLS:
+							srv_proto_list[i].proto_pref=2;
+							break;
+						case PROTO_SCTP:
+							srv_proto_list[i].proto_pref=1;
+							break;
+					}
+				}
+			}
+
+			/* sorting the list */
+			for (i=0;i<list_len-1;i++) {
+				max=i;
+				for (j=i+1;j<list_len;j++) {
+					if (srv_proto_list[j].proto_pref>srv_proto_list[max].proto_pref) { 
+						max=j; 
+					}
+				}
+				if (i!=max) {
+					tmp_srv_element=srv_proto_list[i];
+					srv_proto_list[i]=srv_proto_list[max];
+					srv_proto_list[max]=tmp_srv_element;
+				}
+			}
+
+		}
+		/* looping on the ordered list until we found a protocol what has srv record */
+		for (i=0; i<list_len;i++) {	
+			switch (srv_proto_list[i].proto) {
+				case PROTO_NONE: /* no proto specified, use udp */
+					if (proto)
+						*proto=PROTO_UDP;
+					/* no break */
+				case PROTO_UDP:
+					memcpy(tmp_srv, SRV_UDP_PREFIX, SRV_UDP_PREFIX_LEN);
+					memcpy(tmp_srv+SRV_UDP_PREFIX_LEN, name->s, name->len);
+					tmp_srv[SRV_UDP_PREFIX_LEN + name->len] = '\0';
+					len=SRV_UDP_PREFIX_LEN + name->len;
+					break;
+				case PROTO_TCP:
+					memcpy(tmp_srv, SRV_TCP_PREFIX, SRV_TCP_PREFIX_LEN);
+					memcpy(tmp_srv+SRV_TCP_PREFIX_LEN, name->s, name->len);
+					tmp_srv[SRV_TCP_PREFIX_LEN + name->len] = '\0';
+					len=SRV_TCP_PREFIX_LEN + name->len;
+					break;
+				case PROTO_TLS:
+					memcpy(tmp_srv, SRV_TLS_PREFIX, SRV_TLS_PREFIX_LEN);
+					memcpy(tmp_srv+SRV_TLS_PREFIX_LEN, name->s, name->len);
+					tmp_srv[SRV_TLS_PREFIX_LEN + name->len] = '\0';
+					len=SRV_TLS_PREFIX_LEN + name->len;
+					break;
+				case PROTO_SCTP:
+					memcpy(tmp_srv, SRV_SCTP_PREFIX, SRV_SCTP_PREFIX_LEN);
+					memcpy(tmp_srv+SRV_SCTP_PREFIX_LEN, name->s, name->len);
+					tmp_srv[SRV_SCTP_PREFIX_LEN + name->len] = '\0';
+					len=SRV_SCTP_PREFIX_LEN + name->len;
+					break;
+				default:
+					LOG(L_CRIT, "BUG: sip_resolvehost: unknown proto %d\n",
+							(int)srv_proto_list[i].proto);
+					return 0;
+			}
+			/* set default port */
+			if ((port)&&(*port==0)){
+				*port=(srv_proto_list[i].proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we don't find another */
+			}
+			srv_name.s=tmp_srv;
+			srv_name.len=len;
+			if ((he=dns_srv_get_he(&srv_name, port, dns_flags))!=0) {
+				return he;
+			}
+		}
+	}
+	return 0;
+
+} 
 
 /* internal sip naptr resolver function: resolves a host name trying:
  * - NAPTR lookup if the address is not an ip and *proto==0 and *port==0.
@@ -1515,8 +1649,8 @@ struct hostent* naptr_sip_resolvehost(str* name,  unsigned short* port,
 				" trying SRV lookup...\n", name->len, name->s);
 #endif
 	}
-	/* fallback to normal srv lookup */
-	he=srv_sip_resolvehost(name, 0, port, proto, 0, 0);
+	/* fallback to srv lookup */
+	no_naptr_srv_sip_resolvehost(name,port,proto);
 end:
 	if (naptr_head)
 		free_rdata_list(naptr_head);
