@@ -2890,7 +2890,7 @@ struct hostent* dns_naptr_sip_resolvehost(str* name, unsigned short* port,
 		dns_hash_put(e);
 	}
 naptr_not_found:
-	return dns_srv_sip_resolvehost(name, port, proto);
+	return no_naptr_srv_sip_resolvehost(name,port,proto);
 }
 #endif /* USE_NAPTR */
 
