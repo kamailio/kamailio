@@ -186,17 +186,18 @@ Chapter 1. Admin Guide
    1.1. PATH support
    1.2. GRUU Support
 
-   The module contains REGISTER processing logic.
+   The module contains REGISTER processing logic. The actual location
+   database is managed by the USRLOC module.
 
 1.1. PATH support
 
-   Register module includes Path support (according to RFC 3327) for usage
-   in registrars and home-proxies.
+   The Register module includes Path support (according to RFC 3327) for
+   usage in registrars and home-proxies.
 
-   A call to save(...) stores, if path-support is enabled in the
-   registrar-module, the values of the Path Header(s) along with the
-   contact into usrloc. There are three modes regarding the reply to a
-   REGISTER including one or more Path HFs:
+   If path support is enabled in the registrar module, a call to save(...)
+   stores the values of the Path Header(s) along with the contact into
+   usrloc. There are three modes regarding the reply to a REGISTER
+   including one or more Path HFs:
      * off - stores the value of the Path headers into usrloc without
        passing it back to the UAC in the reply.
      * lazy - stores the Path header and passes it back to the UAC if
@@ -348,13 +349,13 @@ modparam("registrar", "default_q", 1000)
 
 3.6. realm_prefix (string)
 
-   Prefix to be automatically strip from realm. As an alternative to SRV
-   records (not all SIP clients support SRV lookup), a subdomain of the
-   master domain can be defined for SIP purposes (like sip.mydomain.net
-   pointing to same IP address as the SRV record for mydomain.net). By
-   ignoring the realm_prefix "sip.", at registration, sip.mydomain.net
-   will be equivalent to mydomain.net.This parameter can be modified via
-   ser config framework.
+   Prefix to be automatically stripped from realm. As an alternative to
+   SRV records (not all SIP clients support SRV lookup), a subdomain of
+   the master domain can be defined for SIP purposes (like
+   sip.mydomain.net pointing to same IP address as the SRV record for
+   mydomain.net). By ignoring the realm_prefix "sip.", at registration,
+   sip.mydomain.net will be equivalent to mydomain.net.This parameter can
+   be modified via the Kamailio config framework.
 
    Default value is NULL (none).
 
@@ -372,7 +373,7 @@ modparam("registrar", "realm_prefix", "sip.")
    structure and can be later used by tm for forking. If the parameter is
    set to 0, only Request-URI will be overwritten with the highest-q rated
    contact and the rest will be left unprocessed. This parameter can be
-   modified via ser config framework.
+   modified via Kamailio config framework.
 
    Default value is 1.
 
@@ -391,7 +392,7 @@ modparam("registrar", "append_branches", 0)
    If set to 1 then AOR comparison and also storing will be case
    sensitive, if set to 0 then AOR comparison and storing will be case
    insensitive--This is recommended. This parameter can be modified via
-   ser config framework.
+   Kamailio config framework.
 
    Default value is 0.
 
@@ -436,7 +437,8 @@ modparam("registrar", "received_param", "rcv")
 
    The parameter can be used to limit the number of contacts per AOR
    (Address of Record) in the user location database. Value 0 disables the
-   check. This parameter can be modified via ser config framework.
+   check. This parameter can be modified via the Kamailio config
+   framework.
 
    Default value is 0.
 
@@ -452,7 +454,7 @@ modparam("registrar", "max_contacts", 10)
    It can, for example, happen when the max_contacts parameter is set and
    the processing of REGISTER request would exceed the limit. In this case
    the registrar would generate "503 Service Unavailable" response. This
-   parameter can be modified via ser config framework.
+   parameter can be modified via the Kamailio config framework.
 
    If you want to add the Retry-After header field in 5xx replies, set
    this parameter to a value grater than zero (0 means do not add the
@@ -471,7 +473,7 @@ modparam("registrar", "retry_after", 30)
    for a header which contains a socket description (IP:port). This socket
    info will be stored by register instead of the received socket info.
 
-   This make sens only in multiple replicated servers scenarios.
+   This makes sense only in multiple replicated servers scenarios.
 
    Default value is -1 (no flag).
 
@@ -486,7 +488,7 @@ modparam("registrar", "sock_flag", 18)
    the received socket info. The header will be read only if the flag
    sock_flag is set.
 
-   This make sens only in multiple replicated servers scenarios.
+   This makes sense only in multiple replicated servers scenarios.
 
    Default value is NULL.
 
