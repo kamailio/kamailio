@@ -3,12 +3,17 @@
 #include "sca_db.h"
 #include "sca_subscribe.h"
 
-const char	    *sca_subscriptions_column_names[] = {
-			"subscriber", "aor", "event", "expires", "state",
-			"app_idx", "call_id", "from_tag", "to_tag",
-			"notify_cseq", "subscribe_cseq",
-			NULL
-		    };
+const str  SCA_DB_SUBSCRIBER_COL_NAME = STR_STATIC_INIT( "subscriber" );
+const str  SCA_DB_AOR_COL_NAME  = STR_STATIC_INIT( "aor" );
+const str  SCA_DB_EVENT_COL_NAME = STR_STATIC_INIT( "event" );
+const str  SCA_DB_EXPIRES_COL_NAME = STR_STATIC_INIT( "expires" );
+const str  SCA_DB_STATE_COL_NAME = STR_STATIC_INIT( "state" );
+const str  SCA_DB_APP_IDX_COL_NAME = STR_STATIC_INIT( "app_idx" );
+const str  SCA_DB_CALL_ID_COL_NAME = STR_STATIC_INIT( "call_id" );
+const str  SCA_DB_FROM_TAG_COL_NAME = STR_STATIC_INIT( "from_tag" );
+const str  SCA_DB_TO_TAG_COL_NAME = STR_STATIC_INIT( "to_tag" );
+const str  SCA_DB_NOTIFY_CSEQ_COL_NAME = STR_STATIC_INIT( "notify_cseq" );
+const str  SCA_DB_SUBSCRIBE_CSEQ_COL_NAME = STR_STATIC_INIT( "subscribe_cseq" );
 
     void
 sca_db_subscriptions_get_value_for_column( int column, db_val_t *row_values,
@@ -44,33 +49,69 @@ sca_db_subscriptions_get_value_for_column( int column, db_val_t *row_values,
     }
 }
 
+    void
+sca_db_subscriptions_set_value_for_column( int column, db_val_t *row_values,
+	void *column_value )
+{
+    assert( column >= 0 && column < SCA_DB_SUBS_BOUNDARY );
+    assert( column_value != NULL );
+    assert( row_values != NULL );
+
+    switch ( column ) {
+    case SCA_DB_SUBS_SUBSCRIBER_COL:
+    case SCA_DB_SUBS_AOR_COL:
+    case SCA_DB_SUBS_CALL_ID_COL:
+    case SCA_DB_SUBS_FROM_TAG_COL:
+    case SCA_DB_SUBS_TO_TAG_COL:
+	row_values[ column ].val.str_val = *((str *)column_value);
+	row_values[ column ].type = DB1_STR;
+	row_values[ column ].nul = 0;
+	break;
+
+    case SCA_DB_SUBS_EXPIRES_COL:
+	row_values[ column ].val.int_val = (int)(*((time_t *)column_value));
+	row_values[ column ].type = DB1_INT;
+	row_values[ column ].nul = 0;
+	break;
+
+    case SCA_DB_SUBS_APP_IDX_COL:
+	/* for now, don't save appearance index associated with subscriber */
+	row_values[ column ].val.int_val = 0;
+	row_values[ column ].type = DB1_INT;
+	row_values[ column ].nul = 0;
+	break;
+
+    default:
+	LM_WARN( "sca_db_subscriptions_set_value_for_column: unrecognized "
+		 "column index %d, treating as INT", column );
+	/* fall through */
+
+    case SCA_DB_SUBS_EVENT_COL:
+    case SCA_DB_SUBS_STATE_COL:
+    case SCA_DB_SUBS_NOTIFY_CSEQ_COL:
+    case SCA_DB_SUBS_SUBSCRIBE_CSEQ_COL:
+	row_values[ column ].val.int_val = *((int *)column_value);
+	row_values[ column ].type = DB1_INT;
+	row_values[ column ].nul = 0;
+	break;
+    }
+}
+
     str **
 sca_db_subscriptions_columns( void )
 {
-    static str		subscriber = STR_STATIC_INIT( "subscriber" );
-    static str		aor = STR_STATIC_INIT( "aor" );
-    static str		event = STR_STATIC_INIT( "event" );
-    static str		expires = STR_STATIC_INIT( "expires" );
-    static str		state = STR_STATIC_INIT( "state" );
-    static str		app_idx = STR_STATIC_INIT( "app_idx" );
-    static str		call_id = STR_STATIC_INIT( "call_id" );
-    static str		from_tag = STR_STATIC_INIT( "from_tag" );
-    static str		to_tag = STR_STATIC_INIT( "to_tag" );
-    static str		notify_cseq = STR_STATIC_INIT( "notify_cseq" );
-    static str		subscribe_cseq = STR_STATIC_INIT( "subscribe_cseq" );
-
     static str		*subs_columns[] = {
-			    &subscriber,
-			    &aor,
-			    &event,
-			    &expires,
-			    &state,
-			    &app_idx,
-			    &call_id,
-			    &from_tag,
-			    &to_tag,
-			    &notify_cseq,
-			    &subscribe_cseq,
+			    (str *)&SCA_DB_SUBSCRIBER_COL_NAME,
+			    (str *)&SCA_DB_AOR_COL_NAME,
+			    (str *)&SCA_DB_EVENT_COL_NAME,
+			    (str *)&SCA_DB_EXPIRES_COL_NAME,
+			    (str *)&SCA_DB_STATE_COL_NAME,
+			    (str *)&SCA_DB_APP_IDX_COL_NAME,
+			    (str *)&SCA_DB_CALL_ID_COL_NAME,
+			    (str *)&SCA_DB_FROM_TAG_COL_NAME,
+			    (str *)&SCA_DB_TO_TAG_COL_NAME,
+			    (str *)&SCA_DB_NOTIFY_CSEQ_COL_NAME,
+			    (str *)&SCA_DB_SUBSCRIBE_CSEQ_COL_NAME,
 			    NULL
 			};
 

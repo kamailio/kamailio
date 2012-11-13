@@ -25,6 +25,8 @@ struct _sca_subscription {
     int		index;		/* seized appearance-index, line-seize only */
 
     sca_dialog	dialog;		/* call-id, to- and from-tags, cseq */
+
+    int		db_cmd_flag;	/* track whether to INSERT or UPDATE */
 };
 typedef struct _sca_subscription	sca_subscription;
 
@@ -36,6 +38,11 @@ enum {
 	(SCA_SUBSCRIPTION_TERMINATE_OPT_UNSUBSCRIBE | \
 	 SCA_SUBSCRIPTION_TERMINATE_OPT_RELEASE_APPEARANCE)
 
+enum {
+    SCA_SUBSCRIPTION_CREATE_OPT_DEFAULT = 0,
+    SCA_SUBSCRIPTION_CREATE_OPT_RAW_EXPIRES = (1 << 0),
+};
+
 extern const str 	SCA_METHOD_SUBSCRIBE;
 
 #define SCA_SUBSCRIPTION_IS_TERMINATED( sub1 ) \
@@ -46,7 +53,8 @@ int	sca_handle_subscribe( sip_msg_t *, char *, char * );
 
 int	sca_subscription_from_db_result( db1_res_t *, sca_subscription * );
 int	sca_subscriptions_restore_from_db( sca_mod * );
-void	sca_subscription_db_update( unsigned, void * );
+int	sca_subscription_db_update( void );
+void	sca_subscription_db_update_timer( unsigned, void * );
 void	sca_subscription_purge_expired( unsigned int, void * );
 void	sca_subscription_state_to_str( int, str * );
 

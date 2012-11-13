@@ -30,6 +30,7 @@ sl_api_t		slb;	/* sl callback, function for getting to-tag */
 /* PROTOTYPES */
 static int		sca_mod_init( void );
 static int		sca_child_init( int );
+static void		sca_mod_destroy( void );
 static int		sca_bind_usrloc( usrloc_api_t *, sca_mod ** );
 static int		sca_set_config( sca_mod * );
 
@@ -100,7 +101,7 @@ struct module_exports	exports = {
     params,		/* exported parameters */
     sca_mod_init,	/* module initialization function */
     NULL,		/* response handling function */
-    NULL,		/* destructor function */
+    sca_mod_destroy,	/* destructor function */
     NULL,		/* oncancel function */
     sca_child_init,	/* per-child initialization function */
 };
@@ -286,7 +287,7 @@ sca_child_init( int rank )
     if ( rank == PROC_MAIN ) {
 	if ( fork_dummy_timer( PROC_TIMER, "SCA DB SYNC PROCESS",
 			    0, /* we don't need sockets, just writing to DB */
-			    sca_subscription_db_update, /* timer callback */
+			    sca_subscription_db_update_timer, /* timer cb */
 			    NULL, /* parameter passed to callback */
 			    sca->cfg->db_update_interval ) < 0 ) {
 	    LM_ERR( "sca_child_init: failed to register subscription DB "
@@ -391,4 +392,14 @@ error:
     }
 
     return( -1 );
+}
+
+    void
+sca_mod_destroy( void )
+{
+    /* write back to the DB to retain most current subscription info */
+    if ( sca_subscription_db_update() != 0 ) {
+	LM_ERR( "sca_mod_destroy: failed to save current subscriptions "
+		"in DB %.*s", STR_FMT( sca->cfg->db_url ));
+    }
 }

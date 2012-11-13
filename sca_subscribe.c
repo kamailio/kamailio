@@ -18,7 +18,8 @@ extern int	errno;
 
 
 static int sca_subscription_copy_subscription_key( sca_subscription *, str * );
-int	   sca_subscription_save_unsafe( sca_mod *, sca_subscription *, int );
+int	   sca_subscription_save_unsafe( sca_mod *, sca_subscription *,
+					 int, int );
 void	   sca_subscription_print( void * );
 
 const str SCA_METHOD_SUBSCRIBE = STR_STATIC_INIT( "SUBSCRIBE" );
@@ -171,6 +172,43 @@ sca_subscription_from_db_row_values( db_val_t *values, sca_subscription *sub )
 }
 
     int
+sca_subscription_to_db_row_values( sca_subscription *sub, db_val_t *values )
+{
+    int		notify_cseq, subscribe_cseq;
+
+    assert( sub != NULL );
+    assert( values != NULL );
+
+    sca_db_subscriptions_set_value_for_column( SCA_DB_SUBS_SUBSCRIBER_COL,
+						values, &sub->subscriber );
+    sca_db_subscriptions_set_value_for_column( SCA_DB_SUBS_AOR_COL,
+						values, &sub->target_aor );
+    sca_db_subscriptions_set_value_for_column( SCA_DB_SUBS_EVENT_COL, values,
+						&sub->event );
+    sca_db_subscriptions_set_value_for_column( SCA_DB_SUBS_EXPIRES_COL, values,
+						&sub->expires );
+    sca_db_subscriptions_set_value_for_column( SCA_DB_SUBS_STATE_COL, values,
+						&sub->state );
+    sca_db_subscriptions_set_value_for_column( SCA_DB_SUBS_APP_IDX_COL, values,
+						&sub->index );
+    sca_db_subscriptions_set_value_for_column( SCA_DB_SUBS_CALL_ID_COL, values,
+						&sub->dialog.call_id );
+    sca_db_subscriptions_set_value_for_column( SCA_DB_SUBS_FROM_TAG_COL, values,
+						&sub->dialog.from_tag );
+    sca_db_subscriptions_set_value_for_column( SCA_DB_SUBS_TO_TAG_COL, values,
+						&sub->dialog.to_tag );
+
+    notify_cseq = sub->dialog.notify_cseq + 1;
+    subscribe_cseq = sub->dialog.subscribe_cseq + 1;
+    sca_db_subscriptions_set_value_for_column( SCA_DB_SUBS_NOTIFY_CSEQ_COL,
+						values, &notify_cseq );
+    sca_db_subscriptions_set_value_for_column( SCA_DB_SUBS_SUBSCRIBE_CSEQ_COL,
+						values, &subscribe_cseq );
+
+    return( 0 );
+}
+
+    int
 sca_subscriptions_restore_from_db( sca_mod *scam )
 {
     db1_con_t		*db_con;
@@ -245,7 +283,8 @@ sca_subscriptions_restore_from_db( sca_mod *scam )
 
 	sca_hash_table_lock_index( sca->subscriptions, idx );
 
-	if ( sca_subscription_save_unsafe( scam, &sub, idx ) < 0 ) {
+	if ( sca_subscription_save_unsafe( scam, &sub, idx,
+			SCA_SUBSCRIPTION_CREATE_OPT_RAW_EXPIRES ) < 0 ) {
 	    LM_ERR( "sca_subscriptions_restore_from_db: failed to restore "
 		    "%s subscription from %.*s to the hash table",
 		    sca_event_name_from_type( sub.event ),
@@ -275,16 +314,189 @@ done:
     return( rc );
 }
 
-    void
-sca_subscription_db_update( unsigned int ticks, void *param )
+    static int
+sca_subscription_db_update_subscriber( db1_con_t *db_con,
+	sca_subscription *sub )
 {
-LM_INFO( "ADMORTEN DEBUG: sca_subscription_db_update tick" );
+    db_key_t		query_columns[ 1 ];
+    db_val_t		query_values[ 1 ];
+    int			query_column_idx = 0;
+    db_key_t		update_columns[ 6 ];
+    db_val_t		update_values[ 6 ];
+    int			update_column_idx = 0;
+
+    assert( db_con != NULL );
+    assert( sub != NULL );
+
+    /* bind the lookup key and value */
+    SCA_DB_BIND_STR_VALUE( sub->subscriber, &SCA_DB_SUBSCRIBER_COL_NAME,
+			    query_columns, query_values, query_column_idx );
+
+    /* bind updated keys and values */
+    SCA_DB_BIND_INT_VALUE( sub->expires, &SCA_DB_EXPIRES_COL_NAME,
+			    update_columns, update_values, update_column_idx );
+    SCA_DB_BIND_STR_VALUE( sub->dialog.call_id, &SCA_DB_CALL_ID_COL_NAME,
+			    update_columns, update_values, update_column_idx );
+    SCA_DB_BIND_STR_VALUE( sub->dialog.from_tag, &SCA_DB_FROM_TAG_COL_NAME,
+			    update_columns, update_values, update_column_idx );
+    SCA_DB_BIND_STR_VALUE( sub->dialog.to_tag, &SCA_DB_TO_TAG_COL_NAME,
+			    update_columns, update_values, update_column_idx );
+    SCA_DB_BIND_INT_VALUE( sub->dialog.notify_cseq + 1,
+			    &SCA_DB_NOTIFY_CSEQ_COL_NAME,
+			    update_columns, update_values, update_column_idx );
+    SCA_DB_BIND_INT_VALUE( sub->dialog.subscribe_cseq + 1,
+			    &SCA_DB_SUBSCRIBE_CSEQ_COL_NAME,
+			    update_columns, update_values, update_column_idx );
+			    
+
+    if ( sca->db_api->update( db_con, query_columns,NULL, query_values,
+			      update_columns, update_values,
+			      query_column_idx, update_column_idx ) < 0 ) {
+	LM_ERR( "sca_subscription_db_update_subscriber: failed to update "
+		"%s subscriber %.*s in DB",
+		sca_event_name_from_type( sub->event ),
+		STR_FMT( &sub->subscriber ));
+	return( -1 );
+    }
+
+    return( 0 );
+}
+
+    static int
+sca_subscription_db_insert_subscriber( db1_con_t *db_con,
+	sca_subscription *sub )
+{
+    db_key_t		insert_columns[ SCA_DB_SUBSCRIPTIONS_NUM_COLUMNS ];
+    db_val_t		insert_values[ SCA_DB_SUBSCRIPTIONS_NUM_COLUMNS ];
+    str			**column_names;
+    int			i;
+
+    assert( db_con != NULL );
+    assert( sub != NULL );
+
+    column_names = sca_db_subscriptions_columns();
+    if ( column_names == NULL ) {
+	LM_ERR( "sca_subscriptions_restore_from_db: failed to get "
+		"column names for SCA subscriptions table" );
+	return( -1 );
+    }
+
+    for ( i = 0; i < SCA_DB_SUBSCRIPTIONS_NUM_COLUMNS; i++ ) {
+	insert_columns[ i ] = column_names[ i ];
+    }
+
+    /* XXX array boundary checking */
+    if ( sca_subscription_to_db_row_values( sub, insert_values ) != 0 ) {
+	LM_ERR( "sca_subscription_db_insert_subscriber: failed to set "
+		"DB row values for INSERT of %s subscriber %.*s",
+		sca_event_name_from_type( sub->event ),
+		STR_FMT( &sub->subscriber ));
+	return( -1 );
+    }
+
+    if ( sca->db_api->insert( db_con, insert_columns, insert_values,
+			      SCA_DB_SUBSCRIPTIONS_NUM_COLUMNS ) < 0 ) {
+	LM_ERR( "sca_subscription_db_insert_subscriber: failed to insert "
+		"%s subscriber %.*s in DB subscription table",
+		sca_event_name_from_type( sub->event ),
+		STR_FMT( &sub->subscriber ));
+	return( -1 );
+    }
+
+    /* subscription inserted into table, use UPDATE from now on */
+    sub->db_cmd_flag = SCA_DB_FLAG_UPDATE;
+
+    return( 0 );
+}
+
+    int
+sca_subscription_db_update( void )
+{
+    db1_con_t		*db_con = NULL;
+    sca_hash_table	*ht;
+    sca_hash_entry	*entry;
+    sca_subscription	*sub;
+    int			i;
+    int			rc = -1;
+    time_t		now = time( NULL );
+
+    db_con = sca->db_api->init( sca->cfg->db_url );
+    if ( db_con == NULL ){
+	LM_ERR( "sca_subscription_db_update: failed to connect to DB %.*s",
+		STR_FMT( sca->cfg->db_url ));
+	goto done;
+    }
+    if ( sca->db_api->use_table( db_con, sca->cfg->subs_table ) < 0 ) {
+	LM_ERR( "sca_subscription_db_update: failed to in-use table "
+		"for DB %.*s", STR_FMT( sca->cfg->db_url ));
+	goto done;
+    }
+
+    ht = sca->subscriptions;
+    for ( i = 0; i < ht->size; i++ ) {
+	sca_hash_table_lock_index( ht, i );
+
+	for ( entry = ht->slots[ i ].entries; entry != NULL;
+			entry = entry->next ) {
+	    sub = (sca_subscription *)entry->value;
+
+	    if ( sub == NULL || sub->expires < now ) {
+		continue;
+	    }
+
+	    /* we only do call-info subscriptions for now */
+	    if ( sub->event != SCA_EVENT_TYPE_CALL_INFO ) {
+		continue;
+	    }
+
+	    if ( SCA_SUBSCRIPTION_IS_TERMINATED( sub )) {
+		continue;
+	    }
+
+	    if ( sub->db_cmd_flag == SCA_DB_FLAG_INSERT ) {
+		if ( sca_subscription_db_insert_subscriber( db_con, sub ) < 0) {
+		    LM_ERR( "sca_subscription_db_update: failed to insert "
+			    "%s subscriber %.*s into subscription DB",
+			    sca_event_name_from_type( sub->event ),
+			    STR_FMT( &sub->subscriber ));
+		}
+	    } else if ( sub->db_cmd_flag == SCA_DB_FLAG_UPDATE ) {
+		if ( sca_subscription_db_update_subscriber( db_con, sub ) < 0) {
+		    LM_ERR( "sca_subscription_db_update: failed to insert "
+			    "%s subscriber %.*s into subscription DB",
+			    sca_event_name_from_type( sub->event ),
+			    STR_FMT( &sub->subscriber ));
+		}
+	    }
+	}
+
+	sca_hash_table_unlock_index( ht, i );
+    }
+
+    rc = 0;
+
+done:
+    if ( db_con != NULL ) {
+	sca->db_api->close( db_con );
+	db_con = NULL;
+    }
+
+    return( rc );
+}
+
+    void
+sca_subscription_db_update_timer( unsigned int ticks, void *param )
+{
+    if ( sca_subscription_db_update() != 0 ) {
+	LM_ERR( "sca_subscription_db_update_timer: failed to update "
+		"subscriptions in DB %.*s", STR_FMT( sca->cfg->db_url ));
+    }
 }
 
     sca_subscription *
 sca_subscription_create( str *aor, int event, str *subscriber,
-	unsigned int cseq, int expire_delta,
-	str *call_id, str *from_tag, str *to_tag )
+	unsigned int notify_cseq, unsigned int subscribe_cseq, int expire_delta,
+	str *call_id, str *from_tag, str *to_tag, int opts )
 {
     sca_subscription		*sub = NULL;
     int				len = 0;
@@ -303,9 +515,14 @@ sca_subscription_create( str *aor, int event, str *subscriber,
     sub->event = event;
     sub->state = SCA_SUBSCRIPTION_STATE_ACTIVE;
     sub->index = SCA_CALL_INFO_APPEARANCE_INDEX_ANY;
-    sub->expires = time( NULL ) + expire_delta;
-    sub->dialog.subscribe_cseq = cseq;
-    sub->dialog.notify_cseq = 0;
+    if ( opts & SCA_SUBSCRIPTION_CREATE_OPT_RAW_EXPIRES ) {
+	sub->expires = expire_delta;
+    } else {
+	sub->expires = time( NULL ) + expire_delta;
+    }
+    sub->dialog.notify_cseq = notify_cseq;
+    sub->dialog.subscribe_cseq = subscribe_cseq;
+    sub->db_cmd_flag = SCA_DB_FLAG_INSERT;
 
     len = sizeof( sca_subscription );
 
@@ -416,7 +633,7 @@ sca_subscription_print( void *value )
 
     int
 sca_subscription_save_unsafe( sca_mod *scam, sca_subscription *sub,
-	int save_idx )
+	int save_idx, int opts )
 {
     sca_subscription		*new_sub = NULL;
     sca_hash_slot		*slot;
@@ -426,21 +643,17 @@ sca_subscription_save_unsafe( sca_mod *scam, sca_subscription *sub,
 
     new_sub = sca_subscription_create( &sub->target_aor, sub->event,
 			    	       &sub->subscriber,
+				       sub->dialog.notify_cseq,
 				       sub->dialog.subscribe_cseq,
 				       sub->expires,
 				       &sub->dialog.call_id,
 				       &sub->dialog.from_tag,
-				       &sub->dialog.to_tag );
+				       &sub->dialog.to_tag, opts );
     if ( new_sub == NULL ) {
 	return( -1 );
     }
     if ( sub->index != SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) {
 	new_sub->index = sub->index;
-    }
-
-    /* true when restoring subscription from DB */
-    if ( sub->expires != 0 ) {
-	new_sub->expires = sub->expires;
     }
 
     if ( sca_appearance_register( scam, &sub->target_aor ) < 0 ) {
@@ -901,7 +1114,8 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 		req_sub.index = app_idx;
 	    }
 
-	    if ( sca_subscription_save_unsafe( sca, &req_sub, idx ) < 0 ) {
+	    if ( sca_subscription_save_unsafe( sca, &req_sub, idx,
+				SCA_SUBSCRIPTION_CREATE_OPT_DEFAULT ) < 0 ) {
 		SCA_REPLY_ERROR( sca, 500,
 			"Internal Server Error - save subscription", msg );
 		goto done;
