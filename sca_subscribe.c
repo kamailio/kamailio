@@ -419,13 +419,16 @@ sca_subscription_db_delete_expired( db1_con_t *db_con )
     db_val_t		delete_values[ 1 ];
     db_op_t		delete_ops[ 1 ];
     time_t		now = time( NULL );
+    int			kv_count = 0;
 
     delete_columns[ 0 ] = (str *)&SCA_DB_EXPIRES_COL_NAME;
-    delete_values[ 0 ].val.int_val = (int)now;
     delete_ops[ 0 ] = OP_LT;
 
+    SCA_DB_BIND_INT_VALUE( now, &SCA_DB_EXPIRES_COL_NAME,
+			    delete_columns, delete_values, kv_count );
+
     if ( sca->db_api->delete( db_con, delete_columns, delete_ops,
-				delete_values, 1 ) < 0 ) {
+				delete_values, kv_count ) < 0 ) {
 	LM_ERR( "sca_subscription_db_delete_expired: failed to delete "
 		"subscriptions expired before %ld", now );
 	return( -1 );
