@@ -23,7 +23,8 @@ enum {
 };
 
 enum {
-    SCA_DB_FLAG_INSERT = 0,
+    SCA_DB_FLAG_NONE = 0,
+    SCA_DB_FLAG_INSERT = 1,
     SCA_DB_FLAG_UPDATE,
     SCA_DB_FLAG_DELETE,
 };

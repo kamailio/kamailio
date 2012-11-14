@@ -359,6 +359,9 @@ sca_subscription_db_update_subscriber( db1_con_t *db_con,
 	return( -1 );
     }
 
+    /* no further DB updates until subscription is changed */  
+    sub->db_cmd_flag = SCA_DB_FLAG_NONE;
+
     return( 0 );
 }
 
@@ -403,8 +406,30 @@ sca_subscription_db_insert_subscriber( db1_con_t *db_con,
 	return( -1 );
     }
 
-    /* subscription inserted into table, use UPDATE from now on */
-    sub->db_cmd_flag = SCA_DB_FLAG_UPDATE;
+    /* no further DB actions needed until subscription is changed */
+    sub->db_cmd_flag = SCA_DB_FLAG_NONE;
+
+    return( 0 );
+}
+
+    int
+sca_subscription_db_delete_expired( db1_con_t *db_con )
+{
+    db_key_t		delete_columns[ 1 ];
+    db_val_t		delete_values[ 1 ];
+    db_op_t		delete_ops[ 1 ];
+    time_t		now = time( NULL );
+
+    delete_columns[ 0 ] = (str *)&SCA_DB_EXPIRES_COL_NAME;
+    delete_values[ 0 ].val.int_val = (int)now;
+    delete_ops[ 0 ] = OP_LT;
+
+    if ( sca->db_api->delete( db_con, delete_columns, delete_ops,
+				delete_values, 1 ) < 0 ) {
+	LM_ERR( "sca_subscription_db_delete_expired: failed to delete "
+		"subscriptions expired before %ld", now );
+	return( -1 );
+    }
 
     return( 0 );
 }
@@ -473,7 +498,7 @@ sca_subscription_db_update( void )
 	sca_hash_table_unlock_index( ht, i );
     }
 
-    rc = 0;
+    rc = sca_subscription_db_delete_expired( db_con );
 
 done:
     if ( db_con != NULL ) {
@@ -765,6 +790,9 @@ sca_subscription_update_unsafe( sca_mod *scam, sca_subscription *saved_sub,
     saved_sub->dialog.subscribe_cseq = update_sub->dialog.subscribe_cseq;
     saved_sub->dialog.notify_cseq += 1;
     saved_sub->expires = time( NULL ) + update_sub->expires;
+
+    /* flag subscription for write back to DB */ 
+    saved_sub->db_cmd_flag = SCA_DB_FLAG_UPDATE;
 
     if ( update_sub->index != SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) {
 	saved_sub->index = update_sub->index;
