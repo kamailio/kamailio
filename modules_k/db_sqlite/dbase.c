@@ -265,6 +265,24 @@ static int decltype_to_dbtype(const char *decltype)
 	return DB1_INT;
 }
 
+static int type_to_dbtype(int type)
+{
+	switch (type) {
+	case SQLITE_INTEGER:
+		return DB1_INT;
+	case SQLITE_FLOAT:
+		return DB1_DOUBLE;
+	case SQLITE_TEXT:
+		return DB1_STR;
+	case SQLITE_BLOB:
+		return DB1_BLOB;
+	default:
+		/* Unknown, or NULL column value. Assume this is a
+		 * string. */
+		return DB1_STR;
+	}
+}
+
 static str* str_dup(const char *_s)
 {
 	str *s;
@@ -325,10 +343,18 @@ int db_sqlite_store_result(const db1_con_t* _h, db1_res_t** _r)
 			RES_COL_N(res) = rc;
 
 			for (i = 0; i < RES_COL_N(res); i++) {
+				const char *decltype;
+				int dbtype;
+
 				RES_NAMES(res)[i] = str_dup(sqlite3_column_name(conn->stmt, i));
 				if (RES_NAMES(res)[i] == NULL)
 					goto no_mem;
-				RES_TYPES(res)[i] = decltype_to_dbtype(sqlite3_column_decltype(conn->stmt, i));
+				decltype = sqlite3_column_decltype(conn->stmt, i);
+				if (decltype != NULL)
+					dbtype = decltype_to_dbtype(decltype);
+				else
+					dbtype = type_to_dbtype(sqlite3_column_type(conn->stmt, i));
+				RES_TYPES(res)[i] = dbtype;
 			}
 		}
 		if (num_rows >= num_alloc) {
