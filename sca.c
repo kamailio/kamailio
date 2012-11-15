@@ -190,18 +190,19 @@ sca_bind_sl( sca_mod *scam, sl_api_t *sl_api )
     static int
 sca_bind_srdb1( sca_mod *scam, db_func_t *db_api )
 {
-    db1_con_t	*db_con;
+    db1_con_t	*db_con = NULL;
+    int		rc = -1;
 
     if ( db_bind_mod( scam->cfg->db_url, db_api ) != 0 ) {
 	LM_ERR( "Failed to initialize required DB API" );
-	return( -1 );
+	goto done;
     }
     scam->db_api = db_api;
 
     if ( !DB_CAPABILITY( (*db_api), DB_CAP_ALL )) {
 	LM_ERR( "Selected database %.*s lacks required capabilities",
 		STR_FMT( scam->cfg->db_url ));
-	return( -1 );
+	goto done;
     }
 
     /* ensure database exists and table schemas are correct */
@@ -209,16 +210,29 @@ sca_bind_srdb1( sca_mod *scam, db_func_t *db_api )
     if ( db_con == NULL ) {
 	LM_ERR( "sca_bind_srdb1: failed to connect to DB %.*s",
 		STR_FMT( scam->cfg->db_url ));
-	return( -1 );
+	goto done;
     }
 
-    /* XXX table versions check */
+    if ( db_check_table_version( db_api, db_con,
+	    scam->cfg->subs_table, SCA_DB_SUBSCRIPTIONS_TABLE_VERSION ) < 0 ) {
+	LM_ERR( "Version check of %.*s table in DB %.*s failed",
+		STR_FMT( scam->cfg->subs_table ), STR_FMT( scam->cfg->db_url ));
+	LM_ERR( "%.*s table version %d required",
+		STR_FMT( scam->cfg->subs_table ),
+		SCA_DB_SUBSCRIPTIONS_TABLE_VERSION );
+	goto done;
+    }
 
     /* DB and tables are OK, close DB handle. reopen in each child. */
-    db_api->close( db_con );
-    db_con = NULL;
+    rc = 0;
 
-    return( 0 );
+done:
+    if ( db_con != NULL ) {
+	db_api->close( db_con );
+	db_con = NULL;
+    }
+
+    return( rc );
 }
 
     static int
