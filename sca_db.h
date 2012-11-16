@@ -62,5 +62,7 @@ void	sca_db_subscriptions_get_value_for_column( int, db_val_t *, void * );
 void	sca_db_subscriptions_set_value_for_column( int, db_val_t *, void * );
 void	sca_db_subscriptions_bind_value_for_column( int, db_val_t *, void * );
 
+db1_con_t	*sca_db_get_connection( void );
+void		sca_db_disconnect( void );
 
 #endif /* SCA_DB_H */

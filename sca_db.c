@@ -3,6 +3,9 @@
 #include "sca_db.h"
 #include "sca_subscribe.h"
 
+
+db1_con_t	*sca_db_con = NULL;
+
 const str  SCA_DB_SUBSCRIBER_COL_NAME = STR_STATIC_INIT( "subscriber" );
 const str  SCA_DB_AOR_COL_NAME  = STR_STATIC_INIT( "aor" );
 const str  SCA_DB_EVENT_COL_NAME = STR_STATIC_INIT( "event" );
@@ -116,4 +119,27 @@ sca_db_subscriptions_columns( void )
 			};
 
     return( subs_columns );
+}
+
+    db1_con_t *
+sca_db_get_connection( void )
+{
+    assert( sca && sca->cfg->db_url );
+    assert( sca->db_api && sca->db_api->init );
+
+    if ( sca_db_con == NULL ) {
+	sca_db_con = sca->db_api->init( sca->cfg->db_url );
+	/* catch connection error in caller */
+    }
+
+    return( sca_db_con );
+}
+
+    void
+sca_db_disconnect( void )
+{
+    if ( sca_db_con != NULL ) {
+	sca->db_api->close( sca_db_con );
+	sca_db_con = NULL;
+    }
 }

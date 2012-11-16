@@ -448,7 +448,7 @@ sca_subscription_db_update( void )
     int			rc = -1;
     time_t		now = time( NULL );
 
-    db_con = sca->db_api->init( sca->cfg->db_url );
+    db_con = sca_db_get_connection();
     if ( db_con == NULL ){
 	LM_ERR( "sca_subscription_db_update: failed to connect to DB %.*s",
 		STR_FMT( sca->cfg->db_url ));
@@ -504,11 +504,6 @@ sca_subscription_db_update( void )
     rc = sca_subscription_db_delete_expired( db_con );
 
 done:
-    if ( db_con != NULL ) {
-	sca->db_api->close( db_con );
-	db_con = NULL;
-    }
-
     return( rc );
 }
 
@@ -747,9 +742,6 @@ sca_subscription_update_unsafe( sca_mod *scam, sca_subscription *saved_sub,
 	 * mismatched dialog. we assume a subscriber can hold only one
 	 * subscription per event at any given time, so we replace the old
 	 * one with the new.
-	 *
-	 * XXX may want to hook this so a line-seize subscription replacing
-	 * another one clears the active state for the line.
 	 */
 	assert( !SCA_STR_EMPTY( &saved_sub->dialog.id ));
 

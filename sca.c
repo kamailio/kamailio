@@ -416,4 +416,6 @@ sca_mod_destroy( void )
 	LM_ERR( "sca_mod_destroy: failed to save current subscriptions "
 		"in DB %.*s", STR_FMT( sca->cfg->db_url ));
     }
+
+    sca_db_disconnect();
 }
