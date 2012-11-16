@@ -44,18 +44,18 @@ enum {
 	((db_val_t *)(v))[ (c) ].nul = 0; \
 	((db_val_t *)(v))[ (c) ].val.int_val = (int)(cv); \
 	(c)++;
-	
-extern const str      SCA_DB_SUBSCRIBER_COL_NAME;
-extern const str      SCA_DB_AOR_COL_NAME;
-extern const str      SCA_DB_EVENT_COL_NAME;
-extern const str      SCA_DB_EXPIRES_COL_NAME;
-extern const str      SCA_DB_STATE_COL_NAME;
-extern const str      SCA_DB_APP_IDX_COL_NAME;
-extern const str      SCA_DB_CALL_ID_COL_NAME;
-extern const str      SCA_DB_FROM_TAG_COL_NAME;
-extern const str      SCA_DB_TO_TAG_COL_NAME;
-extern const str      SCA_DB_NOTIFY_CSEQ_COL_NAME;
-extern const str      SCA_DB_SUBSCRIBE_CSEQ_COL_NAME;
+
+extern const str	SCA_DB_SUBSCRIBER_COL_NAME;
+extern const str	SCA_DB_AOR_COL_NAME;
+extern const str	SCA_DB_EVENT_COL_NAME;
+extern const str	SCA_DB_EXPIRES_COL_NAME;
+extern const str	SCA_DB_STATE_COL_NAME;
+extern const str	SCA_DB_APP_IDX_COL_NAME;
+extern const str	SCA_DB_CALL_ID_COL_NAME;
+extern const str	SCA_DB_FROM_TAG_COL_NAME;
+extern const str	SCA_DB_TO_TAG_COL_NAME;
+extern const str	SCA_DB_NOTIFY_CSEQ_COL_NAME;
+extern const str	SCA_DB_SUBSCRIBE_CSEQ_COL_NAME;
 
 str	**sca_db_subscriptions_columns( void );
 void	sca_db_subscriptions_get_value_for_column( int, db_val_t *, void * );
