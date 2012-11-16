@@ -620,7 +620,6 @@ sca_appearance_update_unsafe( sca_appearance *app, int state, str *display,
 
 	*(app->uri.s + app->uri.len) = '>';
 	app->uri.len++;
-LM_INFO( "@@ ADMORTEN DEBUG: full appearance-uri: [%.*s]", STR_FMT( &app->uri ));
     }
 
     if ( !SCA_DIALOG_EMPTY( dialog )) {
