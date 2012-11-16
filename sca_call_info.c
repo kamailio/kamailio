@@ -1280,14 +1280,6 @@ done:
 }
 
     static int
-sca_call_info_invite_reply_3xx_handler( sip_msg_t *msg,
-	sca_call_info *call_info, struct to_body *from, struct to_body *to,
-	str *from_aor, str *to_aor, str *contact_uri )
-{
-    return( 1 );
-}
-
-    static int
 sca_call_info_invite_reply_error_handler( sip_msg_t *msg,
 	sca_call_info *call_info, struct to_body *from, struct to_body *to,
 	str *from_aor, str *to_aor, str *contact_uri )
@@ -1464,7 +1456,6 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
 	/* XXX replace with dispatch table. */
 	switch ( msg->REPLY_STATUS ) {
 	case 100:
-	case 302:
 	    rc = 1;
 	    break;
 
@@ -1477,6 +1468,16 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
 	case 200:
 	    rc = sca_call_info_invite_reply_200_handler( msg, call_info,
 				from, to, from_aor, to_aor, contact_uri );
+	    break;
+
+	case 300:
+	case 301:
+	case 302:
+	    /*
+	     * redirection (at least on Polycoms) does not cause caller to
+	     * release its seized appearance. pass it through.
+	     */
+	    rc = 1;
 	    break;
 
 	default:
