@@ -803,14 +803,6 @@ done:
 }
 
     static int
-sca_subscription_delete( sca_mod *scam, sca_subscription *delete_sub,
-	int sub_idx )
-{
-    return( sca_hash_table_index_kv_delete( scam->subscriptions, sub_idx,
-					    &delete_sub->subscriber ));
-}
-
-    static int
 sca_subscription_copy_subscription_key( sca_subscription *sub, str *key_out )
 {
     char			*event_name;
