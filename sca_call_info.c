@@ -556,8 +556,9 @@ sca_call_info_seize_held_call( sip_msg_t *msg, sca_call_info *call_info,
 	goto done;
     }
 
-LM_INFO( "ADMORTEN DEBUG: seizing %.*s appearance-index %d, callee %.*s",
-	STR_FMT( from_aor ), app->index, STR_FMT( &app->callee ));
+    
+    LM_DBG( "sca_call_info_seize_held_call: seizing %.*s index %d, callee %.*s",
+	    STR_FMT( from_aor ), app->index, STR_FMT( &app->callee ));
 
     /* rewrite the RURI to use the callee in this SCA dialog */
     if ( msg->new_uri.s ) {
@@ -590,10 +591,7 @@ LM_INFO( "ADMORTEN DEBUG: seizing %.*s appearance-index %d, callee %.*s",
 	for ( idx = 0; get_sip_branch( idx ) != NULL; idx++ )
 	    ;
 
-LM_INFO( "ADMORTEN DEBUG: %d sip branches", idx + 1 );
-
 	for ( ; idx >= 0; idx-- ) {
-LM_INFO( "ADMORTEN DEBUG: dropping branch %d", idx );
 	    drop_sip_branch( idx );
 	}
     }
@@ -733,11 +731,10 @@ sca_call_info_uri_update( str *aor, sca_call_info *call_info,
     assert( aor != NULL );
     assert( call_info != NULL );
 
-LM_INFO( "ADMORTEN DEBUG: sca_call_info_uri update for %.*s: "
-	 "From: <%.*s> To: <%.*s> Contact: <%.*s> Call-ID: %.*s "
-	 "Call-Info: appearance-index=%d", STR_FMT( aor ),
-	 STR_FMT( &from->uri ), STR_FMT( &to->uri ), STR_FMT( contact_uri ),
-	 STR_FMT( call_id ), call_info->index );
+    LM_DBG( "sca_call_info_uri_update for %.*s: From: <%.*s> To: <%.*s> "
+	    "Contact: <%.*s> Call-ID: %.*s Call-Info: appearance-index=%d",
+	     STR_FMT( aor ), STR_FMT( &from->uri ), STR_FMT( &to->uri ),
+	     STR_FMT( contact_uri ), STR_FMT( call_id ), call_info->index );
 
     if ( !sca_uri_is_shared_appearance( sca, aor )) {
 	return( 0 );
@@ -756,8 +753,9 @@ LM_INFO( "ADMORTEN DEBUG: sca_call_info_uri update for %.*s: "
     app = sca_appearance_for_index_unsafe( sca, aor, call_info->index,
 						slot_idx );
     if ( app != NULL ) {
-LM_INFO( "ADMORTEN DEBUG: found appearance for %.*s", STR_FMT( aor ));
-LM_INFO( "ADMORTEN DEBUG: setting owner to %.*s", STR_FMT( contact_uri ));
+	LM_DBG( "sca_call_info_uri_update: setting owner to %.*s",
+		STR_FMT( contact_uri ));
+
 	if ( sca_appearance_update_unsafe( app, call_info->state,
 		NULL, NULL, &dialog, contact_uri, NULL ) < 0 ) {
 	    sca_appearance_state_to_str( call_info->state, &state_str );
@@ -770,7 +768,6 @@ LM_INFO( "ADMORTEN DEBUG: setting owner to %.*s", STR_FMT( contact_uri ));
 
 	rc = 1;
     } else {
-LM_INFO( "ADMORTEN DEBUG: no appearance for %.*s, seizing next", STR_FMT( aor ));
 	app = sca_appearance_seize_index_unsafe( sca, aor, contact_uri,
 						call_info->index, slot_idx );
 	if ( app == NULL ) {
@@ -779,10 +776,11 @@ LM_INFO( "ADMORTEN DEBUG: no appearance for %.*s, seizing next", STR_FMT( aor ))
 	    goto done;
 	}
 
-LM_INFO( "ADMORTEN DEBUG: seized %d for %.*s: From: <%.*s> To: <%.*s> "
-	 "Call-ID: <%.*s> Dialog: <%.*s>" , app->index,
-	 STR_FMT( &app->owner ), STR_FMT( &from->uri ), STR_FMT( &to->uri ),
-	 STR_FMT( call_id ), STR_FMT( &app->dialog.id ));
+	LM_DBG( "sca_call_info_uri_update: seized %d for %.*s: From: <%.*s> "
+		"To: <%.*s> Call-ID: <%.*s> Dialog: <%.*s>" , app->index,
+		STR_FMT( &app->owner ), STR_FMT( &from->uri ),
+		STR_FMT( &to->uri ), STR_FMT( call_id ),
+		STR_FMT( &app->dialog.id ));
 
 	if ( sca_appearance_update_unsafe( app, SCA_APPEARANCE_STATE_ACTIVE,
 		&from->display, &from->uri, &dialog, contact_uri,
@@ -837,8 +835,6 @@ sca_call_info_is_line_seize_reinvite( sip_msg_t *msg, sca_call_info *call_info,
     }
 
     if ( !SCA_STR_EQ( from_aor, to_aor )) {
-LM_INFO( "ADMORTEN DEBUG: %.*s != %.*s != %.*s",
-	    STR_FMT( &ruri_aor ), STR_FMT( from_aor ), STR_FMT( to_aor ));
 	return( 0 );
     }
 
@@ -974,13 +970,6 @@ sca_call_info_invite_request_handler( sip_msg_t *msg, sca_call_info *call_info,
     }
     /* otherwise, this is an initial INVITE */
 
-    sca_appearance_state_to_str( state, &state_str );
-    LM_INFO( "ADMORTEN: updating %.*s appearance-index %d to %.*s, "
-	     "dialog: callid: %.*s, from-tag: %.*s",
-		STR_FMT( from_aor ), call_info->index,
-		STR_FMT( &state_str ),
-		STR_FMT( &msg->callid->body ),
-		STR_FMT( &from->tag_value ));
 
     dialog.id.s = dlg_buf;
     if ( sca_dialog_build_from_tags( &dialog, sizeof( dlg_buf ),
@@ -991,6 +980,7 @@ sca_call_info_invite_request_handler( sip_msg_t *msg, sca_call_info *call_info,
 
     if ( sca_appearance_update_index( sca, from_aor, call_info->index,
 		state, NULL, NULL, &dialog ) != SCA_APPEARANCE_OK ) {
+	sca_appearance_state_to_str( state, &state_str );
 	LM_ERR( "Failed to update %.*s appearance-index %d to %.*s",
 		STR_FMT( from_aor ), call_info->index,
 		STR_FMT( &state_str ));
@@ -1195,7 +1185,6 @@ sca_call_info_invite_reply_200_handler( sip_msg_t *msg,
     }
 
     if ( !sca_uri_is_shared_appearance( sca, from_aor )) {
-LM_INFO( "## ADMORTEN DEBUG: %.*s is not SCA", STR_FMT( from_aor ));
 	goto done;
     }
 
@@ -1213,17 +1202,10 @@ LM_INFO( "## ADMORTEN DEBUG: %.*s is not SCA", STR_FMT( from_aor ));
     slot_idx = sca_hash_table_index_for_key( sca->appearances, from_aor );
     sca_hash_table_lock_index( sca->appearances, slot_idx );
 
-LM_INFO( "## ADMORTEN DEBUG: looking for %.*s appearance with dialog "
-		"callid:<%.*s>, from-tag:<%.*s>, to-tag:<%.*s>",
-		STR_FMT( from_aor ), STR_FMT( &msg->callid->body ),
-		STR_FMT( &from->tag_value ), STR_FMT( &to->tag_value ));
-
     app = sca_appearance_for_tags_unsafe( sca, from_aor,
 		&msg->callid->body, &from->tag_value, NULL, slot_idx );
     if ( app == NULL ) {
 	/* no SCA line is involved with this call */
-	LM_INFO( "## ADMORTEN DEBUG: %.*s is not an SCA line",
-		    STR_FMT( from_aor ));
 	rc = 1;
 	goto done;
     }
@@ -1331,8 +1313,6 @@ sca_call_info_ack_from_handler( sip_msg_t *msg, str *from_aor, str *to_aor )
     int			slot_idx = -1;
     int			state = SCA_APPEARANCE_STATE_IDLE;
 
-LM_INFO( "ADMORTEN DEBUG: entered sca_call_info_ack_from_handler" );
-
     if ( sca_get_msg_from_header( msg, &from ) < 0 ) {
 	LM_ERR( "sca_call_info_ack_cb: failed to get From-header" );
 	return;
@@ -1432,7 +1412,6 @@ sca_call_info_ack_cb( struct cell *t, int type, struct tmcb_params *params )
 	return;
     }
 
-    LM_INFO( "ADMORTEN DEBUG: call-info NOTIFY to %.*s", STR_FMT( &to_aor ));
 }
 
     static int
@@ -1688,7 +1667,6 @@ sca_call_info_sl_reply_cb( void *cb_arg )
     str			contact_uri = STR_NULL;
 
     if ( slcbp == NULL ) {
-	LM_INFO( "ADMORTEN DEBUG: sca_call_info_sl_reply_cb: slcbp is NULL" );
 	return;
     }
 
