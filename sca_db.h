@@ -4,6 +4,8 @@
 #include "../../lib/srdb1/db.h"
 
 
+#define SCA_DB_SUBSCRIPTIONS_TABLE_VERSION	0
+
 #define SCA_DB_SUBSCRIPTIONS_NUM_COLUMNS	11
 
 enum {
@@ -30,17 +32,17 @@ enum {
 };
 
 #define SCA_DB_BIND_STR_VALUE( cv, ct, k, v, c ) \
-	((db_key_t *)(k))[ c ] = (str *)(ct); \
-	((db_val_t *)(v))[ c ].type = DB1_STR; \
-	((db_val_t *)(v))[ c ].nul = 0; \
-	((db_val_t *)(v))[ c ].val.str_val = (str)(cv); \
+	((db_key_t *)(k))[ (c) ] = (str *)(ct); \
+	((db_val_t *)(v))[ (c) ].type = DB1_STR; \
+	((db_val_t *)(v))[ (c) ].nul = 0; \
+	((db_val_t *)(v))[ (c) ].val.str_val = (str)(cv); \
 	(c)++;
 
 #define SCA_DB_BIND_INT_VALUE( cv, ct, k, v, c ) \
-	((db_key_t *)(k))[ c ] = (str *)(ct); \
-	((db_val_t *)(v))[ c ].type = DB1_INT; \
-	((db_val_t *)(v))[ c ].nul = 0; \
-	((db_val_t *)(v))[ c ].val.int_val = (int)(cv); \
+	((db_key_t *)(k))[ (c) ] = (str *)(ct); \
+	((db_val_t *)(v))[ (c) ].type = DB1_INT; \
+	((db_val_t *)(v))[ (c) ].nul = 0; \
+	((db_val_t *)(v))[ (c) ].val.int_val = (int)(cv); \
 	(c)++;
 	
 extern const str      SCA_DB_SUBSCRIBER_COL_NAME;
