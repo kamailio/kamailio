@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     3.4.0
-%define rel     dev5%{dist}
+%define rel     dev5.1%{dist}
 
 
 
@@ -358,7 +358,7 @@ Max Mind GeoIP real-time query support for Kamailio.
 %build
 make FLAVOUR=kamailio cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT\
 	basedir=$RPM_BUILD_ROOT cfg_target=/%{_sysconfdir}/kamailio/\
-	modules_dirs="modules modules_k" SCTP=1 STUN=1
+	modules_dirs="modules modules_k" SCTP=1 STUN=1 MEMDBG=1
 make
 %if 0%{?fedora}
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
