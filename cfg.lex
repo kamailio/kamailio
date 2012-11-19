@@ -1341,7 +1341,7 @@ IMPORTFILE      "import_file"
 <SELECT>.               { unput(yytext[0]); state = INITIAL_S; BEGIN(INITIAL); } /* Rescan the token in INITIAL state */
 
 <INCLF>[ \t]*      /* eat the whitespace */
-<INCLF>[^ \t\n]+   { /* get the include file name */
+<INCLF>[^ \t\r\n]+   { /* get the include file name */
 				memset(&s_buf, 0, sizeof(s_buf));
 				addstr(&s_buf, yytext, yyleng);
 				r = pp_subst_run(&s_buf.s);
@@ -1355,7 +1355,7 @@ IMPORTFILE      "import_file"
 }
 
 <IMPTF>[ \t]*      /* eat the whitespace */
-<IMPTF>[^ \t\n]+   { /* get the import file name */
+<IMPTF>[^ \t\r\n]+   { /* get the import file name */
 				memset(&s_buf, 0, sizeof(s_buf));
 				addstr(&s_buf, yytext, yyleng);
 				r = pp_subst_run(&s_buf.s);
