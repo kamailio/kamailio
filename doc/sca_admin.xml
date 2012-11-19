@@ -63,7 +63,7 @@
 		when the service is stopped.
 	</para>
 	<para>
-		The module impelements SCA as defined in Broadworks SIP
+		The module implements SCA as defined in Broadworks SIP
 		Access Side Extensions Interface Specifications, Release 13.0,
 		version 1, sections 2, 3 and 4. At the time of this writing,
 		Polycom and Cisco handsets are known to implement the call-info
