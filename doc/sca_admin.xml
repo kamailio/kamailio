@@ -98,6 +98,11 @@
 			<emphasis>tm</emphasis>
 		    </para>
 		    </listitem>
+		    <listitem>
+		    <para>
+			<emphasis>usrloc</emphasis>
+		    </para>
+		    </listitem>
 		</itemizedlist>
 	    </para>
 	</section>
