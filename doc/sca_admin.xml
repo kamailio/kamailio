@@ -74,4 +74,31 @@
 		To date, this module has only been tested with Polycom
 		Soundpoint 550s and 650s running Polycom SIP 3.3.4.
 	</para>
+    </section>
+
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+		<itemizedlist>
+		    <listitem>
+		    <para>
+			<emphasis>a database module</emphasis>
+		    </para>
+		    </listitem>
+		    <listitem>
+		    <para>
+			<emphasis>sl</emphasis>
+		    </para>
+		    </listitem>
+		    <listitem>
+		    <para>
+			<emphasis>tm</emphasis>
+		    </para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+    </section>
 </chapter>
