@@ -400,6 +400,20 @@ route
 onreply_route[REPLY_ROUTE]
 {
 ...
+    if ( status =~ "[456][0-9][0-9]" ) {
+	# don't update SCA state here, since there may be
+	# failure route processing (e.g., call forwarding).
+	# update state in failure route instead.
+	break;
+    }
+
+    sca_call_info_update();
+...
+}
+
+failure_route[FAILURE_ROUTE]
+{
+...
     sca_call_info_update();
 ...
 }
