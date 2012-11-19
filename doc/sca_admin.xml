@@ -100,5 +100,196 @@
 		    </listitem>
 		</itemizedlist>
 	    </para>
+	</section>
+    </section>
+
+    <section>
+	<title>Parameters</title>
+	<section>
+	    <title><varname>domain</varname>(str)</title>
+	    <para>
+		SIP domain to use in SCA NOTIFY Call-Info headers.
+	    </para>
+	    <para>
+		The module uses this value as the SIP domain in Call-Info
+		headers sent with call-info and line-seize NOTIFYs. The domain
+		must match the domain in the SCA line's address-of-record.
+	    </para>
+	    <para>
+		<emphasis>This parameter is required.</emphasis> A future
+		update of the module may extract this value from client
+		SUBSCRIBEs.
+	    </para>
+	    <example>
+		<title>Set <varname>domain</varname> parameter:</title>
+		<programlisting format="linespecific">
+...
+modparam( "sca", "domain", "voice.example.org" )
+...
+		</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>hash_table_size</varname> (integer)</title>
+	    <para>
+		Size, as a power of two, of the shared memory hash table
+		containing the call-info subscriptions and the appearance
+		state. A larger power of two means better performance
+		(fewer collisions, making for fewer subscriber URI comparisons)
+		at the expense of increased shared memory use.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>9</quote> (2 ^ 9 == 512).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>hash_table_size</varname>:</title>
+		<programlisting format="linespecific">
+...
+# create shared memory hash table with 2^8 (256) slots
+modparam( "sca", "hash_table_size", 8 )
+...
+		</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>call_info_max_expires</varname> (integer)</title>
+	    <para>
+		The maximum allowed call-info subscription time in seconds.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>3600</quote> (1 hour).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>call_info_max_expires</varname>:</title>
+		<programlisting format="linespecific">
+...
+modparam( "sca", "call_info_max_expires", 1800 )
+...
+		</programlisting>
+	    </example>
+	</section>
+
+        <section>
+            <title><varname>line_seize_max_expires</varname> (integer)</title>
+            <para>
+		The maximum allowed line-seize subscription time in seconds.
+            </para>
+            <para>
+                <emphasis>
+		    Default value is <quote>15</quote> (15 seconds).
+                </emphasis>
+            </para>
+	    <para>
+		A maximum line-seize subscription time of 15 seconds is
+		recommended in the SIP Access Side Extensions document.
+		This interval is purposely short to prevent a client from
+		seizing an appearance without making a call for extended
+		periods of time.
+	    </para>
+            <example>
+                <title>Set <varname>line_seize_max_expires</varname>:</title>
+                <programlisting format="linespecific">
+...             
+modparam( "sca", "line_seize_max_expires", 30 )
+...
+                </programlisting>
+            </example>
+        </section>
+
+        <section>
+            <title><varname>purge_expired_interval</varname> (integer)</title>
+            <para>
+		The period of time in seconds between purges of expired
+		call-info and line-seize subscriptions.
+            </para>
+            <para>
+                <emphasis>
+		    Default value is <quote>120</quote> (2 minutes).
+                </emphasis>
+            </para>
+	    <para>
+		On finding an expired subscription, the module removes the
+		subscription from the shared memory hash table, and sends a
+		NOTIFY with Subscription-State "terminated;expired" header
+		value to the subscriber. It also NOTIFYs other members of
+		the group, in the event that the expired subscription was
+		a line-seize.
+	    </para>
+            <example>
+                <title>Set <varname>purge_expired_interval</varname>:</title>
+                <programlisting format="linespecific">
+...             
+modparam( "sca", "purge_expired_interval", 60 )
+...
+                </programlisting>
+            </example>
+        </section>
+
+	<section>
+	    <title><varname>db_url</varname>(str)</title>
+	    <para>
+		URL of database to which subscribers will be written.
+	    </para>
+	    <para>
+		<emphasis>Default value is &defaultdb;</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_url</varname> parameter:</title>
+		<programlisting format="linespecific">
+...
+modparam( "sca", "db_url", "&defaultdb;" )
+...
+		</programlisting>
+	    </example>
+	</section>
+
+        <section>
+            <title><varname>subs_table</varname> (str)</title>
+            <para>
+		Name of the database table where call-info subscriptions
+		are written.
+            </para>
+            <para>
+                <emphasis>
+		    Default value is <quote>sca_subscriptions</quote>.
+                </emphasis>
+            </para>
+            <example>
+                <title>Set <varname>subs_table</varname> parameter:</title>
+                <programlisting format="linespecific">
+...             
+modparam( "sca", "subs_table", "call_info_subscriptions" )
+...
+                </programlisting>
+            </example>
+        </section>
+
+	<section>
+	    <title><varname>db_update_interval</varname> (integer)</title>
+	    <para>
+		Period in seconds between writes of call-info subscriber
+		information to the database. 
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>300</quote> (5 minutes).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_update_interval</varname>:</title>
+		<programlisting format="linespecific">
+...
+modparam( "sca", "db_update_interval", 120 )
+...
+		</programlisting>
+	    </example>
+	</section>
+
     </section>
 </chapter>
