@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module Admin Guide -->
+
+<chapter>
+    <title>&adminguide;</title>
+
+    <section>
+	<title>Overview</title>
+	<para>
+		The sca module implements Shared Call Appearances. It handles
+		SUBSCRIBE messages for call-info and line-seize events, and
+		sends call-info NOTIFYs to line subscribers to implement line
+		bridging. The module implements SCA as defined in Broadworks
+		SIP Access Side Extensions Interface Specifications, Release
+		13.0, version 1, sections 2, 3 and 4.
+	</para>
+	<para>
+		SCA group members are receive call state notifications when
+		other group members participate in calls. An SCA caller can
+		place a call on hold, and the call may be retrieved from hold
+		by another member of the group.
+	</para>
+	<para>
+		Subscribers to SCA call-info events SUBSCRIBE to their
+		address-of-record (AoR), asking the application server to
+		send call-info NOTIFYs with line state information as lines
+		in the subscriber group are used.
+	</para>
+	<para>
+		For example, when an SCA subscriber takes the phone off hook,
+		if sends a line-seize SUBSCRIBE to the application server.
+		The application server acknowledges the request, and sends to
+		the subscriber a line-seize NOTIFY with the appearance index
+		of the line claimed for the subscriber. The application also
+		sends call-info NOTIFYs to the other SCA subscribers to the
+		AoR, letting them know that an appearance within the group has
+		gone off hook. Subscribers update their display appropriately.
+	</para>
+	<para>
+		Subscribers to an SCA address-of-record will receive call-info
+		NOTIFYs when a member of the group seizes a line (seized);
+		receives a 180 ringing response from the remote party (ringing);
+		receives a 183 progressing response from the remote party
+		(progressing); when the remote party answers the call (active);
+		when either party in the call places the call on hold (held);
+		and when an SCA line goes back on hook (idle).
+	</para>
+	<para>
+		The call-info subscriber information is stored in memory and
+		is periodically written to the database. Call state information
+		is stored in memory. A future release may periodically write
+		call state to the database, as well. The database is purely
+		for restoring subscriptions after a restart of the application
+		server. Subscriber information is also flushed to the database
+		when the service is stopped.
+	</para>
+	<para>
+		The module impelements SCA as defined in Broadworks SIP
+		Access Side Extensions Interface Specifications, Release 13.0,
+		version 1, sections 2, 3 and 4. At the time of this writing,
+		Polycom and Cisco handsets are known to implement the call-info
+		and line-seize event packages defined in the document, which
+		may be found freely on the web.
+	</para>
+	<para>
+		To date, this module has only been tested with Polycom
+		Soundpoint 550s and 650s running Polycom SIP 3.3.4.
+	</para>
+</chapter>
