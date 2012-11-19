@@ -106,7 +106,7 @@
     <section>
 	<title>Parameters</title>
 	<section>
-	    <title><varname>domain</varname>(str)</title>
+	    <title><varname>domain</varname> (str)</title>
 	    <para>
 		SIP domain to use in SCA NOTIFY Call-Info headers.
 	    </para>
@@ -141,7 +141,7 @@ modparam( "sca", "domain", "voice.example.org" )
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>9</quote> (2 ^ 9 == 512).
+		    Default value is 9 (2 ^ 9 == 512).
 		</emphasis>
 	    </para>
 	    <example>
@@ -162,7 +162,7 @@ modparam( "sca", "hash_table_size", 8 )
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>3600</quote> (1 hour).
+		    Default value is 3600 (1 hour).
 		</emphasis>
 	    </para>
 	    <example>
@@ -182,7 +182,7 @@ modparam( "sca", "call_info_max_expires", 1800 )
             </para>
             <para>
                 <emphasis>
-		    Default value is <quote>15</quote> (15 seconds).
+		    Default value is 15 (15 seconds).
                 </emphasis>
             </para>
 	    <para>
@@ -210,7 +210,7 @@ modparam( "sca", "line_seize_max_expires", 30 )
             </para>
             <para>
                 <emphasis>
-		    Default value is <quote>120</quote> (2 minutes).
+		    Default value is 120 (2 minutes).
                 </emphasis>
             </para>
 	    <para>
@@ -232,7 +232,7 @@ modparam( "sca", "purge_expired_interval", 60 )
         </section>
 
 	<section>
-	    <title><varname>db_url</varname>(str)</title>
+	    <title><varname>db_url</varname> (str)</title>
 	    <para>
 		URL of database to which subscribers will be written.
 	    </para>
@@ -278,7 +278,7 @@ modparam( "sca", "subs_table", "call_info_subscriptions" )
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>300</quote> (5 minutes).
+		    Default value is 300 (5 minutes).
 		</emphasis>
 	    </para>
 	    <example>
