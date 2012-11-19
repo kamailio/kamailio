@@ -290,6 +290,122 @@ modparam( "sca", "db_update_interval", 120 )
 		</programlisting>
 	    </example>
 	</section>
+    </section>
 
+    <section>
+	<title>Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">sca_handle_subscribe()</function>
+	    </title>
+	    <para>
+		The function handling call-info and line-seize SUBSCRIBE
+		requests. It stores or updates the subscriptions in shared
+		memory, and sends NOTIFYs to the subscriber and other
+		members of the group as needed.
+	    </para>
+	    <para>
+		For example, a line-seize SUBSCRIBE will cause the module to
+		reserve an appearance index for the subscriber; send a
+		line-seize NOTIFY to the subscriber indicating which appearance
+		index it must use; and send call-info NOTIFYs to other
+		subscribers to the address-of-record letting them know the
+		appearance is off hook.
+	    </para>
+	    <para>
+		This function can be used from the REQUEST_ROUTE.
+	    </para>
+	    <para>
+		<emphasis>Return code:</emphasis>
+		<itemizedlist>
+		    <listitem>
+		    <para>
+			<emphasis>1 - successful</emphasis>
+		    </para>
+		    </listitem>
+
+		    <listitem>
+		    <para>
+			<emphasis>-1 - failed, error logged</emphasis>
+		    </para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	    <example>
+		<title><function>sca_handle_subscribe</function> usage:</title>
+		<programlisting format="linespecific">
+...
+if ( method == "SUBSCRIBE" &amp;&amp;
+	( @hf_value.event == "call-info" || @hf_value.event == "line_seize" )) {
+    sca_handle_subscribe();
+}
+...
+		</programlisting>
+	    </example>
+	</section>
+
+        <section>
+            <title>
+                <function moreinfo="none">sca_call_info_update()</function>
+            </title>
+            <para>
+		The sca_call_info_update function updates call state for
+		SCA appearances. If a request or response packet contains
+		a Call-Info header, the function extracts call state from
+		the header and sends NOTIFYs to subscribers if needed. If
+		no Call-Info header is included in the packet, the module
+		looks up the To and From URIs to see if either are SCA
+		addresses-of-record. If either the To or From URI are SCA,
+		AoRs, the function looks up the appearance by dialog, and
+		updates call state as needed, sending NOTIFYs to members of
+		the group if the call state has changed.
+            </para>
+	    <para>
+		The sca_call_info_update function updates call state for
+		INVITE, CANCEL, BYE, PRACK and REFER requests and responses.
+	    </para>
+            <para>
+                This function can be used from the REQUEST_ROUTE, REPLY_ROUTE,
+		and FAILURE_ROUTE.
+            </para>
+            <para>
+                <emphasis>Return code:</emphasis>
+                <itemizedlist>
+                    <listitem>
+                    <para>
+                        <emphasis>1 - successful</emphasis>
+                    </para>
+                    </listitem>
+                     
+                    <listitem>
+                    <para>
+                        <emphasis>-1 - failed, error logged</emphasis>
+                    </para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <example>
+                <title><function>sca_call_info_update</function> usage:</title>
+                <programlisting format="linespecific">
+...             
+route
+{
+    ...
+    if ( $fu.sca == "y" ) {
+	sca_call_info_update();
+    }
+    ...
+}
+
+onreply_route[REPLY_ROUTE]
+{
+...
+    sca_call_info_update();
+...
+}
+...             
+                </programlisting>
+            </example>
+        </section>
     </section>
 </chapter>
