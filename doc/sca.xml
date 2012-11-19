@@ -33,5 +33,4 @@
     <toc></toc>
 
     <xi:include href="sca_admin.xml" />
-    <xi:include href="sca_devel.xml" />
 </book>
