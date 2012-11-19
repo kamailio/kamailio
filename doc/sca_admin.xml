@@ -408,4 +408,80 @@ onreply_route[REPLY_ROUTE]
             </example>
         </section>
     </section>
+
+    <section>
+	<title>Exported RPC Commands</title>
+
+	<section>
+	    <title><varname>sca.all_subscriptions</varname></title>
+	    <para>
+		List all current call-info and line-seize subscriptions.
+	    </para>
+	    <para>
+		Name: <emphasis>sca.all_subscriptions</emphasis>
+	    </para>
+	    <para>
+		Parameters: <emphasis>none</emphasis>
+	    </para>
+	    <para>
+		Example:
+	    </para>
+	    <programlisting format="linespecific">
+	    sercmd sca.all_subscriptions
+	    </programlisting>
+	</section>
+
+	<section>
+            <title><varname>sca.all_appearances</varname></title>
+            <para>
+		List all SCA appearances with non-idle state.
+            </para>
+            <para>
+                Name: <emphasis>sca.all_appearances</emphasis>
+            </para>
+            <para>
+                Parameters: <emphasis>none</emphasis>
+            </para>
+            <para>
+                Example:
+            </para>
+            <programlisting format="linespecific">
+            sercmd sca.all_appearances
+            </programlisting>
+        </section>
+
+        <section>
+            <title><varname>sca.release_appearance</varname></title>
+            <para>
+		Set a non-idle appearance index to idle and NOTIFY
+		members of the group.
+            </para>
+            <para>
+                Name: <emphasis>sca.release_appearance</emphasis>
+            </para>
+            <para>
+                Parameters: <emphasis>2</emphasis>
+            </para>
+	    <itemizedlist>
+		<listitem>
+		<para>
+		    <emphasis>SCA Address-of-Record</emphasis>
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		    <emphasis>Appearance Index</emphasis>
+		</para>
+		</listitem>
+	    </itemizedlist>
+            <para>
+                Example:
+            </para>
+            <programlisting format="linespecific">
+	    # release appearance of sip:215@voice.example.com with
+	    # appearance index 3
+            sercmd sca.release_appearance sip:215@voice.example.com 3
+            </programlisting>
+        </section>
+    </section>
 </chapter>
