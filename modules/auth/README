@@ -15,7 +15,7 @@ Daniel-Constantin Mierla
    asipto.com
    <miconda@gmail.com>
 
-   Copyright © 2002, 2003 FhG FOKUS
+   Copyright � 2002, 2003 FhG FOKUS
      __________________________________________________________________
 
    1.1. Overview
@@ -443,6 +443,16 @@ modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
 
 1.3.10. secret (string)
 
+   Secret phrase used to calculate the nonce value. The default is to use
+   a random value generated from the random source in the core.
+
+   If you use multiple servers in your installation, and would like to
+   authenticate on the second server against the nonce generated at the
+   first one its necessary to explicitly set the secret to the same value
+   on all servers. However, the use of a shared (and fixed) secret as
+   nonce is insecure, much better is to stay with the default. Any clients
+   should send the reply to the server that issued the request.
+
    Default value is randomly generated string.
 
    Example 10. Setting secret module parameter
@@ -507,7 +517,7 @@ modparam("auth", "force_stateless_reply", 1)
    records (not all SIP clients support SRV lookup), a subdomain of the
    master domain can be defined for SIP purposes (like sip.mydomain.net
    pointing to same IP address as the SRV record for mydomain.net). By
-   ignoring the realm_prefix “sip.”, at authentication, sip.mydomain.net
+   ignoring the realm_prefix "sip.", at authentication, sip.mydomain.net
    will be equivalent to mydomain.net .
 
    Default value is empty string.
@@ -571,7 +581,7 @@ if (has_credentials("myrealm")) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string “”. In case of REGISTER requests To
+       It must not be empty string "". In case of REGISTER requests To
        header field domain (e.g., variable $td) can be used (because this
        header field represents the user being registered), for all other
        messages From header field domain can be used (e.g., variable $fd).
@@ -658,7 +668,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string “”. In case of REGISTER requests To
+       It must not be empty string "". In case of REGISTER requests To
        header field domain (e.g., varibale $td) can be used (because this
        header field represents a user being registered), for all other
        messages From header field domain can be used (e.g., varibale $fd).

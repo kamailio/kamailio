@@ -548,6 +548,16 @@ modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
 
     <section id="auth.secret">
 	<title><varname>secret</varname> (string)</title>
+	<para>Secret phrase used to calculate the nonce value.
+	The default is to use a random value generated from the random source
+	in the core.</para>
+	<para>If you use multiple servers in your installation, and would like to
+	authenticate on the second server against the nonce generated at the
+	first one its necessary to explicitly set the secret to the same value
+	on all servers. However, the use of a shared (and fixed) secret as
+	nonce is insecure, much better is to stay with the default. Any
+	clients should send the reply to the server that issued the request.
+	</para>
 	<para>
 	    Default value is randomly generated string.
 	</para>
