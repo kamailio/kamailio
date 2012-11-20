@@ -229,10 +229,6 @@ sca_notify_build_headers_from_info( str *hdrs, int max_hdrs_len, sca_mod *scam,
 	
     hdrs->len += len;
 
-    LM_INFO( "ADMORTEN: Call-Info Header for %s NOTIFY to %.*s: \"%.*s\"",
-	    sca_event_name_from_type( sub->event ), STR_FMT( &sub->subscriber ),
-	    STR_FMT( hdrs ));
-
     len = sca_event_append_header_for_type( sub->event,
 		hdrs->s + hdrs->len, max_hdrs_len - hdrs->len );
     if ( len < 0 ) {
