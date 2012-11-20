@@ -81,7 +81,8 @@ sca_dialog_create_replaces_header( sca_dialog *dlg, str *replaces_hdr )
 
     if ( SCA_STR_EMPTY( &dlg->call_id ) || SCA_STR_EMPTY( &dlg->from_tag ) ||
 		SCA_STR_EMPTY( &dlg->to_tag )) {
-	LM_INFO( "ADMORTEN DEBUG: dialog %.*s does not have all tags",
+	LM_ERR( "sca_dialog_create_replaces_header: dialog %.*s is not a "
+		"confirmed dialog, cannot build Replaces header",
 		STR_FMT( &dlg->id ));
 	return( -1 );
     }
