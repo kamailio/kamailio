@@ -215,10 +215,7 @@ sca_rpc_show_subscription( rpc_t *rpc, void *ctx )
     SCA_STR_COPY( &sub_key, &aor );
     SCA_STR_APPEND( &sub_key, &event_name );
 
-LM_INFO( "ADMORTEN: sub_key: %.*s", STR_FMT( &sub_key ));
-
     idx = sca_hash_table_index_for_key( ht, &sub_key );
-LM_INFO( "ADMORTEN: hash table index for %.*s: %d", STR_FMT( &sub_key ), idx );
     sca_hash_table_lock_index( ht, idx );
 
     /* Contact is optional */
