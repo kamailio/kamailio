@@ -91,15 +91,15 @@ Chapter 1. Admin Guide
    defined in Broadworks SIP Access Side Extensions Interface Specifications,
    Release 13.0, version 1, sections 2, 3 and 4.
 
-   SCA group members are receive call state notifications when other group
-   members participate in calls. An SCA caller can place a call on hold, and
-   the call may be retrieved from hold by another member of the group.
+   SCA group members receive call state notifications when other group members
+   participate in calls. An SCA caller can place a call on hold, and the call
+   may be retrieved from hold by another member of the group.
 
    Subscribers to SCA call-info events SUBSCRIBE to their address-of-record
    (AoR), asking the application server to send call-info NOTIFYs with line
    state information as lines in the subscriber group are used.
 
-   For example, when an SCA subscriber takes the phone off hook, if sends a
+   For example, when an SCA subscriber takes the phone off hook, it sends a
    line-seize SUBSCRIBE to the application server. The application server
    acknowledges the request, and sends to the subscriber a line-seize NOTIFY
    with  the appearance index of the line claimed for the subscriber. The
@@ -121,9 +121,7 @@ Chapter 1. Admin Guide
    application server. Subscriber information is also flushed to the database
    when the service is stopped.
 
-   The  module  implements  SCA  as defined in Broadworks SIP Access Side
-   Extensions Interface Specifications, Release 13.0, version 1, sections 2, 3
-   and 4. At the time of this writing, Polycom and Cisco handsets are known to
+   At  the  time of this writing, Polycom and Cisco handsets are known to
    implement  the  call-info and line-seize event packages defined in the
    document, which may be found freely on the web.
 
@@ -302,9 +300,9 @@ if ( method == "SUBSCRIBE" &&
    extracts call state from the header and sends NOTIFYs to subscribers if
    needed. If no Call-Info header is included in the packet, the module looks
    up the To and From URIs to see if either are SCA addresses-of-record. If
-   either  the  To  or  From URI are SCA, AoRs, the function looks up the
-   appearance by dialog, and updates call state as needed, sending NOTIFYs to
-   members of the group if the call state has changed.
+   either the To or From URI are SCA AoRs, the function looks up the appearance
+   by dialog and updates call state as needed, sending NOTIFYs to members of
+   the group if the call state has changed.
 
    The sca_call_info_update function updates call state for INVITE, CANCEL,
    BYE, PRACK and REFER requests and responses.
