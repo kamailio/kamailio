@@ -88,8 +88,6 @@ sca_notify_reply_cb( struct cell *t, int cb_type, struct tmcb_params *cbp )
 	to_aor.len -= strlen( "To: " );
     }
 
-    LM_INFO( "ADMORTEN DEBUG: delete call-info+%.*s subscription for %.*s",
-	    STR_FMT( &to_aor ), STR_FMT( contact_uri ));
     if ( sca_subscription_delete_subscriber_for_event( sca, contact_uri,
 		&SCA_EVENT_NAME_CALL_INFO, &to_aor ) < 0 ) {
 	LM_ERR( "Failed to delete %.*s %.*s subscription",
