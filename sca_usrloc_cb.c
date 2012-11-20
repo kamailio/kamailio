@@ -66,9 +66,6 @@ sca_contact_change_cb( ucontact_t *c, int type, void *param )
 {
     const char		*event_name = sca_name_from_contact_event_type( type );
 
-    LM_INFO( "ADMORTEN DEBUG: contact change: %s %.*s", event_name,
-	    STR_FMT( &c->c ));
-
     if ( type == UL_CONTACT_INSERT || type == UL_CONTACT_UPDATE ) {
 	return;
     }
