@@ -89,7 +89,7 @@ sca_subscription_purge_expired( unsigned int ticks, void *param )
     assert( scam != NULL );
     assert( scam->subscriptions != NULL );
 
-    LM_INFO( "ADMORTEN: EXPIRED PURGE TICK" );
+    LM_INFO( "SCA: purging expired subscriptions" );
 
     ht = scam->subscriptions;
     for ( i = 0; i < ht->size; i++ ) {
