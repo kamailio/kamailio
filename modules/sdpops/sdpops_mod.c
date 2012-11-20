@@ -51,6 +51,7 @@ static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codec, char *bar);
 static int w_sdp_remove_media(sip_msg_t* msg, char* media, char *bar);
 static int w_sdp_print(sip_msg_t* msg, char* level, char *bar);
 static int w_sdp_get(sip_msg_t* msg, char *bar);
+static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar);
 
 static int mod_init(void);
 
@@ -81,6 +82,8 @@ static cmd_export_t cmds[] = {
 		1, fixup_igp_null,  0, ANY_ROUTE},
 	{"sdp_get",                  (cmd_function)w_sdp_get,
 		1, 0,  0, ANY_ROUTE},
+	{"sdp_content",                (cmd_function)w_sdp_content,
+		0, 0,  0, ANY_ROUTE},
 	{"bind_sdpops",                (cmd_function)bind_sdpops,
 		1, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -1104,6 +1107,16 @@ static int w_sdp_get(sip_msg_t* msg, char *avp)
 	}
 	
 	return 1;
+}
+
+/**
+ *
+ */
+static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar)
+{
+	if(parse_sdp(msg)==0 && msg->body!=NULL)
+		return 1;
+	return -1;
 }
 
 /**

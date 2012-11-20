@@ -344,6 +344,27 @@ sdp_get("$avp(sdp)");
 </programlisting>
 	    </example>
 	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">sdp_content()</function>
+	    </title>
+	    <para>
+		Return true if the SIP message has SDP body or a SDP part in body.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_content</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(sdp_content()) {
+    ...
+}
+...
+</programlisting>
+	    </example>
+	</section>
 	</section>
 </chapter>
 
