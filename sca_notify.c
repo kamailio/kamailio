@@ -344,9 +344,6 @@ sca_notify_call_info_subscribers( sca_mod *scam, str *subscription_aor )
     for ( e = slot->entries; e != NULL; e = e->next ) {
 	sub = (sca_subscription *)e->value;
 	if ( !SCA_STR_EQ( subscription_aor, &sub->target_aor )) {
-	    LM_INFO( "ADMORTEN: %.*s (%d) does not match %.*s (%d)",
-			STR_FMT( subscription_aor ), subscription_aor->len,
-			STR_FMT( &sub->target_aor ), sub->target_aor.len );
 	    continue;
 	}
 
