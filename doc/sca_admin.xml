@@ -467,6 +467,86 @@ failure_route[FAILURE_ROUTE]
         </section>
 
         <section>
+            <title><varname>sca.seize_appearance</varname></title>
+            <para>
+		Seize an appearance index for a specific contact within an
+		SCA group, and notify other members of the group that the
+		appearance is off hook. Useful for testing SCA signaling.
+            </para>
+            <para>
+                Name: <emphasis>sca.seize_appearance</emphasis>
+            </para>
+            <para>
+                Parameters: <emphasis>2</emphasis>
+            </para>
+	    <itemizedlist>
+		<listitem>
+		<para>
+		    <emphasis>SCA Address-of-Record</emphasis>
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		    <emphasis>SCA Contact URI</emphasis>
+		</para>
+		</listitem>
+	    </itemizedlist>
+            <para>
+                Example:
+            </para>
+            <programlisting format="linespecific">
+	    # seize next available appearance of sip:215@voice.example.com
+	    # for contact sip:215@10.0.1.2
+            sercmd sca.seize_appearance sip:215@voice.example.com sip:215@10.0.1.2
+            </programlisting>
+        </section>
+
+        <section>
+            <title><varname>sca.update_appearance</varname></title>
+            <para>
+		Update the state of an in-use appearance index, and notify
+		other members of the group. Useful for testing SCA signaling.
+            </para>
+            <para>
+                Name: <emphasis>sca.update_appearance</emphasis>
+            </para>
+            <para>
+                Parameters: <emphasis>3 or 4</emphasis>
+            </para>
+	    <itemizedlist>
+		<listitem>
+		<para>
+		    <emphasis>SCA Address-of-Record</emphasis>
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		    <emphasis>Index of In-Use Appearance</emphasis>
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		    <emphasis>Appearance State</emphasis> 
+		    (seized, ringing, progressing, active, held, held-private)
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		    <emphasis>Appearance Display Info</emphasis> (Optional)
+		</para>
+		</listitem>
+	    </itemizedlist>
+            <para>
+                Example:
+            </para>
+            <programlisting format="linespecific">
+	    # update in-use appearance index 3 of sip:215@voice.example.com
+	    # state held.
+            sercmd sca.update_appearance sip:215@voice.example.com 3 held
+            </programlisting>
+        </section>
+
+        <section>
             <title><varname>sca.release_appearance</varname></title>
             <para>
 		Set a non-idle appearance index to idle and NOTIFY
