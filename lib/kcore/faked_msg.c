@@ -71,6 +71,7 @@ struct sip_msg* faked_msg_next(void)
 {
 	_faked_msg.id = 1 + _faked_msg_no++;
 	_faked_msg.pid = my_pid();
+	memset(&_faked_msg.tval, 0, sizeof(struct timeval));
 	clear_branches();
 	return &_faked_msg;
 }
