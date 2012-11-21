@@ -37,7 +37,9 @@ Andrew Mortensen
 
               5.1. sca.all_subscriptions
               5.2. sca.all_appearances
-              5.3. sca.release_appearance
+              5.3. sca.seize_appearance
+              5.4. sca.update_appearance
+              5.5. sca.release_appearance
 
    List of Examples
 
@@ -81,7 +83,9 @@ Chapter 1. Admin Guide
 
         5.1. sca.all_subscriptions
         5.2. sca.all_appearances
-        5.3. sca.release_appearance
+        5.3. sca.seize_appearance
+        5.4. sca.update_appearance
+        5.5. sca.release_appearance
 
 1. Overview
 
@@ -287,7 +291,7 @@ modparam( "sca", "db_update_interval", 120 )
    Example 1.9. sca_handle_subscribe usage:
 ...
 if ( method == "SUBSCRIBE" &&
-        ( @hf_value.event == "call-info" || @hf_value.event == "line_seize" ))
+        ( @hf_value.event == "call-info" || @hf_value.event == "line-seize" ))
 {
     sca_handle_subscribe();
 }
@@ -319,7 +323,7 @@ if ( method == "SUBSCRIBE" &&
 route
 {
     ...
-    if ( $fu.sca == "y" ) {
+    if ( $fu.sca == "y" || $tu.sca == "y" ) {
         sca_call_info_update();
     }
     ...
@@ -351,7 +355,9 @@ failure_route[FAILURE_ROUTE]
 
    5.1. sca.all_subscriptions
    5.2. sca.all_appearances
-   5.3. sca.release_appearance
+   5.3. sca.seize_appearance
+   5.4. sca.update_appearance
+   5.5. sca.release_appearance
 
 5.1. sca.all_subscriptions
 
@@ -375,7 +381,44 @@ failure_route[FAILURE_ROUTE]
    Example:
             sercmd sca.all_appearances
 
-5.3. sca.release_appearance
+5.3. sca.seize_appearance
+
+   Seize an appearance index for a specific contact within an SCA group, and
+   notify other members of the group that the appearance is off hook. Useful
+   for testing SCA signaling.
+
+   Name: sca.seize_appearance
+
+   Parameters: 2
+     * SCA Address-of-Record
+     * SCA Contact URI
+
+   Example:
+            # seize next available appearance of sip:215@voice.example.com
+            # for contact sip:215@10.0.1.2
+            sercmd sca.seize_appearance sip:215@voice.example.com sip:215@10.0.
+1.2
+
+5.4. sca.update_appearance
+
+   Update the state of an in-use appearance index, and notify other members of
+   the group. Useful for testing SCA signaling.
+
+   Name: sca.update_appearance
+
+   Parameters: 3 or 4
+     * SCA Address-of-Record
+     * Index of In-Use Appearance
+     * Appearance  State  (seized,  ringing,  progressing,  active, held,
+       held-private)
+     * Appearance Display Info (Optional)
+
+   Example:
+            # update in-use appearance index 3 of sip:215@voice.example.com
+            # state held.
+            sercmd sca.update_appearance sip:215@voice.example.com 3 held
+
+5.5. sca.release_appearance
 
    Set a non-idle appearance index to idle and NOTIFY members of the group.
 
