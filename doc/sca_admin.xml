@@ -393,7 +393,7 @@ if ( method == "SUBSCRIBE" &amp;&amp;
 route
 {
     ...
-    if ( $fu.sca == "y" ) {
+    if ( $fu.sca == "y" || $tu.sca == "y" ) {
 	sca_call_info_update();
     }
     ...
