@@ -338,7 +338,7 @@ modparam( "sca", "db_update_interval", 120 )
 		<programlisting format="linespecific">
 ...
 if ( method == "SUBSCRIBE" &amp;&amp;
-	( @hf_value.event == "call-info" || @hf_value.event == "line_seize" )) {
+	( @hf_value.event == "call-info" || @hf_value.event == "line-seize" )) {
     sca_handle_subscribe();
 }
 ...
