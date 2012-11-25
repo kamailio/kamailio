@@ -1042,6 +1042,8 @@ static inline struct mi_root* process_mi_params(struct mi_root *cmd_tree,
 
 	/* we have params -> get callid and fromtag */
 	callid = &node->value;
+	if(callid->s==NULL || callid->len<=0)
+		return init_mi_tree(400, MI_SSTR(MI_MISSING_PARM));
 	LM_DBG("callid='%.*s'\n", callid->len, callid->s);
 
 	node = node->next;
