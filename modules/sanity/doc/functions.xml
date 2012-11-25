@@ -20,10 +20,10 @@
 	    </title>
 	<para>
 		This function makes a row of sanity checks over the given SIP request. The
-		behavior of the function is also controled by 'autodrop' parameter.
+		behavior of the function is also controlled by 'autodrop' parameter.
 		If autodrop=0, the function returns false (-1) if one of the checks failed.
 		When autodrop=1, the function stops the execution of configuration file.
-		In both cases, ff one of the checks fails the module sends a precise error
+		In both cases, if one of the checks fails the module sends a precise error
 		reply via SL send_reply(). Thus there is no need to reply with a generic 
 		error message.
 	</para>
