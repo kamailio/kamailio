@@ -1,0 +1,434 @@
+
+sca Module
+
+Andrew Mortensen
+
+   University of Pennsylvania
+
+   Copyright © 2012 Andrew Mortensen, admorten@isc.upenn.edu
+     _________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Modules
+
+        3. Parameters
+
+              3.1. domain (str)
+              3.2. hash_table_size (integer)
+              3.3. call_info_max_expires (integer)
+              3.4. line_seize_max_expires (integer)
+              3.5. purge_expired_interval (integer)
+              3.6. db_url (str)
+              3.7. subs_table (str)
+              3.8. db_update_interval (integer)
+
+        4. Functions
+
+              4.1. sca_handle_subscribe() 
+              4.2. sca_call_info_update() 
+
+        5. Exported RPC Commands
+
+              5.1. sca.all_subscriptions
+              5.2. sca.all_appearances
+              5.3. sca.seize_appearance
+              5.4. sca.update_appearance
+              5.5. sca.release_appearance
+
+   List of Examples
+
+   1.1. Set domain parameter:
+   1.2. Set hash_table_size:
+   1.3. Set call_info_max_expires:
+   1.4. Set line_seize_max_expires:
+   1.5. Set purge_expired_interval:
+   1.6. Set db_url parameter:
+   1.7. Set subs_table parameter:
+   1.8. Set db_update_interval:
+   1.9. sca_handle_subscribe usage:
+   1.10. sca_call_info_update usage:
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Modules
+
+   3. Parameters
+
+        3.1. domain (str)
+        3.2. hash_table_size (integer)
+        3.3. call_info_max_expires (integer)
+        3.4. line_seize_max_expires (integer)
+        3.5. purge_expired_interval (integer)
+        3.6. db_url (str)
+        3.7. subs_table (str)
+        3.8. db_update_interval (integer)
+
+   4. Functions
+
+        4.1. sca_handle_subscribe() 
+        4.2. sca_call_info_update() 
+
+   5. Exported RPC Commands
+
+        5.1. sca.all_subscriptions
+        5.2. sca.all_appearances
+        5.3. sca.seize_appearance
+        5.4. sca.update_appearance
+        5.5. sca.release_appearance
+
+1. Overview
+
+   The sca module implements Shared Call Appearances. It handles SUBSCRIBE
+   messages for call-info and line-seize events, and sends call-info NOTIFYs to
+   line subscribers to implement line bridging. The module implements SCA as
+   defined in Broadworks SIP Access Side Extensions Interface Specifications,
+   Release 13.0, version 1, sections 2, 3 and 4.
+
+   SCA group members receive call state notifications when other group members
+   participate in calls. An SCA caller can place a call on hold, and the call
+   may be retrieved from hold by another member of the group.
+
+   Subscribers to SCA call-info events SUBSCRIBE to their address-of-record
+   (AoR), asking the application server to send call-info NOTIFYs with line
+   state information as lines in the subscriber group are used.
+
+   For example, when an SCA subscriber takes the phone off hook, it sends a
+   line-seize SUBSCRIBE to the application server. The application server
+   acknowledges the request, and sends to the subscriber a line-seize NOTIFY
+   with  the appearance index of the line claimed for the subscriber. The
+   application also sends call-info NOTIFYs to the other SCA subscribers to the
+   AoR, letting them know that an appearance within the group has gone off
+   hook. Subscribers update their display appropriately.
+
+   Subscribers to an SCA address-of-record will receive call-info NOTIFYs when
+   a  member  of the group seizes a line (seized); receives a 180 ringing
+   response  from  the remote party (ringing); receives a 183 progressing
+   response from the remote party (progressing); when the remote party answers
+   the call (active); when either party in the call places the call on hold
+   (held); and when an SCA line goes back on hook (idle).
+
+   The call-info subscriber information is stored in memory and is periodically
+   written to the database. Call state information is stored in memory. A
+   future release may periodically write call state to the database, as well.
+   The database is purely for restoring subscriptions after a restart of the
+   application server. Subscriber information is also flushed to the database
+   when the service is stopped.
+
+   At  the  time of this writing, Polycom and Cisco handsets are known to
+   implement  the  call-info and line-seize event packages defined in the
+   document, which may be found freely on the web.
+
+   To date, this module has only been tested with Polycom Soundpoint 550s and
+   650s running Polycom SIP 3.3.4.
+
+2. Dependencies
+
+   2.1. Modules
+
+2.1. Modules
+
+   The following modules must be loaded before this module:
+     * a database module
+     * sl
+     * tm
+     * usrloc
+
+3. Parameters
+
+   3.1. domain (str)
+   3.2. hash_table_size (integer)
+   3.3. call_info_max_expires (integer)
+   3.4. line_seize_max_expires (integer)
+   3.5. purge_expired_interval (integer)
+   3.6. db_url (str)
+   3.7. subs_table (str)
+   3.8. db_update_interval (integer)
+
+3.1. domain (str)
+
+   SIP domain to use in SCA NOTIFY Call-Info headers.
+
+   The module uses this value as the SIP domain in Call-Info headers sent with
+   call-info and line-seize NOTIFYs. The domain must match the domain in the
+   SCA line's address-of-record.
+
+   This parameter is required. A future update of the module may extract this
+   value from client SUBSCRIBEs.
+
+   Example 1.1. Set domain parameter:
+...
+modparam( "sca", "domain", "voice.example.org" )
+...
+
+3.2. hash_table_size (integer)
+
+   Size, as a power of two, of the shared memory hash table containing the
+   call-info subscriptions and the appearance state. A larger power of two
+   means better performance (fewer collisions, making for fewer subscriber URI
+   comparisons) at the expense of increased shared memory use.
+
+   Default value is 9 (2 ^ 9 == 512). 
+
+   Example 1.2. Set hash_table_size:
+...
+# create shared memory hash table with 2^8 (256) slots
+modparam( "sca", "hash_table_size", 8 )
+...
+
+3.3. call_info_max_expires (integer)
+
+   The maximum allowed call-info subscription time in seconds.
+
+   Default value is 3600 (1 hour). 
+
+   Example 1.3. Set call_info_max_expires:
+...
+modparam( "sca", "call_info_max_expires", 1800 )
+...
+
+3.4. line_seize_max_expires (integer)
+
+   The maximum allowed line-seize subscription time in seconds.
+
+   Default value is 15 (15 seconds). 
+
+   A maximum line-seize subscription time of 15 seconds is recommended in the
+   SIP Access Side Extensions document. This interval is purposely short to
+   prevent  a client from seizing an appearance without making a call for
+   extended periods of time.
+
+   Example 1.4. Set line_seize_max_expires:
+...
+modparam( "sca", "line_seize_max_expires", 30 )
+...
+
+3.5. purge_expired_interval (integer)
+
+   The  period of time in seconds between purges of expired call-info and
+   line-seize subscriptions.
+
+   Default value is 120 (2 minutes). 
+
+   On finding an expired subscription, the module removes the subscription from
+   the shared memory hash table, and sends a NOTIFY with Subscription-State
+   "terminated;expired" header value to the subscriber. It also NOTIFYs other
+   members of the group, in the event that the expired subscription was a
+   line-seize.
+
+   Example 1.5. Set purge_expired_interval:
+...
+modparam( "sca", "purge_expired_interval", 60 )
+...
+
+3.6. db_url (str)
+
+   URL of database to which subscribers will be written.
+
+   Default value is mysql://openser:openserrw@localhost/openser
+
+   Example 1.6. Set db_url parameter:
+...
+modparam( "sca", "db_url", "mysql://openser:openserrw@localhost/openser" )
+...
+
+3.7. subs_table (str)
+
+   Name of the database table where call-info subscriptions are written.
+
+   Default value is “sca_subscriptions”. 
+
+   Example 1.7. Set subs_table parameter:
+...
+modparam( "sca", "subs_table", "call_info_subscriptions" )
+...
+
+3.8. db_update_interval (integer)
+
+   Period in seconds between writes of call-info subscriber information to the
+   database.
+
+   Default value is 300 (5 minutes). 
+
+   Example 1.8. Set db_update_interval:
+...
+modparam( "sca", "db_update_interval", 120 )
+...
+
+4. Functions
+
+   4.1. sca_handle_subscribe() 
+   4.2. sca_call_info_update() 
+
+4.1.  sca_handle_subscribe()
+
+   The function handling call-info and line-seize SUBSCRIBE requests. It stores
+   or updates the subscriptions in shared memory, and sends NOTIFYs to the
+   subscriber and other members of the group as needed.
+
+   For example, a line-seize SUBSCRIBE will cause the module to reserve an
+   appearance  index  for the subscriber; send a line-seize NOTIFY to the
+   subscriber indicating which appearance index it must use; and send call-info
+   NOTIFYs to other subscribers to the address-of-record letting them know the
+   appearance is off hook.
+
+   This function can be used from the REQUEST_ROUTE.
+
+   Return code:
+     * 1 - successful
+     * -1 - failed, error logged
+
+   Example 1.9. sca_handle_subscribe usage:
+...
+if ( method == "SUBSCRIBE" &&
+        ( @hf_value.event == "call-info" || @hf_value.event == "line-seize" ))
+{
+    sca_handle_subscribe();
+}
+...
+
+4.2.  sca_call_info_update()
+
+   The sca_call_info_update function updates call state for SCA appearances. If
+   a request or response packet contains a Call-Info header, the function
+   extracts call state from the header and sends NOTIFYs to subscribers if
+   needed. If no Call-Info header is included in the packet, the module looks
+   up the To and From URIs to see if either are SCA addresses-of-record. If
+   either the To or From URI are SCA AoRs, the function looks up the appearance
+   by dialog and updates call state as needed, sending NOTIFYs to members of
+   the group if the call state has changed.
+
+   The sca_call_info_update function updates call state for INVITE, CANCEL,
+   BYE, PRACK and REFER requests and responses.
+
+   This  function  can  be  used from the REQUEST_ROUTE, REPLY_ROUTE, and
+   FAILURE_ROUTE.
+
+   Return code:
+     * 1 - successful
+     * -1 - failed, error logged
+
+   Example 1.10. sca_call_info_update usage:
+...
+route
+{
+    ...
+    if ( $fu.sca == "y" || $tu.sca == "y" ) {
+        sca_call_info_update();
+    }
+    ...
+}
+
+onreply_route[REPLY_ROUTE]
+{
+...
+    if ( status =~ "[456][0-9][0-9]" ) {
+        # don't update SCA state here, since there may be
+        # failure route processing (e.g., call forwarding).
+        # update state in failure route instead.
+        break;
+    }
+
+    sca_call_info_update();
+...
+}
+
+failure_route[FAILURE_ROUTE]
+{
+...
+    sca_call_info_update();
+...
+}
+...
+
+5. Exported RPC Commands
+
+   5.1. sca.all_subscriptions
+   5.2. sca.all_appearances
+   5.3. sca.seize_appearance
+   5.4. sca.update_appearance
+   5.5. sca.release_appearance
+
+5.1. sca.all_subscriptions
+
+   List all current call-info and line-seize subscriptions.
+
+   Name: sca.all_subscriptions
+
+   Parameters: none
+
+   Example:
+            sercmd sca.all_subscriptions
+
+5.2. sca.all_appearances
+
+   List all SCA appearances with non-idle state.
+
+   Name: sca.all_appearances
+
+   Parameters: none
+
+   Example:
+            sercmd sca.all_appearances
+
+5.3. sca.seize_appearance
+
+   Seize an appearance index for a specific contact within an SCA group, and
+   notify other members of the group that the appearance is off hook. Useful
+   for testing SCA signaling.
+
+   Name: sca.seize_appearance
+
+   Parameters: 2
+     * SCA Address-of-Record
+     * SCA Contact URI
+
+   Example:
+            # seize next available appearance of sip:215@voice.example.com
+            # for contact sip:215@10.0.1.2
+            sercmd sca.seize_appearance sip:215@voice.example.com sip:215@10.0.
+1.2
+
+5.4. sca.update_appearance
+
+   Update the state of an in-use appearance index, and notify other members of
+   the group. Useful for testing SCA signaling.
+
+   Name: sca.update_appearance
+
+   Parameters: 3 or 4
+     * SCA Address-of-Record
+     * Index of In-Use Appearance
+     * Appearance  State  (seized,  ringing,  progressing,  active, held,
+       held-private)
+     * Appearance Display Info (Optional)
+
+   Example:
+            # update in-use appearance index 3 of sip:215@voice.example.com
+            # state held.
+            sercmd sca.update_appearance sip:215@voice.example.com 3 held
+
+5.5. sca.release_appearance
+
+   Set a non-idle appearance index to idle and NOTIFY members of the group.
+
+   Name: sca.release_appearance
+
+   Parameters: 2
+     * SCA Address-of-Record
+     * Appearance Index
+
+   Example:
+            # release appearance of sip:215@voice.example.com with
+            # appearance index 3
+            sercmd sca.release_appearance sip:215@voice.example.com 3

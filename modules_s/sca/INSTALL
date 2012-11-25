@@ -1,0 +1,16 @@
+1. Put the sca source directory in the modules_s subdirectory of the
+   sip-router source.
+
+2. Build sip-router (any flavor), e.g.,
+	make group_include="standard mysql" include_modules="sca" all
+	(or move to the sca directory and make)
+		
+3. Install
+	make install
+	(or simply cp the sca.so to the module_s library directory)
+
+4. Create the sca_subscriptions table in the DB, e.g.,
+	mysql -u siprouter -p siprouter < sca.sql
+
+5. Set sca module parameters and start proxy.
+	Consult sca module README for details.
