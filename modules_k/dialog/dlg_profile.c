@@ -65,7 +65,7 @@ static dlg_profile_table_t *profiles = NULL;
 static dlg_profile_table_t* new_dlg_profile( str *name,
 		unsigned int size, unsigned int has_value);
 
-
+extern int update_dlg_timeout(dlg_cell_t *, int);
 
 /*!
  * \brief Add profile definitions to the global list
@@ -702,6 +702,74 @@ int	is_known_dlg(struct sip_msg *msg) {
 	dlg_release(dlg);
 
 	return 1;
+}
+
+/*
+ * \brief Set the timeout of all the dialogs in a given profile, by value.
+ * \param profile The evaluated profile name.
+ * \param value The value constraint.
+ * \param timeout The dialog timeout to apply.
+ */
+
+int	dlg_set_timeout_by_profile(struct dlg_profile_table *profile, 
+				   str *value, int timeout) 
+{
+	unsigned int		i;
+	struct dlg_profile_hash	*ph = NULL;
+
+	/* If the profile has no value, iterate through every 
+	 * node and set its timeout.
+	 */
+
+	if(profile->has_value == 0 || value == NULL) {
+		lock_get(&profile->lock);
+
+		for(i = 0; i < profile->size; i ++) {
+			ph = profile->entries[i].first;
+
+			if(!ph) continue;
+			
+			do { 
+				if(update_dlg_timeout(ph->dlg, timeout) < 0) {
+					lock_release(&profile->lock);
+					return -1;
+				}
+
+				ph = ph->next;
+			} while(ph != profile->entries[i].first);
+		} 
+
+		lock_release(&profile->lock);
+	}
+
+	else {
+		i = calc_hash_profile(value, NULL, profile);
+
+		lock_get(&profile->lock);
+
+		ph = profile->entries[i].first;
+
+		if(ph) {
+			do { 
+				if(value->len == ph->value.len &&
+				   memcmp(value->s, ph->value.s, 
+					  value->len) == 0) {
+
+					if(update_dlg_timeout(ph->dlg, 
+							timeout) < 0) {
+						lock_release(&profile->lock);
+						return -1;
+					}
+				}
+			} while(ph != profile->entries[i].first);
+
+			ph = ph->next;
+		}
+
+		lock_release(&profile->lock);
+	}
+
+	return 0;
 }
 
 /****************************** MI commands *********************************/
