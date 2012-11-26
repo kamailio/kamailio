@@ -91,7 +91,6 @@ static rpc_export_t	sca_rpc[] = {
 };
 
 /* EXPORTED PARAMETERS */
-str			domain = STR_NULL;
 str			outbound_proxy = STR_NULL;
 str			db_url = STR_STATIC_INIT( DEFAULT_DB_URL );
 str			db_subs_table = STR_STATIC_INIT( "sca_subscriptions" );
@@ -103,7 +102,6 @@ int			line_seize_max_expires = 15;
 int			purge_expired_interval = 120;
 
 static param_export_t	params[] = {
-    { "domain",			STR_PARAM,	&domain.s },
     { "outbound_proxy",		STR_PARAM,	&outbound_proxy.s },
     { "db_url",			STR_PARAM,	&db_url.s },
     { "subs_table",		STR_PARAM,	&db_subs_table.s },
@@ -266,13 +264,6 @@ sca_set_config( sca_mod *scam )
 	LM_ERR( "Failed to shm_malloc module configuration" );
 	return( -1 );
     }
-
-    if ( domain.s == NULL ) {
-	LM_ERR( "SCA domain modparam is required in configuration script" );
-	return( -1 );
-    }
-    domain.len = strlen( domain.s );
-    scam->cfg->domain = &domain;
 
     if ( outbound_proxy.s ) {
 	outbound_proxy.len = strlen( outbound_proxy.s );

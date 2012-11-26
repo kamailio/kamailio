@@ -206,46 +206,31 @@ done:
 }
 
     static int
-sca_call_info_header_length_for_idle_appearance( sca_mod *scam )
+sca_call_info_build_idle_value( sca_mod *scam, str *aor,
+	char *hdrbuf, int maxlen )
 {
-    int		given_length = 0;
-
-    /* appearance-index=* */
-    given_length += strlen( "*" );
-
-    /* appearance-state=idle */
-    given_length += SCA_APPEARANCE_STATE_STR_IDLE.len;
-
-    given_length += scam->cfg->domain->len;
-
-    return( sca_call_info_header_length( given_length ));
-}
-
-    static int
-sca_call_info_build_idle_value( sca_mod *scam, char *hdrbuf, int maxlen )
-{
+    str			idle_domain = STR_NULL;
     int			len;
 
-    if ( sca_call_info_header_length_for_idle_appearance( scam ) >= maxlen ) {
-	LM_ERR( "Failed to add idle appearances: Call-Info header too long" );
+    if ( sca_call_info_domain_from_uri( aor, &idle_domain ) < 0 ) {
+	LM_ERR( "Failed to extract domain from %.*s for idle domain",
+		STR_FMT( aor ));
 	return( -1 );
     }
 
-#ifdef notdef
-    strcpy( hdrbuf, "<sip:" );
-    len = strlen( "<sip:" );
-
-    memcpy( hdrbuf + len, scam->cfg->domain->s, scam->cfg->domain->len );
-    len += scam->cfg->domain->len;
-#endif /* notdef */
-
     /* the SCA_APPEARANCE_ strs' s member are literal C strings */
     len = snprintf( hdrbuf, maxlen,
-		"<sip:%s>;%s=*;%s=%s%s",
-		scam->cfg->domain->s,
+		"<sip:%.*s>;%s=*;%s=%s%s",
+		STR_FMT( &idle_domain ),
 		SCA_APPEARANCE_INDEX_STR.s,
 		SCA_APPEARANCE_STATE_STR.s,
 		SCA_APPEARANCE_STATE_STR_IDLE.s, CRLF );
+    if ( len >= maxlen ) {
+	LM_ERR( "Failed to add idle appearance: Call-Info header too long" );
+	len = -1;
+
+	/* snprintf can also return negative. we catch that in the caller. */
+    }
 
     return( len );
 }
@@ -273,7 +258,7 @@ sca_call_info_build_header( sca_mod *scam, sca_subscription *sub,
     /* line-seize NOTIFYs will contain only the seized appearance index */
     if ( sub->event != SCA_EVENT_TYPE_LINE_SEIZE ) {
 	/* if not all appearances in use, add *-index idle */
-	len = sca_call_info_build_idle_value( scam,
+	len = sca_call_info_build_idle_value( scam, &sub->target_aor,
 		    hdrbuf + usedlen, maxlen - usedlen );
 	if ( len < 0 || len + usedlen >= maxlen ) {
 	    LM_ERR( "Cannot build idle Call-Info value: buffer too small" );

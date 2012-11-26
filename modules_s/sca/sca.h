@@ -30,7 +30,6 @@
 #define SCA_H
 
 struct _sca_config {
-    str		*domain;
     str		*outbound_proxy;
     str		*db_url;
     str		*subs_table;
