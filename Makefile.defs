@@ -162,11 +162,15 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 VERSION = 3
 PATCHLEVEL = 4
 SUBLEVEL =  0
-EXTRAVERSION = -dev5
+EXTRAVERSION = -dev6
 
+# memory manager switcher
+# 0 - f_malloc (fast malloc)
+# 1 - q_malloc (quick malloc)
+MEMMNG ?= 1
 # memory debugger switcher
-# 0 - off (release mode)
-# 1 - on (devel mode)
+# 0 - off (no-debug mode)
+# 1 - on (debug mode)
 MEMDBG ?= 0
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
@@ -712,13 +716,22 @@ C_DEFS= $(extra_defs) \
 # use make mode=debug all instead. Anyway no by default ser is  compiled w/ 
 # debugging symbols in all cases (-g). --andrei
 
-ifeq ($(MEMDBG), 1)
-	C_DEFS+= -DDBG_QM_MALLOC
+# set memory manager and its debug mode
+ifeq ($(MEMMNG), 1)
+#	use q_malloc
+ifeq 	($(MEMDBG), 1)
+		C_DEFS+= -DDBG_QM_MALLOC
+endif
 	C_DEFS+= -DMEM_JOIN_FREE
 else
+#	use f_malloc
 	C_DEFS+= -DF_MALLOC
+ifeq 	($(MEMDBG), 1)
+		C_DEFS+= -DDBG_F_MALLOC
+endif
 	C_DEFS+= -DMEM_JOIN_FREE
 endif
+
 ifneq ($(PKG_MEM_SIZE),)
 	C_DEFS+= -DPKG_MEM_SIZE=$(PKG_MEM_SIZE)
 endif
