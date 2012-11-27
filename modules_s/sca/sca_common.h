@@ -49,7 +49,6 @@
 #include "../../mem/shm_mem.h"
 
 /* bound API headers */
-#include "../usrloc/usrloc.h"
 #include "../../modules/sl/sl.h"
 #include "../../modules/tm/tm_load.h"
 

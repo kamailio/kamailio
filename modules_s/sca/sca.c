@@ -26,7 +26,6 @@
 #include <sys/types.h>
 #include <stdlib.h>
 
-#include "../usrloc/usrloc.h"
 #include "../../timer.h"
 #include "../../timer_proc.h"
 
@@ -35,7 +34,6 @@
 #include "sca_call_info.h"
 #include "sca_rpc.h"
 #include "sca_subscribe.h"
-#include "sca_usrloc_cb.h"
 
 
 MODULE_VERSION
@@ -46,7 +44,6 @@ sca_mod			*sca;
 
 /* EXTERNAL API */
 db_func_t		dbf;	/* db api */
-usrloc_api_t		ul;	/* usrloc callbacks */
 struct tm_binds		tmb;	/* tm functions for sending messages */
 sl_api_t		slb;	/* sl callback, function for getting to-tag */
 
@@ -54,7 +51,6 @@ sl_api_t		slb;	/* sl callback, function for getting to-tag */
 static int		sca_mod_init( void );
 static int		sca_child_init( int );
 static void		sca_mod_destroy( void );
-static int		sca_bind_usrloc( usrloc_api_t *, sca_mod ** );
 static int		sca_set_config( sca_mod * );
 
 /* EXPORTED COMMANDS */
@@ -127,61 +123,6 @@ struct module_exports	exports = {
     sca_child_init,	/* per-child initialization function */
 };
 
-/*
- * bind usrloc API and register callbacks for events we care about.
- */
-    static int
-sca_bind_usrloc( usrloc_api_t *ul_api, sca_mod **scam )
-{
-    bind_usrloc_t	bind_usrloc;
-
-    assert( scam != NULL );
-
-    bind_usrloc = (bind_usrloc_t)find_export( "ul_bind_usrloc", 1, 0 );
-    if ( !bind_usrloc ) {
-	LM_ERR( "Can't find exported usrloc functions" );
-	return( -1 );
-    }
-
-    if ( bind_usrloc( ul_api ) < 0 ) {
-	LM_ERR( "Can't bind exported usrloc functions" );
-	return( -1 );
-    }
-    if ( ul_api->register_ulcb == NULL ) {
-	LM_ERR( "Failed to import usrloc register callback function" );
-	return( -1 );
-    }
-
-    /*
-     * register callback functions for:
-     *		1. contact insertion (new REGISTER for an AoR);
-     *		2. contact expiration (registration expired);
-     *		3. contact re-registration;
-     *		4. contact deletion (REGISTER with Expires: 0)
-     */
-    if ( ul_api->register_ulcb( UL_CONTACT_INSERT,
-			sca_contact_change_cb, NULL ) < 0 ) {
-	LM_ERR( "Failed to register for usrloc contact insert callback" );
-	return( -1 );
-    }
-    if ( ul_api->register_ulcb( UL_CONTACT_EXPIRE,
-			sca_contact_change_cb, NULL ) < 0 ) {
-	LM_ERR( "Failed to register for usrloc contact expire callback" );
-	return( -1 );
-    }
-    if ( ul_api->register_ulcb( UL_CONTACT_UPDATE,
-			sca_contact_change_cb, NULL ) < 0 ) {
-	LM_ERR( "Failed to register for usrloc contact update callback" );
-	return( -1 );
-    }
-    if ( ul_api->register_ulcb( UL_CONTACT_DELETE,
-			sca_contact_change_cb, NULL ) < 0 ) {
-	LM_ERR( "Failed to register for usrloc contact update callback" );
-	return( -1 );
-    }
-
-    return( 0 );
-} 
 
     static int
 sca_bind_sl( sca_mod *scam, sl_api_t *sl_api )
@@ -356,11 +297,6 @@ sca_mod_init( void )
 
     if ( sca_bind_srdb1( sca, &dbf ) != 0 ) {
 	LM_ERR( "Failed to initialize required DB API" );
-	return( -1 );
-    }
-
-    if ( sca_bind_usrloc( &ul, &sca ) != 0 ) {
-	LM_ERR( "Failed to initialize required usrloc API" );
 	return( -1 );
     }
 
