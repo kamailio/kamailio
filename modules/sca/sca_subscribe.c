@@ -893,17 +893,21 @@ sca_subscription_delete_subscriber_for_event( sca_mod *scam, str *subscriber,
     return( 1 );
 }
 
+/* caller must pkg_free req_sub->rr.s and req_sub->dialog.to_tag.s */
     int
 sca_subscription_from_request( sca_mod *scam, sip_msg_t *msg, int event_type,
 	sca_subscription *req_sub )
 {
-    struct to_body		tmp_to, *to, *from;
+    struct to_body		tmp_to = { 0 };
+    struct to_body		*to, *from;
     str				contact_uri;
     str				to_tag = STR_NULL;
     unsigned int		expires = 0, max_expires;
     unsigned int		cseq;
 
     assert( req_sub != NULL );
+
+    memset( req_sub, 0, sizeof( sca_subscription ));
 
     /* parse required info first */
     if ( !SCA_HEADER_EMPTY( msg->expires )) {
@@ -1012,15 +1016,25 @@ sca_subscription_from_request( sca_mod *scam, sip_msg_t *msg, int event_type,
     req_sub->dialog.id.len = 0;
     req_sub->dialog.call_id = msg->callid->body;
     req_sub->dialog.from_tag = from->tag_value;
-    req_sub->dialog.to_tag = to_tag;
+
+    req_sub->dialog.to_tag.s = pkg_malloc( to_tag.len );
+    if ( req_sub->dialog.to_tag.s == NULL ) {
+	LM_ERR( "Failed to pkg_malloc space for to-tag %.*s",
+		STR_FMT( &to_tag ));
+	goto error;
+    }
+    SCA_STR_COPY( &req_sub->dialog.to_tag, &to_tag );
+    
     req_sub->dialog.subscribe_cseq = 0;
     req_sub->dialog.notify_cseq = 0;
 
-    //free_to_params( &tmp_to );
+    free_to_params( &tmp_to );
+
     return( 1 );
 
 error:
-    //free_to_params( &tmp_to );
+    free_to_params( &tmp_to );
+
     return( -1 );
 }
 
@@ -1070,7 +1084,7 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
     if ( sca_subscription_copy_subscription_key( &req_sub, &sub_key ) < 0 ) {
 	SCA_REPLY_ERROR( sca, 500,
 			"Internal Server Error - copy dialog id", msg );
-	return( -1 );
+	goto done;
     }
     sca_subscription_print( &req_sub );
 
@@ -1082,6 +1096,9 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
     /* ensure we only calculate the hash table index once */
     idx = sca_hash_table_index_for_key( sca->subscriptions,
 					&sub_key );
+    /* pkg_malloc'd in sca_subscription_copy_subscription_key above */
+    pkg_free( sub_key.s );
+
     sca_hash_table_lock_index( sca->subscriptions, idx );
 
     sub = sca_hash_table_index_kv_find_unsafe( sca->subscriptions, idx,
@@ -1168,9 +1185,6 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 	}
     }
 
-    /* pkg_malloc'd in sca_subscription_copy_subscription_key() */
-    pkg_free( sub_key.s );
-
     status = sca_ok_status_for_event( event_type );
     status_text = sca_ok_text_for_event( event_type );
     if ( sca_reply( sca, status, status_text, event_type,
@@ -1205,6 +1219,10 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 done:
     if ( idx >= 0 ) {
 	sca_hash_table_unlock_index( sca->subscriptions, idx );
+    }
+
+    if ( req_sub.dialog.to_tag.s != NULL ) {
+	pkg_free( req_sub.dialog.to_tag.s );
     }
 
     return( rc );
