@@ -847,6 +847,7 @@ int add_listen_iface(char* name, struct name_lst* addr_l,
 }
 #ifdef __OS_linux
 
+#include "linux/types.h"
 #include "linux/netlink.h"
 #include "linux/rtnetlink.h"
 #include "arpa/inet.h"
