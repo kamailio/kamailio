@@ -95,11 +95,6 @@
 			<emphasis>tm</emphasis>
 		    </para>
 		    </listitem>
-		    <listitem>
-		    <para>
-			<emphasis>usrloc</emphasis>
-		    </para>
-		    </listitem>
 		</itemizedlist>
 	    </para>
 	</section>
@@ -107,31 +102,6 @@
 
     <section>
 	<title>Parameters</title>
-	<section>
-	    <title><varname>domain</varname> (str)</title>
-	    <para>
-		SIP domain to use in SCA NOTIFY Call-Info headers.
-	    </para>
-	    <para>
-		The module uses this value as the SIP domain in Call-Info
-		headers sent with call-info and line-seize NOTIFYs. The domain
-		must match the domain in the SCA line's address-of-record.
-	    </para>
-	    <para>
-		<emphasis>This parameter is required.</emphasis> A future
-		update of the module may extract this value from client
-		SUBSCRIBEs.
-	    </para>
-	    <example>
-		<title>Set <varname>domain</varname> parameter:</title>
-		<programlisting format="linespecific">
-...
-modparam( "sca", "domain", "voice.example.org" )
-...
-		</programlisting>
-	    </example>
-	</section>
-
 	<section>
 	    <title><varname>hash_table_size</varname> (integer)</title>
 	    <para>

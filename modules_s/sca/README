@@ -19,14 +19,13 @@ Andrew Mortensen
 
         3. Parameters
 
-              3.1. domain (str)
-              3.2. hash_table_size (integer)
-              3.3. call_info_max_expires (integer)
-              3.4. line_seize_max_expires (integer)
-              3.5. purge_expired_interval (integer)
-              3.6. db_url (str)
-              3.7. subs_table (str)
-              3.8. db_update_interval (integer)
+              3.1. hash_table_size (integer)
+              3.2. call_info_max_expires (integer)
+              3.3. line_seize_max_expires (integer)
+              3.4. purge_expired_interval (integer)
+              3.5. db_url (str)
+              3.6. subs_table (str)
+              3.7. db_update_interval (integer)
 
         4. Functions
 
@@ -43,16 +42,15 @@ Andrew Mortensen
 
    List of Examples
 
-   1.1. Set domain parameter:
-   1.2. Set hash_table_size:
-   1.3. Set call_info_max_expires:
-   1.4. Set line_seize_max_expires:
-   1.5. Set purge_expired_interval:
-   1.6. Set db_url parameter:
-   1.7. Set subs_table parameter:
-   1.8. Set db_update_interval:
-   1.9. sca_handle_subscribe usage:
-   1.10. sca_call_info_update usage:
+   1.1. Set hash_table_size:
+   1.2. Set call_info_max_expires:
+   1.3. Set line_seize_max_expires:
+   1.4. Set purge_expired_interval:
+   1.5. Set db_url parameter:
+   1.6. Set subs_table parameter:
+   1.7. Set db_update_interval:
+   1.8. sca_handle_subscribe usage:
+   1.9. sca_call_info_update usage:
 
 Chapter 1. Admin Guide
 
@@ -65,14 +63,13 @@ Chapter 1. Admin Guide
 
    3. Parameters
 
-        3.1. domain (str)
-        3.2. hash_table_size (integer)
-        3.3. call_info_max_expires (integer)
-        3.4. line_seize_max_expires (integer)
-        3.5. purge_expired_interval (integer)
-        3.6. db_url (str)
-        3.7. subs_table (str)
-        3.8. db_update_interval (integer)
+        3.1. hash_table_size (integer)
+        3.2. call_info_max_expires (integer)
+        3.3. line_seize_max_expires (integer)
+        3.4. purge_expired_interval (integer)
+        3.5. db_url (str)
+        3.6. subs_table (str)
+        3.7. db_update_interval (integer)
 
    4. Functions
 
@@ -142,36 +139,18 @@ Chapter 1. Admin Guide
      * a database module
      * sl
      * tm
-     * usrloc
 
 3. Parameters
 
-   3.1. domain (str)
-   3.2. hash_table_size (integer)
-   3.3. call_info_max_expires (integer)
-   3.4. line_seize_max_expires (integer)
-   3.5. purge_expired_interval (integer)
-   3.6. db_url (str)
-   3.7. subs_table (str)
-   3.8. db_update_interval (integer)
+   3.1. hash_table_size (integer)
+   3.2. call_info_max_expires (integer)
+   3.3. line_seize_max_expires (integer)
+   3.4. purge_expired_interval (integer)
+   3.5. db_url (str)
+   3.6. subs_table (str)
+   3.7. db_update_interval (integer)
 
-3.1. domain (str)
-
-   SIP domain to use in SCA NOTIFY Call-Info headers.
-
-   The module uses this value as the SIP domain in Call-Info headers sent with
-   call-info and line-seize NOTIFYs. The domain must match the domain in the
-   SCA line's address-of-record.
-
-   This parameter is required. A future update of the module may extract this
-   value from client SUBSCRIBEs.
-
-   Example 1.1. Set domain parameter:
-...
-modparam( "sca", "domain", "voice.example.org" )
-...
-
-3.2. hash_table_size (integer)
+3.1. hash_table_size (integer)
 
    Size, as a power of two, of the shared memory hash table containing the
    call-info subscriptions and the appearance state. A larger power of two
@@ -180,24 +159,24 @@ modparam( "sca", "domain", "voice.example.org" )
 
    Default value is 9 (2 ^ 9 == 512). 
 
-   Example 1.2. Set hash_table_size:
+   Example 1.1. Set hash_table_size:
 ...
 # create shared memory hash table with 2^8 (256) slots
 modparam( "sca", "hash_table_size", 8 )
 ...
 
-3.3. call_info_max_expires (integer)
+3.2. call_info_max_expires (integer)
 
    The maximum allowed call-info subscription time in seconds.
 
    Default value is 3600 (1 hour). 
 
-   Example 1.3. Set call_info_max_expires:
+   Example 1.2. Set call_info_max_expires:
 ...
 modparam( "sca", "call_info_max_expires", 1800 )
 ...
 
-3.4. line_seize_max_expires (integer)
+3.3. line_seize_max_expires (integer)
 
    The maximum allowed line-seize subscription time in seconds.
 
@@ -208,12 +187,12 @@ modparam( "sca", "call_info_max_expires", 1800 )
    prevent  a client from seizing an appearance without making a call for
    extended periods of time.
 
-   Example 1.4. Set line_seize_max_expires:
+   Example 1.3. Set line_seize_max_expires:
 ...
 modparam( "sca", "line_seize_max_expires", 30 )
 ...
 
-3.5. purge_expired_interval (integer)
+3.4. purge_expired_interval (integer)
 
    The  period of time in seconds between purges of expired call-info and
    line-seize subscriptions.
@@ -226,41 +205,41 @@ modparam( "sca", "line_seize_max_expires", 30 )
    members of the group, in the event that the expired subscription was a
    line-seize.
 
-   Example 1.5. Set purge_expired_interval:
+   Example 1.4. Set purge_expired_interval:
 ...
 modparam( "sca", "purge_expired_interval", 60 )
 ...
 
-3.6. db_url (str)
+3.5. db_url (str)
 
    URL of database to which subscribers will be written.
 
-   Default value is mysql://openser:openserrw@localhost/openser
+   Default value is mysql://kamailio:kamailiorw@localhost/kamailio
 
-   Example 1.6. Set db_url parameter:
+   Example 1.5. Set db_url parameter:
 ...
-modparam( "sca", "db_url", "mysql://openser:openserrw@localhost/openser" )
+modparam( "sca", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio" )
 ...
 
-3.7. subs_table (str)
+3.6. subs_table (str)
 
    Name of the database table where call-info subscriptions are written.
 
    Default value is “sca_subscriptions”. 
 
-   Example 1.7. Set subs_table parameter:
+   Example 1.6. Set subs_table parameter:
 ...
 modparam( "sca", "subs_table", "call_info_subscriptions" )
 ...
 
-3.8. db_update_interval (integer)
+3.7. db_update_interval (integer)
 
    Period in seconds between writes of call-info subscriber information to the
    database.
 
    Default value is 300 (5 minutes). 
 
-   Example 1.8. Set db_update_interval:
+   Example 1.7. Set db_update_interval:
 ...
 modparam( "sca", "db_update_interval", 120 )
 ...
@@ -288,7 +267,7 @@ modparam( "sca", "db_update_interval", 120 )
      * 1 - successful
      * -1 - failed, error logged
 
-   Example 1.9. sca_handle_subscribe usage:
+   Example 1.8. sca_handle_subscribe usage:
 ...
 if ( method == "SUBSCRIBE" &&
         ( @hf_value.event == "call-info" || @hf_value.event == "line-seize" ))
@@ -318,7 +297,7 @@ if ( method == "SUBSCRIBE" &&
      * 1 - successful
      * -1 - failed, error logged
 
-   Example 1.10. sca_call_info_update usage:
+   Example 1.9. sca_call_info_update usage:
 ...
 route
 {
