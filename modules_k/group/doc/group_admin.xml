@@ -16,13 +16,13 @@
 	<section>
 		<title>Overview</title>
 		<para>
-		This module provides functionalities for different methods of group 
+		This module provides functionality for two different methods of group 
 		membership checking.
 		</para>
 		<section>
 			<title>Strict membership checking</title>
 			<para>
-			There is a database table that contains list of users and groups 
+			The module uses a database table that contains a list of users and groups 
 			they belong to. The module provides the possibility to check if a
 			specific user belongs to a specific group.
 			</para>
@@ -39,7 +39,7 @@
 			group ID(s) the user belongs to (via RE matching) .
 			</para>
 			<para>
-			Due performance reasons (regular expression evaluation), DB cache
+			Due to performance reasons (regular expression evaluation), DB cache
 			support is available: the table content is loaded into memory at 
 			startup and all regular expressions are compiled.
 			</para>
@@ -94,7 +94,7 @@
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("group", "db_url", "mysql://username:password@dbhost/openser")
+modparam("group", "db_url", "&exampledb;")
 ...
 </programlisting>
 		</example>
@@ -164,7 +164,7 @@ modparam("group", "domain_column", "realm")
 	<section>
 		<title><varname>group_column</varname> (string)</title>
 		<para>
-		Name of the <quote>table</quote> column holding groups.
+		Name of the <quote>table</quote> column holding group names.
 		</para>
 		<para>
 		<emphasis>
@@ -184,13 +184,13 @@ modparam("group", "group_column", "grp")
 	<section>
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
-		If enabled (set to non zero value) then domain will be used also used
+		If enabled (set to a non zero value) then the domain will be used also used
 		for strict group matching; otherwise only the username part will be 
 		used.
 		</para>
 		<para>
 		<emphasis>
-			Default value is 0 (no).
+			Default value is 0 (disabled).
 		</emphasis>
 		</para>
 		<example>
@@ -275,7 +275,7 @@ modparam("group", "re_gid_column", "grp_id")
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>1</quote>.
+			Default value is <quote>1</quote> (enabled).
 		</emphasis>
 		</para>
 		<example>
@@ -297,7 +297,7 @@ modparam("group", "multiple_gid", 0)
 		</title>
 		<para>
 		This function is to be used for script group membership. The function 
-		returns true if username in the given &uri; is member of the given
+		returns true if username in the given &uri; is a member of the given
 		group and false if not.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>

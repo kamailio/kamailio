@@ -99,14 +99,14 @@ Chapter 1. Admin Guide
    1.1. Strict membership checking
    1.2. Regular Expression based checking
 
-   This module provides functionalities for different methods of group
+   This module provides functionality for two different methods of group
    membership checking.
 
 1.1. Strict membership checking
 
-   There is a database table that contains list of users and groups they
-   belong to. The module provides the possibility to check if a specific
-   user belongs to a specific group.
+   The module uses a database table that contains a list of users and
+   groups they belong to. The module provides the possibility to check if
+   a specific user belongs to a specific group.
 
    There is no DB caching support, each check involving a DB query.
 
@@ -117,7 +117,7 @@ Chapter 1. Admin Guide
    This type of matching may be used to fetch the group ID(s) the user
    belongs to (via RE matching) .
 
-   Due performance reasons (regular expression evaluation), DB cache
+   Due to performance reasons (regular expression evaluation), DB cache
    support is available: the table content is loaded into memory at
    startup and all regular expressions are compiled.
 
@@ -154,11 +154,11 @@ Chapter 1. Admin Guide
 
    URL of the database table to be used.
 
-   Default value is "mysql://openserro:openserro@localhost/openser".
+   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio".
 
    Example 1.1. Set db_url parameter
 ...
-modparam("group", "db_url", "mysql://username:password@dbhost/openser")
+modparam("group", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
 3.2. table (string)
@@ -197,7 +197,7 @@ modparam("group", "domain_column", "realm")
 
 3.5. group_column (string)
 
-   Name of the "table" column holding groups.
+   Name of the "table" column holding group names.
 
    Default value is "grp".
 
@@ -208,11 +208,11 @@ modparam("group", "group_column", "grp")
 
 3.6. use_domain (integer)
 
-   If enabled (set to non zero value) then domain will be used also used
-   for strict group matching; otherwise only the username part will be
-   used.
+   If enabled (set to a non zero value) then the domain will be used also
+   used for strict group matching; otherwise only the username part will
+   be used.
 
-   Default value is 0 (no).
+   Default value is 0 (disabled).
 
    Example 1.6. Set use_domain parameter
 ...
@@ -261,7 +261,7 @@ modparam("group", "re_gid_column", "grp_id")
    all group IDs that match the user; otherwise only the first will be
    returned.
 
-   Default value is "1".
+   Default value is "1" (enabled).
 
    Example 1.10. Set multiple_gid parameter
 ...
@@ -273,11 +273,11 @@ modparam("group", "multiple_gid", 0)
    4.1. is_user_in(URI, group)
    4.2. get_user_group(URI, AVP)
 
-4.1. is_user_in(URI, group)
+4.1.  is_user_in(URI, group)
 
    This function is to be used for script group membership. The function
-   returns true if username in the given URI is member of the given group
-   and false if not.
+   returns true if username in the given URI is a member of the given
+   group and false if not.
 
    Meaning of the parameters is as follows:
      * URI - URI whose username and optionally domain to be used, this can
@@ -300,7 +300,7 @@ if (is_user_in("Request-URI", "ld")) {
 };
 ...
 
-4.2. get_user_group(URI, AVP)
+4.2.  get_user_group(URI, AVP)
 
    This function is to be used for regular expression based group
    membership. The function returns true if username in the given URI
