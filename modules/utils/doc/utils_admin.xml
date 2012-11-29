@@ -264,7 +264,7 @@ id switch                         filter proxy
 		<title><function>forward_switch</function> usage</title>
 		<programlisting format="linespecific">
 ...
-&ctltool; fifo sp_forward_switch 0=on
+&ctltool; fifo forward_switch 0=on
 ...
 		</programlisting>
 	    </example>
@@ -294,7 +294,7 @@ id switch                         filter proxy
 		<title><function>forward_filter</function> usage</title>
 		<programlisting format="linespecific">
 ...
-&ctltool; fifo sp_forward_filter 0=REGISTER:INVITE
+&ctltool; fifo forward_filter 0=REGISTER:INVITE
 ...
 		</programlisting>
 	    </example>
@@ -313,7 +313,7 @@ id switch                         filter proxy
 		<title><function>forward_proxy</function> usage</title>
 		<programlisting format="linespecific">
 ...
-&ctltool; fifo sp_forward_proxy 0=host-c.domain-c:5060
+&ctltool; fifo forward_proxy 0=host-c.domain-c:5060
 ...
 		</programlisting>
 	    </example>
