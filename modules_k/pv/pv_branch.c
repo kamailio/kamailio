@@ -369,6 +369,7 @@ int pv_get_sndto(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	struct onsend_info* snd_inf;
+	struct ip_addr ip;
 	str s;
 
 	snd_inf=get_onsend_info();
@@ -395,7 +396,8 @@ int pv_get_sndto(struct sip_msg *msg, pv_param_t *param,
 					(int)snd_inf->len);
 		default:
 			/* 0 - ip */
-			s.s   = suip2a(snd_inf->to, sizeof(*snd_inf->to));
+			su2ip_addr(&ip, snd_inf->to);
+			s.s = ip_addr2a(&ip);
 			s.len = strlen(s.s);
 			return pv_get_strval(msg, param, res, &s);
 	}
