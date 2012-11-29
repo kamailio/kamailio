@@ -21,10 +21,10 @@
       <para>The following features are offered by the LDAP module:</para>
       <itemizedlist>
         <listitem>
-            <para>LDAP search function taking an LDAP URL as input</para>
+            <para>LDAP search function based an a LDAP URL</para>
         </listitem>
         <listitem>
-            <para>LDAP result parsing functions to store LDAP data as AVP</para>
+            <para>LDAP result parsing functions to store LDAP data as AVP variables</para>
         </listitem>
         <listitem>
             <para>Support for accessing multiple LDAP servers</para>
@@ -45,7 +45,7 @@
       
       <para>The module implementation makes use of the open source <emphasis>OpenLDAP</emphasis> library available
 	on most UNIX/Linux platforms. Besides LDAP server failover and automatic reconnect, this module can handle
-	multiple LDAP sessions concurrently allowing to access data stored on different LDAP servers. Each &kamailio;
+	multiple LDAP sessions concurrently allowing access to data stored on different LDAP servers. Each &kamailio;
 	worker process maintains one LDAP TCP connection per configured LDAP server. This enables parallel execution
 	of LDAP requests and offloads LDAP concurrency control to the LDAP server(s).</para>
       
@@ -61,30 +61,30 @@
         <title>Usage Basics</title>
 
         <para>
-	First so called LDAP sessions have to be specified in an external configuration file (as described in
-	<xref linkend="ldap-config" xreflabel="LDAP Configuration File"/>). Each LDAP session includes LDAP server
-	access parameters like server hostname or connection timeouts. Normally only a single LDAP session will be
-	used unless there is a need to access more than one LDAP server. The LDAP session name will then be used in
-	the &kamailio; configuration script to refer to a specific LDAP session.
+	LDAP sessions is specified in an external configuration file (as described in
+	<xref linkend="ldap-config" xreflabel="LDAP Configuration File"/>). Each of these LDAP sessions includes
+	LDAP server access parameters like server hostname or connection timeouts. Normally only a single LDAP
+	session per process will be used unless there is a need to access more than one LDAP server. The LDAP
+	session name will then be used in the &kamailio; configuration script to refer to a specific LDAP session.
         </para>
 
         <para>
 	The <varname>ldap_search</varname> function (<xref linkend="ldap-search-fn"/>) performs an LDAP search
 	operation. It expects an LDAP URL as input which includes the LDAP session name and search parameters.
-	<xref linkend="ldap-urls"/>  provides a quick overview on LDAP URLs.
+	The section <xref linkend="ldap-urls"/>  provides a quick overview on LDAP URLs.
         </para>
         
         <para>
-	The result of an LDAP search is stored internally and can be accessed with one of the
+	The result of a LDAP search is stored internally and can be accessed with one of the
 	<varname>ldap_result*</varname> functions. <varname>ldap_result</varname> (<xref linkend="ldap-result-fn"/>)
-	stores resulting LDAP attribute value as AVPs. <varname>ldap_result_check</varname>
+	stores resulting LDAP attribute values as AVPs. <varname>ldap_result_check</varname>
 	(<xref linkend="ldap-result-check-fn"/>) is a convenience function to compare a string with LDAP attribute
 	values using regular expression matching. Finally, <varname>ldap_result_next</varname>
-	(<xref linkend="ldap-result-next-fn"/>) allows to handle LDAP search queries that return more than one LDAP entry.
+	(<xref linkend="ldap-result-next-fn"/>) allows using LDAP search queries that return more than one LDAP entry.
         </para>
         
         <para>
-        All <varname>ldap_result*</varname> functions do always access the LDAP result set from the last
+        All <varname>ldap_result*</varname> functions always access the LDAP result set from the last
 	<varname>ldap_search</varname> call. This should be kept in mind when calling <varname>ldap_search</varname>
 	more than once in the &kamailio; configuration script.
         </para>
@@ -133,8 +133,7 @@
             <term><parameter>attrs</parameter></term>
 
             <listitem>
-              <para>Comma separated list of LDAP attributes to be
-              returned</para>
+              <para>Comma separated list of LDAP attributes to be returned</para>
             </listitem>
           </varlistentry>
 
@@ -365,7 +364,8 @@ ldap_server_url = "ldap://ldap1.example.com,
 
             <listitem>
               <para>LDAP TCP connect timeout in milliseconds. Setting this
-              parameter to a low value enables fast failover if <varname>ldap_server_url</varname> contains more than one LDAP server addresses.</para>
+              parameter to a low value enables fast failover if <varname>ldap_server_url</varname> contains more 
+		than one LDAP server addresses.</para>
 
               <para>Default value: 1000 (one second)</para>
 
@@ -603,7 +603,7 @@ ldap_result("telephoneNumber/$avp(s:tel_number)");
         use in the message routing script. It accesses the LDAP result set
         fetched by the last <varname>ldap_search</varname> call.
         <varname>ldap_attr_name</varname> specifies the LDAP attribute name
-        who's value should be stored in AVP <varname>avp_spec</varname>. Multi
+        who's value will be stored in AVP <varname>avp_spec</varname>. Multi
         valued LDAP attributes generate an indexed AVP. The optional
         <varname>regex_subst</varname> parameter allows to further define what
         part of an attribute value should be stored as AVP.</para>
@@ -1064,7 +1064,7 @@ if (ldap_search(
       <title>Installation &amp; Running</title>
 
       <section>
-        <title>Compiling the Module</title>
+        <title>Compiling the LDAP module</title>
 
         <para>
 	OpenLDAP library (libldap) and header files (libldap-dev) v2.1 or greater (this module was
