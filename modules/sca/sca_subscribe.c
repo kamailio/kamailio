@@ -186,6 +186,8 @@ sca_subscription_from_db_row_values( db_val_t *values, sca_subscription *sub )
 						&sub->dialog.from_tag );
     sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_TO_TAG_COL, values,
 						&sub->dialog.to_tag );
+    sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_RECORD_ROUTE_COL,
+						values, &sub->rr );
     sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_NOTIFY_CSEQ_COL,
 					    values, &sub->dialog.notify_cseq );
     sca_db_subscriptions_get_value_for_column( SCA_DB_SUBS_SUBSCRIBE_CSEQ_COL,
@@ -220,6 +222,8 @@ sca_subscription_to_db_row_values( sca_subscription *sub, db_val_t *values )
 						&sub->dialog.from_tag );
     sca_db_subscriptions_set_value_for_column( SCA_DB_SUBS_TO_TAG_COL, values,
 						&sub->dialog.to_tag );
+    sca_db_subscriptions_set_value_for_column( SCA_DB_SUBS_RECORD_ROUTE_COL,
+						values, &sub->rr );
 
     notify_cseq = sub->dialog.notify_cseq + 1;
     subscribe_cseq = sub->dialog.subscribe_cseq + 1;
@@ -542,13 +546,16 @@ sca_subscription_db_update_timer( unsigned int ticks, void *param )
     sca_subscription *
 sca_subscription_create( str *aor, int event, str *subscriber,
 	unsigned int notify_cseq, unsigned int subscribe_cseq, int expire_delta,
-	str *call_id, str *from_tag, str *to_tag, int opts )
+	str *call_id, str *from_tag, str *to_tag, str *rr, int opts )
 {
     sca_subscription		*sub = NULL;
     int				len = 0;
 
     len += sizeof( sca_subscription );
     len += sizeof( char ) * ( aor->len + subscriber->len );
+    if ( !SCA_STR_EMPTY( rr )) {
+	len += sizeof( char ) * rr->len;
+    }
 
     sub = (sca_subscription *)shm_malloc( len );
     if ( sub == NULL ) {
@@ -579,6 +586,12 @@ sca_subscription_create( str *aor, int event, str *subscriber,
     sub->target_aor.s = (char *)sub + len;
     SCA_STR_COPY( &sub->target_aor, aor );
     len += aor->len;
+
+    if ( !SCA_STR_EMPTY( rr )) {
+	sub->rr.s = (char *)sub + len;
+	SCA_STR_COPY( &sub->rr, rr );
+	len += rr->len;
+    }
 
     /*
      * dialog.id holds call-id + from-tag + to-tag; dialog.call_id,
@@ -664,7 +677,8 @@ sca_subscription_print( void *value )
     sca_subscription		*sub = (sca_subscription *)value;
 
     LM_INFO( "%.*s %s (%d) %.*s, expires: %ld, index: %d, "
-	     "dialog %.*s;%.*s;%.*s, notify_cseq: %d, subscribe_cseq: %d",
+	     "dialog %.*s;%.*s;%.*s, record_route: %.*s, "
+	     "notify_cseq: %d, subscribe_cseq: %d",
 		STR_FMT( &sub->target_aor ),
 		sca_event_name_from_type( sub->event ),
 		sub->event,
@@ -673,6 +687,8 @@ sca_subscription_print( void *value )
 		STR_FMT( &sub->dialog.call_id ),
 		STR_FMT( &sub->dialog.from_tag ),
 		STR_FMT( &sub->dialog.to_tag ),
+		SCA_STR_EMPTY( &sub->rr ) ? 4 : sub->rr.len,
+		SCA_STR_EMPTY( &sub->rr ) ? "null" : sub->rr.s,
 		sub->dialog.notify_cseq,
 		sub->dialog.subscribe_cseq );
 }
@@ -694,7 +710,8 @@ sca_subscription_save_unsafe( sca_mod *scam, sca_subscription *sub,
 				       sub->expires,
 				       &sub->dialog.call_id,
 				       &sub->dialog.from_tag,
-				       &sub->dialog.to_tag, opts );
+				       &sub->dialog.to_tag,
+				       &sub->rr, opts );
     if ( new_sub == NULL ) {
 	return( -1 );
     }
@@ -818,6 +835,18 @@ sca_subscription_update_unsafe( sca_mod *scam, sca_subscription *saved_sub,
 
     /* set notify_cseq in update_sub, since we use it to send the NOTIFY */
     update_sub->dialog.notify_cseq = saved_sub->dialog.notify_cseq;
+
+    /* ensure we send the NOTIFY back through the same path as the SUBSCRIBE */
+    if ( SCA_STR_EMPTY( &update_sub->rr ) && !SCA_STR_EMPTY( &saved_sub->rr )) {
+	update_sub->rr.s = (char *)pkg_malloc( saved_sub->rr.len );
+	if ( update_sub->rr.s == NULL ) {
+	    LM_ERR( "sca_subscription_update_unsafe: pkg_malloc record-route "
+		    "value %.*s failed", STR_FMT( &saved_sub->rr ));
+	    goto done;
+	}
+
+	SCA_STR_COPY( &update_sub->rr, &saved_sub->rr );
+    }
 
     rc = 1;
 
@@ -997,6 +1026,18 @@ sca_subscription_from_request( sca_mod *scam, sip_msg_t *msg, int event_type,
 			STR_FMT( &REQ_LINE( msg ).uri ));
 	    goto error;
 	}
+
+	if ( !SCA_HEADER_EMPTY( msg->record_route )) {
+	    if ( print_rr_body( msg->record_route, &req_sub->rr,
+				0, NULL ) < 0 ) {
+		LM_ERR( "Failed to parse Record-Route header %.*s in "
+			"SUBSCRIBE %.*s from %.*s",
+			STR_FMT( &msg->record_route->body ),
+			STR_FMT( &REQ_LINE( msg ).uri ),
+			STR_FMT( &contact_uri ));
+		goto error;
+	    }
+	}
     }
 
     req_sub->subscriber = contact_uri;
@@ -1034,6 +1075,11 @@ sca_subscription_from_request( sca_mod *scam, sip_msg_t *msg, int event_type,
 
 error:
     free_to_params( &tmp_to );
+
+    if ( !SCA_STR_EMPTY( &req_sub->rr )) {
+	pkg_free( req_sub->rr.s );
+	req_sub->rr.s = NULL;
+    }
 
     return( -1 );
 }
@@ -1223,6 +1269,9 @@ done:
 
     if ( req_sub.dialog.to_tag.s != NULL ) {
 	pkg_free( req_sub.dialog.to_tag.s );
+    }
+    if ( req_sub.rr.s != NULL ) {
+	pkg_free( req_sub.rr.s );
     }
 
     return( rc );

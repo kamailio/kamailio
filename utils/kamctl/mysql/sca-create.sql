@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('sca_subscriptions','0');
+INSERT INTO version (table_name, table_version) values ('sca_subscriptions','1');
 CREATE TABLE sca_subscriptions (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     subscriber VARCHAR(255) NOT NULL,
@@ -10,6 +10,7 @@ CREATE TABLE sca_subscriptions (
     call_id VARCHAR(255) NOT NULL,
     from_tag VARCHAR(64) NOT NULL,
     to_tag VARCHAR(64) NOT NULL,
+    record_route TEXT DEFAULT NULL,
     notify_cseq INT(11) NOT NULL,
     subscribe_cseq INT(11) NOT NULL,
     CONSTRAINT sca_subscriptions_idx UNIQUE (subscriber, call_id, from_tag, to_tag)

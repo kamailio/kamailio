@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('sca_subscriptions','0');
+INSERT INTO version (table_name, table_version) values ('sca_subscriptions','1');
 CREATE TABLE sca_subscriptions (
     id NUMBER(10) PRIMARY KEY,
     subscriber VARCHAR2(255),
@@ -10,6 +10,7 @@ CREATE TABLE sca_subscriptions (
     call_id VARCHAR2(255),
     from_tag VARCHAR2(64),
     to_tag VARCHAR2(64),
+    record_route CLOB,
     notify_cseq NUMBER(10),
     subscribe_cseq NUMBER(10),
     CONSTRAINT ORA_sca_subscriptions_idx  UNIQUE (subscriber, call_id, from_tag, to_tag)

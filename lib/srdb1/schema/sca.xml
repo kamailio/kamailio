@@ -90,6 +90,13 @@
         <description>To-tag for subscription dialog</description>
     </column>
 
+    <column id="record_route">
+        <name>record_route</name>
+        <type>text</type>
+	<null />
+        <description>Subscription Record-Route values</description>
+    </column>
+
     <column id="notify_cseq">
         <name>notify_cseq</name>
         <type>int</type>

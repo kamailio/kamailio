@@ -38,6 +38,7 @@ const str  SCA_DB_APP_IDX_COL_NAME = STR_STATIC_INIT( "app_idx" );
 const str  SCA_DB_CALL_ID_COL_NAME = STR_STATIC_INIT( "call_id" );
 const str  SCA_DB_FROM_TAG_COL_NAME = STR_STATIC_INIT( "from_tag" );
 const str  SCA_DB_TO_TAG_COL_NAME = STR_STATIC_INIT( "to_tag" );
+const str  SCA_DB_RECORD_ROUTE_COL_NAME = STR_STATIC_INIT( "record_route" );
 const str  SCA_DB_NOTIFY_CSEQ_COL_NAME = STR_STATIC_INIT( "notify_cseq" );
 const str  SCA_DB_SUBSCRIBE_CSEQ_COL_NAME = STR_STATIC_INIT( "subscribe_cseq" );
 
@@ -55,6 +56,7 @@ sca_db_subscriptions_get_value_for_column( int column, db_val_t *row_values,
     case SCA_DB_SUBS_CALL_ID_COL:
     case SCA_DB_SUBS_FROM_TAG_COL:
     case SCA_DB_SUBS_TO_TAG_COL:
+    case SCA_DB_SUBS_RECORD_ROUTE_COL:
 	((str *)column_value)->s = (char *)row_values[ column ].val.string_val;
 	((str *)column_value)->len = strlen(((str *)column_value)->s );
 	break;
@@ -89,6 +91,7 @@ sca_db_subscriptions_set_value_for_column( int column, db_val_t *row_values,
     case SCA_DB_SUBS_CALL_ID_COL:
     case SCA_DB_SUBS_FROM_TAG_COL:
     case SCA_DB_SUBS_TO_TAG_COL:
+    case SCA_DB_SUBS_RECORD_ROUTE_COL:
 	row_values[ column ].val.str_val = *((str *)column_value);
 	row_values[ column ].type = DB1_STR;
 	row_values[ column ].nul = 0;
@@ -136,6 +139,7 @@ sca_db_subscriptions_columns( void )
 			    (str *)&SCA_DB_CALL_ID_COL_NAME,
 			    (str *)&SCA_DB_FROM_TAG_COL_NAME,
 			    (str *)&SCA_DB_TO_TAG_COL_NAME,
+			    (str *)&SCA_DB_RECORD_ROUTE_COL_NAME,
 			    (str *)&SCA_DB_NOTIFY_CSEQ_COL_NAME,
 			    (str *)&SCA_DB_SUBSCRIBE_CSEQ_COL_NAME,
 			    NULL

@@ -49,6 +49,8 @@ struct _sca_subscription {
 
     sca_dialog	dialog;		/* call-id, to- and from-tags, cseq */
 
+    str		rr;		/* Record-Route header values */
+
     int		db_cmd_flag;	/* track whether to INSERT or UPDATE */
 };
 typedef struct _sca_subscription	sca_subscription;

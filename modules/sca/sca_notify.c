@@ -98,13 +98,13 @@ sca_notify_reply_cb( struct cell *t, int cb_type, struct tmcb_params *cbp )
     static dlg_t *
 sca_notify_dlg_for_subscription( sca_subscription *sub )
 {
-    dlg_t		*dlg;
+    dlg_t		*dlg = NULL;
 
     dlg = (dlg_t *)pkg_malloc( sizeof( dlg_t ));
     if ( dlg == NULL ) {
 	LM_ERR( "pkg_malloc dlg_t for %.*s failed: out of memory",
 		STR_FMT( &sub->subscriber ));
-	return( NULL );
+	goto error;
     }
     memset( dlg, 0, sizeof( dlg_t ));
 
@@ -122,6 +122,16 @@ sca_notify_dlg_for_subscription( sca_subscription *sub )
     dlg->loc_uri = sub->target_aor;
     dlg->rem_uri = sub->target_aor;
 
+    /* restore route */
+    if ( !SCA_STR_EMPTY( &sub->rr )) {
+	if ( parse_rr_body( sub->rr.s, sub->rr.len, &dlg->route_set ) < 0 ) {
+	    LM_ERR( "sca_notify_dlg_for_subscription: failed to parse "
+		    "%.*s subscription's Record-Route info",
+		    STR_FMT( &sub->subscriber ));
+	    goto error;
+	}
+    }
+
     /*
      * the dialog state in an SCA NOTIFY should always be confirmed,
      * since we generated the dialog to-tag in our response to the
@@ -130,6 +140,13 @@ sca_notify_dlg_for_subscription( sca_subscription *sub )
     dlg->state = DLG_CONFIRMED;
 
     return( dlg );
+
+error:
+    if ( dlg != NULL ) {
+	pkg_free( dlg );
+    }
+
+    return( NULL );
 }
 
     static int
@@ -281,6 +298,10 @@ sca_notify_subscriber_internal( sca_mod *scam, sca_subscription *sub,
 
 done:
     if ( dlg != NULL ) {
+	if ( dlg->route_set != NULL ) {
+	    free_rr( &dlg->route_set );
+	}
+
 	pkg_free( dlg );
     }
 
