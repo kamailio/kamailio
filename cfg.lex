@@ -195,8 +195,6 @@ DROP	"drop"
 EXIT	"exit"
 RETURN	"return"
 BREAK	"break"
-SEND	send
-SEND_TCP	send_tcp
 LOG		log
 ERROR	error
 ROUTE	route
@@ -606,8 +604,6 @@ IMPORTFILE      "import_file"
 <INITIAL>{EXIT}	{ count(); yylval.strval=yytext; return EXIT; }
 <INITIAL>{RETURN}	{ count(); yylval.strval=yytext; return RETURN; }
 <INITIAL>{BREAK}	{ count(); yylval.strval=yytext; return BREAK; }
-<INITIAL>{SEND}	{ count(); yylval.strval=yytext; return SEND; }
-<INITIAL>{SEND_TCP}	{ count(); yylval.strval=yytext; return SEND_TCP; }
 <INITIAL>{LOG}	{ count(); yylval.strval=yytext; return LOG_TOK; }
 <INITIAL>{ERROR}	{ count(); yylval.strval=yytext; return ERROR; }
 <INITIAL>{SETFLAG}	{ count(); yylval.strval=yytext; return SETFLAG; }

@@ -132,6 +132,52 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 </programlisting>
 	    </example>
 	</section>
+
+	<section>
+		<title>
+			<function moreinfo="none">send([ host [ :port ] ])</function>
+		</title>
+		<para>
+			Send the original SIP message to a specific destination in stateless
+			mode. No changes are applied to received message, no Via header is
+			added. Host can be an IP address or hostname. Port is optional and
+			defaults to 5060. Used protocol: UDP.
+		</para>
+		<para>
+			The parameter is optional and defaults to the destination URI from
+			the SIP message if left out. Otherwise it's a string parameter
+			(supporting pseudo-variables) in format
+			"<emphasis>hostname</emphasis>" or
+			"<emphasis>hostname</emphasis>:<emphasis>port</emphasis>",
+			where <emphasis>hostname</emphasis>" can also be a numeric IP
+			address.
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>send</function> usage</title>
+		<programlisting format="linespecific">
+...
+	send();
+	send("10.20.15.10");
+	send("sip.example.com:5070");
+	send("$var(res)");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+			<function moreinfo="none">send_tcp([ host [ :port ] ])</function>
+		</title>
+		<para>
+			This function is identical to <emphasis>send()</emphasis>
+			described above, except that it sends the SIP message using the
+			TCP protocol instead of UDP.
+		</para>
+	</section>
 	</section>
 
 	<section>

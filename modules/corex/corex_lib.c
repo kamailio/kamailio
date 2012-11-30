@@ -27,6 +27,8 @@
 #include "../../dprint.h"
 #include "../../dset.h"
 #include "../../forward.h"
+#include "../../parser/parse_uri.h"
+#include "../../resolve.h"
 
 #include "corex_lib.h"
 
@@ -210,4 +212,89 @@ int corex_register_check_self(void)
 	    return -1;
 	}
 	return 0;
+}
+
+int corex_send(sip_msg_t *msg, gparam_t *pu, enum sip_protos proto)
+{
+	str dest = {0};
+	int ret = 0;
+	struct sip_uri next_hop, *u;
+	struct dest_info dst;
+	char *p;
+
+	if (pu)
+	{
+		if (fixup_get_svalue(msg, pu, &dest))
+		{
+			LM_ERR("cannot get the destination parameter\n");
+			return -1;
+		}
+	}
+
+	init_dest_info(&dst);
+
+	if (dest.len <= 0)
+	{
+		/*get next hop uri uri*/
+		if (msg->dst_uri.len) {
+			ret = parse_uri(msg->dst_uri.s, msg->dst_uri.len,
+							&next_hop);
+			u = &next_hop;
+		} else {
+			ret = parse_sip_msg_uri(msg);
+			u = &msg->parsed_uri;
+		}
+
+		if (ret<0) {
+			LM_ERR("send() - bad_uri dropping packet\n");
+			ret=E_BUG;
+			goto error;
+		}
+	}
+	else
+	{
+		u = &next_hop;
+		u->port_no = 5060;
+		u->host = dest;
+		p = memchr(dest.s, ':', dest.len);
+		if (p)
+		{
+			u->host.len = p - dest.s;
+			p++;
+			u->port_no = str2s(p, dest.len - (p - dest.s), NULL);
+		}
+	}
+
+	ret = sip_hostport2su(&dst.to, &u->host, u->port_no,
+				&dst.proto);
+	if(ret!=0) {
+		LM_ERR("failed to resolve [%.*s]\n", u->host.len,
+			ZSW(u->host.s));
+		ret=E_BUG;
+		goto error;
+	}
+
+	dst.proto = proto;
+	if (proto == PROTO_UDP)
+	{
+		dst.send_sock=get_send_socket(msg, &dst.to, PROTO_UDP);
+		if (dst.send_sock!=0){
+			ret=udp_send(&dst, msg->buf, msg->len);
+		}else{
+			ret=-1;
+		}
+	}
+#ifdef USE_TCP
+	else{
+		/*tcp*/
+		dst.id=0;
+		ret=tcp_send(&dst, 0, msg->buf, msg->len);
+	}
+#endif
+
+	if (ret>=0) ret=1;
+
+
+error:
+	return ret;
 }

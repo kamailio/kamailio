@@ -46,7 +46,6 @@ static str _dbg_action_special[] = {
 
 static dbg_action_t _dbg_action_list[] = {
 	{ FORWARD_T, str_init("forward") },
-	{ SEND_T, str_init("send") },
 	{ LOG_T, str_init("log") },
 	{ ERROR_T, str_init("error") },
 	{ ROUTE_T, str_init("route") },
@@ -82,7 +81,6 @@ static dbg_action_t _dbg_action_list[] = {
 	{ FORWARD_UDP_T, str_init("forward_udp") },
 	{ FORWARD_TLS_T, str_init("forward_tls") },
 	{ FORWARD_SCTP_T, str_init("forward_sctp") },
-	{ SEND_TCP_T, str_init("send_tcp") },
 	{ FORCE_RPORT_T, str_init("force_rport") },
 	{ ADD_LOCAL_RPORT_T, str_init("add_local_rport") },
 	{ SET_ADV_ADDR_T, str_init("set_adv_addr") },

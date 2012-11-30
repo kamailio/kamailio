@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2012 asipto.com
+   Copyright © 2012 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -30,6 +30,8 @@ Daniel-Constantin Mierla
         4. Functions
 
               4.1. append_branch([ uri, [ q ] ])
+              4.2. send([ host [ :port ] ])
+              4.3. send_tcp([ host [ :port ] ])
 
         5. RPC Commands
 
@@ -40,6 +42,7 @@ Daniel-Constantin Mierla
 
    1.1. Set alias_subdomains parameter
    1.2. append_branch usage
+   1.3. send usage
 
 Chapter 1. Admin Guide
 
@@ -58,6 +61,8 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. append_branch([ uri, [ q ] ])
+        4.2. send([ host [ :port ] ])
+        4.3. send_tcp([ host [ :port ] ])
 
    5. RPC Commands
 
@@ -104,7 +109,7 @@ Chapter 1. Admin Guide
    'proto:domain:port', allowing to set restrictions on protocol and port
    as well. Protocol and port are optional.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.1. Set alias_subdomains parameter
 ...
@@ -115,8 +120,10 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 4. Functions
 
    4.1. append_branch([ uri, [ q ] ])
+   4.2. send([ host [ :port ] ])
+   4.3. send_tcp([ host [ :port ] ])
 
-4.1. append_branch([ uri, [ q ] ])
+4.1.  append_branch([ uri, [ q ] ])
 
    Append a new branch to the destination set, useful to build the
    addresses for parallel forking or redirect replies.
@@ -138,19 +145,46 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
     append_branch("$avp(uri)", "0.5");
 ...
 
+4.2.  send([ host [ :port ] ])
+
+   Send the original SIP message to a specific destination in stateless
+   mode. No changes are applied to received message, no Via header is
+   added. Host can be an IP address or hostname. Port is optional and
+   defaults to 5060. Used protocol: UDP.
+
+   The parameter is optional and defaults to the destination URI from the
+   SIP message if left out. Otherwise it's a string parameter (supporting
+   pseudo-variables) in format "hostname" or "hostname:port", where
+   hostname" can also be a numeric IP address.
+
+   This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
+
+   Example 1.3. send usage
+...
+        send();
+        send("10.20.15.10");
+        send("sip.example.com:5070");
+        send("$var(res)");
+...
+
+4.3.  send_tcp([ host [ :port ] ])
+
+   This function is identical to send() described above, except that it
+   sends the SIP message using the TCP protocol instead of UDP.
+
 5. RPC Commands
 
    5.1. corex.list_sockets
    5.2. corex.list_aliases
 
-5.1. corex.list_sockets
+5.1.  corex.list_sockets
 
    Print the list of sockets the application is listening on.
 
    Example:
                 sercmd corex.list_sockets
 
-5.2. corex.list_aliases
+5.2.  corex.list_aliases
 
    Print the list of hostname aliases used to match myself condition.
 
