@@ -309,7 +309,7 @@ modparam("htable", "htable", "c=>size=4;autoexpire=7200;initval=1;")
 
    Example 1.4. Set db_url parameter
 ...
-modparam("htable", "db_url", "mysql://openser:openserrw@localhost/openser")
+modparam("htable", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 ...
 
 3.3. key_name_column (str)
@@ -431,7 +431,7 @@ modparam("htable", "db_expires", 1)
    4.2. sht_rm_name_re(htable=>regexp)
    4.3. sht_rm_value_re(htable=>regexp)
 
-4.1. sht_print()
+4.1.  sht_print()
 
    Dump content of hash table to L_ERR log level. Intended for debug
    purposes.
@@ -444,7 +444,7 @@ modparam("htable", "db_expires", 1)
 sht_print();
 ...
 
-4.2. sht_rm_name_re(htable=>regexp)
+4.2.  sht_rm_name_re(htable=>regexp)
 
    Delete all entries in the htable that match the name against regular
    expression.
@@ -457,7 +457,7 @@ sht_print();
 sht_rm_name_re("ha=>.*");
 ...
 
-4.3. sht_rm_value_re(htable=>regexp)
+4.3.  sht_rm_value_re(htable=>regexp)
 
    Delete all entries in the htable that match the value against regular
    expression.
@@ -488,7 +488,7 @@ sht_rm_value_re("ha=>.*");
    6.2. sht_dump
    6.3. sht_delete
 
-6.1. sht_reload
+6.1.  sht_reload
 
    Reload a hash table from database.
 
@@ -501,7 +501,7 @@ sht_rm_value_re("ha=>.*");
                 _hash_table_name_
                 _empty_line_
 
-6.2. sht_dump
+6.2.  sht_dump
 
    Dump content of a hash table via MI.
 
@@ -514,7 +514,7 @@ sht_rm_value_re("ha=>.*");
                 _hash_table_name_
                 _empty_line_
 
-6.3. sht_delete
+6.3.  sht_delete
 
    Delete a key from a hash table via MI.
 
@@ -537,11 +537,13 @@ sht_rm_value_re("ha=>.*");
 
    7.1. htable:mod-init
 
-7.1. htable:mod-init
+7.1.  htable:mod-init
 
    When defined, the module calls event_route[htable:mod-init] after all
-   modules have been initialised. A typical use case is to initialise
-   items in hash tables. The event route is executed only once.
+   modules have been initialized. A typical use case is to initialise
+   items in hash tables. The event route is executed only once, after core
+   and module initialization, but before Kamailio forks any child
+   processes.
 ...
 event_route[htable:mod-init] {
     $sht(a=>x) = 1;
