@@ -67,7 +67,7 @@ sca_reply( sca_mod *scam, int status_code, char *status_msg,
 	SCA_STR_COPY_CSTR( &extra_headers, "Expires: " );
 
 	len = snprintf( extra_headers.s + extra_headers.len,
-		  sizeof( hdr_buf - extra_headers.len ),
+		  sizeof( hdr_buf ) - extra_headers.len,
 		  "%d%s", expires, CRLF );
 	extra_headers.len += len;
 
