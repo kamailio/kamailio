@@ -256,7 +256,7 @@ id switch                         filter proxy
 
    Example 1.8. forward_switch usage
 ...
-kamctl fifo sp_forward_switch 0=on
+kamctl fifo forward_switch 0=on
 ...
 
 5.3. forward_filter
@@ -275,7 +275,7 @@ kamctl fifo sp_forward_switch 0=on
 
    Example 1.9. forward_filter usage
 ...
-kamctl fifo sp_forward_filter 0=REGISTER:INVITE
+kamctl fifo forward_filter 0=REGISTER:INVITE
 ...
 
 5.4. forward_proxy
@@ -288,7 +288,7 @@ kamctl fifo sp_forward_filter 0=REGISTER:INVITE
 
    Example 1.10. forward_proxy usage
 ...
-kamctl fifo sp_forward_proxy 0=host-c.domain-c:5060
+kamctl fifo forward_proxy 0=host-c.domain-c:5060
 ...
 
 6. Configuration syntax
