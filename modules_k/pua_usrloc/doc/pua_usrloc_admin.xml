@@ -17,13 +17,14 @@
 	<title>Overview</title>
 	<para>
 		 The pua_usrloc module is the connector between the usrloc and pua modules.
-		 It creates the environment to send PUBLISH requests for user
-		 location records, on specific events (e.g., when new record is
+		 With this module, you can monitor the status of SIP registrations.
+		 The module sends PUBLISH requests for user location record changes, 
+		 based on specific events (e.g., when a new record is
 		 added in usrloc, a PUBLISH with status open (online) is issued;
 		 when expires, it sends closed (offline)).
 	</para>
 	<para>
-		Using this module, phones which have no support for presence can
+		Using this module phones which have no support for presence can
 		be seen as online/offline. 
 	</para>
 	</section>
@@ -68,7 +69,8 @@
 		<title><varname>default_domain</varname> (str)</title>
 		<para>
 		The default domain to use when constructing the presentity
-		URI if it is missing from recorded AOR. 
+		URI if it is missing from stored AOR in the usrloc table (in
+		memory or database). 
 		</para>
 		<para>
 		<emphasis>Default value is <quote>NULL</quote>.	
@@ -86,8 +88,8 @@ modparam("pua_usrloc", "default_domain", "kamailio.org")
 	<section>
 		<title><varname>entity_prefix</varname> (str)</title>
 		<para>
-		The prefix when construstructing entity attribute to be added to
-		presence node in XML PIDF.
+		The prefix used when constructing the entity attribute to be added to
+		a presence node in the XML PIDF document.
 		(ex: pres:user@domain ).
 		</para>
 		<para>
