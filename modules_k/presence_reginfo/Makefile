@@ -7,9 +7,6 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=presence_reginfo.so
-DEFS+=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
-      -I$(LOCALBASE)/include
-LIBS+=-L$(LOCALBASE)/lib -lxml2
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
