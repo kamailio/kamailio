@@ -51,10 +51,10 @@
 	    authentication backends).
 	</para>
 	<para>
-	    We decided to break the authentication code into several modules
+	    We decided to divide the authentication code into several modules
 	    because there are now more than one backends (currently database
 	    authentication and radius are supported). This allows us to create
-	    separate packages so uses can install and load only required
+	    separate packages so users can install and load only the required
 	    functionality. This also allows us to avoid unnecessary
 	    dependencies in the binary packages.
 	</para>

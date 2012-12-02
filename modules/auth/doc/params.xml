@@ -13,8 +13,8 @@
 	  <varname>auth_checks_in_dlg</varname> (flags)
 	</title>
 	<para>
-	    These three module parameters control which optional integrity
-         checks will be performed on the SIP message carrying digest response
+	These three module parameters control which optional integrity
+        checks will be performed on the SIP message carrying digest response
         during digest authentication. <varname>auth_check_register</varname>
         controls integrity checks to be performed on REGISTER messages,
         <varname>auth_checks_no_dlg</varname> controls which optional
