@@ -17,13 +17,14 @@
     <section>
 	<title>Overview</title>
 	<para>
-		This module offers generic message queue system in shared memory for
-		inter-process communication via config file. One example of usage is
-		to send time consuming operations to a timer process that consumes
-		items in the queue, without affecting SIP message handling.
+		The mqueue module offers a generic message queue system in shared memory for
+		inter-process communication using the config file. One example of usage is
+		to send time consuming operations to one or several timer processes that consumes
+		items in the queue, without affecting SIP message handling in the socket-listening 
+		process.
 	</para>
 	<para>
-		There can be defined many queues, access to values being done via
+		There can be many defined queues. Access to queued values is done via
 		pseudo variables.
 	</para>
     </section>
@@ -63,7 +64,7 @@
 	<section>
 	    <title><varname>mqueue</varname> (string)</title>
 	    <para>
-		Definition of memory queue
+		Definition of a memory queue
 	    </para>
 	    <para>
 		<emphasis>
@@ -77,7 +78,7 @@
 		oldest one is removed.
 	    </para>
 		<para>
-		The parameter can be set many time, each holding the definition of one
+		The parameter can be set many times, each holding the definition of one
 		queue.
 	    </para>
 	    <example>
@@ -144,7 +145,7 @@ while(mq_fetch("myq"))
 	    </title>
 	    <para>
 		Free the item fetched in pseudo-variables. It is optional, a new fetch
-		frees the old values.
+		frees the previous values.
 	    </para>
 		<example>
 		<title><function>mq_pv_free</function> usage</title>
