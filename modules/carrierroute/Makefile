@@ -9,15 +9,17 @@ include ../../Makefile.defs
 auto_gen=
 NAME=carrierroute.so
 
+ifeq ($(CROSS_COMPILE),)
 BUILDER = $(shell which confuse-config)
+endif
 
 ifeq ($(BUILDER),)
+	ifeq ($(CROSS_COMPILE),)
 	BUILDER = $(shell which pkg-config)
+	endif
 	ifeq ($(BUILDER),)
-		CONFUSEDEFS=-I$(LOCALBASE)/include -I/usr/local/include -I/opt/include \
-			-I/usr/sfw/include
-		CONFUSELIBS=-L$(LOCALBASE)/lib -L/usr/local/lib -L/usr/sfw/lib \
-			-L/opt/lib -lconfuse
+		CONFUSEDEFS=-I$(LOCALBASE)/include
+		CONFUSELIBS=-L$(LOCALBASE)/lib -lconfuse
 	else
 		CONFUSEDEFS = $(shell pkg-config --cflags libconfuse)
 		CONFUSELIBS = $(shell pkg-config --libs libconfuse)
