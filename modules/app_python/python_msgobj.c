@@ -20,18 +20,15 @@
  *
 */
 
+#include <Python.h>
+
 #include "../../action.h"
 #include "../../mem/mem.h"
 #include "../../sr_module.h"
 #include "../../dset.h"
 #include "../../parser/msg_parser.h"
 
-#include <Python.h>
 #include "structmember.h"
-
-#ifndef Py_TYPE
-#define Py_TYPE(ob)               (((PyObject*)(ob))->ob_type)
-#endif
 
 typedef struct {
     PyObject_HEAD
@@ -526,7 +523,7 @@ static PyTypeObject MSGtype = {
 int
 python_msgobj_init(void)
 {
-    Py_TYPE((void*)(&MSGtype)) = &PyType_Type;
+    MSGtype.ob_type = &PyType_Type;
     if (PyType_Ready(&MSGtype) < 0)
         return -1;
     return 0;

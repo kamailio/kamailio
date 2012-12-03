@@ -20,12 +20,12 @@
  *
 */
 
+#include <Python.h>
+
 #include "../../action.h"
 #include "../../dprint.h"
 #include "../../route_struct.h"
 #include "python_exec.h"
-
-#include <Python.h>
 
 /* Return the number of arguments of the application command line */
 static PyObject*

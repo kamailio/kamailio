@@ -20,6 +20,9 @@
  *
 */
 
+#include <Python.h>
+#include <libgen.h>
+
 #include "../../str.h"
 #include "../../sr_module.h"
 
@@ -27,9 +30,6 @@
 #include "python_iface.h"
 #include "python_msgobj.h"
 #include "python_support.h"
-
-#include <Python.h>
-#include <libgen.h>
 
 MODULE_VERSION
 
