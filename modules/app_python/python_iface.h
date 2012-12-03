@@ -26,5 +26,6 @@
 #include <Python.h>
 
 extern PyMethodDef RouterMethods[];
+void RouterAddProperties(PyObject *);
 
 #endif

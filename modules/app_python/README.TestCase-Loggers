@@ -1,0 +1,16 @@
+
+Example of using loggers in Python:
+
+loadmodule "app_python.so"
+modparam("app_python", "script_name", "/path/to/Loggers.py")
+modparam("app_python", "mod_init_function", "mod_init")
+modparam("app_python", "child_init_method", "child_init")
+
+...
+
+route
+{
+    python_exec("TestLoggers", "Test Message\n");
+    ...
+}
+

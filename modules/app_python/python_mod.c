@@ -82,12 +82,11 @@ struct module_exports exports = {
     child_init                      /* per-child init function */
 };
 
-static int
-mod_init(void)
+static int mod_init(void)
 {
     char *dname, *bname, *dname_src, *bname_src;
     int i;
-    PyObject *sys_path, *pDir, *pModule, *pFunc, *pArgs;
+    PyObject *sys_path, *pDir, *pModule, *pFunc, *pArgs, *m;
     PyThreadState *mainThreadState;
 
     if (script_name.len == 0) {
@@ -127,13 +126,15 @@ mod_init(void)
     PyEval_InitThreads();
     mainThreadState = PyThreadState_Get();
 
-    Py_InitModule("Router", RouterMethods);
+    m = Py_InitModule("Router", RouterMethods);
 
     if (python_msgobj_init() != 0) {
         LM_ERR("python_msgobj_init() has failed\n");
         PyEval_ReleaseLock();
         return -1;
     }
+
+    RouterAddProperties(m);
 
     sys_path = PySys_GetObject("path");
     /* PySys_GetObject doesn't pass reference! No need to DEREF */
@@ -227,8 +228,7 @@ mod_init(void)
     return 0;
 }
 
-static int
-child_init(int rank)
+static int child_init(int rank)
 {
     PyObject *pFunc, *pArgs, *pValue, *pResult;
     int rval;
@@ -294,9 +294,7 @@ child_init(int rank)
     return rval;
 }
 
-static void
-mod_destroy(void)
+static void mod_destroy(void)
 {
-
     return;
 }
