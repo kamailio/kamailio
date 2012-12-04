@@ -127,7 +127,7 @@ $(call	set_if_empty,FLAVOUR,kamailio)
 
 #prefix for various configs and scripts
 #config name/name-prefix for distributed configs
-CFG_NAME=sip-router
+CFG_NAME?=sip-router
 #config name/name-prefix for distributed scripts
 SCR_NAME=sip-router
 #name in source tree
@@ -135,15 +135,15 @@ SRC_NAME=sip-router
 
 ifeq ($(FLAVOUR),sip-router)
 # main binary name
-MAIN_NAME?=ser
+MAIN_NAME=ser
 else ifeq ($(FLAVOUR),ser)
 # main binary name
-MAIN_NAME?=ser
+MAIN_NAME=ser
 else ifeq ($(FLAVOUR),kamailio)
 # main binary name
-MAIN_NAME?=kamailio
+MAIN_NAME=kamailio
 # use kamailio config
-CFG_NAME?=kamailio
+CFG_NAME=kamailio
 # kamailio statistics on
 KMSTATS ?= 1
 # fast malloc statistics on
@@ -152,7 +152,7 @@ FMSTATS ?= 1
 WITHAS ?= 1
 else # unknown:
 # main binary name
-MAIN_NAME?=kamailio
+MAIN_NAME=kamailio
 endif
 
 # what to install
