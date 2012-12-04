@@ -826,8 +826,10 @@ sca_subscription_update_unsafe( sca_mod *scam, sca_subscription *saved_sub,
     saved_sub->dialog.notify_cseq += 1;
     saved_sub->expires = time( NULL ) + update_sub->expires;
 
-    /* flag subscription for write back to DB */ 
-    saved_sub->db_cmd_flag = SCA_DB_FLAG_UPDATE;
+    /* flag subscription for DB update only if we've already inserted */ 
+    if ( saved_sub->db_cmd_flag == SCA_DB_FLAG_NONE ) {
+	saved_sub->db_cmd_flag = SCA_DB_FLAG_UPDATE;
+    }
 
     if ( update_sub->index != SCA_CALL_INFO_APPEARANCE_INDEX_ANY ) {
 	saved_sub->index = update_sub->index;
