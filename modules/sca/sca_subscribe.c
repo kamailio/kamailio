@@ -676,7 +676,7 @@ sca_subscription_print( void *value )
 {
     sca_subscription		*sub = (sca_subscription *)value;
 
-    LM_INFO( "%.*s %s (%d) %.*s, expires: %ld, index: %d, "
+    LM_DBG( "%.*s %s (%d) %.*s, expires: %ld, index: %d, "
 	     "dialog %.*s;%.*s;%.*s, record_route: %.*s, "
 	     "notify_cseq: %d, subscribe_cseq: %d",
 		STR_FMT( &sub->target_aor ),
