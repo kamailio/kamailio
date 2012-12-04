@@ -330,7 +330,7 @@ else
 	# depends on libpython-dev
 	exclude_modules+= app_python
 	# depends on libxml2
-	exclude_modules+= xmlops
+	exclude_modules+= xmlops xhttp_pi
 	# depends on jsoc-c
 	exclude_modules+= json jsonrpc-c
 	# depends on libhiredis
