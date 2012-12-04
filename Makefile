@@ -1000,14 +1000,6 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 				fi ; \
 			fi ; \
 		done; true
-		# provisionning xml framework
-		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/pi_framework.xml.sample
-		$(INSTALL_CFG) examples/pi_framework.xml \
-			$(cfg_prefix)/$(cfg_dir)/pi_framework.xml.sample
-		if [ ! -f $(cfg_prefix)/$(cfg_dir)/pi_framework.xml ]; then \
-			mv -f $(cfg_prefix)/$(cfg_dir)/pi_framework.xml.sample \
-				$(cfg_prefix)/$(cfg_dir)/pi_framework.xml; \
-		fi
 		# radius dictionary
 		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.$(CFG_NAME)
 		$(INSTALL_CFG) etc/dictionary.$(CFG_NAME) $(cfg_prefix)/$(cfg_dir)

@@ -27,3 +27,15 @@ DEFS+=-DKAMAILIO_MOD_INTERFACE
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 include ../../Makefile.modules
+
+install-cfg:
+	# provisionning xml framework
+	@$(call try_err, $(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/pi_framework.xml.sample)
+	@$(call try_err, $(INSTALL_CFG) ../../examples/pi_framework.xml \
+		$(cfg_prefix)/$(cfg_dir)/pi_framework.xml.sample)
+	@if [ -z "${skip_cfg_install}" -a \
+		! -f $(cfg_prefix)/$(cfg_dir)/pi_framework.xml ]; then \
+		mv -f $(cfg_prefix)/$(cfg_dir)/pi_framework.xml.sample \
+			$(cfg_prefix)/$(cfg_dir)/pi_framework.xml; \
+	fi
+
