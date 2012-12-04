@@ -123,7 +123,7 @@ endif # verbose
 set_if_empty=$(if $($(1)),,$(eval override $(1)=$(2)))
 
 # flavour: sip-router, ser or kamailio
-$(call	set_if_empty,FLAVOUR,sip-router)
+$(call	set_if_empty,FLAVOUR,kamailio)
 
 #prefix for various configs and scripts
 #config name/name-prefix for distributed configs
@@ -135,24 +135,24 @@ SRC_NAME=sip-router
 
 ifeq ($(FLAVOUR),sip-router)
 # main binary name
-MAIN_NAME=ser
+MAIN_NAME?=ser
 else ifeq ($(FLAVOUR),ser)
 # main binary name
-MAIN_NAME=ser
+MAIN_NAME?=ser
 else ifeq ($(FLAVOUR),kamailio)
 # main binary name
-MAIN_NAME=kamailio
+MAIN_NAME?=kamailio
 # use kamailio config
-CFG_NAME=kamailio
+CFG_NAME?=kamailio
 # kamailio statistics on
 KMSTATS ?= 1
 # fast malloc statistics on
 FMSTATS ?= 1
 # application server support on
 WITHAS ?= 1
-else # default:
+else # unknown:
 # main binary name
-MAIN_NAME=sip-router
+MAIN_NAME?=kamailio
 endif
 
 # what to install
