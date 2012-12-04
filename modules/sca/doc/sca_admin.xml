@@ -9,7 +9,7 @@
 ]>
 <!-- Module Admin Guide -->
 
-<chapter>
+<chapter xmlns:xi="http://www.w3.org/2001/XInclude">
     <title>&adminguide;</title>
 
     <section>
@@ -307,9 +307,11 @@ modparam( "sca", "db_update_interval", 120 )
 		<title><function>sca_handle_subscribe</function> usage:</title>
 		<programlisting format="linespecific">
 ...
-if ( method == "SUBSCRIBE" &amp;&amp;
-	( @hf_value.event == "call-info" || @hf_value.event == "line-seize" )) {
-    sca_handle_subscribe();
+if ( is_method( "SUBSCRIBE" )) {
+    if ( $hdr(Event) == "call-info" || $hdr(Event) == "line-seize" ) {
+	sca_handle_subscribe();
+	exit;
+    }
 }
 ...
 		</programlisting>
@@ -362,11 +364,9 @@ if ( method == "SUBSCRIBE" &amp;&amp;
 ...             
 route
 {
-    ...
-    if ( $fu.sca == "y" || $tu.sca == "y" ) {
-	sca_call_info_update();
-    }
-    ...
+...
+    sca_call_info_update();
+...
 }
 
 onreply_route[REPLY_ROUTE]
@@ -550,4 +550,21 @@ failure_route[FAILURE_ROUTE]
             </programlisting>
         </section>
     </section>
+
+    <section>
+	<title>Sample &kamailioconfig; with SCA</title>
+	<para>
+	    The following is a basic &kamailioconfig; providing Shared Call
+	    Appearances to local subscribers. It has been tested with
+	    Polycom handsets.
+	</para>
+	<example>
+	    <title>&kamailioconfig;</title>
+	    <programlisting format="linespecific">
+##
+<xi:include href="sca.cfg" parse="text" />
+	    </programlisting>
+	</example>
+    </section>
+
 </chapter>
