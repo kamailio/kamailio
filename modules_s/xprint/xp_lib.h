@@ -25,8 +25,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _XL_LIB_H_
-#define _XL_LIB_H_
+#ifndef _XP_LIB_H_
+#define _XP_LIB_H_
 
 #include "../../parser/msg_parser.h"
 
