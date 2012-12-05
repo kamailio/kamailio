@@ -11,6 +11,7 @@ LIBS=
 
 ifeq ($(CROSS_COMPILE),)
 XML2CFG=$(shell which xml2-config)
+CURL2CFG=$(shell which curl-config)
 endif
 
 ifneq ($(XML2CFG),)
@@ -19,7 +20,15 @@ ifneq ($(XML2CFG),)
 else
 	DEFS+=-I$(LOCALBASE)/include/libxml2 \
       -I$(LOCALBASE)/include
-	LIBS+=-L$(LOCALBASE)/lib -lcurl -lxml2
+	LIBS+=-L$(LOCALBASE)/lib -lxml2
+endif
+
+ifneq ($(CURL2CFG),)
+	DEFS += $(shell $(CURL2CFG) --cflags )
+	LIBS += $(shell $(CURL2CFG) --libs)
+else
+	DEFS+=-I$(LOCALBASE)/include
+	LIBS+=-L$(LOCALBASE)/lib -lcurl
 endif
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
