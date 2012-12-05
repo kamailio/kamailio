@@ -2,7 +2,7 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="xlog" xmlns:xi="http://www.w3.org/2001/XInclude">
+<section id="xprint" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
 	<authorgroup>
 	    <author>
@@ -26,7 +26,7 @@
 
     <title>Xprint Module</title>
 
-    <section id="xlog.overview">
+    <section id="xprint.overview">
 	<title>Overview</title>
 	<para>
 		IMPORTANT: this is former xlog module from SIP Express Router (SER)
