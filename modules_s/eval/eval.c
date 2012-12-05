@@ -39,7 +39,7 @@
 #include "../../trim.h"
 #include "../../select.h"
 #include "../../ut.h"
-#include "../xlog/xl_lib.h"
+#include "../xprint/xp_lib.h"
 #include "../../select_buf.h"
 
 #include "../../globals.h"
