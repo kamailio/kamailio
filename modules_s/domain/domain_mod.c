@@ -434,10 +434,7 @@ static int lookup_domain(struct sip_msg* msg, char* flags, char* fp)
 {
 	str domain, tmp;
 	domain_t* d;
-	unsigned int track;
 	int ret = -1;
-
-	track = 0;
 
 	if (get_str_fparam(&domain, msg, (fparam_t*)fp) != 0) {
 		DBG("lookup_domain: Cannot get the domain name to lookup\n");
@@ -474,9 +471,6 @@ static int get_did(str* did, str* domain)
 {
 	str tmp;
 	domain_t* d;
-	unsigned int track;
-
-	track = 0;
 
 	if (!db_mode) {
 		ERR("lookup_domain only works in cache mode\n");
