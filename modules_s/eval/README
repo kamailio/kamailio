@@ -168,7 +168,7 @@ Loop is also interrupted if route_no returns value <= 0.
 
 Example:
 route[LOOP] {
-  xlog("L_ERR", "%@eval.get[1] = %@eval.pop[2]\n");
+  xplog("L_ERR", "%@eval.get[1] = %@eval.pop[2]\n");
   eval_oper("dec");
   eval_oper("inc", 1);
 }
@@ -185,18 +185,18 @@ Example for mathematicians using ser as scientic calculator:
 
 route["FACTORIAL"] {
   if (@eval.get[0] == "-1") { # first loop ?
-    xlog("L_ERR", "How much is factorial of %@eval.get[1] ? \n");
+    xplog("L_ERR", "How much is factorial of %@eval.get[1] ? \n");
     eval_get("r:tmp", 1);
     eval_put("r:tmp");
     eval_oper("sgn");
     if (@eval.get[0] == "0" || @eval.reg.tmp == "1") {  # zero is exception, one is optimization
-      xlog("L_ERR", "1\n");
+      xplog("L_ERR", "1\n");
       eval_put(1);
       eval_remove(1);
       return -1;
     }
     else if (@eval.get[0] == "-1") {  # negative x is nonsense
-      xlog("L_ERR", "not defined\n");
+      xplog("L_ERR", "not defined\n");
       eval_remove(1);
       return -1;
     }
@@ -205,7 +205,7 @@ route["FACTORIAL"] {
   eval_get("r:tmp", 1);  # save x
   eval_oper("*");        # r *= x
   if (@eval.reg.tmp == "2") {
-      xlog("L_ERR", "%@eval.get[0]\n");
+      xplog("L_ERR", "%@eval.get[0]\n");
       return -1;
   }
   eval_push("r:tmp");
@@ -246,7 +246,7 @@ Loop is also interrupted if route_no returns value <= 0.
 
 Example:
 route[LOOP] {
-	xlog("L_ERR", "%@eval.pop[0]\n");
+	xplog("L_ERR", "%@eval.pop[0]\n");
 }
 eval_push("Three");
 eval_push("Two");

@@ -488,7 +488,7 @@ static int parse_location(str s, struct eval_location *p) {
 				if (!xl_print) {
 					xl_print=(xl_print_log_f*)find_export("xprint", NO_SCRIPT, 0);
 					if (!xl_print) {
-						ERR(MODULE_NAME": cannot find \"xprint\", is module xlog loaded?\n");
+						ERR(MODULE_NAME": cannot find \"xprint\", is module xprint loaded?\n");
 						return E_UNSPEC;
 					}
 				}
@@ -497,7 +497,7 @@ static int parse_location(str s, struct eval_location *p) {
 					xl_parse=(xl_parse_format_f*)find_export("xparse", NO_SCRIPT, 0);
 
 					if (!xl_parse) {
-						ERR(MODULE_NAME": cannot find \"xparse\", is module xlog loaded?\n");
+						ERR(MODULE_NAME": cannot find \"xparse\", is module xprint loaded?\n");
 						return E_UNSPEC;
 					}
 				}
