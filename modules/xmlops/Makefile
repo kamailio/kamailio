@@ -9,7 +9,9 @@ auto_gen=
 NAME=xmlops.so
 LIBS=
 
+ifeq ($(CROSS_COMPILE),)
 XML2CFG=$(shell which xml2-config)
+endif
 
 ifneq ($(XML2CFG),)
 
@@ -18,7 +20,7 @@ ifneq ($(XML2CFG),)
 
 else
 
-	DEFS+=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
+	DEFS+=-I$(LOCALBASE)/include/libxml2 \
 		-I$(LOCALBASE)/include
 	LIBS+=-L$(LOCALBASE)/lib -lxml2
 

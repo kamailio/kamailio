@@ -60,6 +60,7 @@ cat <<EOF
  db rorun <id> ....................... execute read-only SQL query from 
                                        \$id variable
  db show <table> ..................... display table content
+ db showg <table> .................... display formatted table content
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_db_ops"

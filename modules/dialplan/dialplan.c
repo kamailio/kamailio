@@ -672,7 +672,7 @@ static void dialplan_rpc_translate(rpc_t* rpc, void* ctx)
 rpc_export_t dialplan_rpc_list[] = {
 	{"dialplan.reload", dialplan_rpc_reload,
 		dialplan_rpc_reload_doc, 0},
-	{"dialplan.dump",   dialplan_rpc_translate,
+	{"dialplan.translate",   dialplan_rpc_translate,
 		dialplan_rpc_translate_doc, 0},
 	{0, 0, 0, 0}
 };

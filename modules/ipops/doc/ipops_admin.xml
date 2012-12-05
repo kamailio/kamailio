@@ -19,27 +19,33 @@
     <title>Overview</title>
          
     <para>
-      This module offers operations for IPv4 and IPv6.
+      This module offers operations for handling IP addresses in both IPv4 and IPv6.
     </para>
 
     <para>
-      IPv6 is defined in <ulink url="http://tools.ietf.org/html/rfc2460">RFC 2460</ulink>. The same IPv6 can be represented by different ASCII strings, so binary comparison is required. For example, the following IPv6 are equivalent:
+      IPv6 is defined in <ulink url="http://tools.ietf.org/html/rfc2460">RFC 2460</ulink>.
+	The same IPv6 address can be represented by different ASCII strings, so binary comparison is required.
+	For example, the following IPv6 addresses are equivalent:
     </para>
 
     <itemizedlist>
       <listitem>
-        <para>1080:0000:0000:0000:0008:0800:200C:417A</para>
+        <para>2001:DB8:0000:0000:0008:0800:200C:417A</para>
       </listitem>
       <listitem>
-        <para>1080:0:0:0:8:800:200C:417A</para>
+        <para>2001:DB8:0:0:8:800:200C:417A</para>
       </listitem>
       <listitem>
-        <para>1080::8:800:200C:417A</para>
+        <para>2001:DB8::200C:417A</para>
       </listitem>
     </itemizedlist>
 
     <para>
-      When using IPv6 in an URI (i.e. a SIP URI) such IP must be written in "IPv6 reference" format (which is the textual representation of the IPv6 enclosed between [ ] symbols). An example is <quote>sip:alice@[1080:0:0:0:8:800:200C:417A]</quote>. This module also allows comparing a IPv6 with its IPv6 reference representation.
+      	When using IPv6 in an URI (i.e. a SIP URI) the IP address must be written in "IPv6 reference" format 
+	(which is the textual representation of the IPv6 enclosed between [ ] symbols).
+	An example is <quote>sip:alice@[2001:DB8:0:0:8:800:200C:417A]</quote>. This allows separation of
+	address and port number with a :, like <quote>[2001:DB8:0:0:8:800:200C:417A]:5060</quote>.
+	This module also allows comparing an IPv6 address with its IPv6 reference representation.
     </para>
            
   </section>
@@ -118,7 +124,7 @@
         <programlisting format="linespecific">
 ...
 if (is_ip($rd)) {
-  xlog("L_INFO", "RURI domain is IP\n");
+  xlog("L_INFO", "RURI domain is an IP address (not a host name/domain)\n");
 }
 ...
         </programlisting>
@@ -360,7 +366,8 @@ switch($rc) {
       </title>
 
       <para>
-        Returns TRUE if both IP's are the same. FALSE otherwise. This function also allows comparing an IPv6 against an IPv6 reference.
+        Returns TRUE if both IP addresses are the same. FALSE otherwise.
+	This function also allows comparing an IPv6 against an IPv6 reference.
       </para>
 
       <para>Parameters:</para>
@@ -403,7 +410,8 @@ if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:41
       </title>
 
       <para>
-        Returns TRUE if both IP's are the same. FALSE otherwise. This function does NOT allow comparing an IPv6 against an IPv6 reference.
+        Returns TRUE if both IP's are the same. FALSE otherwise. This function does NOT 
+	allow comparing an IPv6 against an IPv6 reference.
       </para>
 
       <para>Parameters:</para>

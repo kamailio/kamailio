@@ -151,7 +151,7 @@ modparam("xmlrpc", "url_skip", "^/sip")
 	<section>
 		<title><varname>url_match</varname> (str)</title>
 		<para>
-			Regular expression to match the HTPP URL. If there is no match,
+			Regular expression to match the HTTP URL. If there is no match,
 			then xmlrpc route is not executed. This check is done after
 			url_skip, so if both url_skip and url_match would match then
 			the xmlrpc route is not executed (url_skip has higher priority).

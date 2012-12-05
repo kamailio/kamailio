@@ -8,20 +8,17 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=xcap_client.so
-LIBS=
 
+ifeq ($(CROSS_COMPILE),)
 CURLCFG=$(shell which curl-config)
+endif
 
 ifneq ($(CURLCFG),)
-
 	DEFS += $(shell $(CURLCFG) --cflags)
 	LIBS += $(shell $(CURLCFG) --libs)
-
 else
-
 	DEFS+=-I$(LOCALBASE)/include
 	LIBS+=-L$(SYSBASE)/lib -L$(LOCALBASE)/lib -lcurl
-
 endif
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE

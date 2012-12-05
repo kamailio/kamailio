@@ -15,7 +15,7 @@ Daniel-Constantin Mierla
    asipto.com
    <miconda@gmail.com>
 
-   Copyright © 2002, 2003 FhG FOKUS
+   Copyright � 2002, 2003 FhG FOKUS
      __________________________________________________________________
 
    1.1. Overview
@@ -50,7 +50,7 @@ Daniel-Constantin Mierla
         1.4.6. pv_www_authenticate(realm, passwd, flags [, method])
         1.4.7. pv_proxy_authenticate(realm, passwd, flags)
         1.4.8. pv_auth_check(realm, passwd, flags, checks)
-        1.4.9. auth_get_www_authenticate(realm, flags, pvdst)
+        1.4.9. auth_get_www_authenticate(realm, flags, pvdest)
 
 1.1. Overview
 
@@ -59,10 +59,10 @@ Daniel-Constantin Mierla
    all other authentication related modules (so called authentication
    backends).
 
-   We decided to break the authentication code into several modules
+   We decided to divide the authentication code into several modules
    because there are now more than one backends (currently database
    authentication and radius are supported). This allows us to create
-   separate packages so uses can install and load only required
+   separate packages so users can install and load only the required
    functionality. This also allows us to avoid unnecessary dependencies in
    the binary packages.
 
@@ -443,6 +443,17 @@ modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
 
 1.3.10. secret (string)
 
+   Secret phrase used to calculate the nonce value used to challenge the
+   client for authentication.
+
+   If you use multiple servers in your installation, and would like to
+   authenticate on the second server against the nonce generated at the
+   first one its necessary to explicitly set the secret to the same value
+   on all servers. However, as the use of a shared (and fixed) secret as
+   nonce is insecure, it is much better is to stay with the default. Any
+   clients should send the authenticated request to the server that issued
+   the challenge.
+
    Default value is randomly generated string.
 
    Example 10. Setting secret module parameter
@@ -507,7 +518,7 @@ modparam("auth", "force_stateless_reply", 1)
    records (not all SIP clients support SRV lookup), a subdomain of the
    master domain can be defined for SIP purposes (like sip.mydomain.net
    pointing to same IP address as the SRV record for mydomain.net). By
-   ignoring the realm_prefix “sip.”, at authentication, sip.mydomain.net
+   ignoring the realm_prefix "sip.", at authentication, sip.mydomain.net
    will be equivalent to mydomain.net .
 
    Default value is empty string.
@@ -529,7 +540,7 @@ modparam("auth", "use_domain", 1)
 
 1.4.1. consume_credentials()
 
-   This function removes previously authorized credentials from the
+   This function removes previously authorized credential headers from the
    message being processed by the server. That means that the downstream
    message will not contain credentials there were used by this server.
    This ensures that the proxy will not reveal information about
@@ -571,10 +582,11 @@ if (has_credentials("myrealm")) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string “”. In case of REGISTER requests To
-       header field domain (e.g., variable $td) can be used (because this
-       header field represents the user being registered), for all other
-       messages From header field domain can be used (e.g., variable $fd).
+       It must not be empty string "". In case of REGISTER requests, the
+       To header field domain (e.g., variable $td) can be used (because
+       this header field represents the user being registered), for all
+       other messages From header field domain can be used (e.g., variable
+       $fd).
        The string may contain pseudo variables.
      * flags - Value of this parameter can be a bitmask of following:
           + 1 - build challenge header with qop=auth
@@ -603,8 +615,8 @@ if (!www_authenticate("$td", "subscriber")) {
    information regarding digest authentication see RFC2617. See module
    parameter force_stateless_reply regarding sending of the reply.
 
-   Meaning of the parameters the same as for function www_challenge(realm,
-   flags)
+   Meaning of the parameters is the same as for function
+   www_challenge(realm, flags)
 
    This function can be used from REQUEST_ROUTE.
 
@@ -620,14 +632,14 @@ if (!proxy_authenticate("$fd", "subscriber")) {
    The function challenges a user agent for authentication. It combines
    the functions www_challenge() and proxy_challenge(), by calling
    internally the first one for REGISTER requests and the second one for
-   the rest of the request types.
+   the rest of other request types.
 
    Meaning of the parameters the same as for function www_challenge(realm,
    flags)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 20. proxy_challenge usage
+   Example 20. auth_challenge usage
 ...
 if (!auth_check("$fd", "subscriber", "1")) {
         auth_challenge("$fd", "1");
@@ -658,13 +670,13 @@ if (!auth_check("$fd", "subscriber", "1")) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string “”. In case of REGISTER requests To
+       It must not be empty string "". In case of REGISTER requests To
        header field domain (e.g., varibale $td) can be used (because this
        header field represents a user being registered), for all other
        messages From header field domain can be used (e.g., varibale $fd).
        The string may contain pseudo variables.
      * passwd - the password to be used for authentication. Can contain
-       config variables. Username is taken from Auth header.
+       config variables. The Username is taken from Auth header.
      * flags - the value of this parameter can be a bitmask of following:
           + 1 - the value of password parameter is HA1 format
           + 2 - build challenge header with no qop and add it to avp
@@ -675,7 +687,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
        is optional and if not set is the first "word" on the request-line.
 
    When challenge header is built and stored in avp, append_to_reply() and
-   sl reply functions can be used to send appropriate SIP reply to
+   the sl reply functions can be used to send appropriate SIP reply to
    challenge for authentication.
 
    This function can be used from REQUEST_ROUTE.
@@ -727,7 +739,7 @@ if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 23. pv_proxy_authenticate usage
+   Example 23. pv_auth_check usage
 ...
 $avp(password)="xyz";
 if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
@@ -735,10 +747,10 @@ if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
 };
 ...
 
-1.4.9.  auth_get_www_authenticate(realm, flags, pvdst)
+1.4.9.  auth_get_www_authenticate(realm, flags, pvdest)
 
    Build WWW-Authentication header and set the resulting value in 'pvdest'
-   parameter.
+   pseudo-variable parameter.
 
    Meaning of the realm and flags parameters is the same as for
    pv_www_authenticate(realm, passwd, flags)

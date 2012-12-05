@@ -983,6 +983,15 @@ db_ops() {
 			QUERY="select * FROM $1;"
 			$DBROCMD "$QUERY"
 			;;
+		showg)
+			shift
+			if [ $# -ne 1 ] ; then
+				merr "missing table parameter"
+				exit 1
+			fi
+			QUERY="select * FROM $1\\G;"
+			$DBROCMD "$QUERY"
+			;;
 		*)
 			usage_db_ops
 			exit 1

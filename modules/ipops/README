@@ -76,20 +76,23 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module offers operations for IPv4 and IPv6.
+   This module offers operations for handling IP addresses in both IPv4
+   and IPv6.
 
-   IPv6 is defined in RFC 2460. The same IPv6 can be represented by
-   different ASCII strings, so binary comparison is required. For example,
-   the following IPv6 are equivalent:
-     * 1080:0000:0000:0000:0008:0800:200C:417A
-     * 1080:0:0:0:8:800:200C:417A
-     * 1080::8:800:200C:417A
+   IPv6 is defined in RFC 2460. The same IPv6 address can be represented
+   by different ASCII strings, so binary comparison is required. For
+   example, the following IPv6 addresses are equivalent:
+     * 2001:DB8:0000:0000:0008:0800:200C:417A
+     * 2001:DB8:0:0:8:800:200C:417A
+     * 2001:DB8::200C:417A
 
-   When using IPv6 in an URI (i.e. a SIP URI) such IP must be written in
-   "IPv6 reference" format (which is the textual representation of the
-   IPv6 enclosed between [ ] symbols). An example is
-   "sip:alice@[1080:0:0:0:8:800:200C:417A]". This module also allows
-   comparing a IPv6 with its IPv6 reference representation.
+   When using IPv6 in an URI (i.e. a SIP URI) the IP address must be
+   written in "IPv6 reference" format (which is the textual representation
+   of the IPv6 enclosed between [ ] symbols). An example is
+   "sip:alice@[2001:DB8:0:0:8:800:200C:417A]". This allows separation of
+   address and port number with a :, like
+   "[2001:DB8:0:0:8:800:200C:417A]:5060". This module also allows
+   comparing an IPv6 address with its IPv6 reference representation.
 
 2. Dependencies
 
@@ -122,7 +125,7 @@ Chapter 1. Admin Guide
    4.9. is_ip_rfc1918 (ip)
    4.10. is_in_subnet (ip, subnet)
 
-4.1. is_ip (ip)
+4.1.  is_ip (ip)
 
    Returns TRUE if the argument is a valid IPv4, IPv6 or IPv6 reference.
    FALSE otherwise.
@@ -133,14 +136,14 @@ Chapter 1. Admin Guide
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 
-   Example 1.1. is_ip usage
+   Example 1.1.  is_ip usage
 ...
 if (is_ip($rd)) {
-  xlog("L_INFO", "RURI domain is IP\n");
+  xlog("L_INFO", "RURI domain is an IP address (not a host name/domain)\n");
 }
 ...
 
-4.2. is_pure_ip (ip)
+4.2.  is_pure_ip (ip)
 
    Returns TRUE if the argument is a valid IPv4 or IPv6. FALSE otherwise.
 
@@ -150,7 +153,7 @@ if (is_ip($rd)) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 
-   Example 1.2. is_pure_ip usage
+   Example 1.2.  is_pure_ip usage
 ...
 $var(ip) = "::1";
 if (is_pure_ip($var(ip))) {
@@ -158,7 +161,7 @@ if (is_pure_ip($var(ip))) {
 }
 ...
 
-4.3. is_ipv4 (ip)
+4.3.  is_ipv4 (ip)
 
    Returns TRUE if the argument is a valid IPv4. FALSE otherwise.
 
@@ -168,14 +171,14 @@ if (is_pure_ip($var(ip))) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 
-   Example 1.3. is_ipv4 usage
+   Example 1.3.  is_ipv4 usage
 ...
 if (is_ipv4("1.2.3.4")) {
   xlog("L_INFO", "it's IPv4\n");
 }
 ...
 
-4.4. is_ipv6 (ip)
+4.4.  is_ipv6 (ip)
 
    Returns TRUE if the argument is a valid IPv6. FALSE otherwise.
 
@@ -185,14 +188,14 @@ if (is_ipv4("1.2.3.4")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 
-   Example 1.4. is_ipv6 usage
+   Example 1.4.  is_ipv6 usage
 ...
 if (is_ipv6("1080:0:0:0:8:800:200C:417A")) {
   xlog("L_INFO", "it's IPv6\n");
 }
 ...
 
-4.5. is_ipv6_reference (ip)
+4.5.  is_ipv6_reference (ip)
 
    Returns TRUE if the argument is a valid IPv6 reference. FALSE
    otherwise.
@@ -203,14 +206,14 @@ if (is_ipv6("1080:0:0:0:8:800:200C:417A")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 
-   Example 1.5. is_ipv6_reference usage
+   Example 1.5.  is_ipv6_reference usage
 ...
 if (is_ipv6_reference("[1080:0:0:0:8:800:200C:417A]")) {
   xlog("L_INFO", "it's IPv6 reference\n");
 }
 ...
 
-4.6. ip_type (ip)
+4.6.  ip_type (ip)
 
    Returns the type of the given IP.
 
@@ -226,7 +229,7 @@ if (is_ipv6_reference("[1080:0:0:0:8:800:200C:417A]")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 
-   Example 1.6. ip_type usage
+   Example 1.6.  ip_type usage
 ...
 ip_type($var(myip));
 switch($rc) {
@@ -245,10 +248,10 @@ switch($rc) {
 }
 ...
 
-4.7. compare_ips (ip1, ip2)
+4.7.  compare_ips (ip1, ip2)
 
-   Returns TRUE if both IP's are the same. FALSE otherwise. This function
-   also allows comparing an IPv6 against an IPv6 reference.
+   Returns TRUE if both IP addresses are the same. FALSE otherwise. This
+   function also allows comparing an IPv6 against an IPv6 reference.
 
    Parameters:
      * ip1 - String or pseudo-variable containing the first IP to compare.
@@ -258,7 +261,7 @@ switch($rc) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 
-   Example 1.7. compare_ips usage
+   Example 1.7.  compare_ips usage
 ...
 if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:41
 7A]")) {
@@ -266,7 +269,7 @@ if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:41
 }
 ...
 
-4.8. compare_pure_ips (ip1, ip2)
+4.8.  compare_pure_ips (ip1, ip2)
 
    Returns TRUE if both IP's are the same. FALSE otherwise. This function
    does NOT allow comparing an IPv6 against an IPv6 reference.
@@ -279,14 +282,14 @@ if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:41
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 
-   Example 1.8. compare_pure_ips usage
+   Example 1.8.  compare_pure_ips usage
 ...
 if (compare_pure_ips($si, "1080::8:800:200C:417A")) {
   xlog("L_INFO", "both are the same IP\n");
 }
 ...
 
-4.9. is_ip_rfc1918 (ip)
+4.9.  is_ip_rfc1918 (ip)
 
    Returns TRUE if the argument is a private IPv4 according to RFC 1918.
    FALSE otherwise.
@@ -297,14 +300,14 @@ if (compare_pure_ips($si, "1080::8:800:200C:417A")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 
-   Example 1.9. is_ip_rfc1918 usage
+   Example 1.9.  is_ip_rfc1918 usage
 ...
 if (is_ip_rfc1918("10.0.123.123")) {
   xlog("L_INFO", "it's a private IPv4\n");
 }
 ...
 
-4.10. is_in_subnet (ip, subnet)
+4.10.  is_in_subnet (ip, subnet)
 
    Returns TRUE if the first argument is an IP address within the (CIDR
    notation) subnet in the second argument. FALSE otherwise.
@@ -317,7 +320,7 @@ if (is_ip_rfc1918("10.0.123.123")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 
-   Example 1.10. is_in_subnet usage
+   Example 1.10.  is_in_subnet usage
 ...
 if (is_in_subnet("10.0.123.123", "10.0.123.1/24")) {
   xlog("L_INFO", "it's in the subnet\n");

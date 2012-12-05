@@ -10,9 +10,15 @@ auto_gen=
 NAME=tls.so
 
 CFLASFOUND = 0
+
+ifeq ($(CROSS_COMPILE),)
 BUILDER = $(shell which pkg-config)
+endif
+
 ifneq ($(BUILDER),)
+	ifeq ($(CROSS_COMPILE),)
 	SSLLIBS = $(shell pkg-config --silence-errors --libs libssl)
+	endif
 	ifneq ($(SSLLIBS),)
 		DEFS+= $(shell pkg-config --silence-errors --cflags libssl)
 		LIBS+= $(shell pkg-config --silence-errors --libs libssl)

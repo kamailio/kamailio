@@ -71,10 +71,10 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   Exec module allows to start an external command from a Kamailio script.
-   The commands may be any valid shell commands--the command string is
-   passed to shell using "popen" command. Kamailio passes additionally lot
-   of information about request in environment variables:
+   The exec module allows external commands to be executed from a Kamailio
+   script. The commands may be any valid shell commands--the command
+   string is passed to the shell using "popen" command. Kamailio passes
+   additional information about the request in environment variables:
      * SIP_HF_<hf_name> contains value of each header field in request. If
        a header field occurred multiple times, values are concatenated and
        comma-separated. <hf_name> is in capital letters. Ff a header-field
@@ -85,12 +85,12 @@ Chapter 1. Admin Guide
      * SIP_DID is dialog identifier, which is the same as to-tag.
        Initially, it is empty.
      * SIP_SRCIP is source IP address from which request came.
-     * SIP_ORURI is original request URI.
+     * SIP_ORURI is the original request URI.
      * SIP_RURI is current request URI (if unchanged, equal to original).
      * SIP_USER is userpart of current request URI.
      * SIP_OUSER is userpart of original request URI.
 
-   NOTE: The envirnment variables must be specified with double $ (e.g.,
+   NOTE: The environment variables must be specified with double $ (e.g.,
    $$SIP_OUSER) in the parameters given to exec functions. Otherwise they
    will be evaluated as Kamailio pseudo-variables, throwing errors.
 
@@ -193,7 +193,7 @@ exec_msg("echo TEST > /tmp/$rU.txt");
 4.3. exec_avp(command [, avplist])
 
    Executes an external command. Each line from output of the command is
-   saved in an AVP from 'avplist'. If 'avplist' is missing, the AVP are
+   saved in an AVP from 'avplist'. If 'avplist' is missing, the AVPs are
    named 1, 2, 3, ...
 
    Meaning of the parameters is as follows:

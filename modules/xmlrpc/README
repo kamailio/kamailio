@@ -2,7 +2,7 @@ Jan Janak
 
    iptelorg GmbH
 
-   Copyright © 2005 iptelorg GmbH
+   Copyright � 2005 iptelorg GmbH
      __________________________________________________________________
 
    1.1. Design Goals
@@ -408,7 +408,7 @@ Content-Length: 276
 1.3.3. Type Conversion
 
    The data types of the RPC API are converted to the data types of
-   XML-RPC and vice versa. Table 1, “Data Type Conversion” shows for each
+   XML-RPC and vice versa. Table 1, "Data Type Conversion" shows for each
    RPC API data type corresponding XML-RPC data type.
 
    Table 1. Data Type Conversion
@@ -589,7 +589,7 @@ modparam("xmlrpc", "url_skip", "^/sip")
 
 1.5.7. url_match (str)
 
-   Regular expression to match the HTPP URL. If there is no match, then
+   Regular expression to match the HTTP URL. If there is no match, then
    xmlrpc route is not executed. This check is done after url_skip, so if
    both url_skip and url_match would match then the xmlrpc route is not
    executed (url_skip has higher priority).

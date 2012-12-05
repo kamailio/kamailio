@@ -683,9 +683,10 @@ sht_rm_value_re("ha=>.*");
 		</title>
 		<para>
 			When defined, the module calls event_route[htable:mod-init] after
-			all modules have been initialised. A typical use case is to
+			all modules have been initialized. A typical use case is to
 			initialise items in hash tables. The event route is executed only
-			once.
+			once, after core and module initialization, but before &kamailio; forks any
+			child processes.
 		</para>
         <programlisting  format="linespecific">
 ...			

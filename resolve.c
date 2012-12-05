@@ -725,8 +725,8 @@ struct rdata* get_record(char* name, int type, int flags)
 	    if (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) ||
 		((c >= '0') && (c <= '9')) || (name[i] == '.') ||
 		(name[i] == '-') || (name[i] == '_'))
-		continue;
-	    LM_INFO("invalid domain name '%s'\n", name);
+			continue;
+	    LM_DBG("'%s' is not domain name\n", name);
 	    return 0;
 	}
 

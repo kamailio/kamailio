@@ -4,7 +4,7 @@ Juha Heinanen
 
    TutPro Inc.
 
-   Copyright © 2008-2009 Juha Heinanen
+   Copyright � 2008-2009 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -98,7 +98,7 @@ Chapter 1. Admin Guide
    deactivated.
 
    Function xcap_auth_status can be used to check from presence server
-   database, if watcher is authorized to subscribe event “presence” of
+   database, if watcher is authorized to subscribe event "presence" of
    presentity.
 
 2. Dependencies
@@ -126,9 +126,11 @@ Chapter 1. Admin Guide
 
 3.1. http_query_timeout (int)
 
-   Defines in seconds how long Kamailio waits response from HTTP server.
+   Defines in seconds how long Kamailio waits for response from HTTP
+   server.
 
-   Default value is null, i.e., xcap_auth_status function is disabled.
+   Default value is zero, i.e., that the http_query_timeout function is
+   disabled.
 
    Example 1.1. Set http_query_timeout parameter
 ...
@@ -139,7 +141,7 @@ modparam("utils", "http_query_timeout", 2)
 
    Defines if the forwarding callback should be installed.
 
-   Default value is “0”.
+   Default value is "0" - disabled.
 
    Example 1.2. Set forward_active parameter
                                         ...
@@ -148,8 +150,8 @@ modparam("utils", "http_query_timeout", 2)
 
 3.3. pres_db_url (string)
 
-   Defines presence server database URL. If not given, xcap_auth_status
-   function is disabled.
+   Defines presence server database URL. If not given, the
+   xcap_auth_status function is disabled.
 
    There is no default value.
 
@@ -160,9 +162,10 @@ modparam("utils", "pres_db_url", "mysql://foo:secret@localhost/pres")
 
 3.4. xcap_table (string)
 
-   Defines name of xcap table in presence server database.
+   Defines the name of the xcap table in the presence server database. See
+   the xcap_server module documentation for more information.
 
-   Default value is “xcap”.
+   Default value is "xcap".
 
    Example 1.4. Set xcap_table parameter
 ...
@@ -176,12 +179,12 @@ modparam("utils", "xcap_table", "pres_xcap")
 
 4.1.  http_query(url, result)
 
-   Sends HTTP GET request according to URL given in “url” parameter, which
+   Sends HTTP GET request according to URL given in "url" parameter, which
    is a string that may contain pseudo variables.
 
-   If HTTP server returns a class 2xx or 3xx reply, first line of reply's
-   body (if any) is stored in “result” parameter, which must be a writable
-   pseudo variable.
+   If HTTP server returns a class 2xx or 3xx reply, the first line of the
+   reply's body (if any) is stored in "result" parameter, which must be a
+   writable pseudo variable.
 
    Function returns reply code of HTTP reply or -1 if something went
    wrong.
@@ -201,12 +204,12 @@ switch ($retcode) {
 
 4.2.  xcap_auth_status(watcher_uri, presentity_uri)
 
-   Function checks from presence server database if watcher is authorized
-   to subscribe event “presence” of presentity. Sphere checking is not
-   included.
+   Function checks in the presence server database if a watcher is
+   authorized to subscribe to event "presence" of presentity. Sphere
+   checking is not included.
 
-   Both watcher_uri and presentity_uri are pseudo variables. Function
-   returns ACTIVE_STATUS, if subscription is allowed and PENDING_STATUS,
+   Both watcher_uri and presentity_uri are pseudo variables. The function
+   returns ACTIVE_STATUS, if a subscription is allowed and PENDING_STATUS,
    TERMINATED_STATUS, or WAITING_STATUS otherwise. See
    presence/subscribe.h for the corresponding integer codes. In case of
    error, function returns -1.
@@ -253,7 +256,7 @@ id switch                         filter proxy
 
    Example 1.8. forward_switch usage
 ...
-kamctl fifo sp_forward_switch 0=on
+kamctl fifo forward_switch 0=on
 ...
 
 5.3. forward_filter
@@ -272,7 +275,7 @@ kamctl fifo sp_forward_switch 0=on
 
    Example 1.9. forward_filter usage
 ...
-kamctl fifo sp_forward_filter 0=REGISTER:INVITE
+kamctl fifo forward_filter 0=REGISTER:INVITE
 ...
 
 5.4. forward_proxy
@@ -285,7 +288,7 @@ kamctl fifo sp_forward_filter 0=REGISTER:INVITE
 
    Example 1.10. forward_proxy usage
 ...
-kamctl fifo sp_forward_proxy 0=host-c.domain-c:5060
+kamctl fifo forward_proxy 0=host-c.domain-c:5060
 ...
 
 6. Configuration syntax

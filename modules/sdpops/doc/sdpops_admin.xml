@@ -16,14 +16,14 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides functions for checking and managing the SDP
-		payloads of SIP messages.
+		This module provides functions for checking and managing the 
+		<acronym>SDP</acronym> payloads of SIP messages.
 	</para>
 	<para>
 		Examples of functions this module offers: remove codecs from SDP,
-		check the media stream types, return attributes of SDP document.
+		check the media stream types and return attributes of SDP document.
 		For the full list of the features provided by this module and
-		the implementation state, read the list of exported functions.
+		the implementation state, please read the list of exported functions.
 	</para>
 	</section>
 
@@ -73,7 +73,7 @@
 	    <para>
 			Remove the codecs provided in the parameter 'list' from all
 			media streams found in SDP payload. The parameter 'list' must
-			be one or a comma separated list of numeric codec IDs. The
+			be one item or a comma separated list of numeric codec IDs. The
 			parameter can be a static string or a variable holding the
 			list of numeric codec IDs.
 	    </para>
@@ -99,7 +99,7 @@ sdp_remove_codecs_by_id("0,8,3");
 	    <para>
 			Remove the codecs provided in the parameter 'list' from all
 			media streams found in SDP payload. The parameter 'list' must
-			be one or a comma separated list of codec names. The
+			be one item or a comma separated list of codec names. The
 			parameter can be a static string or a variable holding the
 			list of codec names.
 	    </para>
@@ -123,7 +123,8 @@ sdp_remove_codecs_by_name("PCMU,PCMA,GSM");
 		<function moreinfo="none">sdp_remove_line_by_prefix(string)</function>
 	</title>
 	<para>
-			Remove all SDP attribute lines beginning with 'string'.
+			Remove all SDP attribute lines beginning with 'string'
+			in all media streams.
 	</para>
 	<para>
 			This function can be used from ANY_ROUTE.
@@ -132,7 +133,7 @@ sdp_remove_codecs_by_name("PCMU,PCMA,GSM");
 	<title><function>sdp_remove_line_by_prefix</function> usage</title>
 	<programlisting format="linespecific">
 ...
-if ($si == "1080::8:800:200C:417A"
+if ($si == "2001:DB8::8:800:200C:417A"
         and ( has_body("application/sdp") or has_body("multipart/mixed")))
 {
     xlog("L_INFO", "Cleaning ugly SDP from $si\n");
@@ -151,7 +152,7 @@ if ($si == "1080::8:800:200C:417A"
 	    <para>
 			Keep only the codecs provided in the parameter 'list' from all
 			media streams found in SDP payload. The parameter 'list' must
-			be one or a comma separated list of numeric codec IDs. The
+			be one item or a comma separated list of numeric codec IDs. The
 			parameter can be a static string or a variable holding the
 			list of numeric codec IDs.
 	    </para>
@@ -283,7 +284,7 @@ if(sdp_with_codecs_by_id("0,8,3")) { ... }
 	    <para>
 			Returns true if any of the codecs provided in the parameter 'list'
 			from all media streams is found in SDP payload. The parameter
-			'list' must be one or a comma separated list of codec names.
+			'list' must be one item or a comma separated list of codec names.
 			The parameter can be a static string or a variable holding the
 			list of codec names.
 	    </para>
@@ -295,9 +296,9 @@ if(sdp_with_codecs_by_id("0,8,3")) { ... }
 		<programlisting format="linespecific">
 ...
 # test for PCMU
-if(sdp_with_codecs_by_id("PCMU")) { ... }
+if(sdp_with_codecs_by_name("PCMU")) { ... }
 # test for PCMU, PCMA or GSM
-if(sdp_with_codecs_by_id("PCMU,PCMA,GSM")) { ... }
+if(sdp_with_codecs_by_name("PCMU,PCMA,GSM")) { ... }
 ...
 </programlisting>
 	    </example>
@@ -340,6 +341,27 @@ sdp_print("1");
 		<programlisting format="linespecific">
 ...
 sdp_get("$avp(sdp)");
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">sdp_content()</function>
+	    </title>
+	    <para>
+		Return true if the SIP message has SDP body or a SDP part in body.
+	    </para>
+		<para>
+			This function can be used from ANY_ROUTE.
+	    </para>
+		<example>
+		<title><function>sdp_content</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(sdp_content()) {
+    ...
+}
 ...
 </programlisting>
 	    </example>

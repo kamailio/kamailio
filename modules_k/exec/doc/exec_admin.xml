@@ -16,11 +16,10 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		Exec module allows to start an external command from a &kamailio; script. 
-		The commands may be any valid shell commands--the command string is 
-		passed to shell using <quote>popen</quote> command. &kamailio; passes 
-		additionally lot of information about request in environment
-		variables:
+		The exec module allows external commands to be executed from a &kamailio; 
+		script. The commands may be any valid shell commands--the command string is 
+		passed to the shell using <quote>popen</quote> command. &kamailio; passes 
+		additional information about the request in environment variables:
 	</para>
 	<itemizedlist>
 		<listitem>
@@ -52,7 +51,7 @@
 		</listitem>
 		<listitem>
 		<para>
-			SIP_ORURI is original request &uri;.
+			SIP_ORURI is the original request &uri;.
 		</para>
 		</listitem>
 		<listitem>
@@ -73,7 +72,7 @@
 		</listitem>
 	</itemizedlist>
 	<para>
-		NOTE: The envirnment variables must be specified with double $
+		NOTE: The environment variables must be specified with double $
 		(e.g., $$SIP_OUSER) in the parameters given to exec functions.
 		Otherwise they will be evaluated as &kamailio; pseudo-variables,
 		throwing errors.
@@ -85,7 +84,7 @@
 	<section>
 		<title>&kamailio; Modules</title>
 		<para>
-		The following  modules must be loaded before this module:
+		The following modules must be loaded before this module:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -238,7 +237,7 @@ exec_msg("echo TEST > /tmp/$rU.txt");
 		<para>
 		Executes an external command. Each line from output of the command
 		is saved in an AVP from 'avplist'. If 'avplist' is missing, the
-		AVP are named 1, 2, 3, ...
+		AVPs are named 1, 2, 3, ...
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>

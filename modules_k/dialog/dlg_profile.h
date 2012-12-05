@@ -195,6 +195,12 @@ struct mi_root * mi_profile_list(struct mi_root *cmd_tree, void *param );
 int is_known_dlg(sip_msg_t *msg);
 
 /*!
+ * \brief Adjust timeout in all dialogs within a profile.
+ */
+
+int dlg_set_timeout_by_profile(struct dlg_profile_table *, str *, int);
+
+/*!
  * \brief Add dialog to a profile
  * \param dlg dialog
  * \param value value

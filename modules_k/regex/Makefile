@@ -4,20 +4,20 @@ include ../../Makefile.defs
 auto_gen=
 NAME=regex.so
 
+ifeq ($(CROSS_COMPILE),)
 BUILDER = $(shell which pcre-config)
+endif
 
 ifeq ($(BUILDER),)
-	PCREDEFS=-I$(LOCALBASE)/include -I/usr/local/include -I/opt/include \
-	-I/usr/sfw/include
-	PCRELIBS=-L$(LOCALBASE)/lib -L/usr/local/lib -L/usr/sfw/lib \
-	-L/opt/lib -lpcre
+	PCREDEFS=-I$(LOCALBASE)/include
+	PCRELIBS=-L$(LOCALBASE)/lib -lpcre
 else
 	PCREDEFS = $(shell pcre-config --cflags)
 	PCRELIBS = $(shell pcre-config --libs)
 endif
 
 DEFS+=$(PCREDEFS)
-LIBS=$(PCRELIBS)
+LIBS+=$(PCRELIBS)
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 

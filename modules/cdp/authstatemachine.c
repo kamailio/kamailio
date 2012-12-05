@@ -642,7 +642,10 @@ inline void auth_server_stateless_sm_process(cdp_session_t* s, int event, AAAMes
 int dup_routing_avps(AAAMessage* src, AAAMessage *dest){
 
 	AAA_AVP * avp;
-	str dest_host, dest_realm;
+	str dest_realm;
+	/* Unused due to commented out code
+	str dest_host;
+	*/
 
 	if(!src)
 		return 1;

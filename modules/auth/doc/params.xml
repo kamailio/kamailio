@@ -13,8 +13,8 @@
 	  <varname>auth_checks_in_dlg</varname> (flags)
 	</title>
 	<para>
-	    These three module parameters control which optional integrity
-         checks will be performed on the SIP message carrying digest response
+	These three module parameters control which optional integrity
+        checks will be performed on the SIP message carrying digest response
         during digest authentication. <varname>auth_check_register</varname>
         controls integrity checks to be performed on REGISTER messages,
         <varname>auth_checks_no_dlg</varname> controls which optional
@@ -548,6 +548,16 @@ modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
 
     <section id="auth.secret">
 	<title><varname>secret</varname> (string)</title>
+	<para>Secret phrase used to calculate the nonce value used to challenge
+	the client for authentication.</para>
+	<para>If you use multiple servers in your installation, and would like to
+	authenticate on the second server against the nonce generated at the
+	first one its necessary to explicitly set the secret to the same value
+	on all servers. However, as the use of a shared (and fixed) secret as
+	nonce is insecure, it is much better is to stay with the default. Any
+	clients should send the authenticated request to the server that 
+	issued the challenge.
+	</para>
 	<para>
 	    Default value is randomly generated string.
 	</para>

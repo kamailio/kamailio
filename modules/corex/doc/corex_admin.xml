@@ -16,8 +16,8 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides reimplementation of very old functions that
-		were in core and supported only static string or integer parameters.
+		This module provides reimplementation of a few very old functions that
+		used to be in the core and supported only static string or integer parameters.
 		The new versions bring support for dynamic parameters (allowing
 		variables inside the parameters).
 	</para>
@@ -26,7 +26,7 @@
 		controlled from configuration file or via control interfaces.
 	</para>
 	<para>
-		Contributions to this module must be done under BSD license, to
+		Contributions to this module must be done under the BSD license, to
 		follow the requirements of the core contributions.
 	</para>
 	</section>
@@ -67,7 +67,7 @@
 	<section>
 	    <title><varname>alias_subdomains</varname> (string)</title>
 	    <para>
-		Register a domain and all its sub-domains to match the myself
+		Register a domain and all its sub-domains to match the <quote>myself</quote>
 		condition. It can be set many times. Its full format is:
 		'proto:domain:port', allowing to set restrictions on protocol
 		and port as well. Protocol and port are optional.
@@ -97,11 +97,11 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 	    </title>
 	    <para>
 			Append a new branch to the destination set, useful to build the
-			addresses for parallel forking or redirect replies.
+			set of destination addresses for parallel forking or redirect replies.
 		</para>
 		<para>
 			Both parameters are optional, If no uri parameter is provided,
-			then the address from request URI (r-uri) is taken to build the
+			then the address from request URI (r-uri) is used to build the
 			new branch.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -132,6 +132,52 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 </programlisting>
 	    </example>
 	</section>
+
+	<section>
+		<title>
+			<function moreinfo="none">send([ host [ :port ] ])</function>
+		</title>
+		<para>
+			Send the original SIP message to a specific destination in stateless
+			mode. No changes are applied to received message, no Via header is
+			added. Host can be an IP address or hostname. Port is optional and
+			defaults to 5060. Used protocol: UDP.
+		</para>
+		<para>
+			The parameter is optional and defaults to the destination URI from
+			the SIP message if left out. Otherwise it's a string parameter
+			(supporting pseudo-variables) in format
+			"<emphasis>hostname</emphasis>" or
+			"<emphasis>hostname</emphasis>:<emphasis>port</emphasis>",
+			where <emphasis>hostname</emphasis>" can also be a numeric IP
+			address.
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>send</function> usage</title>
+		<programlisting format="linespecific">
+...
+	send();
+	send("10.20.15.10");
+	send("sip.example.com:5070");
+	send("$var(res)");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+			<function moreinfo="none">send_tcp([ host [ :port ] ])</function>
+		</title>
+		<para>
+			This function is identical to <emphasis>send()</emphasis>
+			described above, except that it sends the SIP message using the
+			TCP protocol instead of UDP.
+		</para>
+	</section>
 	</section>
 
 	<section>
@@ -155,7 +201,7 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 		<function moreinfo="none">corex.list_aliases</function>
 		</title>
 		<para>
-			Print the list of hostname aliases used to match myself
+			Print the list of hostname aliases used to match the myself
 			condition.
 		</para>
 		<para>

@@ -1,0 +1,1 @@
+id(int,auto) subscriber(string) aor(string) event(int) expires(int) state(int) app_idx(int) call_id(string) from_tag(string) to_tag(string) record_route(string,null) notify_cseq(int) subscribe_cseq(int) 

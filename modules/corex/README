@@ -30,6 +30,8 @@ Daniel-Constantin Mierla
         4. Functions
 
               4.1. append_branch([ uri, [ q ] ])
+              4.2. send([ host [ :port ] ])
+              4.3. send_tcp([ host [ :port ] ])
 
         5. RPC Commands
 
@@ -40,6 +42,7 @@ Daniel-Constantin Mierla
 
    1.1. Set alias_subdomains parameter
    1.2. append_branch usage
+   1.3. send usage
 
 Chapter 1. Admin Guide
 
@@ -58,6 +61,8 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. append_branch([ uri, [ q ] ])
+        4.2. send([ host [ :port ] ])
+        4.3. send_tcp([ host [ :port ] ])
 
    5. RPC Commands
 
@@ -66,16 +71,16 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module provides reimplementation of very old functions that were
-   in core and supported only static string or integer parameters. The new
-   versions bring support for dynamic parameters (allowing variables
-   inside the parameters).
+   This module provides reimplementation of a few very old functions that
+   used to be in the core and supported only static string or integer
+   parameters. The new versions bring support for dynamic parameters
+   (allowing variables inside the parameters).
 
    There are also brand new features, related to core internals, but
    controlled from configuration file or via control interfaces.
 
-   Contributions to this module must be done under BSD license, to follow
-   the requirements of the core contributions.
+   Contributions to this module must be done under the BSD license, to
+   follow the requirements of the core contributions.
 
 2. Dependencies
 
@@ -99,7 +104,7 @@ Chapter 1. Admin Guide
 
 3.1. alias_subdomains (string)
 
-   Register a domain and all its sub-domains to match the myself
+   Register a domain and all its sub-domains to match the "myself"
    condition. It can be set many times. Its full format is:
    'proto:domain:port', allowing to set restrictions on protocol and port
    as well. Protocol and port are optional.
@@ -115,14 +120,16 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 4. Functions
 
    4.1. append_branch([ uri, [ q ] ])
+   4.2. send([ host [ :port ] ])
+   4.3. send_tcp([ host [ :port ] ])
 
-4.1. append_branch([ uri, [ q ] ])
+4.1.  append_branch([ uri, [ q ] ])
 
-   Append a new branch to the destination set, useful to build the
-   addresses for parallel forking or redirect replies.
+   Append a new branch to the destination set, useful to build the set of
+   destination addresses for parallel forking or redirect replies.
 
    Both parameters are optional, If no uri parameter is provided, then the
-   address from request URI (r-uri) is taken to build the new branch.
+   address from request URI (r-uri) is used to build the new branch.
 
    Meaning of the parameters is as follows:
      * uri - SIP address of the branch to be used as R-URI in the outgoing
@@ -138,21 +145,48 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
     append_branch("$avp(uri)", "0.5");
 ...
 
+4.2.  send([ host [ :port ] ])
+
+   Send the original SIP message to a specific destination in stateless
+   mode. No changes are applied to received message, no Via header is
+   added. Host can be an IP address or hostname. Port is optional and
+   defaults to 5060. Used protocol: UDP.
+
+   The parameter is optional and defaults to the destination URI from the
+   SIP message if left out. Otherwise it's a string parameter (supporting
+   pseudo-variables) in format "hostname" or "hostname:port", where
+   hostname" can also be a numeric IP address.
+
+   This function can be used from REQUEST_ROUTE or FAILURE_ROUTE.
+
+   Example 1.3. send usage
+...
+        send();
+        send("10.20.15.10");
+        send("sip.example.com:5070");
+        send("$var(res)");
+...
+
+4.3.  send_tcp([ host [ :port ] ])
+
+   This function is identical to send() described above, except that it
+   sends the SIP message using the TCP protocol instead of UDP.
+
 5. RPC Commands
 
    5.1. corex.list_sockets
    5.2. corex.list_aliases
 
-5.1. corex.list_sockets
+5.1.  corex.list_sockets
 
    Print the list of sockets the application is listening on.
 
    Example:
                 sercmd corex.list_sockets
 
-5.2. corex.list_aliases
+5.2.  corex.list_aliases
 
-   Print the list of hostname aliases used to match myself condition.
+   Print the list of hostname aliases used to match the myself condition.
 
    Example:
                 sercmd corex.list_aliases

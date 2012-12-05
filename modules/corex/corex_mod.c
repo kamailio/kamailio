@@ -34,6 +34,8 @@
 MODULE_VERSION
 
 static int w_append_branch(sip_msg_t *msg, char *su, char *sq);
+static int w_send(sip_msg_t *msg, char *su, char *sq);
+static int w_send_tcp(sip_msg_t *msg, char *su, char *sq);
 
 int corex_alias_subdomains_param(modparam_t type, void *val);
 
@@ -47,6 +49,14 @@ static cmd_export_t cmds[]={
 	{"append_branch", (cmd_function)w_append_branch, 1, fixup_spve_null,
 			0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"append_branch", (cmd_function)w_append_branch, 2, fixup_spve_spve,
+			0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"send", (cmd_function)w_send, 0, 0,
+			0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"send", (cmd_function)w_send, 1, fixup_spve_spve,
+			0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"send_tcp", (cmd_function)w_send_tcp, 0, 0,
+			0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"send_tcp", (cmd_function)w_send_tcp, 1, fixup_spve_null,
 			0, REQUEST_ROUTE | FAILURE_ROUTE },
 
 
@@ -119,6 +129,22 @@ static void mod_destroy(void)
 static int w_append_branch(sip_msg_t *msg, char *su, char *sq)
 {
 	if(corex_append_branch(msg, (gparam_t*)su, (gparam_t*)sq) < 0)
+		return -1;
+	return 1;
+}
+
+/**
+ * config wrapper for send() and send_tcp()
+ */
+static int w_send(sip_msg_t *msg, char *su, char *sq)
+{
+	if(corex_send(msg, (gparam_t*)su, PROTO_UDP) < 0)
+		return -1;
+	return 1;
+}
+static int w_send_tcp(sip_msg_t *msg, char *su, char *sq)
+{
+	if(corex_send(msg, (gparam_t*)su, PROTO_TCP) < 0)
 		return -1;
 	return 1;
 }

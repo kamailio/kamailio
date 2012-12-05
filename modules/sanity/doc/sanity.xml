@@ -30,12 +30,12 @@
 		not available yet in the core of SIP-router.
 	</para>
 	<para>
-		This checks are not required by SIP-router itself for its functionality.
+		These checks are not required by SIP-router itself for its functionality.
 		But on the other side it makes not much sence if a broken
 		request traverses through a SIP network if it is rejected sooner
-		or later by a SIP device any way. As every sanity cost extra
+		or later by a SIP device any way. As every sanity check cost extra
 		performance because of additional parsing and evaluation it
-		is now with this module up to the SIP-router adminstrator which checks
+		is with this module now up to the SIP-router adminstrator which checks
 		should be done on which request.
 	</para>
 	<para>
