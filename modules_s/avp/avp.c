@@ -55,7 +55,7 @@
 #include "../../action.h"
 
 #include "../../parser/parse_hname2.h"
-#include "../xlog/xl_lib.h"
+#include "../xprint/xp_lib.h"
 #define NO_SCRIPT -1
 
 MODULE_VERSION
