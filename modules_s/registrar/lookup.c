@@ -247,10 +247,8 @@ int lookup2(struct sip_msg* msg, char* table, char* p2)
 	int res;
 	unsigned int nat;
 	str new_uri, aor;
-	fparam_t* fp;
 
 	nat = 0;
-	fp = (fparam_t*)p2;
 	
 	if (get_str_fparam(&aor, msg, (fparam_t*)p2) != 0) {
 	    ERR("Unable to get the AOR value\n");
