@@ -157,14 +157,14 @@
 		<example>
 			<title>timer common example</title>
 			<programlisting>
-loadmodule "modules/xlog/xlog.so"
+loadmodule "modules/xprint/xprint.so"
 loadmodule "modules/timer/timer.so"
 
 modparam("timer", "declare_timer", "tmr1=ONTIMER,1000"); 
 modparam("timer", "declare_timer", "tmr2=ONTIMER2,2000,slow,enable");
 
 route["print"] {
-	xlog("L_INFO", "fired: %@timer.executed\n");
+	xplog("L_INFO", "fired: %@timer.executed\n");
 }
 
 route["ONTIMER"] {
@@ -191,21 +191,21 @@ route["ONTIMER2"] {
 			<programlisting>
 			
 loadmodule "timer"; 
-loadmodule "xlog";  
+loadmodule "xprint";  
 
 modparam("timer", "declare_timer", "TIMER_TEST=TEST,100,,enable"); 
 
 route {  
-	xlog("L_E","main route"); 
+	xplog("L_E","main route"); 
 }  
     
 route[TEST] {  
 	timer_enable("TIMER_TEST", "0");  
-	xlog("L_E","test start\n");    
+	xplog("L_E","test start\n");    
 		
 	# add here tested functionality
 		
-	xlog("L_E","test end\n"); 
+	xplog("L_E","test end\n"); 
 }
 			</programlisting>
 
