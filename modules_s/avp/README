@@ -152,15 +152,15 @@ if (attr_exists("saved_ruri")) {
 
    Test whether an AVP with given name and value exists. The function
    returns 1 if the AVP with given name and value exists and -1 if not.
-   The value of the AVP is compared string-wise to the result of xlog
+   The value of the AVP is compared string-wise to the result of xprint
    formatting call. The comparison is case sensitive.
 
    Meaning of the parameter is as follows:
      * attribute - The name of the AVP.
-     * xl_format - The xlog formatting string, result of which is looked
+     * xl_format - The xprint formatting string, result of which is looked
        for in AVP.
 
-   Note: You must ensure, that the xlog module is loaded to be able to use
+   Note: You must ensure, that the xprint module is loaded to be able to use
    this function.
 
    Example 5. attr_equals_xl usage
@@ -181,14 +181,14 @@ if (attr_equals_xl("my_avp", "%ct")) {
 1.2.10. xlset_attr($attribute, xl_format)
 
    Creates new AVP identified by attribute and assigns the result string
-   of xlog formatting rules as its value.
+   of xprint formatting rules as its value.
 
    Meaning of the parameter is as follows:
      * $attribute - The name of the AVP.
-     * xl_format - String used for xlog formatting. For detailed info see
-       documentation of xlog module.
+     * xl_format - String used for xprint formatting. For detailed info see
+       documentation of xprint module.
 
-   Note: You must ensure, that the xlog module is loaded to be able to use
+   Note: You must ensure, that the xprint module is loaded to be able to use
    this function.
 
 1.2.11. xlfix_attr($attribute)
@@ -340,13 +340,13 @@ t_relay();
 1.2.21. xlset_destination(xl_format)
 
    Sets the destination of the forwarded request to the value of result of
-   xlog formatted string. Either SIP URI or nameaddr format is allowed.
+   xprint formatted string. Either SIP URI or nameaddr format is allowed.
 
    Meaning of the parameter is as follows:
-     * xl_format - xlog module formatting string, the result is used for
+     * xl_format - xprint module formatting string, the result is used for
        request forwarding.
 
-   Note: You must ensure, that the xlog module is loaded to be able to use
+   Note: You must ensure, that the xprint module is loaded to be able to use
    this function.
 
    Example 9. xlset_destination usage
@@ -429,12 +429,12 @@ if (method=="BYE") {
         # QoS reporting
         if (search("^User-Agent: AVM FRITZ!Box Fon*")) {
                 hdr_body2attrs2("X-RTP-Stat/i", "QoS_");
-                xlog("L_INFO", "QoS: %Ts, %fu, %tu, %ci, %{User-Agent}, %{X-RTP-
-Stat}\n");
+                xplog("L_INFO", "QoS: %Ts, %fu, %tu, %ci, %{User-Agent}, %{X-RTP
+-Stat}\n");
         } else if (search("^User-Agent: Sipura/*")) {
                 hdr_body2attrs("P-RTP-Stat/i", "QoS_");
-                xlog("L_INFO", "QoS: %Ts, %fu, %tu, %ci, %{User-Agent}, %{P-RTP-
-Stat}\n");
+                xplog("L_INFO", "QoS: %Ts, %fu, %tu, %ci, %{User-Agent}, %{P-RTP
+-Stat}\n");
         }
 }
 # AVP QoS_xx now contain the values from appropriate header
@@ -444,8 +444,8 @@ Stat}\n");
 
 1.3.1. xlbuf_size (integer)
 
-   Defines size of internal buffer for all xlog formatting calls. If you
-   don't use xlog formatting calls, you can set it to 0 to preserve some
+   Defines size of internal buffer for all xprint formatting calls. If you
+   don't use xprint formatting calls, you can set it to 0 to preserve some
    memory, if you get errors while formatting due to buffer size, you can
    enlarge it.
 

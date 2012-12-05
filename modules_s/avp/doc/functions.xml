@@ -182,7 +182,7 @@ if (attr_exists("saved_ruri")) {
 	    Test whether an AVP with given name and value exists. The function
 		returns 1 if the AVP with given name and value exists and -1 if
 	    not. The value of the AVP is compared string-wise to the result of
-		xlog formatting call. The comparison is case sensitive.
+		xprint formatting call. The comparison is case sensitive.
 	</para>
 	<para>Meaning of the parameter is as follows:</para>
 	<itemizedlist>
@@ -192,12 +192,12 @@ if (attr_exists("saved_ruri")) {
 		</para>
 	    </listitem>
 	    <listitem>
-		<para><emphasis>xl_format</emphasis> - The xlog formatting string,
+		<para><emphasis>xl_format</emphasis> - The xprint formatting string,
 		    result of which is looked for in AVP.
 		</para>
 	    </listitem>
 	</itemizedlist>
-	<para>Note: You must ensure, that the xlog module is loaded to be able to use this function.</para>
+	<para>Note: You must ensure, that the xprint module is loaded to be able to use this function.</para>
 	<example>
 	    <title><function>attr_equals_xl</function> usage</title>
 	    <programlisting>
@@ -223,7 +223,7 @@ if (attr_equals_xl("my_avp", "%ct")) {
 	<section id="xlset_attr">
 	<title><function>xlset_attr($attribute, xl_format)</function></title>
 	<para>
-		Creates new AVP identified by <emphasis>attribute</emphasis> and assigns the result string of xlog formatting rules as its value.
+		Creates new AVP identified by <emphasis>attribute</emphasis> and assigns the result string of xprint formatting rules as its value.
 	</para>
 	<para>Meaning of the parameter is as follows:</para>
 	<itemizedlist>
@@ -233,12 +233,12 @@ if (attr_equals_xl("my_avp", "%ct")) {
 		</para>
 	    </listitem>
 	    <listitem>
-		<para><emphasis>xl_format</emphasis> - String used for xlog formatting.
-		    For detailed info see documentation of xlog module.
+		<para><emphasis>xl_format</emphasis> - String used for xprint formatting.
+		    For detailed info see documentation of xprint module.
 		</para>
 	    </listitem>
 	</itemizedlist>
-	<para>Note: You must ensure, that the xlog module is loaded to be able to use this function.</para>
+	<para>Note: You must ensure, that the xprint module is loaded to be able to use this function.</para>
     </section>
 
 	<section id="xlfix_attr">
@@ -488,17 +488,17 @@ t_relay();
 	<section id="xlset_destination">
 	<title><function>xlset_destination(xl_format)</function></title>
 	<para>
-		Sets the destination of the forwarded request to the value of result of xlog formatted string. Either SIP URI or nameaddr format is allowed.
+		Sets the destination of the forwarded request to the value of result of xprint formatted string. Either SIP URI or nameaddr format is allowed.
 	</para>
     <para>Meaning of the parameter is as follows:</para>
     <itemizedlist>
         <listitem>
 		<para><emphasis>xl_format</emphasis>
-		- xlog module formatting string, the result is used for request forwarding.
+		- xprint module formatting string, the result is used for request forwarding.
 		</para>
         </listitem>
     </itemizedlist>
-	<para>Note: You must ensure, that the xlog module is loaded to be able to use this function.</para>
+	<para>Note: You must ensure, that the xprint module is loaded to be able to use this function.</para>
 	<example>
 	    <title><function>xlset_destination</function> usage</title>
 	    <programlisting>
@@ -623,10 +623,10 @@ if (method=="BYE") {
 	# QoS reporting
 	if (search("^User-Agent: AVM FRITZ!Box Fon*")) {
 		hdr_body2attrs2("X-RTP-Stat/i", "QoS_");
-		xlog("L_INFO", "QoS: %Ts, %fu, %tu, %ci, %{User-Agent}, %{X-RTP-Stat}\n");
+		xplog("L_INFO", "QoS: %Ts, %fu, %tu, %ci, %{User-Agent}, %{X-RTP-Stat}\n");
 	} else if (search("^User-Agent: Sipura/*")) {
 		hdr_body2attrs("P-RTP-Stat/i", "QoS_");
-		xlog("L_INFO", "QoS: %Ts, %fu, %tu, %ci, %{User-Agent}, %{P-RTP-Stat}\n");
+		xplog("L_INFO", "QoS: %Ts, %fu, %tu, %ci, %{User-Agent}, %{P-RTP-Stat}\n");
 	}
 }
 # AVP QoS_xx now contain the values from appropriate header

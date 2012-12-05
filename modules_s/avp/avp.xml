@@ -191,7 +191,7 @@
       </para>
       <para>
         For more information on xl strings, see
-        <serdoc:module>xlog</serdoc:module>.
+        <serdoc:module>xprint</serdoc:module>.
       </para>
     </refsect2>
 
@@ -338,7 +338,7 @@
       <para>
         For a more flexible way of printing messages to the system log
         that allows to print extra information together with the attribute
-        value, see the <serdoc:module>xlog</serdoc:module> module.
+        value, see the <serdoc:module>xprint</serdoc:module> module.
       </para>
     </refsect2>
 
@@ -467,7 +467,7 @@
       </para>
       <para>
         For more information on xl strings, see
-        <serdoc:module>xlog</serdoc:module>.
+        <serdoc:module>xprint</serdoc:module>.
       </para>
     </refsect2>
 
@@ -486,7 +486,7 @@
       </para>
       <para>
         For more information on xl strings, see
-        <serdoc:module>xlog</serdoc:module>.
+        <serdoc:module>xprint</serdoc:module>.
       </para>
     </refsect2>
 
@@ -504,7 +504,7 @@
         by the argument <symbol>value</symbol>.
       </para>
       <para>
-        For details on xl strings, see <serdoc:module>xlog</serdoc:module>.
+        For details on xl strings, see <serdoc:module>xprint</serdoc:module>.
       </para>
     </refsect2>
 

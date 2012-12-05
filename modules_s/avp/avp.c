@@ -758,7 +758,7 @@ static int get_xl_functions(void)
 	xl_print=(xl_print_log_f*)find_export("xprint", NO_SCRIPT, 0);
 	
 	if (!xl_print) {
-	    LOG(L_CRIT,"ERROR: cannot find \"xprint\", is module xlog loaded?\n");
+	    LOG(L_CRIT,"ERROR: cannot find \"xprint\", is module xprint loaded?\n");
 	    return -1;
 	}
     }
@@ -767,7 +767,7 @@ static int get_xl_functions(void)
 	xl_parse=(xl_parse_format_f*)find_export("xparse", NO_SCRIPT, 0);
 	
 	if (!xl_parse) {
-	    LOG(L_CRIT,"ERROR: cannot find \"xparse\", is module xlog loaded?\n");
+	    LOG(L_CRIT,"ERROR: cannot find \"xparse\", is module xprint loaded?\n");
 	    return -1;
 	}
     }
@@ -776,7 +776,7 @@ static int get_xl_functions(void)
 	xl_free=(xl_elog_free_all_f*)find_export("xfree", NO_SCRIPT, 0);
 	
 	if (!xl_free) {
-	    LOG(L_CRIT,"ERROR: cannot find \"xfree\", is module xlog loaded?\n");
+	    LOG(L_CRIT,"ERROR: cannot find \"xfree\", is module xprint loaded?\n");
 	    return -1;
 	}
     }
@@ -788,10 +788,10 @@ static int get_xl_functions(void)
 	}
 	
 	if (!xl_nul){
-	    LOG(L_CRIT,"ERROR: cannot find \"xnulstr\", is module xlog loaded?\n");
+	    LOG(L_CRIT,"ERROR: cannot find \"xnulstr\", is module xprint loaded?\n");
 	    return -1;
 	} else {
-	    LOG(L_INFO,"INFO: xlog null is \"%.*s\"\n", xl_nul->len, xl_nul->s);
+	    LOG(L_INFO,"INFO: xprint null is \"%.*s\"\n", xl_nul->len, xl_nul->s);
 	}
 	
     }

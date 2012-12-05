@@ -11,8 +11,8 @@
     <section id="xlbuf_size">
     <title><varname>xlbuf_size</varname> (integer)</title>
     <para>
-		Defines size of internal buffer for all xlog formatting calls. If you
-don't use xlog formatting calls, you can set it to 0 to preserve some memory, if
+		Defines size of internal buffer for all xprint formatting calls. If you
+don't use xprint formatting calls, you can set it to 0 to preserve some memory, if
 you get errors while formatting due to buffer size, you can enlarge it.
 	</para>
     <para>
