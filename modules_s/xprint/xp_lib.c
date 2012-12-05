@@ -1128,7 +1128,7 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 						p++;
 					name.len = p - name.s + 1;
 					if (parse_cb(&name, shm, e)) {
-						ERR("xlog: xl_parse_format: failed to parse '%.*s'\n",
+						ERR("xprint: xl_parse_format: failed to parse '%.*s'\n",
 							name.len, name.s);
 						goto error;
 					}
@@ -1419,7 +1419,7 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 				/* we expect a letter */
 				if((*p < 'A' || *p > 'Z') && (*p < 'a' || *p > 'z'))
 				{
-					LOG(L_ERR, "xlog: xl_parse_format: error parsing format"
+					LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
 						" [%s] pos [%d]\n", s, (int)(p-s));
 					goto error;
 				}
@@ -1428,7 +1428,7 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 					p++;
 				if(*p == '\0')
 				{
-					LOG(L_ERR, "xlog: xl_parse_format: error parsing format"
+					LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
 						" [%s] expecting '}' after position [%d]\n", s,
 						(int)(e->hparam.s-s));
 					goto error;
@@ -1444,7 +1444,7 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 						p++;
 						if(*p!='1')
 						{
-							LOG(L_ERR, "xlog: xl_parse_format: error"
+							LOG(L_ERR, "xprint: xl_parse_format: error"
 								" parsing format [%s] -- only -1 is accepted"
 								" as a negative index\n", s);
 								goto error;
@@ -1463,7 +1463,7 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 					}
 					if(*p != ']')
 					{
-						LOG(L_ERR, "xlog: xl_parse_format: error parsing format"
+						LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
 							" [%s] expecting ']' after position [%d]\n", s,
 							(int)(e->hparam.s - s + e->hparam.len));
 						goto error;
@@ -1472,13 +1472,13 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 				}
 				if(*p != '}')
 				{
-					LOG(L_ERR, "xlog: xl_parse_format: error parsing format"
+					LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
 						" [%s] expecting '}' after position [%d]!\n", s,
 						(int)(e->hparam.s-s));
 					goto error;
 				}
 
-				DBG("xlog: xl_parse_format: header name [%.*s] index [%d]\n",
+				DBG("xprint: xl_parse_format: header name [%.*s] index [%d]\n",
 						e->hparam.len, e->hparam.s, e->hindex);
 
 				/* optimize for known headers -- fake header name */
@@ -1492,14 +1492,14 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 						e->hparam.s + ((e->hparam.len<4)?4:e->hparam.len),
 						&hdr)==0)
 				{
-					LOG(L_ERR,"xlog: xl_parse_format: strange error\n");
+					LOG(L_ERR,"xprint: xl_parse_format: strange error\n");
 					goto error;
 				}
 				e->hparam.len--;
 				e->hparam.s[e->hparam.len] = c;
 				if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T)
 				{
-					LOG(L_INFO,"INFO:xlog: xl_parse_format: using "
+					LOG(L_INFO,"INFO:xprint: xl_parse_format: using "
 						"hdr type (%d) instead of <%.*s>\n",
 						hdr.type, e->hparam.len, e->hparam.s);
 					e->hparam.len = hdr.type;
@@ -1512,7 +1512,7 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 				/* we expect a letter */
 				if((*p < 'A' || *p > 'Z') && (*p < 'a' || *p > 'z'))
 				{
-					LOG(L_ERR, "xlog: xl_parse_format: error parsing format"
+					LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
 						" [%s] pos [%d]\n", s, (int)(p-s));
 					goto error;
 				}
@@ -1521,7 +1521,7 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 					p++;
 				if(*p == '\0')
 				{
-					LOG(L_ERR, "xlog: xl_parse_format: error parsing format"
+					LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
 						" [%s] expecting '>' after position [%d]\n", s,
 						(int)(e->hparam.s-s));
 					goto error;
@@ -1537,7 +1537,7 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 						p++;
 						if(*p!='1')
 						{
-							LOG(L_ERR, "xlog: xl_parse_format: error"
+							LOG(L_ERR, "xprint: xl_parse_format: error"
 								" parsing format [%s] -- only -1 is accepted"
 								" as a negative index\n", s);
 								goto error;
@@ -1555,7 +1555,7 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 					}
 					if(*p != ']')
 					{
-						LOG(L_ERR, "xlog: xl_parse_format: error parsing format"
+						LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
 							" [%s] expecting ']' after position [%d]\n", s,
 							(int)(e->hparam.s - s + e->hparam.len));
 						goto error;
@@ -1564,13 +1564,13 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 				}
 				if(*p != '>')
 				{
-					LOG(L_ERR, "xlog: xl_parse_format: error parsing format"
+					LOG(L_ERR, "xprint: xl_parse_format: error parsing format"
 						" [%s] expecting '>' after position [%d]!\n", s,
 						(int)(e->hparam.s-s));
 					goto error;
 				}
 
-				DBG("xlog: xl_parse_format: AVP [%.*s] index [%d]\n",
+				DBG("xprint: xl_parse_format: AVP [%.*s] index [%d]\n",
 						e->hparam.len, e->hparam.s, e->hindex);
 
 				e->itf = xl_get_avp;
@@ -1594,13 +1594,13 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 				break;
 			case '@':
 					/* fill select structure and call resolve_select */
-				DBG("xlog: xl_parse_format: @\n");
+				DBG("xprint: xl_parse_format: @\n");
 				if (shm)
 					n=shm_parse_select(&p, &sel);
 				else
 					n=parse_select(&p, &sel);
 				if (n<0) {
-					ERR("xlog: xl_parse_format: parse_select returned error\n");
+					ERR("xprint: xl_parse_format: parse_select returned error\n");
 					goto error;
 				}
 				e->itf = xl_get_select;
@@ -1628,7 +1628,7 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 						if (range == &e->hindex) {
 							range = &e->hflags;
 						} else {
-							ERR("xlog: xl_parse_format: syntax error in the range specification\n");
+							ERR("xprint: xl_parse_format: syntax error in the range specification\n");
 							goto error;
 						}
 
@@ -1640,13 +1640,13 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 							/* only the left side is defined */
 							e->hflags = -1;
 						} else if (e->hindex > e->hflags) {
-							ERR("xlog: xl_parse_format: syntax error in the range specification\n");
+							ERR("xprint: xl_parse_format: syntax error in the range specification\n");
 							goto error;
 						}
 						break;
 
 					} else {
-						ERR("xlog: xl_parse_format: syntax error in the range specification\n");
+						ERR("xprint: xl_parse_format: syntax error in the range specification\n");
 						goto error;
 					}
 				}
