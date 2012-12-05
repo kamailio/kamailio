@@ -578,9 +578,10 @@ request_route {
         # CANCEL processing
         if (is_method("CANCEL"))
         {
-                if (t_check_trans())
+                if (t_check_trans()) {
                         route(SCA);
                         t_relay();
+		}
                 exit;
         }
 
