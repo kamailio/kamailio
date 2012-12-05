@@ -2,15 +2,15 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="xlog.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+<section id="xprint.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
     </sectioninfo>
 
     <title>Functions</title>
     
-    <section id="xlog.xlog">
+    <section id="xprint.xplog">
 	<title>
-	    <function>xlog(level, format)</function>
+	    <function>xplog(level, format)</function>
 	</title>
 	<para>
 	    Print a formated message using LOG function.
@@ -67,20 +67,20 @@
 	    </listitem>
 	</itemizedlist>
 	<example>
-	    <title><function>xlog</function> usage</title>
+	    <title><function>xplog</function> usage</title>
 	    <programlisting>
 <![CDATA[
 ...
-xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
+xplog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
 ...
 ]]>
 	    </programlisting>
 	</example>
     </section>
     
-    <section id="xdbg">
+    <section id="xprint.xpdbg">
 	<title>
-	    <function>xdbg(format)</function>
+	    <function>xpdbg(format)</function>
 	</title>
 	<para>
 	    Print a formatted message using DBG function.
@@ -93,11 +93,11 @@ xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
 	    </listitem>
 	</itemizedlist>
 	<example>
-	    <title><function>xdbg</function> usage</title>
+	    <title><function>xpdbg</function> usage</title>
 	    <programlisting>
 <![CDATA[
 ...
-xdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
+xpdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
 ...
 ]]>
 	    </programlisting>

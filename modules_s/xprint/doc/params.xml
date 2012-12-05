@@ -2,7 +2,7 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="xlog.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+<section id="xprint.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
     </sectioninfo>
 
@@ -20,7 +20,7 @@
 	    <title>Set <varname>buf_size</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("xlog", "buf_size", 8192)
+modparam("xprint", "buf_size", 8192)
 ...
 	    </programlisting>
 	</example>

@@ -7,7 +7,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=xlog.so
+NAME=xprint.so
 LIBS=
 
 DEFS+=-DSER_MOD_INTERFACE

@@ -57,7 +57,7 @@
 #include "../../parser/parse_hname2.h"
 #include "../../parser/parse_refer_to.h"
 
-#include "xl_lib.h"
+#include "xp_lib.h"
 #include <arpa/inet.h>  // inet_ntop
 
 #include "../../select.h"

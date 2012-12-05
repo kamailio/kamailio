@@ -2,7 +2,7 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="xlog.api" xmlns:xi="http://www.w3.org/2001/XInclude">
+<section id="xprint.api" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
     </sectioninfo>
 
@@ -15,13 +15,13 @@
 		<function>int xbind(xl_api_t *xl_api)</function>
 	    </title>
 	    <para>
-		Bind to the xlog module API.
+		Bind to the xprint module API.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
 		<listitem>
 		    <para><emphasis>xl_api</emphasis> - structure that
-			the xlog module functions are bind to. The functions
+			the xprint module functions are bind to. The functions
 			can be executed as xl_api.xparse(), xl_api.xprint()...
 		    </para>
 		</listitem>

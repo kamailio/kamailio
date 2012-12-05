@@ -1,4 +1,4 @@
-1. Xlog Module
+1. Xprint Module
 
 Elena-Ramona Modroiu
 
@@ -15,8 +15,8 @@ Elena-Ramona Modroiu
 
    1.4. Functions
 
-        1.4.1. xlog(level, format)
-        1.4.2. xdbg(format)
+        1.4.1. xplog(level, format)
+        1.4.2. xpdbg(format)
 
    1.5. Module API
 
@@ -38,6 +38,11 @@ Elena-Ramona Modroiu
               1.5.1.9. str *xnulstr()
 
 1.1. Overview
+
+   IMPORTANT: this is former xlog module from SIP Express Router (SER)
+   kept because it is used by other modules via API to get the value for
+   strings with specifiers. If you want to print log messages from
+   configuration file, use the real module named 'xlog'.
 
    This module provides the possibility to print user formatted log or
    debug messages from SER scripts, similar to printf function but now a
@@ -129,12 +134,12 @@ Elena-Ramona Modroiu
 
    Example 1. Set buf_size parameter
 ...
-modparam("xlog", "buf_size", 8192)
+modparam("xprint", "buf_size", 8192)
 ...
 
 1.4. Functions
 
-1.4.1.  xlog(level, format)
+1.4.1.  xplog(level, format)
 
    Print a formated message using LOG function.
 
@@ -150,21 +155,21 @@ modparam("xlog", "buf_size", 8192)
        What really matters is the third letter of the value.
      * format - The formatted string to be printed.
 
-   Example 2. xlog usage
+   Example 2. xplog usage
 ...
-xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
+xplog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
 ...
 
-1.4.2.  xdbg(format)
+1.4.2.  xpdbg(format)
 
    Print a formatted message using DBG function.
 
    Meaning of the parameters is as follows:
      * format - The formatted string to be printed.
 
-   Example 3. xdbg usage
+   Example 3. xpdbg usage
 ...
-xdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
+xpdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
 ...
 
 1.5. Module API
@@ -173,11 +178,12 @@ xdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
 
 1.5.1.1.  int xbind(xl_api_t *xl_api)
 
-   Bind to the xlog module API.
+   Bind to the xprint module API.
 
    Meaning of the parameters is as follows:
-     * xl_api - structure that the xlog module functions are bind to. The
-       functions can be executed as xl_api.xparse(), xl_api.xprint()...
+     * xl_api - structure that the xprint module functions are bind to.
+       The functions can be executed as xl_api.xparse(),
+       xl_api.xprint()...
 
    Return value: 0 - success, <0 - error.
 

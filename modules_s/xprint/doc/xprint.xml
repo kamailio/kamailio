@@ -24,17 +24,23 @@
 
     </sectioninfo>
 
-    <title>Xlog Module</title>
+    <title>Xprint Module</title>
 
     <section id="xlog.overview">
 	<title>Overview</title>
+	<para>
+		IMPORTANT: this is former xlog module from SIP Express Router (SER)
+		kept because it is used by other modules via API to get the value
+		for strings with specifiers. If you want to print log messages
+		from configuration file, use the real module named 'xlog'.
+	</para>
+    </section>
 	<para>
 	    This module provides the possibility to print user formatted log or
 	    debug messages from SER scripts, similar to printf function but now
 	    a specifier is replaced with a part of the SIP request. <xref
 	    linkend="implemented_specifiers"/> shows what can be printed out.
 	</para>
-    </section>
 
     <section id="implemented_specifiers">
 	<title>Implemented Specifiers</title>

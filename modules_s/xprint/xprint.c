@@ -39,7 +39,7 @@
 #include "../../error.h"
 #include "../../mem/mem.h"
 
-#include "xl_lib.h"
+#include "xp_lib.h"
 
 #define NO_SCRIPT -1
 
@@ -54,19 +54,17 @@ int buf_size=4096;
 static int mod_init(void);
 static int child_init(int);
 
-static int xlog(struct sip_msg*, char*, char*);
-static int xdbg(struct sip_msg*, char*, char*);
+static int xplog(struct sip_msg*, char*, char*);
+static int xpdbg(struct sip_msg*, char*, char*);
 
-static int xlog_fixup(void** param, int param_no);
-static int xdbg_fixup(void** param, int param_no);
+static int xplog_fixup(void** param, int param_no);
+static int xpdbg_fixup(void** param, int param_no);
 
 static void destroy(void);
 
 static cmd_export_t cmds[]={
-	{"xlog",  xlog,  2, xlog_fixup, REQUEST_ROUTE | FAILURE_ROUTE |
-		 ONREPLY_ROUTE | BRANCH_ROUTE},
-	{"xdbg",  xdbg,  1, xdbg_fixup, REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE},
+	{"xplog",  xplog,  2, xplog_fixup, ANY_ROUTE},
+	{"xpdbg",  xpdbg,  1, xpdbg_fixup, ANY_ROUTE},
 	{"xbind",	(cmd_function)xl_bind, NO_SCRIPT, 0, 0},
 	{"xprint",	(cmd_function)xl_print_log, NO_SCRIPT, 0, 0},
 	{"xparse",	(cmd_function)xl_parse_format, NO_SCRIPT, 0, 0},
@@ -88,7 +86,7 @@ static param_export_t params[]={
 
 /** module exports */
 struct module_exports exports= {
-	"xlog",
+	"xprint",
 	cmds,
 	0,        /* RPC methods */
 	params,
@@ -105,11 +103,11 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	DBG("XLOG: initializing ...\n");
+	DBG("initializing ...\n");
 	log_buf = (char*)pkg_malloc((buf_size+1)*sizeof(char));
 	if(log_buf==NULL)
 	{
-		LOG(L_ERR, "XLOG:mod_init: ERROR: no more memory\n");
+		LOG(L_ERR, "mod_init: ERROR: no more memory\n");
 		return -1;
 	}
 
@@ -121,18 +119,18 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	DBG("XLOG: init_child [%d]  pid [%d]\n", rank, getpid());
+	DBG("init_child [%d]  pid [%d]\n", rank, getpid());
 	return xl_child_init(rank);
 }
 
 /**
  */
-static int xlog(struct sip_msg* msg, char* lev, char* frm)
+static int xplog(struct sip_msg* msg, char* lev, char* frm)
 {
 	int log_len, level;
 
 	if (get_int_fparam(&level, msg, (fparam_t *)lev)) {
-		LOG(L_ERR, "XLOG:xlog: cannot get log level\n");
+		LOG(L_ERR, "xplog: cannot get log level\n");
 		return -1;
 	}
 	if (level < L_ALERT)
@@ -153,7 +151,7 @@ static int xlog(struct sip_msg* msg, char* lev, char* frm)
 
 /**
  */
-static int xdbg(struct sip_msg* msg, char* frm, char* str2)
+static int xpdbg(struct sip_msg* msg, char* frm, char* str2)
 {
 	int log_len;
 
@@ -173,12 +171,12 @@ static int xdbg(struct sip_msg* msg, char* frm, char* str2)
  */
 static void destroy(void)
 {
-	DBG("XLOG: destroy module ...\n");
+	DBG("destroy module ...\n");
 	if(log_buf)
 		pkg_free(log_buf);
 }
 
-static int xlog_fixup(void** param, int param_no)
+static int xplog_fixup(void** param, int param_no)
 {
 	int level;
 	fparam_t	*p;
@@ -186,7 +184,7 @@ static int xlog_fixup(void** param, int param_no)
 	if(param_no==1)
 	{
 		if (*param == NULL) {
-			LOG(L_ERR, "XLOG:xlog_fixup: NULL parameter\n");
+			LOG(L_ERR, "xplog_fixup: NULL parameter\n");
 			return -1;
 		}
 
@@ -199,7 +197,7 @@ static int xlog_fixup(void** param, int param_no)
 
 		if(strlen((char*)(*param))<3)
 		{
-			LOG(L_ERR, "XLOG:xlog_fixup: wrong log level\n");
+			LOG(L_ERR, "xplog_fixup: wrong log level\n");
 			return E_UNSPEC;
 		}
 		switch(((char*)(*param))[2])
@@ -212,14 +210,14 @@ static int xlog_fixup(void** param, int param_no)
 		case 'I': level = L_INFO; break;
 		case 'D': level = L_DBG; break;
 		default:
-			LOG(L_ERR, "XLOG:xlog_fixup: unknown log level\n");
+			LOG(L_ERR, "xplog_fixup: unknown log level\n");
 			return E_UNSPEC;
 		}
 		/* constant parameter, but the fparam structure
 		 * needs to be created */
 		p = (fparam_t*)pkg_malloc(sizeof(fparam_t));
 		if (!p) {
-			LOG(L_ERR, "XLOG:xlog_fixup: not enough memory\n");
+			LOG(L_ERR, "xplog_fixup: not enough memory\n");
 			return -1;
 		}
 		p->v.i = level;
@@ -231,12 +229,12 @@ static int xlog_fixup(void** param, int param_no)
 	}
 
 	if(param_no==2)
-		return xdbg_fixup(param, 1);
+		return xpdbg_fixup(param, 1);
 
 	return 0;
 }
 
-static int xdbg_fixup(void** param, int param_no)
+static int xpdbg_fixup(void** param, int param_no)
 {
 	xl_elog_t *model;
 
@@ -246,7 +244,7 @@ static int xdbg_fixup(void** param, int param_no)
 		{
 			if(xl_parse_format((char*)(*param), &model)<0)
 			{
-				LOG(L_ERR, "XLOG:xdbg_fixup: ERROR: wrong format[%s]\n",
+				LOG(L_ERR, "xpdbg_fixup: ERROR: wrong format[%s]\n",
 					(char*)(*param));
 				return E_UNSPEC;
 			}
@@ -256,7 +254,7 @@ static int xdbg_fixup(void** param, int param_no)
 		}
 		else
 		{
-			LOG(L_ERR, "XLOG:xdbg_fixup: ERROR: null format\n");
+			LOG(L_ERR, "xpdbg_fixup: ERROR: null format\n");
 			return E_UNSPEC;
 		}
 	}
