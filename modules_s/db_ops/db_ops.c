@@ -498,7 +498,7 @@ static int parse_xlstr(struct xlstr* s) {
 		xl_print=(xl_print_log_f*)find_export("xprint", NO_SCRIPT, 0);
 
 		if (!xl_print) {
-			ERR(MODULE_NAME": cannot find \"xprint\", is module xlog loaded?\n");
+			ERR(MODULE_NAME": cannot find \"xprint\", is module xprint loaded?\n");
 			return E_UNSPEC;
 		}
 	}
@@ -507,7 +507,7 @@ static int parse_xlstr(struct xlstr* s) {
 		xl_parse=(xl_parse_format_f*)find_export("xparse", NO_SCRIPT, 0);
 
 		if (!xl_parse) {
-			ERR(MODULE_NAME": cannot find \"xparse\", is module xlog loaded?\n");
+			ERR(MODULE_NAME": cannot find \"xparse\", is module xprint loaded?\n");
 			return E_UNSPEC;
 		}
 	}
@@ -518,11 +518,11 @@ static int parse_xlstr(struct xlstr* s) {
 			xl_nul=xl_getnul();
 
 		if (!xl_nul){
-			ERR(MODULE_NAME": cannot find \"xnulstr\", is module xlog loaded?\n");
+			ERR(MODULE_NAME": cannot find \"xnulstr\", is module xprint loaded?\n");
 			return E_UNSPEC;
 		}
 	else
-		INFO(MODULE_NAME": xlog null is \"%.*s\"\n", xl_nul->len, xl_nul->s);
+		INFO(MODULE_NAME": xprint null is \"%.*s\"\n", xl_nul->len, xl_nul->s);
 	}
 
 	if(xl_parse(s->s, &s->xlfmt) < 0) {

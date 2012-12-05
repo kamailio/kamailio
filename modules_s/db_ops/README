@@ -387,7 +387,7 @@ db_close(my_next_handle);
 db_query(sel3, my_handle);
 forach(my_handle, PROCESS_ROW_ROUTE);
 loadmodule "mysql.so"
-loadmodule "xlog.so"
+loadmodule "xprint.so"
 loadmodule "db_ops.so"
 loadmodule "timer.so"
 
@@ -417,20 +417,20 @@ modparam("db_ops", "declare_handle", "h1");
 
 route["print_count"] {
 # testing count
-        xlog("L_INFO", "print count\n");
+        xplog("L_INFO", "print count\n");
         db_query("q1", "h1");
-        xlog("L_INFO", "fetch: row_no: %@db.fetch.h1.row_no, count: %@db.fetch.h
-1.count, row_no: %@db.fetch.h1.row_no, is_empty: %@db.fetch.h1.is_empty, row_no:
- %@db.fetch.h1.row_no\n");
+        xplog("L_INFO", "fetch: row_no: %@db.fetch.h1.row_no, count: %@db.fetch.
+h1.count, row_no: %@db.fetch.h1.row_no, is_empty: %@db.fetch.h1.is_empty, row_no
+: %@db.fetch.h1.row_no\n");
 
-        xlog("L_INFO", "query: is_empty: %@db.query.q1.is_empty, count: %@db.que
-ry.q1.count\n");
+        xplog("L_INFO", "query: is_empty: %@db.query.q1.is_empty, count: %@db.qu
+ery.q1.count\n");
 }
 
 route["print_record"] {
-        xlog("L_INFO","row_no: %@db.fetch.h0.row_no, record: %@db.fetch.h0.field
-[0], %@db.fetch.h0.field[1],  %@db.fetch.h0.field[2],  %@db.fetch.h0.field[3]\n"
-);
+        xplog("L_INFO","row_no: %@db.fetch.h0.row_no, record: %@db.fetch.h0.fiel
+d[0], %@db.fetch.h0.field[1],  %@db.fetch.h0.field[2],  %@db.fetch.h0.field[3]\n
+");
 
 }
 
@@ -452,22 +452,22 @@ route["db_test"] {
         route("print_count");
 
         $f.uid="QWERTY";
-        xlog("L_INFO", "query #1\n");
+        xplog("L_INFO", "query #1\n");
         if (db_query("q1", "h0")) {
                 route("print_tbl");
         }
         db_close("h0");
 
-        xlog("L_INFO", "replace\n");
+        xplog("L_INFO", "replace\n");
         db_query("q4");
 
-        xlog("L_INFO", "query #2\n");
+        xplog("L_INFO", "query #2\n");
         if (db_query("q2", "h0")) {
                 route("print_tbl");
         }
         db_close("h0");
 
-        xlog("L_INFO", "query #3\n");
+        xplog("L_INFO", "query #3\n");
         if (db_query("q3", "h0")) {
                 route("print_tbl");
         }
@@ -480,25 +480,25 @@ route["db_test"] {
         route("print_count");
 
 
-        xlog("L_INFO", "foreach\n");
+        xplog("L_INFO", "foreach\n");
         db_query("q1", "h0");
         db_foreach("h0", "print_record");
 
-        xlog("L_INFO", "query test\n");
-        xlog("L_INFO", "#0: %@db.query.q1.row[0].field[0], %@db.query.q1.row[0].
-field[1], %@db.query.q1.row[0].field[2], %@db.query.q1.row[0].field[3]\n");
-        xlog("L_INFO", "#1: %@db.query.q1.row[1].field[0], %@db.query.q1.row[1].
-field[1], %@db.query.q1.row[1].field[2], %@db.query.q1.row[1].field[3]\n");
-        xlog("L_INFO", "#3: %@db.query.q1.row[3].field[0], %@db.query.q1.row[3].
-field[1], %@db.query.q1.row[3].field[2], %@db.query.q1.row[3].field[3]\n");
+        xplog("L_INFO", "query test\n");
+        xplog("L_INFO", "#0: %@db.query.q1.row[0].field[0], %@db.query.q1.row[0]
+.field[1], %@db.query.q1.row[0].field[2], %@db.query.q1.row[0].field[3]\n");
+        xplog("L_INFO", "#1: %@db.query.q1.row[1].field[0], %@db.query.q1.row[1]
+.field[1], %@db.query.q1.row[1].field[2], %@db.query.q1.row[1].field[3]\n");
+        xplog("L_INFO", "#3: %@db.query.q1.row[3].field[0], %@db.query.q1.row[3]
+.field[1], %@db.query.q1.row[3].field[2], %@db.query.q1.row[3].field[3]\n");
 
 
 }
 
 route["timer_route"] {
-        xlog("L_INFO", "\n\n\ntimer\n");
+        xplog("L_INFO", "\n\n\ntimer\n");
         route("db_test");
 
         timer_enable(0, 0);
-        xlog("L_INFO", "\n\n\n");
+        xplog("L_INFO", "\n\n\n");
 }
