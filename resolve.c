@@ -1650,7 +1650,7 @@ struct hostent* naptr_sip_resolvehost(str* name,  unsigned short* port,
 #endif
 	}
 	/* fallback to srv lookup */
-	no_naptr_srv_sip_resolvehost(name,port,proto);
+	he=no_naptr_srv_sip_resolvehost(name,port,proto);
 end:
 	if (naptr_head)
 		free_rdata_list(naptr_head);
