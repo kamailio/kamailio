@@ -363,7 +363,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		}
 		if(_c->instance!=NULL && _c->instance->body.len>0)
 			ci.instance = _c->instance->body;
-		if(_c->reg_id!=NULL && _c->reg_id->body.len>0) {
+		if(_c->instance!=NULL && _c->reg_id!=NULL && _c->reg_id->body.len>0) {
 			if(str2int(&_c->reg_id->body, &ci.reg_id)<0)
 			{
 				LM_ERR("invalid reg-id value\n");
