@@ -92,7 +92,7 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 
 /*! \brief kamailio compatible version */
 #define km_append_branch(msg, uri, dst_uri, path, q, flags, force_socket) \
-    append_branch(msg, uri, dst_uri, path, q, flags, force_socket, 0, 0);
+    append_branch(msg, uri, dst_uri, path, q, flags, force_socket, 0, 0)
 
 /*! \brief ser compatible append_branch version.
  *  append_branch version compatible with ser: no path or branch flags support
