@@ -735,9 +735,183 @@ static void pdt_rpc_reload(rpc_t* rpc, void* ctx)
 }
 
 
+static const char* pdt_rpc_list_doc[2] = {
+	"List PDT memory records",
+	0
+};
+
+
+int pdt_rpc_print_node(rpc_t* rpc, void* ctx, void *ih, pdt_node_t *pt, char *code,
+		int len, str *sdomain, str *tdomain, str *tprefix)
+{
+	int i;
+	str *cl;
+	str prefix;
+	void* vh;
+
+	if(pt==NULL || len>=PDT_MAX_DEPTH)
+		return 0;
+	
+	cl = pdt_get_char_list();
+
+	for(i=0; i<cl->len; i++)
+	{
+		code[len]=cl->s[i];
+		if(pt[i].domain.s!=NULL)
+		{
+			if((tprefix->s==NULL && tdomain->s==NULL)
+				|| (tprefix->s==NULL && (tdomain->s!=NULL && pt[i].domain.len==tdomain->len
+						&& strncasecmp(pt[i].domain.s, tdomain->s, tdomain->len)==0))
+				|| (tdomain->s==NULL && (len+1>=tprefix->len
+						&& strncmp(code, tprefix->s, tprefix->len)==0))
+				|| ((tprefix->s!=NULL && len+1>=tprefix->len
+						&& strncmp(code, tprefix->s, tprefix->len)==0)
+						&& (tdomain->s!=NULL && pt[i].domain.len>=tdomain->len
+						&& strncasecmp(pt[i].domain.s, tdomain->s, tdomain->len)==0)))
+			{
+				if(rpc->struct_add(ih, "{",
+						"ENTRY", &vh)<0)
+				{
+					LM_ERR("Internal error creating entry\n");
+					return -1;
+				}
+				prefix.s = code;
+				prefix.len = len + 1;
+				if(rpc->struct_add(vh, "SS",
+						"DOMAIN", &pt[i].domain,
+						"PREFIX", &prefix)<0)
+				{
+					LM_ERR("Internal error filling entry struct\n");
+					return -1;
+				}
+			}
+		}
+		if(pdt_rpc_print_node(rpc, ctx, ih, pt[i].child, code, len+1, sdomain,
+					tdomain, tprefix)<0)
+			goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
+
+/*
+ * RPC command to list pdt memory records
+ */
+/**
+ * "pdt.list" parameters:
+ *    sdomain
+ *    prefix
+ *    domain
+ *
+ * 	- '.' (dot) means NULL value and will match anything
+ * 	- the comparison operation is 'START WITH' -- if domain is 'a' then
+ * 	  all domains starting with 'a' are listed
+ *
+ * 	  Examples
+ * 	  pdt_list o 2 .    - lists the entries where sdomain is starting with 'o', 
+ * 	                      prefix is starting with '2' and domain is anything
+ * 	  
+ * 	  pdt_list . 2 open - lists the entries where sdomain is anything, prefix 
+ * 	                      starts with '2' and domain starts with 'open'
+ */
+static void pdt_rpc_list(rpc_t* rpc, void* ctx)
+{
+	str sdomain = {0};
+	str tprefix = {0};
+	str tdomain = {0};
+	pdt_tree_t *pt;
+	unsigned int i;
+	static char code_buf[PDT_MAX_DEPTH+1];
+	int len;
+	str *cl;
+	pdt_tree_t **ptree;
+	void* th;
+	void* ih;
+
+	ptree = pdt_get_ptree();
+
+	if(ptree==NULL || *ptree==NULL)
+	{
+		LM_ERR("empty domain list\n");
+		rpc->fault(ctx, 404, "No records");
+		return;
+	}
+
+	len = rpc->scan(ctx, "*S.SS", &sdomain, &tprefix, &tdomain);
+	if(len<0)
+	{
+		rpc->fault(ctx, 500, "Error Reading Parameters");
+		return;
+	}
+	if(len<1 || sdomain.len==0 || (sdomain.len==1 && sdomain.s[0]=='.')) {
+		sdomain.len = 0;
+		sdomain.s = 0;
+	}
+	cl = pdt_get_char_list();
+	if(len<2 || tprefix.len==0 || (tprefix.len==1 && tprefix.s[0]=='.')) {
+		tprefix.len = 0;
+		tprefix.s = 0;
+	} else if(tprefix.len>0) {
+		/* validate prefix */
+		i = 0;
+		while(tprefix.s!=NULL && i!=tprefix.len)
+		{
+			if(strpos(cl->s, tprefix.s[i]) < 0)
+			{
+				LM_ERR("bad prefix [%.*s]\n", tprefix.len, tprefix.s);
+				rpc->fault(ctx, 400, "Bad Prefix");
+				return;
+			}
+			i++;
+		}
+	}
+	if(len<3 || tdomain.len==0 || (tdomain.len==1 && tdomain.s[0]=='.')) {
+		tdomain.len = 0;
+		tdomain.s = 0;
+	}
+
+	pt = *ptree;
+	
+	if (rpc->add(ctx, "{", &th) < 0)
+	{
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return;
+	}
+	while(pt!=NULL)
+	{
+		LM_ERR("---- 1 (%d [%.*s])\n", sdomain.len, sdomain.len, sdomain.s);
+		if(sdomain.s==NULL || 
+			(sdomain.s!=NULL && pt->sdomain.len>=sdomain.len && 
+			 strncmp(pt->sdomain.s, sdomain.s, sdomain.len)==0))
+		{
+		LM_ERR("---- 2\n");
+			len = 0;
+			if(rpc->struct_add(th, "S{",
+					"SDOMAIN", &pt->sdomain,
+					"RECORDS",  &ih)<0)
+			{
+				rpc->fault(ctx, 500, "Internal error creating sdomain structure");
+				return;
+			}
+			if(pdt_rpc_print_node(rpc, ctx, ih, pt->head, code_buf, len, &pt->sdomain,
+						&tdomain, &tprefix)<0)
+				goto error;
+		}
+		pt = pt->next;
+	}
+	return;
+error:
+	rpc->fault(ctx, 500, "Internal error printing records");
+	return;
+}
+
+
 rpc_export_t pdt_rpc_cmds[] = {
 	{"pdt.reload", pdt_rpc_reload,
 		pdt_rpc_reload_doc, 0},
+	{"pdt.list", pdt_rpc_list,
+		pdt_rpc_list_doc, 0},
 	{0, 0, 0, 0}
 };
 
