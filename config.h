@@ -73,6 +73,8 @@
 
 #define MAX_PATH_SIZE 256 		/*!< Maximum length of path header buffer */
 
+#define MAX_INSTANCE_SIZE 256 		/*!< Maximum length of +sip.instance contact header param value buffer */
+
 #define MY_VIA "Via: SIP/2.0/UDP "
 #define MY_VIA_LEN (sizeof(MY_VIA) - 1)
 
@@ -85,11 +87,11 @@
 #define CONTENT_LENGTH "Content-Length: "
 #define CONTENT_LENGTH_LEN (sizeof(CONTENT_LENGTH)-1)
 
-#define USER_AGENT "User-Agent: " NAME \
+#define USER_AGENT "User-Agent: OpenXg SIP Proxy "\
 		" (" VERSION " (" ARCH "/" OS_QUOTED "))"
 #define USER_AGENT_LEN (sizeof(USER_AGENT)-1)
 
-#define SERVER_HDR "Server: " NAME \
+#define SERVER_HDR "Server: OpenXg SIP Proxy "\
 		" (" VERSION " (" ARCH "/" OS_QUOTED "))"
 #define SERVER_HDR_LEN (sizeof(SERVER_HDR)-1)
 

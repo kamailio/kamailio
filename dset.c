@@ -214,8 +214,8 @@ void set_branch_iterator(int n)
  * more branches
  */
 char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
-				 str* path, unsigned int *flags,
-				 struct socket_info** force_socket)
+		 str* path, unsigned int *flags,
+		 struct socket_info** force_socket)
 {
 	if (i < nr_branches) {
 		*len = branches[i].len;
@@ -258,12 +258,12 @@ char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
  * 0 is returned if there are no more branches
  */
 char* next_branch(int* len, qvalue_t* q, str* dst_uri, str* path,
-					unsigned int* flags, struct socket_info** force_socket)
+		  unsigned int* flags, struct socket_info** force_socket)
 {
 	char* ret;
 	
 	ret=get_branch(branch_iterator, len, q, dst_uri, path, flags,
-					force_socket);
+		       force_socket);
 	if (likely(ret))
 		branch_iterator++;
 	return ret;
@@ -295,7 +295,9 @@ void clear_branches(void)
  * @return  <0 (-1) on failure, 1 on success (script convention).
  */
 int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
-		qvalue_t q, unsigned int flags, struct socket_info* force_socket)
+		  qvalue_t q, unsigned int flags,
+		  struct socket_info* force_socket,
+		  str* instance, unsigned int reg_id)
 {
 	str luri;
 
@@ -359,6 +361,25 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 
 	branches[nr_branches].force_send_socket = force_socket;
 	branches[nr_branches].flags = flags;
+
+	/* copy instance string */
+	if (unlikely(instance && instance->len && instance->s)) {
+		if (unlikely(instance->len > MAX_INSTANCE_SIZE - 1)) {
+			LOG(L_ERR, "too long instance: %.*s\n",
+			    instance->len, instance->s);
+			return -1;
+		}
+		memcpy(branches[nr_branches].instance, instance->s,
+		       instance->len);
+		branches[nr_branches].instance[instance->len] = 0;
+		branches[nr_branches].instance_len = instance->len;
+	} else {
+		branches[nr_branches].instance[0] = '\0';
+		branches[nr_branches].instance_len = 0;
+	}
+
+	/* copy reg_id */
+	branches[nr_branches].reg_id = reg_id;
 
 	nr_branches++;
 	return 1;
