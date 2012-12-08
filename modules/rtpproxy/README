@@ -30,13 +30,13 @@ Carsten Bock
 
    ng-voice GmbH
 
-   Copyright © 2003-2008 Sippy Software, Inc.
+   Copyright � 2003-2008 Sippy Software, Inc.
 
-   Copyright © 2005 Voice Sistem SRL
+   Copyright � 2005 Voice Sistem SRL
 
-   Copyright © 2009-2012 TuTPro Inc.
+   Copyright � 2009-2012 TuTPro Inc.
 
-   Copyright © 2010 VoIPEmbedded Inc.
+   Copyright � 2010 VoIPEmbedded Inc.
      __________________________________________________________________
 
    Table of Contents
@@ -56,9 +56,8 @@ Carsten Bock
               4.2. rtpproxy_disable_tout (integer)
               4.3. rtpproxy_tout (integer)
               4.4. rtpproxy_retr (integer)
-              4.5. force_socket (string)
-              4.6. nortpproxy_str (string)
-              4.7. timeout_socket (string)
+              4.5. nortpproxy_str (string)
+              4.6. timeout_socket (string)
 
         5. Functions
 
@@ -91,19 +90,18 @@ Carsten Bock
    1.2. Set rtpproxy_disable_tout parameter
    1.3. Set rtpproxy_tout parameter
    1.4. Set rtpproxy_retr parameter
-   1.5. Set force_socket parameter
-   1.6. Set nortpproxy_str parameter
-   1.7. Set timeout_socket parameter
-   1.8. fix_nated_contact usage
-   1.9. rtpproxy_offer usage
-   1.10. rtpproxy_answer usage
-   1.11. rtpproxy_destroy usage
-   1.12. rtpproxy_manage usage
-   1.13. rtpproxy_stream2xxx usage
-   1.14. start_recording usage
-   1.15. $rtpstat-Usage
-   1.16. nh_enable_rtpp usage
-   1.17. nh_show_rtpp usage
+   1.5. Set nortpproxy_str parameter
+   1.6. Set timeout_socket parameter
+   1.7. set_rtp_proxy_set usage
+   1.8. rtpproxy_offer usage
+   1.9. rtpproxy_answer usage
+   1.10. rtpproxy_destroy usage
+   1.11. rtpproxy_manage usage
+   1.12. rtpproxy_stream2xxx usage
+   1.13. start_recording usage
+   1.14. $rtpstat-Usage
+   1.15. nh_enable_rtpp usage
+   1.16. nh_show_rtpp usage
 
 Chapter 1. Admin Guide
 
@@ -122,9 +120,8 @@ Chapter 1. Admin Guide
         4.2. rtpproxy_disable_tout (integer)
         4.3. rtpproxy_tout (integer)
         4.4. rtpproxy_retr (integer)
-        4.5. force_socket (string)
-        4.6. nortpproxy_str (string)
-        4.7. timeout_socket (string)
+        4.5. nortpproxy_str (string)
+        4.6. timeout_socket (string)
 
    5. Functions
 
@@ -155,18 +152,19 @@ Chapter 1. Admin Guide
    rtpproxy. Rtpproxies know to work with this module are Sippy RTPproxy
    http://www.rtpproxy.org and ngcp-rtpproxy-ng
    http://deb.sipwise.com/spce/2.6/pool/main/n/ngcp-mediaproxy-ng. Some
-   features of rtpproxy module apply only one of the two rtpproxies.
+   features of the rtpproxy module apply only to one of the two
+   rtpproxies.
 
 2. Multiple RTPProxy usage
 
-   Currently, the rtpproxy module can support multiple rtpproxies for
+   The rtpproxy module can support multiple rtpproxies for
    balancing/distribution and control/selection purposes.
 
-   The module allows the definition of several sets of rtpproxies -
-   load-balancing will be performed over a set and the user has the
+   The module allows definition of several sets of rtpproxies.
+   Load-balancing will be performed over a set and the admin has the
    ability to choose what set should be used. The set is selected via its
-   id - the id being defined along with the set. Refer to the
-   “rtpproxy_sock” module parameter definition for syntax description.
+   id - the id being defined with the set. Refer to the "rtpproxy_sock"
+   module parameter definition for syntax description.
 
    The balancing inside a set is done automatically by the module based on
    the weight of each rtpproxy from the set.
@@ -205,16 +203,15 @@ Chapter 1. Admin Guide
    4.2. rtpproxy_disable_tout (integer)
    4.3. rtpproxy_tout (integer)
    4.4. rtpproxy_retr (integer)
-   4.5. force_socket (string)
-   4.6. nortpproxy_str (string)
-   4.7. timeout_socket (string)
+   4.5. nortpproxy_str (string)
+   4.6. timeout_socket (string)
 
 4.1. rtpproxy_sock (string)
 
    Definition of socket(s) used to connect to (a set) RTPProxy. It may
    specify a UNIX socket or an IPv4/IPv6 UDP socket.
 
-   Default value is “NONE” (disabled).
+   Default value is "NONE" (disabled).
 
    Example 1.1. Set rtpproxy_sock parameter
 ...
@@ -232,11 +229,11 @@ modparam("rtpproxy", "rtpproxy_sock",
 
 4.2. rtpproxy_disable_tout (integer)
 
-   Once RTPProxy was found unreachable and marked as disable, rtpproxy
-   will not attempt to establish communication to RTPProxy for
-   rtpproxy_disable_tout seconds.
+   Once RTPProxy was found unreachable and marked as disabled, the
+   rtpproxy module will not attempt to establish communication to RTPProxy
+   for rtpproxy_disable_tout seconds.
 
-   Default value is “60”.
+   Default value is "60".
 
    Example 1.2. Set rtpproxy_disable_tout parameter
 ...
@@ -247,7 +244,7 @@ modparam("rtpproxy", "rtpproxy_disable_tout", 20)
 
    Timeout value in waiting for reply from RTPProxy.
 
-   Default value is “1”.
+   Default value is "1".
 
    Example 1.3. Set rtpproxy_tout parameter
 ...
@@ -256,32 +253,21 @@ modparam("rtpproxy", "rtpproxy_tout", 2)
 
 4.4. rtpproxy_retr (integer)
 
-   How many times rtpproxy should retry to send and receive after timeout
-   was generated.
+   How many times the module should retry to send and receive after
+   timeout was generated.
 
-   Default value is “5”.
+   Default value is "5".
 
    Example 1.4. Set rtpproxy_retr parameter
 ...
 modparam("rtpproxy", "rtpproxy_retr", 2)
 ...
 
-4.5. force_socket (string)
+4.5. nortpproxy_str (string)
 
-   Socket to be forced in communicating to RTPProxy. It makes sense only
-   for UDP communication. If no one specified, the OS will choose.
-
-   Default value is “NULL”.
-
-   Example 1.5. Set force_socket parameter
-...
-modparam("rtpproxy", "force_socket", "localhost:33333")
-...
-
-4.6. nortpproxy_str (string)
-
-   The parameter sets the SDP attribute used by rtpproxy to mark the
-   packet SDP informations have already been mangled.
+   This parameter sets the SDP attribute used by rtpproxy to mark the
+   message's SDP attachemnt with information that it have already been
+   changed.
 
    If empty string, no marker will be added or checked.
 
@@ -289,24 +275,25 @@ Note
 
    The string must be a complete SDP line, including the EOH (\r\n).
 
-   Default value is “a=nortpproxy:yes\r\n”.
+   Default value is "a=nortpproxy:yes\r\n".
 
-   Example 1.6. Set nortpproxy_str parameter
+   Example 1.5. Set nortpproxy_str parameter
 ...
 modparam("rtpproxy", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 ...
 
-4.7. timeout_socket (string)
+4.6. timeout_socket (string)
 
-   The parameter sets timeout socket, which is transmitted to the
-   RTP-Proxy.
+   The parameter sets the RTP timeout socket, which is transmitted to the
+   RTP-Proxy. It will be used by the RTP proxy to signal back that a media
+   stream timed out.
 
    If it is an empty string, no timeout socket will be transmitted to the
    RTP-Proxy.
 
-   Default value is “” (nothing).
+   Default value is "" (nothing).
 
-   Example 1.7. Set timeout_socket parameter
+   Example 1.6. Set timeout_socket parameter
 ...
 modparam("nathelper", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
 ...
@@ -335,7 +322,7 @@ modparam("nathelper", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.8. fix_nated_contact usage
+   Example 1.7. set_rtp_proxy_set usage
 ...
 set_rtp_proxy_set("2");
 rtpproxy_offer();
@@ -351,16 +338,16 @@ rtpproxy_offer();
      * flags - flags to turn on some features.
           + 1 - append first Via branch to Call-ID when sending command to
             rtpproxy. This can be used to create one media session per
-            branch on the rtpproxy. When sending a subsequent “delete”
+            branch on the rtpproxy. When sending a subsequent "delete"
             command to the rtpproxy, you can then stop just the session
             for a specific branch when passing the flag '1' or '2' in the
-            “unforce_rtpproxy”, or stop all sessions for a call when not
+            "unforce_rtpproxy", or stop all sessions for a call when not
             passing one of those two flags there. This is especially
             useful if you have serially forked call scenarios where
-            rtpproxy gets an “update” command for a new branch, and then a
-            “delete” command for the previous branch, which would
+            rtpproxy gets an "update" command for a new branch, and then a
+            "delete" command for the previous branch, which would
             otherwise delete the full call, breaking the subsequent
-            “lookup” for the new branch. This flag is only supported by
+            "lookup" for the new branch. This flag is only supported by
             the ngcp-mediaproxy-ng rtpproxy at the moment!
           + 2 - append second Via branch to Call-ID when sending command
             to rtpproxy. See flag '1' for its meaning.
@@ -368,8 +355,8 @@ rtpproxy_offer();
             set for a reply.
           + a - flags that UA from which message is received doesn't
             support symmetric RTP. (automatically sets the 'r' flag)
-          + l - force “lookup”, that is, only rewrite SDP when
-            corresponding session is already exists in the RTP proxy. By
+          + l - force "lookup", that is, only rewrite SDP when
+            corresponding session already exists in the RTP proxy. By
             default is on when the session is to be completed.
           + i, e - these flags specify the direction of the SIP message.
             These flags only make sense when rtpproxy is running in bridge
@@ -383,18 +370,27 @@ rtpproxy_offer();
             'ii' and 'ee'. So, for example if a SIP requests is processed
             with 'ie' flags, the corresponding response must be processed
             with 'ie' flags.
-            Note: As rtpproxy is in bridge mode per default asymmetric,
-            you have to specify the 'w' flag for clients behind NAT! See
-            also above notes!
-          + x - this flag will do automatic bridging between IPv4 on the
-            "internal network" and IPv6 on the "external network". The
+            Note: As rtpproxy in bridge mode s per default asymmetric, you
+            have to specify the 'w' flag for clients behind NAT! See also
+            above notes!
+          + x - this flag a shortcut for using the "ie" or "ei"-flags of
+            RTP-Proxy, in order to do automatic bridging between IPv4 on
+            the "internal network" and IPv6 on the "external network". The
             distinction is done by the given IP in the SDP, e.g. a IPv4
             Address will always call "ie" to the RTPProxy (IPv4(i) to
             IPv6(e)) and an IPv6Address will always call "ei" to the
             RTPProxy (IPv6(e) to IPv4(i)).
+            Note: Please note, that this will only work properly with
+            non-dual-stack user-agents or with dual-stack clients
+            according to RFC6157 (which suggest ICE for Dual-Stack
+            implementations). This short-cut will not work properly with
+            RFC4091 (ANAT) compatible clients, which suggests having
+            different m-lines with different IP-protocols grouped
+            together.
           + f - instructs rtpproxy to ignore marks inserted by another
             rtpproxy in transit to indicate that the session is already
-            goes through another proxy. Allows creating chain of proxies.
+            goes through another proxy. Allows creating a chain of
+            proxies.
           + r - flags that IP address in SDP should be trusted. Without
             this flag, rtpproxy ignores address in the SDP and uses source
             address of the SIP message as media address which is passed to
@@ -420,7 +416,7 @@ rtpproxy_offer();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. rtpproxy_offer usage
+   Example 1.8. rtpproxy_offer usage
 route {
 ...
     if (is_method("INVITE")) {
@@ -464,7 +460,7 @@ onreply_route[2]
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.10. rtpproxy_answer usage
+   Example 1.9. rtpproxy_answer usage
 
    See rtpproxy_offer() function example above for example.
 
@@ -478,25 +474,25 @@ onreply_route[2]
      * flags - flags to turn on some features.
           + 1 - append first Via branch to Call-ID when sending command to
             rtpproxy. This can be used to create one media session per
-            branch on the rtpproxy. When sending a subsequent “delete”
+            branch on the rtpproxy. When sending a subsequent "delete"
             command to the rtpproxy, you can then stop just the session
             for a specific branch when passing the flag '1' or '2' in the
-            “unforce_rtpproxy”, or stop all sessions for a call when not
+            "unforce_rtpproxy", or stop all sessions for a call when not
             passing one of those two flags there. This is especially
             useful if you have serially forked call scenarios where
-            rtpproxy gets an “update” command for a new branch, and then a
-            “delete” command for the previous branch, which would
+            rtpproxy gets an "update" command for a new branch, and then a
+            "delete" command for the previous branch, which would
             otherwise delete the full call, breaking the subsequent
-            “lookup” for the new branch. This flag is only supported by
+            "lookup" for the new branch. This flag is only supported by
             the ngcp-mediaproxy-ng rtpproxy at the moment!
           + 2 - append second Via branch to Call-ID when sending command
             to rtpproxy. See flag '1' for its meaning.
-          + t - do not include To tag to “delete” command to rtpproxy thus
+          + t - do not include To tag to "delete" command to rtpproxy thus
             causing full call to be deleted. Useful for deleting unused
             rtpproxy call when 200 OK is received on a branch, where
             rtpproxy is not needed.
 
-   Example 1.11. rtpproxy_destroy usage
+   Example 1.10. rtpproxy_destroy usage
 ...
 rtpproxy_destroy();
 ...
@@ -508,27 +504,27 @@ rtpproxy_destroy();
 5.6.  rtpproxy_manage([flags [, ip_address]])
 
    Manage the RTPProxy session - it combines the functionality of
-   rtpproxy_offer(), rtpproxy_answer() and unfroce_rtpproxy(), detecting
+   rtpproxy_offer(), rtpproxy_answer() and unforce_rtpproxy(), detecting
    internally based on message type and metod which one to execute.
 
-   It can take same kind of parameters as rtpproxy_offer().
+   It can take the same parameters as rtpproxy_offer().
 
-   Functinality:
-     * if INVITE with SDP, then do rtpproxy offer
-     * if INVITE with SDP, when tm is loaded, mark transaction with
-       internal flag FL_SDP_BODY to know that the 1xx and 2xx are for
-       rtpproxy answer
-     * if ACK with SDP, then do rtpproxy answer
-     * if BYE or CANCEL, or called within a failure_route[], then do
-       unforce rtpproxy
-     * if reply to INVITE with code >= 300 do unfrce rtp proxy
-     * if reply with SDP to INVITE having code 1xx and 2xx, then do
-       rtpproxy answer if the request had SDP or tm is not loaded,
-       otherwise do rtpproxy offer
+   Functionality:
+     * If INVITE with SDP, then do rtpproxy_offer()
+     * If INVITE with SDP, when the tm module is loaded, mark transaction
+       with internal flag FL_SDP_BODY to know that the 1xx and 2xx are for
+       rtpproxy_answer()
+     * If ACK with SDP, then do rtpproxy_answer()
+     * If BYE or CANCEL, or called within a FAILURE_ROUTE[], then do
+       unforce_rtpproxy()
+     * If reply to INVITE with code >= 300 do unforce_rtpproxy()
+     * If reply with SDP to INVITE having code 1xx and 2xx, then do
+       rtpproxy_answer() if the request had SDP or tm is not loaded,
+       otherwise do rtpproxy_offer()
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.12. rtpproxy_manage usage
+   Example 1.11. rtpproxy_manage usage
 ...
 rtpproxy_manage();
 ...
@@ -549,9 +545,10 @@ rtpproxy_manage();
    count is -1, the streaming will be in loop indefinitely until the
    appropriate rtpproxy_stop_stream2xxx is issued.
 
-   In order to work correctly, functions require that the session in the
-   RTPproxy already exists. Also those functions don't alted SDP, so that
-   they are not substitute for calling rtpproxy_offer or rtpproxy_answer.
+   In order to work correctly, these functions require that a session in
+   the RTPproxy already exists. Also those functions don't alter the SDP,
+   so that they are not a substitute for calling rtpproxy_offer or
+   rtpproxy_answer.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
@@ -559,11 +556,11 @@ rtpproxy_manage();
      * prompt_name - name of the prompt to stream. Should be either
        absolute pathname or pathname relative to the directory where
        RTPproxy runs.
-     * count - number of times the prompt should be repeated. The value of
-       -1 means that it will be streaming in loop indefinitely, until
-       appropriate rtpproxy_stop_stream2xxx is issued.
+     * count - number of times the prompt should be repeated. A value of
+       -1 means that it will be streaming in a loop indefinitely, until
+       the appropriate rtpproxy_stop_stream2xxx is issued.
 
-   Example 1.13. rtpproxy_stream2xxx usage
+   Example 1.12. rtpproxy_stream2xxx usage
 ...
     if (is_method("INVITE")) {
         rtpproxy_offer();
@@ -596,7 +593,7 @@ rtpproxy_manage();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.14. start_recording usage
+   Example 1.13. start_recording usage
 ...
 start_recording();
 ...
@@ -614,9 +611,9 @@ start_recording();
    Returns the RTP-Statistics from the RTP-Proxy. The RTP-Statistics from
    the RTP-Proxy are provided as a string and it does contain several
    packet-counters. The statistics must be retrieved before the session is
-   deleted (before unforce_rtpproxy).
+   deleted (before unforce_rtpproxy()).
 
-   Example 1.15. $rtpstat-Usage
+   Example 1.14. $rtpstat-Usage
 ...
     append_hf("X-RTP-Statistics: $rtpstat\r\n");
 ...
@@ -637,9 +634,9 @@ start_recording();
    The second parameter value must be a number in decimal.
 
    NOTE: if a rtpproxy is defined multiple times (in the same or diferente
-   sete), all its instances will be enables/disabled.
+   sete), all of its instances will be enables/disabled.
 
-   Example 1.16.  nh_enable_rtpp usage
+   Example 1.15.  nh_enable_rtpp usage
 ...
 $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 ...
@@ -651,52 +648,52 @@ $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 
    No parameter.
 
-   Example 1.17.  nh_show_rtpp usage
+   Example 1.16.  nh_show_rtpp usage
 ...
 $ kamctl fifo nh_show_rtpp
 ...
 
 Chapter 2. Frequently Asked Questions
 
-   2.1. What happend with “rtpproxy_disable” parameter?
+   2.1. What happend with "rtpproxy_disable" parameter?
    2.2. Where can I find more about Kamailio?
    2.3. Where can I post a question about this module?
    2.4. How can I report a bug?
 
    2.1.
 
-       What happend with “rtpproxy_disable” parameter?
+   What happend with "rtpproxy_disable" parameter?
 
-       It was removed as it became obsolete - now “rtpproxy_sock” can take
-       empty value to disable the rtpproxy functionality.
+   It was removed as it became obsolete - now "rtpproxy_sock" can take
+   empty value to disable the rtpproxy functionality.
 
    2.2.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at http://www.kamailio.org/.
+   Take a look at http://www.kamailio.org/.
 
    2.3.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <sr-users@lists.sip-router.org> and e-mails regarding development
-       versions should be sent to <sr-dev@lists.sip-router.org>.
+   E-mails regarding any stable Kamailio release should be sent to
+   <sr-users@lists.sip-router.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.sip-router.org>.
 
-       If you want to keep the mail private, send it to
-       <sr-users@lists.sip-router.org>.
+   If you want to keep the mail private, send it to
+   <sr-users@lists.sip-router.org>.
 
    2.4.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       http://sip-router.org/tracker.
+   Please follow the guidelines provided at:
+   http://sip-router.org/tracker.
