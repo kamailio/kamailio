@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     3.4.0
-%define rel     dev5.1%{dist}
+%define rel     dev7%{dist}
 
 
 
@@ -358,7 +358,7 @@ Max Mind GeoIP real-time query support for Kamailio.
 %build
 make FLAVOUR=kamailio cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT\
 	basedir=$RPM_BUILD_ROOT cfg_target=/%{_sysconfdir}/kamailio/\
-	modules_dirs="modules modules_k" SCTP=1 STUN=1 MEMDBG=1
+	modules_dirs="modules modules_k" SCTP=1 STUN=1
 make
 %if 0%{?fedora}
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
@@ -367,7 +367,7 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
 	klcr ksqlite kredis kjson kmono kberkeley kwebsocket"\
 	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
-	auth_diameter xhttp_pi"
+	auth_diameter xhttp_pi avp sca xprint"
 %else
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
@@ -375,7 +375,7 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kcpl ksnmpstats kpresence kregex kdialplan\
 	klcr ksqlite kberkeley kwebsocket"\
 	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
-	auth_diameter xhttp_pi"
+	auth_diameter xhttp_pi avp sca xprint"
 %endif
 make utils
 
@@ -392,7 +392,7 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
 	klcr ksqlite kredis kjson kmono kberkeley kwebsocket"\
 	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
-	auth_diameter xhttp_pi"
+	auth_diameter xhttp_pi avp sca xprint"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.service \
@@ -408,7 +408,7 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kcpl ksnmpstats kpresence kregex kdialplan\
 	klcr ksqlite kberkeley kwebsocket"\
 	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
-	auth_diameter xhttp_pi"
+	auth_diameter xhttp_pi avp sca xprint"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -474,6 +474,7 @@ fi
 %dir %{_docdir}/kamailio/modules
 %doc %{_docdir}/kamailio/modules/README.async
 %doc %{_docdir}/kamailio/modules/README.auth
+%doc %{_docdir}/kamailio/modules/README.avp
 %doc %{_docdir}/kamailio/modules/README.avpops
 %doc %{_docdir}/kamailio/modules/README.blst
 %doc %{_docdir}/kamailio/modules/README.cfg_db
@@ -498,6 +499,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.ratelimit
 %doc %{_docdir}/kamailio/modules/README.rtpproxy
 %doc %{_docdir}/kamailio/modules/README.sanity
+%doc %{_docdir}/kamailio/modules/README.sca
 %doc %{_docdir}/kamailio/modules/README.sdpops
 %doc %{_docdir}/kamailio/modules/README.sipcapture
 %doc %{_docdir}/kamailio/modules/README.sl
@@ -509,6 +511,8 @@ fi
 %doc %{_docdir}/kamailio/modules/README.topoh
 %doc %{_docdir}/kamailio/modules/README.xhttp
 %doc %{_docdir}/kamailio/modules/README.xhttp_rpc
+%doc %{_docdir}/kamailio/modules/README.xlog
+%doc %{_docdir}/kamailio/modules/README.xprint
 
 %dir %{_docdir}/kamailio/modules_k
 %doc %{_docdir}/kamailio/modules_k/README.acc
@@ -562,7 +566,6 @@ fi
 %doc %{_docdir}/kamailio/modules_k/README.uri_db
 %doc %{_docdir}/kamailio/modules_k/README.userblacklist
 %doc %{_docdir}/kamailio/modules_k/README.usrloc
-%doc %{_docdir}/kamailio/modules_k/README.xlog
 
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/*
@@ -599,6 +602,7 @@ fi
 %dir %{_libdir}/kamailio/modules
 %{_libdir}/kamailio/modules/auth.so
 %{_libdir}/kamailio/modules/async.so
+%{_libdir}/kamailio/modules/avp.so
 %{_libdir}/kamailio/modules/avpops.so
 %{_libdir}/kamailio/modules/blst.so
 %{_libdir}/kamailio/modules/cfg_db.so
@@ -623,6 +627,7 @@ fi
 %{_libdir}/kamailio/modules/ratelimit.so
 %{_libdir}/kamailio/modules/rtpproxy.so
 %{_libdir}/kamailio/modules/sanity.so
+%{_libdir}/kamailio/modules/sca.so
 %{_libdir}/kamailio/modules/sipcapture.so
 %{_libdir}/kamailio/modules/sl.so
 %{_libdir}/kamailio/modules/sdpops.so
@@ -634,6 +639,8 @@ fi
 %{_libdir}/kamailio/modules/topoh.so
 %{_libdir}/kamailio/modules/xhttp.so
 %{_libdir}/kamailio/modules/xhttp_rpc.so
+%{_libdir}/kamailio/modules/xlog.so
+%{_libdir}/kamailio/modules/xprint.so
 
 %dir %{_libdir}/kamailio/modules_k
 %{_libdir}/kamailio/modules_k/acc.so
@@ -687,7 +694,6 @@ fi
 %{_libdir}/kamailio/modules_k/uri_db.so
 %{_libdir}/kamailio/modules_k/userblacklist.so
 %{_libdir}/kamailio/modules_k/usrloc.so
-%{_libdir}/kamailio/modules_k/xlog.so
 
 %{_sbindir}/kamailio
 %{_sbindir}/kamctl
@@ -713,7 +719,7 @@ fi
 
 %{_mandir}/man5/*
 %if 0%{?fedora}
-%{_mandir}/man7/auth.7.gz
+%{_mandir}/man7/*
 %endif
 %{_mandir}/man8/*
 
@@ -990,6 +996,10 @@ fi
 
 
 %changelog
+* Sun Dec 9 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to dev7
+  - Added avp, sca, and xprint modules to the build
+  - Moved xlog from modules_k to modules
 * Fri Nov 9 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Updated rel to dev5
 * Tue Oct 30 2012 Peter Dunkley <peter@dunkley.me.uk>
