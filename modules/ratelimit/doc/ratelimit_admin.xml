@@ -27,6 +27,11 @@
 		associated with its own queue and a number of queues are connected
 		to a certain pipe (see the queue and pipe params).
 	</para>
+	<para>
+		Please also take a look at the <quote>pipelimit</quote> module,
+		that implements the pipe policy with database support. Note that it 
+		doesn't implement the queues that exist in this module.
+	</para>
 	</section>
 	<section>
 	<title>Use Cases</title>
