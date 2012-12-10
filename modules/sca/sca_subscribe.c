@@ -1043,7 +1043,11 @@ sca_subscription_from_request( sca_mod *scam, sip_msg_t *msg, int event_type,
     }
 
     req_sub->subscriber = contact_uri;
-    req_sub->target_aor = REQ_LINE( msg ).uri;
+    if ( sca_uri_extract_aor( &REQ_LINE( msg ).uri, &req_sub->target_aor) < 0) {
+	LM_ERR( "Failed to extract AoR from RURI %.*s",
+		STR_FMT( &REQ_LINE( msg ).uri ));
+	goto error;
+    }
     req_sub->event = event_type;
     req_sub->index = SCA_CALL_INFO_APPEARANCE_INDEX_ANY;
     req_sub->expires = expires;
