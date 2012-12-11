@@ -23,6 +23,16 @@
 #ifndef _PYTHON_SUPPORT_H
 #define  _PYTHON_SUPPORT_H
 
-void python_handle_exception(const char *);
+#include <Python.h>
+#include <stdarg.h>
+
+PyObject *format_exc_obj;
+
+void python_handle_exception(const char *, ...);
+char *make_message(const char *fmt, ...);
+
+PyObject *InitTracebackModule(void);
+char *get_class_name(PyObject *);
+char *get_instance_class_name(PyObject *);
 
 #endif
