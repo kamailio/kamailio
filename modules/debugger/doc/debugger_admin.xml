@@ -18,9 +18,9 @@
 	<title>Overview</title>
 	<para>
 		This module provides an interactive config file debugger. It can print
-		a trace of config execution for a SIP message to log and set
-		breakpoints on every config action, allowing step-by-step execution of 
-		the config.
+		a trace of config script execution for a SIP message to log and set
+		breakpoints on every script action, allowing step-by-step execution of 
+		the routing and response scripts.
 	</para>
 	<para>
 		Debugging can be done from local or remote host via RPC interface (e.g.,
@@ -28,10 +28,10 @@
 	</para>
 	<para>
 		The framework to set breakpoints on specific actions and config lines
-		is not exported to RPC yet. Each action can be accompanied by an
+		is not exported to RPC. Each action can be accompanied by an
 		breakpoint or you can use dbg_breakpoint() function to set a breakpoint
-		at certain line. Global breakpoint can be enabled/disabled at runtime.
-		Also the config running trace can be enabled/disabled at runtime.
+		at certain line. Global breakpoints can be enabled/disabled at runtime.
+		The script running trace can also be enabled/disabled at runtime.
 	</para>
 	<para>
 		When the SIP router process is stopped at a breakpoint, you can
@@ -77,7 +77,7 @@
 	<section>
 	    <title><varname>cfgtrace</varname> (int)</title>
 	    <para>
-			Control whether config running trace is enabled or disabled
+			Control whether the config script trace is enabled or disabled
 			at startup. You can change the value at runtime without
 			restart, globally or per process.
 	    </para>
@@ -140,7 +140,9 @@ modparam("debugger", "log_level", 1)
 	<section>
 	    <title><varname>log_facility</varname> (str)</title>
 	    <para>
-			What log facility is to be used to print module-specific messages.
+			Which log facility is to be used to print module-specific messages.
+			By using this setting, you can configure syslog to send debug
+			messages to a separate log channel, like a specific kamailio-debug log file.
 	    </para>
 	    <para>
 		<emphasis>
@@ -181,7 +183,7 @@ modparam("debugger", "log_prefix", "from-debugger-with-love:")
 	    <title><varname>step_usleep</varname> (int)</title>
 	    <para>
 			Microseconds to sleep before checking for new commands when
-			waiting at breakpoint.
+			waiting at a breakpoint.
 	    </para>
 	    <para>
 		<emphasis>
@@ -202,7 +204,7 @@ modparam("debugger", "step_usleep", 500000)
 	    <title><varname>step_loops</varname> (int)</title>
 	    <para>
 			How many sleeps of 'step_usleep' the RPC process performs when
-			waiting for a reply from worker process before responding to RPC.
+			waiting for a reply from a worker process before responding to RPC.
 			This avoids blocking RPC process forever in case the worker
 			process 'forgets' to write back a reply.
 	    </para>
@@ -235,7 +237,7 @@ modparam("debugger", "step_loops", 100)
 			the breakpoint is enabled (1) or disabled (0) at startup.
 	    </para>
 		<para>
-			Note that this version does not export this anchors to RPC for
+			Note that this version of the module does not export this anchors to RPC for
 			interactive debugging (temporarily disabled).
 	    </para>
 		<example>
@@ -259,7 +261,7 @@ if($si=="10.0.0.10")
 		<function moreinfo="none">dbg.ls</function>
 		</title>
 		<para>
-			List SIP router processes with info related to interactive
+			List &kamailio; processes with info related to interactive
 			debugging.
 		</para>
 		<para>
@@ -284,18 +286,18 @@ if($si=="10.0.0.10")
 		<function moreinfo="none">dbg.trace</function>
 		</title>
 		<para>
-			Control config running trace.
+			Control config script running trace.
 		</para>
 		<para>
 		Name: <emphasis>dbg.trace</emphasis>
 		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
-			<listitem><para>_cmd_ : inner command can be 'on' or 'off' to
+			<listitem><para>_cmd_ : command can be 'on' or 'off' to
 				enable or disable tracing for one or all processes.</para>
 		</listitem>
 			<listitem><para>_pid_ : pid for which to list the details. If 'pid' is
-				omitted, then it will print details for all processes.</para>
+				omitted, then details for all processes will be printed.</para>
 		</listitem>
 		</itemizedlist>
 		<para>
@@ -320,18 +322,17 @@ if($si=="10.0.0.10")
 		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
-			<listitem><para>_cmd_ : inner command, see next section for
+			<listitem><para>_cmd_ : command, see next section for
 			the list of available values.</para>
 		</listitem>
-		<listitem><para>_pid_ : pid for which to apply the inner command.
+		<listitem><para>_pid_ : process id for which to apply the command.
 				If 'pid' is omitted, then the inner command will be applied 
 				to all processes.</para>
 		</listitem>
-		<listitem><para>_params_ : extra params specific for each inner
-				command.</para>
+		<listitem><para>_params_ : extra params specific for each command.</para>
 		</listitem>
 		</itemizedlist>
-		<para>Inner commands:</para>
+		<para>Commands:</para>
 		<itemizedlist>
 		<listitem>
 			<para>on - turn on breakpoints. Pid parameter is optional.
@@ -364,11 +365,11 @@ if($si=="10.0.0.10")
 			Pid parameter is mandatory.</para>
 		</listitem>
 		<listitem>
-			<para>eval - eval a pseudo-variable and print the result in RPC
+			<para>eval - evaluate a pseudo-variable and print the result in RPC
 			Pid parameter is mandatory.</para>
 		</listitem>
 		<listitem>
-			<para>log - eval a pseudo-variable and print the result in SIP
+			<para>log - evaluate a pseudo-variable and print the result in SIP
 			router logs. Pid parameter is mandatory.</para>
 		</listitem>
 		</itemizedlist>
@@ -395,26 +396,26 @@ if($si=="10.0.0.10")
 		</para>
 		<para>
 		Another typical usage is to do interactive debugging and run
-		each line of the route blocks of the config file step-by-step for a
+		each line of the route blocks of the configuration file step-by-step for a
 		particular SIP message.
 		</para>
 		<para>
-		You need to connect using sercmd (or other RPC client) to SIP Router.
+		You need to connect using sercmd (or other RPC client) to &kamailio;.
 		Then you can enable cfg breakpoints and send the SIP message. One
 		process will be in waiting state ('state' field different than 0 when
-		you do dbg.ls). Calling dbg.release will set the other SIP router
+		you do dbg.ls). Calling dbg.release will set the other &kamailio;
 		processes in no-breakpoint mode so they can process other SIP messages
 		without need to interact with them.
 		</para>
 		<para>
-		The process blocked at breakpoint is waiting for a command. Use
+		A process blocked at a breakpoint is waiting for a command. Use
 		'dbg.bp next pid' to execute the current action and stop at the next
-		one. 'dbg.bp eval pid PV' can be used to retrive the value of PV. Once
+		one. 'dbg.bp eval pid PV' can be used to retrieve the value of PV. Once
 		you are done and want to continue the execution of the config wihtout
 		interaction use 'dbg.bp move pid'.
 		</para>
 		<para>
-		Here is an example of session:
+		Example of a session:
 		</para>
 <programlisting  format="linespecific">
 ...
@@ -503,7 +504,7 @@ sercmd> dbg.bp move 6402
 ...
 </programlisting>
 		<para>
-			The above example is for registration with default config for
+			The above example is for a registration with default config for
 			version 3.1.0, without authentication. Listed fields are:
 			'c' - config file; 'l' - line; 'a' - internal action id;
 			'n' - name of executed action. 'ERROR' prefix is printed
