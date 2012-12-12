@@ -264,6 +264,15 @@ int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri)
 			}
 		}
 
+		if (ptr->instance.len) {
+		    if (set_instance(_m, &(ptr->instance)) < 0) {
+			ret = -3;
+			goto done;
+		    }
+		}
+		
+		_m->reg_id = ptr->reg_id;
+
 		set_ruri_q(ptr->q);
 
 		old_bflags = 0;
@@ -293,8 +302,15 @@ int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri)
 
 			/* The same as for the first contact applies for branches 
 			 * regarding path vs. received. */
-			if (km_append_branch(_m,&ptr->c,path_dst.len?&path_dst:&ptr->received,
-			&ptr->path, ptr->q, ptr->cflags, ptr->sock) == -1) {
+			LM_INFO("instance is %.*s\n",
+				ptr->instance.len, ptr->instance.s);
+			if (append_branch(_m, &ptr->c,
+					  path_dst.len?&path_dst:&ptr->received,
+					  &ptr->path, ptr->q, ptr->cflags,
+					  ptr->sock,
+					  ptr->instance.len?&(ptr->instance):0,
+				          ptr->instance.len?ptr->reg_id:0)
+			    == -1) {
 				LM_ERR("failed to append a branch\n");
 				/* Also give a chance to the next branches*/
 				continue;
@@ -319,6 +335,8 @@ int reset_ruri_branch(sip_msg_t *msg)
 	set_ruri_q(Q_UNSPECIFIED);
 	reset_force_socket(msg);
 	setbflagsval(0, 0);
+	reset_instance(msg);
+	msg->reg_id = 0;
 	return 0;
 }
 
@@ -341,6 +359,8 @@ int lookup_branches(sip_msg_t *msg, udomain_t *d)
 	int ruri_b_q = Q_UNSPECIFIED;
 	struct socket_info *ruri_b_socket = 0;
 	flag_t ruri_b_flags = 0;
+	str ruri_b_instance = {0};
+	unsigned int ruri_b_reg_id = 0;
 	branch_t *crt = NULL;
 
 	ret = 1;
@@ -363,6 +383,8 @@ int lookup_branches(sip_msg_t *msg, udomain_t *d)
 	ruri_b_q = get_ruri_q();
 	ruri_b_socket = msg->force_send_socket;
 	getbflagsval(0, &ruri_b_flags);
+	ruri_b_instance = msg->instance;
+	ruri_b_reg_id = msg->reg_id;
 	reset_ruri_branch(msg);
 
 	for(i=0; i<nr_branches; i++) {
@@ -440,6 +462,8 @@ done:
 	set_ruri_q(ruri_b_q);
 	set_force_socket(msg, ruri_b_socket);
 	setbflagsval(0, ruri_b_flags);
+	msg->instance = ruri_b_instance;
+	msg->reg_id = ruri_b_reg_id;
 
 	return (found)?1:ret;
 }
