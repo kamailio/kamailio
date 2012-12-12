@@ -1,0 +1,11 @@
+	<!-- Declaration of htable table-->
+	<db_table id="htable">
+		<table_name>htable</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>key_name</field><type>DB1_STR</type></column>
+		<column><field>key_type</field><type>DB1_INT</type></column>
+		<column><field>value_type</field><type>DB1_INT</type></column>
+		<column><field>key_value</field><type>DB1_STR</type></column>
+		<column><field>expires</field><type>DB1_INT</type></column>
+	</db_table>

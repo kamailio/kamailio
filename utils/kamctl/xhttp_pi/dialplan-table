@@ -1,0 +1,14 @@
+	<!-- Declaration of dialplan table-->
+	<db_table id="dialplan">
+		<table_name>dialplan</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>dpid</field><type>DB1_INT</type></column>
+		<column><field>pr</field><type>DB1_INT</type></column>
+		<column><field>match_op</field><type>DB1_INT</type></column>
+		<column><field>match_exp</field><type>DB1_STR</type></column>
+		<column><field>match_len</field><type>DB1_INT</type></column>
+		<column><field>subst_exp</field><type>DB1_STR</type></column>
+		<column><field>repl_exp</field><type>DB1_STR</type></column>
+		<column><field>attrs</field><type>DB1_STR</type></column>
+	</db_table>

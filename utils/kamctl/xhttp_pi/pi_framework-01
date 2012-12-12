@@ -1,0 +1,38 @@
+	<!-- Declare all mods
+		Each mod must have:
+		- a 'mod_name'
+		- at least one 'cmd'
+		Each cmd must have:
+		- a 'cmd_name'
+		- a 'db_table_id'
+		- a 'cmd_type': c  q  o
+		Each cmd_type can have:
+		- 'clause_cols' used to specify one or multiple clauses
+		- 'query_cols' used for perfoming the actual query
+		- 'order_by_cols' used to specify sorting output
+		Each clause_cols will have 'col' elemnts.
+		Each col will have:
+		- a mandatory 'field' identifying the name of the field
+		- an optional 'value' identifing the given value
+		- a mandatory 'operator' only for 'clause_cols'
+		The [clause|query|order_by]_cols can be:
+		- ov : optional with multiple 'col' with optional 'value'
+		- mv : mandatory with at least one 'col' with optional 'value'
+		- o  : optional with at most one 'col' with no 'value'
+		- m  : mandatory with at least one 'col' with no 'value'
+			/* col in cmd_type */
+		|command    |clause_cols|query_cols|order_by_cols|
+		|DB1_QUERY  |    ov     |    m     |    o        |
+		|DB1_INSERT |    -      |    mv    |    -        |
+		|DB1_DELETE |    mv     |    -     |    -        |
+		|DB1_UPDATE |    ov     |    mv    |    -        |
+		|DB1_REPLACE|    -      |    mv    |    -        |
+			/* clause_cols operator */
+		- '<'  '&lt;'
+		- '>'  '&gt;'
+		- '='  '='
+		- '<=' '&lt;='
+		- '>=' '&gt;='
+		- '!=' '!='
+	-->
+

@@ -1,0 +1,13 @@
+	<!-- Declaration of usr_preferences table-->
+	<db_table id="usr_preferences">
+		<table_name>usr_preferences</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>uuid</field><type>DB1_STR</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>attribute</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_INT</type></column>
+		<column><field>value</field><type>DB1_STR</type></column>
+		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
+	</db_table>

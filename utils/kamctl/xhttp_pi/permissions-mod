@@ -1,0 +1,29 @@
+	<!-- trusted provisionning -->
+	<mod><mod_name>trusted</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>trusted</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>src_ip</field></col>
+				<col><field>proto</field></col>
+				<col><field>from_pattern</field></col>
+				<col><field>tag</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- address provisionning -->
+	<mod><mod_name>address</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>address</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>grp</field></col>
+				<col><field>ip_addr</field></col>
+				<col><field>mask</field></col>
+				<col><field>port</field></col>
+				<col><field>tag</field></col>
+			</query_cols>
+		</cmd>
+	</mod>

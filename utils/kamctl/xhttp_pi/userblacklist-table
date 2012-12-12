@@ -1,0 +1,19 @@
+	<!-- Declaration of userblacklist table-->
+	<db_table id="userblacklist">
+		<table_name>userblacklist</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>whitelist</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of globalblacklist table-->
+	<db_table id="globalblacklist">
+		<table_name>globalblacklist</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>whitelist</field><type>DB1_INT</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>

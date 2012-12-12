@@ -1,0 +1,22 @@
+	<!-- silo provisionning -->
+	<mod><mod_name>silo</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>silo</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>src_addr</field></col>
+				<col><field>dst_addr</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>inc_time</field></col>
+				<col><field>exp_time</field></col>
+				<col><field>snd_time</field></col>
+				<col><field>ctype</field></col>
+				<col><field>body</field></col>
+				<col><field>extra_hdrs</field></col>
+				<col><field>callid</field></col>
+				<col><field>status</field></col>
+			</query_cols>
+		</cmd>
+	</mod>

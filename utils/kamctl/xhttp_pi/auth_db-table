@@ -1,0 +1,13 @@
+	<!-- Declaration of subscriber table-->
+	<db_table id="subscriber">
+		<table_name>subscriber</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>password</field><type>DB1_STR</type></column>
+		<column><field>email_address</field><type>DB1_STR</type></column>
+		<column><field>ha1</field><type>DB1_STR</type></column>
+		<column><field>ha1b</field><type>DB1_STR</type></column>
+		<column><field>rpid</field><type>DB1_STR</type></column>
+	</db_table>

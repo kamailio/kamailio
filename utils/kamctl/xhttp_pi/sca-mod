@@ -1,0 +1,22 @@
+	<!-- sca_subscriptions provisionning -->
+	<mod><mod_name>sca_subscriptions</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>sca_subscriptions</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>subscriber</field></col>
+				<col><field>aor</field></col>
+				<col><field>event</field></col>
+				<col><field>expires</field></col>
+				<col><field>state</field></col>
+				<col><field>app_idx</field></col>
+				<col><field>call_id</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>record_route</field></col>
+				<col><field>notify_cseq</field></col>
+				<col><field>subscribe_cseq</field></col>
+			</query_cols>
+		</cmd>
+	</mod>

@@ -1,0 +1,19 @@
+	<!-- Declaration of imc_rooms table-->
+	<db_table id="imc_rooms">
+		<table_name>imc_rooms</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>name</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>flag</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of imc_members table-->
+	<db_table id="imc_members">
+		<table_name>imc_members</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>room</field><type>DB1_STR</type></column>
+		<column><field>flag</field><type>DB1_INT</type></column>
+	</db_table>

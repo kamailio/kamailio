@@ -1,0 +1,17 @@
+	<!-- Declaration of mtree table-->
+	<db_table id="mtree">
+		<table_name>mtree</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>tprefix</field><type>DB1_STR</type></column>
+		<column><field>tvalue</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of mtrees table-->
+	<db_table id="mtrees">
+		<table_name>mtrees</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>tname</field><type>DB1_STR</type></column>
+		<column><field>tprefix</field><type>DB1_STR</type></column>
+		<column><field>tvalue</field><type>DB1_STR</type></column>
+	</db_table>

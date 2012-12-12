@@ -1,0 +1,46 @@
+	<!-- Declaration of carrierroute table-->
+	<db_table id="carrierroute">
+		<table_name>carrierroute</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>carrier</field><type>DB1_INT</type></column>
+		<column><field>domain</field><type>DB1_INT</type></column>
+		<column><field>scan_prefix</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>mask</field><type>DB1_INT</type></column>
+		<column><field>prob</field><type>DB1_DOUBLE</type></column>
+		<column><field>strip</field><type>DB1_INT</type></column>
+		<column><field>rewrite_host</field><type>DB1_STR</type></column>
+		<column><field>rewrite_prefix</field><type>DB1_STR</type></column>
+		<column><field>rewrite_suffix</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of carrierfailureroute table-->
+	<db_table id="carrierfailureroute">
+		<table_name>carrierfailureroute</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>carrier</field><type>DB1_INT</type></column>
+		<column><field>domain</field><type>DB1_INT</type></column>
+		<column><field>scan_prefix</field><type>DB1_STR</type></column>
+		<column><field>host_name</field><type>DB1_STR</type></column>
+		<column><field>reply_code</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>mask</field><type>DB1_INT</type></column>
+		<column><field>next_domain</field><type>DB1_INT</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of carrier_name table-->
+	<db_table id="carrier_name">
+		<table_name>carrier_name</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>carrier</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of domain_name table-->
+	<db_table id="domain_name">
+		<table_name>domain_name</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+	</db_table>

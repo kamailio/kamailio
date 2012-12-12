@@ -1,0 +1,11 @@
+	<!-- Declaration of domainpolicy table-->
+	<db_table id="domainpolicy">
+		<table_name>domainpolicy</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>rule</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_STR</type></column>
+		<column><field>att</field><type>DB1_STR</type></column>
+		<column><field>val</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>

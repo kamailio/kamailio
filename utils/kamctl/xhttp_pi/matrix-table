@@ -1,0 +1,8 @@
+	<!-- Declaration of matrix table-->
+	<db_table id="matrix">
+		<table_name>matrix</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>first</field><type>DB1_INT</type></column>
+		<column><field>second</field><type>DB1_INT</type></column>
+		<column><field>res</field><type>DB1_INT</type></column>
+	</db_table>

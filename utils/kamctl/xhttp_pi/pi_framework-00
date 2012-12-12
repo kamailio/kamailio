@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<framework>
+	<!-- Declare all db connections
+		Each db connection MUST have:
+		- an "id" to be identified by a tabe
+		- a URL pointing to the actual database
+	-->
+	<db_url id="mysql">mysql://kamailio:kamailiorw@localhost/kamailio</db_url>
+	<!-- Declare all tables
+		Each table MUST have:
+		 - an 'id' to be identified by a command
+		 - a 'table_name' pointing to the actual table name in the database
+		 - a 'db_url_id' to identify the db connection
+		 - multiple 'column' nodes with 'field', 'type' and 'validation':
+			/* type */
+		DB1_INT,      /**< represents an 32 bit integer number      */
+		DB1_BIGINT,   /**< represents an 64 bit integer number      */
+		DB1_DOUBLE,   /**< represents a floating point number       */
+		DB1_STRING,   /**< represents a zero terminated const char* */
+		DB1_STR,      /**< represents a string of 'str' type        */
+		DB1_DATETIME, /**< represents date and time                 */
+		DB1_BLOB,     /**< represents a large binary object         */
+		DB1_BITMAP    /**< an one-dimensional array of 32 flags     */
+			/* validation */
+		P_HOST_PORT  /**< represents [proto:]host[:port]       */
+		P_IPV4_PORT  /**< represents [proto:]IPv4[:port]       */
+		IPV4         /**< represents an IPv4                   */
+		URI          /**< represents a SIP URI                 */
+		URI_IPV4HOST /**< represents a SIP URI w/ IPv4 as host */
+	-->
+

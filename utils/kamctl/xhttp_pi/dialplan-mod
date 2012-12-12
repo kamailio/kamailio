@@ -1,0 +1,18 @@
+	<!-- dialplan provisionning -->
+	<mod><mod_name>dialplan</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>dialplan</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>dpid</field></col>
+				<col><field>pr</field></col>
+				<col><field>match_op</field></col>
+				<col><field>match_exp</field></col>
+				<col><field>match_len</field></col>
+				<col><field>subst_exp</field></col>
+				<col><field>repl_exp</field></col>
+				<col><field>attrs</field></col>
+			</query_cols>
+		</cmd>
+	</mod>

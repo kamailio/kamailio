@@ -1,0 +1,7 @@
+	<!-- Declaration of version table-->
+	<db_table id="version">
+		<table_name>version</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>table_name</field><type>DB1_STR</type></column>
+		<column><field>table_version</field><type>DB1_INT</type></column>
+	</db_table>

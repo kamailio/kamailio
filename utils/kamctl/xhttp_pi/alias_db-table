@@ -1,0 +1,10 @@
+	<!-- Declaration of dbaliases table-->
+	<db_table id="dbaliases">
+		<table_name>dbaliases</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>alias_username</field><type>DB1_STR</type></column>
+		<column><field>alias_domain</field><type>DB1_STR</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+	</db_table>

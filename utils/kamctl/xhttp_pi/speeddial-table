@@ -1,0 +1,14 @@
+	<!-- Declaration of speed_dial table-->
+	<db_table id="speed_dial">
+		<table_name>speed_dial</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>sd_username</field><type>DB1_STR</type></column>
+		<column><field>sd_domain</field><type>DB1_STR</type></column>
+		<column><field>new_uri</field><type>DB1_STR</type></column>
+		<column><field>fname</field><type>DB1_STR</type></column>
+		<column><field>lname</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>

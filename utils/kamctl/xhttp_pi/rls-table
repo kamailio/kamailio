@@ -1,0 +1,43 @@
+	<!-- Declaration of rls_presentity table-->
+	<db_table id="rls_presentity">
+		<table_name>rls_presentity</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>rlsubs_did</field><type>DB1_STR</type></column>
+		<column><field>resource_uri</field><type>DB1_STR</type></column>
+		<column><field>content_type</field><type>DB1_STR</type></column>
+		<column><field>presence_state</field><type>DB1_BLOB</type></column>
+		<column><field>expires</field><type>DB1_INT</type></column>
+		<column><field>updated</field><type>DB1_INT</type></column>
+		<column><field>auth_state</field><type>DB1_INT</type></column>
+		<column><field>reason</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of rls_watchers table-->
+	<db_table id="rls_watchers">
+		<table_name>rls_watchers</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>presentity_uri</field><type>DB1_STR</type></column>
+		<column><field>to_user</field><type>DB1_STR</type></column>
+		<column><field>to_domain</field><type>DB1_STR</type></column>
+		<column><field>watcher_username</field><type>DB1_STR</type></column>
+		<column><field>watcher_domain</field><type>DB1_STR</type></column>
+		<column><field>event</field><type>DB1_STR</type></column>
+		<column><field>event_id</field><type>DB1_STR</type></column>
+		<column><field>to_tag</field><type>DB1_STR</type></column>
+		<column><field>from_tag</field><type>DB1_STR</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>local_cseq</field><type>DB1_INT</type></column>
+		<column><field>remote_cseq</field><type>DB1_INT</type></column>
+		<column><field>contact</field><type>DB1_STR</type></column>
+		<column><field>record_route</field><type>DB1_BLOB</type></column>
+		<column><field>expires</field><type>DB1_INT</type></column>
+		<column><field>status</field><type>DB1_INT</type></column>
+		<column><field>reason</field><type>DB1_STR</type></column>
+		<column><field>version</field><type>DB1_INT</type></column>
+		<column><field>socket_info</field><type>DB1_STR</type></column>
+		<column><field>local_contact</field><type>DB1_STR</type></column>
+		<column><field>from_user</field><type>DB1_STR</type></column>
+		<column><field>from_domain</field><type>DB1_STR</type></column>
+		<column><field>updated</field><type>DB1_INT</type></column>
+	</db_table>
