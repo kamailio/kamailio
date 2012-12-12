@@ -29,6 +29,16 @@ SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 include ../../Makefile.modules
 
 install-cfg:
+	# provisionning xml framework samples
+	@mkdir -p $(data_prefix)/$(data_dir)/xhttp_pi
+	@for FILE in $(wildcard ../../utils/kamctl/xhttp_pi/*) ; do \
+		if [ -f $$FILE ] ; then \
+			$(INSTALL_TOUCH) $$FILE \
+				$(data_prefix)/$(data_dir)/xhttp_pi/`basename "$$FILE"` ; \
+			$(INSTALL_CFG) $$FILE \
+				$(data_prefix)/$(data_dir)/xhttp_pi/`basename "$$FILE"` ; \
+		fi ; \
+	done
 	# provisionning xml framework
 	@$(call try_err, $(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/pi_framework.xml.sample)
 	@$(call try_err, $(INSTALL_CFG) ../../examples/pi_framework.xml \
