@@ -820,6 +820,45 @@ void reset_path_vector(struct sip_msg* const msg)
 }
 
 
+int set_instance(struct sip_msg* msg, str* instance)
+{
+	char* ptr;
+
+	if (unlikely(!msg || !instance)) {
+		LM_ERR("invalid instance parameter value\n");
+		return -1;
+	}
+
+	if (unlikely(instance->len == 0)) {
+		reset_instance(msg);
+	} else if (msg->instance.s && (msg->instance.len >= instance->len)) {
+		memcpy(msg->instance.s, instance->s, instance->len);
+		msg->instance.len = instance->len;
+	} else {
+		ptr = (char*)pkg_malloc(instance->len);
+		if (!ptr) {
+			LM_ERR("not enough pkg memory for instance\n");
+			return -1;
+		}
+		memcpy(ptr, instance->s, instance->len);
+		if (msg->instance.s) pkg_free(msg->instance.s);
+		msg->instance.s = ptr;
+		msg->instance.len = instance->len;
+	}
+	return 0;
+}
+
+
+void reset_instance(struct sip_msg* const msg)
+{
+	if(msg->instance.s != 0) {
+		pkg_free(msg->instance.s);
+	}
+	msg->instance.s = 0;
+	msg->instance.len = 0;
+}
+
+
 hdr_field_t* get_hdr(const sip_msg_t* const msg, const enum _hdr_types_t ht)
 {
 	hdr_field_t *hdr;
