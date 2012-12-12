@@ -306,7 +306,9 @@ static int w_t_is_set(struct sip_msg* msg, char* target, char* bar);
  * searched for nothing each time a new transaction is created */
 static char *fr_timer_param = 0 /*FR_TIMER_AVP*/;
 static char *fr_inv_timer_param = 0 /*FR_INV_TIMER_AVP*/;
-static char *contacts_avp_param = 0;
+
+str contacts_avp = {0, 0};
+str contact_flows_avp = {0, 0};
 
 int tm_remap_503_500 = 1;
 
@@ -473,6 +475,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE},
 	{"t_next_contacts", t_next_contacts,            0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"t_next_contact_flows", t_next_contact_flows,            0, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
 
 	/* not applicable from the script */
 	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,   0, 0},
@@ -519,7 +523,8 @@ static param_export_t params[]={
 	{"cancel_b_method",     PARAM_INT, &default_tm_cfg.cancel_b_flags},
 	{"reparse_on_dns_failover", PARAM_INT, &default_tm_cfg.reparse_on_dns_failover},
 	{"on_sl_reply",         PARAM_STRING|PARAM_USE_FUNC, fixup_on_sl_reply   },
-	{"contacts_avp",        PARAM_STRING, &contacts_avp_param                },
+	{"contacts_avp",        PARAM_STR, &contacts_avp                },
+	{"contact_flows_avp",   PARAM_STR, &contact_flows_avp           },
 	{"disable_6xx_block",   PARAM_INT, &default_tm_cfg.disable_6xx           },
 	{"local_ack_mode",      PARAM_INT, &default_tm_cfg.local_ack_mode        },
 	{"failure_reply_mode",  PARAM_INT, &failure_reply_mode                   },
@@ -840,11 +845,15 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (init_avp_params( fr_timer_param, fr_inv_timer_param,
-						 contacts_avp_param)<0 ){
+	if (init_avp_params(fr_timer_param, fr_inv_timer_param) < 0) {
 		LOG(L_ERR,"ERROR:tm:mod_init: failed to process AVP params\n");
 		return -1;
 	}
+	if ((contacts_avp.len > 0) && (contact_flows_avp.len == 0)) {
+	    LOG(L_ERR,"ERROR:tm:mod_init: contact_flows_avp param has not been defined\n");
+	    return -1;
+	}
+
 #ifdef WITH_EVENT_LOCAL_REQUEST
 	goto_on_local_req=route_lookup(&event_rt, "tm:local-request");
 	if (goto_on_local_req>=0 && event_rt.rlist[goto_on_local_req]==0)
