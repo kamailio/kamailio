@@ -85,10 +85,6 @@ int     fr_inv_timer_avp_type = 0;
 int_str fr_inv_timer_avp = {0};
 static str     fr_inv_timer_str;
 static int     fr_inv_timer_index = 0;
-int     contacts_avp_type = 0;
-int_str contacts_avp = {0};
-static str     contacts_avp_str;
-static int     contacts_avp_index = 0;
 
 int tm_error = 0; /* delayed tm error */
 
@@ -398,8 +394,7 @@ done:
  * Initialize parameters containing the ID of
  * AVPs with various timers
  */
-int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
-					char* contacts_avp_param)
+int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 {
 	pv_spec_t avp_spec;
 	unsigned short avp_type;
@@ -466,34 +461,6 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
 			}
 			/* ser flavour uses the To track of AVPs */
 			fr_inv_timer_avp_type |= AVP_TRACK_TO;
-		}
-	}
-
-	if (contacts_avp_param && *contacts_avp_param) {
-		contacts_avp_str.s = contacts_avp_param;
-		contacts_avp_str.len = strlen(contacts_avp_str.s);
-
-		if(contacts_avp_str.s[0]==PV_MARKER) {
-			if ((pv_parse_spec(&contacts_avp_str, &avp_spec) == 0) 
-					|| (avp_spec.type != PVT_AVP)) {
-				LM_ERR("malformed or non AVP definition <%s>\n",
-					contacts_avp_param);
-				return -1;
-			}
-
-			if(pv_get_avp_name(0, &(avp_spec.pvp), &contacts_avp,
-						&avp_type) != 0) {
-				LM_ERR("invalid AVP definition <%s>\n", contacts_avp_param);
-				return -1;
-			}
-			contacts_avp_type = avp_type;
-		} else {
-			if (parse_avp_spec( &contacts_avp_str, &contacts_avp_type,
-								&contacts_avp, &contacts_avp_index)<0) {
-				LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid contact_avp_params "
-					"AVP specs \"%s\"\n", contacts_avp_param);
-				return -1;
-			}
 		}
 	}
 
