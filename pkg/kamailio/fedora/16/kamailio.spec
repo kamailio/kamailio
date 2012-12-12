@@ -361,21 +361,20 @@ make FLAVOUR=kamailio cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT\
 	modules_dirs="modules modules_k" SCTP=1 STUN=1
 make
 %if 0%{?fedora}
-make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
-	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
-	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
-	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
-	klcr ksqlite kredis kjson kmono kberkeley kwebsocket"\
-	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
-	auth_diameter xhttp_pi avp sca xprint"
+make every-module skip_modules="auth_identity db_cassandra iptrtpproxy \
+	db_oracle memcached mi_xmlrpc osp" \
+	group_include="kstandard kmysql kpostgres kcpl kradius kunixodbc \
+	kxml kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils \
+	kpurple ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson \
+	kredis kmono" \
+	include_modules="cdp mangler xhttp_pi"
 %else
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
-	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
-	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
-	kcpl ksnmpstats kpresence kregex kdialplan\
-	klcr ksqlite kberkeley kwebsocket"\
-	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
-	auth_diameter xhttp_pi avp sca xprint"
+	db_oracle memcached mi_xmlrpc osp" \
+	group_include="kstandard kmysql kpostgres kcpl kunixodbc \
+	kxml kperl ksnmpstats kxmpp kberkeley kldap kutils \
+	kpurple ktls kwebsocket kpresence klua kpython ksqlite" \
+	include_modules="cdp mangler xhttp_pi"
 %endif
 make utils
 
@@ -387,12 +386,12 @@ make utils
 make install
 %if 0%{?fedora}
 make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
-	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
-	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
-	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
-	klcr ksqlite kredis kjson kmono kberkeley kwebsocket"\
-	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
-	auth_diameter xhttp_pi avp sca xprint"
+	db_oracle memcached mi_xmlrpc osp" \
+	group_include="kstandard kmysql kpostgres kcpl kradius kunixodbc\
+	kxml kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils\
+	kpurple ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson\
+	kredis kmono" \
+	include_modules="cdp mangler xhttp_pi"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.service \
@@ -403,12 +402,11 @@ install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.sysconfig \
 		$RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/kamailio
 %else
 make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
-	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
-	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
-	kcpl ksnmpstats kpresence kregex kdialplan\
-	klcr ksqlite kberkeley kwebsocket"\
-	include_modules="xmlrpc xmlops cdp cdp_avp corex malloc_test\
-	auth_diameter xhttp_pi avp sca xprint"
+	db_oracle memcached mi_xmlrpc osp" \
+	group_include="kstandard kmysql kpostgres kcpl kunixodbc \
+	kxml kperl ksnmpstats kxmpp kberkeley kldap kutils \
+	kpurple ktls kwebsocket kpresence klua kpython ksqlite" \
+	include_modules="cdp mangler xhttp_pi"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -487,6 +485,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.enum
 %doc %{_docdir}/kamailio/modules/README.ipops
 %doc %{_docdir}/kamailio/modules/README.malloc_test
+%doc %{_docdir}/kamailio/modules/README.mangler
 %doc %{_docdir}/kamailio/modules/README.matrix
 %doc %{_docdir}/kamailio/modules/README.mediaproxy
 %doc %{_docdir}/kamailio/modules/README.mi_rpc
@@ -615,6 +614,7 @@ fi
 %{_libdir}/kamailio/modules/enum.so
 %{_libdir}/kamailio/modules/ipops.so
 %{_libdir}/kamailio/modules/malloc_test.so
+%{_libdir}/kamailio/modules/mangler.so
 %{_libdir}/kamailio/modules/matrix.so
 %{_libdir}/kamailio/modules/mediaproxy.so
 %{_libdir}/kamailio/modules/mi_rpc.so
@@ -996,6 +996,9 @@ fi
 
 
 %changelog
+* Wed Dec 12 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Added mangler module to the build
+  - Tidied up make commands used to build and install
 * Sun Dec 9 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Updated rel to dev7
   - Added avp, sca, and xprint modules to the build
