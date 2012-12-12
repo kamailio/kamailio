@@ -1,5 +1,5 @@
 %define name    kamailio
-%define ver     3.3.2
+%define ver     3.3.3
 %define rel     0%{dist}
 
 
@@ -944,6 +944,8 @@ fi
 
 
 %changelog
+* Wed Dec 12 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated ver to 3.3.3 in preparation for next release
 * Fri Oct 20 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Set ownership of /etc/kamailio to kamailio.kamailio
   - Added installation of auth.7.gz for Fedora now that manpages are built for
