@@ -944,7 +944,7 @@ fi
 
 %files xhttp-pi
 %defattr(-,root,root)
-#%doc %{_docdir}/kamailio/modules/README.xhttp_pi
+%doc %{_docdir}/kamailio/modules/README.xhttp_pi
 %{_libdir}/kamailio/modules/xhttp_pi.so
 %dir %{_datadir}/kamailio/xhttp_pi
 %{_datadir}/kamailio/xhttp_pi/*
@@ -1000,6 +1000,7 @@ fi
 %changelog
 * Thu Dec 13 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added xhttp_pi framework examples to the installation
+  - Added xhttp_pi README to the installation
 * Wed Dec 12 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added mangler module to the build
   - Tidied up make commands used to build and install
