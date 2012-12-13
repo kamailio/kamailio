@@ -2113,7 +2113,7 @@ static int
 child_init(int rank)
 {
     // initialize the connection to mediaproxy if needed
-    if (!mediaproxy_disabled)
+    if (!mediaproxy_disabled && rank > PROC_MAIN)
         mediaproxy_connect();
 
     return 0;
