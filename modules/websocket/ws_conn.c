@@ -316,6 +316,9 @@ void wsconn_close_now(ws_connection_t *wsc)
 {
 	struct tcp_connection *con = tcpconn_get(wsc->id, 0, 0, 0, 0);
 
+	if (wsconn_rm(wsc, WSCONN_EVENTROUTE_YES) < 0)
+		LM_ERR("removing WebSocket connection\n");
+
 	if (con == NULL)
 	{
 		LM_ERR("getting TCP/TLS connection\n");
@@ -325,9 +328,6 @@ void wsconn_close_now(ws_connection_t *wsc)
 	con->send_flags.f |= SND_F_CON_CLOSE;
 	con->state = S_CONN_BAD;
 	con->timeout = get_ticks_raw();
-
-	if (wsconn_rm(wsc, WSCONN_EVENTROUTE_YES) < 0)
-		LM_ERR("removing WebSocket connection\n");
 }
 
 ws_connection_t *wsconn_get(int id)
