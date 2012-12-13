@@ -1592,7 +1592,11 @@ static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
 		rpc->fault(c, 500, "Invalid parameters");
 		return;
 	}
-	rpc->scan(c, "*S", &rpc_extra_hdrs);
+	if(rpc->scan(c, "*S", &rpc_extra_hdrs)<1)
+	{
+		rpc_extra_hdrs.s = NULL;
+		rpc_extra_hdrs.len = 0;
+	}
 
 	dlg = dlg_lookup(h_entry, h_id);
 	if(dlg==NULL) {
@@ -1631,8 +1635,18 @@ static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
 	str from = {NULL,0};
 	str to = {NULL,0};
 	str op = {NULL,0};
+	int n;
 
-	if (rpc->scan(c, "SS*S", &from, &to, &op) < 2) return;
+	n = rpc->scan(c, "SS", &from, &to);
+	if (n< 2) {
+		LM_ERR("unable to read the parameters (%d)\n", n);
+		rpc->fault(c, 500, "Invalid parameters");
+		return;
+	}
+	if(rpc->scan(c, "*S", &op)<1) {
+		op.s = NULL;
+		op.len = 0;
+	}
 
 	dlg_bridge(&from, &to, &op);
 }
