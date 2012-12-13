@@ -1618,14 +1618,24 @@ static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
 	unsigned int h_entry, h_id;
 	dlg_cell_t * dlg = NULL;
 	str rpc_extra_hdrs = {NULL,0};
+	int n;
 
-	if (rpc->scan(c, "dd*S", &h_entry, &h_id, &rpc_extra_hdrs) < 2) return;
+	n = rpc->scan(c, "dd", &h_entry, &h_id);
+	if (n < 2) {
+		LM_ERR("unable to read the parameters (%d)\n", n);
+		rpc->fault(c, 500, "Invalid parameters");
+		return;
+	}
+	rpc->scan(c, "*S", &rpc_extra_hdrs);
 
 	dlg = dlg_lookup(h_entry, h_id);
-	if(dlg){
-		dlg_bye_all(dlg, (rpc_extra_hdrs.len>0)?&rpc_extra_hdrs:NULL);
-		dlg_release(dlg);
+	if(dlg==NULL) {
+		rpc->fault(c, 404, "Dialog not found");
+		return;
 	}
+
+	dlg_bye_all(dlg, (rpc_extra_hdrs.len>0)?&rpc_extra_hdrs:NULL);
+	dlg_release(dlg);
 }
 static void rpc_profile_get_size(rpc_t *rpc, void *c) {
 	str profile_name = {NULL,0};
