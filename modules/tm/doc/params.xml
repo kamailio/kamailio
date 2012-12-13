@@ -742,7 +742,7 @@ onreply_route["stateless_replies"] {
 	<section>
 		<title><varname>contacts_avp</varname> (string)</title>
 		<para>
-		  This is the name or Id of an AVP
+		This is the name of an XAVP
                 that <function>t_load_contacts()</function> function uses to
                 store contacts of the destination set and that
                 <function>t_next_contacts()</function> function uses to
@@ -759,7 +759,33 @@ onreply_route["stateless_replies"] {
 		<title>Set <varname>contacts_avp</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("tm", "contacts_avp", "$avp(i:25)")
+modparam("tm", "contacts_avp", "tm_contacts")
+...
+</programlisting>
+		</example>
+	</section>
+	
+	<section>
+		<title><varname>contact_flows_avp</varname> (string)</title>
+		<para>
+		This is the name of an XAVP
+                that <function>t_next_contacts()</function> function uses to
+                store contacts (if any) that it skipped, because they
+		contained same +sip.instance value than some other contact,
+                and that <function>t_next_contact_flows()</function>
+		function uses to restore those contacts.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "NULL".  This parameter MUST be
+			set if variable contacts_avp is set.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>contact_flows_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "contact_flows_avp", "tm_contact_flows")
 ...
 </programlisting>
 		</example>

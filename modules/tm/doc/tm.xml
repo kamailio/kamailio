@@ -206,10 +206,11 @@ route {
 		should be tried in parallel, but only after D finishes. Branch A
 		should be tried after B and C finished, because its q value (the
 		default) is the lowest of all. To do that, we need to introduce two
-		new functions into our example and one tm module parameter:
+		new functions into our example and two tm module parameters:
 	  </para>
 	  <programlisting format="linespecific">
 modparam("tm", "contacts_avp", "tm_contacts");
+modparam("tm", "contact_flows_avp", "tm_contact_flows");
 
 route {
   seturi("sip:a@example.com");
@@ -225,7 +226,7 @@ route {
 }	 
 </programlisting>
 	  <para>
-		First of all, the tm module parameter is mandatory if the two new
+		First of all, the tm module parameters are mandatory if the two new
 		functions are used. Function <function>t_load_contacts()</function>
 		takes all branches from the destination set, sorts them according to
 		their q values and stores them in the AVP configured in the modparam.
