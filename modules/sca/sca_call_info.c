@@ -1266,6 +1266,14 @@ done:
 	pkg_free( app_uri_aor.s );
     }
 
+    if ( rc == 1 ) {
+	if ( sca_notify_call_info_subscribers( sca, from_aor ) < 0 ) {
+	    LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on "
+		    "200 OK reply to INVITE", STR_FMT( from_aor ));
+	    rc = -1;
+	}
+    }
+
     return( rc );
 }
 
