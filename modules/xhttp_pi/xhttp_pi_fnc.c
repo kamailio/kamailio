@@ -2707,7 +2707,7 @@ int ph_run_pi_cmd(pi_ctx_t* ctx)
 				command->q_keys,
 				command->c_keys_size,
 				command->q_keys_size,
-				command->o_keys?*command->o_keys:0, 0) < 0){
+				command->o_keys?*command->o_keys:0, &res) < 0){
 				XHTTP_PI_COMPLETE_REPLY(ctx,
 					"Error while querying database.");
 				goto done;
