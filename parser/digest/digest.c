@@ -239,7 +239,7 @@ int get_authorized_cred(struct hdr_field* _f, struct hdr_field** _h)
 int find_credentials(struct sip_msg* msg, str* realm,
 		     hdr_types_t hftype, struct hdr_field** hdr)
 {
-	struct hdr_field** hook, *ptr, *prev;
+	struct hdr_field** hook, *ptr;
 	hdr_flags_t hdr_flags;
 	int res;
 	str* r;
@@ -297,15 +297,18 @@ int find_credentials(struct sip_msg* msg, str* realm,
 			}
 		}
 
-		prev = ptr;
 		if (parse_headers(msg, hdr_flags, 1) == -1) {
 			LOG(L_ERR, "auth:find_credentials: Error while parsing headers\n");
 			return -4;
 		} else {
-			if (prev != msg->last_header) {
-				if (msg->last_header->type == hftype) ptr = msg->last_header;
-				else break;
-			} else break;
+			ptr = ptr->next;
+			while (ptr) {
+				if (ptr->type == hftype)
+					break;
+				ptr = ptr->next;
+			}
+			if (!ptr)
+				break;
 		}
 	}
 	
