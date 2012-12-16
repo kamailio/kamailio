@@ -1576,7 +1576,12 @@ struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port, ch
 			}
 			srv_name.s=tmp_srv;
 			srv_name.len=len;
-			if ((he=dns_srv_get_he(&srv_name, port, dns_flags))!=0) {
+			#ifdef USE_DNS_CACHE
+			he=dns_srv_get_he(&srv_name, port, dns_flags);
+			#else
+			he=srv_sip_resolvehost(&srv_name, 0, port, proto, 1, 0);
+			#endif
+			if (he!=0) {
 				return he;
 			}
 		}
