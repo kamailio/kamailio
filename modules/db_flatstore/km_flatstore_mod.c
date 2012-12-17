@@ -30,8 +30,8 @@
 #include "../../sr_module.h"
 #include "../../mem/shm_mem.h"
 #include "../../lib/srdb1/db.h"
+#include "../../rpc_lookup.h"
 #include "km_flatstore.h"
-#include "km_flat_mi.h"
 #include "km_flatstore_mod.h"
 #include "flatstore_mod.h"
 
@@ -74,14 +74,7 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-
-/*
- * Exported parameters
- */
-static mi_export_t mi_cmds[] = {
-	{ MI_FLAT_ROTATE, mi_flat_rotate_cmd,   MI_NO_INPUT_FLAG,  0,  0 },
-	{ 0, 0, 0, 0, 0}
-};
+static rpc_export_t k_rpc_methods[];
 
 struct kam_module_exports km_exports = {
 	"db_flatstore",
@@ -89,7 +82,7 @@ struct kam_module_exports km_exports = {
 	cmds,
 	params,      /*  module parameters */
 	0,           /* exported statistics */
-	mi_cmds,     /* exported MI functions */
+	NULL,       /* exported MI functions */
 	0,           /* exported pseudo-variables */
 	0,           /* extra processes */
 	km_mod_init,    /* module initialization function */
@@ -101,9 +94,8 @@ struct kam_module_exports km_exports = {
 
 int km_mod_init(void)
 {
-	if(register_mi_mod(km_exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
+	if (rpc_register_array(k_rpc_methods)!=0) {
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -155,4 +147,21 @@ int db_flat_bind_api(db_func_t *dbb)
 
 	return 0;
 }
+
+/* rpc function documentation */
+static const char *rpc_k_rotate_doc[2] = {
+	"Close and reopen flatrotate files during log rotation.", 0
+};
+
+/* rpc function implementations */
+static void rpc_k_rotate(rpc_t *rpc, void *c)
+{
+	*km_flat_rotate = time(0);
+	return;
+}
+
+static rpc_export_t k_rpc_methods[] = {
+	{"flatstore.k_rotate", rpc_k_rotate, rpc_k_rotate_doc, 0},
+	{0, 0, 0, 0},
+};
 
