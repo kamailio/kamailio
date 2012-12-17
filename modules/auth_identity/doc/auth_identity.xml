@@ -9,8 +9,9 @@
 	]
 >
 
-<section id="auth_identity" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="auth_identity" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>The Auth_identity module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Gergely</firstname>
@@ -25,7 +26,7 @@
 	    <year>2007</year>
 	    <holder>Iptel.org</holder>
 	</copyright>
-    </sectioninfo>
+    </bookinfo>
 
     <title>SIP Authenticated Identity Module</title>
 
@@ -221,4 +222,4 @@ route[VERIFY]
 ...
 ]]></programlisting>
 	</section>
-</section>
+</book>
