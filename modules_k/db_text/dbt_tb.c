@@ -452,7 +452,7 @@ int dbt_table_check_row(dbt_table_p _dtp, dbt_row_p _drp)
 		if(!_drp->fields[i].nul 
 				&& dbt_is_neq_type(_dtp->colv[i]->type, _drp->fields[i].type))
 		{
-			LM_DBG("incompatible types - field %d [%d/%d]\n",i,
+			LM_ERR("incompatible types - field %d [%d/%d]\n",i,
 					_dtp->colv[i]->type, _drp->fields[i].type);
 			return -1;
 		}
@@ -471,7 +471,7 @@ int dbt_table_check_row(dbt_table_p _dtp, dbt_row_p _drp)
 			continue;
 		}
 
-		LM_DBG("null value not allowed - field %d\n",i);
+		LM_ERR("null value not allowed - field %d\n",i);
 		return -1;
 	}
 	
