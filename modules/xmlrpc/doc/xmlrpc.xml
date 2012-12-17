@@ -2,8 +2,9 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="xmlrpc" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="xmlrpc" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>The XMLRPC Module</title>
 	<authorgroup>
 		<author>
 		<firstname>Jan</firstname>
@@ -18,7 +19,7 @@
 		<year>2005</year>
 		<holder>iptelorg GmbH</holder>
 	</copyright>
-	</sectioninfo>
+	</bookinfo>
 
 
 	<section id="xmlrpc.design">
@@ -758,4 +759,4 @@ route[XMLRPC]{
 	<xi:include href="params.xml"/>
 	<xi:include href="functions.xml"/>
 
-</section>
+</book>
