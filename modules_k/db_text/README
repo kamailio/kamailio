@@ -6,11 +6,17 @@ Daniel-Constantin Mierla
 
 Edited by
 
+Ovidiu Sas
+
+   <osas@voipembedded.com>
+
+Edited by
+
 Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2003, 2004 FhG FOKUS
+   Copyright © 2003, 2004 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -32,7 +38,10 @@ Daniel-Constantin Mierla
 
               3.1. db_mode (integer)
 
-        4. Functions
+        4. Exported RPC Functions
+
+              4.1. db_text.dump
+
         5. Installation and Running
 
               5.1. Using dbtext with basic Kamailio configuration
@@ -70,7 +79,10 @@ Chapter 1. Admin Guide
 
         3.1. db_mode (integer)
 
-   4. Functions
+   4. Exported RPC Functions
+
+        4.1. db_text.dump
+
    5. Installation and Running
 
         5.1. Using dbtext with basic Kamailio configuration
@@ -107,10 +119,10 @@ Chapter 1. Admin Guide
      * a database is represented by a directory in the local file system.
        NOTE: when you use dbtext in Kamailio, the database URL for modules
        must be the path to the directory where the table-files are
-       located, prefixed by "text://", e.g., "text:///var/dbtext/ser". If
-       there is no "/" after "text://" then "CFG_DIR/" is inserted at the
+       located, prefixed by “text://”, e.g., “text:///var/dbtext/ser”. If
+       there is no “/” after “text://” then “CFG_DIR/” is inserted at the
        beginning of the database path. So, either you provide an absolute
-       path to database directory or a relative one to "CFG_DIR"
+       path to database directory or a relative one to “CFG_DIR”
        directory.
      * a table is represented by a text file inside database directory.
 
@@ -121,7 +133,7 @@ Chapter 1. Admin Guide
      * the name of column must not include white spaces.
      * the format of a column definition is: name(type,attr).
      * between two column definitions must be a white space, e.g.,
-       "first_name(str) last_name(str)".
+       “first_name(str) last_name(str)”.
      * the type of a column can be:
           + int - integer numbers.
           + double - real numbers with two decimals.
@@ -133,11 +145,11 @@ Chapter 1. Admin Guide
           + null - accept null values in column fields.
           + if no attribute is set, the fields of the column cannot have
             null value.
-     * each other line is a row with data. The line ends with "\n".
-     * the fields are separated by ":".
+     * each other line is a row with data. The line ends with “\n”.
+     * the fields are separated by “:”.
      * no value between two ':' (or between ':' and start/end of a row)
-       means "null" value.
-     * next characters must be escaped in strings: "\n", "\r", "\t", ":".
+       means “null” value.
+     * next characters must be escaped in strings: “\n”, “\r”, “\t”, “:”.
      * 0 -- the zero value must be escaped too.
 
    Example 1.1. Sample of a dbtext table
@@ -195,16 +207,27 @@ suser:supasswd:xxx:alpha.org:xxx
    table is requested whether the corresponding file on disk has changed,
    and if yes, will re-load table from file.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.4. Set db_mode parameter
 ...
 modparam("db_text", "db_mode", 1)
 ...
 
-4. Functions
+4. Exported RPC Functions
 
-   None.
+   4.1. db_text.dump
+
+4.1.  db_text.dump
+
+   Write back to hard drive modified tables.
+
+   Name: db_text.dump
+
+   Parameters: none
+
+   RPC Command Format:
+        kamcmd db_text.dump
 
 5. Installation and Running
 
@@ -214,10 +237,10 @@ modparam("db_text", "db_mode", 1)
 
    REMINDER: when you use text in Kamailio, the database URL for modules
    must be the path to the directory where the table-files are located,
-   prefixed by "text://", e.g., "text:///var/dbtext/ser". If there is no
-   "/" after "text://" then "CFG_DIR/" is inserted at the beginning of the
+   prefixed by “text://”, e.g., “text:///var/dbtext/ser”. If there is no
+   “/” after “text://” then “CFG_DIR/” is inserted at the beginning of the
    database path. So, either you provide an absolute path to database
-   directory or a relative one to "CFG_DIR" directory.
+   directory or a relative one to “CFG_DIR” directory.
 
    Example 1.5. Load the dbtext module
 ...
@@ -239,17 +262,17 @@ modparam("module_name", "db_url", "text:///path/to/dbtext/database")
 
    Example 1.6. Definition of 'subscriber' table (one line)
 ...
-username(str) domain(str) password(str) first_name(str) last_name(str) phone(str
-) email_address(str) datetime_created(int) datetime_modified(int) confirmation(s
-tr) flag(str) sendnotification(str) greeting(str) ha1(str) ha1b(str) perms(str)
-allow_find(str) timezone(str,null) rpid(str,null)
+username(str) domain(str) password(str) first_name(str) last_name(str) phone(st
+r) email_address(str) datetime_created(int) datetime_modified(int) confirmation
+(str) flag(str) sendnotification(str) greeting(str) ha1(str) ha1b(str) perms(st
+r) allow_find(str) timezone(str,null) rpid(str,null)
 ...
 
    Example 1.7. Definition of 'location' and 'aliases' tables (one line)
 ...
-username(str) domain(str,null) contact(str,null) received(str) expires(int,null)
- q(double,null) callid(str,null) cseq(int,null) last_modified(str) flags(int) us
-er_agent(str) socket(str)
+username(str) domain(str,null) contact(str,null) received(str) expires(int,null
+) q(double,null) callid(str,null) cseq(int,null) last_modified(str) flags(int)
+user_agent(str) socket(str)
 ...
 
    Example 1.8. Definition of 'version' table and sample records

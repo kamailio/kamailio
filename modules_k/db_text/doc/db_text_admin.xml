@@ -266,10 +266,19 @@ modparam("db_text", "db_mode", 1)
 		</section>
 	</section>
 	<section>
-	<title>Functions</title>
-		<para>
-			<emphasis>None</emphasis>.
-	   	</para>
+	<title>Exported RPC Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">db_text.dump</function>
+		</title>
+		<para>Write back to hard drive modified tables.</para>
+		<para>Name: <emphasis>db_text.dump</emphasis></para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+	kamcmd db_text.dump
+		</programlisting>
+	</section>
 	</section>
 	<section>
 		<title>Installation and Running</title>
