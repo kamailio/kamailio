@@ -58,7 +58,7 @@
 	<listitem>
 	<para>
 	routing info (destinations, rules, groups) are stored in a database and
-	loaded into memory at start up time; reload at runtime via MI command
+	loaded into memory at start up time; reload at runtime via RPC command
 	</para>
 	</listitem>
 
@@ -1305,24 +1305,16 @@ if (is_from_gw("3","1") {
 
 
 <section>
-	<title>MI Commands</title>
+	<title>RPC Commands</title>
 	<section>
 		<title>
-		<function moreinfo="none">dr_reload</function>
+		<function moreinfo="none">drouting.reload</function>
 		</title>
-		<para>
-		Command to reload routing rules from database.
-		</para>
-		<para>
-			It takes no parameter.
-		</para>
-
-		<para>
-		MI FIFO Command Format:
-		</para>
+		<para>Command to reload routing rules from database.</para>
+		<para>It takes no parameter.</para>
+		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		:dr_reload:fifo_reply
-		_empty_line_
+	kamcmd drouting.reload
 		</programlisting>
 	</section>
 </section>
