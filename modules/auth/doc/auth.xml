@@ -9,8 +9,9 @@
 	]
 >
 
-<section id="auth" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="auth" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>The Auth Module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Jan</firstname>
@@ -38,9 +39,9 @@
 	    <holder>FhG FOKUS</holder>
 	</copyright>
 
-    </sectioninfo>
+	<toc></toc>
+    </bookinfo>
 
-    <title>Auth Module</title>
     
     <section id="auth.overview">
 	<title>Overview</title>
@@ -70,4 +71,4 @@
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
 
-</section>
+</book>
