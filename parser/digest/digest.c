@@ -303,12 +303,7 @@ int find_credentials(struct sip_msg* msg, str* realm,
 			LOG(L_ERR, "auth:find_credentials: Error while parsing headers\n");
 			return -4;
 		} else {
-			ptr = ptr->next;
-			while (ptr) {
-				if (ptr->type == hftype)
-					break;
-				ptr = ptr->next;
-			}
+			ptr = next_sibling_hdr(ptr);
 			if (!ptr)
 				break;
 		}
