@@ -1,3 +1,310 @@
+===================== 2012-12-18 Version 3.3.3 Released =====================
+
+===================== Changes Since Version 3.3.2 ===========================
+
+commit bbe8d44acc43038dac4c538067c7fe9917ca3e61
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 18 15:56:55 2012 +0100
+
+    Makefile.defs: version set to 3.3.3
+
+commit a2d326d47b9b7b3d3b68238e38852b0b742c265a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 18 15:53:45 2012 +0100
+
+    pkg: version set to 3.3.3 to rpm specs
+
+commit bbc0e8c5d4da01a16b932952abb32e92f2422ac2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 18 15:52:03 2012 +0100
+
+    pkg: version set to 3.3.3 in deb specs
+
+commit e2d68fd5a6d99c010b91f5730701bb705c1791b3
+Author: Elena-Ramona Modroiu <ramona@asipto.com>
+Date:   Sat Dec 8 14:19:30 2012 +0100
+
+    dispatcher(k): use the right pointer to rpc context
+    (cherry picked from commit 6904d8c80b2089d01a69c3c0217c76c8e0132bac)
+
+commit 5e6bc230d385f489284b4833370badb3facb492f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 19 10:45:41 2012 +0100
+
+    core: handle '\r' as end of included file name
+    
+    - reported by Pirjo Ahvenainen
+    (cherry picked from commit dc0bc9de9528e80cd8bc61201ce82db1a785baf4)
+
+commit 42f2244abefcb157249e2311914a6d0f47396b5e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 9 11:03:46 2012 +0100
+
+    core: tcp - proper handling of '\n-' sequence for detecting end of MSRP frame
+    
+    - in some cases it could go in wrong reading MSRP state
+    - reported by Gavin Llewellyn
+    (cherry picked from commit b255c406ba09ff229361a3bc14cc1c9fd076b52e)
+
+commit 2200f31149fb994e4aaaa78d4ddce14ad0939f29
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 23 16:17:24 2012 +0200
+
+    core: print modparam type id in log when parameter not found
+    (cherry picked from commit 22dd8d6524a95b8bf0246adca99f0049c16fb76f)
+
+commit 3d7623ecb9533c7f66053e871c13b50ecce59855
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 18 09:54:53 2012 +0200
+
+    dialog(k): run event route after setting cfg dlg vars
+    
+    - in this way they (e.g., $DLG_lifetime) should be accessible in event
+      route
+    (cherry picked from commit 2cdded28d9968a0b78f5ec8329ae6983d9ea77a9)
+
+commit 8b703e0e8b5c01ac315819b12bdbe35a657bb5f1
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Mon Dec 17 11:56:24 2012 -0500
+
+    parser/digest: use next_sibling_hdr() instead of hand-rolling it
+
+commit 74460a7e75fe6c8be1dee475b93e1765f5c72a3e
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Sun Dec 16 15:06:32 2012 -0500
+
+    parser/digest: Fix hunting for Auth header in rare cases
+    
+    Fix a bug where find_credentials() would fail to find the correct
+    Auth header when multiple headers are present, the one being looked
+    for isn't the first and the full message had been parsed already.
+
+commit dedbc8cfbada44ee394ea60e49c5cd54b411dc63
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Thu Dec 13 13:57:46 2012 +0200
+
+    modules/mediaproxy: restrict opening of dispatcher connection
+    
+    - restrict opening of dispatcher connection to sub-processes (patch
+      provided by Emil Kroymann)
+    (cherry picked from commit 3198beccbc2ce350bb0af2a1cedec72ccb7c9277)
+
+commit 7d822fcbd1f26b5da5a45abc2c7bb7aae72cb487
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 14 00:43:04 2012 +0100
+
+    dialog(k): reset default value for optional parameter
+    
+    - some rpc transports set a static string for missing optional
+      parameters, causing invalid value
+    - dlg.bridge_dlg proper handling of optional parameters return code
+    (cherry picked from commit 7fc74e46a5d5b4e2b0cbbe5bdc1627e672867164)
+
+commit ccb3a52a11394dc88010aa41465d062e8490564a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 14 00:20:08 2012 +0100
+
+    dialog(k): fixed dlg.end_dlg rpc command
+    
+    - missing of the optional paramter causes negative return code
+    (cherry picked from commit 840d23197e91c70f7b02072e144ec396f5f8f386)
+
+commit 2f73a35b5fc2b3cc66f6a1a860ff6c6e47f9963c
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Dec 12 17:44:24 2012 +0000
+
+    pkg/kamailio/(centos|fedora): Updated .spec in preparation for 3.3.3 release
+
+commit ff0417d4957daffff3a0ca063f07159908058515
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Wed Dec 12 15:24:38 2012 +0000
+
+    parser/sdp: Fixed double free
+    
+    - Found and fixed by Hugh Waite @ Crocodile RCS
+    (cherry picked from commit 8ec30688617a260d478402e59ef465c69e8247d9)
+
+commit 835db0ecde6f401bd77b55e3499fa7cfe452b7ea
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 25 21:54:32 2012 +0100
+
+    dialog(k): safety check for callid parameter in mi commands
+    
+    - if not provided properly, it may result in crash
+    - reported by Ricardo Martinez
+    (cherry picked from commit 8acb59ee4de31ab76763a021acaf7b5a13e02f23)
+
+commit a91b2bfedba95bfff756ce35f192afc657050c83
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 21 17:22:31 2012 +0100
+
+    lib/kcore: reset time value for faked msg
+    
+    - reported by Uri Shacked
+    (cherry picked from commit a708dcb5ad90ec517db481fea0570ec53863b471)
+
+commit bab07e07858464d50d310bbb52431a0b171ee771
+Author: Timo TerÃ¤s <timo.teras@iki.fi>
+Date:   Thu Nov 15 16:11:41 2012 +0200
+
+    modules_k/db_sqlite: fix crash with computed fields in custom queries
+    
+    Computed fields do not have decltype available, so guess the proper
+    field type based on the result type of the first row. This does not
+    work if the first row has null type as result, but is the best we can
+    do easily and fixes gives right result in most cases.
+    
+    Reported-by: Pedro Antonio Vico Solano <pvsolano@amper.es>
+    (cherry picked from commit 09205865f98136e0354539f09f4961ca016a915b)
+
+commit 8198f2dcc92127bc15ac13f71372f016b8c982d9
+Author: Timo TerÃ¤s <timo.teras@iki.fi>
+Date:   Wed Oct 17 09:00:14 2012 +0300
+
+    modules_k/db_sqlite: fix memory leak in sqlops query
+    
+    Seems that most other database drivers release the database
+    resource only at free_result time, which I some how missed.
+    
+    Since we are doing a deep copy in store_result(), we can
+    just release the sqlite resources immediately raw_query().
+    
+    Reported-by: Pedro Antonio Vico Solano <pvsolano@amper.es>
+    (cherry picked from commit ecf95eb0ada8bfacb93af7b82f39347c841229e4)
+
+commit 78d4b145c57e5e93b70f7441ec2c7e63a2f9f2c0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 9 08:41:55 2012 +0100
+
+    dialog(k): use proper scan string for optional headers parameter in rpc commands
+    
+    - credits to Kristofer Signer for report and troubleshooting
+    (cherry picked from commit d5120187eb41e709c840b3cfbb0dc1803f61b036)
+
+commit f860ed61a19a1119ff6612fa6b3ebdfa6dc2f0bd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 9 08:07:42 2012 +0100
+
+    Makefile.defs: arm compiler flags update
+    
+    - patch by Matthias Klose <doko@debian.org>,
+      http://bugs.debian.org/cgi-bin/bugreport.cgi?msg=5;bug=690388
+    (cherry picked from commit e916a4680d37f481167770fff27a710088cb5d3d)
+
+commit 858e4148f222e9f448d54c6bee45a53a8def7062
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Wed Nov 7 09:12:33 2012 -0500
+
+    modules_k/siputils: Fix memory leak in uri_param() function
+
+commit 020acff35f8e9dfa62aba8678a781a0f7bbb110b
+Author: Klaus Darilion <klaus.mailinglists@pernau.at>
+Date:   Wed Nov 7 13:55:55 2012 +0000
+
+    allow freeing of NULL pointer to behave like standard free() function
+    
+    The memory functions provided to openssl needs to behave like standard
+    memory functions, i.e. free(). Therefore, ser_free must accept NULL
+    pointers, see: http://openssl.6102.n7.nabble.com/Custom-free-routine-is-invoked-with-NULL-argument-in-openssl-1-0-1-td25937.html
+    As shm_free() aborts on null pointers, we have to check for null pointer
+    here in the wrapper function.
+    (cherry picked from commit 7c37f8d4dc311c64c12e0b03b5e312892f9d886c)
+
+commit 0575f951e3b99e1524347a9c3ebd337fe8b1dcc3
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Thu Nov 1 21:00:05 2012 +0100
+
+    Revert "New Option: "x" for automatic bridging between IPv4 and IPv6."
+    (Not a Bug-Fix)
+    
+    This reverts commit 2750e03d4977d4a8f59ca0d2d0f59e1caec96b2d.
+
+commit 97d882a722d933f509565b7a2c578cac8b3ea5f9
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Thu Nov 1 20:59:40 2012 +0100
+
+    Revert "Minor bug-fix: Need to update length."
+    (Not a Bug-Fix)
+    
+    This reverts commit 942229d809e715ae330894b20d099f38b616c044.
+
+commit ea5608548508f72f765e6f9590b1e1e2a23fe665
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Tue Sep 18 20:42:55 2012 +0200
+
+    Minor bug-fix: Need to update length.
+
+commit cd1c367218cdcd5f0867af2234f6080e8e6622a6
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Mon Sep 17 17:25:38 2012 +0200
+
+    New Option: "x" for automatic bridging between IPv4 and IPv6.
+    Based on the following assumption: "i" is the IPv4 interface
+    and "e" is the IPv6 interface on the RTPProxy (tested with both
+    RTPProxy and Sipwise's ngcp-mediaproxy-ng).
+    
+    Mechanism is as follows:
+    - IP in SDP is IPv4: Do bridging "ie"
+    - IP in SDP is IPv6: Do bridging "ei"
+    
+    Not a big deal, but makes the configuration much more easier.
+
+commit 890f785bc05f137af624306f51874c17bef10d30
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 25 09:25:17 2012 +0200
+
+    core: use cloned value to parse pv name for caching
+    
+    - patch by Hugh Waite
+    (cherry picked from commit 22f9a675863f85d934afa5e7c09061c66497042b)
+
+commit 66d81cb1a5c11c41a1b5a21a33ab750159403af6
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Sat Oct 20 04:06:17 2012 +0100
+
+    pkg/kamailio/fedora/16: merged latest fixes to .spec from master into 3.3 branch
+
+commit 1e8b69569f810aa7e91c2b0f12948db82fd2d145
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Sat Oct 20 01:23:51 2012 +0100
+
+    Makefiles: Updated Makefiles to use db2x_docbook2man when docbook2x-man is not installed
+    
+    - db2x_docbook2man is what Fedora contains
+    (cherry picked from commit c9088190cf29b7d561ca2bded6266b3e21d51d8b)
+
+commit d1a8ba7f07c19bece6423b6a0cef63d7b284b5cd
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Sat Oct 20 00:29:07 2012 +0100
+
+    pkg/kamailio/fedora/16: Updated .spec to set ownership of /etc/kamailio to kamailio.kamailio
+    
+    - Means that file-based DB (e.g. sqlite) files kept in /etc/kamailio can be
+      written to by processes (including kamailio itself) run by the kamailio user.
+    (cherry picked from commit eb45b8ccb4d859e7726889a4fae50941bd6c8e43)
+
+commit c1e99154fb6ce8ad0edaab27084219f652f12c8b
+Author: Claudio Furrer <elcaio@gmail.com>
+Date:   Wed Oct 17 14:38:52 2012 -0300
+
+    pkg/gentoo: Added ebuild for v3.3.2
+    (cherry picked from commit 131e70db763aec71670466cc399e088bf96561f7)
+
+commit b93559ffd4aea7eeb39029ceb85a4582fe3e0c38
+Author: Claudio Furrer <elcaio@gmail.com>
+Date:   Fri Oct 5 03:32:16 2012 -0300
+
+    pkg/gentoo: version bump, added ebuild for v3.3.1
+    (cherry picked from commit 83e31eaadd549132103899a201cdf100ab669b6e)
+
+commit 94f198821628de8b2f44dc21a8f6cecb2d87ed84
+Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
+Date:   Tue Oct 16 21:24:43 2012 +0100
+
+    pkg/kamailio/(centos|fedora): Updated Boxgrinder appliances to match latest definition
+    
+    - also fixed typo in README
+
 ===================== 2012-10-16 Version 3.3.2 Released =====================
 
 ===================== Changes Since Version 3.3.1 ===========================
