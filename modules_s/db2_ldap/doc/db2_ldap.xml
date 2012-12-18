@@ -21,12 +21,12 @@
 
     </sectioninfo>
 
-    <title>ldap module</title>
+    <title>db2_ldap module</title>
 
     <section id="ldap.overview">
 		<title>Overview</title>
 		<para>
-		The LDAP module is database driver, i.e. it implements DB API functions.
+		The LDAP module is database driver, i.e. it implements DBv2 API functions.
 		The goal is map database query defined by table, matching fields and result fields
 		to LDAP search in sub-tree defined by root, object class, attributes and
 		pass it to the <emphasis>OpenLDAP</emphasis> which communicates with the LDAP server.

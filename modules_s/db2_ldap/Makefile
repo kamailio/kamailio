@@ -4,7 +4,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=ldap.so
+NAME=db2_ldap.so
 
 #DEFS += -DLD_TEST
 

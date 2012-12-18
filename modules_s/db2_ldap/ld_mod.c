@@ -90,7 +90,7 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-	"ldap",
+	"db2_ldap",
 	cmds,
 	0,              /* RPC method */
 	params,         /* module parameters */

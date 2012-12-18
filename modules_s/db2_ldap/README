@@ -1,10 +1,10 @@
-1. ldap module
+1. db2_ldap module
 
 Jan Janak
 
    Iptel.org
 
-   Copyright Â© 2008 Iptel.org GmBH
+   Copyright © 2008 Iptel.org GmBH
      __________________________________________________________________
 
    1.1. Overview
@@ -18,7 +18,7 @@ Jan Janak
 
 1.1. Overview
 
-   The LDAP module is database driver, i.e. it implements DB API
+   The LDAP module is database driver, i.e. it implements DBv2 API
    functions. The goal is map database query defined by table, matching
    fields and result fields to LDAP search in sub-tree defined by root,
    object class, attributes and pass it to the OpenLDAP which communicates
