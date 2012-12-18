@@ -47,7 +47,7 @@
 
 MODULE_VERSION
 
-#define MODULE_NAME "db_ops"
+#define MODULE_NAME "db2_ops"
 #define MODULE_NAME2 "db"
 
 static char* db_url = DEFAULT_DB_URL;

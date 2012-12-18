@@ -1,10 +1,10 @@
-1. db_ops module
+1. db2_ops module
 
 Tomas Mandys
 
    Iptel.org
 
-   Copyright Â© 2007 Tomas Mandys
+   Copyright © 2007 Tomas Mandys
      __________________________________________________________________
 
    1.1. Overview
@@ -123,7 +123,7 @@ tra_ops ]
 
 1.5. Functions
 
-1.5.1.  db_query(query | query_id [,handle] )
+1.5.1. db_query(query | query_id [,handle] )
 
    Executes query and in case of SELECT returns result via handle, seeks
    the first record and returns TRUE if table is not empty. The result is
@@ -142,7 +142,7 @@ tra_ops ]
 
         }
 
-1.5.2.  db_close(handle)
+1.5.2. db_close(handle)
 
    Close table that has been opened using db_query. Note all close after
    script processing automatically.
@@ -152,7 +152,7 @@ tra_ops ]
         db_close(my_handle);
         ...
 
-1.5.3.  db_first(handle)
+1.5.3. db_first(handle)
 
    Returns TRUE if table is not empty. Note that rewind might not be
    supported by particular db driver.
@@ -164,7 +164,7 @@ tra_ops ]
         }
         ...
 
-1.5.4.  db_next(handle)
+1.5.4. db_next(handle)
 
    Moves to the next record and returns TRUE if not EOF.
 
@@ -175,7 +175,7 @@ tra_ops ]
         }
         ...
 
-1.5.5.  db_seek(handle, row_no)
+1.5.5. db_seek(handle, row_no)
 
    Seeks at the row no (origin is zero) and Returns TRUE in case of
    success. Backward seek might not be supported by db driver.
@@ -187,7 +187,7 @@ tra_ops ]
         }
         ...
 
-1.5.6.  db_foreach(handle, route)
+1.5.6. db_foreach(handle, route)
 
    Call specific route for each row, loop is interrupted if route returns
    code <= 0. Return code of the last route call is returned as result of
@@ -204,7 +204,7 @@ tra_ops ]
         }
         ...
 
-1.5.7.  db_proper()
+1.5.7. db_proper()
 
    Hack which enables using db_ops queries in failure route. Call it at
    the beginning of failure_route block.
@@ -216,7 +216,7 @@ tra_ops ]
         ....
         }
 
-1.5.8.  @db.query.query_id
+1.5.8. @db.query.query_id
 
    Returns value of the first row and the first field.
 
@@ -225,7 +225,7 @@ tra_ops ]
         ....
         }
 
-1.5.9.  @db.query.query_id.count
+1.5.9. @db.query.query_id.count
 
    Returns number of rows in select query.
 
@@ -234,7 +234,7 @@ tra_ops ]
         ....
         }
 
-1.5.10.  @db.query.query_id.is_empty
+1.5.10. @db.query.query_id.is_empty
 
    Returns 1 if select query is empty.
 
@@ -243,7 +243,7 @@ tra_ops ]
                 # query is empty
         }
 
-1.5.11.  @db.query.query_id.field[m]
+1.5.11. @db.query.query_id.field[m]
 
    Returns value of the first row and the m-th field. @*.field supports
    select_any_uri and select_any_nameaddr.
@@ -253,7 +253,7 @@ tra_ops ]
                 ...
         }
 
-1.5.12.  @db.query.query_id.row[n]
+1.5.12. @db.query.query_id.row[n]
 
    Returns value of the n-th row and the first field, negative values
    count from the end (-1 == last row).
@@ -263,7 +263,7 @@ tra_ops ]
                 ...
         }
 
-1.5.13.  @db.query.query_id.row[n].field[m]
+1.5.13. @db.query.query_id.row[n].field[m]
 
    Returns value of the n-th row and the m-th field. @*.field supports
    select_any_uri and select_any_nameaddr.
@@ -273,7 +273,7 @@ tra_ops ]
                 ...
         }
 
-1.5.14.  @db.fetch.handle
+1.5.14. @db.fetch.handle
 
    Similar functionality as @db.query selects with exception that
    operation is performed at query has been opened by db_query.
@@ -292,7 +292,7 @@ tra_ops ]
         }
         db_close(my_handle);
 
-1.5.15.  @db.fetch.handle.row_no
+1.5.15. @db.fetch.handle.row_no
 
    Returns current row number (origin is zero).
 

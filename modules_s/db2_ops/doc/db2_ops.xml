@@ -2,7 +2,7 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="db_ops" xmlns:xi="http://www.w3.org/2001/XInclude">
+<section id="db2_ops" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
 	<authorgroup>
 	    <author>
@@ -21,7 +21,7 @@
 
     </sectioninfo>
 
-    <title>db_ops module</title>
+    <title>db2_ops module</title>
 
     <section id="db_ops.overview">
 		<title>Overview</title>

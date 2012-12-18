@@ -8,7 +8,7 @@
 include ../../Makefile.defs
 
 auto_gen=
-NAME=db_ops.so
+NAME=db2_ops.so
 LIBS=
 
 
