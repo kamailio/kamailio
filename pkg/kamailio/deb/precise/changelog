@@ -1,3 +1,9 @@
+kamailio (3.3.3) unstable; urgency=low
+
+  * update to 3.3.3 from upstream
+
+ -- Daniel-Constantin Mierla <miconda@gmail.com>  Tue, 19 Dec 2012 15:45:00 +0100
+
 kamailio (3.3.2) unstable; urgency=low
 
   * update to 3.3.2 from upstream
