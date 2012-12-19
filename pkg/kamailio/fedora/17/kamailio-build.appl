@@ -14,6 +14,7 @@ packages:
   - @base
   - bison			# kamailio
   - db4-devel			# kamailio-bdb
+  - docbook2X
   - expat-devel			# kamailio-xmpp
   - flex			# kamailio
   - GeoIP-devel			# kamailio-GeoIP
