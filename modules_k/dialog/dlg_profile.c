@@ -761,9 +761,9 @@ int	dlg_set_timeout_by_profile(struct dlg_profile_table *profile,
 						return -1;
 					}
 				}
-			} while(ph != profile->entries[i].first);
 
-			ph = ph->next;
+				ph = ph->next;
+			} while(ph != profile->entries[i].first);
 		}
 
 		lock_release(&profile->lock);
