@@ -111,8 +111,8 @@
 	</section>
 
 
-	<xi:include href="params.xml"/>
-    <xi:include href="functions.xml"/>
+	<xi:include href="iptrtpproxy_params.xml"/>
+    	<xi:include href="iptrtpproxy_functions.xml"/>
 
 
 	<section>
@@ -187,5 +187,5 @@ created = timestamp
 
 	</section>
 
-</section>
+</book>
 
