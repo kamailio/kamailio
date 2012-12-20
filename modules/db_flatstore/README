@@ -1,4 +1,4 @@
-1. Db_flatstore Module
+Db_flatstore Module
 
 Jan Janak
 
@@ -8,19 +8,13 @@ Jan Janak
    Copyright © 2004, 2005 FhG FOKUS
      __________________________________________________________________
 
-   1.1. Overview
+1. Overview
 
-        1.1.1. Rotating Log Files
+   1.1. Rotating Log Files
 
-   1.2. Parameters
-
-        1.2.1. flush (integer)
-
-1.1. Overview
-
-   Db_flatstore is one of so-called SIP Router database modules. It does
-   not export any functions executable from the configuration scripts, but
-   it exports a subset of functions from the database API and thus other
+   Db_flatstore is one of the SIP Router database modules. It does not
+   export any functions executable from the configuration scripts, but it
+   exports a subset of functions from the database API and thus other
    modules can use it as a database driver, instead of, for example, the
    Mysql module.
 
@@ -60,7 +54,7 @@ modparam("acc", "db_url", "flatstore:/var/log/acc")
    simply concatenate the contents of files with the same table name but
    different process id.
 
-1.1.1. Rotating Log Files
+1.1. Rotating Log Files
 
    The module implements a SIP Router management interface command called
    flatstore.rotate. When SIP Router receives the command it will close
@@ -86,9 +80,11 @@ sercmd flatstore.rotate
        traffic on the SIP server.
      * Move the renamed files somewhere else and process them.
 
-1.2. Parameters
+2. Parameters
 
-1.2.1. flush (integer)
+   2.1. flush (integer)
+
+2.1. flush (integer)
 
    Enable or disable flushing after each write.
 
