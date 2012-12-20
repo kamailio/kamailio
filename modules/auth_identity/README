@@ -22,7 +22,9 @@ Gergely Kovacs
 1. Overview
 
    Auth Identity module provides functionalities for securely identifying
-   originators of SIP messages. This module has two basic service:
+   originators of SIP messages. It implements the SIP Identity standard
+   where a SIP proxy signs messages that is sent to other domains. This
+   module has two basic services:
      * authorizer - authorizes a message and adds Identity and
        Identity-Info headers
      * verifier - verifies an authorized message
@@ -55,6 +57,16 @@ Gergely Kovacs
    key too.
 
 5. Parameters
+
+   5.1. privatekey_path (string)
+   5.2. certificate_path (string)
+   5.3. certificate_url (string)
+   5.4. msg_timeout (integer)
+   5.5. auth_validity_time (integer)
+   5.6. callid_cache_limit (integer)
+   5.7. certificate_cache_limit (integer)
+   5.8. cainfo_path (string)
+   5.9. accept_pem_certs ([0|1])
 
 5.1. privatekey_path (string)
 
@@ -190,6 +202,34 @@ modparam("auth_identity","accept_pem_certs",1)
 ...
 
 6. Functions
+
+   6.1. auth_date_proc()
+
+        6.1.1. Dependencies
+
+   6.2. auth_add_identity()
+
+        6.2.1. Dependencies
+
+   6.3. vrfy_check_date()
+
+        6.3.1. Dependencies
+
+   6.4. vrfy_get_certificate()
+
+        6.4.1. Dependencies
+
+   6.5. vrfy_check_certificate()
+
+        6.5.1. Dependencies
+
+   6.6. vrfy_check_msgvalidity()
+
+        6.6.1. Dependencies
+
+   6.7. vrfy_check_callid()
+
+        6.7.1. Dependencies
 
 6.1.  auth_date_proc()
 

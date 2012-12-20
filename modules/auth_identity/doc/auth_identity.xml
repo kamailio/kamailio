@@ -34,7 +34,9 @@
 	<title>Overview</title>
 	<para>
 		Auth Identity module provides functionalities for securely identifying
-		originators of SIP messages. This module has two basic service:
+		originators of SIP messages. It implements the SIP Identity standard where a
+		SIP proxy signs messages that is sent to other domains.
+		This module has two basic services:
 		<itemizedlist>
 		<listitem>
 			<para>
@@ -59,12 +61,12 @@
 			<emphasis>CANCEL</emphasis> and <emphasis>REGISTER</emphasis>
 		</para>
 	    </listitem>
-		<listitem>
-			<para>
-				verifier does not support the subjectAltName extension of
-				certificates
-			</para>
-		</listitem>
+	    <listitem>
+		<para>
+			verifier does not support the subjectAltName extension of
+			certificates
+		</para>
+	    </listitem>
 	</itemizedlist>
     </section>
 
@@ -108,8 +110,8 @@
     </section>
 
 
-    <xi:include href="params.xml"/>
-    <xi:include href="functions.xml"/>
+    <xi:include href="auth_identity_params.xml"/>
+    <xi:include href="auth_identity_functions.xml"/>
 
 
 	<section>
