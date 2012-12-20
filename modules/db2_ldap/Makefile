@@ -8,7 +8,7 @@ NAME=db2_ldap.so
 
 #DEFS += -DLD_TEST
 
-DEFS += -Wall -DOPENLDAP23
+DEFS += -Wall -DOPENLDAP23 -DLDAP_DEPRECATED
 
 # Uncomment this if you have a recent version of libldap with
 # LD_SCOPE_CHILDREN defined
