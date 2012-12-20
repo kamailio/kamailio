@@ -43,6 +43,32 @@ Michal Matyska
 
 2. Functions
 
+   2.1. set_iattr(attribute,value)
+   2.2. flags2attr("$avp")
+   2.3. set_sattr(attribute,value)
+   2.4. print_attr($attribute)
+   2.5. attr2uri($attribute[,uri-part])
+   2.6. attr_exists(attribute)
+   2.7. attr_equals(attribute, value)
+   2.8. attr_equals_xl(attribute, xl_format)
+   2.9. dump_attrs()
+   2.10. xlset_attr($attribute, xl_format)
+   2.11. xlfix_attr($attribute)
+   2.12. insert_attr_hf(name)
+   2.13. insert_attr_hf(header_name, $avp_name)
+   2.14. append_attr_hf(name)
+   2.15. append_attr_hf(header_name, $avp_name)
+   2.16. replace_attr_hf(name)
+   2.17. replace_attr_hf(header_name, $avp_name)
+   2.18. attr_to_reply(name)
+   2.19. attr_to_reply(header_name, $avp_name)
+   2.20. attr_destination($avp_name)
+   2.21. xlset_destination(xl_format)
+   2.22. subst_attr($avp_name, subst_re)
+   2.23. del_attr($avp_name)
+   2.24. hdr_body2attrs(headername, prefix)
+   2.25. hdr_body2attrs2(headername, prefix)
+
 2.1. set_iattr(attribute,value)
 
    Create an AVP of type integer.
@@ -424,6 +450,8 @@ if (method=="BYE") {
 # e.g. QoS_JI is jitter
 
 3. Parameters
+
+   3.1. xlbuf_size (integer)
 
 3.1. xlbuf_size (integer)
 
