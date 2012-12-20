@@ -151,7 +151,7 @@ Server: UserLand Frontier/7.0.1-WinNT
    terminates the request, executes corresponding function, and generates
    a reply.
 
-                              [rpc_example.png]
+                            [xmlrpc_example.png]
 
    Example RPC Scenario
 

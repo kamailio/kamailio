@@ -214,7 +214,7 @@ Server: UserLand Frontier/7.0.1-WinNT
 	</para>
 	<mediaobject id="fig.rpc_example" xreflabel="Figure RPC Example">
 	    <imageobject>
-		<imagedata align="center" fileref="rpc_example.png" format="PNG"/>
+		<imagedata align="center" fileref="xmlrpc_example.png" format="PNG"/>
 	    </imageobject>
 	    <textobject>
 		<para>Example RPC Scenario</para>
@@ -756,7 +756,7 @@ route[XMLRPC]{
 	</para>
     </section>
 
-	<xi:include href="params.xml"/>
-	<xi:include href="functions.xml"/>
+	<xi:include href="xmlrpc_params.xml"/>
+	<xi:include href="xmlrpc_functions.xml"/>
 
 </book>

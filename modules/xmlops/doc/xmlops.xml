@@ -3,6 +3,7 @@
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <book id="xmlops" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>XMLOPS Module</title>
     <bookinfo>
 	<authorgroup>
 		<author>
@@ -16,9 +17,8 @@
 	    <year>2009</year>
 	    <holder>asipto.com</holder>
 	</copyright>
-    </sectioninfo>
+    </bookinfo>
 
-    <title>XMLOPS Module</title>
 
     <section id="xmlops.overview">
 	<title>Overview</title>
@@ -62,5 +62,5 @@
     <xi:include href="xmlops_params.xml"/>
     <xi:include href="xmlops_functions.xml"/>
 
-</bookinfo>
+</book>
 
