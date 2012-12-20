@@ -68,7 +68,7 @@
 	</para>
     </section>
     
-    <xi:include href="params.xml"/>
-    <xi:include href="functions.xml"/>
+    <xi:include href="auth_params.xml"/>
+    <xi:include href="auth_functions.xml"/>
 
 </book>
