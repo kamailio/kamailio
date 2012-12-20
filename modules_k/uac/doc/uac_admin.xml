@@ -19,16 +19,16 @@
 		<para>
 		The <acronym>UAC</acronym> (User Agent Client) module provides some basic UAC
 		functionalities like sending SIP requests, registering with a remote service,
-		FROM header manipulation (anonymization) and client authentication.
+		From: header manipulation (anonymization) and client authentication.
 		</para>
 		<para>
-		From version 1.5.0 it has function to send SIP message from
+		The UAC module also supports sending a SIP request from the
 		configuration file. See variable $uac_req(name) and the function
 		uac_req_send().
 		</para>
 		<para>
-		Version 3.1.0 adds database-driven SIP registration functionality. See
-		uac_reg_lookup() function and dedicated section for remote
+		In addition, the module supports database-driven SIP registration functionality. See
+		the uac_reg_lookup() function and dedicated section for remote
 		registration configuration.
 		</para>
 		<para>
@@ -44,6 +44,13 @@
 			<para>
 				CSeq is not increased during authentication - the response 
 				may be rejected.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				The <quote>uac_replace_*</quote> functions can only be run once on the same
+				SIP request. Try to save needed changes in a pseudovariable and
+				apply them once.
 			</para>
 			</listitem>
 		</itemizedlist>
@@ -64,13 +71,13 @@
 			<listitem>
 			<para>
 				<emphasis>RR - Record-Route Module</emphasis>, but only if
-				restore mode for FROM URI is set to <quote>auto</quote>.
+				restore mode for From: URI is set to <quote>auto</quote>.
 			</para>
 			</listitem>
 			<listitem>
 			<para>
 				<emphasis>Dialog Module</emphasis>, but only if
-				restore mode for FROM URI is set to <quote>auto</quote> and
+				restore mode for From: URI is set to <quote>auto</quote> and
 				you want uac_replace_from or uac_replace_to to store the values
 				of the URIs as dialog variables.
 			</para>
