@@ -1,4 +1,4 @@
-1. malloc_test Module
+The malloc_test Module
 
 Andrei Pelinescu-Onciul
 
@@ -7,31 +7,23 @@ Andrei Pelinescu-Onciul
    Copyright © 2010 iptelorg GmbH
      __________________________________________________________________
 
-   1.1. Overview
-   1.2. Parameters
+   List of Examples
 
-        1.2.1. check_content
+   1. Set check_content in the config file
+   2. Set check_content at runtime via sercmd
+   3. men_alloc usage
+   4. mem_free usage
+   5. mt.mem_alloc usage
+   6. mt.mem_free usage
+   7. mt.mem_used usage
+   8. mt.mem_rnd_alloc usage
+   9. mt.mem_test_start usage
+   10. mt.mem_test_stop usage
+   11. mt.mem_test_destroy usage
+   12. mt.mem_test_destroy_all usage
+   13. mt.mem_test_list usage
 
-   1.3. Functions
-
-        1.3.1. mt_mem_alloc(size)
-        1.3.2. mt_mem_free()
-
-   1.4. malloc_test RPC Functions
-
-        1.4.1. mt.mem_alloc size [unit]
-        1.4.2. mt.mem_free [size] [unit]
-        1.4.3. mt.mem_used [unit]
-        1.4.4. mt.mem_rnd_alloc min max total [unit]
-        1.4.5. mt.mem_test_start min max total min_int max_int total_time
-                [unit]
-
-        1.4.6. mt.mem_test_stop id
-        1.4.7. mt.mem_test_destroy id
-        1.4.8. mt.mem_test_destroy_all id
-        1.4.9. mt.mem_test_list [id] [unit]
-
-1.1. Overview
+1. Overview
 
    This is a debugging/test module. It implements functions (both script
    and rpcs) that can be used to stress the memory allocator or force
@@ -41,9 +33,11 @@ Warning
 
    This module should never be used in a production environment.
 
-1.2. Parameters
+2. Parameters
 
-1.2.1. check_content
+   2.1. check_content
+
+2.1. check_content
 
    When doing the tests, check also for the possibility of the memory
    being overwritten. When activated, the allocated memory will be filled
@@ -53,15 +47,18 @@ Warning
 
    It can be changed also at runtime, via the rpc interface.
 
-   Example 1. Set check_content in the config file
+   Example 1.  Set check_content in the config file
 modparam("malloc_test", "check_content", 1)
 
-   Example 2. Set check_content at runtime via sercmd
+   Example 2.  Set check_content at runtime via sercmd
 $ sercmd cfg.set_now_int malloc_test check_content 1
 
-1.3. Functions
+3. Functions
 
-1.3.1. mt_mem_alloc(size)
+   3.1. mt_mem_alloc(size)
+   3.2. mt_mem_free()
+
+3.1. mt_mem_alloc(size)
 
    Allocates size bytes.
 
@@ -75,7 +72,7 @@ Note
 mem_alloc(1048576); # 1MB
 ...
 
-1.3.2. mt_mem_free()
+3.2. mt_mem_free()
 
    Frees all the memory allocated with mem_alloc() up to this point.
 
@@ -89,9 +86,19 @@ Note
 mem_free();
 ...
 
-1.4. malloc_test RPC Functions
+4. malloc_test RPC Functions
 
-1.4.1.  mt.mem_alloc size [unit]
+   4.1. mt.mem_alloc size [unit]
+   4.2. mt.mem_free [size] [unit]
+   4.3. mt.mem_used [unit]
+   4.4. mt.mem_rnd_alloc min max total [unit]
+   4.5. mt.mem_test_start min max total min_int max_int total_time [unit]
+   4.6. mt.mem_test_stop id
+   4.7. mt.mem_test_destroy id
+   4.8. mt.mem_test_destroy_all id
+   4.9. mt.mem_test_list [id] [unit]
+
+4.1.  mt.mem_alloc size [unit]
 
    Allocates the specified number of bytes. unit is optional and can be
    one of:
@@ -103,7 +110,7 @@ mem_free();
    Example 5. mt.mem_alloc usage
  $ sercmd mt.mem_alloc 10 k
 
-1.4.2.  mt.mem_free [size] [unit]
+4.2.  mt.mem_free [size] [unit]
 
    Frees at least size bytes from the memory allocated by other
    malloc_test functions (e.g. mt.mem_alloc).
@@ -119,7 +126,7 @@ mem_free();
    Example 6. mt.mem_free usage
  $ sercmd mt.mem_free 1 m
 
-1.4.3.  mt.mem_used [unit]
+4.3.  mt.mem_used [unit]
 
    Returns/displays how many bytes are allocated. The default unit is
    bytes (for all the possible units see above).
@@ -134,7 +141,7 @@ mem_free();
  $ sercmd mt.mem_used
 9221460
 
-1.4.4. mt.mem_rnd_alloc min max total [unit]
+4.4. mt.mem_rnd_alloc min max total [unit]
 
    Allocates total_size memory, in pieces of random size between min ..
    max (inclusive). unit is optional and represents the unit for all the
@@ -143,7 +150,7 @@ mem_free();
    Example 8. mt.mem_rnd_alloc usage
  $ sercmd mt.mem_rnd_alloc 1 64 10240 k
 
-1.4.5. mt.mem_test_start min max total min_int max_int total_time [unit]
+4.5.  mt.mem_test_start min max total min_int max_int total_time [unit]
 
    Starts a malloc test that will take total_time to execute. Memory
    allocations will be performed at intervals randomly chosen between
@@ -161,14 +168,14 @@ mem_free();
  $ sercmd mt.mem_test_start 15 64 25000 128 1500 3600000 k
 1
 
-1.4.6.  mt.mem_test_stop id
+4.6.  mt.mem_test_stop id
 
    Stops the test indentified by id.
 
    Example 10. mt.mem_test_stop usage
  $ sercmd mt.mem_test_stop 1
 
-1.4.7.  mt.mem_test_destroy id
+4.7.  mt.mem_test_destroy id
 
    Destroys the test indentified by id (besides stopping it, it also frees
    all the data, including the statistics).
@@ -176,14 +183,14 @@ mem_free();
    Example 11. mt.mem_test_destroy usage
  $ sercmd mt.mem_test_destroy 1
 
-1.4.8.  mt.mem_test_destroy_all id
+4.8.  mt.mem_test_destroy_all id
 
    Destroys all the running or stopped tests.
 
    Example 12. mt.mem_test_destroy_all usage
  $ sercmd mt.mem_test_destroy_all
 
-1.4.9.  mt.mem_test_list [id] [unit]
+4.9.  mt.mem_test_list [id] [unit]
 
    Returns/displays data about the test identified by id, or if no id is
    specified, it lists all the tests (running or stopped).

@@ -9,8 +9,9 @@
 	]
 >
 
-<section id="malloc_test" xmlns:xi="http://www.w3.org/2001/XInclude">
-	<sectioninfo>
+<book id="malloc_test" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+		<title>The malloc_test Module</title>
 		<authorgroup>
 			<author>
 				<firstname>Andrei</firstname>
@@ -25,9 +26,8 @@
 			<year>2010</year>
 			<holder>iptelorg GmbH</holder>
 		</copyright>
-	</sectioninfo>
+	</bookinfo>
 
-	<title>malloc_test Module</title>
 
 	<section id="malloc_test.overview">
 		<title>Overview</title>
@@ -40,7 +40,7 @@
 			This module should never be used in a production environment.
 		</para></warning>
 	</section>
-	<xi:include href="params.xml"/>
-	<xi:include href="functions.xml"/>
-	<xi:include href="rpc.xml"/>
-</section>
+	<xi:include href="malloc_test_params.xml"/>
+	<xi:include href="malloc_test_functions.xml"/>
+	<xi:include href="malloc_test_rpc.xml"/>
+</book>
