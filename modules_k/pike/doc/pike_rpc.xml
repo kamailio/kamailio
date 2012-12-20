@@ -2,9 +2,7 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="pike.rpc" xmlns:xi="http://www.w3.org/2001/XInclude">
-	<sectioninfo>
-	</sectioninfo>
+<chapter id="pike.rpc" xmlns:xi="http://www.w3.org/2001/XInclude">
 
 	<title>RPC calls</title>
 
@@ -32,4 +30,4 @@
 			Output of this command is a simple dump of ip_tree nodes marked as ip-leafs.
 		</simpara>
 	</section>
-</section>
+</chapter>
