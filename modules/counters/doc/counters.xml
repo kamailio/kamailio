@@ -9,8 +9,9 @@
 	]
 >
 
-<section id="counters" xmlns:xi="http://www.w3.org/2001/XInclude">
-	<sectioninfo>
+<book id="counters" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>Counters Module</title>
 	<authorgroup>
 		<author>
 		<firstname>Andrei</firstname>
@@ -25,9 +26,8 @@
 		<year>2010</year>
 		<holder>iptelorg GmbH</holder>
 	</copyright>
-	</sectioninfo>
+	</bookinfo>
 
-	<title>Counters Module</title>
 
 	<section id="cnts.overview">
 	<title>Overview</title>
@@ -37,9 +37,9 @@
 	</para>
 	</section>
 
-	<xi:include href="params.xml"/>
-	<xi:include href="functions.xml"/>
-	<xi:include href="rpc.xml"/>
+	<xi:include href="counters_params.xml"/>
+	<xi:include href="counters_functions.xml"/>
+	<xi:include href="counters_rpc.xml"/>
 
-</section>
+</book>
 
