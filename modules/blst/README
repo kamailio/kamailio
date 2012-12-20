@@ -1,4 +1,4 @@
-Blst Module
+Blst Module - Blacklist Management
 
 Andrei Pelinescu-Onciul
 
@@ -21,6 +21,15 @@ Andrei Pelinescu-Onciul
    This module exports blacklist related functions to the script.
 
 2. Functions
+
+   2.1. blst_add([timeout])
+   2.2. blst_add_retry_after(min, max)
+   2.3. blst_del()
+   2.4. blst_is_blacklisted()
+   2.5. blst_set_ignore([flags])
+   2.6. blst_rpl_set_ignore([flags])
+   2.7. blst_clear_ignore([flags])
+   2.8. blst_rpl_clear_ignore([flags])
 
 2.1.  blst_add([timeout])
 

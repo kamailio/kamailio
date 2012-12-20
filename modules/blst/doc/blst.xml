@@ -4,7 +4,7 @@
 
 <book id="blst" xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
-        <title>Blst Module</title>
+        <title>Blst Module - Blacklist Management</title>
 	<authorgroup>
 	    <author>
 		<firstname>Andrei</firstname>
@@ -29,7 +29,7 @@
 	</para>
     </section>
 
-    <xi:include href="functions.xml"/>
+    <xi:include href="blst_functions.xml"/>
 
 </book>
 
