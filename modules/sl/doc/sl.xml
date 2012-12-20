@@ -2,8 +2,9 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="sl" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="sl" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+    	<title>The SL Module - Statless request handling</title>
 	<authorgroup>
 	    <author>
 		<firstname>Bogdan</firstname>
@@ -26,9 +27,8 @@
 	    <year>2003</year>
 	    <holder>FhG FOKUS</holder>
 	</copyright>
-    </sectioninfo>
+    </bookinfo>
 
-    <title>SL Module</title>
 
     <section id="sl.overview">
 	<title>Overview</title>
@@ -66,8 +66,8 @@
 
     </section>
 
-    <xi:include href="params.xml"/>
-    <xi:include href="functions.xml"/>
-    <xi:include href="stats.xml"/>
+    <xi:include href="sl_params.xml"/>
+    <xi:include href="sl_functions.xml"/>
+    <xi:include href="sl_stats.xml"/>
 
-</section>
+</book>

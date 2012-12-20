@@ -1,4 +1,4 @@
-1. SL Module
+The SL Module - Statless request handling
 
 Bogdan Iancu
 
@@ -11,47 +11,16 @@ Daniel-Constantin Mierla
    Copyright © 2003 FhG FOKUS
      __________________________________________________________________
 
-   1.1. Overview
-   1.2. Parameters
+   List of Examples
 
-        1.2.1. default_code (int)
-        1.2.2. default_reason (str)
-        1.2.3. bind_tm (int)
+   1. default_code example
+   2. default_reason example
+   3. bind_tm example
+   4. sl_send_reply usage
+   5. send_reply usage
+   6. sl_reply_error usage
 
-   1.3. Functions
-
-        1.3.1. sl_send_reply(code, reason)
-        1.3.2. send_reply(code, reason)
-        1.3.3. sl_reply_error()
-
-   1.4. Statistics
-
-        1.4.1. 1xx_replies
-        1.4.2. 200_replies
-        1.4.3. 202_replies
-        1.4.4. 2xx_replies
-        1.4.5. 300_replies
-        1.4.6. 301_replies
-        1.4.7. 302_replies
-        1.4.8. 3xx_replies
-        1.4.9. 400_replies
-        1.4.10. 401_replies
-        1.4.11. 403_replies
-        1.4.12. 404_replies
-        1.4.13. 407_replies
-        1.4.14. 408_replies
-        1.4.15. 483_replies
-        1.4.16. 4xx_replies
-        1.4.17. 500_replies
-        1.4.18. 5xx_replies
-        1.4.19. 6xx_replies
-        1.4.20. xxx_replies
-        1.4.21. sent_replies
-        1.4.22. sent_err_replies
-        1.4.23. failures
-        1.4.24. received_ACKs
-
-1.1. Overview
+1. Overview
 
    The SL module allows the SIP server to act as a stateless UA server and
    generate replies to SIP requests without keeping state. That is
@@ -78,9 +47,13 @@ Daniel-Constantin Mierla
    be mirrored in ACK. SER will not see its signature and forward the ACK
    downstream. Caused harm is not bad--just a useless ACK is forwarded.
 
-1.2. Parameters
+2. Parameters
 
-1.2.1. default_code (int)
+   2.1. default_code (int)
+   2.2. default_reason (str)
+   2.3. bind_tm (int)
+
+2.1. default_code (int)
 
    Default reply status code.
 
@@ -91,7 +64,7 @@ Daniel-Constantin Mierla
 modparam("sl", "default_code", 505)
 ...
 
-1.2.2. default_reason (str)
+2.2. default_reason (str)
 
    Default reply reason phrase.
 
@@ -102,7 +75,7 @@ modparam("sl", "default_code", 505)
 modparam("sl", "default_reason", "Server Error")
 ...
 
-1.2.3. bind_tm (int)
+2.3. bind_tm (int)
 
    Controls if SL module should attempt to bind to TM module in order to
    send stateful reply when the transaction is created.
@@ -114,9 +87,13 @@ modparam("sl", "default_reason", "Server Error")
 modparam("sl", "bind_tm", 0)  # feature disabled
 ...
 
-1.3. Functions
+3. Functions
 
-1.3.1. sl_send_reply(code, reason)
+   3.1. sl_send_reply(code, reason)
+   3.2. send_reply(code, reason)
+   3.3. sl_reply_error()
+
+3.1.  sl_send_reply(code, reason)
 
    For the current request, a reply is sent back having the given code and
    text reason. The reply is sent stateless, totally independent of the
@@ -131,7 +108,7 @@ modparam("sl", "bind_tm", 0)  # feature disabled
 sl_send_reply("404", "Not found");
 ...
 
-1.3.2. send_reply(code, reason)
+3.2.  send_reply(code, reason)
 
    For the current request, a reply is sent back having the given code and
    text reason. The reply is sent stateful or stateless, depending of the
@@ -152,7 +129,7 @@ send_reply("404", "Not found");
 send_reply("403", "Invalid user - $fU");
 ...
 
-1.3.3. sl_reply_error()
+3.3.  sl_reply_error()
 
    Sends back an error reply describing the nature of the last internal
    error. Usually this function should be used after a script function
@@ -163,100 +140,125 @@ send_reply("403", "Invalid user - $fU");
 sl_reply_error();
 ...
 
-1.4. Statistics
+4. Statistics
 
-1.4.1. 1xx_replies
+   4.1. 1xx_replies
+   4.2. 200_replies
+   4.3. 202_replies
+   4.4. 2xx_replies
+   4.5. 300_replies
+   4.6. 301_replies
+   4.7. 302_replies
+   4.8. 3xx_replies
+   4.9. 400_replies
+   4.10. 401_replies
+   4.11. 403_replies
+   4.12. 404_replies
+   4.13. 407_replies
+   4.14. 408_replies
+   4.15. 483_replies
+   4.16. 4xx_replies
+   4.17. 500_replies
+   4.18. 5xx_replies
+   4.19. 6xx_replies
+   4.20. xxx_replies
+   4.21. sent_replies
+   4.22. sent_err_replies
+   4.23. failures
+   4.24. received_ACKs
+
+4.1. 1xx_replies
 
    Number of 1xx replies.
 
-1.4.2. 200_replies
+4.2. 200_replies
 
    Number of 201 replies.
 
-1.4.3. 202_replies
+4.3. 202_replies
 
    Number of 202 replies.
 
-1.4.4. 2xx_replies
+4.4. 2xx_replies
 
    Number of 2xx replies.
 
-1.4.5. 300_replies
+4.5. 300_replies
 
    Number of 300 replies.
 
-1.4.6. 301_replies
+4.6. 301_replies
 
    Number of 301 replies.
 
-1.4.7. 302_replies
+4.7. 302_replies
 
    Number of 302 replies.
 
-1.4.8. 3xx_replies
+4.8. 3xx_replies
 
    Number of 3xx replies.
 
-1.4.9. 400_replies
+4.9. 400_replies
 
    Number of 400 replies.
 
-1.4.10. 401_replies
+4.10. 401_replies
 
    Number of 401 replies.
 
-1.4.11. 403_replies
+4.11. 403_replies
 
    Number of 403 replies.
 
-1.4.12. 404_replies
+4.12. 404_replies
 
    Number of 404 replies.
 
-1.4.13. 407_replies
+4.13. 407_replies
 
    Number of 407 replies.
 
-1.4.14. 408_replies
+4.14. 408_replies
 
    Number of 408 replies.
 
-1.4.15. 483_replies
+4.15. 483_replies
 
    Number of 483 replies.
 
-1.4.16. 4xx_replies
+4.16. 4xx_replies
 
    Number of 4xx replies.
 
-1.4.17. 500_replies
+4.17. 500_replies
 
    Number of 500 replies.
 
-1.4.18. 5xx_replies
+4.18. 5xx_replies
 
    Number of 5xx replies.
 
-1.4.19. 6xx_replies
+4.19. 6xx_replies
 
    Number of 6xx replies.
 
-1.4.20. xxx_replies
+4.20. xxx_replies
 
    Number of replies whose code don't match any above.
 
-1.4.21. sent_replies
+4.21. sent_replies
 
    Number of all sent replies.
 
-1.4.22. sent_err_replies
+4.22. sent_err_replies
 
    Number of sent error replies.
 
-1.4.23. failures
+4.23. failures
 
    Number of failures.
 
-1.4.24. received_ACKs
+4.24. received_ACKs
 
    Number of received ACKs filtered by SL module.
