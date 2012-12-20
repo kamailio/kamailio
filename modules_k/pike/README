@@ -36,7 +36,11 @@ Bogdan-Andrei Iancu
 
               5.1. pike_list
 
-   2. Developer Guide
+   2. RPC calls
+
+        1. pike.top
+
+   3. Developer Guide
 
    List of Examples
 
@@ -45,7 +49,7 @@ Bogdan-Andrei Iancu
    1.3. Set remove_latency parameter
    1.4. Set pike_log_level parameter
    1.5. pike_check_req usage
-   2.1. Tree of IP addresses
+   3.1. Tree of IP addresses
 
 Chapter 1. Admin Guide
 
@@ -170,7 +174,7 @@ modparam("pike", "pike_log_level", -1)
 
    4.1. pike_check_req()
 
-4.1. pike_check_req()
+4.1.  pike_check_req()
 
    Process the source IP of the current request and returns false if the
    IP was exceeding the blocking limit.
@@ -196,7 +200,7 @@ if (!pike_check_req()) { exit; };
 
    5.1. pike_list
 
-5.1. pike_list
+5.1.  pike_list
 
    Lists the nodes in the pike tree.
 
@@ -208,12 +212,38 @@ if (!pike_check_req()) { exit; };
                 :pike_list:_reply_fifo_file_
                 _empty_line_
 
-Chapter 2. Developer Guide
+Chapter 2. RPC calls
+
+   Table of Contents
+
+   1. pike.top
+
+1.  pike.top
+
+   Pike.top behaves like a 'top' command and shows source IP addresses of
+   incoming requestes to pike_check_req() function.
+
+   The IP list is sorted by sum of leaf hits (prev and curr) descending
+   and in second level by hits.
+
+   Some IPs could be marked as HOT depending on theirs request rates.
+
+   pike.top command takes one string parameter which specifies what kind
+   of nodes you are interested in. Possible values are HOT or ALL. If no
+   argument is given, it behaves as HOT was used.
+
+   Marking nodes HOT is done on server side, client only presents given
+   data and make some postprocessing like sorting.
+
+   Output of this command is a simple dump of ip_tree nodes marked as
+   ip-leafs.
+
+Chapter 3. Developer Guide
 
    One single tree (for both IPv4 and IPv6) is used. Each node contains a
    byte, the IP addresses stretching from root to the leafs.
 
-   Example 2.1. Tree of IP addresses
+   Example 3.1. Tree of IP addresses
            / 193 - 175 - 132 - 164
 tree root /                  \ 142
           \ 195 - 37 - 78 - 163

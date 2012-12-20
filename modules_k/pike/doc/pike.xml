@@ -38,6 +38,6 @@
 	
 	<xi:include href="pike_admin.xml"/>
 	<xi:include href="pike_devel.xml"/>
-	
+	<xi:include href="pike_rpc.xml"/>
 	
 </book>
