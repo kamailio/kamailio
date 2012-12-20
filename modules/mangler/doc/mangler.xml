@@ -19,8 +19,7 @@
 	    <year>2003</year>
 	    <holder>FhG FOKUS</holder>
 	</copyright>
-    </sectioninfo>
-
+    </bookinfo>
 
     <section id="mangler.overview">
 	<title>Overview</title>
@@ -32,4 +31,4 @@
     <xi:include href="mangler_params.xml"/>
     <xi:include href="mangler_functions.xml"/>
 
-</section>
+</book>
