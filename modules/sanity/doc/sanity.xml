@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
-<section id="options" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<book id="options" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+    	<title>The Sanity Module - SIP syntax checking</title>
 	<authorgroup>
 	    <author>
 		<firstname>Nils</firstname>
@@ -18,24 +25,23 @@
 	    <year>2006</year>
 	    <holder>iptelorg GmbH</holder>
 	</copyright>
-    </sectioninfo>
+    </bookinfo>
 
-    <title>Sanity Module</title>
 
     <section id="sanity.overview">
 	<title>Overview</title>
 	<para>
 		This module aims to implement several sanity checks on incoming
 		requests which are suggested or even required by a RFC, but are
-		not available yet in the core of SIP-router.
+		not available yet in the core of &kamailio;.
 	</para>
 	<para>
-		These checks are not required by SIP-router itself for its functionality.
+		These checks are not required by &kamailio; itself for its functionality.
 		But on the other side it makes not much sence if a broken
 		request traverses through a SIP network if it is rejected sooner
 		or later by a SIP device any way. As every sanity check cost extra
 		performance because of additional parsing and evaluation it
-		is with this module now up to the SIP-router adminstrator which checks
+		is with this module now up to the &kamailio; adminstrator which checks
 		should be done on which request.
 	</para>
 	<para>
@@ -50,7 +56,7 @@
 		<listitem>
 			<para>
 			ruri scheme - (2) - checks if the URI scheme of the request URI is
-			supported (sip[s]|tel[s]) by SIP-router.
+			supported (sip[s]|tel[s]) by &kamailio;
 			</para>
 		</listitem>
 		<listitem>
@@ -105,7 +111,7 @@
 		<listitem>
 			<para>
 			parse uri's - (1024) - checks if the specified URIs are present and
-			parseable by the SIP-router parsers
+			parseable by the &kamailio; parsers
 			</para>
 		</listitem>
 		<listitem>
@@ -133,6 +139,6 @@
 	</para>
     </section>
 
-    <xi:include href="params.xml"/>
-    <xi:include href="functions.xml"/>
-</section>
+    <xi:include href="sanity_params.xml"/>
+    <xi:include href="sanity_functions.xml"/>
+</book>

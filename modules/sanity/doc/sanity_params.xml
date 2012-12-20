@@ -62,7 +62,7 @@ modparam("sanity", "uri_checks", 3)
 	<section id="proxy_require">
 	<title><varname>proxy_require</varname> (string)</title>
 	<para>
-		This parameter sets the list of supported extensions for this SIP-router.
+		This parameter sets the list of supported extensions for this &kamailio;.
 		The value is expected as a comma separated list of extensions.
 		This list is separated into single tokens. Each token from
 		a proxy require header will be compared to the tokens from this
