@@ -1,32 +1,30 @@
-1. Mangler Module
+The Mangler Module - SDP mangling
 
 Gabriel Vasile
 
    FhG FOKUS
 
-   Copyright Â© 2003 FhG FOKUS
+   Copyright © 2003 FhG FOKUS
      __________________________________________________________________
 
-   1.1. Overview
-   1.2. Parameters
+   List of Examples
 
-        1.2.1. contact_flds_separator (string)
+   1. Set db_url parameter
+   2. sdp_mangle_ip usage
+   3. sdp_mangle_port usage
+   4. encode_contact usage
+   5. decode_contact usage
+   6. decode_contact_header usage
 
-   1.3. Functions
+1. Overview
 
-        1.3.1. sdp_mangle_ip(pattern, newip)
-        1.3.2. sdp_mangle_port(offset)
-        1.3.3. encode_contact(encoding_prefix)
-        1.3.4. decode_contact()
-        1.3.5. decode_contact_header()
+   This is a module to help with SDP mangling
 
-1.1. Overview
+2. Parameters
 
-   This is a module to help with SDP mangling. Still in testing.
+   2.1. contact_flds_separator (string)
 
-1.2. Parameters
-
-1.2.1. contact_flds_separator (string)
+2.1. contact_flds_separator (string)
 
    First char of this parameter is used as separator for encoding/decoding
    Contact header.
@@ -47,9 +45,15 @@ modparam("module", "contact_flds_separator", "-")
    then an encoded uri might look
    sip:user-password-ip-port-protocol@PublicIP
 
-1.3. Functions
+3. Functions
 
-1.3.1.  sdp_mangle_ip(pattern, newip)
+   3.1. sdp_mangle_ip(pattern, newip)
+   3.2. sdp_mangle_port(offset)
+   3.3. encode_contact(encoding_prefix)
+   3.4. decode_contact()
+   3.5. decode_contact_header()
+
+3.1.  sdp_mangle_ip(pattern, newip)
 
    Changes IP addresses inside SDP package in lines describing connections
    like c=IN IP4 Currently in only changes IP4 addresses since IP6
@@ -70,7 +74,7 @@ modparam("module", "contact_flds_separator", "-")
 sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
 ...
 
-1.3.2.  sdp_mangle_port(offset)
+3.2.  sdp_mangle_port(offset)
 
    Changes ports inside SDP package in lines describing media like m=audio
    13451.
@@ -86,7 +90,7 @@ sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
 sdp_mangle_port("-12000");
 ...
 
-1.3.3.  encode_contact(encoding_prefix)
+3.3.  encode_contact(encoding_prefix)
 
    This function will encode uri-s inside Contact header in the following
    manner sip:username:password@ip:port;transport=protocol goes
@@ -105,7 +109,7 @@ sdp_mangle_port("-12000");
 if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
 ...
 
-1.3.4.  decode_contact()
+3.4.  decode_contact()
 
    This function will decode the URI in first line in packets which come
    with encoded URI in the following manner
@@ -125,7 +129,7 @@ if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
 if (uri =~ "^enc*") { decode_contact(); }
 ...
 
-1.3.5.  decode_contact_header()
+3.5.  decode_contact_header()
 
    This function will decode URIs inside Contact header in the same manner
    as decode_contact. The difference is no dst_uri is set (src_ip,
