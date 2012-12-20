@@ -545,4 +545,7 @@ int naptr_choose (struct naptr_rdata** crt, char* crt_proto,
 
 #endif/* USE_NAPTR */
 
+struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port,
+		char* proto);
+
 #endif
