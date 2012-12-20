@@ -7,8 +7,9 @@
 
 ]>
 
-<section id="cfg_db" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="cfg_db" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+    <title>The configuration database module - cfg_db</title>
 	<authorgroup>
 	    <author>
 		<firstname>Tomas</firstname>
@@ -24,9 +25,8 @@
 	    <holder>Tomas Mandys</holder>
 	</copyright>
 
-    </sectioninfo>
+    </bookinfo>
 
-    <title>cfg_db module</title>
 	<section id="cfg_db.overview">
 		<title>Overview</title>
 		<para>
@@ -35,10 +35,10 @@
 		API then driver is notified and has chance to set value (of any
 		parameter) based on value taken from database. It's primarily
 		targeted for interfacing with 3rd party software which is aware
-		of configuration.
+		of the Kamailio configuration.
 		</para>
 		<para>
-		Parameter is uniquely identified by <emphasis>group_name</emphasis> plus 
+		A parameter is uniquely identified by a <emphasis>group_name</emphasis> plus a
 		<emphasis>name</emphasis>, which is used by the driver to check if a value can be found.
 		Because configuration parameters may be spread in many tables, a translation table 
 		is used to indicate where to start searching.  Multiple look-up tables may be 
@@ -67,7 +67,7 @@
 		</para>
 	</section>
 
-	<xi:include href="params.xml"/>
+	<xi:include href="cfg_db_params.xml"/>
 
     <section id="cfg_db.examples">
 		<title>Examples</title>
@@ -108,5 +108,5 @@
 
 		</example>
     </section>
-</section>
+</book>
 
