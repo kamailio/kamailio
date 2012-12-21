@@ -45,7 +45,7 @@
 #include "../../usr_avp.h"
 #include "../../ut.h"
 #include "../../id.h"
-#include "../domain/domain.h"
+#include "../uid_domain/domain.h"
 #include "uid_avp_db.h"
 #include "extra_attrs.h"
 
