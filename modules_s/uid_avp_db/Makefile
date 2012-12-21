@@ -7,7 +7,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=avp_db.so
+NAME=uid_avp_db.so
 LIBS=
 DEFS += -Wall
 

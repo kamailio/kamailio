@@ -1,5 +1,5 @@
 #include "extra_attrs.h"
-#include "avp_db.h"
+#include "uid_avp_db.h"
 #include "../../usr_avp.h"
 #include "../../sr_module.h"
 #include "../../ut.h"

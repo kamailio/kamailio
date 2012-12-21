@@ -1,11 +1,11 @@
-1. avp_db Module
+1. uid_avp_db Module
 
 Jiri Kuthan
 
    FhG FOKUS
    <jiri@iptel.org>
 
-   Copyright © 2004, 2005 FhG FOKUS
+   Copyright � 2004, 2005 FhG FOKUS
      __________________________________________________________________
 
    1.1. Overview
@@ -151,23 +151,23 @@ Jiri Kuthan
           be set.
 
    key_column
-          Column name holding key. Default value is “id”.
+          Column name holding key. Default value is "id".
 
    name_column
           Column name used for storing attribute name. Default value is
-          “name”.
+          "name".
 
    value_column
           Column name used for storing attribute value. Default value is
-          “value”.
+          "value".
 
    type_column
           Column name used for storing attribute type. Default value is
-          “type”.
+          "type".
 
    flags_column
           Column name used for storing attribute flags. Default value is
-          “flags”.
+          "flags".
 
    None defined by default.
 
@@ -188,7 +188,7 @@ mysql> describe dlg_attrs;
 +--------+------------------+------+-----+---------+-------+
 5 rows in set (0.00 sec)
 
-   Setting flags from code (all attrs beginning with “dlg_”):
+   Setting flags from code (all attrs beginning with "dlg_"):
 avpflags dialog_flag;
 ...
 route {
@@ -242,8 +242,8 @@ route {
    Loads 'extra attributes' stored by previous call to save_extra_attrs.
 
    group_id
-          Identifies attribute group, see Section 1.3.12, “attr_group
-          (string)”.
+          Identifies attribute group, see Section 1.3.12, "attr_group
+          (string)".
 
    id
           Identifies attributes which should be loaded.
@@ -253,8 +253,8 @@ route {
    Saves 'extra attributes' flagged by group flag under given id.
 
    group_id
-          Identifies attribute group, see Section 1.3.12, “attr_group
-          (string)”.
+          Identifies attribute group, see Section 1.3.12, "attr_group
+          (string)".
 
    id
           Identifier stored with flagged attributes.
@@ -264,8 +264,8 @@ route {
    Removes all extra attributes with given id.
 
    group_id
-          Identifies attribute group, see Section 1.3.12, “attr_group
-          (string)”.
+          Identifies attribute group, see Section 1.3.12, "attr_group
+          (string)".
 
    id
           Identifies attributes which should be removed.
@@ -276,8 +276,8 @@ route {
    id).
 
    group_id
-          Identifies attribute group, see Section 1.3.12, “attr_group
-          (string)”.
+          Identifies attribute group, see Section 1.3.12, "attr_group
+          (string)".
 
    id
           Identifies attributes which should be locked.
@@ -288,8 +288,8 @@ route {
    only id).
 
    group_id
-          Identifies attribute group, see Section 1.3.12, “attr_group
-          (string)”.
+          Identifies attribute group, see Section 1.3.12, "attr_group
+          (string)".
 
    id
           Identifies attributes which should be unlocked.
@@ -352,8 +352,8 @@ route["create_dialog"] {
 }
 
 onreply_route["dialog_creation_reply"] {
-        xplog("L_ERR", "dialog creation reply (%rs, %@cseq.method) [%@from.tag, %
-@to.tag]\n");
+        xplog("L_ERR", "dialog creation reply (%rs, %@cseq.method) [%@from.tag,
+%@to.tag]\n");
 
         $res = @msg.response.code;
         xplog("L_ERR", " ... response: %$res\n");
@@ -362,8 +362,8 @@ onreply_route["dialog_creation_reply"] {
                 break;
         }
         if ($res < 101) {
-                xplog("L_ERR", " ... I won't create dialog from 100 response.\n")
-;
+                xplog("L_ERR", " ... I won't create dialog from 100 response.\n"
+);
                 break;
         }
 
@@ -539,8 +539,8 @@ route["trace_dialog"] {
 
 onreply_route["dialog_reply"] {
         if ($id) {
-                xplog("L_ERR", "In-dialog reply (%rs, %@cseq.method) [%@to.tag, %
-@from.tag]\n");
+                xplog("L_ERR", "In-dialog reply (%rs, %@cseq.method) [%@to.tag,
+%@from.tag]\n");
                 if (!route("load_dialog")) {
                         xplog("L_ERR", "Can't load dialog data\n");
                 }
@@ -615,8 +615,8 @@ route {
                         t_on_reply("dialog_reply");
                 }
                 else {
-                        xplog("L_ERR", "Message within unknown dialog: %@cseq, to
-_tag=%@to.tag from_tag=%@from.tag\n");
+                        xplog("L_ERR", "Message within unknown dialog: %@cseq, t
+o_tag=%@to.tag from_tag=%@from.tag\n");
                 }
         }
 

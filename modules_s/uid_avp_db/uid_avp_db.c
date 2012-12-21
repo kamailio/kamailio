@@ -46,7 +46,7 @@
 #include "../../ut.h"
 #include "../../id.h"
 #include "../domain/domain.h"
-#include "avp_db.h"
+#include "uid_avp_db.h"
 #include "extra_attrs.h"
 
 MODULE_VERSION
@@ -118,7 +118,7 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-    "avp_db",
+    "uid_avp_db",
     cmds,        /* Exported commands */
     0,           /* RPC methods */
     params,      /* Exported parameters */

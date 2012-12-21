@@ -4,7 +4,7 @@
 
 <section id="avp_db" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
-	<title>avp_db Module</title>
+	<title>uid_avp_db Module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Jiri</firstname>
