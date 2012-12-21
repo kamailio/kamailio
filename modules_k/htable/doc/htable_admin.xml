@@ -676,6 +676,92 @@ sht_rm_value_re("ha=>.*");
     </section>
     </section>
 	<section>
+        <title>Exported RPC Commands</title>
+        <section>
+                <title>
+                <function moreinfo="none">htable.get</function>
+                </title>
+                <para>
+		Lists one value in a hash table
+                </para>
+                <para>
+                Name: <emphasis>htable.get</emphasis>
+                </para>
+                <para>Parameters:</para>
+                <itemizedlist>
+                        <listitem><para>name : Name of the hash table to dump</para>
+                        </listitem>
+                        <listitem><para>key : Key name of the hash table value to dump</para>
+                        </listitem>
+
+                </itemizedlist>
+                <para>
+                Example:
+                </para>
+<programlisting  format="linespecific">
+...
+# Dump $sht(students=>daniel)
+kamcmd htable.get students daniel
+...
+</programlisting>
+	</section>
+        <section>
+                <title>
+                <function moreinfo="none">htable.delete</function>
+                </title>
+                <para>
+		Delete one value in a hash table
+                </para>
+                <para>
+                Name: <emphasis>htable.delete</emphasis>
+                </para>
+                <para>Parameters:</para>
+                <itemizedlist>
+                        <listitem><para>name : Name of the hash table to delete</para>
+                        </listitem>
+                        <listitem><para>key : Key name of the hash table value to delete</para>
+                        </listitem>
+
+                </itemizedlist>
+                <para>
+                Example:
+                </para>
+<programlisting  format="linespecific">
+...
+# Delete $sht(students=>anna)
+kamcmd htable.get students anna
+...
+</programlisting>
+	</section>
+        <section>
+                <title>
+                <function moreinfo="none">htable.dump</function>
+                </title>
+                <para>
+		Lists all the values in a hash table
+                </para>
+                <para>
+                Name: <emphasis>dhtable.dump</emphasis>
+                </para>
+                <para>Parameters:</para>
+                <itemizedlist>
+                        <listitem><para>name : Name of the hash table to dump</para>
+                        </listitem>
+
+                </itemizedlist>
+                <para>
+                Example:
+                </para>
+<programlisting  format="linespecific">
+...
+kamcmd htable.dump ipban
+...
+</programlisting>
+	</section>
+
+	</section><!-- RPC commands -->
+
+	<section>
 	<title>Event routes</title>
 	<section>
 		<title>

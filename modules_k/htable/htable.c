@@ -526,6 +526,10 @@ static const char* htable_delete_doc[2] = {
 	"Delete one key from a hash table.",
 	0
 };
+static const char* htable_get_doc[2] = {
+	"Get one key from a hash table.",
+	0
+};
 
 static void htable_rpc_delete(rpc_t* rpc, void* c) {
 	str htname, keyname;
@@ -542,6 +546,67 @@ static void htable_rpc_delete(rpc_t* rpc, void* c) {
 	}
 
 	ht_del_cell(ht, &keyname);
+}
+
+/*! \brief RPC htable.get command to get one item */
+static void htable_rpc_get(rpc_t* rpc, void* c) {
+	str htname, keyname;
+	ht_t *ht;
+	ht_cell_t *htc;	/*!< One HT cell */
+	void* th;
+	void* ih;
+	void* vh;
+
+	if (rpc->scan(c, "SS", &htname, &keyname) < 2) {
+		rpc->fault(c, 500, "Not enough parameters (htable name and key name)");
+		return;
+	}
+
+	/* Find the htable */
+	ht = ht_get_table(&htname);
+	if (!ht) {
+		rpc->fault(c, 500, "No such htable");
+		return;
+	}
+
+	/* Find the  cell */
+	htc = ht_cell_pkg_copy(ht, &keyname, NULL);
+	if(htc == NULL) {
+		/* Print error message */
+		rpc->fault(c, 500, "Key name doesn't exist in htable.");
+		return;
+	}
+
+	/* add entry node */
+	if (rpc->add(c, "{", &th) < 0) {
+		rpc->fault(c, 500, "Internal error creating rpc");
+		goto error;
+	}
+
+	if(rpc->struct_add(th, "{", "item", &vh)<0) {
+		rpc->fault(c, 500, "Internal error creating rpc");
+		goto error;
+	}
+
+	if(htc->flags&AVP_VAL_STR) {
+		if(rpc->struct_add(vh, "SS", "name",  &htc->name.s, "value", &htc->value.s)<0)
+		{
+			rpc->fault(c, 500, "Internal error adding item");
+			goto error;
+		}
+	} else {
+		if(rpc->struct_add(vh, "Sd", "name",  &htc->name.s, "value", (int)htc->value.n))
+		{
+			rpc->fault(c, 500, "Internal error adding item");
+			goto error;
+		}
+	}
+	
+error:
+	/* Release the allocated memory */
+	ht_cell_pkg_free(htc);
+
+	return;
 }
 
 static void  htable_rpc_dump(rpc_t* rpc, void* c)
@@ -625,6 +690,7 @@ error:
 rpc_export_t htable_rpc[] = {
 	{"htable.dump", htable_rpc_dump, htable_dump_doc, 0},
 	{"htable.delete", htable_rpc_delete, htable_delete_doc, 0},
+	{"htable.get", htable_rpc_get, htable_get_doc, 0},
 	{0, 0, 0, 0}
 };
 

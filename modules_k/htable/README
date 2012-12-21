@@ -59,9 +59,15 @@ Alex Balashov
               6.2. sht_dump
               6.3. sht_delete
 
-        7. Event routes
+        7. Exported RPC Commands
 
-              7.1. htable:mod-init
+              7.1. htable.get
+              7.2. htable.delete
+              7.3. htable.dump
+
+        8. Event routes
+
+              8.1. htable:mod-init
 
    List of Examples
 
@@ -122,9 +128,15 @@ Chapter 1. Admin Guide
         6.2. sht_dump
         6.3. sht_delete
 
-   7. Event routes
+   7. Exported RPC Commands
 
-        7.1. htable:mod-init
+        7.1. htable.get
+        7.2. htable.delete
+        7.3. htable.dump
+
+   8. Event routes
+
+        8.1. htable:mod-init
 
 1. Overview
 
@@ -533,11 +545,63 @@ sht_rm_value_re("ha=>.*");
    Example (note the quoting when executing it via FIFO):
                 kamctl fifo sht_delete auth '"user@example.org::last_auth"'
 
-7. Event routes
+7. Exported RPC Commands
 
-   7.1. htable:mod-init
+   7.1. htable.get
+   7.2. htable.delete
+   7.3. htable.dump
 
-7.1.  htable:mod-init
+7.1.  htable.get
+
+   Lists one value in a hash table
+
+   Name: htable.get
+
+   Parameters:
+     * name : Name of the hash table to dump
+     * key : Key name of the hash table value to dump
+
+   Example:
+...
+# Dump $sht(students=>daniel)
+kamcmd htable.get students daniel
+...
+
+7.2.  htable.delete
+
+   Delete one value in a hash table
+
+   Name: htable.delete
+
+   Parameters:
+     * name : Name of the hash table to delete
+     * key : Key name of the hash table value to delete
+
+   Example:
+...
+# Delete $sht(students=>anna)
+kamcmd htable.get students anna
+...
+
+7.3.  htable.dump
+
+   Lists all the values in a hash table
+
+   Name: dhtable.dump
+
+   Parameters:
+     * name : Name of the hash table to dump
+
+   Example:
+...
+kamcmd htable.dump ipban
+...
+
+8. Event routes
+
+   8.1. htable:mod-init
+
+8.1.  htable:mod-init
 
    When defined, the module calls event_route[htable:mod-init] after all
    modules have been initialized. A typical use case is to initialise
