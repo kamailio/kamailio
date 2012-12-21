@@ -50,6 +50,7 @@
 #include "../../dprint.h"
 #include "../../data_lump_rpl.h"
 #include "../../pvar.h"
+#include "../../mod_fix.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
@@ -100,11 +101,13 @@ static str cpl_ok_rpl = str_init("OK");
 MODULE_VERSION
 
 
-static int cpl_invoke_script (struct sip_msg* msg, char* str, char* str2);
-static int w_process_register(struct sip_msg* msg, char* str, char* str2);
-static int w_process_register_norpl(struct sip_msg* msg, char* str,char* str2);
+static int cpl_invoke_script (struct sip_msg* msg, char* str1, char* str2);
+static int cpl_invoke_script3 (struct sip_msg* msg, char* str1, char* str2, char* str3);
+static int w_process_register(struct sip_msg* msg, char* str1, char* str2);
+static int w_process_register_norpl(struct sip_msg* msg, char* str1,char* str2);
 static int cpl_process_register(struct sip_msg* msg, int no_rpl);
 static int fixup_cpl_run_script(void** param, int param_no);
+static int fixup_cpl_run_script3(void** param, int param_no);
 static int cpl_init(void);
 static int mi_child_init(void);
 static int cpl_child_init(int rank);
@@ -127,6 +130,8 @@ static proc_export_t cpl_procs[] = {
 static cmd_export_t cmds[] = {
 	{"cpl_run_script",            (cmd_function)cpl_invoke_script,        2,
 			fixup_cpl_run_script, 0, REQUEST_ROUTE},
+	{"cpl_run_script",            (cmd_function)cpl_invoke_script3,        3,
+			fixup_cpl_run_script3, 0, REQUEST_ROUTE},
 	{"cpl_process_register",      (cmd_function)w_process_register,       0,
 			0, 0,                    REQUEST_ROUTE},
 	{"cpl_process_register_norpl",(cmd_function)w_process_register_norpl, 0,
@@ -218,6 +223,16 @@ static int fixup_cpl_run_script(void** param, int param_no)
 		}
 		pkg_free(*param);
 		*param=(void*)flag;
+	}
+	return 0;
+}
+
+static int fixup_cpl_run_script3(void** param, int param_no)
+{
+	if (param_no==1 || param_no==2) {
+		return fixup_cpl_run_script(param, param_no);
+	} else if (param_no==2) {
+		return fixup_spve_null(param, 1);
 	}
 	return 0;
 }
@@ -547,24 +562,41 @@ static inline int get_orig_user(struct sip_msg *msg, str *username, str *domain)
 /* Params: 
  *   str1 - as unsigned int - can be CPL_RUN_INCOMING or CPL_RUN_OUTGOING 
  *   str2 - as unsigned int - flags regarding state(less)|(ful) 
+ *   str3 - URI in SPVE structure
  */
-static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
+static int cpl_invoke_script3(struct sip_msg* msg, char* str1, char* str2, char *str3)
 {
 	struct cpl_interpreter  *cpl_intr;
 	str  username = {0,0};
 	str  domain = {0,0};
+	str  uri = {0,0};
+	sip_uri_t puri;
 	str  loc;
 	str  script;
 
 	/* get the user_name */
-	if ( ((unsigned long)str1)&CPL_RUN_INCOMING ) {
-		/* if it's incoming -> get the destination user name */
-		if (get_dest_user( msg, &username, &domain)==-1)
-			goto error0;
+	if(str3==NULL) {
+		if ( ((unsigned long)str1)&CPL_RUN_INCOMING ) {
+			/* if it's incoming -> get the destination user name */
+			if (get_dest_user( msg, &username, &domain)==-1)
+				goto error0;
+		} else {
+			/* if it's outgoing -> get the origin user name */
+			if (get_orig_user( msg, &username, &domain)==-1)
+				goto error0;
+		}
 	} else {
-		/* if it's outgoing -> get the origin user name */
-		if (get_orig_user( msg, &username, &domain)==-1)
+		if(fixup_get_svalue(msg, (gparam_p)str3, &uri)!=0)
+		{
+			LM_ERR("invalid uri parameter");
 			goto error0;
+		}
+		if (parse_uri(uri.s, uri.len, &puri) || !puri.user.len) {
+			LM_ERR("unable to extract user name from URI param\n");
+			return -1;
+		}
+		username = puri.user;
+		domain = puri.host;
 	}
 
 	/* get the script for this user */
@@ -621,6 +653,14 @@ error0:
 	return -1;
 }
 
+/* Params: 
+ *   str1 - as unsigned int - can be CPL_RUN_INCOMING or CPL_RUN_OUTGOING 
+ *   str2 - as unsigned int - flags regarding state(less)|(ful) 
+ */
+static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
+{
+	return  cpl_invoke_script3(msg, str1, str2, NULL);
+}
 
 
 #define CPL_SCRIPT          "script"
