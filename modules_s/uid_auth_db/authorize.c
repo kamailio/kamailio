@@ -51,7 +51,7 @@
 #include "../../id.h"
 #include "../../sr_module.h"
 #include "../../modules/auth/api.h"
-#include "authdb_mod.h"
+#include "uid_auth_db_mod.h"
 
 
 #define IS_NULL(f)	((f).flags & DB_NULL)

@@ -46,7 +46,7 @@
 #include "../../modules/auth/api.h"
 #include "authorize.h"
 #include "aaa_avps.h"
-#include "authdb_mod.h"
+#include "uid_auth_db_mod.h"
 
 MODULE_VERSION
 

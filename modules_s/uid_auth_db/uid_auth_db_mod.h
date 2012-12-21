@@ -28,8 +28,8 @@
  */
 
 
-#ifndef AUTHDB_MOD_H
-#define AUTHDB_MOD_H
+#ifndef UID_AUTH_DB_MOD_H
+#define UID_AUTH_DB_MOD_H
 
 #include "../../str.h"
 #include "../../lib/srdb2/db.h"
