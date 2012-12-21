@@ -250,7 +250,7 @@ module_group_kcarrierroute=carrierroute
 module_group_kberkeley=db_berkeley
 
 # K ldap modules
-module_group_kldap=ldap h350
+module_group_kldap=ldap db2_ldap h350
 
 # K utils module
 module_group_kutils=utils
@@ -307,7 +307,7 @@ else
 							auth_radius misc_radius avp_radius uri_radius \
 							acc_radius pa rls presence_b2b xcap xmlrpc\
 							osp tls oracle \
-							unixsock dbg print_lib auth_identity ldap \
+							unixsock dbg print_lib auth_identity db2_ldap ldap \
 							db_berkeley db_mysql db_postgres db_oracle \
 							db_sqlite db_unixodbc db_cassandra memcached mi_xmlrpc \
 							perl perlvdb purple \
