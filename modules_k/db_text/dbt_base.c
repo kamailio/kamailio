@@ -207,7 +207,7 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 
 	if(!_tbc || _tbc->nrcols < _nc)
 	{
-		LM_ERR("table not loaded!\n");
+		LM_ERR("table %s not loaded! (too few columns)\n", CON_TABLE(_h)->s);
 		goto error;
 	}
 	if(_k)
