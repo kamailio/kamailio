@@ -1,10 +1,10 @@
-1. Uri_db Module
+1. UID Uri_db Module
 
 Jan Janak
 
    FhG FOKUS
 
-   Copyright Â© 2003 FhG FOKUS
+   Copyright © 2003 FhG FOKUS
      __________________________________________________________________
 
    1.1. Overview
@@ -127,7 +127,7 @@ modparam("module", "subscriber_domain_column", "domain")
 
 1.4. Functions
 
-1.4.1.  check_to()
+1.4.1. check_to()
 
    Check To username against URI table or digest credentials.
 
@@ -138,7 +138,7 @@ if (check_to()) {
 };
 ...
 
-1.4.2.  check_from()
+1.4.2. check_from()
 
    Check From username against URI table or digest credentials.
 
@@ -149,7 +149,7 @@ if (check_from()) {
 };
 ...
 
-1.4.3.  does_uri_exist()
+1.4.3. does_uri_exist()
 
    Check if username in the request URI belongs to an existing user.
 

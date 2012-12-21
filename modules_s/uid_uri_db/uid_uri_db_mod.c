@@ -49,9 +49,9 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
 #include "../../lib/srdb2/db.h"
-#include "uridb_mod.h"
+#include "uid_uri_db_mod.h"
 #include "../../usr_avp.h"
-#include "../domain/domain.h"
+#include "../uid_domain/domain.h"
 
 MODULE_VERSION
 
@@ -75,7 +75,7 @@ static int check_uri(struct sip_msg* msg, char* s1, char* s2);
 static int header_fixup(void** param, int param_no);
 static int lookup_user_fixup(void** param, int param_no);
 
-#define URI_TABLE    "uri"
+#define URI_TABLE    "uid_uri"
 #define UID_COL      "uid"
 #define DID_COL      "did"
 #define USERNAME_COL "username"
@@ -136,7 +136,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"uri_db",
+	"uid_uri_db",
 	cmds,      /* Exported functions */
 	0,         /* RPC methods */
 	params,    /* Exported parameters */

@@ -7,7 +7,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=uri_db.so
+NAME=uid_uri_db.so
 LIBS=
 
 DEFS+=-DSER_MOD_INTERFACE
