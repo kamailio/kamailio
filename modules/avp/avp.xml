@@ -1,0 +1,543 @@
+<?xml version='1.0'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbookid/id/g/4.5/docbookx.dtd">
+
+<refentry id="module.avp"
+          xmlns:serdoc="http://sip-router.org/xml/serdoc">
+  <refmeta>
+    <refentrytitle>avp</refentrytitle>
+    <manvolnum>7</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>avp</refname>
+    <refpurpose>Manipulation of Attributes</refpurpose>
+  </refnamediv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      The <command>avp</command> module provides various functions for
+      the manipulation of attributes.
+    </para>
+    <para>
+      The name is a left-over from earlier versions of SER where attributes
+      were called ‘attribute-value pairs’ or AVPs for short.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Functions</title>
+
+    <refsect2 xml:id="function.append_attr_hf">
+      <title>
+        <function>append_attr_hf</function>
+        (<symbol>hf</symbol>,
+         <optional><symbol>attribute</symbol></optional>)
+      </title>
+      <para>
+        Allowed in request and failure processing.
+      </para>
+      <para>
+        The <function>append_attr_hf()</function> function appends a
+        new header field value to the header field named by the argument
+        <symbol>hf</symbol>. The new value will be populated with the
+        content of the attribute named by the argument
+        <symbol>attribute</symbol>. If the argument is missing, the content
+        is taken from the attribute with same name as the header field.
+      </para>
+     </refsect2>
+
+    <refsect2 xml:id="function.attr2uri">
+      <title>
+        <function>attr2uri</function>
+        (<symbol>attribute</symbol>,
+        <serdoc:optional><symbol>part</symbol></serdoc:optional>)
+       </title>
+      <para>
+        Allowed in request and failure processing.
+      </para>
+      <para>
+        The <function>attr2uri()</function> function sets the Request-URI
+        to the content of the attribute named by the argument
+        <symbol>attribute</symbol>. If the argument <symbol>part</symbol>
+        is present, only the part of the Request-URI identified by it
+        will be changed. This mimiks the behavior of many of the core
+        functions that allow manipulation of the Request-URI.
+      </para>
+      <para>
+        The following values are allowed for the <symbol>part</symbol>
+        argument:
+      </para>
+      <variablelist>
+        <varlistentry>
+          <term><literal>domain</literal>, <literal>host</literal></term>
+          <listitem>
+            replace the host part of the Request-URI,
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <literal>domainport</literal>, <literal>hostport</literal>
+          </term>
+          <listitem>
+            replace the host and port parts of the Request-URI,
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>port</literal></term>
+          <listitem>
+            replace the port part of the Request-URI,
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>prefix</literal></term>
+          <listitem>
+            prefix the content of the attribute to the username part of
+            the Request-URI,
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>strip</literal></term>
+          <listitem>
+            the attribute contains an integer specifying the number of
+            characters to be stripped off the beginning of the username
+            part of the Request-URI,
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>strip_tail</literal></term>
+          <listitem>
+            the attribute contains an integer specifyin the number of
+            characters to be stripped off the end of the username part of
+            the Request-URI,
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>uri</literal></term>
+          <listitem>
+            replace the entire Request-URI,
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>user</literal>, <literal>username</literal></term>
+          <listitem>
+            replace the username part of the Request-URI,
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <literal>userpass</literal>,
+            <literal>usernamepassword</literal>
+          </term>
+          <listitem>
+            replace the username and password parts of the Request-URI.
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </refsect2>
+
+    <refsect2 xml:id="function.attr_destination">
+      <title>
+        <function>attr_destination</function>
+        (<symbol>attribute</symbol>)
+      </title>
+      <para>
+        Allowed in request and failure processing.
+      </para>
+      <para>
+        The <function>attr_destination()</function> function sets the
+        destination URI to the content of the attribute named by the
+        argument <symbol>attribute</symbol>.
+      </para>
+      <para>
+        If the destination URI is set, the request will be send to the
+        address determined from that URI instead of the Request-URI. It
+        will carried over into branches together with the Request-URI when a
+        call to <serdoc:func>append_branch</serdoc:func> is made.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.attr_equals">
+      <title>
+        <function>attr_equals</function>
+        (<symbol>attribute</symbol>, <symbol>value</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>attr_equals()</function> function checks whether
+        the attribute identified by the argument <symbol>attribute</symbol>
+        exists and its value is identical the the value given by the
+        argument <symbol>value</symbol>. If so, it returns
+        <literal>true</literal> and <literal>false</literal> otherwise.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.attr_equals_xl">
+      <title>
+        <function>attr_equals_xl</function>
+        (<symbol>attribute</symbol>, <symbol>value</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>attr_equals()</function> function checks whether
+        the attribute identified by the argument <symbol>attribute</symbol>
+        exists and its value is identical to the xl string given by the
+        argument <symbol>value</symbol>.  If so, it returns
+        <literal>true</literal> and <literal>false</literal> otherwise.
+      </para>
+      <para>
+        For more information on xl strings, see
+        <serdoc:module>xprint</serdoc:module>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.attr_exists">
+      <title>
+        <function>attr_exists</function>
+        (<symbol>attribute</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>attr_exists()</function> function checks whether
+        an attribute by the name given by the name of
+        <symbol>attribute</symbol> exists and returns
+        <literal>true</literal> in this case or <literal>false</literal>
+        otherwise.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.attr_to_reply">
+      <title>
+        <function>attr_to_reply</function>
+        (<symbol>hf</symbol>,
+        <serdoc:optional><symbol>attribute</symbol></serdoc:optional>)
+      </title>
+      <para>
+        Allowed in request and failure processing.
+      </para>
+      <para>
+        The <function>attr_to_reply()</function> function adds a new
+        header fields value to the final response that will eventually
+        be sent upstream. The name of the header field is given by the
+        argument <symbol>hf</symbol>. The content will be taken from an
+        attribute. If the argument <symbol>attribute</symbol> is present,
+        it contains the name of the attribute. Otherwise, the header field
+        name from the argument <symbol>hf</symbol> will be taken as the
+        name.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.del_attr">
+      <title>
+        <function>del_attr</function>
+        (<symbol>attribute</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>del_attr</function> function deletes the attribute
+        identified by the argument <symbol>attribute</symbol>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.del_attrs">
+      <title>
+        <function>del_attrs</function>
+        (<symbol>group</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>del_attrs()</function> function deletes all
+        attributes from the group of attributes identified by the
+        attribute prefix given through the argument <symbol>group</symbol>.
+        For example, to delete all attributes of the From user, call
+      </para>
+      <programlisting>
+        del_attrs("$fu");
+      </programlisting>
+    </refsect2>
+
+    <refsect2 xml:id="function.dump_attrs">
+      <title>
+        <function>dump_attrs</function>
+        (<serdoc:optional><symbol>group</symbol></serdoc:optional>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>dump_attrs()</function> dumps a list of the existing
+        attributes and their values to the system log. If the
+        <symbol>group</symbol> argument is present, it contains an
+        attribute namespace prefix and limits the output to the attrbutes
+        in that namespace.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.flags2attr">
+      <title>
+        <function>flags2attr</function>
+        (<symbol>attribute</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>flags2attr()</function> function stores the current
+        state of all the flags in compact form in the attribute identified
+        by the argument <symbol>attribute</symbol>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.insert_attr_hf">
+      <title>
+        <function>insert_attr_hf</function>
+        (<symbol>hf</symbol>,
+         <serdoc:optional><symbol>attribute</symbol></serdoc:optional>)
+       </title>
+       <para>
+         Allowed in request and failure processing.
+       </para>
+       <para>
+         The <function>insert_attr_hf()</function> function inserts a
+         header field value to the header field named by the argument
+         <symbol>hf</symbol> with the value of the attribute identified
+         by the argument <symbol>attribute</symbol>. If there are already
+         values for that header field, the new value will be prepended
+         before any existing value.
+       </para>
+       <para>
+         If the optional argument <symbol>attribute</symbol> is missing,
+         the name of the attribute is taken from the name of the header
+         field in argument <symbol>hf</symbol>.
+       </para>
+     </refsect2>
+
+    <refsect2 xml:id="function.print_attr">
+      <title>
+        <function>print_attr</function>
+        (<symbol>attribute</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>print_attr()</function> function prints the content
+        of the attribute identified by the argument
+        <symbol>attribute</symbol> to the system log.
+      </para>
+      <para>
+        For a more flexible way of printing messages to the system log
+        that allows to print extra information together with the attribute
+        value, see the <serdoc:module>xprint</serdoc:module> module.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.replace_attr_hf">
+      <title>
+        <function>replace_attr_hf</function>
+        (<symbol>hf</symbol>,
+        <serdoc:optional><symbol>attribute</symbol></serdoc:optional>)
+      </title>
+      <para>
+        Allowed in request and failure processing.
+      </para>
+      <para>
+        The <function>replace_attr_hf()</function> function removes all
+        header field values of the header field named by the argument
+        <symbol>hf</symbol> and adds a new header field value with the
+        content of the attribute identified by the argument
+        <symbol>attribute</symbol>. If the argument
+        <symbol>attribute</symbol> is missing, the content of the new
+        header field value will be taken from an argument with the same
+        name as the header field.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.set_attr">
+      <title>
+        <function>set_attr</function>
+        (<symbol>attribute</symbol>, <symbol>value</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>set_attr()</function> function is a synonym for
+        the <serdoc:func>set_sattr</serdoc:func> function and sets the
+        attribute identified by the argument <symbol>attribute</symbol>
+        to the string contained in the argument <symbol>value</symbol>.
+      </para>
+      <para>
+        Like <serdoc:func>set_sattr</serdoc:func>, it is identical to
+        assinging an string using the assignment operator and is
+        deprecated.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.set_iattr">
+      <title>
+        <function>set_iattr</function>
+        (<symbol>attribute</symbol>, <symbol>value</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>set_iattr()</function> function sets the attribute
+        identified by the argument <symbol>attribute</symbol> to the
+        integer value contained in the argument <symbol>value</symbol>.
+        If the attribute does not yet exist, it is created.
+      </para>
+      <para>
+        This function is identical to assinging an integer using the
+        assignment operator and
+        is only kept to retain compatibility with earlier versions of SER.
+        It therefore is deprecated and may be removed in the future.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.set_sattr">
+      <title>
+        <function>set_sattr</function>
+        (<symbol>attribute</symbol>, <symbol>value</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>set_sattr()</function> function sets the attribute
+        identified by the argument <symbol>attribute</symbol> to the
+        string contained in the argument <symbol>value</symbol>. If the
+        attribute does not yet exist, it is created.
+      </para>
+      <para>
+        This function is identical to assinging an string using the
+        assignment operator and
+        is only kept to retain compatibility with earlier versions of SER.
+        It therefore is deprecated and may be removed in the future.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.subst_attr">
+      <title>
+        <function>subst_attr</function>
+        (<symbol>attribute</symbol>, <symbol>subst</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>subst_attr()</function> function manipulates the
+        content of the attribute identified by the argument
+        <symbol>attribute</symbol> using a subst expression.
+      </para>
+      <para>
+        A subst expression is identical to the expression used by the
+        <serdoc:bin>sed</serdoc:bin> program’s s command.
+      </para>
+      <!-- XXX We should either explain them in detail here, or in textops
+               or in the admin guide. In any case, there needs to be a
+               reference to the explanation.
+        -->
+    </refsect2>
+
+    <refsect2 xml:id="function.xlfix_attr">
+      <title>
+        <function>xlfix_attr</function>
+        (<symbol>attribute</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>xlfix_attr()</function> function evaluates the xl
+        string contained in the attributed identified by the argument
+        <symbol>attribute</symbol> and stores the result of the evaluation
+        in the same attribute.
+      </para>
+      <para>
+        For more information on xl strings, see
+        <serdoc:module>xprint</serdoc:module>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.xlset_attr">
+      <title>
+        <function>xlset_attr</function>
+        (<symbol>attribute</symbol>, <symbol>value</symbol>)
+      </title>
+      <para>
+        Allowed in request, reply, and failure processing.
+      </para>
+      <para>
+        The <function>xlset_attr()</function> function sets the attribute
+        identified by the argument <symbol>attribute</symbol> to the
+        evaluated xl string given by the argument <symbol>value</symbol>.
+      </para>
+      <para>
+        For more information on xl strings, see
+        <serdoc:module>xprint</serdoc:module>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.xlset_destination">
+      <title>
+        <function>xlset_destination</function>
+        (<symbol>value</symbol>)
+      </title>
+      <para>
+        Allowed in request processing only.
+      </para>
+      <para>
+        The <function>xlset_destination()</function> function sets the
+        destination URI to the evaluated content of the xl string given
+        by the argument <symbol>value</symbol>.
+      </para>
+      <para>
+        For details on xl strings, see <serdoc:module>xprint</serdoc:module>.
+      </para>
+    </refsect2>
+
+  </refsect1>
+
+  <refsect1>
+    <title>Module Parameters</title>
+
+    <refsect2 xml:id="module.avp.xlbuf_size">
+      <title><parameter>xlbuf_size</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>integer</serdoc:paramtype>
+        <serdoc:paramdefault>256</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>xlbuf_size</parameter> parameter defines the size
+        of the buffer that used for evaluation of xl strings. The evaluated
+        string cannot be larger than the size given by this parameter.
+      </para>
+    </refsect2>
+  </refsect1>
+
+  <refsect1 role="manpage">
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><serdoc:sbin>ser</serdoc:sbin></member>
+      <member><serdoc:file>ser.cfg</serdoc:file></member>
+      <member><serdoc:module>avp_db</serdoc:module></member>
+      <member><serdoc:module>avp_radius</serdoc:module></member>
+    </simplelist>
+  </refsect1>
+
+</refentry>
+
+<!-- vim:sw=2 sta et sts=2 ai tw=76
+  -->

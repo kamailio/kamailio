@@ -1184,8 +1184,8 @@ acc_log_request("Some comment");
 
    Example 1.46. acc_db_request usage
 ...
-acc_log_request("Some comment", "SomeTable");
-acc_log_request("Some comment", "acc_$time(year)_$time(mon)");
+acc_db_request("Some comment", "SomeTable");
+acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
 ...
 
 7.3. acc_rad_request(comment)

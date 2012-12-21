@@ -18,27 +18,25 @@
 	<title>Overview</title>
 	<para>
 		This is a module that enables media streams to be proxied
-		via an rtpproxy.
-	</para>
-	<para>
-		Known devices that get along over &nat;s with rtpproxy are ATAs
-		(as clients) and Cisco Gateways (since 12.2(T)) as servers.  See <ulink
-		url="http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature_guide09186a0080110bf9.html">
-		http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature_guide09186a0080110bf9.html"></ulink>
+		via an rtpproxy.  Rtpproxies know to work with this module
+		are Sippy RTPproxy <ulink url="http://www.rtpproxy.org"></ulink>
+		and ngcp-rtpproxy-ng 
+		<ulink url="http://deb.sipwise.com/spce/2.6/pool/main/n/ngcp-mediaproxy-ng"></ulink>.
+		Some features of the rtpproxy module apply only to one of the two rtpproxies.
 	</para>
 	</section>
 
 	<section>
 	<title>Multiple RTPProxy usage</title>
 	<para>
-		Currently, the rtpproxy module can support multiple rtpproxies for
+		The rtpproxy module can support multiple rtpproxies for
 		balancing/distribution and control/selection purposes.
 	</para>
 	<para>
-		The module allows the definition of several sets of rtpproxies -
-		load-balancing will be performed over a set and the user has the
+		The module allows definition of several sets of rtpproxies.
+		Load-balancing will be performed over a set and the admin has the
 		ability to choose what set should be used. The set is selected via
-		its id - the id being defined along with the set. Refer to the
+		its id - the id being defined with the set. Refer to the
 		<quote>rtpproxy_sock</quote> module parameter definition for syntax
 		description.
 	</para>
@@ -129,8 +127,8 @@ modparam("rtpproxy", "rtpproxy_sock",
 	<section>
 		<title><varname>rtpproxy_disable_tout</varname> (integer)</title>
 		<para>
-		Once RTPProxy was found unreachable and marked as disable, rtpproxy
-		will not attempt to establish communication to RTPProxy for
+		Once RTPProxy was found unreachable and marked as disabled, the rtpproxy
+		module will not attempt to establish communication to RTPProxy for
 		rtpproxy_disable_tout seconds.
 		</para>
 		<para>
@@ -169,7 +167,7 @@ modparam("rtpproxy", "rtpproxy_tout", 2)
 	<section>
 		<title><varname>rtpproxy_retr</varname> (integer)</title>
 		<para>
-		How many times rtpproxy should retry to send and receive after
+		How many times the module should retry to send and receive after
 		timeout was generated.
 		</para>
 		<para>
@@ -187,30 +185,11 @@ modparam("rtpproxy", "rtpproxy_retr", 2)
 		</example>
 	</section>
 	<section>
-		<title><varname>force_socket</varname> (string)</title>
-		<para>
-		Socket to be forced in communicating to RTPProxy. It makes sense only
-		for UDP communication. If no one specified, the OS will choose.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>NULL</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>force_socket</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("rtpproxy", "force_socket", "localhost:33333")
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
 		<title><varname>nortpproxy_str</varname> (string)</title>
 		<para>
-		The parameter sets the SDP attribute used by rtpproxy to mark
-		the packet SDP informations have already been mangled.
+		This parameter sets the SDP attribute used by rtpproxy to mark
+		the message's SDP attachemnt with information that it have 
+		already been changed.
 		</para>
 		<para>
 		If empty string, no marker will be added or checked.
@@ -235,7 +214,9 @@ modparam("rtpproxy", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 	<section>
 		<title><varname>timeout_socket</varname> (string)</title>
 		<para>
-		The parameter sets timeout socket, which is transmitted to the RTP-Proxy.
+		The parameter sets the RTP timeout socket, which is transmitted to the RTP-Proxy.
+		It will be used by the RTP proxy to signal back that a media stream timed
+		out.
 		</para>
 		<para>
 		If it is an empty string, no timeout socket will be transmitted to the RTP-Proxy.
@@ -273,7 +254,7 @@ modparam("nathelper", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
 		BRANCH_ROUTE.
 		</para>
 		<example>
-		<title><function>fix_nated_contact</function> usage</title>
+		<title><function>set_rtp_proxy_set</function> usage</title>
 		<programlisting format="linespecific">
 ...
 set_rtp_proxy_set("2");
@@ -318,13 +299,16 @@ rtpproxy_offer();
 				command to rtpproxy. See flag '1' for its meaning.
 				</para></listitem>
 				<listitem><para>
-
+				<emphasis>3</emphasis> - behave like flag 1 is set for a request and
+				like flag 2 is set for a reply.
+				</para></listitem>
+				<listitem><para>
 				<emphasis>a</emphasis> - flags that UA from which message is
 				received doesn't support symmetric RTP. (automatically sets the 'r' flag)
 				</para></listitem>
 				<listitem><para>
 				<emphasis>l</emphasis> - force <quote>lookup</quote>, that is,
-				only rewrite SDP when corresponding session is already exists
+				only rewrite SDP when corresponding session already exists
 				in the RTP proxy. By default is on when the session is to be
 				completed.
 				</para></listitem>
@@ -340,21 +324,27 @@ rtpproxy_offer();
 				So, for example if a SIP requests is processed with 'ie' flags, the corresponding
 				response must be processed with 'ie' flags.
 				</para><para>
-				Note: As rtpproxy is in bridge mode per default asymmetric, you have to specify
+				Note: As rtpproxy in bridge mode s per default asymmetric, you have to specify
 				the 'w' flag for clients behind NAT! See also above notes!
 				</para></listitem>
 				<listitem><para>
-				<emphasis>x</emphasis> - this flag will do automatic bridging between IPv4 on the
+				<emphasis>x</emphasis> - this flag a shortcut for using the "ie" or "ei"-flags of RTP-Proxy,
+				in order to do automatic bridging between IPv4 on the
 				"internal network" and IPv6 on the "external network". The distinction is done by
 				the given IP in the SDP, e.g. a IPv4 Address will always call "ie" to the RTPProxy
 				(IPv4(i) to IPv6(e)) and an IPv6Address will always call "ei" to the RTPProxy (IPv6(e)
 				to IPv4(i)).
+				</para><para>
+				Note: Please note, that this will only work properly with non-dual-stack user-agents or with
+				dual-stack clients according to RFC6157 (which suggest ICE for Dual-Stack implementations).
+				This short-cut will not work properly with RFC4091 (ANAT) compatible clients, which suggests
+				having different m-lines with different IP-protocols grouped together.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>f</emphasis> - instructs rtpproxy to ignore marks
 				inserted by another rtpproxy in transit to indicate that the
 				session is already goes through another proxy. Allows creating
-				chain of proxies.
+				a chain of proxies.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>r</emphasis> - flags that IP address in SDP should
@@ -493,6 +483,9 @@ onreply_route[2]
 				<emphasis>2</emphasis> - append second Via branch to Call-ID when sending
 				command to rtpproxy. See flag '1' for its meaning.
 				</para></listitem>
+				<listitem><para>
+				<emphasis>t</emphasis> - do not include To tag to <quote>delete</quote> command to rtpproxy thus causing full call to be deleted. Useful for deleting unused rtpproxy call when 200 OK is received on a branch, where rtpproxy is not needed.
+				</para></listitem>
 			</itemizedlist>
 		</listitem>
 		</itemizedlist>
@@ -520,48 +513,48 @@ rtpproxy_destroy();
         </title>
 		<para>
 		Manage the RTPProxy session - it combines the functionality of
-		rtpproxy_offer(), rtpproxy_answer() and unfroce_rtpproxy(), detecting
+		rtpproxy_offer(), rtpproxy_answer() and unforce_rtpproxy(), detecting
 		internally based on message type and metod which one to execute.
 		</para>
 		<para>
-		It can take same kind of parameters as rtpproxy_offer().
+		It can take the same parameters as <function>rtpproxy_offer().</function>
 		</para>
 		<para>
-		Functinality:
+		Functionality:
 		</para>
 		<itemizedlist>
 		<listitem>
 			<para>
-			if INVITE with SDP, then do rtpproxy offer
+			If INVITE with SDP, then do <function>rtpproxy_offer()</function>
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			if INVITE with SDP, when tm is loaded, mark transaction with
+			If INVITE with SDP, when the tm module is loaded, mark transaction with
 			internal flag FL_SDP_BODY to know that the 1xx and 2xx are for
-			rtpproxy answer
+			<function>rtpproxy_answer()</function>
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			if ACK with SDP, then do rtpproxy answer
+			If ACK with SDP, then do <function>rtpproxy_answer()</function>
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			if BYE or CANCEL, or called within a failure_route[], then do unforce rtpproxy
+			If BYE or CANCEL, or called within a FAILURE_ROUTE[], then do <function>unforce_rtpproxy()</function>
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			if reply to INVITE with code >= 300 do unfrce rtp proxy
+			If reply to INVITE with code >= 300 do <function>unforce_rtpproxy()</function>
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			if reply with SDP to INVITE having code 1xx and 2xx, then
-			do rtpproxy answer if the request had SDP or tm is not loaded,
-			otherwise do rtpproxy offer
+			If reply with SDP to INVITE having code 1xx and 2xx, then
+			do <function>rtpproxy_answer()</function> if the request had SDP or tm is not loaded,
+			otherwise do <function>rtpproxy_offer()</function>
 			</para>
 		</listitem>
 	</itemizedlist>
@@ -601,9 +594,9 @@ rtpproxy_manage();
 	    the appropriate <function>rtpproxy_stop_stream2xxx</function> is issued.
 	</para>
 	<para>
-	    In order to work correctly, functions require that the session in the
-	    RTPproxy already exists. Also those functions don't alted SDP, so that
-	    they are not substitute for calling <function>rtpproxy_offer</function>
+	    In order to work correctly, these functions require that a session in the
+	    RTPproxy already exists. Also those functions don't alter the SDP, so that
+	    they are not a substitute for calling <function>rtpproxy_offer</function>
 	    or <function>rtpproxy_answer</function>.
 	</para>
 	<para>
@@ -614,15 +607,15 @@ rtpproxy_manage();
 	    <listitem>
 		<para>
 		    <emphasis>prompt_name</emphasis> - name of the prompt to
-		    stream.  Should be either absolute pathname or pathname
+		    stream. Should be either absolute pathname or pathname
 		    relative to the directory where RTPproxy runs.
 		</para>
 	    </listitem>
 	    <listitem>
 		<para>
 		    <emphasis>count</emphasis> - number of times the prompt
-		    should be repeated.  The value of -1 means that it will
-		    be streaming in loop indefinitely, until appropriate
+		    should be repeated. A value of -1 means that it will
+		    be streaming in a loop indefinitely, until the appropriate
 		    <function>rtpproxy_stop_stream2xxx</function> is issued.
 		</para>
 	    </listitem>
@@ -670,8 +663,9 @@ rtpproxy_manage();
 		<function moreinfo="none">start_recording()</function>
 		</title>
 		<para>
-		This command will send a signal to the RTP-Proxy to record
-		the RTP stream on the RTP-Proxy.
+		This function will send a signal to the RTP-Proxy to record
+		the RTP stream on the RTP-Proxy. 
+		<emphasis>This function is only supported by Sippy RTPproxy at the moment!</emphasis>
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
@@ -704,7 +698,7 @@ start_recording();
 			<para>
 			Returns the RTP-Statistics from the RTP-Proxy. The RTP-Statistics from the RTP-Proxy
 			are provided as a string and it does contain several packet-counters. The statistics
-			must be retrieved before the session is deleted	(before unforce_rtpproxy).
+			must be retrieved before the session is deleted	(before <function>unforce_rtpproxy()</function>).
 			</para>
 
 		<example>
@@ -736,7 +730,7 @@ start_recording();
 			</para>
 			<para>
 			NOTE: if a rtpproxy is defined multiple times (in the same or
-			diferente sete), all its instances will be enables/disabled.
+			diferente sete), all of its instances will be enables/disabled.
 			</para>
 			<example>
 			<title>

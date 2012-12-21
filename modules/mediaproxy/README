@@ -225,11 +225,11 @@ modparam("mediaproxy", "mediaproxy_timeout", 500)
    to get the correct NAT IP address from where the SIP signaling
    originated.
 
-   Default value is “$avp(s:signaling_ip)”.
+   Default value is “$avp(signaling_ip)”.
 
    Example 1.4. Setting the signaling_ip_avp parameter
 ...
-modparam("mediaproxy", "signaling_ip_avp", "$avp(s:nat_ip)")
+modparam("mediaproxy", "signaling_ip_avp", "$avp(nat_ip)")
 ...
 
 5.5. media_relay_avp (string)
@@ -240,11 +240,11 @@ modparam("mediaproxy", "signaling_ip_avp", "$avp(s:nat_ip)")
    before calling use_media_proxy(), it will be preferred by the
    dispatcher over the normal selection algorithm.
 
-   Default value is “$avp(s:media_relay)”.
+   Default value is “$avp(media_relay)”.
 
    Example 1.5. Setting the media_relay_avp parameter
 ...
-modparam("mediaproxy", "media_relay_avp", "$avp(s:media_relay)")
+modparam("mediaproxy", "media_relay_avp", "$avp(media_relay)")
 ...
 
 5.6. ice_candidate (string)
@@ -266,17 +266,14 @@ modparam("mediaproxy", "ice_candidate", "low-priority")
 
    Specification of the AVP which holds the ICE candidate that will be
    inserted in the SDP. The value specified in this AVP will override the
-   value in ice_candidate module parameter. Note that if use_media_proxy()
-   and end_media_session() functions are being used, the AVP will not be
-   available in the reply route unless you set onreply_avp_mode from the
-   tm module to '1', and if the AVP is not set, the default value will be
-   used.
+   value in ice_candidate module parameter. If the AVP is not set, the
+   default value will be used.
 
-   Default value is “$avp(s:ice_candidate)”.
+   Default value is “$avp(ice_candidate)”.
 
    Example 1.7. Setting the ice_candidate_avp parameter
 ...
-modparam("mediaproxy", "ice_candidate_avp", "$avp(s:ice_candidate)")
+modparam("mediaproxy", "ice_candidate_avp", "$avp(ice_candidate)")
 ...
 
 6. Functions
@@ -315,7 +312,7 @@ modparam("mediaproxy", "ice_candidate_avp", "$avp(s:ice_candidate)")
 ...
 if (method==INVITE && !has_totag()) {
     # We can also use a specific media relay if we need to
-    #$avp(s:media_relay) = "1.2.3.4";
+    #$avp(media_relay) = "1.2.3.4";
     engage_media_proxy();
 }
 ...
@@ -344,7 +341,7 @@ if (method==INVITE && !has_totag()) {
 ...
 if (method==INVITE) {
     # We can also use a specific media relay if we need to
-    #$avp(s:media_relay) = "1.2.3.4";
+    #$avp(media_relay) = "1.2.3.4";
     use_media_proxy();
 }
 ...

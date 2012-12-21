@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright � 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -91,18 +91,18 @@ Chapter 1. Admin Guide
 1. Overview
 
    This module provides an interactive config file debugger. It can print
-   a trace of config execution for a SIP message to log and set
-   breakpoints on every config action, allowing step-by-step execution of
-   the config.
+   a trace of config script execution for a SIP message to log and set
+   breakpoints on every script action, allowing step-by-step execution of
+   the routing and response scripts.
 
    Debugging can be done from local or remote host via RPC interface
    (e.g., XMLRPC, sercmd, siremis).
 
    The framework to set breakpoints on specific actions and config lines
-   is not exported to RPC yet. Each action can be accompanied by an
-   breakpoint or you can use dbg_breakpoint() function to set a breakpoint
-   at certain line. Global breakpoint can be enabled/disabled at runtime.
-   Also the config running trace can be enabled/disabled at runtime.
+   is not exported to RPC. Each action can be accompanied by an breakpoint
+   or you can use dbg_breakpoint() function to set a breakpoint at certain
+   line. Global breakpoints can be enabled/disabled at runtime. The script
+   running trace can also be enabled/disabled at runtime.
 
    When the SIP router process is stopped at a breakpoint, you can
    investigate the values of any pseudo-variables. Note that some of
@@ -139,11 +139,11 @@ Chapter 1. Admin Guide
 
 3.1. cfgtrace (int)
 
-   Control whether config running trace is enabled or disabled at startup.
-   You can change the value at runtime without restart, globally or per
-   process.
+   Control whether the config script trace is enabled or disabled at
+   startup. You can change the value at runtime without restart, globally
+   or per process.
 
-   Default value is “0” (disabled).
+   Default value is "0" (disabled).
 
    Example 1.1. Set cfgtrace parameter
 ...
@@ -155,7 +155,7 @@ modparam("debugger", "cfgtrace", 1)
    Control whether every line (global) breakpoint is enabled or disabled
    at startup.
 
-   Default value is “0” (disabled).
+   Default value is "0" (disabled).
 
    Example 1.2. Set breakpoint parameter
 ...
@@ -166,7 +166,7 @@ modparam("debugger", "breakpoint", 1)
 
    What log level is to be used to print module-specific messages.
 
-   Default value is “-1” (L_ERR).
+   Default value is "-1" (L_ERR).
 
    Example 1.3. Set log_level parameter
 ...
@@ -175,9 +175,11 @@ modparam("debugger", "log_level", 1)
 
 3.4. log_facility (str)
 
-   What log facility is to be used to print module-specific messages.
+   Which log facility is to be used to print module-specific messages. By
+   using this setting, you can configure syslog to send debug messages to
+   a separate log channel, like a specific kamailio-debug log file.
 
-   Default value is “NULL” (default from core).
+   Default value is "NULL" (default from core).
 
    Example 1.4. Set log_facility parameter
 ...
@@ -188,7 +190,7 @@ modparam("debugger", "log_facility", "LOG_DAEMON")
 
    String to print before any module-specific messages.
 
-   Default value is “*** cfgtrace:”.
+   Default value is "*** cfgtrace:".
 
    Example 1.5. Set log_prefix parameter
 ...
@@ -198,9 +200,9 @@ modparam("debugger", "log_prefix", "from-debugger-with-love:")
 3.6. step_usleep (int)
 
    Microseconds to sleep before checking for new commands when waiting at
-   breakpoint.
+   a breakpoint.
 
-   Default value is “100000” (that is 0.1 sec).
+   Default value is "100000" (that is 0.1 sec).
 
    Example 1.6. Set step_usleep parameter
 ...
@@ -210,11 +212,11 @@ modparam("debugger", "step_usleep", 500000)
 3.7. step_loops (int)
 
    How many sleeps of 'step_usleep' the RPC process performs when waiting
-   for a reply from worker process before responding to RPC. This avoids
+   for a reply from a worker process before responding to RPC. This avoids
    blocking RPC process forever in case the worker process 'forgets' to
    write back a reply.
 
-   Default value is “200”.
+   Default value is "200".
 
    Example 1.7. Set step_loops parameter
 ...
@@ -231,8 +233,8 @@ modparam("debugger", "step_loops", 100)
    this function is called). The 'mode' specifies whether the breakpoint
    is enabled (1) or disabled (0) at startup.
 
-   Note that this version does not export this anchors to RPC for
-   interactive debugging (temporarily disabled).
+   Note that this version of the module does not export this anchors to
+   RPC for interactive debugging (temporarily disabled).
 
    Example 1.8. dbg_breakpoint usage
 ...
@@ -248,7 +250,7 @@ if($si=="10.0.0.10")
 
 5.1.  dbg.ls
 
-   List SIP router processes with info related to interactive debugging.
+   List Kamailio processes with info related to interactive debugging.
 
    Name: dbg.list
 
@@ -262,15 +264,15 @@ if($si=="10.0.0.10")
 
 5.2.  dbg.trace
 
-   Control config running trace.
+   Control config script running trace.
 
    Name: dbg.trace
 
    Parameters:
-     * _cmd_ : inner command can be 'on' or 'off' to enable or disable
-       tracing for one or all processes.
+     * _cmd_ : command can be 'on' or 'off' to enable or disable tracing
+       for one or all processes.
      * _pid_ : pid for which to list the details. If 'pid' is omitted,
-       then it will print details for all processes.
+       then details for all processes will be printed.
 
    Examples for using with sercmd:
                 dbg.trace on
@@ -284,13 +286,12 @@ if($si=="10.0.0.10")
    Name: dbg.bp
 
    Parameters:
-     * _cmd_ : inner command, see next section for the list of available
-       values.
-     * _pid_ : pid for which to apply the inner command. If 'pid' is
+     * _cmd_ : command, see next section for the list of available values.
+     * _pid_ : process id for which to apply the command. If 'pid' is
        omitted, then the inner command will be applied to all processes.
-     * _params_ : extra params specific for each inner command.
+     * _params_ : extra params specific for each command.
 
-   Inner commands:
+   Commands:
      * on - turn on breakpoints. Pid parameter is optional.
      * off - turn off breakpoints. Pid parameter is optional.
      * keep - keep breakpoints only for pid given as parameter
@@ -303,9 +304,9 @@ if($si=="10.0.0.10")
        actions). Pid parameter is mandatory.
      * show - print details about the current breakpoint for pid. Pid
        parameter is mandatory.
-     * eval - eval a pseudo-variable and print the result in RPC Pid
+     * eval - evaluate a pseudo-variable and print the result in RPC Pid
        parameter is mandatory.
-     * log - eval a pseudo-variable and print the result in SIP router
+     * log - evaluate a pseudo-variable and print the result in SIP router
        logs. Pid parameter is mandatory.
 
    Examples for using with sercmd:
@@ -323,23 +324,23 @@ if($si=="10.0.0.10")
    logs.
 
    Another typical usage is to do interactive debugging and run each line
-   of the route blocks of the config file step-by-step for a particular
-   SIP message.
+   of the route blocks of the configuration file step-by-step for a
+   particular SIP message.
 
-   You need to connect using sercmd (or other RPC client) to SIP Router.
+   You need to connect using sercmd (or other RPC client) to Kamailio.
    Then you can enable cfg breakpoints and send the SIP message. One
    process will be in waiting state ('state' field different than 0 when
-   you do dbg.ls). Calling dbg.release will set the other SIP router
+   you do dbg.ls). Calling dbg.release will set the other Kamailio
    processes in no-breakpoint mode so they can process other SIP messages
    without need to interact with them.
 
-   The process blocked at breakpoint is waiting for a command. Use 'dbg.bp
+   A process blocked at a breakpoint is waiting for a command. Use 'dbg.bp
    next pid' to execute the current action and stop at the next one.
-   'dbg.bp eval pid PV' can be used to retrive the value of PV. Once you
+   'dbg.bp eval pid PV' can be used to retrieve the value of PV. Once you
    are done and want to continue the execution of the config wihtout
    interaction use 'dbg.bp move pid'.
 
-   Here is an example of session:
+   Example of a session:
 ...
 sercmd> dbg.ls
 {
@@ -433,7 +434,7 @@ set
  9(6285) ERROR: *** cfgtrace: c=[/etc/kamailio/debugger.cfg] l=516 a=3 n=exit
 ...
 
-   The above example is for registration with default config for version
+   The above example is for a registration with default config for version
    3.1.0, without authentication. Listed fields are: 'c' - config file;
    'l' - line; 'a' - internal action id; 'n' - name of executed action.
    'ERROR' prefix is printed because these messages were sent to the L_ERR

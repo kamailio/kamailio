@@ -192,7 +192,7 @@ static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 		LM_DBG("freeing result set at %p\n", _r);
 		pkg_free(*_r);
 		*_r = 0;
-		/* all mem on openser API side is already freed by
+		/* all mem on Kamailio API side is already freed by
 		 * db_mysql_convert_result in case of error, but we also need
 		 * to free the mem from the mysql lib side */
 		mysql_free_result(CON_RESULT(_h));

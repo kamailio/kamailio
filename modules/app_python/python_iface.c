@@ -20,30 +20,36 @@
  *
 */
 
+/*
+ * Changed
+ *	2012-12-10 ez: Moved a part of functional to mod_Core.c, mod_Logger.c, mod_Ranks.c, mod_Router.c
+ *
+*/
+
+// Python includes
+#include <Python.h>
+
+// router includes
 #include "../../action.h"
 #include "../../dprint.h"
 #include "../../route_struct.h"
-#include "python_exec.h"
+#include "../../str.h"
+#include "../../sr_module.h"
 
-#include <Python.h>
+// local includes
+#include "mod_Router.h"
+#include "mod_Core.h"
+#include "mod_Ranks.h"
+#include "mod_Logger.h"
 
-/* Return the number of arguments of the application command line */
-static PyObject*
-router_LM_ERR(PyObject *self, PyObject *args)
+
+int init_modules(void)
 {
-    char *msg;
+    init_mod_Router();
+    init_mod_Core();
+    init_mod_Ranks();
+    init_mod_Logger();
 
-    if(!PyArg_ParseTuple(args, "s:LM_ERR", &msg))
-        return NULL;
-
-    LM_ERR("%s", msg);
-
-    Py_INCREF(Py_None);
-    return Py_None;
+    return 0;
 }
 
-PyMethodDef RouterMethods[] = {
-    {"LM_ERR", router_LM_ERR, METH_VARARGS,
-     "Pring error message."},
-    {NULL, NULL, 0, NULL}
-};

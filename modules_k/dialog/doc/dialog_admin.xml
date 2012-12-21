@@ -678,7 +678,7 @@ modparam("dialog", "caller_route_column", "column_name")
 		<title>Set <varname>to_route_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "to_route_column", "column_name")
+modparam("dialog", "callee_route_column", "column_name")
 ...
 </programlisting>
 		</example>
@@ -1722,6 +1722,44 @@ if(dlg_set_timeout("180", "123", "456"))
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">dlg_set_timeout_by_profile(profile, [value], timeout)</function>
+		</title>
+		<para>
+			Like <emphasis>dlg_set_timeout()</emphasis>, but 
+			simultaneously sets the timeout of all dialogs in
+			a given profile.  Can be constrained by profile value.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>profile</emphasis> - The dialog profile across which to apply the timeout.
+			</para>
+			<para><emphasis>value</emphasis> (optional) - The profile value to use when applying the dialog timeout.
+			</para>
+			<para><emphasis>timeout</emphasis> - the interval in seconds after
+				which the dialog will time out.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_set_timeout_by_profile</function> usage</title>
+		<programlisting format="linespecific">
+...
+# All dialogs belonging to user abc123 (tracked via set_dlg_profile()) 
+# will be timed out in 3 seconds.
+
+dlg_set_timeout_by_profile("users", "abc123", "3");
+...
+</programlisting>
+		</example>
+	</section>
+
 
 	<section>
 		<title>

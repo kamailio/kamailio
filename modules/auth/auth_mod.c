@@ -46,6 +46,9 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../parser/digest/digest.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_to.h"
+#include "../../parser/parse_uri.h"
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../error.h"
@@ -81,12 +84,21 @@ static int mod_init(void);
  * Remove used credentials from a SIP message header
  */
 int w_consume_credentials(struct sip_msg* msg, char* s1, char* s2);
+/*
+ * Check for credentials with given realm
+ */
+int w_has_credentials(struct sip_msg* msg, char* s1, char* s2);
 
 static int pv_proxy_authenticate(struct sip_msg* msg, char* realm,
 		char *passwd, char *flags);
 static int pv_www_authenticate(struct sip_msg* msg, char* realm,
 		char *passwd, char *flags);
+static int pv_www_authenticate2(struct sip_msg* msg, char* realm,
+		char *passwd, char *flags, char *method);
 static int fixup_pv_auth(void **param, int param_no);
+static int pv_auth_check(sip_msg_t *msg, char *realm,
+		char *passwd, char *flags, char *checks);
+static int fixup_pv_auth_check(void **param, int param_no);
 
 static int proxy_challenge(struct sip_msg *msg, char* realm, char *flags);
 static int www_challenge(struct sip_msg *msg, char* realm, char *flags);
@@ -108,6 +120,8 @@ int force_stateless_reply = 0; /* Always send reply statelessly */
 
 /*! Prefix to strip from realm */
 str auth_realm_prefix = {"", 0};
+
+static int auth_use_domain = 0;
 
 str secret1;
 str secret2;
@@ -154,12 +168,18 @@ static cmd_export_t cmds[] = {
 			fixup_pv_auth, REQUEST_ROUTE},
     {"pv_www_authenticate",    (cmd_function)pv_www_authenticate,    3,
 			fixup_pv_auth, REQUEST_ROUTE},
+    {"pv_www_authenticate",    (cmd_function)pv_www_authenticate2,   4,
+			fixup_pv_auth, REQUEST_ROUTE},
     {"pv_proxy_authorize",     (cmd_function)pv_proxy_authenticate,  3,
 			fixup_pv_auth, REQUEST_ROUTE},
     {"pv_proxy_authenticate",  (cmd_function)pv_proxy_authenticate,  3,
 			fixup_pv_auth, REQUEST_ROUTE},
     {"auth_get_www_authenticate",  (cmd_function)w_auth_get_www_authenticate,  3,
 			fixup_auth_get_www_authenticate, REQUEST_ROUTE},
+    {"has_credentials",        w_has_credentials,                    1,
+			fixup_spve_null, REQUEST_ROUTE},
+    {"pv_auth_check",         (cmd_function)pv_auth_check,           4,
+			fixup_pv_auth_check, REQUEST_ROUTE},
     {"bind_auth_s",           (cmd_function)bind_auth_s, 0, 0, 0        },
     {0, 0, 0, 0, 0}
 };
@@ -186,9 +206,10 @@ static param_export_t params[] = {
 	{"one_time_nonce"  ,       PARAM_INT,    &otn_enabled           },
 	{"otn_in_flight_no",       PARAM_INT,    &otn_in_flight_no      },
 	{"otn_in_flight_order",    PARAM_INT,    &otn_in_flight_k       },
-	{"nid_pool_no",            PARAM_INT,    &nid_pool_no            },
+	{"nid_pool_no",            PARAM_INT,    &nid_pool_no           },
     {"force_stateless_reply",  PARAM_INT,    &force_stateless_reply },
 	{"realm_prefix",           PARAM_STRING, &auth_realm_prefix.s   },
+    {"use_domain",             PARAM_INT,    &auth_use_domain       },
     {0, 0, 0}
 };
 
@@ -409,10 +430,39 @@ int w_consume_credentials(struct sip_msg* msg, char* s1, char* s2)
 }
 
 /**
+ *
+ */
+int w_has_credentials(sip_msg_t *msg, char* realm, char* s2)
+{
+    str srealm  = {0, 0};
+	hdr_field_t *hdr = NULL;
+	int ret;
+
+	if (fixup_get_svalue(msg, (gparam_t*)realm, &srealm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		return -1;
+	}
+
+	ret = find_credentials(msg, &srealm, HDR_PROXYAUTH_T, &hdr);
+	if(ret==0) {
+		LM_DBG("found www credentials with realm [%.*s]\n", srealm.len, srealm.s);
+		return 1;
+	}
+	ret = find_credentials(msg, &srealm, HDR_AUTHORIZATION_T, &hdr);
+	if(ret==0) {
+		LM_DBG("found proxy credentials with realm [%.*s]\n", srealm.len, srealm.s);
+		return 1;
+	}
+
+	LM_DBG("no credentials with realm [%.*s]\n", srealm.len, srealm.s);
+	return -1;
+}
+
+/**
  * @brief do WWW-Digest authentication with password taken from cfg var
  */
 int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
-		int flags, int hftype)
+		int flags, int hftype, str *method)
 {
 	struct hdr_field* h;
 	auth_body_t* cred;
@@ -476,8 +526,7 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
 	}
 
 	/* Recalculate response, it must be same to authorize successfully */
-	ret = auth_check_response(&(cred->digest),
-				&msg->first_line.u.request.method, ha1);
+	ret = auth_check_response(&(cred->digest), method, ha1);
 	if(ret==AUTHENTICATED) {
 		ret = AUTH_OK;
 		switch(post_auth(msg, h)) {
@@ -556,7 +605,8 @@ static int pv_proxy_authenticate(struct sip_msg *msg, char* realm,
 		LM_ERR("invalid flags value\n");
 		goto error;
 	}
-	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_PROXYAUTH_T);
+	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_PROXYAUTH_T,
+				&msg->first_line.u.request.method);
 
 error:
 	return AUTH_ERROR;
@@ -596,10 +646,175 @@ static int pv_www_authenticate(struct sip_msg *msg, char* realm,
 		LM_ERR("invalid flags value\n");
 		goto error;
 	}
-	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T);
+	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T,
+				&msg->first_line.u.request.method);
 
 error:
 	return AUTH_ERROR;
+}
+
+static int pv_www_authenticate2(struct sip_msg *msg, char* realm,
+		char *passwd, char *flags, char *method)
+{
+    int vflags = 0;
+    str srealm  = {0, 0};
+    str spasswd = {0, 0};
+    str smethod = {0, 0};
+
+	if (get_str_fparam(&srealm, msg, (fparam_t*)realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		goto error;
+	}
+
+	if(srealm.len==0) {
+		LM_ERR("invalid realm value - empty content\n");
+		goto error;
+	}
+
+	if (get_str_fparam(&spasswd, msg, (fparam_t*)passwd) < 0) {
+		LM_ERR("failed to get passwd value\n");
+		goto error;
+	}
+
+	if(spasswd.len==0) {
+		LM_ERR("invalid password value - empty content\n");
+		goto error;
+	}
+
+	if (get_int_fparam(&vflags, msg, (fparam_t*)flags) < 0) {
+		LM_ERR("invalid flags value\n");
+		goto error;
+	}
+
+	if (get_str_fparam(&smethod, msg, (fparam_t*)method) < 0) {
+		LM_ERR("failed to get method value\n");
+		goto error;
+	}
+
+	if(smethod.len==0) {
+		LM_ERR("invalid method value - empty content\n");
+		goto error;
+	}
+
+	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T,
+				&smethod);
+
+error:
+	return AUTH_ERROR;
+}
+
+/**
+ *
+ */
+static int pv_auth_check(sip_msg_t *msg, char *realm,
+		char *passwd, char *flags, char *checks)
+{
+    int vflags = 0;
+    int vchecks = 0;
+    str srealm  = {0, 0};
+    str spasswd = {0, 0};
+	int ret;
+	hdr_field_t *hdr;
+	sip_uri_t *uri = NULL;
+	sip_uri_t *turi = NULL;
+	sip_uri_t *furi = NULL;
+
+	if(msg==NULL) {
+		LM_ERR("invalid msg parameter\n");
+		return AUTH_ERROR;
+	}
+
+	if ((msg->REQ_METHOD == METHOD_ACK) || (msg->REQ_METHOD == METHOD_CANCEL)) {
+		return AUTH_OK;
+	}
+
+	if(realm==NULL || passwd==NULL || flags==NULL || checks==NULL) {
+		LM_ERR("invalid parameters\n");
+		return AUTH_ERROR;
+	}
+
+	if (get_str_fparam(&srealm, msg, (fparam_t*)realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		return AUTH_ERROR;
+	}
+
+	if(srealm.len==0) {
+		LM_ERR("invalid realm value - empty content\n");
+		return AUTH_ERROR;
+	}
+
+	if (get_str_fparam(&spasswd, msg, (fparam_t*)passwd) < 0) {
+		LM_ERR("failed to get passwd value\n");
+		return AUTH_ERROR;
+	}
+
+	if(spasswd.len==0) {
+		LM_ERR("invalid password value - empty content\n");
+		return AUTH_ERROR;
+	}
+
+	if (get_int_fparam(&vflags, msg, (fparam_t*)flags) < 0) {
+		LM_ERR("invalid flags value\n");
+		return AUTH_ERROR;
+	}
+
+	if (get_int_fparam(&vchecks, msg, (fparam_t*)checks) < 0) {
+		LM_ERR("invalid checks value\n");
+		return AUTH_ERROR;
+	}
+	LM_DBG("realm [%.*s] flags [%d] checks [%d]\n", srealm.len, srealm.s,
+			vflags, vchecks);
+
+	if(msg->REQ_METHOD==METHOD_REGISTER)
+		ret = pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T,
+					&msg->first_line.u.request.method);
+	else
+		ret = pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_PROXYAUTH_T,
+					&msg->first_line.u.request.method);
+
+	if(ret==AUTH_OK && (vflags&AUTH_CHECK_ID_F)) {
+		hdr = (msg->proxy_auth==0)?msg->authorization:msg->proxy_auth;
+		srealm = ((auth_body_t*)(hdr->parsed))->digest.username.user;
+
+		if((furi=parse_from_uri(msg))==NULL)
+			return AUTH_ERROR;
+
+		if(msg->REQ_METHOD==METHOD_REGISTER || msg->REQ_METHOD==METHOD_PUBLISH) {
+			if((turi=parse_to_uri(msg))==NULL)
+				return AUTH_ERROR;
+			uri = turi;
+		} else {
+			uri = furi;
+		}
+		if(srealm.len!=uri->user.len
+					|| strncmp(srealm.s, uri->user.s, srealm.len)!=0)
+			return AUTH_USER_MISMATCH;
+
+		if(msg->REQ_METHOD==METHOD_REGISTER || msg->REQ_METHOD==METHOD_PUBLISH) {
+			/* check from==to */
+			if(furi->user.len!=turi->user.len
+					|| strncmp(furi->user.s, turi->user.s, furi->user.len)!=0)
+				return AUTH_USER_MISMATCH;
+			if(auth_use_domain!=0 && (furi->host.len!=turi->host.len
+					|| strncmp(furi->host.s, turi->host.s, furi->host.len)!=0))
+				return AUTH_USER_MISMATCH;
+			/* check r-uri==from for publish */
+			if(msg->REQ_METHOD==METHOD_PUBLISH) {
+				if(parse_sip_msg_uri(msg)<0)
+					return AUTH_ERROR;
+				uri = &msg->parsed_uri;
+				if(furi->user.len!=uri->user.len
+						|| strncmp(furi->user.s, uri->user.s, furi->user.len)!=0)
+					return AUTH_USER_MISMATCH;
+				if(auth_use_domain!=0 && (furi->host.len!=uri->host.len
+						|| strncmp(furi->host.s, uri->host.s, furi->host.len)!=0))
+					return AUTH_USER_MISMATCH;
+				}
+		}
+		return AUTH_OK;
+	}
+
+	return ret;
 }
 
 /**
@@ -621,6 +836,28 @@ static int fixup_pv_auth(void **param, int param_no)
 	}
 	return 0;
 }
+
+/**
+ * @brief fixup function for pv_{www,proxy}_authenticate
+ */
+static int fixup_pv_auth_check(void **param, int param_no)
+{
+	if(strlen((char*)*param)<=0) {
+		LM_ERR("empty parameter %d not allowed\n", param_no);
+		return -1;
+	}
+
+	switch(param_no) {
+		case 1:
+		case 2:
+			return fixup_var_pve_str_12(param, 1);
+		case 3:
+		case 4:
+			return fixup_var_int_12(param, 1);
+	}
+	return 0;
+}
+
 
 
 /**

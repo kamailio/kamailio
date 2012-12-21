@@ -51,7 +51,7 @@
 	(((int)(long)(_msg_)->maxforwards->parsed)-1)
 
 /* looks for the MAX FORWARDS header
-   returns the its value, -1 if is not present or -2 for error */
+   returns its value, -1 if is not present or -2 for error */
 int is_maxfwd_present( struct sip_msg* msg , str *foo)
 {
 	int x, err;

@@ -129,6 +129,26 @@
 	<section>
 	<title>Parameters</title>
 	<section>
+		<title><varname>force_socket</varname> (string)</title>
+		<para>
+		Socket to be used when sending NAT pings for UDP communication.
+		If no one specified, the OS will choose a socket.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>force_socket</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "force_socket", "localhost:33333")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>natping_interval</varname> (integer)</title>
 		<para>
 		Period of time in seconds between sending the NAT pings to all 

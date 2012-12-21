@@ -1,0 +1,18 @@
+	<!-- Declaration of grp table-->
+	<db_table id="grp">
+		<table_name>grp</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>grp</field><type>DB1_STR</type></column>
+		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
+	</db_table>
+	<!-- Declaration of re_grp table-->
+	<db_table id="re_grp">
+		<table_name>re_grp</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>reg_exp</field><type>DB1_STR</type></column>
+		<column><field>group_id</field><type>DB1_INT</type></column>
+	</db_table>

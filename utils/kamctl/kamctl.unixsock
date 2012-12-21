@@ -71,7 +71,7 @@ unixsock_cmd()
 
 CTLCMD=unixsock_cmd
 
-unixsock_openser_monitor() {
+unixsock_kamailio_monitor() {
 		attempt=0
 		if [ "$2" == "" ]; then
 		    loops=-1;
@@ -114,5 +114,5 @@ unixsock_openser_monitor() {
 
 }
 
-OPENSER_MONITOR=unixsock_openser_monitor
+KAMAILIO_MONITOR=unixsock_kamailio_monitor
 

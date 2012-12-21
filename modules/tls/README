@@ -56,10 +56,10 @@ Andrei Pelinescu-Onciul
 
 1.1. Overview
 
-   This module implements the TLS transport for SIP-router using the
-   OpenSSL library (http://www.openssl.org). To enable the TLS support
-   this module must be loaded and enable_tls=yes must be added to the
-   SIP-router config file
+   This module implements the TLS transport for Kamailio using the OpenSSL
+   library (http://www.openssl.org). To enable the TLS support this module
+   must be loaded and enable_tls=yes must be added to the SIP-router
+   config file
 
 1.2. Quick Start
 
@@ -291,32 +291,33 @@ te.
 2. sign it with the ca certificate
         openssl ca -in ser1_cert_req.pem -out ser1_cert.pem
 
-3. copy ser1_cert.pem to your ser config. dir
+3. copy ser1_cert.pem to your Kamailio config. dir
 
 
-Setting sip-router to use the certificate
+Setting Kamailio to use the certificate
 -----------------------------------------
 1. create the ca list file:
         for each of your ca certificates that you intend to use do:
                 cat cacert.pem >>calist.pem
 
-2. copy your sip-router certificate, private key and ca list file to your
+2. copy your Kamailio certificate, private key and ca list file to your
         intended machine (preferably in your sip-router configuration directory,
-         this is the default place sip-router searches for).
+         this is the default place Kamailio searches for).
 
-3. set up sip-router.cfg to use the certificate
-        if your ser certificate name is different from cert.pem or it is not
-        placed in sip-router cfg. directory, add to your sip-router.cfg:
+3. set up Kamailio.cfg to use the certificate
+        if your Kamailio certificate name is different from cert.pem or it is no
+t
+        placed in Kamailio cfg. directory, add to your kamailio.cfg:
                 modparam("tls", "certificate", "/path/cert_file_name")
 
-4. set up sip-router to use the private key
+4. set up Kamailio to use the private key
         if your private key is not contained in the same file as the certificate
         (or the certificate name is not the default cert.pem), add to your
-         sip-router.cfg:
+         Kamailio.cfg:
                 modparam("tls", "private_key", "/path/private_key_file")
 
-5. set up sip-router to use the ca list (optional)
-        add to your sip-router.cfg:
+5. set up Kamailio to use the ca list (optional)
+        add to your Kamailio.cfg:
                 modparam("tls", "ca_list", "/path/ca_list_file")
 
 6. set up tls authentication options:
@@ -333,9 +334,9 @@ Revoking a certificate and using a CRL
 2. generate/update the certificate revocation list:
         openssl ca -gencrl -out my_crl.pem
 
-3. copy my_crl.pem to your ser config. dir
+3. copy my_crl.pem to your Kamailio config. dir
 
-4. set up sip-router to use the CRL:
+4. set up Kamailio to use the CRL:
                 modparam("tls", "crl", "path/my_crl.pem")
 
 1.9. Parameters
@@ -372,7 +373,7 @@ modparam("tls", "tls_method", "TLSv1")
    working directory (at runtime). If it starts with a '/' it will be an
    absolute path and if it starts with anything else the path will be
    relative to the main config file directory (e.g.: for ser -f
-   /etc/ser/ser.cfg it will be relative to /etc/ser/).
+   /etc/kamailio/kamailio.cfg it will be relative to /etc/ser/).
 
    Warning: try not to use certificate with keys longer then 1024 bytes.
    Longer keys will severely impact performance, in particular the TLS
@@ -382,7 +383,7 @@ modparam("tls", "tls_method", "TLSv1")
 
    Example 4. Set certificate parameter
 ...
-modparam("tls", "certificate", "/usr/local/etc/ser/my_certificate.pem")
+modparam("tls", "certificate", "/usr/local/etc/kamailio/my_certificate.pem")
 ...
 
 1.9.3. private_key (string)
@@ -392,7 +393,7 @@ modparam("tls", "certificate", "/usr/local/etc/ser/my_certificate.pem")
    If the file name starts with a '.' the path will be relative to the
    working directory (at runtime). If it starts with a '/' it will be an
    absolute path and if it starts with anything else the path will be
-   relative to the main config file directory (e.g.: for ser -f
+   relative to the main config file directory (e.g.: for kamailio -f
    /etc/ser/ser.cfg it will be relative to /etc/ser/).
 
    Note: the private key can be contained in the same file as the
@@ -415,7 +416,7 @@ modparam("tls", "private", "/usr/local/etc/ser/my_pkey.pem")
    If the file name starts with a '.' the path will be relative to the
    working directory (at runtime). If it starts with a '/' it will be an
    absolute path and if it starts with anything else the path will be
-   relative to the main config file directory (e.g.: for ser -f
+   relative to the main config file directory (e.g.: for kamailio -f
    /etc/ser/ser.cfg it will be relative to /etc/ser/).
 
    By default the CA file is not set.
@@ -442,7 +443,7 @@ modparam("tls", "ca_list", "/usr/local/etc/ser/ca_list.pem")
    If the file name starts with a '.' the path will be relative to the
    working directory (at runtime). If it starts with a '/' it will be an
    absolute path and if it starts with anything else the path will be
-   relative to the main config file directory (e.g.: for ser -f
+   relative to the main config file directory (e.g.: for kamailio -f
    /etc/ser/ser.cfg it will be relative to /etc/ser/).
 
 Note
@@ -452,9 +453,9 @@ Note
 
    By default the crl file is not set.
 
-   To update the crl in a running ser, make sure you configure tls via a
-   separate tls config file (the config modparam) and issue a tls.reload
-   RPC call, e.g.:
+   To update the crl in a running Kamailio, make sure you configure tls
+   via a separate tls config file (the config modparam) and issue a
+   tls.reload RPC call, e.g.:
  $ sercmd tls.reload
 
    A quick way to create the CRL in PEM format, using openssl is:
@@ -539,13 +540,13 @@ modparam("tls", "cipher_list", "HIGH")
 1.9.10. send_timeout (int)
 
    This parameter is obsolete and cannot be used in newer TLS versions (>
-   sip-router 3.0). In these versions the send_timeout is replaced by
+   Kamailio 3.0). In these versions the send_timeout is replaced by
    tcp_send_timeout (common with all the tcp connections).
 
 1.9.11. handshake_timeout (int)
 
    This parameter is obsolete and cannot be used in newer TLS versions (>
-   sip-router 3.0). In these versions the handshake_timeout is replaced by
+   Kamailio 3.0). In these versions the handshake_timeout is replaced by
    tcp_connect_timeout (common with all the tcp connections).
 
 1.9.12. connection_timeout (int)
@@ -637,7 +638,7 @@ modparam("tls", "ssl_freelist_max_len", 0)
    succesfull handshake (try minimum 1024).
 
    Lower values would lead to less memory usage, but values lower then the
-   typical ser/sip-router write size would incur a slight performance
+   typical ser/Kamailio write size would incur a slight performance
    penalty. Good values are bigger then the size of the biggest SIP packet
    one normally expects to forward. For example in most setups 2048 would
    be a good value.
@@ -1027,9 +1028,9 @@ modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
    multiple domains, a tls specific config, config reloading and a tls
    specific select framework.
 
-   For ser/sr 3.1 most of the TLS specific code was completely re-written
-   to add support for asynchrounous TLS and fix several long standing
-   bugs.
+   For Kamailio 3.1 most of the TLS specific code was completely
+   re-written to add support for asynchrounous TLS and fix several long
+   standing bugs.
 
    The code is currently maintained by Andrei Pelinescu-Onciul
    <andrei@iptel.org>.

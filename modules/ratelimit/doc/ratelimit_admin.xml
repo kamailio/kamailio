@@ -23,9 +23,14 @@
 	</para>
 	<para>
 		The module implements the pipe/queue policy from BSD's ipfw manual,
-		with some simplifications.  In principle, each specified method is
+		with some simplifications. In principle, each specified method is
 		associated with its own queue and a number of queues are connected
 		to a certain pipe (see the queue and pipe params).
+	</para>
+	<para>
+		Please also take a look at the <quote>pipelimit</quote> module,
+		that implements the pipe policy with database support. Note that it 
+		doesn't implement the queues that exist in this module.
 	</para>
 	</section>
 	<section>
@@ -51,8 +56,8 @@
 ...
 	</programlisting>
 	<para>
-		Upon every incoming request listed above rl_check is invoked. It
-		returns an OK code if the current per request load is below the
+		Upon every incoming request listed above <function>rl_check</function>
+		is invoked. It returns an OK code if the current per request load is below the
 		configured threshold. If the load is exceeded the function returns an
 		error and an administrator can discard requests with a stateless
 		response.
@@ -79,18 +84,18 @@
 		synchronization. During a relatively long interval only the first
 		requests (i.e. REGISTERs) would make it through. Following messages
 		(i.e. RE-REGISTERs) will all hit the SIP proxy at the same time when a
-		common Expire timer expired. Other requests will be retransmissed
-		after given time, the same on all devices with the same firmware/by
+		common Expire timer expired. Other requests will be retransmitted
+		after a given time, the same on all devices with the same firmware/by
 		the same vendor.
 		</para>
 	</section>
 	<section>
 		<title>Random Early Detection Algorithm (RED)</title>
 		<para>
-		Random Early Detection tries to circumvent the synchronization problem
-		imposed by the tail drop algorithm by measuring the average load and
-		adapting the drop rate dynamically. When running with the RED
-		algorithm (enabled by default) &kamailio; will return errors to the &kamailio;
+		The Random Early Detection Algorithm tries to circumvent the synchronization
+		problem imposed by the tail drop algorithm by measuring the average load and
+		adapting the drop rate dynamically. When running with the RED algorithm
+		(enabled by default) &kamailio; will return errors to the &kamailio;
 		routing engine every n'th packet trying to evenly spread the measured
 		load of the last timer interval onto the current interval. As a
 		negative side effect &kamailio; might drop messages although the limit might
@@ -108,24 +113,24 @@
 		rl_check returns an error. 
 		</para>
 	</section>
-	</section>
 	<section>
-	<title>Dynamic Rate Limiting Algorithms</title>
-	<para>
-		When running openser on different machines, one has to adjust the drop
+		<title>Dynamic Rate Limiting Algorithms</title>
+		<para>
+		When running &kamailio; on different machines, one has to adjust the drop
 		rates for the static algorithms to maintain a sub 100% load average or
-		packets start getting dropped in the network stack.  While this is not
+		packets will start getting dropped in the network stack.  While this is not
 		in itself difficult, it isn't neither accurate nor trivial: another
-		server taking a notable fraction of the cpu time will require re-tuning
+		server taking a notable fraction of the CPU time will require re-tuning
 		the parameters.
-	</para>
-	<para>
+		</para>
+		<para>
 		While tuning the drop rates from the outside based on a certain factor
 		is possible, having the algorithm run inside ratelimit permits tuning
 		the rates based on internal server parameters and is somewhat more
 		flexible (or it will be when support for external load factors - as
 		opposed to cpu load - is added).
-	</para>
+		</para>
+	</section>
 	<section>
 		<title>Feedback Algorithm (FEEDBACK)</title>
 		<para>
@@ -136,7 +141,7 @@
 		in PID terms).
 		</para>
 		<para>
-		As reading the cpu load average is relatively expensive (opening /proc/stat,
+		As reading the CPU load average is relatively expensive (opening /proc/stat,
 		parsing it, etc), this only happens once every timer_interval seconds and
 		consequently the FEEDBACK value is only at these intervals recomputed. This
 		in turn makes it difficult for the drop rate to adjust quickly.  Worst case
@@ -209,11 +214,11 @@ modparam("ratelimit", "timer_interval", 5)
 	<section>
 		<title><varname>queue</varname> (integer:string)</title>
 		<para>
-		The format of the queue parameter is "pipe_no:method".  For each defined
+		The format of the queue parameter is "pipe_no:method". For each defined
 		method, the algorithm defined by pipe number "pipe_no" will be used.
 		</para>
 		<para>
-		To specify a queue that accepts all methods, use * instead of METHOD.
+		To specify a queue that accepts all methods, use <quote>*</quote> instead of METHOD.
 		As queues are matched against request methods, you will usually want to have
 		this as the last queue added or other queues with specific methods will never
 		match.  At this time, glob or regexp patterns are not supported.
@@ -278,8 +283,8 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		then the pipe will be identified based on the matched queue.  If a pipe number
 		is provided as a parameter, then the given pipe number will be used for
 		identifying the ratelimit algorithm.
-		The pipe number must be provided via a pseudo variabile.  It is recommended to
-		provide the pipe number via an integer pseudovariabile.
+		The pipe number must be provided via a pseudovariable.  It is recommended to
+		provide the pipe number via an integer pseudovariable.
 		</para>
 		<para>The method will return an error code if the limit for the matched
 		algorithm is reached.
@@ -379,7 +384,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		<function moreinfo="none">rl.stats</function>
 		</title>
 		<para>
-		Lists the parameters and variabiles in the ratelimit module.
+		Lists the parameters and variables in the ratelimit module.
 		</para>
 		<para>
 		Name: <emphasis>rl.stats</emphasis>
@@ -389,7 +394,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		serctl rl.stats
+		sercmd rl.stats
 		</programlisting>
 	</section>
 	<section>
@@ -420,7 +425,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		serctl rl.set_pipe 2 RED 10
+		sercmd rl.set_pipe 2 RED 10
 		</programlisting>
 	</section>
 	<section>
@@ -433,12 +438,12 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		<para>
 		Name: <emphasis>rl.get_pipes</emphasis>
 		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>Parameters:<emphasis>none</emphasis></para>
 		<para>
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		serctl rl.get_pipes
+		sercmd rl.get_pipes
 		</programlisting>
 	</section>
 	<section>
@@ -469,7 +474,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		serctl rl.set_queue 3 INVITE 2
+		sercmd rl.set_queue 3 INVITE 2
 		</programlisting>
 	</section>
 	<section>
@@ -487,7 +492,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		serctl rl.get_queues
+		sercmd rl.get_queues
 		</programlisting>
 	</section>
 	<section>
@@ -516,7 +521,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		serctl rl.set_pid 0.5 0.5 0.5
+		sercmd rl.set_pid 0.5 0.5 0.5
 		</programlisting>
 	</section>
 	<section>
@@ -534,7 +539,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		serctl rl.get_pid
+		sercmd rl.get_pid
 		</programlisting>
 	</section>
 	<section>
@@ -542,7 +547,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		<function moreinfo="none">rl.push_load</function>
 		</title>
 		<para>
-		Force the value of the load parameter.  This methos is usefull
+		Force the value of the load parameter. This method is useful
 		for testing the Feedback algorithm.
 		</para>
 		<para>
@@ -559,7 +564,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		serctl rl.push_load 0.85
+		sercmd rl.push_load 0.85
 		</programlisting>
 	</section>
 	<section>
@@ -567,7 +572,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		<function moreinfo="none">rl.set_dbg</function>
 		</title>
 		<para>
-		This MI function will enable/disable a WARNING debug log exposing the
+		This function will enable/disable a WARNING debug log exposing the
 		internal counters for each pipe (useful in monitoring the ratelimit internals).
 		</para>
 		<para>
@@ -584,7 +589,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		serctl rl.set_dbg 1
+		sercmd rl.set_dbg 1
 		</programlisting>
 	</section>
 	</section>

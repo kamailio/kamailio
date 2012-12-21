@@ -72,10 +72,10 @@ sql_query()
 }
 
 
-openser_drop()  # pars: <database name>
+kamailio_drop()  # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	merr "openser_drop function takes two params"
+	merr "kamailio_drop function takes two params"
 	exit 1
 fi
 
@@ -95,13 +95,13 @@ else
 fi
 
 minfo "Database $1 dropped"
-} #openser_drop
+} #kamailio_drop
 
 
-openser_create () # pars: <database name>
+kamailio_create () # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	merr "openser_create function takes one param"
+	merr "kamailio_create function takes one param"
 	exit 1
 fi
 
@@ -172,7 +172,7 @@ get_answer $INSTALL_EXTRA_TABLES "Install tables for $EXTRA_MODULES? (y/n): "
 if [ "$ANSWER" = "y" ]; then
 	extra_create $1
 fi
-} # openser_create
+} # kamailio_create
 
 
 presence_create () # pars: <database name>

@@ -57,6 +57,11 @@ typedef enum auth_cfg_result {
 
 
 /**
+ * flags for checks in auth functions
+ */
+#define AUTH_CHECK_ID_F 1<<0
+
+/**
  * return codes to auth API functions
  */
 typedef enum auth_result {
@@ -111,9 +116,9 @@ int auth_challenge(struct sip_msg *msg, str *realm, int flags,
 		int hftype);
 
 typedef int (*pv_authenticate_f)(struct sip_msg *msg, str *realm, str *passwd,
-		int flags, int hftype);
+		int flags, int hftype, str *method);
 int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
-		int flags, int hftype);
+		int flags, int hftype, str *method);
 
 typedef int (*consume_credentials_f)(struct sip_msg* msg);
 int consume_credentials(struct sip_msg* msg);

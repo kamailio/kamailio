@@ -16,7 +16,7 @@ else
 	LIBS+= $(shell pkg-config --libs libxml-2.0)
 endif
 
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1

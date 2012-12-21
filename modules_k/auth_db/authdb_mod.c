@@ -43,6 +43,7 @@
 #include "../../mod_fix.h"
 #include "../../trim.h"
 #include "../../mem/mem.h"
+#include "../../parser/parse_uri.h"
 #include "../../modules/auth/api.h"
 #include "authorize.h"
 
@@ -68,6 +69,8 @@ static int child_init(int rank);
 static int mod_init(void);
 
 
+static int w_is_subscriber(sip_msg_t *msg, char *_uri, char* _table,
+		char *_flags);
 static int auth_fixup(void** param, int param_no);
 static int auth_check_fixup(void** param, int param_no);
 int parse_aaa_pvs(char *definition, pv_elem_t **pv_def, int *cnt);
@@ -116,12 +119,16 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE},
 	{"www_authenticate",   (cmd_function)www_authenticate,   2, auth_fixup, 0,
 		REQUEST_ROUTE},
+	{"www_authenticate",   (cmd_function)www_authenticate2,  3, auth_fixup, 0,
+REQUEST_ROUTE},
 	{"proxy_authorize",    (cmd_function)proxy_authenticate, 2, auth_fixup, 0,
 		REQUEST_ROUTE},
 	{"proxy_authenticate", (cmd_function)proxy_authenticate, 2, auth_fixup, 0,
 		REQUEST_ROUTE},
 	{"auth_check",         (cmd_function)auth_check,         3, auth_check_fixup, 0,
 		REQUEST_ROUTE},
+	{"is_subscriber",      (cmd_function)w_is_subscriber,    3, auth_check_fixup, 0,
+		ANY_ROUTE},
 	{"bind_auth_db",       (cmd_function)bind_auth_db,       0, 0, 0,
 		0},
 	{0, 0, 0, 0, 0, 0}
@@ -232,6 +239,64 @@ static void destroy(void)
 }
 
 
+/**
+ * check if the subscriber identified by _uri has a valid record in
+ * database table _table
+ */
+static int w_is_subscriber(sip_msg_t *msg, char *_uri, char* _table,
+		char *_flags)
+{
+	str suri;
+	str stable;
+	int iflags;
+	int ret;
+	sip_uri_t puri;
+
+	if(msg==NULL || _uri==NULL || _table==NULL || _flags==NULL) {
+		LM_ERR("invalid parameters\n");
+		return AUTH_ERROR;
+	}
+
+	if (get_str_fparam(&suri, msg, (fparam_t*)_uri) < 0) {
+		LM_ERR("failed to get uri value\n");
+		return -1;
+	}
+
+	if (suri.len==0) {
+		LM_ERR("invalid uri parameter - empty value\n");
+		return -1;
+	}
+	if(parse_uri(suri.s, suri.len, &puri)<0){
+		LM_ERR("invalid uri parameter format\n");
+		return -1;
+	}
+
+	if (get_str_fparam(&stable, msg, (fparam_t*)_table) < 0) {
+		LM_ERR("failed to get table value\n");
+		return -1;
+	}
+
+	if (stable.len==0) {
+		LM_ERR("invalid table parameter - empty value\n");
+		return -1;
+	}
+
+	if(fixup_get_ivalue(msg, (gparam_p)_flags, &iflags)!=0)
+	{
+		LM_ERR("invalid flags parameter\n");
+		return -1;
+	}
+
+	LM_DBG("uri [%.*s] table [%.*s] flags [%d]\n", suri.len, suri.s,
+			stable.len,  stable.s, iflags);
+	ret = fetch_credentials(msg, &puri.user, (iflags==1)?&puri.host:NULL,
+			&stable);
+
+	if(ret>=0)
+		return 1;
+	return ret;
+}
+
 /*
  * Convert the char* parameters
  */
@@ -245,7 +310,7 @@ static int auth_fixup(void** param, int param_no)
 		return -1;
 	}
 
-	if (param_no == 1) {
+	if (param_no == 1 || param_no == 3) {
 		return fixup_var_str_12(param, 1);
 	} else if (param_no == 2) {
 		name.s = (char*)*param;

@@ -25,7 +25,7 @@ Marius Zbihlei
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. write_db_url (string)
               3.2. read_db_url (string)
@@ -131,7 +131,7 @@ Chapter 1. User's Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. write_db_url (string)
         3.2. read_db_url (string)
@@ -245,7 +245,7 @@ Warning
    running Kamailio with this module loaded:
      * None.
 
-3. Exported Parameters
+3. Parameters
 
    3.1. write_db_url (string)
    3.2. read_db_url (string)
@@ -275,12 +275,12 @@ Warning
 
    The url to the master database where errors are written to.
 
-   Default value is "mysql://openser:openserrw@localhost/openser".
+   Default value is "mysql://openser:openserrw@localhost/openser"
 
    Example 1.1. Set write_db_url parameter
 ...
-modparam("p_usrloc", "write_db_url", "mysql://openser:openserrw@localhost/opense
-r")
+modparam("p_usrloc", "write_db_url", "mysql://username:password@localhost/databa
+sename")
 ...
 
 3.2. read_db_url (string)
@@ -289,12 +289,11 @@ r")
    from. It is seperated from write access, so for better performance, a
    local replicate can be used for read access.
 
-   Default value is "mysql://openser:openserrw@localhost/openser".
+   Default value is mysql://openser:openserrw@localhost/openser .
 
    Example 1.2. Set read_db_url parameter
 ...
-modparam("p_usrloc", "read_db_url", "mysql://openser:openserrw@localhost/openser
-")
+modparam("p_usrloc", "read_db_url", "mysql://user:passwd@localhost/db")
 ...
 
 3.3. reg_db_table (string)
@@ -659,8 +658,8 @@ modparam("p_usrloc", "db_mode", 2)
 +----+----+------+--------+--------+---------------------+-------+----+
 ...
 
-   The urls are omitted for a better overview, but you can use standard
-   openser database URLs like mysql://openser:openserrw@localhost/openser.
+   The URLs are omitted for a better overview, but you can use standard
+   Kamailio database URLs like mysql://openser:openserrw@localhost/openser
    Databases don't need to be on different hosts, e.g. for testing
    purposes.
 

@@ -1,0 +1,21 @@
+	<!-- Declaration of trusted table-->
+	<db_table id="trusted">
+		<table_name>trusted</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>src_ip</field><type>DB1_STR</type></column>
+		<column><field>proto</field><type>DB1_STR</type></column>
+		<column><field>from_pattern</field><type>DB1_STR</type></column>
+		<column><field>tag</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of address table-->
+	<db_table id="address">
+		<table_name>address</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>grp</field><type>DB1_INT</type></column>
+		<column><field>ip_addr</field><type>DB1_STR</type></column>
+		<column><field>mask</field><type>DB1_INT</type></column>
+		<column><field>port</field><type>DB1_INT</type></column>
+		<column><field>tag</field><type>DB1_STR</type></column>
+	</db_table>

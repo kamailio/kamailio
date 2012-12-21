@@ -84,7 +84,7 @@ modules:
 
 .PHONY: install
 .PHONY: install-libs
-install: $(NAME) $(util_dst) install-libs
+install: $(NAME) $(util_dst) install-libs install-util-man
 	$(INSTALL_TOUCH) $(util_dst)/$(NAME)
 	$(INSTALL_BIN)  $(NAME)  $(util_dst)
 
@@ -123,13 +123,31 @@ endif
 ifneq (,$(wildcard $(UTIL_NAME).xml))
 
 $(UTIL_NAME).7: $(UTIL_NAME).xml
-	docbook2x-man -s ../../doc/stylesheets/serdoc2man.xsl $<
+	$(DOCBOOK) -s ../../doc/stylesheets/serdoc2man.xsl $<
 
 man: $(UTIL_NAME).7
 
 else
 
 man:
+
+endif
+
+$(man_prefix)/$(man_dir)/man8:
+	mkdir -p $(man_prefix)/$(man_dir)/man8
+
+.PHONY: install-util-man
+#src-name man page install rules
+ifneq (,$(wildcard $(UTIL_SRC_NAME).8))
+install-util-man: $(man_prefix)/$(man_dir)/man8
+	sed -e "s#$(UTIL_SRC_NAME)#$(UTIL_NAME)#g" \
+			-e "s#$(SRC_NAME)#$(MAIN_NAME)#g" \
+			< $(UTIL_SRC_NAME).8 > $(man_prefix)/$(man_dir)/man8/$(UTIL_NAME).8
+	chmod 644  $(man_prefix)/$(man_dir)/man8/$(UTIL_NAME).8
+
+else
+
+install-util-man:
 
 endif
 

@@ -1,0 +1,39 @@
+	<!-- Declaration of dialog table-->
+	<db_table id="dialog">
+		<table_name>dialog</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>hash_entry</field><type>DB1_INT</type></column>
+		<column><field>hash_id</field><type>DB1_INT</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>from_uri</field><type>DB1_STR</type></column>
+		<column><field>from_tag</field><type>DB1_STR</type></column>
+		<column><field>to_uri</field><type>DB1_STR</type></column>
+		<column><field>to_tag</field><type>DB1_STR</type></column>
+		<column><field>caller_cseq</field><type>DB1_STR</type></column>
+		<column><field>callee_cseq</field><type>DB1_STR</type></column>
+		<column><field>caller_route_set</field><type>DB1_STR</type></column>
+		<column><field>callee_route_set</field><type>DB1_STR</type></column>
+		<column><field>caller_contact</field><type>DB1_STR</type></column>
+		<column><field>callee_contact</field><type>DB1_STR</type></column>
+		<column><field>caller_sock</field><type>DB1_STR</type></column>
+		<column><field>callee_sock</field><type>DB1_STR</type></column>
+		<column><field>state</field><type>DB1_INT</type></column>
+		<column><field>start_time</field><type>DB1_INT</type></column>
+		<column><field>timeout</field><type>DB1_INT</type></column>
+		<column><field>sflags</field><type>DB1_INT</type></column>
+		<column><field>iflags</field><type>DB1_INT</type></column>
+		<column><field>toroute_name</field><type>DB1_STR</type></column>
+		<column><field>req_uri</field><type>DB1_STR</type></column>
+		<column><field>xdata</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of dialog_vars table-->
+	<db_table id="dialog_vars">
+		<table_name>dialog_vars</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>hash_entry</field><type>DB1_INT</type></column>
+		<column><field>hash_id</field><type>DB1_INT</type></column>
+		<column><field>dialog_key</field><type>DB1_STR</type></column>
+		<column><field>dialog_value</field><type>DB1_STR</type></column>
+	</db_table>

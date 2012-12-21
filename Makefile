@@ -250,7 +250,7 @@ module_group_kcarrierroute=carrierroute
 module_group_kberkeley=db_berkeley
 
 # K ldap modules
-module_group_kldap=ldap h350
+module_group_kldap=ldap db2_ldap h350
 
 # K utils module
 module_group_kutils=utils
@@ -310,7 +310,7 @@ else
 							auth_radius misc_radius avp_radius uri_radius \
 							acc_radius pa rls presence_b2b xcap xmlrpc\
 							osp tls oracle \
-							unixsock dbg print_lib auth_identity ldap \
+							unixsock dbg print_lib auth_identity db2_ldap ldap \
 							db_berkeley db_mysql db_postgres db_oracle \
 							db_sqlite db_unixodbc db_cassandra memcached mi_xmlrpc \
 							perl perlvdb purple \
@@ -333,7 +333,7 @@ else
 	# depends on libpython-dev
 	exclude_modules+= app_python
 	# depends on libxml2
-	exclude_modules+= xmlops
+	exclude_modules+= xmlops xhttp_pi
 	# depends on jsoc-c
 	exclude_modules+= json jsonrpc-c
 	# depends on libhiredis
@@ -1212,4 +1212,49 @@ printcdefs:
 printvar:
 	@echo "Content of <$(v)> is:"
 	@echo -n $($(v))
+	@echo
+
+.PHONY: uninstall
+uninstall:
+	@echo "-Installation details:"
+	@echo " *PREFIX Path is: ${PREFIX}"
+	@echo " *BINDIR Path is: ${bin_prefix}/${bin_dir}"
+	@echo " *CFGDIR Path is: ${cfg_prefix}/${cfg_dir}"
+	@echo " *DOCDIR Path is: ${doc_prefix}/${doc_dir}"
+	@echo " *LIBDIR Path is: ${lib_prefix}/${lib_dir}"
+	@echo " *MANDIR Path is: ${man_prefix}/${man_dir}"
+	@echo " *SHRDIR Path is: ${share_prefix}/${share_dir}"
+	@if [ "${PREFIX}" != "/usr/local" ] ; then \
+		echo "-Custom PREFIX Path" ; \
+		if [ "${PREFIX}" = "/" -o "${PREFIX}" = "/usr" ] ; then \
+			echo "-Custom installation in a system folder" ; \
+			echo "-This is advanced installation" ; \
+			echo "-You seem to be in control of what files were deployed" ; \
+			echo "-Folders listed above should give hints about what to delete" ; \
+		else \
+			echo "-Uninstall should be just removal of the folder: ${PREFIX}" ; \
+			echo "-WARNING: before deleting, be sure ${PREFIX} is not a system directory" ; \
+		fi ; \
+	else \
+		echo "-Run following commands to uninstall:" ; \
+		echo ; \
+		echo "rm ${bin_prefix}/${bin_dir}${MAIN_NAME}" ; \
+		if [ "${FLAVOUR}" = "kamailio" ] ; then \
+			echo "rm ${bin_prefix}/${bin_dir}kamctl" ; \
+			echo "rm ${bin_prefix}/${bin_dir}kamdbctl" ; \
+		fi ; \
+		echo "rm ${bin_prefix}/${bin_dir}sercmd" ; \
+		echo "rm ${man_prefix}/${man_dir}man5/$(MAIN_NAME).cfg.5" ; \
+		echo "rm ${man_prefix}/${man_dir}man8/$(MAIN_NAME).8" ; \
+		if [ "${FLAVOUR}" = "kamailio" ] ; then \
+			echo "rm ${man_prefix}/${man_dir}kamctl.8" ; \
+			echo "rm ${man_prefix}/${man_dir}kamdbctl.8" ; \
+		fi ; \
+		echo "rm -rf ${cfg_prefix}/${cfg_dir}" ; \
+		echo "rm -rf ${doc_prefix}/${doc_dir}" ; \
+		echo "rm -rf ${lib_prefix}/${lib_dir}" ; \
+		echo "rm -rf ${share_prefix}/${share_dir}" ; \
+		echo ; \
+		echo "-WARNING: before running the commands, be sure they don't delete any system directory or file" ; \
+	fi ;
 	@echo

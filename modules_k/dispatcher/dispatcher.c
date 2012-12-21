@@ -978,14 +978,14 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 	/* add entry node */
 	if (rpc->add(ctx, "{", &th) < 0)
 	{
-		rpc->fault(c, 500, "Internal error root reply");
+		rpc->fault(ctx, 500, "Internal error root reply");
 		return;
 	}
 	if(rpc->struct_add(th, "d{",
 				"SET_NO", ds_list_nr,
 				"SET",  &ih)<0)
 	{
-		rpc->fault(c, 500, "Internal error set structure");
+		rpc->fault(ctx, 500, "Internal error set structure");
 		return;
 	}
 
@@ -995,7 +995,7 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 		if(rpc->struct_add(ih, "d",
 					"SET_ID", list->id)<0)
 		{
-			rpc->fault(c, 500, "Internal error creating set id");
+			rpc->fault(ctx, 500, "Internal error creating set id");
 			return;
 		}
 
@@ -1004,7 +1004,7 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 			if(rpc->struct_add(ih, "{",
 						"DEST", &vh)<0)
 			{
-				rpc->fault(c, 500, "Internal error creating dest");
+				rpc->fault(ctx, 500, "Internal error creating dest");
 				return;
 			}
 
@@ -1030,7 +1030,7 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 						"ATTRS", (list->dlist[j].attrs.body.s)?
 						&(list->dlist[j].attrs.body):&data)<0)
 			{
-				rpc->fault(c, 500, "Internal error creating dest struct");
+				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return;
 			}
 		}

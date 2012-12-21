@@ -438,7 +438,11 @@ void qm_free(struct qm_block* qm, void* p)
 #endif
 
 	if (p==0) {
+#ifdef DBG_QM_MALLOC
+		LOG(L_WARN, "WARNING:qm_free: free(0) called from %s: %s(%d)\n", file, func, line);
+#else
 		LOG(L_WARN, "WARNING:qm_free: free(0) called\n");
+#endif
 		return;
 	}
 
@@ -484,8 +488,8 @@ void qm_free(struct qm_block* qm, void* p)
 		f->u.nxt_free=(void*)0x1L; /* bogus value, just to mark it as free */
 		/* join packets if possible*/
 		next=FRAG_NEXT(f);
-		if (((char*)next < (char*)qm->last_frag_end) &&( next->u.is_free)){
-		/* join */
+		if (((char*)next < (char*)qm->last_frag_end) && (next->u.is_free)){
+			/* join next packet */
 #ifdef DBG_QM_MALLOC
 			qm_debug_frag(qm, next);
 #endif
@@ -499,15 +503,15 @@ void qm_free(struct qm_block* qm, void* p)
 			prev=FRAG_PREV(f);
 			/*	(struct qm_frag*)((char*)f - (struct qm_frag_end*)((char*)f-
 								sizeof(struct qm_frag_end))->size);*/
-#ifdef DBG_QM_MALLOC
-			qm_debug_frag(qm, prev);
-#endif
 			if (prev->u.is_free){
-				/*join*/
+				/* join prev packet */
+#ifdef DBG_QM_MALLOC
+				qm_debug_frag(qm, prev);
+#endif
 				qm_detach_free(qm, prev);
 				size+=prev->size+FRAG_OVERHEAD;
 				qm->real_used-=FRAG_OVERHEAD;
-					qm->free_hash[GET_HASH(prev->size)].no--; /* FIXME slow */
+				qm->free_hash[GET_HASH(prev->size)].no--; /* FIXME slow */
 				f=prev;
 			}
 		}

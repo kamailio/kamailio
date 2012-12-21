@@ -1,0 +1,16 @@
+	<!-- Declaration of uacreg table-->
+	<db_table id="uacreg">
+		<table_name>uacreg</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>l_uuid</field><type>DB1_STR</type></column>
+		<column><field>l_username</field><type>DB1_STR</type></column>
+		<column><field>l_domain</field><type>DB1_STR</type></column>
+		<column><field>r_username</field><type>DB1_STR</type></column>
+		<column><field>r_domain</field><type>DB1_STR</type></column>
+		<column><field>realm</field><type>DB1_STR</type></column>
+		<column><field>auth_username</field><type>DB1_STR</type></column>
+		<column><field>auth_password</field><type>DB1_STR</type></column>
+		<column><field>auth_proxy</field><type>DB1_STR</type></column>
+		<column><field>expires</field><type>DB1_INT</type></column>
+	</db_table>

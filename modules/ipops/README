@@ -1,16 +1,16 @@
 ipops Module
 
-I√±aki Baz Castillo
+IÒaki Baz Castillo
 
    <ibc@aliax.net>
 
 Edited by
 
-I√±aki Baz Castillo
+IÒaki Baz Castillo
 
    <ibc@aliax.net>
 
-   Copyright ¬© 2011 I√±aki Baz Castillo
+   Copyright © 2011 IÒaki Baz Castillo
      __________________________________________________________________
 
    Table of Contents
@@ -76,20 +76,23 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module offers operations for IPv4 and IPv6.
+   This module offers operations for handling IP addresses in both IPv4
+   and IPv6.
 
-   IPv6 is defined in RFC 2460. The same IPv6 can be represented by
-   different ASCII strings, so binary comparison is required. For example,
-   the following IPv6 are equivalent:
-     * 1080:0000:0000:0000:0008:0800:200C:417A
-     * 1080:0:0:0:8:800:200C:417A
-     * 1080::8:800:200C:417A
+   IPv6 is defined in RFC 2460. The same IPv6 address can be represented
+   by different ASCII strings, so binary comparison is required. For
+   example, the following IPv6 addresses are equivalent:
+     * 2001:DB8:0000:0000:0008:0800:200C:417A
+     * 2001:DB8:0:0:8:800:200C:417A
+     * 2001:DB8::200C:417A
 
-   When using IPv6 in an URI (i.e. a SIP URI) such IP must be written in
-   "IPv6 reference" format (which is the textual representation of the
-   IPv6 enclosed between [ ] symbols). An example is
-   ‚Äúsip:alice@[1080:0:0:0:8:800:200C:417A]‚Äù. This module also allows
-   comparing a IPv6 with its IPv6 reference representation.
+   When using IPv6 in an URI (i.e. a SIP URI) the IP address must be
+   written in "IPv6 reference" format (which is the textual representation
+   of the IPv6 enclosed between [ ] symbols). An example is
+   "sip:alice@[2001:DB8:0:0:8:800:200C:417A]". This allows separation of
+   address and port number with a :, like
+   "[2001:DB8:0:0:8:800:200C:417A]:5060". This module also allows
+   comparing an IPv6 address with its IPv6 reference representation.
 
 2. Dependencies
 
@@ -136,7 +139,7 @@ Chapter 1. Admin Guide
    Example 1.1.  is_ip usage
 ...
 if (is_ip($rd)) {
-  xlog("L_INFO", "RURI domain is IP\n");
+  xlog("L_INFO", "RURI domain is an IP address (not a host name/domain)\n");
 }
 ...
 
@@ -247,8 +250,8 @@ switch($rc) {
 
 4.7.  compare_ips (ip1, ip2)
 
-   Returns TRUE if both IP's are the same. FALSE otherwise. This function
-   also allows comparing an IPv6 against an IPv6 reference.
+   Returns TRUE if both IP addresses are the same. FALSE otherwise. This
+   function also allows comparing an IPv6 against an IPv6 reference.
 
    Parameters:
      * ip1 - String or pseudo-variable containing the first IP to compare.

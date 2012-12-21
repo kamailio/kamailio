@@ -16,10 +16,10 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		Offer a possibility to store incoming/outgoing SIP messages in database.
+		The sipcapture module stores incoming/outgoing SIP messages in database.
 	</para>
 	<para>
-		Kamailio can capture SIP messages in three mode
+		Kamailio can capture SIP messages in three modes
 		<itemizedlist>
 		<listitem>
 		<para>
@@ -33,7 +33,7 @@
                 </listitem>
 		<listitem>
 		<para>
-		Homer encapsulation protocl mode (HEP v1). 
+		Homer encapsulation protocol mode (HEP v1). 
 		</para>
 		</listitem>
 		</itemizedlist>
@@ -104,7 +104,7 @@ modparam("sipcapture", "db_url", "mysql://user:passwd@host/dbname")
 	<section>
 		<title><varname>table_name</varname> (str)</title>
 		<para>
-		Name of the table's name where to store the SIP messages. Can contain multiple tables, separated by "|".
+		Name of the table's name used to store the SIP messages. Can contain multiple tables, separated by "|".
 		</para>
 		<para>
 		<emphasis>
@@ -312,7 +312,7 @@ modparam("sipcapture", "raw_interface", "eth0")
         <section>
                 <title><varname>raw_sock_children</varname> (integer)</title>
                 <para>
-		Parameter define how much children must be created to listen the raw socket.
+		Parameter define how many children that must be created to listen the raw socket.
                 </para>
                 <para>
                 <emphasis>
@@ -320,7 +320,7 @@ modparam("sipcapture", "raw_interface", "eth0")
                 </emphasis>
                 </para>
                 <example>
-                <title>Set <varname>raw_socket_listen</varname> parameter</title>
+                <title>Set <varname>raw_sock_children</varname> parameter</title>
                 <programlisting format="linespecific">
 ...
 modparam("sipcapture", "raw_sock_children", 6)
@@ -340,7 +340,7 @@ modparam("sipcapture", "raw_sock_children", 6)
                 </emphasis>
                 </para>
                 <example>
-                <title>Set <varname>hep_capture_on</varname> parameter</title>
+                <title>Set <varname>promiscous_on</varname> parameter</title>
                 <programlisting format="linespecific">
 ...
 modparam("sipcapture", "promiscuous_on", 1)

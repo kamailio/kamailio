@@ -504,7 +504,7 @@ error:
  */
 void remove_sdp(qos_ctx_t *qos_ctx, unsigned int dir, struct sip_msg *_m, unsigned int role, unsigned int other_role)
 {
-	str *cseq_number, *cseq_method;
+	str *cseq_number;
 	int cseq_method_id;
 	qos_sdp_t *qos_sdp;
 
@@ -514,7 +514,6 @@ void remove_sdp(qos_ctx_t *qos_ctx, unsigned int dir, struct sip_msg *_m, unsign
 	}
 
 	cseq_number = &((get_cseq(_m))->number);
-	cseq_method = &((get_cseq(_m))->method);
 	cseq_method_id = (get_cseq(_m))->method_id;
 
 	if (_m->first_line.type == SIP_REPLY) {

@@ -1,0 +1,10 @@
+	<!-- Declaration of cpl table-->
+	<db_table id="cpl">
+		<table_name>cpl</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>cpl_xml</field><type>DB1_BLOB</type></column>
+		<column><field>cpl_bin</field><type>DB1_BLOB</type></column>
+	</db_table>

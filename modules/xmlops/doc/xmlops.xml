@@ -2,8 +2,9 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="xmlops" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="xmlops" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>XMLOPS Module</title>
+    <bookinfo>
 	<authorgroup>
 		<author>
 		<firstname>Daniel-Constantin</firstname>
@@ -16,9 +17,8 @@
 	    <year>2009</year>
 	    <holder>asipto.com</holder>
 	</copyright>
-    </sectioninfo>
+    </bookinfo>
 
-    <title>XMLOPS Module</title>
 
     <section id="xmlops.overview">
 	<title>Overview</title>
@@ -59,8 +59,8 @@
 		</section>
     </section>
 
-    <xi:include href="params.xml"/>
-    <xi:include href="functions.xml"/>
+    <xi:include href="xmlops_params.xml"/>
+    <xi:include href="xmlops_functions.xml"/>
 
-</section>
+</book>
 

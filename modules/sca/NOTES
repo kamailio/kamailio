@@ -1,0 +1,144 @@
+Hook all transactions?
+	register callbacks for TMCB_REQUEST_IN_N & TMCB_RESPONSE_IN_N
+	if Call-Info header not found, pass
+	might be able to dispense with sca_handle_subscribe().
+	performance penalty: cost of check for Call-Info on each transaction.
+
+    OR
+
+check for Call-Info header in script, call "sca_call_info_update"
+	must be done in onreply route, too
+	more prone to bugs because of missed cases
+	easy to misconfigure, potentially leading to low adoption
+
+
+To consider:
+    * What to do when a subscriber reSUBSCRIBES and the dialog is different
+      from the current saved subscription? Avoiding shm_realloc seems like a
+      good idea, so perhaps just delete the current one and save the new.
+
+      Update: separate shm_alloc for dialog.id in sca_subscription_create,
+	      then shm_free & shm_alloc if differing dialog found.
+
+
+How to remove Call-Info header before relaying?
+    Use del_lump from ../../data_lump.h	
+    Cf. textops module's remove_hf_f()
+
+How to detect hold/pickup in SDP?
+    Use parse_sdp/free_sdp from ../../parser/sdp/sdp.h.
+    
+	sdp_stream_cell_t	*sdp_stream;
+	
+	/* puts sdp_info_t pointer in msg->body */
+	rc = parse_sdp( msg );
+	if ( rc < 0 ) {
+	    error;
+	}
+	/* msg->body must now be free_sdp'd */
+
+	/* for now we'll just assume a single stream per call */
+	sdp_stream = get_sdp_stream( msg, 0, 0 );
+
+	if ( sdp->is_on_hold ) {
+	    ....
+	}
+	
+		
+
+Call-Info meaning in context
+    If present, refers to appearance associated with the Contact URI.
+
+    e.g., a Call-Info header present in an INVITE indicates the caller
+    has appearance-index N and is using the line to place a call.
+
+    e.g., a Call-Info header present in a response indicates the callee
+    has appearance-index N
+
+
+
+A reINVITE from another line in the SCA group has the following characteristics:
+    * RURI is the SCA line's AoR, not the callee.
+    * From and To URIs are also SCA line's AoR.
+	    * SCA provides very limited way to pass callee info: only
+	      in NOTIFY's appearance-uri, which is for display purposes.
+    * From-tag and Call-ID are new. There is no to-tag.
+    * A Call-Info header is present with the appearance-index the line is
+      attempting to retrieve from hold.
+
+
+Revisiting possibility of using TMCB_ tm module hooks.
+    TMCB_E2EACK_IN is called when an ACK matching a 200OK-answered INVITE
+    is received. Could use this to send out call-info NOTIFYs when an SCA
+    line answers a call. Bug right now is that the NOTIFYs are sent out
+    before the proxy has CANCELed the INVITEs to the other members of the
+    group. Seems the handsets are dumping the line state when they get the
+    CANCELs, so the appearance goes away. On next reSUBSCRIBE/NOTIFY, the
+    handsets get the correct state again.
+
+    Using TCMB_REQ_IN is a viable option. It would allow for eliminating
+    the use of exported functions to the script. Second rev? Probably
+    more efficient than using exported functions.
+
+    Hooking TMCB_E2EACK_IN does solve the above problem. Current problem
+    is getting current URIs on both call legs, since callee in hold/pickup
+    scenario (SCA line A1 holds call to B, SCA line A2 picks up) thinks
+    To & From URI are both the SCA line's AoR. Tried sending UPDATEs from
+    the TMCB_E2EACK_IN callback, but because we're sending them before the
+    proxy relays the ACK to the callee, the callee appears to revert to
+    using the URIs in the ACK for all future packets. The callER handles
+    the UPDATE correctly, and uses the correct URIs.
+
+    Possible workarounds for the above, in order of increasing quality:
+    	* Append UPDATE info to shared linked list, register short timer,
+	  send all pending UPDATEs when timer alarms, clear queue.
+
+	    Pros: easy to write, discrete from other code
+	    Cons: This is effectively a sleep(1) workaround. Clumsy, prone
+		    to error: still might cause UPDATE packet to be sent prior
+		    to ACK delivery to callee, if UPDATE is appended to queue
+		    just as timer fires.	
+
+	* Register a TMCB_DESTROY callback in the TMCB_E2EACK_IN callback
+	  to send the UPDATEs when the ACK transaction is destroyed.
+	    
+	    Pros: fits current model fairly well, can glean all required
+		  information from struct cell in callback, no need to
+		  involve script.
+	    Cons: also similar to a sleep(1) workaround, though less prone
+		  to races. still attached to a timer (tm destroy tick),
+		  meaning users may still trigger problem with rapid hold/
+		  pickups.
+
+	* Register a pv in the module, set it to a known value in the
+	  TMCB_E2EACK_IN callback, have the script check the value of the
+	  pv, and invoke an exported sca_update function if the pv is set
+	  the the known value.
+
+	    Pros: fits sip-router script-based logic model well, does not
+		  rely on a timer (eliminates races).
+	    Cons: pv has a lot of overhead for what amounts to a flag, means
+		  adding an exported function to the script.
+
+	* Register a flag, set it in TMCB_E2EACK_IN callback if UPDATEs
+	  need to go to call legs, invoke sca_update from script as above.
+
+	    Pros: it's just a flag.
+	    Cons: setup may be complicated, given sip-router's script flag
+		  handling, means adding exported function for script.
+		  (see fix_flags in flags.c, e.g. registrar's
+		  fix_nated_contact())
+
+
+Dependency on To-URI is problematic for hold/pickup
+    An SCA pickup of a held call on another handset means RURI, From-URI
+    and To-URI are identical. The module currently expects those to
+    be unique. It will be possible to reconcile these, but it suggests
+    that using the sip_uri_t struct and the parse_uri functions may be
+    helpful.
+
+No handler for t_reply (locally sent transaction-stateful replies).
+    Probably need to register callback for TMCB_LOCAL_RESPONSE_IN.
+
+Deletion of call-info subscription when line-seize NOTIFY fails seems
+wrongheaded.

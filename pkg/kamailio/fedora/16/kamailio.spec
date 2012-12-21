@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     3.4.0
-%define rel     dev4%{dist}
+%define rel     dev7%{dist}
 
 
 
@@ -20,18 +20,21 @@ Conflicts:     kamailio-unixODBC < %ver, kamailio-bdb < %ver
 Conflicts:     kamailio-sqlite < %ver, kamailio-utils < %ver
 Conflicts:     kamailio-cpl < %ver, kamailio-snmpstats < %ver
 Conflicts:     kamailio-presence < %ver, kamailio-xmpp < %ver
-Conflicts:     kamailio-tls < %ver, kamailio-purple < %ver, kamailio-ldap < %ver
+Conflicts:     kamailio-purple < %ver, kamailio-ldap < %ver
 Conflicts:     kamailio-xmlrpc < %ver, kamailio-perl < %ver, kamailio-lua < %ver
 Conflicts:     kamailio-python < %ver, kamailio-regex < %ver
 Conflicts:     kamailio-dialplan < %ver, kamailio-lcr < %ver
 Conflicts:     kamailio-xmlops < %ver, kamailio-cdp < %ver
-Conflicts:     kamailio-websocket < %ver, kamailio-outbound < %ver
+Conflicts:     kamailio-websocket < %ver, kamailio-xhttp-pi < %ver
+Conflicts:     kamailio-outbound < %ver
 %if 0%{?fedora}
 Conflicts:     kamailio-radius < %ver, kamailio-carrierroute < %ver
 Conflicts:     kamailio-redis < %ver, kamailio-json < %ver 
 Conflicts:     kamailio-mono < %ver, kamailio-GeoIP < %ver
 %endif
-BuildRequires: bison flex gcc make redhat-rpm-config
+Requires:      openssl lksctp-tools
+BuildRequires: bison flex gcc make redhat-rpm-config openssl-devel
+BuildRequires: lksctp-tools-devel
 
 %description
 Kamailio (former OpenSER) is an Open Source SIP Server released under GPL, able
@@ -150,16 +153,6 @@ BuildRequires: expat-devel
 SIP/XMPP IM gateway for Kamailio.
 
 
-%package tls
-Summary:       TLS transport for Kamailio.
-Group:         System Environment/Daemons
-Requires:      openssl, kamailio = %ver
-BuildRequires: openssl-devel
-
-%description tls
-TLS transport for Kamailio.
-
-
 %package ldap
 Summary:       LDAP search interface for Kamailio.
 Group:         System Environment/Daemons
@@ -253,11 +246,21 @@ XML operation functions for Kamailio.
 %package websocket
 Summary:       WebSocket transport for Kamailio.
 Group:         System Environment/Daemons
-Requires:      openssl, libunistring, kamailio = %ver
-BuildRequires: openssl-devel, libunistring-devel
+Requires:      libunistring, kamailio = %ver
+BuildRequires: libunistring-devel
 
 %description websocket
 WebSocket transport for Kamailio.
+
+
+%package xhttp-pi
+Summary:       Web-provisioning interface for Kamailio.
+Group:         System Environment/Daemons
+Requires:      libxml2, kamailio = %ver
+BuildRequires: libxml2-devel
+
+%description xhttp-pi
+Web-provisioning interface for Kamailio.
 
 
 %package outbound
@@ -367,23 +370,26 @@ Max Mind GeoIP real-time query support for Kamailio.
 %build
 make FLAVOUR=kamailio cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT\
 	basedir=$RPM_BUILD_ROOT cfg_target=/%{_sysconfdir}/kamailio/\
-	modules_dirs="modules modules_k"
+	modules_dirs="modules modules_k" SCTP=1 STUN=1
 make
 %if 0%{?fedora}
-make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
-	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
-	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
-	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
-	klcr ksqlite kredis kjson kmono kberkeley kwebsocket koutbound"\
-	include_modules="xmlrpc xmlops cdp cdp_avp corex"
+make every-module skip_modules="auth_identity db_cassandra iptrtpproxy \
+	db_oracle memcached mi_xmlrpc osp" \
+	group_include="kstandard kmysql kpostgres kcpl kradius kunixodbc \
+	kxml kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils \
+	kpurple ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson \
+	kredis kmono koutbound" \
+	include_modules="cdp mangler print_lib xhttp_pi"
 %else
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
-	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
-	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
-	kcpl ksnmpstats kpresence kregex kdialplan\
-	klcr ksqlite kberkeley kwebsocket koutbound"\
-	include_modules="xmlrpc xmlops cdp cdp_avp corex"
+	db_oracle memcached mi_xmlrpc osp" \
+	group_include="kstandard kmysql kpostgres kcpl kunixodbc \
+	kxml kperl ksnmpstats kxmpp kberkeley kldap kutils \
+	kpurple ktls kwebsocket kpresence klua kpython ksqlite \
+	koutbound" \
+	include_modules="cdp mangler print_lib xhttp_pi"
 %endif
+make utils
 
 
 
@@ -393,11 +399,12 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 make install
 %if 0%{?fedora}
 make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
-	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
-	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
-	kcpl ksnmpstats kcarrierroute kpresence kradius kgeoip kregex kdialplan\
-	klcr ksqlite kredis kjson kmono kberkeley kwebsocket koutbound"\
-	include_modules="xmlrpc xmlops cdp cdp_avp"
+	db_oracle memcached mi_xmlrpc osp" \
+	group_include="kstandard kmysql kpostgres kcpl kradius kunixodbc\
+	kxml kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils\
+	kpurple ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson\
+	kredis kmono koutbound" \
+	include_modules="cdp mangler print_lib xhttp_pi"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.service \
@@ -408,11 +415,12 @@ install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.sysconfig \
 		$RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/kamailio
 %else
 make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
-	db_oracle memcached mi_xmlrpc osp" group_include="kstandard kmysql\
-	kpostgres kunixodbc kldap kperl kpython klua kutils kpurple ktls kxmpp\
-	kcpl ksnmpstats kpresence kregex kdialplan\
-	klcr ksqlite kberkeley kwebsocket koutbound"\
-	include_modules="xmlrpc xmlops cdp cdp_avp"
+	db_oracle memcached mi_xmlrpc osp" \
+	group_include="kstandard kmysql kpostgres kcpl kunixodbc \
+	kxml kperl ksnmpstats kxmpp kberkeley kldap kutils \
+	kpurple ktls kwebsocket kpresence klua kpython ksqlite \
+	koutbound" \
+	include_modules="cdp mangler print_lib xhttp_pi"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -478,6 +486,7 @@ fi
 %dir %{_docdir}/kamailio/modules
 %doc %{_docdir}/kamailio/modules/README.async
 %doc %{_docdir}/kamailio/modules/README.auth
+%doc %{_docdir}/kamailio/modules/README.avp
 %doc %{_docdir}/kamailio/modules/README.avpops
 %doc %{_docdir}/kamailio/modules/README.blst
 %doc %{_docdir}/kamailio/modules/README.cfg_db
@@ -486,10 +495,12 @@ fi
 %doc %{_docdir}/kamailio/modules/README.counters
 %doc %{_docdir}/kamailio/modules/README.ctl
 %doc %{_docdir}/kamailio/modules/README.db_flatstore
+%doc %{_docdir}/kamailio/modules/README.db2_ops
 %doc %{_docdir}/kamailio/modules/README.debugger
 %doc %{_docdir}/kamailio/modules/README.enum
 %doc %{_docdir}/kamailio/modules/README.ipops
 %doc %{_docdir}/kamailio/modules/README.malloc_test
+%doc %{_docdir}/kamailio/modules/README.mangler
 %doc %{_docdir}/kamailio/modules/README.matrix
 %doc %{_docdir}/kamailio/modules/README.mediaproxy
 %doc %{_docdir}/kamailio/modules/README.mi_rpc
@@ -499,19 +510,31 @@ fi
 %doc %{_docdir}/kamailio/modules/README.pdb
 %doc %{_docdir}/kamailio/modules/README.pipelimit
 %doc %{_docdir}/kamailio/modules/README.prefix_route
+%doc %{_docdir}/kamailio/modules/README.print
+%doc %{_docdir}/kamailio/modules/README.print_lib
 %doc %{_docdir}/kamailio/modules/README.ratelimit
 %doc %{_docdir}/kamailio/modules/README.rtpproxy
 %doc %{_docdir}/kamailio/modules/README.sanity
+%doc %{_docdir}/kamailio/modules/README.sca
 %doc %{_docdir}/kamailio/modules/README.sdpops
 %doc %{_docdir}/kamailio/modules/README.sipcapture
 %doc %{_docdir}/kamailio/modules/README.sl
 %doc %{_docdir}/kamailio/modules/README.sms
 %doc %{_docdir}/kamailio/modules/README.textopsx
+%doc %{_docdir}/kamailio/modules/README.timer
+%doc %{_docdir}/kamailio/modules/README.tls
 %doc %{_docdir}/kamailio/modules/README.tm
 %doc %{_docdir}/kamailio/modules/README.tmrec
 %doc %{_docdir}/kamailio/modules/README.topoh
+%doc %{_docdir}/kamailio/modules/README.uid_auth_db
+%doc %{_docdir}/kamailio/modules/README.uid_avp_db
+%doc %{_docdir}/kamailio/modules/README.uid_domain
+%doc %{_docdir}/kamailio/modules/README.uid_gflags
+%doc %{_docdir}/kamailio/modules/README.uid_uri_db
 %doc %{_docdir}/kamailio/modules/README.xhttp
 %doc %{_docdir}/kamailio/modules/README.xhttp_rpc
+%doc %{_docdir}/kamailio/modules/README.xlog
+%doc %{_docdir}/kamailio/modules/README.xprint
 
 %dir %{_docdir}/kamailio/modules_k
 %doc %{_docdir}/kamailio/modules_k/README.acc
@@ -565,9 +588,8 @@ fi
 %doc %{_docdir}/kamailio/modules_k/README.uri_db
 %doc %{_docdir}/kamailio/modules_k/README.userblacklist
 %doc %{_docdir}/kamailio/modules_k/README.usrloc
-%doc %{_docdir}/kamailio/modules_k/README.xlog
 
-%dir %{_sysconfdir}/kamailio
+%dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/*
 %if 0%{?fedora}
 %config %{_unitdir}/*
@@ -586,6 +608,9 @@ fi
 %{_libdir}/kamailio/libkmi.so
 %{_libdir}/kamailio/libkmi.so.1
 %{_libdir}/kamailio/libkmi.so.1.0
+%{_libdir}/kamailio/libprint.so
+%{_libdir}/kamailio/libprint.so.1
+%{_libdir}/kamailio/libprint.so.1.2
 %{_libdir}/kamailio/libsrdb1.so
 %{_libdir}/kamailio/libsrdb1.so.1
 %{_libdir}/kamailio/libsrdb1.so.1.0
@@ -602,6 +627,7 @@ fi
 %dir %{_libdir}/kamailio/modules
 %{_libdir}/kamailio/modules/auth.so
 %{_libdir}/kamailio/modules/async.so
+%{_libdir}/kamailio/modules/avp.so
 %{_libdir}/kamailio/modules/avpops.so
 %{_libdir}/kamailio/modules/blst.so
 %{_libdir}/kamailio/modules/cfg_db.so
@@ -610,10 +636,12 @@ fi
 %{_libdir}/kamailio/modules/counters.so
 %{_libdir}/kamailio/modules/ctl.so
 %{_libdir}/kamailio/modules/db_flatstore.so
+%{_libdir}/kamailio/modules/db2_ops.so
 %{_libdir}/kamailio/modules/debugger.so
 %{_libdir}/kamailio/modules/enum.so
 %{_libdir}/kamailio/modules/ipops.so
 %{_libdir}/kamailio/modules/malloc_test.so
+%{_libdir}/kamailio/modules/mangler.so
 %{_libdir}/kamailio/modules/matrix.so
 %{_libdir}/kamailio/modules/mediaproxy.so
 %{_libdir}/kamailio/modules/mi_rpc.so
@@ -623,19 +651,31 @@ fi
 %{_libdir}/kamailio/modules/pdb.so
 %{_libdir}/kamailio/modules/pipelimit.so
 %{_libdir}/kamailio/modules/prefix_route.so
+%{_libdir}/kamailio/modules/print.so
+%{_libdir}/kamailio/modules/print_lib.so
 %{_libdir}/kamailio/modules/ratelimit.so
 %{_libdir}/kamailio/modules/rtpproxy.so
 %{_libdir}/kamailio/modules/sanity.so
+%{_libdir}/kamailio/modules/sca.so
 %{_libdir}/kamailio/modules/sipcapture.so
 %{_libdir}/kamailio/modules/sl.so
 %{_libdir}/kamailio/modules/sdpops.so
 %{_libdir}/kamailio/modules/sms.so
+%{_libdir}/kamailio/modules/textopsx.so
+%{_libdir}/kamailio/modules/timer.so
+%{_libdir}/kamailio/modules/tls.so
 %{_libdir}/kamailio/modules/tm.so
 %{_libdir}/kamailio/modules/tmrec.so
-%{_libdir}/kamailio/modules/textopsx.so
 %{_libdir}/kamailio/modules/topoh.so
+%{_libdir}/kamailio/modules/uid_auth_db.so
+%{_libdir}/kamailio/modules/uid_avp_db.so
+%{_libdir}/kamailio/modules/uid_domain.so
+%{_libdir}/kamailio/modules/uid_gflags.so
+%{_libdir}/kamailio/modules/uid_uri_db.so
 %{_libdir}/kamailio/modules/xhttp.so
 %{_libdir}/kamailio/modules/xhttp_rpc.so
+%{_libdir}/kamailio/modules/xlog.so
+%{_libdir}/kamailio/modules/xprint.so
 
 %dir %{_libdir}/kamailio/modules_k
 %{_libdir}/kamailio/modules_k/acc.so
@@ -689,12 +729,11 @@ fi
 %{_libdir}/kamailio/modules_k/uri_db.so
 %{_libdir}/kamailio/modules_k/userblacklist.so
 %{_libdir}/kamailio/modules_k/usrloc.so
-%{_libdir}/kamailio/modules_k/xlog.so
 
 %{_sbindir}/kamailio
 %{_sbindir}/kamctl
 %{_sbindir}/kamdbctl
-%{_sbindir}/sercmd
+%{_sbindir}/kamcmd
 
 %dir %{_libdir}/kamailio/kamctl
 %{_libdir}/kamailio/kamctl/kamctl.base
@@ -714,6 +753,9 @@ fi
 %{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyo
 
 %{_mandir}/man5/*
+%if 0%{?fedora}
+%{_mandir}/man7/*
+%endif
 %{_mandir}/man8/*
 
 %dir %{_datadir}/kamailio
@@ -831,12 +873,6 @@ fi
 %{_libdir}/kamailio/modules_k/xmpp.so
 
 
-%files tls
-%defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules/README.tls
-%{_libdir}/kamailio/modules/tls.so
-
-
 %files purple
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules_k/README.purple
@@ -845,8 +881,10 @@ fi
 
 %files ldap
 %defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.db2_ldap
 %doc %{_docdir}/kamailio/modules_k/README.h350
 %doc %{_docdir}/kamailio/modules_k/README.ldap
+%{_libdir}/kamailio/modules/db2_ldap.so
 %{_libdir}/kamailio/modules_k/h350.so
 %{_libdir}/kamailio/modules_k/ldap.so
 
@@ -941,6 +979,14 @@ fi
 %{_libdir}/kamailio/modules/websocket.so
 
 
+%files xhttp-pi
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.xhttp_pi
+%{_libdir}/kamailio/modules/xhttp_pi.so
+%dir %{_datadir}/kamailio/xhttp_pi
+%{_datadir}/kamailio/xhttp_pi/*
+
+
 %files outbound
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules_k/README.outbound
@@ -995,6 +1041,33 @@ fi
 
 
 %changelog
+* Fri Dec 21 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Added db2_ldap, db2_ops, and timer to the build
+  - Added uid_auth_db, uid_avp_db, uid_domain, uid_gflags, uid_uri_db, print,
+    and print_lib to the build
+* Thu Dec 13 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Added xhttp_pi framework examples to the installation
+  - Added xhttp_pi README to the installation
+* Wed Dec 12 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Added mangler module to the build
+  - Tidied up make commands used to build and install
+* Sun Dec 9 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to dev7
+  - Added avp, sca, and xprint modules to the build
+  - Moved xlog from modules_k to modules
+* Fri Nov 9 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to dev5
+* Tue Oct 30 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Added xhttp_pi module to RPM builds
+* Fri Oct 20 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Set ownership of /etc/kamailio to kamailio.kamailio
+  - Added installation of auth.7.gz for Fedora now that manpages are built for
+    Fedora
+  - Added "make utils" to the build section (when it's not there utils get
+    built during the install - which isn't right)
+  - SCTP and STUN now included in this build
+  - Removed kamailio-tls package - tls module now in main kamailio RPM as that
+    has openssl as a dependency for STUN
 * Sun Sep 17 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added corex module to RPM builds
   - Updated rel to dev4

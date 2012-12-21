@@ -1,37 +1,30 @@
+The XMLRPC Module
+
 Jan Janak
 
    iptelorg GmbH
 
-   Copyright © 2005 iptelorg GmbH
+   Copyright � 2005 iptelorg GmbH
      __________________________________________________________________
 
-   1.1. Design Goals
-   1.2. Overview of Operation
-   1.3. XML-RPC Implementation
+   List of Tables
 
-        1.3.1. Requests
-        1.3.2. Replies
-        1.3.3. Type Conversion
-        1.3.4. Limitations
-        1.3.5. Interoperability Problems
+   1. Data Type Conversion
 
-   1.4. Client Examples
-   1.5. Parameters
+   List of Examples
 
-        1.5.1. route (string)
-        1.5.2. autoconversion (string)
-        1.5.3. escape_cr (integer)
-        1.5.4. double_lf_to_crlf (integer)
-        1.5.5. mode (integer)
-        1.5.6. url_skip (str)
-        1.5.7. url_match (str)
+   1.
+   2. Set route parameter
+   3. Set the autoconversion parameter
+   4. Set the escape_cr parameter
+   5. Set the double_lf_to_crlf parameter
+   6. Set the mode parameter
+   7. Set url_skip parameter
+   8. Set url_match parameter
+   9. dispatch_rpc usage
+   10. xmlrpc_reply usage
 
-   1.6. Functions
-
-        1.6.1. dispatch_rpc()
-        1.6.2. xmlrpc_reply(code, reason)
-
-1.1. Design Goals
+1. Design Goals
 
      * Implemented as a module.
      * API independent of transport protocols.
@@ -42,7 +35,7 @@ Jan Janak
      * Easy and straightforward implementation of management functions in
        SER modules.
 
-1.2. Overview of Operation
+2. Overview of Operation
 
    This module implements the XML-RPC transport and encoding interface for
    ser RPCs.
@@ -158,7 +151,7 @@ Server: UserLand Frontier/7.0.1-WinNT
    terminates the request, executes corresponding function, and generates
    a reply.
 
-                              [rpc_example.png]
+                            [xmlrpc_example.png]
 
    Example RPC Scenario
 
@@ -283,7 +276,13 @@ if (method == "POST" || method == "GET") {
     break;
 };
 
-1.3. XML-RPC Implementation
+3. XML-RPC Implementation
+
+   3.1. Requests
+   3.2. Replies
+   3.3. Type Conversion
+   3.4. Limitations
+   3.5. Interoperability Problems
 
    The purpose of the functions of this module is to convert XML-RPC
    document carried in the body of HTTP requests into data returned by the
@@ -298,7 +297,7 @@ if (method == "POST" || method == "GET") {
    server and for each function it can return the documentation string
    describing the function.
 
-1.3.1. Requests
+3.1. Requests
 
    Requests processed by the module are standard XML-RPC requests encoded
    in bodies of HTTP requests.
@@ -322,7 +321,7 @@ Content-Length: 112
    all export RPC functions, prepare the context for the function and
    execute it.
 
-1.3.2. Replies
+3.2. Replies
 
    The module will always generate 200 OK. Other response codes and
    classes are reserved for SER. The status code of the XML-RPC reply,
@@ -405,10 +404,10 @@ Content-Length: 276
 
    This is probably the most common scenario.
 
-1.3.3. Type Conversion
+3.3. Type Conversion
 
    The data types of the RPC API are converted to the data types of
-   XML-RPC and vice versa. Table 1, “Data Type Conversion” shows for each
+   XML-RPC and vice versa. Table 1, "Data Type Conversion" shows for each
    RPC API data type corresponding XML-RPC data type.
 
    Table 1. Data Type Conversion
@@ -434,7 +433,7 @@ Content-Length: 276
   </member>
 </struct>
 
-1.3.4. Limitations
+3.4. Limitations
 
    SER xmlrpc modules does not implement all data types allowed in
    XML-RPC. As well it does not implement arrays and nested structures.
@@ -443,7 +442,7 @@ Content-Length: 276
    need all the bells and whistles of XML-RPC. Parsing and interpreting
    nested structures is complex and we try to avoid it.
 
-1.3.5. Interoperability Problems
+3.5. Interoperability Problems
 
    Due to a bug in Python xmlrpclib there is an interoperability problem
    with basic clients using it: by default an xmlrpclib client expects the
@@ -484,7 +483,7 @@ route[XMLRPC]{
    CRLF conversion (using the double_lf_to_crlf modules parameter) and
    replace CRLF with LFLF in the client queries.
 
-1.4. Client Examples
+4. Client Examples
 
      * examples/xmlrpc_test.pl (basic perl application that builds and
        sends an XMLRPC request from its commandline parameters).
@@ -495,9 +494,17 @@ route[XMLRPC]{
      * serweb (php application that can use the XML-RPC interface to call
        ser functions).
 
-1.5. Parameters
+5. Parameters
 
-1.5.1. route (string)
+   5.1. route (string)
+   5.2. autoconversion (string)
+   5.3. escape_cr (integer)
+   5.4. double_lf_to_crlf (integer)
+   5.5. mode (integer)
+   5.6. url_skip (str)
+   5.7. url_match (str)
+
+5.1. route (string)
 
    Name of the route called for XMLRPC messages.
 
@@ -515,7 +522,7 @@ route[XMLRPC]{
    Example 2. Set route parameter
 modparam("xmlrpc", "route", "route_for_xmlrpcs")
 
-1.5.2. autoconversion (string)
+5.2. autoconversion (string)
 
    Enable or disable automatic parameter type conversion globally, for all
    the methods parameters. If on, a type mismatch in a method parameter
@@ -532,7 +539,7 @@ modparam("xmlrpc", "route", "route_for_xmlrpcs")
    Example 3. Set the autoconversion parameter
 modparam("xmlrpc", "autoconversion", 1)
 
-1.5.3. escape_cr (integer)
+5.3. escape_cr (integer)
 
    Enable CR ('\r') escaping in replies. If enabled each '\r' in the
    xmlrpc reply will be replaced with "&#xD;", according to the xml spec.
@@ -545,7 +552,7 @@ modparam("xmlrpc", "autoconversion", 1)
    Example 4. Set the escape_cr parameter
 modparam("xmlrpc", "escape_cr", 1)
 
-1.5.4. double_lf_to_crlf (integer)
+5.4. double_lf_to_crlf (integer)
 
    When enabled double LFs ('\n\n') in the input xmlrpc strings will be
    replaced with CR LF ('\r\n'). This makes LF LF behave like an escape
@@ -563,7 +570,7 @@ modparam("xmlrpc", "escape_cr", 1)
    Example 5. Set the double_lf_to_crlf parameter
 modparam("xmlrpc", "double_lf_to_crlf", 1)
 
-1.5.5. mode (integer)
+5.5. mode (integer)
 
    When set to 1, xmlrpc module does not register to core the callback
    functions for non-SIP messages. Useful when other module register a
@@ -575,7 +582,7 @@ modparam("xmlrpc", "double_lf_to_crlf", 1)
    Example 6. Set the mode parameter
 modparam("xmlrpc", "mode", 1)
 
-1.5.6. url_skip (str)
+5.6. url_skip (str)
 
    Regular expression to match the HTPP URL. If there is match, then
    xmlrpc route is not executed.
@@ -587,9 +594,9 @@ modparam("xmlrpc", "mode", 1)
 modparam("xmlrpc", "url_skip", "^/sip")
 ...
 
-1.5.7. url_match (str)
+5.7. url_match (str)
 
-   Regular expression to match the HTPP URL. If there is no match, then
+   Regular expression to match the HTTP URL. If there is no match, then
    xmlrpc route is not executed. This check is done after url_skip, so if
    both url_skip and url_match would match then the xmlrpc route is not
    executed (url_skip has higher priority).
@@ -601,9 +608,12 @@ modparam("xmlrpc", "url_skip", "^/sip")
 modparam("xmlrpc", "url_match", "^/RPC2")
 ...
 
-1.6. Functions
+6. Functions
 
-1.6.1.  dispatch_rpc()
+   6.1. dispatch_rpc()
+   6.2. xmlrpc_reply(code, reason)
+
+6.1.  dispatch_rpc()
 
    This function processes an XMLRPC request, found in the body of the
    request.
@@ -630,7 +640,7 @@ route[XMLRPC]{
         dispatch_rpc();
 }
 
-1.6.2.  xmlrpc_reply(code, reason)
+6.2.  xmlrpc_reply(code, reason)
 
    This function can be called from the config script to directly generate
    an XML-RPC reply.

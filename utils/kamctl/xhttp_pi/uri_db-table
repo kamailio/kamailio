@@ -1,0 +1,10 @@
+	<!-- Declaration of uri table-->
+	<db_table id="uri">
+		<table_name>uri</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>uri_user</field><type>DB1_STR</type></column>
+		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
+	</db_table>

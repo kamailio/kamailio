@@ -96,6 +96,17 @@ void lock_tree_branch(unsigned char b);
 void unlock_tree_branch(unsigned char b);
 struct ip_node* get_tree_branch(unsigned char b);
 
+typedef enum {
+        NODE_STATUS_OK    = 0,
+        NODE_STATUS_WARM  = 1,
+        NODE_STATUS_HOT   = 2,
+        NODE_STATUS_ALL   = 3   /** used for status matching */
+} node_status_t;
+node_status_t node_status(struct ip_node *node);
+extern char *node_status_array[];
+unsigned int get_max_hits();
+
+void print_tree( FILE *f);
 
 
 #endif

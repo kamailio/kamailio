@@ -9,21 +9,21 @@
 ### common variables and functions for SQL engines
 
 if [ -z "$DBNAME" ] ; then
-	DBNAME=openser
+	DBNAME=kamailio
 fi
 if [ -z "$DBHOST" ] ; then
 	DBHOST=localhost
 fi
 if [ -z "$DBRWUSER" ] ; then
-	DBRWUSER=openser
+	DBRWUSER=kamailio
 fi
 
 # the read-only user for whom password may be stored here
 if [ -z "$DBROUSER" ] ; then
-	DBROUSER=openserro
+	DBROUSER=kamailioro
 fi
 if [ -z "$DBROPW" ] ; then
-	DBROPW=openserro
+	DBROPW=kamailioro
 fi
 
 # full privileges SQL user
@@ -60,6 +60,7 @@ cat <<EOF
  db rorun <id> ....................... execute read-only SQL query from 
                                        \$id variable
  db show <table> ..................... display table content
+ db showg <table> .................... display formatted table content
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_db_ops"

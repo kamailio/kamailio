@@ -1,0 +1,21 @@
+	<!-- sip_trace provisionning -->
+	<mod><mod_name>sip_trace</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>sip_trace</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>time_stamp</field></col>
+				<col><field>time_us</field></col>
+				<col><field>callid</field></col>
+				<col><field>traced_user</field></col>
+				<col><field>msg</field></col>
+				<col><field>method</field></col>
+				<col><field>status</field></col>
+				<col><field>fromip</field></col>
+				<col><field>toip</field></col>
+				<col><field>fromtag</field></col>
+				<col><field>direction</field></col>
+			</query_cols>
+		</cmd>
+	</mod>

@@ -1,0 +1,42 @@
+	<!-- Declaration of lcr_gw table-->
+	<db_table id="lcr_gw">
+		<table_name>lcr_gw</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>lcr_id</field><type>DB1_INT</type></column>
+		<column><field>gw_name</field><type>DB1_STR</type></column>
+		<column><field>ip_addr</field><type>DB1_STR</type></column>
+		<column><field>hostname</field><type>DB1_STR</type></column>
+		<column><field>port</field><type>DB1_INT</type></column>
+		<column><field>params</field><type>DB1_STR</type></column>
+		<column><field>uri_scheme</field><type>DB1_INT</type></column>
+		<column><field>transport</field><type>DB1_INT</type></column>
+		<column><field>strip</field><type>DB1_INT</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>tag</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>defunct</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of lcr_rule_target table-->
+	<db_table id="lcr_rule_target">
+		<table_name>lcr_rule_target</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>lcr_id</field><type>DB1_INT</type></column>
+		<column><field>rule_id</field><type>DB1_INT</type></column>
+		<column><field>gw_id</field><type>DB1_INT</type></column>
+		<column><field>priority</field><type>DB1_INT</type></column>
+		<column><field>weight</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of lcr_rule table-->
+	<db_table id="lcr_rule">
+		<table_name>lcr_rule</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>lcr_id</field><type>DB1_INT</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>from_uri</field><type>DB1_STR</type></column>
+		<column><field>request_uri</field><type>DB1_STR</type></column>
+		<column><field>stopper</field><type>DB1_INT</type></column>
+		<column><field>enabled</field><type>DB1_INT</type></column>
+	</db_table>

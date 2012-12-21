@@ -64,7 +64,7 @@ db1_con_t* dbt_init(const str* _sqlurl)
 	if(_s.len <= DBT_ID_LEN || strncmp(_s.s, DBT_ID, DBT_ID_LEN)!=0)
 	{
 		LM_ERR("invalid database URL - should be:"
-			" <%s[/]path/to/directory>\n", DBT_ID);
+			" <%s[/]path/to/directory> Current: %s\n", DBT_ID, _s.s);
 		return NULL;
 	}
 	/*
@@ -207,7 +207,7 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 
 	if(!_tbc || _tbc->nrcols < _nc)
 	{
-		LM_ERR("table not loaded!\n");
+		LM_ERR("table %s not loaded! (too few columns)\n", CON_TABLE(_h)->s);
 		goto error;
 	}
 	if(_k)

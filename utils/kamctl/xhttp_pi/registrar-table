@@ -1,0 +1,24 @@
+	<!-- Declaration of aliases table-->
+	<db_table id="aliases">
+		<table_name>aliases</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>ruid</field><type>DB1_STR</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>contact</field><type>DB1_STR</type></column>
+		<column><field>received</field><type>DB1_STR</type></column>
+		<column><field>path</field><type>DB1_STR</type></column>
+		<column><field>expires</field><type>DB1_DATETIME</type></column>
+		<column><field>q</field><type>DB1_DOUBLE</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>cseq</field><type>DB1_INT</type></column>
+		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>cflags</field><type>DB1_INT</type></column>
+		<column><field>user_agent</field><type>DB1_STR</type></column>
+		<column><field>socket</field><type>DB1_STR</type></column>
+		<column><field>methods</field><type>DB1_INT</type></column>
+		<column><field>instance</field><type>DB1_STR</type></column>
+		<column><field>reg_id</field><type>DB1_INT</type></column>
+	</db_table>

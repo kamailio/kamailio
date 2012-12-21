@@ -46,16 +46,17 @@ Ovidiu Sas
 
         4. Parameters
 
-              4.1. natping_interval (integer)
-              4.2. ping_nated_only (integer)
-              4.3. natping_processes (integer)
-              4.4. natping_socket (string)
-              4.5. received_avp (str)
-              4.6. sipping_bflag (integer)
-              4.7. sipping_from (string)
-              4.8. sipping_method (string)
-              4.9. nortpproxy_str (string)
-              4.10. keepalive_timeout (int)
+              4.1. force_socket (string)
+              4.2. natping_interval (integer)
+              4.3. ping_nated_only (integer)
+              4.4. natping_processes (integer)
+              4.5. natping_socket (string)
+              4.6. received_avp (str)
+              4.7. sipping_bflag (integer)
+              4.8. sipping_from (string)
+              4.9. sipping_method (string)
+              4.10. nortpproxy_str (string)
+              4.11. keepalive_timeout (int)
 
         5. Functions
 
@@ -81,25 +82,26 @@ Ovidiu Sas
 
    List of Examples
 
-   1.1. Set natping_interval parameter
-   1.2. Set ping_nated_only parameter
-   1.3. Set natping_processes parameter
-   1.4. Set natping_socket parameter
-   1.5. Set received_avp parameter
-   1.6. Set sipping_bflag parameter
-   1.7. Set sipping_from parameter
-   1.8. Set sipping_method parameter
-   1.9. Set nortpproxy_str parameter
-   1.10. Set keepalive_timeout parameter
-   1.11. fix_nated_contact usage
-   1.12. fix_nated_sdp usage
-   1.13. add_rcv_paramer usage
-   1.14. fix_nated_register usage
-   1.15. add_contact_alias usage
-   1.16. handle_ruri_alias usage
-   1.17. $rr_count usage
-   1.18. $rr_top_count usage
-   1.19. nh_enable_ping usage
+   1.1. Set force_socket parameter
+   1.2. Set natping_interval parameter
+   1.3. Set ping_nated_only parameter
+   1.4. Set natping_processes parameter
+   1.5. Set natping_socket parameter
+   1.6. Set received_avp parameter
+   1.7. Set sipping_bflag parameter
+   1.8. Set sipping_from parameter
+   1.9. Set sipping_method parameter
+   1.10. Set nortpproxy_str parameter
+   1.11. Set keepalive_timeout parameter
+   1.12. fix_nated_contact usage
+   1.13. fix_nated_sdp usage
+   1.14. add_rcv_paramer usage
+   1.15. fix_nated_register usage
+   1.16. add_contact_alias usage
+   1.17. handle_ruri_alias usage
+   1.18. $rr_count usage
+   1.19. $rr_top_count usage
+   1.20. nh_enable_ping usage
 
 Chapter 1. Admin Guide
 
@@ -114,16 +116,17 @@ Chapter 1. Admin Guide
 
    4. Parameters
 
-        4.1. natping_interval (integer)
-        4.2. ping_nated_only (integer)
-        4.3. natping_processes (integer)
-        4.4. natping_socket (string)
-        4.5. received_avp (str)
-        4.6. sipping_bflag (integer)
-        4.7. sipping_from (string)
-        4.8. sipping_method (string)
-        4.9. nortpproxy_str (string)
-        4.10. keepalive_timeout (int)
+        4.1. force_socket (string)
+        4.2. natping_interval (integer)
+        4.3. ping_nated_only (integer)
+        4.4. natping_processes (integer)
+        4.5. natping_socket (string)
+        4.6. received_avp (str)
+        4.7. sipping_bflag (integer)
+        4.8. sipping_from (string)
+        4.9. sipping_method (string)
+        4.10. nortpproxy_str (string)
+        4.11. keepalive_timeout (int)
 
    5. Functions
 
@@ -207,18 +210,31 @@ Chapter 1. Admin Guide
 
 4. Parameters
 
-   4.1. natping_interval (integer)
-   4.2. ping_nated_only (integer)
-   4.3. natping_processes (integer)
-   4.4. natping_socket (string)
-   4.5. received_avp (str)
-   4.6. sipping_bflag (integer)
-   4.7. sipping_from (string)
-   4.8. sipping_method (string)
-   4.9. nortpproxy_str (string)
-   4.10. keepalive_timeout (int)
+   4.1. force_socket (string)
+   4.2. natping_interval (integer)
+   4.3. ping_nated_only (integer)
+   4.4. natping_processes (integer)
+   4.5. natping_socket (string)
+   4.6. received_avp (str)
+   4.7. sipping_bflag (integer)
+   4.8. sipping_from (string)
+   4.9. sipping_method (string)
+   4.10. nortpproxy_str (string)
+   4.11. keepalive_timeout (int)
 
-4.1. natping_interval (integer)
+4.1. force_socket (string)
+
+   Socket to be used when sending NAT pings for UDP communication. If no
+   one specified, the OS will choose a socket.
+
+   Default value is "NULL".
+
+   Example 1.1. Set force_socket parameter
+...
+modparam("nathelper", "force_socket", "localhost:33333")
+...
+
+4.2. natping_interval (integer)
 
    Period of time in seconds between sending the NAT pings to all
    currently registered UAs to keep their NAT bindings alive. Value of 0
@@ -231,47 +247,47 @@ Note
 
    Default value is 0.
 
-   Example 1.1. Set natping_interval parameter
+   Example 1.2. Set natping_interval parameter
 ...
 modparam("nathelper", "natping_interval", 10)
 ...
 
-4.2. ping_nated_only (integer)
+4.3. ping_nated_only (integer)
 
    If this variable is set then only contacts that have "behind_NAT" flag
    in user location database set will get ping.
 
    Default value is 0.
 
-   Example 1.2. Set ping_nated_only parameter
+   Example 1.3. Set ping_nated_only parameter
 ...
 modparam("nathelper", "ping_nated_only", 1)
 ...
 
-4.3. natping_processes (integer)
+4.4. natping_processes (integer)
 
    How many timer processes should be created by the module for the
    exclusive task of sending the NAT pings.
 
    Default value is 1.
 
-   Example 1.3. Set natping_processes parameter
+   Example 1.4. Set natping_processes parameter
 ...
 modparam("nathelper", "natping_processes", 3)
 ...
 
-4.4. natping_socket (string)
+4.5. natping_socket (string)
 
    Spoof the natping's source-ip to this address. Works only for IPv4.
 
    Default value is NULL.
 
-   Example 1.4. Set natping_socket parameter
+   Example 1.5. Set natping_socket parameter
 ...
 modparam("nathelper", "natping_socket", "192.168.1.1:5006")
 ...
 
-4.5. received_avp (str)
+4.6. received_avp (str)
 
    The name of the Attribute-Value-Pair (AVP) used to store the URI
    containing the received IP, port, and protocol. The URI is created by
@@ -288,12 +304,12 @@ Note
 
    Default value is "NULL" (disabled).
 
-   Example 1.5. Set received_avp parameter
+   Example 1.6. Set received_avp parameter
 ...
 modparam("nathelper", "received_avp", "$avp(i:42)")
 ...
 
-4.6. sipping_bflag (integer)
+4.7. sipping_bflag (integer)
 
    What branch flag should be used by the module to identify NATed
    contacts for which it should perform NAT ping via a SIP request instead
@@ -301,12 +317,12 @@ modparam("nathelper", "received_avp", "$avp(i:42)")
 
    Default value is -1 (disabled).
 
-   Example 1.6. Set sipping_bflag parameter
+   Example 1.7. Set sipping_bflag parameter
 ...
 modparam("nathelper", "sipping_bflag", 7)
 ...
 
-4.7. sipping_from (string)
+4.8. sipping_from (string)
 
    The parameter sets the SIP URI to be used in generating the SIP
    requests for NAT ping purposes. To enable the SIP request pinging
@@ -315,24 +331,24 @@ modparam("nathelper", "sipping_bflag", 7)
 
    Default value is "NULL".
 
-   Example 1.7. Set sipping_from parameter
+   Example 1.8. Set sipping_from parameter
 ...
 modparam("nathelper", "sipping_from", "sip:pinger@siphub.net")
 ...
 
-4.8. sipping_method (string)
+4.9. sipping_method (string)
 
    The parameter sets the SIP method to be used in generating the SIP
    requests for NAT ping purposes.
 
    Default value is "OPTIONS".
 
-   Example 1.8. Set sipping_method parameter
+   Example 1.9. Set sipping_method parameter
 ...
 modparam("nathelper", "sipping_method", "INFO")
 ...
 
-4.9. nortpproxy_str (string)
+4.10. nortpproxy_str (string)
 
    The parameter sets the SDP attribute used by nathelper to mark the
    packet SDP informations have already been mangled.
@@ -345,12 +361,12 @@ Note
 
    Default value is "a=nortpproxy:yes\r\n".
 
-   Example 1.9. Set nortpproxy_str parameter
+   Example 1.10. Set nortpproxy_str parameter
 ...
 modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 ...
 
-4.10. keepalive_timeout (int)
+4.11. keepalive_timeout (int)
 
    The parameter sets the interval in secods after which a natted contact
    is removed from location table if it does not reply to SIP keepalives
@@ -364,7 +380,7 @@ modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 
    Default value is "0" (feature disabled).
 
-   Example 1.10. Set keepalive_timeout parameter
+   Example 1.11. Set keepalive_timeout parameter
 ...
 modparam("nathelper", "keepalive_timeout", 120)
 ...
@@ -380,19 +396,19 @@ modparam("nathelper", "keepalive_timeout", 120)
    5.7. add_contact_alias([ip_addr, port, proto])
    5.8. handle_ruri_alias()
 
-5.1. fix_nated_contact()
+5.1.  fix_nated_contact()
 
    Rewrites Contact HF to contain request's source address:port.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.11. fix_nated_contact usage
+   Example 1.12. fix_nated_contact usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
 
-5.2. fix_nated_sdp(flags [, ip_address])
+5.2.  fix_nated_sdp(flags [, ip_address])
 
    Alters the SDP information in orer to facilitate NAT traversal. What
    changes to be performed may be controled via the "flags" parameter.
@@ -415,12 +431,12 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.12. fix_nated_sdp usage
+   Example 1.13. fix_nated_sdp usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
 
-5.3. add_rcv_param([flag]),
+5.3.  add_rcv_param([flag]),
 
    Add received parameter to Contact header fields or Contact URI. The
    parameter will contain URI created from the source IP, port, and
@@ -437,14 +453,14 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.13. add_rcv_paramer usage
+   Example 1.14. add_rcv_paramer usage
 ...
 add_rcv_param(); # add the parameter to the Contact header
 ....
 add_rcv_param("1"); # add the parameter to the Contact URI
 ...
 
-5.4. fix_nated_register()
+5.4.  fix_nated_register()
 
    The function creates a URI consisting of the source IP, port, and
    protocol and stores the URI in an Attribute-Value-Pair. The URI will be
@@ -457,12 +473,12 @@ add_rcv_param("1"); # add the parameter to the Contact URI
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.14. fix_nated_register usage
+   Example 1.15. fix_nated_register usage
 ...
 fix_nated_register();
 ...
 
-5.5. nat_uac_test(flags)
+5.5.  nat_uac_test(flags)
 
    Tries to guess if client's request originated behind a nat. The
    parameter determines what heuristics is used.
@@ -485,14 +501,14 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-5.6. is_rfc1918(ip_address)
+5.6.  is_rfc1918(ip_address)
 
    Determines if the address in the parameter is an rfc1918 address. The
    parameter allows pseudo-variables usage.
 
    This function can be used from ANY_ROUTE.
 
-5.7. add_contact_alias([ip_addr, port, proto])
+5.7.  add_contact_alias([ip_addr, port, proto])
 
    Adds ;alias=ip~port~transport parameter to contact URI containing
    either received ip, port, and transport protocol or those given as
@@ -501,7 +517,7 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and LOCAL_ROUTE.
 
-   Example 1.15. add_contact_alias usage
+   Example 1.16. add_contact_alias usage
 ...
     if (!is_present_hf("Record-Route")) {
         if (!add_contact_alias("$var(src_ip)", "$Rp", "tcp")) {
@@ -512,7 +528,7 @@ fix_nated_register();
     };
 ...
 
-5.8. handle_ruri_alias()
+5.8.  handle_ruri_alias()
 
    Checks if Request URI has alias param and if so, removes it and sets
    $du based on its value. Note that this means that routing of request is
@@ -528,7 +544,7 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, and
    LOCAL_ROUTE.
 
-   Example 1.16. handle_ruri_alias usage
+   Example 1.17. handle_ruri_alias usage
 ...
     if ($du == "") {
         handle_ruri_alias();
@@ -556,7 +572,7 @@ fix_nated_register();
 
    Number of Record Routes in received SIP request or reply.
 
-   Example 1.17. $rr_count usage
+   Example 1.18. $rr_count usage
 ...
     $avp(rr_count) = $rr_count;
 ...
@@ -568,7 +584,7 @@ fix_nated_register();
    value of $rr_top_count is 1. If there is no Record Route(s), value of
    $rr_top_count is 0.
 
-   Example 1.18. $rr_top_count usage
+   Example 1.19. $rr_top_count usage
 ...
     if ($rr_count == $avp(rr_count) + $rr_top_count) {
         route(ADD_CONTACT_ALIAS);
@@ -586,7 +602,7 @@ fix_nated_register();
 
    The function takes only one parameter - a number in decimal format.
 
-   Example 1.19. nh_enable_ping usage
+   Example 1.20. nh_enable_ping usage
 ...
 $ kamctl fifo nh_enable_ping 1
 ...

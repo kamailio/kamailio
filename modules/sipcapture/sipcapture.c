@@ -189,6 +189,7 @@ db1_con_t *db_con = NULL; 		/*!< database connection */
 db_func_t db_funcs;      		/*!< Database functions */
 
 str* table_names = NULL;
+char* table_name_cpy = NULL;
 unsigned int no_tables = 0;
 
 /*multiple table mode*/
@@ -253,7 +254,7 @@ static param_export_t params[] = {
 	{"destination_ip_column",	STR_PARAM, &dest_ip_column.s	},
 	{"destination_port_column",	STR_PARAM, &dest_port_column.s	},		
 	{"contact_ip_column",		STR_PARAM, &contact_ip_column.s },
-	{"contact_port_column",		STR_PARAM, &contact_port_column.s	},
+	{"contact_port_column",		STR_PARAM, &contact_port_column.s},
 	{"originator_ip_column",	STR_PARAM, &orig_ip_column.s    },
 	{"originator_port_column",	STR_PARAM, &orig_port_column.s  },
 	{"proto_column",		STR_PARAM, &proto_column.s },
@@ -324,7 +325,16 @@ static int mt_init(void) {
 
 	/*parse and save table names*/
 	no_tables = 1;
-	p = table_name.s;
+
+	table_name_cpy = (char *) pkg_malloc(sizeof(char) * table_name.len + 1 );
+	if (table_name_cpy == NULL){
+		LM_ERR("no more pkg memory left\n");
+		return -1;
+	}
+	memcpy (table_name_cpy, table_name.s, table_name.len);
+	table_name_cpy[table_name.len] = '\0';
+
+	p = table_name_cpy;
 
 	while (*p)
 	{
@@ -340,7 +350,7 @@ static int mt_init(void) {
 		LM_ERR("no more pkg memory left\n");
 		return -1;
 	}
-	p = strtok (table_name.s,"| \t");
+	p = strtok (table_name_cpy,"| \t");
 	while (p != NULL)
 	{
 		LM_INFO ("INFO: table name:%s\n",p);
@@ -665,6 +675,10 @@ static void destroy(void)
 #endif                        
                 }                		
 		close(raw_sock_desc);
+	}
+
+	if (table_name_cpy){
+		pkg_free(table_name_cpy);
 	}
 	if (table_names){
 		pkg_free(table_names);

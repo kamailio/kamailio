@@ -9,8 +9,9 @@
 	]
 >
 
-<section id="iptrtpproxy" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="iptrtpproxy" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+    	<title>The Iptrtpproxy module</title>
 	<authorgroup>
 	    <author>
 		<firstname>Tomas</firstname>
@@ -26,31 +27,29 @@
 	    <holder>Tomas Mandys</holder>
 	</copyright>
 
-    </sectioninfo>
+    </bookinfo>
 
-    <title>Iptrtpproxy module</title>
 
     <section id="iptrtpproxy.overview">
 	<title>Overview</title>
 	<para>
-	It provides similar functionality as <emphasis>nathelper</emphasis> but
-	communicates with <emphasis>netfilter</emphasis> kernel <emphasis>xt_RTPPROXY</emphasis> module using
-	<emphasis>libipt_RTPPROXY</emphasis> userspace library. 
-	See <ulink url="http://www.2p.cz/en/netfilter_rtp_proxy">http://www.2p.cz/en/netfilter_rtp_proxy</ulink>
-	All RTP streams are 
-	manipulated directly in kernel space, no data is copied from 
+	This module provides similar functionality as <emphasis>nathelper</emphasis> but
+	communicates with <emphasis>netfilter</emphasis> kernel 
+	<emphasis>xt_RTPPROXY</emphasis> module using
+	the <emphasis>libipt_RTPPROXY</emphasis> userspace library. 
+	All RTP streams are manipulated directly in kernel space, no data is copied from 
 	kernel to userspace and back, it reduces load and delay. 
 	See <ulink url="http://www.2p.cz/en/netfilter_rtp_proxy">
 	http://www.2p.cz/en/netfilter_rtp_proxy</ulink> for more details.
 	</para>
 
 	<para>
-	The ser module is written as light-weighted, there is not implemented
-	any dialog managment as in <emphasis>nathelper</emphasis>, the reason is that such an API
-	should be provided by core or specialized dialog manager module.
-	Because such module is not in CVS, session information may be stored 
-	in extra attributes of <emphasis>avp_db</emphasis> module and
-	session id itself in record route as cookie, see <emphasis>rr</emphasis> module.
+	This &kamailio; module is written as a light-weight module, there is no 
+	dialog managment as in <emphasis>Nathelper</emphasis>. The reason is that such an API
+	should be provided by core or a specialized dialog manager module.
+	Because such module is not in git, session information may be stored 
+	in extra attributes of the <emphasis>avp_db</emphasis> module and
+	the session id itself in record route as cookie, see the <emphasis>rr</emphasis> module.
 	</para>
 
 	<para>
@@ -63,9 +62,9 @@
 	</para>
 
 	<para>
-	There is also support for media authorization. Number of codec sets may be defined. When a message containing 
-	SDP offer/answer is being processed then current codecs and streams may be inspected, removed or signallized
-	according a codec set.
+	There is also support for media authorization. Number of codec sets may be defined.
+	When a message containing SDP offer/answer is being processed then current codecs
+	and streams may be inspected, removed or signallized according a codec set.
 	</para>
 
 
@@ -74,12 +73,12 @@
 	<itemizedlist>
 		<listitem>
 			<para>
-		 only IPv4 addresses are supported.
+		 Only IPv4 addresses are supported.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-		 more media streams per session supported
+		 More media streams per session supported
 			</para>
 		</listitem>
 	</itemizedlist>
@@ -91,7 +90,7 @@
 				   
 	<para>
 	The following libraries or applications must be installed before
-	running SER with this module loaded:
+	running &kamailio; with this module loaded:
 	<itemizedlist>
 		<listitem>
 		<para>
@@ -102,7 +101,7 @@
 	</itemizedlist>
 	</para>
 	<note><para>
-	The module Makefile must be edited and iptdir setup to the directory with
+	The modules Makefile must be edited and iptdir setup to the directory with
 	the iptable sources (if different from ~/iptables). Alternatively
 	compile the module using: 
 	<programlisting>
@@ -112,8 +111,8 @@
 	</section>
 
 
-	<xi:include href="params.xml"/>
-    <xi:include href="functions.xml"/>
+	<xi:include href="iptrtpproxy_params.xml"/>
+    	<xi:include href="iptrtpproxy_functions.xml"/>
 
 
 	<section>
@@ -133,10 +132,10 @@
 
 		<programlisting>
 
-	switchboard_name [ ":" [ session_id "/" created ] * ( "," session_id "/" created ) ] ]
-	session_id = * ( [0-9] )   ; empty when no session allocated
-	created = timestamp
-		</programlisting>
+switchboard_name [ ":" [ session_id "/" created ] * ( "," session_id "/" created ) ] ]
+session_id = * ( [0-9] )   ; empty when no session allocated
+created = timestamp
+</programlisting>
 
 		</section>
 
@@ -188,5 +187,5 @@
 
 	</section>
 
-</section>
+</book>
 

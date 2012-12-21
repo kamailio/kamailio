@@ -12,7 +12,7 @@ Edited by
 
 Jan Janak
 
-   Copyright © 2003 FhG FOKUS
+   Copyright � 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -40,8 +40,8 @@ Jan Janak
 
    List of Examples
 
-   1.1. Set “setvars” parameter
-   1.2. Set “time_to_kill” parameter
+   1.1. Set "setvars" parameter
+   1.2. Set "time_to_kill" parameter
    1.3. exec_dset usage
    1.4. exec_msg usage
    1.5. exec_avp usage
@@ -71,10 +71,10 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   Exec module allows to start an external command from a Kamailio script.
-   The commands may be any valid shell commands--the command string is
-   passed to shell using “popen” command. Kamailio passes additionally lot
-   of information about request in environment variables:
+   The exec module allows external commands to be executed from a Kamailio
+   script. The commands may be any valid shell commands--the command
+   string is passed to the shell using "popen" command. Kamailio passes
+   additional information about the request in environment variables:
      * SIP_HF_<hf_name> contains value of each header field in request. If
        a header field occurred multiple times, values are concatenated and
        comma-separated. <hf_name> is in capital letters. Ff a header-field
@@ -85,12 +85,12 @@ Chapter 1. Admin Guide
      * SIP_DID is dialog identifier, which is the same as to-tag.
        Initially, it is empty.
      * SIP_SRCIP is source IP address from which request came.
-     * SIP_ORURI is original request URI.
+     * SIP_ORURI is the original request URI.
      * SIP_RURI is current request URI (if unchanged, equal to original).
      * SIP_USER is userpart of current request URI.
      * SIP_OUSER is userpart of original request URI.
 
-   NOTE: The envirnment variables must be specified with double $ (e.g.,
+   NOTE: The environment variables must be specified with double $ (e.g.,
    $$SIP_OUSER) in the parameters given to exec functions. Otherwise they
    will be evaluated as Kamailio pseudo-variables, throwing errors.
 
@@ -122,19 +122,19 @@ Chapter 1. Admin Guide
 
    Default value is 1.
 
-   Example 1.1. Set “setvars” parameter
+   Example 1.1. Set "setvars" parameter
 ...
 modparam("exec", "setvars", 1)
 ...
 
-3.2.  time_to_kill (integer)
+3.2. time_to_kill (integer)
 
    Specifies the longest time a program is allowed to execute. If the time
    is exceeded, the program is killed.
 
    Default value is 0.
 
-   Example 1.2. Set “time_to_kill” parameter
+   Example 1.2. Set "time_to_kill" parameter
 ...
 modparam("exec", "time_to_kill", 20)
 ...
@@ -145,7 +145,7 @@ modparam("exec", "time_to_kill", 20)
    4.2. exec_msg(command)
    4.3. exec_avp(command [, avplist])
 
-4.1.  exec_dset(command)
+4.1. exec_dset(command)
 
    Executes an external command. Current URI is passed to the command as
    parameter. Output of the command is considered URI set (separated by
@@ -166,13 +166,13 @@ exec_dset("echo TEST > /tmp/test.txt");
 exec_dset("echo TEST > /tmp/$rU.txt");
 ...
 
-4.2.  exec_msg(command)
+4.2. exec_msg(command)
 
    Executes an external command. The whole message is passed to it in
    input, no command-line parameters are added, output of the command is
    not processed.
 
-   The “examples” directory in the source tarball contains several
+   The "examples" directory in the source tarball contains several
    examples that shows how to use this function.
 
    Meaning of the parameters is as follows:
@@ -190,10 +190,10 @@ exec_msg("echo TEST > /tmp/test.txt");
 exec_msg("echo TEST > /tmp/$rU.txt");
 ...
 
-4.3.  exec_avp(command [, avplist])
+4.3. exec_avp(command [, avplist])
 
    Executes an external command. Each line from output of the command is
-   saved in an AVP from 'avplist'. If 'avplist' is missing, the AVP are
+   saved in an AVP from 'avplist'. If 'avplist' is missing, the AVPs are
    named 1, 2, 3, ...
 
    Meaning of the parameters is as follows:

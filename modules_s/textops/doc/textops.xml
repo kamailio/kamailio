@@ -27,7 +27,7 @@
 	<para>
 	    This is mostly an example module. It implements text based
 	    operation (search, replace, append a.s.o). Many functions support
-	    xl_lib formating using xlog module.
+	    xl_lib formating using xprint module.
 	</para>
 	<section id="textops.known_limitations">
 	    <title>Known Limitations</title>

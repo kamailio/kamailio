@@ -90,9 +90,11 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 		bflags = ((*locs)->flags&CPL_LOC_NATED) ? cpl_fct.ulb.nat_flag : 0 ;
 		LM_DBG("appending branch <%.*s>, flags %d\n",
 			(*locs)->addr.uri.len, (*locs)->addr.uri.s, bflags);
-		if(append_branch(msg, &(*locs)->addr.uri, &(*locs)->addr.received, 0,
-						 Q_UNSPECIFIED, bflags, 0)==-1){
-			LM_ERR("failed when appending branch <%s>\n",(*locs)->addr.uri.s);
+		if(append_branch(msg, &(*locs)->addr.uri,
+				 &(*locs)->addr.received, 0,
+				 Q_UNSPECIFIED, bflags, 0, 0, 0)==-1){
+			LM_ERR("failed when appending branch <%s>\n",
+			       (*locs)->addr.uri.s);
 			goto error;
 		}
 		/* free the location and point to the next one */

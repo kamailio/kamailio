@@ -106,7 +106,7 @@ extern int ul_locks_no;
 
 /**
  * @var params
- * defines the parameters which can be set in the openser config file
+ * defines the parameters which can be set in the Kamailio config file
  * is stored. Only used when @see use_domain is set to 1
  * @param write_db_url Url to the database where the key and database information is 
  * stored and where errors are reported to. Only used when @see write_on_db is active.

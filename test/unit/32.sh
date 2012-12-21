@@ -36,7 +36,7 @@ NR=25
 cp $CFG $CFG.bak
 
 echo "loadmodule \"../../modules/db_postgres/db_postgres.so\"" >> $CFG
-echo "modparam(\"usrloc\", \"db_url\", \"postgres://openser:openserrw@localhost/openser\")" >> $CFG
+echo "modparam(\"usrloc\", \"db_url\", \"postgres://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
 echo "modparam(\"usrloc\", \"fetch_rows\", 13)" >> $CFG
 
 

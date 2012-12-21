@@ -8,7 +8,7 @@ Edited by
 
 Bogdan-Andrei Iancu
 
-   Copyright © 2003 FhG FOKUS
+   Copyright � 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -36,7 +36,11 @@ Bogdan-Andrei Iancu
 
               5.1. pike_list
 
-   2. Developer Guide
+   2. RPC calls
+
+        1. pike.top
+
+   3. Developer Guide
 
    List of Examples
 
@@ -45,7 +49,7 @@ Bogdan-Andrei Iancu
    1.3. Set remove_latency parameter
    1.4. Set pike_log_level parameter
    1.5. pike_check_req usage
-   2.1. Tree of IP addresses
+   3.1. Tree of IP addresses
 
 Chapter 1. Admin Guide
 
@@ -208,12 +212,38 @@ if (!pike_check_req()) { exit; };
                 :pike_list:_reply_fifo_file_
                 _empty_line_
 
-Chapter 2. Developer Guide
+Chapter 2. RPC calls
+
+   Table of Contents
+
+   1. pike.top
+
+1.  pike.top
+
+   Pike.top behaves like a 'top' command and shows source IP addresses of
+   incoming requestes to pike_check_req() function.
+
+   The IP list is sorted by sum of leaf hits (prev and curr) descending
+   and in second level by hits.
+
+   Some IPs could be marked as HOT depending on theirs request rates.
+
+   pike.top command takes one string parameter which specifies what kind
+   of nodes you are interested in. Possible values are HOT or ALL. If no
+   argument is given, it behaves as HOT was used.
+
+   Marking nodes HOT is done on server side, client only presents given
+   data and make some postprocessing like sorting.
+
+   Output of this command is a simple dump of ip_tree nodes marked as
+   ip-leafs.
+
+Chapter 3. Developer Guide
 
    One single tree (for both IPv4 and IPv6) is used. Each node contains a
    byte, the IP addresses stretching from root to the leafs.
 
-   Example 2.1. Tree of IP addresses
+   Example 3.1. Tree of IP addresses
            / 193 - 175 - 132 - 164
 tree root /                  \ 142
           \ 195 - 37 - 78 - 163
@@ -223,21 +253,21 @@ tree root /                  \ 142
    the nodes corresponding to each byte of the ip address are expanded. In
    order to be expended a node has to be hit for a given number of times
    (possible by different addresses; in the previous example, the node
-   “37” was expended by the 195.37.78.163 and 195.37.79.134 hits).
+   "37" was expended by the 195.37.78.163 and 195.37.79.134 hits).
 
    For 193.175.132.164 with x= reqs_density_per_unit:
-     * After first req hits -> the “193” node is built.
-     * After x more hits, the “175” node is build; the hits of “193” node
+     * After first req hits -> the "193" node is built.
+     * After x more hits, the "175" node is build; the hits of "193" node
        are split between itself and its child--both of them gone have x/2.
-     * And so on for node “132” and “164”.
-     * Once “164” build the entire address can be found in the tree. “164”
+     * And so on for node "132" and "164".
+     * Once "164" build the entire address can be found in the tree. "164"
        becomes a leaf. After it will be hit as a leaf for x times, it will
-       become “RED” (further request from this address will be blocked).
+       become "RED" (further request from this address will be blocked).
 
    So, to build and block this address were needed 3*x hits. Now, if reqs
    start coming from 193.175.132.142, the first 3 bytes are already in the
    tree (they are shared with the previous address), so I will need only x
-   hits (to build node “142” and to make it “RED”) to make this address
+   hits (to build node "142" and to make it "RED") to make this address
    also to be blocked. This is the reason for the variable number of hits
    necessary to block an IP.
 

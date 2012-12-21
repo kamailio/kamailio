@@ -1,4 +1,4 @@
-1. Auth Module
+The Auth Module
 
 Jan Janak
 
@@ -18,58 +18,72 @@ Daniel-Constantin Mierla
    Copyright © 2002, 2003 FhG FOKUS
      __________________________________________________________________
 
-   1.1. Overview
-   1.2. Dependencies
-   1.3. Parameters
+   List of Examples
 
-        1.3.1. auth_checks_register, auth_checks_no_dlg, and
-                auth_checks_in_dlg (flags)
+   1. Setting the auth_checks_register module parameter
+   2. qop example
+   3. nonce_count example
+   4. one_time_nonce example
+   5. nid_pool_no example
+   6. nc_array_size example
+   7. nc_array_order example
+   8. otn_in_flight_no example
+   9. otn_in_flight_order example
+   10. Setting secret module parameter
+   11. nonce_expire example
+   12. nonce_auth_max_drift example
+   13. force_stateless_reply example
+   14. realm_prefix parameter example
+   15. force_stateless_reply example
+   16. consume_credentials example
+   17. consume_credentials example
+   18. www_challenge usage
+   19. proxy_challenge usage
+   20. auth_challenge usage
+   21. pv_www_authenticate usage
+   22. pv_proxy_authenticate usage
+   23. pv_auth_check usage
+   24. auth_get_www_authenticate
 
-        1.3.2. qop (string)
-        1.3.3. nonce_count (boolean)
-        1.3.4. one_time_nonce (boolean)
-        1.3.5. nid_pool_no (integer)
-        1.3.6. nc_array_size (integer)
-        1.3.7. nc_array_order (integer)
-        1.3.8. otn_in_flight_no (integer)
-        1.3.9. otn_in_flight_order (integer)
-        1.3.10. secret (string)
-        1.3.11. nonce_expire (integer)
-        1.3.12. nonce_auth_max_drift (integer)
-        1.3.13. force_stateless_reply (boolean)
-        1.3.14. realm_prefix (string)
-
-   1.4. Functions
-
-        1.4.1. consume_credentials()
-        1.4.2. www_challenge(realm, flags)
-        1.4.3. proxy_challenge(realm, flags)
-        1.4.4. auth_challenge(realm, flags)
-        1.4.5. pv_www_authenticate(realm, passwd, flags)
-        1.4.6. pv_proxy_authenticate(realm, passwd, flags)
-        1.4.7. auth_get_www_authenticate(realm, flags, pvdst)
-
-1.1. Overview
+1. Overview
 
    This is a generic module that itself doesn't provide all functions
    necessary for authentication but provides functions that are needed by
    all other authentication related modules (so called authentication
    backends).
 
-   We decided to break the authentication code into several modules
+   We decided to divide the authentication code into several modules
    because there are now more than one backends (currently database
    authentication and radius are supported). This allows us to create
-   separate packages so uses can install and load only required
+   separate packages so users can install and load only the required
    functionality. This also allows us to avoid unnecessary dependencies in
    the binary packages.
 
-1.2. Dependencies
+2. Dependencies
 
    The module does not depend on any other module.
 
-1.3. Parameters
+3. Parameters
 
-1.3.1. auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg
+   3.1. auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg
+          (flags)
+
+   3.2. qop (string)
+   3.3. nonce_count (boolean)
+   3.4. one_time_nonce (boolean)
+   3.5. nid_pool_no (integer)
+   3.6. nc_array_size (integer)
+   3.7. nc_array_order (integer)
+   3.8. otn_in_flight_no (integer)
+   3.9. otn_in_flight_order (integer)
+   3.10. secret (string)
+   3.11. nonce_expire (integer)
+   3.12. nonce_auth_max_drift (integer)
+   3.13. force_stateless_reply (boolean)
+   3.14. realm_prefix (string)
+   3.15. use_domain (boolean)
+
+3.1.  auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg
 (flags)
 
    These three module parameters control which optional integrity checks
@@ -155,7 +169,7 @@ modparam("auth", "auth_checks_in_dlg", 15)
 
 ...
 
-1.3.2. qop (string)
+3.2. qop (string)
 
    If set, enable qop for challenges: each challenge will include a qop
    parameter. This is the recommended way, but some older non rfc3261
@@ -177,7 +191,7 @@ modparam("auth", "auth_checks_in_dlg", 15)
 modparam("auth", "qop", "auth")   # set qop=auth
 ...
 
-1.3.3. nonce_count (boolean)
+3.3. nonce_count (boolean)
 
    If enabled the received nc value is remembered and checked against the
    older value (for a successful authentication the received nc must be
@@ -273,7 +287,7 @@ route{
         }
 ...
 
-1.3.4. one_time_nonce (boolean)
+3.4. one_time_nonce (boolean)
 
    If set to 1 nonce reuse is disabled: each nonce is allowed only once,
    in the first reponse to a challenge. All the messages will be
@@ -317,7 +331,7 @@ modparam("auth", "one_time_nonce", 1)
 # Note: stateful mode should be used, see the nonce_count example
 ...
 
-1.3.5. nid_pool_no (integer)
+3.5. nid_pool_no (integer)
 
    Controls the number of partitions for the nonce_count and
    one_time_nonce arrays (it's common to both of them to reduce the nonce
@@ -353,7 +367,7 @@ modparam("auth", "one_time_nonce", 1)
 modparam("auth", "nid_pool_no", 4)
 ...
 
-1.3.6. nc_array_size (integer)
+3.6. nc_array_size (integer)
 
    Maximum number of in-flight nonces for nonce_count. It represents the
    maximum nonces for which state will be kept. When this number is
@@ -377,7 +391,7 @@ modparam("auth", "nid_pool_no", 4)
 modparam("auth", "nc_array_size", 4194304)   # 4Mb
 ...
 
-1.3.7. nc_array_order (integer)
+3.7. nc_array_order (integer)
 
    Equivalent to nc_array_size, but instead of directly specifying the
    size, its value is the power at which 2 should be raised
@@ -394,7 +408,7 @@ modparam("auth", "nc_array_size", 4194304)   # 4Mb
 modparam("auth", "nc_array_order", 22)   # 4Mb
 ...
 
-1.3.8. otn_in_flight_no (integer)
+3.8. otn_in_flight_no (integer)
 
    Maximum number of in-flight nonces for one_time_nonce. It represents
    the maximum number of nonces remembered for the one-time-nonce check.
@@ -420,7 +434,7 @@ modparam("auth", "nc_array_order", 22)   # 4Mb
 modparam("auth", "otn_in_flight_no", 8388608)   # 8 Mb (1Mb memory)
 ...
 
-1.3.9. otn_in_flight_order (integer)
+3.9. otn_in_flight_order (integer)
 
    Equivalent to otn_in_flight_no, but instead of directly specifying the
    size, its value is the power at which 2 should be raised
@@ -438,7 +452,18 @@ modparam("auth", "otn_in_flight_no", 8388608)   # 8 Mb (1Mb memory)
 modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
 ...
 
-1.3.10. secret (string)
+3.10. secret (string)
+
+   Secret phrase used to calculate the nonce value used to challenge the
+   client for authentication.
+
+   If you use multiple servers in your installation, and would like to
+   authenticate on the second server against the nonce generated at the
+   first one its necessary to explicitly set the secret to the same value
+   on all servers. However, as the use of a shared (and fixed) secret as
+   nonce is insecure, it is much better is to stay with the default. Any
+   clients should send the authenticated request to the server that issued
+   the challenge.
 
    Default value is randomly generated string.
 
@@ -447,7 +472,7 @@ modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
 modparam("auth", "secret", "johndoessecretphrase")
 ...
 
-1.3.11. nonce_expire (integer)
+3.11. nonce_expire (integer)
 
    Nonces have limited lifetime. After a given period of time nonces will
    be considered invalid. This is to protect replay attacks. Credentials
@@ -464,7 +489,7 @@ modparam("auth", "secret", "johndoessecretphrase")
 modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 ...
 
-1.3.12. nonce_auth_max_drift (integer)
+3.12. nonce_auth_max_drift (integer)
 
    Maximum difference in seconds between a nonce creation time and the
    current time, if the nonce creation time appears to be in the future.
@@ -486,7 +511,7 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 modparam("auth", "nonce_auth_max_drift", 1)   # set max drift to 1 s
 ...
 
-1.3.13. force_stateless_reply (boolean)
+3.13. force_stateless_reply (boolean)
 
    If set to 1, www_challenge() and proxy_challenge() functions send reply
    statelessly no matter if transaction exists or not. If set to 0
@@ -498,7 +523,7 @@ modparam("auth", "nonce_auth_max_drift", 1)   # set max drift to 1 s
 modparam("auth", "force_stateless_reply", 1)
 ...
 
-1.3.14. realm_prefix (string)
+3.14. realm_prefix (string)
 
    Prefix to be automatically strip from realm. As an alternative to SRV
    records (not all SIP clients support SRV lookup), a subdomain of the
@@ -512,11 +537,31 @@ modparam("auth", "force_stateless_reply", 1)
    Example 14. realm_prefix parameter example
 modparam("auth", "realm_prefix", "sip.")
 
-1.4. Functions
+3.15. use_domain (boolean)
 
-1.4.1. consume_credentials()
+   If set to 1, pv_auth_check() uses domain parts of the URIs to check
+   user identity.
 
-   This function removes previously authorized credentials from the
+   Example 15. force_stateless_reply example
+...
+modparam("auth", "use_domain", 1)
+...
+
+4. Functions
+
+   4.1. consume_credentials()
+   4.2. has_credentials(realm)
+   4.3. www_challenge(realm, flags)
+   4.4. proxy_challenge(realm, flags)
+   4.5. auth_challenge(realm, flags)
+   4.6. pv_www_authenticate(realm, passwd, flags [, method])
+   4.7. pv_proxy_authenticate(realm, passwd, flags)
+   4.8. pv_auth_check(realm, passwd, flags, checks)
+   4.9. auth_get_www_authenticate(realm, flags, pvdest)
+
+4.1. consume_credentials()
+
+   This function removes previously authorized credential headers from the
    message being processed by the server. That means that the downstream
    message will not contain credentials there were used by this server.
    This ensures that the proxy will not reveal information about
@@ -524,14 +569,27 @@ modparam("auth", "realm_prefix", "sip.")
    little bit shorter. The function must be called after www_authorize,
    proxy_authorize, www_authenticate or proxy_authenticate.
 
-   Example 15. consume_credentials example
+   Example 16. consume_credentials example
 ...
-if (www_authenticate("realm", "subscriber)) {
+if (www_authenticate("realm", "subscriber")) {
     consume_credentials();
 };
 ...
 
-1.4.2. www_challenge(realm, flags)
+4.2. has_credentials(realm)
+
+   This function returns true of the request has Autorization or
+   Proxy-Authorization header with provided realm. The parameter can be
+   string with pseudo-variables.
+
+   Example 17. consume_credentials example
+...
+if (has_credentials("myrealm")) {
+    ...
+}
+...
+
+4.3.  www_challenge(realm, flags)
 
    The function challenges a user agent. It will generate a WWW-Authorize
    header field containing a digest challenge, it will put the header
@@ -545,10 +603,11 @@ if (www_authenticate("realm", "subscriber)) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string "". In case of REGISTER requests To
-       header field domain (e.g., variable $td) can be used (because this
-       header field represents the user being registered), for all other
-       messages From header field domain can be used (e.g., variable $fd).
+       It must not be empty string "". In case of REGISTER requests, the
+       To header field domain (e.g., variable $td) can be used (because
+       this header field represents the user being registered), for all
+       other messages From header field domain can be used (e.g., variable
+       $fd).
        The string may contain pseudo variables.
      * flags - Value of this parameter can be a bitmask of following:
           + 1 - build challenge header with qop=auth
@@ -560,14 +619,14 @@ if (www_authenticate("realm", "subscriber)) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 16. www_challenge usage
+   Example 18. www_challenge usage
 ...
 if (!www_authenticate("$td", "subscriber")) {
         www_challenge("$td", "1");
 }
 ...
 
-1.4.3. proxy_challenge(realm, flags)
+4.4.  proxy_challenge(realm, flags)
 
    The function challenges a user agent. It will generate a
    Proxy-Authorize header field containing a digest challenge, it will put
@@ -577,38 +636,38 @@ if (!www_authenticate("$td", "subscriber")) {
    information regarding digest authentication see RFC2617. See module
    parameter force_stateless_reply regarding sending of the reply.
 
-   Meaning of the parameters the same as for function www_challenge(realm,
-   flags)
+   Meaning of the parameters is the same as for function
+   www_challenge(realm, flags)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 17. proxy_challenge usage
+   Example 19. proxy_challenge usage
 ...
 if (!proxy_authenticate("$fd", "subscriber")) {
         proxy_challenge("$fd", "1");
 };
 ...
 
-1.4.4. auth_challenge(realm, flags)
+4.5.  auth_challenge(realm, flags)
 
    The function challenges a user agent for authentication. It combines
    the functions www_challenge() and proxy_challenge(), by calling
    internally the first one for REGISTER requests and the second one for
-   the rest of the request types.
+   the rest of other request types.
 
    Meaning of the parameters the same as for function www_challenge(realm,
    flags)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 18. proxy_challenge usage
+   Example 20. auth_challenge usage
 ...
 if (!auth_check("$fd", "subscriber", "1")) {
         auth_challenge("$fd", "1");
 };
 ...
 
-1.4.5. pv_www_authenticate(realm, passwd, flags)
+4.6.  pv_www_authenticate(realm, passwd, flags [, method])
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will succeed
@@ -638,28 +697,30 @@ if (!auth_check("$fd", "subscriber", "1")) {
        messages From header field domain can be used (e.g., varibale $fd).
        The string may contain pseudo variables.
      * passwd - the password to be used for authentication. Can contain
-       config variables. Username is taken from Auth header.
+       config variables. The Username is taken from Auth header.
      * flags - the value of this parameter can be a bitmask of following:
           + 1 - the value of password parameter is HA1 format
           + 2 - build challenge header with no qop and add it to avp
           + 4 - build challenge header with qop=auth and add it to avp
           + 8 - build challenge header with qop=auth-int and add it to avp
           + 16 - build challenge header with stale=true
+     * method - the method to be used for authentication. This parameter
+       is optional and if not set is the first "word" on the request-line.
 
    When challenge header is built and stored in avp, append_to_reply() and
-   sl reply functions can be used to send appropriate SIP reply to
+   the sl reply functions can be used to send appropriate SIP reply to
    challenge for authentication.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 19. pv_www_authenticate usage
+   Example 21. pv_www_authenticate usage
 ...
 if (!pv_www_authenticate("$td", "123abc", "0")) {
         www_challenge("$td", "1");
 };
 ...
 
-1.4.6. pv_proxy_authenticate(realm, passwd, flags)
+4.7.  pv_proxy_authenticate(realm, passwd, flags)
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will succeed
@@ -674,7 +735,7 @@ if (!pv_www_authenticate("$td", "123abc", "0")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 20. pv_proxy_authenticate usage
+   Example 22. pv_proxy_authenticate usage
 ...
 $avp(password)="xyz";
 if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
@@ -682,17 +743,42 @@ if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
 };
 ...
 
-1.4.7. auth_get_www_authenticate(realm, flags, pvdst)
+4.8.  pv_auth_check(realm, passwd, flags, checks)
+
+   The function combines the functionalities of pv_www_authenticate and
+   pv_proxy_authenticate, first being exectuted if the SIP request is a
+   REGISTER, the second for the rest.
+
+   Meaning of the first three parameters is the same as for
+   pv_www_authenticate(realm, passwd, flags).
+
+   Parameter checks can be used to control the behaviour of the function.
+   If it is 1, then the function will check to see if the authentication
+   username matches either To or From header username, a matter of whether
+   it is for a REGISTER request or not. The parameter may be a pseudo
+   variable.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 23. pv_auth_check usage
+...
+$avp(password)="xyz";
+if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
+        proxy_challenge("$fd", "1");
+};
+...
+
+4.9.  auth_get_www_authenticate(realm, flags, pvdest)
 
    Build WWW-Authentication header and set the resulting value in 'pvdest'
-   parameter.
+   pseudo-variable parameter.
 
    Meaning of the realm and flags parameters is the same as for
    pv_www_authenticate(realm, passwd, flags)
 
    This function can be used from ANY_ROUTE.
 
-   Example 21. auth_get_www_authenticate
+   Example 24. auth_get_www_authenticate
 ...
 if (auth_get_www_authenticate("$fd", "0", "$var(wauth)")) {
         xlog("www authenticate header is [$var(wauth)]\n");

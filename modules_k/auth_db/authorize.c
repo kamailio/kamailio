@@ -52,6 +52,78 @@
 #include "authdb_mod.h"
 
 
+int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table)
+{
+	pv_elem_t *cred;
+	db_key_t keys[2];
+	db_val_t vals[2];
+	db_key_t *col;
+	db1_res_t *res = NULL;
+
+	int n, nc;
+
+	col = pkg_malloc(sizeof(*col) * (credentials_n + 1));
+	if (col == NULL) {
+		LM_ERR("no more pkg memory\n");
+		return -1;
+	}
+
+	keys[0] = &user_column;
+	keys[1] = &domain_column;
+
+	for (n = 0, cred=credentials; cred ; n++, cred=cred->next) {
+		col[n] = &cred->text;
+	}
+
+	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB1_STR;
+	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
+
+	n = 1;
+	VAL_STR(vals) = *user;
+
+	if (domain && domain->len) {
+		VAL_STR(vals + 1) = *domain;
+		n = 2;
+	}
+
+	nc = credentials_n;
+	if (auth_dbf.use_table(auth_db_handle, table) < 0) {
+		LM_ERR("failed to use_table\n");
+		pkg_free(col);
+		return -1;
+	}
+
+	if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, &res) < 0) {
+		LM_ERR("failed to query database\n");
+		pkg_free(col);
+		if(res)
+			auth_dbf.free_result(auth_db_handle, res);
+		return -1;
+	}
+	pkg_free(col);
+	if (RES_ROW_N(res) == 0) {
+		if(res)
+			auth_dbf.free_result(auth_db_handle, res);
+		LM_DBG("no result for user \'%.*s%s%.*s\' in [%.*s]\n",
+				user->len, user->s, (n==2)?"@":"",
+				(n==2)?domain->len:0, (n==2)?domain->s:"",
+				table->len, table->s);
+		return -2;
+	}
+	for (cred=credentials, n=0; cred; cred=cred->next, n++) {
+		if (db_val2pv_spec(msg, &RES_ROWS(res)[0].values[n], cred->spec) != 0) {
+			if(res)
+				auth_dbf.free_result(auth_db_handle, res);
+			LM_ERR("Failed to convert value for column %.*s\n",
+					RES_NAMES(res)[n]->len, RES_NAMES(res)[n]->s);
+			return -3;
+		}
+	}
+	if(res)
+		auth_dbf.free_result(auth_db_handle, res);
+	return 0;
+}
+
 static inline int get_ha1(struct username* _username, str* _domain,
 			  const str* _table, char* _ha1, db1_res_t** res)
 {
@@ -154,7 +226,7 @@ static int generate_avps(struct sip_msg* msg, db1_res_t* db_res)
  * Authorize digest credentials
  */
 static int digest_authenticate(struct sip_msg* msg, str *realm,
-				str *table, hdr_types_t hftype)
+				str *table, hdr_types_t hftype, str *method)
 {
 	char ha1[256];
 	int res;
@@ -219,8 +291,7 @@ static int digest_authenticate(struct sip_msg* msg, str *realm,
 	}
 
 	/* Recalculate response, it must be same to authorize successfully */
-	ret = auth_api.check_response(&(cred->digest),
-				&msg->first_line.u.request.method, ha1);
+	ret = auth_api.check_response(&(cred->digest), method, ha1);
 	if(ret==AUTHENTICATED) {
 		ret = AUTH_OK;
 		switch(auth_api.post_auth(msg, h)) {
@@ -273,7 +344,8 @@ int proxy_authenticate(struct sip_msg* _m, char* _realm, char* _table)
 	}
 	LM_DBG("realm value [%.*s]\n", srealm.len, srealm.s);
 
-	return digest_authenticate(_m, &srealm, &stable, HDR_PROXYAUTH_T);
+	return digest_authenticate(_m, &srealm, &stable, HDR_PROXYAUTH_T,
+					&_m->first_line.u.request.method);
 }
 
 
@@ -305,14 +377,55 @@ int www_authenticate(struct sip_msg* _m, char* _realm, char* _table)
 	}
 	LM_DBG("realm value [%.*s]\n", srealm.len, srealm.s);
 
-	return digest_authenticate(_m, &srealm, &stable, HDR_AUTHORIZATION_T);
+	return digest_authenticate(_m, &srealm, &stable, HDR_AUTHORIZATION_T,
+					&_m->first_line.u.request.method);
+}
+
+int www_authenticate2(struct sip_msg* _m, char* _realm, char* _table, char *_method)
+{
+	str srealm;
+	str stable;
+	str smethod;
+
+	if(_table==NULL) {
+		LM_ERR("invalid table parameter\n");
+		return AUTH_ERROR;
+	}
+
+	stable.s   = _table;
+	stable.len = strlen(stable.s);
+
+	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		return AUTH_ERROR;
+	}
+
+	if (srealm.len==0)
+	{
+		LM_ERR("invalid realm parameter - empty value\n");
+		return AUTH_ERROR;
+	}
+	LM_DBG("realm value [%.*s]\n", srealm.len, srealm.s);
+
+	if (get_str_fparam(&smethod, _m, (fparam_t*)_method) < 0) {
+		LM_ERR("failed to get method value\n");
+		return AUTH_ERROR;
+	}
+
+	if (smethod.len==0)
+	{
+		LM_ERR("invalid method parameter - empty value\n");
+		return AUTH_ERROR;
+	}
+	LM_DBG("method value [%.*s]\n", smethod.len, smethod.s);
+
+	return digest_authenticate(_m, &srealm, &stable, HDR_AUTHORIZATION_T,
+					&smethod);
 }
 
 /*
  * Authenticate using WWW/Proxy-Authorize header field
  */
-#define AUTH_CHECK_ID_F 1<<0
-
 int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags)
 {
 	str srealm;
@@ -363,9 +476,11 @@ int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags)
 			stable.len,  stable.s, iflags);
 
 	if(_m->REQ_METHOD==METHOD_REGISTER)
-		ret = digest_authenticate(_m, &srealm, &stable, HDR_AUTHORIZATION_T);
+		ret = digest_authenticate(_m, &srealm, &stable, HDR_AUTHORIZATION_T,
+						&_m->first_line.u.request.method);
 	else
-		ret = digest_authenticate(_m, &srealm, &stable, HDR_PROXYAUTH_T);
+		ret = digest_authenticate(_m, &srealm, &stable, HDR_PROXYAUTH_T,
+						&_m->first_line.u.request.method);
 
 	if(ret==AUTH_OK && (iflags&AUTH_CHECK_ID_F)) {
 		hdr = (_m->proxy_auth==0)?_m->authorization:_m->proxy_auth;

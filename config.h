@@ -73,6 +73,8 @@
 
 #define MAX_PATH_SIZE 256 		/*!< Maximum length of path header buffer */
 
+#define MAX_INSTANCE_SIZE 256 		/*!< Maximum length of +sip.instance contact header param value buffer */
+
 #define MY_VIA "Via: SIP/2.0/UDP "
 #define MY_VIA_LEN (sizeof(MY_VIA) - 1)
 
@@ -190,10 +192,11 @@
 
 #define PATH_MAX_GUESS	1024		/*!< maximum path length */
 
-#ifdef OPENSER_MOD_INTERFACE
-	#define DEFAULT_DB_URL "mysql://openser:openserrw@localhost/openser"
+#if defined KAMAILIO_MOD_INTERFACE || defined OPENSER_MOD_INTERFACE || \
+		defined MOD_INTERFACE_V1
+	#define DEFAULT_DB_URL "mysql://kamailio:kamailiorw@localhost/kamailio"
 	#define DEFAULT_DB_URL_LEN (sizeof(DEFAULT_DB_URL) - 1)
-	#define DEFAULT_RODB_URL "mysql://openserro:openserro@localhost/openser"
+	#define DEFAULT_RODB_URL "mysql://kamailio:kamailiorw@localhost/okamailio"
 	#define DEFAULT_RODB_URL_LEN (sizeof(DEFAULT_RODB_URL) - 1)
 #else
 	#define DEFAULT_DB_URL "mysql://ser:heslo@localhost/ser"

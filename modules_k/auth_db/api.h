@@ -30,7 +30,7 @@
 #include "../../parser/msg_parser.h"
 
 typedef int (*digest_authenticate_f)(struct sip_msg* msg, str *realm,
-				str *table, hdr_types_t hftype);
+				str *table, hdr_types_t hftype, str *method);
 /**
  * @brief AUTH_DB API structure
  */

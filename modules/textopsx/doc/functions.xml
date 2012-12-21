@@ -12,7 +12,7 @@
 		<para>
 		Use this function to apply changes performed on SIP request content. Be
 		careful when using this function;  due to special handling of changes
-		done to SIP message buffer so far, using this function might change
+		to the SIP message buffer so far, using this function might change
 		the behaviour of your config.  Do test your config properly!
 		</para>
    		<para>
@@ -42,7 +42,7 @@ if(msg_apply_changes())
 	</title>
 	<para>
 		Intercept a SIP reply (in an onreply_route) and change its status code 
-		and reason phrase prior to propogating it.
+		and reason phrase prior to forwarding it.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>
@@ -78,7 +78,7 @@ onreply_route {
 		<function moreinfo="none">remove_body()</function>
 		</title>
 		<para>
-		Use this function to remove body of SIP requests or replies.
+		Use this function to remove the body of SIP requests or replies.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
@@ -122,12 +122,12 @@ keep_hf("User-Agent");
 		<function moreinfo="none">fnmatch(value, expr [, flags])</function>
 		</title>
 		<para>
-			Match the value against the expr using the shell-style pattern
+			Match the value against the expr using shell-style pattern
 			for file name matching (see man page for C function fnmatch()).
-			It is known to be faster and uses less-memory than regexp.
+			It is known to be faster and use less-memory than regular expressions.
 		</para>
 		<para>
-			Parameters flags is optional and can be 'i' to do case insensitive
+			Parameter 'flags' is optional and can be 'i' to do case insensitive
 			matching.
 		</para>
 		<para>

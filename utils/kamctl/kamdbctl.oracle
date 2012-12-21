@@ -38,10 +38,10 @@ if [ -z "$SQLPLUS" ] ; then
 	fi
 	export SQLPLUS
 fi
-if [ -z "$OPENSER_ORASEL" ] ; then
-	OPENSER_ORASEL=`which kamailio_orasel 2>/dev/null`
+if [ -z "$KAMAILIO_ORASEL" ] ; then
+	KAMAILIO_ORASEL=`which kamailio_orasel 2>/dev/null`
 	if [ -n "$SQLPLUS" ]; then
-		export OPENSER_ORASEL
+		export KAMAILIO_ORASEL
 	fi
 fi
 
@@ -78,10 +78,10 @@ oracle_root_cmd()
 }
 
 
-openser_drop()  # pars: <database name>
+kamailio_drop()  # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	merr "openser_drop function takes one params"
+	merr "kamailio_drop function takes one params"
 	exit 1
 fi
 
@@ -119,13 +119,13 @@ if [ -n "$DBSYSUSER" ]; then
 fi
 
 minfo "Scheme '$DBROOTUSER' in database '$1' dropped"
-} #openser_drop
+} #kamailio_drop
 
 
-openser_create() # pars: <database name>
+kamailio_create() # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	merr "openser_create function takes one param"
+	merr "kamailio_create function takes one param"
 	exit 1
 fi
 
@@ -220,7 +220,7 @@ get_answer $INSTALL_EXTRA_TABLES "Install tables for $EXTRA_MODULES? (y/n): "
 if [ "$ANSWER" = "y" ]; then
 	extra_create $1
 fi
-} # openser_create
+} # kamailio_create
 
 
 presence_create() # pars: <database name>
@@ -281,8 +281,8 @@ oracle_dump()
 	if [ -n "$1" ]; then
 		SUFF="@$1"
 	fi
-	if [ -n "$OPENSER_ORASEL" ]; then
-		$OPENSER_ORASEL ${DBROUSER}/${DBROPW}$SUFF -BLNe \
+	if [ -n "$KAMAILIO_ORASEL" ]; then
+		$KAMAILIO_ORASEL ${DBROUSER}/${DBROPW}$SUFF -BLNe \
 		    "select * from table(dump_tables('$DBROOTUSER'));" >$2
 	else
 		echo "set feed 0 lin 8000 pages 0

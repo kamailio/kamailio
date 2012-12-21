@@ -338,7 +338,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 				if (run_top_route(branch_rt.rlist[branch_route], i_req, &ctx)
 						< 0)
 				{
-					LOG(L_ERR, "Error in run_top_route\n");
+					LOG(L_DBG, "negative return code in run_top_route\n");
 				}
 				/* update dst send_flags  and send socket*/
 				snd_flags=i_req->fwd_send_flags;
@@ -428,7 +428,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	/* ... and build it now */
 	shbuf=build_req_buf_from_sip_req( i_req, &len, dst, BUILD_IN_SHM);
 	if (!shbuf) {
-		LOG(L_ERR, "ERROR: print_uac_request: no shm mem\n"); 
+		LM_ERR("could not build request\n"); 
 		ret=E_OUT_OF_MEM;
 		goto error01;
 	}

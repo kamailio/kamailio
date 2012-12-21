@@ -1,0 +1,1742 @@
+<?xml version="1.0"?>
+<framework>
+	<!-- Declare all db connections
+		Each db connection MUST have:
+		- an "id" to be identified by a tabe
+		- a URL pointing to the actual database
+	-->
+	<db_url id="mysql">mysql://kamailio:kamailiorw@localhost/kamailio</db_url>
+	<!-- Declare all tables
+		Each table MUST have:
+		 - an 'id' to be identified by a command
+		 - a 'table_name' pointing to the actual table name in the database
+		 - a 'db_url_id' to identify the db connection
+		 - multiple 'column' nodes with 'field', 'type' and 'validation':
+			/* type */
+		DB1_INT,      /**< represents an 32 bit integer number      */
+		DB1_BIGINT,   /**< represents an 64 bit integer number      */
+		DB1_DOUBLE,   /**< represents a floating point number       */
+		DB1_STRING,   /**< represents a zero terminated const char* */
+		DB1_STR,      /**< represents a string of 'str' type        */
+		DB1_DATETIME, /**< represents date and time                 */
+		DB1_BLOB,     /**< represents a large binary object         */
+		DB1_BITMAP    /**< an one-dimensional array of 32 flags     */
+			/* validation */
+		P_HOST_PORT  /**< represents [proto:]host[:port]       */
+		P_IPV4_PORT  /**< represents [proto:]IPv4[:port]       */
+		IPV4         /**< represents an IPv4                   */
+		URI          /**< represents a SIP URI                 */
+		URI_IPV4HOST /**< represents a SIP URI w/ IPv4 as host */
+	-->
+
+	<!-- Declaration of acc table-->
+	<db_table id="acc">
+		<table_name>acc</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>method</field><type>DB1_STR</type></column>
+		<column><field>from_tag</field><type>DB1_STR</type></column>
+		<column><field>to_tag</field><type>DB1_STR</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>sip_code</field><type>DB1_STR</type></column>
+		<column><field>sip_reason</field><type>DB1_STR</type></column>
+		<column><field>time</field><type>DB1_DATETIME</type></column>
+	</db_table>
+	<!-- Declaration of missed_calls table-->
+	<db_table id="missed_calls">
+		<table_name>missed_calls</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>method</field><type>DB1_STR</type></column>
+		<column><field>from_tag</field><type>DB1_STR</type></column>
+		<column><field>to_tag</field><type>DB1_STR</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>sip_code</field><type>DB1_STR</type></column>
+		<column><field>sip_reason</field><type>DB1_STR</type></column>
+		<column><field>time</field><type>DB1_DATETIME</type></column>
+	</db_table>
+	<!-- Declaration of dbaliases table-->
+	<db_table id="dbaliases">
+		<table_name>dbaliases</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>alias_username</field><type>DB1_STR</type></column>
+		<column><field>alias_domain</field><type>DB1_STR</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of subscriber table-->
+	<db_table id="subscriber">
+		<table_name>subscriber</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>password</field><type>DB1_STR</type></column>
+		<column><field>email_address</field><type>DB1_STR</type></column>
+		<column><field>ha1</field><type>DB1_STR</type></column>
+		<column><field>ha1b</field><type>DB1_STR</type></column>
+		<column><field>rpid</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of usr_preferences table-->
+	<db_table id="usr_preferences">
+		<table_name>usr_preferences</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>uuid</field><type>DB1_STR</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>attribute</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_INT</type></column>
+		<column><field>value</field><type>DB1_STR</type></column>
+		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
+	</db_table>
+	<!-- Declaration of carrierroute table-->
+	<db_table id="carrierroute">
+		<table_name>carrierroute</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>carrier</field><type>DB1_INT</type></column>
+		<column><field>domain</field><type>DB1_INT</type></column>
+		<column><field>scan_prefix</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>mask</field><type>DB1_INT</type></column>
+		<column><field>prob</field><type>DB1_DOUBLE</type></column>
+		<column><field>strip</field><type>DB1_INT</type></column>
+		<column><field>rewrite_host</field><type>DB1_STR</type></column>
+		<column><field>rewrite_prefix</field><type>DB1_STR</type></column>
+		<column><field>rewrite_suffix</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of carrierfailureroute table-->
+	<db_table id="carrierfailureroute">
+		<table_name>carrierfailureroute</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>carrier</field><type>DB1_INT</type></column>
+		<column><field>domain</field><type>DB1_INT</type></column>
+		<column><field>scan_prefix</field><type>DB1_STR</type></column>
+		<column><field>host_name</field><type>DB1_STR</type></column>
+		<column><field>reply_code</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>mask</field><type>DB1_INT</type></column>
+		<column><field>next_domain</field><type>DB1_INT</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of carrier_name table-->
+	<db_table id="carrier_name">
+		<table_name>carrier_name</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>carrier</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of domain_name table-->
+	<db_table id="domain_name">
+		<table_name>domain_name</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of cpl table-->
+	<db_table id="cpl">
+		<table_name>cpl</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>cpl_xml</field><type>DB1_BLOB</type></column>
+		<column><field>cpl_bin</field><type>DB1_BLOB</type></column>
+	</db_table>
+	<!-- Declaration of dialog table-->
+	<db_table id="dialog">
+		<table_name>dialog</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>hash_entry</field><type>DB1_INT</type></column>
+		<column><field>hash_id</field><type>DB1_INT</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>from_uri</field><type>DB1_STR</type></column>
+		<column><field>from_tag</field><type>DB1_STR</type></column>
+		<column><field>to_uri</field><type>DB1_STR</type></column>
+		<column><field>to_tag</field><type>DB1_STR</type></column>
+		<column><field>caller_cseq</field><type>DB1_STR</type></column>
+		<column><field>callee_cseq</field><type>DB1_STR</type></column>
+		<column><field>caller_route_set</field><type>DB1_STR</type></column>
+		<column><field>callee_route_set</field><type>DB1_STR</type></column>
+		<column><field>caller_contact</field><type>DB1_STR</type></column>
+		<column><field>callee_contact</field><type>DB1_STR</type></column>
+		<column><field>caller_sock</field><type>DB1_STR</type></column>
+		<column><field>callee_sock</field><type>DB1_STR</type></column>
+		<column><field>state</field><type>DB1_INT</type></column>
+		<column><field>start_time</field><type>DB1_INT</type></column>
+		<column><field>timeout</field><type>DB1_INT</type></column>
+		<column><field>sflags</field><type>DB1_INT</type></column>
+		<column><field>iflags</field><type>DB1_INT</type></column>
+		<column><field>toroute_name</field><type>DB1_STR</type></column>
+		<column><field>req_uri</field><type>DB1_STR</type></column>
+		<column><field>xdata</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of dialog_vars table-->
+	<db_table id="dialog_vars">
+		<table_name>dialog_vars</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>hash_entry</field><type>DB1_INT</type></column>
+		<column><field>hash_id</field><type>DB1_INT</type></column>
+		<column><field>dialog_key</field><type>DB1_STR</type></column>
+		<column><field>dialog_value</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of dialplan table-->
+	<db_table id="dialplan">
+		<table_name>dialplan</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>dpid</field><type>DB1_INT</type></column>
+		<column><field>pr</field><type>DB1_INT</type></column>
+		<column><field>match_op</field><type>DB1_INT</type></column>
+		<column><field>match_exp</field><type>DB1_STR</type></column>
+		<column><field>match_len</field><type>DB1_INT</type></column>
+		<column><field>subst_exp</field><type>DB1_STR</type></column>
+		<column><field>repl_exp</field><type>DB1_STR</type></column>
+		<column><field>attrs</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of dispatcher table-->
+	<db_table id="dispatcher">
+		<table_name>dispatcher</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>setid</field><type>DB1_INT</type></column>
+		<column><field>destination</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>priority</field><type>DB1_INT</type></column>
+		<column><field>attrs</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of domainpolicy table-->
+	<db_table id="domainpolicy">
+		<table_name>domainpolicy</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>rule</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_STR</type></column>
+		<column><field>att</field><type>DB1_STR</type></column>
+		<column><field>val</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of domain table-->
+	<db_table id="domain">
+		<table_name>domain</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>did</field><type>DB1_STR</type></column>
+		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
+	</db_table>
+	<!-- Declaration of domain_attrs table-->
+	<db_table id="domain_attrs">
+		<table_name>domain_attrs</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>did</field><type>DB1_STR</type></column>
+		<column><field>name</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_INT</type></column>
+		<column><field>value</field><type>DB1_STR</type></column>
+		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
+	</db_table>
+	<!-- Declaration of dr_gateways table-->
+	<db_table id="dr_gateways">
+		<table_name>dr_gateways</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>gwid</field><type>DB1_INT</type></column>
+		<column><field>type</field><type>DB1_INT</type></column>
+		<column><field>address</field><type>DB1_STR</type></column>
+		<column><field>strip</field><type>DB1_INT</type></column>
+		<column><field>pri_prefix</field><type>DB1_STR</type></column>
+		<column><field>attrs</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of dr_rules table-->
+	<db_table id="dr_rules">
+		<table_name>dr_rules</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>ruleid</field><type>DB1_INT</type></column>
+		<column><field>groupid</field><type>DB1_STR</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>timerec</field><type>DB1_STR</type></column>
+		<column><field>priority</field><type>DB1_INT</type></column>
+		<column><field>routeid</field><type>DB1_STR</type></column>
+		<column><field>gwlist</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of dr_gw_lists table-->
+	<db_table id="dr_gw_lists">
+		<table_name>dr_gw_lists</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>gwlist</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of dr_groups table-->
+	<db_table id="dr_groups">
+		<table_name>dr_groups</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>groupid</field><type>DB1_INT</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of grp table-->
+	<db_table id="grp">
+		<table_name>grp</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>grp</field><type>DB1_STR</type></column>
+		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
+	</db_table>
+	<!-- Declaration of re_grp table-->
+	<db_table id="re_grp">
+		<table_name>re_grp</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>reg_exp</field><type>DB1_STR</type></column>
+		<column><field>group_id</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of htable table-->
+	<db_table id="htable">
+		<table_name>htable</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>key_name</field><type>DB1_STR</type></column>
+		<column><field>key_type</field><type>DB1_INT</type></column>
+		<column><field>value_type</field><type>DB1_INT</type></column>
+		<column><field>key_value</field><type>DB1_STR</type></column>
+		<column><field>expires</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of imc_rooms table-->
+	<db_table id="imc_rooms">
+		<table_name>imc_rooms</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>name</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>flag</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of imc_members table-->
+	<db_table id="imc_members">
+		<table_name>imc_members</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>room</field><type>DB1_STR</type></column>
+		<column><field>flag</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of lcr_gw table-->
+	<db_table id="lcr_gw">
+		<table_name>lcr_gw</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>lcr_id</field><type>DB1_INT</type></column>
+		<column><field>gw_name</field><type>DB1_STR</type></column>
+		<column><field>ip_addr</field><type>DB1_STR</type></column>
+		<column><field>hostname</field><type>DB1_STR</type></column>
+		<column><field>port</field><type>DB1_INT</type></column>
+		<column><field>params</field><type>DB1_STR</type></column>
+		<column><field>uri_scheme</field><type>DB1_INT</type></column>
+		<column><field>transport</field><type>DB1_INT</type></column>
+		<column><field>strip</field><type>DB1_INT</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>tag</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>defunct</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of lcr_rule_target table-->
+	<db_table id="lcr_rule_target">
+		<table_name>lcr_rule_target</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>lcr_id</field><type>DB1_INT</type></column>
+		<column><field>rule_id</field><type>DB1_INT</type></column>
+		<column><field>gw_id</field><type>DB1_INT</type></column>
+		<column><field>priority</field><type>DB1_INT</type></column>
+		<column><field>weight</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of lcr_rule table-->
+	<db_table id="lcr_rule">
+		<table_name>lcr_rule</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>lcr_id</field><type>DB1_INT</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>from_uri</field><type>DB1_STR</type></column>
+		<column><field>request_uri</field><type>DB1_STR</type></column>
+		<column><field>stopper</field><type>DB1_INT</type></column>
+		<column><field>enabled</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of matrix table-->
+	<db_table id="matrix">
+		<table_name>matrix</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>first</field><type>DB1_INT</type></column>
+		<column><field>second</field><type>DB1_INT</type></column>
+		<column><field>res</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of silo table-->
+	<db_table id="silo">
+		<table_name>silo</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>src_addr</field><type>DB1_STR</type></column>
+		<column><field>dst_addr</field><type>DB1_STR</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>inc_time</field><type>DB1_INT</type></column>
+		<column><field>exp_time</field><type>DB1_INT</type></column>
+		<column><field>snd_time</field><type>DB1_INT</type></column>
+		<column><field>ctype</field><type>DB1_STR</type></column>
+		<column><field>body</field><type>DB1_BLOB</type></column>
+		<column><field>extra_hdrs</field><type>DB1_BLOB</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>status</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of mtree table-->
+	<db_table id="mtree">
+		<table_name>mtree</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>tprefix</field><type>DB1_STR</type></column>
+		<column><field>tvalue</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of mtrees table-->
+	<db_table id="mtrees">
+		<table_name>mtrees</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>tname</field><type>DB1_STR</type></column>
+		<column><field>tprefix</field><type>DB1_STR</type></column>
+		<column><field>tvalue</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of pdt table-->
+	<db_table id="pdt">
+		<table_name>pdt</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>sdomain</field><type>DB1_STR</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of trusted table-->
+	<db_table id="trusted">
+		<table_name>trusted</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>src_ip</field><type>DB1_STR</type></column>
+		<column><field>proto</field><type>DB1_STR</type></column>
+		<column><field>from_pattern</field><type>DB1_STR</type></column>
+		<column><field>tag</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of address table-->
+	<db_table id="address">
+		<table_name>address</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>grp</field><type>DB1_INT</type></column>
+		<column><field>ip_addr</field><type>DB1_STR</type></column>
+		<column><field>mask</field><type>DB1_INT</type></column>
+		<column><field>port</field><type>DB1_INT</type></column>
+		<column><field>tag</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of pl_pipes table-->
+	<db_table id="pl_pipes">
+		<table_name>pl_pipes</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>pipeid</field><type>DB1_STR</type></column>
+		<column><field>algorithm</field><type>DB1_STR</type></column>
+		<column><field>plimit</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of presentity table-->
+	<db_table id="presentity">
+		<table_name>presentity</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>event</field><type>DB1_STR</type></column>
+		<column><field>etag</field><type>DB1_STR</type></column>
+		<column><field>expires</field><type>DB1_INT</type></column>
+		<column><field>received_time</field><type>DB1_INT</type></column>
+		<column><field>body</field><type>DB1_BLOB</type></column>
+		<column><field>sender</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of active_watchers table-->
+	<db_table id="active_watchers">
+		<table_name>active_watchers</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>presentity_uri</field><type>DB1_STR</type></column>
+		<column><field>watcher_username</field><type>DB1_STR</type></column>
+		<column><field>watcher_domain</field><type>DB1_STR</type></column>
+		<column><field>to_user</field><type>DB1_STR</type></column>
+		<column><field>to_domain</field><type>DB1_STR</type></column>
+		<column><field>event</field><type>DB1_STR</type></column>
+		<column><field>event_id</field><type>DB1_STR</type></column>
+		<column><field>to_tag</field><type>DB1_STR</type></column>
+		<column><field>from_tag</field><type>DB1_STR</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>local_cseq</field><type>DB1_INT</type></column>
+		<column><field>remote_cseq</field><type>DB1_INT</type></column>
+		<column><field>contact</field><type>DB1_STR</type></column>
+		<column><field>record_route</field><type>DB1_BLOB</type></column>
+		<column><field>expires</field><type>DB1_INT</type></column>
+		<column><field>status</field><type>DB1_INT</type></column>
+		<column><field>reason</field><type>DB1_STR</type></column>
+		<column><field>version</field><type>DB1_INT</type></column>
+		<column><field>socket_info</field><type>DB1_STR</type></column>
+		<column><field>local_contact</field><type>DB1_STR</type></column>
+		<column><field>from_user</field><type>DB1_STR</type></column>
+		<column><field>from_domain</field><type>DB1_STR</type></column>
+		<column><field>updated</field><type>DB1_INT</type></column>
+		<column><field>updated_winfo</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of watchers table-->
+	<db_table id="watchers">
+		<table_name>watchers</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>presentity_uri</field><type>DB1_STR</type></column>
+		<column><field>watcher_username</field><type>DB1_STR</type></column>
+		<column><field>watcher_domain</field><type>DB1_STR</type></column>
+		<column><field>event</field><type>DB1_STR</type></column>
+		<column><field>status</field><type>DB1_INT</type></column>
+		<column><field>reason</field><type>DB1_STR</type></column>
+		<column><field>inserted_time</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of xcap table-->
+	<db_table id="xcap">
+		<table_name>xcap</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>doc</field><type>DB1_BLOB</type></column>
+		<column><field>doc_type</field><type>DB1_INT</type></column>
+		<column><field>etag</field><type>DB1_STR</type></column>
+		<column><field>source</field><type>DB1_INT</type></column>
+		<column><field>doc_uri</field><type>DB1_STR</type></column>
+		<column><field>port</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of pua table-->
+	<db_table id="pua">
+		<table_name>pua</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>pres_uri</field><type>DB1_STR</type></column>
+		<column><field>pres_id</field><type>DB1_STR</type></column>
+		<column><field>event</field><type>DB1_INT</type></column>
+		<column><field>expires</field><type>DB1_INT</type></column>
+		<column><field>desired_expires</field><type>DB1_INT</type></column>
+		<column><field>flag</field><type>DB1_INT</type></column>
+		<column><field>etag</field><type>DB1_STR</type></column>
+		<column><field>tuple_id</field><type>DB1_STR</type></column>
+		<column><field>watcher_uri</field><type>DB1_STR</type></column>
+		<column><field>call_id</field><type>DB1_STR</type></column>
+		<column><field>to_tag</field><type>DB1_STR</type></column>
+		<column><field>from_tag</field><type>DB1_STR</type></column>
+		<column><field>cseq</field><type>DB1_INT</type></column>
+		<column><field>record_route</field><type>DB1_BLOB</type></column>
+		<column><field>contact</field><type>DB1_STR</type></column>
+		<column><field>remote_contact</field><type>DB1_STR</type></column>
+		<column><field>version</field><type>DB1_INT</type></column>
+		<column><field>extra_headers</field><type>DB1_BLOB</type></column>
+	</db_table>
+	<!-- Declaration of purplemap table-->
+	<db_table id="purplemap">
+		<table_name>purplemap</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>sip_user</field><type>DB1_STR</type></column>
+		<column><field>ext_user</field><type>DB1_STR</type></column>
+		<column><field>ext_prot</field><type>DB1_STR</type></column>
+		<column><field>ext_pass</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of aliases table-->
+	<db_table id="aliases">
+		<table_name>aliases</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>ruid</field><type>DB1_STR</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>contact</field><type>DB1_STR</type></column>
+		<column><field>received</field><type>DB1_STR</type></column>
+		<column><field>path</field><type>DB1_STR</type></column>
+		<column><field>expires</field><type>DB1_DATETIME</type></column>
+		<column><field>q</field><type>DB1_DOUBLE</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>cseq</field><type>DB1_INT</type></column>
+		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>cflags</field><type>DB1_INT</type></column>
+		<column><field>user_agent</field><type>DB1_STR</type></column>
+		<column><field>socket</field><type>DB1_STR</type></column>
+		<column><field>methods</field><type>DB1_INT</type></column>
+		<column><field>instance</field><type>DB1_STR</type></column>
+		<column><field>reg_id</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of rls_presentity table-->
+	<db_table id="rls_presentity">
+		<table_name>rls_presentity</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>rlsubs_did</field><type>DB1_STR</type></column>
+		<column><field>resource_uri</field><type>DB1_STR</type></column>
+		<column><field>content_type</field><type>DB1_STR</type></column>
+		<column><field>presence_state</field><type>DB1_BLOB</type></column>
+		<column><field>expires</field><type>DB1_INT</type></column>
+		<column><field>updated</field><type>DB1_INT</type></column>
+		<column><field>auth_state</field><type>DB1_INT</type></column>
+		<column><field>reason</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of rls_watchers table-->
+	<db_table id="rls_watchers">
+		<table_name>rls_watchers</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>presentity_uri</field><type>DB1_STR</type></column>
+		<column><field>to_user</field><type>DB1_STR</type></column>
+		<column><field>to_domain</field><type>DB1_STR</type></column>
+		<column><field>watcher_username</field><type>DB1_STR</type></column>
+		<column><field>watcher_domain</field><type>DB1_STR</type></column>
+		<column><field>event</field><type>DB1_STR</type></column>
+		<column><field>event_id</field><type>DB1_STR</type></column>
+		<column><field>to_tag</field><type>DB1_STR</type></column>
+		<column><field>from_tag</field><type>DB1_STR</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>local_cseq</field><type>DB1_INT</type></column>
+		<column><field>remote_cseq</field><type>DB1_INT</type></column>
+		<column><field>contact</field><type>DB1_STR</type></column>
+		<column><field>record_route</field><type>DB1_BLOB</type></column>
+		<column><field>expires</field><type>DB1_INT</type></column>
+		<column><field>status</field><type>DB1_INT</type></column>
+		<column><field>reason</field><type>DB1_STR</type></column>
+		<column><field>version</field><type>DB1_INT</type></column>
+		<column><field>socket_info</field><type>DB1_STR</type></column>
+		<column><field>local_contact</field><type>DB1_STR</type></column>
+		<column><field>from_user</field><type>DB1_STR</type></column>
+		<column><field>from_domain</field><type>DB1_STR</type></column>
+		<column><field>updated</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of sca_subscriptions table-->
+	<db_table id="sca_subscriptions">
+		<table_name>sca_subscriptions</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>subscriber</field><type>DB1_STR</type></column>
+		<column><field>aor</field><type>DB1_STR</type></column>
+		<column><field>event</field><type>DB1_INT</type></column>
+		<column><field>expires</field><type>DB1_INT</type></column>
+		<column><field>state</field><type>DB1_INT</type></column>
+		<column><field>app_idx</field><type>DB1_INT</type></column>
+		<column><field>call_id</field><type>DB1_STR</type></column>
+		<column><field>from_tag</field><type>DB1_STR</type></column>
+		<column><field>to_tag</field><type>DB1_STR</type></column>
+		<column><field>record_route</field><type>DB1_BLOB</type></column>
+		<column><field>notify_cseq</field><type>DB1_INT</type></column>
+		<column><field>subscribe_cseq</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of sip_trace table-->
+	<db_table id="sip_trace">
+		<table_name>sip_trace</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>time_stamp</field><type>DB1_DATETIME</type></column>
+		<column><field>time_us</field><type>DB1_INT</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>traced_user</field><type>DB1_STR</type></column>
+		<column><field>msg</field><type>DB1_BLOB</type></column>
+		<column><field>method</field><type>DB1_STR</type></column>
+		<column><field>status</field><type>DB1_STR</type></column>
+		<column><field>fromip</field><type>DB1_STR</type></column>
+		<column><field>toip</field><type>DB1_STR</type></column>
+		<column><field>fromtag</field><type>DB1_STR</type></column>
+		<column><field>direction</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of speed_dial table-->
+	<db_table id="speed_dial">
+		<table_name>speed_dial</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>sd_username</field><type>DB1_STR</type></column>
+		<column><field>sd_domain</field><type>DB1_STR</type></column>
+		<column><field>new_uri</field><type>DB1_STR</type></column>
+		<column><field>fname</field><type>DB1_STR</type></column>
+		<column><field>lname</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of version table-->
+	<db_table id="version">
+		<table_name>version</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>table_name</field><type>DB1_STR</type></column>
+		<column><field>table_version</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of uacreg table-->
+	<db_table id="uacreg">
+		<table_name>uacreg</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>l_uuid</field><type>DB1_STR</type></column>
+		<column><field>l_username</field><type>DB1_STR</type></column>
+		<column><field>l_domain</field><type>DB1_STR</type></column>
+		<column><field>r_username</field><type>DB1_STR</type></column>
+		<column><field>r_domain</field><type>DB1_STR</type></column>
+		<column><field>realm</field><type>DB1_STR</type></column>
+		<column><field>auth_username</field><type>DB1_STR</type></column>
+		<column><field>auth_password</field><type>DB1_STR</type></column>
+		<column><field>auth_proxy</field><type>DB1_STR</type></column>
+		<column><field>expires</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of uri table-->
+	<db_table id="uri">
+		<table_name>uri</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>uri_user</field><type>DB1_STR</type></column>
+		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
+	</db_table>
+	<!-- Declaration of userblacklist table-->
+	<db_table id="userblacklist">
+		<table_name>userblacklist</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>whitelist</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of globalblacklist table-->
+	<db_table id="globalblacklist">
+		<table_name>globalblacklist</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>whitelist</field><type>DB1_INT</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of location table-->
+	<db_table id="location">
+		<table_name>location</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>ruid</field><type>DB1_STR</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>contact</field><type>DB1_STR</type></column>
+		<column><field>received</field><type>DB1_STR</type></column>
+		<column><field>path</field><type>DB1_STR</type></column>
+		<column><field>expires</field><type>DB1_DATETIME</type></column>
+		<column><field>q</field><type>DB1_DOUBLE</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>cseq</field><type>DB1_INT</type></column>
+		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>cflags</field><type>DB1_INT</type></column>
+		<column><field>user_agent</field><type>DB1_STR</type></column>
+		<column><field>socket</field><type>DB1_STR</type></column>
+		<column><field>methods</field><type>DB1_INT</type></column>
+		<column><field>instance</field><type>DB1_STR</type></column>
+		<column><field>reg_id</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declare all mods
+		Each mod must have:
+		- a 'mod_name'
+		- at least one 'cmd'
+		Each cmd must have:
+		- a 'cmd_name'
+		- a 'db_table_id'
+		- a 'cmd_type': c  q  o
+		Each cmd_type can have:
+		- 'clause_cols' used to specify one or multiple clauses
+		- 'query_cols' used for perfoming the actual query
+		- 'order_by_cols' used to specify sorting output
+		Each clause_cols will have 'col' elemnts.
+		Each col will have:
+		- a mandatory 'field' identifying the name of the field
+		- an optional 'value' identifing the given value
+		- a mandatory 'operator' only for 'clause_cols'
+		The [clause|query|order_by]_cols can be:
+		- ov : optional with multiple 'col' with optional 'value'
+		- mv : mandatory with at least one 'col' with optional 'value'
+		- o  : optional with at most one 'col' with no 'value'
+		- m  : mandatory with at least one 'col' with no 'value'
+			/* col in cmd_type */
+		|command    |clause_cols|query_cols|order_by_cols|
+		|DB1_QUERY  |    ov     |    m     |    o        |
+		|DB1_INSERT |    -      |    mv    |    -        |
+		|DB1_DELETE |    mv     |    -     |    -        |
+		|DB1_UPDATE |    ov     |    mv    |    -        |
+		|DB1_REPLACE|    -      |    mv    |    -        |
+			/* clause_cols operator */
+		- '<'  '&lt;'
+		- '>'  '&gt;'
+		- '='  '='
+		- '<=' '&lt;='
+		- '>=' '&gt;='
+		- '!=' '!='
+	-->
+
+	<!-- acc provisionning -->
+	<mod><mod_name>acc</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>acc</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>method</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>callid</field></col>
+				<col><field>sip_code</field></col>
+				<col><field>sip_reason</field></col>
+				<col><field>time</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- missed_calls provisionning -->
+	<mod><mod_name>missed_calls</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>missed_calls</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>method</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>callid</field></col>
+				<col><field>sip_code</field></col>
+				<col><field>sip_reason</field></col>
+				<col><field>time</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- dbaliases provisionning -->
+	<mod><mod_name>dbaliases</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>dbaliases</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>alias_username</field></col>
+				<col><field>alias_domain</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- subscriber provisionning -->
+	<mod><mod_name>subscriber</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>subscriber</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>password</field></col>
+				<col><field>email_address</field></col>
+				<col><field>ha1</field></col>
+				<col><field>ha1b</field></col>
+				<col><field>rpid</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- usr_preferences provisionning -->
+	<mod><mod_name>usr_preferences</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>usr_preferences</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>uuid</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>attribute</field></col>
+				<col><field>type</field></col>
+				<col><field>value</field></col>
+				<col><field>last_modified</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- carrierroute provisionning -->
+	<mod><mod_name>carrierroute</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>carrierroute</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>carrier</field></col>
+				<col><field>domain</field></col>
+				<col><field>scan_prefix</field></col>
+				<col><field>flags</field></col>
+				<col><field>mask</field></col>
+				<col><field>prob</field></col>
+				<col><field>strip</field></col>
+				<col><field>rewrite_host</field></col>
+				<col><field>rewrite_prefix</field></col>
+				<col><field>rewrite_suffix</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- carrierfailureroute provisionning -->
+	<mod><mod_name>carrierfailureroute</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>carrierfailureroute</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>carrier</field></col>
+				<col><field>domain</field></col>
+				<col><field>scan_prefix</field></col>
+				<col><field>host_name</field></col>
+				<col><field>reply_code</field></col>
+				<col><field>flags</field></col>
+				<col><field>mask</field></col>
+				<col><field>next_domain</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- carrier_name provisionning -->
+	<mod><mod_name>carrier_name</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>carrier_name</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>carrier</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- domain_name provisionning -->
+	<mod><mod_name>domain_name</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>domain_name</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>domain</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- cpl provisionning -->
+	<mod><mod_name>cpl</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>cpl</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>cpl_xml</field></col>
+				<col><field>cpl_bin</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- dialog provisionning -->
+	<mod><mod_name>dialog</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>dialog</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>hash_entry</field></col>
+				<col><field>hash_id</field></col>
+				<col><field>callid</field></col>
+				<col><field>from_uri</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>to_uri</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>caller_cseq</field></col>
+				<col><field>callee_cseq</field></col>
+				<col><field>caller_route_set</field></col>
+				<col><field>callee_route_set</field></col>
+				<col><field>caller_contact</field></col>
+				<col><field>callee_contact</field></col>
+				<col><field>caller_sock</field></col>
+				<col><field>callee_sock</field></col>
+				<col><field>state</field></col>
+				<col><field>start_time</field></col>
+				<col><field>timeout</field></col>
+				<col><field>sflags</field></col>
+				<col><field>iflags</field></col>
+				<col><field>toroute_name</field></col>
+				<col><field>req_uri</field></col>
+				<col><field>xdata</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- dialog_vars provisionning -->
+	<mod><mod_name>dialog_vars</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>dialog_vars</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>hash_entry</field></col>
+				<col><field>hash_id</field></col>
+				<col><field>dialog_key</field></col>
+				<col><field>dialog_value</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- dialplan provisionning -->
+	<mod><mod_name>dialplan</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>dialplan</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>dpid</field></col>
+				<col><field>pr</field></col>
+				<col><field>match_op</field></col>
+				<col><field>match_exp</field></col>
+				<col><field>match_len</field></col>
+				<col><field>subst_exp</field></col>
+				<col><field>repl_exp</field></col>
+				<col><field>attrs</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- dispatcher provisionning -->
+	<mod><mod_name>dispatcher</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>dispatcher</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>setid</field></col>
+				<col><field>destination</field></col>
+				<col><field>flags</field></col>
+				<col><field>priority</field></col>
+				<col><field>attrs</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- domain provisionning -->
+	<mod><mod_name>domain</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>domain</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>domain</field></col>
+				<col><field>did</field></col>
+				<col><field>last_modified</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- domain_attrs provisionning -->
+	<mod><mod_name>domain_attrs</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>domain_attrs</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>did</field></col>
+				<col><field>name</field></col>
+				<col><field>type</field></col>
+				<col><field>value</field></col>
+				<col><field>last_modified</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- domainpolicy provisionning -->
+	<mod><mod_name>domainpolicy</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>domainpolicy</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>rule</field></col>
+				<col><field>type</field></col>
+				<col><field>att</field></col>
+				<col><field>val</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- dr_gateways provisionning -->
+	<mod><mod_name>dr_gateways</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>dr_gateways</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>gwid</field></col>
+				<col><field>type</field></col>
+				<col><field>address</field></col>
+				<col><field>strip</field></col>
+				<col><field>pri_prefix</field></col>
+				<col><field>attrs</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- dr_rules provisionning -->
+	<mod><mod_name>dr_rules</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>dr_rules</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>ruleid</field></col>
+				<col><field>groupid</field></col>
+				<col><field>prefix</field></col>
+				<col><field>timerec</field></col>
+				<col><field>priority</field></col>
+				<col><field>routeid</field></col>
+				<col><field>gwlist</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- dr_gw_lists provisionning -->
+	<mod><mod_name>dr_gw_lists</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>dr_gw_lists</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>gwlist</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- dr_groups provisionning -->
+	<mod><mod_name>dr_groups</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>dr_groups</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>groupid</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- grp provisionning -->
+	<mod><mod_name>grp</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>grp</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>grp</field></col>
+				<col><field>last_modified</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- re_grp provisionning -->
+	<mod><mod_name>re_grp</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>re_grp</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>reg_exp</field></col>
+				<col><field>group_id</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- htable provisionning -->
+	<mod><mod_name>htable</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>htable</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>key_name</field></col>
+				<col><field>key_type</field></col>
+				<col><field>value_type</field></col>
+				<col><field>key_value</field></col>
+				<col><field>expires</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- imc_rooms provisionning -->
+	<mod><mod_name>imc_rooms</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>imc_rooms</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>name</field></col>
+				<col><field>domain</field></col>
+				<col><field>flag</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- imc_members provisionning -->
+	<mod><mod_name>imc_members</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>imc_members</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>room</field></col>
+				<col><field>flag</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- lcr_gw provisionning -->
+	<mod><mod_name>lcr_gw</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>lcr_gw</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>lcr_id</field></col>
+				<col><field>gw_name</field></col>
+				<col><field>ip_addr</field></col>
+				<col><field>hostname</field></col>
+				<col><field>port</field></col>
+				<col><field>params</field></col>
+				<col><field>uri_scheme</field></col>
+				<col><field>transport</field></col>
+				<col><field>strip</field></col>
+				<col><field>prefix</field></col>
+				<col><field>tag</field></col>
+				<col><field>flags</field></col>
+				<col><field>defunct</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- lcr_rule_target provisionning -->
+	<mod><mod_name>lcr_rule_target</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>lcr_rule_target</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>lcr_id</field></col>
+				<col><field>rule_id</field></col>
+				<col><field>gw_id</field></col>
+				<col><field>priority</field></col>
+				<col><field>weight</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- lcr_rule provisionning -->
+	<mod><mod_name>lcr_rule</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>lcr_rule</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>lcr_id</field></col>
+				<col><field>prefix</field></col>
+				<col><field>from_uri</field></col>
+				<col><field>request_uri</field></col>
+				<col><field>stopper</field></col>
+				<col><field>enabled</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- matrix provisionning -->
+	<mod><mod_name>matrix</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>matrix</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>first</field></col>
+				<col><field>second</field></col>
+				<col><field>res</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- silo provisionning -->
+	<mod><mod_name>silo</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>silo</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>src_addr</field></col>
+				<col><field>dst_addr</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>inc_time</field></col>
+				<col><field>exp_time</field></col>
+				<col><field>snd_time</field></col>
+				<col><field>ctype</field></col>
+				<col><field>body</field></col>
+				<col><field>extra_hdrs</field></col>
+				<col><field>callid</field></col>
+				<col><field>status</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- mtree provisionning -->
+	<mod><mod_name>mtree</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>mtree</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>tprefix</field></col>
+				<col><field>tvalue</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- mtrees provisionning -->
+	<mod><mod_name>mtrees</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>mtrees</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>tname</field></col>
+				<col><field>tprefix</field></col>
+				<col><field>tvalue</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- pdt provisionning -->
+	<mod><mod_name>pdt</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>pdt</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>sdomain</field></col>
+				<col><field>prefix</field></col>
+				<col><field>domain</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- trusted provisionning -->
+	<mod><mod_name>trusted</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>trusted</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>src_ip</field></col>
+				<col><field>proto</field></col>
+				<col><field>from_pattern</field></col>
+				<col><field>tag</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- address provisionning -->
+	<mod><mod_name>address</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>address</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>grp</field></col>
+				<col><field>ip_addr</field></col>
+				<col><field>mask</field></col>
+				<col><field>port</field></col>
+				<col><field>tag</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- pl_pipes provisionning -->
+	<mod><mod_name>pl_pipes</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>pl_pipes</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>pipeid</field></col>
+				<col><field>algorithm</field></col>
+				<col><field>plimit</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- presentity provisionning -->
+	<mod><mod_name>presentity</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>presentity</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>event</field></col>
+				<col><field>etag</field></col>
+				<col><field>expires</field></col>
+				<col><field>received_time</field></col>
+				<col><field>body</field></col>
+				<col><field>sender</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- active_watchers provisionning -->
+	<mod><mod_name>active_watchers</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>active_watchers</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>presentity_uri</field></col>
+				<col><field>watcher_username</field></col>
+				<col><field>watcher_domain</field></col>
+				<col><field>to_user</field></col>
+				<col><field>to_domain</field></col>
+				<col><field>event</field></col>
+				<col><field>event_id</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>callid</field></col>
+				<col><field>local_cseq</field></col>
+				<col><field>remote_cseq</field></col>
+				<col><field>contact</field></col>
+				<col><field>record_route</field></col>
+				<col><field>expires</field></col>
+				<col><field>status</field></col>
+				<col><field>reason</field></col>
+				<col><field>version</field></col>
+				<col><field>socket_info</field></col>
+				<col><field>local_contact</field></col>
+				<col><field>from_user</field></col>
+				<col><field>from_domain</field></col>
+				<col><field>updated</field></col>
+				<col><field>updated_winfo</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- watchers provisionning -->
+	<mod><mod_name>watchers</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>watchers</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>presentity_uri</field></col>
+				<col><field>watcher_username</field></col>
+				<col><field>watcher_domain</field></col>
+				<col><field>event</field></col>
+				<col><field>status</field></col>
+				<col><field>reason</field></col>
+				<col><field>inserted_time</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- xcap provisionning -->
+	<mod><mod_name>xcap</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>xcap</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>doc</field></col>
+				<col><field>doc_type</field></col>
+				<col><field>etag</field></col>
+				<col><field>source</field></col>
+				<col><field>doc_uri</field></col>
+				<col><field>port</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- pua provisionning -->
+	<mod><mod_name>pua</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>pua</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>pres_uri</field></col>
+				<col><field>pres_id</field></col>
+				<col><field>event</field></col>
+				<col><field>expires</field></col>
+				<col><field>desired_expires</field></col>
+				<col><field>flag</field></col>
+				<col><field>etag</field></col>
+				<col><field>tuple_id</field></col>
+				<col><field>watcher_uri</field></col>
+				<col><field>call_id</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>cseq</field></col>
+				<col><field>record_route</field></col>
+				<col><field>contact</field></col>
+				<col><field>remote_contact</field></col>
+				<col><field>version</field></col>
+				<col><field>extra_headers</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- purplemap provisionning -->
+	<mod><mod_name>purplemap</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>purplemap</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>sip_user</field></col>
+				<col><field>ext_user</field></col>
+				<col><field>ext_prot</field></col>
+				<col><field>ext_pass</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- aliases provisionning -->
+	<mod><mod_name>aliases</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>aliases</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>ruid</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>contact</field></col>
+				<col><field>received</field></col>
+				<col><field>path</field></col>
+				<col><field>expires</field></col>
+				<col><field>q</field></col>
+				<col><field>callid</field></col>
+				<col><field>cseq</field></col>
+				<col><field>last_modified</field></col>
+				<col><field>flags</field></col>
+				<col><field>cflags</field></col>
+				<col><field>user_agent</field></col>
+				<col><field>socket</field></col>
+				<col><field>methods</field></col>
+				<col><field>instance</field></col>
+				<col><field>reg_id</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- rls_presentity provisionning -->
+	<mod><mod_name>rls_presentity</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>rls_presentity</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>rlsubs_did</field></col>
+				<col><field>resource_uri</field></col>
+				<col><field>content_type</field></col>
+				<col><field>presence_state</field></col>
+				<col><field>expires</field></col>
+				<col><field>updated</field></col>
+				<col><field>auth_state</field></col>
+				<col><field>reason</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- rls_watchers provisionning -->
+	<mod><mod_name>rls_watchers</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>rls_watchers</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>presentity_uri</field></col>
+				<col><field>to_user</field></col>
+				<col><field>to_domain</field></col>
+				<col><field>watcher_username</field></col>
+				<col><field>watcher_domain</field></col>
+				<col><field>event</field></col>
+				<col><field>event_id</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>callid</field></col>
+				<col><field>local_cseq</field></col>
+				<col><field>remote_cseq</field></col>
+				<col><field>contact</field></col>
+				<col><field>record_route</field></col>
+				<col><field>expires</field></col>
+				<col><field>status</field></col>
+				<col><field>reason</field></col>
+				<col><field>version</field></col>
+				<col><field>socket_info</field></col>
+				<col><field>local_contact</field></col>
+				<col><field>from_user</field></col>
+				<col><field>from_domain</field></col>
+				<col><field>updated</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- sca_subscriptions provisionning -->
+	<mod><mod_name>sca_subscriptions</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>sca_subscriptions</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>subscriber</field></col>
+				<col><field>aor</field></col>
+				<col><field>event</field></col>
+				<col><field>expires</field></col>
+				<col><field>state</field></col>
+				<col><field>app_idx</field></col>
+				<col><field>call_id</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>record_route</field></col>
+				<col><field>notify_cseq</field></col>
+				<col><field>subscribe_cseq</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- sip_trace provisionning -->
+	<mod><mod_name>sip_trace</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>sip_trace</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>time_stamp</field></col>
+				<col><field>time_us</field></col>
+				<col><field>callid</field></col>
+				<col><field>traced_user</field></col>
+				<col><field>msg</field></col>
+				<col><field>method</field></col>
+				<col><field>status</field></col>
+				<col><field>fromip</field></col>
+				<col><field>toip</field></col>
+				<col><field>fromtag</field></col>
+				<col><field>direction</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- speed_dial provisionning -->
+	<mod><mod_name>speed_dial</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>speed_dial</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>sd_username</field></col>
+				<col><field>sd_domain</field></col>
+				<col><field>new_uri</field></col>
+				<col><field>fname</field></col>
+				<col><field>lname</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- version provisionning -->
+	<mod><mod_name>version</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>version</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>table_name</field></col>
+				<col><field>table_version</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- uacreg provisionning -->
+	<mod><mod_name>uacreg</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>uacreg</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>l_uuid</field></col>
+				<col><field>l_username</field></col>
+				<col><field>l_domain</field></col>
+				<col><field>r_username</field></col>
+				<col><field>r_domain</field></col>
+				<col><field>realm</field></col>
+				<col><field>auth_username</field></col>
+				<col><field>auth_password</field></col>
+				<col><field>auth_proxy</field></col>
+				<col><field>expires</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- uri provisionning -->
+	<mod><mod_name>uri</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>uri</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>uri_user</field></col>
+				<col><field>last_modified</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- userblacklist provisionning -->
+	<mod><mod_name>userblacklist</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>userblacklist</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>prefix</field></col>
+				<col><field>whitelist</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- globalblacklist provisionning -->
+	<mod><mod_name>globalblacklist</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>globalblacklist</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>prefix</field></col>
+				<col><field>whitelist</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- location provisionning -->
+	<mod><mod_name>location</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>location</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>ruid</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>contact</field></col>
+				<col><field>received</field></col>
+				<col><field>path</field></col>
+				<col><field>expires</field></col>
+				<col><field>q</field></col>
+				<col><field>callid</field></col>
+				<col><field>cseq</field></col>
+				<col><field>last_modified</field></col>
+				<col><field>flags</field></col>
+				<col><field>cflags</field></col>
+				<col><field>user_agent</field></col>
+				<col><field>socket</field></col>
+				<col><field>methods</field></col>
+				<col><field>instance</field></col>
+				<col><field>reg_id</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+</framework>

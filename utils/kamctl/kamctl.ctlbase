@@ -42,7 +42,7 @@ EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_online"
 
-usage_openser_monitor() {
+usage_kamailio_monitor() {
 	echo
 	mecho " -- command 'monitor' - show internal status"
 	echo
@@ -50,7 +50,7 @@ cat <<EOF
  monitor ............................ show server's internal status
 EOF
 }
-USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_openser_monitor"
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_kamailio_monitor"
 
 usage_ping() {
 	echo

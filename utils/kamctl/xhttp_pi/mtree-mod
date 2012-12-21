@@ -1,0 +1,25 @@
+	<!-- mtree provisionning -->
+	<mod><mod_name>mtree</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>mtree</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>tprefix</field></col>
+				<col><field>tvalue</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- mtrees provisionning -->
+	<mod><mod_name>mtrees</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>mtrees</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>tname</field></col>
+				<col><field>tprefix</field></col>
+				<col><field>tvalue</field></col>
+			</query_cols>
+		</cmd>
+	</mod>

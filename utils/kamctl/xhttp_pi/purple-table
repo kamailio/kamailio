@@ -1,0 +1,10 @@
+	<!-- Declaration of purplemap table-->
+	<db_table id="purplemap">
+		<table_name>purplemap</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>sip_user</field><type>DB1_STR</type></column>
+		<column><field>ext_user</field><type>DB1_STR</type></column>
+		<column><field>ext_prot</field><type>DB1_STR</type></column>
+		<column><field>ext_pass</field><type>DB1_STR</type></column>
+	</db_table>

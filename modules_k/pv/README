@@ -11,9 +11,9 @@ Daniel-Constantin Mierla
 
    <daniel@asipto.com>
 
-   Copyright © 2008-2011 Daniel-Constantin Mierla (asipto.com)
+   Copyright � 2008-2011 Daniel-Constantin Mierla (asipto.com)
 
-   Copyright © 2011 Juha Heinanen
+   Copyright � 2011 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -37,6 +37,8 @@ Daniel-Constantin Mierla
               4.1. pv_isset(pvar)
               4.2. pv_unset(pvar)
               4.3. is_int(pvar)
+              4.4. typeof(pvar, vtype)
+              4.5. not_empty(pvar)
 
         5. MI Commands
 
@@ -51,8 +53,10 @@ Daniel-Constantin Mierla
    1.4. pv_isset usage
    1.5. pv_unset usage
    1.6. is_int() usage
-   1.7. shv_set usage
-   1.8. shv_get usage
+   1.7. typeof() usage
+   1.8. not_empty() usage
+   1.9. shv_set usage
+   1.10. shv_get usage
 
 Chapter 1. Admin Guide
 
@@ -75,6 +79,8 @@ Chapter 1. Admin Guide
         4.1. pv_isset(pvar)
         4.2. pv_unset(pvar)
         4.3. is_int(pvar)
+        4.4. typeof(pvar, vtype)
+        4.5. not_empty(pvar)
 
    5. MI Commands
 
@@ -118,11 +124,11 @@ Chapter 1. Admin Guide
    _value_
      * _name_: shared variable name
      * _type_: type of the value
-          + “i”: integer value
-          + “s”: string value
+          + "i": integer value
+          + "s": string value
      * _value_: value to be set
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.1. shvset parameter usage
 ...
@@ -139,11 +145,11 @@ modparam("pv", "shvset", "pstngw=s:sip:10.10.10.10")
    _value_
      * _name_: shared variable name
      * _type_: type of the value
-          + “i”: integer value
-          + “s”: string value
+          + "i": integer value
+          + "s": string value
      * _value_: value to be set
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.2. varset parameter usage
 ...
@@ -167,6 +173,8 @@ modparam("pv","avp_aliases","email=s:email_addr;tmp=i:100")
    4.1. pv_isset(pvar)
    4.2. pv_unset(pvar)
    4.3. is_int(pvar)
+   4.4. typeof(pvar, vtype)
+   4.5. not_empty(pvar)
 
 4.1. pv_isset(pvar)
 
@@ -199,7 +207,7 @@ if(pv_isset("$avp("s:x")"))
 pv_unset("$avp("s:x")");
 ...
 
-4.3.  is_int(pvar)
+4.3. is_int(pvar)
 
    Function checks if pvar argument contains integer value and returns 1
    if it does and -1 otherwise.
@@ -210,6 +218,35 @@ pv_unset("$avp("s:x")");
 ...
 if (is_int("$var(foo)")) {
     xlog("L_INFO", "variable foo contains integer value\n");
+}
+...
+
+4.4. typeof(pvar, vtype)
+
+   Returns true if the type of pseudo-variable matches the second
+   parameter. The second parameter can be: 'int' - type is integer; 'str'
+   - type is string; 'null' - type is null.
+
+   Function can be used from ANYROUTE.
+
+   Example 1.7. typeof() usage
+...
+if (typeof("$var(foo)", "str")) {
+    xdbg("variable foo is a string\n");
+}
+...
+
+4.5. not_empty(pvar)
+
+   Returns true if the pseudo-variables has the type string and is not
+   empty value.
+
+   Function can be used from all kinds of routes.
+
+   Example 1.8. not_empty() usage
+...
+if (not_empty("$var(foo)")) {
+    append_hf("X-Foo: $var(foo)\r\n");
 }
 ...
 
@@ -225,8 +262,8 @@ if (is_int("$var(foo)")) {
    Parameters:
      * _name_: shared variable name
      * _type_: type of the value
-          + “int”: integer value
-          + “str”: string value
+          + "int": integer value
+          + "str": string value
      * _value_: value to be set
 
    MI FIFO Command Format:
@@ -236,7 +273,7 @@ if (is_int("$var(foo)")) {
                 _value_
                 _empty_line_
 
-   Example 1.7. shv_set usage
+   Example 1.9. shv_set usage
 ...
 $ kamctl fifo shv_set debug int 0
 ...
@@ -254,7 +291,7 @@ $ kamctl fifo shv_set debug int 0
                 _name_
                 _empty_line_
 
-   Example 1.8. shv_get usage
+   Example 1.10. shv_get usage
 ...
 $ kamctl fifo shv_get debug
 $ kamctl fifo shv_get

@@ -6,6 +6,12 @@ Daniel-Constantin Mierla
 
 Edited by
 
+Ovidiu Sas
+
+   <osas@voipembedded.com>
+
+Edited by
+
 Daniel-Constantin Mierla
 
    <miconda@gmail.com>
@@ -32,7 +38,10 @@ Daniel-Constantin Mierla
 
               3.1. db_mode (integer)
 
-        4. Functions
+        4. Exported RPC Functions
+
+              4.1. db_text.dump
+
         5. Installation and Running
 
               5.1. Using dbtext with basic Kamailio configuration
@@ -70,7 +79,10 @@ Chapter 1. Admin Guide
 
         3.1. db_mode (integer)
 
-   4. Functions
+   4. Exported RPC Functions
+
+        4.1. db_text.dump
+
    5. Installation and Running
 
         5.1. Using dbtext with basic Kamailio configuration
@@ -202,9 +214,20 @@ suser:supasswd:xxx:alpha.org:xxx
 modparam("db_text", "db_mode", 1)
 ...
 
-4. Functions
+4. Exported RPC Functions
 
-   None.
+   4.1. db_text.dump
+
+4.1.  db_text.dump
+
+   Write back to hard drive modified tables.
+
+   Name: db_text.dump
+
+   Parameters: none
+
+   RPC Command Format:
+        kamcmd db_text.dump
 
 5. Installation and Running
 
@@ -239,17 +262,17 @@ modparam("module_name", "db_url", "text:///path/to/dbtext/database")
 
    Example 1.6. Definition of 'subscriber' table (one line)
 ...
-username(str) domain(str) password(str) first_name(str) last_name(str) phone(str
-) email_address(str) datetime_created(int) datetime_modified(int) confirmation(s
-tr) flag(str) sendnotification(str) greeting(str) ha1(str) ha1b(str) perms(str)
-allow_find(str) timezone(str,null) rpid(str,null)
+username(str) domain(str) password(str) first_name(str) last_name(str) phone(st
+r) email_address(str) datetime_created(int) datetime_modified(int) confirmation
+(str) flag(str) sendnotification(str) greeting(str) ha1(str) ha1b(str) perms(st
+r) allow_find(str) timezone(str,null) rpid(str,null)
 ...
 
    Example 1.7. Definition of 'location' and 'aliases' tables (one line)
 ...
-username(str) domain(str,null) contact(str,null) received(str) expires(int,null)
- q(double,null) callid(str,null) cseq(int,null) last_modified(str) flags(int) us
-er_agent(str) socket(str)
+username(str) domain(str,null) contact(str,null) received(str) expires(int,null
+) q(double,null) callid(str,null) cseq(int,null) last_modified(str) flags(int)
+user_agent(str) socket(str)
 ...
 
    Example 1.8. Definition of 'version' table and sample records

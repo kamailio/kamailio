@@ -1,0 +1,9 @@
+	<!-- Declaration of pdt table-->
+	<db_table id="pdt">
+		<table_name>pdt</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>sdomain</field><type>DB1_STR</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+	</db_table>

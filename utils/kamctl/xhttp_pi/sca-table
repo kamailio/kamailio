@@ -1,0 +1,18 @@
+	<!-- Declaration of sca_subscriptions table-->
+	<db_table id="sca_subscriptions">
+		<table_name>sca_subscriptions</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>subscriber</field><type>DB1_STR</type></column>
+		<column><field>aor</field><type>DB1_STR</type></column>
+		<column><field>event</field><type>DB1_INT</type></column>
+		<column><field>expires</field><type>DB1_INT</type></column>
+		<column><field>state</field><type>DB1_INT</type></column>
+		<column><field>app_idx</field><type>DB1_INT</type></column>
+		<column><field>call_id</field><type>DB1_STR</type></column>
+		<column><field>from_tag</field><type>DB1_STR</type></column>
+		<column><field>to_tag</field><type>DB1_STR</type></column>
+		<column><field>record_route</field><type>DB1_BLOB</type></column>
+		<column><field>notify_cseq</field><type>DB1_INT</type></column>
+		<column><field>subscribe_cseq</field><type>DB1_INT</type></column>
+	</db_table>

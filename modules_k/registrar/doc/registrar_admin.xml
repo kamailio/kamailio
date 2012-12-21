@@ -15,18 +15,19 @@
 	
 	<section>
 	<title>Overview</title>
-	<para>The module contains REGISTER processing logic.</para>
+	<para>The module contains REGISTER processing logic. The actual location
+		database is managed by the USRLOC module.
+	</para>
 	<section>
 		<title>PATH support</title>
 		<para>
-		Register module includes Path support (according to RFC 3327) 
+		The Register module includes Path support (according to RFC 3327) 
 		for usage in registrars and home-proxies.
 		</para>
 		<para>
-		A call to save(...) stores, if path-support is enabled
-		in the registrar-module, the values of the Path
-		Header(s) along with the contact into usrloc. There are
-		three modes regarding the reply to a REGISTER including
+		If path support is enabled in the registrar module, a call to save(...)
+		stores the values of the Path Header(s) along with the contact into usrloc. 
+		There are three modes regarding the reply to a REGISTER including
 		one or more Path HFs:
 		</para>
 		<itemizedlist>
@@ -171,7 +172,7 @@ modparam("registrar", "default_expires", 1800)
 		<title>Set <varname>default_expires_range</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("registrar", "default_expires", 30) # +- 30% from default_expires
+modparam("registrar", "default_expires_range", 30) # +- 30% from default_expires
 ...
 </programlisting>
 		</example>
@@ -247,13 +248,13 @@ modparam("registrar", "default_q", 1000)
 	<section>
 		<title><varname>realm_prefix</varname> (string)</title>
 		<para>
-		 Prefix to be automatically strip from realm. As an alternative to 
+		 Prefix to be automatically stripped from realm. As an alternative to 
 		 SRV records (not all SIP clients support SRV lookup), a subdomain of 
 		 the master domain can be defined for SIP purposes (like 
 		 sip.mydomain.net pointing to same IP address as the SRV record for 
 		 mydomain.net). By ignoring the realm_prefix "sip.", at registration,
 		 sip.mydomain.net will be equivalent to mydomain.net.This parameter 
-		 can be modified via ser config framework.
+		 can be modified via the &kamailio; config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -281,7 +282,7 @@ modparam("registrar", "realm_prefix", "sip.")
 		appended to sip_msg structure and can be later used by tm for forking.
 		If the parameter is set to 0, only Request-URI will be overwritten 
 		with the highest-q rated contact and the rest will be left unprocessed.
-		This parameter can be modified via ser config framework.
+		This parameter can be modified via &kamailio; config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -312,7 +313,7 @@ modparam("registrar", "append_branches", 0)
 		If set to 1 then <acronym>AOR</acronym> comparison and also
 		storing will be case sensitive, if set to 0 then <acronym>AOR</acronym>
 		comparison and storing will be case insensitive--This is recommended.
-		This parameter can be modified via ser config framework.
+		This parameter can be modified via &kamailio; config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -385,7 +386,8 @@ modparam("registrar", "received_param", "rcv")
 		<para>
 		The parameter can be used to limit the number of contacts per 
 		AOR (Address of Record) in the user location database. Value 0 
-		disables the check. This parameter can be modified via ser config framework.
+		disables the check. This parameter can be modified via the &kamailio;
+		config framework.
 		</para>
 		<para>
 		<emphasis>
@@ -411,7 +413,7 @@ modparam("registrar", "max_contacts", 10)
 		<varname>max_contacts</varname> parameter is set and the
 		processing of REGISTER request would exceed the limit. In this case 
 		the registrar would generate "503 Service Unavailable" response.
-		This parameter can be modified via ser config framework.
+		This parameter can be modified via the &kamailio; config framework.
 		</para>
 		<para>
 		If you want to add the Retry-After header field in 5xx replies, set 
@@ -442,7 +444,7 @@ modparam("registrar", "retry_after", 30)
 		socket info.
 		</para>
 		<para>
-		This make sens only in multiple replicated servers scenarios.
+		This makes sense only in multiple replicated servers scenarios.
 		</para>
 		<para>
 		<emphasis>
@@ -467,7 +469,7 @@ modparam("registrar", "sock_flag", 18)
 		flag sock_flag is set.
 		</para>
 		<para>
-		This make sens only in multiple replicated servers scenarios.
+		This makes sense only in multiple replicated servers scenarios.
 		</para>
 		<para>
 		<emphasis>

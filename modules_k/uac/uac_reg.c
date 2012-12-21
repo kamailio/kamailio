@@ -5,12 +5,12 @@
  *
  * This file is part of kamailio, a free SIP server.
  *
- * openser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * openser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
@@ -557,7 +557,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		if(auth.realm.len!=ri->realm.len
 				|| strncmp(auth.realm.s, ri->realm.s, ri->realm.len)!=0)
 		{
-			LM_ERR("realms are different - ignire?!?!\n");
+			LM_ERR("realms are different - ignore?!?!\n");
 		}
 		cred.realm = auth.realm;
 		cred.user = ri->auth_username; 

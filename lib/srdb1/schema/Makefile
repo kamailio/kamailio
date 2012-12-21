@@ -9,6 +9,12 @@ ROOT=../../../
 STYLESHEETS=$(ROOT)/doc/stylesheets/dbschema_k/xsl
 SCHEME=$(ROOT)/utils/kamctl/
 
+#Stylesheet used to generate db_table nodes for pi_framework XML schema
+PI_FRAMEWORK_TABLE_XSL = $(STYLESHEETS)/pi_framework_table.xsl
+
+# Stylesheet used to generate mod nodes for pi_framework XML schema
+PI_FRAMEWORK_MOD_XSL = $(STYLESHEETS)/pi_framework_mod.xsl
+
 # Stylesheet used to generate MySQL database schema
 MYSQL_XSL = $(STYLESHEETS)/mysql.xsl
 
@@ -59,7 +65,32 @@ ifeq ($(VERBOSE), 1)
 	override XSLTPROC := $(XSLTPROC) --verbose
 endif
 
-all: mysql postgres dbtext db_berkeley db_sqlite docbook oracle #modules dbdoc
+all: mysql postgres dbtext db_berkeley db_sqlite docbook oracle pi_framework #modules dbdoc
+
+.PHONY: pi_framework pi_framework_clean
+pi_framework:
+	for FILE in $(TABLES); do \
+		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+		--stringparam dir "$(SCHEME)/xhttp_pi" \
+		--stringparam prefix "$$FILE-" \
+		$(PI_FRAMEWORK_TABLE_XSL) kamailio-"$$FILE".xml ; \
+	done
+	for FILE in $(TABLES); do \
+		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+		--stringparam dir "$(SCHEME)/xhttp_pi" \
+		--stringparam prefix "$$FILE-" \
+		$(PI_FRAMEWORK_MOD_XSL) kamailio-"$$FILE".xml ; \
+	done
+	cat $(SCHEME)/xhttp_pi/pi_framework-00 \
+		$(SCHEME)/xhttp_pi/*-table \
+		$(SCHEME)/xhttp_pi/pi_framework-01 \
+		$(SCHEME)/xhttp_pi/*-mod \
+		$(SCHEME)/xhttp_pi/pi_framework-02 > \
+		$(SCHEME)/xhttp_pi/pi_framework.xml
+
+pi_framework_clean:
+	-@rm -f $(ROOT)/scripts/xhttp_pi/*-table
+	-@rm -f $(ROOT)/scripts/xhttp_pi/*-mod
 
 .PHONY: mysql mysql_clean
 mysql:
@@ -235,4 +266,4 @@ dbdoc_clean:
 	done
 
 .PHONY: clean
-clean: mysql_clean postgres_clean oracle_clean dbtext_clean db_berkeley_clean db_sqlite_clean docbook_clean # modules_clean dbdoc_clean
+clean: mysql_clean postgres_clean oracle_clean dbtext_clean db_berkeley_clean db_sqlite_clean pi_framework_clean docbook_clean # modules_clean dbdoc_clean

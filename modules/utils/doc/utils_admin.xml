@@ -75,13 +75,13 @@
 		<section>
 			<title><varname>http_query_timeout</varname> (int)</title>
 			<para>
-			Defines in seconds how long &kamailio; waits response
+			Defines in seconds how long &kamailio; waits for response
 			from HTTP server.
 			</para>
 			<para>
 			<emphasis>
-				Default value is null, i.e.,
-				xcap_auth_status function is disabled.
+				Default value is zero, i.e.,
+				that the http_query_timeout function is disabled.
 			</emphasis>
 			</para>
 			<example>
@@ -100,7 +100,7 @@ modparam("utils", "http_query_timeout", 2)
 			</para>
 			<para>
 				<emphasis>
-					Default value is <quote>0</quote>.
+					Default value is <quote>0</quote> - disabled.
 				</emphasis>
 			</para>
 			<example>
@@ -115,8 +115,8 @@ modparam("utils", "http_query_timeout", 2)
 		<section>
 			<title><varname>pres_db_url</varname> (string)</title>
 			<para>
-			Defines presence server database URL.  If not
-			given, xcap_auth_status function is disabled.
+			Defines presence server database URL. If not
+			given, the xcap_auth_status function is disabled.
 			</para>
 			<para>
 			<emphasis>
@@ -135,7 +135,8 @@ modparam("utils", "pres_db_url", "mysql://foo:secret@localhost/pres")
 		<section>
 			<title><varname>xcap_table</varname> (string)</title>
 			<para>
-			Defines name of xcap table in presence server database.
+			Defines the name of the xcap table in the presence server database.
+			See the xcap_server module documentation for more information.
 			</para>
 			<para>
 			<emphasis>
@@ -166,7 +167,7 @@ modparam("utils", "xcap_table", "pres_xcap")
 	    	        </para>
 		        <para>
 			If HTTP server returns a class 2xx or 3xx reply,
-			first line of reply's body (if any) is
+			the first line of the reply's body (if any) is
 			stored in <quote>result</quote> parameter,
 			which must be a	writable pseudo	variable.
 			</para>
@@ -176,7 +177,7 @@ modparam("utils", "xcap_table", "pres_xcap")
 	   	     	</para>
 			<para>
 			This function can be used from REQUEST_ROUTE,
-	ONREPLY_ROUTE, FAILURE_ROUTE, and BRANCH_ROUTE.
+			ONREPLY_ROUTE, FAILURE_ROUTE, and BRANCH_ROUTE.
 			</para>
 			<example>
 				<title><function>http_query()</function> usage</title>
@@ -196,15 +197,15 @@ switch ($retcode) {
 				<function moreinfo="none">xcap_auth_status(watcher_uri, presentity_uri)</function>
 			</title>
 			<para>
-			Function checks from presence server database if
-			watcher is authorized to subscribe event
+			Function checks in the presence server database if
+			a watcher is authorized to subscribe to event
 			<quote>presence</quote> of presentity.  Sphere
 			checking is not included.
 			</para>
 			<para>
 			Both watcher_uri and presentity_uri are
-			pseudo variables. Function returns
-			ACTIVE_STATUS, if subscription is 
+			pseudo variables. The function returns
+			ACTIVE_STATUS, if a subscription is 
 			allowed and PENDING_STATUS, TERMINATED_STATUS,
 			or WAITING_STATUS otherwise. See
 			presence/subscribe.h for the corresponding integer
@@ -263,7 +264,7 @@ id switch                         filter proxy
 		<title><function>forward_switch</function> usage</title>
 		<programlisting format="linespecific">
 ...
-&ctltool; fifo sp_forward_switch 0=on
+&ctltool; fifo forward_switch 0=on
 ...
 		</programlisting>
 	    </example>
@@ -293,7 +294,7 @@ id switch                         filter proxy
 		<title><function>forward_filter</function> usage</title>
 		<programlisting format="linespecific">
 ...
-&ctltool; fifo sp_forward_filter 0=REGISTER:INVITE
+&ctltool; fifo forward_filter 0=REGISTER:INVITE
 ...
 		</programlisting>
 	    </example>
@@ -312,7 +313,7 @@ id switch                         filter proxy
 		<title><function>forward_proxy</function> usage</title>
 		<programlisting format="linespecific">
 ...
-&ctltool; fifo sp_forward_proxy 0=host-c.domain-c:5060
+&ctltool; fifo forward_proxy 0=host-c.domain-c:5060
 ...
 		</programlisting>
 	    </example>

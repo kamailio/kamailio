@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="options.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="sanity_check">
+	    <title>
+		<function>sanity_check([msg_checks [, uri_checks]])</function>
+	    </title>
+	<para>
+		This function makes a row of sanity checks over the given SIP request. The
+		behavior of the function is also controlled by 'autodrop' parameter.
+		If autodrop=0, the function returns false (-1) if one of the checks failed.
+		When autodrop=1, the function stops the execution of configuration file.
+		In both cases, if one of the checks fails the module sends a precise error
+		reply via SL send_reply(). Thus there is no need to reply with a generic 
+		error message.
+	</para>
+	<example>
+	    <title><function>sanity_check</function> usage</title>
+	    <programlisting>
+<![CDATA[
+...
+if (!sanity_check()) {
+	exit;
+}
+...
+]]>
+	    </programlisting>
+	</example>
+	<para>
+		Optionally the function takes an integer argument which overwrites
+		the global module parameter default_checks. This allows to make
+		certain test from script regions. The integer value is again the sum
+		of the checks (like for the module parameter) which should be executed
+		at this function call.
+	</para>
+	<example>
+	    <title><function>sanity_check</function> usage with parameter</title>
+	    <programlisting>
+<![CDATA[
+...
+if (method=="REGISTER" && !sanity_check("256")) {
+	/* the register contains an invalid expires value and is replied with a 400 */
+	exit;
+}
+...
+]]>
+	    </programlisting>
+	</example>
+	<para>
+		Optionally the function takes a second integer argument which
+		overwrites the global module parameter uri_checks and thus determines
+		which URIs will be checked if the parse uri test will be executed.
+	</para>
+	<example>
+		<title><function>sanity_check</function> usage with two parameters</title>
+		<programlisting>
+<![CDATA[
+...
+if (method=="INVITE" && !sanity_check("1024", "6")) {
+	/* the INVITE contains an invalid From or To header and is replied with a 400 */
+	exit;
+}
+...
+]]>
+		</programlisting>
+	</example>
+    </section>
+</section>

@@ -49,6 +49,8 @@
 #include "timer.h"
 #include "pike_mi.h"
 #include "pike_funcs.h"
+#include "../../rpc_lookup.h"
+#include "pike_rpc.h"
 
 MODULE_VERSION
 
@@ -110,9 +112,15 @@ struct module_exports exports= {
 
 static int pike_init(void)
 {
+	LOG(L_INFO, "PIKE - initializing\n");
+
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+	if (rpc_register_array(pike_rpc_methods)!=0) {
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 

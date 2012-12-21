@@ -26,11 +26,11 @@
 	So its necessary to drop the 183 in this cases and send a 180 instead.
 	</para>
 	<para>
-	This module provides a function to answer OPTIONS requests which 
+	This module also provides a function to answer OPTIONS requests which 
 	are directed to the server itself. This means an OPTIONS request 
 	which has the address of the server in the request URI, and no 
 	username in the URI. The request will be answered with a 200 OK 
-	which the capabilities of the server.
+	with the capabilities of the server.
 	</para>
 	<para>
 	To answer OPTIONS request directed to your server is the easiest
@@ -176,7 +176,7 @@ modparam("siputils", "contact_flds_separator", "-")
 			This parameter is the content of the Accept-Language header field.
 			You can set any language code which you prefer for error 
 			descriptions from other devices, but presumably there are not
-			much devices around which support other languages then the 
+			many devices around which support other languages than the 
 			default English.
 		</para>
 		<para>
@@ -196,7 +196,8 @@ modparam("siputils", "options_accept_language", "de")
 	<section>
 		<title><varname>options_support</varname> (string)</title>
 		<para>
-			This parameter is the content of the Support header field.
+			This parameter is the content of the Support header field,
+			indicating SIP extensions.
 			Please do not change the default value, because &kamailio; currently 
 			does not support any of the SIP extensions registered at the IANA.
 		</para>
@@ -593,7 +594,7 @@ if (is_uri_user_e164("$avp(i:705)") {
 		module parameter.
 		</para>
 		<para>
-		Note: This function discards all of the URI parameters. Thus, none of the paramters
+		Note: This function discards all of the URI parameters. Thus, none of the parameters
 		(except the transport parameter which is encoded into the userpart) can be restored.
 		</para>
 		<para>

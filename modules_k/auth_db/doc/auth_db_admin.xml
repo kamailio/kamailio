@@ -305,7 +305,7 @@ modparam("auth_db", "version_table", 0)
 	<title>Functions</title>
 	<section>
 		<title>
-			<function moreinfo="none">www_authenticate(realm, table)</function>
+			<function moreinfo="none">www_authenticate(realm, table [, method])</function>
 		</title>
 		<para>
 			Name alias: www_authorize(realm, table)
@@ -358,6 +358,11 @@ modparam("auth_db", "version_table", 0)
 			<para><emphasis>table</emphasis> - Table to be used to lookup 
 			usernames and passwords (usually subscribers table).
 			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>method</emphasis> - the method to be used for
+			authentication. This parameter is optional and if not set
+			is the first "word" on the request-line.</para>
 		</listitem>
 		</itemizedlist>
 		<para>
@@ -527,6 +532,58 @@ if (!auth_check("$fd", "subscriber", "1")) {
 		</example>
 	</section>
 
+
+	<section>
+		<title>
+			<function moreinfo="none">is_subscriber(uri, dbtable, flags)</function>
+		</title>
+		<para>The function checks if there is a subscriber corresponding to
+		the AoR in uri parameter. It uses same database connection as for
+		authentication functions.
+		</para>
+		<para>
+		In addition, if the subscriber record is found, then the load_credentials
+		attributes are loaded. An use case can be loading the credential attributes
+		for callee.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>uri</emphasis> - a valid SIP URI value to identify
+			the subscriber. The string may contain pseudo variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>dbtable</emphasis> - Table to be used to lookup
+			username and domain from URI (usually subscriber table). The string
+			may contain pseudo variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>flags</emphasis> - set of flags to control the
+			behaviour of the function. If it is 1, then the function will
+			use the domain part of the URI to perform the database table search.
+			</para>
+			<para>
+			The parameter may be a pseudo variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title>is_subscriber usage</title>
+		<programlisting format="linespecific">
+...
+if (!is_subscriber("$ru", "subscriber", "1")) {
+    # callee is not a local subscriber
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 </chapter>

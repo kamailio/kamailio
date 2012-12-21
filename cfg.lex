@@ -195,8 +195,6 @@ DROP	"drop"
 EXIT	"exit"
 RETURN	"return"
 BREAK	"break"
-SEND	send
-SEND_TCP	send_tcp
 LOG		log
 ERROR	error
 ROUTE	route
@@ -606,8 +604,6 @@ IMPORTFILE      "import_file"
 <INITIAL>{EXIT}	{ count(); yylval.strval=yytext; return EXIT; }
 <INITIAL>{RETURN}	{ count(); yylval.strval=yytext; return RETURN; }
 <INITIAL>{BREAK}	{ count(); yylval.strval=yytext; return BREAK; }
-<INITIAL>{SEND}	{ count(); yylval.strval=yytext; return SEND; }
-<INITIAL>{SEND_TCP}	{ count(); yylval.strval=yytext; return SEND_TCP; }
 <INITIAL>{LOG}	{ count(); yylval.strval=yytext; return LOG_TOK; }
 <INITIAL>{ERROR}	{ count(); yylval.strval=yytext; return ERROR; }
 <INITIAL>{SETFLAG}	{ count(); yylval.strval=yytext; return SETFLAG; }
@@ -1341,7 +1337,7 @@ IMPORTFILE      "import_file"
 <SELECT>.               { unput(yytext[0]); state = INITIAL_S; BEGIN(INITIAL); } /* Rescan the token in INITIAL state */
 
 <INCLF>[ \t]*      /* eat the whitespace */
-<INCLF>[^ \t\n]+   { /* get the include file name */
+<INCLF>[^ \t\r\n]+   { /* get the include file name */
 				memset(&s_buf, 0, sizeof(s_buf));
 				addstr(&s_buf, yytext, yyleng);
 				r = pp_subst_run(&s_buf.s);
@@ -1355,7 +1351,7 @@ IMPORTFILE      "import_file"
 }
 
 <IMPTF>[ \t]*      /* eat the whitespace */
-<IMPTF>[^ \t\n]+   { /* get the import file name */
+<IMPTF>[^ \t\r\n]+   { /* get the import file name */
 				memset(&s_buf, 0, sizeof(s_buf));
 				addstr(&s_buf, yytext, yyleng);
 				r = pp_subst_run(&s_buf.s);

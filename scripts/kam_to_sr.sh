@@ -54,6 +54,10 @@ BEGIN {
     defs_seen = 1
 }
 
+/^[ \t]*DEFS[ \t]*\+?=.*KAMAILIO_MOD_INTERFACE/ {
+    defs_seen = 1
+}
+
 /^[ \t]*SER_LIBS[ \t]*\+?=.*srdb1\/srdb1/ {
     libs_seen = 1
 }
@@ -66,7 +70,7 @@ BEGIN {
 # this is most likely the last line in the Makefile
 /^[ \t]*include[ \t]+.*\/Makefile\.modules[ \t]*$/ {
     if (serlibpath_seen == 0) print "SERLIBPATH=../../lib"
-    if (defs_seen == 0) print "DEFS+=-DOPENSER_MOD_INTERFACE"
+    if (defs_seen == 0) print "DEFS+=-DKAMAILIO_MOD_INTERFACE"
     if (libs_seen == 0) print "SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1"
 }
 

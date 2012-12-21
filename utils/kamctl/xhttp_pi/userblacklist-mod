@@ -1,0 +1,27 @@
+	<!-- userblacklist provisionning -->
+	<mod><mod_name>userblacklist</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>userblacklist</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>prefix</field></col>
+				<col><field>whitelist</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- globalblacklist provisionning -->
+	<mod><mod_name>globalblacklist</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>globalblacklist</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>prefix</field></col>
+				<col><field>whitelist</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+	</mod>

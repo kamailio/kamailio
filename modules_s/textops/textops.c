@@ -74,7 +74,7 @@
 #include "../../onsend.h"
 #include "../../ut.h"
 #include "../../select.h"
-#include "../xlog/xl_lib.h"
+#include "../../modules/xprint/xp_lib.h"
 #include "../../script_cb.h"
 #include "../../select_buf.h"
 #include "../../ser_time.h"
@@ -239,7 +239,7 @@ static int fixup_xlstr(void** param, int param_no) {
 		if (!xl_print) {
 			xl_print=(xl_print_log_f*)find_export("xprint", NO_SCRIPT, 0);
 			if (!xl_print) {
-				LOG(L_CRIT,"ERROR: textops: cannot find \"xprint\", is module xlog loaded?\n");
+				LOG(L_CRIT,"ERROR: textops: cannot find \"xprint\", is module xprint loaded?\n");
 				return E_UNSPEC;
 			}
 		}
@@ -247,7 +247,7 @@ static int fixup_xlstr(void** param, int param_no) {
 		if (!xl_parse) {
 			xl_parse=(xl_parse_format_f*)find_export("xparse", NO_SCRIPT, 0);
 			if (!xl_parse) {
-				LOG(L_CRIT,"ERROR: textops: cannot find \"xparse\", is module xlog loaded?\n");
+				LOG(L_CRIT,"ERROR: textops: cannot find \"xparse\", is module xprint loaded?\n");
 				return E_UNSPEC;
 			}
 		}

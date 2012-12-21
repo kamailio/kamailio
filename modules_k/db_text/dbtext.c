@@ -34,6 +34,7 @@
 
 #include "../../sr_module.h"
 #include "../../lib/srdb1/db.h"
+#include "../../rpc_lookup.h"
 #include "dbtext.h"
 #include "dbt_lib.h"
 #include "dbt_api.h"
@@ -67,6 +68,7 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
+static rpc_export_t rpc_methods[];
 
 struct module_exports exports = {	
 	"db_text",
@@ -85,6 +87,11 @@ struct module_exports exports = {
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
+	if (rpc_register_array(rpc_methods)!=0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+
 	if(db_api_init()<0)
 		return -1;
 	return 0;
@@ -126,4 +133,24 @@ int dbt_bind_api(db_func_t *dbb)
 
 	return 0;
 }
+
+/* rpc function documentation */
+static const char *rpc_dump_doc[2] = {
+	"Write back to disk modified tables", 0
+};
+
+/* rpc function implementations */
+static void rpc_dump(rpc_t *rpc, void *c) {
+	if (0!=dbt_cache_print(0))
+		rpc->printf(c, "Dump failed");
+	else
+		rpc->printf(c, "Dump OK");
+
+	return;
+}
+
+static rpc_export_t rpc_methods[] = {
+	{"db_text.dump", rpc_dump, rpc_dump_doc, 0},
+	{0, 0, 0, 0}
+};
 

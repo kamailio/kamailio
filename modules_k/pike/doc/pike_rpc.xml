@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<chapter id="pike.rpc" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+	<title>RPC calls</title>
+
+	<section id="pike.top">
+		<title>
+			<function>pike.top</function>
+		</title>
+		<simpara>
+			Pike.top behaves like a 'top' command and shows source IP addresses of incoming requestes to pike_check_req() function.
+		</simpara>
+		<simpara>
+			The IP list is sorted by sum of leaf hits (prev and curr) descending and in second level by hits.
+		</simpara>
+		<simpara>
+			Some IPs could be marked as HOT depending on theirs request rates.
+		</simpara>
+		<simpara>
+			pike.top command takes one string parameter which specifies what kind of nodes you are interested in. Possible values
+			are HOT or ALL. If no argument is given, it behaves as HOT was used.
+		</simpara>
+		<simpara>
+			Marking nodes HOT is done on server side, client only presents given data and make some postprocessing like sorting.
+		</simpara>
+		<simpara>
+			Output of this command is a simple dump of ip_tree nodes marked as ip-leafs.
+		</simpara>
+	</section>
+</chapter>

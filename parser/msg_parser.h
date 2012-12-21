@@ -363,6 +363,8 @@ typedef struct sip_msg {
 	struct socket_info* force_send_socket; /* force sending on this socket,
 											  if ser */
 	str path_vec;
+        str instance;
+        unsigned int reg_id;
 } sip_msg_t;
 
 /*! \brief pointer to a fakes message which was never received ;
@@ -447,6 +449,9 @@ int set_path_vector(struct sip_msg* msg, str* path);
 
 void reset_path_vector(struct sip_msg* const msg);
 
+int set_instance(struct sip_msg* msg, str* instance);
+
+void reset_instance(struct sip_msg* const msg);
 
 /** force a specific send socket for forwarding a request.
  * @param msg - sip msg.

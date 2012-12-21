@@ -1,0 +1,11 @@
+	<!-- version provisionning -->
+	<mod><mod_name>version</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>version</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>table_name</field></col>
+				<col><field>table_version</field></col>
+			</query_cols>
+		</cmd>
+	</mod>

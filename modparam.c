@@ -147,8 +147,9 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 				}
 			}
 			else {
-				LOG(L_ERR, "set_mod_param_regex: parameter <%s> not found in"
-							" module <%s>\n", name, t->exports.name);
+				LOG(L_ERR, "set_mod_param_regex: parameter <%s>"
+							" of type <%d> not found in"
+							" module <%s>\n", name, type, t->exports.name);
 				regfree(&preg);
 				pkg_free(reg);
 				return -3;

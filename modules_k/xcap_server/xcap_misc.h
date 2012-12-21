@@ -7,12 +7,12 @@
  *
  * This file is part of kamailio, a free SIP server.
  *
- * openser is free software; you can redistribute it and/or modify
+ * Kamailo is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * openser is distributed in the hope that it will be useful,
+ * Kamailo is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
@@ -49,6 +49,14 @@ typedef struct xcap_uri {
 	str target;
 	str domain;
 } xcap_uri_t;
+
+typedef struct xcaps_auid_list {
+	str auid;  /* auid value */
+	char term; /* ending char (next one after auid) */
+	int type;  /* internaly type id for auid */
+} xcaps_auid_list_t;
+
+extern xcaps_auid_list_t xcaps_auid_list[];
 
 int xcap_parse_uri(str *huri, str *xroot, xcap_uri_t *xuri);
 int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf);

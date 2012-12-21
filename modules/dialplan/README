@@ -12,9 +12,9 @@ Edited by
 
 Juha Heinanen
 
-   Copyright © 2007-2008 Voice Sistem SRL
+   Copyright � 2007-2008 Voice Sistem SRL
 
-   Copyright © 2008-2010 Juha Heinanen
+   Copyright � 2008-2010 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -23,7 +23,7 @@ Juha Heinanen
 
         1. Overview
         2. How it works
-        3. Usage cases
+        3. Dialplan use cases
         4. Dependencies
 
               4.1. Kamailio Modules
@@ -86,7 +86,7 @@ Chapter 1. Admin Guide
 
    1. Overview
    2. How it works
-   3. Usage cases
+   3. Dialplan use cases
    4. Dependencies
 
         4.1. Kamailio Modules
@@ -126,16 +126,16 @@ Chapter 1. Admin Guide
 1. Overview
 
    This module implements generic string translations based on matching
-   and replacement rules. It can be used to manipulate Request URI or a PV
-   and to translated to a new format/value.
+   and replacement rules. It can be used to manipulate the request URI or
+   a PV and to translate to a new format/value.
 
 2. How it works
 
    At startup, the module will load a set of transformation rules from a
-   database. Every database row will be stored in memory as a translation
-   rule. Each rule will describe how the matching should be made, how the
-   input value should be modified and which attributes should be set for
-   the matching transformation.
+   database. Rules are grouped into dialplans. Every database row will be
+   stored in memory as a translation rule. Each rule will describe how the
+   matching will be made, how the input value will be modified and which
+   attributes that will be set for the matching transformation.
 
    The module expects an input value which will be matched against a rule
    by using regular expressions (see 'man pcresyntax' for syntax), string
@@ -144,18 +144,19 @@ Chapter 1. Admin Guide
    the defined transformation (if any) is applied and the result is
    returned as output value. Also, if any string attribute is associated
    to the rule, this will be returned to the script along with the output
-   value.
+   value. This can be used to identify the used rule.
 
    The first matching rule will be processed.
 
-3. Usage cases
+3. Dialplan use cases
 
-   The module can be used to implement dialplans - do to auto completion
-   of the dial numbers (like national to international), to convert
-   generic numbers to specific numbers (like for emergency numbers).
+   The module can be used to implement multiple dialplans - do to
+   auto-completion of dialed numbers (like national to international), to
+   convert generic numbers to specific numbers (like for emergency
+   numbers).
 
-   The module can also be used for detecting range or sets of numbers
-   mapped on a service/case - attribute string can be used here to store
+   The module can also be used for detecting a range or sets of numbers
+   mapped on a service/case - the attribute string can be used to store
    extra information about the service/case.
 
    Non-SIP string translation can be implemented - like converting country
@@ -173,7 +174,7 @@ Chapter 1. Admin Guide
 4.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * None
+     * A database module
 
 4.2. External Libraries or Applications
 
@@ -200,7 +201,7 @@ Chapter 1. Admin Guide
 
    The translation rules will be loaded using this database URL.
 
-   Default value is “mysql://openser:openserrw@localhost/openser”.
+   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
 
    Example 1.1. Set db_url parameter
 ...
@@ -211,7 +212,7 @@ modparam("dialplan", "db_url", "mysql://user:passwb@localhost/db")
 
    The table's name from which to load the translation rules.
 
-   Default value is “dialplan”.
+   Default value is "dialplan".
 
    Example 1.2. Set table_name parameter
 ...
@@ -220,9 +221,9 @@ modparam("dialplan", "table_name", "my_table")
 
 5.3. dpid_col (string)
 
-   The column name used to store the dialplan ID group.
+   The column name used to store the dialplan group ID.
 
-   Default value is “dpid”.
+   Default value is "dpid".
 
    Example 1.3. Set dpid_col parameter
 ...
@@ -234,7 +235,7 @@ modparam("dialplan", "dpid_col", "column_name")
    The column name used to store the priority of the corresponding rule
    from the database row.
 
-   Default value is “pr”.
+   Default value is "pr".
 
    Example 1.4. Set pr_col parameter
 ...
@@ -245,7 +246,7 @@ modparam("dialplan", "pr_col", "column_name")
 
    The column name used to store the type of matching of the rule.
 
-   Default value is “match_op”.
+   Default value is "match_op".
 
    Example 1.5. Set match_op_col parameter
 ...
@@ -256,7 +257,7 @@ modparam("dialplan", "match_op_col", "column_name")
 
    The column name to store the rule match expression.
 
-   Default value is “match_exp”.
+   Default value is "match_exp".
 
    Example 1.6. Set match_exp_col parameter
 ...
@@ -268,7 +269,7 @@ modparam("dialplan", "match_exp_col", "column_name")
    The column name to store the length of a string matching the match
    expression.
 
-   Default value is “match_len”.
+   Default value is "match_len".
 
    Example 1.7. Set pr_col parameter
 ...
@@ -279,7 +280,7 @@ modparam("dialplan", "match_len_col", "column_name")
 
    The column name to store the rule's substitution expression.
 
-   Default value is “subst_exp”.
+   Default value is "subst_exp".
 
    Example 1.8. Set pr_col parameter
 ...
@@ -290,7 +291,7 @@ modparam("dialplan", "subst_exp_col", "column_name")
 
    The column name to store the rule's replacement expression.
 
-   Default value is “repl_exp”.
+   Default value is "repl_exp".
 
    Example 1.9. Set repl_exp_col parameter
 ...
@@ -302,7 +303,7 @@ modparam("dialplan", "repl_exp_col", "column_name")
    The column name to store the rule's attributes to be set to the
    message.
 
-   Default value is “attrs”.
+   Default value is "attrs".
 
    Example 1.10. Set attrs_col parameter
 ...
@@ -315,7 +316,7 @@ modparam("dialplan", "attrs_col", "column_name")
    (dp_translate() succeeds). This parameter can be an AVP or a SCRIPT
    VAR.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.11. Set attrs_pvar parameter
 ...
@@ -326,7 +327,7 @@ modparam("dialplan", "attrs_pvar", "$avp(s:dest)")
 
    The number of rows to be fetched at once from database
 
-   Default value is “1000”.
+   Default value is "1000".
 
    Example 1.12. Set fetch_rows parameter
 ...
@@ -337,11 +338,11 @@ modparam("dialplan", "fetch_rows", 4000)
 
    6.1. dp_translate(id, [src[/dest]])
 
-6.1.  dp_translate(id, [src[/dest]])
+6.1. dp_translate(id, [src[/dest]])
 
    Will try to translate src into dest according to the translation rules
    with dialplan ID equal to id. If src/dest is missing the default
-   parameter “ruri.user/ruri.user” will be used, thus translating the
+   parameter "ruri.user/ruri.user" will be used, thus translating the
    request uri user part. If only dest is missing, only matching and
    storing of matching rule's attributes is done.
 
@@ -458,7 +459,7 @@ xlog("translated to var $var(y) \n");
    the complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Some sample records fromd dialplan table are presented in the next
+   Some sample records from a dialplan table are presented in the next
    figure.
 
    Example 1.15. Example of rules
@@ -470,10 +471,10 @@ match_exp: ^0([1-9][0-9]+)$
 match_len: 0
 subst_exp: ^0([1-9][0-9]+)$
 repl_exp: 0049\1
-attrs: xyz
+attrs: de
 ...
 dpid: 1
-pr: 1
+pr: 2
 match_op: 1
 match_exp: ^0([1-9][0-9]+)$
 match_len: 0
@@ -485,12 +486,12 @@ attrs: xyz
    Note that you can use config variables in the replacement expression
    (repl_exp) field. However, not all of config variables are safe to use
    there - specifically the variables that have in their name other
-   variables (variables with dinamic name). References to sip message,
+   variables (variables with dynamic name). References to SIP message,
    private variables ($var(...)) and AVPs with static name are among those
    that are safe to use in replacement expressions.
 
-   The match_op field specify matching operator, valid value being: 0 -
-   string comparison; 1 - regular expression matching (pcre); 2 - fnmatch
+   The match_op field specify matching operator, valid values: 0 - string
+   comparison; 1 - regular expression matching (pcre); 2 - fnmatch
    (shell-like pattern) matching.
 
 Chapter 2. Developer's Guide

@@ -17,7 +17,7 @@ Alex Balashov
 
    <abalashov@evaristesys.com>
 
-   Copyright © 2008-2011 http://www.asipto.com
+   Copyright � 2008-2011 http://www.asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -57,10 +57,17 @@ Alex Balashov
 
               6.1. sht_reload
               6.2. sht_dump
+              6.3. sht_delete
 
-        7. Event routes
+        7. Exported RPC Commands
 
-              7.1. htable:mod-init
+              7.1. htable.get htable key
+              7.2. htable.delete htable key
+              7.3. htable.dump htable
+
+        8. Event routes
+
+              8.1. htable:mod-init
 
    List of Examples
 
@@ -119,10 +126,17 @@ Chapter 1. Admin Guide
 
         6.1. sht_reload
         6.2. sht_dump
+        6.3. sht_delete
 
-   7. Event routes
+   7. Exported RPC Commands
 
-        7.1. htable:mod-init
+        7.1. htable.get htable key
+        7.2. htable.delete htable key
+        7.3. htable.dump htable
+
+   8. Event routes
+
+        8.1. htable:mod-init
 
 1. Overview
 
@@ -142,7 +156,7 @@ Chapter 1. Admin Guide
    You can read more about hash tables at:
    http://en.wikipedia.org/wiki/Hash_table.
 
-   The “name” can be a static string or can include pseudo- variables that
+   The "name" can be a static string or can include pseudo- variables that
    will be replaced at runtime.
 
    Example 1.1. Accessing $sht(htname=>key)
@@ -165,7 +179,7 @@ $sht(a=>$ci::srcip) = $si;
    the failed authentications per user and one for storing the time of
    last authentication attempt. To ensure unique name per user, the hash
    table uses a combination of authentication username and text
-   “::auth_count” and “::last_auth”.
+   "::auth_count" and "::last_auth".
 
    Example 1.2. Dictionary attack limitation
 ...
@@ -307,7 +321,7 @@ modparam("htable", "htable", "c=>size=4;autoexpire=7200;initval=1;")
 
    Example 1.4. Set db_url parameter
 ...
-modparam("htable", "db_url", "mysql://openser:openserrw@localhost/openser")
+modparam("htable", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 ...
 
 3.3. key_name_column (str)
@@ -484,6 +498,7 @@ sht_rm_value_re("ha=>.*");
 
    6.1. sht_reload
    6.2. sht_dump
+   6.3. sht_delete
 
 6.1.  sht_reload
 
@@ -511,15 +526,88 @@ sht_rm_value_re("ha=>.*");
                 _hash_table_name_
                 _empty_line_
 
-7. Event routes
+6.3.  sht_delete
 
-   7.1. htable:mod-init
+   Delete a key from a hash table via MI.
 
-7.1.  htable:mod-init
+   Name: sht_delete
+
+   Parameters:
+     * _hash_table_name: The table name to delete the key from
+     * _key_name: The key to delete from the htable
+
+   MI FIFO Command Format:
+                :sht_delete:_reply_fifo_file_
+                _hash_table_name_
+                _key_name_
+                _empty_line_
+
+   Example (note the quoting when executing it via FIFO):
+                kamctl fifo sht_delete auth '"user@example.org::last_auth"'
+
+7. Exported RPC Commands
+
+   7.1. htable.get htable key
+   7.2. htable.delete htable key
+   7.3. htable.dump htable
+
+7.1.  htable.get htable key
+
+   Lists one value in a hash table
+
+   Name: htable.get
+
+   Parameters:
+     * htable : Name of the hash table to dump
+     * key : Key name of the hash table value to dump
+
+   Example:
+...
+# Dump $sht(students=>daniel)
+kamcmd htable.get students daniel
+...
+
+7.2.  htable.delete htable key
+
+   Delete one value in a hash table
+
+   Name: htable.delete
+
+   Parameters:
+     * htable : Name of the hash table to delete
+     * key : Key name of the hash table value to delete
+
+   Example:
+...
+# Delete $sht(students=>anna)
+kamcmd htable.get students anna
+...
+
+7.3.  htable.dump htable
+
+   Lists all the values in a hash table
+
+   Name: dhtable.dump
+
+   Parameters:
+     * htable : Name of the hash table to dump
+
+   Example:
+...
+kamcmd htable.dump ipban
+...
+
+8. Event routes
+
+   8.1. htable:mod-init
+
+8.1.  htable:mod-init
 
    When defined, the module calls event_route[htable:mod-init] after all
-   modules have been initialised. A typical use case is to initialise
-   items in hash tables. The event route is executed only once.
+   modules have been initialized. A typical use case is to initialise
+   items in hash tables. The event route is executed only once, after core
+   and module initialization, but before Kamailio forks any child
+   processes.
 ...
 event_route[htable:mod-init] {
     $sht(a=>x) = 1;

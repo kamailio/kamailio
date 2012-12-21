@@ -17,8 +17,8 @@
 	<title>Overview</title>
 	<para>
 	This module implements generic string translations based on matching and
-	replacement rules. It can be used to manipulate Request URI or a PV and to 
-	translated to a new format/value.
+	replacement rules. It can be used to manipulate the request URI or a PV and to 
+	translate to a new format/value.
 	</para>
 	</section>
 
@@ -26,10 +26,10 @@
 	<title>How it works</title>
 	<para>
 	At startup, the module will load a set of transformation rules from a 
-	database. Every database row will be stored in memory as a translation 
-	rule. Each rule will describe how the matching should be made, how the 
-	input value should be modified and which attributes should be set for 
-	the matching transformation.
+	database. Rules are grouped into dialplans. Every database row will be
+	stored in memory as a translation rule. Each rule will describe how the 
+	matching will be made, how the input value will be modified and which 
+	attributes that will be set for the matching transformation.
 	</para>
 	<para>
 	The module expects an input value which will be matched against a rule
@@ -39,7 +39,7 @@
 	Once a rule is matched, the defined transformation (if any) is applied and 
 	the result is returned as output value. Also, if any string attribute is 
 	associated to the rule, this will be returned to the script along with
-	the output value.
+	the output value. This can be used to identify the used rule.
 	</para>
 	<para>
 	<emphasis> The first matching rule will be processed.</emphasis>
@@ -47,15 +47,15 @@
 	</section>
 
 	<section>
-	<title>Usage cases</title>
+	<title>Dialplan use cases</title>
 	<para>
-	The module can be used to implement dialplans - do to auto completion of 
-	the dial numbers (like national to international), to convert generic 
-	numbers to specific numbers (like for emergency numbers).
+	The module can be used to implement multiple dialplans - do to 
+	auto-completion of dialed numbers (like national to international),
+	to convert generic numbers to specific numbers (like for emergency numbers).
 	</para>
 	<para>
-	The module can also be used for detecting range or sets of numbers mapped 
-	on a service/case - attribute string can be used here to store extra 
+	The module can also be used for detecting a range or sets of numbers mapped 
+	on a service/case - the attribute string can be used to store extra 
 	information about the service/case.
 	</para>
 	<para>
@@ -78,7 +78,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>None</emphasis>
+				<emphasis>A database module</emphasis>
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -113,7 +113,7 @@
 		<para>
 		<emphasis>
 			Default value is 
-				<quote>mysql://openser:openserrw@localhost/openser</quote>.
+				<quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -149,7 +149,7 @@ modparam("dialplan", "table_name", "my_table")
 	<section>
 		<title><varname>dpid_col</varname> (string)</title>
 		<para>
-		The column name used to store the dialplan ID group.
+		The column name used to store the dialplan group ID.
 		</para>
 		<para>
 		<emphasis>
@@ -366,7 +366,7 @@ modparam("dialplan", "fetch_rows", 4000)
 	missing the default parameter <quote>ruri.user/ruri.user</quote> will
 	be used, thus translating the request uri user part.  If only dest is
 	missing, only matching and storing of matching rule's
-	attributes is done.	
+	attributes is done.
 
 	</para>
 	<para>
@@ -571,7 +571,7 @@ xlog("translated to var $var(y) \n");
         project webpage, &kamailiodbdocslink;.
         </para>
 		<para>
-		Some sample records fromd dialplan table are presented in the next
+		Some sample records from a dialplan table are presented in the next
 		figure.
         </para>
 		<example>
@@ -585,10 +585,10 @@ match_exp: ^0([1-9][0-9]+)$
 match_len: 0
 subst_exp: ^0([1-9][0-9]+)$
 repl_exp: 0049\1
-attrs: xyz
+attrs: de
 ...
 dpid: 1
-pr: 1
+pr: 2
 match_op: 1
 match_exp: ^0([1-9][0-9]+)$
 match_len: 0
@@ -602,12 +602,12 @@ attrs: xyz
 		Note that you can use config variables in the replacement expression
 		(repl_exp) field. However, not all of config variables are safe to use
 		there - specifically the variables that have in their name other
-		variables (variables with dinamic name). References to sip message,
+		variables (variables with dynamic name). References to SIP message,
 		private variables ($var(...)) and AVPs with static name are among
 		those that are safe to use in replacement expressions.
 		</para>
 		<para>
-		The match_op field specify matching operator, valid value being:
+		The match_op field specify matching operator, valid values:
 		0 - string comparison; 1 - regular expression matching (pcre);
 		2 - fnmatch (shell-like pattern) matching.
 		</para>

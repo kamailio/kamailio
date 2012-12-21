@@ -88,7 +88,7 @@ ser_mi_monitor() {
 	exit 0
 }
 
-OPENSER_MONITOR=ser_mi_monitor
+KAMAILIO_MONITOR=ser_mi_monitor
 
 
 

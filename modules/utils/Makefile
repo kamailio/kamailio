@@ -9,11 +9,29 @@ auto_gen=
 NAME=utils.so
 LIBS=
 
-DEFS+=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
-      -I$(LOCALBASE)/include
-LIBS+=-L$(LOCALBASE)/lib -lcurl -lxml2
+ifeq ($(CROSS_COMPILE),)
+XML2CFG=$(shell which xml2-config)
+CURL2CFG=$(shell which curl-config)
+endif
 
-DEFS+=-DOPENSER_MOD_INTERFACE
+ifneq ($(XML2CFG),)
+	DEFS += $(shell $(XML2CFG) --cflags )
+	LIBS += $(shell $(XML2CFG) --libs)
+else
+	DEFS+=-I$(LOCALBASE)/include/libxml2 \
+      -I$(LOCALBASE)/include
+	LIBS+=-L$(LOCALBASE)/lib -lxml2
+endif
+
+ifneq ($(CURL2CFG),)
+	DEFS += $(shell $(CURL2CFG) --cflags )
+	LIBS += $(shell $(CURL2CFG) --libs)
+else
+	DEFS+=-I$(LOCALBASE)/include
+	LIBS+=-L$(LOCALBASE)/lib -lcurl
+endif
+
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1

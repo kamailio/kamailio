@@ -360,6 +360,12 @@ static cmd_export_t cmds[] = {
 	{"rtpproxy_destroy",   (cmd_function)unforce_rtp_proxy_f,    0,
 		0, 0,
 		ANY_ROUTE},
+	{"unforce_rtp_proxy",  (cmd_function)unforce_rtp_proxy_f,    1,
+		0, 0,
+		ANY_ROUTE},
+	{"rtpproxy_destroy",   (cmd_function)unforce_rtp_proxy_f,    1,
+		0, 0,
+		ANY_ROUTE},
 	{"start_recording",    (cmd_function)start_recording_f,      0,
 		0, 0,
 		ANY_ROUTE },
@@ -1667,17 +1673,18 @@ found:
 }
 
 static int
-unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
+unforce_rtp_proxy_f(struct sip_msg* msg, char* flags, char* str2)
 {
 	str callid, from_tag, to_tag, viabranch;
 	char *cp;
 	int via = 0;
+	int to = 1;
 	int ret;
 	struct rtpp_node *node;
 	struct iovec v[1 + 4 + 3 + 2] = {{NULL, 0}, {"D", 1}, {" ", 1}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
 						    /* 1 */   /* 2 */   /* 3 */    /* 4 */    /* 5 */    /* 6 */   /* 7 */    /* 8 */   /* 9 */
 
-	for (cp = str1; cp && *cp; cp++) {
+	for (cp = flags; cp && *cp; cp++) {
 		switch (*cp) {
 			case '1':
 				via = 1;
@@ -1685,6 +1692,42 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 
 			case '2':
 				via = 2;
+				break;
+
+			case '3':
+				if(msg && msg->first_line.type == SIP_REPLY)
+					via = 2;
+				else
+					via = 1;
+				break;
+
+ 		        case 't':
+		        case 'T':
+			    to = 0;
+			    break;
+			case 'a':
+			case 'A':
+			case 'i':
+			case 'I':
+			case 'e':
+			case 'E':
+			case 'l':
+			case 'L':
+			case 'f':
+			case 'F':
+			case 'r':
+			case 'R':
+			case 'c':
+			case 'C':
+			case 'o':
+			case 'O':
+			case 'x':
+			case 'X':
+			case 'w':
+			case 'W':
+			case 'z':
+			case 'Z':
+				/* ignore them - they can be sent by rtpproxy_manage() */
 				break;
 
 			default:
@@ -1698,7 +1741,8 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 	}
 	to_tag.s = 0;
-	if (get_to_tag(msg, &to_tag) == -1) {
+	to_tag.len = 0;
+	if ((to == 1) && get_to_tag(msg, &to_tag) == -1) {
 		LM_ERR("can't get To tag\n");
 		return -1;
 	}
@@ -1794,7 +1838,7 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 		return -1;
 
 	if(method==METHOD_CANCEL || method==METHOD_BYE)
-		return unforce_rtp_proxy_f(msg, 0, 0);
+		return unforce_rtp_proxy_f(msg, flags, 0);
 
 	if(ip==NULL)
 	{
@@ -1820,13 +1864,13 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 					&& tmb.t_gett()!=T_UNDEFINED)
 				tmb.t_gett()->uas.request->msg_flags |= FL_SDP_BODY;
 			if(route_type==FAILURE_ROUTE)
-				return unforce_rtp_proxy_f(msg, 0, 0);
+				return unforce_rtp_proxy_f(msg, flags, 0);
 			return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 1,
 					(ip!=NULL)?1:0);
 		}
 	} else if(msg->first_line.type == SIP_REPLY) {
 		if(msg->first_line.u.reply.statuscode>=300)
-			return unforce_rtp_proxy_f(msg, 0, 0);
+			return unforce_rtp_proxy_f(msg, flags, 0);
 		if(nosdp==0) {
 			if(method==METHOD_UPDATE)
 				return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 0,
@@ -2024,6 +2068,13 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 			via = 2;
 			break;
 
+		case '3':
+			if(msg && msg->first_line.type == SIP_REPLY)
+				via = 2;
+			else
+				via = 1;
+			break;
+
 		case 'a':
 		case 'A':
 			if (append_opts(&opts, 'A') == -1) {
@@ -2104,6 +2155,11 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 				}
 			}
 			break;
+
+		case 't':
+		case 'T':
+		        /* Only used in rtpproxy_destroy */
+		        break;
 
 		default:
 			LM_ERR("unknown option `%c'\n", *cp);
@@ -2264,6 +2320,8 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 						LM_ERR("out of pkg memory\n");
 						FORCE_RTP_PROXY_RET (-1);
 					}
+					/* Only execute once */
+					autobridge_ipv4v6 = 0;
 				}
 				if (append_opts(&opts, '6') == -1) {
 					LM_ERR("out of pkg memory\n");
@@ -2281,6 +2339,8 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 					/* We need to update the pointers and the length here, it has changed. */
 					v[1].iov_base = opts.s.s;
 					v[1].iov_len = opts.oidx;
+					/* Only execute once */
+					autobridge_ipv4v6 = 0;
 				}
 			}
 
@@ -2610,19 +2670,20 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
     str from_tag = {0, 0};
     str to_tag = {0, 0};
     struct rtpp_node *node;
-    struct iovec v[1 + 4 + 3 + 1] = {{NULL, 0}, {"Q", 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}, {";1 ", 3}, {";1", }, {NULL, 0}};
+    struct iovec v[1 + 4 + 3 + 1] = {{NULL, 0}, {"Q", 1}, {" ", 1}, {NULL, 0},
+		{" ", 1}, {NULL, 0}, {";1 ", 3}, {";1", }, {NULL, 0}};
 
     if (get_callid(msg, &callid) == -1 || callid.len == 0) {
         LM_ERR("can't get Call-Id field\n");
-        return -1;
+		return pv_get_null(msg, param, res);
     }
     if (get_to_tag(msg, &to_tag) == -1) {
         LM_ERR("can't get To tag\n");
-        return -1;
+		return pv_get_null(msg, param, res);
     }
     if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
         LM_ERR("can't get From tag\n");
-        return -1;
+		return pv_get_null(msg, param, res);
     }
     if(msg->id != current_msg_id){
         selected_rtpp_set = default_rtpp_set;
@@ -2649,6 +2710,8 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
             nitems = 6;
     }
     ret_val.s = send_rtpp_command(node, v, nitems);
+	if(ret_val.s==NULL)
+		return pv_get_null(msg, param, res);
     ret_val.len = strlen(ret_val.s);
     return pv_get_strval(msg, param, res, &ret_val);
 }

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="xprint.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>Functions</title>
+    
+    <section id="xprint.xplog">
+	<title>
+	    <function>xplog(level, format)</function>
+	</title>
+	<para>
+	    Print a formated message using LOG function.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>level</emphasis> - The level that will be used in LOG function. It can be:
+		</para>
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    L_ALERT
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    L_CRIT
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    L_ERR
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    L_WARN
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    L_NOTICE
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    L_INFO
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    L_DBG
+			</para>
+		    </listitem>
+		</itemizedlist>
+		<para>
+		    What really matters is the third letter of the value.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>format</emphasis> - The formatted string to be printed. 
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>xplog</function> usage</title>
+	    <programlisting>
+<![CDATA[
+...
+xplog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
+...
+]]>
+	    </programlisting>
+	</example>
+    </section>
+    
+    <section id="xprint.xpdbg">
+	<title>
+	    <function>xpdbg(format)</function>
+	</title>
+	<para>
+	    Print a formatted message using DBG function.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>format</emphasis> - The formatted string to be printed.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>xpdbg</function> usage</title>
+	    <programlisting>
+<![CDATA[
+...
+xpdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
+...
+]]>
+	    </programlisting>
+	</example>
+    </section>
+</section>

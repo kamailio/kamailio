@@ -528,6 +528,12 @@ int dlg_ka_add(dlg_cell_t *dlg);
 int dlg_ka_run(ticks_t ti);
 
 /*!
+ * \brief Update dialog lifetime - for internal callers.
+ */
+
+int update_dlg_timeout(dlg_cell_t *, int);
+
+/*!
  * \brief Output a dialog via the MI interface
  * \param rpl MI node that should be filled
  * \param dlg printed dialog

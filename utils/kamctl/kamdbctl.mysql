@@ -4,7 +4,7 @@
 #
 # History:
 # 2006-04-07  removed gen_ha1 dependency - use md5sum;
-#             separated the serweb from openser tables;
+#             separated the serweb from kamailio tables;
 #             fixed the reinstall functionality (bogdan)
 # 2006-05-16  added ability to specify MD5 from a configuration file
 #             FreeBSD does not have the md5sum function (norm)
@@ -82,10 +82,10 @@ sql_query()
 }
 
 
-openser_drop()  # pars: <database name>
+kamailio_drop()  # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	merr "openser_drop function takes two params"
+	merr "kamailio_drop function takes two params"
 	exit 1
 fi
 
@@ -124,10 +124,10 @@ db_charset_test()
 }
 
 
-openser_create () # pars: <database name>
+kamailio_create () # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	merr "openser_create function takes one param"
+	merr "kamailio_create function takes one param"
 	exit 1
 fi
 
@@ -137,7 +137,7 @@ db_charset_test
 
 minfo "creating database $1 ..."
 
-# Users: openser is the regular user, openserro only for reading
+# Users: kamailio is the regular user, kamailioro only for reading
 sql_query "" "create database $1 character set $CHARSET;
 	GRANT ALL PRIVILEGES ON $1.* TO '$DBRWUSER' IDENTIFIED  BY '$DBRWPW';
 	GRANT ALL PRIVILEGES ON $1.* TO '${DBRWUSER}'@'$DBHOST' IDENTIFIED BY '$DBRWPW';
@@ -181,7 +181,7 @@ if [ "$ANSWER" = "y" ]; then
 	HAS_EXTRA="yes"
 	extra_create $1
 fi
-} # openser_create
+} # kamailio_create
 
 
 presence_create () # pars: <database name>

@@ -199,11 +199,11 @@ Chapter 1. Admin Guide
    in database for offline messages intended for that user. All of them
    will be sent to contact address provided in REGISTER request.
 
-   It may happen the SIP user to be registered but his SIP User Agent to
-   have no support for MESSAGE request. In this case it should be used the
-   "failure_route" to store the undelivered requests.
+   It may happen that the SIP user to be registered use a SIP User Agent
+   that has no support for MESSAGE requests. In this case the
+   "failure_route" should be used to re-store the undelivered requests.
 
-   Another functionality provided by the modules is to send messages at a
+   Another functionality provided by the module is to send messages at a
    certain time -- the reminder functionality. Using config logic, a
    received message can be stored and delivered at a time specified while
    storing with the 'snd_time_avp'.
@@ -219,7 +219,7 @@ Chapter 1. Admin Guide
      * database module - mysql, dbtext or other module that implements the
        "db" interface and provides support for storing/receiving data
        to/from a database system.
-     * TM--transaction module--is used to send SIP requests.
+     * TM--transaction module-- used to send SIP requests.
 
 2.2. External libraries or applications
 
@@ -317,7 +317,7 @@ modparam("msilo", "contact_hdr", "Contact: <sip:null@example.com>\r\n")
 
    Example 1.5. Set the "extra_hdrs" parameter
 ...
-modparam("msilo", "contact_hdr", "X-Extra: $tu\r\nY-Extra: foo\r\n")
+modparam("msilo", "extra_hdrs", "X-Extra: $tu\r\nY-Extra: foo\r\n")
 ...
 
 3.6. offline_message (string)

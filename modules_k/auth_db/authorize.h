@@ -44,12 +44,17 @@ int proxy_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
  * Authorize using WWW-Authorization header field
  */
 int www_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
-
+int www_authenticate2(struct sip_msg* _msg, char* _realm, char* _table, char *_method);
 
 /*
  * Authenticate using WWW/Proxy-Authorize header field
  */
 int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags);
+
+/*
+ * Fetch credentials for a specific user
+ */
+int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table);
 
 /*
  * Bind to AUTH_DB API

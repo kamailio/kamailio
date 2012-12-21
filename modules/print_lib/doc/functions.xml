@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="print_lib.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>Functions</title>
+
+    <section id="print_lib.print">
+	<title>
+	    <function>print_stderr(txt)</function>
+	</title>
+	<para>
+	    Prints string to stderr.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>txt</emphasis> - string to be printed.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>print_stderr</function> usage</title>
+	    <programlisting>
+...
+print_stderr("The answer is 42\n");
+...
+	    </programlisting>
+	</example>
+    </section>
+</section>

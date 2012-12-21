@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="xprint.api" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>Module API</title>
+
+    <section>
+	<title>Functions</title>
+	<section>
+	    <title>
+		<function>int xbind(xl_api_t *xl_api)</function>
+	    </title>
+	    <para>
+		Bind to the xprint module API.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>xl_api</emphasis> - structure that
+			the xprint module functions are bind to. The functions
+			can be executed as xl_api.xparse(), xl_api.xprint()...
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>Return value: 0 - success, &lt;0 - error.</para>
+	</section>
+
+	<section>
+	    <title>
+		<function>int xparse(char *s, xl_elog_p *el)</function>
+	    </title>
+	    <para>
+		Parse an xl-formatted string in private memory.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>s</emphasis> - string to be parsed.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>el</emphasis> - returned xl-lib list.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>Return value: 0 - success, &lt;0 - error.</para>
+	</section>
+
+	<section>
+	    <title>
+		<function>int shm_xparse(char *s, xl_elog_p *el)</function>
+	    </title>
+	    <para>
+		Parse an xl-formatted string in shared memory.
+		See xparse() function for details.
+	    </para>
+	</section>
+
+	<section>
+	    <title>
+		<function>int xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)</function>
+	    </title>
+	    <para>
+		Parse an xl-formatted string in private memory.
+		This function is able to identify regular expression back references,
+		for example \1, \2, \3... When a back reference is found the callback
+		function is called that is supposed to farther parse the back reference
+		and fill in the xl_elog structure. 
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>s</emphasis> - string to be parsed.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>el</emphasis> - returned xl-lib list.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>cb</emphasis> - callback function for parsing
+			the regular expression back references.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>The prototype of the callback function is:
+		typedef int (*xl_parse_cb) (str *s, int shm, xl_elog_p el);
+	    </para>
+	    <para>Parameters of the callback function:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>s</emphasis> - regular expression back reference
+			to be parsed (without the leading '\' character).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>shm</emphasis> - indicates whether or not shared
+			memory needs to be used. (1: shared memory, 0: private memory)
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>el</emphasis> - pointer to the xl-lib list item that
+			is supposed to be filled in.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>Return value: 0 - success, &lt;0 - error.</para>
+	</section>
+
+	<section>
+	    <title>
+		<function>int shm_xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)</function>
+	    </title>
+	    <para>
+		Parse an xl-formatted string in shared memory supporting regular
+		expression back references.
+		See xparse2() function for details.
+	    </para>
+	</section>
+
+	<section>
+	    <title>
+		<function>xfree(xl_elog_p el)</function>
+	    </title>
+	    <para>
+		Free the xl-lib list allocated by xparse() or xparse2().
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>el</emphasis> - xl-lib list to be freed.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section>
+	    <title>
+		<function>shm_xfree(xl_elog_p el)</function>
+	    </title>
+	    <para>
+		Free the xl-lib list allocated by shm_xparse() or shm_xparse2().
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>el</emphasis> - xl-lib list to be freed.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+	<section>
+	    <title>
+		<function>int xprint(struct sip_msg* msg, xl_elog_p el, char *buf, int *len)</function>
+	    </title>
+	    <para>
+		Evaluate the xl-formatted string and print the result into a buffer.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>msg</emphasis> - SIP message pointer.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>el</emphasis> - xl-lib list to be evaluated.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>buf</emphasis> - pre-allocated buffer that is filled in
+			with the result.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>len</emphasis> - length of the printed string. len needs
+			to be set to the maximum length of the result buffer before calling
+			this function.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>Return value: 0 - success, &lt;0 - error.</para>
+	</section>
+
+	<section>
+	    <title>
+		<function>str *xnulstr()</function>
+	    </title>
+	    <para>
+		Return the string "&lt;null&gt;".
+	    </para>
+	</section>
+    </section>
+
+</section>

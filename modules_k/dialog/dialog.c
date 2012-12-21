@@ -164,6 +164,9 @@ static int w_dlg_bye(struct sip_msg*, char*, char*);
 static int w_dlg_refer(struct sip_msg*, char*, char*);
 static int w_dlg_bridge(struct sip_msg*, char*, char*, char*);
 static int w_dlg_set_timeout(struct sip_msg*, char*, char*, char*);
+static int w_dlg_set_timeout_by_profile2(struct sip_msg *, char *, char *);
+static int w_dlg_set_timeout_by_profile3(struct sip_msg *, char *, char *, 
+					char *);
 static int fixup_dlg_bye(void** param, int param_no);
 static int fixup_dlg_refer(void** param, int param_no);
 static int fixup_dlg_bridge(void** param, int param_no);
@@ -208,6 +211,12 @@ static cmd_export_t cmds[]={
 	{"dlg_set_timeout", (cmd_function)w_dlg_set_timeout,  1,fixup_igp_null,
 			0, ANY_ROUTE },
 	{"dlg_set_timeout", (cmd_function)w_dlg_set_timeout,  3,fixup_igp_all,
+			0, ANY_ROUTE },
+	{"dlg_set_timeout_by_profile", 
+		(cmd_function) w_dlg_set_timeout_by_profile2, 2, fixup_profile,
+			0, ANY_ROUTE },
+	{"dlg_set_timeout_by_profile", 
+		(cmd_function) w_dlg_set_timeout_by_profile3, 3, fixup_profile,
 			0, ANY_ROUTE },
 	{"dlg_set_property", (cmd_function)w_dlg_set_property,1,fixup_spve_null,
 			0, ANY_ROUTE },
@@ -1124,14 +1133,9 @@ static int w_dlg_set_timeout(struct sip_msg *msg, char *pto, char *phe, char *ph
 		return -1;
 	}
 
-	if(update_dlg_timer(&dlg->tl, to)<0) {
-		LM_ERR("failed to update dialog lifetime\n");
-		dlg_release(dlg);
+	if(update_dlg_timeout(dlg, to) != 0) 
 		return -1;
-	}
-	dlg->lifetime = to;
-	dlg->dflags |= DLG_FLAG_CHANGED;
-	dlg_release(dlg);
+
 	return 1;
 }
 
@@ -1176,6 +1180,34 @@ static int w_dlg_set_property(struct sip_msg *msg, char *prop, char *s2)
 	return 1;
 }
 
+static int w_dlg_set_timeout_by_profile3(struct sip_msg *msg, char *profile,
+					char *value, char *timeout_str) 
+{
+	pv_elem_t *pve = NULL;
+	str val_s;
+
+	pve = (pv_elem_t *) value;
+
+	if(pve != NULL && ((struct dlg_profile_table *) profile)->has_value) {
+		if(pv_printf_s(msg,pve, &val_s) != 0 || 
+		   !val_s.s || val_s.len == 0) {
+			LM_WARN("cannot get string for value\n");
+			return -1;
+		}
+	}
+
+	if(dlg_set_timeout_by_profile((struct dlg_profile_table *) profile,
+				   &val_s, atoi(timeout_str)) != 0)
+		return -1;
+
+	return 1;
+}
+
+static int w_dlg_set_timeout_by_profile2(struct sip_msg *msg, 
+					 char *profile, char *timeout_str)
+{
+	return w_dlg_set_timeout_by_profile3(msg, profile, NULL, timeout_str);
+}
 
 void dlg_ka_timer_exec(unsigned int ticks, void* param)
 {
@@ -1586,14 +1618,28 @@ static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
 	unsigned int h_entry, h_id;
 	dlg_cell_t * dlg = NULL;
 	str rpc_extra_hdrs = {NULL,0};
+	int n;
 
-	if (rpc->scan(c, "ddS", &h_entry, &h_id, &rpc_extra_hdrs) < 2) return;
+	n = rpc->scan(c, "dd", &h_entry, &h_id);
+	if (n < 2) {
+		LM_ERR("unable to read the parameters (%d)\n", n);
+		rpc->fault(c, 500, "Invalid parameters");
+		return;
+	}
+	if(rpc->scan(c, "*S", &rpc_extra_hdrs)<1)
+	{
+		rpc_extra_hdrs.s = NULL;
+		rpc_extra_hdrs.len = 0;
+	}
 
 	dlg = dlg_lookup(h_entry, h_id);
-	if(dlg){
-		dlg_bye_all(dlg, (rpc_extra_hdrs.len>0)?&rpc_extra_hdrs:NULL);
-		dlg_release(dlg);
+	if(dlg==NULL) {
+		rpc->fault(c, 404, "Dialog not found");
+		return;
 	}
+
+	dlg_bye_all(dlg, (rpc_extra_hdrs.len>0)?&rpc_extra_hdrs:NULL);
+	dlg_release(dlg);
 }
 static void rpc_profile_get_size(rpc_t *rpc, void *c) {
 	str profile_name = {NULL,0};
@@ -1623,8 +1669,18 @@ static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
 	str from = {NULL,0};
 	str to = {NULL,0};
 	str op = {NULL,0};
+	int n;
 
-	if (rpc->scan(c, "SSS", &from, &to, &op) < 2) return;
+	n = rpc->scan(c, "SS", &from, &to);
+	if (n< 2) {
+		LM_ERR("unable to read the parameters (%d)\n", n);
+		rpc->fault(c, 500, "Invalid parameters");
+		return;
+	}
+	if(rpc->scan(c, "*S", &op)<1) {
+		op.s = NULL;
+		op.len = 0;
+	}
 
 	dlg_bridge(&from, &to, &op);
 }

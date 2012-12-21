@@ -1,50 +1,47 @@
-1. XMLOPS Module
+XMLOPS Module
 
 Daniel-Constantin Mierla
 
    asipto.com
    <miconda@gmail.com>
 
-   Copyright Â© 2009 asipto.com
+   Copyright © 2009 asipto.com
      __________________________________________________________________
 
-   1.1. Overview
-   1.2. Dependencies
+   List of Examples
 
-        1.2.1. Kamailio Modules
-        1.2.2. External Libraries or Applications
+   1. Set buf_size parameter
+   2. Set xml_ns parameter
+   3. xml usage
 
-   1.3. Parameters
-
-        1.3.1. buf_size (integer)
-        1.3.2. xml_ns (str)
-
-   1.4. Pseudo-Variables
-
-        1.4.1. $xml(name=>spec)
-
-1.1. Overview
+1. Overview
 
    This is a module implementing functions and pseudo-variables for XML
    operations.
 
-1.2. Dependencies
+2. Dependencies
 
-1.2.1. Kamailio Modules
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * none.
 
-1.2.2. External Libraries or Applications
+2.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running kamailio with this module loaded:
      * libxml - for compilation from source, the development headers from
        this library are needed as well.
 
-1.3. Parameters
+3. Parameters
 
-1.3.1. buf_size (integer)
+   3.1. buf_size (integer)
+   3.2. xml_ns (str)
+
+3.1. buf_size (integer)
 
    Maximum size of the XML buffer.
 
@@ -55,7 +52,7 @@ Daniel-Constantin Mierla
 modparam("xmlops", "buf_size", 8192)
 ...
 
-1.3.2. xml_ns (str)
+3.2. xml_ns (str)
 
    Register xml namespace prefix. Parameter value must have the format:
    'prefix=uri'.
@@ -65,9 +62,11 @@ modparam("xmlops", "buf_size", 8192)
 modparam("xmlops", "xml_ns", "rpid=urn:ietf:params:xml:ns:pidf:rpid")
 ...
 
-1.4. Pseudo-Variables
+4. Pseudo-Variables
 
-1.4.1.  $xml(name=>spec)
+   4.1. $xml(name=>spec)
+
+4.1.  $xml(name=>spec)
 
    Pseudo-variable for XML document operations using xpath syntax. For
    more see the Pseudo-Variables Cookbook.

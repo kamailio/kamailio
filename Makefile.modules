@@ -77,7 +77,7 @@ DEFS += -DMOD_NAME='"$(MOD_NAME)"'
 
 
 ifeq (,$(findstring -DSER_MOD_INTERFACE, $(DEFS)))
-	MODIFACE=-DOPENSER_MOD_INTERFACE
+	MODIFACE=-DKAMAILIO_MOD_INTERFACE
 else
 	MODIFACE=-DSER_MOD_INTERFACE
 endif
@@ -295,7 +295,7 @@ endif
 ifneq (,$(wildcard $(MOD_NAME).xml))
 
 $(MOD_NAME).7: $(MOD_NAME).xml
-	docbook2x-man -s ../../doc/stylesheets/serdoc2man.xsl $<
+	$(DOCBOOK) -s ../../doc/stylesheets/serdoc2man.xsl $<
 
 man: $(MOD_NAME).7
 

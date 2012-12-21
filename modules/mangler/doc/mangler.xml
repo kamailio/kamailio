@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<book id="mangler" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+    	<title>The Mangler Module - SDP mangling</title>
+	<authorgroup>
+	    <author>
+		<firstname>Gabriel</firstname>
+		<surname>Vasile</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email>vasile@fokus.fraunhofer.de</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+    </bookinfo>
+
+    <section id="mangler.overview">
+	<title>Overview</title>
+	<para>
+	    This is a module to help with SDP mangling
+	</para>
+    </section>
+
+    <xi:include href="mangler_params.xml"/>
+    <xi:include href="mangler_functions.xml"/>
+
+</book>

@@ -16,6 +16,7 @@ Peter Dunkley
 
               2.1. Initiating a connection
               2.2. SIP message routing
+              2.3. MSRP message routing
 
         3. Dependencies
 
@@ -29,6 +30,7 @@ Peter Dunkley
               4.3. keepalive_processes (integer)
               4.4. keepalive_interval (integer)
               4.5. ping_application_data (string)
+              4.6. sub_protocols (integer)
 
         5. Functions
 
@@ -56,7 +58,8 @@ Peter Dunkley
    1.5. Set keepalive_processes parameter
    1.6. Set keepalive_interval parameter
    1.7. Set ping_application_data parameter
-   1.8. ws_handle_handshake usage
+   1.8. Set sub_protocols parameter
+   1.9. ws_handle_handshake usage
 
 Chapter 1. Admin Guide
 
@@ -67,6 +70,7 @@ Chapter 1. Admin Guide
 
         2.1. Initiating a connection
         2.2. SIP message routing
+        2.3. MSRP message routing
 
    3. Dependencies
 
@@ -80,6 +84,7 @@ Chapter 1. Admin Guide
         4.3. keepalive_processes (integer)
         4.4. keepalive_interval (integer)
         4.5. ping_application_data (string)
+        4.6. sub_protocols (integer)
 
    5. Functions
 
@@ -102,8 +107,9 @@ Chapter 1. Admin Guide
 
    This module implements a WebSocket (RFC 6455) server and provides
    connection establishment (handshaking), management (including
-   connection keep-alive), and framing for the SIP WebSocket sub-protocol
-   (ietf-draft-sipcore-sip-websocket).
+   connection keep-alive), and framing for the SIP and MSRP WebSocket
+   sub-protocols (draft-ietf-sipcore-sip-websocket and
+   draft-pd-msrp-websocket).
 
    The module supports WebSockets (ws) and secure WebSockets (wss)
 
@@ -111,6 +117,7 @@ Chapter 1. Admin Guide
 
    2.1. Initiating a connection
    2.2. SIP message routing
+   2.3. MSRP message routing
 
 2.1. Initiating a connection
 
@@ -122,13 +129,14 @@ Chapter 1. Admin Guide
    headers before calling Section 5.1, “ ws_handle_handshake() ”. The
    event_route can also be used to make sure the HTTP GET has the correct
    URI, perform HTTP authentication on the WebSocket connection, and check
-   the Origin header (RFC 6454) to ensure a browser-based SIP UA has been
-   downloaded from the correct location.
+   the Origin header (RFC 6454) to ensure a browser-based SIP UA or MSRP
+   client has been downloaded from the correct location.
 
    Example 1.1. event_route[xhttp:request]
 ...
 loadmodule "sl.so"
 loadmodule "xhttp.so"
+loadmodule "msrp.so"  # Only required if using MSRP over WebSockets
 loadmodule "websocket.so"
 ...
 event_route[xhttp:request] {
@@ -194,7 +202,7 @@ event_route[xhttp:request] {
    WebSocket connection is made. This means that the routing headers
    cannot be used for request or response routing in the normal manner.
 
-   ietf-draft-sipcore-sip-websocket states that SIP WebSocket Clients and
+   draft-ietf-sipcore-sip-websocket states that SIP WebSocket Clients and
    the SIP registrar should implement Outbound (RFC 5626) and Path (RFC
    3327) to enable requests and responses to be correctly routed. However,
    Kamailio does not currently support Outbound and it may not be possible
@@ -265,6 +273,16 @@ onreply_route[WS_REPLY] {
 }
 ...
 
+2.3. MSRP message routing
+
+   MSRP over WebSocket clients create invalid local URIs for use in Path
+   headers (From-Path: and To-Path:) because a JavaScript stack running in
+   a browser has no way to determine the local address from which the
+   WebSocket connection is made. This is OK because MSRP over WebSocket
+   clients MUST use an MSRP relay and it is the MSRP relay's
+   responsibility to select the correct connection to the client based on
+   the MSRP URIs that it has created (and maintains a mapping for).
+
 3. Dependencies
 
    3.1. Kamailio Modules
@@ -284,6 +302,9 @@ onreply_route[WS_REPLY] {
    scheme:
      * tls.
 
+   The following module is required to support MSRP over WebSockets:
+     * msrp.
+
 3.2. External Libraries or Applications
 
    The following libraries must be installed before running Kamailio with
@@ -298,6 +319,7 @@ onreply_route[WS_REPLY] {
    4.3. keepalive_processes (integer)
    4.4. keepalive_interval (integer)
    4.5. ping_application_data (string)
+   4.6. sub_protocols (integer)
 
 4.1. keepalive_mechanism (integer)
 
@@ -367,6 +389,21 @@ modparam("websocket", "keepalive_interval", 2)
 modparam("websocket", "ping_application_data", "WebSockets rock")
 ...
 
+4.6. sub_protocols (integer)
+
+   A bitmap that allows you to control the sub-protocols supported by the
+   WebSocket server.
+     * 1 - sip (draft-ietf-sipcore-sip-websocket)
+     * 2 - msrp (draft-pd-msrp-websocket) - msrp.so must be loaded before
+       websocket.so
+
+   Default value is 1 when msrp.so is not loaded 3 when msrp.so is loaded.
+
+   Example 1.8. Set sub_protocols parameter
+...
+modparam("websocket", "sub_protocols", 2)
+...
+
 5. Functions
 
    5.1. ws_handle_handshake()
@@ -385,7 +422,7 @@ Note
    This function returns 0, stopping all further processing of the
    request, when there is a problem.
 
-   Example 1.8. ws_handle_handshake usage
+   Example 1.9. ws_handle_handshake usage
 ...
 ws_handle_handshake();
 ...

@@ -619,7 +619,7 @@ static inline int send_sockinfo(int fd)
    unsigned char i;
    char buffer[300];
    int k=0,j;
-   buffer[k++]=16;/*This used to be T_TABLE_POWER in openser 1.0.1, now its hardcoded in config.h*/
+   buffer[k++]=16;/*This used to be T_TABLE_POWER in Kamailio 1.0.1, now its hardcoded in config.h*/
    for(i=0,s=udp_listen;s;s=s->next,i++);
 #ifdef USE_TCP
    for(s=tcp_listen;s;s=s->next,i++);

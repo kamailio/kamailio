@@ -274,7 +274,7 @@ Chapter 1. Admin Guide
 1.4. Address Permissions
 
    The module can be used to determine if an address (IP address and port)
-   matches any of the IP subnets stored in cached openser database table.
+   matches any of the IP subnets stored in cached Kamailio database table.
    Port 0 in cached database table matches any port. IP address and port
    to be matched can be either taken from the request
    (allow_source_address) or given as pvar arguments (allow_address).

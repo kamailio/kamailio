@@ -32,7 +32,7 @@ TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 cp $CFG $CFG.tmp
 echo "loadmodule \"../../modules/db_postgres/db_postgres.so\"" >> $CFG
-echo "modparam(\"cpl-c\", \"db_url\", \"postgres://openser:openserrw@localhost/openser\")" >> $CFG
+echo "modparam(\"cpl-c\", \"db_url\", \"postgres://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
 
 
 $BIN -w . -f $CFG &> /dev/null;

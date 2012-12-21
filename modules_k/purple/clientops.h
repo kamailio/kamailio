@@ -1,4 +1,4 @@
-/* OpenSER PURPLE MODULE
+/* Kamailio PURPLE MODULE
  * 
  * Copyright (C) 2008 Atos Worldline
  * Contact: Eric PTAK <eric.ptak@atosorigin.com>

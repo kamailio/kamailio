@@ -964,6 +964,27 @@ int dlg_set_toroute(struct dlg_cell *dlg, str *route)
 	return 0;
 }
 
+/*
+ * Internal function to adjust the lifetime of a dialog, used by
+ * various userland functions that touch the dialog timeout.
+ */
+
+int	update_dlg_timeout(dlg_cell_t *dlg, int timeout)
+{
+	if(update_dlg_timer(&dlg->tl, timeout) < 0) {
+		LM_ERR("failed to update dialog lifetime\n");
+		dlg_release(dlg);
+		return -1;
+	} 
+
+	dlg->lifetime = timeout;
+	dlg->dflags |= DLG_FLAG_CHANGED;
+
+	dlg_release(dlg);
+
+	return 0;
+}
+
 /**************************** MI functions ******************************/
 /*!
  * \brief Helper method that output a dialog via the MI interface
@@ -1174,6 +1195,8 @@ static inline struct mi_root* process_mi_params(struct mi_root *cmd_tree,
 
 	/* we have params -> get callid and fromtag */
 	callid = &node->value;
+	if(callid->s==NULL || callid->len<=0)
+		return init_mi_tree(400, MI_SSTR(MI_MISSING_PARM));
 	LM_DBG("callid='%.*s'\n", callid->len, callid->s);
 
 	node = node->next;

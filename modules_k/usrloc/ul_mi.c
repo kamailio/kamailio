@@ -664,7 +664,9 @@ struct mi_root* mi_usrloc_show_contact(struct mi_root *cmd, void *param)
 				"methods=0x%X"
 				"%s%.*s%s" /*received*/
 				"%s%.*s%s" /*user-agent*/
-				"%s%.*s%s", /*path*/
+				"%s%.*s%s" /*path*/
+				"%s%.*s" /*instance*/
+			        ";reg-id=%u",
 				con->c.len, ZSW(con->c.s),
 				q2str(con->q, 0), (int)(con->expires - act_time),
 				con->flags, con->cflags,
@@ -676,7 +678,10 @@ struct mi_root* mi_usrloc_show_contact(struct mi_root *cmd, void *param)
 				con->user_agent.len?";user_agent=<":"",con->user_agent.len,
 					ZSW(con->user_agent.s), con->user_agent.len?">":"",
 				con->path.len?";path=<":"", con->path.len,
-					ZSW(con->path.s), con->path.len?">":""
+					ZSW(con->path.s), con->path.len?">":"",
+				con->instance.len?";+sip.instance=":"", con->instance.len,
+				        ZSW(con->instance.s),
+				con->reg_id
 				);
 			if (node==0)
 				goto error;

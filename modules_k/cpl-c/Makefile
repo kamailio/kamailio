@@ -6,12 +6,20 @@ include ../../Makefile.defs
 auto_gen=
 NAME=cpl-c.so
 
-DEFS +=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
+ifeq ($(CROSS_COMPILE),)
+XML2CFG=$(shell which xml2-config)
+endif
+
+ifneq ($(XML2CFG),)
+	DEFS += $(shell $(XML2CFG) --cflags )
+	LIBS += $(shell $(XML2CFG) --libs)
+else
+	DEFS +=-I$(LOCALBASE)/include/libxml2 \
 		-I$(LOCALBASE)/include  # iconv.h
+	LIBS += -L$(LOCALBASE)/lib -lxml2
+endif
 
-LIBS= -L$(LOCALBASE)/lib -lxml2
-
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kmi/kmi

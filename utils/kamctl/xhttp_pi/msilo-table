@@ -1,0 +1,18 @@
+	<!-- Declaration of silo table-->
+	<db_table id="silo">
+		<table_name>silo</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>src_addr</field><type>DB1_STR</type></column>
+		<column><field>dst_addr</field><type>DB1_STR</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>inc_time</field><type>DB1_INT</type></column>
+		<column><field>exp_time</field><type>DB1_INT</type></column>
+		<column><field>snd_time</field><type>DB1_INT</type></column>
+		<column><field>ctype</field><type>DB1_STR</type></column>
+		<column><field>body</field><type>DB1_BLOB</type></column>
+		<column><field>extra_hdrs</field><type>DB1_BLOB</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>status</field><type>DB1_INT</type></column>
+	</db_table>

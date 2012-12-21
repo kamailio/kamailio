@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="xprint.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="buf_size">
+	<title><varname>buf_size</varname> (integer)</title>
+	<para>
+	    Maximum size of the log message.
+	</para>
+	<para>
+	    Default value is 4096.
+	</para>
+	<example>
+	    <title>Set <varname>buf_size</varname> parameter</title>
+	    <programlisting>
+...
+modparam("xprint", "buf_size", 8192)
+...
+	    </programlisting>
+	</example>
+    </section>
+</section>

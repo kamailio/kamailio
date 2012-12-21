@@ -1,0 +1,356 @@
+Eval module
+===========
+
+Author: tomas.mandys at iptel dot org
+
+The module implements expression evaluation in route script, i.e. enables
+e.g. addition, concatanation, value items etc. There are two basic types:
+integer and string. Operation are processed using values on stack and
+polish notation. Besides the stack there are also register that may be
+accessed by quick manner in run time, via select or stack manipulation functions,
+because they are fixed during fixup phase.
+
+Module parameters:
+-----------------
+
+declare_register: string;
+
+Declares one register, multiple declaration supported
+
+Example:
+  modparam("eval", "declare_register", "ax");
+  modparam("eval", "declare_register", "bx");
+  modparam("eval", "declare_register", "cx");
+  modparam("eval", "declare_register", "dx");
+
+xlbuf_size: int;
+Default: 4096
+
+Size of buffer for xlib formating.
+
+
+Module functions:
+----------------
+
+location:
+Location for stack manipulation operation. Thare are supported int/str constant,
+AVP, register, xlib formatted string
+
+integers: any value (included string) that may be converted to int
+string: any string, prefix "s:" forces string even when is "integer"
+xlib: string prefixed by "x:"
+AVP: an AVP compliant string starting with "$"
+register: register name declared using "declare_register" and starting with "r:"
+function: get value from function, "f:<funcname>"
+
+Currently are supported following functions:
+time ... get time in seconds
+uuid ... get uuid using uuid library
+stackno ... get current stack size
+
+Example:
+"f:time"
+
+
+Note that result of any select may be used using xlib string, e.g. "x:%@eval.get[0]"
+
+
+stack_pos:
+Position on the stack. Values greater or equal than zero are counted from top, negative values counted
+from bottom, i.e. 0..topmost position, -1..bottommost position
+
+Example:
+Value   Idx as or
+3456    0  -5
+5678    1  -4
+87655   2  -3
+76534   3  -2
+-1543   4  -1
+
+
+Stack manipulation functions return TRUE/FALSE if operation was succesfull or not. Every stack_pos/num may be
+evaluated in runtime using location (AVP, register, xlstr).
+
+eval_add(location[, stack_pos]);
+eval_push(location[, stack_pos]);
+Default: stack_pos: -1
+Add value bellow stack_pos item.
+
+Example:
+eval_push("1");
+eval_push("$a");
+eval_push("x:%ru", -2);
+$pos = 1;
+eval_push("ABC", "$pos");
+
+eval_insert(location[, stack_pos]);
+Default: stack_pos: 0
+Add value above stack_pos item.
+
+Example:
+eval_insert("s:1");
+eval_push("f:uuid");
+eval_push("f:time");
+
+eval_xchg(location[, stack_pos]);
+Default: stack_pos: 0
+Exchange values between stack and location. Note that only
+register location is allowed.
+
+eval_get(location[, stack_pos]);
+Default: stack_pos: 0
+Move value from stack to (writable) location, i.e. AVP, register.
+Note that enables assigning AVP value also as interger
+(vs. select that returns alway string)
+
+Example:
+eval_get("$avp", 2);
+
+eval_put(location[, stack_pos]);
+Default: stack_pos: 0
+Move value from location to stack.
+
+eval_add_value(location[, num]);
+Default: num: -1
+Split value (comma delimited items) and add to stack
+
+Example:
+eval_add_value("One,Two,Three,Four"); # add 4 items stack
+
+eval_insert_value(location[, num]);
+Default: num: 0
+Split value (comma delimited items) and insert to stack
+
+
+eval_pop(location[, stack_pos]);
+Default: stack_pos: 0
+Get value from writable location and remove it from the stack
+
+eval_remove([stack_pos[, num]]);
+Default: stack_pos: 0; num: 1
+Remove num items from the stack starting at stack_pos. If num is negative then stops removing (-num) element before bottom.
+
+Example:
+$pos = 1;
+$num = 3;
+eval_remove("$pos", "$num");
+
+eval_clear(what);
+Clear stack (if bit0 in what set) or registers (if bit1 in what set)
+
+eval_oper(operations[, stack_pos]);
+Default: stack_pos: 0
+Perform comma delimited operations relating to stack_pos, i.e. get n parameters (stack_pos, stack_pos+1, ...stack_pos+n-1),
+put result at stack_pos and remove params (stack_pos+1, ...stack_pos+n-1). When not enough params availble then
+false is returned, error logged and stack is in state in time of error (i.e. probably unpredictable).
+
+Operation may contain location (avp,xlib str,register) to evaluate function in runtime, i.e. indirect functions. Note
+that particular operation is evaluated, not complete string:
+
+$op1="abs"; $op2="/"; eval_oper("$op1,$op2,+,*"); # OK
+$op = "abs,/,+,*"; eval_oper("$op");  # BAD
+
+Example:
+
+eval_push("2");
+eval_push("3");
+eval_push("9");
+eval_oper("+,*");   # i.e. (2+3)*9 = 54
+eval_insert("100", 0);
+$op="-";
+eval_oper("$op");     # i.e. 100-54 = 64
+
+eval_while(route_no [, stack_pos])
+Default: stack_pos: 0
+Implements simple looping. Route_no is called while stack[stack_pos] is true, i.e.
+non empty integer non equal zero or non empty string.
+Loop is also interrupted if route_no returns value <= 0.
+
+Example:
+route[LOOP] {
+  xplog("L_ERR", "%@eval.get[1] = %@eval.pop[2]\n");
+  eval_oper("dec");
+  eval_oper("inc", 1);
+}
+
+eval_push(3);
+eval_push(1);
+eval_push("One");
+eval_push("Two");
+eval_push("Three");
+eval_while("LOOP");
+eval_remove(0, 2);
+
+Example for mathematicians using ser as scientic calculator:
+
+route["FACTORIAL"] {
+  if (@eval.get[0] == "-1") { # first loop ?
+    xplog("L_ERR", "How much is factorial of %@eval.get[1] ? \n");
+    eval_get("r:tmp", 1);
+    eval_put("r:tmp");
+    eval_oper("sgn");
+    if (@eval.get[0] == "0" || @eval.reg.tmp == "1") {  # zero is exception, one is optimization
+      xplog("L_ERR", "1\n");
+      eval_put(1);
+      eval_remove(1);
+      return -1;
+    }
+    else if (@eval.get[0] == "-1") {  # negative x is nonsense
+      xplog("L_ERR", "not defined\n");
+      eval_remove(1);
+      return -1;
+    }
+    # stack[0] is 1
+  }
+  eval_get("r:tmp", 1);  # save x
+  eval_oper("*");        # r *= x
+  if (@eval.reg.tmp == "2") {
+      xplog("L_ERR", "%@eval.get[0]\n");
+      return -1;
+  }
+  eval_push("r:tmp");
+  eval_oper("dec", 1); # x--
+}
+
+route{
+
+
+eval_push("-1");  # condition
+eval_push(0);
+eval_while("FACTORIAL");
+eval_remove();
+
+eval_push("-1");  # condition
+eval_push(1);
+eval_while("FACTORIAL");
+eval_remove();
+
+eval_push("-1");  # condition
+eval_push(-3);
+eval_while("FACTORIAL");
+eval_remove();
+
+eval_push("-1");  # condition
+eval_push(9);
+eval_while("FACTORIAL");
+eval_remove();
+
+Keen ser user will implement inverse hyperbolic tangens as homework.
+
+
+eval_while_stack(route_no [, stack_count])
+Default: stack_count: 0
+Implements simple looping. Route_no is called while number of stack item is
+greater than stack_count, resp. lower than abs(stack_count) if stack_count is negative.
+Loop is also interrupted if route_no returns value <= 0.
+
+Example:
+route[LOOP] {
+	xplog("L_ERR", "%@eval.pop[0]\n");
+}
+eval_push("Three");
+eval_push("Two");
+eval_push("One");
+eval_push("GO!");
+eval_while_stack("LOOP");
+
+
+eval_dump();
+Dumps stack and registers to stderr. For debugging purposes.
+
+
+Selects:
+-------
+
+@eval.pop[stack_pos]
+Get value of stack item and remove it from the stack
+
+@eval.get[stack_pos]
+Get register value
+
+@eval.reg.REGNAME
+Return register value.
+Example:
+if (@eval.reg.ax == @eval.get[0]) {
+
+}
+
+Note that @eval.get and @eval.reg support select_any_uri and select_any_nameaddr
+
+@eval.uuid
+Generates uuid, obsolete use @sys.unique
+
+Operators/functions
+-------------------
+
+String <-> integer conversion is perfomed automatically.
+
+"+" ... additon, 2 (int) params
+"-" ... subtraction, 2 (int) params
+"*" ... multiplication, 2 (int) params
+"/" ... division, 2 (int) params
+"%" ... modulo, 2 (int) params
+"neg" ... negation, 1 (int) param
+"abs" ... absolute value, 1 (int) param
+"sgn" ... signum, 1 (int) param
+"dec" ... decrement, 1 (int) param
+"inc" ... increment, 1 (int) param
+"&" ... bitand, 2 (int) params
+"|" ... bitor, 2 (int) params
+"^" ... bitxor, 2 (int) params
+"~" ... bitnot, 1 (int) param
+"&&" ... and, 2 (int) params
+"||" ... or, 2 (int) params
+"!" ... not, 1 (int) params
+
+"==" ... equal, 2 (any) params
+"!=" ... non equal, 2 (any) params
+">" ... greater, 2 (any) params
+">=" ... greater or equal, 2 (any) params
+"<" ... lower, 2 (any) params
+"<=" ... lower or equal, 2 (any) params
+
+
+"concat" ... string concatanation, 2 (str) params
+"substr" ... substring, (str) param, (int) position, (int) length
+get substring
+
+	If start is non-negative, the returned string will start at the start'th position in string, counting from zero. For instance, in the string 'abcdef', the character at position 0 is 'a', the character at position 2 is 'c', and so forth. If start is negative, the returned string will start at the start'th character from the end of string.
+
+	If length is given and is positive, the string returned will contain at most length characters beginning from start (depending on the length of string). If string is less than or equal to start characters long, empty string is returned.
+
+	If length is given and is negative, then that many characters will be omitted from the end of string (after the start position has been calculated when a start is negative). If start denotes a position beyond this truncation, an empty string will be returned.
+
+"strdel" ... delete substring, (str) param, (int) position, (int) length
+see substr
+
+"strlen" ... str length, (str) param
+"strstr" ... substring position, (str) string, (str) needle
+Return position of needle in string, -1 if not found
+
+"strupper" ... upcase, (str) str
+"strlower" ... locase, (str) str
+
+"(int)" ... cast item as integer
+"(str)" ... cast item as string
+
+Value oparation:
+working with comma delimited list of values, e.g. Record-route, route, etc.
+
+"valat" ... get value at index, (str) values, (int) idx
+Get values[idx], positive/negative logic similar to stack manipulation
+
+"valuris" ... get values in "normalized" form (uri only), (str) values
+
+"valrev" ... get values in reversal order, (str) values
+
+"subval" ... get subvalues, (str) values, (idx) index, (len) length  (... see substr)
+
+"strvalat" ... (str) values, (str) needle, get index of string in value (-1 if string does not exist)
+
+"valcount" ... get number of items
+
+"geturi" ... get uri part, "<", ">" are stripped, (str) addr
+
+"valconcat" ... concatenate n stack items to value, n<=0 returns empty string, (int) n, (str) v1 ... (str) vn
+

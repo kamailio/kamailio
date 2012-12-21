@@ -41,7 +41,7 @@ Andrei Pelinescu-Onciul
 
    This is mostly an example module. It implements text based operation
    (search, replace, append a.s.o). Many functions support xl_lib
-   formating using xlog module.
+   formating using xprint module.
 
 1.1.1. Known Limitations
 
@@ -436,10 +436,10 @@ if (@hf_value_exists.supported.path == "1") {
    Example 23. @hf_value select usage
 ...
 $a = @hf_value.my_header[1].my_param;
-xlog("L_ERR", "%@hf_value.via[-1], %@hf_value.from.tag\n");
+xplog("L_ERR", "%@hf_value.via[-1], %@hf_value.from.tag\n");
 $b = @hf_value.p_associated_uri;
 
-xlog("L_ERR", "Route uris: '%@hf_value.route[*].uri'\n");
+xplog("L_ERR", "Route uris: '%@hf_value.route[*].uri'\n");
 $rr = @hf_value.route.uri;
 
 $prt = @hf_value2.authorization.integrity_protected;

@@ -487,7 +487,7 @@ int msrp_parse_uri(char *start, int len, msrp_uri_t *uri)
 	if(uri->host.len<=0)
 	{
 		LM_ERR("bad host part in [%.*s] at [%ld]\n",
-				len, start, s - start);
+				len, start, (long)(s - start));
 		goto error;
 	}
 	if(uri->port.len <= 0)
@@ -498,17 +498,19 @@ int msrp_parse_uri(char *start, int len, msrp_uri_t *uri)
 		if(uri->port_no<1 || uri->port_no > ((1<<16)-1))
 		{
 			LM_ERR("bad port part in [%.*s] at [%ld]\n",
-					len, start, s - start);
+					len, start, (long)(s - start));
 			goto error;
 		}
 	}
 	if(uri->params.len > 0)
 	{
 		uri->proto.s = uri->params.s;
-		if(uri->params.len > 3 && strncasecmp(uri->params.s, "tcp", 3)==0)
-		{
+		if(uri->params.len > 3 && strncasecmp(uri->params.s, "tcp", 3)==0) {
 			uri->proto.len = 3;
 			uri->proto_no = MSRP_PROTO_TCP;
+		} else if (uri->params.len > 2 && strncasecmp(uri->params.s, "ws", 2)==0) {
+			uri->proto.len = 2;
+			uri->proto_no = MSRP_PROTO_WS;
 		} else {
 			p = q_memchr(uri->params.s, ';', uri->params.len);
 			if(p!=NULL) {

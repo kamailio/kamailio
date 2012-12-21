@@ -72,6 +72,9 @@ static param_export_t params[]=
 	{ "keepalive_timeout",		INT_PARAM, &ws_keepalive_timeout },
 	{ "ping_application_data",	STR_PARAM, &ws_ping_application_data.s},
 
+	/* ws_handshake.c */
+	{ "sub_protocols",		INT_PARAM, &ws_sub_protocols},
+
 	/* ws_mod.c */
 	{ "keepalive_interval",		INT_PARAM, &ws_keepalive_interval },
 	{ "keepalive_processes",	INT_PARAM, &ws_keepalive_processes },
@@ -212,6 +215,22 @@ static int mod_init(void)
 
 		/* Add extra process/timer for the keepalive process */
 		register_sync_timers(ws_keepalive_processes);
+	}
+
+	if (ws_sub_protocols & SUB_PROTOCOL_MSRP
+		&& !sr_event_enabled(SREV_TCP_MSRP_FRAME))
+		ws_sub_protocols &= ~SUB_PROTOCOL_MSRP;
+
+	if ((ws_sub_protocols & SUB_PROTOCOL_ALL) == 0)
+	{
+		LM_ERR("no sub-protocols enabled\n");
+		goto error;
+	}
+
+	if ((ws_sub_protocols | SUB_PROTOCOL_ALL) != SUB_PROTOCOL_ALL)
+	{
+		LM_ERR("unrecognised sub-protocols enabled\n");
+		goto error;
 	}
 
 	return 0;

@@ -1,0 +1,43 @@
+	<!-- Declaration of dr_gateways table-->
+	<db_table id="dr_gateways">
+		<table_name>dr_gateways</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>gwid</field><type>DB1_INT</type></column>
+		<column><field>type</field><type>DB1_INT</type></column>
+		<column><field>address</field><type>DB1_STR</type></column>
+		<column><field>strip</field><type>DB1_INT</type></column>
+		<column><field>pri_prefix</field><type>DB1_STR</type></column>
+		<column><field>attrs</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of dr_rules table-->
+	<db_table id="dr_rules">
+		<table_name>dr_rules</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>ruleid</field><type>DB1_INT</type></column>
+		<column><field>groupid</field><type>DB1_STR</type></column>
+		<column><field>prefix</field><type>DB1_STR</type></column>
+		<column><field>timerec</field><type>DB1_STR</type></column>
+		<column><field>priority</field><type>DB1_INT</type></column>
+		<column><field>routeid</field><type>DB1_STR</type></column>
+		<column><field>gwlist</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of dr_gw_lists table-->
+	<db_table id="dr_gw_lists">
+		<table_name>dr_gw_lists</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>gwlist</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of dr_groups table-->
+	<db_table id="dr_groups">
+		<table_name>dr_groups</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>groupid</field><type>DB1_INT</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>

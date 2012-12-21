@@ -8,7 +8,7 @@ Edited by
 
 Bogdan Iancu
 
-   Copyright Â© 2006 Voice Sistem SRL
+   Copyright © 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -100,7 +100,7 @@ modparam("statistics", "variable", "active_calls/no_reset")
    4.1. update_stat(variable,value)
    4.2. reset_stat(variable)
 
-4.1.  update_stat(variable,value)
+4.1. update_stat(variable,value)
 
    Updates the value of the statistic variable with the new value.
 
@@ -119,7 +119,7 @@ $var(a_calls) = "active_calls";
 update_stat("$var(a_calls)", "-1");
 ...
 
-4.2.  reset_stat(variable)
+4.2. reset_stat(variable)
 
    Resets to zero the value of the statistic variable.
 

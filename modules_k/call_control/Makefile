@@ -9,7 +9,7 @@ include ../../Makefile.defs
 auto_gen=
 NAME=call_control.so
 LIBS=
-DEFS+=-DOPENSER_MOD_INTERFACE
+DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 
 include ../../Makefile.modules

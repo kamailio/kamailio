@@ -1,0 +1,9 @@
+	<!-- Declaration of pl_pipes table-->
+	<db_table id="pl_pipes">
+		<table_name>pl_pipes</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>pipeid</field><type>DB1_STR</type></column>
+		<column><field>algorithm</field><type>DB1_STR</type></column>
+		<column><field>plimit</field><type>DB1_INT</type></column>
+	</db_table>

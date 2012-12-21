@@ -1,4 +1,4 @@
-1. Sanity Module
+The Sanity Module - SIP syntax checking
 
 Nils Ohlmeier
 
@@ -7,38 +7,35 @@ Nils Ohlmeier
    Copyright © 2006 iptelorg GmbH
      __________________________________________________________________
 
-   1.1. Overview
-   1.2. Dependencies
-   1.3. Parameters
+   List of Examples
 
-        1.3.1. default_checks (integer)
-        1.3.2. uri_checks (integer)
-        1.3.3. proxy_require (string)
-        1.3.4. autodrop (integer)
+   1. Set default_checks parameter
+   2. Set uri_checks parameter
+   3. Set proxy_require parameter
+   4. Set autodrop parameter
+   5. sanity_check usage
+   6. sanity_check usage with parameter
+   7. sanity_check usage with two parameters
 
-   1.4. Functions
-
-        1.4.1. sanity_check([msg_checks [, uri_checks]])
-
-1.1. Overview
+1. Overview
 
    This module aims to implement several sanity checks on incoming
    requests which are suggested or even required by a RFC, but are not
-   available yet in the core of SIP-router.
+   available yet in the core of Kamailio.
 
-   This checks are not required by SIP-router itself for its
-   functionality. But on the other side it makes not much sence if a
-   broken request traverses through a SIP network if it is rejected sooner
-   or later by a SIP device any way. As every sanity cost extra
-   performance because of additional parsing and evaluation it is now with
-   this module up to the SIP-router adminstrator which checks should be
-   done on which request.
+   These checks are not required by Kamailio itself for its functionality.
+   But on the other side it makes not much sence if a broken request
+   traverses through a SIP network if it is rejected sooner or later by a
+   SIP device any way. As every sanity check cost extra performance
+   because of additional parsing and evaluation it is with this module now
+   up to the Kamailio adminstrator which checks should be done on which
+   request.
 
    The following checks are available:
      * ruri sip version - (1) - checks if the SIP version in the request
        URI is supported, currently only 2.0.
      * ruri scheme - (2) - checks if the URI scheme of the request URI is
-       supported (sip[s]|tel[s]) by SIP-router.
+       supported (sip[s]|tel[s]) by Kamailio
      * required headers - (4) -checks if the minimum set of required
        headers to, from, cseq, callid and via is present in the request.
      * via sip version - (8) - not working because parser fails already
@@ -57,19 +54,24 @@ Nils Ohlmeier
        header are present in the list of the extensions from the module
        parameter proxy_require.
      * parse uri's - (1024) - checks if the specified URIs are present and
-       parseable by the SIP-router parsers
+       parseable by the Kamailio parsers
      * digest credentials (2048) Check all instances of digest credentials
        in a message. The test checks whether there are all required digest
        parameters and have meaningful values.
 
-1.2. Dependencies
+2. Dependencies
 
    The following modules must be loaded before this module:
      * sl - Stateless replies.
 
-1.3. Parameters
+3. Parameters
 
-1.3.1. default_checks (integer)
+   3.1. default_checks (integer)
+   3.2. uri_checks (integer)
+   3.3. proxy_require (string)
+   3.4. autodrop (integer)
+
+3.1. default_checks (integer)
 
    This parameter determines which of the checks from the sanity module
    are executed if no parameter was given to the sanity_check function
@@ -87,7 +89,7 @@ Nils Ohlmeier
 modparam("sanity", "default_checks", 1)
 ...
 
-1.3.2. uri_checks (integer)
+3.2. uri_checks (integer)
 
    This parameter determines which URIs are going to be checked if the
    'parse uri' will be executed.
@@ -100,19 +102,19 @@ modparam("sanity", "default_checks", 1)
 modparam("sanity", "uri_checks", 3)
 ...
 
-1.3.3. proxy_require (string)
+3.3. proxy_require (string)
 
-   This parameter set the list of supported extensions for this
-   SIP-router. The value is expected as comma separated list of the
-   extensions. This list is separated into single tokens. Each token from
-   a proxy require header will be compare to the tokens from this list.
+   This parameter sets the list of supported extensions for this Kamailio.
+   The value is expected as a comma separated list of extensions. This
+   list is separated into single tokens. Each token from a proxy require
+   header will be compared to the tokens from this list.
 
    Example 3. Set proxy_require parameter
 ...
 modparam("sanity", "proxy_require", "foo, bar")
 ...
 
-1.3.4. autodrop (integer)
+3.4. autodrop (integer)
 
    This parameter controls whether the module drops automatically or not
    the SIP message if the sanity checks fail. Default value is 1 (auto
@@ -126,15 +128,17 @@ modparam("sanity", "proxy_require", "foo, bar")
 modparam("sanity", "autodrop", 1)
 ...
 
-1.4. Functions
+4. Functions
 
-1.4.1. sanity_check([msg_checks [, uri_checks]])
+   4.1. sanity_check([msg_checks [, uri_checks]])
+
+4.1.  sanity_check([msg_checks [, uri_checks]])
 
    This function makes a row of sanity checks over the given SIP request.
-   The behavior of the function is also controled by 'autodrop' parameter.
-   If autodrop=0, the function returns false (-1) if one of the checks
-   failed. When autodrop=1, the function stops the execution of
-   configuration file. In both cases, ff one of the checks fails the
+   The behavior of the function is also controlled by 'autodrop'
+   parameter. If autodrop=0, the function returns false (-1) if one of the
+   checks failed. When autodrop=1, the function stops the execution of
+   configuration file. In both cases, if one of the checks fails the
    module sends a precise error reply via SL send_reply(). Thus there is
    no need to reply with a generic error message.
 

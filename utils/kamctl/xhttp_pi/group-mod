@@ -1,0 +1,26 @@
+	<!-- grp provisionning -->
+	<mod><mod_name>grp</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>grp</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>grp</field></col>
+				<col><field>last_modified</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- re_grp provisionning -->
+	<mod><mod_name>re_grp</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>re_grp</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>reg_exp</field></col>
+				<col><field>group_id</field></col>
+			</query_cols>
+		</cmd>
+	</mod>

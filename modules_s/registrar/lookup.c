@@ -165,7 +165,8 @@ skip_rewrite_uri:
 					LOG(L_ERR, "ERROR: lookup(): branch: out of memory\n");
 					goto cont; /* try to continue */
 				}
-				if (append_branch(_m, &new_uri, 0, 0, ptr->q, 0, 0) == -1) {
+				if (append_branch(_m, &new_uri, 0, 0, ptr->q,
+						  0, 0, 0, 0) == -1) {
 					LOG(L_ERR, "lookup(): Error while appending a branch\n");
 					pkg_free(new_uri.s);
 					if (ser_error==E_TOO_MANY_BRANCHES) goto skip;
@@ -174,8 +175,10 @@ skip_rewrite_uri:
 				}
 				pkg_free(new_uri.s); /* append_branch doesn't free it */
 			}else{
-				if (append_branch(_m, &ptr->c, &ptr->received, 0 /* path */,
-									ptr->q, 0 /* brflags*/, ptr->sock) == -1) {
+				if (append_branch(_m, &ptr->c, &ptr->received,
+						  0 /* path */,
+						  ptr->q, 0 /* brflags*/,
+						  ptr->sock, 0, 0) == -1) {
 					LOG(L_ERR, "lookup(): Error while appending a branch\n");
 					goto skip; /* Return OK here so the function succeeds */
 				}
@@ -247,10 +250,8 @@ int lookup2(struct sip_msg* msg, char* table, char* p2)
 	int res;
 	unsigned int nat;
 	str new_uri, aor;
-	fparam_t* fp;
 
 	nat = 0;
-	fp = (fparam_t*)p2;
 	
 	if (get_str_fparam(&aor, msg, (fparam_t*)p2) != 0) {
 	    ERR("Unable to get the AOR value\n");
@@ -328,7 +329,8 @@ skip_rewrite_uri:
 					ERR("branch: out of memory\n");
 					goto cont; /* try to continue */
 				}
-				if (append_branch(msg, &new_uri, 0, 0, ptr->q, 0, 0) == -1) {
+				if (append_branch(msg, &new_uri, 0, 0, ptr->q,
+						  0, 0, 0, 0) == -1) {
 					ERR("Error while appending a branch\n");
 					pkg_free(new_uri.s);
 					if (ser_error == E_TOO_MANY_BRANCHES) goto skip;
@@ -337,8 +339,10 @@ skip_rewrite_uri:
 				}
 				pkg_free(new_uri.s); /* append_branch doesn't free it */
 			} else {
-				if (append_branch(msg, &ptr->c, &ptr->received, 0 /* path */,
-									 ptr->q, 0, ptr->sock) == -1) {
+				if (append_branch(msg, &ptr->c, &ptr->received,
+						  0 /* path */,
+						  ptr->q, 0, ptr->sock,
+						  0, 0) == -1) {
 					ERR("Error while appending a branch\n");
 					goto skip; /* Return OK here so the function succeeds */
 				}

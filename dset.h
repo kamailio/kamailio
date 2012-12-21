@@ -59,6 +59,13 @@ struct branch
         * contact within the array */
     struct socket_info* force_send_socket;
 
+    /* +sip.instance contact header param value */
+    char instance[MAX_INSTANCE_SIZE];
+    unsigned int instance_len;
+
+    /* reg-id contact header param value */
+    unsigned int reg_id;
+
     /* Branch flags */
     flag_t flags;
 };
@@ -79,29 +86,30 @@ int drop_sip_branch(int idx);
  * Add a new branch to current transaction 
  */
 int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
-					 qvalue_t q, unsigned int flags,
-					 struct socket_info* force_socket);
+		  qvalue_t q, unsigned int flags,
+		  struct socket_info* force_socket,
+		  str* instance, unsigned int reg_id);
 
 /*! \brief kamailio compatible version */
 #define km_append_branch(msg, uri, dst_uri, path, q, flags, force_socket) \
-	append_branch(msg, uri, dst_uri, path, q, flags, force_socket)
+    append_branch(msg, uri, dst_uri, path, q, flags, force_socket, 0, 0)
 
 /*! \brief ser compatible append_branch version.
  *  append_branch version compatible with ser: no path or branch flags support
  *  and no str parameters.
  */
 static inline int ser_append_branch(struct sip_msg* msg,
-									char* uri, int uri_len,
-									char* dst_uri, int dst_uri_len,
-									qvalue_t q,
-									struct socket_info* force_socket)
+				    char* uri, int uri_len,
+				    char* dst_uri, int dst_uri_len,
+				    qvalue_t q,
+				    struct socket_info* force_socket)
 {
-	str s_uri, s_dst_uri;
-	s_uri.s=uri;
-	s_uri.len=uri_len;
-	s_dst_uri.s=dst_uri;
-	s_dst_uri.len=dst_uri_len;
-	return append_branch(msg, &s_uri, &s_dst_uri, 0, q, 0, force_socket);
+    str s_uri, s_dst_uri;
+    s_uri.s=uri;
+    s_uri.len=uri_len;
+    s_dst_uri.s=dst_uri;
+    s_dst_uri.len=dst_uri_len;
+    return append_branch(msg, &s_uri, &s_dst_uri, 0, q, 0, force_socket, 0, 0);
 }
 
 
@@ -126,14 +134,11 @@ void set_branch_iterator(int n);
  *  *len) or 0 if there are no more branches.
  */
 char* next_branch(int* len, qvalue_t* q, str* dst_uri, str* path,
-					unsigned int* flags, struct socket_info** force_socket);
-
+		  unsigned int* flags, struct socket_info** force_socket);
 
 char* get_branch( unsigned int i, int* len, qvalue_t* q, str* dst_uri,
-				  str* path, unsigned int *flags,
-				  struct socket_info** force_socket);
-
-
+		  str* path, unsigned int *flags,
+		  struct socket_info** force_socket);
 
 /*! \brief
  * Empty the array of branches

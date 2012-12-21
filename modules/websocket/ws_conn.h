@@ -50,6 +50,8 @@ typedef struct ws_connection
 	struct ws_connection *id_next;
 
 	struct receive_info rcv;
+
+	unsigned int sub_protocol;
 } ws_connection_t;
 
 typedef struct
@@ -73,7 +75,7 @@ extern stat_var *ws_max_concurrent_connections;
 
 int wsconn_init(void);
 void wsconn_destroy(void);
-int wsconn_add(struct receive_info rcv);
+int wsconn_add(struct receive_info rcv, unsigned int sub_protocol);
 int wsconn_rm(ws_connection_t *wsc, ws_conn_eventroute_t run_event_route);
 int wsconn_update(ws_connection_t *wsc);
 void wsconn_close_now(ws_connection_t *wsc);

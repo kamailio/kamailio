@@ -473,14 +473,14 @@ modparam("permissions", "declare_ipset", "my_ipset2=127.0.0.0/24;10.0.0.0/255.25
 	
 route[TT2] {
 	if (ip_is_trusted("$net", "$ip")) {
-		xlog("L_E", "'%$ip' - TRUE\n");
+		xplog("L_E", "'%$ip' - TRUE\n");
 	} else {
-		xlog("L_E", "'%$ip' - FALSE\n");
+		xplog("L_E", "'%$ip' - FALSE\n");
 	}
 }
 
 route[TT1] {
-	xlog("L_E", "Testing netmask '%$net'\n");
+	xplog("L_E", "Testing netmask '%$net'\n");
 	
 	$ip = "s";   # source address
 	route(TT2);

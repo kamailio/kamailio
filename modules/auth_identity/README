@@ -1,4 +1,4 @@
-1. SIP Authenticated Identity Module
+The Auth_identity module
 
 Gergely Kovacs
 
@@ -7,59 +7,24 @@ Gergely Kovacs
    Copyright © 2007 Iptel.org
      __________________________________________________________________
 
-   1.1. Overview
-   1.2. Dependencies
-   1.3. Compilation
-   1.4. Installation And Running
-   1.5. Parameters
+   List of Examples
 
-        1.5.1. privatekey_path (string)
-        1.5.2. certificate_path (string)
-        1.5.3. certificate_url (string)
-        1.5.4. msg_timeout (integer)
-        1.5.5. auth_validity_time (integer)
-        1.5.6. callid_cache_limit (integer)
-        1.5.7. certificate_cache_limit (integer)
-        1.5.8. cainfo_path (string)
-        1.5.9. accept_pem_certs ([0|1])
+   1. Set privatekey_path parameter
+   2. Set certificate_path parameter
+   3. Set certificate_url parameter
+   4. Set msg_timeout parameter
+   5. Set auth_validity_time parameter
+   6. Set auth_validity_time parameter
+   7. Set certificate_cache_limit parameter
+   8. Set cainfo_path parameter
+   9. Set accept_pem_certs parameter
 
-   1.6. Functions
-
-        1.6.1. auth_date_proc()
-
-              1.6.1.1. Dependencies
-
-        1.6.2. auth_add_identity()
-
-              1.6.2.1. Dependencies
-
-        1.6.3. vrfy_check_date()
-
-              1.6.3.1. Dependencies
-
-        1.6.4. vrfy_get_certificate()
-
-              1.6.4.1. Dependencies
-
-        1.6.5. vrfy_check_certificate()
-
-              1.6.5.1. Dependencies
-
-        1.6.6. vrfy_check_msgvalidity()
-
-              1.6.6.1. Dependencies
-
-        1.6.7. vrfy_check_callid()
-
-              1.6.7.1. Dependencies
-
-   1.7. Authorizer service examples
-   1.8. Verifier service examples
-
-1.1. Overview
+1. Overview
 
    Auth Identity module provides functionalities for securely identifying
-   originators of SIP messages. This module has two basic service:
+   originators of SIP messages. It implements the SIP Identity standard
+   where a SIP proxy signs messages that is sent to other domains. This
+   module has two basic services:
      * authorizer - authorizes a message and adds Identity and
        Identity-Info headers
      * verifier - verifies an authorized message
@@ -70,11 +35,11 @@ Gergely Kovacs
      * verifier does not support the subjectAltName extension of
        certificates
 
-1.2. Dependencies
+2. Dependencies
 
    This module does not depend any other module.
 
-1.3. Compilation
+3. Compilation
 
    This module needs the following headers and libraries:
      * OpenSSL (version 0.9.8 or higher) for cryptographic functions
@@ -83,7 +48,7 @@ Gergely Kovacs
    If you'd like to use TLS module too then use the corresponding LIB line
    in auth_identity's Makefile
 
-1.4. Installation And Running
+4. Installation And Running
 
    the Authorizer service needs to make the public key, which conveyed in
    a certificate, available over HTTPS or HTTP for verifiers. The domain
@@ -91,9 +56,19 @@ Gergely Kovacs
    certificate must be the same. This service needs access to the private
    key too.
 
-1.5. Parameters
+5. Parameters
 
-1.5.1. privatekey_path (string)
+   5.1. privatekey_path (string)
+   5.2. certificate_path (string)
+   5.3. certificate_url (string)
+   5.4. msg_timeout (integer)
+   5.5. auth_validity_time (integer)
+   5.6. callid_cache_limit (integer)
+   5.7. certificate_cache_limit (integer)
+   5.8. cainfo_path (string)
+   5.9. accept_pem_certs ([0|1])
+
+5.1. privatekey_path (string)
 
    Note: this parameter is for authorizer service.
 
@@ -107,7 +82,7 @@ Gergely Kovacs
 modparam("auth_identity","privatekey_path","/etc/ssl/private/key.pem")
 ...
 
-1.5.2. certificate_path (string)
+5.2. certificate_path (string)
 
    Note: this parameter is for authorizer service.
 
@@ -121,7 +96,7 @@ modparam("auth_identity","privatekey_path","/etc/ssl/private/key.pem")
 modparam("auth_identity","certificate_path","/var/www/ssl/mycert.pem")
 ...
 
-1.5.3. certificate_url (string)
+5.3. certificate_url (string)
 
    Note: this parameter is for authorizer service.
 
@@ -136,7 +111,7 @@ modparam("auth_identity","certificate_path","/var/www/ssl/mycert.pem")
 modparam("auth_identity","certificate_url","https://foo.bar/mycert.der")
 ...
 
-1.5.4. msg_timeout (integer)
+5.4. msg_timeout (integer)
 
    Note: this parameter is for authorizer service.
 
@@ -151,7 +126,7 @@ modparam("auth_identity","certificate_url","https://foo.bar/mycert.der")
 modparam("auth_identity","msg_timeout",600)
 ...
 
-1.5.5. auth_validity_time (integer)
+5.5. auth_validity_time (integer)
 
    Note: this parameter is for verifier service.
 
@@ -166,7 +141,7 @@ modparam("auth_identity","msg_timeout",600)
 modparam("auth_identity","auth_validity_time",3600)
 ...
 
-1.5.6. callid_cache_limit (integer)
+5.6. callid_cache_limit (integer)
 
    Note: this parameter is for verifier service.
 
@@ -183,7 +158,7 @@ modparam("auth_identity","auth_validity_time",3600)
 modparam("auth_identity","callid_cache_limit",32768)
 ...
 
-1.5.7. certificate_cache_limit (integer)
+5.7. certificate_cache_limit (integer)
 
    Note: this parameter is for verifier service.
 
@@ -198,7 +173,7 @@ modparam("auth_identity","callid_cache_limit",32768)
 modparam("auth_identity","certificate_cache_limit",4096)
 ...
 
-1.5.8. cainfo_path (string)
+5.8. cainfo_path (string)
 
    Note: this parameter is for verifier service.
 
@@ -213,7 +188,7 @@ modparam("auth_identity","certificate_cache_limit",4096)
 modparam("auth_identity","cainfo_path","/etc/ssl/certs/ca-certificates.crt")
 ...
 
-1.5.9. accept_pem_certs ([0|1])
+5.9. accept_pem_certs ([0|1])
 
    Note: this parameter is for verifier service.
 
@@ -226,9 +201,37 @@ modparam("auth_identity","cainfo_path","/etc/ssl/certs/ca-certificates.crt")
 modparam("auth_identity","accept_pem_certs",1)
 ...
 
-1.6. Functions
+6. Functions
 
-1.6.1. auth_date_proc()
+   6.1. auth_date_proc()
+
+        6.1.1. Dependencies
+
+   6.2. auth_add_identity()
+
+        6.2.1. Dependencies
+
+   6.3. vrfy_check_date()
+
+        6.3.1. Dependencies
+
+   6.4. vrfy_get_certificate()
+
+        6.4.1. Dependencies
+
+   6.5. vrfy_check_certificate()
+
+        6.5.1. Dependencies
+
+   6.6. vrfy_check_msgvalidity()
+
+        6.6.1. Dependencies
+
+   6.7. vrfy_check_callid()
+
+        6.7.1. Dependencies
+
+6.1.  auth_date_proc()
 
    Note: this function is for authorizer service.
 
@@ -239,11 +242,11 @@ modparam("auth_identity","accept_pem_certs",1)
    authentication service (set by certificate_path parameter) has been
    expired.
 
-1.6.1.1. Dependencies
+6.1.1. Dependencies
 
    No dependencies
 
-1.6.2. auth_add_identity()
+6.2.  auth_add_identity()
 
    Note: this function is for authorizer service.
 
@@ -259,22 +262,22 @@ modparam("auth_identity","accept_pem_certs",1)
    Call-ID, CSeq, Date, Contact) and body after auth_add_identity()'s been
    called
 
-1.6.2.1. Dependencies
+6.2.1. Dependencies
 
    auth_date_proc() must be called before
 
-1.6.3. vrfy_check_date()
+6.3.  vrfy_check_date()
 
    Note: this function is for verifier service.
 
    Checks Date header of the incoming message whether falls in validity
    time (set by auth_validity_time parameter)
 
-1.6.3.1. Dependencies
+6.3.1. Dependencies
 
    No dependencies
 
-1.6.4. vrfy_get_certificate()
+6.4.  vrfy_get_certificate()
 
    Note: this function is for verifier service.
 
@@ -283,11 +286,11 @@ modparam("auth_identity","accept_pem_certs",1)
    parameter). If the required certificate is not found there then this
    function downloads it.
 
-1.6.4.1. Dependencies
+6.4.1. Dependencies
 
    No dependencies
 
-1.6.5. vrfy_check_certificate()
+6.5.  vrfy_check_certificate()
 
    Note: this function is for verifier service.
 
@@ -295,23 +298,23 @@ modparam("auth_identity","accept_pem_certs",1)
    subject and the domain part of the URL are the same) and adds it to
    certificate table.
 
-1.6.5.1. Dependencies
+6.5.1. Dependencies
 
    vrfy_get_certificate() must be called before
 
-1.6.6. vrfy_check_msgvalidity()
+6.6.  vrfy_check_msgvalidity()
 
    Note: this function is for verifier service.
 
    Assembles digest-string from the message, create SHA1 hash and compares
    it with the decrypted value of Identity header.
 
-1.6.6.1. Dependencies
+6.6.1. Dependencies
 
    vrfy_get_certificate() must be called before and
    vrfy_check_certificate() should be called before
 
-1.6.7. vrfy_check_callid()
+6.7.  vrfy_check_callid()
 
    Note: this function is for verifier service.
 
@@ -321,11 +324,11 @@ modparam("auth_identity","accept_pem_certs",1)
    has not been replayed then adds it to callid table (which size is set
    by callid_cache_limit parameter).
 
-1.6.7.1. Dependencies
+6.7.1. Dependencies
 
    This function should be called for the last time.
 
-1.7. Authorizer service examples
+7. Authorizer service examples
 
 ...
 route[INIT]
@@ -368,7 +371,7 @@ route[OUTBOUND]
 }
 ...
 
-1.8. Verifier service examples
+8. Verifier service examples
 
 ...
 route[INIT]

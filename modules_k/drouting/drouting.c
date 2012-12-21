@@ -46,7 +46,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
 #include "../../dset.h"
-#include "../../lib/kmi/mi.h"
+#include "../../rpc_lookup.h"
 
 #include "dr_load.h"
 #include "prefix_tree.h"
@@ -123,11 +123,6 @@ static int is_from_gw_2(struct sip_msg* msg, char* str1, char* str2);
 static int goes_to_gw_0(struct sip_msg* msg, char* f1, char* f2);
 static int goes_to_gw_1(struct sip_msg* msg, char* f1, char* f2);
 
-static struct mi_root* dr_reload_cmd(struct mi_root *cmd_tree, void *param);
-
-#define RELOAD_MI_CMD  "dr_reload"
-
-
 MODULE_VERSION
 
 /*
@@ -177,28 +172,19 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-
-/*
- * Exported MI functions
- */
-static mi_export_t mi_cmds[] = {
-	{ RELOAD_MI_CMD, dr_reload_cmd, MI_NO_INPUT_FLAG, 0, 0 },
-	{ 0, 0, 0, 0, 0}
-};
-
-
+static rpc_export_t rpc_methods[];
 
 struct module_exports exports = {
 	"drouting",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,            /* Exported functions */
 	params,          /* Exported parameters */
-	0,               /* exported statistics */
-	mi_cmds,         /* exported MI functions */
-	0,               /* exported pseudo-variables */
+	NULL,            /* exported statistics */
+	NULL,            /* exported MI functions */
+	NULL,            /* exported pseudo-variables */
 	0,               /* additional processes */
 	dr_init,         /* Module initialization function */
-	(response_function) 0,
+	(response_function) NULL,
 	(destroy_function) dr_exit,
 	(child_init_function) dr_child_init /* per-child init function */
 };
@@ -271,9 +257,8 @@ static int dr_init(void)
 
 	LM_INFO("DRouting - initializing\n");
 
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
+	if (rpc_register_array(rpc_methods)!=0) {
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -468,32 +453,40 @@ static int dr_exit(void)
 }
 
 
+/* rpc function documentation */
+static const char *rpc_reload_doc[2] = {
+    "Write back to disk modified tables", 0
+};
 
-static struct mi_root* dr_reload_cmd(struct mi_root *cmd_tree, void *param)
+/* rpc function implementations */
+static void rpc_reload(rpc_t *rpc, void *c)
 {
 	int n;
 
-	LM_INFO("\"%s\" MI command received!\n",RELOAD_MI_CMD);
+	LM_INFO("RPC command received!\n");
 
 	/* init DB connection if needed */
 	if (db_hdl==NULL) {
 		db_hdl=dr_dbf.init(&db_url);
 		if(db_hdl==0 ) {
-			LM_CRIT("cannot initialize database connection\n");
-			goto error;
+			rpc->printf(c, "cannot initialize database connection");
+			return;
 		}
 	}
 
 	if ( (n=dr_reload_data())!=0 ) {
-		LM_CRIT("failed to load routing data\n");
-		goto error;
+		rpc->printf(c, "failed to load routing data");
+		return;
 	}
 
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-error:
-	return init_mi_tree( 500, "Failed to reload",16);
+	rpc->printf(c, "relaad OK");
+	return;
 }
 
+static rpc_export_t rpc_methods[] = {
+	{"drouting.reload", rpc_reload, rpc_reload_doc, 0},
+	{0, 0, 0, 0}
+};
 
 
 static inline int get_group_id(struct sip_uri *uri)

@@ -20,18 +20,15 @@
  *
 */
 
+#include <Python.h>
+
 #include "../../action.h"
 #include "../../mem/mem.h"
 #include "../../sr_module.h"
 #include "../../dset.h"
 #include "../../parser/msg_parser.h"
 
-#include <Python.h>
 #include "structmember.h"
-
-#ifndef Py_TYPE
-#define Py_TYPE(ob)               (((PyObject*)(ob))->ob_type)
-#endif
 
 typedef struct {
     PyObject_HEAD
@@ -42,8 +39,7 @@ static PyTypeObject MSGtype;
 
 #define is_msgobject(v)         ((v)->ob_type == &MSGtype)
 
-msgobject *
-newmsgobject(struct sip_msg *msg)
+msgobject *newmsgobject(struct sip_msg *msg)
 {
     msgobject *msgp;
 
@@ -55,22 +51,17 @@ newmsgobject(struct sip_msg *msg)
     return msgp;
 }
 
-void
-msg_invalidate(msgobject *self)
+void msg_invalidate(msgobject *self)
 {
-
     self->msg = NULL;
 }
 
-static void
-msg_dealloc(msgobject *msgp)
+static void msg_dealloc(msgobject *msgp)
 {
-
     PyObject_Del(msgp);
 }
 
-static PyObject *
-msg_copy(msgobject *self)
+static PyObject *msg_copy(msgobject *self)
 {
     msgobject *msgp;
 
@@ -80,8 +71,7 @@ msg_copy(msgobject *self)
     return (PyObject *)msgp;
 }
 
-static PyObject *
-msg_rewrite_ruri(msgobject *self, PyObject *args)
+static PyObject *msg_rewrite_ruri(msgobject *self, PyObject *args)
 {
     char *ruri;
     struct action act;
@@ -94,8 +84,7 @@ msg_rewrite_ruri(msgobject *self, PyObject *args)
     }
 
     if ((self->msg->first_line).type != SIP_REQUEST) {
-        PyErr_SetString(PyExc_RuntimeError, "Not a request message - "
-          "rewrite is not possible.\n");
+        PyErr_SetString(PyExc_RuntimeError, "Not a request message - rewrite is not possible.\n");
         Py_INCREF(Py_None);
         return Py_None;
     }
@@ -120,8 +109,7 @@ msg_rewrite_ruri(msgobject *self, PyObject *args)
     return Py_None;
 }
 
-static PyObject *
-msg_set_dst_uri(msgobject *self, PyObject *args)
+static PyObject *msg_set_dst_uri(msgobject *self, PyObject *args)
 {
     str ruri;
 
@@ -132,8 +120,7 @@ msg_set_dst_uri(msgobject *self, PyObject *args)
     }
 
     if ((self->msg->first_line).type != SIP_REQUEST) {
-        PyErr_SetString(PyExc_RuntimeError, "Not a request message - "
-          "set destination is not possible.\n");
+        PyErr_SetString(PyExc_RuntimeError, "Not a request message - set destination is not possible.\n");
         Py_INCREF(Py_None);
         return Py_None;
     }
@@ -155,8 +142,7 @@ msg_set_dst_uri(msgobject *self, PyObject *args)
     return Py_None;
 }
 
-static PyObject *
-msg_getHeader(msgobject *self, PyObject *args)
+static PyObject *msg_getHeader(msgobject *self, PyObject *args)
 {
     struct hdr_field *hf;
     str hname, *hbody;
@@ -189,8 +175,7 @@ msg_getHeader(msgobject *self, PyObject *args)
     return PyString_FromStringAndSize(hbody->s, hbody->len);
 }
 
-static PyObject *
-msg_call_function(msgobject *self, PyObject *args)
+static PyObject *msg_call_function(msgobject *self, PyObject *args)
 {
     int i, rval;
     char *fname, *arg1, *arg2;
@@ -288,20 +273,15 @@ PyDoc_STRVAR(copy_doc,
 Return a copy (``clone'') of the msg object.");
 
 static PyMethodDef msg_methods[] = {
-    {"copy",          (PyCFunction)msg_copy,          METH_NOARGS,  copy_doc},
-    {"rewrite_ruri",  (PyCFunction)msg_rewrite_ruri,  METH_VARARGS,
-      "Rewrite Request-URI."},
-    {"set_dst_uri",   (PyCFunction)msg_set_dst_uri,   METH_VARARGS,
-      "Set destination URI."},
-    {"getHeader",     (PyCFunction)msg_getHeader,     METH_VARARGS,
-      "Get SIP header field by name."},
-    {"call_function", (PyCFunction)msg_call_function, METH_VARARGS,
-      "Invoke function exported by the other module."},
-    {NULL, NULL, 0, NULL}                              /* sentinel */
+    {"copy",          (PyCFunction)msg_copy,          METH_NOARGS,		copy_doc},
+    {"rewrite_ruri",  (PyCFunction)msg_rewrite_ruri,  METH_VARARGS,		"Rewrite Request-URI."},
+    {"set_dst_uri",   (PyCFunction)msg_set_dst_uri,   METH_VARARGS,		"Set destination URI."},
+    {"getHeader",     (PyCFunction)msg_getHeader,     METH_VARARGS,		"Get SIP header field by name."},
+    {"call_function", (PyCFunction)msg_call_function, METH_VARARGS,		"Invoke function exported by the other module."},
+    {NULL, NULL, 0, NULL} /* sentinel */
 };
 
-static PyObject *
-msg_getType(msgobject *self, PyObject *unused)
+static PyObject *msg_getType(msgobject *self, PyObject *unused)
 {
     const char *rval;
 
@@ -311,24 +291,25 @@ msg_getType(msgobject *self, PyObject *unused)
         return Py_None;
     }
 
-    switch ((self->msg->first_line).type) {
-    case SIP_REQUEST:
-       rval = "SIP_REQUEST";
-       break;
+    switch ((self->msg->first_line).type)
+    {
+	case SIP_REQUEST:
+	    rval = "SIP_REQUEST";
+	    break;
 
-    case SIP_REPLY:
-       rval = "SIP_REPLY";
-       break;
+	case SIP_REPLY:
+	    rval = "SIP_REPLY";
+	    break;
 
-    default:
-       /* Shouldn't happen */
-       abort();
+	default:
+    	    /* Shouldn't happen */
+	    abort();
     }
+
     return PyString_FromString(rval);
 }
 
-static PyObject *
-msg_getMethod(msgobject *self, PyObject *unused)
+static PyObject *msg_getMethod(msgobject *self, PyObject *unused)
 {
     str *rval;
 
@@ -339,8 +320,7 @@ msg_getMethod(msgobject *self, PyObject *unused)
     }
 
     if ((self->msg->first_line).type != SIP_REQUEST) {
-        PyErr_SetString(PyExc_RuntimeError, "Not a request message - "
-          "no method available.\n");
+        PyErr_SetString(PyExc_RuntimeError, "Not a request message - no method available.\n");
         Py_INCREF(Py_None);
         return Py_None;
     }
@@ -348,8 +328,7 @@ msg_getMethod(msgobject *self, PyObject *unused)
     return PyString_FromStringAndSize(rval->s, rval->len);
 }
 
-static PyObject *
-msg_getStatus(msgobject *self, PyObject *unused)
+static PyObject *msg_getStatus(msgobject *self, PyObject *unused)
 {
     str *rval;
 
@@ -360,8 +339,7 @@ msg_getStatus(msgobject *self, PyObject *unused)
     }
 
     if ((self->msg->first_line).type != SIP_REPLY) {
-        PyErr_SetString(PyExc_RuntimeError, "Not a non-reply message - "
-          "no status available.\n");
+        PyErr_SetString(PyExc_RuntimeError, "Not a non-reply message - no status available.\n");
         Py_INCREF(Py_None);
         return Py_None;
     }
@@ -370,8 +348,7 @@ msg_getStatus(msgobject *self, PyObject *unused)
     return PyString_FromStringAndSize(rval->s, rval->len);
 }
 
-static PyObject *
-msg_getRURI(msgobject *self, PyObject *unused)
+static PyObject *msg_getRURI(msgobject *self, PyObject *unused)
 {
     str *rval;
 
@@ -382,8 +359,7 @@ msg_getRURI(msgobject *self, PyObject *unused)
     }
 
     if ((self->msg->first_line).type != SIP_REQUEST) {
-        PyErr_SetString(PyExc_RuntimeError, "Not a request message - "
-          "RURI is not available.\n");
+        PyErr_SetString(PyExc_RuntimeError, "Not a request message - RURI is not available.\n");
         Py_INCREF(Py_None);
         return Py_None;
     }
@@ -392,8 +368,7 @@ msg_getRURI(msgobject *self, PyObject *unused)
     return PyString_FromStringAndSize(rval->s, rval->len);
 }
 
-static PyObject *
-msg_get_src_address(msgobject *self, PyObject *unused)
+static PyObject *msg_get_src_address(msgobject *self, PyObject *unused)
 {
     PyObject *src_ip, *src_port, *pyRval;
 
@@ -427,8 +402,7 @@ msg_get_src_address(msgobject *self, PyObject *unused)
     return pyRval;
 }
 
-static PyObject *
-msg_get_dst_address(msgobject *self, PyObject *unused)
+static PyObject *msg_get_dst_address(msgobject *self, PyObject *unused)
 {
     PyObject *dst_ip, *dst_port, *pyRval;
 
@@ -463,24 +437,12 @@ msg_get_dst_address(msgobject *self, PyObject *unused)
 }
 
 static PyGetSetDef msg_getseters[] = {
-    {"Type",
-     (getter)msg_getType, NULL, NULL,
-     "Get message type - \"SIP_REQUEST\" or \"SIP_REPLY\"."},
-    {"Method",
-     (getter)msg_getMethod, NULL, NULL,
-     "Get SIP method name."},
-    {"Status",
-     (getter)msg_getStatus, NULL, NULL,
-     "Get SIP status code string."},
-    {"RURI",
-     (getter)msg_getRURI, NULL, NULL,
-     "Get SIP Request-URI."},
-    {"src_address",
-     (getter)msg_get_src_address, NULL, NULL,
-     "Get (IP, port) tuple representing source address of the message."},
-    {"dst_address",
-     (getter)msg_get_dst_address, NULL, NULL,
-     "Get (IP, port) tuple representing destination address of the message."},
+    {"Type",		(getter)msg_getType, NULL, NULL,		"Get message type - \"SIP_REQUEST\" or \"SIP_REPLY\"."},
+    {"Method",		(getter)msg_getMethod, NULL, NULL,		"Get SIP method name."},
+    {"Status",		(getter)msg_getStatus, NULL, NULL,		"Get SIP status code string."},
+    {"RURI",		(getter)msg_getRURI, NULL, NULL,		"Get SIP Request-URI."},
+    {"src_address",	(getter)msg_get_src_address, NULL, NULL,	"Get (IP, port) tuple representing source address of the message."},
+    {"dst_address",	(getter)msg_get_dst_address, NULL, NULL,	"Get (IP, port) tuple representing destination address of the message."},
     {NULL, NULL, NULL, NULL, NULL}  /* Sentinel */
 };
 
@@ -523,10 +485,9 @@ static PyTypeObject MSGtype = {
     msg_getseters,            /*tp_getset*/
 };
 
-int
-python_msgobj_init(void)
+int python_msgobj_init(void)
 {
-    Py_TYPE((void*)(&MSGtype)) = &PyType_Type;
+    MSGtype.ob_type = &PyType_Type;
     if (PyType_Ready(&MSGtype) < 0)
         return -1;
     return 0;

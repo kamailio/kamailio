@@ -342,6 +342,23 @@ int fixup_free_pvar_null(void** param, int param_no)
 	return fixup_free_pvar_all(param, param_no);
 }
 
+int fixup_pvar_none(void** param, int param_no)
+{
+	if (param_no == 1)
+		return fixup_pvar_all(param, param_no);
+	return 0;
+}
+
+
+
+int fixup_free_pvar_none(void** param, int param_no)
+{
+	if (param_no == 1)
+		return fixup_free_pvar_all(param, param_no);
+	return 0;
+}
+
+
 /* must be written "by hand", see above (fixup_pvar_pvar).
 FIXUP_F2T(pvar_str, 1, 2, 1, FPARAM_PVS, FPARAM_STR)
 FIXUP_F2T(pvar_str_str, 1, 3, 1, FPARAM_PVS, FPARAM_STR)

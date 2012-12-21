@@ -79,8 +79,8 @@ extern struct msgid_var user_cell_reset_flags;
 
 extern int fr_inv_timer_avp_type;
 extern int_str fr_inv_timer_avp;
-extern int contacts_avp_type;
-extern int_str contacts_avp;
+extern str contacts_avp;
+extern str contact_flows_avp;
 
 /* default names for timer's AVPs  */
 #define FR_TIMER_AVP      "callee_fr_timer"
@@ -153,8 +153,7 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 /*
  * Parse and fixup the fr_*_timer AVP specs
  */
-int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
-					char *contacts_avp_param);
+int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param);
 
 
 typedef void (*unref_cell_f)(struct cell *t);

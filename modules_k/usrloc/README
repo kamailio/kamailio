@@ -208,31 +208,31 @@ Chapter 1. Admin Guide
 
    1.1. Contact matching
 
-   User location module. The module keeps a user location table and
-   provides access to the table to other modules. The module exports no
-   functions that could be used directly from scripts.
+   The User location module module keeps a user location table and
+   provides access to the table for other modules. The module exports no
+   functions that can be used directly from routing scripts.
 
 1.1. Contact matching
 
-   How the contacts are matched (dor same AOR - Address of Record) is an
-   important aspect of the usrloc module, especially in the context of NAT
-   traversal - this raises more problems since contacts from different
-   phones of the same user may overlap (if behind NATs with same
-   configuration) or the re-register contact of the same phone may be seen
-   as a new one (due different binding via NAT).
+   How the contacts are matched (for the same AOR - Address of Record) is
+   an important aspect of the usrloc module, especially in the context of
+   NAT traversal - this raises more problems since contacts from different
+   phones of the same user may overlap (if both are behind NATs with the
+   same configuration) or the re-register contact of the same phone may be
+   seen as a new one (due different binding via NAT).
 
    The SIP RFC 3261 publishes a matching algorithm based only on the
-   contact string with callid and cseq number extra checking (if callid is
-   the same, it must have a higher cseq number, otherwise it is invalid).
+   contact string with Call-id and Cseq extra checking (if the Call-ID is
+   the same, it must have a higher Cseq number, otherwise it is invalid).
    But as argumented above, this is not enough in NAT traversal context,
    so the Kamailio implementation of contact matching offers more
    algorithms:
-     * contact based only - it is strict RFC 3261 compliancy - the contact
-       is matched as string and extra checked via callid and cseq (if
-       callid is the same, it must have a higher cseq number, otherwise it
-       is invalid).
-     * contact and callid based - it is an extension of the first case -
-       the contact and callid must be matched as string; the cseq must be
+     * Contact based only - it is strict RFC 3261 compliancy - the Contact
+       URI is matched as string and extra checked via Call-ID and cseq (if
+       Call-ID is the same, it must have a higher cseq number, otherwise
+       it is invalid).
+     * Contact and Call-id based - it is an extension of the first case -
+       the contact and Call-ID must be matched as string; the cseq must be
        higher than the previous one - so be careful how you deal with
        REGISTER retransmissions in this case.
      * contact and path based - it is an extension of the first case - the
@@ -240,8 +240,8 @@ Chapter 1. Admin Guide
        than the previous one - so be careful how you deal with REGISTER
        retransmissions in this case.
 
-   How to control/select the contact maching algorithm, please see the
-   module parameter matching_mode at Section 3.23, "matching_mode
+   To find out how to control/select the contact maching algorithm, please
+   see the module parameter matching_mode - Section 3.23, "matching_mode
    (integer)".
 
 2. Dependencies
@@ -308,7 +308,7 @@ modparam("usrloc", "nat_bflag", 3)
 
 3.2. user_column (string)
 
-   Name of column containing usernames.
+   Name of database column containing usernames.
 
    Default value is "username".
 
@@ -319,7 +319,7 @@ modparam("usrloc", "user_column", "username")
 
 3.3. domain_column (string)
 
-   Name of column containing domains.
+   Name of database column containing domains.
 
    Default value is "domain".
 
@@ -330,7 +330,7 @@ modparam("usrloc", "domain_column", "domain")
 
 3.4. contact_column (string)
 
-   Name of column containing contacts.
+   Name of database column containing contacts.
 
    Default value is "contact".
 
@@ -341,7 +341,7 @@ modparam("usrloc", "contact_column", "contact")
 
 3.5. expires_column (string)
 
-   Name of column containing expires value.
+   Name of database column containing expires value.
 
    Default value is "expires".
 
@@ -352,7 +352,7 @@ modparam("usrloc", "expires_column", "expires")
 
 3.6. q_column (string)
 
-   Name of column containing q values.
+   Name of database column containing q values.
 
    Default value is "q".
 
@@ -363,7 +363,7 @@ modparam("usrloc", "q_column", "q")
 
 3.7. callid_column (string)
 
-   Name of column containing callid values.
+   Name of database column containing Call-ID values.
 
    Default value is "callid".
 
@@ -374,7 +374,7 @@ modparam("usrloc", "callid_column", "callid")
 
 3.8. cseq_column (string)
 
-   Name of column containing cseq numbers.
+   Name of database column containing Cseq.
 
    Default value is "cseq".
 
@@ -385,7 +385,7 @@ modparam("usrloc", "cseq_column", "cseq")
 
 3.9. methods_column (string)
 
-   Name of column containing supported methods.
+   Name of database column containing supported methods.
 
    Default value is "methods".
 
@@ -396,7 +396,7 @@ modparam("usrloc", "methods_column", "methods")
 
 3.10. flags_column (string)
 
-   Name of column to save the internal flags of the record.
+   Name of database column to save the internal flags of the record.
 
    Default value is "flags".
 
@@ -407,7 +407,7 @@ modparam("usrloc", "flags_column", "flags")
 
 3.11. cflags_column (string)
 
-   Name of column to save the branch/contact flags of the record.
+   Name of database column to save the branch/contact flags of the record.
 
    Default value is "cflags".
 
@@ -418,7 +418,7 @@ modparam("usrloc", "cflags_column", "cflags")
 
 3.12. user_agent_column (string)
 
-   Name of column containing user-agent values.
+   Name of database column containing user-agent values.
 
    Default value is "user_agent".
 
@@ -429,8 +429,8 @@ modparam("usrloc", "user_agent_column", "user_agent")
 
 3.13. received_column (string)
 
-   Name of column containing the source IP, port, and protocol from the
-   REGISTER message.
+   Name of database column containing the source IP, port, and protocol
+   from the REGISTER message.
 
    Default value is "received".
 
@@ -441,8 +441,8 @@ modparam("usrloc", "received_column", "received")
 
 3.14. socket_column (string)
 
-   Name of column containing the received socket information (IP:port) for
-   the REGISTER message.
+   Name of database column containing the received socket information
+   (IP:port) for the REGISTER message.
 
    Default value is "socket".
 
@@ -453,7 +453,7 @@ modparam("usrloc", "socket_column", "socket")
 
 3.15. path_column (string)
 
-   Name of column containing the Path header.
+   Name of database column containing the Path header.
 
    Default value is "path".
 
@@ -464,7 +464,7 @@ modparam("usrloc", "path_column", "path")
 
 3.16. ruid_column (string)
 
-   Name of column containing the record unique id.
+   Name of database column containing the Kamailio record unique id.
 
    Default value is "ruid".
 
@@ -475,7 +475,8 @@ modparam("usrloc", "ruid_column", "myruid")
 
 3.17. instance_column (string)
 
-   Name of column containing the SIP instace (GRUU - RFC5627).
+   Name of database column containing the SIP instance ID (GRUU -
+   RFC5627). This is a unique device identifier - UUID.
 
    Default value is "instance".
 
@@ -511,7 +512,7 @@ modparam("usrloc", "desc_time_order", 1)
 
 3.20. timer_interval (integer)
 
-   Number of seconds between two timer runs. The module uses timer to
+   Number of seconds between two timer runs. The module uses a timer to
    delete expired contacts, synchronize with database and other tasks,
    that need to be run periodically.
 
@@ -526,7 +527,7 @@ modparam("usrloc", "timer_interval", 120)
 
    URL of the database that should be used.
 
-   Default value is "mysql://openser:openserrw@localhost/openser".
+   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
 
    Example 1.21. Set db_url parameter
 ...
@@ -535,11 +536,11 @@ modparam("usrloc", "db_url", "dbdriver://username:password@dbhost/dbname")
 
 3.22. db_mode (integer)
 
-   The usrloc module can utilize database for persistent contact storage.
-   If you use database, your contacts will survive machine restarts or SW
-   crashes. The disadvantage is that accessing database can be very time
-   consuming. Therefore, usrloc module implements four database accessing
-   modes:
+   The usrloc module can utilize a database for persistent contact
+   storage. If a database is used, the location database (contacts) will
+   survive machine restarts or software crashes. The disadvantage is that
+   accessing a database can be very time consuming. Therefore, usrloc
+   module implements four database accessing modes:
      * 0 - This disables database completely. Only memory will be used.
        Contacts will not survive restart. Use this value if you need a
        really fast usrloc and contact persistence is not necessary or is

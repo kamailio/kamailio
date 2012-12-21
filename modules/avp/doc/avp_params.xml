@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="avp.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="xlbuf_size">
+    <title><varname>xlbuf_size</varname> (integer)</title>
+    <para>
+		Defines size of internal buffer for all xprint formatting calls. If you
+don't use xprint formatting calls, you can set it to 0 to preserve some memory, if
+you get errors while formatting due to buffer size, you can enlarge it.
+	</para>
+    <para>
+        Default value is 256.
+    </para>
+    <example>
+        <title>Set <varname>xlbuf_size</varname> parameter</title>
+        <programlisting>
+...
+modparam("avp", "xlbuf_size", 1024)
+...
+        </programlisting>
+    </example>
+    </section>
+
+</section>

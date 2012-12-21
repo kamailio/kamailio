@@ -1,0 +1,17 @@
+	<!-- usr_preferences provisionning -->
+	<mod><mod_name>usr_preferences</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>usr_preferences</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>uuid</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>attribute</field></col>
+				<col><field>type</field></col>
+				<col><field>value</field></col>
+				<col><field>last_modified</field></col>
+			</query_cols>
+		</cmd>
+	</mod>

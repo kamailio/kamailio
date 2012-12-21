@@ -8,8 +8,9 @@
 
 ]>
 
-<section id="ctl" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <sectioninfo>
+<book id="ctl" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>The Ctl Module</title>
 	<authorgroup>
 		<author>
 		<firstname>Andrei</firstname>
@@ -24,27 +25,26 @@
 		<year>2009</year>
 		<holder>iptelorg GmbH</holder>
 	</copyright>
-	</sectioninfo>
+	</bookinfo>
 
-	<title>Ctl Module</title>
 
 	<section id="ctl.overview">
 	<title>Overview</title>
 	<para>
-		This module implements the binrpc transport interface for &ser; rpcs.
+		This module implements the binrpc transport interface for &kamailio; RPCs.
 		It supports various transports over which it speaks binrpc:
 		Unix datagram sockets, Unix stream sockets, UDP and TCP.
 		It also supports a backward compatible FIFO interface (using the old
-		ser FIFO protocol).
+		&kamailio; FIFO protocol).
 	</para>
 	<para>
-		By default (if no parameters are changed from the config file) it uses
+		By default (if no parameters are changed in the config file) it uses
 		a Unix stream socket under /tmp: /tmp/&ctlsocket;. This socket is also the
 		default for &sercmd;.
 	</para>
 	<para>
-		In general it's used in conjunction with &sercmd;. &sercmd; it's a unix
-		tool for invoking ser/sip-router rpcs. It can be used both in
+		In general it's used in conjunction with &sercmd;. &sercmd; is a Unix
+		tool for invoking &kamailio; RPC functions. It can be used both in
 		interactive mode (supports tab-completion and history) or command
 		line mode.
 		<example>
@@ -83,8 +83,8 @@ $ &sercmd; ps
 	</para>
 	</section>
 
-    <xi:include href="params.xml"/>
-    <xi:include href="rpc.xml"/>
+    <xi:include href="ctl_params.xml"/>
+    <xi:include href="ctl_rpc.xml"/>
 
-</section>
+</book>
 

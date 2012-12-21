@@ -663,8 +663,6 @@ int fix_actions(struct action* a)
 			case FORWARD_TCP_T:
 			case FORWARD_SCTP_T:
 			case FORWARD_UDP_T:
-			case SEND_T:
-			case SEND_TCP_T:
 					switch(t->val[0].type){
 						case IP_ST:
 							tmp=strdup(ip_addr2a(

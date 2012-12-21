@@ -96,6 +96,9 @@ int fixup_regexpNL_none(void** param, int param_no);
 int fixup_pvar_null(void **param, int param_no);
 int fixup_free_pvar_null(void** param, int param_no);
 
+int fixup_pvar_none(void** param, int param_no);
+int fixup_free_pvar_none(void** param, int param_no);
+
 int fixup_pvar_pvar(void **param, int param_no);
 int fixup_free_pvar_pvar(void** param, int param_no);
 

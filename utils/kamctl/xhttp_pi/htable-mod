@@ -1,0 +1,15 @@
+	<!-- htable provisionning -->
+	<mod><mod_name>htable</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>htable</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>key_name</field></col>
+				<col><field>key_type</field></col>
+				<col><field>value_type</field></col>
+				<col><field>key_value</field></col>
+				<col><field>expires</field></col>
+			</query_cols>
+		</cmd>
+	</mod>

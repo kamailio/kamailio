@@ -52,6 +52,11 @@ struct stat_or_pv {
 	pv_spec_t  *pv;
 };
 
+struct long_or_pv {
+	long   val;
+	pv_spec_t  *pv;
+};
+
 
 
 static cmd_export_t cmds[]={
@@ -106,9 +111,10 @@ static int mod_init(void)
 static int fixup_stat(void** param, int param_no)
 {
 	struct stat_or_pv *sopv;
+	struct long_or_pv *lopv;
 	str s;
 	long n;
-	int err;
+	int err = 0;
 
 	s.s = (char*)*param;
 	s.len = strlen(s.s);
@@ -139,21 +145,39 @@ static int fixup_stat(void** param, int param_no)
 		*param=(void*)sopv;
 		return 0;
 	} else if (param_no==2) {
-		/* update value - integer */
-		if (s.s[0]=='-' || s.s[0]=='+') {
-			n = str2s( s.s+1, s.len-1, &err);
-			if (s.s[0]=='-')
-				n = -n;
-		} else {
-			n = str2s( s.s, s.len, &err);
+		lopv = (struct long_or_pv *) pkg_malloc(sizeof(struct long_or_pv));
+		if (lopv == NULL) {
+			LM_ERR("no more pkg mem\n");
+			return E_OUT_OF_MEM;
 		}
+		memset(lopv, 0, sizeof(struct long_or_pv));
+		/* is it pv? */
+		if (s.s[0] == '$') {
+			if (fixup_pvar_pvar(param, 2) != 0) {
+				LM_ERR("invalid pv %s as parameter\n",s.s);
+				return E_CFG;
+			}
+			lopv->pv = (pv_spec_t*) (*param);
+		} else {
+			/* it is string */
+			/* update value - integer */
+			if (s.s[0] == '-' || s.s[0] == '+') {
+				n = str2s(s.s + 1, s.len - 1, &err);
+				if (s.s[0] == '-')
+					n = -n;
+			} else {
+				n = str2s(s.s, s.len, &err);
+			}
+			lopv->val = n;
+		}
+
 		if (err==0){
 			if (n==0) {
 				LM_ERR("update with 0 has no sense\n");
 				return E_CFG;
 			}
-			pkg_free(*param);
-			*param=(void*)n;
+			pkg_free(s.s);
+			*param=(void*)lopv;
 			return 0;
 		}else{
 			LM_ERR("bad update number <%s>\n",(char*)(*param));
@@ -164,11 +188,33 @@ static int fixup_stat(void** param, int param_no)
 }
 
 
-static int w_update_stat(struct sip_msg *msg, char *stat_p, char *n)
+static int w_update_stat(struct sip_msg *msg, char *stat_p, char *long_p)
 {
 	struct stat_or_pv *sopv = (struct stat_or_pv *)stat_p;
+	struct long_or_pv *lopv = (struct long_or_pv *)long_p;
 	pv_value_t pv_val;
 	stat_var *stat;
+	long n = 0;
+	int err;
+
+	if (lopv->val) {
+		n=lopv->val;
+	} else {
+		if (pv_get_spec_value(msg, lopv->pv, &pv_val) != 0 || (pv_val.flags & PV_VAL_STR) == 0) {
+			LM_ERR("failed to get pv string value\n");
+			return -1;
+		}
+		str s = pv_val.rs;
+		/* it is string */
+		/* update value - integer */
+		if (s.s[0] == '-' || s.s[0] == '+') {
+			n = str2s(s.s + 1, s.len - 1, &err);
+			if (s.s[0] == '-')
+				n = -n;
+		} else {
+			n = str2s(s.s, s.len, &err);
+		}
+	}
 
 	if (sopv->stat) {
 		update_stat( sopv->stat, (long)n);

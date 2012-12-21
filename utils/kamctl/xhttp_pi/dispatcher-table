@@ -1,0 +1,12 @@
+	<!-- Declaration of dispatcher table-->
+	<db_table id="dispatcher">
+		<table_name>dispatcher</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>setid</field><type>DB1_INT</type></column>
+		<column><field>destination</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>priority</field><type>DB1_INT</type></column>
+		<column><field>attrs</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>

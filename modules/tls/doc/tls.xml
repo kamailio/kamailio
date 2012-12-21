@@ -2,8 +2,11 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	[ <!ENTITY % local.common.attrib
-	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'"> ]
->
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'"> 
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 
 <section id="tls" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<sectioninfo>
@@ -28,7 +31,7 @@
 		<section id="tls.overview">
 		<title>Overview</title>
 		<para>
-			This module implements the TLS transport for SIP-router using the <ulink url="http://www.openssl.org">OpenSSL library</ulink> (http://www.openssl.org). To enable the TLS support this module must be loaded and <emphasis>enable_tls=yes</emphasis> must be added to the SIP-router config file 
+			This module implements the TLS transport for &kamailio; using the <ulink url="http://www.openssl.org">OpenSSL library</ulink> (http://www.openssl.org). To enable the TLS support this module must be loaded and <emphasis>enable_tls=yes</emphasis> must be added to the SIP-router config file 
 		</para>
 		</section>
 		<section id="tls.quick_start">

@@ -9,6 +9,7 @@
 ]>
 <!-- Module User's Guide -->
 
+
 <chapter>
     <chapterinfo>
     </chapterinfo>
@@ -111,15 +112,13 @@
 		The url to the master database where errors are written to.
 	    </para>
 	    <para>
-		<emphasis>
-		    Default value is <quote>mysql://openser:openserrw@localhost/openser</quote>.
-		</emphasis>
+		    Default value is <quote>&defaultdb;</quote>
 	    </para>
 	    <example>
 		<title>Set <varname>write_db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("p_usrloc", "write_db_url", "mysql://openser:openserrw@localhost/openser")
+modparam("p_usrloc", "write_db_url", "mysql://username:password@localhost/databasename")
 ...
 </programlisting>
 	    </example>
@@ -132,15 +131,14 @@ modparam("p_usrloc", "write_db_url", "mysql://openser:openserrw@localhost/opense
 		performance, a local replicate can be used for read access.
 	    </para>
 	    <para>
-		<emphasis>
-		    Default value is <quote>mysql://openser:openserrw@localhost/openser</quote>.
+		<emphasis>Default value is &defaultdb; .
 		</emphasis>
 	    </para>
 	    <example>
 		<title>Set <varname>read_db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("p_usrloc", "read_db_url", "mysql://openser:openserrw@localhost/openser")
+modparam("p_usrloc", "read_db_url", "mysql://user:passwd@localhost/db")
 ...
 </programlisting>
 	    </example>
@@ -682,10 +680,10 @@ modparam("p_usrloc", "db_mode", 2)
 +----+----+------+--------+--------+---------------------+-------+----+
 ...
 		</programlisting>
-		<para>The urls are omitted for a better overview, but you can use
-			standard openser database URLs like
-			mysql://openser:openserrw@localhost/openser. Databases don't
-			need to be on different hosts, e.g. for testing purposes.
+		<para>The URLs are omitted for a better overview, but you can use
+			standard &kamailio; database URLs like
+			&defaultdb; 
+			Databases don't need to be on different hosts, e.g. for testing purposes.
 		</para>
 	</example>
 		<para>

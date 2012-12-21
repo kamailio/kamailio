@@ -12,7 +12,7 @@ Edited by
 
 Jan Janak
 
-   Copyright © 2003 FhG FOKUS
+   Copyright � 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -99,14 +99,14 @@ Chapter 1. Admin Guide
    1.1. Strict membership checking
    1.2. Regular Expression based checking
 
-   This module provides functionalities for different methods of group
+   This module provides functionality for two different methods of group
    membership checking.
 
 1.1. Strict membership checking
 
-   There is a database table that contains list of users and groups they
-   belong to. The module provides the possibility to check if a specific
-   user belongs to a specific group.
+   The module uses a database table that contains a list of users and
+   groups they belong to. The module provides the possibility to check if
+   a specific user belongs to a specific group.
 
    There is no DB caching support, each check involving a DB query.
 
@@ -117,7 +117,7 @@ Chapter 1. Admin Guide
    This type of matching may be used to fetch the group ID(s) the user
    belongs to (via RE matching) .
 
-   Due performance reasons (regular expression evaluation), DB cache
+   Due to performance reasons (regular expression evaluation), DB cache
    support is available: the table content is loaded into memory at
    startup and all regular expressions are compiled.
 
@@ -154,11 +154,11 @@ Chapter 1. Admin Guide
 
    URL of the database table to be used.
 
-   Default value is “mysql://openserro:openserro@localhost/openser”.
+   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio".
 
    Example 1.1. Set db_url parameter
 ...
-modparam("group", "db_url", "mysql://username:password@dbhost/openser")
+modparam("group", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
 3.2. table (string)
@@ -166,7 +166,7 @@ modparam("group", "db_url", "mysql://username:password@dbhost/openser")
    Name of the table holding strict definitions of groups and their
    members.
 
-   Default value is “grp”.
+   Default value is "grp".
 
    Example 1.2. Set table parameter
 ...
@@ -175,9 +175,9 @@ modparam("group", "table", "grp_table")
 
 3.3. user_column (string)
 
-   Name of the “table” column holding usernames.
+   Name of the "table" column holding usernames.
 
-   Default value is “username”.
+   Default value is "username".
 
    Example 1.3. Set user_column parameter
 ...
@@ -186,9 +186,9 @@ modparam("group", "user_column", "user")
 
 3.4. domain_column (string)
 
-   Name of the “table” column holding domains.
+   Name of the "table" column holding domains.
 
-   Default value is “domain”.
+   Default value is "domain".
 
    Example 1.4. Set domain_column parameter
 ...
@@ -197,9 +197,9 @@ modparam("group", "domain_column", "realm")
 
 3.5. group_column (string)
 
-   Name of the “table” column holding groups.
+   Name of the "table" column holding group names.
 
-   Default value is “grp”.
+   Default value is "grp".
 
    Example 1.5. Set group_column parameter
 ...
@@ -208,11 +208,11 @@ modparam("group", "group_column", "grp")
 
 3.6. use_domain (integer)
 
-   If enabled (set to non zero value) then domain will be used also used
-   for strict group matching; otherwise only the username part will be
-   used.
+   If enabled (set to a non zero value) then the domain will be used also
+   used for strict group matching; otherwise only the username part will
+   be used.
 
-   Default value is 0 (no).
+   Default value is 0 (disabled).
 
    Example 1.6. Set use_domain parameter
 ...
@@ -225,7 +225,7 @@ modparam("group", "use_domain", 1)
    groups. If no table is defined, the regular-expression support is
    disabled.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.7. Set re_table parameter
 ...
@@ -234,10 +234,10 @@ modparam("group", "re_table", "re_grp")
 
 3.8. re_exp_column (string)
 
-   Name of the “re_table” column holding the regular expression used for
+   Name of the "re_table" column holding the regular expression used for
    user matching.
 
-   Default value is “reg_exp”.
+   Default value is "reg_exp".
 
    Example 1.8. Set reg_exp_column parameter
 ...
@@ -246,9 +246,9 @@ modparam("group", "reg_exp_column", "re")
 
 3.9. re_gid_column (string)
 
-   Name of the “re_table” column holding the group IDs.
+   Name of the "re_table" column holding the group IDs.
 
-   Default value is “group_id”.
+   Default value is "group_id".
 
    Example 1.9. Set re_gid_column parameter
 ...
@@ -261,7 +261,7 @@ modparam("group", "re_gid_column", "grp_id")
    all group IDs that match the user; otherwise only the first will be
    returned.
 
-   Default value is “1”.
+   Default value is "1" (enabled).
 
    Example 1.10. Set multiple_gid parameter
 ...
@@ -276,8 +276,8 @@ modparam("group", "multiple_gid", 0)
 4.1.  is_user_in(URI, group)
 
    This function is to be used for script group membership. The function
-   returns true if username in the given URI is member of the given group
-   and false if not.
+   returns true if username in the given URI is a member of the given
+   group and false if not.
 
    Meaning of the parameters is as follows:
      * URI - URI whose username and optionally domain to be used, this can

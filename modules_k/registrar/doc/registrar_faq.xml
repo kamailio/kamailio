@@ -109,7 +109,7 @@
 		</question>
 		<answer>
 		<para>
-			It was removed, as its functionality was mmigrate into usrloc
+			It was removed, as its functionality was migrated into usrloc
 			module, were there is a parameter with the same name.
 		</para>
 		</answer>

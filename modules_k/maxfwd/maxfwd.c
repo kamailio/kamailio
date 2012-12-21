@@ -44,16 +44,27 @@
 #include "../../error.h"
 #include "../../ut.h"
 #include "../../mem/mem.h"
+#include "../../cfg/cfg.h"
 #include "mf_funcs.h"
 #include "api.h"
 
 MODULE_VERSION
 
-#define MAXFWD_UPPER_LIMIT 256
+struct cfg_group_maxfwd {
+	int max_limit;
+};
 
-static int max_limit = MAXFWD_UPPER_LIMIT;
+static struct cfg_group_maxfwd default_maxfwd_cfg = {
+	max_limit:16
+};
 
-static int fixup_maxfwd_header(void** param, int param_no);
+static void *maxfwd_cfg = &default_maxfwd_cfg;
+
+static cfg_def_t maxfwd_cfg_def[] = {
+        {"max_limit", CFG_VAR_INT, 0, 255, 0, 0, "Max. maxfwd limit"},
+        {0, 0, 0, 0, 0, 0}
+};
+
 static int w_process_maxfwd_header(struct sip_msg* msg,char* str,char* str2);
 static int is_maxfwd_lt(struct sip_msg *msg, char *slimit, char *foo);
 static int mod_init(void);
@@ -61,17 +72,27 @@ static int mod_init(void);
 int bind_maxfwd(maxfwd_api_t *api);
 
 static cmd_export_t cmds[]={
+	{"maxfwd_process", (cmd_function)w_process_maxfwd_header, 1,
+		fixup_var_int_1, 0, REQUEST_ROUTE},
 	{"mf_process_maxfwd_header", (cmd_function)w_process_maxfwd_header, 1,
-		fixup_maxfwd_header, 0, REQUEST_ROUTE},
+		fixup_var_int_1, 0, REQUEST_ROUTE},
+	{"process_maxfwd", (cmd_function)w_process_maxfwd_header, 1,
+		fixup_var_int_1, 0, REQUEST_ROUTE},
+
 	{"is_maxfwd_lt", (cmd_function)is_maxfwd_lt, 1,
-		fixup_maxfwd_header, 0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+		fixup_var_int_1, 0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"maxfwd_at_least", (cmd_function)is_maxfwd_lt, 1,
+		fixup_var_int_1, 0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"mf_lowlimit", (cmd_function)is_maxfwd_lt, 1,
+		fixup_var_int_1, 0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+
 	{"bind_maxfwd",  (cmd_function)bind_maxfwd,  0,
 		0, 0, 0},
 	{0,0,0,0,0,0}
 };
 
 static param_export_t params[]={
-	{"max_limit",    INT_PARAM,  &max_limit},
+	{"max_limit",    INT_PARAM,  &default_maxfwd_cfg.max_limit},
 	{0,0,0}
 };
 
@@ -96,44 +117,15 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
-	if ( max_limit<1 || max_limit>MAXFWD_UPPER_LIMIT ) {
-		LM_ERR("invalid max limit (%d) [1,%d]\n",
-			max_limit,MAXFWD_UPPER_LIMIT);
+	if (cfg_declare("maxfwd", maxfwd_cfg_def, &default_maxfwd_cfg,
+				cfg_sizeof(maxfwd), &maxfwd_cfg)) {
+		LM_ERR("failed to declare the configuration\n");
 		return E_CFG;
 	}
 	return 0;
 }
 
 
-
-static int fixup_maxfwd_header(void** param, int param_no)
-{
-	unsigned long code;
-	int err;
-
-	if (param_no==1){
-		code=str2s(*param, strlen(*param), &err);
-		if (err==0){
-			if (code<1 || code>MAXFWD_UPPER_LIMIT){
-				LM_ERR("invalid MAXFWD number <%ld> [1,%d]\n",
-					code,MAXFWD_UPPER_LIMIT);
-				return E_UNSPEC;
-			}
-			if (code>max_limit) {
-				LM_ERR("default value <%ld> bigger than max limit(%d)\n",
-					code, max_limit);
-				return E_UNSPEC;
-			}
-			pkg_free(*param);
-			*param=(void*)code;
-			return 0;
-		}else{
-			LM_ERR("bad  number <%s>\n",(char*)(*param));
-			return E_UNSPEC;
-		}
-	}
-	return 0;
-}
 
 
 /**
@@ -142,7 +134,14 @@ static int fixup_maxfwd_header(void** param, int param_no)
 int process_maxfwd_header(struct sip_msg *msg, int limit)
 {
 	int val;
-	str mf_value;
+	str mf_value = {0};
+	int max_limit;
+
+	if(limit<0 || limit>255) {
+		LM_ERR("invalid param value: %d\n", limit);
+		return -1;
+	}
+	max_limit = cfg_get(maxfwd, maxfwd_cfg, max_limit);
 
 	val=is_maxfwd_present(msg, &mf_value);
 	switch (val) {
@@ -178,7 +177,12 @@ error:
  */
 static int w_process_maxfwd_header(struct sip_msg* msg, char* str1, char* str2)
 {
-	return process_maxfwd_header(msg, (int)(unsigned long)str1);
+	int mfval;
+	if (get_int_fparam(&mfval, msg, (fparam_t*) str1) < 0) {
+		LM_ERR("could not get param value\n");
+		return -1;
+	}
+	return process_maxfwd_header(msg, mfval);
 }
 
 
@@ -192,6 +196,14 @@ static int is_maxfwd_lt(struct sip_msg *msg, char *slimit, char *foo)
 	int val;
 
 	limit = (int)(long)slimit;
+	if (get_int_fparam(&limit, msg, (fparam_t*) slimit) < 0) {
+		LM_ERR("could not get param value\n");
+		return -1;
+	}
+	if(limit<0 || limit>255) {
+		LM_ERR("invalid param value: %d\n", limit);
+		return -1;
+	}
 	val = is_maxfwd_present( msg, &mf_value);
 	LM_DBG("value = %d \n",val);
 

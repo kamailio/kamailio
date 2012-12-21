@@ -1,0 +1,18 @@
+	<!-- speed_dial provisionning -->
+	<mod><mod_name>speed_dial</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>speed_dial</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>sd_username</field></col>
+				<col><field>sd_domain</field></col>
+				<col><field>new_uri</field></col>
+				<col><field>fname</field></col>
+				<col><field>lname</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+	</mod>

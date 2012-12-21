@@ -61,13 +61,14 @@ Chapter 1. Admin Guide
 1. Overview
 
    The pua_usrloc module is the connector between the usrloc and pua
-   modules. It creates the environment to send PUBLISH requests for user
-   location records, on specific events (e.g., when new record is added in
-   usrloc, a PUBLISH with status open (online) is issued; when expires, it
-   sends closed (offline)).
+   modules. With this module, you can monitor the status of SIP
+   registrations. The module sends PUBLISH requests for user location
+   record changes, based on specific events (e.g., when a new record is
+   added in usrloc, a PUBLISH with status open (online) is issued; when
+   expires, it sends closed (offline)).
 
-   Using this module, phones which have no support for presence can be
-   seen as online/offline.
+   Using this module phones which have no support for presence can be seen
+   as online/offline.
 
 2. Dependencies
 
@@ -95,7 +96,7 @@ Chapter 1. Admin Guide
 3.1. default_domain (str)
 
    The default domain to use when constructing the presentity URI if it is
-   missing from recorded AOR.
+   missing from stored AOR in the usrloc table (in memory or database).
 
    Default value is "NULL".
 
@@ -106,8 +107,8 @@ modparam("pua_usrloc", "default_domain", "kamailio.org")
 
 3.2. entity_prefix (str)
 
-   The prefix when construstructing entity attribute to be added to
-   presence node in XML PIDF. (ex: pres:user@domain ).
+   The prefix used when constructing the entity attribute to be added to a
+   presence node in the XML PIDF document. (ex: pres:user@domain ).
 
    Default value is "NULL".
 
@@ -132,7 +133,7 @@ modparam("pua_usrloc", "branch_flag", 9)
 
    4.1. pua_set_publish()
 
-4.1. pua_set_publish()
+4.1.  pua_set_publish()
 
    The function is used to mark REGISTER requests that have to issue a
    PUBLISH. The PUBLISH is issued when REGISTER is saved in location
