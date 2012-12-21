@@ -134,6 +134,12 @@ static void pike_top(rpc_t *rpc, void *c)
 		options |= NODE_STATUS_WARM;
 	}
 	DBG("pike:top: options: 0x%02x\n", options);
+
+
+	if (options == 0) {
+		rpc->fault(c, 500, "Bad argument. Select: ALL, HOT or WARM");
+		exit;
+	}
 	
 	
 	print_tree( 0 );
@@ -178,7 +184,7 @@ static void pike_top(rpc_t *rpc, void *c)
 
 // TODO check documentation
 static const char* pike_top_doc[] = {
-	"pike.top doc.",  /* Documentation string */
+	"pike.top Dump parts of the pike table",  /* Documentation string */
 	0                 /* Method signature(s) */
 };
 
