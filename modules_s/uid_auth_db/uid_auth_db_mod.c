@@ -145,7 +145,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-    "auth_db",
+    "uid_auth_db",
     cmds,       /* Exported functions */
     0,          /* RPC methods */
     params,     /* Exported parameters */

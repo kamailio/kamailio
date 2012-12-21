@@ -7,7 +7,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=auth_db.so
+NAME=uid_auth_db.so
 LIBS=
 
 DEFS+=-DSER_MOD_INTERFACE
