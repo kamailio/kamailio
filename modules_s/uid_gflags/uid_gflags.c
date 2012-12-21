@@ -90,10 +90,10 @@ static avp_list_t *avps_2;
 static rpc_export_t rpc_methods[];
 
 static cmd_export_t cmds[]={
-	{"set_gflag",   set_gflag,   1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
-	{"reset_gflag", reset_gflag, 1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
-	{"is_gflag",    is_gflag,    1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
-	{"flush_gflags", flush_gflags, 0, 0,         REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
+	{"set_ugflag",   set_gflag,   1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
+	{"reset_ugflag", reset_gflag, 1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
+	{"is_ugflag",    is_gflag,    1, fixup_int_1, REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
+	{"flush_ugflags", flush_gflags, 0, 0,         REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -110,7 +110,7 @@ static param_export_t params[]={
 };
 
 struct module_exports exports = {
-	"gflags",
+	"uid_gflags",
 	cmds,
 	rpc_methods, /* RPC methods */
 	params,

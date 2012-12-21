@@ -1,10 +1,10 @@
-1. Gflags Module
+1. UID Gflags Module
 
 Jiri Kuthan
 
    <jiri@iptel.org>
 
-   Copyright Â© 2004 FhG FOKUS
+   Copyright © 2004 FhG FOKUS
      __________________________________________________________________
 
    1.1. Overview
@@ -15,8 +15,8 @@ Jiri Kuthan
    1.3. Functions
 
         1.3.1. set_gflag(flag_num)
-        1.3.2. reset_gflag(flag_num)
-        1.3.3. is_gflag(flag_num)
+        1.3.2. reset_ugflag(flag_num)
+        1.3.3. is_ugflag(flag_num)
 
    1.4. FIFO Interface
    1.5. XMLRPC Interface
@@ -32,7 +32,7 @@ Jiri Kuthan
 
    Global flags can be accessed from the configuration script, for
    example:
-if (is_gflag("1")) {
+if (is_ugflag("1")) {
     t_relay_to_udp("10.0.0.1", "5060");
 } else {
     t_relay_to_udp("10.0.0.2", "5060");
@@ -59,22 +59,22 @@ if (is_gflag("1")) {
    Set the flag identified by flag_num to 1. The range of flag_num is 0 to
    31.
 
-   Example 1. set_gflag usage
+   Example 1. set_ugflag usage
 ...
-set_gflag("2");
+set_ugflag("2");
 ...
 
-1.3.2. reset_gflag(flag_num)
+1.3.2. reset_ugflag(flag_num)
 
    Set the flag identified by flag_num to 0. The range of flag_num is 0 to
    31.
 
-   Example 2. reset_gflag usage
+   Example 2. reset_ugflag usage
 ...
-reset_gflag("2");
+reset_ugflag("2");
 ...
 
-1.3.3. is_gflag(flag_num)
+1.3.3. is_ugflag(flag_num)
 
    Returns 1 when flag identified by flag_num is set, 0 otherwise. The
    range of flag_num parameter is 0 to 31.

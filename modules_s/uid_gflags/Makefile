@@ -7,7 +7,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=gflags.so
+NAME=uid_gflags.so
 LIBS=
 
 DEFS+=-DSER_MOD_INTERFACE

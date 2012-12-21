@@ -17,9 +17,9 @@
 	</copyright>
     </sectioninfo>
 
-    <title>Gflags Module</title>
+    <title>UID Gflags Module</title>
 
-    <section id="gflags.overview">
+    <section id="uid_gflags.overview">
 	<title>Overview</title>
 	<para>
 	    The module implements global flags. The difference between the
@@ -33,7 +33,7 @@
 	    Global flags can be accessed from the configuration script, for example:
 	</para>
 	<programlisting>
-if (is_gflag("1")) {
+if (is_ugflag("1")) {
     t_relay_to_udp("10.0.0.1", "5060");
 } else {
     t_relay_to_udp("10.0.0.2", "5060");
