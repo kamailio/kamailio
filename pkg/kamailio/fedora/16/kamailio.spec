@@ -481,6 +481,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.counters
 %doc %{_docdir}/kamailio/modules/README.ctl
 %doc %{_docdir}/kamailio/modules/README.db_flatstore
+%doc %{_docdir}/kamailio/modules/README.db2_ops
 %doc %{_docdir}/kamailio/modules/README.debugger
 %doc %{_docdir}/kamailio/modules/README.enum
 %doc %{_docdir}/kamailio/modules/README.ipops
@@ -504,6 +505,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.sl
 %doc %{_docdir}/kamailio/modules/README.sms
 %doc %{_docdir}/kamailio/modules/README.textopsx
+%doc %{_docdir}/kamailio/modules/README.timer
 %doc %{_docdir}/kamailio/modules/README.tls
 %doc %{_docdir}/kamailio/modules/README.tm
 %doc %{_docdir}/kamailio/modules/README.tmrec
@@ -610,6 +612,7 @@ fi
 %{_libdir}/kamailio/modules/counters.so
 %{_libdir}/kamailio/modules/ctl.so
 %{_libdir}/kamailio/modules/db_flatstore.so
+%{_libdir}/kamailio/modules/db2_ops.so
 %{_libdir}/kamailio/modules/debugger.so
 %{_libdir}/kamailio/modules/enum.so
 %{_libdir}/kamailio/modules/ipops.so
@@ -632,10 +635,11 @@ fi
 %{_libdir}/kamailio/modules/sl.so
 %{_libdir}/kamailio/modules/sdpops.so
 %{_libdir}/kamailio/modules/sms.so
+%{_libdir}/kamailio/modules/textopsx.so
+%{_libdir}/kamailio/modules/timer.so
+%{_libdir}/kamailio/modules/tls.so
 %{_libdir}/kamailio/modules/tm.so
 %{_libdir}/kamailio/modules/tmrec.so
-%{_libdir}/kamailio/modules/tls.so
-%{_libdir}/kamailio/modules/textopsx.so
 %{_libdir}/kamailio/modules/topoh.so
 %{_libdir}/kamailio/modules/xhttp.so
 %{_libdir}/kamailio/modules/xhttp_rpc.so
@@ -846,8 +850,10 @@ fi
 
 %files ldap
 %defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.db2_ldap
 %doc %{_docdir}/kamailio/modules_k/README.h350
 %doc %{_docdir}/kamailio/modules_k/README.ldap
+%{_libdir}/kamailio/modules/db2_ldap.so
 %{_libdir}/kamailio/modules_k/h350.so
 %{_libdir}/kamailio/modules_k/ldap.so
 
@@ -998,6 +1004,8 @@ fi
 
 
 %changelog
+* Fri Dec 21 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Added db2_ldap, db2_ops, and timer to the build
 * Thu Dec 13 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added xhttp_pi framework examples to the installation
   - Added xhttp_pi README to the installation
