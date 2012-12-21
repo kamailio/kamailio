@@ -1313,7 +1313,8 @@ static int lua_sr_registrar_save(lua_State *L)
 static int lua_sr_registrar_lookup(lua_State *L)
 {
 	int ret;
-	char *table;
+	char *table = NULL;
+	str uri = {NULL, 0};
 	sr_lua_env_t *env_L;
 
 	env_L = sr_lua_env_get();
@@ -1328,18 +1329,31 @@ static int lua_sr_registrar_lookup(lua_State *L)
 		LM_WARN("invalid parameters from Lua env\n");
 		return app_lua_return_error(L);
 	}
-	if(lua_gettop(L)!=1)
+	if(lua_gettop(L)==1)
+	{
+		table = (char*)lua_tostring(L, -1);
+	}
+	else if (lua_gettop(L)==2)
+	{
+		table = (char*)lua_tostring(L, -2);
+		uri.s = (char*)lua_tostring(L, -1);
+		uri.len = strlen(uri.s);
+	} else
 	{
 		LM_WARN("invalid number of parameters from Lua\n");
 		return app_lua_return_error(L);
 	}
-	table  = (char*)lua_tostring(L, -1);
 	if(table==NULL || strlen(table)==0)
 	{
 		LM_WARN("invalid parameters from Lua\n");
 		return app_lua_return_error(L);
 	}
-	ret = _lua_registrarb.lookup(env_L->msg, table);
+	if(lua_gettop(L)==2)
+	{
+		ret = _lua_registrarb.lookup_uri(env_L->msg, table, &uri);
+	} else {
+		ret = _lua_registrarb.lookup(env_L->msg, table);
+	}
 
 	return app_lua_return_int(L, ret);
 }
