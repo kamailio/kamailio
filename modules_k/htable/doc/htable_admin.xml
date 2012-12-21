@@ -679,7 +679,7 @@ sht_rm_value_re("ha=>.*");
         <title>Exported RPC Commands</title>
         <section>
                 <title>
-                <function moreinfo="none">htable.get</function>
+                <function moreinfo="none">htable.get htable key</function>
                 </title>
                 <para>
 		Lists one value in a hash table
@@ -689,7 +689,7 @@ sht_rm_value_re("ha=>.*");
                 </para>
                 <para>Parameters:</para>
                 <itemizedlist>
-                        <listitem><para>name : Name of the hash table to dump</para>
+                        <listitem><para>htable : Name of the hash table to dump</para>
                         </listitem>
                         <listitem><para>key : Key name of the hash table value to dump</para>
                         </listitem>
@@ -707,7 +707,7 @@ kamcmd htable.get students daniel
 	</section>
         <section>
                 <title>
-                <function moreinfo="none">htable.delete</function>
+                <function moreinfo="none">htable.delete htable key</function>
                 </title>
                 <para>
 		Delete one value in a hash table
@@ -717,7 +717,7 @@ kamcmd htable.get students daniel
                 </para>
                 <para>Parameters:</para>
                 <itemizedlist>
-                        <listitem><para>name : Name of the hash table to delete</para>
+                        <listitem><para>htable : Name of the hash table to delete</para>
                         </listitem>
                         <listitem><para>key : Key name of the hash table value to delete</para>
                         </listitem>
@@ -735,7 +735,7 @@ kamcmd htable.get students anna
 	</section>
         <section>
                 <title>
-                <function moreinfo="none">htable.dump</function>
+                <function moreinfo="none">htable.dump htable</function>
                 </title>
                 <para>
 		Lists all the values in a hash table
@@ -745,7 +745,7 @@ kamcmd htable.get students anna
                 </para>
                 <para>Parameters:</para>
                 <itemizedlist>
-                        <listitem><para>name : Name of the hash table to dump</para>
+                        <listitem><para>htable : Name of the hash table to dump</para>
                         </listitem>
 
                 </itemizedlist>

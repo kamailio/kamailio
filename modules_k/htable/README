@@ -61,9 +61,9 @@ Alex Balashov
 
         7. Exported RPC Commands
 
-              7.1. htable.get
-              7.2. htable.delete
-              7.3. htable.dump
+              7.1. htable.get htable key
+              7.2. htable.delete htable key
+              7.3. htable.dump htable
 
         8. Event routes
 
@@ -130,9 +130,9 @@ Chapter 1. Admin Guide
 
    7. Exported RPC Commands
 
-        7.1. htable.get
-        7.2. htable.delete
-        7.3. htable.dump
+        7.1. htable.get htable key
+        7.2. htable.delete htable key
+        7.3. htable.dump htable
 
    8. Event routes
 
@@ -547,18 +547,18 @@ sht_rm_value_re("ha=>.*");
 
 7. Exported RPC Commands
 
-   7.1. htable.get
-   7.2. htable.delete
-   7.3. htable.dump
+   7.1. htable.get htable key
+   7.2. htable.delete htable key
+   7.3. htable.dump htable
 
-7.1.  htable.get
+7.1.  htable.get htable key
 
    Lists one value in a hash table
 
    Name: htable.get
 
    Parameters:
-     * name : Name of the hash table to dump
+     * htable : Name of the hash table to dump
      * key : Key name of the hash table value to dump
 
    Example:
@@ -567,14 +567,14 @@ sht_rm_value_re("ha=>.*");
 kamcmd htable.get students daniel
 ...
 
-7.2.  htable.delete
+7.2.  htable.delete htable key
 
    Delete one value in a hash table
 
    Name: htable.delete
 
    Parameters:
-     * name : Name of the hash table to delete
+     * htable : Name of the hash table to delete
      * key : Key name of the hash table value to delete
 
    Example:
@@ -583,14 +583,14 @@ kamcmd htable.get students daniel
 kamcmd htable.get students anna
 ...
 
-7.3.  htable.dump
+7.3.  htable.dump htable
 
    Lists all the values in a hash table
 
    Name: dhtable.dump
 
    Parameters:
-     * name : Name of the hash table to dump
+     * htable : Name of the hash table to dump
 
    Example:
 ...
