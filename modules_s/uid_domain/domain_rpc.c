@@ -25,7 +25,7 @@
 #include "../../ut.h"
 #include "../../mem/mem.h"
 #include "hash.h"
-#include "domain_mod.h"
+#include "uid_domain_mod.h"
 #include "domain_rpc.h"
 
 

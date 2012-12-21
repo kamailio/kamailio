@@ -7,7 +7,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=domain.so
+NAME=uid_domain.so
 LIBS=
 
 DEFS+=-DSER_MOD_INTERFACE

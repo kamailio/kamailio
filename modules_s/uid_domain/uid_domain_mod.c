@@ -29,7 +29,7 @@
  *              calls to domain_db_{bind,init,close,ver} (andrei)
  */
 
-#include "domain_mod.h"
+#include "uid_domain_mod.h"
 #include <stdio.h>
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
@@ -66,12 +66,12 @@ MODULE_VERSION
 #define DOMAIN_TABLE_VERSION 2
 #define DOMATTR_TABLE_VERSION 1
 
-#define DOMAIN_TABLE  "domain"
+#define DOMAIN_TABLE  "uid_domain"
 #define DOMAIN_COL    "domain"
 #define DID_COL       "did"
 #define FLAGS_COL     "flags"
 
-#define DOMATTR_TABLE "domain_attrs"
+#define DOMATTR_TABLE "uid_domain_attrs"
 #define DOMATTR_DID   "did"
 #define DOMATTR_NAME  "name"
 #define DOMATTR_TYPE  "type"
@@ -155,7 +155,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"domain",
+	"uid_domain",
 	cmds,       /* Exported functions */
 	domain_rpc, /* RPC methods */
 	params,     /* Exported parameters */

@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "domain_mod.h"
+#include "uid_domain_mod.h"
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
 #include "../../ut.h"

@@ -21,7 +21,7 @@
  */
 
 #include <string.h>
-#include "domain_mod.h"
+#include "uid_domain_mod.h"
 #include "hash.h"
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"

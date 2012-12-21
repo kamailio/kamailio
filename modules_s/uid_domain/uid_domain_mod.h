@@ -20,8 +20,8 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef _DOMAIN_MOD_H
-#define _DOMAIN_MOD_H
+#ifndef _UID_DOMAIN_MOD_H
+#define _UID_DOMAIN_MOD_H
 
 #include "../../lib/srdb2/db.h"
 #include "../../str.h"

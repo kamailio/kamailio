@@ -24,7 +24,7 @@
 #define _HASH_H
 
 #include <stdio.h>
-#include "domain_mod.h"
+#include "uid_domain_mod.h"
 #include "domain.h"
 
 #define HASH_SIZE 128
