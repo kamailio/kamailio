@@ -29,8 +29,6 @@
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/mi.h"
 
-#include "../nathelper/nat_uac_test.h"
-
 #include "api.h"
 
 MODULE_VERSION
@@ -42,9 +40,6 @@ static str ob_key = {0, 0};
 
 static cmd_export_t cmds[]= 
 {
-	{ "ob_nat_uac_test", (cmd_function) nat_uac_test_f,
-	  1, fixup_uint_null, 0,
-	  REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
 	{ "bind_ob", (cmd_function) bind_ob,
 	  1, 0, 0,
 	  0 },
