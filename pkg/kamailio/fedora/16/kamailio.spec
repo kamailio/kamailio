@@ -367,14 +367,14 @@ make every-module skip_modules="auth_identity db_cassandra iptrtpproxy \
 	kxml kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils \
 	kpurple ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson \
 	kredis kmono" \
-	include_modules="cdp mangler xhttp_pi"
+	include_modules="cdp mangler print_lib xhttp_pi"
 %else
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
 	db_oracle memcached mi_xmlrpc osp" \
 	group_include="kstandard kmysql kpostgres kcpl kunixodbc \
 	kxml kperl ksnmpstats kxmpp kberkeley kldap kutils \
 	kpurple ktls kwebsocket kpresence klua kpython ksqlite" \
-	include_modules="cdp mangler xhttp_pi"
+	include_modules="cdp mangler print_lib xhttp_pi"
 %endif
 make utils
 
@@ -391,7 +391,7 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	kxml kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils\
 	kpurple ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson\
 	kredis kmono" \
-	include_modules="cdp mangler xhttp_pi"
+	include_modules="cdp mangler print_lib xhttp_pi"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.service \
@@ -406,7 +406,7 @@ make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
 	group_include="kstandard kmysql kpostgres kcpl kunixodbc \
 	kxml kperl ksnmpstats kxmpp kberkeley kldap kutils \
 	kpurple ktls kwebsocket kpresence klua kpython ksqlite" \
-	include_modules="cdp mangler xhttp_pi"
+	include_modules="cdp mangler print_lib xhttp_pi"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -496,6 +496,8 @@ fi
 %doc %{_docdir}/kamailio/modules/README.pdb
 %doc %{_docdir}/kamailio/modules/README.pipelimit
 %doc %{_docdir}/kamailio/modules/README.prefix_route
+%doc %{_docdir}/kamailio/modules/README.print
+%doc %{_docdir}/kamailio/modules/README.print_lib
 %doc %{_docdir}/kamailio/modules/README.ratelimit
 %doc %{_docdir}/kamailio/modules/README.rtpproxy
 %doc %{_docdir}/kamailio/modules/README.sanity
@@ -510,6 +512,11 @@ fi
 %doc %{_docdir}/kamailio/modules/README.tm
 %doc %{_docdir}/kamailio/modules/README.tmrec
 %doc %{_docdir}/kamailio/modules/README.topoh
+%doc %{_docdir}/kamailio/modules/README.uid_auth_db
+%doc %{_docdir}/kamailio/modules/README.uid_avp_db
+%doc %{_docdir}/kamailio/modules/README.uid_domain
+%doc %{_docdir}/kamailio/modules/README.uid_gflags
+%doc %{_docdir}/kamailio/modules/README.uid_uri_db
 %doc %{_docdir}/kamailio/modules/README.xhttp
 %doc %{_docdir}/kamailio/modules/README.xhttp_rpc
 %doc %{_docdir}/kamailio/modules/README.xlog
@@ -587,6 +594,9 @@ fi
 %{_libdir}/kamailio/libkmi.so
 %{_libdir}/kamailio/libkmi.so.1
 %{_libdir}/kamailio/libkmi.so.1.0
+%{_libdir}/kamailio/libprint.so
+%{_libdir}/kamailio/libprint.so.1
+%{_libdir}/kamailio/libprint.so.1.2
 %{_libdir}/kamailio/libsrdb1.so
 %{_libdir}/kamailio/libsrdb1.so.1
 %{_libdir}/kamailio/libsrdb1.so.1.0
@@ -627,6 +637,8 @@ fi
 %{_libdir}/kamailio/modules/pdb.so
 %{_libdir}/kamailio/modules/pipelimit.so
 %{_libdir}/kamailio/modules/prefix_route.so
+%{_libdir}/kamailio/modules/print.so
+%{_libdir}/kamailio/modules/print_lib.so
 %{_libdir}/kamailio/modules/ratelimit.so
 %{_libdir}/kamailio/modules/rtpproxy.so
 %{_libdir}/kamailio/modules/sanity.so
@@ -641,6 +653,11 @@ fi
 %{_libdir}/kamailio/modules/tm.so
 %{_libdir}/kamailio/modules/tmrec.so
 %{_libdir}/kamailio/modules/topoh.so
+%{_libdir}/kamailio/modules/uid_auth_db.so
+%{_libdir}/kamailio/modules/uid_avp_db.so
+%{_libdir}/kamailio/modules/uid_domain.so
+%{_libdir}/kamailio/modules/uid_gflags.so
+%{_libdir}/kamailio/modules/uid_uri_db.so
 %{_libdir}/kamailio/modules/xhttp.so
 %{_libdir}/kamailio/modules/xhttp_rpc.so
 %{_libdir}/kamailio/modules/xlog.so
@@ -1006,6 +1023,8 @@ fi
 %changelog
 * Fri Dec 21 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added db2_ldap, db2_ops, and timer to the build
+  - Added uid_auth_db, uid_avp_db, uid_domain, uid_gflags, uid_uri_db, print,
+    and print_lib to the build
 * Thu Dec 13 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added xhttp_pi framework examples to the installation
   - Added xhttp_pi README to the installation
