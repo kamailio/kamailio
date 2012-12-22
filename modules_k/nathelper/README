@@ -503,6 +503,9 @@ fix_nated_register();
      * 32 - test if the source IP address of signaling is a RFC1918
        address
      * 64 - test if the source connection of signaling is a WebSocket
+     * 128 - test if the Contact URI port differs from the source port of
+       the request (Warning: this is might be legal or even intended
+       combination in non natted scenarios)
 
    All flags can be bitwise combined, the test returns true if any of the
    tests identified a NAT.

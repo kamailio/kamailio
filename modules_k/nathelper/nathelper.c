@@ -244,6 +244,7 @@ MODULE_VERSION
 #define	NAT_UAC_TEST_RPORT	0x10
 #define	NAT_UAC_TEST_O_1918	0x20
 #define NAT_UAC_TEST_WS		0x40
+#define	NAT_UAC_TEST_C_PORT	0x80
 
 
 #define DEFAULT_RTPP_SET_ID		0
@@ -1397,6 +1398,27 @@ contact_1918(struct sip_msg* msg)
 }
 
 /*
+ * test if source port of signaling is different from
+ * port advertised in Contact
+ */
+static int
+contact_rport(struct sip_msg* msg)
+{
+	struct sip_uri uri;
+	contact_t* c;
+
+	if (get_contact_uri(msg, &uri, &c) == -1) {
+		return -1;
+	}
+
+	if (msg->rcv.src_port != (uri.port_no ? uri.port_no : SIP_PORT)) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+/*
  * test for occurrence of RFC1918 IP address in SDP
  */
 static int
@@ -1496,10 +1518,17 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 		return 1;
 
 	/*
- 	 * tests prototype to check whether the message arrived on a WebSocket
+	 * test prototype to check whether the message arrived on a WebSocket
  	 */
 	if ((tests & NAT_UAC_TEST_WS)
 		&& (msg->rcv.proto == PROTO_WS || msg->rcv.proto == PROTO_WSS))
+		return 1;
+
+	/*
+	 * test if source port of signaling is different from
+	 * port advertised in Contact
+	 */
+	if ((tests & NAT_UAC_TEST_C_PORT) && (contact_rport(msg) > 0))
 		return 1;
 
 	/* no test succeeded */

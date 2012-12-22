@@ -570,6 +570,11 @@ fix_nated_register();
 			<emphasis>64</emphasis> -  test if the source connection of
 			signaling is a WebSocket
 			</para></listitem>
+			<listitem><para>
+			<emphasis>128</emphasis> -  test if the Contact URI port differs
+			from the source port of the request (Warning: this is might be legal
+			or even intended combination in non natted scenarios)
+			</para></listitem>
 			</itemizedlist>
 		<para>
 		All flags can be bitwise combined, the test returns true if any of 
