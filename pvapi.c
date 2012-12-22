@@ -1854,9 +1854,11 @@ void pv_destroy_api(void)
 static char **_pv_print_buffer = NULL;
 #define PV_DEFAULT_PRINT_BUFFER_SIZE 1024
 static int _pv_print_buffer_size  = PV_DEFAULT_PRINT_BUFFER_SIZE;
+static int _pv_print_buffer_size_active  = 0;
 /* 6 mod params + 4 direct usage from mods */
 #define PV_DEFAULT_PRINT_BUFFER_SLOTS 10
 static int _pv_print_buffer_slots = PV_DEFAULT_PRINT_BUFFER_SLOTS;
+static int _pv_print_buffer_slots_active = 0;
 static int _pv_print_buffer_index = 0;
 
 /**
@@ -1890,6 +1892,9 @@ int pv_init_buffer(void)
 	}
 	LM_DBG("PV print buffer initialized to [%d][%d]\n",
 			_pv_print_buffer_slots, _pv_print_buffer_size);
+	_pv_print_buffer_slots_active = _pv_print_buffer_slots;
+	_pv_print_buffer_size_active = _pv_print_buffer_size;
+
 	return 0;
 }
 
@@ -1902,12 +1907,14 @@ void pv_destroy_buffer(void)
 
 	if(_pv_print_buffer==NULL)
 		return;
-	for(i=0; i<_pv_print_buffer_slots; i++)
+	for(i=0; i<_pv_print_buffer_slots_active; i++)
 	{
 		if(_pv_print_buffer[i]!=NULL)
 			pkg_free(_pv_print_buffer[i]);
 	}
 	pkg_free(_pv_print_buffer);
+	_pv_print_buffer_slots_active = 0;
+	_pv_print_buffer_size_active = 0;
 	_pv_print_buffer = NULL;
 }
 
@@ -1916,8 +1923,8 @@ void pv_destroy_buffer(void)
  */
 int pv_reinit_buffer(void)
 {
-	if(_pv_print_buffer_size==PV_DEFAULT_PRINT_BUFFER_SIZE
-			&& _pv_print_buffer_slots==PV_DEFAULT_PRINT_BUFFER_SLOTS)
+	if(_pv_print_buffer_size==_pv_print_buffer_size_active
+			&& _pv_print_buffer_slots==_pv_print_buffer_slots_active)
 		return 0;
 	pv_destroy_buffer();
 	return pv_init_buffer();
