@@ -220,6 +220,7 @@
 #include "../../socket_info.h"
 #include "../../mod_fix.h"
 #include "../../dset.h"
+#include "../../select.h"
 #include "../registrar/sip_msg.h"
 #include "../usrloc/usrloc.h"
 #include "nathelper.h"
@@ -438,6 +439,27 @@ struct module_exports exports = {
 	child_init
 };
 
+
+static int
+sel_nathelper(str* res, select_t* s, struct sip_msg* msg)
+{
+
+	/* dummy */
+	return 0;
+}
+
+static int sel_rewrite_contact(str* res, select_t* s, struct sip_msg* msg);
+
+SELECT_F(select_any_nameaddr)
+
+select_row_t sel_declaration[] = {
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("nathelper"), sel_nathelper, SEL_PARAM_EXPECTED},
+	{ sel_nathelper, SEL_PARAM_STR, STR_STATIC_INIT("rewrite_contact"), sel_rewrite_contact, CONSUME_NEXT_INT },
+
+	{ sel_rewrite_contact, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
+
+	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
+};
 
 static int
 fixup_fix_sdp(void** param, int param_no)
@@ -688,6 +710,8 @@ mod_init(void)
 			abort();
 		nets_1918[i].netaddr = ntohl(addr.s_addr) & nets_1918[i].mask;
 	}
+
+	register_select_table(sel_declaration);
 
 	return 0;
 }
@@ -2291,4 +2315,60 @@ static int nh_sip_reply_received(sip_msg_t *msg)
 done:
 	/* let the core handle further the reply */
 	return 1;
+}
+
+static int
+sel_rewrite_contact(str* res, select_t* s, struct sip_msg* msg)
+{
+	static char buf[500];
+	contact_t* c;
+	int n, def_port_fl, len;
+	char *cp;
+	str hostport;
+	struct sip_uri uri;
+
+	res->len = 0;
+	n = s->params[2].v.i;
+	if (n <= 0) {
+		LOG(L_ERR, "ERROR: rewrite_contact[%d]: zero or negative index not supported\n", n);
+		return -1;
+	}
+	c = 0;
+	do {
+		if (contact_iterator(&c, msg, c) < 0 || !c)
+			return -1;
+		n--;
+	} while (n > 0);
+
+	if (parse_uri(c->uri.s, c->uri.len, &uri) < 0 || uri.host.len <= 0) {
+		LOG(L_ERR, "rewrite_contact[%d]: Error while parsing Contact URI\n", s->params[2].v.i);
+		return -1;
+	}
+	len = c->len - uri.host.len;
+	if (uri.port.len > 0)
+		len -= uri.port.len;
+	def_port_fl = (msg->rcv.proto == PROTO_TLS && msg->rcv.src_port == SIPS_PORT) || (msg->rcv.proto != PROTO_TLS && msg->rcv.src_port == SIP_PORT);
+	if (!def_port_fl)
+		len += 1/*:*/+5/*port*/;
+	if (len > sizeof(buf)) {
+		LOG(L_ERR, "ERROR: rewrite_contact[%d]: contact too long\n", s->params[2].v.i);
+		return -1;
+	}
+	hostport = uri.host;
+	if (uri.port.len > 0)
+		hostport.len = uri.port.s + uri.port.len - uri.host.s;
+
+	res->s = buf;
+	res->len = hostport.s - c->name.s;
+	memcpy(buf, c->name.s, res->len);
+	cp = ip_addr2a(&msg->rcv.src_ip);
+	if (def_port_fl) {
+		res->len+= snprintf(buf+res->len, sizeof(buf)-res->len, "%s", cp);
+	} else {
+		res->len+= snprintf(buf+res->len, sizeof(buf)-res->len, "%s:%d", cp, msg->rcv.src_port);
+	}
+	memcpy(buf+res->len, hostport.s+hostport.len, c->len-(hostport.s+hostport.len-c->name.s));
+	res->len+= c->len-(hostport.s+hostport.len-c->name.s);
+
+	return 0;
 }

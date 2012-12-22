@@ -736,5 +736,27 @@ $ &ctltool; fifo nh_enable_ping 1
 
 	</section>
 
+	<section>
+		<title>Selects</title>
+
+		<section id="nathelper.rewrite_contact">
+		<title>@nathelper.rewrite_contact[n]</title>
+		<para>
+			Get n-th Contact value with IP:Port rewritten to source ip:port. N is counted from 1.
+		    Only IP:port is rewritten, remaining part are left unchanged. Full nameaddr is supported.
+		</para>
+		<example>
+			<title>@nathelper.rewrite_contact usage</title>
+			<programlisting>
+...
+$c = @nathelper.rewrite_contact[1];
+...
+$c2 = @nathelper.rewrite_contact[1].nameaddr.uri;
+			</programlisting>
+		</example>
+		</section>
+
+	</section>
+
 </chapter>
 
