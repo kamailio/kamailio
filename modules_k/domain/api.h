@@ -32,7 +32,7 @@ typedef struct domain_api {
 } domain_api_t;
 
 typedef int (*bind_domain_t)(domain_api_t* api);
-int bind_domain(domain_api_t* api);
+extern int bind_domain(domain_api_t* api);
 
 
 #endif
