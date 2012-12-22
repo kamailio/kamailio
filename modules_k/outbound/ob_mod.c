@@ -96,20 +96,23 @@ static int mod_init(void)
 
    <HMAC-SHA1-80><protocol><dst_ip><dst_port><src_ip><src_port>
           10     +    1    +  16   +    2    +  16   +    2
-	   = 47 bytes
+	   = 47 bytes maximum
 
-   IP addresses will always be 16 bytes. When an IPv4 address is used the
-   address will be encoded in the first four bytes and the last four bytes will
-   be ignored.
+   <protocol> specifies whether the addresses are IPv4 or IPv6 and the
+   transport.
+		Bits 0-6:	transport (see sip_protos enum from ip_addr.h)
+		Bit 7:		IPv6 if set, IPv4 if unset	
 
-   base64 encoded size: ceiling((47+2)/3)*4 = 68 bytes
+   IP addresses will be 4 (for IPv6) or 16 (for IPv6) bytes.
+
+   Maximum base64 encoded size: ceiling((47+2)/3)*4 = 68 bytes
 */
 
-#define UNENC_FLOW_TOKEN_LENGTH	47
-#define SHA1_LENGTH		20
-#define SHA1_80_LENGTH		10
-#define FLOW_TOKEN_START_POS	(SHA1_80_LENGTH)
-static unsigned char unenc_flow_token[UNENC_FLOW_TOKEN_LENGTH];
+#define UNENC_FLOW_TOKEN_MAX_LENGTH	47
+#define SHA1_LENGTH			20
+#define SHA1_80_LENGTH			10
+#define FLOW_TOKEN_START_POS		(SHA1_80_LENGTH)
+static unsigned char unenc_flow_token[UNENC_FLOW_TOKEN_MAX_LENGTH];
 static unsigned char hmac_sha1[EVP_MAX_MD_SIZE];
 
 int encode_flow_token(str *flow_token, struct receive_info rcv)
@@ -123,16 +126,17 @@ int encode_flow_token(str *flow_token, struct receive_info rcv)
 	}
 
 	/* Encode protocol information */
-	unenc_flow_token[pos++] = rcv.proto;
+	unenc_flow_token[pos++] = 
+		(rcv.dst_ip.af == AF_INET6 ? 0x80 : 0x00) | rcv.proto;
 
 	/* Encode destination address */
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < (rcv.dst_ip.af == AF_INET6 ? 16 : 4); i++)
 		unenc_flow_token[pos++] = rcv.dst_ip.u.addr[i];
 	unenc_flow_token[pos++] = (rcv.dst_port >> 8) & 0xff;
 	unenc_flow_token[pos++] =  rcv.dst_port       & 0xff;
 
 	/* Encode source address */
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < (rcv.src_ip.af == AF_INET6 ? 16 : 4); i++)
 		unenc_flow_token[pos++] = rcv.src_ip.u.addr[i];
 	unenc_flow_token[pos++] = (rcv.dst_port >> 8) & 0xff;
 	unenc_flow_token[pos++] =  rcv.dst_port       & 0xff;
@@ -141,46 +145,46 @@ int encode_flow_token(str *flow_token, struct receive_info rcv)
 	   prepend onto the flow token */
 	HMAC(EVP_sha1(), ob_key.s, ob_key.len,
 		&unenc_flow_token[FLOW_TOKEN_START_POS],
-		UNENC_FLOW_TOKEN_LENGTH - FLOW_TOKEN_START_POS,
+		pos - FLOW_TOKEN_START_POS,
 		hmac_sha1, NULL);
 	memcpy(unenc_flow_token, &hmac_sha1[SHA1_LENGTH - SHA1_80_LENGTH],
 		SHA1_80_LENGTH);
 
 	/* base64 encode the entire flow token and store for the caller to
  	   use */
-	flow_token->s = pkg_malloc(base64_enc_len(UNENC_FLOW_TOKEN_LENGTH));
+	flow_token->s = pkg_malloc(base64_enc_len(pos));
 	if (flow_token->s == NULL)
 	{
 		LM_ERR("allocating package memory\n");
 		return -1;
 	}
-	flow_token->len = base64_enc(unenc_flow_token, UNENC_FLOW_TOKEN_LENGTH,
+	flow_token->len = base64_enc(unenc_flow_token, pos,
 				(unsigned char *) flow_token->s,
-				base64_enc_len(UNENC_FLOW_TOKEN_LENGTH));
+				base64_enc_len(pos));
 
 	return 0;
 }
 
 int decode_flow_token(struct receive_info *rcv, str flow_token)
 {
-	int pos = FLOW_TOKEN_START_POS, i;
+	int pos = FLOW_TOKEN_START_POS, flow_length, i;
 
-	if (flow_token.len != base64_enc_len(UNENC_FLOW_TOKEN_LENGTH))
+	if (flow_token.len > base64_enc_len(UNENC_FLOW_TOKEN_MAX_LENGTH))
 	{
-		LM_ERR("bad flow token length.  Length is %d, expected %d\n",
-			flow_token.len, UNENC_FLOW_TOKEN_LENGTH);
+		LM_ERR("bad flow token length.  Length is %d, expected <= %d\n",
+			flow_token.len, UNENC_FLOW_TOKEN_MAX_LENGTH);
 		return -1;
 	}
 
 	/* base64 decode the flow token */
-	base64_dec((unsigned char *) flow_token.s, flow_token.len,
-			unenc_flow_token, UNENC_FLOW_TOKEN_LENGTH);
+	flow_length = base64_dec((unsigned char *) flow_token.s, flow_token.len,
+			unenc_flow_token, UNENC_FLOW_TOKEN_MAX_LENGTH);
 
 	/* HMAC-SHA1 the flow token (after the hash) and compare with the
 	   truncated hash at the start of the flow token. */
 	HMAC(EVP_sha1(), ob_key.s, ob_key.len,
 		&unenc_flow_token[FLOW_TOKEN_START_POS],
-		UNENC_FLOW_TOKEN_LENGTH - FLOW_TOKEN_START_POS,
+		flow_length - FLOW_TOKEN_START_POS,
 		hmac_sha1, NULL);
 	if (memcmp(unenc_flow_token, &hmac_sha1[SHA1_LENGTH - SHA1_80_LENGTH],
 		SHA1_80_LENGTH) != 0)
@@ -190,16 +194,26 @@ int decode_flow_token(struct receive_info *rcv, str flow_token)
 	}
 
 	/* Decode protocol information */
-	rcv->proto = unenc_flow_token[pos++];
+	if (unenc_flow_token[pos] & 0x80)
+	{
+		rcv->dst_ip.af = rcv->src_ip.af = AF_INET6;
+		rcv->dst_ip.len = rcv->src_ip.len = 16;
+	}
+	else
+	{
+		rcv->dst_ip.af = rcv->src_ip.af = AF_INET;
+		rcv->dst_ip.len = rcv->src_ip.len = 4;
+	}
+	rcv->proto = unenc_flow_token[pos++] & 0x7f;
 
 	/* Decode destination address */
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < (rcv->dst_ip.af == AF_INET6 ? 16 : 4); i++)
 		rcv->dst_ip.u.addr[i] = unenc_flow_token[pos++];
 	rcv->dst_port = ((unenc_flow_token[pos++] << 8) & 0xff)
 				| (unenc_flow_token[pos++] & 0xff);
 
 	/* Decode source address */
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < (rcv->src_ip.af == AF_INET6 ? 16 : 4); i++)
 		rcv->src_ip.u.addr[i] = unenc_flow_token[pos++];
 	rcv->src_port = ((unenc_flow_token[pos++] << 8) & 0xff)
 				| (unenc_flow_token[pos++] & 0xff);
