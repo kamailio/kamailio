@@ -1,13 +1,13 @@
 This directory contains various utility programs for SIP-router
 
-db_berkeley		????
+db_berkeley	 recovery for berkeley_db module
 db_oracle		????
-fifo_relay		????
-kamctl		????
-kamunix		????
+fifo_relay	PHP script to provide network based fifo access
+kamctl		Script to communicate with Kamailio over the MI interface
+kamunix		Kamailio UNIX socket wrapper
 pdbt		????
-pike_top		????
+pike_top	SER mod_pike top console
 profile		????
 route_graph		????
-sercmd		????
+kamcmd		Software to communicate with Kamailio using the binRPC interface
 sipgrep		????
