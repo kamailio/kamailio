@@ -554,7 +554,6 @@ static void htable_rpc_get(rpc_t* rpc, void* c) {
 	ht_t *ht;
 	ht_cell_t *htc;	/*!< One HT cell */
 	void* th;
-	void* ih;
 	void* vh;
 
 	if (rpc->scan(c, "SS", &htname, &keyname) < 2) {

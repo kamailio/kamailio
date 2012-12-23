@@ -714,8 +714,22 @@ int	is_known_dlg(struct sip_msg *msg) {
 int	dlg_set_timeout_by_profile(struct dlg_profile_table *profile, 
 				   str *value, int timeout) 
 {
-	unsigned int		i;
+	unsigned int		i = 0;
+	dlg_cell_t		*this_dlg = NULL;
 	struct dlg_profile_hash	*ph = NULL;
+
+	/* Private structure necessary for manipulating dialog 
+         * timeouts outside of profile locks.  Admittedly, an
+         * ugly hack, but avoids some concurrency issues.
+         */
+
+	struct dlg_map_list {
+		unsigned int		h_id;
+		unsigned int		h_entry;
+		struct dlg_map_list	*next;
+	} *map_head, *map_scan, *map_scan_next;
+
+	map_head = NULL;
 
 	/* If the profile has no value, iterate through every 
 	 * node and set its timeout.
@@ -730,11 +744,23 @@ int	dlg_set_timeout_by_profile(struct dlg_profile_table *profile,
 			if(!ph) continue;
 			
 			do { 
-				if(update_dlg_timeout(ph->dlg, timeout) < 0) {
-					lock_release(&profile->lock);
-					return -1;
-				}
+				struct dlg_map_list *d = malloc(sizeof(struct dlg_map_list));
 
+				if(!d)
+					return -1;
+
+				memset(d, 0, sizeof(struct dlg_map_list));
+
+				d->h_id = ph->dlg->h_id;
+				d->h_entry = ph->dlg->h_entry;
+
+				if(map_head == NULL)
+					map_head = d;
+				else {
+					d->next = map_head;
+					map_head = d;
+				}
+	
 				ph = ph->next;
 			} while(ph != profile->entries[i].first);
 		} 
@@ -750,15 +776,24 @@ int	dlg_set_timeout_by_profile(struct dlg_profile_table *profile,
 		ph = profile->entries[i].first;
 
 		if(ph) {
-			do { 
-				if(value->len == ph->value.len &&
-				   memcmp(value->s, ph->value.s, 
-					  value->len) == 0) {
+			do {
+				if(ph && value->len == ph->value.len &&
+				   memcmp(value->s, ph->value.s, value->len) == 0) {
+					struct dlg_map_list *d = malloc(sizeof(struct dlg_map_list));
 
-					if(update_dlg_timeout(ph->dlg, 
-							timeout) < 0) {
-						lock_release(&profile->lock);
+					if(!d)
 						return -1;
+
+					memset(d, 0, sizeof(struct dlg_map_list));
+
+					d->h_id = ph->dlg->h_id;
+					d->h_entry = ph->dlg->h_entry;
+
+					if(map_head == NULL)
+						map_head = d;
+					else {
+						d->next = map_head;
+						map_head = d;
 					}
 				}
 
@@ -767,6 +802,27 @@ int	dlg_set_timeout_by_profile(struct dlg_profile_table *profile,
 		}
 
 		lock_release(&profile->lock);
+	}
+
+	/* Walk the list and bulk-set the timeout */
+	
+	for(map_scan = map_head; map_scan != NULL; map_scan = map_scan_next) {
+		map_scan_next = map_scan->next;
+
+		this_dlg = dlg_lookup(map_scan->h_entry, map_scan->h_id);
+
+		if(!this_dlg) {
+			LM_CRIT("Unable to find dialog %d:%d\n", map_scan->h_entry, map_scan->h_id);
+		} else if(this_dlg->state >= DLG_STATE_EARLY) {	
+			if(update_dlg_timeout(this_dlg, timeout) < 0) {
+               			LM_ERR("Unable to set timeout on %d:%d\n", map_scan->h_entry,
+					map_scan->h_id);
+			}
+
+	                dlg_release(this_dlg);
+		}
+
+		free(map_scan);
 	}
 
 	return 0;

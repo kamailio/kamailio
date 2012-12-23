@@ -146,4 +146,365 @@ if(fnmatch("$rU", "123*"))
 		</example>
 	</section>
 
+    <section id="append_hf_value">
+	<title>
+	    <function>append_hf_value(hf, hvalue)</function>
+	</title>
+	<para>
+		Append new header value after an existing header, if no index acquired append at the end of
+		list. Note that a header may consist of comma delimited list of values.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf</emphasis> - Header field to be appended. Format: HFNAME [ [IDX] ].
+		If index is not specified new header is inserted at the end of message.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>hvalue</emphasis> - Value to be added, config var formatting supported.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>append_hf_value</function> usage</title>
+	    <programlisting>
+...
+append_hf_value("foo", "gogo;stamp=$Ts")   # add new header
+append_hf_value("foo[1]", "gogo")  # add new value behind first value
+append_hf_value("foo[-1]", "$var(Bar)") # try add value to the last header, if not exists add new header
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="insert_hf_value">
+	<title>
+	    <function>insert_hf_value(hf, hvalue)</function>
+	</title>
+	<para>
+		Insert new header value before an existing header, if no index acquired insert before first
+		hf header. Note that a header may consist of comma delimited list of values.
+		To insert value behing last value use <function>appenf_hf_value</function>.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf</emphasis> - Header field to be appended. Format: HFNAME [ [IDX] ].
+		If index is not specified new header is inserted at the top of message.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>hvalue</emphasis> - Value to be added, config var formatting supported.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>insert_hf_value</function> usage</title>
+	    <programlisting>
+...
+insert_hf_value("foo[2]", "gogo")
+insert_hf_value("foo", "$avp(foo)")   # add new header at the top of list
+insert_hf_value("foo[1]", "gogo") # try add to the first header
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="remove_hf_value">
+	<title>
+	    <function>remove_hf_value(hf_par)</function>
+	</title>
+	<para>
+		Remove the header value from existing header, Note that a header may consist of comma delimited list of values.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf_par</emphasis> - Header field/param to be removed. Format: HFNAME [ [IDX] ] [. PARAM ]
+		If asterisk is specified as index then all values are affected.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>remove_hf_value</function> usage</title>
+	    <programlisting>
+...
+remove_hf_value("foo")  # remove foo[1]
+remove_hf_value("foo[*]")  # remove all foo's headers
+remove_hf_value("foo[-1]") # last foo
+remove_hf_value("foo.bar")  # delete parameter
+remove_hf_value("foo[*].bar") # for each foo delete bar parameters
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="remove_hf_value2">
+	<title>
+	    <function>remove_hf_value2(hf_par)</function>
+	</title>
+	<para>
+		Remove specified header or parameter. It is expected header in Authorization format (comma delimiters are not treated as multi-value delimiters).
+
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf_par</emphasis> - Header/param to be removed. Format: HFNAME [ [IDX] ] [. PARAM ]
+		If asterisk is specified as index then all values are affected.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>remove_hf_value2</function> usage</title>
+	    <programlisting>
+...
+remove_hf_value2("foo")  # remove foo[1]
+remove_hf_value2("foo[*]")  # remove all foo's headers, the same as remove_hf_header("foo[*]");
+remove_hf_value2("foo[-1]") # last foo
+remove_hf_value2("foo.bar")  # delete parameter
+remove_hf_value2("foo[*].bar") # for each foo delete bar parameters
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="assign_hf_value">
+	<title>
+	    <function>assign_hf_value(hf, hvalue)</function>
+	</title>
+	<para>
+		Assign value to specified header value / param.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+			<para><emphasis>hf_para</emphasis> - Header field value / param to be appended.
+				Format: HFNAME [ [IDX] ] [. PARAM]
+		If asterisk is specified as index then all values are affected.
+		</para>
+	    </listitem>
+	    <listitem>
+			<para><emphasis>hvalue</emphasis> - Value to be assigned, config var
+				formatting supported. If value is empty then no equal sign apears in param.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>assign_hf_value</function> usage</title>
+	    <programlisting>
+...
+assign_hf_value("foo", "gogo")  # foo[1]
+assign_hf_value("foo[-1]", "gogo")  # foo[last_foo]
+
+assign_hf_value("foo.bar", "")
+assign_hf_value("foo[3].bar", "")
+assign_hf_value("foo[*]", "")  # remove all foo's, empty value remains
+assign_hf_value("foo[*].bar", "")  # set empty value (ex. lr)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="assign_hf_value2">
+	<title>
+	    <function>assign_hf_value2(hf, hvalue)</function>
+	</title>
+	<para>
+		Assign value to specified header. It is expected header in Authorization format (comma delimiters are not treated as multi-value delimiters).
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf_para</emphasis> - Header field value / param to be appended. Format: HFNAME [ [IDX] ] [. PARAM]
+		If asterisk is specified as index then all values are affected.
+		</para>
+	    </listitem>
+	    <listitem>
+			<para><emphasis>hvalue</emphasis> - Value to be assigned, config var formatting supported.
+				If value is empty then no equal sign apears in param.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>assign_hf_value2</function> usage</title>
+	    <programlisting>
+...
+assign_hf_value2("Authorization.integrity-protected", "\"yes\"")
+assign_hf_value2("foo[-1]", "gogo")  # foo[last_foo]
+assign_hf_value2("foo[*].bar", "")  # set empty value (ex. lr)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="include_hf_value">
+	<title>
+	    <function>include_hf_value(hf, hvalue)</function>
+	</title>
+	<para>
+		Add value in set if not exists, eg. "Supported: path,100rel".
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf</emphasis> - Header field name to be affected.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>hvalue</emphasis> - config var formatting supported.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>include_hf_value</function> usage</title>
+	    <programlisting>
+...
+include_hf_value("Supported", "path");
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="exclude_hf_value">
+	<title>
+	    <function>exclude_hf_value(hf, hvalue)</function>
+	</title>
+	<para>
+		Remove value from set if exists, eg. "Supported: path,100rel".
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf</emphasis> - Header field name to be affected.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>hvalue</emphasis> - config formatting supported.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>exclude_hf_value</function> usage</title>
+	    <programlisting>
+...
+exclude_hf_value("Supported", "100rel");
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="hf_value_exists">
+	<title>
+	    <function>hf_value_exists(hf, hvalue)</function>
+	</title>
+	<para>
+		Check if value exists in set. Alternate select <emphasis>@hf_value_exists.HF.VALUE</emphasis>
+		may be used. It returns one or zero.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>hf</emphasis> - Header field name to be affected. Underscores are treated as dashes.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>hvalue</emphasis> - config var formatting supported.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>hf_value_exists</function> usage</title>
+	    <programlisting>
+...
+if (hf_value_exists("Supported", "100rel")) {
+
+}
+
+if (@hf_value_exists.supported.path == "1") {
+
+}
+...
+	    </programlisting>
+	</example>
+    </section>
+
+	<section>
+	<title>Selects</title>
+    <section id="sel.hf_value">
+	<title>@hf_value</title>
+	<para>
+		Get value of required header-value or param. Note that functions called 'value2'
+		works with Authorization-like headers where comma is not treated as value delimiter. Formats:
+		@hf_value.HFNAME[IDX]    # idx value, negative value counts from bottom
+		@hf_value.HFNAME.PARAM_NAME
+		@hf_value.HFNAME[IDX].PARAM_NAME
+		@hf_value.HFNAME.p.PARAM_NAME  # or .param., useful if requred called "uri", "p", "param"
+		@hf_value.HFNAME[IDX].p.PARAM_NAME # dtto
+		@hf_value.HFNAME[IDX].uri # (&lt; &amp; &gt; excluded)
+		@hf_value.HFNAME[*]     # return comma delimited list of all values (combines headers)
+		@hf_value.HFNAME        # the same as above [*] but may be parsed by cfg.y
+		@hf_value.HFNAME[*].uri # return comma delimited list of uris (&lt; &amp; &gt; excluded)
+		@hf_value.HFNAME.uri    # the same as above [*] but may be parsed by cfg.y
+		@hf_value.HFNAME[IDX].name  # returns name part, quotes excluded
+		@hf_value.HFNAME.name   # returns name part of the first value
+
+		@hf_value2.HFNAME        # returns value of first header
+		@hf_value2.HFNAME[IDX]   # returns value of idx's header
+		@hf_value2.HFNAME.PARAM_NAME
+		@hf_value2.HFNAME[IDX].PARAM_NAME
+
+		@hf_value.HFNAME[IDX].uri  # return URI, quotes excluded
+		@hf_value.HFNAME.p.uri  # returns param named uri, not URI itself
+		@hf_value.HFNAME.p.name # returns param named name, not name itself
+		@hf_value.HFNAME[IDX].uri.name #  any sel_any_uri nested features may be used
+		@hf_value.HFNAME[IDX].nameaddr.name # select_any_nameaddr
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>HFNAME</emphasis> - Header field name. Underscores are treated as dashes.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>IDX</emphasis> - Value index, negative value counts from bottom
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>PARAM_NAME</emphasis> - name of parameter
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>@hf_value select</function> usage</title>
+	    <programlisting>
+...
+$a = @hf_value.my_header[1].my_param;
+xplog("L_ERR", "$sel(@hf_value.via[-1]), $sel(@hf_value.from.tag)\n");
+$b = @hf_value.p_associated_uri;
+
+xplog("L_ERR", "Route uris: '$sel(@hf_value.route[*].uri)'\n");
+$rr = @hf_value.route.uri;
+
+$prt = @hf_value2.authorization.integrity_protected;
+...
+	    </programlisting>
+	</example>
+    </section>
+    <section id="sel.hf_value2">
+	<title>@hf_value2</title>
+	<para>
+		TBA.
+	</para>
+    </section>
+    <section id="sel.hf_value_exists">
+	<title>@hf_value_exists</title>
+	<para>
+		TBA.
+	</para>
+    </section>
+
+    </section>
+
 </section>

@@ -128,7 +128,7 @@ static cmd_export_t cmds[] = {
 	{"lookup_domain", (cmd_function)w_lookup_domain, 2, fixup_pvar_str,
 	 fixup_free_pvar_str,
 	 REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
-	{"bind_domain", (cmd_function)bind_domain, 0, 0, 0, 0},
+	{"bind_domain", (cmd_function)bind_domain, 1, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
