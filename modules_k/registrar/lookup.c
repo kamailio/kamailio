@@ -387,7 +387,7 @@ int lookup_branches(sip_msg_t *msg, udomain_t *d)
 	ruri_b_reg_id = msg->reg_id;
 	reset_ruri_branch(msg);
 
-	for(i=0; i<nr_branches; i++) {
+	for(i=0; i<nr_branches_start; i++) {
 		crt = get_sip_branch(i);
 		/* it has to be a clean branch to do lookup for it */
 		if(crt->len <= 0 || crt->dst_uri_len > 0
