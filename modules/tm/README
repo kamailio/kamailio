@@ -8,9 +8,9 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
-   Copyright © 2003 FhG FOKUS
+   Copyright � 2003 FhG FOKUS
 
-   Copyright © 2008 Juha Heinanen
+   Copyright � 2008 Juha Heinanen
      __________________________________________________________________
 
    1.1. Overview
@@ -179,13 +179,13 @@ Juha Heinanen
 Note
 
    Several Kamailio TM module functions are now implemented in the TMX
-   module: “modules_k/tmx”. Check it to see if what you are looking for is
+   module: "modules_k/tmx". Check it to see if what you are looking for is
    there.
 
 1.2. Serial Forking Based on Q Value
 
    A single SIP INVITE request may be forked to multiple destinations. We
-   call the set of all such destinations a “destination set”. Individual
+   call the set of all such destinations a "destination set". Individual
    elements within the destination sets are called branches. The script
    writer can add URIs to the destination set from the configuration file,
    or they can be loaded from the user location database. Each registered
@@ -218,7 +218,7 @@ Note
    and t_next_contacts().
 
    Every branch in the destination set is assigned a priority number, also
-   known as the “q value”. The q value is a floating point number in a
+   known as the "q value". The q value is a floating point number in a
    range 0 to 1.0. The higher the q value number, the more priority is
    given to the particular branch in the destination set. Branches with q
    value 1.0 have maximum priority, such branches should be always be
@@ -987,7 +987,7 @@ modparam("tm", "unmatched_cancel", "2")
    Default value is 1 (on).
 
    Can be set at runtime, e.g.:
-        $ sercmd cfg.set_now_int tm ruri_matching 0
+        $ kamcmd cfg.set_now_int tm ruri_matching 0
 
    Example 31. Set ruri_matching parameter
 ...
@@ -1006,7 +1006,7 @@ modparam("tm", "ruri_matching", 1)
    Default value is 1 (on).
 
    Can be set at runtime, e.g.:
-        $ sercmd cfg.set_now_int tm via1_matching 0
+        $ kamcmd cfg.set_now_int tm via1_matching 0
 
    Example 32. Set via1_matching parameter
 ...
@@ -1021,7 +1021,7 @@ modparam("tm", "via1_matching", 1)
    Default value is 0 (off).
 
    Can be set at runtime, e.g.:
-        $ sercmd cfg.set_now_int tm pass_provisional_replies 1
+        $ kamcmd cfg.set_now_int tm pass_provisional_replies 1
 
    Example 33. Set pass_provisional_replies parameter
 ...
@@ -1036,7 +1036,7 @@ modparam("tm", "pass_provisional_replies", 1)
    Default value is 500.
 
    Can be set at runtime, e.g.:
-        $ sercmd cfg.set_now_int tm default_code 505
+        $ kamcmd cfg.set_now_int tm default_code 505
 
    Example 34. Set default_code parameter
 ...
@@ -1051,7 +1051,7 @@ modparam("tm", "default_code", 501)
    Default value is "Server Internal Error".
 
    Can be set at runtime, e.g.:
-        $ sercmd cfg.set_now_string tm default_reason "Unknown error"
+        $ kamcmd cfg.set_now_string tm default_reason "Unknown error"
 
    Example 35. Set default_reason parameter
 ...
@@ -1073,7 +1073,7 @@ modparam("tm", "default_reason", "Unknown reason")
    Default value is 0 (off, rfc conformant behaviour).
 
    Can be set at runtime, e.g.:
-        $ sercmd cfg.set_now_int tm disable_6xx_block 0
+        $ kamcmd cfg.set_now_int tm disable_6xx_block 0
 
    See also: t_set_disable_6xx().
 
@@ -1105,7 +1105,7 @@ Note
    The default value is 0 (rfc conformant behaviour).
 
    Can be set at runtime, e.g.:
-        $ sercmd cfg.set_now_int tm local_ack_mode 0
+        $ kamcmd cfg.set_now_int tm local_ack_mode 0
 
    Example 37. Set local_ack_mode parameter
 ...
@@ -1181,7 +1181,7 @@ modparam("tm", "faked_reply_prio", 2000)
    Default value is 1 (enabled).
 
    Can be set at runtime, e.g.:
-        $ sercmd cfg.set_now_int tm local_cancel_reason 0
+        $ kamcmd cfg.set_now_int tm local_cancel_reason 0
 
    See also: e2e_cancel_reason.
 
@@ -1199,7 +1199,7 @@ modparam("tm", "local_cancel_reason", 0)
    Default value is 1 (enabled).
 
    Can be changed at runtime, e.g.:
-        $ sercmd cfg.set_now_int tm e2e_cancel_reason 0
+        $ kamcmd cfg.set_now_int tm e2e_cancel_reason 0
 
    See also: t_set_no_e2e_cancel_reason() and local_cancel_reason.
 

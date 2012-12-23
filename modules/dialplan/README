@@ -338,7 +338,7 @@ modparam("dialplan", "fetch_rows", 4000)
 
    6.1. dp_translate(id, [src[/dest]])
 
-6.1. dp_translate(id, [src[/dest]])
+6.1.  dp_translate(id, [src[/dest]])
 
    Will try to translate src into dest according to the translation rules
    with dialplan ID equal to id. If src/dest is missing the default
@@ -434,7 +434,7 @@ xlog("translated to var $var(y) \n");
    Parameters: none
 
    Example:
-                sercmd dialplan.reload
+                kamcmd dialplan.reload
 
 8.2. dialplan.translate
 
@@ -448,8 +448,8 @@ xlog("translated to var $var(y) \n");
      * Input String
 
    Example:
-        # sercmd dp_translate dpid "input"
-        sercmd dp_translate 1 "abcdxyz"
+        # kamcmd dp_translate dpid "input"
+        kamcmd dp_translate 1 "abcdxyz"
 
 9. Installation
 

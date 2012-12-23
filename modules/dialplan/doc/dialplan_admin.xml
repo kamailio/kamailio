@@ -529,7 +529,7 @@ xlog("translated to var $var(y) \n");
 		Example:
 		</para>
         <programlisting  format="linespecific">
-		sercmd dialplan.reload
+		&sercmd; dialplan.reload
 		</programlisting>
 		</section>
     
@@ -555,8 +555,8 @@ xlog("translated to var $var(y) \n");
 		Example:
 		</para>
         <programlisting  format="linespecific">
-        # sercmd dp_translate dpid "input"
-        sercmd dp_translate 1 "abcdxyz"
+        # &sercmd; dp_translate dpid "input"
+        &sercmd; dp_translate 1 "abcdxyz"
 		</programlisting>
 		</section>
 	</section>

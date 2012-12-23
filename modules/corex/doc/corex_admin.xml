@@ -193,7 +193,7 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 		Example:
 		</para>
         <programlisting  format="linespecific">
-		sercmd corex.list_sockets
+		&sercmd; corex.list_sockets
 		</programlisting>
     </section>
 	<section>
@@ -208,7 +208,7 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 		Example:
 		</para>
         <programlisting  format="linespecific">
-		sercmd corex.list_aliases
+		&sercmd; corex.list_aliases
 		</programlisting>
     </section>
     </section>

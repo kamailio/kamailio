@@ -655,10 +655,10 @@ resetdebug();
 		Examples:
 		</para>
         <programlisting  format="linespecific">
-		sercmd pkg.stats
-		sercmd pkg.stats pid 1234
-		sercmd pkg.stats rank 1
-		sercmd pkg.stats index 10
+		&sercmd; pkg.stats
+		&sercmd; pkg.stats pid 1234
+		&sercmd; pkg.stats rank 1
+		&sercmd; pkg.stats index 10
 		</programlisting>
     </section>
     </section>

@@ -210,13 +210,13 @@ modparam("ratelimit", "reply_code", 505)
 </programlisting>
 		</example>
 		<para>
-		This value can be modified at runtime using sercmd
+		This value can be modified at runtime using &sercmd;
 		</para>
 		<example>
 		<title> Set <varname>reply_code</varname> parameter at runtime </title>
 		<programlisting format="linespecific">
 
-sercmd cfg.set_now_int ratelimit reply_code 505
+&sercmd; cfg.set_now_int ratelimit reply_code 505
 
 		</programlisting>
 		</example>
@@ -240,13 +240,13 @@ modparam("ratelimit", "reply_reason", "Limiting")
 </programlisting>
 		</example>
 		<para>
-		This value can be modified at runtime using sercmd
+		This value can be modified at runtime using &sercmd;
 		</para>
 		<example>
 		<title> Set <varname>reply_reason</varname> parameter at runtime </title>
 		<programlisting format="linespecific">
 
-sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
+&sercmd; cfg.set_now_string ratelimit reply_reason "Limiting"
 
 		</programlisting>
 		</example>

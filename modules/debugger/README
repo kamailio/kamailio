@@ -96,7 +96,7 @@ Chapter 1. Admin Guide
    the routing and response scripts.
 
    Debugging can be done from local or remote host via RPC interface
-   (e.g., XMLRPC, sercmd, siremis).
+   (e.g., XMLRPC, kamcmd, siremis).
 
    The framework to set breakpoints on specific actions and config lines
    is not exported to RPC. Each action can be accompanied by an breakpoint
@@ -258,7 +258,7 @@ if($si=="10.0.0.10")
      * _pid_ : pid for which to list the details. If 'pid' is omitted then
        will print for all processes.
 
-   Examples of use with sercmd:
+   Examples of use with kamcmd:
                 dbg.ls
                 dbg.ls 1234
 
@@ -274,7 +274,7 @@ if($si=="10.0.0.10")
      * _pid_ : pid for which to list the details. If 'pid' is omitted,
        then details for all processes will be printed.
 
-   Examples for using with sercmd:
+   Examples for using with kamcmd:
                 dbg.trace on
                 dbg.trace off
                 dbg.trace on 1234
@@ -309,7 +309,7 @@ if($si=="10.0.0.10")
      * log - evaluate a pseudo-variable and print the result in SIP router
        logs. Pid parameter is mandatory.
 
-   Examples for using with sercmd:
+   Examples for using with kamcmd:
                 dbg.bp off
                 dbg.bp on
                 dbg.bp release
@@ -327,7 +327,7 @@ if($si=="10.0.0.10")
    of the route blocks of the configuration file step-by-step for a
    particular SIP message.
 
-   You need to connect using sercmd (or other RPC client) to Kamailio.
+   You need to connect using kamcmd (or other RPC client) to Kamailio.
    Then you can enable cfg breakpoints and send the SIP message. One
    process will be in waiting state ('state' field different than 0 when
    you do dbg.ls). Calling dbg.release will set the other Kamailio
@@ -342,7 +342,7 @@ if($si=="10.0.0.10")
 
    Example of a session:
 ...
-sercmd> dbg.ls
+kamcmd> dbg.ls
 {
         entry: 0
         pid: 6393
@@ -369,19 +369,19 @@ sercmd> dbg.ls
         in.cmd: 0
 }
 
-sercmd> dbg.bp show 6402
+kamcmd> dbg.bp show 6402
 at bkp [/etc/kamailio/debugger.cfg:369] a=6 n=route
 
-sercmd> dbg.bp next 6402
+kamcmd> dbg.bp next 6402
 exec [/etc/kamailio/debugger.cfg:369] a=6 n=route
 
-sercmd> dbg.bp next 6402
+kamcmd> dbg.bp next 6402
 exec [/etc/kamailio/debugger.cfg:462] a=17 n=if
 
-sercmd> dbg.bp eval 6402 $fu
+kamcmd> dbg.bp eval 6402 $fu
 $fu : t=str v=sip:test@kamailio.org
 
-sercmd> dbg.bp move 6402
+kamcmd> dbg.bp move 6402
 200 ok
 ...
 

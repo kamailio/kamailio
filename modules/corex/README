@@ -182,11 +182,11 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
    Print the list of sockets the application is listening on.
 
    Example:
-                sercmd corex.list_sockets
+                kamcmd corex.list_sockets
 
 5.2.  corex.list_aliases
 
    Print the list of hostname aliases used to match the myself condition.
 
    Example:
-                sercmd corex.list_aliases
+                kamcmd corex.list_aliases
