@@ -1,61 +1,59 @@
 # $id$
 
-kamcmd usage examples
+sercmd usage examples
 
 
 help:
-	kamcmd  -h
+	sercmd  -h
 
-* use an udp kamailio control socket:
-=====================================
- Kamailio config:
+use an udp ser control socket:
+ ser config:
   loadmodule "modules/ctl/ctl.so"
   modparam("ctl", "binrpc", "udp:localhost:2046")
   modparam("ctl", "binrpc", "tcp:localhost:2046")
   modparam("ctl", "binrpc", "unixs:/tmp/unix_stream")
   modparam("ctl", "binrpc", "unixd:/tmp/unix_dgram")
 
- kamcmd:
-	kamcmd -s udp:localhost:2046 core.version
+ sercmd:
+	sercmd -s udp:localhost:2046 core.version
 
 use a tcp socket:
-	kamcmd -s tcp:localhost:2046 core.version
+	sercmd -s tcp:localhost:2046 core.version
 
 use a stream unix socket:
-	kamcmd -s unixs:/tmp/unix_stream core.version
+	sercmd -s unixs:/tmp/unix_stream core.version
 
 use a datagram unix socket:
-	kamcmd -s unixd:/tmp/unix_dgram core.version
+	sercmd -s unixd:/tmp/unix_dgram core.version
 
 
-* Command help
-==============
+
 list available commands on ser side:
-	kamcmd -s unixd:/tmp/unix_drgam ls
+	sercmd -s unixd:/tmp/unix_drgam ls
 
-list all available commands (including kamcmd builtins or aliases):
-	kamcmd -s unixd:/tmp/unix_dgram ?
+list all available commands (including sercmd builtins or aliases):
+	sercmd -s unixd:/tmp/unix_dgram ?
 or
-	kamcmd -s unixd:/tmp/unix_dgram help
+	sercmd -s unixd:/tmp/unix_dgram help
 
 get help on one command:
-	kamcmd -s unixd:/tmp/unix_dgram help core.ps
+	sercmd -s unixd:/tmp/unix_dgram help core.ps
 
 list ser processes:
-	kamcmd -s unixd:/tmp/unix_dgram ps
+	sercmd -s unixd:/tmp/unix_dgram ps
 
 send an rpc command to ser:
-	kamcmd -s unixd:/tmp/unix_dgram core.shmmem
+	sercmd -s unixd:/tmp/unix_dgram core.shmmem
 
 format the output:
-	kamcmd -s unixd:/tmp/unix_dgram -f 'pid:%v desc:"%v"\n' core.ps
+	sercmd -s unixd:/tmp/unix_dgram -f 'pid:%v desc:"%v"\n' core.ps
 	(note: you could use just ps instead of core.ps)
 	
 format the output as csv:
-	kamcmd -s unixd:/tmp/unix_dgram -f '%v,' core.ps
+	sercmd -s unixd:/tmp/unix_dgram -f '%v,' core.ps
 
 enter interactive mode:
-	kamcmd -s unixd:/tmp/unix_dgram
+	sercmd -s unixd:/tmp/unix_dgram
 	(note: type help,or ? to see the command list, tab expansion should also
 	 work)
 
