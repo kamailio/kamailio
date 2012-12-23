@@ -30,10 +30,10 @@ fi
 #
 usage_ser_mi() {
 	echo
-	mecho " -- command 'sercmd_mi'"
+	mecho " -- command 'kamcmd_mi'"
 	echo
 cat <<EOF
- sercmd_mi ............................. send mi command through sercmd
+ kamcmd_mi ............................. send mi command through kamcmd
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_ser_mi"
@@ -44,7 +44,7 @@ ser_mi_cmd()
 	mdbg "entering ser_mi_cmd $*"
 	
 	if [ "$#" -lt 1 ]; then
-		merr "sercmd_mi must take at least command name as parameter"
+		merr "kamcmd_mi must take at least command name as parameter"
 		exit 1
 	fi
 
