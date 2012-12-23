@@ -8,24 +8,23 @@
 Overview
 ========
 
-sercmd is a unix tool for interfacing with sip-router using ser exported RPCs.
+kamcmd is a unix tool for interfacing with Kamailio using exported RPCs.
 It uses binrpc (a proprietary protocol, designed for minimal packet size and
 fast parsing) over a variety of transports (unix stream sockets, unix datagram
  sockets, udp or tcp).
 For more details on binrpc see the ctl module documentation
-(modules_s/ctl/README).
+(modules/ctl/README).
 
-sercmd can work in command line mode (the RPC or command name is just another
+kamcmd can work in command line mode (the RPC or command name is just another
 command line parameter) or in interactive mode. The interactive mode supports
-history and tab-completion (if sercmd was compiled with libreadline support).
+history and tab-completion (if kamcmd was compiled with libreadline support).
 
-On ser side the ctl module must be loaded.
-
+On Kamailio side the ctl module must be loaded.
 
 Usage
 =====
 
-	sercmd [options][-s address] [ cmd ]
+	kamcmd [options][-s address] [ cmd ]
 
 Options:
     -s address  unix socket name or host name to send the commands on
@@ -52,7 +51,7 @@ arg:
      string or number; to force a number to be interpreted as string 
      prefix it by "s:", e.g. s:1
 
-If no address is specified (no -s), sercmd will use  by default
+If no address is specified (no -s), kamcmd will use  by default
 unixs:/tmp/ser_ctl. This is also the default for the ctl module (if no
  "binrpc" module parameters are present in the config).
 
@@ -60,54 +59,53 @@ unixs:/tmp/ser_ctl. This is also the default for the ctl module (if no
 Command Types
 =============
 
-There are 3 types of commands: "raw" ser RPC, sercmd aliases and sercmd
+There are 3 types of commands: "raw" RPC, kamcmd aliases and kamcmd
  builtins.
 
 The "raw" RPC commands work directly with ser with no change on the input or
  the output.
-All the RPCs can be seen using sercmd ls.
+To list available RPC commands, use "kamcmd help".
 
-The aliases are just other easier to remember names for some ser RPCs, which
-some time include nicer formatting of the rpc result.
-One can see all the defined aliases using: sercmd help|grep alias: .
+The aliases are just easier to remember names for some RPCs, which
+some time include nicer formatting of the RPC result.
+One can see all the defined aliases using: kamcmd help|grep alias: .
 Example:
  ps is an alias for core.ps with the output formatted in a more readable way.
- sercmd ps is equivalent to sercmd -f"%v\t%v\n" core.ps.
- Without the formatting, the output of sercmd core.ps looks like:
+ kamcmd ps is equivalent to kamcmd -f"%v\t%v\n" core.ps.
+ Without the formatting, the output of kamcmd core.ps looks like:
 
 11262
 attendant
 11268
 udp receiver child=0 sock=127.0.0.1:5060
 ...
- Using sercmd ps (or  sercmd -f"%v\t%v\n" core.ps) the output looks like:
+ Using kamcmd ps (or  kamcmd -f"%v\t%v\n" core.ps) the output looks like:
 
 11262	attendant
 11268	udp receiver child=0 sock=127.0.0.1:5060
 ...
 
 The built-in commands can combine several different rpcs.
-One can see all the built-in commands using: sercmd help|grep builtin: .
-
+One can see all the built-in commands using: kamcmd help|grep builtin: .
 
 Getting help on a command
 =========================
 
 To get the help message associated with a command use 
-sercmd help <command_name>.
+kamcmd help <command_name>.
 Example:
-$ sercmd help ps
+$ kamcmd help ps
 ps is an alias for core.ps with reply formatting: "%v\t%v\n"
-$ sercmd help core.ps
-Returns the description of running SER processes.
+$ kamcmd help core.ps
+Returns the description of running Kamailio processes.
 
 
 Listing all the commands
 ========================
 
 To see all the available commands (ser RPCs, aliases and bultins) use
- sercmd help.
-To see only the "raw" RPCs, user sercmd ls.
+ kamcmd help.
+To see only the "raw" RPCs, user kamcmd ls.
 Note: since each module can define its own RPCs, the available RPCs depend
  on the loaded modules.
 
@@ -117,7 +115,7 @@ Examples
 
 Using the default socket (requires only loadmodule "ctl" in ser.cfg):
 
-$ sercmd ps
+$ kamcmd ps
 11262	attendant
 11268	udp receiver child=0 sock=127.0.0.1:5060
 11269	udp receiver child=1 sock=127.0.0.1:5060
@@ -130,25 +128,25 @@ $ sercmd ps
 11276	tcp receiver child=1
 11277	tcp main process
 
-$ sercmd help  # list all the supported commands
+$ kamcmd help  # list all the supported commands
 dst_blacklist.add
 ctl.who
 ...
 
-$ sercmd help core.uptime # help for the core.uptime rpc
-Returns uptime of SER server.
+$ kamcmd help core.uptime # help for the core.uptime rpc
+Returns uptime of the Kamailio server.
 
-$ sercmd cfg.cfg_set_int_now debug 5 # turn debug level to 5 (needs cfg)
+$ kamcmd cfg.cfg_set_int_now debug 5 # turn debug level to 5 (needs cfg)
 
-$ sercmd # enters interactive mode
+$ kamcmd # enters interactive mode
 
 Using a tcp socket
-(assumes modparam("ctl", "binrpc", "tcp:localhost:2048") in ser.cfg)
+(assumes modparam("ctl", "binrpc", "tcp:localhost:2048") in kamailio.cfg)
 
-$ sercmd -s tcp:localhost:2048 core.version
-Server: Sip EXpress router (2.1.0-dev23-make (i386/linux))
+$ kamcmd -s tcp:localhost:2048 core.version
+Server: Kamailio (3.3.2 (i386/linux))
 
-$ sercmd -s tcp:localhost:2048 SRV _sip._udp.iptel.org
+$ kamcmd -s tcp:localhost:2048 SRV _sip._udp.iptel.org
     name: _sip._udp.iptel.org
     type: SRV
     size (bytes): 104
@@ -163,33 +161,33 @@ $ sercmd -s tcp:localhost:2048 SRV _sip._udp.iptel.org
     rr expires in (s): 67693
     rr error flags: 0
 
-sercmd -s tcp:127.0.0.1:2048  # enters interactive mode over tcp
+kamcmd -s tcp:127.0.0.1:2048  # enters interactive mode over tcp
 
-For more examples see utils/sercmd/EXAMPLES
- [http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=utils/sercmd/EXAMPLES].
+For more examples see utils/kamcmd/EXAMPLES
+ [http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=utils/kamcmd/EXAMPLES].
 
 
 Interactive Mode
 ================
 
-To enter the interactive mode start sercmd without specifying a command name
+To enter the interactive mode start kamcmd without specifying a command name
  on the command line.
-If sercmd was compiled with libreadline support (automatically if
+If kamcmd was compiled with libreadline support (automatically if
 libreadline dev files are installed), the interactive mode will have tab
 completion and history support.
 
 Example:
 
-$ sercmd
-sercmd 0.1
+$ kamcmd
+kamcmd 0.2
 Copyright 2006 iptelorg GmbH
 This is free software with ABSOLUTELY NO WARRANTY.
 For details type `warranty'.
-sercmd> core.s<tab>
+kamcmd> core.s<tab>
 core.sctp_info     core.sctp_options  core.shmmem
-sercmd> help core.shmmem 
+kamcmd> help core.shmmem 
 Returns shared memory info.
-sercmd> core.shmmem
+kamcmd> core.shmmem
 {
 	total: 33554432
 	free: 33147816
@@ -198,20 +196,19 @@ sercmd> core.shmmem
 	max_used: 406616
 	fragments: 2
 }
-sercmd> quit
+kamcmd> quit
 
 
 Related Stuff
 =============
 
+* ctl module: required, implements binrpc on Kamailio side, without it kamcmd doesn't work.
 
-ctl module: required, implements binrpc on ser side, without it sercmd 
-doesn't work.
-See modules_s/ctl/README
+See modules/ctl/README
  [http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules_s/ctl/README].
 
-cfg_rpc module: allows setting or reading configuration parameters on-the-fly.
-For example one could change the tcp connection lifetime to 180s using:
-$ sercmd cfg.set_now_int tcp.connection_lifetime 180
-See modules_s/cfg_rpc/README
- [http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules_s/cfg_rpc/README].
+* cfg_rpc module: allows setting or reading configuration parameters on-the-fly.
+	For example one could change the tcp connection lifetime to 180s using:
+	$ kamcmd cfg.set_now_int tcp.connection_lifetime 180
+	See modules/cfg_rpc/README
+ 	[http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules_s/cfg_rpc/README].
