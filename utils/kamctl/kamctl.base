@@ -435,7 +435,7 @@ cat <<EOF
  address rm <grp> <ipaddr> ......... remove entries for given grp and ipaddr
 EOF
 }
-USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_trusted"
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_address"
 
 usage_dispatcher() {
 	echo
