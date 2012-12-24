@@ -266,8 +266,8 @@ int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri)
 
 		if (ptr->instance.len) {
 		    if (set_instance(_m, &(ptr->instance)) < 0) {
-			ret = -3;
-			goto done;
+				ret = -3;
+				goto done;
 		    }
 		}
 		
@@ -282,6 +282,13 @@ int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri)
 		if (ptr->sock)
 			set_force_socket(_m, ptr->sock);
 
+		if(ptr->xavp!=NULL) {
+			xavp = xavp_clone_level_nodata(ptr->xavp);
+			if(xavp_add(xavp, NULL)<0) {
+				ret = -3;
+				goto done;
+			}
+		}
 		ptr = ptr->next;
 	}
 
@@ -314,6 +321,13 @@ int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri)
 				LM_ERR("failed to append a branch\n");
 				/* Also give a chance to the next branches*/
 				continue;
+			}
+			if(ptr->xavp!=NULL) {
+				xavp = xavp_clone_level_nodata(ptr->xavp);
+				if(xavp_insert(xavp, nr_branches, NULL)<0) {
+					ret = -3;
+					goto done;
+				}
 			}
 		}
 	}
