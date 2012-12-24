@@ -32,6 +32,9 @@
 #include "ul_callback.h"
 #include "../../qvalue.h"
 #include "../../str.h"
+#ifdef WITH_XAVP
+#include "../../xavp.h"
+#endif
 
 #define NO_DB         0
 #define WRITE_THROUGH 1
@@ -87,6 +90,9 @@ typedef struct ucontact {
 	unsigned int methods;   /*!< Supported methods */
 	str instance;           /*!< SIP instance value - gruu */
 	unsigned int reg_id;    /*!< reg-id parameters */
+#ifdef WITH_XAVP
+	sr_xavp_t * xavp;       /*!< per contact xavps */
+#endif
 	struct ucontact* next;  /*!< Next contact in the linked list */
 	struct ucontact* prev;  /*!< Previous contact in the linked list */
 } ucontact_t;
@@ -109,6 +115,9 @@ typedef struct ucontact_info {
 	unsigned int methods;     /*!< supported methods */
 	str instance;             /*!< SIP instance value - gruu */
 	unsigned int reg_id;      /*!< reg-id parameters */
+#ifdef WITH_XAVP
+	sr_xavp_t * xavp;         /*!< per contact xavps */
+#endif
 	time_t last_modified;     /*!< last modified */
 } ucontact_info_t;
 
