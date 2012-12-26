@@ -1475,7 +1475,7 @@ struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port, ch
 						" (%d), unable to perform SRV lookup\n", name->len);
 	} else {
 		/* if proto available, then add only the forced protocol to the list */
-		if (proto && *proto==0){
+		if (proto && *proto!=PROTO_NONE){
 			srv_proto_list[0].proto=*proto;
 			list_len=1;
 		} else {
