@@ -52,6 +52,7 @@
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
 #include "../../mod_fix.h"
+#include "../outbound/api.h"
 #include "../rr/api.h"
 
 #include "path.h"
@@ -74,6 +75,10 @@ static int mod_init(void);
  */
 struct rr_binds path_rrb;
 
+/*! \brief
+ * outbound API
+ */
+ob_api_t path_obb;
 
 /*! \brief
  * Exported functions
@@ -130,6 +135,13 @@ static int mod_init(void)
 			LM_ERR("failed to register rr callback\n");
 			return -1;
 		}
+	}
+
+	if (ob_load_api(&path_obb) == 0)
+		LM_INFO("Bound path module to outbound module\n");
+	else {
+		LM_INFO("outbound module not available\n");
+		memset(&path_obb, 0, sizeof(ob_api_t));
 	}
 	
 	return 0;

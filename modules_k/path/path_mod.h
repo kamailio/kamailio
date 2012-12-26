@@ -34,7 +34,9 @@
 #ifndef PATH_MOD_H
 #define PATH_MOD_H
 
-extern int use_received;
+#include "../outbound/api.h"
 
+extern int use_received;
+extern ob_api_t path_obb;
 
 #endif /* PATH_MOD_H */

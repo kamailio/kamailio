@@ -41,6 +41,10 @@
 #include "path.h"
 #include "path_mod.h"
 
+typedef enum {
+	PATH_PARAM_NONE, PATH_PARAM_RECEIVED, PATH_PARAM_OB
+} path_param_t;
+
 #define PATH_PREFIX		"Path: <sip:"
 #define PATH_PREFIX_LEN		(sizeof(PATH_PREFIX)-1)
 
@@ -50,10 +54,20 @@
 #define PATH_RC_PARAM		";received="
 #define PATH_RC_PARAM_LEN	(sizeof(PATH_RC_PARAM)-1)
 
+#define PATH_OB_PARAM		";ob"
+#define PATH_OB_PARAM_LEN	(sizeof(PATH_OB_PARAM)-1)
+
 #define	PATH_CRLF		">\r\n"
 #define PATH_CRLF_LEN		(sizeof(PATH_CRLF)-1)
 
-static int prepend_path(struct sip_msg* _m, str *user, int recv)
+#define ALLOC_AND_COPY_PATH_HDR() \
+	if ((suffix = pkg_malloc(suffix_len)) == NULL) { \
+		LM_ERR("no pkg memory left for suffix\n"); \
+		goto out1; \
+	} \
+	memcpy(suffix, PATH_LR_PARAM, PATH_LR_PARAM_LEN);
+
+static int prepend_path(struct sip_msg* _m, str *user, path_param_t param)
 {
 	struct lump *l;
 	char *prefix, *suffix, *crlf;
@@ -76,15 +90,24 @@ static int prepend_path(struct sip_msg* _m, str *user, int recv)
 		memcpy(prefix + prefix_len - 1, "@", 1);
 	}
 
-	suffix_len = PATH_LR_PARAM_LEN + (recv ? PATH_RC_PARAM_LEN : 0);
-	suffix = pkg_malloc(suffix_len);
-	if (!suffix) {
-		LM_ERR("no pkg memory left for suffix\n");
-		goto out1;
+	switch(param) {
+	default:
+		suffix_len = PATH_LR_PARAM_LEN;
+		ALLOC_AND_COPY_PATH_HDR();
+		break;
+	case PATH_PARAM_RECEIVED:
+		suffix_len = PATH_LR_PARAM_LEN + PATH_RC_PARAM_LEN;
+		ALLOC_AND_COPY_PATH_HDR();
+		memcpy(suffix + PATH_LR_PARAM_LEN, PATH_RC_PARAM,	
+			PATH_RC_PARAM_LEN);
+		break;
+	case PATH_PARAM_OB:
+		suffix_len = PATH_LR_PARAM_LEN + PATH_OB_PARAM_LEN;
+		ALLOC_AND_COPY_PATH_HDR();
+		memcpy(suffix + PATH_LR_PARAM_LEN, PATH_OB_PARAM,
+			PATH_OB_PARAM_LEN);
+		break;
 	}
-	memcpy(suffix, PATH_LR_PARAM, PATH_LR_PARAM_LEN);
-	if(recv)
-		memcpy(suffix+PATH_LR_PARAM_LEN, PATH_RC_PARAM, PATH_RC_PARAM_LEN);
 
 	crlf = pkg_malloc(PATH_CRLF_LEN);
 	if (!crlf) {
@@ -119,7 +142,7 @@ static int prepend_path(struct sip_msg* _m, str *user, int recv)
 	if (!l) goto out2;
 	l = insert_new_lump_before(l, suffix, suffix_len, 0);
 	if (!l) goto out2;
-	if (recv) {
+	if (param == PATH_PARAM_RECEIVED) {
 		/* TODO: agranig: optimize this one! */
 		src_ip = ip_addr2a(&_m->rcv.src_ip);
 		rcv_addr.s = pkg_malloc(6 + IP_ADDR_MAX_STR_SIZE + 22); /* 'sip:<ip>:<port>;transport=sctp'\0 */
@@ -174,7 +197,24 @@ out4:
 int add_path(struct sip_msg* _msg, char* _a, char* _b)
 {
 	str user = {0,0};
-	return prepend_path(_msg, &user, 0);
+	int ret;
+	path_param_t param = PATH_PARAM_NONE;
+
+	if (path_obb.use_outbound != NULL
+		&& path_obb.use_outbound(_msg)) {
+		if (path_obb.encode_flow_token(&user, _msg->rcv) != 0) {
+			LM_ERR("encoding outbound flow token\n");
+			return -1;	
+		}
+		param = PATH_PARAM_OB;
+	}
+
+	ret = prepend_path(_msg, &user, param);
+
+	if (user.s != NULL)
+		pkg_free(user.s);
+
+	return ret;
 }
 
 /*! \brief
@@ -183,7 +223,7 @@ int add_path(struct sip_msg* _msg, char* _a, char* _b)
  */
 int add_path_usr(struct sip_msg* _msg, char* _usr, char* _b)
 {
-	return prepend_path(_msg, (str*)_usr, 0);
+	return prepend_path(_msg, (str*)_usr, PATH_PARAM_NONE);
 }
 
 /*! \brief
@@ -193,7 +233,7 @@ int add_path_usr(struct sip_msg* _msg, char* _usr, char* _b)
 int add_path_received(struct sip_msg* _msg, char* _a, char* _b)
 {
 	str user = {0,0};
-	return prepend_path(_msg, &user, 1);
+	return prepend_path(_msg, &user, PATH_PARAM_RECEIVED);
 }
 
 /*! \brief
@@ -202,7 +242,7 @@ int add_path_received(struct sip_msg* _msg, char* _a, char* _b)
  */
 int add_path_received_usr(struct sip_msg* _msg, char* _usr, char* _b)
 {
-	return prepend_path(_msg, (str*)_usr, 1);
+	return prepend_path(_msg, (str*)_usr, PATH_PARAM_RECEIVED);
 }
 
 /*! \brief
