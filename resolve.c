@@ -1462,6 +1462,7 @@ struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port, ch
 		int proto_pref;
 	} srv_proto_list[PROTO_LAST], tmp_srv_element;
 	struct hostent* he;
+	struct ip_addr* ip;
 	str srv_name;
 	static char tmp_srv[MAX_DNS_NAME]; /* tmp. buff. for SRV lookups */
 	int len;
@@ -1469,6 +1470,23 @@ struct hostent* no_naptr_srv_sip_resolvehost(str* name, unsigned short* port, ch
 	/* init variables */
 	he=0;
 	len=0;
+
+	/* check if it's an ip address */
+	if (((ip=str2ip(name))!=0)
+#ifdef	USE_IPV6
+			  || ((ip=str2ip6(name))!=0)
+#endif
+			 ){
+		/* we are lucky, this is an ip address */
+		/* set proto if needed - default udp */
+		if ((proto)&&(*proto==PROTO_NONE))
+			*proto=PROTO_UDP;
+		/* set port if needed - default 5060/5061 */
+		if ((port)&&(*port==0))
+			*port=((proto) && (*proto==PROTO_TLS))?SIPS_PORT:SIP_PORT;
+		he=ip_addr2he(name, ip);
+		return he;
+	}
 
 	if ((name->len+SRV_MAX_PREFIX_LEN+1)>MAX_DNS_NAME){
 		LOG(L_WARN, "WARNING: no_naptr_srv_sip_resolvehost: domain name too long"
