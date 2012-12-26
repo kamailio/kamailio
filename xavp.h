@@ -78,6 +78,8 @@ typedef struct _sr_xavp {
 int xavp_init_head(void);
 void avpx_free(sr_xavp_t *xa);
 
+int xavp_add(sr_xavp_t *xavp, sr_xavp_t **list);
+int xavp_add_last(sr_xavp_t *xavp, sr_xavp_t **list);
 sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list);
 sr_xavp_t *xavp_set_value(str *name, int idx, sr_xval_t *val, sr_xavp_t **list);
 sr_xavp_t *xavp_get(str *name, sr_xavp_t *start);
@@ -93,7 +95,12 @@ void xavp_reset_list(void);
 sr_xavp_t **xavp_set_list(sr_xavp_t **head);
 sr_xavp_t **xavp_get_crt_list(void);
 
+int xavp_insert(sr_xavp_t *xavp, int idx, sr_xavp_t **list);
+sr_xavp_t *xavp_extract(str *name, sr_xavp_t **list);
+
 void xavp_print_list(sr_xavp_t **head);
+
+sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold);
 #endif
 
 #endif

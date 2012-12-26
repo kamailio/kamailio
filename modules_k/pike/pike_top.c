@@ -45,7 +45,7 @@ static char *print_addr(unsigned char *ip, int iplen)
 	return pike_top_print_addr(ip, iplen, buff, sizeof(buff));
 }
 
-int pike_top_add_entry( unsigned char *ip_addr, int addr_len, unsigned int leaf_hits[2], unsigned int hits[2], unsigned int expires, node_status_t status )
+int pike_top_add_entry( unsigned char *ip_addr, int addr_len, unsigned short leaf_hits[2], unsigned short hits[2], unsigned int expires, node_status_t status )
 {
 	struct TopListItem_t *new_item = (struct TopListItem_t *)malloc(sizeof(struct TopListItem_t));
 	

@@ -683,7 +683,7 @@ Note
    4.7. ds_load_update()
    4.8. ds_load_unset()
 
-4.1. ds_select_dst(set, alg)
+4.1.  ds_select_dst(set, alg)
 
    The method selects a destination from addresses set.
 
@@ -740,7 +740,7 @@ $var(a) = 4;
 ds_select_dst("1", "$var(a)");
 ...
 
-4.2. ds_select_domain(set, alg)
+4.2.  ds_select_domain(set, alg)
 
    The method selects a destination from addresses set and rewrites the
    host and port from R-URI. The parameters have same meaning as for
@@ -753,21 +753,21 @@ ds_select_dst("1", "$var(a)");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.3. ds_next_dst()
+4.3.  ds_next_dst()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
    and sets the dst_uri (outbound proxy address).
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.4. ds_next_domain()
+4.4.  ds_next_domain()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
    and sets the domain part of the request URI.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.5. ds_mark_dst([state])
+4.5.  ds_mark_dst([state])
 
    Mark the last used address from destination set as inactive ("i"/"I"),
    active ("a"/"A"), disabled ("d"/"D") or trying ("t"/"T"). Apart of
@@ -804,7 +804,7 @@ failure_route[tryagain] {
 }
 ...
 
-4.6. ds_is_from_list([groupid])
+4.6.  ds_is_from_list([groupid])
 
    This function returns true, if the current request comes from a host in
    the given group of the dispatcher-list; otherwise false.
@@ -823,7 +823,7 @@ if(ds_is_from_list("10")) {
 }
 ...
 
-4.7. ds_load_update()
+4.7.  ds_load_update()
 
    Updates the load state:
      * if it is a BYE or CANCEL - remove the load from destination address
@@ -834,7 +834,7 @@ if(ds_is_from_list("10")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-4.8. ds_load_unset()
+4.8.  ds_load_unset()
 
    Remove the call load for the destination that routed the call.
 
@@ -871,7 +871,7 @@ onreply_route {
    5.2. ds_list
    5.3. ds_reload
 
-5.1. ds_set_state
+5.1.  ds_set_state
 
    Sets the status for a destination address (can be use to mark the
    destination as active or inactive).
@@ -896,7 +896,7 @@ onreply_route {
                 _address_
                 _empty_line_
 
-5.2. ds_list
+5.2.  ds_list
 
    It lists the groups and included destinations.
 
@@ -908,7 +908,7 @@ onreply_route {
                 :ds_list:_reply_fifo_file_
                 _empty_line_
 
-5.3. ds_reload
+5.3.  ds_reload
 
    It reloads the groups and included destinations. For algorithm 10 (call
    load distribution), old internal list of active calls is destroyed
@@ -928,7 +928,7 @@ onreply_route {
    6.2. dispatcher.list
    6.3. dispatcher.reload
 
-6.1. dispatcher.set_state
+6.1.  dispatcher.set_state
 
    Sets the state for a destination address (can be use to mark the
    destination as active or inactive).
@@ -948,11 +948,11 @@ onreply_route {
 
    Example:
 ...
-# prototype: sercmd dispatcher.set_state _state_ _group_ _address_
-sercmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
+# prototype: kamcmd dispatcher.set_state _state_ _group_ _address_
+kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
 ...
 
-6.2. dispatcher.list
+6.2.  dispatcher.list
 
    Lists the groups and included destinations.
 
@@ -961,9 +961,9 @@ sercmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
    Parameters: none
 
    Example:
-                sercmd dispatcher.list
+                kamcmd dispatcher.list
 
-6.3. dispatcher.reload
+6.3.  dispatcher.reload
 
    Reloads the groups and included destinations. The command is disabled
    for call load based dispatching (algorithm 10) since removal of
@@ -974,7 +974,7 @@ sercmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
    Parameters: none
 
    Example
-                sercmd dispatcher.reload
+                kamcmd dispatcher.reload
 
 7. Installation and Running
 
@@ -1328,7 +1328,7 @@ failure_route[RTF_DISPATCH] {
    8.1. dispatcher:dst-down
    8.2. dispatcher:dst-up
 
-8.1. dispatcher:dst-down
+8.1.  dispatcher:dst-down
 
    When defined, the module calls event_route[dispatcher:ds-down] when a
    destination goes down (becomes probing). A typical use case is to
@@ -1339,7 +1339,7 @@ event_route[dispatcher:dst-down] {
 }
 ...
 
-8.2. dispatcher:dst-up
+8.2.  dispatcher:dst-up
 
    When defined, the module calls event_route[dispatcher:ds-up] when a
    destination that was previously down (probing) comes up. A typical use

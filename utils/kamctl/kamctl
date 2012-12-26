@@ -2491,13 +2491,13 @@ case $1 in
 		permissions_address "$@"
 		;;
 
-	fifo|mi|unixsock|ser_mi|sercmd_mi|sercmdmi)
+	fifo|mi|unixsock|ser_mi|sercmd_mi|sercmdmi|kamcmd_mi|kamcmdmi)
 		require_ctlengine
 		shift
 		$CTLCMD "$@"
 		;;
 
-	ser|sercmd)
+	ser|sercmd|kamcmd)
 		require_kamcmd
 		shift
 		$SERCTLCMD "$@"

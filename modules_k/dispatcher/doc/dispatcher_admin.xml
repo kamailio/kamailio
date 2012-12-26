@@ -1168,8 +1168,8 @@ onreply_route {
 		</para>
 <programlisting  format="linespecific">
 ...
-# prototype: sercmd dispatcher.set_state _state_ _group_ _address_
-sercmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
+# prototype: &sercmd; dispatcher.set_state _state_ _group_ _address_
+&sercmd; dispatcher.set_state ip 2 sip:127.0.0.1:5080
 ...
 </programlisting>
     </section>
@@ -1188,7 +1188,7 @@ sercmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
 		Example:
 		</para>
         <programlisting  format="linespecific">
-		sercmd dispatcher.list
+		&sercmd; dispatcher.list
 		</programlisting>
     </section>
 	<section>
@@ -1209,7 +1209,7 @@ sercmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
 		Example
 		</para>
         <programlisting  format="linespecific">
-		sercmd dispatcher.reload
+		&sercmd; dispatcher.reload
 		</programlisting>
     </section>
 

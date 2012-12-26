@@ -24,7 +24,7 @@
 	</para>
 	<para>
 		Debugging can be done from local or remote host via RPC interface (e.g.,
-		XMLRPC, sercmd, siremis).
+		XMLRPC, &sercmd;, siremis).
 	</para>
 	<para>
 		The framework to set breakpoints on specific actions and config lines
@@ -273,7 +273,7 @@ if($si=="10.0.0.10")
 			omitted then will print for all processes.</para></listitem>	  
 		</itemizedlist>
 		<para>
-		Examples of use with sercmd:
+		Examples of use with &sercmd;:
 		</para>
         <programlisting  format="linespecific">
 		dbg.ls
@@ -301,7 +301,7 @@ if($si=="10.0.0.10")
 		</listitem>
 		</itemizedlist>
 		<para>
-		Examples for using with sercmd:
+		Examples for using with &sercmd;:
 		</para>
         <programlisting  format="linespecific">
 		dbg.trace on
@@ -374,7 +374,7 @@ if($si=="10.0.0.10")
 		</listitem>
 		</itemizedlist>
 		<para>
-		Examples for using with sercmd:
+		Examples for using with &sercmd;:
 		</para>
         <programlisting  format="linespecific">
 		dbg.bp off
@@ -400,7 +400,7 @@ if($si=="10.0.0.10")
 		particular SIP message.
 		</para>
 		<para>
-		You need to connect using sercmd (or other RPC client) to &kamailio;.
+		You need to connect using &sercmd; (or other RPC client) to &kamailio;.
 		Then you can enable cfg breakpoints and send the SIP message. One
 		process will be in waiting state ('state' field different than 0 when
 		you do dbg.ls). Calling dbg.release will set the other &kamailio;
@@ -419,7 +419,7 @@ if($si=="10.0.0.10")
 		</para>
 <programlisting  format="linespecific">
 ...
-sercmd> dbg.ls
+&sercmd;> dbg.ls
 {
 	entry: 0
 	pid: 6393
@@ -446,19 +446,19 @@ sercmd> dbg.ls
 	in.cmd: 0
 }
 
-sercmd> dbg.bp show 6402
+&sercmd;> dbg.bp show 6402
 at bkp [/etc/kamailio/debugger.cfg:369] a=6 n=route
 
-sercmd> dbg.bp next 6402
+&sercmd;> dbg.bp next 6402
 exec [/etc/kamailio/debugger.cfg:369] a=6 n=route
 
-sercmd> dbg.bp next 6402
+&sercmd;> dbg.bp next 6402
 exec [/etc/kamailio/debugger.cfg:462] a=17 n=if
 
-sercmd> dbg.bp eval 6402 $fu
+&sercmd;> dbg.bp eval 6402 $fu
 $fu : t=str v=sip:test@kamailio.org
 
-sercmd> dbg.bp move 6402
+&sercmd;> dbg.bp move 6402
 200 ok
 ...
 </programlisting>

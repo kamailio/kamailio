@@ -394,7 +394,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		sercmd rl.stats
+		&sercmd; rl.stats
 		</programlisting>
 	</section>
 	<section>
@@ -425,7 +425,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		sercmd rl.set_pipe 2 RED 10
+		&sercmd; rl.set_pipe 2 RED 10
 		</programlisting>
 	</section>
 	<section>
@@ -443,7 +443,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		sercmd rl.get_pipes
+		&sercmd; rl.get_pipes
 		</programlisting>
 	</section>
 	<section>
@@ -474,7 +474,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		sercmd rl.set_queue 3 INVITE 2
+		&sercmd; rl.set_queue 3 INVITE 2
 		</programlisting>
 	</section>
 	<section>
@@ -492,7 +492,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		sercmd rl.get_queues
+		&sercmd; rl.get_queues
 		</programlisting>
 	</section>
 	<section>
@@ -521,7 +521,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		sercmd rl.set_pid 0.5 0.5 0.5
+		&sercmd; rl.set_pid 0.5 0.5 0.5
 		</programlisting>
 	</section>
 	<section>
@@ -539,7 +539,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		sercmd rl.get_pid
+		&sercmd; rl.get_pid
 		</programlisting>
 	</section>
 	<section>
@@ -564,7 +564,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		sercmd rl.push_load 0.85
+		&sercmd; rl.push_load 0.85
 		</programlisting>
 	</section>
 	<section>
@@ -589,7 +589,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 		RPC Command Format:
 		</para>
 		<programlisting  format="linespecific">
-		sercmd rl.set_dbg 1
+		&sercmd; rl.set_dbg 1
 		</programlisting>
 	</section>
 	</section>

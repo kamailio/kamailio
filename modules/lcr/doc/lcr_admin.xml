@@ -1318,7 +1318,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 		<example>
 		<title><function>lcr.reload</function> RPC example</title>
 		<programlisting  format="linespecific">
-		$ sercmd lcr.reload
+		$ &sercmd; lcr.reload
 		</programlisting>
 		</example>
 		</section>
@@ -1333,7 +1333,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 		<example>
 		<title><function>lcr.dump_gws</function> RPC example</title>
 		<programlisting  format="linespecific">
-		$ sercmd lcr.dump_gws
+		$ &sercmd; lcr.dump_gws
 		</programlisting>
 		</example>
 		</section>
@@ -1348,7 +1348,7 @@ if (to_any_gw("192.55.66.2", 1)) {
  		<example>
 		<title><function>lcr.dump_rules</function> RPC example</title>
         <programlisting  format="linespecific">
-		$ sercmd lcr.dump_rules
+		$ &sercmd; lcr.dump_rules
 		</programlisting>
 		</example>
 		</section>
@@ -1367,7 +1367,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 		<example>
 		<title><function>lcr.defunct_gw</function> RPC example</title>
 		<programlisting  format="linespecific">
-		$ sercmd lcr.defunct_gw 1 4 120
+		$ &sercmd; lcr.defunct_gw 1 4 120
 		</programlisting>
 		</example>
 		</section>

@@ -138,7 +138,7 @@ static void pike_top(rpc_t *rpc, void *c)
 
 	if (options == 0) {
 		rpc->fault(c, 500, "Bad argument. Select: ALL, HOT or WARM");
-		exit;
+		return;
 	}
 	
 	
@@ -196,4 +196,3 @@ rpc_export_t pike_rpc_methods[] = {
 	{"pike.top",   pike_top,     pike_top_doc, 0},
 	{0, 0, 0, 0}
 };
-

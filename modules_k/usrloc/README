@@ -68,21 +68,22 @@ Bogdan-Andrei Iancu
               3.30. timer_procs (string)
 
         4. Functions
-        5. MI Commands
+        5. xavp_contact (string)
+        6. MI Commands
 
-              5.1. ul_rm
-              5.2. ul_rm_contact
-              5.3. ul_dump
-              5.4. ul_flush
-              5.5. ul_add
-              5.6. ul_show_contact
+              6.1. ul_rm
+              6.2. ul_rm_contact
+              6.3. ul_dump
+              6.4. ul_flush
+              6.5. ul_add
+              6.6. ul_show_contact
 
-        6. Statistics
+        7. Statistics
 
-              6.1. users
-              6.2. contacts
-              6.3. expires
-              6.4. registered_users
+              7.1. users
+              7.2. contacts
+              7.3. expires
+              7.4. registered_users
 
    2. Developer Guide
 
@@ -140,6 +141,7 @@ Bogdan-Andrei Iancu
    1.28. Set db_update_as_insert parameter
    1.29. Set db_check_update parameter
    1.30. Set timer_procs parameter
+   1.31. Set xavp_contact parameter
 
 Chapter 1. Admin Guide
 
@@ -188,21 +190,22 @@ Chapter 1. Admin Guide
         3.30. timer_procs (string)
 
    4. Functions
-   5. MI Commands
+   5. xavp_contact (string)
+   6. MI Commands
 
-        5.1. ul_rm
-        5.2. ul_rm_contact
-        5.3. ul_dump
-        5.4. ul_flush
-        5.5. ul_add
-        5.6. ul_show_contact
+        6.1. ul_rm
+        6.2. ul_rm_contact
+        6.3. ul_dump
+        6.4. ul_flush
+        6.5. ul_add
+        6.6. ul_show_contact
 
-   6. Statistics
+   7. Statistics
 
-        6.1. users
-        6.2. contacts
-        6.3. expires
-        6.4. registered_users
+        7.1. users
+        7.2. contacts
+        7.3. expires
+        7.4. registered_users
 
 1. Overview
 
@@ -705,16 +708,28 @@ modparam("usrloc", "timer_procs", 4)
 
    There are no exported functions that could be used in scripts.
 
-5. MI Commands
+5. xavp_contact (string)
 
-   5.1. ul_rm
-   5.2. ul_rm_contact
-   5.3. ul_dump
-   5.4. ul_flush
-   5.5. ul_add
-   5.6. ul_show_contact
+   The name of XAVP storring the attributes per contact. They are saved in
+   location record and restored at lookup.
 
-5.1. ul_rm
+   Default value is "NULL".
+
+   Example 1.31. Set xavp_contact parameter
+...
+modparam("usrloc", "xavp_contact", "ulattrs")
+...
+
+6. MI Commands
+
+   6.1. ul_rm
+   6.2. ul_rm_contact
+   6.3. ul_dump
+   6.4. ul_flush
+   6.5. ul_add
+   6.6. ul_show_contact
+
+6.1. ul_rm
 
    Deletes an entire AOR record (including its contacts).
 
@@ -723,7 +738,7 @@ modparam("usrloc", "timer_procs", 4)
      * AOR - user AOR in username[@domain] format (domain must be supplied
        only if use_domain option is on).
 
-5.2. ul_rm_contact
+6.2. ul_rm_contact
 
    Deletes a contact from an AOR record.
 
@@ -733,7 +748,7 @@ modparam("usrloc", "timer_procs", 4)
        only if use_domain option is on).
      * contact - exact contact to be removed
 
-5.3. ul_dump
+6.3. ul_dump
 
    Dumps the entire content of the USRLOC in memory cache
 
@@ -742,11 +757,11 @@ modparam("usrloc", "timer_procs", 4)
        "brief", a brief dump will be done (only AOR and contacts, with no
        other details)
 
-5.4. ul_flush
+6.4. ul_flush
 
    Triggers the flush of USRLOC memory cache into DB.
 
-5.5. ul_add
+6.5. ul_add
 
    Adds a new contact for an user AOR.
 
@@ -762,7 +777,7 @@ modparam("usrloc", "timer_procs", 4)
      * cflags - per branch flags of the contact
      * methods - mask with supported requests of the contact
 
-5.6. ul_show_contact
+6.6. ul_show_contact
 
    Dumps the contacts of an user AOR.
 
@@ -771,33 +786,33 @@ modparam("usrloc", "timer_procs", 4)
      * AOR - user AOR in username[@domain] format (domain must be supplied
        only if use_domain option is on).
 
-6. Statistics
+7. Statistics
 
-   6.1. users
-   6.2. contacts
-   6.3. expires
-   6.4. registered_users
+   7.1. users
+   7.2. contacts
+   7.3. expires
+   7.4. registered_users
 
    Exported statistics are listed in the next sections.
 
-6.1. users
+7.1. users
 
    Number of AOR existing in the USRLOC memory cache for that domain - can
    not be resetted; this statistic will be register for each used domain
    (Ex: location).
 
-6.2. contacts
+7.2. contacts
 
    Number of contacts existing in the USRLOC memory cache for that domain
    - can not be resetted; this statistic will be register for each used
    domain (Ex: location).
 
-6.3. expires
+7.3. expires
 
    Total number of expired contacts for that domain - can be resetted;
    this statistic will be register for each used domain (Ex: location).
 
-6.4. registered_users
+7.4. registered_users
 
    Total number of AOR existing in the USRLOC memory cache for all domains
    - can not be resetted.

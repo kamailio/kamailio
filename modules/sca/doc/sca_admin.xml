@@ -413,7 +413,7 @@ failure_route[FAILURE_ROUTE]
 		Example:
 	    </para>
 	    <programlisting format="linespecific">
-	    sercmd sca.all_subscriptions
+	    &sercmd; sca.all_subscriptions
 	    </programlisting>
 	</section>
 
@@ -432,7 +432,7 @@ failure_route[FAILURE_ROUTE]
                 Example:
             </para>
             <programlisting format="linespecific">
-            sercmd sca.all_appearances
+            &sercmd; sca.all_appearances
             </programlisting>
         </section>
 
@@ -467,7 +467,7 @@ failure_route[FAILURE_ROUTE]
             <programlisting format="linespecific">
 	    # seize next available appearance of sip:215@voice.example.com
 	    # for contact sip:215@10.0.1.2
-            sercmd sca.seize_appearance sip:215@voice.example.com sip:215@10.0.1.2
+            &sercmd; sca.seize_appearance sip:215@voice.example.com sip:215@10.0.1.2
             </programlisting>
         </section>
 
@@ -512,7 +512,7 @@ failure_route[FAILURE_ROUTE]
             <programlisting format="linespecific">
 	    # update in-use appearance index 3 of sip:215@voice.example.com
 	    # state held.
-            sercmd sca.update_appearance sip:215@voice.example.com 3 held
+            &sercmd; sca.update_appearance sip:215@voice.example.com 3 held
             </programlisting>
         </section>
 
@@ -546,7 +546,7 @@ failure_route[FAILURE_ROUTE]
             <programlisting format="linespecific">
 	    # release appearance of sip:215@voice.example.com with
 	    # appearance index 3
-            sercmd sca.release_appearance sip:215@voice.example.com 3
+            &sercmd; sca.release_appearance sip:215@voice.example.com 3
             </programlisting>
         </section>
     </section>

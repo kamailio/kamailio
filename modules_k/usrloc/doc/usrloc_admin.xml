@@ -832,6 +832,27 @@ modparam("usrloc", "timer_procs", 4)
 	</para>
 	</section>
 
+	<section id="xavp_contact">
+		<title><varname>xavp_contact</varname> (string)</title>
+		<para>
+		The name of XAVP storring the attributes per contact. They are saved
+		in location record and restored at lookup.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xavp_contact</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "xavp_contact", "ulattrs")
+...
+</programlisting>
+		</example>
+	</section>
+
 
 	<section>
 	<title>MI Commands</title>

@@ -105,6 +105,8 @@ error:
 	if (c->user_agent.s) shm_free(c->user_agent.s);
 	if (c->callid.s) shm_free(c->callid.s);
 	if (c->c.s) shm_free(c->c.s);
+	if (c->ruid.s) shm_free(c->ruid.s);
+	if (c->instance.s) shm_free(c->instance.s);
 	shm_free(c);
 	return 0;
 }

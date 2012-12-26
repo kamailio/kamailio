@@ -110,6 +110,8 @@ int ul_timer_procs = 0;
 int ul_db_check_update = 0;
 int ul_keepalive_timeout = 0;
 
+str ul_xavp_contact_name = {0};
+
 /* sruid to get internal uid for mi/rpc commands */
 sruid_t _ul_sruid;
 
@@ -197,6 +199,7 @@ static param_export_t params[] = {
 	{"db_update_as_insert", INT_PARAM, &ul_db_update_as_insert},
 	{"timer_procs",         INT_PARAM, &ul_timer_procs},
 	{"db_check_update",     INT_PARAM, &ul_db_check_update},
+	{"xavp_contact",        STR_PARAM, &ul_xavp_contact_name.s},
 	{0, 0, 0}
 };
 
@@ -291,6 +294,9 @@ static int mod_init(void)
 	reg_id_col.len = strlen(reg_id_col.s);
 	last_mod_col.len = strlen(last_mod_col.s);
 	db_url.len = strlen(db_url.s);
+
+	if(ul_xavp_contact_name.s!=NULL)
+		ul_xavp_contact_name.len = strlen(ul_xavp_contact_name.s);
 
 	if(ul_hash_size<=1)
 		ul_hash_size = 512;

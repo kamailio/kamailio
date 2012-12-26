@@ -147,7 +147,7 @@ Chapter 1. Admin Guide
 
    This is URL of the database to be used.
 
-   Default value is "mysql://openserro:openserro@localhost/openser"
+   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio"
 
    Example 1.1. Setting db_url parameter
 modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
@@ -367,7 +367,7 @@ if (lookup_domain("$fd", "from_")) {
    Parameters: none
 
    Example:
-                sercmd domain.reload
+                kamcmd domain.reload
 
 6.2. domain.dump
 
@@ -378,7 +378,7 @@ if (lookup_domain("$fd", "from_")) {
    Parameters: none
 
    Example:
-                sercmd domain.dump
+                kamcmd domain.dump
 
 7. Known Limitations
 
@@ -402,7 +402,7 @@ Chapter 2. Developer Guide
 
    1.1. is_domain_local(domain)
 
-1.1. is_domain_local(domain)
+1.1.  is_domain_local(domain)
 
    Checks if domain given in str* parameter is local.
 

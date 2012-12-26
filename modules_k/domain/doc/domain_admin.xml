@@ -377,7 +377,7 @@ if (lookup_domain("$fd", "from_")) {
 		Example:
 		</para>
         <programlisting  format="linespecific">
-		sercmd domain.reload
+		&sercmd; domain.reload
 		</programlisting>
 	</section>
 	<section>
@@ -394,7 +394,7 @@ if (lookup_domain("$fd", "from_")) {
 		Example:
 		</para>
         <programlisting  format="linespecific">
-		sercmd domain.dump
+		&sercmd; domain.dump
 		</programlisting>
 	</section>
 	</section>

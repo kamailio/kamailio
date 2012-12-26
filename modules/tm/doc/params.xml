@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	 <!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+	 %docentities;
+	]
+>
 
 <section id="tm.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
@@ -935,7 +942,7 @@ modparam("tm", "unmatched_cancel", "2")
 	<para>
 		Can be set at runtime, e.g.:
 		<programlisting>
-	$ sercmd cfg.set_now_int tm ruri_matching 0
+	$ &sercmd; cfg.set_now_int tm ruri_matching 0
 		</programlisting>
 	</para>
 	<example>
@@ -965,7 +972,7 @@ modparam("tm", "ruri_matching", 1)
 	<para>
 		Can be set at runtime, e.g.:
 		<programlisting>
-	$ sercmd cfg.set_now_int tm via1_matching 0
+	$ &sercmd; cfg.set_now_int tm via1_matching 0
 		</programlisting>
 	</para>
 	<example>
@@ -990,7 +997,7 @@ modparam("tm", "via1_matching", 1)
 	<para>
 		Can be set at runtime, e.g.:
 		<programlisting>
-	$ sercmd cfg.set_now_int tm pass_provisional_replies 1
+	$ &sercmd; cfg.set_now_int tm pass_provisional_replies 1
 		</programlisting>
 	</para>
 	<example>
@@ -1017,7 +1024,7 @@ modparam("tm", "pass_provisional_replies", 1)
 	<para>
 		Can be set at runtime, e.g.:
 		<programlisting>
-	$ sercmd cfg.set_now_int tm default_code 505
+	$ &sercmd; cfg.set_now_int tm default_code 505
 		</programlisting>
 	</para>
 	<example>
@@ -1042,7 +1049,7 @@ modparam("tm", "default_code", 501)
 	<para>
 		Can be set at runtime, e.g.:
 		<programlisting>
-	$ sercmd cfg.set_now_string tm default_reason "Unknown error"
+	$ &sercmd; cfg.set_now_string tm default_reason "Unknown error"
 		</programlisting>
 	</para>
 	<example>
@@ -1077,7 +1084,7 @@ modparam("tm", "default_reason", "Unknown reason")
 	<para>
 		Can be set at runtime, e.g.:
 		<programlisting>
-	$ sercmd cfg.set_now_int tm disable_6xx_block 0
+	$ &sercmd; cfg.set_now_int tm disable_6xx_block 0
 		</programlisting>
 	</para>
 	<para>
@@ -1127,7 +1134,7 @@ modparam("tm", "disable_6xx_block", 1)
 	<para>
 		Can be set at runtime, e.g.:
 		<programlisting>
-	$ sercmd cfg.set_now_int tm local_ack_mode 0
+	$ &sercmd; cfg.set_now_int tm local_ack_mode 0
 		</programlisting>
 	</para>
 	<example>
@@ -1248,7 +1255,7 @@ modparam("tm", "faked_reply_prio", 2000)
 		<para>
 			Can be set at runtime, e.g.:
 			<programlisting>
-	$ sercmd cfg.set_now_int tm local_cancel_reason 0
+	$ &sercmd; cfg.set_now_int tm local_cancel_reason 0
 			</programlisting>
 		</para>
 		<para>
@@ -1279,7 +1286,7 @@ modparam("tm", "local_cancel_reason", 0)
 		<para>
 			Can be changed at runtime, e.g.:
 			<programlisting>
-	$ sercmd cfg.set_now_int tm e2e_cancel_reason 0
+	$ &sercmd; cfg.set_now_int tm e2e_cancel_reason 0
 			</programlisting>
 		</para>
 		<para>

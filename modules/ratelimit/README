@@ -428,7 +428,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    Parameters: none
 
    RPC Command Format:
-                sercmd rl.stats
+                kamcmd rl.stats
 
 7.2.  rl.set_pipe
 
@@ -442,7 +442,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
      * pipe_limit - the limit assigned to the given pipe id.
 
    RPC Command Format:
-                sercmd rl.set_pipe 2 RED 10
+                kamcmd rl.set_pipe 2 RED 10
 
 7.3.  rl.get_pipes
 
@@ -453,7 +453,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    Parameters:none
 
    RPC Command Format:
-                sercmd rl.get_pipes
+                kamcmd rl.get_pipes
 
 7.4.  rl.set_queue
 
@@ -467,7 +467,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
      * pipe_id - the pipe id assigned to the given queue id.
 
    RPC Command Format:
-                sercmd rl.set_queue 3 INVITE 2
+                kamcmd rl.set_queue 3 INVITE 2
 
 7.5.  rl.get_queues
 
@@ -478,7 +478,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    Parameters: none
 
    RPC Command Format:
-                sercmd rl.get_queues
+                kamcmd rl.get_queues
 
 7.6.  rl.set_pid
 
@@ -492,7 +492,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
      * kd - the derivative parameter.
 
    RPC Command Format:
-                sercmd rl.set_pid 0.5 0.5 0.5
+                kamcmd rl.set_pid 0.5 0.5 0.5
 
 7.7.  rl.get_pid
 
@@ -503,7 +503,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
    Parameters: none
 
    RPC Command Format:
-                sercmd rl.get_pid
+                kamcmd rl.get_pid
 
 7.8.  rl.push_load
 
@@ -517,7 +517,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
        smaller then 1.0).
 
    RPC Command Format:
-                sercmd rl.push_load 0.85
+                kamcmd rl.push_load 0.85
 
 7.9.  rl.set_dbg
 
@@ -531,7 +531,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
      * dbg - the debug value (0 means disable and 1 means enable).
 
    RPC Command Format:
-                sercmd rl.set_dbg 1
+                kamcmd rl.set_dbg 1
 
 8. Known limitations
 

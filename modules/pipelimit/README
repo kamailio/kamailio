@@ -145,7 +145,7 @@ Chapter 1. Admin Guide
 
    URL of the database server to be used.
 
-   Default value is "mysql://openser:openserrw@localhost/openser".
+   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
 
    Example 1.1. Set db_url parameter
 ...
@@ -223,10 +223,10 @@ modparam("ratelimit", "timer_interval", 5)
 modparam("ratelimit", "reply_code", 505)
 ...
 
-   This value can be modified at runtime using sercmd
+   This value can be modified at runtime using kamcmd
 
    Example 1.8.  Set reply_code parameter at runtime
-sercmd cfg.set_now_int ratelimit reply_code 505
+kamcmd cfg.set_now_int ratelimit reply_code 505
 
 3.8. reply_reason (string)
 
@@ -239,17 +239,17 @@ sercmd cfg.set_now_int ratelimit reply_code 505
 modparam("ratelimit", "reply_reason", "Limiting")
 ...
 
-   This value can be modified at runtime using sercmd
+   This value can be modified at runtime using kamcmd
 
    Example 1.10.  Set reply_reason parameter at runtime
-sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
+kamcmd cfg.set_now_string ratelimit reply_reason "Limiting"
 
 4. Functions
 
    4.1. pl_check(name)
    4.2. pl_drop([ [min ], max ])
 
-4.1. pl_check(name)
+4.1.  pl_check(name)
 
    Check the current request against the 'name' pipe. The pipe name can be
    provided via a pseudo variabile.
@@ -278,7 +278,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
         }
 ...
 
-4.2. pl_drop([ [min ], max ])
+4.2.  pl_drop([ [min ], max ])
 
    For the current request, a "503 - Server Unavailable" reply is sent
    back. The reply may or may not have a "Retry-After" header. If no
@@ -313,7 +313,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
    5.5. pl_get_pid
    5.6. pl_push_load
 
-5.1. pl_stats
+5.1.  pl_stats
 
    Lists the parameters and variabiles in the pipelimit module.
 
@@ -325,7 +325,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
                 :pl_stats:_reply_fifo_file_
                 _empty_line_
 
-5.2. pl_set_pipe
+5.2.  pl_set_pipe
 
    Sets the pipe parameters for the given pipe id.
 
@@ -343,7 +343,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
                 10
                 _empty_line_
 
-5.3. pl_get_pipes
+5.3.  pl_get_pipes
 
    Gets the list of in use pipes.
 
@@ -355,7 +355,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
                 :pl_get_pipes:_reply_fifo_file_
                 _empty_line_
 
-5.4. pl_set_pid
+5.4.  pl_set_pid
 
    Sets the PID Controller parameters for the Feedback Algorithm.
 
@@ -373,7 +373,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
                 0.5
                 _empty_line_
 
-5.5. pl_get_pid
+5.5.  pl_get_pid
 
    Gets the list of in use PID Controller parameters.
 
@@ -385,7 +385,7 @@ sercmd cfg.set_now_string ratelimit reply_reason "Limiting"
                 :pl_get_pid:_reply_fifo_file_
                 _empty_line_
 
-5.6. pl_push_load
+5.6.  pl_push_load
 
    Force the value of the load parameter. This command is useful for
    testing the Feedback algorithm.
