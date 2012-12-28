@@ -9,4 +9,5 @@
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
     <name>User location</name>
     <xi:include href="location.xml"/>
+    <xi:include href="location_attrs.xml"/>
 </database>

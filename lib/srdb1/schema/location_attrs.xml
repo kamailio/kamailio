@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="location" xmlns:db="http://docbook.org/ns/docbook">
+    <name>location_attrs</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Persistent user location attributes for the usrloc module. More information can be found at: &KAMAILIO_MOD_DOC;usrloc.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="ruid">
+        <name>ruid</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Record internal unique id</description>
+        <natural/>
+    </column>
+
+	<column id="username">
+        <name>&USERCOL;</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Username / phone number </description>
+        <natural/>
+    </column>
+
+    <column id="domain">
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <null/>
+        <default><null/></default>
+        <description>Domain name</description>
+        <natural/>
+    </column>
+
+    <column>
+        <name>aname</name>
+        <type>string</type>
+        <size>64</size>
+		<default/>
+        <description>Attribute name.</description>
+    </column>
+
+    <column>
+        <name>atype</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>Attribute type.</description>
+    </column>
+
+    <column>
+        <name>avalue</name>
+        <type>string</type>
+        <size>255</size>
+        <default/>
+        <description>Attribute value.</description>
+    </column>
+
+    <column id="last_modified">
+        <name>last_modified</name>
+        <type>datetime</type>
+        <default>&DEFAULT_DATETIME;</default>
+        <default db="oracle">to_date('&DEFAULT_DATETIME;','yyyy-mm-dd hh24:mi:ss')</default>
+        <description>Date and time when this entry was last modified.</description>
+    </column>
+
+    <index>
+        <name>account_record_idx</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
+        <colref linkend="ruid"/>
+    </index>
+    <index>
+        <name>last_modified_idx</name>
+        <colref linkend="last_modified"/>
+    </index>
+
+
+</table>
