@@ -213,4 +213,16 @@ int get_urecord_by_ruid(udomain_t* _d, unsigned int _aorhash,
 int delete_urecord(udomain_t* _d, str* _aor, struct urecord* _r);
 
 
+/* ===== per-contact attributes ======= */
+
+/*!
+ * \brief Load all location attributes from an udomain
+ *
+ * Load all location attributes from a udomain, useful to populate the
+ * memory cache on startup.
+ * \param _d loaded domain
+ * \return 0 on success, -1 on failure
+ */
+int uldb_preload_attrs(udomain_t *_d);
+
 #endif

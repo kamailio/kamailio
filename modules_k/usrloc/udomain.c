@@ -1123,3 +1123,185 @@ int delete_urecord(udomain_t* _d, str* _aor, struct urecord* _r)
 	release_urecord(_r);
 	return 0;
 }
+
+
+/*!
+ * \brief Load all location attributes from an udomain
+ *
+ * Load all location attributes from a udomain, useful to populate the
+ * memory cache on startup.
+ * \param _d loaded domain
+ * \return 0 on success, -1 on failure
+ */
+int uldb_preload_attrs(udomain_t *_d)
+{
+	char uri[MAX_URI_SIZE];
+	str  suri;
+	char tname_buf[64];
+	str tname;
+	db_row_t *row;
+	db_key_t columns[6];
+	db1_res_t* res = NULL;
+	str user = {0};
+	str domain = {0};
+	str ruid;
+	str aname;
+	str avalue;
+	sr_xval_t aval;
+	int i;
+	int n;
+
+	urecord_t* r;
+	ucontact_t* c;
+
+	if(ul_xavp_contact_name.s==NULL) {
+		/* feature disabled by mod param */
+		return 0;
+	}
+
+	if(_d->name->len + 6>=64) {
+		LM_ERR("attributes table name is too big\n");
+		return -1;
+	}
+	strncpy(tname_buf, _d->name->s, _d->name->len);
+	tname_buf[_d->name->len] = '\0';
+	strcat(tname_buf, "_attrs");
+	tname.s = tname_buf;
+	tname.len = _d->name->len + 6;
+
+	columns[0] = &ulattrs_user_col;
+	columns[1] = &ulattrs_ruid_col;
+	columns[2] = &ulattrs_aname_col;
+	columns[3] = &ulattrs_atype_col;
+	columns[4] = &ulattrs_avalue_col;
+	columns[5] = &ulattrs_domain_col;
+
+	if (ul_dbf.use_table(ul_dbh, &tname) < 0) {
+		LM_ERR("sql use_table failed for %.*s\n", tname.len, tname.s);
+		return -1;
+	}
+
+#ifdef EXTRA_DEBUG
+	LM_NOTICE("load start time [%d]\n", (int)time(NULL));
+#endif
+
+	if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
+		if (ul_dbf.query(ul_dbh, 0, 0, 0, columns, 0, (use_domain)?(6):(5), 0,
+					0) < 0) {
+			LM_ERR("db_query (1) failed\n");
+			return -1;
+		}
+		if(ul_dbf.fetch_result(ul_dbh, &res, ul_fetch_rows)<0) {
+			LM_ERR("fetching rows failed\n");
+			return -1;
+		}
+	} else {
+		if (ul_dbf.query(ul_dbh, 0, 0, 0, columns, 0, (use_domain)?(6):(5), 0,
+		&res) < 0) {
+			LM_ERR("db_query failed\n");
+			return -1;
+		}
+	}
+
+	if (RES_ROW_N(res) == 0) {
+		LM_DBG("location attrs table is empty\n");
+		ul_dbf.free_result(ul_dbh, res);
+		return 0;
+	}
+
+
+	n = 0;
+	do {
+		LM_DBG("loading records - cycle [%d]\n", ++n);
+		for(i = 0; i < RES_ROW_N(res); i++) {
+			row = RES_ROWS(res) + i;
+
+			user.s = (char*)VAL_STRING(ROW_VALUES(row));
+			if (VAL_NULL(ROW_VALUES(row)) || user.s==0 || user.s[0]==0) {
+				LM_CRIT("empty username record in table %s...skipping\n",
+						_d->name->s);
+				continue;
+			}
+			user.len = strlen(user.s);
+
+			ruid.s = (char*)VAL_STRING(ROW_VALUES(row) + 1);
+			ruid.len = strlen(ruid.s);
+			aname.s = (char*)VAL_STRING(ROW_VALUES(row) + 2);
+			aname.len = strlen(aname.s);
+			avalue.s = (char*)VAL_STRING(ROW_VALUES(row) + 4);
+			avalue.len = strlen(avalue.s);
+			memset(&aval, 0, sizeof(sr_xval_t));
+			if(VAL_INT(ROW_VALUES(row)+3)==0) {
+				/* string value */
+				aval.v.s = avalue;
+				aval.type = SR_XTYPE_STR;
+			} else if(VAL_INT(ROW_VALUES(row)+3)==1) {
+				/* int value */
+				str2sint(&avalue, &aval.v.i);
+				aval.type = SR_XTYPE_INT;
+			} else {
+				/* unknown type - ignore */
+				continue;
+			}
+
+			if (use_domain) {
+				domain.s = (char*)VAL_STRING(ROW_VALUES(row) + 6);
+				if (VAL_NULL(ROW_VALUES(row)+6) || domain.s==0 || domain.s[0]==0){
+					LM_CRIT("empty domain record for user %.*s...skipping\n",
+							user.len, user.s);
+					continue;
+				}
+				domain.len = strlen(domain.s);
+				/* user.s cannot be NULL - checked previosly */
+				suri.len = snprintf(uri, MAX_URI_SIZE, "%.*s@%s",
+					user.len, user.s, domain.s);
+				suri.s = uri;
+				if (suri.s[suri.len]!=0) {
+					LM_CRIT("URI '%.*s@%s' longer than %d\n", user.len, user.s,
+							domain.s, MAX_URI_SIZE);
+					continue;
+				}
+			} else {
+				suri = user;
+			}
+
+			lock_udomain(_d, &suri);
+			if (get_urecord_by_ruid(_d, ul_get_aorhash(&suri), &ruid, &r, &c) > 0) {
+				/* delete attrs records from db table */
+				LM_INFO("no contact record for this ruid\n");
+				uldb_delete_attrs(_d->name, &user, &domain, &ruid);
+			} else {
+				/* add xavp to contact */
+				if(c->xavp==NULL) {
+					if(xavp_add_xavp_value(&ul_xavp_contact_name, &aname,
+								&aval, &c->xavp)==NULL)
+						LM_INFO("cannot add first xavp to contact - ignoring\n");
+				} else {
+					if(c->xavp->val.type==SR_XTYPE_XAVP) {
+						if(xavp_add_value(&aname, &aval, &c->xavp->val.v.xavp)==NULL)
+							LM_INFO("cannot add values to contact xavp\n");
+					}
+				}
+			}
+			unlock_udomain(_d, &user);
+		}
+
+		if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
+			if(ul_dbf.fetch_result(ul_dbh, &res, ul_fetch_rows)<0) {
+				LM_ERR("fetching rows (1) failed\n");
+				ul_dbf.free_result(ul_dbh, res);
+				return -1;
+			}
+		} else {
+			break;
+		}
+	} while(RES_ROW_N(res)>0);
+
+	ul_dbf.free_result(ul_dbh, res);
+
+#ifdef EXTRA_DEBUG
+	LM_NOTICE("load end time [%d]\n", (int)time(NULL));
+#endif
+
+	return 0;
+}
