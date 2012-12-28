@@ -26,3 +26,20 @@
 			</query_cols>
 		</cmd>
 	</mod>
+	<!-- location_attrs provisionning -->
+	<mod><mod_name>location_attrs</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>location_attrs</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>ruid</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>aname</field></col>
+				<col><field>atype</field></col>
+				<col><field>avalue</field></col>
+				<col><field>last_modified</field></col>
+			</query_cols>
+		</cmd>
+	</mod>

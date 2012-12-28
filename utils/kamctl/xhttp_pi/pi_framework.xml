@@ -212,17 +212,6 @@
 		<column><field>attrs</field><type>DB1_STR</type></column>
 		<column><field>description</field><type>DB1_STR</type></column>
 	</db_table>
-	<!-- Declaration of domainpolicy table-->
-	<db_table id="domainpolicy">
-		<table_name>domainpolicy</table_name>
-		<db_url_id>mysql</db_url_id>
-		<column><field>id</field><type>DB1_INT</type></column>
-		<column><field>rule</field><type>DB1_STR</type></column>
-		<column><field>type</field><type>DB1_STR</type></column>
-		<column><field>att</field><type>DB1_STR</type></column>
-		<column><field>val</field><type>DB1_STR</type></column>
-		<column><field>description</field><type>DB1_STR</type></column>
-	</db_table>
 	<!-- Declaration of domain table-->
 	<db_table id="domain">
 		<table_name>domain</table_name>
@@ -242,6 +231,17 @@
 		<column><field>type</field><type>DB1_INT</type></column>
 		<column><field>value</field><type>DB1_STR</type></column>
 		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
+	</db_table>
+	<!-- Declaration of domainpolicy table-->
+	<db_table id="domainpolicy">
+		<table_name>domainpolicy</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>rule</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_STR</type></column>
+		<column><field>att</field><type>DB1_STR</type></column>
+		<column><field>val</field><type>DB1_STR</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of dr_gateways table-->
 	<db_table id="dr_gateways">
@@ -754,6 +754,19 @@
 		<column><field>methods</field><type>DB1_INT</type></column>
 		<column><field>instance</field><type>DB1_STR</type></column>
 		<column><field>reg_id</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of location_attrs table-->
+	<db_table id="location_attrs">
+		<table_name>location_attrs</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>ruid</field><type>DB1_STR</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>aname</field><type>DB1_STR</type></column>
+		<column><field>atype</field><type>DB1_INT</type></column>
+		<column><field>avalue</field><type>DB1_STR</type></column>
+		<column><field>last_modified</field><type>DB1_DATETIME</type></column>
 	</db_table>
 	<!-- Declare all mods
 		Each mod must have:
@@ -1736,6 +1749,23 @@
 				<col><field>methods</field></col>
 				<col><field>instance</field></col>
 				<col><field>reg_id</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- location_attrs provisionning -->
+	<mod><mod_name>location_attrs</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>location_attrs</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>ruid</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>aname</field></col>
+				<col><field>atype</field></col>
+				<col><field>avalue</field></col>
+				<col><field>last_modified</field></col>
 			</query_cols>
 		</cmd>
 	</mod>

@@ -25,3 +25,18 @@ CREATE TABLE location (
 CREATE INDEX account_contact_idx ON location (username, domain, contact);
 CREATE INDEX expires_idx ON location (expires);
 
+INSERT INTO version (table_name, table_version) values ('location_attrs','1');
+CREATE TABLE location_attrs (
+    id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    ruid VARCHAR(64) DEFAULT '' NOT NULL,
+    username VARCHAR(64) DEFAULT '' NOT NULL,
+    domain VARCHAR(64) DEFAULT NULL,
+    aname VARCHAR(64) DEFAULT '' NOT NULL,
+    atype INT(11) DEFAULT 0 NOT NULL,
+    avalue VARCHAR(255) DEFAULT '' NOT NULL,
+    last_modified DATETIME DEFAULT '1900-01-01 00:00:01' NOT NULL
+) ENGINE=MyISAM;
+
+CREATE INDEX account_record_idx ON location_attrs (username, domain, ruid);
+CREATE INDEX last_modified_idx ON location_attrs (last_modified);
+
