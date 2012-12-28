@@ -270,7 +270,7 @@ CC_LONGVER:=$(shell if  $(CC) -v 2>/dev/null; then \
 					else \
 						$(CC) -V 2>&1 ; \
 					fi )
-MKTAGS=ctags -R .
+MKTAGS=ctags
 
 #find-out the compiler's name
 

@@ -288,10 +288,14 @@ clean_doxygen:
 
 .PHONY: TAGS
 TAGS:
-	$(MKTAGS) 
-	
-	
-	
+	$(MKTAGS) --exclude="obsolete/*" -R .
+
+.PHONY: TAGS-ALL
+TAGS-ALL:
+	$(MKTAGS) -R .
+
+
+
 ifeq (,$(MAKECMDGOALS))
 -include $(depends)
 else
