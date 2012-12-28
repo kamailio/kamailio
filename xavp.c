@@ -183,6 +183,38 @@ sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list)
 	return avp;
 }
 
+sr_xavp_t *xavp_add_xavp_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t **list)
+{
+	sr_xavp_t *ravp=0;
+	sr_xavp_t *cavp=0;
+	sr_xval_t rval;
+
+	cavp = xavp_new_value(name, val);
+	if (cavp==NULL)
+		return NULL;
+
+	memset(&rval, 0, sizeof(sr_xval_t));
+	rval.type = SR_XTYPE_XAVP;
+	rval.v.xavp = cavp;
+
+	ravp = xavp_new_value(rname, &rval);
+	if (ravp==NULL) {
+		xavp_destroy_list(&cavp);
+		return NULL;
+	}
+
+	/* Prepend new value to the list */
+	if(list) {
+		ravp->next = *list;
+		*list = ravp;
+	} else {
+		ravp->next = *_xavp_list_crt;
+		*_xavp_list_crt = ravp;
+	}
+
+	return ravp;
+}
+
 sr_xavp_t *xavp_set_value(str *name, int idx, sr_xval_t *val, sr_xavp_t **list)
 {
 	sr_xavp_t *avp;

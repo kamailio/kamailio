@@ -81,6 +81,7 @@ void avpx_free(sr_xavp_t *xa);
 int xavp_add(sr_xavp_t *xavp, sr_xavp_t **list);
 int xavp_add_last(sr_xavp_t *xavp, sr_xavp_t **list);
 sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list);
+sr_xavp_t *xavp_add_xavp_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t **list);
 sr_xavp_t *xavp_set_value(str *name, int idx, sr_xval_t *val, sr_xavp_t **list);
 sr_xavp_t *xavp_get(str *name, sr_xavp_t *start);
 sr_xavp_t *xavp_get_by_index(str *name, int idx, sr_xavp_t **start);
