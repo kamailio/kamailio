@@ -549,7 +549,9 @@ sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
 	sr_xavp_t *pavp = NULL;
 
 	if(xold == NULL)
+	{
 		return NULL;
+	}
 	if(xold->val.type==SR_XTYPE_DATA)
 	{
 		LM_INFO("xavp value type is 'data' - ignoring in clone\n");
@@ -563,18 +565,21 @@ sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
 	}
 
 	if(xold->val.type!=SR_XTYPE_XAVP)
+	{
 		return xnew;
+	}
 
 	xnew->val.v.xavp = NULL;
 	oavp = xold->val.v.xavp;
 
 	while(oavp)
 	{
-		if(xold->val.type!=SR_XTYPE_DATA && xold->val.type!=SR_XTYPE_XAVP)
+		if(oavp->val.type!=SR_XTYPE_DATA && oavp->val.type!=SR_XTYPE_XAVP)
 		{
 			navp =  xavp_new_value(&oavp->name, &oavp->val);
 			if(navp==NULL)
 			{
+				LM_ERR("cannot create cloned embedded xavp\n");
 				if(xnew->val.v.xavp == NULL)
 				{
 					shm_free(xnew);
