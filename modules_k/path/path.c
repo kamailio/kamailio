@@ -199,6 +199,7 @@ int add_path(struct sip_msg* _msg, char* _a, char* _b)
 	str user = {0,0};
 	int ret;
 	path_param_t param = PATH_PARAM_NONE;
+	struct via_body *via;
 
 	if (path_obb.use_outbound != NULL
 		&& path_obb.use_outbound(_msg)) {
@@ -206,7 +207,11 @@ int add_path(struct sip_msg* _msg, char* _a, char* _b)
 			LM_ERR("encoding outbound flow token\n");
 			return -1;	
 		}
-		param = PATH_PARAM_OB;
+
+		/* Only include ;ob parameter if this is the first-hop (that
+		   means only one Via:) */
+		if (parse_via_header(_msg, 2, &via) < 0)
+			param = PATH_PARAM_OB;
 	}
 
 	ret = prepend_path(_msg, &user, param);
