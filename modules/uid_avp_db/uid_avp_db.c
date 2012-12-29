@@ -52,8 +52,8 @@
 MODULE_VERSION
 
 static char* db_url           = DEFAULT_RODB_URL;    /* Database URL */
-static char* user_attrs_table = "user_attrs";
-static char* uri_attrs_table  = "uri_attrs";
+static char* user_attrs_table = "uid_user_attrs";
+static char* uri_attrs_table  = "uid_uri_attrs";
 static char* uid_column       = "uid";
 static char* username_column  = "username";
 static char* did_column       = "did";
