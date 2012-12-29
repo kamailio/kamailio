@@ -110,6 +110,12 @@ uacreg|
 uacreg|1
 uid_credentials|
 uid_credentials|7
+uid_uri|
+uid_uri|3
+uid_uri_attrs|
+uid_uri_attrs|2
+uid_user_attrs|
+uid_user_attrs|3
 uri|
 uri|1
 userblacklist|

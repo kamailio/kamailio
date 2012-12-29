@@ -727,6 +727,30 @@
 		<column><field>type</field><type>DB1_INT</type></column>
 		<column><field>flags</field><type>DB1_INT</type></column>
 	</db_table>
+	<!-- Declaration of uid_uri table-->
+	<db_table id="uid_uri">
+		<table_name>uid_uri</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>uid</field><type>DB1_STR</type></column>
+		<column><field>did</field><type>DB1_STR</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>scheme</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of uid_uri_attrs table-->
+	<db_table id="uid_uri_attrs">
+		<table_name>uid_uri_attrs</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>did</field><type>DB1_STR</type></column>
+		<column><field>name</field><type>DB1_STR</type></column>
+		<column><field>value</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_INT</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>scheme</field><type>DB1_STR</type></column>
+	</db_table>
 	<!-- Declaration of uri table-->
 	<db_table id="uri">
 		<table_name>uri</table_name>
@@ -1738,6 +1762,38 @@
 				<col><field>value</field></col>
 				<col><field>type</field></col>
 				<col><field>flags</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- uid_uri provisionning -->
+	<mod><mod_name>uid_uri</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>uid_uri</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>uid</field></col>
+				<col><field>did</field></col>
+				<col><field>username</field></col>
+				<col><field>flags</field></col>
+				<col><field>scheme</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- uid_uri_attrs provisionning -->
+	<mod><mod_name>uid_uri_attrs</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>uid_uri_attrs</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>did</field></col>
+				<col><field>name</field></col>
+				<col><field>value</field></col>
+				<col><field>type</field></col>
+				<col><field>flags</field></col>
+				<col><field>scheme</field></col>
 			</query_cols>
 		</cmd>
 	</mod>

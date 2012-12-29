@@ -8,12 +8,9 @@
 ]>
 
 <table>
-  <name>uid_user_attrs</name>
-  <version>3</version>
+  <name>uid_uri_attrs</name>
+  <version>2</version>
   <type db="mysql">&MYSQL_TABLE_TYPE;</type>
-  <description>
-	Per user attributes loaded with uid_avp_db module.
-  </description>
 
   <column id="id">
     <name>id</name>
@@ -25,20 +22,25 @@
     <description>Unique ID</description>
   </column>
 
-  <column id="userattrs.uid">
-	<name>uid</name>
-	<name db="oracle">uuid</name>
+  <column id="uriattrs.username">
+	<name>username</name>
 	<type>string</type>
-	<size>&id_len;</size>
+	<size>&user_len;</size>
   </column>
 
-  <column id="userattrs.name">
+  <column id="uriattrs.did">
+    <name>did</name>
+    <type>string</type>
+    <size>&id_len;</size>
+  </column>
+  
+  <column id="uriattrs.name">
 	<name>name</name>
 	<type>string</type>
 	<size>&avp_name_len;</size>
   </column>
 
-  <column id="userattrs.value">
+  <column id="uriattrs.value">
 	<name>value</name>
 	<type>string</type>
 	<null/>
@@ -51,7 +53,7 @@
 	<default>0</default>
   </column>
 
-  <column id="userattrs.flags">
+  <column id="uriattrs.flags">
 	<name>flags</name>
 	<type>unsigned int</type>
 	<default>0</default>
@@ -60,12 +62,28 @@
 	</description>
   </column>
 
+  <column id="uriattrs.scheme">
+    <name>scheme</name>
+    <type>string</type>
+	<size>8</size>
+    <default>sip</default>
+    <description>
+      URI scheme:
+      - SIP  
+      - SIPS 
+      - TEL  
+      - TELS 
+    </description>
+  </column>
+
   <index>
 	<unique/>
-	<name>userattrs_idx</name>
-	<colref linkend="userattrs.uid"/>
-	<colref linkend="userattrs.name"/>
-	<colref linkend="userattrs.value"/>
+	<name>uriattrs_idx</name>
+    <colref linkend="uriattrs.username"/>
+	<colref linkend="uriattrs.did"/>
+	<colref linkend="uriattrs.name"/>
+	<colref linkend="uriattrs.value"/>
+	<colref linkend="uriattrs.scheme"/>
   </index>
 
 </table>
