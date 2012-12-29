@@ -75,7 +75,7 @@ static unsigned int *gflags;
 
 static char* db_url = DEFAULT_DB_URL;
 static int   load_global_attrs = 0;
-static char* attr_table = "global_attrs";
+static char* attr_table = "uid_global_attrs";
 static char* attr_name = "name";
 static char* attr_type = "type";
 static char* attr_value = "value";
