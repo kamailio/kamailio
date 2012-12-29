@@ -33,3 +33,26 @@ BEGIN map2users('location'); END;
 CREATE INDEX location_account_contact_idx  ON location (username, domain, contact);
 CREATE INDEX location_expires_idx  ON location (expires);
 
+INSERT INTO version (table_name, table_version) values ('location_attrs','1');
+CREATE TABLE location_attrs (
+    id NUMBER(10) PRIMARY KEY,
+    ruid VARCHAR2(64) DEFAULT '',
+    username VARCHAR2(64) DEFAULT '',
+    domain VARCHAR2(64) DEFAULT NULL,
+    aname VARCHAR2(64) DEFAULT '',
+    atype NUMBER(10) DEFAULT 0 NOT NULL,
+    avalue VARCHAR2(255) DEFAULT '',
+    last_modified DATE DEFAULT to_date('1900-01-01 00:00:01','yyyy-mm-dd hh24:mi:ss')
+);
+
+CREATE OR REPLACE TRIGGER location_attrs_tr
+before insert on location_attrs FOR EACH ROW
+BEGIN
+  auto_id(:NEW.id);
+END location_attrs_tr;
+/
+BEGIN map2users('location_attrs'); END;
+/
+CREATE INDEX ORA_account_record_idx  ON location_attrs (username, domain, ruid);
+CREATE INDEX ORA_last_modified_idx  ON location_attrs (last_modified);
+

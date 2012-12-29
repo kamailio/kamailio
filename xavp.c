@@ -183,6 +183,38 @@ sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list)
 	return avp;
 }
 
+sr_xavp_t *xavp_add_xavp_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t **list)
+{
+	sr_xavp_t *ravp=0;
+	sr_xavp_t *cavp=0;
+	sr_xval_t rval;
+
+	cavp = xavp_new_value(name, val);
+	if (cavp==NULL)
+		return NULL;
+
+	memset(&rval, 0, sizeof(sr_xval_t));
+	rval.type = SR_XTYPE_XAVP;
+	rval.v.xavp = cavp;
+
+	ravp = xavp_new_value(rname, &rval);
+	if (ravp==NULL) {
+		xavp_destroy_list(&cavp);
+		return NULL;
+	}
+
+	/* Prepend new value to the list */
+	if(list) {
+		ravp->next = *list;
+		*list = ravp;
+	} else {
+		ravp->next = *_xavp_list_crt;
+		*_xavp_list_crt = ravp;
+	}
+
+	return ravp;
+}
+
 sr_xavp_t *xavp_set_value(str *name, int idx, sr_xval_t *val, sr_xavp_t **list)
 {
 	sr_xavp_t *avp;
@@ -517,7 +549,9 @@ sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
 	sr_xavp_t *pavp = NULL;
 
 	if(xold == NULL)
+	{
 		return NULL;
+	}
 	if(xold->val.type==SR_XTYPE_DATA)
 	{
 		LM_INFO("xavp value type is 'data' - ignoring in clone\n");
@@ -531,18 +565,21 @@ sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
 	}
 
 	if(xold->val.type!=SR_XTYPE_XAVP)
+	{
 		return xnew;
+	}
 
 	xnew->val.v.xavp = NULL;
 	oavp = xold->val.v.xavp;
 
 	while(oavp)
 	{
-		if(xold->val.type!=SR_XTYPE_DATA && xold->val.type!=SR_XTYPE_XAVP)
+		if(oavp->val.type!=SR_XTYPE_DATA && oavp->val.type!=SR_XTYPE_XAVP)
 		{
 			navp =  xavp_new_value(&oavp->name, &oavp->val);
 			if(navp==NULL)
 			{
+				LM_ERR("cannot create cloned embedded xavp\n");
 				if(xnew->val.v.xavp == NULL)
 				{
 					shm_free(xnew);

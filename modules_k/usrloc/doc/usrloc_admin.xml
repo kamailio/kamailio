@@ -823,15 +823,6 @@ modparam("usrloc", "timer_procs", 4)
 		</example>
 	</section>
 
-	</section>
-
-	<section>
-	<title>Functions</title>
-	<para>
-		There are no exported functions that could be used in scripts.
-	</para>
-	</section>
-
 	<section id="xavp_contact">
 		<title><varname>xavp_contact</varname> (string)</title>
 		<para>
@@ -853,6 +844,14 @@ modparam("usrloc", "xavp_contact", "ulattrs")
 		</example>
 	</section>
 
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<para>
+		There are no exported functions that could be used in scripts.
+	</para>
+	</section>
 
 	<section>
 	<title>MI Commands</title>

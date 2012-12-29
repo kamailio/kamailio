@@ -25,3 +25,18 @@ CREATE TABLE location (
 CREATE INDEX location_account_contact_idx ON location (username, domain, contact);
 CREATE INDEX location_expires_idx ON location (expires);
 
+INSERT INTO version (table_name, table_version) values ('location_attrs','1');
+CREATE TABLE location_attrs (
+    id INTEGER PRIMARY KEY NOT NULL,
+    ruid VARCHAR(64) DEFAULT '' NOT NULL,
+    username VARCHAR(64) DEFAULT '' NOT NULL,
+    domain VARCHAR(64) DEFAULT NULL,
+    aname VARCHAR(64) DEFAULT '' NOT NULL,
+    atype INTEGER DEFAULT 0 NOT NULL,
+    avalue VARCHAR(255) DEFAULT '' NOT NULL,
+    last_modified TIMESTAMP WITHOUT TIME ZONE DEFAULT '1900-01-01 00:00:01' NOT NULL
+);
+
+CREATE INDEX location_attrs_account_record_idx ON location_attrs (username, domain, ruid);
+CREATE INDEX location_attrs_last_modified_idx ON location_attrs (last_modified);
+

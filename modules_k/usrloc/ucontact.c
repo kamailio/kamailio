@@ -75,6 +75,7 @@ void ucontact_xavp_store(ucontact_t *_c)
 	if(xavp==NULL)
 		return;
 	/* clone the xavp found in core */
+	LM_DBG("trying to clone per contact xavps\n");
 	_c->xavp = xavp_clone_level_nodata(xavp);
 	return;
 }
@@ -615,6 +616,9 @@ int db_insert_ucontact(ucontact_t* _c)
 		return -1;
 	}
 
+	uldb_insert_attrs(_c->domain, &vals[0].val.str_val, &vals[nr_cols-1].val.str_val,
+		&_c->ruid, _c->xavp);
+
 	return 0;
 }
 
@@ -786,9 +790,15 @@ int db_update_ucontact(ucontact_t* _c)
 		 * to do an INSERT */
 		if(ul_dbf.affected_rows(ul_dbh)==0) {
 			LM_DBG("affected rows by UPDATE was 0, doing an INSERT\n");
-			return db_insert_ucontact(_c);
+			if(db_insert_ucontact(_c)<0)
+				return -1;
 		}
 	}
+	/* delete old db attrs and add the current list */
+	uldb_delete_attrs(_c->domain, &vals1[0].val.str_val,
+			&vals1[3].val.str_val, &_c->ruid);
+	uldb_insert_attrs(_c->domain, &vals1[0].val.str_val, &vals1[3].val.str_val,
+		&_c->ruid, _c->xavp);
 
 	return 0;
 }
@@ -839,6 +849,9 @@ int db_delete_ucontact(ucontact_t* _c)
 			vals[3].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 		}
 	}
+
+	uldb_delete_attrs(_c->domain, &vals[0].val.str_val,
+			&vals[3].val.str_val, &_c->ruid);
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
 		LM_ERR("sql use_table failed\n");
@@ -966,6 +979,182 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 		} else {
 			_c->state = CS_SYNC;
 		}
+	}
+	return 0;
+}
+
+/*!
+ * \brief Load all location attributes from a udomain
+ *
+ * Load all location attributes from a udomain, useful to populate the
+ * memory cache on startup.
+ * \param _dname loaded domain name
+ * \param _user sip username
+ * \param _domain sip domain
+ * \param _ruid usrloc record unique id
+ * \return 0 on success, -1 on failure
+ */
+int uldb_delete_attrs(str* _dname, str *_user, str *_domain, str *_ruid)
+{
+	char tname_buf[64];
+	str tname;
+	db_key_t keys[3];
+	db_val_t vals[3];
+
+	LM_DBG("trying to delete location attributes\n");
+
+	if(ul_xavp_contact_name.s==NULL) {
+		/* feature disabled by mod param */
+		return 0;
+	}
+
+	if(_dname->len+6>=64) {
+		LM_ERR("attributes table name is too big\n");
+		return -1;
+	}
+	strncpy(tname_buf, _dname->s, _dname->len);
+	tname_buf[_dname->len] = '\0';
+	strcat(tname_buf, "_attrs");
+	tname.s = tname_buf;
+	tname.len = _dname->len + 6;
+
+	keys[0] = &ulattrs_user_col;
+	keys[1] = &ulattrs_ruid_col;
+	keys[2] = &ulattrs_domain_col;
+
+	vals[0].type = DB1_STR;
+	vals[0].nul = 0;
+	vals[0].val.str_val = *_user;
+
+	vals[1].type = DB1_STR;
+	vals[1].nul = 0;
+	vals[1].val.str_val = *_ruid;
+
+	if (use_domain) {
+		vals[2].type = DB1_STR;
+		vals[2].nul = 0;
+		vals[2].val.str_val = *_domain;
+	}
+
+	if (ul_dbf.use_table(ul_dbh, &tname) < 0) {
+		LM_ERR("sql use_table failed\n");
+		return -1;
+	}
+
+	if (ul_dbf.delete(ul_dbh, keys, 0, vals, (use_domain) ? (3) : (2)) < 0) {
+		LM_ERR("deleting from database failed\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/*!
+ * \brief Insert contact attributes into the database
+ * \param _dname loaded domain name
+ * \param _user sip username
+ * \param _domain sip domain
+ * \param _ruid record unique id
+ * \param _xhead head of xavp list
+ * \return 0 on success, -1 on failure
+ */
+int uldb_insert_attrs(str *_dname, str *_user, str *_domain,
+		str *_ruid, sr_xavp_t *_xhead)
+{
+	char tname_buf[64];
+	str tname;
+	str avalue;
+	sr_xavp_t *xavp;
+	db_key_t keys[7];
+	db_val_t vals[7];
+	int nr_cols;
+
+	LM_DBG("trying to insert location attributes\n");
+
+	if(ul_xavp_contact_name.s==NULL) {
+		/* feature disabled by mod param */
+		LM_DBG("location attributes disabled\n");
+		return 0;
+	}
+
+	if(_xhead==NULL || _xhead->val.type!=SR_XTYPE_XAVP
+			|| _xhead->val.v.xavp==NULL) {
+		/* nothing to write */
+		LM_DBG("no location attributes\n");
+		return 0;
+	}
+
+	if(_dname->len+6>=64) {
+		LM_ERR("attributes table name is too big\n");
+		return -1;
+	}
+	strncpy(tname_buf, _dname->s, _dname->len);
+	tname_buf[_dname->len] = '\0';
+	strcat(tname_buf, "_attrs");
+	tname.s = tname_buf;
+	tname.len = _dname->len + 6;
+
+	if (ul_dbf.use_table(ul_dbh, &tname) < 0) {
+		LM_ERR("sql use_table failed for %.*s\n", tname.len, tname.s);
+		return -1;
+	}
+
+	keys[0] = &ulattrs_user_col;
+	keys[1] = &ulattrs_ruid_col;
+	keys[2] = &ulattrs_last_mod_col;
+	keys[3] = &ulattrs_aname_col;
+	keys[4] = &ulattrs_atype_col;
+	keys[5] = &ulattrs_avalue_col;
+	keys[6] = &ulattrs_domain_col;
+
+	vals[0].type = DB1_STR;
+	vals[0].nul = 0;
+	vals[0].val.str_val = *_user;
+
+	vals[1].type = DB1_STR;
+	vals[1].nul = 0;
+	vals[1].val.str_val = *_ruid;
+
+	vals[2].type = DB1_DATETIME;
+	vals[2].nul = 0;
+	vals[2].val.time_val = time(NULL);
+
+	if (use_domain && _domain!=NULL && _domain->s!=NULL) {
+		nr_cols = 7;
+		vals[6].type = DB1_STR;
+		vals[6].nul = 0;
+		vals[6].val.str_val = *_domain;
+
+	} else {
+		nr_cols = 6;
+	}
+
+	for(xavp=_xhead->val.v.xavp; xavp; xavp=xavp->next) {
+		vals[3].type = DB1_STR;
+		vals[3].nul = 0;
+		vals[3].val.str_val = xavp->name;
+
+		vals[4].type = DB1_INT;
+		vals[4].nul = 0;
+		if(xavp->val.type==SR_XTYPE_STR) {
+			vals[4].val.int_val = 0;
+			avalue = xavp->val.v.s;
+		} else if(xavp->val.type==SR_XTYPE_INT) {
+			vals[4].val.int_val = 1;
+			avalue.s = sint2str((long)xavp->val.v.i, &avalue.len);
+		} else {
+			continue;
+		}
+
+		vals[5].type = DB1_STR;
+		vals[5].nul = 0;
+		vals[5].val.str_val = avalue;
+
+		if (ul_dbf.insert(ul_dbh, keys, vals, nr_cols) < 0) {
+			LM_ERR("inserting contact in db failed\n");
+			return -1;
+		}
+
 	}
 	return 0;
 }

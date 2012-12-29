@@ -37,6 +37,7 @@
 
 
 #include <stdio.h>
+#include "../../xavp.h"
 #include "usrloc.h"
 
 
@@ -149,4 +150,30 @@ int db_delete_ucontact(ucontact_t* _c);
  */
 int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci);
 
+/* ====== per contact attributes ====== */
+
+/*!
+ * \brief Load all location attributes from a udomain
+ *
+ * Load all location attributes from a udomain, useful to populate the
+ * memory cache on startup.
+ * \param _dname loaded domain name
+ * \param _user sip username
+ * \param _domain sip domain
+ * \param _ruid usrloc record unique id
+ * \return 0 on success, -1 on failure
+ */
+int uldb_delete_attrs(str* _dname, str *_user, str *_domain, str *_ruid);
+
+/*!
+ * \brief Insert contact attributes into the database
+ * \param _dname loaded domain name
+ * \param _user sip username
+ * \param _domain sip domain
+ * \param _ruid record unique id
+ * \param _xhead head of xavp list
+ * \return 0 on success, -1 on failure
+ */
+int uldb_insert_attrs(str *_dname, str *_user, str *_domain,
+        str *_ruid, sr_xavp_t *_xhead);
 #endif
