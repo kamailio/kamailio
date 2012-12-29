@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE database PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+  <!ENTITY % entities SYSTEM "entities.xml">
+  %entities;
+]>
+
+<table xmlns:db="http://docbook.org/ns/docbook">
+  <name>uid_global_attrs</name>
+  <version>1</version>
+  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+  <description>
+	The table contains value for global attributes. Global attributes are
+	often used to implement default value for attributes that are not present
+	in domain or user attributes.
+  </description>
+
+  <column id="id">
+    <name>id</name>
+    <type>unsigned int</type>
+    <size>&table_id_len;</size>
+    <autoincrement/>
+    <primary/>
+    <type db="dbtext">int,auto</type>
+    <description>Unique ID</description>
+  </column>
+
+  <column id="global_attrs.name">
+	<name>name</name>
+	<type>string</type>
+	<size>&avp_name_len;</size>
+	<description>
+	  Attribute name. This should be one of the names listed in attr_types
+	  table.
+	</description>
+  </column>
+
+  <column id="global_attrs.type">
+	<name>type</name>
+	<type>int</type>
+	<default>0</default>
+	<description>
+	  Attribute type. This should be the value of type column from attr_types
+	  table with same name.
+	</description>
+  </column>
+
+  <column id="global_attrs.value">
+	<name>value</name>
+	<type>string</type>
+	<null/>
+	<size>&avp_val_len;</size>
+	<description>
+	  Value of the attribute.
+	</description>
+  </column>
+
+  <column id="global_attrs.flags">
+	<name>flags</name>
+	<type>unsigned int</type>
+	<default>0</default>
+	<description>
+	  Various flags. The meaning of bits in the flags field is described in
+	  the table below.
+	  <db:note>
+		<db:simpara>
+		  Note that several flags below have no meaning in this table and are
+		  only presented for completeness, because the flags column has
+		  identical meaning of flags across most tables in the database.
+		</db:simpara>
+	  </db:note>
+	  <db:table><db:title>possible global_attrs flags</db:title>
+		<db:tgroup cols="4">
+		  <db:thead>
+			<db:row>
+			  <db:entry>Bit</db:entry>
+			  <db:entry>Hex value</db:entry>
+			  <db:entry>Flag</db:entry>
+			  <db:entry>Description</db:entry>
+			</db:row>
+		  </db:thead>
+		  <db:tbody>
+			<db:row>
+			  <db:entry>0</db:entry>
+			  <db:entry>0x00000001</db:entry>
+			  <db:entry>FOR_SER</db:entry>
+			  <db:entry>
+				If set then SER will load the row (not
+				applicable in this table).
+			  </db:entry>
+			</db:row>
+			<db:row>
+			  <db:entry>1</db:entry>
+			  <db:entry>0x00000002</db:entry>
+			  <db:entry>DISABLED</db:entry>
+			  <db:entry>
+				The data represented by the row is temporarily disabled, which
+				means it stays in the database but no applications use it.
+			  </db:entry>
+			</db:row>
+			<db:row>
+			  <db:entry>2</db:entry>
+			  <db:entry>0x00000004</db:entry>
+			  <db:entry>CANONICAL</db:entry>
+			  <db:entry>
+				The URI or domain name is canonical. When displaying the URI
+				of the user or name of a domain then this entry should be
+				used.  Not applicable in this table.
+			  </db:entry>
+			</db:row>
+			<db:row>
+			  <db:entry>3</db:entry>
+			  <db:entry>0x00000008</db:entry>
+			  <db:entry>ALLOWED_TO</db:entry>
+			  <db:entry>
+				The URI represented by this row can be used in The Request-URI
+				or To header field. In other words the user will be reachable
+				under this URI and can use it as an alias. Not applicable in
+				this table.
+			  </db:entry>
+			</db:row>
+			<db:row>
+			  <db:entry>4</db:entry>
+			  <db:entry>0x00000010</db:entry>
+			  <db:entry>ALLOWED_FROM</db:entry>
+			  <db:entry>
+				The user identified by uid can use this URI in From header
+				field. Not applicable in this table.
+			  </db:entry>
+			</db:row>
+			<db:row>
+			  <db:entry>5</db:entry>
+			  <db:entry>0x00000020</db:entry>
+			  <db:entry>FOR_SERWEB</db:entry>
+			  <db:entry>
+				The data represented by the row is for SERWeb. This is
+				currently used in credentials table only where the flags
+				allows to keep different credentials for digest authentication
+				in SIP and for SERWeb authentication. Not applicable in this
+				table.
+			  </db:entry>
+			</db:row>
+			<db:row>
+			  <db:entry>6</db:entry>
+			  <db:entry>0x00000040</db:entry>
+			  <db:entry>PENDING</db:entry>
+			  <db:entry>
+				The account owning the piece of data has not been activated
+				yet. Not applicable in this table, this is mainly used in
+				credentials table.
+			  </db:entry>
+			</db:row>
+			<db:row>
+			  <db:entry>7</db:entry>
+			  <db:entry>0x00000100</db:entry>
+			  <db:entry>DELETED</db:entry>
+			  <db:entry>
+				The row has been scheduled for deletion.
+			  </db:entry>
+			</db:row>
+			<db:row>
+			  <db:entry>8</db:entry>
+			  <db:entry>0x00000200</db:entry>
+			  <db:entry>CALLER_DELETED</db:entry>
+			  <db:entry>
+				The accounting record has been scheduled for deletion by the
+				caller. The row can be deleted once both the caller and callee
+				schedule the record for deletion. A single record can be
+				shared by two users and thus both of them must schedule it for
+				deletion before it can be physically deleted.
+			  </db:entry>
+			</db:row>
+			<db:row>
+			  <db:entry>9</db:entry>
+			  <db:entry>0x00000400</db:entry>
+			  <db:entry>CALLEE_DELETED</db:entry>
+			  <db:entry>
+				The accounting record has been scheduled for deletion by the
+				callee. The row can be deleted once both the caller and callee
+				schedule the record for deletion. A single record can be
+				shared by two users and thus both of them must schedule it for
+				deletion before it can be physically deleted.
+			  </db:entry>
+			</db:row>
+		  </db:tbody>
+		</db:tgroup>
+	  </db:table>	    
+	</description>
+  </column>
+
+  <index>
+	<name>global_attrs_idx</name>
+	<unique/>
+	<colref linkend="global_attrs.name"/>
+	<colref linkend="global_attrs.value"/>
+  </index>
+
+  <row-identificator>
+	<colref linkend="global_attrs.name"/>
+  </row-identificator>
+
+  <row vendor-controlled="1">
+	<value col="global_attrs.name">sw_domain_default_flags</value>
+	<value col="global_attrs.type">0</value>
+	<value col="global_attrs.value">33</value>
+	<value col="global_attrs.flags">32</value>
+  </row>
+  
+  <row vendor-controlled="1">
+	<value col="global_attrs.name">sw_credential_default_flags</value>
+	<value col="global_attrs.type">0</value>
+	<value col="global_attrs.value">33</value>
+	<value col="global_attrs.flags">32</value>
+  </row>
+  
+  <row vendor-controlled="1">
+	<value col="global_attrs.name">sw_uri_default_flags</value>
+	<value col="global_attrs.type">0</value>
+	<value col="global_attrs.value">57</value>
+	<value col="global_attrs.flags">32</value>
+  </row>
+
+  <row vendor-controlled="1">
+	<value col="global_attrs.name">sw_uname_assign_mode</value>
+	<value col="global_attrs.type">2</value>
+	<value col="global_attrs.value">fcfs</value>
+	<value col="global_attrs.flags">32</value>
+  </row>
+  
+  <row vendor-controlled="1">
+    <value col="global_attrs.name">domain_data_version</value>
+    <value col="global_attrs.type">0</value>
+    <value col="global_attrs.value">0</value>
+    <value col="global_attrs.flags">33</value>
+  </row>
+
+  <row vendor-controlled="1">
+    <value col="global_attrs.name">gattr_timestamp</value>
+    <value col="global_attrs.type">0</value>
+    <value col="global_attrs.value">0</value>
+    <value col="global_attrs.flags">33</value>
+  </row>
+  
+  <row>
+	<value col="global_attrs.name">sw_show_status</value>
+	<value col="global_attrs.type">0</value>
+	<value col="global_attrs.value">1</value>
+	<value col="global_attrs.flags">32</value>
+  </row>
+  
+  <row>
+	<value col="global_attrs.name">sw_require_conf</value>
+	<value col="global_attrs.type">0</value>
+	<value col="global_attrs.value">1</value>
+	<value col="global_attrs.flags">32</value>
+  </row>
+  
+  <row>
+	<value col="global_attrs.name">lang</value>
+	<value col="global_attrs.type">2</value>
+	<value col="global_attrs.value">en</value>
+	<value col="global_attrs.flags">33</value>
+  </row>
+  
+  <row>
+	<value col="global_attrs.name">sw_timezone</value>
+	<value col="global_attrs.type">2</value>
+	<value col="global_attrs.value">Europe/Prague</value>
+	<value col="global_attrs.flags">32</value>
+  </row>
+  
+  <row>
+	<value col="global_attrs.name">uid_format</value>
+	<value col="global_attrs.type">2</value>
+	<value col="global_attrs.value">0</value>
+	<value col="global_attrs.flags">32</value>
+  </row>
+  
+  <row>
+	<value col="global_attrs.name">did_format</value>
+	<value col="global_attrs.type">2</value>
+	<value col="global_attrs.value">0</value>
+	<value col="global_attrs.flags">32</value>
+  </row>
+  
+  <row>
+	<value col="global_attrs.name">sw_max_uri_user</value>
+	<value col="global_attrs.type">0</value>
+	<value col="global_attrs.value">5</value>
+	<value col="global_attrs.flags">32</value>
+  </row>
+  
+</table>

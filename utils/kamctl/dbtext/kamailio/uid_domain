@@ -1,2 +1,1 @@
 id(int,auto) did(string) domain(string) flags(int) 
-uid_domain:2

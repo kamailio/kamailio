@@ -747,6 +747,16 @@
 		<column><field>value</field><type>DB1_STR</type></column>
 		<column><field>flags</field><type>DB1_INT</type></column>
 	</db_table>
+	<!-- Declaration of uid_global_attrs table-->
+	<db_table id="uid_global_attrs">
+		<table_name>uid_global_attrs</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>name</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_INT</type></column>
+		<column><field>value</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+	</db_table>
 	<!-- Declaration of uid_uri table-->
 	<db_table id="uid_uri">
 		<table_name>uid_uri</table_name>
@@ -1806,6 +1816,20 @@
 			<query_cols>
 				<col><field>id</field></col>
 				<col><field>did</field></col>
+				<col><field>name</field></col>
+				<col><field>type</field></col>
+				<col><field>value</field></col>
+				<col><field>flags</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- uid_global_attrs provisionning -->
+	<mod><mod_name>uid_global_attrs</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>uid_global_attrs</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
 				<col><field>name</field></col>
 				<col><field>type</field></col>
 				<col><field>value</field></col>

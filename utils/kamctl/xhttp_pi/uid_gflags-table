@@ -1,0 +1,10 @@
+	<!-- Declaration of uid_global_attrs table-->
+	<db_table id="uid_global_attrs">
+		<table_name>uid_global_attrs</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>name</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_INT</type></column>
+		<column><field>value</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+	</db_table>
