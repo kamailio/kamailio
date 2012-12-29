@@ -1,2 +1,1 @@
 id(int,auto) ruid(string) username(string) domain(string,null) aname(string) atype(int) avalue(string) last_modified(int) 
-location_attrs:1

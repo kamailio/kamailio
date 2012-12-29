@@ -702,6 +702,20 @@
 		<column><field>auth_proxy</field><type>DB1_STR</type></column>
 		<column><field>expires</field><type>DB1_INT</type></column>
 	</db_table>
+	<!-- Declaration of uid_credentials table-->
+	<db_table id="uid_credentials">
+		<table_name>uid_credentials</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>auth_username</field><type>DB1_STR</type></column>
+		<column><field>did</field><type>DB1_STR</type></column>
+		<column><field>realm</field><type>DB1_STR</type></column>
+		<column><field>password</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>ha1</field><type>DB1_STR</type></column>
+		<column><field>ha1b</field><type>DB1_STR</type></column>
+		<column><field>uid</field><type>DB1_STR</type></column>
+	</db_table>
 	<!-- Declaration of uri table-->
 	<db_table id="uri">
 		<table_name>uri</table_name>
@@ -1680,6 +1694,24 @@
 				<col><field>auth_password</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- uid_credentials provisionning -->
+	<mod><mod_name>uid_credentials</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>uid_credentials</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>auth_username</field></col>
+				<col><field>did</field></col>
+				<col><field>realm</field></col>
+				<col><field>password</field></col>
+				<col><field>flags</field></col>
+				<col><field>ha1</field></col>
+				<col><field>ha1b</field></col>
+				<col><field>uid</field></col>
 			</query_cols>
 		</cmd>
 	</mod>

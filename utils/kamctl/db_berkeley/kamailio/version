@@ -68,6 +68,8 @@ lcr_rule_target|
 lcr_rule_target|1
 location|
 location|6
+location_attrs|
+location_attrs|1
 matrix|
 matrix|1
 missed_calls|
