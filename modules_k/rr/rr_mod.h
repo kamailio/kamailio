@@ -29,6 +29,8 @@
 #ifndef RR_MOD_H
 #define RR_MOD_H
 
+#include "../outbound/api.h"
+
 #ifdef ENABLE_USER_CHECK
 #include "../../str.h"
 extern str i_user;
@@ -43,6 +45,6 @@ extern int enable_full_lr;
 /*! add username to record-route URI */
 extern int add_username;
 extern int enable_socket_mismatch_warning;
-
+extern ob_api_t rr_obb;
 
 #endif /* RR_MOD_H */

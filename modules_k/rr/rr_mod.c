@@ -40,6 +40,7 @@
 #include "../../mem/mem.h"
 #include "../../mod_fix.h"
 #include "../../parser/parse_rr.h"
+#include "../outbound/api.h"
 #include "loose.h"
 #include "record.h"
 #include "rr_cb.h"
@@ -56,9 +57,10 @@ int append_fromtag = 1;		/*!< append from tag by default */
 int enable_double_rr = 1;	/*!< enable using of 2 RR by default */
 int enable_full_lr = 0;		/*!< compatibilty mode disabled by default */
 int add_username = 0;	 	/*!< do not add username by default */
- int enable_socket_mismatch_warning = 1; /*!< enable socket mismatch warning */
+int enable_socket_mismatch_warning = 1; /*!< enable socket mismatch warning */
 
 static unsigned int last_rr_msg;
+ob_api_t rr_obb;
 
 MODULE_VERSION
 
@@ -147,9 +149,22 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
+	if (ob_load_api(&rr_obb) == 0)
+		LM_INFO("Bound rr module to outbound module\n");
+	else
+	{
+		LM_INFO("oubound module not available\n");
+		memset(&rr_obb, 0, sizeof(ob_api_t));
+	}
+
 #ifdef ENABLE_USER_CHECK
 	if(ignore_user)
 	{
+		if (rr_obb.use_outbound)
+		{
+			LM_ERR("cannot use \"ignore_user\" with outbound\n");
+			return -1;
+		}
 		i_user.s = ignore_user;
 		i_user.len = strlen(ignore_user);
 	}
@@ -159,6 +174,13 @@ static int mod_init(void)
 		i_user.len = 0;
 	}
 #endif
+
+	if (add_username != 0 && rr_obb.use_outbound)
+	{
+		LM_ERR("cannot use \"add_username\" with outbound\n");
+		return -1;
+	}
+
 	return 0;
 }
 
