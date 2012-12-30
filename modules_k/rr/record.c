@@ -289,6 +289,11 @@ int record_route(struct sip_msg* _m, str *params)
 			LM_ERR("failed to extract username\n");
 			return -1;
 		}
+	} else if (rr_obb.use_outbound && rr_obb.use_outbound(_m)) {
+		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
+			LM_ERR("encoding outbound flow token\n");
+			return -1;
+		}
 	}
 
 	if (append_fromtag) {
@@ -371,6 +376,11 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	if (add_username) {
 		if (get_username(_m, &user) < 0) {
 			LM_ERR("failed to extract username\n");
+			return -1;
+		}
+	} else if (rr_obb.use_outbound && rr_obb.use_outbound(_m)) {
+		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
+			LM_ERR("encoding outbound flow token\n");
 			return -1;
 		}
 	}
@@ -588,6 +598,11 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 	if (add_username) {
 		if (get_username(_m, &user) < 0) {
 			LM_ERR("failed to extract username\n");
+			return -1;
+		}
+	} else if (rr_obb.use_outbound && rr_obb.use_outbound(_m)) {
+		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
+			LM_ERR("encoding outbound flow token\n");
 			return -1;
 		}
 	}
