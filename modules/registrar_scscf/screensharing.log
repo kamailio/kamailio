@@ -1,0 +1,66 @@
+DEBUG 10-24 14:36:45.015 CoreScreenShare.java 256 111 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - arg: webex.it.za.smilecoms.com
+DEBUG 10-24 14:36:45.020 CoreScreenShare.java 261 111 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - arg: openmeetings/10
+DEBUG 10-24 14:36:45.020 CoreScreenShare.java 261 111 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - arg: 1935
+DEBUG 10-24 14:36:45.020 CoreScreenShare.java 261 111 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - arg: 8bc4a82d9529045531a9f06b2149e6db
+DEBUG 10-24 14:36:45.020 CoreScreenShare.java 261 111 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - arg: Desktop sharer;Click Start to publish your screen;Start sharing;Pause sharing;Select your screen area:;Change width;Change height;X-Offset;Y-Offset;Width:;Height:;Connection was closed by server;Show mouse position to viewers;Recording;You may record and share your screen at the same time. To enable others to see your screen just hit the start button on the top.;Start recording;Stop recording;Close;Quality of the screen share:;Very high quality;High quality;Medium quality;Low quality;Publish;Start Publish;Stop Publish;Host;Publish App;Publish Id;Reduce the width of the SharingScreen before you try to move it left;Reduce the height of the SharingScreen before you try to move it bottom;Reduce the x of the SharingScreen before you try to make it wider;Reduce the y of the SharingScreen before you try to make it higher;Fill these settings stream your screen data to 3th party providers like justin.tv;Please start Screen sharing to be able to publish it;Moderator permission required to start recording
+DEBUG 10-24 14:36:45.020 CoreScreenShare.java 261 111 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - arg: 1
+DEBUG 10-24 14:36:45.021 CoreScreenShare.java 262 111 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - arg: 1
+DEBUG 10-24 14:36:45.021 CoreScreenShare.java 262 111 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - arg: 1
+DEBUG 10-24 14:36:45.021 CoreScreenShare.java 262 111 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - arg: true
+DEBUG 10-24 14:36:45.022 CoreScreenShare.java 263 131 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - labelTexts :: Desktop sharer;Click Start to publish your screen;Start sharing;Pause sharing;Select your screen area:;Change width;Change height;X-Offset;Y-Offset;Width:;Height:;Connection was closed by server;Show mouse position to viewers;Recording;You may record and share your screen at the same time. To enable others to see your screen just hit the start button on the top.;Start recording;Stop recording;Close;Quality of the screen share:;Very high quality;High quality;Medium quality;Low quality;Publish;Start Publish;Stop Publish;Host;Publish App;Publish Id;Reduce the width of the SharingScreen before you try to move it left;Reduce the height of the SharingScreen before you try to move it bottom;Reduce the x of the SharingScreen before you try to make it wider;Reduce the y of the SharingScreen before you try to make it higher;Fill these settings stream your screen data to 3th party providers like justin.tv;Please start Screen sharing to be able to publish it;Moderator permission required to start recording
+DEBUG 10-24 14:36:45.022 CoreScreenShare.java 263 133 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - textArray Length 36
+DEBUG 10-24 14:36:45.022 CoreScreenShare.java 263 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 0 :: Desktop sharer
+DEBUG 10-24 14:36:45.022 CoreScreenShare.java 263 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 1 :: Click Start to publish your screen
+DEBUG 10-24 14:36:45.023 CoreScreenShare.java 264 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 2 :: Start sharing
+DEBUG 10-24 14:36:45.023 CoreScreenShare.java 264 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 3 :: Pause sharing
+DEBUG 10-24 14:36:45.023 CoreScreenShare.java 264 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 4 :: Select your screen area:
+DEBUG 10-24 14:36:45.023 CoreScreenShare.java 264 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 5 :: Change width
+DEBUG 10-24 14:36:45.024 CoreScreenShare.java 265 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 6 :: Change height
+DEBUG 10-24 14:36:45.024 CoreScreenShare.java 265 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 7 :: X-Offset
+DEBUG 10-24 14:36:45.024 CoreScreenShare.java 265 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 8 :: Y-Offset
+DEBUG 10-24 14:36:45.024 CoreScreenShare.java 265 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 9 :: Width:
+DEBUG 10-24 14:36:45.025 CoreScreenShare.java 266 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 10 :: Height:
+DEBUG 10-24 14:36:45.025 CoreScreenShare.java 266 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 11 :: Connection was closed by server
+DEBUG 10-24 14:36:45.025 CoreScreenShare.java 266 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 12 :: Show mouse position to viewers
+DEBUG 10-24 14:36:45.025 CoreScreenShare.java 266 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 13 :: Recording
+DEBUG 10-24 14:36:45.025 CoreScreenShare.java 266 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 14 :: You may record and share your screen at the same time. To enable others to see your screen just hit the start button on the top.
+DEBUG 10-24 14:36:45.026 CoreScreenShare.java 267 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 15 :: Start recording
+DEBUG 10-24 14:36:45.026 CoreScreenShare.java 267 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 16 :: Stop recording
+DEBUG 10-24 14:36:45.026 CoreScreenShare.java 267 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 17 :: Close
+DEBUG 10-24 14:36:45.026 CoreScreenShare.java 267 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 18 :: Quality of the screen share:
+DEBUG 10-24 14:36:45.027 CoreScreenShare.java 268 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 19 :: Very high quality
+DEBUG 10-24 14:36:45.027 CoreScreenShare.java 268 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 20 :: High quality
+DEBUG 10-24 14:36:45.027 CoreScreenShare.java 268 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 21 :: Medium quality
+DEBUG 10-24 14:36:45.027 CoreScreenShare.java 268 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 22 :: Low quality
+DEBUG 10-24 14:36:45.027 CoreScreenShare.java 268 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 23 :: Publish
+DEBUG 10-24 14:36:45.027 CoreScreenShare.java 268 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 24 :: Start Publish
+DEBUG 10-24 14:36:45.027 CoreScreenShare.java 268 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 25 :: Stop Publish
+DEBUG 10-24 14:36:45.028 CoreScreenShare.java 269 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 26 :: Host
+DEBUG 10-24 14:36:45.028 CoreScreenShare.java 269 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 27 :: Publish App
+DEBUG 10-24 14:36:45.028 CoreScreenShare.java 269 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 28 :: Publish Id
+DEBUG 10-24 14:36:45.028 CoreScreenShare.java 269 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 29 :: Reduce the width of the SharingScreen before you try to move it left
+DEBUG 10-24 14:36:45.028 CoreScreenShare.java 269 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 30 :: Reduce the height of the SharingScreen before you try to move it bottom
+DEBUG 10-24 14:36:45.028 CoreScreenShare.java 269 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 31 :: Reduce the x of the SharingScreen before you try to make it wider
+DEBUG 10-24 14:36:45.028 CoreScreenShare.java 269 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 32 :: Reduce the y of the SharingScreen before you try to make it higher
+DEBUG 10-24 14:36:45.029 CoreScreenShare.java 270 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 33 :: Fill these settings stream your screen data to 3th party providers like justin.tv
+DEBUG 10-24 14:36:45.029 CoreScreenShare.java 270 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 34 :: Please start Screen sharing to be able to publish it
+DEBUG 10-24 14:36:45.029 CoreScreenShare.java 270 136 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - 35 :: Moderator permission required to start recording
+DEBUG 10-24 14:36:45.029 CoreScreenShare.java 270 143 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - host: webex.it.za.smilecoms.com, app: openmeetings/10, port: 1935, publish: 8bc4a82d9529045531a9f06b2149e6db
+DEBUG 10-24 14:36:45.600 ScreenSharerFrame.java 841 698 org.openmeetings.screen.webstart.gui.ScreenSharerFrame [javawsApplicationMain] - calcRescaleFactors -- 
+DEBUG 10-24 14:36:45.601 ScreenSharerFrame.java 842 715 org.openmeetings.screen.webstart.gui.ScreenSharerFrame [javawsApplicationMain] - resize: X:1920 Y: 1080
+DEBUG 10-24 14:36:45.681 CoreScreenShare.java 922 170 org.openmeetings.screen.webstart.CoreScreenShare [javawsApplicationMain] - initialized
+DEBUG 10-24 14:36:59.142 ScreenSharerFrame.java 14383 698 org.openmeetings.screen.webstart.gui.ScreenSharerFrame [AWT-EventQueue-0] - calcRescaleFactors -- 
+DEBUG 10-24 14:36:59.142 ScreenSharerFrame.java 14383 715 org.openmeetings.screen.webstart.gui.ScreenSharerFrame [AWT-EventQueue-0] - resize: X:1920 Y: 1080
+DEBUG 10-24 14:37:01.478 CoreScreenShare.java 16719 250 org.openmeetings.screen.webstart.CoreScreenShare [AWT-EventQueue-0] - captureScreenStart
+DEBUG 10-24 14:37:01.872 RTMPScreenShare.java 17113 54 org.openmeetings.screen.webstart.RTMPScreenShare [NioProcessor-2] - connection opened
+DEBUG 10-24 14:37:02.173 CoreScreenShare.java 17414 209 org.openmeetings.screen.webstart.CoreScreenShare [NioProcessor-2] - ########## setConnectionAsSharingClient
+DEBUG 10-24 14:37:02.601 CoreScreenShare.java 17842 763 org.openmeetings.screen.webstart.CoreScreenShare [NioProcessor-2] - createPublishStream result stream id: 1
+DEBUG 10-24 14:37:02.601 CoreScreenShare.java 17842 765 org.openmeetings.screen.webstart.CoreScreenShare [NioProcessor-2] - publishing video by name: 8bc4a82d9529045531a9f06b2149e6db
+DEBUG 10-24 14:37:02.603 CoreScreenShare.java 17844 768 org.openmeetings.screen.webstart.CoreScreenShare [NioProcessor-2] - setup capture thread
+DEBUG 10-24 14:37:02.604 CoreScreenShare.java 17845 770 org.openmeetings.screen.webstart.CoreScreenShare [NioProcessor-2] - setup capture thread vScreenSpinnerWidth 1920
+DEBUG 10-24 14:37:02.604 CoreScreenShare.java 17845 772 org.openmeetings.screen.webstart.CoreScreenShare [NioProcessor-2] - setup capture thread vScreenSpinnerHeight 1080
+DEBUG 10-24 14:37:02.659 CoreScreenShare.java 17900 344 org.openmeetings.screen.webstart.CoreScreenShare [NioProcessor-2] - onStreamEvent Invoke: Service: null Method: onStatus Num Params: 1 0: {clientid=1, level=status, details=8bc4a82d9529045531a9f06b2149e6db, description=, code=NetStream.Publish.Start}
+DEBUG 10-24 14:37:02.659 CoreScreenShare.java 17900 351 org.openmeetings.screen.webstart.CoreScreenShare [NioProcessor-2] - onStreamEvent Publish start
+DEBUG 10-24 14:38:24.923 CoreScreenShare.java 100164 272 org.openmeetings.screen.webstart.CoreScreenShare [AWT-EventQueue-0] - INVOKE screenSharerAction
+DEBUG 10-24 14:38:24.929 CoreScreenShare.java 100170 328 org.openmeetings.screen.webstart.CoreScreenShare [NioProcessor-2] - ScreenShare stopStream
+DEBUG 10-24 14:38:24.935 RTMPScreenShare.java 100176 61 org.openmeetings.screen.webstart.RTMPScreenShare [NioProcessor-2] - connection closed
