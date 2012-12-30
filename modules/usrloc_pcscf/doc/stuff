@@ -1,0 +1,72 @@
+/** Full Diameter Peer configuration. */
+typedef struct {
+	str fqdn;					/**< own FQDN */
+	str realm;					/**< own Realm */
+	str identity;				/**< own diameter URI */
+	int vendor_id;				/**< own vendorid */
+	str product_name;			/**< own product name */
+	int accept_unknown_peers;	/**< if to accept connections from peers that are not configured initially */
+	int drop_unknown_peers;		/**< if to drop the peers that are not initially configured on disconnected;
+									 usually, you want to do this, unless you want your list of peers to
+									 grow and you want to try and connect back to everybody that connected 
+									 to you before */
+	int tc;						/**< Tc timer duration (30 seconds should be) */
+	int workers;				/**< Number of worker-processes to fork */
+	int queue_length;			/**< Length of the message queue; when it is filled, the server part will
+									 block until workers will finish work on at least one item in the queue */
+	int connect_timeout;		/**< Connect timeout for outbound connections */
+	int transaction_timeout;	/**< Transaction timeout duration */
+	
+	int sessions_hash_size;		/**< Size of the sessions hash table */									 
+	int default_auth_session_timeout; /** The default Authorization Session Timeout to use if none other indicated */ 
+	int max_auth_session_timeout;	  /** The max Authorization Session Timeout limit */ 
+	
+	peer_config *peers;			/**< list of peers */
+	int peers_cnt;				/**< size of the list of peers */
+	
+	acceptor_config *acceptors;	/**< list of acceptors */
+	int acceptors_cnt;			/**< size of the list of acceptors */
+	
+	app_config *applications;	/**< list of supporter applications */
+	int applications_cnt;		/**< size of list of supported applications*/
+
+	int *supported_vendors;		/**< list of supported vendor ids */
+	int supported_vendors_cnt;	/**< size of list of supported vendor ids */
+	
+	routing_table *r_table;		/**< realm routing table */
+} dp_config;
+
+/**
+ * Exported functions. This is the API available for use from other SER modules.
+ * If you require more, please add them here.
+ * <p>
+ * - load_cdp() - find and load the CDiameterPeer function bindings
+ * <p>
+ * - AAACreateRequest() - create a diameter request #AAAMessage
+ * - AAACreateResponse() - create a diameter response #AAAMessage
+ * - AAAFreeMessage() - free up the memory used in a Diameter message
+ * <p>
+ * - AAASendMessage() - asynchronously send a message
+ * - AAASendMessageToPeer() - asynchronously send a message to a forced peer
+ * - AAASendRecvMessage() - synchronously send a message and get the response
+ * - AAASendRecvMessageToPeer() - synchronously send a message and get the response to a forced peer 
+ * <p>
+ * - AAACreateSession() - create a diameter #AAASessionId
+ * - AAADropSession() - drop a diameter #AAASessionId
+ * <p>
+ * - AAACreateTransaction() - create a diameter #AAATransaction
+ * - AAADropTransaction() - drop a diameter #AAATransaction
+ * <p>
+ * - AAACreateAVP() - create an #AAA_AVP
+ * - AAAAddAVPToMessage() - add an #AAA_AVP to a #AAAMessage
+ * - AAAFindMatchingAVP() - find an #AAA_AVP inside a #AAAMessage
+ * - AAAGetNextAVP() - get the next #AAA_AVP from the #AAAMessage
+ * - AAAFreeAVP() - free the memory taken by the #AAA_AVP
+ * - AAAGroupAVPS() - group a #AAA_AVP_LIST of #AAA_AVP into a grouped #AAA_AVP 
+ * - AAAUngroupAVPS() - ungroup a grouped #AAA_AVP into a #AAA_AVP_LIST of #AAA_AVP
+ * - AAAFindMatchingAVPList() - find an #AAA_AVP inside a #AAA_AVP_LIST
+ * - AAAFreeAVPList() - free the memory taken by the all members of #AAA_AVP_LIST
+ * <p>
+ * - AAAAddRequestHandler() - add a #AAARequestHandler_f callback to request being received
+ * - AAAAddResponseHandler() - add a #AAAResponseHandler_f callback to responses being received
+ */

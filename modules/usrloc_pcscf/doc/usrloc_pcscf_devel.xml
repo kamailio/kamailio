@@ -1,0 +1,682 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+]>
+<!-- Module Developer's Guide -->
+<chapter>
+  <title>&develguide;</title>
+
+  <section>
+    <title>Available Functions</title>
+
+    <section>
+      <title><function moreinfo="none">load_cdp(struct cdp_binds
+      *cdpb)</function></title>
+
+      <para>Find and load the CDiameterPeer function bindings</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>struct cdp_binds *cdpb</emphasis> - structure
+          holding function pointers</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAACreateRequest(AAAApplicationId
+      app_id, AAACommandCode command_code, AAAMsgFlag flags, AAASession
+      *session)</function></title>
+
+      <para>Create a Diameter request</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>AAAApplicationId app_id</emphasis> - structure
+          holding function pointers</para>
+        </listitem>
+
+        <listitem>
+          <para>AAACommandCode command_code - command code for the
+          message</para>
+        </listitem>
+
+        <listitem>
+          <para>AAAMsgFlag flags - flags to be set</para>
+        </listitem>
+
+        <listitem>
+          <para>AAASession *session - session id to be set</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAACreateResponse(AAAMessage
+      *request)</function></title>
+
+      <para>Create a Diameter response to a give request</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>AAAMessage *request</emphasis> - request that this
+          response is for</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAAReturnCode AAAFreeMessage(AAAMessage
+      **msg)</function></title>
+
+      <para>Free up memory used by Diameter message</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>AAAMessage **msg</emphasis> - pointer to the pointer
+          containing the message</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAAReturnCode AAASendMessage(AAAMessage
+      *message, AAATransactionCallback_f *callback_f, void
+      *callback_param)</function></title>
+
+      <para>Send Diameter message asynchronously</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>AAAMessage *message</emphasis> - request message to
+          be sent</para>
+        </listitem>
+
+        <listitem>
+          <para>AAATransactionCallback_f *callback_f - When the response is
+          received, the callback_f(callback_param,...) is called</para>
+        </listitem>
+
+        <listitem>
+          <para>void *callback_param - generic param for callback</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAAReturnCode
+      AAASendMessageToPeer(AAAMessage *message, str *peer_id,
+      AAATransactionCallback_f *callback_f, void
+      *callback_param)</function></title>
+
+      <para>Send Diameter message to specific peer asynchronously</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>AAAMessage *message - request message to send</para>
+        </listitem>
+
+        <listitem>
+          <para>str *peer_id - FQDN of peer to send to</para>
+        </listitem>
+
+        <listitem>
+          <para>AAATransactionCallback_f *callback_f - When the response is
+          received, the callback_f(callback_param,...) is called</para>
+        </listitem>
+
+        <listitem>
+          <para>void *callback_param - generic param for callback</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAAMessage*
+      AAASendRecvMessage(AAAMessage *message)</function></title>
+
+      <para>Send Diameter message synchronously. This blocks until a response
+      is received or a transactional time-out happens.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>AAAMessage *message - request message to be sent</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAAMessage*
+      AAASendRecvMessageToPeer(AAAMessage *message, str
+      *peer_id)</function></title>
+
+      <para>Send Diameter message to specific peer synchronously. This blocks
+      until a response is received or a transactional time-out happens.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>AAAMessage *message</emphasis> - request message to
+          send</para>
+        </listitem>
+
+        <listitem>
+          <para>str *peer_id - FQDN of peer to send to.</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAASession* AAACreateSession(void
+      *generic_data)</function></title>
+
+      <para>Create a generic Diameter session</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>void *generic_data - data to be save to session, useful for
+          attaching app specific data to the session</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAASession* AAAMakeSession(int
+      app_id,int type,str session_id)</function></title>
+
+      <para>Create a Diameter session using already known params</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>int app_id - app id to use</para>
+        </listitem>
+
+        <listitem>
+          <para>int type - type of session</para>
+        </listitem>
+
+        <listitem>
+          <para>str session_id - session ID</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAASession* AAAGetSession(str
+      id)</function></title>
+
+      <para>Retrieve a Diameter session. Returns with a lock on
+      AAASession-&gt;hash - Unlock when done working with result</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>str id - Diameter session ID to search for</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAADropSession(AAASession
+      *s)</function></title>
+
+      <para>Drop a Diameter session - deallocating all memory</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>AAASession *s - session to drop</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAASessionLock(unsigned int
+      hash)</function></title>
+
+      <para>Lock a Diameter session (hash table row)</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>unsigned int hash - hash to lock</emphasis></para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAASessionUnLock(unsigned int
+      hash)</function></title>
+
+      <para>Unlock a Diameter session (hash table row)</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>unsigned int hash - hash to unlock</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAASession*
+      AAACreateClientAuthSession(int is_statefull,AAASessionCallback_f
+      *cb,void *generic_data)</function></title>
+
+      <para>Creates an Authorisation session for the Client. It generate a new
+      ID and adds to the list of CDP sessions. Returns with a lock on
+      AAASession-&gt;hash</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>int is_statefull - is session stateful or
+          not</emphasis></para>
+        </listitem>
+
+        <listitem>
+          <para>AAASessionCallback_f *cb - callback function on session state
+          change</para>
+        </listitem>
+
+        <listitem>
+          <para>void *generic_data - generic callback data</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAASession*
+      AAACreateServerAuthSession(AAMessage *msg,int
+      is_statefull,AAASessionCallback_f *cb,void
+      *generic_data)</function></title>
+
+      <para>Create authorisation session for the Server. Generates a new ID
+      and add to CDP list of sessions. Returns with a lock on
+      AAASession-&gt;hash.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>AAMessage *msg - request message from which to create server
+          session</para>
+        </listitem>
+
+        <listitem>
+          <para>int is_statefull - is session stateful or not</para>
+        </listitem>
+
+        <listitem>
+          <para>AAASessionCallback_f *cb - callback function on session state
+          change</para>
+        </listitem>
+
+        <listitem>
+          <para>void *generic_data - generic callback data</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAASession* AAAGetAuthSession(str
+      id)</function></title>
+
+      <para>Look for an authorisation session. Returns with lock on
+      AAASession-&gt;hash</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>str id - ID of Auth session to search for</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAADropAuthSession(AAASession
+      *s)</function></title>
+
+      <para>Deallocates the memory taken by a Authorisation session</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>AAASession *s</emphasis> - Session to drop and
+          deallocate memory for</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAATerminateAuthSession(AAASession
+      *s)</function></title>
+
+      <para>Sends a service terminated event to the session</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>AAASession *s</emphasis> - authhorisation session to
+          terminate</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAATransaction*
+      AAACreateTransaction(AAAApplicationId app_id,AAACommandCode
+      cmd_code)</function></title>
+
+      <para>Create a AAATransaction for the given request</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>AAAApplicationId app_id - ID of the request's
+          application</para>
+        </listitem>
+
+        <listitem>
+          <para>AAACommandCode cmd_code - request's code</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">int AAADropTransaction(AAATransaction
+      *trans)</function></title>
+
+      <para>Deallocates the memory taken by AAA transaction</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>AAATransaction *trans - transaction to free</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAA_AVP* AAACreateAVP(AAA_AVPCode code,
+      AAA_AVPFlag flags, AAAVendorId vendorId, char *data, size_t length,
+      AVPDataStatus data_status)</function></title>
+
+      <para>Create new AVP and return pointer to it</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>AAA_AVPCode code</emphasis> - code for new
+          AVP</para>
+        </listitem>
+
+        <listitem>
+          <para>AAA_AVPFlag flags - flags to set</para>
+        </listitem>
+
+        <listitem>
+          <para>AAAVendorId vendorId - vendor ID for AVP</para>
+        </listitem>
+
+        <listitem>
+          <para>char *data - generic payload data</para>
+        </listitem>
+
+        <listitem>
+          <para>size_t length - length of payload data</para>
+        </listitem>
+
+        <listitem>
+          <para>AVPDataStatus data_status - what to do with the payload,
+          duplicate, free with message, etc</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAAReturnCode
+      AAAAddAVPToMessage(AAAMessage *msg, AAA_AVP *avp, AAA_AVP
+      *position)</function></title>
+
+      <para>Find and load the CDiameterPeer function bindings</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>AAAMessage *msg</emphasis> - the message to add
+          to</para>
+        </listitem>
+
+        <listitem>
+          <para>AAA_AVP *avp - the AVP to add</para>
+        </listitem>
+
+        <listitem>
+          <para>AAA_AVP *position - AVP to add after. if NULL, we add at
+          beginning</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAA_AVP* AAAFindMatchingAVP(AAAMessage
+      *msg, AAA_AVP *startAvp, AAA_AVPCode avpCode, AAAVendorId vendorId,
+      AAASearchType searchType)</function></title>
+
+      <para>Find and load the CDiameterPeer function bindings</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>AAAMessage *msg - the message to search in</para>
+        </listitem>
+
+        <listitem>
+          <para>AAA_AVP *startAvp - at which AVP to start the search. usefull
+          for looking for more of the same name</para>
+        </listitem>
+
+        <listitem>
+          <para>AAA_AVPCode avpCode - AVP code to match</para>
+        </listitem>
+
+        <listitem>
+          <para>AAAVendorId vendorId - AVP vendor ID to match</para>
+        </listitem>
+
+        <listitem>
+          <para>AAASearchType searchType - look forward or backward</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAA_AVP * AAAGetNextAVP(AAA_AVP
+      *avp)</function></title>
+
+      <para>Find and load the CDiameterPeer function bindings</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>AAA_AVP *avp - reference AVP</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAAReturnCode AAAFreeAVP(AAA_AVP
+      **avp)</function></title>
+
+      <para>Find and load the CDiameterPeer function bindings</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>AAA_AVP **avp - pointer memory to be freed</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">str AAAGroupAVPS(AAA_AVP_LIST
+      avps)</function></title>
+
+      <para>Groups a list of AVPS into a data buffer</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>AAA_AVP_LIST avps - list of AVPS to group</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAA_AVP_LIST AAAUnGroupAVPS(str
+      buf)</function></title>
+
+      <para>Ungroup a data buffer into a list of AVPs</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>str buf - payload to ungroup list from</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAA_AVP*
+      AAAFindMatchingAVPList(AAA_AVP_LIST avpList, AAA_AVP *startAvp,
+      AAA_AVPCode avpCode, AAAVendorId vendorId, AAASearchType
+      searchType)</function></title>
+
+      <para>Find an AVP in an AVP list</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>AAA_AVP_LIST avpList - AVP list to search</para>
+        </listitem>
+
+        <listitem>
+          <para>AAA_AVP *startAvp - where to start the search</para>
+        </listitem>
+
+        <listitem>
+          <para>AAA_AVPCode avpCode - AVP code to match</para>
+        </listitem>
+
+        <listitem>
+          <para>AAAVendorId vendorId - vendor ID to match</para>
+        </listitem>
+
+        <listitem>
+          <para>AAASearchType searchType - forwards or backwards</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">AAAFreeAVPList(AAA_AVP_LIST
+      *avpList)</function></title>
+
+      <para>Free AVP list and all its members</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>AAA_AVP_LIST *avpList - list to be freed</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">int
+      AAAAddRequestHandler(AAARequestHandler_f *f,void
+      *param)</function></title>
+
+      <para>add a #AAARequestHandler_f callback to request being
+      received</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>AAARequestHandler_f *f - callback function to be called on
+          incoming requests</para>
+        </listitem>
+
+        <listitem>
+          <para>void *param - generic data passed to callback function</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">int
+      AAAAddResponseHandler(AAAResponseHandler_f *f,void
+      *param)</function></title>
+
+      <para>add a #AAAResponseHandler_f callback to responses being
+      received</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>AAAResponseHandler_f *f</emphasis> - callback
+          function to be called on incoming responses</para>
+        </listitem>
+
+        <listitem>
+          <para>void *param - generic data to be bassed to callback
+          function</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+  </section>
+</chapter>
