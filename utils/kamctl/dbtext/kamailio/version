@@ -29,6 +29,7 @@ lcr_gw:3
 lcr_rule:2
 lcr_rule_target:1
 location:6
+location_attrs:1
 matrix:1
 missed_calls:3
 mtree:1
@@ -48,6 +49,12 @@ speed_dial:2
 subscriber:6
 trusted:5
 uacreg:1
+uid_credentials:7
+uid_domain:2
+uid_domain_attrs:1
+uid_uri:3
+uid_uri_attrs:2
+uid_user_attrs:3
 uri:1
 userblacklist:1
 usr_preferences:2

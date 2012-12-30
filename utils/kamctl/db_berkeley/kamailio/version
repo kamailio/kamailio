@@ -68,6 +68,8 @@ lcr_rule_target|
 lcr_rule_target|1
 location|
 location|6
+location_attrs|
+location_attrs|1
 matrix|
 matrix|1
 missed_calls|
@@ -106,6 +108,18 @@ trusted|
 trusted|5
 uacreg|
 uacreg|1
+uid_credentials|
+uid_credentials|7
+uid_domain|
+uid_domain|2
+uid_domain_attrs|
+uid_domain_attrs|1
+uid_uri|
+uid_uri|3
+uid_uri_attrs|
+uid_uri_attrs|2
+uid_user_attrs|
+uid_user_attrs|3
 uri|
 uri|1
 userblacklist|

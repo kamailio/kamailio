@@ -1,0 +1,1 @@
+id(int,auto) username(string) did(string) name(string) value(string,null) type(int) flags(int) scheme(string) 

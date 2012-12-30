@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table>
+  <name>uid_user_attrs</name>
+  <version>3</version>
+  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+  <description>
+	Per user attributes loaded with uid_avp_db module.
+  </description>
+
+  <column id="id">
+    <name>id</name>
+    <type>unsigned int</type>
+    <size>&table_id_len;</size>
+    <autoincrement/>
+    <primary/>
+    <type db="dbtext">int,auto</type>
+    <description>Unique ID</description>
+  </column>
+
+  <column id="userattrs.uid">
+	<name>uid</name>
+	<name db="oracle">uuid</name>
+	<type>string</type>
+	<size>&id_len;</size>
+  </column>
+
+  <column id="userattrs.name">
+	<name>name</name>
+	<type>string</type>
+	<size>&avp_name_len;</size>
+  </column>
+
+  <column id="userattrs.value">
+	<name>value</name>
+	<type>string</type>
+	<null/>
+	<size>&avp_val_len;</size>
+  </column>
+
+  <column>
+	<name>type</name>
+	<type>int</type>
+	<default>0</default>
+  </column>
+
+  <column id="userattrs.flags">
+	<name>flags</name>
+	<type>unsigned int</type>
+	<default>0</default>
+	<description>
+	  Various flags (SER_LOAD and such).
+	</description>
+  </column>
+
+  <index>
+	<unique/>
+	<name>userattrs_idx</name>
+	<colref linkend="userattrs.uid"/>
+	<colref linkend="userattrs.name"/>
+	<colref linkend="userattrs.value"/>
+  </index>
+
+</table>

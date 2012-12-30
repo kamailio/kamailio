@@ -702,6 +702,85 @@
 		<column><field>auth_proxy</field><type>DB1_STR</type></column>
 		<column><field>expires</field><type>DB1_INT</type></column>
 	</db_table>
+	<!-- Declaration of uid_credentials table-->
+	<db_table id="uid_credentials">
+		<table_name>uid_credentials</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>auth_username</field><type>DB1_STR</type></column>
+		<column><field>did</field><type>DB1_STR</type></column>
+		<column><field>realm</field><type>DB1_STR</type></column>
+		<column><field>password</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>ha1</field><type>DB1_STR</type></column>
+		<column><field>ha1b</field><type>DB1_STR</type></column>
+		<column><field>uid</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of uid_user_attrs table-->
+	<db_table id="uid_user_attrs">
+		<table_name>uid_user_attrs</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>uid</field><type>DB1_STR</type></column>
+		<column><field>name</field><type>DB1_STR</type></column>
+		<column><field>value</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_INT</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of uid_domain table-->
+	<db_table id="uid_domain">
+		<table_name>uid_domain</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>did</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of uid_domain_attrs table-->
+	<db_table id="uid_domain_attrs">
+		<table_name>uid_domain_attrs</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>did</field><type>DB1_STR</type></column>
+		<column><field>name</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_INT</type></column>
+		<column><field>value</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of uid_global_attrs table-->
+	<db_table id="uid_global_attrs">
+		<table_name>uid_global_attrs</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>name</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_INT</type></column>
+		<column><field>value</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of uid_uri table-->
+	<db_table id="uid_uri">
+		<table_name>uid_uri</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>uid</field><type>DB1_STR</type></column>
+		<column><field>did</field><type>DB1_STR</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>scheme</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of uid_uri_attrs table-->
+	<db_table id="uid_uri_attrs">
+		<table_name>uid_uri_attrs</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>username</field><type>DB1_STR</type></column>
+		<column><field>did</field><type>DB1_STR</type></column>
+		<column><field>name</field><type>DB1_STR</type></column>
+		<column><field>value</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_INT</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>scheme</field><type>DB1_STR</type></column>
+	</db_table>
 	<!-- Declaration of uri table-->
 	<db_table id="uri">
 		<table_name>uri</table_name>
@@ -1680,6 +1759,113 @@
 				<col><field>auth_password</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- uid_credentials provisionning -->
+	<mod><mod_name>uid_credentials</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>uid_credentials</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>auth_username</field></col>
+				<col><field>did</field></col>
+				<col><field>realm</field></col>
+				<col><field>password</field></col>
+				<col><field>flags</field></col>
+				<col><field>ha1</field></col>
+				<col><field>ha1b</field></col>
+				<col><field>uid</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- uid_user_attrs provisionning -->
+	<mod><mod_name>uid_user_attrs</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>uid_user_attrs</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>uid</field></col>
+				<col><field>name</field></col>
+				<col><field>value</field></col>
+				<col><field>type</field></col>
+				<col><field>flags</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- uid_domain provisionning -->
+	<mod><mod_name>uid_domain</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>uid_domain</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>did</field></col>
+				<col><field>domain</field></col>
+				<col><field>flags</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- uid_domain_attrs provisionning -->
+	<mod><mod_name>uid_domain_attrs</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>uid_domain_attrs</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>did</field></col>
+				<col><field>name</field></col>
+				<col><field>type</field></col>
+				<col><field>value</field></col>
+				<col><field>flags</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- uid_global_attrs provisionning -->
+	<mod><mod_name>uid_global_attrs</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>uid_global_attrs</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>name</field></col>
+				<col><field>type</field></col>
+				<col><field>value</field></col>
+				<col><field>flags</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- uid_uri provisionning -->
+	<mod><mod_name>uid_uri</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>uid_uri</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>uid</field></col>
+				<col><field>did</field></col>
+				<col><field>username</field></col>
+				<col><field>flags</field></col>
+				<col><field>scheme</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
+	<!-- uid_uri_attrs provisionning -->
+	<mod><mod_name>uid_uri_attrs</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>uid_uri_attrs</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>username</field></col>
+				<col><field>did</field></col>
+				<col><field>name</field></col>
+				<col><field>value</field></col>
+				<col><field>type</field></col>
+				<col><field>flags</field></col>
+				<col><field>scheme</field></col>
 			</query_cols>
 		</cmd>
 	</mod>

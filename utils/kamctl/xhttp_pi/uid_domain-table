@@ -1,0 +1,20 @@
+	<!-- Declaration of uid_domain table-->
+	<db_table id="uid_domain">
+		<table_name>uid_domain</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>did</field><type>DB1_STR</type></column>
+		<column><field>domain</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+	</db_table>
+	<!-- Declaration of uid_domain_attrs table-->
+	<db_table id="uid_domain_attrs">
+		<table_name>uid_domain_attrs</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>did</field><type>DB1_STR</type></column>
+		<column><field>name</field><type>DB1_STR</type></column>
+		<column><field>type</field><type>DB1_INT</type></column>
+		<column><field>value</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+	</db_table>

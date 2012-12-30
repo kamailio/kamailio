@@ -1,0 +1,18 @@
+	<!-- uid_credentials provisionning -->
+	<mod><mod_name>uid_credentials</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>uid_credentials</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>auth_username</field></col>
+				<col><field>did</field></col>
+				<col><field>realm</field></col>
+				<col><field>password</field></col>
+				<col><field>flags</field></col>
+				<col><field>ha1</field></col>
+				<col><field>ha1b</field></col>
+				<col><field>uid</field></col>
+			</query_cols>
+		</cmd>
+	</mod>

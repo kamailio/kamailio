@@ -1,0 +1,14 @@
+	<!-- Declaration of uid_credentials table-->
+	<db_table id="uid_credentials">
+		<table_name>uid_credentials</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>auth_username</field><type>DB1_STR</type></column>
+		<column><field>did</field><type>DB1_STR</type></column>
+		<column><field>realm</field><type>DB1_STR</type></column>
+		<column><field>password</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>ha1</field><type>DB1_STR</type></column>
+		<column><field>ha1b</field><type>DB1_STR</type></column>
+		<column><field>uid</field><type>DB1_STR</type></column>
+	</db_table>
