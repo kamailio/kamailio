@@ -51,7 +51,7 @@
 #include "../../str.h"
 #include "../../onsend.h"
 
-#include "../../modules/sipcapture/sipcapture.h"
+#include "../../modules/sipcapture/hep.h"
 
 #ifdef STATISTICS
 #include "../../lib/kcore/statistics.h"
