@@ -171,7 +171,7 @@ int decode_flow_token(struct receive_info *rcv, str flow_token)
 
 	if (flow_token.len > base64_enc_len(UNENC_FLOW_TOKEN_MAX_LENGTH))
 	{
-		LM_ERR("bad flow token length.  Length is %d, expected <= %d\n",
+		LM_INFO("bad flow token length.  Length is %d, expected <= %d\n",
 			flow_token.len, UNENC_FLOW_TOKEN_MAX_LENGTH);
 		return -1;
 	}
@@ -189,7 +189,7 @@ int decode_flow_token(struct receive_info *rcv, str flow_token)
 	if (memcmp(unenc_flow_token, &hmac_sha1[SHA1_LENGTH - SHA1_80_LENGTH],
 		SHA1_80_LENGTH) != 0)
 	{
-		LM_ERR("flow token failed validation\n");
+		LM_INFO("flow token failed validation\n");
 		return -1;
 	}
 
