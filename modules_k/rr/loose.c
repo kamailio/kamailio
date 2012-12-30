@@ -529,9 +529,11 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token,
 					rcv.src_ip.af == AF_INET6 ? "]" : "",
 					rcv.src_port,
 					get_proto_name(rcv.proto));
+
+		return 1;
 	}
 
-	return 1;
+	return 0;
 }
 
 /*!
