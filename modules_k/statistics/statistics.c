@@ -113,8 +113,8 @@ static int fixup_stat(void** param, int param_no)
 	struct stat_or_pv *sopv;
 	struct long_or_pv *lopv;
 	str s;
-	long n;
-	int err = 0;
+	long n=0;
+	int err=0;
 
 	s.s = (char*)*param;
 	s.len = strlen(s.s);
