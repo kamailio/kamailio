@@ -95,8 +95,8 @@ static int mod_init(void)
 /* Structure of flow token
 
    <HMAC-SHA1-80><protocol><dst_ip><dst_port><src_ip><src_port>
-          10     +    1    +  16   +    2    +  16   +    2
-	   = 47 bytes maximum
+          10     +    1    + 4or16 +    2    +  16   +    2
+	   = 35 bytes minimum and 47 bytes maximum
 
    <protocol> specifies whether the addresses are IPv4 or IPv6 and the
    transport.
@@ -105,9 +105,11 @@ static int mod_init(void)
 
    IP addresses will be 4 (for IPv6) or 16 (for IPv6) bytes.
 
+   Minimum base64 encoded size: ceiling((35+2)/3)*4 = 52 bytes
    Maximum base64 encoded size: ceiling((47+2)/3)*4 = 68 bytes
 */
 
+#define UNENC_FLOW_TOKEN_MIN_LENGTH	35
 #define UNENC_FLOW_TOKEN_MAX_LENGTH	47
 #define SHA1_LENGTH			20
 #define SHA1_80_LENGTH			10
@@ -169,10 +171,25 @@ int decode_flow_token(struct receive_info *rcv, str flow_token)
 {
 	int pos = FLOW_TOKEN_START_POS, flow_length, i;
 
-	if (flow_token.len > base64_enc_len(UNENC_FLOW_TOKEN_MAX_LENGTH))
+	if (rcv == NULL)
 	{
-		LM_INFO("bad flow token length.  Length is %d, expected <= %d\n",
-			flow_token.len, UNENC_FLOW_TOKEN_MAX_LENGTH);
+		LM_ERR("bad receive_info structure provided\n");
+		return -1;
+	}
+
+	if (flow_token.s == NULL)
+	{
+		LM_INFO("no flow token provided\n");
+		return -1;
+	}
+
+	if (flow_token.len != base64_enc_len(UNENC_FLOW_TOKEN_MIN_LENGTH)
+	    && flow_token.len != base64_enc_len(UNENC_FLOW_TOKEN_MAX_LENGTH))
+	{
+		LM_INFO("bad flow token length.  Length is %d, expected %d"
+			" or %d.\n", flow_token.len,
+			UNENC_FLOW_TOKEN_MIN_LENGTH,
+			UNENC_FLOW_TOKEN_MAX_LENGTH);
 		return -1;
 	}
 
