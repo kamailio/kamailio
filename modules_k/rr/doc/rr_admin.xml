@@ -95,7 +95,7 @@ UAC                       &kamailio; PROXY                          UAS
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+				(optional) The "outbound" module is needed for outbound routing as per RFC 5626.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -178,6 +178,10 @@ modparam("rr", "append_fromtag", 0)
 		Record-Routes. The server will later remove both of them.
 		</para>
 		<para>
+		Double record-routing does not occur when outbound is used for
+		a request.
+		</para>
+		<para>
 		<emphasis>
 			Default value is 1 (yes).
 		</emphasis>
@@ -197,6 +201,11 @@ modparam("rr", "enable_double_rr", 0)
 		<para>
 		If set to a non 0 value (which means yes), the username part will
 		be also added in the Record-Route URI.
+		</para>
+		<para>
+		This option cannot be set when the <quote>outbound</quote>
+		module is loaded before this module as outbound uses the
+		username part of Record-Route URIs to store flow-tokens.
 		</para>
 		<para>
 		<emphasis>
@@ -269,6 +278,11 @@ modparam("rr", "enable_socket_mismatch_warning", 0)
 		the function returns FALSE.
 		</para>
 		<para>
+		When the <quote>outbound</quote> module was loaded before this module
+		and the Route: header contains a username part this function will
+		attempt to use the username part as a flow-token for routing.
+		</para>
+		<para>
 		Make sure your loose_routing function can't be used by attackers to 
 		bypass proxy authorization.
 		</para>
@@ -304,6 +318,12 @@ loose_route();
 		If any string is passed as parameter, it will be appended as URI
 		parameter to the Record-Route header. The string must follow the 
 		<quote>;name=value</quote> scheme and it may contain pseudo-variables.
+		</para>
+		<para>
+		When the <quote>outbound</quote> module was loaded before this module
+		this function will determine whether outbound is required for the
+		request and generate and add a flow-token as the username part of the
+		Record-Route-URI.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and 
@@ -347,6 +367,12 @@ record_route();
 		outbound interface and the 'string2' param is pointing to the inbound interface.
 		</para>
 		<para>
+		When the <quote>outbound</quote> module was loaded before this module
+		this function will determine whether outbound is required for the
+		request and generate and add a flow-token as the username part of the
+		Record-Route-URI.
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and 
 		FAILURE_ROUTE.
 		</para>
@@ -368,6 +394,12 @@ record_route_preset("1.2.3.4:5090");
 		The function adds a new Record-Route header field using the address given. The
 		header field will be inserted in the message before any other Record-Route header
 		fields.
+		</para>
+		<para>
+		When the <quote>outbound</quote> module was loaded before this module
+		this function will determine whether outbound is required for the
+		request and generate and add a flow-token as the username part of the
+		Record-Route-URI.
 		</para>
 		<para>Meaning of the parameter is as follows:</para>
 		<itemizedlist>
