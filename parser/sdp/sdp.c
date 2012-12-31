@@ -369,6 +369,7 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	sdp_payload_attr_t *payload_attr;
 	int parse_payload_attr;
 	str fmtp_string;
+	str remote_candidates = {"a:remote-candidates:", 20};
 
 	/* hook the start and lenght of sdp body inside structure
 	 * - shorcut useful for multi-part bodies and sdp operations
@@ -552,6 +553,9 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 				payload_attr = (sdp_payload_attr_t*)get_sdp_payload4payload(stream, &rtp_payload);
 				set_sdp_payload_fmtp(payload_attr, &fmtp_string);
 			} else if (parse_payload_attr && extract_candidate(&tmpstr1, stream) == 0) {
+			        a1p += 2;
+			} else if (parse_payload_attr && extract_field(&tmpstr1, &stream->remote_candidates,
+								       remote_candidates) == 0) {
 			        a1p += 2;
 			} else if (extract_accept_types(&tmpstr1, &stream->accept_types) == 0) {
 				a1p = stream->accept_types.s + stream->accept_types.len;
@@ -822,7 +826,7 @@ void print_sdp_stream(sdp_stream_cell_t *stream, int log_level)
 	sdp_payload_attr_t *payload;
         sdp_ice_attr_t *ice_attr;
 
-	LOG(log_level , "....stream[%d]:%p=>%p {%p} '%.*s' '%.*s:%.*s:%.*s' '%.*s' [%d] '%.*s' '%.*s:%.*s' (%d)=>%p (%d)=>%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
+	LOG(log_level , "....stream[%d]:%p=>%p {%p} '%.*s' '%.*s:%.*s:%.*s' '%.*s' [%d] '%.*s' '%.*s:%.*s' (%d)=>%p (%d)=>%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
 		stream->stream_num, stream, stream->next,
 		stream->p_payload_attr,
 		stream->media.len, stream->media.s,
@@ -838,7 +842,8 @@ void print_sdp_stream(sdp_stream_cell_t *stream, int log_level)
 		stream->path.len, stream->path.s,
 		stream->max_size.len, stream->max_size.s,
 		stream->accept_types.len, stream->accept_types.s,
-		stream->accept_wrapped_types.len, stream->accept_wrapped_types.s);
+	        stream->accept_wrapped_types.len, stream->accept_wrapped_types.s,
+	    	stream->remote_candidates.len, stream->remote_candidates.s);
 	payload = stream->payload_attr;
 	while (payload) {
 		LOG(log_level, "......payload[%d]:%p=>%p p_payload_attr[%d]:%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",

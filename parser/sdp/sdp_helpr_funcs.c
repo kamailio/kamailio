@@ -343,7 +343,7 @@ int extract_candidate(str *body, sdp_stream_cell_t *stream)
     int len, fl;
     sdp_ice_attr_t *ice_attr;
 
-    if (strncasecmp(body->s, "a=candidate:", 12) != 0) {
+    if ((body->len < 12) || (strncasecmp(body->s, "a=candidate:", 12) != 0)) {
 	/*LM_DBG("We are not pointing to an a=candidate: attribute =>`%.*s'\n", body->len, body->s); */
 	return -1;
     }
