@@ -492,6 +492,13 @@ static inline int find_rem_target(struct sip_msg* _m, struct hdr_field** _h, rr_
 #define MAX_ROUTE_URI_LEN	66
 static char uri_buf[MAX_ROUTE_URI_LEN];
 
+/*!
+ * \brief Perform outbound processing - force local socket and set destination URI
+ * \param _m SIP message
+ * \param flow_token string containing the flow token extracted from the Route: header
+ * \param dst_uri string to write the destination URI to (extracted from flow token)
+ * \return -1 on error, 0 when outbound not in use, 1 when outbound in use
+ */
 static inline int process_outbound(struct sip_msg *_m, str flow_token,
 		str *dst_uri)
 {
@@ -567,8 +574,10 @@ static inline int after_strict(struct sip_msg* _m)
 	}
 
 	next_is_strict = is_strict(&puri.params);
-	if ((use_ob = process_outbound(_m, puri.user, &uri) < 0))
+	if ((use_ob = process_outbound(_m, puri.user, &uri) < 0)) {
+		LM_ERR("processing outbound flow token\n");
 		return RR_ERROR;
+	}
 
 	if (!use_ob && enable_double_rr && is_2rr(&puri.params) && is_myself(&puri)) {
 		/* double route may occure due different IP and port, so force as
@@ -758,8 +767,10 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	next_is_strict = is_strict(&puri.params);
 	routed_params = puri.params;
 	uri_is_myself = is_myself(&puri);
-	if ((use_ob = process_outbound(_m, puri.user, &uri) < 0))
+	if ((use_ob = process_outbound(_m, puri.user, &uri) < 0)) {
+		LM_ERR("processing outbound flow token\n");
 		return RR_ERROR;
+	}
 
 	/* IF the URI was added by me, remove it */
 	if (uri_is_myself>0)
