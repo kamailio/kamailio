@@ -502,13 +502,22 @@ static char uri_buf[MAX_ROUTE_URI_LEN];
 static inline int process_outbound(struct sip_msg *_m, str flow_token,
 		str *dst_uri)
 {
+	int ret;
 	struct receive_info rcv;
 	struct socket_info *si;
 
 	if (!rr_obb.decode_flow_token)
 		return 0;
 
-	if (rr_obb.decode_flow_token(&rcv, flow_token) == 0) {
+	ret = rr_obb.decode_flow_token(&rcv, flow_token);
+
+	if (ret == -2) {
+		LM_INFO("no flow token found - outbound not in use\n");
+		return 0;
+	} else if (ret == -1) {
+		LM_ERR("failed to decode flow token\n");
+		return -1;
+	} else {
 
 		/* First, force the local socket */
 		si = find_si(&rcv.dst_ip, rcv.dst_port, rcv.proto);
@@ -539,8 +548,6 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token,
 
 		return 1;
 	}
-
-	return 0;
 }
 
 /*!
