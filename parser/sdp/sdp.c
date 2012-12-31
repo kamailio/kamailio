@@ -161,6 +161,7 @@ static inline sdp_payload_attr_t *add_sdp_payload(sdp_stream_cell_t* _stream, in
 	return payload_attr;
 }
 
+
 /**
  * Initialize fast access pointers.
  */
@@ -550,6 +551,8 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 				a1p = fmtp_string.s + fmtp_string.len;
 				payload_attr = (sdp_payload_attr_t*)get_sdp_payload4payload(stream, &rtp_payload);
 				set_sdp_payload_fmtp(payload_attr, &fmtp_string);
+			} else if (parse_payload_attr && extract_candidate(&tmpstr1, stream) == 0) {
+			        a1p += 2;
 			} else if (extract_accept_types(&tmpstr1, &stream->accept_types) == 0) {
 				a1p = stream->accept_types.s + stream->accept_types.len;
 			} else if (extract_accept_wrapped_types(&tmpstr1, &stream->accept_wrapped_types) == 0) {
@@ -777,6 +780,7 @@ void free_sdp(sdp_info_t** _sdp)
 	sdp_session_cell_t *session, *l_session;
 	sdp_stream_cell_t *stream, *l_stream;
 	sdp_payload_attr_t *payload, *l_payload;
+        sdp_ice_attr_t *tmp;
 
 	LM_DBG("_sdp = %p\n", _sdp);
 	if (sdp == NULL) return;
@@ -799,6 +803,11 @@ void free_sdp(sdp_info_t** _sdp)
 			if (l_stream->p_payload_attr) {
 				pkg_free(l_stream->p_payload_attr);
 			}
+			while (l_stream->ice_attr) {
+			    tmp = l_stream->ice_attr->next;
+			    pkg_free(l_stream->ice_attr);
+			    l_stream->ice_attr->next = tmp;
+			}
 			pkg_free(l_stream);
 		}
 		pkg_free(l_session);
@@ -811,8 +820,9 @@ void free_sdp(sdp_info_t** _sdp)
 void print_sdp_stream(sdp_stream_cell_t *stream, int log_level)
 {
 	sdp_payload_attr_t *payload;
+        sdp_ice_attr_t *ice_attr;
 
-	LOG(log_level , "....stream[%d]:%p=>%p {%p} '%.*s' '%.*s:%.*s:%.*s' '%.*s' [%d] '%.*s' '%.*s:%.*s' (%d)=>%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
+	LOG(log_level , "....stream[%d]:%p=>%p {%p} '%.*s' '%.*s:%.*s:%.*s' '%.*s' [%d] '%.*s' '%.*s:%.*s' (%d)=>%p (%d)=>%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
 		stream->stream_num, stream, stream->next,
 		stream->p_payload_attr,
 		stream->media.len, stream->media.s,
@@ -822,6 +832,7 @@ void print_sdp_stream(sdp_stream_cell_t *stream, int log_level)
 		stream->payloads.len, stream->payloads.s,
 		stream->bw_type.len, stream->bw_type.s, stream->bw_width.len, stream->bw_width.s,
 		stream->payloads_num, stream->payload_attr,
+		stream->ice_attrs_num, stream->ice_attr,
 		stream->sendrecv_mode.len, stream->sendrecv_mode.s,
 		stream->ptime.len, stream->ptime.s,
 		stream->path.len, stream->path.s,
@@ -839,6 +850,13 @@ void print_sdp_stream(sdp_stream_cell_t *stream, int log_level)
 			payload->rtp_params.len, payload->rtp_params.s,
 			payload->fmtp_string.len, payload->fmtp_string.s);
 		payload=payload->next;
+	}
+	ice_attr = stream->ice_attr;
+	while (ice_attr) {
+	    LOG(log_level, "......'%.*s' %u\n",
+		ice_attr->foundation.len, ice_attr->foundation.s,
+		ice_attr->component_id);
+	    ice_attr = ice_attr->next;
 	}
 }
 

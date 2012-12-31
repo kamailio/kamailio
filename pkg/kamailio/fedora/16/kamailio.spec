@@ -299,6 +299,16 @@ BuildRequires: libxml2-devel
 C Diameter Peer module and extensions module for Kamailio.
 
 
+%package  ims
+Summary:  IMS modules and extensions module for Kamailio.
+Group:    System Environment/Daemons
+Requires: libxml2, kamailio = %ver, kamailio-cdp = %ver
+BuildRequires: libxml2-devel
+
+%description ims
+IMS modules and extensions module for Kamailio.
+
+
 %if 0%{?fedora}
 %package radius
 Summary:       Radius AAA API for Kamailio.
@@ -497,6 +507,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.db_flatstore
 %doc %{_docdir}/kamailio/modules/README.db2_ops
 %doc %{_docdir}/kamailio/modules/README.debugger
+#%doc %{_docdir}/kamailio/modules/README.dialog2
 %doc %{_docdir}/kamailio/modules/README.enum
 %doc %{_docdir}/kamailio/modules/README.ipops
 %doc %{_docdir}/kamailio/modules/README.malloc_test
@@ -638,6 +649,7 @@ fi
 %{_libdir}/kamailio/modules/db_flatstore.so
 %{_libdir}/kamailio/modules/db2_ops.so
 %{_libdir}/kamailio/modules/debugger.so
+%{_libdir}/kamailio/modules/dialog2.so
 %{_libdir}/kamailio/modules/enum.so
 %{_libdir}/kamailio/modules/ipops.so
 %{_libdir}/kamailio/modules/malloc_test.so
@@ -973,6 +985,27 @@ fi
 %{_libdir}/kamailio/modules/cdp_avp.so
 
 
+%files ims
+%defattr(-,root,root)
+%{_libdir}/kamailio/libkamailio_ims.so
+%{_libdir}/kamailio/libkamailio_ims.so.0
+%{_libdir}/kamailio/libkamailio_ims.so.0.1
+#%doc %{_docdir}/kamailio/modules/README.auth_ims
+%{_libdir}/kamailio/modules/auth_ims.so
+#%doc %{_docdir}/kamailio/modules/README.icscf
+%{_libdir}/kamailio/modules/icscf.so
+#%doc %{_docdir}/kamailio/modules/README.isc
+%{_libdir}/kamailio/modules/isc.so
+#%doc %{_docdir}/kamailio/modules/README.registrar_pcscf
+%{_libdir}/kamailio/modules/registrar_pcscf.so
+#%doc %{_docdir}/kamailio/modules/README.registrar_scscf
+%{_libdir}/kamailio/modules/registrar_scscf.so
+#%doc %{_docdir}/kamailio/modules/README.usrloc_pcscf
+%{_libdir}/kamailio/modules/usrloc_pcscf.so
+#%doc %{_docdir}/kamailio/modules/README.usrloc_scscf
+%{_libdir}/kamailio/modules/usrloc_scscf.so
+
+
 %files websocket
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.websocket
@@ -1041,6 +1074,8 @@ fi
 
 
 %changelog
+* Mon Dec 31 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Added dialog2 and IMS modules to the build
 * Fri Dec 21 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added db2_ldap, db2_ops, and timer to the build
   - Added uid_auth_db, uid_avp_db, uid_domain, uid_gflags, uid_uri_db, print,

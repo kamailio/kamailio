@@ -75,6 +75,7 @@
 #include "../../receive.h"
 #include "sipcapture.h"
 #include "hash_mode.h"
+#include "hep.h"
 
 #ifdef STATISTICS
 #include "../../lib/kcore/statistics.h"
@@ -97,7 +98,6 @@ static int mod_init(void);
 static int child_init(int rank);
 static void destroy(void);
 static int sip_capture(struct sip_msg *msg, char *s1, char *s2);
-int hep_msg_received(void *data);
 int init_rawsock_children(void);
 int extract_host_port(void);
 int raw_capture_socket(struct ip_addr* ip, str* iface, int port_start, int port_end, int proto);
@@ -155,7 +155,6 @@ static str star_contact		= str_init("*");
 int raw_sock_desc = -1; /* raw socket used for ip packets */
 unsigned int raw_sock_children = 1;
 int capture_on   = 0;
-int hep_capture_on   = 0;
 int ipip_capture_on   = 0;
 int moni_capture_on   = 0;
 int moni_port_start = 0;
@@ -164,8 +163,8 @@ int *capture_on_flag = NULL;
 int db_insert_mode = 0;
 int promisc_on = 0;
 int bpf_on = 0;
-int hep_offset = 0; //this stores the hep header added offset 
-
+int hep_capture_on   = 0;
+int hep_offset = 0;
 str raw_socket_listen = { 0, 0 };
 str raw_interface = { 0, 0 };
 
@@ -685,178 +684,15 @@ static void destroy(void)
 	}
 }
 
-
-/**
- * HEP message
- */
-int hep_msg_received(void *data)
-{
-
-	void **srevp;
-	char *buf;
-	unsigned *len;
-	struct receive_info *ri;
-	
-	int hl;
-        struct hep_hdr *heph;
-        struct ip_addr dst_ip, src_ip;
-        char *hep_payload, *end, *hep_ip;
-        struct hep_iphdr *hepiph = NULL;
-
-	struct hep_timehdr* heptime_tmp = NULL;
-        memset(heptime, 0, sizeof(struct hep_timehdr));
-
-#ifdef USE_IPV6
-        struct hep_ip6hdr *hepip6h = NULL;
-#endif /* USE_IPV6 */
-
-	if(!hep_capture_on) {
-		LOG(L_ERR, "ERROR: sipcapture:hep_msg_received HEP is not enabled\n");
-                return -1;	
-	}	
-	
-	hep_offset = 0; 
-	
-	srevp = (void**)data;
-	        
-	buf = (char *)srevp[0];
-	len = (unsigned *)srevp[1];
-	ri = (struct receive_info *)srevp[2];
-
-
-	hl = hep_offset = sizeof(struct hep_hdr);
-        end = buf + *len;
-        if (unlikely(*len<hep_offset)) {
-        	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received len less than offset [%i] vs [%i]\n", *len, hep_offset);
-                return -1;
-        }
-
-	/* hep_hdr */
-        heph = (struct hep_hdr*) buf;
-
-        switch(heph->hp_f){
-        	case AF_INET:
-                	hl += sizeof(struct hep_iphdr);
-                        break;
-#ifdef USE_IPV6
-		case AF_INET6:
-                	hl += sizeof(struct hep_ip6hdr);
-                        break;
-#endif /* USE_IPV6 */
-		default:
-                        LOG(L_ERR, "ERROR: sipcapture:hep_msg_received:  unsupported family [%d]\n", heph->hp_f);
-                        return -1;
-                }
-
-	/* Check version */
-        if((heph->hp_v != 1 && heph->hp_v != 2) || hl != heph->hp_l) {
-        	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: not supported version or bad length: v:[%d] l:[%d] vs [%d]\n",
-                                                heph->hp_v, heph->hp_l, hl);
-                return -1;
-	}
-
-        /* PROTO */
-        if(heph->hp_p == IPPROTO_UDP) ri->proto=PROTO_UDP;
-        else if(heph->hp_p == IPPROTO_TCP) ri->proto=PROTO_TCP;
-        else if(heph->hp_p == IPPROTO_IDP) ri->proto=PROTO_TLS; /* fake protocol */
-#ifdef USE_SCTP
-        else if(heph->hp_p == IPPROTO_SCTP) ri->proto=PROTO_SCTP;
-#endif
-        else {
-        	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: unknow protocol [%d]\n",heph->hp_p);
-                ri->proto = PROTO_NONE;
-	}
-
-        hep_ip = buf + sizeof(struct hep_hdr);
-
-        if (unlikely(hep_ip>end)){
-                LOG(L_ERR,"hep_ip is over buf+len\n");
-                return -1;
-        }
-
-	switch(heph->hp_f){
-		case AF_INET:
-                	hep_offset+=sizeof(struct hep_iphdr);
-                        hepiph = (struct hep_iphdr*) hep_ip;
-                        break;
-#ifdef USE_IPV6
-
-		case AF_INET6:
-                	hep_offset+=sizeof(struct hep_ip6hdr);
-                        hepip6h = (struct hep_ip6hdr*) hep_ip;
-                        break;
-#endif /* USE_IPV6 */
-
-	  }
-
-	/* VOIP payload */
-        hep_payload = buf + hep_offset;
-
-        if (unlikely(hep_payload>end)){
-        	LOG(L_ERR,"hep_payload is over buf+len\n");
-                return -1;
-	}
-
-	/* timming */
-        if(heph->hp_v == 2) {
-                hep_offset+=sizeof(struct hep_timehdr);
-                heptime_tmp = (struct hep_timehdr*) hep_payload;
-
-                heptime->tv_sec = heptime_tmp->tv_sec;
-                heptime->tv_usec = heptime_tmp->tv_usec;
-                heptime->captid = heptime_tmp->captid;
-        }
-
-
-
-	/* fill ip from the packet to dst_ip && to */
-        switch(heph->hp_f){
-
-		case AF_INET:
-                	dst_ip.af = src_ip.af = AF_INET;
-                        dst_ip.len = src_ip.len = 4 ;
-                        memcpy(&dst_ip.u.addr, &hepiph->hp_dst, 4);
-                        memcpy(&src_ip.u.addr, &hepiph->hp_src, 4);
-                        break;
-#ifdef USE_IPV6
-
-		case AF_INET6:
-                	dst_ip.af = src_ip.af = AF_INET6;
-                        dst_ip.len = src_ip.len = 16 ;
-                        memcpy(&dst_ip.u.addr, &hepip6h->hp6_dst, 16);
-                        memcpy(&src_ip.u.addr, &hepip6h->hp6_src, 16);
-                        break;
-
-#endif /* USE_IPV6 */
-	}
-
-        ri->src_ip = src_ip;
-        ri->src_port = ntohs(heph->hp_sport);
-
-        ri->dst_ip = dst_ip;
-        ri->dst_port = ntohs(heph->hp_dport);
-
-	/* cut off the offset */
-	/* 
-	 *  *len -= offset;
-         *  p = buf + offset;
-	 *  memmove(buf, p, BUF_SIZE+1); 
-	*/
-	memset(buf, '\n', hep_offset); /* the parser will ignore the starting \n no need to do expensive memmove */
-	
-	return 0;
-}
-
-
 static int sip_capture_prepare(sip_msg_t *msg)
 {
-	/* We need parse all headers */
-	if (parse_headers(msg, HDR_CALLID_F|HDR_EOH_F, 0) != 0) {
-		LM_ERR("cannot parse headers\n");
-		return -1;
-	}
-	
-	return 0;
+        /* We need parse all headers */
+        if (parse_headers(msg, HDR_CALLID_F|HDR_EOH_F, 0) != 0) {
+                LM_ERR("cannot parse headers\n");
+                return -1;
+        }
+
+        return 0;
 }
 
 static int sip_capture_store(struct _sipcapture_object *sco)
@@ -1056,16 +892,23 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 	db_keys[36] = &msg_column;
 	db_vals[36].type = DB1_BLOB;
 	db_vals[36].nul = 0;
-	
-	if(hep_offset>0){
-		/* if message was captured via hep skip trailing empty spaces(newlines) from the start of the buffer */
+		
+	/* need to be removed in the future */
+        /* if message was captured via hep skip trailing empty spaces(newlines) from the start of the buffer */
+	/* if(hep_offset>0){
 		tmp.s = sco->msg.s + hep_offset;
 		tmp.len = sco->msg.len - hep_offset;
 		hep_offset = 0;
 	} else {
+
 		tmp.s = sco->msg.s;
 		tmp.len = sco->msg.len;
 	}
+	*/
+	
+	/*we don't have empty spaces now */
+	tmp.s = sco->msg.s;
+	tmp.len = sco->msg.len;
 
 	db_vals[36].val.blob_val = tmp;
 

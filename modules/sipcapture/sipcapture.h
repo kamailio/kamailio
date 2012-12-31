@@ -70,30 +70,3 @@ struct _sipcapture_object {
 	stat_var *stat;
 #endif
 };
-
-struct hep_hdr{
-    u_int8_t hp_v;            /* version */
-    u_int8_t hp_l;            /* length */
-    u_int8_t hp_f;            /* family */
-    u_int8_t hp_p;            /* protocol */
-    u_int16_t hp_sport;       /* source port */
-    u_int16_t hp_dport;       /* destination port */
-};
-
-struct hep_iphdr{
-        struct in_addr hp_src;
-        struct in_addr hp_dst;      /* source and dest address */
-};
-
-struct hep_timehdr{
-   u_int32_t tv_sec;         /* seconds */
-   u_int32_t tv_usec;        /* useconds */
-   u_int16_t captid;          /* Capture ID node */
-};
-
-#ifdef USE_IPV6
-struct hep_ip6hdr {
-        struct in6_addr hp6_src;        /* source address */
-        struct in6_addr hp6_dst;        /* destination address */
-};
-#endif

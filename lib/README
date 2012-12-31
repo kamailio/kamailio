@@ -32,6 +32,10 @@ Used by modules: pa, rls, dialog, rpa
 trie - Common digit trie implementation for prefix matching, used by
        carrierroute and userblacklist
 
+Used by IMS modules: icscf, usrloc_scscf, usrloc_pcscf, registrar_scscf, registrar_pcscf
+
+ims - IMS extensions helpers. Generally just getters.
+
 Usage:
 -----
 

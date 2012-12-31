@@ -28,7 +28,7 @@ packages:
   - libevent-devel		# kamailio-json
   - libpurple-devel		# kamailio-purple
   - libunistring-devel		# kamailio-websocket
-  - libxml2-devel		# kamailio-cdp, kamailio-cpl, kamailio-presence, kamailio-purple, kamailio-utils, kamailio-xhttp-pi, kamailio-xmlops, kamailio-xmlrpc
+  - libxml2-devel		# kamailio-cdp, kamailio-cpl, kamailio-ims, kamailio-presence, kamailio-purple, kamailio-utils, kamailio-xhttp-pi, kamailio-xmlops, kamailio-xmlrpc
   - lksctp-tools-devel		# kamailio
   - lua-devel			# kamailio-lua
   - make			# kamailio

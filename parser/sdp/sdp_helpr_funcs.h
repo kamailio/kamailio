@@ -33,6 +33,7 @@
 
 #include "../../str.h"
 #include "../msg_parser.h"
+#include "sdp.h"
 
 /**
  * Detect the mixed part delimiter.
@@ -50,6 +51,7 @@ int extract_sendrecv_mode(str *body, str *sendrecv_mode, int *is_on_hold);
 int extract_mediaip(str *body, str *mediaip, int *pf, char *line);
 int extract_media_attr(str *body, str *mediamedia, str *mediaport, str *mediatransport, str *mediapayload, int *is_rtp);
 int extract_bwidth(str *body, str *bwtype, str *bwwitdth);
+int extract_candidate(str *body, sdp_stream_cell_t *stream);
 
 /* RFC3605 attributes */
 int extract_rtcp(str *body, str *rtcp);

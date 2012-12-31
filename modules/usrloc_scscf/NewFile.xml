@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<methodResponse>
+<params>
+<param>
+<value><struct><member><name>Domain</name><value><string>location</string></value></member><member><name>Size</name><value><int>512</int></value></member><member><name>IMPUs</name><value><struct><member><name>IMPU</name><value><struct><member><name>IMPU</name><value><string>sip:123456789012345@ims.smilecoms.com</string></value></member><member><name>IMPI/Subscription</name><value><string>123456789012345@private.ims.smilecoms.com</string></value></member><member><name>State</name><value><string>registered</string></value></member><member><name>Barred</name><value><int>1</int></value></member><member><name>ccf1</name><value><string>aaa://priccfaddress:1234</string></value></member><member><name>ecf1</name><value><string></string></value></member><member><name>ccf2</name><value><string></string></value></member><member><name>ecf2</name><value><string></string></value></member></struct></value></member><member><name>IMPU</name><value><struct><member><name>IMPU</name><value><string>sip:27832837000@ims.smilecoms.com</string></value></member><member><name>IMPI/Subscription</name><value><string>123456789012345@private.ims.smilecoms.com</string></value></member><member><name>State</name><value><string>registered</string></value></member><member><name>Barred</name><value><int>0</int></value></member><member><name>ccf1</name><value><string>aaa://priccfaddress:1234</string></value></member><member><name>ecf1</name><value><string></string></value></member><member><name>ccf2</name><value><string></string></value></member><member><name>ecf2</name><value><string></string></value></member></struct></value></member></struct></value></member><member><name>Stats</name><value><struct><member><name>Records</name><value><int>2</int></value></member><member><name>Max-Slots</name><value><int>1</int></value></member></struct></value></member></struct>
+</value>
+</param>
+</params>
+</methodResponse>
