@@ -25,11 +25,15 @@
 #include "../../basex.h"
 #include "../../dprint.h"
 #include "../../dset.h"
+#include "../../forward.h"
 #include "../../ip_addr.h"
 #include "../../mod_fix.h"
 #include "../../sr_module.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/mi.h"
+#include "../../parser/contact/parse_contact.h"
+#include "../../parser/parse_rr.h"
+#include "../../parser/parse_uri.h"
 
 #include "api.h"
 
@@ -257,18 +261,124 @@ int decode_flow_token(struct receive_info *rcv, str flow_token)
 
 int use_outbound(struct sip_msg *msg)
 {
+	contact_t *contact;
+	rr_t *rt;
+	struct sip_uri puri;
+	param_hooks_t hooks;
+	param_t *params;
+	int ret;
+
 	/* If Outbound is forced return success without any further checks */
 	if (isbflagset(0, ob_force_bflag) > 0)
+	{
+		LM_INFO("outbound forced\n");
 		return 1;
+	}
 
-	/* Use Outbound when:
-	    # It's an initial request (out-of-dialog INVITE, REGISTER,
-	      SUBSCRIBE, or REFER), with
-	    # A single Via:, and
-	    # Top Route: points to us and has ;ob parameter _OR_ Contact: has
-	      ;ob parameter _OR_ it's a REGISTER with ;+sip.instance
+	/* Use Outbound when there is a single Via: header and:
+	    # It's a REGISTER request with a Contact-URI containing a ;reg-id
+	      parameter, or
+	    # The Contact-URI has an ;ob parameter, or
+	    # The top Route-URI points to use and has an ;ob parameter
 	*/
 
+	/* Check there is a single Via: */
+	if (!(parse_headers(msg, HDR_VIA2_F, 0) == -1 || msg->via2 == 0
+		|| msg->via2->error != PARSE_OK))
+	{
+		LM_INFO("second Via: found - outbound not used\n");
+		return 0;
+	}
+
+	/* Look for ;reg-id in REGISTER Contact-URIs and ;ob in any
+	   Contact-URIs */
+	if (parse_headers(msg, HDR_CONTACT_F, 0) >= 0 && msg->contact)
+	{
+		if (parse_contact(msg->contact) < 0)
+		{
+			LM_ERR("parsing Contact: header body\n");
+			return 0;
+		}
+		contact = ((contact_body_t *) msg->contact->parsed)->contacts;
+		if (!contact)
+		{
+			LM_ERR("empty Contact:\n");
+			return 0;
+		}
+		if (parse_uri(contact->uri.s, contact->uri.len, &puri) < 0)
+		{
+			LM_ERR("parsing Contact-URI\n");
+			return 0;
+		}
+		if (parse_params(&puri.params, CLASS_CONTACT, &hooks,
+			&params) != 0)
+		{
+			LM_ERR("parsing Contact-URI parameters\n");
+			return 0;
+		}
+
+		if (msg->REQ_METHOD == METHOD_REGISTER && hooks.contact.reg_id)
+		{
+			LM_INFO("found REGISTER with ;reg_id paramter on"
+				"Contact-URI - outbound used\n");
+			return 1;
+		}
+
+		if (hooks.contact.ob)
+		{
+			LM_INFO("found ;ob parameter on Contact-URI - outbound"
+				" used\n");
+			return 1;
+		}
+	}
+
+	/* Check to see if the top Route-URI is me and has a ;ob parameter */
+	if (parse_headers(msg, HDR_ROUTE_F, 0) >= 0 && msg->route)
+	{
+		if (parse_rr(msg->route) < 0)
+		{
+			LM_ERR("parsing Route: header body\n");
+			return 0;
+		}
+		rt = (rr_t *) msg->route->parsed;
+		if (!rt)
+		{
+			LM_ERR("empty Route:\n");
+			return 0;
+		}
+		if (parse_uri(rt->nameaddr.uri.s, rt->nameaddr.uri.len,
+				&puri) < 0)
+		{
+			LM_ERR("parsing Route-URI\n");
+			return 0;
+		}
+		if (parse_params(&puri.params, CLASS_URI, &hooks,
+			&params) != 0)
+		{
+			LM_ERR("parsing Route-URI parameters\n");
+			return 0;
+		}
+
+		ret = check_self(&puri.host,
+				puri.port_no ? puri.port_no : SIP_PORT, 0);
+		if (ret < 1 || (ret == 1 && puri.gr.s != NULL))
+		{
+			/* If the host:port doesn't match, or does but it's
+			   gruu */
+			LM_INFO("top Route-URI is not me - outbound not"
+				" used\n");
+			return 0;
+		}
+
+		if (hooks.uri.ob)
+		{
+			LM_INFO("found ;ob parameter on Route-URI - outbound"
+				" used\n");
+			return 1;
+		}
+	}
+
+	LM_INFO("outbound not used\n");
 	return 0;
 }
 
