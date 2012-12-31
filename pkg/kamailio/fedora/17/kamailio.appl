@@ -23,7 +23,7 @@ packages:
   - libevent			# kamailio-json
   - libpurple			# kamailio-purple
   - libunistring		# kamailio-websocket
-  - libxml2			# kamailio-cdp, kamailio-cpl, kamailio-presence, kamailio-purple, kamailio-utils, kamailio-xhttp-pi, kamailio-xmlops, kamailio-xmlrpc
+  - libxml2			# kamailio-cdp, kamailio-cpl, kamailio-ims, kamailio-presence, kamailio-purple, kamailio-utils, kamailio-xhttp-pi, kamailio-xmlops, kamailio-xmlrpc
   - lksctp-tools		# kamailio
   - mod_perl			# kamailio-perl
   - mono-core			# kamailio-mono
