@@ -86,6 +86,7 @@ typedef struct sdp_stream_cell {
         int ice_attrs_num;                        /**< number of ICE attrs inside a stream */
         /* add fast access pointers to ice attributes if you need them */
         sdp_ice_attr_t *ice_attr;
+	str remote_candidates;                    /**< ICE a:remote-candidates */
 } sdp_stream_cell_t;
 
 typedef struct sdp_session_cell {
