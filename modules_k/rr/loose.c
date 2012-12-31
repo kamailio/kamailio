@@ -495,8 +495,8 @@ static char uri_buf[MAX_ROUTE_URI_LEN];
 /*!
  * \brief Perform outbound processing - force local socket and set destination URI
  * \param _m SIP message
- * \param flow_token string containing the flow token extracted from the Route: header
- * \param dst_uri string to write the destination URI to (extracted from flow token)
+ * \param flow_token string containing the flow-token extracted from the Route: header
+ * \param dst_uri string to write the destination URI to (extracted from flow-token)
  * \return -1 on error, 0 when outbound not in use, 1 when outbound in use
  */
 static inline int process_outbound(struct sip_msg *_m, str flow_token,
@@ -515,7 +515,7 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token,
 		if (si)
 			set_force_socket(_m, si);
 		else {
-			LM_ERR("cannot find socket from flow token\n");
+			LM_ERR("cannot find socket from flow-token\n");
 			return -1;
 		}
 
@@ -575,7 +575,7 @@ static inline int after_strict(struct sip_msg* _m)
 
 	next_is_strict = is_strict(&puri.params);
 	if ((use_ob = process_outbound(_m, puri.user, &uri) < 0)) {
-		LM_ERR("processing outbound flow token\n");
+		LM_ERR("processing outbound flow-token\n");
 		return RR_ERROR;
 	}
 
@@ -768,7 +768,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	routed_params = puri.params;
 	uri_is_myself = is_myself(&puri);
 	if ((use_ob = process_outbound(_m, puri.user, &uri) < 0)) {
-		LM_ERR("processing outbound flow token\n");
+		LM_ERR("processing outbound flow-token\n");
 		return RR_ERROR;
 	}
 
