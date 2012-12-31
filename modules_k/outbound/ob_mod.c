@@ -93,6 +93,13 @@ static int mod_init(void)
 	else
 		ob_key.len = strlen(ob_key.s);
 
+	if (ob_key.len != 20)
+	{
+		LM_ERR("flow_token_key wrong length. Expected 20 got %d\n",
+			ob_key.len);
+		return -1;
+	}
+
 	return 0;
 }
 
