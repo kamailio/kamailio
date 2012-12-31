@@ -204,7 +204,7 @@ int add_path(struct sip_msg* _msg, char* _a, char* _b)
 	if (path_obb.use_outbound != NULL
 		&& path_obb.use_outbound(_msg)) {
 		if (path_obb.encode_flow_token(&user, _msg->rcv) != 0) {
-			LM_ERR("encoding outbound flow token\n");
+			LM_ERR("encoding outbound flow-token\n");
 			return -1;	
 		}
 
