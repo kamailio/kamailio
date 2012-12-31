@@ -92,7 +92,7 @@ static int mod_init(void)
 	return 0;
 }
 
-/* Structure of flow token
+/* Structure of flow-token
 
    <HMAC-SHA1-80><protocol><dst_ip><dst_port><src_ip><src_port>
           10     +    1    + 4or16 +    2    +  16   +    2
@@ -143,16 +143,20 @@ int encode_flow_token(str *flow_token, struct receive_info rcv)
 	unenc_flow_token[pos++] = (rcv.dst_port >> 8) & 0xff;
 	unenc_flow_token[pos++] =  rcv.dst_port       & 0xff;
 
-	/* HMAC-SHA1 the calculated flow token, truncate to 80 bits, and
-	   prepend onto the flow token */
-	HMAC(EVP_sha1(), ob_key.s, ob_key.len,
+	/* HMAC-SHA1 the calculated flow-token, truncate to 80 bits, and
+	   prepend onto the flow-token */
+	if (HMAC(EVP_sha1(), ob_key.s, ob_key.len,
 		&unenc_flow_token[FLOW_TOKEN_START_POS],
 		pos - FLOW_TOKEN_START_POS,
-		hmac_sha1, NULL);
+		hmac_sha1, NULL) == NULL)
+	{
+		LM_ERR("HMAC-SHA1 failed\n");
+		return -1;
+	}
 	memcpy(unenc_flow_token, &hmac_sha1[SHA1_LENGTH - SHA1_80_LENGTH],
 		SHA1_80_LENGTH);
 
-	/* base64 encode the entire flow token and store for the caller to
+	/* base64 encode the entire flow-token and store for the caller to
  	   use */
 	flow_token->s = pkg_malloc(base64_enc_len(pos));
 	if (flow_token->s == NULL)
@@ -179,34 +183,47 @@ int decode_flow_token(struct receive_info *rcv, str flow_token)
 
 	if (flow_token.s == NULL)
 	{
-		LM_INFO("no flow token provided\n");
-		return -1;
+		LM_INFO("no flow-token provided\n");
+		return -2;
 	}
 
 	if (flow_token.len != base64_enc_len(UNENC_FLOW_TOKEN_MIN_LENGTH)
 	    && flow_token.len != base64_enc_len(UNENC_FLOW_TOKEN_MAX_LENGTH))
 	{
-		LM_INFO("bad flow token length.  Length is %d, expected %d"
+		LM_INFO("bad flow-token length.  Length is %d, expected %d"
 			" or %d.\n", flow_token.len,
 			UNENC_FLOW_TOKEN_MIN_LENGTH,
 			UNENC_FLOW_TOKEN_MAX_LENGTH);
-		return -1;
+		return -2;
 	}
 
-	/* base64 decode the flow token */
+	/* base64 decode the flow-token */
 	flow_length = base64_dec((unsigned char *) flow_token.s, flow_token.len,
 			unenc_flow_token, UNENC_FLOW_TOKEN_MAX_LENGTH);
+	if (flow_length == 0)
+	{
+		LM_INFO("not a valid base64 encoded string\n");
+		return -2;
+	}
 
-	/* HMAC-SHA1 the flow token (after the hash) and compare with the
-	   truncated hash at the start of the flow token. */
-	HMAC(EVP_sha1(), ob_key.s, ob_key.len,
+	/* At this point the string is the correct length and a valid
+	   base64 string.  It is highly unlikely that this is not meant to be
+	   a flow-token.
+
+	   HMAC-SHA1 the flow-token (after the hash) and compare with the
+	   truncated hash at the start of the flow-token. */
+	if (HMAC(EVP_sha1(), ob_key.s, ob_key.len,
 		&unenc_flow_token[FLOW_TOKEN_START_POS],
 		flow_length - FLOW_TOKEN_START_POS,
-		hmac_sha1, NULL);
+		hmac_sha1, NULL) == NULL)
+	{
+		LM_ERR("HMAC-SHA1 failed\n");
+		return -1;
+	}
 	if (memcmp(unenc_flow_token, &hmac_sha1[SHA1_LENGTH - SHA1_80_LENGTH],
 		SHA1_80_LENGTH) != 0)
 	{
-		LM_INFO("flow token failed validation\n");
+		LM_ERR("flow-token failed validation\n");
 		return -1;
 	}
 
