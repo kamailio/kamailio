@@ -69,7 +69,8 @@ typedef enum ptype {
 	P_TO_TAG,    /*!< Dialog event package: to-tag */
 	P_ISD,       /*!< Dialog event package: include-session-description */
 	P_SLA,       /*!< Dialog event package: sla */
-	P_MA         /*!< Dialog event package: ma */
+	P_MA,        /*!< Dialog event package: ma */
+	P_OB         /*!< Contact|URI: ob parameter */
 } ptype_t;
 
 
@@ -106,6 +107,7 @@ struct contact_hooks {
 	struct param* received; /*!< received parameter */
 	struct param* instance; /*!< sip.instance parameter */
 	struct param* reg_id;   /*!< reg-id parameter */
+	struct param* ob;       /*!< ob parameter */
 };
 
 
@@ -121,6 +123,7 @@ struct uri_hooks {
 	struct param* dstip;     /*!< Destination IP */
 	struct param* dstport;   /*!< Destination port */
 	struct param* ftag;      /*!< From tag in the original request */
+	struct param* ob;        /*!< ob parameter */
 };
 
 

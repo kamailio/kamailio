@@ -152,7 +152,7 @@ static inline void parse_contact_class(param_hooks_t* _h, param_t* _p)
 			_h->contact.methods = _p;
 		}
 		break;
-		
+
 	case 'r':
 	case 'R':
 		if ((_p->name.len == 8) &&
@@ -170,6 +170,14 @@ static inline void parse_contact_class(param_hooks_t* _h, param_t* _p)
 			(!strncasecmp(_p->name.s + 1, "sip.instance", 12))) {
 			_p->type = P_INSTANCE;
 			_h->contact.instance = _p;
+		}
+		break;
+	case 'o':
+	case 'O':
+		if ((_p->name.len == 2) &&
+		    (!strncasecmp(_p->name.s + 1, "b", 1))) {
+			_p->type = P_OB;
+			_h->contact.ob = _p;
 		}
 		break;
 	}
@@ -250,6 +258,14 @@ static inline void parse_uri_class(param_hooks_t* _h, param_t* _p)
 		    (!strncasecmp(_p->name.s + 1, "tag", 3))) {
 			_p->type = P_FTAG;
 			_h->uri.ftag = _p;
+		}
+		break;
+	case 'o':
+	case 'O':
+		if ((_p->name.len == 2) &&
+		    (!strncasecmp(_p->name.s + 1, "b", 1))) {
+			_p->type = P_OB;
+			_h->uri.ob = _p;
 		}
 		break;
 	}
