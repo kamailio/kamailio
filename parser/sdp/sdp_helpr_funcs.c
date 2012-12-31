@@ -27,10 +27,12 @@
  */
 
 
+#include <stdlib.h>
 #include "../../ut.h"
 #include "../msg_parser.h"
 #include "../parser_f.h"
 #include "../parse_hname2.h"
+#include "sdp.h"
 
 
 static struct {
@@ -308,6 +310,78 @@ int extract_fmtp( str *body, str *fmtp_payload, str *fmtp_string )
 
 	return 0;
 }
+
+
+/**
+ * Allocate a new ice attribute
+ */
+static inline sdp_ice_attr_t *add_sdp_ice(sdp_stream_cell_t* _stream)
+{
+	sdp_ice_attr_t *ice_attr;
+	int len;
+
+	len = sizeof(sdp_ice_attr_t);
+	ice_attr = (sdp_ice_attr_t *)pkg_malloc(len);
+	if (ice_attr == NULL) {
+	    LM_ERR("No memory left\n");
+	    return NULL;
+	}
+	memset( ice_attr, 0, len);
+
+	/* Insert the new ice attribute */
+	ice_attr->next = _stream->ice_attr;
+	_stream->ice_attr = ice_attr;
+	_stream->ice_attrs_num++;
+
+	return ice_attr;
+}
+
+
+int extract_candidate(str *body, sdp_stream_cell_t *stream)
+{
+    char *space, *start;
+    int len, fl;
+    sdp_ice_attr_t *ice_attr;
+
+    if (strncasecmp(body->s, "a=candidate:", 12) != 0) {
+	/*LM_DBG("We are not pointing to an a=candidate: attribute =>`%.*s'\n", body->len, body->s); */
+	return -1;
+    }
+    
+    start = body->s + 12;
+    len = body->len - 12;
+
+    space = memchr(start, 32, len);
+    if ((space == NULL) || (space - start + 3 > len) || !isdigit(*(space + 1)))  {
+	LM_ERR("no component in `a=candidate'\n");
+	return -1;
+    }
+
+    fl = space - start;
+    
+    start = space + 1;
+    len = len - (space - start + 1);
+    space = memchr(start, 32, len);
+    if (space == NULL) {
+	LM_ERR("no component in `a=candidate'\n");
+	return -1;
+    }
+
+    ice_attr = add_sdp_ice(stream);
+    if (ice_attr == NULL) {
+	LM_ERR("failed to add ice attribute\n");
+	return -1;
+    }
+
+    /* currently only foundation and component-id are parsed */
+    /* if needed, parse more */
+    ice_attr->foundation.s = body->s + 12;
+    ice_attr->foundation.len = fl;
+    ice_attr->component_id = strtol(start, (char **)NULL, 10);
+
+    return 0;
+}
+
 
 /* generic method for attribute extraction
  * field must has format "a=attrname:" */

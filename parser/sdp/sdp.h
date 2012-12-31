@@ -42,6 +42,17 @@ typedef struct sdp_payload_attr {
 	str fmtp_string;
 } sdp_payload_attr_t;
 
+typedef struct sdp_ice_attr {
+    struct sdp_ice_attr *next;
+    str foundation;
+    unsigned int component_id;
+    str transport;
+    str connection_addr;
+    str port;
+    str candidate_type;
+    int candidateType; /* ICE_HOST/ICE_SRFLX/ICE_PRFLX/ICE_RELAY/ICE_UNKNOWN */
+} sdp_ice_attr_t;
+
 typedef struct sdp_stream_cell {
 	struct sdp_stream_cell *next;
 	/* c=<network type> <address type> <connection address> */
@@ -72,6 +83,9 @@ typedef struct sdp_stream_cell {
 	str accept_wrapped_types;                 /**< RFC4975: accept-wrapped-types attribute */
 	struct sdp_payload_attr **p_payload_attr; /**< fast access pointers to payloads */
 	struct sdp_payload_attr *payload_attr;
+        int ice_attrs_num;                        /**< number of ICE attrs inside a stream */
+        /* add fast access pointers to ice attributes if you need them */
+        sdp_ice_attr_t *ice_attr;
 } sdp_stream_cell_t;
 
 typedef struct sdp_session_cell {
