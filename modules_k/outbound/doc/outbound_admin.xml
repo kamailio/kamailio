@@ -15,14 +15,94 @@
 	
 	<section>
 	<title>Overview</title>
-	<para>...</para>
+	<para>This module provides C-API functions to enable &kamailio; to be
+	used as an outbound Edge Proxy (see RFC 5626 section 5).</para>
+	<para>The <emphasis>path</emphasis> and <emphasis>rr</emphasis> will
+	bind to this module if it is loaded before they are.</para>
+	<section>
+		<title>Edge Proxy Keep-Alives (STUN)</title>
+		<para>Outbound Edge Proxies MUST support STUN NAT keep-alives
+		on their SIP UDP ports. &kamailio; supports this as a
+		compile-time option that is disabled by default.</para>
+		<example>
+		<title>Compiling &kamailio; with STUN support</title>
+		<programlisting><![CDATA[
+make FLAVOUR=kamailio cfg STUN=1
+make all
+]]></programlisting>
+		</example>
+	</section>
+	<section>
+		<title>Flow Timer</title>
+		<para>The maximum interval at which a User Agent must send a
+		keep-alive may be specified by the Registrar using the
+		Flow-Timer: header in 2xx responses to REGISTERs.</para>
+		<para>When using TCP or TLS as the SIP transport care should
+		be taken to set the <quote>tcp_connection_lifetime</quote>
+		on the Edge Proxy to a value slightly larger than the interval
+		the Registrar is using for flow timer. Setting
+		<quote>tcp_connection_lifetime</quote> to less than the
+		interval could cause connections to be lost, and setting it
+		to a value much larger than the interval will keep connections
+		open far longer than is required (which is wasteful).</para>
+		<para>Application-layer keep-alives are optional when the
+		underlying transport already has a keep-alive mechanism. The
+		WebSocket transport has a transport-layer keep-alive. When
+		using the WebSocket transport the
+		<quote>keepalive_timeout</quote> should be set to a value
+		a little greater than the Registrar flow timer interval and a
+		little less than the <quote>tcp_connection_lifetime</quote>.
+		</para>
+	</section>
+	<example>
+	<title>Edge Proxy Configuration</title>
+	<programlisting><![CDATA[
+...
+#!define FLOW_TIMER	20
+...
+tcp_connection_lifetime=FLOW_TIMER+10
+...
+loadmodule "websocket.so"
+loadmodule "outbound.so"
+loadmodule "rr.so"
+loadmodule "path.so"
+...
+modparam("websocket", "keepalive_timeout", FLOW_TIMER+5)
+...
+modparam("outbound", "flow_token_key", "!!!Kamailio rocks!!!")
+...
+###TBD###
+]]></programlisting>
+	</example>
+	<example>
+	<title>Registrar Configuration</title>
+	<programlisting><![CDATA[
+...
+#!define FLOW_TIMER	20
+...
+tcp_connection_lifetime=FLOW_TIMER+10
+...
+loadmodule "registrar.so"
+...
+modparam("registrar", "flow_timer", FLOW_TIMER)
+...
+###TBD###
+]]></programlisting>
+	</example>
 	</section>
 
 	<section>
 	<title>Dependencies</title>
 	<section>
 		<title>&kamailio; Modules</title>
-		<para>...</para>
+		<para>
+		The following modules must be loaded before this module:
+		<itemizedlist>
+		<listitem>
+		<para><emphasis>None</emphasis></para>
+		</listitem>
+		</itemizedlist>
+		</para>
 	</section>
 
 	<section>
@@ -42,17 +122,48 @@
 
 	<section>
 	<title>Parameters</title>
-	<para>...</para>
+	<section>
+		<title><varname>force_outbound_bflag</varname> (integer)</title>
+		<para>A branch flag which, if set for a request, will force
+		<emphasis>path</emphasis> and <emphasis>rr</emphasis> to add
+		flow tokens to Path: and Record-Route: headers regardless of
+		the request contents.</para>
+		<para><emphasis>Default value is -1.</emphasis></para>
+		<example>
+		<title>Set <varname>force_outbound_bflag</varname> parameter
+		</title>
+		<programlisting format="linespecific">
+modparam("outbound", "force_outbound_bflag", 1)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>flow_token_key</varname> (string)</title>
+		<para>The outbound flow token is generated using the algorithm
+		described in RFC 5626 section 5.2. This algorithm requires a 20
+		octet crypto random key that is unique for each Edge Proxy.
+		</para>
+		<note><para>If this 20 character string is not set &kamailio;
+		will not start.</para></note>
+		<para><emphasis>Default value is: "".</emphasis></para>
+		<example>
+		<title>Set <varname>flow_token_key</varname> parameter
+		</title>
+		<programlisting format="linespecific">
+modparam("outbound", "flow_token_key", "!!!Kamailio rocks!!!")
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
 	<title>Functions</title>
-	<para>...</para>
+	<para><emphasis>None</emphasis></para>
 	</section>
 
 	<section>
 	<title>MI Commands</title>
-	<para>...</para>
+	<para><emphasis>None</emphasis></para>
 	</section>
 
 </chapter>

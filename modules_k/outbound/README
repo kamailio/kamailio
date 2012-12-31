@@ -12,32 +12,123 @@ Peter Dunkley
    1. Admin Guide
 
         1. Overview
+
+              1.1. Edge Proxy Keep-Alives (STUN)
+              1.2. Flow Timer
+
         2. Dependencies
 
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
         3. Parameters
+
+              3.1. force_outbound_bflag (integer)
+              3.2. flow_token_key (string)
+
         4. Functions
         5. MI Commands
+
+   List of Examples
+
+   1.1. Compiling Kamailio with STUN support
+   1.2. Edge Proxy Configuration
+   1.3. Registrar Configuration
+   1.4. Set force_outbound_bflag parameter
+   1.5. Set flow_token_key parameter
 
 Chapter 1. Admin Guide
 
    Table of Contents
 
    1. Overview
+
+        1.1. Edge Proxy Keep-Alives (STUN)
+        1.2. Flow Timer
+
    2. Dependencies
 
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
    3. Parameters
+
+        3.1. force_outbound_bflag (integer)
+        3.2. flow_token_key (string)
+
    4. Functions
    5. MI Commands
 
 1. Overview
 
-   ...
+   1.1. Edge Proxy Keep-Alives (STUN)
+   1.2. Flow Timer
+
+   This module provides C-API functions to enable Kamailio to be used as
+   an outbound Edge Proxy (see RFC 5626 section 5).
+
+   The path and rr will bind to this module if it is loaded before they
+   are.
+
+1.1. Edge Proxy Keep-Alives (STUN)
+
+   Outbound Edge Proxies MUST support STUN NAT keep-alives on their SIP
+   UDP ports. Kamailio supports this as a compile-time option that is
+   disabled by default.
+
+   Example 1.1. Compiling Kamailio with STUN support
+make FLAVOUR=kamailio cfg STUN=1
+make all
+
+1.2. Flow Timer
+
+   The maximum interval at which a User Agent must send a keep-alive may
+   be specified by the Registrar using the Flow-Timer: header in 2xx
+   responses to REGISTERs.
+
+   When using TCP or TLS as the SIP transport care should be taken to set
+   the “tcp_connection_lifetime” on the Edge Proxy to a value slightly
+   larger than the interval the Registrar is using for flow timer. Setting
+   “tcp_connection_lifetime” to less than the interval could cause
+   connections to be lost, and setting it to a value much larger than the
+   interval will keep connections open far longer than is required (which
+   is wasteful).
+
+   Application-layer keep-alives are optional when the underlying
+   transport already has a keep-alive mechanism. The WebSocket transport
+   has a transport-layer keep-alive. When using the WebSocket transport
+   the “keepalive_timeout” should be set to a value a little greater than
+   the Registrar flow timer interval and a little less than the
+   “tcp_connection_lifetime”.
+
+   Example 1.2. Edge Proxy Configuration
+...
+#!define FLOW_TIMER     20
+...
+tcp_connection_lifetime=FLOW_TIMER+10
+...
+loadmodule "websocket.so"
+loadmodule "outbound.so"
+loadmodule "rr.so"
+loadmodule "path.so"
+...
+modparam("websocket", "keepalive_timeout", FLOW_TIMER+5)
+...
+modparam("outbound", "flow_token_key", "!!!Kamailio rocks!!!")
+...
+###TBD###
+
+   Example 1.3. Registrar Configuration
+...
+#!define FLOW_TIMER     20
+...
+tcp_connection_lifetime=FLOW_TIMER+10
+...
+loadmodule "registrar.so"
+...
+modparam("registrar", "flow_timer", FLOW_TIMER)
+...
+###TBD###
 
 2. Dependencies
 
@@ -46,7 +137,8 @@ Chapter 1. Admin Guide
 
 2.1. Kamailio Modules
 
-   ...
+   The following modules must be loaded before this module:
+     * None
 
 2.2. External Libraries or Applications
 
@@ -56,12 +148,39 @@ Chapter 1. Admin Guide
 
 3. Parameters
 
-   ...
+   3.1. force_outbound_bflag (integer)
+   3.2. flow_token_key (string)
+
+3.1. force_outbound_bflag (integer)
+
+   A branch flag which, if set for a request, will force path and rr to
+   add flow tokens to Path: and Record-Route: headers regardless of the
+   request contents.
+
+   Default value is -1.
+
+   Example 1.4. Set force_outbound_bflag parameter
+modparam("outbound", "force_outbound_bflag", 1)
+
+3.2. flow_token_key (string)
+
+   The outbound flow token is generated using the algorithm described in
+   RFC 5626 section 5.2. This algorithm requires a 20 octet crypto random
+   key that is unique for each Edge Proxy.
+
+Note
+
+   If this 20 character string is not set Kamailio will not start.
+
+   Default value is: "".
+
+   Example 1.5. Set flow_token_key parameter
+modparam("outbound", "flow_token_key", "!!!Kamailio rocks!!!")
 
 4. Functions
 
-   ...
+   None
 
 5. MI Commands
 
-   ...
+   None
