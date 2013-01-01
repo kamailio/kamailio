@@ -281,6 +281,7 @@ int record_route(struct sip_msg* _m, str *params)
 	str user;
 	struct to_body* from = NULL;
 	str* tag;
+	int use_ob = rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0;
 	
 	user.len = 0;
 	
@@ -289,7 +290,7 @@ int record_route(struct sip_msg* _m, str *params)
 			LM_ERR("failed to extract username\n");
 			return -1;
 		}
-	} else if (rr_obb.use_outbound && rr_obb.use_outbound(_m)) {
+	} else if (use_ob) {
 		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
 			LM_ERR("encoding outbound flow-token\n");
 			return -1;
@@ -312,7 +313,7 @@ int record_route(struct sip_msg* _m, str *params)
 		rr_param_buf.len = 0;
 	}
 
-	if (enable_double_rr && !(rr_obb.use_outbound && rr_obb.use_outbound(_m))) {
+	if (enable_double_rr && !use_ob) {
 		l = anchor_lump(_m, _m->headers->name.s - _m->buf,0,HDR_RECORDROUTE_T);
 		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 		if (!l || !l2) {
@@ -325,8 +326,7 @@ int record_route(struct sip_msg* _m, str *params)
 			LM_ERR("failed to insert conditional lump\n");
 			return -6;
 		}
-		if (build_rr(l, l2, &user, tag, params, OUTBOUND,
-			rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0) < 0) {
+		if (build_rr(l, l2, &user, tag, params, OUTBOUND, 0) < 0) {
 			LM_ERR("failed to insert outbound Record-Route\n");
 			return -7;
 		}
@@ -339,8 +339,8 @@ int record_route(struct sip_msg* _m, str *params)
 		return -3;
 	}
 	
-	if (build_rr(l, l2, &user, tag, params, INBOUND,
-		rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0) < 0) {
+	if (build_rr(l, l2, &user, tag, params, use_ob ? OUTBOUND : INBOUND,
+			use_ob) < 0) {
 		LM_ERR("failed to insert inbound Record-Route\n");
 		return -4;
 	}
@@ -368,7 +368,8 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	struct lump* l;
 	char* hdr, *p;
 	int hdr_len;
-
+	int use_ob = rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0;
+	
 	from = 0;
 	user.len = 0;
 	user.s = 0;
@@ -378,7 +379,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 			LM_ERR("failed to extract username\n");
 			return -1;
 		}
-	} else if (rr_obb.use_outbound && rr_obb.use_outbound(_m)) {
+	} else if (use_ob) {
 		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
 			LM_ERR("encoding outbound flow-token\n");
 			return -1;
@@ -591,7 +592,8 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 	str *tag = NULL;
 	struct lump* l;
 	struct lump* l2;
-
+	int use_ob = rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0;
+	
 	user.len = 0;
 	user.s = 0;
 
@@ -600,7 +602,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 			LM_ERR("failed to extract username\n");
 			return -1;
 		}
-	} else if (rr_obb.use_outbound && rr_obb.use_outbound(_m)) {
+	} else if (use_ob) {
 		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
 			LM_ERR("encoding outbound flow-token\n");
 			return -1;
@@ -615,7 +617,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 		tag = &((struct to_body*)_m->from->parsed)->tag_value;
 	}
 
-	if (enable_double_rr && !(rr_obb.use_outbound && rr_obb.use_outbound(_m))) {
+	if (enable_double_rr && !use_ob) {
 		l = anchor_lump(_m, _m->headers->name.s - _m->buf,0,HDR_RECORDROUTE_T);
 		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 		if (!l || !l2) {
@@ -629,7 +631,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 			return -4;
 		}
 		if (build_advertised_rr(l, l2, _data, &user, tag, OUTBOUND,
-			rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0) < 0) {
+					0) < 0) {
 			LM_ERR("failed to insert outbound Record-Route\n");
 			return -5;
 		}
@@ -642,8 +644,9 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 		return -6;
 	}
 	
-	if (build_advertised_rr(l, l2, _data, &user, tag, INBOUND,
-		rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0) < 0) {
+	if (build_advertised_rr(l, l2, _data, &user, tag,
+				use_ob ? OUTBOUND: INBOUND,
+				use_ob) < 0) {
 		LM_ERR("failed to insert outbound Record-Route\n");
 		return -7;
 	}
