@@ -23,7 +23,7 @@ Peter Dunkley
 
         3. Parameters
 
-              3.1. force_outbound_bflag (integer)
+              3.1. force_outbound_flag (integer)
               3.2. flow_token_key (string)
 
         4. Functions
@@ -34,7 +34,7 @@ Peter Dunkley
    1.1. Compiling Kamailio with STUN support
    1.2. Edge Proxy Configuration
    1.3. Registrar Configuration
-   1.4. Set force_outbound_bflag parameter
+   1.4. Set force_outbound_flag parameter
    1.5. Set flow_token_key parameter
 
 Chapter 1. Admin Guide
@@ -53,7 +53,7 @@ Chapter 1. Admin Guide
 
    3. Parameters
 
-        3.1. force_outbound_bflag (integer)
+        3.1. force_outbound_flag (integer)
         3.2. flow_token_key (string)
 
    4. Functions
@@ -116,19 +116,33 @@ modparam("websocket", "keepalive_timeout", FLOW_TIMER+5)
 ...
 modparam("outbound", "flow_token_key", "!!!Kamailio rocks!!!")
 ...
-###TBD###
+route {
+...
+        if (is_method("INVITE|SUBSCRIBE"))
+                record_route();
+        else if (is_method("REGISTER"))
+                add_path();
+...
+}
+...
+onreply_route {
+        if (!t_check_trans()) {
+                drop;
+        }
+
+        if ($rm == "REGISTER" && $rs >= 200 && $rs <= 299)
+        {
+                if ($(hdr(Require)[*])=~"outbound")
+                        insert_hf("Flow-Timer: FLOW_TIMER\r\n", "Call-ID");
+        }
+}
 
    Example 1.3. Registrar Configuration
 ...
-#!define FLOW_TIMER     20
-...
-tcp_connection_lifetime=FLOW_TIMER+10
-...
 loadmodule "registrar.so"
 ...
-modparam("registrar", "flow_timer", FLOW_TIMER)
+modparam("registrar", "outbound_mode", 2)
 ...
-###TBD###
 
 2. Dependencies
 
@@ -148,19 +162,19 @@ modparam("registrar", "flow_timer", FLOW_TIMER)
 
 3. Parameters
 
-   3.1. force_outbound_bflag (integer)
+   3.1. force_outbound_flag (integer)
    3.2. flow_token_key (string)
 
-3.1. force_outbound_bflag (integer)
+3.1. force_outbound_flag (integer)
 
-   A branch flag which, if set for a request, will force path and rr to
-   add flow tokens to Path: and Record-Route: headers regardless of the
-   request contents.
+   A flag which, if set for a request, will force path and rr to add flow
+   tokens to Path: and Record-Route: headers regardless of the request
+   contents.
 
    Default value is -1.
 
-   Example 1.4. Set force_outbound_bflag parameter
-modparam("outbound", "force_outbound_bflag", 1)
+   Example 1.4. Set force_outbound_flag parameter
+modparam("outbound", "force_outbound_flag", 1)
 
 3.2. flow_token_key (string)
 

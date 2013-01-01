@@ -71,22 +71,36 @@ modparam("websocket", "keepalive_timeout", FLOW_TIMER+5)
 ...
 modparam("outbound", "flow_token_key", "!!!Kamailio rocks!!!")
 ...
-###TBD###
+route {
+...
+	if (is_method("INVITE|SUBSCRIBE"))
+		record_route();
+	else if (is_method("REGISTER"))
+		add_path();
+...
+}
+...
+onreply_route {
+	if (!t_check_trans()) {
+		drop;
+	}
+
+	if ($rm == "REGISTER" && $rs >= 200 && $rs <= 299)
+	{
+		if ($(hdr(Require)[*])=~"outbound")
+			insert_hf("Flow-Timer: FLOW_TIMER\r\n", "Call-ID");
+	}
+}
 ]]></programlisting>
 	</example>
 	<example>
 	<title>Registrar Configuration</title>
 	<programlisting><![CDATA[
 ...
-#!define FLOW_TIMER	20
-...
-tcp_connection_lifetime=FLOW_TIMER+10
-...
 loadmodule "registrar.so"
 ...
-modparam("registrar", "flow_timer", FLOW_TIMER)
+modparam("registrar", "outbound_mode", 2)
 ...
-###TBD###
 ]]></programlisting>
 	</example>
 	</section>
@@ -123,17 +137,17 @@ modparam("registrar", "flow_timer", FLOW_TIMER)
 	<section>
 	<title>Parameters</title>
 	<section>
-		<title><varname>force_outbound_bflag</varname> (integer)</title>
-		<para>A branch flag which, if set for a request, will force
+		<title><varname>force_outbound_flag</varname> (integer)</title>
+		<para>A flag which, if set for a request, will force
 		<emphasis>path</emphasis> and <emphasis>rr</emphasis> to add
 		flow tokens to Path: and Record-Route: headers regardless of
 		the request contents.</para>
 		<para><emphasis>Default value is -1.</emphasis></para>
 		<example>
-		<title>Set <varname>force_outbound_bflag</varname> parameter
+		<title>Set <varname>force_outbound_flag</varname> parameter
 		</title>
 		<programlisting format="linespecific">
-modparam("outbound", "force_outbound_bflag", 1)
+modparam("outbound", "force_outbound_flag", 1)
 </programlisting>
 		</example>
 	</section>
