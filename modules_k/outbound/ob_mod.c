@@ -41,7 +41,7 @@ MODULE_VERSION
 
 static int mod_init(void);
 
-static unsigned int ob_force_bflag = (unsigned int) -1;
+static unsigned int ob_force_flag = (unsigned int) -1;
 static str ob_key = {0, 0};
 
 static cmd_export_t cmds[]= 
@@ -54,7 +54,7 @@ static cmd_export_t cmds[]=
 
 static param_export_t params[]=
 {
-	{ "force_outbound_bflag",	INT_PARAM, &ob_force_bflag },
+	{ "force_outbound_flag",	INT_PARAM, &ob_force_flag },
 	{ "flow_token_key",		STR_PARAM, &ob_key.s},
 	{ 0, 0, 0 }
 };
@@ -77,13 +77,11 @@ struct module_exports exports=
 
 static int mod_init(void)
 {
-	if (ob_force_bflag == (unsigned int) -1)
-		ob_force_bflag = 0;
-	else if (ob_force_bflag >= 8 * sizeof (ob_force_bflag)) {
-		LM_ERR("force_outbound_bflag (%d) too big!\n", ob_force_bflag);
+	if (ob_force_flag != -1 && !flag_in_range(ob_force_flag))
+	{
+		LM_ERR("bad force_outbound_flag value (%d)\n", ob_force_flag);
 		return -1;
-	} else
-		ob_force_bflag = 1 << ob_force_bflag;
+	}
 
 	if (ob_key.s == 0)
 	{
@@ -276,7 +274,7 @@ int use_outbound(struct sip_msg *msg)
 	int ret;
 
 	/* If Outbound is forced return success without any further checks */
-	if (isbflagset(0, ob_force_bflag) > 0)
+	if (ob_force_flag != -1 && isflagset(msg, ob_force_flag) > 0)
 	{
 		LM_INFO("outbound forced\n");
 		return 1;
@@ -299,7 +297,7 @@ int use_outbound(struct sip_msg *msg)
 
 	/* Look for ;reg-id in REGISTER Contact-URIs and ;ob in any
 	   Contact-URIs */
-	if (parse_headers(msg, HDR_CONTACT_F, 0) >= 0 && msg->contact)
+	if (msg->contact || parse_headers(msg, HDR_CONTACT_F, 0) != -1)
 	{
 		if (parse_contact(msg->contact) < 0)
 		{
@@ -326,7 +324,7 @@ int use_outbound(struct sip_msg *msg)
 
 		if (msg->REQ_METHOD == METHOD_REGISTER && hooks.contact.reg_id)
 		{
-			LM_INFO("found REGISTER with ;reg_id paramter on"
+			LM_INFO("found REGISTER with ;reg-id paramter on"
 				"Contact-URI - outbound used\n");
 			return 1;
 		}
@@ -340,7 +338,7 @@ int use_outbound(struct sip_msg *msg)
 	}
 
 	/* Check to see if the top Route-URI is me and has a ;ob parameter */
-	if (parse_headers(msg, HDR_ROUTE_F, 0) >= 0 && msg->route)
+	if (msg->route || parse_headers(msg, HDR_ROUTE_F, 0) != -1)
 	{
 		if (parse_rr(msg->route) < 0)
 		{
