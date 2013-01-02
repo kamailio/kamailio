@@ -12,7 +12,11 @@ LIBS=
 
 DEFS+=-DOPENSER_MOD_INTERFACE -I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2
 
-LIBS += -L$(LOCALBASE)/lib -lrt
+LIBS += -L$(LOCALBASE)/lib
+
+ifneq ($(OS),darwin)
+	LIBS += -lrt
+endif
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kcore/kcore
