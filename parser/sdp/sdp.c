@@ -810,7 +810,7 @@ void free_sdp(sdp_info_t** _sdp)
 			while (l_stream->ice_attr) {
 			    tmp = l_stream->ice_attr->next;
 			    pkg_free(l_stream->ice_attr);
-			    l_stream->ice_attr->next = tmp;
+			    l_stream->ice_attr = tmp;
 			}
 			pkg_free(l_stream);
 		}
