@@ -294,6 +294,11 @@ module_group_kredis=ndb_redis
 # K mono module
 module_group_kmono=app_mono
 
+# For IMS
+# kamailio modules
+module_group_kims=auth_ims cdp cdp_avp dialog2 ims_qos isc icscf ipsec\
+                        registrar_pcscf registrar_scscf usrloc_pcscf usrloc_scscf
+
 # if not set on the cmd. line, env or in the modules.lst (cfg_group_include)
 # exclude the below modules.
 ifneq ($(group_include)$(cfg_group_include),)
@@ -864,6 +869,17 @@ deb:
 		rm debian; \
 	else \
 		ln -s pkg/$(MAIN_NAME)/deb/debian debian; \
+		dpkg-buildpackage -rfakeroot -tc; \
+		rm debian; \
+	fi
+
+.PHONY: deb-stable
+deb-stable:
+	-@if [ -d debian ]; then \
+		dpkg-buildpackage -rfakeroot -tc; \
+		rm debian; \
+	else \
+		ln -s pkg/$(MAIN_NAME)/deb/squeeze debian; \
 		dpkg-buildpackage -rfakeroot -tc; \
 		rm debian; \
 	fi
