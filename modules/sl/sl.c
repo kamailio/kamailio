@@ -62,6 +62,8 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../ut.h"
+#include "../../data_lump.h"
+#include "../../mod_fix.h"
 #include "../../script_cb.h"
 #include "../../mem/mem.h"
 
@@ -81,9 +83,12 @@ int _sl_filtered_ack_route = -1; /* default disabled */
 static int sl_bind_tm = 1;
 static struct tm_binds tmb;
 
-static int w_sl_send_reply(struct sip_msg* msg, char* str, char* str2);
+static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2);
 static int w_send_reply(struct sip_msg* msg, char* str1, char* str2);
-static int w_sl_reply_error(struct sip_msg* msg, char* str, char* str2);
+static int w_sl_reply_error(struct sip_msg* msg, char* str1, char* str2);
+static int w_sl_forward_reply0(sip_msg_t* msg, char* str1, char* str2);
+static int w_sl_forward_reply1(sip_msg_t* msg, char* str1, char* str2);
+static int w_sl_forward_reply2(sip_msg_t* msg, char* str1, char* str2);
 static int bind_sl(sl_api_t* api);
 static int mod_init(void);
 static int child_init(int rank);
@@ -99,6 +104,12 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"sl_reply_error", w_sl_reply_error,            0, 0,
 		REQUEST_ROUTE},
+	{"sl_forward_reply",  w_sl_forward_reply0,      0, 0,
+		ONREPLY_ROUTE},
+	{"sl_forward_reply",  w_sl_forward_reply1,      1, fixup_spve_all,
+		ONREPLY_ROUTE},
+	{"sl_forward_reply",  w_sl_forward_reply2,      2, fixup_spve_all,
+		ONREPLY_ROUTE},
 	{"bind_sl",        (cmd_function)bind_sl,       0, 0,              0},
 	{0,0,0,0,0}
 };
@@ -347,6 +358,138 @@ static int fixup_sl_reply(void** param, int param_no)
 	return 0;
 }
 
+/**
+ * @brief forward SIP reply statelessy with different code and reason text
+ */
+static int w_sl_forward_reply(sip_msg_t* msg, str* code, str* reason)
+{
+	char oldscode[3];
+	int oldncode;
+	int ret;
+	struct lump	*ldel = NULL;
+	struct lump	*ladd = NULL;
+	char *rbuf;
+
+	if(msg->first_line.type!=SIP_REPLY) {
+		LM_ERR("invalid SIP message type\n");
+		return -1;
+	}
+	if(code!=NULL) {
+		if(code->len!=3) {
+			LM_ERR("invalid reply code value %.*s\n", code->len, code->s);
+			return -1;
+		}
+		if(msg->first_line.u.reply.status.s[0]!=code->s[0]) {
+			LM_ERR("reply code class cannot be changed\n");
+			return -1;
+		}
+		if(code->s[1]<'0' || code->s[1]>'9'
+				|| code->s[2]<'0' || code->s[2]>'9') {
+			LM_ERR("invalid reply code value %.*s!\n", code->len, code->s);
+			return -1;
+		}
+	}
+	if(reason!=NULL && reason->len<=0) {
+		LM_ERR("invalid reply reason value\n");
+		return -1;
+	}
+	if(code!=NULL) {
+		/* backup old values */
+		oldscode[0] = msg->first_line.u.reply.status.s[0];
+		oldscode[1] = msg->first_line.u.reply.status.s[1];
+		oldscode[2] = msg->first_line.u.reply.status.s[2];
+		oldncode = msg->first_line.u.reply.statuscode;
+		/* update status code directly in msg buffer */
+		msg->first_line.u.reply.statuscode = (code->s[0]-'0')*100
+			+ (code->s[1]-'0')*10 + code->s[2]-'0';
+		msg->first_line.u.reply.status.s[0] = code->s[0];
+		msg->first_line.u.reply.status.s[1] = code->s[1];
+		msg->first_line.u.reply.status.s[2] = code->s[2];
+
+	}
+	if(reason!=NULL) {
+		ldel = del_lump(msg,
+					msg->first_line.u.reply.reason.s - msg->buf,
+					msg->first_line.u.reply.reason.len,
+					0);
+		if (ldel==NULL) {
+			LM_ERR("failed to add del lump\n");
+			ret = -1;
+			goto restore;
+		}
+		rbuf = (char *)pkg_malloc(reason->len);
+		if (rbuf==NULL) {
+			LM_ERR("not enough memory\n");
+			ret = -1;
+			goto restore;
+		}
+		memcpy(rbuf, reason->s, reason->len);
+		ladd = insert_new_lump_after(ldel, rbuf, reason->len, 0);
+		if (ladd==0) {
+			LOG(L_ERR, "failed to add reason lump: %.*s\n",
+				reason->len, reason->s);
+			pkg_free(rbuf);
+			ret = -1;
+			goto restore;
+		}
+	}
+	ret = forward_reply(msg);
+restore:
+	if(reason!=NULL) {
+		if(ldel!=NULL) {
+			remove_lump(msg, ldel);
+		}
+		if(ladd!=NULL) {
+			remove_lump(msg, ladd);
+		}
+	}
+	if(code!=NULL) {
+		msg->first_line.u.reply.statuscode = oldncode;
+		msg->first_line.u.reply.status.s[0] = oldscode[0];
+		msg->first_line.u.reply.status.s[1] = oldscode[1];
+		msg->first_line.u.reply.status.s[2] = oldscode[2];
+	}
+	return ret;
+}
+
+/**
+ * @brief forward SIP reply statelessy
+ */
+static int w_sl_forward_reply0(sip_msg_t* msg, char* str1, char* str2)
+{
+	return w_sl_forward_reply(msg, NULL, NULL);
+}
+
+/**
+ * @brief forward SIP reply statelessy with a new code
+ */
+static int w_sl_forward_reply1(sip_msg_t* msg, char* str1, char* str2)
+{
+	str code;
+	if(fixup_get_svalue(msg, (gparam_t*)str1, &code)<0) {
+		LM_ERR("cannot get the reply code parameter value\n");
+		return -1;
+	}
+	return w_sl_forward_reply(msg, &code, NULL);
+}
+
+/**
+ * @brief forward SIP reply statelessy with new code and reason text
+ */
+static int w_sl_forward_reply2(sip_msg_t* msg, char* str1, char* str2)
+{
+	str code;
+	str reason;
+	if(fixup_get_svalue(msg, (gparam_t*)str1, &code)<0) {
+		LM_ERR("cannot get the reply code parameter value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)str2, &reason)<0) {
+		LM_ERR("cannot get the reply reason parameter value\n");
+		return -1;
+	}
+	return w_sl_forward_reply(msg, &code, &reason);
+}
 
 /**
  * @brief bind functions to SL API structure
