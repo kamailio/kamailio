@@ -712,3 +712,32 @@ unsigned int count_applied_lumps(struct lump *ll, int type)
 	return n;
 }
 
+int remove_lump(sip_msg_t *msg, struct lump *l)
+{
+	struct lump *t = NULL;
+	struct lump *prev = NULL;
+	struct lump **list = NULL;
+
+	list=&msg->add_rm;	
+	for (t=*list; t; prev=t, t=t->next) {
+		if(t==l)
+			break;
+	}
+	if(t==NULL) {
+		list=&msg->body_lumps;
+		for (t=*list; t; prev=t, t=t->next) {
+			if(t==l)
+				break;
+		}
+	}
+	if(t!=NULL) {
+		if(prev==NULL) {
+			*list = t->next;
+		} else {
+			prev->next = t->next;
+		}
+		free_lump(t);
+		return 1;
+	}
+	return 0;
+}
