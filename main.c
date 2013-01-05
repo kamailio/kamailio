@@ -225,7 +225,7 @@ Options:\n\
                   field to a via\n\
     -R           Same as `-r` but use reverse dns;\n\
                   (to use both use `-rR`)\n\
-    -v           Turn on \"via:\" host checking when forwarding replies\n\
+    -K           Turn on \"via:\" host checking when forwarding replies\n\
     -d           Debugging mode (multiple -d increase the level)\n\
     -D no        1..do not fork (almost) anyway, 2..do not daemonize creator\n\
                   3..daemonize (default)\n\
@@ -1860,7 +1860,7 @@ int main(int argc, char** argv)
 	dprint_init_colors();
 
 	/* command line options */
-	options=  ":f:cm:M:dVIhEeb:l:L:n:vrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:"
+	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:"
 #ifdef STATS
 		"s:"
 #endif
@@ -1957,6 +1957,7 @@ int main(int argc, char** argv)
 			case 'd':
 					/* ignore it, was parsed immediately after startup */
 					break;
+			case 'v':
 			case 'V':
 					printf("version: %s\n", full_version);
 					printf("flags: %s\n", ver_flags );
@@ -2019,7 +2020,7 @@ int main(int argc, char** argv)
 			case 'b':
 			case 'l':
 			case 'n':
-			case 'v':
+			case 'K':
 			case 'r':
 			case 'R':
 			case 'D':
@@ -2129,6 +2130,7 @@ try_again:
 			case 'm':
 			case 'M':
 			case 'd':
+			case 'v':
 			case 'V':
 			case 'I':
 			case 'h':
@@ -2175,7 +2177,7 @@ try_again:
 						goto error;
 					}
 					break;
-			case 'v':
+			case 'K':
 					check_via=1;
 					break;
 			case 'r':
