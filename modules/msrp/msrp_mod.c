@@ -146,6 +146,12 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(msrp_cmap_init_rpc()<0)
+	{
+		LM_ERR("failed to register cmap RPC commands\n");
+		return -1;
+	}
+
 	if(msrp_cmap_size>0) {
 		if(msrp_cmap_size>16)
 			msrp_cmap_size = 16;

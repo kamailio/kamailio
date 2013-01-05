@@ -452,6 +452,26 @@ event_route[msrp:frame-in] {
 	</section>
 
 	<section>
+	<title>RPC Commands</title>
+	<section>
+		<title>
+		<function moreinfo="none">msrp.cmaplist</function>
+		</title>
+		<para>
+		List active MSRP connections.
+		</para>
+		<para>
+		Example:
+		</para>
+<programlisting  format="linespecific">
+...
+&sercmd; msrp.cmaplist
+...
+</programlisting>
+    </section>
+    </section>
+
+	<section>
 		<title>Event Routes</title>
 		<para>
 			For each MSRP frame received from the network, the module executes

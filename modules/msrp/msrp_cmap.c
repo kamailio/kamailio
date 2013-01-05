@@ -29,6 +29,8 @@
 #include "../../ut.h"
 
 #include "../../lib/srutils/sruid.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 
 #include "msrp_netio.h"
 #include "msrp_env.h"
@@ -399,6 +401,107 @@ int msrp_cmap_clean(void)
 			}
 		}
 		lock_release(&_msrp_cmap_head->cslots[i].lock);
+	}
+
+	return 0;
+}
+
+static const char* msrp_cmap_rpc_list_doc[2] = {
+	"Return the content of dispatcher sets",
+	0
+};
+
+
+/*
+ * RPC command to print connections map table
+ */
+static void msrp_cmap_rpc_list(rpc_t* rpc, void* ctx)
+{
+	void* th;
+	void* ih;
+	void* vh;
+	msrp_citem_t *it;
+	int i;
+	int n;
+	str edate;
+
+	if(_msrp_cmap_head==NULL)
+	{
+		LM_ERR("no connections map table\n");
+		rpc->fault(ctx, 500, "No Connections Map Table");
+		return;
+	}
+
+	/* add entry node */
+	if (rpc->add(ctx, "{", &th) < 0)
+	{
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return;
+	}
+
+	if(rpc->struct_add(th, "d{",
+				"MAP_SIZE", _msrp_cmap_head->mapsize,
+				"CONLIST",  &ih)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error set structure");
+		return;
+	}
+	n = 0;
+	for(i=0; i<_msrp_cmap_head->mapsize; i++)
+	{
+		lock_get(&_msrp_cmap_head->cslots[i].lock);
+		for(it=_msrp_cmap_head->cslots[i].first; it; it=it->next)
+		{
+			if(rpc->struct_add(ih, "{",
+						"CONDATA", &vh)<0)
+			{
+				rpc->fault(ctx, 500, "Internal error creating connection");
+				lock_release(&_msrp_cmap_head->cslots[i].lock);
+				return;
+			}
+			edate.s = ctime(&it->expires);
+			edate.len = 24;
+			if(rpc->struct_add(vh, "dSSSSSdd",
+						"CITEMID", it->citemid,
+						"SESSIONID", &it->sessionid,
+						"PEER", &it->peer,
+						"ADDR", &it->addr,
+						"SOCK", &it->sock,
+						"EXPIRES", &edate,
+						"CONID", it->conid,
+						"FLAGS", it->cflags)<0)
+			{
+				rpc->fault(ctx, 500, "Internal error creating dest struct");
+				lock_release(&_msrp_cmap_head->cslots[i].lock);
+				return;
+			}
+			n++;
+		}
+		lock_release(&_msrp_cmap_head->cslots[i].lock);
+	}
+	if(rpc->struct_add(th, "d", "CONCOUNT", n)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error connection counter");
+		return;
+	}
+	return;
+}
+
+rpc_export_t msrp_cmap_rpc_cmds[] = {
+	{"msrp.cmaplist",   msrp_cmap_rpc_list,
+		msrp_cmap_rpc_list_doc,   0},
+	{0, 0, 0, 0}
+};
+
+/**
+ *
+ */
+int msrp_cmap_init_rpc(void)
+{
+	if (rpc_register_array(msrp_cmap_rpc_cmds)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
 	}
 
 	return 0;

@@ -50,8 +50,12 @@ Alex Balashov
               4.9. msrp_cmap_lookup()
 
         5. Pseudo Variables
-        6. Event Routes
-        7. Usage
+        6. RPC Commands
+
+              6.1. msrp.cmaplist
+
+        7. Event Routes
+        8. Usage
 
    List of Examples
 
@@ -102,8 +106,12 @@ Chapter 1. Admin Guide
         4.9. msrp_cmap_lookup()
 
    5. Pseudo Variables
-   6. Event Routes
-   7. Usage
+   6. RPC Commands
+
+        6.1. msrp.cmaplist
+
+   7. Event Routes
+   8. Usage
 
 1. Overview
 
@@ -401,12 +409,25 @@ event_route[msrp:frame-in] {
    These are documented in the appropriate Wiki pages hosted on the
    project web site.
 
-6. Event Routes
+6. RPC Commands
+
+   6.1. msrp.cmaplist
+
+6.1. msrp.cmaplist
+
+   List active MSRP connections.
+
+   Example:
+...
+kamcmd msrp.cmaplist
+...
+
+7. Event Routes
 
    For each MSRP frame received from the network, the module executes
    event_route[msrp:frame-in] block in the config file.
 
-7. Usage
+8. Usage
 
    When 'sipmsg' parameter is set to 1 (which is default), the module
    internally builds a SIP request from the MSRP frame and exposes it to

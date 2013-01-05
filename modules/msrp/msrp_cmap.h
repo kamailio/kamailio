@@ -70,4 +70,5 @@ int msrp_cmap_lookup(msrp_frame_t *mf);
 
 int msrp_sruid_init(void);
 
+int msrp_cmap_init_rpc(void);
 #endif
