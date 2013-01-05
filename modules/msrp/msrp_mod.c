@@ -68,6 +68,7 @@ int msrp_cmap_size = 0;
 int msrp_auth_min_expires = 60;
 int msrp_auth_max_expires = 3600;
 int msrp_timer_interval = 60;
+str msrp_use_path_addr = { 0 };
 
 static int msrp_frame_received(void *data);
 sip_msg_t *msrp_fake_sipmsg(msrp_frame_t *mf);
@@ -111,11 +112,12 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"sipmsg",            INT_PARAM,   &msrp_param_sipmsg},
-	{"cmap_size",         INT_PARAM,   &msrp_cmap_size},
-	{"auth_min_expires",  INT_PARAM,   &msrp_auth_min_expires},
-	{"auth_max_expires",  INT_PARAM,   &msrp_auth_max_expires},
-	{"timer_interval",    INT_PARAM,   &msrp_timer_interval},
+	{"sipmsg",            PARAM_INT,   &msrp_param_sipmsg},
+	{"cmap_size",         PARAM_INT,   &msrp_cmap_size},
+	{"auth_min_expires",  PARAM_INT,   &msrp_auth_min_expires},
+	{"auth_max_expires",  PARAM_INT,   &msrp_auth_max_expires},
+	{"timer_interval",    PARAM_INT,   &msrp_timer_interval},
+	{"use_path_addr",     PARAM_STR,   &msrp_use_path_addr},
 	{0, 0, 0}
 };
 

@@ -42,6 +42,7 @@ static sruid_t _msrp_sruid;
 
 extern int msrp_auth_min_expires;
 extern int msrp_auth_max_expires;
+extern str msrp_use_path_addr;
 
 /**
  *
@@ -298,13 +299,15 @@ int msrp_cmap_save(msrp_frame_t *mf)
 	{
 		srcaddr.len = snprintf(sbuf, MSRP_SBUF_SIZE,
 				"Use-Path: msrps://%.*s/%.*s;tcp\r\nExpires: %d\r\n",
-				srcsock.len-4, srcsock.s+4,
+				(msrp_use_path_addr.s)?msrp_use_path_addr.len:(srcsock.len-4),
+				(msrp_use_path_addr.s)?msrp_use_path_addr.s:(srcsock.s+4),
 				_msrp_sruid.uid.len, _msrp_sruid.uid.s,
 				expires);
 	} else {
 		srcaddr.len = snprintf(sbuf, MSRP_SBUF_SIZE,
 				"Use-Path: msrp://%.*s/%.*s;tcp\r\nExpires: %d\r\n",
-				srcsock.len-4, srcsock.s+4,
+				(msrp_use_path_addr.s)?msrp_use_path_addr.len:(srcsock.len-4),
+				(msrp_use_path_addr.s)?msrp_use_path_addr.s:(srcsock.s+4),
 				_msrp_sruid.uid.len, _msrp_sruid.uid.s,
 				expires);
 	}

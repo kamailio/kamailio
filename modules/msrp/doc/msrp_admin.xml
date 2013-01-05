@@ -183,6 +183,25 @@ modparam("msrp", "auth_max_expiresl", 1800)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>use_path_addr</varname> (str)</title>
+		<para>
+		The hostname:port to be used when building Use-Path header.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (server IP and port are used).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>use_path_addr</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msrp", "use_path_addr", "msrp.kamailio.org:5061")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -202,7 +221,7 @@ modparam("msrp", "auth_max_expiresl", 1800)
 		This function can be used in ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>msrp</function> usage</title>
+		<title><function>msrp_relay</function> usage</title>
 		<programlisting format="linespecific">
 ...
 event_route[msrp:frame-in] {
