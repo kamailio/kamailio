@@ -36,11 +36,13 @@
 #include "../../events.h"
 #include "../../tcp_conn.h"
 #include "../../pvar.h"
+#include "../../timer_proc.h" /* register_sync_timer */
 
 #include "msrp_parser.h"
 #include "msrp_netio.h"
 #include "msrp_vars.h"
 #include "msrp_env.h"
+#include "msrp_cmap.h"
 
 MODULE_VERSION
 
@@ -56,8 +58,16 @@ static int w_msrp_is_reply(sip_msg_t* msg, char* str1, char* str2);
 static int w_msrp_set_dst(sip_msg_t* msg, char* taddr, char* fsock);
 static int w_msrp_relay_flags(sip_msg_t* msg, char *tflags, char* str2);
 static int w_msrp_reply_flags(sip_msg_t* msg, char *tflags, char* str2);
+static int w_msrp_cmap_save(sip_msg_t* msg, char* str1, char* str2);
+static int w_msrp_cmap_lookup(sip_msg_t* msg, char* str1, char* str2);
+
+static void msrp_local_timer(unsigned int ticks, void* param); /*!< Local timer handler */
 
 int msrp_param_sipmsg = 1;
+int msrp_cmap_size = 0;
+int msrp_auth_min_expires = 60;
+int msrp_auth_max_expires = 3600;
+int msrp_timer_interval = 60;
 
 static int msrp_frame_received(void *data);
 sip_msg_t *msrp_fake_sipmsg(msrp_frame_t *mf);
@@ -83,21 +93,29 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"msrp_reply", (cmd_function)w_msrp_reply3, 3, fixup_spve_all,
 		0, ANY_ROUTE},
-	{"msrp_is_request", (cmd_function)w_msrp_is_request, 0, 0,
+	{"msrp_is_request",  (cmd_function)w_msrp_is_request, 0, 0,
 		0, ANY_ROUTE},
-	{"msrp_is_reply", (cmd_function)w_msrp_is_reply, 0, 0,
+	{"msrp_is_reply",    (cmd_function)w_msrp_is_reply, 0, 0,
 		0, ANY_ROUTE},
-	{"msrp_set_dst", (cmd_function)w_msrp_set_dst, 2, fixup_spve_all,
+	{"msrp_set_dst",     (cmd_function)w_msrp_set_dst, 2, fixup_spve_all,
 		0, ANY_ROUTE},
 	{"msrp_relay_flags", (cmd_function)w_msrp_relay_flags, 1, fixup_igp_null,
 		0, ANY_ROUTE},
 	{"msrp_reply_flags", (cmd_function)w_msrp_reply_flags, 1, fixup_igp_null,
 		0, ANY_ROUTE},
+	{"msrp_cmap_save",   (cmd_function)w_msrp_cmap_save, 0, 0,
+		0, ANY_ROUTE},
+	{"msrp_cmap_lookup", (cmd_function)w_msrp_cmap_lookup, 0, 0,
+		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]={
-	{"sipmsg",     INT_PARAM,   &msrp_param_sipmsg},
+	{"sipmsg",            INT_PARAM,   &msrp_param_sipmsg},
+	{"cmap_size",         INT_PARAM,   &msrp_cmap_size},
+	{"auth_min_expires",  INT_PARAM,   &msrp_auth_min_expires},
+	{"auth_max_expires",  INT_PARAM,   &msrp_auth_max_expires},
+	{"timer_interval",    INT_PARAM,   &msrp_timer_interval},
 	{0, 0, 0}
 };
 
@@ -123,6 +141,22 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	if(msrp_sruid_init()<0) {
+		LM_ERR("cannot init msrp uid\n");
+		return -1;
+	}
+
+	if(msrp_cmap_size>0) {
+		if(msrp_cmap_size>16)
+			msrp_cmap_size = 16;
+		if(msrp_cmap_init(1<<msrp_cmap_size)<0) {
+			LM_ERR("Cannot init internal cmap\n");
+			return -1;
+		}
+		if(msrp_timer_interval<=0)
+			msrp_timer_interval = 60;
+		register_sync_timers(1);
+	}
 	sr_event_register_cb(SREV_TCP_MSRP_FRAME, msrp_frame_received);
 	return 0;
 }
@@ -132,8 +166,20 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
+	if(msrp_sruid_init()<0) {
+		LM_ERR("cannot init msrp uid\n");
+		return -1;
+	}
+
 	if (rank!=PROC_MAIN)
 		return 0;
+	if(msrp_cmap_size>0) {
+		if(fork_sync_timer(PROC_TIMER, "MSRP Timer", 1 /*socks flag*/,
+				msrp_local_timer, NULL, msrp_timer_interval /*sec*/)<0) {
+			LM_ERR("failed to start timer routine as process\n");
+			return -1; /* error */
+		}
+	}
 
 	return 0;
 }
@@ -333,6 +379,42 @@ static int w_msrp_reply_flags(sip_msg_t* msg, char *tflags, char* str2)
 	return ret;
 }
 
+
+/**
+ *
+ */
+static int w_msrp_cmap_save(sip_msg_t* msg, char* str1, char* str2)
+{
+	msrp_frame_t *mf;
+	int ret;
+
+	mf = msrp_get_current_frame();
+	if(mf==NULL)
+		return -1;
+
+	ret = msrp_cmap_save(mf);
+	if(ret==0) ret = 1;
+	return ret;
+}
+
+
+/**
+ *
+ */
+static int w_msrp_cmap_lookup(sip_msg_t* msg, char* str1, char* str2)
+{
+	msrp_frame_t *mf;
+	int ret;
+
+	mf = msrp_get_current_frame();
+	if(mf==NULL)
+		return -1;
+
+	ret = msrp_cmap_lookup(mf);
+	if(ret==0) ret = 1;
+	return ret;
+}
+
 /**
  *
  */
@@ -340,7 +422,6 @@ static int msrp_frame_received(void *data)
 {
 	tcp_event_info_t *tev;
 	static msrp_frame_t mf;
-	msrp_uri_t uri;
 	sip_msg_t *fmsg;
 	struct run_act_ctx ctx;
 	int rtb, rt;
@@ -385,10 +466,13 @@ static int msrp_frame_received(void *data)
 	}
 	msrp_reset_env();
 	msrp_destroy_frame(&mf);
-	msrp_parse_uri("msrps://alice.example.com:9892/98cjs;tcp",
-			sizeof("msrps://alice.example.com:9892/98cjs;tcp")-1, &uri);
-	msrp_parse_uri("msrps://me@alice.example.com:9892/98cjs;tcp;a=123",
-			sizeof("msrps://m3@alice.example.com:9892/98cjs;tcp;a=123")-1, &uri);
-
 	return 0;
+}
+
+/**
+ *
+ */
+static void msrp_local_timer(unsigned int ticks, void* param)
+{
+	msrp_cmap_clean();
 }

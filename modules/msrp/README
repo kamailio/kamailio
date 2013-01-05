@@ -16,7 +16,7 @@ Alex Balashov
 
    <abalashov@evaristesys.com>
 
-   Copyright Â© 2012 asipto.com
+   Copyright © 2012 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -32,6 +32,10 @@ Alex Balashov
         3. Parameters
 
               3.1. sipmsg (int)
+              3.2. cmap_size (int)
+              3.3. timer_interval (int)
+              3.4. auth_min_expires (int)
+              3.5. auth_max_expires (int)
 
         4. Functions
 
@@ -42,6 +46,8 @@ Alex Balashov
               4.5. msrp_set_dst(addr, sock)
               4.6. msrp_relay_flags(flags)
               4.7. msrp_reply_flags(flags)
+              4.8. msrp_cmap_save()
+              4.9. msrp_cmap_lookup()
 
         5. Pseudo Variables
         6. Event Routes
@@ -50,14 +56,20 @@ Alex Balashov
    List of Examples
 
    1.1. Set sipmsg parameter
-   1.2. msrp usage
-   1.3. msrp_reply usage
-   1.4. msrp_is_request usage
-   1.5. msrp_is_reply usage
-   1.6. msrp_set_dst usage
-   1.7. msrp_relay_flags usage
-   1.8. msrp_reply_flags usage
-   1.9. Event Route
+   1.2. Set cmap_size parameter
+   1.3. Set timer_interval parameter
+   1.4. Set auth_min_expires parameter
+   1.5. Set auth_max_expires parameter
+   1.6. msrp usage
+   1.7. msrp_reply usage
+   1.8. msrp_is_request usage
+   1.9. msrp_is_reply usage
+   1.10. msrp_set_dst usage
+   1.11. msrp_relay_flags usage
+   1.12. msrp_reply_flags usage
+   1.13. msrp_cmap_save usage
+   1.14. msrp_cmap_lookup usage
+   1.15. Event Route
 
 Chapter 1. Admin Guide
 
@@ -72,6 +84,10 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. sipmsg (int)
+        3.2. cmap_size (int)
+        3.3. timer_interval (int)
+        3.4. auth_min_expires (int)
+        3.5. auth_max_expires (int)
 
    4. Functions
 
@@ -82,6 +98,8 @@ Chapter 1. Admin Guide
         4.5. msrp_set_dst(addr, sock)
         4.6. msrp_relay_flags(flags)
         4.7. msrp_reply_flags(flags)
+        4.8. msrp_cmap_save()
+        4.9. msrp_cmap_lookup()
 
    5. Pseudo Variables
    6. Event Routes
@@ -137,6 +155,10 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. sipmsg (int)
+   3.2. cmap_size (int)
+   3.3. timer_interval (int)
+   3.4. auth_min_expires (int)
+   3.5. auth_max_expires (int)
 
 3.1. sipmsg (int)
 
@@ -152,6 +174,52 @@ Chapter 1. Admin Guide
 modparam("msrp", "sipmsg", 1)
 ...
 
+3.2. cmap_size (int)
+
+   The size of connection map table, to be computed as power of 2 (e.g.,
+   if the value is 4, then the number of slots in map table is 2^4 = 16).
+
+   Default value is '0' (no internal map table to be used).
+
+   Example 1.2. Set cmap_size parameter
+...
+modparam("msrp", "cmap_size", 8)
+...
+
+3.3. timer_interval (int)
+
+   The timer interval in seconds to run the procedure for cleaning expired
+   connections.
+
+   Default value is '60'.
+
+   Example 1.3. Set timer_interval parameter
+...
+modparam("msrp", "timer_interval", 90)
+...
+
+3.4. auth_min_expires (int)
+
+   The minimum value accepted for Expires header in AUTH requests.
+
+   Default value is '60'.
+
+   Example 1.4. Set auth_min_expires parameter
+...
+modparam("msrp", "auth_min_expiresl", 90)
+...
+
+3.5. auth_max_expires (int)
+
+   The maximum value accepted for Expires header in AUTH requests.
+
+   Default value is '3600'.
+
+   Example 1.5. Set auth_max_expires parameter
+...
+modparam("msrp", "auth_max_expiresl", 1800)
+...
+
 4. Functions
 
    4.1. msrp_relay()
@@ -161,8 +229,10 @@ modparam("msrp", "sipmsg", 1)
    4.5. msrp_set_dst(addr, sock)
    4.6. msrp_relay_flags(flags)
    4.7. msrp_reply_flags(flags)
+   4.8. msrp_cmap_save()
+   4.9. msrp_cmap_lookup()
 
-4.1.  msrp_relay()
+4.1. msrp_relay()
 
    Relay MSRP frame according to the To-Path. This function has to be
    executed for each MSRP request or reply that has to be forwarded. Note
@@ -171,14 +241,14 @@ modparam("msrp", "sipmsg", 1)
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.2. msrp usage
+   Example 1.6. msrp usage
 ...
 event_route[msrp:frame-in] {
     msrp_relay();
 }
 ...
 
-4.2.  msrp_reply(code, text [, hdrs])
+4.2. msrp_reply(code, text [, hdrs])
 
    Send a reply for the current MSRP request, adding optional headers.
 
@@ -186,20 +256,20 @@ event_route[msrp:frame-in] {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.3. msrp_reply usage
+   Example 1.7. msrp_reply usage
 ...
 event_route[msrp:frame-in] {
     msrp_reply("403", "Not allowed");
 }
 ...
 
-4.3.  msrp_is_request()
+4.3. msrp_is_request()
 
    Return true if the MSRP frame is a request.
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.4. msrp_is_request usage
+   Example 1.8. msrp_is_request usage
 ...
 event_route[msrp:frame-in] {
     if(msrp_is_request())
@@ -210,13 +280,13 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.4.  msrp_is_reply()
+4.4. msrp_is_reply()
 
    Return true if the MSRP frame is a reply.
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.5. msrp_is_reply usage
+   Example 1.9. msrp_is_reply usage
 ...
 event_route[msrp:frame-in] {
     if(msrp_is_reply())
@@ -227,7 +297,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.5.  msrp_set_dst(addr, sock)
+4.5. msrp_set_dst(addr, sock)
 
    Set destination attributes: addr - target address as MSRP URI; sock -
    local socket to be used (format 'proto:ip:port').
@@ -236,7 +306,7 @@ event_route[msrp:frame-in] {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.6. msrp_set_dst usage
+   Example 1.10. msrp_set_dst usage
 ...
 event_route[msrp:frame-in] {
     ...
@@ -245,7 +315,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.6.  msrp_relay_flags(flags)
+4.6. msrp_relay_flags(flags)
 
    Set transport layer sending flags for forwarding current MSRP frame;
    flags - a bitmask of flags - 1 (don't create a new connection), 2
@@ -255,7 +325,7 @@ event_route[msrp:frame-in] {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.7. msrp_relay_flags usage
+   Example 1.11. msrp_relay_flags usage
 ...
 event_route[msrp:frame-in] {
     ...
@@ -264,7 +334,7 @@ event_route[msrp:frame-in] {
 }
 ...
 
-4.7.  msrp_reply_flags(flags)
+4.7. msrp_reply_flags(flags)
 
    Set transport layer sending flags for replies to the current MSRP
    frame; flags - a bitmask of flags - 1 (don't create a new connection),
@@ -274,11 +344,48 @@ event_route[msrp:frame-in] {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.8. msrp_reply_flags usage
+   Example 1.12. msrp_reply_flags usage
 ...
 event_route[msrp:frame-in] {
     ...
     msrp_reply_flags("1");
+    ...
+}
+...
+
+4.8. msrp_cmap_save()
+
+   Save details of a MSRP connection upon AUTH request inside the internal
+   map table, indexed by session id.
+
+   This function can be used in ANY_ROUTE.
+
+   Example 1.13. msrp_cmap_save usage
+...
+event_route[msrp:frame-in] {
+    ...
+        if(metod=="AUTH") { msrp_cmap_save(); exit; }
+    ...
+}
+...
+
+4.9. msrp_cmap_lookup()
+
+   Lookup MSRP connection details for current session id.
+
+   This function can be used in ANY_ROUTE.
+
+   Example 1.14. msrp_cmap_lookup usage
+...
+event_route[msrp:frame-in] {
+    ...
+        if(metod=="SEND" and $msrp(nexthops)==1) {
+                if(msrp_cmap_lookup()) {
+                        msrp_relay();
+                } else {
+                        msrp_reply("481", "Session not found");
+                }
+        }
     ...
 }
 ...
@@ -362,7 +469,7 @@ Content-Type: text/plain
    Next is an example of configuration file with the routing block for
    MSRP frames. In this config, the SIP traffic is rejected.
 
-   Example 1.9. Event Route
+   Example 1.15. Event Route
 ...
 
 #!KAMAILIO

@@ -105,6 +105,84 @@ modparam("msrp", "sipmsg", 1)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>cmap_size</varname> (int)</title>
+		<para>
+		The size of connection map table, to be computed as power of 2 (e.g.,
+		if the value is 4, then the number of slots in map table is 2^4 = 16).
+		</para>
+		<para>
+		<emphasis>
+			Default value is '0' (no internal map table to be used).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>cmap_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msrp", "cmap_size", 8)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>timer_interval</varname> (int)</title>
+		<para>
+		The timer interval in seconds to run the procedure for cleaning
+		expired connections.
+		</para>
+		<para>
+		<emphasis>
+			Default value is '60'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timer_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msrp", "timer_interval", 90)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>auth_min_expires</varname> (int)</title>
+		<para>
+		The minimum value accepted for Expires header in AUTH requests.
+		</para>
+		<para>
+		<emphasis>
+			Default value is '60'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>auth_min_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msrp", "auth_min_expiresl", 90)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>auth_max_expires</varname> (int)</title>
+		<para>
+		The maximum value accepted for Expires header in AUTH requests.
+		</para>
+		<para>
+		<emphasis>
+			Default value is '3600'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>auth_max_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("msrp", "auth_max_expiresl", 1800)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -292,6 +370,61 @@ event_route[msrp:frame-in] {
 event_route[msrp:frame-in] {
     ...
     msrp_reply_flags("1");
+    ...
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">msrp_cmap_save()</function>
+	    </title>
+	    <para>
+		Save details of a MSRP connection upon AUTH request inside
+		the internal map table, indexed by session id.
+		</para>
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msrp_cmap_save</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[msrp:frame-in] {
+    ...
+	if(metod=="AUTH") { msrp_cmap_save(); exit; }
+    ...
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">msrp_cmap_lookup()</function>
+	    </title>
+	    <para>
+		Lookup MSRP connection details for current session id.
+		</para>
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msrp_cmap_lookup</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[msrp:frame-in] {
+    ...
+	if(metod=="SEND" and $msrp(nexthops)==1) {
+		if(msrp_cmap_lookup()) {
+			msrp_relay();
+		} else {
+			msrp_reply("481", "Session not found");
+		}
+	}
     ...
 }
 ...

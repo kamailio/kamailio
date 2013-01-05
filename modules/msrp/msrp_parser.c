@@ -60,6 +60,7 @@ static msrp_str_id_t _msrp_htypes[] = {
 	{ str_init("Authorization"),        MSRP_HDR_AUTH },
 	{ str_init("WWW-Authenticate"),     MSRP_HDR_WWWAUTH },
 	{ str_init("Authentication-Info"),  MSRP_HDR_AUTHINFO },
+	{ str_init("Expires"),              MSRP_HDR_EXPIRES },
 	{ {0, 0}, 0}
 };
 
@@ -696,5 +697,96 @@ int msrp_parse_hdr_to_path(msrp_frame_t *mf)
 	if(hdr->parsed.flags&MSRP_DATA_SET)
 		return 0;
 	return msrp_parse_hdr_uri_list(hdr);
+}
+
+/**
+ *
+ */
+int msrp_parse_hdr_expires(msrp_frame_t *mf)
+{
+	msrp_hdr_t *hdr;
+	str hbody;
+	int expires;
+
+	hdr = msrp_get_hdr_by_id(mf, MSRP_HDR_EXPIRES);
+	if(hdr==NULL)
+		return -1;
+	if(hdr->parsed.flags&MSRP_DATA_SET)
+		return 0;
+	hbody = hdr->body;
+	trim(&hbody);
+	if(str2sint(&hbody, &expires)<0) {
+		LM_ERR("invalid expires value\n");
+		return -1;
+	}
+	hdr->parsed.flags |= MSRP_DATA_SET;
+	hdr->parsed.free_fn = NULL;
+	hdr->parsed.data = (void*)(long)expires;
+
+	return 0;
+}
+
+/**
+ *
+ */
+int msrp_frame_get_first_from_path(msrp_frame_t *mf, str *sres)
+{
+	str s = {0};
+	msrp_hdr_t *hdr;
+	str_array_t *sar;
+
+	if(msrp_parse_hdr_from_path(mf)<0)
+		return -1;
+	hdr = msrp_get_hdr_by_id(mf, MSRP_HDR_FROM_PATH);
+	if(hdr==NULL)
+		return -1;
+	sar = (str_array_t*)hdr->parsed.data;
+	s = sar->list[sar->size-1];
+	trim(&s);
+	*sres = s;
+	return 0;
+}
+
+/**
+ *
+ */
+int msrp_frame_get_expires(msrp_frame_t *mf, int *expires)
+{
+	msrp_hdr_t *hdr;
+
+	if(msrp_parse_hdr_expires(mf)<0)
+		return -1;
+	hdr = msrp_get_hdr_by_id(mf, MSRP_HDR_AUTH);
+	if(hdr==NULL)
+		return -1;
+	*expires = (int)(long)hdr->parsed.data;
+	return 0;
+}
+
+/**
+ *
+ */
+int msrp_frame_get_sessionid(msrp_frame_t *mf, str *sres)
+{
+	str s = {0};
+	msrp_hdr_t *hdr;
+	str_array_t *sar;
+	msrp_uri_t uri;
+
+	if(msrp_parse_hdr_to_path(mf)<0)
+		return -1;
+	hdr = msrp_get_hdr_by_id(mf, MSRP_HDR_TO_PATH);
+	if(hdr==NULL)
+		return -1;
+	sar = (str_array_t*)hdr->parsed.data;
+	s = sar->list[0];
+	trim(&s);
+	if(msrp_parse_uri(s.s, s.len, &uri)<0 || uri.session.len<=0)
+		return -1;
+	s = uri.session;
+	trim(&s);
+	*sres = s;
+
+	return 0;
 }
 
