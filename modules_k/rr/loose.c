@@ -48,6 +48,7 @@
 #define RR_ERROR -1		/*!< An error occured while processing route set */
 #define RR_DRIVEN 1		/*!< The next hop is determined from the route set */
 #define NOT_RR_DRIVEN -1	/*!< The next hop is not determined from the route set */
+#define FLOW_TOKEN_BROKEN -2	/*!< Outbound flow-token shows evidence of tampering */
 
 #define RR_ROUTE_PREFIX ROUTE_PREFIX "<"
 #define RR_ROUTE_PREFIX_LEN (sizeof(RR_ROUTE_PREFIX)-1)
@@ -581,9 +582,9 @@ static inline int after_strict(struct sip_msg* _m)
 	}
 
 	next_is_strict = is_strict(&puri.params);
-	if ((use_ob = process_outbound(_m, puri.user, &uri) < 0)) {
+	if ((use_ob = process_outbound(_m, puri.user, &uri)) < 0) {
 		LM_ERR("processing outbound flow-token\n");
-		return RR_ERROR;
+		return FLOW_TOKEN_BROKEN;
 	}
 
 	if (!use_ob && enable_double_rr && is_2rr(&puri.params) && is_myself(&puri)) {
@@ -774,9 +775,9 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	next_is_strict = is_strict(&puri.params);
 	routed_params = puri.params;
 	uri_is_myself = is_myself(&puri);
-	if ((use_ob = process_outbound(_m, puri.user, &uri) < 0)) {
+	if ((use_ob = process_outbound(_m, puri.user, &uri)) < 0) {
 		LM_ERR("processing outbound flow-token\n");
-		return RR_ERROR;
+		return FLOW_TOKEN_BROKEN;
 	}
 
 	/* IF the URI was added by me, remove it */
@@ -795,6 +796,11 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 				LM_ERR("failed to remove Route HF\n");
 				return RR_ERROR;
 			}
+
+			/* When using outbound skip past all this stuff and just set
+ 			   the destination */
+			if (use_ob) goto got_uri;
+
 			res = find_next_route(_m, &hdr);
 			if (res < 0) {
 				LM_ERR("failed to find next route\n");
@@ -872,6 +878,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	} else {
 		/* Next hop is loose router */
 		LM_DBG("Next URI is a loose router\n");
+got_uri:
 
 		if (!use_ob) {
 			if(get_maddr_uri(&uri, &puri)!=0) {
