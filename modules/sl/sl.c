@@ -393,12 +393,12 @@ static int w_sl_forward_reply(sip_msg_t* msg, str* code, str* reason)
 		LM_ERR("invalid reply reason value\n");
 		return -1;
 	}
+	/* backup old values */
+	oldscode[0] = msg->first_line.u.reply.status.s[0];
+	oldscode[1] = msg->first_line.u.reply.status.s[1];
+	oldscode[2] = msg->first_line.u.reply.status.s[2];
+	oldncode = msg->first_line.u.reply.statuscode;
 	if(code!=NULL) {
-		/* backup old values */
-		oldscode[0] = msg->first_line.u.reply.status.s[0];
-		oldscode[1] = msg->first_line.u.reply.status.s[1];
-		oldscode[2] = msg->first_line.u.reply.status.s[2];
-		oldncode = msg->first_line.u.reply.statuscode;
 		/* update status code directly in msg buffer */
 		msg->first_line.u.reply.statuscode = (code->s[0]-'0')*100
 			+ (code->s[1]-'0')*10 + code->s[2]-'0';
