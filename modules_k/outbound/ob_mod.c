@@ -104,8 +104,8 @@ static int mod_init(void)
 /* Structure of flow-token
 
    <HMAC-SHA1-80><protocol><dst_ip><dst_port><src_ip><src_port>
-          10     +    1    + 4or16 +    2    +  16   +    2
-	   = 35 bytes minimum and 47 bytes maximum
+          10     +    1    + 4or16 +    2    + 4or16 +    2
+	   = 23 bytes minimum and 47 bytes maximum
 
    <protocol> specifies whether the addresses are IPv4 or IPv6 and the
    transport.
@@ -114,11 +114,11 @@ static int mod_init(void)
 
    IP addresses will be 4 (for IPv6) or 16 (for IPv6) bytes.
 
-   Minimum base64 encoded size: ceiling((35+2)/3)*4 = 52 bytes
+   Minimum base64 encoded size: ceiling((23+2)/3)*4 = 52 bytes
    Maximum base64 encoded size: ceiling((47+2)/3)*4 = 68 bytes
 */
 
-#define UNENC_FLOW_TOKEN_MIN_LENGTH	35
+#define UNENC_FLOW_TOKEN_MIN_LENGTH	23
 #define UNENC_FLOW_TOKEN_MAX_LENGTH	47
 #define SHA1_LENGTH			20
 #define SHA1_80_LENGTH			10
@@ -149,8 +149,8 @@ int encode_flow_token(str *flow_token, struct receive_info rcv)
 	/* Encode source address */
 	for (i = 0; i < (rcv.src_ip.af == AF_INET6 ? 16 : 4); i++)
 		unenc_flow_token[pos++] = rcv.src_ip.u.addr[i];
-	unenc_flow_token[pos++] = (rcv.dst_port >> 8) & 0xff;
-	unenc_flow_token[pos++] =  rcv.dst_port       & 0xff;
+	unenc_flow_token[pos++] = (rcv.src_port >> 8) & 0xff;
+	unenc_flow_token[pos++] =  rcv.src_port       & 0xff;
 
 	/* HMAC-SHA1 the calculated flow-token, truncate to 80 bits, and
 	   prepend onto the flow-token */
@@ -196,28 +196,25 @@ int decode_flow_token(struct receive_info *rcv, str flow_token)
 		return -2;
 	}
 
-	if (flow_token.len != base64_enc_len(UNENC_FLOW_TOKEN_MIN_LENGTH)
-	    && flow_token.len != base64_enc_len(UNENC_FLOW_TOKEN_MAX_LENGTH))
+	if (flow_token.len == 0)
 	{
-		LM_INFO("bad flow-token length.  Length is %d, expected %d"
-			" or %d.\n", flow_token.len,
-			UNENC_FLOW_TOKEN_MIN_LENGTH,
-			UNENC_FLOW_TOKEN_MAX_LENGTH);
+		LM_ERR("no flow-token found\n");
 		return -2;
 	}
 
 	/* base64 decode the flow-token */
 	flow_length = base64_dec((unsigned char *) flow_token.s, flow_token.len,
 			unenc_flow_token, UNENC_FLOW_TOKEN_MAX_LENGTH);
-	if (flow_length == 0)
+	if (flow_length != UNENC_FLOW_TOKEN_MIN_LENGTH
+		&& flow_length != UNENC_FLOW_TOKEN_MAX_LENGTH)
 	{
-		LM_INFO("not a valid base64 encoded string\n");
+		LM_INFO("no flow-token found - bad length (%d)\n", flow_length);
 		return -2;
 	}
 
-	/* At this point the string is the correct length and a valid
-	   base64 string.  It is highly unlikely that this is not meant to be
-	   a flow-token.
+	/* At this point the string is a valid base64 string and the correct
+	   length.  It is highly unlikely that this is not meant to be a
+	   flow-token.
 
 	   HMAC-SHA1 the flow-token (after the hash) and compare with the
 	   truncated hash at the start of the flow-token. */
@@ -252,14 +249,14 @@ int decode_flow_token(struct receive_info *rcv, str flow_token)
 	/* Decode destination address */
 	for (i = 0; i < (rcv->dst_ip.af == AF_INET6 ? 16 : 4); i++)
 		rcv->dst_ip.u.addr[i] = unenc_flow_token[pos++];
-	rcv->dst_port = ((unenc_flow_token[pos++] << 8) & 0xff)
-				| (unenc_flow_token[pos++] & 0xff);
+	rcv->dst_port = unenc_flow_token[pos++] << 8;
+	rcv->dst_port |= unenc_flow_token[pos++];
 
 	/* Decode source address */
 	for (i = 0; i < (rcv->src_ip.af == AF_INET6 ? 16 : 4); i++)
 		rcv->src_ip.u.addr[i] = unenc_flow_token[pos++];
-	rcv->src_port = ((unenc_flow_token[pos++] << 8) & 0xff)
-				| (unenc_flow_token[pos++] & 0xff);
+	rcv->src_port = unenc_flow_token[pos++] << 8;
+	rcv->src_port |= unenc_flow_token[pos++];
 
 	return 0;
 }
@@ -310,22 +307,11 @@ int use_outbound(struct sip_msg *msg)
 			LM_ERR("empty Contact:\n");
 			return 0;
 		}
-		if (parse_uri(contact->uri.s, contact->uri.len, &puri) < 0)
-		{
-			LM_ERR("parsing Contact-URI\n");
-			return 0;
-		}
-		if (parse_params(&puri.params, CLASS_CONTACT, &hooks,
-			&params) != 0)
-		{
-			LM_ERR("parsing Contact-URI parameters\n");
-			return 0;
-		}
-
-		if (msg->REQ_METHOD == METHOD_REGISTER && hooks.contact.reg_id)
+		
+		if (msg->REQ_METHOD == METHOD_REGISTER && contact->reg_id)
 		{
 			LM_INFO("found REGISTER with ;reg-id paramter on"
-				"Contact-URI - outbound used\n");
+				" Contact-URI - outbound used\n");
 			return 1;
 		}
 
