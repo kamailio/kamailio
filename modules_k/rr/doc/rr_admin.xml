@@ -292,6 +292,26 @@ modparam("rr", "enable_socket_mismatch_warning", 0)
 		this comprehensive RFC).
 		</para>
 		<para>
+		Return codes:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>1</emphasis> - route calculation has been successful
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>-1</emphasis> - route calculation has been unsuccessful
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>-2</emphasis> - outbound flow-token shows evidence of tampering
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
 		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>

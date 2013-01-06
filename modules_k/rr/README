@@ -321,6 +321,11 @@ modparam("rr", "enable_socket_mismatch_warning", 0)
    details (grep for “route set” is a good starting point in this
    comprehensive RFC).
 
+   Return codes:
+     * 1 - route calculation has been successful
+     * -1 - route calculation has been unsuccessful
+     * -2 - outbound flow-token shows evidence of tampering
+
    This function can be used from REQUEST_ROUTE.
 
    Example 1.7. loose_route usage
