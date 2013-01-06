@@ -235,6 +235,34 @@ modparam("nathelper", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>ice_candidate_priority_avp</varname> (string)</title>
+		<para>
+		If specified and if value of the avp value is not 0,
+		<function>rtpproxy_manage</function> function adds
+		ICE relay candidate attributes
+		to sdp stream(s) containing ICE candidate attributes.
+		</para>
+		<para>
+		If value of the avp is 1, added candidates
+		have high priority.  If value of the avp is 2 (default),
+		added candidates have low priority.
+		</para>
+		<para>
+		<emphasis>
+		There is no default value meaning that no ICE relay
+		candidates are added in any circumstance.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ice_candidate_priority_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpproxy", "ice_candidate_priority_avp", "$avp(ice_priority)")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

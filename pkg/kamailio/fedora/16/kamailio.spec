@@ -1,6 +1,6 @@
 %define name    kamailio
-%define ver     3.4.0
-%define rel     dev7%{dist}
+%define ver     4.0.0
+%define rel     dev8%{dist}
 
 
 
@@ -507,7 +507,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.db_flatstore
 %doc %{_docdir}/kamailio/modules/README.db2_ops
 %doc %{_docdir}/kamailio/modules/README.debugger
-#%doc %{_docdir}/kamailio/modules/README.dialog2
+%doc %{_docdir}/kamailio/modules/README.dialog2
 %doc %{_docdir}/kamailio/modules/README.enum
 %doc %{_docdir}/kamailio/modules/README.ipops
 %doc %{_docdir}/kamailio/modules/README.malloc_test
@@ -1074,6 +1074,8 @@ fi
 
 
 %changelog
+* Sun Jan 6 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated ver to 4.0.0 and rel to dev8
 * Mon Dec 31 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Added dialog2 and IMS modules to the build
 * Fri Dec 21 2012 Peter Dunkley <peter@dunkley.me.uk>

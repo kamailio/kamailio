@@ -189,7 +189,7 @@ int dlg_ka_run(ticks_t ti)
 		}
 		if(*dlg_ka_list_head == *dlg_ka_list_tail) {
 			*dlg_ka_list_head = NULL;
-			*dlg_ka_list_head = NULL;
+			*dlg_ka_list_tail = NULL;
 		}
 		*dlg_ka_list_head = dka->next;
 		lock_release(dlg_ka_list_lock);
@@ -213,7 +213,7 @@ int dlg_ka_run(ticks_t ti)
 			if(*dlg_ka_list_tail!=NULL)
 				(*dlg_ka_list_tail)->next = dka;
 			if(*dlg_ka_list_head==NULL)
-				*dlg_ka_list_tail = dka;
+				*dlg_ka_list_head = dka;
 			*dlg_ka_list_tail = dka;
 			lock_release(dlg_ka_list_lock);
 		}

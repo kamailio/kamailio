@@ -50,6 +50,7 @@
 #include "../../lib/kcore/statistics.h"
 #include "../../modules/sl/sl.h"
 #include "../../lib/kmi/mi.h"
+#include "../../rpc_lookup.h"
 
 #include "pl_ht.h"
 #include "pl_db.h"
@@ -155,6 +156,8 @@ static mi_export_t mi_cmds [] = {
 	{"pl_push_load",  mi_push_load,  0,                0, 0},
 	{0,0,0,0,0}
 };
+
+static rpc_export_t rpc_methods[];
 
 /** module exports */
 struct module_exports exports= {
@@ -279,6 +282,11 @@ static void update_cpu_load(void)
 /* initialize ratelimit module */
 static int mod_init(void)
 {
+	if(rpc_register_array(rpc_methods)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
@@ -699,4 +707,84 @@ struct mi_root* mi_push_load(struct mi_root* cmd_tree, void* param)
 bad_syntax:
 	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 }
+
+/* rpc function documentation */
+const char *rpc_pl_stats_doc[2] = {
+	"Print pipelimit statistics: \
+<id> <load> <counter>", 0
+};
+
+const char *rpc_pl_get_pipes_doc[2] = {
+	"Print pipes info: \
+<id> <algorithm> <limit> <counter>", 0
+};
+
+const char *rpc_pl_set_pipe_doc[2] = {
+	"Sets a pipe params: <pipe_id> <pipe_algorithm> <pipe_limit>", 0
+};
+
+const char *rpc_pl_get_pid_doc[2] = {
+	"Print PID Controller parameters for the FEEDBACK algorithm: \
+<ki> <kp> <kd>", 0
+};
+
+const char *rpc_pl_set_pid_doc[2] = {
+	"Sets the PID Controller parameters for the FEEDBACK algorithm: \
+<ki> <kp> <kd>", 0
+};
+
+const char *rpc_pl_push_load_doc[2] = {
+	"Force the value of the load parameter for FEEDBACK algorithm: \
+<load>", 0
+};
+
+/* rpc function implementations */
+void rpc_pl_stats(rpc_t *rpc, void *c);
+void rpc_pl_get_pipes(rpc_t *rpc, void *c);
+void rpc_pl_set_pipe(rpc_t *rpc, void *c);
+
+void rpc_pl_get_pid(rpc_t *rpc, void *c) {
+	rpl_pipe_lock(0);
+	rpc->printf(c, "ki[%f] kp[%f] kd[%f] ", *pid_ki, *pid_kp, *pid_kd);
+	rpl_pipe_release(0);
+}
+
+void rpc_pl_set_pid(rpc_t *rpc, void *c) {
+	double ki, kp, kd;
+
+	if (rpc->scan(c, "fff", &ki, &kp, &kd) < 3) return;
+
+	rpl_pipe_lock(0);
+	*pid_ki = ki;
+	*pid_kp = kp;
+	*pid_kd = kd;
+	rpl_pipe_release(0);
+}
+
+void rpc_pl_push_load(rpc_t *rpc, void *c) {
+	double value;
+
+	if (rpc->scan(c, "f", &value) < 1) return;
+
+	if (value < 0.0 || value > 1.0) {
+		LM_ERR("value out of range: %0.3f in not in [0.0,1.0]\n", value);
+		rpc->fault(c, 400, "Value out of range");
+		return;
+	}
+	rpl_pipe_lock(0);
+	*load_value = value;
+	rpl_pipe_release(0);
+
+	do_update_load();
+}
+
+static rpc_export_t rpc_methods[] = {
+	{"pl.stats",      rpc_pl_stats,     rpc_pl_stats_doc,     0},
+	{"pl.get_pipes",  rpc_pl_get_pipes, rpc_pl_get_pipes_doc, 0},
+	{"pl.set_pipe",   rpc_pl_set_pipe,  rpc_pl_set_pipe_doc,  0},
+	{"pl.get_pid",    rpc_pl_get_pid,   rpc_pl_get_pid_doc,   0},
+	{"pl.set_pid",    rpc_pl_set_pid,   rpc_pl_set_pid_doc,   0},
+	{"pl.push_load",  rpc_pl_push_load, rpc_pl_push_load_doc, 0},
+	{0, 0, 0, 0}
+};
 

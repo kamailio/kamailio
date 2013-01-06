@@ -14,8 +14,8 @@ libxml2_includes=-I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
 libxml2_libs=-L$(LOCALBASE)/lib -lxml2
 INCLUDES= -I$(CURDIR)/.. -I$(CURDIR)/../.. $(libxml2_includes) 
 LIBS=$(libxml2_libs)
-SERLIBPATH=..
-SER_LIBS=$(SERLIBPATH)/cds/ser_cds
+#SERLIBPATH=..
+#SER_LIBS=$(SERLIBPATH)/cds/ser_cds
 
 include ../../Makefile.libs
 

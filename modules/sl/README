@@ -19,6 +19,7 @@ Daniel-Constantin Mierla
    4. sl_send_reply usage
    5. send_reply usage
    6. sl_reply_error usage
+   7. send_reply usage
 
 1. Overview
 
@@ -92,8 +93,9 @@ modparam("sl", "bind_tm", 0)  # feature disabled
    3.1. sl_send_reply(code, reason)
    3.2. send_reply(code, reason)
    3.3. sl_reply_error()
+   3.4. sl_forward _reply([ code, [ reason ] ])
 
-3.1.  sl_send_reply(code, reason)
+3.1. sl_send_reply(code, reason)
 
    For the current request, a reply is sent back having the given code and
    text reason. The reply is sent stateless, totally independent of the
@@ -108,7 +110,7 @@ modparam("sl", "bind_tm", 0)  # feature disabled
 sl_send_reply("404", "Not found");
 ...
 
-3.2.  send_reply(code, reason)
+3.2. send_reply(code, reason)
 
    For the current request, a reply is sent back having the given code and
    text reason. The reply is sent stateful or stateless, depending of the
@@ -129,7 +131,7 @@ send_reply("404", "Not found");
 send_reply("403", "Invalid user - $fU");
 ...
 
-3.3.  sl_reply_error()
+3.3. sl_reply_error()
 
    Sends back an error reply describing the nature of the last internal
    error. Usually this function should be used after a script function
@@ -138,6 +140,25 @@ send_reply("403", "Invalid user - $fU");
    Example 6. sl_reply_error usage
 ...
 sl_reply_error();
+...
+
+3.4. sl_forward _reply([ code, [ reason ] ])
+
+   Forward statelessy the current received SIP reply, with the option to
+   change the status code and reason text. The new code has to be in the
+   same class. The received reply is forwarded as well by core when the
+   config execution ended, unless it is dropped from config.
+
+   Meaning of the parameters is as follows:
+     * code - Status code.
+     * reason - Reason phrase.
+
+   This function can be used from ONREPLY_ROUTE.
+
+   Example 7. send_reply usage
+...
+if(status=="408")
+    sl_forward_reply("404", "Not found");
 ...
 
 4. Statistics

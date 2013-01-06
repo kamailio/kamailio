@@ -159,10 +159,10 @@ endif
 INSTALL_FLAVOUR=$(FLAVOUR)
 
 #version number
-VERSION = 3
-PATCHLEVEL = 4
+VERSION = 4
+PATCHLEVEL = 0
 SUBLEVEL =  0
-EXTRAVERSION = -dev7
+EXTRAVERSION = -dev8
 
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
