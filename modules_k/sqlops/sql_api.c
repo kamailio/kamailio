@@ -450,22 +450,22 @@ int sql_exec_xquery(struct sip_msg *msg, sql_con_t *con, str *query,
 				{
 					case DB1_STRING:
 						val.type = SR_XTYPE_STR;
-						sv.s=
+						val.v.s.s=
 							(char*)RES_ROWS(db_res)[i].values[j].val.string_val;
-						sv.len=strlen(sv.s);
+						val.v.s.len=strlen(val.v.s.s);
 					break;
 					case DB1_STR:
 						val.type = SR_XTYPE_STR;
-						sv.len=
+						val.v.s.len=
 							RES_ROWS(db_res)[i].values[j].val.str_val.len;
-						sv.s=
+						val.v.s.s=
 							(char*)RES_ROWS(db_res)[i].values[j].val.str_val.s;
 					break;
 					case DB1_BLOB:
 						val.type = SR_XTYPE_STR;
-						sv.len=
+						val.v.s.len=
 							RES_ROWS(db_res)[i].values[j].val.blob_val.len;
-						sv.s=
+						val.v.s.s=
 							(char*)RES_ROWS(db_res)[i].values[j].val.blob_val.s;
 					break;
 					case DB1_INT:
@@ -491,28 +491,10 @@ int sql_exec_xquery(struct sip_msg *msg, sql_con_t *con, str *query,
 					default:
 						val.type = SR_XTYPE_NULL;
 				}
-				if(val.type == SR_XTYPE_STR)
-				{
-					if(sv.len==0)
-					{
-						val.v.s = _sql_empty_str;
-					} else {
-						val.v.s.s = (char*)pkg_malloc(sv.len*sizeof(char));
-						if(val.v.s.s == NULL)
-						{
-							LM_ERR("no more memory\n");
-							goto error;
-						}
-						memcpy(val.v.s.s, sv.s, sv.len);
-						val.v.s.len = sv.len;
-					}
-				}
 			}
 			/* Add column to current row, under the column's name */
 			LM_DBG("Adding column: %.*s\n", RES_NAMES(db_res)[j]->len, RES_NAMES(db_res)[j]->s);
 			xavp_add_value(RES_NAMES(db_res)[j], &val, &row);
-			if (val.type == SR_XTYPE_STR && val.v.s.len > 0)
-				pkg_free(val.v.s.s);
 		}
 		/* Add row to result xavp */
 		val.type = SR_XTYPE_XAVP;
@@ -523,11 +505,6 @@ int sql_exec_xquery(struct sip_msg *msg, sql_con_t *con, str *query,
 
 	con->dbf.free_result(con->dbh, db_res);
 	return 1;
-
-error:
-	con->dbf.free_result(con->dbh, db_res);
-	return -1;
-
 }
 
 int sql_do_xquery(struct sip_msg *msg, sql_con_t *con, pv_elem_t *query,
