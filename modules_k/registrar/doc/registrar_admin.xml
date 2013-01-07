@@ -721,6 +721,50 @@ modparam("registrar", "gruu_enabled", 0)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>outbound_mode</varname> (integer)</title>
+		<para>
+		If set to 0 then this module will accept REGISTER requests
+		that do not contain a Supported: header with the outbound
+		options-tag. The 200 OK response to REGISTER requests that this
+		module generates will not contain Require: or Supported: headers
+		with the outbound options tag.
+		</para>
+		<para>
+		If set to 1 then this module will accept REGISTER requests
+		that do not contain a Supported: header with the outbound
+		options-tag. The 200 OK response to REGISTER requests that this
+		module generates will contain a Supported: header with the
+		outbound options tag.
+		</para>
+		<para>
+		If set to 2 then this module will reject REGISTER requests
+		that do not contain a Supported: header with the outbound
+		options-tag. The 200 OK response to REGISTER requests that this
+		module generates will contain Require: and Supported: headers
+		with the outbound options tag.
+		</para>
+		<para>
+		Set this parameter to 2 if you are using SIP Outbound (RFC
+		5626) and want your Edge Proxy to insert a Flow-Timer: header
+		into the 200 OK response to REGISTERs (as per RFC 5626 section
+		5.4).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>outbound_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "outbound_mode", 2)
+...
+		</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	
