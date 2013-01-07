@@ -119,6 +119,7 @@ int path_use_params = 0;			/*!< if the received- and nat-parameters of last Path
 sruid_t _reg_sruid;
 
 int reg_gruu_enabled = 1;
+int reg_outbound_mode = 0;
 
 /* Populate this AVP if testing for specific registration instance. */
 char *reg_callid_avp_param = 0;
@@ -222,6 +223,7 @@ static param_export_t params[] = {
 	{"xavp_cfg",           STR_PARAM, &reg_xavp_cfg.s     					},
 	{"xavp_rcd",           STR_PARAM, &reg_xavp_rcd.s     					},
 	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    					},
+	{"outbound_mode",      INT_PARAM, &reg_outbound_mode					},
 	{0, 0, 0}
 };
 
@@ -371,6 +373,11 @@ static int mod_init(void)
 	} else if (sock_flag!=-1) {
 		LM_WARN("sock_flag defined but no sock_hdr_name -> reseting flag\n");
 		sock_flag = -1;
+	}
+
+	if (reg_outbound_mode < 0 || reg_outbound_mode > 2) {
+		LM_ERR("outbound_mode modparam must be 0 (not supported), 1 (supported), or 2 (supported and required)\n");
+		return -1;
 	}
 
 	/* fix the flags */

@@ -67,6 +67,10 @@
 #define REG_SAVE_REPL_FL    (1<<2)
 #define REG_SAVE_ALL_FL     ((1<<3)-1)
 
+#define REG_OUTBOUND_NONE	0
+#define REG_OUTBOUND_SUPPORTED	1
+#define REG_OUTBOUND_REQUIRE	2
+
 extern int nat_flag;
 extern int tcp_persistent_flag;
 extern int received_avp;
@@ -84,6 +88,7 @@ extern int path_enabled;
 extern int path_mode;
 extern int path_use_params;
 extern int reg_gruu_enabled;
+extern int reg_outbound_mode;
 
 extern str sock_hdr_name;
 extern int sock_flag;
