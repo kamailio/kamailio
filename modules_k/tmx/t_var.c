@@ -21,6 +21,7 @@
  */
 
 #include "../../mem/mem.h"
+#include "../../dset.h"
 
 #include "tmx_mod.h"
 #include "t_var.h"
@@ -367,16 +368,42 @@ int pv_get_tm_branch_idx(struct sip_msg *msg, pv_param_t *param,
 {
 	int l = 0;
 	char *ch = NULL;
+	struct cell *t;
 	tm_ctx_t *tcx = 0;
-	int idx = 0;
+	int idx = T_BR_UNDEFINED;
 
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	tcx = _tmx_tmb.tm_ctx_get();
-	if(tcx != NULL)
-		idx = tcx->branch_index;
-	
+	/* statefull replies have the branch_index set */
+	if(msg->first_line.type == SIP_REPLY && route_type != CORE_ONREPLY_ROUTE) {
+		tcx = _tmx_tmb.tm_ctx_get();
+		if(tcx != NULL)
+			idx = tcx->branch_index;
+	} else switch(route_type) {
+		case BRANCH_ROUTE:
+			/* branches have their index set */
+			tcx = _tmx_tmb.tm_ctx_get();
+			if(tcx != NULL)
+				idx = tcx->branch_index;
+			break;
+		case REQUEST_ROUTE:
+			/* take the branch number from the number of added branches */
+			idx = nr_branches;
+			break;
+		case FAILURE_ROUTE:
+			/* first get the transaction */
+			t = _tmx_tmb.t_gett();
+			if ( t == NULL && t == T_UNDEFINED ) {
+				return -1;
+			}
+			/* add the currently added branches to the number of
+			 * completed branches in the transaction
+			 */
+			idx = t->nr_of_outgoings + nr_branches;
+			break;
+	}
+
 	ch = sint2str(idx, &l);
 
 	res->rs.s = ch;

@@ -1296,6 +1296,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 							FL_TIMEOUT:0) | 
 				((Trans->uac[picked_branch].request.flags & F_RB_REPLIED)?
 						 	FL_REPLIED:0);
+			tm_ctx_set_branch_index(picked_branch);
 			run_failure_handlers( Trans, Trans->uac[picked_branch].reply,
 									picked_code, extra_flags);
 			if (unlikely((drop_replies==3 && branch_cnt<Trans->nr_of_outgoings) ||
