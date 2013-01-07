@@ -1,6 +1,9 @@
 /*
  * $Id$
  *
+ * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
+ * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
+ * 
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
@@ -14,7 +17,9 @@
  * improved architecture
  * 
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Focus. Thanks for great work! This is an effort to 
+ * FhG Fokus. 
+ * Copyright (C) 2004-2006 FhG Fokus
+ * Thanks for great work! This is an effort to 
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -42,6 +47,7 @@
 #define _CDP__H
 
 #include "../../sr_module.h"
+#include "statistics.h"
 
 #define M_NAME "cdp"
 
@@ -49,6 +55,5 @@
 static int cdp_init( void );
 static int cdp_child_init( int rank );
 static int cdp_exit( void );
-
 
 #endif

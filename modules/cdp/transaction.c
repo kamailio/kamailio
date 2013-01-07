@@ -1,6 +1,9 @@
 /*
  * $Id$
  *
+ * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
+ * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
+ * 
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
@@ -14,7 +17,9 @@
  * improved architecture
  * 
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Focus. Thanks for great work! This is an effort to 
+ * FhG Fokus. 
+ * Copyright (C) 2004-2006 FhG Fokus
+ * Thanks for great work! This is an effort to 
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -76,13 +81,13 @@ int cdp_trans_destroy()
 			t = trans_list->head;
 			trans_list->head = t->next;
 			cdp_free_trans(t);
-		}		
+		}
 		lock_destroy(trans_list->lock);
 		lock_dealloc((void*)trans_list->lock);
 		shm_free(trans_list);
 		trans_list = 0;
 	}
-	
+
 	return 1;
 }
 /**
@@ -92,7 +97,7 @@ int cdp_trans_destroy()
  * @param ptr - generic pointer to pass to the callback on call
  * @param timeout - timeout time in seconds
  * @param auto_drop - whether to auto drop the transaction on event, or let the application do it later
- * @returns the created cdp_trans_t* or NULL on error 
+ * @returns the created cdp_trans_t* or NULL on error
  */
 inline cdp_trans_t* cdp_add_trans(AAAMessage *msg,AAATransactionCallback_f *cb, void *ptr,int timeout,int auto_drop)
 {
@@ -108,6 +113,8 @@ inline cdp_trans_t* cdp_add_trans(AAAMessage *msg,AAATransactionCallback_f *cb, 
 		shm_free(x);
 		return 0;
 	}
+
+	gettimeofday(&x->started, NULL);
 	x->endtoendid = msg->endtoendId;
 	x->hopbyhopid = msg->hopbyhopId;
 	x->cb = cb;
@@ -183,27 +190,28 @@ inline void cdp_free_trans(cdp_trans_t *x)
  */
 int cdp_trans_timer(time_t now, void* ptr)
 {
-	cdp_trans_t *x,*n;	
+	cdp_trans_t *x,*n;
 	LM_DBG("trans_timer(): taking care of diameter transactions...\n");
 	lock_get(trans_list->lock);
 	x = trans_list->head;
 	while(x)
 	{
 		if (now>x->expires){
+            update_stat(stat_cdp_timeouts, 1);		//Transaction has timed out waiting for response
 			x->ans = 0;
 			if (x->cb){
-				(x->cb)(1,*(x->ptr),0);
+				(x->cb)(1,*(x->ptr),0, (now - x->expires));
 			}
 			n = x->next;
-			
+
 			if (x->prev) x->prev->next = x->next;
 			else trans_list->head = x->next;
 			if (x->next) x->next->prev = x->prev;
 			else trans_list->tail = x->prev;
 			if (x->auto_drop) cdp_free_trans(x);
-			
+
 			x = n;
-		} else 
+		} else
 			x = x->next;
 	}
 	lock_release(trans_list->lock);
@@ -219,15 +227,15 @@ int cdp_trans_timer(time_t now, void* ptr)
 * @param app_id - id of the request's application
 * @param cmd_code - request's code
 * @returns the AAATransaction*
-*/				
+*/
 AAATransaction *AAACreateTransaction(AAAApplicationId app_id,AAACommandCode cmd_code)
 {
 	AAATransaction *t;
 	t = shm_malloc(sizeof(AAATransaction));
 	if (!t) return 0;
-	memset(t,0,sizeof(AAATransaction));	
+	memset(t,0,sizeof(AAATransaction));
 	t->application_id=app_id;
-	t->command_code=cmd_code;			
+	t->command_code=cmd_code;
 	return t;
 }
 

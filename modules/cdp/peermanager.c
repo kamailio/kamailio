@@ -1,6 +1,9 @@
 /*
  * $Id$
  *
+ * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
+ * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
+ * 
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
@@ -14,7 +17,9 @@
  * improved architecture
  * 
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Focus. Thanks for great work! This is an effort to 
+ * FhG Fokus. 
+ * Copyright (C) 2004-2006 FhG Fokus
+ * Thanks for great work! This is an effort to 
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -60,7 +65,7 @@ AAAMsgIdentifier *endtoend_id=0;/**< Current id for End-to-end */
 gen_lock_t *msg_id_lock;		/**< lock for the message identifier changes */
 
 /**
- * Initializes the Peer Manager. 
+ * Initializes the Peer Manager.
  * The initial list of peers is taken from the configuration provided
  * @param config - configuration for initial peers
  * @returns 1
@@ -71,20 +76,20 @@ int peer_manager_init(dp_config *config)
 	peer *p;
 	LM_DBG("peer_manager_init(): Peer Manager initialization...\n");
 	peer_list = shm_malloc(sizeof(peer_list_t));
-	peer_list->head = 0; 
+	peer_list->head = 0;
 	peer_list->tail = 0;
 	peer_list_lock = lock_alloc();
 	peer_list_lock = lock_init(peer_list_lock);
-	
+
 	hopbyhop_id = shm_malloc(sizeof(AAAMsgIdentifier));
 	endtoend_id = shm_malloc(sizeof(AAAMsgIdentifier));
 	msg_id_lock = lock_alloc();
 	msg_id_lock = lock_init(msg_id_lock);
-	
+
 	srand((unsigned int)time(0));
 	*hopbyhop_id = rand();
 	*endtoend_id = (time(0)&0xFFF)<<20;
-	*endtoend_id |= rand() & 0xFFFFF;	
+	*endtoend_id |= rand() & 0xFFFFF;
 
 	for(i=0;i<config->peers_cnt;i++){
 		p = new_peer(config->peers[i].fqdn,config->peers[i].realm,config->peers[i].port);
@@ -92,9 +97,9 @@ int peer_manager_init(dp_config *config)
 		p->is_dynamic = 0;
 		add_peer(p);
 	}
-	
+
 	add_timer(1,0,&peer_timer,0);
-	
+
 	return 1;
 }
 
@@ -116,11 +121,11 @@ void peer_manager_destroy()
 
 /*	lock_get(msg_id_lock);	*/
 	shm_free(hopbyhop_id);
-	shm_free(endtoend_id);	
+	shm_free(endtoend_id);
 	lock_destroy(msg_id_lock);
 	lock_dealloc((void*)msg_id_lock);
 
-	shm_free(peer_list);	
+	shm_free(peer_list);
 	lock_destroy(peer_list_lock);
 	lock_dealloc((void*)peer_list_lock);
 	LM_DBG("peer_manager_init(): ...Peer Manager destroyed\n");
@@ -130,25 +135,19 @@ void peer_manager_destroy()
  * Logs the list of peers
  * @param level - log level to print to
  */
-void log_peer_list(int level)
+void log_peer_list()
 {
 	/* must have lock on peer_list_lock when calling this!!! */
 	peer *p;
 	int i;
-#ifdef SER_MOD_INTERFACE
-	if (!is_printable(level))
-#else		
-	if (debug<level)
-#endif
-		return;
-	
-	LOG(level,"--- Peer List: ---\n");
+
+    LM_DBG("--- Peer List: ---\n");
 	for(p = peer_list->head;p;p = p->next){
-		LOG(level,ANSI_GREEN" S["ANSI_YELLOW"%s"ANSI_GREEN"] "ANSI_BLUE"%.*s:%d"ANSI_GREEN" D["ANSI_RED"%c"ANSI_GREEN"]\n",dp_states[p->state],p->fqdn.len,p->fqdn.s,p->port,p->is_dynamic?'X':' ');
+		LM_DBG(ANSI_GREEN" S["ANSI_YELLOW"%s"ANSI_GREEN"] "ANSI_BLUE"%.*s:%d"ANSI_GREEN" D["ANSI_RED"%c"ANSI_GREEN"]\n",dp_states[p->state],p->fqdn.len,p->fqdn.s,p->port,p->is_dynamic?'X':' ');
 		for(i=0;i<p->applications_cnt;i++)
-			LOG(level,ANSI_YELLOW"\t [%d,%d]"ANSI_GREEN"\n",p->applications[i].id,p->applications[i].vendor);
+			LM_DBG(ANSI_YELLOW"\t [%d,%d]"ANSI_GREEN"\n",p->applications[i].id,p->applications[i].vendor);
 	}
-	LOG(level,"------------------\n");		 
+	LM_DBG("------------------\n");
 }
 
 /**
@@ -170,7 +169,7 @@ void add_peer(peer *p)
 /**
  * Removes a peer from the peer list
  * @param p - the peer to remove
- */ 
+ */
 void remove_peer(peer *p)
 {
 	peer *i;
@@ -194,7 +193,7 @@ peer *get_peer_from_sock(int sock)
 {
 	peer *i;
 	lock_get(peer_list_lock);
-	
+
 	i = peer_list->head;
 	while(i&&i->I_sock!=sock&&i->R_sock!=sock) i = i->next;
 	lock_release(peer_list_lock);
@@ -213,7 +212,7 @@ peer *get_peer_from_fqdn(str fqdn,str realm)
 	lock_get(peer_list_lock);
 	i = peer_list->head;
 	while(i){
-		if (fqdn.len == i->fqdn.len && strncasecmp(fqdn.s,i->fqdn.s,fqdn.len)==0) 
+		if (fqdn.len == i->fqdn.len && strncasecmp(fqdn.s,i->fqdn.s,fqdn.len)==0)
 			break;
 		i = i->next;
 	}
@@ -240,7 +239,7 @@ peer *get_peer_by_fqdn(str *fqdn)
 	lock_get(peer_list_lock);
 	i = peer_list->head;
 	while(i){
-		if (fqdn->len == i->fqdn.len && strncasecmp(fqdn->s,i->fqdn.s,fqdn->len)==0) 
+		if (fqdn->len == i->fqdn.len && strncasecmp(fqdn->s,i->fqdn.s,fqdn->len)==0)
 			break;
 		i = i->next;
 	}
@@ -278,7 +277,7 @@ int peer_timer(time_t now,void *ptr)
 					touch_peer(p);
 					sm_process(p,Start,0,1,0);
 					break;
-				/* timeouts */	
+				/* timeouts */
 				case Wait_Conn_Ack:
 				case Wait_I_CEA:
 				case Closing:
@@ -286,7 +285,7 @@ int peer_timer(time_t now,void *ptr)
 				case Wait_Conn_Ack_Elect:
 					touch_peer(p);
 					sm_process(p,Timeout,0,1,0);
-					break;	
+					break;
 				/* inactivity detected */
 				case I_Open:
 				case R_Open:
@@ -300,18 +299,18 @@ int peer_timer(time_t now,void *ptr)
 						touch_peer(p);
 					}
 					break;
-				/* ignored states */	
+				/* ignored states */
 				/* unknown states */
 				default:
 					LM_ERR("peer_timer(): Peer %.*s inactive  in state %d\n",
 						p->fqdn.len,p->fqdn.s,p->state);
-			}				
+			}
 		}
 		lock_release(p->lock);
 		p = n;
 	}
 	lock_release(peer_list_lock);
-	log_peer_list(L_INFO);
+	log_peer_list();
 	i = config->tc/5;
 	if (i<=0) i=1;
 	return i;

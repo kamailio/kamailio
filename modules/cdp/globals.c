@@ -1,6 +1,9 @@
 /*
  * $Id$
  *
+ * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
+ * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
+ * 
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
@@ -14,7 +17,9 @@
  * improved architecture
  * 
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Focus. Thanks for great work! This is an effort to 
+ * FhG Fokus. 
+ * Copyright (C) 2004-2006 FhG Fokus
+ * Thanks for great work! This is an effort to 
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -46,34 +51,34 @@
 //str aaa_identity={"unset_identity",14};
 
 /** initialized the pkg and shm memory */
-int init_memory(int show_status)
-{
-#ifdef PKG_MALLOC
-	if (init_pkg_mallocs()==-1)
-		goto error;
-	if (show_status){
-		LM_DBG( "Memory status (pkg):\n");
-		pkg_status();
-	}
-#endif
-
-#ifdef SHM_MEM
-	
-	if (init_shm_mallocs(
-#ifdef SER_MOD_INTERFACE
-				1
-#endif
-		)==-1)
-		goto error;
-	if (show_status){
-		LM_DBG( "Memory status (shm):\n");
-		shm_status();
-	}
-#endif
-	return 1;
-error:
-	return 0;
-}	
+//int init_memory(int show_status)
+//{
+//#ifdef PKG_MALLOC
+//	if (init_pkg_mallocs()==-1)
+//		goto error;
+//	if (show_status){
+//		LM_DBG( "Memory status (pkg):\n");
+//		pkg_status();
+//	}
+//#endif
+//
+//#ifdef SHM_MEM
+//
+//	if (init_shm_mallocs(
+//#ifdef SER_MOD_INTERFACE
+//				1
+//#endif
+//		)==-1)
+//		goto error;
+//	if (show_status){
+//		LM_DBG( "Memory status (shm):\n");
+//		shm_status();
+//	}
+//#endif
+//	return 1;
+//error:
+//	return 0;
+//}
 
 /** call it before exiting; if show_status==1, mem status is displayed */
 void destroy_memory(int show_status)

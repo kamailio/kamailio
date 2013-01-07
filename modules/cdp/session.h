@@ -1,6 +1,9 @@
 /*
  * $Id$
  *
+ * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
+ * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
+ * 
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
@@ -14,7 +17,9 @@
  * improved architecture
  * 
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Focus. Thanks for great work! This is an effort to 
+ * FhG Fokus. 
+ * Copyright (C) 2004-2006 FhG Fokus
+ * Thanks for great work! This is an effort to 
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -52,16 +57,16 @@ typedef void (AAASessionCallback_f)(int event,void *session);
 /** Types of sessions */
 typedef enum {
 	UNKNOWN_SESSION			= 0,
-	
+
 	AUTH_CLIENT_STATELESS	= 1,
 	AUTH_SERVER_STATELESS	= 2,
 	AUTH_CLIENT_STATEFULL	= 3,
 	AUTH_SERVER_STATEFULL	= 4,
-	
+
 	ACCT_CLIENT				= 5,
 	ACCT_SERVER_STATELESS	= 6,
 	ACCT_SERVER_STATEFULL	= 7,
-		
+
 } cdp_session_type_t;
 
 /** auth session states */
@@ -76,7 +81,7 @@ typedef enum {
 typedef enum {
 	AUTH_EV_START						=0,
 	AUTH_EV_SEND_REQ 					=1,
-	AUTH_EV_SEND_ANS					=2,	
+	AUTH_EV_SEND_ANS					=2,
 	AUTH_EV_SEND_ANS_SUCCESS			=3,
 	AUTH_EV_SEND_ANS_UNSUCCESS			=4,
 	AUTH_EV_RECV_ASR					=5,
@@ -101,15 +106,15 @@ typedef enum {
 	AUTH_EV_SESSION_MODIFIED			=24,
 	AUTH_EV_SESSION_DROP				=25,
 } cdp_auth_event;
-	
+
 /** structure for auth session */
 typedef struct _cdp_auth_session_t {
 	cdp_auth_state state;	/**< current state */
-	
+
 	time_t timeout;			/**< absolute time for session timeout  -1 means forever */
 	time_t lifetime;		/**< absolute time for auth lifetime -1 means forever */
-	time_t grace_period;	/**< grace_period in seconds 	*/ 
-	void* generic_data;			
+	time_t grace_period;	/**< grace_period in seconds 	*/
+	void* generic_data;
 } cdp_auth_session_t;
 
 /** Accounting states definition */
@@ -147,16 +152,16 @@ typedef enum {
 typedef struct _acc_session {
 
 	cdp_acc_state_t state;						/**< current state */
-	
+
 	str dlgid;       						/**< application-level identifier, combines application session (e.g. SIP dialog) or event with diameter accounting session */
-	
+
 	unsigned int acct_record_number; 		/**< number of last accounting record within this session */
 	time_t aii;	 							/**< expiration of Acct-Interim-Interval (seconds) */
 	time_t timeout;							/**< session timeout (seconds) */
-	
-	
-	void* generic_data;			
-	
+
+
+	void* generic_data;
+
 } cdp_acc_session_t;
 
 
@@ -166,32 +171,32 @@ typedef struct _acc_session {
 typedef struct _cdp_session_t {
 	unsigned int hash;
 	str id;                             /**< session-ID as string */
-	unsigned int application_id;		/**< specific application id associated with this session */	
+	unsigned int application_id;		/**< specific application id associated with this session */
 	unsigned int vendor_id;				/**< specific vendor id for this session */
 	cdp_session_type_t type;
-	str dest_host, dest_realm; /*the destination host and realm, used only for auth, for the moment*/	
+	str dest_host, dest_realm; /*the destination host and realm, used only for auth, for the moment*/
 	union {
 		cdp_auth_session_t auth;
 		cdp_acc_session_t acc;
 		void *generic_data;
 	} u;
-	 
+
 	AAASessionCallback_f *cb;			/**< session callback function */
-	
-	struct _cdp_session_t *next,*prev; 	
+
+	struct _cdp_session_t *next,*prev;
 } cdp_session_t;
 
 /** Session list structure */
-typedef struct _cdp_session_list_t {		
+typedef struct _cdp_session_list_t {
 	gen_lock_t *lock;				/**< lock for list operations */
-	cdp_session_t *head,*tail;		/**< first, last sessions in the list */ 
+	cdp_session_t *head,*tail;		/**< first, last sessions in the list */
 } cdp_session_list_t;
 
 
 
 int cdp_sessions_init(int hash_size);
 int cdp_sessions_destroy();
-void cdp_sessions_log(int level);
+void cdp_sessions_log();
 int cdp_sessions_timer(time_t now, void* ptr);
 
 cdp_session_t* cdp_get_session(str id);

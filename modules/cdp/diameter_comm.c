@@ -1,6 +1,9 @@
 /*
  * $Id$
  *
+ * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
+ * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
+ * 
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
@@ -14,7 +17,9 @@
  * improved architecture
  * 
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Focus. Thanks for great work! This is an effort to 
+ * FhG Fokus. 
+ * Copyright (C) 2004-2006 FhG Fokus
+ * Thanks for great work! This is an effort to 
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -49,7 +54,7 @@
 #include "globals.h"
 
 extern dp_config *config;				/**< Configuration for this diameter peer 	*/
-extern unsigned int latency_threshold;	/**<max delay for Diameter call */
+extern unsigned int* latency_threshold_p;	/**<max delay for Diameter call */
 
 				/* CALLBACKS */
 extern handler_list *handlers; 		/**< list of handlers */
@@ -119,10 +124,10 @@ int AAAAddResponseHandler(AAAResponseHandler_f *f,void *param)
  * @param peer_id - FQDN of the peer to send
  * @param callback_f - callback to be called on transactional response or transaction timeout
  * @param callback_param - generic parameter to call the transactional callback function with
- * @returns 1 on success, 0 on failure 
+ * @returns 1 on success, 0 on failure
  * \todo remove peer_id and add Realm routing
  */
-AAAReturnCode AAASendMessage(	
+AAAReturnCode AAASendMessage(
 		AAAMessage *message,
 		AAATransactionCallback_f *callback_f,
 		void *callback_param)
@@ -144,13 +149,13 @@ AAAReturnCode AAASendMessage(
 		else
 			LM_ERR("AAASendMessage(): can't add transaction callback for answer.\n");
 	}
-	
+
 //	if (!peer_send_msg(p,message))
-	if (!sm_process(p,Send_Message,message,0,0))	
+	if (!sm_process(p,Send_Message,message,0,0))
 		goto error;
-		
+
 	return 1;
-error:	
+error:
 	AAAFreeMessage(&message);
 	return 0;
 }
@@ -162,12 +167,12 @@ error:
  * @param peer_id - FQDN of the peer to send
  * @param callback_f - callback to be called on transactional response or transaction timeout
  * @param callback_param - generic parameter to call the transactional callback function with
- * @returns 1 on success, 0 on failure 
+ * @returns 1 on success, 0 on failure
  * \todo remove peer_id and add Realm routing
  */
-AAAReturnCode AAASendMessageToPeer(	
+AAAReturnCode AAASendMessageToPeer(
 		AAAMessage *message,
-		str *peer_id, 
+		str *peer_id,
 		AAATransactionCallback_f *callback_f,
 		void *callback_param)
 {
@@ -188,13 +193,13 @@ AAAReturnCode AAASendMessageToPeer(
 		else
 			LM_ERR("AAASendMessageToPeer(): can't add transaction callback for answer.\n");
 	}
-		
+
 //	if (!peer_send_msg(p,message))
-	if (!sm_process(p,Send_Message,message,0,0))	
+	if (!sm_process(p,Send_Message,message,0,0))
 		goto error;
-		
+
 	return 1;
-error:	
+error:
 	AAAFreeMessage(&message);
 	return 0;
 }
@@ -203,15 +208,15 @@ error:
 /**
  * Generic callback used by AAASendRecvMessage() to block until a transactional response
  * is received.
- * The AAASendRecvMessage() is basically a AAASendMessage() that has a callback 
- * (this function) that blocks until a transactional response or timeout is received and 
+ * The AAASendRecvMessage() is basically a AAASendMessage() that has a callback
+ * (this function) that blocks until a transactional response or timeout is received and
  * then it returns that.
- *  
+ *
  * @param is_timeout - if this is a time-out or response event
  * @param param - generic parameter to call the transactional callback function with
  * @param ans - the answer for the callback
  */
-void sendrecv_cb(int is_timeout,void *param,AAAMessage *ans)
+void sendrecv_cb(int is_timeout,void *param,AAAMessage *ans, long elapsed_msecs)
 {
 	if (sem_release((gen_sem_t*)param)<0)
 		LM_ERR("sendrecv_cb(): Failed to unlock a transactional sendrecv! > %s\n",strerror(errno));
@@ -219,10 +224,10 @@ void sendrecv_cb(int is_timeout,void *param,AAAMessage *ans)
 
 /**
  * Send a AAAMessage synchronously.
- * This blocks until a response is received or a transactional time-out happens. 
+ * This blocks until a response is received or a transactional time-out happens.
  * @param message - the request to be sent
  * @param peer_id - FQDN of the peer to send
- * @returns 1 on success, 0 on failure 
+ * @returns 1 on success, 0 on failure
  * \todo remove peer_id and add Realm routing
  * \todo replace the busy-waiting lock in here with one that does not consume CPU
  */
@@ -232,8 +237,11 @@ AAAMessage* AAASendRecvMessage(AAAMessage *message)
 	gen_sem_t *sem=0;
 	cdp_trans_t *t;
 	AAAMessage *ans;
-	unsigned int ms = 0;
-	
+    struct timeval start, stop;
+    long elapsed_usecs=0, elapsed_millis=0;
+
+    gettimeofday(&start, NULL);
+
 	p = get_routing_peer(message);
 	if (!p) {
 		LM_ERR("AAASendRecvMessage(): Can't find a suitable connected peer in the routing table.\n");
@@ -243,23 +251,16 @@ AAAMessage* AAASendRecvMessage(AAAMessage *message)
 		LM_ERR("AAASendRecvMessage(): Peer not connected to %.*s\n",p->fqdn.len,p->fqdn.s);
 		goto error;
 	}
-	
-	
+
+
 	if (is_req(message)){
 		sem_new(sem,0);
 		t = cdp_add_trans(message,sendrecv_cb,(void*)sem,config->transaction_timeout,0);
 
-		ms = TICKS_TO_MS(get_ticks_raw());
-//		if (!peer_send_msg(p,message)) {
-		if (!sm_process(p,Send_Message,message,0,0)){	
-			sem_free(sem);	
+		if (!sm_process(p,Send_Message,message,0,0)){
+			sem_free(sem);
 			goto error;
 		}
-		ms = TICKS_TO_MS(get_ticks_raw()) - ms;
-		if (ms > latency_threshold)
-			LM_ERR("took too long to transition state machine for Send_Message [%dms]\n", ms);
-
-		ms = TICKS_TO_MS(get_ticks_raw());
 
 		/* block until callback is executed */
 		while(sem_get(sem)<0){
@@ -267,9 +268,11 @@ AAAMessage* AAASendRecvMessage(AAAMessage *message)
 			LM_WARN("AAASendRecvMessage(): interrupted by signal or something > %s\n",strerror(errno));
 		}
 		sem_free(sem);
-		ms = TICKS_TO_MS(get_ticks_raw()) - ms;
-		if (ms > latency_threshold) {
-			LM_ERR("CDP response to Send_Message took too long (>%dms) - [%dms]\n", latency_threshold, ms);
+		gettimeofday(&stop, NULL);
+        elapsed_usecs = (stop.tv_sec - start.tv_sec)*1000000 + (stop.tv_usec - start.tv_usec);
+        elapsed_millis = elapsed_usecs/1000;
+		if (elapsed_millis > *latency_threshold_p) {
+			LM_ERR("CDP response to Send_Message took too long (>%dms) - [%ldms]\n", *latency_threshold_p, elapsed_millis);
 		}
 		ans = t->ans;
 		cdp_free_trans(t);
@@ -279,8 +282,8 @@ AAAMessage* AAASendRecvMessage(AAAMessage *message)
 		goto error;
 	}
 
-		
-error:	
+
+error:
 out_of_memory:
 	AAAFreeMessage(&message);
 	return 0;
@@ -288,10 +291,10 @@ out_of_memory:
 
 /**
  * Send a AAAMessage synchronously.
- * This blocks until a response is received or a transactional time-out happens. 
+ * This blocks until a response is received or a transactional time-out happens.
  * @param message - the request to be sent
  * @param peer_id - FQDN of the peer to send
- * @returns 1 on success, 0 on failure 
+ * @returns 1 on success, 0 on failure
  * \todo remove peer_id and add Realm routing
  * \todo replace the busy-waiting lock in here with one that does not consume CPU
  */
@@ -301,8 +304,11 @@ AAAMessage* AAASendRecvMessageToPeer(AAAMessage *message, str *peer_id)
 	gen_sem_t *sem;
 	cdp_trans_t *t;
 	AAAMessage *ans;
-	int ms = 0;
-	
+	struct timeval start, stop;
+    long elapsed_usecs=0, elapsed_millis=0;
+
+    gettimeofday(&start, NULL);
+
 	p = get_peer_by_fqdn(peer_id);
 	if (!p) {
 		LM_ERR("AAASendRecvMessageToPeer(): Peer unknown %.*s\n",peer_id->len,peer_id->s);
@@ -312,33 +318,31 @@ AAAMessage* AAASendRecvMessageToPeer(AAAMessage *message, str *peer_id)
 		LM_ERR("AAASendRecvMessageToPeer(): Peer not connected to %.*s\n",peer_id->len,peer_id->s);
 		goto error;
 	}
-	
+
 	if (is_req(message)){
 		sem_new(sem,0);
 		t = cdp_add_trans(message,sendrecv_cb,(void*)sem,config->transaction_timeout,0);
 
-		ms = TICKS_TO_MS(get_ticks_raw());
 //		if (!peer_send_msg(p,message)) {
-		if (!sm_process(p,Send_Message,message,0,0)){	
-			sem_free(sem);				
+		if (!sm_process(p,Send_Message,message,0,0)){
+			sem_free(sem);
 			goto error;
 		}
-		ms = TICKS_TO_MS(get_ticks_raw()) - ms;
-		if (ms > latency_threshold)
-					LM_ERR("took too long to transition state machine for Send_Message [%dms]\n", ms);
-
-		ms = TICKS_TO_MS(get_ticks_raw());
 		/* block until callback is executed */
 		while(sem_get(sem)<0){
 			if (shutdownx&&(*shutdownx)) goto error;
 			LM_WARN("AAASendRecvMessageToPeer(): interrupted by signal or something > %s\n",strerror(errno));
 		}
+
+		gettimeofday(&stop, NULL);
+		elapsed_usecs = (stop.tv_sec - start.tv_sec) * 1000000
+				+ (stop.tv_usec - start.tv_usec);
+		elapsed_millis = elapsed_usecs / 1000;
+		if (elapsed_millis > *latency_threshold_p) {
+			LM_ERR("CDP response to Send_Message took too long (>%dms) - [%ldms]\n", *latency_threshold_p, elapsed_millis);
+		}
 		sem_free(sem);
 
-		ms = TICKS_TO_MS(get_ticks_raw()) - ms;
-		if (ms > latency_threshold) {
-			LM_ERR("CDP response to Send_Message took too long (>%dms) - [%dms]\n", latency_threshold, ms);
-		}
 		ans = t->ans;
 		cdp_free_trans(t);
 		return ans;
@@ -347,8 +351,8 @@ AAAMessage* AAASendRecvMessageToPeer(AAAMessage *message, str *peer_id)
 		goto error;
 	}
 
-		
-error:	
+
+error:
 out_of_memory:
 	AAAFreeMessage(&message);
 	return 0;

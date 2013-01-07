@@ -1,6 +1,9 @@
 /*
  * $Id$
  *
+ * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
+ * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
+ * 
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
@@ -14,7 +17,9 @@
  * improved architecture
  * 
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Focus. Thanks for great work! This is an effort to 
+ * FhG Fokus. 
+ * Copyright (C) 2004-2006 FhG Fokus
+ * Thanks for great work! This is an effort to 
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -43,24 +48,25 @@
 #include "receiver.h"
 #include "peerstatemachine.h"
 
+extern unsigned int* latency_threshold_p;	/**<max delay for Diameter call */
 
 handler_list *handlers = 0; /**< list of handlers */
 gen_lock_t *handlers_lock;	/**< lock for list of handlers */
 
 /**
  * This callback is added as an internal message listener and used to process
- * transaction requests. 
+ * transaction requests.
  * - first it calls all the registered handlers for requests and responses
  * - then it calls the transaction handler
  * @param p - peer that this message came from
  * @param msg - the diameter message
  * @param ptr - not used anymore
  * @returns 1 always
- */ 
+ */
 int api_callback(peer *p,AAAMessage *msg,void* ptr)
 {
 	cdp_trans_t *t;
-	int auto_drop;	
+	int auto_drop;
 	handler *h;
 	handler x;
 	enum handler_types type;
@@ -77,7 +83,7 @@ int api_callback(peer *p,AAAMessage *msg,void* ptr)
 					rsp = (x.handler.requestHandler)(msg,h->param);
 					if (rsp) {
 						//peer_send_msg(p,rsp);
-						sm_process(p,Send_Message,rsp,0,0);	
+						sm_process(p,Send_Message,rsp,0,0);
 					}
 					lock_get(handlers_lock);
 				}
@@ -87,17 +93,26 @@ int api_callback(peer *p,AAAMessage *msg,void* ptr)
 					lock_get(handlers_lock);
 				}
 			}
-		}		
+		}
 	lock_release(handlers_lock);
-	
-	if (!is_req(msg)){		
+
+	if (!is_req(msg)){
 		/* take care of transactional callback if any */
 		t = cdp_take_trans(msg);
 		if (t){
 			t->ans = msg;
+            struct timeval stop;
+            gettimeofday(&stop, NULL);
+            long elapsed_usecs =  (stop.tv_sec - t->started.tv_sec)*1000000 + (stop.tv_usec - t->started.tv_usec);
+            long elapsed_msecs = elapsed_usecs/1000;
+            if (elapsed_msecs > *latency_threshold_p) {
+            	LM_ERR("Received diameter response outside of threshold (%d) - %ld\n", *latency_threshold_p, elapsed_msecs);
+            }
+            update_stat(replies_received, 1);
+            update_stat(replies_response_time, elapsed_msecs);
 			auto_drop = t->auto_drop;
 			if (t->cb){
-				(t->cb)(0,*(t->ptr),msg);
+				(t->cb)(0,*(t->ptr),msg, elapsed_msecs);
 			}
 			if (auto_drop) cdp_free_trans(t);
 		}
