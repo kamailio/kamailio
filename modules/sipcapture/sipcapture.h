@@ -23,12 +23,6 @@
  *
  */
 
-#ifdef __OS_solaris
-typedef uint8_t u_int8_t;
-typedef uint16_t u_int16_t;
-#define IPPROTO_IPIP IPPROTO_ENCAP /* Solaris IPIP protocol has name ENCAP */
-#endif
-
 struct _sipcapture_object {
 	str method;
 	str reply_reason;
@@ -64,8 +58,8 @@ struct _sipcapture_object {
 	str rtp_stat;
 	int type;
         long long tmstamp;
-	str node;	
-	str msg;	
+	str node;
+	str msg;
 #ifdef STATISTICS
 	stat_var *stat;
 #endif

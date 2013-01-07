@@ -30,6 +30,7 @@
 #ifdef __OS_solaris
 typedef uint8_t u_int8_t;
 typedef uint16_t u_int16_t;
+typedef uint32_t u_int32_t;
 #define IPPROTO_IPIP IPPROTO_ENCAP /* Solaris IPIP protocol has name ENCAP */
 #endif
 
@@ -154,11 +155,11 @@ struct hep_generic_recv {
 #ifdef USE_IPV6
         hep_chunk_ip6_t    *hep_src_ip6;
         hep_chunk_ip6_t    *hep_dst_ip6;
-#endif                
+#endif
         hep_chunk_uint8_t  *proto_t;
         hep_chunk_uint32_t *capt_id;
         hep_chunk_uint16_t *keep_tm;
-        hep_chunk_str_t    *auth_key;        
+        hep_chunk_str_t    *auth_key;
         hep_chunk_t   *payload_chunk;
 } __attribute__((packed));
 
