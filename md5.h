@@ -22,6 +22,13 @@
 /* Probably not the proper place, but will do for Debian: */
 #include <sys/types.h>
 
+/* fix types for Sun Solaris */
+#if defined(__SVR4) || defined(__sun)
+    typedef uint8_t u_int8_t;
+    typedef uint32_t u_int32_t;
+    typedef uint64_t u_int64_t;
+#endif
+
 typedef struct MD5Context {
 	u_int32_t state[4];			/* state */
 	u_int64_t count;			/* number of bits, mod 2^64 */
