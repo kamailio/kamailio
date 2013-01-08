@@ -765,6 +765,48 @@ modparam("registrar", "outbound_mode", 2)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>flow_timer</varname> (integer)</title>
+		<para>
+		If set to 0 then this module will not add a Flow-Timer: header
+		to 200 OK responses to REGISTER requests.
+		</para>
+		<para>
+		If set to > 0 then this module will add a Flow-Timer: header
+		containing this value to 200 OK responses to REGISTER requests.
+		This parameter may only be set to a value > 0 when
+		<emphasis>outbound_mode</emphasis> is set to 2.
+		</para>
+		<para>
+		When set to a value > 0 this parameter should be set to slightly
+		less than the connection timeout value between the UAC and the
+		network (this corresponds to the core
+		<emphasis>tcp_connection_lifetime</emphasis> option and
+		<emphasis>websocket</emphasis>
+		<emphasis>keepalive_timeout</emphasis> modparam). This parameter
+		is most useful when you have a single edge proxy/registrar. If
+		you are using a separate SIP Outbound Edge Proxy you should
+		consider leaving this parameter set to 0 and adding the
+		Flow-Timer: header on the Edge Proxy (as this allows you to
+		keep all of the timer values for a specific flow in one
+		configuration - that of the Edge Proxy).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>flow_timer</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "flow_timer", 25)
+...
+		</programlisting>
+		</example>
+	</section>
+
+
 	</section>
 
 	

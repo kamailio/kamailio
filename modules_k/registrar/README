@@ -59,6 +59,7 @@ Bogdan-Andre Iancu
               3.22. xavp_rcd (string)
               3.23. gruu_enabled (integer)
               3.24. outbound_mode (integer)
+              3.25. flow_timer (integer)
 
         4. Functions
 
@@ -110,15 +111,16 @@ Bogdan-Andre Iancu
    1.21. Set xavp_rcd parameter
    1.22. Set gruu_enabled parameter
    1.23. Set outbound_mode parameter
-   1.24. save usage
-   1.25. lookup usage
-   1.26. lookup_branches usage
-   1.27. registered usage
-   1.28. add_sock_hdr usage
-   1.29. unregister usage
-   1.30. reg_fetch_contacts usage
-   1.31. reg_free_contacts usage
-   1.32. $ulc(name) usage
+   1.24. Set flow_timer parameter
+   1.25. save usage
+   1.26. lookup usage
+   1.27. lookup_branches usage
+   1.28. registered usage
+   1.29. add_sock_hdr usage
+   1.30. unregister usage
+   1.31. reg_fetch_contacts usage
+   1.32. reg_free_contacts usage
+   1.33. $ulc(name) usage
 
 Chapter 1. Admin Guide
 
@@ -160,6 +162,7 @@ Chapter 1. Admin Guide
         3.22. xavp_rcd (string)
         3.23. gruu_enabled (integer)
         3.24. outbound_mode (integer)
+        3.25. flow_timer (integer)
 
    4. Functions
 
@@ -274,6 +277,7 @@ Chapter 1. Admin Guide
    3.22. xavp_rcd (string)
    3.23. gruu_enabled (integer)
    3.24. outbound_mode (integer)
+   3.25. flow_timer (integer)
 
 3.1. default_expires (integer)
 
@@ -655,6 +659,32 @@ modparam("registrar", "gruu_enabled", 0)
 modparam("registrar", "outbound_mode", 2)
 ...
 
+3.25. flow_timer (integer)
+
+   If set to 0 then this module will not add a Flow-Timer: header to 200
+   OK responses to REGISTER requests.
+
+   If set to > 0 then this module will add a Flow-Timer: header containing
+   this value to 200 OK responses to REGISTER requests. This parameter may
+   only be set to a value > 0 when outbound_mode is set to 2.
+
+   When set to a value > 0 this parameter should be set to slightly less
+   than the connection timeout value between the UAC and the network (this
+   corresponds to the core tcp_connection_lifetime option and websocket
+   keepalive_timeout modparam). This parameter is most useful when you
+   have a single edge proxy/registrar. If you are using a separate SIP
+   Outbound Edge Proxy you should consider leaving this parameter set to 0
+   and adding the Flow-Timer: header on the Edge Proxy (as this allows you
+   to keep all of the timer values for a specific flow in one
+   configuration - that of the Edge Proxy).
+
+   Default value is 0.
+
+   Example 1.24. Set flow_timer parameter
+...
+modparam("registrar", "flow_timer", 25)
+...
+
 4. Functions
 
    4.1. save(domain, [, flags [, uri]])
@@ -703,7 +733,7 @@ modparam("registrar", "outbound_mode", 2)
 
    This function can be used from REQUEST_ROUTE and REPLY_ROUTE.
 
-   Example 1.24. save usage
+   Example 1.25. save usage
 ...
 save("location");
 save("location", "0x01");
@@ -736,7 +766,7 @@ save("location", "0x00", "sip:test@kamailio.org");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.25. lookup usage
+   Example 1.26. lookup usage
 ...
 lookup("location");
 switch ($retcode) {
@@ -762,7 +792,7 @@ switch ($retcode) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.26. lookup_branches usage
+   Example 1.27. lookup_branches usage
 ...
 lookup_branches("location");
 ...
@@ -781,7 +811,7 @@ lookup_branches("location");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.27. registered usage
+   Example 1.28. registered usage
 ...
 if (registered("location")) {
         sl_send_reply("100", "Trying");
@@ -801,7 +831,7 @@ if (registered("location")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.28. add_sock_hdr usage
+   Example 1.29. add_sock_hdr usage
 ...
 add_sock_hdr("Sock-Info");
 ...
@@ -819,7 +849,7 @@ add_sock_hdr("Sock-Info");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.29. unregister usage
+   Example 1.30. unregister usage
 ...
 unregister("location", "$ru");
 unregister("location", "sip:user@kamailio.org");
@@ -841,7 +871,7 @@ unregister("location", "sip:user@kamailio.org");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.30. reg_fetch_contacts usage
+   Example 1.31. reg_fetch_contacts usage
 ...
 reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
@@ -860,7 +890,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.31. reg_free_contacts usage
+   Example 1.32. reg_free_contacts usage
 ...
 reg_free_contacts("callee");
 ...
@@ -926,7 +956,7 @@ reg_free_contacts("callee");
    The pseudo-variable accepts positive index value to access a specific
    contact record.
 
-   Example 1.32. $ulc(name) usage
+   Example 1.33. $ulc(name) usage
 ...
 if(reg_fetch_contacts("location", "$fu", "caller"))
 {
