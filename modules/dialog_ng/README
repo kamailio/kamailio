@@ -1,0 +1,1061 @@
+dialog_ng Module
+
+Bogdan-Andrei Iancu
+
+   Voice Sistem SRL
+
+Carsten Bock
+
+   ng-voice.com
+
+Jason Penton
+
+   Smile Communications
+
+Richard Good
+
+   Smile Communications
+
+Edited by
+
+Bogdan-Andrei Iancu
+
+Edited by
+
+Carsten Bock
+
+Edited by
+
+Jason Penton
+
+Edited by
+
+Richard Good
+
+   Copyright © 2006 Voice Sistem SRL
+
+   Copyright © 2011 Carsten Bock, http://www.ng-voice.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. How it works
+        3. Dialog profiling
+        4. Dependencies
+
+              4.1. Kamailio Modules
+              4.2. External Libraries or Applications
+
+        5. Parameters
+
+              5.1. enable_stats (integer)
+              5.2. hash_size (integer)
+              5.3. rr_param (string)
+              5.4. dlg_flag (integer)
+              5.5. timeout_avp (string)
+              5.6. default_timeout (integer)
+              5.7. dlg_extra_hdrs (string)
+              5.8. dlg_match_mode (integer)
+              5.9. detect_spirals (integer)
+              5.10. db_url (string)
+              5.11. db_mode (integer)
+              5.12. db_update_period (integer)
+              5.13. db_fetch_rows (integer)
+              5.14. table_name (string)
+              5.15. profiles_with_value (string)
+              5.16. profiles_no_value (string)
+              5.17. bridge_controller (string)
+              5.18. initial_cbs_inscript (string)
+
+        6. Functions
+
+              6.1. set_dlg_profile(profile,[value])
+              6.2. unset_dlg_profile(profile,[value])
+              6.3. is_in_profile(profile,[value])
+              6.4. get_profile_size(profile,[value],size)
+              6.5. dlg_isflagset(flag)
+              6.6. dlg_setflag(flag)
+              6.7. dlg_resetflag(flag)
+              6.8. dlg_terminate
+              6.9. dlg_refer(side, address)
+              6.10. dlg_manage()
+              6.11. dlg_bridge(from, to, op)
+              6.12. dlg_get(callid, ftag, ttag)
+              6.13. is_known_dlg()
+
+        7. Exported statistics
+
+              7.1. active_dialogs
+              7.2. early_dialogs
+              7.3. processed_dialogs
+              7.4. expired_dialogs
+              7.5. failed_dialogs
+
+        8. MI Commands
+
+              8.1. dlg_list
+              8.2. dlg_list_ctx
+              8.3. dlg_end_dlg
+              8.4. dlg_terminate_dlg
+              8.5. profile_get_size
+              8.6. profile_list_dlgs
+              8.7. dlg_bridge
+
+        9. Exported RPC Functions
+
+              9.1. dlg.list
+              9.2. dlg.list_ctx
+              9.3. dlg.dlg_list
+              9.4. dlg.dlg_list_ctx
+              9.5. dlg.end_dlg
+              9.6. dlg.profile_get_size
+              9.7. dlg.profile_list
+              9.8. dlg.bridge_dlg
+
+        10. Exported pseudo-variables
+
+              10.1. $DLG_count
+              10.2. $DLG_status
+              10.3. $DLG_lifetime
+              10.4. $dlg(...)
+              10.5. $dlg_ctx(...)
+              10.6. $dlg_var(key)
+
+   2. Developer Guide
+
+        1. Available Functions
+
+              1.1. register_dlgcb (dialog, type, cb, param, free_param_cb)
+
+              1.2. terminate_dlg (str callid, str ftag, str ttag, hdrs)
+              1.3. set_dlg_var (dlg, key, val)
+              1.4. get_dlg_var (dlg, key)
+              1.5. get_current_dialog ()
+
+   3. Frequently Asked Questions
+
+   List of Examples
+
+   1.1. Set hash_size parameter
+   1.2. Set rr_param parameter
+   1.3. Set dlg_flag parameter
+   1.4. Set timeout_avp parameter
+   1.5. Set default_timeout parameter
+   1.6. Set dlf_extra_hdrs parameter
+   1.7. Set detect_spirals parameter
+   1.8. Set profiles_with_value parameter
+   1.9. Set profiles_no_value parameter
+   1.10. Set bridge_controller parameter
+   1.11. set_dlg_profile usage
+   1.12. unset_dlg_profile usage
+   1.13. is_in_profile usage
+   1.14. get_profile_size usage
+   1.15. dlg_isflagset usage
+   1.16. dlg_setflag usage
+   1.17. dlg_resetflag usage
+   1.18. dlg_terminate usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. How it works
+   3. Dialog profiling
+   4. Dependencies
+
+        4.1. Kamailio Modules
+        4.2. External Libraries or Applications
+
+   5. Parameters
+
+        5.1. enable_stats (integer)
+        5.2. hash_size (integer)
+        5.3. rr_param (string)
+        5.4. dlg_flag (integer)
+        5.5. timeout_avp (string)
+        5.6. default_timeout (integer)
+        5.7. dlg_extra_hdrs (string)
+        5.8. dlg_match_mode (integer)
+        5.9. detect_spirals (integer)
+        5.10. db_url (string)
+        5.11. db_mode (integer)
+        5.12. db_update_period (integer)
+        5.13. db_fetch_rows (integer)
+        5.14. table_name (string)
+        5.15. profiles_with_value (string)
+        5.16. profiles_no_value (string)
+        5.17. bridge_controller (string)
+        5.18. initial_cbs_inscript (string)
+
+   6. Functions
+
+        6.1. set_dlg_profile(profile,[value])
+        6.2. unset_dlg_profile(profile,[value])
+        6.3. is_in_profile(profile,[value])
+        6.4. get_profile_size(profile,[value],size)
+        6.5. dlg_isflagset(flag)
+        6.6. dlg_setflag(flag)
+        6.7. dlg_resetflag(flag)
+        6.8. dlg_terminate
+        6.9. dlg_refer(side, address)
+        6.10. dlg_manage()
+        6.11. dlg_bridge(from, to, op)
+        6.12. dlg_get(callid, ftag, ttag)
+        6.13. is_known_dlg()
+
+   7. Exported statistics
+
+        7.1. active_dialogs
+        7.2. early_dialogs
+        7.3. processed_dialogs
+        7.4. expired_dialogs
+        7.5. failed_dialogs
+
+   8. MI Commands
+
+        8.1. dlg_list
+        8.2. dlg_list_ctx
+        8.3. dlg_end_dlg
+        8.4. dlg_terminate_dlg
+        8.5. profile_get_size
+        8.6. profile_list_dlgs
+        8.7. dlg_bridge
+
+   9. Exported RPC Functions
+
+        9.1. dlg.list
+        9.2. dlg.list_ctx
+        9.3. dlg.dlg_list
+        9.4. dlg.dlg_list_ctx
+        9.5. dlg.end_dlg
+        9.6. dlg.profile_get_size
+        9.7. dlg.profile_list
+        9.8. dlg.bridge_dlg
+
+   10. Exported pseudo-variables
+
+        10.1. $DLG_count
+        10.2. $DLG_status
+        10.3. $DLG_lifetime
+        10.4. $dlg(...)
+        10.5. $dlg_ctx(...)
+        10.6. $dlg_var(key)
+
+1. Overview
+
+   The dialog_ng module provides dialog awareness to the Kamailio proxy. Its
+   functionality is to keep track of the current dialogs, to offer
+   information about them (like how many dialogs are active) or to manage
+   them. The module exports several functions that could be used directly
+   from scripts. The dialog_ng module extends the original dialog module by
+   providing support for forked calling and early dialog termination. It
+   is the intention that the dialog_ng module will eventually replace the
+   dialog module.
+
+   The module, via an internal API, also provide the foundation to build
+   on top of it more complex dialog-based functionalities via other
+   Kamailio modules.
+
+2. How it works
+
+   To create the dialog associated to an initial request, the flag
+   “dlg_flag” ( Section 5.4, “ dlg_flag (integer) ”) must be set before
+   creating the corresponding transaction.
+
+   The dialog is automatically destroyed when a “BYE” is received. In case
+   of no “BYE”, the dialog lifetime is controlled via the default timeout
+   (see “default_timeout” - Section 5.6, “ default_timeout (integer) ”)
+   and custom timeout (see “timeout_avp” - Section 5.5, “ timeout_avp
+   (string) ”). The dialog timeout is reset each time a sequential request
+   passes.
+
+3. Dialog profiling
+
+   Dialog profiling is a mechanism that helps in classifying, sorting and
+   keeping trace of certain types of dialogs, using whatever properties of
+   the dialog (like caller, destination, type of calls, etc). Dialogs can
+   be dynamically added in different (and several) profile tables -
+   logically, each profile table can have a special meaning (like dialogs
+   outside the domain, dialogs terminated to PSTN, etc).
+
+   There are two types of profiles:
+     * with no value - a dialog simply belongs to a profile. (like
+       outbound calls profile). There is no other additional information
+       to describe the dialog's belonging to the profile;
+     * with value - a dialog belongs to a profile having a certain value
+       (like in caller profile, where the value is the caller ID). The
+       belonging of the dialog to the profile is strictly related to the
+       value.
+
+   A dialog can be added to multiple profiles in the same time.
+
+   Profiles are visible (at the moment) in the request route (for initial
+   and sequential requests) and in the branch, failure and reply routes of
+   the original request.
+
+4. Dependencies
+
+   4.1. Kamailio Modules
+   4.2. External Libraries or Applications
+
+4.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * TM - Transaction module
+     * RR - Record-Route module
+
+4.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+5. Parameters
+
+   5.1. enable_stats (integer)
+   5.2. hash_size (integer)
+   5.3. rr_param (string)
+   5.4. dlg_flag (integer)
+   5.5. timeout_avp (string)
+   5.6. default_timeout (integer)
+   5.7. dlg_extra_hdrs (string)
+   5.8. dlg_match_mode (integer)
+   5.9. detect_spirals (integer)
+   5.10. db_url (string)
+   5.11. db_mode (integer)
+   5.12. db_update_period (integer)
+   5.13. db_fetch_rows (integer)
+   5.14. table_name (string)
+   5.15. profiles_with_value (string)
+   5.16. profiles_no_value (string)
+   5.17. bridge_controller (string)
+   5.18. initial_cbs_inscript (string)
+
+5.1.  enable_stats (integer)
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+5.2.  hash_size (integer)
+
+   The size of the hash table internally used to keep the dialogs. A
+   larger table is much faster but consumes more memory. The hash size
+   must be a power of two number.
+
+   IMPORTANT: If dialogs' information should be stored in a database, a
+   constant hash_size should be used, otherwise the restoring process will
+   not take place. If you really want to modify the hash_size you must
+   delete all table's rows before restarting the server.
+
+   Default value is “4096”.
+
+   Example 1.1. Set hash_size parameter
+...
+modparam("dialog_ng", "hash_size", 1024)
+...
+
+5.3.  rr_param (string)
+
+   Name of the Record-Route parameter to be added with the dialog cookie.
+   It is used for the fast dialog matching of sequential requests.
+
+   Default value is “did”.
+
+   Example 1.2. Set rr_param parameter
+...
+modparam("dialog_ng", "rr_param", "xyz")
+...
+
+5.4.  dlg_flag (integer)
+
+   Flag to be used for marking if a dialog should be constructed for the
+   current request (this make sense only for initial requests).
+
+   Default value is “none”.
+
+   Example 1.3. Set dlg_flag parameter
+...
+modparam("dialog_ng", "dlg_flag", 4)
+...
+
+5.5.  timeout_avp (string)
+
+   The specification of an AVP that contain a custom timeout (in seconds)
+   for the dialog. It may be used only in a request (initial or
+   sequential) context
+
+   Default value is “none”.
+
+   Example 1.4. Set timeout_avp parameter
+...
+modparam("dialog_ng", "timeout_avp", "$avp(i:10)")
+...
+
+5.6.  default_timeout (integer)
+
+   The default dialog timeout (in seconds) if no custom one is set.
+
+   Default value is “43200 (12 hours)”.
+
+   Example 1.5. Set default_timeout parameter
+...
+modparam("dialog_ng", "default_timeout", 21600)
+...
+
+5.7.  dlg_extra_hdrs (string)
+
+   A string containing the extra headers (full format, with EOH) to be
+   added in the requests generated by the module (like BYEs).
+
+   Default value is “NULL”.
+
+   Example 1.6. Set dlf_extra_hdrs parameter
+...
+modparam("dialog_ng", "dlg_extra_hdrs", "Hint: credit expired\r\n")
+...
+
+5.8.  dlg_match_mode (integer)
+
+   Deprecated - in the new dialog module we always match using DID ONLY
+
+5.9.  detect_spirals (integer)
+
+   Whether spirals (i.e., messages routed through the proxy multiple
+   times) should be detected or not.
+
+   If set to 0, spirals will not be detected and result in the generation
+   of a new, possibly dangling dialog structure per occurring spiral. If
+   set to 1, spirals are detected and internally mapped to existing dialog
+   structures.
+
+   Default value is 1.
+
+   Example 1.7. Set detect_spirals parameter
+...
+modparam("dialog_ng", "detect_spirals", 1)
+...
+
+5.10.  db_url (string)
+
+   Db storage not yet supported by dialog_ng - this to be done in future.
+
+5.11.  db_mode (integer)
+
+   Db storage not yet supported by dialog_ng - this to be done in future.
+
+5.12.  db_update_period (integer)
+
+   Db storage not yet supported by dialog_ng - this to be done in future.
+
+5.13.  db_fetch_rows (integer)
+
+   Db storage not yet supported by dialog_ng - this to be done in future.
+
+5.14.  table_name (string)
+
+   Db storage not yet supported by dialog_ng - this to be done in future.
+
+5.15.  profiles_with_value (string)
+
+   List of names for profiles with values.
+
+   Default value is “empty”.
+
+   Example 1.8. Set profiles_with_value parameter
+...
+modparam("dialog", "profiles_with_value", "caller ; my_profile")
+...
+
+5.16.  profiles_no_value (string)
+
+   List of names for profiles without values.
+
+   Default value is “empty”.
+
+   Example 1.9. Set profiles_no_value parameter
+...
+modparam("dialog", "profiles_no_value", "inbound ; outbound")
+...
+
+5.17.  bridge_controller (string)
+
+   SIP address to be used in From header when initiating a call bridge.
+
+   Default value is “sip:controller@kamailio.org”.
+
+   Example 1.10. Set bridge_controller parameter
+...
+modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
+...
+
+5.18.  initial_cbs_inscript (string)
+
+   This has been deprecated since dlg_manage has been removed.
+
+6. Functions
+
+   6.1. set_dlg_profile(profile,[value])
+   6.2. unset_dlg_profile(profile,[value])
+   6.3. is_in_profile(profile,[value])
+   6.4. get_profile_size(profile,[value],size)
+   6.5. dlg_isflagset(flag)
+   6.6. dlg_setflag(flag)
+   6.7. dlg_resetflag(flag)
+   6.8. dlg_terminate
+   6.9. dlg_refer(side, address)
+   6.10. dlg_manage()
+   6.11. dlg_bridge(from, to, op)
+   6.12. dlg_get(callid, ftag, ttag)
+   6.13. is_known_dlg()
+
+6.1.  set_dlg_profile(profile,[value])
+
+   Inserts the current dialog into a profile. Note that if the profile
+   does not supports values, this will be silently discarded. Also, there
+   is no check for inserting the same dialog in the same profile for
+   multiple times.
+
+   Meaning of the parameters is as follows:
+     * profile - name of the profile to be added to;
+     * value (optional) - string value to define the belonging of the
+       dialog to the profile - note that the profile must support values.
+       Pseudo-variables are supported.
+
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
+   and FAILURE_ROUTE.
+
+   Example 1.11.  set_dlg_profile usage
+...
+set_dlg_profile("inbound_call");
+set_dlg_profile("caller","$fu");
+...
+
+6.2.  unset_dlg_profile(profile,[value])
+
+   Removes the current dialog from a profile.
+
+   Meaning of the parameters is as follows:
+     * profile - name of the profile to be removed from;
+     * value (optional) - string value to define the belonging of the
+       dialog to the profile - note that the profile must support values.
+       Pseudo-variables are supported.
+
+   This function can be used from BRANCH_ROUTE, REPLY_ROUTE and
+   FAILURE_ROUTE.
+
+   Example 1.12.  unset_dlg_profile usage
+...
+unset_dlg_profile("inbound_call");
+unset_dlg_profile("caller","$fu");
+...
+
+6.3.  is_in_profile(profile,[value])
+
+   Checks if the current dialog belongs to a profile. If the profile
+   supports values, the check can be reinforced to take into account a
+   specific value - if the dialog was inserted into the profile for a
+   specific value. If no value is passed, only the simply belonging of the
+   dialog to the profile is checked. Note that if the profile does not
+   supports values, this will be silently discarded.
+
+   Meaning of the parameters is as follows:
+     * profile - name of the profile to be checked against;
+     * value (optional) - string value to further restrict the check.
+       Pseudo-variables are supported.
+
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
+   and FAILURE_ROUTE.
+
+   Example 1.13.  is_in_profile usage
+...
+if (is_in_profile("inbound_call")) {
+        log("this request belongs to a inbound call\n");
+}
+...
+if (is_in_profile("caller","XX")) {
+        log("this request belongs to a call of user XX\n");
+}
+...
+
+6.4.  get_profile_size(profile,[value],size)
+
+   Returns the number of dialogs belonging to a profile. If the profile
+   supports values, the check can be reinforced to take into account a
+   specific value - how many dialogs were inserted into the profile with a
+   specific value. If no value is passed, only simply belonging of the
+   dialog to the profile is checked. Note that if the profile does not
+   supports values, this will be silently discarded.
+
+   Meaning of the parameters is as follows:
+     * profile - name of the profile to get the size for;
+     * value (optional) - string value to further restrict the check.
+       Pseudo-variables are supported;
+     * size - an AVP or script variable to return the profile size in.
+
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
+   and FAILURE_ROUTE.
+
+   Example 1.14.  get_profile_size usage
+...
+if(get_profile_size("inbound_call","$avp(size)"))
+    xlog("currently there are $avp(size) inbound calls\n");
+...
+if(get_profile_size("caller","$fu","$avp(size)"))
+    xlog("currently, the user $fu has $avp(size) active outgoing calls\n");
+...
+
+6.5.  dlg_isflagset(flag)
+
+   Check if the dialog flag is set or not.
+
+   Meaning of the parameters is as follows:
+     * flag - index of the flag - can be pseudo-variable.
+
+   This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
+   ONREPLY_ROUTE and FAILURE_ROUTE.
+
+   Example 1.15.  dlg_isflagset usage
+...
+if(dlg_isflagset("1"))
+{
+    ...
+}
+...
+
+6.6.  dlg_setflag(flag)
+
+   Set the dialog flag.
+
+   Meaning of the parameters is as follows:
+     * flag - index of the flag - can be pseudo-variable.
+
+   This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
+   ONREPLY_ROUTE and FAILURE_ROUTE.
+
+   Example 1.16.  dlg_setflag usage
+...
+dlg_setflag("1");
+...
+
+6.7.  dlg_resetflag(flag)
+
+   Reset the dialog flag.
+
+   Meaning of the parameters is as follows:
+     * flag - index of the flag - can be pseudo-variable.
+
+   This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
+   ONREPLY_ROUTE and FAILURE_ROUTE.
+
+   Example 1.17.  dlg_resetflag usage
+...
+redlg_setflag("1");
+...
+
+6.8.  dlg_terminate
+
+   Terminates a dialog. In dialog_ng module this function now includes
+   support for early as well as confirmed dialogs.
+
+   Meaning of the parameters is as follows:
+     * side - which side to terminate. It can be: caller, callee or both
+       of them.
+     * reason - reason for termination.
+
+   This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
+   ONREPLY_ROUTE and FAILURE_ROUTE.
+
+   Example 1.18.  dlg_terminate usage
+...
+dlg_terminate("all", "Insufficient QoS");
+...
+
+6.9.  dlg_refer(side, address)
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+6.10.  dlg_manage()
+
+   This has been deprecated in dialog_ng. Instead set dialog flag for
+   initial INVITE and Route-parameter-callback execution for within-dialog
+   requests.
+
+6.11.  dlg_bridge(from, to, op)
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+6.12.  dlg_get(callid, ftag, ttag)
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+6.13.  is_known_dlg()
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+7. Exported statistics
+
+   7.1. active_dialogs
+   7.2. early_dialogs
+   7.3. processed_dialogs
+   7.4. expired_dialogs
+   7.5. failed_dialogs
+
+7.1.  active_dialogs
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+7.2.  early_dialogs
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+7.3.  processed_dialogs
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+7.4.  expired_dialogs
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+7.5.  failed_dialogs
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+8. MI Commands
+
+   8.1. dlg_list
+   8.2. dlg_list_ctx
+   8.3. dlg_end_dlg
+   8.4. dlg_terminate_dlg
+   8.5. profile_get_size
+   8.6. profile_list_dlgs
+   8.7. dlg_bridge
+
+8.1.  dlg_list
+
+   Lists the description of a dialog or of all dialogs (calls). If only
+   one dialogs is to be listed, the dialog identifiers are to be passed as
+   parameter (callid and fromtag). In dialog_ng module this also now also
+   lists all dlg_out entries for early dialogs.
+
+   Name: dlg_list
+
+   Parameters:
+     * callid (optional) - callid if a single dialog to be listed.
+     * from_tag (optional, but cannot be present without the callid
+       parameter) - from tag (as per initial request) of the dialog to be
+       listed. Note that if the from_tag is not specified, only dialogs
+       created by a request without a from tag are matched, which will
+       only occur with broken clients and is thus a very rare situation.
+
+   MI FIFO Command Format:
+                :dlg_list:_reply_fifo_file_
+                _empty_line_
+                :dlg_list:_reply_fifo_file_
+                abcdrssfrs122444@192.168.1.1
+                AAdfeEFF33
+
+8.2.  dlg_list_ctx
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+8.3.  dlg_end_dlg
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+8.4.  dlg_terminate_dlg
+
+   Terminates a singe dialog, identified by the call_id, ftag, ttag. In
+   dialog_ng module this dialog can be terminated in the early or confirmed
+   states.
+
+   Name: dlg_terminate_dlg
+
+   Parameters:
+     * callid - callid of the dialog to be terminated.
+     * ftag fromtag of dialog to be terminated.
+     * ttag totag of dialog to be terminated.
+
+   Note: Works for confirmed and early dialogs.
+
+   MI FIFO Command Format:
+                :dlg_terminate_dlg:_reply_fifo_file_
+                abcdrssfrs122444@192.168.1.1
+                AAdfeEFF33 ftag-1234 t-tag1234
+
+8.5.  profile_get_size
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+8.6.  profile_list_dlgs
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+8.7.  dlg_bridge
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+9. Exported RPC Functions
+
+   9.1. dlg.list
+   9.2. dlg.list_ctx
+   9.3. dlg.dlg_list
+   9.4. dlg.dlg_list_ctx
+   9.5. dlg.end_dlg
+   9.6. dlg.profile_get_size
+   9.7. dlg.profile_list
+   9.8. dlg.bridge_dlg
+
+9.1.  dlg.list
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+9.2.  dlg.list_ctx
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+9.3.  dlg.dlg_list
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+9.4.  dlg.dlg_list_ctx
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+9.5.  dlg.end_dlg
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+9.6.  dlg.profile_get_size
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+9.7.  dlg.profile_list
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+9.8.  dlg.bridge_dlg
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+10. Exported pseudo-variables
+
+   10.1. $DLG_count
+   10.2. $DLG_status
+   10.3. $DLG_lifetime
+   10.4. $dlg(...)
+   10.5. $dlg_ctx(...)
+   10.6. $dlg_var(key)
+
+10.1.  $DLG_count
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+10.2.  $DLG_status
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+10.3.  $DLG_lifetime
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+10.4.  $dlg(...)
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+10.5.  $dlg_ctx(...)
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+10.6.  $dlg_var(key)
+
+   This function is currently not supported by the dialog_ng module. To be
+   incorporated in the future.
+
+Chapter 2. Developer Guide
+
+   Table of Contents
+
+   1. Available Functions
+
+        1.1. register_dlgcb (dialog, type, cb, param, free_param_cb)
+        1.2. terminate_dlg (str callid, str ftag, str ttag, hdrs)
+        1.3. set_dlg_var (dlg, key, val)
+        1.4. get_dlg_var (dlg, key)
+        1.5. get_current_dialog ()
+
+1. Available Functions
+
+   1.1. register_dlgcb (dialog, type, cb, param, free_param_cb)
+   1.2. terminate_dlg (str callid, str ftag, str ttag, hdrs)
+   1.3. set_dlg_var (dlg, key, val)
+   1.4. get_dlg_var (dlg, key)
+   1.5. get_current_dialog ()
+
+1.1.  register_dlgcb (dialog, type, cb, param, free_param_cb)
+
+   Register a new callback to the dialog.
+
+   Meaning of the parameters is as follows:
+     * struct dlg_cell* dlg - dialog to register callback to. If maybe
+       NULL only for DLGCB_CREATED callback type, which is not a per
+       dialog type.
+     * int type - types of callbacks; more types may be register for the
+       same callback function; only DLGCB_CREATED must be register alone.
+       Possible types:
+          + DLGCB_LOADED
+          + DLGCB_CREATED - called when a new dialog is created - it's a
+            global type (not associated to any dialog)
+          + DLGCB_FAILED - called when the dialog was negatively replied
+            (non-2xx) - it's a per dialog type.
+          + DLGCB_CONFIRMED_NA - called when the dialog is confirmed (2xx
+            replied) but the setup-concluding ACK message from the caller
+            is yet pending - it's a per dialog type.
+          + DLGCB_CONFIRMED - called when the dialog is confirmed (2xx
+            replied) and the setup-concluding ACK message from the caller
+            has been seen - it's a per dialog type.
+          + DLGCB_REQ_WITHIN - called when the dialog matches a sequential
+            request (excluding setup-concluding ACK messages which are
+            handled in DLGCB_CONFIRMED) - it's a per dialog type.
+          + DLGCB_TERMINATED - called when the dialog is terminated via
+            BYE - it's a per dialog type.
+          + DLGCB_TERMINATED_CONFIRMED - called when response to a BYE
+            request is received - it's a per dialog type.
+          + DLGCB_EXPIRED - called when the dialog expires without
+            receiving a BYE - it's a per dialog type.
+          + DLGCB_EARLY - called when the dialog is created in an early
+            state (18x replied) - it's a per dialog type.
+          + DLGCB_RESPONSE_FWDED - called when the dialog matches a reply
+            to the initial INVITE request - it's a per dialog type.
+          + DLGCB_RESPONSE_WITHIN - called when the dialog matches a reply
+            to a subsequent in dialog request - it's a per dialog type.
+          + DLGCB_MI_CONTEXT - called when the mi dlg_list_ctx command is
+            invoked - it's a per dialog type.
+          + DLGCB_SPIRALED - called when the dialog matches a spiraling
+            request - it's a per dialog type.
+          + DLGCB_DESTROY
+     * dialog_cb cb - callback function to be called. Prototype is: “void
+       (dialog_cb) (struct dlg_cell* dlg, int type, struct dlg_cb_params *
+       params); ”
+     * void *param - parameter to be passed to the callback function.
+     * param_free callback_param_free - callback function to be called to
+       free the param. Prototype is: “void (param_free_cb) (void *param);”
+
+1.2.  terminate_dlg (str callid, str ftag, str ttag, hdrs)
+
+   Terminate a Dialog identified by callid, ftag and ttag in early or
+   confirmed state.
+
+   Meaning of parameters is as follows:
+     * str* callid - callid of dialog to terminate.
+     * str* ftag - from_tag of dialog to terminate.
+     * str* ttag - to tag of dialog to terminate.
+     * str* hdrs - string containg extra headers (full format) to be added
+       to the BYE requests of the dialog.
+
+1.3.  set_dlg_var (dlg, key, val)
+
+   Add a variable to the dialog structure
+
+   Meaning of parameters is as follows:
+     * struct dlg_cell* dlg - dialog to add to.
+     * str* key - Name of the variable.
+     * str* val - Value of the variable.
+
+1.4.  get_dlg_var (dlg, key)
+
+   Retrieves a variable attached to the dialog structure
+
+   Meaning of parameters is as follows:
+     * struct dlg_cell* dlg - dialog to get the variable from.
+     * str* key - Name of the variable.
+
+1.5.  get_current_dialog ()
+
+   Get the current dialog for a message, if exists
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. What happend with “use_tight_match” parameter?
+   3.2. Why is there a dialog_ng module and a dialog module?
+   3.3. Where can I find more about Kamailio?
+   3.4. Where can I post a question about this module?
+   3.5. How can I report a bug?
+
+   3.1.
+
+       What happend with “use_tight_match” parameter?
+
+       The parameter was removed with version 1.3 as the option of tight
+       matching became mandatory and not configurable. Now, the tight matching
+       is done all the time (when using DID matching).
+
+   3.2.
+
+       Why is there a dialog_ng module and a dialog module?
+
+       The dialog_ng module addresses shortcomings in the intial dialog module
+       design. It makes some large changes to the API and therefore must be
+       introduced slowly. It is currently in the early development stages.
+       Eventually the dialog_ng module should replace the dialog module.
+
+   3.3.
+
+       Where can I find more about Kamailio?
+
+       Take a look at http://www.kamailio.org/.
+
+   3.4.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+         * Developer Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+
+       E-mails regarding any stable Kamailio release should be sent to
+       <sr-users@lists.sip-router.org> and e-mails regarding development
+       versions should be sent to <sr-dev@lists.sip-router.org>.
+
+       If you want to keep the mail private, send it to
+       <sr-users@lists.sip-router.org>.
+
+   3.5.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sip-router.org/tracker.

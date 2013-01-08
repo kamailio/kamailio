@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+]>
+<!-- Module User's Guide -->
+<chapter>
+  <title>&adminguide;</title>
+
+  <section>
+    <title>Overview</title>
+
+    <para>This module serves as a storage engine for PCSCF contacts, much like
+    the standard Kamailio module, usrloc, is a storage engine for standard SIP
+    contacts. The concept of a contact in IMS, PCSCF specifically, is very
+    different to that of std. SIP and as a result we have built this new
+    module. Alot of the design has been borrowed from the std. usrloc module.
+    For example. An IMS contact, in PCSCF, needs things like:</para>
+
+    <para><itemizedlist>
+        <listitem>
+          <para>Diameter Rx session for signalling bearer status. i.e. this is
+          effectively QoS from the network to make sure the signalling link
+          can be 'trusted'</para>
+        </listitem>
+
+        <listitem>
+          <para>IPSEC Security Assocation for secure signalling between UE and
+          PCSCF (first point of contact)</para>
+        </listitem>
+
+        <listitem>
+          <para>IMPU, each contact can have a number of associated public
+          identities (IMPU).</para>
+        </listitem>
+      </itemizedlist></para>
+  </section>
+
+  <section>
+    <title>Dependencies</title>
+
+    <section>
+      <title>&kamailio; Modules</title>
+
+      <para>The following modules must be loaded before this module:
+      <itemizedlist>
+          <listitem>
+            <para><emphasis>None</emphasis>.</para>
+          </listitem>
+        </itemizedlist></para>
+    </section>
+
+    <section>
+      <title>External Libraries or Applications</title>
+
+      <para>The following libraries or applications must be installed before
+      running &kamailio; with this module loaded: <itemizedlist>
+          <listitem>
+            <para><emphasis>None</emphasis>.</para>
+          </listitem>
+        </itemizedlist></para>
+    </section>
+  </section>
+
+  <section>
+    <title>Parameters</title>
+
+    <section>
+      <title>hash_size (int)</title>
+
+      <para>The number of entries of the hash table used by to store the
+      contact records is 2^hash_size. For hash_size=4, the number of entries
+      of the hash table is 16. </para>
+
+      <para><emphasis> Default value is 9. </emphasis></para>
+
+      <example>
+        <title>Set <varname>hash_size</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("ims_usrloc_pcscf", "hash_size", 10)
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>timer_interval (int)</title>
+
+      <para>Number of seconds between two timer runs. The module uses timer to
+      delete expired contacts. </para>
+
+      <para><emphasis> Default value is 60. </emphasis></para>
+
+      <example>
+        <title>Set timer_interval parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("ims_usrloc_pcscf", "timer_interval", 30)
+...
+</programlisting>
+      </example>
+    </section>
+  </section>
+
+  <section>
+    <title>Functions</title>
+
+    <section>
+      <para>There are no exported functions that could be used in scripts.
+      </para>
+    </section>
+  </section>
+
+  <section>
+    <title>RPC Commands</title>
+
+    <para>exported RPC commands.</para>
+
+    <section>
+      <title>ulpcscf.status</title>
+
+      <para>Status of pcscf_usrloc, AORs, max slots, etc.</para>
+    </section>
+  </section>
+
+  <section>
+    <title>Statistics</title>
+
+    <para>Exported statistics are listed in the next sections. </para>
+
+    <section>
+      <title>registered contacts</title>
+
+      <para>Number of AOR contacts in registered state - cannot be
+      reset.</para>
+    </section>
+
+    <section>
+      <title>impus</title>
+
+      <para>Number of IMPUs - cannot be reset.</para>
+    </section>
+
+    <section>
+      <title>expired contacts</title>
+
+      <para>Number of expired contacts - can be reset.</para>
+    </section>
+  </section>
+</chapter>
