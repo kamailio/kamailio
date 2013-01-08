@@ -507,7 +507,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.db_flatstore
 %doc %{_docdir}/kamailio/modules/README.db2_ops
 %doc %{_docdir}/kamailio/modules/README.debugger
-%doc %{_docdir}/kamailio/modules/README.dialog2
+%doc %{_docdir}/kamailio/modules/README.dialog_ng
 %doc %{_docdir}/kamailio/modules/README.enum
 %doc %{_docdir}/kamailio/modules/README.ipops
 %doc %{_docdir}/kamailio/modules/README.malloc_test
@@ -649,7 +649,7 @@ fi
 %{_libdir}/kamailio/modules/db_flatstore.so
 %{_libdir}/kamailio/modules/db2_ops.so
 %{_libdir}/kamailio/modules/debugger.so
-%{_libdir}/kamailio/modules/dialog2.so
+%{_libdir}/kamailio/modules/dialog_ng.so
 %{_libdir}/kamailio/modules/enum.so
 %{_libdir}/kamailio/modules/ipops.so
 %{_libdir}/kamailio/modules/malloc_test.so
@@ -990,20 +990,20 @@ fi
 %{_libdir}/kamailio/libkamailio_ims.so
 %{_libdir}/kamailio/libkamailio_ims.so.0
 %{_libdir}/kamailio/libkamailio_ims.so.0.1
-#%doc %{_docdir}/kamailio/modules/README.auth_ims
-%{_libdir}/kamailio/modules/auth_ims.so
-#%doc %{_docdir}/kamailio/modules/README.icscf
-%{_libdir}/kamailio/modules/icscf.so
-#%doc %{_docdir}/kamailio/modules/README.isc
-%{_libdir}/kamailio/modules/isc.so
-#%doc %{_docdir}/kamailio/modules/README.registrar_pcscf
-%{_libdir}/kamailio/modules/registrar_pcscf.so
-#%doc %{_docdir}/kamailio/modules/README.registrar_scscf
-%{_libdir}/kamailio/modules/registrar_scscf.so
-#%doc %{_docdir}/kamailio/modules/README.usrloc_pcscf
-%{_libdir}/kamailio/modules/usrloc_pcscf.so
-#%doc %{_docdir}/kamailio/modules/README.usrloc_scscf
-%{_libdir}/kamailio/modules/usrloc_scscf.so
+#%doc %{_docdir}/kamailio/modules/README.ims_auth
+%{_libdir}/kamailio/modules/ims_auth.so
+#%doc %{_docdir}/kamailio/modules/README.ims_icscf
+%{_libdir}/kamailio/modules/ims_icscf.so
+#%doc %{_docdir}/kamailio/modules/README.ims_isc
+%{_libdir}/kamailio/modules/ims_isc.so
+#%doc %{_docdir}/kamailio/modules/README.ims_registrar_pcscf
+%{_libdir}/kamailio/modules/ims_registrar_pcscf.so
+#%doc %{_docdir}/kamailio/modules/README.ims_registrar_scscf
+%{_libdir}/kamailio/modules/ims_registrar_scscf.so
+#%doc %{_docdir}/kamailio/modules/README.ims_usrloc_pcscf
+%{_libdir}/kamailio/modules/ims_usrloc_pcscf.so
+#%doc %{_docdir}/kamailio/modules/README.ims_usrloc_scscf
+%{_libdir}/kamailio/modules/ims_usrloc_scscf.so
 
 
 %files websocket
@@ -1074,6 +1074,9 @@ fi
 
 
 %changelog
+* Tue Jan 8 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Changed dialog2 to dialog_ng
+  - Renamed all IMS modules (prepended ims_)
 * Sun Jan 6 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Updated ver to 4.0.0 and rel to dev8
 * Mon Dec 31 2012 Peter Dunkley <peter@dunkley.me.uk>
