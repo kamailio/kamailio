@@ -581,6 +581,29 @@ static int add_supported(struct sip_msg* _m, str* _p)
  		     LUMP_RPL_HDR | LUMP_RPL_NODUP);
  	return 0;
 }
+
+#define FLOW_TIMER "Flow-Timer: "
+#define FLOW_TIMER_LEN (sizeof(FLOW_TIMER) - 1)
+
+static int add_flow_timer(struct sip_msg* _m)
+{
+	char* buf;
+	int lump_len;
+
+	/* Add three as REG_FLOW_TIMER_MAX is 999 - three digits */
+ 	buf = (char*)pkg_malloc(FLOW_TIMER_LEN + 3 + CRLF_LEN);
+ 	if (!buf) {
+ 		LM_ERR("no pkg memory left\n");
+ 		return -1;
+ 	}
+	lump_len = snprintf(buf, FLOW_TIMER_LEN + 3 + CRLF_LEN,
+				"%.*s%d%.*s",
+				FLOW_TIMER_LEN, FLOW_TIMER,
+				reg_flow_timer,
+				CRLF_LEN, CRLF);
+ 	add_lump_rpl(_m, buf, lump_len, LUMP_RPL_HDR | LUMP_RPL_NODUP);
+ 	return 0;
+}
  
 /*! \brief
  * Send a reply
@@ -630,6 +653,11 @@ int reg_send_reply(struct sip_msg* _m)
 		case REG_OUTBOUND_REQUIRE:
 			if (add_require(_m, &outbound_str) < 0)
 				return -1;
+
+			if (reg_flow_timer > 0) {
+				if (add_flow_timer(_m) < 0)
+					return -1;
+			}
 			/* Fall-thru */
 		case REG_OUTBOUND_SUPPORTED:
 			if (add_supported(_m, &outbound_str) < 0)

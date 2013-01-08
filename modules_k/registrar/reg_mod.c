@@ -120,6 +120,7 @@ sruid_t _reg_sruid;
 
 int reg_gruu_enabled = 1;
 int reg_outbound_mode = 0;
+int reg_flow_timer = 0;
 
 /* Populate this AVP if testing for specific registration instance. */
 char *reg_callid_avp_param = 0;
@@ -224,6 +225,7 @@ static param_export_t params[] = {
 	{"xavp_rcd",           STR_PARAM, &reg_xavp_rcd.s     					},
 	{"gruu_enabled",       INT_PARAM, &reg_gruu_enabled    					},
 	{"outbound_mode",      INT_PARAM, &reg_outbound_mode					},
+	{"flow_timer",         INT_PARAM, &reg_flow_timer					},
 	{0, 0, 0}
 };
 
@@ -377,6 +379,12 @@ static int mod_init(void)
 
 	if (reg_outbound_mode < 0 || reg_outbound_mode > 2) {
 		LM_ERR("outbound_mode modparam must be 0 (not supported), 1 (supported), or 2 (supported and required)\n");
+		return -1;
+	}
+
+	if (reg_flow_timer < 0 || reg_flow_timer > REG_FLOW_TIMER_MAX
+			|| (reg_flow_timer > 0 && reg_outbound_mode != REG_OUTBOUND_REQUIRE)) {
+		LM_ERR("bad value for flow_timer\n");
 		return -1;
 	}
 
