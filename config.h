@@ -206,6 +206,7 @@
 #endif
 
 #define VERSION_TABLE "version"			/*!< table holding versions of other ser tables */
+#define VERSION_TABLE_LEN (sizeof(VERSION_TABLE) - 1)
 #define VERSION_COLUMN "table_version"		/*!< Column holding version number in version table */
 #define TABLENAME_COLUMN "table_name"		/*!< Column holding module name in version table */
 

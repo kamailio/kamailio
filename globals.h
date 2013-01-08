@@ -129,6 +129,7 @@ extern char* chroot_dir;
 extern char* working_dir;
 extern int sr_auto_aliases;
 extern int sr_msg_time;
+extern str version_table;
 
 #ifdef USE_MCAST
 extern int mcast_loopback;

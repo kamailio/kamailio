@@ -496,6 +496,7 @@ MAX_WLOOPS		"max_while_loops"
 PVBUFSIZE		"pv_buffer_size"
 PVBUFSLOTS		"pv_buffer_slots"
 HTTP_REPLY_HACK		"http_reply_hack"
+VERSION_TABLE_CFG		"version_table"
 
 /* stun config variables */
 STUN_REFRESH_INTERVAL "stun_refresh_interval"
@@ -973,6 +974,7 @@ IMPORTFILE      "import_file"
 									return PVBUFSLOTS; }
 <INITIAL>{HTTP_REPLY_HACK}		{	count(); yylval.strval=yytext;
 									return HTTP_REPLY_HACK; }
+<INITIAL>{VERSION_TABLE_CFG}  { count(); yylval.strval=yytext; return VERSION_TABLE_CFG;}
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
 <INITIAL>{LATENCY_LOG}  { count(); yylval.strval=yytext; return LATENCY_LOG;}
 <INITIAL>{MSG_TIME}  { count(); yylval.strval=yytext; return MSG_TIME;}

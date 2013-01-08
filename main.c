@@ -397,6 +397,7 @@ int sip_warning = 0;
 int server_signature=1;
 str server_hdr = {SERVER_HDR, SERVER_HDR_LEN};
 str user_agent_hdr = {USER_AGENT, USER_AGENT_LEN};
+str version_table = {VERSION_TABLE, VERSION_TABLE_LEN};
 /* should ser try to locate outbound interface on multihomed
  * host? by default not -- too expensive
  */

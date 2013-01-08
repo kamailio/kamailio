@@ -61,6 +61,7 @@
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
+#include "../../globals.h"
 #include "db_cap.h"
 #include "db_id.h"
 #include "db_pool.h"
@@ -372,7 +373,7 @@ int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* tab
 	db_val_t val[1];
 	db1_res_t* res = NULL;
 	db_val_t* ver = 0;
-	str version = str_init(VERSION_TABLE);
+	str *version = &version_table;
 	str tmp1 = str_init(TABLENAME_COLUMN);
 	str tmp2 = str_init(VERSION_COLUMN);
 	int ret;
@@ -382,7 +383,7 @@ int db_table_version(const db_func_t* dbf, db1_con_t* connection, const str* tab
 		return -1;
 	}
 
-	if (dbf->use_table(connection, &version) < 0) {
+	if (dbf->use_table(connection, version) < 0) {
 		LM_ERR("error while changing table\n");
 		return -1;
 	}

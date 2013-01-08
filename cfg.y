@@ -561,6 +561,7 @@ extern char *finame;
 %token PVBUFSIZE
 %token PVBUFSLOTS
 %token HTTP_REPLY_HACK
+%token VERSION_TABLE_CFG
 %token CFG_DESCRIPTION
 %token SERVER_ID
 %token LATENCY_LOG
@@ -984,6 +985,10 @@ assign_stm:
 	| CORELOG EQUAL error { yyerror("int value expected"); }
 	| SIP_WARNING EQUAL NUMBER { sip_warning=$3; }
 	| SIP_WARNING EQUAL error { yyerror("boolean value expected"); }
+	| VERSION_TABLE_CFG EQUAL STRING { version_table.s=$3;
+			version_table.len=strlen(version_table.s);
+	}
+	| VERSION_TABLE_CFG EQUAL error { yyerror("string value expected"); }
 	| USER EQUAL STRING     {
 		if (shm_initialized())
 			yyerror("user must be before any modparam or the"
