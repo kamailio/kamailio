@@ -1076,6 +1076,26 @@ modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
 	</section>
 
 	<section>
+		<title><varname>bridge_contact</varname> (string)</title>
+		<para>
+			SIP address to be used in Contact header when doing a call bridge.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>sip:controller@kamailio.org:5060</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>bridge_contact</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "bridge_contact", "sip:ctd@127.0.0.1:5060")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>initial_cbs_inscript</varname> (int)</title>
 		<para>
             If the initial dialog callbacks (i.e., DLGCB_CREATED and
