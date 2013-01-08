@@ -153,7 +153,7 @@ static int mod_init(void)
 		LM_INFO("Bound rr module to outbound module\n");
 	else
 	{
-		LM_INFO("oubound module not available\n");
+		LM_INFO("outbound module not available\n");
 		memset(&rr_obb, 0, sizeof(ob_api_t));
 	}
 
