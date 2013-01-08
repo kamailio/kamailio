@@ -95,6 +95,8 @@ route {
 				# must be outbound routed
 			}
 		}
+
+		t_on_failure("FAIL_OUTBOUND");
 		route(RELAY);
 	} else if (is_method("REGISTER")) {
 		add_path();
@@ -106,7 +108,6 @@ route {
 }
 
 route[RELAY] {
-	t_on_failure("FAIL_OUTBOUND");
 	if (!t_relay()) {
 		sl_send_reply("430", "Flow Failed");
 	}
@@ -148,23 +149,78 @@ onreply_route {
 		if ($(hdr(Require)[*])=~"outbound")
 			insert_hf("Flow-Timer: FLOW_TIMER\r\n", "Call-ID");
 	}
+
+...
 }
 
-failure_route[REPLY_OUTBOUND] {
+failure_route[FAIL_OUTBOUND] {
 	if (t_branch_timeout() || !t_branch_replied()) {
 		send_reply("430", "Flow Failed");
 	}
 }
+...
 ]]></programlisting>
 	</example>
 	<example>
 	<title>Registrar Configuration</title>
 	<programlisting><![CDATA[
 ...
+loadmodule "tm.so"
+...
 loadmodule "registrar.so"
 ...
+modparam("tm", "contacts_avp", "tm_contacts")
+modparam("tm", "contact_flows_avp", "tm_contact_flows")
+...
+modparam("registrar", "use_path", 1)
+modparam("registrar", "path_mode", 2)
 modparam("registrar", "outbound_mode", 2)
-### TBD
+...
+route[LOCATION] {
+...
+	if (!lookup("location")) {
+		$var(rc) = $rc;
+		route(TOVOICEMAIL);
+		t_newtran();
+		switch ($var(rc)) {
+			case -1:
+			case -3:
+				send_reply("404", "Not Found");
+				exit;
+			case -2:
+				send_reply("405", "Method Not Allowed");
+				exit;
+		}
+	}
+
+	if (!t_load_contacts()) {
+		send_reply("500", "Server Internal Error");
+		exit;
+	}
+
+	if (!t_next_contacts()) {
+		send_reply("500", "Server Internal Error");
+		exit;
+	}
+
+	t_on_failure(FAIL_OUTBOUND);
+...
+}
+...
+failure_route[FAIL_OUTBOUND] {
+	if (t_check_status("408|430")) {
+		if (!t_next_contact_flows() && !t_next_contacts()) {
+			send_reply("500", "Server Internal Error");
+			exit;
+		}
+	} else if (!t_next_contacts()) {
+		send_reply("500", "Server Internal Error");
+		exit;
+	}
+
+	t_on_failure(FAIL_OUTBOUND);
+	route[RELAY];
+}
 ...
 ]]></programlisting>
 	</example>
