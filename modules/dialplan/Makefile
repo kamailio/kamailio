@@ -7,17 +7,21 @@ auto_gen=
 NAME=dialplan.so
 
 ifeq ($(CROSS_COMPILE),)
-BUILDER = $(shell which pcre-config)
+PCRE_BUILDER = $(shell \
+	if pkg-config --exists libcre; then \
+		echo 'pkg-config libpcre'; \
+	else \
+		which pcre-config; \
+	fi)
 endif
 
-ifeq ($(BUILDER),)
+ifeq ($(PCRE_BUILDER),)
 	PCREDEFS=-I$(LOCALBASE)/include
 	PCRELIBS=-L$(LOCALBASE)/lib -lpcre
 else
-	PCREDEFS = $(shell pcre-config --cflags)
-	PCRELIBS = $(shell pcre-config --libs)
+	PCREDEFS = $(shell $(PCRE_BUILDER) --cflags)
+	PCRELIBS = $(shell $(PCRE_BUILDER) --libs)
 endif
-
 DEFS+=$(PCREDEFS)
 LIBS=$(PCRELIBS)
 
