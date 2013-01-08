@@ -7,11 +7,15 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=utils.so
-LIBS=
 
 ifeq ($(CROSS_COMPILE),)
 XML2CFG=$(shell which xml2-config)
-CURL2CFG=$(shell which curl-config)
+CURL_BUILDER=$(shell \
+	if pkg-config --exists libcurl; then \
+		echo 'pkg-config libcurl'; \
+	else \
+		which curl-config; \
+	fi)
 endif
 
 ifneq ($(XML2CFG),)
@@ -23,9 +27,9 @@ else
 	LIBS+=-L$(LOCALBASE)/lib -lxml2
 endif
 
-ifneq ($(CURL2CFG),)
-	DEFS += $(shell $(CURL2CFG) --cflags )
-	LIBS += $(shell $(CURL2CFG) --libs)
+ifneq ($(CURL_BUILDER),)
+	DEFS += $(shell $(CURL_BUILDER) --cflags )
+	LIBS += $(shell $(CURL_BUILDER) --libs)
 else
 	DEFS+=-I$(LOCALBASE)/include
 	LIBS+=-L$(LOCALBASE)/lib -lcurl
