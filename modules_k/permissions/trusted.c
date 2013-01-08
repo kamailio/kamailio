@@ -104,12 +104,15 @@ int reload_trusted_table(void)
 	for (i = 0; i < RES_ROW_N(res); i++) {
 	    val = ROW_VALUES(row + i);
 	    if ((ROW_N(row + i) == 4) &&
-		(VAL_TYPE(val) == DB1_STRING) && !VAL_NULL(val) &&
-		(VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1) &&
+		((VAL_TYPE(val) == DB1_STRING) || (VAL_TYPE(val) == DB1_STR) ) && 
+		!VAL_NULL(val) &&
+		((VAL_TYPE(val + 1) == DB1_STRING) || (VAL_TYPE(val + 1) == DB1_STR))
+		&& !VAL_NULL(val + 1) &&
 		(VAL_NULL(val + 2) ||
-		 ((VAL_TYPE(val + 2) == DB1_STRING) && !VAL_NULL(val + 2))) &&
-		(VAL_NULL(val + 3) ||
-		 ((VAL_TYPE(val + 3) == DB1_STRING) && !VAL_NULL(val + 3)))) {
+		 (((VAL_TYPE(val + 2) == DB1_STRING) || (VAL_TYPE(val + 2) == DB1_STR)) &&
+		!VAL_NULL(val + 2))) && (VAL_NULL(val + 3) ||
+		 (((VAL_TYPE(val + 3) == DB1_STRING) || (VAL_TYPE(val + 3) == DB1_STR) )&& 
+		!VAL_NULL(val + 3)))) {
 		if (VAL_NULL(val + 2)) {
 		    pattern = 0;
 		} else {

@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
+#include "../../rpc.h"
 #include "../../usr_avp.h"
 #include "../../lib/kmi/mi.h"
 
@@ -96,6 +97,7 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
  */
 void hash_table_print(struct trusted_list** hash_table, FILE* reply_file);
 int hash_table_mi_print(struct trusted_list **hash_table, struct mi_node* rpl);
+int hash_table_rpc_print(struct trusted_list **hash_table, rpc_t* rpc, void* c);
 
 /* 
  * Empty hash table
@@ -163,6 +165,7 @@ int find_group_in_addr_hash_table(struct addr_list** table,
 void addr_hash_table_print(struct addr_list** hash_table, FILE* reply_file);
 int addr_hash_table_mi_print(struct addr_list** hash_table,
 			     struct mi_node* rpl);
+int addr_hash_table_rpc_print(struct addr_list** table, rpc_t* rpc, void* c);
 
 
 /* 
@@ -234,6 +237,7 @@ int subnet_table_insert(struct subnet* table, unsigned int grp,
  */
 void subnet_table_print(struct subnet* table, FILE* reply_file);
 int subnet_table_mi_print(struct subnet* table, struct mi_node* rpl);
+int subnet_table_rpc_print(struct subnet* table, rpc_t* rpc, void* c);
 
 
 #endif /* _PERM_HASH_H_ */

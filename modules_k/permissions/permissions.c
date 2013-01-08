@@ -42,6 +42,8 @@
 #include "../../globals.h"
 #include "../../mod_fix.h"
 #include "../../ut.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 
 MODULE_VERSION
 
@@ -116,6 +118,8 @@ static void mod_exit(void);
 static int child_init(int rank);
 static int mi_trusted_child_init();
 static int mi_addr_child_init();
+static int permissions_init_rpc(void);
+
 
 
 /* Exported functions */
@@ -451,7 +455,7 @@ static int load_fixup(void** param, int param_no)
 		if (table[rules_num].rules) {
 			LM_DBG("file (%s) parsed\n", pathname);
 		} else {
-			LM_INFO("file (%s) not found => empty rule set\n", pathname);
+			LM_INFO("file (%s) not parsed properly => empty rule set\n", pathname);
 		}
 		*param = (void*)(long)rules_num;
 		if (param_no == 2) rules_num++;
@@ -585,6 +589,12 @@ static int mod_init(void)
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
+	if(permissions_init_rpc()!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -971,5 +981,55 @@ static int fixup_allow_address(void** param, int param_no)
 		return fixup_spve_null(param, 1);
 	if(param_no==3)
 		return fixup_igp_null(param, 1);
+	return 0;
+}
+
+static const char* rpc_trusted_reload_doc[2] = {
+	"Reload permissions trusted table",
+	0
+};
+
+static const char* rpc_address_reload_doc[2] = {
+	"Reload permissions address table",
+	0
+};
+
+static const char* rpc_trusted_dump_doc[2] = {
+	"Dump permissions trusted table",
+	0
+};
+
+static const char* rpc_address_dump_doc[2] = {
+	"Dump permissions address table",
+	0
+};
+
+static const char* rpc_subnet_dump_doc[2] = {
+	"Dump permissions subnet table",
+	0
+};
+
+static const char* rpc_test_uri_doc[2] = {
+	"Tests if (URI, Contact) pair is allowed according to allow/deny files",
+	0
+};
+
+rpc_export_t permissions_rpc[] = {
+	{"permissions.trustedReload", rpc_trusted_reload, rpc_trusted_reload_doc, 0},
+	{"permissions.addressReload", rpc_address_reload, rpc_address_reload_doc, 0},
+	{"permissions.trustedDump", rpc_trusted_dump, rpc_trusted_dump_doc, 0},
+	{"permissions.addressDump", rpc_address_dump, rpc_address_dump_doc, 0},
+	{"permissions.subnetDump", rpc_subnet_dump, rpc_subnet_dump_doc, 0},
+	{"permissions.testUri", rpc_test_uri, rpc_test_uri_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int permissions_init_rpc(void)
+{
+	if (rpc_register_array(permissions_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 	return 0;
 }

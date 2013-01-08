@@ -1,5 +1,5 @@
+
 /*
- *
  * allow_address related functions
  *
  * Copyright (C) 2006 Juha Heinanen
@@ -136,14 +136,34 @@ int reload_address_table(void)
 	for (i = 0; i < RES_ROW_N(res); i++) {
 		val = ROW_VALUES(row + i);
 		/* basic checks to db values */
-		if ((ROW_N(row + i) != 5)
-				|| (VAL_TYPE(val) != DB1_INT) || VAL_NULL(val)
-				|| (VAL_INT(val) <= 0)
-				|| (VAL_TYPE(val + 1) != DB1_STRING) || VAL_NULL(val + 1)
-				|| (VAL_TYPE(val + 2) != DB1_INT) || VAL_NULL(val + 2)
-				|| (VAL_TYPE(val + 3) != DB1_INT) || VAL_NULL(val + 3))
+		if (ROW_N(row + i) != 5)
 		{
-			LM_DBG("failure during checks of db values\n");
+			LM_DBG("failure during checks of db address table: Colums %d - expected 5\n", ROW_N(row + i));
+			goto dberror;
+		}
+		if ((VAL_TYPE(val) != DB1_INT) || VAL_NULL(val) || (VAL_INT(val) <= 0))
+		{
+			LM_DBG("failure during checks of database value 1 (group) in address table\n");
+			goto dberror;
+		}
+		if ((VAL_TYPE(val + 1) != DB1_STRING) && (VAL_TYPE(val + 1) != DB1_STR))
+		{
+			LM_DBG("failure during checks of database value 2 (IP address) in address table - not a string value\n");
+			goto dberror;
+		}
+		if (VAL_NULL(val + 1))
+		{
+			LM_DBG("failure during checks of database value 2 (IP address) in address table - NULL value not permitted\n");
+			goto dberror;
+		}
+		if ((VAL_TYPE(val + 2) != DB1_INT) || VAL_NULL(val + 2))
+		{
+			LM_DBG("failure during checks of database value 3 (subnet size/CIDR) in address table\n");
+			goto dberror;
+		}
+		if ((VAL_TYPE(val + 3) != DB1_INT) || VAL_NULL(val + 3))
+		{
+			LM_DBG("failure during checks of database value 4 (port) in address table\n");
 			goto dberror;
 		}
 		gid = VAL_UINT(val);

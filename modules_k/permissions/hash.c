@@ -270,8 +270,8 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 }
 
 
-/* 
- * Print trusted entries stored in hash table 
+/*! \brief
+ * MI Interface :: Print trusted entries stored in hash table 
  */
 int hash_table_mi_print(struct trusted_list** table, struct mi_node* rpl)
 {
@@ -296,6 +296,50 @@ int hash_table_mi_print(struct trusted_list** table, struct mi_node* rpl)
 	return 0;
 }
 
+/*! \brief
+ * RPC interface :: Print trusted entries stored in hash table 
+ */
+int hash_table_rpc_print(struct trusted_list** hash_table, rpc_t* rpc, void* c)
+{
+	int i;
+	struct trusted_list *np;
+	void* th;
+	void* ih;
+
+	if (rpc->add(c, "{", &th) < 0)
+	{
+		rpc->fault(c, 500, "Internal error creating rpc");
+		return -1;
+	}
+
+	for (i = 0; i < PERM_HASH_SIZE; i++) {
+		np = hash_table[i];
+		while (np) {
+			if(rpc->struct_add(th, "d{", 
+					"table", i,
+					"item", &ih) < 0)
+                        {
+                                rpc->fault(c, 500, "Internal error creating rpc ih");
+                                return -1;
+                        }
+
+			if(rpc->struct_add(ih, "s", "ip", np->src_ip.s) < 0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc data (ip)");
+				return -1;
+			}
+			if(rpc->struct_add(ih, "dss", "proto",  np->proto,
+						"pattern",  np->pattern ? np->pattern : "NULL",
+						"tag",  np->tag.len ? np->tag.s : "NULL") < 0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc data");
+				return -1;
+			}
+			np = np->next;
+		}
+	}
+	return 0;
+}
 
 /* 
  * Free contents of hash table, it doesn't destroy the
@@ -456,9 +500,8 @@ int find_group_in_addr_hash_table(struct addr_list** table,
 	return -1;
 }
 
-
-/* 
- * Print addresses stored in hash table 
+/*! \brief
+ * MI: Print addresses stored in hash table 
  */
 int addr_hash_table_mi_print(struct addr_list** table, struct mi_node* rpl)
 {
@@ -473,6 +516,53 @@ int addr_hash_table_mi_print(struct addr_list** table, struct mi_node* rpl)
 						i, np->grp, ip_addr2a(&np->addr),
 						np->port, (np->tag.s==NULL)?"":np->tag.s) == 0)
 				return -1;
+			np = np->next;
+		}
+	}
+	return 0;
+}
+
+/*! \brief
+ * RPC: Print addresses stored in hash table 
+ */
+int addr_hash_table_rpc_print(struct addr_list** table, rpc_t* rpc, void* c)
+{
+	int i;
+	int count;
+	void* th;
+	void* ih;
+	struct addr_list *np;
+
+
+	if (rpc->add(c, "{", &th) < 0)
+	{
+		rpc->fault(c, 500, "Internal error creating rpc");
+		return -1;
+	}
+
+	for (i = 0; i < PERM_HASH_SIZE; i++) {
+		np = table[i];
+		while (np) {
+			if(rpc->struct_add(th, "dd{", 
+					"table", i,
+					"group", np->grp,
+					"item", &ih) < 0)
+                        {
+                                rpc->fault(c, 500, "Internal error creating rpc ih");
+                                return -1;
+                        }
+
+			if(rpc->struct_add(ih, "s", "ip", ip_addr2a(&np->addr)) < 0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc data (ip)");
+				return -1;
+			}
+			if(rpc->struct_add(ih, "ds", "port",  np->port,
+						"tag",  np->tag.len ? np->tag.s : "NULL") < 0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc data");
+				return -1;
+			}
 			np = np->next;
 		}
 	}
@@ -651,6 +741,50 @@ int subnet_table_mi_print(struct subnet* table, struct mi_node* rpl)
 					i, table[i].grp, ip_addr2a(&table[i].subnet),
 					table[i].mask, table[i].port,
 					(table[i].tag.s==NULL)?"":table[i].tag.s) == 0) {
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/*! \brief
+ * RPC interface :: Print subnet entries stored in hash table 
+ */
+int subnet_table_rpc_print(struct subnet* table, rpc_t* rpc, void* c)
+{
+	int i;
+	int count;
+	void* th;
+	void* ih;
+
+	count = table[PERM_MAX_SUBNETS].grp;
+
+	if (rpc->add(c, "{", &th) < 0)
+	{
+		rpc->fault(c, 500, "Internal error creating rpc");
+		return -1;
+	}
+
+	for (i = 0; i < count; i++) {
+		if(rpc->struct_add(th, "dd{", 
+				"id", i,
+				"group", table[i].grp,
+				"item", &ih) < 0)
+                {
+                        rpc->fault(c, 500, "Internal error creating rpc ih");
+                        return -1;
+                }
+
+		if(rpc->struct_add(ih, "s", "ip", ip_addr2a(&table[i].subnet)) < 0)
+		{
+			rpc->fault(c, 500, "Internal error creating rpc data (subnet)");
+			return -1;
+		}
+		if(rpc->struct_add(ih, "dds", "mask", table[i].mask,
+					"port", table[i].port,
+					"tag",  (table[i].tag.s==NULL)?"":table[i].tag.s) < 0)
+		{
+			rpc->fault(c, 500, "Internal error creating rpc data");
 			return -1;
 		}
 	}

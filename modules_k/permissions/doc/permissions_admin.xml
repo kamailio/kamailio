@@ -1187,6 +1187,97 @@ if (allow_trusted("$si", "$proto")) {
 	</section>
 
 	</section>
+	<section>
+	<title>RPC Commands</title>
+	<section>
+		<title>
+		<function moreinfo="none">addressReload</function>
+		</title>
+		<para>
+			Causes permissions module to re-read the contents of
+			address database table into cache
+			memory.  In cache memory the entries are
+			for performance reasons stored in two
+                        different tables:  address table and
+			subnet table depending on the value of
+			the mask field (32 or smaller).
+
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+	</section>
+	
+	<section>
+		<title>
+		<function moreinfo="none">addressDump</function>
+		</title>
+		<para>
+			Causes permissions module to dump
+                   	contents of cache memory address table.
+			(Not the subnet table).
+
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">subnetDump</function>
+		</title>
+		<para>
+			Causes permissions module to dump
+                	contents of cache memory subnet table.
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">testUri basename uri contact</function>
+		</title>
+		<para>
+			Tests if (URI, Contact) pair is allowed according to
+			allow/deny files.  The files must already have been
+		 	loaded by &kamailio;.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>basename</emphasis> -
+				Basename from which allow and deny filenames will be created by
+				appending contents of allow_suffix and deny_suffix
+				parameters.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>URI</emphasis> - URI to be tested
+			</para></listitem>
+			<listitem><para>
+				<emphasis>Contact</emphasis> - Contact to be tested
+			</para></listitem>
+		</itemizedlist>
+
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">trustedReload</function>
+		</title>
+		<para>
+			Causes permissions module to re-read the contents of
+			trusted table into cache memory.
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">trustedDump</function>
+		</title>
+		<para>
+			Causes permissions module to dump contents of trusted
+			table from cache memory.
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+	</section>
+
+	</section> <!-- RPC commands -->
 
 </chapter>
 
