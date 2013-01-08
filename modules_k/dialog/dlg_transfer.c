@@ -40,10 +40,47 @@
 #define DLG_HOLD_SDP "v=0\r\no=kamailio-bridge 0 0 IN IP4 0.0.0.0\r\ns=kamailio\r\nc=IN IP4 0.0.0.0\r\nt=0 0\r\nm=audio 9 RTP/AVP 8 0\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:0 PCMU/8000\r\n"
 #define DLG_HOLD_SDP_LEN	(sizeof(DLG_HOLD_SDP)-1)
 
+/*
 #define DLG_HOLD_CT_HDR "Contact: <sip:kamailio.org:5060>\r\nContent-Type: application/sdp\r\n"
 #define DLG_HOLD_CT_HDR_LEN	(sizeof(DLG_HOLD_CT_HDR)-1)
+*/
 
 extern str dlg_bridge_controller;
+extern str dlg_bridge_contact;
+
+static char *dlg_bridge_hdrs_buf = NULL;
+static str dlg_bridge_inv_hdrs = {0};
+static str dlg_bridge_ref_hdrs = {0};
+
+int dlg_bridge_init_hdrs(void)
+{
+	if(dlg_bridge_hdrs_buf!=NULL)
+		return 0;
+	dlg_bridge_hdrs_buf = (char*)pkg_malloc((dlg_bridge_contact.len + 46)
+													* sizeof(char));
+	if(dlg_bridge_hdrs_buf==NULL) {
+		LM_ERR("no more pkg memory\n");
+		return -1;
+	}
+	strncpy(dlg_bridge_hdrs_buf,
+			"Contact: <", 10);
+	strncpy(dlg_bridge_hdrs_buf + 10,
+			dlg_bridge_contact.s, dlg_bridge_contact.len);
+	strncpy(dlg_bridge_hdrs_buf + 10 + dlg_bridge_contact.len,
+			">\r\nContent-Type: application/sdp\r\n", 34);
+	dlg_bridge_hdrs_buf[dlg_bridge_contact.len+44] = '\0';
+	dlg_bridge_inv_hdrs.s = dlg_bridge_hdrs_buf;
+	dlg_bridge_inv_hdrs.len = dlg_bridge_contact.len + 44;
+	dlg_bridge_ref_hdrs.s = dlg_bridge_hdrs_buf;
+	dlg_bridge_ref_hdrs.len = dlg_bridge_contact.len + 13;
+	return 0;
+}
+
+void dlg_bridge_destroy_hdrs(void)
+{
+	if(dlg_bridge_hdrs_buf!=NULL)
+		pkg_free(dlg_bridge_hdrs_buf);
+}
 
 void dlg_transfer_ctx_free(dlg_transfer_ctx_t *dtc)
 {
@@ -145,7 +182,7 @@ static int dlg_refer_callee(dlg_transfer_ctx_t *dtc)
 	}
 
 	hdrs.len = 23 + 2*CRLF_LEN + dlg_bridge_controller.len
-		+ dtc->to.len;
+		+ dtc->to.len + dlg_bridge_ref_hdrs.len;
 	LM_DBG("sending REFER [%d] <%.*s>\n", hdrs.len, dtc->to.len, dtc->to.s);
 	hdrs.s = (char*)pkg_malloc(hdrs.len*sizeof(char));
 	if(hdrs.s == NULL)
@@ -158,6 +195,8 @@ static int dlg_refer_callee(dlg_transfer_ctx_t *dtc)
 			dtc->to.len);
 	memcpy(hdrs.s+23+dlg_bridge_controller.len+CRLF_LEN+dtc->to.len,
 			CRLF, CRLF_LEN);
+	memcpy(hdrs.s+23+dlg_bridge_controller.len+CRLF_LEN+dtc->to.len+CRLF_LEN,
+			dlg_bridge_controller.s, dlg_bridge_controller.len);
 
 	memset(&uac_r, '\0', sizeof(uac_req_t));
 	set_uac_req(&uac_r, &met, &hdrs, NULL, dialog_info, TMCB_LOCAL_COMPLETED,
@@ -278,7 +317,6 @@ int dlg_bridge(str *from, str *to, str *op)
 	int ret;
 	str s_method = {"INVITE", 6};
 	str s_body;
-	str s_hdrs;
 	uac_req_t uac_r;
 
 	dtc = (dlg_transfer_ctx_t*)shm_malloc(sizeof(dlg_transfer_ctx_t));
@@ -314,12 +352,10 @@ int dlg_bridge(str *from, str *to, str *op)
 			dtc->to.len, dtc->to.s);
 	s_body.s   = DLG_HOLD_SDP;
 	s_body.len = DLG_HOLD_SDP_LEN;
-	s_hdrs.s   = DLG_HOLD_CT_HDR;
-	s_hdrs.len = DLG_HOLD_CT_HDR_LEN;
 
 	memset(&uac_r, '\0', sizeof(uac_req_t));
 	uac_r.method = &s_method;
-	uac_r.headers = &s_hdrs;
+	uac_r.headers = &dlg_bridge_inv_hdrs;
 	uac_r.body = &s_body;
 	uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
 	uac_r.cb = dlg_bridge_tm_callback;

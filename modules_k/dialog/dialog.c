@@ -112,6 +112,8 @@ int dlg_event_rt[DLG_EVENTRT_MAX];
 
 str dlg_bridge_controller = {"sip:controller@kamailio.org", 27};
 
+str dlg_bridge_contact = {"sip:controller@kamailio.org:5060", 32};
+
 str ruri_pvar_param = {"$ru", 3};
 pv_elem_t * ruri_param_model = NULL;
 
@@ -269,6 +271,7 @@ static param_export_t mod_params[]={
 	{ "profiles_with_value",   STR_PARAM, &profiles_wv_s            },
 	{ "profiles_no_value",     STR_PARAM, &profiles_nv_s            },
 	{ "bridge_controller",     STR_PARAM, &dlg_bridge_controller.s  },
+	{ "bridge_contact",        PARAM_STR, &dlg_bridge_contact       },
 	{ "ruri_pvar",             STR_PARAM, &ruri_pvar_param.s        },
 	{ "initial_cbs_inscript",  INT_PARAM, &initial_cbs_inscript     },
 	{ "send_bye",              INT_PARAM, &dlg_send_bye             },
@@ -467,6 +470,9 @@ static int mod_init(void)
 	}
 
 	if(faked_msg_init()<0)
+		return -1;
+
+	if(dlg_bridge_init_hdrs()<0)
 		return -1;
 
 	if (timeout_spec.s)
@@ -744,6 +750,7 @@ static void mod_destroy(void)
 		dialog_update_db(0, 0);
 		destroy_dlg_db();
 	}
+	dlg_bridge_destroy_hdrs();
 	/* no DB interaction from now on */
 	dlg_db_mode = DB_MODE_NONE;
 	destroy_dlg_table();
