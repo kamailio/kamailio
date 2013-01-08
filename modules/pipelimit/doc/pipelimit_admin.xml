@@ -310,7 +310,7 @@ modparam("pipelimit", "reply_reason", "Limiting")
 		xlog("L_ALERT","pl_check(\"$var(p)\") pass -NOP algorithm\n");
 		break;
 	default:
-		xlog("L_ERR","pl_check(\"$var(p)\") droping \
+		xlog("L_ERR","pl_check(\"$var(p)\") dropping \
 with unexpected retcode=$var(check_result)\n");
 		pl_drop();
 		exit;
