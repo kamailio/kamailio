@@ -522,7 +522,7 @@ static int pipe_push(struct sip_msg * msg, str *pipeid)
 	if(pipe==NULL)
 	{
 		LM_ERR("pipe not found [%.*s]\n", pipeid->len, pipeid->s);
-		return -1;
+		return -2;
 	}
 
 	pipe->counter++;
@@ -531,7 +531,7 @@ static int pipe_push(struct sip_msg * msg, str *pipeid)
 		case PIPE_ALGO_NOP:
 			LM_ERR("no algorithm defined for pipe %.*s\n",
 					pipeid->len, pipeid->s);
-			ret = 1;
+			ret = 2;
 			break;
 		case PIPE_ALGO_TAILDROP:
 			ret = (pipe->counter <= pipe->limit * timer_interval) ? 1 : -1;

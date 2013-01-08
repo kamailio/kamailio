@@ -278,8 +278,11 @@ kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
    Check the current request against the 'name' pipe. The pipe name can be
    provided via a pseudo variabile.
 
-   The method will return an error code if the limit for the matched
-   algorithm is reached.
+   The method will return:
+     * -2 if no pipe was found
+     * -1 if pipe limit was reached
+     * 1 if pipe limit was NOT reached
+     * 2 if pipe has NOP algorithm
 
    Meaning of the parameters is as follows:
      * name - the pseudovariable holding the pipe name.
@@ -296,7 +299,27 @@ kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
 ...
         # use pipe 'one' for the current method via PV
         $var(p) = "one";
-        if (!pl_check("$var(p)")) {
+        $var(check_result) = pl_check("$var(p)");
+        switch($var(check_result)) {
+        case -2:
+                xlog("L_ALERT","pl_check(\"$var(p)\") drop -pipe NOT found\n");
+                pl_drop();
+                exit;
+                break;
+        case -1:
+                xlog("L_ALERT","pl_check(\"$var(p)\") drop\n");
+                pl_drop();
+                exit;
+                break;
+        case 1:
+                xlog("L_INFO", "pl_check(\"$var(p)\") pass\n");
+                break;
+        case 2:
+                xlog("L_ALERT","pl_check(\"$var(p)\") pass -NOP algorithm\n");
+                break;
+        default:
+                xlog("L_ERR","pl_check(\"$var(p)\") droping \
+with unexpected retcode=$var(check_result)\n");
                 pl_drop();
                 exit;
         }
