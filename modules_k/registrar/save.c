@@ -61,6 +61,7 @@
 #include "../../mod_fix.h"
 #include "../../lib/srutils/sruid.h"
 #include "../../lib/kcore/cmpapi.h"
+#include "../../lib/kcore/parse_supported.h"
 #include "../../lib/kcore/statistics.h"
 #ifdef USE_TCP
 #include "../../tcp_server.h"
@@ -839,6 +840,15 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 
 	if (check_contacts(_m, &st) > 0) {
 		goto error;
+	}
+
+	if (parse_supported(_m) == 0) {
+		if (!(((struct supported_body *)_m->supported->parsed)->supported_all
+				& F_SUPPORTED_OUTBOUND) && reg_outbound_mode == REG_OUTBOUND_REQUIRE) {
+			LM_WARN("Outbound required by server and not supported by UAC\n");
+			rerrno = R_OB_UNSUP;
+			goto error;
+		}
 	}
 	
 	get_act_time();

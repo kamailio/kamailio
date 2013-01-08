@@ -2018,7 +2018,7 @@ void print_all_socket_lists()
 						si->flags & SI_IS_MCAST ? " mcast" : "",
 						si->flags & SI_IS_MHOMED? " mhomed" : "");
 				if (si->useinfo.name.s)
-					printf(" advertise %s", si->useinfo.name.s);
+					printf(" advertise %s:%d", si->useinfo.name.s, si->useinfo.port_no);
 				printf("\n");
 			}
 		}

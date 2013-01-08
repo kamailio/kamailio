@@ -163,7 +163,8 @@ failure_route[REPLY_OUTBOUND] {
 ...
 loadmodule "registrar.so"
 ...
-TBD
+modparam("registrar", "outbound_mode", 2)
+### TBD
 ...
 ]]></programlisting>
 	</example>

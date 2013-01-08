@@ -373,6 +373,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 #define MSG_200 "OK"
 #define MSG_400 "Bad Request"
 #define MSG_420 "Bad Extension"
+#define MSG_421 "Extension Required"
 #define MSG_500 "Server Internal Error"
 #define MSG_503 "Service Unavailable"
 
@@ -406,6 +407,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 #define EI_R_CALLID_LEN  "Callid too long"                          /* R_CALLID_LEN */
 #define EI_R_PARSE_PATH  "Path parse error"                         /* R_PARSE_PATH */
 #define EI_R_PATH_UNSUP  "No support for found Path indicated"      /* R_PATH_UNSUP */
+#define EI_R_OB_UNSUP    "No support for Outbound indicated"        /* R_OB_UNSUP */
 
 str error_info[] = {
 	{EI_R_FINE,       sizeof(EI_R_FINE) - 1},
@@ -437,7 +439,8 @@ str error_info[] = {
 	{EI_R_CONTACT_LEN,sizeof(EI_R_CONTACT_LEN) - 1},
 	{EI_R_CALLID_LEN, sizeof(EI_R_CALLID_LEN) - 1},
 	{EI_R_PARSE_PATH, sizeof(EI_R_PARSE_PATH) - 1},
-	{EI_R_PATH_UNSUP, sizeof(EI_R_PATH_UNSUP) - 1}
+	{EI_R_PATH_UNSUP, sizeof(EI_R_PATH_UNSUP) - 1},
+	{EI_R_OB_UNSUP,   sizeof(EI_R_OB_UNSUP) - 1},
 
 };
 
@@ -471,7 +474,8 @@ int codes[] = {
 	400, /* R_CONTACT_LEN */
 	400, /* R_CALLID_LEN */
 	400, /* R_PARSE_PATH */
-	420  /* R_PATH_UNSUP */
+	420, /* R_PATH_UNSUP */
+	421  /* R_OB_UNSUP */
 
 };
 
@@ -537,6 +541,69 @@ static int add_unsupported(struct sip_msg* _m, str* _p)
  		     LUMP_RPL_HDR | LUMP_RPL_NODUP);
  	return 0;
 }
+
+#define REQUIRE "Require: "
+#define REQUIRE_LEN (sizeof(REQUIRE) - 1)
+
+static int add_require(struct sip_msg* _m, str* _p)
+{
+	char* buf;
+
+ 	buf = (char*)pkg_malloc(REQUIRE_LEN + _p->len + CRLF_LEN);
+ 	if (!buf) {
+ 		LM_ERR("no pkg memory left\n");
+ 		return -1;
+ 	}
+ 	memcpy(buf, REQUIRE, REQUIRE_LEN);
+ 	memcpy(buf + REQUIRE_LEN, _p->s, _p->len);
+ 	memcpy(buf + REQUIRE_LEN + _p->len, CRLF, CRLF_LEN);
+ 	add_lump_rpl(_m, buf, REQUIRE_LEN + _p->len + CRLF_LEN,
+ 		     LUMP_RPL_HDR | LUMP_RPL_NODUP);
+ 	return 0;
+}
+
+#define SUPPORTED "Supported: "
+#define SUPPORTED_LEN (sizeof(SUPPORTED) - 1)
+
+static int add_supported(struct sip_msg* _m, str* _p)
+{
+	char* buf;
+
+ 	buf = (char*)pkg_malloc(SUPPORTED_LEN + _p->len + CRLF_LEN);
+ 	if (!buf) {
+ 		LM_ERR("no pkg memory left\n");
+ 		return -1;
+ 	}
+ 	memcpy(buf, SUPPORTED, SUPPORTED_LEN);
+ 	memcpy(buf + SUPPORTED_LEN, _p->s, _p->len);
+ 	memcpy(buf + SUPPORTED_LEN + _p->len, CRLF, CRLF_LEN);
+ 	add_lump_rpl(_m, buf, SUPPORTED_LEN + _p->len + CRLF_LEN,
+ 		     LUMP_RPL_HDR | LUMP_RPL_NODUP);
+ 	return 0;
+}
+
+#define FLOW_TIMER "Flow-Timer: "
+#define FLOW_TIMER_LEN (sizeof(FLOW_TIMER) - 1)
+
+static int add_flow_timer(struct sip_msg* _m)
+{
+	char* buf;
+	int lump_len;
+
+	/* Add three as REG_FLOW_TIMER_MAX is 999 - three digits */
+ 	buf = (char*)pkg_malloc(FLOW_TIMER_LEN + 3 + CRLF_LEN);
+ 	if (!buf) {
+ 		LM_ERR("no pkg memory left\n");
+ 		return -1;
+ 	}
+	lump_len = snprintf(buf, FLOW_TIMER_LEN + 3 + CRLF_LEN,
+				"%.*s%d%.*s",
+				FLOW_TIMER_LEN, FLOW_TIMER,
+				reg_flow_timer,
+				CRLF_LEN, CRLF);
+ 	add_lump_rpl(_m, buf, lump_len, LUMP_RPL_HDR | LUMP_RPL_NODUP);
+ 	return 0;
+}
  
 /*! \brief
  * Send a reply
@@ -544,6 +611,7 @@ static int add_unsupported(struct sip_msg* _m, str* _p)
 int reg_send_reply(struct sip_msg* _m)
 {
 	str unsup = str_init(SUPPORTED_PATH_STR);
+	str outbound_str = str_init(SUPPORTED_OUTBOUND_STR);
 	long code;
 	str msg = str_init(MSG_200); /* makes gcc shut up */
 	char* buf;
@@ -552,34 +620,67 @@ int reg_send_reply(struct sip_msg* _m)
 		add_lump_rpl( _m, contact.buf, contact.data_len, LUMP_RPL_HDR|LUMP_RPL_NODUP|LUMP_RPL_NOFREE);
 		contact.data_len = 0;
 	}
-			
-	if (rerrno == R_FINE && path_enabled && _m->path_vec.s) {
-		if (path_mode != PATH_MODE_OFF) {
-			if (parse_supported(_m)<0 && path_mode == PATH_MODE_STRICT) {
-				rerrno = R_PATH_UNSUP;
-				if (add_unsupported(_m, &unsup) < 0)
-					return -1;
-				if (add_path(_m, &_m->path_vec) < 0)
-					return -1;
-			}
-			else if (get_supported(_m) & F_SUPPORTED_PATH) {
-				if (add_path(_m, &_m->path_vec) < 0)
-					return -1;
-			} else if (path_mode == PATH_MODE_STRICT) {
-				rerrno = R_PATH_UNSUP;
-				if (add_unsupported(_m, &unsup) < 0)
-					return -1;
-				if (add_path(_m, &_m->path_vec) < 0)
-					return -1;
+
+	switch (rerrno) {
+	case R_FINE:
+		if (path_enabled && _m->path_vec.s) {
+			if (path_mode != PATH_MODE_OFF) {
+				if (parse_supported(_m)<0 && path_mode == PATH_MODE_STRICT) {
+					rerrno = R_PATH_UNSUP;
+					if (add_unsupported(_m, &unsup) < 0)
+						return -1;
+					if (add_path(_m, &_m->path_vec) < 0)
+						return -1;
+				}
+				else if (get_supported(_m) & F_SUPPORTED_PATH) {
+					if (add_path(_m, &_m->path_vec) < 0)
+						return -1;
+				} else if (path_mode == PATH_MODE_STRICT) {
+					rerrno = R_PATH_UNSUP;
+					if (add_unsupported(_m, &unsup) < 0)
+						return -1;
+					if (add_path(_m, &_m->path_vec) < 0)
+						return -1;
+				}
 			}
 		}
+
+		switch(reg_outbound_mode)
+		{
+		case REG_OUTBOUND_NONE:
+		default:
+			break;
+		case REG_OUTBOUND_REQUIRE:
+			if (add_require(_m, &outbound_str) < 0)
+				return -1;
+
+			if (reg_flow_timer > 0) {
+				if (add_flow_timer(_m) < 0)
+					return -1;
+			}
+			/* Fall-thru */
+		case REG_OUTBOUND_SUPPORTED:
+			if (add_supported(_m, &outbound_str) < 0)
+				return -1;
+			break;
+		}
+		break;
+	case R_OB_UNSUP:
+		if (add_require(_m, &outbound_str) < 0)
+			return -1;
+		if (add_supported(_m, &outbound_str) < 0)
+			return -1;
+		break;
+	default:
+		break;
 	}
 
 	code = codes[rerrno];
 	switch(code) {
-	case 200: msg.s = MSG_200; msg.len = sizeof(MSG_200)-1; break;
+	case 200: msg.s = MSG_200; msg.len = sizeof(MSG_200)-1;break;
 	case 400: msg.s = MSG_400; msg.len = sizeof(MSG_400)-1;break;
 	case 420: msg.s = MSG_420; msg.len = sizeof(MSG_420)-1;break;
+	case 421: msg.s = MSG_420; msg.len = sizeof(MSG_421)-1;break;
 	case 500: msg.s = MSG_500; msg.len = sizeof(MSG_500)-1;break;
 	case 503: msg.s = MSG_503; msg.len = sizeof(MSG_503)-1;break;
 	}

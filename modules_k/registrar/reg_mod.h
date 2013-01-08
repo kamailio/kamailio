@@ -67,6 +67,15 @@
 #define REG_SAVE_REPL_FL    (1<<2)
 #define REG_SAVE_ALL_FL     ((1<<3)-1)
 
+#define REG_OUTBOUND_NONE	0
+#define REG_OUTBOUND_SUPPORTED	1
+#define REG_OUTBOUND_REQUIRE	2
+
+/* Maximum of 999 to keep flow-timer to 3 digits
+   - make sure to update reply.c:add_flow_timer() if the number of digits
+     increases! */
+#define REG_FLOW_TIMER_MAX	999
+
 extern int nat_flag;
 extern int tcp_persistent_flag;
 extern int received_avp;
@@ -84,6 +93,8 @@ extern int path_enabled;
 extern int path_mode;
 extern int path_use_params;
 extern int reg_gruu_enabled;
+extern int reg_outbound_mode;
+extern int reg_flow_timer;
 
 extern str sock_hdr_name;
 extern int sock_flag;

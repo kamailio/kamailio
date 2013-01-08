@@ -1464,8 +1464,6 @@ insert_candidates(struct sip_msg *msg, char *where, str *ip, unsigned int port,
     append_str(at, rtp_port.s, rtp_port.len);
     append_str(at, " typ relay\r\n", 12);
 
-    LM_DBG("inserting '%.*s'\n", at - buf, buf);
-
     anchor = anchor_lump(msg, where - msg->buf, 0, 0);
     if (anchor == 0) {
 	LOG(L_ERR, "insert_candidates: can't get anchor\n");
