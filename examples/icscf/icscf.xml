@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DiameterPeer 
+	FQDN="icscf.kamailio-ims.org"
+	Realm="kamailio-ims.org"
+	Vendor_Id="10415"
+	Product_Name="CDiameterPeer"
+	AcceptUnknownPeers="1"
+	DropUnknownOnDisconnect="1"
+	Tc="30"
+	Workers="4"
+	QueueLength="8"
+	TransactionTimeout="5"
+	SessionsHashSize="128"
+	DefaultAuthSessionTimeout="3600"
+	MaxAuthSessionTimeout="3600"
+>
+
+	<Peer FQDN="hss.kamailio-ims.org" Realm="kamailio-ims.org" port="3868"/> 
+
+	<Acceptor port="3868" bind="192.168.0.2"/>
+
+        <Auth id="16777216" vendor="10415"/> <!--3GPP CxDX -->
+
+	<DefaultRoute FQDN="hss.kamailio-ims.org" metric="10"/>
+</DiameterPeer>
