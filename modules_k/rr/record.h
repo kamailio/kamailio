@@ -31,7 +31,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
-
+#include "../../pvar.h"
 
 /*!
  * \brief Insert a new Record-Route header field with lr parameter
@@ -81,6 +81,8 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data);
  * \return 0 on success, -1 on failure
  */
 int add_rr_param(struct sip_msg* msg, str* rr_param);
+
+void init_custom_user(pv_spec_t *custom_user_avp);
 
 
 #endif /* RECORD_H */
