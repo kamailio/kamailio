@@ -13,9 +13,9 @@
     <title>Overview</title>
 
     <para>CDP (C Diameter Peer) allows Diameter communication to and from
-    sip-router/kamailio. Most of the code is inherited from DISC
+    Kamailio. Most of the code is inherited from DISC
     http://developer.berlios.de/projects/disc/ and OpenIMS and modified for
-    use within Kamailio. A few improvements/new functionality has been added
+    use within Kamailio. A few improvements and new functionality has been added
     along the way, for example, threshold reporting on Diameter calls that are
     serviced above a certain threshold.</para>
   </section>
@@ -49,14 +49,14 @@
     file. The exported API can be seen in mod.c. The Full Diameter API is in
     diameter.h and diameter_api.h. IMS-specific constants can be found in
     diameter_ims.h. The protocol coding is implemented in diameter_avp.c and
-    diameter_msg.c. Diameter state machine is implemented in
+    diameter_msg.c. The diameter state machine is implemented in
     peerstatemachine.c - there is one of these for each peer which maintains
     all protocol/application state for each peer. peermanager.c is responsible
     for peer administration. Diameter transactions are implemented in
     transaction.c.</para>
 
     <para>There are 2 configuration areas for CDP. Firstly it must be loaded
-    and conifugred in the Kamailio.cfg file (this is the normal task
+    and configured in the Kamailio.cfg file (this is the normal task
     associated with Kamailio modules). Then, an XML file is required to
     configure various Diameter parameters and all related peers and the
     associated routes.</para>
@@ -132,7 +132,7 @@ modparam("cdp", "latency_threshold", 1000)
     <title>Functions</title>
 
     <section>
-      <para>No functions available from configuraion. See API for internal
+      <para>No functions available from configuration. See API for internal
       functions.</para>
     </section>
   </section>
@@ -144,7 +144,7 @@ modparam("cdp", "latency_threshold", 1000)
       <title>DiameterPeer.xml example</title>
 
       <para>This is an example CDP configuration file. The location of this
-      file is confiured as a CDP parameter (config_file) - See section 4.1
+      file is configured as a CDP parameter (config_file) - See section 4.1
       Above</para>
 
       <example>
@@ -203,7 +203,7 @@ modparam("cdp", "latency_threshold", 1000)
         &lt;!--
                 Definition of peers to connect to and accept connections from. For each peer found in here
                 a dedicated receiver process will be forked. All other unkwnown peers will share a single
-                receiver. NB. you must have a peer definition for each peer listed in the realm routing section
+                receiver. NB: You must have a peer definition for each peer listed in the realm routing section
         --&gt;
         &lt;Peer FQDN="pcrf1.ims.smilecoms.com" Realm="ims.smilecoms.com" port="3868"/&gt;
         &lt;Peer FQDN="pcrf2.ims.smilecoms.com" Realm="ims.smilecoms.com" port="3868"/&gt;
