@@ -40,7 +40,7 @@
 	</para>
 
 	<para>
-	The capturing can be turned on/off using fifo commad.
+	The capturing can be turned on/off using mi or rpc commands. Example:
 	</para>
 	<para>
 	&ctltool; fifo sip_capture on
@@ -425,7 +425,35 @@ modparam("sipcapture", "capture_node", "homer03")
 		_empty_line_
 		</programlisting>
 	</section>
+	</section><!-- MI commands -->
+    	<section>
+	<title>RPC Commands</title>
+	<section>
+		<title>
+		<function moreinfo="none">sipcapture.status param</function>
+		</title>
+		<para>
+
+		</para>
+		<para>
+		Name: <emphasis>sipcapture.status</emphasis>
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>on or off: turns on/off SIP message capturing.
+			Possible values are:</para>
+			<itemizedlist>
+				<listitem><para>on</para></listitem> 
+				<listitem><para>off</para></listitem>
+			</itemizedlist>
+			</listitem>
+			<listitem><quote>check</quote> does not change 
+			sipcapture status, just reports the current status.</para>
+			</listitem>
+		</itemizedlist>
+
 	</section>
+	</section><!-- MI commands -->
 	
 	<section>
 		<title>Database setup</title>

@@ -60,6 +60,8 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 #include "../../lib/srdb1/db.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_content.h"
@@ -95,6 +97,7 @@ MODULE_VERSION
 
 /* module function prototypes */
 static int mod_init(void);
+static int sipcapture_init_rpc(void);
 static int child_init(int rank);
 static void destroy(void);
 static int sip_capture(struct sip_msg *msg, char *s1, char *s2);
@@ -407,6 +410,11 @@ static int mod_init(void) {
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+	if(sipcapture_init_rpc()!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -1564,4 +1572,54 @@ int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip) {
 	return 0;
 }
 
+static void sipcapture_rpc_status (rpc_t* rpc, void* c) {
+	str status = {0, 0};
+
+	if (rpc->scan(c, "S", &status) < 1) {
+		rpc->fault(c, 500, "Not enough parameters (on, off or check)");
+		return;
+	}
+
+	if(capture_on_flag==NULL) {
+		rpc->fault(c, 500, "Internal error");
+		return;
+	}
+
+	if (strncasecmp(status.s, "on", strlen("on")) == 0) {
+		*capture_on_flag = 1;
+		rpc->printf(c, "Enabled");
+		return;
+	}
+	if (strncasecmp(status.s, "off", strlen("off")) == 0) {
+		*capture_on_flag = 0;
+		rpc->printf(c, "Disabled");
+		return;
+	}
+	if (strncasecmp(status.s, "check", strlen("check")) == 0) {
+		rpc->printf(c, *capture_on_flag ? "Enabled" : "Disabled");
+		return;
+	} 
+	rpc->fault(c, 500, "Bad parameter (on, off or check)");
+	return;
+}
+
+static const char* sipcapture_status_doc[2] = {
+        "Get status or turn on/off sipcapture.",
+        0
+};
+
+rpc_export_t sipcapture_rpc[] = {
+	{"sipcapture.status", sipcapture_rpc_status, sipcapture_status_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int sipcapture_init_rpc(void)
+{
+	if (rpc_register_array(sipcapture_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}
 

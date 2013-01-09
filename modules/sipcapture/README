@@ -10,9 +10,9 @@ Alexandr Dubovikov
 
    <alexandr.dubovikov@gmail.com>
 
-   Copyright © 2011 QSC AG
+   Copyright � 2011 QSC AG
 
-   Copyright © 2011 http://www.qsc.de
+   Copyright � 2011 http://www.qsc.de
      __________________________________________________________________
 
    Table of Contents
@@ -47,8 +47,12 @@ Alexandr Dubovikov
 
               4.1. sip_capture
 
-        5. Database setup
-        6. Limitation
+        5. RPC Commands
+
+              5.1. sipcapture.status param
+
+        6. Database setup
+        7. Limitation
 
    List of Examples
 
@@ -100,8 +104,12 @@ Chapter 1. Admin Guide
 
         4.1. sip_capture
 
-   5. Database setup
-   6. Limitation
+   5. RPC Commands
+
+        5.1. sipcapture.status param
+
+   6. Database setup
+   7. Limitation
 
 1. Overview
 
@@ -113,7 +121,7 @@ Chapter 1. Admin Guide
      * Monitoring/mirroring port.
      * Homer encapsulation protocol mode (HEP v1, v2, v3).
 
-   The capturing can be turned on/off using fifo commad.
+   The capturing can be turned on/off using mi or rpc commands. Example:
 
    kamctl fifo sip_capture on
 
@@ -361,7 +369,7 @@ modparam("sipcapture", "capture_node", "homer03")
           + on
           + off
        The parameter is optional - if missing, the command will return the
-       status of the SIP message capturing (as string “on” or “off” )
+       status of the SIP message capturing (as string "on" or "off" )
        without changing anything.
 
    MI FIFO Command Format:
@@ -369,7 +377,22 @@ modparam("sipcapture", "capture_node", "homer03")
                 capture_mode
                 _empty_line_
 
-5. Database setup
+5. RPC Commands
+
+   5.1. sipcapture.status param
+
+5.1.  sipcapture.status param
+
+   Name: sipcapture.status
+
+   Parameters:
+     * on or off: turns on/off SIP message capturing. Possible values are:
+          + on
+          + off
+     * "check" does not change sipcapture status, just reports the current
+       status.
+
+6. Database setup
 
    Before running Kamailio with sipcapture, you have to setup the database
    tables where the module will store the data. For that, if the table
@@ -379,7 +402,7 @@ modparam("sipcapture", "capture_node", "homer03")
    find the complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-6. Limitation
+7. Limitation
 
    1. Only one capturing mode on RAW socket is supported: IPIP or
    monitoring/mirroring port. Don't activate both at the same time. 2. By
