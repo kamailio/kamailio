@@ -75,6 +75,35 @@ static char rr_param_buf_ptr[RR_PARAM_BUF_SIZE];
 static str rr_param_buf = {rr_param_buf_ptr,0};
 static unsigned int rr_param_msg;
 
+static pv_spec_t *custom_user_avp;		/*!< AVP for custom_user setting */
+
+
+void init_custom_user(pv_spec_t *custom_user_avp_p)
+{
+    custom_user_avp = custom_user_avp_p;
+}
+
+/*!
+ * \brief Return the custom_user for a record route
+ * \param req SIP message
+ * \param custom_user to be returned
+ * \return <0 for failure
+ */
+inline static int get_custom_user(struct sip_msg *req, str *custom_user) {
+	pv_value_t pv_val;
+
+	if (custom_user_avp) {
+		if ((pv_get_spec_value(req, custom_user_avp, &pv_val) == 0)
+				&& (pv_val.flags & PV_VAL_STR) && (pv_val.rs.len > 0)) {
+			custom_user->s = pv_val.rs.s;
+			custom_user->len = pv_val.rs.len;
+			return 0;
+		}
+		LM_DBG("invalid AVP value, using default user from RURI\n");
+	}
+
+	return -1;
+}
 
 /*!
  * \brief Extract username from the Request URI
@@ -89,7 +118,7 @@ static inline int get_username(struct sip_msg* _m, str* _user)
 {
 	struct sip_uri puri;
 
-	     /* first try to look at r-uri for a username */
+	/* first try to look at r-uri for a username */
 	if (parse_uri(_m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len, &puri) < 0) {
 		LM_ERR("failed to parse R-URI\n");
 		return -1;
@@ -104,7 +133,7 @@ static inline int get_username(struct sip_msg* _m, str* _user)
 		if (parse_uri(_m->new_uri.s, _m->new_uri.len, &puri) < 0) {
 			LM_ERR("failed to parse new_uri\n");
 			return -2;
-	        }
+		}
 	}
 
 	_user->s = puri.user.s;
@@ -286,9 +315,12 @@ int record_route(struct sip_msg* _m, str *params)
 	user.len = 0;
 	
 	if (add_username) {
-		if (get_username(_m, &user) < 0) {
-			LM_ERR("failed to extract username\n");
-			return -1;
+		/* check if there is a custom user set */
+		if (get_custom_user(_m, &user) < 0) {
+			if (get_username(_m, &user) < 0) {
+				LM_ERR("failed to extract username\n");
+				return -1;
+			}
 		}
 	} else if (use_ob) {
 		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {

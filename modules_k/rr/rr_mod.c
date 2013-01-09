@@ -58,6 +58,8 @@ int enable_double_rr = 1;	/*!< enable using of 2 RR by default */
 int enable_full_lr = 0;		/*!< compatibilty mode disabled by default */
 int add_username = 0;	 	/*!< do not add username by default */
 int enable_socket_mismatch_warning = 1; /*!< enable socket mismatch warning */
+static str custom_user_spec = {NULL, 0};
+pv_spec_t custom_user_avp;
 
 static unsigned int last_rr_msg;
 ob_api_t rr_obb;
@@ -117,6 +119,7 @@ static param_export_t params[] ={
 #endif
 	{"add_username",		INT_PARAM, &add_username},
 	{"enable_socket_mismatch_warning",INT_PARAM,&enable_socket_mismatch_warning},
+	{"custom_user_avp",           STR_PARAM, &custom_user_spec.s},
 	{0, 0, 0 }
 };
 
@@ -180,6 +183,18 @@ static int mod_init(void)
 		LM_ERR("cannot use \"add_username\" with outbound\n");
 		return -1;
 	}
+
+	if (custom_user_spec.s) {
+		custom_user_spec.len = strlen(custom_user_spec.s);
+		if (pv_parse_spec(&custom_user_spec, &custom_user_avp) == 0
+				&& (custom_user_avp.type != PVT_AVP)) {
+			LM_ERR("malformed or non AVP custom_user "
+					"AVP definition in '%.*s'\n", custom_user_spec.len,custom_user_spec.s);
+			return -1;
+		}
+	}
+
+	init_custom_user(custom_user_spec.s ? &custom_user_avp : 0);
 
 	return 0;
 }
