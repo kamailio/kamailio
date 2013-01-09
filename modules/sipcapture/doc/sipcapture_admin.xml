@@ -458,7 +458,7 @@ modparam("sipcapture", "capture_node", "homer03")
 	<section>
 		<title>Database setup</title>
 		<para>
-		Before running &kamailio; with sipcapture, you have to setup the database 
+		Before running &kamailio; with the sipcapture module, you have to setup the database 
 		tables where the module will store the data. For that, if the table were not 
 		created by the installation script or you choose to install everything by 
 		yourself you can use the sipcapture_create.sql, <acronym>SQL</acronym> script 
@@ -467,16 +467,18 @@ modparam("sipcapture", "capture_node", "homer03")
 		</para>
 	</section>
 	<section>
-        <title>Limitation</title>
-        <para>
-	
+        <title>Limitations</title>
+	<itemizedlist>
+		<listitem>
 		1. Only one capturing mode on RAW socket is supported: IPIP or monitoring/mirroring port. 
 		   Don't activate both at the same time.
+		</listitem><listitem>
 		2. By default MySQL doesn't support INSERT DELAYED for partitioning table. You can patch MySQL 
 		  (http://bugs.mysql.com/bug.php?id=50393)
+		</listitem><listitem>
 		3. Mirroring port capturing works only on Linux.
-	
-        </para>
+		</listitem>
+        </itemizedlist>
         </section>
 </chapter>
 

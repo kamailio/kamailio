@@ -52,7 +52,7 @@ Alexandr Dubovikov
               5.1. sipcapture.status param
 
         6. Database setup
-        7. Limitation
+        7. Limitations
 
    List of Examples
 
@@ -109,7 +109,7 @@ Chapter 1. Admin Guide
         5.1. sipcapture.status param
 
    6. Database setup
-   7. Limitation
+   7. Limitations
 
 1. Overview
 
@@ -394,18 +394,18 @@ modparam("sipcapture", "capture_node", "homer03")
 
 6. Database setup
 
-   Before running Kamailio with sipcapture, you have to setup the database
-   tables where the module will store the data. For that, if the table
-   were not created by the installation script or you choose to install
-   everything by yourself you can use the sipcapture_create.sql, SQL
-   script in the sql folder of sipcapture module as template. You can also
-   find the complete database documentation on the project webpage,
+   Before running Kamailio with the sipcapture module, you have to setup
+   the database tables where the module will store the data. For that, if
+   the table were not created by the installation script or you choose to
+   install everything by yourself you can use the sipcapture_create.sql,
+   SQL script in the sql folder of sipcapture module as template. You can
+   also find the complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-7. Limitation
+7. Limitations
 
-   1. Only one capturing mode on RAW socket is supported: IPIP or
-   monitoring/mirroring port. Don't activate both at the same time. 2. By
-   default MySQL doesn't support INSERT DELAYED for partitioning table.
-   You can patch MySQL (http://bugs.mysql.com/bug.php?id=50393) 3.
-   Mirroring port capturing works only on Linux.
+     * 1. Only one capturing mode on RAW socket is supported: IPIP or
+       monitoring/mirroring port. Don't activate both at the same time.
+     * 2. By default MySQL doesn't support INSERT DELAYED for partitioning
+       table. You can patch MySQL (http://bugs.mysql.com/bug.php?id=50393)
+     * 3. Mirroring port capturing works only on Linux.
