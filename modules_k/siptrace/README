@@ -23,7 +23,7 @@ Daniel-Constantin Mierla
 
    Table of Contents
 
-   1. SIPtrace Admin Guide
+   1. Admin Guide
 
         1. Overview
         2. Dependencies
@@ -85,7 +85,7 @@ Daniel-Constantin Mierla
    1.16. Set trace_delayed parameter
    1.17. sip_trace() usage
 
-Chapter 1. SIPtrace Admin Guide
+Chapter 1. Admin Guide
 
    Table of Contents
 
