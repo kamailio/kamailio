@@ -49,6 +49,12 @@
 #include "pv_trans.h"
 
 
+static char _empty_str[] = "";
+static str _tr_empty = { _empty_str, 0 };
+static str _tr_uri = {0, 0};
+static struct sip_uri _tr_parsed_uri;
+static param_t* _tr_uri_params = NULL;
+
 /*! transformation buffer size */
 #define TR_BUFFER_SIZE 65536
 #define TR_BUFFER_SLOTS	4
@@ -384,8 +390,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 					val->rs.s = p+1;
 					val->rs.len = s-p;
 				} else {
-					val->rs.s = "";
-					val->rs.len = 0;
+					val->rs = _tr_empty;
 				}
 			} else {
 				s = val->rs.s;
@@ -406,8 +411,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 					val->rs.s = s;
 					val->rs.len = p-s;
 				} else {
-					val->rs.s = "";
-					val->rs.len = 0;
+					val->rs = _tr_empty;
 				}
 			}
 			break;
@@ -747,11 +751,6 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	}
 	return 0;
 }
-
-static str _tr_empty = { "", 0 };
-static str _tr_uri = {0, 0};
-static struct sip_uri _tr_parsed_uri;
-static param_t* _tr_uri_params = NULL;
 
 
 /*!
