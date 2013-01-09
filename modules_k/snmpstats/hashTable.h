@@ -32,7 +32,7 @@
  * \brief SNMP statistic module, hash table
  *
  * This file describes several structure.  In general, it was necessary to map
- * between OpenSER's "aor" (Address of Record) and string indexing mechanisms,
+ * between Kamailio's "aor" (Address of Record) and string indexing mechanisms,
  * and the SNMPStats modules integer indexing scheme for users and contacts.
  * While it would have been a more natural fit to use string indexes in the
  * SNMPStats module, SNMP limitations precluded this.  
@@ -58,7 +58,7 @@
 #define HASHSLOT_H
 
 /*!
- * Used to map between a 'contact' name (OpenSER's index) and a contact index.
+ * Used to map between a 'contact' name (Kamailio's index) and a contact index.
  * (SNMPStats Index) 
  */
 typedef struct contactToIndexStruct 
@@ -73,7 +73,7 @@ typedef struct contactToIndexStruct
 
 
 /*!
- * Used to map between an 'aor' (OpenSER index) and a user index. (SNMPStats
+ * Used to map between an 'aor' (Kamailio index) and a user index. (SNMPStats
  * index).  Since each user can have multiple contacts, the structure also has a
  * 'contactIndex', and a reference to the contactToIndexStruct list. 
  */
@@ -132,7 +132,7 @@ typedef struct hashSlot
 
 
 /*! Returns a aorToIndexStruct_t, holding the given 'userIndex' and 'aor'.  The
- * structure is used to map between the "aor" (OpenSER's way of indexing
+ * structure is used to map between the "aor" (Kamailio's way of indexing
  * users/contacts), and the SNMPStats user and contact integer indexes.  
  *
  * \note This record does not make a copy of aor, but instead points
@@ -143,7 +143,7 @@ aorToIndexStruct_t *createHashRecord(int userIndex, char *aor);
 
 
 /*! Returns a chunk of memory large enough to store 'size' hashSlot's.  The
- * table will contain mappings between OpenSER's "aor" user/contact indexing
+ * table will contain mappings between Kamailio's "aor" user/contact indexing
  * scheme, and SNMPStats integer indexing scheme */
 hashSlot_t  *createHashTable(int size);
 
@@ -158,7 +158,7 @@ int calculateHashSlot(char *theString, int hashTableSize);
  * indexed with 'aor'.  If a match is found, then an aorToIndextStruct_t
  * structure is returned. 
  *
- * This function is called to discover the map between OpenSER's "aor" 
+ * This function is called to discover the map between Kamailio's "aor" 
  * (Address of Records) indexing scheme, and the SNMPStats modules integer
  * indexing scheme for its contact/user data. 
  *

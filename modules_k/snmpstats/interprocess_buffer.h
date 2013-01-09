@@ -31,8 +31,8 @@
  * \file
  * \brief SNMP statistic module, interprocess buffer
  *
- * The SNMPStats module exposes user information through openserSIPRegUserTable,
- * openserSIPContactTable, and openserSIPRegUserLookupTable.  These tables are
+ * The SNMPStats module exposes user information through kamailioSIPRegUserTable,
+ * kamailioSIPContactTable, and kamailioSIPRegUserLookupTable.  These tables are
  * populated through callback mechanisms from the usrloc module.  Unfortunately
  * the NetSNMP table population code is very slow when dealing with large
  * amounts of data.  Because we don't want to experience a performance hit when

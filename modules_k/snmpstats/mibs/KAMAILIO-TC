@@ -1,5 +1,5 @@
 -- *******************************************************************
--- OPENSER-TC: OpenSER MIB Textual Conventions
+-- KAMAILIO-TC: Kamailio MIB Textual Conventions
 --
 -- Date of Creation: March 2006
 -- Mike Varley
@@ -10,7 +10,7 @@
 -- *******************************************************************
 
 
-OPENSER-TC DEFINITIONS ::= BEGIN
+KAMAILIO-TC DEFINITIONS ::= BEGIN
 
 IMPORTS
 	MODULE-IDENTITY,
@@ -18,25 +18,25 @@ IMPORTS
 		FROM SNMPv2-SMI
 	TEXTUAL-CONVENTION
 		FROM SNMPv2-TC
-	openserModules
-		FROM OPENSER-REG-MIB;
+	kamailioModules
+		FROM KAMAILIO-REG-MIB;
 
 
-openserTcModule MODULE-IDENTITY
-	LAST-UPDATED	"200603211200Z"
-	ORGANIZATION	"OpenSER"
+kamailioTcModule MODULE-IDENTITY
+	LAST-UPDATED	"201301081200Z"
+	ORGANIZATION	"Kamailio"
 	CONTACT-INFO
-		"http://www.openser.org"
+		"http://www.kamailio.org"
 	DESCRIPTION
-		"OpenSER Global Textual Conventions."
-	::={ openserModules 2 }
+		"Kamailio Global Textual Conventions."
+	::={ kamailioModules 2 }
 
 
 --
 -- SIP type descriptions, taken from SIP-TC in drafts-ietf-sip-mib-10.txt
 --
 
-OpenSERSIPTransportProtocol ::= TEXTUAL-CONVENTION
+KamailioSIPTransportProtocol ::= TEXTUAL-CONVENTION
            STATUS current
            DESCRIPTION
                 "This convention is a bit map.  Each bit represents a
@@ -62,7 +62,7 @@ OpenSERSIPTransportProtocol ::= TEXTUAL-CONVENTION
            }
 --         REFERENCE "RFC 3261, Section 18"
 
-OpenSERSIPEntityRole ::= TEXTUAL-CONVENTION
+KamailioSIPEntityRole ::= TEXTUAL-CONVENTION
            STATUS current
            DESCRIPTION
                 "This convention defines the role of a SIP entity.
@@ -78,7 +78,7 @@ OpenSERSIPEntityRole ::= TEXTUAL-CONVENTION
            }
 
 
-OpenSERSIPMethodIdentifier ::= TEXTUAL-CONVENTION
+KamailioSIPMethodIdentifier ::= TEXTUAL-CONVENTION
        STATUS current
        DESCRIPTION
             "This is an IETF Assigned Numbers Authority (IANA)

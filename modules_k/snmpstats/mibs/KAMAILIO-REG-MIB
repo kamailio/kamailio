@@ -1,5 +1,5 @@
 -- *******************************************************************
--- OPENSER-REG-MIB: Kamailio Global Registration MIB file
+-- KAMAILIO-REG-MIB: Kamailio Global Registration MIB file
 --
 -- Date of Creation: March 2006
 -- Mike Varley
@@ -14,20 +14,24 @@
 --
 -- *******************************************************************
 
-OPENSER-REG-MIB DEFINITIONS ::= BEGIN
+KAMAILIO-REG-MIB DEFINITIONS ::= BEGIN
 
 IMPORTS
     MODULE-IDENTITY,
     enterprises, OBJECT-IDENTITY
         FROM SNMPv2-SMI;
 
-openserRegMibModule MODULE-IDENTITY
-    LAST-UPDATED    "200909280430Z"
+kamailioRegMibModule MODULE-IDENTITY
+    LAST-UPDATED    "201301080430Z"
     ORGANIZATION    "Kamailio"
     CONTACT-INFO
         "http://www.kamailio.org open source project."
     DESCRIPTION
         "Kamailio Global Registration MIB"
+
+    REVISION "201301080430Z"
+    DESCRIPTION
+        "Moved MIB to the new product name Kamailio and renamed MIB as well as entries"
 
     REVISION "200909280430Z"
     DESCRIPTION
@@ -37,72 +41,72 @@ openserRegMibModule MODULE-IDENTITY
     REVISION "200603211200Z"
     DESCRIPTION
         "Initial Kamailio Mib Release"
-    ::= { openserModules 1 }
+    ::= { kamailioModules 1 }
 
 -- top level enterprise identification
-openser OBJECT-IDENTITY
+kamailio OBJECT-IDENTITY
     STATUS current
     DESCRIPTION 
     "The IANA has assigned enterprise branch 34352 to Kamailio."
     ::= { enterprises 34352 }
 
 -- namespace management sub-trees    
-openserReg OBJECT-IDENTITY
+kamailioReg OBJECT-IDENTITY
     STATUS current
     DESCRIPTION 
     "Sub-tree for identification of Modules and logical components."
-    ::= { openser 1 }
+    ::= { kamailio 1 }
 
-openserGeneric OBJECT-IDENTITY
+kamailioGeneric OBJECT-IDENTITY
     STATUS current
     DESCRIPTION 
     "Sub-tree for objects and events common to Kamailio products."
-    ::= { openser 2 }
+    ::= { kamailio 2 }
     
-openserProducts OBJECT-IDENTITY
+kamailioProducts OBJECT-IDENTITY
     STATUS current
     DESCRIPTION 
     "Sub-tree for objects and events for specific Kamailio products and modules."
-    ::= { openser 3 }
+    ::= { kamailio 3 }
     
 -- Agent implementation profiles: Agents which implement the product MIBs 
 -- can publish under this branch which portions they support or exclude.
-openserCaps OBJECT-IDENTITY
+kamailioCaps OBJECT-IDENTITY
     STATUS current
     DESCRIPTION 
     "Sub-tree for agent implementation profiles."
-    ::= { openser 4 }
+    ::= { kamailio 4 }
 
-openserReqs OBJECT-IDENTITY
+kamailioReqs OBJECT-IDENTITY
     STATUS current
     DESCRIPTION 
     "Sub-tree for Management Application module requirements."
-    ::= { openser 5 }
+    ::= { kamailio 5 }
     
 -- Experimental branch, for development
-openserExpr   OBJECT-IDENTITY
+kamailioExpr   OBJECT-IDENTITY
     STATUS current
     DESCRIPTION 
     "Sub-tree for experimental definitions and new development."
-    ::= { openser 6 }
+    ::= { kamailio 6 }
 
 
 --
 -- The Registration sub-tree
 --
-openserModules  OBJECT-IDENTITY
+kamailioModules  OBJECT-IDENTITY
     STATUS current
     DESCRIPTION 
     "Sub-tree to register the values assigned to modules with the 
      MODULE-IDENTITY construct. Core MIBs are registered under this branch."
-    ::= { openserReg 1 }
+    ::= { kamailioReg 1 }
 
-openserPlugins OBJECT-IDENTITY
+kamailioPlugins OBJECT-IDENTITY
     STATUS current
     DESCRIPTION
     "Sub-tree to register plugin modules. Plugins with their own specific MIBs
      are registered under this branch."
-    ::= {openserReg 2 }
+    ::= {kamailioReg 2 }
     
 --
 -- Generic Sub-tree: currently there are no generic object or event definitions
@@ -114,17 +118,17 @@ openserPlugins OBJECT-IDENTITY
 -- and events are defined.
 --
 
-openserCoreMIB  OBJECT-IDENTITY
+kamailioCoreMIB  OBJECT-IDENTITY
     STATUS current
     DESCRIPTION 
     "Sub-tree for all objects and events related to the core Kamailio MIBs"
-    ::= { openserProducts 1 }
+    ::= { kamailioProducts 1 }
 
-openserPluginMIB OBJECT-IDENTITY
+kamailioPluginMIB OBJECT-IDENTITY
     STATUS current
     DESCRIPTION 
     "Sub-tree for all objects and events related to plugins for Kamailio."
-    ::= { openserProducts 2 }
+    ::= { kamailioProducts 2 }
  
 --
 -- Agent Capabilities Sub-tree: currently there are no agent capability MIBs
@@ -150,24 +154,24 @@ openserPluginMIB OBJECT-IDENTITY
 -- if someone is looking to add a new module.
 --
 
--- openserRegMibModule ::= { openserModules 1 } is this files MODULE-IDENTITY
+-- kamailioRegMibModule ::= { kamailioModules 1 } is this files MODULE-IDENTITY
 
 -- The Text Conventions used by the Kamailio product tree.
-openserTcModule OBJECT IDENTIFIER ::= { openserModules 2 }
+kamailioTcModule OBJECT IDENTIFIER ::= { kamailioModules 2 }
 
 -- The Kamailio version of the SIP-COMMON-MIB.
-openserSIPCommonModule OBJECT IDENTIFIER ::= { openserModules 3 }
+kamailioSIPCommonModule OBJECT IDENTIFIER ::= { kamailioModules 3 }
 
 -- The Kamailio version of the SIP-SERVER-MIB.
-openserSIPServerModule OBJECT IDENTIFIER ::= { openserModules 4 }
+kamailioSIPServerModule OBJECT IDENTIFIER ::= { kamailioModules 4 }
 
 -- The Kamailio MIB Module, containing internal statistics and state
 -- information.
-openserModule OBJECT IDENTIFIER ::= { openserModules 5 }
+kamailioModule OBJECT IDENTIFIER ::= { kamailioModules 5 }
 
 --
 -- Plugin Module Registrations: add any Kamailio plugin MIB Module registrations
--- here, under openserPlugins.
+-- here, under kamailioPlugins.
 --
 
 --
@@ -175,29 +179,29 @@ openserModule OBJECT IDENTIFIER ::= { openserModules 5 }
 -- The MIB files will define objects that use the following as their parent.
 --
 
-openserSIPCommonMIB OBJECT-IDENTITY
+kamailioSIPCommonMIB OBJECT-IDENTITY
     STATUS current
     DESCRIPTION 
     "The Kamailio version of the SIP-COMMON-MIB. All objects and events are
      defined under this branch."
-    ::= { openserCoreMIB 1 }
+    ::= { kamailioCoreMIB 1 }
 
-openserSIPServerMIB OBJECT-IDENTITY
+kamailioSIPServerMIB OBJECT-IDENTITY
     STATUS current
     DESCRIPTION 
     "The Kamailio version of the SIP-SERVER-MIB. All objects and events are
      defined under this branch."
-    ::= { openserCoreMIB 2 }
+    ::= { kamailioCoreMIB 2 }
     
-openserMIB OBJECT-IDENTITY
+kamailioMIB OBJECT-IDENTITY
     STATUS current
     DESCRIPTION 
     "The Kamailio MIB object and event definitons."
-    ::= { openserCoreMIB 3 }
+    ::= { kamailioCoreMIB 3 }
 
 --
 -- Product Plugin MIBs: add any specific Kamailio plugin MIBs here, under 
--- openserPluginMIB
+-- kamailioPluginMIB
 --
 
 

@@ -34,50 +34,50 @@
  *
  */
 
-#ifndef OPENSERMIBNOTIFICATIONS_H
-#define OPENSERMIBNOTIFICATIONS_H
+#ifndef KAMAILIOMIBNOTIFICATIONS_H
+#define KAMAILIOMIBNOTIFICATIONS_H
 
 
 /* 
- * Sends off an openserMsgQueueDepthMinorEvent trap to the master agent,
+ * Sends off an kamailioMsgQueueDepthMinorEvent trap to the master agent,
  * assigning the following variable bindings:
  *
- *  - openserMsgQueueDepth          = msgQueueDepth
- *  - openserMsgQueueMinorThreshold = minorThreshold
+ *  - kamailioMsgQueueDepth          = msgQueueDepth
+ *  - kamailioMsgQueueMinorThreshold = minorThreshold
  *
  */
-int send_openserMsgQueueDepthMinorEvent_trap(int msgQueueDepth, 
+int send_kamailioMsgQueueDepthMinorEvent_trap(int msgQueueDepth, 
 		int minorThreshold);
 
 /*
- * Sends off an openserMsgQueueDepthMajorEvent trap to the master agent,
+ * Sends off an kamailioMsgQueueDepthMajorEvent trap to the master agent,
  * assigning the following variable bindings:
  *
- *  - openserMsgQueueDepth          = msgQueueDepth
- *  - openserMsgQueueMajorThreshold = majorThreshold
+ *  - kamailioMsgQueueDepth          = msgQueueDepth
+ *  - kamailioMsgQueueMajorThreshold = majorThreshold
  *
  */
-int send_openserMsgQueueDepthMajorEvent_trap(int msgQueueDepth, 
+int send_kamailioMsgQueueDepthMajorEvent_trap(int msgQueueDepth, 
 		int majorThreshold);
 
 /*
- * Sends off an openserDialogLimitMinorEvent trap to the master agent,
+ * Sends off an kamailioDialogLimitMinorEvent trap to the master agent,
  * assigning the following variable bindings:
  *
- *  - openserCurNumDialogs             = numDialogs
- *  - openserDialogLimitMinorThreshold = threshold
+ *  - kamailioCurNumDialogs             = numDialogs
+ *  - kamailioDialogLimitMinorThreshold = threshold
  *
  */
-int send_openserDialogLimitMinorEvent_trap(int numDialogs, int threshold);
+int send_kamailioDialogLimitMinorEvent_trap(int numDialogs, int threshold);
 
 /*
- * Sends off an openserDialogLimitMinorEvent trap to the master agent,
+ * Sends off an kamailioDialogLimitMinorEvent trap to the master agent,
  * assigning the following variable bindings:
  *
- *  - openserCurNumDialogs             = numDialogs
- *  - openserDialogLimitMinorThreshold = threshold
+ *  - kamailioCurNumDialogs             = numDialogs
+ *  - kamailioDialogLimitMinorThreshold = threshold
  *
  */
-int send_openserDialogLimitMajorEvent_trap(int numDialogs, int threshold);
+int send_kamailioDialogLimitMajorEvent_trap(int numDialogs, int threshold);
 
-#endif /* OPENSERMIBNOTIFICATIONS_H */
+#endif /* KAMAILIOMIBNOTIFICATIONS_H */

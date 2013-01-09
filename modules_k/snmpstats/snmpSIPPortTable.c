@@ -28,8 +28,8 @@
  * 
  * Originally Generated with mib2c using mib2c.array-user.conf
  *
- * This file implements the openserSIPPortTable.  For a full description of the table,
- * please see the OPENSER-SIP-COMMON-MIB.
+ * This file implements the kamailioSIPPortTable.  For a full description of the table,
+ * please see the KAMAILIO-SIP-COMMON-MIB.
  *
  */
 
@@ -48,8 +48,8 @@
 static     netsnmp_handler_registration *my_handler = NULL;
 static     netsnmp_table_array_callbacks cb;
 
-oid    openserSIPPortTable_oid[]   = { openserSIPPortTable_TABLE_OID };
-size_t openserSIPPortTable_oid_len = OID_LENGTH(openserSIPPortTable_oid);
+oid    kamailioSIPPortTable_oid[]   = { kamailioSIPPortTable_TABLE_OID };
+size_t kamailioSIPPortTable_oid_len = OID_LENGTH(kamailioSIPPortTable_oid);
 
 
 /* Returns a new OID with the following structure:
@@ -75,7 +75,7 @@ oid *createIndex(int ipType, int *ipAddress, int *sizeOfOID)
 	currentOIDIndex = pkg_malloc((*sizeOfOID) * sizeof(oid));
 
 	if (currentOIDIndex == NULL) {
-		LM_ERR("failed to create a row for openserSIPPortTable\n");
+		LM_ERR("failed to create a row for kamailioSIPPortTable\n");
 		*sizeOfOID = 0;
 		return NULL;
 	}
@@ -101,7 +101,7 @@ oid *createIndex(int ipType, int *ipAddress, int *sizeOfOID)
  *
  * Note: NULL will be returned on an error 
  */
-openserSIPPortTable_context *getRow(int ipType, int *ipAddress) 
+kamailioSIPPortTable_context *getRow(int ipType, int *ipAddress) 
 {
 	int lengthOfOID;
 	oid *currentOIDIndex = createIndex(ipType, ipAddress, &lengthOfOID);
@@ -116,7 +116,7 @@ openserSIPPortTable_context *getRow(int ipType, int *ipAddress)
 	theIndex.oids = currentOIDIndex;
 	theIndex.len  = lengthOfOID;
 
-	openserSIPPortTable_context *rowToReturn;
+	kamailioSIPPortTable_context *rowToReturn;
 
 	/* Lets check to see if there is an existing row. */
 	rowToReturn = CONTAINER_FIND(cb.container, &theIndex);
@@ -133,7 +133,7 @@ openserSIPPortTable_context *getRow(int ipType, int *ipAddress)
 	}
 	
 	/* If we are here then the row doesn't exist yet.  So lets create it. */
-	rowToReturn = SNMP_MALLOC_TYPEDEF(openserSIPPortTable_context);
+	rowToReturn = SNMP_MALLOC_TYPEDEF(kamailioSIPPortTable_context);
 
 	/* Not enough memory to create the new row. */
 	if (rowToReturn == NULL) {
@@ -145,8 +145,8 @@ openserSIPPortTable_context *getRow(int ipType, int *ipAddress)
 	rowToReturn->index.len  = lengthOfOID;
 	rowToReturn->index.oids = currentOIDIndex;
 
-	memcpy(rowToReturn->openserSIPStringIndex, currentOIDIndex, NUM_IP_OCTETS + 3);
-	rowToReturn->openserSIPStringIndex_len = NUM_IP_OCTETS + 3;
+	memcpy(rowToReturn->kamailioSIPStringIndex, currentOIDIndex, NUM_IP_OCTETS + 3);
+	rowToReturn->kamailioSIPStringIndex_len = NUM_IP_OCTETS + 3;
 
 	/* Insert the new row into the table */
 	CONTAINER_INSERT(cb.container, rowToReturn);
@@ -165,7 +165,7 @@ openserSIPPortTable_context *getRow(int ipType, int *ipAddress)
 void createRowsFromIPList(int *theList, int listSize, int protocol, 
 		int *snmpIndex) {
 
-	openserSIPPortTable_context *currentRow;
+	kamailioSIPPortTable_context *currentRow;
 	
 	int curIndexOfIP;
 	int curSocketIdx;
@@ -199,27 +199,27 @@ void createRowsFromIPList(int *theList, int listSize, int protocol,
 
 		if (currentRow == NULL) {
 			LM_ERR("failed to create all the "
-					"rows for the openserSIPPortTable\n");
+					"rows for the kamailioSIPPortTable\n");
 			return;
 		}
 
-		currentRow->openserSIPTransportRcv[0]  |= valueToAssign;
-		currentRow->openserSIPTransportRcv_len = 1;
+		currentRow->kamailioSIPTransportRcv[0]  |= valueToAssign;
+		currentRow->kamailioSIPTransportRcv_len = 1;
 	}
 }
 
 /*
- * Initializes the openserSIPPortTable module.  
+ * Initializes the kamailioSIPPortTable module.  
  *
  * Specifically, this function will define the tables structure, and then
- * populate it with the ports and transports that OpenSER is listening on.
+ * populate it with the ports and transports that Kamailio is listening on.
  *
  */
-void init_openserSIPPortTable(void)
+void init_kamailioSIPPortTable(void)
 {
 	int curSNMPIndex = 0;
 
-	initialize_table_openserSIPPortTable();
+	initialize_table_kamailioSIPPortTable();
 
 	int *UDPList = NULL;
 	int *TCPList = NULL;
@@ -246,13 +246,13 @@ void init_openserSIPPortTable(void)
 }
 
  
-/* Initialize the openserSIPPortTable table by defining how it is structured */
-void initialize_table_openserSIPPortTable(void)
+/* Initialize the kamailioSIPPortTable table by defining how it is structured */
+void initialize_table_kamailioSIPPortTable(void)
 {
 	netsnmp_table_registration_info *table_info;
 
 	if(my_handler) {
-		snmp_log(LOG_ERR, "initialize_table_openserSIPPortTable_handler"
+		snmp_log(LOG_ERR, "initialize_table_kamailioSIPPortTable_handler"
 				"called again\n");
 		return;
 	}
@@ -262,35 +262,35 @@ void initialize_table_openserSIPPortTable(void)
 	/* create the table structure itself */
 	table_info = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
 
-	my_handler = netsnmp_create_handler_registration("openserSIPPortTable",
+	my_handler = netsnmp_create_handler_registration("kamailioSIPPortTable",
 			netsnmp_table_array_helper_handler,
-			openserSIPPortTable_oid,
-			openserSIPPortTable_oid_len,
+			kamailioSIPPortTable_oid,
+			kamailioSIPPortTable_oid_len,
 			HANDLER_CAN_RONLY);
     
 	if (!my_handler || !table_info) {
 		snmp_log(LOG_ERR, "malloc failed in "
-			 "initialize_table_openserSIPPortTable_handler\n");
+			 "initialize_table_kamailioSIPPortTable_handler\n");
 		return; /** mallocs failed */
 	}
 
 	/* Set up the table's structural definition */
 	
-	/* index: openserSIPPortIndex */
+	/* index: kamailioSIPPortIndex */
 	netsnmp_table_helper_add_index(table_info, ASN_OCTET_STR);
 
-	table_info->min_column = openserSIPPortTable_COL_MIN;
-	table_info->max_column = openserSIPPortTable_COL_MAX;
+	table_info->min_column = kamailioSIPPortTable_COL_MIN;
+	table_info->max_column = kamailioSIPPortTable_COL_MAX;
 
 	/* register the table with the master agent */
-	cb.get_value = openserSIPPortTable_get_value;
-	cb.container = netsnmp_container_find("openserSIPPortTable_primary:"
-			"openserSIPPortTable:"
+	cb.get_value = kamailioSIPPortTable_get_value;
+	cb.container = netsnmp_container_find("kamailioSIPPortTable_primary:"
+			"kamailioSIPPortTable:"
 			"table_container");
 
 	
-	DEBUGMSGTL(("initialize_table_openserSIPPortTable",
-				"Registering table openserSIPPortTable "
+	DEBUGMSGTL(("initialize_table_kamailioSIPPortTable",
+				"Registering table kamailioSIPPortTable "
 				"as a table array\n"));
 	
 	netsnmp_table_container_register(my_handler, table_info, &cb,
@@ -302,29 +302,29 @@ void initialize_table_openserSIPPortTable(void)
  *
  * The function is mostly left in its auto-generated form 
  */
-int openserSIPPortTable_get_value(netsnmp_request_info *request, 
+int kamailioSIPPortTable_get_value(netsnmp_request_info *request, 
 		netsnmp_index *item,
 		netsnmp_table_request_info *table_info )
 {
 	netsnmp_variable_list *var = request->requestvb;
 
-	openserSIPPortTable_context *context = 
-		(openserSIPPortTable_context *)item;
+	kamailioSIPPortTable_context *context = 
+		(kamailioSIPPortTable_context *)item;
 
 	switch(table_info->colnum) 
 	{
 		
-		case COLUMN_OPENSERSIPTRANSPORTRCV:
-			/** OpenSERSIPTransportProtocol = ASN_OCTET_STR */
+		case COLUMN_KAMAILIOSIPTRANSPORTRCV:
+			/** KamailioSIPTransportProtocol = ASN_OCTET_STR */
 			snmp_set_var_typed_value(var, ASN_OCTET_STR,
 					(unsigned char *)
-					&context->openserSIPTransportRcv,
-					context->openserSIPTransportRcv_len );
+					&context->kamailioSIPTransportRcv,
+					context->kamailioSIPTransportRcv_len );
 			break;
 
 		default: /** We shouldn't get here */
 			snmp_log(LOG_ERR, "unknown column in "
-					"openserSIPPortTable_get_value\n");
+					"kamailioSIPPortTable_get_value\n");
 			return SNMP_ERR_GENERR;
 	}
 
@@ -332,10 +332,10 @@ int openserSIPPortTable_get_value(netsnmp_request_info *request,
 }
 
 /* Auto-generated function */
-const openserSIPPortTable_context *
-openserSIPPortTable_get_by_idx(netsnmp_index * hdr)
+const kamailioSIPPortTable_context *
+kamailioSIPPortTable_get_by_idx(netsnmp_index * hdr)
 {
-	return (const openserSIPPortTable_context *)
+	return (const kamailioSIPPortTable_context *)
 		CONTAINER_FIND(cb.container, hdr );
 }
 

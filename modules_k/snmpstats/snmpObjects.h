@@ -30,38 +30,38 @@
  *        : mib2c.scalar.conf,v 1.9 2005/01/07 09:37:18 dts12 Exp $
  *
  * This file defines all registration and handling of all scalars defined in the
- * OPENSER-MIB.  Please see OPENSER-MIB for the complete descriptions of the
+ * KAMAILIO-MIB.  Please see KAMAILIO-MIB for the complete descriptions of the
  * individual scalars.
  *
  */
 
-#ifndef OPENSEROBJECTS_H
-#define OPENSEROBJECTS_H
+#ifndef KAMAILIOOBJECTS_H
+#define KAMAILIOOBJECTS_H
 
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
 /* function declarations */
-void init_openserObjects(void);
+void init_kamailioObjects(void);
 
-Netsnmp_Node_Handler handle_openserMsgQueueDepth;
-Netsnmp_Node_Handler handle_openserMsgQueueMinorThreshold;
-Netsnmp_Node_Handler handle_openserMsgQueueMajorThreshold;
-Netsnmp_Node_Handler handle_openserMsgQueueDepthAlarmStatus;
-Netsnmp_Node_Handler handle_openserMsgQueueDepthMinorAlarm;
-Netsnmp_Node_Handler handle_openserMsgQueueDepthMajorAlarm;
-Netsnmp_Node_Handler handle_openserCurNumDialogs;
-Netsnmp_Node_Handler handle_openserCurNumDialogsInProgress;
-Netsnmp_Node_Handler handle_openserCurNumDialogsInSetup;
-Netsnmp_Node_Handler handle_openserTotalNumFailedDialogSetups;
-Netsnmp_Node_Handler handle_openserDialogLimitMinorThreshold;
-Netsnmp_Node_Handler handle_openserDialogLimitMajorThreshold;
-Netsnmp_Node_Handler handle_openserTotalNumDialogSetups;
-Netsnmp_Node_Handler handle_openserDialogUsageState;
-Netsnmp_Node_Handler handle_openserDialogLimitAlarmStatus;
-Netsnmp_Node_Handler handle_openserDialogLimitMinorAlarm;
-Netsnmp_Node_Handler handle_openserDialogLimitMajorAlarm;
+Netsnmp_Node_Handler handle_kamailioMsgQueueDepth;
+Netsnmp_Node_Handler handle_kamailioMsgQueueMinorThreshold;
+Netsnmp_Node_Handler handle_kamailioMsgQueueMajorThreshold;
+Netsnmp_Node_Handler handle_kamailioMsgQueueDepthAlarmStatus;
+Netsnmp_Node_Handler handle_kamailioMsgQueueDepthMinorAlarm;
+Netsnmp_Node_Handler handle_kamailioMsgQueueDepthMajorAlarm;
+Netsnmp_Node_Handler handle_kamailioCurNumDialogs;
+Netsnmp_Node_Handler handle_kamailioCurNumDialogsInProgress;
+Netsnmp_Node_Handler handle_kamailioCurNumDialogsInSetup;
+Netsnmp_Node_Handler handle_kamailioTotalNumFailedDialogSetups;
+Netsnmp_Node_Handler handle_kamailioDialogLimitMinorThreshold;
+Netsnmp_Node_Handler handle_kamailioDialogLimitMajorThreshold;
+Netsnmp_Node_Handler handle_kamailioTotalNumDialogSetups;
+Netsnmp_Node_Handler handle_kamailioDialogUsageState;
+Netsnmp_Node_Handler handle_kamailioDialogLimitAlarmStatus;
+Netsnmp_Node_Handler handle_kamailioDialogLimitMinorAlarm;
+Netsnmp_Node_Handler handle_kamailioDialogLimitMajorAlarm;
 
 /* The following four functions are used to retrieve thresholds set via the
  * kamailio.cfg configuration file. */
@@ -70,4 +70,4 @@ int get_msg_queue_major_threshold(void);
 int get_dialog_minor_threshold(void);
 int get_dialog_major_threshold(void);
 
-#endif /* OPENSEROBJECTS_H */
+#endif /* KAMAILIOOBJECTS_H */

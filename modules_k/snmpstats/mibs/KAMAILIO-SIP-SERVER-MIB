@@ -1,6 +1,6 @@
 -- ***********************************************************************
 --
--- This MIB provides information related to the OpenSER SIP Router.
+-- This MIB provides information related to the Kamailio SIP Router.
 -- 
 -- Copyright (c) The Internet Society (2006)
 -- Ammendments (c) Soma Networks, Inc. (2006)
@@ -9,7 +9,7 @@
 -- *****************************************************************
 
 
-OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
+KAMAILIO-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
 
       IMPORTS
            MODULE-IDENTITY,
@@ -32,15 +32,15 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
            SnmpAdminString
                 FROM SNMP-FRAMEWORK-MIB
 
-           openserModules, 
-           openserSIPServerMIB
-                FROM OPENSER-REG-MIB;
+           kamailioModules, 
+           kamailioSIPServerMIB
+                FROM KAMAILIO-REG-MIB;
 
-      openserSIPServerModule MODULE-IDENTITY
-           LAST-UPDATED   "200603281700Z"
-           ORGANIZATION   "OpenSER"
+      kamailioSIPServerModule MODULE-IDENTITY
+           LAST-UPDATED   "201301081000Z"
+           ORGANIZATION   "Kamailio"
            CONTACT-INFO
-                   "http://www.openser.org"
+                   "http://www.kamailio.org"
                    
            DESCRIPTION
                 "
@@ -101,43 +101,47 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                   see the RFC itself for full legal notices."
               REVISION        "200603281700Z"
               DESCRIPTION
-                   "Added openserSIPRegUserLookupTable."
+                   "Added kamailioSIPRegUserLookupTable."
 
               REVISION        "200603231200Z"
               DESCRIPTION
-                   "made OpenSER specific and changed sipRegUserTable."
+                   "made Kamailio specific and changed sipRegUserTable."
                    
               REVISION        "200603021700Z"
               DESCRIPTION
                    "Initial version of the IETF SIP-SERVER-MIB module."
+
+              REVISION        "201301081000Z"
+              DESCRIPTION
+                   "Changed product name to Kamailio and renamed MIB entries and MIB itself"
            
-        ::= { openserModules 4 }
+        ::= { kamailioModules 4 }
 
 --
 -- Top-Level Components of this MIB.
 --
 
-      openserSIPServerObjects  OBJECT-IDENTITY
+      kamailioSIPServerObjects  OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for accessible objects in the MIB." 
-        ::= { openserSIPServerMIB 1 }
+        ::= { kamailioSIPServerMIB 1 }
         
-      openserSIPServerConform  OBJECT-IDENTITY
+      kamailioSIPServerConform  OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for conformance specifications." 
-        ::= { openserSIPServerMIB 2 }
+        ::= { kamailioSIPServerMIB 2 }
 
 --
 -- These groups contain objects common to all SIP servers.
 --
 
-      openserSIPServerCfg   OBJECT-IDENTITY
+      kamailioSIPServerCfg   OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for server configuration objects." 
-        ::= { openserSIPServerObjects 1 }
+        ::= { kamailioSIPServerObjects 1 }
 
 --
 -- Common Server Configuration Objects
@@ -147,22 +151,22 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
 -- This group contains MIB objects related to SIP Proxy Servers.
 --
     
-      openserSIPProxyCfg OBJECT-IDENTITY
+      kamailioSIPProxyCfg OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for proxy server configuration objects." 
-        ::= { openserSIPServerObjects 3 }
+        ::= { kamailioSIPServerObjects 3 }
       
-      openserSIPProxyStats    OBJECT-IDENTITY
+      kamailioSIPProxyStats    OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for proxy server statistics objects."  
-        ::= { openserSIPServerObjects 4 }
+        ::= { kamailioSIPServerObjects 4 }
 
 --
 -- Proxy Server Configuration
 --
-      openserSIPProxyStatefulness OBJECT-TYPE
+      kamailioSIPProxyStatefulness OBJECT-TYPE
           SYNTAX     INTEGER {
                               stateless(1),
                               transactionStateful(2),
@@ -198,10 +202,10 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 callStateful(3), the proxy is call stateful."
           REFERENCE
                 "RFC 3261, Section 16"
-          ::= { openserSIPProxyCfg 1 }
+          ::= { kamailioSIPProxyCfg 1 }
 
 
-      openserSIPProxyRecordRoute OBJECT-TYPE
+      kamailioSIPProxyRecordRoute OBJECT-TYPE
           SYNTAX     TruthValue
           MAX-ACCESS read-only
           STATUS     current
@@ -218,12 +222,12 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 not add itself to the Record-Route header."
           REFERENCE
                 "RFC 3261, Section 20.30"
-          ::= { openserSIPProxyCfg 3 }
+          ::= { kamailioSIPProxyCfg 3 }
 
 --
 -- Security
 --
-      openserSIPProxyAuthMethod OBJECT-TYPE
+      kamailioSIPProxyAuthMethod OBJECT-TYPE
           SYNTAX     BITS {
                              none(0),
                              tls(1),
@@ -240,13 +244,13 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 bit 2  HTTP Digest is used."
           REFERENCE
               "RFC 3261 Sections 22, 23, 26, 26.2.3"
-          ::= { openserSIPProxyCfg 4 }
+          ::= { kamailioSIPProxyCfg 4 }
 
 
 --
 -- Proxy Server Statistics
 --
-      openserSIPNumProxyRequireFailures OBJECT-TYPE
+      kamailioSIPNumProxyRequireFailures OBJECT-TYPE
           SYNTAX     Counter32
           MAX-ACCESS read-only
           STATUS     current
@@ -256,28 +260,28 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 Require headers.  Such occurrences result in a 420 Bad
                 Extension status code being
                 returned."
-          ::= { openserSIPProxyStats 1 }
+          ::= { kamailioSIPProxyStats 1 }
 
 --
 -- This group contains MIB objects related to SIP Registrars.
 --
-      openserSIPRegCfg OBJECT-IDENTITY
+      kamailioSIPRegCfg OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for SIP Registrar Configuration."
-        ::= { openserSIPServerObjects 5 }
+        ::= { kamailioSIPServerObjects 5 }
         
-      openserSIPRegStats OBJECT-IDENTITY
+      kamailioSIPRegStats OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for SIP Registrar Statistics." 
-        ::= { openserSIPServerObjects 6 }
+        ::= { kamailioSIPServerObjects 6 }
 
 --
 -- Registrar Configuration
 --
 
-      openserSIPRegMaxContactExpiryDuration OBJECT-TYPE
+      kamailioSIPRegMaxContactExpiryDuration OBJECT-TYPE
           SYNTAX     Unsigned32 (0..4294967295)
           UNITS      "seconds"
           MAX-ACCESS read-only
@@ -293,9 +297,9 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 of this object, then the contact information is given the
                 duration specified by this object, and that duration
                 is indicated to the User Agent in the response."
-          ::= { openserSIPRegCfg 2 }
+          ::= { kamailioSIPRegCfg 2 }
 
-      openserSIPRegMaxUsers OBJECT-TYPE
+      kamailioSIPRegMaxUsers OBJECT-TYPE
           SYNTAX     Unsigned32 (1..4294967295)
           MAX-ACCESS read-only
           STATUS     current
@@ -303,18 +307,18 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                "This object reflects the maximum number of users that
                 the Registrar supports.  The current number of users is
                 reflected by sipRegCurrentUsers."
-          ::= { openserSIPRegCfg 3 }
+          ::= { kamailioSIPRegCfg 3 }
 
-      openserSIPRegCurrentUsers OBJECT-TYPE
+      kamailioSIPRegCurrentUsers OBJECT-TYPE
           SYNTAX     Gauge32 (0..4294967295)
           MAX-ACCESS read-only
           STATUS     current
           DESCRIPTION
                "This object reflects the number of users currently
                 registered with the Registrar."
-          ::= { openserSIPRegCfg 4 }
+          ::= { kamailioSIPRegCfg 4 }
 
-      openserSIPRegDfltRegActiveInterval OBJECT-TYPE
+      kamailioSIPRegDfltRegActiveInterval OBJECT-TYPE
           SYNTAX     Unsigned32 (1..4294967295)
           UNITS      "seconds"
           MAX-ACCESS read-only
@@ -334,22 +338,22 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 This object SHOULD be non-volatile and its value SHOULD
                 be kept at reboot."
           REFERENCE "RFC 3261, Section 10.2"
-          ::= { openserSIPRegCfg 5 }
+          ::= { kamailioSIPRegCfg 5 }
 
 --
 -- Per User Information
 --
-      openserSIPRegUserTable OBJECT-TYPE
-          SYNTAX     SEQUENCE OF OpenSERSIPRegUserEntry
+      kamailioSIPRegUserTable OBJECT-TYPE
+          SYNTAX     SEQUENCE OF KamailioSIPRegUserEntry
           MAX-ACCESS not-accessible
           STATUS     current
           DESCRIPTION
                "This table contains information on all users registered
                 to each Registrar in this system."
-          ::= { openserSIPRegCfg 6 }
+          ::= { kamailioSIPRegCfg 6 }
 
-      openserSIPRegUserEntry OBJECT-TYPE
-          SYNTAX     OpenSERSIPRegUserEntry
+      kamailioSIPRegUserEntry OBJECT-TYPE
+          SYNTAX     KamailioSIPRegUserEntry
           MAX-ACCESS not-accessible
           STATUS     current
           DESCRIPTION
@@ -358,26 +362,26 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
 
                 Each row represents those objects for a particular SIP
                 server present in this system."
-          INDEX { openserSIPUserIndex }
-          ::= { openserSIPRegUserTable 1 }
+          INDEX { kamailioSIPUserIndex }
+          ::= { kamailioSIPRegUserTable 1 }
 
-      OpenSERSIPRegUserEntry ::=
+      KamailioSIPRegUserEntry ::=
           SEQUENCE {
-                   openserSIPUserIndex                     Unsigned32,
-                   openserSIPUserUri                       SnmpAdminString,
-                   openserSIPUserAuthenticationFailures    Counter32
+                   kamailioSIPUserIndex                     Unsigned32,
+                   kamailioSIPUserUri                       SnmpAdminString,
+                   kamailioSIPUserAuthenticationFailures    Counter32
           }
 
-        openserSIPUserIndex OBJECT-TYPE
+        kamailioSIPUserIndex OBJECT-TYPE
              SYNTAX     Unsigned32 (1..4294967295)
              MAX-ACCESS not-accessible
              STATUS     current
              DESCRIPTION
                   "This object uniquely identifies a conceptual row in
                   the table."
-             ::= { openserSIPRegUserEntry 1 }
+             ::= { kamailioSIPRegUserEntry 1 }
              
-      openserSIPUserUri OBJECT-TYPE
+      kamailioSIPUserUri OBJECT-TYPE
           SYNTAX     SnmpAdminString
           MAX-ACCESS read-only
           STATUS     current
@@ -386,22 +390,22 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 is the main form by which the Registrar knows the user.
                 The format is typically 'user@domain'.  It is contained
                 in the To header for all REGISTER requests."
-          ::= { openserSIPRegUserEntry 2 }
+          ::= { kamailioSIPRegUserEntry 2 }
 
-      openserSIPUserAuthenticationFailures OBJECT-TYPE
+      kamailioSIPUserAuthenticationFailures OBJECT-TYPE
           SYNTAX     Counter32
           MAX-ACCESS read-only
           STATUS     current
           DESCRIPTION
                "This object contains a count of the number of times the
                 user has failed authentication."
-          ::= { openserSIPRegUserEntry 3 }
+          ::= { kamailioSIPRegUserEntry 3 }
 
 --
 -- Per Contact Information
 --
-      openserSIPContactTable OBJECT-TYPE
-          SYNTAX     SEQUENCE OF OpenSERSipContactEntry
+      kamailioSIPContactTable OBJECT-TYPE
+          SYNTAX     SEQUENCE OF KamailioSipContactEntry
           MAX-ACCESS not-accessible
           STATUS     current
           DESCRIPTION
@@ -409,38 +413,38 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 a registered user (specified by sipUserIndex) wishes to
                 be found (i.e. the user has provided Contact information
                 to each SIP Registrar in this system)."
-          ::= { openserSIPRegCfg 7 }
+          ::= { kamailioSIPRegCfg 7 }
 
-      openserSIPContactEntry OBJECT-TYPE
-          SYNTAX     OpenSERSipContactEntry
+      kamailioSIPContactEntry OBJECT-TYPE
+          SYNTAX     KamailioSipContactEntry
           MAX-ACCESS not-accessible
           STATUS     current
           DESCRIPTION
                "This entry contains information for a single Contact.
                 Multiple contacts may exist for a single user."
-          INDEX { openserSIPUserIndex, openserSIPContactIndex }
-          ::= { openserSIPContactTable 1 }
+          INDEX { kamailioSIPUserIndex, kamailioSIPContactIndex }
+          ::= { kamailioSIPContactTable 1 }
 
-      OpenSERSipContactEntry ::=
+      KamailioSipContactEntry ::=
           SEQUENCE {
-                   openserSIPContactIndex                Unsigned32,
-                   openserSIPContactDisplayName          SnmpAdminString,
-                   openserSIPContactURI                  SnmpAdminString,
-                   openserSIPContactLastUpdated          DateAndTime,
-                   openserSIPContactExpiry               DateAndTime,
-                   openserSIPContactPreference           SnmpAdminString
+                   kamailioSIPContactIndex                Unsigned32,
+                   kamailioSIPContactDisplayName          SnmpAdminString,
+                   kamailioSIPContactURI                  SnmpAdminString,
+                   kamailioSIPContactLastUpdated          DateAndTime,
+                   kamailioSIPContactExpiry               DateAndTime,
+                   kamailioSIPContactPreference           SnmpAdminString
           }
 
-      openserSIPContactIndex OBJECT-TYPE
+      kamailioSIPContactIndex OBJECT-TYPE
           SYNTAX     Unsigned32 (1..4294967295)
           MAX-ACCESS not-accessible
           STATUS     current
           DESCRIPTION
                "Along with the sipUserIndex, this object uniquely
                 identifies a conceptual row in the table."
-          ::= { openserSIPContactEntry 1 }
+          ::= { kamailioSIPContactEntry 1 }
 
-      openserSIPContactDisplayName OBJECT-TYPE
+      kamailioSIPContactDisplayName OBJECT-TYPE
           SYNTAX     SnmpAdminString
           MAX-ACCESS read-only
           STATUS     current
@@ -450,9 +454,9 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 corresponding to contact URIs of
                 sip:BigGuy@sip.northpole.ca or
                 sip:sclaus817@sip.mobile.com, respectively."
-          ::= { openserSIPContactEntry 2 }
+          ::= { kamailioSIPContactEntry 2 }
 
-      openserSIPContactURI OBJECT-TYPE
+      kamailioSIPContactURI OBJECT-TYPE
           SYNTAX     SnmpAdminString
           MAX-ACCESS read-only
           STATUS     current
@@ -462,9 +466,9 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 to a client from a Redirect Server, or is used as the
                 RequestURI in a SIP request line for requests forwarded
                 by a proxy."
-          ::= { openserSIPContactEntry 3 }
+          ::= { kamailioSIPContactEntry 3 }
 
-      openserSIPContactLastUpdated OBJECT-TYPE
+      kamailioSIPContactLastUpdated OBJECT-TYPE
           SYNTAX     DateAndTime
           MAX-ACCESS read-only
           STATUS     current
@@ -473,9 +477,9 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 information was accepted.  If the contact information
                 is updated via a subsequent REGISTER of the same
                 information, this object is also updated."
-          ::= { openserSIPContactEntry 4 }
+          ::= { kamailioSIPContactEntry 4 }
 
-      openserSIPContactExpiry OBJECT-TYPE
+      kamailioSIPContactExpiry OBJECT-TYPE
           SYNTAX     DateAndTime
           MAX-ACCESS read-only
           STATUS     current
@@ -485,9 +489,9 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 specified by the user at registration (Expires header
                 or expiry parameter in the Contact information), or a
                 system default can be applied."
-          ::= { openserSIPContactEntry 5 }
+          ::= { kamailioSIPContactEntry 5 }
 
-      openserSIPContactPreference OBJECT-TYPE
+      kamailioSIPContactPreference OBJECT-TYPE
           SYNTAX     SnmpAdminString
           MAX-ACCESS read-only
           STATUS     current
@@ -503,7 +507,7 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 locations preferred by the user."
           REFERENCE
                "RFC 3261, Section 10.2.1.2, 16.6 and 20.10"
-          ::= { openserSIPContactEntry 6 }
+          ::= { kamailioSIPContactEntry 6 }
 
 --
 -- The regUser lookup table. Clients can use this structure to do a search on 
@@ -528,7 +532,7 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
 -- get from the RegUserTable is consitent with what they expect; this is SNMP
 -- and there are no guarantees between requests.
 --
-      openserSIPRegUserLookupCounter OBJECT-TYPE
+      kamailioSIPRegUserLookupCounter OBJECT-TYPE
             SYNTAX      Counter32
             MAX-ACCESS  read-only
             STATUS      current
@@ -536,85 +540,85 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                  "This is a monotonically increasing value that increases by 1
                   each time and SNMP-GET is performed on this object. Clients 
                   should read this object, then use the result as an index into
-                  the openserSIPRegUserLookupTable.
+                  the kamailioSIPRegUserLookupTable.
                   
                   This ensures that every row-set in the 
-                  openserSIPRegUserTable is unique, and each client request 
+                  kamailioSIPRegUserTable is unique, and each client request 
                   will have a unique index to use."
-            ::= { openserSIPRegCfg 8 }
+            ::= { kamailioSIPRegCfg 8 }
             
-       openserSIPRegUserLookupTable  OBJECT-TYPE
-          SYNTAX     SEQUENCE OF OpenSERSIPRegUserLookupEntry
+       kamailioSIPRegUserLookupTable  OBJECT-TYPE
+          SYNTAX     SEQUENCE OF KamailioSIPRegUserLookupEntry
           MAX-ACCESS not-accessible
           STATUS     current
           DESCRIPTION
                "This table contains the index mapping between a user's URI and
-                the index into the openserSIPRegUserTable.
+                the index into the kamailioSIPRegUserTable.
                 
                 To use this table, a client must first get an index by doing a
-                SNMP GET on openserSIPRegUserLookupCounter. Then it must do an
+                SNMP GET on kamailioSIPRegUserLookupCounter. Then it must do an
                 SNMP SET on this table and create a new row in the table: it
                 needs to set the index, the URI the client is looking for, and
                 set the row-status to createAndGo.
                 
                 Then the client can do an SNMP GET on this table with the 
                 aquired index. If the row-status is 'active', then the 
-                openserSIPRegUserIndex is the index into the 
-                openserSIPRegUserTable that has the specified URI (0 zero 
+                kamailioSIPRegUserIndex is the index into the 
+                kamailioSIPRegUserTable that has the specified URI (0 zero 
                 indicates no such URI). The client should then set the 
                 row-status to 'destroy' in order to clean up this entry. Note
                 that after some time the entry will be automatically removed
                 regardless."
-          ::= { openserSIPRegCfg 9 }
+          ::= { kamailioSIPRegCfg 9 }
 
-      openserSIPRegUserLookupEntry OBJECT-TYPE
-          SYNTAX     OpenSERSIPRegUserLookupEntry
+      kamailioSIPRegUserLookupEntry OBJECT-TYPE
+          SYNTAX     KamailioSIPRegUserLookupEntry
           MAX-ACCESS not-accessible
           STATUS     current
           DESCRIPTION
                "This entry contains a mapping from a given URI to the index in
-                the openserSIPRegUserTable."
-          INDEX { openserSIPRegUserLookupIndex }
-          ::= { openserSIPRegUserLookupTable 1 }
+                the kamailioSIPRegUserTable."
+          INDEX { kamailioSIPRegUserLookupIndex }
+          ::= { kamailioSIPRegUserLookupTable 1 }
 
-      OpenSERSIPRegUserLookupEntry ::=
+      kamailioSIPRegUserLookupEntry ::=
           SEQUENCE {
-                   openserSIPRegUserLookupIndex          Unsigned32,
-                   openserSIPRegUserLookupURI            SnmpAdminString,
-                   openserSIPRegUserIndex                Unsigned32,
-                   openserSIPRegUserLookupRowStatus      RowStatus
+                   kamailioSIPRegUserLookupIndex          Unsigned32,
+                   kamailioSIPRegUserLookupURI            SnmpAdminString,
+                   kamailioSIPRegUserIndex                Unsigned32,
+                   kamailioSIPRegUserLookupRowStatus      RowStatus
           }
 
-      openserSIPRegUserLookupIndex OBJECT-TYPE
+      kamailioSIPRegUserLookupIndex OBJECT-TYPE
           SYNTAX     Unsigned32
           MAX-ACCESS not-accessible
           STATUS     current
           DESCRIPTION
                "The specific lookup index for a client's request. Rows are 
                 automatically reaped, so this table remains small."
-          ::= { openserSIPRegUserLookupEntry 1 }
+          ::= { kamailioSIPRegUserLookupEntry 1 }
 
-      openserSIPRegUserLookupURI OBJECT-TYPE
+      kamailioSIPRegUserLookupURI OBJECT-TYPE
           SYNTAX     SnmpAdminString
           MAX-ACCESS read-create
           STATUS     current
           DESCRIPTION
-               "This object is the URI to locate in the openserSIPRegUserTable.
+               "This object is the URI to locate in the kamailioSIPRegUserTable.
                 The client must provide this data."
-          ::= { openserSIPRegUserLookupEntry 2 }
+          ::= { kamailioSIPRegUserLookupEntry 2 }
 
-      openserSIPRegUserIndex OBJECT-TYPE
+      kamailioSIPRegUserIndex OBJECT-TYPE
           SYNTAX     Unsigned32
           MAX-ACCESS read-only
           STATUS     current
           DESCRIPTION
                "This object is the index of the specified URI in the 
-                openserSIPRegUserTable. 0 (zero) indicates the URI is not in
-                the openserSIPRegUserTable. This value is provided by the agent
+                kamailioSIPRegUserTable. 0 (zero) indicates the URI is not in
+                the kamailioSIPRegUserTable. This value is provided by the agent
                 when the row-status is set to 'active'."
-          ::= { openserSIPRegUserLookupEntry 3 }
+          ::= { kamailioSIPRegUserLookupEntry 3 }
 
-      openserSIPRegUserLookupRowStatus OBJECT-TYPE
+      kamailioSIPRegUserLookupRowStatus OBJECT-TYPE
           SYNTAX     RowStatus
           MAX-ACCESS read-create
           STATUS     current
@@ -625,16 +629,16 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                   notReady: the agent has not yet finished processing the 
                       request.
                   active: the agent has completed its search and populated the 
-                    openserSIPRegUserIndex column.
+                    kamailioSIPRegUserIndex column.
                   destroy: the client sets this value to indicate it has 
                     finished with the row. The agent will remove it from the 
                     table."
-          ::= { openserSIPRegUserLookupEntry 4 }
+          ::= { kamailioSIPRegUserLookupEntry 4 }
 
 --
 -- Registrar Statistics
 --
-      openserSIPRegAcceptedRegistrations OBJECT-TYPE
+      kamailioSIPRegAcceptedRegistrations OBJECT-TYPE
           SYNTAX     Counter32
           MAX-ACCESS read-only
           STATUS     current
@@ -644,133 +648,133 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 the Registrar.  This includes additions of new contact
                 information, refreshing contact information, as well as
                 requests for deletion of contact information."
-          ::= { openserSIPRegStats 1 }
+          ::= { kamailioSIPRegStats 1 }
 
-      openserSIPRegRejectedRegistrations OBJECT-TYPE
+      kamailioSIPRegRejectedRegistrations OBJECT-TYPE
           SYNTAX     Counter32
           MAX-ACCESS read-only
           STATUS     current
           DESCRIPTION
                "This object contains a count of the number REGISTER
                 requests that have been rejected by the Registrar."
-          ::= { openserSIPRegStats 2 }
+          ::= { kamailioSIPRegStats 2 }
 
 --
 -- Conformance
 --
-      openserSIPServerCompliances OBJECT-IDENTITY
+      kamailioSIPServerCompliances OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for server compliences."  
-        ::= { openserSIPServerConform 1 }
+        ::= { kamailioSIPServerConform 1 }
 
-      openserSIPServerGroups OBJECT-IDENTITY
+      kamailioSIPServerGroups OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for server group compliences."
-        ::= { openserSIPServerConform 2 }
+        ::= { kamailioSIPServerConform 2 }
 
 --
 -- Compliance Statements
 --
-      openserSIPProxyServerCompliance MODULE-COMPLIANCE
+      kamailioSIPProxyServerCompliance MODULE-COMPLIANCE
           STATUS     current
           DESCRIPTION
                "The compliance statement for SIP entities acting
                 as Proxy Servers."
           MODULE -- this module
-               MANDATORY-GROUPS { openserSIPProxyConfigGroup,
-                                  openserSIPProxyStatsGroup }
-          ::= { openserSIPServerCompliances 1 }
+               MANDATORY-GROUPS { kamailioSIPProxyConfigGroup,
+                                  kamailioSIPProxyStatsGroup }
+          ::= { kamailioSIPServerCompliances 1 }
 
-      openserSIPRegistrarServerCompliance MODULE-COMPLIANCE
+      kamailioSIPRegistrarServerCompliance MODULE-COMPLIANCE
           STATUS     current
           DESCRIPTION
                "The compliance statement for SIP entities acting
                 as Registrars."
           MODULE -- this module
-               MANDATORY-GROUPS { openserSIPRegistrarConfigGroup,
-                                  openserSIPRegistrarStatsGroup }
-          GROUP openserSIPRegistrarUsersGroup
+               MANDATORY-GROUPS { kamailioSIPRegistrarConfigGroup,
+                                  kamailioSIPRegistrarStatsGroup }
+          GROUP kamailioSIPRegistrarUsersGroup
           DESCRIPTION
                "This is an optional group."
-          ::= { openserSIPServerCompliances 3 }
+          ::= { kamailioSIPServerCompliances 3 }
 
 --
 -- Units of Conformance
 --
 
-      openserSIPProxyConfigGroup OBJECT-GROUP
+      kamailioSIPProxyConfigGroup OBJECT-GROUP
           OBJECTS {
-                  openserSIPProxyStatefulness,
-                  openserSIPProxyRecordRoute,
-                  openserSIPProxyAuthMethod
+                  kamailioSIPProxyStatefulness,
+                  kamailioSIPProxyRecordRoute,
+                  kamailioSIPProxyAuthMethod
           }
           STATUS  current
           DESCRIPTION
                "A collection of objects providing configuration for
                 SIP Proxy servers."
-          ::= { openserSIPServerGroups 2 }
+          ::= { kamailioSIPServerGroups 2 }
 
-      openserSIPProxyStatsGroup OBJECT-GROUP
+      kamailioSIPProxyStatsGroup OBJECT-GROUP
           OBJECTS {
-                  openserSIPNumProxyRequireFailures
+                  kamailioSIPNumProxyRequireFailures
           }
           STATUS  current
           DESCRIPTION
                "A collection of objects providing statistics for
                 SIP Proxy servers."
-          ::= { openserSIPServerGroups 3 }
+          ::= { kamailioSIPServerGroups 3 }
 
-      openserSIPRegistrarConfigGroup OBJECT-GROUP
+      kamailioSIPRegistrarConfigGroup OBJECT-GROUP
           OBJECTS {
-                  openserSIPRegMaxContactExpiryDuration,
-                  openserSIPRegMaxUsers,
-                  openserSIPRegCurrentUsers,
-                  openserSIPRegDfltRegActiveInterval
+                  kamailioSIPRegMaxContactExpiryDuration,
+                  kamailioSIPRegMaxUsers,
+                  kamailioSIPRegCurrentUsers,
+                  kamailioSIPRegDfltRegActiveInterval
           }
           STATUS  current
           DESCRIPTION
                "A collection of objects providing configuration for
                 SIP Registrars."
-          ::= { openserSIPServerGroups 4 }
+          ::= { kamailioSIPServerGroups 4 }
 
-      openserSIPRegistrarStatsGroup OBJECT-GROUP
+      kamailioSIPRegistrarStatsGroup OBJECT-GROUP
           OBJECTS {
-                  openserSIPRegAcceptedRegistrations,
-                  openserSIPRegRejectedRegistrations
+                  kamailioSIPRegAcceptedRegistrations,
+                  kamailioSIPRegRejectedRegistrations
           }
           STATUS  current
           DESCRIPTION
                "A collection of objects providing statistics for
                 SIP Registrars."
-          ::= { openserSIPServerGroups 5 }
+          ::= { kamailioSIPServerGroups 5 }
 
-      openserSIPRegistrarUsersGroup OBJECT-GROUP
+      kamailioSIPRegistrarUsersGroup OBJECT-GROUP
           OBJECTS {
-                  openserSIPUserUri,
-                  openserSIPUserAuthenticationFailures,
-                  openserSIPContactDisplayName,
-                  openserSIPContactURI,
-                  openserSIPContactLastUpdated,
-                  openserSIPContactExpiry,
-                  openserSIPContactPreference
+                  kamailioSIPUserUri,
+                  kamailioSIPUserAuthenticationFailures,
+                  kamailioSIPContactDisplayName,
+                  kamailioSIPContactURI,
+                  kamailioSIPContactLastUpdated,
+                  kamailioSIPContactExpiry,
+                  kamailioSIPContactPreference
           }
           STATUS  current
           DESCRIPTION
                "A collection of objects related to registered users."
-          ::= {openserSIPServerGroups 6 }
+          ::= {kamailioSIPServerGroups 6 }
           
-      openserSIPRegistrarLookupGroup OBJECT-GROUP
+      kamailioSIPRegistrarLookupGroup OBJECT-GROUP
           OBJECTS {
-                  openserSIPRegUserLookupCounter,
-                  openserSIPRegUserLookupURI,
-                  openserSIPRegUserIndex,
-                  openserSIPRegUserLookupRowStatus
+                  kamailioSIPRegUserLookupCounter,
+                  kamailioSIPRegUserLookupURI,
+                  kamailioSIPRegUserIndex,
+                  kamailioSIPRegUserLookupRowStatus
           }
           STATUS  current
           DESCRIPTION
                "A collection of objects related to registered user lookups."
-          ::= {openserSIPServerGroups 7 }
+          ::= {kamailioSIPServerGroups 7 }
 
 END

@@ -17,44 +17,48 @@
 		<title>Overview</title>
 
 		<para>The SNMPStats module provides an SNMP management interface
-		to OpenSER.  Specifically, it provides general SNMP queryable 
+		to Kamailio.  Specifically, it provides general SNMP queryable 
 		scalar statistics, table representations of more complicated data such as 
 		user and contact information, and alarm monitoring capabilities.
+		</para>
+		<para>
+		The MIB has been renamed in version 4.0.0 to reflect the product name. Please
+		note that all the OID names has changed, as well as the MIB itself.
 		</para>
 		<section>
 			<title>General Scalar Statistics</title>
 			<para>
 			The SNMPStats module provides a number of general scalar statistics.  
-			Details are available in OPENSER-MIB, OPENSER-REG-MIB, 
-			OPENSER-SIP-COMMON-MIB, and OPENSER-SIP-SERVER-MIB.  But briefly, 
+			Details are available in KAMAILIO-MIB, KAMAILIO-REG-MIB, 
+			KAMAILIO-SIP-COMMON-MIB, and KAMAILIO-SIP-SERVER-MIB.  But briefly, 
 			these scalars are:
 			</para>
 			<para>
-			openserSIPProtocolVersion, openserSIPServiceStartTime, openserSIPEntityType,
-			openserSIPSummaryInRequests, openserSIPSummaryOutRequest, 
-			openserSIPSummaryInResponses, openserSIPSummaryOutResponses,
-			openserSIPSummaryTotalTransactions, openserSIPCurrentTransactions, 
-			openserSIPNumUnsupportedUris, openserSIPNumUnsupportedMethods, 
-			openserSIPOtherwiseDiscardedMsgs, openserSIPProxyStatefulness
-			openserSIPProxyRecordRoute, openserSIPProxyAuthMethod, 
-			openserSIPNumProxyRequireFailures, openserSIPRegMaxContactExpiryDuration,
-			openserSIPRegMaxUsers, openserSIPRegCurrentUsers, 
-			openserSIPRegDfltRegActiveInterval, openserSIPRegAcceptedRegistrations,
-			openserSIPRegRejectedRegistrations, openserMsgQueueDepth.
-			openserCurNumDialogs, openserCurNumDialogsInProgress, 
-			openserCurNumDialogsInSetup, openserTotalNumFailedDialogSetups
+			kamailioSIPProtocolVersion, kamailioSIPServiceStartTime, kamailioSIPEntityType,
+			kamailioSIPSummaryInRequests, kamailioSIPSummaryOutRequest, 
+			kamailioSIPSummaryInResponses, kamailioSIPSummaryOutResponses,
+			kamailioSIPSummaryTotalTransactions, kamailioSIPCurrentTransactions, 
+			kamailioSIPNumUnsupportedUris, kamailioSIPNumUnsupportedMethods, 
+			kamailioSIPOtherwiseDiscardedMsgs, kamailioSIPProxyStatefulness
+			kamailioSIPProxyRecordRoute, kamailioSIPProxyAuthMethod, 
+			kamailioSIPNumProxyRequireFailures, kamailioSIPRegMaxContactExpiryDuration,
+			kamailioSIPRegMaxUsers, kamailioSIPRegCurrentUsers, 
+			kamailioSIPRegDfltRegActiveInterval, kamailioSIPRegAcceptedRegistrations,
+			kamailioSIPRegRejectedRegistrations, kamailioMsgQueueDepth.
+			kamailioCurNumDialogs, kamailioCurNumDialogsInProgress, 
+			kamailioCurNumDialogsInSetup, kamailioTotalNumFailedDialogSetups
 			</para>
 			<para>
 			There are also scalars associated with alarms.  They are as follows:
 			</para>
 
 			<para>
-			openserMsgQueueMinorThreshold, openserMsgQueueMajorThreshold,
-			openserMsgQueueDepthAlarmStatus, openserMsgQueueDepthMinorAlarm,
-			openserMsgQueueDepthMajorAlarm, openserDialogLimitMinorThreshold,
-			openserDialogLimitMajorThreshold, openserDialogUsageState,
-			openserDialogLimitAlarmStatus, openserDialogLimitMinorAlarm,
-			openserDialogLimitMajorAlarm
+			kamailioMsgQueueMinorThreshold, kamailioMsgQueueMajorThreshold,
+			kamailioMsgQueueDepthAlarmStatus, kamailioMsgQueueDepthMinorAlarm,
+			kamailioMsgQueueDepthMajorAlarm, kamailioDialogLimitMinorThreshold,
+			kamailioDialogLimitMajorThreshold, kamailioDialogUsageState,
+			kamailioDialogLimitAlarmStatus, kamailioDialogLimitMinorAlarm,
+			kamailioDialogLimitMajorAlarm
 			</para>
 		</section>
 		<section>
@@ -65,9 +69,9 @@
 			</para>
 
 			<para>
-			openserSIPPortTable, openserSIPMethodSupportedTable, 
-			openserSIPStatusCodesTable, openserSIPRegUserTable, openserSIPContactTable,
-			openserSIPRegUserLookupTable
+			kamailioSIPPortTable, kamailioSIPMethodSupportedTable, 
+			kamailioSIPStatusCodesTable, kamailioSIPRegUserTable, kamailioSIPContactTable,
+			kamailioSIPRegUserLookupTable
 			</para>
 		</section>
 		<section>
@@ -87,15 +91,15 @@
 				</para>
 				<para>
 				If a minor or major condition has occured, then a 
-				openserDialogLimitMinorEvent trap or a 
-				openserDialogLimitMajorEvent trap will be generated, 
+				kamailioDialogLimitMinorEvent trap or a 
+				kamailioDialogLimitMajorEvent trap will be generated, 
 				respectively. The minor and major thresholds are
 				described in the parameters section below.
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				The number of bytes waiting to be consumed across all of OpenSERs
+				The number of bytes waiting to be consumed across all of Kamailios
 				listening ports has passed a minor or major threshold.  The idea is
 				that a network operation centre can be made aware that a machine 
 				hosting a SIP server may be entering a degraded state, and to 
@@ -103,14 +107,14 @@
 				</para>
 				<para>
 				If the number of bytes to be consumed passes a minor or major 
-				threshold, then a openserMsgQueueDepthMinorEvent or 
-				openserMsgQueueDepthMajorEvent trap will be sent out, respectively.
+				threshold, then a kamailioMsgQueueDepthMinorEvent or 
+				kamailioMsgQueueDepthMajorEvent trap will be sent out, respectively.
 				</para>
 			</listitem>
 
 			</orderedlist>
 			<para>
-			Full details of these traps can be found in the distributions OPENSER-MIB
+			Full details of these traps can be found in the distributions KAMAILIO-MIB
 			file.  
 			</para>
 		</section>
@@ -123,21 +127,21 @@
 	<section>
 	<title>How the SNMPStats module gets its data</title>
 	<para>
-	The SNMPStats module uses OpenSERs internal statistic framework to collect most of its
+	The SNMPStats module uses Kamailios internal statistic framework to collect most of its
 	data. However, there are two exceptions.  
 	<orderedlist>
 		<listitem>
 			<para>
-			The openserSIPRegUserTable and openserSIPContactTable rely on the usrloc 
+			The kamailioSIPRegUserTable and kamailioSIPContactTable rely on the usrloc 
 			modules	callback system.  Specifically, the SNMPStats module will receive 
 			callbacks whenever a user/contact is added to the system.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			The SNMPStats modules openserSIPMsgQueueDepthMinorEvent and 
-			openserSIPMsgQueueDepthMajorEvent alarms rely on the OpenSER core to find out
-			what interfaces, ports, and transports OpenSER is listening on.  However,
+			The SNMPStats modules kamailioSIPMsgQueueDepthMinorEvent and 
+			kamailioSIPMsgQueueDepthMajorEvent alarms rely on the Kamailio core to find out
+			what interfaces, ports, and transports Kamailio is listening on.  However,
 			the module will actually query the proc file system to find out the number
 			of bytes waiting to be consumed.  (Currently, this will only work on systems
 			providing the proc file system).
@@ -155,12 +159,12 @@
 	</para>
 	<para>
 	The SNMPStats module expects to connect to a <emphasis>Master Agent</emphasis>.  This
-	would be a NetSNMP daemon running either on the same system as the OpenSER instance, or 
+	would be a NetSNMP daemon running either on the same system as the Kamailio instance, or 
 	on another system.  (Communication can take place over TCP, so there is no restriction
-	that this daemon need be on the same system as OpenSER).
+	that this daemon need be on the same system as Kamailio).
 	</para>
 	<para>
-	If the master agent is unavailable when OpenSER first starts up, the SNMPStats module will
+	If the master agent is unavailable when Kamailio first starts up, the SNMPStats module will
 	continue to run.  However, you will not be able to query it.  Thankfully, the SNMPStats
 	module continually looks for its master agent.  So even if the master agent is started late, 
 	or if the link to the SNMPStats module is severed due to a temporary hardware failure
@@ -201,13 +205,13 @@
 		<para>
 		<emphasis>dialog</emphasis> - all scalars relating to the number of dialogs are 
 		dependent on the presence of the dialog module.  Furthermore, if the module is 
-		not loaded, then the openserDialogLimitMinorEvent, and openserDialogLimitMajorEvent
+		not loaded, then the kamailioDialogLimitMinorEvent, and kamailioDialogLimitMajorEvent
 		alarm will be disabled. 
 		</para>
 		</listitem>
 		
 		</itemizedlist>
-		The contents of the openserSIPMethodSupportedTable change depending on which modules
+		The contents of the kamailioSIPMethodSupportedTable change depending on which modules
 		are loaded.  
 		</para>
 	</section>
@@ -243,9 +247,9 @@
 		<title><varname>sipEntityType</varname> (String) </title>
 
 		<para>
-		This parameter describes the entity type for this OpenSER instance,
+		This parameter describes the entity type for this Kamailio instance,
 		and will be used in determining what is returned for the
-		openserSIPEntityType scalar. Valid parameters are:
+		kamailioSIPEntityType scalar. Valid parameters are:
 		</para>
 
 		<para>
@@ -266,7 +270,7 @@ modparam("snmpstats", "sipEntityType", "proxyServer")
 
 		<para>
 		Note that as the above example shows, you can define this parameter more
-		than once.  This is of course because a given OpenSER instance can take on
+		than once.  This is of course because a given Kamailio instance can take on
 		more than one role.
 		</para>
 	</section>
@@ -276,8 +280,8 @@ modparam("snmpstats", "sipEntityType", "proxyServer")
 
 		<para>
 		The SNMPStats module monitors the number of bytes waiting to be consumed by 
-		OpenSER.  If the number of bytes waiting to be consumed exceeds a minor
-		threshold, the SNMPStats module will send out an openserMsgQueueDepthMinorEvent
+		Kamailio.  If the number of bytes waiting to be consumed exceeds a minor
+		threshold, the SNMPStats module will send out an kamailioMsgQueueDepthMinorEvent
 		trap to signal that an alarm condition has occured.  The minor threshold is set
 		with the MsgQueueMinorThreshold parameter.  
 		</para>
@@ -301,8 +305,8 @@ modparam("snmpstats", "MsgQueueMinorThreshold", 2000)
 
 		<para>
 		The SNMPStats module monitors the number of bytes waiting to be consumed by 
-		OpenSER.  If the number of bytes waiting to be consumed exceeds a major
-		threshold, the SNMPStats module will send out an openserMsgQueueDepthMajorEvent
+		Kamailio.  If the number of bytes waiting to be consumed exceeds a major
+		threshold, the SNMPStats module will send out an kamailioMsgQueueDepthMajorEvent
 		trap to signal that an alarm condition has occured.  The major threshold is set
 		with the MsgQueueMajorThreshold parameter.  
 		</para>
@@ -327,7 +331,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 		<para>
 		The SNMPStats module monitors the number of active dialogs.  If the number of
 		active dialogs exceeds a minor threshold, the SNMPStats module will send out 
-		an openserDialogLimitMinorEvent trap to signal that an alarm condition has 
+		an kamailioDialogLimitMinorEvent trap to signal that an alarm condition has 
 		occured.  The minor threshold is set with the dlg_minor_threshold parameter.  
 		</para>
 
@@ -351,7 +355,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 		<para>
 		The SNMPStats module monitors the number of active dialogs.  If the number of
 		active dialogs exceeds a major threshold, the SNMPStats module will send out 
-		an openserDialogLimitMajorEvent trap to signal that an alarm condition has 
+		an kamailioDialogLimitMajorEvent trap to signal that an alarm condition has 
 		occured.  The major threshold is set with the dlg_major_threshold parameter.  
 		</para>
 
@@ -373,7 +377,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 		<title><varname>snmpgetPath</varname> (String)</title>
 
 		<para>
-		The SNMPStats module provides the openserSIPServiceStartTime scalar.
+		The SNMPStats module provides the kamailioSIPServiceStartTime scalar.
 		This scalar requires the SNMPStats module to perform a snmpget query
 		to the master agent.  You can use this parameter to set the path to 
 		your instance of NetSNMP's snmpget program.  
@@ -399,7 +403,7 @@ modparam("snmpstats", "snmpgetPath",     "/my/custom/path/")
 		<title><varname>snmpCommunity</varname> (String)</title>
 
 		<para>
-		The SNMPStats module provides the openserSIPServiceStartTime scalar.
+		The SNMPStats module provides the kamailioSIPServiceStartTime scalar.
 		This scalar requires the SNMPStats module to perform a snmpget query
 		to the master agent.  If you have defined a custom community string
 		for the snmp daemon, you need to specify it with this parameter.  
@@ -479,7 +483,7 @@ modparam("snmpstats", "export_registrar", 1)
 	<para>
 	The SNMPStats modules makefile requires that the NetSNMP script
 	"net-snmp-config" can run.  At a minimum, running "net-snmp-config --agent-libs"
-	from the OpenSER source directory should return something similar to: 
+	from the Kamailio source directory should return something similar to: 
 
 	<programlisting format="linespecific">
     -L/usr/local/lib -lnetsnmpmibs -lnetsnmpagent -lnetsnmphelpers -lnetsnmp
@@ -572,7 +576,7 @@ modparam("snmpstats", "export_registrar", 1)
 	The above line tells the SNMPStats module to register with the master agent on
 	the localhost, port 705.  The parameters should match up with the snmpd process.
 	Note that the master agent (snmpd) does not need to be present on the same
-	machine as OpenSER.  localhost could be replaced with any other machine. 
+	machine as Kamailio.  localhost could be replaced with any other machine. 
 	</para>
 	</section>
 	
@@ -600,7 +604,7 @@ modparam("snmpstats", "export_registrar", 1)
     NET-SNMP version 5.3.1
 	</programlisting>
 
-	Now, start up OpenSER in another window.  In the snmpd window, you should see a
+	Now, start up Kamailio in another window.  In the snmpd window, you should see a
 	bunch of:
 
 	<programlisting format="linespecific">

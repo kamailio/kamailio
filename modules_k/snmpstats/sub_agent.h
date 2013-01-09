@@ -43,7 +43,7 @@
 #define AGENT_PROCESS_NAME   "snmpstats_sub_agent"
 
 /*! Run the AgentX sub-agent as a separate process.  The child will
- * insulate itself from the rest of OpenSER by overriding most of signal
+ * insulate itself from the rest of Kamailio by overriding most of signal
  * handlers. */
 void agentx_child(int rank);
 

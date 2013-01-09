@@ -32,8 +32,8 @@
  * \brief SNMP statistic module, interprocess buffer
  *
  * This file implements the interprocess buffer, used for marshalling data
- * exchange from the usrloc module to the openserSIPRegUserTable,
- * openserSIPContactTable, and indirectly the openserSIPRegUserLookupTable.
+ * exchange from the usrloc module to the kamailioSIPRegUserTable,
+ * kamailioSIPContactTable, and indirectly the kamailioSIPRegUserLookupTable.
  *
  * Details on why the interprocess buffer is needed can be found in the comments
  * at the top of interprocess_buffer.h
@@ -194,7 +194,7 @@ void handleContactCallbacks(ucontact_t *contactInfo, int type, void *param)
 	return;
 
 error:
-	LM_ERR("Not enough shared memory for  openserSIPRegUserTable insert."
+	LM_ERR("Not enough shared memory for  kamailioSIPRegUserTable insert."
 			" (%s)\n", contactInfo->c.s);
 }
 
@@ -313,7 +313,7 @@ static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer)
 			currentUser->contactIndex, 
 				currentBuffer->stringContact)) {
 
-			LM_ERR("openserSIPRegUserTable was unable to allocate memory for "
+			LM_ERR("kamailioSIPRegUserTable was unable to allocate memory for "
 					"adding contact: %s to user %s.\n",
 					currentBuffer->stringName, currentBuffer->stringContact);
 

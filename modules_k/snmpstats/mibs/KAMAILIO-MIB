@@ -1,9 +1,9 @@
 -- ***********************************************************************
--- OPENSER-MIB:  OPENSER MIB
+-- KAMAILIO-MIB:  KAMAILIO MIB
 --
 -- Date of Creation: Januay 2006
 --
--- This MIB provides information related to the OpenSER SIP Router.
+-- This MIB provides information related to the Kamailio SIP Router.
 -- 
 -- Copyright (c) The Internet Society (2006)
 -- Ammendments (c) Soma Networks, Inc. (2006)
@@ -11,7 +11,7 @@
 -- All rights reserved.
 -- *****************************************************************
 
-OPENSER-MIB DEFINITIONS ::= BEGIN
+KAMAILIO-MIB DEFINITIONS ::= BEGIN
 
     IMPORTS
         MODULE-IDENTITY,
@@ -34,142 +34,145 @@ OPENSER-MIB DEFINITIONS ::= BEGIN
         X731UsageState,
         X731AlarmStatus,
         X731AlarmState
-            FROM OPENSER-TC
+            FROM KAMAILIO-TC
             
         MODULE-COMPLIANCE,
         OBJECT-GROUP,
         NOTIFICATION-GROUP
             FROM SNMPv2-CONF
 
-        openserModules, openserMIB
-            FROM OPENSER-REG-MIB;
+        kamailioModules, kamailioMIB
+            FROM KAMAILIO-REG-MIB;
 
-    openserModule MODULE-IDENTITY
-        LAST-UPDATED "200603231200Z"
-        ORGANIZATION "OpenSER"
+    kamailioModule MODULE-IDENTITY
+        LAST-UPDATED "201301081200Z"
+        ORGANIZATION "Kamailio"
         CONTACT-INFO 
-            "http://www.openser.org"
+            "http://www.kamailio.org"
         DESCRIPTION
-            "OpenSER MIB module.
+            "Kamailio MIB module.
              This module defines objects which are neceesary to monitor an
-             instance of OpenSER.
+             instance of Kamailio.
              
              The objects in this MIB are intended to be used in conjunction
-             with those rovided in OPENSER-SIP-COMMON-MIB and
-             OPENSER-SIP-SERVER-MIB.  In particular, this MIB defines the X.731
-             attributes required to monitor the OpenSER subsystems and the
-             OpenSER core itself."
+             with those rovided in KAMAILIO-SIP-COMMON-MIB and
+             KAMAILIO-SIP-SERVER-MIB.  In particular, this MIB defines the X.731
+             attributes required to monitor the Kamailio subsystems and the
+             Kamailio core itself."
         REVISION   "200605021200Z"
         DESCRIPTION
             "clarified some of the statisitcs collected, added the alarm 
             states and notifications."
         REVISION   "200603231200Z"
         DESCRIPTION
-           "changed ownership to OpenSER group, and made it SMIv2 compliant."
+           "changed ownership to Kamailio group, and made it SMIv2 compliant."
         REVISION   "200601061200Z"
         DESCRIPTION
-           "Initial version of the OPENSER-MIB module."
-        ::= { openserModules 5 }
+           "Initial version of the KAMAILIO-MIB module."
+        REVISION   "201301081200Z"
+        DESCRIPTION
+           "Renamed MIB and mib entries to new product name, Kamailio."
+        ::= { kamailioModules 5 }
 
 --
 -- Top-Level Components of this MIB.
 --
-    openserObjects OBJECT-IDENTITY
+    kamailioObjects OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for accessible objects in the MIB."
-        ::= { openserMIB 1 } 
+        ::= { kamailioMIB 1 } 
 
-    openserMIBEvents OBJECT-IDENTITY
+    kamailioMIBEvents OBJECT-IDENTITY
         STATUS current
         DESCRIPTION
-        "A sub-tree for all the OPENSER-MIB related events and traps."
-        ::= {openserMIB 2 }
+        "A sub-tree for all the KAMAILIO-MIB related events and traps."
+        ::= {kamailioMIB 2 }
 
-    openserConform OBJECT-IDENTITY
+    kamailioConform OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for Conformance specifications."
-        ::= { openserMIB 3 }
+        ::= { kamailioMIB 3 }
                                 
 
 --
--- openserObjects sub-components
+-- kamailioObjects sub-components
 --
-    openserServer  OBJECT-IDENTITY
+    kamailioServer  OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for Server state, alarms, and management."
-        ::= { openserObjects 1 }
+        ::= { kamailioObjects 1 }
 
-    openserMsgs  OBJECT-IDENTITY
+    kamailioMsgs  OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
-        "Sub-tree for tracking of individual SIP messages processed by OpenSER."
-        ::= { openserObjects 2 }
+        "Sub-tree for tracking of individual SIP messages processed by Kamailio."
+        ::= { kamailioObjects 2 }
 
-   openserDialog  OBJECT-IDENTITY
+   kamailioDialog  OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
-        "Sub-tree for tracking of SIP Dialogs being processed by OpenSER."
-    ::= { openserObjects 3 }
+        "Sub-tree for tracking of SIP Dialogs being processed by Kamailio."
+    ::= { kamailioObjects 3 }
 
 -- 
--- OpenSER Server Objects
+-- Kamailio Server Objects
 --
 
 
 --
--- OpenSER Message Objects
+-- Kamailio Message Objects
 --
 
 --
 -- Message Statistics 
 --
-    openserMsgStats OBJECT-IDENTITY
+    kamailioMsgStats OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for Message Statistics." 
-        ::= { openserMsgs 3 }
+        ::= { kamailioMsgs 3 }
 
-    openserMsgQueueDepth       OBJECT-TYPE
+    kamailioMsgQueueDepth       OBJECT-TYPE
         SYNTAX      Gauge32
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
             "The number of packets (udp or tcp) waiting in the OS network queue, 
              waiting to be processed."
-        ::= { openserMsgStats 1 }
+        ::= { kamailioMsgStats 1 }
 
-    openserMsgQueueMinorThreshold    OBJECT-TYPE
+    kamailioMsgQueueMinorThreshold    OBJECT-TYPE
         SYNTAX      Integer32
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-            "When the openserMsgQueueDepth reaches this point, a minor alarm 
+            "When the kamailioMsgQueueDepth reaches this point, a minor alarm 
              will be generated. This value reflects the configured value; if it
              is set to -1, then the alarm is never sent."
-        ::= { openserMsgStats 2 }
+        ::= { kamailioMsgStats 2 }
         
-    openserMsgQueueMajorThreshold    OBJECT-TYPE
+    kamailioMsgQueueMajorThreshold    OBJECT-TYPE
         SYNTAX      Integer32
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-            "When the openserMsgQueueDepth reaches this point, a major alarm 
+            "When the kamailioMsgQueueDepth reaches this point, a major alarm 
              will be generated. This value reflects the configured value; if it
              is set to -1, then the alarm is never sent."
-        ::= { openserMsgStats 3 }
+        ::= { kamailioMsgStats 3 }
 --
 -- Message Alarms
 --
-    openserMsgAlarms OBJECT-IDENTITY
+    kamailioMsgAlarms OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for Message Alarms."
-        ::= { openserMsgs 4 }
+        ::= { kamailioMsgs 4 }
 
-    openserMsgQueueDepthAlarmStatus   OBJECT-TYPE
+    kamailioMsgQueueDepthAlarmStatus   OBJECT-TYPE
         SYNTAX      X731AlarmStatus
         MAX-ACCESS  read-only
         STATUS      current
@@ -177,7 +180,7 @@ OPENSER-MIB DEFINITIONS ::= BEGIN
             "This status variable reports the alarm levels that have been
              generated for the message queue depth.
                
-             The thresholds are defined in the OpenSER configuration; if they 
+             The thresholds are defined in the Kamailio configuration; if they 
              are not configured, this alarm status will always be clear. 
              Specifically, in this case no bits will be toggled, and therefore
              this scalar will return 00.
@@ -187,9 +190,9 @@ OPENSER-MIB DEFINITIONS ::= BEGIN
              
              underRepair(0), critical(1), major(2), minor(3), 
              alarmOutstanding(4), unknown(5)"
-        ::= { openserMsgAlarms 1 }
+        ::= { kamailioMsgAlarms 1 }
 
-    openserMsgQueueDepthMinorAlarm  OBJECT-TYPE
+    kamailioMsgQueueDepthMinorAlarm  OBJECT-TYPE
         SYNTAX      X731AlarmState
         MAX-ACCESS  read-only
         STATUS      current
@@ -198,9 +201,9 @@ OPENSER-MIB DEFINITIONS ::= BEGIN
              threshold has been surpassed.
                 clear(0) the queue depth is below the configured threshold.
                 minor(1) the queue depth has exceeded the configured threshold."
-        ::= { openserMsgAlarms 2 }
+        ::= { kamailioMsgAlarms 2 }
     
-    openserMsgQueueDepthMajorAlarm  OBJECT-TYPE
+    kamailioMsgQueueDepthMajorAlarm  OBJECT-TYPE
         SYNTAX      X731AlarmState
         MAX-ACCESS  read-only
         STATUS      current
@@ -209,9 +212,9 @@ OPENSER-MIB DEFINITIONS ::= BEGIN
              threshold has been surpassed.               
                 clear(0) the queue depth is below the configured threshold.
                 major(2) the queue depth has exceeded the configured threshold."
-        ::= { openserMsgAlarms 3 }
+        ::= { kamailioMsgAlarms 3 }
 --
--- OpenSER Dialog Objects
+-- Kamailio Dialog Objects
 --
 
 --
@@ -219,46 +222,46 @@ OPENSER-MIB DEFINITIONS ::= BEGIN
 --    contains information about currently active calls.
 --
 
-    openserDialogTable   OBJECT-TYPE
-          SYNTAX      SEQUENCE OF  OpenSERDialogTableEntry
+    kamailioDialogTable   OBJECT-TYPE
+          SYNTAX      SEQUENCE OF  KamailioDialogTableEntry
           MAX-ACCESS  not-accessible
           STATUS      current
           DESCRIPTION
               "This table contains information on all active calls in
                the system."
-          ::= { openserDialog 1 }
+          ::= { kamailioDialog 1 }
   
-    openserDialogTableEntry   OBJECT-TYPE
-          SYNTAX      OpenSERDialogTableEntry
+    kamailioDialogTableEntry   OBJECT-TYPE
+          SYNTAX      KamailioDialogTableEntry
           MAX-ACCESS  not-accessible
           STATUS      current
           DESCRIPTION
              "This entry contains information for a single active call in the
               system."
-          INDEX { openserDialogIndex }
-          ::= { openserDialogTable 1 }
+          INDEX { kamailioDialogIndex }
+          ::= { kamailioDialogTable 1 }
 
-    OpenSERDialogTableEntry ::= 
+    KamailioDialogTableEntry ::= 
         SEQUENCE {
-            openserDialogIndex              Unsigned32,
-            openserDialogType               INTEGER,
-            openserDialogToUri              SnmpAdminString,
-            openserDialogFromUri            SnmpAdminString,
-            openserDialogState              INTEGER,
-            openserDialogStartTime          DateAndTime,
-            openserDialogLastUpdateTime     DateAndTime,
-            openserDialogExpiryTime         DateAndTime
+            kamailioDialogIndex              Unsigned32,
+            kamailioDialogType               INTEGER,
+            kamailioDialogToUri              SnmpAdminString,
+            kamailioDialogFromUri            SnmpAdminString,
+            kamailioDialogState              INTEGER,
+            kamailioDialogStartTime          DateAndTime,
+            kamailioDialogLastUpdateTime     DateAndTime,
+            kamailioDialogExpiryTime         DateAndTime
         }
 
-    openserDialogIndex OBJECT-TYPE
+    kamailioDialogIndex OBJECT-TYPE
         SYNTAX      Unsigned32
         MAX-ACCESS  not-accessible
         STATUS current
         DESCRIPTION 
         "The index of this dialog."
-        ::= { openserDialogTableEntry 1 }
+        ::= { kamailioDialogTableEntry 1 }
 
-   openserDialogType OBJECT-TYPE
+   kamailioDialogType OBJECT-TYPE
         SYNTAX      INTEGER {
             invite(1),
             subscribe(2)
@@ -269,25 +272,25 @@ OPENSER-MIB DEFINITIONS ::= BEGIN
         "The type of Dialog:
             invite(1)     - the dialog was created with a SIP INVITE.
             subscribe(2)  - the dialog was created with a SIP SUBSCRIBE."
-        ::= { openserDialogTableEntry 2 }
+        ::= { kamailioDialogTableEntry 2 }
                 
-    openserDialogToUri OBJECT-TYPE
+    kamailioDialogToUri OBJECT-TYPE
         SYNTAX      SnmpAdminString
         MAX-ACCESS  read-only
         STATUS current
         DESCRIPTION 
         "The URI of the To header."
-        ::= { openserDialogTableEntry 3 }
+        ::= { kamailioDialogTableEntry 3 }
         
-    openserDialogFromUri OBJECT-TYPE
+    kamailioDialogFromUri OBJECT-TYPE
         SYNTAX      SnmpAdminString
         MAX-ACCESS  read-only
         STATUS current
         DESCRIPTION 
         "The URI of the From header."
-        ::= { openserDialogTableEntry 4 }
+        ::= { kamailioDialogTableEntry 4 }
         
-    openserDialogState OBJECT-TYPE
+    kamailioDialogState OBJECT-TYPE
         SYNTAX  INTEGER {
             unconfirmed(0),
             early(1),
@@ -310,140 +313,140 @@ OPENSER-MIB DEFINITIONS ::= BEGIN
                                received.
               
           terminated dialogs stay present in the system for only a short period 
-          of time, and then are cleared by OpenSER."
-        ::= { openserDialogTableEntry 5 }
+          of time, and then are cleared by Kamailio."
+        ::= { kamailioDialogTableEntry 5 }
         
-    openserDialogStartTime OBJECT-TYPE
+    kamailioDialogStartTime OBJECT-TYPE
         SYNTAX      DateAndTime
         MAX-ACCESS  read-only
         STATUS current
         DESCRIPTION 
         "The time this dialog was started."
-        ::= { openserDialogTableEntry 6 }
+        ::= { kamailioDialogTableEntry 6 }
         
-    openserDialogLastUpdateTime OBJECT-TYPE
+    kamailioDialogLastUpdateTime OBJECT-TYPE
         SYNTAX      DateAndTime
         MAX-ACCESS  read-only
         STATUS current
         DESCRIPTION 
         "The last time this dialog was updated; ie, when the last SIP
          message for this dialog was seen."
-        ::= { openserDialogTableEntry 7 }        
+        ::= { kamailioDialogTableEntry 7 }        
 
-    openserDialogExpiryTime OBJECT-TYPE
+    kamailioDialogExpiryTime OBJECT-TYPE
         SYNTAX      DateAndTime
         MAX-ACCESS  read-only
         STATUS current
         DESCRIPTION 
         "The time at which this dialog will automatically expire."
-        ::= { openserDialogTableEntry 8 }        
+        ::= { kamailioDialogTableEntry 8 }        
 
 
-    openserDialogStats OBJECT-IDENTITY
+    kamailioDialogStats OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-section for Dialog counters and statistics."
-        ::= { openserDialog 2 }
+        ::= { kamailioDialog 2 }
 
-    openserCurNumDialogs     OBJECT-TYPE
+    kamailioCurNumDialogs     OBJECT-TYPE
         SYNTAX      Gauge32
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
             "The current number of dialogs either in EARLY or CONFIRMED 
              state."
-        ::= { openserDialogStats 1 }
+        ::= { kamailioDialogStats 1 }
         
-    openserCurNumDialogsInProgress     OBJECT-TYPE
+    kamailioCurNumDialogsInProgress     OBJECT-TYPE
         SYNTAX      Gauge32
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
             "The current number of CONFIRMED dialogs."
-        ::= { openserDialogStats 2 }
+        ::= { kamailioDialogStats 2 }
         
-    openserCurNumDialogsInSetup     OBJECT-TYPE
+    kamailioCurNumDialogsInSetup     OBJECT-TYPE
         SYNTAX      Gauge32
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
             "The current number of EARLY dialogs."
-        ::= { openserDialogStats 3 }
+        ::= { kamailioDialogStats 3 }
         
-    openserTotalNumFailedDialogSetups     OBJECT-TYPE
+    kamailioTotalNumFailedDialogSetups     OBJECT-TYPE
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
             "The total number of calls that failed with an error. 
              The following codes define a failed call:"
-        ::= { openserDialogStats 4 }
+        ::= { kamailioDialogStats 4 }
 
-    openserDialogLimitMinorThreshold    OBJECT-TYPE
+    kamailioDialogLimitMinorThreshold    OBJECT-TYPE
         SYNTAX      Integer32
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-            "The configured minor threshold indicating the openser system has 
+            "The configured minor threshold indicating the kamailio system has 
              reached a high level of dialogs. -1 indicates the value
              is not configured, and the alarm will never be set."
-        ::= { openserDialogStats 5 }
+        ::= { kamailioDialogStats 5 }
 
-    openserDialogLimitMajorThreshold    OBJECT-TYPE
+    kamailioDialogLimitMajorThreshold    OBJECT-TYPE
         SYNTAX      Integer32
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-            "The configured threshold indicating the openser system has reached
+            "The configured threshold indicating the kamailio system has reached
              a maximum number of dialogs, and perhaps performace will suffer.
              -1 indicates the value is not configured, and alarms will never be 
              set, and the usage state will never be reported as 'busy'."
-        ::= { openserDialogStats 6 }
+        ::= { kamailioDialogStats 6 }
 
-    openserTotalNumDialogSetups     OBJECT-TYPE
+    kamailioTotalNumDialogSetups     OBJECT-TYPE
         SYNTAX      Counter32
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
             "The total number of calls (answered and failed)."
-        ::= { openserDialogStats 7 }
+        ::= { kamailioDialogStats 7 }
 
 
 --
 -- Dialog State
 --
 
-    openserDialogStates  OBJECT-IDENTITY
+    kamailioDialogStates  OBJECT-IDENTITY
         STATUS current
         DESCRIPTION
-        "a sub-tree for OpenSER's dialog tracking states."
-        ::= { openserDialog 3 }
+        "a sub-tree for Kamailio's dialog tracking states."
+        ::= { kamailioDialog 3 }
     
-    openserDialogUsageState     OBJECT-TYPE
+    kamailioDialogUsageState     OBJECT-TYPE
         SYNTAX      X731UsageState
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-        "The current usage state of OpenSER's dialog tracking:
+        "The current usage state of Kamailio's dialog tracking:
             idle(0)   - no dialogs are currently being tracked.
             active(1) - at least 1 dialog is being tracked.
             busy(2)   - the maximum number of dialogs are being tracked.
                         
          The 'busy' point is based on a configuration variable (the same as
-         openserDialogMajorLimitThreshold): if this value is -1, then the server
+         kamailioDialogMajorLimitThreshold): if this value is -1, then the server
          is never considered 'busy'."
-    ::= { openserDialogStates 1 }
+    ::= { kamailioDialogStates 1 }
 
 --
 -- Dialog Alarms
 --
-    openserDialogAlarms   OBJECT-IDENTITY
+    kamailioDialogAlarms   OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for call alarms." 
-    ::= { openserDialog 4 }
+    ::= { kamailioDialog 4 }
 
-    openserDialogLimitAlarmStatus  OBJECT-TYPE
+    kamailioDialogLimitAlarmStatus  OBJECT-TYPE
         SYNTAX      X731AlarmStatus
         MAX-ACCESS  read-only
         STATUS      current
@@ -457,96 +460,96 @@ OPENSER-MIB DEFINITIONS ::= BEGIN
              
             underRepair(0), critical(1), major(2), minor(3), 
             alarmOutstanding(4), unknown(5)"
-        ::= { openserDialogAlarms 1 }
+        ::= { kamailioDialogAlarms 1 }
 
-   openserDialogLimitMinorAlarm  OBJECT-TYPE
+   kamailioDialogLimitMinorAlarm  OBJECT-TYPE
         SYNTAX      X731AlarmState
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-           "The OpenSER system is approaching or has reached its configured 
+           "The Kamailio system is approaching or has reached its configured 
             minor dialog limit threshold.
                 clear(0) - the current number of dialogs is below the configured
                            threshold.
                 minor(1) - the current number of dialogs has reached or exceeded
                            the configured threshold.
                            
-            The threshold is defined in the OpenSER configuration; if it 
+            The threshold is defined in the Kamailio configuration; if it 
              is not configured, this alarm will not be sent."
-        ::= { openserDialogAlarms 2 }
+        ::= { kamailioDialogAlarms 2 }
 
-   openserDialogLimitMajorAlarm  OBJECT-TYPE
+   kamailioDialogLimitMajorAlarm  OBJECT-TYPE
         SYNTAX      X731AlarmState
         MAX-ACCESS  read-only
         STATUS      current
         DESCRIPTION
-           "The OpenSER system is approaching or has reached its configured 
+           "The Kamailio system is approaching or has reached its configured 
             dialog limit.
                 clear(0) - the current number of dialogs is below the configured
                            threshold.
                 major(2) - the current number of dialogs has reached or exceeded
                            the configured threshold.
             
-            The threshold is defined in the OpenSER configuration; if it 
+            The threshold is defined in the Kamailio configuration; if it 
              is not configured, this alarm will not be sent."
-        ::= { openserDialogAlarms 3 }
+        ::= { kamailioDialogAlarms 3 }
 
 -- 
 -- Notifications
 --
 
 --
--- This section defines the SNMP traps, or notifications, that the OPENSER-MIB
+-- This section defines the SNMP traps, or notifications, that the KAMAILIO-MIB
 -- supports.
 --
 
-    openserMIBNotifications  OBJECT-IDENTITY
+    kamailioMIBNotifications  OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "A sub-section for reverse-mapping between SNMPv1 and SNMPv2 events."
-        ::= { openserMIBEvents 0 } 
+        ::= { kamailioMIBEvents 0 } 
         
-    openserMsgQueueDepthMinorEvent NOTIFICATION-TYPE
+    kamailioMsgQueueDepthMinorEvent NOTIFICATION-TYPE
         OBJECTS {
-          openserMsgQueueDepth, openserMsgQueueMinorThreshold
+          kamailioMsgQueueDepth, kamailioMsgQueueMinorThreshold
         }
         STATUS  current
         DESCRIPTION
-        "The message queue depth (as reported by openserMsgQueueDepth) has 
-         exceeded the minor configured threshold openserMsgQueueMinorThreshold."
-        ::= { openserMIBNotifications 1 }
+        "The message queue depth (as reported by kamailioMsgQueueDepth) has 
+         exceeded the minor configured threshold kamailioMsgQueueMinorThreshold."
+        ::= { kamailioMIBNotifications 1 }
         
-    openserMsgQueueDepthMajorEvent NOTIFICATION-TYPE
+    kamailioMsgQueueDepthMajorEvent NOTIFICATION-TYPE
         OBJECTS {
-            openserMsgQueueDepth, openserMsgQueueMajorThreshold
+            kamailioMsgQueueDepth, kamailioMsgQueueMajorThreshold
         }
         STATUS  current
         DESCRIPTION
-        "The message queue depth (as reported by openserMsgQueueDepth) has 
-         exceeded the minor configured threshold openserMsgQueueMinorThreshold."
-        ::= { openserMIBNotifications 2 }
+        "The message queue depth (as reported by kamailioMsgQueueDepth) has 
+         exceeded the minor configured threshold kamailioMsgQueueMinorThreshold."
+        ::= { kamailioMIBNotifications 2 }
         
-    openserDialogLimitMinorEvent NOTIFICATION-TYPE
+    kamailioDialogLimitMinorEvent NOTIFICATION-TYPE
         OBJECTS {
-            openserCurNumDialogs, openserDialogLimitMinorThreshold
+            kamailioCurNumDialogs, kamailioDialogLimitMinorThreshold
         }
         STATUS  current
         DESCRIPTION
         "The number of dialogs being tracked in the system (as reported by
-         openserCurNumDialogs) has exceeded the minor configured threshold 
-         openserDialogLimitMinorThreshold."
-        ::= { openserMIBNotifications 3 }
+         kamailioCurNumDialogs) has exceeded the minor configured threshold 
+         kamailioDialogLimitMinorThreshold."
+        ::= { kamailioMIBNotifications 3 }
 
-    openserDialogLimitMajorEvent NOTIFICATION-TYPE
+    kamailioDialogLimitMajorEvent NOTIFICATION-TYPE
         OBJECTS {
-            openserCurNumDialogs, openserDialogLimitMajorThreshold
+            kamailioCurNumDialogs, kamailioDialogLimitMajorThreshold
         }
         STATUS  current
         DESCRIPTION
         "The number of dialogs being tracked in the system (as reported by
-         openserCurNumDialogs) has exceeded the major configured threshold 
-         openserDialogLimitMajorThreshold."
-        ::= { openserMIBNotifications 4 }
+         kamailioCurNumDialogs) has exceeded the major configured threshold 
+         kamailioDialogLimitMajorThreshold."
+        ::= { kamailioMIBNotifications 4 }
 
 
 --
@@ -556,103 +559,103 @@ OPENSER-MIB DEFINITIONS ::= BEGIN
 --
 -- Compliance Statements
 --
-    openserCompliance   MODULE-COMPLIANCE
+    kamailioCompliance   MODULE-COMPLIANCE
         STATUS      current
         DESCRIPTION
-            "The compliance statement for OpenSER in the SOMAvoice product."
+            "The compliance statement for Kamailio in the SOMAvoice product."
 
         MODULE -- this module
-            MANDATORY-GROUPS { openserX731Group,
-                               openserStatsGroup,
-                               openserAlarmsGroup,
-                               openserMsgQueueEvents,
-                               openserDialogLimitEvents }
-        ::= { openserConform 1 }
+            MANDATORY-GROUPS { kamailioX731Group,
+                               kamailioStatsGroup,
+                               kamailioAlarmsGroup,
+                               kamailioMsgQueueEvents,
+                               kamailioDialogLimitEvents }
+        ::= { kamailioConform 1 }
 
-    openserGroups  OBJECT-IDENTITY
+    kamailioGroups  OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for defining the conformance groups."
-        ::= { openserConform 2 }
+        ::= { kamailioConform 2 }
         
-    openserNotifications OBJECT-IDENTITY
+    kamailioNotifications OBJECT-IDENTITY
         STATUS current
         DESCRIPTION
         "Sub-tree for defining the conformance notifications."
-        ::= { openserConform 3 }
+        ::= { kamailioConform 3 }
 
 --
 -- Units of Conformance
 --
-    openserX731Group    OBJECT-GROUP
+    kamailioX731Group    OBJECT-GROUP
         OBJECTS {
-            openserDialogUsageState
+            kamailioDialogUsageState
         }
         STATUS  current
         DESCRIPTION
             "A collection of objects providing X.731 state and alarm status
-             information in OpenSER."
-        ::= { openserGroups 1 }
+             information in Kamailio."
+        ::= { kamailioGroups 1 }
 
-    openserStatsGroup   OBJECT-GROUP
+    kamailioStatsGroup   OBJECT-GROUP
         OBJECTS {
-            openserMsgQueueDepth,
-            openserMsgQueueMinorThreshold,
-            openserMsgQueueMajorThreshold,
-            openserDialogType,
-            openserDialogToUri,
-            openserDialogFromUri,
-            openserDialogState,
-            openserDialogStartTime,
-            openserDialogLastUpdateTime,
-            openserDialogExpiryTime,
-            openserCurNumDialogs,
-            openserCurNumDialogsInProgress,
-            openserCurNumDialogsInSetup,
-            openserTotalNumFailedDialogSetups,
-            openserDialogLimitMinorThreshold,
-            openserDialogLimitMajorThreshold,
-            openserTotalNumDialogSetups
+            kamailioMsgQueueDepth,
+            kamailioMsgQueueMinorThreshold,
+            kamailioMsgQueueMajorThreshold,
+            kamailioDialogType,
+            kamailioDialogToUri,
+            kamailioDialogFromUri,
+            kamailioDialogState,
+            kamailioDialogStartTime,
+            kamailioDialogLastUpdateTime,
+            kamailioDialogExpiryTime,
+            kamailioCurNumDialogs,
+            kamailioCurNumDialogsInProgress,
+            kamailioCurNumDialogsInSetup,
+            kamailioTotalNumFailedDialogSetups,
+            kamailioDialogLimitMinorThreshold,
+            kamailioDialogLimitMajorThreshold,
+            kamailioTotalNumDialogSetups
         }
         STATUS  current
         DESCRIPTION
-            "A collection of objects providing statistics in OpenSER."
-        ::= { openserGroups 2 }
+            "A collection of objects providing statistics in Kamailio."
+        ::= { kamailioGroups 2 }
 
-    openserAlarmsGroup   OBJECT-GROUP
+    kamailioAlarmsGroup   OBJECT-GROUP
         OBJECTS {
-            openserMsgQueueDepthAlarmStatus,
-            openserMsgQueueDepthMinorAlarm,
-            openserMsgQueueDepthMajorAlarm,
-            openserDialogLimitAlarmStatus,
-            openserDialogLimitMinorAlarm,
-            openserDialogLimitMajorAlarm
+            kamailioMsgQueueDepthAlarmStatus,
+            kamailioMsgQueueDepthMinorAlarm,
+            kamailioMsgQueueDepthMajorAlarm,
+            kamailioDialogLimitAlarmStatus,
+            kamailioDialogLimitMinorAlarm,
+            kamailioDialogLimitMajorAlarm
         }
         STATUS  current
         DESCRIPTION
             "A collection of objects providing stateful alarm information in
-             OpenSER."
-        ::= { openserGroups 3 }
+             Kamailio."
+        ::= { kamailioGroups 3 }
     
-    openserMsgQueueEvents   NOTIFICATION-GROUP
+    kamailioMsgQueueEvents   NOTIFICATION-GROUP
         NOTIFICATIONS {
-            openserMsgQueueDepthMinorEvent,
-            openserMsgQueueDepthMajorEvent
+            kamailioMsgQueueDepthMinorEvent,
+            kamailioMsgQueueDepthMajorEvent
         }
         STATUS current
         DESCRIPTION
             "A collection of events for the message queue depth."
-        ::= { openserNotifications 1 }
+        ::= { kamailioNotifications 1 }
 
-    openserDialogLimitEvents   NOTIFICATION-GROUP
+    kamailioDialogLimitEvents   NOTIFICATION-GROUP
         NOTIFICATIONS {
-            openserDialogLimitMinorEvent,
-            openserDialogLimitMajorEvent
+            kamailioDialogLimitMinorEvent,
+            kamailioDialogLimitMajorEvent
         }
         STATUS current
         DESCRIPTION
             "A collection of events for dialog tracking."
-        ::= { openserNotifications 2 }
+        ::= { kamailioNotifications 2 }
 
 END
 

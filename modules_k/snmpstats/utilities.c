@@ -49,7 +49,7 @@
 #include "../../lib/kcore/kstats_wrapper.h"
 
 /*!
- * This function copies an OpenSER "str" datatype into a '\\0' terminated char*
+ * This function copies an Kamailio "str" datatype into a '\\0' terminated char*
  * string. 
  *
  * \note Make sure to free the memory allocated to *copiedString, when you no

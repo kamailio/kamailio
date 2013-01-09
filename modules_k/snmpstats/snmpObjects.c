@@ -32,7 +32,7 @@
  *		: mib2c.scalar.conf,v 1.9 2005/01/07 09:37:18 dts12 Exp $
  *
  * This file defines all registration and handling of all scalars defined in the
- * OPENSER-MIB.  Please see OPENSER-MIB for the complete descriptions of the
+ * KAMAILIO-MIB.  Please see KAMAILIO-MIB for the complete descriptions of the
  * individual scalars.
  */
 
@@ -49,219 +49,219 @@
 #include "alarm_checks.h"
 
 /* 
- * Initializes the openserObjects module.  This involves:
+ * Initializes the kamailioObjects module.  This involves:
  *
  *  - Registering all OID's
  *  - Setting up handlers for all OID's
  *
  * This function is mostly auto-generated.
  */
-void init_openserObjects(void)
+void init_kamailioObjects(void)
 {
-	static oid openserMsgQueueDepth_oid[]            =  
-		{ OPENSER_OID,3,1,3,1,2,3,1 };
+	static oid kamailioMsgQueueDepth_oid[]            =  
+		{ KAMAILIO_OID,3,1,3,1,2,3,1 };
 
-	static oid openserMsgQueueMinorThreshold_oid[]   = 
-		{ OPENSER_OID,3,1,3,1,2,3,2 };
+	static oid kamailioMsgQueueMinorThreshold_oid[]   = 
+		{ KAMAILIO_OID,3,1,3,1,2,3,2 };
 
-	static oid openserMsgQueueMajorThreshold_oid[]   = 
-		{ OPENSER_OID,3,1,3,1,2,3,3 };
+	static oid kamailioMsgQueueMajorThreshold_oid[]   = 
+		{ KAMAILIO_OID,3,1,3,1,2,3,3 };
 
-	static oid openserMsgQueueDepthAlarmStatus_oid[] = 
-		{ OPENSER_OID,3,1,3,1,2,4,1 };
+	static oid kamailioMsgQueueDepthAlarmStatus_oid[] = 
+		{ KAMAILIO_OID,3,1,3,1,2,4,1 };
   
-  	static oid openserMsgQueueDepthMinorAlarm_oid[]  = 
-		{ OPENSER_OID,3,1,3,1,2,4,2 };
+  	static oid kamailioMsgQueueDepthMinorAlarm_oid[]  = 
+		{ KAMAILIO_OID,3,1,3,1,2,4,2 };
 
-	static oid openserMsgQueueDepthMajorAlarm_oid[]  = 
-		{ OPENSER_OID,3,1,3,1,2,4,3 };
+	static oid kamailioMsgQueueDepthMajorAlarm_oid[]  = 
+		{ KAMAILIO_OID,3,1,3,1,2,4,3 };
 
-	static oid openserCurNumDialogs_oid[]            = 
-		{ OPENSER_OID,3,1,3,1,3,2,1 };
+	static oid kamailioCurNumDialogs_oid[]            = 
+		{ KAMAILIO_OID,3,1,3,1,3,2,1 };
 
-	static oid openserCurNumDialogsInProgress_oid[]  = 
-		{ OPENSER_OID,3,1,3,1,3,2,2 };
+	static oid kamailioCurNumDialogsInProgress_oid[]  = 
+		{ KAMAILIO_OID,3,1,3,1,3,2,2 };
 
-	static oid openserCurNumDialogsInSetup_oid[]     = 
-		{ OPENSER_OID,3,1,3,1,3,2,3 };
+	static oid kamailioCurNumDialogsInSetup_oid[]     = 
+		{ KAMAILIO_OID,3,1,3,1,3,2,3 };
 
-	static oid openserTotalNumFailedDialogSetups_oid[] = 
-		{ OPENSER_OID,3,1,3,1,3,2,4 };
+	static oid kamailioTotalNumFailedDialogSetups_oid[] = 
+		{ KAMAILIO_OID,3,1,3,1,3,2,4 };
 
-	static oid openserDialogLimitMinorThreshold_oid[]  = 
-		{ OPENSER_OID,3,1,3,1,3,2,5 };
+	static oid kamailioDialogLimitMinorThreshold_oid[]  = 
+		{ KAMAILIO_OID,3,1,3,1,3,2,5 };
 
-	static oid openserDialogLimitMajorThreshold_oid[]  = 
-		{ OPENSER_OID,3,1,3,1,3,2,6 };
+	static oid kamailioDialogLimitMajorThreshold_oid[]  = 
+		{ KAMAILIO_OID,3,1,3,1,3,2,6 };
 
-	static oid openserTotalNumDialogSetups_oid[] =
-		{ OPENSER_OID,3,1,3,1,3,2,7 };
+	static oid kamailioTotalNumDialogSetups_oid[] =
+		{ KAMAILIO_OID,3,1,3,1,3,2,7 };
 
-	static oid openserDialogUsageState_oid[]       = 
-		{ OPENSER_OID,3,1,3,1,3,3,1 };
+	static oid kamailioDialogUsageState_oid[]       = 
+		{ KAMAILIO_OID,3,1,3,1,3,3,1 };
 
-	static oid openserDialogLimitAlarmStatus_oid[] = 
-		{ OPENSER_OID,3,1,3,1,3,4,1 };
+	static oid kamailioDialogLimitAlarmStatus_oid[] = 
+		{ KAMAILIO_OID,3,1,3,1,3,4,1 };
 
-	static oid openserDialogLimitMinorAlarm_oid[]  = 
-		{ OPENSER_OID,3,1,3,1,3,4,2 };
+	static oid kamailioDialogLimitMinorAlarm_oid[]  = 
+		{ KAMAILIO_OID,3,1,3,1,3,4,2 };
 
-	static oid openserDialogLimitMajorAlarm_oid[]  = 
-		{ OPENSER_OID,3,1,3,1,3,4,3 };
+	static oid kamailioDialogLimitMajorAlarm_oid[]  = 
+		{ KAMAILIO_OID,3,1,3,1,3,4,3 };
 
 
-  DEBUGMSGTL(("openserObjects", "Initializing\n"));
+  	DEBUGMSGTL(("kamailioObjects", "Initializing\n"));
 
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserMsgQueueDepth", 
-			handle_openserMsgQueueDepth,
-			openserMsgQueueDepth_oid, 
-			OID_LENGTH(openserMsgQueueDepth_oid),
+			"kamailioMsgQueueDepth", 
+			handle_kamailioMsgQueueDepth,
+			kamailioMsgQueueDepth_oid, 
+			OID_LENGTH(kamailioMsgQueueDepth_oid),
 			HANDLER_CAN_RONLY)
 		);
 
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserMsgQueueMinorThreshold", 
-			handle_openserMsgQueueMinorThreshold,
-			openserMsgQueueMinorThreshold_oid, 
-			OID_LENGTH(openserMsgQueueMinorThreshold_oid),
+			"kamailioMsgQueueMinorThreshold", 
+			handle_kamailioMsgQueueMinorThreshold,
+			kamailioMsgQueueMinorThreshold_oid, 
+			OID_LENGTH(kamailioMsgQueueMinorThreshold_oid),
 			HANDLER_CAN_RONLY)
 		);
 
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserMsgQueueMajorThreshold", 
-			handle_openserMsgQueueMajorThreshold,
-			openserMsgQueueMajorThreshold_oid, 
-			OID_LENGTH(openserMsgQueueMajorThreshold_oid),
+			"kamailioMsgQueueMajorThreshold", 
+			handle_kamailioMsgQueueMajorThreshold,
+			kamailioMsgQueueMajorThreshold_oid, 
+			OID_LENGTH(kamailioMsgQueueMajorThreshold_oid),
 			HANDLER_CAN_RONLY)
 		);
 
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserMsgQueueDepthAlarmStatus", 
-			handle_openserMsgQueueDepthAlarmStatus,
-			openserMsgQueueDepthAlarmStatus_oid, 
-			OID_LENGTH(openserMsgQueueDepthAlarmStatus_oid),
+			"kamailioMsgQueueDepthAlarmStatus", 
+			handle_kamailioMsgQueueDepthAlarmStatus,
+			kamailioMsgQueueDepthAlarmStatus_oid, 
+			OID_LENGTH(kamailioMsgQueueDepthAlarmStatus_oid),
 			HANDLER_CAN_RONLY)
 		);
 
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserMsgQueueDepthMinorAlarm", 
-			handle_openserMsgQueueDepthMinorAlarm,
-			openserMsgQueueDepthMinorAlarm_oid, 
-			OID_LENGTH(openserMsgQueueDepthMinorAlarm_oid),
+			"kamailioMsgQueueDepthMinorAlarm", 
+			handle_kamailioMsgQueueDepthMinorAlarm,
+			kamailioMsgQueueDepthMinorAlarm_oid, 
+			OID_LENGTH(kamailioMsgQueueDepthMinorAlarm_oid),
 			HANDLER_CAN_RONLY)
 		);
   
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserMsgQueueDepthMajorAlarm", 
-			handle_openserMsgQueueDepthMajorAlarm,
-			openserMsgQueueDepthMajorAlarm_oid, 
-			OID_LENGTH(openserMsgQueueDepthMajorAlarm_oid),
+			"kamailioMsgQueueDepthMajorAlarm", 
+			handle_kamailioMsgQueueDepthMajorAlarm,
+			kamailioMsgQueueDepthMajorAlarm_oid, 
+			OID_LENGTH(kamailioMsgQueueDepthMajorAlarm_oid),
 			HANDLER_CAN_RONLY)
 		);
 
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserCurNumDialogs", 
-			handle_openserCurNumDialogs,
-			openserCurNumDialogs_oid, 
-			OID_LENGTH(openserCurNumDialogs_oid),
+			"kamailioCurNumDialogs", 
+			handle_kamailioCurNumDialogs,
+			kamailioCurNumDialogs_oid, 
+			OID_LENGTH(kamailioCurNumDialogs_oid),
 			HANDLER_CAN_RONLY)
 		);
 	
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserCurNumDialogsInProgress", 
-			handle_openserCurNumDialogsInProgress,
-			openserCurNumDialogsInProgress_oid, 
-			OID_LENGTH(openserCurNumDialogsInProgress_oid),
+			"kamailioCurNumDialogsInProgress", 
+			handle_kamailioCurNumDialogsInProgress,
+			kamailioCurNumDialogsInProgress_oid, 
+			OID_LENGTH(kamailioCurNumDialogsInProgress_oid),
 			HANDLER_CAN_RONLY)
 		);
 	
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserCurNumDialogsInSetup", 
-			handle_openserCurNumDialogsInSetup,
-			openserCurNumDialogsInSetup_oid, 
-			OID_LENGTH(openserCurNumDialogsInSetup_oid),
+			"kamailioCurNumDialogsInSetup", 
+			handle_kamailioCurNumDialogsInSetup,
+			kamailioCurNumDialogsInSetup_oid, 
+			OID_LENGTH(kamailioCurNumDialogsInSetup_oid),
 			HANDLER_CAN_RONLY)
 		);
   
   	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserTotalNumFailedDialogSetups", 
-		handle_openserTotalNumFailedDialogSetups,
-		openserTotalNumFailedDialogSetups_oid, 
-		OID_LENGTH(openserTotalNumFailedDialogSetups_oid),
+			"kamailioTotalNumFailedDialogSetups", 
+		handle_kamailioTotalNumFailedDialogSetups,
+		kamailioTotalNumFailedDialogSetups_oid, 
+		OID_LENGTH(kamailioTotalNumFailedDialogSetups_oid),
 		HANDLER_CAN_RONLY)
 		);
 	
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserDialogLimitMinorThreshold", 
-			handle_openserDialogLimitMinorThreshold,
-			openserDialogLimitMinorThreshold_oid, 
-			OID_LENGTH(openserDialogLimitMinorThreshold_oid),
+			"kamailioDialogLimitMinorThreshold", 
+			handle_kamailioDialogLimitMinorThreshold,
+			kamailioDialogLimitMinorThreshold_oid, 
+			OID_LENGTH(kamailioDialogLimitMinorThreshold_oid),
 			 HANDLER_CAN_RONLY)
 		);
 
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserDialogLimitMajorThreshold", 
-			handle_openserDialogLimitMajorThreshold,
-			openserDialogLimitMajorThreshold_oid, 
-			OID_LENGTH(openserDialogLimitMajorThreshold_oid),
+			"kamailioDialogLimitMajorThreshold", 
+			handle_kamailioDialogLimitMajorThreshold,
+			kamailioDialogLimitMajorThreshold_oid, 
+			OID_LENGTH(kamailioDialogLimitMajorThreshold_oid),
 			HANDLER_CAN_RONLY)
 		);
 
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserTotalNumDialogSetups",
-		handle_openserTotalNumDialogSetups,
-		openserTotalNumDialogSetups_oid,
-		OID_LENGTH(openserTotalNumDialogSetups_oid),
+			"kamailioTotalNumDialogSetups",
+		handle_kamailioTotalNumDialogSetups,
+		kamailioTotalNumDialogSetups_oid,
+		OID_LENGTH(kamailioTotalNumDialogSetups_oid),
 		HANDLER_CAN_RONLY)
 		);
 
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserDialogUsageState", 
-			handle_openserDialogUsageState,
-			openserDialogUsageState_oid, 
-			OID_LENGTH(openserDialogUsageState_oid),
+			"kamailioDialogUsageState", 
+			handle_kamailioDialogUsageState,
+			kamailioDialogUsageState_oid, 
+			OID_LENGTH(kamailioDialogUsageState_oid),
 			HANDLER_CAN_RONLY)
 		);
   
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserDialogLimitAlarmStatus", 
-			handle_openserDialogLimitAlarmStatus,
-			openserDialogLimitAlarmStatus_oid, 
-			OID_LENGTH(openserDialogLimitAlarmStatus_oid),
+			"kamailioDialogLimitAlarmStatus", 
+			handle_kamailioDialogLimitAlarmStatus,
+			kamailioDialogLimitAlarmStatus_oid, 
+			OID_LENGTH(kamailioDialogLimitAlarmStatus_oid),
 			HANDLER_CAN_RONLY)
 		);
    
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserDialogLimitMinorAlarm", 
-			handle_openserDialogLimitMinorAlarm,
-			openserDialogLimitMinorAlarm_oid, 
-			OID_LENGTH(openserDialogLimitMinorAlarm_oid),
+			"kamailioDialogLimitMinorAlarm", 
+			handle_kamailioDialogLimitMinorAlarm,
+			kamailioDialogLimitMinorAlarm_oid, 
+			OID_LENGTH(kamailioDialogLimitMinorAlarm_oid),
 			HANDLER_CAN_RONLY)
 		);
  
 	netsnmp_register_scalar(
 		netsnmp_create_handler_registration(
-			"openserDialogLimitMajorAlarm", 
-			handle_openserDialogLimitMajorAlarm,
-			openserDialogLimitMajorAlarm_oid, 
-			OID_LENGTH(openserDialogLimitMajorAlarm_oid),
+			"kamailioDialogLimitMajorAlarm", 
+			handle_kamailioDialogLimitMajorAlarm,
+			kamailioDialogLimitMajorAlarm_oid, 
+			OID_LENGTH(kamailioDialogLimitMajorAlarm_oid),
 			HANDLER_CAN_RONLY)
 		);
 }
@@ -291,7 +291,7 @@ static int msgQueueMinorThreshold = -1;
 static int msgQueueMajorThreshold = -1;
 
 
-int handle_openserMsgQueueDepth(netsnmp_mib_handler *handler,
+int handle_kamailioMsgQueueDepth(netsnmp_mib_handler *handler,
   		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -309,7 +309,7 @@ int handle_openserMsgQueueDepth(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-int handle_openserMsgQueueMinorThreshold(netsnmp_mib_handler *handler,
+int handle_kamailioMsgQueueMinorThreshold(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -323,7 +323,7 @@ int handle_openserMsgQueueMinorThreshold(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-int handle_openserMsgQueueMajorThreshold(netsnmp_mib_handler *handler,
+int handle_kamailioMsgQueueMajorThreshold(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -337,7 +337,7 @@ int handle_openserMsgQueueMajorThreshold(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-int handle_openserMsgQueueDepthAlarmStatus(netsnmp_mib_handler *handler,
+int handle_kamailioMsgQueueDepthAlarmStatus(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -366,7 +366,7 @@ int handle_openserMsgQueueDepthAlarmStatus(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-int handle_openserMsgQueueDepthMinorAlarm(netsnmp_mib_handler *handler,
+int handle_kamailioMsgQueueDepthMinorAlarm(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -386,7 +386,7 @@ int handle_openserMsgQueueDepthMinorAlarm(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-int handle_openserMsgQueueDepthMajorAlarm(netsnmp_mib_handler *handler,
+int handle_kamailioMsgQueueDepthMajorAlarm(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -406,7 +406,7 @@ int handle_openserMsgQueueDepthMajorAlarm(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-int handle_openserCurNumDialogs(netsnmp_mib_handler *handler,
+int handle_kamailioCurNumDialogs(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -424,7 +424,7 @@ int handle_openserCurNumDialogs(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-int handle_openserCurNumDialogsInProgress(netsnmp_mib_handler *handler,
+int handle_kamailioCurNumDialogsInProgress(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -445,7 +445,7 @@ int handle_openserCurNumDialogsInProgress(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-int handle_openserCurNumDialogsInSetup(netsnmp_mib_handler *handler,
+int handle_kamailioCurNumDialogsInSetup(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -463,7 +463,7 @@ int handle_openserCurNumDialogsInSetup(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-int handle_openserTotalNumFailedDialogSetups(netsnmp_mib_handler *handler,
+int handle_kamailioTotalNumFailedDialogSetups(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -479,7 +479,7 @@ int handle_openserTotalNumFailedDialogSetups(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-int handle_openserTotalNumDialogSetups(netsnmp_mib_handler *handler,
+int handle_kamailioTotalNumDialogSetups(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -495,7 +495,7 @@ int handle_openserTotalNumDialogSetups(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-int handle_openserDialogLimitMinorThreshold(netsnmp_mib_handler *handler,
+int handle_kamailioDialogLimitMinorThreshold(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -509,7 +509,7 @@ int handle_openserDialogLimitMinorThreshold(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-int handle_openserDialogLimitMajorThreshold(netsnmp_mib_handler *handler,
+int handle_kamailioDialogLimitMajorThreshold(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -523,7 +523,7 @@ int handle_openserDialogLimitMajorThreshold(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-int handle_openserDialogUsageState(netsnmp_mib_handler *handler,
+int handle_kamailioDialogUsageState(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -556,7 +556,7 @@ int handle_openserDialogUsageState(netsnmp_mib_handler *handler,
 }
 
 
-int handle_openserDialogLimitAlarmStatus(netsnmp_mib_handler *handler,
+int handle_kamailioDialogLimitAlarmStatus(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -587,7 +587,7 @@ int handle_openserDialogLimitAlarmStatus(netsnmp_mib_handler *handler,
 
 
 
-int handle_openserDialogLimitMinorAlarm(netsnmp_mib_handler *handler,
+int handle_kamailioDialogLimitMinorAlarm(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)
@@ -608,7 +608,7 @@ int handle_openserDialogLimitMinorAlarm(netsnmp_mib_handler *handler,
 	return SNMP_ERR_GENERR;
 }
 
-int handle_openserDialogLimitMajorAlarm(netsnmp_mib_handler *handler,
+int handle_kamailioDialogLimitMajorAlarm(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info   *reqinfo,
 		netsnmp_request_info         *requests)

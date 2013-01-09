@@ -49,7 +49,7 @@
  * 4) mod_init() will initialize some interprocess communication buffers, as
  *    well as callback mechanisms for the usrloc module.  To understand what the
  *    interprocess buffer and callbacks are and are for, please see the comments
- *    at the beginning of openserSIPRegUserTable.c
+ *    at the beginning of kamailioSIPRegUserTable.c
  */
 
 /*!
@@ -62,7 +62,7 @@
 /*!
  * \defgroup snmpstats SNMPSTATS :: The Kamailio snmpstats Module
  *
- * The SNMPStats module provides an SNMP management interface to OpenSER.
+ * The SNMPStats module provides an SNMP management interface to Kamailio.
  * Specifically, it provides general SNMP queryable scalar statistics, table
  * representations of more complicated data such as user and contact information,
  * and alarm monitoring capabilities.
@@ -338,7 +338,7 @@ static int mod_init(void)
 					" with the usrloc module\n");
 			LM_ERR("Are you sure that the usrloc module was loaded"
 					" before the snmpstats module in ");
-			LM_ERR("kamailio.cfg?  openserSIPRegUserTable will not be "
+			LM_ERR("kamailio.cfg?  kamailioSIPRegUserTable will not be "
 				   "updated.");
 			*/
 		}
@@ -445,7 +445,7 @@ static void sigchld_handler(int signal)
 /*!
  * This function will spawn a child that retrieves the sysUpTime and stores the
  * result in a file. This file will be read by the AgentX Sub-agent process to
- * supply the openserSIPServiceStartTime time. This function never returns,
+ * supply the kamailioSIPServiceStartTime time. This function never returns,
  * but it will generated a SIGCHLD when it terminates.  There must a SIGCHLD
  * handler to ignore the SIGCHLD for only this process. (See sigchld_handler
  * above).
@@ -539,7 +539,7 @@ static int spawn_sysUpTime_child(void)
 	if (full_path_to_snmpget == NULL) 
 	{
 		LM_ERR("Ran out of memory while trying to retrieve sysUpTime.  ");
-		LM_ERR( "                  openserSIPServiceStartTime is "
+		LM_ERR( "                  kamailioSIPServiceStartTime is "
 				"defaulting to zero\n");
 		return -1;
 	}
@@ -555,7 +555,7 @@ static int spawn_sysUpTime_child(void)
 	if (execve(full_path_to_snmpget, args, NULL) == -1) {
 		LM_ERR( "snmpget failed to run.  Did you supply the snmpstats module"
 				" with a proper snmpgetPath parameter? The "
-				"openserSIPServiceStartTime is defaulting to zero\n");
+				"kamailioSIPServiceStartTime is defaulting to zero\n");
 		close(snmpget_fd);
 		free(full_path_to_snmpget);
 		exit(-1);

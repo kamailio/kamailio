@@ -94,18 +94,18 @@ static int initialize_agentx(void)
 	
 	/* Initialize all scalars, and let the master agent know we want to
 	 * handle all OID's pertaining to these scalars. */
-	init_openserSIPCommonObjects();
-	init_openserSIPServerObjects();
-	init_openserObjects();
+	init_kamailioSIPCommonObjects();
+	init_kamailioSIPServerObjects();
+	init_kamailioObjects();
 
 	/* Initialiaze all the tables, and let the master agent know we want to
 	 * handle all the OID's pertaining to these tables */
-	init_openserSIPPortTable();
-	init_openserSIPMethodSupportedTable();
-	init_openserSIPStatusCodesTable();
-	init_openserSIPRegUserTable();
-	init_openserSIPContactTable();
-	init_openserSIPRegUserLookupTable();
+	init_kamailioSIPPortTable();
+	init_kamailioSIPMethodSupportedTable();
+	init_kamailioSIPStatusCodesTable();
+	init_kamailioSIPRegUserTable();
+	init_kamailioSIPContactTable();
+	init_kamailioSIPRegUserLookupTable();
 
 	/* In case we recevie a request to stop (kill -TERM or kill -INT) */
 	keep_running = 1;
@@ -125,7 +125,7 @@ static int initialize_agentx(void)
 }
 
 /*! Creates a child that will become the AgentX sub-agent.  The child will
- * insulate itself from the rest of OpenSER by overriding most of signal
+ * insulate itself from the rest of Kamailio by overriding most of signal
  * handlers. */
 void agentx_child(int rank)
 {
@@ -139,8 +139,8 @@ void agentx_child(int rank)
 	new_sigterm_handler.sa_handler = sigterm_handler;
 	sigaction(SIGTERM, &new_sigterm_handler, NULL);
 
-	/* We don't want OpenSER's normal handlers doing anything when
-	 * we die.  As far as OpenSER knows this process never existed.
+	/* We don't want Kamailio's normal handlers doing anything when
+	 * we die.  As far as Kamailio knows this process never existed.
 	 * So override all signal handlers to the OS default. */
 	sigemptyset(&default_handlers.sa_mask);
 	default_handlers.sa_flags = 0;

@@ -129,7 +129,7 @@
 		</para>
 
 		<programlisting format="linespecific">
-    ERROR: load_module: could not open module &lt;/usr/local/lib/openser/modules/snmpstats.so&gt;: 
+    ERROR: load_module: could not open module &lt;/usr/local/lib/kamailio/modules_k/snmpstats.so&gt;: 
            libnetsnmpmibs.so.10: cannot open shared object file: No such file or directory.
 		</programlisting>
 	
@@ -219,21 +219,21 @@
 	    <answer>
 		<para>
 		All scalars and tables are named in the SNMPStats module overview.  The files
-		OPENSER-MIB, OPENSER-REG-MIB, OPENSER-SIP-COMMON-MIB and OPENSER-SIP-SERVER-MIB
+		KAMAILIO-MIB, KAMAILIO-REG-MIB, KAMAILIO-SIP-COMMON-MIB and KAMAILIO-SIP-SERVER-MIB
 		contain the full definitions and descriptions.  Note however, that the MIBs
 		may actually contain scalars and tables which are currently not provided by the
 		SNMPStats module.  Therefore, it is better to use NetSNMP's snmptranslate
-		as an alternative. Take the openserSIPEntityType scalar as an example. You can
+		as an alternative. Take the kamailioSIPEntityType scalar as an example. You can
 		invoke snmptranslate as follows:
 
 		<programlisting format="linespecific">
-    snmptranslate -TBd openserSIPEntityType
+    snmptranslate -TBd kamailioSIPEntityType
 		</programlisting>		
 
 		Which would result in something similar to the following:
 
 		<programlisting format="linespecific">
-    -- FROM       OPENSER-SIP-COMMON-MIB
+    -- FROM       KAMAILIO-SIP-COMMON-MIB
     -- TEXTUAL CONVENTION KamailioSIPEntityRole
     SYNTAX        BITS {other(0), userAgent(1), proxyServer(2), redirectServer(3), registrarServer(4)} 
     MAX-ACCESS    read-only
@@ -279,18 +279,18 @@
     snmpget -v 2c -c theCommunityString machineToSendTheMachineTo scalarElement.0
     		</programlisting>
 
-		For example, consider an snmpget on the openserSIPEntityType scalar, 
+		For example, consider an snmpget on the kamailioSIPEntityType scalar, 
 		run on the same machine running the &kamailio; instance, with the default
 		"public" community string.  The command would be:
 
 		<programlisting format="linespecific">
-    snmpget -v2c -c public localhost openserSIPEntityType.0
+    snmpget -v2c -c public localhost kamailioSIPEntityType.0
 		</programlisting>
 
 		Which would result in something similar to:
 
 		<programlisting format="linespecific">
-    OPENSER-SIP-COMMON-MIB::openserSIPEntityType.0 = BITS: F8 \
+    KAMAILIO-SIP-COMMON-MIB::kamailioSIPEntityType.0 = BITS: F8 \
 		other(0) userAgent(1) proxyServer(2)          \
 		redirectServer(3) registrarServer(4) 
 		</programlisting>
@@ -310,18 +310,18 @@
     snmptable -Ci -v 2c -c theCommunityString machineToSendTheMachineTo theTableName
     		</programlisting>
 
-		For example, consider the openserSIPRegUserTable.  If we run the snmptable
+		For example, consider the kamailioSIPRegUserTable.  If we run the snmptable
 		command on the same machine as the running &kamailio; instance, configured with
 		the default "public" community string.  The command would be:
 
 		<programlisting format="linespecific">
-    snmptable -Ci -v 2c -c public localhost openserSIPRegUserTable
+    snmptable -Ci -v 2c -c public localhost kamailioSIPRegUserTable
 		</programlisting>
 
 		Which would result in something similar to:
 
 		<programlisting format="linespecific">
-    index openserSIPUserUri openserSIPUserAuthenticationFailures
+    index kamailioSIPUserUri kamailioSIPUserAuthenticationFailures
         1       DefaultUser                                    0
         2            bogdan                                    0
         3    jeffrey.magder                                    0

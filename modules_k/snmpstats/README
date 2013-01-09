@@ -116,50 +116,54 @@ Chapter 1. Admin Guide
    1.2. SNMP Tables
    1.3. Alarm Monitoring
 
-   The SNMPStats module provides an SNMP management interface to OpenSER.
+   The SNMPStats module provides an SNMP management interface to Kamailio.
    Specifically, it provides general SNMP queryable scalar statistics,
    table representations of more complicated data such as user and contact
    information, and alarm monitoring capabilities.
 
+   The MIB has been renamed in version 4.0.0 to reflect the product name.
+   Please note that all the OID names has changed, as well as the MIB
+   itself.
+
 1.1. General Scalar Statistics
 
    The SNMPStats module provides a number of general scalar statistics.
-   Details are available in OPENSER-MIB, OPENSER-REG-MIB,
-   OPENSER-SIP-COMMON-MIB, and OPENSER-SIP-SERVER-MIB. But briefly, these
-   scalars are:
+   Details are available in KAMAILIO-MIB, KAMAILIO-REG-MIB,
+   KAMAILIO-SIP-COMMON-MIB, and KAMAILIO-SIP-SERVER-MIB. But briefly,
+   these scalars are:
 
-   openserSIPProtocolVersion, openserSIPServiceStartTime,
-   openserSIPEntityType, openserSIPSummaryInRequests,
-   openserSIPSummaryOutRequest, openserSIPSummaryInResponses,
-   openserSIPSummaryOutResponses, openserSIPSummaryTotalTransactions,
-   openserSIPCurrentTransactions, openserSIPNumUnsupportedUris,
-   openserSIPNumUnsupportedMethods, openserSIPOtherwiseDiscardedMsgs,
-   openserSIPProxyStatefulness openserSIPProxyRecordRoute,
-   openserSIPProxyAuthMethod, openserSIPNumProxyRequireFailures,
-   openserSIPRegMaxContactExpiryDuration, openserSIPRegMaxUsers,
-   openserSIPRegCurrentUsers, openserSIPRegDfltRegActiveInterval,
-   openserSIPRegAcceptedRegistrations, openserSIPRegRejectedRegistrations,
-   openserMsgQueueDepth. openserCurNumDialogs,
-   openserCurNumDialogsInProgress, openserCurNumDialogsInSetup,
-   openserTotalNumFailedDialogSetups
+   kamailioSIPProtocolVersion, kamailioSIPServiceStartTime,
+   kamailioSIPEntityType, kamailioSIPSummaryInRequests,
+   kamailioSIPSummaryOutRequest, kamailioSIPSummaryInResponses,
+   kamailioSIPSummaryOutResponses, kamailioSIPSummaryTotalTransactions,
+   kamailioSIPCurrentTransactions, kamailioSIPNumUnsupportedUris,
+   kamailioSIPNumUnsupportedMethods, kamailioSIPOtherwiseDiscardedMsgs,
+   kamailioSIPProxyStatefulness kamailioSIPProxyRecordRoute,
+   kamailioSIPProxyAuthMethod, kamailioSIPNumProxyRequireFailures,
+   kamailioSIPRegMaxContactExpiryDuration, kamailioSIPRegMaxUsers,
+   kamailioSIPRegCurrentUsers, kamailioSIPRegDfltRegActiveInterval,
+   kamailioSIPRegAcceptedRegistrations,
+   kamailioSIPRegRejectedRegistrations, kamailioMsgQueueDepth.
+   kamailioCurNumDialogs, kamailioCurNumDialogsInProgress,
+   kamailioCurNumDialogsInSetup, kamailioTotalNumFailedDialogSetups
 
    There are also scalars associated with alarms. They are as follows:
 
-   openserMsgQueueMinorThreshold, openserMsgQueueMajorThreshold,
-   openserMsgQueueDepthAlarmStatus, openserMsgQueueDepthMinorAlarm,
-   openserMsgQueueDepthMajorAlarm, openserDialogLimitMinorThreshold,
-   openserDialogLimitMajorThreshold, openserDialogUsageState,
-   openserDialogLimitAlarmStatus, openserDialogLimitMinorAlarm,
-   openserDialogLimitMajorAlarm
+   kamailioMsgQueueMinorThreshold, kamailioMsgQueueMajorThreshold,
+   kamailioMsgQueueDepthAlarmStatus, kamailioMsgQueueDepthMinorAlarm,
+   kamailioMsgQueueDepthMajorAlarm, kamailioDialogLimitMinorThreshold,
+   kamailioDialogLimitMajorThreshold, kamailioDialogUsageState,
+   kamailioDialogLimitAlarmStatus, kamailioDialogLimitMinorAlarm,
+   kamailioDialogLimitMajorAlarm
 
 1.2. SNMP Tables
 
    The SNMPStats module provides several tables, containing more
    complicated data. The current available tables are:
 
-   openserSIPPortTable, openserSIPMethodSupportedTable,
-   openserSIPStatusCodesTable, openserSIPRegUserTable,
-   openserSIPContactTable, openserSIPRegUserLookupTable
+   kamailioSIPPortTable, kamailioSIPMethodSupportedTable,
+   kamailioSIPStatusCodesTable, kamailioSIPRegUserTable,
+   kamailioSIPContactTable, kamailioSIPRegUserLookupTable
 
 1.3. Alarm Monitoring
 
@@ -170,20 +174,22 @@ Chapter 1. Admin Guide
        their SIP servers may be overloaded, without having to explicitly
        check for this condition.
        If a minor or major condition has occured, then a
-       openserDialogLimitMinorEvent trap or a openserDialogLimitMajorEvent
-       trap will be generated, respectively. The minor and major
-       thresholds are described in the parameters section below.
-    2. The number of bytes waiting to be consumed across all of OpenSERs
+       kamailioDialogLimitMinorEvent trap or a
+       kamailioDialogLimitMajorEvent trap will be generated, respectively.
+       The minor and major thresholds are described in the parameters
+       section below.
+    2. The number of bytes waiting to be consumed across all of Kamailios
        listening ports has passed a minor or major threshold. The idea is
        that a network operation centre can be made aware that a machine
        hosting a SIP server may be entering a degraded state, and to
        investigate why this is so.
        If the number of bytes to be consumed passes a minor or major
-       threshold, then a openserMsgQueueDepthMinorEvent or
-       openserMsgQueueDepthMajorEvent trap will be sent out, respectively.
+       threshold, then a kamailioMsgQueueDepthMinorEvent or
+       kamailioMsgQueueDepthMajorEvent trap will be sent out,
+       respectively.
 
    Full details of these traps can be found in the distributions
-   OPENSER-MIB file.
+   KAMAILIO-MIB file.
 
 2. How it works
 
@@ -192,15 +198,15 @@ Chapter 1. Admin Guide
 
 2.1. How the SNMPStats module gets its data
 
-   The SNMPStats module uses OpenSERs internal statistic framework to
+   The SNMPStats module uses Kamailios internal statistic framework to
    collect most of its data. However, there are two exceptions.
-    1. The openserSIPRegUserTable and openserSIPContactTable rely on the
+    1. The kamailioSIPRegUserTable and kamailioSIPContactTable rely on the
        usrloc modules callback system. Specifically, the SNMPStats module
        will receive callbacks whenever a user/contact is added to the
        system.
-    2. The SNMPStats modules openserSIPMsgQueueDepthMinorEvent and
-       openserSIPMsgQueueDepthMajorEvent alarms rely on the OpenSER core
-       to find out what interfaces, ports, and transports OpenSER is
+    2. The SNMPStats modules kamailioSIPMsgQueueDepthMinorEvent and
+       kamailioSIPMsgQueueDepthMajorEvent alarms rely on the Kamailio core
+       to find out what interfaces, ports, and transports Kamailio is
        listening on. However, the module will actually query the proc file
        system to find out the number of bytes waiting to be consumed.
        (Currently, this will only work on systems providing the proc file
@@ -213,12 +219,12 @@ Chapter 1. Admin Guide
    Operations Centre), or administrator.
 
    The SNMPStats module expects to connect to a Master Agent. This would
-   be a NetSNMP daemon running either on the same system as the OpenSER
+   be a NetSNMP daemon running either on the same system as the Kamailio
    instance, or on another system. (Communication can take place over TCP,
    so there is no restriction that this daemon need be on the same system
-   as OpenSER).
+   as Kamailio).
 
-   If the master agent is unavailable when OpenSER first starts up, the
+   If the master agent is unavailable when Kamailio first starts up, the
    SNMPStats module will continue to run. However, you will not be able to
    query it. Thankfully, the SNMPStats module continually looks for its
    master agent. So even if the master agent is started late, or if the
@@ -250,10 +256,10 @@ Chapter 1. Admin Guide
        respective tables will be empty.
      * dialog - all scalars relating to the number of dialogs are
        dependent on the presence of the dialog module. Furthermore, if the
-       module is not loaded, then the openserDialogLimitMinorEvent, and
-       openserDialogLimitMajorEvent alarm will be disabled.
+       module is not loaded, then the kamailioDialogLimitMinorEvent, and
+       kamailioDialogLimitMajorEvent alarm will be disabled.
 
-   The contents of the openserSIPMethodSupportedTable change depending on
+   The contents of the kamailioSIPMethodSupportedTable change depending on
    which modules are loaded.
 
 3.2. External Libraries or Applications
@@ -282,9 +288,9 @@ Chapter 1. Admin Guide
 
 4.1. sipEntityType (String)
 
-   This parameter describes the entity type for this OpenSER instance, and
-   will be used in determining what is returned for the
-   openserSIPEntityType scalar. Valid parameters are:
+   This parameter describes the entity type for this Kamailio instance,
+   and will be used in determining what is returned for the
+   kamailioSIPEntityType scalar. Valid parameters are:
 
    registrarServer, redirectServer, proxyServer, userAgent, other
 
@@ -295,15 +301,15 @@ modparam("snmpstats", "sipEntityType", "proxyServer")
 ...
 
    Note that as the above example shows, you can define this parameter
-   more than once. This is of course because a given OpenSER instance can
+   more than once. This is of course because a given Kamailio instance can
    take on more than one role.
 
 4.2. MsgQueueMinorThreshold (Integer)
 
    The SNMPStats module monitors the number of bytes waiting to be
-   consumed by OpenSER. If the number of bytes waiting to be consumed
+   consumed by Kamailio. If the number of bytes waiting to be consumed
    exceeds a minor threshold, the SNMPStats module will send out an
-   openserMsgQueueDepthMinorEvent trap to signal that an alarm condition
+   kamailioMsgQueueDepthMinorEvent trap to signal that an alarm condition
    has occured. The minor threshold is set with the MsgQueueMinorThreshold
    parameter.
 
@@ -318,9 +324,9 @@ modparam("snmpstats", "MsgQueueMinorThreshold", 2000)
 4.3. MsgQueueMajorThreshold (Integer)
 
    The SNMPStats module monitors the number of bytes waiting to be
-   consumed by OpenSER. If the number of bytes waiting to be consumed
+   consumed by Kamailio. If the number of bytes waiting to be consumed
    exceeds a major threshold, the SNMPStats module will send out an
-   openserMsgQueueDepthMajorEvent trap to signal that an alarm condition
+   kamailioMsgQueueDepthMajorEvent trap to signal that an alarm condition
    has occured. The major threshold is set with the MsgQueueMajorThreshold
    parameter.
 
@@ -336,7 +342,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 
    The SNMPStats module monitors the number of active dialogs. If the
    number of active dialogs exceeds a minor threshold, the SNMPStats
-   module will send out an openserDialogLimitMinorEvent trap to signal
+   module will send out an kamailioDialogLimitMinorEvent trap to signal
    that an alarm condition has occured. The minor threshold is set with
    the dlg_minor_threshold parameter.
 
@@ -352,7 +358,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 
    The SNMPStats module monitors the number of active dialogs. If the
    number of active dialogs exceeds a major threshold, the SNMPStats
-   module will send out an openserDialogLimitMajorEvent trap to signal
+   module will send out an kamailioDialogLimitMajorEvent trap to signal
    that an alarm condition has occured. The major threshold is set with
    the dlg_major_threshold parameter.
 
@@ -366,7 +372,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 
 4.6. snmpgetPath (String)
 
-   The SNMPStats module provides the openserSIPServiceStartTime scalar.
+   The SNMPStats module provides the kamailioSIPServiceStartTime scalar.
    This scalar requires the SNMPStats module to perform a snmpget query to
    the master agent. You can use this parameter to set the path to your
    instance of NetSNMP's snmpget program.
@@ -380,7 +386,7 @@ modparam("snmpstats", "snmpgetPath",     "/my/custom/path/")
 
 4.7. snmpCommunity (String)
 
-   The SNMPStats module provides the openserSIPServiceStartTime scalar.
+   The SNMPStats module provides the kamailioSIPServiceStartTime scalar.
    This scalar requires the SNMPStats module to perform a snmpget query to
    the master agent. If you have defined a custom community string for the
    snmp daemon, you need to specify it with this parameter.
@@ -423,7 +429,7 @@ modparam("snmpstats", "export_registrar", 1)
    There are several things that need to be done to get the SNMPStats
    module compiled and up and running.
 
-6.1. Compiling the SNMPStats Module
+6.1.  Compiling the SNMPStats Module
 
    In order for the SNMPStats module to compile, you will need at least
    version 5.3 of the NetSNMP source code. The source can be found at:
@@ -434,8 +440,8 @@ modparam("snmpstats", "export_registrar", 1)
 
    The SNMPStats modules makefile requires that the NetSNMP script
    "net-snmp-config" can run. At a minimum, running "net-snmp-config
-   --agent-libs" from the OpenSER source directory should return something
-   similar to:
+   --agent-libs" from the Kamailio source directory should return
+   something similar to:
     -L/usr/local/lib -lnetsnmpmibs -lnetsnmpagent -lnetsnmphelpers -lnetsnmp
 
    The specifics of what is returned depends on how the system was
@@ -445,7 +451,7 @@ modparam("snmpstats", "export_registrar", 1)
    recommended you install NetSNMP from source to avoid bringing in
    excessive dependencies to the SNMPStats module.
 
-6.2. Configuring NetSNMP to allow connections from the SNMPStats module.
+6.2.  Configuring NetSNMP to allow connections from the SNMPStats module.
 
    The SNMPStats module will communicate with the NetSNMP Master Agent.
    This communication happens over a protocol known as AgentX. This means
@@ -477,7 +483,7 @@ modparam("snmpstats", "export_registrar", 1)
    This tells NetSNMP to act as a master agent, listening on the localhost
    UDP interface at port 705.
 
-6.3. Configuring the SNMPStats module for communication with a Master Agent
+6.3.  Configuring the SNMPStats module for communication with a Master Agent
 
    The previous section explained how to set up a NetSNMP master agent to
    accept AgentX connections. We now need to tell the SNMPStats module how
@@ -494,10 +500,10 @@ modparam("snmpstats", "export_registrar", 1)
    The above line tells the SNMPStats module to register with the master
    agent on the localhost, port 705. The parameters should match up with
    the snmpd process. Note that the master agent (snmpd) does not need to
-   be present on the same machine as OpenSER. localhost could be replaced
+   be present on the same machine as Kamailio. localhost could be replaced
    with any other machine.
 
-6.4. Testing for a proper Configuration
+6.4.  Testing for a proper Configuration
 
    As a quick test to make sure that the SNMPStats module sub-agent can
    succesfully connect to the NetSNMP Master agent, start snmpd with the
@@ -513,7 +519,7 @@ modparam("snmpstats", "export_registrar", 1)
     agentx/master: initializing...   DONE
     NET-SNMP version 5.3.1
 
-   Now, start up OpenSER in another window. In the snmpd window, you
+   Now, start up Kamailio in another window. In the snmpd window, you
    should see a bunch of:
     agentx/master: handle pdu (req=0x2c58ebd4,trans=0x0,sess=0x0)
     agentx/master: open 0x81137c0
@@ -618,8 +624,8 @@ Chapter 2. Frequently Asked Questions
 
    On some systems, you may receive the following error at stdout or the
    log files depending on the configuration.
-    ERROR: load_module: could not open module </usr/local/lib/openser/modules/sn
-mpstats.so>:
+    ERROR: load_module: could not open module </usr/local/lib/kamailio/modules_k
+/snmpstats.so>:
            libnetsnmpmibs.so.10: cannot open shared object file: No such file or
  directory.
 
@@ -649,17 +655,17 @@ mpstats.so>:
    How can I learn what all the scalars and tables are?
 
    All scalars and tables are named in the SNMPStats module overview. The
-   files OPENSER-MIB, OPENSER-REG-MIB, OPENSER-SIP-COMMON-MIB and
-   OPENSER-SIP-SERVER-MIB contain the full definitions and descriptions.
+   files KAMAILIO-MIB, KAMAILIO-REG-MIB, KAMAILIO-SIP-COMMON-MIB and
+   KAMAILIO-SIP-SERVER-MIB contain the full definitions and descriptions.
    Note however, that the MIBs may actually contain scalars and tables
    which are currently not provided by the SNMPStats module. Therefore, it
    is better to use NetSNMP's snmptranslate as an alternative. Take the
-   openserSIPEntityType scalar as an example. You can invoke snmptranslate
-   as follows:
-    snmptranslate -TBd openserSIPEntityType
+   kamailioSIPEntityType scalar as an example. You can invoke
+   snmptranslate as follows:
+    snmptranslate -TBd kamailioSIPEntityType
 
    Which would result in something similar to the following:
-    -- FROM       OPENSER-SIP-COMMON-MIB
+    -- FROM       KAMAILIO-SIP-COMMON-MIB
     -- TEXTUAL CONVENTION KamailioSIPEntityRole
     SYNTAX        BITS {other(0), userAgent(1), proxyServer(2), redirectServer(3
 ), registrarServer(4)}
@@ -695,13 +701,13 @@ mpstats.so>:
     snmpget -v 2c -c theCommunityString machineToSendTheMachineTo scalarElement.
 0
 
-   For example, consider an snmpget on the openserSIPEntityType scalar,
+   For example, consider an snmpget on the kamailioSIPEntityType scalar,
    run on the same machine running the Kamailio instance, with the default
    "public" community string. The command would be:
-    snmpget -v2c -c public localhost openserSIPEntityType.0
+    snmpget -v2c -c public localhost kamailioSIPEntityType.0
 
    Which would result in something similar to:
-    OPENSER-SIP-COMMON-MIB::openserSIPEntityType.0 = BITS: F8 \
+    KAMAILIO-SIP-COMMON-MIB::kamailioSIPEntityType.0 = BITS: F8 \
                 other(0) userAgent(1) proxyServer(2)          \
                 redirectServer(3) registrarServer(4)
 
@@ -713,14 +719,14 @@ mpstats.so>:
     snmptable -Ci -v 2c -c theCommunityString machineToSendTheMachineTo theTable
 Name
 
-   For example, consider the openserSIPRegUserTable. If we run the
+   For example, consider the kamailioSIPRegUserTable. If we run the
    snmptable command on the same machine as the running Kamailio instance,
    configured with the default "public" community string. The command
    would be:
-    snmptable -Ci -v 2c -c public localhost openserSIPRegUserTable
+    snmptable -Ci -v 2c -c public localhost kamailioSIPRegUserTable
 
    Which would result in something similar to:
-    index openserSIPUserUri openserSIPUserAuthenticationFailures
+    index kamailioSIPUserUri kamailioSIPUserAuthenticationFailures
         1       DefaultUser                                    0
         2            bogdan                                    0
         3    jeffrey.magder                                    0

@@ -51,8 +51,8 @@
  * 4) mod_init() will initialize some interprocess communication buffers, as
  *    well as callback mechanisms for the usrloc module.  To understand what the
  *    interprocess buffer and callbacks are and are for, please see the
- *    respective comments in interprocess_buffer.h, openserSIPRegUserTable.h,
- *    and openserSIPContactTable.h.
+ *    respective comments in interprocess_buffer.h, kamailioSIPRegUserTable.h,
+ *    and kamailioSIPContactTable.h.
  */
 
 /*!

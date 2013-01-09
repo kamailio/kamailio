@@ -90,8 +90,8 @@ int check_dialog_alarm(int threshold_to_compare_to)
 	return 0;
 }
 
-/*! This function will be called periodically from an OpenSER timer.  The first
- * time it is called, it will query OPENSER-MIB for configured thresholds.
+/*! This function will be called periodically from an Kamailio timer.  The first
+ * time it is called, it will query KAMAILIO-MIB for configured thresholds.
  */
 void run_alarm_check(unsigned int ticks, void * attr) 
 {
@@ -134,7 +134,7 @@ void run_alarm_check(unsigned int ticks, void * attr)
 
 	if (bytesInMsgQueue != 0) 
 	{
-		send_openserMsgQueueDepthMinorEvent_trap(bytesInMsgQueue, 
+		send_kamailioMsgQueueDepthMinorEvent_trap(bytesInMsgQueue, 
 						msg_queue_minor_threshold);
 	}
 
@@ -143,7 +143,7 @@ void run_alarm_check(unsigned int ticks, void * attr)
 
 	if (bytesInMsgQueue != 0) 
 	{
-		send_openserMsgQueueDepthMajorEvent_trap(bytesInMsgQueue, 
+		send_kamailioMsgQueueDepthMajorEvent_trap(bytesInMsgQueue, 
 						msg_queue_major_threshold);
 	}
 
@@ -153,7 +153,7 @@ void run_alarm_check(unsigned int ticks, void * attr)
 
 	if (numActiveDialogs != 0)
 	{
-		send_openserDialogLimitMinorEvent_trap(numActiveDialogs,
+		send_kamailioDialogLimitMinorEvent_trap(numActiveDialogs,
 						dialog_minor_threshold);
 	}
 	
@@ -161,7 +161,7 @@ void run_alarm_check(unsigned int ticks, void * attr)
 
 	if (numActiveDialogs != 0)
 	{
-		send_openserDialogLimitMajorEvent_trap(numActiveDialogs,
+		send_kamailioDialogLimitMajorEvent_trap(numActiveDialogs,
 						dialog_major_threshold);
 	}
 }

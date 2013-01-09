@@ -41,7 +41,7 @@
 
 #include "../../sr_module.h"
 
-#define OPENSER_OID            1,3,6,1,4,1,34352
+#define KAMAILIO_OID            1,3,6,1,4,1,34352
 
 /***************************************************************
  * Textual Conventions for BITS types - begins
@@ -125,7 +125,7 @@
 #define TC_TRUE  1
 #define TC_FALSE 2
 
-#define SNMPGET_TEMP_FILE "/tmp/openSER_SNMPAgent.txt"
+#define SNMPGET_TEMP_FILE "/tmp/kamailio_SNMPAgent.txt"
 #define SNMPGET_MAX_BUFFER 80
 #define MAX_PROC_BUFFER    256
 

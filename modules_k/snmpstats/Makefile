@@ -30,5 +30,5 @@ include ../../Makefile.modules
 install_module_custom:
 	echo "installing mibs ..."
 	mkdir -p $(INSTALLMIBDIR)
-	$(INSTALL_CFG) mibs/OPENSER* $(INSTALLMIBDIR)
+	$(INSTALL_CFG) mibs/KAMAILIO* $(INSTALLMIBDIR)
 

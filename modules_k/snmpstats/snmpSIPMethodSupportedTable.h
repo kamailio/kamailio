@@ -26,17 +26,17 @@
  * --------
  * 2006-11-23 initial version (jmagder)
  * 2007-02-16 Moved all OID registrations from the experimental branch to 
- *            OpenSER's IANA assigned enterprise branch. (jmagder)
+ *            Kamailio's IANA assigned enterprise branch. (jmagder)
  * 
  * Originally Generated with Mib2c using mib2c.array-user.conf.
  * 
  * This file defines the prototypes used to define the
- * openserSIPMethodSupportedTable.  For full details, please see the
- * OPENSER-SIP-COMMON-MIB.
+ * kamailioSIPMethodSupportedTable.  For full details, please see the
+ * KAMAILIO-SIP-COMMON-MIB.
  */
 
-#ifndef OPENSERSIPMETHODSUPPORTEDTABLE_H
-#define OPENSERSIPMETHODSUPPORTEDTABLE_H
+#ifndef KAMAILIOSIPMETHODSUPPORTEDTABLE_H
+#define KAMAILIOSIPMETHODSUPPORTEDTABLE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,29 +53,29 @@ extern "C" {
  * This strucutre represents a single row in the SNMP table, and is mostly
  * auto-generated. 
  */
-typedef struct openserSIPMethodSupportedTable_context_s {
+typedef struct kamailioSIPMethodSupportedTable_context_s {
 
 	netsnmp_index index;
 
-	/** OpenSERSIPMethodIdentifier = ASN_UNSIGNED */
-	unsigned long openserSIPMethodSupportedIndex;
+	/** KamailioSIPMethodIdentifier = ASN_UNSIGNED */
+	unsigned long kamailioSIPMethodSupportedIndex;
 
 	/** SnmpAdminString = ASN_OCTET_STR */
-	unsigned char *openserSIPMethodName;
+	unsigned char *kamailioSIPMethodName;
 	
-	long openserSIPMethodName_len;
+	long kamailioSIPMethodName_len;
 
 	void * data;
 
-} openserSIPMethodSupportedTable_context;
+} kamailioSIPMethodSupportedTable_context;
 
 
-/* Initializes the openserSIPMethodSupportedTable, and populates the tables 
+/* Initializes the kamailioSIPMethodSupportedTable, and populates the tables 
  * contents */
-void init_openserSIPMethodSupportedTable(void);
+void init_kamailioSIPMethodSupportedTable(void);
 
-/* Defines openserSIPMethodSupportedTable's structure and callback mechanisms */
-void initialize_table_openserSIPMethodSupportedTable(void);
+/* Defines kamailioSIPMethodSupportedTable's structure and callback mechanisms */
+void initialize_table_kamailioSIPMethodSupportedTable(void);
 
 
 /* 
@@ -83,36 +83,36 @@ void initialize_table_openserSIPMethodSupportedTable(void);
  *
  * The function is pretty much left as is from the auto-generated code. 
  */
-int openserSIPMethodSupportedTable_get_value(netsnmp_request_info *, 
+int kamailioSIPMethodSupportedTable_get_value(netsnmp_request_info *, 
 		netsnmp_index *, netsnmp_table_request_info *);
 
-const openserSIPMethodSupportedTable_context * 
-	openserSIPMethodSupportedTable_get_by_idx(netsnmp_index *);
+const kamailioSIPMethodSupportedTable_context * 
+	kamailioSIPMethodSupportedTable_get_by_idx(netsnmp_index *);
 
-const openserSIPMethodSupportedTable_context * 
-	openserSIPMethodSupportedTable_get_by_idx_rs(netsnmp_index *,
+const kamailioSIPMethodSupportedTable_context * 
+	kamailioSIPMethodSupportedTable_get_by_idx_rs(netsnmp_index *,
 			int row_status);
 
 /*
  * oid declarations
  */
-extern oid    openserSIPMethodSupportedTable_oid[];
-extern size_t openserSIPMethodSupportedTable_oid_len;
+extern oid    kamailioSIPMethodSupportedTable_oid[];
+extern size_t kamailioSIPMethodSupportedTable_oid_len;
 
-#define openserSIPMethodSupportedTable_TABLE_OID OPENSER_OID,3,1,1,1,1,7
+#define kamailioSIPMethodSupportedTable_TABLE_OID KAMAILIO_OID,3,1,1,1,1,7
     
 /*
- * column number definitions for table openserSIPMethodSupportedTable
+ * column number definitions for table kamailioSIPMethodSupportedTable
  */
-#define COLUMN_OPENSERSIPMETHODSUPPORTEDINDEX  1
-#define COLUMN_OPENSERSIPMETHODNAME            2
+#define COLUMN_KAMAILIOSIPMETHODSUPPORTEDINDEX  1
+#define COLUMN_KAMAILIOSIPMETHODNAME            2
 
-#define openserSIPMethodSupportedTable_COL_MIN 2
-#define openserSIPMethodSupportedTable_COL_MAX 2
+#define kamailioSIPMethodSupportedTable_COL_MIN 2
+#define kamailioSIPMethodSupportedTable_COL_MAX 2
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /** OPENSERSIPMETHODSUPPORTEDTABLE_H */
+#endif /** KAMAILIOSIPMETHODSUPPORTEDTABLE_H */

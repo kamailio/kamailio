@@ -30,25 +30,25 @@
  *        : mib2c.scalar.conf,v 1.9 2005/01/07 09:37:18 dts12 Exp $
  *
  * This file defines all registration and handling of all scalars defined in the
- * OPENSER-SIP-COMMON-MIB.  Please see OPENSER-SIP-COMMON-MIB for the complete
+ * KAMAILIO-SIP-COMMON-MIB.  Please see KAMAILIO-SIP-COMMON-MIB for the complete
  * descriptions of the individual scalars.
  */
-#ifndef OPENSERSIPCOMMONOBJECTS_H
-#define OPENSERSIPCOMMONOBJECTS_H
+#ifndef KAMAILIOSIPCOMMONOBJECTS_H
+#define KAMAILIOSIPCOMMONOBJECTS_H
 
-void init_openserSIPCommonObjects(void);
+void init_kamailioSIPCommonObjects(void);
 
-Netsnmp_Node_Handler handle_openserSIPProtocolVersion;
-Netsnmp_Node_Handler handle_openserSIPServiceStartTime;
-Netsnmp_Node_Handler handle_openserSIPEntityType;
-Netsnmp_Node_Handler handle_openserSIPSummaryInRequests;
-Netsnmp_Node_Handler handle_openserSIPSummaryOutRequests;
-Netsnmp_Node_Handler handle_openserSIPSummaryInResponses;
-Netsnmp_Node_Handler handle_openserSIPSummaryOutResponses;
-Netsnmp_Node_Handler handle_openserSIPSummaryTotalTransactions;
-Netsnmp_Node_Handler handle_openserSIPCurrentTransactions;
-Netsnmp_Node_Handler handle_openserSIPNumUnsupportedUris;
-Netsnmp_Node_Handler handle_openserSIPNumUnsupportedMethods;
-Netsnmp_Node_Handler handle_openserSIPOtherwiseDiscardedMsgs;
+Netsnmp_Node_Handler handle_kamailioSIPProtocolVersion;
+Netsnmp_Node_Handler handle_kamailioSIPServiceStartTime;
+Netsnmp_Node_Handler handle_kamailioSIPEntityType;
+Netsnmp_Node_Handler handle_kamailioSIPSummaryInRequests;
+Netsnmp_Node_Handler handle_kamailioSIPSummaryOutRequests;
+Netsnmp_Node_Handler handle_kamailioSIPSummaryInResponses;
+Netsnmp_Node_Handler handle_kamailioSIPSummaryOutResponses;
+Netsnmp_Node_Handler handle_kamailioSIPSummaryTotalTransactions;
+Netsnmp_Node_Handler handle_kamailioSIPCurrentTransactions;
+Netsnmp_Node_Handler handle_kamailioSIPNumUnsupportedUris;
+Netsnmp_Node_Handler handle_kamailioSIPNumUnsupportedMethods;
+Netsnmp_Node_Handler handle_kamailioSIPOtherwiseDiscardedMsgs;
 
-#endif /* OPENSERSIPCOMMONOBJECTS_H */
+#endif /* KAMAILIOSIPCOMMONOBJECTS_H */
