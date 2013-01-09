@@ -530,6 +530,10 @@ static const char* htable_get_doc[2] = {
 	"Get one key from a hash table.",
 	0
 };
+static const char* htable_list_doc[2] = {
+	"List all htables.",
+	0
+};
 
 static void htable_rpc_delete(rpc_t* rpc, void* c) {
 	str htname, keyname;
@@ -686,10 +690,58 @@ error:
 	lock_release(&ht->entries[i].lock);
 }
 
+static void  htable_rpc_list(rpc_t* rpc, void* c)
+{
+	ht_t *ht;
+	void* th;
+	char dbname[128];
+
+	ht = ht_get_root();
+	if(ht==NULL)
+	{
+		rpc->fault(c, 500, "No htables");
+		return;
+	}
+	while (ht != NULL)
+	{
+		int len = 0;
+		/* add entry node */
+		if (rpc->add(c, "{", &th) < 0)
+		{
+			rpc->fault(c, 500, "Internal error creating structure rpc");
+			goto error;
+		}
+		if (ht->dbtable.len > 0) {
+			len = ht->dbtable.len > 127 ? 127 : ht->dbtable.len;
+			memcpy(dbname, ht->dbtable.s, len);
+			dbname[ht->dbtable.len] = '\0';
+		} else {
+			dbname[0] = '\0';
+		}
+
+		if(rpc->struct_add(th, "Ssdddd",
+						"name", &ht->name,	/* String */
+						"dbtable", &dbname ,	/* Char * */
+						"dbmode", (int)  ht->dbmode,		/* u int */
+						"expire", (int) ht->htexpire,		/* u int */
+						"updateexpire", ht->updateexpire,	/* int */
+						"size", (int) ht->htsize		/* u int */
+						) < 0) {
+			rpc->fault(c, 500, "Internal error creating data rpc");
+			goto error;
+		}
+		ht = ht->next;
+	}
+
+error:
+	return;
+}
+
 rpc_export_t htable_rpc[] = {
 	{"htable.dump", htable_rpc_dump, htable_dump_doc, 0},
 	{"htable.delete", htable_rpc_delete, htable_delete_doc, 0},
 	{"htable.get", htable_rpc_get, htable_get_doc, 0},
+	{"htable.listTables", htable_rpc_list, htable_list_doc, 0},
 	{0, 0, 0, 0}
 };
 

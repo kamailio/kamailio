@@ -64,6 +64,7 @@ Alex Balashov
               7.1. htable.get htable key
               7.2. htable.delete htable key
               7.3. htable.dump htable
+              7.4. htable.listTables
 
         8. Event routes
 
@@ -133,6 +134,7 @@ Chapter 1. Admin Guide
         7.1. htable.get htable key
         7.2. htable.delete htable key
         7.3. htable.dump htable
+        7.4. htable.listTables
 
    8. Event routes
 
@@ -550,6 +552,7 @@ sht_rm_value_re("ha=>.*");
    7.1. htable.get htable key
    7.2. htable.delete htable key
    7.3. htable.dump htable
+   7.4. htable.listTables
 
 7.1.  htable.get htable key
 
@@ -595,6 +598,20 @@ kamcmd htable.get students anna
    Example:
 ...
 kamcmd htable.dump ipban
+...
+
+7.4.  htable.listTables
+
+   Lists all defined tables
+
+   Name: dhtable.listTables
+
+   Parameters:
+     * None
+
+   Example:
+...
+kamcmd htable.listTables
 ...
 
 8. Event routes

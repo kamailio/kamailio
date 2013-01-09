@@ -194,6 +194,11 @@ int ht_cell_pkg_free(ht_cell_t *cell)
 }
 
 
+ht_t *ht_get_root(void)
+{
+	return _ht_root;
+}
+
 ht_t* ht_get_table(str *name)
 {
 	unsigned int htid;
@@ -736,7 +741,7 @@ int ht_table_spec(char *spec)
 		LM_ERR("shared memory was not initialized\n");
 		return -1;
 	}
-	/* parse: name=>dbtable=abc;autoexpire=123;size=123*/
+	/* parse: name=>dbtable=abc;autoexpire=123;size=123 */
 	in.s = spec;
 	in.len = strlen(in.s);
 	if(keyvalue_parse_str(&in, KEYVALUE_TYPE_PARAMS, &kval)<0)

@@ -758,6 +758,31 @@ kamcmd htable.dump ipban
 ...
 </programlisting>
 	</section>
+        <section>
+                <title>
+                <function moreinfo="none">htable.listTables</function>
+                </title>
+                <para>
+		Lists all defined tables
+                </para>
+                <para>
+                Name: <emphasis>dhtable.listTables</emphasis>
+                </para>
+                <para>Parameters:</para>
+                <itemizedlist>
+                        <listitem><para>None</para>
+                        </listitem>
+
+                </itemizedlist>
+                <para>
+                Example:
+                </para>
+<programlisting  format="linespecific">
+...
+kamcmd htable.listTables
+...
+</programlisting>
+	</section>
 
 	</section><!-- RPC commands -->
 
