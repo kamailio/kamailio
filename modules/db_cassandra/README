@@ -142,9 +142,12 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 
    The following libraries or applications must be installed before
    running SIP Router with this module loaded:
-     * Thrift library version 0.6.1 .
+     * Thrift library (tested with version 0.6.1 and version 0.7.0). You
+       can download it from http://archive.apache.org/dist/thrift .
 
-   The implementation was tested with Cassandra version 1.0.1 .
+   The implementation was tested with Cassandra version 1.0.1 and version
+   1.1.6. I used the sourced from DataStax Community Edition
+   (http://www.datastax.com/download/community).
 
 3. Parameters
 

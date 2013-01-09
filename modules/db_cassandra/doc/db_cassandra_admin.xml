@@ -122,12 +122,17 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>Thrift library</emphasis> version 0.6.1 .
+				<emphasis>Thrift library</emphasis>
+				(tested with version 0.6.1 and version 0.7.0).
+				You can download it from http://archive.apache.org/dist/thrift .
 			</para>
 			</listitem>
 			</itemizedlist>
 		</para>
-		<para> The implementation was tested with Cassandra version 1.0.1 .</para>
+		<para> The implementation was tested with Cassandra version 1.0.1
+			and version 1.1.6. I used the sourced from DataStax Community
+			Edition (http://www.datastax.com/download/community).
+		</para>
 	</section>
 	</section>
 
