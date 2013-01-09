@@ -207,7 +207,8 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
      * Third row: the columns that form the secondary key separated by
        space.
 
-   Bellow you can see the schema for the location table:
+   Bellow you can see the schema for the location table (when use_domain
+   not set):
 
    ...
    callid(string) cflags(int) contact(string) cseq(int) expires(timestamp) flags
@@ -219,10 +220,23 @@ eg_id(int)
    ...
 
    Observe first that the row key is the username and the secondary index
-   is the contact. We have also defined a timestamp column - expires. In
-   this example, both the row key and the secondary index are defined by
-   only one column, but they can be formed out of more columns. You can
-   list them separated by space.
+   is the contact. We have also defined a timestamp column - expires.
+
+   If you need to use the domain part of the AOR also (you have set
+   use_domain parameter for usrloc in the script), you should include the
+   domain column in the list of columns and in the primary key. The schema
+   will then look like this:
+   ...
+   callid(string) cflags(int) contact(string) cseq(int) domain(string) expires(t
+imestamp) flags(int) last_modified(int) methods(int) path(string) q(double) rece
+ived(string) socket(string) user_agent(string) username(string) ruid(string) ins
+tance(string) reg_id(int)
+   username domain
+   contact
+   ...
+
+   Notice that a key (primary or secondary) can be composed from more
+   columns, in which case you have to specify them separated by space.
 
    To understand why the schema looks like this, we must first see which
    queries are performed on the location table. (The 'callid' condition
@@ -239,14 +253,23 @@ eg_id(int)
        secondary keys.
 
    The timestamp column that leaves the Cassandra cluster to deal with
-   deleting expired record can be used only with a modification to the
-   usrloc module that replaces the update performed at re-registration
-   with an insert operation (so that all columns are updated). This
-   behavior can be enabled by setting a parameter in the usrloc module
+   deleting the expired records. For this to work right we needed to
+   modify a bit the behavior of usrloc module and replace update sql query
+   performed at re-registration with an insert sql query (so that all
+   columns are updated and the new timestamp is set for all columns). This
+   behavior is enabled by setting a parameter in the usrloc module
    db_update_as_insert:
 
    ...
    modparam("usrloc", "db_update_as_insert", 1)
+   ...
+
+   Also you should disable in usrloc module the timer routine that checks
+   for expired records. You can do this by setting the timer interval to
+   0. timer_interval:
+
+   ...
+   modparam("usrloc", "timer_interval", 0)
    ...
 
    The alternative would have been to define an index on the expire column

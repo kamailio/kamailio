@@ -359,7 +359,7 @@ int cassa_constr_key( const db_key_t* _k, const db_val_t* _v,
 				break;
 		}
 		if(j == _n) {
-			LM_ERR("The key column with name [%.*s] not found in values\n", key_array[i]->name.len, key_array[i]->name.s);
+			LM_DBG("The key column with name [%.*s] not found in values\n", key_array[i]->name.len, key_array[i]->name.s);
 			break;
 		}
 		pk= dbval_to_string(_v[j], pk);
