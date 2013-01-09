@@ -447,7 +447,7 @@ modparam("sipcapture", "capture_node", "homer03")
 				<listitem><para>off</para></listitem>
 			</itemizedlist>
 			</listitem>
-			<listitem><quote>check</quote> does not change 
+			<listitem><para><quote>check</quote> does not change 
 			sipcapture status, just reports the current status.</para>
 			</listitem>
 		</itemizedlist>
