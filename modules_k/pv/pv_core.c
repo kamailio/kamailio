@@ -59,6 +59,7 @@ static str pv_uri_scheme[] = {
 		{ "urn",  3 },
 		{ 0, 0 }
 	};
+static char _empty_str[] = "";
 
 static str pv_af_list[] = {
 		{ "IPv4",  4 },
@@ -1872,7 +1873,7 @@ int pv_set_ruri_user(struct sip_msg* msg, pv_param_t *param,
 		memset(&act, 0, sizeof(act));
 		act.type = SET_USER_T;
 		act.val[0].type = STRING_ST;
-		act.val[0].u.string = "";
+		act.val[0].u.string = _empty_str;
 		init_run_actions_ctx(&h);
 		if (do_action(&h, &act, msg)<0)
 		{
@@ -1965,7 +1966,7 @@ int pv_set_ruri_port(struct sip_msg* msg, pv_param_t *param,
 		memset(&act, 0, sizeof(act));
 		act.type = SET_PORT_T;
 		act.val[0].type = STRING_ST;
-		act.val[0].u.string = "";
+		act.val[0].u.string = _empty_str;
 		init_run_actions_ctx(&h);
 		if (do_action(&h, &act, msg)<0)
 		{
