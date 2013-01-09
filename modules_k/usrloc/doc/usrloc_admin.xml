@@ -994,7 +994,25 @@ modparam("usrloc", "xavp_contact", "ulattrs")
 		</itemizedlist>
 	</section>
 
+	</section><!-- MI commands -->
+	<section>
+	<title>RPC Commands</title>
+
+	<section>
+		<title>
+		<function moreinfo="none">ul.dump</function>
+		</title>
+		<para>
+		Dumps the content of the location table
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				None.
+			</para></listitem>
+		</itemizedlist>
 	</section>
+	</section><!-- RPC commands -->
 
 
 	<section>
