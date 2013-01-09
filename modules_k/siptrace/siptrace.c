@@ -41,6 +41,8 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 #include "../../lib/srdb1/db.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
@@ -86,6 +88,7 @@ sl_api_t slb;
 
 /* module function prototypes */
 static int mod_init(void);
+static int siptrace_init_rpc(void);
 static int child_init(int rank);
 static void destroy(void);
 static int sip_trace(struct sip_msg*, char*, char*);
@@ -124,8 +127,8 @@ static str time_us_column     = str_init("time_us");     /* 10 */
 
 #define XHEADERS_BUFSIZE 512
 
-int trace_flag = -1;
-int trace_on   = 0;
+int trace_flag = 0;
+=nt trace_on   = 0;
 int trace_sl_acks = 1;
 
 int trace_to_database = 1;
@@ -263,6 +266,11 @@ static int mod_init(void)
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+	if(siptrace_init_rpc() != 0) 
+	{
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -1765,3 +1773,55 @@ static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int
 error:
 	return -1;
 }
+
+static void siptrace_rpc_status (rpc_t* rpc, void* c) {
+	str status = {0, 0};
+
+	if (rpc->scan(c, "S", &status) < 1) {
+		rpc->fault(c, 500, "Not enough parameters (on, off or check)");
+		return;
+	}
+
+	if(trace_on_flag==NULL) {
+		rpc->fault(c, 500, "Internal error");
+		return;
+	}
+
+	if (strncasecmp(status.s, "on", strlen("on")) == 0) {
+		*trace_on_flag = 1;
+		rpc->printf(c, "Enabled");
+		return;
+	}
+	if (strncasecmp(status.s, "off", strlen("off")) == 0) {
+		*trace_on_flag = 0;
+		rpc->printf(c, "Disabled");
+		return;
+	}
+	if (strncasecmp(status.s, "check", strlen("check")) == 0) {
+		rpc->printf(c, *trace_on_flag ? "Enabled" : "Disabled");
+		return;
+	} 
+	rpc->fault(c, 500, "Bad parameter (on, off or check)");
+	return;
+}
+
+static const char* siptrace_status_doc[2] = {
+        "Get status or turn on/off siptrace. Parameters: on, off or check.",
+        0
+};
+
+rpc_export_t siptrace_rpc[] = {
+	{"siptrace.status", siptrace_rpc_status, siptrace_status_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int siptrace_init_rpc(void)
+{
+	if (rpc_register_array(siptrace_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}
+
