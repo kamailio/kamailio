@@ -33,6 +33,7 @@
 #define _REGPV_H_
 
 #include "../../pvar.h"
+#include "../../modules_k/usrloc/usrloc.h"
 
 int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
@@ -45,5 +46,7 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 int pv_free_contacts(struct sip_msg* msg, char* profile, char *s2);
 
 void regpv_free_profiles(void);
+
+void reg_ul_expired_contact(ucontact_t* c, int type, void* param);
 
 #endif

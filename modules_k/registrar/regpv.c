@@ -33,6 +33,9 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../mod_fix.h"
+#include "../../route.h"
+#include "../../action.h"
+#include "../../lib/kcore/faked_msg.h"
 #include "../usrloc/usrloc.h"
 #include "reg_mod.h"
 #include "common.h"
@@ -571,4 +574,128 @@ int pv_free_contacts(struct sip_msg* msg, char* profile, char* s2)
 	regpv_free_profile(rpp);
 
 	return 1;
+}
+
+void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
+{
+	str profile = {"exp", 3};
+	regpv_profile_t *rpp;
+	ucontact_t* c0;
+	int rt, backup_rt;
+	struct run_act_ctx ctx;
+	sip_msg_t *fmsg;
+	int olen;
+	int ilen;
+	char *p;
+
+	if(reg_expire_event_rt<0)
+		return;
+
+	if (faked_msg_init() < 0)
+	{
+		LM_ERR("faked_msg_init() failed\n");
+		return;
+	}
+
+	rpp = regpv_get_profile(&profile);
+	if(rpp==0)
+	{
+		LM_ERR("error getting profile structure\n");
+		return;
+	}
+	/* check and free if profile already set */
+	if(rpp->flags)
+		regpv_free_profile(rpp);
+
+	/* copy aor and ul domain */
+	rpp->aor.s = (char*)pkg_malloc(ptr->aor->len*sizeof(char));
+	if(rpp->aor.s==NULL)
+	{
+		LM_ERR("no more pkg\n");
+		return;
+	}
+	memcpy(rpp->aor.s, ptr->aor->s, ptr->aor->len);
+	rpp->aor.len = ptr->aor->len;
+	rpp->domain = *ptr->domain;
+	rpp->flags = 1;
+
+	/* copy contact */
+	ilen = sizeof(ucontact_t);
+
+	olen = (ptr->c.len + ptr->received.len + ptr->path.len
+			+ ptr->callid.len + ptr->user_agent.len + ptr->ruid.len
+			+ ptr->instance.len)*sizeof(char) + ilen;
+	c0 = (ucontact_t*)pkg_malloc(olen);
+	if(c0==NULL)
+	{
+		LM_ERR("no more pkg\n");
+		goto error;
+	}
+	memcpy(c0, ptr, ilen);
+	c0->domain = NULL;
+	c0->aor = NULL;
+	c0->next = NULL;
+	c0->prev = NULL;
+
+	c0->c.s = (char*)c0 + ilen;
+	memcpy(c0->c.s, ptr->c.s, ptr->c.len);
+	c0->c.len = ptr->c.len;
+	p = c0->c.s + c0->c.len;
+
+	if(ptr->received.s!=NULL)
+	{
+		c0->received.s = p;
+		memcpy(c0->received.s, ptr->received.s, ptr->received.len);
+		c0->received.len = ptr->received.len;
+		p += c0->received.len;
+	}
+	if(ptr->path.s!=NULL)
+	{
+		c0->path.s = p;
+		memcpy(c0->path.s, ptr->path.s, ptr->path.len);
+		c0->path.len = ptr->path.len;
+		p += c0->path.len;
+	}
+	c0->callid.s = p;
+	memcpy(c0->callid.s, ptr->callid.s, ptr->callid.len);
+	c0->callid.len = ptr->callid.len;
+	p += c0->callid.len;
+	if(ptr->user_agent.s!=NULL)
+	{
+		c0->user_agent.s = p;
+		memcpy(c0->user_agent.s, ptr->user_agent.s, ptr->user_agent.len);
+		c0->user_agent.len = ptr->user_agent.len;
+		p += c0->user_agent.len;
+	}
+	if(ptr->ruid.s!=NULL)
+	{
+		c0->ruid.s = p;
+		memcpy(c0->ruid.s, ptr->ruid.s, ptr->ruid.len);
+		c0->ruid.len = ptr->ruid.len;
+		p += c0->ruid.len;
+	}
+	if(ptr->instance.s!=NULL)
+	{
+		c0->instance.s = p;
+		memcpy(c0->instance.s, ptr->instance.s, ptr->instance.len);
+		c0->instance.len = ptr->instance.len;
+		p += c0->instance.len;
+	}
+
+	rpp->contacts = c0;
+	rpp->nrc = 1;
+	LM_DBG("saved contact for <%.*s> in [%.*s]\n",
+			ptr->aor->len, ptr->aor->s, rpp->pname.len, rpp->pname.s);
+
+	fmsg = faked_msg_next();
+	backup_rt = get_route_type();
+	set_route_type(REQUEST_ROUTE);
+	init_run_actions_ctx(&ctx);
+	run_top_route(event_rt.rlist[rt], fmsg, 0);
+	set_route_type(backup_rt);
+
+	return;
+error:
+	regpv_free_profile(rpp);
+	return;
 }

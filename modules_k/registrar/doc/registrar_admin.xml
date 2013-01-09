@@ -1192,6 +1192,28 @@ reg_free_contacts("callee");
 	</section>
 
 <section>
+	<title>Event Routes</title>
+	<section>
+		<title><varname>event_route[usrloc:contact-expired]</varname></title>
+		<para>
+		Executed when a contact in location table has expired. The variable
+		$ulc(exp=&gt;...) is filled with the attributes of the expired contact.
+		</para>
+		<example>
+		<title><function>event_route[usrloc:contact-expired]</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[usrloc:contact-expired] {
+    xlog("expired contact for $ulc(exp->aor)\n");
+}
+...
+</programlisting>
+		</example>
+
+	</section>
+</section>
+
+<section>
 	<title>Statistics</title>
 	<section>
 		<title><varname>max_expires</varname></title>
@@ -1227,7 +1249,7 @@ reg_free_contacts("callee");
 </section>
 
 	<section>
-	<title>Exported pseudo-variables</title>
+	<title>Pseudo Variables</title>
 		
 		<section>
 			<title><varname>$ulc(profile=>attr)</varname></title>

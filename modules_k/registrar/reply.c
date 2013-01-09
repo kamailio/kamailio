@@ -598,9 +598,9 @@ static int add_flow_timer(struct sip_msg* _m)
  	}
 	lump_len = snprintf(buf, FLOW_TIMER_LEN + 3 + CRLF_LEN,
 				"%.*s%d%.*s",
-				FLOW_TIMER_LEN, FLOW_TIMER,
+				(int)FLOW_TIMER_LEN, FLOW_TIMER,
 				reg_flow_timer,
-				CRLF_LEN, CRLF);
+				(int)CRLF_LEN, CRLF);
  	add_lump_rpl(_m, buf, lump_len, LUMP_RPL_HDR | LUMP_RPL_NODUP);
  	return 0;
 }

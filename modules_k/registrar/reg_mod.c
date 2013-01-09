@@ -139,6 +139,9 @@ int reg_use_domain = 0;
 int sock_flag = -1;
 str sock_hdr_name = {0,0};
 
+/* where to go for event route ("usrloc:contact-expired") */
+int reg_expire_event_rt = -1; /* default disabled */
+
 #define RCV_NAME "received"
 str rcv_param = str_init(RCV_NAME);
 
@@ -358,6 +361,20 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(ul.register_ulcb != NULL)
+	{
+		reg_expire_event_rt = route_lookup(&event_rt, "usrloc:expired-contact");
+		if (reg_expire_event_rt>=0 && event_rt.rlist[reg_expire_event_rt]==0)
+			reg_expire_event_rt=-1; /* disable */
+		if (reg_expire_event_rt>=0) {
+			set_child_rpc_sip_mode();
+			if(ul.register_ulcb(UL_CONTACT_EXPIRE, reg_ul_expired_contact, 0)< 0)
+			{
+				LM_ERR("can not register callback for expired contacts\n");
+				return -1;
+			}
+		}
+	}
 	/*
 	 * Import use_domain parameter from usrloc
 	 */
