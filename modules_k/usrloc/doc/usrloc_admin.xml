@@ -1012,6 +1012,26 @@ modparam("usrloc", "xavp_contact", "ulattrs")
 			</para></listitem>
 		</itemizedlist>
 	</section>
+	<section>
+		<title>
+		<function moreinfo="none">ul.lookup table AOR</function>
+		</title>
+		<para>
+		Looks up the contents of an AOR entry in the location table
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>table name</emphasis> - table where the AOR
+				resides (Ex: location).
+			</para></listitem>
+			<listitem><para>
+				<emphasis>AOR</emphasis> - user AOR in username[@domain]
+				format (domain must be supplied only if use_domain option
+				is on).
+			</para></listitem>
+		</itemizedlist>
+	</section>
 	</section><!-- RPC commands -->
 
 

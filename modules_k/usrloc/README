@@ -81,6 +81,7 @@ Bogdan-Andrei Iancu
         6. RPC Commands
 
               6.1. ul.dump
+              6.2. ul.lookup table AOR
 
         7. Statistics
 
@@ -207,6 +208,7 @@ Chapter 1. Admin Guide
    6. RPC Commands
 
         6.1. ul.dump
+        6.2. ul.lookup table AOR
 
    7. Statistics
 
@@ -798,6 +800,7 @@ modparam("usrloc", "xavp_contact", "ulattrs")
 6. RPC Commands
 
    6.1. ul.dump
+   6.2. ul.lookup table AOR
 
 6.1.  ul.dump
 
@@ -805,6 +808,15 @@ modparam("usrloc", "xavp_contact", "ulattrs")
 
    Parameters:
      * None.
+
+6.2.  ul.lookup table AOR
+
+   Looks up the contents of an AOR entry in the location table
+
+   Parameters:
+     * table name - table where the AOR resides (Ex: location).
+     * AOR - user AOR in username[@domain] format (domain must be supplied
+       only if use_domain option is on).
 
 7. Statistics
 
