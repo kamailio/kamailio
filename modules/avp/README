@@ -35,11 +35,11 @@ Michal Matyska
    the contents of AVPs (Attribute-Value pairs). The AVPs are variables
    attached to the SIP message being processed. Each variable has its name
    and value. AVPs can be used to store arbitrary data or as a means of
-   inter-module comminication.
+   inter-module communication.
 
    You may also want to check the avpops module which is more flexible and
-   contains more functions. In future SER releases the avp module will be
-   probably deprecated in favor of avpops module.
+   contains more functions. In future Kamailio releases the avp module
+   will be probably deprecated in favor of avpops module.
 
 2. Functions
 
@@ -84,7 +84,7 @@ set_iattr("fr_inv_timer", "60")
 
 2.2. flags2attr("$avp")
 
-   Store the current state of SER flags into the sepcified avp.
+   Store the current state of Kamailio flags into the specified AVP.
 
    Example 2. flags2attr usage
 ...
@@ -140,9 +140,9 @@ set_sattr("called_number", "1234")
    Example 4. attr_exists usage
 ...
 if (attr_exists("saved_ruri")) {
-  attr2uri("saved_uri");
+    attr2uri("saved_uri");
 } else {
-  rewriteuri("sip:a@iptel.org");
+    rewriteuri("sip:a@iptel.org");
 };
 ...
 

@@ -41,7 +41,7 @@ set_iattr("fr_inv_timer", "60")
     <section id="flags2attr">
 	<title><function>flags2attr("$avp")</function></title>
 	<para>
-	    Store the current state of SER flags into the sepcified avp.
+	    Store the current state of &kamailio; flags into the specified AVP.
 	</para>
 	<example>
 	    <title><function>flags2attr</function> usage</title>
@@ -89,8 +89,7 @@ set_sattr("called_number", "1234")
 	<para>Meaning of the parameter is as follows:</para>
 	<itemizedlist>
 	    <listitem>
-		<para><emphasis>attribute</emphasis> - The name of the
-		    AVP.
+		<para><emphasis>attribute</emphasis> - The name of the AVP.
 		</para>
 	    </listitem>
 	</itemizedlist>
@@ -144,9 +143,9 @@ set_sattr("called_number", "1234")
 	    <programlisting>
 ...
 if (attr_exists("saved_ruri")) {
-  attr2uri("saved_uri");
+    attr2uri("saved_uri");
 } else {
-  rewriteuri("sip:a@iptel.org");
+    rewriteuri("sip:a@iptel.org");
 };
 ...
 		</programlisting>

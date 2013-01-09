@@ -28,7 +28,7 @@
 	</copyright>
     </bookinfo>
 
-    <title>Avp Module</title>
+    <title>The AVP Module</title>
 
     <section>
 	<title>Overview</title>
@@ -37,11 +37,11 @@
 	    manipulate the contents of AVPs (Attribute-Value pairs). The AVPs
 	    are variables attached to the SIP message being processed. Each
 	    variable has its name and value. AVPs can be used to store
-	    arbitrary data or as a means of inter-module comminication.
+	    arbitrary data or as a means of inter-module communication.
 	</para>
 	<para>
-	    You may also want to check the avpops module which is more flexible
-	    and contains more functions. In future SER releases the avp module
+	    You may also want to check the <emphasis>avpops</emphasis> module which is more flexible
+	    and contains more functions. In future &kamailio; releases the avp module
 	    will be probably deprecated in favor of avpops module.
 	</para>
     </section>
