@@ -17,9 +17,9 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		Db_cassandra is one of the &siprouter; database modules. It does
+		Db_cassandra is one of the &kamailio; database modules. It does
 		not export any functions executable from the configuration scripts,
-		but it exports a subset of functions from the database API, and thus,
+		but it exports a subset of functions using the database API, and thus,
 		other modules can use it as a database driver, instead of, for
 		example, the Mysql module.
 	</para>
@@ -34,10 +34,10 @@
 		below.
 	</para>
 	<para>
-		Cassandra DB is especially suited for storing large data or data that requires
-		distribution, redundancy or replication. One usage example is
+		Cassandra DB is especially suited for storing large amounts of data or data
+		that requires distribution, redundancy or replication. One usage example is
 		a distributed location system in a platform that has a cluster of &siprouter;
-		servers, with more proxies and registration servers accessing the same location
+		servers, with several proxies and registration servers accessing the same location
 		database. This was actually the main use case we had in mind when implementing
 		this module. Please NOTE that it has only been tested with the
 		<emphasis>usrloc</emphasis>, <emphasis>auth_db</emphasis> and <emphasis>domain</emphasis> modules.
@@ -143,7 +143,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 		<para>
 			The directory where the files with the table schemas are located.
 			This directory has to contain the subdirectories corresponding to the
-			databases' names (name of the directory = name of the database). 
+			database name (name of the directory = name of the database). 
 			These directories, in turn, contain the files with the table schemas.
 			See the schemas in utils/kamctl/dbcassandra directory.
 		</para>
@@ -152,7 +152,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 <programlisting format="linespecific">
    ...
    modparam("db_cassandra", "schema_path",
-               "/usr/local/sip-router/etc/kamctl/dbcassandra")
+               "/usr/local/kamailio/etc/kamctl/dbcassandra")
    ...
 </programlisting>
 		</example>
@@ -169,7 +169,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 	<section>
 	<title>Installation</title>
 		<para>
-		Because it dependes on an external library, the db_cassandra module is not
+		Because the db_cassandra module dependes on an external library, it is not
 		compiled and installed by default. You can use one of these options:
 		</para>
 		<itemizedlist>
@@ -232,7 +232,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 		</itemizedlist>
 		</para>
 		<para>
-			Bellow you can see the schema for the <emphasis>location</emphasis>
+			Below you can see the schema for the <emphasis>location</emphasis>
 			table (when use_domain not set):
 		</para>
 	<para>

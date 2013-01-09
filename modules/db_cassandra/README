@@ -14,7 +14,7 @@ Anca Vamanu
 
    <anca.vamanu@1and1.ro>
 
-   Copyright Â© 2012 1&1 Internet AG
+   Copyright © 2012 1&1 Internet AG
      __________________________________________________________________
 
    Table of Contents
@@ -61,9 +61,9 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   Db_cassandra is one of the SIP Router database modules. It does not
+   Db_cassandra is one of the Kamailio database modules. It does not
    export any functions executable from the configuration scripts, but it
-   exports a subset of functions from the database API, and thus, other
+   exports a subset of functions using the database API, and thus, other
    modules can use it as a database driver, instead of, for example, the
    Mysql module.
 
@@ -76,13 +76,14 @@ Chapter 1. Admin Guide
    two indexing levels. These issues will be explained in an example
    below.
 
-   Cassandra DB is especially suited for storing large data or data that
-   requires distribution, redundancy or replication. One usage example is
-   a distributed location system in a platform that has a cluster of SIP
-   Router servers, with more proxies and registration servers accessing
-   the same location database. This was actually the main use case we had
-   in mind when implementing this module. Please NOTE that it has only
-   been tested with the usrloc, auth_db and domain modules.
+   Cassandra DB is especially suited for storing large amounts of data or
+   data that requires distribution, redundancy or replication. One usage
+   example is a distributed location system in a platform that has a
+   cluster of SIP Router servers, with several proxies and registration
+   servers accessing the same location database. This was actually the
+   main use case we had in mind when implementing this module. Please NOTE
+   that it has only been tested with the usrloc, auth_db and domain
+   modules.
 
    You can find a configuration file example for this usage in the module
    - kamailio_cassa.cfg.
@@ -157,14 +158,14 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 
    The directory where the files with the table schemas are located. This
    directory has to contain the subdirectories corresponding to the
-   databases' names (name of the directory = name of the database). These
+   database name (name of the directory = name of the database). These
    directories, in turn, contain the files with the table schemas. See the
    schemas in utils/kamctl/dbcassandra directory.
 
    Example 1.1. Set schema_path parameter
    ...
    modparam("db_cassandra", "schema_path",
-               "/usr/local/sip-router/etc/kamctl/dbcassandra")
+               "/usr/local/kamailio/etc/kamctl/dbcassandra")
    ...
 
 4. Functions
@@ -173,7 +174,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 
 5. Installation
 
-   Because it dependes on an external library, the db_cassandra module is
+   Because the db_cassandra module dependes on an external library, it is
    not compiled and installed by default. You can use one of these
    options:
      * - edit the "Makefile" and remove "db_cassandra" from
@@ -210,7 +211,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
      * Third row: the columns that form the secondary key separated by
        space.
 
-   Bellow you can see the schema for the location table (when use_domain
+   Below you can see the schema for the location table (when use_domain
    not set):
 
    ...
