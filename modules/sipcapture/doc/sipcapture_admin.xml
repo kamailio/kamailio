@@ -453,7 +453,7 @@ modparam("sipcapture", "capture_node", "homer03")
 		</itemizedlist>
 
 	</section>
-	</section><!-- MI commands -->
+	</section><!-- RPC commands -->
 	
 	<section>
 		<title>Database setup</title>
