@@ -268,7 +268,9 @@ failure_route[FAIL_OUTBOUND] {
 		<title>Set <varname>force_outbound_flag</varname> parameter
 		</title>
 		<programlisting format="linespecific">
+...
 modparam("outbound", "force_outbound_flag", 1)
+...
 </programlisting>
 		</example>
 	</section>
@@ -285,7 +287,9 @@ modparam("outbound", "force_outbound_flag", 1)
 		<title>Set <varname>flow_token_key</varname> parameter
 		</title>
 		<programlisting format="linespecific">
+...
 modparam("outbound", "flow_token_key", "!!!Kamailio rocks!!!")
+...
 </programlisting>
 		</example>
 	</section>
