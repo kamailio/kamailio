@@ -128,7 +128,7 @@ static str time_us_column     = str_init("time_us");     /* 10 */
 #define XHEADERS_BUFSIZE 512
 
 int trace_flag = 0;
-=nt trace_on   = 0;
+int trace_on   = 0;
 int trace_sl_acks = 1;
 
 int trace_to_database = 1;
