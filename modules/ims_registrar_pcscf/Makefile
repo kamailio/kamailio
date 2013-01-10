@@ -8,15 +8,21 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=ims_registrar_pcscf.so
-LIBS=
 
-DEFS+=-DOPENSER_MOD_INTERFACE -I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2
-
-LIBS += -L$(LOCALBASE)/lib
-
-ifneq ($(OS),darwin)
-	LIBS += -lrt
+ifeq ($(CROSS_COMPILE),)
+XML2CFG=$(shell which xml2-config)
 endif
+
+ifneq ($(XML2CFG),)
+	DEFS += $(shell $(XML2CFG) --cflags )
+	LIBS += $(shell $(XML2CFG) --libs)
+else
+	DEFS+=-I$(LOCALBASE)/include/libxml2 \
+		-I$(LOCALBASE)/include
+	LIBS+=-L$(LOCALBASE)/lib -lxml2
+endif
+
+DEFS+=-DOPENSER_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kcore/kcore
