@@ -70,6 +70,7 @@ install-bin: $(bin_prefix)/$(bin_dir)
 		# install db setup base script
 		sed -e "s#/usr/local/sbin#$(bin_target)#g" \
 			-e "s#/usr/local/etc/kamailio#$(cfg_target)#g" \
+			-e "s#/usr/local/share/kamailio#$(data_target)#g" \
 			< kamdbctl.base > /tmp/kamdbctl.base
 		$(INSTALL_CFG) /tmp/kamdbctl.base \
 			$(modules_prefix)/$(lib_dir)/kamctl/kamdbctl.base

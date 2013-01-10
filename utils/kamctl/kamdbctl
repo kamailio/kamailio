@@ -168,6 +168,76 @@ kamailio_restore() #pars: <database name> <filename>
 }
 
 
+kamailio_pframework_create() #pars: none
+{
+	touch $DEFAULT_CFG_DIR/pi_framework_sample
+	if [ $? -ne 0 ] ; then
+		merr "Unable to create $DEFAULT_CFG_DIR/pi_framework_sample"
+		exit 1
+	fi
+
+	if [ -d "$DATA_DIR/xhttp_pi" ] ; then
+		PI_MODULES="$STANDARD_MODULES"
+	else
+		merr "Please install first the xhttp_pi module"
+		exit 1
+	fi
+
+
+	get_answer $INSTALL_EXTRA_TABLES "Add provisionning framework for extra tables? (y/n): "
+	if [ "$ANSWER" = "y" ]; then
+		PI_MODULES="$PI_MODULES $EXTRA_MODULES"
+	fi
+
+	get_answer $INSTALL_PRESENCE_TABLES "Add provisionning framework for presence tables? (y/n): "
+	if [ "$ANSWER" = "y" ]; then
+		PI_MODULES="$PI_MODULES $PRESENCE_TABLES"
+	fi
+
+	cat $DATA_DIR/xhttp_pi/pi_framework-00 > $DEFAULT_CFG_DIR/pi_framework_sample
+	for TABLE in $PI_MODULES; do
+		if [ -e $DATA_DIR/xhttp_pi/$TABLE-table ]; then
+			cat $DATA_DIR/xhttp_pi/$TABLE-table >> $DEFAULT_CFG_DIR/pi_framework_sample
+		else
+			merr "Unable to configure: $TABLE - missing table descriptor"
+		fi
+	done
+	cat $DATA_DIR/xhttp_pi/pi_framework-01 >> $DEFAULT_CFG_DIR/pi_framework_sample
+	for TABLE in $PI_MODULES; do
+		if [ -e $DATA_DIR/xhttp_pi/$TABLE-mod ]; then
+			cat $DATA_DIR/xhttp_pi/$TABLE-mod >> $DEFAULT_CFG_DIR/pi_framework_sample
+		else
+			merr "Unable to configure: $TABLE - missing mod descriptor"
+		fi
+	done
+	cat $DATA_DIR/xhttp_pi/pi_framework-02 >> $DEFAULT_CFG_DIR/pi_framework_sample
+
+	minfo "Sample provisionning framework saved as: $DEFAULT_CFG_DIR/pi_framework_sample"
+}
+
+kamailio_pframework() #pars: <action>
+{
+	if [ $# -ne 1 ] ; then
+		merr "kamailio_pframework function takes one parameter"
+		exit 1
+	fi
+
+	case $1 in
+		create)
+			shift
+			kamailio_pframework_create "$@"
+			exit $?
+			;;
+		*)
+			merr "Unexpected pframework action: $1"
+			usage
+			exit 1
+			;;
+	esac
+}
+
+
+
 case $1 in
 	migrate)
 		if [ "$USED_DBENGINE" != "mysql" ] ; then
@@ -301,6 +371,11 @@ case $1 in
 	bdb|db_berkeley)
 		shift
 		kamailio_berkeley "$@"
+		exit $?
+		;;
+	pframework)
+		shift
+		kamailio_pframework "$@"
 		exit $?
 		;;
 	version)

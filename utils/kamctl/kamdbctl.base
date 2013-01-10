@@ -56,6 +56,12 @@ DEFAULT_CSEQ=${DEFAULT_CSEQ:-13}
 DEFAULT_LOCATION_EXPIRES=${DEFAULT_LOCATION_EXPIRES:-${FOREVER}}
 
 
+# default location for config files
+DEFAULT_CFG_DIR=/usr/local/etc/kamailio
+
+# default location for data files
+DEFAULT_DATA_DIR=/usr/local/share/kamailio
+
 # Needed programs
 MD5=${MD5:-md5sum}
 AWK=${AWK:-awk}
@@ -79,21 +85,22 @@ COMMAND=`basename $0`
 cat <<EOF
 $0 $VERSION
 
-usage: $COMMAND create <db name or db_path, optional> .....(creates a new database)
-       $COMMAND drop <db name or db_path, optional> .......(!entirely deletes tables!)
-       $COMMAND reinit <db name or db_path, optional> .....(!entirely deletes and than re-creates tables!)
-       $COMMAND backup <file> .................................(dumps current database to file)
-       $COMMAND restore <file> ................................(restores tables from a file)
-       $COMMAND copy <new_db> .................................(creates a new db from an existing one)
-       $COMMAND migrate <old_db> <new_db> .....................(migrates DB from 1.2 to 1.3, not implemented yet!)
-       $COMMAND presence ......................................(adds the presence related tables)
-       $COMMAND extra .........................................(adds the extra tables)
+usage: $COMMAND create <db name or db_path, optional> ...(creates a new database)
+       $COMMAND drop <db name or db_path, optional> .....(!entirely deletes tables!)
+       $COMMAND reinit <db name or db_path, optional> ...(!entirely deletes and than re-creates tables!)
+       $COMMAND backup <file> ...........................(dumps current database to file)
+       $COMMAND restore <file> ..........................(restores tables from a file)
+       $COMMAND copy <new_db> ...........................(creates a new db from an existing one)
+       $COMMAND migrate <old_db> <new_db> ...............(migrates DB from 1.2 to 1.3, not implemented yet!)
+       $COMMAND presence ................................(adds the presence related tables)
+       $COMMAND extra ...................................(adds the extra tables)
 
        if you want to manipulate database as other database user than
        root, want to change database name from default value "$DBNAME",
        or want to use other values for users and password, edit the
        "config vars" section of the command $COMMAND.
 
+       $COMMAND pframework create .......................(creates a sample provisioning framework file)
 EOF
 } #usage
 
