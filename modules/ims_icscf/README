@@ -1,0 +1,310 @@
+IMS ICSCF Module
+
+Dragos Vingarzan
+
+   FhG Fokus
+   <Dragos.Vingarzan@fokus.fraunhofer.de>
+
+Jason Penton
+
+   Smile Communications
+   <jason.penton@smilecoms.com>
+
+Richard Good
+
+   Smile Communications
+   <richard.good@smilecoms.com>
+
+   Copyright © 2007 FhG FOKUS
+
+   Copyright © 2012 Smile Communications
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. route_lir_user_unknown (string)
+              3.2. route_uar_user_unknown (string)
+              3.3. scscf_entry_expiry (integer)
+              3.4. cxdx_forced_peer (string)
+              3.5. cxdx_dest_realm (string)
+
+        4. Functions
+
+              4.1. I_scscf_select(initial)
+              4.2. I_scscf_drop()
+              4.3. I_perform_user_authorization_request(capabalities)
+              4.4. I_perform_location_information_request()
+
+        5. Statistics
+
+              5.1. Average UAR Response Time (uar_avg_response_time)
+              5.2. UAR Timeouts (uar_timeouts)
+              5.3. Average LIR Response Time (lir_avg_response_time)
+              5.4. LIR Timeouts (lir_timeouts)
+
+   List of Examples
+
+   1.1. route_lir_user_unknown parameter usage
+   1.2. route_uar_user_unknown parameter usage
+   1.3. scscf_entry_expiry parameter usage
+   1.4. cxdx_forced_peer parameter usage
+   1.5. version_table parameter usage
+   1.6. I_scscf_select usage
+   1.7. I_scscf_drop usage
+   1.8. I_perform_user_authorization_request usage
+   1.9. proxy_authorize usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. route_lir_user_unknown (string)
+        3.2. route_uar_user_unknown (string)
+        3.3. scscf_entry_expiry (integer)
+        3.4. cxdx_forced_peer (string)
+        3.5. cxdx_dest_realm (string)
+
+   4. Functions
+
+        4.1. I_scscf_select(initial)
+        4.2. I_scscf_drop()
+        4.3. I_perform_user_authorization_request(capabalities)
+        4.4. I_perform_location_information_request()
+
+   5. Statistics
+
+        5.1. Average UAR Response Time (uar_avg_response_time)
+        5.2. UAR Timeouts (uar_timeouts)
+        5.3. Average LIR Response Time (lir_avg_response_time)
+        5.4. LIR Timeouts (lir_timeouts)
+
+1. Overview
+
+   This module provides all functionality to build an IMS ICSCF.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The Following modules must be loaded before this module:
+     * TM - Transaction Manager
+     * SL - Stateless Reply
+     * CDP - C Diameter Peer
+     * CDP_AVP - CDP AVP Applications
+
+2.2. External Libraries or Applications
+
+   This modules requires the Kamailio internal IMS library.
+
+3. Parameters
+
+   3.1. route_lir_user_unknown (string)
+   3.2. route_uar_user_unknown (string)
+   3.3. scscf_entry_expiry (integer)
+   3.4. cxdx_forced_peer (string)
+   3.5. cxdx_dest_realm (string)
+
+3.1. route_lir_user_unknown (string)
+
+   This is the route which is executed if HSS returns "user unknown" in
+   LIR
+
+   Default value is ''.
+
+   Example 1.1. route_lir_user_unknown parameter usage
+...
+modparam("ims_icscf","route_lir_user_unknown", "lir_term_user_unknown")
+...
+
+3.2. route_uar_user_unknown (string)
+
+   This is the route which is executed if HSS returns "user unknown" in
+   UAR.
+
+   Default value is ''.
+
+   Example 1.2. route_uar_user_unknown parameter usage
+...
+modparam("ims_icscf","route_uar_user_unknown", "uar_term_user_unknown")
+...
+
+3.3. scscf_entry_expiry (integer)
+
+   This is the time in s after which S-CSCF entries in the I-CSCF's SCSCF
+   list will expire.
+
+   Default value is 300.
+
+   Example 1.3. scscf_entry_expiry parameter usage
+...
+modparam("ims_icscf","scscf_entry_expiry", 300)
+...
+
+3.4. cxdx_forced_peer (string)
+
+   FQDN of Diameter Peer (HSS) to use for communication (MAR)
+
+   Default value is "".
+
+   Example 1.4. cxdx_forced_peer parameter usage
+...
+modparam("ims_icscf", "cxdx_forced_peer", "hss.ims.smilecoms.com")
+...
+
+3.5. cxdx_dest_realm (string)
+
+   Destination realm to be used in Diameter messags to HSS
+
+   Default value is "ims.smilecoms.com".
+
+   Example 1.5. version_table parameter usage
+...
+modparam("ims_icscf", "cxdx_dest_realm", "ims.smilecoms.com")
+...
+
+4. Functions
+
+   4.1. I_scscf_select(initial)
+   4.2. I_scscf_drop()
+   4.3. I_perform_user_authorization_request(capabalities)
+   4.4. I_perform_location_information_request()
+
+4.1. I_scscf_select(initial)
+
+   This function is used to retrieve the next unused SCSCF from thelist
+   for this request (based on callid).
+
+   A positive return code (1) means an SCSCF was found and is armed for
+   routing.
+
+   Meaning of the parameters is as follows:
+     * initial - Signal whether or not this is an original or subsequent.
+
+   This function can be used from REQUEST_ROUTE | FAILURE_ROUTE.
+
+   Example 1.6. I_scscf_select usage
+...
+if (I_scscf_select("0")) {
+     #there is an S-CSCF list - no need to do a UAR
+     t_on_reply("register_reply");
+     t_on_failure("register_failure");
+     t_relay();
+}
+...
+
+4.2. I_scscf_drop()
+
+   Drop the list of SCSCFs for this request (based on callid).
+
+   This function can be used from REQUEST_ROUTE | FAILURE_ROUTE |
+   REPLY_ROUTE
+
+   Example 1.7. I_scscf_drop usage
+...
+I_scscf_drop();
+...
+
+   .
+
+4.3. I_perform_user_authorization_request(capabalities)
+
+   Perform a UAR on Diameter CXDX interface. This function will build a
+   list of SCSCFs to be used and populate the SCSCF list for the request.
+   On a succesful return of this message you can get the next available
+   SCSCF by using the I_scscf_select functoin in 4.1.
+     * capabilities - whether to request capabilities or not "1" - with
+       capabilities, "0" - no capabilities.
+
+   This function can be used from REQUEST_ROUTE.
+
+   p.s. this is executed asynchronously. See example on how to retrieve
+   return value
+
+   Example 1.8. I_perform_user_authorization_request usage
+...
+            I_perform_user_authorization_request("0"); #0=REG/DEREG; 1=REG+Capab
+ilities
+            #this is async so to know status we have to check the reply avp
+            switch ($avp(s:uaa_return_code)){
+                case 1: #success
+                    if (I_scscf_select("0")){
+                        t_on_failure("register_failure");
+                        t_on_reply("register_reply");
+                        if (!t_relay()) {
+                            t_reply("500", "Error forwarding to SCSCF");
+                        }
+                    } else {#select failed
+                        I_scscf_drop();
+                        t_reply("500", "Server error on SCSCF Select (UAR)");
+                    }
+                    break;
+                case -1: #failure
+                    xlog("L_ERR", "UAR failure - error response sent from module
+");
+                    break;
+                case -2: #error
+                    xlog("L_ERR", "UAR error - sending error response now");
+                    t_reply("500", "UAR failed");
+                    break;
+                default:
+                    xlog("L_ERR", "Unknown return code from UAR, value is [$avp(
+s:uaa_return_code)]");
+                    t_reply("500", "Unknown response code from UAR");
+                    break;
+            }
+...
+
+4.4. I_perform_location_information_request()
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.9. proxy_authorize usage
+...
+if (!proxy_authorize("$fd", "subscriber)) {
+proxy_challenge("$fd", "1");  # Realm will be autogenerated
+};
+...
+
+5. Statistics
+
+   5.1. Average UAR Response Time (uar_avg_response_time)
+   5.2. UAR Timeouts (uar_timeouts)
+   5.3. Average LIR Response Time (lir_avg_response_time)
+   5.4. LIR Timeouts (lir_timeouts)
+
+5.1. Average UAR Response Time (uar_avg_response_time)
+
+   The average response time in milliseconds for UAR-UAA transaction.
+
+5.2. UAR Timeouts (uar_timeouts)
+
+   The number of UAR timeouts.
+
+5.3. Average LIR Response Time (lir_avg_response_time)
+
+   The average response time in milliseconds for LIR-LIA transaction.
+
+5.4. LIR Timeouts (lir_timeouts)
+
+   The number of LIR timeouts.
