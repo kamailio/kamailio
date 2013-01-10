@@ -1,0 +1,222 @@
+The IMS ISC Module
+
+Dragos Vingarzan
+
+   FhG Fokus
+   <Dragos.Vingarzan@fokus.fraunhofer.de>
+
+Jason Penton
+
+   Smile Communications
+   <jason.penton@smilecoms.com>
+
+Richard Good
+
+   Smile Communications
+   <richard.good@smilecoms.com>
+
+   Copyright © 2007 FhG FOKUS
+
+   Copyright © 2012 Smile Communications
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. my_uri (string)
+              3.2. expires_grace (integer)
+              3.3. isc_fr_timeout (integer)
+              3.4. isc_fr_inv_timeout (integer)
+
+        4. Functions
+
+              4.1. isc_match_filter_reg(reg_state,domain)
+              4.2. isc_match_filter(direction,domain)
+              4.3. isc_from_as(direction)
+
+   List of Examples
+
+   1.1. my_uri parameter usage
+   1.2. expires_grace parameter usage
+   1.3. isc_fr_timeout parameter usage
+   1.4. isc_fr_inv_timeout parameter usage
+   1.5. isc_match_filter_reg usage
+   1.6. isc_match_filter usage
+   1.7. isc_from_as usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. my_uri (string)
+        3.2. expires_grace (integer)
+        3.3. isc_fr_timeout (integer)
+        3.4. isc_fr_inv_timeout (integer)
+
+   4. Functions
+
+        4.1. isc_match_filter_reg(reg_state,domain)
+        4.2. isc_match_filter(direction,domain)
+        4.3. isc_from_as(direction)
+
+1. Overview
+
+   This module provides the functionality for an IMS S-CSCF to implement
+   the ISC interface between S-CSCF and SIP Application Server.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The Following modules must be loaded before this module:
+     * TM - Transaction Manager
+     * IMS Usrloc SCSCF
+
+2.2. External Libraries or Applications
+
+   This modules requires the Kamailio internal IMS library.
+
+3. Parameters
+
+   3.1. my_uri (string)
+   3.2. expires_grace (integer)
+   3.3. isc_fr_timeout (integer)
+   3.4. isc_fr_inv_timeout (integer)
+
+3.1. my_uri (string)
+
+   This is the SIP URI of server on which the SCSCF is hosted.
+
+   Default value is 'sip:scscf.ims.smilecoms.com:6060'.
+
+   Example 1.1. my_uri parameter usage
+...
+modparam("ims_isc", "my_uri", "sip:scscf.ims.smilecoms.com:6060")
+...
+
+3.2. expires_grace (integer)
+
+   This is the expires value to add to the expires during 3rd party
+   registration to prevent expiration in Application Server.
+
+   Default value is 120.
+
+   Example 1.2. expires_grace parameter usage
+...
+modparam("ims_isc", "expires_grace", 120)
+...
+
+3.3. isc_fr_timeout (integer)
+
+   This is the time in ms that we will wait for an AS response before we
+   consider it dead. It has to be lower than the SIP transaction timeout
+   to prevent downstream timeouts. But not too small as ASs tend to take a
+   long time to respond.
+
+   Default value is 5000.
+
+   Example 1.3. isc_fr_timeout parameter usage
+...
+modparam("ims_isc", "isc_fr_timeout", 5000)
+...
+
+3.4. isc_fr_inv_timeout (integer)
+
+   This is the time in ms that we will wait for an AS INVITE response
+   before we consider it dead. It has to be lower than the SIP transaction
+   timeout to prevent downstream timeouts. But not too small as ASs tend
+   to take a long time to respond.
+
+   Default value is 20000
+
+   Example 1.4. isc_fr_inv_timeout parameter usage
+...
+modparam("ims_isc", "isc_fr_inv_timeout", 20000)
+...
+
+4. Functions
+
+   4.1. isc_match_filter_reg(reg_state,domain)
+   4.2. isc_match_filter(direction,domain)
+   4.3. isc_from_as(direction)
+
+4.1. isc_match_filter_reg(reg_state,domain)
+
+   This function checks if a REGISTER messages matches Initial Filter
+   Criteria - if so it inserts the necessary route headers and modifies
+   the destination URI to forward to the relevant Application Server.
+
+   A positive return code (1) means that the REGISTER message has matched
+   to Initial Filter Criteria and is armed for routing.
+
+   Meaning of the parameters is as follows:
+     * reg_state if the user was previously registered 0 - for initial
+       registration, 1 for re/de-registration.
+     * domain that usrloc_scscf uses to store user information.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.5. isc_match_filter_reg usage
+...
+isc_match_filter_reg("1","location");
+...
+
+4.2. isc_match_filter(direction,domain)
+
+   This function checks if a non-REGISTER messages matches Initial Filter
+   Criteria - if so it inserts the necessary route headers and modifies
+   the destination URI to forward to the relevant Application Server.
+
+   A positive return code (1) means that the message has matched to
+   Initial Filter Criteria and is armed for routing.
+
+   Meaning of the parameters is as follows:
+     * direction the direction of this message - orig, term, etc.
+     * domain that usrloc_scscf uses to store user information.
+
+   This function can be used from REQUEST_ROUTE | FAILURE_ROUTE.
+
+   Example 1.6. isc_match_filter usage
+...
+isc_match_filter("orig","location");
+...
+
+4.3. isc_from_as(direction)
+
+   This function checks if this message has come from an Application
+   Server.
+
+   A positive return code (1) means that the message has come from an
+   Application Server.
+
+   Meaning of the parameters is as follows:
+     * direction the direction of this message - orig, term, etc.
+
+   This function can be used from REQUEST_ROUTE | FAILURE_ROUTE.
+
+   Example 1.7. isc_from_as usage
+...
+if (!isc_from_as("orig")) {
+    remove_hf("P-Asserted-Identity");
+}
+...

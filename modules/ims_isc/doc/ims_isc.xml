@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+]>
+<book>
+  <bookinfo>
+    <title>The IMS ISC Module</title>
+
+    <authorgroup>
+      <author>
+        <firstname>Dragos Vingarzan</firstname>
+
+        <surname/>
+
+        <affiliation>
+          <orgname>FhG Fokus</orgname>
+        </affiliation>
+
+        <email>Dragos.Vingarzan@fokus.fraunhofer.de</email>
+      </author>
+
+      <author>
+        <firstname>Jason</firstname>
+
+        <surname>Penton</surname>
+
+        <affiliation>
+          <orgname>Smile Communications</orgname>
+        </affiliation>
+
+        <email>jason.penton@smilecoms.com</email>
+      </author>
+
+      <author>
+        <firstname>Richard</firstname>
+
+        <surname>Good</surname>
+        <affiliation>
+          <orgname>Smile Communications</orgname>
+        </affiliation>
+
+        <email>richard.good@smilecoms.com</email>
+      </author>
+    </authorgroup>
+
+    <copyright>
+      <year>2007</year>
+      <holder>FhG FOKUS</holder>
+    </copyright>
+
+    <copyright>
+      <year>2012</year>
+
+      <holder>Smile Communications</holder>
+    </copyright>
+  </bookinfo>
+
+  <toc/>
+
+  <xi:include href="ims_isc_admin.xml"
+              xmlns:xi="http://www.w3.org/2001/XInclude"/>
+</book>
