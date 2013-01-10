@@ -39,6 +39,8 @@
 #include "../../action.h"
 #include "../../mod_fix.h"
 #include "../../parser/parse_from.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 
 #include "mtree.h"
 
@@ -109,6 +111,7 @@ static int  mod_init(void);
 static void mod_destroy(void);
 static int  child_init(int rank);
 static int  mi_child_init(void);
+static int mtree_init_rpc(void);
 
 static int mt_match(struct sip_msg *msg, gparam_t *dm, gparam_t *var,
 		gparam_t *mode);
@@ -183,6 +186,11 @@ static int mod_init(void)
 		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
+	if(mtree_init_rpc()!=0)
+        {
+                LM_ERR("failed to register RPC commands\n");
+                return -1;
+        }
 
 	db_url.len = strlen(db_url.s);
 	db_table.len = strlen(db_table.s);
@@ -978,5 +986,75 @@ struct mi_root* mt_mi_summary(struct mi_root* cmd_tree, void* param)
 	return rpl_tree;
 error:
 	free_mi_tree(rpl_tree);
+	return 0;
+}
+
+void rpc_mtree_summary(rpc_t* rpc, void* c) 
+{
+	m_tree_t *pt;
+	void* th;
+	void* ih;
+
+	if(!mt_defined_trees())
+	{
+		rpc->fault(c, 500, "Empty tree list.");
+                return;
+	}
+
+	if (rpc->add(c, "{", &th) < 0)
+	{
+		rpc->fault(c, 500, "Internal error creating rpc");
+		return;
+	}
+	pt = mt_get_first_tree();
+
+	while(pt!=NULL)
+	{
+		if(rpc->struct_add(th, "s{",
+				"table", pt->tname.s,
+				"item", &ih) < 0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc ih");
+				return;
+			}
+
+		if(rpc->struct_add(ih, "d", "ttype", pt->type) < 0 ) {
+                                rpc->fault(c, 500, "Internal error adding type");
+                                return;
+                }
+		if(rpc->struct_add(ih, "d", "memsize", pt->memsize) < 0 ) {
+                                rpc->fault(c, 500, "Internal error adding memsize");
+                                return;
+                }
+		if(rpc->struct_add(ih, "d", "nrnodes", pt->nrnodes) < 0 ) {
+                                rpc->fault(c, 500, "Internal error adding nodes");
+                                return;
+                }
+		if(rpc->struct_add(ih, "d", "nritems", pt->nritems) < 0 ) {
+                                rpc->fault(c, 500, "Internal error adding items");
+                                return;
+                }
+		pt = pt->next;
+	}
+	return;
+}
+
+static const char* rpc_mtree_summary_doc[2] = {
+	"Print summary of loaded mtree tables",
+	0
+};
+
+rpc_export_t mtree_rpc[] = {
+	{"mtree.summary", rpc_mtree_summary, rpc_mtree_summary_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int mtree_init_rpc(void)
+{
+	if (rpc_register_array(mtree_rpc) != 0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 	return 0;
 }

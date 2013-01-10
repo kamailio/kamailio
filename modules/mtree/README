@@ -61,6 +61,10 @@ Juha Heinanen
               5.2. mt_reload
               5.3. mt_summary
 
+        6. RPC Commands
+
+              6.1. mtree.summary
+
    List of Examples
 
    1.1. Set db_url parameter
@@ -114,6 +118,10 @@ Chapter 1. Admin Guide
         5.2. mt_reload
         5.3. mt_summary
 
+   6. RPC Commands
+
+        6.1. mtree.summary
+
 1. Overview
 
    This module loads data indexed by prefixes from database and returns
@@ -155,7 +163,7 @@ Chapter 1. Admin Guide
 
    URL of the database server to be used.
 
-   Default value is "mysql://openser:openserrw@localhost/openser".
+   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
 
    Example 1.1. Set db_url parameter
 ...
@@ -302,7 +310,7 @@ modparam("mtree", "mt_allow_duplicates", 1)
 
    4.1. mt_match(mtree, pv, mode)
 
-4.1. mt_match(mtree, pv, mode)
+4.1.  mt_match(mtree, pv, mode)
 
    Match 'pv' value against 'mtree'. If 'mtree' type is 0 or 2 and value
    of 'mode' is NOT 2, sets a value of the longest matching prefix to
@@ -323,7 +331,7 @@ mt_match("mytree", "$rU", "0");
    5.2. mt_reload
    5.3. mt_summary
 
-5.1. mt_list
+5.1.  mt_list
 
    List content of a tree.
 
@@ -337,7 +345,7 @@ mt_match("mytree", "$rU", "0");
                 _mtname_
                 _empty_line_
 
-5.2. mt_reload
+5.2.  mt_reload
 
    Reload mtree from database.
 
@@ -352,7 +360,7 @@ mt_match("mytree", "$rU", "0");
                 _mtname_
                 _empty_line_
 
-5.3. mt_summary
+5.3.  mt_summary
 
    List usage summary for all trees.
 
@@ -363,3 +371,13 @@ mt_match("mytree", "$rU", "0");
    MI FIFO Command Format:
                 :mt_summary:_reply_fifo_file_
                 _empty_line_
+
+6. RPC Commands
+
+   6.1. mtree.summary
+
+6.1.  mtree.summary
+
+   List usage summary for all trees.
+
+   Parameters: none.

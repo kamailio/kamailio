@@ -416,7 +416,19 @@ mt_match("mytree", "$rU", "0");
 		_empty_line_
 		</programlisting>
     </section>
-    </section>
+    </section><!-- MI commands -->
+	<section>
+	<title>RPC Commands</title>
+	<section>
+		<title>
+		<function moreinfo="none">mtree.summary</function>
+		</title>
+		<para>
+		List usage summary for all trees.
+		</para>
+		<para>Parameters: none.</para>
+        </section>
+    	</section><!-- RPC commands -->
 
 </chapter>
 
