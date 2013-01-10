@@ -81,7 +81,8 @@ typedef struct sdp_stream_cell {
 	str max_size;                             /**< RFC4975: max-size attribute */
 	str accept_types;                         /**< RFC4975: accept-types attribute */
 	str accept_wrapped_types;                 /**< RFC4975: accept-wrapped-types attribute */
-	struct sdp_payload_attr **p_payload_attr; /**< fast access pointers to payloads */
+        str raw_stream;                           /**< fast access to raw stream string */
+        struct sdp_payload_attr **p_payload_attr; /**< fast access pointers to payloads */
 	struct sdp_payload_attr *payload_attr;
         int ice_attrs_num;                        /**< number of ICE attrs inside a stream */
         /* add fast access pointers to ice attributes if you need them */

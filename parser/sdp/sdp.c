@@ -481,6 +481,10 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 		stream = add_sdp_stream(session, stream_num, &sdp_media, &sdp_port, &sdp_transport, &sdp_payload, is_rtp, pf, &sdp_ip);
 		if (stream == 0) return -1;
 
+        /* Store fast access ptr to raw stream */
+        stream->raw_stream.s = tmpstr1.s; 
+        stream->raw_stream.len = tmpstr1.len;
+                
 		/* increment total number of streams */
 		_sdp->streams_num++;
 
