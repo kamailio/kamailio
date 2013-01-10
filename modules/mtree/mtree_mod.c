@@ -593,6 +593,9 @@ static int mt_load_db(str *tname)
 
 	bk_head = old_tree->head;
 	old_tree->head = new_tree.head;
+	old_tree->nrnodes = new_tree.nrnodes;
+	old_tree->nritems = new_tree.nritems;
+	old_tree->memsize = new_tree.memsize;
 
 	mt_reload_flag = 0;
 
