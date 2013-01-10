@@ -73,26 +73,6 @@ modparam("ims_auth", "name", "sip:scscf3.ims.smilecoms.com:6060")
     </section>
 
     <section>
-      <title><varname>name</varname> (string)</title>
-
-      <para>This is the name of the SCSCF as identified in communication with
-      the HSS (Server-Name AVP of MAR).</para>
-
-      <para><emphasis> Default value is 'sip:scscf.ims.smilecoms.com:6060'.
-      </emphasis></para>
-
-      <example>
-        <title><varname>name</varname> parameter usage</title>
-
-        <programlisting format="linespecific">
-...
-modparam("ims_auth", "name", "sip:scscf3.ims.smilecoms.com:6060")
-...
-</programlisting>
-      </example>
-    </section>
-
-    <section>
       <title><varname>auth_data_hash_size</varname> (integer)</title>
 
       <para>This is the size of the hash table used to store auth vectors
