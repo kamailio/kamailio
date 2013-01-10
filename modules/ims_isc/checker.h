@@ -46,6 +46,7 @@
 #ifndef _ISC_CHECKER_H
 #define _ISC_CHECKER_H
 
+#include <sys/types.h> /* for regex */
 #include <regex.h>
 #include "../../sr_module.h"
 #include "../../lib/ims/ims_getters.h"
