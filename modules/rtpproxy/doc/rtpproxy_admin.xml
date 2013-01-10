@@ -579,10 +579,12 @@ rtpproxy_destroy();
 		<para>
 		Manage the RTPProxy session - it combines the functionality of
 		rtpproxy_offer(), rtpproxy_answer() and unforce_rtpproxy(), detecting
-		internally based on message type and metod which one to execute.
+		internally based on message type and method which one to execute.
 		</para>
 		<para>
 		It can take the same parameters as <function>rtpproxy_offer().</function>
+		The flags parameter to rtpproxy_manage() can be a configuration variable
+		containing the flags as a string.
 		</para>
 		<para>
 		Functionality:

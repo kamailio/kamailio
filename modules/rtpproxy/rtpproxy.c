@@ -408,10 +408,10 @@ static cmd_export_t cmds[] = {
 		0, 0,
 		ANY_ROUTE},
 	{"rtpproxy_manage",	(cmd_function)rtpproxy_manage1,     1,
-		0, 0,
+		fixup_spve_null, fixup_free_spve_null,
 		ANY_ROUTE},
 	{"rtpproxy_manage",	(cmd_function)rtpproxy_manage2,     2,
-		0, 0,
+		fixup_spve_str, fixup_free_spve_str,
 		ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -2039,13 +2039,19 @@ rtpproxy_manage0(struct sip_msg *msg, char *flags, char *ip)
 static int
 rtpproxy_manage1(struct sip_msg *msg, char *flags, char *ip)
 {
-	return rtpproxy_manage(msg, flags, 0);
+	str flag_str;
+	fixup_get_svalue(msg, (gparam_p)flags, &flag_str);
+	return rtpproxy_manage(msg, flag_str.s, 0);
 }
 
 static int
 rtpproxy_manage2(struct sip_msg *msg, char *flags, char *ip)
 {
-	return rtpproxy_manage(msg, flags, ip);
+	str flag_str;
+	str ip_str;
+	fixup_get_svalue(msg, (gparam_p)flags, &flag_str);
+	fixup_get_svalue(msg, (gparam_p)ip, &ip_str);
+	return rtpproxy_manage(msg, flag_str.s, ip_str.s);
 }
 
 static int
