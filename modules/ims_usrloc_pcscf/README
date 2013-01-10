@@ -1,0 +1,214 @@
+IMS Usrloc PCSCF Module
+
+Jason Penton
+
+   Smile Communications
+
+Edited by
+
+Richard Good
+
+   Smile Communications
+
+   Copyright © 2012 Smile Communications
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. hash_size (int)
+              3.2. timer_interval (int)
+
+        4. Functions
+
+              4.1.
+
+        5. RPC Commands
+
+              5.1. ulpcscf.status
+
+        6. Statistics
+
+              6.1. registered contacts
+              6.2. impus
+              6.3. expired contacts
+
+   2. Frequently Asked Questions
+
+   List of Examples
+
+   1.1. Set hash_size parameter
+   1.2. Set timer_interval parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. hash_size (int)
+        3.2. timer_interval (int)
+
+   4. Functions
+
+        4.1.
+
+   5. RPC Commands
+
+        5.1. ulpcscf.status
+
+   6. Statistics
+
+        6.1. registered contacts
+        6.2. impus
+        6.3. expired contacts
+
+1. Overview
+
+   This module serves as a storage engine for PCSCF contacts, much like
+   the standard Kamailio module, usrloc, is a storage engine for standard
+   SIP contacts. The concept of a contact in IMS, PCSCF specifically, is
+   very different to that of std. SIP and as a result we have built this
+   new module. Alot of the design has been borrowed from the std. usrloc
+   module. For example. An IMS contact, in PCSCF, needs things like:
+     * Diameter Rx session for signalling bearer status. i.e. this is
+       effectively QoS from the network to make sure the signalling link
+       can be 'trusted'
+     * IPSEC Security Assocation for secure signalling between UE and
+       PCSCF (first point of contact)
+     * IMPU, each contact can have a number of associated public
+       identities (IMPU).
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. hash_size (int)
+   3.2. timer_interval (int)
+
+3.1. hash_size (int)
+
+   The number of entries of the hash table used by to store the contact
+   records is 2^hash_size. For hash_size=4, the number of entries of the
+   hash table is 16.
+
+   Default value is 9.
+
+   Example 1.1. Set hash_size parameter
+...
+modparam("ims_usrloc_pcscf", "hash_size", 10)
+...
+
+3.2. timer_interval (int)
+
+   Number of seconds between two timer runs. The module uses timer to
+   delete expired contacts.
+
+   Default value is 60.
+
+   Example 1.2. Set timer_interval parameter
+...
+modparam("ims_usrloc_pcscf", "timer_interval", 30)
+...
+
+4. Functions
+
+   4.1.
+
+   There are no exported functions that could be used in scripts.
+
+5. RPC Commands
+
+   5.1. ulpcscf.status
+
+   exported RPC commands.
+
+5.1. ulpcscf.status
+
+   Status of pcscf_usrloc, AORs, max slots, etc.
+
+6. Statistics
+
+   6.1. registered contacts
+   6.2. impus
+   6.3. expired contacts
+
+   Exported statistics are listed in the next sections.
+
+6.1. registered contacts
+
+   Number of AOR contacts in registered state - cannot be reset.
+
+6.2. impus
+
+   Number of IMPUs - cannot be reset.
+
+6.3. expired contacts
+
+   Number of expired contacts - can be reset.
+
+Chapter 2. Frequently Asked Questions
+
+   2.1. Where can I find more about Kamailio?
+   2.2. Where can I post a question about this module?
+   2.3. How can I report a bug?
+
+   2.1.
+
+       Where can I find more about Kamailio?
+
+       Take a look at http://www.kamailio.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+         * Developer Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+
+       E-mails regarding any stable Kamailio release should be sent to
+       <sr-users@lists.sip-router.org> and e-mails regarding development
+       versions should be sent to <sr-dev@lists.sip-router.org>.
+
+       If you want to keep the mail private, send it to
+       <sr-users@lists.sip-router.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sip-router.org/tracker.

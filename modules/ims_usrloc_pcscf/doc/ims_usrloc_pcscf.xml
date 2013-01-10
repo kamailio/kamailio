@@ -7,7 +7,7 @@
 ]>
 <book>
   <bookinfo>
-    <title>cdp Module</title>
+    <title>IMS Usrloc PCSCF Module</title>
 
     <productname class="trade">&kamailioname;</productname>
 
@@ -51,9 +51,6 @@
   <toc/>
 
   <xi:include href="ims_usrloc_pcscf_admin.xml"
-              xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-  <xi:include href="ims_usrloc_pcscf_devel.xml"
               xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
   <xi:include href="ims_usrloc_pcscf_faq.xml"
