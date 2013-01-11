@@ -166,7 +166,8 @@ modparam("uac","rr_to_store_param","my_param")
 			<listitem>
 				<para>
 				<quote>auto</quote> - all sequential requests and replies will 
-				be automatically updated based on stored original URI.
+				be automatically updated based on stored original URI. For this
+				option you have to set <quote>modparam("rr", "append_fromtag", 1)</quote>.
 				</para>
 			</listitem>
 			</itemizedlist>

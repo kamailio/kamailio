@@ -236,7 +236,8 @@ modparam("uac","rr_to_store_param","my_param")
        sequential requests - this must be manually updated based on
        original URI.
      * “auto” - all sequential requests and replies will be automatically
-       updated based on stored original URI.
+       updated based on stored original URI. For this option you have to
+       set “modparam("rr", "append_fromtag", 1)”.
 
    This parameter is optional, it's default value being “auto”.
 
