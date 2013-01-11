@@ -693,15 +693,18 @@ int dlg_new_dialog(struct sip_msg *msg, struct cell *t)
 		dlg = get_dlg(&callid, &ftag, &ttag, &dir);
 		if (dlg)
 		{
-			LM_DBG("Callid '%.*s' found, must be a spiraled request\n",
-					callid.len, callid.s);
-			spiral_detected = 1;
+			if ( dlg->state!=DLG_STATE_DELETED ) {
+				LM_DBG("Callid '%.*s' found, must be a spiraled request\n",
+						callid.len, callid.s);
+				spiral_detected = 1;
 
-			run_dlg_callbacks( DLGCB_SPIRALED, dlg, msg, DLG_DIR_DOWNSTREAM, 0);
+				run_dlg_callbacks( DLGCB_SPIRALED, dlg, msg, DLG_DIR_DOWNSTREAM, 0);
 
-			// get_dlg with del==0 has incremented the ref count by 1
+				// get_dlg with del==0 has incremented the ref count by 1
+				unref_dlg(dlg, 1);
+				goto finish;
+			}
 			unref_dlg(dlg, 1);
-			goto finish;
 		}
 	}
 	spiral_detected = 0;
