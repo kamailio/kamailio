@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     4.0.0
-%define rel     dev8%{dist}
+%define rel     pre0%{dist}
 
 
 
@@ -1076,6 +1076,8 @@ fi
 
 
 %changelog
+* Fri Jan 11 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to pre0
 * Thu Jan 10 2013 Peter Dunkley <peter@dunkley.me.uk>
   - More IMS updates
 * Tue Jan 8 2013 Peter Dunkley <peter@dunkley.me.uk>
