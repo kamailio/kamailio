@@ -415,7 +415,6 @@ int sql_exec_xquery(struct sip_msg *msg, sql_con_t *con, str *query,
 	sr_xavp_t *row = NULL;
 	sr_xval_t val;
 	int i, j;
-	str sv;
 
 	if(msg==NULL || query==NULL || xavp==NULL)
 	{
