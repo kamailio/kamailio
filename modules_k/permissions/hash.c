@@ -528,7 +528,6 @@ int addr_hash_table_mi_print(struct addr_list** table, struct mi_node* rpl)
 int addr_hash_table_rpc_print(struct addr_list** table, rpc_t* rpc, void* c)
 {
 	int i;
-	int count;
 	void* th;
 	void* ih;
 	struct addr_list *np;
