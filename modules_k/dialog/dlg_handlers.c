@@ -805,16 +805,20 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
         dlg = get_dlg(&callid, &ftag, &ttag, &dir);
         if (dlg)
         {
-            LM_DBG("Callid '%.*s' found, must be a spiraled request\n",
-                callid.len, callid.s);
-            spiral_detected = 1;
+			if ( dlg->state != DLG_STATE_DELETED )
+			{
+				LM_DBG("Callid '%.*s' found, must be a spiraled request\n",
+					callid.len, callid.s);
+				spiral_detected = 1;
 
-            if (run_initial_cbs)
-                run_dlg_callbacks( DLGCB_SPIRALED, dlg, req, NULL,
-						DLG_DIR_DOWNSTREAM, 0);
-            /* get_dlg() has incremented the ref count by 1
-			 * - it's ok, dlg will be unref at the end of function */
-            goto finish;
+				if (run_initial_cbs)
+					run_dlg_callbacks( DLGCB_SPIRALED, dlg, req, NULL,
+							DLG_DIR_DOWNSTREAM, 0);
+				/* get_dlg() has incremented the ref count by 1
+				 * - it's ok, dlg will be unref at the end of function */
+				goto finish;
+			}
+			dlg_release(dlg);
         }
     }
     spiral_detected = 0;
