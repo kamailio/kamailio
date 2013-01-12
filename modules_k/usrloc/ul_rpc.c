@@ -42,6 +42,7 @@ int rpc_dump_contact(rpc_t* rpc, void* ctx, void *ih, ucontact_t* c)
 	str socket_str = {"[not set]", 9};
 	time_t t;
 
+	t = time(0);
 	if(rpc->struct_add(ih, "{", "Contact", &vh)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error creating contact struct");
@@ -186,7 +187,6 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 	struct urecord* r;
 	dlist_t* dl;
 	udomain_t* dom;
-	time_t t;
 	str brief = {0, 0};
 	int summary = 0;
 	ucontact_t* c;
@@ -201,7 +201,6 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 	if(brief.len==5 && (strncmp(brief.s, "brief", 5)==0))
 		summary = 1;
 	
-	t = time(0);
 	for( dl=root ; dl ; dl=dl->next ) {
 		dom = dl->d;
 		if (rpc->add(ctx, "{", &th) < 0)
@@ -228,7 +227,6 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 					if(rpc->struct_add(ah, "S",
 							"AoR", &r->aor)<0)
 					{
-						unlock_ulslot( dom, i);
 						rpc->fault(ctx, 500, "Internal error creating aor struct");
 						return;
 					}
@@ -329,7 +327,6 @@ static void ul_rpc_lookup(rpc_t* rpc, void* ctx)
 	udomain_t* dom;
 	str table = {0, 0};
 	str aor = {0, 0};
-	ucontact_t* c;
 	void* th;
 	urecord_t *rec;
 	ucontact_t* con;
