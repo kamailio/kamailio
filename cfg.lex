@@ -198,6 +198,7 @@ BREAK	"break"
 LOG		log
 ERROR	error
 ROUTE	route
+ROUTE_IF route_if_exist
 ROUTE_REQUEST request_route
 ROUTE_FAILURE failure_route
 ROUTE_REPLY reply_route
@@ -617,6 +618,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{AVPFLAGS_DECL}	{ count(); yylval.strval=yytext; return AVPFLAGS_DECL; }
 <INITIAL>{MSGLEN}	{ count(); yylval.strval=yytext; return MSGLEN; }
 <INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }
+<INITIAL>{ROUTE_IF}	{ count(); yylval.strval=yytext; return ROUTE_IF; }
 <INITIAL>{ROUTE_REQUEST}	{ count(); yylval.strval=yytext; return ROUTE_REQUEST; }
 <INITIAL>{ROUTE_ONREPLY}	{ count(); yylval.strval=yytext;
 								return ROUTE_ONREPLY; }
