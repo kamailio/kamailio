@@ -581,7 +581,7 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 	str profile = {"exp", 3};
 	regpv_profile_t *rpp;
 	ucontact_t* c0;
-	int rt, backup_rt;
+	int backup_rt;
 	struct run_act_ctx ctx;
 	sip_msg_t *fmsg;
 	int olen;
@@ -691,7 +691,7 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 	backup_rt = get_route_type();
 	set_route_type(REQUEST_ROUTE);
 	init_run_actions_ctx(&ctx);
-	run_top_route(event_rt.rlist[rt], fmsg, 0);
+	run_top_route(event_rt.rlist[reg_expire_event_rt], fmsg, 0);
 	set_route_type(backup_rt);
 
 	return;
