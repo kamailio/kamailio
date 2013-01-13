@@ -300,7 +300,6 @@ extern char *finame;
 
 
 /* keywords */
-%token ROUTE_IF
 %token FORWARD
 %token FORWARD_TCP
 %token FORWARD_TLS
@@ -3243,17 +3242,6 @@ cmd:
 	}
 	| ERROR error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| ERROR LPAREN error RPAREN { $$=0; yyerror("bad error argument"); }
-	| ROUTE_IF LPAREN ID RPAREN	{
-		if ($3) {
-			$$ = mk_action(ROUTE_IF_T, 1, STRING_ST, (void*)$3);
-			set_cfg_pos($$);
-		} else {
-			$$ = 0;
-			YYERROR;
-		}
-	}
-	| ROUTE_IF error { $$=0; yyerror("missing '(' or ')' ?"); }
-	| ROUTE_IF LPAREN error RPAREN { $$=0; yyerror("bad route_if_exist argument"); }
 	| ROUTE LPAREN rval_expr RPAREN	{
 		if ($3) {
 			$$ = mk_action(ROUTE_T, 1, RVE_ST, (void*)$3);

@@ -37,6 +37,11 @@
 		<surname>Kuthan</surname>
 		<email>jiri@iptel.org</email>
 		</author>
+		<author>
+		<firstname>Olle E.</firstname>
+		<surname>Johansson</surname>
+		<email>oej@edvina.net</email>
+		</author>
 		<editor>
 		<firstname>Daniel-Constantin</firstname>
 		<surname>Mierla</surname>
@@ -44,9 +49,11 @@
 		</editor>
 	</authorgroup>
 	<copyright>
+		<year>2013</year>
 		<year>2007</year>
 		<year>2008</year>
 		<year>2004</year>
+		<holder>Edvina AB</holder>
 		<holder>1und1 Internet AG</holder>
 		<holder>BASIS AudioNet GmbH</holder>
 		<holder>Elena-Ramona Modroiu</holder>

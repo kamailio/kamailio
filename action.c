@@ -646,29 +646,6 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					"not implemented yet\n", a->val[0].u.string, a->val[1].u.string);
 			ret=1;
 			break;
-		case ROUTE_IF_T:
-			rv = rval_expr_eval(h, msg, a->val[0].u.data);
-			rval_cache_init(&c1);
-			if (unlikely(rv == 0 || rval_get_tmp_str(h, msg, &s, rv, 0, &c1) < 0)) {
-				rval_destroy(rv);
-				rval_cache_clean(&c1);
-				ERR("failed to convert RVE to string\n");
-				ret = E_UNSPEC;
-				goto error;
-			}
-			i = route_lookup(&main_rt, s.s);
-			rval_destroy(rv);
-			rval_cache_clean(&c1);
-			s.s = 0;
-			if (unlikely(i < 0)) {
-				/* Give up silently */
-				break;
-			}
-			ret=run_actions(h, main_rt.rlist[i], msg);
-			h->last_retcode=ret;
-			_last_returned_code = h->last_retcode;
-			h->run_flags&=~(RETURN_R_F|BREAK_R_F); /* absorb return & break */
-			break;
 		case ROUTE_T:
 			if (likely(a->val[0].type == NUMBER_ST))
 				i = a->val[0].u.number;
