@@ -85,8 +85,10 @@ define PACKAGE_GRP_INSTALL_template
 		-for d in $(DUP_LIBS_DIRS); do \
 			test "$$d" != "$(CURDIR)/debian/kamailio-$(grp)-modules/usr/$(LIBDIR)/kamailio" &&\
 			for r in $$d/lib*; do \
-				echo "removing $(grp) lib `basename $$r` present also in $$d";\
-				rm -f $(CURDIR)/debian/kamailio-$(grp)-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"` ; \
+				if [ "$$r" != "$$d/lib*" ]; then \
+					echo "removing $(grp) lib `basename $$r` present also in $$d";\
+					rm -f $(CURDIR)/debian/kamailio-$(grp)-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"` ; \
+				fi \
 			done ; \
 		done
 	)
@@ -103,8 +105,10 @@ define PACKAGE_MODULE_INSTALL_template
 		-for d in $(DUP_LIBS_DIRS); do \
 			test "$$d" != "$(CURDIR)/debian/kamailio-$(call mod_name,$(mod))-module/usr/$(LIBDIR)/kamailio" &&\
 			for r in $$d/lib*; do \
-				echo "removing $(call mod_name, $(mod)) lib `basename $$r` present also in $$d";\
-				rm -f $(CURDIR)/debian/kamailio-$(call mod_name,$(mod))-module/usr/$(LIBDIR)/kamailio/`basename "$$r"` ; \
+				if [ "$$r" != "$$d/lib*" ]; then \
+					echo "removing $(call mod_name, $(mod)) lib `basename $$r` present also in $$d";\
+					rm -f $(CURDIR)/debian/kamailio-$(call mod_name,$(mod))-module/usr/$(LIBDIR)/kamailio/`basename "$$r"` ; \
+				fi \
 			done ; \
 		done
 	)
