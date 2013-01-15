@@ -107,7 +107,7 @@ static int fixup_lir(void** param, int param_no);
 
 static cmd_export_t cmds[] = {
     {"I_perform_user_authorization_request", (cmd_function) I_perform_user_authorization_request, 1, fixup_uar, 0, REQUEST_ROUTE},
-    {"I_perform_location_information_request", (cmd_function) I_perform_location_information_request, 0, fixup_lir, 0, REQUEST_ROUTE},
+    {"I_perform_location_information_request", (cmd_function) I_perform_location_information_request, 1, fixup_lir, 0, REQUEST_ROUTE},
     {"I_scscf_select", (cmd_function) I_scscf_select, 1, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
     {"I_scscf_drop", (cmd_function) I_scscf_drop, 0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
     { 0, 0, 0, 0, 0, 0}
