@@ -62,6 +62,10 @@ very few, Kamailio enabling next compile time flags:
   - internal statistics
   - application server extensions in tm module
 
+In version 4.0.0 the modules were merged into one set and the merger
+between the two products was completed. Kamailio is now the main
+flavour.
+
 Switching between flavours is a matter of 'make' command parameters.
 
 Several installation tutorials for Kamailio are available on the web wiki:
@@ -130,6 +134,7 @@ Requirements:
 - libpcre libs and devel headers - if you want to compile the lcr and dialplan
   modules
 - libsctp devel headers - if you want to compile the SCTP transport in the core
+- linunistring - for the Websockets module
 
 
 OS Notes:
@@ -253,10 +258,8 @@ B) Build Commands
 
 Compile modules except some explicitly excepted (see below)
 	make modules  - all modules in the modules/ directory (common modules)
-	make modules_s - all modules in the modules_s/ directory (ser modules)
 	make modules_k - all modules in the modules_k/ directory (kamailio modules)
-	make modules-all or make every-module  - all the modules (modules, modules_s
-                                         and module_k)
+	make modules-all or make every-module  - all the modules (modules and module_k)
 
 * Compile all:
 	make all
@@ -680,10 +683,10 @@ D) SIP Server with Persistent Data Storage
 
 3.2) create MySQL tables for Kamailio flavour
 	- if you have a previously installed Kamailio on your system, use
-    	/usr/sbin/kamdbctl reinstall 
+    	/usr/local/sbin/kamdbctl reinstall 
 	  to convert your Kamailio database into new structures
 	- otherwise, if this is your very first installation, use
-    	/usr/sbin/kamdbctl create
+    	/usr/local/sbin/kamdbctl create
 	  to create Kamailio database structures
    (you will be prompted for password of MySql "root" user)
 

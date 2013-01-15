@@ -3,23 +3,14 @@
 SIP-ROUTER modules
 ==================
 
-This is the first release of the combined project. In order to be able to support
-an upgrade path for both Kamailio/OpenSER and SER current users, we have been forced to
-provide some modules in two versions, which means that we have three set of modules:
+This is the first release of the merged product - Kamailio and SER. 
+In the previous release some modules where provided in two versions, in Kamailio
+and SER flavours. These are now merged. In some cases, the functionality has 
+changed. You can still do the same operation, but how you do it may be different.
 
+Modules are divided in two directories
  - modules: 	the SIP router modules
  - modules_k: 	Kamailio modules
- - modules_s: 	SER modules
-
-All modules are compatible with the core, so regardless if you are a new user or 
-an existing, you are free to make a choice between the three sets as well as
-mix and match between them.
-
-Note that if you are currently using one product, you want to select the module
-that exists in the K/S directories first to get a smooth upgrade path.
-
-As sip-router development progress, we will move as many modules as possible
-into the core and only keep k/s modules for backwards compatibility when required.
 
 What is a module?
 =================
@@ -27,21 +18,15 @@ A module consists of a lot of functions that enhance the core. Some of the modul
 depends on other modules. It's all properly documented in the README that belongs
 to each module (available as web pages on the sip-router.org web site).
 
-A module providers up to three different APIs:
+A module providers up to five different APIs:
 
 - Enhancements to the core SIP-router routing script (functions)
-- Commands for the management interface (MI)
+- Commands for the management interface (MI and RPC)
 - Development interface for other modules
+- Pseudo-variables
+- Selects and config framework variables
 
 A single module may provide a selection of this, maybe only one of them.
-
-Why do we have two modules with the same name?
-==============================================
-Some modules exists both in modules_k and modules_s - like xlog. If you are
-upgrading from Kamailio, we recommend using the one in modules_k for backwards
-compatibility, if you are using SER then select the one in modules_s.
-In the future the development team will try to integrate modules that are
-split like this into one integrated module.
 
 Core modules
 ------------
