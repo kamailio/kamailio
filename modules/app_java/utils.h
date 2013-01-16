@@ -28,5 +28,7 @@
 #include <string.h>
 
 char **split(char *, char *);
+char *rand_string(const int);
+char *str_replace(char *, char *, char *);
 
 #endif

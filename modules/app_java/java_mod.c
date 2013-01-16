@@ -163,6 +163,7 @@ static int mod_init(void)
     }
 
 
+//    KamailioClass = (*env)->FindClass(env, class_name.s);
     KamailioClass = (*env)->FindClass(env, class_object_name);
     pkg_free(class_object_name);
     if (!KamailioClass || (*env)->ExceptionCheck(env))
@@ -243,6 +244,7 @@ static int child_init(int rank)
 
     (*env)->DeleteLocalRef(env, child_init_id);
 
+
     if (jvm != NULL)
         (*jvm)->DetachCurrentThread(jvm);
 
@@ -259,6 +261,7 @@ static void mod_destroy(void)
 
     if (jvm != NULL)
     {
+
 	(*jvm)->DetachCurrentThread(jvm);
 	(*jvm)->DestroyJavaVM(jvm);
     }

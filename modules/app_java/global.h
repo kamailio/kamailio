@@ -33,8 +33,18 @@
 
 #define	JAVA_MODULE_PKG_PATH	"org/sip-router"
 
+typedef struct threadData
+{
+    JNIEnv	*env;
+    JavaVM	*jvm;
+    char	*sClassName;
+    int		iThreadIndex;
+} tstThreadData;
+
+
 JavaVM *jvm;
 JNIEnv *env;
+tstThreadData *pThreadData;
 jclass KamailioClass;
 jclass KamailioClassInstanceRef;
 jobject KamailioClassInstance;

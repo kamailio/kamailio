@@ -27,8 +27,6 @@
 #include <time.h>
 
 #include "utils.h"
-#include "../../sr_module.h"
-
 
 char **split(char *str, char *sep)
 {
@@ -37,13 +35,11 @@ char **split(char *str, char *sep)
     char *saveptr = NULL;
     int i;
 
-    buf = (char **)pkg_realloc(NULL, sizeof(char *));
+    buf = (char **)calloc(1, sizeof(char *));
     if (!buf)
     {
-	LM_ERR("pkg_realloc() has failed. Not enough memory!\n");
-	return NULL;
+	return '\0';
     }
-    memset(&buf, 0, sizeof(char *));
 
     if (str == NULL)
 	return buf;
@@ -63,18 +59,79 @@ char **split(char *str, char *sep)
         if (token == NULL || !strcmp(token, ""))
             break;
 
-	buf = (char **)pkg_realloc(buf, (i+1) * sizeof(char *));
-	if (!buf)
-	{
-	    LM_ERR("pkg_realloc() has failed. Not enough memory!\n");
-	    return NULL;
-	}
+	buf = (char **)realloc(buf, (i+1) * sizeof(char *));
         buf[i] = strdup(token);
     }
-    buf[i] = NULL;
+    buf[i] = '\0';
 
     free(token);
 
     return buf;
 }
 
+
+char *rand_string(const int len)
+{
+    char *buf;
+    const char alphanum[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    int i;
+
+    buf = (char *)calloc(len+1, sizeof(char));
+    if (!buf)
+	return NULL;
+
+    srand(time(NULL));
+    for (i=0; i<len; i++)
+    {
+        buf[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
+    }
+
+    buf[len] = '\0';
+
+    return buf;
+}
+
+char *str_replace(char *original, char *pattern, char *replacement)
+{
+    char *oriptr, *patloc, *retptr, *returned;
+    size_t replen, patlen, orilen, patcnt, retlen, skplen;
+
+    replen = strlen(replacement);
+    patlen = strlen(pattern);
+    orilen = strlen(original);
+    patcnt = 0;
+
+    // find how many times the pattern occurs in the original string
+    for (oriptr = original; (patloc = strstr(oriptr, pattern)); oriptr = patloc + patlen)
+    {
+	patcnt++;
+    }
+
+    // allocate memory for the new string
+    retlen = orilen + patcnt * (replen - patlen);
+    returned = (char *)malloc((retlen+1) * sizeof(char));
+
+    if (returned != NULL)
+    {
+	// copy the original string, 
+	// replacing all the instances of the pattern
+	retptr = returned;
+	for (oriptr = original; (patloc = strstr(oriptr, pattern)); oriptr = patloc + patlen)
+	{
+    	    skplen = patloc - oriptr;
+
+    	    // copy the section until the occurence of the pattern
+    	    strncpy(retptr, oriptr, skplen);
+    	    retptr += skplen;
+
+    	    // copy the replacement 
+    	    strncpy(retptr, replacement, replen);
+    	    retptr += replen;
+	}
+
+	// copy the rest of the string.
+	strcpy(retptr, oriptr);
+    }
+
+    return returned;
+}
