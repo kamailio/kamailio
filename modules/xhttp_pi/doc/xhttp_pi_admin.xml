@@ -39,6 +39,13 @@
 			</para></listitem>
 		</itemizedlist>
 	</para>
+	<para>
+		Note: when provisioning tables using <emphasis>db_text</emphasis>,
+		any change made to a <emphasis>db_text</emphasis> table will not
+		be reflected on the actual text file.  In order to force a write
+		out to the disk of the cached tables, the db_text rpc command
+		<emphasis>db_text.dump</emphasis> must be used.
+	</para>
 	</section>
 
 	<section>

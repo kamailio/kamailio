@@ -97,6 +97,11 @@ Chapter 1. Admin Guide
      * ability to reconfigure the interface layout on the fly by reloading
        the config from the xml framework via the rpc command interface.
 
+   Note: when provisioning tables using db_text, any change made to a
+   db_text table will not be reflected on the actual text file. In order
+   to force a write out to the disk of the cached tables, the db_text rpc
+   command db_text.dump must be used.
+
 2. Usage
 
    The layout of the provisionning interface is controlled via an external
