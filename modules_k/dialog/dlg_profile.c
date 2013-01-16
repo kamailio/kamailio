@@ -613,6 +613,7 @@ int is_dlg_in_profile(struct sip_msg *msg, struct dlg_profile_table *profile,
 	struct dlg_cell *dlg;
 	struct dlg_profile_link *linker;
 	struct dlg_entry *d_entry;
+	int ret;
 
 	/* get current dialog */
 	dlg = dlg_get_msg_dialog(msg);
@@ -620,6 +621,7 @@ int is_dlg_in_profile(struct sip_msg *msg, struct dlg_profile_table *profile,
 	if (dlg==NULL)
 		return -1;
 
+	ret = -1;
 	/* check the dialog linkers */
 	d_entry = &d_table->entries[dlg->h_entry];
 	dlg_lock( d_table, d_entry);
@@ -627,10 +629,12 @@ int is_dlg_in_profile(struct sip_msg *msg, struct dlg_profile_table *profile,
 		if (linker->profile==profile) {
 			if (profile->has_value==0) {
 				dlg_unlock( d_table, d_entry);
+				ret = 1;
 				goto done;
 			} else if (value && value->len==linker->hash_linker.value.len &&
 			memcmp(value->s,linker->hash_linker.value.s,value->len)==0){
 				dlg_unlock( d_table, d_entry);
+				ret = 1;
 				goto done;
 			}
 			/* allow further search - maybe the dialog is inserted twice in
@@ -642,7 +646,7 @@ int is_dlg_in_profile(struct sip_msg *msg, struct dlg_profile_table *profile,
 
 done:
 	dlg_release(dlg);
-	return -1;
+	return ret;
 }
 
 
