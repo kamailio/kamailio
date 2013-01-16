@@ -342,7 +342,7 @@ static const str XHTTP_PI_Response_Foot = str_init(\
 "\n</center>\n<div align=\"center\" class=\"foot\" style=\"margin:20px auto\">"\
 	"<span style='margin-left:5px;'></span>"\
 	"<a href=\"http://kamailio.org\">Kamailio web site</a><br/>"\
-	"Copyright &copy; 2012 <a href=\"http://www.voipembedded.com/\">VoIP Embedded</a>"\
+	"Copyright &copy; 2012-2013 <a href=\"http://www.voipembedded.com/\">VoIP Embedded Inc.</a>"\
 								". All rights reserved."\
 "</div></body></html>");
 
