@@ -58,6 +58,9 @@ kamdbctl pframework create
 		<emphasis>STANDARD_MODULES</emphasis> and
 		<emphasis>EXTRA_MODULES</emphasis> vars from
 		<emphasis>kamctlrc</emphasis> file.
+		The sample framework file will provide the ability to inspect tables.
+		In order to add/modify/remove records to/from tables,
+		new commands must be added by the admin.
 	</para>
 	</section>
 

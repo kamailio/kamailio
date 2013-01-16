@@ -108,7 +108,9 @@ kamdbctl pframework create
    The generated framework will be saved inside Kamailio's config
    directory as pi_framework_sample. The list of configurable tables will
    be based on the STANDARD_MODULES and EXTRA_MODULES vars from kamctlrc
-   file.
+   file. The sample framework file will provide the ability to inspect
+   tables. In order to add/modify/remove records to/from tables, new
+   commands must be added by the admin.
 
 3. Framework
 
