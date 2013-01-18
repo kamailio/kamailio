@@ -10,27 +10,21 @@ auto_gen=
 NAME=carrierroute.so
 
 ifeq ($(CROSS_COMPILE),)
-BUILDER = $(shell which confuse-config)
+CONFUSE_BUILDER = $(shell \
+	if which confuse-config &>/dev/null;then \
+		echo 'confuse-config'; \
+	elif pkg-config --exists libconfuse; then \
+		echo 'pkg-config libconfuse'; \
+	fi)
 endif
 
-ifeq ($(BUILDER),)
-	ifeq ($(CROSS_COMPILE),)
-	BUILDER = $(shell which pkg-config)
-	endif
-	ifeq ($(BUILDER),)
-		CONFUSEDEFS=-I$(LOCALBASE)/include
-		CONFUSELIBS=-L$(LOCALBASE)/lib -lconfuse
-	else
-		CONFUSEDEFS = $(shell pkg-config --cflags libconfuse)
-		CONFUSELIBS = $(shell pkg-config --libs libconfuse)
-	endif
+ifeq ($(CONFUSE_BUILDER),)
+	DEFS += -I$(LOCALBASE)/include
+	LIBS += -L$(LOCALBASE)/lib -lconfuse
 else
-		CONFUSEDEFS = $(shell confuse-config --cflags)
-		CONFUSELIBS = $(shell confuse-config --libs)
+	DEFS += $(shell $(CONFUSE_BUILDER) --cflags)
+	LIBS += $(shell $(CONFUSE_BUILDER) --libs)
 endif
-
-DEFS+=$(CONFUSEDEFS)
-LIBS=$(CONFUSELIBS)
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
