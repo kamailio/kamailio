@@ -172,7 +172,7 @@ static int fixup_stat(void** param, int param_no)
 		}
 
 		if (err==0){
-			if (n==0) {
+			if (n==0 && (s.s[0]!='$')) {	//we can't check the value of the pvar so have to ignore this check if it is a pvar
 				LM_ERR("update with 0 has no sense\n");
 				return E_CFG;
 			}
