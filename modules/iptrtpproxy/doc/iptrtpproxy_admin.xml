@@ -10,6 +10,219 @@
 >
 
 
+<chapter>
+    <section id="iptrtpproxy.overview">
+	<title>Overview</title>
+	<para>
+	This module provides similar functionality as <emphasis>nathelper</emphasis> but
+	communicates with <emphasis>netfilter</emphasis> kernel 
+	<emphasis>xt_RTPPROXY</emphasis> module using
+	the <emphasis>libipt_RTPPROXY</emphasis> userspace library. 
+	All RTP streams are manipulated directly in kernel space, no data is copied from 
+	kernel to userspace and back, it reduces load and delay. 
+	See <ulink url="http://www.2p.cz/en/netfilter_rtp_proxy">
+	http://www.2p.cz/en/netfilter_rtp_proxy</ulink> for more details.
+	</para>
+
+	<para>
+	This &kamailio; module is written as a light-weight module, there is no 
+	dialog managment as in <emphasis>Nathelper</emphasis>. The reason is that such an API
+	should be provided by core or a specialized dialog manager module.
+	Because such module is not in git, session information may be stored 
+	in extra attributes of the <emphasis>avp_db</emphasis> module and
+	the session id itself in record route as cookie, see the <emphasis>rr</emphasis> module.
+	</para>
+
+	<para>
+	It should be able to support all cases as re-invites when SIP client offers media change in SDP and
+	when number of medias in offer/answer are different. 
+	</para>
+
+	<para>
+	<emphasis>Nathelper</emphasis> may be still used for testing if client is behind the NAT.
+	</para>
+
+	<para>
+	There is also support for media authorization. Number of codec sets may be defined.
+	When a message containing SDP offer/answer is being processed then current codecs
+	and streams may be inspected, removed or signallized according a codec set.
+	</para>
+
+
+	<para>
+	Limitations:
+	<itemizedlist>
+		<listitem>
+			<para>
+		 Only IPv4 addresses are supported.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+		 More media streams per session supported
+			</para>
+		</listitem>
+	</itemizedlist>
+	</para>
+    </section>
+
+	<section id="iptrtpproxy.dep">
+	<title>Dependencies</title>
+				   
+	<para>
+	The following libraries or applications must be installed before
+	running &kamailio; with this module loaded:
+	<itemizedlist>
+		<listitem>
+		<para>
+		netfilter xt_RTPPROXY &amp; libipt_RTPPROXY,
+	    see <ulink url="http://www.2p.cz/en/netfilter_rtp_proxy">http://www.2p.cz/en/netfilter_rtp_proxy</ulink>
+		</para>
+		</listitem>
+	</itemizedlist>
+	</para>
+	<note><para>
+	The modules Makefile must be edited and iptdir setup to the directory with
+	the iptable sources (if different from ~/iptables). Alternatively
+	compile the module using: 
+	<programlisting>
+		make -C modules/iptrtpproxy iptdir=path_to_iptables_src
+	</programlisting>
+	</para></note>
+	</section>
+
+	<section id="iptrtpproxy.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+		<title>Parameters</title>
+
+		<section id="config">
+		<title><varname>config</varname> (string)</title>
+		<para>
+  References <emphasis>iptrtpproxy.cfg</emphasis>, see <emphasis>iptrtpproxy_helper</emphasis>. Default value
+		is <emphasis>/etc/iptrtpproxy.cfg</emphasis>. If only codec authorization is to be used then 
+		<emphasis>/dev/null</emphasis> may be used.
+		</para>
+		</section>
+
+		<section id="switchboard">
+		<title><varname>switchboard</varname> (string)</title>
+		<para>
+  References <emphasis>xt_RTPPROXY</emphasis> switchboard for usage by ser module. 
+		</para>
+		<para>
+		The format is:
+		</para>
+			<programlisting>
+  "name=" value * ( ";" name "=" value )
+
+  name =  "aggregation" | "sip-addr-" 
+			</programlisting>
+
+		<para>
+  The <emphasis>name</emphasis> is the switchboard name as declared in config and will be used by script functions and references switchboard. 
+  It's mandatory parameter. The special name <emphasis>*</emphasis> set values for all switchboards. 
+		</para>
+		<para>
+  The <emphasis>sip-addr</emphasis> is address used by <function>iptrtpproxy_ser_param(by_sip_ip)</function> to find a switchboard for particular
+  connection. If not explicitly configured then RTP switchboard gate address are used for this feature. 
+		</para>
+		<para>
+The <emphasis>aggregation</emphasis> enables to aggregate more switchboards in cluster and to widden bandwidth.
+Aggregation will take <emphasis>sip-addr</emphasis> from the first switchboard of its. 
+		</para>
+		<example>
+			<title>Declare <varname>switchboard</varname></title>
+			<programlisting>
+	...
+	modparam("iptrtpproxy", "config", "/etc/iptrtpproxy.cfg");
+	modparam("iptrtpproxy", "switchboard", "name=my1;sip-addr-a=1.2.3.4;sip-addr-b=5.6.7.8");
+	modparam("iptrtpproxy", "switchboard", "name=my2;sip-addr-a=2.3.4.5;sip-addr-b=3.4.5.6;aggregation=my23");
+	modparam("iptrtpproxy", "switchboard", "name=my3;aggregation=my23");
+	modparam("iptrtpproxy", "switchboard", "name=*;aggregation=my123");
+	...
+			</programlisting>
+		</example>
+		</section>
+
+		<section id="rpc_heartbeat_timeout">
+		<title><varname>rpc_heartbeat_timeout</varname> (int)</title>
+		<para>
+		Timeout in seconds used for rerequest remote RTP proxy via RPC command after preceeding error.
+		In other words if a RPC server is unresponsive at the moment then next attempt will be forced
+		after this timeout. Default value is <emphasis>30</emphasis>.
+		</para>
+		</section>
+
+		<section id="hostname">
+		<title><varname>hostname</varname> (string)</title>
+		<para>
+		The hostname used by RPC to identify machine where Ser is running to communicate which RTP proxy
+		via local interface. Default value is taken from system hostname.
+		</para>
+		</section>
+
+		<section id="declare_codec">
+		<title><varname>declare_codec</varname> (string)</title>
+		<para>
+		There are basic implicit codecs compiled in module, more codecs may be added by this parameter (one codec per modparam).
+		</para>
+		</section>
+
+		<section id="codec_set">
+		<title><varname>codec_set</varname> (string)</title>
+		<para>
+		Declares new codec set. Codecs are declared for each media type independently. 
+		</para>
+		<para>
+		The format is:
+		</para>
+			<programlisting>
+  "name=" value * ( ";" name "=" value )
+
+  name =  "media_type" | "rights" | "codecs" | "max_streams" | ( "rtp" | "rtcp" ) "_" ( "bytes" | "packets" )
+
+  media_types = "audio" | "video" | "application" | "text" | "message" | "data" | "control" | "?" | "*"
+			</programlisting>		
+
+		<para>
+  The <emphasis>name</emphasis> is the codec set name to be defined.
+		</para>
+		<para>
+  The <emphasis>media_type</emphasis> belongs to type at <emphasis>m=</emphasis> SDP line. Question mark means
+  "unknown media" type and asterisk "all media types".
+		</para>
+		<para>
+  The <emphasis>max_streams</emphasis> defines how many streams (m= lines) is allowed per media type.
+		</para>
+		<para>
+  The <emphasis>rights</emphasis> defines if particular codec is allowed <emphasis>0</emphasis>, disallowed, i.e. will be removed
+  if bit AND operation with <function>remove_codec_mask</function> is non-zero or its presence will be signallized by <function>@iptrtpproxy.auth_rights</function> (any other value).
+		</para>
+		<para>
+  The <emphasis>codecs</emphasis> comma separated list of codecs. Previous <emphasis>media_type&amp;rights</emphasis> will be applied.
+		</para>
+		<para>
+  The <emphasis>rtp/rtcp_bytes/packets</emphasis> limits bandwidth per <emphasis>media_type</emphasis> (0 is unlimited). It will override
+  bandwidth limited by <function>iptrtpproxy_set_param("throttle_*")</function>.
+		</para>
+		<example>
+			<title>Declare <varname>codec_set</varname></title>
+			<programlisting>
+	...
+	# enable all codecs, default state when codec is declared
+	modparam("iptrtpproxy", "codec_set", "name=cs1;media_type=*;max_streams=9999;rights=0;codecs=*");
+	# allow only 2 audio and 1 video stream
+	modparam("iptrtpproxy", "codec_set", "name=cs2;media_type=*;max_streams=0;media_type=audio;max_streams=2;media_type=video;max_streams=1");
+	# dtto, allow only a few audio and video codecs, GSM codec is allowed but signallized
+	modparam("iptrtpproxy", "codec_set", "name=cs3;media_type=*;max_streams=0;rights=1;codecs=*;media_type=audio;max_streams=2;rights=0;codecs=PCMU,G729,G728,parityfec,telephone-events;rights=2;codecs=GSM;media_type=video;max_streams=1;rights=0;codecs=jpeg,parityfec");
+	# limit max. bandwidth for video¨	
+	modparam("iptrtpproxy", "codec_set", "name=cs4;media_type=video;rtp_bytes=10000;rtcp_bytes=1000");
+	...
+			</programlisting>
+		</example>
+		</section>
+
+	</section>
 	<section id="iptrtpproxy.funcs" xmlns:xi="http://www.w3.org/2001/XInclude">
 		<title>Functions</title>
 
@@ -340,4 +553,76 @@
 		</para>
 		</section>
 	</section>
+	<section>
+		<title>Selects</title>
 
+		<section id="iptrtpproxy.session_ids">
+		<title>
+			<function>@iptrtpproxy.session_ids</function>
+		</title>
+		<para>
+		Returns sessions allocated/updated in <function>iptrtpproxy_alloc/update</function>.
+		</para>
+
+		<para>
+		The format is:
+		</para>
+
+		<programlisting>
+
+switchboard_name [ ":" [ session_id "/" created ] * ( "," session_id "/" created ) ] ]
+session_id = * ( [0-9] )   ; empty when no session allocated
+created = timestamp
+</programlisting>
+
+		</section>
+
+		<section id="iptrtpproxy.sdp_ip">
+		<title>
+			<function>@iptrtpproxy.sdp_ip</function>
+		</title>
+		<para>
+		Return first rewritten IP provided at SDP <emphasis>c=</emphasis> line.
+		</para>
+		</section>
+
+		<section id="iptrtpproxy.o_name">
+		<title>
+			<function>@iptrtpproxy.o_name</function>
+		</title>
+		<para>
+		Return username from original <emphasis>o=</emphasis> line.
+		</para>
+		</section>
+
+		<section id="iptrtpproxy.o_addr">
+		<title>
+			<function>@iptrtpproxy.o_addr</function>
+		</title>
+		<para>
+		Return address from original <emphasis>o=</emphasis> line.
+		</para>
+		</section>
+
+		<section id="iptrtpproxy.auth_rights">
+		<title>
+			<function>@iptrtpproxy.auth_rights</function>
+		</title>
+		<para>
+		Result of <function>iptrtpproxy_authorize_media</function>.
+		</para>
+		</section>
+
+		<section id="iptrtpproxy.active_media_num">
+		<title>
+			<function>@iptrtpproxy.active_media_num</function>
+		</title>
+		<para>
+		Returns number of active media streams in SDP. <function>iptrtpproxy_authorize_media</function>
+		may disable some streams, i.e. returned value may change after authorization.
+		</para>
+		</section>
+
+	</section>
+
+</chapter>
