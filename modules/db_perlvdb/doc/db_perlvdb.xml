@@ -36,8 +36,8 @@
 	</bookinfo>
 	<toc></toc>
 	
-	<xi:include href="perlvdb_admin.xml"/>
-	<xi:include href="perlvdb_devel.xml"/>
+	<xi:include href="db_perlvdb_admin.xml"/>
+	<xi:include href="db_perlvdb_devel.xml"/>
 	
 	
 </book>

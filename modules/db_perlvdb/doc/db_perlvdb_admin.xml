@@ -35,12 +35,12 @@
 		database backend using the db_url_parameter:
 	</para>
 	<programlisting>
-modparam("acc", "db_url", "perlvdb:OpenSER::VDB::Adapter::AccountingSIPtrace")
+modparam("acc", "db_url", "perlvdb:Kamailio::VDB::Adapter::AccountingSIPtrace")
 </programlisting>
 	<para>
 		This configuration options tells acc module that it should use the
 		perlvdb module which will in turn use the Perl class
-		OpenSER::VDB::Adapter::AccountingSIPtrace
+		Kamailio::VDB::Adapter::AccountingSIPtrace
 		to relay the database requests.
 	</para>
 	</section>

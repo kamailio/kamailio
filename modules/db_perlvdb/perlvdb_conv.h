@@ -31,7 +31,7 @@
 #include "../../lib/srdb1/db_val.h"
 #include "../../lib/srdb1/db_key.h"
 
-#include "perlvdb.h"
+#include "db_perlvdb.h"
 
 #include <XSUB.h>
 

@@ -28,7 +28,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-#include "perlvdb.h"
+#include "db_perlvdb.h"
 #include "perlvdbfunc.h"
 #include "../../str.h"
 

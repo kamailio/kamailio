@@ -24,7 +24,7 @@
  *
  */
 
-#include "perlvdb.h"
+#include "db_perlvdb.h"
 
 MODULE_VERSION
 
@@ -58,7 +58,7 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-	"perlvdb",
+	"db_perlvdb",
 	RTLD_NOW | RTLD_GLOBAL, /* dlopen flags */
 	cmds,
 	params,      /*  module parameters */

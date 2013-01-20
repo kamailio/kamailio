@@ -27,14 +27,14 @@ Bastian Friedrich
    2. Developer Guide
 
         1. Introduction
-        2. Base class OpenSER::VDB
+        2. Base class Kamailio::VDB
         3. Data types
 
-              3.1. OpenSER::VDB::Value
-              3.2. OpenSER::VDB::Pair
-              3.3. OpenSER::VDB::ReqCond
-              3.4. OpenSER::VDB::Column
-              3.5. OpenSER::VDB::Result
+              3.1. Kamailio::VDB::Value
+              3.2. Kamailio::VDB::Pair
+              3.3. Kamailio::VDB::ReqCond
+              3.4. Kamailio::VDB::Column
+              3.5. Kamailio::VDB::Result
 
         4. Adapters
 
@@ -71,11 +71,11 @@ Chapter 1. Admin Guide
 
    Modules can be configured to use the perlvdb module as database backend
    using the db_url_parameter:
-modparam("acc", "db_url", "perlvdb:OpenSER::VDB::Adapter::AccountingSIPtrace")
+modparam("acc", "db_url", "perlvdb:Kamailio::VDB::Adapter::AccountingSIPtrace")
 
    This configuration options tells acc module that it should use the
    perlvdb module which will in turn use the Perl class
-   OpenSER::VDB::Adapter::AccountingSIPtrace to relay the database
+   Kamailio::VDB::Adapter::AccountingSIPtrace to relay the database
    requests.
 
 2. Dependencies
@@ -107,14 +107,14 @@ Chapter 2. Developer Guide
    Table of Contents
 
    1. Introduction
-   2. Base class OpenSER::VDB
+   2. Base class Kamailio::VDB
    3. Data types
 
-        3.1. OpenSER::VDB::Value
-        3.2. OpenSER::VDB::Pair
-        3.3. OpenSER::VDB::ReqCond
-        3.4. OpenSER::VDB::Column
-        3.5. OpenSER::VDB::Result
+        3.1. Kamailio::VDB::Value
+        3.2. Kamailio::VDB::Pair
+        3.3. Kamailio::VDB::ReqCond
+        3.4. Kamailio::VDB::Column
+        3.5. Kamailio::VDB::Result
 
    4. Adapters
 
@@ -124,8 +124,8 @@ Chapter 2. Developer Guide
 
 1. Introduction
 
-   OpenSER uses a database API for requests of numerous different types of
-   data. Four primary operations are supported:
+   Kamailio uses a database API for requests of numerous different types
+   of data. Four primary operations are supported:
      * query
      * insert
      * update
@@ -134,21 +134,21 @@ Chapter 2. Developer Guide
    This module relays these database requests to user implemented Perl
    functions.
 
-2. Base class OpenSER::VDB
+2. Base class Kamailio::VDB
 
    A client module has to be configured to use the perlvdb module in
    conjunction with a Perl class to provide the functions. The configured
-   class needs to inherit from the base class OpenSER::VDB.
+   class needs to inherit from the base class Kamailio::VDB.
 
    Derived classes have to implement the necessary functions "query",
    "insert", "update" and/or "delete". The client module specifies the
    necessary functions. To find out which functions are called from a
    module, its processes may be evaluated with the
-   OpenSER::VDB::Adapter::Describe class which will log incoming requests
+   Kamailio::VDB::Adapter::Describe class which will log incoming requests
    (without actually providing any real functionality).
 
    While users can directly implement their desired functionality in a
-   class derived from OpenSER::VDB, it is advisable to split the
+   class derived from Kamailio::VDB, it is advisable to split the
    implementation into an Adapter that transforms the relational
    structured parameters into pure Perl function arguments, and add a
    virtual table (VTab) to provide the relaying to an underlying
@@ -156,48 +156,48 @@ Chapter 2. Developer Guide
 
 3. Data types
 
-   3.1. OpenSER::VDB::Value
-   3.2. OpenSER::VDB::Pair
-   3.3. OpenSER::VDB::ReqCond
-   3.4. OpenSER::VDB::Column
-   3.5. OpenSER::VDB::Result
+   3.1. Kamailio::VDB::Value
+   3.2. Kamailio::VDB::Pair
+   3.3. Kamailio::VDB::ReqCond
+   3.4. Kamailio::VDB::Column
+   3.5. Kamailio::VDB::Result
 
    Before introducing the higher level concepts of this module, the used
-   datatypes will briefly be explained. The OpenSER Perl library includes
+   datatypes will briefly be explained. The Kamailio Perl library includes
    some data types that have to be used in this module:
 
-3.1. OpenSER::VDB::Value
+3.1. Kamailio::VDB::Value
 
    A value includes a data type flag and a value. Valid data types are
    DB_INT, DB_DOUBLE, DB_STRING, DB_STR, DB_DATETIME, DB_BLOB, DB_BITMAP.
    A new variable may be created with
-my $val = new OpenSER::VDB::Value(DB_STRING, "foobar");
+my $val = new Kamailio::VDB::Value(DB_STRING, "foobar");
 
    Value objects contain the type() and data() methods to get or set the
    type and data attributes.
 
-3.2. OpenSER::VDB::Pair
+3.2. Kamailio::VDB::Pair
 
    The Pair class is derived from the Value class and additionally
    contains a column name (key). A new variable may be created with
-my $pair = new OpenSER::VDB::Pair("foo", DB_STRING, "bar");
+my $pair = new Kamailio::VDB::Pair("foo", DB_STRING, "bar");
 
    where foo is the key and bar is the value. Additonally to the methods
    of the Value class, it contains a key() method to get or set the key
    attribute.
 
-3.3. OpenSER::VDB::ReqCond
+3.3. Kamailio::VDB::ReqCond
 
    The ReqCond class is used for select condition and is derived from the
    Pair class. It contains an addtional operator attribute. A new variable
    may be created with
-my $cond = new OpenSER::VDB::ReqCond("foo", ">", DB_INT, 5);
+my $cond = new Kamailio::VDB::ReqCond("foo", ">", DB_INT, 5);
 
    where foo is the key, "greater" is the operator and 5 is the value to
    compare. Additonally to the methods of the Pair class, it contains an
    op() method to get or set the operator attribute.
 
-3.4. OpenSER::VDB::Column
+3.4. Kamailio::VDB::Column
 
    This class represents a column definition or database schema. It
    contains an array for the column names and an array for the column
@@ -205,12 +205,12 @@ my $cond = new OpenSER::VDB::ReqCond("foo", ">", DB_INT, 5);
    created with
 my @types = { DB_INT, DB_STRING };
 my @names = { "id", "vals" };
-my $cols = new OpenSER::VDB::Column(\@types, \@names);
+my $cols = new Kamailio::VDB::Column(\@types, \@names);
 
    The class contains the methods type() and name() to get or set the type
    and name arrays.
 
-3.5. OpenSER::VDB::Result
+3.5. Kamailio::VDB::Result
 
    The Result class represents a query result. It contains a schema (class
    Column) and an array of rows, where each row is an array of Values. The
@@ -227,7 +227,7 @@ my $cols = new OpenSER::VDB::Column(\@types, \@names);
    another user/host pair. The Alias adapter turns the ReqCond array into
    two separate scalars that are used as parameters for a VTab call.
 
-   Adapter classes have to inherit from the OpenSER::VDB base class and
+   Adapter classes have to inherit from the Kamailio::VDB base class and
    may provide one or more functions with the names insert, update,
    replace, query and/or delete, depending on the module which is to be
    used with the adapter. While modules such as alias_db only require a
@@ -238,24 +238,24 @@ my $cols = new OpenSER::VDB::Column(\@types, \@names);
    The implemented functions need to deal with the correct data types. The
    parameter and return types are listed in this section.
 
-   insert() is passed an array of OpenSER::VDB::Pair objects. It should
+   insert() is passed an array of Kamailio::VDB::Pair objects. It should
    return an integer value.
 
-   replace() is passed an array of OpenSER::VDB::Pair objects. This
+   replace() is passed an array of Kamailio::VDB::Pair objects. This
    function is currently not used by any publicly available modules. It
    should return an integer value.
 
-   delete() is passed an array of OpenSER::VDB::ReqCond objects. It should
-   return an integer value.
+   delete() is passed an array of Kamailio::VDB::ReqCond objects. It
+   should return an integer value.
 
-   update() is passed an array of OpenSER::VDB::ReqCond objects (which
-   rows to update) and an array of OpenSER::VDB::Pair objects (new data).
+   update() is passed an array of Kamailio::VDB::ReqCond objects (which
+   rows to update) and an array of Kamailio::VDB::Pair objects (new data).
    It should return an integer value.
 
-   query() is passed an array of OpenSER::VDB::ReqCond objects (which rows
-   to select), an array of strings (which column names to return) and a
-   single string by which column to sort. It should return an object of
-   type OpenSER::VDB::Result.
+   query() is passed an array of Kamailio::VDB::ReqCond objects (which
+   rows to select), an array of strings (which column names to return) and
+   a single string by which column to sort. It should return an object of
+   type Kamailio::VDB::Result.
 
 5. VTabs
 
