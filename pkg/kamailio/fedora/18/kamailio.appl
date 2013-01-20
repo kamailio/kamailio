@@ -1,0 +1,42 @@
+name: "kamailio-fc18-#BASE_ARCH#"
+summary: "Fedora 18 image for installing Kamailio #BASE_ARCH# RPMs"
+os:
+  name: fedora
+  version: 18
+  password: kamailio
+hardware:
+  memory: 1024
+  partitions:
+    "/":
+      size: 2
+packages:
+  - @core
+  - @base
+  - db4				# kamailio-bdb
+  - expat			# kamailio-xmpp
+  - GeoIP			# kamailio-GeoIP
+  - glib			# kamailio-purple
+  - hiredis			# kamailio-redis
+  - json-c			# kamailio-json
+  - libconfuse			# kamailio-carrierroute
+  - libcurl			# kamailio-utils, kamailio-presence
+  - libevent			# kamailio-json
+  - libpurple			# kamailio-purple
+  - libunistring		# kamailio-websocket
+  - libxml2			# kamailio-cdp, kamailio-cpl, kamailio-ims, kamailio-presence, kamailio-purple, kamailio-utils, kamailio-xhttp-pi, kamailio-xmlops, kamailio-xmlrpc
+  - lksctp-tools		# kamailio
+  - mod_perl			# kamailio-perl
+  - mono-core			# kamailio-mono
+  - mysql-libs			# kamailio-mysql
+  - net-snmp-libs		# kamailio-snmpstats
+  - openldap			# kamailio-ldap
+  - openssl			# kamailio
+  - pcre			# kamailio-regex, kamailio-dialplan, kamailio-lcr
+  - perl-Authen-SASL		# kamailio-perl
+  - perl-LDAP			# kamailio-perl
+  - postgresql-libs		# kamailio-postgresql
+  - python			# kamailio-python
+  - radiusclient-ng		# kamailio-radius
+  - sqlite			# kamailio-sqlite
+  - unixODBC			# kamailio-unixODBC
+  - zlib			# kamailio-mysql

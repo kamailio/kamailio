@@ -1,0 +1,49 @@
+name: "kamailio-build-fc18-#BASE_ARCH#"
+summary: "Fedora 18 image for building Kamailio #BASE_ARCH# RPMs"
+os:
+  name: fedora
+  version: 18
+  password: kamailio
+hardware:
+  memory: 1024
+  partitions:
+    "/":
+      size: 6
+packages:
+  - @core
+  - @base
+  - bison			# kamailio
+  - db4-devel			# kamailio-bdb
+  - docbook2X
+  - expat-devel			# kamailio-xmpp
+  - flex			# kamailio
+  - GeoIP-devel			# kamailio-GeoIP
+  - gcc
+  - git
+  - glib-devel			# kamailio-purple
+  - hiredis-devel		# kamailio-redis
+  - json-c-devel		# kamailio-json
+  - libconfuse-devel		# kamailio-carrierroute
+  - libcurl-devel		# kamailio-utils, kamailio-presence
+  - libevent-devel		# kamailio-json
+  - libpurple-devel		# kamailio-purple
+  - libunistring-devel		# kamailio-websocket
+  - libxml2-devel		# kamailio-cdp, kamailio-cpl, kamailio-ims, kamailio-presence, kamailio-purple, kamailio-utils, kamailio-xhttp-pi, kamailio-xmlops, kamailio-xmlrpc
+  - lksctp-tools-devel		# kamailio
+  - lua-devel			# kamailio-lua
+  - make			# kamailio
+  - mod_perl-devel		# kamailio-perl
+  - mono-devel			# kamailio-mono
+  - mysql-devel			# kamailio-mysql
+  - net-snmp-devel		# kamailio-snmpstats
+  - openldap-devel		# kamailio-ldap
+  - openssl-devel		# kamailio
+  - pcre-devel			# kamailio-regex, kamailio-dialplan, kamailio-lcr
+  - postgresql-devel		# kamailio-postgresql
+  - python-devel		# kamailio-python
+  - radiusclient-ng-devel	# kamailio-radius
+  - redhat-rpm-config		# kamailio-debuginfo
+  - rpm-build
+  - sqlite-devel		# kamailio-sqlite
+  - unixODBC-devel		# kamailio-unixODBC
+  - zlib-devel			# kamailio-mysql
