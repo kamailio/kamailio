@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Perl module for OpenSER
+ * Perl module for Kamailio
  *
  * Copyright (C) 2006 Collax GmbH 
  *                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -128,7 +128,7 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	}
 
 	m = sv_newmortal();
-	sv_setref_pv(m, "OpenSER::Message", (void *)_msg);
+	sv_setref_pv(m, "Kamailio::Message", (void *)_msg);
 	SvREADONLY_on(SvRV(m));
 
 

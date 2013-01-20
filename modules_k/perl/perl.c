@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Perl module for OpenSER
+ * Perl module for Kamailio
  *
  * Copyright (C) 2006 Collax GmbH
  *                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -24,7 +24,7 @@
  *
  */
 
-#define DEFAULTMODULE "OpenSER"
+#define DEFAULTMODULE "Kamailio"
 #define MAX_LIB_PATHS 10
 
 #include <stdio.h>
@@ -53,7 +53,7 @@ MODULE_VERSION
 /* Full path to the script including executed functions */
 char *filename = NULL;
 
-/* Path to an arbitrary directory where the OpenSER Perl modules are
+/* Path to an arbitrary directory where the Kamailio Perl modules are
  * installed */
 char *modpath = NULL;
 
@@ -165,18 +165,18 @@ struct module_exports exports = {
 
 
 EXTERN_C void boot_DynaLoader (pTHX_ CV* cv);
-EXTERN_C void boot_OpenSER(pTHX_ CV* cv);
+EXTERN_C void boot_Kamailio(pTHX_ CV* cv);
 
 
 /*
  * This is output by perl -MExtUtils::Embed -e xsinit
- * and complemented by the OpenSER bootstrapping
+ * and complemented by the Kamailio bootstrapping
  */
 EXTERN_C void xs_init(pTHX) {
         char *file = __FILE__;
         dXSUB_SYS;
 
-        newXS("OpenSER::bootstrap", boot_OpenSER, file);
+        newXS("Kamailio::bootstrap", boot_Kamailio, file);
 
         newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
 }
@@ -229,7 +229,7 @@ PerlInterpreter *parser_init(void) {
 		}
 	}
 
-	argv[argc] = "-M"DEFAULTMODULE; argc++; /* Always "use" Openser.pm */
+	argv[argc] = "-M"DEFAULTMODULE; argc++; /* Always "use" Kamailio.pm */
 
 	argv[argc] = filename; /* The script itself */
 	argc++;
@@ -314,7 +314,7 @@ struct mi_root* perl_mi_reload(struct mi_root *cmd_tree, void *param)
 
 /*
  * mod_init
- * Called by openser at init time
+ * Called by kamailio at init time
  */
 static int mod_init(void) {
 
@@ -356,7 +356,7 @@ static int mod_init(void) {
 
 /*
  * destroy
- * called by openser at exit time
+ * called by kamailio at exit time
  */
 static void destroy(void)
 {

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Perl module for OpenSER
+ * Perl module for Kamailio
  *
  * Copyright (C) 2006 Collax GmbH
  *                    (Bastian Friedrich <bastian.friedrich@collax.com>)

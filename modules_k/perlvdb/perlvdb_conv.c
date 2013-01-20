@@ -62,7 +62,7 @@ AV *conds2perlarray(db_key_t* keys, db_op_t* ops, db_val_t* vals, int n) {
 					element = cond2perlcond(*(keys + i),
 							*(ops + i), vals + i);
 		} else {
-/* OP_EQ is defined in OpenSER _and_ perl. Includes collide :( */
+/* OP_EQ is defined in Kamailio _and_ perl. Includes collide :( */
 #ifdef OP_EQ
 			element = cond2perlcond(*(keys + i), OP_EQ, vals + i);
 #else
@@ -246,7 +246,7 @@ int perlresult2dbres(SV *perlres, db1_res_t **r) {
 			     modified db result value. */
 
 	if (!(SvROK(perlres) &&
-		(sv_derived_from(perlres, "OpenSER::VDB::Result")))) {
+		(sv_derived_from(perlres, "Kamailio::VDB::Result")))) {
 		goto error;
 	}
 	/* Memory allocation for C side result structure */
@@ -406,7 +406,7 @@ end:
 	av_undef(rowarray);
 	return retval;
 error:
-	LM_CRIT("broken result set. Exiting, leaving OpenSER in unknown state.\n");
+	LM_CRIT("broken result set. Exiting, leaving Kamailio in unknown state.\n");
 	return -1;
 }
 

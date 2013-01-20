@@ -35,9 +35,9 @@
 
 #include <XSUB.h>
 
-#define PERL_CLASS_VALUE	"OpenSER::VDB::Value"
-#define PERL_CLASS_PAIR		"OpenSER::VDB::Pair"
-#define PERL_CLASS_REQCOND	"OpenSER::VDB::ReqCond"
+#define PERL_CLASS_VALUE	"Kamailio::VDB::Value"
+#define PERL_CLASS_PAIR		"Kamailio::VDB::Pair"
+#define PERL_CLASS_REQCOND	"Kamailio::VDB::ReqCond"
 
 #define PERL_CONSTRUCTOR_NAME	"new"
 

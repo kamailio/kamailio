@@ -52,7 +52,7 @@
 #include "perlvdb_oohelpers.h"
 #include "perlvdbfunc.h"
 
-#define PERL_VDB_BASECLASS	"OpenSER::VDB"
+#define PERL_VDB_BASECLASS	"Kamailio::VDB"
 
 #define PERL_VDB_USETABLEMETHOD	"use_table"
 #define PERL_VDB_INSERTMETHOD	"_insert"

@@ -85,7 +85,7 @@ SV *getobj(db1_con_t *con) {
  * - not null
  * - not undef
  * - an object
- * - derived from OpenSER::VDB
+ * - derived from Kamailio::VDB
  */
 int checkobj(SV* obj) {
 	if (obj != NULL) {
@@ -314,13 +314,13 @@ int perlvdb_db_query(db1_con_t* h, db_key_t* k, db_op_t* op, db_val_t* v,
 	av_undef(condarr);
 	av_undef(retkeysarr);
 
-	/* Transform perl result set to OpenSER result set */
+	/* Transform perl result set to Kamailio result set */
 	if (!resultset) {
 		/* No results. */
 		LM_ERR("no perl result set.\n");
 		retval = -1;
 	} else {
-		if (sv_isa(resultset, "OpenSER::VDB::Result")) {
+		if (sv_isa(resultset, "Kamailio::VDB::Result")) {
 			retval = perlresult2dbres(resultset, r);
 		/* Nested refs are decreased/deleted inside the routine */
 			SvREFCNT_dec(resultset);

@@ -1,12 +1,12 @@
 /*
  * $Id$
  *
- * Perl module for OpenSER
+ * Perl module for Kamailio
  *
  * Copyright (C) 2006 Collax GmbH
  *                    (Bastian Friedrich <bastian.friedrich@collax.com>)
  *
- * This file is part of openser, a free SIP server.
+ * This file is part of kamailio, a free SIP server.
  *
  * openser is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
