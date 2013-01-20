@@ -1,7 +1,7 @@
 #
 # $Id: Result.pm 852 2007-03-01 20:32:37Z bastian $
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2006 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -25,7 +25,7 @@
 
 use strict;
 
-=head2 OpenSER::VDB::Result
+=head2 Kamailio::VDB::Result
 
 This class represents a VDB result set. It contains a
 column definition, plus an array of rows.
@@ -33,18 +33,18 @@ Rows themselves are simply references to arrays of scalars.
 
 =cut
 
-package OpenSER::VDB::Result;
+package Kamailio::VDB::Result;
 
-use OpenSER;
-use OpenSER::VDB::Column;
+use Kamailio;
+use Kamailio::VDB::Column;
 
-our @ISA = qw ( OpenSER::Utils::Debug );
+our @ISA = qw ( Kamailio::Utils::Debug );
 
 =head2 new(coldefs,[row, row, ...])
 
 The constructor creates a new Result object.
 Its first parameter is a reference to an array of
- OpenSER::VDB::Column objects.
+ Kamailio::VDB::Column objects.
 Additional parameters may be passed to provide initial rows, which
 are references to arrays of scalars.
 

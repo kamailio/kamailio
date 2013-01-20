@@ -1,7 +1,7 @@
 #
 # $Id: Pair.pm 757 2007-01-05 10:56:28Z bastian $
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2006 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,20 +23,20 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-=head1 OpenSER::VDB::Pair
+=head1 Kamailio::VDB::Pair
 
 This package represents database key/value pairs, consisting of a 
 key, a value type, and the value.
 
-This package inherits from OpenSER::VDB::Value and thus has the same methods.
+This package inherits from Kamailio::VDB::Value and thus has the same methods.
 
 =cut
 
-package OpenSER::VDB::Pair;
+package Kamailio::VDB::Pair;
 
-use OpenSER::VDB::Value;
+use Kamailio::VDB::Value;
 
-our @ISA = qw ( OpenSER::VDB::Value OpenSER::Utils::Debug );
+our @ISA = qw ( Kamailio::VDB::Value Kamailio::Utils::Debug );
 
 =head2 new(key,type,name)
 
@@ -50,7 +50,7 @@ sub new {
 	my $type = shift;
 	my $data = shift;
 
-	my $self = new OpenSER::VDB::Value($type, $data);
+	my $self = new Kamailio::VDB::Value($type, $data);
 
 	bless $self, $class;
 

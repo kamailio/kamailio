@@ -1,7 +1,7 @@
 #
 # $Id: TableVersions.pm 757 2007-01-05 10:56:28Z bastian $
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2007 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,10 +23,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-package OpenSER::VDB::Adapter::TableVersions;
+package Kamailio::VDB::Adapter::TableVersions;
 
-use OpenSER;
-use OpenSER::Constants;
+use Kamailio;
+use Kamailio::Constants;
 
 sub version {
 	my $table = shift;
@@ -37,10 +37,10 @@ sub version {
 	my @cols;
 	my @row;
 
-	push @cols, new OpenSER::VDB::Column(DB_INT, "table_version");
-	push @row, new OpenSER::VDB::Value(DB_INT, $v);
+	push @cols, new Kamailio::VDB::Column(DB_INT, "table_version");
+	push @row, new Kamailio::VDB::Value(DB_INT, $v);
 	
-	return new OpenSER::VDB::Result(\@cols, (bless \@row, OpenSER::Utils::Debug));
+	return new Kamailio::VDB::Result(\@cols, (bless \@row, Kamailio::Utils::Debug));
 }
 
 1;

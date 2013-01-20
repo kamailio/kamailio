@@ -1,7 +1,7 @@
 #
 # $Id: Alias.pm 757 2007-01-05 10:56:28Z bastian $
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2007 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,25 +23,25 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-=head1 OpenSER::VDB::Adapter::Alias
+=head1 Kamailio::VDB::Adapter::Alias
 
 This package is intended for usage with the alias_db module. The query VTab
 has to take two arguments and return an array of two arguments (user name/domain).
 
 =cut
 
-package OpenSER::VDB::Adapter::Alias;
+package Kamailio::VDB::Adapter::Alias;
 
-use OpenSER::Constants;
-use OpenSER qw ( log );
+use Kamailio::Constants;
+use Kamailio qw ( log );
 
-use OpenSER::VDB;
-use OpenSER::VDB::Column;
-use OpenSER::VDB::Result;
+use Kamailio::VDB;
+use Kamailio::VDB::Column;
+use Kamailio::VDB::Result;
 
 use Data::Dumper;
 
-our @ISA = qw ( OpenSER::VDB );
+our @ISA = qw ( Kamailio::VDB );
 
 =head2 query(conds,retkeys,order)
 
@@ -78,18 +78,18 @@ sub query {
 	
 	my $result;
 
-	push @cols, new OpenSER::VDB::Column(DB_STRING, "username");
-	push @cols, new OpenSER::VDB::Column(DB_STRING, "domain");
+	push @cols, new Kamailio::VDB::Column(DB_STRING, "username");
+	push @cols, new Kamailio::VDB::Column(DB_STRING, "domain");
 
 	if ($newaddr) {
 		my @row;
-		my $resval1 = new OpenSER::VDB::Value(DB_STRING, $newaddr->{username} );
+		my $resval1 = new Kamailio::VDB::Value(DB_STRING, $newaddr->{username} );
 		push @row, $resval1;
-		my $resval2 = new OpenSER::VDB::Value(DB_STRING, $newaddr->{domain} );
+		my $resval2 = new Kamailio::VDB::Value(DB_STRING, $newaddr->{domain} );
 		push @row, $resval2;
-		$result = new OpenSER::VDB::Result(\@cols, (bless \@row, "OpenSER::Utils::Debug"));
+		$result = new Kamailio::VDB::Result(\@cols, (bless \@row, "Kamailio::Utils::Debug"));
 	} else {
-		$result = new OpenSER::VDB::Result(\@cols);
+		$result = new Kamailio::VDB::Result(\@cols);
 	}
 
 	return $result;

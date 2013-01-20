@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2006 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -26,13 +26,13 @@
 # This file was kindly donated by Collax GmbH
 
 
-=head1 OpenSER::Utils::PhoneNumbers
+=head1 Kamailio::Utils::PhoneNumbers
 
-OpenSER::Utils::PhoneNumbers - Functions for canonical forms of phone numbers.
+Kamailio::Utils::PhoneNumbers - Functions for canonical forms of phone numbers.
 
- use OpenSER::Utils::PhoneNumbers;
+ use Kamailio::Utils::PhoneNumbers;
 
- my $phonenumbers = new OpenSER::Utils::PhoneNumbers(
+ my $phonenumbers = new Kamailio::Utils::PhoneNumbers(
       publicAccessPrefix => "0",
       internationalPrefix => "+",
       longDistancePrefix => "0",
@@ -81,7 +81,7 @@ This module exports the following functions when C<use>ed:
 
 =cut
 
-package OpenSER::Utils::PhoneNumbers;
+package Kamailio::Utils::PhoneNumbers;
 
 use Exporter;
 our @ISA = qw(Exporter);
@@ -94,7 +94,7 @@ our @EXPORT = qw(
 
 The new operator returns an object of this type and sets its locational
 context according to the passed parameters. See
-L<OpenSER::Utils::PhoneNumbers> above.
+L<Kamailio::Utils::PhoneNumbers> above.
 
 =cut
 

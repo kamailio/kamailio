@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2006 Collax GmbH
 #		     (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,29 +23,29 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-package OpenSER::Message;
+package Kamailio::Message;
 require Exporter;
 require DynaLoader;
 
 our @ISA = qw(Exporter DynaLoader);
 our @EXPORT = qw ( t );
-bootstrap OpenSER;
+bootstrap Kamailio;
 
 sub AUTOLOAD{
 	use vars qw($AUTOLOAD);
 	my $a = $AUTOLOAD;
 	
-	$a =~ s/^OpenSER::Message:://;
+	$a =~ s/^Kamailio::Message:://;
 
 	my $l = scalar @_;
 	if ($l == 0) {
 		croak("Usage: $a(self, param1 = undef, param2 = undef)");
 	} elsif ($l == 1) {
-		return OpenSER::Message::moduleFunction(@_[0], $a);
+		return Kamailio::Message::moduleFunction(@_[0], $a);
 	} elsif ($l == 2) {
-		return OpenSER::Message::moduleFunction(@_[0], $a, @_[1]);
+		return Kamailio::Message::moduleFunction(@_[0], $a, @_[1]);
 	} elsif ($l == 3) {
-		return OpenSER::Message::moduleFunction(@_[0],
+		return Kamailio::Message::moduleFunction(@_[0],
 							$a, @_[1], @_[2]);
 	} else {
 		croak("Usage: $a(self, param1 = undef, param2 = undef)");

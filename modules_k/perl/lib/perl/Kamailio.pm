@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2006 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,7 +23,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-package OpenSER;
+package Kamailio;
 require Exporter;
 require DynaLoader;
 
@@ -31,19 +31,19 @@ require DynaLoader;
 @EXPORT = qw ( t );
 @EXPORT_OK = qw ( log );
 
-use OpenSER::Message;
-use OpenSER::Constants;
-use OpenSER::Utils::Debug;
+use Kamailio::Message;
+use Kamailio::Constants;
+use Kamailio::Utils::Debug;
 
-bootstrap OpenSER;
+bootstrap Kamailio;
 
 
 BEGIN {
 	$SIG{'__DIE__'} = sub {
-		OpenSER::Message::log(undef, L_ERR, "perl error: $_[0]\n");
+		Kamailio::Message::log(undef, L_ERR, "perl error: $_[0]\n");
         };
 	$SIG{'__WARN__'} = sub {
-		OpenSER::Message::log(undef, L_ERR, "perl warning: $_[0]\n");
+		Kamailio::Message::log(undef, L_ERR, "perl warning: $_[0]\n");
         };
 }
 

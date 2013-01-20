@@ -1,7 +1,7 @@
 #
 # $Id: Describe.pm 757 2007-01-05 10:56:28Z bastian $
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2007 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,7 +23,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-=head1 OpenSER::VDB::Adapter::Describe
+=head1 Kamailio::VDB::Adapter::Describe
 
 This package is intended for debug usage. It will print information about requested
 functions and operations of a client module.
@@ -32,18 +32,18 @@ Use this module to request schema information when creating new adapters.
 
 =cut
 
-package OpenSER::VDB::Adapter::Describe;
+package Kamailio::VDB::Adapter::Describe;
 
-use OpenSER::Constants;
-use OpenSER qw ( log );
+use Kamailio::Constants;
+use Kamailio qw ( log );
 
-use OpenSER::VDB;
-use OpenSER::VDB::Column;
-use OpenSER::VDB::Result;
+use Kamailio::VDB;
+use Kamailio::VDB::Column;
+use Kamailio::VDB::Result;
 
 use Data::Dumper;
 
-our @ISA = qw ( OpenSER::VDB );
+our @ISA = qw ( Kamailio::VDB );
 
 sub use_table {
 	my $self = shift;
@@ -132,12 +132,12 @@ sub query {
 
 	for my $k (@$retkeys) {
 		$keys_descr .= " ($k)";
-		push @cols, new OpenSER::VDB::Column(DB_STRING, $k);
+		push @cols, new Kamailio::VDB::Column(DB_STRING, $k);
 	}
 	log(L_INFO, "perlvdb:Describe: The following keys were requested: $keys_descr\n");
 	log(L_INFO, "perlvdb:Describe: Order requested: '$order'\n");
 
-	return new OpenSER::VDB::Result(\@cols);
+	return new Kamailio::VDB::Result(\@cols);
 }
 
 1;

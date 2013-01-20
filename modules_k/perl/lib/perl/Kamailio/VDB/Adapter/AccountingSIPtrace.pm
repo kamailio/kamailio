@@ -1,7 +1,7 @@
 #
 # $Id: AccountingSIPtrace.pm 757 2007-01-05 10:56:28Z bastian $
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2007 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,22 +23,22 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-=head1 OpenSER::VDB::Adapter::AccountingSIPtrace
+=head1 Kamailio::VDB::Adapter::AccountingSIPtrace
 
 This package is an Adapter for the acc and siptrace modules, featuring
 only an insert operation.
 
 =cut
 
-package OpenSER::VDB::Adapter::AccountingSIPtrace;
+package Kamailio::VDB::Adapter::AccountingSIPtrace;
 
-use OpenSER::VDB;
-use OpenSER::VDB::VTab;
-use OpenSER;
-use OpenSER::Constants;
+use Kamailio::VDB;
+use Kamailio::VDB::VTab;
+use Kamailio;
+use Kamailio::Constants;
 use Data::Dumper;
 
-our @ISA = qw ( OpenSER::VDB );
+our @ISA = qw ( Kamailio::VDB );
 
 sub insert {
 	my $self = shift;

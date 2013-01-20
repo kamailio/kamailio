@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2006 Collax GmbH 
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -25,12 +25,12 @@
 
 # This file was kindly donated by Collax GmbH
 
-=head1 OpenSER::LDAPUtils::LDAPConf
+=head1 Kamailio::LDAPUtils::LDAPConf
 
-OpenSER::LDAPUtils::LDAPConf - Read openldap config from standard config files.
+Kamailio::LDAPUtils::LDAPConf - Read openldap config from standard config files.
 
- use OpenSER::LDAPUtils::LDAPConf;
- my $conf = new OpenSER::LDAPUtils::LDAPConf();
+ use Kamailio::LDAPUtils::LDAPConf;
+ my $conf = new Kamailio::LDAPUtils::LDAPConf();
 
 This module may be used to retrieve the global LDAP configuration as
 used by other LDAP software, such as C<nsswitch.ldap> and C<pam-ldap>.
@@ -40,7 +40,7 @@ When used from an account with sufficient privilegs (e.g. root), the
 ldap manager passwort is also retrieved.
 
 =cut
-package OpenSER::LDAPUtils::LDAPConf;
+package Kamailio::LDAPUtils::LDAPConf;
 
 my $def_ldap_path = "/etc/openldap" ;
 my $def_conf      = "ldap.conf";
@@ -48,7 +48,7 @@ my $def_secret    = "ldap.secret";
 
 =head2 Constructor new()
 
-Returns a new, initialized C<OpenSER::LDAPUtils::LDAPConf> object.
+Returns a new, initialized C<Kamailio::LDAPUtils::LDAPConf> object.
 
 =cut
 sub new {

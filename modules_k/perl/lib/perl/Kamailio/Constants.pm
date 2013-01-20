@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2006 Collax GmbH
 #		     (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,15 +23,15 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-=head1 OpenSER::Constants
+=head1 Kamailio::Constants
 
 This package provides a number of constants taken from enums and defines of
-OpenSER header files. Unfortunately, there is no mechanism for updating the
+Kamailio header files. Unfortunately, there is no mechanism for updating the
 constants automatically, so check the values if you are in doubt.
 
 =cut
 
-package OpenSER::Constants;
+package Kamailio::Constants;
 
 use Exporter;
 
@@ -54,7 +54,7 @@ BEGIN {
 
 ###########################################################
 ## Unfortunately, there are no "enum"s in Perl. The following blocks reflect
-## some C headers from OpenSER.
+## some C headers from Kamailio.
 ## UPDATE THIS FILE WHEN THESE HEADER FILES CHANGE!
 
 #####################

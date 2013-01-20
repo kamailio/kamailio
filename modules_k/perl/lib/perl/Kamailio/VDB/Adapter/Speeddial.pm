@@ -1,7 +1,7 @@
 #
 # $Id: Speeddial.pm 757 2007-01-05 10:56:28Z bastian $
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2007 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,22 +23,22 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-=head1 OpenSER::VDB::Adapter::Speeddial
+=head1 Kamailio::VDB::Adapter::Speeddial
 
 This adapter can be used with the speeddial module.
 
 =cut
 
-package OpenSER::VDB::Adapter::Speeddial;
+package Kamailio::VDB::Adapter::Speeddial;
 
-use OpenSER::Constants;
-use OpenSER qw ( log );
+use Kamailio::Constants;
+use Kamailio qw ( log );
 
-use OpenSER::VDB;
-use OpenSER::VDB::Column;
-use OpenSER::VDB::Result;
+use Kamailio::VDB;
+use Kamailio::VDB::Column;
+use Kamailio::VDB::Result;
 
-our @ISA = qw ( OpenSER::VDB );
+our @ISA = qw ( Kamailio::VDB );
 
 sub query {
 	my $self = shift;
@@ -66,14 +66,14 @@ sub query {
 	
 	my $result;
 
-	push @cols, new OpenSER::VDB::Column(DB_STRING, "uid_name");
+	push @cols, new Kamailio::VDB::Column(DB_STRING, "uid_name");
 
 	if ($newaddr) {
-		my $resval = new OpenSER::VDB::Value(DB_STRING, $newaddr );
+		my $resval = new Kamailio::VDB::Value(DB_STRING, $newaddr );
 		push my @row, $resval;
-		$result = new OpenSER::VDB::Result(\@cols, (bless \@row, "OpenSER::Utils::Debug"));
+		$result = new Kamailio::VDB::Result(\@cols, (bless \@row, "Kamailio::Utils::Debug"));
 	} else {
-		$result = new OpenSER::VDB::Result(\@cols);
+		$result = new Kamailio::VDB::Result(\@cols);
 	}
 
 	return $result;

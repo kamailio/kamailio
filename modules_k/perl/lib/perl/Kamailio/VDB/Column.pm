@@ -1,7 +1,7 @@
 #
 # $Id: Column.pm 852 2007-03-01 20:32:37Z bastian $
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2006 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,27 +23,27 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-=head1 OpenSER::VDB::Column
+=head1 Kamailio::VDB::Column
 
 This package represents database column definition, consisting of a 
 column name and its data type.
 
 =head2 Stringification
 
-When accessing a OpenSER::VDB::Column object as a string, it simply returns its 
+When accessing a Kamailio::VDB::Column object as a string, it simply returns its 
 column name regardless of its type.
 =cut
 
-package OpenSER::VDB::Column;
+package Kamailio::VDB::Column;
 
 use overload '""' => \&stringify;
 
 sub stringify { shift->{name} }
 
-use OpenSER;
-use OpenSER::Constants;
+use Kamailio;
+use Kamailio::Constants;
 
-our @ISA = qw ( OpenSER::Utils::Debug );
+our @ISA = qw ( Kamailio::Utils::Debug );
 
 =head2 new(type,name)
 
@@ -71,7 +71,7 @@ sub new {
 =head2 type( )
 
 Returns or sets the current type. Please consider using the constants
-from OpenSER::Constants
+from Kamailio::Constants
 
 =cut
 

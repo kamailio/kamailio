@@ -1,7 +1,7 @@
 #
 # $Id: Auth.pm 757 2007-01-05 10:56:28Z bastian $
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2007 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,7 +23,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-=head1 OpenSER::VDB::Adapter::Auth
+=head1 Kamailio::VDB::Adapter::Auth
 
 This adapter is intended for usage with the auth_db module.
 The VTab should take a username as an argument and return a (plain text!)
@@ -31,19 +31,19 @@ password.
 
 =cut
 
-package OpenSER::VDB::Adapter::Auth;
+package Kamailio::VDB::Adapter::Auth;
 
-use OpenSER::Constants;
-use OpenSER qw ( log );
+use Kamailio::Constants;
+use Kamailio qw ( log );
 
-use OpenSER::VDB;
-use OpenSER::VDB::Column;
-use OpenSER::VDB::Result;
-use OpenSER::VDB::Adapter::TableVersions;
+use Kamailio::VDB;
+use Kamailio::VDB::Column;
+use Kamailio::VDB::Result;
+use Kamailio::VDB::Adapter::TableVersions;
 
 use Data::Dumper;
 
-our @ISA = qw ( OpenSER::VDB );
+our @ISA = qw ( Kamailio::VDB );
 
 sub query {
 	my $self = shift;
@@ -58,7 +58,7 @@ sub query {
 	my $password = undef;
 
 	if ($self->{tablename} eq "version") {
-		return OpenSER::VDB::Adapter::TableVersions::version(@$conds[0]->data());
+		return Kamailio::VDB::Adapter::TableVersions::version(@$conds[0]->data());
 	}
 		
 	if ((scalar @$conds != 1) || (scalar @$retkeys != 2)) {
@@ -71,7 +71,7 @@ sub query {
 	}
 
 	for my $k (@$retkeys) {
-		push @cols, new OpenSER::VDB::Column(DB_STRING, $k);
+		push @cols, new Kamailio::VDB::Column(DB_STRING, $k);
 	}
 
 	my $vtab = $self->{vtabs}->{$self->{tablename}};
@@ -81,11 +81,11 @@ sub query {
 
 	if ($password) {
 		my @row;
-		push @row, new OpenSER::VDB::Value(DB_STRING, $password);
+		push @row, new Kamailio::VDB::Value(DB_STRING, $password);
 		push @row, undef;
-		$result = new OpenSER::VDB::Result(\@cols, (bless \@row, "OpenSER::Utils::Debug"));
+		$result = new Kamailio::VDB::Result(\@cols, (bless \@row, "Kamailio::Utils::Debug"));
 	} else {
-		$result = new OpenSER::VDB::Result(\@cols);
+		$result = new Kamailio::VDB::Result(\@cols);
 	}
 
 	return $result;

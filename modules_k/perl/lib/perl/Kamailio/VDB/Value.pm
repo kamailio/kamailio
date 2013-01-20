@@ -1,7 +1,7 @@
 #
 # $Id: Value.pm 852 2007-03-01 20:32:37Z bastian $
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2006 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,29 +23,29 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-=head1 OpenSER::VDB::Value
+=head1 Kamailio::VDB::Value
 
 This package represents a database value. Additional to the data itself,
 information about its type is stored.
 
 =head2 stringification
 
-When accessing a OpenSER::VDB::Value object as a string, it simply returns its data
+When accessing a Kamailio::VDB::Value object as a string, it simply returns its data
 regardless of its type.
 =cut
 
 use strict;
 
-package OpenSER::VDB::Value;
+package Kamailio::VDB::Value;
 
 use overload '""' => \&stringify;
 
 sub stringify { shift->{data} }
 
-use OpenSER;
-use OpenSER::Constants;
+use Kamailio;
+use Kamailio::Constants;
 
-our @ISA = qw ( OpenSER::Utils::Debug );
+our @ISA = qw ( Kamailio::Utils::Debug );
 
 =head2 new(type,data)
 
@@ -73,7 +73,7 @@ sub new {
 =head2 type()
 
 Returns or sets the current data type. Please consider using the constants
-from OpenSER::Constants
+from Kamailio::Constants
 
 =cut
 

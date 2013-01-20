@@ -1,7 +1,7 @@
 #
 # $Id: VTab.pm 757 2007-01-05 10:56:28Z bastian $
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2006 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,18 +23,18 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-=head1 OpenSER::VDB::VTab
+=head1 Kamailio::VDB::VTab
 
-This package handles virtual tables and is used by the OpenSER::VDB class to store
+This package handles virtual tables and is used by the Kamailio::VDB class to store
 information about valid tables. The package is not inteded for end user access.
 
 =cut
 
-package OpenSER::VDB::VTab;
+package Kamailio::VDB::VTab;
 
-use OpenSER;
+use Kamailio;
 
-our @ISA = qw ( OpenSER::Utils::Debug );
+our @ISA = qw ( Kamailio::Utils::Debug );
 
 =head2 new()
 

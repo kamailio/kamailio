@@ -1,7 +1,7 @@
 #
 # $Id: Debug.pm 757 2007-01-05 10:56:28Z bastian $
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2007 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,14 +23,14 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-package OpenSER::Utils::Debug;
+package Kamailio::Utils::Debug;
 
-use OpenSER qw ( log );
-use OpenSER::Constants;
+use Kamailio qw ( log );
+use Kamailio::Constants;
 
 #sub DESTROY {
 #	my $class = shift;
-#	OpenSER::log(OpenSER::Constants::L_CRIT, "perl/vdb:Debug:Dying object: $class\n");
+#	Kamailio::log(Kamailio::Constants::L_CRIT, "perl/vdb:Debug:Dying object: $class\n");
 #}
 
 1;

@@ -1,7 +1,7 @@
 #
 # $Id: ReqCond.pm 757 2007-01-05 10:56:28Z bastian $
 #
-# Perl module for OpenSER
+# Perl module for Kamailio
 #
 # Copyright (C) 2006 Collax GmbH
 #                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -23,21 +23,21 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-=head1 OpenSER::VDB::ReqCond
+=head1 Kamailio::VDB::ReqCond
 
 This package represents a request condition for database access, consisting of a 
 column name, an operator (=, <, >, ...), a data type and a value.
 
-This package inherits from OpenSER::VDB::Pair and thus includes its methods.
+This package inherits from Kamailio::VDB::Pair and thus includes its methods.
 
 =cut
 
-package OpenSER::VDB::ReqCond;
+package Kamailio::VDB::ReqCond;
 
-use OpenSER::VDB::Value;
-use OpenSER::VDB::Pair;
+use Kamailio::VDB::Value;
+use Kamailio::VDB::Pair;
 
-our @ISA = qw ( OpenSER::VDB::Pair OpenSER::Utils::Debug );
+our @ISA = qw ( Kamailio::VDB::Pair Kamailio::Utils::Debug );
 
 =head2 new(key,op,type,name)
 
@@ -52,7 +52,7 @@ sub new {
 	my $type = shift;
 	my $data = shift;
 
-	my $self = new OpenSER::VDB::Pair($key, $type, $data);
+	my $self = new Kamailio::VDB::Pair($key, $type, $data);
 
 	bless $self, $class;
 
