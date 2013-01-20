@@ -1,10 +1,10 @@
 %define name    kamailio
 %define ver     4.0.0
-%define rel     pre0%{dist}
+%define rel     pre1%{dist}
 
 
 
-Summary:       Kamailio (OpenSER) - the Open Source SIP Server
+Summary:       Kamailio (former OpenSER) - the Open Source SIP Server
 Name:          %name
 Version:       %ver
 Release:       %rel
@@ -380,7 +380,7 @@ Max Mind GeoIP real-time query support for Kamailio.
 %build
 make FLAVOUR=kamailio cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT\
 	basedir=$RPM_BUILD_ROOT cfg_target=/%{_sysconfdir}/kamailio/\
-	modules_dirs="modules modules_k" SCTP=1 STUN=1
+	modules_dirs="modules" SCTP=1 STUN=1
 make
 %if 0%{?fedora}
 make every-module skip_modules="auth_identity db_cassandra iptrtpproxy \
@@ -494,110 +494,108 @@ fi
 %doc %{_docdir}/kamailio/README-MODULES
 
 %dir %{_docdir}/kamailio/modules
+%doc %{_docdir}/kamailio/modules/README.acc
+%doc %{_docdir}/kamailio/modules/README.alias_db
 %doc %{_docdir}/kamailio/modules/README.async
 %doc %{_docdir}/kamailio/modules/README.auth
+%doc %{_docdir}/kamailio/modules/README.auth_db
+%doc %{_docdir}/kamailio/modules/README.auth_diameter
 %doc %{_docdir}/kamailio/modules/README.avp
 %doc %{_docdir}/kamailio/modules/README.avpops
+%doc %{_docdir}/kamailio/modules/README.benchmark
 %doc %{_docdir}/kamailio/modules/README.blst
+%doc %{_docdir}/kamailio/modules/README.call_control
 %doc %{_docdir}/kamailio/modules/README.cfg_db
 %doc %{_docdir}/kamailio/modules/README.cfg_rpc
+%doc %{_docdir}/kamailio/modules/README.cfgutils
 %doc %{_docdir}/kamailio/modules/README.corex
 %doc %{_docdir}/kamailio/modules/README.counters
 %doc %{_docdir}/kamailio/modules/README.ctl
+%doc %{_docdir}/kamailio/modules/README.db_cluster
 %doc %{_docdir}/kamailio/modules/README.db_flatstore
+%doc %{_docdir}/kamailio/modules/README.db_text
 %doc %{_docdir}/kamailio/modules/README.db2_ops
 %doc %{_docdir}/kamailio/modules/README.debugger
+%doc %{_docdir}/kamailio/modules/README.dialog
+%doc %{_docdir}/kamailio/modules/README.dispatcher
+%doc %{_docdir}/kamailio/modules/README.diversion
+%doc %{_docdir}/kamailio/modules/README.dmq
+%doc %{_docdir}/kamailio/modules/README.domain
+%doc %{_docdir}/kamailio/modules/README.domainpolicy
+%doc %{_docdir}/kamailio/modules/README.drouting
 %doc %{_docdir}/kamailio/modules/README.enum
+%doc %{_docdir}/kamailio/modules/README.exec
+%doc %{_docdir}/kamailio/modules/README.group
+%doc %{_docdir}/kamailio/modules/README.htable
+%doc %{_docdir}/kamailio/modules/README.imc
 %doc %{_docdir}/kamailio/modules/README.ipops
+%doc %{_docdir}/kamailio/modules/README.kex
 %doc %{_docdir}/kamailio/modules/README.malloc_test
 %doc %{_docdir}/kamailio/modules/README.mangler
 %doc %{_docdir}/kamailio/modules/README.matrix
+%doc %{_docdir}/kamailio/modules/README.maxfwd
 %doc %{_docdir}/kamailio/modules/README.mediaproxy
+%doc %{_docdir}/kamailio/modules/README.mi_datagram
+%doc %{_docdir}/kamailio/modules/README.mi_fifo
 %doc %{_docdir}/kamailio/modules/README.mi_rpc
 %doc %{_docdir}/kamailio/modules/README.mqueue
+%doc %{_docdir}/kamailio/modules/README.msilo
 %doc %{_docdir}/kamailio/modules/README.msrp
 %doc %{_docdir}/kamailio/modules/README.mtree
+%doc %{_docdir}/kamailio/modules/README.nat_traversal
+%doc %{_docdir}/kamailio/modules/README.nathelper
+%doc %{_docdir}/kamailio/modules/README.p_usrloc
+%doc %{_docdir}/kamailio/modules/README.path
 %doc %{_docdir}/kamailio/modules/README.pdb
+%doc %{_docdir}/kamailio/modules/README.pdt
+%doc %{_docdir}/kamailio/modules/README.permissions
+%doc %{_docdir}/kamailio/modules/README.pike
 %doc %{_docdir}/kamailio/modules/README.pipelimit
 %doc %{_docdir}/kamailio/modules/README.prefix_route
 %doc %{_docdir}/kamailio/modules/README.print
 %doc %{_docdir}/kamailio/modules/README.print_lib
+%doc %{_docdir}/kamailio/modules/README.pv
+%doc %{_docdir}/kamailio/modules/README.qos
 %doc %{_docdir}/kamailio/modules/README.ratelimit
+%doc %{_docdir}/kamailio/modules/README.registrar
+%doc %{_docdir}/kamailio/modules/README.rr
+%doc %{_docdir}/kamailio/modules/README.rtimer
 %doc %{_docdir}/kamailio/modules/README.rtpproxy
 %doc %{_docdir}/kamailio/modules/README.sanity
 %doc %{_docdir}/kamailio/modules/README.sca
 %doc %{_docdir}/kamailio/modules/README.sdpops
+%doc %{_docdir}/kamailio/modules/README.seas
 %doc %{_docdir}/kamailio/modules/README.sipcapture
+%doc %{_docdir}/kamailio/modules/README.siptrace
+%doc %{_docdir}/kamailio/modules/README.siputils
 %doc %{_docdir}/kamailio/modules/README.sl
 %doc %{_docdir}/kamailio/modules/README.sms
+%doc %{_docdir}/kamailio/modules/README.speeddial
+%doc %{_docdir}/kamailio/modules/README.sqlops
+%doc %{_docdir}/kamailio/modules/README.sst
+%doc %{_docdir}/kamailio/modules/README.statistics
+%doc %{_docdir}/kamailio/modules/README.textops
 %doc %{_docdir}/kamailio/modules/README.textopsx
 %doc %{_docdir}/kamailio/modules/README.timer
 %doc %{_docdir}/kamailio/modules/README.tls
 %doc %{_docdir}/kamailio/modules/README.tm
 %doc %{_docdir}/kamailio/modules/README.tmrec
+%doc %{_docdir}/kamailio/modules/README.tmx
 %doc %{_docdir}/kamailio/modules/README.topoh
+%doc %{_docdir}/kamailio/modules/README.uac
+%doc %{_docdir}/kamailio/modules/README.uac_redirect
 %doc %{_docdir}/kamailio/modules/README.uid_auth_db
 %doc %{_docdir}/kamailio/modules/README.uid_avp_db
 %doc %{_docdir}/kamailio/modules/README.uid_domain
 %doc %{_docdir}/kamailio/modules/README.uid_gflags
 %doc %{_docdir}/kamailio/modules/README.uid_uri_db
+%doc %{_docdir}/kamailio/modules/README.uri_db
+%doc %{_docdir}/kamailio/modules/README.userblacklist
+%doc %{_docdir}/kamailio/modules/README.usrloc
 %doc %{_docdir}/kamailio/modules/README.xhttp
 %doc %{_docdir}/kamailio/modules/README.xhttp_rpc
 %doc %{_docdir}/kamailio/modules/README.xlog
 %doc %{_docdir}/kamailio/modules/README.xprint
-
-%dir %{_docdir}/kamailio/modules_k
-%doc %{_docdir}/kamailio/modules_k/README.acc
-%doc %{_docdir}/kamailio/modules_k/README.alias_db
-%doc %{_docdir}/kamailio/modules_k/README.auth_db
-%doc %{_docdir}/kamailio/modules_k/README.auth_diameter
-%doc %{_docdir}/kamailio/modules_k/README.benchmark
-%doc %{_docdir}/kamailio/modules_k/README.call_control
-%doc %{_docdir}/kamailio/modules_k/README.cfgutils
-%doc %{_docdir}/kamailio/modules_k/README.db_cluster
-%doc %{_docdir}/kamailio/modules_k/README.db_text
-%doc %{_docdir}/kamailio/modules_k/README.dialog
-%doc %{_docdir}/kamailio/modules_k/README.dispatcher
-%doc %{_docdir}/kamailio/modules_k/README.diversion
-%doc %{_docdir}/kamailio/modules_k/README.dmq
-%doc %{_docdir}/kamailio/modules_k/README.domain
-%doc %{_docdir}/kamailio/modules_k/README.domainpolicy
-%doc %{_docdir}/kamailio/modules_k/README.drouting
-%doc %{_docdir}/kamailio/modules_k/README.exec
-%doc %{_docdir}/kamailio/modules_k/README.group
-%doc %{_docdir}/kamailio/modules_k/README.htable
-%doc %{_docdir}/kamailio/modules_k/README.imc
-%doc %{_docdir}/kamailio/modules_k/README.kex
-%doc %{_docdir}/kamailio/modules_k/README.maxfwd
-%doc %{_docdir}/kamailio/modules_k/README.mi_datagram
-%doc %{_docdir}/kamailio/modules_k/README.mi_fifo
-%doc %{_docdir}/kamailio/modules_k/README.msilo
-%doc %{_docdir}/kamailio/modules_k/README.nat_traversal
-%doc %{_docdir}/kamailio/modules_k/README.nathelper
-%doc %{_docdir}/kamailio/modules_k/README.p_usrloc
-%doc %{_docdir}/kamailio/modules_k/README.path
-%doc %{_docdir}/kamailio/modules_k/README.pdt
-%doc %{_docdir}/kamailio/modules_k/README.permissions
-%doc %{_docdir}/kamailio/modules_k/README.pike
-%doc %{_docdir}/kamailio/modules_k/README.pv
-%doc %{_docdir}/kamailio/modules_k/README.qos
-%doc %{_docdir}/kamailio/modules_k/README.registrar
-%doc %{_docdir}/kamailio/modules_k/README.rr
-%doc %{_docdir}/kamailio/modules_k/README.rtimer
-%doc %{_docdir}/kamailio/modules_k/README.seas
-%doc %{_docdir}/kamailio/modules_k/README.siptrace
-%doc %{_docdir}/kamailio/modules_k/README.siputils
-%doc %{_docdir}/kamailio/modules_k/README.speeddial
-%doc %{_docdir}/kamailio/modules_k/README.sqlops
-%doc %{_docdir}/kamailio/modules_k/README.sst
-%doc %{_docdir}/kamailio/modules_k/README.statistics
-%doc %{_docdir}/kamailio/modules_k/README.textops
-%doc %{_docdir}/kamailio/modules_k/README.tmx
-%doc %{_docdir}/kamailio/modules_k/README.uac
-%doc %{_docdir}/kamailio/modules_k/README.uac_redirect
-%doc %{_docdir}/kamailio/modules_k/README.uri_db
-%doc %{_docdir}/kamailio/modules_k/README.userblacklist
-%doc %{_docdir}/kamailio/modules_k/README.usrloc
 
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/*
@@ -635,110 +633,108 @@ fi
 %{_libdir}/kamailio/libtrie.so.1.0
 
 %dir %{_libdir}/kamailio/modules
+%{_libdir}/kamailio/modules/acc.so
+%{_libdir}/kamailio/modules/alias_db.so
 %{_libdir}/kamailio/modules/auth.so
+%{_libdir}/kamailio/modules/auth_db.so
+%{_libdir}/kamailio/modules/auth_diameter.so
 %{_libdir}/kamailio/modules/async.so
 %{_libdir}/kamailio/modules/avp.so
 %{_libdir}/kamailio/modules/avpops.so
+%{_libdir}/kamailio/modules/benchmark.so
 %{_libdir}/kamailio/modules/blst.so
+%{_libdir}/kamailio/modules/call_control.so
 %{_libdir}/kamailio/modules/cfg_db.so
 %{_libdir}/kamailio/modules/cfg_rpc.so
+%{_libdir}/kamailio/modules/cfgutils.so
 %{_libdir}/kamailio/modules/corex.so
 %{_libdir}/kamailio/modules/counters.so
 %{_libdir}/kamailio/modules/ctl.so
+%{_libdir}/kamailio/modules/db_cluster.so
+%{_libdir}/kamailio/modules/db_text.so
 %{_libdir}/kamailio/modules/db_flatstore.so
 %{_libdir}/kamailio/modules/db2_ops.so
 %{_libdir}/kamailio/modules/debugger.so
+%{_libdir}/kamailio/modules/dialog.so
+%{_libdir}/kamailio/modules/dispatcher.so
+%{_libdir}/kamailio/modules/diversion.so
+%{_libdir}/kamailio/modules/dmq.so
+%{_libdir}/kamailio/modules/domain.so
+%{_libdir}/kamailio/modules/domainpolicy.so
+%{_libdir}/kamailio/modules/drouting.so
 %{_libdir}/kamailio/modules/enum.so
+%{_libdir}/kamailio/modules/exec.so
+%{_libdir}/kamailio/modules/group.so
+%{_libdir}/kamailio/modules/htable.so
+%{_libdir}/kamailio/modules/imc.so
 %{_libdir}/kamailio/modules/ipops.so
+%{_libdir}/kamailio/modules/kex.so
 %{_libdir}/kamailio/modules/malloc_test.so
 %{_libdir}/kamailio/modules/mangler.so
 %{_libdir}/kamailio/modules/matrix.so
+%{_libdir}/kamailio/modules/maxfwd.so
 %{_libdir}/kamailio/modules/mediaproxy.so
+%{_libdir}/kamailio/modules/mi_datagram.so
+%{_libdir}/kamailio/modules/mi_fifo.so
 %{_libdir}/kamailio/modules/mi_rpc.so
 %{_libdir}/kamailio/modules/mqueue.so
+%{_libdir}/kamailio/modules/msilo.so
 %{_libdir}/kamailio/modules/msrp.so
 %{_libdir}/kamailio/modules/mtree.so
+%{_libdir}/kamailio/modules/nat_traversal.so
+%{_libdir}/kamailio/modules/nathelper.so
+%{_libdir}/kamailio/modules/p_usrloc.so
+%{_libdir}/kamailio/modules/path.so
 %{_libdir}/kamailio/modules/pdb.so
+%{_libdir}/kamailio/modules/pdt.so
+%{_libdir}/kamailio/modules/permissions.so
+%{_libdir}/kamailio/modules/pike.so
 %{_libdir}/kamailio/modules/pipelimit.so
 %{_libdir}/kamailio/modules/prefix_route.so
 %{_libdir}/kamailio/modules/print.so
 %{_libdir}/kamailio/modules/print_lib.so
+%{_libdir}/kamailio/modules/pv.so
+%{_libdir}/kamailio/modules/qos.so
 %{_libdir}/kamailio/modules/ratelimit.so
+%{_libdir}/kamailio/modules/registrar.so
+%{_libdir}/kamailio/modules/rr.so
+%{_libdir}/kamailio/modules/rtimer.so
 %{_libdir}/kamailio/modules/rtpproxy.so
 %{_libdir}/kamailio/modules/sanity.so
 %{_libdir}/kamailio/modules/sca.so
+%{_libdir}/kamailio/modules/seas.so
 %{_libdir}/kamailio/modules/sipcapture.so
+%{_libdir}/kamailio/modules/siptrace.so
+%{_libdir}/kamailio/modules/siputils.so
 %{_libdir}/kamailio/modules/sl.so
 %{_libdir}/kamailio/modules/sdpops.so
 %{_libdir}/kamailio/modules/sms.so
+%{_libdir}/kamailio/modules/speeddial.so
+%{_libdir}/kamailio/modules/sqlops.so
+%{_libdir}/kamailio/modules/sst.so
+%{_libdir}/kamailio/modules/statistics.so
+%{_libdir}/kamailio/modules/textops.so
 %{_libdir}/kamailio/modules/textopsx.so
 %{_libdir}/kamailio/modules/timer.so
 %{_libdir}/kamailio/modules/tls.so
 %{_libdir}/kamailio/modules/tm.so
 %{_libdir}/kamailio/modules/tmrec.so
+%{_libdir}/kamailio/modules/tmx.so
 %{_libdir}/kamailio/modules/topoh.so
+%{_libdir}/kamailio/modules/uac.so
+%{_libdir}/kamailio/modules/uac_redirect.so
 %{_libdir}/kamailio/modules/uid_auth_db.so
 %{_libdir}/kamailio/modules/uid_avp_db.so
 %{_libdir}/kamailio/modules/uid_domain.so
 %{_libdir}/kamailio/modules/uid_gflags.so
 %{_libdir}/kamailio/modules/uid_uri_db.so
+%{_libdir}/kamailio/modules/uri_db.so
+%{_libdir}/kamailio/modules/userblacklist.so
+%{_libdir}/kamailio/modules/usrloc.so
 %{_libdir}/kamailio/modules/xhttp.so
 %{_libdir}/kamailio/modules/xhttp_rpc.so
 %{_libdir}/kamailio/modules/xlog.so
 %{_libdir}/kamailio/modules/xprint.so
-
-%dir %{_libdir}/kamailio/modules_k
-%{_libdir}/kamailio/modules_k/acc.so
-%{_libdir}/kamailio/modules_k/alias_db.so
-%{_libdir}/kamailio/modules_k/auth_db.so
-%{_libdir}/kamailio/modules_k/auth_diameter.so
-%{_libdir}/kamailio/modules_k/benchmark.so
-%{_libdir}/kamailio/modules_k/call_control.so
-%{_libdir}/kamailio/modules_k/cfgutils.so
-%{_libdir}/kamailio/modules_k/db_cluster.so
-%{_libdir}/kamailio/modules_k/db_text.so
-%{_libdir}/kamailio/modules_k/dialog.so
-%{_libdir}/kamailio/modules_k/dispatcher.so
-%{_libdir}/kamailio/modules_k/diversion.so
-%{_libdir}/kamailio/modules_k/dmq.so
-%{_libdir}/kamailio/modules_k/domain.so
-%{_libdir}/kamailio/modules_k/domainpolicy.so
-%{_libdir}/kamailio/modules_k/drouting.so
-%{_libdir}/kamailio/modules_k/exec.so
-%{_libdir}/kamailio/modules_k/group.so
-%{_libdir}/kamailio/modules_k/htable.so
-%{_libdir}/kamailio/modules_k/imc.so
-%{_libdir}/kamailio/modules_k/kex.so
-%{_libdir}/kamailio/modules_k/maxfwd.so
-%{_libdir}/kamailio/modules_k/mi_datagram.so
-%{_libdir}/kamailio/modules_k/mi_fifo.so
-%{_libdir}/kamailio/modules_k/msilo.so
-%{_libdir}/kamailio/modules_k/nat_traversal.so
-%{_libdir}/kamailio/modules_k/nathelper.so
-%{_libdir}/kamailio/modules_k/p_usrloc.so
-%{_libdir}/kamailio/modules_k/path.so
-%{_libdir}/kamailio/modules_k/pdt.so
-%{_libdir}/kamailio/modules_k/permissions.so
-%{_libdir}/kamailio/modules_k/pike.so
-%{_libdir}/kamailio/modules_k/pv.so
-%{_libdir}/kamailio/modules_k/qos.so
-%{_libdir}/kamailio/modules_k/registrar.so
-%{_libdir}/kamailio/modules_k/rr.so
-%{_libdir}/kamailio/modules_k/rtimer.so
-%{_libdir}/kamailio/modules_k/seas.so
-%{_libdir}/kamailio/modules_k/siptrace.so
-%{_libdir}/kamailio/modules_k/siputils.so
-%{_libdir}/kamailio/modules_k/speeddial.so
-%{_libdir}/kamailio/modules_k/sqlops.so
-%{_libdir}/kamailio/modules_k/sst.so
-%{_libdir}/kamailio/modules_k/statistics.so
-%{_libdir}/kamailio/modules_k/textops.so
-%{_libdir}/kamailio/modules_k/tmx.so
-%{_libdir}/kamailio/modules_k/uac.so
-%{_libdir}/kamailio/modules_k/uac_redirect.so
-%{_libdir}/kamailio/modules_k/uri_db.so
-%{_libdir}/kamailio/modules_k/userblacklist.so
-%{_libdir}/kamailio/modules_k/usrloc.so
 
 %{_sbindir}/kamailio
 %{_sbindir}/kamctl
@@ -796,8 +792,8 @@ fi
 
 %files unixODBC
 %defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules_k/README.db_unixodbc
-%{_libdir}/kamailio/modules_k/db_unixodbc.so
+%doc %{_docdir}/kamailio/modules/README.db_unixodbc
+%{_libdir}/kamailio/modules/db_unixodbc.so
 
 
 %files bdb
@@ -813,8 +809,8 @@ fi
 
 %files sqlite
 %defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules_k/README.db_sqlite
-%{_libdir}/kamailio/modules_k/db_sqlite.so
+%doc %{_docdir}/kamailio/modules/README.db_sqlite
+%{_libdir}/kamailio/modules/db_sqlite.so
 %{_libdir}/kamailio/kamctl/kamctl.sqlite
 %{_libdir}/kamailio/kamctl/kamdbctl.sqlite
 %dir %{_datadir}/kamailio/db_sqlite
@@ -829,74 +825,74 @@ fi
 
 %files cpl
 %defattr(-,root,root)
-%{_docdir}/kamailio/modules_k/README.cpl-c
-%{_libdir}/kamailio/modules_k/cpl-c.so
+%{_docdir}/kamailio/modules/README.cpl-c
+%{_libdir}/kamailio/modules/cpl-c.so
 
 
 %files snmpstats
 %defattr(-,root,root)
-%{_docdir}/kamailio/modules_k/README.snmpstats
-%{_libdir}/kamailio/modules_k/snmpstats.so
+%{_docdir}/kamailio/modules/README.snmpstats
+%{_libdir}/kamailio/modules/snmpstats.so
 
 
 %files presence
 %defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules_k/README.presence
-%doc %{_docdir}/kamailio/modules_k/README.presence_conference
-%doc %{_docdir}/kamailio/modules_k/README.presence_dialoginfo
-%doc %{_docdir}/kamailio/modules_k/README.presence_mwi
-%doc %{_docdir}/kamailio/modules_k/README.presence_profile
-%doc %{_docdir}/kamailio/modules_k/README.presence_reginfo
-%doc %{_docdir}/kamailio/modules_k/README.presence_xml
-%doc %{_docdir}/kamailio/modules_k/README.pua
-%doc %{_docdir}/kamailio/modules_k/README.pua_bla
-%doc %{_docdir}/kamailio/modules_k/README.pua_dialoginfo
-%doc %{_docdir}/kamailio/modules_k/README.pua_mi
-%doc %{_docdir}/kamailio/modules_k/README.pua_reginfo
-%doc %{_docdir}/kamailio/modules_k/README.pua_usrloc
-%doc %{_docdir}/kamailio/modules_k/README.pua_xmpp
-%doc %{_docdir}/kamailio/modules_k/README.rls
-%doc %{_docdir}/kamailio/modules_k/README.xcap_client
-%doc %{_docdir}/kamailio/modules_k/README.xcap_server
-%{_libdir}/kamailio/modules_k/presence.so
-%{_libdir}/kamailio/modules_k/presence_conference.so
-%{_libdir}/kamailio/modules_k/presence_dialoginfo.so
-%{_libdir}/kamailio/modules_k/presence_mwi.so
-%{_libdir}/kamailio/modules_k/presence_profile.so
-%{_libdir}/kamailio/modules_k/presence_reginfo.so
-%{_libdir}/kamailio/modules_k/presence_xml.so
-%{_libdir}/kamailio/modules_k/pua.so
-%{_libdir}/kamailio/modules_k/pua_bla.so
-%{_libdir}/kamailio/modules_k/pua_dialoginfo.so
-%{_libdir}/kamailio/modules_k/pua_mi.so
-%{_libdir}/kamailio/modules_k/pua_reginfo.so
-%{_libdir}/kamailio/modules_k/pua_usrloc.so
-%{_libdir}/kamailio/modules_k/pua_xmpp.so
-%{_libdir}/kamailio/modules_k/rls.so
-%{_libdir}/kamailio/modules_k/xcap_client.so
-%{_libdir}/kamailio/modules_k/xcap_server.so
+%doc %{_docdir}/kamailio/modules/README.presence
+%doc %{_docdir}/kamailio/modules/README.presence_conference
+%doc %{_docdir}/kamailio/modules/README.presence_dialoginfo
+%doc %{_docdir}/kamailio/modules/README.presence_mwi
+%doc %{_docdir}/kamailio/modules/README.presence_profile
+%doc %{_docdir}/kamailio/modules/README.presence_reginfo
+%doc %{_docdir}/kamailio/modules/README.presence_xml
+%doc %{_docdir}/kamailio/modules/README.pua
+%doc %{_docdir}/kamailio/modules/README.pua_bla
+%doc %{_docdir}/kamailio/modules/README.pua_dialoginfo
+%doc %{_docdir}/kamailio/modules/README.pua_mi
+%doc %{_docdir}/kamailio/modules/README.pua_reginfo
+%doc %{_docdir}/kamailio/modules/README.pua_usrloc
+%doc %{_docdir}/kamailio/modules/README.pua_xmpp
+%doc %{_docdir}/kamailio/modules/README.rls
+%doc %{_docdir}/kamailio/modules/README.xcap_client
+%doc %{_docdir}/kamailio/modules/README.xcap_server
+%{_libdir}/kamailio/modules/presence.so
+%{_libdir}/kamailio/modules/presence_conference.so
+%{_libdir}/kamailio/modules/presence_dialoginfo.so
+%{_libdir}/kamailio/modules/presence_mwi.so
+%{_libdir}/kamailio/modules/presence_profile.so
+%{_libdir}/kamailio/modules/presence_reginfo.so
+%{_libdir}/kamailio/modules/presence_xml.so
+%{_libdir}/kamailio/modules/pua.so
+%{_libdir}/kamailio/modules/pua_bla.so
+%{_libdir}/kamailio/modules/pua_dialoginfo.so
+%{_libdir}/kamailio/modules/pua_mi.so
+%{_libdir}/kamailio/modules/pua_reginfo.so
+%{_libdir}/kamailio/modules/pua_usrloc.so
+%{_libdir}/kamailio/modules/pua_xmpp.so
+%{_libdir}/kamailio/modules/rls.so
+%{_libdir}/kamailio/modules/xcap_client.so
+%{_libdir}/kamailio/modules/xcap_server.so
 
 
 %files xmpp
 %defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules_k/README.xmpp
-%{_libdir}/kamailio/modules_k/xmpp.so
+%doc %{_docdir}/kamailio/modules/README.xmpp
+%{_libdir}/kamailio/modules/xmpp.so
 
 
 %files purple
 %defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules_k/README.purple
-%{_libdir}/kamailio/modules_k/purple.so
+%doc %{_docdir}/kamailio/modules/README.purple
+%{_libdir}/kamailio/modules/purple.so
 
 
 %files ldap
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.db2_ldap
-%doc %{_docdir}/kamailio/modules_k/README.h350
-%doc %{_docdir}/kamailio/modules_k/README.ldap
+%doc %{_docdir}/kamailio/modules/README.h350
+%doc %{_docdir}/kamailio/modules/README.ldap
 %{_libdir}/kamailio/modules/db2_ldap.so
-%{_libdir}/kamailio/modules_k/h350.so
-%{_libdir}/kamailio/modules_k/ldap.so
+%{_libdir}/kamailio/modules/h350.so
+%{_libdir}/kamailio/modules/ldap.so
 
 
 %files xmlrpc
@@ -907,36 +903,36 @@ fi
 
 %files perl
 %defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules_k/README.perl
-%doc %{_docdir}/kamailio/modules_k/README.perlvdb
-%{_libdir}/kamailio/modules_k/perl.so
-%{_libdir}/kamailio/modules_k/perlvdb.so
+%doc %{_docdir}/kamailio/modules/README.app_perl
+%doc %{_docdir}/kamailio/modules/README.db_perlvdb
+%{_libdir}/kamailio/modules/app_perl.so
+%{_libdir}/kamailio/modules/db_perlvdb.so
 %dir %{_libdir}/kamailio/perl
-%{_libdir}/kamailio/perl/OpenSER.pm
-%dir %{_libdir}/kamailio/perl/OpenSER
-%{_libdir}/kamailio/perl/OpenSER/Constants.pm
-%{_libdir}/kamailio/perl/OpenSER/Message.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB.pm
-%dir %{_libdir}/kamailio/perl/OpenSER/LDAPUtils
-%{_libdir}/kamailio/perl/OpenSER/LDAPUtils/LDAPConf.pm
-%{_libdir}/kamailio/perl/OpenSER/LDAPUtils/LDAPConnection.pm
-%dir %{_libdir}/kamailio/perl/OpenSER/Utils
-%{_libdir}/kamailio/perl/OpenSER/Utils/Debug.pm
-%{_libdir}/kamailio/perl/OpenSER/Utils/PhoneNumbers.pm
-%dir %{_libdir}/kamailio/perl/OpenSER/VDB
-%{_libdir}/kamailio/perl/OpenSER/VDB/Column.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/Pair.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/ReqCond.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/Result.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/VTab.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/Value.pm
-%dir %{_libdir}/kamailio/perl/OpenSER/VDB/Adapter
-%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/AccountingSIPtrace.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Alias.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Auth.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Describe.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/Speeddial.pm
-%{_libdir}/kamailio/perl/OpenSER/VDB/Adapter/TableVersions.pm
+%{_libdir}/kamailio/perl/Kamailio.pm
+%dir %{_libdir}/kamailio/perl/Kamailio
+%{_libdir}/kamailio/perl/Kamailio/Constants.pm
+%{_libdir}/kamailio/perl/Kamailio/Message.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB.pm
+%dir %{_libdir}/kamailio/perl/Kamailio/LDAPUtils
+%{_libdir}/kamailio/perl/Kamailio/LDAPUtils/LDAPConf.pm
+%{_libdir}/kamailio/perl/Kamailio/LDAPUtils/LDAPConnection.pm
+%dir %{_libdir}/kamailio/perl/Kamailio/Utils
+%{_libdir}/kamailio/perl/Kamailio/Utils/Debug.pm
+%{_libdir}/kamailio/perl/Kamailio/Utils/PhoneNumbers.pm
+%dir %{_libdir}/kamailio/perl/Kamailio/VDB
+%{_libdir}/kamailio/perl/Kamailio/VDB/Column.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Pair.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/ReqCond.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Result.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/VTab.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Value.pm
+%dir %{_libdir}/kamailio/perl/Kamailio/VDB/Adapter
+%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/AccountingSIPtrace.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/Alias.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/Auth.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/Describe.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/Speeddial.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/TableVersions.pm
 
 
 %files lua
@@ -953,8 +949,8 @@ fi
 
 %files regex
 %defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules_k/README.regex
-%{_libdir}/kamailio/modules_k/regex.so
+%doc %{_docdir}/kamailio/modules/README.regex
+%{_libdir}/kamailio/modules/regex.so
 
 
 %files dialplan
@@ -1024,20 +1020,20 @@ fi
 
 %files outbound
 %defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules_k/README.outbound
-%{_libdir}/kamailio/modules_k/outbound.so
+%doc %{_docdir}/kamailio/modules/README.outbound
+%{_libdir}/kamailio/modules/outbound.so
 
 
 %if 0%{?fedora}
 %files radius
 %defattr(-,root,root)
-%{_docdir}/kamailio/modules_k/README.acc_radius
-%{_docdir}/kamailio/modules_k/README.auth_radius
-%{_docdir}/kamailio/modules_k/README.misc_radius
+%{_docdir}/kamailio/modules/README.acc_radius
+%{_docdir}/kamailio/modules/README.auth_radius
+%{_docdir}/kamailio/modules/README.misc_radius
 %{_docdir}/kamailio/modules/README.peering
-%{_libdir}/kamailio/modules_k/acc_radius.so
-%{_libdir}/kamailio/modules_k/auth_radius.so
-%{_libdir}/kamailio/modules_k/misc_radius.so
+%{_libdir}/kamailio/modules/acc_radius.so
+%{_libdir}/kamailio/modules/auth_radius.so
+%{_libdir}/kamailio/modules/misc_radius.so
 %{_libdir}/kamailio/modules/peering.so
 
 
@@ -1076,6 +1072,10 @@ fi
 
 
 %changelog
+* Sun Jan 20 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to pre1
+  - Moved modules from modules_k/ to modules/
+  - Renamed perl modules
 * Fri Jan 11 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Updated rel to pre0
 * Thu Jan 10 2013 Peter Dunkley <peter@dunkley.me.uk>
