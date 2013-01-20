@@ -167,7 +167,7 @@ if (perl_exec("ldap_alias")) {
 			<title>Set <varname>filename</varname> parameter</title>
 			<programlisting format="linespecific">
 ...
-modparam("perl", "filename", "/home/john/openser/myperl.pl")
+modparam("perl", "filename", "/home/test/kamailio/myperl.pl")
 ...
 </programlisting>
 			</example>
@@ -187,7 +187,7 @@ modparam("perl", "filename", "/home/john/openser/myperl.pl")
 			<title>Set <varname>modpath</varname> parameter</title>
 			<programlisting format="linespecific">
 ...
-modparam("perl", "modpath", "/usr/local/lib/openser/perl/")
+modparam("perl", "modpath", "/usr/local/lib/kamailio/perl/")
 ...
 </programlisting>
 			</example>

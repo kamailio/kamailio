@@ -15,16 +15,16 @@
        Text::ParseWords v3.24
        Text::Wrap v2005.082401
 -->
-<chapter><title>OpenSER Perl API</title>
-  <section id="ID-d83a4c83b0cd455aef9602128b87c323"><title>OpenSER</title>
+<chapter><title>Kamailio Perl API</title>
+  <section id="ID-d83a4c83b0cd455aef9602128b87c323"><title>Kamailio</title>
     <para>
-      This module provides access to a limited number of OpenSER core
+      This module provides access to a limited number of Kamailio core
       functions. As the most interesting functions deal with SIP messages,
-      they are located in the OpenSER::Message class below.
+      they are located in the Kamailio::Message class below.
     </para>
     <section id="ID-3ae476990b7b1fe73d972e68eb52f93c"><title>log(level,message)</title>
       <para>
-	Logs the message with OpenSER's logging facility. The logging level
+	Logs the message with Kamailio's logging facility. The logging level
 	is one of the following:
       </para>
       <screen><![CDATA[* L_ALERT
@@ -39,15 +39,15 @@
 	role="italic">NOT</emphasis> automatically exported, as it collides
 	with the perl function log (which calculates the logarithm). Either
 	explicitly import the function (via <literal
-	role="code"><![CDATA[use OpenSER qw ( log );]]></literal>), or call
+	role="code"><![CDATA[use Kamailio qw ( log );]]></literal>), or call
 	it with its full name:
       </para>
-      <screen><![CDATA[OpenSER::log(L_INFO, "foobar");]]></screen>
+      <screen><![CDATA[Kamailio::log(L_INFO, "foobar");]]></screen>
     </section>
   </section>
-  <section id="ID-949656abaac653354242d1d0e9b418be"><title>OpenSER::Message</title>
+  <section id="ID-949656abaac653354242d1d0e9b418be"><title>Kamailio::Message</title>
     <para>
-      This package provides access functions for an OpenSER <literal
+      This package provides access functions for an Kamailio <literal
       role="code"><![CDATA[sip_msg]]></literal> structure and its
       sub-components. Through its means it is possible to fully configure
       alternative routing decisions.
@@ -157,7 +157,7 @@
       </para>
       <para>
 	As this function provides access to the functions that are exported
-	to the OpenSER configuration file, it is autoloaded for unknown
+	to the Kamailio configuration file, it is autoloaded for unknown
 	functions. Instead of writing
       </para>
       <screen><![CDATA[$m->moduleFunction("sl_send_reply", "500", "Internal Error");
@@ -171,7 +171,7 @@ $m->xlog("L_INFO", "foo");]]></screen>
 	WARNING
       </para>
       <para>
-	In OpenSER 1.2, only a limited subset of module functions is
+	In Kamailio 1.2, only a limited subset of module functions is
 	available. This restriction will be removed in a later version.
       </para>
       <para>
@@ -277,7 +277,7 @@ $m->xlog("L_INFO", "foo");]]></screen>
     </section>
     <section id="ID-9fb36151aa2a86585e66dc19227b7d92"><title>log(level,message) (deprecated type)</title>
       <para>
-	Logs the message with OpenSER's logging facility. The logging level
+	Logs the message with Kamailio's logging facility. The logging level
 	is one of the following:
       </para>
       <screen><![CDATA[* L_ALERT
@@ -288,8 +288,8 @@ $m->xlog("L_INFO", "foo");]]></screen>
 * L_INFO
 * L_DBG]]></screen>
       <para>
-	The logging function should be accessed via the OpenSER module
-	variant. This one, located in OpenSER::Message, is deprecated.
+	The logging function should be accessed via the Kamailio module
+	variant. This one, located in Kamailio::Message, is deprecated.
       </para>
     </section>
     <section id="ID-b6b5403d6a2b667316e7ce7ddd0937d0"><title>rewrite_ruri(newruri)</title>
@@ -335,11 +335,11 @@ $m->xlog("L_INFO", "foo");]]></screen>
     </section>
     <section id="ID-f20c57aaa92a757d7152aa0479ee1fc0"><title>getParsedRURI()</title>
       <para>
-	Returns the current destination URI as an OpenSER::URI object.
+	Returns the current destination URI as an Kamailio::URI object.
       </para>
     </section>
   </section>
-  <section id="ID-ea7b3e8a4dc6ddf7af0e02f7cec8eef1"><title>OpenSER::URI</title>
+  <section id="ID-ea7b3e8a4dc6ddf7af0e02f7cec8eef1"><title>Kamailio::URI</title>
     <para>
       This package provides functions for access to sip_uri structures.
     </para>
@@ -444,9 +444,9 @@ $m->xlog("L_INFO", "foo");]]></screen>
       </para>
     </section>
   </section>
-  <section id="ID-f092a1ce520e2e575c41702289adf85e"><title>OpenSER::AVP</title>
+  <section id="ID-f092a1ce520e2e575c41702289adf85e"><title>Kamailio::AVP</title>
     <para>
-      This package provides access functions for OpenSER's AVPs. These
+      This package provides access functions for Kamailio's AVPs. These
       variables can be created, evaluated, modified and removed through
       this package.
     </para>
@@ -460,15 +460,15 @@ $m->xlog("L_INFO", "foo");]]></screen>
 	Add an AVP.
       </para>
       <para>
-	Add an OpenSER AVP to its environment. name and val may both be
+	Add an Kamailio AVP to its environment. name and val may both be
 	integers or strings; this function will try to guess what is
 	correct. Please note that
       </para>
-      <screen><![CDATA[OpenSER::AVP::add("10", "10")]]></screen>
+      <screen><![CDATA[Kamailio::AVP::add("10", "10")]]></screen>
       <para>
 	is something different than
       </para>
-      <screen><![CDATA[OpenSER::AVP::add(10, 10)]]></screen>
+      <screen><![CDATA[Kamailio::AVP::add(10, 10)]]></screen>
       <para>
 	due to this evaluation: The first will create _string_ AVPs with
 	the name 10, while the latter will create a numerical AVP.
@@ -479,27 +479,27 @@ $m->xlog("L_INFO", "foo");]]></screen>
     </section>
     <section id="ID-ad3f402b1c78426a3a1de4d0c1d9ad6c"><title>get(name)</title>
       <para>
-	get an OpenSER AVP:
+	get an Kamailio AVP:
       </para>
-      <screen><![CDATA[my $numavp = OpenSER::AVP::get(5);
-my $stravp = OpenSER::AVP::get("foo");]]></screen>
+      <screen><![CDATA[my $numavp = Kamailio::AVP::get(5);
+my $stravp = Kamailio::AVP::get("foo");]]></screen>
     </section>
     <section id="ID-15db533161502fc4591ec9acdd990ef4"><title>destroy(name)</title>
       <para>
 	Destroy an AVP.
       </para>
-      <screen><![CDATA[OpenSER::AVP::destroy(5);
-OpenSER::AVP::destroy("foo");]]></screen>
+      <screen><![CDATA[Kamailio::AVP::destroy(5);
+Kamailio::AVP::destroy("foo");]]></screen>
     </section>
   </section>
-  <section id="ID-b2dcbd51ac3a3e6208edd5e4f6a5ef63"><title>OpenSER::Utils::PhoneNumbers</title>
+  <section id="ID-b2dcbd51ac3a3e6208edd5e4f6a5ef63"><title>Kamailio::Utils::PhoneNumbers</title>
     <para>
-      OpenSER::Utils::PhoneNumbers - Functions for canonical forms of phone
+      Kamailio::Utils::PhoneNumbers - Functions for canonical forms of phone
       numbers.
     </para>
-    <screen><![CDATA[use OpenSER::Utils::PhoneNumbers;
+    <screen><![CDATA[use Kamailio::Utils::PhoneNumbers;
 
-my $phonenumbers = new OpenSER::Utils::PhoneNumbers(
+my $phonenumbers = new Kamailio::Utils::PhoneNumbers(
      publicAccessPrefix => "0",
      internationalPrefix => "+",
      longDistancePrefix => "0",
@@ -560,7 +560,7 @@ $number    = $phonenumbers->dialNumber("+497612034567");]]></screen>
 	The new operator returns an object of this type and sets its
 	locational context according to the passed parameters. See
 	<citerefentry>
-	<refentrytitle>OpenSER::Utils::PhoneNumbers</refentrytitle>
+	<refentrytitle>Kamailio::Utils::PhoneNumbers</refentrytitle>
 	</citerefentry> above.
       </para>
     </section>
@@ -579,13 +579,13 @@ $number    = $phonenumbers->dialNumber("+497612034567");]]></screen>
       </para>
     </section>
   </section>
-  <section id="ID-05a2ba8f92ec3fe3d26bcb69d169a1b1"><title>OpenSER::LDAPUtils::LDAPConf</title>
+  <section id="ID-05a2ba8f92ec3fe3d26bcb69d169a1b1"><title>Kamailio::LDAPUtils::LDAPConf</title>
     <para>
-      OpenSER::LDAPUtils::LDAPConf - Read openldap config from standard
+      Kamailio::LDAPUtils::LDAPConf - Read openldap config from standard
       config files.
     </para>
-    <screen><![CDATA[use OpenSER::LDAPUtils::LDAPConf;
-my $conf = new OpenSER::LDAPUtils::LDAPConf();]]></screen>
+    <screen><![CDATA[use Kamailio::LDAPUtils::LDAPConf;
+my $conf = new Kamailio::LDAPUtils::LDAPConf();]]></screen>
     <para>
       This module may be used to retrieve the global LDAP configuration as
       used by other LDAP software, such as <literal
@@ -601,7 +601,7 @@ my $conf = new OpenSER::LDAPUtils::LDAPConf();]]></screen>
     <section id="ID-77bbb24cd07a34db564171c3072c9f8c"><title>Constructor new()</title>
       <para>
 	Returns a new, initialized <literal
-	role="code"><![CDATA[OpenSER::LDAPUtils::LDAPConf]]></literal>
+	role="code"><![CDATA[Kamailio::LDAPUtils::LDAPConf]]></literal>
 	object.
       </para>
     </section>
@@ -659,23 +659,23 @@ my $conf = new OpenSER::LDAPUtils::LDAPConf();]]></screen>
       </para>
     </section>
   </section>
-  <section id="ID-10d643239760bcd4a2286051808d077e"><title>OpenSER::LDAPUtils::LDAPConnection</title>
+  <section id="ID-10d643239760bcd4a2286051808d077e"><title>Kamailio::LDAPUtils::LDAPConnection</title>
     <para>
-      OpenSER::LDAPUtils::LDAPConnection - Perl module to perform simple
+      Kamailio::LDAPUtils::LDAPConnection - Perl module to perform simple
       LDAP queries.
     </para>
     <para>
       OO-Style interface:
     </para>
-    <screen><![CDATA[use OpenSER::LDAPUtils::LDAPConnection;
-my $ldap = new OpenSER::LDAPUtils::LDAPConnection;
+    <screen><![CDATA[use Kamailio::LDAPUtils::LDAPConnection;
+my $ldap = new Kamailio::LDAPUtils::LDAPConnection;
 my @rows = $ldap-search("uid=andi","ou=people,ou=coreworks,ou=de");]]></screen>
     <para>
       Procedural interface:
     </para>
-    <screen><![CDATA[use OpenSER::LDAPUtils::LDAPConnection;
+    <screen><![CDATA[use Kamailio::LDAPUtils::LDAPConnection;
 my @rows = $ldap->search(
-      new OpenSER::LDAPUtils::LDAPConfig(), "uid=andi","ou=people,ou=coreworks,ou=de");]]></screen>
+      new Kamailio::LDAPUtils::LDAPConfig(), "uid=andi","ou=people,ou=coreworks,ou=de");]]></screen>
     <para>
       This perl module offers a somewhat simplified interface to the
       <literal role="code"><![CDATA[Net::LDAP]]></literal> functionality.
@@ -690,11 +690,11 @@ my @rows = $ldap->search(
       <para>
 	The first argument, when given, should be a hash reference pointing
 	to to the connection parameters, possibly an <literal
-	role="code"><![CDATA[OpenSER::LDAPUtils::LDAPConfig]]></literal>
+	role="code"><![CDATA[Kamailio::LDAPUtils::LDAPConfig]]></literal>
 	object. This argument may be <literal
 	role="code"><![CDATA[undef]]></literal> in which case a new
 	(default) <literal
-	role="code"><![CDATA[OpenSER::LDAPUtils::LDAPConfig]]></literal>
+	role="code"><![CDATA[Kamailio::LDAPUtils::LDAPConfig]]></literal>
 	object is used.
       </para>
       <para>
@@ -716,7 +716,7 @@ my @rows = $ldap->search(
       </para>
       <para>
 	When the first argument (conf) is a <literal
-	role="code"><![CDATA[OpenSER::LDAPUtils::LDAPConnection]]></literal>,
+	role="code"><![CDATA[Kamailio::LDAPUtils::LDAPConnection]]></literal>,
 	it will be used to perform the queries. You can pass the first
 	argument implicitly by using the "method" syntax.
       </para>
@@ -724,9 +724,9 @@ my @rows = $ldap->search(
 	Otherwise the <literal role="code"><![CDATA[conf]]></literal>
 	argument should be a reference to a hash containing the connection
 	setup parameters as contained in a <literal
-	role="code"><![CDATA[OpenSER::LDAPUtils::LDAPConf]]></literal>
+	role="code"><![CDATA[Kamailio::LDAPUtils::LDAPConf]]></literal>
 	object. In this mode, the <literal
-	role="code"><![CDATA[OpenSER::LDAPUtils::LDAPConnection]]></literal>
+	role="code"><![CDATA[Kamailio::LDAPUtils::LDAPConnection]]></literal>
 	from previous queries will be reused.
       </para>
       <section id="ID-fb371aca693935a2ea3467c59473c78f"><title>Arguments:</title>
@@ -785,10 +785,10 @@ my @rows = $ldap->search(
       </section>
     </section>
   </section>
-  <section id="ID-94fdb1e4103544a567ac38ee23c8a4d1"><title>OpenSER::VDB</title>
+  <section id="ID-94fdb1e4103544a567ac38ee23c8a4d1"><title>Kamailio::VDB</title>
     <para>
       This package is an (abstract) base class for all virtual databases.
-      Derived packages can be configured to be used by OpenSER as a
+      Derived packages can be configured to be used by Kamailio as a
       database.
     </para>
     <para>
@@ -796,20 +796,20 @@ my @rows = $ldap->search(
       not provide any functionality.
     </para>
   </section>
-  <section id="ID-d97df315e2044f430319fc4cd9937aa5"><title>OpenSER::Constants</title>
+  <section id="ID-d97df315e2044f430319fc4cd9937aa5"><title>Kamailio::Constants</title>
     <para>
       This package provides a number of constants taken from enums and
-      defines of OpenSER header files. Unfortunately, there is no mechanism
+      defines of Kamailio header files. Unfortunately, there is no mechanism
       for updating the constants automatically, so check the values if you
       are in doubt.
     </para>
   </section>
-  <section id="ID-9658bbad14831f685cca13a5c9bb4335"><title>OpenSER::VDB::Adapter::Speeddial</title>
+  <section id="ID-9658bbad14831f685cca13a5c9bb4335"><title>Kamailio::VDB::Adapter::Speeddial</title>
     <para>
       This adapter can be used with the speeddial module.
     </para>
   </section>
-  <section id="ID-5cdb14839de18c32782e3d768e170da7"><title>OpenSER::VDB::Adapter::Alias</title>
+  <section id="ID-5cdb14839de18c32782e3d768e170da7"><title>Kamailio::VDB::Adapter::Alias</title>
     <para>
       This package is intended for usage with the alias_db module. The
       query VTab has to take two arguments and return an array of two
@@ -822,13 +822,13 @@ my @rows = $ldap->search(
       </para>
     </section>
   </section>
-  <section id="ID-8165ac0b808b36ff72ee4032e0f62881"><title>OpenSER::VDB::Adapter::AccountingSIPtrace</title>
+  <section id="ID-8165ac0b808b36ff72ee4032e0f62881"><title>Kamailio::VDB::Adapter::AccountingSIPtrace</title>
     <para>
       This package is an Adapter for the acc and siptrace modules,
       featuring only an insert operation.
     </para>
   </section>
-  <section id="ID-048913e15394a9675cfe02af5c340528"><title>OpenSER::VDB::Adapter::Describe</title>
+  <section id="ID-048913e15394a9675cfe02af5c340528"><title>Kamailio::VDB::Adapter::Describe</title>
     <para>
       This package is intended for debug usage. It will print information
       about requested functions and operations of a client module.
@@ -838,21 +838,21 @@ my @rows = $ldap->search(
       adapters.
     </para>
   </section>
-  <section id="ID-682dd320dd536e7fb0de4a24e9d1e46e"><title>OpenSER::VDB::Adapter::Auth</title>
+  <section id="ID-682dd320dd536e7fb0de4a24e9d1e46e"><title>Kamailio::VDB::Adapter::Auth</title>
     <para>
       This adapter is intended for usage with the auth_db module. The VTab
       should take a username as an argument and return a (plain text!)
       password.
     </para>
   </section>
-  <section id="ID-f245c032bf4b4837415c871537a63e3b"><title>OpenSER::VDB::ReqCond</title>
+  <section id="ID-f245c032bf4b4837415c871537a63e3b"><title>Kamailio::VDB::ReqCond</title>
     <para>
       This package represents a request condition for database access,
       consisting of a column name, an operator (=, &lt;, &gt;, ...), a data
       type and a value.
     </para>
     <para>
-      This package inherits from OpenSER::VDB::Pair and thus includes its
+      This package inherits from Kamailio::VDB::Pair and thus includes its
       methods.
     </para>
     <section id="ID-c50f7cee51ceffdb7253101a36d6b7b3"><title>new(key,op,type,name)</title>
@@ -866,13 +866,13 @@ my @rows = $ldap->search(
       </para>
     </section>
   </section>
-  <section id="ID-4be9a5fa03b11c2c2dad3594fc3b585d"><title>OpenSER::VDB::Pair</title>
+  <section id="ID-4be9a5fa03b11c2c2dad3594fc3b585d"><title>Kamailio::VDB::Pair</title>
     <para>
       This package represents database key/value pairs, consisting of a
       key, a value type, and the value.
     </para>
     <para>
-      This package inherits from OpenSER::VDB::Value and thus has the same
+      This package inherits from Kamailio::VDB::Value and thus has the same
       methods.
     </para>
     <section id="ID-e6cc5b1a997ea8e29d2a00b986784dc0"><title>new(key,type,name)</title>
@@ -886,9 +886,9 @@ my @rows = $ldap->search(
       </para>
     </section>
   </section>
-  <section id="ID-41cd8a9b5b94c05139d2a7f62d5a967b"><title>OpenSER::VDB::VTab</title>
+  <section id="ID-41cd8a9b5b94c05139d2a7f62d5a967b"><title>Kamailio::VDB::VTab</title>
     <para>
-      This package handles virtual tables and is used by the OpenSER::VDB
+      This package handles virtual tables and is used by the Kamailio::VDB
       class to store information about valid tables. The package is not
       inteded for end user access.
     </para>
@@ -902,21 +902,21 @@ my @rows = $ldap->search(
       </para>
     </section>
   </section>
-  <section id="ID-dd87abbf6c21bba656e60f50bf1db81b"><title>OpenSER::VDB::Value</title>
+  <section id="ID-dd87abbf6c21bba656e60f50bf1db81b"><title>Kamailio::VDB::Value</title>
     <para>
       This package represents a database value. Additional to the data
       itself, information about its type is stored.
     </para>
     <section id="ID-f8210a055e2dc48b7cd31acfbe483ef9"><title>stringification</title>
       <para>
-	When accessing a OpenSER::VDB::Value object as a string, it simply
+	When accessing a Kamailio::VDB::Value object as a string, it simply
 	returns its data regardless of its type. =cut
       </para>
       <para>
 	use strict;
       </para>
       <para>
-	package OpenSER::VDB::Value;
+	package Kamailio::VDB::Value;
       </para>
       <para>
 	use overload '""' =&gt; \&amp;stringify;
@@ -925,10 +925,10 @@ my @rows = $ldap->search(
 	sub stringify { shift-&gt;{data} }
       </para>
       <para>
-	use OpenSER; use OpenSER::Constants;
+	use Kamailio; use Kamailio::Constants;
       </para>
       <para>
-	our @ISA = qw ( OpenSER::Utils::Debug );
+	our @ISA = qw ( Kamailio::Utils::Debug );
       </para>
     </section>
     <section id="ID-246aa300bb8cb062e3126e6eddd094c4"><title>new(type,data)</title>
@@ -940,7 +940,7 @@ my @rows = $ldap->search(
     <section id="ID-1b24f490feaba7e8ffde5919a34a3ea5"><title>type()</title>
       <para>
 	Returns or sets the current data type. Please consider using the
-	constants from OpenSER::Constants
+	constants from Kamailio::Constants
       </para>
     </section>
     <section id="ID-8ed1b290ce747e1e6fc97d5c253d67eb"><title>data()</title>
@@ -949,18 +949,18 @@ my @rows = $ldap->search(
       </para>
     </section>
   </section>
-  <section id="ID-01b04d0ae14c862d7543534782702100"><title>OpenSER::VDB::Column</title>
+  <section id="ID-01b04d0ae14c862d7543534782702100"><title>Kamailio::VDB::Column</title>
     <para>
       This package represents database column definition, consisting of a
       column name and its data type.
     </para>
     <section id="ID-c1f63ab2d499e0ffb0eff65d3d1bcaa3"><title>Stringification</title>
       <para>
-	When accessing a OpenSER::VDB::Column object as a string, it simply
+	When accessing a Kamailio::VDB::Column object as a string, it simply
 	returns its column name regardless of its type. =cut
       </para>
       <para>
-	package OpenSER::VDB::Column;
+	package Kamailio::VDB::Column;
       </para>
       <para>
 	use overload '""' =&gt; \&amp;stringify;
@@ -969,10 +969,10 @@ my @rows = $ldap->search(
 	sub stringify { shift-&gt;{name} }
       </para>
       <para>
-	use OpenSER; use OpenSER::Constants;
+	use Kamailio; use Kamailio::Constants;
       </para>
       <para>
-	our @ISA = qw ( OpenSER::Utils::Debug );
+	our @ISA = qw ( Kamailio::Utils::Debug );
       </para>
     </section>
     <section id="ID-9be0a542b4be1d36c09e57a0a7785b8b"><title>new(type,name)</title>
@@ -984,7 +984,7 @@ my @rows = $ldap->search(
     <section id="ID-9e27faa58b7b4659e2d511fd4ed58ccd"><title>type( )</title>
       <para>
 	Returns or sets the current type. Please consider using the
-	constants from OpenSER::Constants
+	constants from Kamailio::Constants
       </para>
     </section>
     <section id="ID-e3219d620b6d1b4f5656ee466ef3cf22"><title>name()</title>
@@ -992,7 +992,7 @@ my @rows = $ldap->search(
 	Returns or sets the current column name.
       </para>
     </section>
-    <section id="ID-07e232dc068e186782a8d0c0bbae91d3"><title>OpenSER::VDB::Result</title>
+    <section id="ID-07e232dc068e186782a8d0c0bbae91d3"><title>Kamailio::VDB::Result</title>
       <para>
 	This class represents a VDB result set. It contains a column
 	definition, plus an array of rows. Rows themselves are simply
@@ -1002,7 +1002,7 @@ my @rows = $ldap->search(
     <section id="ID-54e80aeec6aaaa66afb9548d25388dea"><title>new(coldefs,[row, row, ...])</title>
       <para>
 	The constructor creates a new Result object. Its first parameter is
-	a reference to an array of OpenSER::VDB::Column objects. Additional
+	a reference to an array of Kamailio::VDB::Column objects. Additional
 	parameters may be passed to provide initial rows, which are
 	references to arrays of scalars.
       </para>

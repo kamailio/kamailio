@@ -1,5 +1,5 @@
-use OpenSER qw ( log );
-use OpenSER::Constants;
+use Kamailio qw ( log );
+use Kamailio::Constants;
 
 use IPC::Shareable;
 
@@ -9,7 +9,7 @@ my %lastcalltimes;
 my %lastcallids;
 
 
-# This function shows that normal persistent variables are _not_ valid between multiple instances of the OpenSER.
+# This function shows that normal persistent variables are _not_ valid between multiple instances of the Kamailio.
 # With the default setup of 4 children, the value logged is only incremented every 4th time.
 sub limited {
 

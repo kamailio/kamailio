@@ -1,5 +1,5 @@
-use OpenSER qw ( log );
-use OpenSER::Constants;
+use Kamailio qw ( log );
+use Kamailio::Constants;
 
 # Header demos
 

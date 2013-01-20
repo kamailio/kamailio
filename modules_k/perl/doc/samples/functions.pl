@@ -1,5 +1,5 @@
-use OpenSER qw ( log );
-use OpenSER::Constants;
+use Kamailio qw ( log );
+use Kamailio::Constants;
 
 #This function demonstrates how to call functions that are exported by other modules.
 sub exportedfuncs {
@@ -46,8 +46,8 @@ sub autotest {
 	return 1;
 }
 
-# The following two functions demonstrate that the OpenSER perl module handles
-# dieing interpreters correctly. OpenSER itself will not crash.
+# The following two functions demonstrate that the Kamailio perl module handles
+# dieing interpreters correctly. Kamailio itself will not crash.
 
 sub diefunc1 {
 	my $m = shift;

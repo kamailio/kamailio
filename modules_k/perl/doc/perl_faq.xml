@@ -25,7 +25,7 @@
 		    <listitem>
 			<para>Missing module functions. Not all functions of other modules are
 			available for Perl access. The reason for this is a design property of
-			OpenSER. Making available more functions is work in progress.</para>
+			&kamailio;. Making available more functions is work in progress.</para>
 		    </listitem>
 		    <listitem>
 			<para>Perl and threads. Perl itself is, when compiled with the correct
@@ -33,7 +33,7 @@
 			The DBI modules, especially (but not restricted to) DBI::ODBC are known
 			NOT to be thread safe.</para>
 			<para>Using DBI::ODBC -- and possibly other non-thread-safe Perl
-			extensions -- may result in erroneous behavior of OpenSER, including
+			extensions -- may result in erroneous behavior of &kamailio;, including
 			(but not restricted to) server crashes and wrong routing.</para>
 		    </listitem>
 		</itemizedlist>

@@ -33,13 +33,13 @@ Bastian Friedrich
               6.1. perl_exec_simple(func, [param])
               6.2. perl_exec(func, [param])
 
-   2. OpenSER Perl API
+   2. Kamailio Perl API
 
-        1. OpenSER
+        1. Kamailio
 
               1.1. log(level,message)
 
-        2. OpenSER::Message
+        2. Kamailio::Message
 
               2.1. getType()
               2.2. getStatus()
@@ -62,7 +62,7 @@ Bastian Friedrich
               2.19. append_branch(branch,qval)
               2.20. getParsedRURI()
 
-        3. OpenSER::URI
+        3. Kamailio::URI
 
               3.1. user()
               3.2. host()
@@ -85,13 +85,13 @@ Bastian Friedrich
               3.19. lr_val()
               3.20. r2_val()
 
-        4. OpenSER::AVP
+        4. Kamailio::AVP
 
               4.1. add(name,val)
               4.2. get(name)
               4.3. destroy(name)
 
-        5. OpenSER::Utils::PhoneNumbers
+        5. Kamailio::Utils::PhoneNumbers
 
               5.1.
                       new(publicAccessPrefix,internationalPrefix,longDistanceP
@@ -100,7 +100,7 @@ Bastian Friedrich
               5.2. canonicalForm( number [, context] )
               5.3. dialNumber( number [, context] )
 
-        6. OpenSER::LDAPUtils::LDAPConf
+        6. Kamailio::LDAPUtils::LDAPConf
 
               6.1. Constructor new()
               6.2. Method base()
@@ -112,7 +112,7 @@ Bastian Friedrich
               6.8. Method binddn()
               6.9. Method bindpw()
 
-        7. OpenSER::LDAPUtils::LDAPConnection
+        7. Kamailio::LDAPUtils::LDAPConnection
 
               7.1. Constructor new( [config, [authenticated]] )
               7.2. Function/Method search( conf, filter, base,
@@ -121,52 +121,52 @@ Bastian Friedrich
                     7.2.1. Arguments:
                     7.2.2. Result:
 
-        8. OpenSER::VDB
-        9. OpenSER::Constants
-        10. OpenSER::VDB::Adapter::Speeddial
-        11. OpenSER::VDB::Adapter::Alias
+        8. Kamailio::VDB
+        9. Kamailio::Constants
+        10. Kamailio::VDB::Adapter::Speeddial
+        11. Kamailio::VDB::Adapter::Alias
 
               11.1. query(conds,retkeys,order)
 
-        12. OpenSER::VDB::Adapter::AccountingSIPtrace
-        13. OpenSER::VDB::Adapter::Describe
-        14. OpenSER::VDB::Adapter::Auth
-        15. OpenSER::VDB::ReqCond
+        12. Kamailio::VDB::Adapter::AccountingSIPtrace
+        13. Kamailio::VDB::Adapter::Describe
+        14. Kamailio::VDB::Adapter::Auth
+        15. Kamailio::VDB::ReqCond
 
               15.1. new(key,op,type,name)
               15.2. op()
 
-        16. OpenSER::VDB::Pair
+        16. Kamailio::VDB::Pair
 
               16.1. new(key,type,name)
               16.2. key()
 
-        17. OpenSER::VDB::VTab
+        17. Kamailio::VDB::VTab
 
               17.1. new()
               17.2. call(op,[args])
 
-        18. OpenSER::VDB::Value
+        18. Kamailio::VDB::Value
 
               18.1. stringification
               18.2. new(type,data)
               18.3. type()
               18.4. data()
 
-        19. OpenSER::VDB::Column
+        19. Kamailio::VDB::Column
 
               19.1. Stringification
               19.2. new(type,name)
               19.3. type( )
               19.4. name()
-              19.5. OpenSER::VDB::Result
+              19.5. Kamailio::VDB::Result
               19.6. new(coldefs,[row, row, ...])
               19.7. coldefs()
               19.8. rows()
 
    3. Perl samples
 
-        1. sample directory
+        1. Sample directory
 
               1.1. Script descriptions
 
@@ -330,7 +330,7 @@ if (perl_exec("ldap_alias")) {
 
    Example 1.1. Set filename parameter
 ...
-modparam("perl", "filename", "/home/john/openser/myperl.pl")
+modparam("perl", "filename", "/home/test/kamailio/myperl.pl")
 ...
 
 5.2. modpath (string)
@@ -344,7 +344,7 @@ modparam("perl", "filename", "/home/john/openser/myperl.pl")
 
    Example 1.2. Set modpath parameter
 ...
-modparam("perl", "modpath", "/usr/local/lib/openser/perl/")
+modparam("perl", "modpath", "/usr/local/lib/kamailio/perl/")
 ...
 
 6. Functions
@@ -391,15 +391,15 @@ if (perl_exec("ldapalias")) {
 };
 ...
 
-Chapter 2. OpenSER Perl API
+Chapter 2. Kamailio Perl API
 
    Table of Contents
 
-   1. OpenSER
+   1. Kamailio
 
         1.1. log(level,message)
 
-   2. OpenSER::Message
+   2. Kamailio::Message
 
         2.1. getType()
         2.2. getStatus()
@@ -422,7 +422,7 @@ Chapter 2. OpenSER Perl API
         2.19. append_branch(branch,qval)
         2.20. getParsedRURI()
 
-   3. OpenSER::URI
+   3. Kamailio::URI
 
         3.1. user()
         3.2. host()
@@ -445,13 +445,13 @@ Chapter 2. OpenSER Perl API
         3.19. lr_val()
         3.20. r2_val()
 
-   4. OpenSER::AVP
+   4. Kamailio::AVP
 
         4.1. add(name,val)
         4.2. get(name)
         4.3. destroy(name)
 
-   5. OpenSER::Utils::PhoneNumbers
+   5. Kamailio::Utils::PhoneNumbers
 
         5.1.
                 new(publicAccessPrefix,internationalPrefix,longDistancePrefix,
@@ -460,7 +460,7 @@ Chapter 2. OpenSER Perl API
         5.2. canonicalForm( number [, context] )
         5.3. dialNumber( number [, context] )
 
-   6. OpenSER::LDAPUtils::LDAPConf
+   6. Kamailio::LDAPUtils::LDAPConf
 
         6.1. Constructor new()
         6.2. Method base()
@@ -472,7 +472,7 @@ Chapter 2. OpenSER Perl API
         6.8. Method binddn()
         6.9. Method bindpw()
 
-   7. OpenSER::LDAPUtils::LDAPConnection
+   7. Kamailio::LDAPUtils::LDAPConnection
 
         7.1. Constructor new( [config, [authenticated]] )
         7.2. Function/Method search( conf, filter, base,
@@ -481,60 +481,60 @@ Chapter 2. OpenSER Perl API
               7.2.1. Arguments:
               7.2.2. Result:
 
-   8. OpenSER::VDB
-   9. OpenSER::Constants
-   10. OpenSER::VDB::Adapter::Speeddial
-   11. OpenSER::VDB::Adapter::Alias
+   8. Kamailio::VDB
+   9. Kamailio::Constants
+   10. Kamailio::VDB::Adapter::Speeddial
+   11. Kamailio::VDB::Adapter::Alias
 
         11.1. query(conds,retkeys,order)
 
-   12. OpenSER::VDB::Adapter::AccountingSIPtrace
-   13. OpenSER::VDB::Adapter::Describe
-   14. OpenSER::VDB::Adapter::Auth
-   15. OpenSER::VDB::ReqCond
+   12. Kamailio::VDB::Adapter::AccountingSIPtrace
+   13. Kamailio::VDB::Adapter::Describe
+   14. Kamailio::VDB::Adapter::Auth
+   15. Kamailio::VDB::ReqCond
 
         15.1. new(key,op,type,name)
         15.2. op()
 
-   16. OpenSER::VDB::Pair
+   16. Kamailio::VDB::Pair
 
         16.1. new(key,type,name)
         16.2. key()
 
-   17. OpenSER::VDB::VTab
+   17. Kamailio::VDB::VTab
 
         17.1. new()
         17.2. call(op,[args])
 
-   18. OpenSER::VDB::Value
+   18. Kamailio::VDB::Value
 
         18.1. stringification
         18.2. new(type,data)
         18.3. type()
         18.4. data()
 
-   19. OpenSER::VDB::Column
+   19. Kamailio::VDB::Column
 
         19.1. Stringification
         19.2. new(type,name)
         19.3. type( )
         19.4. name()
-        19.5. OpenSER::VDB::Result
+        19.5. Kamailio::VDB::Result
         19.6. new(coldefs,[row, row, ...])
         19.7. coldefs()
         19.8. rows()
 
-1. OpenSER
+1. Kamailio
 
    1.1. log(level,message)
 
-   This module provides access to a limited number of OpenSER core
+   This module provides access to a limited number of Kamailio core
    functions. As the most interesting functions deal with SIP messages,
-   they are located in the OpenSER::Message class below.
+   they are located in the Kamailio::Message class below.
 
 1.1. log(level,message)
 
-   Logs the message with OpenSER's logging facility. The logging level is
+   Logs the message with Kamailio's logging facility. The logging level is
    one of the following:
 * L_ALERT
 * L_CRIT
@@ -546,11 +546,11 @@ Chapter 2. OpenSER Perl API
 
    Please note that this method is NOT automatically exported, as it
    collides with the perl function log (which calculates the logarithm).
-   Either explicitly import the function (via use OpenSER qw ( log );), or
-   call it with its full name:
-OpenSER::log(L_INFO, "foobar");
+   Either explicitly import the function (via use Kamailio qw ( log );),
+   or call it with its full name:
+Kamailio::log(L_INFO, "foobar");
 
-2. OpenSER::Message
+2. Kamailio::Message
 
    2.1. getType()
    2.2. getStatus()
@@ -573,9 +573,9 @@ OpenSER::log(L_INFO, "foobar");
    2.19. append_branch(branch,qval)
    2.20. getParsedRURI()
 
-   This package provides access functions for an OpenSER sip_msg structure
-   and its sub-components. Through its means it is possible to fully
-   configure alternative routing decisions.
+   This package provides access functions for an Kamailio sip_msg
+   structure and its sub-components. Through its means it is possible to
+   fully configure alternative routing decisions.
 
 2.1. getType()
 
@@ -651,8 +651,8 @@ OpenSER::log(L_INFO, "foobar");
    string1 and/or string2 may be omitted.
 
    As this function provides access to the functions that are exported to
-   the OpenSER configuration file, it is autoloaded for unknown functions.
-   Instead of writing
+   the Kamailio configuration file, it is autoloaded for unknown
+   functions. Instead of writing
 $m->moduleFunction("sl_send_reply", "500", "Internal Error");
 $m->moduleFunction("xlog", "L_INFO", "foo");
 
@@ -662,8 +662,8 @@ $m->xlog("L_INFO", "foo");
 
    WARNING
 
-   In OpenSER 1.2, only a limited subset of module functions is available.
-   This restriction will be removed in a later version.
+   In Kamailio 1.2, only a limited subset of module functions is
+   available. This restriction will be removed in a later version.
 
    Here is a list of functions that are expected to be working (not
    claiming completeness):
@@ -766,7 +766,7 @@ $m->xlog("L_INFO", "foo");
 
 2.13. log(level,message) (deprecated type)
 
-   Logs the message with OpenSER's logging facility. The logging level is
+   Logs the message with Kamailio's logging facility. The logging level is
    one of the following:
 * L_ALERT
 * L_CRIT
@@ -776,8 +776,8 @@ $m->xlog("L_INFO", "foo");
 * L_INFO
 * L_DBG
 
-   The logging function should be accessed via the OpenSER module variant.
-   This one, located in OpenSER::Message, is deprecated.
+   The logging function should be accessed via the Kamailio module
+   variant. This one, located in Kamailio::Message, is deprecated.
 
 2.14. rewrite_ruri(newruri)
 
@@ -814,9 +814,9 @@ if ($m->getRURI() =~ m/\@somedomain.net/) {
 
 2.20. getParsedRURI()
 
-   Returns the current destination URI as an OpenSER::URI object.
+   Returns the current destination URI as an Kamailio::URI object.
 
-3. OpenSER::URI
+3. Kamailio::URI
 
    3.1. user()
    3.2. host()
@@ -921,13 +921,13 @@ if ($m->getRURI() =~ m/\@somedomain.net/) {
 
    Returns the r2_val part of this URI.
 
-4. OpenSER::AVP
+4. Kamailio::AVP
 
    4.1. add(name,val)
    4.2. get(name)
    4.3. destroy(name)
 
-   This package provides access functions for OpenSER's AVPs. These
+   This package provides access functions for Kamailio's AVPs. These
    variables can be created, evaluated, modified and removed through this
    package.
 
@@ -939,13 +939,13 @@ if ($m->getRURI() =~ m/\@somedomain.net/) {
 
    Add an AVP.
 
-   Add an OpenSER AVP to its environment. name and val may both be
+   Add an Kamailio AVP to its environment. name and val may both be
    integers or strings; this function will try to guess what is correct.
    Please note that
-OpenSER::AVP::add("10", "10")
+Kamailio::AVP::add("10", "10")
 
    is something different than
-OpenSER::AVP::add(10, 10)
+Kamailio::AVP::add(10, 10)
 
    due to this evaluation: The first will create _string_ AVPs with the
    name 10, while the latter will create a numerical AVP.
@@ -954,17 +954,17 @@ OpenSER::AVP::add(10, 10)
 
 4.2. get(name)
 
-   get an OpenSER AVP:
-my $numavp = OpenSER::AVP::get(5);
-my $stravp = OpenSER::AVP::get("foo");
+   get an Kamailio AVP:
+my $numavp = Kamailio::AVP::get(5);
+my $stravp = Kamailio::AVP::get("foo");
 
 4.3. destroy(name)
 
    Destroy an AVP.
-OpenSER::AVP::destroy(5);
-OpenSER::AVP::destroy("foo");
+Kamailio::AVP::destroy(5);
+Kamailio::AVP::destroy("foo");
 
-5. OpenSER::Utils::PhoneNumbers
+5. Kamailio::Utils::PhoneNumbers
 
    5.1.
           new(publicAccessPrefix,internationalPrefix,longDistancePrefix,count
@@ -973,11 +973,11 @@ OpenSER::AVP::destroy("foo");
    5.2. canonicalForm( number [, context] )
    5.3. dialNumber( number [, context] )
 
-   OpenSER::Utils::PhoneNumbers - Functions for canonical forms of phone
+   Kamailio::Utils::PhoneNumbers - Functions for canonical forms of phone
    numbers.
-use OpenSER::Utils::PhoneNumbers;
+use Kamailio::Utils::PhoneNumbers;
 
-my $phonenumbers = new OpenSER::Utils::PhoneNumbers(
+my $phonenumbers = new Kamailio::Utils::PhoneNumbers(
      publicAccessPrefix => "0",
      internationalPrefix => "+",
      longDistancePrefix => "0",
@@ -1029,7 +1029,7 @@ e,areaCode,pbxCode)
 
    The new operator returns an object of this type and sets its locational
    context according to the passed parameters. See
-   OpenSER::Utils::PhoneNumbers above.
+   Kamailio::Utils::PhoneNumbers above.
 
 5.2. canonicalForm( number [, context] )
 
@@ -1043,7 +1043,7 @@ e,areaCode,pbxCode)
    number to to dial. WHen no context is given in the second argument, a
    default context from the systems configuration is used.
 
-6. OpenSER::LDAPUtils::LDAPConf
+6. Kamailio::LDAPUtils::LDAPConf
 
    6.1. Constructor new()
    6.2. Method base()
@@ -1055,10 +1055,10 @@ e,areaCode,pbxCode)
    6.8. Method binddn()
    6.9. Method bindpw()
 
-   OpenSER::LDAPUtils::LDAPConf - Read openldap config from standard
+   Kamailio::LDAPUtils::LDAPConf - Read openldap config from standard
    config files.
-use OpenSER::LDAPUtils::LDAPConf;
-my $conf = new OpenSER::LDAPUtils::LDAPConf();
+use Kamailio::LDAPUtils::LDAPConf;
+my $conf = new Kamailio::LDAPUtils::LDAPConf();
 
    This module may be used to retrieve the global LDAP configuration as
    used by other LDAP software, such as nsswitch.ldap and pam-ldap. The
@@ -1069,7 +1069,7 @@ my $conf = new OpenSER::LDAPUtils::LDAPConf();
 
 6.1. Constructor new()
 
-   Returns a new, initialized OpenSER::LDAPUtils::LDAPConf object.
+   Returns a new, initialized Kamailio::LDAPUtils::LDAPConf object.
 
 6.2. Method base()
 
@@ -1110,7 +1110,7 @@ my $conf = new OpenSER::LDAPUtils::LDAPConf();
    Returns the password to use for authentication to the ldap server. When
    no bind password has been specified, returns the rootbindpw if any.
 
-7. OpenSER::LDAPUtils::LDAPConnection
+7. Kamailio::LDAPUtils::LDAPConnection
 
    7.1. Constructor new( [config, [authenticated]] )
    7.2. Function/Method search( conf, filter, base, [requested_attributes
@@ -1119,19 +1119,19 @@ my $conf = new OpenSER::LDAPUtils::LDAPConf();
         7.2.1. Arguments:
         7.2.2. Result:
 
-   OpenSER::LDAPUtils::LDAPConnection - Perl module to perform simple LDAP
-   queries.
+   Kamailio::LDAPUtils::LDAPConnection - Perl module to perform simple
+   LDAP queries.
 
    OO-Style interface:
-use OpenSER::LDAPUtils::LDAPConnection;
-my $ldap = new OpenSER::LDAPUtils::LDAPConnection;
+use Kamailio::LDAPUtils::LDAPConnection;
+my $ldap = new Kamailio::LDAPUtils::LDAPConnection;
 my @rows = $ldap-search("uid=andi","ou=people,ou=coreworks,ou=de");
 
    Procedural interface:
-use OpenSER::LDAPUtils::LDAPConnection;
+use Kamailio::LDAPUtils::LDAPConnection;
 my @rows = $ldap->search(
-      new OpenSER::LDAPUtils::LDAPConfig(), "uid=andi","ou=people,ou=coreworks,o
-u=de");
+      new Kamailio::LDAPUtils::LDAPConfig(), "uid=andi","ou=people,ou=coreworks,
+ou=de");
 
    This perl module offers a somewhat simplified interface to the
    Net::LDAP functionality. It is intended for cases where just a few
@@ -1144,8 +1144,8 @@ u=de");
 
    The first argument, when given, should be a hash reference pointing to
    to the connection parameters, possibly an
-   OpenSER::LDAPUtils::LDAPConfig object. This argument may be undef in
-   which case a new (default) OpenSER::LDAPUtils::LDAPConfig object is
+   Kamailio::LDAPUtils::LDAPConfig object. This argument may be undef in
+   which case a new (default) Kamailio::LDAPUtils::LDAPConfig object is
    used.
 
    When the optional second argument is a true value, the connection will
@@ -1160,14 +1160,15 @@ u=de");
    entry, unless a specific attribute has been requested, in wich case the
    values(s) fot this attribute are returned.
 
-   When the first argument (conf) is a OpenSER::LDAPUtils::LDAPConnection,
-   it will be used to perform the queries. You can pass the first argument
-   implicitly by using the "method" syntax.
+   When the first argument (conf) is a
+   Kamailio::LDAPUtils::LDAPConnection, it will be used to perform the
+   queries. You can pass the first argument implicitly by using the
+   "method" syntax.
 
    Otherwise the conf argument should be a reference to a hash containing
    the connection setup parameters as contained in a
-   OpenSER::LDAPUtils::LDAPConf object. In this mode, the
-   OpenSER::LDAPUtils::LDAPConnection from previous queries will be
+   Kamailio::LDAPUtils::LDAPConf object. In this mode, the
+   Kamailio::LDAPUtils::LDAPConnection from previous queries will be
    reused.
 
 7.2.1. Arguments:
@@ -1196,26 +1197,27 @@ u=de");
    attibutes. When multiple entries match the query, the attribute lists
    are concatenated.
 
-8. OpenSER::VDB
+8. Kamailio::VDB
 
    This package is an (abstract) base class for all virtual databases.
-   Derived packages can be configured to be used by OpenSER as a database.
+   Derived packages can be configured to be used by Kamailio as a
+   database.
 
    The base class itself should NOT be used in this context, as it does
    not provide any functionality.
 
-9. OpenSER::Constants
+9. Kamailio::Constants
 
    This package provides a number of constants taken from enums and
-   defines of OpenSER header files. Unfortunately, there is no mechanism
+   defines of Kamailio header files. Unfortunately, there is no mechanism
    for updating the constants automatically, so check the values if you
    are in doubt.
 
-10. OpenSER::VDB::Adapter::Speeddial
+10. Kamailio::VDB::Adapter::Speeddial
 
    This adapter can be used with the speeddial module.
 
-11. OpenSER::VDB::Adapter::Alias
+11. Kamailio::VDB::Adapter::Alias
 
    11.1. query(conds,retkeys,order)
 
@@ -1228,12 +1230,12 @@ u=de");
    Queries the vtab with the given arguments for request conditions, keys
    to return and sort order column name.
 
-12. OpenSER::VDB::Adapter::AccountingSIPtrace
+12. Kamailio::VDB::Adapter::AccountingSIPtrace
 
    This package is an Adapter for the acc and siptrace modules, featuring
    only an insert operation.
 
-13. OpenSER::VDB::Adapter::Describe
+13. Kamailio::VDB::Adapter::Describe
 
    This package is intended for debug usage. It will print information
    about requested functions and operations of a client module.
@@ -1241,13 +1243,13 @@ u=de");
    Use this module to request schema information when creating new
    adapters.
 
-14. OpenSER::VDB::Adapter::Auth
+14. Kamailio::VDB::Adapter::Auth
 
    This adapter is intended for usage with the auth_db module. The VTab
    should take a username as an argument and return a (plain text!)
    password.
 
-15. OpenSER::VDB::ReqCond
+15. Kamailio::VDB::ReqCond
 
    15.1. new(key,op,type,name)
    15.2. op()
@@ -1256,7 +1258,7 @@ u=de");
    consisting of a column name, an operator (=, <, >, ...), a data type
    and a value.
 
-   This package inherits from OpenSER::VDB::Pair and thus includes its
+   This package inherits from Kamailio::VDB::Pair and thus includes its
    methods.
 
 15.1. new(key,op,type,name)
@@ -1267,7 +1269,7 @@ u=de");
 
    Returns or sets the current operator.
 
-16. OpenSER::VDB::Pair
+16. Kamailio::VDB::Pair
 
    16.1. new(key,type,name)
    16.2. key()
@@ -1275,7 +1277,7 @@ u=de");
    This package represents database key/value pairs, consisting of a key,
    a value type, and the value.
 
-   This package inherits from OpenSER::VDB::Value and thus has the same
+   This package inherits from Kamailio::VDB::Value and thus has the same
    methods.
 
 16.1. new(key,type,name)
@@ -1286,12 +1288,12 @@ u=de");
 
    Returns or sets the current key.
 
-17. OpenSER::VDB::VTab
+17. Kamailio::VDB::VTab
 
    17.1. new()
    17.2. call(op,[args])
 
-   This package handles virtual tables and is used by the OpenSER::VDB
+   This package handles virtual tables and is used by the Kamailio::VDB
    class to store information about valid tables. The package is not
    inteded for end user access.
 
@@ -1304,7 +1306,7 @@ Constructs a new VTab object
    Invokes an operation on the table (insert, update, ...) with the given
    arguments.
 
-18. OpenSER::VDB::Value
+18. Kamailio::VDB::Value
 
    18.1. stringification
    18.2. new(type,data)
@@ -1316,20 +1318,20 @@ Constructs a new VTab object
 
 18.1. stringification
 
-   When accessing a OpenSER::VDB::Value object as a string, it simply
+   When accessing a Kamailio::VDB::Value object as a string, it simply
    returns its data regardless of its type. =cut
 
    use strict;
 
-   package OpenSER::VDB::Value;
+   package Kamailio::VDB::Value;
 
    use overload '""' => \&stringify;
 
    sub stringify { shift->{data} }
 
-   use OpenSER; use OpenSER::Constants;
+   use Kamailio; use Kamailio::Constants;
 
-   our @ISA = qw ( OpenSER::Utils::Debug );
+   our @ISA = qw ( Kamailio::Utils::Debug );
 
 18.2. new(type,data)
 
@@ -1339,19 +1341,19 @@ Constructs a new VTab object
 18.3. type()
 
    Returns or sets the current data type. Please consider using the
-   constants from OpenSER::Constants
+   constants from Kamailio::Constants
 
 18.4. data()
 
    Returns or sets the current data.
 
-19. OpenSER::VDB::Column
+19. Kamailio::VDB::Column
 
    19.1. Stringification
    19.2. new(type,name)
    19.3. type( )
    19.4. name()
-   19.5. OpenSER::VDB::Result
+   19.5. Kamailio::VDB::Result
    19.6. new(coldefs,[row, row, ...])
    19.7. coldefs()
    19.8. rows()
@@ -1361,18 +1363,18 @@ Constructs a new VTab object
 
 19.1. Stringification
 
-   When accessing a OpenSER::VDB::Column object as a string, it simply
+   When accessing a Kamailio::VDB::Column object as a string, it simply
    returns its column name regardless of its type. =cut
 
-   package OpenSER::VDB::Column;
+   package Kamailio::VDB::Column;
 
    use overload '""' => \&stringify;
 
    sub stringify { shift->{name} }
 
-   use OpenSER; use OpenSER::Constants;
+   use Kamailio; use Kamailio::Constants;
 
-   our @ISA = qw ( OpenSER::Utils::Debug );
+   our @ISA = qw ( Kamailio::Utils::Debug );
 
 19.2. new(type,name)
 
@@ -1382,13 +1384,13 @@ Constructs a new VTab object
 19.3. type( )
 
    Returns or sets the current type. Please consider using the constants
-   from OpenSER::Constants
+   from Kamailio::Constants
 
 19.4. name()
 
    Returns or sets the current column name.
 
-19.5. OpenSER::VDB::Result
+19.5. Kamailio::VDB::Result
 
    This class represents a VDB result set. It contains a column
    definition, plus an array of rows. Rows themselves are simply
@@ -1397,7 +1399,7 @@ Constructs a new VTab object
 19.6. new(coldefs,[row, row, ...])
 
    The constructor creates a new Result object. Its first parameter is a
-   reference to an array of OpenSER::VDB::Column objects. Additional
+   reference to an array of Kamailio::VDB::Column objects. Additional
    parameters may be passed to provide initial rows, which are references
    to arrays of scalars.
 
@@ -1413,7 +1415,7 @@ Chapter 3. Perl samples
 
    Table of Contents
 
-   1. sample directory
+   1. Sample directory
 
         1.1. Script descriptions
 
@@ -1428,7 +1430,7 @@ Chapter 3. Perl samples
               1.1.9. phonenumbers.pl
               1.1.10. pseudovars.pl
 
-1. sample directory
+1. Sample directory
 
    1.1. Script descriptions
 
@@ -1459,7 +1461,7 @@ Chapter 3. Perl samples
    The minimal function in branches.pl demonstrates that you can access
    the "append_branch" function from within perl, just as you would have
    done from your normal configuration file. You'll find documentation on
-   the concepts of branching in the OpenSER documentation.
+   the concepts of branching in the Kamailio documentation.
 
 1.1.2. firstline.pl
 
@@ -1469,9 +1471,9 @@ Chapter 3. Perl samples
 
 1.1.3. flags.pl
 
-   The perl module provides access to OpenSER's flagging mechanism. The
-   flag names available for OpenSER modules are made available through the
-   OpenSER::Constants package, so you can flag messages as "green",
+   The perl module provides access to Kamailio's flagging mechanism. The
+   flag names available for Kamailio modules are made available through
+   the Kamailio::Constants package, so you can flag messages as "green",
    "magenta" etc.
 
    The first function, setflag, demonstrates how the "green" flag is set.
@@ -1482,7 +1484,7 @@ Chapter 3. Perl samples
 
    This sample script demonstrates different things related to calling
    functions from within perl, and the different types of functions you
-   can offer for OpenSER access.
+   can offer for Kamailio access.
 
    “exportedfuncs” simply demonstrates that you can use the moduleFunction
    method to call functions offered by other modules. The results are
@@ -1492,17 +1494,17 @@ Chapter 3. Perl samples
    destination addresses are passed to the alias_db module.
 
    Please note that the moduleFunction method is not fully available in
-   OpenSER 1.2. See the method's documentation for details.
+   Kamailio 1.2. See the method's documentation for details.
 
    “paramfunc” shows that you can pass arbitrary strings to perl
    functions. Do with them whatever you want :)
 
-   “autotest” demonstrates that unknown functions in OpenSER::Message
+   “autotest” demonstrates that unknown functions in Kamailio::Message
    objects are automatically transformed into calls to module functions.
 
    The “diefunc”s show that dying perl scripts - by "manual" dying, or
-   because of script errors - are handled by the OpenSER package. The
-   error message is logged through OpenSER's logging mechanism. Please
+   because of script errors - are handled by the Kamailio package. The
+   error message is logged through Kamailio's logging mechanism. Please
    note that this only works correctly if you do NOT overwrite the default
    die handler. Oh, yes, that works for warnings, too.
 
@@ -1522,15 +1524,15 @@ Chapter 3. Perl samples
 1.1.6. logging.pl
 
    For debugging purposes, you probably want to write messages to the
-   syslog. The “logdemo” shows three ways to access the OpenSER log
-   function: it is available through the OpenSER class as well as through
-   the OpenSER::Message class.
+   syslog. The “logdemo” shows three ways to access the Kamailio log
+   function: it is available through the Kamailio class as well as through
+   the Kamailio::Message class.
 
    Remember that you can use exported functions from other modules. You
    may thus as well use the “xlog” module and it's xlog function.
 
    The L_INFO, L_DBG, L_ERR, L_CRIT... constants are available through the
-   OpenSER::Constants package.
+   Kamailio::Constants package.
 
 1.1.7. messagedump.pl
 
@@ -1544,13 +1546,13 @@ Chapter 3. Perl samples
    When processing SIP messages, you may want to use persistent data
    across multiple calls to your Perl functions. Your first option is to
    use global variables in your script. Unfortunately, these globals are
-   not visible from the mulitple instances of OpenSER. You may want to use
-   a mechanism such as the IPC::Shareable shared memory access package to
-   correct this.
+   not visible from the mulitple instances of Kamailio. You may want to
+   use a mechanism such as the IPC::Shareable shared memory access package
+   to correct this.
 
 1.1.9. phonenumbers.pl
 
-   The OpenSER::Utils::PhoneNumbers package provides two methods for the
+   The Kamailio::Utils::PhoneNumbers package provides two methods for the
    transformation of local to canonical telephone numbers, and vice versa.
    This script demonstrates it's use.
 
@@ -1578,13 +1580,13 @@ Chapter 4. Frequently Asked Questions
        bugs.
          * Missing module functions. Not all functions of other modules are
            available for Perl access. The reason for this is a design property
-           of OpenSER. Making available more functions is work in progress.
+           of Kamailio. Making available more functions is work in progress.
          * Perl and threads. Perl itself is, when compiled with the correct
            parameters, thread safe; unfortunately, not all Perl modules are.
            The DBI modules, especially (but not restricted to) DBI::ODBC are
            known NOT to be thread safe.
            Using DBI::ODBC -- and possibly other non-thread-safe Perl
-           extensions -- may result in erroneous behavior of OpenSER,
+           extensions -- may result in erroneous behavior of Kamailio,
            including (but not restricted to) server crashes and wrong routing.
 
    4.2.

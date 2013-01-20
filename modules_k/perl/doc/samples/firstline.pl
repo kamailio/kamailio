@@ -1,5 +1,5 @@
-use OpenSER;
-use OpenSER::Constants;
+use Kamailio;
+use Kamailio::Constants;
 
 sub firstline {
 	my $m = shift;
@@ -7,12 +7,12 @@ sub firstline {
 	my $v = $m->getVersion();
 	my $t = $m->getType();
 
-	OpenSER::log(L_INFO, "type is $t; version is $v\n");
+	Kamailio::log(L_INFO, "type is $t; version is $v\n");
 
 	if ($t == SIP_REQUEST) {
-		OpenSER::log(L_INFO, "A request. Method is ".$m->getMethod()." to RURI ".$m->getRURI()."\n");
+		Kamailio::log(L_INFO, "A request. Method is ".$m->getMethod()." to RURI ".$m->getRURI()."\n");
 	} else {
-		OpenSER::log(L_INFO, "A reply. status is ".$m->getStatus()." with reason ".$m->getReason()."\n");
+		Kamailio::log(L_INFO, "A reply. status is ".$m->getStatus()." with reason ".$m->getReason()."\n");
 	}
 	
 	return 1;

@@ -1,12 +1,12 @@
-use OpenSER::Constants;
-use OpenSER::Utils::PhoneNumbers;
+use Kamailio::Constants;
+use Kamailio::Utils::PhoneNumbers;
 
 # Demonstrate how the PhoneNumbers class works.
 sub canonical {
 	my $m = shift;
 
 	if ($m->getMethod() eq "INVITE") {
-		my $p = new OpenSER::Utils::PhoneNumbers(publicAccessPrefix => "0",
+		my $p = new Kamailio::Utils::PhoneNumbers(publicAccessPrefix => "0",
 		                                         internationalPrefix => "+",
 							 longDistancePrefix => "0",
 							 countryCode => "49",
@@ -17,9 +17,9 @@ sub canonical {
 
 		if ($u =~ m/(.*)sip:([+0-9]+)\@(.*)/) {
 			my $c = $p->canonicalForm($2);
-			OpenSER::log(L_INFO, "canonical number in '$u' is '$c'\n");
+			Kamailio::log(L_INFO, "canonical number in '$u' is '$c'\n");
 		} else {
-			OpenSER::log(L_INFO, "Not a POTS number.\n");
+			Kamailio::log(L_INFO, "Not a POTS number.\n");
 		}
 	}
 	return 1;
@@ -29,7 +29,7 @@ sub dialnr {
 	my $m = shift;
 
 	if ($m->getMethod() eq "INVITE") {
-		my $p = new OpenSER::Utils::PhoneNumbers(publicAccessPrefix => "0",
+		my $p = new Kamailio::Utils::PhoneNumbers(publicAccessPrefix => "0",
 		                                         internationalPrefix => "+",
 							 longDistancePrefix => "0",
 							 countryCode => "49",
@@ -40,9 +40,9 @@ sub dialnr {
 
 		if ($u =~ m/(.*)sip:([+0-9]+)\@(.*)/) {
 			my $c = $p->dialNumber($2);
-			OpenSER::log(L_INFO, "dial number in '$u' is '$c'\n");
+			Kamailio::log(L_INFO, "dial number in '$u' is '$c'\n");
 		} else {
-			OpenSER::log(L_INFO, "Not a POTS number.\n");
+			Kamailio::log(L_INFO, "Not a POTS number.\n");
 		}
 	}
 	return 1;

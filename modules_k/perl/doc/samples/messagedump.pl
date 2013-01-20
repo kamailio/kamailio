@@ -1,5 +1,5 @@
-use OpenSER qw ( log );
-use OpenSER::Constants;
+use Kamailio qw ( log );
+use Kamailio::Constants;
 
 sub messagedump {
 	my $m = shift;
@@ -10,7 +10,7 @@ sub messagedump {
 	my $uri = $m->getRURI();
 	log(L_INFO, "RURI is $uri\n");
 
-	open F,">>/tmp/openser-perl-messagedump";
+	open F,">>/tmp/kamailio-perl-messagedump";
 	print F "=========================== New header ===========================\n";
 	my $fh = $m->getFullHeader();
 	print F $fh;
