@@ -3,10 +3,10 @@ $Id$
 
      ==================================================
 
-     SIP Express Router and Kamailio Installation Notes
+          Kamailio Installation Notes
 
+	     http://www.kamailio.org
              http://sip-router.org
-			 http://www.kamailio.org
 
      ==================================================
 
@@ -51,9 +51,10 @@ The two major SIP server flavours are:
   - Kamailio (former OpenSER)
 
 Starting with version 3.0.0, the two SIP server flavours are built from
-same source code tree.
+same source code tree. In version 4.0.0 the two source code trees was
+merged even more, so a combined module directory is now used.
 
-SER flavor is the one built by default - historically speaking, it is the
+Kamailio flavor is the one built by default. SER is, historically speaking, the
 first open source SIP server started in 2001. Kamailio forked from SER in
 2005 under the initial name OpenSER.
 
@@ -257,9 +258,8 @@ B) Build Commands
 	make
 
 Compile modules except some explicitly excepted (see below)
-	make modules  - all modules in the modules/ directory (common modules)
-	make modules_k - all modules in the modules_k/ directory (kamailio modules)
-	make modules-all or make every-module  - all the modules (modules and module_k)
+	make modules  - all modules in the modules/ directory 
+	make modules-all or make every-module  - all the modules 
 
 * Compile all:
 	make all
@@ -483,8 +483,8 @@ Documentation:
   module directory).
 	make man
 
-  Generates README file for modules_k/foo.
-	make modules=modules_k/foo modules-readme
+  Generates README file for modules/foo.
+	make modules=modules/foo modules-readme
 
 Install:
 --------
