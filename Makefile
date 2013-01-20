@@ -235,7 +235,7 @@ module_group_kunixodbc=db_unixodbc
 module_group_kxml=xmlrpc mi_xmlrpc xmlops
 
 # K perl module
-module_group_kperl=perl perlvdb
+module_group_kperl=app_perl db_perlvdb
 
 # K snmpstats module
 module_group_ksnmpstats=snmpstats
@@ -318,7 +318,7 @@ else
 							unixsock dbg print_lib auth_identity db2_ldap ldap \
 							db_berkeley db_mysql db_postgres db_oracle \
 							db_sqlite db_unixodbc db_cassandra memcached mi_xmlrpc \
-							perl perlvdb purple \
+							app_perl db_perlvdb purple \
 							snmpstats xmpp cdp \
 							carrierroute peering \
 							dialplan lcr utils presence presence_mwi \
