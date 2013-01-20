@@ -6,7 +6,7 @@
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
-auto_gen=openserxs.c
+auto_gen=kamailioxs.c
 NAME=perl.so
 LIBS=
 
@@ -27,7 +27,7 @@ DEFS+=-DKAMAILIO_MOD_INTERFACE
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kmi/kmi
 
-PODFILES=openserxs.xs `find lib/perl -name *.pm`
+PODFILES=kamailioxs.xs `find lib/perl -name *.pm`
 
 ifeq ($(TYPEMAP),)
 	ifeq ($(PERLLIBPATH),)
@@ -38,39 +38,39 @@ endif
 
 include ../../Makefile.modules
 
-perl.d: openserxs.o
-perl.o: perl.c openserxs.o
+perl.d: kamailioxs.o
+perl.o: perl.c kamailioxs.o
 
-openserxs.o: CFLAGS+=-Wno-unused
+kamailioxs.o: CFLAGS+=-Wno-unused
 
-openserxs.c: openserxs.xs typemap
-	xsubpp -typemap $(TYPEMAP) -typemap typemap openserxs.xs > openserxs.c
+kamailioxs.c: kamailioxs.xs typemap
+	xsubpp -typemap $(TYPEMAP) -typemap typemap kamailioxs.xs > kamailioxs.c
 
 .PHONY: perlpod
 perlpod: doc/perl_pod.sgml
 
-doc/perl_pod.sgml: openserxs.xs
-	cat $(PODFILES) | pod2docbook --doctype=chapter --title='OpenSER Perl API' --no-header - doc/perl_pod.sgml
+doc/perl_pod.sgml: kamailioxs.xs
+	cat $(PODFILES) | pod2docbook --doctype=chapter --title='Kamailio Perl API' --no-header - doc/perl_pod.sgml
 
 install-perl-scripts:
-	echo "installing Perl Kamailio (OpenSER) packages ..."
+	echo "installing Perl Kamailio packages ..."
 	mkdir -p $(modules_prefix)/$(lib_dir)/perl
 	$(INSTALL_CFG) lib/perl/*.pm $(modules_prefix)/$(lib_dir)/perl
-	mkdir -p $(modules_prefix)/$(lib_dir)/perl/OpenSER
-	$(INSTALL_CFG) lib/perl/OpenSER/*.pm \
-		$(modules_prefix)/$(lib_dir)/perl/OpenSER
-	mkdir -p $(modules_prefix)/$(lib_dir)/perl/OpenSER/LDAPUtils
-	$(INSTALL_CFG) lib/perl/OpenSER/LDAPUtils/*.pm \
-		$(modules_prefix)/$(lib_dir)/perl/OpenSER/LDAPUtils
-	mkdir -p $(modules_prefix)/$(lib_dir)/perl/OpenSER/Utils
-	$(INSTALL_CFG) lib/perl/OpenSER/Utils/*.pm \
-		$(modules_prefix)/$(lib_dir)/perl/OpenSER/Utils
-	mkdir -p $(modules_prefix)/$(lib_dir)/perl/OpenSER/VDB
-	$(INSTALL_CFG) lib/perl/OpenSER/VDB/*.pm \
-		$(modules_prefix)/$(lib_dir)/perl/OpenSER/VDB
-	mkdir -p $(modules_prefix)/$(lib_dir)/perl/OpenSER/VDB/Adapter
-	$(INSTALL_CFG) lib/perl/OpenSER/VDB/Adapter/*.pm \
-		$(modules_prefix)/$(lib_dir)/perl/OpenSER/VDB/Adapter
+	mkdir -p $(modules_prefix)/$(lib_dir)/perl/Kamailio
+	$(INSTALL_CFG) lib/perl/Kamailio/*.pm \
+		$(modules_prefix)/$(lib_dir)/perl/Kamailio
+	mkdir -p $(modules_prefix)/$(lib_dir)/perl/Kamailio/LDAPUtils
+	$(INSTALL_CFG) lib/perl/Kamailio/LDAPUtils/*.pm \
+		$(modules_prefix)/$(lib_dir)/perl/Kamailio/LDAPUtils
+	mkdir -p $(modules_prefix)/$(lib_dir)/perl/Kamailio/Utils
+	$(INSTALL_CFG) lib/perl/Kamailio/Utils/*.pm \
+		$(modules_prefix)/$(lib_dir)/perl/Kamailio/Utils
+	mkdir -p $(modules_prefix)/$(lib_dir)/perl/Kamailio/VDB
+	$(INSTALL_CFG) lib/perl/Kamailio/VDB/*.pm \
+		$(modules_prefix)/$(lib_dir)/perl/Kamailio/VDB
+	mkdir -p $(modules_prefix)/$(lib_dir)/perl/Kamailio/VDB/Adapter
+	$(INSTALL_CFG) lib/perl/Kamailio/VDB/Adapter/*.pm \
+		$(modules_prefix)/$(lib_dir)/perl/Kamailio/VDB/Adapter
 
 install-scripts: install-perl-scripts
 
