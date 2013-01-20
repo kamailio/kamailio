@@ -25,7 +25,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_uri.h"
-#include "../../modules_k/usrloc/usrloc.h"
+#include "../../modules/usrloc/usrloc.h"
 #include <libxml/parser.h>
 #include "pua_reginfo.h"
 

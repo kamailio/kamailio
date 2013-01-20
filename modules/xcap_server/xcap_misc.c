@@ -32,7 +32,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_param.h"
-#include "../../modules_k/xcap_client/xcap_callbacks.h"
+#include "../../modules/xcap_client/xcap_callbacks.h"
 
 #include "xcap_misc.h"
 

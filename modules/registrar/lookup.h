@@ -33,7 +33,7 @@
 #define LOOKUP_H
 
 #include "../../parser/msg_parser.h"
-#include "../../modules_k/usrloc/usrloc.h"
+#include "../../modules/usrloc/usrloc.h"
 
 
 /*! \brief

@@ -42,7 +42,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../mod_fix.h"
 #include "../../parser/parse_uri.h"
-#include "../../modules_k/xcap_client/xcap_callbacks.h"
+#include "../../modules/xcap_client/xcap_callbacks.h"
 #include "../../modules/sl/sl.h"
 #include "../../lib/kcore/cmpapi.h"
 #include "../../ip_addr.h"

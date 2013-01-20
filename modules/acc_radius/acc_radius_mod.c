@@ -47,7 +47,7 @@
 #include "../../mem/mem.h"
 #include "../../parser/parse_to.h"
 #include "../../lib/kcore/radius.h"
-#include "../../modules_k/acc/acc_api.h"
+#include "../../modules/acc/acc_api.h"
 #include "acc_radius_mod.h"
 
 MODULE_VERSION

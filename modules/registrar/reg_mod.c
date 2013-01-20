@@ -66,7 +66,7 @@
 #include "../../error.h"
 #include "../../socket_info.h"
 #include "../../pvar.h"
-#include "../../modules_k/usrloc/usrloc.h"
+#include "../../modules/usrloc/usrloc.h"
 #include "../../lib/kcore/statistics.h"
 #include "../../lib/srutils/sruid.h"
 #include "../../modules/sl/sl.h"

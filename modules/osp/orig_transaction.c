@@ -33,7 +33,7 @@
 #include "../../dset.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
-#include "../../modules_k/siputils/siputils.h"
+#include "../../modules/siputils/siputils.h"
 #include "orig_transaction.h"
 #include "destination.h"
 #include "osptoolkit.h"

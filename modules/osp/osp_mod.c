@@ -34,7 +34,7 @@
 
 #include <osp/osp.h>
 #include "../rr/api.h"
-#include "../../modules_k/siputils/siputils.h"
+#include "../../modules/siputils/siputils.h"
 #include "osp_mod.h"
 #include "orig_transaction.h"
 #include "term_transaction.h"

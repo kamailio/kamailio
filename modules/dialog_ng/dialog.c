@@ -21,7 +21,7 @@
 #include "../../parser/parse_to.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../rpc_lookup.h"
-#include "../../modules_k/rr/api.h"
+#include "../../modules/rr/api.h"
 
 #include "dlg_hash.h"
 #include "dlg_timer.h"
