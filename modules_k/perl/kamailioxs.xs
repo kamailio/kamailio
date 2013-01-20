@@ -429,19 +429,19 @@ inline int sv2int_str(SV *val, int_str *is,
 /* ************************************************************************ */
 /* Object methods begin here */
 
-=head1 OpenSER
+=head1 Kamailio
 
-This module provides access to a limited number of OpenSER core functions.
+This module provides access to a limited number of Kamailio core functions.
 As the most interesting functions deal with SIP messages, they are located
-in the OpenSER::Message class below.
+in the Kamailio::Message class below.
 
 =cut
 
-MODULE = OpenSER PACKAGE = OpenSER
+MODULE = Kamailio PACKAGE = Kamailio
 
 =head2 log(level,message)
 
-Logs the message with OpenSER's logging facility. The logging level
+Logs the message with Kamailio's logging facility. The logging level
 is one of the following:
 
  * L_ALERT
@@ -454,10 +454,10 @@ is one of the following:
 
 Please note that this method is I<NOT> automatically exported, as it collides
 with the perl function log (which calculates the logarithm). Either explicitly
-import the function (via C<use OpenSER qw ( log );>), or call it with its full
+import the function (via C<use Kamailio qw ( log );>), or call it with its full
 name:
 
- OpenSER::log(L_INFO, "foobar");
+ Kamailio::log(L_INFO, "foobar");
 
 =cut
 
@@ -481,13 +481,13 @@ log(level, log)
 
 
 
-MODULE = OpenSER PACKAGE = OpenSER::Message
+MODULE = Kamailio PACKAGE = Kamailio::Message
 
 PROTOTYPES: ENABLE
 
-=head1 OpenSER::Message
+=head1 Kamailio::Message
 
-This package provides access functions for an OpenSER C<sip_msg> structure and
+This package provides access functions for an Kamailio C<sip_msg> structure and
 its sub-components. Through its means it is possible to fully configure
 alternative routing decisions.
 
@@ -845,7 +845,7 @@ parameters self, string1, string2.
 C<string1> and/or C<string2> may be omitted.
 
 As this function provides access to the functions that are exported to the
-OpenSER configuration file, it is autoloaded for unknown functions. Instead of
+Kamailio configuration file, it is autoloaded for unknown functions. Instead of
 writing
 
  $m->moduleFunction("sl_send_reply", "500", "Internal Error");
@@ -858,7 +858,7 @@ you may as well write
 
 WARNING
 
-In OpenSER 1.2, only a limited subset of module functions is available. This
+In Kamailio 1.2, only a limited subset of module functions is available. This
 restriction will be removed in a later version.
 
 Here is a list of functions that are expected to be working (not claiming
@@ -991,7 +991,7 @@ moduleFunction (self, func, string1 = NULL, string2 = NULL)
 
 =head2 log(level,message) (deprecated type)
 
-Logs the message with OpenSER's logging facility. The logging level
+Logs the message with Kamailio's logging facility. The logging level
 is one of the following:
 
  * L_ALERT
@@ -1002,8 +1002,8 @@ is one of the following:
  * L_INFO
  * L_DBG
 
-The logging function should be accessed via the OpenSER module variant. This
-one, located in OpenSER::Message, is deprecated.
+The logging function should be accessed via the Kamailio module variant. This
+one, located in Kamailio::Message, is deprecated.
 
 =cut
 
@@ -1211,7 +1211,7 @@ append_branch(self, branch = NULL, qval = NULL)
 
 =head2 getParsedRURI()
 
-Returns the current destination URI as an OpenSER::URI object.
+Returns the current destination URI as an Kamailio::URI object.
 
 =cut
 
@@ -1233,7 +1233,7 @@ getParsedRURI(self)
 
 		uri = &(msg->parsed_uri);
 		ret = sv_newmortal();
-		sv_setref_pv(ret, "OpenSER::URI", (void *)uri);
+		sv_setref_pv(ret, "Kamailio::URI", (void *)uri);
 		SvREADONLY_on(SvRV(ret));
 
 		ST(0) = ret;
@@ -1241,9 +1241,9 @@ getParsedRURI(self)
 	
 
 
-MODULE = OpenSER PACKAGE = OpenSER::URI
+MODULE = Kamailio PACKAGE = Kamailio::URI
 
-=head1 OpenSER::URI
+=head1 Kamailio::URI
 
 This package provides functions for access to sip_uri structures.
 
@@ -1513,9 +1513,9 @@ r2_val(self)
 
 
 
-=head1 OpenSER::AVP
+=head1 Kamailio::AVP
 
-This package provides access functions for OpenSER's AVPs.
+This package provides access functions for Kamailio's AVPs.
 These variables can be created, evaluated, modified and removed through this
 package.
 
@@ -1526,20 +1526,20 @@ documentation of add method below.
 =cut
 
 
-MODULE = OpenSER PACKAGE = OpenSER::AVP
+MODULE = Kamailio PACKAGE = Kamailio::AVP
 
 =head2 add(name,val)
 
 Add an AVP.
 
-Add an OpenSER AVP to its environment. name and val may both be integers or
+Add an Kamailio AVP to its environment. name and val may both be integers or
 strings; this function will try to guess what is correct. Please note that
  
- OpenSER::AVP::add("10", "10")
+ Kamailio::AVP::add("10", "10")
 
 is something different than
 
- OpenSER::AVP::add(10, 10)
+ Kamailio::AVP::add(10, 10)
 
 due to this evaluation: The first will create _string_ AVPs with the name
 10, while the latter will create a numerical AVP.
@@ -1579,10 +1579,10 @@ add(p_name, p_val)
 
 =head2 get(name)
 
-get an OpenSER AVP:
+get an Kamailio AVP:
 
- my $numavp = OpenSER::AVP::get(5);
- my $stravp = OpenSER::AVP::get("foo");
+ my $numavp = Kamailio::AVP::get(5);
+ my $stravp = Kamailio::AVP::get("foo");
 
 =cut
 
@@ -1632,8 +1632,8 @@ get(p_name)
 
 Destroy an AVP.
 
- OpenSER::AVP::destroy(5);
- OpenSER::AVP::destroy("foo");
+ Kamailio::AVP::destroy(5);
+ Kamailio::AVP::destroy("foo");
 
 =cut
 
