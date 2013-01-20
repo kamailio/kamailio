@@ -7,7 +7,7 @@
 
 include ../../Makefile.defs
 auto_gen=kamailioxs.c
-NAME=perl.so
+NAME=app_perl.so
 LIBS=
 
 ifeq ($(PERLLDOPTS),)
@@ -47,10 +47,10 @@ kamailioxs.c: kamailioxs.xs typemap
 	xsubpp -typemap $(TYPEMAP) -typemap typemap kamailioxs.xs > kamailioxs.c
 
 .PHONY: perlpod
-perlpod: doc/perl_pod.sgml
+perlpod: doc/app_perl_pod.xml
 
-doc/perl_pod.sgml: kamailioxs.xs
-	cat $(PODFILES) | pod2docbook --doctype=chapter --title='Kamailio Perl API' --no-header - doc/perl_pod.sgml
+doc/app_perl_pod.sgml: kamailioxs.xs
+	cat $(PODFILES) | pod2docbook --doctype=chapter --title='Kamailio Perl API' --no-header - doc/app_perl_pod.sgml
 
 install-perl-scripts:
 	echo "installing Perl Kamailio packages ..."

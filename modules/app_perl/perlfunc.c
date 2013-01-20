@@ -37,7 +37,7 @@
 #include "../../parser/parse_uri.h"
 
 #include "perlfunc.h"
-#include "perl.h"
+#include "app_perl_mod.h"
 
 
 /*

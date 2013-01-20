@@ -35,7 +35,7 @@
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
 #include "../../lib/kmi/mi.h"
-#include "../rr/api.h"
+#include "../../modules/rr/api.h"
 #include "../../modules/sl/sl.h"
 
 /* lock_ops.h defines union semun, perl does not need to redefine it */
@@ -44,7 +44,7 @@
 #endif
 
 #include "perlfunc.h"
-#include "perl.h"
+#include "app_perl_mod.h"
 
 /* #include "perlxsi.h" function is in here... */
 
@@ -148,7 +148,7 @@ static mi_export_t mi_cmds[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"perl", 
+	"app_perl", 
 	RTLD_NOW | RTLD_GLOBAL,
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
