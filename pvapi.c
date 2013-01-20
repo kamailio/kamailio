@@ -120,6 +120,10 @@ int pv_locate_name(str *in)
 		LM_ERR("missing pv marker [%.*s]\n", in->len, in->s);
 		return -1;
 	}
+	if(in->s[1]==PV_MARKER)
+	{
+		return 2;
+	}
 	pcount = 0;
 	if(in->s[1]==PV_LNBRACKET)
 	{
