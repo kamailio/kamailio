@@ -74,7 +74,7 @@ static cmd_export_t cmds[] = {
 /** module exports */
 struct module_exports exports = {
     "app_python",                   /* module name */
-    DEFAULT_DLFLAGS,                /* dlopen flags */
+    RTLD_NOW | RTLD_GLOBAL,         /* dlopen flags */
     cmds,                           /* exported functions */
     params,                         /* exported parameters */
     0,                              /* exported statistics */
