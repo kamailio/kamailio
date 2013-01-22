@@ -32,6 +32,9 @@ $maxparts = 6; #6 days How long keep the data in the DB
 $newparts = 2; #new partitions for 2 days. Anyway, start this script daily!
 @stepsvalues = (86400, 3600, 1800, 900); 
 $partstep = 0; # 0 - Day, 1 - Hour, 2 - 30 Minutes, 3 - 15 Minutes 
+# version 1 = auth_field is "authorization"
+$schema_version = 2;
+$auth_field = "auth";
 
 #Check it
 $partstep=0 if(!defined $stepsvalues[$partstep]);
@@ -43,11 +46,12 @@ $coof=int(86400/$mystep);
 #How much partitions
 $maxparts*=$coof;
 $newparts*=$coof;
+$auth_field = "authorization" if($schema_version == 1);
+
 
 my $db = DBI->connect("DBI:mysql:$mysql_dbname:$mysql_host:3306", $mysql_user, $mysql_password);
 
 #$db->{PrintError} = 0;
-
 my $sth = $db->do("
 CREATE TABLE IF NOT EXISTS `".$mysql_table."` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -72,7 +76,7 @@ CREATE TABLE IF NOT EXISTS `".$mysql_table."` (
   `diversion` varchar(256) NOT NULL,
   `reason` varchar(200) NOT NULL,
   `content_type` varchar(256) NOT NULL,
-  `authorization` varchar(256) NOT NULL,
+  `".$auth_field."` varchar(256) NOT NULL,
   `user_agent` varchar(256) NOT NULL,
   `source_ip` varchar(50) NOT NULL DEFAULT '',
   `source_port` int(10) NOT NULL,
