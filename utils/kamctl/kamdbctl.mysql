@@ -84,18 +84,18 @@ sql_query()
 
 kamailio_drop()  # pars: <database name>
 {
-if [ $# -ne 1 ] ; then
-	merr "kamailio_drop function takes two params"
-	exit 1
-fi
+	if [ $# -ne 1 ] ; then
+		merr "kamailio_drop function takes two params"
+		exit 1
+	fi
 
-sql_query "" "drop database $1;"
+	sql_query "" "DROP DATABASE $1;"
 
-if [ $? -ne 0 ] ; then
-	merr "Dropping database $1 failed!"
-	exit 1
-fi
-minfo "Database $1 deleted"
+	if [ $? -ne 0 ] ; then
+		merr "Dropping database $1 failed!"
+		exit 1
+	fi
+	minfo "Database $1 deleted"
 }
 
 
@@ -123,6 +123,54 @@ db_charset_test()
 	CHARSET=$CURRCHARSET
 }
 
+kamailio_db_create () # pars: <database name>
+{
+	if [ $# -ne 1 ] ; then
+		merr "kamailio_db_create function takes one param"
+		exit 1
+	fi
+
+	minfo "test server charset"
+
+	db_charset_test
+
+	minfo "creating database $1 ..."
+
+	sql_query "" "CREATE DATACASE $1 CHARACTER SET $CHARSET;"
+
+	if [ $? -ne 0 ] ; then
+		merr "Creating database $1 failed!"
+		exit 1
+	fi
+}
+
+kamailio_db_grant () # pars: <database name>
+{
+	if [ $# -ne 1 ] ; then
+		merr "kamailio_db_grant function takes one param"
+		exit 1
+	fi
+
+	minfo "granting privileges to database $1 ..."
+
+	# Users: kamailio is the regular user, kamailioro only for reading
+	sql_query "" "GRANT ALL PRIVILEGES ON $1.* TO '${DBRWUSER}'@'$DBHOST' IDENTIFIED BY '$DBRWPW';
+		GRANT SELECT ON $1.* TO '${DBROUSER}'@'$DBHOST' IDENTIFIED BY '$DBROPW';"
+
+	if [ $? -ne 0 ] ; then
+		merr "granting privileges to database $1 failed!"
+		exit 1
+	fi
+
+	if [ "$DBHOST" != "localhost" ] ; then
+		sql_query "" "GRANT ALL PRIVILEGES ON $1.* TO '$DBRWUSER'@'localhost' IDENTIFIED  BY '$DBRWPW';
+			GRANT SELECT ON $1.* TO '$DBROUSER'@'localhost' IDENTIFIED BY '$DBROPW';"
+		if [ $? -ne 0 ] ; then
+			merr "granting localhost privileges to database $1 failed!"
+			exit 1
+		fi
+	fi
+}
 
 kamailio_create () # pars: <database name>
 {
@@ -131,24 +179,9 @@ if [ $# -ne 1 ] ; then
 	exit 1
 fi
 
-minfo "test server charset"
+kamailio_db_create $1
 
-db_charset_test
-
-minfo "creating database $1 ..."
-
-# Users: kamailio is the regular user, kamailioro only for reading
-sql_query "" "create database $1 character set $CHARSET;
-	GRANT ALL PRIVILEGES ON $1.* TO '$DBRWUSER' IDENTIFIED  BY '$DBRWPW';
-	GRANT ALL PRIVILEGES ON $1.* TO '${DBRWUSER}'@'$DBHOST' IDENTIFIED BY '$DBRWPW';
-	GRANT SELECT ON $1.* TO '$DBROUSER' IDENTIFIED BY '$DBROPW';
-	GRANT SELECT ON $1.* TO '${DBROUSER}'@'$DBHOST' IDENTIFIED BY '$DBROPW';"
-
-
-if [ $? -ne 0 ] ; then
-	merr "Creating core database and grant privileges failed!"
-	exit 1
-fi
+kamailio_db_grant $1
 
 for TABLE in $STANDARD_MODULES; do
 	mdbg "Creating core table: $TABLE"
@@ -224,7 +257,7 @@ for TABLE in $EXTRA_MODULES; do
 	mdbg "Creating extra table: $TABLE"
 	sql_query $1 < $DB_SCHEMA/$TABLE-create.sql
 	if [ $? -ne 0 ] ; then
-		merr "Creating extra tables failed!"
+		merr "Creating extra tables failed at $TABLE!"
 		exit 1
 		fi
 	done
