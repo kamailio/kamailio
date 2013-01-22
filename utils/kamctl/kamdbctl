@@ -372,6 +372,10 @@ case $1 in
 		extra_create $DBNAME
 		exit $?
 		;;
+	dbuid)
+		dbuid_create $DBNAME
+		exit $?
+		;;
 	drop)
 		# delete kamailio database
 		# create new database structures
@@ -396,6 +400,48 @@ case $1 in
 			exit $ret
 		fi
 		kamailio_create $DBNAME
+		exit $?
+		;;
+	dbonly)
+		# create only an empty database
+		if [ "$USED_DBENGINE" != "mysql" ] ; then
+			merr "$USED_DBENGINE db engine doesn't support this operation"
+			exit 1
+		fi
+		shift
+		if [ $# -eq 1 ] ; then
+			DBNAME="$1"
+		fi
+
+		kamailio_db_create $DBNAME
+		exit $?
+		;;
+	grant)
+		# grant privileges to database
+		if [ "$USED_DBENGINE" != "mysql" ] ; then
+			merr "$USED_DBENGINE db engine doesn't support this operation"
+			exit 1
+		fi
+		shift
+		if [ $# -eq 1 ] ; then
+			DBNAME="$1"
+		fi
+
+		kamailio_db_grant $DBNAME
+		exit $?
+		;;
+	revoke)
+		# revoke privileges to database
+		if [ "$USED_DBENGINE" != "mysql" ] ; then
+			merr "$USED_DBENGINE db engine doesn't support this operation"
+			exit 1
+		fi
+		shift
+		if [ $# -eq 1 ] ; then
+			DBNAME="$1"
+		fi
+
+		kamailio_db_revoke $DBNAME
 		exit $?
 		;;
 	bdb|db_berkeley)
