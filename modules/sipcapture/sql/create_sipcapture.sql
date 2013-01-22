@@ -2,6 +2,8 @@
  * only for MYSQL >= 5.1.43
 */
 
+/* schema version 2 */
+
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `sip_capture` (
@@ -27,7 +29,7 @@ CREATE TABLE `sip_capture` (
   `diversion` varchar(256) NOT NULL,
   `reason` varchar(200) NOT NULL,
   `content_type` varchar(256) NOT NULL,
-  `authorization` varchar(256) NOT NULL,
+  `auth` varchar(256) NOT NULL,
   `user_agent` varchar(256) NOT NULL,
   `source_ip` varchar(50) NOT NULL DEFAULT '',
   `source_port` int(10) NOT NULL,

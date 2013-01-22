@@ -93,7 +93,7 @@ MODULE_VERSION
 
 #define TABLE_LEN 256
 
-#define NR_KEYS 37
+#define NR_KEYS 36
 
 /* module function prototypes */
 static int mod_init(void);
@@ -113,8 +113,7 @@ static struct mi_root* sip_capture_mi(struct mi_root* cmd, void* param );
 static str db_url		= str_init(DEFAULT_RODB_URL);
 static str table_name		= str_init("sip_capture");
 static str hash_source		= str_init("call_id");
-static str mt_mode			= str_init("rand");
-static str id_column		= str_init("id");
+static str mt_mode		= str_init("rand");
 static str date_column		= str_init("date");
 static str micro_ts_column 	= str_init("micro_ts");
 static str method_column 	= str_init("method"); 	
@@ -227,7 +226,6 @@ static param_export_t params[] = {
 	{"table_name",       		STR_PARAM, &table_name.s	},
 	{"hash_source",				STR_PARAM, &hash_source.s	},
 	{"mt_mode",					STR_PARAM, &mt_mode.s	},
-	{"id_column",        		STR_PARAM, &id_column.s         },
 	{"date_column",        		STR_PARAM, &date_column.s       },	
 	{"micro_ts_column",     	STR_PARAM, &micro_ts_column.s	},
 	{"method_column",      		STR_PARAM, &method_column.s 	},
@@ -423,7 +421,6 @@ static int mod_init(void) {
 	hash_source.len = strlen (hash_source.s);
 	mt_mode.len = strlen(mt_mode.s);
 	date_column.len = strlen(date_column.s);
-	id_column.len = strlen(id_column.s);
 	micro_ts_column.len = strlen(micro_ts_column.s);
 	method_column.len = strlen(method_column.s); 	
 	reply_reason_column.len = strlen(reply_reason_column.s);        
@@ -717,189 +714,184 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 		return -1;
 	}
 	
-	db_keys[0] = &id_column;			
-        db_vals[0].type = DB1_INT;
-        db_vals[0].nul = 0;
-        db_vals[0].val.int_val = 0;
-        
-	db_keys[1] = &date_column;
-	db_vals[1].type = DB1_DATETIME;
-	db_vals[1].nul = 0;
-	db_vals[1].val.time_val = time(NULL);
+	db_keys[0] = &date_column;
+	db_vals[0].type = DB1_DATETIME;
+	db_vals[0].nul = 0;
+	db_vals[0].val.time_val = time(NULL);
 	
-	db_keys[2] = &micro_ts_column;
-        db_vals[2].type = DB1_BIGINT;
-        db_vals[2].nul = 0;
-        db_vals[2].val.ll_val = sco->tmstamp;
+	db_keys[1] = &micro_ts_column;
+        db_vals[1].type = DB1_BIGINT;
+        db_vals[1].nul = 0;
+        db_vals[1].val.ll_val = sco->tmstamp;
 	
-	db_keys[3] = &method_column;
+	db_keys[2] = &method_column;
+	db_vals[2].type = DB1_STR;
+	db_vals[2].nul = 0;
+	db_vals[2].val.str_val = sco->method;
+	
+	db_keys[3] = &reply_reason_column;
 	db_vals[3].type = DB1_STR;
 	db_vals[3].nul = 0;
-	db_vals[3].val.str_val = sco->method;
+	db_vals[3].val.str_val = sco->reply_reason;
 	
-	db_keys[4] = &reply_reason_column;
+	db_keys[4] = &ruri_column;
 	db_vals[4].type = DB1_STR;
 	db_vals[4].nul = 0;
-	db_vals[4].val.str_val = sco->reply_reason;
+	db_vals[4].val.str_val = sco->ruri;
 	
-	db_keys[5] = &ruri_column;
+	db_keys[5] = &ruri_user_column;
 	db_vals[5].type = DB1_STR;
 	db_vals[5].nul = 0;
-	db_vals[5].val.str_val = sco->ruri;
+	db_vals[5].val.str_val = sco->ruri_user;
 	
-	db_keys[6] = &ruri_user_column;
+	db_keys[6] = &from_user_column;
 	db_vals[6].type = DB1_STR;
 	db_vals[6].nul = 0;
-	db_vals[6].val.str_val = sco->ruri_user;
+	db_vals[6].val.str_val = sco->from_user;
 	
-	db_keys[7] = &from_user_column;
+	db_keys[7] = &from_tag_column;
 	db_vals[7].type = DB1_STR;
 	db_vals[7].nul = 0;
-	db_vals[7].val.str_val = sco->from_user;
-	
-	db_keys[8] = &from_tag_column;
+	db_vals[7].val.str_val = sco->from_tag;
+
+	db_keys[8] = &to_user_column;
 	db_vals[8].type = DB1_STR;
 	db_vals[8].nul = 0;
-	db_vals[8].val.str_val = sco->from_tag;
+	db_vals[8].val.str_val = sco->to_user;
 
-	db_keys[9] = &to_user_column;
+	db_keys[9] = &to_tag_column;
 	db_vals[9].type = DB1_STR;
 	db_vals[9].nul = 0;
-	db_vals[9].val.str_val = sco->to_user;
-
-	db_keys[10] = &to_tag_column;
+	db_vals[9].val.str_val = sco->to_tag;
+	
+	db_keys[10] = &pid_user_column;
 	db_vals[10].type = DB1_STR;
 	db_vals[10].nul = 0;
-	db_vals[10].val.str_val = sco->to_tag;
-	
-	db_keys[11] = &pid_user_column;
+	db_vals[10].val.str_val = sco->pid_user;
+
+	db_keys[11] = &contact_user_column;
 	db_vals[11].type = DB1_STR;
 	db_vals[11].nul = 0;
-	db_vals[11].val.str_val = sco->pid_user;
+	db_vals[11].val.str_val = sco->contact_user;	
 
-	db_keys[12] = &contact_user_column;
+	db_keys[12] = &auth_user_column;
 	db_vals[12].type = DB1_STR;
 	db_vals[12].nul = 0;
-	db_vals[12].val.str_val = sco->contact_user;	
-
-	db_keys[13] = &auth_user_column;
+	db_vals[12].val.str_val = sco->auth_user;
+	
+	db_keys[13] = &callid_column;
 	db_vals[13].type = DB1_STR;
 	db_vals[13].nul = 0;
-	db_vals[13].val.str_val = sco->auth_user;
-	
-	db_keys[14] = &callid_column;
+	db_vals[13].val.str_val = sco->callid;
+
+	db_keys[14] = &callid_aleg_column;
 	db_vals[14].type = DB1_STR;
 	db_vals[14].nul = 0;
-	db_vals[14].val.str_val = sco->callid;
-
-	db_keys[15] = &callid_aleg_column;
+	db_vals[14].val.str_val = sco->callid_aleg;
+	
+	db_keys[15] = &via_1_column;
 	db_vals[15].type = DB1_STR;
 	db_vals[15].nul = 0;
-	db_vals[15].val.str_val = sco->callid_aleg;
+	db_vals[15].val.str_val = sco->via_1;
 	
-	db_keys[16] = &via_1_column;
+	db_keys[16] = &via_1_branch_column;
 	db_vals[16].type = DB1_STR;
 	db_vals[16].nul = 0;
-	db_vals[16].val.str_val = sco->via_1;
-	
-	db_keys[17] = &via_1_branch_column;
+	db_vals[16].val.str_val = sco->via_1_branch;
+
+	db_keys[17] = &cseq_column;
 	db_vals[17].type = DB1_STR;
 	db_vals[17].nul = 0;
-	db_vals[17].val.str_val = sco->via_1_branch;
-
-	db_keys[18] = &cseq_column;
+	db_vals[17].val.str_val = sco->cseq;	
+	
+	db_keys[18] = &reason_column;
 	db_vals[18].type = DB1_STR;
 	db_vals[18].nul = 0;
-	db_vals[18].val.str_val = sco->cseq;	
+	db_vals[18].val.str_val = sco->reason;
 	
-	db_keys[19] = &reason_column;
+	db_keys[19] = &content_type_column;
 	db_vals[19].type = DB1_STR;
 	db_vals[19].nul = 0;
-	db_vals[19].val.str_val = sco->reason;
-	
-	db_keys[20] = &content_type_column;
+	db_vals[19].val.str_val = sco->content_type;
+
+	db_keys[20] = &authorization_column;
 	db_vals[20].type = DB1_STR;
 	db_vals[20].nul = 0;
-	db_vals[20].val.str_val = sco->content_type;
+	db_vals[20].val.str_val = sco->authorization;
 
-	db_keys[21] = &authorization_column;
+	db_keys[21] = &user_agent_column;
 	db_vals[21].type = DB1_STR;
 	db_vals[21].nul = 0;
-	db_vals[21].val.str_val = sco->authorization;
-
-	db_keys[22] = &user_agent_column;
+	db_vals[21].val.str_val = sco->user_agent;
+	
+	db_keys[22] = &source_ip_column;
 	db_vals[22].type = DB1_STR;
 	db_vals[22].nul = 0;
-	db_vals[22].val.str_val = sco->user_agent;
+	db_vals[22].val.str_val = sco->source_ip;
 	
-	db_keys[23] = &source_ip_column;
-	db_vals[23].type = DB1_STR;
-	db_vals[23].nul = 0;
-	db_vals[23].val.str_val = sco->source_ip;
-	
-	db_keys[24] = &source_port_column;
-        db_vals[24].type = DB1_INT;
-        db_vals[24].nul = 0;
-        db_vals[24].val.int_val = sco->source_port;
+	db_keys[23] = &source_port_column;
+        db_vals[23].type = DB1_INT;
+        db_vals[23].nul = 0;
+        db_vals[23].val.int_val = sco->source_port;
         
-	db_keys[25] = &dest_ip_column;
-	db_vals[25].type = DB1_STR;
-	db_vals[25].nul = 0;
-	db_vals[25].val.str_val = sco->destination_ip;
+	db_keys[24] = &dest_ip_column;
+	db_vals[24].type = DB1_STR;
+	db_vals[24].nul = 0;
+	db_vals[24].val.str_val = sco->destination_ip;
 	
-	db_keys[26] = &dest_port_column;
-        db_vals[26].type = DB1_INT;
-        db_vals[26].nul = 0;
-        db_vals[26].val.int_val = sco->destination_port;        
+	db_keys[25] = &dest_port_column;
+        db_vals[25].type = DB1_INT;
+        db_vals[25].nul = 0;
+        db_vals[25].val.int_val = sco->destination_port;        
         
-	db_keys[27] = &contact_ip_column;
-	db_vals[27].type = DB1_STR;
-	db_vals[27].nul = 0;
-	db_vals[27].val.str_val = sco->contact_ip;
+	db_keys[26] = &contact_ip_column;
+	db_vals[26].type = DB1_STR;
+	db_vals[26].nul = 0;
+	db_vals[26].val.str_val = sco->contact_ip;
 	
-	db_keys[28] = &contact_port_column;
-        db_vals[28].type = DB1_INT;
-        db_vals[28].nul = 0;
-        db_vals[28].val.int_val = sco->contact_port;
+	db_keys[27] = &contact_port_column;
+        db_vals[27].type = DB1_INT;
+        db_vals[27].nul = 0;
+        db_vals[27].val.int_val = sco->contact_port;
         
-	db_keys[29] = &orig_ip_column;
-	db_vals[29].type = DB1_STR;
-	db_vals[29].nul = 0;
-	db_vals[29].val.str_val = sco->originator_ip;
+	db_keys[28] = &orig_ip_column;
+	db_vals[28].type = DB1_STR;
+	db_vals[28].nul = 0;
+	db_vals[28].val.str_val = sco->originator_ip;
 	
-	db_keys[30] = &orig_port_column;			
+	db_keys[29] = &orig_port_column;			
+        db_vals[29].type = DB1_INT;
+        db_vals[29].nul = 0;
+        db_vals[29].val.int_val = sco->originator_port;        
+        
+        db_keys[30] = &proto_column;			
         db_vals[30].type = DB1_INT;
         db_vals[30].nul = 0;
-        db_vals[30].val.int_val = sco->originator_port;        
-        
-        db_keys[31] = &proto_column;			
+        db_vals[30].val.int_val = sco->proto;        
+
+        db_keys[31] = &family_column;			
         db_vals[31].type = DB1_INT;
         db_vals[31].nul = 0;
-        db_vals[31].val.int_val = sco->proto;        
-
-        db_keys[32] = &family_column;			
-        db_vals[32].type = DB1_INT;
+        db_vals[31].val.int_val = sco->family;        
+        
+        db_keys[32] = &rtp_stat_column;			
+        db_vals[32].type = DB1_STR;
         db_vals[32].nul = 0;
-        db_vals[32].val.int_val = sco->family;        
+        db_vals[32].val.str_val = sco->rtp_stat;                
         
-        db_keys[33] = &rtp_stat_column;			
-        db_vals[33].type = DB1_STR;
+        db_keys[33] = &type_column;			
+        db_vals[33].type = DB1_INT;
         db_vals[33].nul = 0;
-        db_vals[33].val.str_val = sco->rtp_stat;                
-        
-        db_keys[34] = &type_column;			
-        db_vals[34].type = DB1_INT;
-        db_vals[34].nul = 0;
-        db_vals[34].val.int_val = sco->type;                
+        db_vals[33].val.int_val = sco->type;                
 
-	db_keys[35] = &node_column;
-	db_vals[35].type = DB1_STR;
-	db_vals[35].nul = 0;
-	db_vals[35].val.str_val = sco->node;
+	db_keys[34] = &node_column;
+	db_vals[34].type = DB1_STR;
+	db_vals[34].nul = 0;
+	db_vals[34].val.str_val = sco->node;
 	
-	db_keys[36] = &msg_column;
-	db_vals[36].type = DB1_BLOB;
-	db_vals[36].nul = 0;
+	db_keys[35] = &msg_column;
+	db_vals[35].type = DB1_BLOB;
+	db_vals[35].nul = 0;
 		
 	/* need to be removed in the future */
         /* if message was captured via hep skip trailing empty spaces(newlines) from the start of the buffer */
@@ -918,7 +910,7 @@ static int sip_capture_store(struct _sipcapture_object *sco)
 	tmp.s = sco->msg.s;
 	tmp.len = sco->msg.len;
 
-	db_vals[36].val.blob_val = tmp;
+	db_vals[35].val.blob_val = tmp;
 
 	if (no_tables > 0 ){
 		if ( mtmode == mode_hash ){

@@ -8,7 +8,7 @@
 #
 # partrotate_unixtimestamp is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version
 #
 # partrotate_unixtimestamp is distributed in the hope that it will be useful,
@@ -22,7 +22,7 @@
 
 use DBI;
 
-$version = "0.2.2";
+$version = "0.2.5";
 $mysql_table = "sip_capture";
 $mysql_dbname = "homer_db";
 $mysql_user = "mysql_login";
@@ -32,28 +32,36 @@ $maxparts = 6; #6 days How long keep the data in the DB
 $newparts = 2; #new partitions for 2 days. Anyway, start this script daily!
 @stepsvalues = (86400, 3600, 1800, 900); 
 $partstep = 0; # 0 - Day, 1 - Hour, 2 - 30 Minutes, 3 - 15 Minutes 
-# version 1 = auth_field is "authorization"
-$schema_version = 2;
-$auth_field = "auth";
+$engine = "MyISAM";
+$sql_schema_version = 2;
+$auth_column = "auth";
+$check_table = 1; #Check if table exists. For PostgreSQL change creation schema!
 
 #Check it
 $partstep=0 if(!defined $stepsvalues[$partstep]);
 #Mystep
 $mystep = $stepsvalues[$partstep];
 #Coof
+
+# Optionally load override configuration. perl format
+$rc = "/etc/sysconfig/partrotaterc";
+if (-e $rc) {
+  do $rc;
+}
+
 $coof=int(86400/$mystep);
 
 #How much partitions
 $maxparts*=$coof;
 $newparts*=$coof;
-$auth_field = "authorization" if($schema_version == 1);
-
 
 my $db = DBI->connect("DBI:mysql:$mysql_dbname:$mysql_host:3306", $mysql_user, $mysql_password);
 
+$auth_column = "authorization" if($sql_schema_version == 1);
+
 #$db->{PrintError} = 0;
-my $sth = $db->do("
-CREATE TABLE IF NOT EXISTS `".$mysql_table."` (
+
+$sql = "CREATE TABLE IF NOT EXISTS `".$mysql_table."` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   `micro_ts` bigint(18) NOT NULL DEFAULT '0',
@@ -67,7 +75,7 @@ CREATE TABLE IF NOT EXISTS `".$mysql_table."` (
   `to_tag` varchar(64) NOT NULL,
   `pid_user` varchar(100) NOT NULL DEFAULT '',
   `contact_user` varchar(120) NOT NULL,
-  `auth_user` varchar(120) NOT NULL,
+  `".$auth_column."` varchar(120) NOT NULL,
   `callid` varchar(100) NOT NULL DEFAULT '',
   `callid_aleg` varchar(100) NOT NULL DEFAULT '',
   `via_1` varchar(256) NOT NULL,
@@ -76,11 +84,11 @@ CREATE TABLE IF NOT EXISTS `".$mysql_table."` (
   `diversion` varchar(256) NOT NULL,
   `reason` varchar(200) NOT NULL,
   `content_type` varchar(256) NOT NULL,
-  `".$auth_field."` varchar(256) NOT NULL,
+  `authorization` varchar(256) NOT NULL,
   `user_agent` varchar(256) NOT NULL,
-  `source_ip` varchar(50) NOT NULL DEFAULT '',
+  `source_ip` varchar(60) NOT NULL DEFAULT '',
   `source_port` int(10) NOT NULL,
-  `destination_ip` varchar(50) NOT NULL DEFAULT '',
+  `destination_ip` varchar(60) NOT NULL DEFAULT '',
   `destination_port` int(10) NOT NULL,
   `contact_ip` varchar(60) NOT NULL,
   `contact_port` int(10) NOT NULL,
@@ -104,10 +112,21 @@ CREATE TABLE IF NOT EXISTS `".$mysql_table."` (
   KEY `method` (`method`),
   KEY `source_ip` (`source_ip`),
   KEY `destination_ip` (`destination_ip`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
-PARTITION BY RANGE ( UNIX_TIMESTAMP(`date`)) (PARTITION pmax VALUES LESS THAN MAXVALUE ENGINE = MyISAM);
-");
+) ENGINE=".$engine." DEFAULT CHARSET=latin1
+PARTITION BY RANGE ( UNIX_TIMESTAMP(`date`)) (PARTITION pmax VALUES LESS THAN MAXVALUE ENGINE = ".$engine.")";
 
+my $sth = $db->do($sql) if($check_table == 1);
+
+#check if the table has partitions. If not, create one
+my $query = "SHOW TABLE STATUS FROM ".$mysql_dbname. " WHERE Name='".$mysql_table."'";
+$sth = $db->prepare($query);
+$sth->execute();
+my $tstatus = $sth->fetchrow_hashref()->{Create_options};
+if ($tstatus !~ /partitioned/) {
+   my $query = "ALTER TABLE ".$mysql_table. " PARTITION BY RANGE ( UNIX_TIMESTAMP(`date`)) (PARTITION pmax VALUES LESS THAN MAXVALUE)";
+   $sth = $db->prepare($query);
+   $sth->execute();
+}
 
 my $query = "SELECT UNIX_TIMESTAMP(CURDATE() - INTERVAL 1 DAY)";
 $sth = $db->prepare($query);
@@ -178,7 +197,7 @@ for(my $i=0; $i<$newparts; $i++) {
 
 	# Fix MAXVALUE. Thanks Dorn B. <djbinter@gmail.com> for report and fix.
         $query = "ALTER TABLE ".$mysql_table." REORGANIZE PARTITION pmax INTO (PARTITION ".$newpartname
-                                ."\n VALUES LESS THAN (".$curtstamp.") ENGINE = MyISAM, PARTITION pmax VALUES LESS THAN MAXVALUE ENGINE = MyISAM)";  
+                                ."\n VALUES LESS THAN (".$curtstamp.") ENGINE = ".$engine.", PARTITION pmax VALUES LESS THAN MAXVALUE ENGINE = ".$engine.")";  
 
         $db->do($query);
                     
