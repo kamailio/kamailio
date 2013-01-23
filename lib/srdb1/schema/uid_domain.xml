@@ -216,7 +216,7 @@ create function todomain (pdid varchar(64)) returns varchar(128)
 READS SQL DATA
 begin
     declare tdomain varchar(128) default NULL;
-	select domain into tdomain from domain where did=pdid and 
+	select domain into tdomain from uid_domain where did=pdid and 
         canonical(flags) limit 1;
 	return tdomain;
 end
@@ -238,7 +238,7 @@ create function todid (pdomain varchar(128)) returns varchar(64)
 READS SQL DATA
 begin
     declare tdid varchar(64) default NULL;
-    select did into tdid from domain where domain=pdomain and 
+    select did into tdid from uid_domain where domain=pdomain and 
         active(flags) limit 1;
 	return tdid;
 end
