@@ -124,7 +124,7 @@ begin
         set tdid = todid(substr(puri FROM i + 1));
 	    set puri = left(puri, i - 1);
 	end if;
-	select uid into tuid from uri where scheme=tscheme and
+	select uid into tuid from uid_uri where scheme=tscheme and
         username=puri and did=tdid and active(flags);
 	return tuid;
 end

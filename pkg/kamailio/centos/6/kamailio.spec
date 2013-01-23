@@ -1,1 +1,1 @@
-../../fedora/16/kamailio.spec
+../../fedora/17/kamailio.spec

@@ -1,1 +1,1 @@
-../16/kamailio.spec
+../17/kamailio.spec

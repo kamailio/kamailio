@@ -52,6 +52,7 @@ uacreg:1
 uid_credentials:7
 uid_domain:2
 uid_domain_attrs:1
+uid_global_attrs:1
 uid_uri:3
 uid_uri_attrs:2
 uid_user_attrs:3
