@@ -29,16 +29,19 @@
 # DB_PATH="/usr/local/etc/kamailio/dbtext"
 
 ## database read/write user
-# DBRWUSER=kamailio
+# DBRWUSER="kamailio"
 
 ## password for database read/write user
 # DBRWPW="kamailiorw"
 
 ## database read only user
-# DBROUSER=kamailioro
+# DBROUSER="kamailioro"
 
 ## password for database read only user
-# DBROPW=kamailioro
+# DBROPW="kamailioro"
+
+## database access host (from where is kamctl used)
+# DBACCESSHOST=192.168.0.1
 
 ## database super user (for ORACLE this is 'scheme-creator' user)
 # DBROOTUSER="root"
