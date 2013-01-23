@@ -10,9 +10,7 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
 	<title>&adminguide;</title>
-	
 	<section>
 	<title>Overview</title>
 	<para>
@@ -43,7 +41,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>libjson (http://metaparadigm.com/json-c/)</emphasis>
+				<emphasis>libjson (https://github.com/json-c/json-c/wiki)</emphasis>
 			</para>
 			</listitem>
 			</itemizedlist>
