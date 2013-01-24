@@ -31,10 +31,16 @@
 
 #include "sr_compat.h"
 
+/**
+ * compatibility modes:
+ *  - SR_COMPAT_SER - strict compatibiliy with ser ($xy is avp)
+ *  - SR_COMPAT_KAMAILIO - strict compatibiliy with kamailio ($xy is pv)
+ *  - SR_COMPAT_MAX - max compatibiliy ($xy tried as pv, if not found, is avp)
+ */
 #ifdef SR_SER
 #define SR_DEFAULT_COMPAT SR_COMPAT_SER
 #elif defined SR_KAMAILIO || defined SR_OPENSER
-#define SR_DEFAULT_COMPAT SR_COMPAT_KAMAILIO
+#define SR_DEFAULT_COMPAT SR_COMPAT_MAX
 #elif defined SR_ALL || defined SR_MAX_COMPAT
 #define SR_DEFAULT_COMPAT SR_COMPAT_MAX
 #else
