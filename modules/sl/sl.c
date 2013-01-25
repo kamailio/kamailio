@@ -449,7 +449,7 @@ restore:
 		msg->first_line.u.reply.status.s[1] = oldscode[1];
 		msg->first_line.u.reply.status.s[2] = oldscode[2];
 	}
-	return ret;
+	return (ret==0)?1:ret;
 }
 
 /**
