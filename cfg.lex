@@ -1101,7 +1101,7 @@ IMPORTFILE      "import_file"
 <PVARID>{ID}|'\.'			{yymore(); }
 <PVARID>{LPAREN}			{	state = PVAR_P_S; BEGIN(PVAR_P);
 								p_nest=1; yymore(); }
-<PVARID>.					{	yyless(yyleng-1);
+<PVARID>{CR}|{EAT_ABLE}|.	{	yyless(yyleng-1);
 								count();
 								addstr(&s_buf, yytext, yyleng);
 								yylval.strval=s_buf.s;
