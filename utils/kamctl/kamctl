@@ -1060,6 +1060,77 @@ domain() {
 
 #
 ##### ------------------------------------------------ #####
+### uid_domain management
+#
+uid_domain() {
+	case $1 in
+		reload)
+			require_kamcmd
+			$SERCTLCMD domain.reload
+			;;
+		show)
+			require_kamcmd
+			$SERCTLCMD domain.dump
+			;;
+		showdb)
+			require_dbengine
+			QUERY="select * FROM $UID_DOMAIN_TABLE ; "
+			$DBROCMD "$QUERY"
+			;;
+		add)
+			require_dbengine
+			shift
+			if [ $# -lt 1 ] ; then
+				merr "too few parameters"
+				exit 1
+			fi
+			
+			DOMAIN=$1
+			DID=$2
+			FLAGS=$3
+	
+			if [ -z "$2" ] ; then
+				DID=$DOMAIN
+			fi 
+			if [ -z "$3" ] ; then
+				FLAGS=$(( $SRDB_LOAD_SER | $SRDB_CANON | $SRDB_FOR_SERWEB ))
+			fi 
+
+			if is_value_in_db $UID_DOMAIN_TABLE $UID_DO_DOMAIN_COLUMN $DOMAIN; then
+				minfo "$1 already in $UID_DOMAIN_TABLE table"
+				exit 0
+			fi
+			QUERY="insert into $UID_DOMAIN_TABLE ($UID_DO_DID_COLUMN,$UID_DO_DOMAIN_COLUMN,$UID_DO_FLAGS_COLUMN) VALUES ('$DID','$DOMAIN',$FLAGS);"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "uid_domain - SQL Error"
+				exit 1
+			fi
+			minfo "execute '$0 uid_domain reload' to synchronize cache and database"
+			;;
+		rm)
+			require_dbengine
+			shift
+			if [ $# -ne 1 ] ; then
+				merr "missing domain parameter"
+				exit 1
+			fi
+			QUERY="delete from $UID_DOMAIN_TABLE where domain='$1';"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "domain - SQL Error"
+				exit 1
+			fi
+			minfo "execute '$0 uid_domain reload' to synchronize cache and database"
+			;;
+		*)
+			usage_uid_domain
+			exit 1
+	esac
+}
+
+#
+##### ------------------------------------------------ #####
 ### permissions trusted management
 #
 permissions_trusted() {
@@ -2479,6 +2550,11 @@ case $1 in
 	domain)
 		shift
 		domain "$@"
+		;;
+
+	uid_domain)
+		shift
+		uid_domain "$@"
 		;;
 
 	trusted)

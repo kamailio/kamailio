@@ -140,3 +140,17 @@ cat <<EOF
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_domain"
+
+uid_usage_domain() {
+	echo
+	mecho " -- command 'uid_domain' - manage local domains"
+	echo
+cat <<EOF
+ uid_domain reload ....................... reload domains from disk
+ uid_domain show ......................... show current domains in memory
+ uid_domain showdb ....................... show domains in the database
+ uid_domain add <domain> [did] [flags].... add the domain to the database
+ uid_domain rm <domain> .................. delete the domain from the database
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS uid_usage_domain"
