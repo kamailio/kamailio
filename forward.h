@@ -105,6 +105,7 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 							((msg)->via1->port)?(msg)->via1->port: SIP_PORT )
 
 int forward_reply( struct sip_msg* msg);
+int forward_reply_nocb( struct sip_msg* msg);
 
 int is_check_self_func_list_set(void);
 

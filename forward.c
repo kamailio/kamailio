@@ -754,7 +754,8 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 	he=sip_resolvehost(name, &port, &proto);
 	
 	if (he==0){
-		LOG(L_NOTICE, "ERROR:forward_reply:resolve_host(%.*s) failure\n",
+		LOG(L_NOTICE,
+				"update_sock_struct_from_via:resolve_host(%.*s) failure\n",
 				name->len, name->s);
 		return -1;
 	}
@@ -765,8 +766,9 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 
 
 
-/* removes first via & sends msg to the second */
-int forward_reply(struct sip_msg* msg)
+/* removes first via & sends msg to the second
+ * - mode param controls if modules sip response callbacks are executed */
+static int do_forward_reply(struct sip_msg* msg, int mode)
 {
 	char* new_buf;
 	struct dest_info dst;
@@ -792,8 +794,10 @@ int forward_reply(struct sip_msg* msg)
 	}
 	
 	/* check modules response_f functions */
-	for (r=0; r<mod_response_cbk_no; r++)
-		if (mod_response_cbks[r](msg)==0) goto skip;
+	if(likely(mode==0)) {
+		for (r=0; r<mod_response_cbk_no; r++)
+			if (mod_response_cbks[r](msg)==0) goto skip;
+	}
 	/* we have to forward the reply stateless, so we need second via -bogdan*/
 	if (parse_headers( msg, HDR_VIA2_F, 0 )==-1 
 		|| (msg->via2==0) || (msg->via2->error!=PARSE_OK))
@@ -870,6 +874,18 @@ skip:
 error:
 	if (new_buf) pkg_free(new_buf);
 	return -1;
+}
+
+/* removes first via & sends msg to the second */
+int forward_reply(struct sip_msg* msg)
+{
+	return do_forward_reply(msg, 0);
+}
+
+/* removes first via & sends msg to the second - no module callbacks */
+int forward_reply_nocb(struct sip_msg* msg)
+{
+	return do_forward_reply(msg, 1);
 }
 
 static void apply_force_send_socket(struct dest_info* dst, struct sip_msg* msg)
