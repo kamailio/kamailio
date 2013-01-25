@@ -66,8 +66,8 @@ static param_export_t params[]={
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-    { "python_exec", (cmd_function)python_exec1, 1,  NULL, 0,	REQUEST_ROUTE | FAILURE_ROUTE  | ONREPLY_ROUTE | BRANCH_ROUTE },
-    { "python_exec", (cmd_function)python_exec2, 2,  NULL, 0,	REQUEST_ROUTE | FAILURE_ROUTE  | ONREPLY_ROUTE | BRANCH_ROUTE },
+    { "python_exec", (cmd_function)python_exec1, 1,  NULL, 0,	ANY_ROUTE },
+    { "python_exec", (cmd_function)python_exec2, 2,  NULL, 0,	ANY_ROUTE },
     { 0, 0, 0, 0, 0, 0 }
 };
 

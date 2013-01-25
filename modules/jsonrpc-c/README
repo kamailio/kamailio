@@ -10,7 +10,7 @@ Jordan Levy
 
    <jordan@flowroute.com>
 
-   Copyright © 2011 Flowroute LLC (flowroute.com)
+   Copyright Â© 2011 Flowroute LLC (flowroute.com)
      __________________________________________________________________
 
    Table of Contents
@@ -23,11 +23,11 @@ Jordan Levy
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Exported Parameters
+        3. Parameters
 
               3.1. servers (string)
 
-        4. Exported Functions
+        4. Functions
 
               4.1. jsonrpc_notification(method, parameters)
               4.2. jsonrpc_request(method, parameters, return_route,
@@ -49,11 +49,11 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Exported Parameters
+   3. Parameters
 
         3.1. servers (string)
 
-   4. Exported Functions
+   4. Functions
 
         4.1. jsonrpc_notification(method, parameters)
         4.2. jsonrpc_request(method, parameters, return_route,
@@ -86,9 +86,10 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * libjson - http://metaparadigm.com/json-c/
+     * libjson (https://github.com/json-c/json-c/wiki)
+     * libevent - http://libevent.org/
 
-3. Exported Parameters
+3. Parameters
 
    3.1. servers (string)
 
@@ -105,13 +106,13 @@ modparam("jsonrpc", "servers", "localhost:9999,2 10.10.0.1:9999,2 backup.server:
 9999,1")
 ...
 
-4. Exported Functions
+4. Functions
 
    4.1. jsonrpc_notification(method, parameters)
    4.2. jsonrpc_request(method, parameters, return_route, error_route,
           result_var)
 
-4.1. jsonrpc_notification(method, parameters)
+4.1.  jsonrpc_notification(method, parameters)
 
    Invokes the remote 'method' with the given 'parameters' as a
    notification. Unlike jsonrpc_request (below), notifications do not
@@ -126,7 +127,7 @@ modparam("jsonrpc", "servers", "localhost:9999,2 10.10.0.1:9999,2 backup.server:
 jsonrpc_notification("update_user", "{'id': 1234, 'name': 'Petros'}")
 ...
 
-4.2. jsonrpc_request(method, parameters, return_route, error_route,
+4.2.  jsonrpc_request(method, parameters, return_route, error_route,
 result_var)
 
    Invokes the remote 'method' with the given 'parameters'. When the

@@ -14,7 +14,7 @@ Anca Vamanu
 
    <anca.vamanu@1and1.ro>
 
-   Copyright © 2012 1&1 Internet AG
+   Copyright Â© 2012 1&1 Internet AG
      __________________________________________________________________
 
    Table of Contents
@@ -101,8 +101,8 @@ Chapter 1. Admin Guide
    the table. The comparator and validators should be either UTF8Type or
    ASCIIType. Example:
    ...
-   create keyspace openser;
-   use openser;
+   create keyspace kamailio;
+   use kamailio;
    create column family 'location' with comparator='UTF8Type' and
 default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
    ...

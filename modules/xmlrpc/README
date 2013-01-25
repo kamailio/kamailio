@@ -7,6 +7,25 @@ Jan Janak
    Copyright © 2005 iptelorg GmbH
      __________________________________________________________________
 
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Parameters
+
+              1.1. route (string)
+              1.2. autoconversion (string)
+              1.3. escape_cr (integer)
+              1.4. double_lf_to_crlf (integer)
+              1.5. mode (integer)
+              1.6. url_skip (str)
+              1.7. url_match (str)
+
+        2. Functions
+
+              2.1. dispatch_rpc()
+              2.2. xmlrpc_reply(code, reason)
+
    List of Tables
 
    1. Data Type Conversion
@@ -14,15 +33,15 @@ Jan Janak
    List of Examples
 
    1.
-   2. Set route parameter
-   3. Set the autoconversion parameter
-   4. Set the escape_cr parameter
-   5. Set the double_lf_to_crlf parameter
-   6. Set the mode parameter
-   7. Set url_skip parameter
-   8. Set url_match parameter
-   9. dispatch_rpc usage
-   10. xmlrpc_reply usage
+   1.1. Set route parameter
+   1.2. Set the autoconversion parameter
+   1.3. Set the escape_cr parameter
+   1.4. Set the double_lf_to_crlf parameter
+   1.5. Set the mode parameter
+   1.6. Set url_skip parameter
+   1.7. Set url_match parameter
+   1.8. dispatch_rpc usage
+   1.9. xmlrpc_reply usage
 
 1. Design Goals
 
@@ -494,17 +513,36 @@ route[XMLRPC]{
      * serweb (php application that can use the XML-RPC interface to call
        ser functions).
 
-5. Parameters
+Chapter 1. Admin Guide
 
-   5.1. route (string)
-   5.2. autoconversion (string)
-   5.3. escape_cr (integer)
-   5.4. double_lf_to_crlf (integer)
-   5.5. mode (integer)
-   5.6. url_skip (str)
-   5.7. url_match (str)
+   Table of Contents
 
-5.1. route (string)
+   1. Parameters
+
+        1.1. route (string)
+        1.2. autoconversion (string)
+        1.3. escape_cr (integer)
+        1.4. double_lf_to_crlf (integer)
+        1.5. mode (integer)
+        1.6. url_skip (str)
+        1.7. url_match (str)
+
+   2. Functions
+
+        2.1. dispatch_rpc()
+        2.2. xmlrpc_reply(code, reason)
+
+1. Parameters
+
+   1.1. route (string)
+   1.2. autoconversion (string)
+   1.3. escape_cr (integer)
+   1.4. double_lf_to_crlf (integer)
+   1.5. mode (integer)
+   1.6. url_skip (str)
+   1.7. url_match (str)
+
+1.1. route (string)
 
    Name of the route called for XMLRPC messages.
 
@@ -519,10 +557,10 @@ route[XMLRPC]{
 
    Default: the main route is used.
 
-   Example 2. Set route parameter
+   Example 1.1. Set route parameter
 modparam("xmlrpc", "route", "route_for_xmlrpcs")
 
-5.2. autoconversion (string)
+1.2. autoconversion (string)
 
    Enable or disable automatic parameter type conversion globally, for all
    the methods parameters. If on, a type mismatch in a method parameter
@@ -536,10 +574,10 @@ modparam("xmlrpc", "route", "route_for_xmlrpcs")
    or to modify the target rpc to accept any type (see the rpc scan '.'
    modifier).
 
-   Example 3. Set the autoconversion parameter
+   Example 1.2. Set the autoconversion parameter
 modparam("xmlrpc", "autoconversion", 1)
 
-5.3. escape_cr (integer)
+1.3. escape_cr (integer)
 
    Enable CR ('\r') escaping in replies. If enabled each '\r' in the
    xmlrpc reply will be replaced with "&#xD;", according to the xml spec.
@@ -549,10 +587,10 @@ modparam("xmlrpc", "autoconversion", 1)
 
    Default: on.
 
-   Example 4. Set the escape_cr parameter
+   Example 1.3. Set the escape_cr parameter
 modparam("xmlrpc", "escape_cr", 1)
 
-5.4. double_lf_to_crlf (integer)
+1.4. double_lf_to_crlf (integer)
 
    When enabled double LFs ('\n\n') in the input xmlrpc strings will be
    replaced with CR LF ('\r\n'). This makes LF LF behave like an escape
@@ -567,10 +605,10 @@ modparam("xmlrpc", "escape_cr", 1)
 
    Default: off.
 
-   Example 5. Set the double_lf_to_crlf parameter
+   Example 1.4. Set the double_lf_to_crlf parameter
 modparam("xmlrpc", "double_lf_to_crlf", 1)
 
-5.5. mode (integer)
+1.5. mode (integer)
 
    When set to 1, xmlrpc module does not register to core the callback
    functions for non-SIP messages. Useful when other module register a
@@ -579,22 +617,22 @@ modparam("xmlrpc", "double_lf_to_crlf", 1)
 
    Default: 0.
 
-   Example 6. Set the mode parameter
+   Example 1.5. Set the mode parameter
 modparam("xmlrpc", "mode", 1)
 
-5.6. url_skip (str)
+1.6. url_skip (str)
 
    Regular expression to match the HTPP URL. If there is match, then
    xmlrpc route is not executed.
 
    Default value is null (don't skip).
 
-   Example 7. Set url_skip parameter
+   Example 1.6. Set url_skip parameter
 ...
 modparam("xmlrpc", "url_skip", "^/sip")
 ...
 
-5.7. url_match (str)
+1.7. url_match (str)
 
    Regular expression to match the HTTP URL. If there is no match, then
    xmlrpc route is not executed. This check is done after url_skip, so if
@@ -603,17 +641,17 @@ modparam("xmlrpc", "url_skip", "^/sip")
 
    Default value is null (match everything).
 
-   Example 8. Set url_match parameter
+   Example 1.7. Set url_match parameter
 ...
 modparam("xmlrpc", "url_match", "^/RPC2")
 ...
 
-6. Functions
+2. Functions
 
-   6.1. dispatch_rpc()
-   6.2. xmlrpc_reply(code, reason)
+   2.1. dispatch_rpc()
+   2.2. xmlrpc_reply(code, reason)
 
-6.1.  dispatch_rpc()
+2.1.  dispatch_rpc()
 
    This function processes an XMLRPC request, found in the body of the
    request.
@@ -629,7 +667,7 @@ modparam("xmlrpc", "url_match", "^/RPC2")
    function with matching name. If such a function is found then
    dispatch_rpc() will pass control to the function to handle the request.
 
-   Example 9. dispatch_rpc usage
+   Example 1.8. dispatch_rpc usage
 #...
 modparam("xmlrpc", "route", "XMLRPC");
 #...
@@ -640,12 +678,12 @@ route[XMLRPC]{
         dispatch_rpc();
 }
 
-6.2.  xmlrpc_reply(code, reason)
+2.2.  xmlrpc_reply(code, reason)
 
    This function can be called from the config script to directly generate
    an XML-RPC reply.
 
-   Example 10. xmlrpc_reply usage
+   Example 1.9. xmlrpc_reply usage
 #...
 modparam("xmlrpc", "route", "XMLRPC");
 #...

@@ -170,6 +170,12 @@ kamailio_restore() #pars: <database name> <filename>
 
 kamailio_pframework_create() #pars: none
 {
+	if [ -e $DEFAULT_CFG_DIR/pi_framework_sample ] ; then
+		get_answer ask "Sample already exists. Overwrite? (y/n): "
+		if [ "$ANSWER" != "y" ]; then
+			exit 1
+		fi
+	fi
 	touch $DEFAULT_CFG_DIR/pi_framework_sample
 	if [ $? -ne 0 ] ; then
 		merr "Unable to create $DEFAULT_CFG_DIR/pi_framework_sample"
@@ -191,7 +197,7 @@ kamailio_pframework_create() #pars: none
 
 	get_answer $INSTALL_PRESENCE_TABLES "Add provisionning framework for presence tables? (y/n): "
 	if [ "$ANSWER" = "y" ]; then
-		PI_MODULES="$PI_MODULES $PRESENCE_TABLES"
+		PI_PRESENCE_MODULES="TRUE"
 	fi
 
 	cat $DATA_DIR/xhttp_pi/pi_framework-00 > $DEFAULT_CFG_DIR/pi_framework_sample
@@ -202,6 +208,18 @@ kamailio_pframework_create() #pars: none
 			merr "Unable to configure: $TABLE - missing table descriptor"
 		fi
 	done
+	if [ "$PI_PRESENCE_MODULES" = "TRUE" ]; then
+		if [ -e $DATA_DIR/xhttp_pi/presence-table ]; then
+			cat $DATA_DIR/xhttp_pi/presence-table >> $DEFAULT_CFG_DIR/pi_framework_sample
+		else
+			merr "Unable to configure: presence - missing table descriptor"
+		fi
+		if [ -e $DATA_DIR/xhttp_pi/rls-table ]; then
+			cat $DATA_DIR/xhttp_pi/rls-table >> $DEFAULT_CFG_DIR/pi_framework_sample
+		else
+			merr "Unable to configure: rls - missing table descriptor"
+		fi
+	fi
 	cat $DATA_DIR/xhttp_pi/pi_framework-01 >> $DEFAULT_CFG_DIR/pi_framework_sample
 	for TABLE in $PI_MODULES; do
 		if [ -e $DATA_DIR/xhttp_pi/$TABLE-mod ]; then
@@ -210,6 +228,18 @@ kamailio_pframework_create() #pars: none
 			merr "Unable to configure: $TABLE - missing mod descriptor"
 		fi
 	done
+	if [ "$PI_PRESENCE_MODULES" = "TRUE" ]; then
+		if [ -e $DATA_DIR/xhttp_pi/presence-mod ]; then
+			cat $DATA_DIR/xhttp_pi/presence-mod >> $DEFAULT_CFG_DIR/pi_framework_sample
+		else
+			merr "Unable to configure: presence - missing mod descriptor"
+		fi
+		if [ -e $DATA_DIR/xhttp_pi/rls-mod ]; then
+			cat $DATA_DIR/xhttp_pi/rls-mod >> $DEFAULT_CFG_DIR/pi_framework_sample
+		else
+			merr "Unable to configure: rls - missing mod descriptor"
+		fi
+	fi
 	cat $DATA_DIR/xhttp_pi/pi_framework-02 >> $DEFAULT_CFG_DIR/pi_framework_sample
 
 	minfo "Sample provisionning framework saved as: $DEFAULT_CFG_DIR/pi_framework_sample"
@@ -342,6 +372,10 @@ case $1 in
 		extra_create $DBNAME
 		exit $?
 		;;
+	dbuid)
+		dbuid_create $DBNAME
+		exit $?
+		;;
 	drop)
 		# delete kamailio database
 		# create new database structures
@@ -366,6 +400,48 @@ case $1 in
 			exit $ret
 		fi
 		kamailio_create $DBNAME
+		exit $?
+		;;
+	dbonly)
+		# create only an empty database
+		if [ "$USED_DBENGINE" != "mysql" ] ; then
+			merr "$USED_DBENGINE db engine doesn't support this operation"
+			exit 1
+		fi
+		shift
+		if [ $# -eq 1 ] ; then
+			DBNAME="$1"
+		fi
+
+		kamailio_db_create $DBNAME
+		exit $?
+		;;
+	grant)
+		# grant privileges to database
+		if [ "$USED_DBENGINE" != "mysql" ] ; then
+			merr "$USED_DBENGINE db engine doesn't support this operation"
+			exit 1
+		fi
+		shift
+		if [ $# -eq 1 ] ; then
+			DBNAME="$1"
+		fi
+
+		kamailio_db_grant $DBNAME
+		exit $?
+		;;
+	revoke)
+		# revoke privileges to database
+		if [ "$USED_DBENGINE" != "mysql" ] ; then
+			merr "$USED_DBENGINE db engine doesn't support this operation"
+			exit 1
+		fi
+		shift
+		if [ $# -eq 1 ] ; then
+			DBNAME="$1"
+		fi
+
+		kamailio_db_revoke $DBNAME
 		exit $?
 		;;
 	bdb|db_berkeley)

@@ -62,8 +62,8 @@
 	</para>
 <programlisting format="linespecific">
    ...
-   create keyspace openser;
-   use openser;
+   create keyspace kamailio;
+   use kamailio;
    create column family 'location' with comparator='UTF8Type' and 
 default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
    ...

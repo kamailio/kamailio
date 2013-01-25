@@ -7,15 +7,30 @@ Nils Ohlmeier
    Copyright © 2006 iptelorg GmbH
      __________________________________________________________________
 
+   Table of Contents
+
+   1.
+
+        1. Parameters
+
+              1.1. default_checks (integer)
+              1.2. uri_checks (integer)
+              1.3. proxy_require (string)
+              1.4. autodrop (integer)
+
+        2. Functions
+
+              2.1. sanity_check([msg_checks [, uri_checks]])
+
    List of Examples
 
-   1. Set default_checks parameter
-   2. Set uri_checks parameter
-   3. Set proxy_require parameter
-   4. Set autodrop parameter
-   5. sanity_check usage
-   6. sanity_check usage with parameter
-   7. sanity_check usage with two parameters
+   1.1. Set default_checks parameter
+   1.2. Set uri_checks parameter
+   1.3. Set proxy_require parameter
+   1.4. Set autodrop parameter
+   1.5. sanity_check usage
+   1.6. sanity_check usage with parameter
+   1.7. sanity_check usage with two parameters
 
 1. Overview
 
@@ -64,14 +79,27 @@ Nils Ohlmeier
    The following modules must be loaded before this module:
      * sl - Stateless replies.
 
-3. Parameters
+   Table of Contents
 
-   3.1. default_checks (integer)
-   3.2. uri_checks (integer)
-   3.3. proxy_require (string)
-   3.4. autodrop (integer)
+   1. Parameters
 
-3.1. default_checks (integer)
+        1.1. default_checks (integer)
+        1.2. uri_checks (integer)
+        1.3. proxy_require (string)
+        1.4. autodrop (integer)
+
+   2. Functions
+
+        2.1. sanity_check([msg_checks [, uri_checks]])
+
+1. Parameters
+
+   1.1. default_checks (integer)
+   1.2. uri_checks (integer)
+   1.3. proxy_require (string)
+   1.4. autodrop (integer)
+
+1.1. default_checks (integer)
 
    This parameter determines which of the checks from the sanity module
    are executed if no parameter was given to the sanity_check function
@@ -84,12 +112,12 @@ Nils Ohlmeier
    cseq_method (32), cseq_value (64), cotent_length (128), expires_value
    (256), proxy_require (512).
 
-   Example 1. Set default_checks parameter
+   Example 1.1. Set default_checks parameter
 ...
 modparam("sanity", "default_checks", 1)
 ...
 
-3.2. uri_checks (integer)
+1.2. uri_checks (integer)
 
    This parameter determines which URIs are going to be checked if the
    'parse uri' will be executed.
@@ -97,24 +125,24 @@ modparam("sanity", "default_checks", 1)
    Default value is 7. This resolves to the following list of parsed URIs:
    Request RUI (1), From URI (2) and To URI (4).
 
-   Example 2. Set uri_checks parameter
+   Example 1.2. Set uri_checks parameter
 ...
 modparam("sanity", "uri_checks", 3)
 ...
 
-3.3. proxy_require (string)
+1.3. proxy_require (string)
 
    This parameter sets the list of supported extensions for this Kamailio.
    The value is expected as a comma separated list of extensions. This
    list is separated into single tokens. Each token from a proxy require
    header will be compared to the tokens from this list.
 
-   Example 3. Set proxy_require parameter
+   Example 1.3. Set proxy_require parameter
 ...
 modparam("sanity", "proxy_require", "foo, bar")
 ...
 
-3.4. autodrop (integer)
+1.4. autodrop (integer)
 
    This parameter controls whether the module drops automatically or not
    the SIP message if the sanity checks fail. Default value is 1 (auto
@@ -123,16 +151,16 @@ modparam("sanity", "proxy_require", "foo, bar")
    sure you exit execution of config without sending a SIP reply because
    it is sent by module itself.
 
-   Example 4. Set autodrop parameter
+   Example 1.4. Set autodrop parameter
 ...
 modparam("sanity", "autodrop", 1)
 ...
 
-4. Functions
+2. Functions
 
-   4.1. sanity_check([msg_checks [, uri_checks]])
+   2.1. sanity_check([msg_checks [, uri_checks]])
 
-4.1.  sanity_check([msg_checks [, uri_checks]])
+2.1.  sanity_check([msg_checks [, uri_checks]])
 
    This function makes a row of sanity checks over the given SIP request.
    The behavior of the function is also controlled by 'autodrop'
@@ -142,7 +170,7 @@ modparam("sanity", "autodrop", 1)
    module sends a precise error reply via SL send_reply(). Thus there is
    no need to reply with a generic error message.
 
-   Example 5. sanity_check usage
+   Example 1.5. sanity_check usage
 ...
 if (!sanity_check()) {
         exit;
@@ -155,7 +183,7 @@ if (!sanity_check()) {
    checks (like for the module parameter) which should be executed at this
    function call.
 
-   Example 6. sanity_check usage with parameter
+   Example 1.6. sanity_check usage with parameter
 ...
 if (method=="REGISTER" && !sanity_check("256")) {
         /* the register contains an invalid expires value and is replied with a
@@ -168,7 +196,7 @@ if (method=="REGISTER" && !sanity_check("256")) {
    overwrites the global module parameter uri_checks and thus determines
    which URIs will be checked if the parse uri test will be executed.
 
-   Example 7. sanity_check usage with two parameters
+   Example 1.7. sanity_check usage with two parameters
 ...
 if (method=="INVITE" && !sanity_check("1024", "6")) {
         /* the INVITE contains an invalid From or To header and is replied with

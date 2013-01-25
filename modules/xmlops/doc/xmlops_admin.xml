@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="xmlops.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>Parameters</title>
+
+    <section id="buf_size">
+	<title><varname>buf_size</varname> (integer)</title>
+	<para>
+	    Maximum size of the XML buffer.
+	</para>
+	<para>
+	    Default value is 4096.
+	</para>
+	<example>
+	    <title>Set <varname>buf_size</varname> parameter</title>
+	    <programlisting>
+...
+modparam("xmlops", "buf_size", 8192)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+	<section id="xml_ns">
+		<title><varname>xml_ns</varname> (str)</title>
+		<para>
+		Register xml namespace prefix. Parameter value must have the format:
+		'prefix=uri'.</para>
+		<example>
+		<title>Set <varname>xml_ns</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xmlops", "xml_ns", "rpid=urn:ietf:params:xml:ns:pidf:rpid")
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	<section id="pv-xml">
+    <title>Pseudo-Variables</title>
+		<title>
+		<function moreinfo="none">$xml(name=>spec)</function>
+		</title>
+		<para>
+		Pseudo-variable for XML document operations using xpath syntax. For
+		more see the Pseudo-Variables Cookbook.
+		</para>
+		<example>
+		<title><function>xml</function> usage</title>
+		<programlisting format="linespecific">
+...
+$xml(x=&gt;doc)
+    = '&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;a&gt;&lt;b&gt;test&lt;/b&gt;&lt;/a&gt;';
+xlog("content of node b: $xml(x=&gt;xpath:/a/b/text())\n");
+$xml(x=&gt;xpath:/a/b) = "1234";
+...
+</programlisting>
+		</example>
+	</section>
+
+</section>

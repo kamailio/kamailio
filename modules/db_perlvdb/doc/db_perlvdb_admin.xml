@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		The Perl Virtual Database (VDB) provides a virtualization framework
+		for &kamailio;'s database access. It does not handle a particular
+		database engine itself but lets the user relay database requests
+		to arbitrary Perl functions.
+	</para>
+	<para>
+		This module cannot be used "out of the box". The user has to supply
+		functionality dedicated to the client module. See below for options.
+	</para>
+	<para>
+		The module can be used in all current &kamailio; modules that need
+		database access. Relaying of insert, update, query and delete
+		operations is supported.
+	</para>
+	<para>
+		Modules can be configured to use the perlvdb module as
+		database backend using the db_url_parameter:
+	</para>
+	<programlisting>
+modparam("acc", "db_url", "perlvdb:Kamailio::VDB::Adapter::AccountingSIPtrace")
+</programlisting>
+	<para>
+		This configuration options tells acc module that it should use the
+		perlvdb module which will in turn use the Perl class
+		Kamailio::VDB::Adapter::AccountingSIPtrace
+		to relay the database requests.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following  modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>perl</emphasis> -- Perl module</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis> (Besides the ones mentioned in the perl
+				module documentation).
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+		<para>
+			<emphasis>None</emphasis>.
+		</para>
+	</section>
+
+	<section>
+	<title>Functions</title>
+		<para>
+			<emphasis>None</emphasis>.
+		</para>
+	</section>
+
+</chapter>
+

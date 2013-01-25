@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<chapter>
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Parameters</title>
+
+	<section id="route">
+	<title><varname>route</varname> (string)</title>
+	<para>
+		Name of the route called for XMLRPC messages.
+	</para>
+	<para>
+		This route will be called only for HTTP messages whose method is
+		either GET or POST. The message visible inside the route
+		will be a HTTP request converted to SIP (the uri will be fixed and
+		a fake via will be added).
+	</para>
+	<para>
+		The route should perform additional security checks to
+		ensure the client is authorized to execute management/RPC functions
+		and then it should call the <function>dispatch_rpc()</function>.
+	</para>
+	<para>
+		Default: the main route is used.
+	</para>
+	<example>
+		<title>Set <varname>route</varname> parameter</title>
+		<programlisting>
+modparam("xmlrpc", "route", "route_for_xmlrpcs")
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="autoconversion">
+	<title><varname>autoconversion</varname> (string)</title>
+	<para>
+		Enable or disable automatic parameter type conversion globally, 
+		for all the methods parameters.
+		If on, a type mismatch in a method parameter
+		will not cause a fault if it is possible to automatically
+		convert it to the type expected by the method.
+	</para>
+	<para>
+		Default: off.
+	</para>
+	<para>
+		It is recommended to leave this parameter to its default off value
+		and fix instead the client application (which should use the
+		proper types) or to modify the target rpc to accept any type
+		(see the rpc scan '.' modifier).
+	</para>
+	<example>
+		<title>Set the <varname>autoconversion</varname> parameter</title>
+		<programlisting>
+modparam("xmlrpc", "autoconversion", 1)
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="escape_cr">
+	<title><varname>escape_cr</varname> (integer)</title>
+	<para>
+		Enable CR ('\r') escaping in replies. If enabled each '\r' in the
+		xmlrpc reply will be replaced with "&amp;#xD;", according to the
+		xml spec.
+	</para>
+	<para>
+		It should be turned off only if you suspect interoperability problems
+		with older clients.
+	</para>
+	<para>
+		Default: on.
+	</para>
+	<example>
+		<title>Set the <varname>escape_cr</varname> parameter</title>
+		<programlisting>
+modparam("xmlrpc", "escape_cr", 1)
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="double_lf_to_crlf">
+	<title><varname>double_lf_to_crlf</varname> (integer)</title>
+	<para>
+		When enabled double LFs ('\n\n') in the input xmlrpc strings
+		will be replaced with CR LF ('\r\n'). This makes LF LF behave like
+		an escape character for CR LF and is needed for compatibility with
+		kamailio tools and to work around buggy xmlrpc clients that don't
+		escape the CR in CR LF ('\r' should be escaped to "&amp;#xD;"
+		otherwise according to the xml spec "\r\n" will be transformed to
+		'\n'), but need to send CR LF in the strings (e.g. they use
+		<function>tm.t_uac_wait</function>).
+	</para>
+	<para>
+		Note: when this option is turned on, there is no way to send a double
+		LF ('\n\n'), it will always be transformed in CR LF ('\r\n').
+	</para>
+	<para>
+		Default: off.
+	</para>
+	<example>
+		<title>Set the <varname>double_lf_to_crlf</varname> parameter</title>
+		<programlisting>
+modparam("xmlrpc", "double_lf_to_crlf", 1)
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="param_mode">
+	<title><varname>mode</varname> (integer)</title>
+	<para>
+		When set to 1, xmlrpc module does not register to core the callback
+		functions for non-SIP messages. Useful when other module register
+		a callback for HTTP request, being the decision of admin when to
+		call the XMLRPC route (or functions).
+	</para>
+	<para>
+		Default: 0.
+	</para>
+	<example>
+		<title>Set the <varname>mode</varname> parameter</title>
+		<programlisting>
+modparam("xmlrpc", "mode", 1)
+		</programlisting>
+	</example>
+	</section>
+	<section>
+		<title><varname>url_skip</varname> (str)</title>
+		<para>
+			Regular expression to match the HTPP URL. If there is match,
+			then xmlrpc route is not executed.
+		</para>
+		<para>
+		<emphasis>
+			Default value is null (don't skip).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>url_skip</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xmlrpc", "url_skip", "^/sip")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>url_match</varname> (str)</title>
+		<para>
+			Regular expression to match the HTTP URL. If there is no match,
+			then xmlrpc route is not executed. This check is done after
+			url_skip, so if both url_skip and url_match would match then
+			the xmlrpc route is not executed (url_skip has higher priority).
+		</para>
+		<para>
+		<emphasis>
+			Default value is null (match everything).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>url_match</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xmlrpc", "url_match", "^/RPC2")
+...
+</programlisting>
+		</example>
+	</section>
+</section>
+<section>
+
+	<title>Functions</title>
+
+	<section id="xmlrpc.dispatch_rpc">
+	<title>
+		<function>dispatch_rpc()</function>
+	</title>
+	<para>
+		This function processes an XMLRPC request, found in the body of
+		the request.
+	</para>
+	<para>
+		It should be used only in a route specified using the
+		<varname>"route"</varname> module parameter or if the request method
+		is GET or POST (using it for other request methods will not have
+		adverse side-effects, but it will probably not work).
+	</para>
+	<para>
+		dispatch_rpc() extracts the XML-RPC document from the body of the
+		request to determine the name of the RPC method to be called and then
+		it searches through the list of all the RPC functions to find a
+		function with matching name. If such a function is found then
+		dispatch_rpc() will pass control to the function to handle the
+		request.
+	</para>
+	<example>
+		<title><function>dispatch_rpc</function> usage</title>
+		<programlisting>
+#...
+modparam("xmlrpc", "route", "XMLRPC");
+#...
+route[XMLRPC]{
+	if search("^User-Agent:.*xmlrpclib"))
+		set_reply_close();
+	set_reply_no_connect(); # optional
+	dispatch_rpc();
+}
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="xmlrpc.xmlrpc_reply">
+	<title>
+		<function>xmlrpc_reply(code, reason)</function>
+	</title>
+	<para>
+		This function can be called from the config script to directly
+		generate an XML-RPC reply.
+	</para>
+	<example>
+		<title><function>xmlrpc_reply</function> usage</title>
+		<programlisting>
+#...
+modparam("xmlrpc", "route", "XMLRPC");
+#...
+route[XMLRPC]{
+	# allow XMLRPC requests only on TLS and only if the client
+	# certificate is valid
+	if (proto!=TLS){
+		xmlrpc_reply("400", "xmlrpc allowed only over TLS");
+		return;
+	}
+	if (@tls.peer.verified!=""){
+		xmlrpc_reply("400", "Unauthorized");
+		return;
+	}
+	if search("^User-Agent:.*xmlrpclib"))
+		set_reply_close();
+	set_reply_no_connect(); # optional
+	dispatch_rpc();
+}
+		</programlisting>
+	</example>
+	</section>
+
+
+</section>
+</chapter>

@@ -22,6 +22,10 @@ else
 	LIBS+=-L$(LOCALBASE)/lib -lxml2
 endif
 
+ifneq ($(OS),darwin)
+	LIBS += -lrt
+endif
+
 DEFS+=-DOPENSER_MOD_INTERFACE
 
 SERLIBPATH=../../lib

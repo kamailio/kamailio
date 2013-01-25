@@ -51,6 +51,12 @@ int json_get_field(struct sip_msg* msg, char* json, char* field, char* dst)
 	dst_pv = (pv_spec_t *)dst;
 	
 	struct json_object *j = json_tokener_parse(json_s.s);
+
+	if (is_error(j)) {
+		LM_ERR("empty or invalid JSON\n");
+		return -1;
+	}
+
 	char *value = (char*)json_object_to_json_string(json_object_object_get(j, field_s.s));
 
 	dst_val.rs.s = value;

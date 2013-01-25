@@ -3,23 +3,14 @@
 SIP-ROUTER modules
 ==================
 
-This is the first release of the combined project. In order to be able to support
-an upgrade path for both Kamailio/OpenSER and SER current users, we have been forced to
-provide some modules in two versions, which means that we have three set of modules:
+This is the second major release of the merged SIP Server - Kamailio and SER. 
+In the previous release some modules where provided in two versions, in Kamailio
+and SER flavours. These are now merged. In some cases, the functionality has 
+changed. You can still do the same operation, but how you do it may be different.
 
- - modules: 	the SIP router modules
- - modules_k: 	Kamailio modules
- - modules_s: 	SER modules
-
-All modules are compatible with the core, so regardless if you are a new user or 
-an existing, you are free to make a choice between the three sets as well as
-mix and match between them.
-
-Note that if you are currently using one product, you want to select the module
-that exists in the K/S directories first to get a smooth upgrade path.
-
-As sip-router development progress, we will move as many modules as possible
-into the core and only keep k/s modules for backwards compatibility when required.
+Modules are in the "modules" directory.
+In previous releases there was a "modules_k" and "modules_s" directory, but in
+this release these directories are empty.
 
 What is a module?
 =================
@@ -27,114 +18,148 @@ A module consists of a lot of functions that enhance the core. Some of the modul
 depends on other modules. It's all properly documented in the README that belongs
 to each module (available as web pages on the sip-router.org web site).
 
-A module providers up to three different APIs:
+A module providers up to five different APIs:
 
 - Enhancements to the core SIP-router routing script (functions)
-- Commands for the management interface (MI)
+- Commands for the management interface (MI and RPC)
 - Development interface for other modules
+- Pseudo-variables
+- Selects and config framework variables
 
 A single module may provide a selection of this, maybe only one of them.
 
-Why do we have two modules with the same name?
-==============================================
-Some modules exists both in modules_k and modules_s - like xlog. If you are
-upgrading from Kamailio, we recommend using the one in modules_k for backwards
-compatibility, if you are using SER then select the one in modules_s.
-In the future the development team will try to integrate modules that are
-split like this into one integrated module.
-
-Core modules
-------------
-auth_identity		SIP Identity support (RFC 4474)
-auth_radius		Radius authentication
-avpops			Attribute-value pair operations ("variables")
-carrierroute		A telephony routing module
-cfg_db			Database driver for configuration API
-cfg_rpc
-ctl
-db_berkeley		Database :: Berkeley DB (Oracle)
-db_flatstore		Database :: Flatstore
-db_mysql		Database :: Mysql
-db_postgres		Database :: PostgreSQL
-dialplan		Dialplan management
-enum			Enum support
-iptrtpproxy		NAT traversal :: Kernel based RTP proxy
-lcr			Least cost routing
-mediaproxy		Nat traversal :: Mediaproxy (AG projects)
-mi_rpc			Management Interface :: XML RPC support
-misc_radius		Various Radius functions
-pdb			Number portabilityusing external server
-peering			SIP peering between service providers
-tls			SSL/TLS support
-tm			SIP transaction support (stateful proxy)
-topoh			Topology hinding
-utils			Various utilities (http query, xcap status)
-xmlrpc
-
-Kamailio modules
+Kamailio Modules
 ----------------
 acc			Accounting
+acc_radius		Accounting with RADIUS backend
 alias_db		Alias management in database modules
+app_lua			Lang :: Execute embedded LUA scripts
+app_mono		Lang :: Execute embedded MONO scripts (like C#, Java, javascript)
+app_perl		Lang :: Embedded perl script support
+app_python		Lang :: Execute embedded Python scripts
+async			Asynchronus SIP request handling functions
 auth			MD5 digest authentication support
 auth_db			Authentication using a database module
 auth_diameter		Authentication based on Diameter
+auth_identity		SIP Identity support (RFC 4474)
+auth_radius		Radius authentication
+acp			Collection of functions for handling AVP's (from SER)
+avpops			Attribute-value pair operations ("variables")
 benchmark		Development benchmark module
+blst			Blacklisting API for configuration scripts
 call_control		Call timeouts and management (depends on Dialog module)
+carrierroute		A telephony routing module
+cdp			C Diameter Peer - core communication engine
+cdp_avp			C Diameter Peer - application extensions
+cfg_db			Database driver for configuration API
+cfg_rpc			Update core and module parameters from RPC
 cfgutils		Various configuration utilities
+corex			Core extensions
+counters		Internal counter API for configuration
 cpl-c			Implementation of SIP Call Processing Language (RFC 3880)
+ctl			Control connector for RPC interface (fifo, unixsock, tcp, udp)
+db_berkeley		Database :: Berkeley DB (Oracle)
+db_cluster		Generic database connectors clustering and failover
+db_cassandra		Database :: Cassandra database server connector
+db_flatstore		Database :: Flatstore
+db_mysql		Database :: Mysql
 db_oracle		Database :: Oracle support
+db_perlvdb		Database :: Use perl database functions
+db_postgres		Database :: PostgreSQL
 db_text			Database :: Text support
 db_unixodbc		Database :: Unix ODBC support
+db2_ldap		Database connector to LDAP using the DB2 API
+db2_ops			Database operations for DB API v2
+debugger		Interactive configuration processing debugger
 dialog			Dialog ("call") state module
+dialplan		Dialplan management
+dialog_ng		Dialog tracking module - next generation
 dispatcher		Load balancing and failover
 diversion		Call redirect support (SIP Diversion: header)
+dmq			Devel :: Distributed message queue system using SIP (early development)
 domain			Proxy :: Multiple domain support using databases
 domainpolicy		Proxy :: Obsolete module - This module is no longer maintained
 drouting		Proxy :: Dynamic routing
+enum			Enum support
 exec			External exec module
+geoip			GeoIP API to configuration file
 group			Utils :: Group membership checking
 h350			LDAP/ITU H.350 multimedia schema support
 htable			Utils :: Hash table support
 imc			IM :: Instant messaging conference
+ims_auth		IMS authentication module
+ims_icscf		IMS ICSCF component module
+ims_isc			IMS ISC component module
+ims_qos			IMS Diameter Rx interface
+ims_registrar_pcscf	IMS PCSCF registrar module
+ims_registrar_scscf	IMS SCSCF registrar module
+ipops			IP and DNS related operations
+iptrtpproxy		NAT traversal :: Kernel based RTP proxy
 jabber			IM :: Jabber gateway
+json			Access to JSON document attributes
+jsonrpc-c		JSON-RPC client over netstrings protocol
 kex			Proxy :: Kamailio core functions (backwards compatibility)
+lcr			Least cost routing
 ldap			LDAP Directory access
+malloc_test		Functions for stress-testing memory manager (from SER)
+mangler			SIP message mangling functions (from SER)
+matrix			Matrix operations
 maxfwd			SIP loop detection prevention (max-forwards header - "ttl")
+mediaproxy		Nat traversal :: Mediaproxy (AG projects)
 memcached		Utils :: In-memory caching support (memcached)
 mi_datagram		Management interface :: UDP
 mi_fifo			Management Interface :: Unix FIFO
+mi_rpc			Management Interface :: RPC support
 mi_xmlrpc		Management Interface :: XML-rpc
+misc_radius		Various Radius functions
 msilo			Text message storage
+msrp			Embedded MSRP relay (RFC 4975 and RFC 4976)
+mqueue			Message queue system for configuration file
 nat_traversal		NAT :: NAT traversal module
 nathelper		NAT :: NAT traversal module :: RTPproxy (SIPPY software)
+ndb_redis		Connector to REDIS NoSQL Database engine
 osp			Open Settlement Protocol support
+outbound		SIP Outbound Implementation
+p_usrloc		Partitioned and distributed user location services
 path			Path: header support
+pdb			Number portability using external server
 pdt			Proxy :: Routing based on numeric prefix
-perl			Perl-based module interface
-perlvdb			Database :: Use perl database functions
+peering			SIP peering between service providers
 permissions		Security :: TCP-wrapper-like ACL functions
 pike			Security :: DOS-attack prevention
+pipelimit		Traffic shaping policies
+prefix_route		Execute config file route blocks based on prefix
 presence		Presence :: Core presence module
+presence_conference	Presence :: Conference events handling
 presence_dialoginfo	Presence :: Dialog info
 presence_mwi		Presence :: Message waiting indication
+presence_profile	Presence :: User profile extensions (RFC 6080)
+presence_reginfo	Presence :: Registration info (RFC 3680)
 presence_xml		Presence :: XML handler
+print			DEVEL :: Basic sample of a module
+print_lib		DEVEL :: Basic sample of a module with dependency on other modules
 pua			Presence :: Common module
 pua_bla			Presence :: BLA
 pua_dialoginfo		Presence :: Dialog Info support
 pua_mi			Presence :: Management interface
+pua_reginfo		Presence :: Registration information (RFC 3680)
 pua_usrloc		Presence :: USRLOC integration
 pua_xmpp		Presence :: XMPP/Jabber gateway
 purple			Presence :: Libpurple support
 pv			Pseudo-variable implementation
 qos			Dialogs :: SDP management 
-ratelimit		Security :: Rate limit
+ratelimit		Traffic shaping module
 regex			Regular expression support
 registrar		Registrar/location server support
 rls			Presence :: Resource list server
 rr			Proxy :: Record routing
 rtimer			Utils :: Timer based routing script processing
+rtpproxy		NAT :: Nat traversal module for RTPproxy control
 sanity			Syntax checking for incoming SIP requests
+sca			PRESENCE :: Shared call appearances
+sdpops			SDP operations
 seas			Application server interface
+sipcapture		SIP Capture Server module (used in the Homer project)
 siptrace		Store SIP messages in database
 siputils		Various utilities for SIP call handling
 sl			Proxy :: Stateless handling of SIP messages
@@ -145,71 +170,32 @@ sqlops			SQL operations
 sst			SIP Session Timers implementation
 statistics		Script statistics support
 textops			Text operations
+textopsx		Extra Text operations
+timer			Execute routing blocks on core timers (From SER)
+tls			SSL/TLS support
+tm			Proxy :: SIP transaction support (stateful)
 tmx			Proxy :: Kamailio transaction extensions (TM module)
+topoh			Topology hinding
 uac			UAC functions (From: mangling and UAC auth)
 uac_redirect		UAC redirection support
+uid_auth_db		Authentication module using unique IDs (from SER)
+uid_avp_db		AVP Database operations using unique IDs (from SER)
+uid_domain		Domain management using unique IDs (from SER)
+uid_gflags		Global attributes and flags using Unique IDs (from SER)
+uid_uri_db		Database URI operations using unique IDs (from SER)
 uri_db			URI operation with database support
 userblacklist		User-specific blacklists
 usrloc			Proxy :: Location server
+utils			Various utilities (http query, xcap status)
+websocket		HTTP :: Websocket transport layer for proxy
 xcap_client		Presence :: XCAP support
+xcap_server		Presence :: XCAP server implementation
+xhttp			HTTP :: The server
+xhttp_pi		HTTP :: Provisioning interface for Kamailio
+xhttp_rpc		HTTP :: RPC Command support
 xlog			Utils :: Extended logging support
+xmlops			XML operations using XPath
+xmlrpc			HTTP :: XMLrpc support
 xmpp			Presence/IM :: XMPP/jabber gateway
+xprint			Functions for printing messages with specifiers (from SER)
 
-SER modules
------------
-acc_db			Authentication :: acc module is used to report on transactions to database
-acc_radius		Authentication :: acc module is used to report on transactions to RADIUS.
-acc_syslog		Authentication :: acc module is used to report on transactions to syslog
-auth			Authentication backend (needs additional modules)
-auth_db			Database authentication
-avp			functions used to manipulate the contents of Attribute-Value pairs
-avp_db			Attribute-value pairs in database
-bdb			Database :: Berkeley DB (Oracle)
-blst			Blacklist management
-cpl-c			CPL support in SIP-router
-db_ops			Database :: SQL operations from configurtion script
-dbg			Debugging support
-dbtext			Database :: Text
-dialog
-dispatcher		Load balancing ::  a dispatcher for destination addresses
-diversion		Proxy :: Call redirection support (Diversion: header)
-domain			Proxy :: Multiple domain support
-eval			implements expression evaluation in route script
-exec			Proxy :: External script support (modify route set)
-fifo			Obsolete :: This module is replaced by the modules/ctl module
-gflags			Proxy :: Global flags
-jabber			IM :: Jabber gateway
-ldap			LDAP directory server support
-mangler			SDP mangling
-maxfwd			Proxy :: Loop prevention (max-forwards header)
-msilo			Offline message storage
-nathelper		NAT traversal :: RTP proxy (SIPPY software)
-options			Proxy :: Support for SIP OPTION request
-oracle			Database :: Oracle
-osp			Open Settlement Protocol
-pa			Presence :: server
-pdt			Proxy :: Simple routing on number prefixes
-permissions		Security :: ACL support like TCP wrappers
-pike			Security :: Rate limit control
-prefix_route		Proxy :: Routing based on a set of prefixes from the database
-presence_b2b		Presence :: Back2back UA
-print			Example module for developers
-print_lib		Example module for developers
-ratelimit		Security :: Rate limit of SIP requests
-registrar		Registrar (for REGISTER requests)
-rls			Resource list server (for presence)
-rr			Proxy :: Record routing logic
-sanity			Implement several sanity checks on incoming requests
-sl			Proxy :: Stateless replies
-sms			SMS gateway
-speeddial		Proxy :: Speed dialing for users
-textops			Text operations (search, replace)
-timer			triggering specific route block on timer
-tls			TLS module * DEPRECATED * Use the modules/tls module instead
-uac			User agent client
-unixsock		Obsolete :: This module is replaced by the modules/ctl module
-uri			URI checks
-uri_db			URI checks with database support
-usrloc			Location server
-xcap			Presence :: XCAP integration
-xlog			Extended logging support

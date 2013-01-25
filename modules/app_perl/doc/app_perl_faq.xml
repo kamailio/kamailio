@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module FAQ -->
+
+<chapter>
+    
+    <title>&faqguide;</title>
+    <qandaset defaultlabel="number">
+	<qandaentry>
+	    <question>
+		<para>Are there known bugs in the Perl module?</para>
+	    </question>
+	    <answer>
+		<para>
+		    The Perl module does have a few shortcomings that may be regarded as bugs.
+		</para>
+		<itemizedlist>
+		    <listitem>
+			<para>Missing module functions. Not all functions of other modules are
+			available for Perl access. The reason for this is a design property of
+			&kamailio;. Making available more functions is work in progress.</para>
+		    </listitem>
+		    <listitem>
+			<para>Perl and threads. Perl itself is, when compiled with the correct
+			parameters, thread safe; unfortunately, not all Perl modules are.
+			The DBI modules, especially (but not restricted to) DBI::ODBC are known
+			NOT to be thread safe.</para>
+			<para>Using DBI::ODBC -- and possibly other non-thread-safe Perl
+			extensions -- may result in erroneous behavior of &kamailio;, including
+			(but not restricted to) server crashes and wrong routing.</para>
+		    </listitem>
+		</itemizedlist>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>Where can I find more about &kamailio;?</para>
+	    </question>
+	    <answer>
+		<para>
+			Take a look at &kamailiohomelink;.
+		</para>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>Where can I post a question about this module?</para>
+	    </question>
+	    <answer>
+		<para>
+			First at all check if your question was already answered on one of
+			our mailing lists: 
+		</para>
+		<itemizedlist>
+		    <listitem>
+			<para>User Mailing List - &kamailiouserslink;</para>
+		    </listitem>
+		    <listitem>
+			<para>Developer Mailing List - &kamailiodevlink;</para>
+		    </listitem>
+		</itemizedlist>
+		<para>
+			E-mails regarding any stable &kamailio; release should be sent to 
+			&kamailiousersmail; and e-mails regarding development versions
+			should be sent to &kamailiodevmail;.
+		</para>
+		<para>
+			If you want to keep the mail private, send it to 
+			&kamailiohelpmail;.
+		</para>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<para>How can I report a bug?</para>
+	    </question>
+	    <answer>
+		<para>
+			Please follow the guidelines provided at:
+			&kamailiobugslink;.
+		</para>
+	    </answer>
+	</qandaentry>
+    </qandaset>
+</chapter>
+

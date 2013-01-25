@@ -3,10 +3,10 @@ $Id$
 
      ==================================================
 
-     SIP Express Router and Kamailio Installation Notes
+          Kamailio Installation Notes
 
+	     http://www.kamailio.org
              http://sip-router.org
-			 http://www.kamailio.org
 
      ==================================================
 
@@ -51,9 +51,10 @@ The two major SIP server flavours are:
   - Kamailio (former OpenSER)
 
 Starting with version 3.0.0, the two SIP server flavours are built from
-same source code tree.
+same source code tree. In version 4.0.0 the two source code trees was
+merged even more, so a combined module directory is now used.
 
-SER flavor is the one built by default - historically speaking, it is the
+Kamailio flavor is the one built by default. SER is, historically speaking, the
 first open source SIP server started in 2001. Kamailio forked from SER in
 2005 under the initial name OpenSER.
 
@@ -61,6 +62,10 @@ Starting with version 3.1.0 the differences between the two flavours are
 very few, Kamailio enabling next compile time flags:
   - internal statistics
   - application server extensions in tm module
+
+In version 4.0.0 the modules were merged into one set and the merger
+between the two products was completed. Kamailio is now the main
+flavour.
 
 Switching between flavours is a matter of 'make' command parameters.
 
@@ -130,6 +135,7 @@ Requirements:
 - libpcre libs and devel headers - if you want to compile the lcr and dialplan
   modules
 - libsctp devel headers - if you want to compile the SCTP transport in the core
+- linunistring - for the Websockets module
 
 
 OS Notes:
@@ -252,11 +258,8 @@ B) Build Commands
 	make
 
 Compile modules except some explicitly excepted (see below)
-	make modules  - all modules in the modules/ directory (common modules)
-	make modules_s - all modules in the modules_s/ directory (ser modules)
-	make modules_k - all modules in the modules_k/ directory (kamailio modules)
-	make modules-all or make every-module  - all the modules (modules, modules_s
-                                         and module_k)
+	make modules  - all modules in the modules/ directory 
+	make modules-all or make every-module  - all the modules 
 
 * Compile all:
 	make all
@@ -480,8 +483,8 @@ Documentation:
   module directory).
 	make man
 
-  Generates README file for modules_k/foo.
-	make modules=modules_k/foo modules-readme
+  Generates README file for modules/foo.
+	make modules=modules/foo modules-readme
 
 Install:
 --------
@@ -680,10 +683,10 @@ D) SIP Server with Persistent Data Storage
 
 3.2) create MySQL tables for Kamailio flavour
 	- if you have a previously installed Kamailio on your system, use
-    	/usr/sbin/kamdbctl reinstall 
+    	/usr/local/sbin/kamdbctl reinstall 
 	  to convert your Kamailio database into new structures
 	- otherwise, if this is your very first installation, use
-    	/usr/sbin/kamdbctl create
+    	/usr/local/sbin/kamdbctl create
 	  to create Kamailio database structures
    (you will be prompted for password of MySql "root" user)
 

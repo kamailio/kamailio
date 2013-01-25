@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module Developer's Guide -->
+
+<chapter>
+	
+	<title>&develguide;</title>
+	<section><title>Introduction</title>
+		<para>
+		Kamailio uses a database API for requests of numerous different
+		types of data. Four primary operations are supported:
+			<itemizedlist>
+				<listitem><para>query</para></listitem>
+				<listitem><para>insert</para></listitem>
+				<listitem><para>update</para></listitem>
+				<listitem><para>delete</para></listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			This module relays these database requests to user implemented
+			Perl functions.
+		</para>
+	</section>
+	<section><title>Base class Kamailio::VDB</title>
+		<para>
+			A client module has to be configured to use the perlvdb module in conjunction
+			with a Perl class to provide the functions. The configured class needs to
+			inherit from the base class <literal role="code">Kamailio::VDB</literal>.
+		</para>
+		<para>
+			Derived classes have to implement the necessary
+			functions "query", "insert", "update" and/or "delete". The client module
+			specifies the necessary functions.
+			To find out which functions are called from a module, its processes may
+			be evaluated with the <literal role="code">Kamailio::VDB::Adapter::Describe</literal> class which will
+			log incoming requests (without actually providing any real functionality).
+		</para>
+		<para>
+			While users can directly implement their desired functionality in a class
+			derived from Kamailio::VDB, it is advisable to split the implementation into
+			an Adapter that transforms the relational structured parameters into pure
+			Perl function arguments, and add a virtual table (VTab) to provide the
+			relaying to an underlying technology.
+		</para>
+	</section>
+	<section><title>Data types</title>
+		<para>
+			Before introducing the higher level concepts of this module, the used
+			datatypes will briefly be explained.
+			The Kamailio Perl library includes some data types that have to be used
+			in this module:
+		</para>
+		<section><title>Kamailio::VDB::Value</title>
+		<para>
+			A value includes a data type flag and a value. Valid data types are
+			DB_INT, DB_DOUBLE, DB_STRING, DB_STR, DB_DATETIME, DB_BLOB, DB_BITMAP.
+			A new variable may be created with <programlisting>
+my $val = new Kamailio::VDB::Value(DB_STRING, "foobar");
+</programlisting>
+			Value objects contain the type() and data() methods to get or set the type
+			and data attributes.
+		</para>
+		</section>
+		<section><title>Kamailio::VDB::Pair</title>
+		<para>
+			The Pair class is derived from the Value class and additionally contains a
+			column name (key).
+			A new variable may be created with <programlisting>
+my $pair = new Kamailio::VDB::Pair("foo", DB_STRING, "bar");
+</programlisting>
+			where foo is the key and bar is the value.
+			Additonally to the methods of the Value class, it contains a key() method to
+			get or set the key attribute.
+		</para>
+		</section>
+		<section><title>Kamailio::VDB::ReqCond</title>
+		<para>
+			The ReqCond class is used for select condition and is derived from the Pair
+			class. It contains an addtional operator attribute.
+			A new variable may be created with <programlisting>
+my $cond = new Kamailio::VDB::ReqCond("foo", ">", DB_INT, 5);
+</programlisting>
+			where foo is the key, "greater" is the operator and 5 is the value to compare.
+			Additonally to the methods of the Pair class, it contains an op() method to
+			get or set the operator attribute.
+		</para>
+		</section>
+		<section><title>Kamailio::VDB::Column</title>
+		<para>
+			This class represents a column definition or database schema. It contains an
+			array for the column names and an array for the column types. Both arrays need
+			to have the same length.
+			A new variable may be created with <programlisting>
+my @types = { DB_INT, DB_STRING };
+my @names = { "id", "vals" };
+my $cols = new Kamailio::VDB::Column(\@types, \@names);
+</programlisting>
+			The class contains the methods type() and name() to get or set the type and name
+			arrays.
+		</para>
+		</section>
+		<section><title>Kamailio::VDB::Result</title>
+		<para>
+			The Result class represents a query result. It contains a schema (class Column)
+			and an array of rows, where each row is an array of Values. The object methods
+			coldefs() and rows() may be used to get and set the object attributes.
+		</para>
+		</section>
+	</section>
+	<section><title>Adapters</title>
+		<para>
+			Adapters should be used to turn the relational structured database request into
+			pure Perl function arguments. The alias_db function alias_db_lookup for example 
+			takes a user/host pair, and turns it into another user/host pair. The Alias
+			adapter turns the ReqCond array into two separate scalars that are used as parameters
+			for a VTab call.
+		</para>
+		<para>
+			Adapter classes have to inherit from the Kamailio::VDB base class and may provide
+			one or more functions with the names insert, update, replace, query and/or delete,
+			depending on the module which is to be used with the adapter. While modules such as
+			alias_db only require a query function, others -- such as siptrace -- depend
+			on inserts only.
+		</para>
+		<section><title>Function parameters</title>
+			<para>
+				The implemented functions need to deal with the correct data types. The
+				parameter and return types are listed in this section.
+			</para>
+			<para>
+				<emphasis>insert()</emphasis> is passed an array of Kamailio::VDB::Pair objects.
+				It should return an integer value.
+			</para>
+			<para>
+				<emphasis>replace()</emphasis> is passed an array of Kamailio::VDB::Pair objects.
+				This function is currently not used by any publicly available modules.
+				It should return an integer value.
+			</para>
+			<para>
+				<emphasis>delete()</emphasis> is passed an array of Kamailio::VDB::ReqCond objects.
+				It should return an integer value.
+			</para>
+			<para>
+				<emphasis>update()</emphasis> is passed an array of Kamailio::VDB::ReqCond objects
+				(which rows to update) and an array of Kamailio::VDB::Pair objects
+				(new data).
+				It should return an integer value.
+			</para>
+			<para>
+				<emphasis>query()</emphasis> is passed an array of Kamailio::VDB::ReqCond objects
+				(which rows to select), an array of strings (which column names to return)
+				and a single string by which column to sort.
+				It should return an object of type Kamailio::VDB::Result.
+			</para>
+		</section>
+	</section>
+	<section><title>VTabs</title>
+		<para>
+			VTabs (virtual tables) provide a particular implementation for an adapter. The Alias
+			adapter e.g. calls a function with two parameters (user, host) and expects a hash to
+			be returned with the two elements username and domain, or undef (when no result
+			is found).
+			A sample VTab implementation for the Alias adapter demonstrates this technique with
+			a Perl hash that contains the alias data.
+		</para>
+		<para>
+			The standard Adapter/VTab pattern lets the user choose between three options on how to
+			implement VTabs:
+			<itemizedlist>
+				<listitem><para><emphasis>Single function</emphasis>. When a function is used
+				as a virtual table, it is passed the operation name (insert, replace, update,
+				query, delete) as its first parameter. The function may be implemented
+				in the main namespace.</para></listitem>
+			</itemizedlist>
+			<itemizedlist>
+				<listitem><para><emphasis>Package/class</emphasis>. The defined class needs
+				to have an init() function. It will be called during the first call of that
+				VTab.
+				Addtionally, the package has
+				to define the necessary functions insert, replace, update, delete and/or query.
+				These functions will be called in a function context (first parameter is the
+				class name).
+				</para></listitem>
+			</itemizedlist>
+			<itemizedlist>
+				<listitem><para><emphasis>Object</emphasis>. The defined class needs
+				to have a new() function which will return a reference to the newly
+				created object. This object needs to define the necessary functions insert,
+				replace, update, delete and/or query.
+				These functions will be called in a method context (first parameter is
+				a reference to the object).
+				</para></listitem>
+			</itemizedlist>
+		</para>
+	</section>
+</chapter>
+

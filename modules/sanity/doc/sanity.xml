@@ -139,6 +139,5 @@
 	</para>
     </section>
 
-    <xi:include href="sanity_params.xml"/>
-    <xi:include href="sanity_functions.xml"/>
+    <xi:include href="sanity_admin.xml"/>
 </book>

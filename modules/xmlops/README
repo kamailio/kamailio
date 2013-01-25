@@ -40,6 +40,7 @@ Daniel-Constantin Mierla
 
    3.1. buf_size (integer)
    3.2. xml_ns (str)
+   3.3. Pseudo-Variables
 
 3.1. buf_size (integer)
 
@@ -62,11 +63,9 @@ modparam("xmlops", "buf_size", 8192)
 modparam("xmlops", "xml_ns", "rpid=urn:ietf:params:xml:ns:pidf:rpid")
 ...
 
-4. Pseudo-Variables
+3.3. Pseudo-Variables
 
-   4.1. $xml(name=>spec)
-
-4.1.  $xml(name=>spec)
+3.3. Pseudo-Variables
 
    Pseudo-variable for XML document operations using xpath syntax. For
    more see the Pseudo-Variables Cookbook.

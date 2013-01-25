@@ -235,7 +235,7 @@ module_group_kunixodbc=db_unixodbc
 module_group_kxml=xmlrpc mi_xmlrpc xmlops
 
 # K perl module
-module_group_kperl=perl perlvdb
+module_group_kperl=app_perl db_perlvdb
 
 # K snmpstats module
 module_group_ksnmpstats=snmpstats
@@ -299,8 +299,8 @@ module_group_kmono=app_mono
 
 # For IMS
 # kamailio modules
-module_group_kims=auth_ims cdp cdp_avp dialog2 ims_qos isc icscf ipsec\
-                        registrar_pcscf registrar_scscf usrloc_pcscf usrloc_scscf
+module_group_kims=ims_auth cdp cdp_avp dialog_ng ims_qos ims_isc ims_icscf\
+                        ims_registrar_pcscf ims_registrar_scscf ims_usrloc_pcscf ims_usrloc_scscf
 
 # if not set on the cmd. line, env or in the modules.lst (cfg_group_include)
 # exclude the below modules.
@@ -318,7 +318,7 @@ else
 							unixsock dbg print_lib auth_identity db2_ldap ldap \
 							db_berkeley db_mysql db_postgres db_oracle \
 							db_sqlite db_unixodbc db_cassandra memcached mi_xmlrpc \
-							perl perlvdb purple \
+							app_perl db_perlvdb purple \
 							snmpstats xmpp cdp \
 							carrierroute peering \
 							dialplan lcr utils presence presence_mwi \

@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module Sample descriptions -->
+
+<chapter>
+	<chapterinfo>
+	</chapterinfo>
+	<title>Perl samples</title>
+	
+	<section>
+		<title>Sample directory</title>
+		<para>
+		There are a number of example scripts in the <quote>samples/</quote>. They are
+		documented well. Read them, it will explain a lot to you :)
+		</para>
+		<para>
+		If you want to use any of these scripts directly in your implementation, you
+		can use Perl's <quote>require</quote> mechanism to import them (just remember
+		that you need to use quotes when require'ing .pl files).
+		</para>
+		<section>
+			<title>Script descriptions</title>
+			<para>
+			The included sample scripts are described below:
+			</para>
+			<section>
+				<title>branches.pl</title>
+				<para>
+				The minimal function in branches.pl demonstrates that you can access the "append_branch"
+				function from within perl, just as you would have done from your normal configuration file.
+				You'll find documentation on the concepts of branching in the Kamailio documentation.
+				</para>
+			</section>
+			<section>
+				<title>firstline.pl</title>
+				<para>
+				Message's first_line structure may be evaluated. Message can be either of
+				SIP_REQUEST or SIP_REPLY. Depending on that, different information can be received.
+				This script demonstrates these functions.
+				</para>
+			</section>
+			<section>
+				<title>flags.pl</title>
+				<para>
+				The perl module provides access to Kamailio's flagging mechanism. The flag names available
+				for Kamailio modules are made available through the Kamailio::Constants package, so you can
+				flag messages as "green", "magenta" etc.
+				</para>
+				<para>
+				The first function, setflag, demonstrates how the "green" flag is set. In the second function,
+				readflag, the "green" and "magenta" flags are evaluated.
+				</para>
+			</section>
+			<section>
+				<title>functions.pl</title>
+				<para>
+				This sample script demonstrates different things related to calling functions from within perl,
+				and the different types of functions you can offer for Kamailio access.
+				</para>
+				<para>
+				<quote>exportedfuncs</quote> simply demonstrates that you can use the moduleFunction method
+				to call functions offered by other modules. The results are equivalent to calling these
+				functions from your config file. In the demonstrated case, telephone calls with a destination
+				number beginning with 555... are rejected with an internal server error. Other destination
+				addresses are passed to the alias_db module.
+				</para>
+				<para>
+				Please note that the moduleFunction method is not fully available in Kamailio 1.2. See the method's
+				documentation for details.
+				</para>
+				<para>
+				<quote>paramfunc</quote> shows that you can pass arbitrary strings to perl functions. Do with
+				them whatever you want :)
+				</para>
+				<para>
+				<quote>autotest</quote> demonstrates that unknown functions in Kamailio::Message objects are
+				automatically transformed into calls to module functions.
+				</para>
+				<para>
+				The <quote>diefunc</quote>s show that dying perl scripts - by "manual" dying, or because of script
+				errors - are handled by the Kamailio package. The error message is logged through Kamailio's logging
+				mechanism. Please note that this only works correctly if you do NOT overwrite the default die handler.
+				Oh, yes, that works for warnings, too.
+				</para>
+			</section>
+			<section>
+				<title>headers.pl</title>
+				<para>
+				Header extraction is among the most crucial functionalities while processing SIP messages. This
+				sample script demonstrates access to header names and values within two sample functions.
+				</para>
+				<para>
+				<quote>headernames</quote> extracts all header names and logs their names.
+				</para>
+				<para>
+				<quote>someheaders</quote> logs the contents of the two headers, <quote>To</quote> and
+				<quote>WWW-Contact</quote>. As you can see, headers that occur more than once are retrieved
+				as an array, which may be accessed by Perl's array accessing methods.
+				</para>
+			</section>
+			<section>
+				<title>logging.pl</title>
+				<para>
+				For debugging purposes, you probably want to write messages to the syslog. The <quote>logdemo</quote>
+				shows three ways to access the Kamailio log function: it is available through the Kamailio class as well
+				as through the Kamailio::Message class.
+				</para>
+				<para>
+				Remember that you can use exported functions from other modules. You may thus as well use the
+				<quote>xlog</quote> module and it's xlog function.
+				</para>
+				<para>
+				The L_INFO, L_DBG, L_ERR, L_CRIT... constants are available through the Kamailio::Constants package.
+				</para>
+			</section>
+			<section>
+				<title>messagedump.pl</title>
+				<para>
+				This script demonstrates how to access the whole message header of the current message. Please note that
+				modifications on the message made by earlier function calls in your configuration script may NOT be
+				reflected in this dump.
+				</para>
+			</section>
+			<section>
+				<title>persistence.pl</title>
+				<para>
+				When processing SIP messages, you may want to use persistent data across multiple calls to your
+				Perl functions. Your first option is to use global variables in your script. Unfortunately,
+				these globals are not visible from the mulitple instances of Kamailio. You may want to use a
+				mechanism such as the IPC::Shareable shared memory access package to correct this.
+				</para>
+			</section>
+			<section>
+				<title>phonenumbers.pl</title>
+				<para>
+				The Kamailio::Utils::PhoneNumbers package provides two methods for the transformation of local to
+				canonical telephone numbers, and vice versa. This script demonstrates it's use.
+				</para>
+			</section>
+			<section>
+				<title>pseudovars.pl</title>
+				<para>
+				This script demonstrates the Perl module's <quote>pseudoVar</quote> method. It may be used to
+				retrieve the values of current pseudo variables.
+				</para>
+				<para>
+				You might notice that there is no particular function for setting pseudo variables; you may use
+				the exported functions from the avpops module, though.
+				</para>
+			</section>
+		</section>
+	</section>
+	<!-- section>
+		<title>Other examples</title>
+		<para>
+<programlisting format="linespecific">
+...
+if (perl_exec_msg("ldap_alias")) {
+	route[1];
+}	
+...
+</programlisting>
+		</para>
+	</section -->
+
+</chapter>
+

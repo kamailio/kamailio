@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<chapter>
+<section id="sanity.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+    <title>Parameters</title>
+
+    <section id="default_checks">
+	<title><varname>default_checks</varname> (integer)</title>
+	<para>
+		This parameter determines which of the checks from the sanity
+		module are executed if no parameter was given to the sanity_check
+		function call. By default all implemented checks are included
+		in the execution of the sanity_check function. The integer value
+		is the sum of the check numbers which should be executed by default.
+	</para>
+	<para>
+	    Default value is 999. This resolves to the following list of
+		checks: ruri_sip_version (1), ruri_scheme (2), required_headers (4),
+		cseq_method (32), cseq_value (64), cotent_length (128), 
+		expires_value (256), proxy_require (512).
+	</para>
+	<example>
+	    <title>Set <varname>default_checks</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "default_checks", 1)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+	<section id="uri_checks">
+	<title><varname>uri_checks</varname> (integer)</title>
+	<para>
+		This parameter determines which URIs are going to be checked
+		if the 'parse uri' will be executed.
+	</para>
+	<para>
+		Default value is 7. This resolves to the following list of
+		parsed URIs: Request RUI (1), From URI (2) and To URI (4).
+	</para>
+	<example>
+	    <title>Set <varname>uri_checks</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "uri_checks", 3)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="proxy_require">
+	<title><varname>proxy_require</varname> (string)</title>
+	<para>
+		This parameter sets the list of supported extensions for this &kamailio;.
+		The value is expected as a comma separated list of extensions.
+		This list is separated into single tokens. Each token from
+		a proxy require header will be compared to the tokens from this
+		list.
+	</para>
+	<example>
+	    <title>Set <varname>proxy_require</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "proxy_require", "foo, bar")
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="autodrop">
+	<title><varname>autodrop</varname> (integer)</title>
+	<para>
+		This parameter controls whether the module drops automatically
+		or not the SIP message if the sanity checks fail. Default value
+		is 1 (auto drop). If set to 0, sanity_check() function will return
+		-1 (false) to configuration file, allowing to write log messages for
+		example - be sure you exit execution of config without sending a SIP
+		reply because it is sent by module itself.
+	</para>
+	<example>
+	    <title>Set <varname>autodrop</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "autodrop", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+</section>
+
+   <section id="sanity.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+    <title>Functions</title>
+    <section id="sanity_check">
+	    <title>
+		<function>sanity_check([msg_checks [, uri_checks]])</function>
+	    </title>
+	<para>
+		This function makes a row of sanity checks over the given SIP request. The
+		behavior of the function is also controlled by 'autodrop' parameter.
+		If autodrop=0, the function returns false (-1) if one of the checks failed.
+		When autodrop=1, the function stops the execution of configuration file.
+		In both cases, if one of the checks fails the module sends a precise error
+		reply via SL send_reply(). Thus there is no need to reply with a generic 
+		error message.
+	</para>
+	<example>
+	    <title><function>sanity_check</function> usage</title>
+	    <programlisting>
+<![CDATA[
+...
+if (!sanity_check()) {
+	exit;
+}
+...
+]]>
+	    </programlisting>
+	</example>
+	<para>
+		Optionally the function takes an integer argument which overwrites
+		the global module parameter default_checks. This allows to make
+		certain test from script regions. The integer value is again the sum
+		of the checks (like for the module parameter) which should be executed
+		at this function call.
+	</para>
+	<example>
+	    <title><function>sanity_check</function> usage with parameter</title>
+	    <programlisting>
+<![CDATA[
+...
+if (method=="REGISTER" && !sanity_check("256")) {
+	/* the register contains an invalid expires value and is replied with a 400 */
+	exit;
+}
+...
+]]>
+	    </programlisting>
+	</example>
+	<para>
+		Optionally the function takes a second integer argument which
+		overwrites the global module parameter uri_checks and thus determines
+		which URIs will be checked if the parse uri test will be executed.
+	</para>
+	<example>
+		<title><function>sanity_check</function> usage with two parameters</title>
+		<programlisting>
+<![CDATA[
+...
+if (method=="INVITE" && !sanity_check("1024", "6")) {
+	/* the INVITE contains an invalid From or To header and is replied with a 400 */
+	exit;
+}
+...
+]]>
+		</programlisting>
+	</example>
+    </section>
+</section>
+</chapter>

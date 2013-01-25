@@ -29,18 +29,22 @@ USERCOL=${USERCOL:-username}
 
 INSTALL_EXTRA_TABLES=${INSTALL_EXTRA_TABLES:-ask}
 INSTALL_PRESENCE_TABLES=${INSTALL_PRESENCE_TABLES:-ask}
+INSTALL_DBUID_TABLES=${INSTALL_DBUID_TABLES:-ask}
 
 # Used by dbtext and db_berkeley to define tables to be created, used by
 # postgres to do the grants
-STANDARD_TABLES=${STANDARD_TABLES:-version acc dbaliases domain domain_attrs grp
-		uri speed_dial lcr_gw lcr_rule lcr_rule_target pdt subscriber
-		location re_grp trusted address missed_calls usr_preferences
-		aliases silo dialog dialog_vars dispatcher dialplan}
+STANDARD_TABLES=${STANDARD_TABLES:-version acc dbaliases domain domain_attrs
+		grp uri speed_dial lcr_gw lcr_rule lcr_rule_target pdt subscriber
+		location location_attrs re_grp trusted address missed_calls
+		usr_preferences aliases silo dialog dialog_vars dispatcher dialplan}
 EXTRA_TABLES=${EXTRA_TABLES:-imc_members imc_rooms cpl sip_trace domainpolicy
 		carrierroute carrier_name domain_name carrierfailureroute userblacklist
-		globalblacklist htable purplemap uacreg pl_pipes mtree mtrees}
+		globalblacklist htable purplemap uacreg pl_pipes mtree mtrees
+		sca_subscriptions}
 PRESENCE_TABLES=${PRESENCE_TABLES:-presentity active_watchers watchers xcap 
 		pua rls_presentity rls_watchers}
+DBUID_TABLES=${UID_TABLES:-uid_credentials uid_domain uid_domain_attrs
+		uid_global_attrs uid_uri uid_uri_attrs uid_user_attrs}
 
 # SQL definitions
 # If you change this definitions here, then you must change them
@@ -69,12 +73,17 @@ GREP=${GREP:-grep}
 SED=${SED:-sed}
 
 # define what modules should be installed
-STANDARD_MODULES=${STANDARD_MODULES:-standard acc lcr domain group permissions
-				     registrar usrloc msilo alias_db uri_db
-				     speeddial avpops auth_db pdt dialog dispatcher
-				     dialplan}
+STANDARD_MODULES=${STANDARD_MODULES:-standard acc lcr domain group
+		permissions registrar usrloc msilo alias_db uri_db speeddial
+		avpops auth_db pdt dialog dispatcher dialplan}
+
+PRESENCE_MODULES=${PRESENCE_MODULES:-presence rls}
+
 EXTRA_MODULES=${EXTRA_MODULES:-imc cpl siptrace domainpolicy carrierroute
-    userblacklist htable purple uac pipelimit mtree}
+		userblacklist htable purple uac pipelimit mtree sca}
+
+DBUID_MODULES=${UID_MODULES:-uid_auth_db uid_avp_db uid_domain uid_gflags
+		uid_uri_db}
 
 ############################################################
 
@@ -94,6 +103,10 @@ usage: $COMMAND create <db name or db_path, optional> ...(creates a new database
        $COMMAND migrate <old_db> <new_db> ...............(migrates DB from 1.2 to 1.3, not implemented yet!)
        $COMMAND presence ................................(adds the presence related tables)
        $COMMAND extra ...................................(adds the extra tables)
+       $COMMAND dbuid ...................................(adds the uid tables)
+       $COMMAND dbonly ..................................(creates empty database)
+       $COMMAND grant ...................................(grant privileges to database)
+       $COMMAND revoke ..................................(revoke privileges to database)
 
        if you want to manipulate database as other database user than
        root, want to change database name from default value "$DBNAME",

@@ -13,11 +13,14 @@ endif
 ifneq ($(XML2CFG),)
 	DEFS += $(shell $(XML2CFG) --cflags )
 	LIBS += $(shell $(XML2CFG) --libs)
-	LIBS += -lrt
 else
 	INCLUDES +=-I$(LOCALBASE)/include/libxml2 \
 		-I$(LOCALBASE)/include
-	LIBS += -L$(LOCALBASE)/lib -lxml2 -lrt
+	LIBS += -L$(LOCALBASE)/lib -lxml2
+endif
+
+ifneq ($(OS),darwin)
+	LIBS += -lrt
 endif
 
 include ../../Makefile.modules

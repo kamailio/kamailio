@@ -166,6 +166,7 @@ static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 	char *s=NULL;
 	int i, retries;
 	ExecStatusType pqresult;
+	PGresult *res = NULL;
 
 	if(! _con || !_s || !_s->s)
 	{
@@ -216,9 +217,14 @@ static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 		/* exec the query */
 
 		if (PQsendQuery(CON_CONNECTION(_con), s)) {
+			/* Get the result of the query */
+			while ((res = PQgetResult(CON_CONNECTION(_con))) != NULL) {
+				db_postgres_free_query(_con);
+				CON_RESULT(_con) = res;
+			}
 			pqresult = PQresultStatus(CON_RESULT(_con));
 			if((pqresult!=PGRES_FATAL_ERROR)
-					|| (PQstatus(CON_CONNECTION(_con))==CONNECTION_OK))
+					&& (PQstatus(CON_CONNECTION(_con))==CONNECTION_OK))
 			{
 				LM_DBG("sending query ok: %p (%d) - [%.*s]\n",
 						_con, pqresult, _s->len, _s->s);
@@ -262,7 +268,6 @@ static int db_postgres_submit_query(const db1_con_t* _con, const str* _s)
 int db_postgres_fetch_result(const db1_con_t* _con, db1_res_t** _res, const int nrows)
 {
 	int rows;
-	PGresult *res = NULL;
 	ExecStatusType pqresult;
 
 	if (!_con || !_res || nrows < 0) {
@@ -283,14 +288,6 @@ int db_postgres_fetch_result(const db1_con_t* _con, db1_res_t** _res, const int 
 		/* Allocate a new result structure */
 		*_res = db_new_result();
 
-		/* Get the result of the previous query */
-		while (1) {
-			if ((res = PQgetResult(CON_CONNECTION(_con)))) {
-				CON_RESULT(_con) = res;
-			} else {
-				break;
-			}
-		}
 		pqresult = PQresultStatus(CON_RESULT(_con));
 		LM_DBG("%p PQresultStatus(%s) PQgetResult(%p)\n", _con,
 			PQresStatus(pqresult), CON_RESULT(_con));
@@ -496,7 +493,6 @@ int db_postgres_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
  */
 int db_postgres_store_result(const db1_con_t* _con, db1_res_t** _r)
 {
-	PGresult *res = NULL;
 	ExecStatusType pqresult;
 	int rc = 0;
 
@@ -505,14 +501,6 @@ int db_postgres_store_result(const db1_con_t* _con, db1_res_t** _r)
 		LM_ERR("failed to init new result\n");
 		rc = -1;
 		goto done;
-	}
-
-	while (1) {
-		if ((res = PQgetResult(CON_CONNECTION(_con)))) {
-			CON_RESULT(_con) = res;
-		} else {
-			break;
-		}
 	}
 
 	pqresult = PQresultStatus(CON_RESULT(_con));
