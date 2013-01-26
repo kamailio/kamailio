@@ -721,7 +721,8 @@ modparam("dispatcher", "force_dst", 1)
 		<function moreinfo="none">ds_select_dst(set, alg)</function>
 		</title>
 		<para>
-		The method selects a destination from addresses set.
+		The method selects a destination from addresses set. It returns true if
+		a new destination is set.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -730,7 +731,7 @@ modparam("dispatcher", "force_dst", 1)
 			<emphasis>set</emphasis> - the id of the set from where to pick
 			up destination address. It is the first column in destination
 			list file. The parameter can be an integer or a variable holding
-			an interger.
+			an integer.
 			</para>
 		</listitem>
 		<listitem>

@@ -685,12 +685,13 @@ Note
 
 4.1.  ds_select_dst(set, alg)
 
-   The method selects a destination from addresses set.
+   The method selects a destination from addresses set. It returns true if
+   a new destination is set.
 
    Meaning of the parameters is as follows:
      * set - the id of the set from where to pick up destination address.
        It is the first column in destination list file. The parameter can
-       be an integer or a variable holding an interger.
+       be an integer or a variable holding an integer.
      * alg - the algorithm used to select the destination address. The
        parameter can be an integer or a variable holding an interger.
           + "0" - hash over callid
