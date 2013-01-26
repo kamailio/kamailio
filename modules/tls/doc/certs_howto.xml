@@ -101,7 +101,7 @@ Setting &kamailio; to use the certificate
 		cat cacert.pem >>calist.pem
 	
 2. copy your &kamailio; certificate, private key and ca list file to your 
-	intended machine (preferably in your sip-router configuration directory,
+	intended machine (preferably in your &kamailio; configuration directory,
 	 this is the default place &kamailio; searches for).
 	
 3. set up &kamailio;.cfg to use the certificate

@@ -31,7 +31,7 @@
 		<section id="tls.overview">
 		<title>Overview</title>
 		<para>
-			This module implements the TLS transport for &kamailio; using the <ulink url="http://www.openssl.org">OpenSSL library</ulink> (http://www.openssl.org). To enable the TLS support this module must be loaded and <emphasis>enable_tls=yes</emphasis> must be added to the SIP-router config file 
+			This module implements the TLS transport for &kamailio; using the <ulink url="http://www.openssl.org">OpenSSL library</ulink> (http://www.openssl.org). To enable the TLS support this module must be loaded and <emphasis>enable_tls=yes</emphasis> must be added to the Kamailio config file 
 		</para>
 		</section>
 		<section id="tls.quick_start">
@@ -61,7 +61,7 @@ route{
 		<section id="tls.notes">
 		<title>Important Notes</title>
 		<para>
-			The TLS module needs some special options enabled when compiling SIP-router. These options are enabled by default, however in case you're using a modified SIP-router version or Makefile, make sure that you enable -DUSE_TLS and -DTLS_HOOKS (or compile with make TLS_HOOKS=1 which will take care of both options). To quickly check if your SIP-router version was compiled with these options, run ser -V and look for USE_TLS and TLS_HOOKS among the flags.
+			The TLS module needs some special options enabled when compiling Kamailio. These options are enabled by default, however in case you're using a modified Kamailio version or Makefile, make sure that you enable -DUSE_TLS and -DTLS_HOOKS (or compile with make TLS_HOOKS=1 which will take care of both options). To quickly check if your Kamailio version was compiled with these options, run ser -V and look for USE_TLS and TLS_HOOKS among the flags.
 		</para>
 		<para>
 			This module includes several workarounds for various Openssl bugs (like compression and Kerberos using 
@@ -70,7 +70,7 @@ route{
 			a workaround is enabled, a message will be logged. In general it is recommended to compile this module on the same machine or a similar machine to where ser will be run or to link it statically with libssl. For example if on the compile machine openssl does not have the kerberos support enabled, but on the target machine a kerberos enabled openssl library is installed, ser cannot apply the needed workarounds and will refuse to start. The same thing will happen if the openssl versions are too different (to force ser startup anyway, see the <varname>tls_force_run</varname> module parameter).
 		</para>
 		<para>
-			Try to avoid using keys larger then 1024 bytes. Large keys significantly slow down the TLS connection handshake, thus limiting the maximum SIP-router TLS connection rate.
+			Try to avoid using keys larger then 1024 bytes. Large keys significantly slow down the TLS connection handshake, thus limiting the maximum Kamailio TLS connection rate.
 		</para>
 		<para>
 			Compression is fully supported if you have a new enough Openssl version (starting with 0.9.8).  Although there are some problems with zlib compression in currently deployed Openssl versions (up to and including 0.9.8d, see openssl bug #1468), the TLS module will automatically switch to its own fixed version.
@@ -95,7 +95,7 @@ make -C modules/tls
 			<programlisting>
 make modules modules=modules/tls
 			</programlisting>
-			or (compiling whole SIP-router and the tls module)
+			or (compiling whole Kamailio and the tls module)
 			<programlisting>
 make all include_modules=tls
 			</programlisting>
@@ -108,14 +108,14 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
 			</programlisting>
 		</para>
 		<para>
-			In general, if SIP-router fails to start with a symbol not found error when trying to load the tls module (check the log), it means some needed library was not linked and it must be added to <emphasis>TLS_EXTRA_LIBS</emphasis>
+			In general, if Kamailio fails to start with a symbol not found error when trying to load the tls module (check the log), it means some needed library was not linked and it must be added to <emphasis>TLS_EXTRA_LIBS</emphasis>
 		</para>
 		</section>
 
 		<section id="tls.low_memory">
 		<title>TLS and Low Memory</title>
 		<para>
-			The openssl library doesn't handle very well low memory situations. If memory allocations start to fail (due to memory shortage), openssl can crash or cause memory leaks (making the memory shortage even worse). As of this writing all openssl versions were affected (includind 0.9.8e), see openssl bug #1491. The tls module has some workarounds for preventing this problem (see <varname>low_mem_treshold1</varname> and <varname>low_mem_threshold2</varname>), however starting SIP-router with enough shared memory is higly recommended. When this is not possible a quick way to significantly reduce openssl memory usage it to  disable compression (see <varname>tls_disable_compression</varname>).
+			The openssl library doesn't handle very well low memory situations. If memory allocations start to fail (due to memory shortage), openssl can crash or cause memory leaks (making the memory shortage even worse). As of this writing all openssl versions were affected (includind 0.9.8e), see openssl bug #1491. The tls module has some workarounds for preventing this problem (see <varname>low_mem_treshold1</varname> and <varname>low_mem_threshold2</varname>), however starting Kamailio with enough shared memory is higly recommended. When this is not possible a quick way to significantly reduce openssl memory usage it to  disable compression (see <varname>tls_disable_compression</varname>).
 		</para>
 		</section>
 
@@ -158,7 +158,7 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 		<section id="tls.known_limitations">
 		<title>Known Limitations</title>
 		<para>
-			The private key must not encrypted (SIP-router cannot ask you for a password on startup).
+			The private key must not encrypted (Kamailio cannot ask you for a password on startup).
 		</para>
 		<para>
 			The TLS certificate verifications ignores the certificate name, subject altname and ip extensions, it just checks if the certificate is signed by a recognized CA. One can use the select framework to try to overcome this limitation (check in the script for the contents of various certificate fields), but this is not only slow, but also not exactly standard conforming (the verification should happen during TLS connection establishment and not after).

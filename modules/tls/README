@@ -58,8 +58,8 @@ Andrei Pelinescu-Onciul
 
    This module implements the TLS transport for Kamailio using the OpenSSL
    library (http://www.openssl.org). To enable the TLS support this module
-   must be loaded and enable_tls=yes must be added to the SIP-router
-   config file
+   must be loaded and enable_tls=yes must be added to the Kamailio config
+   file
 
 1.2. Quick Start
 
@@ -86,11 +86,11 @@ route{
 1.3. Important Notes
 
    The TLS module needs some special options enabled when compiling
-   SIP-router. These options are enabled by default, however in case
-   you're using a modified SIP-router version or Makefile, make sure that
-   you enable -DUSE_TLS and -DTLS_HOOKS (or compile with make TLS_HOOKS=1
+   Kamailio. These options are enabled by default, however in case you're
+   using a modified Kamailio version or Makefile, make sure that you
+   enable -DUSE_TLS and -DTLS_HOOKS (or compile with make TLS_HOOKS=1
    which will take care of both options). To quickly check if your
-   SIP-router version was compiled with these options, run ser -V and look
+   Kamailio version was compiled with these options, run ser -V and look
    for USE_TLS and TLS_HOOKS among the flags.
 
    This module includes several workarounds for various Openssl bugs (like
@@ -109,7 +109,7 @@ route{
 
    Try to avoid using keys larger then 1024 bytes. Large keys
    significantly slow down the TLS connection handshake, thus limiting the
-   maximum SIP-router TLS connection rate.
+   maximum Kamailio TLS connection rate.
 
    Compression is fully supported if you have a new enough Openssl version
    (starting with 0.9.8). Although there are some problems with zlib
@@ -138,7 +138,7 @@ make -C modules/tls
    or
 make modules modules=modules/tls
 
-   or (compiling whole SIP-router and the tls module)
+   or (compiling whole Kamailio and the tls module)
 make all include_modules=tls
 
    .
@@ -150,7 +150,7 @@ make all include_modules=tls
    command line. E.g.:
 make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
 
-   In general, if SIP-router fails to start with a symbol not found error
+   In general, if Kamailio fails to start with a symbol not found error
    when trying to load the tls module (check the log), it means some
    needed library was not linked and it must be added to TLS_EXTRA_LIBS
 
@@ -162,7 +162,7 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
    of this writing all openssl versions were affected (includind 0.9.8e),
    see openssl bug #1491. The tls module has some workarounds for
    preventing this problem (see low_mem_treshold1 and low_mem_threshold2),
-   however starting SIP-router with enough shared memory is higly
+   however starting Kamailio with enough shared memory is higly
    recommended. When this is not possible a quick way to significantly
    reduce openssl memory usage it to disable compression (see
    tls_disable_compression).
@@ -183,7 +183,7 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 
 1.7. Known Limitations
 
-   The private key must not encrypted (SIP-router cannot ask you for a
+   The private key must not encrypted (Kamailio cannot ask you for a
    password on startup).
 
    The TLS certificate verifications ignores the certificate name, subject
@@ -301,7 +301,7 @@ Setting Kamailio to use the certificate
                 cat cacert.pem >>calist.pem
 
 2. copy your Kamailio certificate, private key and ca list file to your
-        intended machine (preferably in your sip-router configuration directory,
+        intended machine (preferably in your Kamailio configuration directory,
          this is the default place Kamailio searches for).
 
 3. set up Kamailio.cfg to use the certificate
@@ -456,7 +456,7 @@ Note
    To update the crl in a running Kamailio, make sure you configure tls
    via a separate tls config file (the config modparam) and issue a
    tls.reload RPC call, e.g.:
- $ sercmd tls.reload
+ $ kamcmd tls.reload
 
    A quick way to create the CRL in PEM format, using openssl is:
  $ openssl ca -gencrl -keyfile cacert.key -cert cacert.pem -out my_crl.pem
@@ -569,7 +569,7 @@ modparam("tls", "connection_timeout", 60)
 ...
 
    Example 13. Set tls.connection_timeout at runtime
- $ sercmd cfg.set_now_int tls connection_timeout 180
+ $ kamcmd cfg.set_now_int tls connection_timeout 180
 
 1.9.13. tls_disable_compression (boolean)
 
@@ -706,7 +706,7 @@ modparam("tls", "send_close_notify", 1)
 ...
 
    Example 20. Set tls.send_close_notify at runtime
- $ sercmd cfg.set_now_int tls send_close_notify 1
+ $ kamcmd cfg.set_now_int tls send_close_notify 1
 
 1.9.19. con_ct_wq_max (integer)
 
@@ -725,7 +725,7 @@ modparam("tls", "con_ct_wq_max", 1048576)
 ...
 
    Example 22. Set tls.con_ct_wq_max at runtime
- $ sercmd cfg.set_now_int tls con_ct_wq_max 1048576
+ $ kamcmd cfg.set_now_int tls con_ct_wq_max 1048576
 
 1.9.20. ct_wq_max (integer)
 
@@ -744,7 +744,7 @@ modparam("tls", "ct_wq_max", 4194304)
 ...
 
    Example 24. Set tls.ct_wq_max at runtime
- $ sercmd cfg.set_now_int tls ct_wq_max 4194304
+ $ kamcmd cfg.set_now_int tls ct_wq_max 4194304
 
 1.9.21. ct_wq_blk_size (integer)
 
@@ -762,7 +762,7 @@ modparam("tls", "ct_wq_blk_size", 2048)
 ...
 
    Example 26. Set tls.ct_wq_max at runtime
- $ sercmd cfg.set_now_int tls ct_wq_blk_size 2048
+ $ kamcmd cfg.set_now_int tls ct_wq_blk_size 2048
 
 1.9.22. tls_log (int)
 
@@ -775,12 +775,12 @@ modparam("tls", "ct_wq_blk_size", 2048)
 
    Example 27. Set tls_log parameter
 ...
-# ignore TLS messages if SIP-router is started with debug less than 10
+# ignore TLS messages if Kamailio is started with debug less than 10
 modparam("tls", "tls_log", 10)
 ...
 
    Example 28. Set tls.log at runtime
- $ sercmd cfg.set_now_int tls log 10
+ $ kamcmd cfg.set_now_int tls log 10
 
 1.9.23. tls_debug (int)
 
@@ -796,12 +796,12 @@ modparam("tls", "tls_log", 10)
 
    Example 29. Set tls_debug parameter
 ...
-# ignore TLS debug messages if SIP-router is started with debug less than 10
+# ignore TLS debug messages if Kamailio is started with debug less than 10
 modparam("tls", "tls_debug", 10)
 ...
 
    Example 30. Set tls.debug at runtime
- $ sercmd cfg.set_now_int tls debug 10
+ $ kamcmd cfg.set_now_int tls debug 10
 
 1.9.24. low_mem_threshold1 (integer)
 
@@ -832,7 +832,7 @@ modparam("tls", "low_mem_threshold1", -1)
 ...
 
    Example 32. Set tls.low_mem_threshold1 at runtime
- $ sercmd cfg.set_now_int tls low_mem_threshold1 2048
+ $ kamcmd cfg.set_now_int tls low_mem_threshold1 2048
 
 1.9.25. low_mem_threshold2 (integer)
 
@@ -864,15 +864,15 @@ modparam("tls", "low_mem_threshold2", -1)
 ...
 
    Example 34. Set tls.low_mem_threshold2 at runtime
- $ sercmd cfg.set_now_int tls low_mem_threshold2 1024
+ $ kamcmd cfg.set_now_int tls low_mem_threshold2 1024
 
 1.9.26. tls_force_run (boolean)
 
-   If enabled SIP-router will start even if some of the openssl sanity
+   If enabled Kamailio will start even if some of the openssl sanity
    checks fail (turn it on at your own risk).
 
    Currently failing any of the following sanity checks will not allow
-   SIP-router to start:
+   Kamailio to start:
      * the version of the library the TLS module was compiled with is "too
        different" from the library used at runtime. The versions should
        have the same major, minor and fix level (e.g.: 0.9.8a and 0.9.8c
@@ -960,8 +960,8 @@ modparam("tls", "renegotiation", 1)
    path and anything else a path relative to the directory of the current
    ser main config file.
 
-   SIP-router acts as a server when it accepts a connection and as a
-   client when it initiates a new connection by itself (it connects to
+   Kamailio acts as a server when it accepts a connection and as a client
+   when it initiates a new connection by itself (it connects to
    something).
 
    Example 39. Short config file
@@ -989,7 +989,7 @@ verify_depth = 3
 ca_list = local_ca.pem
 
    For a more complete example check the tls.cfg distributed with the
-   SIP-router source (sip_router/modules/tls/tls.cfg).
+   Kamailio source (sip_router/modules/tls/tls.cfg).
 
    Example 40. Set config parameter
 ...
@@ -1000,8 +1000,8 @@ modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
    immediately, but after the first tls.reload RPC call.
 
    Example 41. Change and reload tls config at runtime
- $ sercmd cfg.set_now_string tls config "/usr/local/etc/ser/new_tls.cfg"
- $ sercmd tls.reload
+ $ kamcmd cfg.set_now_string tls config "/usr/local/etc/ser/new_tls.cfg"
+ $ kamcmd tls.reload
 
 1.10. Functions
 

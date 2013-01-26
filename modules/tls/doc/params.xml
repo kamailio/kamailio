@@ -676,7 +676,7 @@ modparam("tls", "ct_wq_blk_size", 2048)
 		<title>Set <varname>tls_log</varname> parameter</title>
 		<programlisting>
 ...
-# ignore TLS messages if SIP-router is started with debug less than 10
+# ignore TLS messages if Kamailio is started with debug less than 10
 modparam("tls", "tls_log", 10)
 ...
 		</programlisting>
@@ -709,7 +709,7 @@ modparam("tls", "tls_log", 10)
 		<title>Set <varname>tls_debug</varname> parameter</title>
 		<programlisting>
 ...
-# ignore TLS debug messages if SIP-router is started with debug less than 10
+# ignore TLS debug messages if Kamailio is started with debug less than 10
 modparam("tls", "tls_debug", 10)
 ...
 		</programlisting>
@@ -825,10 +825,10 @@ modparam("tls", "low_mem_threshold2", -1)
 	<section id="tls_force_run">
 	<title><varname>tls_force_run</varname> (boolean)</title>
 	<para>
-		If enabled SIP-router will start even if some of the openssl sanity checks fail (turn it on at your own risk).
+		If enabled Kamailio  will start even if some of the openssl sanity checks fail (turn it on at your own risk).
 	</para>
 	<para>
-		Currently failing any of the following sanity checks will not allow SIP-router to start:
+		Currently failing any of the following sanity checks will not allow Kamailio  to start:
 	</para>
 	<itemizedlist>
 			<listitem>
@@ -956,7 +956,7 @@ modparam("tls", "renegotiation", 1)
 		the current ser main config file.
 	</para>
 	<para>
-		SIP-router acts as a server when it accepts a connection and as a
+		Kamailio  acts as a server when it accepts a connection and as a
 		client when it initiates a new connection by itself (it connects to
 		something).
 	</para>
@@ -989,7 +989,7 @@ ca_list = local_ca.pem
 	</programlisting>
 	</example>
 	<para>
-		For a more complete example check the <emphasis>tls.cfg</emphasis> distributed with the SIP-router source (sip_router/modules/tls/tls.cfg).
+		For a more complete example check the <emphasis>tls.cfg</emphasis> distributed with the Kamailio  source (sip_router/modules/tls/tls.cfg).
 	</para>
 	<example>
 		<title>Set <varname>config</varname> parameter</title>
