@@ -37,7 +37,7 @@
 		<section id="tls.quick_start">
 		<title>Quick Start</title>
 		<para>
-			Make sure you have a proper certificate and private key and either use the certificate and private_key module parameters, or make sure the certificate and key are in the same PEM file, named cert.pem an placed in [your-cfg-install-prefix]/etc/ser/. Don't forget to load the tls module and to enable TLS (add <emphasis>enable_tls=yes</emphasis> to your config).
+			Make sure you have a proper certificate and private key and either use the certificate and private_key module parameters, or make sure the certificate and key are in the same PEM file, named cert.pem an placed in [your-cfg-install-prefix]/etc/kamailio/. Don't forget to load the tls module and to enable TLS (add <emphasis>enable_tls=yes</emphasis> to your config).
 		</para>
 		<example>
 		<title>quick start config</title>
@@ -61,13 +61,13 @@ route{
 		<section id="tls.notes">
 		<title>Important Notes</title>
 		<para>
-			The TLS module needs some special options enabled when compiling Kamailio. These options are enabled by default, however in case you're using a modified Kamailio version or Makefile, make sure that you enable -DUSE_TLS and -DTLS_HOOKS (or compile with make TLS_HOOKS=1 which will take care of both options). To quickly check if your Kamailio version was compiled with these options, run ser -V and look for USE_TLS and TLS_HOOKS among the flags.
+			The TLS module needs some special options enabled when compiling Kamailio. These options are enabled by default, however in case you're using a modified Kamailio version or Makefile, make sure that you enable -DUSE_TLS and -DTLS_HOOKS (or compile with make TLS_HOOKS=1 which will take care of both options). To quickly check if your Kamailio version was compiled with these options, run kamailio -V and look for USE_TLS and TLS_HOOKS among the flags.
 		</para>
 		<para>
 			This module includes several workarounds for various Openssl bugs (like compression and Kerberos using 
 			the wrong memory allocations functions, low memory problems a.s.o). On startup it will try to enable 
 			the needed workarounds based on the openssl library version. Each time a known problem is detected and 
-			a workaround is enabled, a message will be logged. In general it is recommended to compile this module on the same machine or a similar machine to where ser will be run or to link it statically with libssl. For example if on the compile machine openssl does not have the kerberos support enabled, but on the target machine a kerberos enabled openssl library is installed, ser cannot apply the needed workarounds and will refuse to start. The same thing will happen if the openssl versions are too different (to force ser startup anyway, see the <varname>tls_force_run</varname> module parameter).
+			a workaround is enabled, a message will be logged. In general it is recommended to compile this module on the same machine or a similar machine to where kamailio will be run or to link it statically with libssl. For example if on the compile machine openssl does not have the kerberos support enabled, but on the target machine a kerberos enabled openssl library is installed, kamailio cannot apply the needed workarounds and will refuse to start. The same thing will happen if the openssl versions are too different (to force kamailio startup anyway, see the <varname>tls_force_run</varname> module parameter).
 		</para>
 		<para>
 			Try to avoid using keys larger then 1024 bytes. Large keys significantly slow down the TLS connection handshake, thus limiting the maximum Kamailio TLS connection rate.

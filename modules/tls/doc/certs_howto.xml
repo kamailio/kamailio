@@ -20,7 +20,8 @@
 			Assumptions: we run our own CA.
 		</para>
 		<para>
-			Warning: in this example no key is encrypted. The client and server private keys must not be encrypted (ser doesn't support encrypted keys), so make sure the corresponding files are readable only by trusted people. You should use a password for your CA private key.
+			Warning: in this example no key is encrypted. The client and server private keys must not be encrypted (&kamailio; doesn't support encrypted keys),
+			so make sure the corresponding files are readable only by trusted people. You should use a password for your CA private key.
 		</para>
 		<para>
 		<programlisting>
@@ -57,16 +58,16 @@ RANDFILE        = $dir/private/.rand    # private random number file
 If this is not the case create a new openssl config file that uses the above
 paths for the default CA and add to all the openssl commands:
  -config filename. E.g.:
-	openssl ca -config my_openssl.cnf -in ser1_cert_req.pem -out ser1_cert.pem
+	openssl ca -config my_openssl.cnf -in kamailio1_cert_req.pem -out kamailio1_cert.pem
 
 
 Creating CA certificate
 -----------------------
-1. create CA dir
+1. create CA directory
 	mkdir ca
 	cd ca
 	
-2. create ca dir structure and files  (see ca(1))
+2. create ca directory structure and files  (see ca(1))
 	mkdir demoCA #default CA name, edit /etc/ss/openssl.cnf
 	mkdir  demoCA/private
 	mkdir demoCA/newcerts
@@ -85,22 +86,22 @@ Creating CA certificate
 Creating a server/client certificate
 ------------------------------------
 1. create a certificate request (and its private key in privkey.pem)
-	openssl req -out ser1_cert_req.pem -new -nodes
-	WARNING: the organization name should be the same as in the ca certificate.
+	openssl req -out kamailio1_cert_req.pem -new -nodes
+	WARNING: the organization name should be the same as in the CA certificate.
 	
 2. sign it with the ca certificate
-	openssl ca -in ser1_cert_req.pem -out ser1_cert.pem
+	openssl ca -in kamailio1_cert_req.pem -out kamailio1_cert.pem
 	
-3. copy ser1_cert.pem to your &kamailio; config. dir
+3. copy kamailio1_cert.pem to your &kamailio; config. dir
 
 
 Setting &kamailio; to use the certificate
 -----------------------------------------
-1. create the ca list file:
+1. Create the ca list file:
 	for each of your ca certificates that you intend to use do:
 		cat cacert.pem >>calist.pem
 	
-2. copy your &kamailio; certificate, private key and ca list file to your 
+2. Copy your &kamailio; certificate, private key and ca list file to your 
 	intended machine (preferably in your &kamailio; configuration directory,
 	 this is the default place &kamailio; searches for).
 	

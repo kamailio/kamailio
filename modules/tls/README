@@ -73,8 +73,8 @@ Andrei Pelinescu-Onciul
    Make sure you have a proper certificate and private key and either use
    the certificate and private_key module parameters, or make sure the
    certificate and key are in the same PEM file, named cert.pem an placed
-   in [your-cfg-install-prefix]/etc/ser/. Don't forget to load the tls
-   module and to enable TLS (add enable_tls=yes to your config).
+   in [your-cfg-install-prefix]/etc/kamailio/. Don't forget to load the
+   tls module and to enable TLS (add enable_tls=yes to your config).
 
    Example 1. quick start config
 #...
@@ -97,8 +97,8 @@ route{
    using a modified Kamailio version or Makefile, make sure that you
    enable -DUSE_TLS and -DTLS_HOOKS (or compile with make TLS_HOOKS=1
    which will take care of both options). To quickly check if your
-   Kamailio version was compiled with these options, run ser -V and look
-   for USE_TLS and TLS_HOOKS among the flags.
+   Kamailio version was compiled with these options, run kamailio -V and
+   look for USE_TLS and TLS_HOOKS among the flags.
 
    This module includes several workarounds for various Openssl bugs (like
    compression and Kerberos using the wrong memory allocations functions,
@@ -106,13 +106,13 @@ route{
    workarounds based on the openssl library version. Each time a known
    problem is detected and a workaround is enabled, a message will be
    logged. In general it is recommended to compile this module on the same
-   machine or a similar machine to where ser will be run or to link it
-   statically with libssl. For example if on the compile machine openssl
-   does not have the kerberos support enabled, but on the target machine a
-   kerberos enabled openssl library is installed, ser cannot apply the
-   needed workarounds and will refuse to start. The same thing will happen
-   if the openssl versions are too different (to force ser startup anyway,
-   see the tls_force_run module parameter).
+   machine or a similar machine to where kamailio will be run or to link
+   it statically with libssl. For example if on the compile machine
+   openssl does not have the kerberos support enabled, but on the target
+   machine a kerberos enabled openssl library is installed, kamailio
+   cannot apply the needed workarounds and will refuse to start. The same
+   thing will happen if the openssl versions are too different (to force
+   kamailio startup anyway, see the tls_force_run module parameter).
 
    Try to avoid using keys larger then 1024 bytes. Large keys
    significantly slow down the TLS connection handshake, thus limiting the
@@ -221,7 +221,7 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
    Assumptions: we run our own CA.
 
    Warning: in this example no key is encrypted. The client and server
-   private keys must not be encrypted (ser doesn't support encrypted
+   private keys must not be encrypted (Kamailio doesn't support encrypted
    keys), so make sure the corresponding files are readable only by
    trusted people. You should use a password for your CA private key.
 
@@ -258,17 +258,17 @@ RANDFILE        = $dir/private/.rand    # private random number file
 If this is not the case create a new openssl config file that uses the above
 paths for the default CA and add to all the openssl commands:
  -config filename. E.g.:
-        openssl ca -config my_openssl.cnf -in ser1_cert_req.pem -out ser1_cert.p
-em
+        openssl ca -config my_openssl.cnf -in kamailio1_cert_req.pem -out kamail
+io1_cert.pem
 
 
 Creating CA certificate
 -----------------------
-1. create CA dir
+1. create CA directory
         mkdir ca
         cd ca
 
-2. create ca dir structure and files  (see ca(1))
+2. create ca directory structure and files  (see ca(1))
         mkdir demoCA #default CA name, edit /etc/ss/openssl.cnf
         mkdir  demoCA/private
         mkdir demoCA/newcerts
@@ -288,23 +288,23 @@ y.pem
 Creating a server/client certificate
 ------------------------------------
 1. create a certificate request (and its private key in privkey.pem)
-        openssl req -out ser1_cert_req.pem -new -nodes
-        WARNING: the organization name should be the same as in the ca certifica
+        openssl req -out kamailio1_cert_req.pem -new -nodes
+        WARNING: the organization name should be the same as in the CA certifica
 te.
 
 2. sign it with the ca certificate
-        openssl ca -in ser1_cert_req.pem -out ser1_cert.pem
+        openssl ca -in kamailio1_cert_req.pem -out kamailio1_cert.pem
 
-3. copy ser1_cert.pem to your Kamailio config. dir
+3. copy kamailio1_cert.pem to your Kamailio config. dir
 
 
 Setting Kamailio to use the certificate
 -----------------------------------------
-1. create the ca list file:
+1. Create the ca list file:
         for each of your ca certificates that you intend to use do:
                 cat cacert.pem >>calist.pem
 
-2. copy your Kamailio certificate, private key and ca list file to your
+2. Copy your Kamailio certificate, private key and ca list file to your
         intended machine (preferably in your Kamailio configuration directory,
          this is the default place Kamailio searches for).
 
@@ -376,8 +376,8 @@ modparam("tls", "tls_method", "TLSv1")
    If the file name starts with a '.' the path will be relative to the
    working directory (at runtime). If it starts with a '/' it will be an
    absolute path and if it starts with anything else the path will be
-   relative to the main config file directory (e.g.: for ser -f
-   /etc/kamailio/kamailio.cfg it will be relative to /etc/ser/).
+   relative to the main config file directory (e.g.: for kamailio -f
+   /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
 
    Warning: try not to use certificate with keys longer then 1024 bytes.
    Longer keys will severely impact performance, in particular the TLS
@@ -398,7 +398,7 @@ modparam("tls", "certificate", "/usr/local/etc/kamailio/my_certificate.pem")
    working directory (at runtime). If it starts with a '/' it will be an
    absolute path and if it starts with anything else the path will be
    relative to the main config file directory (e.g.: for kamailio -f
-   /etc/ser/ser.cfg it will be relative to /etc/ser/).
+   /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
 
    Note: the private key can be contained in the same file as the
    certificate (just append it to the certificate file, e.g.: cat pkey.pem
@@ -408,7 +408,7 @@ modparam("tls", "certificate", "/usr/local/etc/kamailio/my_certificate.pem")
 
    Example 5. Set private_key parameter
 ...
-modparam("tls", "private", "/usr/local/etc/ser/my_pkey.pem")
+modparam("tls", "private", "/usr/local/etc/kamailio/my_pkey.pem")
 ...
 
 1.9.4. ca_list (string)
@@ -421,7 +421,7 @@ modparam("tls", "private", "/usr/local/etc/ser/my_pkey.pem")
    working directory (at runtime). If it starts with a '/' it will be an
    absolute path and if it starts with anything else the path will be
    relative to the main config file directory (e.g.: for kamailio -f
-   /etc/ser/ser.cfg it will be relative to /etc/ser/).
+   /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
 
    By default the CA file is not set.
 
@@ -433,7 +433,7 @@ modparam("tls", "private", "/usr/local/etc/ser/my_pkey.pem")
 
    Example 6. Set ca_list parameter
 ...
-modparam("tls", "ca_list", "/usr/local/etc/ser/ca_list.pem")
+modparam("tls", "ca_list", "/usr/local/etc/kamailio/ca_list.pem")
 ...
 
 1.9.5. crl (string)
@@ -448,7 +448,7 @@ modparam("tls", "ca_list", "/usr/local/etc/ser/ca_list.pem")
    working directory (at runtime). If it starts with a '/' it will be an
    absolute path and if it starts with anything else the path will be
    relative to the main config file directory (e.g.: for kamailio -f
-   /etc/ser/ser.cfg it will be relative to /etc/ser/).
+   /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
 
 Note
 
@@ -480,7 +480,7 @@ Note
 
    Example 7. Set crl parameter
 ...
-modparam("tls", "crl", "/usr/local/etc/ser/crl.pem")
+modparam("tls", "crl", "/usr/local/etc/kamailio/crl.pem")
 ...
 
 1.9.6. verify_certificate (boolean)
@@ -642,10 +642,10 @@ modparam("tls", "ssl_freelist_max_len", 0)
    succesfull handshake (try minimum 1024).
 
    Lower values would lead to less memory usage, but values lower then the
-   typical ser/Kamailio write size would incur a slight performance
-   penalty. Good values are bigger then the size of the biggest SIP packet
-   one normally expects to forward. For example in most setups 2048 would
-   be a good value.
+   typical Kamailio write size would incur a slight performance penalty.
+   Good values are bigger then the size of the biggest SIP packet one
+   normally expects to forward. For example in most setups 2048 would be a
+   good value.
 
 Note
 
@@ -893,7 +893,7 @@ modparam("tls", "tls_force_run", 11)
 
 1.9.27. session_cache (boolean)
 
-   If enabled SIP server will do caching of the TLS sessions data,
+   If enabled Kamailio will do caching of the TLS sessions data,
    generation a session_id and sending it back to client.
 
    By default TLS session caching is disabled (0).
@@ -917,7 +917,7 @@ modparam("tls", "session_id", "my-session-id-context")
 
 1.9.29. renegotiation (boolean)
 
-   If enabled SIP server will allow renegotiations of TLS connection
+   If enabled Kamailio will allow renegotiations of TLS connection
    initiated by the client. This may expose to a security risk if the
    client is not a trusted peer and keeps renegotiating, consuming CPU and
    bandwidth resources.
@@ -941,8 +941,8 @@ modparam("tls", "renegotiation", 1)
    If the file name starts with a '.' the path will be relative to the
    working directory (at runtime). If it starts with a '/' it will be an
    absolute path and if it starts with anything else the path will be
-   relative to the main config file directory (e.g.: for ser -f
-   /etc/ser/ser.cfg it will be relative to /etc/ser/).
+   relative to the main config file directory (e.g.: for kamailio -f
+   /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
 
    By default no config file is specified.
 
@@ -962,7 +962,7 @@ modparam("tls", "renegotiation", 1)
    the same rules as for the tls config filename itself: starting with a
    '.' means relative to the working directory, a '/' means an absolute
    path and anything else a path relative to the directory of the current
-   ser main config file.
+   Kamailio main config file.
 
    Kamailio acts as a server when it accepts a connection and as a client
    when it initiates a new connection by itself (it connects to
@@ -993,18 +993,18 @@ verify_depth = 3
 ca_list = local_ca.pem
 
    For a more complete example check the tls.cfg distributed with the
-   Kamailio source (sip_router/modules/tls/tls.cfg).
+   Kamailio source (kamailio/modules/tls/tls.cfg).
 
    Example 40. Set config parameter
 ...
-modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
+modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 ...
 
    It can be changed also at runtime. The new config will not be loaded
    immediately, but after the first tls.reload RPC call.
 
    Example 41. Change and reload tls config at runtime
- $ kamcmd cfg.set_now_string tls config "/usr/local/etc/ser/new_tls.cfg"
+ $ kamcmd cfg.set_now_string tls config "/usr/local/etc/kamailio/new_tls.cfg"
  $ kamcmd tls.reload
 
 1.10. Functions
@@ -1056,7 +1056,7 @@ modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
 1.12. History
 
    This module was put together by Jan Janak <jan@iptel.org> from code
-   from the experimental tls core addon
+   based on the experimental tls core addon
    (http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/experimental/tls/), code
    originally written by Peter Griffiths and later maintained by Cesc
    Santasusana and from an iptelorg tls code addon, written by Andrei
@@ -1065,7 +1065,7 @@ modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
    specific select framework.
 
    For Kamailio 3.1 most of the TLS specific code was completely
-   re-written to add support for asynchrounous TLS and fix several long
+   re-written to add support for asynchronous TLS and fix several long
    standing bugs.
 
    The code is currently maintained by Andrei Pelinescu-Onciul
