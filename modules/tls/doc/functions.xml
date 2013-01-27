@@ -8,7 +8,7 @@
 
 ]>
 
-<section id="textops.functions">
+<section id="tls.functions">
 	<sectioninfo>
 	</sectioninfo>
 
@@ -32,6 +32,4 @@
 			</programlisting>
 		</example>
 	</section>
-
-
 </section>

@@ -168,11 +168,8 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 		</para>
 		<para>
 			This documentation is incomplete.
-			The RPCs are not documented here, but in doc/rpc_list/rpc_tls.txt
-			or <ulink url="http://sip-router.org/docbook/sip-router/branch/master/rpc_list/rpc_list.html#rpc_exports.tls">
-			http://sip-router.org/docbook/sip-router/branch/master/rpc_list/rpc_list.html#rpc_exports.tls</ulink>.
 			The provided selects are not documented. A list with all the
-			ones implemented by the tls module can be seen under
+			ones implemented by the TLS module can be seen under
 			doc/select_list/select_tls.txt or
 			or <ulink url="http://sip-router.org/docbook/sip-router/branch/master/select_list/select_list.html#select_list.tls">
 			http://sip-router.org/docbook/sip-router/branch/master/select_list/select_list.html#select_list.tls</ulink>.
@@ -182,6 +179,7 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 	<xi:include href="certs_howto.xml"/>
 	<xi:include href="params.xml"/>
 	<xi:include href="functions.xml"/>
+	<xi:include href="rpc.xml"/>
 	<xi:include href="history.xml"/>
 
 </section>

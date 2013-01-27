@@ -52,7 +52,14 @@ Andrei Pelinescu-Onciul
 
         1.10.1. is_peer_verified()
 
-   1.11. History
+   1.11. RPC Commands
+
+        1.11.1. tls.info
+        1.11.2. tls.list
+        1.11.3. tls.options
+        1.11.4. tls.reload
+
+   1.12. History
 
 1.1. Overview
 
@@ -197,12 +204,9 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
    TLS specific config reloading is not safe, so for now better don't use
    it, especially under heavy traffic.
 
-   This documentation is incomplete. The RPCs are not documented here, but
-   in doc/rpc_list/rpc_tls.txt or
-   http://sip-router.org/docbook/sip-router/branch/master/rpc_list/rpc_lis
-   t.html#rpc_exports.tls. The provided selects are not documented. A list
-   with all the ones implemented by the tls module can be seen under
-   doc/select_list/select_tls.txt or or
+   This documentation is incomplete. The provided selects are not
+   documented. A list with all the ones implemented by the TLS module can
+   be seen under doc/select_list/select_tls.txt or or
    http://sip-router.org/docbook/sip-router/branch/master/select_list/sele
    ct_list.html#select_list.tls.
 
@@ -1017,7 +1021,39 @@ modparam("tls", "config", "/usr/local/etc/ser/tls.cfg")
                 drop;
         }
 
-1.11. History
+1.11. RPC Commands
+
+1.11.1. tls.info
+
+   List internal information related to the TLS module in a short list -
+   max connections, opened connections and the write queue size.
+
+   Parameters:
+     * None.
+
+1.11.2. tls.list
+
+   List details about all active TLS connections.
+
+   Parameters:
+     * None.
+
+1.11.3. tls.options
+
+   List the current TLS configuration.
+
+   Parameters:
+     * None.
+
+1.11.4. tls.reload
+
+   Reload the external TLS configuration file. (Does not reload modparam()
+   parameters)
+
+   Parameters:
+     * None.
+
+1.12. History
 
    This module was put together by Jan Janak <jan@iptel.org> from code
    from the experimental tls core addon
