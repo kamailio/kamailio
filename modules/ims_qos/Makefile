@@ -15,4 +15,8 @@ SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kcore/kcore
 SER_LIBS+=$(SERLIBPATH)/ims/kamailio_ims
 
+ifneq ($(OS),darwin)
+	LIBS += -lrt
+endif
+
 include ../../Makefile.modules
