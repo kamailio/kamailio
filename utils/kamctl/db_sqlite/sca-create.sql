@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('sca_subscriptions','0');
+INSERT INTO version (table_name, table_version) values ('sca_subscriptions','1');
 CREATE TABLE sca_subscriptions (
     id INTEGER PRIMARY KEY NOT NULL,
     subscriber VARCHAR(255) NOT NULL,
