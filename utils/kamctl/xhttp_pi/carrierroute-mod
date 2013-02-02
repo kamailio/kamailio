@@ -18,6 +18,50 @@
 				<col><field>description</field></col>
 			</query_cols>
 		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>carrierroute</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>carrier</field></col>
+				<col><field>domain</field></col>
+				<col><field>scan_prefix</field></col>
+				<col><field>flags</field></col>
+				<col><field>mask</field></col>
+				<col><field>prob</field></col>
+				<col><field>strip</field></col>
+				<col><field>rewrite_host</field></col>
+				<col><field>rewrite_prefix</field></col>
+				<col><field>rewrite_suffix</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>carrierroute</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>carrier</field></col>
+				<col><field>domain</field></col>
+				<col><field>scan_prefix</field></col>
+				<col><field>flags</field></col>
+				<col><field>mask</field></col>
+				<col><field>prob</field></col>
+				<col><field>strip</field></col>
+				<col><field>rewrite_host</field></col>
+				<col><field>rewrite_prefix</field></col>
+				<col><field>rewrite_suffix</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>carrierroute</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
 	</mod>
 	<!-- carrierfailureroute provisionning -->
 	<mod><mod_name>carrierfailureroute</mod_name>
@@ -37,6 +81,46 @@
 				<col><field>description</field></col>
 			</query_cols>
 		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>carrierfailureroute</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>carrier</field></col>
+				<col><field>domain</field></col>
+				<col><field>scan_prefix</field></col>
+				<col><field>host_name</field></col>
+				<col><field>reply_code</field></col>
+				<col><field>flags</field></col>
+				<col><field>mask</field></col>
+				<col><field>next_domain</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>carrierfailureroute</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>carrier</field></col>
+				<col><field>domain</field></col>
+				<col><field>scan_prefix</field></col>
+				<col><field>host_name</field></col>
+				<col><field>reply_code</field></col>
+				<col><field>flags</field></col>
+				<col><field>mask</field></col>
+				<col><field>next_domain</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>carrierfailureroute</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
 	</mod>
 	<!-- carrier_name provisionning -->
 	<mod><mod_name>carrier_name</mod_name>
@@ -48,6 +132,30 @@
 				<col><field>carrier</field></col>
 			</query_cols>
 		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>carrier_name</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>carrier</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>carrier_name</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>carrier</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>carrier_name</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
 	</mod>
 	<!-- domain_name provisionning -->
 	<mod><mod_name>domain_name</mod_name>
@@ -58,5 +166,29 @@
 				<col><field>id</field></col>
 				<col><field>domain</field></col>
 			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>domain_name</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>domain</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>domain_name</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>domain</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>domain_name</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>

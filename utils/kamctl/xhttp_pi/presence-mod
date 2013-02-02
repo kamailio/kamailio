@@ -15,6 +15,44 @@
 				<col><field>sender</field></col>
 			</query_cols>
 		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>presentity</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>event</field></col>
+				<col><field>etag</field></col>
+				<col><field>expires</field></col>
+				<col><field>received_time</field></col>
+				<col><field>body</field></col>
+				<col><field>sender</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>presentity</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>event</field></col>
+				<col><field>etag</field></col>
+				<col><field>expires</field></col>
+				<col><field>received_time</field></col>
+				<col><field>body</field></col>
+				<col><field>sender</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>presentity</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
 	</mod>
 	<!-- active_watchers provisionning -->
 	<mod><mod_name>active_watchers</mod_name>
@@ -49,6 +87,76 @@
 				<col><field>updated_winfo</field></col>
 			</query_cols>
 		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>active_watchers</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>presentity_uri</field></col>
+				<col><field>watcher_username</field></col>
+				<col><field>watcher_domain</field></col>
+				<col><field>to_user</field></col>
+				<col><field>to_domain</field></col>
+				<col><field>event</field></col>
+				<col><field>event_id</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>callid</field></col>
+				<col><field>local_cseq</field></col>
+				<col><field>remote_cseq</field></col>
+				<col><field>contact</field></col>
+				<col><field>record_route</field></col>
+				<col><field>expires</field></col>
+				<col><field>status</field></col>
+				<col><field>reason</field></col>
+				<col><field>version</field></col>
+				<col><field>socket_info</field></col>
+				<col><field>local_contact</field></col>
+				<col><field>from_user</field></col>
+				<col><field>from_domain</field></col>
+				<col><field>updated</field></col>
+				<col><field>updated_winfo</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>active_watchers</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>presentity_uri</field></col>
+				<col><field>watcher_username</field></col>
+				<col><field>watcher_domain</field></col>
+				<col><field>to_user</field></col>
+				<col><field>to_domain</field></col>
+				<col><field>event</field></col>
+				<col><field>event_id</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>callid</field></col>
+				<col><field>local_cseq</field></col>
+				<col><field>remote_cseq</field></col>
+				<col><field>contact</field></col>
+				<col><field>record_route</field></col>
+				<col><field>expires</field></col>
+				<col><field>status</field></col>
+				<col><field>reason</field></col>
+				<col><field>version</field></col>
+				<col><field>socket_info</field></col>
+				<col><field>local_contact</field></col>
+				<col><field>from_user</field></col>
+				<col><field>from_domain</field></col>
+				<col><field>updated</field></col>
+				<col><field>updated_winfo</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>active_watchers</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
 	</mod>
 	<!-- watchers provisionning -->
 	<mod><mod_name>watchers</mod_name>
@@ -65,6 +173,42 @@
 				<col><field>reason</field></col>
 				<col><field>inserted_time</field></col>
 			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>watchers</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>presentity_uri</field></col>
+				<col><field>watcher_username</field></col>
+				<col><field>watcher_domain</field></col>
+				<col><field>event</field></col>
+				<col><field>status</field></col>
+				<col><field>reason</field></col>
+				<col><field>inserted_time</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>watchers</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>presentity_uri</field></col>
+				<col><field>watcher_username</field></col>
+				<col><field>watcher_domain</field></col>
+				<col><field>event</field></col>
+				<col><field>status</field></col>
+				<col><field>reason</field></col>
+				<col><field>inserted_time</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>watchers</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>
 	<!-- xcap provisionning -->
@@ -83,6 +227,44 @@
 				<col><field>doc_uri</field></col>
 				<col><field>port</field></col>
 			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>xcap</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>doc</field></col>
+				<col><field>doc_type</field></col>
+				<col><field>etag</field></col>
+				<col><field>source</field></col>
+				<col><field>doc_uri</field></col>
+				<col><field>port</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>xcap</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>doc</field></col>
+				<col><field>doc_type</field></col>
+				<col><field>etag</field></col>
+				<col><field>source</field></col>
+				<col><field>doc_uri</field></col>
+				<col><field>port</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>xcap</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>
 	<!-- pua provisionning -->
@@ -111,5 +293,63 @@
 				<col><field>version</field></col>
 				<col><field>extra_headers</field></col>
 			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>pua</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>pres_uri</field></col>
+				<col><field>pres_id</field></col>
+				<col><field>event</field></col>
+				<col><field>expires</field></col>
+				<col><field>desired_expires</field></col>
+				<col><field>flag</field></col>
+				<col><field>etag</field></col>
+				<col><field>tuple_id</field></col>
+				<col><field>watcher_uri</field></col>
+				<col><field>call_id</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>cseq</field></col>
+				<col><field>record_route</field></col>
+				<col><field>contact</field></col>
+				<col><field>remote_contact</field></col>
+				<col><field>version</field></col>
+				<col><field>extra_headers</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>pua</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>pres_uri</field></col>
+				<col><field>pres_id</field></col>
+				<col><field>event</field></col>
+				<col><field>expires</field></col>
+				<col><field>desired_expires</field></col>
+				<col><field>flag</field></col>
+				<col><field>etag</field></col>
+				<col><field>tuple_id</field></col>
+				<col><field>watcher_uri</field></col>
+				<col><field>call_id</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>cseq</field></col>
+				<col><field>record_route</field></col>
+				<col><field>contact</field></col>
+				<col><field>remote_contact</field></col>
+				<col><field>version</field></col>
+				<col><field>extra_headers</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>pua</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>

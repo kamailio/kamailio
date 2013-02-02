@@ -18,4 +18,48 @@
 				<col><field>direction</field></col>
 			</query_cols>
 		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>sip_trace</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>time_stamp</field></col>
+				<col><field>time_us</field></col>
+				<col><field>callid</field></col>
+				<col><field>traced_user</field></col>
+				<col><field>msg</field></col>
+				<col><field>method</field></col>
+				<col><field>status</field></col>
+				<col><field>fromip</field></col>
+				<col><field>toip</field></col>
+				<col><field>fromtag</field></col>
+				<col><field>direction</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>sip_trace</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>time_stamp</field></col>
+				<col><field>time_us</field></col>
+				<col><field>callid</field></col>
+				<col><field>traced_user</field></col>
+				<col><field>msg</field></col>
+				<col><field>method</field></col>
+				<col><field>status</field></col>
+				<col><field>fromip</field></col>
+				<col><field>toip</field></col>
+				<col><field>fromtag</field></col>
+				<col><field>direction</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>sip_trace</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
 	</mod>

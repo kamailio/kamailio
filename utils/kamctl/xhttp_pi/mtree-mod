@@ -9,6 +9,32 @@
 				<col><field>tvalue</field></col>
 			</query_cols>
 		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>mtree</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>tprefix</field></col>
+				<col><field>tvalue</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>mtree</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>tprefix</field></col>
+				<col><field>tvalue</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>mtree</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
 	</mod>
 	<!-- mtrees provisionning -->
 	<mod><mod_name>mtrees</mod_name>
@@ -21,5 +47,33 @@
 				<col><field>tprefix</field></col>
 				<col><field>tvalue</field></col>
 			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>mtrees</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>tname</field></col>
+				<col><field>tprefix</field></col>
+				<col><field>tvalue</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>mtrees</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>tname</field></col>
+				<col><field>tprefix</field></col>
+				<col><field>tvalue</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>mtrees</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>

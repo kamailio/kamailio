@@ -20,6 +20,54 @@
 				<col><field>defunct</field></col>
 			</query_cols>
 		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>lcr_gw</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>lcr_id</field></col>
+				<col><field>gw_name</field></col>
+				<col><field>ip_addr</field></col>
+				<col><field>hostname</field></col>
+				<col><field>port</field></col>
+				<col><field>params</field></col>
+				<col><field>uri_scheme</field></col>
+				<col><field>transport</field></col>
+				<col><field>strip</field></col>
+				<col><field>prefix</field></col>
+				<col><field>tag</field></col>
+				<col><field>flags</field></col>
+				<col><field>defunct</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>lcr_gw</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>lcr_id</field></col>
+				<col><field>gw_name</field></col>
+				<col><field>ip_addr</field></col>
+				<col><field>hostname</field></col>
+				<col><field>port</field></col>
+				<col><field>params</field></col>
+				<col><field>uri_scheme</field></col>
+				<col><field>transport</field></col>
+				<col><field>strip</field></col>
+				<col><field>prefix</field></col>
+				<col><field>tag</field></col>
+				<col><field>flags</field></col>
+				<col><field>defunct</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>lcr_gw</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
 	</mod>
 	<!-- lcr_rule_target provisionning -->
 	<mod><mod_name>lcr_rule_target</mod_name>
@@ -34,6 +82,38 @@
 				<col><field>priority</field></col>
 				<col><field>weight</field></col>
 			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>lcr_rule_target</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>lcr_id</field></col>
+				<col><field>rule_id</field></col>
+				<col><field>gw_id</field></col>
+				<col><field>priority</field></col>
+				<col><field>weight</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>lcr_rule_target</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>lcr_id</field></col>
+				<col><field>rule_id</field></col>
+				<col><field>gw_id</field></col>
+				<col><field>priority</field></col>
+				<col><field>weight</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>lcr_rule_target</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>
 	<!-- lcr_rule provisionning -->
@@ -50,5 +130,39 @@
 				<col><field>stopper</field></col>
 				<col><field>enabled</field></col>
 			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>lcr_rule</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>lcr_id</field></col>
+				<col><field>prefix</field></col>
+				<col><field>from_uri</field></col>
+				<col><field>request_uri</field></col>
+				<col><field>stopper</field></col>
+				<col><field>enabled</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>lcr_rule</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>lcr_id</field></col>
+				<col><field>prefix</field></col>
+				<col><field>from_uri</field></col>
+				<col><field>request_uri</field></col>
+				<col><field>stopper</field></col>
+				<col><field>enabled</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>lcr_rule</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>

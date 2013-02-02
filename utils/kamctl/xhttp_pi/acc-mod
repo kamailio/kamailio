@@ -14,6 +14,42 @@
 				<col><field>time</field></col>
 			</query_cols>
 		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>acc</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>method</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>callid</field></col>
+				<col><field>sip_code</field></col>
+				<col><field>sip_reason</field></col>
+				<col><field>time</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>acc</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>method</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>callid</field></col>
+				<col><field>sip_code</field></col>
+				<col><field>sip_reason</field></col>
+				<col><field>time</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>acc</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
 	</mod>
 	<!-- missed_calls provisionning -->
 	<mod><mod_name>missed_calls</mod_name>
@@ -30,5 +66,41 @@
 				<col><field>sip_reason</field></col>
 				<col><field>time</field></col>
 			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>missed_calls</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>method</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>callid</field></col>
+				<col><field>sip_code</field></col>
+				<col><field>sip_reason</field></col>
+				<col><field>time</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>missed_calls</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>method</field></col>
+				<col><field>from_tag</field></col>
+				<col><field>to_tag</field></col>
+				<col><field>callid</field></col>
+				<col><field>sip_code</field></col>
+				<col><field>sip_reason</field></col>
+				<col><field>time</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>missed_calls</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>

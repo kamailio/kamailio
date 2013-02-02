@@ -25,6 +25,64 @@
 				<col><field>reg_id</field></col>
 			</query_cols>
 		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>location</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>ruid</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>contact</field></col>
+				<col><field>received</field></col>
+				<col><field>path</field></col>
+				<col><field>expires</field></col>
+				<col><field>q</field></col>
+				<col><field>callid</field></col>
+				<col><field>cseq</field></col>
+				<col><field>last_modified</field></col>
+				<col><field>flags</field></col>
+				<col><field>cflags</field></col>
+				<col><field>user_agent</field></col>
+				<col><field>socket</field></col>
+				<col><field>methods</field></col>
+				<col><field>instance</field></col>
+				<col><field>reg_id</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>location</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>ruid</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>contact</field></col>
+				<col><field>received</field></col>
+				<col><field>path</field></col>
+				<col><field>expires</field></col>
+				<col><field>q</field></col>
+				<col><field>callid</field></col>
+				<col><field>cseq</field></col>
+				<col><field>last_modified</field></col>
+				<col><field>flags</field></col>
+				<col><field>cflags</field></col>
+				<col><field>user_agent</field></col>
+				<col><field>socket</field></col>
+				<col><field>methods</field></col>
+				<col><field>instance</field></col>
+				<col><field>reg_id</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>location</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
 	</mod>
 	<!-- location_attrs provisionning -->
 	<mod><mod_name>location_attrs</mod_name>
@@ -41,5 +99,41 @@
 				<col><field>avalue</field></col>
 				<col><field>last_modified</field></col>
 			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>location_attrs</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>ruid</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>aname</field></col>
+				<col><field>atype</field></col>
+				<col><field>avalue</field></col>
+				<col><field>last_modified</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>location_attrs</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>ruid</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>aname</field></col>
+				<col><field>atype</field></col>
+				<col><field>avalue</field></col>
+				<col><field>last_modified</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>location_attrs</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>

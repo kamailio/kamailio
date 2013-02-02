@@ -43,22 +43,95 @@
 		<xsl:text>&#x9;&lt;mod&gt;&lt;mod_name&gt;</xsl:text>
 		<xsl:value-of select="$table.name"/>
 		<xsl:text>&lt;/mod_name&gt;&#xa;</xsl:text>
+
+		<!-- show/DB1_QUERY -->
 		<xsl:text>&#x9;&#x9;&lt;cmd&gt;&lt;cmd_name&gt;show&lt;/cmd_name&gt;&#xa;</xsl:text>
 		<xsl:text>&#x9;&#x9;&#x9;&lt;db_table_id&gt;</xsl:text>
 		<xsl:value-of select="$table.name"/>
 		<xsl:text>&lt;/db_table_id&gt;&#xa;</xsl:text>
 		<xsl:text>&#x9;&#x9;&#x9;&lt;cmd_type&gt;DB1_QUERY&lt;/cmd_type&gt;&#xa;</xsl:text>
 		<xsl:text>&#x9;&#x9;&#x9;&lt;query_cols&gt;&#xa;</xsl:text>
-		<xsl:apply-templates select="column"/>
+		<xsl:for-each select="column">
+			<xsl:text>&#x9;&#x9;&#x9;&#x9;&lt;col&gt;&lt;field&gt;</xsl:text>
+			<xsl:call-template name="get-name"/>
+			<xsl:text>&lt;/field&gt;&lt;/col&gt;&#xa;</xsl:text>
+		</xsl:for-each>
 		<xsl:text>&#x9;&#x9;&#x9;&lt;/query_cols&gt;&#xa;</xsl:text>
 		<xsl:text>&#x9;&#x9;&lt;/cmd&gt;&#xa;</xsl:text>
-		<xsl:text>&#x9;&lt;/mod&gt;&#xa;</xsl:text>
-	</xsl:template>
 
-	<xsl:template match="column">
-		<xsl:text>&#x9;&#x9;&#x9;&#x9;&lt;col&gt;&lt;field&gt;</xsl:text>
-		<xsl:call-template name="get-name"/>
-		<xsl:text>&lt;/field&gt;&lt;/col&gt;&#xa;</xsl:text>
+		<!-- add/DB1_INSERT -->
+		<xsl:text>&#x9;&#x9;&lt;cmd&gt;&lt;cmd_name&gt;add&lt;/cmd_name&gt;&#xa;</xsl:text>
+		<xsl:text>&#x9;&#x9;&#x9;&lt;db_table_id&gt;</xsl:text>
+		<xsl:value-of select="$table.name"/>
+		<xsl:text>&lt;/db_table_id&gt;&#xa;</xsl:text>
+		<xsl:text>&#x9;&#x9;&#x9;&lt;cmd_type&gt;DB1_INSERT&lt;/cmd_type&gt;&#xa;</xsl:text>
+		<xsl:text>&#x9;&#x9;&#x9;&lt;query_cols&gt;&#xa;</xsl:text>
+		<xsl:for-each select="column">
+			<xsl:choose>
+				<xsl:when test="autoincrement">
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:text>&#x9;&#x9;&#x9;&#x9;&lt;col&gt;&lt;field&gt;</xsl:text>
+					<xsl:call-template name="get-name"/>
+					<xsl:text>&lt;/field&gt;&lt;/col&gt;&#xa;</xsl:text>
+				</xsl:otherwise>
+			</xsl:choose>
+		</xsl:for-each>
+		<xsl:text>&#x9;&#x9;&#x9;&lt;/query_cols&gt;&#xa;</xsl:text>
+		<xsl:text>&#x9;&#x9;&lt;/cmd&gt;&#xa;</xsl:text>
+
+		<!-- update/DB1_UPDATE -->
+		<xsl:if test="column/primary">
+			<xsl:text>&#x9;&#x9;&lt;cmd&gt;&lt;cmd_name&gt;update&lt;/cmd_name&gt;&#xa;</xsl:text>
+			<xsl:text>&#x9;&#x9;&#x9;&lt;db_table_id&gt;</xsl:text>
+			<xsl:value-of select="$table.name"/>
+			<xsl:text>&lt;/db_table_id&gt;&#xa;</xsl:text>
+			<xsl:text>&#x9;&#x9;&#x9;&lt;cmd_type&gt;DB1_UPDATE&lt;/cmd_type&gt;&#xa;</xsl:text>
+			<xsl:text>&#x9;&#x9;&#x9;&lt;clause_cols&gt;&#xa;</xsl:text>
+			<xsl:for-each select="column">
+				<xsl:if test="primary">
+					<xsl:text>&#x9;&#x9;&#x9;&#x9;&lt;col&gt;&lt;field&gt;</xsl:text>
+					<xsl:call-template name="get-name"/>
+					<xsl:text>&lt;/field&gt;&lt;operator&gt;=&lt;/operator&gt;&lt;/col&gt;&#xa;</xsl:text>
+				</xsl:if>
+			</xsl:for-each>
+			<xsl:text>&#x9;&#x9;&#x9;&lt;/clause_cols&gt;&#xa;</xsl:text>
+			<xsl:text>&#x9;&#x9;&#x9;&lt;query_cols&gt;&#xa;</xsl:text>
+			<xsl:for-each select="column">
+				<xsl:choose>
+					<xsl:when test="primary">
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:text>&#x9;&#x9;&#x9;&#x9;&lt;col&gt;&lt;field&gt;</xsl:text>
+						<xsl:call-template name="get-name"/>
+						<xsl:text>&lt;/field&gt;&lt;/col&gt;&#xa;</xsl:text>
+					</xsl:otherwise>
+				</xsl:choose>
+			</xsl:for-each>
+			<xsl:text>&#x9;&#x9;&#x9;&lt;/query_cols&gt;&#xa;</xsl:text>
+			<xsl:text>&#x9;&#x9;&lt;/cmd&gt;&#xa;</xsl:text>
+		</xsl:if>
+
+		<!-- delete/DB1_DELETE -->
+		<xsl:if test="column/primary">
+			<xsl:text>&#x9;&#x9;&lt;cmd&gt;&lt;cmd_name&gt;delete&lt;/cmd_name&gt;&#xa;</xsl:text>
+			<xsl:text>&#x9;&#x9;&#x9;&lt;db_table_id&gt;</xsl:text>
+			<xsl:value-of select="$table.name"/>
+			<xsl:text>&lt;/db_table_id&gt;&#xa;</xsl:text>
+			<xsl:text>&#x9;&#x9;&#x9;&lt;cmd_type&gt;DB1_DELETE&lt;/cmd_type&gt;&#xa;</xsl:text>
+			<xsl:text>&#x9;&#x9;&#x9;&lt;clause_cols&gt;&#xa;</xsl:text>
+			<xsl:for-each select="column">
+				<xsl:if test="primary">
+					<xsl:text>&#x9;&#x9;&#x9;&#x9;&lt;col&gt;&lt;field&gt;</xsl:text>
+					<xsl:call-template name="get-name"/>
+					<xsl:text>&lt;/field&gt;&lt;operator&gt;=&lt;/operator&gt;&lt;/col&gt;&#xa;</xsl:text>
+				</xsl:if>
+			</xsl:for-each>
+			<xsl:text>&#x9;&#x9;&#x9;&lt;/clause_cols&gt;&#xa;</xsl:text>
+			<xsl:text>&#x9;&#x9;&lt;/cmd&gt;&#xa;</xsl:text>
+		</xsl:if>
+
+		<xsl:text>&#x9;&lt;/mod&gt;&#xa;</xsl:text>
 	</xsl:template>
 
 </xsl:stylesheet>

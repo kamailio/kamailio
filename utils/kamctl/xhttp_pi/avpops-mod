@@ -14,4 +14,40 @@
 				<col><field>last_modified</field></col>
 			</query_cols>
 		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>usr_preferences</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>uuid</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>attribute</field></col>
+				<col><field>type</field></col>
+				<col><field>value</field></col>
+				<col><field>last_modified</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>usr_preferences</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>uuid</field></col>
+				<col><field>username</field></col>
+				<col><field>domain</field></col>
+				<col><field>attribute</field></col>
+				<col><field>type</field></col>
+				<col><field>value</field></col>
+				<col><field>last_modified</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>usr_preferences</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
 	</mod>
