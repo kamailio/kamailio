@@ -56,17 +56,13 @@ static const char* ul_rpc_dump_doc[2] = {
 };
 
 static void ul_rpc_dump(rpc_t* rpc, void* ctx) {
-	struct pcontact* c;
-	ppublic_t* p;
 	dlist_t* dl;
 	udomain_t* dom;
 	time_t t;
 	void* th;
 	void* ah;
-	void* ih;
-	void* sr;
 	void* sh;
-	int max, n, i, j;
+	int max, n, i;
 
 	t = time(0);
 	for (dl = root; dl; dl = dl->next) {
