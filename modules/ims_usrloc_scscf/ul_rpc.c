@@ -177,18 +177,11 @@ static void ul_rpc_show_impu(rpc_t* rpc, void* ctx)
 
 static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 {
-	struct impurecord* r;
 	dlist_t* dl;
 	udomain_t* dom;
 	time_t t;
-	ucontact_t* c;
-	str empty_str = { "[not set]", 9 };
 	void* th;
-	void* ah;
-	void* ih;
-	void* vh;
 	void* sh;
-	void* dh;
 	int max, n, i;
 
 	t = time(0);
