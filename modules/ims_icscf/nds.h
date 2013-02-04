@@ -62,8 +62,6 @@
 #define MSG_403 "Forbidden" 
 #define MSG_500 "I-CSCF Error while stripping untrusted headers"
 
-static str str_msg_403 = {MSG_403, 9};
-static str str_msg_500 = {MSG_500, 46};
 
 int I_NDS_check_trusted(struct sip_msg* msg, char* str1, char* str2);
 

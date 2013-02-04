@@ -65,6 +65,9 @@
 extern sl_api_t slb;
 
 
+static str str_msg_403 = {MSG_403, 9};
+static str str_msg_500 = {MSG_500, 46};
+
 /** Defines the untrusted headers */
 str untrusted_headers[]={
 	{"P-Asserted-Identity",19},
