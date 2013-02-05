@@ -130,7 +130,13 @@ kamdbctl pframework create
 			<listitem><para>DB1_DOUBLE</para></listitem>
 			<listitem><para>DB1_STRING</para></listitem>
 			<listitem><para>DB1_STR</para></listitem>
-			<listitem><para>DB1_DATETIME</para></listitem>
+			<listitem><para>DB1_DATETIME</para>
+			<itemizedlist>
+				<listitem><para>Note: input field must be provided in
+					'YEAR-MM-DD HH:MM:SS' format.</para>
+				</listitem>
+			</itemizedlist>
+			</listitem>
 			<listitem><para>DB1_BLOB</para></listitem>
 			<listitem><para>DB1_BITMAP</para></listitem>
 		</itemizedlist>
@@ -233,7 +239,7 @@ kamdbctl pframework create
 		</para>
 		<itemizedlist>
 			<listitem><para>
-			full subscriber provisionning with automatic ha1/ha1b fields;
+			full subscriber provisionning with automatic ha1/ha1b fields.
 			</para></listitem>
 		</itemizedlist>
 	</section>

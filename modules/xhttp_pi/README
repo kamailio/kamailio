@@ -163,6 +163,8 @@ kamdbctl pframework create
      * DB1_STRING
      * DB1_STR
      * DB1_DATETIME
+          + Note: input field must be provided in 'YEAR-MM-DD HH:MM:SS'
+            format.
      * DB1_BLOB
      * DB1_BITMAP
 
@@ -219,7 +221,7 @@ kamdbctl pframework create
 4. To-do
 
    Features to be added in the future:
-     * full subscriber provisionning with automatic ha1/ha1b fields;
+     * full subscriber provisionning with automatic ha1/ha1b fields.
 
 5. Dependencies
 
