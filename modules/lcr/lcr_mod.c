@@ -943,7 +943,8 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 		   i);
 	    return 0;
 	}
-	if (VAL_NULL(ROW_VALUES(row) + 1)) {
+	if (VAL_NULL(ROW_VALUES(row) + 1) ||
+	    (strlen((char *)VAL_STRING(ROW_VALUES(row) + 1)) == 0)) {
 	    ip_string.s = (char *)0;
 	    ip_addr.af = 0;
 	    ip_addr.len = 0;
