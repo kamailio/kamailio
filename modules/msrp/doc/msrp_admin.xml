@@ -413,7 +413,7 @@ event_route[msrp:frame-in] {
 ...
 event_route[msrp:frame-in] {
     ...
-	if(metod=="AUTH") { msrp_cmap_save(); exit; }
+	if(method=="AUTH") { msrp_cmap_save(); exit; }
     ...
 }
 ...
@@ -437,7 +437,7 @@ event_route[msrp:frame-in] {
 ...
 event_route[msrp:frame-in] {
     ...
-	if(metod=="SEND" and $msrp(nexthops)==1) {
+	if(method=="SEND" and $msrp(nexthops)==1) {
 		if(msrp_cmap_lookup()) {
 			msrp_relay();
 		} else {
@@ -578,7 +578,7 @@ Content-Type: text/plain
 			for MSRP frames. In this config, the SIP traffic is rejected.
 		</para>
 		<example>
-		<title>Event Route</title>
+		<title>Event Route (using htable for MSRP connection tracking)</title>
 		<programlisting format="linespecific">
 ...
 <![CDATA[
@@ -611,7 +611,6 @@ loadmodule "cfgutils.so"
 loadmodule "htable.so"
 loadmodule "xlog.so"
 
-# ----- mi_fifo params -----
 modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
 
 modparam("auth", "nonce_count", 1)
@@ -739,7 +738,140 @@ event_route[msrp:frame-in] {
 ]]>
 ...
 </programlisting>
-	    </example>
+		</example>
+		<example>
+		<title>Event Route (using msrp_cmap_ functions for connection tracking)</title>
+		<programlisting format="linespecific">
+...
+<![CDATA[
+#!KAMAILIO
+
+debug=2
+memdbg=5
+memlog=5
+
+children=4
+
+log_stderror=yes
+auto_aliases=no
+
+tcp_accept_no_cl=yes
+tcp_connection_lifetime=1810
+
+listen=127.0.0.1:5060
+
+mpath="modules_k/:modules/"
+
+loadmodule "sl.so"
+loadmodule "kex.so"
+loadmodule "mi_fifo.so"
+loadmodule "ctl.so"
+loadmodule "msrp.so"
+loadmodule "pv.so"
+loadmodule "auth.so"
+loadmodule "cfgutils.so"
+loadmodule "xlog.so"
+
+modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
+
+modparam("auth", "nonce_count", 1)
+modparam("auth", "qop", "auth")
+
+modparam("msrp", "cmap_size", 8)
+modparam("msrp", "use_path_addr", "msrp://127.0.0.1:5060")
+
+request_route {
+	sl_send_reply("403", "No SIP Here");
+	exit;
+}
+
+reply_route {
+	drop;
+}
+
+event_route[msrp:frame-in] {
+	xdbg("============#[[$msrp(method)]]===========\n");
+	xdbg("============*[[$si:$sp]]\n");
+	xdbg("============ crthop:   [$msrp(crthop)]\n");
+	xdbg("============ prevhop:  [$msrp(prevhop)]\n");
+	xdbg("============ nexthop:  [$msrp(nexthop)]\n");
+	xdbg("============ firsthop: [$msrp(firsthop)]\n");
+	xdbg("============ lasthop:  [$msrp(lasthop)]\n");
+	xdbg("============ prevhops: [$msrp(prevhops)]\n");
+	xdbg("============ nexthops: [$msrp(nexthops)]\n");
+	xdbg("============ srcaddr:  [$msrp(srcaddr)]\n");
+	xdbg("============ srcsock:  [$msrp(srcsock)]\n");
+	xdbg("============ sessid:   [$msrp(sessid)]\n");
+
+	msrp_reply_flags("1");
+
+	if (msrp_is_reply())
+	{
+		msrp_relay();
+	}
+	else if($msrp(method)=="AUTH")
+	{
+		if($msrp(nexthops)>0)
+		{
+			msrp_relay();
+			exit;
+		}
+
+		# frame for local server - send Use-Path
+		# -- passwd can be loaded from DB based on $au
+		$var(passwd) = "xyz123";
+		if(!pv_www_authenticate("myrealm", "$var(passwd)", "0",
+					"$msrp(method)"))
+		{
+			if(auth_get_www_authenticate("myrealm", "1",
+							"$var(wauth)"))
+			{
+				msrp_reply("401", "Unauthorized",
+						"$var(wauth)");
+			} else {
+				msrp_reply("500", "Server Error");
+			}
+			exit;
+		}
+
+		msrp_cmap_save();
+	}
+	else if ($msrp(method)=="SEND" || $msrp(method)=="REPORT")
+	{
+		if ($msrp(nexthops)>1)
+		{
+			if ($msrp(method)!="REPORT")
+			{
+				msrp_reply("200", "OK");
+			}
+			msrp_relay();
+			exit;
+		}
+
+		if (msrp_cmap_lookup())
+		{
+			if ($msrp(method)!="REPORT")
+			{
+				msrp_reply("200", "OK");
+			}
+			msrp_relay_flags("1");
+			msrp_relay();
+		}
+		else
+		{
+			msrp_reply("481", "Session-does-not-exist");
+		}
+	}
+	else
+	{
+		msrp_reply("501", "Request-method-not-understood");
+	}
+}
+]]>
+...
+</programlisting>
+		</example>
+
 	</section>
 
 </chapter>
