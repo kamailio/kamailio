@@ -26,24 +26,32 @@
 
 	<section>
 	<title>Limitations</title>
+	<itemizedlist>
+	<listitem>
 	<para>
 		This module does not implement asynchronous RPC commands.
 		It is unlikely that asynchronous RPC commands will be executed
 		from an RPC web interface.
 	</para>
+	</listitem>
+	<listitem>
 	<para>
 		This module does not accept parameters embedded in a structure
 		(see RPC documentation for more info about how parameters can be
 		passed to RPC).
 	</para>
+	</listitem>
+	<listitem>
 	<para>
 		At startup, all RPC commands are sorted and grouped based on
-		their format.  The expected format is [group].[subcommand].
+		their format. The expected format is [group].[subcommand].
 		The initial xhttp_rpc webpage displays all the retrieved groups.
 		All RPC commands are available as sub-menus of each [group].
 		If an RPC command is not in the expected format, it will be
 		dropped from the initial xhttp_rpc home page menu.
 	</para>
+	</listitem>
+	</itemizedlist>
 	</section>
 	</section>
 
@@ -82,9 +90,9 @@
 	<section>
 		<title><varname>xhttp_rpc_root</varname> (str)</title>
 		<para>
-			It specifies the root path for RPC http requests.
+			Specifies the root path for RPC http requests.
 			The link to the RPC web interface must be constructed
-			using the following patern:
+			using the following pattern:
 			http://[server_IP]:[tcp_port]/[xhttp_rpc_root] 
 		</para>
 		<para>
@@ -104,8 +112,8 @@ modparam("xhttp_rpc", "xhttp_rpc_root", "http_rpc")
 	<section>
 		<title><varname>xhttp_rpc_buf_size</varname> (str)</title>
 		<para>
-			It specifies the maximum length of the buffer used
-			to write in the RPC reply information in order to
+			Specifies the maximum length of the buffer used
+			to write the RPC reply information in order to
 			build the HTML response.
 		</para>
 		<para>
