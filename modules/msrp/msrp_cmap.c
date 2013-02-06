@@ -354,8 +354,7 @@ int msrp_cmap_lookup(msrp_frame_t *mf)
 	{
 		if(itb->citemid>hid) {
 			break;
-		}
-		if(itb->citemid>hid) {
+		} else {
 			if(itb->sessionid.len == sesid.len
 					&& memcmp(itb->sessionid.s, sesid.s, sesid.len)==0) {
 				LM_DBG("found session [%.*s]\n", sesid.len, sesid.s);
