@@ -203,7 +203,7 @@ route[LOCATION] {
 		exit;
 	}
 
-	t_on_failure(FAIL_OUTBOUND);
+	t_on_failure("FAIL_OUTBOUND");
 ...
 }
 ...
@@ -218,8 +218,8 @@ failure_route[FAIL_OUTBOUND] {
 		exit;
 	}
 
-	t_on_failure(FAIL_OUTBOUND);
-	route[RELAY];
+	t_on_failure("FAIL_OUTBOUND");
+	route(RELAY);
 }
 ...
 ]]></programlisting>
