@@ -301,7 +301,7 @@ modparam("xhttp_pi", "xhttp_pi_root", "pi")
 	<section>
 		<title><varname>xhttp_pi_buf_size</varname> (int)</title>
 		<para>
-			It specifies the maximum length of the buffer used
+			It specifies the maximum length of the buffer (in bytes) used
 			to write in the HTML reply information in order to
 			build the HTML response.
 		</para>

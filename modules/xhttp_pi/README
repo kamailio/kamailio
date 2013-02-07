@@ -260,8 +260,8 @@ modparam("xhttp_pi", "xhttp_pi_root", "pi")
 
 6.2. xhttp_pi_buf_size (int)
 
-   It specifies the maximum length of the buffer used to write in the HTML
-   reply information in order to build the HTML response.
+   It specifies the maximum length of the buffer (in bytes) used to write
+   in the HTML reply information in order to build the HTML response.
 
    Default value is 0 (auto set to 1/3 of the size of the configured pkg
    mem).
