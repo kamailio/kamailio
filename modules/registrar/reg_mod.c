@@ -363,7 +363,7 @@ static int mod_init(void)
 
 	if(ul.register_ulcb != NULL)
 	{
-		reg_expire_event_rt = route_lookup(&event_rt, "usrloc:expired-contact");
+		reg_expire_event_rt = route_lookup(&event_rt, "usrloc:contact-expired");
 		if (reg_expire_event_rt>=0 && event_rt.rlist[reg_expire_event_rt]==0)
 			reg_expire_event_rt=-1; /* disable */
 		if (reg_expire_event_rt>=0) {
