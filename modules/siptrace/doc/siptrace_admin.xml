@@ -96,7 +96,7 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is "".
+			Default value is "mysql://kamailio:kamailiorw@localhost/okamailio".
 		</emphasis>
 		</para>
 		<example>

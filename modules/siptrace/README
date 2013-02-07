@@ -191,7 +191,7 @@ Chapter 1. Admin Guide
 
    Database URL.
 
-   Default value is "".
+   Default value is "mysql://kamailio:kamailiorw@localhost/okamailio".
 
    Example 1.1. Set db_url parameter
 ...
