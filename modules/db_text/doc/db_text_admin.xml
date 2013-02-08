@@ -22,8 +22,8 @@
 	<para>
 		The module is meant for use in demos or small devices that do not
 		support other DB modules. It keeps everything in memory and if you deal
-		with large amount of data you may run quickly out of memory. Also, it
-		has not implemented all standard database facilities (like order by),
+		with large amount of data you may run out of memory quickly. Also, it
+		does not implement all standard database facilities (like order by),
 		it includes minimal functionality to work properly (who knows ?!?)
 		with &kamailio;.
 	</para>
@@ -33,10 +33,10 @@
 		it will fail (support for such situation is in to-do list).
 	</para>
 	<para>
-		NOTE: even when is in non-caching mode, the module does not write
+		NOTE: even when db_text is in non-caching mode, the module does not write
 		back to hard drive after changes. In this mode, the module checks if
 		the corresponding file on disk has changed, and reloads it. The write
-		on disk happens at openser shut down.
+		to disk happens at &kamailio; shut down.
 	</para>
 		<section>
 		<title>Design of dbtext engine</title>
@@ -45,10 +45,12 @@
 			<itemizedlist>
 			<listitem>
 				<para>
-				a database is represented by a directory in the local file
+				A database is represented by a directory in the local file
 				system.
+				</para>
+				<para>
 				NOTE: when you use <emphasis>dbtext</emphasis> in &kamailio;,
-				the	database URL for modules must be the path to the directory
+				the database URL for modules must be the path to the directory
 				where the table-files are located, prefixed by 
 				<quote>text://</quote>, e.g., 
 				<quote>text:///var/dbtext/ser</quote>. If there is no
@@ -58,10 +60,14 @@
 				database directory or a relative one to <quote>CFG_DIR</quote>
 				directory.
 				</para>
+				<para>
+				Do not forget that all databases in &kamailio; needs the <quote>version</quote>
+				table.
+				</para>
 			</listitem>
 			<listitem>
 				<para>
-				a table is represented by a text file inside database directory.
+				A table is represented by a text file inside database directory.
 				</para>
 			</listitem>
 			</itemizedlist>
@@ -70,8 +76,8 @@
 		<section>
 		<title>Internal format of a dbtext table</title>
 		<para>
-		First line is the definition of the columns. Each column must be
-		declared as follows:
+		The first line is the definition of the columns. Each column must be
+		declared in the following format:
 			<itemizedlist>
 			<listitem>
 				<para>
@@ -200,10 +206,10 @@ suser:supasswd:xxx:alpha.org:xxx
 		</section>
 		<section>
 		<title>Existing limitations</title>
-		<para>This database interface don't support the data insertion with
-				default values. All such values specified in the database template
-				are ignored. So its advisable to specify all data for a column at
-				insertion operations.
+		<para>This database interface does not support data insertion with
+			default values. All such values specified in the database template
+			are ignored. So its advisable to specify all data for a column at
+			insertion operations.
 		</para>
 		</section>
 	</section>
@@ -212,7 +218,7 @@ suser:supasswd:xxx:alpha.org:xxx
 		<section>
 			<title>&kamailio; modules</title>
 		<para>
-			The next modules must be loaded before this module:
+			These modules must be loaded before this module:
 			<itemizedlist>
 			<listitem>
 				<para>
@@ -225,7 +231,7 @@ suser:supasswd:xxx:alpha.org:xxx
 		<section>
 			<title>External libraries or applications</title>
 		<para>
-			The next libraries or applications must be installed before running
+			These libraries or applications must be installed before running
 			&kamailio; with this module:
 			<itemizedlist>
 			<listitem>
@@ -248,7 +254,7 @@ suser:supasswd:xxx:alpha.org:xxx
 		Set caching mode (0) or non-caching mode (1). In caching mode, data
 		is loaded at startup. In non-caching mode, the module check every time
 		a table is requested whether the corresponding file on disk has
-		changed, and if yes, will re-load table from file.
+		changed, and if yes, will re-load the table from file.
 		</para>
 		<para>
 		<emphasis>
@@ -271,7 +277,7 @@ modparam("db_text", "db_mode", 1)
 		<title>
 		<function moreinfo="none">db_text.dump</function>
 		</title>
-		<para>Write back to hard drive modified tables.</para>
+		<para>Write back to hard drive all modified tables.</para>
 		<para>Name: <emphasis>db_text.dump</emphasis></para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 		<para>RPC Command Format:</para>
@@ -307,12 +313,13 @@ modparam("module_name", "db_url", "text:///path/to/dbtext/database")
 </programlisting>
 		</example>
 		<section>
-			<title>Using dbtext with basic &kamailio; configuration</title>
+			<title>Using db_text with a basic &kamailio; configuration</title>
 		<para>
-		Here are the definitions for most important table as well as a basic 
-		configuration file to use dbtext with &kamailio;. The table structures
-		may change in time and you will have to adjust next examples. These are 
-		know to work with upcoming &kamailio; v0.9.x
+		Here are definitions for the most important tables as well as a basic 
+		configuration file to use db_text with &kamailio;. The table structures
+		may change in time and you will have to adjust these examples. Check the
+		source code directory <quote>utils/kamctl/dbtxt/kamailio</quote> for
+		current definitions.
 		</para>
 		<para>
 		You have to populate the table 'subscriber' by hand with user profiles 
