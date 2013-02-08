@@ -142,7 +142,7 @@ Chapter 1. Admin Guide
    directory data in the Kamailio SIP message routing script.
 
    The following features are offered by the LDAP module:
-     * LDAP search function based an a LDAP URL
+     * LDAP search function based on a LDAP URL
      * LDAP result parsing functions to store LDAP data as AVP variables
      * Support for accessing multiple LDAP servers
      * LDAP SIMPLE authentication
