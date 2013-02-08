@@ -21,7 +21,7 @@
       <para>The following features are offered by the LDAP module:</para>
       <itemizedlist>
         <listitem>
-            <para>LDAP search function based an a LDAP URL</para>
+            <para>LDAP search function based on a LDAP URL</para>
         </listitem>
         <listitem>
             <para>LDAP result parsing functions to store LDAP data as AVP variables</para>
