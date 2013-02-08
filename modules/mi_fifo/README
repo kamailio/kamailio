@@ -70,11 +70,11 @@ Chapter 1. Admin Guide
 1. Overview
 
    This is a module which provides a FIFO transport layer implementation
-   for Management Interface.
+   for the Management Interface.
 
 2. FIFO command syntax
 
-   The external commands issued via FIFO interface must follow the
+   The external commands issued via the FIFO interface must follow the
    following syntax:
      * request = first_line argument*
      * first_line = ':'command_name':'reply_fifo'\n'
@@ -117,7 +117,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set fifo_name parameter
 ...
-modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
+modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
 ...
 
 4.2. fifo_mode (integer)
@@ -134,9 +134,9 @@ modparam("mi_fifo", "fifo_mode", 0600)
 
 4.3. fifo_group (integer) fifo_group (string)
 
-   Group to be used for creating the listening FIFO file.
+   System Group to be used for creating the listening FIFO file.
 
-   Default value is the inherited one.
+   Default value is the inherited one (process group).
 
    Example 1.3. Set fifo_group parameter
 ...
@@ -146,9 +146,9 @@ modparam("mi_fifo", "fifo_group", "root")
 
 4.4. fifo_user (integer) fifo_group (string)
 
-   User to be used for creating the listening FIFO file.
+   System User to be used for creating the listening FIFO file.
 
-   Default value is the inherited one.
+   Default value is the inherited one (process user).
 
    Example 1.4. Set fifo_user parameter
 ...
@@ -170,7 +170,7 @@ modparam("mi_fifo", "reply_dir", "/home/kamailio/tmp/")
 4.6. reply_indent (string)
 
    Strings to be used for line indentation. As the MI data structure is
-   tree oriendeted, the depth level will printed as indentation.
+   tree oriented, the depth level will be printed as indentation.
 
    Default value is ""\t" (TAB)".
 
@@ -186,7 +186,7 @@ modparam("mi_fifo", "reply_indent", "    ")
 6. Example
 
    This is an example showing the FIFO format for the "get_statistics
-   dialog: tm:" MI commad: response.
+   dialog: tm:" MI command response.
 
    Example 1.7. FIFO request
 :get_statistics:reply_fifo\n

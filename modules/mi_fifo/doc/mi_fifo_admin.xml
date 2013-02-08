@@ -17,14 +17,14 @@
 	<title>Overview</title>
 	<para>
 		This is a module which provides a FIFO transport layer 
-		implementation for Management Interface.
+		implementation for the Management Interface.
 	</para>
 	</section>
 
 	<section>
 	<title>FIFO command syntax</title>
 	<para>
-		The external commands issued via FIFO interface must follow the
+		The external commands issued via the FIFO interface must follow the
 		following syntax:
 		<itemizedlist>
 			<listitem><para><emphasis>
@@ -97,7 +97,7 @@
 		<title>Set <varname>fifo_name</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("mi_fifo", "fifo_name", "/tmp/openser_fifo")
+modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
 ...
 </programlisting>
 		</example>
@@ -128,11 +128,11 @@ modparam("mi_fifo", "fifo_mode", 0600)
 		<title><varname>fifo_group</varname> (integer)
 		<varname>fifo_group</varname> (string)</title>
 		<para>
-		Group to be used for creating the listening FIFO file.
+		System Group to be used for creating the listening FIFO file.
 		</para>
 		<para>
 		<emphasis>
-			Default value is the inherited one.
+			Default value is the inherited one (process group).
 		</emphasis>
 		</para>
 		<example>
@@ -150,11 +150,11 @@ modparam("mi_fifo", "fifo_group", "root")
 		<title><varname>fifo_user</varname> (integer)
 		<varname>fifo_group</varname> (string)</title>
 		<para>
-		User to be used for creating the listening FIFO file.
+		System User to be used for creating the listening FIFO file.
 		</para>
 		<para>
 		<emphasis>
-			Default value is the inherited one.
+			Default value is the inherited one (process user).
 		</emphasis>
 		</para>
 		<example>
@@ -192,7 +192,7 @@ modparam("mi_fifo", "reply_dir", "/home/kamailio/tmp/")
 		<title><varname>reply_indent</varname> (string)</title>
 		<para>
 		Strings to be used for line indentation. As the MI data structure 
-		is tree oriendeted, the depth level will printed as indentation.
+		is tree oriented, the depth level will be printed as indentation.
 		</para>
 		<para>
 		<emphasis>
@@ -222,7 +222,7 @@ modparam("mi_fifo", "reply_indent", "    ")
 	<title>Example</title>
 		<para>
 		This is an example showing the FIFO format for the 
-		<quote>get_statistics dialog: tm:</quote> MI commad:
+		<quote>get_statistics dialog: tm:</quote> MI command
 		response.
 		</para>
 		<example>
