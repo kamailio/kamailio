@@ -31,15 +31,15 @@ Daniel-Constantin Mierla
               3.3. resetsflag(flag)
               3.4. setbflag(flag [, branch])
               3.5. isbflagset(flag [, branch])
-              3.6. resetsflag(flag [, branch])
-              3.7. km_append_branch([uri])
-              3.8. setdsturi(uri)
-              3.9. resetdsturi()
-              3.10. isdsturiset()
-              3.11. pv_printf(var, str)
-              3.12. is_myself(uri)
-              3.13. setdebug(level)
-              3.14. resetdebug()
+              3.6. resetbflag(flag [, branch])
+              3.7. setdsturi(uri)
+              3.8. resetdsturi()
+              3.9. isdsturiset()
+              3.10. pv_printf(var, str)
+              3.11. is_myself(uri)
+              3.12. setdebug(level)
+              3.13. resetdebug()
+              3.14. km_append_branch([uri])
 
         4. MI Commands
 
@@ -64,7 +64,7 @@ Daniel-Constantin Mierla
    1.3. resetsflag usage
    1.4. setbflag usage
    1.5. setbflag usage
-   1.6. resetsflag usage
+   1.6. resetbflag usage
    1.7. setdsturi usage
    1.8. resetdsturi usage
    1.9. isdsturiset usage
@@ -90,15 +90,15 @@ Chapter 1. Admin Guide
         3.3. resetsflag(flag)
         3.4. setbflag(flag [, branch])
         3.5. isbflagset(flag [, branch])
-        3.6. resetsflag(flag [, branch])
-        3.7. km_append_branch([uri])
-        3.8. setdsturi(uri)
-        3.9. resetdsturi()
-        3.10. isdsturiset()
-        3.11. pv_printf(var, str)
-        3.12. is_myself(uri)
-        3.13. setdebug(level)
-        3.14. resetdebug()
+        3.6. resetbflag(flag [, branch])
+        3.7. setdsturi(uri)
+        3.8. resetdsturi()
+        3.9. isdsturiset()
+        3.10. pv_printf(var, str)
+        3.11. is_myself(uri)
+        3.12. setdebug(level)
+        3.13. resetdebug()
+        3.14. km_append_branch([uri])
 
    4. MI Commands
 
@@ -145,15 +145,15 @@ Chapter 1. Admin Guide
    3.3. resetsflag(flag)
    3.4. setbflag(flag [, branch])
    3.5. isbflagset(flag [, branch])
-   3.6. resetsflag(flag [, branch])
-   3.7. km_append_branch([uri])
-   3.8. setdsturi(uri)
-   3.9. resetdsturi()
-   3.10. isdsturiset()
-   3.11. pv_printf(var, str)
-   3.12. is_myself(uri)
-   3.13. setdebug(level)
-   3.14. resetdebug()
+   3.6. resetbflag(flag [, branch])
+   3.7. setdsturi(uri)
+   3.8. resetdsturi()
+   3.9. isdsturiset()
+   3.10. pv_printf(var, str)
+   3.11. is_myself(uri)
+   3.12. setdebug(level)
+   3.13. resetdebug()
+   3.14. km_append_branch([uri])
 
 3.1. setsflag(flag)
 
@@ -248,12 +248,12 @@ if(isbflagset("1"))
 }
 ...
 
-3.6. resetsflag(flag [, branch])
+3.6. resetbflag(flag [, branch])
 
-   Reset the script flag.
+   Reset the branch flag.
 
    Meaning of the parameters is as follows:
-     * flag - the index of the script flag to be reset. Can be integer or
+     * flag - the index of the branch flag to be reset. Can be integer or
        pseudo-variable with integer value.
      * branch - the index of the branch whose flag to be set. Can be
        integer or pseudo-variable with integer value. If omitted, then
@@ -261,17 +261,12 @@ if(isbflagset("1"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.6. resetsflag usage
+   Example 1.6. resetbflag usage
 ...
 resetbflag("1");
 ...
 
-3.7. km_append_branch([uri])
-
-   It was replaced by append_branch() from corex module, starting with
-   version 3.4.0.
-
-3.8. setdsturi(uri)
+3.7. setdsturi(uri)
 
    Set the destination address URI (outbound proxy address).
 
@@ -288,7 +283,7 @@ resetbflag("1");
 setdsturi("sip:10.0.0.10");
 ...
 
-3.9. resetdsturi()
+3.8. resetdsturi()
 
    Reset the destination address URI (outbound proxy address).
 
@@ -299,7 +294,7 @@ setdsturi("sip:10.0.0.10");
 resetdsturi();
 ...
 
-3.10. isdsturiset()
+3.9. isdsturiset()
 
    Check if the destination address URI (outbound proxy address) is set.
 
@@ -313,10 +308,10 @@ if(isdsturiset())
 }
 ...
 
-3.11. pv_printf(var, str)
+3.10. pv_printf(var, str)
 
-   Evalues the str and sets the resulted value to variable var. For
-   backward compatibility reasons, same function can be executed via
+   Evalues the str and sets the resulting value to variable var. For
+   backward compatibility reasons, the same function can be executed via
    'avp_printf(var, str)'.
 
    Meaning of the parameters is as follows:
@@ -332,7 +327,7 @@ pv_printf("$ru", "sip:$rU@$fd");
 pv_printf("$avp(x)", "From: $fU - To: $tU");
 ...
 
-3.12. is_myself(uri)
+3.11. is_myself(uri)
 
    Check if the parameter matches the 'myself' condition (i.e., is a local
    IP or domain).
@@ -351,7 +346,7 @@ if(is_myself("$fu")) {
 }
 ...
 
-3.13. setdebug(level)
+3.12. setdebug(level)
 
    Set the debug log level per process.
 
@@ -369,7 +364,7 @@ $var(level) = 2;
 setdebug("$var(level)");
 ...
 
-3.14. resetdebug()
+3.13. resetdebug()
 
    Reset the local debug log level back to the value of core parameter
    'debug'.
@@ -380,6 +375,11 @@ setdebug("$var(level)");
 ...
 resetdebug();
 ...
+
+3.14. km_append_branch([uri])
+
+   This function was replaced by append_branch() from corex module,
+   starting with version 4.0.0.
 
 4. MI Commands
 
