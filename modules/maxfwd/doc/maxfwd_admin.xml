@@ -16,9 +16,15 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		The module implements all the operations regarding MaX-Forward header 
-		field, like adding it (if not present) or decrementing and checking 
+		The module implements all of the operations that handle the Max-Forward
+		SIP header field, like adding it (if not present) or decrementing and checking 
 		the value of the existent one.
+	</para>
+	<para>
+		The SIP Max-Forward header is used to prevent loops in a SIP network.
+		Every server that process and forward a SIP request lowers the Max-Forward
+		value with one. When the value reaches zero, the request is not forwarded
+		and an error response is sent to the UAC.
 	</para>
 	</section>
 	<section>
@@ -67,7 +73,7 @@
 		</para>
 		<para>
 		The range of values stretches from 1 to 256, which is the maximum 
-		MAX-FORWARDS value allowed by RFC 3261. Its value can be changed at
+		MAX-FORWARDS value allowed by RFC 3261. The value can be changed at
 		runtime.
 		</para>
 		<para>
@@ -100,7 +106,7 @@ modparam("maxfwd", "max_limit", 32)
 		its value will be decremented (if not 0). The parameter can be a
 		variable.
 		</para>
-		<para>Retuning codes:</para>
+		<para>Return codes:</para>
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>2 (true)</emphasis> - header was not found and
@@ -218,7 +224,7 @@ if (!maxfwd_process("10") &amp;&amp; $retcode==-1) {
 		<title><function>is_maxfwd_lt</function> usage</title>
 		<programlisting format="linespecific">
 ...
-# next hope is a gateway, so make no sens to
+# next hop is a gateway, so make no sense to
 # forward if MF is 0 (after decrement)
 if ( is_maxfwd_lt("1") ) {
 	sl_send_reply("483","Too Many Hops");
