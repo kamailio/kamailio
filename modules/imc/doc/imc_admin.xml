@@ -18,7 +18,7 @@
 	<para>
 		This module offers support for instant message conference. It
 		follows the architecture of IRC channels, you can send commands
-		embedded in MESSAGE body, because there are no SIP UA clients
+		embedded in MESSAGE body, because there are just a few SIP UA clients
 		which have GUI for IM conferencing.
 	</para>
 	<para>
@@ -28,7 +28,7 @@
 	</para>
 	<para>
 	To ease the integration in the configuration file, the interpreter of
-	the IMC commands are embeded in the module, from configuration poin of
+	the IMC commands are embeded in the module. From a configuration point of
 	view, there is only one function which has to be executed for both
 	messages and commands.
 	</para>
@@ -42,7 +42,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>mysql</emphasis>.
+				<emphasis>db_mysql</emphasis>.
 			</para>
 			</listitem>
 			<listitem>
