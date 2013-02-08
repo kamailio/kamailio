@@ -14,8 +14,8 @@
 	</title>
 	<para>
 	    Changes IP addresses inside SDP package in lines describing
-	    connections like c=IN IP4 Currently in only changes IP4 addresses
-	    since IP6 probably will not need to traverse NAT :)
+	    connections like c=IN IP4 . Currently this function only changes 
+	    IP4 addresses since IP6 probably will not need to traverse NAT :)
 	</para>
 	<para>
 	    The function returns negative on error, or number of replacements + 1.
@@ -24,9 +24,9 @@
 	<itemizedlist>
 	    <listitem>
 		<para>
-		    <emphasis>pattern</emphasis> - A pair ip/mask used to match
+		    <emphasis>pattern</emphasis> - A ip address/mask pair used to match
 		    IP's located inside SDP package in lines c=IN IP4 ip. This
-		    lines will only be mangled if located IP is in the network
+		    line will only be changed if located IP is in the network
 		    described by this pattern. Examples of valid patterns are
 		    "10.0.0.0/255.0.0.0" or "10.0.0.0/8" etc.
 		</para>
@@ -87,8 +87,8 @@ sdp_mangle_port("-12000");
 	<para>
 	    This function will encode uri-s inside Contact header in the
 	    following manner sip:username:password@ip:port;transport=protocol
-	    goes sip:enc_pref*username*ip*port*protocol@public_ip * is the
-	    default separator.
+	    goes <emphasis>sip:enc_pref*username*ip*port*protocol@public_ip</emphasis>.
+	    "*" (asterisk) is the default separator.
 	</para>
 	<para>
 	    The function returns negative on error, 1 on success.
@@ -98,8 +98,8 @@ sdp_mangle_port("-12000");
 	    <listitem>
 		<para>
 		    <emphasis>encoding_prefix</emphasis> - Something to allow
-		    us to determine that a contact is encoded publicip--a
-		    routable IP,most probably you should put your external IP
+		    us to determine that a contact is encoded public ip--a
+		    routable IP, most probably you should put your external IP
 		    of your NAT box.
 		</para>
 	    </listitem>
@@ -121,10 +121,18 @@ if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
 	<para>
 	    This function will decode the URI in first line in packets which
 	    come with encoded URI in the following manner
+	    <emphasis>
 	    sip:enc_pref*username*ip*port*protocol*src_ip*src_port*src_proto@public_ip;parameters
-	   goes to
-	    sip:username:password@ip:port;parameters and will set dst_uri to
-		sip:src_ip:src_port;transport=src_proto (so that the next forward() or
+	    </emphasis>
+	   is converted to
+	    <emphasis>
+	    sip:username:password@ip:port;parameters
+	    </emphasis>
+	    and will set destination URI to 
+	    <emphasis>
+	    sip:src_ip:src_port;transport=src_proto
+	    </emphasis>
+		(so that the next forward() or
 		t_relay() will send the message back to src_ip:src_port using 
 		src_proto). It uses the default set parameter for contact encoding 
 		separator.
@@ -132,7 +140,6 @@ if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
 	<para>
 	    The function returns negative on error, 1 on success.
 	</para>
-	<para>Meaning of the parameters is as follows:</para>
 	<example>
 	    <title><function>decode_contact</function> usage</title>
 	    <programlisting>
@@ -149,15 +156,14 @@ if (uri =~ "^enc*") { decode_contact(); }
 	</title>
 	<para>
 	    This function will decode URIs inside Contact header in the
-	    same manner as decode_contact.  The difference is no dst_uri is set
+	    same manner as decode_contact(). The difference is that no dst_uri is set
 		 (src_ip, src_port and src_proto are ignored) and instead of changing
-		 the request uri, the Contact header uris are modified.
+		 the request uri, the Contact header URI is modified.
 		 It uses the default set parameter for contact encoding separator.
 	</para>
 	<para>
 	    The function returns negative on error, 1 on success.
 	</para>
-	<para>Meaning of the parameters is as follows:</para>
 	<example>
 	    <title><function>decode_contact_header</function> usage</title>
 	    <programlisting>

@@ -20,11 +20,12 @@
 	    <holder>FhG FOKUS</holder>
 	</copyright>
     </bookinfo>
+    <toc></toc>
 
     <section id="mangler.overview">
 	<title>Overview</title>
 	<para>
-	    This is a module to help with SDP mangling
+	    This is a module to help with SDP mangling - changing data in the SDP.
 	</para>
     </section>
 

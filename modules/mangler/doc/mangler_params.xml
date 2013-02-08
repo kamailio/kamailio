@@ -13,6 +13,8 @@
 	<para>
 	    First char of this parameter is used as separator for
 	    encoding/decoding Contact header.
+	    If you set this parameter to "-", 
+	    then an encoded uri might look sip:user-password-ip-port-protocol@PublicIP
 	</para>
 	<warning>
 	    <para>
@@ -29,13 +31,10 @@
 	    <title>Set <varname>db_url</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("module", "contact_flds_separator", "-")
+modparam("mangler", "contact_flds_separator", "-")
 ...
 	    </programlisting>
 	</example>
-	<para>
-	    then an encoded uri might look sip:user-password-ip-port-protocol@PublicIP
-	</para>
     </section>
     
 </section>
