@@ -76,8 +76,8 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module offers operations for handling IP addresses in both IPv4
-   and IPv6.
+   This module offers operations for handling IP addresses, both IPv4 and
+   IPv6.
 
    IPv6 is defined in RFC 2460. The same IPv6 address can be represented
    by different ASCII strings, so binary comparison is required. For
@@ -131,7 +131,8 @@ Chapter 1. Admin Guide
    FALSE otherwise.
 
    Parameters:
-     * ip - String or pseudo-variable containing the IP to evaluate.
+     * ip - String or pseudo-variable containing the IP address to
+       evaluate.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
@@ -251,7 +252,8 @@ switch($rc) {
 4.7.  compare_ips (ip1, ip2)
 
    Returns TRUE if both IP addresses are the same. FALSE otherwise. This
-   function also allows comparing an IPv6 against an IPv6 reference.
+   function also allows comparing an IPv6 address against an IPv6
+   reference.
 
    Parameters:
      * ip1 - String or pseudo-variable containing the first IP to compare.
@@ -275,8 +277,9 @@ if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:41
    does NOT allow comparing an IPv6 against an IPv6 reference.
 
    Parameters:
-     * ip1 - String or pseudo-variable containing the first IP to compare.
-     * ip2 - String or pseudo-variable containing the second IP to
+     * ip1 - String or pseudo-variable containing the first IP address to
+       compare.
+     * ip2 - String or pseudo-variable containing the second IP address to
        compare.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,

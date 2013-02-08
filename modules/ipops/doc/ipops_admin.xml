@@ -19,9 +19,8 @@
     <title>Overview</title>
          
     <para>
-      This module offers operations for handling IP addresses in both IPv4 and IPv6.
+      This module offers operations for handling IP addresses, both IPv4 and IPv6.
     </para>
-
     <para>
       IPv6 is defined in <ulink url="http://tools.ietf.org/html/rfc2460">RFC 2460</ulink>.
 	The same IPv6 address can be represented by different ASCII strings, so binary comparison is required.
@@ -108,7 +107,7 @@
       <itemizedlist>
         <listitem>
           <para>
-            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP address to evaluate.
           </para>
         </listitem>
       </itemizedlist>
@@ -367,7 +366,7 @@ switch($rc) {
 
       <para>
         Returns TRUE if both IP addresses are the same. FALSE otherwise.
-	This function also allows comparing an IPv6 against an IPv6 reference.
+	This function also allows comparing an IPv6 address against an IPv6 reference.
       </para>
 
       <para>Parameters:</para>
@@ -419,12 +418,12 @@ if (compare_ips("1080:0000:0000:0000:0008:0800:200C:417A", "[1080::8:800:200C:41
       <itemizedlist>
         <listitem>
           <para>
-            <emphasis>ip1</emphasis> - String or pseudo-variable containing the first IP to compare.
+            <emphasis>ip1</emphasis> - String or pseudo-variable containing the first IP address to compare.
           </para>
         </listitem>
         <listitem>
           <para>
-            <emphasis>ip2</emphasis> - String or pseudo-variable containing the second IP to compare.
+            <emphasis>ip2</emphasis> - String or pseudo-variable containing the second IP address to compare.
           </para>
         </listitem>
       </itemizedlist>
