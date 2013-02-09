@@ -83,7 +83,7 @@ void python_handle_exception(const char *fmt, ...)
     buf = (char *)pkg_realloc(NULL, buflen * sizeof(char *));
     if (!buf)
     {
-	LM_ERR("python_handle_exception(): Can't allocate memory (%lu bytes), pkg_realloc() has failed. Not enough memory.\n", buflen * sizeof(char *));
+	LM_ERR("python_handle_exception(): Can't allocate memory (%lu bytes), pkg_realloc() has failed. Not enough memory.\n", (unsigned long)(buflen * sizeof(char *)));
 	return;
     }
     memset(buf, 0, sizeof(char *));
@@ -115,7 +115,7 @@ void python_handle_exception(const char *fmt, ...)
 	buf = (char *)pkg_realloc(buf, buflen * sizeof(char *));
 	if (!buf)
 	{
-	    LM_ERR("python_handle_exception(): Can't allocate memory (%li bytes), pkg_realloc() has failed. Not enough memory.\n", buflen * sizeof(char *));
+	    LM_ERR("python_handle_exception(): Can't allocate memory (%lu bytes), pkg_realloc() has failed. Not enough memory.\n", (unsigned long)(buflen * sizeof(char *)));
 	    Py_DECREF(line);
 	    Py_DECREF(pResult);
 	    return;
@@ -174,7 +174,7 @@ char *make_message(const char *fmt, ...)
     p = (char *)pkg_realloc(NULL, size * sizeof(char *));
     if (!p)
     {
-	LM_ERR("make_message(): Can't allocate memory (%li bytes), pkg_malloc() has failed: Not enough memory.\n", size * sizeof(char *));
+	LM_ERR("make_message(): Can't allocate memory (%lu bytes), pkg_malloc() has failed: Not enough memory.\n", (unsigned long)(size * sizeof(char *)));
 	return NULL;
     }
     memset(p, 0, size * sizeof(char *));
@@ -196,7 +196,7 @@ char *make_message(const char *fmt, ...)
 	np = (char *)pkg_realloc(p, size * sizeof(char *));
         if (!np)
 	{
-	    LM_ERR("make_message(): Can't allocate memory (%li bytes), pkg_realloc() has failed: Not enough memory.\n", size * sizeof(char *));
+	    LM_ERR("make_message(): Can't allocate memory (%lu bytes), pkg_realloc() has failed: Not enough memory.\n", (unsigned long)size * sizeof(char *));
 	    if (p)
     		pkg_free(p);
     	    return NULL;
@@ -223,13 +223,7 @@ char *get_class_name(PyObject *y)
     name = PyString_AsString(p);
     Py_XDECREF(p);
 
-    if (name == NULL)
-    {
-	Py_XDECREF(name);
-	return NULL;
-    }
-    else
-	return name;
+    return name;
 }
 
 
@@ -256,12 +250,5 @@ char *get_instance_class_name(PyObject *y)
     Py_XDECREF(p);
     Py_XDECREF(n);
 
-    if (name == NULL)
-    {
-	Py_XDECREF(name);
-	return NULL;
-    }
-    else
-	return name;
+    return name;
 }
-

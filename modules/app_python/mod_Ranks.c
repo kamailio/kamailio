@@ -65,7 +65,7 @@ void init_mod_Ranks(void)
     PyModule_AddObject(ranks_module, "PROC_SIPRPC",		PyInt_FromLong((long)PROC_SIPRPC));
     PyModule_AddObject(ranks_module, "PROC_MIN",		PyInt_FromLong((long)PROC_MIN));
 
-    Py_INCREF(&ranks_module);
+    Py_INCREF(ranks_module);
 
 #ifdef WITH_EXTRA_DEBUG
     LM_ERR("Module 'Router.Ranks' has been initialized\n");

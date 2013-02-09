@@ -287,7 +287,6 @@ static int child_init(int rank)
 	    PyErr_Format(PyExc_AttributeError, "'module' instance has no class name");
 	python_handle_exception("child_init");
 	Py_DECREF(format_exc_obj);
-	Py_XDECREF(classname);
 	PyThreadState_Swap(NULL);
 	PyEval_ReleaseLock();
 	return -1;
@@ -309,7 +308,6 @@ static int child_init(int rank)
 	    PyErr_Format(PyExc_AttributeError, "class object '%s' has is not callable attribute '%s'", !classname ? "None" : classname, mod_init_fname.s);
 	python_handle_exception("child_init");
 	Py_DECREF(format_exc_obj);
-	Py_XDECREF(classname);
 	Py_XDECREF(pFunc);
         PyThreadState_Swap(NULL);
         PyEval_ReleaseLock();
@@ -320,7 +318,6 @@ static int child_init(int rank)
     if (pArgs == NULL) {
 	python_handle_exception("child_init");
 	Py_DECREF(format_exc_obj);
-	Py_XDECREF(classname);
         Py_DECREF(pFunc);
         PyThreadState_Swap(NULL);
         PyEval_ReleaseLock();
@@ -370,7 +367,6 @@ static int child_init(int rank)
 	python_handle_exception("child_init");
 	Py_DECREF(format_exc_obj);
 	Py_XDECREF(pResult);
-	Py_XDECREF(classname);
 	PyThreadState_Swap(NULL);
 	PyEval_ReleaseLock();
 	return -1;
@@ -379,7 +375,6 @@ static int child_init(int rank)
 
     rval = PyInt_AsLong(pResult);
     Py_DECREF(pResult);
-    Py_XDECREF(classname);
     PyThreadState_Swap(NULL);
     PyEval_ReleaseLock();
 

@@ -229,7 +229,7 @@ void init_mod_Logger(void)
     */
     PyModule_AddObject(logger_module, "DEFAULT_FACILITY", PyInt_FromLong((long)DEFAULT_FACILITY));
 
-    Py_INCREF(&logger_module);
+    Py_INCREF(logger_module);
 
 #ifdef WITH_EXTRA_DEBUG
     LM_ERR("Module 'Router.Logger' has been initialized\n");
