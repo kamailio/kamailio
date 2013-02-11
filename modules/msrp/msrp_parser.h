@@ -44,6 +44,8 @@
 
 #define MSRP_REQ_RPLSTART	10000
 
+#define MSRP_RPL_CODE(n)	((n) - MSRP_REQ_RPLSTART)
+
 typedef struct msrp_fline {
 	str buf;
 	int msgtypeid;
