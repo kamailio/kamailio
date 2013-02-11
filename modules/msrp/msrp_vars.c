@@ -152,7 +152,8 @@ int pv_get_msrp(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res)
 		case 3:
 			if(mf->fline.msgtypeid==MSRP_REQUEST)
 				return pv_get_null(msg, param, res);
-			return pv_get_intstrval(msg, param, res, mf->fline.rtypeid,
+			return pv_get_intstrval(msg, param, res,
+					MSRP_RPL_CODE(mf->fline.rtypeid),
 					&mf->fline.rtype);
 		case 4:
 			if(mf->hbody.s==NULL)
