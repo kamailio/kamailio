@@ -1623,7 +1623,6 @@ void ph_freeMods(ph_mod_t **ph_modules, int ph_modules_size)
 	ph_mod_t *_ph_modules = *ph_modules;
 	db_key_t *cmd_keys;
 	db_op_t *cmd_ops;
-	db_type_t *cmd_types;
 	ph_vals_t *cmd_vals;
 
 	if(_ph_modules==NULL) return;
@@ -1640,7 +1639,6 @@ void ph_freeMods(ph_mod_t **ph_modules, int ph_modules_size)
 			/* */
 			cmd_keys = _ph_modules[i].cmds[j].c_keys;
 			cmd_ops = _ph_modules[i].cmds[j].c_ops;
-			cmd_types = _ph_modules[i].cmds[j].c_types;
 			cmd_vals = _ph_modules[i].cmds[j].c_vals;
 			for(k=0;k<_ph_modules[i].cmds[j].c_keys_size;k++){
 				if(cmd_ops && cmd_ops[k]){
@@ -1690,11 +1688,9 @@ void ph_freeMods(ph_mod_t **ph_modules, int ph_modules_size)
 				shm_free(_ph_modules[i].cmds[j].c_vals);
 				_ph_modules[i].cmds[j].c_vals = NULL;
 			}
-			cmd_keys = NULL; cmd_ops = NULL;
-			cmd_types = NULL; cmd_vals = NULL;
+			cmd_ops = NULL;
 			/* */
 			cmd_keys = _ph_modules[i].cmds[j].q_keys;
-			cmd_types = _ph_modules[i].cmds[j].q_types;
 			cmd_vals = _ph_modules[i].cmds[j].q_vals;
 			for(k=0;k<_ph_modules[i].cmds[j].q_keys_size;k++){
 				if(cmd_keys && cmd_keys[k]){
@@ -1736,7 +1732,7 @@ void ph_freeMods(ph_mod_t **ph_modules, int ph_modules_size)
 				shm_free(_ph_modules[i].cmds[j].q_vals);
 				_ph_modules[i].cmds[j].q_vals = NULL;
 			}
-			cmd_keys = NULL; cmd_types = NULL; cmd_vals = NULL;
+			cmd_vals = NULL;
 			/* */
 			cmd_keys = _ph_modules[i].cmds[j].c_keys;
 			for(k=0;k<_ph_modules[i].cmds[j].c_keys_size;k++){
