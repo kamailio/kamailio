@@ -53,8 +53,6 @@ int hep_msg_received(void *data)
         unsigned *len;
         struct receive_info *ri;
 
-        LOG(L_ERR, "sipcapture:hep_msg_received HEP is not enabled\n");
-
         if(!hep_capture_on) {
                 LOG(L_ERR, "sipcapture:hep_msg_received HEP is not enabled\n");
                 return -1;
