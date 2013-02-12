@@ -2539,7 +2539,6 @@ error:
 int ph_run_pi_cmd(pi_ctx_t* ctx)
 {
 	char *p;
-	char *_p;
 	char *buf = ctx->reply.buf.s;
 	int ret;
 	int mod = ctx->mod;
@@ -2671,7 +2670,6 @@ int ph_run_pi_cmd(pi_ctx_t* ctx)
 			command->db_table->name.s);
 		goto done;
 	}
-	_p = p;
 	if(ph_build_reply(ctx)<0)
 		goto error;
 	p = ctx->reply.body.s + ctx->reply.body.len;
