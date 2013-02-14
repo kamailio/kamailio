@@ -347,11 +347,12 @@ done:
 
     sca_appearance *
 sca_appearance_seize_index_unsafe( sca_mod *scam, str *aor, str *owner_uri,
-	int app_idx, int slot_idx )
+	int app_idx, int slot_idx, int *seize_error )
 {
     sca_appearance_list	*app_list;
     sca_appearance	*app = NULL;
     sca_hash_slot	*slot;
+    int			error = SCA_APPEARANCE_ERR_UNKNOWN;
 
     slot = sca_hash_table_slot_for_index( scam->appearances, slot_idx );
 
@@ -372,9 +373,8 @@ sca_appearance_seize_index_unsafe( sca_mod *scam, str *aor, str *owner_uri,
 	}
     }
     if ( app != NULL && app->index == app_idx ) {
-	LM_ERR( "sca_appearance_seize_index_unsafe: tried to seize in-use "
-		"%.*s appearance-index %d for %.*s", STR_FMT( aor ),
-		app_idx, STR_FMT( owner_uri ));
+	/* attempt to seize in-use appearance-index */
+	error = SCA_APPEARANCE_ERR_INDEX_UNAVAILABLE;
 	app = NULL;
 	goto done;
     }
@@ -383,14 +383,47 @@ sca_appearance_seize_index_unsafe( sca_mod *scam, str *aor, str *owner_uri,
     if ( app == NULL ) {
         LM_ERR( "Failed to create new appearance for %.*s at index %d",
                 STR_FMT( owner_uri ), app_idx );
+	error = SCA_APPEARANCE_ERR_MALLOC;
         goto done;
     }
     app->state = SCA_APPEARANCE_STATE_SEIZED;
 
     sca_appearance_list_insert_appearance( app_list, app );
 
+    error = SCA_APPEARANCE_OK;
+
 done:
+    if ( seize_error ) {
+	*seize_error = error;
+    }
+
     return( app );
+}
+
+    int
+sca_appearance_seize_index( sca_mod *scam, str *aor, int idx, str *owner_uri )
+{
+    sca_appearance	*app;
+    int			slot_idx;
+    int			app_idx = -1;
+    int			error = SCA_APPEARANCE_OK;
+
+    slot_idx = sca_hash_table_index_for_key( scam->appearances, aor );
+    sca_hash_table_lock_index( scam->appearances, slot_idx );
+
+    app = sca_appearance_seize_index_unsafe( scam, aor, owner_uri,
+						idx, slot_idx, &error );
+    if ( app != NULL ) {
+	app_idx = app->index;
+    }
+
+    sca_hash_table_unlock_index( scam->appearances, slot_idx );
+
+    if ( error == SCA_APPEARANCE_ERR_INDEX_UNAVAILABLE ) {
+	app_idx = SCA_APPEARANCE_INDEX_UNAVAILABLE;
+    }
+
+    return( app_idx );
 }
 
     sca_appearance *
@@ -860,7 +893,7 @@ sca_appearance_update_index( sca_mod *scam, str *aor, int idx,
     if ( app == NULL ) {
 	LM_WARN( "Cannot update %.*s index %d to %.*s: index %d not in use",
 		 STR_FMT( aor ), idx, STR_FMT( &state_str ), idx );
-	rc = SCA_APPEARANCE_ERR_INVALID_INDEX;
+	rc = SCA_APPEARANCE_ERR_INDEX_INVALID;
 	goto done;
     }
 
@@ -978,7 +1011,7 @@ sca_appearance_release_index( sca_mod *scam, str *aor, int idx )
     if ( app == NULL ) {
 	LM_ERR( "Failed to unlink %.*s appearance-index %d: invalid index",
 		STR_FMT( aor ), idx );
-	rc = SCA_APPEARANCE_ERR_INVALID_INDEX;
+	rc = SCA_APPEARANCE_ERR_INDEX_INVALID;
 	goto done;
     }
     sca_appearance_free( app );

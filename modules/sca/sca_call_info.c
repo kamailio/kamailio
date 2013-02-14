@@ -775,7 +775,7 @@ sca_call_info_uri_update( str *aor, sca_call_info *call_info,
 	rc = 1;
     } else {
 	app = sca_appearance_seize_index_unsafe( sca, aor, contact_uri,
-						call_info->index, slot_idx );
+					    call_info->index, slot_idx, NULL );
 	if ( app == NULL ) {
 	    LM_ERR( "sca_call_info_uri_update: failed to seize index %d "
 		    "for %.*s", call_info->index, STR_FMT( contact_uri ));

@@ -1096,7 +1096,7 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
     sca_subscription	req_sub;
     sca_subscription	*sub = NULL;
     sca_call_info	call_info;
-    hdr_field_t		*call_info_hdr;
+    hdr_field_t		*call_info_hdr = NULL;
     str			sub_key = STR_NULL;
     str			*to_tag = NULL;
     char		*status_text;
@@ -1151,6 +1151,23 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
     /* pkg_malloc'd in sca_subscription_copy_subscription_key above */
     pkg_free( sub_key.s );
 
+    if ( req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE ) {
+	call_info_hdr = sca_call_info_header_find( msg->headers );
+	if ( call_info_hdr ) {
+	    if ( sca_call_info_body_parse( &call_info_hdr->body,
+		    &call_info ) < 0 ) {
+		SCA_REPLY_ERROR( sca, 400, "Bad Request - "
+				"Invalid Call-Info header", msg );
+		goto done;
+	    }
+	    app_idx = call_info.index;
+	} else {
+	    SCA_REPLY_ERROR( sca, 400, "Bad Request - "
+			    "missing Call-Info header", msg );
+	    goto done;
+	}
+    }
+
     sca_hash_table_lock_index( sca->subscriptions, idx );
 
     sub = sca_hash_table_index_kv_find_unsafe( sca->subscriptions, idx,
@@ -1165,17 +1182,6 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 	}
 
 	if ( req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE ) {
-	    call_info_hdr = sca_call_info_header_find( msg->headers );
-	    if ( call_info_hdr ) {
-		if ( sca_call_info_body_parse( &call_info_hdr->body,
-			&call_info ) < 0 ) {
-		    SCA_REPLY_ERROR( sca, 400, "Bad Request - "
-				    "Invalid Call-Info header", msg );
-		    goto done;
-		}
-		app_idx = call_info.index;
-	    }
-
 	    if ( req_sub.expires == 0 ) {
 		/* release the seized appearance */
 		if ( call_info_hdr == NULL ) {
@@ -1192,13 +1198,17 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 		}
 	    } else if ( SCA_STR_EMPTY( to_tag )) {
 		/* don't seize new index if this is a line-seize reSUBSCRIBE */
-		app_idx = sca_appearance_seize_next_available_index( sca,
-				&req_sub.target_aor, &req_sub.subscriber );
-		if ( app_idx < 0 ) {
+		app_idx = sca_appearance_seize_index( sca, &req_sub.target_aor,
+				app_idx, &req_sub.subscriber );
+		if ( app_idx == SCA_APPEARANCE_INDEX_UNAVAILABLE ) {
+		    SCA_REPLY_ERROR( sca, 480, "Temporarily Unavailable", msg );
+		    goto done;
+		} else if ( app_idx < 0 ) {
 		    SCA_REPLY_ERROR( sca, 500, "Internal Server Error - "
 					"seize appearance index", msg );
 		    goto done;
 		}
+		req_sub.index = app_idx;
 	    }
 	}
     } else {
@@ -1211,9 +1221,12 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 
 	if ( req_sub.expires > 0 ) {
 	    if ( req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE ) {
-		app_idx = sca_appearance_seize_next_available_index( sca,
-				&req_sub.target_aor, &req_sub.subscriber );
-		if ( app_idx < 0 ) {
+		app_idx = sca_appearance_seize_index( sca, &req_sub.target_aor,
+				app_idx, &req_sub.subscriber );
+		if ( app_idx == SCA_APPEARANCE_INDEX_UNAVAILABLE ) {
+		    SCA_REPLY_ERROR( sca, 480, "Temporarily Unavailable", msg );
+		    goto done;
+		} else if ( app_idx < 0 ) {
 		    SCA_REPLY_ERROR( sca, 500, "Internal Server Error - "
 					"seize appearance index", msg );
 		    goto done;
