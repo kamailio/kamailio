@@ -76,7 +76,19 @@ sca_reply( sca_mod *scam, int status_code, char *status_msg,
 	    LM_ERR( "Failed to add Allow-Events and Expires headers" );
 	    return( -1 );
 	}
-   }
+    } else if ( status_code == 480 ) {
+	/* tell loser of line-seize SUBSCRIBE race to try again shortly */ 
+	extra_headers.s = hdr_buf;
+	len = snprintf( extra_headers.s, sizeof( hdr_buf ),
+			"Retry-After: %d%s", 1, CRLF );
+	extra_headers.len = len;
+
+	if ( add_lump_rpl( msg, extra_headers.s, extra_headers.len,
+			    LUMP_RPL_HDR ) == NULL ) {
+	    LM_ERR( "sca_reply: failed to add Retry-After header" );
+	    return( -1 );
+	}
+    }
 
     if ( scam->sl_api->freply( msg, status_code, &status_str ) < 0 ) {
 	LM_ERR( "Failed to send \"%d %s\" reply to %.*s",
