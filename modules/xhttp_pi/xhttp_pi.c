@@ -76,7 +76,7 @@ static xhttp_api_t xhttp_api;
 gen_lock_t* ph_lock;
 
 
-str xhttp_pi_root = str_init("http_pi");
+str xhttp_pi_root = str_init("pi");
 str filename = {NULL, 0};
 
 int buf_size = 0;
