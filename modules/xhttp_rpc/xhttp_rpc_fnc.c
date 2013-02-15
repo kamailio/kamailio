@@ -142,7 +142,7 @@ static const str XHTTP_RPC_Response_Title_Table_1 = str_init(\
         "<tr bgcolor=\"#BBDDFF\">"\
         "<td colspan=2 valign=\"top\" align=\"left\" bgcolor=\"#EFF7FF\" width=\"100%%\">"\
         "<br/><h2 align=\"center\">");
-static const str XHTTP_RPC_Response_Title_Table_2 = str_init(" RPC Interface</h2>"\
+static const str XHTTP_RPC_Response_Title_Table_2 = str_init(": RPC Interface</h2>"\
         "<p align=\"center\">");
 static const str XHTTP_RPC_Response_Title_Table_4 = str_init("</p><br/></td></tr></table>\n<center>\n");
 
@@ -199,7 +199,7 @@ static const str XHTTP_RPC_Response_Foot = str_init(\
         "<span style='margin-left:5px;'></span>"\
         "<a href=\"http://sip-router.org\">SIP Router web site</a> .:. "\
         "<a href=\"http://www.kamailio.org\">Kamailio web site</a><br/>"\
-        "Copyright &copy; 2011 <a href=\"http://www.voipembedded.com/\">VoIP Embedded</a>"\
+        "Copyright &copy; 2011-2013 <a href=\"http://www.voipembedded.com/\">VoIP Embedded</a>"\
                                                                 ". All rights reserved."\
 "</div></body></html>");
 
