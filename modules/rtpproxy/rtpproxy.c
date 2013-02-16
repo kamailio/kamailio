@@ -1429,18 +1429,15 @@ append_filtered_ip(char *at, str *ip)
 		
 static int
 insert_candidates(struct sip_msg *msg, char *where, str *ip, unsigned int port,
-		  str *rtcp_port, int priority)
+		  int priority)
 {
     char *buf, *at;
     struct lump* anchor;
     str rtp_port;
+    str rtcp_port;
 
-    if (rtcp_port->len) {
-	buf = pkg_malloc(24 + 78 + 14 + 24 + 2*ip->len + 2 + 2*rtcp_port->len +
-			 24);
-    } else {
-	buf = pkg_malloc(12 + 39 + 12 + 12 + ip->len + 1 + rtcp_port->len + 12);
-    }	
+    rtcp_port.s = int2str(port+1, &rtcp_port.len); /* beware static buffer */
+    buf = pkg_malloc(24 + 78 + 14 + 24 + 2*ip->len + 2 + 2*rtcp_port.len + 24);
     if (buf == NULL) {
 	LM_ERR("insert_candidates: out of memory\n");
 	return -1;
@@ -1448,7 +1445,6 @@ insert_candidates(struct sip_msg *msg, char *where, str *ip, unsigned int port,
 
     at = buf;
 
-    if (rtcp_port->len) {
 	append_str(at, "a=candidate:", 12);
 	at = append_filtered_ip(at, ip);
 	append_str(at, " 2 UDP ", 7);
@@ -1459,11 +1455,10 @@ insert_candidates(struct sip_msg *msg, char *where, str *ip, unsigned int port,
 	}
 	append_str(at, ip->s, ip->len);
 	append_chr(at, ' ');
-	append_str(at, rtcp_port->s, rtcp_port->len);
+	append_str(at, rtcp_port.s, rtcp_port.len);
 	append_str(at, " typ relay\r\n", 12);
-    }
 
-    rtp_port.s = int2str(port, &rtp_port.len);
+    rtp_port.s = int2str(port, &rtp_port.len); /* beware static buffer */
     append_str(at, "a=candidate:", 12);
     at = append_filtered_ip(at, ip);
     append_str(at, " 1 UDP ", 7);
@@ -1476,6 +1471,8 @@ insert_candidates(struct sip_msg *msg, char *where, str *ip, unsigned int port,
     append_chr(at, ' ');
     append_str(at, rtp_port.s, rtp_port.len);
     append_str(at, " typ relay\r\n", 12);
+
+    LM_DBG("inserting '%.*s'\n", (int)(at - buf), buf);
 
     anchor = anchor_lump(msg, where - msg->buf, 0, 0);
     if (anchor == 0) {
@@ -2704,13 +2701,12 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 
 			/* Add ice relay candidates */
 			if (ice_candidate_priority_val.n && sdp_stream->ice_attrs_num > 0) {
-			    body1.s = sdp_stream->ice_attr->foundation.s - 12;
-			    body1.len = bodylimit - body1.s;
-			    if (insert_candidates(msg, sdp_stream->ice_attr->foundation.s - 12,
-						  &newip, port, &newrtcp,
-						  ice_candidate_priority_val.n) == -1) {
-				FORCE_RTP_PROXY_RET (-1);
-			    }
+				body1.s = sdp_stream->ice_attr->foundation.s - 12;
+				body1.len = bodylimit - body1.s;
+				if (insert_candidates(msg, sdp_stream->ice_attr->foundation.s - 12,
+						&newip, port, ice_candidate_priority_val.n) == -1) {
+					FORCE_RTP_PROXY_RET (-1);
+				}
 			}
 
 			c1p = sdp_session->ip_addr.s;
