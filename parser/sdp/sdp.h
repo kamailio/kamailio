@@ -59,7 +59,7 @@ typedef struct sdp_stream_cell {
 	int pf;         /**< connection address family: AF_INET/AF_INET6 */
 	str ip_addr;    /**< connection address */
 	int stream_num; /**< stream index inside a session */
-	int is_rtp;	/**< flag indicating if this is an RTP stream */
+	int is_rtp;	    /**< flag indicating if this is an RTP stream */
 	int is_on_hold; /**< flag indicating if this stream is on hold */
 	/* m=<media> <port> <transport> <payloads> */
 	str media;
@@ -81,12 +81,12 @@ typedef struct sdp_stream_cell {
 	str max_size;                             /**< RFC4975: max-size attribute */
 	str accept_types;                         /**< RFC4975: accept-types attribute */
 	str accept_wrapped_types;                 /**< RFC4975: accept-wrapped-types attribute */
-        str raw_stream;                           /**< fast access to raw stream string */
-        struct sdp_payload_attr **p_payload_attr; /**< fast access pointers to payloads */
+	str raw_stream;                           /**< fast access to raw stream string */
+	struct sdp_payload_attr **p_payload_attr; /**< fast access pointers to payloads */
 	struct sdp_payload_attr *payload_attr;
-        int ice_attrs_num;                        /**< number of ICE attrs inside a stream */
-        /* add fast access pointers to ice attributes if you need them */
-        sdp_ice_attr_t *ice_attr;
+	int ice_attrs_num;                        /**< number of ICE attrs inside a stream */
+	/* add fast access pointers to ice attributes if you need them */
+	sdp_ice_attr_t *ice_attr;
 	str remote_candidates;                    /**< ICE a:remote-candidates */
 } sdp_stream_cell_t;
 
@@ -95,16 +95,16 @@ typedef struct sdp_session_cell {
 	int session_num;  /**< session index inside sdp */
 	str cnt_disp;     /**< the Content-Disposition header (for Content-Type:multipart/mixed) */
 	/* c=<network type> <address type> <connection address> */
-	int pf;		/**< connection address family: AF_INET/AF_INET6 */
-	str ip_addr;	/**< connection address */
+	int pf;           /**< connection address family: AF_INET/AF_INET6 */
+	str ip_addr;      /**< connection address */
 	/* o=<username> <session id> <version> <network type> <address type> <address> */
-	int o_pf;	/**< origin address family: AF_INET/AF_INET6 */
-	str o_ip_addr;	/**< origin address */
+	int o_pf;         /**< origin address family: AF_INET/AF_INET6 */
+	str o_ip_addr;    /**< origin address */
 	/* b=<bwtype>:<bandwidth> */
 	str bw_type;      /**< alphanumeric modifier giving the meaning of the <bandwidth> figure:
 				CT - conference total;
 				AS - application specific */
-	str bw_width;   /**< The <bandwidth> is interpreted as kilobits per second by default */
+	str bw_width;     /**< The <bandwidth> is interpreted as kilobits per second by default */
 	int streams_num;  /**< number of streams inside a session */
 	struct sdp_stream_cell*  streams;
 } sdp_session_cell_t;
@@ -115,10 +115,10 @@ typedef struct sdp_session_cell {
 typedef struct sdp_info {
 	msg_body_type_t type;
 	free_msg_body_f free;
-	str text; /**< link to start of sdp and its length */
-	int sessions_num;	/**< number of SDP sessions */
+	str text;         /**< link to start of sdp and its length */
+	int sessions_num; /**< number of SDP sessions */
 	int streams_num;  /**< total number of streams for all SDP sessions */
-	str raw_sdp;	  /* Pointer to the Raw SDP (Might be embedded in multipart body) */
+	str raw_sdp;      /* Pointer to the Raw SDP (Might be embedded in multipart body) */
 	struct sdp_session_cell *sessions;
 } sdp_info_t;
 
