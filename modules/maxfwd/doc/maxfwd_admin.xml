@@ -78,7 +78,7 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>256</quote>.
+			Default value is <quote>16</quote>.
 		</emphasis>
 		</para>
 		<example>
