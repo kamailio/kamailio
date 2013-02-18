@@ -413,7 +413,7 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
                 LM_DBG("Searching out dialog with to_tag '%.*s' (looking for %.*s\n", dlg_out->to_tag.len, dlg_out->to_tag.s, tag->len, tag->s);
 
                 if (dlg_out->to_tag.len == tag->len && memcmp(dlg_out->to_tag.s, tag->s, dlg_out->to_tag.len) == 0) {
-                    LM_ERR("Found dialog_out entry with correct to_tag - updating leg info\n");
+                    LM_DBG("Found dialog_out entry with correct to_tag - updating leg info\n");
 
                     if (contact->len > 0) {
                         dlg_out->callee_contact.s = (char*) shm_malloc(contact->len);
