@@ -294,7 +294,8 @@ int use_outbound(struct sip_msg *msg)
 
 	/* Look for ;reg-id in REGISTER Contact-URIs and ;ob in any
 	   Contact-URIs */
-	if (msg->contact || parse_headers(msg, HDR_CONTACT_F, 0) != -1)
+	if (msg->contact
+		|| (parse_headers(msg, HDR_CONTACT_F, 0) != -1 && msg->contact))
 	{
 		if (parse_contact(msg->contact) < 0)
 		{
@@ -324,7 +325,8 @@ int use_outbound(struct sip_msg *msg)
 	}
 
 	/* Check to see if the top Route-URI is me and has a ;ob parameter */
-	if (msg->route || parse_headers(msg, HDR_ROUTE_F, 0) != -1)
+	if (msg->route
+		|| (parse_headers(msg, HDR_ROUTE_F, 0) != -1 && msg->route))
 	{
 		if (parse_rr(msg->route) < 0)
 		{
