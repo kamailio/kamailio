@@ -294,7 +294,7 @@ int use_outbound(struct sip_msg *msg)
 
 	/* Look for ;reg-id in REGISTER Contact-URIs and ;ob in any
 	   Contact-URIs */
-	if (msg->contact && parse_headers(msg, HDR_CONTACT_F, 0) != -1)
+	if (msg->contact || parse_headers(msg, HDR_CONTACT_F, 0) != -1)
 	{
 		if (parse_contact(msg->contact) < 0)
 		{
