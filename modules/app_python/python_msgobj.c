@@ -95,14 +95,13 @@ static PyObject *msg_rewrite_ruri(msgobject *self, PyObject *args)
     memset(&act, '\0', sizeof(act));
 
     act.type = SET_URI_T;
-    act.val[0].type = STR_ST;
+    act.val[0].type = STRING_ST;
     act.val[0].u.str.s = ruri;
     act.val[0].u.str.len = strlen(ruri);
 
     init_run_actions_ctx(&ra_ctx);
     if (do_action(&ra_ctx, &act, self->msg) < 0) {
         LM_ERR("Error in do_action\n");
-        PyErr_SetString(PyExc_RuntimeError, "Error in do_action\n");
     }
 
     Py_INCREF(Py_None);
@@ -302,8 +301,8 @@ static PyObject *msg_getType(msgobject *self, PyObject *unused)
 	    break;
 
 	default:
-    	    /* Shouldn't happen */
-	    abort();
+            rval = "SIP_INVALID";
+            break;
     }
 
     return PyString_FromString(rval);
