@@ -1248,8 +1248,8 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
     /* XXX this should be locked; could use a filled-in req_sub */
     if ( sca_notify_subscriber( sca, &req_sub, app_idx ) < 0 ) {
 	LM_ERR( "SCA %s SUBSCRIBE+NOTIFY for %.*s failed",
-		sca_event_name_from_type( sub->event ),
-		STR_FMT( &sub->subscriber ));
+		sca_event_name_from_type( req_sub.event ),
+		STR_FMT( &req_sub.subscriber ));
 	/*
 	 * XXX - what does subscriber do in this case? drop subscription?
 	 * sub is already saved/updated in hash table. let it rot?
