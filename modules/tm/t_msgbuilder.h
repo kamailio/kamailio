@@ -52,6 +52,9 @@
 #define FROMTAG_LEN (sizeof(FROMTAG)-1)
 #define TOTAG ";tag="
 #define TOTAG_LEN (sizeof(TOTAG)-1)
+#define MAXFWD_VALUE "70"
+#define MAXFWD_HEADER "Max-Forwards: " MAXFWD_VALUE CRLF
+#define MAXFWD_HEADER_LEN (sizeof(MAXFWD_HEADER) - 1)
 
 
 char *build_local(struct cell *Trans, unsigned int branch,

@@ -152,7 +152,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	*len+= via_len;
 	/*headers*/
 	*len+=Trans->from.len+Trans->callid.len+to->len+
-		+Trans->cseq_n.len+1+method_len+CRLF_LEN; 
+		+Trans->cseq_n.len+1+method_len+CRLF_LEN+MAXFWD_HEADER_LEN; 
 
 
 	/* copy'n'paste Route headers */
@@ -226,6 +226,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	append_str( p, Trans->cseq_n.s, Trans->cseq_n.len );
 	append_str( p, " ", 1 );
 	append_str( p, method, method_len );
+	append_str( p, MAXFWD_HEADER, MAXFWD_HEADER_LEN );
 	append_str( p, CRLF, CRLF_LEN );
 
 	if (!is_local(Trans))  {
@@ -1516,6 +1517,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	*len += CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;                                      /* Call-ID */
 	*len += CSEQ_LEN + cseq.len + 1 + method->len + CRLF_LEN;                                    /* CSeq */
 	*len += calculate_routeset_length(dialog);                                                   /* Route set */
+	*len += MAXFWD_HEADER_LEN;                                                                   /* Max-forwards */	
 	*len += CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN; /* Content-
 																	 Length */
 	*len += (server_signature ? (user_agent_hdr.len + CRLF_LEN) : 0);	                         /* Signature */
@@ -1538,6 +1540,10 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	w = print_cseq(w, &cseq, method, t);                  /* CSeq */
 	w = print_callid(w, dialog, t);                       /* Call-ID */
 	w = print_routeset(w, dialog);                        /* Route set */
+
+	if(headers==NULL || headers->len<15
+			|| strnstr(headers->s, "Max-Forwards:", headers->len)==NULL)
+		memapp(w, MAXFWD_HEADER, MAXFWD_HEADER_LEN);      /* Max-forwards */
 
      /* Content-Length */
 	memapp(w, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
