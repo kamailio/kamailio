@@ -1441,7 +1441,7 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
     int			rc = -1;
 
     if ( SCA_STR_EMPTY( contact_uri )) {
-	LM_ERR( "sca_call_info_invite_handler: Contact header is empty. "
+	LM_DBG( "sca_call_info_invite_handler: Contact header is empty. "
 		"(From: %.*s To: %.*s)", STR_FMT( from_aor ),
 		 STR_FMT( to_aor ));
 	return( -1 );
