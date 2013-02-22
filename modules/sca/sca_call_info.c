@@ -1185,15 +1185,18 @@ sca_call_info_invite_reply_200_handler( sip_msg_t *msg,
 
     if ( call_info != NULL ) {
 	/* this implies To-AoR is SCA */
-
 	rc = sca_call_info_uri_update( to_aor, call_info, from, to,
 			contact_uri, &msg->callid->body );
-
-	rc = sca_call_info_insert_asserted_identity( msg, contact_uri, to );
     }
 
     if ( !sca_uri_is_shared_appearance( sca, from_aor )) {
 	goto done;
+    }
+
+    if ( sca_call_info_insert_asserted_identity( msg, contact_uri, to ) < 0 ) {
+	LM_WARN( "sca_call_info_invite_reply_200_handler: failed to "
+		"add P-Asserted-Identity header to response from %.*s",
+		STR_FMT( contact_uri ));
     }
 
     /*
