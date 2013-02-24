@@ -5,6 +5,9 @@
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
+ * Copyright (C) 2013 Edvina AB, Sollentuna, Sweden
+ * Modifications by: Olle E. Johansson (oej@edvina.net)
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify it
@@ -25,6 +28,7 @@
  * History:
  * --------
  * 2006-11-23 initial version (jmagder)
+ * 2013-02-24 Added WS, WSS and SCTP support (oej)
  * 
  * Originally Generated with mib2c using mib2c.array-user.conf
  *
@@ -183,6 +187,18 @@ void createRowsFromIPList(int *theList, int listSize, int protocol,
 	{
 		valueToAssign = TC_TRANSPORT_PROTOCOL_TLS;
 	}
+	else if (protocol == PROTO_WS)
+	{
+		valueToAssign = TC_TRANSPORT_PROTOCOL_WS;
+	}
+	else if (protocol == PROTO_WSS)
+	{
+		valueToAssign = TC_TRANSPORT_PROTOCOL_WSS;
+	}
+	else if (protocol == PROTO_SCTP)
+	{
+		valueToAssign = TC_SIP_TRANSPORT_PROTOCOL_SCTP;
+	}
 	else 
 	{
 		valueToAssign = TC_TRANSPORT_PROTOCOL_OTHER;
@@ -224,15 +240,24 @@ void init_kamailioSIPPortTable(void)
 	int *UDPList = NULL;
 	int *TCPList = NULL;
 	int *TLSList = NULL;
+	int *WSList = NULL;
+	int *WSSList = NULL;
+	int *SCTPList = NULL;
 
 	int numUDPSockets;
 	int numTCPSockets; 
 	int numTLSSockets;
+	int numWSSockets;
+	int numWSSSockets;
+	int numSCTPSockets;
 	
 	/* Retrieve the list of the number of UDP and TCP sockets. */
 	numUDPSockets = get_socket_list_from_proto(&UDPList, PROTO_UDP);
 	numTCPSockets = get_socket_list_from_proto(&TCPList, PROTO_TCP);
 	numTLSSockets = get_socket_list_from_proto(&TLSList, PROTO_TLS);
+	numWSSockets = get_socket_list_from_proto(&WSList, PROTO_WS);
+	numWSSSockets = get_socket_list_from_proto(&WSSList, PROTO_WSS);
+	numSCTPSockets = get_socket_list_from_proto(&SCTPList, PROTO_SCTP);
 
 	/* Generate all rows, using all retrieved interfaces. */
 	createRowsFromIPList(UDPList, numUDPSockets, PROTO_UDP, &curSNMPIndex);
@@ -243,6 +268,15 @@ void init_kamailioSIPPortTable(void)
 
 	curSNMPIndex = 0;
 	createRowsFromIPList(TLSList, numTLSSockets, PROTO_TLS, &curSNMPIndex);
+
+	curSNMPIndex = 0;
+	createRowsFromIPList(WSList, numWSSockets, PROTO_WS, &curSNMPIndex);
+
+	curSNMPIndex = 0;
+	createRowsFromIPList(WSSList, numWSSSockets, PROTO_WSS, &curSNMPIndex);
+
+	curSNMPIndex = 0;
+	createRowsFromIPList(SCTPList, numSCTPSockets, PROTO_SCTP, &curSNMPIndex);
 }
 
  
