@@ -207,33 +207,44 @@ static struct sigaction old_sigchld_handler;
  *
  *     http://en.wikipedia.org/wiki/SIP_Responses 
  *
+ * Updated by oej to use the IETF reference page
+ *     http://www.iana.org/assignments/sip-parameters/sip-parameters.xml#sip-parameters-7
+ *
  * If there are more message codes added at a later time, they should be added
  * here, and to out_message_code_names below.  
  *
  * The array is used to register the statistics keeping track of the number of
  * messages received with the response code X.
+ *
  */
 char *in_message_code_names[] = 
 {
-	"100_in", "180_in", "181_in", "182_in", "183_in", 
+	"100_in", "180_in", "181_in", "182_in", "183_in", "199_in",
 	
-	"200_in", "202_in", 
+	"200_in", "202_in", "204_in",
 	
 	"300_in", "301_in", "302_in", "305_in", "380_in",
 	
 	"400_in", "401_in", "402_in", "403_in", "404_in", "405_in", "406_in", 
-	"407_in", "408_in", "410_in", "413_in", "414_in", "415_in", "416_in", 
-	"420_in", "421_in", "423_in", "480_in", "481_in", "482_in", "483_in", 
-	"484_in", "485_in", "486_in", "487_in", "488_in", "491_in", "492_in",	
-	"494_in", 
+	"407_in", "408_in", "410_in", "412_in", "413_in", "414_in", "415_in", 
+	"416_in", "417_in", "420_in", "421_in", "422_in", "423_in", "424_in",
+	"428_in", "429_in", "430_in", "433_in", "436_in", "437_in", "438_in",
+	"439_in", "440_in", "469_in", "470_in", "480_in", "481_in", "482_in",
+	"483_in", "484_in", "485_in", "486_in", "487_in", "488_in", "489_in",
+	"491_in", "492_in", "493_in", "494_in", 
 	
 	"500_in", "501_in", "502_in", "503_in", "504_in", "505_in", "513_in",
+	"580_in",
+
 	"600_in", "603_in", "604_in", "606_in"
 };
 
 /*! The following message codes are from Wikipedia at:
  *
  *     http://en.wikipedia.org/wiki/SIP_Responses 
+ *
+ * Updated by oej to use the IETF reference page
+ *     http://www.iana.org/assignments/sip-parameters/sip-parameters.xml#sip-parameters-7
  *
  * If there are more message codes added at a later time, they should be added
  * here, and to in_message_code_names above.
@@ -243,19 +254,23 @@ char *in_message_code_names[] =
  */
 char *out_message_code_names[] = 
 {
-	"100_out", "180_out", "181_out", "182_out", "183_out", 
+	"100_out", "180_out", "181_out", "182_out", "183_out", "199_out",
 	
-	"200_out", "202_out", 
+	"200_out", "202_out", "204_out",
 	
 	"300_out", "301_out", "302_out", "305_out", "380_out",
 	
 	"400_out", "401_out", "402_out", "403_out", "404_out", "405_out", "406_out", 
-	"407_out", "408_out", "410_out", "413_out", "414_out", "415_out", "416_out", 
-	"420_out", "421_out", "423_out", "480_out", "481_out", "482_out", "483_out", 
-	"484_out", "485_out", "486_out", "487_out", "488_out", "491_out", "492_out",	
-	"494_out", 
+	"407_out", "408_out", "410_out", "412_out", "413_out", "414_out", "415_out",
+	"416_out", "417_out", "420_out", "421_out", "422_out", "423_out", "424_out",
+	"428_out", "429_out", "430_out", "433_out", "436_out", "437_out", "438_out", 
+	"439_out", "440_out", "469_out", "470_out", "480_out", "481_out", "482_out",
+	"483_out", "484_out", "485_out", "486_out", "487_out", "488_out", "489_out",
+	"491_out", "492_out", "493_out", "494_out", 
 	
 	"500_out", "501_out", "502_out", "503_out", "504_out", "505_out", "513_out",
+	"580_out",
+
 	"600_out", "603_out", "604_out", "606_out"
 };
 
