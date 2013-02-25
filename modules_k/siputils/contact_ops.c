@@ -530,12 +530,6 @@ decode2format (str uri, char separator, struct uri_format *format)
 					lastpos = pos+1;
 				
 				}
-			else
-			if (((*pos) == '>')||(*pos == ';'))
-				{
-				/* invalid chars inside username part */
-				return -5;
-				}
 		}
 		
 		
