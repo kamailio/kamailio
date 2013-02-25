@@ -1475,11 +1475,34 @@ static inline char* print_callid(char* w, dlg_t* dialog, struct cell* t)
 	memapp(w, CRLF, CRLF_LEN);
 	t->callid.s = w;
 	t->callid.len = CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;
-
+	
 	w = print_callid_mini(w, dialog->id.call_id);
 	return w;
 }
 
+/*
+* Find the first occurrence of find in s, where the search is limited to the
+* first slen characters of s.
+*/
+static
+char * _strnstr(const char* s, const char* find, size_t slen) {
+	char c, sc;
+	size_t len;
+
+	if ((c = *find++) != '\0') {
+		len = strlen(find);
+		do {
+			do {
+				if (slen-- < 1 || (sc = *s++) == '\0')
+					return (NULL);
+			} while (sc != c);
+			if (len > slen)
+				return (NULL);
+		} while (strncmp(s, find, len) != 0);
+		s--;
+	}
+	return ((char *)s);
+}
 
 /*
  * Create a request
@@ -1542,7 +1565,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	w = print_routeset(w, dialog);                        /* Route set */
 
 	if(headers==NULL || headers->len<15
-			|| strnstr(headers->s, "Max-Forwards:", headers->len)==NULL)
+			|| _strnstr(headers->s, "Max-Forwards:", headers->len)==NULL)
 		memapp(w, MAXFWD_HEADER, MAXFWD_HEADER_LEN);      /* Max-forwards */
 
      /* Content-Length */

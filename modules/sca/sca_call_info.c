@@ -1444,7 +1444,7 @@ sca_call_info_invite_handler( sip_msg_t *msg, sca_call_info *call_info,
 	LM_DBG( "sca_call_info_invite_handler: Contact header is empty. "
 		"(From: %.*s To: %.*s)", STR_FMT( from_aor ),
 		 STR_FMT( to_aor ));
-	return( -1 );
+	return( 1 );
     }
 
     if ( msg->first_line.type == SIP_REQUEST ) {
