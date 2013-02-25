@@ -296,22 +296,27 @@ int process_body(str notify_body, udomain_t * domain) {
 				callid.len = strlen(callid.s);
 				received.s = xmlGetAttrContentByName(contacts, "received");
 				if (received.s == NULL) {
-                                        LM_DBG("No received for this contact!\n");
-                                }
-				received.len - strlen(received.s);
+                    LM_DBG("No received for this contact!\n");
+					received.len = 0;
+                } else {
+					received.len = strlen(received.s);
+				}
 
 				path.s = xmlGetAttrContentByName(contacts, "path");	
-				if (received.s == NULL) {
-                                        LM_DBG("No path for this contact!\n");
-                                }
-				path.len = strlen(path.s);
+				if (path.s == NULL) {
+                    LM_DBG("No path for this contact!\n");
+					path.len = 0;
+                } else {
+					path.len = strlen(path.s);
+				}
 
 				user_agent.s = xmlGetAttrContentByName(contacts, "user_agent");
-				if (received.s == NULL) {
-                                        LM_DBG("No user_agent for this contact!\n");
-                                }
-				user_agent.len = strlen(user_agent.s);
-
+				if (user_agent.s == NULL) {
+                    LM_DBG("No user_agent for this contact!\n");
+					user_agent.len = 0;
+                } else {
+					user_agent.len = strlen(user_agent.s);
+				}
 				event = reginfo_parse_event(xmlGetAttrContentByName(contacts, "event"));
 				if (event == EVENT_UNKNOWN) {
 					LM_ERR("No event for this contact!\n");		
