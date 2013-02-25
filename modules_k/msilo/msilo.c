@@ -1134,13 +1134,15 @@ static int m_dump(struct sip_msg* msg, str* owner_s)
 				   tmp_extra_hdrs /*extra_hdrs*/) < 0)
 		{
 			LM_ERR("headers building failed [%d]\n", mid);
-			pkg_free(tmp_extra_hdrs.s);
+			if(tmp_extra_hdrs.len>0)
+				pkg_free(tmp_extra_hdrs.s);
 			if (msilo_dbf.free_result(db_con, db_res) < 0)
 				LM_ERR("failed to free the query result\n");
 			msg_list_set_flag(ml, mid, MS_MSG_ERRO);
 			goto error;
 		}
-		pkg_free(tmp_extra_hdrs.s);
+		if(tmp_extra_hdrs.len>0)
+			pkg_free(tmp_extra_hdrs.s);
 			
 		LM_DBG("msg [%d-%d] for: %.*s\n", i+1, mid,	pto->uri.len, pto->uri.s);
 			
