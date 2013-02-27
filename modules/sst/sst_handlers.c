@@ -884,8 +884,8 @@ static int parse_msg_for_sst_info(struct sip_msg *msg, sst_msg_info_t *minfo)
 	 * it is not found if unsuccessfull.
 	 */
 	if ((rtn = parse_supported(msg)) == 0) {
-		if ((((struct supported_body*)msg->supported->parsed)->supported_all
-						& F_SUPPORTED_TIMER)) {
+		if ((((struct option_tag_body*)msg->supported->parsed)->option_tags_all
+						& F_OPTION_TAG_TIMER)) {
 			minfo->supported = 1;
 		}
 	}
