@@ -118,6 +118,8 @@
 #define _tity_ 0x79746974   /* "tity" */
 #define _info_ 0x6f666e69   /* "info" */
 #define _path_ 0x68746170   /* "path" */
+#define _100r_ 0x72303031   /* "100r" */
+#define _time_ 0x656d6974   /* "time" */
 
 #define _pt_l_ 0x6c2d7470   /* "pt-l" */
 #define _angu_ 0x75676e61   /* "angu" */
