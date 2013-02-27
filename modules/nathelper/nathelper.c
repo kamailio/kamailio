@@ -339,6 +339,7 @@ static const char sbuf[4] = {0, 0, 0, 0};
 static char *force_socket_str = 0;
 static pid_t mypid;
 static int sipping_flag = -1;
+static int sipping_disable_flag = -1;
 static int natping_processes = 1;
 
 static str nortpproxy_str = str_init("a=nortpproxy:yes");
@@ -412,6 +413,7 @@ static param_export_t params[] = {
 	{"sipping_from",          STR_PARAM, &sipping_from.s        },
 	{"sipping_method",        STR_PARAM, &sipping_method.s      },
 	{"sipping_bflag",         INT_PARAM, &sipping_flag          },
+	{"sipping_disable_bflag", INT_PARAM, &sipping_disable_flag  },
 	{"natping_processes",     INT_PARAM, &natping_processes     },
 	{"natping_socket",        STR_PARAM, &natping_socket        },
 	{"keepalive_timeout",     INT_PARAM, &nh_keepalive_timeout  },
@@ -676,6 +678,7 @@ mod_init(void)
 		}
 
 		sipping_flag = (sipping_flag==-1)?0:(1<<sipping_flag);
+		sipping_disable_flag = (sipping_disable_flag==-1)?0:(1<<sipping_disable_flag);
 
 		/* set reply function if SIP natping is enabled */
 		if (sipping_flag) {
@@ -1993,6 +1996,9 @@ nh_timer(unsigned int ticks, void *timer_idx)
 		cp =  (char*)cp + sizeof(ruid.len) + ruid.len;
 		memcpy( &aorhash, cp, sizeof(aorhash));
 		cp = (char*)cp + sizeof(aorhash);
+
+		if ((flags & sipping_disable_flag)) /* always 0 if sipping_disable_flag not set */
+			continue;
 
 		/* determin the destination */
 		if ( path.len && (flags&sipping_flag)!=0 ) {
