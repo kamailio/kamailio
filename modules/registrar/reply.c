@@ -39,6 +39,7 @@
 #include "../../ut.h"
 #include "../../xavp.h"
 #include "../../parser/msg_parser.h"
+#include "../../lib/kcore/parse_require.h"
 #include "../../lib/kcore/parse_supported.h"
 #include "../../data_lump_rpl.h"
 #include "../usrloc/usrloc.h"
@@ -408,6 +409,8 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 #define EI_R_PARSE_PATH  "Path parse error"                         /* R_PARSE_PATH */
 #define EI_R_PATH_UNSUP  "No support for found Path indicated"      /* R_PATH_UNSUP */
 #define EI_R_OB_UNSUP    "No support for Outbound indicated"        /* R_OB_UNSUP */
+#define EI_R_OB_REQD     "No support for Outbound on server"        /* R_OB_REQD */
+
 
 str error_info[] = {
 	{EI_R_FINE,       sizeof(EI_R_FINE) - 1},
@@ -441,7 +444,7 @@ str error_info[] = {
 	{EI_R_PARSE_PATH, sizeof(EI_R_PARSE_PATH) - 1},
 	{EI_R_PATH_UNSUP, sizeof(EI_R_PATH_UNSUP) - 1},
 	{EI_R_OB_UNSUP,   sizeof(EI_R_OB_UNSUP) - 1},
-
+	{EI_R_OB_REQD,   sizeof(EI_R_OB_REQD) - 1},
 };
 
 int codes[] = {
@@ -475,8 +478,8 @@ int codes[] = {
 	400, /* R_CALLID_LEN */
 	400, /* R_PARSE_PATH */
 	420, /* R_PATH_UNSUP */
-	421  /* R_OB_UNSUP */
-
+	421, /* R_OB_UNSUP */
+	420  /* R_OB_REQD */
 };
 
 
@@ -654,14 +657,27 @@ int reg_send_reply(struct sip_msg* _m)
 			if (add_require(_m, &outbound_str) < 0)
 				return -1;
 
+			if (add_supported(_m, &outbound_str) < 0)
+				return -1;
+
 			if (reg_flow_timer > 0) {
 				if (add_flow_timer(_m) < 0)
 					return -1;
 			}
-			/* Fall-thru */
+			break;
 		case REG_OUTBOUND_SUPPORTED:
 			if (add_supported(_m, &outbound_str) < 0)
 				return -1;
+
+			if (get_require(_m) & F_OPTION_TAG_OUTBOUND) {
+				if (add_require(_m, &outbound_str) < 0)
+					return -1;
+
+				if (reg_flow_timer > 0) {
+					if (add_flow_timer(_m) < 0)
+						return -1;
+				}
+			}
 			break;
 		}
 		break;
@@ -669,6 +685,10 @@ int reg_send_reply(struct sip_msg* _m)
 		if (add_require(_m, &outbound_str) < 0)
 			return -1;
 		if (add_supported(_m, &outbound_str) < 0)
+			return -1;
+		break;
+	case R_OB_REQD:
+		if (add_unsupported(_m, &outbound_str) < 0)
 			return -1;
 		break;
 	default:
