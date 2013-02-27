@@ -188,7 +188,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 
 
 	if(msg!=NULL && parse_supported(msg)==0
-			&& (get_supported(msg) & F_SUPPORTED_GRUU))
+			&& (get_supported(msg) & F_OPTION_TAG_GRUU))
 		mode = 1;
 	else
 		mode = 0;
@@ -610,8 +610,8 @@ static int add_flow_timer(struct sip_msg* _m)
  */
 int reg_send_reply(struct sip_msg* _m)
 {
-	str unsup = str_init(SUPPORTED_PATH_STR);
-	str outbound_str = str_init(SUPPORTED_OUTBOUND_STR);
+	str unsup = str_init(OPTION_TAG_PATH_STR);
+	str outbound_str = str_init(OPTION_TAG_OUTBOUND_STR);
 	long code;
 	str msg = str_init(MSG_200); /* makes gcc shut up */
 	char* buf;
@@ -632,7 +632,7 @@ int reg_send_reply(struct sip_msg* _m)
 					if (add_path(_m, &_m->path_vec) < 0)
 						return -1;
 				}
-				else if (get_supported(_m) & F_SUPPORTED_PATH) {
+				else if (get_supported(_m) & F_OPTION_TAG_PATH) {
 					if (add_path(_m, &_m->path_vec) < 0)
 						return -1;
 				} else if (path_mode == PATH_MODE_STRICT) {

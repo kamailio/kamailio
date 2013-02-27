@@ -843,8 +843,8 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 	}
 
 	if (parse_supported(_m) == 0) {
-		if (!(((struct supported_body *)_m->supported->parsed)->supported_all
-				& F_SUPPORTED_OUTBOUND) && reg_outbound_mode == REG_OUTBOUND_REQUIRE) {
+		if (!(((struct option_tag_body *)_m->supported->parsed)->option_tags_all
+				& F_OPTION_TAG_OUTBOUND) && reg_outbound_mode == REG_OUTBOUND_REQUIRE) {
 			LM_WARN("Outbound required by server and not supported by UAC\n");
 			rerrno = R_OB_UNSUP;
 			goto error;
