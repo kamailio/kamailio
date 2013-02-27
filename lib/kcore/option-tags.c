@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Copyright (C) 2006 Andreas Granig <agranig@linguin.org>
- *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -19,36 +17,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *
- * History:
- * -------
- * 2006-03-02  parse_supported() parses and cumulates all SUPPORTED 
- *             headers (bogdan)
  */
 
-/*!
- * \file
- * \brief Supported parser
- * \ingroup parser
- */
-
-#ifndef PARSE_SUPPORTED_H
-#define PARSE_SUPPORTED_H
-
-#include "../../parser/msg_parser.h"
 #include "../../mem/mem.h"
 #include "option-tags.h"
 
-#define get_supported(p_msg) \
-	((p_msg)->supported ? ((struct option_tag_body*)(p_msg)->supported->parsed)->option_tags_all : 0)
+static inline void free_option_tag(struct option_tag_body **otb)
+{
+	if (otb && *otb) {
+		pkg_free(*otb);
+		*otb = 0;
+	}
+}
 
-
-/*!
- * Parse all Supported headers.
- */
-int parse_supported( struct sip_msg *msg);
-
-
-void free_supported(struct option_tag_body **sb);
-
-#endif /* PARSE_SUPPORTED_H */
+void hf_free_option_tag(void *parsed)
+{
+	struct option_tag_body *otb;
+	otb = (struct option_tag_body *) parsed;
+	free_option_tag(&otb);
+}
