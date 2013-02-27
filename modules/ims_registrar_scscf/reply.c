@@ -563,7 +563,7 @@ int build_p_associated_uri(ims_subscription* s) {
  * Send a reply
  */
 int reg_send_reply_transactional(struct sip_msg* _m, contact_for_header_t* contact_header, struct cell* t_cell) {
-    str unsup = str_init(SUPPORTED_PATH_STR);
+    str unsup = str_init(OPTION_TAG_PATH_STR);
     long code;
     str msg = str_init(MSG_200); /* makes gcc shut up */
     char* buf;
@@ -582,7 +582,7 @@ int reg_send_reply_transactional(struct sip_msg* _m, contact_for_header_t* conta
                     return -1;
                 if (add_path(_m, &_m->path_vec) < 0)
                     return -1;
-            } else if (get_supported(_m) & F_SUPPORTED_PATH) {
+            } else if (get_supported(_m) & F_OPTION_TAG_PATH) {
                 if (add_path(_m, &_m->path_vec) < 0)
                     return -1;
             } else if (path_mode == PATH_MODE_STRICT) {
@@ -656,7 +656,7 @@ int reg_send_reply_transactional(struct sip_msg* _m, contact_for_header_t* conta
  * Send a reply
  */
 int reg_send_reply(struct sip_msg* _m, contact_for_header_t* contact_header) {
-    str unsup = str_init(SUPPORTED_PATH_STR);
+    str unsup = str_init(OPTION_TAG_PATH_STR);
     long code;
     str msg = str_init(MSG_200); /* makes gcc shut up */
     char* buf;
@@ -675,7 +675,7 @@ int reg_send_reply(struct sip_msg* _m, contact_for_header_t* contact_header) {
                     return -1;
                 if (add_path(_m, &_m->path_vec) < 0)
                     return -1;
-            } else if (get_supported(_m) & F_SUPPORTED_PATH) {
+            } else if (get_supported(_m) & F_OPTION_TAG_PATH) {
                 if (add_path(_m, &_m->path_vec) < 0)
                     return -1;
             } else if (path_mode == PATH_MODE_STRICT) {
