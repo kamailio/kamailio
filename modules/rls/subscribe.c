@@ -525,7 +525,7 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 		return -1;
 	}
 
-	if(!(get_supported(msg) & F_SUPPORTED_EVENTLIST))
+	if(!(get_supported(msg) & F_OPTION_TAG_EVENTLIST))
 	{
 		LM_DBG("No support for 'eventlist' - not for rls\n");
 		goto forpresence;
