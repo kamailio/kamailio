@@ -50,6 +50,7 @@
 #include "../../parser/parse_allow.h"
 #include "../../parser/parse_methods.h"
 #include "../../parser/msg_parser.h"
+#include "../../parser/parse_rr.h"
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_uri.h"
 #include "../../dprint.h"
@@ -217,8 +218,7 @@ static inline int no_contacts(sip_msg_t *_m, udomain_t* _d, str* _a, str* _h)
 /*! \brief
  * Fills the common part (for all contacts) of the info structure
  */
-static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
-											unsigned int _e, unsigned int _f)
+static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c, unsigned int _e, unsigned int _f, int _use_regid)
 {
 	static ucontact_info_t ci;
 	static str no_ua = str_init("n/a");
@@ -365,7 +365,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		}
 		if(_c->instance!=NULL && _c->instance->body.len>0)
 			ci.instance = _c->instance->body;
-		if(_c->instance!=NULL && _c->reg_id!=NULL && _c->reg_id->body.len>0) {
+		if(_use_regid && _c->instance!=NULL && _c->reg_id!=NULL && _c->reg_id->body.len>0) {
 			if(str2int(&_c->reg_id->body, &ci.reg_id)<0 || ci.reg_id==0)
 			{
 				LM_ERR("invalid reg-id value\n");
@@ -424,7 +424,7 @@ int reg_get_crt_max_contacts(void)
  * and insert all contacts from the message that have expires
  * > 0
  */
-static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a)
+static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, int _use_regid)
 {
 	ucontact_info_t* ci;
 	urecord_t* r = NULL;
@@ -480,7 +480,7 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a)
 		}
 
 		/* pack the contact_info */
-		if ( (ci=pack_ci( (ci==0)?_m:0, _c, expires, flags))==0 ) {
+		if ( (ci=pack_ci( (ci==0)?_m:0, _c, expires, flags, _use_regid))==0 ) {
 			LM_ERR("failed to extract contact info\n");
 			goto error;
 		}
@@ -607,8 +607,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
  * 3) If contact in usrloc exists and expires
  *    == 0, delete contact
  */
-static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
-										int _mode)
+static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, int _use_regid)
 {
 	ucontact_info_t *ci;
 	ucontact_t *c, *ptr, *ptr0;
@@ -627,7 +626,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 
 	rc = 0;
 	/* pack the contact_info */
-	if ( (ci=pack_ci( _m, 0, 0, flags))==0 ) {
+	if ( (ci=pack_ci( _m, 0, 0, flags, _use_regid))==0 ) {
 		LM_ERR("failed to initial pack contact info\n");
 		goto error;
 	}
@@ -658,7 +657,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 		calc_contact_expires(_m, _c->expires, &expires);
 
 		/* pack the contact info */
-		if ( (ci=pack_ci( 0, _c, expires, 0))==0 ) {
+		if ( (ci=pack_ci( 0, _c, expires, 0, _use_regid))==0 ) {
 			LM_ERR("failed to pack contact specific info\n");
 			goto error;
 		}
@@ -774,7 +773,7 @@ error:
  * contained some contact header fields
  */
 static inline int add_contacts(struct sip_msg* _m, udomain_t* _d,
-		str* _a, int _mode)
+		str* _a, int _mode, int _use_regid)
 {
 	int res;
 	int ret;
@@ -796,7 +795,7 @@ static inline int add_contacts(struct sip_msg* _m, udomain_t* _d,
 	}
 
 	if (res == 0) { /* Contacts found */
-		if ((ret=update_contacts(_m, r, _mode)) < 0) {
+		if ((ret=update_contacts(_m, r, _mode, _use_regid)) < 0) {
 			build_contact(_m, r->contacts, &u->host);
 			ul.release_urecord(r);
 			ul.unlock_udomain(_d, _a);
@@ -805,7 +804,7 @@ static inline int add_contacts(struct sip_msg* _m, udomain_t* _d,
 		build_contact(_m, r->contacts, &u->host);
 		ul.release_urecord(r);
 	} else {
-		if (insert_contacts(_m, _d, _a) < 0) {
+		if (insert_contacts(_m, _d, _a, _use_regid) < 0) {
 			ul.unlock_udomain(_d, _a);
 			return -4;
 		}
@@ -827,6 +826,12 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 	str aor;
 	int ret;
 	sip_uri_t *u;
+	rr_t *route;
+	struct sip_uri puri;
+	param_hooks_t hooks;
+	param_t *params;
+	contact_t *contact;
+	int use_ob = 1, use_regid = 1;
 
 	u = parse_to_uri(_m);
 	if(u==NULL)
@@ -855,9 +860,55 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 	if (parse_require(_m) == 0) {
 		if (!(get_require(_m) & F_OPTION_TAG_OUTBOUND)
 				&& reg_outbound_mode == REG_OUTBOUND_NONE) {
-			LM_WARN("Outbound required by client and not supported by server\n");
+			LM_WARN("Outbound required by UAC and not supported by server\n");
 			rerrno = R_OB_REQD;
 			goto error;
+		}
+	}
+
+	if (reg_outbound_mode != REG_OUTBOUND_NONE
+		&& !(parse_headers(_m, HDR_VIA2_F, 0) == -1 || _m->via2 == 0
+			|| _m->via2->error != PARSE_OK)) {
+		/* Outbound supported on server, and more than one Via: - not the first hop */
+
+		if (!(parse_headers(_m, HDR_PATH_F, 0) == -1 || _m->path == 0)) {
+			if (parse_rr_body(_m->path->body.s, _m->path->body.len, &route) < 0) {
+				LM_ERR("Failed to parse Path: header body\n");
+				goto error;
+			}
+			if (parse_uri(route->nameaddr.uri.s, route->nameaddr.uri.len, &puri) < 0) {
+				LM_ERR("Failed to parse Path: URI\n");
+				goto error;
+			}
+			if (parse_params(&puri.params, CLASS_URI, &hooks, &params) != 0) {
+				LM_ERR("Failed to parse Path: URI parameters\n");
+				goto error;
+			}
+			if (!hooks.uri.ob) {
+				/* No ;ob parameter to top Path: URI - no outbound */
+				use_ob = 0;
+			}
+
+		} else {
+			/* No Path: header - no outbound */
+			use_ob = 0;
+
+		}
+
+		contact = ((contact_body_t *) _m->contact->parsed)->contacts;
+		if (!contact) {
+			LM_ERR("empty Contact:\n");
+			goto error;
+		}
+
+		if (use_ob == 0 && (get_supported(_m) & F_OPTION_TAG_OUTBOUND)
+			&& contact->reg_id) {
+			LM_WARN("Outbound used by UAC but not supported by edge proxy\n");
+			rerrno = R_OB_UNSUP_EDGE;
+			goto error;
+		} else {
+			/* ignore ;reg-id parameter */
+			use_regid = 0;
 		}
 	}
 
@@ -882,7 +933,7 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 		}
 	} else {
 		mode = is_cflag_set(REG_SAVE_REPL_FL)?1:0;
-		if ((ret=add_contacts(_m, (udomain_t*)_d, &aor, mode)) < 0)
+		if ((ret=add_contacts(_m, (udomain_t*)_d, &aor, mode, use_regid)) < 0)
 			goto error;
 		ret = (ret==0)?1:ret;
 	}

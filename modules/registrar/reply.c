@@ -375,6 +375,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 #define MSG_400 "Bad Request"
 #define MSG_420 "Bad Extension"
 #define MSG_421 "Extension Required"
+#define MSG_439 "First Hop Lacks Outbound Support"
 #define MSG_500 "Server Internal Error"
 #define MSG_503 "Service Unavailable"
 
@@ -410,6 +411,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 #define EI_R_PATH_UNSUP  "No support for found Path indicated"      /* R_PATH_UNSUP */
 #define EI_R_OB_UNSUP    "No support for Outbound indicated"        /* R_OB_UNSUP */
 #define EI_R_OB_REQD     "No support for Outbound on server"        /* R_OB_REQD */
+#define EI_R_OB_UNSUP_EDGE "No support for Outbound on edge proxy"  /* R_OB_UNSUP_EDGE */
 
 
 str error_info[] = {
@@ -444,7 +446,8 @@ str error_info[] = {
 	{EI_R_PARSE_PATH, sizeof(EI_R_PARSE_PATH) - 1},
 	{EI_R_PATH_UNSUP, sizeof(EI_R_PATH_UNSUP) - 1},
 	{EI_R_OB_UNSUP,   sizeof(EI_R_OB_UNSUP) - 1},
-	{EI_R_OB_REQD,   sizeof(EI_R_OB_REQD) - 1},
+	{EI_R_OB_REQD,    sizeof(EI_R_OB_REQD) - 1},
+	{EI_R_OB_UNSUP_EDGE, sizeof(EI_R_OB_UNSUP_EDGE) - 1},
 };
 
 int codes[] = {
@@ -479,7 +482,8 @@ int codes[] = {
 	400, /* R_PARSE_PATH */
 	420, /* R_PATH_UNSUP */
 	421, /* R_OB_UNSUP */
-	420  /* R_OB_REQD */
+	420, /* R_OB_REQD */
+	439, /* R_OB_UNSUP_EDGE */
 };
 
 
@@ -700,7 +704,8 @@ int reg_send_reply(struct sip_msg* _m)
 	case 200: msg.s = MSG_200; msg.len = sizeof(MSG_200)-1;break;
 	case 400: msg.s = MSG_400; msg.len = sizeof(MSG_400)-1;break;
 	case 420: msg.s = MSG_420; msg.len = sizeof(MSG_420)-1;break;
-	case 421: msg.s = MSG_420; msg.len = sizeof(MSG_421)-1;break;
+	case 421: msg.s = MSG_421; msg.len = sizeof(MSG_421)-1;break;
+	case 439: msg.s = MSG_439; msg.len = sizeof(MSG_439)-1;break;
 	case 500: msg.s = MSG_500; msg.len = sizeof(MSG_500)-1;break;
 	case 503: msg.s = MSG_503; msg.len = sizeof(MSG_503)-1;break;
 	}

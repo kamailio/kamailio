@@ -65,7 +65,8 @@ typedef enum rerr {
 	R_PARSE_PATH, /*!< Error while parsing Path */
 	R_PATH_UNSUP, /*!< Path not supported by UAC */
 	R_OB_UNSUP,   /*!< Outbound not supported by UAC */
-	R_OB_REQD     /*!< Outbound required by UAC but not supported on server */
+	R_OB_REQD,    /*!< Outbound required by UAC but not supported on server */
+	R_OB_UNSUP_EDGE, /*!< Outbound needed for this registration but not supported on edge proxy */
 
 } rerr_t;
 
