@@ -94,6 +94,7 @@ static int w_lookup(struct sip_msg* _m, char* _d, char* _p2);
 static int w_lookup_branches(struct sip_msg* _m, char* _d, char* _p2);
 static int w_registered(struct sip_msg* _m, char* _d, char* _uri);
 static int w_unregister(struct sip_msg* _m, char* _d, char* _uri);
+static int w_unregister2(struct sip_msg* _m, char* _d, char* _uri, char *_ruid);
 
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
@@ -185,6 +186,8 @@ static cmd_export_t cmds[] = {
 	{"add_sock_hdr", (cmd_function)add_sock_hdr,  1,  fixup_str_null, 0,
 			REQUEST_ROUTE },
 	{"unregister",   (cmd_function)w_unregister,  2,  unreg_fixup, 0,
+			REQUEST_ROUTE| FAILURE_ROUTE },
+	{"unregister",   (cmd_function)w_unregister2, 3, unreg_fixup, 0,
 			REQUEST_ROUTE| FAILURE_ROUTE },
 	{"reg_fetch_contacts", (cmd_function)pv_fetch_contacts, 3, 
 			fetchc_fixup, 0,
@@ -501,7 +504,26 @@ static int w_unregister(struct sip_msg* _m, char* _d, char* _uri)
 		return -1;
 	}
 
-	return unregister(_m, (udomain_t*)_d, &uri);
+	return unregister(_m, (udomain_t*)_d, &uri, NULL);
+}
+
+static int w_unregister2(struct sip_msg* _m, char* _d, char* _uri, char *_ruid)
+{
+	str uri = {0};
+	str ruid = {0};
+	if(fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(_m, (gparam_p)_ruid, &ruid)!=0 || ruid.len<=0)
+	{
+		LM_ERR("invalid ruid parameter\n");
+		return -1;
+	}
+
+
+	return unregister(_m, (udomain_t*)_d, &uri, &ruid);
 }
 
 /*! \brief
@@ -545,6 +567,8 @@ static int unreg_fixup(void** param, int param_no)
 	if (param_no == 1) {
 		return domain_fixup(param, 1);
 	} else if (param_no == 2) {
+		return fixup_spve_null(param, 1);
+	} else if (param_no == 3) {
 		return fixup_spve_null(param, 1);
 	}
 	return 0;

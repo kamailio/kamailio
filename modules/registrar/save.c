@@ -953,26 +953,49 @@ error:
 	return 0;
 }
 
-int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri)
+int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri, str *_ruid)
 {
 	str aor = {0, 0};
 	sip_uri_t *u;
+	urecord_t *r;
+	ucontact_t *c;
 
 	u = parse_to_uri(_m);
 	if(u==NULL)
 		return -2;
-
 
 	if (extract_aor(_uri, &aor, NULL) < 0) {
 		LM_ERR("failed to extract Address Of Record\n");
 		return -1;
 	}
 
-	if (star(_m, _d, &aor, &u->host) < 0)
-	{
-		LM_ERR("error unregistering user [%.*s]\n", aor.len, aor.s);
-		return -1;
+	if (_ruid == NULL) {
+		/* No ruid provided - remove all contacts for aor */
+
+		if (star(_m, _d, &aor, &u->host) < 0)
+		{
+			LM_ERR("error unregistering user [%.*s]\n", aor.len, aor.s);
+			return -1;
+		}
+	} else {
+		/* ruid provided - remove a specific contact */
+
+		ul.lock_udomain(_d, &aor);
+		if (ul.get_urecord_by_ruid(_d, ul.get_aorhash(&aor),
+				_ruid, r, c) != 0) {
+			ul.unlock_udomain(_d, &aor);
+			LM_WARN("AOR/Contact not found\n");
+			return -1;
+		}
+		if (ul.delete_ucontact(r, c) != 0) {
+			ul.unlock_udomain(_d, &aor);
+			LM_WARN("could not delete contact\n");
+			return -1;
+		}
+		ul.release_urecord(r);
+		ul.unlock_udomain(_d, &aor);
 	}
+
 	return 1;
 }
 
