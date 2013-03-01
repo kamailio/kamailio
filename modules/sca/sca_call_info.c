@@ -980,6 +980,11 @@ sca_call_info_invite_request_handler( sip_msg_t *msg, sca_call_info *call_info,
 
     if ( sca_call_is_held( msg )) {
 	state = SCA_APPEARANCE_STATE_HELD;
+	if ( call_info->state == SCA_APPEARANCE_STATE_HELD_PRIVATE ) {
+	    state = SCA_APPEARANCE_STATE_HELD_PRIVATE;
+	} else {
+	    state = SCA_APPEARANCE_STATE_HELD;
+	}
     } else if ( !SCA_STR_EMPTY( &to->tag_value )) {
 	/* this is a reINVITE from an SCA line that put the call on hold */
 	state = SCA_APPEARANCE_STATE_ACTIVE;
@@ -1235,7 +1240,7 @@ sca_call_info_invite_reply_200_handler( sip_msg_t *msg,
 	goto done;
     }
 
-    if ( app->state != SCA_APPEARANCE_STATE_HELD ) {
+    if ( !sca_appearance_is_held( app )) {
 	state = SCA_APPEARANCE_STATE_ACTIVE;
     }
     /* if a Call-Info header is present, app-index goes to Contact */
