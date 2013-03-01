@@ -1080,10 +1080,12 @@ add_sock_hdr("Sock-Info");
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">unregister(domain, uri)</function>
+		<function moreinfo="none">unregister(domain, uri[, ruid])</function>
 		</title>
 		<para>
-		The function remove all the contact associated to 'uri'.
+		The function removes contacts associated with 'uri'. If 'ruid' is
+		provided a specific contact is removed, if 'ruid' is not provided
+		all contacts are removed.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -1100,6 +1102,13 @@ add_sock_hdr("Sock-Info");
 			pseudo-variables that are evaluated at runtime.
 			</para>
 		</listitem>
+		<listitem>
+			<para>
+			<emphasis>ruid</emphasis> - The record unique ID for a
+			a specific contact to be removed. It can contain
+			pseudo-variables that are evaluated at runtime.
+			</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -1110,6 +1119,7 @@ add_sock_hdr("Sock-Info");
 ...
 unregister("location", "$ru");
 unregister("location", "sip:user@kamailio.org");
+unregister("location", "$ru", "$ulc(caller=>ruid)");
 ...
 </programlisting>
 		</example>
@@ -1277,11 +1287,7 @@ event_route[usrloc:contact-expired] {
 				<listitem>
 				<para><emphasis>aorhash</emphasis> - hash id for the record
 				</para>
-				</listitem>	  
-				<listitem>
-				<para><emphasis>count</emphasis> - number of contacts
-				</para>
-				</listitem>	  
+				</listitem>
 				<listitem>
 				<para><emphasis>addr</emphasis> - contact address
 				</para>
@@ -1307,6 +1313,10 @@ event_route[usrloc:contact-expired] {
 				</para>
 				</listitem>	  
 				<listitem>
+				<para><emphasis>cseq</emphasis> - the cseq value
+				</para>
+				</listitem>	  
+				<listitem>
 				<para><emphasis>flags</emphasis> - flags value
 				</para>
 				</listitem>	  
@@ -1328,6 +1338,22 @@ event_route[usrloc:contact-expired] {
 				</listitem>	  
 				<listitem>
 				<para><emphasis>methods</emphasis> - methods value
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>count</emphasis> - number of contacts
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>ruid</emphasis> - record unique ID
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>reg-id</emphasis> - reg-id value
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>instance</emphasis> - instance value
 				</para>
 				</listitem>	  
 			</itemizedlist>
