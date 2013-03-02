@@ -1,6 +1,7 @@
 /*
  * $Id$
  *
+ * Copyright (C) 2012 Edvina AB
  * Copyright (C) 2007 1&1 Internet AG
  * Copyright (C) 2007 BASIS AudioNet GmbH
  * Copyright (C) 2004 FhG
@@ -70,6 +71,7 @@
 #include "../../globals.h"
 #include "../../hashes.h"
 #include "../../locking.h"
+#include "../../route.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -91,6 +93,8 @@ static int dbg_pkg_status(struct sip_msg*, char*,char*);
 static int dbg_shm_status(struct sip_msg*, char*,char*);
 static int dbg_pkg_summary(struct sip_msg*, char*,char*);
 static int dbg_shm_summary(struct sip_msg*, char*,char*);
+static int route_exists(struct sip_msg*, char*);
+static int check_route_exists(struct sip_msg*, char*);
 
 static int set_gflag(struct sip_msg*, char *, char *);
 static int reset_gflag(struct sip_msg*, char *, char *);
@@ -177,6 +181,10 @@ static cmd_export_t cmds[]={
 	{"unlock",       (cmd_function)cfg_unlock,  1,   fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"core_hash",    (cmd_function)w_core_hash, 3,   fixup_core_hash, 0,
+		ANY_ROUTE},
+	{"check_route_exists",    (cmd_function)check_route_exists, 1,   0, 0,
+		ANY_ROUTE},
+	{"route_if_exists",    (cmd_function)route_exists, 1,   0, 0,
 		ANY_ROUTE},
 	{"bind_cfgutils", (cmd_function)bind_cfgutils,  0,
 		0, 0, 0},
@@ -737,6 +745,32 @@ static int cfg_unlock(struct sip_msg *msg, char *key, char *s2)
 	return cfg_lock_wrapper(msg, (gparam_p)key, 1);
 }
 
+/*! Check if a route block exists - only request routes
+ */
+static int check_route_exists(struct sip_msg *msg, char *route)
+{
+	if (route_lookup(&main_rt, route))
+		return 1;
+	return 0;
+}
+
+/*! Run a request route block if it exists
+ */
+static int route_exists(struct sip_msg *msg, char *route)
+{
+	struct run_act_ctx ctx;
+	int newroute, backup_rt;
+
+	if (!(newroute = route_lookup(&main_rt, route))) {
+		return 0;
+	}
+	backup_rt = get_route_type();
+	set_route_type(REQUEST_ROUTE);
+	init_run_actions_ctx(&ctx);
+	run_top_route(main_rt.rlist[newroute], msg, 0);
+	set_route_type(backup_rt);
+	return 0;
+}
 
 static int mod_init(void)
 {
