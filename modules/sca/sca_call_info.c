@@ -31,6 +31,7 @@
 #include "sca_dialog.h"
 #include "sca_event.h"
 #include "sca_notify.h"
+#include "sca_reply.h"
 #include "sca_subscribe.h"
 #include "sca_util.h"
 
@@ -564,6 +565,19 @@ sca_call_info_seize_held_call( sip_msg_t *msg, sca_call_info *call_info,
 	goto done;
     }
 
+    if ( app->state == SCA_APPEARANCE_STATE_HELD_PRIVATE ) {
+	/*
+	 * spec calls for "403 Forbidden" when non-owner tries to
+	 * seize a privately held call. if we get here, there's no
+	 * to-tag in the INVITE, meaning this isn't a reINVITE
+	 * from the owner to take the call off private hold.
+	 */
+	SCA_REPLY_ERROR( sca, 403, "Forbidden - private call", msg );
+
+	/* rc bubbles up to script. 0 tells script to stop processing. */
+	rc = 0;
+	goto done;
+    }
     
     LM_DBG( "sca_call_info_seize_held_call: seizing %.*s index %d, callee %.*s",
 	    STR_FMT( from_aor ), app->index, STR_FMT( &app->callee ));
@@ -973,9 +987,11 @@ sca_call_info_invite_request_handler( sip_msg_t *msg, sca_call_info *call_info,
 					    from, to, from_aor, to_aor )) {
 	rc = sca_call_info_seize_held_call( msg, call_info, from, to,
 					   from_aor, to_aor, contact_uri );
+	if ( rc <= 0 ) {
+	    goto done;
+	}
     }
     /* otherwise, this is an initial INVITE */
-
 
     dialog.id.s = dlg_buf;
     if ( sca_dialog_build_from_tags( &dialog, sizeof( dlg_buf ),
