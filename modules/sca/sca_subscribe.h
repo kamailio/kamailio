@@ -74,7 +74,12 @@ extern const str 	SCA_METHOD_SUBSCRIBE;
 	((sub1)->state >= SCA_SUBSCRIPTION_STATE_TERMINATED && \
 		(sub1)->state <= SCA_SUBSCRIPTION_STATE_TERMINATED_TIMEOUT )
 
+#define SCA_SUB_REPLY_ERROR( mod, scode, smsg, sreply ) \
+        sca_subscription_reply((mod), (scode), (smsg), \
+		SCA_EVENT_TYPE_CALL_INFO, -1, (sreply))
+
 int	sca_handle_subscribe( sip_msg_t *, char *, char * );
+int	sca_subscription_reply( sca_mod *, int, char *, int, int, sip_msg_t * );
 
 int	sca_subscription_from_db_result( db1_res_t *, sca_subscription * );
 int	sca_subscriptions_restore_from_db( sca_mod * );
