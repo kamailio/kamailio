@@ -62,6 +62,7 @@
 static void pg_fld_free(db_fld_t* fld, struct pg_fld* payload)
 {
 	db_drv_free(&payload->gen);
+	if (payload->name) pkg_free(payload->name);
 	pkg_free(payload);
 }
 

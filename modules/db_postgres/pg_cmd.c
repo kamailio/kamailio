@@ -198,19 +198,88 @@ static int get_types(db_cmd_t* cmd)
 {
 	struct pg_cmd* pcmd;
 	struct pg_con* pcon;
+	int i, n;
+	pg_type_t *types;
 
 	pcmd = DB_GET_PAYLOAD(cmd);
 	/* FIXME */
 	pcon = DB_GET_PAYLOAD(cmd->ctx->con[db_payload_idx]);
 
+	types = pcon->oid;
 	pcmd->types = PQdescribePrepared(pcon->con, pcmd->name);
 	
 	if (PQresultStatus(pcmd->types) != PGRES_COMMAND_OK) {
 		ERR("postgres: Error while obtaining description of prepared statement\n");
 		return -1;
 	}
+	/* adapted from check_result() in db_mysql */
+	n = PQnfields(pcmd->types);
+	if (cmd->result == NULL) {
+		/* The result set parameter of db_cmd function was empty, that
+		 * means the command is select * and we have to create the array
+		 * of result fields in the cmd structure manually.
+		 */
+		cmd->result = db_fld(n + 1);
+		cmd->result_count = n;
+		for(i = 0; i < cmd->result_count; i++) {
+			struct pg_fld *f;
+			if (pg_fld(cmd->result + i, cmd->table.s) < 0) goto error;
+			f = DB_GET_PAYLOAD(cmd->result + i);
+			f->name = pkg_malloc(strlen(PQfname(pcmd->types, i))+1);
+			if (f->name == NULL) {
+				ERR("postgres: Out of private memory\n");
+				goto error;
+			}
+			strcpy(f->name, PQfname(pcmd->types, i));
+			cmd->result[i].name = f->name;
+		}
+	} else {
+		if (cmd->result_count != n) {
+			BUG("postgres: Number of fields in PQresult does not match number of parameters in DB API\n");
+			goto error;
+		}
+	}
 
+	/* Now iterate through all the columns in the result set and replace
+	 * any occurrence of DB_UNKNOWN type with the type of the column
+	 * retrieved from the database and if no column name was provided then
+	 * update it from the database as well.
+	 */
+	for(i = 0; i < cmd->result_count; i++) {
+		Oid type = PQftype(pcmd->types, i);
+		if (cmd->result[i].type != DB_NONE) continue;
+
+		if ((type == types[PG_INT2].oid) || (type == types[PG_INT4].oid) || (type == types[PG_INT8].oid))
+			cmd->result[i].type = DB_INT;
+
+		else if (type == types[PG_FLOAT4].oid)
+			cmd->result[i].type = DB_FLOAT;
+
+		else if (type == types[PG_FLOAT8].oid)
+			cmd->result[i].type = DB_DOUBLE;
+
+		else if ((type == types[PG_TIMESTAMP].oid) || (type == types[PG_TIMESTAMPTZ].oid))
+			cmd->result[i].type = DB_DATETIME;
+
+		else if ((type == types[PG_VARCHAR].oid) || (type == types[PG_CHAR].oid) || (type == types[PG_TEXT].oid))
+			cmd->result[i].type = DB_STR;
+
+		else if ((type == types[PG_BIT].oid) || (type == types[PG_VARBIT].oid))
+			cmd->result[i].type = DB_BITMAP;
+
+		else if (type == types[PG_BYTE].oid)
+			cmd->result[i].type = DB_BLOB;
+
+		else
+		{
+			ERR("postgres: Unsupported PostgreSQL column type: %d, table: %s, column: %s\n",
+				type, cmd->table.s, PQfname(pcmd->types, i));
+			goto error;
+		}
+	}
 	return 0;
+error:
+	return -1;
 }
 
 
@@ -352,7 +421,7 @@ static int upload_cmd(db_cmd_t* cmd)
 	DBG("postgres: Uploading command '%s': '%s'\n", pcmd->name,
 		pcmd->sql_cmd.s);
 
-	res = PQprepare(pcon->con, pcmd->name, pcmd->sql_cmd.s, 0, NULL);
+	res = PQprepare(pcon->con, pcmd->name, pcmd->sql_cmd.s, (cmd->match_count + cmd->vals_count), NULL);
 	
 	st = PQresultStatus(res);
 

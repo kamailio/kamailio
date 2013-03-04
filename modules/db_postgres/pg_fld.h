@@ -47,6 +47,7 @@
 struct pg_fld {
 	db_drv_t gen;
 
+	char* name;
 	/**
 	 * A union of varius data types from db_fld, postgres expects binary
 	 * data in network byte order so we use these variables as temporary
