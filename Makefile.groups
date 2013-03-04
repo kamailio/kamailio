@@ -167,18 +167,18 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 # groups are sets of modules selected by compile target interest (should be
 # built by combining lists)
 
-# Modules in this group are the default compiled modules due to 
+# Modules in this group are the default compiled modules due to
 # no external compile or link dependencies
 module_group_default=$(mod_list_basic) $(mod_list_extra) \
 					  $(mod_list_db) $(mod_list_dbuid) \
 					  $(mod_list_devel)
 
-# Modules in this group are the default compiled modules due to 
+# Modules in this group are the default compiled modules due to
 # no internal/external compile or link dependencies
 module_group_standard=$(mod_list_basic) $(mod_list_extra) \
 					  $(mod_list_devel)
 
-# Modules in this group are considered a standard part due to 
+# Modules in this group are considered a standard part due to
 # widespread usage, but they have dependencies that must be satisfied for 
 # compilation (e.g., lcr, radius, presence, tls, ...).
 module_group_common=$(mod_list_db) $(mod_list_dbuid) \
@@ -213,90 +213,89 @@ module_group_ignore= $(sort $(filter-out $(module_group_default), $(mod_list_all
 
 
 
-### --- Groups defined for packaging ###
+### --- Groups defined for pacKaging ###
 
-# Standard modules in K Debian distro
+# Standard modules in main pkg
 module_group_kstandard=$(mod_list_basic) $(mod_list_extra) \
 					  $(mod_list_db) $(mod_list_dbuid) \
 					  $(mod_list_pcre)
 
-# K mysql module
+# pkg mysql module
 module_group_kmysql=$(mod_list_mysql)
 
-# K postgress module
+# pkg postgress module
 module_group_kpostgres=$(mod_list_postgres)
 
-# K cpl module
+# pkg cpl module
 module_group_kcpl=$(mod_list_cpl)
 
-# K xml modules
+# pkg xml modules
 module_group_kxml=$(mod_list_xmldeps) $(mod_list_mi_xmlrpc)
 
-# K radius modules
+# pkg radius modules
 module_group_kradius=$(mod_list_radius)
 
-# K unixodbc module
+# pkg unixodbc module
 module_group_kunixodbc=$(mod_list_unixodbc)
 
-# K perl module
+# pkg perl module
 module_group_kperl=$(mod_list_app_perl)
 
-# K snmpstats module
+# pkg snmpstats module
 module_group_ksnmpstats=$(mod_list_snmpstats)
 
-# K xmpp module
+# pkg xmpp module
 module_group_kxmpp=$(mod_list_xmpp)
 
-# K carrierroute module
+# pkg carrierroute module
 module_group_kcarrierroute=$(mod_list_carrierroute)
 
-# K berkeley module
+# pkg berkeley module
 module_group_kberkeley=$(mod_list_berkeley)
 
-# K ldap modules
+# pkg ldap modules
 module_group_kldap=$(mod_list_ldap)
 
-# K utils module
+# pkg utils module
 module_group_kutils=$(mod_list_utils)
 
-# K purple module
+# pkg purple module
 module_group_kpurple=$(mod_list_purple)
 
-# K memcached module
+# pkg memcached module
 module_group_kmemcached=$(mod_list_memcached)
 
-# K tls module
+# pkg tls module
 module_group_ktls=$(mod_list_tlsdeps)
 
-# K websocket module
+# pkg websocket module
 module_group_kwebsocket=$(mod_list_websocket)
 
-# K presence modules
+# pkg presence modules
 module_group_kpresence=$(mod_list_presence)
 
-# K lua module
+# pkg lua module
 module_group_klua=$(mod_list_lua)
 
-# K python module
+# pkg python module
 module_group_kpython=$(mod_list_python)
 
-# K geoip module
+# pkg geoip module
 module_group_kgeoip=$(mod_list_geoip)
 
-# K sqlite module
+# pkg sqlite module
 module_group_ksqlite=$(mod_list_sqlite)
 
 # K json modules
 module_group_kjson=$(mod_list_json)
 
-# K redis module
+# pkg redis module
 module_group_kredis=$(mod_list_redis)
 
-# K mono module
+# pkg mono module
 module_group_kmono=$(mod_list_mono)
 
-# For IMS
-# kamailio modules
+# pkg IMS modules
 module_group_kims=$(mod_list_ims)
 
 
