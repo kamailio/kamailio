@@ -87,7 +87,10 @@ mod_list_purple=purple
 mod_list_memcached=memcached
 
 # - modules depending on openssl library
-mod_list_tlsdeps=auth_identity outbound tls
+mod_list_tlsdeps=auth_identity tls
+
+# - modules depending on openssl library
+mod_list_outbound=outbound
 
 # - modules depending on unistring library
 mod_list_websocket=websocket
@@ -158,7 +161,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_mono) $(mod_list_ims) \
 			   $(mod_list_cassandra) $(mod_list_oracle) \
 			   $(mod_list_iptrtpproxy) $(mod_list_mi_xmlrpc) \
-			   $(mod_list_osp) )
+			   $(mod_list_outbound) $(mod_list_osp) )
 
 
 
@@ -297,6 +300,9 @@ module_group_kmono=$(mod_list_mono)
 
 # pkg IMS modules
 module_group_kims=$(mod_list_ims)
+
+# pkg outbound module
+module_group_koutbound=$(mod_list_outbound)
 
 
 # list of static modules
