@@ -148,12 +148,13 @@ CFG_NAME=kamailio
 KMSTATS ?= 1
 # fast malloc statistics on
 FMSTATS ?= 1
-# application server support on
-WITHAS ?= 1
 else # unknown:
 # main binary name
 MAIN_NAME=kamailio
 endif
+
+# application server support on
+WITHAS ?= 1
 
 # what to install
 INSTALL_FLAVOUR=$(FLAVOUR)
