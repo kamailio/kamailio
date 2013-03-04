@@ -1,245 +1,306 @@
 # Module groups definitions
 #
 
-# - default only include the standard group
-# Make backwards compatible, don't set group_include default...
-# group_include?="standard"
-
-# Modules in this group are considered a standard part (due to 
-# widespread usage) and have no external compile or link dependencies (note 
-# that some of these interplay with external systems).
-module_group_standard=acc_syslog auth avp ctl dispatcher diversion enum\
-				eval exec fifo db_flatstore gflags maxfwd mediaproxy \
-				nathelper options pdt permissions pike print ratelimit \
-				registrar rr rtpproxy sanity sl textops timer tm uac \
-				unixsock uri usrloc xlog cfg_rpc sipcapture msrp tmrec
-
-# Modules in this group are considered a standard part of SER (due to 
-# widespread usage) but they have dependencies that must be satisfied for 
-# compilation.
-# acc_radius, auth_radius, misc_radius => radiusclient-ng
-# acc_db, auth_db, avp_db, db_ops, domain, lcr, msilo, dialog, speeddial,
-# uri_db => database module (db_mysql, db_postgres, dbtext ...)
-# mysql, postgres => mysql server and client libraries or postgres server and
-#  client libraries or other database back-end (ex. mysql-devel)
-# pa, xmlrpc => libxml2
-# rls => pa
+# lists are sets of modules that don't include modules that are in other lists
+# - break the lists as needed in order to use them to build desired groups
+#   and packages
 #
-# NOTE! All presence modules (dialog, pa, presence_b2b, rls, xcap) have been
-# included in this group due to interdependencies
-module_group_standard_dep=acc_db acc_radius auth_db auth_radius avp_db \
-				auth_identity db_ops domain lcr misc_radius \
-				msilo dialog pa \
-				presence_b2b rls speeddial uri_db xcap xmlrpc
+
+
+# - basic used modules, with no extra dependency (widespread usage)
+mod_list_basic=async auth benchmark blst cfg_rpc cfgutils corex counters \
+				   ctl debugger diversion enum exec ipops kex mangler maxfwd \
+				   mediaproxy mi_datagram mi_fifo mi_rpc mqueue \
+				   nat_traversal nathelper path pike pv ratelimit rr rtimer \
+				   rtpproxy sanity sdpops siputils sl statistics textops \
+				   textopsx tm tmx topoh xlog
+
+# - extra used modules, with no extra dependency
+mod_list_extra=avp auth_diameter call_control dmq domainpolicy msrp pdb qos \
+				 sca seas sms sst timer tmrec uac_redirect xhttp xhttp_rpc \
+				 xprint
+
+# - common modules depending on database
+mod_list_db=acc alias_db auth_db avpops cfg_db db_text db_flatstore \
+			  db_cluster dialog dispatcher domain drouting group \
+			  htable imc matrix msilo mtree p_usrloc pdt permissions \
+			  pipelimit prefix_route registrar sipcapture siptrace speeddial \
+			  sqlops uac uri_db userblacklist usrloc
+
+
+# - common modules depending on database, using UID db schema
+mod_list_dbuid=db2_ops uid_auth_db uid_avp_db uid_domain uid_gflags \
+				 uid_uri_db
+
+# - modules for devel purposes
+mod_list_devel=malloc_test print print_lib
+
+# - modules depending on pcre3 library
+mod_list_pcre=dialplan lcr regex
+
+# - modules depending on radius client library
+mod_list_radius=acc_radius auth_radius misc_radius peering
+
+# - modules depending on ldap client library
+mod_list_ldap=db2_ldap h350 ldap
+
+# - modules depending on mysql client library
+mod_list_mysql=db_mysql
+
+# - modules depending on postgres client library
+mod_list_postgres=db_postgres
+
+# - modules depending on unixodbc library
+mod_list_unixodbc=db_unixodbc
+
+# - modules depending on mysql cassandra library
+mod_list_cassandra=db_cassandra
+
+# - modules depending on xml2 library
+mod_list_cpl=cpl-c
+
+# - modules depending on xml2 library
+mod_list_xmldeps=xhttp_pi xmlrpc xmlops
+
+# - modules depending on xml c rpc library
+mod_list_mi_xmlrpc=mi_xmlrpc
+
+# - modules depending on net-snmp library
+mod_list_snmpstats=snmpstats
+
+# - modules depending on expat library
+mod_list_xmpp=xmpp
+
+# - modules depending on confuse library
+mod_list_carrierroute=carrierroute
+
+# - modules depending on bdb (db4) library
+mod_list_berkeley=db_berkeley
+
+# - modules depending on curl library
+mod_list_utils=utils
+
+# - modules depending on purple library
+mod_list_purple=purple
+
+# - modules depending on memcache library
+mod_list_memcached=memcached
+
+# - modules depending on openssl library
+mod_list_tlsdeps=auth_identity outbound tls
+
+# - modules depending on unistring library
+mod_list_websocket=websocket
+
+# - modules related to SIMPLE presence extensions
+mod_list_presence=presence presence_conference presence_dialoginfo \
+					   presence_mwi presence_profile presence_reginfo \
+					   presence_xml \
+					   pua pua_bla pua_dialoginfo pua_mi pua_reginfo \
+					   pua_usrloc pua_xmpp \
+					   rls xcap_client xcap_server
+
+
+# - modules depending on lua library
+mod_list_lua=app_lua
+
+# - modules depending on perl library
+mod_list_perldeps=app_perl db_perlvdb
+
+# - modules depending on python library
+mod_list_python=app_python
+
+# - modules depending on geoip library
+mod_list_geoip=geoip
+
+# - modules depending on sqlite library
+mod_list_sqlite=db_sqlite
+
+# - modules depending on oracle library
+mod_list_oracle=db_oracle
+
+# - modules depending on json library
+mod_list_json=json jsonrpc-c
+
+# - modules depending on redis library
+mod_list_redis=ndb_redis
+
+# - modules depending on mono library
+mod_list_mono=app_mono
+
+# - modules related to IMS extensions
+mod_list_ims=cdp cdp_avp dialog_ng ims_auth ims_isc ims_icscf ims_qos \
+			   ims_registrar_pcscf ims_registrar_scscf ims_usrloc_pcscf \
+			   ims_usrloc_scscf
+
+# - modules depending on osp toolkit library
+mod_list_osp=osp
+
+# - modules depending on iptables library
+mod_list_iptrtpproxy=iptrtpproxy
+
+# - all modules
+mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
+			   $(mod_list_db) $(mod_list_dbuid) \
+			   $(mod_list_devel) $(mod_list_pcre) \
+			   $(mod_list_radius) $(mod_list_ldap) \
+			   $(mod_list_mysql) $(mod_list_postgres) \
+			   $(mod_list_unixodbc) $(mod_list_xmldeps) \
+			   $(mod_list_perldeps) $(mod_list_cpl) \
+			   $(mod_list_xmpp) $(mod_list_carrierroute) \
+			   $(mod_list_berkeley) $(mod_list_utils) \
+			   $(mod_list_purple) $(mod_list_memcached) \
+			   $(mod_list_tlsdeps) $(mod_list_websocket) \
+			   $(mod_list_snmpstats) $(mod_list_presence) \
+			   $(mod_list_lua) $(mod_list_python) \
+			   $(mod_list_geoip) $(mod_list_sqlite) \
+			   $(mod_list_json) $(mod_list_redis) \
+			   $(mod_list_mono) $(mod_list_ims) \
+			   $(mod_list_cassandra) $(mod_list_oracle) \
+			   $(mod_list_iptrtpproxy) $(mod_list_mi_xmlrpc) \
+			   $(mod_list_osp) )
+
+
+
+### --- Groups defined for source code compilation ###
+
+# groups are sets of modules selected by compile target interest (should be
+# built by combining lists)
+
+# Modules in this group are the default compiled modules due to 
+# no external compile or link dependencies
+module_group_default=$(mod_list_basic) $(mod_list_extra) \
+					  $(mod_list_db) $(mod_list_dbuid) \
+					  $(mod_list_devel)
+
+# Modules in this group are the default compiled modules due to 
+# no internal/external compile or link dependencies
+module_group_standard=$(mod_list_basic) $(mod_list_extra) \
+					  $(mod_list_devel)
+
+# Modules in this group are considered a standard part due to 
+# widespread usage, but they have dependencies that must be satisfied for 
+# compilation (e.g., lcr, radius, presence, tls, ...).
+module_group_common=$(mod_list_db) $(mod_list_dbuid) \
+					$(mod_list_pcre) $(mod_list_radius) \
+					$(mod_list_xmldeps) $(mod_list_presence) \
+					$(mod_list_tlsdeps)
 
 # For db use (db modules, excluding drivers)
-module_group_db=acc_db auth_db avp_db db_ops db_text \
-				uri_db domain lcr msilo speeddial
-				#dbtext (s) not migrated yet to the new db interface
+module_group_db=$(mod_list_db)
 
 # For mysql
-module_group_mysql_driver=db_mysql
+module_group_mysql_driver=$(mod_list_mysql)
 module_group_mysql=$(module_group_mysql_driver) $(module_group_db)
 
 # For postgress
-module_group_postgres_driver=db_postgres
+module_group_postgres_driver=$(mod_list_postgres)
 module_group_postgres=$(module_group_postgres_driver) $(module_group_db)
 
 # For radius
-module_group_radius=acc_radius auth_radius misc_radius avp_radius uri_radius \
-					peering
+module_group_radius=$(mod_list_radius)
 
 # For presence
 # kamailio modules
-module_group_presence=presence presence_dialoginfo presence_mwi presence_xml presence_profile\
-						pua pua_bla pua_dialoginfo pua_mi pua_usrloc pua_xmpp \
-						rls xcap_client xcap_server presence_conference \
-						presence_reginfo pua_reginfo
-#ser modules
-module_group_presence+=dialog presence_b2b xcap
-# obsolete/unmaintained ser modules
-#module_group_presence=pa rls
-
-# Modules in this group satisfy specific or niche applications, but are 
-# considered stable for production use. They may or may not have dependencies
-# cpl-c => libxml2
-# jabber => expat (library)
-# osp => OSP Toolkit (sipfoundry)
-# sms => none (external modem)
-module_group_stable=cpl-c dbtext jabber osp sms pdb
-
-# Modules in this group are either not complete, untested, or without enough
-# reports of usage to allow the module into the stable group. They may or may
-# not have dependencies
-module_group_experimental=tls oracle iptrtpproxy ndb_redis async websocket outbound
+module_group_presence=$(mod_list_presence)
 
 # For cassandra
-module_group_cassandra_driver=db_cassandra
+module_group_cassandra_driver=$(mod_list_cassandra)
 module_group_cassandra=$(module_group_cassandra_driver) $(module_group_db)
 
+# For all modules not compiled by default
+module_group_ignore= $(sort $(filter-out $(module_group_default), $(mod_list_all)))
 
-### Kamailio specific groups ###
+
+
+### --- Groups defined for packaging ###
+
 # Standard modules in K Debian distro
-module_group_kstandard=acc alias_db auth auth_db benchmark call_control corex \
-				cfgutils db_text dialog dispatcher diversion domain drouting \
-				exec group htable imc kex maxfwd mi_datagram mi_fifo msilo \
-				nat_traversal nathelper path pdt permissions pike pv qos \
-				ratelimit regex registrar rr rtimer rtpproxy siptrace siputils \
-				sl sms speeddial sqlops sst statistics textops tmx uac \
-				uac_redirect uri_db userblacklist usrloc xlog seas \
-				avpops cfg_db cfg_rpc ctl db_flatstore dialplan enum \
-				iptrtpproxy lcr mediaproxy mi_rpc pdb sanity tm topoh \
-				blst prefix_route counters debugger matrix mqueue mtree \
-				pipelimit rtpproxy textopsx xhttp xhttp_rpc ipops p_usrloc \
-				sdpops async sipcapture dmq msrp tmrec db_cluster
+module_group_kstandard=$(mod_list_basic) $(mod_list_extra) \
+					  $(mod_list_db) $(mod_list_dbuid) \
+					  $(mod_list_pcre)
 
 # K mysql module
-module_group_kmysql=db_mysql
+module_group_kmysql=$(mod_list_mysql)
 
 # K postgress module
-module_group_kpostgres=db_postgres
+module_group_kpostgres=$(mod_list_postgres)
 
 # K cpl module
-module_group_kcpl=cpl-c
+module_group_kcpl=$(mod_list_cpl)
+
+# K xml modules
+module_group_kxml=$(mod_list_xmldeps) $(mod_list_mi_xmlrpc)
 
 # K radius modules
-module_group_kradius=acc_radius auth_radius misc_radius peering
+module_group_kradius=$(mod_list_radius)
 
 # K unixodbc module
-module_group_kunixodbc=db_unixodbc
-
-# K xmlrpc modules
-module_group_kxml=xmlrpc mi_xmlrpc xmlops
+module_group_kunixodbc=$(mod_list_unixodbc)
 
 # K perl module
-module_group_kperl=app_perl db_perlvdb
+module_group_kperl=$(mod_list_app_perl)
 
 # K snmpstats module
-module_group_ksnmpstats=snmpstats
+module_group_ksnmpstats=$(mod_list_snmpstats)
 
 # K xmpp module
-module_group_kxmpp=xmpp
+module_group_kxmpp=$(mod_list_xmpp)
 
 # K carrierroute module
-module_group_kcarrierroute=carrierroute
+module_group_kcarrierroute=$(mod_list_carrierroute)
 
 # K berkeley module
-module_group_kberkeley=db_berkeley
+module_group_kberkeley=$(mod_list_berkeley)
 
 # K ldap modules
-module_group_kldap=ldap db2_ldap h350
+module_group_kldap=$(mod_list_ldap)
 
 # K utils module
-module_group_kutils=utils
+module_group_kutils=$(mod_list_utils)
 
 # K purple module
-module_group_kpurple=purple
+module_group_kpurple=$(mod_list_purple)
 
 # K memcached module
-module_group_kmemcached=memcached
+module_group_kmemcached=$(mod_list_memcached)
 
 # K tls module
-module_group_ktls=tls
+module_group_ktls=$(mod_list_tlsdeps)
 
 # K websocket module
-module_group_kwebsocket=websocket
-
-# K outbound module
-module_group_koutbound=outbound
+module_group_kwebsocket=$(mod_list_websocket)
 
 # K presence modules
-module_group_kpresence=presence presence_dialoginfo presence_mwi presence_xml presence_profile\
-						pua pua_bla pua_dialoginfo pua_mi pua_usrloc pua_xmpp \
-						rls xcap_client xcap_server presence_conference \
-						presence_reginfo pua_reginfo
+module_group_kpresence=$(mod_list_presence)
 
 # K lua module
-module_group_klua=app_lua
+module_group_klua=$(mod_list_lua)
 
 # K python module
-module_group_kpython=app_python
+module_group_kpython=$(mod_list_python)
 
 # K geoip module
-module_group_kgeoip=geoip
+module_group_kgeoip=$(mod_list_geoip)
 
 # K sqlite module
-module_group_ksqlite=db_sqlite
+module_group_ksqlite=$(mod_list_sqlite)
 
 # K json modules
-module_group_kjson=json jsonrpc-c
+module_group_kjson=$(mod_list_json)
 
 # K redis module
-module_group_kredis=ndb_redis
+module_group_kredis=$(mod_list_redis)
 
 # K mono module
-module_group_kmono=app_mono
+module_group_kmono=$(mod_list_mono)
 
 # For IMS
 # kamailio modules
-module_group_kims=ims_auth cdp cdp_avp dialog_ng ims_qos ims_isc ims_icscf\
-                        ims_registrar_pcscf ims_registrar_scscf ims_usrloc_pcscf ims_usrloc_scscf
+module_group_kims=$(mod_list_ims)
 
-# if not set on the cmd. line, env or in the modules.lst (cfg_group_include)
-# exclude the below modules.
-ifneq ($(group_include)$(cfg_group_include),)
-	# For group_include, default all modules are excluded except those in 
-	# include_modules
-	exclude_modules?=
-else
-	# Old defaults for backwards compatibility
-	# excluded because they depend on external libraries
-	exclude_modules?= 		cpl mangler postgres jabber mysql cpl-c \
-							auth_radius misc_radius avp_radius uri_radius \
-							acc_radius pa rls presence_b2b xcap xmlrpc\
-							osp tls oracle \
-							unixsock dbg print_lib auth_identity db2_ldap ldap \
-							db_berkeley db_mysql db_postgres db_oracle \
-							db_sqlite db_unixodbc db_cassandra memcached mi_xmlrpc \
-							app_perl db_perlvdb purple \
-							snmpstats xmpp cdp \
-							carrierroute peering \
-							dialplan lcr utils presence presence_mwi \
-							presence_dialoginfo presence_xml pua pua_bla \
-							pua_dialoginfo pua_usrloc pua_xmpp \
-							regex xcap_client xcap_server presence_conference \
-							presence_reginfo pua_reginfo websocket outbound
-	#excluded because they depend on external *.h files
-	exclude_modules+= h350
-	# excluded because they do not compile (remove them only after they are
-	#  fixed) -- andrei
-	exclude_modules+= bdb dbtext iptrtpproxy pa rls
-	# depends on libgeoip
-	exclude_modules+= geoip
-	# depends on liblua5.1-dev
-	exclude_modules+= app_lua
-	# depends on libpython-dev
-	exclude_modules+= app_python
-	# depends on libxml2
-	exclude_modules+= xmlops xhttp_pi
-	# depends on jsoc-c
-	exclude_modules+= json jsonrpc-c
-	# depends on libhiredis
-	exclude_modules+= ndb_redis
-	# depends on mono-devel
-	exclude_modules+= app_mono
-	# depends on tm being compiled with -DWITH_AS_SUPPORT support
-ifeq (,$(findstring -DWITH_AS_SUPPORT, $(C_DEFS)))
-		exclude_modules+= seas
-endif
-endif
 
-# always exclude the CVS dir
-override exclude_modules+= CVS $(skip_modules)
-
-# Test for the groups and add to include_modules
-ifneq (,$(group_include))
-$(eval override include_modules+= $(foreach grp, $(group_include), \
-										$(module_group_$(grp)) ))
-endif
-
-# first 2 lines are excluded because of the experimental or incomplete
-# status of the modules
-# the rest is excluded because it depends on external libraries
+# list of static modules
 #
 static_modules:=
 
