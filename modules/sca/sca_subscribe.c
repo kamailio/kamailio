@@ -1334,10 +1334,11 @@ sca_subscription_reply( sca_mod *scam, int status_code, char *status_msg,
 	len = snprintf( extra_headers.s + extra_headers.len,
 		sizeof( hdr_buf ) - extra_headers.len,
 		"Expires: %d%s", expires, CRLF );
-	if ( len >= sizeof( hdr_buf ) || len < 0 ) {
+	if ( len >= (sizeof( hdr_buf ) - extra_headers.len) || len < 0 ) {
 	    LM_ERR( "sca_subscription_reply: extra headers too long" );
 	    return( -1 );
 	}
+	extra_headers.len += len;
     } else if ( status_code == 480 ) {
 	/* tell loser of line-seize SUBSCRIBE race to try again shortly */
 	extra_headers.s = hdr_buf;
