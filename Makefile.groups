@@ -245,7 +245,7 @@ module_group_kradius=$(mod_list_radius)
 module_group_kunixodbc=$(mod_list_unixodbc)
 
 # pkg perl module
-module_group_kperl=$(mod_list_app_perl)
+module_group_kperl=$(mod_list_perldeps)
 
 # pkg snmpstats module
 module_group_ksnmpstats=$(mod_list_snmpstats)
