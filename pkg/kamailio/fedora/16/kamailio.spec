@@ -1,5 +1,5 @@
 %define name    kamailio
-%define ver     3.3.3
+%define ver     3.3.4
 %define rel     0%{dist}
 
 
@@ -944,6 +944,8 @@ fi
 
 
 %changelog
+* Tue Mar 5 2012 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated ver to 3.3.4
 * Wed Dec 12 2012 Peter Dunkley <peter@dunkley.me.uk>
   - Updated ver to 3.3.3 in preparation for next release
 * Fri Oct 20 2012 Peter Dunkley <peter@dunkley.me.uk>
