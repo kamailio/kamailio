@@ -1,6 +1,6 @@
 %define name    kamailio
-%define ver     4.0.0
-%define rel     pre1%{dist}
+%define ver     4.1.0
+%define rel     dev0%{dist}
 
 
 
@@ -1072,6 +1072,8 @@ fi
 
 
 %changelog
+* Tue Mar 5 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to dev0 and ver to 4.1.0
 * Sun Jan 20 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Updated rel to pre1
   - Moved modules from modules_k/ to modules/
