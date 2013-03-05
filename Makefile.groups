@@ -233,7 +233,10 @@ module_group_kpostgres=$(mod_list_postgres)
 module_group_kcpl=$(mod_list_cpl)
 
 # pkg xml modules
-module_group_kxml=$(mod_list_xmldeps) $(mod_list_mi_xmlrpc)
+module_group_kxml=$(mod_list_xmldeps)
+
+# pkg mi_xmlrpc modules
+module_group_kmi_xmlrpc=$(mod_list_mi_xmlrpc)
 
 # pkg radius modules
 module_group_kradius=$(mod_list_radius)
