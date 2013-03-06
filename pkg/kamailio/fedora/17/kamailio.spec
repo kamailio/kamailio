@@ -909,37 +909,37 @@ fi
 
 
 %files perl
-#%defattr(-,root,root)
-#%doc %{_docdir}/kamailio/modules/README.app_perl
-#%doc %{_docdir}/kamailio/modules/README.db_perlvdb
-#%{_libdir}/kamailio/modules/app_perl.so
-#%{_libdir}/kamailio/modules/db_perlvdb.so
-#%dir %{_libdir}/kamailio/perl
-#%{_libdir}/kamailio/perl/Kamailio.pm
-#%dir %{_libdir}/kamailio/perl/Kamailio
-#%{_libdir}/kamailio/perl/Kamailio/Constants.pm
-#%{_libdir}/kamailio/perl/Kamailio/Message.pm
-#%{_libdir}/kamailio/perl/Kamailio/VDB.pm
-#%dir %{_libdir}/kamailio/perl/Kamailio/LDAPUtils
-#%{_libdir}/kamailio/perl/Kamailio/LDAPUtils/LDAPConf.pm
-#%{_libdir}/kamailio/perl/Kamailio/LDAPUtils/LDAPConnection.pm
-#%dir %{_libdir}/kamailio/perl/Kamailio/Utils
-#%{_libdir}/kamailio/perl/Kamailio/Utils/Debug.pm
-#%{_libdir}/kamailio/perl/Kamailio/Utils/PhoneNumbers.pm
-#%dir %{_libdir}/kamailio/perl/Kamailio/VDB
-#%{_libdir}/kamailio/perl/Kamailio/VDB/Column.pm
-#%{_libdir}/kamailio/perl/Kamailio/VDB/Pair.pm
-#%{_libdir}/kamailio/perl/Kamailio/VDB/ReqCond.pm
-#%{_libdir}/kamailio/perl/Kamailio/VDB/Result.pm
-#%{_libdir}/kamailio/perl/Kamailio/VDB/VTab.pm
-#%{_libdir}/kamailio/perl/Kamailio/VDB/Value.pm
-#%dir %{_libdir}/kamailio/perl/Kamailio/VDB/Adapter
-#%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/AccountingSIPtrace.pm
-#%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/Alias.pm
-#%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/Auth.pm
-#%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/Describe.pm
-#%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/Speeddial.pm
-#%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/TableVersions.pm
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.app_perl
+%doc %{_docdir}/kamailio/modules/README.db_perlvdb
+%{_libdir}/kamailio/modules/app_perl.so
+%{_libdir}/kamailio/modules/db_perlvdb.so
+%dir %{_libdir}/kamailio/perl
+%{_libdir}/kamailio/perl/Kamailio.pm
+%dir %{_libdir}/kamailio/perl/Kamailio
+%{_libdir}/kamailio/perl/Kamailio/Constants.pm
+%{_libdir}/kamailio/perl/Kamailio/Message.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB.pm
+%dir %{_libdir}/kamailio/perl/Kamailio/LDAPUtils
+%{_libdir}/kamailio/perl/Kamailio/LDAPUtils/LDAPConf.pm
+%{_libdir}/kamailio/perl/Kamailio/LDAPUtils/LDAPConnection.pm
+%dir %{_libdir}/kamailio/perl/Kamailio/Utils
+%{_libdir}/kamailio/perl/Kamailio/Utils/Debug.pm
+%{_libdir}/kamailio/perl/Kamailio/Utils/PhoneNumbers.pm
+%dir %{_libdir}/kamailio/perl/Kamailio/VDB
+%{_libdir}/kamailio/perl/Kamailio/VDB/Column.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Pair.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/ReqCond.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Result.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/VTab.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Value.pm
+%dir %{_libdir}/kamailio/perl/Kamailio/VDB/Adapter
+%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/AccountingSIPtrace.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/Alias.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/Auth.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/Describe.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/Speeddial.pm
+%{_libdir}/kamailio/perl/Kamailio/VDB/Adapter/TableVersions.pm
 
 
 %files lua
@@ -1085,6 +1085,8 @@ fi
 
 
 %changelog
+* Wed Mar 6 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Restored perl related files
 * Tue Mar 5 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Updated rel to dev0 and ver to 4.1.0
   - Re-ordered file to make it internally consistent
