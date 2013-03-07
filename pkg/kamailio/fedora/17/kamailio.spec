@@ -36,6 +36,9 @@ Conflicts:     kamailio-mono < %ver, kamailio-GeoIP < %ver
 Requires:      openssl lksctp-tools
 BuildRequires: bison flex gcc make redhat-rpm-config openssl-devel
 BuildRequires: lksctp-tools-devel
+%if 0%{?fedora}
+BuildRequires: docbook2X
+%endif
 
 %description
 Kamailio (former OpenSER) is an Open Source SIP Server released under GPL, able
@@ -1085,6 +1088,8 @@ fi
 
 
 %changelog
+* Thu Mar 7 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Added build requirement for docbook2X for Fedora builds
 * Wed Mar 6 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Restored perl related files
 * Tue Mar 5 2013 Peter Dunkley <peter@dunkley.me.uk>
