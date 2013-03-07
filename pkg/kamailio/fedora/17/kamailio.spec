@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     4.0.0
-%define rel     rc1%{dist}
+%define rel     0%{dist}
 
 
 
@@ -1085,6 +1085,8 @@ fi
 
 
 %changelog
+* Thu Mar 7 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Changed rel from rc1 to 0 in preparation for 4.0.0 release
 * Wed Mar 6 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Restored perl related files
 * Tue Mar 5 2013 Peter Dunkley <peter@dunkley.me.uk>
