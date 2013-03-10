@@ -1,12 +1,9 @@
-$Id$
-
 
      ==================================================
 
-          Kamailio Installation Notes
+          Kamailio SIP Server Installation Notes
 
-	     http://www.kamailio.org
-             http://sip-router.org
+                 http://www.kamailio.org
 
      ==================================================
 
@@ -17,15 +14,11 @@ $Id$
   not explicitely mentioned, SIP server refers to any of these two
   applications.
 
-  This memo gives you hints how to set up the SIP server quickly. To 
-  understand how SIP server works and how to configure it properly,
-  please read the admin's guide available from the http://sip-router.org
-  website.
-
-  We also urge you to read latest ISSUES (available from website
-  too) and check for potential problems in this release.
-  Users of previous releases are encouraged to read NEWS to learn how to move
-  to this new SIP server version.
+  This memo gives you hints how to set up the SIP server quickly.
+  
+  You can find similar tutorial and many more on project's web site:
+    - http://www.kamailio.org/w/documentation/
+    - http://www.kamailio.org/wiki/
   
 
 Table of Contents
@@ -34,6 +27,10 @@ Table of Contents
 1. SIP Server Flavours
 2. Supported Architectures and Requirements
 3. Howto Build SIP Server From the Source Distribution
+   3.1 Kamailio Fast Track Installation
+   3.2 Details Installing from Source Code
+     A) Set SIP Server Flavour
+     B) Build Commands
 4. Quick-Start Installation Guide
    A) Getting Help
    B) Disclaimers
@@ -51,7 +48,7 @@ The two major SIP server flavours are:
   - Kamailio (former OpenSER)
 
 Starting with version 3.0.0, the two SIP server flavours are built from
-same source code tree. In version 4.0.0 the two source code trees was
+same source code tree. In version 4.0.0 the two source code trees were
 merged even more, so a combined module directory is now used.
 
 Kamailio flavor is the one built by default. SER is, historically speaking, the
@@ -64,10 +61,10 @@ very few, Kamailio enabling next compile time flags:
   - application server extensions in tm module
 
 In version 4.0.0 the modules were merged into one set and the merger
-between the two products was completed. Kamailio is now the main
-flavour.
+between the two products was completed.
 
-Switching between flavours is a matter of 'make' command parameters.
+Kamailio is now the default flavour. Switching between flavours is a matter
+of 'make' command parameters.
 
 Several installation tutorials for Kamailio are available on the web wiki:
   - http://www.kamailio.org/wiki/
@@ -135,6 +132,7 @@ Requirements:
 - libpcre libs and devel headers - if you want to compile the lcr and dialplan
   modules
 - libsctp devel headers - if you want to compile the SCTP transport in the core
+- libssl devel headers (openssl project) - if you want to compule the TLS module
 - linunistring - for the Websockets module
 
 
@@ -208,7 +206,6 @@ OS Notes:
 	    see README of the module you want to use
     Both SER and Kamailio flavours have APT deb repositories that allow you to
 	install the binaries easily - see the web sites for more details:
-	  - http://iptel.org/ser
 	  - http://kamailio.org
 
  Cygwin  (alpha state, partial support)
@@ -230,22 +227,47 @@ OS Notes:
 
 
 3. Howto Build SIP Server From Source Distribution
--------------------------------------------
+--------------------------------------------------
 
-(NOTE: if make doesn't work try gmake  instead)
+(NOTE: if make doesn't work try gmake instead)
+
+3.1 Kamailio Fast Track Installation
+....................................
+
+
+If you are familiar with Unix/Linux  build tools aready and you installed
+required dependency, then you can just follow this section, otherwise
+skip over it.
+
+To get the SIP server installed, in the folder with source code run:
+
+  make cfg
+  make all
+  make install
+
+If you want to install with additional modules, for example with mysql and
+tls, run:
+
+  make include_modules="db_mysql tls" cfg
+  make all
+  make install
+
+3.2 Details Installing from Source Code
+.......................................
+
 
 A) Set SIP Server Flavour
 
 If you don't have a clean source tree, first do:
    make proper
 
-To build SER flavour, you don't need to do anything special, continue to
+To build Kamailio flavour, you don't need to do anything special, continue to
 read the section 3.B).
 
-To build Kamailio flavour, you have to run first:
-   make FLAVOUR=kamailio cfg
+To build SER flavour, you have to run first:
+   make FLAVOUR=ser cfg
 
-The parameter 'FLAVOUR=kamailio' must be given all the time when make target
+The parameter 'FLAVOUR=ser' must be given all the time when make target
 is 'cfg'.
 
 B) Build Commands
@@ -520,15 +542,15 @@ Install:
   "modules" or "excluded_modules").
 
 
-3. Quick-Start Installation Guide
-----------------------------------------------
+4. Quick-Start Installation Guide
+---------------------------------
 
 A) Getting Help
 
   This guide gives you instructions on how to set up the SIP server
   (SER or Kamailio) on your box quickly. In case the default configuration
   does not fly, please check the documentation at the SIP server web site
-  http://sip-router.org to learn how to configure SIP server for your site.
+  http://www.kamailio.org to learn how to configure SIP server for your site.
 
   If the documentation does not resolve your problem you may try contacting 
   our user forum by E-mail at sr-users@lists.sip-router.org -- that is the
@@ -564,7 +586,7 @@ C) Quick Start
   If you use Solaris 8 you can try our solaris package.
   If you use Gentoo Linux you do not have to download a package.
 
-2) Install the package
+  2) Install the package
 	RPM:
     		rpm -i <package_name>
 	debian:
@@ -584,7 +606,7 @@ C) Quick Start
 	*BSD:
     		pkg_add package_name
     
-3) Start the server
+  3) Start the server
 
 	RPM + gentoo:
     		/etc/init.d/ser start
@@ -603,7 +625,7 @@ C) Quick Start
     		You can start SIP server directly with /usr/local/sbin/ser or
 			/usr/local/sbin/kamailio.
     
-4) optionally, watch server's health using the
+  4) optionally, watch server's health using the
    	serctl or kamctl utility
 
     - to do so, first set the environment variable SIP_DOMAIN to your domain 
@@ -623,7 +645,7 @@ C) Quick Start
         /usr/local/sbin/kamctl moni (if you installed Kamailio flavour from a
 		tar.gz or solaris package)
 
-5) Connect SIP phones
+  5) Connect SIP phones
 
   Register with the server using your favorite SIP User Agent. You may want to look 
   at configuration hints for use of various clients on iptel.org site at
@@ -651,7 +673,7 @@ D) SIP Server with Persistent Data Storage
 
    set-variable    = max_connections=500
 
-1) Download the package containing mysql support for SIP server from: 
+  1) Download the package containing mysql support for SIP server from: 
     
     **** site not available yet
 
@@ -661,7 +683,7 @@ D) SIP Server with Persistent Data Storage
 	For gentoo please include 'mysql' to your USE variable in /etc/make.conf
 	or give it as variable to the emerge command.
 
-2) install the package
+  2) install the package
     rpm -i <package_name>
     or
     dpkg -i <package_name>
@@ -672,7 +694,7 @@ D) SIP Server with Persistent Data Storage
 	(if do not want to put 'mysql' into your USE variable you can type:
 	 USE="mysql" emerge ser)
 
-3.1) create MySQL tables for SER flavour
+  3.1) create MySQL tables for SER flavour
 	- if you have a previously installed SER on your system, use
     	/usr/sbin/ser_mysql.sh reinstall 
 	  to convert your SER database into new structures
@@ -681,7 +703,7 @@ D) SIP Server with Persistent Data Storage
 	  to create SER database structures
    (you will be prompted for password of MySql "root" user)
 
-3.2) create MySQL tables for Kamailio flavour
+  3.2) create MySQL tables for Kamailio flavour
 	- if you have a previously installed Kamailio on your system, use
     	/usr/local/sbin/kamdbctl reinstall 
 	  to convert your Kamailio database into new structures
@@ -690,7 +712,7 @@ D) SIP Server with Persistent Data Storage
 	  to create Kamailio database structures
    (you will be prompted for password of MySql "root" user)
 
-4) configure SIP server to use SQL
+  4) configure SIP server to use SQL
     uncomment all lines in configuration file ser.cfg or kamilio.cfg which are
 	related to authentication:
     - loadmodule "db_mysql.so"
@@ -704,7 +726,7 @@ D) SIP Server with Persistent Data Storage
         break;
       }
 
-5) be sure to replace realm, the first parameter in www_* actions, 
+  5) be sure to replace realm, the first parameter in www_* actions, 
    with name of your server; some broken UAC implementations don't 
    authenticate otherwise; the authentication command in your
    configuration script should look then like this:
@@ -713,12 +735,12 @@ D) SIP Server with Persistent Data Storage
         break;
       }
 
-6) restart the server
+  6) restart the server
     /etc/init.d/ser restart
 	  or
     /etc/init.d/kamailio restart
 
-7) you can now start  managing the server using the serctl or kamctl utility; 
+  7) you can now start  managing the server using the serctl or kamctl utility; 
    you need to first set the environment variable SIP_DOMAIN to your 
    local SIP realm, e.g.,
        export SIP_DOMAIN="myserver.foobar.com"
