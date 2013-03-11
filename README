@@ -38,7 +38,7 @@ Kamailio's performance and robustness allows it to serve millions of users and a
 of very large operators. With a low-cost dual-CPU, the Kamailio server is able to power 
 IP telephony services in an area as large as the Bay Area during peak hours.
 
-The Kamailio is extremely configurable to allow the creation of various routing and 
+The Kamailio server is extremely configurable to allow the creation of various routing and 
 admission policies as well as setting up new and customized services. Its configurability 
 allows it to serve many roles: network security barrier, presence server, application server, 
 IMS server or PSTN gateway guard (Session Border Controller) for example.
@@ -74,8 +74,8 @@ Router, then OpenSER and now Kamailio. A merge project was started during the fa
 of 2008 by developers from the OpenSER project, recently renamed to Kamailio.org
 and SIP Express Router (SER) from iptel.org. 
 
-Kamailio is the result of a merge of the code base and years
-of experience from both developer teams. In release 4.0, during the spring of 2013, the
+Kamailio is the result of a merge of the code base and years of experience from
+both developer teams. In release 4.0, during the spring of 2013, the
 merger of the products was completed and a unified product was released.
 
 See http://www.sip-router.org/ for the story of SER, OpenSER/Kamailio and kamailio.org.
@@ -89,7 +89,7 @@ subject to available manpower.
 
 To receive feedback to your inquiries, we recommend you to subscribe 
 to the sr-users mailing list and post your queries there. This mailing 
-list is set up for mutual help by the community of ser users and developers. 
+list is set up for mutual help by the community of Kamailio users and developers. 
 To participate in the mailing list, subscribe at the following web address: 
          http://lists.sip-router.org/mailman/listinfo/sr-users
 
