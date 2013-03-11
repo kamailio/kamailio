@@ -68,8 +68,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/digest/digest.h"
-#include "../../lib/kcore/parse_pai.h"
-#include "../../lib/kcore/parse_ppi.h"
+#include "../../parser/parse_ppi_pai.h"
 #include "../../pvar.h"
 #include "../../str.h"
 #include "../../onsend.h"
@@ -957,7 +956,7 @@ error:
 static int sip_capture(struct sip_msg *msg, char *s1, char *s2)
 {
 	struct _sipcapture_object sco;
-	struct sip_uri from, to, pai, contact;
+	struct sip_uri from, to, contact;
 	struct hdr_field *hook1 = NULL;	 
 	hdr_field_t *tmphdr[4];       
 	contact_body_t*  cb=0;	        	        
@@ -1062,32 +1061,35 @@ static int sip_capture(struct sip_msg *msg, char *s1, char *s2)
         	EMPTY_STR(sco.to_user);
         	EMPTY_STR(sco.to_tag);
         }
-	
+
 	/* Call-id */
 	if(msg->callid) sco.callid = msg->callid->body;
 	else { EMPTY_STR(sco.callid); }
-	
-	/* P-Asserted-Id */
-	if(msg->pai && (parse_pai_header(msg) == 0)) {
 
-	     if (parse_uri(get_pai(msg)->uri.s, get_pai(msg)->uri.len, &pai)<0){
-             	LM_DBG("DEBUG: do_action: bad pai: method:[%.*s] CID: [%.*s]\n", sco.method.len, sco.method.s, sco.callid.len, sco.callid.s);
-             }
-             else {
-	        LM_DBG("PARSE PAI: (%.*s)\n",get_pai(msg)->uri.len, get_pai(msg)->uri.s);
-	        sco.pid_user = pai.user;                          
-             }
-	}	
-	else if(msg->ppi && (parse_ppi_header(msg) == 0)) {
-		
-	     if (parse_uri(get_ppi(msg)->uri.s, get_ppi(msg)->uri.len, &pai)<0){
-             	LM_DBG("DEBUG: do_action: bad ppi: method:[%.*s] CID: [%.*s]\n", sco.method.len, sco.method.s, sco.callid.len, sco.callid.s);
-             }
-             else {
-	        sco.pid_user = pai.user;
-             }
-        }
-        else { EMPTY_STR(sco.pid_user); }
+	/* P-Asserted-Id */
+	if((parse_pai_header(msg) == 0) && (msg->pai) && (msg->pai->parsed)) {
+		to_body_t *pai = get_pai(msg)->id; /* This returns the first entry */
+		if ((pai->parsed_uri.user.s == NULL) &&
+			(parse_uri(pai->uri.s, pai->uri.len, &pai->parsed_uri) < 0)){
+			LM_DBG("DEBUG: do_action: bad pai: method:[%.*s] CID: [%.*s]\n", sco.method.len, sco.method.s, sco.callid.len, sco.callid.s);
+		}
+		else {
+			LM_DBG("PARSE PAI: (%.*s)\n", pai->uri.len, pai->uri.s);
+			sco.pid_user = pai->parsed_uri.user;
+		}
+	}
+	else if((parse_ppi_header(msg) == 0) && (msg->ppi) && (msg->ppi->parsed)) {
+		to_body_t *ppi = get_ppi(msg)->id; /* This returns the first entry */
+		if ((ppi->parsed_uri.user.s == NULL) &&
+			(parse_uri(ppi->uri.s, ppi->uri.len, &ppi->parsed_uri) < 0)){
+			LM_DBG("DEBUG: do_action: bad ppi: method:[%.*s] CID: [%.*s]\n", sco.method.len, sco.method.s, sco.callid.len, sco.callid.s);
+		}
+		else {
+			LM_DBG("PARSE PPI: (%.*s)\n", ppi->uri.len, ppi->uri.s);
+			sco.pid_user = ppi->parsed_uri.user;
+		}
+	}
+	else { EMPTY_STR(sco.pid_user); }
 	
 	/* Auth headers */
         if(msg->proxy_auth != NULL) hook1 = msg->proxy_auth;

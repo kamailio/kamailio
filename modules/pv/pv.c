@@ -97,7 +97,7 @@ static pv_export_t mod_pvs[] = {
 		pv_set_scriptvar, pv_parse_scriptvar_name, 0, 0, 0},
 	{{"ai", (sizeof("ai")-1)}, /* */
 		PVT_OTHER, pv_get_pai, 0,
-		0, 0, 0, 0},
+		0, pv_parse_index, 0, 0},
 	{{"adu", (sizeof("adu")-1)}, /* auth digest uri */
 		PVT_OTHER, pv_get_authattr, 0,
 		0, 0, pv_init_iname, 3},
@@ -262,10 +262,10 @@ static pv_export_t mod_pvs[] = {
 		0, 0, pv_init_iname, 1},
 	{{"pd", (sizeof("pd")-1)}, /* */
 		PVT_OTHER, pv_get_ppi_attr, 0,
-		0, 0, pv_init_iname, 3},
+		0, pv_parse_index, pv_init_iname, 3},
 	{{"pn", (sizeof("pn")-1)}, /* */
 		PVT_OTHER, pv_get_ppi_attr, 0,
-		0, 0, pv_init_iname, 4},
+		0, pv_parse_index, pv_init_iname, 4},
 	{{"pp", (sizeof("pp")-1)}, /* */
 		PVT_OTHER, pv_get_pid, 0,
 		0, 0, 0, 0},
@@ -277,10 +277,10 @@ static pv_export_t mod_pvs[] = {
 		0, 0, 0, 0},
 	{{"pu", (sizeof("pu")-1)}, /* */
 		PVT_OTHER, pv_get_ppi_attr, 0,
-		0, 0, pv_init_iname, 1},
+		0, pv_parse_index, pv_init_iname, 1},
 	{{"pU", (sizeof("pU")-1)}, /* */
 		PVT_OTHER, pv_get_ppi_attr, 0,
-		0, 0, pv_init_iname, 2},
+		0, pv_parse_index, pv_init_iname, 2},
 	{{"rb", (sizeof("rb")-1)}, /* */
 		PVT_MSG_BODY, pv_get_msg_body, 0,
 		0, 0, 0, 0},
