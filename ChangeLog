@@ -2,6 +2,87 @@
 
 ===================== Changes Since Version 3.3.0 ===========================
 
+commit 33e0d0ec6a370bfe580dddbb473ff4e0c1b2e746
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 11 16:00:01 2013 +0100
+
+    Makefile.defs: version set to 4.0.0
+    
+    - new major release
+
+commit 146d08078b64f3a40e01bb8dba4f4de8a50a857b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 11 15:57:31 2013 +0100
+
+    Makefile.dirs: updated the list with module directories
+    (cherry picked from commit c72aabf37beb308f99b46f764ee9c01b0d875da3)
+
+commit bd0099263cf693a2a890450d8696c6d6fd17ae00
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Mon Mar 11 11:43:49 2013 +0100
+
+    NEWS Update with reference to Wiki
+    (cherry picked from commit 697a272672e434b017cd7e3c6782c5cefa0f2de8)
+
+commit dbfa3769a3d50607126a5ad99b4e730c8be41514
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Mon Mar 11 11:36:54 2013 +0100
+
+    INSTALL update for release
+    (cherry picked from commit 220b782018c3158a05f695eac5b1bff0f7ad239f)
+
+commit 4f084e251742f64ac423c5d266f0ea0dc1e33926
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Mon Mar 11 11:13:36 2013 +0100
+
+    README - last minute release fixes
+
+commit b6040e7c14a9562d58649859a407f9f1f5b3a8cc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 11 09:38:37 2013 +0100
+
+    tm: set proper buffer len when Max-Forward header is not added
+    
+    - reported by Juha Heinanen
+    (cherry picked from commit 2d38b046b6202a35c0adf4c8b61f0d665432dd4f)
+
+commit 5111813177bce534bbfbc158e3c90cfd381c0b63
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 10 22:46:50 2013 +0100
+
+    pkg: deb specs updated for v4.0.0
+    (cherry picked from commit a349d9aab2d95b9b1cbc58870ead9a7294bcdcaa)
+
+commit 080db7fd62fcf3c941fce2e1e0552a6584572c3e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 10 23:53:26 2013 +0100
+
+    core: try to detect ipv6 addresses only when USE_IPV6 is used
+    
+    - reported by Juha Heinanen
+    (cherry picked from commit b035aa9f2cc19d387b1b8f33a7888ffee27a4138)
+
+commit de672e729c52f27252c78759c9b68b5ca09dfbdc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 10 22:07:11 2013 +0100
+
+    INSTALL: updates for v4.0.0
+    (cherry picked from commit b4ebc4a8164cfee995fb3ed0570702ae0547c0ce)
+
+commit 73106e703c3e2ad031f9c875a52ecf9b99750c39
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 8 23:22:06 2013 +0100
+
+    ChangeLog_k: removed obsolete file
+    (cherry picked from commit ff04edd6ee7ddc213b346afffeec04a995bf16fa)
+
+commit 69c3909a8701bf47fc31105e29382ae09d383943
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 8 23:20:06 2013 +0100
+
+    ChangeLog: updated content to prepare for v4.0.0
+    (cherry picked from commit 28111e7943f209ed936a6e9f1d5278d6235cedbb)
+
 commit 71101a73000e2e00c9c7ce38d1bcc3efa94e58fc
 Author: Peter Dunkley <peter.dunkley@crocodile-rcs.com>
 Date:   Thu Mar 7 02:11:35 2013 +0000
