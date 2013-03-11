@@ -7,16 +7,15 @@
 
      ==================================================
 
-  Welcome! This is an amazingly flexible, robust
-  and secure SIP server built on years of experience in several Open
-  Source projects. It's a merge of the SIP Express Router (SER) and the
-  Kamailio (OpenSER) products produced by a joint development team. When
-  not explicitely mentioned, SIP server refers to any of these two
-  applications.
+  Welcome! This is an amazingly flexible, robust and secure SIP server
+  built on years of experience in several Open Source projects. It's a merge
+  of the SIP Express Router (SER) and the Kamailio (OpenSER) products produced
+  by a joint development team. When not explicitely mentioned, SIP server refers
+  to any of these two applications.
 
-  This memo gives you hints how to set up the SIP server quickly.
+  This memo gives you hints on how to set up the SIP server quickly.
   
-  You can find similar tutorial and many more on project's web site:
+  You can find a similar tutorial and many more on project's web site:
     - http://www.kamailio.org/w/documentation/
     - http://www.kamailio.org/wiki/
   
@@ -272,7 +271,7 @@ is 'cfg'.
 
 B) Build Commands
 
-  SIP server is split in four main parts: The core, the modules, the
+  The SIP server is split in four main parts: The core, the modules, the
   utilties, and scripts/examples.  When you build, you can decide to build
   only the core, the modules, both, or all.
 
@@ -297,8 +296,8 @@ Including groups of modules:
   modules to include, according to their status:
   - standard - Modules in this group are considered a standard part of SIP server
     (due to widespread usage) but they have no dependencies (note that some of
-	these interplay with external systems.
-    However, they don't have compile or link dependencies).
+    these interplay with external systems. However, they don't have compile
+    or link dependencies).
 
   - db - Modules in this group use databases and need a database driver to run.
     Included are drivers for the text mode db (dbtext) and for dumping
@@ -306,14 +305,13 @@ Including groups of modules:
     postgres groups.
 
   - standard_dep -  Modules in this group are considered a standard part of SIP
-    server(due to widespread usage)
-    but they have dependencies that most be satisfied for compilation.
+    server (due to widespread usage) but they have dependencies that must be satisfied
+    for compilation.
     NOTE! All presence modules (dialog, pa, presence_b2b, rls, xcap) have been
 	included in this group due to interdependencies
 
   - stable - Modules in this group satisfy specific or niche applications,
-    but are considered stable for production use. They may or may not have
-	dependencies
+    and are considered stable for production use. They may or may not have dependencies
 
   - experimental - Modules in this group are either not complete, untested, or
     without enough reports of usage to allow the module into the stable group.
@@ -418,6 +416,7 @@ Configure:
 
   Example: 
 	make cfg include_modules=mysql mode=debug
+
   All future make invocations will include the mysql module and will build in debug mode
 
   Note: if config.mak doesn't exist (e.g. initial checkout or after a make 
@@ -574,14 +573,13 @@ C) Quick Start
   authentication, then you have to install additional database support --
   proceed to section D) after you are finished with C).
 
-  1) Download an RPM or debian package from site
+  1) Download an RPM or Debian package from the links on the wiki
 
-    ****** site not available yet
+    http://www.kamailio.org/wiki/
 
   If you don't use an rpm or debian based distribution, try our tar.gz'ed
   binaries
-
-  ******* not available yet
+    http://www.kamailio.org/pub/kamailio/latest/src/
 
   If you use Solaris 8 you can try our solaris package.
   If you use Gentoo Linux you do not have to download a package.
@@ -647,9 +645,7 @@ C) Quick Start
 
   5) Connect SIP phones
 
-  Register with the server using your favorite SIP User Agent. You may want to look 
-  at configuration hints for use of various clients on iptel.org site at
-     http://www.iptel.org/phpBB/viewforum.php?forum=1&8
+  Register with the server using your favorite SIP User Agent (phone). 
 
   In most cases, you need to set the following options:
 
@@ -665,7 +661,8 @@ D) SIP Server with Persistent Data Storage
   The default configuration is very simple and features many simplifications. 
   In particular, it does not authenticate users and loses User Location database 
   on reboot. To provide persistence, keep user credentials and remember users' 
-  locations across reboots, SIP server can be configured to use a database, like MySQL. 
+  locations across reboots, Kamailio can be configured to use a database, like MySQL. 
+
   Before you proceed, you need to make sure MySQL is installed on your box. Your
   MySQL server must be configured to deal with a large number of
   connection. To increase it, set the following line in [mysqld] section
@@ -673,9 +670,9 @@ D) SIP Server with Persistent Data Storage
 
    set-variable    = max_connections=500
 
-  1) Download the package containing mysql support for SIP server from: 
-    
-    **** site not available yet
+  1) Download the package containing mysql support for SIP server from the links
+     you find on: 
+        http://www.kamailio.org/wiki/
 
     (rpm and deb provided, most of the binary tar.gz distributions and the 
      solaris package include it; if it is not present you'll have to rebuild
