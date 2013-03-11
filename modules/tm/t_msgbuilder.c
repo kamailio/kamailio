@@ -1512,6 +1512,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 {
 	char* buf, *w;
 	str content_length, cseq, via;
+	unsigned int maxfwd_len;
 
 	if (!method || !dialog) {
 		LOG(L_ERR, "build_uac_req(): Invalid parameter value\n");
@@ -1525,6 +1526,14 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 		LOG(L_ERR, "build_uac_req(): Error while printing CSeq number\n");
 		return 0;
 	}
+
+	if(headers==NULL || headers->len<15
+			|| _strnstr(headers->s, "Max-Forwards:", headers->len)==NULL) {
+		maxfwd_len = MAXFWD_HEADER_LEN;
+	} else {
+		maxfwd_len = 0;
+	}
+
 	*len = method->len + 1 + dialog->hooks.request_uri->len + 1 + SIP_VERSION_LEN + CRLF_LEN;
 
 	if (assemble_via(&via, t, dst, branch) < 0) {
@@ -1540,7 +1549,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	*len += CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;                                      /* Call-ID */
 	*len += CSEQ_LEN + cseq.len + 1 + method->len + CRLF_LEN;                                    /* CSeq */
 	*len += calculate_routeset_length(dialog);                                                   /* Route set */
-	*len += MAXFWD_HEADER_LEN;                                                                   /* Max-forwards */	
+	*len += maxfwd_len;                                                                          /* Max-forwards */	
 	*len += CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN; /* Content-
 																	 Length */
 	*len += (server_signature ? (user_agent_hdr.len + CRLF_LEN) : 0);	                         /* Signature */
@@ -1564,8 +1573,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	w = print_callid(w, dialog, t);                       /* Call-ID */
 	w = print_routeset(w, dialog);                        /* Route set */
 
-	if(headers==NULL || headers->len<15
-			|| _strnstr(headers->s, "Max-Forwards:", headers->len)==NULL)
+	if(maxfwd_len>0)
 		memapp(w, MAXFWD_HEADER, MAXFWD_HEADER_LEN);      /* Max-forwards */
 
      /* Content-Length */
