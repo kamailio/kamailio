@@ -53,9 +53,9 @@ Ovidiu Sas
               4.5. natping_socket (string)
               4.6. received_avp (str)
               4.7. sipping_bflag (integer)
-              4.8. sipping_disable_bflag (integer)
-              4.9. sipping_from (string)
-              4.10. sipping_method (string)
+              4.8. sipping_from (string)
+              4.9. sipping_method (string)
+              4.10. natping_disable_bflag (integer)
               4.11. nortpproxy_str (string)
               4.12. keepalive_timeout (int)
 
@@ -94,9 +94,9 @@ Ovidiu Sas
    1.5. Set natping_socket parameter
    1.6. Set received_avp parameter
    1.7. Set sipping_bflag parameter
-   1.8. Set sipping_disable_bflag parameter
-   1.9. Set sipping_from parameter
-   1.10. Set sipping_method parameter
+   1.8. Set sipping_from parameter
+   1.9. Set sipping_method parameter
+   1.10. Set natping_disable_bflag parameter
    1.11. Set nortpproxy_str parameter
    1.12. Set keepalive_timeout parameter
    1.13. fix_nated_contact usage
@@ -130,9 +130,9 @@ Chapter 1. Admin Guide
         4.5. natping_socket (string)
         4.6. received_avp (str)
         4.7. sipping_bflag (integer)
-        4.8. sipping_disable_bflag (integer)
-        4.9. sipping_from (string)
-        4.10. sipping_method (string)
+        4.8. sipping_from (string)
+        4.9. sipping_method (string)
+        4.10. natping_disable_bflag (integer)
         4.11. nortpproxy_str (string)
         4.12. keepalive_timeout (int)
 
@@ -229,9 +229,9 @@ Chapter 1. Admin Guide
    4.5. natping_socket (string)
    4.6. received_avp (str)
    4.7. sipping_bflag (integer)
-   4.8. sipping_disable_bflag (integer)
-   4.9. sipping_from (string)
-   4.10. sipping_method (string)
+   4.8. sipping_from (string)
+   4.9. sipping_method (string)
+   4.10. natping_disable_bflag (integer)
    4.11. nortpproxy_str (string)
    4.12. keepalive_timeout (int)
 
@@ -335,21 +335,7 @@ modparam("nathelper", "received_avp", "$avp(i:42)")
 modparam("nathelper", "sipping_bflag", 7)
 ...
 
-4.8. sipping_disable_bflag (integer)
-
-   What branch flag should be used by the module to disable NAT pings on a
-   per-registration basis. If the given flag is set for a particular
-   registration, then no NAT pings will be sent at all, regardless of any
-   other conditions.
-
-   Default value is -1 (disabled).
-
-   Example 1.8. Set sipping_disable_bflag parameter
-...
-modparam("nathelper", "sipping_disable_bflag", 8)
-...
-
-4.9. sipping_from (string)
+4.8. sipping_from (string)
 
    The parameter sets the SIP URI to be used in generating the SIP
    requests for NAT ping purposes. To enable the SIP request pinging
@@ -358,21 +344,35 @@ modparam("nathelper", "sipping_disable_bflag", 8)
 
    Default value is “NULL”.
 
-   Example 1.9. Set sipping_from parameter
+   Example 1.8. Set sipping_from parameter
 ...
 modparam("nathelper", "sipping_from", "sip:pinger@siphub.net")
 ...
 
-4.10. sipping_method (string)
+4.9. sipping_method (string)
 
    The parameter sets the SIP method to be used in generating the SIP
    requests for NAT ping purposes.
 
    Default value is “OPTIONS”.
 
-   Example 1.10. Set sipping_method parameter
+   Example 1.9. Set sipping_method parameter
 ...
 modparam("nathelper", "sipping_method", "INFO")
+...
+
+4.10. natping_disable_bflag (integer)
+
+   What branch flag should be used by the module to disable NAT pings on a
+   per-registration basis. If the given flag is set for a particular
+   registration, then no NAT pings will be sent at all, regardless of any
+   other conditions.
+
+   Default value is -1 (disabled).
+
+   Example 1.10. Set natping_disable_bflag parameter
+...
+modparam("nathelper", "natping_disable_bflag", 8)
 ...
 
 4.11. nortpproxy_str (string)
