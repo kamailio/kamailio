@@ -81,6 +81,9 @@ static int mem_only = 0;
 
 extern sruid_t _reg_sruid;
 
+static int q_override_msg_id;
+static qvalue_t q_override_value;
+
 /*! \brief
  * Process request that contained a star, in that case, 
  * we will remove all bindings with the given username 
@@ -308,7 +311,11 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 			ci.c = &_c->uri;
 
 		/* Calculate q value of the contact */
-		if (calc_contact_q(_c->q, &ci.q) < 0) {
+		if (m && m->id == q_override_msg_id)
+		{
+			ci.q = q_override_value;
+		}
+		else if (calc_contact_q(_c->q, &ci.q) < 0) {
 			rerrno = R_INV_Q;
 			LM_ERR("failed to calculate q\n");
 			goto error;
@@ -913,4 +920,17 @@ int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri)
 	}
 	return 1;
 }
+
+int set_q_override(struct sip_msg* _m, int _q)
+{
+	if ((_q < 0) || (_q > 1000))
+	{
+		LM_ERR("Invalid q value\n");
+		return -1;
+	}
+	q_override_msg_id = _m->id;
+	q_override_value = _q;
+	return 1;
+}
+
 

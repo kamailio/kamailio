@@ -1096,7 +1096,7 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
     sca_subscription	req_sub;
     sca_subscription	*sub = NULL;
     sca_call_info	call_info;
-    hdr_field_t		*call_info_hdr;
+    hdr_field_t		*call_info_hdr = NULL;
     str			sub_key = STR_NULL;
     str			*to_tag = NULL;
     char		*status_text;
@@ -1108,34 +1108,35 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 
     if ( parse_headers( msg, HDR_EOH_F, 0 ) < 0 ) {
 	LM_ERR( "header parsing failed: bad request" );
-	SCA_REPLY_ERROR( sca, 400, "Bad Request", msg );
+	SCA_SUB_REPLY_ERROR( sca, 400, "Bad Request", msg );
 	return( -1 );
     }
 
     if ( !STR_EQ( REQ_LINE( msg ).method, SCA_METHOD_SUBSCRIBE )) {
 	LM_ERR( "bad request method %.*s", STR_FMT( &REQ_LINE( msg ).method ));
-	SCA_REPLY_ERROR( sca, 500, "Internal server error - config", msg );
+	SCA_SUB_REPLY_ERROR( sca, 500, "Internal server error - config", msg );
 	return( -1 );
     }
 
     if ( SCA_HEADER_EMPTY( msg->event )) {
-	SCA_REPLY_ERROR( sca, 400, "Missing Event", msg );
+	SCA_SUB_REPLY_ERROR( sca, 400, "Missing Event", msg );
 	return( -1 );
     }
 
     event_type = sca_event_from_str( &msg->event->body );
     if ( event_type == SCA_EVENT_TYPE_UNKNOWN ) {
-	SCA_REPLY_ERROR( sca, 400, "Bad Event", msg );
+	SCA_SUB_REPLY_ERROR( sca, 400, "Bad Event", msg );
 	return( -1 );
     }
 
     if ( sca_subscription_from_request( sca, msg, event_type, &req_sub ) < 0 ) {
-	SCA_REPLY_ERROR( sca, 400, "Bad Shared Call Appearance Request", msg );
+	SCA_SUB_REPLY_ERROR( sca, 400,
+		"Bad Shared Call Appearance Request", msg );
 	return( -1 );
     }
     if ( sca_subscription_copy_subscription_key( &req_sub, &sub_key ) < 0 ) {
-	SCA_REPLY_ERROR( sca, 500,
-			"Internal Server Error - copy dialog id", msg );
+	SCA_SUB_REPLY_ERROR( sca, 500, "Internal Server Error - "
+			    "copy dialog id", msg );
 	goto done;
     }
     sca_subscription_print( &req_sub );
@@ -1151,6 +1152,23 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
     /* pkg_malloc'd in sca_subscription_copy_subscription_key above */
     pkg_free( sub_key.s );
 
+    if ( req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE ) {
+	call_info_hdr = sca_call_info_header_find( msg->headers );
+	if ( call_info_hdr ) {
+	    if ( sca_call_info_body_parse( &call_info_hdr->body,
+		    &call_info ) < 0 ) {
+		SCA_SUB_REPLY_ERROR( sca, 400, "Bad Request - "
+				"Invalid Call-Info header", msg );
+		goto done;
+	    }
+	    app_idx = call_info.index;
+	} else {
+	    SCA_SUB_REPLY_ERROR( sca, 400, "Bad Request - "
+			    "missing Call-Info header", msg );
+	    goto done;
+	}
+    }
+
     sca_hash_table_lock_index( sca->subscriptions, idx );
 
     sub = sca_hash_table_index_kv_find_unsafe( sca->subscriptions, idx,
@@ -1159,62 +1177,60 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
     if ( sub != NULL ) {
 	/* this will remove the subscription if expires == 0 */
 	if ( sca_subscription_update_unsafe( sca, sub, &req_sub, idx ) < 0 ) {
-	    SCA_REPLY_ERROR( sca, 500,
-		    "Internal Server Error - update subscription", msg );
+	    SCA_SUB_REPLY_ERROR( sca, 500, "Internal Server Error - "
+				"update subscription", msg );
 	    goto done;
 	}
 
 	if ( req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE ) {
-	    call_info_hdr = sca_call_info_header_find( msg->headers );
-	    if ( call_info_hdr ) {
-		if ( sca_call_info_body_parse( &call_info_hdr->body,
-			&call_info ) < 0 ) {
-		    SCA_REPLY_ERROR( sca, 400, "Bad Request - "
-				    "Invalid Call-Info header", msg );
-		    goto done;
-		}
-		app_idx = call_info.index;
-	    }
-
 	    if ( req_sub.expires == 0 ) {
 		/* release the seized appearance */
 		if ( call_info_hdr == NULL ) {
-		    SCA_REPLY_ERROR( sca, 400, "Bad Request - "
+		    SCA_SUB_REPLY_ERROR( sca, 400, "Bad Request - "
 				    "missing Call-Info header", msg );
 		    goto done;
 		}
 	
 		if ( sca_appearance_release_index( sca, &req_sub.target_aor,
 			call_info.index ) != SCA_APPEARANCE_OK ) {
-		    SCA_REPLY_ERROR( sca, 500, "Internal Server Error - "
-				    "release seized line", msg );
+		    SCA_SUB_REPLY_ERROR( sca, 500, "Internal Server Error - "
+					"release seized line", msg );
 		    goto done;
 		}
 	    } else if ( SCA_STR_EMPTY( to_tag )) {
 		/* don't seize new index if this is a line-seize reSUBSCRIBE */
-		app_idx = sca_appearance_seize_next_available_index( sca,
-				&req_sub.target_aor, &req_sub.subscriber );
-		if ( app_idx < 0 ) {
-		    SCA_REPLY_ERROR( sca, 500, "Internal Server Error - "
-					"seize appearance index", msg );
+		app_idx = sca_appearance_seize_index( sca, &req_sub.target_aor,
+				app_idx, &req_sub.subscriber );
+		if ( app_idx == SCA_APPEARANCE_INDEX_UNAVAILABLE ) {
+		    SCA_SUB_REPLY_ERROR( sca, 480,
+				"Temporarily Unavailable", msg );
+		    goto done;
+		} else if ( app_idx < 0 ) {
+		    SCA_SUB_REPLY_ERROR( sca, 500,
+			"Internal Server Error - seize appearance index", msg );
 		    goto done;
 		}
+		req_sub.index = app_idx;
 	    }
 	}
     } else {
 	/* in-dialog request, but we didn't find it. */
 	if ( !SCA_STR_EMPTY( to_tag )) {
-	    SCA_REPLY_ERROR( sca, 481,
+	    SCA_SUB_REPLY_ERROR( sca, 481,
 		    "Call Leg/Transaction Does Not Exist", msg );
 	    goto done;
 	}
 
 	if ( req_sub.expires > 0 ) {
 	    if ( req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE ) {
-		app_idx = sca_appearance_seize_next_available_index( sca,
-				&req_sub.target_aor, &req_sub.subscriber );
-		if ( app_idx < 0 ) {
-		    SCA_REPLY_ERROR( sca, 500, "Internal Server Error - "
+		app_idx = sca_appearance_seize_index( sca, &req_sub.target_aor,
+				app_idx, &req_sub.subscriber );
+		if ( app_idx == SCA_APPEARANCE_INDEX_UNAVAILABLE ) {
+		    SCA_SUB_REPLY_ERROR( sca, 480,
+					"Temporarily Unavailable", msg );
+		    goto done;
+		} else if ( app_idx < 0 ) {
+		    SCA_SUB_REPLY_ERROR( sca, 500, "Internal Server Error - "
 					"seize appearance index", msg );
 		    goto done;
 		}
@@ -1223,8 +1239,8 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 
 	    if ( sca_subscription_save_unsafe( sca, &req_sub, idx,
 				SCA_SUBSCRIPTION_CREATE_OPT_DEFAULT ) < 0 ) {
-		SCA_REPLY_ERROR( sca, 500,
-			"Internal Server Error - save subscription", msg );
+		SCA_SUB_REPLY_ERROR( sca, 500, "Internal Server Error - "
+				    "save subscription", msg );
 		goto done;
 	    }
 	} else {
@@ -1239,9 +1255,9 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 
     status = sca_ok_status_for_event( event_type );
     status_text = sca_ok_text_for_event( event_type );
-    if ( sca_reply( sca, status, status_text, event_type,
+    if ( sca_subscription_reply( sca, status, status_text, event_type,
 		    req_sub.expires, msg ) < 0 ) {
-	SCA_REPLY_ERROR( sca, 500, "Internal server error", msg );
+	SCA_SUB_REPLY_ERROR( sca, 500, "Internal server error", msg );
 	goto done;
     }
 
@@ -1280,6 +1296,58 @@ done:
     }
 
     return( rc );
+}
+
+    int
+sca_subscription_reply( sca_mod *scam, int status_code, char *status_msg,
+	int event_type, int expires, sip_msg_t *msg )
+{
+    str			extra_headers = STR_NULL;
+    char		hdr_buf[ 1024 ];
+    int			len;
+
+    if ( event_type != SCA_EVENT_TYPE_CALL_INFO &&
+		event_type != SCA_EVENT_TYPE_LINE_SEIZE ) {
+	LM_ERR( "sca_subscription_reply: unrecognized event type %d",
+		event_type );
+	return( -1 );
+    }
+
+    if ( status_code < 300 ) {
+	/* Add Event, Contact, Allow-Events and Expires headers */
+	extra_headers.s = hdr_buf;
+	len = snprintf( extra_headers.s, sizeof( hdr_buf ),
+		"Event: %s%s", sca_event_name_from_type( event_type ), CRLF );
+	if ( len >= sizeof( hdr_buf ) || len < 0 ) {
+	    LM_ERR( "sca_subscription_reply: extra headers too long" );
+	    return( -1 );
+	}
+	extra_headers.len = len;
+
+	SCA_STR_APPEND_CSTR( &extra_headers, "Contact: " );
+	SCA_STR_APPEND( &extra_headers, &REQ_LINE( msg ).uri );
+	SCA_STR_APPEND_CSTR( &extra_headers, CRLF );
+
+	SCA_STR_COPY_CSTR( &extra_headers,
+		"Allow-Events: call-info, line-seize" CRLF );
+
+	len = snprintf( extra_headers.s + extra_headers.len,
+		sizeof( hdr_buf ) - extra_headers.len,
+		"Expires: %d%s", expires, CRLF );
+	if ( len >= (sizeof( hdr_buf ) - extra_headers.len) || len < 0 ) {
+	    LM_ERR( "sca_subscription_reply: extra headers too long" );
+	    return( -1 );
+	}
+	extra_headers.len += len;
+    } else if ( status_code == 480 ) {
+	/* tell loser of line-seize SUBSCRIBE race to try again shortly */
+	extra_headers.s = hdr_buf;
+	len = snprintf( extra_headers.s, sizeof( hdr_buf ),
+			"Retry-After: %d%s", 1, CRLF );
+	extra_headers.len = len;
+    }
+
+    return( sca_reply( scam, status_code, status_msg, &extra_headers, msg ));
 }
 
     int

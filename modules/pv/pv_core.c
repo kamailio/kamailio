@@ -40,8 +40,7 @@
 #include "../../parser/parse_refer_to.h"
 #include "../../parser/parse_rpid.h"
 #include "../../parser/parse_diversion.h"
-#include "../../lib/kcore/parse_ppi.h"
-#include "../../lib/kcore/parse_pai.h"
+#include "../../parser/parse_ppi_pai.h"
 #include "../../parser/digest/digest.h"
 
 #include "pv_core.h"
@@ -865,38 +864,84 @@ int pv_get_rpid(struct sip_msg *msg, pv_param_t *param,
 int pv_get_ppi_attr(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
+    int idxf;
+    int idx;
     struct sip_uri *uri;
-    
-    if(msg==NULL)
-	return -1;
+    p_id_body_t *ppi_body = NULL;
+	to_body_t *ppi_uri = NULL;
+	int i, cur_id;
 
-    if(parse_ppi_header(msg) < 0) {
-	LM_DBG("no P-Preferred-Identity header\n");
-	return pv_get_null(msg, param, res);
-    }
-	
-    if(msg->ppi == NULL || get_ppi(msg) == NULL) {
-	       LM_DBG("no P-Preferred-Identity header\n");
+    if(msg==NULL)
+		return -1;
+    
+	if(parse_ppi_header(msg) < 0)
+    {
+		LM_DBG("no P-Preferred-Identity header\n");
 		return pv_get_null(msg, param, res);
     }
-    
+
+    if (pv_get_spec_index(msg, param, &idx, &idxf) != 0)
+    {
+    	LM_ERR("Invalid index\n");
+		return -1;
+    }
+
+    if (idxf == PV_IDX_ALL)
+	{
+		LM_ERR("Unable to return 'all' PPI values\n");
+		return -1;
+	}
+
+	ppi_body = get_ppi(msg);
+	ppi_uri = &ppi_body->id[0];
+	cur_id = 0;
+	i = 0;
+	while (i < idx)
+	{
+		cur_id++;
+		if (cur_id < ppi_body->num_ids)
+		{
+			ppi_uri = &ppi_body->id[cur_id];
+			i++;
+		}
+		else if (ppi_body->next != NULL)
+		{
+			ppi_body = ppi_body->next;
+			ppi_uri = &ppi_body->id[0];
+			cur_id = 0;
+			i++;
+		}
+		else
+		{
+			/* No more PPIs */
+			return pv_get_null(msg, param, res);
+		}
+
+	}
+	/* Found the ID at index 'idx' */
+
     if(param->pvn.u.isname.name.n == 1) { /* uri */
-		return pv_get_strval(msg, param, res, &(get_ppi(msg)->uri));
+		return pv_get_strval(msg, param, res, &(ppi_uri->uri));
     }
 	
     if(param->pvn.u.isname.name.n==4) { /* display name */
-		if(get_ppi(msg)->display.s == NULL ||
-				get_ppi(msg)->display.len <= 0) {
+		if(ppi_uri->display.s == NULL ||
+				ppi_uri->display.len <= 0) {
 		    LM_DBG("no P-Preferred-Identity display name\n");
 			return pv_get_null(msg, param, res);
 		}
-		return pv_get_strval(msg, param, res, &(get_ppi(msg)->display));
+		return pv_get_strval(msg, param, res, &(ppi_uri->display));
     }
 
-    if((uri=parse_ppi_uri(msg))==NULL) {
-		LM_ERR("cannot parse P-Preferred-Identity URI\n");
-		return pv_get_null(msg, param, res);
-    }
+	uri = &ppi_uri->parsed_uri;
+	if (uri->host.s == NULL && uri->user.s == NULL)
+	{
+		if (parse_uri(ppi_uri->uri.s, ppi_uri->uri.len, uri) < 0)
+		{
+			LM_ERR("cannot parse P-Preferred-Identity URI\n");
+			return pv_get_null(msg, param, res);
+		}
+	}
 
     if(param->pvn.u.isname.name.n==2) { /* username */
 		if(uri->user.s==NULL || uri->user.len<=0) {
@@ -920,21 +965,62 @@ int pv_get_ppi_attr(struct sip_msg *msg, pv_param_t *param,
 int pv_get_pai(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
+    int idxf;
+    int idx;
+    p_id_body_t *pai_body = NULL;
+	to_body_t *pai_uri = NULL;
+	int i, cur_id;
+
     if(msg==NULL)
 		return -1;
     
-    if(parse_pai_header(msg)==-1)
+	if(parse_pai_header(msg) < 0)
     {
 		LM_DBG("no P-Asserted-Identity header\n");
 		return pv_get_null(msg, param, res);
     }
-	
-    if(msg->pai==NULL || get_pai(msg)==NULL) {
-		LM_DBG("no P-Asserted-Identity header\n");
-		return pv_get_null(msg, param, res);
+
+    if (pv_get_spec_index(msg, param, &idx, &idxf) != 0)
+    {
+    	LM_ERR("Invalid index\n");
+		return -1;
     }
-    
-	return pv_get_strval(msg, param, res, &(get_pai(msg)->uri));
+
+    if (idxf == PV_IDX_ALL)
+	{
+		LM_ERR("Unable to return 'all' PAI values\n");
+		return -1;
+	}
+
+	pai_body = get_pai(msg);
+	pai_uri = &pai_body->id[0];
+	cur_id = 0;
+	i = 0;
+	while (i < idx)
+	{
+		cur_id++;
+		if (cur_id < pai_body->num_ids)
+		{
+			pai_uri = &pai_body->id[cur_id];
+			i++;
+		}
+		else if (pai_body->next != NULL)
+		{
+			pai_body = pai_body->next;
+			pai_uri = &pai_body->id[0];
+			cur_id = 0;
+			i++;
+		}
+		else
+		{
+			/* No more PAIs */
+			return pv_get_null(msg, param, res);
+		}
+
+	}
+	/* Found the ID at index 'idx' */
+
+	return pv_get_strval(msg, param, res, &(pai_uri->uri));
 }
 
 /* proto of received message: $pr or $proto*/

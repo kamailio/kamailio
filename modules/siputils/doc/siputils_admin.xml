@@ -478,6 +478,35 @@ add_uri_param("nat=yes");
 	</section>
 	<section>
 		<title>
+		<function moreinfo="none">get_uri_param(name, var)</function>
+		</title>
+		<para>
+		Get the value of RURI parameter.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>name</emphasis> - the name of R-URI parameter</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>var</emphasis> - the variable where to store the
+			value of the parameter</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>add_uri_param</function> usage</title>
+		<programlisting format="linespecific">
+...
+get_uri_param("nat", "$var(nat)");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
 		<function moreinfo="none">tel2sip(uri, hostpart, result)</function>
 		</title>
 		<para>

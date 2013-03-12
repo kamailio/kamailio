@@ -48,6 +48,7 @@
  */
 int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str* _uri);
 int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri);
+int set_q_override(struct sip_msg* _m, int _q);
 
 
 #endif /* SAVE_H */

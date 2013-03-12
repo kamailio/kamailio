@@ -294,3 +294,302 @@ next_hf:
 	}
 	return NULL;
 }
+
+
+/**
+ * trim_leading_hts
+ *
+ * trim leading all spaces ' ' and horizontal tabs '\t' characters.
+ *   - buffer, pointer to the beginning of the buffer.
+ *   - end_buffer, pointer to the end of the buffer.
+ * returns
+ *   - pointer to the first non-match character if success.
+ *   - pointer to NULL if the end_buffer is reached.
+ */
+char *trim_leading_hts (char *buffer, char *end_buffer)
+{
+	char *cpy_buffer = buffer;
+	while ((cpy_buffer < end_buffer) &&
+			((*cpy_buffer == ' ') || (*cpy_buffer == '\t'))) {
+		cpy_buffer++;
+	}
+
+	return ((cpy_buffer < end_buffer) ? cpy_buffer : NULL);
+}
+
+
+/**
+ * trim_leading_e_r
+ *
+ * trim leading characters until get a '\r'.
+ *   - buffer, pointer to the beginning of the buffer.
+ *   - end_buffer, pointer to the end of the buffer.
+ *
+ * returns
+ *   - pointer to the first '\r' character if success.
+ *   - pointer to NULL if the end_buffer is reached.
+ */
+char *trim_leading_e_r (char *buffer, char *end_buffer)
+{
+	char *cpy_buffer = buffer;
+	while ((cpy_buffer < end_buffer) && (*cpy_buffer != '\r')) {
+		cpy_buffer++;
+	}
+	return ((cpy_buffer < end_buffer) ? cpy_buffer : NULL);
+}
+
+
+/**
+ * part_multipart_headers_cmp
+ * trim leading characters until get a '\r'.
+ * receives
+ *   - buffer, pointer to the beginning of the headers in a part of the multipart body.
+ *   - end_buffer, pointer to the end of the headers in the multipart body.
+ *   - content type/ content subtype.
+ *         if (type == 0 / subtype == 0): Content-Type: disabled in the search.
+ *   - content id.
+ *         if (id == NULL): Content-ID: disabled in the search.
+ *   - content length.
+ *         if (length == NULL) Content-Length: disabled in the search.
+ *
+ * returns
+ *   - true, if the part of the multipart body has :
+ *            -- Content-Type   that matches content_type / content_subtype. (if Content-Type enabled) &&
+ *            -- Content-ID     that matches content_id. (if Content-ID enabled) &&
+ *            -- Content-Length that matches content_length. (if Content-Length enabled)
+ *   - false, if any of them doesnt match.
+ */
+int part_multipart_headers_cmp (char *buffer,
+				char *end_buffer,
+				unsigned short content_type,
+				unsigned short content_subtype,
+				char *content_id,
+				char *content_length)
+{
+	int error = 0;
+	char *error_msg = NULL;
+
+	char *cpy_c = NULL;
+	char *cpy_d = NULL;
+
+	char *value_ini = NULL;
+	char *value_fin = NULL;
+	unsigned int umime;
+
+	int found = 0;
+	int found_content_type   = 0;
+	int found_content_id     = 0;
+	int found_content_length = 0;
+
+	if ((buffer == NULL) || (end_buffer == NULL)) {
+		error = -1;
+		error_msg = "buffer and/or end_buffer are NULL";
+	} else {
+		cpy_c = buffer;
+		cpy_d = end_buffer;
+
+		if ((content_type == 0) && (content_subtype == 0)) {
+			found_content_type   = 1;
+		}
+		if (content_id == NULL) {
+			found_content_id = 1;
+		}
+		if (content_length == NULL) {
+			found_content_length = 1;
+		}
+
+		found = found_content_type * found_content_id * found_content_length;
+		while ((!found) && (!error) && (cpy_c < cpy_d)) {
+			if ((cpy_c + 8) < cpy_d) {
+				if ( (LOWER_DWORD(READ(cpy_c)) == _cont_)
+						&& (LOWER_DWORD(READ(cpy_c + 4)) == _ent__) ) {
+					cpy_c += 8;
+					if ( (!found_content_type)
+							&& ((cpy_c + 5) < cpy_d)
+							&& ((*(cpy_c + 0) == 't') || (*(cpy_c + 0) == 'T'))
+							&& ((*(cpy_c + 1) == 'y') || (*(cpy_c + 1) == 'Y'))
+							&& ((*(cpy_c + 2) == 'p') || (*(cpy_c + 2) == 'P'))
+							&& ((*(cpy_c + 3) == 'e') || (*(cpy_c + 3) == 'E'))
+							&& (*(cpy_c + 4) == ':') ) {
+						cpy_c += 5;
+						/* value_ has the content of the header */
+						value_ini = trim_leading_hts(cpy_c, cpy_d);
+						value_fin = trim_leading_e_r(cpy_c, cpy_d);
+						if ((value_ini != NULL) && (value_fin != NULL)) {
+							cpy_c = value_fin;
+							if (decode_mime_type(value_ini, value_fin, &umime)) {
+								if (umime == ((content_type<<16)|content_subtype)) {
+									found_content_type = 1;
+								} else {
+									error = -2;
+									error_msg = "MIME types mismatch";
+								}
+							} else {
+								error = -3;
+								error_msg = "Failed to decode MIME type";
+							}
+						} else {
+							error = -4;
+							error_msg = "Failed to perform trim_leading_hts || trim_leading_e_r";
+						}
+					} else if( (!found_content_id) && ((cpy_c + 3) < cpy_d)
+							&& ((*(cpy_c + 0) == 'i') || (*(cpy_c + 0) == 'I'))
+							&& ((*(cpy_c + 1) == 'd') || (*(cpy_c + 1) == 'D'))
+							&& (*(cpy_c + 2) == ':') ) {
+						cpy_c += 3;
+						/* value_ has the content of the header */
+						value_ini = trim_leading_hts(cpy_c, cpy_d);
+						value_fin = trim_leading_e_r(cpy_c, cpy_d);
+						if ((value_ini != NULL) && (value_fin != NULL)) {
+							cpy_c = value_fin;
+							if (strncmp(content_id, value_ini, value_fin-value_ini) == 0) {
+								found_content_id = 1;
+							} else {
+								error = -5;
+								error_msg = "Content-ID mismatch";
+							}
+						} else {
+							error = -6;
+							error_msg = "Failed to perform trim_leading_hts || trim_leading_e_r";
+						}
+					} else if( (!found_content_length) && ((cpy_c + 7) < cpy_d)
+							&& ((*(cpy_c + 0) == 'l') || (*(cpy_c + 0) == 'L'))
+							&& ((*(cpy_c + 1) == 'e') || (*(cpy_c + 1) == 'E'))
+							&& ((*(cpy_c + 2) == 'n') || (*(cpy_c + 2) == 'N'))
+							&& ((*(cpy_c + 3) == 'g') || (*(cpy_c + 3) == 'G'))
+							&& ((*(cpy_c + 4) == 't') || (*(cpy_c + 4) == 'T'))
+							&& ((*(cpy_c + 5) == 'h') || (*(cpy_c + 5) == 'H'))
+							&& (*(cpy_c + 6) == ':') ) {
+						cpy_c += 7;
+						/* value_ has the content of the header */
+						value_ini = trim_leading_hts(cpy_c, cpy_d);
+						value_fin = trim_leading_e_r(cpy_c, cpy_d);
+						if ((value_ini != NULL) && (value_fin != NULL)) {
+							cpy_c = value_fin;
+							if (strncmp(content_length, value_ini, value_fin-value_ini) == 0) {
+								found_content_length = 1;
+							} else {
+								error = -7;
+								error_msg = "Content-Length mismatch";
+							}
+						} else {
+							error = -8;
+							error_msg = "Failed to perform trim_leading_hts || trim_leading_e_r";
+						}
+					} else {
+						/* Next characters dont match "Type:" or "ID:" or "Length:" OR
+					     * header already parsed (maybe duplicates?) and founded OR
+					     * header initially set as disabled and it doesnt need to be treated.
+					     * This is NOT an error. */
+						;
+					}
+				} else {
+					/* First 8 characters dont match "Content-"
+					 * This is NOT an error. */
+					;
+				}
+			} else {
+				error = -9;
+				error_msg = "We reached the end of the buffer";
+			}
+			found = found_content_type * found_content_id * found_content_length;
+			if ((!found) && (!error)) {
+				value_fin = trim_leading_e_r(cpy_c, cpy_d);
+				if (value_fin != NULL) {
+					cpy_c = value_fin;
+					if ((cpy_c + 1) < cpy_d) {
+						if ((*cpy_c == '\r') && (*(cpy_c + 1) == '\n')) {
+							cpy_c++;
+							cpy_c++;
+						} else {
+							error = -10;
+							error_msg = "Each line must end with a \r\n";
+						}
+					} else {
+						error = -11;
+						error_msg = "We reached the end of the buffer";
+					}
+				} else {
+					error = -12;
+					error_msg = "Failed to perform trim_leading_e_r";
+				}
+			}
+		} /* End main while loop */
+	}
+
+	if (error < 0) {
+		LM_ERR("part_multipart_headers_cmp. error. \"%i\". \"%s\".\n", error, error_msg);
+		return 0;
+	} else {
+		return found;
+	}
+}
+
+/**
+ * get_body_part_by_filter
+ *
+ * Filters the multipart part from a given SIP message which matches the
+ * Content-Type && || Content-ID  && || Content-Length
+ * receives
+ *   - SIP message
+ *   - pointer to the beginning of the headers in a part of the multipart body.
+ *   - pointer to the end of the headers in the multipart body.
+ *   - content type/ content subtype.
+ *         if (type == 0 / subtype == 0): Content-Type: disabled in the search.
+ *   - content id.
+ *         if (id == NULL): Content-ID: disabled in the search.
+ *   - content length.
+ *         if (length == NULL) Content-Length: disabled in the search.
+ *   - len. Length of the multipart message returned.
+ *
+ * returns
+ *   - pointer to the multipart if success.
+ *   - NULL, if none of the multiparts match.
+ */
+char *get_body_part_by_filter(struct sip_msg *msg,
+		     unsigned short content_type,
+		     unsigned short content_subtype,
+		     char *content_id,
+		     char *content_length,
+		     int *len)
+{
+	int mime;
+	char*c, *d, *buf_end;
+	str boundary;
+
+	if ((mime = parse_content_type_hdr(msg)) <= 0)
+		return NULL;
+
+	if ((mime>>16) == TYPE_MULTIPART) {
+		/* type is multipart/something, search for type/subtype part */
+		if (get_boundary_param(msg, &boundary)) {
+			ERR("failed to get boundary parameter\n");
+			return NULL;
+		}
+		if (!(c = get_body(msg)))
+			return NULL;
+		buf_end = msg->buf+msg->len;
+
+		while ((c = search_boundary(c, buf_end, &boundary))) {
+			/* skip boundary */
+			c += 2 + boundary.len;
+
+			if ((c+2 > buf_end) || ((*c == '-') && (*(c+1) == '-')) )
+				/* end boundary, no more body part will follow */
+				return NULL;
+
+			/* go to the next line */
+			while ((c < buf_end) && (*c != '\n')) c++;
+			c++;
+			if (c >= buf_end)
+				return NULL;
+
+			d = get_multipart_body(c, buf_end, &boundary, len);
+			if (part_multipart_headers_cmp(c, d, content_type, content_subtype,
+						content_id, content_length)) {
+				return d;
+			}
+		}
+	}
+	return NULL;
+}

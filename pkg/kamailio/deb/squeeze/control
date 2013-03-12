@@ -31,6 +31,7 @@ Build-Depends: bison,
                libssl-dev,
                libxml2-dev,
                libxmlrpc-c3-dev,
+               libunistring-dev,
                python,
                python-dev,
                unixodbc-dev,
@@ -399,4 +400,24 @@ Description: Kamailio - IMS Modules
  .
  This package contains various Diameter interfaces and modules for Kamailio
  to run as an IMS core.
+
+Package: kamailio-outbound-modules
+Architecture: any
+Depends: ${shlibs:Depends}, kamailio (= ${binary:Version})
+Description: Kamailio - Outbound Module
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package contains the module implementing SIP outbound extension.
+
+Package: kamailio-websocket-modules
+Architecture: any
+Depends: ${shlibs:Depends}, kamailio (= ${binary:Version})
+Description: Kamailio - Websocket Module
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package contains the module implementing WebSocket transport layer.
 

@@ -1,6 +1,5 @@
 /*
- *
- * Copyright (C) 2006 Juha Heinanen
+ * Copyright (C) 2013 Hugh Waite
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -17,29 +16,36 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
-/*!
- * \file
- * \brief P-Asserted-Identity header parser
+/*! \file
+ * \brief Parser :: Parse P-Asserted-Identity: header
+ *
  * \ingroup parser
  */
 
-#ifndef PARSE_PAI_H
-#define PARSE_PAI_H
+#ifndef PARSE_PAI_PPI_H
+#define PARSE_PAI_PPI_H
 
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_to.h"
+#include "../str.h"
+#include "msg_parser.h"
+#include "parse_to.h"
 
+typedef struct p_id_body {
+	to_body_t *id;
+	int num_ids;
+	struct p_id_body *next;
+} p_id_body_t;
+
+int parse_pai_header(struct sip_msg* const msg);
+int parse_ppi_header(struct sip_msg* const msg);
 
 /*! casting macro for accessing P-Asserted-Identity body */
-#define get_pai(p_msg)  ((struct to_body*)(p_msg)->pai->parsed)
+#define get_pai(p_msg)  ((p_id_body_t*)(p_msg)->pai->parsed)
 
+/*! casting macro for accessing P-Preferred-Identity body */
+#define get_ppi(p_msg)  ((p_id_body_t*)(p_msg)->ppi->parsed)
 
-/*!
- * P-Asserted-Identity header field parser
- */
-int parse_pai_header( struct sip_msg *msg);
+int free_pai_ppi_body(p_id_body_t *pid_b);
 
-#endif /* PARSE_PAI_H */
+#endif

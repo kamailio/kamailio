@@ -525,6 +525,53 @@ unlock("$rU");
 		</example>
 	</section>
 	<section>
+		<title><function moreinfo="none">check_route_exists(route)</function></title>
+		<para>
+		Check if a route block exists
+		</para>
+		<para>Parameters:</para>
+		<para>
+		<quote>name</quote> of a route block in the config file, like <quote>route[FROGJUMP]</quote>
+		</para>
+		<para>
+		This function can be used from any route. You can only check for
+		route[] blocks, not reply, event or other routes.
+		</para>
+		<example>
+		<title><function moreinfo="none">check_route_exists()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(check_route_exists("FROGJUMP") {
+	$var(jumping_frogs) = 1;
+};
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><function moreinfo="none">route_if_exists(route)</function></title>
+		<para>
+		Execute a routing block only if it is defined. If it's not defined, silently
+		move to the next action in the configuration script.
+		</para>
+		<para>Parameters:</para>
+		<para>
+		<quote>name</quote> of a route block in the config file, like <quote>route[FROGJUMP]</quote>
+		</para>
+		<para>
+		This function can be used from any route. You can only execute it for
+		route[] blocks, not reply, event or other routes.
+		</para>
+		<example>
+		<title><function moreinfo="none">route_if_exists()</function> usage</title>
+		<programlisting format="linespecific">
+...
+route_if_exists("PRESENCE_SANTA_CLAUS");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><function moreinfo="none">core_hash(string1, string2, size)</function></title>
 		<para>
 		Exported function that enables the core_hash() function to be used

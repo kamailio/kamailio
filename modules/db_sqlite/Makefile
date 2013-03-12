@@ -6,7 +6,12 @@ include ../../Makefile.defs
 auto_gen=
 NAME=db_sqlite.so
 
-LIBS +=-lsqlite3
+# sqlite3.h locations (freebsd,openbsd  solaris)
+DEFS += -I$(LOCALBASE)/include
+
+# libodbc locations on RH/Suse, Solaris /OpenBSD, FreeBSD
+# (Debian does the right thing and puts it in /usr/lib)
+LIBS= -L$(LOCALBASE)/lib -lsqlite3
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 

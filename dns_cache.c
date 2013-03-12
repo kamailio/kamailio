@@ -1891,8 +1891,10 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 #endif /* USE_DNS_CACHE_STATS */
 
 	if (type==T_A){
+#ifdef USE_IPV6
 		if (str2ip6(name)!=0)
 			goto end;
+#endif /* USE_IPV6 */
 		if ((ip=str2ip(name))!=0){
 				e=dns_cache_mk_ip_entry(name, ip);
 				if (likely(e))
@@ -2469,8 +2471,10 @@ inline static struct hostent* dns_a_get_he(str* name)
 	struct hostent* he;
 
 	e=0;
+#ifdef	USE_IPV6
 	if (str2ip6(name)!=0)
 		return 0;
+#endif
 	if ((ip=str2ip(name))!=0){
 		return ip_addr2he(name, ip);
 	}
@@ -2971,8 +2975,10 @@ inline static int dns_a_resolve( struct dns_hash_entry** e,
 	ret=-E_DNS_NO_IP;
 	if (*e==0){ /* do lookup */
 		/* if ip don't set *e */
+#ifdef	USE_IPV6
 		if (str2ip6(name)!=0)
 			goto error;
+#endif
 		if ((tmp=str2ip(name))!=0){
 			*ip=*tmp;
 			*rr_no=0;

@@ -112,4 +112,9 @@ int w_is_request(struct sip_msg* msg, char *foo, char *bar);
  */
 int w_is_reply(struct sip_msg* msg, char *foo, char *bar);
 
+/*
+ * Find if Request URI has a given parameter with matching value
+ */
+int get_uri_param(struct sip_msg* _msg, char* _param, char* _value);
+
 #endif /* CHECKS_H */

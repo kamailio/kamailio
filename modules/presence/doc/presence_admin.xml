@@ -902,6 +902,25 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 </section>
 
 <section>
+	<title>RPC Commands</title>
+	<section>
+	  <title>
+		<function moreinfo="none">presence.cleanup</function>
+	  </title>
+	  <para>
+		Manually triggers the cleanup functions for the active_watchers, presentity,
+		and watchers tables. Useful if you have set <varname>clean_period</varname>
+		and/or <varname>db_update_period</varname> to zero or less.
+	  </para>
+	  <para>
+		Name: <emphasis>presence.cleanup</emphasis>
+	  </para>
+	  <para>Parameters: <emphasis>none</emphasis></para>
+
+	</section>
+</section>
+
+<section>
 	<title>Installation</title>
 	<para>
 	The module requires 3 tables in the &kamailio; database: "presentity",

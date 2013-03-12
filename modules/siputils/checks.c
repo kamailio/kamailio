@@ -675,3 +675,53 @@ int set_uri_host(struct sip_msg* _m, char* _uri, char* _value)
 
     return 1;
 }
+
+/**
+ * Find if Request URI has a given parameter and returns the value.
+ */
+int get_uri_param(struct sip_msg* _msg, char* _param, char* _value)
+{
+	str *param, t;
+	pv_spec_t* dst;
+	pv_value_t val;
+
+	param_hooks_t hooks;
+	param_t* params;
+
+	param = (str*)_param;
+	dst = (pv_spec_t *) _value;
+  
+	if (parse_sip_msg_uri(_msg) < 0) {
+		LM_ERR("ruri parsing failed\n");
+		return -1;
+	}
+
+	t = _msg->parsed_uri.params;
+
+	if (parse_params(&t, CLASS_ANY, &hooks, &params) < 0) {
+		LM_ERR("ruri parameter parsing failed\n");
+		return -1;
+	}
+
+	while (params) {
+		if ((params->name.len == param->len)
+				&& (strncmp(params->name.s, param->s, param->len) == 0)) {
+			memset(&val, 0, sizeof(pv_value_t));
+			val.rs.s = params->body.s;
+			val.rs.len = params->body.len;
+			val.flags = PV_VAL_STR;
+			dst->setf(_msg, &dst->pvp, (int)EQ_T, &val);
+			goto found;
+		} else {
+			params = params->next;
+		}
+	}
+  
+	free_params(params);
+	return -1;
+
+found:
+	free_params(params);
+	return 1;
+}
+
