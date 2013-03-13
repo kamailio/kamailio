@@ -69,5 +69,8 @@ struct mi_root* mi_shvar_set(struct mi_root* cmd_tree, void* param);
 int param_set_var( modparam_t type, void* val);
 int param_set_shvar( modparam_t type, void* val);
 
+void rpc_shv_get(rpc_t* rpc, void* c);
+void rpc_shv_set(rpc_t* rpc, void* c);
+
 #endif
 

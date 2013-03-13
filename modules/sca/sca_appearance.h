@@ -48,10 +48,13 @@ enum {
 enum {
     SCA_APPEARANCE_OK = 0,
     SCA_APPEARANCE_ERR_NOT_IN_USE = 0x1001,
-    SCA_APPEARANCE_ERR_INVALID_INDEX = 0x1002,
-    SCA_APPEARANCE_ERR_MALLOC = 0x1004,
+    SCA_APPEARANCE_ERR_INDEX_INVALID = 0x1002,
+    SCA_APPEARANCE_ERR_INDEX_UNAVAILABLE = 0x1004,
+    SCA_APPEARANCE_ERR_MALLOC = 0x1008,
     SCA_APPEARANCE_ERR_UNKNOWN = 0x1f00,
 };
+#define SCA_APPEARANCE_INDEX_UNAVAILABLE	-2
+
 
 extern const str SCA_APPEARANCE_INDEX_STR;
 extern const str SCA_APPEARANCE_STATE_STR;
@@ -98,7 +101,8 @@ void	sca_appearance_state_to_str( int, str * );
 int	sca_appearance_state_from_str( str * );
 
 sca_appearance 	*sca_appearance_seize_index_unsafe( sca_mod *, str *, str *,
-								int, int );
+							int, int, int * );
+int	sca_appearance_seize_index( sca_mod *, str *, int, str * );
 int	sca_appearance_seize_next_available_index( sca_mod *, str *, str * );
 sca_appearance 	*sca_appearance_seize_next_available_unsafe( sca_mod *, str *,
 							     str *, int );

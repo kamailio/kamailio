@@ -170,7 +170,7 @@ int ds_ht_clear_slots(ds_ht_t *dsht)
 		}
 		dsht->entries[i].first = NULL;
 		dsht->entries[i].esize = 0;
-		lock_destroy(&dsht->entries[i].lock);
+		lock_release(&dsht->entries[i].lock);
 	}
 	return 0;
 }

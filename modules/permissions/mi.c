@@ -196,6 +196,38 @@ void rpc_subnet_dump(rpc_t* rpc, void* c) {
 	return;
 }
 
+/*
+ * MI function to print domain name table
+ */
+struct mi_root* mi_domain_name_dump(struct mi_root *cmd_tree, void *param)
+{
+	struct mi_root* rpl_tree;
+
+	rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
+	if (rpl_tree==NULL) return 0;
+
+	if(domain_list_table && domain_name_table_mi_print(*domain_list_table, &rpl_tree->node) <  0) {
+		LM_ERR("failed to add a node\n");
+		free_mi_tree(rpl_tree);
+		return 0;
+	}
+
+	return rpl_tree;
+}
+
+
+/*! \brief
+ * RPC function to dump domain name table
+ */
+void rpc_domain_name_dump(rpc_t* rpc, void* c) {
+
+	if ( domain_name_table_rpc_print(*domain_list_table, rpc, c) < 0 ) {
+		LM_DBG("failed to print a subnet_table dump\n");
+	}
+	return;
+}
+
+
 #define MAX_FILE_LEN 128
 
 /*! \brief

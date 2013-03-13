@@ -57,6 +57,7 @@
 #include "parse_disposition.h"
 #include "parse_allow.h"
 #include "../ut.h"
+#include "parse_ppi_pai.h"
 
 /** Frees a hdr_field structure.
  * WARNING: it frees only parsed (and not name.s, body.s)
@@ -122,11 +123,11 @@ void clean_hdr_field(struct hdr_field* const hf)
 			break;
 
 		case HDR_PAI_T:
-			free_to(hf->parsed);
+			free_pai_ppi_body(hf->parsed);
 			break;
 
 		case HDR_PPI_T:
-			free_to(hf->parsed);
+			free_pai_ppi_body(hf->parsed);
 			break;
 
 		case HDR_PROXYAUTH_T:

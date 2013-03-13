@@ -34,6 +34,9 @@ extern struct addr_list ***addr_hash_table;
 extern struct subnet **subnet_table; 
 
 
+/* Pointer to current domain name table */
+extern struct domain_name_list ***domain_list_table;
+
 /*
  * Initialize data structures
  */

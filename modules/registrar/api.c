@@ -111,6 +111,20 @@ int regapi_registered(struct sip_msg *msg, char *table)
 /**
  *
  */
+int regapi_set_q_override(struct sip_msg *msg, str *new_q)
+{
+	int _q;
+	if (str2q(&_q, new_q->s, new_q->len) < 0)
+	{
+		LM_ERR("invalid q parameter\n");
+		return -1;
+	}
+	return set_q_override(msg, _q);
+}
+
+/**
+ *
+ */
 int bind_registrar(registrar_api_t* api)
 {
 	if (!api) {
@@ -122,6 +136,7 @@ int bind_registrar(registrar_api_t* api)
 	api->lookup     = regapi_lookup;
 	api->lookup_uri = regapi_lookup_uri;
 	api->registered = regapi_registered;
+	api->set_q_override = regapi_set_q_override;
 
 	return 0;
 }

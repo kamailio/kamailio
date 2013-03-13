@@ -336,5 +336,39 @@ $ &ctltool; fifo shv_get
 			</example>
 		</section>
 	</section>
+	<section>
+        <title>RPC Commands</title>
+		<section>
+			<title><function moreinfo="none">pv.shvSet</function></title>
+			<para>
+				Set the value of a shared variable ($shv(name)).
+			</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_name_: shared variable name</para></listitem>
+			
+			<listitem><para>_type_: type of the value</para>
+			      <itemizedlist>
+	    <listitem><para> <quote>int</quote>: integer value </para></listitem> 
+		<listitem><para> <quote>str</quote>: string value </para></listitem>	
+				  </itemizedlist>
+			</listitem>	  
+
+			<listitem><para>_value_: value to be set</para></listitem>
+		</itemizedlist>
+		</section>
+		<section>
+			<title><function moreinfo="none">pv.shvGet</function></title>
+			<para>
+				Get the value of a shared variable ($shv(name)).
+			</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_name_: shared variable name</para></listitem>
+		</itemizedlist>
+		<para>If no name is given, all shared variables are listed</para>
+		</section>
+	</section>
+	
 </chapter>
 

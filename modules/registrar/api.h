@@ -43,6 +43,9 @@ int regapi_lookup(struct sip_msg *msg, char *table);
 typedef int (*regapi_lookup_uri_f)(struct sip_msg *msg, char *table, str *uri);
 int regapi_lookup_uri(struct sip_msg *msg, char *table, str *uri);
 
+typedef int (*regapi_set_q_override_f)(struct sip_msg *msg, str *new_q);
+int regapi_set_q_override(struct sip_msg *msg, str *new_q);
+
 /**
  * @brief REGISTRAR API structure
  */
@@ -52,6 +55,7 @@ typedef struct registrar_api {
 	regapi_lookup_f     lookup;
 	regapi_lookup_uri_f lookup_uri;
 	regapi_lookup_f     registered;
+	regapi_set_q_override_f set_q_override;
 } registrar_api_t;
 
 typedef int (*bind_registrar_f)(registrar_api_t* api);

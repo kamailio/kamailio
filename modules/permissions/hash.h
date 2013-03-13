@@ -240,4 +240,58 @@ int subnet_table_mi_print(struct subnet* table, struct mi_node* rpl);
 int subnet_table_rpc_print(struct subnet* table, rpc_t* rpc, void* c);
 
 
+/*
+ * Structure used to store domain names
+ */
+struct domain_name_list {
+	unsigned int grp;        /* address group */
+	str  domain;        /* domain_name */
+	unsigned int port;       /* port or 0 */
+	str tag;
+	struct domain_name_list* next;
+};
+
+/*
+ * Create a domain_name table
+ */
+struct domain_name_list** new_domain_name_table(void);
+
+/*
+ * Release memory allocated for a subnet table
+ */
+void free_domain_name_table(struct domain_name_list** table);
+
+/* 
+ * Empty contents of domain_name hash table
+ */
+void empty_domain_name_table(struct domain_name_list** table);
+
+/* 
+ * Check if an entry exists in domain_name table that matches given group, domain_name,
+ * and port.  Port 0 in  matches any port.
+ */
+int match_domain_name_table(struct domain_name_list** table, unsigned int group,
+		str *domain_name, unsigned int port);
+
+/* 
+ * Add <grp, domain_name, port> into hash table
+ */
+int domain_name_table_insert(struct domain_name_list** table, unsigned int grp,
+		str *domain_name, unsigned int port, char *tagv);
+
+/* 
+ * Check if an domain_name/port entry exists in hash table in any group.
+ * Returns first group in which ip_addr/port is found.
+ * Port 0 in hash table matches any port. 
+ */
+int find_group_in_domain_name_table(struct domain_name_list** table,
+		str *domain_name, unsigned int port);
+
+/*! \brief
+ * RPC: Print addresses stored in hash table 
+ */
+void domain_name_table_print(struct subnet* table, FILE* reply_file);
+int domain_name_table_rpc_print(struct domain_name_list** table, rpc_t* rpc, void* c);
+int domain_name_table_mi_print(struct domain_name_list** table, struct mi_node* rpl);
+
 #endif /* _PERM_HASH_H_ */

@@ -28,6 +28,9 @@
 #include "../../pvar.h"
 #include "../../mod_fix.h"
 #include "../../lib/kmi/mi.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
+
 
 #include "pv_branch.h"
 #include "pv_core.h"
@@ -94,7 +97,7 @@ static pv_export_t mod_pvs[] = {
 		pv_set_scriptvar, pv_parse_scriptvar_name, 0, 0, 0},
 	{{"ai", (sizeof("ai")-1)}, /* */
 		PVT_OTHER, pv_get_pai, 0,
-		0, 0, 0, 0},
+		0, pv_parse_index, 0, 0},
 	{{"adu", (sizeof("adu")-1)}, /* auth digest uri */
 		PVT_OTHER, pv_get_authattr, 0,
 		0, 0, pv_init_iname, 3},
@@ -259,10 +262,10 @@ static pv_export_t mod_pvs[] = {
 		0, 0, pv_init_iname, 1},
 	{{"pd", (sizeof("pd")-1)}, /* */
 		PVT_OTHER, pv_get_ppi_attr, 0,
-		0, 0, pv_init_iname, 3},
+		0, pv_parse_index, pv_init_iname, 3},
 	{{"pn", (sizeof("pn")-1)}, /* */
 		PVT_OTHER, pv_get_ppi_attr, 0,
-		0, 0, pv_init_iname, 4},
+		0, pv_parse_index, pv_init_iname, 4},
 	{{"pp", (sizeof("pp")-1)}, /* */
 		PVT_OTHER, pv_get_pid, 0,
 		0, 0, 0, 0},
@@ -274,10 +277,10 @@ static pv_export_t mod_pvs[] = {
 		0, 0, 0, 0},
 	{{"pu", (sizeof("pu")-1)}, /* */
 		PVT_OTHER, pv_get_ppi_attr, 0,
-		0, 0, pv_init_iname, 1},
+		0, pv_parse_index, pv_init_iname, 1},
 	{{"pU", (sizeof("pU")-1)}, /* */
 		PVT_OTHER, pv_get_ppi_attr, 0,
-		0, 0, pv_init_iname, 2},
+		0, pv_parse_index, pv_init_iname, 2},
 	{{"rb", (sizeof("rb")-1)}, /* */
 		PVT_MSG_BODY, pv_get_msg_body, 0,
 		0, 0, 0, 0},
@@ -448,6 +451,7 @@ static int pv_unset(struct sip_msg* msg, char* pvid, char *foo);
 static int is_int(struct sip_msg* msg, char* pvar, char* s2);
 static int pv_typeof(sip_msg_t *msg, char *pv, char *t);
 static int pv_not_empty(sip_msg_t *msg, char *pv, char *s2);
+static int pv_init_rpc(void);
 
 static cmd_export_t cmds[]={
 	{"pv_isset",  (cmd_function)pv_isset,  1, fixup_pvar_null, 0, 
@@ -495,6 +499,11 @@ static int mod_init(void)
 		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
+	if(pv_init_rpc()!=0)
+        {
+                LM_ERR("failed to register RPC commands\n");
+                return -1;
+        }
 
 	return 0;
 }
@@ -628,4 +637,30 @@ static int is_int(struct sip_msg* msg, char* pvar, char* s2)
 	}
 
 	return -1;
+}
+
+static const char* rpc_shv_set_doc[2] = {
+	"Set a shared variable (args: name type value)",
+	0
+};
+
+static const char* rpc_shv_get_doc[2] = {
+	"Get the value of a shared variable. If no argument, dumps all",
+	0
+};
+
+rpc_export_t pv_rpc[] = {
+	{"pv.shvSet", rpc_shv_set, rpc_shv_set_doc, 0},
+	{"pv.shvGet", rpc_shv_get, rpc_shv_get_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int pv_init_rpc(void)
+{
+	if (rpc_register_array(pv_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
 }

@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2007 Elena-Ramona Modroiu
+ * Copyright (C) 2013 Olle E. Johansson
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -613,6 +614,152 @@ error:
 	if(rpl_tree!=NULL)
 		free_mi_tree(rpl_tree);
 	return NULL;
+}
+
+
+void rpc_shv_get(rpc_t* rpc, void* c)
+{
+	str varname;
+	int allvars = 0;
+	sh_var_t *shv = NULL;
+	void* th;
+        void* ih;
+        void* vh;
+
+	if (rpc->scan(c, "S", &varname) != 1) {
+		allvars = 1;
+        }
+
+	if (!allvars) {
+		/* Get one variable value */
+		shv = get_shvar_by_name(&varname);
+		if(shv==NULL) {
+			rpc->fault(c, 404, "Variable not found");
+			return;
+		}
+		if (rpc->add(c, "{",  &ih) < 0)
+        	{
+               		rpc->fault(c, 500, "Internal error creating rpc");
+                	return;
+        	}
+		
+		lock_shvar(shv);
+		if(shv->v.flags&VAR_VAL_STR)
+		{
+			if(rpc->struct_add(ih, "sss", "name", varname.s, "type", "string", "value", shv->v.value.s.s) < 0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc data (str)");
+				unlock_shvar(shv);
+				return;
+			}
+		} else {
+			if(rpc->struct_add(ih, "ssd", "name", varname.s, "type", "int", "value", shv->v.value.n) < 0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc data (int)");
+				unlock_shvar(shv);
+				return;
+			}
+		}
+		unlock_shvar(shv);
+
+		return;
+	}
+	if (rpc->add(c, "{", &th) < 0)
+       	{
+         	rpc->fault(c, 500, "Internal error creating rpc");
+               	return;
+       	}
+
+	if(rpc->struct_add(th, "{", "items", &ih) < 0)
+               {
+                         rpc->fault(c, 500, "Internal error creating rpc th");
+                         return;
+               }
+
+	for(shv=sh_vars; shv; shv=shv->next)
+	{
+		lock_shvar(shv);
+		if(rpc->struct_add(ih, "{", "shv", &vh) < 0)
+               {
+                         rpc->fault(c, 500, "Internal error creating rpc th");
+                         return;
+               }
+		if(shv->v.flags&VAR_VAL_STR)
+		{
+			if(rpc->struct_add(vh, "sss", "name", shv->name.s, "type", "string", "value", shv->v.value.s.s) < 0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc data");
+				unlock_shvar(shv);
+				return;
+			}
+		} else {
+			if(rpc->struct_add(vh, "ssd", "name", shv->name.s, "type", "int", "value", shv->v.value.n) < 0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc data");
+				unlock_shvar(shv);
+				return;
+			}
+		}
+		unlock_shvar(shv);
+	}
+
+	return ;
+}
+
+void rpc_shv_set(rpc_t* rpc, void* c)
+{
+	str varname, type, value;
+	int ival = 0;
+	int_str isv;
+	sh_var_t *shv = NULL;
+	int flags = 0;
+	LM_DBG("Entering SHV_set\n");
+
+	if (rpc->scan(c, "S", &varname) != 1) {
+		rpc->fault(c, 500, "Missing parameter varname (Parameters: varname type value)");
+		return;
+        }
+	LM_DBG("SHV_set Varname %.*s \n", varname.len, varname.s);
+	if (rpc->scan(c, "S", &type) != 1) {
+		rpc->fault(c, 500, "Missing parameter type (Parameters: varname type value)");
+		return;
+        }
+	if (strcasecmp(type.s, "int") == 0 ) {
+		if (rpc->scan(c, "d", &ival) != 1) {
+			rpc->fault(c, 500, "Missing integer parameter value (Parameters: varname type value)");
+			return;
+        	}
+		isv.n = ival;
+	} else  if (strcasecmp(type.s, "str") == 0 ) {
+		/* String value */
+		if (rpc->scan(c, "S", &value) != 1) {
+			rpc->fault(c, 500, "Missing parameter value (Parameters: varname type value)");
+			return;
+        	}
+		isv.s = value;
+		flags = VAR_VAL_STR;
+	} else {
+		rpc->fault(c, 500, "Unknown parameter type (Types: int or str)");
+		return;
+	}
+
+	shv = get_shvar_by_name(&varname);
+	if(shv==NULL) {
+		rpc->fault(c, 404, "Variable not found");
+		return;
+	}
+		
+	lock_shvar(shv);
+	if(set_shvar_value(shv, &isv, flags)==NULL)
+	{
+		rpc->fault(c, 500, "Cannot set shared variable value");
+		LM_ERR("cannot set shv value\n");
+	} else {
+		rpc->printf(c, "Ok. Variable set to new value.");
+	}
+
+	unlock_shvar(shv);
+	return;
 }
 
 int param_set_xvar( modparam_t type, void* val, int mode)

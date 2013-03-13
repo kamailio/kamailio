@@ -328,6 +328,28 @@ modparam("nathelper", "sipping_method", "INFO")
 		</example>
 	</section>
 	<section>
+		<title><varname>natping_disable_bflag</varname> (integer)</title>
+		<para>
+		What branch flag should be used by the module to disable NAT pings
+		on a per-registration basis. If the given flag is set for a
+		particular registration, then no NAT pings will be sent at all,
+		regardless of any other conditions.
+		</para>
+		<para>
+		<emphasis>
+			Default value is -1 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>natping_disable_bflag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "natping_disable_bflag", 8)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>nortpproxy_str</varname> (string)</title>
 		<para>
 		The parameter sets the SDP attribute used by nathelper to mark

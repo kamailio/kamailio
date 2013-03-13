@@ -660,7 +660,7 @@ struct mi_root* mi_usrloc_show_contact(struct mi_root *cmd, void *param)
 			}
 
 			node = addf_mi_node_child( rpl, 0, "Contact", 7,
-				"<%.*s>;q=%s;expires=%d;flags=0x%X;cflags=0x%X;socket=<%.*s>;"
+				"<%.*s>;q=%s;expires=%d;flags=0x%X;cflags=0x%X;state=%d;socket=<%.*s>;"
 				"methods=0x%X"
 				"%s%.*s%s" /*received*/
 				"%s%.*s%s" /*user-agent*/
@@ -669,7 +669,7 @@ struct mi_root* mi_usrloc_show_contact(struct mi_root *cmd, void *param)
 			        ";reg-id=%u",
 				con->c.len, ZSW(con->c.s),
 				q2str(con->q, 0), (int)(con->expires - act_time),
-				con->flags, con->cflags,
+				con->flags, con->cflags, con->state,
 				con->sock?con->sock->sock_str.len:3,
 					con->sock?con->sock->sock_str.s:"NULL",
 				con->methods,

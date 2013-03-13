@@ -1,6 +1,6 @@
 %define name    kamailio
-%define ver     4.0.0
-%define rel     pre1%{dist}
+%define ver     4.1.0
+%define rel     dev0%{dist}
 
 
 
@@ -27,6 +27,7 @@ Conflicts:     kamailio-dialplan < %ver, kamailio-lcr < %ver
 Conflicts:     kamailio-xmlops < %ver, kamailio-cdp < %ver
 Conflicts:     kamailio-websocket < %ver, kamailio-xhttp-pi < %ver
 Conflicts:     kamailio-outbound < %ver, kamailio-ims < %ver
+Conflicts:     kamailio-auth-identity < %ver
 %if 0%{?fedora}
 Conflicts:     kamailio-radius < %ver, kamailio-carrierroute < %ver
 Conflicts:     kamailio-redis < %ver, kamailio-json < %ver 
@@ -35,6 +36,9 @@ Conflicts:     kamailio-mono < %ver, kamailio-GeoIP < %ver
 Requires:      openssl lksctp-tools
 BuildRequires: bison flex gcc make redhat-rpm-config openssl-devel
 BuildRequires: lksctp-tools-devel
+%if 0%{?fedora}
+BuildRequires: docbook2X
+%endif
 
 %description
 Kamailio (former OpenSER) is an Open Source SIP Server released under GPL, able
@@ -153,6 +157,21 @@ BuildRequires: expat-devel
 SIP/XMPP IM gateway for Kamailio.
 
 
+%package  purple
+Summary:  Multi-protocol IM and presence gateway module.
+Group:    System Environment/Daemons
+%if 0%{?fedora}
+Requires: glib, libpurple, libxml2, kamailio = %ver, kamailio-presence = %ver
+BuildRequires: glib-devel, libpurple-devel, libxml2-devel
+%else
+Requires: glib2, libpurple, libxml2, kamailio = %ver, kamailio-presence = %ver
+BuildRequires: glib2-devel, libpurple-devel, libxml2-devel
+%endif
+
+%description purple
+Multi-protocol IM and presence gateway module.
+
+
 %package ldap
 Summary:       LDAP search interface for Kamailio.
 Group:         System Environment/Daemons
@@ -243,6 +262,36 @@ BuildRequires: libxml2-devel
 XML operation functions for Kamailio.
 
 
+%package  cdp
+Summary:  C Diameter Peer module and extensions module for Kamailio.
+Group:    System Environment/Daemons
+Requires: libxml2, kamailio = %ver
+BuildRequires: libxml2-devel
+
+%description cdp
+C Diameter Peer module and extensions module for Kamailio.
+
+
+%package  ims
+Summary:  IMS modules and extensions module for Kamailio.
+Group:    System Environment/Daemons
+Requires: libxml2, kamailio = %ver, kamailio-cdp = %ver
+BuildRequires: libxml2-devel
+
+%description ims
+IMS modules and extensions module for Kamailio.
+
+
+%package  auth-identity
+Summary:  Functions for secure identification of originators of SIP messages for Kamailio.
+Group:    System Environment/Daemons
+Requires: libcurl, kamailio = %ver
+BuildRequires: libcurl-devel
+
+%description auth-identity
+Functions for secure identification of originators of SIP messages for Kamailio.
+
+
 %package websocket
 Summary:       WebSocket transport for Kamailio.
 Group:         System Environment/Daemons
@@ -272,41 +321,6 @@ BuildRequires: openssl-devel
 %description outbound
 RFC 5626, "Managing Client-Initiated Connections in the Session Initiation
 Protocol (SIP)" support for Kamailio.
-
-
-%package  purple
-Summary:  Multi-protocol IM and presence gateway module.
-Group:    System Environment/Daemons
-%if 0%{?fedora}
-Requires: glib, libpurple, libxml2, kamailio = %ver, kamailio-presence = %ver
-BuildRequires: glib-devel, libpurple-devel, libxml2-devel
-%else
-Requires: glib2, libpurple, libxml2, kamailio = %ver, kamailio-presence = %ver
-BuildRequires: glib2-devel, libpurple-devel, libxml2-devel
-%endif
-
-%description purple
-Multi-protocol IM and presence gateway module.
-
-
-%package  cdp
-Summary:  C Diameter Peer module and extensions module for Kamailio.
-Group:    System Environment/Daemons
-Requires: libxml2, kamailio = %ver
-BuildRequires: libxml2-devel
-
-%description cdp
-C Diameter Peer module and extensions module for Kamailio.
-
-
-%package  ims
-Summary:  IMS modules and extensions module for Kamailio.
-Group:    System Environment/Daemons
-Requires: libxml2, kamailio = %ver, kamailio-cdp = %ver
-BuildRequires: libxml2-devel
-
-%description ims
-IMS modules and extensions module for Kamailio.
 
 
 %if 0%{?fedora}
@@ -383,21 +397,19 @@ make FLAVOUR=kamailio cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT\
 	modules_dirs="modules" SCTP=1 STUN=1
 make
 %if 0%{?fedora}
-make every-module skip_modules="auth_identity db_cassandra iptrtpproxy \
-	db_oracle memcached mi_xmlrpc osp" \
-	group_include="kstandard kmysql kpostgres kcpl kradius kunixodbc \
-	kxml kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils \
-	kpurple ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson \
-	kredis kmono koutbound kims" \
-	include_modules="cdp mangler print_lib xhttp_pi"
+make every-module skip_modules="db_cassandra iptrtpproxy db_oracle memcached \
+	mi_xmlrpc osp" \
+	group_include="kstandard kmysql kpostgres kcpl kxml kradius kunixodbc \
+	kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils kpurple \
+	ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson kredis \
+	kmono kims koutbound"
 %else
-make every-module skip_modules="auth_identity db_cassandra iptrtpproxy\
-	db_oracle memcached mi_xmlrpc osp" \
-	group_include="kstandard kmysql kpostgres kcpl kunixodbc \
-	kxml kperl ksnmpstats kxmpp kberkeley kldap kutils \
-	kpurple ktls kwebsocket kpresence klua kpython ksqlite \
-	koutbound kims" \
-	include_modules="cdp mangler print_lib xhttp_pi"
+make every-module skip_modules="db_cassandra iptrtpproxy db_oracle memcached \
+	mi_xmlrpc osp" \
+	group_include="kstandard kmysql kpostgres kcpl kxml kunixodbc \
+	kperl ksnmpstats kxmpp kberkeley kldap kutils kpurple \
+	ktls kwebsocket kpresence klua kpython ksqlite \
+	kims koutbound"
 %endif
 make utils
 
@@ -408,13 +420,12 @@ make utils
 
 make install
 %if 0%{?fedora}
-make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
-	db_oracle memcached mi_xmlrpc osp" \
-	group_include="kstandard kmysql kpostgres kcpl kradius kunixodbc\
-	kxml kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils\
-	kpurple ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson\
-	kredis kmono koutbound kims" \
-	include_modules="cdp mangler print_lib xhttp_pi"
+make install-modules-all skip_modules="db_cassandra iptrtpproxy db_oracle \
+	memcached mi_xmlrpc osp" \
+	group_include="kstandard kmysql kpostgres kcpl kxml kradius kunixodbc \
+	kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils kpurple \
+	ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson kredis \
+	kmono kims koutbound"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.service \
@@ -424,13 +435,12 @@ mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
 install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.sysconfig \
 		$RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/kamailio
 %else
-make install-modules-all skip_modules="auth_identity db_cassandra iptrtpproxy\
-	db_oracle memcached mi_xmlrpc osp" \
-	group_include="kstandard kmysql kpostgres kcpl kunixodbc \
-	kxml kperl ksnmpstats kxmpp kberkeley kldap kutils \
-	kpurple ktls kwebsocket kpresence klua kpython ksqlite \
-	koutbound kims" \
-	include_modules="cdp mangler print_lib xhttp_pi"
+make install-modules-all skip_modules="db_cassandra iptrtpproxy db_oracle \
+	memcached mi_xmlrpc osp" \
+	group_include="kstandard kmysql kpostgres kcpl kxml kunixodbc \
+	kperl ksnmpstats kxmpp kberkeley kldap kutils kpurple \
+	ktls kwebsocket kpresence klua kpython ksqlite \
+	kims koutbound"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -1004,6 +1014,12 @@ fi
 %{_libdir}/kamailio/modules/ims_usrloc_scscf.so
 
 
+%files auth-identity
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.auth_identity
+%{_libdir}/kamailio/modules/auth_identity.so
+
+
 %files websocket
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.websocket
@@ -1072,6 +1088,17 @@ fi
 
 
 %changelog
+* Thu Mar 7 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Added build requirement for docbook2X for Fedora builds
+* Wed Mar 6 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Restored perl related files
+* Tue Mar 5 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Updated rel to dev0 and ver to 4.1.0
+  - Re-ordered file to make it internally consistent
+  - Updated make commands to match updated module groups
+  - Added auth_identity back in
+  - Temporarily commented out perl related files as perl modules do not appear
+    to be working
 * Sun Jan 20 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Updated rel to pre1
   - Moved modules from modules_k/ to modules/

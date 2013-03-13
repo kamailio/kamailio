@@ -1,0 +1,46 @@
+<project name="Kamailio Examples" default="all">
+
+    <target name="all" description="Do the entire build" depends="clean,siprouter_compile,kamailio.jar,main_compile" >
+	<echo>Building Kamailio examples</echo>
+    </target>
+
+    <target name="make.dirs" description="Make a dir">
+	<mkdir dir="build"/>
+    </target>
+
+    <target name="kamailio.jar" description="make jar file" depends="siprouter_compile">
+	<jar destfile="kamailio.jar">
+    	    <fileset dir="build" includes="**">
+        	<include name="**/*.class"/>
+                <exclude name="**/CVS"/>
+                <exclude name="**/.svn"/>
+                <exclude name="**/.git"/>
+            </fileset>
+        </jar>
+    </target>
+
+    <target name="siprouter_compile" description="compile java"  depends="make.dirs">
+	<javac destdir="build" includeantruntime="false">
+    	    <src path="siprouter_src/"/>
+        </javac>
+    </target>
+
+    <target name="main_compile" description="compile java">
+	<javac destdir="." includeantruntime="false" includes="**.java">
+    	    <src path="."/>
+	    <classpath>
+		<pathelement path="."/>
+		<pathelement location="kamailio.jar"/>
+	    </classpath>
+        </javac>
+    </target>
+
+
+
+    <target name="clean" description="Clean up">
+        <delete dir="build"/>
+	<delete file="kamailio.jar"/>
+	<delete file="Kamailio.class"/>
+    </target>
+
+</project>

@@ -14,6 +14,8 @@ Daniel-Constantin Mierla
    Copyright © 2008-2011 Daniel-Constantin Mierla (asipto.com)
 
    Copyright © 2011 Juha Heinanen
+
+   Copyright © 2013 Olle E. Johansson, Edvina AB
      __________________________________________________________________
 
    Table of Contents
@@ -44,6 +46,11 @@ Daniel-Constantin Mierla
 
               5.1. shv_set
               5.2. shv_get
+
+        6. RPC Commands
+
+              6.1. pv.shvSet
+              6.2. pv.shvGet
 
    List of Examples
 
@@ -86,6 +93,11 @@ Chapter 1. Admin Guide
 
         5.1. shv_set
         5.2. shv_get
+
+   6. RPC Commands
+
+        6.1. pv.shvSet
+        6.2. pv.shvGet
 
 1. Overview
 
@@ -207,7 +219,7 @@ if(pv_isset("$avp("s:x")"))
 pv_unset("$avp("s:x")");
 ...
 
-4.3. is_int(pvar)
+4.3.  is_int(pvar)
 
    Function checks if pvar argument contains integer value and returns 1
    if it does and -1 otherwise.
@@ -221,7 +233,7 @@ if (is_int("$var(foo)")) {
 }
 ...
 
-4.4. typeof(pvar, vtype)
+4.4.  typeof(pvar, vtype)
 
    Returns true if the type of pseudo-variable matches the second
    parameter. The second parameter can be: 'int' - type is integer; 'str'
@@ -236,7 +248,7 @@ if (typeof("$var(foo)", "str")) {
 }
 ...
 
-4.5. not_empty(pvar)
+4.5.  not_empty(pvar)
 
    Returns true if the pseudo-variables has the type string and is not
    empty value.
@@ -296,3 +308,28 @@ $ kamctl fifo shv_set debug int 0
 $ kamctl fifo shv_get debug
 $ kamctl fifo shv_get
 ...
+
+6. RPC Commands
+
+   6.1. pv.shvSet
+   6.2. pv.shvGet
+
+6.1. pv.shvSet
+
+   Set the value of a shared variable ($shv(name)).
+
+   Parameters:
+     * _name_: shared variable name
+     * _type_: type of the value
+          + "int": integer value
+          + "str": string value
+     * _value_: value to be set
+
+6.2. pv.shvGet
+
+   Get the value of a shared variable ($shv(name)).
+
+   Parameters:
+     * _name_: shared variable name
+
+   If no name is given, all shared variables are listed

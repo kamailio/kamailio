@@ -1,0 +1,54 @@
+
+Prerequistites:
+1) Java JDK (either openjdk or oracle's)
+2) GNU Java Compiler (gcj)
+3) Apache ANT (http://ant.apache.org/)
+
+Build process:
+
+1) Open Kamailio.java with any text editor and change (if differs) a FULL PATH to app_java.so :
+   Example:
+        static
+        {
+            System.load("/opt/kamailio/lib/kamailio/modules/app_java.so");
+        }
+
+2) Type: ant
+   Example: ant
+Buildfile: /opt/dev/kamailio/modules/app_java/build.xml
+
+clean:
+   [delete] Deleting directory /opt/dev/kamailio/modules/app_java/build
+   [delete] Deleting: /opt/dev/kamailio/modules/app_java/Kamailio.class
+
+make.dirs:
+    [mkdir] Created dir: /opt/dev/kamailio/modules/app_java/build
+
+siprouter_compile:
+    [javac] Compiling 4 source files to /opt/dev/kamailio/modules/app_java/build
+
+kamailio.jar:
+      [jar] Building jar: /opt/dev/kamailio/modules/app_java/kamailio.jar
+
+main_compile:
+    [javac] Compiling 1 source file to /opt/dev/kamailio/modules/app_java
+
+all:
+     [echo] Building Kamailio examples
+
+BUILD SUCCESSFUL
+Total time: 4 seconds
+
+3) If no errors, copy file kamailio.jar into 'java' directory (see file app_java.mod)
+4) Copy file Kamailio.class to 'java' folder.
+5) Enjoy! :)
+
+
+
+
+
+
+
+
+
+

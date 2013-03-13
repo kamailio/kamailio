@@ -411,7 +411,7 @@ static cmd_export_t cmds[] = {
 		fixup_spve_null, fixup_free_spve_null,
 		ANY_ROUTE},
 	{"rtpproxy_manage",	(cmd_function)rtpproxy_manage2,     2,
-		fixup_spve_str, fixup_free_spve_str,
+		fixup_spve_spve, fixup_free_spve_spve,
 		ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -2037,7 +2037,11 @@ static int
 rtpproxy_manage1(struct sip_msg *msg, char *flags, char *ip)
 {
 	str flag_str;
-	fixup_get_svalue(msg, (gparam_p)flags, &flag_str);
+	if(fixup_get_svalue(msg, (gparam_p)flags, &flag_str)<0)
+	{
+		LM_ERR("invalid flags parameter\n");
+		return -1;
+	}
 	return rtpproxy_manage(msg, flag_str.s, 0);
 }
 
@@ -2046,8 +2050,16 @@ rtpproxy_manage2(struct sip_msg *msg, char *flags, char *ip)
 {
 	str flag_str;
 	str ip_str;
-	fixup_get_svalue(msg, (gparam_p)flags, &flag_str);
-	fixup_get_svalue(msg, (gparam_p)ip, &ip_str);
+	if(fixup_get_svalue(msg, (gparam_p)flags, &flag_str)<0)
+	{
+		LM_ERR("invalid flags parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)ip, &ip_str)<0)
+	{
+		LM_ERR("invalid IP parameter\n");
+		return -1;
+	}
 	return rtpproxy_manage(msg, flag_str.s, ip_str.s);
 }
 
