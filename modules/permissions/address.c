@@ -54,6 +54,11 @@ struct subnet **subnet_table;        /* Ptr to current subnet table */
 struct subnet *subnet_table_1;       /* Ptr to subnet table 1 */
 struct subnet *subnet_table_2;       /* Ptr to subnet table 2 */
 
+struct domain_name_list ***domain_list_table;        /* Ptr to current domain name table */
+static struct domain_name_list **domain_list_table_1;       /* Ptr to domain name table 1 */
+static struct domain_name_list **domain_list_table_2;       /* Ptr to domain name table 2 */
+
+
 static db1_con_t* db_handle = 0;
 static db_func_t perm_dbf;
 
@@ -87,6 +92,7 @@ int reload_address_table(void)
 
 	struct addr_list **new_hash_table;
 	struct subnet *new_subnet_table;
+	struct domain_name_list **new_domain_name_table;
 	int i;
 	unsigned int gid;
 	unsigned int port;
@@ -128,6 +134,16 @@ int reload_address_table(void)
 		empty_subnet_table(subnet_table_1);
 		new_subnet_table = subnet_table_1;
 	}
+
+	/* Choose new domain name table */
+	if (*domain_list_table == domain_list_table_1) {
+		empty_domain_name_table(domain_list_table_2);
+		new_domain_name_table = domain_list_table_2;
+	} else {
+		empty_domain_name_table(domain_list_table_1);
+		new_domain_name_table = domain_list_table_1;
+	}
+
 
 	row = RES_ROWS(res);
 
@@ -173,42 +189,55 @@ int reload_address_table(void)
 		port = VAL_UINT(val + 3);
 		tagv = VAL_NULL(val + 4)?NULL:(char *)VAL_STRING(val + 4);
 		ipa = strtoipX(&ips);
-		if(ipa==NULL)
+		if ( ipa==NULL )
 		{
-			LM_DBG("failure during IP address conversion\n");
-			goto dberror;
+			LM_DBG("Domain name: %.*s\n", ips.len, ips.s);
+		//	goto dberror;
+		} else {
+			if(ipa->af == AF_INET6) {
+				if(mask<0 || mask>128) {
+					LM_DBG("failure during IP mask check for v6\n");
+					goto dberror;
+				}
+			} else {
+				if(mask<0 || mask>32) {
+					LM_DBG("failure during IP mask check for v4\n");
+					goto dberror;
+				}
+			}
 		}
-		if(ipa->af == AF_INET6) {
-			if(mask<0 || mask>128) {
-				LM_DBG("failure during IP mask check for v6\n");
-				goto dberror;
+
+		if ( ipa ) {
+			if ( (ipa->af==AF_INET6 && mask==128) || (ipa->af==AF_INET && mask==32) ) {
+				if (addr_hash_table_insert(new_hash_table, gid, ipa, port, tagv)
+						== -1) {
+					LM_ERR("hash table problem\n");
+					perm_dbf.free_result(db_handle, res);
+					return -1;
+				}
+				LM_DBG("Tuple <%u, %s, %u> inserted into address hash table\n",
+						gid, ips.s, port);
+			} else {
+				if (subnet_table_insert(new_subnet_table, gid, ipa, mask,
+								port, tagv)
+							== -1) {
+					LM_ERR("subnet table problem\n");
+					perm_dbf.free_result(db_handle, res);
+					return -1;
+				}
+				LM_DBG("Tuple <%u, %s, %u, %u> inserted into subnet table\n",
+						gid, ips.s, port, mask);
 			}
 		} else {
-			if(mask<0 || mask>32) {
-				LM_DBG("failure during IP mask check for v4\n");
-				goto dberror;
-			}
-		}
-		if((ipa->af==AF_INET6 && mask==128) || (ipa->af==AF_INET && mask==32))
-		{
-			if (addr_hash_table_insert(new_hash_table, gid, ipa, port, tagv)
-					== -1) {
-				LM_ERR("hash table problem\n");
-				perm_dbf.free_result(db_handle, res);
-				return -1;
-			}
-			LM_DBG("Tuple <%u, %s, %u> inserted into address hash table\n",
-					gid, ips.s, port);
-		} else {
-			if (subnet_table_insert(new_subnet_table, gid, ipa, mask,
+				if (domain_name_table_insert(new_domain_name_table, gid, &ips,
 							port, tagv)
 						== -1) {
-				LM_ERR("subnet table problem\n");
+				LM_ERR("domain name table problem\n");
 				perm_dbf.free_result(db_handle, res);
 				return -1;
 			}
-			LM_DBG("Tuple <%u, %s, %u, %u> inserted into subnet table\n",
-					gid, ips.s, port, mask);
+			LM_DBG("Tuple <%u, %s, %u> inserted into domain name table\n",
+					gid, ips.s, port);
 		}
 	}
 
@@ -216,6 +245,7 @@ int reload_address_table(void)
 
 	*addr_hash_table = new_hash_table;
 	*subnet_table = new_subnet_table;
+	*domain_list_table = new_domain_name_table;
 
 	LM_DBG("address table reloaded successfully.\n");
 
@@ -293,6 +323,21 @@ int init_addresses(void)
 
 	*subnet_table = subnet_table_1;
 
+	domain_list_table_1 = new_domain_name_table();
+	if (!domain_list_table_1) goto error;
+
+	domain_list_table_2 = new_domain_name_table();
+	if (!domain_list_table_2) goto error;
+
+	domain_list_table = (struct domain_name_list ***)shm_malloc(sizeof(struct domain_name_list **));
+	if (!domain_list_table) {
+		LM_ERR("no more shm memory for domain name table\n");
+		goto error;
+	}
+
+	*domain_list_table = domain_list_table_1;
+
+
 	if (reload_address_table() == -1) {
 		LM_CRIT("reload of address table failed\n");
 		goto error;
@@ -328,6 +373,20 @@ error:
 		shm_free(subnet_table);
 		subnet_table = 0;
 	}
+
+	if (domain_list_table_1) {
+		free_domain_name_table(domain_list_table_1);
+		domain_list_table_1 = 0;
+	}
+	if (domain_list_table_2) {
+		free_domain_name_table(domain_list_table_2);
+		domain_list_table_2 = 0;
+	}
+	if (domain_list_table) {
+		shm_free(domain_list_table);
+		domain_list_table = 0;
+	}
+
 	perm_dbf.close(db_handle);
 	db_handle = 0;
 	return -1;
@@ -361,6 +420,9 @@ void clean_addresses(void)
 	if (subnet_table_1) free_subnet_table(subnet_table_1);
 	if (subnet_table_2) free_subnet_table(subnet_table_2);
 	if (subnet_table) shm_free(subnet_table);
+	if (domain_list_table_1) free_domain_name_table(domain_list_table_1);
+	if (domain_list_table_2) free_domain_name_table(domain_list_table_2);
+	if (domain_list_table) shm_free(domain_list_table);
 }
 
 
@@ -387,10 +449,8 @@ int allow_address(struct sip_msg* _msg, char* _addr_group, char* _addr_sp,
 		LM_ERR("cannot get value of address pvar\n");
 		return -1;
 	}
-	if ( (ipa=strtoipX(&ips)) == NULL ) {
-		LM_ERR("failed to convert IP address string to in_addr\n");
-		return -1;
-	}
+
+	ipa=strtoipX(&ips);
 
 	if (_port_sp==NULL
 			|| (fixup_get_ivalue(_msg, (gparam_p)_port_sp, (int*)&port) < 0)) {
@@ -398,10 +458,14 @@ int allow_address(struct sip_msg* _msg, char* _addr_group, char* _addr_sp,
 		return -1;
 	}
 
-	if (match_addr_hash_table(*addr_hash_table, addr_group, ipa, port) == 1)
-		return 1;
-	else
-		return match_subnet_table(*subnet_table, addr_group, ipa, port);
+	if ( ipa ) {
+		if (match_addr_hash_table(*addr_hash_table, addr_group, ipa, port) == 1)
+			return 1;
+		else
+			return match_subnet_table(*subnet_table, addr_group, ipa, port);
+	} else {
+		return match_domain_name_table(*domain_list_table, addr_group, &ips, port);
+	}
 }
 
 
@@ -479,30 +543,35 @@ int allow_address_group(struct sip_msg* _msg, char* _addr, char* _port)
 		LM_ERR("cannot get value of address pvar\n");
 		return -1;
 	}
-	if ( (ipa=strtoipX(&ips)) == NULL ) {
-		LM_ERR("failed to convert IP address string to in_addr\n");
-		return -1;
-	}
-
 	if (_port==NULL
 			|| (fixup_get_ivalue(_msg, (gparam_p)_port, (int*)&port) < 0)) {
 		LM_ERR("cannot get value of port pvar\n");
 		return -1;
 	}
 
-	LM_DBG("looking for <%.*s, %u> in address table\n",
-			ips.len, ips.s, port);
-	group = find_group_in_addr_hash_table(*addr_hash_table,
-			ipa, port);
-	LM_DBG("Found address in group <%d>\n", group);
+	ipa=strtoipX(&ips);
 
-	if (group != -1) return group;
+	if ( ipa ) {
+		LM_DBG("looking for <%.*s, %u> in address table\n",
+				ips.len, ips.s, port);
+		group = find_group_in_addr_hash_table(*addr_hash_table,
+				ipa, port);
+		LM_DBG("Found address in group <%d>\n", group);
 
-	LM_DBG("looking for <%.*s, %u> in subnet table\n",
-			ips.len, ips.s, port);
-	group = find_group_in_subnet_table(*subnet_table,
-			&_msg->rcv.src_ip,
-			_msg->rcv.src_port);
-	LM_DBG("Found a match of subnet in group <%d>\n", group);
+		if (group != -1) return group;
+
+		LM_DBG("looking for <%.*s, %u> in subnet table\n",
+				ips.len, ips.s, port);
+		group = find_group_in_subnet_table(*subnet_table,
+				ipa, port);
+		LM_DBG("Found a match of subnet in group <%d>\n", group);
+	} else {
+		LM_DBG("looking for <%.*s, %u> in domain_name table\n",
+				ips.len, ips.s, port);
+		group = find_group_in_domain_name_table(*domain_list_table,
+				&ips, port);
+		LM_DBG("Found a match of domain_name in group <%d>\n", group);
+	}
+
 	return group;
 }

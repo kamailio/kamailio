@@ -188,6 +188,7 @@ static mi_export_t mi_cmds[] = {
 		mi_addr_child_init },
 	{ MI_ADDRESS_DUMP,    mi_address_dump,    MI_NO_INPUT_FLAG,  0,  0 },
 	{ MI_SUBNET_DUMP,     mi_subnet_dump,     MI_NO_INPUT_FLAG,  0,  0 },
+	{ MI_DOMAIN_DUMP,     mi_domain_name_dump,MI_NO_INPUT_FLAG,  0,  0 },
 	{ MI_ALLOW_URI,       mi_allow_uri,       0,  0,  0 },
 	{ 0, 0, 0, 0, 0 }
 };
@@ -1009,6 +1010,12 @@ static const char* rpc_subnet_dump_doc[2] = {
 	0
 };
 
+static const char* rpc_domain_name_dump_doc[2] = {
+	"Dump permissions domain name table",
+	0
+};
+
+
 static const char* rpc_test_uri_doc[2] = {
 	"Tests if (URI, Contact) pair is allowed according to allow/deny files",
 	0
@@ -1020,6 +1027,7 @@ rpc_export_t permissions_rpc[] = {
 	{"permissions.trustedDump", rpc_trusted_dump, rpc_trusted_dump_doc, 0},
 	{"permissions.addressDump", rpc_address_dump, rpc_address_dump_doc, 0},
 	{"permissions.subnetDump", rpc_subnet_dump, rpc_subnet_dump_doc, 0},
+	{"permissions.domainDump", rpc_domain_name_dump, rpc_domain_name_dump_doc, 0},
 	{"permissions.testUri", rpc_test_uri, rpc_test_uri_doc, 0},
 	{0, 0, 0, 0}
 };

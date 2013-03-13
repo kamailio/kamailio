@@ -830,3 +830,220 @@ void free_subnet_table(struct subnet* table)
 
 	shm_free(table);
 }
+
+/*
+ * Create and initialize a domain_name table
+ */
+struct domain_name_list** new_domain_name_table(void)
+{
+	struct domain_name_list** ptr;
+
+	/* Initializing hash tables and hash table variable */
+	ptr = (struct domain_name_list **)shm_malloc
+		(sizeof(struct domain_name_list*) * PERM_HASH_SIZE);
+	if (!ptr) {
+		LM_ERR("no shm memory for hash table\n");
+		return 0;
+	}
+
+	memset(ptr, 0, sizeof(struct domain_name*) * PERM_HASH_SIZE);
+	return ptr;
+}
+
+
+/* 
+ * Free contents of hash table, it doesn't destroy the
+ * hash table itself
+ */
+void empty_domain_name_table(struct domain_name_list **table)
+{
+	int i;
+	struct domain_name_list *np, *next;
+
+	for (i = 0; i < PERM_HASH_SIZE; i++) {
+		np = table[i];
+		while (np) {
+			next = np->next;
+			shm_free(np);
+			np = next;
+		}
+		table[i] = 0;
+	}
+}
+
+/*
+ * Release all memory allocated for a hash table
+ */
+void free_domain_name_table(struct domain_name_list** table)
+{
+	if (!table)
+		return;
+
+	empty_domain_name_table(table);
+	shm_free(table);
+}
+
+
+/* 
+ * Check if an entry exists in hash table that has given group, domain_name, and
+ * port.  Port 0 in hash table matches any port.
+ */
+int match_domain_name_table(struct domain_name_list** table, unsigned int group,
+		str *domain_name, unsigned int port)
+{
+	struct domain_name_list *np;
+	avp_value_t val;
+
+	for (np = table[perm_hash(*domain_name)]; np != NULL; np = np->next) {
+		if ( (np->grp == group)
+				&& ((np->port == 0) || (np->port == port))
+				&& np->domain.len == domain_name->len
+				&& strncmp(np->domain.s, domain_name->s, domain_name->len)==0 ) {
+
+			if (tag_avp.n && np->tag.s) {
+				val.s = np->tag;
+				if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, val) != 0) {
+					LM_ERR("setting of tag_avp failed\n");
+					return -1;
+				}
+			}
+
+			return 1;
+		}
+	}
+
+	return -1;
+}
+
+
+/* 
+ * Check if an domain_name/port entry exists in hash table in any group.
+ * Returns first group in which ip_addr/port is found.
+ * Port 0 in hash table matches any port. 
+ */
+int find_group_in_domain_name_table(struct domain_name_list** table,
+		str *domain_name, unsigned int port)
+{
+	struct domain_name_list *np;
+
+	for (np = table[perm_hash(*domain_name)]; np != NULL; np = np->next) {
+		if ( ((np->port == 0) || (np->port == port))
+				&& np->domain.len == domain_name->len
+				&& strncmp(np->domain.s, domain_name->s, domain_name->len)==0 ) {
+			return np->grp;
+		}
+	}
+
+	return -1;
+}
+
+
+/* 
+ * Add <grp, domain_name, port> into hash table
+ */
+int domain_name_table_insert(struct domain_name_list** table, unsigned int grp,
+		str *domain_name, unsigned int port, char *tagv)
+{
+	struct domain_name_list *np;
+	unsigned int hash_val;
+	int len;
+
+	len = sizeof(struct domain_name_list) + domain_name->len;
+	if(tagv!=NULL)
+		len += strlen(tagv) + 1;
+
+	np = (struct domain_name_list *) shm_malloc(len);
+	if (np == NULL) {
+		LM_ERR("no shm memory for table entry\n");
+		return -1;
+	}
+
+	memset(np, 0, len);
+
+	np->grp = grp;
+	np->domain.s = (char*)np + sizeof(struct domain_name_list);
+	memcpy(np->domain.s, domain_name->s, domain_name->len);
+	np->domain.len = domain_name->len;
+	np->port = port;
+	if(tagv!=NULL) {
+		np->tag.s = (char*)np + sizeof(struct domain_name_list) + domain_name->len;
+		np->tag.len = strlen(tagv);
+		strcpy(np->tag.s, tagv);
+	}
+
+	LM_DBG("** Added domain name: %.*s\n", np->domain.len, np->domain.s);
+
+	hash_val = perm_hash(*domain_name);
+	np->next = table[hash_val];
+	table[hash_val] = np;
+
+	return 1;
+}
+
+
+/*! \brief
+ * RPC: Print addresses stored in hash table 
+ */
+int domain_name_table_rpc_print(struct domain_name_list** table, rpc_t* rpc, void* c)
+{
+	int i;
+	void* th;
+	void* ih;
+	struct domain_name_list *np;
+
+
+	if (rpc->add(c, "{", &th) < 0)
+	{
+		rpc->fault(c, 500, "Internal error creating rpc");
+		return -1;
+	}
+
+	for (i = 0; i < PERM_HASH_SIZE; i++) {
+		np = table[i];
+		while (np) {
+			if(rpc->struct_add(th, "dd{", 
+					"table", i,
+					"group", np->grp,
+					"item", &ih) < 0) {
+				rpc->fault(c, 500, "Internal error creating rpc ih");
+				return -1;
+			}
+
+			if(rpc->struct_add(ih, "S", "domain_name", &np->domain) < 0) {
+				rpc->fault(c, 500, "Internal error creating rpc data (ip)");
+				return -1;
+			}
+			if(rpc->struct_add(ih, "ds", "port",  np->port,
+						"tag",  np->tag.len ? np->tag.s : "NULL") < 0) {
+				rpc->fault(c, 500, "Internal error creating rpc data");
+				return -1;
+			}
+			np = np->next;
+		}
+	}
+	return 0;
+}
+
+/*! \brief
+ * MI: Print domain name stored in hash table 
+ */
+int domain_name_table_mi_print(struct domain_name_list** table, struct mi_node* rpl)
+{
+	int i;
+	struct domain_name_list *np;
+
+	for (i = 0; i < PERM_HASH_SIZE; i++) {
+		np = table[i];
+		while (np) {
+			if (addf_mi_node_child(rpl, 0, 0, 0,
+						"%4d <%u, %.*s, %u> [%s]",
+						i, np->grp, np->domain.len, np->domain.s,
+						np->port, (np->tag.s==NULL)?"":np->tag.s) == 0)
+				return -1;
+			np = np->next;
+		}
+	}
+	return 0;
+}
+
+

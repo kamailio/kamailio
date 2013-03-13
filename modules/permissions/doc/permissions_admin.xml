@@ -169,19 +169,29 @@
 		<title>Address Permissions</title>
 		<para>
 		The module can be used to determine if an address (IP
-		address and port) matches any of the IP subnets
-		stored in cached &kamailio; database table.
-		Port 0 in cached database table matches any port.  IP
+		address and port or DNS domain name) matches any of the
+		addresses stored in cached &kamailio; database table.
+		IP addresses in the database table can be subnet addresses.
+		Port 0 in cached database table matches any port. The
 		address and port to be matched can be either taken from
 		the request (allow_source_address) or given as pvar
 		arguments (allow_address).
 		</para>
 		<para>
-		Addresses stored in cached database table can be grouped
+		Addresses stored in database table can be grouped
 		together into one or more groups specified by a group
 		identifier (positive integer value, i.e., equal or greater than 1).
 		Group identifier is given as argument to allow_address and
 		allow_source_address functions.
+		One group can contain all of the three types of addresses: exact 
+		IP address, subnet IP address or DNS domain name.
+		</para>
+		<para>
+		When matching is done if the argument is an IP, it is tried to
+		be matched with the records from that group that are of type exact
+		IP or subnet. If the argument is not an IP it is tried to be matched
+		with the records that are DNS domain names. No DNS lookup is performed,
+		only strict matching.
 		</para>
 		<para>
 		As a side effect of matching the address, non-NULL tag 
@@ -424,7 +434,7 @@ modparam("permissions", "db_url", "&exampledb;")
 	<section>
 		<title><varname>address_table</varname> (string)</title>
 		<para>
-		Name of database table containing IP subnet information used by
+		Name of database table containing IP subnets and DNS domain names used by
 		<function moreinfo="none">allow_address</function> and
                 <function moreinfo="none">allow_source_address</function>
                 functions.
@@ -947,9 +957,15 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 		<function moreinfo="none">allow_address(group_id, ip_addr_pvar, port_pvar)</function>
 		</title>
 		<para>
-		Returns true if IP address and port given as values of pvar
+		Returns true if address and port given as values of pvar
 		arguments belonging to a group given as group_id argument
-		matches an IP subnet found in cached address table.
+		matches an IP subnet or a DNS domain name found in cached
+		address table.
+		When matching is done if the argument is an IP, it is tried to
+		be matched with the records from that group that are of type exact
+		IP or subnet. If the argument is not an IP it is tried to be matched
+		with the records that are DNS domain names. No DNS lookup is performed,
+		only strict matching.
 		Cached address table entry containing port value 0
 		matches any port.  group_id argument can be an integer
 		string or a pseudo variable. 
@@ -966,8 +982,10 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 if (!allow_address("1", "$si", "$sp")) {
 	sl_send_reply("403", "Forbidden");
 };
-// Check IP address/port stored in AVPs i:704/i:705 is in group 2
-if (!allow_address("2", "$avp(i:704)", "$avp(i:705)") {
+// Check address/port stored in AVPs src_adr/src_port is in group 2
+$avp(dst_adr) = "sipdomain.com";
+$avp(dst_port) = "0";
+if (!allow_address("2", "$avp(dst_adr)", "$avp(dst_port)") {
 	sl_send_reply("403", "Forbidden");
 };
 ...
