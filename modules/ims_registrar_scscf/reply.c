@@ -38,7 +38,7 @@
 #include "../../ut.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/contact/contact.h"
-#include "../../lib/kcore/parse_supported.h"
+#include "../../parser/parse_supported.h"
 #include "../../data_lump_rpl.h"
 #include "../ims_usrloc_scscf/usrloc.h"
 #include "rerrno.h"
