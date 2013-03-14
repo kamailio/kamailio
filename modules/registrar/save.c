@@ -865,7 +865,7 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 	}
 
 	if (parse_require(_m) == 0) {
-		if (!(get_require(_m) & F_OPTION_TAG_OUTBOUND)
+		if ((get_require(_m) & F_OPTION_TAG_OUTBOUND)
 				&& reg_outbound_mode == REG_OUTBOUND_NONE) {
 			LM_WARN("Outbound required by UAC and not supported by server\n");
 			rerrno = R_OB_REQD;
@@ -908,17 +908,18 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 			goto error;
 		}
 
-		if (use_ob == 0 && (get_supported(_m) & F_OPTION_TAG_OUTBOUND)
-			&& contact->reg_id) {
-			LM_WARN("Outbound used by UAC but not supported by edge proxy\n");
-			rerrno = R_OB_UNSUP_EDGE;
-			goto error;
-		} else {
-			/* ignore ;reg-id parameter */
-			use_regid = 0;
+		if (use_ob == 0) {
+			if ((get_supported(_m) & F_OPTION_TAG_OUTBOUND)
+			    && contact->reg_id) {
+				LM_WARN("Outbound used by UAC but not supported by edge proxy\n");
+				rerrno = R_OB_UNSUP_EDGE;
+				goto error;
+			} else {
+				/* ignore ;reg-id parameter */
+				use_regid = 0;
+			}
 		}
 	}
-
 	
 	get_act_time();
 	c = get_first_contact(_m);

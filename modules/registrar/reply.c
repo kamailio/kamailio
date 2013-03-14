@@ -673,7 +673,8 @@ int reg_send_reply(struct sip_msg* _m)
 			if (add_supported(_m, &outbound_str) < 0)
 				return -1;
 
-			if (get_require(_m) & F_OPTION_TAG_OUTBOUND) {
+			if ((get_require(_m) & F_OPTION_TAG_OUTBOUND)
+			    || (get_supported(_m) & F_OPTION_TAG_OUTBOUND)) {
 				if (add_require(_m, &outbound_str) < 0)
 					return -1;
 
