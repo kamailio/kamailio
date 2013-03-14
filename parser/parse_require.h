@@ -31,7 +31,7 @@
 #define PARSE_REQUIRE_H
 
 #include "msg_parser.h"
-#include "parser/hf.h"
+#include "hf.h"
 #include "../mem/mem.h"
 #include "parse_option_tags.h"
 
