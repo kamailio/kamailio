@@ -30,9 +30,9 @@
 #ifndef PARSE_REQUIRE_H
 #define PARSE_REQUIRE_H
 
-#include "../../parser/msg_parser.h"
-#include "../../parser/hf.h"
-#include "../../mem/mem.h"
+#include "msg_parser.h"
+#include "parser/hf.h"
+#include "../mem/mem.h"
 #include "parse_option_tags.h"
 
 #define get_require(p_msg) \

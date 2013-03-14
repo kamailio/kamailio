@@ -21,7 +21,7 @@
  *
  */
 
-#include "../../mem/mem.h"
+#include "../mem/mem.h"
 #include "parse_option_tags.h"
 
 static inline void free_option_tag(struct option_tag_body **otb)

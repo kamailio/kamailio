@@ -35,8 +35,8 @@
 #ifndef PARSE_SUPPORTED_H
 #define PARSE_SUPPORTED_H
 
-#include "../../parser/msg_parser.h"
-#include "../../mem/mem.h"
+#include "msg_parser.h"
+#include "../mem/mem.h"
 #include "parse_option_tags.h"
 
 #define get_supported(p_msg) \

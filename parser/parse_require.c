@@ -26,7 +26,7 @@
  * \ingroup parser
  */
 
-#include "../../mem/mem.h"
+#include "../mem/mem.h"
 #include "parse_require.h"
 
 /*!

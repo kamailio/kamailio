@@ -25,8 +25,8 @@
 #define OPTION_TAGS_H
 
 #include <strings.h>
-#include "../../parser/hf.h"
-#include "../../parser/keys.h"
+#include "hf.h"
+#include "keys.h"
 
 #define F_OPTION_TAG_PATH	(1 << 0)
 #define F_OPTION_TAG_100REL	(1 << 1)
