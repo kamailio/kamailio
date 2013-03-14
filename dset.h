@@ -66,6 +66,10 @@ struct branch
     /* reg-id contact header param value */
     unsigned int reg_id;
 
+    /* ruid value from usrloc */
+    char ruid[MAX_RUID_SIZE];
+    unsigned int ruid_len;
+
     /* Branch flags */
     flag_t flags;
 };
@@ -88,11 +92,12 @@ int drop_sip_branch(int idx);
 int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 		  qvalue_t q, unsigned int flags,
 		  struct socket_info* force_socket,
-		  str* instance, unsigned int reg_id);
+		  str* instance, unsigned int reg_id,
+		  str* ruid);
 
 /*! \brief kamailio compatible version */
 #define km_append_branch(msg, uri, dst_uri, path, q, flags, force_socket) \
-    append_branch(msg, uri, dst_uri, path, q, flags, force_socket, 0, 0)
+    append_branch(msg, uri, dst_uri, path, q, flags, force_socket, 0, 0, 0)
 
 /*! \brief ser compatible append_branch version.
  *  append_branch version compatible with ser: no path or branch flags support
@@ -109,7 +114,7 @@ static inline int ser_append_branch(struct sip_msg* msg,
     s_uri.len=uri_len;
     s_dst_uri.s=dst_uri;
     s_dst_uri.len=dst_uri_len;
-    return append_branch(msg, &s_uri, &s_dst_uri, 0, q, 0, force_socket, 0, 0);
+    return append_branch(msg, &s_uri, &s_dst_uri, 0, q, 0, force_socket, 0, 0, 0);
 }
 
 

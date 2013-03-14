@@ -297,7 +297,8 @@ void clear_branches(void)
 int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 		  qvalue_t q, unsigned int flags,
 		  struct socket_info* force_socket,
-		  str* instance, unsigned int reg_id)
+		  str* instance, unsigned int reg_id,
+		  str* ruid)
 {
 	str luri;
 
@@ -380,6 +381,22 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 
 	/* copy reg_id */
 	branches[nr_branches].reg_id = reg_id;
+
+	/* copy ruid string */
+	if (unlikely(ruid && ruid->len && ruid->s)) {
+		if (unlikely(ruid->len > MAX_RUID_SIZE - 1)) {
+			LOG(L_ERR, "too long ruid: %.*s\n",
+			    ruid->len, ruid->s);
+			return -1;
+		}
+		memcpy(branches[nr_branches].ruid, ruid->s,
+		       ruid->len);
+		branches[nr_branches].ruid[ruid->len] = 0;
+		branches[nr_branches].ruid_len = ruid->len;
+	} else {
+		branches[nr_branches].ruid[0] = '\0';
+		branches[nr_branches].ruid_len = 0;
+	}
 
 	nr_branches++;
 	return 1;
