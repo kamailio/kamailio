@@ -1238,7 +1238,7 @@ if(remove_hf_re("^P-"))
 		<para>
 		The function returns <emphasis>true</emphasis> if the SIP message
 		has a body attached. The checked includes also the 
-		<quote>Content-Lenght</quote> header presence and value.
+		<quote>Content-Length</quote> header presence and value.
 		</para>
 		<para>
 		If a parameter is given, the mime described will be also checked against

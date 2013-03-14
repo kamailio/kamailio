@@ -100,7 +100,7 @@ remove_body();
 		<para>
 			Remove headers that don't match the regular expression regexp.
 			Several header are ignored always (thus not removed): Via, From,
-			To, Call-ID, CSeq, Content-Lenght, Content-Type, Max-Forwards,
+			To, Call-ID, CSeq, Content-Length, Content-Type, Max-Forwards,
 			Contact, Route, Record-Route -- these can be removed one by one
 			with remove_hf().
 		</para>
