@@ -403,7 +403,7 @@ static int mod_init(void)
 	}
 
 	if (reg_flow_timer < 0 || reg_flow_timer > REG_FLOW_TIMER_MAX
-			|| (reg_flow_timer > 0 && reg_outbound_mode != REG_OUTBOUND_REQUIRE)) {
+			|| (reg_flow_timer > 0 && reg_outbound_mode == REG_OUTBOUND_NONE)) {
 		LM_ERR("bad value for flow_timer\n");
 		return -1;
 	}
