@@ -62,8 +62,8 @@
 #include "../../mod_fix.h"
 #include "../../lib/srutils/sruid.h"
 #include "../../lib/kcore/cmpapi.h"
-#include "../../lib/kcore/parse_require.h"
-#include "../../lib/kcore/parse_supported.h"
+#include "../../parser/parse_require.h"
+#include "../../parser/parse_supported.h"
 #include "../../lib/kcore/statistics.h"
 #ifdef USE_TCP
 #include "../../tcp_server.h"
