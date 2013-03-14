@@ -968,10 +968,6 @@ int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri, str *_ruid)
 	urecord_t *r;
 	ucontact_t *c;
 
-	u = parse_to_uri(_m);
-	if(u==NULL)
-		return -2;
-
 	if (extract_aor(_uri, &aor, NULL) < 0) {
 		LM_ERR("failed to extract Address Of Record\n");
 		return -1;
@@ -979,6 +975,10 @@ int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri, str *_ruid)
 
 	if (_ruid == NULL) {
 		/* No ruid provided - remove all contacts for aor */
+
+		u = parse_to_uri(_m);
+		if(u==NULL)
+			return -2;
 
 		if (star(_m, _d, &aor, &u->host) < 0)
 		{
