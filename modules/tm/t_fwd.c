@@ -1493,7 +1493,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 
 	init_branch_iterator();
 	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri, &path,
-										&bflags, &si))) {
+										&bflags, &si, 0))) {
 		try_new++;
 		setbflagsval(0, bflags);
 
