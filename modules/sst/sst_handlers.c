@@ -55,7 +55,7 @@
 
 #include "../../pvar.h"
 #include "../../lib/kcore/parse_sst.h"
-#include "../../lib/kcore/parse_supported.h"
+#include "../../parser/parse_supported.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../data_lump.h"
