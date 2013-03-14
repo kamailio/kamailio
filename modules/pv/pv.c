@@ -410,6 +410,9 @@ static pv_export_t mod_pvs[] = {
 	{{"ua", (sizeof("ua")-1)}, /* */
 		PVT_OTHER, pv_get_useragent, 0,
 		0, 0, 0, 0},
+	{{"ruid", (sizeof("ruid")-1)}, /* */
+		PVT_OTHER, pv_get_ruid, 0,
+		0, 0, 0, 0},
 
 	{ {"shv", (sizeof("shv")-1)}, PVT_OTHER, pv_get_shvar,
 		pv_set_shvar, pv_parse_shvar_name, 0, 0, 0},
