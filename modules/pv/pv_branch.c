@@ -48,7 +48,7 @@ int pv_get_branchx(struct sip_msg *msg, pv_param_t *param,
 		return pv_get_null(msg, param, res);
 	}
 
-	uri.s = get_branch(idx, &uri.len, &lq, &duri, &path, &fl, &fsocket);
+	uri.s = get_branch(idx, &uri.len, &lq, &duri, &path, &fl, &fsocket, 0);
 
 	/* branch(count) doesn't need a valid branch, everything else does */
 	if(uri.s == 0 && ( param->pvn.u.isname.name.n != 5/* count*/ ))
