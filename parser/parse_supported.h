@@ -1,6 +1,8 @@
 /*
  * $Id$
  *
+ * Copyright (C) 2006 Andreas Granig <agranig@linguin.org>
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -17,32 +19,36 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ *
+ * History:
+ * -------
+ * 2006-03-02  parse_supported() parses and cumulates all SUPPORTED 
+ *             headers (bogdan)
  */
 
 /*!
  * \file
- * \brief Require parser
+ * \brief Supported parser
  * \ingroup parser
  */
 
-#ifndef PARSE_REQUIRE_H
-#define PARSE_REQUIRE_H
+#ifndef PARSE_SUPPORTED_H
+#define PARSE_SUPPORTED_H
 
 #include "../../parser/msg_parser.h"
-#include "../../parser/hf.h"
 #include "../../mem/mem.h"
-#include "option-tags.h"
+#include "parse_option_tags.h"
 
-#define get_require(p_msg) \
-	((p_msg)->require ? ((struct option_tag_body*)(p_msg)->require->parsed)->option_tags_all : 0)
+#define get_supported(p_msg) \
+	((p_msg)->supported ? ((struct option_tag_body*)(p_msg)->supported->parsed)->option_tags_all : 0)
 
 
 /*!
- * Parse all Require headers.
+ * Parse all Supported headers.
  */
-int parse_require( struct sip_msg *msg);
+int parse_supported( struct sip_msg *msg);
 
 
-void free_require(struct option_tag_body **rb);
+void free_supported(struct option_tag_body **sb);
 
-#endif /* PARSE_REQUIRE_H */
+#endif /* PARSE_SUPPORTED_H */

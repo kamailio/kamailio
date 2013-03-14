@@ -1,6 +1,8 @@
 /*
  * $Id$
  *
+ * Copyright (C) 2006 Andreas Granig <agranig@linguin.org>
+ * 
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify

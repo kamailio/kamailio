@@ -1,6 +1,8 @@
 /*
  * $Id$
  *
+ * Copyright (C) 2006 Andreas Granig <agranig@linguin.org>
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -19,20 +21,30 @@
  *
  */
 
+/*!
+ * \file
+ * \brief Require parser
+ * \ingroup parser
+ */
+
+#ifndef PARSE_REQUIRE_H
+#define PARSE_REQUIRE_H
+
+#include "../../parser/msg_parser.h"
+#include "../../parser/hf.h"
 #include "../../mem/mem.h"
-#include "option-tags.h"
+#include "parse_option_tags.h"
 
-static inline void free_option_tag(struct option_tag_body **otb)
-{
-	if (otb && *otb) {
-		pkg_free(*otb);
-		*otb = 0;
-	}
-}
+#define get_require(p_msg) \
+	((p_msg)->require ? ((struct option_tag_body*)(p_msg)->require->parsed)->option_tags_all : 0)
 
-void hf_free_option_tag(void *parsed)
-{
-	struct option_tag_body *otb;
-	otb = (struct option_tag_body *) parsed;
-	free_option_tag(&otb);
-}
+
+/*!
+ * Parse all Require headers.
+ */
+int parse_require( struct sip_msg *msg);
+
+
+void free_require(struct option_tag_body **rb);
+
+#endif /* PARSE_REQUIRE_H */
