@@ -642,24 +642,23 @@ modparam("registrar", "gruu_enabled", 0)
 
 3.24. outbound_mode (integer)
 
-   If set to 0 then this module will accept REGISTER requests that do not
+   If set to 0 this module will accept REGISTER requests that do not
    contain a Supported: header with the outbound options-tag. The 200 OK
    response to REGISTER requests that this module generates will not
-   contain Require: or Supported: headers with the outbound options tag.
+   contain Require: or Supported: headers with the outbound options-tag.
+   If the client has a Require: header with the outbound options tag the
+   REGISTER will be rejected with a 420 Bad Extension response.
 
-   If set to 1 then this module will accept REGISTER requests that do not
-   contain a Supported: header with the outbound options-tag. The 200 OK
-   response to REGISTER requests that this module generates will contain a
-   Supported: header with the outbound options tag.
+   If set to 1 this module will accept REGISTER requests that do not
+   contain a Supported: header with the outbound options-tag and REGISTER
+   requests that do contain a Supported: or Requires: header with the
+   outbound options-tag. When the client supports outbound the appropriate
+   RFC5626 procedures will be followed.
 
-   If set to 2 then this module will reject REGISTER requests that do not
-   contain a Supported: header with the outbound options-tag. The 200 OK
-   response to REGISTER requests that this module generates will contain
-   Require: and Supported: headers with the outbound options tag.
-
-   Set this parameter to 2 if you are using SIP Outbound (RFC 5626) and
-   want your Edge Proxy to insert a Flow-Timer: header into the 200 OK
-   response to REGISTERs (as per RFC 5626 section 5.4).
+   If set to 2 this module will reject REGISTER requests that do not
+   contain a Supported: header with the outbound options-tag. When the
+   client supports outbound the appropriate RFC5626 procedures will be
+   followed.
 
    Default value is 0.
 
@@ -675,17 +674,17 @@ modparam("registrar", "outbound_mode", 2)
 
    If set to > 0 then this module will add a Flow-Timer: header containing
    this value to 200 OK responses to REGISTER requests. This parameter may
-   only be set to a value > 0 when outbound_mode is set to 2.
+   only be set to a value > 0 when outbound_mode is set to 1 or 2.
 
    When set to a value > 0 this parameter should be set to slightly less
    than the connection timeout value between the UAC and the network (this
    corresponds to the core tcp_connection_lifetime option and websocket
    keepalive_timeout modparam). This parameter is most useful when you
-   have a single edge proxy/registrar. If you are using a separate SIP
-   Outbound Edge Proxy you should consider leaving this parameter set to 0
-   and adding the Flow-Timer: header on the Edge Proxy (as this allows you
-   to keep all of the timer values for a specific flow in one
-   configuration - that of the Edge Proxy).
+   have a single edge proxy/registrar or if you have an edge proxy that
+   cannot modify responses. If you are using a separate edge proxy you
+   should consider leaving this parameter set to 0 and adding the
+   Flow-Timer: header on the edge proxy as this allows you to keep all of
+   the timer values for a specific flow in one configuration.
 
    Default value is 0.
 
