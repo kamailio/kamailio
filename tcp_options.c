@@ -115,7 +115,7 @@ static cfg_def_t tcp_cfg_def[] = {
 	{ "new_conn_alias_flags", CFG_VAR_INT | CFG_ATOMIC, 0,    2,  0,         0,
 		"flags for the def. aliases for a new conn. (FORCE_ADD:1, REPLACE:2 "},
 	{ "accept_no_cl",   CFG_VAR_INT | CFG_ATOMIC,   0,        1,  0,         0,
-		"accept TCP messges without Content-Lenght "},
+		"accept TCP messges without Content-Length "},
 	/* internal and/or "fixed" versions of some vars
 	   (not supposed to be writeable, read will provide only debugging value*/
 	{ "rd_buf_size", CFG_VAR_INT | CFG_ATOMIC,    512,    16777216,  0,         0,

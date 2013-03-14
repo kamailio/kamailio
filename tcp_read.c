@@ -106,7 +106,7 @@ int is_msg_complete(struct tcp_req* r);
 #endif /* USE_STUN */
 
 #ifdef READ_HTTP11
-#define HTTP11CONTINUE	"HTTP/1.1 100 Continue\r\nContent-Lenght: 0\r\n\r\n"
+#define HTTP11CONTINUE	"HTTP/1.1 100 Continue\r\nContent-Length: 0\r\n\r\n"
 #define HTTP11CONTINUE_LEN	(sizeof(HTTP11CONTINUE)-1)
 #endif
 

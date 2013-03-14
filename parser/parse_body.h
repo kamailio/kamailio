@@ -42,7 +42,7 @@ char *get_body_part(	struct sip_msg *msg,
 			int *len);
 
 /*! \brief Returns the pointer within the msg body to the given part matching
- * type/subtype, content id or content lenght. It sets the length.
+ * type/subtype, content id or content length. It sets the length.
  * The result can be the whole msg body, or a part of a multipart body.
  */
 char *get_body_part_by_filter(struct sip_msg *msg,

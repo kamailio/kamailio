@@ -139,7 +139,7 @@ struct cfg_group_tcp{
 	int accept_aliases;
 	int alias_flags;
 	int new_conn_alias_flags;
-	int accept_no_cl;  /* on/off - accpet messages without content-lenght */
+	int accept_no_cl;  /* on/off - accept messages without content-length */
 
 	/* internal, "fixed" vars */
 	unsigned int rd_buf_size; /* read buffer size (should be > max. datagram)*/
