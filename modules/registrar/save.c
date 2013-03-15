@@ -988,15 +988,12 @@ int unregister(struct sip_msg* _m, udomain_t* _d, str* _uri, str *_ruid)
 	} else {
 		/* ruid provided - remove a specific contact */
 
-		ul.lock_udomain(_d, &aor);
 		if (ul.get_urecord_by_ruid(_d, ul.get_aorhash(&aor),
 				_ruid, &r, &c) != 0) {
-			ul.unlock_udomain(_d, &aor);
 			LM_WARN("AOR/Contact not found\n");
 			return -1;
 		}
 		if (ul.delete_ucontact(r, c) != 0) {
-			ul.unlock_udomain(_d, &aor);
 			LM_WARN("could not delete contact\n");
 			return -1;
 		}
