@@ -43,6 +43,7 @@ MODULE_VERSION
 #define OB_KEY_LEN	20
 
 static int mod_init(void);
+static void destroy(void);
 
 static unsigned int ob_force_flag = (unsigned int) -1;
 static str ob_key = {0, 0};
@@ -73,7 +74,7 @@ struct module_exports exports=
 	0,			/* extra processes */
 	mod_init,		/* module initialization function */
 	0,			/* response function */
-	0,			/* destroy function */
+	destroy,		/* destroy function */
 	0			/* per-child initialization function */
 };
 
@@ -98,6 +99,11 @@ static int mod_init(void)
 	}
 
 	return 0;
+}
+
+static void destroy(void)
+{
+	shm_free(ob_key.s);
 }
 
 /* Structure of flow-token
