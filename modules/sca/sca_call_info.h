@@ -30,13 +30,35 @@
 /* pass to sca_notify_subscriber to include all appearances in Call-Info hdr */
 #define SCA_CALL_INFO_APPEARANCE_INDEX_ANY	0
 
+enum {
+    SCA_CALL_INFO_SHARED_NONE = 0,
+    SCA_CALL_INFO_SHARED_CALLER = (1 << 0),
+    SCA_CALL_INFO_SHARED_CALLEE = (1 << 1),
+};
+
 struct _sca_call_info {
     str		sca_uri;
     int		index;
     int		state;
     str		uri;
+
+    /* mask tracking which endpoints in a call are shared */
+    int		ua_shared;
 };
 typedef struct _sca_call_info		sca_call_info;
+
+#define SCA_CALL_INFO_EMPTY( ci1 ) \
+	(!(ci1) && ((ci1)->index == SCA_CALL_INFO_APPEARANCE_INDEX_ANY && \
+			(ci1)->state == SCA_APPEARANCE_STATE_UNKNOWN))
+
+#define SCA_CALL_INFO_IS_SHARED_CALLER( ci1 ) \
+	(!SCA_CALL_INFO_EMPTY((ci1)) && \
+	(((sca_call_info *)(ci1))->ua_shared & SCA_CALL_INFO_SHARED_CALLER))
+
+#define SCA_CALL_INFO_IS_SHARED_CALLEE( ci1 ) \
+	(!SCA_CALL_INFO_EMPTY((ci1)) && \
+	(((sca_call_info *)(ci1))->ua_shared & SCA_CALL_INFO_SHARED_CALLEE))
+
 
 extern const str	SCA_CALL_INFO_HEADER_STR;
 
