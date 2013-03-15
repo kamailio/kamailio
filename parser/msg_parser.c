@@ -859,6 +859,45 @@ void reset_instance(struct sip_msg* const msg)
 }
 
 
+int set_ruid(struct sip_msg* msg, str* ruid)
+{
+	char* ptr;
+
+	if (unlikely(!msg || !ruid)) {
+		LM_ERR("invalid ruid parameter value\n");
+		return -1;
+	}
+
+	if (unlikely(ruid->len == 0)) {
+		reset_ruid(msg);
+	} else if (msg->ruid.s && (msg->ruid.len >= ruid->len)) {
+		memcpy(msg->ruid.s, ruid->s, ruid->len);
+		msg->ruid.len = ruid->len;
+	} else {
+		ptr = (char*)pkg_malloc(ruid->len);
+		if (!ptr) {
+			LM_ERR("not enough pkg memory for ruid\n");
+			return -1;
+		}
+		memcpy(ptr, ruid->s, ruid->len);
+		if (msg->ruid.s) pkg_free(msg->ruid.s);
+		msg->ruid.s = ptr;
+		msg->ruid.len = ruid->len;
+	}
+	return 0;
+}
+
+
+void reset_ruid(struct sip_msg* const msg)
+{
+	if(msg->ruid.s != 0) {
+		pkg_free(msg->ruid.s);
+	}
+	msg->ruid.s = 0;
+	msg->ruid.len = 0;
+}
+
+
 hdr_field_t* get_hdr(const sip_msg_t* const msg, const enum _hdr_types_t ht)
 {
 	hdr_field_t *hdr;

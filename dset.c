@@ -215,7 +215,8 @@ void set_branch_iterator(int n)
  */
 char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
 		 str* path, unsigned int *flags,
-		 struct socket_info** force_socket)
+		 struct socket_info** force_socket,
+		 str *ruid)
 {
 	if (i < nr_branches) {
 		*len = branches[i].len;
@@ -232,6 +233,10 @@ char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
 			*force_socket = branches[i].force_send_socket;
 		if (flags)
 			*flags = branches[i].flags;
+		if (ruid) {
+			ruid->len = branches[i].ruid_len;
+			ruid->s = (ruid->len)?branches[i].ruid:0;
+		}
 		return branches[i].uri;
 	} else {
 		*len = 0;
@@ -248,6 +253,10 @@ char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
 			*force_socket = 0;
 		if (flags)
 			*flags = 0;
+		if (ruid) {
+			ruid->s = 0;
+			ruid->len = 0;
+		}
 		return 0;
 	}
 }
@@ -258,12 +267,13 @@ char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
  * 0 is returned if there are no more branches
  */
 char* next_branch(int* len, qvalue_t* q, str* dst_uri, str* path,
-		  unsigned int* flags, struct socket_info** force_socket)
+		  unsigned int* flags, struct socket_info** force_socket,
+		  str* ruid)
 {
 	char* ret;
 	
 	ret=get_branch(branch_iterator, len, q, dst_uri, path, flags,
-		       force_socket);
+		       force_socket, ruid);
 	if (likely(ret))
 		branch_iterator++;
 	return ret;
@@ -297,7 +307,8 @@ void clear_branches(void)
 int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 		  qvalue_t q, unsigned int flags,
 		  struct socket_info* force_socket,
-		  str* instance, unsigned int reg_id)
+		  str* instance, unsigned int reg_id,
+		  str* ruid)
 {
 	str luri;
 
@@ -381,6 +392,22 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 	/* copy reg_id */
 	branches[nr_branches].reg_id = reg_id;
 
+	/* copy ruid string */
+	if (unlikely(ruid && ruid->len && ruid->s)) {
+		if (unlikely(ruid->len > MAX_RUID_SIZE - 1)) {
+			LOG(L_ERR, "too long ruid: %.*s\n",
+			    ruid->len, ruid->s);
+			return -1;
+		}
+		memcpy(branches[nr_branches].ruid, ruid->s,
+		       ruid->len);
+		branches[nr_branches].ruid[ruid->len] = 0;
+		branches[nr_branches].ruid_len = ruid->len;
+	} else {
+		branches[nr_branches].ruid[0] = '\0';
+		branches[nr_branches].ruid_len = 0;
+	}
+
 	nr_branches++;
 	return 1;
 }
@@ -415,7 +442,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 	crt_branch = get_branch_iterator();
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0))) {
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0))) {
 		cnt++;
 		*len += uri.len;
 		if (q != Q_UNSPECIFIED) {
@@ -456,7 +483,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 	}
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0))) {
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0, 0, 0))) {
 		if (i) {
 			memcpy(p, CONTACT_DELIM, CONTACT_DELIM_LEN);
 			p += CONTACT_DELIM_LEN;
