@@ -243,6 +243,49 @@ do{								\
 }while(0)
 
 
+#define XHTTP_PI_ESC_COPY(p,str,temp_holder,temp_counter)	\
+do{	\
+	(temp_holder).s = (str).s;	\
+	(temp_holder).len = 0;	\
+	for((temp_counter)=0;(temp_counter)<(str).len;(temp_counter)++) {	\
+		switch((str).s[(temp_counter)]) {	\
+		case '<':	\
+			(temp_holder).len = (temp_counter) - (temp_holder).len;	\
+			XHTTP_PI_COPY_2(p, (temp_holder), XHTTP_PI_ESC_LT);	\
+			(temp_holder).s += (temp_counter) + 1;	\
+			(temp_holder).len = (temp_counter) + 1;	\
+			break;	\
+		case '>':	\
+			(temp_holder).len = (temp_counter) - (temp_holder).len;	\
+			XHTTP_PI_COPY_2(p, (temp_holder), XHTTP_PI_ESC_GT);	\
+			(temp_holder).s += (temp_counter) + 1;	\
+			(temp_holder).len = (temp_counter) + 1;	\
+			break;	\
+		case '&':	\
+			(temp_holder).len = (temp_counter) - (temp_holder).len;	\
+			XHTTP_PI_COPY_2(p, (temp_holder), XHTTP_PI_ESC_AMP);	\
+			(temp_holder).s += (temp_counter) + 1;	\
+			(temp_holder).len = (temp_counter) + 1;	\
+			break;	\
+		case '"':	\
+			(temp_holder).len = (temp_counter) - (temp_holder).len;	\
+			XHTTP_PI_COPY_2(p, (temp_holder), XHTTP_PI_ESC_QUOT);	\
+			(temp_holder).s += (temp_counter) + 1;	\
+			(temp_holder).len = (temp_counter) + 1;	\
+			break;	\
+		case '\'':	\
+			(temp_holder).len = (temp_counter) - (temp_holder).len;	\
+			XHTTP_PI_COPY_2(p, (temp_holder), XHTTP_PI_ESC_SQUOT);	\
+			(temp_holder).s += (temp_counter) + 1;	\
+			(temp_holder).len = (temp_counter) + 1;	\
+			break;	\
+		}	\
+	}	\
+	(temp_holder).len = (temp_counter) - (temp_holder).len;	\
+	XHTTP_PI_COPY(p, (temp_holder));	\
+}while(0)
+
+
 static const str XHTTP_PI_Response_Head_1 = str_init("<html><head><title>"\
 	"Kamailio Provisionning Interface</title>"\
 	"<style type=\"text/css\">"\
@@ -348,6 +391,12 @@ static const str XHTTP_PI_Response_Foot = str_init(\
 
 #define XHTTP_PI_ROWSPAN 20
 static const str XHTTP_PI_CMD_ROWSPAN = str_init("20");
+
+static const str XHTTP_PI_ESC_LT =    str_init("&lt;");   /* < */
+static const str XHTTP_PI_ESC_GT =    str_init("&gt;");   /* > */
+static const str XHTTP_PI_ESC_AMP =   str_init("&amp;");  /* & */
+static const str XHTTP_PI_ESC_QUOT =  str_init("&quot;"); /* " */
+static const str XHTTP_PI_ESC_SQUOT = str_init("&#39;");  /* ' */
 
 
 xmlAttrPtr ph_xmlNodeGetAttrByName(xmlNodePtr node, const char *name)
@@ -2543,7 +2592,8 @@ int ph_run_pi_cmd(pi_ctx_t* ctx)
 	str arg_url = {ctx->arg.s, ctx->arg.len};
 	str arg_name;
 	str arg_val;
-	//unsigned long i;
+	str temp_holder;
+	int temp_counter;
 	int i;
 	int j;
 	int max_page_len = ctx->reply.buf.len;
@@ -2733,8 +2783,11 @@ int ph_run_pi_cmd(pi_ctx_t* ctx)
 							values[j].val.str_val.len,
 							values[j].val.str_val.s,
 							val_str.len, val_str.s);
-					XHTTP_PI_COPY(p,
-						val_str.len?val_str:XHTTP_PI_NBSP);
+						if (val_str.len) {
+							XHTTP_PI_ESC_COPY(p, val_str, temp_holder, temp_counter);
+						} else {
+							XHTTP_PI_COPY(p, XHTTP_PI_NBSP);
+						}
 						break;
 					case DB1_INT:
 						val_str.s = p;
