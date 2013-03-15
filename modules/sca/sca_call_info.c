@@ -589,7 +589,7 @@ sca_call_info_seize_held_call( sip_msg_t *msg, sca_call_info *call_info,
 	 * to watch for it. log our overwriting of it.
 	 */
 
-	LM_INFO( "SCA caller retrieving held call, but RURI was already "
+	LM_DBG( "SCA caller retrieving held call, but RURI was already "
 		 "rewritten as %.*s. Overwriting with %.*s.",
 		 STR_FMT( &msg->new_uri ), STR_FMT( &app->callee ));
 
