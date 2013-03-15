@@ -21,6 +21,7 @@
  *
  */
 #include <openssl/hmac.h>
+#include <openssl/rand.h>
 
 #include "../../basex.h"
 #include "../../dprint.h"
@@ -39,6 +40,8 @@
 
 MODULE_VERSION
 
+#define OB_KEY_LEN	20
+
 static int mod_init(void);
 
 static unsigned int ob_force_flag = (unsigned int) -1;
@@ -55,7 +58,6 @@ static cmd_export_t cmds[]=
 static param_export_t params[]=
 {
 	{ "force_outbound_flag",	INT_PARAM, &ob_force_flag },
-	{ "flow_token_key",		STR_PARAM, &ob_key.s},
 	{ 0, 0, 0 }
 };
 
@@ -83,20 +85,12 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (ob_key.s == 0)
+	if (RAND_bytes((unsigned char *) ob_key.s, OB_KEY_LEN) == 0)
 	{
-		LM_ERR("flow_token_key not set\n");
-		return -1;
+		LM_ERR("unable to get %d cryptographically strong pseudo-"
+		       "random bytes\n", OB_KEY_LEN);
 	}
-	else
-		ob_key.len = strlen(ob_key.s);
-
-	if (ob_key.len != 20)
-	{
-		LM_ERR("flow_token_key wrong length. Expected 20 got %d\n",
-			ob_key.len);
-		return -1;
-	}
+	ob_key.len = OB_KEY_LEN;
 
 	return 0;
 }
