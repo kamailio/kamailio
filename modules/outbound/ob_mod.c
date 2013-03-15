@@ -85,12 +85,17 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (RAND_bytes((unsigned char *) ob_key.s, OB_KEY_LEN) == 0)
+	if ((ob_key.s = shm_malloc(OB_KEY_LEN)) == NULL)
 	{
-		LM_ERR("unable to get %d cryptographically strong pseudo-"
-		       "random bytes\n", OB_KEY_LEN);
+		LM_ERR("Failed to allocate memory for flow-token key\n");
+		return -1;
 	}
 	ob_key.len = OB_KEY_LEN;
+	if (RAND_bytes((unsigned char *) ob_key.s, ob_key.len) == 0)
+	{
+		LM_ERR("unable to get %d cryptographically strong pseudo-"
+		       "random bytes\n", ob_key.len);
+	}
 
 	return 0;
 }
