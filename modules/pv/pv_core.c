@@ -1810,6 +1810,9 @@ int pv_get_ruid(struct sip_msg *msg, pv_param_t *param,
 	if(msg==NULL)
 		return -1;
 
+	if(msg->first_line.type == SIP_REPLY)
+		return pv_get_null(msg, param, res);
+
 	if(msg->ruid.len==0) 
 	{
 		LM_DBG("no ruid\n");
