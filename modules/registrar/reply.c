@@ -39,7 +39,8 @@
 #include "../../ut.h"
 #include "../../xavp.h"
 #include "../../parser/msg_parser.h"
-#include "../../lib/kcore/parse_supported.h"
+#include "../../parser/parse_require.h"
+#include "../../parser/parse_supported.h"
 #include "../../data_lump_rpl.h"
 #include "../usrloc/usrloc.h"
 #include "rerrno.h"
@@ -188,7 +189,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 
 
 	if(msg!=NULL && parse_supported(msg)==0
-			&& (get_supported(msg) & F_SUPPORTED_GRUU))
+			&& (get_supported(msg) & F_OPTION_TAG_GRUU))
 		mode = 1;
 	else
 		mode = 0;
@@ -374,6 +375,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 #define MSG_400 "Bad Request"
 #define MSG_420 "Bad Extension"
 #define MSG_421 "Extension Required"
+#define MSG_439 "First Hop Lacks Outbound Support"
 #define MSG_500 "Server Internal Error"
 #define MSG_503 "Service Unavailable"
 
@@ -408,6 +410,9 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 #define EI_R_PARSE_PATH  "Path parse error"                         /* R_PARSE_PATH */
 #define EI_R_PATH_UNSUP  "No support for found Path indicated"      /* R_PATH_UNSUP */
 #define EI_R_OB_UNSUP    "No support for Outbound indicated"        /* R_OB_UNSUP */
+#define EI_R_OB_REQD     "No support for Outbound on server"        /* R_OB_REQD */
+#define EI_R_OB_UNSUP_EDGE "No support for Outbound on edge proxy"  /* R_OB_UNSUP_EDGE */
+
 
 str error_info[] = {
 	{EI_R_FINE,       sizeof(EI_R_FINE) - 1},
@@ -441,7 +446,8 @@ str error_info[] = {
 	{EI_R_PARSE_PATH, sizeof(EI_R_PARSE_PATH) - 1},
 	{EI_R_PATH_UNSUP, sizeof(EI_R_PATH_UNSUP) - 1},
 	{EI_R_OB_UNSUP,   sizeof(EI_R_OB_UNSUP) - 1},
-
+	{EI_R_OB_REQD,    sizeof(EI_R_OB_REQD) - 1},
+	{EI_R_OB_UNSUP_EDGE, sizeof(EI_R_OB_UNSUP_EDGE) - 1},
 };
 
 int codes[] = {
@@ -475,8 +481,9 @@ int codes[] = {
 	400, /* R_CALLID_LEN */
 	400, /* R_PARSE_PATH */
 	420, /* R_PATH_UNSUP */
-	421  /* R_OB_UNSUP */
-
+	421, /* R_OB_UNSUP */
+	420, /* R_OB_REQD */
+	439, /* R_OB_UNSUP_EDGE */
 };
 
 
@@ -610,8 +617,8 @@ static int add_flow_timer(struct sip_msg* _m)
  */
 int reg_send_reply(struct sip_msg* _m)
 {
-	str unsup = str_init(SUPPORTED_PATH_STR);
-	str outbound_str = str_init(SUPPORTED_OUTBOUND_STR);
+	str unsup = str_init(OPTION_TAG_PATH_STR);
+	str outbound_str = str_init(OPTION_TAG_OUTBOUND_STR);
 	long code;
 	str msg = str_init(MSG_200); /* makes gcc shut up */
 	char* buf;
@@ -632,7 +639,7 @@ int reg_send_reply(struct sip_msg* _m)
 					if (add_path(_m, &_m->path_vec) < 0)
 						return -1;
 				}
-				else if (get_supported(_m) & F_SUPPORTED_PATH) {
+				else if (get_supported(_m) & F_OPTION_TAG_PATH) {
 					if (add_path(_m, &_m->path_vec) < 0)
 						return -1;
 				} else if (path_mode == PATH_MODE_STRICT) {
@@ -654,14 +661,28 @@ int reg_send_reply(struct sip_msg* _m)
 			if (add_require(_m, &outbound_str) < 0)
 				return -1;
 
+			if (add_supported(_m, &outbound_str) < 0)
+				return -1;
+
 			if (reg_flow_timer > 0) {
 				if (add_flow_timer(_m) < 0)
 					return -1;
 			}
-			/* Fall-thru */
+			break;
 		case REG_OUTBOUND_SUPPORTED:
 			if (add_supported(_m, &outbound_str) < 0)
 				return -1;
+
+			if ((get_require(_m) & F_OPTION_TAG_OUTBOUND)
+			    || (get_supported(_m) & F_OPTION_TAG_OUTBOUND)) {
+				if (add_require(_m, &outbound_str) < 0)
+					return -1;
+
+				if (reg_flow_timer > 0) {
+					if (add_flow_timer(_m) < 0)
+						return -1;
+				}
+			}
 			break;
 		}
 		break;
@@ -669,6 +690,10 @@ int reg_send_reply(struct sip_msg* _m)
 		if (add_require(_m, &outbound_str) < 0)
 			return -1;
 		if (add_supported(_m, &outbound_str) < 0)
+			return -1;
+		break;
+	case R_OB_REQD:
+		if (add_unsupported(_m, &outbound_str) < 0)
 			return -1;
 		break;
 	default:
@@ -680,7 +705,8 @@ int reg_send_reply(struct sip_msg* _m)
 	case 200: msg.s = MSG_200; msg.len = sizeof(MSG_200)-1;break;
 	case 400: msg.s = MSG_400; msg.len = sizeof(MSG_400)-1;break;
 	case 420: msg.s = MSG_420; msg.len = sizeof(MSG_420)-1;break;
-	case 421: msg.s = MSG_420; msg.len = sizeof(MSG_421)-1;break;
+	case 421: msg.s = MSG_421; msg.len = sizeof(MSG_421)-1;break;
+	case 439: msg.s = MSG_439; msg.len = sizeof(MSG_439)-1;break;
 	case 500: msg.s = MSG_500; msg.len = sizeof(MSG_500)-1;break;
 	case 503: msg.s = MSG_503; msg.len = sizeof(MSG_503)-1;break;
 	}

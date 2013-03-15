@@ -40,6 +40,7 @@ int pv_get_branchx(struct sip_msg *msg, pv_param_t *param,
 	str path;
 	unsigned int fl = 0;
 	struct socket_info* fsocket = NULL;
+	str ruid;
 
 	/* get the index */
 	if(pv_get_spec_index(msg, param, &idx, &idxf)!=0)
@@ -48,7 +49,7 @@ int pv_get_branchx(struct sip_msg *msg, pv_param_t *param,
 		return pv_get_null(msg, param, res);
 	}
 
-	uri.s = get_branch(idx, &uri.len, &lq, &duri, &path, &fl, &fsocket);
+	uri.s = get_branch(idx, &uri.len, &lq, &duri, &path, &fl, &fsocket, &ruid);
 
 	/* branch(count) doesn't need a valid branch, everything else does */
 	if(uri.s == 0 && ( param->pvn.u.isname.name.n != 5/* count*/ ))
@@ -79,6 +80,10 @@ int pv_get_branchx(struct sip_msg *msg, pv_param_t *param,
 			return pv_get_uintval(msg, param, res, nr_branches);
 		case 6: /* flags */
 			return pv_get_uintval(msg, param, res, fl);
+		case 7: /* ruid */
+			if(ruid.len==0)
+				return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &ruid);
 		default:
 			/* 0 - uri */
 			return pv_get_strval(msg, param, res, &uri);
@@ -245,6 +250,9 @@ int pv_set_branchx(struct sip_msg* msg, pv_param_t *param,
 			}
 			br->flags = val->ri;
 		break;
+		case 7: /* ruid */
+			/* do nothing - cannot set the ruid */
+		break;
 		default:
 			/* 0 - uri */
 			if(val==NULL || (val->flags&PV_VAL_NULL))
@@ -296,6 +304,8 @@ int pv_parse_branchx_name(pv_spec_p sp, str *in)
 		case 4: 
 			if(strncmp(in->s, "path", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 2;
+			else if (strncmp(in->s, "ruid", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 7;
 			else goto error;
 		break;
 		case 1: 

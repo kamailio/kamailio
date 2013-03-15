@@ -38,6 +38,9 @@ enum {
     SCA_APPEARANCE_STATE_HELD_PRIVATE,
     SCA_APPEARANCE_STATE_UNKNOWN = 0xff,
 }; 
+#define sca_appearance_is_held( app1 ) \
+	((app1) && ((app1)->state == SCA_APPEARANCE_STATE_HELD || \
+		   (app1)->state == SCA_APPEARANCE_STATE_HELD_PRIVATE))
 
 enum {
     SCA_APPEARANCE_FLAG_DEFAULT = 0,

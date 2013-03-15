@@ -75,6 +75,8 @@
 
 #define MAX_INSTANCE_SIZE 256 		/*!< Maximum length of +sip.instance contact header param value buffer */
 
+#define MAX_RUID_SIZE 65		/*!< Maximum length of ruid for location records */
+
 #define MY_VIA "Via: SIP/2.0/UDP "
 #define MY_VIA_LEN (sizeof(MY_VIA) - 1)
 
