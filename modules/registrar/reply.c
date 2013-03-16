@@ -658,11 +658,18 @@ int reg_send_reply(struct sip_msg* _m)
 				if (add_flow_timer(_m) < 0)
 					return -1;
 			}
-			/* Fall-thru */
-		case REG_OUTBOUND_SUPPORTED:
 			if (add_supported(_m, &outbound_str) < 0)
-				return -1;
+			    return -1;
 			break;
+		case REG_OUTBOUND_SUPPORTED:
+		    if ((parse_supported(_m) == 0) &&
+			(((struct supported_body *)_m->supported->parsed)->supported_all & F_SUPPORTED_OUTBOUND)) {
+			if (add_require(_m, &outbound_str) < 0)
+			    return -1;
+		    }
+		    if (add_supported(_m, &outbound_str) < 0)
+			return -1;
+		    break;
 		}
 		break;
 	case R_OB_UNSUP:
