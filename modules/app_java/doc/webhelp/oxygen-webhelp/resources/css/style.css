@@ -1,0 +1,647 @@
+body {
+	font-family: 'Lucida sans Unicode', Arial, Verdana;
+	font-size: 12px
+}
+
+#comments {
+	border-bottom: 1px solid #ccc;
+	color: #444;
+	padding: 9px;
+	background-image: url('/img/icon_comment24x24.png');
+	background-position: 10px 7px;
+	background-repeat: no-repeat;
+	background-color: #eee;
+}
+
+ul.commentStyle {
+	list-style: none;
+	padding: 0
+}
+
+ul.commentStyle li {
+	clear: both;
+	padding: 0;
+	margin-left: 5px;
+}
+
+ul.commentStyle li ul.commentStyle li {
+	margin-left: 30px;
+}
+
+div.liContent {
+	padding: 7px;
+	padding-left: 0px;
+	border-bottom:1px solid #ccc;
+}
+
+
+div.liContent div.liContent {
+	padding-left: 165px;
+}
+.head{
+	
+}
+
+.minus,.plus {
+	background-image: url('/img/expand.png');
+	background-repeat: no-repeat;
+	padding: 2px 7px 7px 10px;
+	width: 15px;
+	height: 15px;
+	margin-top: 10px;
+	background-position: -16px 0;
+	margin-right: 7px;
+}
+
+.plus {
+	background-position: 0 0;
+}
+
+.minus {
+	background-position: -13px 0;
+}
+
+div.liContent:hover,div.suspended:hover {
+	background-color: lightyellow;
+}
+
+ul.commentStyle li:first-child {
+	border-top: 0 solid #ccc
+}
+
+ul.commentStyle li ul.commentStyle li {
+	/*border-bottom: 1px solid #ccc; */
+}
+
+ul.commentStyle li div.content {
+	padding: 7px 7px 7px 15px;
+	clear: both
+}
+.content p:FIRST-CHILD{
+	padding: 5px;
+margin: 0;
+	}
+
+span.name {
+	font-weight: bold;
+	font-size: 1.2em;
+	color: #336699;
+}
+
+span.date {
+	font-size: 0.8em;
+	padding-left: 17px;
+	float: right;
+}
+
+span.version {
+	font-size: 1.0em;
+	padding-left: 10px;
+	float: right;
+}
+
+.bt_admin {
+	float: right;
+	vertical-align: middle;
+}
+
+.commentState {
+	padding: 3px 7px 3px 7px;
+	color: #444;
+	display: inline-block;
+	font-size: 0.8em;
+	width: 60px;
+	text-align: center;
+	text-shadow: 0 1px 0 #fff;
+	margin-left: 7px;
+}
+
+.level {
+	padding: 0 10px 0 10px;
+}
+
+.actions {
+	width: 210px;
+	border-left: 1px solid #eee;
+	float: right;
+}
+
+.bt_edit,.bt_approve,.bt_suspend,.bt_delete {
+	padding: 2px 4px 2px 4px;
+	width: 50px;
+	background-color: #eee;
+	border-radius: 5px;
+	text-align: center;
+	text-shadow: 0 1px 0 #fff;
+	cursor: pointer;
+	margin-left: 10px;
+	font-size: 0.9em;
+	box-shadow: 0px 1px 5px #999;
+	float: right;
+}
+
+.bt_edit:hover,.bt_approve:hover,.bt_suspend:hover,.bt_delete:hover {
+	background-color: #98C1D6;
+	text-shadow: 0 1px 0 #ddd;
+}
+
+#oldComments {
+	clear: both;
+}
+
+#bt_new {
+	margin: 10px;
+	position: relative;
+}
+
+.span_new {
+	background-color: #336699;
+	color: white;
+	border-radius: 4px;
+	text-shadow: 0 1px 0 #000;
+	padding: 3px;
+	border: 0;
+	margin: 0;
+	font-size: 0.9em;
+	cursor: pointer;
+	width: 60px;
+	text-align: center;
+}
+.bt_reply {
+	color: #336699;
+}
+.bt_reply:hover {
+	cursor: pointer;
+}
+
+.span_new {
+	width: 100px
+}
+
+.span_new:hover {
+	background-color: #334466 /*color: #336699;*/
+}
+
+#preload {
+	width: 300px;
+}
+
+#loginResponse {
+	color: red;
+	font-style: italic
+}
+
+#userAccount {
+	float: right;
+	margin: 0;
+	margin-top: -4px
+}
+
+#accountInfo a,#userAccount #bt_logIn,#userAccount #bt_logOff,#userAccount #bt_editProfile {
+	background-color: #336699;
+	padding: 5px 10px 5px 10px;
+	color: white;
+	border: 0;
+	border-radius: 4px;
+	margin: 0;
+	font-size: 0.8em;
+	text-shadow: 0 1px 0 #000;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+#accountInfo a:hover,#userAccount #bt_logIn:hover,#userAccount #bt_logOff:hover,#userAccount #bt_editProfile:hover {
+	background-color: #334466
+}
+
+#u_Profile {
+	clear: both;
+	position: relative;
+	background-color: #fff;
+	padding-left: 15px;
+	border-radius: 7px;
+	border: 1px solid #ccc;
+	border-top: 0;
+	float: none;
+	width: 300px;
+	box-shadow: 1px 1px 10px #999;
+	margin-top: 14px;
+	z-index: 100;
+}
+
+#u_Profile table {
+	font-size: 1em;
+	width: 96%;
+	padding: 2%;
+}
+
+#u_Profile table thead td {
+	font-size: 1.2em
+}
+
+#u_Profile table td:FIRST-CHILD {
+	width: 55%;
+}
+
+#u_Profile table#u_notification {
+	margin: 0;
+	padding: 0
+}
+
+#u_Profile table#u_notification td:FIRST-CHILD {
+	width: 75%;
+}
+.u_response{color:#cc0000}
+
+#submitComment,#bt_recover,#bt_signUp,#logIn,#bt_passwd,#bt_profile {
+	background-color: #eee;
+	border-radius: 5px;
+	box-shadow: 0 1px 7px #888;
+	color: #000;
+	text-shadow: 0 1px 0 #fff;
+	cursor: pointer;
+	padding: 3px 6px 4px 6px;
+	margin-top: 13px;
+	display: inline-block;
+	font-size: 0.9em;
+	border: 0;
+}
+
+#submitComment:hover,#bt_recover:hover,#bt_signUp:hover,#logIn:hover,#bt_passwd:hover,#bt_profile:hover {
+	background-color: #336699;
+	color: #fff;
+	text-shadow: 0 1px 0 #222;
+	box-shadow: 0 1px 12px #000;
+}
+
+#cm_count {
+	font-weight: bold;
+	font-size: 1.2em;
+	margin-left: 35px;
+}
+#cm_title{
+	font-weight: bold;
+	font-size: 1.2em;	
+}
+
+
+/*	Log In data */
+#loginData {
+	clear: both;
+	position: relative;
+	background-color: #fff;
+	padding-left: 15px;
+	border-radius: 7px;
+	border: 1px solid #ccc;
+	border-top: 0;
+	float: none;
+	width: 300px;
+	box-shadow: 1px 1px 10px #999;
+	margin-top: 14px;
+	z-index: 100;
+}
+
+#userAccount #loginData {
+	position: absolute;
+	right: 10px;
+}
+
+.login {
+	font-size: 1em;
+	width: 96%;
+	padding: 2%;
+}
+
+.login thead td {
+	font-size: 1.2em
+}
+
+.login td:FIRST-CHILD {
+	width: 50%
+}
+
+.loginAlternative {
+	width: 280px;
+	padding: 10px;
+}
+
+.loginAlternative span {
+	padding: 0px 5px 10px 5px;
+	margin: 0
+}
+
+.bt_lostPwd {
+	float: left;
+	color: #336699;
+}
+
+.bt_signUp {
+	float: right;
+	color: #336699;
+}
+
+.loginAlternative span:hover {
+	color: #cc0000;
+	cursor: pointer;
+}
+
+/*	/ Log In data */
+
+/*	Sign up Form */
+#signUp {
+	clear: both;
+	position: relative;
+	background-color: #fff;
+	padding-left: 15px;
+	padding-right: 5px;
+	border-radius: 7px;
+	border: 1px solid #ccc;
+	float: none;
+	width: 360px;
+	box-shadow: 1px 1px 10px #999;
+	margin-top: 14px;
+	z-index: 100;
+}
+
+#signUp table thead td {
+	font-size: 1.2em;
+}
+
+#signUp table td:FIRST-CHILD {
+	width: 45%
+}
+
+.inputTable {
+	width: 180px;
+}
+
+#signUp table {
+	font-size: 1em;
+	width: 100%;
+}
+
+#userAccount #signUp {
+	position: absolute;
+	right: 10px;
+}
+
+/*	/ Sign up Form */
+
+/*	Lost Password Form */
+#recoverPwd {
+	clear: both;
+	position: relative;
+	background-color: #fff;
+	padding-left: 15px;
+	padding-right: 5px;
+	border-radius: 7px;
+	border: 1px solid #ccc;
+	float: none;
+	width: 330px;
+	box-shadow: 1px 1px 10px #999;
+	margin-top: 14px;
+	z-index: 100;
+}
+
+#recoverPwd table thead td {
+	font-size: 1.2em;
+}
+
+#recoverPwd table td:FIRST-CHILD {
+	width: 45%
+}
+
+.inputTable {
+	width: 180px;
+}
+
+#recoverPwd table {
+	font-size: 1em;
+	width: 100%;
+}
+
+#userAccount #recoverPwd {
+	position: absolute;
+	right: 10px;
+}
+/*	/ Lost Password Form */
+
+/* Insert new comment */
+#newComment {
+	width: 600px;
+	margin: 10px;
+	padding: 10px;
+	font-size: 1em;
+	vertical-align: bottom;
+}
+
+#newComment form {
+	padding: 0;
+	margin: 0
+}
+
+/* Close button */
+.bt_close {
+	clear: both;
+	background-image: url("/img/close.png");
+	background-repeat: no-repeat;
+	/*background-position:5px 5px;*/
+	position: relative;
+	cursor: pointer;
+	width: 20px;
+	height: 20px;
+	padding: 0px 4px 0 4px;
+	text-align: center;
+	float: right;
+	margin-top: 10px;
+}
+
+.bt_close:HOVER {
+	background-image: url("/img/close_hover.png");
+}
+
+#newComment .bt_close {
+	margin-top: 0px;
+}
+/* / Close button */
+#u_Profile {
+	clear: both;
+	float: right;
+	position: absolute;
+	width: 500px;
+	right: 10px;
+	margin-top: 35px;
+	z-index: 100;
+}
+
+#preload {
+	vertical-align: top;
+	text-align: center;
+	padding-top: 80px;
+	height: 127px
+}
+
+#preload img {
+	width: 50px
+}
+
+.red {
+	color: #cc0000
+}
+
+div.suspended { /*	background-color: white; */
+	
+}
+
+.moderationInfo {
+	margin: 0;
+	padding: 0;
+	color: #cc0000;
+}
+
+.mustBeModerate {
+	background-color: #E8F0F7;
+	padding: 10px;
+	border-radius: 10px;
+	margin-bottom: 10px
+}
+
+/* ADMIN */
+#cm_title span {
+	padding: 8px
+}
+
+#bt_approveAll{
+	padding: 2px 4px 2px 4px;
+	width: 80px;
+	background-color: #eee;
+	border-radius: 5px;
+	text-align: center;
+	text-shadow: 0 1px 0 #fff;
+	cursor: pointer;
+	margin-left: 10px;
+	font-size: 0.9em;
+	box-shadow: 0px 1px 5px #999;
+	float:right;
+}
+#bt_approveAll:hover {
+	background-color: #98C1D6;
+	text-shadow: 0 1px 0 #ddd;
+}
+
+
+#showConfirmApproveAll{
+	right: 20px;
+	position: absolute;
+	background-color: #fcfcfc;
+	border: 1px solid #ccc;
+	min-width: 150px;
+	box-shadow: 1px 1px 15px #555;
+	padding: 15px;
+	margin-top:25px
+}
+
+
+#editUser {
+	z-index: 1000;
+	background-color: #fff;
+	border: 1px solid #ccc;
+	position: absolute;
+	min-width: 400px;
+	box-shadow: 1px 1px 15px #555;
+	padding: 15px;
+	left: 40%;
+	margin-top: -100px;
+}
+
+#editUser:hover {
+	background-color: white
+}
+
+#adminUsers form fieldset {
+	border: 0px solid #eee;
+	margin-top: 20px;
+}
+
+table#usersList {
+	width: 100%
+}
+
+table#usersList td {
+	padding: 10px
+}
+
+table#usersList thead {
+	background-color: #336699;
+	color: #fff;
+	text-shadow: 0 1px 0 #333;
+	text-align: left;
+	text-indent: 15px
+}
+
+table#usersList tbody td {
+	border: 1px solid #fff;
+}
+
+table#usersList tbody tr:HOVER {
+	background-color: lightyellow;
+	cursor: pointer;
+	border-top: 1px solid #eee;
+	border-bottom: 1px solid #ccc;
+}
+
+table#usersList #editUser table tr:HOVER {
+	background-color: #fff;
+}
+
+.bt_edit_user {
+	padding: 3px 5px 3px 5px;
+	width: 50px;
+	background-color: #eee;
+	border-radius: 5px;
+	text-align: center;
+	text-shadow: 0 1px 0 #fff;
+	cursor: pointer;
+	margin-left: 10px;
+	font-size: 0.7em;
+	box-shadow: 0px 1px 2px #999;
+}
+
+.bt_edit_user:hover {
+	background-color: #98C1D6;
+	text-shadow: 0 1px 0 #ddd;
+}
+
+#confirmDelete {
+	right: 20px;
+	position: absolute;
+	background-color: #fcfcfc;
+	border: 1px solid #ccc;
+	min-width: 150px;
+	box-shadow: 1px 1px 15px #555;
+	padding: 15px;
+	margin-top:25px
+}
+
+#confirmActions {
+	text-align: center;
+	padding: 10px;
+}
+
+#confirmDelete #commentToDelete {
+	text-align: left;
+	padding: 10px;
+	border: 1px solid #ccc;
+	background-color: #fff;
+	margin: 5px
+}
+
+#confirmActions span {
+	text-align: center;
+	padding: 4px;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+	width: 25px;
+	margin: 40px;
+	cursor: pointer
+}

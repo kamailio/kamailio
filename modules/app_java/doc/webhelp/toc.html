@@ -1,0 +1,190 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <base target="contentwin" />
+      <meta name="copyright" content="(C) Copyright 2012" />
+      <meta name="DC.rights.owner" content="(C) Copyright 2012" />
+      <link href="oxygen-webhelp/resources/css/ui.dynatree.css" type="text/css" rel="stylesheet" />
+      <link href="oxygen-webhelp/resources/css/webhelp_toc.css" type="text/css" rel="stylesheet" />
+      <title>Chapter 1. Admin Guide</title><script type="text/javascript" src="oxygen-webhelp/resources/js/jquery.js">
+         <!----></script><script type="text/javascript" src="oxygen-webhelp/resources/js/jquery-ui.custom.js">
+         <!----></script><script type="text/javascript" src="oxygen-webhelp/resources/js/jquery.cookie.js">
+         <!----></script><script type="text/javascript" src="oxygen-webhelp/resources/js/jquery.dynatree.js">
+         <!----></script><script type="text/javascript" src="oxygen-webhelp/search/htmlFileList.js">
+         <!----></script><script type="text/javascript" src="oxygen-webhelp/search/htmlFileInfoList.js">
+         <!----></script><script type="text/javascript" src="oxygen-webhelp/search/nwSearchFnt.js">
+         <!----></script><script type="text/javascript" src="oxygen-webhelp/search/stemmers/en_stemmer.js">
+         <!----></script><script type="text/javascript" src="oxygen-webhelp/search/index-1.js">
+         <!----></script><script type="text/javascript" src="oxygen-webhelp/search/index-2.js">
+         <!----></script><script type="text/javascript" src="oxygen-webhelp/search/index-3.js">
+         <!----></script><script src="oxygen-webhelp/resources/localization/strings.js" type="text/javascript" charset="utf-8">
+         <!----></script><script src="oxygen-webhelp/resources/js/webhelp.js" type="text/javascript">
+         <!----></script><script src="oxygen-webhelp/resources/js/quick_search.js" type="text/javascript">
+         <!----></script><script src="oxygen-webhelp/resources/js/browserDetect.js" type="text/javascript">
+         <!----></script></head>
+   <body onload="javascript:showMenu('content');">
+      <h1>Chapter 1. Admin Guide</h1>
+      <noscript><style type="text/css">
+              #searchBlock,
+              #preload,
+              #indexBlock,
+              #tocMenu span{
+                display:none
+              }
+              #tab_nav_tree{
+                display:block
+              }
+              #contentMenuItem:before{
+                content:"Content";
+              }</style></noscript>
+      <div id="tocMenu">
+         <div id="content" style="display:inline">
+            Content
+            
+         </div>
+         <div id="search" style="display:inline">
+            Search
+            
+         </div>
+      </div><script type="text/javascript">
+         <!--          
+               $('#content').html(getLocalization("Content"));            
+               $('#search').html(getLocalization("Search"));
+               $('#index').html(getLocalization("Index"));
+            --></script><div id="bck_toc">
+         <div id="searchBlock" style="display:none;">
+            <form name="searchForm" id="searchForm" action="javascript:void(0)" onsubmit="Verifie('searchForm');">Keywords: 
+               <!----><input type="text" id="textToSearch" name="textToSearch" class="textToSearch" size="30" />
+               <!----><input type="button" value="Search" name="Search" class="searchButton" onclick="Verifie('searchForm');" /></form>
+            <div id="searchResults">
+               <!---->
+            </div>
+         </div>
+         <div id="preload">Loading, please wait ...
+            <p><img src="oxygen-webhelp/resources/img/spinner.gif" alt="Loading" /></p>
+         </div>
+         <div id="contentBlock">
+            <div id="tab_nav_tree_placeholder">
+               <div id="tab_nav_tree" class="visible_tab">
+                  <div id="tree">
+                     <ul>
+                        
+                        <li><a href="oxygen-main.html#d6e3">Overview</a></li>
+                        
+                        <li><a href="ch01s02.html">Dependencies</a><ul>
+                              <li><a href="ch01s02.html#d6e8">Kamailio Modules</a></li>
+                              <li><a href="ch01s02.html#d6e15">External Libraries or Applications</a></li>
+                           </ul>
+                        </li>
+                        
+                        <li><a href="ch01s03.html">Java runtime</a><ul>
+                              <li><a href="ch01s03.html#d6e69"></a></li>
+                           </ul>
+                        </li>
+                        
+                        <li><a href="ch01s04.html">Parameters</a><ul>
+                              <li><a href="ch01s04.html#d6e74">class_name (string)</a></li>
+                              <li><a href="ch01s04.html#d6e87">child_init_method (string)</a></li>
+                              <li><a href="ch01s04.html#d6e98">java_options (string)</a></li>
+                              <li><a href="ch01s04.html#d6e123">force_kam_cmd_exec (int)</a></li>
+                           </ul>
+                        </li>
+                        
+                        <li><a href="ch01s05.html">Functions</a><ul>
+                              <li><a href="ch01s05.html#d6e137">Common requirements</a></li>
+                              <li><a href="ch01s05.html#d6e146">java_method_exec(method, method_signature, [param1[, param2[, ...]]])</a></li>
+                              <li><a href="ch01s05.html#d6e181">java_staticmethod_exec(method, method_signature, [param1[, param2[, ...]]])</a></li>
+                              <li><a href="ch01s05.html#d6e216">java_s_method_exec(method, method_signature, [param1[, param2[, ...]]])</a></li>
+                              <li><a href="ch01s05.html#d6e254">java_s_staticmethod_exec(method, method_signature, [param1[, param2[, ...]]])</a></li>
+                           </ul>
+                        </li>
+                        
+                        <li><a href="ch01s06.html">Java Module API</a><ul>
+                              <li><a href="ch01s06.html#d6e295">Minimal program skeleton</a></li>
+                           </ul>
+                        </li>
+                        
+                     </ul>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+      <div class="footer"></div><script type="text/javascript">
+         <!--
+                              $(function(){
+                                $("#tree").dynatree({
+                                   // using default options
+                                    onActivate: function(node) {
+                                    	if( node.data.href ){
+                                         // Open target
+                                          parent.contentwin.location = node.data.href;
+                                          node.expand();
+                                      }
+                                   },
+                                   onFocus: function(node) {
+                                  	   //$("#echoFocused").text(node.data.title);
+                                      // Auto-activate focused node after 2 seconds
+                                      node.scheduleAction("activate", 100);
+                                   }
+                                });
+                                $("#tree").dynatree("getRoot").visit(function(node){
+                                	//console.log("getRoot");                                  
+  	                                  	node.expand(true);
+                                      	node.expand(false);
+                                      	$("#preload").addClass('hide');
+                                      	$("#tab_nav_tree_placeholder").removeClass('hide').addClass('show');
+                                      	//node.scheduleAction("activate", 0);
+                                      });
+                              });
+                        --></script><script type="text/javascript">
+         <!--
+  var showAll=true;
+         
+         function showDivs(){
+        	 if (!showAll){
+        		$('#list_idx').html("");
+          	$("#indexList").show();
+          	$("#indexList div").show();
+          	showAll=true;
+        	 }
+         }
+         
+                $(function () {
+                  $('input#id_search').quicksearch('#indexList div', {
+                    'show': function () {                      	
+                    		if ($("input#id_search").val() != '') {    
+                    			showAll=false;
+	                      	var li = $(this).clone();
+                        	li.appendTo('#list_idx');
+                        	li.show();
+                        	$("#indexList").hide();
+                      	} else {
+                      		showDivs();
+    	                  }
+                    },
+                    'onBefore': function () {
+      	                if ($("input#id_search").val() != '') {
+      	                	$('#list_idx').html('');
+          	            	$("#indexList").hide();
+            	        	} else{
+            	        		showDivs();
+                	      }
+                    },
+                    'noResults': function () {
+								/*                    	                    	
+                      if ($("input#id_search").val() != '') {
+                      	showAll=false;
+                        $("#indexList").hide();
+                      } else {
+                       	showDivs();
+                      }
+                  */    
+                    }
+                  });
+                });
+            --></script></body>
+</html>

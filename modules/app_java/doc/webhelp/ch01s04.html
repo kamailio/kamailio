@@ -1,0 +1,159 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Parameters</title><meta name="generator" content="DocBook XSL Stylesheets V1.77.1"/><link rel="home" href="oxygen-main.html" title="Chapter 1. Admin Guide"/><link rel="up" href="oxygen-main.html" title="Chapter 1. Admin Guide"/><link rel="prev" href="ch01s03.html" title="Java runtime"/><link rel="next" href="ch01s05.html" title="Functions"/><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><link rel="stylesheet" type="text/css" href="oxygen-webhelp/resources/css/webhelp_topic.css"/>
+<script type="text/javascript" src="oxygen-webhelp/resources/js/jquery.js"> </script>
+<script type="text/javascript" src="oxygen-webhelp/resources/js/jquery-ui.custom.min.js"> </script>
+<script type="text/javascript" src="oxygen-webhelp/resources/js/frames_redirect.js"> </script>                                        <script type="text/javascript" charset="utf-8" src="oxygen-webhelp/resources/localization/strings.js"> </script>                         <script type="text/javascript" charset="utf-8" src="oxygen-webhelp/resources/js/comments-functions.js"> </script>                         <script type="text/javascript" charset="utf-8" src="oxygen-webhelp/resources/php/cnf.php"> </script>                         <script type="text/javascript" charset="utf-8" src="oxygen-webhelp/resources/js/init.js"> </script>
+<script type="text/javascript"><!--
+    var prefix = "oxygen-main";
+    var ratingFile = "";
+    redirectToToc(window.location.search);
+    function highlightSearchTerm(){
+        if(parent.termsToHighlight != null){
+        // highlight each term in the content view  
+          for(i = 0 ; i < parent.termsToHighlight.length ; i++){        
+              $('*', window.parent.contentwin.document).highlight(parent.termsToHighlight[i]);
+          }
+        }
+    }
+//--></script>
+</head><body onload="highlightSearchTerm()"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Parameters</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="ch01s03.html">Prev</a> </td><th width="60%" align="center"> </th><td width="20%" align="right"> <a accesskey="n" href="ch01s05.html">Next</a></td></tr></table><hr/></div><span class="frames"><script type="text/javascript"><!--                    
+									 if (top === self) { 
+							        document.write("<div class='wFrames'><a href=" + getPath(location.pathname) + ">With Frames</a></div>");							
+						        } else {
+						          //document.write("<div class='wFramesPerma'><a href=" + getPath(location.pathname) + " target='_top' title='link to this page'>Link</a></div>");						
+						        }       
+                  --></script></span>
+<div class="section" id="d6e72"><div class="titlepage"><div><div><h2 class="title" style="clear: both">Parameters</h2></div></div></div>
+		
+
+		
+		<div class="section" id="d6e74"><div class="titlepage"><div><div><h3 class="title"><code class="varname">class_name</code> (string)</h3></div></div></div>
+			
+		    <p>
+		    	The class name should have the same compiled file name.
+		    	If the value is <span class="emphasis"><em>"Kamailio"</em></span>, then the compiled file should be named as <span class="emphasis"><em>"Kamailio.class"</em></span>.
+		    </p>
+		    <p>
+				<span class="emphasis"><em>
+					Default value is <span class="quote">“<span class="quote">Kamailio</span>”</span>.
+				</em></span>
+		    </p>
+		    <div class="example" id="d6e83"><p class="title"><strong>Example 1.1. Set <code class="varname">class_name</code> parameter</strong></p><div class="example-contents">
+		    	
+				<pre class="programlisting">
+...
+modparam("app_java", "class_name", "Kamailio")
+...
+</pre>
+		    </div></div><br class="example-break"/>
+		</div>
+
+		
+		<div class="section" id="d6e87"><div class="titlepage"><div><div><h3 class="title"><code class="varname">child_init_method</code> (string)</h3></div></div></div>
+			
+			<p>
+				TBD.
+			</p>
+			<p>
+				<span class="emphasis"><em>
+					Default value is <span class="quote">“<span class="quote">child_init</span>”</span>.
+				</em></span>
+			</p>
+			<div class="example" id="d6e94"><p class="title"><strong>Example 1.2. Set <code class="varname">child_init_method</code> parameter</strong></p><div class="example-contents">
+				
+				<pre class="programlisting">
+...
+modparam("app_java", "child_init_method", "my_mod_init")
+...
+</pre>
+			</div></div><br class="example-break"/>
+		</div>
+
+		
+		<div class="section" id="d6e98"><div class="titlepage"><div><div><h3 class="title"><code class="varname">java_options</code> (string)</h3></div></div></div>
+			
+			<p>
+				Java options for Java Virtual Machine.
+				For more info read <a class="ulink" href="http://docs.oracle.com/javase/6/docs/technotes/tools/windows/java.html" target="_top"><em class="citetitle">java docs</em></a>
+			</p>
+			<p>
+				<span class="emphasis"><em>
+					Default value is <span class="quote">“<span class="quote">-Djava.compiler=NONE</span>”</span>.
+				</em></span>
+			</p>
+			<div class="example" id="d6e107"><p class="title"><strong>Example 1.3. Set <code class="varname">java_options</code> parameter</strong></p><div class="example-contents">
+				
+				<pre class="programlisting">
+...
+modparam("app_java", "java_options", "-Djava.compiler=NONE")
+...
+</pre>
+			</div></div><br class="example-break"/>
+			<div class="example" id="d6e111"><p class="title"><strong>Example 1.4. Set <code class="varname">java_options</code> parameter (live configuration)</strong></p><div class="example-contents">
+				
+				<pre class="programlisting">
+...
+# Assumes "application java folder" is located at /opt/kamailio/java
+modparam("app_java", "java_options", "-Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
+...
+</pre>
+			</div></div><br class="example-break"/>
+			<div class="example" id="d6e115"><p class="title"><strong>Example 1.5. Set <code class="varname">java_options</code> parameter (verbose configuration)</strong></p><div class="example-contents">
+				
+				<pre class="programlisting">
+...
+# Assumes "application java folder" is located at /opt/kamailio/java
+modparam("app_java", "java_options", "-verbose:gc,class,jni -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
+...
+</pre>
+			</div></div><br class="example-break"/>
+			<div class="example" id="d6e119"><p class="title"><strong>Example 1.6. Set <code class="varname">java_options</code> parameter (debug configuration)</strong></p><div class="example-contents">
+				
+				<pre class="programlisting">
+...
+# Assumes "application java folder" is located at /opt/kamailio/java
+modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
+...
+</pre>
+			</div></div><br class="example-break"/>
+		</div>
+
+		
+		<div class="section" id="d6e123"><div class="titlepage"><div><div><h3 class="title"><code class="varname">force_kam_cmd_exec</code> (int)</h3></div></div></div>
+			
+			<p>
+				This parameter forces execution a kamailio comnmand with java native method <span class="quote">“<span class="quote">KamExec</span>”</span>.
+				# Note: this is an untested yet feature, may cause (but may not) a memory leaks if used from embedded languages.
+			</p>
+			<p>
+				<span class="emphasis"><em>
+					Default value is <span class="quote">“<span class="quote">0 (off)</span>”</span>.
+				</em></span>
+			</p>
+			<div class="example" id="d6e131"><p class="title"><strong>Example 1.7. Set <code class="varname">force_kam_cmd_exec</code> parameter</strong></p><div class="example-contents">
+				
+				<pre class="programlisting">
+...
+modparam("app_java", "force_kam_cmd_exec", 1)
+...
+</pre>
+			</div></div><br class="example-break"/>
+		</div>
+	</div><div class="navfooter"><hr/><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ch01s03.html">Prev</a> </td><td width="20%" align="center"> </td><td width="40%" align="right"> <a accesskey="n" href="ch01s05.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Java runtime </td><td width="20%" align="center"><a accesskey="h" href="oxygen-main.html">Home</a></td><td width="40%" align="right" valign="top"> Functions</td></tr></table></div><div class="footer">WebHelp output generated by<a href="http://www.oxygenxml.com" target="_blank"><span class="oXygenLogo"><img src="oxygen-webhelp/resources/img/LogoOxygen100x22.png" alt="Oxygen"/></span><span class="xmlauthor">XML Author</span></a>.
+        </div>    <script type="text/javascript">
+        <!--
+            function expand(){
+                if (parent.tocwin){
+                    parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
+                }
+            }
+            var aArray = document.getElementsByTagName('a');
+            var i;
+            for (i = 0; i< aArray.length; i++){
+              aArray[i].onclick = expand;
+            }
+        -->
+    </script> 
+</body></html>

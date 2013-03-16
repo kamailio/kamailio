@@ -1,0 +1,33 @@
+<!DOCTYPE html SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>WebHelp</title>
+			<meta HTTP-EQUIV="REFRESH" content="0; url=../../../"/>        
+    </head>
+    <body>            
+            Current generated project :            
+            <!-- to be generated  -->
+<div id="productInfo" style="display:none;">
+	<span id="oxy_productid">@PRODUCT_ID@</span>
+	<span id="oxy_productVersion">@PRODUCT_VERSION@</span>
+</div>
+<!-- /to be generated  -->
+                 
+	<script type="text/javascript">
+    var pageSearch = window.location.href;
+    var pageWSearch = pageSearch.replace(window.location.search,"");
+    pageWSearch = pageWSearch.replace(window.location.hash,"");
+    var url=pageWSearch.split("/");
+    var newUrl="";
+    for ( var i = 0; i < url.length; i++) {
+    	if (url[i]=='oxygen-webhelp'){
+    		break;
+    	}else{    	    		
+				newUrl=newUrl+url[i]+"/";
+    	}
+		}    
+    document.location=newUrl;
+    </script>
+                                              
+    </body>
+</html>

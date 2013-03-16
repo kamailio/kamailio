@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml" version="-//W3C//DTD XHTML 1.1//EN"><head xmlns:h="http://www.w3.org/1999/xhtml" profile=""><title>Functions</title><meta name="generator" content="DocBook XSL Stylesheets V1.77.1"/></head><body><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="d5e135" shape="rect"/>Functions</h1></div></div></div>
+		
+    	
+    	
+    	<div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="d5e137" shape="rect"/>
+    			Common requirements
+    		</h2></div></div></div>
+    		
+    		<p>Each function has a required parameter <span class="quote">“<span class="quote">method_signature</span>”</span>. For more info
+				see <a class="ulink" href="http://www.rgagnon.com/javadetails/java-0286.html" shape="rect"><em class="citetitle">Determine the signature of a method</em></a>.
+				Signature represents the variable type. The mapping between the Java type and C type
+				is
+				</p><pre class="programlisting" xml:space="preserve">
+		Type     Chararacter 
+		boolean      Z 
+		byte         B 
+		char         C 
+		double       D 
+		float        F 
+		int          I 
+		long         J 
+		object       L 
+		short        S 
+		void         V 
+		Note that to specify an object, the "L" is followed by the object's class name and ends with a semi-colon, ';' .
+    			</pre><p>
+			</p>
+    		<p> app_java supports the following signatures:
+				</p><pre class="programlisting" xml:space="preserve">
+		Primitives: Z,B,C,D,F,I,J,L,S,V
+		Objects: 
+			Ljava/lang/Boolean;
+			Ljava/lang/Byte;
+			Ljava/lang/Character;
+			Ljava/lang/Double;
+			Ljava/lang/Float;
+			Ljava/lang/Integer;
+			Ljava/lang/Long;
+			Ljava/lang/Short;
+			Ljava/lang/String;
+			NULL parameter: V
+
+	Each parameter passed to function will be cast according to given signature.
+	
+	Parameters are optional, ommitting a parameter meant the passed value is NULL.
+	Parameters count should be exactly the same as signature count.
+	Note 1: Arrays representation (symbol '[') is not supported yet.
+	Note 2: You shall use a correct signature, e.g. the following examples of combinations are invalid:    
+    	java_method_exec("ExampleMethod", "ZI", "False");
+        java_method_exec("ExampleMethod", "LI", "something", "5");
+</pre><p>
+			</p>
+
+ 
+    	</div>
+    	
+  
+    	
+    	<div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="d5e146" shape="rect"/>java_method_exec(method, method_signature, [param1[, param2[, ...]]])</h2></div></div></div>
+    		
+    		<p>Executes a java class method <span class="emphasis"><em>method</em></span>. Parameter <span class="emphasis"><em>method_signature</em></span> is required.</p>
+    		<div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">
+			    	<div class="example"><a id="d5e153" shape="rect"/><p class="title"><strong>Example 1.8. Signature: "V"</strong></p><div class="example-contents">
+						
+			    		<p>Kamailio prototype</p>
+			    		<pre class="programlisting" xml:space="preserve">java_method_exec("ExampleMethod", "V");</pre>
+			    		<p>Java prototype</p>
+			    		<pre class="programlisting" xml:space="preserve">public int ExampleMethod();</pre>
+			    		<p>Example of usage:</p>
+			    		<pre class="programlisting" xml:space="preserve">
+# Kamailio
+java_method_exec("ExampleMethod", "V");
+
+# Java
+public int ExampleMethod()
+{
+		... do something;
+		return 1;
+}
+</pre>
+			    	</div></div>
+	    		</li><li class="listitem">
+	    			<div class="example"><a id="d5e162" shape="rect"/><p class="title"><strong>Example 1.9. Signature: "Ljava/lang/String;I"</strong></p><div class="example-contents">
+	    				
+	    				<p>Kamailio prototype</p>
+		    			<pre class="programlisting" xml:space="preserve">java_method_exec("ExampleMethod", "Ljava/lang/String;I", "Hello world", "5");</pre>
+	    				<p>Java prototype</p>
+	    				<pre class="programlisting" xml:space="preserve">public int ExampleMethod(String param1, int param2);</pre>
+	    				<p>In the above scenario parameter 2 ("5") will be cast to integer representation.</p>
+	    				<p>Example of usage:</p>
+	    				<pre class="programlisting" xml:space="preserve">
+# Kamailio
+java_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
+
+# Java
+public int ExampleMethod(String SipMessageBuffer, int SipMessageLenght)
+{
+		... do something with buffer;
+		return 1;
+}
+</pre>
+	    			</div></div>
+	    		</li><li class="listitem">
+    				<div class="example"><a id="d5e172" shape="rect"/><p class="title"><strong>Example 1.10. Signature: "ZB"</strong></p><div class="example-contents">
+    					
+    					<p>Kamailio prototype</p>
+    					<pre class="programlisting" xml:space="preserve">java_method_exec("ExampleMethod", "ZB", "true", "0x05");</pre>
+    					<p>Java prototype</p>
+    					<pre class="programlisting" xml:space="preserve">public int ExampleMethod(boolean param1, byte param2);</pre>
+    					<p>In the above scenario parameter 1 ("true") will be cast to boolean representation.</p>
+    					<p>Example of usage:</p>
+    					<pre class="programlisting" xml:space="preserve">
+# Kamailio
+java_method_exec("ExampleMethod", "ZB", "true", "0x05");
+
+# Java
+public int ExampleMethod(boolean flagSet, byte bFlag);
+{
+		if (flagSet)
+		{
+			... do something with flags;
+		}
+		return 1;
+}
+</pre>
+    				</div></div>
+    			</li></ul></div>
+    	</div>
+    	
+
+    	
+    	<div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="d5e181" shape="rect"/>java_staticmethod_exec(method, method_signature, [param1[, param2[, ...]]])</h2></div></div></div>
+    		
+    		<p>Executes a java static method <span class="emphasis"><em>method</em></span>. Parameter <span class="emphasis"><em>method_signature</em></span> is required.</p>
+    		<div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">
+    				<div class="example"><a id="d5e188" shape="rect"/><p class="title"><strong>Example 1.11. Signature: "V"</strong></p><div class="example-contents">
+    					
+    					<p>Kamailio prototype</p>
+    					<pre class="programlisting" xml:space="preserve">java_staticmethod_exec("ExampleMethod", "V");</pre>
+    					<p>Java prototype</p>
+    					<pre class="programlisting" xml:space="preserve">public static int ExampleMethod();</pre>
+    					<p>Example of usage:</p>
+    					<pre class="programlisting" xml:space="preserve">
+# Kamailio
+java_staticmethod_exec("ExampleMethod", "V");
+
+# Java
+public static int ExampleMethod()
+{
+		... do something;
+		return 1;
+}
+</pre>
+    				</div></div>
+    			</li><li class="listitem">
+    				<div class="example"><a id="d5e197" shape="rect"/><p class="title"><strong>Example 1.12. Signature: "Ljava/lang/String;I"</strong></p><div class="example-contents">
+    					
+    					<p>Kamailio prototype</p>
+    					<pre class="programlisting" xml:space="preserve">java_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "Hello world", "5");</pre>
+    					<p>Java prototype</p>
+    					<pre class="programlisting" xml:space="preserve">public static int ExampleMethod(String param1, int param2);</pre>
+    					<p>In the above scenario parameter 2 ("5") will be cast to integer representation.</p>
+    					<p>Example of usage:</p>
+    					<pre class="programlisting" xml:space="preserve">
+# Kamailio
+java_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
+
+# Java
+public static int ExampleMethod(String SipMessageBuffer, int SipMessageLenght)
+{
+		... do something with buffer;
+		return 1;
+}
+</pre>
+    				</div></div>
+    			</li><li class="listitem">
+    				<div class="example"><a id="d5e207" shape="rect"/><p class="title"><strong>Example 1.13. Signature: "ZB"</strong></p><div class="example-contents">
+    					
+    					<p>Kamailio prototype</p>
+    					<pre class="programlisting" xml:space="preserve">java_staticmethod_exec("ExampleMethod", "ZB", "true", "0x05");</pre>
+    					<p>Java prototype</p>
+    					<pre class="programlisting" xml:space="preserve">public static int ExampleMethod(boolean param1, byte param2);</pre>
+    					<p>In the above scenario parameter 1 ("true") will be cast to boolean representation.</p>
+    					<p>Example of usage:</p>
+    					<pre class="programlisting" xml:space="preserve">
+# Kamailio
+java_staticmethod_exec("ExampleMethod", "ZB", "true", "0x05");
+
+# Java
+public static int ExampleMethod(boolean flagSet, byte bFlag);
+{
+		if (flagSet)
+		{
+			... do something with flags;
+		}
+		return 1;
+}
+</pre>
+    				</div></div>
+    			</li></ul></div>
+    	</div>
+    	
+    	
+    	
+    	<div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="d5e216" shape="rect"/>java_s_method_exec(method, method_signature, [param1[, param2[, ...]]])</h2></div></div></div>
+    		
+    		<p>Executes a java class synchronized method <span class="emphasis"><em>method</em></span>. Parameter <span class="emphasis"><em>method_signature</em></span> is required.</p>
+    		<p>For more info see <a class="ulink" href="http://docs.oracle.com/javase/tutorial/essential/concurrency/syncmeth.html" shape="rect"><em class="citetitle">Synchronized Methods</em></a></p>
+    		<div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">
+    				<div class="example"><a id="d5e226" shape="rect"/><p class="title"><strong>Example 1.14. Signature: "V"</strong></p><div class="example-contents">
+    					
+    					<p>Kamailio prototype</p>
+    					<pre class="programlisting" xml:space="preserve">java_s_method_exec("ExampleMethod", "V");</pre>
+    					<p>Java prototype</p>
+    					<pre class="programlisting" xml:space="preserve">public synchronized int ExampleMethod();</pre>
+    					<p>Example of usage:</p>
+    					<pre class="programlisting" xml:space="preserve">
+# Kamailio
+java_s_method_exec("ExampleMethod", "V");
+
+# Java
+public synchronized int ExampleMethod()
+{
+		... do something;
+		return 1;
+}
+</pre>
+    				</div></div>
+    			</li><li class="listitem">
+    				<div class="example"><a id="d5e235" shape="rect"/><p class="title"><strong>Example 1.15. Signature: "Ljava/lang/String;I"</strong></p><div class="example-contents">
+    					
+    					<p>Kamailio prototype</p>
+    					<pre class="programlisting" xml:space="preserve">java_s_method_exec("ExampleMethod", "Ljava/lang/String;I", "Hello world", "5");</pre>
+    					<p>Java prototype</p>
+    					<pre class="programlisting" xml:space="preserve">public synchronized int ExampleMethod(String param1, int param2);</pre>
+    					<p>In the above scenario parameter 2 ("5") will be cast to integer representation.</p>
+    					<p>Example of usage:</p>
+    					<pre class="programlisting" xml:space="preserve">
+# Kamailio
+java_s_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
+
+# Java
+public synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLenght)
+{
+		... do something with buffer;
+		return 1;
+}
+</pre>
+    				</div></div>
+    			</li><li class="listitem">
+    				<div class="example"><a id="d5e245" shape="rect"/><p class="title"><strong>Example 1.16. Signature: "ZB"</strong></p><div class="example-contents">
+    					
+    					<p>Kamailio prototype</p>
+    					<pre class="programlisting" xml:space="preserve">java_s_method_exec("ExampleMethod", "ZB", "true", "0x05");</pre>
+    					<p>Java prototype</p>
+    					<pre class="programlisting" xml:space="preserve">public synchronized int ExampleMethod(boolean param1, byte param2);</pre>
+    					<p>In the above scenario parameter 1 ("true") will be cast to boolean representation.</p>
+    					<p>Example of usage:</p>
+    					<pre class="programlisting" xml:space="preserve">
+# Kamailio
+java_s_method_exec("ExampleMethod", "ZB", "true", "0x05");
+
+# Java
+public synchronized int ExampleMethod(boolean flagSet, byte bFlag);
+{
+		if (flagSet)
+		{
+			... do something with flags;
+		}
+		return 1;
+}
+</pre>
+    				</div></div>
+    			</li></ul></div>
+    	</div>
+    	
+    	
+    	
+    	<div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="d5e254" shape="rect"/>java_s_staticmethod_exec(method, method_signature, [param1[, param2[, ...]]])</h2></div></div></div>
+    		
+    		<p>Executes a java synchronized static method <span class="emphasis"><em>method</em></span>. Parameter <span class="emphasis"><em>method_signature</em></span> is required.</p>
+    		<p>For more info see <a class="ulink" href="http://docs.oracle.com/javase/tutorial/essential/concurrency/syncmeth.html" shape="rect"><em class="citetitle">Synchronized Methods</em></a></p>
+    		<div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">
+    				<div class="example"><a id="d5e264" shape="rect"/><p class="title"><strong>Example 1.17. Signature: "V"</strong></p><div class="example-contents">
+    					
+    					<p>Kamailio prototype</p>
+    					<pre class="programlisting" xml:space="preserve">java_s_staticmethod_exec("ExampleMethod", "V");</pre>
+    					<p>Java prototype</p>
+    					<pre class="programlisting" xml:space="preserve">public static synchronized int ExampleMethod();</pre>
+    					<p>Example of usage:</p>
+    					<pre class="programlisting" xml:space="preserve">
+# Kamailio
+java_s_staticmethod_exec("ExampleMethod", "V");
+
+# Java
+public static synchronized int ExampleMethod()
+{
+		... do something;
+		return 1;
+}
+</pre>
+    				</div></div>
+    			</li><li class="listitem">
+    				<div class="example"><a id="d5e273" shape="rect"/><p class="title"><strong>Example 1.18. Signature: "Ljava/lang/String;I"</strong></p><div class="example-contents">
+    					
+    					<p>Kamailio prototype</p>
+    					<pre class="programlisting" xml:space="preserve">java_s_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "Hello world", "5");</pre>
+    					<p>Java prototype</p>
+    					<pre class="programlisting" xml:space="preserve">public static synchronized int ExampleMethod(String param1, int param2);</pre>
+    					<p>In the above scenario parameter 2 ("5") will be cast to integer representation.</p>
+    					<p>Example of usage:</p>
+    					<pre class="programlisting" xml:space="preserve">
+# Kamailio
+java_s_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
+
+# Java
+public static synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLenght)
+{
+		... do something with buffer;
+		return 1;
+}
+</pre>
+    				</div></div>
+    			</li><li class="listitem">
+    				<div class="example"><a id="d5e283" shape="rect"/><p class="title"><strong>Example 1.19. Signature: "ZB"</strong></p><div class="example-contents">
+    					
+    					<p>Kamailio prototype</p>
+    					<pre class="programlisting" xml:space="preserve">java_s_staticmethod_exec("ExampleMethod", "ZB", "true", "0x05");</pre>
+    					<p>Java prototype</p>
+    					<pre class="programlisting" xml:space="preserve">public static synchronized int ExampleMethod(boolean param1, byte param2);</pre>
+    					<p>In the above scenario parameter 1 ("true") will be cast to boolean representation.</p>
+    					<p>Example of usage:</p>
+    					<pre class="programlisting" xml:space="preserve">
+# Kamailio
+java_s_staticmethod_exec("ExampleMethod", "ZB", "true", "0x05");
+
+# Java
+public static synchronized int ExampleMethod(boolean flagSet, byte bFlag);
+{
+		if (flagSet)
+		{
+			... do something with flags;
+		}
+		return 1;
+}
+</pre>
+    				</div></div>
+    			</li></ul></div>
+    	</div>
+    	
+
+    </div></body></html>

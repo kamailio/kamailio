@@ -1,0 +1,220 @@
+body{
+  font-family:arial, helvetica, verdana;
+  font-size:12px;
+  text-shadow: 0 1px 0 #fff;
+}
+
+h1 {
+   text-align:center;
+}
+
+h1.centerH{
+  vertical-align:middle;
+  text-align:center;
+  font-size:1.6em;
+  font-weight:normal;
+  text-shadow: 0 1px 0 #fff;
+}
+
+#logo,.topictitle1{
+  margin:auto;
+  margin-bottom:35px;
+  font-size:1.7em;
+  color:#444;
+  width:83%;
+  position:relative;
+  left:1%;
+}
+
+.topictitle1{
+  margin-top:30px;
+  margin-bottom:0
+}
+
+#logo img, .topictitle1 img{
+  width:150px;
+}
+
+.titProduct{
+  font-weight:bold;
+}
+
+#form{
+  width:10%;
+  position:relative;
+  left:45%;
+  float:left;
+}
+img{
+  vertical-align:middle;
+}
+div.title{
+  font-size:medium;
+  font-style:normal;
+  font-weight:bold;
+  padding:5px 2px 5px 2px;
+}
+div.desc{
+  color:#444;
+  font-size:1.1em;
+  font-style:normal;
+  /*font-weight:bold;*/
+  padding:5px 2px 5px 2px;
+  line-height:1.6em;
+}
+
+input{
+  line-height:22px;
+  margin:3px;
+}
+
+input[readonly = readonly]{
+  background-color:#f9f9f9;
+  color:#444;
+  padding:1px;
+  border:1px solid #ccc;
+}
+div.panel, .taskbody{
+  clear:both;
+  width:80%;
+  position:relative;
+  left:9%;
+  background-color:#F9FEFF;
+  border-radius:7px;
+  box-shadow:0px 2px 2px #eee;
+  border:1px solid #ddd;
+  float:left;
+  padding:10px;
+  margin:10px 5px 10px 5px;
+}
+
+div.panel table{
+  width:100%;
+}
+
+div.panel td:first-child{
+  font-weight:bold;
+  color:#333;
+  width:60%;
+}
+div.panel .settingDesc{
+  font-weight:normal;
+  font-size:0.9em;
+  color:#555;
+}
+
+div.panel td{
+  height:2.5em;
+  padding:4px;
+}
+
+div.panel .col2 td{
+  height:1.8em;
+  padding:4px;
+}
+
+
+div.panel td:last-child{
+  font-style:italic;
+  font-size:0.9em;
+  padding-left:7px;
+}
+div.panel .col2 td:last-child{
+  font-style:normal;
+  font-size:1em;
+}
+
+div.panel tr:hover td{
+  background-color:#E6F7FF;
+}
+
+
+#doInstallData{
+  width:100%;
+  left:5%;
+  padding:0px;
+  margin:10px 5px 0px 5px;
+}
+div.success{
+  color:green;
+  font-weight:bold;
+}
+div.error{
+  color:red;
+  font-weight:bold;
+}
+.btActions{
+  clear:both;
+  width:91%;
+}
+.btActions input{
+  float:right;
+  margin:auto;
+	margin-left: 20px;
+	margin-bottom: 20px;
+  padding: 4px;
+	width: 130px;
+	cursor: pointer;
+  border:1px solid #ddd;
+	border-radius: 5px;
+	background-color: #eee;
+	text-align: center;
+	text-shadow: 0 1px 0 #fff;
+	font-weight:bold;
+	color:#666;
+	box-shadow: 1px 1px 7px #ccc;
+}
+
+.btActions input:hover {
+	background-color: #E1F1FF;
+  color:#333;
+}
+
+table.col2 td:first-child{width:38%}
+
+/* *** installation.html *** */
+
+h1.topictitle1{
+  font-size:2em;
+  padding:15px 0 15px 0;
+}
+
+.taskbody h2{
+  padding-top:10px;
+  color:#444;
+}
+
+ol{
+  line-height:2em;
+}
+
+li.step .cmd{font-weight:bold}
+li.substep .cmd{font-weight:normal;}
+strong.b{}
+span.code{
+	padding: 20px;
+	font-family: Courier, monospace;
+	font-size: 12px;
+	display: block;
+	background-color: #fefefe;
+	border: 1px solid #ddd;
+	margin: 10px;
+	line-height: 18px;
+}
+.bld{
+	color:#336699;
+	font-weight: bold;
+}	
+ol ol ol{
+  list-style:circle;
+}
+ol a{
+  color:#275078;
+  text-decoration:none  
+  }
+  
+div.removeInfo{
+	font-size: medium;
+	font-weight: bold;
+	color: #aa0000;
+}

@@ -1,0 +1,552 @@
+#comments {
+	font-size: 12px;
+	border-width: 1px;
+	border-style: solid;
+	border-color: rgb(238, 238, 238) rgb(238, 238, 238) rgb(221, 221, 221);
+	color: rgb(68, 68, 68);
+	float: left;
+	width: 100%;
+	padding: 5px 5px 5px 0px;
+	vertical-align: middle;
+	background-image: url('../img/icon_comment24x24.png');
+	background-color: rgb(251, 251, 251);
+	box-shadow: rgb(238, 238, 238) 0px 2px 3px;
+	background-position: 10px 50%;
+	background-repeat: no-repeat no-repeat;
+}
+
+#comments #userAccount {
+	padding: 5px 0px;
+	margin: 0px;
+	right: 15px;
+	float: right;
+	display: inline-block;
+}
+
+#loginResponse {
+	color: red;
+	font-style: italic;
+}
+
+.bt_toolbar,#accountInfo a,#userAccount #bt_logIn,#userAccount #bt_logOff,#userAccount #bt_editProfile
+	{
+	background-color: rgb(223, 241, 255);
+	cursor: pointer;
+	font-size: 0.8em;
+	color: rgb(51, 51, 51);
+	text-shadow: rgb(255, 255, 255) 0px 1px 0px;
+	text-decoration: none;
+	padding: 5px 10px;
+	min-width: 60px;
+	border: 1px solid rgb(221, 221, 221);
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+	border-bottom-right-radius: 5px;
+	border-bottom-left-radius: 5px;
+	margin: 0px 0px 0px 10px;
+	box-shadow: rgb(221, 221, 221) 1px 1px 7px;
+}
+
+.btnHGlue {
+	display: inline-block;
+	width: 30px;
+	height: 10px;
+}
+
+.btn,.bt_cancel,#l_bt_submit_nc,#bt_recover,#bt_signUp,#logIn,#l_bt_submit_log,#bt_passwd,.span_bt,#bt_profile,#bt_close
+	{
+	background-color: rgb(249, 249, 249);
+	border: 1px solid rgb(221, 221, 221);
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+	border-bottom-right-radius: 5px;
+	border-bottom-left-radius: 5px;
+	box-shadow: rgb(221, 221, 221) 1px 1px 3px;
+	min-width: 60px;
+	color: rgb(68, 68, 68);
+	text-shadow: rgb(255, 255, 255) 0px 1px 0px;
+	cursor: pointer;
+	padding: 6px 10px;
+	margin-top: 15px;
+	display: inline-block;
+	font-size: 0.9em;
+	font-style: normal;
+	text-align: center;
+}
+.btn:HOVER,.bt_cancel:hover,#l_bt_submit_nc:hover,#bt_recover:hover,#bt_signUp:hover,#logIn:hover,#l_bt_submit_log:hover,.span_bt:hover,#bt_passwd:hover,#bt_profile:hover, #bt_close:hover
+	{
+	color:#000;
+	border:1px solid #ccc;
+	background-color: #E1F1FF;
+	box-shadow: 1px 1px 3px #ddd;
+}
+#cm_count,#preload {
+	margin-left: 35px;
+}
+
+#cm_count,#cm_title {
+	font-weight: bold;
+	font-size: 1.2em;
+	padding-left: 5px;
+}
+
+#loginData,#recoverPwd,#signUp {
+	width: 350px;
+	position: absolute;
+	clear: both;
+	background-color: rgb(255, 255, 255);
+	border-top-left-radius: 7px;
+	border-top-right-radius: 7px;
+	border-bottom-right-radius: 7px;
+	border-bottom-left-radius: 7px;
+	border-width: 0px 1px 1px;
+	border-right-style: solid;
+	border-bottom-style: solid;
+	border-left-style: solid;
+	border-right-color: rgb(204, 204, 204);
+	border-bottom-color: rgb(204, 204, 204);
+	border-left-color: rgb(204, 204, 204);
+	float: left;
+	padding: 10px;
+	box-shadow: rgb(153, 153, 153) 1px 1px 10px;
+	top: 20%;
+	left: 50%;
+	margin-top: -15%;
+	margin-left: -25%;
+	z-index: 100;
+}
+
+.login {
+	font-size: 1em;
+	width: 96%;
+	padding: 2%;
+}
+
+.login thead td {
+	font-size: 1.2em;
+	font-weight: bold;
+}
+
+.login td:first-child {
+	width: 50%;
+}
+
+.bt_close {
+	clear: both;
+	background-image: url("../img/close.png");
+	background-repeat: no-repeat;
+	/*background-position:5px 5px;*/
+	position: relative;
+	cursor: pointer;
+	width: 20px;
+	height: 20px;
+	padding: 0px 4px 0 4px;
+	text-align: center;
+	float: right;
+	margin-top: 10px;
+}
+
+.bt_close:HOVER {
+	background-image: url("../img/close_hover.png");
+}
+
+#preload img {
+	padding: 0px 5px;
+	margin-bottom: 0px;
+}
+
+#adminMenu {
+	clear: both;
+	float: right;
+	padding: 5px 0px;
+	margin: 0px;
+	right: 15px;
+	display: inline-block;
+}
+
+#adminMenu .span_bt {
+	float: right;
+	margin-right: 20px;
+}
+
+.formTitle {
+	height: 30px;
+	font-weight: bold;
+	font-size: 1.2em;
+	float: left;
+	padding: 10px;
+}
+
+#loginData input,#recoverPwd input,#signUp input {
+	line-height: 18px;
+	margin: 10px 0px 0px;
+}
+
+#v_preload {
+	height: 30px;
+	font-weight: bold;
+	font-size: 1.2em;
+	float: left;
+	padding: 10px;
+}
+
+#setVersionInfo {
+	clear: both;
+	padding: 10px;
+}
+
+#exportDiv {
+	position: absolute;
+	clear: both;
+	width: 60%;
+	background-color: rgb(255, 255, 255);
+	border-top-left-radius: 7px;
+	border-top-right-radius: 7px;
+	border-bottom-right-radius: 7px;
+	border-bottom-left-radius: 7px;
+	border-width: 0px 1px 1px;
+	border-right-style: solid;
+	border-bottom-style: solid;
+	border-left-style: solid;
+	border-right-color: rgb(204, 204, 204);
+	border-bottom-color: rgb(204, 204, 204);
+	border-left-color: rgb(204, 204, 204);
+	float: none;
+	padding: 10px;
+	box-shadow: rgb(153, 153, 153) 1px 1px 10px;
+	top: 30%;
+	left: 50%;
+	min-width: 400px;
+	margin-top: -10%;
+	margin-left: -30%;
+	z-index: 100;
+}
+
+.bt_inactiv {
+	background-color: rgb(239, 239, 239);
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+	border-bottom-right-radius: 5px;
+	border-bottom-left-radius: 5px;
+	box-shadow: rgb(170, 170, 170) 0px 1px 4px;
+	min-width: 60px;
+	color: rgb(221, 221, 221);
+	text-shadow: rgb(255, 255, 255) 0px 1px 0px;
+	cursor: pointer;
+	padding: 6px 10px;
+	margin-top: 15px;
+	display: inline-block;
+	font-size: 0.9em;
+	text-align: center;
+	border: 0px;
+}
+
+body {
+	font-family: arial, helvetica, verdana;
+	font-size: 0.9em;
+}
+
+#msgInfo {
+		
+}
+
+#adminMenu {
+	padding: 5px 0px;
+	margin: 0px;
+	right: 15px;
+	float: right;
+}
+
+#inlineViewDiv {
+	position: absolute;
+	clear: both;
+	width: 90%;
+	height: 80%;
+	background-color: rgb(255, 255, 255);
+	border-top-left-radius: 7px;
+	border-top-right-radius: 7px;
+	border-bottom-right-radius: 7px;
+	border-bottom-left-radius: 7px;
+	border: 1px solid rgb(204, 204, 204);
+	box-shadow: rgb(153, 153, 153) 1px 1px 10px;
+	float: none;
+	padding: 10px;
+	top: 7%;
+	left: 5%;
+	overflow: hidden;
+}
+
+.inLineFormTitle {
+	height: 5%;
+	font-weight: bold;
+	font-size: 1.2em;
+	float: left;
+	padding: 10px;
+}
+
+#setVersionDiv {
+	position: absolute;
+	clear: both;
+	background-color: rgb(255, 255, 255);
+	border-top-left-radius: 7px;
+	border-top-right-radius: 7px;
+	border-bottom-right-radius: 7px;
+	border-bottom-left-radius: 7px;
+	border-width: 0px 1px 1px;
+	border-right-style: solid;
+	border-bottom-style: solid;
+	border-left-style: solid;
+	border-right-color: rgb(204, 204, 204);
+	border-bottom-color: rgb(204, 204, 204);
+	border-left-color: rgb(204, 204, 204);
+	float: none;
+	box-shadow: rgb(153, 153, 153) 1px 1px 10px;
+	top: 10%;
+	left: 50%;
+	width: 50%;
+	padding: 15px;
+	margin-left: -25%;
+	z-index: 100;
+}
+table#usersList {
+	width: 100%
+}
+
+table#usersList td {
+	padding: 10px
+}
+
+table#usersList thead {
+	background-color: #336699;
+	color: #fff;
+	text-shadow: 0 1px 0 #333;
+	text-align: left;
+	text-indent: 15px
+}
+.tbHRow {
+	width: 98%;
+	height:100%;
+	float: left;
+	padding: 5px 0px 5px 0px;
+	border-bottom: 1px solid #ccc;
+	background-color: #69c;
+	color: #fff;
+	text-shadow: 0 1px 0 #333;
+	text-align: center;	
+}
+.tbRow {
+	float: left;
+	width: 99%;
+	padding-bottom: 5px;
+	border-bottom: 1px solid #ccc;
+	vertical-align: middle;
+}
+.tbRow:hover {
+	background-color:#fffff0;
+}
+.tbCell {
+	float: left;		
+	vertical-align: middle;		
+	padding-left:5px;  
+}
+.tbCell p{
+	
+}
+table#usersList tbody td {
+	border: 1px solid #fff;
+}
+
+table#usersList tbody tr:HOVER { /*	background-color: lightyellow;*/
+	background-color: #F2FAFF;
+	cursor: pointer;
+	border-top: 1px solid #eee;
+	border-bottom: 1px solid #ccc;
+}
+
+table#usersList #editUser table tr:HOVER {
+	background-color: #fff;
+}
+table#usersList thead {
+	font-weight:bold;	
+	background-color: #336699;
+	color: #fff;
+	text-shadow: 0 1px 0 #333;
+	text-align: left;
+	text-indent: 5px;
+}
+.listTitle,.listTitleV{
+	width: 44%;
+	float: left;
+	padding-bottom: 5px;
+	/*border-bottom: 1px solid #ddd;*/
+	margin-bottom:5px;
+	margin-left:5px;
+	font-weight: bold;
+	float: left;	
+}
+
+table#usersList tbody td{
+	font-size: 0.8em;
+	padding: 5px;
+	
+	}
+	
+	.products{
+	clear: both;
+	border: 1px solid #ccc;
+	width: 44%;
+	float: left;
+	padding: 5px;
+}
+
+.formTitle {
+	height: 30px;
+	font-weight: bold;
+	font-size: 1.2em;
+	float: left;
+	padding: 10px 10px 10px 10px;
+}
+#loginData input, #recoverPwd input,#signUp input{
+	line-height: 18px;
+	margin: 10px 0 0 0;
+}
+
+.v_true,.v_false {
+	padding: 3px 5px 3px 5px;
+	width: 30px;
+	height: 20px;
+	background-color: #eee;
+	border-radius: 5px;
+	text-align: center;
+	text-shadow: 0 1px 0 #fff;
+	cursor: pointer;
+	font-size: 1em;
+	box-shadow: 0px 1px 2px #999;
+	float: left;
+	margin-top: 15px;
+	margin-left: 10px;
+}
+
+.versionTimeLine {
+	float: left;
+	width: 56px;
+	background-image: url('../img/timeVersion.png');
+	background-position: 50% 0px;
+	background-repeat: no-repeat;
+	margin-bottom: 10px;
+}
+
+.v_true:hover,.v_false:hover {
+	background-color: #98C1D6;
+	text-shadow: 0 1px 0 #ddd;
+	margin-left: 10px;
+}
+
+.v_true {
+	background-color: #dfd;
+}
+.versions{	
+	border: 1px solid #ccc;
+	width: 44%;
+	float: left;
+	padding: 5px;
+	margin-left: 20px;
+}
+.inLineBand {
+	clear: both;
+	float: left;
+	padding: 10px 0px 0px;
+	width: 100%;
+	height: 40px;
+}
+
+#ex_inline {
+	max-height: 82%;
+	overflow: auto;
+	width: 100%;
+}
+
+#editUser td {
+	height: 2em;
+}
+
+#editUser {
+	z-index: 10;
+	background-color: rgb(255, 255, 255);
+	border: 1px solid rgb(204, 204, 204);
+	position: absolute;
+	min-width: 400px;
+	width: 50%;
+	box-shadow: rgb(85, 85, 85) 1px 1px 15px;
+	padding: 15px;
+	left: 50%;
+	margin-top: -100px;
+	margin-left: -300px;
+}
+
+#editUser table {
+	width: 100%;
+}
+
+#editUser table input[type="text"] {
+	width: 90%;
+}
+
+#editUser table td:first-child {
+	width: 200px;
+}
+
+#adminUsers {
+	float: left;
+}
+
+#adminUsers form fieldset {
+	border: 0px solid rgb(238, 238, 238);
+}
+
+.toolbar {
+	height: 55px;
+}
+
+.product_Versions,.selectable,.p_selectable,.band {
+	clear: both;
+	float: left;
+	width: 100%;
+}
+
+.product_Versions,
+.selectable,
+.p_selectable,
+.band {
+	clear: both;
+	float: left;
+	width: 100%;
+	
+}
+
+.selectable,
+.p_selectable {
+	cursor: pointer;
+}
+
+.selectedItem {
+	background-color: #369;
+	color: #fff;
+}
+
+
+.1selectable:hover,
+.1p_selectable:hover {
+	background-color: #58b;
+	color: #fff;
+	cursor: pointer;
+}
+
+.cb-element{	
+	margin:1px 5px 1px 5px;	
+	vertical-align: top;		
+}
+input.ck{	
+	margin-bottom: 18px;	
+}
+

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml" version="-//W3C//DTD XHTML 1.1//EN"><head xmlns:h="http://www.w3.org/1999/xhtml" profile=""><title>Java Module API</title><meta name="generator" content="DocBook XSL Stylesheets V1.77.1"/></head><body><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="d5e292" shape="rect"/>Java Module API</h1></div></div></div>
+		
+    	<p/>
+    	
+    	
+    	<div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="d5e295" shape="rect"/>Minimal program skeleton</h2></div></div></div>
+    		
+    		<p/>
+    		<div class="example"><a id="d5e298" shape="rect"/><p class="title"><strong>Example 1.20. Minimal program skeleton</strong></p><div class="example-contents">
+    			
+    			<p/>
+    			<pre class="programlisting" xml:space="preserve">
+import org.siprouter.*;
+import org.siprouter.NativeInterface.*;
+
+public class Kamailio extends NativeMethods
+{
+		/* Here you should specify a full path to app_java.so */
+		static
+		{
+				System.load("/opt/kamailio/lib/kamailio/modules/app_java.so");
+		}
+
+		/* Constructor. Do not remove !!! */
+		public Kamailio()
+		{
+		}
+
+		/*
+		This method should be executed for each children process, immediately after forking.
+		Required. Do not remove !!!
+		*/
+		public int child_init(int rank)
+		{
+				return 1;
+		}
+}
+</pre>
+    		</div></div>
+    	</div>
+    	
+    	
+    </div></body></html>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml" version="-//W3C//DTD XHTML 1.1//EN"><head xmlns:h="http://www.w3.org/1999/xhtml" profile=""><title>Parameters</title><meta name="generator" content="DocBook XSL Stylesheets V1.77.1"/></head><body><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="d5e72" shape="rect"/>Parameters</h1></div></div></div>
+		
+
+		
+		<div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="d5e74" shape="rect"/><code class="varname">class_name</code> (string)</h2></div></div></div>
+			
+		    <p>
+		    	The class name should have the same compiled file name.
+		    	If the value is <span class="emphasis"><em>"Kamailio"</em></span>, then the compiled file should be named as <span class="emphasis"><em>"Kamailio.class"</em></span>.
+		    </p>
+		    <p>
+				<span class="emphasis"><em>
+					Default value is <span class="quote">“<span class="quote">Kamailio</span>”</span>.
+				</em></span>
+		    </p>
+		    <div class="example"><a id="d5e83" shape="rect"/><p class="title"><strong>Example 1.1. Set <code class="varname">class_name</code> parameter</strong></p><div class="example-contents">
+		    	
+				<pre class="programlisting" xml:space="preserve">
+...
+modparam("app_java", "class_name", "Kamailio")
+...
+</pre>
+		    </div></div>
+		</div>
+
+		
+		<div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="d5e87" shape="rect"/><code class="varname">child_init_method</code> (string)</h2></div></div></div>
+			
+			<p>
+				TBD.
+			</p>
+			<p>
+				<span class="emphasis"><em>
+					Default value is <span class="quote">“<span class="quote">child_init</span>”</span>.
+				</em></span>
+			</p>
+			<div class="example"><a id="d5e94" shape="rect"/><p class="title"><strong>Example 1.2. Set <code class="varname">child_init_method</code> parameter</strong></p><div class="example-contents">
+				
+				<pre class="programlisting" xml:space="preserve">
+...
+modparam("app_java", "child_init_method", "my_mod_init")
+...
+</pre>
+			</div></div>
+		</div>
+
+		
+		<div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="d5e98" shape="rect"/><code class="varname">java_options</code> (string)</h2></div></div></div>
+			
+			<p>
+				Java options for Java Virtual Machine.
+				For more info read <a class="ulink" href="http://docs.oracle.com/javase/6/docs/technotes/tools/windows/java.html" shape="rect"><em class="citetitle">java docs</em></a>
+			</p>
+			<p>
+				<span class="emphasis"><em>
+					Default value is <span class="quote">“<span class="quote">-Djava.compiler=NONE</span>”</span>.
+				</em></span>
+			</p>
+			<div class="example"><a id="d5e107" shape="rect"/><p class="title"><strong>Example 1.3. Set <code class="varname">java_options</code> parameter</strong></p><div class="example-contents">
+				
+				<pre class="programlisting" xml:space="preserve">
+...
+modparam("app_java", "java_options", "-Djava.compiler=NONE")
+...
+</pre>
+			</div></div>
+			<div class="example"><a id="d5e111" shape="rect"/><p class="title"><strong>Example 1.4. Set <code class="varname">java_options</code> parameter (live configuration)</strong></p><div class="example-contents">
+				
+				<pre class="programlisting" xml:space="preserve">
+...
+# Assumes "application java folder" is located at /opt/kamailio/java
+modparam("app_java", "java_options", "-Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
+...
+</pre>
+			</div></div>
+			<div class="example"><a id="d5e115" shape="rect"/><p class="title"><strong>Example 1.5. Set <code class="varname">java_options</code> parameter (verbose configuration)</strong></p><div class="example-contents">
+				
+				<pre class="programlisting" xml:space="preserve">
+...
+# Assumes "application java folder" is located at /opt/kamailio/java
+modparam("app_java", "java_options", "-verbose:gc,class,jni -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
+...
+</pre>
+			</div></div>
+			<div class="example"><a id="d5e119" shape="rect"/><p class="title"><strong>Example 1.6. Set <code class="varname">java_options</code> parameter (debug configuration)</strong></p><div class="example-contents">
+				
+				<pre class="programlisting" xml:space="preserve">
+...
+# Assumes "application java folder" is located at /opt/kamailio/java
+modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:/opt/kamailio/java/kamailio.jar")
+...
+</pre>
+			</div></div>
+		</div>
+
+		
+		<div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="d5e123" shape="rect"/><code class="varname">force_kam_cmd_exec</code> (int)</h2></div></div></div>
+			
+			<p>
+				This parameter forces execution a kamailio comnmand with java native method <span class="quote">“<span class="quote">KamExec</span>”</span>.
+				# Note: this is an untested yet feature, may cause (but may not) a memory leaks if used from embedded languages.
+			</p>
+			<p>
+				<span class="emphasis"><em>
+					Default value is <span class="quote">“<span class="quote">0 (off)</span>”</span>.
+				</em></span>
+			</p>
+			<div class="example"><a id="d5e131" shape="rect"/><p class="title"><strong>Example 1.7. Set <code class="varname">force_kam_cmd_exec</code> parameter</strong></p><div class="example-contents">
+				
+				<pre class="programlisting" xml:space="preserve">
+...
+modparam("app_java", "force_kam_cmd_exec", 1)
+...
+</pre>
+			</div></div>
+		</div>
+	</div></body></html>

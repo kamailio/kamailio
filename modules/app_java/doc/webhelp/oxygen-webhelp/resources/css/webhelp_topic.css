@@ -1,0 +1,249 @@
+body {
+  background-color:white;
+  margin:0px; padding:0 0 0 0.9em;
+  font-family: arial, helvetica, sans-serif;
+  line-height:18px;
+  font-size:12px;
+  
+}
+span.frames{ cursor:pointer; padding:0 5px 0 0; }
+
+a span.navheader_separator,a span.navheader_linktext {
+  display:none;
+}
+
+a:visited{
+  color:#660066;        
+}
+a:hover{
+  color:red;
+}
+
+a span.frames{
+/*
+ * Patch 18.08.2010 EXM-18336
+ * color:navy;
+ */
+    color:#0000FF; 
+    text-decoration:underline;
+}
+/*
+ * Patch 18.08.2010 EXM-18336
+ * a:hover{ 
+ *    color:red; 
+ *    text-decoration:underline;
+ * }
+ * 
+ */
+
+table.nav{
+  width:100%;  
+  vertical-align:middle;
+}
+
+table.nav td + td {
+  text-align:right;
+  padding:0 0.4em 0 0;
+}
+
+/* Patch EXM-18336
+ * h1.topictitle1 {
+ *   color:black;
+ *   background-color:#eee;  
+ *   padding:0.3em 0 0 0.2em;
+ *   margin:0 0.3em 0 0;
+}
+ */
+h1.topictitle1 {
+  color:black;
+  background-color:#C0C0C0;
+  font-size: 20px;  
+  padding:0.3em 0 0.3em 0.3em;
+  margin:0 0.3em 0 0;
+}
+
+div.rate_page{float:left; width:400px; margin:40px 0 0 0;}
+div.rate_response {color:#555; font-size:0.9em;}
+.stars { position:absolute; width:105px; height:16px; left:140px; margin:-15px 0 0px 0;
+  background-image:url("../img/dot.png");background-position:0px 1px; 
+  background-repeat:no-repeat;overflow:hidden; padding:0; }
+
+ul.stars li{  margin:0; height:20px; width:21px;position:absolute;float:left;list-style-type:none;}
+ul.stars li a{ text-decoration:none; position:absolute; overflow:hidden; padding:0; margin:0;}
+ul.stars li a:hover, ul.stars li a.show_star {text-decoration:none; background-image:url("../img/star.png"); 
+  background-position:0 0px;height:25px; background-repeat:no-repeat;
+}
+input {margin:14px 0 0 0;}
+textarea.text-input{margin:4px 0 0 0; width:225px; height:100px; border:1px solid #ccc;}
+
+a#star1 { width:18px; z-index:6;  }
+a#star2 { width:40px; z-index:5; }
+a#star3 { width:60px; z-index:4; }
+a#star4 { width:80px; z-index:3; }
+a#star5 { width:100px; z-index:2; }
+
+div#rate_comment {clear:both; margin:14px 0 0 0;}
+div.rate_response {margin:-14px 0 0 0; }
+.small {font-size:0.9em;}
+.hide {display:none;}
+.show {display:block;}
+
+/*----------------------*/
+
+
+/*----------------
+    The footer. 
+-----------------*/
+
+div.footer{  
+  margin:2em 0.6em 1.5em 0;
+  float:right;
+  line-height:24px;
+  color:#444;
+  font-size:0.9em
+}
+div.footer a{text-decoration:none; color:#444}
+
+.navfooter{
+  border-top:1px solid #eee;
+  margin:3em 0 0 0; 
+  padding:0.4em 0 0 0;
+}
+
+ul li {
+  line-height:18px;
+}
+
+div.footer span.oXygenLogo img{  
+  vertical-align:bottom;
+  border:0;
+}
+div.footer span.xmlauthor{
+  margin-bottom:14px;
+}
+
+
+
+/*----------------*/
+/*The copyright.*/
+div, td{
+    font-size:10pt;
+}
+
+div.copyright{
+    font-size:8pt;
+    padding-top:1em;
+}
+#nav_tree div.copyright{
+    padding-top:0.2em;
+    padding-left:1em;
+}
+
+/* Makes the titles stand-out */
+h1.title,
+h2.title{
+    color:#333;
+    background-color:#ececec;
+    text-shadow:0 1px 0 #fff;
+    padding: 0.4em;
+    box-shadow: 0px 1px 2px #999;
+    /*border-radius:5px;*/
+}
+
+
+/* The navigation tree classes */
+#nav_tree > ul{
+    border-top:1px solid gray;
+    border-bottom:1px solid gray;
+    margin-top: 0em;
+    margin-left: 0.5em;
+    margin-right: 0.5em;
+    min-width:300px;
+    padding: 1em;
+    font-size:10pt;
+}
+
+#content{
+    margin-left:1em;
+    border-left:2px solid gray;
+    padding-left:1em;
+}
+
+#nav_tree ul ul{
+    margin:0;
+    padding:0;
+}
+
+#nav_tree form{
+    margin-top:0.5em;
+    margin-bottom:0.5em;
+    padding-right:0.5em;
+    text-align:right;
+}
+#nav_tree form input{
+    font-size:8pt;
+}
+
+#nav_tree li {
+    margin-top: 0.2em;
+    margin-left: 1em;
+    list-style-type:none;
+}
+
+/* The links */
+#nav_tree a.nav_tree{
+    color:black;
+    background-color:inherit;
+}
+
+/* The selected page. */
+#nav_tree li.nav_tree_last_open_book > a{
+    background-color: #333399;
+    color:white;
+    text-decoration:none;
+}
+
+#nav_tree li:before{
+    display:inline;
+    vertical-align:text-bottom;
+    padding-top:0.2em;
+    padding-right:0.2em;
+}
+
+
+/* Title displayed over the tree area.*/
+#nav_tree p.nav_title { 
+    font-size: 14pt; 
+    font-weight: bold; 
+    margin-bottom: 0.5px; 
+    margin-top: 0.5em;
+    margin-left: 0.5em;
+    margin-right: 0.5em;
+}
+#nav_tree p.nav_title a{ 
+    text-decoration:none;
+    color:black;
+    background-color:inherit;
+}
+
+/* The path in the document displayed over the content.*/
+div.nav_path{
+    text-align:right;
+}
+
+.redX {
+    color:red;
+    background-color:inherit;
+    font-size:1.2em;
+}
+
+.oXygenLogo {
+    color:#1166DD;
+    background-color:inherit;
+    font-weight:bold;
+    font-size:1.2em;
+}
+
+.highlight { 
+    background-color: #FFFF88; 
+}

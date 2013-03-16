@@ -1,0 +1,437 @@
+html
+{
+	overflow: auto;
+}
+
+body {
+    margin: 0px; padding:0;
+    font-family: arial, helvetica, sans-serif;
+    font-size:18px;
+    background-color:white;
+}
+
+#tocMenu{
+  /* Patch EXM-18336
+   * padding-left: 0.6em;
+   */
+  margin:0 auto;
+  overflow: auto;
+  min-width:250px;
+  width:100%;
+}
+#tocMenu div{ 
+  text-decoration:none; 
+  color:#336699; 
+  padding:4px 10px 2px 10px;
+  cursor:pointer; 
+  border-bottom:0;
+  background-color:#f9f9f9;
+  border:1px solid #ddd;
+  border-top-left-radius:7px;
+  border-top-right-radius:7px;
+  border-bottom:0;
+  float: left;
+  min-height: 1px;
+  text-shadow:0 1px 0 #fff;
+}
+
+#tocMenu div:hover{
+  color:#cc0000;
+}
+
+#tocMenu div.selected{	
+	text-decoration: none;
+	/*width:70px;*/
+	color:#333;
+	background-color:#D3E1F1;
+  border:1px solid #ccc;
+  border-top-left-radius:7px;
+  border-top-right-radius:7px;
+  border-bottom:0;
+  text-shadow:0 1px 0 #fff;
+} 
+ 
+#indexBlock {
+  line-height:1.8em;
+}
+
+#indexBlock a{
+  text-decoration:none;
+}
+
+#indexBlock fieldset{
+  border:0;
+  padding-top:0;
+  border-bottom:1px solid #eee;
+}
+
+#indexBlock ul{
+  color:#444;
+  list-style:none;
+  margin:0;
+  padding-left:16px;
+}
+
+#list_idx{
+  padding-left:20px;
+}
+
+#id_search{
+  width:270px; 
+}
+
+#bck_toc{
+  background-color:#D3E1F1;
+  padding:10px 0 0 0px;
+}
+  
+
+#tab_nav_tree_placeholder, #searchResults{
+    height:90%;	
+    /*overflow: auto;*/
+}
+
+#searchForm{
+    padding:0 10px 15px 10px;
+    border-bottom:0px solid #eee;
+}
+
+#bck_toc #searchBlock,#bck_toc #indexBlock, #bck_toc #contentBlock{
+    border-top:1px solid #ccc;
+    background-color:white;
+    padding-top:20px; 
+    position: relative;
+	  vertical-align:top;
+	  width:100%;
+}
+
+h1{
+   font-size:1.2em;
+   padding:0.1em 0 0 0.3em;
+}
+
+a span.navheader_separator,a span.navheader_linktext {
+  display:none;
+}
+
+a{
+  color:navy; 
+  text-decoration:underline;
+}
+
+a:hover{ 
+  color:red; 
+  text-decoration:underline;
+}
+
+.hide{display:none}
+
+#preload{
+    position:absolute;
+    margin:80px 0 0 40px;
+    color:#444;
+    height:100px;
+    text-align:center;
+}
+.g_pu,.g_nu {cursor:pointer; padding:0 4px 0 4px;}
+/*
+ * Start patch WebHelp - 18.08.2010 EXM-18336
+ */
+.g_nu,.g_pu,
+a.link{
+	padding-left: 10px;
+	padding-right: 10px;
+    color: #0000EE;
+    text-decoration: underline;
+}
+
+a.link:hover{
+	color:red;
+    text-decoration: underline;
+}
+
+a.link:visited{
+    color: #840084;
+    text-decoration: underline;
+    font-size:40px;
+}
+
+.normalLink{
+	color: #2B008C;
+	background-color: #EBEFF8;
+    text-decoration: none;
+	font-size: 15px;
+	padding-left: 10px;
+	padding-right: 10px;
+}
+a.otherLink{
+    color: #0050A0;
+    background-color: #EBEFF8;
+    text-decoration: none;
+	font-size: 13px;
+    font-weight: bold;	
+}
+a.otherLink:hover{
+    text-decoration: none;
+}
+.searchButton{
+    font-size: 11px;
+    margin-left: 10px;
+}
+.highlightText{
+    color: #0050A0;
+	/*
+    background-color: #EBEFF8;
+	*/
+    text-decoration: none;
+	font-size: 13px;
+    font-weight: bold;	
+}
+.textToSearch{
+    font-size: 11px;
+}
+a.foundResult{
+    color:#0000FF;
+    font-weight: bold;
+}
+a.foundResult:visited{
+  color:#660066;         
+}
+a.foundResult:hover{
+    color:red;
+}
+    
+/*
+ * End patch WebHelp - 18.08.2010 EXM-18336
+ */
+
+
+table.nav{
+  width:100%;  
+  vertical-align:middle;
+}
+
+table.nav td + td {
+  text-align:right;
+}
+
+h1.topictitle1 {
+  color:black;
+  background-color:#eee;
+  padding: 0.2em;
+}
+
+.navfooter{
+  border-top:1px solid #eee;
+  padding:0.4em 0 0 0;
+}
+
+#searchResults{
+    padding: 0.6em;
+}
+
+.searchresult{
+  margin:0;
+  padding:0
+}
+
+.searchresult li{
+  margin-top:0.2em;
+  padding: 0.6em;
+}
+
+/*
+ .searchresult li:hover{
+  background-color:#ebebeb;  
+}
+*/
+
+div.footer{  
+  line-height:24px;
+  padding:0 0 0 0.9em;
+}
+
+div.footer span.oXygenLogo img{ 
+  border:0;
+  vertical-align:bottom;
+}
+div.footer span.xmlauthor{
+  margin-bottom:0.7em;
+}
+
+
+
+/*----------- OLD STYLE ---------------*/
+
+/*The copyright.*/
+div, td{
+    font-size:10pt;
+}
+
+div.copyright{
+    font-size:8pt;
+    padding-top:1em;
+}
+#nav_tree div.copyright{
+    padding-top:0.2em;
+    padding-left:1em;
+}
+
+/* Makes the titles stand-out */
+h1.title,
+h2.title{
+    color:black;
+    background-color:silver;
+    padding: 0.2em;
+}
+
+
+/* The navigation tree classes */
+#nav_tree > ul{
+    border-top:1px solid gray;
+    border-bottom:1px solid gray;
+    margin-top: 0em;
+    margin-left: 0.5em;
+    margin-right: 0.5em;
+    min-width:300px;
+    padding: 1em;
+    font-size:10pt;
+}
+
+#content{
+    margin-left:1em;
+    border-left:0px solid gray;
+    padding-left:1em;
+}
+
+#nav_tree ul ul{
+    margin:0;
+    padding:0;
+}
+
+#nav_tree form{
+    margin-top:0.5em;
+    margin-bottom:0.5em;
+    padding-right:0.5em;
+    text-align:right;
+}
+#nav_tree form input{
+    font-size:8pt;
+}
+
+#nav_tree li {
+    margin-top: 0.2em;
+    margin-left: 1em;
+    list-style-type:none;
+}
+
+/* The links */
+#nav_tree a.nav_tree{
+    color:black;
+    background-color:inherit;
+}
+
+/* The selected page. */
+#nav_tree li.nav_tree_last_open_book > a{
+    background-color: #333399;
+    color:white;
+    text-decoration:none;
+}
+
+#nav_tree li:before{
+    display:inline;
+    vertical-align:text-bottom;
+    padding-top:0.2em;
+    padding-right:0.2em;
+}
+
+
+/* Title displayed over the tree area.*/
+#nav_tree p.nav_title { 
+    font-size: 14pt; 
+    font-weight: bold; 
+    margin-bottom: 0.5px; 
+    margin-top: 0.5em;
+    margin-left: 0.5em;
+    margin-right: 0.5em;
+}
+#nav_tree p.nav_title a{ 
+    text-decoration:none;
+    color:black;
+    background-color:inherit;
+}
+
+/* The path in the document displayed over the content.*/
+div.nav_path{
+    text-align:right;
+}
+
+/*----------------
+    The footer. 
+-----------------*/
+.footer {
+    margin-top:3em;
+}
+
+.redX {
+    color:red;
+    background-color:inherit;
+    font-size:1.2em;
+}
+
+.oXygenLogo {
+    color:#1166DD;
+    background-color:inherit;
+    font-weight:bold;
+    font-size:1.2em;
+}
+.searchExpression {
+    color: #0050A0; 
+    /*background-color: #EBEFF8;*/ 
+    font-size: 10pt; 
+    font-weight:bold;
+}
+#star ul.star { 
+    LIST-STYLE: none; 
+    MARGIN: 0; 
+    PADDING: 0; 
+    WIDTH: 85px;
+    /* was 100 */ 
+    HEIGHT: 20px;
+    LEFT: 1px; 
+    TOP: -5px; 
+    POSITION: relative; 
+    FLOAT: right; 
+    BACKGROUND: url('../img/starsSmall.png') repeat-x 0 -25px;
+}
+#star li { 
+    PADDING: 0; 
+    MARGIN: 0; 
+    FLOAT: right; 
+    DISPLAY: block; 
+    WIDTH: 85px;
+    /* was 100 */
+    HEIGHT: 20px; 
+    TEXT-DECORATION: none; 
+    text-indent: -9000px; 
+    Z-INDEX: 20; 
+    POSITION: absolute; 
+    PADDING: 0; 
+}
+#star li.curr { 
+    BACKGROUND: url('../img/starsSmall.png') left 25px; 
+    FONT-SIZE: 1px; 
+}
+#star div.user {
+    LEFT: 5px;
+    POSITION: relative;
+    FLOAT: right;
+    FONT-SIZE: 13px;
+    FONT-FAMILY: Arial;
+    COLOR: #888;
+}
+#rightDiv{
+    position: relative;
+    width: 98%;
+    text-align: right;    
+}

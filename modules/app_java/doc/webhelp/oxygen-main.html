@@ -1,0 +1,79 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Chapter 1. Admin Guide</title><meta name="generator" content="DocBook XSL Stylesheets V1.77.1"/><link rel="home" href="oxygen-main.html" title="Chapter 1. Admin Guide"/><link rel="next" href="ch01s02.html" title="Dependencies"/><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><link rel="stylesheet" type="text/css" href="oxygen-webhelp/resources/css/webhelp_topic.css"/>
+<script type="text/javascript" src="oxygen-webhelp/resources/js/jquery.js"> </script>
+<script type="text/javascript" src="oxygen-webhelp/resources/js/jquery-ui.custom.min.js"> </script>
+<script type="text/javascript" src="oxygen-webhelp/resources/js/frames_redirect.js"> </script>                                        <script type="text/javascript" charset="utf-8" src="oxygen-webhelp/resources/localization/strings.js"> </script>                         <script type="text/javascript" charset="utf-8" src="oxygen-webhelp/resources/js/comments-functions.js"> </script>                         <script type="text/javascript" charset="utf-8" src="oxygen-webhelp/resources/php/cnf.php"> </script>                         <script type="text/javascript" charset="utf-8" src="oxygen-webhelp/resources/js/init.js"> </script>
+<script type="text/javascript"><!--
+    var prefix = "oxygen-main";
+    var ratingFile = "";
+    redirectToToc(window.location.search);
+    function highlightSearchTerm(){
+        if(parent.termsToHighlight != null){
+        // highlight each term in the content view  
+          for(i = 0 ; i < parent.termsToHighlight.length ; i++){        
+              $('*', window.parent.contentwin.document).highlight(parent.termsToHighlight[i]);
+          }
+        }
+    }
+//--></script>
+</head><body onload="highlightSearchTerm()"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 1. Admin Guide</th></tr><tr><td width="20%" align="left"> </td><th width="60%" align="center"> </th><td width="20%" align="right"> <a accesskey="n" href="ch01s02.html">Next</a></td></tr></table><hr/></div><span class="frames"><script type="text/javascript"><!--                    
+									 if (top === self) { 
+							        document.write("<div class='wFrames'><a href=" + getPath(location.pathname) + ">With Frames</a></div>");							
+						        } else {
+						          //document.write("<div class='wFramesPerma'><a href=" + getPath(location.pathname) + " target='_top' title='link to this page'>Link</a></div>");						
+						        }       
+                  --></script></span>
+<div class="chapter" id="d6e1"><div class="titlepage"><div><div><h2 class="title">Chapter 1. Admin Guide</h2></div></div></div><div class="toc"><p><strong>Table of Contents</strong></p><dl><dt><span class="section"><a href="oxygen-main.html#d6e3">Overview</a></span></dt><dt><span class="section"><a href="ch01s02.html">Dependencies</a></span></dt><dd><dl><dt><span class="section"><a href="ch01s02.html#d6e8">Kamailio Modules</a></span></dt><dt><span class="section"><a href="ch01s02.html#d6e15">External Libraries or Applications</a></span></dt></dl></dd><dt><span class="section"><a href="ch01s03.html">Java runtime</a></span></dt><dd><dl><dt><span class="section"><a href="ch01s03.html#d6e69"/></span></dt></dl></dd><dt><span class="section"><a href="ch01s04.html">Parameters</a></span></dt><dd><dl><dt><span class="section"><a href="ch01s04.html#d6e74"><code class="varname">class_name</code> (string)</a></span></dt><dt><span class="section"><a href="ch01s04.html#d6e87"><code class="varname">child_init_method</code> (string)</a></span></dt><dt><span class="section"><a href="ch01s04.html#d6e98"><code class="varname">java_options</code> (string)</a></span></dt><dt><span class="section"><a href="ch01s04.html#d6e123"><code class="varname">force_kam_cmd_exec</code> (int)</a></span></dt></dl></dd><dt><span class="section"><a href="ch01s05.html">Functions</a></span></dt><dd><dl><dt><span class="section"><a href="ch01s05.html#d6e137">
+    			Common requirements
+    		</a></span></dt><dt><span class="section"><a href="ch01s05.html#d6e146">java_method_exec(method, method_signature, [param1[, param2[, ...]]])</a></span></dt><dt><span class="section"><a href="ch01s05.html#d6e181">java_staticmethod_exec(method, method_signature, [param1[, param2[, ...]]])</a></span></dt><dt><span class="section"><a href="ch01s05.html#d6e216">java_s_method_exec(method, method_signature, [param1[, param2[, ...]]])</a></span></dt><dt><span class="section"><a href="ch01s05.html#d6e254">java_s_staticmethod_exec(method, method_signature, [param1[, param2[, ...]]])</a></span></dt></dl></dd><dt><span class="section"><a href="ch01s06.html">Java Module API</a></span></dt><dd><dl><dt><span class="section"><a href="ch01s06.html#d6e295">Minimal program skeleton</a></span></dt></dl></dd></dl></div>
+    
+    
+    
+    
+    <div class="section" id="d6e3"><div class="titlepage"><div><div><h2 class="title" style="clear: both">Overview</h2></div></div></div>
+		
+		<p>
+			This module allows executing Java compiled classes from config file, exporting
+			functions to access the SIP message from Java using Java Native Interface (JNI).
+		</p>
+    </div>
+	
+	
+	
+    
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+    
+	
+	
+	
+    
+	
+	
+</div><div class="navfooter"><hr/><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"> </td><td width="20%" align="center"> </td><td width="40%" align="right"> <a accesskey="n" href="ch01s02.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top"> </td><td width="20%" align="center"> </td><td width="40%" align="right" valign="top"> Dependencies</td></tr></table></div><div class="footer">WebHelp output generated by<a href="http://www.oxygenxml.com" target="_blank"><span class="oXygenLogo"><img src="oxygen-webhelp/resources/img/LogoOxygen100x22.png" alt="Oxygen"/></span><span class="xmlauthor">XML Author</span></a>.
+        </div>    <script type="text/javascript">
+        <!--
+            function expand(){
+                if (parent.tocwin){
+                    parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
+                }
+            }
+            var aArray = document.getElementsByTagName('a');
+            var i;
+            for (i = 0; i< aArray.length; i++){
+              aArray[i].onclick = expand;
+            }
+        -->
+    </script> 
+</body></html>
