@@ -366,9 +366,7 @@ sca_rpc_update_appearance( rpc_t *rpc, void *ctx )
 	return;
     }
     if ( rpc->scan( ctx, "*S", &app_uri ) == 1 ) {
-	if ( !SCA_STR_EMPTY( &app_uri )) {
-	    app_uri_p = &app_uri;
-	}
+	app_uri_p = &app_uri;
     }
 
     app_state = sca_appearance_state_from_str( &app_state_str );
