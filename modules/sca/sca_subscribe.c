@@ -457,7 +457,7 @@ sca_subscription_db_delete_expired( db1_con_t *db_con )
     if ( sca->db_api->delete( db_con, delete_columns, delete_ops,
 				delete_values, kv_count ) < 0 ) {
 	LM_ERR( "sca_subscription_db_delete_expired: failed to delete "
-		"subscriptions expired before %ld", now );
+		"subscriptions expired before %ld", (long int)now );
 	return( -1 );
     }
 
@@ -683,7 +683,7 @@ sca_subscription_print( void *value )
 		sca_event_name_from_type( sub->event ),
 		sub->event,
 		STR_FMT( &sub->subscriber ),
-		sub->expires, sub->index,
+		(long int)sub->expires, sub->index,
 		STR_FMT( &sub->dialog.call_id ),
 		STR_FMT( &sub->dialog.from_tag ),
 		STR_FMT( &sub->dialog.to_tag ),
