@@ -28,7 +28,7 @@ Konstantin Mosesov
               4.1. class_name (string)
               4.2. child_init_method (string)
               4.3. java_options (string)
-              4.4. force_kam_cmd_exec (int)
+              4.4. force_cmd_exec (int)
 
         5. Functions
 
@@ -57,7 +57,7 @@ Konstantin Mosesov
    1.4. Set java_options parameter (live configuration)
    1.5. Set java_options parameter (verbose configuration)
    1.6. Set java_options parameter (debug configuration)
-   1.7. Set force_kam_cmd_exec parameter
+   1.7. Set force_cmd_exec parameter
    1.8. Signature: "V"
    1.9. Signature: "Ljava/lang/String;I"
    1.10. Signature: "ZB"
@@ -91,7 +91,7 @@ Chapter 1. Admin Guide
         4.1. class_name (string)
         4.2. child_init_method (string)
         4.3. java_options (string)
-        4.4. force_kam_cmd_exec (int)
+        4.4. force_cmd_exec (int)
 
    5. Functions
 
@@ -166,7 +166,7 @@ Chapter 1. Admin Guide
    4.1. class_name (string)
    4.2. child_init_method (string)
    4.3. java_options (string)
-   4.4. force_kam_cmd_exec (int)
+   4.4. force_cmd_exec (int)
 
 4.1. class_name (string)
 
@@ -225,7 +225,7 @@ ler=NONE -Djava.class.path=/path/to/kamailio/modules:/opt/kamailio/java:/opt/kam
 ailio/java/kamailio.jar")
 ...
 
-4.4. force_kam_cmd_exec (int)
+4.4. force_cmd_exec (int)
 
    This parameter forces execution a kamailio comnmand with java native
    method “KamExec”. # Note: this is an untested yet feature, may cause
@@ -233,9 +233,9 @@ ailio/java/kamailio.jar")
 
    Default value is “0 (off)”.
 
-   Example 1.7. Set force_kam_cmd_exec parameter
+   Example 1.7. Set force_cmd_exec parameter
 ...
-modparam("app_java", "force_kam_cmd_exec", 1)
+modparam("app_java", "force_cmd_exec", 1)
 ...
 
 5. Functions

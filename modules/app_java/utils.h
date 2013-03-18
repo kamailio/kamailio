@@ -29,11 +29,6 @@
 
 #include <jni.h>
 
-// cast object to pointer
-#define FORCE_CAST_O2P(var, type) *(type*)&var
-
 char **split(char *, char *);
-void ThrowNewException(JNIEnv *, char *, ...);
-struct sip_msg *get_struct_sip_msg(JNIEnv *);
 
 #endif

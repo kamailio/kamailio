@@ -374,7 +374,7 @@ int KamExec(JNIEnv *jenv, char *fname, int argc, char **argv)
     }
 
     /* check fixups */
-    if (force_kam_cmd_exec == 0 && fexport->fixup != NULL && fexport->free_fixup == NULL)
+    if (force_cmd_exec == 0 && fexport->fixup != NULL && fexport->free_fixup == NULL)
     {
         LM_ERR("app_java: KamExec(): function '%s' has fixup - cannot be used\n", fname);
 	return -1;

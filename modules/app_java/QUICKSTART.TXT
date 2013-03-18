@@ -14,7 +14,7 @@ modparam("app_java", "java_options", "-Djava.compiler=NONE -Djava.class.path=<KA
 
 # This parameter forces execution a kamailio comnmand with java native method KamExec.
 # Note: this is an untested feature, may cause (but may not) a memory leaks if used from embedded languages.
-modparam("app_java", "force_kam_cmd_exec", 1);
+modparam("app_java", "force_cmd_exec", 1);
 
 
 

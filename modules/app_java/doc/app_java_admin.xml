@@ -190,9 +190,9 @@ modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni -Djava.compi
 			</example>
 		</section>
 
-		<!-- force_kam_cmd_exec -->
+		<!-- force_cmd_exec -->
 		<section>
-			<title><varname>force_kam_cmd_exec</varname> (int)</title>
+			<title><varname>force_cmd_exec</varname> (int)</title>
 			<para>
 				This parameter forces execution a &kamailiobinary; comnmand with java native method <quote>KamExec</quote>.
 				# Note: this is an untested yet feature, may cause (but may not) a memory leaks if used from embedded languages.
@@ -203,10 +203,10 @@ modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni -Djava.compi
 				</emphasis>
 			</para>
 			<example>
-				<title>Set <varname>force_kam_cmd_exec</varname> parameter</title>
+				<title>Set <varname>force_cmd_exec</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("app_java", "force_kam_cmd_exec", 1)
+modparam("app_java", "force_cmd_exec", 1)
 ...
 </programlisting>
 			</example>

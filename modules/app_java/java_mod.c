@@ -54,7 +54,7 @@ static param_export_t params[] = {
     {"class_name",         STR_PARAM, &class_name },
     {"child_init_method",  STR_PARAM, &child_init_mname },
     {"java_options",	   STR_PARAM, &java_options_str },
-    {"force_kam_cmd_exec", INT_PARAM, &force_kam_cmd_exec },
+    {"force_cmd_exec", INT_PARAM, &force_cmd_exec },
     {0,0,0}
 };
 
@@ -101,15 +101,15 @@ static int mod_init(void)
     char **opts;
     int nOptions;
 
-    if (force_kam_cmd_exec < 0 || force_kam_cmd_exec > 1)
+    if (force_cmd_exec < 0 || force_cmd_exec > 1)
     {
-	LM_ERR("Parameter force_kam_cmd_exec should be either 0 or 1\n");
+	LM_ERR("Parameter force_cmd_exec should be either 0 or 1\n");
 	return -1;
     }
 
-    if (force_kam_cmd_exec)
+    if (force_cmd_exec)
     {
-	LM_NOTICE("app_java: Parameter force_kam_cmd_exec may cause a memory leaks if used from embedded languages\n");
+	LM_NOTICE("app_java: Parameter force_cmd_exec may cause a memory leaks if used from embedded languages\n");
     }
 
     options = (JavaVMOption *)pkg_malloc(sizeof(JavaVMOption));

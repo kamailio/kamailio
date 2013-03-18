@@ -26,7 +26,7 @@ Konstantin Mosesov
 	      3.1. class_name (string)
               3.2. child_init_method (string)
 	      3.3. java_options (string)
-	      3.4. force_kam_cmd_exec (int)
+	      3.4. force_cmd_exec (int)
 
         4. Functions
 
@@ -141,7 +141,7 @@ Chapter 1. Admin Guide
         3.1. class_name (string)
         3.2. child_init_method (string)
         3.3. java_options (string)
-	3.4. force_kam_cmd_exec (int)
+	3.4. force_cmd_exec (int)
 
    4. Functions
 
@@ -206,7 +206,7 @@ Chapter 1. Admin Guide
    3.1. class_name (string)
    3.2. child_init_method (string)
    3.3. java_options (string)
-   3.4. force_kam_cmd_exec (int)
+   3.4. force_cmd_exec (int)
 
 3.1. class_name (string)
 
@@ -258,7 +258,7 @@ modparam("app_java", "java_options", "-verbose:gc,class,jni -Djava.compiler=NONE
 modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:/path/to/class_name_file_directory:/path/to/kamailio.jar")
 ...
 
-3.4. force_kam_cmd_exec (int)
+3.4. force_cmd_exec (int)
 
    This parameter forces execution a kamailio comnmand with java native method KamExec_raw.
    Note: may cause a memory leaks if used from embedded languages.
