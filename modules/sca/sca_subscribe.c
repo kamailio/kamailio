@@ -1017,7 +1017,7 @@ sca_subscription_from_request( sca_mod *scam, sip_msg_t *msg, int event_type,
     }
 
     to_tag = to->tag_value;
-    if ( SCA_STR_EMPTY( &to_tag )) {
+    if ( to_tag.s == NULL ) {
 	/*
 	 * XXX need hook to detect when we have a subscription and the
 	 * subscriber sends an out-of-dialog SUBSCRIBE, which indicates the

@@ -175,6 +175,19 @@ void handle_exception(void)
 
 }
 
+void ThrowNewException(JNIEnv *env, char *fmt, ...)
+{
+    va_list ap;
+    char buf[1024];
+
+    memset(buf, 0, sizeof(char));
+
+    va_start(ap, fmt);
+    vsnprintf(buf, 1024, fmt, ap);
+    va_end(ap);
+
+    (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/Exception"), buf);
+}
 
 void handle_VM_init_failure(int res)
 {

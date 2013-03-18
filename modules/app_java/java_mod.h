@@ -25,6 +25,6 @@
 #ifndef __JAVA_MOD_H__
 #define	__JAVA_MOD_H__
 
-int force_kam_cmd_exec;
+int force_cmd_exec;
 
 #endif

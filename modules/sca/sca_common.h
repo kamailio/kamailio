@@ -93,8 +93,7 @@
 		memcmp((str1)->s, (str2)->s, (str1)->len) == 0)
 
 #define SCA_STR_EMPTY( str1 ) \
-	(((str1) != NULL && ((str1)->s == NULL || (str1)->len <= 0 )) \
-		|| (str1) == NULL )
+	((str1) == NULL || ((str1)->s == NULL || (str1)->len <= 0 ))
 
 #define SCA_HEADER_EMPTY( hdr1 ) \
 	((hdr1) == NULL || SCA_STR_EMPTY( &(hdr1)->body ))

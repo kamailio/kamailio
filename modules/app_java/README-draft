@@ -1,0 +1,837 @@
+app_java Module
+
+Konstantin Mosesov
+
+Edited by
+
+Konstantin Mosesov
+
+   <konstantinm@voipgroup.org.ua>
+
+   Copyright © 2013 Konstantin Mosesov
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+	      3.1. class_name (string)
+              3.2. child_init_method (string)
+	      3.3. java_options (string)
+	      3.4. force_cmd_exec (int)
+
+        4. Functions
+
+	      4.0. Common requirements.
+              4.1. java_method_exec(method, method_signature, [param1[, param2]])
+	      4.2. java_s_method_exec(method, method_signature, [param1[, param2]])
+	      4.3. java_staticmethod_exec(method, method_signature, [param1[, param2]])
+	      4.4. java_s_staticmethod_exec(method, method_signature, [param1[, param2]])
+
+	5. Java module API
+
+	      5.0. Minimal program skeleton and structure of package org.siprouter
+		   5.0.1.  Minimal program skeleton
+		   5.0.2.  Structure of package org.siprouter
+	      5.1. abstract class NativeMethods
+	           5.1.1.  General logging
+			   5.1.1.0.   Logging levels and facilities
+			   5.1.1.1.   native void LM_GEN1(int logLevel, String s);
+			   5.1.1.2.   native void LM_GEN2(int logFacility, int logLevel, String s);
+			   5.1.1.3.   native void LM_ALERT(String s);
+			   5.1.1.4.   native void LM_CRIT(String s);
+			   5.1.1.5.   native void LM_WARN(String s);
+			   5.1.1.6.   native void LM_NOTICE(String s);
+			   5.1.1.7.   native void LM_ERR(String s);
+			   5.1.1.8.   native void LM_INFO(String s);
+			   5.1.1.9.   native void LM_DBG(String s);
+		   5.1.2.  Execution of kamailio commands
+			   5.1.2.1.   static native int KamExec(String fname, String... params);
+    			   5.1.2.2.   static native int SetURI(String ruri);
+    			   5.1.2.3.   static native int RewriteURI(String ruri);
+
+	      5.2. class IPPair.
+		   5.2.1.   final String ip;
+		   5.2.2.   final int port;
+	      5.3. abstract class SipMsg
+		   5.3.0.   Internal structure understanding.
+		   5.3.1.   int id;
+		   5.3.2.   int pid;
+		   5.3.3.   String eoh;
+		   5.3.4.   String unparsed;
+		   5.3.5.   String buf;
+		   5.3.6.   int len;
+		   5.3.7.   String new_uri;
+		   5.3.8.   String dst_uri;
+		   5.3.9.   int parsed_uri_ok;
+		   5.3.10.  int parsed_orig_ruri_ok;
+		   5.3.11.  String add_to_branch_s;
+		   5.3.12.  int add_to_branch_len;
+		   5.3.13.  int hash_index;
+		   5.3.14.  int msg_flags;
+		   5.3.15.  static native SipMsg ParseSipMsg();
+		   5.3.16.  static native String getMsgType();
+		   5.3.17.  static native String getRURI();
+		   5.3.18.  static native IPPair getSrcAddress();
+		   5.3.19.  static native IPPair getDstAddress();
+		   5.3.20.  static native String getBuffer();
+	      5.4. interface NativeInterface
+		   5.4.1.   abstract class Ranks
+			    5.4.1.1.  static final int PROC_MAIN
+			    5.4.1.2.  static final int PROC_TIMER
+			    5.4.1.3.  static final int PROC_RPC
+			    5.4.1.4.  static final int PROC_FIFO
+			    5.4.1.5.  static final int PROC_TCP_MAIN
+			    5.4.1.6.  static final int PROC_UNIXSOCK
+			    5.4.1.7.  static final int PROC_ATTENDANT
+			    5.4.1.8.  static final int PROC_INIT
+			    5.4.1.9.  static final int PROC_NOCHLDINIT
+			    5.4.1.10. static final int PROC_SIPINIT
+			    5.4.1.11. static final int PROC_SIPRPC
+			    5.4.1.12. static final int PROC_MIN
+		   5.4.2.   abstract class LogParams
+			    5.4.2.0.  Loggigng params
+			    5.4.2.1.  static final int L_ALERT
+			    5.4.2.2.  static final int L_BUG
+			    5.4.2.3.  static final int L_CRIT2
+			    5.4.2.4.  static final int L_CRIT
+			    5.4.2.5.  static final int L_ERR
+			    5.4.2.6.  static final int L_WARN
+			    5.4.2.7.  static final int L_NOTICE
+			    5.4.2.8.  static final int L_INFO
+			    5.4.2.9.  static final int L_DBG
+			    5.4.2.10. static final int DEFAULT_FACILITY
+	      5.5. Examples of usage Java API
+
+   List of Examples
+
+   1.1. Set class_name parameter
+   1.2. Set child_init_method parameter
+   1.3. Set java_options parameter
+   1.4. Set java_options parameter (live configuration)
+   1.5. Set java_options parameter (verbose configuration)
+   1.6. Set java_options parameter (debug configuration)
+
+   2.0. Example of usage signatures.
+   2.1. Example of usage java_method_exec()
+   2.2. Example of usage java_s_method_exec()
+   2.3. Example of usage java_staticmethod_exec()
+   3.4. Example of usage java_s_staticmethod_exec()
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. class_name (string)
+        3.2. child_init_method (string)
+        3.3. java_options (string)
+	3.4. force_cmd_exec (int)
+
+   4. Functions
+
+	4.0. Common requirements.
+        4.1. java_method_exec(method, method_signature, [param1[, param2]])         - class method
+        4.2. java_s_method_exec(method, method_signature, [param1[, param2]])       - class synchronized method
+        4.3. java_staticmethod_exec(method, method_signature, [param1[, param2]])   - static method
+        4.4. java_s_staticmethod_exec(method, method_signature, [param1[, param2]]) - static synchronized method
+
+1. Overview
+
+   This module allows executing Java compiled classes from config file, exporting
+   functions to access the SIP message from Java using Java Native Interface (JNI).
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+   2.3. Java runtime
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   Legend:
+      * - Runtime library, required to launch
+      R - Required
+      O - Optional
+      D - Development (for building-rebuilding java)
+      P - Dependance of package
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     [*]    java-common            - Base of all Java packages
+     [*]    default-jre            - Standard Java or Java compatible Runtime
+     [*]    gcj-jre                - Java runtime environment using GIJ/classpath
+     [*]    libgcj12 (>=12)        - Java runtime library for use with gcj
+     [DR]   ant                    - Java based build tool like make
+     [DO]   ant-contrib            - collection of tasks, types and other tools for Apache Ant
+     [DPO]  ant-gcj                - Java based build tool like make (GCJ)
+     [DPO]  ant-optional           - Java based build tool like make - optional libraries
+     [DPO]  ant-optional-gcj       - Java based build tool like make - optional libraries (GCJ)
+     [DR]   default-jdk            - Standard Java or Java compatible Development Kit
+     [DR]   gcj-jdk                - gcj and classpath development tools for Java(TM)
+     [DR]   libgcj13-dev (>=12)    - Java development headers for use with gcj
+     [DO]   jdk                    - JDK Development Kit (either oracle jdk or openjdk)
+
+   The following libraries or applications must be compiled before
+   running Kamailio with this module loaded:
+     [*]   <class_name>.class
+     [*]   kamailio.jar
+
+2.3. Java runtime
+
+   Java runtime library (JRE or JDK) is required to use this module.
+
+3. Parameters
+
+   3.1. class_name (string)
+   3.2. child_init_method (string)
+   3.3. java_options (string)
+   3.4. force_cmd_exec (int)
+
+3.1. class_name (string)
+
+   The class name should have the same compiled file name.
+   If the value is "Kamailio", then the compiled file should be named as "Kamailio.class".
+
+   Default value is “Kamailio”.
+
+   Example 1.1. Set class_name parameter
+...
+modparam("app_java", "class_name", "Kamailio")
+...
+
+3.2. child_init_method (string)
+
+   TBD.
+
+   Default value is “child_init”.
+
+   Example 1.2. Set child_init_method parameter
+...
+modparam("app_java", "child_init_method", "my_mod_init")
+...
+
+3.3. java_options (string)
+
+   Java options for Java Virtual Machine.
+   For more info see: http://docs.oracle.com/javase/6/docs/technotes/tools/windows/java.html
+
+   Default value is “-Djava.compiler=NONE”.
+
+   Example 1.3. Set java_options parameter
+...
+modparam("app_java", "java_options", "-Djava.compiler=NONE")
+...
+
+   Example 1.4. Set java_options parameter (live configuration)
+...
+modparam("app_java", "java_options", "-Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:/path/to/<class_name>_file_directory:/path/to/kamailio.jar")
+...
+
+   Example 1.5. Set java_options parameter (verbose configuration)
+...
+modparam("app_java", "java_options", "-verbose:gc,class,jni -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:/path/to/class_name_file_directory:/path/to/kamailio.jar")
+...
+
+   Example 1.6. Set java_options parameter (debug configuration)
+...
+modparam("app_java", "java_options", "-Xdebug -verbose:gc,class,jni -Djava.compiler=NONE -Djava.class.path=/path/to/kamailio/modules:/path/to/class_name_file_directory:/path/to/kamailio.jar")
+...
+
+3.4. force_cmd_exec (int)
+
+   This parameter forces execution a kamailio comnmand with java native method KamExec_raw.
+   Note: may cause a memory leaks if used from embedded languages.
+
+   Default value is 0 (off).
+
+4. Functions
+
+   4.0. Common requirements.
+   4.1. java_method_exec(method, method_signature, [param1[, param2]])
+   4.2. java_s_method_exec(method, method_signature, [param1[, param2]])
+   4.3. java_staticmethod_exec(method, method_signature, [param1[, param2]])
+   4.4. java_s_staticmethod_exec(method, method_signature, [param1[, param2]])
+
+4.0. Common requirements.
+
+   Each function has a required parameter “method_signature”.
+   For more info see: http://www.rgagnon.com/javadetails/java-0286.html
+   There are two parts to the signature. The first part is enclosed within the parentheses and represents the method's arguments. 
+   The second portion follows the closing parenthesis and represents the return type. The mapping between the Java type and C type is
+	Type     Chararacter 
+	boolean      Z 
+	byte         B 
+	char         C 
+	double       D 
+	float        F 
+	int          I 
+	long         J 
+	object       L 
+	short        S 
+	void         V 
+	array        [ 
+   Note that to specify an object, the "L" is followed by the object's class name and ends with a semi-colon, ';' .
+
+   app_java supports the following signatures
+      primitives: Z,B,C,D,F,I,J,L,S,V
+      objects: 
+		Ljava/lang/Boolean;
+		Ljava/lang/Byte;
+		Ljava/lang/Character;
+		Ljava/lang/Double;
+		Ljava/lang/Float;
+		Ljava/lang/Integer;
+		Ljava/lang/Long;
+		Ljava/lang/Short;
+		Ljava/lang/String;
+      NULL parameter: V
+
+   Each parameter passed to function will be cast according to given signature.
+
+   Example 2.0. Example of usage signatures.
+        0. Equivalent of java prototype:  public int ExampleMethod();
+...
+java_method_exec("ExampleMethod", "V");
+...
+
+        1. Equivalent of java prototype:  public int ExampleMethod(String param1, int param2);
+...
+java_method_exec("ExampleMethod", "Ljava/lang/String;I", "Hello world", "5");
+...
+           In the above scenario parameter 2 ("5") will be cast to integer representation.
+
+        2. Equivalent of java prototype:  public int ExampleMethod(boolean param1, byte param2);
+...
+java_method_exec("ExampleMethod", "ZB", "true", "0x05");
+...
+           In the above scenario parameter 1 ("true") will be cast to boolean representation.
+
+   Parameters are optional, ommitting a parameter meant the passed value is NULL.
+   Parameters count should be exactly the same as signature count.
+   Note, you shall use a correct signature, e.g. the following examples of combinations are invalid:
+        *) java_method_exec("ExampleMethod", "ZI", "False");
+        *) java_method_exec("ExampleMethod", "VI", "", "5");
+        *) java_method_exec("ExampleMethod", "LI", "something", "5");
+
+
+4.1.  java_method_exec(method, method_signature, [param1[, param2]])
+
+   Executes a java method “method”. Parameter “method_signature” is required (see 4.0).
+
+   Example 2.1. java_method_exec usage
+...
+# Equivalent of java prototype:  public int ExampleMethod();
+java_method_exec("ExampleMethod", "V");
+
+# Equivalent of java prototype:  public int ExampleMethod(String SipMessageBuffer, int SipMessageLenght);
+java_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
+...
+
+
+4.2.  java_s_method_exec(method, method_signature, [param1[, param2]])
+
+   Executes a java synchronized method “method”. Parameter “method_signature” is required (see 4.0).
+   See a more info about to synchronization: http://docs.oracle.com/javase/tutorial/essential/concurrency/syncmeth.html
+
+   Example 2.2. java_s_method_exec usage
+...
+# Equivalent of java prototype:  public synchronized int ExampleMethod();
+java_s_method_exec("ExampleMethod", "V");
+
+# Equivalent of java prototype:  public synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLenght);
+java_s_method_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
+...
+
+
+4.3.  java_staticmethod_exec(method, method_signature, [param1[, param2]])
+
+   Executes a java static method “method”. Parameter “method_signature” is required (see 4.0).
+
+   Example 2.3. java_staticmethod_exec usage
+...
+# Equivalent of java prototype:  public static int ExampleMethod();
+java_staticmethod_exec("ExampleMethod", "V");
+
+# Equivalent of java prototype:  public static int ExampleMethod(String SipMessageBuffer, int SipMessageLenght);
+java_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
+...
+
+
+4.4.  java_s_staticmethod_exec(method, method_signature, [param1[, param2]])
+
+   Executes a java synchronized static method “method”. Parameter “method_signature” is required (see 4.0).
+   See a more info about to synchronization: http://docs.oracle.com/javase/tutorial/essential/concurrency/syncmeth.html
+
+   Example 2.4. java_s_staticmethod_exec usage
+...
+# Equivalent of java prototype:  public static synchronized int ExampleMethod();
+java_s_staticmethod_exec("ExampleMethod", "V");
+
+# Equivalent of java prototype:  public static synchronized int ExampleMethod(String SipMessageBuffer, int SipMessageLenght);
+java_s_staticmethod_exec("ExampleMethod", "Ljava/lang/String;I", "$mb", "$ml");
+...
+
+
+5. Java module API
+
+
+5.0. Minimal program skeleton and structure of package org.siprouter
+
+   5.0.1.  Minimal program skeleton
+
+...
+import org.siprouter.*;
+import org.siprouter.NativeInterface.*;
+
+public class Kamailio extends NativeMethods
+{
+	/* Here you should specify a full path to app_java.so */
+        static
+        {
+            System.load("/opt/kamailio/lib/kamailio/modules/app_java.so");
+        }
+
+        /* Constructor. Do not remove !!! */
+        public Kamailio()
+        {
+        }
+
+	/*
+	    This method should be executed for each children process, immediately after forking.
+	    Required. Do not remove !!!
+	*/
+        public int child_init(int rank)
+        {
+	    return 1;
+	}
+}
+...
+
+   5.0.2.  Structure of package org.siprouter
+
+            org.siprouter ---*---*--*-------> class NativeMethods
+                             |   |  +--> class IPPair
+                             |   +--> class SipMsg
+                             +--> interface NativeInterface
+                                        |
+                                        +--> class Ranks
+                                        +--> class LogParams
+
+
+5.1. abstract class NativeMethods
+
+   5.1.1.   General logging
+
+	5.1.1.0.   Log levels and facilities
+
+		   Log levels:
+			L_ALERT		= -5
+			L_BUG		= -4
+			L_CRIT2		= -3
+			L_CRIT		= -2
+			L_ERR		= -1
+			L_WARN		= 0
+			L_NOTICE	= 1
+			L_INFO		= 2
+			L_DBG		= 3
+
+		   Log facilities (see man syslog(3)):
+			DEFAULT_FACILITY	= 0  (LOG_KERN (Linux))
+
+		   1. Example of usage log levels and facilities:
+		     LM_GEN1(LogParams.L_BUG, "Hello World!\n");
+		     produces (example of output):
+		      0(3003) BUG: app_java [java_native_methods.c:255]: Hello World!
+
+		   2. Example of usage log levels and facilities:
+		     LM_GEN2(LogParams.DEFAULT_FACILITY, LogParams.L_WARN, "Hello World!\n");
+		     produces (example of output):
+		      2(3147) WARNING: app_java [java_native_methods.c:279]: Hello World!
+
+
+	5.1.1.1.   native void LM_GEN1(int logLevel, String s);
+	5.1.1.2.   native void LM_GEN2(int logFacility, int logLevel, String s);
+	5.1.1.3.   native void LM_ALERT(String s);
+        5.1.1.4.   native void LM_CRIT(String s);
+        5.1.1.5.   native void LM_WARN(String s);
+        5.1.1.6.   native void LM_NOTICE(String s);
+        5.1.1.7.   native void LM_ERR(String s);
+        5.1.1.8.   native void LM_INFO(String s);
+        5.1.1.9.   native void LM_DBG(String s);
+
+   5.1.2.   Execution of kamailio commands
+
+	5.1.2.1.   static native int KamExec(String fname, String... params);
+
+		   Executes a kamailio command.
+
+		   Parameter 'fname'  - Required. Kamailio function name.
+		   Parameter 'params' - An array of string parameters. Note, this method allows up to 6 params,
+					it will ignore all parameters if more than 6.
+
+		   Returns:
+			     1 - command was successfully executed.
+			    -1 - execution of command was failed.
+
+        5.1.2.2.   static native int SetURI(String ruri);
+
+		   Rewrites the request URI.
+
+		   Returns:
+			    1 - Ok
+			   -1 - Failed
+
+		   Online reference: http://www.kamailio.org/wiki/cookbooks/3.3.x/core#rewriteuri
+
+        5.1.2.3.   static native int RewriteURI(String ruri);
+
+		   Rewrites the request URI.
+		   Alias method: SetURI
+
+		   Returns:
+			    1 - Ok
+			   -1 - Failed
+
+		   Online reference: http://www.kamailio.org/wiki/cookbooks/3.3.x/core#rewriteuri
+
+
+
+5.2.   class IPPair.
+
+   Represents an IP-address pair (IP, Port)
+
+   5.2.1.   final String ip;
+
+	    IP Address
+
+   5.2.2.   final int port;
+
+	    Port
+
+
+5.3. abstract class SipMsg
+
+   5.3.0.   Internal structure understanding.
+
+	    The class SipMsg is partially incapsulating kamailio's struct sip_msg.
+	    References: parser/msg_parser.h, parser/parse_fline.h
+
+   5.3.1.   int id;
+
+	    Message id, unique/process
+
+   5.3.2.   int pid;
+
+	    Process ID
+
+   5.3.3.   String eoh;
+
+	    Pointer to the end of header (if found) or null
+
+   5.3.4.   String unparsed;
+
+	    Here we stopped parsing
+
+   5.3.5.   String buf;
+
+	    Scratch pad, holds a modified message, via, etc. point into it.
+
+   5.3.6.   int len;
+
+	    Message len (orig)
+
+   5.3.7.   String new_uri;
+
+	    Changed first line uri, when you change this
+
+   5.3.8.   String dst_uri;
+
+	    Destination URI, must be forwarded to this URI if dst_url lenght != 0
+
+   5.3.9.   int parsed_uri_ok;
+
+	    1 if parsed_orig_uri is valid, 0 if not, set if to 0 if you modify the uri (e.g change new_uri)
+
+   5.3.10.  int parsed_orig_ruri_ok;
+
+	    1 if parsed_orig_uri is valid, 0 if not, set if to 0 if you modify the uri (e.g change new_uri)
+
+   5.3.11.  String add_to_branch_s;
+
+	    Whatever whoever want to append to branch comes here
+
+   5.3.12.  int add_to_branch_len;
+
+	    Lenght of add_to_branch_s
+
+   5.3.13.  int hash_index;
+
+	    Index to TM hash table; stored in core to avoid unnecessary calculations
+
+   5.3.14.  int msg_flags;
+
+	    Flags used by core. Allows to set various flags on the message; may be used 
+	    for simple inter-module communication or remembering processing state reache.
+
+   5.3.15.  static native SipMsg ParseSipMsg();
+
+	    This method is using to get an instance of class SipMsg and populate a properties
+	    of this class with a fields specified at 5.3.1 - 5.3.14.
+
+   5.3.16.  static native String getMsgType();
+
+	    Gets a message type. Return value:
+		'SIP_REQUEST' - if message is request
+		'SIP_REPLY'   - if message is reply
+		'SIP_INVALID' - if invalid message
+
+   5.3.17.  static native String getRURI();
+
+	    Gets a request URI (RURI).
+
+   5.3.18.  static native IPPair getSrcAddress();
+
+	    Gets a source IP address and port.
+
+   5.3.19.  static native IPPair getDstAddress();
+
+	    Gets a destination IP address and port.
+
+   5.3.20.  static native String getBuffer();
+
+	    Gets a message buffer.
+
+
+5.4. interface NativeInterface
+
+   5.4.1.   abstract class Ranks
+
+	5.4.1.1.  static final int PROC_MAIN
+
+		  Main ser process
+
+        5.4.1.2.  static final int PROC_TIMER
+
+		  Timer attendant process
+
+        5.4.1.3.  static final int PROC_RPC
+
+		  RPC type process
+
+        5.4.1.4.  static final int PROC_FIFO
+
+		  FIFO attendant process.
+		  Alias to PROC_RPC.
+
+        5.4.1.5.  static final int PROC_TCP_MAIN
+
+		  TCP main process
+
+        5.4.1.6.  static final int PROC_UNIXSOCK
+
+		  Unix socket server
+
+        5.4.1.7.  static final int PROC_ATTENDANT
+
+		  Main "attendant process
+
+        5.4.1.8.  static final int PROC_INIT
+
+		  Special rank, the context is the main ser process, but this is
+		  guaranteed to be executed before any rocess is forked, so it
+		  can be used to setup shared variables that depend on some
+		  after mod_init available information (e.g. total number of processes).
+		  @warning child_init(PROC_MAIN) is again called in the same process (main)
+		  (before tcp), so make sure you don't init things twice, 
+		  both in PROC_MAIN and PROC_INT
+
+        5.4.1.9.  static final int PROC_NOCHLDINIT
+
+		  no child init functions will be called if this rank is used in fork_process()
+
+        5.4.1.10. static final int PROC_SIPINIT
+
+		  First SIP worker - some modules do special processing in this child, 
+		  like loading db data
+
+        5.4.1.11. static final int PROC_SIPRPC
+
+		  Used to init RPC worker as SIP commands handler.
+		  Don't do any special processing in the child init with this rank - 
+		  just bare child initialization
+
+        5.4.1.12. static final int PROC_MIN
+
+		  Minimum process rank.
+		  Alias to PROC_NOCHLDINIT.
+
+   5.4.2.   abstract class LogParams
+	5.4.2.0.  Loggigng params
+        5.4.2.1.  static final int L_ALERT
+        5.4.2.2.  static final int L_BUG
+        5.4.2.3.  static final int L_CRIT2
+        5.4.2.4.  static final int L_CRIT
+        5.4.2.5.  static final int L_ERR
+        5.4.2.6.  static final int L_WARN
+        5.4.2.7.  static final int L_NOTICE
+        5.4.2.8.  static final int L_INFO
+        5.4.2.9.  static final int L_DBG
+        5.4.2.10. static final int DEFAULT_FACILITY
+
+
+5.5. Examples of usage Java API
+
+...
+
+import java.lang.*;
+import java.io.*; 
+
+import org.siprouter.*;
+import org.siprouter.NativeInterface.*;
+
+public class Kamailio extends NativeMethods
+{
+	static
+	{
+	    System.load("/opt/kamailio/lib/kamailio/modules/app_java.so");
+	}
+
+	/* Constructor. Do not remove !!! */
+	public Kamailio()
+	{
+	}
+
+
+	public int child_init(int rank)
+	{
+	    switch (rank)
+	    {
+		case Ranks.PROC_MAIN:
+		    LM_INFO("We're at PROC_MAIN\n");
+		    break;
+		case Ranks.PROC_TIMER:
+		    LM_INFO("We're at PROC_TIMER\n");
+		    break;
+		case Ranks.PROC_RPC:
+		    LM_INFO("We're at PROC_RPC/PROC_FIFO\n");
+		    break;
+		case Ranks.PROC_TCP_MAIN:
+		    LM_INFO("We're at PROC_TCP_MAIN\n");
+		    break;
+		case Ranks.PROC_UNIXSOCK:
+		    LM_INFO("We're at PROC_UNIXSOCK\n");
+		    break;
+		case Ranks.PROC_ATTENDANT:
+		    LM_INFO("We're at PROC_ATTENDANT\n");
+		    break;
+		case Ranks.PROC_INIT:
+		    LM_INFO("We're at PROC_INIT\n");
+		    break;
+		case Ranks.PROC_NOCHLDINIT:
+		    LM_INFO("We're at PROC_NOCHLDINIT/PROC_MIN\n");
+		    break;
+		case Ranks.PROC_SIPINIT:
+		    LM_INFO("We're at PROC_SIPINIT\n");
+		    break;
+		case Ranks.PROC_SIPRPC:
+		    LM_INFO("We're at PROC_SIPRPC\n");
+		    break;
+	    }
+
+	    return 1;
+	}
+
+	public int TestMethod()
+	{
+
+	    LM_INFO(String.format("Msg Type: %s\n", SipMsg.getMsgType()));
+
+	    IPPair src = SipMsg.getSrcAddress();
+	    if (src != null)
+	    {
+		LM_INFO(String.format("src address=%s, src port=%d\n", src.ip, src.port));
+	    }
+	    else
+	    {
+		LM_ERR("IPPair src is null!");
+	    }
+
+	    IPPair dst = SipMsg.getDstAddress();
+	    if (dst != null)
+	    {
+		LM_INFO(String.format("dst address=%s, dst port=%d\n", dst.ip, dst.port));
+	    }
+	    else
+	    {
+		LM_ERR("IPPair dst is null!");
+	    }
+
+	    LM_INFO(String.format("buffer:\n%s\n", SipMsg.getBuffer().trim()));
+
+	    SipMsg msg = SipMsg.ParseSipMsg();
+	    if (msg != null)
+	    {
+		LM_INFO("msg:\n");
+		LM_INFO(String.format("\tid=%d\n", msg.id));
+		LM_INFO(String.format("\tpid=%d\n", msg.pid));
+		LM_INFO(String.format("\teoh='%s'\n", msg.eoh));
+		LM_INFO(String.format("\tunparsed='%s'\n", msg.unparsed));
+		LM_INFO(String.format("\tbuf='%s'\n", msg.buf));
+		LM_INFO(String.format("\tlen=%d\n", msg.len));
+		LM_INFO(String.format("\tnew_uri='%s'\n", msg.new_uri));
+		LM_INFO(String.format("\tdst_uri='%s'\n", msg.dst_uri));
+		LM_INFO(String.format("\tparsed_uri_ok=%d\n", msg.parsed_uri_ok));
+		LM_INFO(String.format("\tparsed_orig_ruri_ok=%d\n", msg.parsed_orig_ruri_ok));
+		LM_INFO(String.format("\tadd_to_branch_s='%s'\n", msg.add_to_branch_s));
+		LM_INFO(String.format("\tadd_to_branch_len=%d\n", msg.add_to_branch_len));
+		LM_INFO(String.format("\thash_index=%d\n", msg.hash_index));
+		LM_INFO(String.format("\tmsg_flags=%d\n", msg.msg_flags));
+		LM_INFO(String.format("\tset_global_address='%s'\n", msg.set_global_address));
+		LM_INFO(String.format("\tset_global_port='%s'\n", msg.set_global_port));
+	    }
+	    else
+	    {
+		LM_ERR("SipMsg msg is null!\n");
+	    }
+
+	    return 1;
+	}
+}
+
+...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

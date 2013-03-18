@@ -31,6 +31,7 @@
 #include <jni.h>
 
 void handle_exception(void);
+void ThrowNewException(JNIEnv *, char *, ...);
 void handle_VM_init_failure(int res);
 
 

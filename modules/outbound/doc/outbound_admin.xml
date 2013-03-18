@@ -69,8 +69,6 @@ loadmodule "path.so"
 ...
 modparam("websocket", "keepalive_timeout", FLOW_TIMER+5)
 ...
-modparam("outbound", "flow_token_key", "!!!Kamailio rocks!!!")
-...
 route {
 	route(REQINIT);
 	...
@@ -270,25 +268,6 @@ failure_route[FAIL_OUTBOUND] {
 		<programlisting format="linespecific">
 ...
 modparam("outbound", "force_outbound_flag", 1)
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title><varname>flow_token_key</varname> (string)</title>
-		<para>The outbound flow token is generated using the algorithm
-		described in RFC 5626 section 5.2. This algorithm requires a 20
-		octet crypto random key that is unique for each Edge Proxy.
-		</para>
-		<note><para>If this 20 character string is not set &kamailio;
-		will not start.</para></note>
-		<para><emphasis>Default value is: "".</emphasis></para>
-		<example>
-		<title>Set <varname>flow_token_key</varname> parameter
-		</title>
-		<programlisting format="linespecific">
-...
-modparam("outbound", "flow_token_key", "!!!Kamailio rocks!!!")
 ...
 </programlisting>
 		</example>
