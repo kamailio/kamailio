@@ -363,6 +363,10 @@ sca_appearance_seize_index_unsafe( sca_mod *scam, str *aor, str *owner_uri,
 	goto done;
     }
 
+    if ( app_idx <= 0 ) {
+        app_idx = sca_appearance_list_next_available_index_unsafe( app_list );
+    }
+
     for ( app = app_list->appearances; app != NULL; app = app->next ) {
 	if ( app->index >= app_idx ) {
 	    break;
