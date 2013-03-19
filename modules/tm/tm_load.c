@@ -110,6 +110,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->t_uac_with_ids = t_uac_with_ids;
 	tmb->t_unref = t_unref;
 	tmb->run_failure_handlers = run_failure_handlers;
+	tmb->run_branch_failure_handlers = run_branch_failure_handlers;
 	tmb->cancel_uacs = cancel_uacs;
 	tmb->cancel_all_uacs = cancel_all_uacs;
 	tmb->prepare_request_within = prepare_req_within;

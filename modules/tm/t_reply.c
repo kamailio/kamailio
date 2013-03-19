@@ -172,6 +172,8 @@ char *tm_tag_suffix;
 
 /* where to go if there is no positive reply (>=300) */
 static int goto_on_failure=0;
+/* where to go if a failure is returned on a branch */
+static int goto_on_branch_failure=0;
 /* where to go on receipt of reply */
 static int goto_on_reply=0;
 /* where to go on receipt of reply without transaction context */
@@ -262,6 +264,20 @@ void t_on_failure( unsigned int go_to )
 }
 
 
+void t_on_branch_failure( unsigned int go_to )
+{
+	struct cell *t = get_t();
+
+	/* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction;
+	 * in REQUEST_ROUTE T will be set only if the transaction was already
+	 * created; if not -> use the static variable */
+	if (!t || t==T_UNDEFINED )
+		goto_on_branch_failure=go_to;
+	else
+		t->on_branch_failure = go_to;
+}
+
+
 void t_on_reply( unsigned int go_to )
 {
 	struct cell *t = get_t();
@@ -279,6 +295,10 @@ void t_on_reply( unsigned int go_to )
 unsigned int get_on_failure()
 {
 	return goto_on_failure;
+}
+unsigned int get_on_branch_failure()
+{
+	return goto_on_branch_failure;
 }
 unsigned int get_on_reply()
 {
@@ -1039,6 +1059,67 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 }
 
 
+/* return 1 if a failure_route processes */
+int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
+					int code, int extra_flags)
+{
+	static struct sip_msg faked_req;
+	struct sip_msg *shmem_msg = t->uas.request;
+	int on_branch_failure;
+
+	on_branch_failure = t->uac[picked_branch].on_branch_failure;
+
+	/* failure_route for a local UAC? */
+	if (!shmem_msg) {
+		LOG(L_WARN,"Warning: run_branch_failure_handlers: no UAC support (%d, %d) \n",
+			on_branch_failure, t->tmcb_hl.reg_types);
+		return 0;
+	}
+
+	/* don't start faking anything if we don't have to */
+	if (unlikely(!on_branch_failure && !has_tran_tmcbs( t, TMCB_ON_BRANCH_FAILURE))) {
+		LOG(L_WARN,
+			"Warning: run_failure_handlers: no branch_failure handler (%d, %d)\n",
+			on_branch_failure, t->tmcb_hl.reg_types);
+		return 1;
+	}
+
+	if (!fake_req(&faked_req, shmem_msg, extra_flags, &t->uac[picked_branch])) {
+		LOG(L_ERR, "ERROR: run_branch_failure_handlers: fake_req failed\n");
+		return 0;
+	}
+	/* fake also the env. conforming to the fake msg */
+	faked_env( t, &faked_req);
+	/* DONE with faking ;-) -> run the branch_failure handlers */
+
+	if (unlikely(has_tran_tmcbs( t, TMCB_ON_BRANCH_FAILURE)) ) {
+		run_trans_callbacks( TMCB_ON_BRANCH_FAILURE, t, &faked_req, rpl, code);
+	}
+	if (on_branch_failure) {
+		/* avoid recursion -- if branch_failure_route forwards, and does not
+		 * set next branch failure route, branch_failure_route will not be reentered
+		 * on branch failure */
+		t->on_branch_failure=0;
+		if (exec_pre_script_cb(&faked_req, BRANCH_FAILURE_CB_TYPE)>0) {
+			/* run a branch_failure_route action if some was marked */
+			if (run_top_route(branch_failure_rt.rlist[on_branch_failure], &faked_req, 0)<0)
+				LOG(L_ERR, "ERROR: run_branch_failure_handlers: Error in run_top_route\n");
+			exec_post_script_cb(&faked_req, BRANCH_FAILURE_CB_TYPE);
+		}
+		/* update message flags, if changed in branch_failure route */
+		t->uas.request->flags = faked_req.flags;
+	}
+
+	/* restore original environment and free the fake msg */
+	faked_env( t, 0);
+	free_faked_req(&faked_req,t);
+
+	/* if branch_failure handler changed flag, update transaction context */
+	shmem_msg->flags = faked_req.flags;
+	return 1;
+}
+
+
 
 /* 401, 407, 415, 420, and 484 have priority over the other 4xx*/
 inline static short int get_4xx_prio(unsigned char xx)
@@ -1251,6 +1332,22 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	if (new_code >=300 ) {
 
 		Trans->uac[branch].last_received=new_code;
+
+/* New branch failure route code */
+		if (unlikely(has_tran_tmcbs( Trans, TMCB_ON_BRANCH_FAILURE_RO|TMCB_ON_BRANCH_FAILURE)
+						|| Trans->uac[branch].on_branch_failure )) {
+			extra_flags=
+				((Trans->uac[branch].request.flags & F_RB_TIMEOUT)?
+							FL_TIMEOUT:0) | 
+				((Trans->uac[branch].request.flags & F_RB_REPLIED)?
+						 	FL_REPLIED:0);
+			tm_ctx_set_branch_index(branch);
+			picked_branch = branch;
+			run_branch_failure_handlers( Trans, Trans->uac[branch].reply,
+									new_code, extra_flags);
+		}
+/* END - New branch failure route code */
+
 
 		/* if all_final return lowest */
 		picked_branch=t_pick_branch(branch,new_code, Trans, &picked_code);
