@@ -70,7 +70,7 @@ Sas Ovidiu
 
         6. Exported Pseudo Variables
 
-              6.1. $rtpstart
+              6.1. $rtpstat
 
         7. MI Commands
 
@@ -136,7 +136,7 @@ Chapter 1. Admin Guide
 
    6. Exported Pseudo Variables
 
-        6.1. $rtpstart
+        6.1. $rtpstat
 
    7. MI Commands
 
@@ -588,9 +588,9 @@ start_recording();
 
 6. Exported Pseudo Variables
 
-   6.1. $rtpstart
+   6.1. $rtpstat
 
-6.1. $rtpstart
+6.1. $rtpstat
 
    Returns the RTP-Statistics from the RTP-Proxy. The RTP-Statistics from
    the RTP-Proxy are provided as a string and it does contain several
