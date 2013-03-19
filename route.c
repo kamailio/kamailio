@@ -102,6 +102,7 @@
 struct route_list main_rt;
 struct route_list onreply_rt;
 struct route_list failure_rt;
+struct route_list branch_failure_rt;
 struct route_list branch_rt;
 struct route_list onsend_rt;
 struct route_list event_rt;
@@ -142,6 +143,7 @@ void destroy_routes()
 	destroy_rlist(&main_rt);
 	destroy_rlist(&onreply_rt);
 	destroy_rlist(&failure_rt);
+	destroy_rlist(&branch_failure_rt);
 	destroy_rlist(&branch_rt);
 	destroy_rlist(&event_rt);
 }
@@ -209,6 +211,8 @@ int init_routes()
 	if (init_rlist("on_reply", &onreply_rt, ONREPLY_RT_NO, RT_HASH_SIZE)<0)
 		goto error;
 	if (init_rlist("failure", &failure_rt, FAILURE_RT_NO, RT_HASH_SIZE)<0)
+		goto error;
+	if (init_rlist("branch_failure", &branch_failure_rt, FAILURE_RT_NO, RT_HASH_SIZE)<0)
 		goto error;
 	if (init_rlist("branch", &branch_rt, BRANCH_RT_NO, RT_HASH_SIZE)<0)
 		goto error;
