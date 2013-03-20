@@ -41,6 +41,7 @@
 #include "../../str.h"
 #include "../../mem/mem.h"
 #include "../../ut.h" /* for user2uid() */
+#include "../../rpc_lookup.h" /* for sercmd */
 #include "carrierroute.h"
 #include "cr_fixup.h"
 #include "cr_map.h"
@@ -50,6 +51,9 @@
 #include "db_carrierroute.h"
 #include "config.h"
 #include <sys/stat.h>
+
+#define AVP_CR_URIS "_cr_uris"
+int_str cr_uris_avp; // contains all PSTN destinations
 
 MODULE_VERSION
 
@@ -129,6 +133,8 @@ static mi_export_t mi_cmds[] = {
 	{ 0, 0, 0, 0, 0}
 };
 
+static rpc_export_t rpc_methods[];
+
 struct module_exports exports = {
 	"carrierroute",
 	DEFAULT_DLFLAGS, /* dlopen flags */
@@ -161,6 +167,11 @@ static int mod_init(void) {
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+
+	if(rpc_register_array(rpc_methods)!=0) {
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -241,6 +252,10 @@ static int mod_init(void) {
 	if(mode == CARRIERROUTE_MODE_DB){
 		carrierroute_db_close();
 	}
+
+	cr_uris_avp.s.s = AVP_CR_URIS;
+	cr_uris_avp.s.len = sizeof(AVP_CR_URIS) -1;
+
 	return 0;
 }
 
@@ -263,10 +278,37 @@ static int mi_child_init(void) {
 	return 0;
 }
 
-
 static void mod_destroy(void) {
 	if(mode == CARRIERROUTE_MODE_DB){
 		carrierroute_db_close();
 	}
 	destroy_route_data();
 }
+
+static const char *rpc_cr_reload_routes_doc[2] = {
+	"Reload routes", 0
+};
+
+static void rpc_cr_reload_routes(rpc_t *rpc, void *c) {
+
+	if(mode == CARRIERROUTE_MODE_DB){
+		if (carrierroute_dbh==NULL) {
+			carrierroute_dbh = carrierroute_dbf.init(&carrierroute_db_url);
+			if(carrierroute_dbh==0 ) {
+				LM_ERR("cannot initialize database connection\n");
+				return;
+			}
+		}
+	}
+
+	if ( (reload_route_data())!=0 ) {
+		LM_ERR("failed to load routing data\n");
+		return;
+	}
+}
+
+static rpc_export_t rpc_methods[] = {
+	{ "cr.reload_routes",  rpc_cr_reload_routes, rpc_cr_reload_routes_doc, 0},
+	{0, 0, 0, 0}
+};
+

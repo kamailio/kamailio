@@ -511,6 +511,11 @@ descavp)
    This is useful if you need some additional informations that belongs to
    each gw, like the destination or the number of channels.
 
+   The function pays special attention to the failurerouting cases, so
+   that any destination that has failed to provide a successful response
+   will not be reused in a subsequent call of cr_route. This situation can
+   appear when different route domains contain a set of common gateways.
+
    This function is only usable with rewrite_user and prefix_matching
    containing a valid string. This string needs to be numerical if the
    match_mode parameter is set to 10. It uses the standard CRC32 algorithm
@@ -1063,7 +1068,7 @@ Chapter 2. Module parameter for database access.
 
    URL to the database containing the data.
 
-   Default value is “mysql://openserro:openserro@localhost/openser”.
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”.
 
    Example 2.1. Set db_url parameter
 ...
