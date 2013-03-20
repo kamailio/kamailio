@@ -2159,14 +2159,12 @@ int main(int argc, char** argv)
 	struct binrpc_cmd cmd;
 	struct id_list* sock_id;
 	char* format;
-	int interactive;
 	char* line;
 	char* l;
 
 	quit=0;
 	format=0;
 	line=0;
-	interactive=0;
 	s=-1;
 	sock_name=0;
 	sock_type=UNIXS_SOCK;
@@ -2273,7 +2271,6 @@ int main(int argc, char** argv)
 	sock_id=0;
 	
 	if (optind>=argc){
-			interactive=1;
 			/*fprintf(stderr, "ERROR: no command specified\n");
 			goto error; */
 	}else{
