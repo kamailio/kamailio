@@ -646,6 +646,20 @@ static int use_next_gw(struct sip_msg* msg)
 	return 1;
 }
 
+int dr_already_choosen(rt_info_t* rt_info, int* local_gwlist, int lgw_size, int check)
+{
+	int l;
+
+	for ( l = 0; l<lgw_size; l++ ) {
+		if ( rt_info->pgwl[local_gwlist[l]].pgw == rt_info->pgwl[check].pgw ) {
+			LM_INFO("Gateway already choosen %.*s, local_gwlist[%d]=%d, %d\n",
+					rt_info->pgwl[check].pgw->ip.len, rt_info->pgwl[check].pgw->ip.s, l, local_gwlist[l], check);
+			return 1;
+		}
+	}
+
+	return 0;
+}
 
 static int do_routing(struct sip_msg* msg, dr_group_t *drg)
 {
@@ -806,6 +820,30 @@ again:
 					}
 				}
 			}
+
+			if ( sort_order == 2 ) {
+				/* check not to use the same gateway as before */
+				if ( t>1 ) {
+					/* check if all in the current set were already chosen */
+					if (i-j <= t-1) {
+						for( l = j; l< i; l++) {
+							if ( ! dr_already_choosen(rt_info, local_gwlist, t-1, l) )
+								break;
+						}
+						if ( l == i ) {
+							LM_INFO("All gateways in group from %d - %d were already used\n", j, i);
+							t--; /* jump over this group, nothing to choose here */
+							j=i; continue;
+						}
+					}
+					while ( dr_already_choosen(rt_info, local_gwlist, t-1, local_gwlist[t-1]) ) {
+						local_gwlist[t-1]   = j + rand()%(i-j);
+					}
+				}
+				LM_DBG("The %d gateway is %.*s [%d]\n", t, rt_info->pgwl[local_gwlist[t-1]].pgw->ip.len,
+						rt_info->pgwl[local_gwlist[t-1]].pgw->ip.s, local_gwlist[t-1]);
+			}
+
 			/* next group starts from i */
 			j=i;
 		}
