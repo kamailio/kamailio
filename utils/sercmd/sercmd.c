@@ -2158,7 +2158,6 @@ int main(int argc, char** argv)
 	int sock_type;
 	int s;
 	struct binrpc_cmd cmd;
-	int rec;
 	struct id_list* sock_id;
 	char* format;
 	int interactive;
@@ -2169,7 +2168,6 @@ int main(int argc, char** argv)
 	format=0;
 	line=0;
 	interactive=0;
-	rec=1;
 	s=-1;
 	sock_name=0;
 	port_no=0;
