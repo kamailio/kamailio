@@ -95,7 +95,9 @@ void print_udomain(FILE* _f, udomain_t* _d);
  * \param _d cleaned domain
  * \return 0 on success, -1 on failure
  */
+/*
 int db_timer_udomain(udomain_t* _d);
+*/
 
 
 /*!

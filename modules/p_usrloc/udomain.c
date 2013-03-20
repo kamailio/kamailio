@@ -589,6 +589,7 @@ done:
  * \param _d cleaned domain
  * \return 0 on success, -1 on failure
  */
+/*
 int db_timer_udomain(udomain_t* _d)
 {
 	db_key_t keys[2];
@@ -611,6 +612,7 @@ int db_timer_udomain(udomain_t* _d)
 	//if (ul_db_layer_delete(_d, NULL, NULL, keys, ops, vals, 2) < 0) { //FIXME
 	return 0;
 }
+*/
 
 
 
