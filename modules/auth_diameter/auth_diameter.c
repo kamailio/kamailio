@@ -212,13 +212,10 @@ int diameter_www_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
 
 static int group_fixup(void** param, int param_no)
 {
-	void* ptr;
 	str* s;
 
 	if (param_no == 1) 
 	{
-		ptr = *param;
-		
 		if (!strcasecmp((char*)*param, "Request-URI")) 
 		{
 			*param = (void*)1;
@@ -245,8 +242,6 @@ static int group_fixup(void** param, int param_no)
 				
 		LM_ERR("unsupported Header Field identifier\n");
 		return E_UNSPEC;
-		
-		//pkg_free(ptr);
 	} 
 	
 	if (param_no == 2) 
@@ -257,14 +252,12 @@ static int group_fixup(void** param, int param_no)
 			LM_ERR("no pkg memory left\n");
 			return E_UNSPEC;
 		}
-		ptr = *param;
 		s->s = (char*)*param;
 		s->len = strlen(s->s);
 		*param = (void*)s;
 	}
 
 end:
-//	pkg_free(ptr);
 	return 0;
 }
 
