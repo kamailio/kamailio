@@ -2154,7 +2154,6 @@ int main(int argc, char** argv)
 {
 	int c;
 	char* sock_name;
-	int port_no;
 	int sock_type;
 	int s;
 	struct binrpc_cmd cmd;
@@ -2170,7 +2169,6 @@ int main(int argc, char** argv)
 	interactive=0;
 	s=-1;
 	sock_name=0;
-	port_no=0;
 	sock_type=UNIXS_SOCK;
 	opterr=0;
 	while((c=getopt(argc, argv, "UVhs:D:R:vf:"))!=-1){
