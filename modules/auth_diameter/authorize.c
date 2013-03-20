@@ -295,7 +295,7 @@ int authorize(struct sip_msg* msg, pv_elem_t* realm, int hftype)
 int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 						struct sip_uri ruri, unsigned int m_id, rd_buf_t* rb)
 {
-	str method, user_name;
+	str user_name;
 	AAAMessage *req;
 	AAA_AVP *avp, *position; 
 	int name_flag, port_flag;
@@ -316,8 +316,6 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 	else
 		cred = NULL;
 			
-	method = *p_method;
-
 	if(!cred)
 	{
 		/* Username AVP */
