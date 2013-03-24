@@ -121,6 +121,26 @@ modparam("db_mysql", "auto_reconnect", 0)
 </programlisting>
 		</example>
 	</section>
+	<section id="db_mysql.p.insert_delayed">
+		<title><varname>insert_delayed</varname> (integer)</title>
+		<para>
+		If set to 1, all INSERT SQL queries will be sent to MySQL server as
+		INSERT DELAYED.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (1 - on / 0 - off).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>insert_delayed</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_mysql", "insert_delayed", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Functions</title>
