@@ -538,7 +538,7 @@ int msrp_parse_uri(char *start, int len, msrp_uri_t *uri)
 
 error:
 	LM_ERR("parsing error in [%.*s] at [%ld]\n",
-			len, start, s - start);
+			len, start, (long int)(s - start));
 	memset(uri, 0, sizeof(msrp_uri_t));
 	return -1;
 }
