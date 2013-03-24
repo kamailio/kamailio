@@ -382,6 +382,7 @@ static inline void wb_timer(urecord_t* _r)
 void timer_urecord(urecord_t* _r)
 {
 	switch(db_mode) {
+	case DB_READONLY:
 	case NO_DB:         nodb_timer(_r);
 						break;
 	/* use also the write_back timer routine to handle the failed
