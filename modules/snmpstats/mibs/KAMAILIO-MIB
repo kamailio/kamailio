@@ -7,6 +7,7 @@
 -- 
 -- Copyright (c) The Internet Society (2006)
 -- Ammendments (c) Soma Networks, Inc. (2006)
+-- Kamailio extras (c) Edvina AB, 2013
 --
 -- All rights reserved.
 -- *****************************************************************
@@ -72,6 +73,30 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         REVISION   "201301081200Z"
         DESCRIPTION
            "Renamed MIB and mib entries to new product name, Kamailio."
+        REVISION   "201303231200Z"
+        DESCRIPTION
+           "Added Kamailio core memory allocation data."
+        ::= { kamailioModules 5 }
+
+--
+-- Top-Level Components of this MIB.
+--
+    kamailioObjects OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for accessible objects in the MIB."
+        ::= { kamailioMIB 1 } 
+
+    kamailioMIBEvents OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION
+        "A sub-tree for all the KAMAILIO-MIB related events and traps."
+        ::= {kamailioMIB 2 }
+
+    kamailioConform OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+	"Some stuff here"
         ::= { kamailioModules 5 }
 
 --
@@ -119,6 +144,46 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 
 -- 
 -- Kamailio Server Objects
+--
+    kamailioSrvMemory OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for Core Memory Statistics." 
+        ::= { kamailioServer 1 }
+
+    kamailioSrvCounters OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for Core Counters/Statistic variables." 
+        ::= { kamailioServer 2 }
+
+    kamailioSrvProcess OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for Core Processes." 
+        ::= { kamailioServer 3 }
+
+-- 
+-- Kamailio Server Memory data
+--
+    kamailioSrvMaxMemory OBJECT-TYPE
+        SYNTAX      Gauge32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Maximum available Shared Memory"
+        ::= { kamailioSrvMemory 1 }
+
+    kamailioSrvFreeMemory OBJECT-TYPE
+        SYNTAX      Gauge32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Available free memory in the Shared Memory pool"
+        ::= { kamailioSrvMemory 2 }
+
+-- 
+-- Kamailio Server Core counters
 --
 
 

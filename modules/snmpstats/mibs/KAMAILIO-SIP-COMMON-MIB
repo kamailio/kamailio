@@ -113,7 +113,6 @@ KAMAILIO-SIP-COMMON-MIB DEFINITIONS ::= BEGIN
               Registrar: A registrar is a server that accepts
               REGISTER requests and places the information it
               receives in those requests into the location service
-
               for the domain it handles.
 
               Copyright (C) The Internet Society (2005). This version
