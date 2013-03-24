@@ -39,4 +39,14 @@ void init_kamailioServer(void);
 Netsnmp_Node_Handler handle_kamailioSrvMaxMemory;
 Netsnmp_Node_Handler handle_kamailioSrvFreeMemory;
 
+Netsnmp_Node_Handler handle_kamailioSrvCnfFullVersion;
+Netsnmp_Node_Handler handle_kamailioSrvCnfVerName;
+Netsnmp_Node_Handler handle_kamailioSrvCnfVerVersion;
+Netsnmp_Node_Handler handle_kamailioSrvCnfVerArch;
+Netsnmp_Node_Handler handle_kamailioSrvCnfVerOs;
+Netsnmp_Node_Handler handle_kamailioSrvCnfVerId;
+Netsnmp_Node_Handler handle_kamailioSrvCnfVerCompTime;
+Netsnmp_Node_Handler handle_kamailioSrvCnfVerCompiler;
+Netsnmp_Node_Handler handle_kamailioSrvCnfVerFlags;
+
 #endif /* KAMAILIOSERVER_H */

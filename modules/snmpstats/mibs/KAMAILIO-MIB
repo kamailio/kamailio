@@ -26,7 +26,11 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         Gauge32
             FROM SNMPv2-SMI
             
-        DateAndTime
+        DateAndTime,
+	TEXTUAL-CONVENTION,
+	DisplayString,
+	RowStatus,
+	TruthValue
             FROM SNMPv2-TC
 
         SnmpAdminString
@@ -96,30 +100,8 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
     kamailioConform OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
-	"Some stuff here"
-        ::= { kamailioModules 5 }
-
---
--- Top-Level Components of this MIB.
---
-    kamailioObjects OBJECT-IDENTITY
-        STATUS current
-        DESCRIPTION 
-        "Sub-tree for accessible objects in the MIB."
-        ::= { kamailioMIB 1 } 
-
-    kamailioMIBEvents OBJECT-IDENTITY
-        STATUS current
-        DESCRIPTION
-        "A sub-tree for all the KAMAILIO-MIB related events and traps."
-        ::= {kamailioMIB 2 }
-
-    kamailioConform OBJECT-IDENTITY
-        STATUS current
-        DESCRIPTION 
         "Sub-tree for Conformance specifications."
         ::= { kamailioMIB 3 }
-                                
 
 --
 -- kamailioObjects sub-components
@@ -142,6 +124,12 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         "Sub-tree for tracking of SIP Dialogs being processed by Kamailio."
     ::= { kamailioObjects 3 }
 
+   kamailioNet OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for tracking of Network Transports being enabled in Kamailio."
+    ::= { kamailioObjects 4 }
+
 -- 
 -- Kamailio Server Objects
 --
@@ -151,17 +139,103 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         "Sub-tree for Core Memory Statistics." 
         ::= { kamailioServer 1 }
 
+    kamailioSrvConfig OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for Core configuration - compile flags etc." 
+        ::= { kamailioServer 2 }
+
     kamailioSrvCounters OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for Core Counters/Statistic variables." 
-        ::= { kamailioServer 2 }
+        ::= { kamailioServer 3 }
 
     kamailioSrvProcess OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
         "Sub-tree for Core Processes." 
-        ::= { kamailioServer 3 }
+        ::= { kamailioServer 4 }
+
+-- 
+-- Kamailio Server Configuration
+--
+
+    kamailioSrvCnfFullVersion OBJECT-TYPE
+        SYNTAX DisplayString
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Full version of Kamailio"
+        ::= { kamailioSrvConfig 1 }
+
+    kamailioSrvCnfVerName OBJECT-TYPE
+        SYNTAX DisplayString
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Version of Kamailio"
+        ::= { kamailioSrvConfig 2 }
+
+    kamailioSrvCnfVerVersion OBJECT-TYPE
+        SYNTAX DisplayString
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Version of Kamailio"
+        ::= { kamailioSrvConfig 3 }
+
+    kamailioSrvCnfVerArch OBJECT-TYPE
+        SYNTAX      DisplayString
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Architecture Kamailio is compiled for"
+        ::= { kamailioSrvConfig 4 }
+
+
+    kamailioSrvCnfVerOs	OBJECT-TYPE
+        SYNTAX DisplayString
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Operating System Kamailio is compiled for"
+        ::= { kamailioSrvConfig 5 }
+
+
+    kamailioSrvCnfVerId	OBJECT-TYPE
+        SYNTAX DisplayString
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Kamailio Version ID"
+        ::= { kamailioSrvConfig 6 }
+
+
+    kamailioSrvCnfVerCompTime OBJECT-TYPE
+        SYNTAX DisplayString
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Kamailio Build time"
+        ::= { kamailioSrvConfig 7 }
+
+    kamailioSrvCnfVerCompiler OBJECT-TYPE
+        SYNTAX DisplayString
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Kamailio Build compiler used"
+        ::= { kamailioSrvConfig 8 }
+
+    kamailioSrvCnfVerFlags OBJECT-TYPE
+        SYNTAX DisplayString
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Kamailio Build compile time flags"
+        ::= { kamailioSrvConfig 9 }
+
 
 -- 
 -- Kamailio Server Memory data
@@ -185,6 +259,130 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
 -- 
 -- Kamailio Server Core counters
 --
+
+-- 
+-- Kamailio Network Objects
+--
+    kamailioNetTcp OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for TCP Network Transport objects (incl TLS conncetions)." 
+        ::= { kamailioNet 1 }
+
+
+    kamailioNetWebsocket OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for Websocket Network Transport objects ." 
+        ::= { kamailioNet 2 }
+
+    kamailioNetHttp OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for HTTP Server Transport objects ." 
+        ::= { kamailioNet 3 }
+
+
+--
+-- TCP connection objects
+--
+    kamailioNetTcpTls OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for TCP/TLS objects." 
+        ::= { kamailioNetTcp 1 }
+
+    kamailioNetTcpStat OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for TCP/TLS statistics." 
+        ::= { kamailioNetTcp 2 }
+
+    kamailioNetTcpConfig OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for TCP/TLS configuration data." 
+        ::= { kamailioNetTcp 3 }
+
+--
+-- TCP connection config objects
+--
+    kamailioNetTcpEnabled OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+	DEFVAL { false }
+        DESCRIPTION 
+        "True if TCP is enabled in this server."
+        ::= { kamailioNetTcpConfig 1 }
+
+--
+-- TCP connection statistic objects
+--
+    kamailioNetTcpConnEstablished OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Incremented each time a TCP connection is established."
+        ::= { kamailioNetTcpStat 1 }
+
+    kamailioNetTcpConnFailed OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Number of failed active TCP connection attempts."
+        ::= { kamailioNetTcpStat 2 }
+
+    kamailioNetTcpConnReset OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Number of reset TCP connections"
+        ::= { kamailioNetTcpStat 3 }
+
+    kamailioNetTcpConnSuccess OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Number of successful TCP connections"
+        ::= { kamailioNetTcpStat 4 }
+
+    kamailioNetTcpConnOpened OBJECT-TYPE
+        SYNTAX      Gauge32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Number of current opened TCP connections"
+        ::= { kamailioNetTcpStat 5 }
+
+    kamailioNetTcpConnPassiveOpen OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Total number of accepted TCP connections (so far)."
+        ::= { kamailioNetTcpStat 6 }
+
+    kamailioNetTcpConnSuccess OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Total number of successfully active opened TCP connections"
+        ::= { kamailioNetTcpStat 7 }
+
+    kamailioNetTcpConnReject OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Number of rejected incoming TCP connections."
+        ::= { kamailioNetTcpStat 8 }
+
 
 
 --

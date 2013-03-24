@@ -41,6 +41,7 @@
 #include "snmpstats_globals.h"
 #include "utilities.h"
 #include "../../lib/kcore/statistics.h"
+#include "../../ver.h"
 
 /** Initializes the kamailioServer module */
 void
@@ -48,6 +49,16 @@ init_kamailioServer(void)
 {
     const oid kamailioSrvMaxMemory_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,1,1 };
     const oid kamailioSrvFreeMemory_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,1,2 };
+
+    const oid kamailioSrvCnfFullVersion_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,1 };
+    const oid kamailioSrvCnfVerName_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,2 };
+    const oid kamailioSrvCnfVerVersion_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,3 };
+    const oid kamailioSrvCnfVerArch_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,4 };
+    const oid kamailioSrvCnfVerOs_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,5 };
+    const oid kamailioSrvCnfVerId_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,6 };
+    const oid kamailioSrvCnfVerCompTime_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,7 };
+    const oid kamailioSrvCnfVerCompiler_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,8 };
+    const oid kamailioSrvCnfVerFlags_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,1,2,9 };
 
      DEBUGMSGTL(("kamailioServer", "Initializing\n"));
      LM_DBG("initializing Kamailio Server OID's X\n");
@@ -60,6 +71,51 @@ init_kamailioServer(void)
     netsnmp_register_scalar(
         netsnmp_create_handler_registration("kamailioSrvFreeMemory", handle_kamailioSrvFreeMemory,
                                kamailioSrvFreeMemory_oid, OID_LENGTH(kamailioSrvFreeMemory_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioSrvCnfFullVersion", handle_kamailioSrvCnfFullVersion,
+                               kamailioSrvCnfFullVersion_oid, OID_LENGTH(kamailioSrvCnfFullVersion_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioSrvCnfVerName", handle_kamailioSrvCnfVerName,
+                               kamailioSrvCnfVerName_oid, OID_LENGTH(kamailioSrvCnfVerName_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioSrvCnfVerVersion", handle_kamailioSrvCnfVerVersion,
+                               kamailioSrvCnfVerVersion_oid, OID_LENGTH(kamailioSrvCnfVerVersion_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioSrvCnfVerArch", handle_kamailioSrvCnfVerArch,
+                               kamailioSrvCnfVerArch_oid, OID_LENGTH(kamailioSrvCnfVerArch_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioSrvCnfVerOs", handle_kamailioSrvCnfVerOs,
+                               kamailioSrvCnfVerOs_oid, OID_LENGTH(kamailioSrvCnfVerOs_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioSrvCnfVerId", handle_kamailioSrvCnfVerId,
+                               kamailioSrvCnfVerId_oid, OID_LENGTH(kamailioSrvCnfVerId_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioSrvCnfVerCompTime", handle_kamailioSrvCnfVerCompTime,
+                               kamailioSrvCnfVerCompTime_oid, OID_LENGTH(kamailioSrvCnfVerCompTime_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioSrvCnfVerCompiler", handle_kamailioSrvCnfVerCompiler,
+                               kamailioSrvCnfVerCompiler_oid, OID_LENGTH(kamailioSrvCnfVerCompiler_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioSrvCnfVerFlags", handle_kamailioSrvCnfVerFlags,
+                               kamailioSrvCnfVerFlags_oid, OID_LENGTH(kamailioSrvCnfVerFlags_oid),
                                HANDLER_CAN_RONLY
         ));
 }
@@ -94,6 +150,8 @@ handle_kamailioSrvMaxMemory(netsnmp_mib_handler *handler,
 
     return SNMP_ERR_NOERROR;
 }
+
+
 int
 handle_kamailioSrvFreeMemory(netsnmp_mib_handler *handler,
                           netsnmp_handler_registration *reginfo,
@@ -119,6 +177,262 @@ handle_kamailioSrvFreeMemory(netsnmp_mib_handler *handler,
         default:
             /* we should never get here, so this is a really bad error */
             snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioSrvFreeMemory\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+
+int
+handle_kamailioSrvCnfFullVersion(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    /* We are never called for a GETNEXT if it's registered as a
+       "instance", as it's "magically" handled for us.  */
+
+    /* a instance handler also only hands us one request at a time, so
+       we don't need to loop over a list of requests; we'll only get one. */
+
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
+					full_version, strlen(full_version));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioSrvCnfFullVersion\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioSrvCnfVerName(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    /* We are never called for a GETNEXT if it's registered as a
+       "instance", as it's "magically" handled for us.  */
+
+    /* a instance handler also only hands us one request at a time, so
+       we don't need to loop over a list of requests; we'll only get one. */
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
+					ver_name, strlen(ver_name));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioSrvCnfVerName\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioSrvCnfVerVersion(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    /* We are never called for a GETNEXT if it's registered as a
+       "instance", as it's "magically" handled for us.  */
+
+    /* a instance handler also only hands us one request at a time, so
+       we don't need to loop over a list of requests; we'll only get one. */
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
+					ver_version, strlen(ver_version));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioSrvCnfVerVersion\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioSrvCnfVerArch(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    /* We are never called for a GETNEXT if it's registered as a
+       "instance", as it's "magically" handled for us.  */
+
+    /* a instance handler also only hands us one request at a time, so
+       we don't need to loop over a list of requests; we'll only get one. */
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
+					ver_arch, strlen(ver_arch));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioSrvCnfVerArch\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioSrvCnfVerOs(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    /* We are never called for a GETNEXT if it's registered as a
+       "instance", as it's "magically" handled for us.  */
+
+    /* a instance handler also only hands us one request at a time, so
+       we don't need to loop over a list of requests; we'll only get one. */
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
+					ver_os, strlen(ver_os));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioSrvCnfVerOs\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioSrvCnfVerId(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    /* We are never called for a GETNEXT if it's registered as a
+       "instance", as it's "magically" handled for us.  */
+
+    /* a instance handler also only hands us one request at a time, so
+       we don't need to loop over a list of requests; we'll only get one. */
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
+					ver_id, strlen(ver_id));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioSrvCnfVerId\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioSrvCnfVerCompTime(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    /* We are never called for a GETNEXT if it's registered as a
+       "instance", as it's "magically" handled for us.  */
+
+    /* a instance handler also only hands us one request at a time, so
+       we don't need to loop over a list of requests; we'll only get one. */
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
+					ver_compiled_time, strlen(ver_compiled_time));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioSrvCnfVerCompTime\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioSrvCnfVerCompiler(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    /* We are never called for a GETNEXT if it's registered as a
+       "instance", as it's "magically" handled for us.  */
+
+    /* a instance handler also only hands us one request at a time, so
+       we don't need to loop over a list of requests; we'll only get one. */
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
+					ver_compiler, strlen(ver_compiler));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioSrvCnfVerCompiler\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioSrvCnfVerFlags(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    /* We are never called for a GETNEXT if it's registered as a
+       "instance", as it's "magically" handled for us.  */
+
+    /* a instance handler also only hands us one request at a time, so
+       we don't need to loop over a list of requests; we'll only get one. */
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
+					ver_flags, strlen(ver_flags));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioSrvCnfVerFlags\n", reqinfo->mode );
             return SNMP_ERR_GENERR;
     }
 
