@@ -475,8 +475,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE},
 	{"t_next_contacts", t_next_contacts,            0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE},
-	{"t_next_contact_flows", t_next_contact_flows,            0, 0,
-			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"t_next_contact_flow", t_next_contact_flow,            0, 0,
+			REQUEST_ROUTE | BRANCH_FAILURE_ROUTE},
 
 	/* not applicable from the script */
 	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,   0, 0},
@@ -1444,7 +1444,7 @@ inline static int _w_t_relay_to(struct sip_msg  *p_msg ,
 	struct cell *t;
 	int res;
 
-	if (is_route_type(FAILURE_ROUTE)) {
+	if (is_route_type(FAILURE_ROUTE|BRANCH_FAILURE_ROUTE)) {
 		t=get_t();
 		if (!t || t==T_UNDEFINED) {
 			LOG(L_CRIT, "BUG: w_t_relay_to: undefined T\n");

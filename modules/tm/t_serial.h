@@ -34,4 +34,4 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value);
 
 int t_next_contacts(struct sip_msg* msg, char* key, char* value);
 
-int t_next_contact_flows(struct sip_msg* msg, char* key, char* value);
+int t_next_contact_flow(struct sip_msg* msg, char* key, char* value);
