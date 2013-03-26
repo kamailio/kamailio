@@ -64,6 +64,7 @@
 #include "globals.h"
 #include "rpc_lookup.h"
 #include "sr_compat.h"
+#include "ppcfg.h"
 
 #include <sys/stat.h>
 #include <regex.h>
@@ -271,6 +272,7 @@ static int register_module(unsigned ver, union module_exports_u* e,
 {
 	int ret, i;
 	struct sr_module* mod;
+	char defmod[64];
 
 	ret=-1;
 
@@ -364,6 +366,20 @@ static int register_module(unsigned ver, union module_exports_u* e,
 			goto error;
 		}
 		/* i==0 => success */
+	}
+
+	/* add cfg define for each module: MOD_modulename */
+	if(strlen(mod->exports.name)>=60) {
+		LM_ERR("too long module name: %s\n", mod->exports.name);
+		goto error;
+	}
+	strcpy(defmod, "MOD_");
+	strcat(defmod, mod->exports.name);
+	pp_define_set_type(0);
+	if(pp_define(strlen(defmod), defmod)<0) {
+		LM_ERR("unable to set cfg define for module: %s\n",
+				mod->exports.name);
+		goto error;
 	}
 
 	/* link module in the list */
