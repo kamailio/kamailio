@@ -203,8 +203,8 @@
 		
 		<listitem>
 		<para>
-		<emphasis>dialog</emphasis> - all scalars relating to the number of dialogs are 
-		dependent on the presence of the dialog module.  Furthermore, if the module is 
+		<emphasis>dialog or dialog-ng</emphasis> - all scalars relating to the number of dialogs are 
+		dependent on the presence of a dialog module.  Furthermore, if the module is 
 		not loaded, then the kamailioDialogLimitMinorEvent, and kamailioDialogLimitMajorEvent
 		alarm will be disabled. 
 		</para>
@@ -243,7 +243,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id ="snmpstats.p.sipentitytape">
 		<title><varname>sipEntityType</varname> (String) </title>
 
 		<para>
@@ -275,7 +275,7 @@ modparam("snmpstats", "sipEntityType", "proxyServer")
 		</para>
 	</section>
 
-	<section>
+	<section id ="snmpstats.p.MsqQueueMinorTreshold">
 		<title><varname>MsgQueueMinorThreshold</varname> (Integer)</title>
 
 		<para>
@@ -300,7 +300,7 @@ modparam("snmpstats", "MsgQueueMinorThreshold", 2000)
 		</para>
 	</section>
 	
-	<section>
+	<section id ="snmpstats.p.MsqQueueMajorTreshold">
 		<title><varname>MsgQueueMajorThreshold</varname> (Integer)</title>
 
 		<para>
@@ -325,7 +325,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 		</para>
 	</section>
 
-	<section>
+	<section id ="snmpstats.p.dlg_minor_treshold">
 		<title><varname>dlg_minor_threshold</varname> (Integer)</title>
 
 		<para>
@@ -349,7 +349,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 		</para>
 	</section>
 
-	<section>
+	<section id ="snmpstats.p.dlg_major_treshold">
 		<title><varname>dlg_major_threshold</varname> (Integer)</title>
 
 		<para>
@@ -373,7 +373,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 		</para>
 	</section>
 
-	<section>
+	<section id ="snmpstats.p.snmpgetPath">
 		<title><varname>snmpgetPath</varname> (String)</title>
 
 		<para>
@@ -399,7 +399,7 @@ modparam("snmpstats", "snmpgetPath",     "/my/custom/path/")
 		</example>
 	</section>
 	
-	<section>
+	<section id ="snmpstats.p.snmpCommunity">
 		<title><varname>snmpCommunity</varname> (String)</title>
 
 		<para>
@@ -425,7 +425,7 @@ modparam("snmpstats", "snmpCommunity", "customCommunityString")
 		</example>
 	</section>
 
-	<section>
+	<section id ="snmpstats.p.export_registrar">
 		<title><varname>export_registrar</varname> (int)</title>
 
 		<para>

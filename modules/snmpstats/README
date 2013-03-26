@@ -254,10 +254,10 @@ Chapter 1. Admin Guide
      * usrloc - all scalars and tables relating to users and contacts are
        dependent on the usrloc module. If the module is not loaded, the
        respective tables will be empty.
-     * dialog - all scalars relating to the number of dialogs are
-       dependent on the presence of the dialog module. Furthermore, if the
-       module is not loaded, then the kamailioDialogLimitMinorEvent, and
-       kamailioDialogLimitMajorEvent alarm will be disabled.
+     * dialog or dialog-ng - all scalars relating to the number of dialogs
+       are dependent on the presence of a dialog module. Furthermore, if
+       the module is not loaded, then the kamailioDialogLimitMinorEvent,
+       and kamailioDialogLimitMajorEvent alarm will be disabled.
 
    The contents of the kamailioSIPMethodSupportedTable change depending on
    which modules are loaded.
@@ -429,7 +429,7 @@ modparam("snmpstats", "export_registrar", 1)
    There are several things that need to be done to get the SNMPStats
    module compiled and up and running.
 
-6.1.  Compiling the SNMPStats Module
+6.1. Compiling the SNMPStats Module
 
    In order for the SNMPStats module to compile, you will need at least
    version 5.3 of the NetSNMP source code. The source can be found at:
@@ -451,7 +451,7 @@ modparam("snmpstats", "export_registrar", 1)
    recommended you install NetSNMP from source to avoid bringing in
    excessive dependencies to the SNMPStats module.
 
-6.2.  Configuring NetSNMP to allow connections from the SNMPStats module.
+6.2. Configuring NetSNMP to allow connections from the SNMPStats module.
 
    The SNMPStats module will communicate with the NetSNMP Master Agent.
    This communication happens over a protocol known as AgentX. This means
@@ -483,7 +483,7 @@ modparam("snmpstats", "export_registrar", 1)
    This tells NetSNMP to act as a master agent, listening on the localhost
    UDP interface at port 705.
 
-6.3.  Configuring the SNMPStats module for communication with a Master Agent
+6.3. Configuring the SNMPStats module for communication with a Master Agent
 
    The previous section explained how to set up a NetSNMP master agent to
    accept AgentX connections. We now need to tell the SNMPStats module how
@@ -503,7 +503,7 @@ modparam("snmpstats", "export_registrar", 1)
    be present on the same machine as Kamailio. localhost could be replaced
    with any other machine.
 
-6.4.  Testing for a proper Configuration
+6.4. Testing for a proper Configuration
 
    As a quick test to make sure that the SNMPStats module sub-agent can
    succesfully connect to the NetSNMP Master agent, start snmpd with the
