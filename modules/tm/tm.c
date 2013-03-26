@@ -190,7 +190,6 @@ MODULE_VERSION
 static int fixup_hostport2proxy(void** param, int param_no);
 static int fixup_proto_hostport2proxy(void** param, int param_no);
 static int fixup_on_failure(void** param, int param_no);
-static int fixup_on_branch_failure(void** param, int param_no);
 static int fixup_on_reply(void** param, int param_no);
 static int fixup_on_branch(void** param, int param_no);
 static int fixup_t_reply(void** param, int param_no);
@@ -273,7 +272,6 @@ inline static int w_t_forward_nonack_sctp(struct sip_msg*, char* str,char*);
 inline static int w_t_forward_nonack_to(struct sip_msg* msg, char* str,char*);
 inline static int w_t_relay_cancel(struct sip_msg *p_msg, char *_foo, char *_bar);
 inline static int w_t_on_failure(struct sip_msg* msg, char *go_to, char *foo);
-inline static int w_t_on_branch_failure(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_branch(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
 inline static int t_check_status(struct sip_msg* msg, char *match, char *foo);
@@ -411,14 +409,12 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE},
 	{"t_on_failure",       w_t_on_failure,         1, fixup_on_failure,
 			REQUEST_ROUTE | FAILURE_ROUTE | TM_ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"t_on_branch_failure",w_t_on_branch_failure,         1, fixup_on_branch_failure,
-			REQUEST_ROUTE | FAILURE_ROUTE | TM_ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"t_on_reply",         w_t_on_reply,            1, fixup_on_reply,
 			REQUEST_ROUTE | FAILURE_ROUTE | TM_ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"t_on_branch",       w_t_on_branch,         1, fixup_on_branch,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_check_status",     t_check_status,          1, fixup_t_check_status,
-			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_FAILURE_ROUTE},
 	{"t_write_req",       t_write_req,              2, fixup_t_write,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"t_write_unix",      t_write_unix,             2, fixup_t_write,
@@ -605,21 +601,6 @@ static int fixup_on_failure(void** param, int param_no)
 }
 
 
-static int fixup_on_branch_failure(void** param, int param_no)
-{
-	if (param_no==1){
-		if(strlen((char*)*param)<=1
-				&& (*(char*)(*param)==0 || *(char*)(*param)=='0')) {
-			*param = (void*)0;
-			return 0;
-		}
-		return fixup_routes("t_on_branch_failure", &branch_failure_rt, param);
-	}
-	return 0;
-}
-
-
-
 static int fixup_on_reply(void** param, int param_no)
 {
 	if (param_no==1){
@@ -751,7 +732,6 @@ static int script_init( struct sip_msg *foo, unsigned int flags, void *bar)
 		message's t_on_failure value
 	*/
 	t_on_failure( 0 );
-	t_on_branch_failure(0);
 	t_on_reply(0);
 	t_on_branch(0);
 	/* reset the kr status */
@@ -874,6 +854,9 @@ static int mod_init(void)
 	    return -1;
 	}
 
+	goto_on_branch_failure = route_lookup(&event_rt, "tm:branch-failure");
+	if (goto_on_branch_failure >= 0 && event_rt.rlist[goto_on_branch_failure]==0)
+		goto_on_branch_failure = -1; /* disable */
 #ifdef WITH_EVENT_LOCAL_REQUEST
 	goto_on_local_req=route_lookup(&event_rt, "tm:local-request");
 	if (goto_on_local_req>=0 && event_rt.rlist[goto_on_local_req]==0)
@@ -998,7 +981,10 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 		}
 		status = int2str( lowest_status , 0);
 		break;
-
+	case BRANCH_FAILURE_ROUTE:
+#warning add the status for branch failure route
+		status = int2str(t->uac[get_t_branch()].last_received, 0);
+		break;
 	default:
 		LOG(L_ERR,"ERROR:t_check_status: unsupported route type %d\n",
 				get_route_type());
@@ -1387,11 +1373,6 @@ inline static int w_t_on_failure( struct sip_msg* msg, char *go_to, char *foo)
 	return 1;
 }
 
-inline static int w_t_on_branch_failure( struct sip_msg* msg, char *go_to, char *foo)
-{
-	t_on_branch_failure( (unsigned int )(long) go_to );
-	return 1;
-}
 
 inline static int w_t_on_branch( struct sip_msg* msg, char *go_to, char *foo)
 {
@@ -1435,7 +1416,6 @@ static int w_t_is_set(struct sip_msg* msg, char *target, char *foo )
 			else
 				r = t->on_reply;
 			break;
-#warning need to add branch_failure_route
 	}
 	if(r) return 1;
 	return -1;
@@ -1449,7 +1429,6 @@ static int fixup_t_is_set(void** param, int param_no)
 		if((len==13 && strncmp((char*)*param, "failure_route", 13)==0)
 				|| (len==13 && strncmp((char*)*param, "onreply_route", 13)==0)
 				|| (len==12 && strncmp((char*)*param, "branch_route", 12)==0)) {
-#warning need to add branch_failure_route
 			return 0;
 		}
 

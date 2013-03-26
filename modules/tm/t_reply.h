@@ -61,6 +61,7 @@ enum rps {
 extern char tm_tags[TOTAG_VALUE_LEN];
 extern char *tm_tag_suffix;
 
+extern int goto_on_branch_failure;
 extern int goto_on_sl_reply;
 
 extern int failure_reply_mode;

@@ -173,7 +173,7 @@ char *tm_tag_suffix;
 /* where to go if there is no positive reply (>=300) */
 static int goto_on_failure=0;
 /* where to go if a failure is returned on a branch */
-static int goto_on_branch_failure=0;
+int goto_on_branch_failure=0;
 /* where to go on receipt of reply */
 static int goto_on_reply=0;
 /* where to go on receipt of reply without transaction context */
@@ -261,20 +261,6 @@ void t_on_failure( unsigned int go_to )
 		goto_on_failure=go_to;
 	else
 		t->on_failure = go_to;
-}
-
-
-void t_on_branch_failure( unsigned int go_to )
-{
-	struct cell *t = get_t();
-
-	/* in REPLY_ROUTE and FAILURE_ROUTE T will be set to current transaction;
-	 * in REQUEST_ROUTE T will be set only if the transaction was already
-	 * created; if not -> use the static variable */
-	if (!t || t==T_UNDEFINED )
-		goto_on_branch_failure=go_to;
-	else
-		t->on_branch_failure = go_to;
 }
 
 
@@ -1067,20 +1053,18 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	struct sip_msg *shmem_msg = t->uas.request;
 	int on_branch_failure;
 
-	on_branch_failure = t->uac[picked_branch].on_branch_failure;
-
 	/* failure_route for a local UAC? */
 	if (!shmem_msg) {
 		LOG(L_WARN,"Warning: run_branch_failure_handlers: no UAC support (%d, %d) \n",
-			on_branch_failure, t->tmcb_hl.reg_types);
+			goto_on_branch_failure, t->tmcb_hl.reg_types);
 		return 0;
 	}
 
 	/* don't start faking anything if we don't have to */
-	if (unlikely(!on_branch_failure && !has_tran_tmcbs( t, TMCB_ON_BRANCH_FAILURE))) {
+	if (unlikely(!goto_on_branch_failure && !has_tran_tmcbs( t, TMCB_ON_BRANCH_FAILURE))) {
 		LOG(L_WARN,
 			"Warning: run_failure_handlers: no branch_failure handler (%d, %d)\n",
-			on_branch_failure, t->tmcb_hl.reg_types);
+			goto_on_branch_failure, t->tmcb_hl.reg_types);
 		return 1;
 	}
 
@@ -1090,19 +1074,17 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	}
 	/* fake also the env. conforming to the fake msg */
 	faked_env( t, &faked_req);
+	set_route_type(BRANCH_FAILURE_ROUTE);
+	set_t(t, picked_branch);
 	/* DONE with faking ;-) -> run the branch_failure handlers */
 
 	if (unlikely(has_tran_tmcbs( t, TMCB_ON_BRANCH_FAILURE)) ) {
 		run_trans_callbacks( TMCB_ON_BRANCH_FAILURE, t, &faked_req, rpl, code);
 	}
-	if (on_branch_failure) {
-		/* avoid recursion -- if branch_failure_route forwards, and does not
-		 * set next branch failure route, branch_failure_route will not be reentered
-		 * on branch failure */
-		t->on_branch_failure=0;
+	if (goto_on_branch_failure) {
 		if (exec_pre_script_cb(&faked_req, BRANCH_FAILURE_CB_TYPE)>0) {
 			/* run a branch_failure_route action if some was marked */
-			if (run_top_route(branch_failure_rt.rlist[on_branch_failure], &faked_req, 0)<0)
+			if (run_top_route(event_rt.rlist[goto_on_branch_failure], &faked_req, 0)<0)
 				LOG(L_ERR, "ERROR: run_branch_failure_handlers: Error in run_top_route\n");
 			exec_post_script_cb(&faked_req, BRANCH_FAILURE_CB_TYPE);
 		}
@@ -1334,8 +1316,11 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		Trans->uac[branch].last_received=new_code;
 
 /* New branch failure route code */
-		if (unlikely(has_tran_tmcbs( Trans, TMCB_ON_BRANCH_FAILURE_RO|TMCB_ON_BRANCH_FAILURE)
-						|| Trans->uac[branch].on_branch_failure )) {
+		/* also append the current reply to the transaction to
+		 * make it available in failure routes - a kind of "fake"
+		 * save of the final reply per branch */
+		Trans->uac[branch].reply = reply;
+		if (unlikely(Trans->uac[branch].on_branch_failure )) {
 			extra_flags=
 				((Trans->uac[branch].request.flags & F_RB_TIMEOUT)?
 							FL_TIMEOUT:0) | 
