@@ -15,5 +15,7 @@ Netsnmp_Node_Handler handle_kamailioNetTcpConnOpened;
 Netsnmp_Node_Handler handle_kamailioNetTcpConnPassiveOpen;
 Netsnmp_Node_Handler handle_kamailioNetTcpConnReject;
 Netsnmp_Node_Handler handle_kamailioNetTcpEnabled;
+Netsnmp_Node_Handler handle_kamailioNetTcpMaxConns;
+Netsnmp_Node_Handler handle_kamailioNetTcpAsync;
 
 #endif /* KAMAILIONET_H */

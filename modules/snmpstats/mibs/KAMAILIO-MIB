@@ -193,7 +193,6 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         "Architecture Kamailio is compiled for"
         ::= { kamailioSrvConfig 4 }
 
-
     kamailioSrvCnfVerOs	OBJECT-TYPE
         SYNTAX DisplayString
         MAX-ACCESS  read-only
@@ -202,7 +201,6 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         "Operating System Kamailio is compiled for"
         ::= { kamailioSrvConfig 5 }
 
-
     kamailioSrvCnfVerId	OBJECT-TYPE
         SYNTAX DisplayString
         MAX-ACCESS  read-only
@@ -210,7 +208,6 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         DESCRIPTION 
         "Kamailio Version ID"
         ::= { kamailioSrvConfig 6 }
-
 
     kamailioSrvCnfVerCompTime OBJECT-TYPE
         SYNTAX DisplayString
@@ -315,6 +312,46 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         DESCRIPTION 
         "True if TCP is enabled in this server."
         ::= { kamailioNetTcpConfig 1 }
+
+    kamailioNetTcpMaxConns OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Maximum number of TCP connections (configurable)"
+        ::= { kamailioNetTcpConfig 2 }
+
+    kamailioNetTcpAsync OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "True if TCP Async is enabled in this server."
+        ::= { kamailioNetTcpConfig 3 }
+
+	---	connect_timeout: 10
+	---	send_timeout: 10
+	---	connection_lifetime: 120
+	---	max_connections(soft): 2048
+	---	max_tls_connections(soft): 2048
+	---	no_connect: 0
+	---	fd_cache: 1
+	---	async: 1
+	---	connect_wait: 1
+	---	conn_wq_max: 32768
+	---	wq_max: 10485760
+	---	defer_accept: 0
+	---	delayed_ack: 0
+	---	syncnt: 0
+	---	linger2: 0
+	---	keepalive: 1
+	---	keepidle: 0
+	---	keepintvl: 0
+	---	keepcnt: 0
+	---	crlf_ping: 1
+	---	accept_aliases: 0
+	---	alias_flags: 1
+	---	new_conn_alias_flags: 2
 
 --
 -- TCP connection statistic objects
