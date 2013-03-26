@@ -53,7 +53,6 @@
 #define ERROR_ROUTE   (1 << 5)
 #define LOCAL_ROUTE   (1 << 6)
 #define CORE_ONREPLY_ROUTE (1 << 7)
-#define BRANCH_FAILURE_ROUTE (1 << 8)
 #define ONREPLY_ROUTE (TM_ONREPLY_ROUTE|CORE_ONREPLY_ROUTE)
 #define EVENT_ROUTE   REQUEST_ROUTE
 #define ANY_ROUTE     (0xFFFFFFFF)
@@ -86,7 +85,6 @@ extern struct route_list main_rt;
 /* main reply route table */
 extern struct route_list onreply_rt;
 extern struct route_list failure_rt;
-extern struct route_list branch_failure_rt;
 extern struct route_list branch_rt;
 extern struct route_list onsend_rt;
 extern struct route_list event_rt;

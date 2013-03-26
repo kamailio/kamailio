@@ -200,7 +200,6 @@ ERROR	error
 ROUTE	route
 ROUTE_REQUEST request_route
 ROUTE_FAILURE failure_route
-ROUTE_BRANCH_FAILURE branch_failure_route
 ROUTE_REPLY reply_route
 ROUTE_ONREPLY onreply_route
 ROUTE_BRANCH branch_route
@@ -624,8 +623,6 @@ IMPORTFILE      "import_file"
 <INITIAL>{ROUTE_REPLY}	{ count(); yylval.strval=yytext; return ROUTE_REPLY; }
 <INITIAL>{ROUTE_FAILURE}	{ count(); yylval.strval=yytext;
 								return ROUTE_FAILURE; }
-<INITIAL>{ROUTE_BRANCH_FAILURE}	{ count(); yylval.strval=yytext;
-								return ROUTE_BRANCH_FAILURE; }
 <INITIAL>{ROUTE_BRANCH} { count(); yylval.strval=yytext; return ROUTE_BRANCH; }
 <INITIAL>{ROUTE_SEND} { count(); yylval.strval=yytext; return ROUTE_SEND; }
 <INITIAL>{ROUTE_EVENT} { count(); yylval.strval=yytext; return ROUTE_EVENT; }

@@ -314,7 +314,6 @@ extern char *finame;
 %token ROUTE
 %token ROUTE_REQUEST
 %token ROUTE_FAILURE
-%token ROUTE_BRANCH_FAILURE
 %token ROUTE_ONREPLY
 %token ROUTE_REPLY
 %token ROUTE_BRANCH
@@ -706,7 +705,6 @@ statement:
 	| module_stm
 	| {rt=REQUEST_ROUTE;} route_stm
 	| {rt=FAILURE_ROUTE;} failure_route_stm
-	| {rt=BRANCH_FAILURE_ROUTE;} branch_failure_route_stm
 	| onreply_route_stm
 	| {rt=BRANCH_ROUTE;} branch_route_stm
 	| {rt=ONSEND_ROUTE;}   send_route_stm
@@ -1970,28 +1968,6 @@ failure_route_stm:
 		push($6, &failure_rt.rlist[i_tmp]);
 	}
 	| ROUTE_FAILURE error { yyerror("invalid failure_route statement"); }
-	;
-
-branch_failure_route_stm:
-	ROUTE_BRANCH_FAILURE LBRACK route_name RBRACK LBRACE actions RBRACE {
-	#ifdef SHM_MEM
-		if (!shm_initialized() && init_shm()<0) {
-			yyerror("Can't initialize shared memory");
-			YYABORT;
-		}
-	#endif /* SHM_MEM */
-		i_tmp=route_get(&branch_failure_rt, $3);
-		if (i_tmp==-1){
-			yyerror("internal error");
-			YYABORT;
-		}
-		if (branch_failure_rt.rlist[i_tmp]){
-			yyerror("duplicate route");
-			YYABORT;
-		}
-		push($6, &branch_failure_rt.rlist[i_tmp]);
-	}
-	| ROUTE_BRANCH_FAILURE error { yyerror("invalid branch_failure_route statement"); }
 	;
 
 
