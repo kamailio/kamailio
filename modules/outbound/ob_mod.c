@@ -385,6 +385,14 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 		}
 	}
 
+	/* Check there is a single Via: */
+	if (!(parse_headers(msg, HDR_VIA2_F, 0) == -1 || msg->via2 == 0
+		|| msg->via2->error != PARSE_OK))
+	{
+		LM_INFO("second Via: found - outbound not used\n");
+		return 0;
+	}
+
 	/* Look for ;ob in Contact-URIs */
 	if (msg->contact
 		|| (parse_headers(msg, HDR_CONTACT_F, 0) != -1 && msg->contact))
