@@ -406,7 +406,7 @@ static int check_routing(struct sip_msg* msg, int idx)
 	}
 
 check_branches:
-	for( br_idx=0 ; (branch.s=get_branch(br_idx,&branch.len,&q,0,0,0,0,0))!=0 ;
+	for( br_idx=0 ; (branch.s=get_branch(br_idx,&branch.len,&q,0,0,0,0,0,0))!=0 ;
 			br_idx++ ) {
 		uri_str = get_plain_uri(&branch);
 		if (!uri_str) {
