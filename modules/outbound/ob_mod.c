@@ -206,7 +206,7 @@ int decode_flow_token(struct receive_info *rcv, str flow_token)
 
 	if (flow_token.s == NULL)
 	{
-		LM_INFO("no flow-token provided\n");
+		LM_DBG("no flow-token provided\n");
 		return -2;
 	}
 
@@ -275,29 +275,10 @@ int decode_flow_token(struct receive_info *rcv, str flow_token)
 	return 0;
 }
 
-int use_outbound(struct sip_msg *msg)
+static int use_outbound_register(struct sip_msg *msg)
 {
 	contact_t *contact;
-	rr_t *rt;
-	struct sip_uri puri;
-	param_hooks_t hooks;
-	param_t *params;
-	int ret;
-
-	/* If Outbound is forced return success without any further checks */
-	if (ob_force_flag != -1 && isflagset(msg, ob_force_flag) > 0)
-	{
-		LM_INFO("outbound forced\n");
-		return 1;
-	}
-
-	/* Use Outbound when there is a single Via: header and:
-	    # It's a REGISTER request with a Contact-URI containing a ;reg-id
-	      parameter, or
-	    # The Contact-URI has an ;ob parameter, or
-	    # The top Route-URI points to use and has an ;ob parameter
-	*/
-
+	
 	/* Check there is a single Via: */
 	if (!(parse_headers(msg, HDR_VIA2_F, 0) == -1 || msg->via2 == 0
 		|| msg->via2->error != PARSE_OK))
@@ -306,8 +287,7 @@ int use_outbound(struct sip_msg *msg)
 		return 0;
 	}
 
-	/* Look for ;reg-id in REGISTER Contact-URIs and ;ob in any
-	   Contact-URIs */
+	/* Look for ;reg-id in Contact-URIs */
 	if (msg->contact
 		|| (parse_headers(msg, HDR_CONTACT_F, 0) != -1 && msg->contact))
 	{
@@ -323,20 +303,28 @@ int use_outbound(struct sip_msg *msg)
 			return 0;
 		}
 		
-		if (msg->REQ_METHOD == METHOD_REGISTER && contact->reg_id)
+		if (contact->reg_id)
 		{
 			LM_INFO("found REGISTER with ;reg-id paramter on"
 				" Contact-URI - outbound used\n");
 			return 1;
 		}
 
-		if (hooks.contact.ob)
-		{
-			LM_INFO("found ;ob parameter on Contact-URI - outbound"
-				" used\n");
-			return 1;
-		}
 	}
+
+	LM_INFO("outbound not used\n");
+	return 0;
+}
+
+static int use_outbound_non_reg(struct sip_msg *msg)
+{
+	contact_t *contact;
+	rr_t *rt;
+	struct sip_uri puri;
+	param_hooks_t hooks;
+	param_t *params;
+	int ret;
+	struct receive_info rcv;
 
 	/* Check to see if the top Route-URI is me and has a ;ob parameter */
 	if (msg->route
@@ -359,13 +347,6 @@ int use_outbound(struct sip_msg *msg)
 			LM_ERR("parsing Route-URI\n");
 			return 0;
 		}
-		if (parse_params(&puri.params, CLASS_URI, &hooks,
-			&params) != 0)
-		{
-			LM_ERR("parsing Route-URI parameters\n");
-			return 0;
-		}
-
 		ret = check_self(&puri.host,
 				puri.port_no ? puri.port_no : SIP_PORT, 0);
 		if (ret < 1 || (ret == 1 && puri.gr.s != NULL))
@@ -377,9 +358,64 @@ int use_outbound(struct sip_msg *msg)
 			return 0;
 		}
 
+		if (parse_params(&puri.params, CLASS_URI, &hooks,
+			&params) != 0)
+		{
+			LM_ERR("parsing Route-URI parameters\n");
+			return 0;
+		}
+
 		if (hooks.uri.ob)
 		{
 			LM_INFO("found ;ob parameter on Route-URI - outbound"
+				" used\n");
+
+			if (decode_flow_token(&rcv, puri.user) == 0)
+			{
+				if (!ip_addr_cmp(&rcv.src_ip, &msg->rcv.src_ip)
+					|| rcv.src_port != msg->rcv.src_port)
+				{
+					LM_INFO("\"incoming\" request found\n");
+					return 2;
+				}
+			}
+
+			LM_INFO("\"outgoing\" request found\n");
+			return 1;
+		}
+	}
+
+	/* Look for ;ob in Contact-URIs */
+	if (msg->contact
+		|| (parse_headers(msg, HDR_CONTACT_F, 0) != -1 && msg->contact))
+	{
+		if (parse_contact(msg->contact) < 0)
+		{
+			LM_ERR("parsing Contact: header body\n");
+			return 0;
+		}
+		contact = ((contact_body_t *) msg->contact->parsed)->contacts;
+		if (!contact)
+		{
+			LM_ERR("empty Contact:\n");
+			return 0;
+		}
+	
+		if (parse_uri(contact->uri.s, contact->uri.len, &puri)
+			< 0)
+		{
+			LM_ERR("parsing Contact-URI\n");
+			return 0;
+		}
+		if (parse_params(&puri.params, CLASS_CONTACT, &hooks, &params)
+			!= 0)
+		{
+			LM_ERR("parsing Contact-URI parameters\n");
+			return 0;
+		}
+		if (hooks.contact.ob)
+		{
+			LM_INFO("found ;ob parameter on Contact-URI - outbound"
 				" used\n");
 			return 1;
 		}
@@ -387,6 +423,33 @@ int use_outbound(struct sip_msg *msg)
 
 	LM_INFO("outbound not used\n");
 	return 0;
+}
+
+int use_outbound(struct sip_msg *msg)
+{
+	if (msg->first_line.type != SIP_REQUEST)
+	{
+		LM_ERR("use_outbound called for something that isn't a SIP"
+			" request\n");
+		return 0;
+	}
+
+	/* If Outbound is forced return success without any further checks */
+	if (ob_force_flag != -1 && isflagset(msg, ob_force_flag) > 0)
+	{
+		LM_DBG("outbound forced\n");
+		return 1;
+	}
+
+	LM_INFO("Analysing %.*s for outbound markers\n",
+		msg->first_line.u.request.method.len,
+		msg->first_line.u.request.method.s);
+
+	if (msg->REQ_METHOD == METHOD_REGISTER)
+		return use_outbound_register(msg);
+	else
+		return use_outbound_non_reg(msg);
+
 }
 
 int bind_ob(struct ob_binds *pxb)
