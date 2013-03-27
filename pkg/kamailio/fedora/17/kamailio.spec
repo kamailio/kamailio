@@ -518,6 +518,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.cfg_db
 %doc %{_docdir}/kamailio/modules/README.cfg_rpc
 %doc %{_docdir}/kamailio/modules/README.cfgutils
+%doc %{_docdir}/kamailio/modules/README.cnxcc
 %doc %{_docdir}/kamailio/modules/README.corex
 %doc %{_docdir}/kamailio/modules/README.counters
 %doc %{_docdir}/kamailio/modules/README.ctl
@@ -657,6 +658,7 @@ fi
 %{_libdir}/kamailio/modules/cfg_db.so
 %{_libdir}/kamailio/modules/cfg_rpc.so
 %{_libdir}/kamailio/modules/cfgutils.so
+%{_libdir}/kamailio/modules/cnxcc.so
 %{_libdir}/kamailio/modules/corex.so
 %{_libdir}/kamailio/modules/counters.so
 %{_libdir}/kamailio/modules/ctl.so
@@ -1088,6 +1090,8 @@ fi
 
 
 %changelog
+* Wed Mar 27 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Added cnxcc module to .spec
 * Thu Mar 7 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Added build requirement for docbook2X for Fedora builds
 * Wed Mar 6 2013 Peter Dunkley <peter@dunkley.me.uk>
