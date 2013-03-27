@@ -30,6 +30,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../mem/mem.h"
+#include "../../locking.h"
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../lib/kcore/cmpapi.h"
@@ -58,16 +59,65 @@ sr_lua_env_t *sr_lua_env_get(void)
 /**
  *
  */
-typedef struct _sr_lua_load
-{
-	char *script;
-	struct _sr_lua_load *next;
-} sr_lua_load_t;
-
-/**
- *
- */
 static sr_lua_load_t *_sr_lua_load_list = NULL;
+/**
+ * set of locks to manage the shared variable.
+ */
+static gen_lock_set_t *sr_lua_locks = NULL;
+static sr_lua_script_ver_t *sr_lua_script_ver = NULL;
+
+
+int lua_sr_alloc_script_ver(void)
+{
+	int size = _sr_L_env.nload;
+	
+	sr_lua_script_ver = (sr_lua_script_ver_t *) shm_malloc(sizeof(sr_lua_script_ver_t));
+	if(sr_lua_script_ver==NULL)
+	{
+		LM_ERR("cannot allocate shm memory\n");
+		return -1;
+	}
+
+	sr_lua_script_ver->version = (unsigned int *) shm_malloc(sizeof(unsigned int)*size);
+	if(sr_lua_script_ver->version==NULL)
+	{
+		LM_ERR("cannot allocate shm memory\n");
+		goto error;
+	}
+	memset(sr_lua_script_ver->version, 0, sizeof(unsigned int)*size);
+	sr_lua_script_ver->len = size;
+
+	if((sr_lua_locks=lock_set_alloc(size))==0)
+	{
+		LM_CRIT("failed to alloc lock set\n");
+		goto error;
+	}
+	if(lock_set_init(sr_lua_locks)==0 )
+	{
+		LM_CRIT("failed to init lock set\n");
+		goto error;
+	}
+
+	return 0;
+error:
+	if(sr_lua_script_ver!=NULL)
+	{
+		if(sr_lua_script_ver->version!=NULL)
+		{
+			shm_free(sr_lua_script_ver->version);
+			sr_lua_script_ver->version = NULL;
+		}
+		shm_free(sr_lua_script_ver);
+		sr_lua_script_ver = NULL;
+	}
+	if(sr_lua_locks!=NULL)
+	{
+		lock_set_destroy( sr_lua_locks );
+		lock_set_dealloc( sr_lua_locks );
+		sr_lua_locks = NULL;
+	}
+	return -1;
+}
 
 /**
  *
@@ -84,8 +134,13 @@ int sr_lua_load_script(char *script)
 	}
 	memset(li, 0, sizeof(sr_lua_load_t));
 	li->script = script;
+	li->version = 0;
 	li->next = _sr_lua_load_list;
 	_sr_lua_load_list = li;
+	_sr_L_env.nload += 1;
+	LM_DBG("loaded script:[%s].\n", script);
+	LM_DBG("Now there are %d scripts loaded\n", _sr_L_env.nload);
+
 	return 0;
 }
 
@@ -114,10 +169,19 @@ void lua_sr_openlibs(lua_State *L)
  */
 int lua_sr_init_mod(void)
 {
+	/* allocate shm */
+	if(lua_sr_alloc_script_ver()<0)
+	{
+		LM_CRIT("failed to alloc shm for version\n");
+		return -1;
+	}
+
 	memset(&_sr_L_env, 0, sizeof(sr_lua_env_t));
 	if(lua_sr_exp_init_mod()<0)
 		return -1;
+
 	return 0;
+
 }
 
 /**
@@ -258,6 +322,126 @@ void lua_sr_destroy(void)
 		_sr_L_env.LL = NULL;
 	}
 	memset(&_sr_L_env, 0, sizeof(sr_lua_env_t));
+
+	if(sr_lua_script_ver!=NULL)
+	{
+		shm_free(sr_lua_script_ver->version);
+		shm_free(sr_lua_script_ver);
+	}
+
+	if (sr_lua_locks!=NULL)
+	{
+		lock_set_destroy( sr_lua_locks );
+		lock_set_dealloc( sr_lua_locks );
+		sr_lua_locks = 0;
+	}
+}
+
+/**
+ *
+ */
+int lua_sr_list_script(sr_lua_load_t **list)
+{
+	*list = _sr_lua_load_list;
+	return 0;
+}
+
+/**
+ * Mark script in pos to be reloaded
+ * pos -1: reload all scritps
+ */
+int lua_sr_reload_script(int pos)
+{
+	int i, len = sr_lua_script_ver->len;
+	if(_sr_lua_load_list!= NULL)
+	{
+		if (!sr_lua_script_ver)
+		{
+			LM_CRIT("shm for version not allocated\n");
+			return -1;
+		}
+		if (pos<0)
+		{
+			// let's mark all the scripts to be reloaded
+			for (i=0;i<len;i++)
+			{
+				lock_set_get(sr_lua_locks, i);
+				sr_lua_script_ver->version[i] += 1;
+				lock_set_release(sr_lua_locks, i);
+			}
+		}
+		else
+		{
+			if (pos>=0 && pos<len)
+			{
+				lock_set_get(sr_lua_locks, pos);
+				sr_lua_script_ver->version[pos] += 1;
+				lock_set_release(sr_lua_locks, pos);
+				LM_DBG("pos: %d set to reloaded\n", pos);
+			}
+			else
+			{
+				LM_ERR("pos out of range\n");
+				return -2;
+			}
+		}
+		return 0;
+	}
+	LM_ERR("No script loaded\n");
+	return -1;
+}
+
+/**
+ * Checks if loaded version matches the shared
+ * counter. If not equal reloads the script.
+ */
+int sr_lua_reload_script(void)
+{
+	sr_lua_load_t *li = _sr_lua_load_list;
+	int ret, i;
+	char *txt;
+
+	int sv_len = sr_lua_script_ver->len;
+	int sv[sv_len];
+
+	for(i=0;i<sv_len;i++)
+	{
+		lock_set_get(sr_lua_locks, i);
+		sv[i] = sr_lua_script_ver->version[i];
+		lock_set_release(sr_lua_locks, i);
+	}
+
+	if(li==NULL)
+	{
+		LM_DBG("No script loaded\n");
+		return 0;
+	}
+
+	for (i=0;i<sv_len;i++)
+	{
+		if(li->version!=sv[i])
+		{
+			LM_DBG("loaded version:%d needed: %d Let's reload <%s>\n",
+				li->version, sv[i], li->script);
+			ret = luaL_dofile(_sr_L_env.LL, (const char*)li->script);
+			if(ret!=0)
+			{
+				LM_ERR("failed to load Lua script: %s (err: %d)\n",
+						li->script, ret);
+				txt = (char*)lua_tostring(_sr_L_env.LL, -1);
+				LM_ERR("error from Lua: %s\n", (txt)?txt:"unknown");
+				lua_pop(_sr_L_env.LL, 1);
+				lua_sr_destroy();
+				return -1;
+			}
+			li->version = sv[i];
+			LM_DBG("<%s> set to version %d\n", li->script, li->version);
+		}
+		else LM_DBG("No need to reload [%s] is version %d\n",
+			li->script, li->version);
+		li = li->next;
+	}
+	return 1;
 }
 
 /**
@@ -404,6 +588,12 @@ int app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 	if(_sr_L_env.LL==NULL)
 	{
 		LM_ERR("lua loading state not initialized (call: %s)\n", func);
+		return -1;
+	}
+	/* check the script version loaded */
+	if(!sr_lua_reload_script())
+	{
+		LM_ERR("lua reload failed\n");
 		return -1;
 	}
 

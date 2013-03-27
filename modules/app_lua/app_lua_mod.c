@@ -29,6 +29,8 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../mod_fix.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
 
 #include "app_lua_api.h"
 
@@ -40,6 +42,8 @@ MODULE_VERSION
 static int  mod_init(void);
 static void mod_destroy(void);
 static int  child_init(int rank);
+
+static int app_lua_init_rpc(void);
 
 static int w_app_lua_dostring(struct sip_msg *msg, char *script, char *extra);
 static int w_app_lua_dofile(struct sip_msg *msg, char *script, char *extra);
@@ -99,8 +103,6 @@ struct module_exports exports = {
 	child_init      /* per child init function */
 };
 
-
-
 /**
  * init module function
  */
@@ -108,6 +110,12 @@ static int mod_init(void)
 {
 	if(lua_sr_init_mod()<0)
 		return -1;
+
+	if(app_lua_init_rpc()<0)  
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 	return 0;
 }
 
@@ -329,3 +337,72 @@ static int fixup_lua_run(void** param, int param_no)
 	return fixup_spve_null(param, 1);
 }
 
+/*** RPC implementation ***/
+
+static const char* app_lua_rpc_reload_doc[2] = {
+	"Reload lua script",
+	0
+};
+
+static const char* app_lua_rpc_list_doc[2] = {
+	"list lua scripts",
+	0
+};
+
+static void app_lua_rpc_reload(rpc_t* rpc, void* ctx)
+{
+	int pos = -1;
+
+	rpc->scan(ctx, "*d", &pos);
+	LM_DBG("selected index: %d\n", pos);
+	if(lua_sr_reload_script(pos)<0)
+		rpc->fault(ctx, 500, "Reload Failed");
+	return;
+}
+
+static void app_lua_rpc_list(rpc_t* rpc, void* ctx)
+{
+	int i;
+	sr_lua_load_t *list = NULL, *li;
+	if(lua_sr_list_script(&list)<0)
+	{
+		LM_ERR("Can't get loaded scripts\n");
+		return;
+	}
+	if(list)
+	{
+		li = list;
+		i = 0;
+		while(li)
+		{
+			rpc->printf(ctx, "%d: [%s]", i, li->script);
+			li = li->next;
+			i += 1;
+		}
+	}
+	else {
+		rpc->printf(ctx,"No scripts loaded");
+	}
+	return;
+}
+
+rpc_export_t app_lua_rpc_cmds[] = {
+	{"app_lua.reload", app_lua_rpc_reload,
+		app_lua_rpc_reload_doc, 0},
+	{"app_lua.list", app_lua_rpc_list,
+		app_lua_rpc_list_doc, 0},
+	{0, 0, 0, 0}
+};
+
+/**
+ * register RPC commands
+ */
+static int app_lua_init_rpc(void)
+{
+	if (rpc_register_array(app_lua_rpc_cmds)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}

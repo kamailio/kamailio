@@ -340,7 +340,51 @@ if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 	</section>
 	
     </section>
-	
+
+    <section>
+        <title>Exported RPC Commands</title>
+        <section>
+            <title>
+            <function moreinfo="none">app_lua.list</function>
+            </title>
+            <para>
+            Lists the id and path for every script loaded by
+            the load parameter.
+            </para>
+            <para>
+            Name: <emphasis>app_lua.list</emphasis>
+            </para>
+            <para>Parameters: <emphasis>none</emphasis></para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+                &sercmd; app_lua.lists
+            </programlisting>
+        </section>
+        <section>
+            <title>
+            <function moreinfo="none">app_lua.reload</function>
+            </title>
+            <para>
+            Marks the need to reload the selected script.
+            The actual reload is done by every working process when the next
+            call to lua_run function is executed.
+            If no parameter is added all the scripts are selected to be reloaded.
+            </para>
+            <para>
+            Name: <emphasis>app_lua.reload</emphasis>
+            </para>
+            <para>Parameters: <emphasis>id</emphasis></para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+                &sercmd; app_lua.reload 0
+            </programlisting>
+        </section>
+    </section>
+
     <section>
 	<title>Example of usage</title>
     <para>

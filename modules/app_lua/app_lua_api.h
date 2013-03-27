@@ -30,13 +30,31 @@
 
 #include "../../parser/msg_parser.h"
 
+/**
+ * version variable stores a version counter for each script loaded.
+ * This counter will be updated via RPC.
+ */
+typedef struct _sr_lua_script_ver
+{
+	unsigned int *version;
+	unsigned int len; /* length of version array */
+} sr_lua_script_ver_t;
+
 typedef struct _sr_lua_env
 {
 	lua_State *L;
 	lua_State *LL;
 	struct sip_msg *msg;
 	unsigned int flags;
+	unsigned int nload; /* number of scripts loaded */
 } sr_lua_env_t;
+
+typedef struct _sr_lua_load
+{
+	char *script;
+	int version; /* child loaded version */
+	struct _sr_lua_load *next;
+} sr_lua_load_t;
 
 sr_lua_env_t *sr_lua_env_get(void);
 
@@ -45,8 +63,11 @@ int lua_sr_init_mod(void);
 int lua_sr_init_child(void);
 void lua_sr_destroy(void);
 int lua_sr_init_probe(void);
+int lua_sr_reload_script(int pos);
+int lua_sr_list_script(sr_lua_load_t **list);
 
 int sr_lua_load_script(char *script);
+int sr_lua_reload_script(void);
 int sr_lua_register_module(char *mname);
 
 int app_lua_dostring(struct sip_msg *msg, char *script);
