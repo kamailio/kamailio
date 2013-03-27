@@ -37,6 +37,7 @@
 #include "../../dprint.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_rr.h"
 #include "../../str.h"
 #include "../../data_lump.h"
 #include "record.h"
@@ -316,6 +317,51 @@ lump_err:
 	return -4;
 }
 
+/*!
+ * \brief Copy flow-token from top-Route: to a string
+ *
+ * Copy the user part of the top-Route: to a string (allocating private memory
+ * for this).
+ * \param token where the user-part of the top-Route: will be copied to
+ * \param _m the SIP message to extract the top-Route: from
+ * \return 0 on success, negative on failure
+ */
+static int copy_flow_token(str *token, struct sip_msg *_m)
+{
+	rr_t *rt;
+	struct sip_uri puri;
+
+	if (_m->route
+	    || (parse_headers(_m, HDR_ROUTE_F, 0) != -1 && _m->route)) {
+		if (parse_rr(_m->route) < 0) {
+			LM_ERR("parsing Route: header body\n");
+			return -1;
+		}
+		rt = (rr_t *) _m->route->parsed;
+		if (!rt) {
+			LM_ERR("empty Route:\n");
+			return -1;
+		}
+		if (parse_uri(rt->nameaddr.uri.s, rt->nameaddr.uri.len,
+				&puri) < 0) {
+			LM_ERR("parsing Route-URI\n");
+			return -1;
+		}
+
+		token->s = pkg_malloc(puri.user.len * sizeof(char));
+		if (token->s == NULL) {
+			LM_ERR("allocating memory\n");
+			return -1;
+		}
+		memcpy(token->s, puri.user.s, puri.user.len);
+		token->len = puri.user.len;
+		return 0;
+	}
+
+	LM_ERR("no Route: headers found\n");
+	return -1;
+}
+
 
 /*!
  * \brief Insert a new Record-Route header field with lr parameter
@@ -345,9 +391,14 @@ int record_route(struct sip_msg* _m, str *params)
 				return -1;
 			}
 		}
-	} else if (use_ob) {
+	} else if (use_ob == 1) {
 		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
 			LM_ERR("encoding outbound flow-token\n");
+			return -1;
+		}
+	} else if (use_ob == 2) {
+		if (copy_flow_token(&user, _m) != 0) {
+			LM_ERR("copying outbound flow-token\n");
 			return -1;
 		}
 	}
@@ -448,9 +499,14 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 			LM_ERR("failed to extract username\n");
 			return -1;
 		}
-	} else if (use_ob) {
+	} else if (use_ob == 1) {
 		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
 			LM_ERR("encoding outbound flow-token\n");
+			return -1;
+		}
+	} else if (use_ob == 2) {
+		if (copy_flow_token(&user, _m) != 0) {
+			LM_ERR("copying outbound flow-token\n");
 			return -1;
 		}
 	}
@@ -682,9 +738,14 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 			LM_ERR("failed to extract username\n");
 			return -1;
 		}
-	} else if (use_ob) {
+	} else if (use_ob == 1) {
 		if (rr_obb.encode_flow_token(&user, _m->rcv) != 0) {
 			LM_ERR("encoding outbound flow-token\n");
+			return -1;
+		}
+	} else if (use_ob == 2) {
+		if (copy_flow_token(&user, _m) != 0) {
+			LM_ERR("copying outbound flow-token\n");
 			return -1;
 		}
 	}
