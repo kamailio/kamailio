@@ -365,7 +365,7 @@ void add_contact_flows_avp(str *uri, str *dst_uri, str *path, str *sock_str,
  * Adds to request a new destination set that includes highest
  * priority class contacts in contacts_avp, but only one contact with same
  * +sip.instance value is included.  Others are added to contact_flows_avp
- * for later consumption by next_contact_flows().
+ * for later consumption by next_contact_flow().
  * Request URI is rewritten with first contact and the remaining contacts
  * (if any) are added as branches. Removes all highest priority contacts
  * from contacts_avp.
@@ -461,6 +461,7 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 	il->instance.len = instance.len;
 	memcpy(il->instance.s, instance.s, instance.len);
 	il->next = (struct instance_list *)0;
+	set_instance(msg, &instance);
     }
 
     vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
@@ -588,6 +589,11 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
         vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
         ruid = vavp->val.v.s;
 
+	LM_DBG("Appending branch uri-'%.*s' dst-'%.*s' path-'%.*s' inst-'%.*s'\n",
+		uri.len, uri.s,
+		dst_uri.len, dst_uri.s,
+		path.len, path.s,
+		instance.len, instance.s);
 	if (append_branch(msg, &uri, &dst_uri, &path, 0, flags, sock, &instance, 0,
 			  &ruid) != 1) {
 	    LM_ERR("appending branch failed\n");
@@ -626,13 +632,11 @@ int t_next_contact_flow(struct sip_msg* msg, char* key, char* value)
 {
     str uri, dst_uri, path, instance, host, ruid;
 	str this_instance;
-	int this_branch;
     struct socket_info *sock;
     unsigned int flags;
     sr_xavp_t *xavp_list, *xavp, *next_xavp, *vavp;
     char *tmp;
     int port, proto;
-	int q_dummy;
 
     /* Check if contact_flows_avp has been defined */
     if (contact_flows_avp.len == 0) {
@@ -642,9 +646,13 @@ int t_next_contact_flow(struct sip_msg* msg, char* key, char* value)
     }
 
     /* Load Request-URI and branches */
-	this_branch = get_t_branch();
-	uri.s = get_branch(this_branch, &uri.len, &q_dummy, NULL, NULL, NULL, NULL, &this_instance);
+	t_get_this_branch_instance(msg, &this_instance);
 
+	if (this_instance.len == 0)
+	{
+		LM_DBG("No instance on this branch\n");
+		return -2;
+	}
 	/* Find first contact_flows_avp value */
 	xavp_list = xavp_get(&contact_flows_avp, NULL);
 	if (!xavp_list) {
@@ -713,6 +721,11 @@ int t_next_contact_flow(struct sip_msg* msg, char* key, char* value)
 		vavp = xavp_get(&ruid_name, xavp->val.v.xavp);
 		ruid = vavp->val.v.s;
 
+		LM_DBG("Appending branch uri-'%.*s' dst-'%.*s' path-'%.*s' inst-'%.*s'\n",
+			uri.len, uri.s,
+			dst_uri.len, dst_uri.s,
+			path.len, path.s,
+			instance.len, instance.s);
 		if (append_branch(msg, &uri, &dst_uri, &path, 0, flags, sock, &instance, 0,
 			  &ruid) != 1) {
 			LM_ERR("appending branch failed\n");
@@ -724,7 +737,6 @@ int t_next_contact_flow(struct sip_msg* msg, char* key, char* value)
 next_xavp:
 		xavp = next_xavp;
 	}
-
 
 	return 1;
 }

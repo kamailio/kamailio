@@ -177,7 +177,6 @@ int t_is_canceled(struct sip_msg* msg);
 
 typedef struct tm_xbinds {
 	t_on_route_f t_on_failure;
-	t_on_route_f t_on_branch_failure;
 	t_on_route_f t_on_branch;
 	t_on_route_f t_on_reply;
 	t_no_param_f t_check_trans;

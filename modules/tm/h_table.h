@@ -229,6 +229,7 @@ typedef struct ua_client
 #endif
 	str uri;
 	str path;
+	str instance;
 	/* if we don't store, we at least want to know the status */
 	int             last_received;
 
@@ -249,8 +250,6 @@ typedef struct ua_client
 #endif
 	/* the route to take if no final positive reply arrived */
 	unsigned short on_failure;
-	/* the route to take for each downstream branch failure */
-	unsigned short on_branch_failure;
 	/* the onreply_route to be processed if registered to do so */
 	unsigned short on_reply;
 }ua_client_type;
@@ -443,8 +442,6 @@ typedef struct cell
 	unsigned short on_reply;
 	 /* The route to take for each downstream branch separately */
 	unsigned short on_branch;
-	 /* The route to take for each downstream branch failure */
-	unsigned short on_branch_failure;
 
 	/* place holder for MD5checksum  (meaningful only if syn_branch=0) */
 	char md5[0]; /* if syn_branch==0 then MD5_LEN bytes are extra alloc'ed*/

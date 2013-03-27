@@ -215,8 +215,6 @@ void on_failure_reply( struct cell* t, struct sip_msg* msg,
 */
 void t_on_failure( unsigned int go_to );
 unsigned int get_on_failure(void);
-void t_on_branch_failure( unsigned int go_to );
-unsigned int get_on_branch_failure(void);
 void t_on_reply( unsigned int go_to );
 unsigned int get_on_reply(void);
 
@@ -244,5 +242,7 @@ void free_faked_req(struct sip_msg *faked_req, struct cell *t);
 
 typedef int (*tget_picked_f)(void);
 int t_get_picked_branch(void);
+
+int t_get_this_branch_instance(struct sip_msg *msg, str *instance);
 
 #endif

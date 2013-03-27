@@ -282,10 +282,6 @@ unsigned int get_on_failure()
 {
 	return goto_on_failure;
 }
-unsigned int get_on_branch_failure()
-{
-	return goto_on_branch_failure;
-}
 unsigned int get_on_reply()
 {
 	return goto_on_reply;
@@ -1051,7 +1047,6 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 {
 	static struct sip_msg faked_req;
 	struct sip_msg *shmem_msg = t->uas.request;
-	int on_branch_failure;
 
 	/* failure_route for a local UAC? */
 	if (!shmem_msg) {
@@ -1061,7 +1056,7 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	}
 
 	/* don't start faking anything if we don't have to */
-	if (unlikely(!goto_on_branch_failure && !has_tran_tmcbs( t, TMCB_ON_BRANCH_FAILURE))) {
+	if (unlikely((goto_on_branch_failure < 0) && !has_tran_tmcbs( t, TMCB_ON_BRANCH_FAILURE))) {
 		LOG(L_WARN,
 			"Warning: run_failure_handlers: no branch_failure handler (%d, %d)\n",
 			goto_on_branch_failure, t->tmcb_hl.reg_types);
@@ -1081,7 +1076,7 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	if (unlikely(has_tran_tmcbs( t, TMCB_ON_BRANCH_FAILURE)) ) {
 		run_trans_callbacks( TMCB_ON_BRANCH_FAILURE, t, &faked_req, rpl, code);
 	}
-	if (goto_on_branch_failure) {
+	if (goto_on_branch_failure >= 0) {
 		if (exec_pre_script_cb(&faked_req, BRANCH_FAILURE_CB_TYPE)>0) {
 			/* run a branch_failure_route action if some was marked */
 			if (run_top_route(event_rt.rlist[goto_on_branch_failure], &faked_req, 0)<0)
@@ -1320,7 +1315,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		 * make it available in failure routes - a kind of "fake"
 		 * save of the final reply per branch */
 		Trans->uac[branch].reply = reply;
-		if (unlikely(Trans->uac[branch].on_branch_failure )) {
+		if (unlikely(goto_on_branch_failure > 0 )) {
 			extra_flags=
 				((Trans->uac[branch].request.flags & F_RB_TIMEOUT)?
 							FL_TIMEOUT:0) | 
@@ -2610,6 +2605,32 @@ void t_drop_replies(int v)
 	in shm mem, we are just going to clone it. So better to set a flag
 	and check it after failure_route has ended. (Miklos) */
 	drop_replies = v;
+}
+
+int t_get_this_branch_instance(struct sip_msg *msg, str *instance)
+{
+	struct cell *t;
+	if (!msg || !instance)
+	{
+		LM_ERR("Invalid params\n");
+		return -1;
+	}
+	if (get_route_type() != BRANCH_FAILURE_ROUTE)
+	{
+		LM_ERR("Called t_get_this_branch_instance not in a branch_failure_route\n");
+		return -1;
+	}
+
+	t = 0;
+	/* first get the transaction */
+	if (t_check(msg, 0 ) == -1) return -1;
+	if ((t = get_t()) == 0) {
+		LOG(L_ERR, "ERROR: t_check_status: cannot check status for a reply "
+			"which has no T-state established\n");
+		return -1;
+	}
+	*instance = t->uac[get_t_branch()].instance;
+	return 1;
 }
 
 #if 0

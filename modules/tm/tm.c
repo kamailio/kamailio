@@ -896,8 +896,6 @@ static int child_init(int rank)
 
 
 
-
-
 /**************************** wrapper functions ***************************/
 static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 {
