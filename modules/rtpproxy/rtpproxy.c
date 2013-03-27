@@ -283,7 +283,8 @@ static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
 static int alter_rtcp(struct sip_msg *msg, str *body, str *oldport, str *newport);
 static char *gencookie();
 static int rtpp_test(struct rtpp_node*, int, int);
-static int unforce_rtp_proxy_f(struct sip_msg *, char *, char *);
+static int unforce_rtp_proxy1_f(struct sip_msg *, char *, char *);
+static int unforce_rtp_proxy(struct sip_msg *, char *);
 static int force_rtp_proxy(struct sip_msg *, char *, char *, int, int);
 static int start_recording_f(struct sip_msg *, char *, char *);
 static int rtpproxy_answer1_f(struct sip_msg *, char *, char *);
@@ -359,16 +360,16 @@ static cmd_export_t cmds[] = {
 	{"set_rtp_proxy_set",  (cmd_function)set_rtp_proxy_set_f,    1,
 		fixup_set_id, 0,
 		ANY_ROUTE},
-	{"unforce_rtp_proxy",  (cmd_function)unforce_rtp_proxy_f,    0,
+	{"unforce_rtp_proxy",  (cmd_function)unforce_rtp_proxy1_f,   0,
 		0, 0,
 		ANY_ROUTE},
-	{"rtpproxy_destroy",   (cmd_function)unforce_rtp_proxy_f,    0,
+	{"rtpproxy_destroy",   (cmd_function)unforce_rtp_proxy1_f,   0,
 		0, 0,
 		ANY_ROUTE},
-	{"unforce_rtp_proxy",  (cmd_function)unforce_rtp_proxy_f,    1,
+	{"unforce_rtp_proxy",  (cmd_function)unforce_rtp_proxy1_f,   1,
 		fixup_spve_null, 0,
 		ANY_ROUTE},
-	{"rtpproxy_destroy",   (cmd_function)unforce_rtp_proxy_f,    1,
+	{"rtpproxy_destroy",   (cmd_function)unforce_rtp_proxy1_f,   1,
 		fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"start_recording",    (cmd_function)start_recording_f,      0,
@@ -1800,7 +1801,21 @@ get_extra_id(struct sip_msg* msg, str *id_str) {
 
 
 static int
-unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
+unforce_rtp_proxy1_f(struct sip_msg* msg, char* str1, char* str2)
+{
+	str flags;
+
+	if (str1)
+		get_str_fparam(&flags, msg, (fparam_t *) str1);
+	else
+		flags.s = NULL;
+
+	return unforce_rtp_proxy(msg, flags.s);
+}
+
+
+static int
+unforce_rtp_proxy(struct sip_msg* msg, char* flags)
 {
 	str callid, from_tag, to_tag, viabranch;
 	char *cp;
@@ -1810,16 +1825,11 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 	str extra_id;
 	int ret;
 	struct rtpp_node *node;
-	str flags;
 	struct iovec v[1 + 4 + 3 + 2] = {{NULL, 0}, {"D", 1}, {" ", 1}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
 	                                            /* 1 */   /* 2 */   /* 3 */    /* 4 */    /* 5 */    /* 6 */   /* 7 */    /* 8 */   /* 9 */
 
-	if (str1)
-		get_str_fparam(&flags, msg, (fparam_t *) str1);
-	else
-		flags.s = NULL;
 
-	for (cp = flags.s; cp && *cp; cp++) {
+	for (cp = flags; cp && *cp; cp++) {
 		switch (*cp) {
 			case '1':
 				via = 1;
@@ -1982,7 +1992,7 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 		return -1;
 
 	if(method==METHOD_CANCEL || method==METHOD_BYE)
-		return unforce_rtp_proxy_f(msg, flags, 0);
+		return unforce_rtp_proxy(msg, flags);
 
 	if(ip==NULL)
 	{
@@ -2008,13 +2018,13 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 					&& tmb.t_gett()!=T_UNDEFINED)
 				tmb.t_gett()->uas.request->msg_flags |= FL_SDP_BODY;
 			if(route_type==FAILURE_ROUTE)
-				return unforce_rtp_proxy_f(msg, flags, 0);
+				return unforce_rtp_proxy(msg, flags);
 			return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 1,
 					(ip!=NULL)?1:0);
 		}
 	} else if(msg->first_line.type == SIP_REPLY) {
 		if(msg->first_line.u.reply.statuscode>=300)
-			return unforce_rtp_proxy_f(msg, flags, 0);
+			return unforce_rtp_proxy(msg, flags);
 		if(nosdp==0) {
 			if(method==METHOD_UPDATE)
 				return force_rtp_proxy(msg, flags, (cp!=NULL)?newip:ip, 0,
