@@ -42,7 +42,11 @@
 
 #define SRVERSION "1.0"
 
-
+/**
+ * reload enabled param
+ * default: 0 (off)
+ */
+static unsigned int sr_reload = 0;
 /**
  *
  */
@@ -153,6 +157,19 @@ int sr_lua_register_module(char *mname)
 	if(lua_sr_exp_register_mod(mname)==0)
 		return 0;
 	return -1;
+}
+
+/**
+ *
+ */
+int sr_lua_reload_module(unsigned int reload)
+{
+	LM_DBG("reload:%d\n", reload);
+	if(reload!=0) {
+		sr_reload = 1;
+		LM_DBG("reload param activated!\n");
+	}
+	return 0;
 }
 
 /**
@@ -359,6 +376,11 @@ int lua_sr_reload_script(int pos)
 		{
 			LM_CRIT("shm for version not allocated\n");
 			return -1;
+		}
+		if (sr_reload==0)
+		{
+			LM_ERR("reload is not activated\n");
+			return -3;
 		}
 		if (pos<0)
 		{
@@ -590,13 +612,16 @@ int app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 		LM_ERR("lua loading state not initialized (call: %s)\n", func);
 		return -1;
 	}
-	/* check the script version loaded */
-	if(!sr_lua_reload_script())
+	if(sr_reload!=0)
 	{
-		LM_ERR("lua reload failed\n");
-		return -1;
+		/* check the script version loaded */
+		if(!sr_lua_reload_script())
+		{
+			LM_ERR("lua reload failed\n");
+			return -1;
+		}
 	}
-
+	else LM_DBG("reload deactivated\n");
 	LM_DBG("executing Lua function: [[%s]]\n", func);
 	LM_DBG("lua top index is: %d\n", lua_gettop(_sr_L_env.LL));
 	lua_getglobal(_sr_L_env.LL, func);

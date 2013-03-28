@@ -69,6 +69,7 @@ int lua_sr_list_script(sr_lua_load_t **list);
 int sr_lua_load_script(char *script);
 int sr_lua_reload_script(void);
 int sr_lua_register_module(char *mname);
+int sr_lua_reload_module(unsigned int reload);
 
 int app_lua_dostring(struct sip_msg *msg, char *script);
 int app_lua_dofile(struct sip_msg *msg, char *script);

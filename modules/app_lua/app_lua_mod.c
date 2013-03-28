@@ -63,10 +63,12 @@ static int fixup_lua_run(void** param, int param_no);
 
 int app_lua_load_param(modparam_t type, void *val);
 int app_lua_register_param(modparam_t type, void *val);
+int app_lua_reload_param(modparam_t type, void *val);
 
 static param_export_t params[]={
 	{"load",     STR_PARAM|USE_FUNC_PARAM, (void*)app_lua_load_param},
 	{"register", STR_PARAM|USE_FUNC_PARAM, (void*)app_lua_register_param},
+	{"reload",   INT_PARAM|USE_FUNC_PARAM, (void*)app_lua_reload_param},
 	{0, 0, 0}
 };
 
@@ -330,6 +332,11 @@ int app_lua_register_param(modparam_t type, void *val)
 	if(val==NULL)
 		return -1;
 	return sr_lua_register_module((char*)val);
+}
+
+int app_lua_reload_param(modparam_t type, void *val)
+{
+	return sr_lua_reload_module((unsigned int)(long) (int *)val);
 }
 
 static int fixup_lua_run(void** param, int param_no)

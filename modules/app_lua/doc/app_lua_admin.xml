@@ -249,6 +249,27 @@ modparam("app_lua", "register", "sl")
 	    </example>
 	</section>
 
+	<section>
+	    <title><varname>reload</varname> (boolean)</title>
+	    <para>
+			If reload is 1 enables the ability to reload the
+			scripts using the RPC app_lua.reload command.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0 (off)</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>reload</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_lua", "reload", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
 	</section>
 	
     <section>
