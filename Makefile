@@ -622,6 +622,7 @@ tar: makefile_vars $(auto_gen_keep)
 	$(TAR) -C .. \
 		--exclude=$(notdir $(CURDIR))/test* \
 		--exclude=$(notdir $(CURDIR))/tmp* \
+		--exclude=$(notdir $(CURDIR))/debian \
 		--exclude=$(notdir $(CURDIR))/debian/$(MAIN_NAME) \
 		--exclude=$(notdir $(CURDIR))/debian/$(MAIN_NAME)-* \
 		--exclude=$(notdir $(CURDIR))/$(MAIN_NAME)_tls* \

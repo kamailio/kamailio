@@ -942,9 +942,24 @@ modparam("drouting", "drl_table", "my_gw_lists")
 			<emphasis>2</emphasis> - from each destination group, only a 
 			single destination is randomly selected; groups do maintain their
 			order (as given);
+			<para>
 			Ex: 1,2;3,4,5;6 -> randomizer ->
+			</para>
+			<para>
 			(A) 2;4;6  -> usage 2,4,6
+			</para>
+			<para>
 			(B) 1;5;6  -> usage 1,5,6
+			</para>
+			<para>
+			It is ok to have repeating gateways in different groups. The module will
+			take care internally in case of failure not to choose a gateway that
+			was tried already.
+			</para>
+			<para>
+			Ex: 1,2,3; 1,2,3; 1,2,3 -> no gateway will be choosen twice. So in case there
+			are 2 failures, all the three gateways (1,2,3) will be tried in a random order.
+			</para>
 		</listitem>
 		</itemizedlist>
 		</para>

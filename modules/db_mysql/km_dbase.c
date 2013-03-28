@@ -404,10 +404,15 @@ int db_mysql_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
  * \param _n number of key=value pairs
  * \return zero on success, negative value on failure
  */
-int db_mysql_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
+int db_mysql_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+		const int _n)
 {
-	return db_do_insert(_h, _k, _v, _n, db_mysql_val2str,
-	db_mysql_submit_query);
+	if(unlikely(db_mysql_insert_all_delayed==1))
+		return db_do_insert_delayed(_h, _k, _v, _n, db_mysql_val2str,
+				db_mysql_submit_query);
+	else
+		return db_do_insert(_h, _k, _v, _n, db_mysql_val2str,
+				db_mysql_submit_query);
 }
 
 

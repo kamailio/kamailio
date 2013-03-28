@@ -304,18 +304,18 @@ Chapter 1. Admin Guide
        draft 09):
        Table 1.4. Time recurrence attributes
 
-   Attribute Description
-   dastard Start of interval (RFC 2445 DATE-TIME)
-   duration Length of interval (RFC 2445 DURATION)
-   freq Frequency of recurrence (secondly,minutely,hourly, daily,weekly,
-   monthly, or yearly).
-   until bound of recurrence (RFC 2445 DATE-TIME)
-   interval How often the recurrence repeats
-   byday List of days of the week
-   bymonthday List of days of the month
-   byyearday List of days of the year
-   byweekno List of weeks of the year
-   bymonth List of months of the year
+     Attribute                            Description
+     dastard    Start of interval (RFC 2445 DATE-TIME)
+     duration   Length of interval (RFC 2445 DURATION)
+     freq       Frequency of recurrence (secondly,minutely,hourly, daily,weekly,
+                monthly, or yearly).
+     until      bound of recurrence (RFC 2445 DATE-TIME)
+     interval   How often the recurrence repeats
+     byday      List of days of the week
+     bymonthday List of days of the month
+     byyearday  List of days of the year
+     byweekno   List of weeks of the year
+     bymonth    List of months of the year
        The value stored in database has the format of:
        <dtstart>|<duration>|<freq>|<until>|<interval>|<byday>|<bymonthday>
        |<byyearday>|<byweekno>|<bymonth>
@@ -570,9 +570,16 @@ modparam("drouting", "drl_table", "my_gw_lists")
        destinations). Ex: 1,2;3,4,5;6 -> randomizer -> (A) 2,1;4,3,5;6 ->
        usage 2,1,4,3,5,6 (B) 1,2;3,5,4;6 -> usage 1,2,3,5,4,6
      * 2 - from each destination group, only a single destination is
-       randomly selected; groups do maintain their order (as given); Ex:
-       1,2;3,4,5;6 -> randomizer -> (A) 2;4;6 -> usage 2,4,6 (B) 1;5;6 ->
-       usage 1,5,6
+       randomly selected; groups do maintain their order (as given);
+       Ex: 1,2;3,4,5;6 -> randomizer ->
+       (A) 2;4;6 -> usage 2,4,6
+       (B) 1;5;6 -> usage 1,5,6
+       It is ok to have repeating gateways in different groups. The module
+       will take care internally in case of failure not to choose a
+       gateway that was tried already.
+       Ex: 1,2,3; 1,2,3; 1,2,3 -> no gateway will be choosen twice. So in
+       case there are 2 failures, all the three gateways (1,2,3) will be
+       tried in a random order.
 
    Default value is “0”.
 

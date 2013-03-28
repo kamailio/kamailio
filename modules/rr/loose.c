@@ -513,12 +513,15 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token,
 	ret = rr_obb.decode_flow_token(&rcv, flow_token);
 
 	if (ret == -2) {
-		LM_INFO("no flow token found - outbound not in use\n");
+		LM_DBG("no flow token found - outbound not in use\n");
 		return 0;
 	} else if (ret == -1) {
 		LM_ERR("failed to decode flow token\n");
 		return -1;
-	} else {
+	} else if (!ip_addr_cmp(&rcv.src_ip, &_m->rcv.src_ip)
+			|| rcv.src_port != _m->rcv.src_port) {
+		LM_DBG("\"incoming\" request found. Using flow-token for"
+			"routing\n");
 
 		/* First, force the local socket */
 		si = find_si(&rcv.dst_ip, rcv.dst_port, rcv.proto);
@@ -546,9 +549,9 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token,
 					rcv.src_ip.af == AF_INET6 ? "]" : "",
 					rcv.src_port,
 					get_proto_name(rcv.proto));
-
-		return 1;
 	}
+
+	return 1;
 }
 
 /*!

@@ -140,23 +140,16 @@ void init_kamailioSIPMethodSupportedTable(void)
 	 * NOTE: My way of checking what METHODS we support is probably wrong.
 	 * Please feel free to correct it! */
 	
-	if (module_loaded("sl")) {
-		createRow(1, "METHOD_INVITE");
-		createRow(2, "METHOD_CANCEL");
-		createRow(3, "METHOD_ACK");
-	}
-
-	if (module_loaded("tm")) {
-		createRow(4, "METHOD_BYE");
-	}
+	createRow(1, "METHOD_INVITE");
+	createRow(2, "METHOD_CANCEL");
+	createRow(3, "METHOD_ACK");
+	createRow(4, "METHOD_BYE");
 
 	if (module_loaded("options") || module_loaded("siputils")) {
 		createRow(6, "METHOD_OPTIONS");
 	}
 
-	if (module_loaded("dialog")) {
-		createRow(7, "METHOD_UPDATE");
-	}
+	createRow(7, "METHOD_UPDATE");
 
 	if (module_loaded("registrar")) {
 		createRow(8, "METHOD_REGISTER");
@@ -166,9 +159,6 @@ void init_kamailioSIPMethodSupportedTable(void)
 
 	createRow(5,  "METHOD_INFO");
 	createRow(9,  "METHOD_MESSAGE");
-
-	/* I'm not sure what these guys are, so saying we support them by
-	 * default.  */
 	createRow(12, "METHOD_PRACK");
 	createRow(13, "METHOD_REFER");
 	createRow(14, "METHOD_PUBLISH");

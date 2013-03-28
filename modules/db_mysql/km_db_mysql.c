@@ -50,6 +50,7 @@
 
 unsigned int db_mysql_timeout_interval = 2;   /* Default is 6 seconds */
 unsigned int db_mysql_auto_reconnect = 1;     /* Default is enabled   */
+unsigned int db_mysql_insert_all_delayed = 0; /* Default is off */
 
 /* MODULE_VERSION */
 

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+    <title>cnxcc Module</title>
+    <productname class="trade">&kamailioname;</productname>
+    <authorgroup>
+	<author>
+	<firstname>Carlos</firstname>
+	<surname>Ruiz Diaz</surname>
+	<affiliation>
+	    <orgname>ConexionGroup SA</orgname>
+	</affiliation>
+	<address>
+	    <email>carlos.ruizdiaz@gmail.com</email>
+	</address>
+	</author>
+    </authorgroup>
+    <copyright>
+	<year>2012</year>
+	<holder>Carlos Ruiz Diaz, carlos.ruizdiaz@gmail.com</holder>
+    </copyright>
+    </bookinfo>
+
+    <toc></toc>
+
+    <xi:include href="cnxcc_admin.xml" />
+</book>

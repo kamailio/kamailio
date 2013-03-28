@@ -37,8 +37,9 @@
 
 
 #define MAX_DOMAIN_SIZE 256
-#define MAX_COMPONENT_SIZE 32  /* separator, apex, ... This simplifies checks */
-		
+#define MAX_NUM_LEN 22
+#define MAX_COMPONENT_SIZE (MAX_NUM_LEN * 2)  /* separator, apex, ... This simplifies checks */
+
 
 /*
  * Check if from user is an e164 number and has a naptr record

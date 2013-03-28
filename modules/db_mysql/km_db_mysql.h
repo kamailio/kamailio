@@ -42,6 +42,7 @@
 
 extern unsigned int db_mysql_timeout_interval;
 extern unsigned int db_mysql_auto_reconnect;
+extern unsigned int db_mysql_insert_all_delayed;
 
 int db_mysql_bind_api(db_func_t *dbb);
 

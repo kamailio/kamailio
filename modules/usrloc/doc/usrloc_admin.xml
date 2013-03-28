@@ -588,6 +588,15 @@ modparam("usrloc", "db_url", "&exampledb;")
 			caching also disable the statistics exports.
 			</para>
 		</listitem>
+		<listitem>
+			<para>
+			4 - This uses database to load records at startup but uses only
+			memory during the runtime. Records are not written back at all,
+			not even at shutdown. Useful for scenarios when registrations are
+			replicated to a node that does the storage in database during
+			runtime.
+			</para>
+		</listitem>
 		</itemizedlist>
 		<warning>
 		<para>

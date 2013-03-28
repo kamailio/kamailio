@@ -63,6 +63,8 @@
 #include "snmpSIPContactTable.h"
 #include "snmpSIPRegUserLookupTable.h"
 #include "snmpMIBNotifications.h"
+#include "kamailioServer.h"
+#include "kamailioNet.h"
 
 #include "../../dprint.h"
 #include "../../cfg/cfg_struct.h"
@@ -91,6 +93,8 @@ static int initialize_agentx(void)
 {
 	/* We register with a master agent */
 	register_with_master_agent(AGENT_PROCESS_NAME);
+
+	LM_DBG("Initializing Kamailio OID's for SNMPD MasterX\n");
 	
 	/* Initialize all scalars, and let the master agent know we want to
 	 * handle all OID's pertaining to these scalars. */
@@ -106,6 +110,9 @@ static int initialize_agentx(void)
 	init_kamailioSIPRegUserTable();
 	init_kamailioSIPContactTable();
 	init_kamailioSIPRegUserLookupTable();
+	init_kamailioServer();
+	init_kamailioNet();
+	LM_DBG("Done initializing Kamailio OID's for SNMPD MasterX\n");
 
 	/* In case we recevie a request to stop (kill -TERM or kill -INT) */
 	keep_running = 1;
@@ -117,6 +124,7 @@ static int initialize_agentx(void)
 		agent_check_and_process(1); /* 0 == don't block */
 	}
 
+	LM_DBG("Shutting down Kamailio SNMPD MasterX sub agent.\n");
 	snmp_shutdown(AGENT_PROCESS_NAME);
 	SOCK_CLEANUP;
 	exit (0);
@@ -181,10 +189,12 @@ void register_with_master_agent(char *name_to_register_under)
 	/* Initialize TCP if necessary.  (Its here for WIN32) compatibility. */
 	SOCK_STARTUP;
 
+	LM_DBG("Connecting to SNMPD MasterX\n");
 	/* Read in our configuration file to determine master agent ping times
 	 * what port communication is to take place over, etc. */
 	init_agent("snmpstats");
 
 	/* Use a name we can register our agent under. */
 	init_snmp(name_to_register_under);
+	LM_DBG("** Connected to SNMPD MasterX\n");
 }

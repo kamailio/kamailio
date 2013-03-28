@@ -413,15 +413,19 @@ static int child_init(int _rank)
 			return 0;
 		case DB_ONLY:
 		case WRITE_THROUGH:
-			/* we need connection from working SIP and TIMER and MAIN
-			 * processes only */
+			/* connect to db only from SIP workers, TIMER and MAIN processes */
 			if (_rank<=0 && _rank!=PROC_TIMER && _rank!=PROC_MAIN)
 				return 0;
 			break;
 		case WRITE_BACK:
-			/* connect only from TIMER (for flush), from MAIN (for
+			/* connect to db only from TIMER (for flush), from MAIN (for
 			 * final flush() and from child 1 for preload */
-			if (_rank!=PROC_TIMER && _rank!=PROC_MAIN && _rank!=1)
+			if (_rank!=PROC_TIMER && _rank!=PROC_MAIN && _rank!=PROC_SIPINIT)
+				return 0;
+			break;
+		case DB_READONLY:
+			/* connect to db only from child 1 for preload */
+			if(_rank!=PROC_SIPINIT)
 				return 0;
 			break;
 	}
@@ -432,7 +436,7 @@ static int child_init(int _rank)
 		return -1;
 	}
 	/* _rank==PROC_SIPINIT is used even when fork is disabled */
-	if (_rank==PROC_SIPINIT && db_mode!= DB_ONLY) {
+	if (_rank==PROC_SIPINIT && db_mode!=DB_ONLY) {
 		/* if cache is used, populate domains from DB */
 		for( ptr=root ; ptr ; ptr=ptr->next) {
 			if (preload_udomain(ul_dbh, ptr->d) < 0) {

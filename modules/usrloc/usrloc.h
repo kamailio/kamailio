@@ -40,6 +40,7 @@
 #define WRITE_THROUGH 1
 #define WRITE_BACK    2
 #define DB_ONLY       3
+#define DB_READONLY   4
 
 /*forward declaration necessary for udomain*/
 
