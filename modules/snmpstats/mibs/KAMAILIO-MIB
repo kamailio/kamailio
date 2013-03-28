@@ -321,21 +321,13 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         "Maximum number of TCP connections (tcp_max_connections)"
         ::= { kamailioNetTcpConfig 2 }
 
-    kamailioNetTcpAsync OBJECT-TYPE
-        SYNTAX  TruthValue
-        MAX-ACCESS  read-only
-        STATUS current
-        DESCRIPTION 
-        "True if TCP Async is enabled in this server (tcp_async)"
-        ::= { kamailioNetTcpConfig 3 }
-
     kamailioNetTcpConnTimeout OBJECT-TYPE
         SYNTAX  Integer32
         MAX-ACCESS  read-only
         STATUS current
         DESCRIPTION 
         "TCP Connection Timeout (tcp_connect_timeout)"
-        ::= { kamailioNetTcpConfig 4 }
+        ::= { kamailioNetTcpConfig 3 }
 
     kamailioNetTcpSendTimeout OBJECT-TYPE
         SYNTAX  Integer32
@@ -343,7 +335,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         STATUS current
         DESCRIPTION 
         "Time in seconds after a TCP connection will be closed if it is not available for writing in this interval (tcp_send_timeout)"
-        ::= { kamailioNetTcpConfig 5 }
+        ::= { kamailioNetTcpConfig 4 }
 
     kamailioNetTcpConnLifetime OBJECT-TYPE
         SYNTAX  Integer32
@@ -351,7 +343,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         STATUS current
         DESCRIPTION 
         "Lifetime in seconds for TCP sessions (tcp_connection_lifetime)"
-        ::= { kamailioNetTcpConfig 6 }
+        ::= { kamailioNetTcpConfig 5 }
 
     kamailioNetTcpConnLifetime OBJECT-TYPE
         SYNTAX  Integer32
@@ -359,27 +351,174 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         STATUS current
         DESCRIPTION 
         "Maximum number of tcp connections (tcp_max_connections)"
+        ::= { kamailioNetTcpConfig 6 }
+
+    kamailioNetTcpNoConnect OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "True if Kamailio never tries to set up outbound TCP (or TCP/TLS) connections (tcp_no_connect)"
         ::= { kamailioNetTcpConfig 7 }
 
-	---	max_tls_connections(soft): 2048
-	---	no_connect: 0
-	---	fd_cache: 1
-	---	async: 1
-	---	connect_wait: 1
-	---	conn_wq_max: 32768
-	---	wq_max: 10485760
-	---	defer_accept: 0
-	---	delayed_ack: 0
-	---	syncnt: 0
-	---	linger2: 0
-	---	keepalive: 1
-	---	keepidle: 0
-	---	keepintvl: 0
-	---	keepcnt: 0
-	---	crlf_ping: 1
-	---	accept_aliases: 0
+    kamailioNetTcpFdCache OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "If enabled FDs used for sending will be cached inside the process calling tcp_send (tcp_fd_cache)"
+        ::= { kamailioNetTcpConfig 8 }
+
+    kamailioNetTcpAsync OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "True if TCP Async is enabled in this server (tcp_async)"
+        ::= { kamailioNetTcpConfig 9 }
+
+    kamailioNetTcpAsyncConnWait OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "??? No description available "
+        ::= { kamailioNetTcpConfig 10 }
+
+    kamailioNetTcpAsyncConnWait OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "??? No description available "
+        ::= { kamailioNetTcpConfig 10 }
+
+    kamailioNetTcpAsyncConnWqMax OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Async TCP: Maximum bytes queued for write allowed per connection. (tcp_conn_wq_max)"
+        ::= { kamailioNetTcpConfig 11 }
+
+    kamailioNetTcpAsyncWqMax OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Async TCP: Maximum bytes queued for write (tcp__wq_max)"
+        ::= { kamailioNetTcpConfig 12 }
+
+    kamailioNetTcpAsyncWqBlkSize OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Async TCP: Maximum bytes queued for write (tcp_wq_blk_size)"
+        ::= { kamailioNetTcpConfig 12 }
+
+    kamailioNetTcpRdBufSize OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Buffer size used for tcp reads (tcp_rd_buf_size)"
+        ::= { kamailioNetTcpConfig 13 }
+
+    kamailioNetTcpDeferAccept OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Tcp accepts will be delayed until some data is received (tcp_defer_accept)"
+        ::= { kamailioNetTcpConfig 14 }
+
+    kamailioNetTcpDelayedAck OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Initial ACK for opened connections will be delayed and sent with the first data segment (tcp_delayed_ack)"
+        ::= { kamailioNetTcpConfig 15 }
+
+    kamailioNetTcpSynCnt OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Number of SYN retransmissions before aborting a connect attempt (tcp_syncnt)"
+        ::= { kamailioNetTcpConfig 16 }
+
+    kamailioNetTcpLinger OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Lifetime of orphaned sockets in FIN_WAIT2 state. Linux only. (tcp_linger2)"
+        ::= { kamailioNetTcpConfig 17 }
+
+    kamailioNetTcpKeepAlive OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "True if TCP Keepalives are enabled (tcp_keepalive)"
+        ::= { kamailioNetTcpConfig 18 }
+
+    kamailioNetTcpKeepIdle OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Time before starting to send keepalives, if the connection is idle. Linux only. (tcp_keepidle)"
+        ::= { kamailioNetTcpConfig 19 }
+
+    kamailioNetTcpKeepIntvl OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Time interval between keepalive probes, when the previous probe failed. Linux only. (tcp_keepintvl)"
+        ::= { kamailioNetTcpConfig 20 }
+
+    kamailioNetTcpKeepCnt OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Number of keepalives sent before dropping the connection. Linux only. (tcp_keepcnt)"
+        ::= { kamailioNetTcpConfig 21 }
+
+    kamailioNetTcpCrlfPing OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Enable SIP outbound TCP keep-alive using PING-PONG (CRLFCRLF - CRLF). (tcp_crlf_ping)"
+        ::= { kamailioNetTcpConfig 22 }
+
+    kamailioNetTcpAcceptAliases OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Reuse TCP connections based on aliases (tcp_accept_alias)"
+        ::= { kamailioNetTcpConfig 23 }
+
+    kamailioNetTcpAcceptNoCl OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "True if Content-Length headers are required (tcp_accept_no_cl)"
+        ::= { kamailioNetTcpConfig 24 }
+
+
+	--- RPC settings not found. Still looking.
+	---	connect_wait: 1 Depends on Async
 	---	alias_flags: 1
 	---	new_conn_alias_flags: 2
+	---	max_tls_connections(soft): 2048
 
 --
 -- TCP connection statistic objects

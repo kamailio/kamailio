@@ -58,15 +58,32 @@ init_kamailioNet(void)
     const oid kamailioNetTcpConnFailed_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,2 };
     const oid kamailioNetTcpConnReset_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,3 };
     const oid kamailioNetTcpConnSuccess_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,4 };
-    const oid kamailioNetTcpConnOpened_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,5 };
+    const oid kamailioNetTcpConnOpen_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,5 };
     const oid kamailioNetTcpConnPassiveOpen_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,6 };
     const oid kamailioNetTcpConnReject_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,2,8 };
     const oid kamailioNetTcpEnabled_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,1 };
     const oid kamailioNetTcpMaxConns_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,2 };
-    const oid kamailioNetTcpAsync_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,3 };
-    const oid kamailioNetTcpConnTimeout_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,4 };
-    const oid kamailioNetTcpSendTimeout_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,5 };
-    const oid kamailioNetTcpConnLifetime_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,6 };
+    const oid kamailioNetTcpConnTimeout_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,3 };
+    const oid kamailioNetTcpSendTimeout_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,4 };
+    const oid kamailioNetTcpConnLifetime_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,5 };
+    const oid kamailioNetTcpNoConnect_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,7 };
+    const oid kamailioNetTcpFdCache_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,8 };
+    const oid kamailioNetTcpAsync_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,9 };
+    const oid kamailioNetTcpAsyncConnWait_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,10 };
+    const oid kamailioNetTcpAsyncConnWqMax_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,11 };
+    const oid kamailioNetTcpAsyncWqMax_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,12 };
+    const oid kamailioNetTcpRdBufSize_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,13 };
+    const oid kamailioNetTcpDeferAccept_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,14 };
+    const oid kamailioNetTcpDelayedAck_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,15 };
+    const oid kamailioNetTcpSynCnt_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,16 };
+    const oid kamailioNetTcpLinger_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,17 };
+    const oid kamailioNetTcpKeepAlive_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,18 };
+    const oid kamailioNetTcpKeepIdle_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,19 };
+    const oid kamailioNetTcpKeepIntvl_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,20 };
+    const oid kamailioNetTcpKeepCnt_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,21 };
+    const oid kamailioNetTcpCrlfPing_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,22 };
+    const oid kamailioNetTcpAcceptAliases_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,23 };
+    const oid kamailioNetTcpAcceptNoCl_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,24 };
 
   DEBUGMSGTL(("kamailioNet", "Initializing\n"));
 
@@ -91,8 +108,8 @@ init_kamailioNet(void)
                                HANDLER_CAN_RONLY
         ));
     netsnmp_register_scalar(
-        netsnmp_create_handler_registration("kamailioNetTcpConnOpened", handle_kamailioNetTcpConnOpened,
-                               kamailioNetTcpConnOpened_oid, OID_LENGTH(kamailioNetTcpConnOpened_oid),
+        netsnmp_create_handler_registration("kamailioNetTcpConnOped", handle_kamailioNetTcpConnOpen,
+                               kamailioNetTcpConnOpen_oid, OID_LENGTH(kamailioNetTcpConnOpen_oid),
                                HANDLER_CAN_RONLY
         ));
     netsnmp_register_scalar(
@@ -116,11 +133,6 @@ init_kamailioNet(void)
                                HANDLER_CAN_RONLY
         ));
     netsnmp_register_scalar(
-        netsnmp_create_handler_registration("kamailioNetTcpAsync", handle_kamailioNetTcpAsync,
-                               kamailioNetTcpAsync_oid, OID_LENGTH(kamailioNetTcpAsync_oid),
-                               HANDLER_CAN_RONLY
-        ));
-    netsnmp_register_scalar(
         netsnmp_create_handler_registration("kamailioNetTcpConnTimeout", handle_kamailioNetTcpConnTimeout,
                                kamailioNetTcpConnTimeout_oid, OID_LENGTH(kamailioNetTcpConnTimeout_oid),
                                HANDLER_CAN_RONLY
@@ -133,6 +145,96 @@ init_kamailioNet(void)
     netsnmp_register_scalar(
         netsnmp_create_handler_registration("kamailioNetTcpConnLifetime", handle_kamailioNetTcpConnLifetime,
                                kamailioNetTcpConnLifetime_oid, OID_LENGTH(kamailioNetTcpConnLifetime_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpNoConnect", handle_kamailioNetTcpNoConnect,
+                               kamailioNetTcpNoConnect_oid, OID_LENGTH(kamailioNetTcpNoConnect_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpFdCache", handle_kamailioNetTcpFdCache,
+                               kamailioNetTcpFdCache_oid, OID_LENGTH(kamailioNetTcpFdCache_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpAsync", handle_kamailioNetTcpAsync,
+                               kamailioNetTcpAsync_oid, OID_LENGTH(kamailioNetTcpAsync_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpAsyncConnWait", handle_kamailioNetTcpAsyncConnWait,
+                               kamailioNetTcpAsyncConnWait_oid, OID_LENGTH(kamailioNetTcpAsyncConnWait_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpAsyncConnWqMax", handle_kamailioNetTcpAsyncConnWqMax,
+                               kamailioNetTcpAsyncConnWqMax_oid, OID_LENGTH(kamailioNetTcpAsyncConnWqMax_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpAsyncWqMax", handle_kamailioNetTcpAsyncWqMax,
+                               kamailioNetTcpAsyncWqMax_oid, OID_LENGTH(kamailioNetTcpAsyncWqMax_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpRdBufSize", handle_kamailioNetTcpRdBufSize,
+                               kamailioNetTcpRdBufSize_oid, OID_LENGTH(kamailioNetTcpRdBufSize_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpDeferAccept", handle_kamailioNetTcpDeferAccept,
+                               kamailioNetTcpDeferAccept_oid, OID_LENGTH(kamailioNetTcpDeferAccept_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpDelayedAck", handle_kamailioNetTcpDelayedAck,
+                               kamailioNetTcpDelayedAck_oid, OID_LENGTH(kamailioNetTcpDelayedAck_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpSynCnt", handle_kamailioNetTcpSynCnt,
+                               kamailioNetTcpSynCnt_oid, OID_LENGTH(kamailioNetTcpSynCnt_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpLinger", handle_kamailioNetTcpLinger,
+                               kamailioNetTcpLinger_oid, OID_LENGTH(kamailioNetTcpLinger_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpKeepAlive", handle_kamailioNetTcpKeepAlive,
+                               kamailioNetTcpKeepAlive_oid, OID_LENGTH(kamailioNetTcpKeepAlive_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpKeepIdle", handle_kamailioNetTcpKeepIdle,
+                               kamailioNetTcpKeepIdle_oid, OID_LENGTH(kamailioNetTcpKeepIdle_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpKeepIntvl", handle_kamailioNetTcpKeepIntvl,
+                               kamailioNetTcpKeepIntvl_oid, OID_LENGTH(kamailioNetTcpKeepIntvl_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpKeepCnt", handle_kamailioNetTcpKeepCnt,
+                               kamailioNetTcpKeepCnt_oid, OID_LENGTH(kamailioNetTcpKeepCnt_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpCrlfPing", handle_kamailioNetTcpCrlfPing,
+                               kamailioNetTcpCrlfPing_oid, OID_LENGTH(kamailioNetTcpCrlfPing_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpAcceptAliases", handle_kamailioNetTcpAcceptAliases,
+                               kamailioNetTcpAcceptAliases_oid, OID_LENGTH(kamailioNetTcpAcceptAliases_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpAcceptNoCl", handle_kamailioNetTcpAcceptNoCl,
+                               kamailioNetTcpAcceptNoCl_oid, OID_LENGTH(kamailioNetTcpAcceptNoCl_oid),
                                HANDLER_CAN_RONLY
         ));
 }
@@ -242,7 +344,7 @@ handle_kamailioNetTcpConnSuccess(netsnmp_mib_handler *handler,
     return SNMP_ERR_NOERROR;
 }
 int
-handle_kamailioNetTcpConnOpened(netsnmp_mib_handler *handler,
+handle_kamailioNetTcpConnOpen(netsnmp_mib_handler *handler,
                           netsnmp_handler_registration *reginfo,
                           netsnmp_agent_request_info   *reqinfo,
                           netsnmp_request_info         *requests)
@@ -258,7 +360,7 @@ handle_kamailioNetTcpConnOpened(netsnmp_mib_handler *handler,
 
         default:
             /* we should never get here, so this is a really bad error */
-            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpConnOpened\n", reqinfo->mode );
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpConnOpen\n", reqinfo->mode );
             return SNMP_ERR_GENERR;
     }
 
@@ -488,6 +590,507 @@ handle_kamailioNetTcpConnLifetime(netsnmp_mib_handler *handler,
         default:
             /* we should never get here, so this is a really bad error */
             snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpConnLifetime\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpNoConnect(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value ;
+
+    tcp_options_get(&t);
+    value = t.no_connect;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpNoConnect\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioNetTcpFdCache(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.con_lifetime;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpFdCache\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpAsyncConnWait(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.tcp_connect_wait;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpAsyncConnWait\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpAsyncConnWqMax(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.tcpconn_wq_max;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpAsyncConnWqMax\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpAsyncWqMax(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.tcp_wq_max;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpAsyncWqMax\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpRdBufSize(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.rd_buf_size;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpRdBufSize\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpDeferAccept(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.defer_accept;
+
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpDeferAccept\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpDelayedAck(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.delayed_ack;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpDelayedAck\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpSynCnt(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.syncnt;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpSynCnt\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpLinger(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.linger2;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpLinger\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpKeepAlive(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.keepalive;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpKeepAlive\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioNetTcpKeepIdle(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.keepidle;
+    
+    switch(reqinfo->mode) {
+
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.con_lifetime;
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpKeepIdle\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpKeepIntvl(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.keepintvl;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpKeepIntvl\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpKeepCnt(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.keepcnt;
+
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpKeepCnt\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpCrlfPing(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.crlf_ping;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpCrlfPing\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpAcceptAliases(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.accept_aliases;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpAcceptAliases\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpAcceptNoCl(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.accept_no_cl;
+    /* We are never called for a GETNEXT if it's registered as a
+       "instance", as it's "magically" handled for us.  */
+
+    /* a instance handler also only hands us one request at a time, so
+       we don't need to loop over a list of requests; we'll only get one. */
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpAcceptNoCl\n", reqinfo->mode );
             return SNMP_ERR_GENERR;
     }
 
