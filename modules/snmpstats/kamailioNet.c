@@ -64,6 +64,9 @@ init_kamailioNet(void)
     const oid kamailioNetTcpEnabled_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,1 };
     const oid kamailioNetTcpMaxConns_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,2 };
     const oid kamailioNetTcpAsync_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,3 };
+    const oid kamailioNetTcpConnTimeout_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,4 };
+    const oid kamailioNetTcpSendTimeout_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,5 };
+    const oid kamailioNetTcpConnLifetime_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,6 };
 
   DEBUGMSGTL(("kamailioNet", "Initializing\n"));
 
@@ -117,17 +120,22 @@ init_kamailioNet(void)
                                kamailioNetTcpAsync_oid, OID_LENGTH(kamailioNetTcpAsync_oid),
                                HANDLER_CAN_RONLY
         ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpConnTimeout", handle_kamailioNetTcpConnTimeout,
+                               kamailioNetTcpConnTimeout_oid, OID_LENGTH(kamailioNetTcpConnTimeout_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpSendTimeout", handle_kamailioNetTcpSendTimeout,
+                               kamailioNetTcpSendTimeout_oid, OID_LENGTH(kamailioNetTcpSendTimeout_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetTcpConnLifetime", handle_kamailioNetTcpConnLifetime,
+                               kamailioNetTcpConnLifetime_oid, OID_LENGTH(kamailioNetTcpConnLifetime_oid),
+                               HANDLER_CAN_RONLY
+        ));
 }
-
-#ifdef SKREP
-	con_timeout: 0
-	connect_success: 0
-	current_write_queue_size: 0
-	local_reject: 0
-	passive_open: 0
-	send_timeout: 0
-	sendq_full: 0
-#endif
 
 int
 handle_kamailioNetTcpConnEstablished(netsnmp_mib_handler *handler,
@@ -395,6 +403,91 @@ handle_kamailioNetTcpAsync(netsnmp_mib_handler *handler,
         default:
             /* we should never get here, so this is a really bad error */
             snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpAsync\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int
+handle_kamailioNetTcpConnTimeout(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.connect_timeout_s;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpConnTimeout\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioNetTcpSendTimeout(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.send_timeout;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpSendTimeout\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioNetTcpConnLifetime(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+    struct cfg_group_tcp t;
+    unsigned int value;
+
+    tcp_options_get(&t);
+    value = t.con_lifetime;
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
+			 (u_char *) &value, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpConnLifetime\n", reqinfo->mode );
             return SNMP_ERR_GENERR;
     }
 

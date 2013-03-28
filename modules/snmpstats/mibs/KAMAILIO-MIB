@@ -318,7 +318,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         MAX-ACCESS  read-only
         STATUS current
         DESCRIPTION 
-        "Maximum number of TCP connections (configurable)"
+        "Maximum number of TCP connections (tcp_max_connections)"
         ::= { kamailioNetTcpConfig 2 }
 
     kamailioNetTcpAsync OBJECT-TYPE
@@ -326,13 +326,41 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         MAX-ACCESS  read-only
         STATUS current
         DESCRIPTION 
-        "True if TCP Async is enabled in this server."
+        "True if TCP Async is enabled in this server (tcp_async)"
         ::= { kamailioNetTcpConfig 3 }
 
-	---	connect_timeout: 10
-	---	send_timeout: 10
-	---	connection_lifetime: 120
-	---	max_connections(soft): 2048
+    kamailioNetTcpConnTimeout OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "TCP Connection Timeout (tcp_connect_timeout)"
+        ::= { kamailioNetTcpConfig 4 }
+
+    kamailioNetTcpSendTimeout OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Time in seconds after a TCP connection will be closed if it is not available for writing in this interval (tcp_send_timeout)"
+        ::= { kamailioNetTcpConfig 5 }
+
+    kamailioNetTcpConnLifetime OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Lifetime in seconds for TCP sessions (tcp_connection_lifetime)"
+        ::= { kamailioNetTcpConfig 6 }
+
+    kamailioNetTcpConnLifetime OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Maximum number of tcp connections (tcp_max_connections)"
+        ::= { kamailioNetTcpConfig 7 }
+
 	---	max_tls_connections(soft): 2048
 	---	no_connect: 0
 	---	fd_cache: 1
@@ -388,12 +416,12 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         "Number of successful TCP connections"
         ::= { kamailioNetTcpStat 4 }
 
-    kamailioNetTcpConnOpened OBJECT-TYPE
+    kamailioNetTcpConnOpen OBJECT-TYPE
         SYNTAX      Gauge32
         MAX-ACCESS  read-only
         STATUS current
         DESCRIPTION 
-        "Number of current opened TCP connections"
+        "Number of current open TCP connections"
         ::= { kamailioNetTcpStat 5 }
 
     kamailioNetTcpConnPassiveOpen OBJECT-TYPE
