@@ -304,7 +304,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 		   can change/update msg->instance */
 		if (instance==&i_req->instance)
 			instance=&instance_bak;
-		/* zero it first so that set_instancetor will work */
+		/* zero it first so that set_instance will work */
 		i_req->instance.s=0;
 		i_req->instance.len=0;
 		if (unlikely(instance)){
@@ -418,6 +418,13 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 		}else if (unlikely(path==0 && i_req->path_vec.len!=0)){
 			i_req->path_vec.s=0;
 			i_req->path_vec.len=0;
+		}
+		if (unlikely(instance && (i_req->instance.s!=instance->s ||
+							  i_req->instance.len!=instance->len))){
+			i_req->instance=*instance;
+		}else if (unlikely(instance==0 && i_req->instance.len!=0)){
+			i_req->instance.s=0;
+			i_req->instance.len=0;
 		}
 	}
 	
