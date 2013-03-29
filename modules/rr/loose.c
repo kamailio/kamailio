@@ -504,13 +504,13 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token,
 		str *dst_uri)
 {
 	int ret;
-	struct receive_info rcv;
+	struct receive_info *rcv = NULL;
 	struct socket_info *si;
 
 	if (!rr_obb.decode_flow_token)
 		return 0;
 
-	ret = rr_obb.decode_flow_token(&rcv, flow_token);
+	ret = rr_obb.decode_flow_token(_m, rcv, flow_token);
 
 	if (ret == -2) {
 		LM_DBG("no flow token found - outbound not in use\n");
@@ -518,13 +518,13 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token,
 	} else if (ret == -1) {
 		LM_ERR("failed to decode flow token\n");
 		return -1;
-	} else if (!ip_addr_cmp(&rcv.src_ip, &_m->rcv.src_ip)
-			|| rcv.src_port != _m->rcv.src_port) {
+	} else if (!ip_addr_cmp(&rcv->src_ip, &_m->rcv.src_ip)
+			|| rcv->src_port != _m->rcv.src_port) {
 		LM_DBG("\"incoming\" request found. Using flow-token for"
 			"routing\n");
 
 		/* First, force the local socket */
-		si = find_si(&rcv.dst_ip, rcv.dst_port, rcv.proto);
+		si = find_si(&rcv->dst_ip, rcv->dst_port, rcv->proto);
 		if (si)
 			set_force_socket(_m, si);
 		else {
@@ -539,16 +539,16 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token,
 		dst_uri->len += snprintf(dst_uri->s + dst_uri->len,
 					MAX_ROUTE_URI_LEN - dst_uri->len,
 					"sip:%s",
-					rcv.src_ip.af == AF_INET6 ? "[" : "");
-		dst_uri->len += ip_addr2sbuf(&rcv.src_ip,
+					rcv->src_ip.af == AF_INET6 ? "[" : "");
+		dst_uri->len += ip_addr2sbuf(&rcv->src_ip,
 					dst_uri->s + dst_uri->len,
 					MAX_ROUTE_URI_LEN - dst_uri->len);
 		dst_uri->len += snprintf(dst_uri->s + dst_uri->len,
 					MAX_ROUTE_URI_LEN - dst_uri->len,
 					"%s:%d;transport=%s",
-					rcv.src_ip.af == AF_INET6 ? "]" : "",
-					rcv.src_port,
-					get_proto_name(rcv.proto));
+					rcv->src_ip.af == AF_INET6 ? "]" : "",
+					rcv->src_port,
+					get_proto_name(rcv->proto));
 	}
 
 	return 1;
