@@ -43,11 +43,8 @@
 #include "rr_mod.h"
 
 
-#define RR_PREFIX_SIP "Record-Route: <sip:"
-#define RR_PREFIX_SIP_LEN (sizeof(RR_PREFIX_SIP)-1)
-
-#define RR_PREFIX_SIPS "Record-Route: <sip:"
-#define RR_PREFIX_SIPS_LEN (sizeof(RR_PREFIX_SIPS)-1)
+#define RR_PREFIX "Record-Route: <sip:"
+#define RR_PREFIX_LEN (sizeof(RR_PREFIX)-1)
 
 #define RR_LR ";lr"
 #define RR_LR_LEN (sizeof(RR_LR)-1)
@@ -80,15 +77,6 @@ static unsigned int rr_param_msg;
 
 static pv_spec_t *custom_user_avp;		/*!< AVP for custom_user setting */
 
-
-inline static int rr_is_sips(sip_msg_t *_m)
-{
-	if(parse_sip_msg_uri(_m)<0)
-		return 0;
-	if(_m->parsed_uri.type==SIPS_URI_T)
-		return 1;
-	return 0;
-}
 
 void init_custom_user(pv_spec_t *custom_user_avp_p)
 {
@@ -199,23 +187,13 @@ static inline struct lump *insert_rr_param_lump(struct lump *before,
  * \return 0 on success, negative on failure
  */
 static inline int build_rr(struct lump* _l, struct lump* _l2, str* user,
-				str *tag, str *params, int _inbound, int _use_ob, int _sips)
+				str *tag, str *params, int _inbound, int _use_ob)
 {
 	char* prefix, *suffix, *term, *r2;
 	int suffix_len, prefix_len;
 	char *p;
-	char *rr_prefix;
-	int rr_prefix_len;
 
-	if(_sips==0) {
-		rr_prefix = RR_PREFIX_SIP;
-		rr_prefix_len = RR_PREFIX_SIP_LEN;
-	} else {
-		rr_prefix = RR_PREFIX_SIPS;
-		rr_prefix_len = RR_PREFIX_SIPS_LEN;
-	}
-
-	prefix_len = rr_prefix_len + (user->len ? (user->len + 1) : 0);
+	prefix_len = RR_PREFIX_LEN + (user->len ? (user->len + 1) : 0);
 	if (enable_full_lr) {
 		suffix_len = RR_LR_FULL_LEN + (params?params->len:0) +
 				((tag && tag->len) ? (RR_FROMTAG_LEN + tag->len) : 0);
@@ -238,21 +216,21 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, str* user,
 		return -3;
 	}
 	
-	memcpy(prefix, rr_prefix, rr_prefix_len);
+	memcpy(prefix, RR_PREFIX, RR_PREFIX_LEN);
 	if (user->len) {
-		memcpy(prefix + rr_prefix_len, user->s, user->len);
+		memcpy(prefix + RR_PREFIX_LEN, user->s, user->len);
 #ifdef ENABLE_USER_CHECK
 		/* don't add the ignored user into a RR */
 		if(i_user.len && i_user.len == user->len && 
 				!strncmp(i_user.s, user->s, i_user.len))
 		{
-			if(prefix[rr_prefix_len]=='x')
-				prefix[rr_prefix_len]='y';
+			if(prefix[RR_PREFIX_LEN]=='x')
+				prefix[RR_PREFIX_LEN]='y';
 			else
-				prefix[rr_prefix_len]='x';
+				prefix[RR_PREFIX_LEN]='x';
 		}
 #endif
-		prefix[rr_prefix_len + user->len] = '@';
+		prefix[RR_PREFIX_LEN + user->len] = '@';
 	}
 
 	p = suffix;
@@ -333,7 +311,6 @@ int record_route(struct sip_msg* _m, str *params)
 	struct to_body* from = NULL;
 	str* tag;
 	int use_ob = rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0;
-	int sips;
 	
 	user.len = 0;
 	
@@ -368,8 +345,6 @@ int record_route(struct sip_msg* _m, str *params)
 		rr_param_buf.len = 0;
 	}
 
-	sips = rr_is_sips(_m);
-
 	if (enable_double_rr && !use_ob) {
 		l = anchor_lump(_m, _m->headers->name.s - _m->buf,0,HDR_RECORDROUTE_T);
 		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
@@ -383,7 +358,7 @@ int record_route(struct sip_msg* _m, str *params)
 			LM_ERR("failed to insert conditional lump\n");
 			return -6;
 		}
-		if (build_rr(l, l2, &user, tag, params, OUTBOUND, 0, sips) < 0) {
+		if (build_rr(l, l2, &user, tag, params, OUTBOUND, 0) < 0) {
 			LM_ERR("failed to insert outbound Record-Route\n");
 			return -7;
 		}
@@ -397,7 +372,7 @@ int record_route(struct sip_msg* _m, str *params)
 	}
 	
 	if (build_rr(l, l2, &user, tag, params, use_ob ? OUTBOUND : INBOUND,
-			use_ob, sips) < 0) {
+			use_ob) < 0) {
 		LM_ERR("failed to insert inbound Record-Route\n");
 		return -4;
 	}
@@ -426,19 +401,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	char* hdr, *p;
 	int hdr_len;
 	int use_ob = rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0;
-	char *rr_prefix;
-	int rr_prefix_len;
-	int sips;
-
-	sips = rr_is_sips(_m);
-	if(sips==0) {
-		rr_prefix = RR_PREFIX_SIP;
-		rr_prefix_len = RR_PREFIX_SIP_LEN;
-	} else {
-		rr_prefix = RR_PREFIX_SIPS;
-		rr_prefix_len = RR_PREFIX_SIPS_LEN;
-	}
-
+	
 	from = 0;
 	user.len = 0;
 	user.s = 0;
@@ -469,7 +432,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 		return -3;
 	}
 
-	hdr_len = rr_prefix_len;
+	hdr_len = RR_PREFIX_LEN;
 	if (user.len)
 		hdr_len += user.len + 1; /* @ */
 	hdr_len += _data->len;
@@ -493,8 +456,8 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	}
 
 	p = hdr;
-	memcpy(p, rr_prefix, rr_prefix_len);
-	p += rr_prefix_len;
+	memcpy(p, RR_PREFIX, RR_PREFIX_LEN);
+	p += RR_PREFIX_LEN;
 
 	if (user.len) {
 		memcpy(p, user.s, user.len);
@@ -545,23 +508,13 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 #define RR_TRANS_LEN 11
 #define RR_TRANS ";transport="
 static inline int build_advertised_rr(struct lump* _l, struct lump* _l2, str *_data,
-				str* user, str *tag, int _inbound, int _use_ob, int _sips)
+				str* user, str *tag, int _inbound, int _use_ob)
 {
 	char *p;
 	char *hdr, *trans, *r2, *suffix, *term;
 	int hdr_len, suffix_len;
-	char *rr_prefix;
-	int rr_prefix_len;
 
-	if(_sips==0) {
-		rr_prefix = RR_PREFIX_SIP;
-		rr_prefix_len = RR_PREFIX_SIP_LEN;
-	} else {
-		rr_prefix = RR_PREFIX_SIPS;
-		rr_prefix_len = RR_PREFIX_SIPS_LEN;
-	}
-
-	hdr_len = rr_prefix_len;
+	hdr_len = RR_PREFIX_LEN;
 	if (user && user->len)
 		hdr_len += user->len + 1; /* @ */
 	hdr_len += _data->len;
@@ -593,8 +546,8 @@ static inline int build_advertised_rr(struct lump* _l, struct lump* _l2, str *_d
 	}
 
 	p = hdr;
-	memcpy(p, rr_prefix, rr_prefix_len);
-	p += rr_prefix_len;
+	memcpy(p, RR_PREFIX, RR_PREFIX_LEN);
+	p += RR_PREFIX_LEN;
 
 	if (user->len) {
 		memcpy(p, user->s, user->len);
@@ -672,7 +625,6 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 	struct lump* l;
 	struct lump* l2;
 	int use_ob = rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0;
-	int sips;
 	
 	user.len = 0;
 	user.s = 0;
@@ -697,8 +649,6 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 		tag = &((struct to_body*)_m->from->parsed)->tag_value;
 	}
 
-	sips = rr_is_sips(_m);
-
 	if (enable_double_rr && !use_ob) {
 		l = anchor_lump(_m, _m->headers->name.s - _m->buf,0,HDR_RECORDROUTE_T);
 		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
@@ -713,7 +663,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 			return -4;
 		}
 		if (build_advertised_rr(l, l2, _data, &user, tag, OUTBOUND,
-					0, sips) < 0) {
+					0) < 0) {
 			LM_ERR("failed to insert outbound Record-Route\n");
 			return -5;
 		}
@@ -728,7 +678,7 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 	
 	if (build_advertised_rr(l, l2, _data, &user, tag,
 				use_ob ? OUTBOUND: INBOUND,
-				use_ob, sips) < 0) {
+				use_ob) < 0) {
 		LM_ERR("failed to insert outbound Record-Route\n");
 		return -7;
 	}
