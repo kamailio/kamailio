@@ -185,15 +185,12 @@ int encode_flow_token(str *flow_token, struct receive_info rcv)
 	return 0;
 }
 
-int decode_flow_token(struct receive_info *rcv, str flow_token)
+int decode_flow_token(struct sip_msg *msg, struct receive_info *rcv, str flow_token)
 {
 	int pos = FLOW_TOKEN_START_POS, flow_length, i;
 
-	if (rcv == NULL)
-	{
-		LM_ERR("bad receive_info structure provided\n");
-		return -1;
-	}
+	if (msg->flow.decoded)
+		goto end;
 
 	if (flow_token.s == NULL)
 	{
@@ -241,28 +238,31 @@ int decode_flow_token(struct receive_info *rcv, str flow_token)
 	/* Decode protocol information */
 	if (unenc_flow_token[pos] & 0x80)
 	{
-		rcv->dst_ip.af = rcv->src_ip.af = AF_INET6;
-		rcv->dst_ip.len = rcv->src_ip.len = 16;
+		msg->flow.rcv.dst_ip.af = msg->flow.rcv.src_ip.af = AF_INET6;
+		msg->flow.rcv.dst_ip.len = msg->flow.rcv.src_ip.len = 16;
 	}
 	else
 	{
-		rcv->dst_ip.af = rcv->src_ip.af = AF_INET;
-		rcv->dst_ip.len = rcv->src_ip.len = 4;
+		msg->flow.rcv.dst_ip.af = msg->flow.rcv.src_ip.af = AF_INET;
+		msg->flow.rcv.dst_ip.len = msg->flow.rcv.src_ip.len = 4;
 	}
-	rcv->proto = unenc_flow_token[pos++] & 0x7f;
+	msg->flow.rcv.proto = unenc_flow_token[pos++] & 0x7f;
 
 	/* Decode destination address */
-	for (i = 0; i < (rcv->dst_ip.af == AF_INET6 ? 16 : 4); i++)
-		rcv->dst_ip.u.addr[i] = unenc_flow_token[pos++];
-	rcv->dst_port = unenc_flow_token[pos++] << 8;
-	rcv->dst_port |= unenc_flow_token[pos++];
+	for (i = 0; i < (msg->flow.rcv.dst_ip.af == AF_INET6 ? 16 : 4); i++)
+		msg->flow.rcv.dst_ip.u.addr[i] = unenc_flow_token[pos++];
+	msg->flow.rcv.dst_port = unenc_flow_token[pos++] << 8;
+	msg->flow.rcv.dst_port |= unenc_flow_token[pos++];
 
 	/* Decode source address */
-	for (i = 0; i < (rcv->src_ip.af == AF_INET6 ? 16 : 4); i++)
-		rcv->src_ip.u.addr[i] = unenc_flow_token[pos++];
-	rcv->src_port = unenc_flow_token[pos++] << 8;
-	rcv->src_port |= unenc_flow_token[pos++];
+	for (i = 0; i < (msg->flow.rcv.src_ip.af == AF_INET6 ? 16 : 4); i++)
+		msg->flow.rcv.src_ip.u.addr[i] = unenc_flow_token[pos++];
+	msg->flow.rcv.src_port = unenc_flow_token[pos++] << 8;
+	msg->flow.rcv.src_port |= unenc_flow_token[pos++];
+	msg->flow.decoded = 1;
 
+end:
+	rcv = &msg->flow.rcv;
 	return 0;
 }
 
@@ -315,7 +315,7 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 	param_hooks_t hooks;
 	param_t *params;
 	int ret;
-	struct receive_info rcv;
+	struct receive_info *rcv = NULL;
 
 	/* Check to see if the top Route-URI is me and has a ;ob parameter */
 	if (msg->route
@@ -361,10 +361,10 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 			LM_INFO("found ;ob parameter on Route-URI - outbound"
 				" used\n");
 
-			if (decode_flow_token(&rcv, puri.user) == 0)
+			if (decode_flow_token(msg, rcv, puri.user) == 0)
 			{
-				if (!ip_addr_cmp(&rcv.src_ip, &msg->rcv.src_ip)
-					|| rcv.src_port != msg->rcv.src_port)
+				if (!ip_addr_cmp(&rcv->src_ip, &msg->rcv.src_ip)
+					|| rcv->src_port != msg->rcv.src_port)
 				{
 					LM_INFO("\"incoming\" request found\n");
 					return 2;
