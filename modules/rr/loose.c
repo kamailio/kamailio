@@ -510,7 +510,7 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token,
 	if (!rr_obb.decode_flow_token)
 		return 0;
 
-	ret = rr_obb.decode_flow_token(_m, rcv, flow_token);
+	ret = rr_obb.decode_flow_token(_m, &rcv, flow_token);
 
 	if (ret == -2) {
 		LM_DBG("no flow token found - outbound not in use\n");
