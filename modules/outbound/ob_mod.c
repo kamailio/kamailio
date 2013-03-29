@@ -274,7 +274,7 @@ static int use_outbound_register(struct sip_msg *msg)
 	if (!(parse_headers(msg, HDR_VIA2_F, 0) == -1 || msg->via2 == 0
 		|| msg->via2->error != PARSE_OK))
 	{
-		LM_INFO("second Via: found - outbound not used\n");
+		LM_DBG("second Via: found - outbound not used\n");
 		return 0;
 	}
 
@@ -296,14 +296,14 @@ static int use_outbound_register(struct sip_msg *msg)
 		
 		if (contact->reg_id)
 		{
-			LM_INFO("found REGISTER with ;reg-id paramter on"
+			LM_DBG("found REGISTER with ;reg-id paramter on"
 				" Contact-URI - outbound used\n");
 			return 1;
 		}
 
 	}
 
-	LM_INFO("outbound not used\n");
+	LM_DBG("outbound not used\n");
 	return 0;
 }
 
@@ -344,7 +344,7 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 		{
 			/* If the host:port doesn't match, or does but it's
 			   gruu */
-			LM_INFO("top Route-URI is not me - outbound not"
+			LM_DBG("top Route-URI is not me - outbound not"
 				" used\n");
 			return 0;
 		}
@@ -358,7 +358,7 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 
 		if (hooks.uri.ob)
 		{
-			LM_INFO("found ;ob parameter on Route-URI - outbound"
+			LM_DBG("found ;ob parameter on Route-URI - outbound"
 				" used\n");
 
 			if (decode_flow_token(msg, &rcv, puri.user) == 0)
@@ -366,12 +366,12 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 				if (!ip_addr_cmp(&rcv->src_ip, &msg->rcv.src_ip)
 					|| rcv->src_port != msg->rcv.src_port)
 				{
-					LM_INFO("\"incoming\" request found\n");
+					LM_DBG("\"incoming\" request found\n");
 					return 2;
 				}
 			}
 
-			LM_INFO("\"outgoing\" request found\n");
+			LM_DBG("\"outgoing\" request found\n");
 			return 1;
 		}
 	}
@@ -380,7 +380,7 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 	if (!(parse_headers(msg, HDR_VIA2_F, 0) == -1 || msg->via2 == 0
 		|| msg->via2->error != PARSE_OK))
 	{
-		LM_INFO("second Via: found - outbound not used\n");
+		LM_DBG("second Via: found - outbound not used\n");
 		return 0;
 	}
 
@@ -414,13 +414,13 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 		}
 		if (hooks.contact.ob)
 		{
-			LM_INFO("found ;ob parameter on Contact-URI - outbound"
+			LM_DBG("found ;ob parameter on Contact-URI - outbound"
 				" used\n");
 			return 1;
 		}
 	}
 
-	LM_INFO("outbound not used\n");
+	LM_DBG("outbound not used\n");
 	return 0;
 }
 
@@ -440,7 +440,7 @@ int use_outbound(struct sip_msg *msg)
 		return 1;
 	}
 
-	LM_INFO("Analysing %.*s for outbound markers\n",
+	LM_DBG("Analysing %.*s for outbound markers\n",
 		msg->first_line.u.request.method.len,
 		msg->first_line.u.request.method.s);
 
