@@ -76,14 +76,11 @@
 #include "ip_addr.h"
 #include "cfg/cfg_struct.h"
 #include "events.h"
+#include "stun.h"
 #ifdef USE_RAW_SOCKS
 #include "raw_sock.h"
 #endif /* USE_RAW_SOCKS */
 
-
-#ifdef USE_STUN
-  #include "ser_stun.h"
-#endif
 
 #ifdef DBG_MSG_QA
 /* message quality assurance -- frequently, bugs in ser have
@@ -501,19 +498,14 @@ int udp_rcv_loop()
 			}
 		}
 #ifndef NO_ZERO_CHECKS
-#ifdef USE_STUN
-		/* STUN support can be switched off even if it's compiled */
-		if (stun_allow_stun == 0 || (unsigned char)*buf != 0x00) {
-#endif
-		  if (len<MIN_UDP_PACKET) {
-			  tmp=ip_addr2a(&ri.src_ip);
-			  DBG("udp_rcv_loop: probing packet received from %s %d\n",
-				  	tmp, htons(ri.src_port));
-			  continue;
-		  }
-#ifdef USE_STUN
+		if (!unlikely(sr_event_enabled(SREV_STUN_IN)) || (unsigned char)*buf != 0x00) {
+			if (len<MIN_UDP_PACKET) {
+				tmp=ip_addr2a(&ri.src_ip);
+				DBG("udp_rcv_loop: probing packet received from %s %d\n",
+					tmp, htons(ri.src_port));
+				continue;
+			}
 		}
-#endif
 /* historically, zero-terminated packets indicated a bug in clients
  * that calculated wrongly packet length and included string-terminating
  * zero; today clients exist with legitimate binary payloads and we
@@ -544,17 +536,15 @@ int udp_rcv_loop()
 		
 		/* update the local config */
 		cfg_update();
-#ifdef USE_STUN
-			/* STUN support can be switched off even if it's compiled */
-			if (stun_allow_stun && (unsigned char)*buf == 0x00) {
-			    /* stun_process_msg releases buf memory if necessary */
-				if ((stun_process_msg(buf, len, &ri)) != 0) {
-					continue; /* some error occurred */
-				}
-			} else
-#endif
-		/* receive_msg must free buf too!*/
-		receive_msg(buf, len, &ri);
+		if (unlikely(sr_event_enabled(SREV_STUN_IN)) && (unsigned char)*buf == 0x00) {
+			/* stun_process_msg releases buf memory if necessary */
+			if ((stun_process_msg(buf, len, &ri)) != 0) {
+				continue; /* some error occurred */
+			}
+		} else {
+			/* receive_msg must free buf too!*/
+			receive_msg(buf, len, &ri);
+		}
 		
 	/* skip: do other stuff */
 		

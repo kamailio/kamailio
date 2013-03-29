@@ -195,12 +195,6 @@
 	#define IF_DST_BLACKLIST(x) warn("dst blacklist support not compiled in")
 #endif
 
-#ifdef USE_STUN
-	#define IF_STUN(x) x
-#else 
-	#define IF_STUN(x) warn("stun support not compiled in")
-#endif
-
 #ifdef USE_SCTP
 	#define IF_SCTP(x) x
 #else
@@ -585,10 +579,6 @@ extern char *finame;
 %token ATTR_GLOBAL
 %token ADDEQ
 
-
-%token STUN_REFRESH_INTERVAL
-%token STUN_ALLOW_STUN
-%token STUN_ALLOW_FP
 
 /*pre-processor*/
 %token SUBST
@@ -1708,12 +1698,6 @@ assign_stm:
 	| PVBUFSLOTS EQUAL error { yyerror("number expected"); }
 	| HTTP_REPLY_HACK EQUAL NUMBER { http_reply_hack=$3; }
 	| HTTP_REPLY_HACK EQUAL error { yyerror("boolean value expected"); }
-	| STUN_REFRESH_INTERVAL EQUAL NUMBER { IF_STUN(stun_refresh_interval=$3); }
-	| STUN_REFRESH_INTERVAL EQUAL error{ yyerror("number expected"); }
-	| STUN_ALLOW_STUN EQUAL NUMBER { IF_STUN(stun_allow_stun=$3); }
-	| STUN_ALLOW_STUN EQUAL error{ yyerror("number expected"); }
-	| STUN_ALLOW_FP EQUAL NUMBER { IF_STUN(stun_allow_fp=$3) ; }
-	| STUN_ALLOW_FP EQUAL error{ yyerror("number expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
     | LATENCY_LOG EQUAL NUMBER { default_core_cfg.latency_log=$3; }
 	| LATENCY_LOG EQUAL error  { yyerror("number  expected"); }

@@ -504,15 +504,6 @@ unsigned short port_no=0; /* default port*/
 unsigned short tls_port_no=0; /* default port */
 #endif
 
-#ifdef USE_STUN
-/* refresh interval in miliseconds */
-unsigned int stun_refresh_interval=0;
-/* stun can be switch off even if it is compiled */
-int stun_allow_stun=1;
-/* use or don't use fingerprint */
-int stun_allow_fp=1;
-#endif
-
 struct host_alias* aliases=0; /* name aliases list */
 
 /* Parameter to child_init */

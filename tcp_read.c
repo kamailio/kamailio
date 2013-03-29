@@ -97,13 +97,7 @@
 #include "tsend.h"
 #include "forward.h"
 #include "events.h"
-
-#ifdef USE_STUN
-#include "ser_stun.h"
-
-int is_msg_complete(struct tcp_req* r);
-
-#endif /* USE_STUN */
+#include "stun.h"
 
 #ifdef READ_HTTP11
 #define HTTP11CONTINUE	"HTTP/1.1 100 Continue\r\nContent-Length: 0\r\n\r\n"
@@ -122,6 +116,8 @@ static int tcpmain_sock=-1;
 
 static struct local_timer tcp_reader_ltimer;
 static ticks_t tcp_reader_prev_ticks;
+
+int is_msg_complete(struct tcp_req* r);
 
 /**
  * control cloning of TCP receive buffer
@@ -373,11 +369,8 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 	int bytes, remaining;
 	char *p;
 	struct tcp_req* r;
-
-#ifdef USE_STUN
 	unsigned int mc;   /* magic cookie */
 	unsigned short body_len;
-#endif
 
 #ifdef READ_MSRP
 	char *mfline;
@@ -610,18 +603,16 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 						r->start=p;
 						break;
 					default:
-#ifdef USE_STUN
-						/* STUN support can be switched off even if it's compiled */
 						/* stun test */						
-						if (stun_allow_stun && (unsigned char)*p == 0x00) {
+						if (unlikely(sr_event_enabled(SREV_STUN_IN)) && (unsigned char)*p == 0x00) {
 							r->state=H_STUN_MSG;
 						/* body will used as pointer to the last used byte */
 							r->body=p;
 							r->content_len = 0;
 							DBG("stun msg detected\n");
-						}else
-#endif
-						r->state=H_SKIP;
+						} else {
+							r->state=H_SKIP;
+						}
 						r->start=p;
 				};
 				p++;
@@ -656,7 +647,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 					r->state = H_SKIP_EMPTY;
 				}
 				break;
-#ifdef USE_STUN
+
 			case H_STUN_MSG:
 				if ((r->pos - r->body) >= sizeof(struct stun_hdr)) {
 					/* copy second short from buffer where should be body 
@@ -688,8 +679,8 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 						}
 						else {
 							/* set content_len to length of fingerprint */
-							body_len = sizeof(struct stun_attr) + 
-									   SHA_DIGEST_LENGTH;
+							body_len = sizeof(struct stun_attr) + 20;
+							/* 20 is SHA_DIGEST_LENGTH from openssl/sha.h */
 						}
 					}
 					r->content_len=body_len;
@@ -711,7 +702,8 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 					}
 					else {
 						/* set content_len to length of fingerprint */
-						body_len = sizeof(struct stun_attr)+SHA_DIGEST_LENGTH;
+						body_len = sizeof(struct stun_attr) + 20;
+						/* 20 is SHA_DIGEST_LENGTH from openssl/sha.h */
 						r->content_len=body_len;
 					}
 				}
@@ -736,7 +728,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 					p = r->pos;
 				}
 				break;
-#endif /* USE_STUN */
+
 			change_state_case(H_CONT_LEN1,  'O', 'o', H_CONT_LEN2);
 			change_state_case(H_CONT_LEN2,  'N', 'n', H_CONT_LEN3);
 			change_state_case(H_CONT_LEN3,  'T', 't', H_CONT_LEN4);
@@ -1350,14 +1342,11 @@ again:
 					LOG(L_ERR, "CRLF ping: tcp_send() failed\n");
 				}
 				ret = 0;
-			}else
-#ifdef USE_STUN
-			if (unlikely(req->state==H_STUN_END)){
+			} else if (unlikely(req->state==H_STUN_END)) {
 				/* stun request */
 				ret = stun_process_msg(req->start, req->parsed-req->start,
 									 &con->rcv);
-			}else
-#endif
+			} else
 #ifdef READ_MSRP
 			// if (unlikely(req->flags&F_TCP_REQ_MSRP_FRAME)){
 			if (unlikely(req->state==H_MSRP_FINISH)){
@@ -1762,8 +1751,6 @@ error:
 }
 
 
-
-#ifdef USE_STUN
 int is_msg_complete(struct tcp_req* r)
 {
 	if (TCP_REQ_HAS_CLEN(r)) {
@@ -1778,6 +1765,5 @@ int is_msg_complete(struct tcp_req* r)
 		return 1;
 	}
 }
-#endif
 
 #endif /* USE_TCP */

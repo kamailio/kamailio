@@ -136,12 +136,6 @@ extern int mcast_loopback;
 extern int mcast_ttl;
 #endif /* USE_MCAST */
 
-#ifdef USE_STUN
-extern unsigned int stun_refresh_interval;
-extern int stun_allow_stun;
-extern int stun_allow_fp;
-#endif
-
 #ifdef USE_IPV6
 extern int auto_bind_ipv6;
 #endif

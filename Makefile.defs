@@ -647,8 +647,6 @@ data_target = $(prefix)/$(data_dir)
 # -DPROFILING
 #		if enabled profiling will be enabled for child processes
 #		Don't forget to set PROFILE (see below)
-# -DUSE_STUN
-#		compiles in stun support
 # -DNO_SIG_DEBUG
 #        turns off debugging messages in signal handlers (which might be 
 #         unsafe)
@@ -750,10 +748,6 @@ ifeq ($(FMSTATS), 1)
 endif
 ifeq ($(WITHAS), 1)
 	C_DEFS+= -DWITH_AS_SUPPORT
-endif
-
-ifneq ($(STUN),)
-	C_DEFS+= -DUSE_STUN
 endif
 
 ifeq ($(mode),)
@@ -2098,11 +2092,6 @@ LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl -lcrypto \
 # NOTE: depending on the way in which libssl was compiled you might
 #       have to add -lz -lkrb5   (zlib and kerberos5).
 #       E.g.: make CORE_TLS=1 EXTRA_TLS_LIBS="-lz -lkrb5"
-endif
-
-ifneq ($(STUN),)
-C_INCLUDES+= -I$(LOCALBASE)/ssl/include
-LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lcrypto
 endif
 
 ifneq ($(found_lock_method), yes)

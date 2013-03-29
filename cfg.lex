@@ -498,11 +498,6 @@ PVBUFSLOTS		"pv_buffer_slots"
 HTTP_REPLY_HACK		"http_reply_hack"
 VERSION_TABLE_CFG		"version_table"
 
-/* stun config variables */
-STUN_REFRESH_INTERVAL "stun_refresh_interval"
-STUN_ALLOW_STUN "stun_allow_stun"
-STUN_ALLOW_FP "stun_allow_fp"
-
 SERVER_ID     "server_id"
 
 LATENCY_LOG				latency_log
@@ -984,10 +979,6 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 <INITIAL>{LOADPATH}		{ count(); yylval.strval=yytext; return LOADPATH; }
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
-
-<INITIAL>{STUN_REFRESH_INTERVAL} { count(); yylval.strval=yytext; return STUN_REFRESH_INTERVAL;}
-<INITIAL>{STUN_ALLOW_STUN} { count(); yylval.strval=yytext; return STUN_ALLOW_STUN;}
-<INITIAL>{STUN_ALLOW_FP} { count(); yylval.strval=yytext; return STUN_ALLOW_FP;}
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }
 <INITIAL>{ADDEQ}          { count(); return ADDEQ; }

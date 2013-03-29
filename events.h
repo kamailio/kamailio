@@ -28,12 +28,13 @@
 #define SREV_CORE_STATS			3
 #define SREV_CFG_RUN_ACTION		4
 #define SREV_PKG_SET_USED		5
-#define SREV_PKG_SET_REAL_USED	6
+#define SREV_PKG_SET_REAL_USED		6
 #define SREV_NET_DGRAM_IN		7
 #define SREV_TCP_HTTP_100C		8
 #define SREV_TCP_MSRP_FRAME		9
 #define SREV_TCP_WS_FRAME_IN		10
 #define SREV_TCP_WS_FRAME_OUT		11
+#define SREV_STUN_IN			12
 
 
 typedef int (*sr_event_cb_f)(void *data);
@@ -50,6 +51,7 @@ typedef struct sr_event_cb {
 	sr_event_cb_f tcp_msrp_frame;
 	sr_event_cb_f tcp_ws_frame_in;
 	sr_event_cb_f tcp_ws_frame_out;
+	sr_event_cb_f stun_in;
 } sr_event_cb_t;
 
 void sr_event_cb_init(void);
