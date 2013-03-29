@@ -1,0 +1,11 @@
+	<!-- Declaration of rtpproxy table-->
+	<db_table id="rtpproxy">
+		<table_name>rtpproxy</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>setid</field><type>DB1_STR</type></column>
+		<column><field>url</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>weight</field><type>DB1_INT</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>

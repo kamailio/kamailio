@@ -630,6 +630,17 @@
 		<column><field>from_domain</field><type>DB1_STR</type></column>
 		<column><field>updated</field><type>DB1_INT</type></column>
 	</db_table>
+	<!-- Declaration of rtpproxy table-->
+	<db_table id="rtpproxy">
+		<table_name>rtpproxy</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>setid</field><type>DB1_STR</type></column>
+		<column><field>url</field><type>DB1_STR</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>weight</field><type>DB1_INT</type></column>
+		<column><field>description</field><type>DB1_STR</type></column>
+	</db_table>
 	<!-- Declaration of sca_subscriptions table-->
 	<db_table id="sca_subscriptions">
 		<table_name>sca_subscriptions</table_name>
@@ -3309,6 +3320,53 @@
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
 			<db_table_id>rls_watchers</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
+	</mod>
+	<!-- rtpproxy provisionning -->
+	<mod><mod_name>rtpproxy</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>rtpproxy</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field></col>
+				<col><field>setid</field></col>
+				<col><field>url</field></col>
+				<col><field>flags</field></col>
+				<col><field>weight</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>rtpproxy</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>setid</field></col>
+				<col><field>url</field></col>
+				<col><field>flags</field></col>
+				<col><field>weight</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>rtpproxy</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>setid</field></col>
+				<col><field>url</field></col>
+				<col><field>flags</field></col>
+				<col><field>weight</field></col>
+				<col><field>description</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>rtpproxy</db_table_id>
 			<cmd_type>DB1_DELETE</cmd_type>
 			<clause_cols>
 				<col><field>id</field><operator>=</operator></col>

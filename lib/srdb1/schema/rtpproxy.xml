@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="rtpproxy" xmlns:db="http://docbook.org/ns/docbook">
+    <name>rtpproxy</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used by the rtpproxy module. It contains the sets of rtpproxy instances used for proxying media between endpoints. More information about the rtpproxy module can be found at: &KAMAILIO_MOD_DOC;rtpproxy.html
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+
+    <column id="setid">
+        <name>setid</name>
+        <type>string</type>
+	<size>32</size>
+        <description>Set ID</description>
+        <default>00</default>
+    </column>
+
+    <column id="url">
+        <name>url</name>
+        <type>string</type>
+        <size>64</size>
+        <description>RTPProxy instance socket URL</description>
+        <default/>
+    </column>
+
+    <column id="flags">
+        <name>flags</name>
+        <type>int</type>
+        <description>Flags of the rtpproxy instance</description>
+        <default>0</default>
+        <natural/>
+    </column>
+
+    <column id="weight">
+        <name>weight</name>
+        <type>int</type>
+        <description>Weighting of this rtpproxy instance in the set</description>
+        <default>1</default>
+        <natural/>
+    </column>
+
+    <column>
+        <name>description</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Description for this instance</description>
+    </column>
+
+</table>
