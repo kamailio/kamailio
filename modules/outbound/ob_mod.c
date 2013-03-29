@@ -21,6 +21,7 @@
  *
  */
 #include <openssl/hmac.h>
+#include <openssl/rand.h>
 
 #include "../../basex.h"
 #include "../../dprint.h"
@@ -39,7 +40,10 @@
 
 MODULE_VERSION
 
+#define OB_KEY_LEN	20
+
 static int mod_init(void);
+static void destroy(void);
 
 static unsigned int ob_force_flag = (unsigned int) -1;
 static str ob_key = {0, 0};
@@ -55,7 +59,6 @@ static cmd_export_t cmds[]=
 static param_export_t params[]=
 {
 	{ "force_outbound_flag",	INT_PARAM, &ob_force_flag },
-	{ "flow_token_key",		STR_PARAM, &ob_key.s},
 	{ 0, 0, 0 }
 };
 
@@ -71,7 +74,7 @@ struct module_exports exports=
 	0,			/* extra processes */
 	mod_init,		/* module initialization function */
 	0,			/* response function */
-	0,			/* destroy function */
+	destroy,		/* destroy function */
 	0			/* per-child initialization function */
 };
 
@@ -83,22 +86,33 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (ob_key.s == 0)
+	if ((ob_key.s = shm_malloc(OB_KEY_LEN)) == NULL)
 	{
-		LM_ERR("flow_token_key not set\n");
+		LM_ERR("Failed to allocate memory for flow-token key\n");
 		return -1;
 	}
-	else
-		ob_key.len = strlen(ob_key.s);
+	ob_key.len = OB_KEY_LEN;
+	if (RAND_bytes((unsigned char *) ob_key.s, ob_key.len) == 0)
+	{
+		LM_ERR("unable to get %d cryptographically strong pseudo-"
+		       "random bytes\n", ob_key.len);
+	}
 
-	if (ob_key.len != 20)
+#ifndef USE_STUN
+	LM_WARN("STUN support not built-in. UDP keep-alive not supported.\n");
+#else
+	if (stun_allow_stun != 1)
 	{
-		LM_ERR("flow_token_key wrong length. Expected 20 got %d\n",
-			ob_key.len);
-		return -1;
+		LM_WARN("STUN disabled.  UDP keep-alive not supported.\n");
 	}
+#endif
 
 	return 0;
+}
+
+static void destroy(void)
+{
+	shm_free(ob_key.s);
 }
 
 /* Structure of flow-token
