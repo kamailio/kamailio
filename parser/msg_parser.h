@@ -366,6 +366,11 @@ typedef struct sip_msg {
         str instance;
         unsigned int reg_id;
 	str ruid;
+
+	struct {
+		int decoded;
+		struct receive_info rcv;
+	} flow;
 } sip_msg_t;
 
 /*! \brief pointer to a fakes message which was never received ;
