@@ -24,7 +24,6 @@
 #include "../../dprint.h"
 #include "../../events.h"
 #include "../../ip_addr.h"
-#include "../../locking.h"
 #include "../../sr_module.h"
 #include "kam_stun.h"
 
