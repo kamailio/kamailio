@@ -46,11 +46,16 @@
  * reload enabled param
  * default: 0 (off)
  */
-static unsigned int sr_reload = 0;
+static unsigned int _app_lua_sr_reload = 0;
 /**
  *
  */
 static sr_lua_env_t _sr_L_env;
+
+/**
+ *
+ */
+static int *_app_lua_sv = NULL;
 
 /**
  * @return the static Lua env
@@ -166,7 +171,7 @@ int sr_lua_reload_module(unsigned int reload)
 {
 	LM_DBG("reload:%d\n", reload);
 	if(reload!=0) {
-		sr_reload = 1;
+		_app_lua_sr_reload = 1;
 		LM_DBG("reload param activated!\n");
 	}
 	return 0;
@@ -377,7 +382,7 @@ int lua_sr_reload_script(int pos)
 			LM_CRIT("shm for version not allocated\n");
 			return -1;
 		}
-		if (sr_reload==0)
+		if (_app_lua_sr_reload==0)
 		{
 			LM_ERR("reload is not activated\n");
 			return -3;
@@ -422,9 +427,7 @@ int sr_lua_reload_script(void)
 	sr_lua_load_t *li = _sr_lua_load_list;
 	int ret, i;
 	char *txt;
-
 	int sv_len = sr_lua_script_ver->len;
-	int *sv = (int *) pkg_malloc(sizeof(int)*sv_len);
 
 	if(li==NULL)
 	{
@@ -432,16 +435,25 @@ int sr_lua_reload_script(void)
 		return 0;
 	}
 
+	if(_app_lua_sv==NULL) {
+		_app_lua_sv = (int *) pkg_malloc(sizeof(int)*sv_len);
+		if(_app_lua_sv==NULL)
+		{
+			LM_ERR("no more pkg memory\n");
+			return -1;
+		}
+	}
+
 	for(i=0;i<sv_len;i++)
 	{
 		lock_set_get(sr_lua_locks, i);
-		sv[i] = sr_lua_script_ver->version[i];
+		_app_lua_sv[i] = sr_lua_script_ver->version[i];
 		lock_set_release(sr_lua_locks, i);
 
-		if(li->version!=sv[i])
+		if(li->version!=_app_lua_sv[i])
 		{
 			LM_DBG("loaded version:%d needed: %d Let's reload <%s>\n",
-				li->version, sv[i], li->script);
+				li->version, _app_lua_sv[i], li->script);
 			ret = luaL_dofile(_sr_L_env.LL, (const char*)li->script);
 			if(ret!=0)
 			{
@@ -450,18 +462,15 @@ int sr_lua_reload_script(void)
 				txt = (char*)lua_tostring(_sr_L_env.LL, -1);
 				LM_ERR("error from Lua: %s\n", (txt)?txt:"unknown");
 				lua_pop(_sr_L_env.LL, 1);
-				lua_sr_destroy();
-				pkg_free(sv);
 				return -1;
 			}
-			li->version = sv[i];
+			li->version = _app_lua_sv[i];
 			LM_DBG("<%s> set to version %d\n", li->script, li->version);
 		}
 		else LM_DBG("No need to reload [%s] is version %d\n",
 			li->script, li->version);
 		li = li->next;
 	}
-	pkg_free(sv);
 	return 1;
 }
 
@@ -611,7 +620,7 @@ int app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 		LM_ERR("lua loading state not initialized (call: %s)\n", func);
 		return -1;
 	}
-	if(sr_reload!=0)
+	if(_app_lua_sr_reload!=0)
 	{
 		/* check the script version loaded */
 		if(!sr_lua_reload_script())
