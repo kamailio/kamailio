@@ -357,6 +357,11 @@ void lua_sr_destroy(void)
 		lock_set_dealloc( sr_lua_locks );
 		sr_lua_locks = 0;
 	}
+
+	if(_app_lua_sv!=NULL) {
+		pkg_free(_app_lua_sv);
+		_app_lua_sv = 0;
+	}
 }
 
 /**
