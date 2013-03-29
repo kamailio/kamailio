@@ -253,6 +253,31 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         "Available free memory in the Shared Memory pool"
         ::= { kamailioSrvMemory 2 }
 
+    kamailioSrvMaxUsed OBJECT-TYPE
+        SYNTAX      Gauge32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Maximum amount of memory used in the Shared Memory pool"
+        ::= { kamailioSrvMemory 3 }
+
+    kamailioSrvRealUsed OBJECT-TYPE
+        SYNTAX      Gauge32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Current amount of memory used in the Shared Memory pool"
+        ::= { kamailioSrvMemory 4 }
+
+    kamailioSrvMemFragments OBJECT-TYPE
+        SYNTAX      Gauge32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Current amount of memory fragments in the Shared Memory pool"
+        ::= { kamailioSrvMemory 5 }
+
+
 -- 
 -- Kamailio Server Core counters
 --
@@ -279,6 +304,11 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         "Sub-tree for HTTP Server Transport objects ." 
         ::= { kamailioNet 3 }
 
+    kamailioNetConfig OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for transport properties"
+        ::= { kamailioNet 4 }
 
 --
 -- TCP connection objects
@@ -587,8 +617,107 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         "Number of rejected incoming TCP connections."
         ::= { kamailioNetTcpStat 8 }
 
+--
+-- Kamailio Network Configuration
+--
+    kamailioNetConfUdpTransport OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+	DEFVAL { false }
+        DESCRIPTION 
+        "True if UDP is active in this server."
+        ::= { kamailioNetConfig 1 }
 
+    kamailioNetConfUdpDtlsTransport OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+	DEFVAL { false }
+        DESCRIPTION 
+        "True if UDP/DTLS is active in this server. (Future reservation)"
+        ::= { kamailioNetConfig 2 }
 
+    kamailioNetConfTcpTransport OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+	DEFVAL { false }
+        DESCRIPTION 
+        "True if TCP is active in this server."
+        ::= { kamailioNetConfig 3 }
+
+    kamailioNetConfTcpTlsTransport OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+	DEFVAL { false }
+        DESCRIPTION 
+        "True if TCP/TLS is active in this server."
+        ::= { kamailioNetConfig 4 }
+
+    kamailioNetConfSctpTransport OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+	DEFVAL { false }
+        DESCRIPTION 
+        "True if Sctp is enabled in this server."
+        ::= { kamailioNetConfig 5 }
+
+    kamailioNetConfSctpTlsTransport OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+	DEFVAL { false }
+        DESCRIPTION 
+        "True if Sctp/TLS is enabled in this server. (Future reservation)"
+        ::= { kamailioNetConfig 6 }
+
+    kamailioNetConfWsTransport OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+	DEFVAL { false }
+        DESCRIPTION 
+        "True if WS - WebSocket Transport- is enabled in this server."
+        ::= { kamailioNetConfig 7 }
+
+    kamailioNetConfWsTlsTransport OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+	DEFVAL { false }
+        DESCRIPTION 
+        "True if WSS - WebSocket Transport with TLS- is enabled in this server."
+        ::= { kamailioNetConfig 8 }
+
+    kamailioNetConfHttpServer OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+	DEFVAL { false }
+        DESCRIPTION 
+        "True if the embedded HTTP server (xhttp module) is loaded in this server."
+        ::= { kamailioNetConfig 9 }
+
+    kamailioNetConfMsrpRelay OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+	DEFVAL { false }
+        DESCRIPTION 
+        "True if the MSRP Relay server is loaded in this server."
+        ::= { kamailioNetConfig 10 }
+
+    kamailioNetConfStunServer OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+	DEFVAL { false }
+        DESCRIPTION 
+        "True if the STUN Server server (SIP Outbound) is loaded in this server."
+        ::= { kamailioNetConfig 11 }
 --
 -- Kamailio Message Objects
 --
