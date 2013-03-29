@@ -185,7 +185,7 @@ int encode_flow_token(str *flow_token, struct receive_info rcv)
 	return 0;
 }
 
-int decode_flow_token(struct sip_msg *msg, struct receive_info *rcv, str flow_token)
+int decode_flow_token(struct sip_msg *msg, struct receive_info **rcv, str flow_token)
 {
 	int pos = FLOW_TOKEN_START_POS, flow_length, i;
 
@@ -262,7 +262,7 @@ int decode_flow_token(struct sip_msg *msg, struct receive_info *rcv, str flow_to
 	msg->flow.decoded = 1;
 
 end:
-	rcv = &msg->flow.rcv;
+	*rcv = &msg->flow.rcv;
 	return 0;
 }
 
@@ -361,7 +361,7 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 			LM_INFO("found ;ob parameter on Route-URI - outbound"
 				" used\n");
 
-			if (decode_flow_token(msg, rcv, puri.user) == 0)
+			if (decode_flow_token(msg, &rcv, puri.user) == 0)
 			{
 				if (!ip_addr_cmp(&rcv->src_ip, &msg->rcv.src_ip)
 					|| rcv->src_port != msg->rcv.src_port)
