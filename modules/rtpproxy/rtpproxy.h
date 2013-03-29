@@ -27,6 +27,7 @@
 #ifndef _RTPPROXY_H
 #define _RTPPROXY_H
 
+#include <sys/uio.h>
 #include "../../str.h"
 
 /* Handy macros */
@@ -67,5 +68,13 @@ struct rtpp_set_head{
 /* Functions from nathelper */
 struct rtpp_node *select_rtpp_node(str, int);
 char *send_rtpp_command(struct rtpp_node *, struct iovec *, int);
+
+struct rtpp_set *get_rtpp_set(str *set_name);
+int insert_rtpp_node(struct rtpp_set *const rtpp_list, const str *const url, const int weight, const int disabled);
+
+int init_rtpproxy_db(void);
+
+extern str rtpp_db_url;
+extern str rtpp_table_name;
 
 #endif

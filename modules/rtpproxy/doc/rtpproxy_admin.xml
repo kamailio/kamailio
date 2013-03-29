@@ -98,8 +98,11 @@
 	<section>
 		<title><varname>rtpproxy_sock</varname> (string)</title>
 		<para>
-		Definition of socket(s) used to connect to (a set) RTPProxy. It may
-		specify a UNIX socket or an IPv4/IPv6 UDP socket.
+		Used to define the list of RTPPRoxy instances to connect to.
+		These can be UNIX sockets or IPv4/IPv6 UDP sockets.
+
+		Each modparam entry will insert sockets into a single set. If no set ID is given, the default set ID '0' will be used. To define multiple sets add the set number at the beginning of each parameter followed by '=='.
+		Sockets can be weighted by adding '=#' to a socket where # is an integer. A socket with a weight of 2 will be chosen twice as often as one with a weight of 1.
 		</para>
 		<para>
 		<emphasis>
@@ -112,9 +115,11 @@
 ...
 # single rtproxy
 modparam("rtpproxy", "rtpproxy_sock", "udp:localhost:12221")
+
 # multiple rtproxies for LB
 modparam("rtpproxy", "rtpproxy_sock",
 	"udp:localhost:12221 udp:localhost:12222")
+
 # multiple sets of multiple rtproxies
 modparam("rtpproxy", "rtpproxy_sock",
 	"1 == udp:localhost:12221 udp:localhost:12222")
@@ -230,7 +235,7 @@ modparam("rtpproxy", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 		<title>Set <varname>timeout_socket</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("nathelper", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
+modparam("rtpproxy", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
 ...
 </programlisting>
 		</example>
@@ -277,6 +282,41 @@ modparam("rtpproxy", "ice_candidate_priority_avp", "$avp(ice_priority)")
 		<programlisting format="linespecific">
 ...
 modparam("rtpproxy", "extra_id_pv", "$avp(extra_id)")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_url</varname> (string)</title>
+		<para>
+			The database URL to load rtp_proxy sets from.
+			If this parameter is set, the module will attempt to load the rtpproxy sets from the specified database and will ignore any 'rtpproxy_sock' modparams.
+		</para>
+		<para>
+			Default is empty, a database will not be used.
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpproxy", "db_url", "mysql://user:passwb@localhost/database")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>table_name</varname> (string)</title>
+		<para>
+			The name of the table containing the rtpproxy sets.
+		</para>
+		<para>
+			Default value is <quote>rtpproxy</quote>.
+		</para>
+		<example>
+		<title>Set <varname>table_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpproxy", "table_name", "my_rtpp_sets")
 ...
 </programlisting>
 		</example>
