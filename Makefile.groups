@@ -95,6 +95,9 @@ mod_list_outbound=outbound
 # - modules depending on unistring library
 mod_list_websocket=websocket
 
+# - modules depending on openssl library
+mod_list_stun=stun
+
 # - modules related to SIMPLE presence extensions
 mod_list_presence=presence presence_conference presence_dialoginfo \
 					   presence_mwi presence_profile presence_reginfo \
@@ -165,7 +168,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_cassandra) $(mod_list_oracle) \
 			   $(mod_list_iptrtpproxy) $(mod_list_mi_xmlrpc) \
 			   $(mod_list_outbound) $(mod_list_osp) \
-			   $(mod_list_java) )
+			   $(mod_list_java) $(mod_list_stun))
 
 
 
@@ -313,6 +316,9 @@ module_group_koutbound=$(mod_list_outbound)
 
 # pkg java module
 module_group_kjava=$(mod_list_java)
+
+# pkg stun module
+module_group_kstun=$(mod_list_stun)
 
 # list of static modules
 #
