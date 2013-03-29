@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+	<title>STUN Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Peter</firstname>
+		<surname>Dunkley</surname>
+		<affiliation><orgname>Crocodile RCS Ltd</orgname></affiliation>
+		<address>
+			<email>peter.dunkley@crocodile-rcs.com</email>
+		</address>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2012</year>
+		<holder>Crocodile RCS Ltd</holder>
+	</copyright>
+	<copyright>
+		<year>2001-2003</year>
+		<holder>FhG Fokus</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+	
+	<xi:include href="stun_admin.xml"/>
+</book>
