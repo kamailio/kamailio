@@ -316,8 +316,8 @@ int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri)
 
 			/* The same as for the first contact applies for branches 
 			 * regarding path vs. received. */
-			LM_INFO("instance is %.*s\n",
-				ptr->instance.len, ptr->instance.s);
+			LM_DBG("instance is %.*s\n",
+			       ptr->instance.len, ptr->instance.s);
 			if (append_branch(_m, &ptr->c,
 					  path_dst.len?&path_dst:&ptr->received,
 					  &ptr->path, ptr->q, ptr->cflags,
