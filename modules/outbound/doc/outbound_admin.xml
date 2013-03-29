@@ -22,15 +22,8 @@
 	<section>
 		<title>Edge Proxy Keep-Alives (STUN)</title>
 		<para>Outbound Edge Proxies MUST support STUN NAT keep-alives
-		on their SIP UDP ports. &kamailio; supports this as a
-		compile-time option that is disabled by default.</para>
-		<example>
-		<title>Compiling &kamailio; with STUN support</title>
-		<programlisting><![CDATA[
-make FLAVOUR=kamailio cfg STUN=1
-make all
-]]></programlisting>
-		</example>
+		on their SIP UDP ports. &kamailio; supports this though the
+		<quote>stun</quote> module.</para>
 	</section>
 	<section>
 		<title>Flow Timer</title>

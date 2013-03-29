@@ -30,10 +30,9 @@ Peter Dunkley
 
    List of Examples
 
-   1.1. Compiling Kamailio with STUN support
-   1.2. Edge Proxy Configuration
-   1.3. Registrar Configuration
-   1.4. Set force_outbound_flag parameter
+   1.1. Edge Proxy Configuration
+   1.2. Registrar Configuration
+   1.3. Set force_outbound_flag parameter
 
 Chapter 1. Admin Guide
 
@@ -70,12 +69,7 @@ Chapter 1. Admin Guide
 1.1. Edge Proxy Keep-Alives (STUN)
 
    Outbound Edge Proxies MUST support STUN NAT keep-alives on their SIP
-   UDP ports. Kamailio supports this as a compile-time option that is
-   disabled by default.
-
-   Example 1.1. Compiling Kamailio with STUN support
-make FLAVOUR=kamailio cfg STUN=1
-make all
+   UDP ports. Kamailio supports this though the “stun” module.
 
 1.2. Flow Timer
 
@@ -98,7 +92,7 @@ make all
    the Registrar flow timer interval and a little less than the
    “tcp_connection_lifetime”.
 
-   Example 1.2. Edge Proxy Configuration
+   Example 1.1. Edge Proxy Configuration
 #!KAMAILIO
 #
 # Edge proxy configuration
@@ -265,7 +259,7 @@ failure_route[FAIL_OUTBOUND]{
         }
 }
 
-   Example 1.3. Registrar Configuration
+   Example 1.2. Registrar Configuration
 ...
 loadmodule "tm.so"
 ...
@@ -353,7 +347,7 @@ failure_route[FAIL_OUTBOUND] {
 
    Default value is -1.
 
-   Example 1.4. Set force_outbound_flag parameter
+   Example 1.3. Set force_outbound_flag parameter
 ...
 modparam("outbound", "force_outbound_flag", 1)
 ...

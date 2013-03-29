@@ -98,15 +98,6 @@ static int mod_init(void)
 		       "random bytes\n", ob_key.len);
 	}
 
-#ifndef USE_STUN
-	LM_WARN("STUN support not built-in. UDP keep-alive not supported.\n");
-#else
-	if (stun_allow_stun != 1)
-	{
-		LM_WARN("STUN disabled.  UDP keep-alive not supported.\n");
-	}
-#endif
-
 	return 0;
 }
 
