@@ -99,61 +99,126 @@ make all
    “tcp_connection_lifetime”.
 
    Example 1.2. Edge Proxy Configuration
-...
-#!define FLOW_TIMER     20
-...
-tcp_connection_lifetime=FLOW_TIMER+10
-...
-loadmodule "websocket.so"
+#!KAMAILIO
+#
+# Edge proxy configuration
+#
+
+#!subst "/REGISTRAR_IP/192.168.122.3/"
+#!subst "/REGISTRAR_PORT/5060/"
+#!substdef "/FLOW_TIMER/20/"
+
+####### Global Parameters #########
+
+debug=2
+log_stderror=no
+log_facility=LOG_LOCAL0
+fork=yes
+children=4
+alias="example.com"
+mpath="/usr/lib64/kamailio/modules"
+tcp_connection_lifetime=30 # FLOW_TIMER + 10
+
+
+####### Modules Section ########
+
+loadmodule "tm.so"
+loadmodule "sl.so"
 loadmodule "outbound.so"
 loadmodule "rr.so"
 loadmodule "path.so"
-...
-modparam("websocket", "keepalive_timeout", FLOW_TIMER+5)
-...
-route {
+loadmodule "pv.so"
+loadmodule "maxfwd.so"
+loadmodule "xlog.so"
+loadmodule "sanity.so"
+loadmodule "ctl.so"
+loadmodule "mi_rpc.so"
+loadmodule "mi_fifo.so"
+loadmodule "textops.so"
+loadmodule "siputils.so"
+
+# ----------------- setting module-specific parameters ---------------
+
+# ----- mi_fifo params -----
+modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
+
+# ----- tm params -----
+modparam("tm", "failure_reply_mode", 3)
+
+# ----- rr params -----
+modparam("rr", "append_fromtag", 0)
+
+
+####### Routing Logic ########
+
+request_route {
         route(REQINIT);
-        ...
-        t_check_trans();
 
-        if (is_method("INVITE|SUBSCRIBE")) {
-                record_route();
-
-                if ($rU==$null) {
-                        sl_send_reply("484", "Address Incomplete");
-                        exit;
-                }
-
-                if (!loose_route()) {
-                        switch($rc) {
-                        case -2:
-                                # Flow-token has been tampered with
-                                sl_send_reply("403", "Forbidden");
-                                exit;
-                        case -1:
-                                # Handle -1 here if all dialog forming requests
-                                # must be outbound routed
-                        }
-                }
-
-                t_on_failure("FAIL_OUTBOUND");
-                route(RELAY);
-        } else if (is_method("REGISTER")) {
-                add_path();
-                if (!t_relay("### Registrar ###")) {
-                        sl_reply_error();
+        if (is_method("CANCEL")) {
+                if (t_check_trans()) {
+                        route(RELAY);
                 }
                 exit;
         }
+
+        route(WITHINDLG);
+
+        t_check_trans();
+
+        if (is_method("REGISTER")) {
+                remove_hf("Route");
+                add_path();
+                $du = "sip:REGISTRAR_IP:REGISTRAR_PORT";
+        } else {
+                if (is_method("INVITE|SUBSCRIBE"))
+                        record_route();
+
+                if ($si == "REGISTRAR_IP" && $sp == "REGISTRAR_PORT") {
+                        if (!loose_route()) {
+                                switch($rc) {
+                                case -2:
+                                        sl_send_reply("403", "Forbidden");
+                                        exit;
+                                default:
+                                        sl_reply_error();
+                                        exit;
+                                }
+                        }
+
+                        t_on_failure("FAIL_OUTBOUND");
+                } else {
+                        if ($rU == $null) {
+                                sl_send_reply("484", "Address Incomplete");
+                                exit;
+                        }
+                        remove_hf("Route");
+                        $du = "sip:REGISTRAR_IP:REGISTRAR_PORT";
+                }
+        }
+
+        route(RELAY);
 }
 
 route[RELAY] {
         if (!t_relay()) {
-                sl_send_reply("430", "Flow Failed");
+                sl_reply_error();
         }
         exit;
 }
-...
+
+route[REQINIT] {
+        if (!mf_process_maxfwd_header("10")) {
+                sl_send_reply("483","Too Many Hops");
+                exit;
+        }
+
+        if(!sanity_check("1511", "7"))
+        {
+                xlog("Malformed SIP message from $si:$sp\n");
+                exit;
+        }
+}
+
 route[WITHINDLG] {
         if (has_totag()) {
                 if (!loose_route()) {
@@ -161,44 +226,44 @@ route[WITHINDLG] {
                         case -2:
                                 sl_send_reply("403", "Forbidden");
                                 exit;
-                        case -1:
+                        default:
                                 if (is_method("ACK")) {
-                                        if (t_check_trans()) {
-                                                t_relay();
+                                        if ( t_check_trans() ) {
+                                                route(RELAY);
                                                 exit;
                                         } else {
                                                 exit;
                                         }
                                 }
-                                sl_send_reply("404", "Not Found");
+                                sl_send_reply("404","Not Found");
                         }
                 } else {
+                        if (is_method("NOTIFY")) {
+                                record_route();
+                        }
                         route(RELAY);
                 }
                 exit;
         }
 }
-...
+
 onreply_route {
         if (!t_check_trans()) {
                 drop;
         }
 
-        if ($rm == "REGISTER" && $rs >= 200 && $rs <= 299)
-        {
+        if ($rm == "REGISTER" && $rs >= 200 && $rs <= 299) {
+                remove_hf("Flow-Timer");
                 if ($(hdr(Require)[*])=~"outbound")
                         insert_hf("Flow-Timer: FLOW_TIMER\r\n", "Call-ID");
         }
-
-...
 }
 
-failure_route[FAIL_OUTBOUND] {
+failure_route[FAIL_OUTBOUND]{
         if (t_branch_timeout() || !t_branch_replied()) {
                 send_reply("430", "Flow Failed");
         }
 }
-...
 
    Example 1.3. Registrar Configuration
 ...
