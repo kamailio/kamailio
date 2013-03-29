@@ -1014,6 +1014,10 @@ clean_modules_cfg clean-modules-cfg:
 .PHONY: clean_makefile_vars clean-makefile-vars
 	rm -f Makefile.vars
 
+# clean everything generated - shortcut on maintainer-clean
+.PHONY: pure
+pure: maintainer-clean
+
 .PHONY: dbschema
 dbschema:
 	-@echo "Build database schemas"
