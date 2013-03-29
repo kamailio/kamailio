@@ -130,6 +130,7 @@ loadmodule "mi_rpc.so"
 loadmodule "mi_fifo.so"
 loadmodule "textops.so"
 loadmodule "siputils.so"
+loadmodule "stun.so"
 
 # ----------------- setting module-specific parameters ---------------
 
