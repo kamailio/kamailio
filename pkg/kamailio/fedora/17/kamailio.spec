@@ -1,6 +1,6 @@
 %define name    kamailio
 %define ver     4.1.0
-%define rel     dev0%{dist}
+%define rel     dev1%{dist}
 
 
 
@@ -27,7 +27,7 @@ Conflicts:     kamailio-dialplan < %ver, kamailio-lcr < %ver
 Conflicts:     kamailio-xmlops < %ver, kamailio-cdp < %ver
 Conflicts:     kamailio-websocket < %ver, kamailio-xhttp-pi < %ver
 Conflicts:     kamailio-outbound < %ver, kamailio-ims < %ver
-Conflicts:     kamailio-auth-identity < %ver
+Conflicts:     kamailio-auth-identity < %ver, kamailio-stun < %ver
 %if 0%{?fedora}
 Conflicts:     kamailio-radius < %ver, kamailio-carrierroute < %ver
 Conflicts:     kamailio-redis < %ver, kamailio-json < %ver 
@@ -323,6 +323,17 @@ RFC 5626, "Managing Client-Initiated Connections in the Session Initiation
 Protocol (SIP)" support for Kamailio.
 
 
+%package stun
+Summary:       Limited STUN (RFC 5389) support for Kamailio.
+Group:         System Environment/Daemons
+Requires:      openssl, kamailio = %ver, kamailio-stun = %ver
+BuildRequires: openssl-devel
+
+%description stun
+Limited RFC 5389, "Session Traversal Utilities for NAT (STUN)" support for
+Kamailio.
+
+
 %if 0%{?fedora}
 %package radius
 Summary:       Radius AAA API for Kamailio.
@@ -394,7 +405,7 @@ Max Mind GeoIP real-time query support for Kamailio.
 %build
 make FLAVOUR=kamailio cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT\
 	basedir=$RPM_BUILD_ROOT cfg_target=/%{_sysconfdir}/kamailio/\
-	modules_dirs="modules" SCTP=1 STUN=1
+	modules_dirs="modules" SCTP=1
 make
 %if 0%{?fedora}
 make every-module skip_modules="db_cassandra iptrtpproxy db_oracle memcached \
@@ -402,14 +413,14 @@ make every-module skip_modules="db_cassandra iptrtpproxy db_oracle memcached \
 	group_include="kstandard kmysql kpostgres kcpl kxml kradius kunixodbc \
 	kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils kpurple \
 	ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson kredis \
-	kmono kims koutbound"
+	kmono kims koutbound kstun"
 %else
 make every-module skip_modules="db_cassandra iptrtpproxy db_oracle memcached \
 	mi_xmlrpc osp" \
 	group_include="kstandard kmysql kpostgres kcpl kxml kunixodbc \
 	kperl ksnmpstats kxmpp kberkeley kldap kutils kpurple \
 	ktls kwebsocket kpresence klua kpython ksqlite \
-	kims koutbound"
+	kims koutbound kstun"
 %endif
 make utils
 
@@ -425,7 +436,7 @@ make install-modules-all skip_modules="db_cassandra iptrtpproxy db_oracle \
 	group_include="kstandard kmysql kpostgres kcpl kxml kradius kunixodbc \
 	kperl ksnmpstats kxmpp kcarrierroute kberkeley kldap kutils kpurple \
 	ktls kwebsocket kpresence klua kpython kgeoip ksqlite kjson kredis \
-	kmono kims koutbound"
+	kmono kims koutbound kstun"
 
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m644 pkg/kamailio/fedora/%{?fedora}/kamailio.service \
@@ -440,7 +451,7 @@ make install-modules-all skip_modules="db_cassandra iptrtpproxy db_oracle \
 	group_include="kstandard kmysql kpostgres kcpl kxml kunixodbc \
 	kperl ksnmpstats kxmpp kberkeley kldap kutils kpurple \
 	ktls kwebsocket kpresence klua kpython ksqlite \
-	kims koutbound"
+	kims koutbound kstun"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
@@ -1042,6 +1053,12 @@ fi
 %{_libdir}/kamailio/modules/outbound.so
 
 
+%files stun
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.stun
+%{_libdir}/kamailio/modules/stun.so
+
+
 %if 0%{?fedora}
 %files radius
 %defattr(-,root,root)
@@ -1090,6 +1107,9 @@ fi
 
 
 %changelog
+* Fri Mar 29 2013 Peter Dunkley <peter@dunkley.me.uk>
+  - Added stun module to .spec
+  - Updated rel to dev1
 * Wed Mar 27 2013 Peter Dunkley <peter@dunkley.me.uk>
   - Added cnxcc module to .spec
 * Thu Mar 7 2013 Peter Dunkley <peter@dunkley.me.uk>
