@@ -424,14 +424,7 @@ int sr_lua_reload_script(void)
 	char *txt;
 
 	int sv_len = sr_lua_script_ver->len;
-	int sv[sv_len];
-
-	for(i=0;i<sv_len;i++)
-	{
-		lock_set_get(sr_lua_locks, i);
-		sv[i] = sr_lua_script_ver->version[i];
-		lock_set_release(sr_lua_locks, i);
-	}
+	int *sv = (int *) pkg_malloc(sizeof(int)*sv_len);
 
 	if(li==NULL)
 	{
@@ -439,8 +432,12 @@ int sr_lua_reload_script(void)
 		return 0;
 	}
 
-	for (i=0;i<sv_len;i++)
+	for(i=0;i<sv_len;i++)
 	{
+		lock_set_get(sr_lua_locks, i);
+		sv[i] = sr_lua_script_ver->version[i];
+		lock_set_release(sr_lua_locks, i);
+
 		if(li->version!=sv[i])
 		{
 			LM_DBG("loaded version:%d needed: %d Let's reload <%s>\n",
@@ -454,6 +451,7 @@ int sr_lua_reload_script(void)
 				LM_ERR("error from Lua: %s\n", (txt)?txt:"unknown");
 				lua_pop(_sr_L_env.LL, 1);
 				lua_sr_destroy();
+				pkg_free(sv);
 				return -1;
 			}
 			li->version = sv[i];
@@ -463,6 +461,7 @@ int sr_lua_reload_script(void)
 			li->script, li->version);
 		li = li->next;
 	}
+	pkg_free(sv);
 	return 1;
 }
 
