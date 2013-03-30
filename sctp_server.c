@@ -451,10 +451,22 @@ static int sctp_init_sock_opt_common(int s, int af)
 #endif
 	/* set tos */
 	optval = tos;
-	if (setsockopt(s, IPPROTO_IP, IP_TOS, (void*)&optval,sizeof(optval)) ==-1){
-		LOG(L_WARN, "WARNING: sctp_init_sock_opt_common: setsockopt tos: %s\n",
-				strerror(errno));
-		/* continue since this is not critical */
+	if(af==AF_INET){
+		if (setsockopt(s, IPPROTO_IP, IP_TOS, (void*)&optval,
+					sizeof(optval)) ==-1){
+			LM_WARN("sctp_init_sock_opt_common: setsockopt tos: %s\n",
+					strerror(errno));
+			/* continue since this is not critical */
+		}
+#ifdef USE_IPV6
+	} else if(af==AF_INET6){
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_TCLASS,
+					(void*)&optval, sizeof(optval)) ==-1) {
+			LM_WARN("sctp_init_sock_opt_common: setsockopt v6 tos: %s\n",
+					strerror(errno));
+			/* continue since this is not critical */
+		}
+#endif
 	}
 	
 	/* set receive buffer: SO_RCVBUF*/
