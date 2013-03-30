@@ -90,6 +90,7 @@ struct module_exports exports= {
 static void load_dns(void)
 {
 	struct dns_func_t *f = pkg_malloc(sizeof(struct dns_func_t));
+	memset(f, 0, sizeof(struct dns_func_t));
 	f->sr_res_init = dnssec_res_init;
 	f->sr_gethostbyname = dnssec_gethostbyname;
 	f->sr_gethostbyname2 = dnssec_gethostbyname2;
