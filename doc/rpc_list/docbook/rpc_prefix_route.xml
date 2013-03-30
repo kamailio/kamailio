@@ -10,7 +10,7 @@ RPC Exports for prefix_route
 
 <section id="prefix_route.reload"><title>prefix_route.reload</title>
 <para>
-        Documentation missing (rpc_reload_doc).
+        Reload prefix routes from DB
 </para>
 <para>
 </para>
@@ -18,7 +18,7 @@ RPC Exports for prefix_route
 
 <section id="prefix_route.dump"><title>prefix_route.dump</title>
 <para>
-        Documentation missing (rpc_dump_doc).
+        Dump the prefix route tree
 </para>
 <para>
 </para>

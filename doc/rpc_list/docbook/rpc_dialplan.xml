@@ -16,7 +16,7 @@ RPC Exports for dialplan
 </para>
 </section>
 
-<section id="dialplan.dump"><title>dialplan.dump</title>
+<section id="dialplan.translate"><title>dialplan.translate</title>
 <para>
         Perform dialplan translation
 </para>

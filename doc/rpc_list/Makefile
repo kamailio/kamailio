@@ -22,35 +22,51 @@ docbook_output_dir=docbook
 #
 files_list= \
 			$(COREPATH)/core_cmd.c:core \
+			$(COREPATH)/modules/app_lua/app_lua_mod.c:app_lua \
+			$(COREPATH)/modules/carrierroute/carrierroute.c:carrierroute \
 			$(COREPATH)/modules/cfg_rpc/cfg_rpc.c:cfg_rpc \
+			$(COREPATH)/modules/cnxcc/cnxcc_mod.c:cnxcc \
+			$(COREPATH)/modules/corex/corex_rpc.c:corex \
 			$(COREPATH)/modules/counters/counters.c:counters \
 			$(COREPATH)/modules/ctl/ctl.c:ctl \
 			$(COREPATH)/modules/db_flatstore/flat_rpc.c:db_flatstore \
+			$(COREPATH)/modules/db_flatstore/km_flatstore_mod.c:db_flatstore \
+			$(COREPATH)/modules/db_text/dbtext.c:db_text \
 			$(COREPATH)/modules/debugger/debugger_api.c:debugger \
+			$(COREPATH)/modules/dialog/dialog.c:dialog \
+			$(COREPATH)/modules/dialog_ng/dialog.c:dialog_ng \
 			$(COREPATH)/modules/dialplan/dialplan.c:dialplan \
+			$(COREPATH)/modules/dispatcher/dispatcher.c:dispatcher \
+			$(COREPATH)/modules/domain/domain_mod.c:domain \
+			$(COREPATH)/modules/drouting/drouting.c:drouting \
+			$(COREPATH)/modules/htable/htable.c:htable \
+			$(COREPATH)/modules/ims_usrloc_pcscf/ul_rpc.c:ims_usrloc_pcscf \
+			$(COREPATH)/modules/ims_usrloc_scscf/ul_rpc.c:ims_usrloc_scscf \
+			$(COREPATH)/modules/kex/pkg_stats.c:kex \
 			$(COREPATH)/modules/lcr/lcr_rpc.c:lcr \
 			$(COREPATH)/modules/malloc_test/malloc_test.c:malloc_test \
 			$(COREPATH)/modules/mi_rpc/mi_rpc_mod.c:mi_rpc \
+			$(COREPATH)/modules/msrp/msrp_cmap.c:msrp \
+			$(COREPATH)/modules/mtree/mtree_mod.c:mtree \
+			$(COREPATH)/modules/pdt/pdt.c:pdt \
+			$(COREPATH)/modules/permissions/permissions.c:permissions \
+			$(COREPATH)/modules/pike/pike_rpc.c:pike \
+			$(COREPATH)/modules/pipelimit/pipelimit.c:pipelimit \
 			$(COREPATH)/modules/prefix_route/pr_rpc.c:prefix_route \
+			$(COREPATH)/modules/presence/presence.c:presence \
+			$(COREPATH)/modules/pv/pv.c:pv \
 			$(COREPATH)/modules/ratelimit/ratelimit.c:ratelimit \
+			$(COREPATH)/modules/sca/sca.c:sca \
+			$(COREPATH)/modules/sipcapture/sipcapture.c:sipcapture \
+			$(COREPATH)/modules/siptrace/siptrace.c:siptrace \
 			$(COREPATH)/modules/sl/sl_stats.c:sl \
 			$(COREPATH)/modules/tls/tls_rpc.c:tls \
 			$(COREPATH)/modules/tm/tm.c:tm \
-			$(COREPATH)/modules_k/dialog/dialog.c:dialog \
-			$(COREPATH)/modules_k/dispatcher/dispatcher.c:dispatcher \
-			$(COREPATH)/modules_k/domain/domain_mod.c:domain \
-			$(COREPATH)/modules_k/htable/htable.c:htable \
-			$(COREPATH)/modules_k/kex/pkg_stats.c:kex \
-			$(COREPATH)/modules_k/uac/uac_reg.c:uac \
-			$(COREPATH)/modules_k/usrloc/ul_rpc.c:usrloc \
-			$(COREPATH)/modules_s/cpl-c/cpl_rpc.c:cpl-c \
-			$(COREPATH)/modules_s/dispatcher/ds_rpc.c:dispatcher_s \
-			$(COREPATH)/modules_s/domain/domain_rpc.c:domain_s \
-			$(COREPATH)/modules_s/gflags/gflags.c:gflags \
-			$(COREPATH)/modules_s/pdt/pdt.c:pdt \
-			$(COREPATH)/modules_s/pike/rpc.c:pike \
-			$(COREPATH)/modules_s/presence_b2b/rpc.c:presence_b2b \
-			$(COREPATH)/modules_s/usrloc/ul_rpc.c:usrloc_s
+			$(COREPATH)/modules/uac/uac_reg.c:uac \
+			$(COREPATH)/modules/uid_domain/domain_rpc.c:uid_domain \
+			$(COREPATH)/modules/uid_gflags/uid_gflags.c:uid_gflags \
+			$(COREPATH)/modules/usrloc/ul_rpc.c:usrloc \
+			$(COREPATH)/modules/xhttp_pi/xhttp_pi.c:xhttp_pi
 
 # list of excluded groups
 grp_exclude=pa

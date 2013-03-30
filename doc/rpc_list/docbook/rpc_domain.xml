@@ -10,7 +10,7 @@ RPC Exports for domain
 
 <section id="domain.reload"><title>domain.reload</title>
 <para>
-        Reload domain table from database
+        Reload domain tables from database
 </para>
 <para>
 </para>
@@ -18,7 +18,7 @@ RPC Exports for domain
 
 <section id="domain.dump"><title>domain.dump</title>
 <para>
-        Return the contents of domain table
+        Return the contents of domain and domain_attrs tables
 </para>
 <para>
 </para>

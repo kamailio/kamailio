@@ -7,3 +7,6 @@ RPC Exports for usrloc
  1. ul.dump
         Dump user location tables
 
+ 2. ul.lookup
+        Lookup one AOR in the usrloc location table
+

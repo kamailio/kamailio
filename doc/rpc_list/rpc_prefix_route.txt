@@ -5,8 +5,8 @@ RPC Exports for prefix_route
 
 
  1. prefix_route.reload
-        Documentation missing (rpc_reload_doc).
+        Reload prefix routes from DB
 
  2. prefix_route.dump
-        Documentation missing (rpc_dump_doc).
+        Dump the prefix route tree
 

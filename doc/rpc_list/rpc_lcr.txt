@@ -13,3 +13,6 @@ RPC Exports for lcr
  3. lcr.dump_rules
         Dump the contents of the lcr_rules table.
 
+ 4. lcr.defunct_gw
+        Defunct gateway until specified time (Unix timestamp).
+

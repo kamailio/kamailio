@@ -16,4 +16,12 @@ RPC Exports for usrloc
 </para>
 </section>
 
+<section id="ul.lookup"><title>ul.lookup</title>
+<para>
+        Lookup one AOR in the usrloc location table
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

@@ -5,15 +5,15 @@ RPC Exports for tls
 
 
  1. tls.reload
-        Documentation missing (tls_reload_doc).
+        Reload TLS configuration file
 
  2. tls.list
-        Documentation missing (tls_list_doc).
+        List currently open TLS connections
         Returns an array.
 
  3. tls.info
-        Documentation missing (tls_info_doc).
+        Returns internal tls related info.
 
  4. tls.options
-        Documentation missing (tls_options_doc).
+        Dumps all the tls config options.
 

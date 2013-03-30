@@ -10,7 +10,7 @@ RPC Exports for sl
 
 <section id="sl.stats"><title>sl.stats</title>
 <para>
-        Documentation missing (rpc_stats_doc).
+        Print reply statistics.
 </para>
 <para>
 </para>

@@ -7,3 +7,12 @@ RPC Exports for htable
  1. htable.dump
         Dump the contents of hash table.
 
+ 2. htable.delete
+        Delete one key from a hash table.
+
+ 3. htable.get
+        Get one key from a hash table.
+
+ 4. htable.listTables
+        List all htables.
+

@@ -32,4 +32,12 @@ RPC Exports for lcr
 </para>
 </section>
 
+<section id="lcr.defunct_gw"><title>lcr.defunct_gw</title>
+<para>
+        Defunct gateway until specified time (Unix timestamp).
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

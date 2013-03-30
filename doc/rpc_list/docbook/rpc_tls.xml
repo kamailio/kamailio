@@ -10,7 +10,7 @@ RPC Exports for tls
 
 <section id="tls.reload"><title>tls.reload</title>
 <para>
-        Documentation missing (tls_reload_doc).
+        Reload TLS configuration file
 </para>
 <para>
 </para>
@@ -18,7 +18,7 @@ RPC Exports for tls
 
 <section id="tls.list"><title>tls.list</title>
 <para>
-        Documentation missing (tls_list_doc).
+        List currently open TLS connections
 </para>
 <para>
         Returns an array.
@@ -27,7 +27,7 @@ RPC Exports for tls
 
 <section id="tls.info"><title>tls.info</title>
 <para>
-        Documentation missing (tls_info_doc).
+        Returns internal tls related info.
 </para>
 <para>
 </para>
@@ -35,7 +35,7 @@ RPC Exports for tls
 
 <section id="tls.options"><title>tls.options</title>
 <para>
-        Documentation missing (tls_options_doc).
+        Dumps all the tls config options.
 </para>
 <para>
 </para>

@@ -16,4 +16,28 @@ RPC Exports for htable
 </para>
 </section>
 
+<section id="htable.delete"><title>htable.delete</title>
+<para>
+        Delete one key from a hash table.
+</para>
+<para>
+</para>
+</section>
+
+<section id="htable.get"><title>htable.get</title>
+<para>
+        Get one key from a hash table.
+</para>
+<para>
+</para>
+</section>
+
+<section id="htable.listTables"><title>htable.listTables</title>
+<para>
+        List all htables.
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

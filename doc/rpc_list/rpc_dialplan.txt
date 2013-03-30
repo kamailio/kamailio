@@ -7,6 +7,6 @@ RPC Exports for dialplan
  1. dialplan.reload
         Reload dialplan table from database
 
- 2. dialplan.dump
+ 2. dialplan.translate
         Perform dialplan translation
 

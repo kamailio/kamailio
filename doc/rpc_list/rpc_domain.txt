@@ -5,8 +5,8 @@ RPC Exports for domain
 
 
  1. domain.reload
-        Reload domain table from database
+        Reload domain tables from database
 
  2. domain.dump
-        Return the contents of domain table
+        Return the contents of domain and domain_attrs tables
 

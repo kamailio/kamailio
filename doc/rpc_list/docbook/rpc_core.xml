@@ -163,6 +163,14 @@ RPC Exports for core
 </para>
 </section>
 
+<section id="core.tcp_list"><title>core.tcp_list</title>
+<para>
+        Returns tcp connections details.
+</para>
+<para>
+</para>
+</section>
+
 <section id="core.sctp_options"><title>core.sctp_options</title>
 <para>
         Returns active sctp options. With one parameter it returns the
@@ -188,6 +196,22 @@ RPC Exports for core
 <section id="core.udp4_raw_info"><title>core.udp4_raw_info</title>
 <para>
         Returns udp4_raw related info.
+</para>
+<para>
+</para>
+</section>
+
+<section id="core.aliases_list"><title>core.aliases_list</title>
+<para>
+        List local SIP server host aliases
+</para>
+<para>
+</para>
+</section>
+
+<section id="core.sockets_list"><title>core.sockets_list</title>
+<para>
+        List local SIP server listen sockets
 </para>
 <para>
 </para>
