@@ -4,9 +4,9 @@ Peter Dunkley
 
    Crocodile RCS Ltd
 
-   Copyright Â© 2012 Crocodile RCS Ltd
+   Copyright © 2012 Crocodile RCS Ltd
 
-   Copyright Â© 2001-2003 FhG Fokus
+   Copyright © 2001-2003 FhG Fokus
      __________________________________________________________________
 
    Table of Contents
@@ -40,7 +40,8 @@ Chapter 1. Admin Guide
 1. Overview
 
    This module provides limited STUN server (RFC 5389) support for
-   Kamailio.
+   Kamailio. It's built for providing STUN support in the SIP signalling
+   channel, not being a standalone STUN/TURN server.
 
 2. Dependencies
 

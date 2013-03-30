@@ -16,7 +16,8 @@
 	<section>
 	<title>Overview</title>
 	<para>This module provides limited STUN server (RFC 5389) support for
-	&kamailio;.</para>
+	&kamailio;. It's built for providing STUN support in the SIP signalling
+	channel, not being a standalone STUN/TURN server.</para>
 	</section>
 
 	<section>
