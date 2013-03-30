@@ -72,6 +72,10 @@ extern char *wsconn_state_str[];
 
 extern stat_var *ws_current_connections;
 extern stat_var *ws_max_concurrent_connections;
+extern stat_var *ws_sip_current_connections;
+extern stat_var *ws_sip_max_concurrent_connections;
+extern stat_var *ws_msrp_current_connections;
+extern stat_var *ws_msrp_max_concurrent_connections;
 
 int wsconn_init(void);
 void wsconn_destroy(void);

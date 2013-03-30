@@ -28,6 +28,12 @@
 #include "../../kstats_types.h"
 #include "../sl/sl.h"
 
+enum
+{
+	SUB_PROTOCOL_SIP  = (1 << 0),
+	SUB_PROTOCOL_MSRP = (1 << 1)
+};
+
 extern sl_api_t ws_slb;
 extern int *ws_enabled;
 extern gen_lock_t *ws_stats_lock;

@@ -57,6 +57,16 @@ extern stat_var *ws_local_closed_connections;
 extern stat_var *ws_received_frames;
 extern stat_var *ws_remote_closed_connections;
 extern stat_var *ws_transmitted_frames;
+extern stat_var *ws_sip_failed_connections;
+extern stat_var *ws_sip_local_closed_connections;
+extern stat_var *ws_sip_received_frames;
+extern stat_var *ws_sip_remote_closed_connections;
+extern stat_var *ws_sip_transmitted_frames;
+extern stat_var *ws_msrp_failed_connections;
+extern stat_var *ws_msrp_local_closed_connections;
+extern stat_var *ws_msrp_received_frames;
+extern stat_var *ws_msrp_remote_closed_connections;
+extern stat_var *ws_msrp_transmitted_frames;
 
 int ws_frame_receive(void *data);
 int ws_frame_transmit(void *data);

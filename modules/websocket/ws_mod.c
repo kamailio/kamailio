@@ -85,21 +85,35 @@ static param_export_t params[]=
 static stat_export_t stats[] =
 {
 	/* ws_conn.c */
-	{ "ws_current_connections",       0, &ws_current_connections },
-	{ "ws_max_concurrent_connections",0, &ws_max_concurrent_connections },
+	{ "ws_current_connections",            0, &ws_current_connections },
+	{ "ws_max_concurrent_connections",     0, &ws_max_concurrent_connections },
+	{ "ws_sip_current_connections",        0, &ws_sip_current_connections },
+        { "ws_sip_max_concurrent_connectons",  0, &ws_sip_max_concurrent_connections },
+        { "ws_msrp_current_connections",       0, &ws_msrp_current_connections },
+        { "ws_msrp_max_concurrent_connectons", 0, &ws_sip_max_concurrent_connections },
 
 	/* ws_frame.c */
-	{ "ws_failed_connections",        0, &ws_failed_connections },
-	{ "ws_local_closed_connections",  0, &ws_local_closed_connections },
-	{ "ws_received_frames",           0, &ws_received_frames },
-	{ "ws_remote_closed_connections", 0, &ws_remote_closed_connections },
-	{ "ws_transmitted_frames",        0, &ws_transmitted_frames },
+	{ "ws_failed_connections",             0, &ws_failed_connections },
+	{ "ws_local_closed_connections",       0, &ws_local_closed_connections },
+	{ "ws_received_frames",                0, &ws_received_frames },
+	{ "ws_remote_closed_connections",      0, &ws_remote_closed_connections },
+	{ "ws_transmitted_frames",             0, &ws_transmitted_frames },
+	{ "ws_sip_failed_connections",         0, &ws_sip_failed_connections },
+	{ "ws_sip_local_closed_connections",   0, &ws_sip_local_closed_connections },
+	{ "ws_sip_received_frames",            0, &ws_sip_received_frames },
+	{ "ws_sip_remote_closed_connections",  0, &ws_sip_remote_closed_connections },
+	{ "ws_sip_transmitted_frames",         0, &ws_sip_transmitted_frames },
+	{ "ws_msrp_failed_connections",        0, &ws_msrp_failed_connections },
+	{ "ws_msrp_local_closed_connections",  0, &ws_msrp_local_closed_connections },
+	{ "ws_msrp_received_frames",           0, &ws_msrp_received_frames },
+	{ "ws_msrp_remote_closed_connections", 0, &ws_msrp_remote_closed_connections },
+	{ "ws_msrp_transmitted_frames",        0, &ws_msrp_transmitted_frames },
 
 	/* ws_handshake.c */
-	{ "ws_failed_handshakes",         0, &ws_failed_handshakes },
-	{ "ws_successful_handshakes",     0, &ws_successful_handshakes },
-	{ "ws_sip_handshakes",            0, &ws_sip_handshakes },
-	{ "ws_msrp_handshakes",           0, &ws_msrp_handshakes },
+	{ "ws_failed_handshakes",              0, &ws_failed_handshakes },
+	{ "ws_successful_handshakes",          0, &ws_successful_handshakes },
+	{ "ws_sip_successful_handshakes",      0, &ws_sip_successful_handshakes },
+	{ "ws_msrp_successful_handshakes",     0, &ws_msrp_successful_handshakes },
 
 	{ 0, 0, 0 }
 };

@@ -48,6 +48,10 @@ ws_connection_used_list_t *wsconn_used_list = NULL;
 
 stat_var *ws_current_connections;
 stat_var *ws_max_concurrent_connections;
+stat_var *ws_sip_current_connections;
+stat_var *ws_sip_max_concurrent_connections;
+stat_var *ws_msrp_current_connections;
+stat_var *ws_msrp_max_concurrent_connections;
 
 char *wsconn_state_str[] =
 {
@@ -126,9 +130,15 @@ error:
 static inline void _wsconn_rm(ws_connection_t *wsc)
 {
 	wsconn_listrm(wsconn_id_hash[wsc->id_hash], wsc, id_next, id_prev);
+
+	update_stat(ws_current_connections, -1);
+	if (wsc->sub_protocol == SUB_PROTOCOL_SIP)
+		update_stat(ws_sip_current_connections, -1);
+	else if (wsc->sub_protocol == SUB_PROTOCOL_MSRP)
+		update_stat(ws_msrp_current_connections, -1);
+
 	shm_free(wsc);
 	wsc = NULL;
-	update_stat(ws_current_connections, -1);
 }
 
 void wsconn_destroy(void)
@@ -215,11 +225,32 @@ int wsconn_add(struct receive_info rcv, unsigned int sub_protocol)
 
 	/* Update connection statistics */
 	lock_get(wsstat_lock);
+
 	update_stat(ws_current_connections, 1);
 	cur_cons = get_stat_val(ws_current_connections);
 	max_cons = get_stat_val(ws_max_concurrent_connections);
 	if (max_cons < cur_cons)
 		update_stat(ws_max_concurrent_connections, cur_cons - max_cons);
+
+	if (wsc->sub_protocol == SUB_PROTOCOL_SIP)
+	{
+		update_stat(ws_sip_current_connections, 1);
+		cur_cons = get_stat_val(ws_sip_current_connections);
+		max_cons = get_stat_val(ws_sip_max_concurrent_connections);
+		if (max_cons < cur_cons)
+			update_stat(ws_sip_max_concurrent_connections,
+					cur_cons - max_cons);
+	}
+	else if (wsc->sub_protocol == SUB_PROTOCOL_MSRP)
+	{
+		update_stat(ws_msrp_current_connections, 1);
+		cur_cons = get_stat_val(ws_msrp_current_connections);
+		max_cons = get_stat_val(ws_msrp_max_concurrent_connections);
+		if (max_cons < cur_cons)
+			update_stat(ws_msrp_max_concurrent_connections,
+					cur_cons - max_cons);
+	}
+
 	lock_release(wsstat_lock);
 
 	return 0;
@@ -352,7 +383,7 @@ ws_connection_t *wsconn_get(int id)
 static int add_node(struct mi_root *tree, ws_connection_t *wsc)
 {
 	int interval;
-	char *src_proto, *dst_proto, *pong;
+	char *src_proto, *dst_proto, *pong, *sub_protocol;
 	char src_ip[IP6_MAX_STR_SIZE + 1], dst_ip[IP6_MAX_STR_SIZE + 1];
 	struct tcp_connection *con = tcpconn_get(wsc->id, 0, 0, 0, 0);
 
@@ -369,10 +400,17 @@ static int add_node(struct mi_root *tree, ws_connection_t *wsc)
 		pong = wsc->awaiting_pong ? "awaiting Pong, " : "";
 
 		interval = (int)time(NULL) - wsc->last_used;
+		if (wsc->sub_protocol == SUB_PROTOCOL_SIP)
+			sub_protocol = "sip";
+		else if (wsc->sub_protocol == SUB_PROTOCOL_MSRP)
+			sub_protocol = "msrp";
+		else
+			sub_protocol = "**UNKNOWN**";
 
 		if (addf_mi_node_child(&tree->node, 0, 0, 0,
 					"%d: %s:%s:%hu -> %s:%s:%hu (state: %s"
-					", %slast used %ds ago)",
+					", %s last used %ds ago"
+					", sub-protocol: %s)",
 					wsc->id,
 					src_proto,
 					strlen(src_ip) ? src_ip : "*",
@@ -382,7 +420,8 @@ static int add_node(struct mi_root *tree, ws_connection_t *wsc)
 					con->rcv.dst_port,
 					wsconn_state_str[wsc->state],
 					pong,
-					interval) == 0)
+					interval,
+					sub_protocol) == 0)
 			return -1;
 
 		return 1;
