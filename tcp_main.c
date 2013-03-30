@@ -373,7 +373,7 @@ static inline int init_sock_keepalive(int s)
  *  disable nagle, tos lowdelay, reuseaddr, non-blocking
  *
  * return -1 on error */
-static int init_sock_opt(int s)
+static int init_sock_opt(int s, int af)
 {
 	int flags;
 	int optval;
@@ -388,11 +388,24 @@ static int init_sock_opt(int s)
 #endif
 	/* tos*/
 	optval = tos;
-	if (setsockopt(s, IPPROTO_IP, IP_TOS, (void*)&optval,sizeof(optval)) ==-1){
-		LOG(L_WARN, "WARNING: init_sock_opt: setsockopt tos: %s\n",
-				strerror(errno));
-		/* continue since this is not critical */
+	if(af==AF_INET){
+		if (setsockopt(s, IPPROTO_IP, IP_TOS, (void*)&optval,
+					sizeof(optval)) ==-1){
+			LOG(L_WARN, "WARNING: init_sock_opt: setsockopt tos: %s\n",
+					strerror(errno));
+			/* continue since this is not critical */
+		}
+#ifdef USE_IPV6
+	} else if(af==AF_INET6){
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_TCLASS,
+					(void*)&optval, sizeof(optval)) ==-1) {
+			LOG(L_WARN, "WARNING: init_sock_opt: setsockopt v6 tos: %s\n",
+					strerror(errno));
+			/* continue since this is not critical */
+		}
+#endif
 	}
+
 #if  !defined(TCP_DONT_REUSEADDR) 
 	optval=1;
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
@@ -1140,7 +1153,7 @@ inline static int tcp_do_connect(	union sockaddr_union* server,
 				su2a(server, sizeof(*server)), errno, strerror(errno));
 		goto error;
 	}
-	if (init_sock_opt(s)<0){
+	if (init_sock_opt(s, server->s.sa_family)<0){
 		LOG(L_ERR, "ERROR: tcp_do_connect %s: init_sock_opt failed\n",
 					su2a(server, sizeof(*server)));
 		goto error;
