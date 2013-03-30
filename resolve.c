@@ -153,7 +153,7 @@ error:
  */
 static int _resolv_init(void)
 {
-	res_init();
+	dns_func.sr_res_init();
 #ifdef HAVE_RESOLV_RES
 	if (cfg_get(core, core_cfg, dns_retr_time)>0)
 		_res.retrans=cfg_get(core, core_cfg, dns_retr_time);
@@ -714,10 +714,6 @@ struct rdata* get_record(char* name, int type, int flags)
 	struct rdata* fullname_rd;
 	char c;
 	
-#ifdef USE_DNSSEC
-	val_status_t val_status;
-#endif
-
 	name_len=strlen(name);
 
 	for (i = 0; i < name_len; i++) {
@@ -738,20 +734,7 @@ struct rdata* get_record(char* name, int type, int flags)
 	}
 	fullname_rd=0;
 
-#ifndef USE_DNSSEC
-	size=res_search(name, C_IN, type, buff.buff, sizeof(buff));
-#else
-	size=val_res_query((val_context_t *) NULL,
-                      (char *) name, 
-                      (int) C_IN,
-		      (int) type, 
-                      (unsigned char *) buff.buff, 
-		      (int) sizeof(buff),
-                      &val_status);	
-	if(!val_istrusted(val_status)){
-		LOG(L_INFO, "INFO: got not trusted record when resolving %s\n",name);
-	}
-#endif
+	size=dns_func.sr_res_search(name, C_IN, type, buff.buff, sizeof(buff));
 
 	if (unlikely(size<0)) {
 		DBG("get_record: lookup(%s, %d) failed\n", name, type);

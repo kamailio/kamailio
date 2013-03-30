@@ -1759,10 +1759,6 @@ ifeq ($(OS), linux)
 			LIBS+=-lpthread
 		endif
 	endif
-	ifneq (,$(findstring -DUSE_DNSSEC, $(C_DEFS)))
-		LIBS+=-lval-threads -lcrypto -lsres -lpthread
-$(info "using libval for DNSSEC validation")
-	endif
         # check for >= 2.5.44
 
 	ifeq ($(shell [ $(OSREL_N) -ge 2005044 ] && echo has_epoll), has_epoll)
