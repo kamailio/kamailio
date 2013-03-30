@@ -38,6 +38,8 @@ extern int ws_sub_protocols;
 
 extern stat_var *ws_failed_handshakes;
 extern stat_var *ws_successful_handshakes;
+extern stat_var *ws_sip_handshakes;
+extern stat_var *ws_msrp_handshakes;
 
 int ws_handle_handshake(struct sip_msg *msg);
 struct mi_root *ws_mi_disable(struct mi_root *cmd, void *param);

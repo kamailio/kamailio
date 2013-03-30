@@ -46,6 +46,8 @@ int ws_sub_protocols = DEFAULT_SUB_PROTOCOLS;
 
 stat_var *ws_failed_handshakes;
 stat_var *ws_successful_handshakes;
+stat_var *ws_sip_handshakes;
+stat_var *ws_msrp_handshakes;
 
 static str str_sip = str_init("sip");
 static str str_msrp = str_init("msrp");
@@ -306,7 +308,14 @@ int ws_handle_handshake(struct sip_msg *msg)
 					str_hdr_sec_websocket_version.len,
 					str_hdr_sec_websocket_version.s,
 					WS_VERSION);
-		ws_send_reply(msg, 400, &str_status_bad_request, &headers);
+		if (ws_send_reply(msg, 400, &str_status_bad_request, &headers)
+				== 0)
+		{
+			if (ws_sub_protocols & SUB_PROTOCOL_SIP)
+				update_stat(ws_sip_handshakes, 1);
+			else if (ws_sub_protocols & SUB_PROTOCOL_MSRP)
+				update_stat(ws_msrp_handshakes, 1);
+		}
 		return 0;
 	}
 

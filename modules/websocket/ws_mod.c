@@ -98,6 +98,8 @@ static stat_export_t stats[] =
 	/* ws_handshake.c */
 	{ "ws_failed_handshakes",         0, &ws_failed_handshakes },
 	{ "ws_successful_handshakes",     0, &ws_successful_handshakes },
+	{ "ws_sip_handshakes",            0, &ws_sip_handshakes },
+	{ "ws_msrp_handshakes",           0, &ws_msrp_handshakes },
 
 	{ 0, 0, 0 }
 };
