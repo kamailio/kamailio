@@ -35,9 +35,15 @@ enum
 };
 
 extern sl_api_t ws_slb;
-extern int *ws_enabled;
 extern gen_lock_t *ws_stats_lock;
 
 extern int ws_ping_interval;	/* time (in seconds) between sending Pings */
+
+struct cfg_group_websocket
+{
+	int keepalive_timeout;
+	int enabled;
+};
+extern void *ws_cfg;		/* module configuration structure */
 
 #endif /* _WS_MOD_H */

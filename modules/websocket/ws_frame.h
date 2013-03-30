@@ -36,9 +36,6 @@ typedef enum
 	REMOTE_CLOSE
 } ws_close_type_t;
 
-#define DEFAULT_KEEPALIVE_TIMEOUT		180 /* seconds */
-extern int ws_keepalive_timeout;
-
 enum
 {
 	KEEPALIVE_MECHANISM_NONE = 0,

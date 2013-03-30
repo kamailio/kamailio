@@ -28,6 +28,7 @@
 #include "../../sr_module.h"
 #include "../../tcp_conn.h"
 #include "../../timer_proc.h"
+#include "../../cfg/cfg.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/mi.h"
 #include "../../mem/mem.h"
@@ -47,10 +48,12 @@ static int child_init(int rank);
 static void destroy(void);
 
 sl_api_t ws_slb;
-int *ws_enabled;
 
 #define DEFAULT_KEEPALIVE_INTERVAL	1
 static int ws_keepalive_interval = DEFAULT_KEEPALIVE_INTERVAL;
+
+#define DEFAULT_KEEPALIVE_TIMEOUT	180 /* seconds */
+static int ws_keepalive_timeout = DEFAULT_KEEPALIVE_TIMEOUT;
 
 #define DEFAULT_KEEPALIVE_PROCESSES	1
 static int ws_keepalive_processes = DEFAULT_KEEPALIVE_PROCESSES;
@@ -151,6 +154,30 @@ struct module_exports exports=
 	child_init		/* per-child initialization function */
 };
 
+static cfg_def_t ws_cfg_def[] =
+{
+	/* ws_frame.c */
+	{ "keepalive_timeout",	CFG_VAR_INT | CFG_ATOMIC,
+	  0, 0, 0, 0,
+	  "Time (in seconds) after which to send a keep-alive on idle"
+	  " WebSocket connections." },
+
+	/* ws_handshake.c */	
+	{ "enabled",		CFG_VAR_INT | CFG_ATOMIC,
+	  0, 0, 0, 0,
+	  "Shows whether WebSockets are enabled or not." },
+
+	{ 0, 0, 0, 0, 0, 0 }
+};
+
+struct cfg_group_websocket default_ws_cfg =
+{
+	DEFAULT_KEEPALIVE_TIMEOUT, /* keepalive_timeout */
+	1			/* enabled */
+};
+void *ws_cfg = &default_ws_cfg;
+
+
 static int mod_init(void)
 {
 	if (sl_load_api(&ws_slb) != 0)
@@ -189,14 +216,6 @@ static int mod_init(void)
 		goto error;
 	}
 
-	if ((ws_enabled = (int *) shm_malloc(sizeof(int))) == NULL)
-	{
-		LM_ERR("allocating shared memory\n");
-		goto error;
-	}
-	*ws_enabled = 1;
-
-	
 	if (ws_ping_application_data.s != 0)
 		ws_ping_application_data.len =
 					strlen(ws_ping_application_data.s);
@@ -249,12 +268,17 @@ static int mod_init(void)
 		goto error;
 	}
 
+	if (cfg_declare("websocket", ws_cfg_def, &default_ws_cfg,
+			cfg_sizeof(websocket), &ws_cfg)) {
+		LM_ERR("declaring configuration\n");
+		return -1;
+	}
+	cfg_get(websocket, ws_cfg, keepalive_timeout) = ws_keepalive_timeout;
+
 	return 0;
 
 error:
 	wsconn_destroy();
-	shm_free(ws_enabled);
-
 	return -1;
 }
 
@@ -287,5 +311,4 @@ static int child_init(int rank)
 static void destroy(void)
 {
 	wsconn_destroy();
-	shm_free(ws_enabled);
 }

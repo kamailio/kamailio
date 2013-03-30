@@ -128,7 +128,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 	msg->rpl_send_flags.f |= SND_F_CON_CLOSE;
 	msg->rpl_send_flags.f |= SND_F_FORCE_CON_REUSE;
 
-	if (*ws_enabled == 0)
+	if (cfg_get(websocket, ws_cfg, enabled) == 0)
 	{
 		LM_INFO("disabled: bouncing handshake\n");
 		ws_send_reply(msg, 503, &str_status_service_unavailable,
@@ -396,14 +396,14 @@ int ws_handle_handshake(struct sip_msg *msg)
 
 struct mi_root *ws_mi_disable(struct mi_root *cmd, void *param)
 {
-	*ws_enabled = 0;
+	cfg_get(websocket, ws_cfg, enabled) = 0;
 	LM_WARN("disabling websockets - new connections will be dropped\n");
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
 struct mi_root *ws_mi_enable(struct mi_root *cmd, void *param)
 {
-	*ws_enabled = 1;
+	cfg_get(websocket, ws_cfg, enabled) = 1;
 	LM_WARN("enabling websockets\n");
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }

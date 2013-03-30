@@ -93,9 +93,6 @@ typedef enum
 #define OPCODE_PONG		(0xa)
 /* 0xb - 0xf are reserved for further control frames */
 
-/* Time (in seconds) after which to send a keepalive on an idle connection */
-int ws_keepalive_timeout = DEFAULT_KEEPALIVE_TIMEOUT;
-int ws_keepalive_mechanism = DEFAULT_KEEPALIVE_MECHANISM;
 str ws_ping_application_data = {0, 0};
 
 stat_var *ws_failed_connections;
@@ -812,7 +809,8 @@ struct mi_root *ws_mi_pong(struct mi_root *cmd, void *param)
 
 void ws_keepalive(unsigned int ticks, void *param)
 {
-	int check_time = (int) time(NULL) - ws_keepalive_timeout;
+	int check_time = (int) time(NULL)
+		- cfg_get(websocket, ws_cfg, keepalive_timeout);
 	ws_connection_t *wsc = wsconn_used_list->head;
 
 	while (wsc && wsc->last_used < check_time)
