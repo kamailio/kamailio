@@ -85,6 +85,17 @@ init_kamailioNet(void)
     const oid kamailioNetTcpAcceptAliases_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,23 };
     const oid kamailioNetTcpAcceptNoCl_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,1,3,24 };
 
+    /* WebSockets */
+    const oid kamailioNetWsConnsActive_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,1 };
+    const oid kamailioNetWsConnsActiveMax_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,2 };
+    const oid kamailioNetWsConnsFailed_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,3 };
+    const oid kamailioNetWsConnsClosedLocal_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,4 };
+    const oid kamailioNetWsConnsClosedRemote_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,5 };
+    const oid kamailioNetWsFramesRx_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,6 };
+    const oid kamailioNetWsFramesTx_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,7 };
+    const oid kamailioNetWsHandshakeSuccess_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,8 };
+    const oid kamailioNetWsHandshakeFailed_oid[] = { 1,3,6,1,4,1,34352,3,1,3,1,4,2,1,9 };
+
   DEBUGMSGTL(("kamailioNet", "Initializing\n"));
 
     netsnmp_register_scalar(
@@ -235,6 +246,51 @@ init_kamailioNet(void)
     netsnmp_register_scalar(
         netsnmp_create_handler_registration("kamailioNetTcpAcceptNoCl", handle_kamailioNetTcpAcceptNoCl,
                                kamailioNetTcpAcceptNoCl_oid, OID_LENGTH(kamailioNetTcpAcceptNoCl_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetWsConnsActive", handle_kamailioNetWsConnsActive,
+                               kamailioNetWsConnsActive_oid, OID_LENGTH(kamailioNetWsConnsActive_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetWsConnsActiveMax", handle_kamailioNetWsConnsActiveMax,
+                               kamailioNetWsConnsActiveMax_oid, OID_LENGTH(kamailioNetWsConnsActiveMax_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetWsConnsFailed", handle_kamailioNetWsConnsFailed,
+                               kamailioNetWsConnsFailed_oid, OID_LENGTH(kamailioNetWsConnsFailed_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetWsConnsClosedLocal", handle_kamailioNetWsConnsClosedLocal,
+                               kamailioNetWsConnsClosedLocal_oid, OID_LENGTH(kamailioNetWsConnsClosedLocal_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetWsConnsClosedRemote", handle_kamailioNetWsConnsClosedRemote,
+                               kamailioNetWsConnsClosedRemote_oid, OID_LENGTH(kamailioNetWsConnsClosedRemote_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetWsFramesRx", handle_kamailioNetWsFramesRx,
+                               kamailioNetWsFramesRx_oid, OID_LENGTH(kamailioNetWsFramesRx_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetWsFramesTx", handle_kamailioNetWsFramesTx,
+                               kamailioNetWsFramesTx_oid, OID_LENGTH(kamailioNetWsFramesTx_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetWsHandshakeSuccess", handle_kamailioNetWsHandshakeSuccess,
+                               kamailioNetWsHandshakeSuccess_oid, OID_LENGTH(kamailioNetWsHandshakeSuccess_oid),
+                               HANDLER_CAN_RONLY
+        ));
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration("kamailioNetWsHandshakeFailed", handle_kamailioNetWsHandshakeFailed,
+                               kamailioNetWsHandshakeFailed_oid, OID_LENGTH(kamailioNetWsHandshakeFailed_oid),
                                HANDLER_CAN_RONLY
         ));
 }
@@ -1063,8 +1119,7 @@ handle_kamailioNetTcpAcceptAliases(netsnmp_mib_handler *handler,
     return SNMP_ERR_NOERROR;
 }
 
-int
-handle_kamailioNetTcpAcceptNoCl(netsnmp_mib_handler *handler,
+int handle_kamailioNetTcpAcceptNoCl(netsnmp_mib_handler *handler,
                           netsnmp_handler_registration *reginfo,
                           netsnmp_agent_request_info   *reqinfo,
                           netsnmp_request_info         *requests)
@@ -1074,11 +1129,6 @@ handle_kamailioNetTcpAcceptNoCl(netsnmp_mib_handler *handler,
 
     tcp_options_get(&t);
     value = t.accept_no_cl;
-    /* We are never called for a GETNEXT if it's registered as a
-       "instance", as it's "magically" handled for us.  */
-
-    /* a instance handler also only hands us one request at a time, so
-       we don't need to loop over a list of requests; we'll only get one. */
     
     switch(reqinfo->mode) {
 
@@ -1091,6 +1141,221 @@ handle_kamailioNetTcpAcceptNoCl(netsnmp_mib_handler *handler,
         default:
             /* we should never get here, so this is a really bad error */
             snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetTcpAcceptNoCl\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+
+int handle_kamailioNetWsConnsActive(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+   int datafield = get_statistic("ws_current_connections");
+    
+    switch(reqinfo->mode) {
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_GAUGE,
+			(u_char *) &datafield, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetWsConnsActive\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioNetWsConnsActiveMax(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+   int datafield = get_statistic("ws_max_concurrent_connections");
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_GAUGE,
+				(u_char *) &datafield, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetWsConnsActiveMax\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioNetWsConnsFailed(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+   int datafield = get_statistic("ws_failed_connections");
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_COUNTER,
+			(u_char *) &datafield, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetWsConnsFailed\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioNetWsConnsClosedLocal(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+   int datafield = get_statistic("ws_local_closed_connections");
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_COUNTER,
+			(u_char *) &datafield, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetWsConnsClosedLocal\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioNetWsConnsClosedRemote(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+   int datafield = get_statistic("ws_remote_closed_connections");
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_COUNTER,
+			(u_char *) &datafield, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetWsConnsClosedRemote\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioNetWsFramesRx(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+   int datafield = get_statistic("ws_received_frames");
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_COUNTER,
+			(u_char *) &datafield, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetWsFramesRx\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioNetWsFramesTx(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+   int datafield = get_statistic("ws_transmitted_frames");
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_COUNTER,
+			(u_char *) &datafield, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetWsFramesTx\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioNetWsHandshakeSuccess(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+   int datafield = get_statistic("ws_successful_handshakes");
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_COUNTER,
+			(u_char *) &datafield, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetWsHandshakeSuccess\n", reqinfo->mode );
+            return SNMP_ERR_GENERR;
+    }
+
+    return SNMP_ERR_NOERROR;
+}
+int
+handle_kamailioNetWsHandshakeFailed(netsnmp_mib_handler *handler,
+                          netsnmp_handler_registration *reginfo,
+                          netsnmp_agent_request_info   *reqinfo,
+                          netsnmp_request_info         *requests)
+{
+   int datafield = get_statistic("ws_failed_handshakes");
+    
+    switch(reqinfo->mode) {
+
+        case MODE_GET:
+            snmp_set_var_typed_value(requests->requestvb, ASN_COUNTER,
+			(u_char *) &datafield, sizeof(int));
+            break;
+
+
+        default:
+            /* we should never get here, so this is a really bad error */
+            snmp_log(LOG_ERR, "unknown mode (%d) in handle_kamailioNetWsHandshakeFailed\n", reqinfo->mode );
             return SNMP_ERR_GENERR;
     }
 

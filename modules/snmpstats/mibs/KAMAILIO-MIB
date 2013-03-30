@@ -77,9 +77,9 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         REVISION   "201301081200Z"
         DESCRIPTION
            "Renamed MIB and mib entries to new product name, Kamailio."
-        REVISION   "201303231200Z"
+        REVISION   "201303301200Z"
         DESCRIPTION
-           "Added Kamailio core memory allocation data."
+           "Added Kamailio process information - memory, transports, core configuration"
         ::= { kamailioModules 5 }
 
 --
@@ -316,7 +316,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
     kamailioNetTcpTls OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
-        "Sub-tree for TCP/TLS objects." 
+        "Sub-tree for TCP/TLS specific objects." 
         ::= { kamailioNetTcp 1 }
 
     kamailioNetTcpStat OBJECT-IDENTITY
@@ -718,6 +718,104 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         DESCRIPTION 
         "True if the STUN Server server (SIP Outbound) is loaded in this server."
         ::= { kamailioNetConfig 11 }
+
+--
+-- Websocket Connection Objects
+--
+    kamailioNetWsStat OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for Websocket statistics." 
+        ::= { kamailioNetWebsocket 1 }
+
+   kamailioNetWsConfig OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION 
+        "Sub-tree for Websocket configuration objects." 
+        ::= { kamailioNetWebsocket 2 }
+
+--
+-- Kamailio WebSocket Configuration  Objects
+--
+	--- Currently empty.
+
+--
+-- Kamailio WebSocket Statistics  Objects
+--
+
+    kamailioNetWsConnsActive OBJECT-TYPE
+        SYNTAX      Gauge
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "Number of currently active websocket connections"
+        ::= { kamailioNetWsStat 1 }
+
+    kamailioNetWsConnsActiveMax OBJECT-TYPE
+        SYNTAX      Gauge
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "The maximum number of active websocket connections since process start"
+        ::= { kamailioNetWsStat 2 }
+
+    kamailioNetWsConnsFailed OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "The number of failed websocket connections since process start"
+        ::= { kamailioNetWsStat 3 }
+
+    kamailioNetWsConnsClosedLocal OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "The number of locally closed websocket connections"
+        ::= { kamailioNetWsStat 4 }
+
+    kamailioNetWsConnsClosedRemote OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "The number of closed websocket connections by remote peer"
+        ::= { kamailioNetWsStat 5 }
+
+    kamailioNetWsFramesRx OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "The number of received websocket frames"
+        ::= { kamailioNetWsStat 6 }
+
+    kamailioNetWsFramesTx OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "The number of transmitted websocket frames"
+        ::= { kamailioNetWsStat 7 }
+
+    kamailioNetWsHandshakeSuccess OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "The number of transmitted websocket frames"
+        ::= { kamailioNetWsStat 8 }
+
+    kamailioNetWsHandshakeFailed OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS current
+        DESCRIPTION 
+        "The number of transmitted websocket frames"
+        ::= { kamailioNetWsStat 9 }
+
+
 --
 -- Kamailio Message Objects
 --
