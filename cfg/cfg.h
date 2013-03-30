@@ -36,10 +36,10 @@
 #define CFG_VAR_STR		3U
 #define CFG_VAR_POINTER		4U
 
-/* number of bits required for the variable type */
+/*! \brief number of bits required for the variable type */
 #define CFG_INPUT_SHIFT		3
 
-/* input type */
+/*! \brief input types */
 #define CFG_INPUT_INT		(CFG_VAR_INT << CFG_INPUT_SHIFT)
 #define CFG_INPUT_STRING	(CFG_VAR_STRING << CFG_INPUT_SHIFT)
 #define CFG_INPUT_STR		(CFG_VAR_STR << CFG_INPUT_SHIFT)
@@ -47,28 +47,25 @@
 #define CFG_VAR_MASK(x)		((x)&((1U<<CFG_INPUT_SHIFT)-1))
 #define CFG_INPUT_MASK(x)	((x)&((1U<<(2*CFG_INPUT_SHIFT))-(1U<<CFG_INPUT_SHIFT)))
 
-/* atomic change is allowed */
-#define CFG_ATOMIC		(1U<<(2*CFG_INPUT_SHIFT))
-/* variable is read-only */
-#define CFG_READONLY		(1U<<(2*CFG_INPUT_SHIFT+1))
-/* per-child process callback needs to be called only once */
-#define CFG_CB_ONLY_ONCE	(1U<<(2*CFG_INPUT_SHIFT+2))
+#define CFG_ATOMIC		(1U<<(2*CFG_INPUT_SHIFT))	/*!< atomic change is allowed */
+#define CFG_READONLY		(1U<<(2*CFG_INPUT_SHIFT+1))	/*!< variable is read-only */
+#define CFG_CB_ONLY_ONCE	(1U<<(2*CFG_INPUT_SHIFT+2))	/*!< per-child process callback needs to be called only once */
 
 typedef int (*cfg_on_change)(void *, str *, str *, void **);
 typedef void (*cfg_on_set_child)(str *, str *);
 
-/* strutrure to be used by the module interface */
+/*! \brief structrure to be used by the module interface */
 typedef struct _cfg_def {
 	char	*name;
 	unsigned int	type;
 	int	min;
 	int	max;
-	cfg_on_change	on_change_cb;
+	cfg_on_change		on_change_cb;
 	cfg_on_set_child	on_set_child_cb;
 	char	*descr;
 } cfg_def_t;
 
-/* declares a new cfg group
+/*! \brief declares a new cfg group
  * handler is set to the memory area where the variables are stored
  * return value is -1 on error
  */
@@ -81,33 +78,33 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 #define cfg_get(gname, handle, var) \
 	((struct cfg_group_##gname *)handle)->var
 
-/* declares a single variable with integer type */
+/*! \brief declares a single variable with integer type */
 int cfg_declare_int(char *group_name, char *var_name,
 		int val, int min, int max, char *descr);
 
-/* declares a single variable with str type */
+/*! \brief declares a single variable with str type */
 int cfg_declare_str(char *group_name, char *var_name, char *val, char *descr);
 
-/* Add a varibale to a group instance with integer type.
+/*! \brief Add a variable to a group instance with integer type.
  * The group instance is created if it does not exist.
  * wrapper function for new_add_var()
  */
 int cfg_ginst_var_int(char *group_name, unsigned int group_id, char *var_name,
 			int val);
 
-/* Add a varibale to a group instance with string type.
+/*! \brief Add a variable to a group instance with string type.
  * The group instance is created if it does not exist.
  * wrapper function for new_add_var()
  */
 int cfg_ginst_var_string(char *group_name, unsigned int group_id, char *var_name,
 			char *val);
 
-/* Create a new group instance.
+/*! \brief Create a new group instance.
  * wrapper function for new_add_var()
  */
 int cfg_new_ginst(char *group_name, unsigned int group_id);
 
-/* returns the handle of a cfg group */
+/*! \brief returns the handle of a cfg group */
 void **cfg_get_handle(char *gname);
 
 #endif /* _CFG_H */
