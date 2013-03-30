@@ -7,9 +7,7 @@ auto_gen=
 NAME=dialog_ng.so
 LIBS= 
 
-ifeq ($(CFG_NAME),kamailio)
-	DEFS += -DKAMAILIO_MOD_INTERFACE
-endif
+DEFS += -DKAMAILIO_MOD_INTERFACE
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kmi/kmi
