@@ -1097,7 +1097,7 @@ static int w_dlg_bridge(struct sip_msg *msg, char *from, char *to, char *op)
 		return -1;
 	}
 
-	if(dlg_bridge(&sf, &st, &so)!=0)
+	if(dlg_bridge(&sf, &st, &so, NULL)!=0)
 		return -1;
 	return 1;
 }
@@ -1345,6 +1345,7 @@ struct mi_root * mi_dlg_bridge(struct mi_root *cmd_tree, void *param)
 	str from = {0,0};
 	str to = {0,0};
 	str op = {0,0};
+	str bd = {0,0};
 	struct mi_node* node;
 
 	node = cmd_tree->node.kids;
@@ -1374,9 +1375,23 @@ struct mi_root * mi_dlg_bridge(struct mi_root *cmd_tree, void *param)
 		{
 			return init_mi_tree(500, "Bad OP value", 12);
 		}
+		if(op.len==1 && *op.s=='.')
+		{
+			op.s = NULL;
+			op.len = 0;
+		}
+		node= node->next;
+		if(node != NULL)
+		{
+			bd = node->value;
+			if(bd.len<=0 || bd.s==NULL)
+			{
+				return init_mi_tree(500, "Bad SDP value", 13);
+			}
+		}
 	}
 
-	if(dlg_bridge(&from, &to, &op)!=0)
+	if(dlg_bridge(&from, &to, &op, &bd)!=0)
 		return init_mi_tree(500, MI_INTERNAL_ERR_S,  MI_INTERNAL_ERR_LEN);
 
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
@@ -1676,6 +1691,7 @@ static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
 	str from = {NULL,0};
 	str to = {NULL,0};
 	str op = {NULL,0};
+	str bd = {NULL,0};
 	int n;
 
 	n = rpc->scan(c, "SS", &from, &to);
@@ -1687,9 +1703,18 @@ static void rpc_dlg_bridge(rpc_t *rpc, void *c) {
 	if(rpc->scan(c, "*S", &op)<1) {
 		op.s = NULL;
 		op.len = 0;
+	} else {
+		if(op.len==1 && *op.s=='.') {
+			op.s = NULL;
+			op.len = 0;
+		}
+		if(rpc->scan(c, "*S", &bd)<1) {
+			bd.s = NULL;
+			bd.len = 0;
+		}
 	}
 
-	dlg_bridge(&from, &to, &op);
+	dlg_bridge(&from, &to, &op, &bd);
 }
 
 static rpc_export_t rpc_methods[] = {

@@ -32,7 +32,7 @@ typedef struct _dlg_transfer_ctx {
 	struct dlg_cell *dlg;
 } dlg_transfer_ctx_t;
 
-int dlg_bridge(str *from, str *to, str *op);
+int dlg_bridge(str *from, str *to, str *op, str *bd);
 int dlg_transfer(struct dlg_cell *dlg, str *to, int side);
 int dlg_bridge_init_hdrs(void);
 void dlg_bridge_destroy_hdrs(void);

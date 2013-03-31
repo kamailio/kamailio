@@ -311,7 +311,7 @@ error:
 }
 
 
-int dlg_bridge(str *from, str *to, str *op)
+int dlg_bridge(str *from, str *to, str *op, str *bd)
 {
 	dlg_transfer_ctx_t *dtc;
 	int ret;
@@ -350,8 +350,13 @@ int dlg_bridge(str *from, str *to, str *op)
 
 	LM_DBG("bridge <%.*s> to <%.*s>\n", dtc->from.len, dtc->from.s,
 			dtc->to.len, dtc->to.s);
-	s_body.s   = DLG_HOLD_SDP;
-	s_body.len = DLG_HOLD_SDP_LEN;
+	if(bd!=NULL && bd->s!=NULL && bd->len>0) {
+		s_body.s = bd->s;
+		s_body.len = bd->len;
+	} else {
+		s_body.s   = DLG_HOLD_SDP;
+		s_body.len = DLG_HOLD_SDP_LEN;
+	}
 
 	memset(&uac_r, '\0', sizeof(uac_req_t));
 	uac_r.method = &s_method;
