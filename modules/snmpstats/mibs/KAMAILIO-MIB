@@ -291,7 +291,6 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         "Sub-tree for TCP Network Transport objects (incl TLS conncetions)." 
         ::= { kamailioNet 1 }
 
-
     kamailioNetWebsocket OBJECT-IDENTITY
         STATUS current
         DESCRIPTION 
@@ -718,6 +717,15 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         DESCRIPTION 
         "True if the STUN Server server (SIP Outbound) is loaded in this server."
         ::= { kamailioNetConfig 11 }
+
+    kamailioNetConfOutbound OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS  read-only
+        STATUS current
+	DEFVAL { false }
+        DESCRIPTION 
+        "True if the SIP Outbound module is loaded in this server."
+        ::= { kamailioNetConfig 12 }
 
 --
 -- Websocket Connection Objects
