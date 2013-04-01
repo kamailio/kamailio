@@ -27,6 +27,7 @@ Daniel-Constantin Mierla
 
               3.1. load (string)
               3.2. register (string)
+              3.3. reload (boolean)
 
         4. Functions
 
@@ -35,16 +36,22 @@ Daniel-Constantin Mierla
               4.3. lua_run(function, params)
               4.4. lua_runstring(script)
 
-        5. Example of usage
+        5. Exported RPC Commands
+
+              5.1. app_lua.list
+              5.2. app_lua.reload
+
+        6. Example of usage
 
    List of Examples
 
    1.1. Set load parameter
    1.2. Set register parameter
-   1.3. lua_dofile usage
-   1.4. lua_dostring usage
-   1.5. lua_run usage
-   1.6. lua_runstring usage
+   1.3. Set reload parameter
+   1.4. lua_dofile usage
+   1.5. lua_dostring usage
+   1.6. lua_run usage
+   1.7. lua_runstring usage
 
 Chapter 1. Admin Guide
 
@@ -60,6 +67,7 @@ Chapter 1. Admin Guide
 
         3.1. load (string)
         3.2. register (string)
+        3.3. reload (boolean)
 
    4. Functions
 
@@ -68,7 +76,12 @@ Chapter 1. Admin Guide
         4.3. lua_run(function, params)
         4.4. lua_runstring(script)
 
-   5. Example of usage
+   5. Exported RPC Commands
+
+        5.1. app_lua.list
+        5.2. app_lua.reload
+
+   6. Example of usage
 
 1. Overview
 
@@ -109,6 +122,7 @@ Chapter 1. Admin Guide
 
    3.1. load (string)
    3.2. register (string)
+   3.3. reload (boolean)
 
 3.1. load (string)
 
@@ -167,6 +181,18 @@ modparam("app_lua", "load", "/usr/local/etc/kamailio/lua/myscript.lua")
 modparam("app_lua", "register", "sl")
 ...
 
+3.3. reload (boolean)
+
+   If reload is 1 enables the ability to reload the scripts using the RPC
+   app_lua.reload command.
+
+   Default value is "0 (off)".
+
+   Example 1.3. Set reload parameter
+...
+modparam("app_lua", "reload", 1)
+...
+
 4. Functions
 
    4.1. lua_dofile(path)
@@ -179,7 +205,7 @@ modparam("app_lua", "register", "sl")
    Execute the Lua script stored in 'path'. The parameter can be a string
    with pseudo-variables evaluated at runtime.
 
-   Example 1.3. lua_dofile usage
+   Example 1.4. lua_dofile usage
 ...
 lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
 ...
@@ -189,7 +215,7 @@ lua_dofile("/usr/local/etc/kamailio/lua/myscript.lua");
    Execute the Lua script stored in parameter. The parameter can be a
    string with pseudo-variables.
 
-   Example 1.4. lua_dostring usage
+   Example 1.5. lua_dostring usage
 ...
 if(!lua_dostring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 {
@@ -204,7 +230,7 @@ if(!lua_dostring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
    loaded at startup via parameter 'load'. Parameters can be strings with
    pseudo-variables that are evaluated at runtime.
 
-   Example 1.5. lua_run usage
+   Example 1.6. lua_run usage
 ...
 if(!lua_run("sr_append_fu_to_reply"))
 {
@@ -220,7 +246,7 @@ lua_run("lua_funcx", "$rU", "2");
    string with pseudo-variables. The script is executed in Lua context
    specific to loaded Lua files at startup.
 
-   Example 1.6. lua_runstring usage
+   Example 1.7. lua_runstring usage
 ...
 if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 {
@@ -228,7 +254,37 @@ if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 }
 ...
 
-5. Example of usage
+5. Exported RPC Commands
+
+   5.1. app_lua.list
+   5.2. app_lua.reload
+
+5.1. app_lua.list
+
+   Lists the id and path for every script loaded by the load parameter.
+
+   Name: app_lua.list
+
+   Parameters: none
+
+   Example:
+                kamcmd app_lua.lists
+
+5.2. app_lua.reload
+
+   Marks the need to reload the selected script. The actual reload is done
+   by every working process when the next call to lua_run function is
+   executed. If no parameter is added all the scripts are selected to be
+   reloaded.
+
+   Name: app_lua.reload
+
+   Parameters: id
+
+   Example:
+                kamcmd app_lua.reload 0
+
+6. Example of usage
 
    Create your Lua script and stored on file system, say:
    '/usr/local/etc/kamailio/lua/myscript.lua'.
