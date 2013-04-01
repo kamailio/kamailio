@@ -4,6 +4,8 @@
  * SNMPStats Module 
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
+ * Copyright (C) 2013 Edvina AB, Sollentuna, Sweden
+ * Updated and extended by: Olle E. Johansson (oej@edvina.net)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -25,6 +27,7 @@
  * History:
  * --------
  * 2006-11-23 initial version (jmagder)
+ * 2013-04-01 updates of the MIB with core memory, tcp stats and much more (oej)
  * 
  * There are some important points to understanding the SNMPStat modules
  * architecture.
