@@ -92,7 +92,7 @@
     </section>
     <section>
 	<title>Parameters</title>
-	<section>
+	<section id="cfgutils.p.initial_propability">
 		<title><varname>initial_probability</varname> (string)</title>
 		<para>
 		The initial value of the probability.
@@ -111,7 +111,7 @@ modparam("cfgutils", "initial_probability", 15)
 	    </example>
 	</section>
 
-	<section>
+	<section id="cfgutils.p.hash_file">
 		<title><varname>hash_file</varname> (string)</title>
 		<para>
 		The config file name for that a hash value should be calculated on startup.
@@ -130,7 +130,7 @@ modparam("cfgutils", "hash_file", "/etc/kamailio/&kamailioconfig;")
 	    </example>
 	</section>
 
-		<section>
+		<section id="cfgutils.p.initial_gflags">
 		<title><varname>initial_gflags</varname> (integer)</title>
 		<para>
 		The initial value of global flags bitmap.
@@ -145,7 +145,7 @@ modparam("cfgutils", "initial_gflags", 15)
 		</programlisting>
 		</example>
 	</section>
-		<section>
+		<section id="cfgutils.p.lock_set_size">
 		<title><varname>lock_set_size</varname> (integer)</title>
 		<para>
 		Size of lock set - the value is used as power of two to compute the
@@ -165,7 +165,7 @@ modparam("cfgutils", "lock_set_size", 4)
 
     <section>
 	<title>Functions</title>
-	<section>
+	<section  id="cfgutils.f.rand_event">
 		<title><function moreinfo="none">rand_event()</function></title>
 		<para>
 			Return true or false, depending on a random value and a
@@ -186,7 +186,7 @@ if (rand_event()) {
 		</example>
 	</section>
 	
-	<section>
+	<section id="cfgutils.f.rand_set_prob">
 	    <title><function moreinfo="none">rand_set_prob(probabiltiy)</function></title>
 	    <para>
 		Set the <quote>probability</quote> of the decision.
@@ -204,7 +204,7 @@ rand_set_prob("4");
 	    </example>
 	</section>
 
-	<section>
+	<section id="cfgutils.f.rand_reset_prob">
 	    <title><function moreinfo="none">rand_reset_prob()</function></title>
 	    <para>
 		Reset the probability back to the inital value.
@@ -219,7 +219,7 @@ rand_reset_prob();
 	    </example>
 	</section>
 
-	<section>
+	<section id="cfgutils.f.rand_get_prob">
 	    <title><function moreinfo="none">rand_get_prob()</function></title>
 	    <para>
 		Return the current probability setting, e.g. for logging purposes.
@@ -233,7 +233,7 @@ rand_get_prob();
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="cfgutils.f.sleep">
 		<title>
 			<function moreinfo="none">sleep(time)</function>
 		</title>
@@ -261,7 +261,7 @@ sleep("1");
 		</example>
 	</section>
 	
-	<section>
+	<section id="cfgutils.f.usleep">
 		<title>
 			<function moreinfo="none">usleep(time)</function>
 		</title>
@@ -289,7 +289,7 @@ usleep("500");
 		</example>
 	</section>
 	
-	<section>
+	<section id="cfgutils.f.abort">
 		<title>
 			<function moreinfo="none">abort()</function>
 		</title>
@@ -311,7 +311,7 @@ abort();
 		</example>
 	</section>
 	
-	<section>
+	<section id="cfgutils.f.pkg_status">
 		<title>
 			<function moreinfo="none">pkg_status()</function>
 		</title>
@@ -335,7 +335,7 @@ pkg_status();
 		</example>
 	</section>
 	
-	<section>
+	<section id="cfgutils.f.pkg_summary">
 		<title>
 			<function moreinfo="none">pkg_summary()</function>
 		</title>
@@ -359,7 +359,7 @@ pkg_summary();
 		</example>
 	</section>
 	
-	<section>
+	<section id="cfgutils.f.shm_status">
 		<title>
 			<function moreinfo="none">shm_status()</function>
 		</title>
@@ -383,7 +383,7 @@ shm_status();
 		</example>
 	</section>
 
-	<section>
+	<section  id="cfgutils.f.shm_summary">
 		<title>
 			<function moreinfo="none">shm_summary()</function>
 		</title>
@@ -407,7 +407,7 @@ shm_summary();
 		</example>
 	</section>
 	
-	<section>
+	<section id="cfgutils.f.set_gflag">
 		<title><function moreinfo="none">set_gflag(flag)</function></title>
 		<para>
 		Set the bit at the position <quote>flag</quote> in global flags.
@@ -429,7 +429,7 @@ set_gflag("4");
 		</example>
 	</section>
 
-	<section>
+	<section id="cfgutils.f.reset_gflag">
 		<title><function moreinfo="none">reset_gflag(flag)</function></title>
 		<para>
 		Reset the bit at the position <quote>flag</quote> in global flags.
@@ -451,7 +451,7 @@ reset_gflag("4");
 		</example>
 	</section>
 
-	<section>
+	<section id="cfgutils.f.is_gflag">
 		<title><function moreinfo="none">is_gflag(flag)</function></title>
 		<para>
 		Check if bit at the position <quote>flag</quote> in global flags is
@@ -478,7 +478,7 @@ if(is_gflag("4"))
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="cfgutils.f.lock">
 		<title><function moreinfo="none">lock(key)</function></title>
 		<para>
 		Lock the key. Can be used to syncronize operations in config file,
@@ -503,7 +503,7 @@ lock("$rU");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="cfgutils.f.unlock">
 		<title><function moreinfo="none">unlock(key)</function></title>
 		<para>
 		Unlock the key.
@@ -524,7 +524,7 @@ unlock("$rU");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="cfgutils.f.check_route_exists">
 		<title><function moreinfo="none">check_route_exists(route)</function></title>
 		<para>
 		Check if a route block exists
@@ -548,7 +548,7 @@ if(check_route_exists("FROGJUMP") {
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="cfgutils.f.route_if_exists">
 		<title><function moreinfo="none">route_if_exists(route)</function></title>
 		<para>
 		Execute a routing block only if it is defined. If it's not defined, silently
@@ -571,7 +571,7 @@ route_if_exists("PRESENCE_SANTA_CLAUS");
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="cfgutils.f.core_hash">
 		<title><function moreinfo="none">core_hash(string1, string2, size)</function></title>
 		<para>
 		Exported function that enables the core_hash() function to be used
@@ -617,7 +617,7 @@ core_hash("$ci", "", 4);
 			should be changed as in the functions available in the routing
 			script.
 		</para>
-		<section>
+		<section id="cfgutils.m.rand_set_prob">
 			<title><function moreinfo="none">rand_set_prop</function></title>
 			<para>
 				Set the probability value to the given parameter.
@@ -636,7 +636,7 @@ $ &ctltool; fifo rand_set_prob 10
 			</example>
 			
 		</section>
-		<section>
+		<section id="cfgutils.m.rand_reset_prob">
 			<title><function moreinfo="none">rand_reset_prob</function></title>
 			<para>
 				Reset the probability value to the inital start value.
@@ -654,7 +654,7 @@ $ &ctltool; fifo rand_reset_prob
 </programlisting>
 			</example>
 		</section>
-		<section>
+		<section  id="cfgutils.m.rand_get_prob">
 			<title><function moreinfo="none">rand_get_prob</function></title>
 			<para>
 				Return the actual probability setting.
@@ -672,7 +672,7 @@ The actual probability is 50 percent.
 </programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="cfgutils.m.check_config_hash">
 			<title><function moreinfo="none">check_config_hash</function></title>
 			<para>
 				Check if the actual config file hash is identical to the stored one.
@@ -692,7 +692,7 @@ The actual config file hash is identical to the stored one.
 </programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="cfgutils.m.get_config_hash">
 			<title><function moreinfo="none">get_config_hash</function></title>
 			<para>
 				Return the stored config file hash.
@@ -711,7 +711,7 @@ $ &ctltool; fifo get_config_hash
 </programlisting>
 			</example>
 		</section>
-				<section>
+		<section  id="cfgutils.m.set_gflag">
 			<title><function moreinfo="none">set_gflag</function></title>
 			<para>
 			Set the value of some flags (specified by bitmask) to 1.
@@ -731,7 +731,7 @@ $ &ctltool; fifo set_gflag 0x3
 			</example>
 
 		</section>
-		<section>
+		<section  id="cfgutils.m.reset_gflag">
 			<title><function moreinfo="none">reset_gflag</function></title>
 			<para>
 			Reset the value of some flags to 0.
@@ -751,7 +751,7 @@ $ &ctltool; fifo reset_gflag 0x3
 </programlisting>
 			</example>
 		</section>
-		<section>
+		<section  id="cfgutils.m.is_gflag">
 			<title><function moreinfo="none">is_gflag</function></title>
 			<para>
 			Returns true if the all the flags from the bitmask are set.
@@ -786,7 +786,7 @@ TRUE
 </programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="cfgutils.m.get_gflags">
 			<title><function moreinfo="none">get_gflags</function></title>
 			<para>
 			Return the bitmap with all flags. The function gets no 
