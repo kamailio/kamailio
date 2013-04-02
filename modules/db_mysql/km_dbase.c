@@ -500,6 +500,142 @@ int db_mysql_affected_rows(const db1_con_t* _h)
 	return (int)mysql_affected_rows(CON_CONNECTION(_h));
 }
 
+/**
+ * Starts a single transaction that will consist of one or more queries (SQL BEGIN)
+ * \param _h database handle
+ * \return 0 on success, negative on failure
+ */
+int db_mysql_start_transaction(db1_con_t* _h, db_locking_t _l)
+{
+	str begin_str = str_init("BEGIN");
+	str lock_start_str = str_init("LOCK TABLE ");
+	str lock_end_str  = str_init(" WRITE");
+	str lock_str = {0, 0};
+
+	if (!_h) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (CON_TRANSACTION(_h) == 1) {
+		LM_ERR("transaction already started\n");
+		return -1;
+	}
+
+	if (db_mysql_raw_query(_h, &begin_str, NULL) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		return -1;
+	}
+
+	CON_TRANSACTION(_h) = 1;
+
+	switch(_l)
+	{
+	case DB_LOCKING_NONE:
+		break;
+	case DB_LOCKING_FULL:
+		/* Fall-thru */
+	case DB_LOCKING_WRITE:
+		if ((lock_str.s = pkg_malloc((lock_start_str.len + CON_TABLE(_h)->len + lock_end_str.len) * sizeof(char))) == NULL)
+		{
+			LM_ERR("allocating pkg memory\n");
+			goto error;
+		}
+
+		memcpy(lock_str.s, lock_start_str.s, lock_start_str.len);
+		lock_str.len += lock_start_str.len;
+		memcpy(lock_str.s + lock_str.len, CON_TABLE(_h)->s, CON_TABLE(_h)->len);
+		lock_str.len += CON_TABLE(_h)->len;
+		memcpy(lock_str.s + lock_str.len, lock_end_str.s, lock_end_str.len);
+		lock_str.len += lock_end_str.len;
+
+		if (db_mysql_raw_query(_h, &lock_str, NULL) < 0)
+		{
+			LM_ERR("executing raw_query\n");
+			goto error;
+		}
+
+		if (lock_str.s) pkg_free(lock_str.s);
+		break;
+
+	default:
+		LM_WARN("unrecognised lock type\n");
+		goto error;
+	}
+
+	return 0;
+
+error:
+	if (lock_str.s) pkg_free(lock_str.s);
+	db_mysql_abort_transaction(_h);
+	return -1;
+}
+
+/**
+ * Ends a transaction and commits the changes (SQL COMMIT)
+ * \param _h database handle
+ * \return 0 on success, negative on failure
+ */
+int db_mysql_end_transaction(db1_con_t* _h)
+{
+	str query_str = str_init("COMMIT");
+
+	if (!_h) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (CON_TRANSACTION(_h) == 0) {
+		LM_ERR("transaction not in progress\n");
+		return -1;
+	}
+
+	if (db_mysql_raw_query(_h, &query_str, NULL) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		return -1;
+	}
+
+	/* Only _end_ the transaction after the raw_query.  That way, if the
+ 	   raw_query fails, and the calling module does an abort_transaction()
+	   to clean-up, a ROLLBACK will be sent to the DB. */
+	CON_TRANSACTION(_h) = 0;
+	return 0;
+}
+
+/**
+ * Ends a transaction and rollsback the changes (SQL ROLLBACK)
+ * \param _h database handle
+ * \return 1 if there was something to rollback, 0 if not, negative on failure
+ */
+int db_mysql_abort_transaction(db1_con_t* _h)
+{
+	str query_str = str_init("ROLLBACK");
+
+	if (!_h) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (CON_TRANSACTION(_h) == 0) {
+		LM_DBG("nothing to rollback\n");
+		return 0;
+	}
+
+	/* Whether the rollback succeeds or not we need to _end_ the
+ 	   transaction now or all future starts will fail */
+	CON_TRANSACTION(_h) = 0;
+
+	if (db_mysql_raw_query(_h, &query_str, NULL) < 0)
+	{
+		LM_ERR("executing raw_query\n");
+		return -1;
+	}
+
+	return 1;
+}
+
 
 /**
   * Insert a row into a specified table, update on duplicate key.

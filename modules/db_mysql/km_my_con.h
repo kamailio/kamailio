@@ -48,16 +48,18 @@ struct my_con {
 	MYSQL* con;              /*!< Connection representation */
 	MYSQL_ROW row;           /*!< Actual row in the result */
 	time_t timestamp;        /*!< Timestamp of last query */
+	int transaction;	 /*!< indicates whether a multi-query transaction is currently open */
 };
 
 
 /*
  * Some convenience wrappers
  */
-#define CON_RESULT(db_con)     (((struct my_con*)((db_con)->tail))->res)
-#define CON_CONNECTION(db_con) (((struct my_con*)((db_con)->tail))->con)
-#define CON_ROW(db_con)        (((struct my_con*)((db_con)->tail))->row)
-#define CON_TIMESTAMP(db_con)  (((struct my_con*)((db_con)->tail))->timestamp)
+#define CON_RESULT(db_con)      (((struct my_con*)((db_con)->tail))->res)
+#define CON_CONNECTION(db_con)  (((struct my_con*)((db_con)->tail))->con)
+#define CON_ROW(db_con)         (((struct my_con*)((db_con)->tail))->row)
+#define CON_TIMESTAMP(db_con)   (((struct my_con*)((db_con)->tail))->timestamp)
+#define CON_TRANSACTION(db_con) (((struct my_con*)((db_con)->tail))->transaction)
 
 
 /*! \brief
