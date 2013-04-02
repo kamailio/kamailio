@@ -72,7 +72,7 @@
 	
 	<section>
 		<title>Parameters</title>
-		<section>
+		<section id="utils.p.http_query_timeout">
 			<title><varname>http_query_timeout</varname> (int)</title>
 			<para>
 			Defines in seconds how long &kamailio; waits for response
@@ -93,7 +93,7 @@ modparam("utils", "http_query_timeout", 2)
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="utils.p.forward_active">
 			<title><varname>forward_active</varname> (int)</title>
 			<para>
 				Defines if the forwarding callback should be installed.
@@ -112,7 +112,7 @@ modparam("utils", "http_query_timeout", 2)
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="utils.p.pres_db_url">
 			<title><varname>pres_db_url</varname> (string)</title>
 			<para>
 			Defines presence server database URL. If not
@@ -132,7 +132,7 @@ modparam("utils", "pres_db_url", "mysql://foo:secret@localhost/pres")
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="utils.p.xcap_table">
 			<title><varname>xcap_table</varname> (string)</title>
 			<para>
 			Defines the name of the xcap table in the presence server database.
@@ -156,7 +156,7 @@ modparam("utils", "xcap_table", "pres_xcap")
 
 	<section>
 	<title>Functions</title>
-		<section>
+		<section id="utils.f.http_query">
 			<title>
 				<function moreinfo="none">http_query(url, result)</function>
 			</title>
@@ -192,7 +192,7 @@ switch ($retcode) {
 				</programlisting>
 			</example>
 		</section>
-		<section>
+		<section id="utils.f.xcap_auth_status">
 			<title>
 				<function moreinfo="none">xcap_auth_status(watcher_uri, presentity_uri)</function>
 			</title>
@@ -235,7 +235,7 @@ if (method=="MESSAGE") {
 	<section>
 	    <title><acronym>MI</acronym> Commands</title>
 		
-		<section>
+	<section id="utils.m.forward_list">
 	    <title><function moreinfo="none">forward_list</function></title>
 	    <para>
 		List active forward rules.
@@ -253,8 +253,8 @@ id switch                         filter proxy
 ...
 		</programlisting>
 	    </example>
-		</section>
-		<section>
+	</section>
+	<section id="utils.m.forward_switch">
 	    <title><function moreinfo="none">forward_switch</function></title>
 	    <para>
 		This command can be used to activate or deactivate forwarding rules.
@@ -268,9 +268,8 @@ id switch                         filter proxy
 ...
 		</programlisting>
 	    </example>
-		</section>
-		
-		<section>
+	</section>
+	<section id="utils.m.forward_filter">
 	    <title><function moreinfo="none">forward_filter</function></title>
 	    <para>
 		Can be used to specify the filter for a certain id. Messages will only be
@@ -298,9 +297,8 @@ id switch                         filter proxy
 ...
 		</programlisting>
 	    </example>
-		</section>
-
-		<section>
+	</section>
+	<section id="utils.m.forward_proxy">
 	    <title><function moreinfo="none">forward_proxy</function></title>
 	    <para>
 		This command can be used to configure forwarding rules. Specifies

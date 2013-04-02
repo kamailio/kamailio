@@ -177,7 +177,7 @@ modparam("utils", "xcap_table", "pres_xcap")
    4.1. http_query(url, result)
    4.2. xcap_auth_status(watcher_uri, presentity_uri)
 
-4.1.  http_query(url, result)
+4.1. http_query(url, result)
 
    Sends HTTP GET request according to URL given in "url" parameter, which
    is a string that may contain pseudo variables.
@@ -202,7 +202,7 @@ switch ($retcode) {
 }
 ...
 
-4.2.  xcap_auth_status(watcher_uri, presentity_uri)
+4.2. xcap_auth_status(watcher_uri, presentity_uri)
 
    Function checks in the presence server database if a watcher is
    authorized to subscribe to event "presence" of presentity. Sphere
