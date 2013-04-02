@@ -62,10 +62,10 @@ Chapter 1. Admin Guide
    used as a middle layer between modules and database connectors.
 
    Via clustering, database operations can be executed across multiple
-   servers, based on policies such as paraller write, serial or round
+   servers, based on policies such as parallel write, serial or round
    robin write and read.
 
-   Following database commands are considered to be write operations:
+   The following database commands are considered to be write operations:
    INSERT, DELETE, UPDATE, REPLACE, INSERT-DELAYED, INSERT-UPDATE. The
    read operations are done for database commands: QUERY and RAW-QUERY.
 
@@ -94,7 +94,8 @@ Chapter 1. Admin Guide
 3.1. connection (str)
 
    Specify the connection to a real database system. The format is
-   'conid=>DBURL' - providing a connection id and the database URL.
+   'conid=>DBURL' - providing a connection id and the database URL used by
+   the database driver used.
 
    Default value is NULL.
 
@@ -112,17 +113,21 @@ modparam("db_cluster", "connection",
    'clsid=>conid1=def1;conid2=def2' - providing a cluster id and the list
    of database connections to be used. For each connection you have to
    provide a usage definition. The usage definition is a 4-char long
-   string, specifying priority and command mode for read an write
-   operations to be done on that connection.
+   string, specifying priority and command mode for read and write
+   operations to be performed on that connection.
 
-   The priority is a digit between 0 and 9, higher value is higher
-   priority. Priority 0 means that connection is not going to be used in
-   that cluster.
+   The priority is a digit between 0 and 9, where a higher value means
+   higher priority. Priority 0 means that the connection is not going to
+   be used in that cluster.
 
    Command mode is a character among s, r and p. s is for doing serial
    operations (try first and if fails, try next); r is for doing round
    robin operations; p - is for doing parallel operations (this is valid
    only for write operations).
+
+   The first two characters is priority and mode for read, followed by two
+   characters for priority and mode for write operations. "p" is only used
+   for write operations.
 
    Default value is NULL.
 
