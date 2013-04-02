@@ -373,7 +373,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 						cdr_extra_definition = cdr_log_name '=' pseudo_variable
 						</emphasis></para></listitem>
 					</itemizedlist>
-					See also <xref linkend="cdr_extra"/>.
+					See also <xref linkend="acc.p.cdr_extra"/>.
 					<para>
 					The full list of supported pseudo-variables in Sip-Router is
 					available at:
@@ -493,7 +493,7 @@ $dlg_var(callee) = $avp(callee); #callee='C'
 	<section id="ACC-param-id">
 	<title>Parameters</title>
 	<!-- Generic ACC parameters -->
-	<section>
+	<section id="acc.p.early_media">
 		<title><varname>early_media</varname> (integer)</title>
 		<para>
 		Should be early media (any provisional reply with body) accounted too ?
@@ -508,7 +508,7 @@ modparam("acc", "early_media", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.failed_transaction_flag">
 		<title><varname>failed_transaction_flag</varname> (integer)</title>
 		<para>
 		Per transaction flag which says if the transaction should be 
@@ -524,7 +524,7 @@ modparam("acc", "failed_transaction_flag", 4)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.failed_filter">
 		<title><varname>failed_filter</varname> (string)</title>
 		<para>
 		A string of failure response codes from 300 to 999
@@ -542,7 +542,7 @@ modparam("acc", "failed_filter", "404,407")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.report_ack">
 		<title><varname>report_ack</varname> (integer)</title>
 		<para>
 		Shall acc attempt to account e2e ACKs too ? Note that this is really 
@@ -560,7 +560,7 @@ modparam("acc", "report_ack", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.report_cancels">
 		<title><varname>report_cancels</varname> (integer)</title>
 		<para>
 		By default, CANCEL reporting is disabled -- most accounting
@@ -577,7 +577,7 @@ modparam("acc", "report_cancels", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.detect_direction">
 		<title><varname>detect_direction</varname> (integer)</title>
 		<para>
 		Controlles the direction detection for sequential requests. If 
@@ -599,7 +599,7 @@ modparam("acc", "detect_direction", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.acc_prepare_flag">
 		<title><varname>acc_prepare_flag</varname> (integer)</title>
 		<para>
 		Per transaction flag which says if the transaction may be accounted
@@ -607,7 +607,7 @@ modparam("acc", "detect_direction", 1)
 		failure_route). If this flag is not set and acc or missed_call flag
 		are not set either in request route block, there is no way to mark the
 		request for transaction later. If either acc or missed_call flags are
-		set in request route block, it is no need to set this flag.
+		set in request route block, there is no need to set this flag.
 		</para>
 		<para>
 		Default value is not-set (no flag).
@@ -619,7 +619,7 @@ modparam("acc", "acc_prepare_flag", 5)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.multi_leg_info">
 		<title><varname>multi_leg_info</varname> (string)</title>
 		<para>
 		Defines the AVP set to be used in per-call-leg accounting.
@@ -651,7 +651,7 @@ modparam("acc", "multi_leg_info",
 		</example>
 	</section>
 	<!-- SYSLOG specific ACC parameters -->
-	<section>
+	<section id="acc.p.log_flag">
 		<title><varname>log_flag</varname> (integer)</title>
 		<para>
 		Request flag which needs to be set to account a transaction via syslog.
@@ -666,7 +666,7 @@ modparam("acc", "log_flag", 2)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.log_missed_flag">
 		<title><varname>log_missed_flag</varname> (integer)</title>
 		<para>
 		Request flag which needs to be set to account missed calls via syslog.
@@ -681,7 +681,7 @@ modparam("acc", "log_missed_flag", 3)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.log_level">
 		<title><varname>log_level</varname> (integer)</title>
 		<para>
 		Log level at which accounting messages are issued to syslog.
@@ -696,7 +696,7 @@ modparam("acc", "log_level", 2)   # Set log_level to 2
 </programlisting>
 		</example>
 	</section>
-		<section>
+	<section id="acc.p.log_facility">
 		<title><varname>log_facility</varname> (string)</title>
 		<para>
 		Log facility to which accounting messages are issued to syslog.
@@ -713,7 +713,7 @@ modparam("acc", "log_facility", "LOG_DAEMON")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.log_extra">
 		<title><varname>log_extra</varname> (string)</title>
 		<para>
 		Extra values to be logged.
@@ -730,7 +730,7 @@ modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
 		</example>
 	</section>
 	<!-- RADIUS specific ACC parameters -->
-	<section>
+	<section id="acc.p.radius_config">
 		<title><varname>radius_config</varname> (string)</title>
 		<para>
 		<emphasis>This parameter is radius specific.</emphasis> Path to 
@@ -754,7 +754,7 @@ modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section  id="acc.p.radius_flag">
 		<title><varname>radius_flag</varname> (integer)</title>
 		<para>
 		Request flag which needs to be set to account a 
@@ -770,7 +770,7 @@ modparam("acc", "radius_flag", 2)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.radius_missed_flag">
 		<title><varname>radius_missed_flag</varname> (integer)</title>
 		<para>
 		Request flag which needs to be set to account missed 
@@ -786,7 +786,7 @@ modparam("acc", "radius_missed_flag", 3)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.service_type">
 		<title><varname>service_type</varname> (integer)</title>
 		<para>
 		Radius service type used for accounting.
@@ -801,7 +801,7 @@ modparam("acc", "service_type", 16)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.radius_extra">
 		<title><varname>radius_extra</varname> (string)</title>
 		<para>
 		Extra values to be logged via RADIUS - RADIUS specific.
@@ -818,7 +818,7 @@ modparam("acc", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
 		</example>
 	</section>
 	<!-- SQL specific ACC parameters -->
-	<section>
+	<section id="acc.p.db_flag">
 		<title><varname>db_flag</varname> (integer)</title>
 		<para>
 		Request flag which needs to be set to account a 
@@ -834,7 +834,7 @@ modparam("acc", "db_flag", 2)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.db_missed_flag">
 		<title><varname>db_missed_flag</varname> (integer)</title>
 		<para>
 		Request flag which needs to be set to account missed 
@@ -850,7 +850,7 @@ modparam("acc", "db_missed_flag", 3)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section  id="acc.p.db_table_acc">
 		<title><varname>db_table_acc</varname> (string)</title>
 		<para>
 		Table name of accounting successfull calls -- database specific. It
@@ -867,7 +867,7 @@ modparam("acc", "db_table_acc", "acc_$time(year)_$time(mon)")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.db_table_missed_calls">
 		<title><varname>db_table_missed_calls</varname> (string)</title>
 		<para>
 		Table name for accounting missed calls -- database specific. It
@@ -883,7 +883,7 @@ modparam("acc", "db_table_missed_calls", "myMC_table")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		SQL address -- database specific. If is set to NULL or emty string,
@@ -895,11 +895,11 @@ modparam("acc", "db_table_missed_calls", "myMC_table")
 		<example>
 		<title>db_url example</title>
 		<programlisting format="linespecific">
-modparam("acc", "db_url", "mysql://user:password@localhost/openser")
+modparam("acc", "db_url", "mysql://user:password@localhost/kamailio")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section  id="acc.p.acc_method_column">
 		<title><varname>acc_method_column</varname> (string)</title>
 		<para>
 		Column name in accounting table to store the request's method name as
@@ -915,7 +915,7 @@ modparam("acc", "acc_method_column", "method")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.acc_from_tag_column">
 		<title><varname>acc_from_tag_column</varname> (string)</title>
 		<para>
 		Column name in accounting table to store the From header TAG parameter.
@@ -930,7 +930,7 @@ modparam("acc", "acc_from_tag_column", "from_tag")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.acc_to_tag_column">
 		<title><varname>acc_to_tag_column</varname> (string)</title>
 		<para>
 		Column name in accounting table to store the To header TAG parameter.
@@ -945,7 +945,7 @@ modparam("acc", "acc_to_tag_column", "to_tag")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.acc_callid_column">
 		<title><varname>acc_callid_column</varname> (string)</title>
 		<para>
 		Column name in accounting table to store the request's Callid value.
@@ -960,7 +960,7 @@ modparam("acc", "acc_callid_column", "callid")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.acc_sip_code_column">
 		<title><varname>acc_sip_code_column</varname> (string)</title>
 		<para>
 		Column name in accounting table to store the final reply's numric code
@@ -976,7 +976,7 @@ modparam("acc", "acc_sip_code_column", "sip_code")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.acc_sip_reason_column">
 		<title><varname>acc_sip_reason_column</varname> (string)</title>
 		<para>
 		Column name in accounting table to store the final reply's reason
@@ -992,7 +992,7 @@ modparam("acc", "acc_sip_reason_column", "sip_reason")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.acc_time_column">
 		<title><varname>acc_time_column</varname> (string)</title>
 		<para>
 		Column name in accounting table to store the time stamp of the 
@@ -1008,7 +1008,7 @@ modparam("acc", "acc_time_column", "time")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.db_extra">
 		<title><varname>db_extra</varname> (string)</title>
 		<para>
 		Extra values to be logged into database - DB specific.
@@ -1024,7 +1024,7 @@ modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.db_insert_mode">
 		<title><varname>db_insert_mode</varname> (integer)</title>
 		<para>
 		If set to 1, use INSERT DELAYED to add records to accounting tables
@@ -1042,7 +1042,7 @@ modparam("acc", "db_insert_mode", 1)
 		</example>
 	</section>
 	<!-- DIAMETER specific ACC parameters -->
-	<section>
+	<section id="acc.p.diameter_flag">
 		<title><varname>diameter_flag</varname> (integer)</title>
 		<para>
 		Request flag which needs to be set to account a 
@@ -1058,7 +1058,7 @@ modparam("acc", "diameter_flag", 2)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.diameter_missed_flag">
 		<title><varname>diameter_missed_flag</varname> (integer)</title>
 		<para>
 		Request flag which needs to be set to account missed 
@@ -1074,7 +1074,7 @@ modparam("acc", "diameter_missed_flag", 3)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.diameter_client_host">
 		<title><varname>diameter_client_host</varname> (string)</title>
 		<para>
 		Hostname of the machine where the DIAMETER Client is 
@@ -1090,7 +1090,7 @@ modparam("acc", "diameter_client_host", "3a_server.net")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.diameter_client_port">
 		<title><varname>diameter_client_port</varname> (int)</title>
 		<para>
 		Port number where the Diameter Client is 
@@ -1106,7 +1106,7 @@ modparam("acc", "diameter_client_port", 3000)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.diameter_extra">
 		<title><varname>diameter_extra</varname> (string)</title>
 		<para>
 		Extra values to be logged via DIAMETER - DIAMETER specific.
@@ -1122,7 +1122,7 @@ modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:email)")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.cdr_enable">
 		<title><varname>cdr_enable</varname> (integer)</title>
 		<para>
 		Should CDR-based logging be enabled?
@@ -1138,11 +1138,11 @@ modparam("acc", "cdr_enable", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.cdr_start_on_confirmed">
 		<title><varname>cdr_start_on_confirmed</varname> (integer)</title>
 		<para>
 		Should the start time be taken from the time when the dialog is created,
-        or when the dialog is confirmed?
+        	or when the dialog is confirmed?
 		</para>
 		<para>
 		0 - use time of dialog creation (default).
@@ -1155,7 +1155,7 @@ modparam("acc", "cdr_start_on_confirmed", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc.p.cdr_facility">
 		<title><varname>cdr_facility</varname> (integer)</title>
 		<para>
 		Log facility to which CDR messages are issued to syslog.
@@ -1172,7 +1172,7 @@ modparam("acc", "cdr_facility", "LOG_DAEMON")
 </programlisting>
 		</example>
 	</section>
-	<section id="cdr_extra">
+	<section id="acc.p.cdr_extra">
 		<title><varname>cdr_extra</varname> (string)</title>
 		<para>
 		Set of pseudo-variables defining custom CDR fields. See
@@ -1188,7 +1188,7 @@ modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)"
 </programlisting>
 		</example>
 	</section>
-	<section id="cdr_start_id">
+	<section id="acc.p.cdr_start_id">
 		<title><varname>cdr_start_id</varname> (string)</title>
 		<para>
 		Modifying the start id which is used to store the start time.
@@ -1203,7 +1203,7 @@ modparam("acc", "cdr_start_id", "start")
 </programlisting>
 		</example>
 	</section>
-	<section id="cdr_end_id">
+	<section id="acc.p.cdr_end_id">
 		<title><varname>cdr_end_id</varname> (string)</title>
 		<para>
 		Modifying the end id which is used to store the end time.
@@ -1218,10 +1218,10 @@ modparam("acc", "cdr_end_id", "end")
 </programlisting>
 		</example>
 	</section>
-		<section id="cdr_duration_id">
+	<section id="acc.p.cdr_duration_id">
 		<title><varname>cdr_duration_id</varname> (string)</title>
 		<para>
-		Modifying the duration id which is used to store the duration.
+		Modify the duration id which is used to store the duration.
 		</para>
 		<para>
 		Default value is 'd'

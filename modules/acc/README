@@ -755,7 +755,7 @@ modparam("acc", "detect_direction", 1)
    failure_route). If this flag is not set and acc or missed_call flag are
    not set either in request route block, there is no way to mark the
    request for transaction later. If either acc or missed_call flags are
-   set in request route block, it is no need to set this flag.
+   set in request route block, there is no need to set this flag.
 
    Default value is not-set (no flag).
 
@@ -938,7 +938,7 @@ modparam("acc", "db_table_missed_calls", "myMC_table")
    Default value is "NULL" (SQL disabled).
 
    Example 1.23. db_url example
-modparam("acc", "db_url", "mysql://user:password@localhost/openser")
+modparam("acc", "db_url", "mysql://user:password@localhost/kamailio")
 
 6.24. acc_method_column (string)
 
@@ -1138,7 +1138,7 @@ modparam("acc", "cdr_end_id", "end")
 
 6.44. cdr_duration_id (string)
 
-   Modifying the duration id which is used to store the duration.
+   Modify the duration id which is used to store the duration.
 
    Default value is 'd'
 
