@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2012 Crocodile RCS Ltd
+ * Copyright (C) 2012-2013 Crocodile RCS Ltd
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -44,6 +44,8 @@ enum
 };
 #define DEFAULT_KEEPALIVE_MECHANISM		KEEPALIVE_MECHANISM_PING
 extern int ws_keepalive_mechanism;
+
+#define DEFAULT_KEEPALIVE_TIMEOUT		180 /* seconds */
 
 extern str ws_ping_application_data;
 #define DEFAULT_PING_APPLICATION_DATA		SERVER_HDR

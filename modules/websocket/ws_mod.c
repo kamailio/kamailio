@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2012 Crocodile RCS Ltd
+ * Copyright (C) 2012-2013 Crocodile RCS Ltd
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -37,6 +37,7 @@
 #include "ws_handshake.h"
 #include "ws_frame.h"
 #include "ws_mod.h"
+#include "config.h"
 
 MODULE_VERSION
 
@@ -52,7 +53,6 @@ sl_api_t ws_slb;
 #define DEFAULT_KEEPALIVE_INTERVAL	1
 static int ws_keepalive_interval = DEFAULT_KEEPALIVE_INTERVAL;
 
-#define DEFAULT_KEEPALIVE_TIMEOUT	180 /* seconds */
 static int ws_keepalive_timeout = DEFAULT_KEEPALIVE_TIMEOUT;
 
 #define DEFAULT_KEEPALIVE_PROCESSES	1
@@ -153,30 +153,6 @@ struct module_exports exports=
 	destroy,		/* destroy function */
 	child_init		/* per-child initialization function */
 };
-
-static cfg_def_t ws_cfg_def[] =
-{
-	/* ws_frame.c */
-	{ "keepalive_timeout",	CFG_VAR_INT | CFG_ATOMIC,
-	  0, 0, 0, 0,
-	  "Time (in seconds) after which to send a keep-alive on idle"
-	  " WebSocket connections." },
-
-	/* ws_handshake.c */	
-	{ "enabled",		CFG_VAR_INT | CFG_ATOMIC,
-	  0, 0, 0, 0,
-	  "Shows whether WebSockets are enabled or not." },
-
-	{ 0, 0, 0, 0, 0, 0 }
-};
-
-struct cfg_group_websocket default_ws_cfg =
-{
-	DEFAULT_KEEPALIVE_TIMEOUT, /* keepalive_timeout */
-	1			/* enabled */
-};
-void *ws_cfg = &default_ws_cfg;
-
 
 static int mod_init(void)
 {

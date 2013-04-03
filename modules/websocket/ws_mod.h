@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2012 Crocodile RCS Ltd
+ * Copyright (C) 2012-2013 Crocodile RCS Ltd
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -38,12 +38,5 @@ extern sl_api_t ws_slb;
 extern gen_lock_t *ws_stats_lock;
 
 extern int ws_ping_interval;	/* time (in seconds) between sending Pings */
-
-struct cfg_group_websocket
-{
-	int keepalive_timeout;
-	int enabled;
-};
-extern void *ws_cfg;		/* module configuration structure */
 
 #endif /* _WS_MOD_H */

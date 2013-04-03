@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2012 Crocodile RCS Ltd
+ * Copyright (C) 2012-2013 Crocodile RCS Ltd
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -39,6 +39,7 @@
 #include "ws_conn.h"
 #include "ws_handshake.h"
 #include "ws_mod.h"
+#include "config.h"
 
 #define WS_VERSION		(13)
 
