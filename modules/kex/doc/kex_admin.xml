@@ -58,7 +58,7 @@
 
 	<section>
 	<title>Functions</title>
-		<section>
+		<section id="kex.f.setsflag">
 		<title><function moreinfo="none">setsflag(flag)</function></title>
 		<para>
 			Set the script flag.
@@ -87,7 +87,7 @@ setsflag("$var(flag)");
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="kex.f.issflagset">
 		<title><function moreinfo="none">issflagset(flag)</function></title>
 		<para>
 			Return true of the script flag is set.
@@ -105,7 +105,7 @@ setsflag("$var(flag)");
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>setsflag</function> usage</title>
+		<title><function>issflagset</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if(issflagset("1"))
@@ -116,7 +116,7 @@ if(issflagset("1"))
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="kex.f.resetsflag">
 		<title><function moreinfo="none">resetsflag(flag)</function></title>
 		<para>
 			Reset the script flag.
@@ -142,7 +142,7 @@ resetsflag("1");
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="kex.f.setbflag">
 		<title><function moreinfo="none">setbflag(flag [, branch])</function></title>
 		<para>
 			Set the branch flag.
@@ -178,7 +178,7 @@ setbflag("$var(flag)", "1");
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="kex.f.isbflagset">
 		<title><function moreinfo="none">isbflagset(flag [, branch])</function></title>
 		<para>
 			Return true of the branch flag is set.
@@ -203,7 +203,7 @@ setbflag("$var(flag)", "1");
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>setbflag</function> usage</title>
+		<title><function>isbflagset</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if(isbflagset("1"))
@@ -214,7 +214,7 @@ if(isbflagset("1"))
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="kex.f.resetbflag">
 		<title><function moreinfo="none">resetbflag(flag [, branch])</function></title>
 		<para>
 			Reset the branch flag.
@@ -247,7 +247,7 @@ resetbflag("1");
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="kex.f.setdsturi">
 		<title><function moreinfo="none">setdsturi(uri)</function></title>
 		<para>
 			Set the destination address URI (outbound proxy address).
@@ -276,7 +276,7 @@ setdsturi("sip:10.0.0.10");
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="kex.f.resetdsturi">
 		<title><function moreinfo="none">resetdsturi()</function></title>
 		<para>
 			Reset the destination address URI (outbound proxy address).
@@ -293,7 +293,7 @@ resetdsturi();
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="kex.f.isdsturiset">
 		<title><function moreinfo="none">isdsturiset()</function></title>
 		<para>
 			Check if the destination address URI (outbound proxy address)
@@ -314,7 +314,7 @@ if(isdsturiset())
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="kex.f.pv_printf">
 		<title><function moreinfo="none">pv_printf(var, str)</function></title>
 		<para>
 			Evalues the str and sets the resulting value to variable var. For
@@ -348,7 +348,7 @@ pv_printf("$avp(x)", "From: $fU - To: $tU");
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="kex.f.is_myself">
 		<title><function moreinfo="none">is_myself(uri)</function></title>
 		<para>
 			Check if the parameter matches the 'myself' condition (i.e., is
@@ -378,7 +378,7 @@ if(is_myself("$fu")) {
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="kex.f.setdebug">
 		<title><function moreinfo="none">setdebug(level)</function></title>
 		<para>
 			Set the debug log level per process.
@@ -407,7 +407,7 @@ setdebug("$var(level)");
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="kex.f.resetdebug">
 		<title><function moreinfo="none">resetdebug()</function></title>
 		<para>
 		Reset the local debug log level back to the value of core parameter
@@ -425,7 +425,7 @@ resetdebug();
 </programlisting>
 		</example>
 		</section>
-		<section>
+		<section id="kex.f.km_append_branch">
 		<title><function moreinfo="none">km_append_branch([uri])</function></title>
 		<para>
 			This function was replaced by append_branch() from corex module, starting with
@@ -436,7 +436,7 @@ resetdebug();
 
 	<section>
 	<title>MI Commands</title>
-	<section>
+	<section id="kex.m.arg">
 		<title>
 		<function moreinfo="none">arg</function>
 		</title>
@@ -454,8 +454,8 @@ resetdebug();
 		:arg:_reply_fifo_file_
 		_empty_line_
 		</programlisting>
-    </section>
-	<section>
+    	</section>
+	<section id="kex.m.kill">
 		<title>
 		<function moreinfo="none">kill</function>
 		</title>
@@ -473,8 +473,8 @@ resetdebug();
 		:kill:_reply_fifo_file_
 		_empty_line_
 		</programlisting>
-    </section>
-	<section>
+    	</section>
+	<section id="kex.m.pwd">
 		<title>
 		<function moreinfo="none">pwd</function>
 		</title>
@@ -492,8 +492,8 @@ resetdebug();
 		:pwd:_reply_fifo_file_
 		_empty_line_
 		</programlisting>
-    </section>
-	<section>
+    	</section>
+	<section id="kex.m.uptime">
 		<title>
 		<function moreinfo="none">uptime</function>
 		</title>
@@ -512,7 +512,7 @@ resetdebug();
 		_empty_line_
 		</programlisting>
     </section>
-	<section>
+	<section id="kex.m.version">
 		<title>
 		<function moreinfo="none">version</function>
 		</title>
@@ -531,7 +531,7 @@ resetdebug();
 		_empty_line_
 		</programlisting>
     </section>
-	<section>
+	<section id="kex.m.which">
 		<title>
 		<function moreinfo="none">which</function>
 		</title>
@@ -550,7 +550,7 @@ resetdebug();
 		_empty_line_
 		</programlisting>
     </section>
-	<section>
+	<section id="kex.m.get_statistics">
 		<title>
 		<function moreinfo="none">get_statistics</function>
 		</title>
@@ -574,7 +574,7 @@ resetdebug();
 		_empty_line_
 		</programlisting>
     </section>
-	<section>
+	<section id="kex.m.reset_statistics">
 		<title>
 		<function moreinfo="none">reset_statistics</function>
 		</title>
@@ -595,7 +595,7 @@ resetdebug();
 		_empty_line_
 		</programlisting>
     </section>
-	<section>
+	<section id="kex.m.clear_statistics">
 		<title>
 		<function moreinfo="none">clear_statistics</function>
 		</title>
@@ -621,7 +621,7 @@ resetdebug();
 
 	<section>
 	<title>RPC Commands</title>
-	<section>
+	<section id="kex.r.pkg.stats">
 		<title>
 		<function moreinfo="none">pkg.stats</function>
 		</title>
