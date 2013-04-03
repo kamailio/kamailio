@@ -765,6 +765,11 @@ static void core_tcp_list(rpc_t* rpc, void* c)
 	struct tcp_connection* con;
 	int i, len, timeout;
 
+	if (tcp_disable) {
+		rpc->fault(c, 500, "tcp support disabled");
+		return;
+	}
+
 	TCPCONN_LOCK;
 	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
 		for (con = tcpconn_id_hash[i]; con; con = con->id_next) {
