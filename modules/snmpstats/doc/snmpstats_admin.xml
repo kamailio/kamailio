@@ -60,6 +60,11 @@
 			kamailioDialogLimitAlarmStatus, kamailioDialogLimitMinorAlarm,
 			kamailioDialogLimitMajorAlarm
 			</para>
+			<para>
+			In Kamailio 4.1 a set of new OIDs was added to reflect the
+			&kamailio; configuration, the version, core status (memory, connections),
+			transports and module data.
+			</para>
 		</section>
 		<section>
 			<title>SNMP Tables</title>

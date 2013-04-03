@@ -8,7 +8,13 @@ Edited by
 
 Jeffrey Magder
 
+Edited by
+
+Olle E. Johansson
+
    Copyright © 2006 SOMA Networks, Inc.
+
+   Copyright © 2013 Edvina AB, Sollentuna, Sweden
      __________________________________________________________________
 
    Table of Contents
@@ -155,6 +161,10 @@ Chapter 1. Admin Guide
    kamailioDialogLimitMajorThreshold, kamailioDialogUsageState,
    kamailioDialogLimitAlarmStatus, kamailioDialogLimitMinorAlarm,
    kamailioDialogLimitMajorAlarm
+
+   In Kamailio 4.1 a set of new OIDs was added to reflect the Kamailio
+   configuration, the version, core status (memory, connections),
+   transports and module data.
 
 1.2. SNMP Tables
 
