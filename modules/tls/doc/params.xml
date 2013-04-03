@@ -13,7 +13,7 @@
 
     <title>Parameters</title>
 
-	<section id="tls_method">
+	<section id="tls.p.tls_method">
 	<title><varname>tls_method</varname> (string)</title>
 	<para>
 		Sets the SSL/TLS protocol method. Possible values are:
@@ -53,7 +53,7 @@ modparam("tls", "tls_method", "TLSv1")
 	</example>
 	</section>
 
-	<section id="certificate">
+	<section id="tls.p.certificate">
 	<title><varname>certificate</varname> (string)</title>
 	<para>
 		Sets the certificate file name. The certificate file can also contain
@@ -84,7 +84,7 @@ modparam("tls", "certificate", "/usr/local/etc/kamailio/my_certificate.pem")
 	</example>
 	</section>
 
-	<section id="private_key">
+	<section id="tls.p.private_key">
 	<title><varname>private_key</varname> (string)</title>
 	<para>
 		Sets the private key file name.
@@ -114,7 +114,7 @@ modparam("tls", "private", "/usr/local/etc/kamailio/my_pkey.pem")
 	</example>
 	</section>
 
-<section id="ca_list">
+	<section id="tls.p.ca_list">
 	<title><varname>ca_list</varname> (string)</title>
 	<para>
 		Sets the CA list file name. This file contains a list of all the
@@ -153,7 +153,7 @@ modparam("tls", "ca_list", "/usr/local/etc/kamailio/ca_list.pem")
 	</example>
 	</section>
 
-<section id="crl">
+	<section id="tls.p.crl">
 	<title><varname>crl</varname> (string)</title>
 	<para>
 		Sets the certificate revocation list file name. This file contains a
@@ -223,7 +223,7 @@ modparam("tls", "crl", "/usr/local/etc/kamailio/crl.pem")
 	</example>
 	</section>
 
-<section id="verify_certificate">
+<section id="tls.p.verify_certificate">
 	<title><varname>verify_certificate</varname> (boolean)</title>
 	<para>
 		If enabled it will force certificate verification. For more information see the <ulink url="http://www.openssl.org/docs/apps/verify.html">verify(1)</ulink> openssl man page.
@@ -247,7 +247,7 @@ modparam("tls", "verify_certificate", 1)
 	</example>
 	</section>
 
-<section id="verify_depth">
+<section id="tls.p.verify_depth">
 	<title><varname>verify_depth</varname> (integer)</title>
 	<para>
 		Sets how far up the certificate chain will the certificate verification go in the search for a trusted CA.
@@ -268,7 +268,7 @@ modparam("tls", "verify_depth", 9)
 	</example>
 	</section>
 
-<section id="require_certificate">
+<section id="tls.p.require_certificate">
 	<title><varname>require_certificate</varname> (boolean)</title>
 	<para>
 		When enabled it will require a certificate from a client. If the client does not offer a certificate and <varname>verify_certificate</varname> is on, the certificate verification will fail.
@@ -286,7 +286,7 @@ modparam("tls", "require_certificate", 1)
 	</example>
 	</section>
 
-<section id="cipher_list">
+<section id="tls.p.cipher_list">
 	<title><varname>cipher_list</varname> (string)</title>
 	<para>
 		Sets the list of accepted ciphers. The list consists of cipher strings separated by colons. For more information on the cipher list format see the <ulink url="http://www.openssl.org/docs/apps/ciphers.html">cipher(1)</ulink> openssl man page.
@@ -304,7 +304,7 @@ modparam("tls", "cipher_list", "HIGH")
 	</example>
 	</section>
 
-	<section id="send_timeout">
+	<section id="tls.p.send_timeout">
 	<title><varname>send_timeout</varname> (int)</title>
 	<para>
 		This parameter is <emphasis>obsolete</emphasis> and cannot be used
@@ -314,7 +314,7 @@ modparam("tls", "cipher_list", "HIGH")
 	</para>
 	</section>
 
-	<section id="handshake_timeout">
+	<section id="tls.p.handshake_timeout">
 	<title><varname>handshake_timeout</varname> (int)</title>
 	<para>
 		This parameter is <emphasis>obsolete</emphasis> and cannot be used
@@ -324,7 +324,7 @@ modparam("tls", "cipher_list", "HIGH")
 	</para>
 	</section>
 
-	<section id="connection_timeout">
+	<section id="tls.p.connection_timeout">
 	<title><varname>connection_timeout</varname> (int)</title>
 	<para>
 		Sets the amount of time after which an idle TLS connection will be
@@ -358,7 +358,7 @@ modparam("tls", "connection_timeout", 60)
 	</example>
 	</section>
 
-	<section id="tls_disable_compression">
+	<section id="tls.p.tls_disable_compression">
 	<title><varname>tls_disable_compression</varname> (boolean)</title>
 	<para>
 		If set compression over SSL/TLS will be disabled.
@@ -380,7 +380,7 @@ modparam("tls", "tls_disable_compression", 0) # enable
 	</section>
 
 
-<section id="ssl_release_buffers">
+<section id="tls.p.ssl_release_buffers">
 	<title><varname>ssl_release_buffers</varname> (integer)</title>
 	<para>
 		Release internal OpenSSL read or write buffers as soon as they are
@@ -415,7 +415,7 @@ modparam("tls", "ssl_release_buffers", 1)
 	</section>
 
 
-<section id="ssl_freelist_max_len">
+<section id="tls.p.ssl_freelist_max_len">
 	<title><varname>ssl_free_list_max_len</varname> (integer)</title>
 	<para>
 		Sets the maximum number of free memory chunks, that OpenSSL will keep
@@ -451,7 +451,7 @@ modparam("tls", "ssl_freelist_max_len", 0)
 	</section>
 
 
-<section id="ssl_max_send_fragment">
+<section id="tls.p.ssl_max_send_fragment">
 	<title><varname>ssl_max_send_fragment</varname> (integer)</title>
 	<para>
 		Sets the maximum number of bytes (from the clear text) sent into
@@ -501,7 +501,7 @@ modparam("tls", "ssl_max_send_fragment", 4096)
 	</section>
 
 
-<section id="ssl_read_ahead">
+<section id="tls.p.ssl_read_ahead">
 	<title><varname>ssl_read_ahead</varname> (boolean)</title>
 	<para>
 		Enables read ahead, reducing the number of internal OpenSSL BIO read()
@@ -534,7 +534,7 @@ modparam("tls", "ssl_read_ahead", 1)
 	</section>
 
 
-	<section id="send_close_notify">
+	<section id="tls.p.send_close_notify">
 	<title><varname>send_close_notify</varname> (boolean)</title>
 	<para>
 		Enables/disables sending close notify alerts prior to closing the
@@ -567,7 +567,7 @@ modparam("tls", "send_close_notify", 1)
 	</section>
 
 
-	<section id="con_ct_wq_max">
+	<section id="tls.p.con_ct_wq_max">
 	<title><varname>con_ct_wq_max</varname> (integer)</title>
 	<para>
 		Sets the maximum allowed per connection clear-text send queue size in
@@ -598,7 +598,7 @@ modparam("tls", "con_ct_wq_max", 1048576)
 	</section>
 
 
-	<section id="ct_wq_max">
+	<section id="tls.p.ct_wq_max">
 	<title><varname>ct_wq_max</varname> (integer)</title>
 	<para>
 		Sets the maximum total number of bytes queued in all the clear-text
@@ -629,7 +629,7 @@ modparam("tls", "ct_wq_max", 4194304)
 	</section>
 
 
-	<section id="ct_wq_blk_size">
+	<section id="tls.p.ct_wq_blk_size">
 	<title><varname>ct_wq_blk_size</varname> (integer)</title>
 	<para>
 		Minimum block size for the internal clear-text send queues
@@ -660,7 +660,7 @@ modparam("tls", "ct_wq_blk_size", 2048)
 	</section>
 
 
-	<section id="tls_log">
+	<section id="tls.p.tls_log">
 	<title><varname>tls_log</varname> (int)</title>
 	<para>
 		Sets the log level at which TLS related messages will be logged.
@@ -690,7 +690,7 @@ modparam("tls", "tls_log", 10)
 	</section>
 
 
-	<section id="tls_debug">
+	<section id="tls.p.tls_debug">
 	<title><varname>tls_debug</varname> (int)</title>
 	<para>
 		Sets the log level at which TLS debug messages will be logged.
@@ -723,7 +723,7 @@ modparam("tls", "tls_debug", 10)
 	</section>
 
 
-<section id="low_mem_threshold1">
+<section id="tls.p.low_mem_threshold1">
 	<title><varname>low_mem_threshold1</varname> (integer)</title>
 	<para>
 		Sets the minimal free memory from which attempts to open or accept
@@ -773,7 +773,7 @@ modparam("tls", "low_mem_threshold1", -1)
 	</example>
 	</section>
 
-<section id="low_mem_threshold2">
+<section id="tls.p.low_mem_threshold2">
 	<title><varname>low_mem_threshold2</varname> (integer)</title>
 	<para>
 		Sets the minimal free memory from which TLS operations on already established TLS connections will start to fail preemptively.  The value is expressed in KB.
@@ -822,7 +822,7 @@ modparam("tls", "low_mem_threshold2", -1)
 	</example>
 	</section>
 
-	<section id="tls_force_run">
+	<section id="tls.p.tls_force_run">
 	<title><varname>tls_force_run</varname> (boolean)</title>
 	<para>
 		If enabled Kamailio  will start even if some of the openssl sanity checks fail (turn it on at your own risk).
@@ -855,7 +855,7 @@ modparam("tls", "tls_force_run", 11)
 	</example>
 	</section>
 
-	<section id="session_cache">
+	<section id="tls.p.session_cache">
 	<title><varname>session_cache</varname> (boolean)</title>
 	<para>
 		If enabled &kamailio; will do caching of the TLS sessions data, generation a session_id and sending
@@ -874,7 +874,7 @@ modparam("tls", "session_cache", 1)
 	</example>
 	</section>
 
-	<section id="session_id">
+	<section id="tls.p.session_id">
 	<title><varname>session_id</varname> (str)</title>
 	<para>
 		The value for session ID context, making sense when session caching is enabled.
@@ -892,7 +892,7 @@ modparam("tls", "session_id", "my-session-id-context")
 	</example>
 	</section>
 
-	<section id="renegotiation">
+	<section id="tls.p.renegotiation">
 	<title><varname>renegotiation</varname> (boolean)</title>
 	<para>
 		If enabled &kamailio;  will allow renegotiations of TLS connection initiated by the client. This may
@@ -912,7 +912,7 @@ modparam("tls", "renegotiation", 1)
 	</example>
 	</section>
 
-	<section id="config">
+	<section id="tls.p.config">
 	<title><varname>config</varname> (string)</title>
 	<para>
 		Sets the name of the TLS specific config file.

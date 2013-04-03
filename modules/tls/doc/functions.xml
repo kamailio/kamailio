@@ -14,7 +14,7 @@
 
 	<title>Functions</title>
 
-	<section id="tls.is_peer_verfied">
+	<section id="tls.f.is_peer_verfied">
 		<title><function>is_peer_verified()</function></title>
 		<para>
 			Returns true if the connection on which the message was received

@@ -12,7 +12,7 @@
 	<sectioninfo>
 	</sectioninfo>
 	<title>RPC Commands</title>
-	<section id="tls.info">
+	<section id="tls.r.tls.info">
 		<title><function>tls.info</function></title>
 		<para>
 			List internal information related to the TLS module in 
@@ -26,7 +26,7 @@
                         </para></listitem>
                 </itemizedlist>
 	</section>
-	<section id="tls.list">
+	<section id="tls.r.tls.list">
 		<title><function>tls.list</function></title>
 		<para>
 			List details about all active TLS connections.
@@ -38,7 +38,7 @@
                         </para></listitem>
                 </itemizedlist>
 	</section>
-	<section id="tls.options">
+	<section id="tls.r.tls.options">
 		<title><function>tls.options</function></title>
 		<para>
 			List the current TLS configuration.
@@ -50,7 +50,7 @@
                         </para></listitem>
                 </itemizedlist>
 	</section>
-	<section id="tls.reload">
+	<section id="tls.r.tls.reload">
 		<title><function>tls.reload</function></title>
 		<para>
 			Reload the external TLS configuration file. (Does not reload 
