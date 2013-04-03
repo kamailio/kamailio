@@ -53,7 +53,7 @@
 
 		<title>Parameters</title>
 
-		<section id="declare_timer">
+		<section id="timer.p.declare_timer">
 			<title><varname>declare_timer</varname> (string)</title>
 			<para>
 			Declares timer route which will be called in specific interval.
@@ -86,7 +86,7 @@
 	<section id="timer.functions">
 		<title>Functions</title>
 
-		<section id="timer_enable">
+		<section id="timer.p.timer_enable">
 			<title>
 				<function>timer_enable(timer_id, enable_disable)</function>
 			</title>
