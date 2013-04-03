@@ -734,9 +734,10 @@ int t_next_contact_flow(struct sip_msg* msg, char* key, char* value)
 		}
 
 		xavp_rm(xavp, NULL);
+		return 1;
 next_xavp:
 		xavp = next_xavp;
 	}
 
-	return 1;
+	return -1;
 }
