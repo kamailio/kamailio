@@ -911,6 +911,7 @@ mod_init(void)
 		LM_ERR("no shm memory for rtpp_set_list\n");
 		return -1;
 	}
+	memset(rtpp_set_list, 0, sizeof(struct rtpp_set_head));
 
 	if (nortpproxy_str.s==NULL || nortpproxy_str.s[0]==0) {
 		nortpproxy_str.len = 0;
