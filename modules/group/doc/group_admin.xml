@@ -27,7 +27,7 @@
 			specific user belongs to a specific group.
 			</para>
 			<para>
-			There is no DB caching support, each check involving a DB query.
+			There is no DB caching support, which means that each check involves a DB query.
 			</para>
 		</section>
 		<section>
@@ -55,7 +55,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				A database module, like mysql, postgres or dbtext
+				A database module, like db_mysql, db_postgres or db_text
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -79,7 +79,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="group.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 		&url; of the database table to be used.
@@ -100,7 +100,7 @@ modparam("group", "db_url", "&exampledb;")
 		</example>
 	</section>
 
-	<section>
+	<section id="group.p.table">
 		<title><varname>table</varname> (string)</title>
 		<para>
 		Name of the table holding strict definitions of groups and 
@@ -121,7 +121,7 @@ modparam("group", "table", "grp_table")
 		</example>
 	</section>
 
-	<section>
+	<section id="group.p.user_column">
 		<title><varname>user_column</varname> (string)</title>
 		<para>
 		Name of the <quote>table</quote> column holding usernames.
@@ -141,7 +141,7 @@ modparam("group", "user_column", "user")
 		</example>
 	</section>
 
-	<section>
+	<section id="group.p.domain_column">
 		<title><varname>domain_column</varname> (string)</title>
 		<para>
 		Name of the <quote>table</quote> column holding domains.
@@ -161,7 +161,7 @@ modparam("group", "domain_column", "realm")
 		</example>
 	</section>
 
-	<section>
+	<section id="group.p.group_column">
 		<title><varname>group_column</varname> (string)</title>
 		<para>
 		Name of the <quote>table</quote> column holding group names.
@@ -181,7 +181,7 @@ modparam("group", "group_column", "grp")
 		</example>
 	</section>
 
-	<section>
+	<section id="group.p.use_domain">
 		<title><varname>use_domain</varname> (integer)</title>
 		<para>
 		If enabled (set to a non zero value) then the domain will be used also used
@@ -203,7 +203,7 @@ modparam("group", "use_domain", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="group.p.re_table">
 		<title><varname>re_table</varname> (string)</title>
 		<para>
 		Name of the table holding definitions for regular-expression 
@@ -225,7 +225,7 @@ modparam("group", "re_table", "re_grp")
 		</example>
 	</section>
 
-	<section>
+	<section id="group.p.re_exp_column">
 		<title><varname>re_exp_column</varname> (string)</title>
 		<para>
 		Name of the <quote>re_table</quote> column holding the regular
@@ -237,10 +237,10 @@ modparam("group", "re_table", "re_grp")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>reg_exp_column</varname> parameter</title>
+		<title>Set <varname>re_exp_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("group", "reg_exp_column", "re")
+modparam("group", "re_exp_column", "re")
 ...
 </programlisting>
 		</example>
@@ -266,7 +266,7 @@ modparam("group", "re_gid_column", "grp_id")
 		</example>
 	</section>
 
-	<section>
+	<section id="group.p.multiple_gid">
 		<title><varname>multiple_gid</varname> (integer)</title>
 		<para>
 		If enabled (non zero value) the regular-expression matching will
@@ -291,7 +291,7 @@ modparam("group", "multiple_gid", 0)
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="group.f.is_user_in">
 		<title>
 		<function moreinfo="none">is_user_in(URI, group)</function>
 		</title>
@@ -346,7 +346,7 @@ if (is_user_in("Request-URI", "ld")) {
 		</example>
 	</section>
 
-	<section>
+	<section id="group.f.get_user_group">
 		<title>
 		<function moreinfo="none">get_user_group(URI, AVP)</function>
 		</title>

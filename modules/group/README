@@ -56,7 +56,7 @@ Jan Janak
    1.5. Set group_column parameter
    1.6. Set use_domain parameter
    1.7. Set re_table parameter
-   1.8. Set reg_exp_column parameter
+   1.8. Set re_exp_column parameter
    1.9. Set re_gid_column parameter
    1.10. Set multiple_gid parameter
    1.11. is_user_in usage
@@ -108,7 +108,8 @@ Chapter 1. Admin Guide
    groups they belong to. The module provides the possibility to check if
    a specific user belongs to a specific group.
 
-   There is no DB caching support, each check involving a DB query.
+   There is no DB caching support, which means that each check involves a
+   DB query.
 
 1.2. Regular Expression based checking
 
@@ -129,7 +130,7 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * A database module, like mysql, postgres or dbtext
+     * A database module, like db_mysql, db_postgres or db_text
 
 2.2. External Libraries or Applications
 
@@ -239,9 +240,9 @@ modparam("group", "re_table", "re_grp")
 
    Default value is "reg_exp".
 
-   Example 1.8. Set reg_exp_column parameter
+   Example 1.8. Set re_exp_column parameter
 ...
-modparam("group", "reg_exp_column", "re")
+modparam("group", "re_exp_column", "re")
 ...
 
 3.9. re_gid_column (string)
@@ -273,7 +274,7 @@ modparam("group", "multiple_gid", 0)
    4.1. is_user_in(URI, group)
    4.2. get_user_group(URI, AVP)
 
-4.1.  is_user_in(URI, group)
+4.1. is_user_in(URI, group)
 
    This function is to be used for script group membership. The function
    returns true if username in the given URI is a member of the given
@@ -300,7 +301,7 @@ if (is_user_in("Request-URI", "ld")) {
 };
 ...
 
-4.2.  get_user_group(URI, AVP)
+4.2. get_user_group(URI, AVP)
 
    This function is to be used for regular expression based group
    membership. The function returns true if username in the given URI
