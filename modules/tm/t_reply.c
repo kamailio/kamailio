@@ -2633,6 +2633,32 @@ int t_get_this_branch_instance(struct sip_msg *msg, str *instance)
 	return 1;
 }
 
+int t_get_this_branch_ruid(struct sip_msg *msg, str *ruid)
+{
+	struct cell *t;
+	if (!msg || !ruid)
+	{
+		LM_ERR("Invalid params\n");
+		return -1;
+	}
+	if (get_route_type() != BRANCH_FAILURE_ROUTE)
+	{
+		LM_ERR("Called t_get_this_branch_ruid not in a branch_failure_route\n");
+		return -1;
+	}
+
+	t = 0;
+	/* first get the transaction */
+	if (t_check(msg, 0 ) == -1) return -1;
+	if ((t = get_t()) == 0) {
+		LOG(L_ERR, "ERROR: t_check_status: cannot check status for a reply "
+			"which has no T-state established\n");
+		return -1;
+	}
+	*ruid = t->uac[get_t_branch()].ruid;
+	return 1;
+}
+
 #if 0
 static int send_reply(struct cell *trans, unsigned int code, str* text, str* body, str* headers, str* to_tag)
 {

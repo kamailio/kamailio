@@ -244,5 +244,6 @@ typedef int (*tget_picked_f)(void);
 int t_get_picked_branch(void);
 
 int t_get_this_branch_instance(struct sip_msg *msg, str *instance);
+int t_get_this_branch_ruid(struct sip_msg *msg, str *ruid);
 
 #endif

@@ -230,6 +230,7 @@ typedef struct ua_client
 	str uri;
 	str path;
 	str instance;
+	str ruid;
 	/* if we don't store, we at least want to know the status */
 	int             last_received;
 
