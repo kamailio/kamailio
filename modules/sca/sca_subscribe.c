@@ -1161,7 +1161,7 @@ sca_handle_subscribe( sip_msg_t *msg, char *p1, char *p2 )
 				"Invalid Call-Info header", msg );
 		goto done;
 	    }
-	    app_idx = call_info.index;
+	    req_sub.index = app_idx = call_info.index;
 	} else {
 	    SCA_SUB_REPLY_ERROR( sca, 400, "Bad Request - "
 			    "missing Call-Info header", msg );
