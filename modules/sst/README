@@ -170,7 +170,7 @@ Chapter 1. Admin Guide
 3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * dialog - dialog module and its dependencies. (tm)
+     * dialog or dialog-ng - dialog module and its dependencies. (tm)
      * sl - stateless module.
 
 3.2. External Libraries or Applications

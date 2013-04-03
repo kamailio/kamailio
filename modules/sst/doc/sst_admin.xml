@@ -123,7 +123,8 @@
 		<itemizedlist>
 		<listitem>
 		<para>
-		<emphasis>dialog</emphasis> - dialog module and its dependencies. (tm)
+		<emphasis>dialog</emphasis> or <emphasis>dialog-ng</emphasis>
+		- dialog module and its dependencies. (tm)
 		</para>
 		</listitem>
 		<listitem>
@@ -151,7 +152,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="sst.p.enable_stats">
 		<title><varname>enable_stats</varname> (integer)</title>
 
 		<para>If the statistics support should be enabled or
@@ -175,7 +176,7 @@ modparam("sst", "enable_stats", 0)
 		</example>
 	</section>
 
-	<section>
+	<section id="sst.p.min_se">
 		<title><varname>min_se</varname> (integer)</title>
 
 		<para>The value is used to set the proxies MIN-SE
@@ -203,7 +204,7 @@ modparam("sst", "min_se", 2400)
 		</example>
 	</section>
 
-	<section>
+	<section id="sst.p.timeout_avp">
 		<title><varname>timeout_avp</varname> (string)</title>
 
 		<para>This parameter MUST be set to the same value as the
@@ -229,7 +230,7 @@ modparam("sst", "timeout_avp", "$avp(i:10)")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="sst.p.reject_to_small">
 		<title><varname>reject_to_small</varname> (integer)</title>
 
 		<para>In the initial INVITE if the UAC has requested a
@@ -259,7 +260,7 @@ modparam("sst", "reject_to_small", 0)
 </programlisting>
 		</example>
 	</section>
-<section>
+	<section id="sst.p.sst_flag">
 		<title><varname>sst_flag</varname> (integer)</title>
 		
 		<para>Keeping with &kamailio;, the module will not do
@@ -305,7 +306,7 @@ route {
 	</section>
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="sst.f.sstCheckMin">
 		<title>
 		<function moreinfo="none">sstCheckMin(send_reply_flag)</function>
 		</title>
