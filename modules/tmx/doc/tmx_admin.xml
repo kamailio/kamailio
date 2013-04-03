@@ -355,6 +355,9 @@ tcontinue('123', '456', 'MYROUTE');
 			<listitem><para>
 				<emphasis>$T_rpl(pv)</emphasis>
 			</para></listitem>
+			<listitem><para>
+				<emphasis>$T_reply_ruid</emphasis>
+			</para></listitem>
 		</itemizedlist>
 		<para>
 		Exported pseudo-variables are documented at &kamwikilink;.
