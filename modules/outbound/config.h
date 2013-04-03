@@ -34,6 +34,4 @@ extern struct cfg_group_outbound default_outbound_cfg;
 extern void *outbound_cfg;
 extern cfg_def_t outbound_cfg_def[];
 
-extern void ds_ping_reply_codes_update(str*, str*);
-
 #endif
