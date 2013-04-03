@@ -26,6 +26,7 @@
 #include "../../ip_addr.h"
 #include "../../sr_module.h"
 #include "kam_stun.h"
+#include "config.h"
 
 MODULE_VERSION
 
@@ -55,6 +56,13 @@ static int mod_init(void)
 		LM_ERR("registering STUN receive call-back\n");
 		return -1;
 	}
+
+        if (cfg_declare("stun", stun_cfg_def, &default_stun_cfg,
+                        cfg_sizeof(stun), &stun_cfg)) {
+                LM_ERR("declaring config framework variable\n");
+                return -1;
+        }
+        default_stun_cfg.stun_active = 1;
 
 	return 0;
 }
