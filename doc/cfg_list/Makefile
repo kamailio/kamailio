@@ -28,8 +28,9 @@ files_list= \
 	$(COREPATH)/modules/carrierroute/config.c:carrierroute \
 	$(COREPATH)/modules/malloc_test/malloc_test.c:malloc_test \
 	$(COREPATH)/modules/tls/tls_cfg.c:tls \
-	$(COREPATH)/modules/dispatcher/config.c:dispatcher
-
+	$(COREPATH)/modules/dispatcher/config.c:dispatcher \
+	$(COREPATH)/modules/websocket/config.c:websocket \
+	$(COREPATH)/modules/outbound/config.c:outbound
 
 
 # list of excluded groups
