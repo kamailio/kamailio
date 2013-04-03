@@ -30,7 +30,8 @@ files_list= \
 	$(COREPATH)/modules/tls/tls_cfg.c:tls \
 	$(COREPATH)/modules/dispatcher/config.c:dispatcher \
 	$(COREPATH)/modules/websocket/config.c:websocket \
-	$(COREPATH)/modules/outbound/config.c:outbound
+	$(COREPATH)/modules/outbound/config.c:outbound \
+	$(COREPATH)/modules/stun/config.c:stun
 
 
 # list of excluded groups
