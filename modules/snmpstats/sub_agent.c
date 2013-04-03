@@ -65,6 +65,7 @@
 #include "snmpMIBNotifications.h"
 #include "kamailioServer.h"
 #include "kamailioNet.h"
+#include "kamailioNetConfig.h"
 
 #include "../../dprint.h"
 #include "../../cfg/cfg_struct.h"
@@ -112,6 +113,7 @@ static int initialize_agentx(void)
 	init_kamailioSIPRegUserLookupTable();
 	init_kamailioServer();
 	init_kamailioNet();
+	init_kamailioNetConfig();
 	LM_DBG("Done initializing Kamailio OID's for SNMPD MasterX\n");
 
 	/* In case we recevie a request to stop (kill -TERM or kill -INT) */

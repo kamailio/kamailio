@@ -45,8 +45,12 @@
 #include "../../str.h"
 #include "../../locking.h"
 #include "../../mem/mem.h"
+#include "../../cfg/cfg.h"
+#include "../../cfg/cfg_ctx.h"
 
 #include "../../lib/kcore/kstats_wrapper.h"
+
+static cfg_ctx_t  *ctx = NULL;
 
 /*!
  * This function copies an Kamailio "str" datatype into a '\\0' terminated char*
@@ -145,4 +149,47 @@ char * convertTMToSNMPDateAndTime(struct tm *timeStructure)
 	dateAndTime[7] = 0;
 
 	return dateAndTime;
+}
+
+/* module initialization function */
+int config_context_init(void)
+{
+	if (cfg_register_ctx(&ctx, NULL)) {
+		LOG(L_ERR, "cfg_rpc: failed to register cfg context\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/*! \brief Get config framework variable 
+ * type will return cfg_type - CFG_VAR_INT, CFG_VAR_STRING, CFG_VAR_STR
+ * If type is CFG_VAR_UNSET then call failed and return value should be ignored.
+*/
+int snmp_cfg_get_int(char *arg_group, char *arg_name, unsigned int *type)
+{
+	void	*val;
+	unsigned int	val_type;
+	int res;
+
+	str group, name;
+
+	group.s = arg_group;
+	group.len = strlen(arg_group);
+	name.s = arg_name;
+	name.len = strlen(arg_name);
+
+	*type = CFG_VAR_UNSET;
+
+	res = cfg_get_by_name(ctx, &group, NULL, &name, &val, &val_type);
+	if (res < 0) {
+		LM_ERR("Failed to get the variable\n");
+		return -1;
+	} else if (res > 0) {
+		LM_ERR("Variable exists, but it is not readable via RPC interface\n");
+		return -1;
+	}
+	LM_DBG("Config framework variable %s:%s retrieved %d\n", arg_group, arg_name, (int)(long) val);
+	*type = val_type;
+	return (int) (long) val;
 }

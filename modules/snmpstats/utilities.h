@@ -72,4 +72,14 @@ int get_statistic(char *statName);
  * counted on to be around if this function is called again. */
 char * convertTMToSNMPDateAndTime(struct tm *timeStructure);
 
+/*! \brief Get config framework variable 
+ * type will return cfg_type - CFG_VAR_INT, CFG_VAR_STRING, CFG_VAR_STR
+ * If type is CFG_VAR_UNSET then call failed and return value should be ignored.
+*/
+int snmp_cfg_get_int(char *arg_group, char *arg_name, unsigned int *type);
+
+/*! Initialize config framework */
+int config_context_init(void);
+
+
 #endif
