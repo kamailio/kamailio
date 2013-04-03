@@ -935,12 +935,14 @@ mod_init(void)
 	}
 	/* storing the list of rtp proxy sets in shared memory*/
 	for(i=0;i<rtpp_sets;i++){
+		LM_DBG("Adding RTP-Proxy set %d/%d: %s\n", i, rtpp_sets, rtpp_strings[i]);
 		if ((rtpp_db_url.s == NULL) &&
 		    (rtpproxy_add_rtpproxy_set(rtpp_strings[i]) != 0)) {
 			for(;i<rtpp_sets;i++)
 				if(rtpp_strings[i])
 					pkg_free(rtpp_strings[i]);
 			pkg_free(rtpp_strings);
+			LM_ERR("Failed to add RTP-Proxy from Config!\n");
 			return -1;
 		}
 		if(rtpp_strings[i])
