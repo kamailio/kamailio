@@ -30,8 +30,6 @@
 #ifndef _WS_CONFIG_H
 #define _WS_CONFIG_H
 
-#include "../../qvalue.h"
-#include "../../str.h"
 #include "../../cfg/cfg.h"
 
 struct cfg_group_websocket
